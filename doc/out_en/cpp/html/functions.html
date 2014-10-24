@@ -84,6 +84,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
       <li><a href="#index_i"><span>i</span></a></li>
       <li><a href="#index_l"><span>l</span></a></li>
       <li><a href="#index_n"><span>n</span></a></li>
+      <li><a href="#index_o"><span>o</span></a></li>
       <li><a href="#index_p"><span>p</span></a></li>
       <li><a href="#index_q"><span>q</span></a></li>
       <li><a href="#index_r"><span>r</span></a></li>
@@ -100,7 +101,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
      onmouseover="return searchBox.OnSearchSelectShow()"
      onmouseout="return searchBox.OnSearchSelectHide()"
      onkeydown="return searchBox.OnSearchSelectKey(event)">
-<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Files</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&#160;</span>Variables</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(6)"><span class="SelectionMark">&#160;</span>Typedefs</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(7)"><span class="SelectionMark">&#160;</span>Enumerations</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(8)"><span class="SelectionMark">&#160;</span>Macros</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(9)"><span class="SelectionMark">&#160;</span>Pages</a></div>
+<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Files</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&#160;</span>Variables</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(6)"><span class="SelectionMark">&#160;</span>Typedefs</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(7)"><span class="SelectionMark">&#160;</span>Enumerations</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(8)"><span class="SelectionMark">&#160;</span>Enumerator</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(9)"><span class="SelectionMark">&#160;</span>Macros</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(10)"><span class="SelectionMark">&#160;</span>Pages</a></div>
 
 <!-- iframe showing the search results (closed by default) -->
 <div id="MSearchResultsWindow">
@@ -147,13 +148,15 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 </li>
 <li>close()
 : <a class="el" href="classsdbclient_1_1sdbCursor.html#ae19fe2a2fa1e1ef9c031e8b00c8fb462">sdbclient::sdbCursor</a>
+, <a class="el" href="classsdbclient_1_1sdbLob.html#a6f657580a3c047ef4f99f5a6dd6e5d13">sdbclient::sdbLob</a>
 </li>
 <li>closeAllCursors()
 : <a class="el" href="classsdbclient_1_1sdb.html#a2052673f94c49d421bed64e096553093">sdbclient::sdb</a>
 </li>
 <li>connect()
-: <a class="el" href="classsdbclient_1_1sdbNode.html#a1f2e1269f21af5bcf36e0e38deb15cf8">sdbclient::sdbNode</a>
-, <a class="el" href="classsdbclient_1_1sdb.html#a97c1f8b762abebfeec2b550f803490de">sdbclient::sdb</a>
+: <a class="el" href="classsdbclient_1_1sdb.html#aa1ffa2592e22ed4d0e98c9dbe8f937e6">sdbclient::sdb</a>
+, <a class="el" href="classsdbclient_1_1sdbNode.html#a1f2e1269f21af5bcf36e0e38deb15cf8">sdbclient::sdbNode</a>
+, <a class="el" href="classsdbclient_1_1sdb.html#a34313780f36d821b9a6627f0ca743a01">sdbclient::sdb</a>
 </li>
 <li>create()
 : <a class="el" href="classsdbclient_1_1sdbCollection.html#aff4162e8c438202e2d096a2a813b513a">sdbclient::sdbCollection</a>
@@ -170,6 +173,10 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 </li>
 <li>createIndex()
 : <a class="el" href="classsdbclient_1_1sdbCollection.html#a233a9df73d247e5a78bd113fe2bd2dff">sdbclient::sdbCollection</a>
+</li>
+<li>createLob()
+: <a class="el" href="classsdbclient_1_1__sdbCollection.html#aca72e22c140722d803566ba632971c64">sdbclient::_sdbCollection</a>
+, <a class="el" href="classsdbclient_1_1sdbCollection.html#ab1b462cd1506e4afd0cc56d7f4a806d5">sdbclient::sdbCollection</a>
 </li>
 <li>createNode()
 : <a class="el" href="classsdbclient_1_1sdbReplicaGroup.html#ae4062f8836a13a35ceac11d7a3417ab1">sdbclient::sdbReplicaGroup</a>
@@ -231,6 +238,10 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <li>execUpdate()
 : <a class="el" href="classsdbclient_1_1sdb.html#a08d7daff3410df13b1e43a70f78d0763">sdbclient::sdb</a>
 </li>
+<li>explain()
+: <a class="el" href="classsdbclient_1_1__sdbCollection.html#a70982aeaf1ddf2b27881841a92d0b369">sdbclient::_sdbCollection</a>
+, <a class="el" href="classsdbclient_1_1sdbCollection.html#afdaa3f848a87ed2db340ea04a5fb6b55">sdbclient::sdbCollection</a>
+</li>
 </ul>
 
 
@@ -255,9 +266,12 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <li>getCount()
 : <a class="el" href="classsdbclient_1_1sdbCollection.html#ac2a4d640622d115cf726626f15e5329b">sdbclient::sdbCollection</a>
 </li>
+<li>getCreateTime()
+: <a class="el" href="classsdbclient_1_1sdbLob.html#aee8d67f23dcc0955d6e26990157de66f">sdbclient::sdbLob</a>
+</li>
 <li>getCSName()
-: <a class="el" href="classsdbclient_1_1sdbCollection.html#a1b8f0ce34cbacba60fcf4012d0987bc9">sdbclient::sdbCollection</a>
-, <a class="el" href="classsdbclient_1_1sdbCollectionSpace.html#a19abc1d2fec9c9196a0ad602df107bec">sdbclient::sdbCollectionSpace</a>
+: <a class="el" href="classsdbclient_1_1sdbCollectionSpace.html#a19abc1d2fec9c9196a0ad602df107bec">sdbclient::sdbCollectionSpace</a>
+, <a class="el" href="classsdbclient_1_1sdbCollection.html#a1b8f0ce34cbacba60fcf4012d0987bc9">sdbclient::sdbCollection</a>
 </li>
 <li>getDetail()
 : <a class="el" href="classsdbclient_1_1sdbReplicaGroup.html#a5b3c659c793be0f56bc4702495559b2f">sdbclient::sdbReplicaGroup</a>
@@ -281,8 +295,8 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 : <a class="el" href="classsdbclient_1_1sdbReplicaGroup.html#afc5bf017a09cf3e919dad70ccca32b74">sdbclient::sdbReplicaGroup</a>
 </li>
 <li>getName()
-: <a class="el" href="classsdbclient_1_1sdbDomain.html#a81faf2aea84005ea27b1d7755fe1f00c">sdbclient::sdbDomain</a>
-, <a class="el" href="classsdbclient_1_1sdbReplicaGroup.html#a810fa83e611ddd773370b48906fcfd95">sdbclient::sdbReplicaGroup</a>
+: <a class="el" href="classsdbclient_1_1sdbReplicaGroup.html#a810fa83e611ddd773370b48906fcfd95">sdbclient::sdbReplicaGroup</a>
+, <a class="el" href="classsdbclient_1_1sdbDomain.html#a81faf2aea84005ea27b1d7755fe1f00c">sdbclient::sdbDomain</a>
 </li>
 <li>getNode()
 : <a class="el" href="classsdbclient_1_1sdbReplicaGroup.html#a5b99c70ccbf8f57151ca2fb9e8892f90">sdbclient::sdbReplicaGroup</a>
@@ -293,14 +307,20 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <li>getNodeNum()
 : <a class="el" href="classsdbclient_1_1sdbReplicaGroup.html#ad1ebb2af0f8f8f6cac68e5b20d1b5607">sdbclient::sdbReplicaGroup</a>
 </li>
+<li>getOid()
+: <a class="el" href="classsdbclient_1_1sdbLob.html#af841b8424e9877e2214ab6ea85ef3766">sdbclient::sdbLob</a>
+</li>
 <li>getQueryMeta()
 : <a class="el" href="classsdbclient_1_1sdbCollection.html#ad81f17ef5bbe4447ffa1edde10c13ccf">sdbclient::sdbCollection</a>
 </li>
 <li>getReplicaGroup()
-: <a class="el" href="classsdbclient_1_1sdb.html#ae580ee35cce39c18b54e54cc91c2089e">sdbclient::sdb</a>
+: <a class="el" href="classsdbclient_1_1sdb.html#a58d0bc33aa136c21ead0b0fea747fe42">sdbclient::sdb</a>
 </li>
 <li>getServiceName()
 : <a class="el" href="classsdbclient_1_1sdbNode.html#a749ce008ae045fbcf5980d15784adea5">sdbclient::sdbNode</a>
+</li>
+<li>getSize()
+: <a class="el" href="classsdbclient_1_1sdbLob.html#ad2e972c51839b77291c41249ce26b368">sdbclient::sdbLob</a>
 </li>
 <li>getSlave()
 : <a class="el" href="classsdbclient_1_1sdbReplicaGroup.html#a97234239d6503d93a6cb5cf028dd6b8a">sdbclient::sdbReplicaGroup</a>
@@ -320,6 +340,9 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 </li>
 <li>isCatalog()
 : <a class="el" href="classsdbclient_1_1sdbReplicaGroup.html#a10e5653a1e1962abd1f092bc5a030e09">sdbclient::sdbReplicaGroup</a>
+</li>
+<li>isClosed()
+: <a class="el" href="classsdbclient_1_1sdbLob.html#a14d3eba0e6fea8c8a3dd90519cce5391">sdbclient::sdbLob</a>
 </li>
 <li>isValid()
 : <a class="el" href="classsdbclient_1_1sdb.html#a587e82a600dfefaab2872df189e08ca4">sdbclient::sdb</a>
@@ -346,6 +369,9 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <li>listDomains()
 : <a class="el" href="classsdbclient_1_1sdb.html#a507853027ef45972e5dffdd1c5d53621">sdbclient::sdb</a>
 </li>
+<li>listLobs()
+: <a class="el" href="classsdbclient_1_1sdbCollection.html#ad9256ad1c6815a3941e4f7d2178588eb">sdbclient::sdbCollection</a>
+</li>
 <li>listProcedures()
 : <a class="el" href="classsdbclient_1_1sdb.html#a5a2fa83aaae147419194df4cd9df9a86">sdbclient::sdb</a>
 </li>
@@ -365,6 +391,13 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 </ul>
 
 
+<h3><a class="anchor" id="index_o"></a>- o -</h3><ul>
+<li>openLob()
+: <a class="el" href="classsdbclient_1_1sdbCollection.html#af7a6611ea6816d1c7da7974fe8b892b0">sdbclient::sdbCollection</a>
+</li>
+</ul>
+
+
 <h3><a class="anchor" id="index_p"></a>- p -</h3><ul>
 <li>pCollection
 : <a class="el" href="classsdbclient_1_1sdbCollection.html#a7da5c47b4d2dccf4750a83ca5eaa1fbe">sdbclient::sdbCollection</a>
@@ -374,6 +407,12 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 </li>
 <li>pCursor
 : <a class="el" href="classsdbclient_1_1sdbCursor.html#afbccbc01559bfc9c4b2f4da0ac10d386">sdbclient::sdbCursor</a>
+</li>
+<li>pDomain
+: <a class="el" href="classsdbclient_1_1sdbDomain.html#a7045e014f68b05490ad6d8d19154d64e">sdbclient::sdbDomain</a>
+</li>
+<li>pLob
+: <a class="el" href="classsdbclient_1_1sdbLob.html#a9e92b2232add5571d9b526561cc603e7">sdbclient::sdbLob</a>
 </li>
 <li>pNode
 : <a class="el" href="classsdbclient_1_1sdbNode.html#ad1832433c2bf258b19203a81bece0641">sdbclient::sdbNode</a>
@@ -389,14 +428,20 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 
 <h3><a class="anchor" id="index_q"></a>- q -</h3><ul>
 <li>query()
-: <a class="el" href="classsdbclient_1_1sdbCollection.html#a0b094c874ea53c019da6f5b4ad62a37f">sdbclient::sdbCollection</a>
+: <a class="el" href="classsdbclient_1_1sdbCollection.html#a5b5dae5cc3d1db97a86c6910be9ef259">sdbclient::sdbCollection</a>
 </li>
 </ul>
 
 
 <h3><a class="anchor" id="index_r"></a>- r -</h3><ul>
+<li>read()
+: <a class="el" href="classsdbclient_1_1sdbLob.html#a33ca315bf1f23758a94b166320f959d9">sdbclient::sdbLob</a>
+</li>
 <li>removeBackup()
 : <a class="el" href="classsdbclient_1_1sdb.html#a797f130822fe81c5cc3ea378e02a31b6">sdbclient::sdb</a>
+</li>
+<li>removeLob()
+: <a class="el" href="classsdbclient_1_1sdbCollection.html#a608760487730d302da5a1e7dc4ce386e">sdbclient::sdbCollection</a>
 </li>
 <li>removeNode()
 : <a class="el" href="classsdbclient_1_1sdbReplicaGroup.html#ad6e1c902321b24e329832f84a367e10b">sdbclient::sdbReplicaGroup</a>
@@ -429,24 +474,30 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <li>sdbCursor()
 : <a class="el" href="classsdbclient_1_1sdbCursor.html#a82bee251ec1076c461be6c0b13230c67">sdbclient::sdbCursor</a>
 </li>
+<li>sdbLob()
+: <a class="el" href="classsdbclient_1_1sdbLob.html#a86d3647ce14b4342e9c3f36c482966c3">sdbclient::sdbLob</a>
+</li>
 <li>sdbNode()
 : <a class="el" href="classsdbclient_1_1sdbNode.html#a97b9b44327a10685c286c16ba5d0df25">sdbclient::sdbNode</a>
 </li>
 <li>sdbReplicaGroup()
 : <a class="el" href="classsdbclient_1_1sdbReplicaGroup.html#a73013670a44cb26e588b4b919203dd35">sdbclient::sdbReplicaGroup</a>
 </li>
+<li>seek()
+: <a class="el" href="classsdbclient_1_1sdbLob.html#ae619d16f7d665e2408235419f54f463f">sdbclient::sdbLob</a>
+</li>
 <li>setSessionAttr()
 : <a class="el" href="classsdbclient_1_1sdb.html#a2052443a0e641164ac89ca54f87a5f3e">sdbclient::sdb</a>
 </li>
 <li>split()
-: <a class="el" href="classsdbclient_1_1sdbCollection.html#a6088162e2083805eb52cd2410e925203">sdbclient::sdbCollection</a>
+: <a class="el" href="classsdbclient_1_1sdbCollection.html#a8919c63570b4b3df679375db896339ec">sdbclient::sdbCollection</a>
 </li>
 <li>splitAsync()
-: <a class="el" href="classsdbclient_1_1sdbCollection.html#a7a10f9333670535e166a34a308ff5d6e">sdbclient::sdbCollection</a>
+: <a class="el" href="classsdbclient_1_1sdbCollection.html#add4fa8fa068f241d997d3c21b388c323">sdbclient::sdbCollection</a>
 </li>
 <li>start()
-: <a class="el" href="classsdbclient_1_1sdbReplicaGroup.html#a1e28a382f4272458d382d1eebe6d86e0">sdbclient::sdbReplicaGroup</a>
-, <a class="el" href="classsdbclient_1_1sdbNode.html#a48982ef0e50a0ca69ea6fc43e87d0634">sdbclient::sdbNode</a>
+: <a class="el" href="classsdbclient_1_1sdbNode.html#a48982ef0e50a0ca69ea6fc43e87d0634">sdbclient::sdbNode</a>
+, <a class="el" href="classsdbclient_1_1sdbReplicaGroup.html#a1e28a382f4272458d382d1eebe6d86e0">sdbclient::sdbReplicaGroup</a>
 </li>
 <li>stop()
 : <a class="el" href="classsdbclient_1_1sdbNode.html#a1366edb08d86d9ac9c3005e3a8e587a1">sdbclient::sdbNode</a>
@@ -482,6 +533,9 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <li>waitTasks()
 : <a class="el" href="classsdbclient_1_1sdb.html#a7927ebb2fb8706d5d8eba031a9e2bf91">sdbclient::sdb</a>
 </li>
+<li>write()
+: <a class="el" href="classsdbclient_1_1sdbLob.html#a39a9381411a0f8ee39261c167b62bfb8">sdbclient::sdbLob</a>
+</li>
 </ul>
 
 
@@ -508,7 +562,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Sun Jul 6 2014 16:02:09 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Fri Oct 24 2014 13:32:16 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.2
 </small></address>

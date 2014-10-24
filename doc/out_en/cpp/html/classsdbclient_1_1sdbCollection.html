@@ -70,7 +70,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
      onmouseover="return searchBox.OnSearchSelectShow()"
      onmouseout="return searchBox.OnSearchSelectHide()"
      onkeydown="return searchBox.OnSearchSelectKey(event)">
-<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Files</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&#160;</span>Variables</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(6)"><span class="SelectionMark">&#160;</span>Typedefs</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(7)"><span class="SelectionMark">&#160;</span>Enumerations</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(8)"><span class="SelectionMark">&#160;</span>Macros</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(9)"><span class="SelectionMark">&#160;</span>Pages</a></div>
+<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Files</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&#160;</span>Variables</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(6)"><span class="SelectionMark">&#160;</span>Typedefs</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(7)"><span class="SelectionMark">&#160;</span>Enumerations</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(8)"><span class="SelectionMark">&#160;</span>Enumerator</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(9)"><span class="SelectionMark">&#160;</span>Macros</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(10)"><span class="SelectionMark">&#160;</span>Pages</a></div>
 
 <!-- iframe showing the search results (closed by default) -->
 <div id="MSearchResultsWindow">
@@ -94,7 +94,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 </div><!--header-->
 <div class="contents">
 
-<p>Database operation interfaces of cursor.  
+<p>Database operation interfaces of collection.  
  <a href="classsdbclient_1_1sdbCollection.html#details">More...</a></p>
 
 <p><code>#include &lt;<a class="el" href="client_8hpp_source.html">client.hpp</a>&gt;</code></p>
@@ -142,12 +142,12 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a282d616532a50056a8583e1725bea04c"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdbCollection.html#a282d616532a50056a8583e1725bea04c">del</a> (const bson::BSONObj &amp;condition=_sdbStaticObject, const bson::BSONObj &amp;hint=_sdbStaticObject)</td></tr>
 <tr class="memdesc:a282d616532a50056a8583e1725bea04c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Delete the matching documents in current collection.  <a href="#a282d616532a50056a8583e1725bea04c"></a><br/></td></tr>
 <tr class="separator:a282d616532a50056a8583e1725bea04c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a94709b49ac750ce629f1ca0b5606cd24"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a94709b49ac750ce629f1ca0b5606cd24"></a>
-INT32&#160;</td><td class="memItemRight" valign="bottom"><b>query</b> (<a class="el" href="classsdbclient_1_1__sdbCursor.html">_sdbCursor</a> **cursor, const bson::BSONObj &amp;condition=_sdbStaticObject, const bson::BSONObj &amp;selected=_sdbStaticObject, const bson::BSONObj &amp;orderBy=_sdbStaticObject, const bson::BSONObj &amp;hint=_sdbStaticObject, INT64 numToSkip=0, INT64 numToReturn=-1)</td></tr>
-<tr class="separator:a94709b49ac750ce629f1ca0b5606cd24"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0b094c874ea53c019da6f5b4ad62a37f"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdbCollection.html#a0b094c874ea53c019da6f5b4ad62a37f">query</a> (<a class="el" href="classsdbclient_1_1sdbCursor.html">sdbCursor</a> &amp;cursor, const bson::BSONObj &amp;condition=_sdbStaticObject, const bson::BSONObj &amp;selected=_sdbStaticObject, const bson::BSONObj &amp;orderBy=_sdbStaticObject, const bson::BSONObj &amp;hint=_sdbStaticObject, INT64 numToSkip=0, INT64 numToReturn=-1)</td></tr>
-<tr class="memdesc:a0b094c874ea53c019da6f5b4ad62a37f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the matching documents in current collection.  <a href="#a0b094c874ea53c019da6f5b4ad62a37f"></a><br/></td></tr>
-<tr class="separator:a0b094c874ea53c019da6f5b4ad62a37f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a51587e70ae435db5b94af8cbb930908f"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a51587e70ae435db5b94af8cbb930908f"></a>
+INT32&#160;</td><td class="memItemRight" valign="bottom"><b>query</b> (<a class="el" href="classsdbclient_1_1__sdbCursor.html">_sdbCursor</a> **cursor, const bson::BSONObj &amp;condition=_sdbStaticObject, const bson::BSONObj &amp;selected=_sdbStaticObject, const bson::BSONObj &amp;orderBy=_sdbStaticObject, const bson::BSONObj &amp;hint=_sdbStaticObject, INT64 numToSkip=0, INT64 numToReturn=-1, INT32 flag=0)</td></tr>
+<tr class="separator:a51587e70ae435db5b94af8cbb930908f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5b5dae5cc3d1db97a86c6910be9ef259"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdbCollection.html#a5b5dae5cc3d1db97a86c6910be9ef259">query</a> (<a class="el" href="classsdbclient_1_1sdbCursor.html">sdbCursor</a> &amp;cursor, const bson::BSONObj &amp;condition=_sdbStaticObject, const bson::BSONObj &amp;selected=_sdbStaticObject, const bson::BSONObj &amp;orderBy=_sdbStaticObject, const bson::BSONObj &amp;hint=_sdbStaticObject, INT64 numToSkip=0, INT64 numToReturn=-1, INT32 flag=0)</td></tr>
+<tr class="memdesc:a5b5dae5cc3d1db97a86c6910be9ef259"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the matching documents in current collection.  <a href="#a5b5dae5cc3d1db97a86c6910be9ef259"></a><br/></td></tr>
+<tr class="separator:a5b5dae5cc3d1db97a86c6910be9ef259"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a233a9df73d247e5a78bd113fe2bd2dff"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdbCollection.html#a233a9df73d247e5a78bd113fe2bd2dff">createIndex</a> (const bson::BSONObj &amp;indexDef, const CHAR *pName, BOOLEAN isUnique, BOOLEAN isEnforced)</td></tr>
 <tr class="memdesc:a233a9df73d247e5a78bd113fe2bd2dff"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create the index in current collection.  <a href="#a233a9df73d247e5a78bd113fe2bd2dff"></a><br/></td></tr>
 <tr class="separator:a233a9df73d247e5a78bd113fe2bd2dff"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -193,6 +193,21 @@ INT32&#160;</td><td class="memItemRight" valign="bottom"><b>getQueryMeta</b> (<a
 <tr class="memitem:ae109b9915c1f22d57a448ee22f3dbdde"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdbCollection.html#ae109b9915c1f22d57a448ee22f3dbdde">detachCollection</a> (const CHAR *subClFullName)</td></tr>
 <tr class="memdesc:ae109b9915c1f22d57a448ee22f3dbdde"><td class="mdescLeft">&#160;</td><td class="mdescRight">Dettach the specified collection.  <a href="#ae109b9915c1f22d57a448ee22f3dbdde"></a><br/></td></tr>
 <tr class="separator:ae109b9915c1f22d57a448ee22f3dbdde"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afdaa3f848a87ed2db340ea04a5fb6b55"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdbCollection.html#afdaa3f848a87ed2db340ea04a5fb6b55">explain</a> (<a class="el" href="classsdbclient_1_1sdbCursor.html">sdbCursor</a> &amp;cursor, const bson::BSONObj &amp;condition=_sdbStaticObject, const bson::BSONObj &amp;select=_sdbStaticObject, const bson::BSONObj &amp;orderBy=_sdbStaticObject, const bson::BSONObj &amp;hint=_sdbStaticObject, INT64 numToSkip=0, INT64 numToReturn=-1, INT32 flag=0, const bson::BSONObj &amp;options=_sdbStaticObject)</td></tr>
+<tr class="memdesc:afdaa3f848a87ed2db340ea04a5fb6b55"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get access plan of query.  <a href="#afdaa3f848a87ed2db340ea04a5fb6b55"></a><br/></td></tr>
+<tr class="separator:afdaa3f848a87ed2db340ea04a5fb6b55"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab1b462cd1506e4afd0cc56d7f4a806d5"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdbCollection.html#ab1b462cd1506e4afd0cc56d7f4a806d5">createLob</a> (<a class="el" href="classsdbclient_1_1sdbLob.html">sdbLob</a> &amp;lob, const bson::OID *oid=NULL)</td></tr>
+<tr class="memdesc:ab1b462cd1506e4afd0cc56d7f4a806d5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create large object.  <a href="#ab1b462cd1506e4afd0cc56d7f4a806d5"></a><br/></td></tr>
+<tr class="separator:ab1b462cd1506e4afd0cc56d7f4a806d5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a608760487730d302da5a1e7dc4ce386e"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdbCollection.html#a608760487730d302da5a1e7dc4ce386e">removeLob</a> (const bson::OID &amp;oid)</td></tr>
+<tr class="memdesc:a608760487730d302da5a1e7dc4ce386e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Remove large object.  <a href="#a608760487730d302da5a1e7dc4ce386e"></a><br/></td></tr>
+<tr class="separator:a608760487730d302da5a1e7dc4ce386e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af7a6611ea6816d1c7da7974fe8b892b0"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdbCollection.html#af7a6611ea6816d1c7da7974fe8b892b0">openLob</a> (<a class="el" href="classsdbclient_1_1sdbLob.html">sdbLob</a> &amp;lob, const bson::OID &amp;oid)</td></tr>
+<tr class="memdesc:af7a6611ea6816d1c7da7974fe8b892b0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Open an existing large object for reading.  <a href="#af7a6611ea6816d1c7da7974fe8b892b0"></a><br/></td></tr>
+<tr class="separator:af7a6611ea6816d1c7da7974fe8b892b0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad9256ad1c6815a3941e4f7d2178588eb"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdbCollection.html#ad9256ad1c6815a3941e4f7d2178588eb">listLobs</a> (<a class="el" href="classsdbclient_1_1sdbCursor.html">sdbCursor</a> &amp;cursor)</td></tr>
+<tr class="memdesc:ad9256ad1c6815a3941e4f7d2178588eb"><td class="mdescLeft">&#160;</td><td class="mdescRight">List all the lobs' meta data in current collection.  <a href="#ad9256ad1c6815a3941e4f7d2178588eb"></a><br/></td></tr>
+<tr class="separator:ad9256ad1c6815a3941e4f7d2178588eb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"></a>
 Public Attributes</h2></td></tr>
@@ -200,7 +215,7 @@ Public Attributes</h2></td></tr>
 <tr class="separator:a7da5c47b4d2dccf4750a83ca5eaa1fbe"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Database operation interfaces of cursor. </p>
+<div class="textblock"><p>Database operation interfaces of collection. </p>
 </div><h2 class="groupheader">Member Function Documentation</h2>
 <a class="anchor" id="a18a1f054c19946c883564c260b58eeb0"></a>
 <div class="memitem">
@@ -488,6 +503,57 @@ Public Attributes</h2></td></tr>
 
 </div>
 </div>
+<a class="anchor" id="ab1b462cd1506e4afd0cc56d7f4a806d5"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">INT32 sdbclient::sdbCollection::createLob </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classsdbclient_1_1sdbLob.html">sdbLob</a> &amp;&#160;</td>
+          <td class="paramname"><em>lob</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const bson::OID *&#160;</td>
+          <td class="paramname"><em>oid</em> = <code>NULL</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Create large object. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">oid</td><td>The id of the large object </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">lob</td><td>The newly create large object </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname">SDB_OK</td><td>Operation Success </td></tr>
+    <tr><td class="paramname">Others</td><td>Operation Fail </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section note"><dt>Note</dt><dd>When oid is offered, use it to create a lob for writing, otherwise, API will generate one. After creating a lob, need to close it to release resource. </dd></dl>
+
+</div>
+</div>
 <a class="anchor" id="a282d616532a50056a8583e1725bea04c"></a>
 <div class="memitem">
 <div class="memproto">
@@ -636,6 +702,105 @@ Public Attributes</h2></td></tr>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">pName</td><td>The index name </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname">SDB_OK</td><td>Operation Success </td></tr>
+    <tr><td class="paramname">Others</td><td>Operation Fail </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="afdaa3f848a87ed2db340ea04a5fb6b55"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">INT32 sdbclient::sdbCollection::explain </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classsdbclient_1_1sdbCursor.html">sdbCursor</a> &amp;&#160;</td>
+          <td class="paramname"><em>cursor</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const bson::BSONObj &amp;&#160;</td>
+          <td class="paramname"><em>condition</em> = <code>_sdbStaticObject</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const bson::BSONObj &amp;&#160;</td>
+          <td class="paramname"><em>select</em> = <code>_sdbStaticObject</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const bson::BSONObj &amp;&#160;</td>
+          <td class="paramname"><em>orderBy</em> = <code>_sdbStaticObject</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const bson::BSONObj &amp;&#160;</td>
+          <td class="paramname"><em>hint</em> = <code>_sdbStaticObject</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">INT64&#160;</td>
+          <td class="paramname"><em>numToSkip</em> = <code>0</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">INT64&#160;</td>
+          <td class="paramname"><em>numToReturn</em> = <code>-1</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">INT32&#160;</td>
+          <td class="paramname"><em>flag</em> = <code>0</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const bson::BSONObj &amp;&#160;</td>
+          <td class="paramname"><em>options</em> = <code>_sdbStaticObject</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Get access plan of query. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">condition</td><td>The matching rule, return all the documents if null </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">select</td><td>The selective rule, return the whole document if null </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">orderBy</td><td>The ordered rule, never sort if null </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">hint</td><td>The hint, automatically match the optimal hint if null </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">numToSkip</td><td>Skip the first numToSkip documents, never skip if this parameter is 0 </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">numToReturn</td><td>Only return numToReturn documents, return all if this parameter is -1 </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">options</td><td>the rules of explain </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">flags</td><td>The flags of query </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">cursor</td><td>The cursor of current query </td></tr>
   </table>
   </dd>
 </dl>
@@ -955,7 +1120,97 @@ Public Attributes</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="a0b094c874ea53c019da6f5b4ad62a37f"></a>
+<a class="anchor" id="ad9256ad1c6815a3941e4f7d2178588eb"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">INT32 sdbclient::sdbCollection::listLobs </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classsdbclient_1_1sdbCursor.html">sdbCursor</a> &amp;&#160;</td>
+          <td class="paramname"><em>cursor</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>List all the lobs' meta data in current collection. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[out]</td><td class="paramname">cursor</td><td>The curosr reference of the result </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname">SDB_OK</td><td>Operation Success </td></tr>
+    <tr><td class="paramname">Others</td><td>Operation Fail </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="af7a6611ea6816d1c7da7974fe8b892b0"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">INT32 sdbclient::sdbCollection::openLob </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classsdbclient_1_1sdbLob.html">sdbLob</a> &amp;&#160;</td>
+          <td class="paramname"><em>lob</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const bson::OID &amp;&#160;</td>
+          <td class="paramname"><em>oid</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Open an existing large object for reading. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">oid</td><td>The id of the large object </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">lob</td><td>The large object to get </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname">SDB_OK</td><td>Operation Success </td></tr>
+    <tr><td class="paramname">Others</td><td>Operation Fail </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section note"><dt>Note</dt><dd>Need to close lob to release resource, after opening a lob. </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="a5b5dae5cc3d1db97a86c6910be9ef259"></a>
 <div class="memitem">
 <div class="memproto">
 <table class="mlabels">
@@ -1002,7 +1257,13 @@ Public Attributes</h2></td></tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">INT64&#160;</td>
-          <td class="paramname"><em>numToReturn</em> = <code>-1</code>&#160;</td>
+          <td class="paramname"><em>numToReturn</em> = <code>-1</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">INT32&#160;</td>
+          <td class="paramname"><em>flag</em> = <code>0</code>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -1026,7 +1287,51 @@ Public Attributes</h2></td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">hint</td><td>The hint, automatically match the optimal hint if not provided </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">numToSkip</td><td>Skip the first numToSkip documents, default is 0 </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">numToReturn</td><td>Only return numToReturn documents, default is -1 for returning all results </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">flag</td><td>The query flag, defalt to be 0 <pre class="fragment">FLG_QUERY_FORCE_HINT(0x00000080)      : Force to use specified hint to query, if database have no index assigned by the hint, fail to query
+FLG_QUERY_PARALLED(0x00000100)        : Enable paralled sub query
+FLG_QUERY_WITH_RETURNDATA(0x00000200) : In general, query won't return data until cursor get from database,
+                                        when add this flag, return data in query response, it will be more high-performance
+</pre></td></tr>
     <tr><td class="paramdir">[out]</td><td class="paramname">cursor</td><td>The cursor of current query </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname">SDB_OK</td><td>Operation Success </td></tr>
+    <tr><td class="paramname">Others</td><td>Operation Fail </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="a608760487730d302da5a1e7dc4ce386e"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">INT32 sdbclient::sdbCollection::removeLob </td>
+          <td>(</td>
+          <td class="paramtype">const bson::OID &amp;&#160;</td>
+          <td class="paramname"><em>oid</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Remove large object. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">oid</td><td>The id of the large object </td></tr>
   </table>
   </dd>
 </dl>
@@ -1423,7 +1728,7 @@ Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 <p>A pointer of virtual base class <a class="el" href="classsdbclient_1_1__sdbCollection.html">_sdbCollection</a></p>
-<p>Class <a class="el" href="classsdbclient_1_1sdbCollection.html" title="Database operation interfaces of cursor.">sdbCollection</a> is a shell for _sdbCollection.We use pCollection to call the methods in class <a class="el" href="classsdbclient_1_1__sdbCollection.html">_sdbCollection</a>. </p>
+<p>Class <a class="el" href="classsdbclient_1_1sdbCollection.html" title="Database operation interfaces of collection.">sdbCollection</a> is a shell for <a class="el" href="classsdbclient_1_1__sdbCollection.html">_sdbCollection</a>. We use pCollection to call the methods in class <a class="el" href="classsdbclient_1_1__sdbCollection.html">_sdbCollection</a>. </p>
 
 </div>
 </div>
@@ -1433,7 +1738,7 @@ Public Attributes</h2></td></tr>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Sun Jul 6 2014 16:02:09 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Fri Oct 24 2014 13:32:16 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.2
 </small></address>

@@ -36,7 +36,6 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
   <div id="navrow1" class="tabs">
     <ul class="tablist">
       <li><a href="index.html"><span>Main&#160;Page</span></a></li>
-      <li><a href="annotated.html"><span>Classes</span></a></li>
       <li class="current"><a href="files.html"><span>Files</span></a></li>
       <li>
         <div id="MSearchBox" class="MSearchBoxInactive">
@@ -66,13 +65,10 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
     <ul class="tablist">
       <li><a href="globals.html"><span>All</span></a></li>
       <li><a href="globals_func.html"><span>Functions</span></a></li>
+      <li><a href="globals_type.html"><span>Typedefs</span></a></li>
       <li><a href="globals_enum.html"><span>Enumerations</span></a></li>
       <li class="current"><a href="globals_eval.html"><span>Enumerator</span></a></li>
-    </ul>
-  </div>
-  <div id="navrow4" class="tabs3">
-    <ul class="tablist">
-      <li><a href="#index_b"><span>b</span></a></li>
+      <li><a href="globals_defs.html"><span>Macros</span></a></li>
     </ul>
   </div>
 </div><!-- top -->
@@ -81,7 +77,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
      onmouseover="return searchBox.OnSearchSelectShow()"
      onmouseout="return searchBox.OnSearchSelectHide()"
      onkeydown="return searchBox.OnSearchSelectKey(event)">
-<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Files</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Variables</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&#160;</span>Enumerations</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(6)"><span class="SelectionMark">&#160;</span>Enumerator</a></div>
+<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Files</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Typedefs</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Enumerations</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&#160;</span>Enumerator</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(6)"><span class="SelectionMark">&#160;</span>Macros</a></div>
 
 <!-- iframe showing the search results (closed by default) -->
 <div id="MSearchResultsWindow">
@@ -91,113 +87,99 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 </div>
 
 <div class="contents">
-&#160;
-
-<h3><a class="anchor" id="index_b"></a>- b -</h3><ul>
-<li>BSON_ALREADY_FINISHED
-: <a class="el" href="bson_8h.html#a4b9bcba51128a5736912d46966d35e3aa562e555cfa18a7ade9747981c69eac27">bson.h</a>
+&#160;<ul>
+<li>SDB_LIST_CL_IN_DOMAIN
+: <a class="el" href="client_8h.html#a64fae029b89fcfd99538e07e790abf41a5f731c52f01bcceef04125169c64cd9c">client.h</a>
 </li>
-<li>BSON_ARRAY
-: <a class="el" href="bson_8h.html#adac27a93ef69dbe56a6409c68395e5cba7c181d05951c92c9aac7a3c45d1a5290">bson.h</a>
+<li>SDB_LIST_COLLECTIONS
+: <a class="el" href="client_8h.html#a64fae029b89fcfd99538e07e790abf41abe9f56cf0f8a9bd27c12f4663797e853">client.h</a>
 </li>
-<li>BSON_BIN_BINARY
-: <a class="el" href="bson_8h.html#a90b11e7302ded0445cd344b3a469fe04ac44f3837024f227d2df028bd4ccd0c80">bson.h</a>
+<li>SDB_LIST_COLLECTIONSPACES
+: <a class="el" href="client_8h.html#a64fae029b89fcfd99538e07e790abf41ab31ba5691c0b587d313e2c667dd4bdd5">client.h</a>
 </li>
-<li>BSON_BIN_BINARY_OLD
-: <a class="el" href="bson_8h.html#a90b11e7302ded0445cd344b3a469fe04ab8eb35d035c2205c14a141442d76e5b9">bson.h</a>
+<li>SDB_LIST_CONTEXTS
+: <a class="el" href="client_8h.html#a64fae029b89fcfd99538e07e790abf41a6d2411afc0bdd2f11ffb9503e981106e">client.h</a>
 </li>
-<li>BSON_BIN_FUNC
-: <a class="el" href="bson_8h.html#a90b11e7302ded0445cd344b3a469fe04a9d01399317425511227bcfa6c43514a2">bson.h</a>
+<li>SDB_LIST_CONTEXTS_CURRENT
+: <a class="el" href="client_8h.html#a64fae029b89fcfd99538e07e790abf41a571270a7f9df759b6769f94adf59c233">client.h</a>
 </li>
-<li>BSON_BIN_MD5
-: <a class="el" href="bson_8h.html#a90b11e7302ded0445cd344b3a469fe04a2d58780068b0471258a6a6f17425f9d0">bson.h</a>
+<li>SDB_LIST_CS_IN_DOMAIN
+: <a class="el" href="client_8h.html#a64fae029b89fcfd99538e07e790abf41ac37d213d9a8f24931c51512990762855">client.h</a>
 </li>
-<li>BSON_BIN_USER
-: <a class="el" href="bson_8h.html#a90b11e7302ded0445cd344b3a469fe04ac7ac545dfdb7742abaf246fcc081b3e8">bson.h</a>
+<li>SDB_LIST_DOMAINS
+: <a class="el" href="client_8h.html#a64fae029b89fcfd99538e07e790abf41a3ebeef2822a556abf2bd4cf1bc67fb7d">client.h</a>
 </li>
-<li>BSON_BIN_UUID
-: <a class="el" href="bson_8h.html#a90b11e7302ded0445cd344b3a469fe04a87279c83d5e8ff9854eb640890ce0ae3">bson.h</a>
+<li>SDB_LIST_END
+: <a class="el" href="client_8h.html#a64fae029b89fcfd99538e07e790abf41a90878f9cc04c1059b2abb0c9cbb4af2f">client.h</a>
 </li>
-<li>BSON_BINDATA
-: <a class="el" href="bson_8h.html#adac27a93ef69dbe56a6409c68395e5cbaf38ace19c4f326a21130220d6653fba5">bson.h</a>
+<li>SDB_LIST_GROUPS
+: <a class="el" href="client_8h.html#a64fae029b89fcfd99538e07e790abf41a15d2d4d1888797d33f7cf23c476d9c1f">client.h</a>
 </li>
-<li>BSON_BOOL
-: <a class="el" href="bson_8h.html#adac27a93ef69dbe56a6409c68395e5cba577d27af09765aabba4a4d651d8aa1c2">bson.h</a>
+<li>SDB_LIST_SESSIONS
+: <a class="el" href="client_8h.html#a64fae029b89fcfd99538e07e790abf41aa7eb7e9b7c034ad122db3dcb5067df5a">client.h</a>
 </li>
-<li>BSON_CODE
-: <a class="el" href="bson_8h.html#adac27a93ef69dbe56a6409c68395e5cba3f5b1a5e67dfac683383955d127f4522">bson.h</a>
+<li>SDB_LIST_SESSIONS_CURRENT
+: <a class="el" href="client_8h.html#a64fae029b89fcfd99538e07e790abf41aa1a07c12efb4c147aa45dd2e8292a8c6">client.h</a>
 </li>
-<li>BSON_CODEWSCOPE
-: <a class="el" href="bson_8h.html#adac27a93ef69dbe56a6409c68395e5cba1563780e5216e84e356bf4139d4dfbd8">bson.h</a>
+<li>SDB_LIST_STORAGEUNITS
+: <a class="el" href="client_8h.html#a64fae029b89fcfd99538e07e790abf41a0aef36e5875efb0801c5a37ed8bdff72">client.h</a>
 </li>
-<li>BSON_DATE
-: <a class="el" href="bson_8h.html#adac27a93ef69dbe56a6409c68395e5cbae7c62b3e7f9cbfa2023c7d18c3904282">bson.h</a>
+<li>SDB_LIST_STOREPROCEDURES
+: <a class="el" href="client_8h.html#a64fae029b89fcfd99538e07e790abf41a232c5caab007abff5e19bae6906bf198">client.h</a>
 </li>
-<li>BSON_DBREF
-: <a class="el" href="bson_8h.html#adac27a93ef69dbe56a6409c68395e5cbac1530f7ab5d63d762b893939f4b7a674">bson.h</a>
+<li>SDB_LIST_TASKS
+: <a class="el" href="client_8h.html#a64fae029b89fcfd99538e07e790abf41aac85981cee14b8fed1bd829668f97a56">client.h</a>
 </li>
-<li>BSON_DOUBLE
-: <a class="el" href="bson_8h.html#adac27a93ef69dbe56a6409c68395e5cba302ac3dacea5d87f22bcbd2e94ea4b69">bson.h</a>
+<li>SDB_LOB_CREATEONLY
+: <a class="el" href="client_8h.html#ab325438708db06790ad8bc61f3ab9990a3d615de5227b528e3d0f1ec2f30a654d">client.h</a>
 </li>
-<li>BSON_EOO
-: <a class="el" href="bson_8h.html#adac27a93ef69dbe56a6409c68395e5cba9f61aabc2dc9955aa3574dd46588b879">bson.h</a>
+<li>SDB_LOB_READ
+: <a class="el" href="client_8h.html#ab325438708db06790ad8bc61f3ab9990a933574507f86ae84dc2e8c8eee2e3c5b">client.h</a>
 </li>
-<li>BSON_FIELD_HAS_DOT
-: <a class="el" href="bson_8h.html#a4b9bcba51128a5736912d46966d35e3aa4caf779046862ea23dd771d8af8918f1">bson.h</a>
+<li>SDB_LOB_SEEK_CUR
+: <a class="el" href="client_8h.html#af77505dd6aeb8e9158f66f01f60ba37aabc01f3f0d8f8ae95d519854301181e9b">client.h</a>
 </li>
-<li>BSON_FIELD_INIT_DOLLAR
-: <a class="el" href="bson_8h.html#a4b9bcba51128a5736912d46966d35e3aa8cd94ba3ad97927cd32fd1ee9833d95a">bson.h</a>
+<li>SDB_LOB_SEEK_END
+: <a class="el" href="client_8h.html#af77505dd6aeb8e9158f66f01f60ba37aaa13ce8e7163da3d6f35842ec5946e8f2">client.h</a>
 </li>
-<li>BSON_INT
-: <a class="el" href="bson_8h.html#adac27a93ef69dbe56a6409c68395e5cba335b884b9c2fbd2d2bed660007147d78">bson.h</a>
+<li>SDB_LOB_SEEK_SET
+: <a class="el" href="client_8h.html#af77505dd6aeb8e9158f66f01f60ba37aafec176c8b54770ddbe02a20167f6ac60">client.h</a>
 </li>
-<li>BSON_LONG
-: <a class="el" href="bson_8h.html#adac27a93ef69dbe56a6409c68395e5cbadd5cb324e7276d62bcfd92466ac23bdb">bson.h</a>
+<li>SDB_SNAP_CATALOG
+: <a class="el" href="client_8h.html#a98041827bff0c9494091863444ddc690af4639f253945be503456e7a64f3f608e">client.h</a>
 </li>
-<li>BSON_MAXKEY
-: <a class="el" href="bson_8h.html#adac27a93ef69dbe56a6409c68395e5cbab2545fbccb5f8a022601a723721d00a4">bson.h</a>
+<li>SDB_SNAP_COLLECTIONS
+: <a class="el" href="client_8h.html#a98041827bff0c9494091863444ddc690a806f7dc03a0454839a469ee08fa22bfe">client.h</a>
 </li>
-<li>BSON_MINKEY
-: <a class="el" href="bson_8h.html#adac27a93ef69dbe56a6409c68395e5cba67ea0291abb41cb75a298f5079a27c2b">bson.h</a>
+<li>SDB_SNAP_COLLECTIONSPACES
+: <a class="el" href="client_8h.html#a98041827bff0c9494091863444ddc690af2f34aff1971650e7f3fe734b589bdc6">client.h</a>
 </li>
-<li>BSON_NOT_UTF8
-: <a class="el" href="bson_8h.html#a4b9bcba51128a5736912d46966d35e3aa8402d6292eddd17aac37e251fd41b644">bson.h</a>
+<li>SDB_SNAP_CONTEXTS
+: <a class="el" href="client_8h.html#a98041827bff0c9494091863444ddc690a7210debb74b81380d3a1a1e1596adfc5">client.h</a>
 </li>
-<li>BSON_NULL
-: <a class="el" href="bson_8h.html#adac27a93ef69dbe56a6409c68395e5cbaddb291a0dd2ed0553dc5451197c085c1">bson.h</a>
+<li>SDB_SNAP_CONTEXTS_CURRENT
+: <a class="el" href="client_8h.html#a98041827bff0c9494091863444ddc690a6a3019ae64b86df9f06fea6fff3be3f6">client.h</a>
 </li>
-<li>BSON_OBJECT
-: <a class="el" href="bson_8h.html#adac27a93ef69dbe56a6409c68395e5cba070c51183de4ba246b8ded07a75c3df5">bson.h</a>
+<li>SDB_SNAP_DATABASE
+: <a class="el" href="client_8h.html#a98041827bff0c9494091863444ddc690aa8af162b151dd24462d1338fce4599a7">client.h</a>
 </li>
-<li>BSON_OID
-: <a class="el" href="bson_8h.html#adac27a93ef69dbe56a6409c68395e5cba90ce06d51b2816467d0f67f8fb0e56a5">bson.h</a>
+<li>SDB_SNAP_END
+: <a class="el" href="client_8h.html#a98041827bff0c9494091863444ddc690a4ed6d2100be0fe9f8c1600d90e34bf23">client.h</a>
 </li>
-<li>BSON_REGEX
-: <a class="el" href="bson_8h.html#adac27a93ef69dbe56a6409c68395e5cba6bc4c386dd322e38ac97a7a6d812e106">bson.h</a>
+<li>SDB_SNAP_SESSIONS
+: <a class="el" href="client_8h.html#a98041827bff0c9494091863444ddc690a9acbfe5507ebddf9b4dad210c238ab71">client.h</a>
 </li>
-<li>BSON_SIZE_OVERFLOW
-: <a class="el" href="bson_8h.html#ac0022026c717c8e214dd119955b4e662a73a6529cc9b7dbf482eb116780bec87b">bson.h</a>
+<li>SDB_SNAP_SESSIONS_CURRENT
+: <a class="el" href="client_8h.html#a98041827bff0c9494091863444ddc690adde45c257158aa2303759097d621c4fb">client.h</a>
 </li>
-<li>BSON_STRING
-: <a class="el" href="bson_8h.html#adac27a93ef69dbe56a6409c68395e5cba1fab58ca0d6be1152b70522c07b3d3d2">bson.h</a>
-</li>
-<li>BSON_SYMBOL
-: <a class="el" href="bson_8h.html#adac27a93ef69dbe56a6409c68395e5cbafe62aabc79174f0319bf900f53fd3699">bson.h</a>
-</li>
-<li>BSON_TIMESTAMP
-: <a class="el" href="bson_8h.html#adac27a93ef69dbe56a6409c68395e5cbab1128a46ae1ec848d0f74bcbbad20f8d">bson.h</a>
-</li>
-<li>BSON_UNDEFINED
-: <a class="el" href="bson_8h.html#adac27a93ef69dbe56a6409c68395e5cbaae5d398856c35f8949ade196edde961e">bson.h</a>
-</li>
-<li>BSON_VALID
-: <a class="el" href="bson_8h.html#a4b9bcba51128a5736912d46966d35e3aad2a627420132bdc19105d04dd2bfc179">bson.h</a>
+<li>SDB_SNAP_SYSTEM
+: <a class="el" href="client_8h.html#a98041827bff0c9494091863444ddc690a958835534c0d93efd59f1317046f229a">client.h</a>
 </li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Sep 2 2013 14:55:01 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Fri Oct 24 2014 13:32:10 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.2
 </small></address>

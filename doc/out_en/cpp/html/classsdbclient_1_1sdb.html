@@ -70,7 +70,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
      onmouseover="return searchBox.OnSearchSelectShow()"
      onmouseout="return searchBox.OnSearchSelectHide()"
      onkeydown="return searchBox.OnSearchSelectKey(event)">
-<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Files</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&#160;</span>Variables</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(6)"><span class="SelectionMark">&#160;</span>Typedefs</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(7)"><span class="SelectionMark">&#160;</span>Enumerations</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(8)"><span class="SelectionMark">&#160;</span>Macros</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(9)"><span class="SelectionMark">&#160;</span>Pages</a></div>
+<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Files</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&#160;</span>Variables</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(6)"><span class="SelectionMark">&#160;</span>Typedefs</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(7)"><span class="SelectionMark">&#160;</span>Enumerations</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(8)"><span class="SelectionMark">&#160;</span>Enumerator</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(9)"><span class="SelectionMark">&#160;</span>Macros</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(10)"><span class="SelectionMark">&#160;</span>Pages</a></div>
 
 <!-- iframe showing the search results (closed by default) -->
 <div id="MSearchResultsWindow">
@@ -122,7 +122,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:a97c1f8b762abebfeec2b550f803490de"><td class="mdescLeft">&#160;</td><td class="mdescRight">Connect to remote Database Server.  <a href="#a97c1f8b762abebfeec2b550f803490de"></a><br/></td></tr>
 <tr class="separator:a97c1f8b762abebfeec2b550f803490de"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a34313780f36d821b9a6627f0ca743a01"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdb.html#a34313780f36d821b9a6627f0ca743a01">connect</a> (const CHAR **pConnAddrs, INT32 arrSize, const CHAR *pUsrName, const CHAR *pPasswd)</td></tr>
-<tr class="memdesc:a34313780f36d821b9a6627f0ca743a01"><td class="mdescLeft">&#160;</td><td class="mdescRight">Connect to database used the first valid address in the array.  <a href="#a34313780f36d821b9a6627f0ca743a01"></a><br/></td></tr>
+<tr class="memdesc:a34313780f36d821b9a6627f0ca743a01"><td class="mdescLeft">&#160;</td><td class="mdescRight">Connect to database used a random valid address in the array.  <a href="#a34313780f36d821b9a6627f0ca743a01"></a><br/></td></tr>
 <tr class="separator:a34313780f36d821b9a6627f0ca743a01"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac6f6df869718e162c3dea937f3cd39e8"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdb.html#ac6f6df869718e162c3dea937f3cd39e8">createUsr</a> (const CHAR *pUsrName, const CHAR *pPasswd)</td></tr>
 <tr class="memdesc:ac6f6df869718e162c3dea937f3cd39e8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Add an user in current database.  <a href="#ac6f6df869718e162c3dea937f3cd39e8"></a><br/></td></tr>
@@ -767,7 +767,7 @@ OverWrite   : Whether overwrite the old backup file, default to be false
 </table>
 </div><div class="memdoc">
 
-<p>Connect to database used the first valid address in the array. </p>
+<p>Connect to database used a random valid address in the array. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">pConnAddrs</td><td>The array of the coord's address </td></tr>
@@ -1887,9 +1887,10 @@ SDB_SNAP_CATA           : Get catalog's snapshot
 Path        : Assign the backups in specifed path to be list, if not assign, use the backup path asigned in the configuration file
 Name        : Assign the backups with specifed name to be list
 </pre> </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">select</td><td>The selective rule, return the whole document if null </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">condition</td><td>The matching rule, return all the documents if not provided </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">selector</td><td>The selective rule, return the whole document if null </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">orderBy</td><td>The ordered rule, never sort if null </td></tr>
-    <tr><td class="paramdir">[out]</td><td class="paramname">handle</td><td>The cusor handle of result </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">cursor</td><td>The cusor handle of result </td></tr>
   </table>
   </dd>
 </dl>
@@ -2620,8 +2621,8 @@ Name        : Assign the backups with specifed name to be remove
         </tr>
       </table>
 </div><div class="memdoc">
-<p>A pointer of virtual base class <a class="el" href="classsdbclient_1_1__sdbCursor.html">_sdbCursor</a></p>
-<p>Class sdb is a shell for _sdb.We use pSDB to call the methods in class <a class="el" href="classsdbclient_1_1__sdb.html">_sdb</a>. </p>
+<p>A pointer of virtual base class <a class="el" href="classsdbclient_1_1__sdb.html">_sdb</a></p>
+<p>Class sdb is a shell for <a class="el" href="classsdbclient_1_1__sdb.html">_sdb</a>. We use pSDB to call the methods in class <a class="el" href="classsdbclient_1_1__sdb.html">_sdb</a>. </p>
 
 </div>
 </div>
@@ -2631,7 +2632,7 @@ Name        : Assign the backups with specifed name to be remove
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Sun Jul 6 2014 16:02:09 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Fri Oct 24 2014 13:32:16 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.2
 </small></address>
