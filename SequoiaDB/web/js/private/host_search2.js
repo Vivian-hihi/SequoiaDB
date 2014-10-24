@@ -167,7 +167,7 @@ function addHostList()
 			}
 			tempHostInfo.push( temp ) ;
 		}
-		order = { 'cmd': 'scan host', 'HostInfo': '{ClusterName:"' + clusterName + '",HostInfo:' + JSON.stringify( tempHostInfo ) + ',User:"' + user + '",Passwd:"' + pwd + '",SshPort:"' + ssh + '",AgentPort:"' + agent + '"}' } ;
+		order = { 'cmd': 'scan host', 'HostInfo': JSON.stringify( { 'ClusterName': clusterName, 'HostInfo': tempHostInfo, 'User': user, 'Passwd': pwd, 'SshPort': ssh, 'AgentPort': agent } ) } ;
 		ajaxSendMsg( order, true, function( jsonArr ){
 			var hostInfoLen = jsonArr.length ;
 			for( var i = 1; i < hostInfoLen; ++i )
@@ -292,7 +292,7 @@ function submitHostList()
 	}
 	sdbjs.fun.openLoading( 'loading' ) ;
 	sdbjs.fun.timeLoading( 'loading', tempPoraryHosts.length * 5 ) ;
-	var order = { 'cmd': 'add host', 'HostInfo': '{"ClusterName":"' + clusterName + '", "HostInfo":' + JSON.stringify( tempPoraryHosts ) + ',"User":"-","Passwd":"-","SshPort":"-","AgentPort":"-" }' } ;
+	var order = { 'cmd': 'add host', 'HostInfo': JSON.stringify( { 'ClusterName': clusterName, 'HostInfo': tempPoraryHosts, 'User': '-', 'Passwd': '-', 'SshPort': '-', 'AgentPort': '-' } ) } ;
 	ajaxSendMsg( order, true, function( jsonArr ){
 		var SdbGuideOrder = $.cookie( 'SdbGuideOrder' ) ;
 		if( SdbGuideOrder == 'Deployment' )
@@ -611,11 +611,11 @@ function saveEditHostGrid( num )
 	var clusterName = $.cookie( 'SdbClusterName' ) ;
 	if( _hostlist[ num ]['IP'] != '' )
 	{
-		order = { 'cmd': 'scan host', 'HostInfo': '{ClusterName:"' + clusterName + '",HostInfo: [ { "IP": "' + _hostlist[ num ]['IP'] + '" } ],User:"' + user + '",Passwd:"' + pwd + '",SshPort:"' + ssh + '",AgentPort:"' + agent + '"}' } ;
+		order = { 'cmd': 'scan host', 'HostInfo': JSON.stringify( { 'ClusterName': clusterName, 'HostInfo': [ { 'IP': _hostlist[ num ]['IP'] } ], 'User': user, 'Passwd': pwd, 'SshPort': ssh, 'AgentPort': agent } ) } ;
 	}
 	else
 	{
-		order = { 'cmd': 'scan host', 'HostInfo': '{ClusterName:"' + clusterName + '",HostInfo: [ { "HostName": "' + _hostlist[ num ]['HostName'] + '" } ],User:"' + user + '",Passwd:"' + pwd + '",SshPort:"' + ssh + '",AgentPort:"' + agent + '"}' } ;
+		order = { 'cmd': 'scan host', 'HostInfo': JSON.stringify( { 'ClusterName': clusterName, 'HostInfo': [ { 'HostName': _hostlist[ num ]['HostName'] } ], 'User': user, 'Passwd': pwd, 'SshPort': ssh, 'AgentPort': agent } ) } ;
 	}
 	sdbjs.fun.openLoading( 'loading' ) ;
 	sdbjs.fun.timeLoading( 'loading', 2 ) ;
@@ -703,7 +703,7 @@ function checkHostInfo()
 		}
 		sdbjs.fun.openLoading( 'loading' ) ;
 		sdbjs.fun.timeLoading( 'loading', sumHost * 3 ) ;
-		var order = { 'cmd': 'check host', 'HostInfo': '{ClusterName:"' + clusterName + '",HostInfo:' + JSON.stringify( _hostConf ) + ',User:"-",Passwd:"-",SshPort:"-",AgentPort:"-"}' } ;
+		var order = { 'cmd': 'check host', 'HostInfo': JSON.stringify( { 'ClusterName': clusterName, 'HostInfo': _hostConf, 'User': '-', 'Passwd': '-', 'SshPort': '-', 'AgentPort': '-'} ) } ;
 		ajaxSendMsg( order, true, function( jsonArr ){
 			var host_len = jsonArr.length ;
 			for( var i = 1, k = 0; i < host_len; ++i, ++k )

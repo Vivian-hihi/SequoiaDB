@@ -48,7 +48,7 @@ function createCluster()
 		$( '#createClusterAdvanced' ).children( ':eq(1)' ).text( '安装路径长度在 1 - 1024 范围。' ) ;
 		return;
 	}
-	var order = { 'cmd': 'create cluster', 'ClusterInfo': '{ClusterName:"' + value[0] + '",SdbUser:"' + value[1] + '",SdbPasswd:"' + value[2] + '",SdbUserGroup:"' + value[3] + '",InstallPath:"' + value[4] +  '"}' } ;
+	var order = { 'cmd': 'create cluster', 'ClusterInfo': JSON.stringify( { 'ClusterName': value[0], 'SdbUser': value[1], 'SdbPasswd': value[2], 'SdbUserGroup': value[3], 'InstallPath': value[4] } ) } ;
 	ajaxSendMsg( order, false, function( jsonArr ){
 		gotoPage( 'index.html' ) ;
 	}, function( jsonArr ){
@@ -151,7 +151,7 @@ function guideStart()
 		$( '#deploymentGuideAdvanced' ).children( ':eq(1)' ).text( '安装路径长度在 1 - 1024 范围。' ) ;
 		return;
 	}
-	var order = { 'cmd': 'create cluster', 'ClusterInfo': '{ClusterName:"' + value[0] + '",SdbUser:"' + value[3] + '",SdbPasswd:"' + value[4] + '",SdbUserGroup:"' + value[5] + '",InstallPath:"' + value[6] +  '"}' } ;
+	var order = { 'cmd': 'create cluster', 'ClusterInfo': JSON.stringify( { 'ClusterName': value[0], 'SdbUser': value[3], 'SdbPasswd': value[4], 'SdbUserGroup': value[5], 'InstallPath': value[6] } ) } ;
 	ajaxSendMsg( order, false, function( jsonArr ){
 		$.cookie( 'SdbGuideOrder', 'Deployment' ) ;
 		$.cookie( 'SdbClusterName', value[0] ) ;
@@ -406,7 +406,7 @@ function createRightPic()
 		
 		if( hostList.length > 0 )
 		{
-			var order = { 'cmd': 'query host status', 'HostInfo': '{"HostInfo":' + JSON.stringify( hostList ) + '}' } ;
+			var order = { 'cmd': 'query host status', 'HostInfo': JSON.stringify( { 'HostInfo': hostList } ) } ;
 			ajaxSendMsg( order, true, function( jsonArr ){
 				var hostNumLen = jsonArr[1]['HostInfo'].length ;
 				var cpuPercent = 0 ;

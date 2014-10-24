@@ -155,7 +155,7 @@ function getHostList()
 		var len = _hostList.length ;
 		for( var i = 0; i < len; ++i )
 		{
-			var order = { 'cmd': 'query host status', 'HostInfo': '{"HostInfo":[{"HostName":"' + _hostList[i]['HostName'] + '"}]}' } ;
+			var order = { 'cmd': 'query host status', 'HostInfo': JSON.stringify( { 'HostInfo': [ { 'HostName': _hostList[i]['HostName'] } ] } ) } ;
 			ajaxSendMsg( order, false, function( jsonArr ){
 				if( jsonArr[1]['HostInfo'][0]['errno'] == undefined || jsonArr[1]['HostInfo'][0]['errno'] == 0 )
 				{
