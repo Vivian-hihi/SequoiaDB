@@ -256,6 +256,11 @@ namespace engine
          }
          sdbSetErrMsg( ss.str().c_str() ) ;
 
+         if ( sdbIsErrMsgEmpty() )
+         {
+            sdbSetErrMsg( getErrDesp( rc ) ) ;
+         }
+
          JS_SetPendingException( cx , INT_TO_JSVAL( rc ) ) ;
       }
       else
