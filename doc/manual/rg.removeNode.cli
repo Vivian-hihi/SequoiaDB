@@ -7,7 +7,7 @@
 .SH "NAME"
 
 .sp 2
-removeNode - Delete the specified node in the replica group
+removeNode - Delete the specified node in the replica group.
 .SH "SYNOPSIS"
 
 .sp 2

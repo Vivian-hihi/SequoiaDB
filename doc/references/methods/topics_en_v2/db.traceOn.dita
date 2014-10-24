@@ -5,7 +5,7 @@
   <body>
     <section>
       <title>NAME</title>
-      <p>traceOn() - Turn on the trace function of the database engine.</p>
+      <p>traceOn - Turn on the trace function of the database engine.</p>
     </section>
     <section>
       <title>SYNOPSIS</title>

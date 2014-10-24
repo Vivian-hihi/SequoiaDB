@@ -5,7 +5,7 @@
   <body>
     <section>
       <title>NAME</title>
-      <p>traceOff() - Turn off the trace function of the database engine.</p>
+      <p>traceOff - Turn off the trace function of the database engine.</p>
     </section>
     <section>
       <title>SYNOPSIS</title>

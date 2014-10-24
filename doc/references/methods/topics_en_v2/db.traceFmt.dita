@@ -5,7 +5,7 @@
   <body>
     <section>
       <title>NAME</title>
-      <p>traceFmt() - Output information into file according to the program's trace.</p>
+      <p>traceFmt - Output information into file according to the program's trace.</p>
     </section>
     <section>
       <title>SYNOPSIS</title>

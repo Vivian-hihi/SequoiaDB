@@ -7,7 +7,7 @@
 .SH "NAME"
 
 .sp 2
-traceFmt() - Output information into file according to the
+traceFmt - Output information into file according to the
 program's trace.
 .SH "SYNOPSIS"
 

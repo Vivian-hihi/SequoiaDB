@@ -7,7 +7,7 @@
 .SH "NAME"
 
 .sp 2
-traceOn() - Turn on the trace function of the database engine.
+traceOn - Turn on the trace function of the database engine.
 .SH "SYNOPSIS"
 
 .sp 2

@@ -7,7 +7,7 @@
 .SH "NAME"
 
 .sp 2
-traceOff() - Turn off the trace function of the database engine.
+traceOff - Turn off the trace function of the database engine.
 .SH "SYNOPSIS"
 
 .sp 2
