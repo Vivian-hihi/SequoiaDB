@@ -12,6 +12,7 @@
   <topicref href="topics/detachCL.dita"/>
   <topicref href="topics/dropIndex.dita"/>
   <topicref href="topics/find.dita"/>
+  <topicref href="topics/findOne.dita"/>
   <topicref href="topics/getIndex.dita"/>
   <topicref href="topics/getlob.dita"/>
   <topicref href="topics/dbinsert.dita"/>

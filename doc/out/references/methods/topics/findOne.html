@@ -7,17 +7,15 @@
 <meta name="copyright" content="(C) Copyright 2005"/>
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
-<meta name="DC.Title" content="db.collectionspace.collection.listLobs()"/>
-<meta name="description" content="db.collectionspace.collection.putLob() 枚举集合中的大对象。 参数描述 参数名 参数类型 描述 是否必填 - - - - 此方法暂不支持排序等查询操作。 示例 枚举 foo.bar 中的所有大对象 db.foo.bar.listLobs()"/>
+<meta name="DC.Title" content="db.collectionspace.collection.findOne()"/>
+<meta name="description" content="db.collectionspace.collection.findOne([cond],[sel]) 此方法的使用与 db.collectionspace.collection.find([cond],[sel]) 相同，具体的使用可以参照 find() 方法。但该操作方法只返回一条记录。"/>
 <meta name="DC.Relation" scheme="URI" content="../../../references/methods/jscollection.html"/>
-<meta name="DC.Relation" scheme="URI" content="deleteLob.html"/>
-<meta name="DC.Relation" scheme="URI" content="getlob.html"/>
-<meta name="DC.Relation" scheme="URI" content="putlob.html"/>
+<meta name="DC.Relation" scheme="URI" content="find.html"/>
 <meta name="DC.Format" content="XHTML"/>
-<meta name="DC.Identifier" content="topic_qs5_kkk_tp"/>
+<meta name="DC.Identifier" content="topic_hmp_41w_vp"/>
 <link rel="stylesheet" type="text/css" href="../../../commonltr.css"/>
 <link rel="stylesheet" type="text/css" href="../../../assets/webhelp_topic.css"/>
-<title>db.collectionspace.collection.listLobs()</title>
+<title>db.collectionspace.collection.findOne()</title>
 <script type="text/javascript" src="../../../assets/jquery-1.3.2.js"> </script><script type="text/javascript" src="../../../assets/jquery-ui-1.8.2.custom.min.js"> </script><script type="text/javascript" src="../../../assets/frames_redirect.js"> </script><script type="text/javascript"><!--
     var prefix = "../../../../index.html";
     var ratingFile = "";
@@ -31,69 +29,25 @@
         }
     }
 //--></script></head>
-<body onload="highlightSearchTerm()" id="topic_qs5_kkk_tp"><a name="topic_qs5_kkk_tp"><!-- --></a>
+<body onload="highlightSearchTerm()" id="topic_hmp_41w_vp"><a name="topic_hmp_41w_vp"><!-- --></a>
 <table class="nav"><tbody><tr><td><div class="navheader"><span class="frames" onclick="redirectFrames(location.pathname)"><script type="text/javascript"><!--
   if (parent.window.location.pathname == window.location.pathname ) document.write('With Frames');                    
                     --></script></span><a class="link" href="../../../references/methods/jscollection.html" title="SdbCollection"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">SdbCollection</span></a>  </div></td><td width="50%"><a class="navheader_parent_path" href="methodlist.html" title="SequoiaDB JavaScript 方法">SequoiaDB JavaScript 方法</a> / <a class="navheader_parent_path" href="../../../references/methods/jscollection.html" title="SdbCollection">SdbCollection</a></td></tr></tbody></table>
 
-  <h1 class="title topictitle1">db.collectionspace.collection.listLobs()</h1>
+  <h1 class="title topictitle1">db.collectionspace.collection.findOne()</h1>
 
   <div class="body">
-    <div class="section"><h2 class="title sectiontitle">db.collectionspace.collection.putLob()</h2>
-      <p class="p">枚举集合中的大对象。</p>
+    <div class="section"><h2 class="title sectiontitle">db.collectionspace.collection.findOne([cond],[sel])</h2>
+      <p class="p">此方法的使用与 db.collectionspace.collection.find([cond],[sel]) 相同，具体的使用可以参照 find() 方法。但该操作方法只返回一条记录。</p>
 
     </div>
-
-    <div class="section"><h2 class="title sectiontitle">参数描述</h2>
-      <a name="topic_qs5_kkk_tp__references_method_createNode_table"><!-- --></a><table cellpadding="4" cellspacing="0" summary="" id="topic_qs5_kkk_tp__references_method_createNode_table" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d124832e26" class="stentry">参数名</th>
-
-          <th valign="bottom" align="left" id="d124832e29" class="stentry">参数类型</th>
-
-          <th valign="bottom" align="left" id="d124832e32" class="stentry">描述</th>
-
-          <th valign="bottom" align="left" id="d124832e35" class="stentry">是否必填</th>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d124832e26" class="stentry">-</td>
-
-          <td valign="top" headers="d124832e29" class="stentry">-</td>
-
-          <td valign="top" headers="d124832e32" class="stentry">-</td>
-
-          <td valign="top" headers="d124832e35" class="stentry">-</td>
-
-        </tr>
-</table>
-      
-    </div>
-
-    <div class="p"><div class="note note"><span class="notetitle">Note:</span> <ul class="ul">
-      <li class="li">此方法暂不支持排序等查询操作。</li>
-      
-    </ul>
-
-    </div>
-</div>
-
-    <div class="section"><h2 class="title sectiontitle">示例</h2>
-      <ul class="ul">
-        <li class="li">枚举 foo.bar 中的所有大对象<pre class="pre codeblock">db.foo.bar.listLobs()</pre>
-</li>
-        
-      </ul>
-      
-    </div>
-
+    
   </div>
 
   <div class="related-links"><div class="relinfo"><strong>Related information</strong><br/>
-<div><a class="navheader_parent_path" href="deleteLob.html" title="db.collectionspace.collection.deleteLob()">db.collectionspace.collection.deleteLob()</a></div>
-<div><a class="navheader_parent_path" href="getlob.html" title="db.collectionspace.collection.getLob()">db.collectionspace.collection.getLob()</a></div>
-<div><a class="navheader_parent_path" href="putlob.html" title="db.collectionspace.collection.putLob()">db.collectionspace.collection.putLob()</a></div>
+<div><a class="navheader_parent_path" href="find.html" title="db.collectionspace.collection.find()">db.collectionspace.collection.find()</a></div>
 </div>
-</div>
+</div>  
 <div class="navfooter"><a class="link" href="../../../references/methods/jscollection.html" title="SdbCollection"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">SdbCollection</span></a>  <script type="text/javascript"><!--         
     function expand(){
         parent.tocwin.expandToTopic(window.location.href, this.getAttribute('href'));

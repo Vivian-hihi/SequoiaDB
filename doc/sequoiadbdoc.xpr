@@ -856,6 +856,7 @@
                     <file name="references/methods/topics/execUpdate.dita"/>
                     <file name="references/methods/topics/explain.dita"/>
                     <file name="references/methods/topics/find.dita"/>
+                    <file name="references/methods/topics/findOne.dita"/>
                     <file name="references/methods/flushConfigure_en.dita"/>
                     <file name="references/methods/flushConfigure.dita"/>
                     <file name="references/methods/topics/getCL_en.dita"/>
