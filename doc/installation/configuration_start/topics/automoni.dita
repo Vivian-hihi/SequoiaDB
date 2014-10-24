@@ -6,7 +6,7 @@
     <p>PHP 监控支持 IE9+、chrome、firefox 等主流浏览器。</p>
     <ul>
       <li>1. 启动 PHP 服务
-        <p>1.1 在安装了 sequoiadb 的主机上，执行 sequoiadb 目录下 bin/sdbwsart。例如：<codeblock>/opt/sequoiadb/bin/sdbwsart</codeblock></p>        
+        <p>1.1 在安装了 SequoiaDB 的主机上，执行 sequoiadb 目录下 bin/sdbwsart。例如：<codeblock>/opt/sequoiadb/bin/sdbwsart</codeblock></p>        
         <p><image href="../images/o11.jpg"/></p>
         <p>1.2 在浏览器输入 【步骤1.1】 的地址 http://192.168.1.215:8080/</p>
         <p><image href="../images/o12.jpg"/></p></li>      
