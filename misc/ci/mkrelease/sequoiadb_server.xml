@@ -256,6 +256,9 @@
                     <text>${type}</text>
                     <value>SMS</value>
                 </compareText>
+                <isTrue>
+                    <value>${OM}</value>
+                </isTrue>
             </ruleList>
         </runProgram>
         <changePermissions>
@@ -267,7 +270,7 @@
             <permissions>0777</permissions>
         </changePermissions>
         <changeOwnerAndGroup>
-            <files>${installdir}/packet</files>
+            <files>${installdir}/packet/*</files>
             <group>${username}_group</group>
             <owner>${username}</owner>
         </changeOwnerAndGroup>
@@ -622,6 +625,14 @@
                         </componentTest>
                     </ruleList>
                 </choiceParameterGroup>
+                <booleanParameter>
+                    <name>OM</name>
+                    <description>${msg(Installer.Paramers.sms.description)}</description>
+                    <explanation></explanation>
+                    <value>false</value>
+                    <default>false</default>
+                    <cliOptionShow>0</cliOptionShow>
+                </booleanParameter>
             </parameterList>
         </parameterGroup>
     </parameterList>

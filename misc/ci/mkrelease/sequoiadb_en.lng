@@ -10,7 +10,7 @@ Install.Paramers.port.explanation=SequoiaDB Cluster Manager port
 Install.Paramers.processAutoStart.explanation=Do You Want To Start The Process When Machine Restart
 Install.Paramers.processAutoStart.Description=Process Auto Start
 
-Installer.Paramers.installationType.description=OM Service
+Installer.Paramers.sms.description=Do You Want To Install OM Service
 Installer.Paramers.installationType.explanation=Which type to install:DB/SMS
 Installer.Paramers.svcnamePort.explanation=Svcname Port
 Installer.Paramers.dbpath.explanation=SMS data path

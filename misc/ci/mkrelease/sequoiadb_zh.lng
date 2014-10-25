@@ -10,7 +10,7 @@ Install.Paramers.port.explanation=配置SequoiaDB集群管理服务端口,集群
 Install.Paramers.processAutoStart.explanation=是否允许Sequoiadb相关进程开机自启动
 Install.Paramers.processAutoStart.Description=Sequoiadb相关进程开机自启动
 
-Installer.Paramers.installationType.description=OM服务
+Installer.Paramers.sms.description=是否安装OM服务
 Installer.Paramers.installationType.explanation=需要安装的服务：DB/SMS
 
 Installer.Paramers.svcnamePort.explanation=svcname端口
