@@ -1337,8 +1337,6 @@ INT32 ossExec ( const CHAR * program,
    STARTUPINFO        startInfo  = {0} ;
    DWORD              ntFlag     = NORMAL_PRIORITY_CLASS ;
    BOOLEAN            inheritH   = FALSE ;
-   CHAR               progName [ OSS_MAX_PATHSIZE + 1 + 2 ] = {0} ; // +2 for ""
-   CHAR               workProgName [ OSS_MAX_PATHSIZE + 1 ] = {0} ;
    INT32              bufferLen  = 0 ;
    CHAR *             argBuffer  = NULL ;
    CHAR *             pArgs      = NULL ;
@@ -1414,48 +1412,23 @@ INT32 ossExec ( const CHAR * program,
    if ( arguments )
    {
       pArgs = (CHAR*)arguments ;
-      INT32 arg0Len = 0 ;
-      INT32 progLen = 0 ;
-      rc = ossResolvePath ( arguments, workProgName ) ;
-      if ( rc )
-      {
-         PD_LOG ( PDERROR, "Failed to resolve argument: %s, rc = %d",
-                  arguments, rc ) ;
-         goto error ;
-      }
-
-      // if the path contains space, it's then ambiguous, so we have to add ""
-      // around the command
-      ossSnprintf ( progName, sizeof(progName), "\"%s\"",
-                    workProgName ) ;
-      arg0Len = ossStrlen ( arguments ) ;
-      progLen = ossStrlen ( progName ) ;
       // iterate all argument until we find "\0\0"
       // this part we check if we have more than one argument in the list
       while ( TRUE )
       {
          INT32 argXLen = ossStrlen ( pArgs ) ;
+         bufferLen += ( argXLen + 1 ) ;
+
          if ( ( '\0' == pArgs[argXLen] ) &&
               ( '\0' == pArgs[argXLen + 1] ) )
          {
             // iterate to end of the argument
-            pArgs = &pArgs[argXLen] ;
             break ;
          }
          // iterate to the next argument
          pArgs = &pArgs[argXLen + 1] ;
       }
 
-      // if the argument list include more than 1 argument, then we need to
-      // calculate the size of buffer required to hold them
-      if ( pArgs != arguments )
-      {
-         bufferLen = progLen + 1 + ( pArgs - &arguments[arg0Len] ) ;
-      }
-      else
-      {
-         bufferLen = progLen + 1;
-      }
       // allocate memory, free by end of the function
       argBuffer = (CHAR*) SDB_OSS_MALLOC ( bufferLen+1 ) ;
       if ( !argBuffer )
@@ -1465,9 +1438,7 @@ INT32 ossExec ( const CHAR * program,
          goto error ;
       }
       ossMemset ( argBuffer, 0, bufferLen + 1) ;
-      ossMemcpy ( argBuffer, progName, progLen ) ;
-      ossMemcpy ( &argBuffer[progLen], &arguments[arg0Len],
-                  bufferLen - progLen ) ;
+      ossMemcpy ( argBuffer, arguments, bufferLen ) ;
       // iterate through and change all '\0' to ' '
       pArgs = argBuffer ;
       while ( TRUE )
@@ -1486,51 +1457,23 @@ INT32 ossExec ( const CHAR * program,
       pArgs = argBuffer ;
       PD_LOG ( PDINFO, "Execute command: %s", argBuffer ) ;
    } // if ( arguments )
+   else if ( NULL != program )
+   {
+      bufferLen = ossStrlen( program ) ;
+      argBuffer = (CHAR*)SDB_OSS_MALLOC( bufferLen + 1 ) ;
+      if ( !argBuffer )
+      {
+         PD_LOG ( PDERROR, "Failed to allocate argument buffer" ) ;
+         rc = SDB_OOM ;
+         goto error ;
+      }
+      ossStrcpy( argBuffer, program ) ;
+      pArgs = argBuffer ;
+   }
    else
    {
-      // if we don't have arguments
-      if ( program )
-      {
-         CHAR *lpszProgName                         = NULL ;
-         CHAR *pContext                             = NULL ;
-         CHAR tempProgName [ OSS_MAX_PATHSIZE + 1 ] = {0} ;
-         const CHAR *lpszRest                       = NULL ;
-         INT32 restLen                              = 0 ;
-         INT32 progLen                              = 0 ;
-         // since we are going to use strtok to separate arguments, let's make a
-         // dup of const char
-         ossStrncpy ( tempProgName, program, OSS_MAX_PATHSIZE ) ;
-         lpszProgName = ossStrtok ( tempProgName, " ", &pContext ) ;
-         rc = ossResolvePath ( lpszProgName, workProgName ) ;
-         if ( rc )
-         {
-            PD_LOG ( PDERROR, "Failed to resolve argument: %s, rc = %d",
-                     lpszProgName, rc ) ;
-            goto error ;
-         }
-         ossSnprintf ( progName, sizeof(progName), "\"%s\"",
-                       workProgName ) ;
-         // check for and add input parameters to the buffer
-         if ( NULL != (lpszRest = ossStrchr ( program, ' ' ) ) )
-         {
-            progLen = ossStrlen ( progName ) ;
-            restLen = ossStrlen ( lpszRest ) ;
-            argBuffer = (CHAR*)SDB_OSS_MALLOC ( progLen + restLen + 1 ) ;
-            if ( !argBuffer )
-            {
-               PD_LOG ( PDERROR, "Failed to allocate buffer" ) ;
-               rc = SDB_OOM ;
-               goto error ;
-            }
-            ossStrncpy ( argBuffer, progName, progLen + 1 ) ;
-            ossStrncat ( argBuffer, lpszRest, progLen + restLen + 1 ) ;
-            pArgs = argBuffer ;
-         }
-         else
-         {
-            pArgs = progName ;
-         }
-      } // if ( program )
+      rc = SDB_INVALIDARG ;
+      goto error ;
    }
 
    startInfo.cb                   = sizeof(STARTUPINFO) ;
@@ -1582,6 +1525,7 @@ INT32 ossExec ( const CHAR * program,
    else
    {
       rc = SDB_OK ;
+      pid = procInfo.dwProcessId ;
 
       if ( flag & OSS_EXEC_SSAVE )
       {
@@ -1613,7 +1557,6 @@ INT32 ossExec ( const CHAR * program,
       } // if ( results && ( flag & OSS_EXEC_SSAVE ) )
       CloseHandle ( procInfo.hThread ) ; // close thread handle obj
       CloseHandle ( procInfo.hProcess ) ; // close process handle obj
-      pid = procInfo.dwProcessId ;
    }
 done :
    if ( argBuffer )
@@ -1647,7 +1590,8 @@ error :
       {
          CloseHandle ( npHandleStdin->_handle ) ;
       }
-   } 
+   }
+   pid = OSS_INVALID_PID ;
    goto done ;
 }
 

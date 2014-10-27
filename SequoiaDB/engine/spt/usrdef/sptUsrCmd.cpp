@@ -110,6 +110,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       string cmd ;
       string ev ;
+      UINT32 timeout = 0 ;
       sptCmdRunner runner ;
 
       rc = arg.getString( 0, cmd ) ;
@@ -127,15 +128,25 @@ namespace engine
          detail = BSON( SPT_ERR << "environment should be a string" ) ;
          goto error ;
       }
-      else if ( SDB_OK == rc )
+      else if ( SDB_OK == rc && !ev.empty() )
       {
          cmd += " " ;
          cmd += ev ;
       }
 
+      rc = arg.getNative( 2, (void*)&timeout, SPT_NATIVE_INT32 ) ;
+      if ( SDB_OK != rc && SDB_OUT_OF_BOUND != rc )
+      {
+         rc = SDB_INVALIDARG ;
+         detail = BSON( SPT_ERR << "timeout should be a number" ) ;
+         goto error ;
+      }
+      rc = SDB_OK ;
+
       _strOut = "" ;
       _retCode = 0 ;
-      rc = runner.exec( cmd.c_str(), _retCode, FALSE ) ;
+      rc = runner.exec( cmd.c_str(), _retCode, FALSE,
+                        0 == timeout ? -1 : (INT64)timeout ) ;
       if ( SDB_OK != rc )
       {
          stringstream ss ;
@@ -241,7 +252,7 @@ namespace engine
       stringstream ss ;
       ss << "Cmd functions:" << endl
          << " var cmd = new Cmd()" << endl
-         << "   run( cmd, [args] )" << endl
+         << "   run( cmd, [args], [timeout] )  timeout(ms), default 0: never timeout" << endl
          << "   start( cmd, [args] )" << endl
          << "   getLastRet()" << endl
          << "   getLastOut()" << endl ;

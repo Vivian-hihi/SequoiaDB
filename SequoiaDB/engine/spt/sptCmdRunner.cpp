@@ -59,6 +59,7 @@ namespace engine
       _id = OSS_INVALID_PID ;
       _hasRead = FALSE ;
       _readResult = SDB_OK ;
+      _timeout = -1 ;
    }
 
    _sptCmdRunner::~_sptCmdRunner()
@@ -82,6 +83,20 @@ namespace engine
                   e.what() ) ;
          _event.signal() ;
       }
+
+      try
+      {
+         _monitorEvent.reset() ;
+         boost::thread thrdMonitor( &_sptCmdRunner::monitor, this ) ;
+         thrdMonitor.detach() ;
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG ( PDSEVERE, "Failed to create new thread: %s",
+                  e.what() ) ;
+         _monitorEvent.signal() ;
+         return ;
+      }
    }
 
    void _sptCmdRunner::asyncRead()
@@ -91,8 +106,31 @@ namespace engine
       _event.signal() ;
    }
 
+   void _sptCmdRunner::monitor()
+   {
+      INT32 rc = _event.wait( _timeout ) ;
+      if ( rc ) // timeout
+      {
+         UINT32 i = 0 ;
+         ossTerminateProcess( _id, FALSE ) ;
+         while ( ossIsProcessRunning( _id ) )
+         {
+            ossSleep( 100 ) ;
+            i += 100 ;
+
+            if ( i > 2 * OSS_ONE_SEC )
+            {
+               ossTerminateProcess( _id, TRUE ) ;
+               break ;
+            }
+         }
+      }
+      _monitorEvent.signalAll( rc ) ;
+   }
+
    INT32 _sptCmdRunner::exec( const CHAR *cmd, UINT32 &exit,
-                              BOOLEAN isBackground )
+                              BOOLEAN isBackground,
+                              INT64 timeout )
    {
       INT32 rc = SDB_OK ;
       SDB_ASSERT( NULL != cmd, "can not be null" ) ;
@@ -110,9 +148,12 @@ namespace engine
       }
       res.exitcode = 0 ;
       res.termcode = 0 ;
+      _timeout     = timeout ;
 
+#if defined( _LINUX )
       argv.push_back( SPT_SHELL_CALL ) ;
       argv.push_back( SPT_SHELL_ARG ) ;
+#endif // _LINUX
       argv.push_back( cmd ) ;
 
       rc = ossBuildArguments( &arguments, argLen, argv ) ;
@@ -123,6 +164,7 @@ namespace engine
       }
 
       _event.signal() ;
+      _monitorEvent.signal() ;
       _hasRead = FALSE ;
       _readResult = SDB_OK ;
       _outStr = "" ;
@@ -134,7 +176,15 @@ namespace engine
                  cmd, rc ) ;
          goto error ;
       }
-      _event.wait() ;
+
+      _monitorEvent.wait( -1, &rc ) ;
+      if ( rc ) // run timeout
+      {
+         exit = (UINT32)rc ;
+         rc = SDB_OK ;
+         _outStr += "***Error: run it timeout" ;
+         goto done ;
+      }
 
       exit = res.exitcode ;
    done:

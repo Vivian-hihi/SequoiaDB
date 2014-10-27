@@ -53,8 +53,12 @@ namespace engine
       virtual ~_sptCmdRunner() ;
 
    public:
+      /*
+         timeout is ms, ignore when isBackground = TRUE
+      */
       INT32 exec( const CHAR *cmd, UINT32 &exit,
-                  BOOLEAN isBackground = FALSE ) ;
+                  BOOLEAN isBackground = FALSE,
+                  INT64 timeout = -1 ) ;
 
       INT32 done() ;
 
@@ -68,6 +72,7 @@ namespace engine
                                      OSSNPIPE * const npHandleStdout ) ;
 
       void  asyncRead() ;
+      void  monitor() ;
 
       INT32 _readOut( string &out, BOOLEAN readEOF = TRUE ) ;
 
@@ -75,9 +80,11 @@ namespace engine
       OSSNPIPE       _out ;
       OSSPID         _id ;
       ossEvent       _event ;
+      ossEvent       _monitorEvent ;
       BOOLEAN        _hasRead ;
       string         _outStr ;
       INT32          _readResult ;
+      INT64          _timeout ;
 
    } ;
    typedef class _sptCmdRunner sptCmdRunner ;
