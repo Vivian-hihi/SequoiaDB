@@ -15,7 +15,7 @@ getLob - Get the LOB in collection.
 .sp 2
 
 .sp 2
-db.collectionspace.collection.getLob(\fB<oid><file
+db.collectionspace.collection.getLob(\fB<oid>,<file
 path>,[forced]\fR)
 .SH "CATEGORY"
 
