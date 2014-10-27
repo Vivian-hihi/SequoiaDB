@@ -491,7 +491,7 @@
             </folder>
             <folder name="images">
                 <file name="hadoop_integration/images/hadoop_en.jpg"/>
-                <file name="hadoop%20integration/images/hadoop.jpg"/>
+                <file name="hadoop_integration/images/hadoop.jpg"/>
             </folder>
             <folder name="pig">
                 <file name="hadoop_integration/pig/pig_en.dita"/>
