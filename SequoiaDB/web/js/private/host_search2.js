@@ -705,24 +705,36 @@ function checkHostInfo()
 		sdbjs.fun.timeLoading( 'loading', sumHost * 3 ) ;
 		var order = { 'cmd': 'check host', 'HostInfo': JSON.stringify( { 'ClusterName': clusterName, 'HostInfo': _hostConf, 'User': '-', 'Passwd': '-', 'SshPort': '-', 'AgentPort': '-'} ) } ;
 		ajaxSendMsg( order, true, function( jsonArr ){
-			var host_len = jsonArr.length ;
-			for( var i = 1, k = 0; i < host_len; ++i, ++k )
-			{
-				if( !( typeof( jsonArr[i]['errno'] ) == 'number' && jsonArr[i]['errno'] != 0 ) )
-				{
-					_hostConf[k]['CPU']     = jsonArr[i]['CPU'] ;
-					_hostConf[k]['Net']     = jsonArr[i]['Net'] ;
-					_hostConf[k]['Memory']  = jsonArr[i]['Memory'] ;
-					_hostConf[k]['Port']    = jsonArr[i]['Port'] ;
-					_hostConf[k]['Service'] = jsonArr[i]['Service'] ;
-					_hostConf[k]['OM']      = jsonArr[i]['OM'] ;
-					_hostConf[k]['Safety']  = jsonArr[i]['Safety'] ;
-					_hostConf[k]['OS']      = jsonArr[i]['OS'] ;
-					_hostConf[k]['Disk']    = jsonArr[i]['Disk'] ;
-				}
-				_hostConf[k]['errno'] = jsonArr[i]['errno'] ;
-			}
 			var hostListLen = _hostConf.length ;
+			var host_len = jsonArr.length ;
+			var errorDetail = [] ;
+			for( var k = 0; k < hostListLen; ++k )
+			{
+				for( var i = 1; i < host_len; ++i )
+				{
+					if( _hostConf[k]['HostName'] == jsonArr[i]['HostName'] && _hostConf[k]['IP'] == jsonArr[i]['IP'] )
+					{
+						if( !( typeof( jsonArr[i]['errno'] ) == 'number' && jsonArr[i]['errno'] != 0 ) )
+						{
+							_hostConf[k]['CPU']     = jsonArr[i]['CPU'] ;
+							_hostConf[k]['Net']     = jsonArr[i]['Net'] ;
+							_hostConf[k]['Memory']  = jsonArr[i]['Memory'] ;
+							_hostConf[k]['Port']    = jsonArr[i]['Port'] ;
+							_hostConf[k]['Service'] = jsonArr[i]['Service'] ;
+							_hostConf[k]['OM']      = jsonArr[i]['OM'] ;
+							_hostConf[k]['Safety']  = jsonArr[i]['Safety'] ;
+							_hostConf[k]['OS']      = jsonArr[i]['OS'] ;
+							_hostConf[k]['Disk']    = jsonArr[i]['Disk'] ;
+						}
+						else
+						{
+							errorDetail[k] = jsonArr[i]['detail'] ;
+						}
+						_hostConf[k]['errno'] = jsonArr[i]['errno'] ;
+						break ;
+					}
+				}
+			}
 			var tab_data = [] ;
 			var firstActive = -1 ;
 			for( var i = 0; i < hostListLen; ++i )
@@ -767,7 +779,8 @@ function checkHostInfo()
 				}
 				else
 				{
-					sdbjs.parts.tabList.add( 'hostSwitchList', [ { 'name': _hostConf[i]['HostName'], 'sname': _hostConf[i]['IP'], 'text': '<span class="badge badge-danger">' + jsonArr[i+1]['detail'] + '</span>' } ] ) ;
+					sdbjs.parts.tabList.add( 'hostSwitchList', [ { 'name': _hostConf[i]['HostName'], 'sname': _hostConf[i]['IP'], 'text': '<span class="badge badge-danger" data-type="tooltip">error</span>' } ] ) ;
+					sdbjs.fun.addOnEvent( $( '#hostSwitchList > li:eq(' + i + ') > div:eq(0) > span:eq(0)' ).data( 'text', errorDetail[i] ) ) ;
 					sdbjs.parts.tabList.disable( 'hostSwitchList', i ) ;
 				}
 			}
