@@ -161,13 +161,23 @@
 			</case>
 
 			<case value="samples">
-				<echo message="... test the client sample test ..." />
+				<echo message="... Test the sample test ..." />
+				<sdbtest host="${test.host.NAME}" testscript="${test.machine.deploy.path}/deploy/exec-python-testcases.xml Test-Python-Samples" remotereports="${testcase.path}/samples_testcases/Python/reports" masterreports="${test.reports.path}" >
+					<param name="ci.properties.path" value="${test.machine.software.path}/ci.test.properties" />
+					<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
+					<param name="samples.testcase.path" value="${testcase.path}/samples_testcases" />
+					<param name="deploy.case.fullname" value="${deploy.case.fullname}" />
+					<param name="excludes.dir.patterns" value="" />
+					<param name="includes.dir.patterns" value="*" />
+				</sdbtest>
+				<echo message="... Samples test is over ..." />
+				<!-- <echo message="... test the client sample test ..." />
 				<sdbtest host="${test.host.NAME}" testscript="${test.machine.deploy.path}/deploy/exec-samples-testcases.xml" remotereports="${test.machine.deploy.path}/deploy/hlt/samples_testcases/CPP/reports" masterreports="${test.reports.path}" >
 					<param name="samples.testcase.path" value="${testcase.path}/samples_testcases" />
 					<param name="deploy.case.fullname" value="${deploy.case.fullname}" />
 					<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
 				</sdbtest>
-				<echo message="... client sample test is over ..." />
+				<echo message="... client sample test is over ..." /> -->
 			</case>
 
 			<case value="tpcc">
