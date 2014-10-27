@@ -162,7 +162,7 @@
 
 			<case value="samples">
 				<echo message="... Test the sample test ..." />
-				<sdbtest host="${test.host.NAME}" testscript="${test.machine.deploy.path}/deploy/exec-python-testcases.xml Test-Python-Samples" remotereports="${testcase.path}/samples_testcases/Python/reports" masterreports="${test.reports.path}" >
+				<sdbtest host="${test.host.NAME}" testscript="${test.machine.deploy.path}/deploy/exec-samples-testcases.xml" remotereports="${testcase.path}/samples_testcases/reports" masterreports="${test.reports.path}" >
 					<param name="ci.properties.path" value="${test.machine.software.path}/ci.test.properties" />
 					<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
 					<param name="samples.testcase.path" value="${testcase.path}/samples_testcases" />

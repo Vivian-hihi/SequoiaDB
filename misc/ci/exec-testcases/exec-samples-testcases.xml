@@ -2,7 +2,7 @@
 <!--@param ${reports.path}: The path where test case direcotry.-->
 <!--@param ${test.package.name}: The name of test package name,.-->
 <!--@param ${deploy.case.fullname}: The file name ( .xml )this file name is -->
-<project name="exec-samples-testcases" default="exec-samples-testcases">
+<project name="Exec-Samples-Testcases" default="Test-Python-Samples">
     <property file="${ci.properties.path}" />
     <taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
         <classpath>
@@ -10,13 +10,14 @@
         </classpath>
     </taskdef>
 
-    <target name="clean-env" depends="">
-        <echo message="reports.path=${reports.path}" />
-        <delete dir="${reports.path}" failonerror="false" />
-        <mkdir dir="${reports.path}" />
+    <target name="Test-Python-Samples">
+        <ant antfile="exec-python-testcases.xml" dir="." target="Test-Python-Samples" inheritAll="true">
+        </ant>
     </target>
 
-    <target name="exec-samples-testcases" depends="clean-env">
+
+
+    <!-- <target name="exec-samples-testcases" depends="clean-env">
         <foreach target="test-suite-case" param="test-suite-fullname">
             <path>
                 <dirset dir="${samples.testcase.path}" />
@@ -154,7 +155,6 @@
                 <exclude name="*.htm" />
                 <exclude name="*.js" />
                 <exclude name="*.css" />
-<!--                 <exclude name="buildApp.bat" /> -->
                 <exclude name="*.dll" />
                 <exclide name="*.cs" />
             </fileset>
@@ -209,6 +209,6 @@
             </else>
         </if>
 
-        <echo file="${reports.path}/TEST-${test.suite.class.name}.xml" append="true" message="&lt;/testcase&gt;&#10;" />
-    </target>
+        <echo file="${reports.path}/TEST-${test.suite.class.name}.xml" append="true" message="&lt;/testcase&gt;&#10;" /> -->
+    
 </project>
