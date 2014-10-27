@@ -41,6 +41,8 @@ RET_JSON[Port]       = "" ;
 RET_JSON[Service]    = "" ;
 RET_JSON[Safety]     = "" ;
 
+var errMsg           = "" ;
+
 // os info
 function getOSInfo()
 {
@@ -77,14 +79,15 @@ function getOMInfo()
          omInfo[HasInstalled] = false ;
          RET_JSON[OM] = omInfo ;
       }
+      else if ( SDB_TIMEOUT == e )
+      {
+         errMsg = "The sdbcm's version is too low to support" ;
+         exception_handle( e, errMsg ) ;
+      }
       else
       {
-         if ( "number" == typeof( e ) )
-         {
-            setLastErrMsg( "Failed to get OM info" ) ;
-            setLastError( e ) ;
-         }
-         throw e ;
+         errMsg = "Failed to get OM's info" ;
+         exception_handle( e, errMsg ) ;
       }
    }
 }
@@ -207,13 +210,12 @@ function extractOMInfo ( obj )
       var str = null ;
       try
       {
-         str = cmd.run( sdbcmprog + " --version " ) ;
+         str = cmd.run( sdbcmprog + " --version ", "", OMA_GTE_VERSION_TIME ) ;
       }
       catch ( e )
       {
-         setLastErrMsg( "Failed to get OM version info" ) ;
-         setLastError( SDB_SYS ) ;
-         throw SDB_SYS ;
+         errMsg = "Failed to extract OM's info" ;
+         exception_handle( e, errMsg ) ;
       }
       var beg = str.indexOf( OMA_MISC_OM_VERSION ) ;
       var end = str.indexOf( '\n' ) ;

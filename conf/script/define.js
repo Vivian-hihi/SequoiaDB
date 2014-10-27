@@ -176,8 +176,8 @@ var OMA_SYS_CATALOG_RG                = "SYSCatalogGroup" ;
 var OMA_SYS_COORD_RG                  = "SYSCoord" ;
 var OMA_LINUX                         = "LINUX" ;
 var OMA_WINDOWS                       = "WINDOWS" ;
-var OMA_SLEEP_TIME                    = 500 ;
+var OMA_SLEEP_TIME                    = 500 ; // ms
 var OMA_TRY_TIMES                     = 6 ;
 var OMA_WAIT_CATA_RG_TRY_TIMES        = 600 ;
-
+var OMA_GTE_VERSION_TIME              = 10000 // ms
 
