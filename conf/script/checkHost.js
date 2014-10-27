@@ -240,8 +240,8 @@ function main()
    RET_JSON[IP] = BUS_JSON[IP] ;
    RET_JSON[HostName] = BUS_JSON[HostName] ; 
    // get local host info
-   getOSInfo() ;
    getOMInfo() ;
+   getOSInfo() ;
    getCPUInfo() ;
    getMemInfo() ;
    getDiskInfo() ;
