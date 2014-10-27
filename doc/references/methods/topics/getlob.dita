@@ -41,7 +41,7 @@
     </note></p>
     <section><title>示例</title>
       <ul>
-        <li>将标示符为 5435e7b69487faa663000897 的 lob 写入本地 /opt/newlob 文件<codeblock>db.foo.bar.getLob(' 5435e7b69487faa663000897','/opt/newlob')</codeblock></li>        
+        <li>将标示符为 5435e7b69487faa663000897 的 lob 写入本地 /opt/newlob 文件<codeblock>db.foo.bar.getLob('5435e7b69487faa663000897','/opt/newlob')</codeblock></li>        
       </ul>      
     </section>
   </body>
