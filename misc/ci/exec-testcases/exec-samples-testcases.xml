@@ -11,7 +11,7 @@
     </taskdef>
 
     <target name="Test-Python-Samples">
-        <ant antfile="exec-python-testcases.xml" dir="." target="Test-Python-Samples" inheritAll="true">
+        <ant antfile="exec-driver-python-test.xml" dir="." target="Test-Python-Samples" inheritAll="true">
         </ant>
     </target>
 
