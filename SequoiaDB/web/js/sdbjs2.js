@@ -798,10 +798,10 @@ sdbjs.fun.isArray = function( object )
 }
 
 /*
- * 解析ip ip段 hostname  hostname段，返回对象 obj
- * obj.type 和 obj.value
+ * 解析ip ip段 hostname  hostname段
+ * 返回数组  [ { 'address': 'xxx', 'type': 'host' }, { 'address': 'xxx', 'type': 'ip' } ]
  */
-sdbjs.fun.getHostList = function( str )
+sdbjs.fun.getHostList = function( address )
 {
 	//数字字符串自动补零
 	function pad(num, n)
@@ -814,109 +814,110 @@ sdbjs.fun.getHostList = function( str )
 		}
 		return num;
 	}
-	var obj = new Object ;
-	var link_search = new Array() ;
-	var ip_search = new Array() ;
-   var host_search = new Array() ;
-	//识别主机字符串，扫描主机
-	var reg = new RegExp(/^(((2[0-4]\d|25[0-5]|[01]?\d\d?)|(\[[ ]*(2[0-4]\d|25[0-5]|[01]?\d\d?)[ ]*\-[ ]*(2[0-4]\d|25[0-5]|[01]?\d\d?)[ ]*\]))\.){3}((2[0-4]\d|25[0-5]|[01]?\d\d?)|(\[(2[0-4]\d|25[0-5]|[01]?\d\d?)\-(2[0-4]\d|25[0-5]|[01]?\d\d?)\]))$/) ;
-	str.replace( /(^\s*)|(\s*$)/g, "" ) ;
-	var matches = new Array() ;
-	if ( ( matches = reg.exec( str ) ) != null )
+	var link_search = [] ;
+	var splitAddress = address.split( /[,\s;]/ ) ;
+	var splitLen = splitAddress.length ;
+	for( var strNum = 0; strNum < splitLen; ++strNum )
 	{
-		//ip区间
-		var ip_arr = str.split(".") ;
-		for ( ipsub in ip_arr )
-		{
-			reg = new RegExp(/^((2[0-4]\d|25[0-5]|[01]?\d\d?)|(\[[ ]*(2[0-4]\d|25[0-5]|[01]?\d\d?)[ ]*\-[ ]*(2[0-4]\d|25[0-5]|[01]?\d\d?)[ ]*\]))$/) ;
-			if ( ( matches = reg.exec( ip_arr[ipsub] ) ) != null )
-			{
-				//匹配每个数值
-				if ( ( matches[4] == undefined || matches[5] == undefined ) ||
-					  ( matches[4] === '' || matches[5] === '' ) )
-				{
-					//这是一个数字 192
-					ip_search.push( matches[0] ) ;
-				}
-				else
-				{
-					//这是一个区间 [1-10]
-					ip_search.push( new Array( matches[4], matches[5] ) ) ;
-				}
-			}
-		}
-	}
-	else
-	{
-		//主机名
-		reg = new RegExp(/^((.*)(\[[ ]*(\d+)[ ]*\-[ ]*(\d+)[ ]*\])(.*))$/) ;
+		var str = $.trim( splitAddress[ strNum ] ) ;
+		var ip_search = [] ;
+		var host_search = [] ;
+		var matches = new Array() ;
+		//识别主机字符串，扫描主机
+		var reg = new RegExp(/^(((2[0-4]\d|25[0-5]|[01]?\d\d?)|(\[[ ]*(2[0-4]\d|25[0-5]|[01]?\d\d?)[ ]*\-[ ]*(2[0-4]\d|25[0-5]|[01]?\d\d?)[ ]*\]))\.){3}((2[0-4]\d|25[0-5]|[01]?\d\d?)|(\[(2[0-4]\d|25[0-5]|[01]?\d\d?)\-(2[0-4]\d|25[0-5]|[01]?\d\d?)\]))$/) ;
 		if ( ( matches = reg.exec( str ) ) != null )
 		{
-			host_search.push( matches[2] ) ;
-			host_search.push( matches[4] ) ;
-			host_search.push( matches[5] ) ;
-			host_search.push( matches[6] ) ;
-		}
-		else
-		{
-			host_search = str ;
-		}
-	}
-
-	if ( ip_search.length > 0 )
-	{
-		//遍历数组，把IP段转成每个IP存入数组
-		for( var i = ( sdbjs.fun.isArray( ip_search[0] ) ? parseInt(ip_search[0][0]) : 0 ), i_end = ( sdbjs.fun.isArray( ip_search[0] ) ? parseInt(ip_search[0][1]) : 0 ); i <= i_end; ++i )
-		{
-			for( var j = ( sdbjs.fun.isArray( ip_search[1] ) ? parseInt(ip_search[1][0]) : 0 ), j_end = ( sdbjs.fun.isArray( ip_search[1] ) ? parseInt(ip_search[1][1]) : 0 ); j <= j_end; ++j )
+			//ip区间
+			var ip_arr = str.split(".") ;
+			for ( ipsub in ip_arr )
 			{
-				for( var k = ( sdbjs.fun.isArray( ip_search[2] ) ? parseInt(ip_search[2][0]) : 0 ), k_end = ( sdbjs.fun.isArray( ip_search[2] ) ? parseInt(ip_search[2][1]) : 0 ); k <= k_end; ++k )
+				reg = new RegExp(/^((2[0-4]\d|25[0-5]|[01]?\d\d?)|(\[[ ]*(2[0-4]\d|25[0-5]|[01]?\d\d?)[ ]*\-[ ]*(2[0-4]\d|25[0-5]|[01]?\d\d?)[ ]*\]))$/) ;
+				if ( ( matches = reg.exec( ip_arr[ipsub] ) ) != null )
 				{
-					for( var l = ( sdbjs.fun.isArray( ip_search[3] ) ? parseInt(ip_search[3][0]) : 0 ), l_end = ( sdbjs.fun.isArray( ip_search[3] ) ? parseInt(ip_search[3][1]) : 0 ); l <= l_end; ++l )
+					//匹配每个数值
+					if ( ( matches[4] == undefined || matches[5] == undefined ) ||
+						  ( matches[4] === '' || matches[5] === '' ) )
 					{
-						link_search.push( (( sdbjs.fun.isArray( ip_search[0] ) ? i : ip_search[0] )+'.'+( sdbjs.fun.isArray( ip_search[1] ) ? j : ip_search[1] )+'.'+( sdbjs.fun.isArray( ip_search[2] ) ? k : ip_search[2] )+'.'+( sdbjs.fun.isArray( ip_search[3] ) ? l : ip_search[3] )) ) ;
+						//这是一个数字 192
+						ip_search.push( matches[0] ) ;
+					}
+					else
+					{
+						//这是一个区间 [1-10]
+						ip_search.push( new Array( matches[4], matches[5] ) ) ;
 					}
 				}
 			}
 		}
-		obj.type = 'ip' ;
-	}
-
-
-	if ( host_search.length > 0 )
-	{
-		//转换hostname
-		if ( sdbjs.fun.isArray( host_search ) )
-		{
-			var str_start = host_search[0] ;
-			var str_end   = host_search[3] ;
-			var strlen_num = host_search[1].length ;
-			var strlen_temp  = parseInt(host_search[1]).toString().length ;
-			var need_add_zero = false ;
-			if ( strlen_num > strlen_temp )
-			{
-				need_add_zero = true ;
-			}
-			for ( var i = parseInt(host_search[1]), i_end = parseInt(host_search[2]); i <= i_end ; ++i )
-			{
-				if ( need_add_zero && i.toString().length <= strlen_num )
-				{
-					link_search.push( str_start + pad(i,strlen_num) + str_end ) ;
-				}
-				else
-				{
-					link_search.push( str_start + i + str_end ) ;
-				}
-			}
-		}
 		else
 		{
-			link_search.push( host_search ) ;
+			//主机名
+			reg = new RegExp(/^((.*)(\[[ ]*(\d+)[ ]*\-[ ]*(\d+)[ ]*\])(.*))$/) ;
+			if ( ( matches = reg.exec( str ) ) != null )
+			{
+				host_search.push( matches[2] ) ;
+				host_search.push( matches[4] ) ;
+				host_search.push( matches[5] ) ;
+				host_search.push( matches[6] ) ;
+			}
+			else
+			{
+				host_search = str ;
+			}
 		}
-		obj.type = 'host' ;
+	
+		if ( ip_search.length > 0 )
+		{
+			//遍历数组，把IP段转成每个IP存入数组
+			for( var i = ( sdbjs.fun.isArray( ip_search[0] ) ? parseInt(ip_search[0][0]) : 0 ), i_end = ( sdbjs.fun.isArray( ip_search[0] ) ? parseInt(ip_search[0][1]) : 0 ); i <= i_end; ++i )
+			{
+				for( var j = ( sdbjs.fun.isArray( ip_search[1] ) ? parseInt(ip_search[1][0]) : 0 ), j_end = ( sdbjs.fun.isArray( ip_search[1] ) ? parseInt(ip_search[1][1]) : 0 ); j <= j_end; ++j )
+				{
+					for( var k = ( sdbjs.fun.isArray( ip_search[2] ) ? parseInt(ip_search[2][0]) : 0 ), k_end = ( sdbjs.fun.isArray( ip_search[2] ) ? parseInt(ip_search[2][1]) : 0 ); k <= k_end; ++k )
+					{
+						for( var l = ( sdbjs.fun.isArray( ip_search[3] ) ? parseInt(ip_search[3][0]) : 0 ), l_end = ( sdbjs.fun.isArray( ip_search[3] ) ? parseInt(ip_search[3][1]) : 0 ); l <= l_end; ++l )
+						{
+							link_search.push( { 'address': (( sdbjs.fun.isArray( ip_search[0] ) ? i : ip_search[0] )+'.'+( sdbjs.fun.isArray( ip_search[1] ) ? j : ip_search[1] )+'.'+( sdbjs.fun.isArray( ip_search[2] ) ? k : ip_search[2] )+'.'+( sdbjs.fun.isArray( ip_search[3] ) ? l : ip_search[3] )), 'type': 'ip' } ) ;
+						}
+					}
+				}
+			}
+		}
+	
+	
+		if ( host_search.length > 0 )
+		{
+			//转换hostname
+			if ( sdbjs.fun.isArray( host_search ) )
+			{
+				var str_start = host_search[0] ;
+				var str_end   = host_search[3] ;
+				var strlen_num = host_search[1].length ;
+				var strlen_temp  = parseInt(host_search[1]).toString().length ;
+				var need_add_zero = false ;
+				if ( strlen_num > strlen_temp )
+				{
+					need_add_zero = true ;
+				}
+				for ( var i = parseInt(host_search[1]), i_end = parseInt(host_search[2]); i <= i_end ; ++i )
+				{
+					if ( need_add_zero && i.toString().length <= strlen_num )
+					{
+						link_search.push( { 'address': str_start + pad(i,strlen_num) + str_end, 'type': 'host' } ) ;
+					}
+					else
+					{
+						link_search.push( { 'address': str_start + i + str_end, 'type': 'host' } ) ;
+					}
+				}
+			}
+			else
+			{
+				link_search.push( { 'address': host_search, 'type': 'host' } ) ;
+			}
+		}
 	}
-	obj.value = link_search ;
-	return obj ;
+	return link_search ;
 }
 
 //---------------------------------------- public 组件 ----------------------------------------//

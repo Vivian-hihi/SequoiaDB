@@ -147,8 +147,8 @@ function addHostList()
 	var list_obj = sdbjs.fun.getHostList( addressList );
 	var clusterName = $.cookie( 'SdbClusterName' ) ;
 	var order = '' ;
-	var list_hosts_arr = list_obj.value ;
-	var list_hosts_num = list_hosts_arr.length ;
+	var list_hosts_arr = list_obj ;
+	var list_hosts_num = list_obj.length ;
 	var list_hosts_index = 0 ;
 	
 	function getTheHostLink()
@@ -157,13 +157,13 @@ function addHostList()
 		for( var i = 0; i < 5 && list_hosts_index < list_hosts_num; ++i, ++list_hosts_index )
 		{
 			var temp = null ;
-			if( list_obj.type == 'ip' )
+			if( list_hosts_arr[list_hosts_index]['type'] == 'ip' )
 			{
-				temp = { "IP": list_hosts_arr[list_hosts_index] } ;
+				temp = { "IP": list_hosts_arr[list_hosts_index]['address'] } ;
 			}
 			else
 			{
-				temp = { "HostName": list_hosts_arr[list_hosts_index] } ;
+				temp = { "HostName": list_hosts_arr[list_hosts_index]['address'] } ;
 			}
 			tempHostInfo.push( temp ) ;
 		}
