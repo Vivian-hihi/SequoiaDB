@@ -505,7 +505,7 @@ namespace engine
       rc = _getFileHeader( header ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to get file header:%s, rc:%d", rc ) ;
+         PD_LOG( PDERROR, "failed to get file header, rc:%d", rc ) ;
          goto error ;
       }
 
