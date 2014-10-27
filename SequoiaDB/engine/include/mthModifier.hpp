@@ -70,6 +70,7 @@ namespace engine
       BIT,
       ADDTOSET,
       RENAME,
+      NULLOPR,
 
       UNKNOW
    } ;

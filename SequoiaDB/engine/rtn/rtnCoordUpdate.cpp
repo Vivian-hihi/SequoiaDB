@@ -92,12 +92,19 @@ namespace engine
          boSelector = BSONObj( pSelector );
          boHint = BSONObj( pHint );
          boUpdator = BSONObj( pUpdator );
+
+         if ( boUpdator.isEmpty() )
+         {
+            PD_LOG( PDERROR, "modifier can't be empty" ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
       }
       catch ( std::exception &e )
       {
          PD_RC_CHECK( SDB_INVALIDARG, PDERROR,
-                     "update failed, received unexpected error:%s",
-                     e.what() );
+                      "Update failed, received unexpected error:%s",
+                      e.what() );
       }
 
       do
@@ -134,48 +141,70 @@ namespace engine
                                           hasShardingKey, cb ) ;
             //rc = checkModifierForSubCL( subCLList, pUpdator, cb );
             PD_RC_CHECK( rc, PDERROR,
-                        "failed to kick the sharding-key field "
-                        "for sub-collection(rc=%d)",
-                        rc );
+                         "Failed to kick the sharding-key field "
+                         "for sub-collection(rc=%d)",
+                         rc );
             newUpdator = newSubCLUpdator;
             if ( hasShardingKey )
             {
+               if ( newUpdator.isEmpty() )
+               {
+                  if ( flag & FLG_UPDATE_UPSERT )
+                  {
+                     newUpdator = BSON( "$null" << BSON( "null" << 1 ) ) ;
+                  }
+                  else
+                  {
+                     goto done ;
+                  }
+               }
                MsgOpUpdate *pUpdateReq = (MsgOpUpdate *)pReceiveBuffer;
                rc = msgBuildUpdateMsg( &pNewMsg, &bufferSize, pUpdateReq->name,
                                        flag, 0, &boSelector,
                                        &newUpdator, &boHint );
                PD_RC_CHECK( rc, PDERROR,
-                           "failed to build update request(rc=%d)", rc );
+                            "Failed to build update request(rc=%d)", rc ) ;
                pMsgReq = (MsgOpUpdate *)pNewMsg;
             }
             if ( pMsgReq->flags | FLG_UPDATE_UPSERT )
             {
-               pMsgReq->flags &= !FLG_UPDATE_UPSERT ;
+               pMsgReq->flags &= ~FLG_UPDATE_UPSERT ;
                pMsgReq->flags |= FLG_UPDATE_RETURNNUM;
             }
             rc = modifyOpOnMainCL( cataInfo, subCLList,
-                                 (MsgHeader *)pMsgReq,
-                                 pRouteAgent, cb, isNeedRefresh,
-                                 emptyRCList, sendGroupLst,
-                                 ((flag & FLG_UPDATE_RETURNNUM)
-                                 | (flag & FLG_UPDATE_UPSERT)) ?
-                                 &numTmp : NULL );
+                                   (MsgHeader *)pMsgReq,
+                                   pRouteAgent, cb, isNeedRefresh,
+                                   emptyRCList, sendGroupLst,
+                                   ((flag & FLG_UPDATE_RETURNNUM)
+                                   | (flag & FLG_UPDATE_UPSERT)) ?
+                                   &numTmp : NULL );
          }
          else
          {
             if ( hasShardingKey )
             {
+               if ( newUpdator.isEmpty() )
+               {
+                  if ( flag & FLG_UPDATE_UPSERT )
+                  {
+                     newUpdator = BSON( "$null" << BSON( "null" << 1 ) ) ;
+                  }
+                  else
+                  {
+                     goto done ;
+                  }
+               }
                MsgOpUpdate *pUpdateReq = (MsgOpUpdate *)pReceiveBuffer;
                rc = msgBuildUpdateMsg( &pNewMsg, &bufferSize, pUpdateReq->name,
                                        flag, 0, &boSelector,
                                        &newUpdator, &boHint );
                PD_RC_CHECK( rc, PDERROR,
-                           "failed to build update request(rc=%d)", rc );
+                            "Failed to build update request(rc=%d)", rc );
                pMsgReq = (MsgOpUpdate *)pNewMsg;
             }
             if ( pMsgReq->flags | FLG_UPDATE_UPSERT )
             {
-               pMsgReq->flags &= !FLG_UPDATE_UPSERT ;
+               pMsgReq->flags &= ~FLG_UPDATE_UPSERT ;
                pMsgReq->flags |= FLG_UPDATE_RETURNNUM;
             }
             rc = updateNormalCL( cataInfo, boSelector, pMsgReq,
@@ -556,7 +585,6 @@ namespace engine
                                           BOOLEAN &hasShardingKey )
    {
       INT32 rc = SDB_OK ;
-      hasShardingKey = FALSE ;
       try
       {
          BSONObj boShardingKey ;
@@ -636,6 +664,7 @@ namespace engine
       CoordSubCLlist::const_iterator iterCL = subCLList.begin();
       BSONObj boCur = boUpdator;
       BSONObj boNew = boUpdator;
+
       while( iterCL != subCLList.end() )
       {
          CoordCataInfoPtr subCataInfo;

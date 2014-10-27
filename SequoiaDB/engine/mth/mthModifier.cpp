@@ -1034,6 +1034,14 @@ namespace engine
                return UNSET ;
             }
          }
+         else if ( field[ 1 ] == 'n' )
+         {
+            if ( field[2] == 'u' && field[3] == 'l' &&
+                 field[4] == 'l' && field[5] == 0 )
+            {
+               return NULLOPR ;
+            }
+         }
       }
 
       return UNKNOW ;
@@ -1604,7 +1612,8 @@ namespace engine
            PULL == me->_modType ||
            PULL_ALL == me->_modType ||
            POP == me->_modType ||
-           RENAME == me->_modType )
+           RENAME == me->_modType ||
+           NULLOPR == me->_modType )
       {
          // we don't continue for those types since they are not going to append
          // new records
@@ -1792,6 +1801,8 @@ namespace engine
          b.appendAs ( e, me->_toModify.valuestr() ) ;
          break ;
       }
+      case NULLOPR:
+         break ;
       default :
          PD_LOG_MSG ( PDERROR, "unknow modifier type[%d]", me->_modType ) ;
          rc = SDB_INVALIDARG ;
