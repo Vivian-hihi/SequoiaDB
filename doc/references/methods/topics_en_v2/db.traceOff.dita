@@ -5,7 +5,7 @@
   <body>
     <section>
       <title>NAME</title>
-      <p>traceOff - Turn off the trace function of the database engine.</p>
+      <p>traceOff - 关闭数据库引擎跟踪功能，并将跟踪情况导出二进制文件，如：/opt/sequoiadb/trace.dump</p>
     </section>
     <section>
       <title>SYNOPSIS</title>
@@ -17,7 +17,7 @@
     </section>
     <section>
       <title>DESCRIPTION</title> 
-      <p>Turn off the trace function of the database engine.</p>
+      <p>关闭数据库引擎跟踪功能，并将跟踪情况导出二进制文件，如：/opt/sequoiadb/trace.dump </p>
       <parml>
         <plentry>
           <pt>Dump file (string)</pt>

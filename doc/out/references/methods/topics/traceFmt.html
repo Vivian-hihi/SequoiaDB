@@ -8,8 +8,8 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="traceFmt()"/>
-<meta name="description" content="traceFmt(&lt;formatType&gt;,&lt;input&gt;,&lt;output&gt;) 根据程序跟踪输出相应的信息到文件。 参数描述 参数名 参数类型 描述 是否必填 formatType int 格式类型。 是 input string 输入文件。 是 output string 输出文件。 是 示例 根据程序的跟踪情况形成文件打印出来： traceFmt(0, ..."/>
-<meta name="DC.Relation" scheme="URI" content="../../../references/methods/jssequoiadb.html"/>
+<meta name="description" content="traceFmt(&lt;formatType&gt;,&lt;input&gt;,&lt;output&gt;) 将 db.traceOff() 导出来的二进制文件格式化为另外文件输出。 参数描述 参数名 参数类型 描述 是否必填 formatType int 格式类型。 是 input string 输入文件。 是 output string 输出文件。 是 示例 格式化输出文件： traceFmt(0, ..."/>
+<meta name="DC.Relation" scheme="URI" content="../../../references/methods/global.html"/>
 <meta name="DC.Relation" scheme="URI" content="traceOff.html"/>
 <meta name="DC.Relation" scheme="URI" content="traceOn.html"/>
 <meta name="DC.Relation" scheme="URI" content="traceResume.html"/>
@@ -35,55 +35,55 @@
 <body onload="highlightSearchTerm()" id="topic_fcp_xzm_zj"><a name="topic_fcp_xzm_zj"><!-- --></a>
 <table class="nav"><tbody><tr><td><div class="navheader"><span class="frames" onclick="redirectFrames(location.pathname)"><script type="text/javascript"><!--
   if (parent.window.location.pathname == window.location.pathname ) document.write('With Frames');                    
-                    --></script></span><a class="link" href="../../../references/methods/jssequoiadb.html" title="Sdb"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">Sdb</span></a>  </div></td><td width="50%"><a class="navheader_parent_path" href="methodlist.html" title="SequoiaDB JavaScript 方法">SequoiaDB JavaScript 方法</a> / <a class="navheader_parent_path" href="../../../references/methods/jssequoiadb.html" title="Sdb">Sdb</a></td></tr></tbody></table>
+                    --></script></span><a class="link" href="../../../references/methods/global.html" title="Global"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">Global</span></a>  </div></td><td width="50%"><a class="navheader_parent_path" href="methodlist.html" title="SequoiaDB JavaScript 方法">SequoiaDB JavaScript 方法</a> / <a class="navheader_parent_path" href="../../../references/methods/global.html" title="Global">Global</a></td></tr></tbody></table>
 
   <h1 class="title topictitle1">traceFmt()</h1>
 
   <div class="body">
     <div class="section"><h2 class="title sectiontitle">traceFmt(&lt;formatType&gt;,&lt;input&gt;,&lt;output&gt;)</h2>
-      <p class="p">根据程序跟踪输出相应的信息到文件。</p>
+      <p class="p">将 db.traceOff() 导出来的二进制文件格式化为另外文件输出。</p>
 
     </div>
 
     <div class="section"><h2 class="title sectiontitle">参数描述</h2>
       <a name="topic_fcp_xzm_zj__references_method_createNode_table"><!-- --></a><table cellpadding="4" cellspacing="0" summary="" id="topic_fcp_xzm_zj__references_method_createNode_table" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d136375e26" class="stentry">参数名</th>
+          <th valign="bottom" align="left" id="d136444e26" class="stentry">参数名</th>
 
-          <th valign="bottom" align="left" id="d136375e29" class="stentry">参数类型</th>
+          <th valign="bottom" align="left" id="d136444e29" class="stentry">参数类型</th>
 
-          <th valign="bottom" align="left" id="d136375e32" class="stentry">描述</th>
+          <th valign="bottom" align="left" id="d136444e32" class="stentry">描述</th>
 
-          <th valign="bottom" align="left" id="d136375e35" class="stentry">是否必填</th>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d136375e26" class="stentry">formatType</td>
-
-          <td valign="top" headers="d136375e29" class="stentry">int</td>
-
-          <td valign="top" headers="d136375e32" class="stentry">格式类型。</td>
-
-          <td valign="top" headers="d136375e35" class="stentry">是</td>
+          <th valign="bottom" align="left" id="d136444e35" class="stentry">是否必填</th>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d136375e26" class="stentry">input</td>
+          <td valign="top" headers="d136444e26" class="stentry">formatType</td>
 
-          <td valign="top" headers="d136375e29" class="stentry">string</td>
+          <td valign="top" headers="d136444e29" class="stentry">int</td>
 
-          <td valign="top" headers="d136375e32" class="stentry">输入文件。</td>
+          <td valign="top" headers="d136444e32" class="stentry">格式类型。</td>
 
-          <td valign="top" headers="d136375e35" class="stentry">是</td>
+          <td valign="top" headers="d136444e35" class="stentry">是</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d136375e26" class="stentry">output</td>
+          <td valign="top" headers="d136444e26" class="stentry">input</td>
 
-          <td valign="top" headers="d136375e29" class="stentry">string</td>
+          <td valign="top" headers="d136444e29" class="stentry">string</td>
 
-          <td valign="top" headers="d136375e32" class="stentry">输出文件。</td>
+          <td valign="top" headers="d136444e32" class="stentry">输入文件。</td>
 
-          <td valign="top" headers="d136375e35" class="stentry">是</td>
+          <td valign="top" headers="d136444e35" class="stentry">是</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d136444e26" class="stentry">output</td>
+
+          <td valign="top" headers="d136444e29" class="stentry">string</td>
+
+          <td valign="top" headers="d136444e32" class="stentry">输出文件。</td>
+
+          <td valign="top" headers="d136444e35" class="stentry">是</td>
 
         </tr>
 </table>
@@ -92,7 +92,7 @@
     
     <div class="section"><h2 class="title sectiontitle">示例</h2>
       <ul class="ul">
-        <li class="li">根据程序的跟踪情况形成文件打印出来：<pre class="pre codeblock">traceFmt(0, "/opt/sequoiadb/trace.dump", "/opt/sequoiadb/trace.flw")</pre>
+        <li class="li">格式化输出文件：<pre class="pre codeblock">traceFmt(0, "/opt/sequoiadb/trace.dump", "/opt/sequoiadb/trace.flw")</pre>
 </li>
         
       </ul>
@@ -108,7 +108,7 @@
 <div><a class="navheader_parent_path" href="traceStatus.html" title="db.traceStatus()">db.traceStatus()</a></div>
 </div>
 </div>
-<div class="navfooter"><a class="link" href="../../../references/methods/jssequoiadb.html" title="Sdb"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">Sdb</span></a>  <script type="text/javascript"><!--         
+<div class="navfooter"><a class="link" href="../../../references/methods/global.html" title="Global"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">Global</span></a>  <script type="text/javascript"><!--         
     function expand(){
         parent.tocwin.expandToTopic(window.location.href, this.getAttribute('href'));
     }

@@ -4,7 +4,7 @@
   <title>traceFmt()</title>
   <body>
     <section><title>traceFmt(&lt;formatType>,&lt;input>,&lt;output>)</title>
-      <p>根据程序跟踪输出相应的信息到文件。</p>
+      <p>将 db.traceOff() 导出来的二进制文件格式化为另外文件输出。</p>
     </section>
     <section><title>参数描述</title>
       <simpletable id="references_method_createNode_table">
@@ -36,7 +36,7 @@
     </section>    
     <section><title>示例</title>
       <ul>
-        <li>根据程序的跟踪情况形成文件打印出来：<codeblock>traceFmt(0, "/opt/sequoiadb/trace.dump", "/opt/sequoiadb/trace.flw")</codeblock></li>        
+        <li>格式化输出文件：<codeblock>traceFmt(0, "/opt/sequoiadb/trace.dump", "/opt/sequoiadb/trace.flw")</codeblock></li>        
       </ul>      
     </section>
   </body>

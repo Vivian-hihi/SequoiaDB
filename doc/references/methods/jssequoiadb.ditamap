@@ -37,8 +37,7 @@
   <topicref href="topics/resetSnapshot.dita"/>
   <topicref href="setSessionAttr.dita"/>
   <topicref href="topics/dbsnapshot.dita"/>
-  <topicref href="topics/startRG.dita"/>
-  <topicref href="topics/traceFmt.dita"/>
+  <topicref href="topics/startRG.dita"/>  
   <topicref href="topics/traceOff.dita"/>
   <topicref href="topics/traceOn.dita"/>
   <topicref href="topics/traceResume.dita"/>

@@ -2,7 +2,7 @@
 <!DOCTYPE map PUBLIC "-//OASIS//DTD DITA Map//EN" "http://docs.oasis-open.org/dita/v1.1/OS/dtd/map.dtd">
 <map title="References_Mothods">    
  <topicref href="topics/methodlist.dita">
-     
+     <anchorref href="global.ditamap"/>
      <anchorref href="jssequoiadb.ditamap"/>
      <anchorref href="jscollectionspace.ditamap"/>
      <anchorref href="jscollection.ditamap"/>

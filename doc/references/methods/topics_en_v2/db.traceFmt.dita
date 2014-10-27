@@ -5,7 +5,7 @@
   <body>
     <section>
       <title>NAME</title>
-      <p>traceFmt - Output information into file according to the program's trace.</p>
+      <p>traceFmt - 将db.traceOff()导出来的二进制文件格式化为另外文件输出 </p>
     </section>
     <section>
       <title>SYNOPSIS</title>
@@ -17,7 +17,7 @@
     </section>
     <section>
       <title>DESCRIPTION</title> 
-      <p>Output information into file according to the program's trace.</p>
+      <p>将db.traceOff()导出来的二进制文件格式化为另外文件输出 </p>
       <parml>
         <plentry>
           <pt>formatType (int)</pt>
@@ -35,7 +35,7 @@
     </section>    
     <section>
       <title>Examples</title>
-      <p>Output information into file according to the program's trace, and print it out.</p>
+      <p>格式化输出文件 </p>
       <codeblock>traceFmt(0, "/opt/sequoiadb/trace.dump", "/opt/sequoiadb/trace.flw")</codeblock>      
     </section>
   </body>
