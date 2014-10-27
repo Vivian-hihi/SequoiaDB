@@ -9,7 +9,7 @@
     </section>
     <section>
       <title>SYNOPSIS</title>
-      <p></p><apiname>db.collectionspace.collection.getLob</apiname>(<parmname>&lt;oid>&lt;file path>,[forced]</parmname>)
+      <p></p><apiname>db.collectionspace.collection.getLob</apiname>(<parmname>&lt;oid>,&lt;file path>,[forced]</parmname>)
     </section>
     <section>
       <title>CATEGORY</title>
