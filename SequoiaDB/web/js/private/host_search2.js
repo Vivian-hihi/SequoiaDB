@@ -712,8 +712,9 @@ function checkHostInfo()
 			{
 				for( var i = 1; i < host_len; ++i )
 				{
-					if( _hostConf[k]['HostName'] == jsonArr[i]['HostName'] && _hostConf[k]['IP'] == jsonArr[i]['IP'] )
+					if( _hostConf[k]['HostName'] == jsonArr[i]['HostName'] || _hostConf[k]['IP'] == jsonArr[i]['IP'] )
 					{
+						errorDetail[k] = '' ;
 						if( !( typeof( jsonArr[i]['errno'] ) == 'number' && jsonArr[i]['errno'] != 0 ) )
 						{
 							_hostConf[k]['CPU']     = jsonArr[i]['CPU'] ;
