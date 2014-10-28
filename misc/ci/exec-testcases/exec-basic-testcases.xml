@@ -11,15 +11,13 @@
 <!--@param ${WORKSPACE}: where the working space is it-->
 <!--@param ${ci.script.file.path} : where the ci.test.properties file is it -->
 
-<project name="test-basic-testcases" default="Test-Basic-Testcases">
+<project name="Exec-Basic-Testcases" default="Test-Basic-Testcases">
 	<hostinfo prefix="host" />
 	<property file="${ci.properties.path}" />
 	<property name="sdb.fullname" value="${install.path}/sequoiadb/bin/sdb" />
 	<property name="import.file" value="${host.NAME}-testcases-time.json" />
 	<property name="import.cmd" value="ant -l deploy-test-result.log -f deploy-test-result.xml -Dant.sdb.tasks.path=${antTask.jar.path} -Dproperties.dir=${ci.properties.path} -Dcoord.service.port=11810 -Dcs.name=basic_testcases -Dcl.name=year_2014 -Dimport.file=${import.file}" />
 	<property name="delete.uninstall.config" value="find /tmp -name 'bitrock_installer*.log' -delete" />
-
-	<!-- <property name="to.copy.test.log" value="true"/> -->
 	<taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
 		<classpath>
 			<fileset dir="${antTask.jar.path}" includes="*.jar" />
@@ -34,6 +32,20 @@
 		<stafTools worktype="delete" workHost="${host.NAME}" fileName="${install.path}/${import.file}" failonerror="false" />
 		<stafTools worktype="shell" workHost="${host.NAME}" workDir="/tmp" common="${delete.uninstall.config}" failonerror="false" />
 		<echo message="Clean deploy result reports compeleted." />
+	</target>
+
+	<target name="Test-Basic-Samples" depends="">
+		<echo message="Begin test basic samples testcases..." />
+		<echo message="Perform the basic samples testcases,with testcase.path=${samples.testcase.path}/JS" />
+		<foreach target="test-one-suite" param="test.suite.fullname">
+			<path>
+				<dirset dir="${samples.testcase.path}/JS" includes="${includes.dir.patterns}" excludes="${excludes.dir.patterns}" />
+			</path>
+			<param name="testcases.path" value="${samples.testcase.path}/JS" />
+			<param name="test-type" value="samples-basic" />
+			<param name="includes.case.patterns" value="*.js" />
+			<param name="excludes.case.patterns" value="" />
+		</foreach>
 	</target>
 
 	<target name="Test-Basic-Testcases" depends="Clean-Basic-Reports">

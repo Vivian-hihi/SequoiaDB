@@ -2,7 +2,7 @@
 <!--@param ${reports.path}: The path where test case direcotry.-->
 <!--@param ${test.package.name}: The name of test package name,.-->
 <!--@param ${deploy.case.fullname}: The file name ( .xml )this file name is -->
-<project name="Exec-Samples-Testcases" default="Test-Python-Samples">
+<project name="Exec-Samples-Testcases" default="Test-Basic-Samples">
     <property file="${ci.properties.path}" />
     <taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
         <classpath>
@@ -11,8 +11,11 @@
     </taskdef>
 
     <target name="Test-Python-Samples">
-        <ant antfile="exec-driver-python-test.xml" dir="." target="Test-Python-Samples" inheritAll="true">
-        </ant>
+        <ant antfile="exec-driver-python-test.xml" dir="." target="Test-Python-Samples" inheritAll="true" />
+    </target>
+
+    <target name="Test-Basic-Samples">
+        <ant antfile="exec-basic-testcases.xml" dir="." target="Test-Basic-Samples" inheritAll="true" />
     </target>
 
 
