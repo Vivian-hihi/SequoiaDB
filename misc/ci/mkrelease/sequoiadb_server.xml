@@ -279,10 +279,10 @@
             <group>root</group>
             <owner>root</owner>
         </changeOwnerAndGroup>
-        <changePermissions>
-            <files>${install}/bin/sdbomtool</files>
-            <permissions>4755</permissions>
-        </changePermissions>
+        <runProgram>
+            <program>chmod</program>
+            <programArguments>4755 ${installdir}/bin/sdbomtool</programArguments>
+        </runProgram>
     </postInstallationActionList>
     <preUninstallationActionList>
         <stopWindowsService>
