@@ -33,6 +33,7 @@
 #include "omManagerJob.hpp"
 #include "omDef.hpp"
 #include "rtn.hpp"
+#include "ossProc.hpp"
 #include "../bson/bson.h"
 #include <string>
 #include <vector>
@@ -141,6 +142,73 @@ namespace engine
       goto done ;
    }
 
+   void omClusterNotifier::_getAgentService( string &serviceName )
+   {
+      INT32 rc = SDB_OK ;
+      CHAR conf[OSS_MAX_PATHSIZE + 1] = { 0 } ;
+      po::options_description desc ( "Config options" ) ;
+      po::variables_map vm ;
+      CHAR hostport[OSS_MAX_HOSTNAME + 6] = { 0 } ;
+      serviceName = boost::lexical_cast<string>( SDBCM_DFT_PORT ) ;
+      rc = ossGetHostName( hostport, OSS_MAX_HOSTNAME ) ;
+      if ( rc != SDB_OK )
+      {
+         PD_LOG( PDERROR, "get host name failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      ossStrncat ( hostport, SDBCM_CONF_PORT, ossStrlen(SDBCM_CONF_PORT) ) ;
+
+      desc.add_options()
+         (SDBCM_CONF_DFTPORT, po::value<string>(), "sdbcm default "
+         "listening port")
+         (hostport, po::value<string>(), "sdbcm specified listening port")
+      ;
+
+      rc = ossGetEWD ( conf, OSS_MAX_PATHSIZE ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to get excutable file's working "
+                  "directory" ) ;
+         goto error ;
+      }
+
+      if ( ( ossStrlen ( conf ) + ossStrlen ( SDBCM_CONF_PATH_FILE ) + 2 ) >
+           OSS_MAX_PATHSIZE )
+      {
+         PD_LOG ( PDERROR, "Working directory too long" ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      ossStrncat( conf, OSS_FILE_SEP, 1 );
+      ossStrncat( conf, SDBCM_CONF_PATH_FILE,
+                  ossStrlen( SDBCM_CONF_PATH_FILE ) );
+      rc = utilReadConfigureFile ( conf, desc, vm ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to read configure file, rc = %d", rc ) ;
+         goto error ;
+      }
+      else if ( vm.count( hostport ) )
+      {
+         serviceName = vm[hostport].as<string>() ;
+      }
+      else if ( vm.count( SDBCM_CONF_DFTPORT ) )
+      {
+         serviceName = vm[SDBCM_CONF_DFTPORT].as<string>() ;
+      }
+      else
+      {
+         serviceName = boost::lexical_cast<string>( SDBCM_DFT_PORT ) ;
+      }
+
+   done:
+      return ;
+   error:
+      goto done ;
+   }
+
    INT32 omClusterNotifier::_updateNotifier()
    {
       INT32 rc = SDB_OK ;
@@ -204,6 +272,26 @@ namespace engine
 
          _vHostTable.push_back( tmp ) ;
          _mapTargetAgents.insert( _MAPAGENT_VALUE( tmp.hostName, tmp ) ) ;
+      }
+
+      {
+         CHAR localHost[ OSS_MAX_HOSTNAME + 1 ] ;
+         ossGetHostName( localHost, OSS_MAX_HOSTNAME ) ;
+         _MAPAGENT_ITER iter = _mapTargetAgents.find( localHost ) ;
+         if ( iter == _mapTargetAgents.end() )
+         {
+            omHostContent content ;
+            content.hostName = localHost ;
+            content.ip       = localHost ;
+            string serviceName ;
+            _getAgentService( serviceName ) ;
+            content.serviceName = serviceName ;
+            content.user        = "" ;
+            content.passwd      = "" ;
+
+            _mapTargetAgents.insert( 
+                                _MAPAGENT_VALUE( content.hostName, content ) ) ;
+         }
       }
    done:
       return rc ;
@@ -351,7 +439,7 @@ namespace engine
       }
 
       hosttable = arrayBuilder.arr() ;
-      
+
       _MAPAGENT_ITER iter = _mapTargetAgents.begin() ;
       while ( iter != _mapTargetAgents.end() )
       {
@@ -547,7 +635,7 @@ namespace engine
    {
       return FALSE ;
    }
-   
+
    INT32 omTaskJob::doit()
    {
       INT32 rc     = SDB_OK ;
@@ -566,7 +654,7 @@ namespace engine
          {
             _taskManager->run() ;
          }
-         
+
          ossSleep( OSS_ONE_SEC ) ;
       }
 

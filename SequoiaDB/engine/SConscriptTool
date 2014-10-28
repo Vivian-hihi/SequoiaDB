@@ -407,6 +407,10 @@ sdbdpsdumpFiles = [
       "tools/sdbDpsFilterMain.cpp"
       ]
 
+sdbOmToolMain = [
+      "tools/sdbOmTool.cpp"
+      ]
+
 #BSON
 toolEnv.StaticLibrary('bson', bsonFiles)
 #Client Driver
@@ -495,6 +499,12 @@ sdbinspect = toolEnv.Program("sdbinspect",
          inspectFiles,
          LIBDEPS=["oss", "bson", "pmd", "util", "pd", "client", "clientcpp"],
          _LIBDEPS='$_LIBDEPS_OBJS' )
+         
+if linux:         
+   sdbomtool = toolEnv.Program("sdbomtool",
+               sdbOmToolMain,
+               LIBDEPS=["pd", "oss", "util"],
+               _LIBDEPS='$_LIBDEPS_OBJS' )
 
 toolEnv.Install( '#/bin', sdbexprt )
 toolEnv.Install( '#/bin', sdbimprt )
@@ -512,3 +522,5 @@ toolEnv.Install( '#/tools', sdbload2 )
 toolEnv.Install( '#/tools', sdbmemcheck )
 toolEnv.Install( '#/bin', sdbdpsdump )
 toolEnv.Install( '#/bin', sdbinspect )
+if linux:
+   toolEnv.Install( '#/bin', sdbomtool )

@@ -84,6 +84,7 @@ namespace engine
          INT32            _notifyAgent() ;
          INT32            _addUpdateHostReq( pmdRemoteSession *remoteSession ) ;
          void             _clearSession( pmdRemoteSession *remoteSession ) ;
+         void             _getAgentService( string &serviceName ) ;
 
       private:
          pmdEDUCB                *_cb ;
