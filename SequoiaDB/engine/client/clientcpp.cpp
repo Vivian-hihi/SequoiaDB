@@ -4111,7 +4111,12 @@ namespace sdbclient
    {
       if ( _connection )
       {
+         if ( _isOpen )
+         {
+            close() ;  
+         }
          _connection->_unregLob ( this ) ;
+         _connection = NULL ;
       }
       if ( _pSendBuffer )
       {
@@ -4409,7 +4414,9 @@ namespace sdbclient
 
    done:
       if ( locked )
+      {
          _connection->unlock() ;
+      }
       PD_TRACE_EXITRC ( SDB_CLIENT_CLOSE, rc );
       return rc ;
    error:
