@@ -1441,7 +1441,7 @@ namespace engine
                   lineBuilder.append( SPT_USR_SYSTEM_MOUNT, mount ) ;
                   lineBuilder.appendBool( SPT_USR_SYSTEM_ISLOCAL,
                                           string::npos !=
-                                          fileSystem.find( "/dev/sd", 0, 7 )) ;
+                                          fileSystem.find( "/dev/", 0, 5 )) ;
                   arrBuilder << lineBuilder.obj() ;
                }
                catch ( std::exception &e )
