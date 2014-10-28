@@ -407,8 +407,6 @@ function main()
       }
       // set return result
       RET_JSON[HostInfo].push( ret ) ;
-      // clean up something
-      cleanup( ssh, osInfo ) ;
    }
 
    return RET_JSON ;
