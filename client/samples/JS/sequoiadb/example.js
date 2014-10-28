@@ -1,7 +1,8 @@
 // To run this example, type ./sdb -f example.js
 
 // connect to database
-var db = new Sdb('localhost', 11810);
+/*var db = new Sdb('localhost', 11810);*/
+var db = new Sdb(COORDHOSTNAME, COORDSVCNAME);
 
 // try-catch block just to ensure that you can run this example multiple times
 try {
