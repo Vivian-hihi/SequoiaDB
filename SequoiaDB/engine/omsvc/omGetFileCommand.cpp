@@ -1565,6 +1565,7 @@ namespace engine
                                            list<omScanHostInfo> &hostInfoList ) 
    {
       INT32 rc = SDB_OK ;
+      _id2Host.clear() ;
       list<omScanHostInfo>::iterator iter = hostInfoList.begin() ;
       while ( iter != hostInfoList.end() )
       {
@@ -1595,6 +1596,8 @@ namespace engine
             PD_LOG( PDERROR, "msgBuildQueryMsg failed:rc=%d", rc ) ;
             goto error ;
          }
+
+         _id2Host[routeID.value] = *iter ;
 
          subSession->setReqMsg( (MsgHeader *)pContent ) ;
          iter++;
@@ -1682,6 +1685,35 @@ namespace engine
       goto done ;
    }
 
+   void omCheckHostCommand::_errorCheckHostEnv( 
+                                          list<omScanHostInfo> &hostInfoList,
+                                          list<BSONObj> &hostResult, 
+                                          MsgRouteID id, int flag,
+                                          const string &error )
+   {
+      string hostName = "" ;
+      string ip       = "" ;
+      map<UINT64, omScanHostInfo>::iterator iter = _id2Host.find( id.value ) ;
+      SDB_ASSERT( iter != _id2Host.end() , "" ) ;
+      if ( iter != _id2Host.end() )
+      {
+         omScanHostInfo info = iter->second ;
+         hostName = info.hostName ;
+         ip       = info.ip ;
+      }
+
+      //sdbGetOMManager()->getHostInfoByID( id, hostName, service ) ;
+      BSONObj result = BSON( OM_BSON_FIELD_HOST_IP << ip
+                             << OM_BSON_FIELD_HOST_NAME << hostName
+                             << OM_REST_RES_RETCODE << flag 
+                             << OM_REST_RES_DETAIL << error ) ;
+      hostResult.push_back( result ) ;
+      _eraseFromListByIP( hostInfoList, ip ) ;
+
+      PD_LOG( PDERROR, "check host error:%s,agent=%s,rc=%d", error.c_str(), 
+              hostName.c_str(), flag ) ;
+   }
+
    INT32 omCheckHostCommand::_checkHostEnv( list<omScanHostInfo> &hostInfoList, 
                                             list<BSONObj> &hostResult )
    {
@@ -1723,13 +1755,14 @@ namespace engine
 
       for ( UINT32 i = 0 ; i < subSessionVec.size() ; i++ )
       {
+         rc = SDB_OK ;
          vector<BSONObj> objVec ;
          SINT32 flag               = SDB_OK ;
          SINT64 contextID          = -1 ;
          SINT32 startFrom          = 0 ;
          SINT32 numReturned        = 0 ;
          MsgHeader* pRspMsg        = NULL ;
-         pmdSubSession *subSession = subSessionVec[i] ;
+         pmdSubSession *subSession = subSessionVec[i] ;         
          if ( subSession->isDisconnect() )
          {
             PD_LOG(PDERROR, "session disconnected:id=%s,rc=%d", 
@@ -1740,10 +1773,11 @@ namespace engine
          pRspMsg = subSession->getRspMsg() ;
          if ( NULL == pRspMsg )
          {
-            rc = SDB_UNEXPECTED_RESULT ;
-            _errorDetail = "unexpected result" ;
-            PD_LOG(PDERROR, "%s:rc=%d", _errorDetail.c_str(), rc ) ;
-            goto error ;
+            _errorDetail = "receive null response from agent" ;
+            _errorCheckHostEnv( hostInfoList, hostResult, 
+                                subSession->getNodeID(), SDB_UNEXPECTED_RESULT,
+                                _errorDetail ) ;
+            continue ;
          }
 
          rc = msgExtractReply( (CHAR *)pRspMsg, &flag, &contextID, &startFrom, 
@@ -1751,42 +1785,48 @@ namespace engine
          if ( SDB_OK != rc )
          {
             _errorDetail = "extract reply failed" ;
-            PD_LOG( PDERROR, "%s:rc=%d", _errorDetail.c_str(), rc ) ;
-            goto error ;
+            _errorCheckHostEnv( hostInfoList, hostResult, 
+                                subSession->getNodeID(), rc, _errorDetail ) ;
+            continue ;
          }
 
          if ( SDB_OK != flag )
          {
-            rc = flag ;
             if ( objVec.size() > 0 )
             {
                _errorDetail = objVec[0].getStringField( OM_REST_RES_DETAIL ) ;
             }
-            PD_LOG( PDERROR, "agent process failed:detail=%s,rc=%d", 
-                    _errorDetail.c_str(), rc ) ;
-            goto error ;
+            _errorCheckHostEnv( hostInfoList, hostResult, 
+                                subSession->getNodeID(), flag, _errorDetail ) ;
+            continue ;
          }
 
          if ( 1 != objVec.size() )
          {
-            rc = SDB_UNEXPECTED_RESULT ;
             _errorDetail = "unexpected response size" ;
-            PD_LOG( PDERROR, "%s:rc=%d", _errorDetail.c_str(), rc ) ;
-            goto error ;
+            _errorCheckHostEnv( hostInfoList, hostResult, 
+                                subSession->getNodeID(), SDB_UNEXPECTED_RESULT, 
+                                _errorDetail ) ;
+            continue ;
          }
 
          BSONObj result = objVec[0] ;
          rc = _checkResFormat( result ) ;
          if ( SDB_OK != rc )
          {
-            PD_LOG( PDERROR, "agent's response format error:rc=%d", rc ) ;
-            goto error ;
+            _errorDetail = "agent's response format error" ;
+            _errorCheckHostEnv( hostInfoList, hostResult, 
+                                subSession->getNodeID(), rc, _errorDetail ) ;
+            continue ;
          }
+
          _updateDiskInfo( result ) ;
          hostResult.push_back( result ) ;
          //TODO: get /etc/hosts, and check 
          _eraseFromList( hostInfoList, result ) ;
       }
+
+      rc = SDB_OK ;
 
       {
          list<omScanHostInfo>::iterator iter = hostInfoList.begin() ;

@@ -181,6 +181,28 @@ namespace engine
       string sshPort ;
       string agentPort ;
       bool isNeedUninstall ;
+
+      omScanHostInfo()
+      {
+         hostName        = "" ;
+         ip              = "" ;
+         user            = "" ;
+         passwd          = "" ;
+         sshPort         = "" ;
+         agentPort       = "" ;
+         isNeedUninstall = false ;
+      }
+      
+      omScanHostInfo( const omScanHostInfo &right )
+      {
+         hostName        = right.hostName ;
+         ip              = right.ip ;
+         user            = right.user ;
+         passwd          = right.passwd ;
+         sshPort         = right.sshPort ;
+         agentPort       = right.agentPort ;
+         isNeedUninstall = right.isNeedUninstall ;
+      }
    } ;
    class omScanHostCommand : public omCreateClusterCommand
    {
@@ -264,6 +286,10 @@ namespace engine
          void            _updateDiskInfo( BSONObj &onehost ) ;
 
          INT32           _checkResFormat( BSONObj &result ) ;
+         void            _errorCheckHostEnv( list<omScanHostInfo> &hostInfoList,
+                                             list<BSONObj> &hostResult, 
+                                             MsgRouteID id, int flag,
+                                             const string &error ) ;
          INT32           _checkHostEnv( list<omScanHostInfo> &hostInfoList, 
                                         list<BSONObj> &hostResult ) ;
 
@@ -286,6 +312,9 @@ namespace engine
          INT32           _addAgentExitReq( omManager *om,
                                           pmdRemoteSession *remoteSession,
                                           list<omScanHostInfo> &hostInfoList ) ;
+
+      private:
+         map<UINT64, omScanHostInfo> _id2Host ;
    };
 
    class omAddHostCommand : public omScanHostCommand
