@@ -45,6 +45,13 @@
         </ant>
     </target>
 
+    <target name="Test-Java-Samples">
+        <ant antfile="exec-driver-java-test.xml" dir="." target="Test-Java-Samples" inheritAll="true" >
+            <property name="excludes.dir.patterns" value="" />
+            <property name="includes.dir.patterns" value="*" />
+        </ant>
+    </target>
+
 
     <!-- <target name="exec-samples-testcases" depends="clean-env">
         <foreach target="test-suite-case" param="test-suite-fullname">
