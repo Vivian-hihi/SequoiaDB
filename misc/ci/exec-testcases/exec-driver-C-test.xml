@@ -24,7 +24,7 @@
         <echo message="Clean deploy result reports compeleted." />
     </target>
 
-    <target name="Test-C-Samples" depends="Clean-C-Reports">
+    <target name="Test-C-Samples" depends="">
         <hostinfo prefix="host" />
         <echo message="Begin test c samples testcases..." />
         <echo message="Perform the c samples testcases with testcase.path=${samples.testcase.path}/C" />

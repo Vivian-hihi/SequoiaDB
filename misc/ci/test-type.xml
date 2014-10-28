@@ -167,8 +167,6 @@
 					<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
 					<param name="samples.testcase.path" value="${testcase.path}/samples_testcases" />
 					<param name="deploy.case.fullname" value="${deploy.case.fullname}" />
-					<param name="excludes.dir.patterns" value="" />
-					<param name="includes.dir.patterns" value="*" />
 				</sdbtest>
 				<echo message="... Samples test is over ..." />
 				<!-- <echo message="... test the client sample test ..." />

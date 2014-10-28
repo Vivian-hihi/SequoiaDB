@@ -11,13 +11,39 @@
     </taskdef>
 
     <target name="Test-Python-Samples">
-        <ant antfile="exec-driver-python-test.xml" dir="." target="Test-Python-Samples" inheritAll="true" />
+        <ant antfile="exec-driver-python-test.xml" dir="." target="Test-Python-Samples" inheritAll="true" >
+            <property name="excludes.dir.patterns" value="reports*" />
+            <property name="includes.dir.patterns" value="*" />
+        </ant>
     </target>
 
     <target name="Test-Basic-Samples">
-        <ant antfile="exec-basic-testcases.xml" dir="." target="Test-Basic-Samples" inheritAll="true" />
+        <ant antfile="exec-basic-testcases.xml" dir="." target="Test-Basic-Samples" inheritAll="true" >
+            <property name="excludes.dir.patterns" value="vote" />
+            <property name="includes.dir.patterns" value="*" />
+        </ant>
     </target>
 
+    <target name="Test-C-Samples">
+        <ant antfile="exec-driver-C-test.xml" dir="." target="Test-C-Samples" inheritAll="true" >
+            <property name="excludes.dir.patterns" value="" />
+            <property name="includes.dir.patterns" value="*" />
+        </ant>
+    </target>
+
+    <target name="Test-CPP-Samples">
+        <ant antfile="exec-driver-CPP-test.xml" dir="." target="Test-CPP-Samples" inheritAll="true" >
+            <property name="excludes.dir.patterns" value="rg" />
+            <property name="includes.dir.patterns" value="*" />
+        </ant>
+    </target>
+
+    <target name="Test-PHP-Samples">
+        <ant antfile="exec-driver-php-test.xml" dir="." target="Test-PHP-Samples" inheritAll="true" >
+            <property name="excludes.dir.patterns" value="tools" />
+            <property name="includes.dir.patterns" value="*" />
+        </ant>
+    </target>
 
 
     <!-- <target name="exec-samples-testcases" depends="clean-env">
