@@ -145,6 +145,7 @@
 			</manifest>
 			<fileset dir="${deploy.path}/hlt/samples_testcases/Java/build" includes="**/*" />
 		</jar>
+		<copy file="${sequoiadb.jar.dir}" tofile="${WORKSPACE}/deploy/hlt/samples_testcases/Java/lib/sequoiadb.jar" />
 	</target>
 	
 	<target name="build_c_samples" depends="" >

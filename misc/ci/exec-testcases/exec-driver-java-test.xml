@@ -36,6 +36,38 @@
         <mkdir dir="${reports.path}" />
     </target>
 
+    <target name="Test-Java-Samples" depends="">
+        <property name="java_test.dir" value="${samples.testcase.path}/Java/build" />
+        <property name="java_test.jar.dir" value="${samples.testcase.path}/Java/lib/java_samples.jar" />
+        <property name="sequoiadb.jar.dir" value="${samples.testcase.path}/Java/lib/sequoiadb.jar" />
+        <junit printsummary="yes" fork="yes" showoutput="true" timeout="1200000">
+            <classpath>
+                <pathelement path="/usr/share/java/junit.jar" />
+                <pathelement path="/usr/share/java/junit4.jar" />  <!-- delete -->
+
+                <pathelement path="${sequoiadb.jar.dir}" />
+                <pathelement path="${java_test.jar.dir}" />
+            </classpath>
+            <formatter type="xml" />
+            <batchtest todir="${reports.path}">
+                <fileset dir="${java_test.dir}">
+                    <include name="**/*.*" />
+                    <exclude name="**/TestConstant*.*" />
+                    <exclude name="**/Replica*.*" />
+                    <exclude name="**/*testdata*/*" />
+                    <exclude name="**/*Constan*.class" />
+                    <exclude name="**/SdbNest.class" />
+                    <exclude name="**/MultiThread*" />   
+                </fileset>
+            </batchtest>
+        </junit>
+        <basename property="deploy.name" file="${deploy.case.fullname}" suffix=".xml" />
+        <replace token='name="com.sequoiadb.test' value='name="com.sequoiadb.testcases-java.${deploy.name}'>
+            <fileset dir="${reports.path}/"  includes="*" />
+        </replace>
+        <echo message="samples java is over , report file is in ${reports.path}" /> 
+    </target>
+
     <target name="exec-driver-java-test" depends="clean-env">
         <junit printsummary="yes" fork="yes" showoutput="true" timeout="1200000">
             <classpath>
