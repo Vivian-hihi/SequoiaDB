@@ -180,7 +180,7 @@ namespace engine
       BYTE           _oid[DMS_LOB_OID_LEN] ;
       UINT32         _sequence ;
       UINT32         _dataLen ;
-      SINT32         _lastPageInBucket ;
+      SINT32         _prevPageInBucket ;
       SINT32         _nextPageInBucket ;
       UINT32         _clLogicalID ;
       UINT16         _mbID ;
@@ -189,7 +189,7 @@ namespace engine
       _dmsLobDataMapBlk()
       :_sequence( 0 ),
        _dataLen( 0 ),
-       _lastPageInBucket( DMS_LOB_INVALID_PAGEID ),
+       _prevPageInBucket( DMS_LOB_INVALID_PAGEID ),
        _nextPageInBucket( DMS_LOB_INVALID_PAGEID ),
        _clLogicalID( DMS_INVALID_CLID ),
        _mbID( DMS_INVALID_MBID )

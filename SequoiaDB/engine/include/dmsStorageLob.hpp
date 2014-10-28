@@ -79,6 +79,8 @@ namespace engine
                       dmsStorageData *pDataSu ) ;
       virtual ~_dmsStorageLob() ;
 
+      _dmsStorageLobData*  getLobData() { return &_data ; }
+
    public:
       INT32 open( const CHAR *path,
                   BOOLEAN createNew,

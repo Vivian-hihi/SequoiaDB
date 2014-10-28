@@ -233,8 +233,9 @@ namespace engine
       UINT32         _totalIndexPages ;
       UINT64         _totalDataFreeSpace ;
       UINT64         _totalIndexFreeSpace ;
+      UINT32         _totalLobPages ;
       // end
-      CHAR           _pad [ 408 ] ;
+      CHAR           _pad [ 404 ] ;
 
       void reset ( const CHAR *clName = NULL,
                    UINT16 mbID = DMS_INVALID_MBID,
@@ -279,6 +280,7 @@ namespace engine
          _totalIndexPages        = 0 ;
          _totalDataFreeSpace     = 0 ;
          _totalIndexFreeSpace    = 0 ;
+         _totalLobPages          = 0 ;
 
          // pad
          ossMemset( _pad, 0, sizeof( _pad ) ) ;
@@ -374,6 +376,7 @@ namespace engine
       UINT32      _totalIndexPages ;
       UINT64      _totalDataFreeSpace ;
       UINT64      _totalIndexFreeSpace ;
+      UINT32      _totalLobPages ;
 
       void reset()
       {
@@ -382,6 +385,7 @@ namespace engine
          _totalIndexPages        = 0 ;
          _totalDataFreeSpace     = 0 ;
          _totalIndexFreeSpace    = 0 ;
+         _totalLobPages          = 0 ;
       }
       _dmsMBStatInfo ()
       {
@@ -513,6 +517,7 @@ namespace engine
    } ;
 
    class _dmsStorageIndex ;
+   class _dmsStorageLob ;
    class _dmsStorageUnit ;
    class _pmdEDUCB ;
    class _mthModifier ;
@@ -524,6 +529,7 @@ namespace engine
    {
       friend class _dmsStorageIndex ;
       friend class _dmsStorageUnit ;
+      friend class _dmsStorageLob ;
 
       struct cmp_str
       {
@@ -650,6 +656,9 @@ namespace engine
          void                 _attach ( _dmsStorageIndex *pIndexSu ) ;
          void                 _detach () ;
 
+         void                 _attachLob( _dmsStorageLob *pLobSu ) ;
+         void                 _detachLob() ;
+
       private:
          void           _initializeMME () ;
 
@@ -741,6 +750,7 @@ namespace engine
          ossSpinXLatch                       _latchContext ;
 
          _dmsStorageIndex                    *_pIdxSU ;
+         _dmsStorageLob                      *_pLobSU ;
 
    };
    typedef _dmsStorageData dmsStorageData ;

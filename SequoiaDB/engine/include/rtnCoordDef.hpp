@@ -68,6 +68,7 @@
                                                 TotalRecords:\"$Details.0.TotalRecords\",\
                                                 TotalDataPages:\"$Details.0.TotalDataPages\",\
                                                 TotalIndexPages:\"$Details.0.TotalIndexPages\",\
+                                                TotalLobPages:\"$Details.0.TotalLobPages\",\
                                                 TotalDataFreeSpace:\"$Details.0.TotalDataFreeSpace\",\
                                                 TotalIndexFreeSpace:\"$Details.0.TotalIndexFreeSpace\",\
                                                 NodeName:\"$Details.0.NodeName\"\
@@ -78,8 +79,8 @@
                                                 GroupName:1,\
                                                 Details:{ID:1,LogicalID:1,Sequence:1,\
                                                          Indexes:1,Status:1,TotalRecords:1,TotalDataPages:1,\
-                                                         TotalIndexPages:1,TotalDataFreeSpace:1,TotalIndexFreeSpace:1,\
-                                                         NodeName:1}\
+                                                         TotalIndexPages:1,TotalLobPages:1,TotalDataFreeSpace:1,\
+                                                         TotalIndexFreeSpace:1,NodeName:1}\
                                                 }\
                                        }\n\
                                        {$group:{\
@@ -108,8 +109,15 @@
                                                 _id:\"$Name\",\
                                                 Name:{$first:\"$Name\"},\
                                                 PageSize:{$first:\"$PageSize\"},\
+                                                LobPageSize:{$first:\"LobPageSize\"},\
                                                 TotalSize:{$sum:\"$TotalSize\"},\
                                                 FreeSize:{$sum:\"$FreeSize\"},\
+                                                TotalDataSize:{$sum:\"$TotalDataSize\"},\
+                                                FreeDataSize:{$sum:\"$FreeDataSize\"},\
+                                                TotalIndexSize:{$sum:\"$TotalIndexSize\"},\
+                                                FreeIndexSize:{$sum:\"$FreeIndexSize\"},\
+                                                TotalLobSize:{$sum:\"TotalLobSize\"},\
+                                                FreeLobSize:{$sum:\"$FreeLobSize\"},\
                                                 Collection:{$mergearrayset:\"$Collection\"},\
                                                 Group:{$addtoset:\"$GroupName\"}\
                                                 }\

@@ -64,6 +64,7 @@ namespace engine
       UINT64 _totalRecords ;
       UINT32 _totalDataPages ;
       UINT32 _totalIndexPages ;
+      UINT32 _totalLobPages ;
       UINT64 _totalDataFreeSpace ;
       UINT64 _totalIndexFreeSpace ;
       // end
@@ -85,6 +86,7 @@ namespace engine
          _totalRecords        = 0 ;
          _totalDataPages      = 0 ;
          _totalIndexPages     = 0 ;
+         _totalLobPages       = 0 ;
          _totalDataFreeSpace  = 0 ;
          _totalIndexFreeSpace = 0 ;
       }
@@ -101,11 +103,13 @@ namespace engine
          return ossStrncmp( _name, r._name, sizeof(_name))<0 ;
       }
       OSS_INLINE void addDetails ( UINT32 sequence, UINT32 numIndexes,
-                               UINT16 blockID, UINT16 flag,
-                               UINT32 logicID, UINT64 totalRecords,
-                               UINT32 totalDataPages, UINT32 totalIndexPages,
-                               UINT64 totalDataFreeSpace,
-                               UINT64 totalIndexFreeSpace)
+                                   UINT16 blockID, UINT16 flag,
+                                   UINT32 logicID, UINT64 totalRecords,
+                                   UINT32 totalDataPages,
+                                   UINT32 totalIndexPages,
+                                   UINT32 totalLobPages,
+                                   UINT64 totalDataFreeSpace,
+                                   UINT64 totalIndexFreeSpace)
       {
          detailedInfo info ;
          info._sequence = sequence ;
@@ -117,6 +121,7 @@ namespace engine
          info._totalRecords        = totalRecords ;
          info._totalDataPages      = totalDataPages ;
          info._totalIndexPages     = totalIndexPages ;
+         info._totalLobPages       = totalLobPages ;
          info._totalDataFreeSpace  = totalDataFreeSpace ;
          info._totalIndexFreeSpace = totalIndexFreeSpace ;
 
@@ -139,6 +144,12 @@ namespace engine
          _totalSize = 0 ;
          _freeSize  = 0 ;
          _lobPageSize = 0 ;
+         _totalDataSize = 0 ;
+         _totalIndexSize = 0 ;
+         _totalLobSize = 0 ;
+         _freeDataSize = 0 ;
+         _freeIndexSize = 0 ;
+         _freeLobSize = 0 ;
       }
       _monCollectionSpace ( const _monCollectionSpace &right )
       {
@@ -150,6 +161,12 @@ namespace engine
          _totalSize = right._totalSize ;
          _freeSize  = right._freeSize ;
          _lobPageSize = right._lobPageSize ;
+         _totalDataSize = right._totalDataSize ;
+         _totalIndexSize = right._totalIndexSize ;
+         _totalLobSize = right._totalLobSize ;
+         _freeDataSize = right._freeDataSize ;
+         _freeIndexSize = right._freeIndexSize ;
+         _freeLobSize = right._freeLobSize ;
          try
          {
             for ( it = right._collections.begin();
@@ -192,6 +209,12 @@ namespace engine
       INT64 _totalSize ;
       INT64 _freeSize ;
       INT32 _lobPageSize ;
+      INT64 _totalDataSize ;
+      INT64 _totalIndexSize ;
+      INT64 _totalLobSize ;
+      INT64 _freeDataSize ;
+      INT64 _freeIndexSize ;
+      INT64 _freeLobSize ;
 
       OSS_INLINE BOOLEAN operator<(const _monCollectionSpace &r) const
       {
@@ -207,6 +230,12 @@ namespace engine
          _totalSize      = right._totalSize ;
          _freeSize       = right._freeSize ;
          _lobPageSize    = right._lobPageSize ;
+         _totalDataSize = right._totalDataSize ;
+         _totalIndexSize = right._totalIndexSize ;
+         _totalLobSize = right._totalLobSize ;
+         _freeDataSize = right._freeDataSize ;
+         _freeIndexSize = right._freeIndexSize ;
+         _freeLobSize = right._freeLobSize ;
          try
          {
             for ( it = right._collections.begin();
@@ -242,11 +271,11 @@ namespace engine
       dmsStorageUnitID _CSID ;
       UINT32 _logicalCSID ;
       SINT32 _pageSize ;
+      SINT32 _lobPageSize ;
       SINT32 _sequence ;
       SINT32 _numCollections ;
       SINT32 _collectionHWM ;
       SINT64 _size ;
-      SINT32 _lobPageSize ;
       OSS_INLINE BOOLEAN operator<(const _monStorageUnit &r) const
       {
          SINT32 rc = ossStrncmp( _name, r._name, sizeof(_name))<0 ;

@@ -122,14 +122,15 @@ namespace engine
          SDB_OSS_DEL _pIndexSu ;
          _pIndexSu = NULL ;
       }
-      if ( _pDataSu )
-      {
-         SDB_OSS_DEL _pDataSu ;
-         _pDataSu = NULL ;
-      }
       if ( _pLobSu )
       {
          SDB_OSS_DEL _pLobSu ;
+         _pDataSu = NULL ;
+      }
+      // _pDataSu must be delete at the last
+      if ( _pDataSu )
+      {
+         SDB_OSS_DEL _pDataSu ;
          _pDataSu = NULL ;
       }
       PD_TRACE_EXIT ( SDB__DMSSU_DESC ) ;
@@ -1142,6 +1143,7 @@ namespace engine
                                  mbStat->_totalRecords,
                                  mbStat->_totalDataPages,
                                  mbStat->_totalIndexPages,
+                                 mbStat->_totalLobPages,
                                  mbStat->_totalDataFreeSpace,
                                  mbStat->_totalIndexFreeSpace ) ;
          //add
@@ -1171,6 +1173,7 @@ namespace engine
       ossMemset ( su._name, 0, sizeof ( su._name ) ) ;
       ossStrncpy ( su._name, CSName(), DMS_SU_NAME_SZ ) ;
       su._pageSize = getPageSize() ;
+      su._lobPageSize = getLobPageSize() ;
       su._sequence = CSSequence() ;
       su._numCollections = dataHeader->_numMB ;
       su._collectionHWM = dataHeader->_MBHWM ;
@@ -1185,18 +1188,37 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_TOTALSIZE, "_dmsStorageUnit::totalSize" )
-   INT64 _dmsStorageUnit::totalSize() const
+   INT64 _dmsStorageUnit::totalSize( UINT32 type ) const
    {
       INT64 totalSize = 0 ;
+      const dmsStorageUnitHeader *dataHeader = NULL ;
       PD_TRACE_ENTRY ( SDB__DMSSU_TOTALSIZE ) ;
-      if ( _pDataSu && _pIndexSu )
+
+      if ( !_pDataSu || !_pIndexSu || !_pLobSu )
       {
-         const dmsStorageUnitHeader *dataHeader = _pDataSu->getHeader() ;
-         const dmsStorageUnitHeader *idxHeader = _pIndexSu->getHeader() ;
-         totalSize = dataHeader->_storageUnitSize +
-                     idxHeader->_storageUnitSize ;
-         totalSize = totalSize << _pDataSu->pageSizeSquareRoot() ;
+         goto done ;
       }
+
+      if ( type & DMS_SU_DATA )
+      {
+         dataHeader = _pDataSu->getHeader() ;
+         totalSize += ( dataHeader->_storageUnitSize <<
+                        _pDataSu->pageSizeSquareRoot() ) ;
+      }
+      if ( type & DMS_SU_INDEX )
+      {
+         dataHeader = _pIndexSu->getHeader() ;
+         totalSize += ( dataHeader->_storageUnitSize <<
+                        _pDataSu->pageSizeSquareRoot() ) ;
+      }
+      if ( ( type & DMS_SU_LOB ) && _pLobSu->isOpened() )
+      {
+         totalSize += ( _pLobSu->getHeader()->_storageUnitSize <<
+                        _pLobSu->pageSizeSquareRoot() ) ;
+         totalSize += _pLobSu->getLobData()->getFileSz() ;
+      }
+
+   done:
       PD_TRACE1 ( SDB__DMSSU_TOTALSIZE,
                   PD_PACK_LONG ( totalSize ) ) ;
       PD_TRACE_EXIT ( SDB__DMSSU_TOTALSIZE ) ;
@@ -1204,16 +1226,33 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_TOTALDATAPAGES, "_dmsStorageUnit::totalDataPages" )
-   INT64 _dmsStorageUnit::totalDataPages() const
+   INT64 _dmsStorageUnit::totalDataPages( UINT32 type ) const
    {
       INT64 totalDataPages = 0 ;
+      const dmsStorageUnitHeader *dataHeader = NULL ;
       PD_TRACE_ENTRY ( SDB__DMSSU_TOTALDATAPAGES ) ;
-      if ( _pDataSu && _pIndexSu )
+
+      if ( !_pDataSu || !_pIndexSu || !_pLobSu )
       {
-         const dmsStorageUnitHeader *dataHeader = _pDataSu->getHeader() ;
-         const dmsStorageUnitHeader *idxHeader = _pIndexSu->getHeader() ;
-         totalDataPages = dataHeader->_pageNum + idxHeader->_pageNum ;
+         goto done ;
       }
+
+      if ( type & DMS_SU_DATA )
+      {
+         dataHeader = _pDataSu->getHeader() ;
+         totalDataPages += dataHeader->_pageNum ;
+      }
+      if ( type & DMS_SU_INDEX )
+      {
+         dataHeader = _pIndexSu->getHeader() ;
+         totalDataPages += dataHeader->_pageNum ;
+      }
+      if ( ( type & DMS_SU_LOB ) && _pLobSu->isOpened() )
+      {
+         totalDataPages += _pLobSu->getHeader()->_pageNum ;
+      }
+
+   done:
       PD_TRACE1 ( SDB__DMSSU_TOTALDATAPAGES,
                   PD_PACK_LONG ( totalDataPages ) ) ;
       PD_TRACE_EXIT ( SDB__DMSSU_TOTALDATAPAGES ) ;
@@ -1221,35 +1260,96 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_TOTALDATASIZE, "_dmsStorageUnit::totalDataSize" )
-   INT64 _dmsStorageUnit::totalDataSize() const
+   INT64 _dmsStorageUnit::totalDataSize( UINT32 type ) const
    {
       INT64 totalSize = 0 ;
       PD_TRACE_ENTRY ( SDB__DMSSU_TOTALDATASIZE ) ;
-      if ( _pDataSu )
+
+      if ( !_pDataSu || !_pIndexSu || !_pLobSu )
       {
-         totalSize = totalDataPages() << _pDataSu->pageSizeSquareRoot() ;
+         goto done ;
       }
+
+      if ( type & DMS_SU_DATA )
+      {
+         totalSize += ( totalDataPages( DMS_SU_DATA ) <<
+                        _pDataSu->pageSizeSquareRoot() ) ;
+      }
+      if ( type & DMS_SU_INDEX )
+      {
+         totalSize += ( totalDataPages( DMS_SU_INDEX ) <<
+                        _pDataSu->pageSizeSquareRoot() ) ;
+      }
+      if ( ( type & DMS_SU_LOB ) && _pLobSu->isOpened() )
+      {
+         totalSize += _pLobSu->getLobData()->getDataSz() ;
+      }
+
+   done:
       PD_TRACE1 ( SDB__DMSSU_TOTALDATASIZE,
                   PD_PACK_LONG ( totalSize ) ) ;
       PD_TRACE_EXIT ( SDB__DMSSU_TOTALDATASIZE ) ;
       return totalSize ;
    }
 
-   // 32 bit is enough for free pages
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_TOTALFREEPAGES, "_dmsStorageUnit::totalFreePages" )
-   INT32 _dmsStorageUnit::totalFreePages () const
+   INT64 _dmsStorageUnit::totalFreePages ( UINT32 type ) const
    {
-      INT32 freePages = 0 ;
+      INT64 freePages = 0 ;
       PD_TRACE_ENTRY ( SDB__DMSSU_TOTALFREEPAGES ) ;
-      if ( _pDataSu && _pIndexSu )
+
+      if ( !_pDataSu || !_pIndexSu || !_pLobSu )
       {
-         freePages = (INT32)_pDataSu->freePageNum() +
-                     (INT32)_pIndexSu->freePageNum() ;
+         goto done ;
       }
+
+      if ( type & DMS_SU_DATA )
+      {
+         freePages += (INT64)_pDataSu->freePageNum() ;
+      }
+      if ( type & DMS_SU_INDEX )
+      {
+         freePages += (INT64)_pIndexSu->freePageNum() ;
+      }
+      if ( ( type & DMS_SU_LOB ) && _pLobSu->isOpened() )
+      {
+         freePages += (INT64)_pLobSu->freePageNum() ;
+      }
+
+   done:
       PD_TRACE1 ( SDB__DMSSU_TOTALFREEPAGES,
                   PD_PACK_INT ( freePages ) ) ;
       PD_TRACE_EXIT ( SDB__DMSSU_TOTALFREEPAGES ) ;
       return freePages ;
+   }
+
+   INT64 _dmsStorageUnit::totalFreeSize( UINT32 type ) const
+   {
+      INT64 totalFreeSize = 0 ;
+
+      if ( !_pDataSu || !_pIndexSu || !_pLobSu )
+      {
+         goto done ;
+      }
+
+      if ( type & DMS_SU_DATA )
+      {
+         totalFreeSize += ( totalFreePages( DMS_SU_DATA ) <<
+                            _pDataSu->pageSizeSquareRoot() ) ;
+      }
+      if ( type & DMS_SU_INDEX )
+      {
+         totalFreeSize += ( totalFreePages( DMS_SU_INDEX ) <<
+                            _pDataSu->pageSizeSquareRoot() ) ;
+      }
+      if ( ( type & DMS_SU_LOB ) && _pLobSu->isOpened() )
+      {
+         totalFreeSize += ( totalFreePages( DMS_SU_LOB ) *
+                            _pDataSu->getLobdPageSize() ) ;
+      }
+
+   done:
+      return totalFreeSize ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_GETSTATINFO, "_dmsStorageUnit::getStatInfo" )
@@ -1272,6 +1372,7 @@ namespace engine
          statInfo._totalCount += mbStat->_totalRecords ;
          statInfo._totalDataPages += mbStat->_totalDataPages ;
          statInfo._totalIndexPages += mbStat->_totalIndexPages ;
+         statInfo._totalLobPages += mbStat->_totalLobPages ;
          statInfo._totalDataFreeSpace += mbStat->_totalDataFreeSpace ;
          statInfo._totalIndexFreeSpace += mbStat->_totalIndexFreeSpace ;
 

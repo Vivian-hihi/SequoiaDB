@@ -1127,6 +1127,10 @@ namespace engine
    {
       PD_TRACE_ENTRY ( SDB__SDB_DMSCB_DUMPINFO2 );
       dmsStorageUnit *su = NULL ;
+      INT64 totalDataFreeSize    = 0 ;
+      INT64 totalIndexFreeSize   = 0 ;
+      INT64 totalLobFreeSize     = 0 ;
+
       DMSCB_SLOCK
 #if defined (_WINDOWS)
       std::map<const CHAR*, dmsStorageUnitID, cmp_cscb>::const_iterator it ;
@@ -1159,6 +1163,11 @@ namespace engine
 
          // get stat info
          su->getStatInfo( statInfo ) ;
+         totalDataFreeSize    = su->totalFreeSize( DMS_SU_DATA ) +
+                                statInfo._totalDataFreeSpace ;
+         totalIndexFreeSize   = su->totalFreeSize( DMS_SU_INDEX ) +
+                                statInfo._totalIndexFreeSpace ;
+         totalLobFreeSize     = su->totalFreeSize( DMS_SU_LOB ) ;
 
          ossMemset ( cs._name, 0, sizeof(cs._name) ) ;
          ossStrncpy ( cs._name, cscb->_name, DMS_COLLECTION_SPACE_NAME_SZ);
@@ -1167,9 +1176,14 @@ namespace engine
          cs._totalSize = su->totalSize() ;
          cs._clNum    = statInfo._clNum ;
          cs._totalRecordNum = statInfo._totalCount ;
-         cs._freeSize = su->totalFreePages() * su->getPageSize() +
-                        statInfo._totalDataFreeSpace +
-                        statInfo._totalIndexFreeSpace ;
+         cs._freeSize = totalDataFreeSize + totalIndexFreeSize +
+                        totalLobFreeSize ;
+         cs._totalDataSize = su->totalSize( DMS_SU_DATA ) ;
+         cs._freeDataSize  = totalDataFreeSize ;
+         cs._totalIndexSize = su->totalSize( DMS_SU_INDEX ) ;
+         cs._freeIndexSize = totalIndexFreeSize ;
+         cs._totalLobSize = su->totalSize( DMS_SU_LOB ) ;
+         cs._freeLobSize = totalLobFreeSize ;
          su->dumpInfo ( cs._collections, sys ) ;
          csList.insert ( cs ) ;
       }

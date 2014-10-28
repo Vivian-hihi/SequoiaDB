@@ -62,6 +62,9 @@ using namespace bson ;
 
 namespace engine
 {
+
+   #define OSS_MAX_FILE_SZ          ( 8796093022208ll )
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB_MONGETNODENAME, "monGetNodeName" )
    static CHAR *monGetNodeName ( CHAR *nodeName,
                                  UINT32 size,
@@ -1133,6 +1136,8 @@ namespace engine
                                (*it1)._totalDataPages ) ;
                   ob1.append ( FIELD_NAME_TOTAL_INDEX_PAGES,
                                (*it1)._totalIndexPages ) ;
+                  ob1.append ( FIELD_NAME_TOTAL_LOB_PAGES,
+                               (*it1)._totalLobPages ) ;
                   ob1.append ( FIELD_NAME_TOTAL_DATA_FREESPACE,
                                (long long)((*it1)._totalDataFreeSpace )) ;
                   ob1.append ( FIELD_NAME_TOTAL_INDEX_FREESPACE,
@@ -1181,6 +1186,9 @@ namespace engine
       SDB_ASSERT ( dmsCB, "dmsCB can't be NULL" ) ;
       SDB_ASSERT ( context, "context can't be NULL" ) ;
 
+      INT64 dataCapSize    = 0 ;
+      INT64 lobCapSize     = 0 ;
+
       PD_TRACE_ENTRY ( SDB_MONDUMPALLCOLLECTIONSPACES ) ;
       std::set<monCollectionSpace> csList ;
       dmsCB->dumpInfo ( csList, includeSys ) ;
@@ -1206,14 +1214,31 @@ namespace engine
                      ab.append (BSON ( FIELD_NAME_NAME << (*it1) ) ) ;
                   }
                }
+               dataCapSize = (INT64)cs._pageSize * DMS_MAX_PG ;
+               lobCapSize  = (INT64)cs._lobPageSize * DMS_MAX_PG ;
+               if ( lobCapSize > OSS_MAX_FILE_SZ )
+               {
+                  lobCapSize = OSS_MAX_FILE_SZ ;
+               }
+
                ob.append ( FIELD_NAME_COLLECTION, ab.arr() ) ;
                ob.append ( FIELD_NAME_PAGE_SIZE, cs._pageSize ) ;
+               ob.append ( FIELD_NAME_LOB_PAGE_SIZE, cs._lobPageSize ) ;
                ob.append ( FIELD_NAME_MAX_CAPACITY_SIZE,
-                           (INT64)cs._pageSize * DMS_MAX_PG ) ;
+                           2 * dataCapSize + lobCapSize ) ;
+               ob.append ( FIELD_NAME_MAX_DATA_CAP_SIZE, dataCapSize ) ;
+               ob.append ( FIELD_NAME_MAX_INDEX_CAP_SIZE, dataCapSize ) ;
+               ob.append ( FIELD_NAME_MAX_LOB_CAP_SIZE, lobCapSize ) ;
                ob.append ( FIELD_NAME_NUMCOLLECTIONS, cs._clNum ) ;
                ob.append ( FIELD_NAME_TOTAL_RECORDS, cs._totalRecordNum ) ;
                ob.append ( FIELD_NAME_TOTAL_SIZE, cs._totalSize ) ;
                ob.append ( FIELD_NAME_FREE_SIZE, cs._freeSize ) ;
+               ob.append ( FIELD_NAME_TOTAL_DATA_SIZE, cs._totalDataSize ) ;
+               ob.append ( FIELD_NAME_FREE_DATA_SIZE, cs._freeDataSize ) ;
+               ob.append ( FIELD_NAME_TOTAL_IDX_SIZE, cs._totalIndexSize ) ;
+               ob.append ( FIELD_NAME_FREE_IDX_SIZE, cs._freeIndexSize ) ;
+               ob.append ( FIELD_NAME_TOTAL_LOB_SIZE, cs._totalLobSize ) ;
+               ob.append ( FIELD_NAME_FREE_LOB_SIZE, cs._freeLobSize ) ;
             }
             ob.append ( FIELD_NAME_NAME, cs._name ) ;
             if ( addInfo )
@@ -1268,6 +1293,7 @@ namespace engine
             ob.append ( FIELD_NAME_ID, su._CSID ) ;
             ob.append ( FIELD_NAME_LOGICAL_ID, su._logicalCSID ) ;
             ob.append ( FIELD_NAME_PAGE_SIZE, su._pageSize ) ;
+            ob.append ( FIELD_NAME_LOB_PAGE_SIZE, su._lobPageSize ) ;
             ob.append ( FIELD_NAME_SEQUENCE, su._sequence ) ;
             ob.append ( FIELD_NAME_NUMCOLLECTIONS, su._numCollections ) ;
             ob.append ( FIELD_NAME_COLLECTIONHWM, su._collectionHWM ) ;

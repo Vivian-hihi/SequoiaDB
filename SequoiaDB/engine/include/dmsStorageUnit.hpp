@@ -68,10 +68,16 @@ namespace engine
       INT64          _totalCount ;
       INT32          _totalDataPages ;
       INT32          _totalIndexPages ;
+      INT32          _totalLobPages ;
       INT64          _totalDataFreeSpace ;
       INT64          _totalIndexFreeSpace ;
    } ;
    typedef _dmsStorageUnitStat dmsStorageUnitStat ;
+
+   #define DMS_SU_DATA           ( 0x0001 )
+   #define DMS_SU_INDEX          ( 0x0002 )
+   #define DMS_SU_LOB            ( 0x0004 )
+   #define DMS_SU_ALL            ( 0xFFFF )
 
    /*
       _dmsStorageUnit define
@@ -105,10 +111,12 @@ namespace engine
          UINT32      CSSequence() const { return _storageInfo._sequence ; }
          UINT32      LogicalCSID() const { return _pDataSu->logicalID() ; }
          dmsStorageUnitID CSID() const { return _pDataSu->CSID() ; }
-         INT64       totalSize () const ;
-         INT64       totalDataPages() const ;
-         INT64       totalDataSize() const ;
-         INT32       totalFreePages() const ;
+
+         INT64       totalSize ( UINT32 type = DMS_SU_ALL ) const ;
+         INT64       totalDataPages( UINT32 type = DMS_SU_ALL ) const ;
+         INT64       totalDataSize( UINT32 type = DMS_SU_ALL ) const ;
+         INT64       totalFreePages( UINT32 type = DMS_SU_ALL ) const ;
+         INT64       totalFreeSize( UINT32 type = DMS_SU_ALL ) const ;
          void        getStatInfo( dmsStorageUnitStat &statInfo ) ;
 
       public:

@@ -38,6 +38,7 @@
 
 #include "dmsStorageData.hpp"
 #include "dmsStorageIndex.hpp"
+#include "dmsStorageLob.hpp"
 #include "pmd.hpp"
 #include "dpsTransCB.hpp"
 #include "dpsOp2Record.hpp"
@@ -295,6 +296,7 @@ namespace engine
    {
       PD_TRACE_ENTRY ( SDB__DMSSTORAGEDATA ) ;
       _pIdxSU           = NULL ;
+      _pLobSU           = NULL ;
       _logicalCSID      = 0 ;
       _CSID             = DMS_INVALID_SUID ;
       PD_TRACE_EXIT ( SDB__DMSSTORAGEDATA ) ;
@@ -315,6 +317,7 @@ namespace engine
       _vecContext.clear() ;
 
       _pIdxSU = NULL ;
+      _pLobSU = NULL ;
       PD_TRACE_EXIT ( SDB__DMSSTORAGEDATA_DESC ) ;
    }
 
@@ -336,6 +339,8 @@ namespace engine
                _mbStatInfo[i]._totalDataFreeSpace ;
             _dmsMME->_mbList[i]._totalIndexFreeSpace =
                _mbStatInfo[i]._totalIndexFreeSpace ;
+            _dmsMME->_mbList[i]._totalLobPages =
+               _mbStatInfo[i]._totalLobPages ;
          }
       }
       PD_TRACE_EXIT ( SDB__DMSSTORAGEDATA_SYNCMEMTOMMAP ) ;
@@ -350,6 +355,17 @@ namespace engine
    void _dmsStorageData::_detach ()
    {
       _pIdxSU = NULL ;
+   }
+
+   void _dmsStorageData::_attachLob( _dmsStorageLob * pLobSu )
+   {
+      SDB_ASSERT( pLobSu, "Lob su can't be NULL" ) ;
+      _pLobSU = pLobSu ;
+   }
+
+   void _dmsStorageData::_detachLob()
+   {
+      _pLobSU = NULL ;
    }
 
    UINT64 _dmsStorageData::_dataOffset ()
@@ -450,6 +466,8 @@ namespace engine
                _dmsMME->_mbList[i]._totalDataFreeSpace ;
             _mbStatInfo[i]._totalIndexFreeSpace =
                _dmsMME->_mbList[i]._totalIndexFreeSpace ;
+            _mbStatInfo[i]._totalLobPages =
+               _dmsMME->_mbList[i]._totalLobPages ;
          }
       }
 
@@ -1576,6 +1594,14 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Failed to truncate the collection[%s], rc: %d",
                    pName, rc ) ;
 
+      // truncate lob
+      if ( _pLobSU->isOpened() )
+      {
+         rc = _pLobSU->truncate( context, cb, NULL ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to truncate the collection[%s] lob,"
+                      "rc: %d", pName, rc ) ;
+      }
+
       // change mb meta data
       DMS_SET_MB_FREE( context->mb()->_flag ) ;
       context->mb()->_logicalID-- ;
@@ -1737,6 +1763,13 @@ namespace engine
       rc = _truncateCollection( context ) ;
       PD_RC_CHECK( rc, PDERROR, "Truncate collection[%s] data failed, rc: %d",
                    pName, rc ) ;
+
+      if ( _pLobSU->isOpened() )
+      {
+         rc = _pLobSU->truncate( context, cb, NULL ) ;
+         PD_RC_CHECK( rc, PDERROR, "Truncate collection[%s] lob failed, rc: %d",
+                      pName, rc ) ;
+      }
 
       // write dps log
       if ( dpscb )

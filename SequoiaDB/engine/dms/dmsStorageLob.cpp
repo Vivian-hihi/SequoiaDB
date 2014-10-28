@@ -73,10 +73,14 @@ namespace engine
    {
       ossMemset( _path, 0, sizeof( _path ) ) ;
       _needDelayOpen = FALSE ;
+
+      _dmsData->_attachLob( this ) ;
    }
 
    _dmsStorageLob::~_dmsStorageLob()
    {
+      _dmsData->_detachLob() ;
+      _dmsData = NULL ;
       _dmsBME = NULL ;
    }
 
@@ -690,6 +694,7 @@ namespace engine
          PD_LOG( PDERROR, "failed to find free space:%d", rc ) ;
          goto error ;
       }
+      context->mbStat()->_totalLobPages += 1 ;
 
    done:
       return rc ;
@@ -953,7 +958,7 @@ namespace engine
       if ( DMS_LOB_INVALID_PAGEID == pageInBucket )
       {
          pageInBucket = pageId ;
-         blk._lastPageInBucket = DMS_LOB_INVALID_PAGEID ;
+         blk._prevPageInBucket = DMS_LOB_INVALID_PAGEID ;
          blk._nextPageInBucket = DMS_LOB_INVALID_PAGEID ;
       }
       /// neet to find the last one
@@ -977,7 +982,7 @@ namespace engine
             if ( DMS_LOB_INVALID_PAGEID == lastBlk->_nextPageInBucket )
             {
                lastBlk->_nextPageInBucket = pageId ;
-               blk._lastPageInBucket = tmpPage ;
+               blk._prevPageInBucket = tmpPage ;
                blk._nextPageInBucket = DMS_LOB_INVALID_PAGEID ;
                break ;
             }
@@ -986,7 +991,6 @@ namespace engine
                tmpPage = lastBlk->_nextPageInBucket ;
                continue ;
             }
-            
          } while ( TRUE ) ;
       }
    done:
@@ -1254,9 +1258,10 @@ namespace engine
          bucketNumber = _getBucket( hash ) ;
       }
 
-      if ( DMS_LOB_INVALID_PAGEID == blk->_lastPageInBucket )
+      if ( DMS_LOB_INVALID_PAGEID == blk->_prevPageInBucket )
       {
-         SDB_ASSERT( _dmsBME->_buckets[bucketNumber] == page, "must be this page" ) ;
+         SDB_ASSERT( _dmsBME->_buckets[bucketNumber] == page,
+                     "must be this page" ) ;
          _dmsBME->_buckets[bucketNumber] = blk->_nextPageInBucket ;
          if ( DMS_LOB_INVALID_PAGEID != blk->_nextPageInBucket )
          {
@@ -1264,24 +1269,24 @@ namespace engine
             ossValuePtr nextExtent = extentAddr( blk->_nextPageInBucket ) ;
             if ( !nextExtent )
             {
-               PD_LOG( PDERROR, "we got a NULL extent from extendAddr(), pageid:%d",
-                       blk->_nextPageInBucket ) ;
+               PD_LOG( PDERROR, "we got a NULL extent from extendAddr(), "
+                       "pageid:%d", blk->_nextPageInBucket ) ;
                rc = SDB_SYS ;
                goto error ;
             }
 
             nextBlk = DMS_LOB_META( nextExtent ) ;
-            nextBlk->_lastPageInBucket = DMS_LOB_INVALID_PAGEID ;
+            nextBlk->_prevPageInBucket = DMS_LOB_INVALID_PAGEID ;
          }
       }
       else
       {
          _dmsLobDataMapBlk *lastBlk = NULL ;
-         ossValuePtr lastExtent = extentAddr( blk->_lastPageInBucket ) ;
+         ossValuePtr lastExtent = extentAddr( blk->_prevPageInBucket ) ;
          if ( !lastExtent )
          {
             PD_LOG( PDERROR, "we got a NULL extent from extendAddr(), pageid:%d",
-                    blk->_lastPageInBucket ) ;
+                    blk->_prevPageInBucket ) ;
             rc = SDB_SYS ;
             goto error ;
          }
@@ -1302,10 +1307,11 @@ namespace engine
             }
 
             nextBlk = DMS_LOB_META( nextExtent ) ;
-            nextBlk->_lastPageInBucket = blk->_lastPageInBucket ;
+            nextBlk->_prevPageInBucket = blk->_prevPageInBucket ;
          }
       }
 
+      _dmsData->_mbStatInfo[ blk->_mbID ]._totalLobPages -= 1 ;
       _releasePage( page ) ;
    done:
       return rc ;
@@ -1325,9 +1331,6 @@ namespace engine
       dpsMergeInfo info ;
       dpsLogRecord &logRecord = info.getMergeBlock().record() ;
       dpsTransCB *transCB = pmdGetKRCB()->getTransCB() ;
-
-      /// we do not want to add this operation to log now -- yunwu
-      dpscb = NULL ;
 
       if ( !isOpened() )
       {
@@ -1419,6 +1422,9 @@ namespace engine
          }
       }
 
+      // clear the stat info
+      mbContext->mbStat()->_totalLobPages = 0 ;
+
       if ( NULL != dpscb )
       {
          SDB_ASSERT( NULL != _dmsData, "can not be null" ) ;
@@ -1441,6 +1447,7 @@ namespace engine
 
          dpscb->writeData( info ) ;
       }
+
    done:
       if ( !locked )
       {
@@ -1455,7 +1462,8 @@ namespace engine
    error:
       if ( needPanic )
       {
-         PD_LOG( PDSEVERE, "we must panic db now, we got a lrreparable error" ) ;
+         PD_LOG( PDSEVERE, "we must panic db now, we got a lrreparable "
+                 "error" ) ;
          ossPanic() ;
       }
       goto done ;
