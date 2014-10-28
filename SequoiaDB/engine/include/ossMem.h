@@ -52,6 +52,7 @@
 
 #define SDB_OSS_MALLOC(x)       ossMemAlloc(x,__FILE__,__LINE__)
 #define SDB_OSS_FREE(x)         ossMemFree(x)
+#define SDB_OSS_ORIGINAL_FREE(x) free(x)
 #define SDB_OSS_REALLOC(x,y)    ossMemRealloc(x,y,__FILE__,__LINE__)
 
 #define SDB_OSS_MALLOC3(x,y,z)  ossMemAlloc(x,y,z)
@@ -80,6 +81,8 @@ void ossMemTrack ( void *p ) ;
 void ossMemUnTrack ( void *p ) ;
 
 void ossMemTrace ( const CHAR *pPath ) ;
+
+void *ossAlignedAlloc( UINT32 alignment, UINT32 size ) ;
 
 SDB_EXTERN_C_END
 #endif

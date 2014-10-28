@@ -38,6 +38,11 @@
 #include "core.h"
 #include "ossMem.h"
 #include "ossUtil.h"
+#if defined (_LINUX)
+#include <stdlib.h>
+#elif defined (_WINDOWS)
+#include <malloc.h>
+#endif
 
 // in engine we always compile in C++, so we can include pd.hpp
 #if defined (SDB_ENGINE)
@@ -488,3 +493,33 @@ void ossMemFree ( void *p )
       ossMemFree2 ( p ) ;
 //   PD_TRACE_EXIT ( SDB__OSSMEMFREE ) ;
 }
+
+void *ossAlignedAlloc( UINT32 alignment, UINT32 size )
+{
+#if defined (_LINUX)
+   void *ptr = NULL ;
+   /// returns zero on success, or one of the 
+   ///  error values listed in the next section on failure.
+   /// Note that errno is not set.
+   INT32 rc = SDB_OK ;
+   rc = posix_memalign( &ptr, alignment, size ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+done:
+   return ptr ;
+error:
+   if ( NULL != ptr )
+   {
+      SDB_OSS_ORIGINAL_FREE( ptr ) ;
+      ptr = NULL ;
+   }
+   goto done ;
+#elif defined (_WINDOWS)
+   return _aligned_malloc( size, alignment ) ;
+#else
+   return NULL ;
+#endif   
+}
+
