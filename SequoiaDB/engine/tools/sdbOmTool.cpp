@@ -474,6 +474,15 @@ namespace engine
       VEC_HOST_ITEM vecItems ;
       string err ;
       INT32 rc = SDB_OK ;
+
+      if ( !isValidIPV4( ip.c_str() ) )
+      {
+         rc = SDB_INVALIDARG ;
+         err = "error ip format:" + ip ;
+         cout << err << endl ;
+         goto error ;
+      }
+      
       rc = parseHostsFile( vecItems, err ) ;
       if ( SDB_OK != rc )
       {
@@ -561,9 +570,6 @@ namespace engine
    INT32 doCommand( const string &mode, const string &hostName, 
                     const string &ip )
    {
-      std::cout << "mode:" << mode << "\nhostName:" << hostName << "\nip:"
-                << ip << std::endl ;
-
       INT32 rc = SDB_OK ;
       if ( mode == OM_TOOL_MODE_ADD_STR )
       {
