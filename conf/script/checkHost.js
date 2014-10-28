@@ -81,7 +81,7 @@ function getOMInfo()
       }
       else if ( SDB_TIMEOUT == e )
       {
-         errMsg = "The sdbcm's version is too low to support" ;
+         errMsg = "Incompatible versions" ;
          exception_handle( e, errMsg ) ;
       }
       else
