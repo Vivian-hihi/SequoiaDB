@@ -274,6 +274,15 @@
             <group>${username}_group</group>
             <owner>${username}</owner>
         </changeOwnerAndGroup>
+        <changeOwnerAndGroup>
+            <files>${installdir}/bin/sdbomtool</files>
+            <group>root</group>
+            <owner>root</owner>
+        </changeOwnerAndGroup>
+        <changePermissions>
+            <files>${install}/bin/sdbomtool</files>
+            <permissions>4755</permissions>
+        </changePermissions>
     </postInstallationActionList>
     <preUninstallationActionList>
         <stopWindowsService>
