@@ -2,7 +2,7 @@
 <!--@param ${reports.path}: The path where test case direcotry.-->
 <!--@param ${test.package.name}: The name of test package name,.-->
 <!--@param ${deploy.case.fullname}: The file name ( .xml )this file name is -->
-<project name="Exec-Samples-Testcases" default="Test-Java-Samples">
+<project name="Exec-Samples-Testcases" default="Test-Python-Samples">
     <property file="${ci.properties.path}" />
     <taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
         <classpath>
@@ -10,7 +10,7 @@
         </classpath>
     </taskdef>
 
-    <target name="Test-Python-Samples">
+    <target name="Test-Python-Samples" depends="Test-Java-Samples">
         <ant antfile="exec-driver-python-test.xml" dir="." target="Test-Python-Samples" inheritAll="true" >
             <property name="excludes.dir.patterns" value="reports*" />
             <property name="includes.dir.patterns" value="*" />
@@ -24,7 +24,7 @@
         </ant>
     </target> -->
 
-    <target name="Test-C-Samples" depends="Test-Python-Samples">
+    <target name="Test-C-Samples" depends="">
         <ant antfile="exec-driver-C-test.xml" dir="." target="Test-C-Samples" inheritAll="true" >
             <property name="excludes.dir.patterns" value="" />
             <property name="includes.dir.patterns" value="*" />
