@@ -1348,7 +1348,7 @@ namespace engine
    _clsFSSrcSession::_clsFSSrcSession( UINT64 sessionID,
                                        _netRouteAgent *agent )
    :_clsDataSrcBaseSession( sessionID, agent ),
-    _mb( 1024 )
+    _lsnSearchMB( 1024 )
    {
    }
 
@@ -1618,20 +1618,12 @@ namespace engine
          DPS_LSN lsn ;
          lsn.offset = offset ;
          SDB_DPSCB *dpsCB = pmdGetKRCB()->getDPSCB() ;
-         _mb.clear() ;
-         INT32 rc = dpsCB->search( lsn, &_mb ) ;
+         _lsnSearchMB.clear() ;
+         INT32 rc = dpsCB->searchHeader( lsn, &_lsnSearchMB ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG ( PDERROR, "Split Session[%s]: Failed to load dps "
                      "log[offset:%lld, rc:%d]", sessionName(), offset, rc ) ;
-            goto error ;
-         }
-
-         rc = record.load( _mb.startPtr() ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG ( PDERROR, "Split Session[%s]: parse dps log failed[rc:%d]",
-                     sessionName(), rc ) ;
             goto error ;
          }
 

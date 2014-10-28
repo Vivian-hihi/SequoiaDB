@@ -205,7 +205,7 @@ namespace engine
       virtual BOOLEAN _canSwitchWhenSyncLog() ;
 
    private:
-      _dpsMessageBlock _mb ;
+      _dpsMessageBlock     _lsnSearchMB ;
    } ;
    typedef class _clsFSSrcSession clsFSSrcSession ;
 
