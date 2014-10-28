@@ -17,14 +17,14 @@
         </ant>
     </target>
 
-    <target name="Test-Basic-Samples" depends="Test-Python-Samples">
+    <!-- <target name="Test-Basic-Samples" depends="Test-Python-Samples">
         <ant antfile="exec-basic-testcases.xml" dir="." target="Test-Basic-Samples" inheritAll="true" >
             <property name="excludes.dir.patterns" value="vote" />
             <property name="includes.dir.patterns" value="*" />
         </ant>
-    </target>
+    </target> -->
 
-    <target name="Test-C-Samples" depends="Test-Basic-Samples">
+    <target name="Test-C-Samples" depends="Test-Python-Samples">
         <ant antfile="exec-driver-C-test.xml" dir="." target="Test-C-Samples" inheritAll="true" >
             <property name="excludes.dir.patterns" value="" />
             <property name="includes.dir.patterns" value="*" />
