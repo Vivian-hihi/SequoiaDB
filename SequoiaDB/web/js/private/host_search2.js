@@ -505,7 +505,7 @@ function showHostData( num )
 		var data_json = { 'cell': [ { 'text': inputStr },
 											 { 'text': hostDisk[i]['Name'] },
 											 { 'text': hostDisk[i]['Mount'] },
-											 { 'text': ( hostDisk[i]['IsLocal'] ? 'false' : 'true' ) },
+											 { 'text': ( hostDisk[i]['IsLocal'] ? 'true' : 'false' ) },
 											 { 'text': progress_str } ] } ;
 		sdbjs.parts.gridBox.add( 'hostDiskList', data_json ) ;
 	}
@@ -862,7 +862,7 @@ $(document).ready(function()
 		sdbjs.fun.autoCorrect( { 'id': 'leftPanel_2', 'style': { 'height': 'sdbjs.public.height - 151' } } ) ;
 		sdbjs.fun.autoCorrect( { 'id': 'rightPanel_2', 'style': { 'height': 'sdbjs.public.height - 151' } } ) ;
 		sdbjs.fun.autoCorrect( { 'id': 'hostSwitchList', 'style': { 'maxHeight': 'sdbjs.public.height - 261' } } ) ;
-		sdbjs.parts.gridBox.create( 'hostDiskList', { 'maxHeight': 237, 'minHeight': 28, 'position': 'relative' },  [ [ '', '磁盘', '路径', '网络磁盘', '容量' ] ], [ 5, 10, 25, 20, 30 ] ).appendTo( $( '#rightPanel_2 > .panel-body' ).eq(2) ) ;
+		sdbjs.parts.gridBox.create( 'hostDiskList', { 'maxHeight': 237, 'minHeight': 28, 'position': 'relative' },  [ [ '', '磁盘', '路径', '本地设备', '容量' ] ], [ 5, 10, 25, 20, 30 ] ).appendTo( $( '#rightPanel_2 > .panel-body' ).eq(2) ) ;
 		sdbjs.parts.gridBox.create( 'hostCPUList', { 'maxHeight': 206, 'minHeight': 28, 'position': 'relative' },  [ [ 'ID', '类型', '核心数', '主频' ] ], [ 3, 2, 1, 1 ] ).appendTo( $( '#rightPanel_2 > .panel-body' ).eq(3) ) ;
 		sdbjs.parts.gridBox.create( 'hostNetList', { 'maxHeight': 206, 'minHeight': 28, 'position': 'relative' },  [ [ 'ID', '类型', '速率', 'IP' ] ], [ 1, 1, 1, 1 ] ).appendTo( $( '#rightPanel_2 > .panel-body' ).eq(4) ) ;
 		sdbjs.parts.gridBox.create( 'hostPortList', { 'maxHeight': 206, 'minHeight': 28, 'position': 'relative' },  [ [ '端口', '状态' ] ], [ 1, 1 ] ).appendTo( $( '#rightPanel_2 > .panel-body' ).eq(5) ) ;
