@@ -74,6 +74,9 @@
 		<mkdir dir="${deploy.path}/hlt/js_testcases" />
 		<mkdir dir="${deploy.path}/hlt/sql_testcases" />
 		<mkdir dir="${deploy.path}/hlt/unusual_testcases" />
+
+		<mkdir dir="${deploy.path}/hlt/samples_testcases" />
+		
 		<mkdir dir="${deploy.path}/hlt/java-app-test/js-data-source" />
 
 		<copy todir="${deploy.path}/hlt/java-app-test/js-data-source">
@@ -94,6 +97,9 @@
 		</copy>
 		<copy todir="${deploy.path}/hlt/unusual_testcases">
 			<fileset dir="${build.testcases}/unusual_testcases" includes="**/*" />
+		</copy>
+		<copy todir="${deploy.path}/hlt/samples_testcases">
+			<fileset dir="${build.testcases}/samples_testcases" includes="**/*" />
 		</copy>
 		<copy file="${ci.script.path}/../ci.test.properties" todir="${deploy.path}" />
 		<copy todir="${deploy.path}">
