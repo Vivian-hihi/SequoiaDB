@@ -36,7 +36,7 @@
         <mkdir dir="${reports.path}" />
     </target>
 
-    <target name="Test-Java-Samples" depends="">
+    <target name="Test-Java-Samples" depends="clean-env">
         <property name="java_test.dir" value="${samples.testcase.path}/Java/build" />
         <property name="java_test.jar.dir" value="${samples.testcase.path}/Java/lib/java_samples.jar" />
         <property name="sequoiadb.jar.dir" value="${samples.testcase.path}/Java/lib/sequoiadb.jar" />

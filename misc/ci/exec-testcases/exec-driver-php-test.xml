@@ -23,7 +23,7 @@
 		<echo message="Clean deploy result reports compeleted." />
 	</target>
 
-	<target name="Test-PHP-Samples" depends="">
+	<target name="Test-PHP-Samples" depends="Exec-PHP-Testcases">
 		<echo message="Begin test php samples testcases..." />
 		<echo message="Perform the php samples testcases,with testcase.path=${samples.testcase.path}/PHP" />
 		<foreach target="test-one-suite" param="test.suite.fullname">

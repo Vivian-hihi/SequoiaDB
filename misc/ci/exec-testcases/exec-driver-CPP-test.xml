@@ -23,7 +23,7 @@
         <echo message="Clean deploy result reports compeleted." />
     </target>
 
-    <target name="Test-CPP-Samples" depends="">
+    <target name="Test-CPP-Samples" depends="Clean-CPP-Reports">
         <hostinfo prefix="host" />
         <echo message="Begin test c++ samples testcases..." />
         <echo message="Perform the c++ samples testcases,with testcase.path=${samples.testcase.path}/CPP" />
