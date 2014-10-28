@@ -237,6 +237,9 @@ namespace engine
          FLOAT32 orderFactor = 1.0f ;
          dir = 1 ;
          BOOLEAN start = TRUE ;
+         rtnStartStopKey startStopKey;
+         BSONElement startKey;
+         BSONElement stopKey;
          while ( keyItr.more() && orderItr.more() )
          {
             BSONElement keyEle = keyItr.next() ;
@@ -275,6 +278,7 @@ namespace engine
          matchedFields = 0 ;
          const map<string, rtnPredicate> &predicates
                      = _matcher.getPredicateSet().predicates();
+         map<string, rtnPredicate>::const_iterator it;
          nQueryFields = predicates.size() ;
          while ( keyItr.more() )
          {
@@ -282,9 +286,23 @@ namespace engine
             // for each element in the key, let's see if we used it in the
             // query. More keys used by query, we esimtate the index may more
             // satisfy our requirement
-            if ( predicates.find( keyEle.fieldName() )
+            if (( it = predicates.find( keyEle.fieldName() ))
                   != predicates.end() )
             {
+               // some cases have predicates, though it's not 
+               // that proper to use index, such as the case
+               // with max and min boundanry,
+               // so we need to lead such cases to table scan here
+               startStopKey = it->second._startStopKeys[0] ;
+               startKey = startStopKey._startKey._bound ;
+               stopKey = startStopKey._stopKey._bound ;
+               
+               if(0 == startKey.woCompare( bson::minKey.firstElement() ) &&
+                  0 == stopKey.woCompare( bson::maxKey.firstElement() ))
+               {
+                  continue;
+               }
+               
                ++matchedFields ;
             }
             else

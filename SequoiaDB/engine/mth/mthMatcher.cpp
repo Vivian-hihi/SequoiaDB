@@ -126,18 +126,20 @@ namespace engine
       case RegEx:
       {
          // for regular expresion case
-         // if is in the $or { } and more than one element
-         // need not add predicate
-         /*if ( predicatable )
-         {
-            _predicateSet.addPredicate ( ele.fieldName(), ele, isNot ) ;
-         }*/
          rc = _injectElement ( ele, BSONObj::opREGEX, lme ) ;
          if ( rc )
          {
             PD_LOG ( PDERROR, "Failed inject element, rc: %d", rc ) ;
             goto error ;
          }
+
+         // if is in the $or { } and more than one element
+         // need not add predicate
+         if ( predicatable )
+         {
+            _predicateSet.addPredicate ( ele.fieldName(), ele, isNot ) ;
+         }
+         
          break ;
 
       }
@@ -469,6 +471,11 @@ namespace engine
                            PD_LOG ( PDERROR, "Failed inject element, rc: %d", rc ) ;
                            goto error ;
                         }
+
+                        if ( predicatable )
+                        {
+                           _predicateSet.addPredicate ( ele.fieldName(), ele, isNot ) ;
+                        }                        
                         
                         continue;
                      }

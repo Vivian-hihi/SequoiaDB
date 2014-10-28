@@ -473,6 +473,8 @@ namespace engine
          case 'x': // extended
             extended = true;
             break;
+         case 's':
+            continue;
          default:
             goto done ; // cant use index
          }
