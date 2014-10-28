@@ -2249,6 +2249,23 @@ SDB_EXPORT INT32 sdbCreateNode ( sdbReplicaGroupHandle cHandle,
             BSON_APPEND( configuration, key, temp, string ) ;
             break ;
          }
+         case BSON_BOOL :
+         {
+            CHAR temp[6] = { 0 } ;
+            if ( bson_iterator_bool( &it ) )
+            {
+               ossSnprintf( temp, sizeof( temp ),
+                            "%s", "true" ) ;
+            }
+            else
+            {
+               ossSnprintf( temp, sizeof( temp ),
+                            "%s", "false" ) ;
+            }
+            BSON_APPEND( configuration, key,
+                         temp, string ) ;
+            break ;
+         }
          default :
             rc = SDB_INVALIDARG ;
             goto error ;
