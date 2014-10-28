@@ -587,7 +587,7 @@ sdbjs.fun.addOnEvent = function( obj )
 				var buttonW = $( this ).outerWidth() ;
 				var buttonH = $( this ).outerHeight() ;
 				
-				$( sdbjs.private.smallLabel ).show().children( ':eq(1)' ).html( text ) ;
+				$( sdbjs.private.smallLabel ).removeClass().addClass( 'tooltip' ).show().children( ':eq(1)' ).html( text ) ;
 				
 				var tooltipW = $( sdbjs.private.smallLabel ).outerWidth() ;
 				var tooltipH = $( sdbjs.private.smallLabel ).outerHeight() ;
@@ -615,7 +615,7 @@ sdbjs.fun.addOnEvent = function( obj )
 				if( tooltipW + 6 < buttonL && className == '' )
 				{
 					className = 'tooltip left' ;
-					left = buttonL - tooltipW - 6 ;
+					left = buttonL - tooltipW - 9 ;
 					if( buttonT + parseInt( buttonH * 0.5 ) + tooltipH - 14 < sdbjs.public.height )
 					{
 						top = buttonT + parseInt( buttonH * 0.5 ) - 14 ;
@@ -636,12 +636,12 @@ sdbjs.fun.addOnEvent = function( obj )
 					left = buttonL - tooltipW + 27 ;
 					if( tooltipH + 7 < buttonT )
 					{
-						top = buttonT - tooltipH - 7 ;
+						top = buttonT - tooltipH - 10 ;
 					}
 					else if ( tooltipH + 7 + buttonT + buttonH < sdbjs.public.height )
 					{
 						className = 'tooltip bottom bottom-right' ;
-						top = buttonT + buttonH - 2 ;
+						top = buttonT + buttonH ;
 					}
 					else
 					{
@@ -654,12 +654,12 @@ sdbjs.fun.addOnEvent = function( obj )
 					left = buttonL + buttonW - 27 ;
 					if( tooltipH + 7 < buttonT )
 					{
-						top = buttonT - tooltipH - 7 ;
+						top = buttonT - tooltipH - 10 ;
 					}
 					else if ( tooltipH + 7 + buttonT + buttonH < sdbjs.public.height )
 					{
 						className = 'tooltip bottom bottom-left' ;
-						top = buttonT + buttonH - 2 ;
+						top = buttonT + buttonH ;
 					}
 					else
 					{
@@ -672,13 +672,13 @@ sdbjs.fun.addOnEvent = function( obj )
 					if( tooltipH + 10 < buttonT )
 					{
 						className += ' top' ;
-						top = buttonT - tooltipH - 7 ;
+						top = buttonT - tooltipH - 10 ;
 						left = buttonL + parseInt( buttonW * 0.5 ) - parseInt( tooltipW * 0.5 ) ;
 					}
 					else if ( buttonT + buttonH + tooltipH + 10 < sdbjs.public.height )
 					{
 						className += ' bottom' ;
-						top = buttonT + buttonH - 3 ;
+						top = buttonT + buttonH ;
 						left = buttonL + parseInt( buttonW * 0.5 ) - parseInt( tooltipW * 0.5 ) ;
 					}
 					else
@@ -694,7 +694,7 @@ sdbjs.fun.addOnEvent = function( obj )
 			}
 		} ) ;
 		$( obj ).on( 'mouseout', function(){
-			$( sdbjs.private.smallLabel ).hide().removeClass().addClass( 'tooltip' ) ;
+			$( sdbjs.private.smallLabel ).hide() ;
 		} ) ;
 	}
 	else
@@ -1638,6 +1638,12 @@ $(document).ready(function(){
 	sdbjs.private.htmlScreen2 = $( '<div></div>' ).addClass( 'mask-screen mask-screen-not-alpha' ).css( 'z-index', 9998 ).appendTo( $( 'body' ) ) ;
 	//创建小标签
 	sdbjs.private.smallLabel = $( '<div></div>' ).addClass( 'tooltip' ).html( '<div class="tooltip-arrow"></div><div class="tooltip-inner"></div>' ).appendTo( $( 'body' ) ) ;
+	$( sdbjs.private.smallLabel ).on( 'mouseover', function(){
+		$( this ).show() ;
+	} ) ;
+	$( sdbjs.private.smallLabel ).on( 'mouseout', function(){
+		$( this ).hide() ;
+	} ) ;
 });
 
 /*
