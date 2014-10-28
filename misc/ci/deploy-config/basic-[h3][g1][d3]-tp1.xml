@@ -86,7 +86,7 @@
 
 	<target name="H3-G1-D3" depends="">
 		<hostinfo prefix="host" />
-		<property name="test-type-list" value="driver-java" />
+		<property name="test-type-list" value="basic,driver-java" />
 		<property name="copy.test.log" value="true"/>
 		<!-- <property name="import.file.name" value="basic-testcases-time.json" /> -->
 		<!-- <property name="test-type-list" value="driver-java" /> -->
