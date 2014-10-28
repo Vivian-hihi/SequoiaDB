@@ -282,6 +282,11 @@
         <runProgram>
             <program>chmod</program>
             <programArguments>4755 ${installdir}/bin/sdbomtool</programArguments>
+            <ruleList>
+                <platformTest>
+                    <type>linux</type>
+                </platformTest>
+            </ruleList>
         </runProgram>
     </postInstallationActionList>
     <preUninstallationActionList>
