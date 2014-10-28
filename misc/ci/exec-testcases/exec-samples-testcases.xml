@@ -2,7 +2,7 @@
 <!--@param ${reports.path}: The path where test case direcotry.-->
 <!--@param ${test.package.name}: The name of test package name,.-->
 <!--@param ${deploy.case.fullname}: The file name ( .xml )this file name is -->
-<project name="Exec-Samples-Testcases" default="Test-Basic-Samples">
+<project name="Exec-Samples-Testcases" default="Test-Java-Samples">
     <property file="${ci.properties.path}" />
     <taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
         <classpath>
@@ -17,234 +17,38 @@
         </ant>
     </target>
 
-    <target name="Test-Basic-Samples">
+    <target name="Test-Basic-Samples" depends="Test-Python-Samples">
         <ant antfile="exec-basic-testcases.xml" dir="." target="Test-Basic-Samples" inheritAll="true" >
             <property name="excludes.dir.patterns" value="vote" />
             <property name="includes.dir.patterns" value="*" />
         </ant>
     </target>
 
-    <target name="Test-C-Samples">
+    <target name="Test-C-Samples" depends="Test-Basic-Samples">
         <ant antfile="exec-driver-C-test.xml" dir="." target="Test-C-Samples" inheritAll="true" >
             <property name="excludes.dir.patterns" value="" />
             <property name="includes.dir.patterns" value="*" />
         </ant>
     </target>
 
-    <target name="Test-CPP-Samples">
+    <target name="Test-CPP-Samples" depends="Test-C-Samples">
         <ant antfile="exec-driver-CPP-test.xml" dir="." target="Test-CPP-Samples" inheritAll="true" >
             <property name="excludes.dir.patterns" value="rg" />
             <property name="includes.dir.patterns" value="*" />
         </ant>
     </target>
 
-    <target name="Test-PHP-Samples">
+    <target name="Test-PHP-Samples" depends="Test-CPP-Samples">
         <ant antfile="exec-driver-php-test.xml" dir="." target="Test-PHP-Samples" inheritAll="true" >
             <property name="excludes.dir.patterns" value="tools" />
             <property name="includes.dir.patterns" value="*" />
         </ant>
     </target>
 
-    <target name="Test-Java-Samples">
+    <target name="Test-Java-Samples" depends="Test-PHP-Samples">
         <ant antfile="exec-driver-java-test.xml" dir="." target="Test-Java-Samples" inheritAll="true" >
             <property name="excludes.dir.patterns" value="" />
             <property name="includes.dir.patterns" value="*" />
         </ant>
     </target>
-
-
-    <!-- <target name="exec-samples-testcases" depends="clean-env">
-        <foreach target="test-suite-case" param="test-suite-fullname">
-            <path>
-                <dirset dir="${samples.testcase.path}" />
-            </path>
-        </foreach>
-    </target>
-
-    <target name="exec-java-samples-testcases" depends="exec-samples-testcases">
-        <property name="java_samples.dir" value="${samples.testcase.path}/Java/build" />
-        <property name="java_samples.jar.dir" value="${samples.testcase.path}/Java/lib/java_samples.jar" />
-        <property name="sequoiadb.jar.dir" value="${samples.testcase.path}/../drivers_testcases/java/lib/sequoiadb.jar" />
-        <taskdef name="junit" classname="org.apache.tools.ant.taskdefs.optional.junit.JUnitTask">
-            <classpath>
-                <pathelement location="/usr/share/java/ant-junit.jar" />
-            </classpath>
-        </taskdef>
-
-        <junit printsummary="on" fork="true" showoutput="true" timeout="1200000">
-            <classpath>
-                <pathelement path="/usr/share/java/junit4.jar" />
-                <pathelement path="${sequoiadb.jar.dir}" />
-                <pathelement path="${java_samples.jar.dir}" />
-            </classpath>
-            <formatter type="xml" />
-            <batchtest todir="${reports.path}">
-                <fileset dir="${java_samples.dir}">
-                    <include name="**/*.*" />
-                    <exclude name="**/TestConstant*.*" />
-                    <exclude name="**/Replica*.*" />
-                    <exclude name="**/*testdata*/*" />
-                    <exclude name="**/*Constan*.class" />
-                    <exclude name="**/SdbNest.class" />
-                    <exclude name="**/MultiThread*" /> 
-                </fileset>
-            </batchtest>
-        </junit>
-        <echo message="samples java is over , report file is in ${reports.path}" />
-    </target>
-
-    <target name="init-python-samples-testcases" depends="exec-java-samples-testcases">
-        <property name="python.tar" value="pysequoiadb.tar.gz" />
-
-        <echo message="begin to init python driver..." />
-        <exec executable="/bin/tar" dir="${install.path}/sequoiadb/python">
-            <arg line=" -zxvf ${python.tar}" />
-        </exec>
-        <exec executable="/usr/bin/python" dir="${install.path}/sequoiadb/python">
-            <arg line=" setup.py install" />
-        </exec>
-
-        <foreach target="exec-python-samples-testcases" param="test-case-fullname">
-            <path>
-                <dirset dir="${samples.testcase.path}" />
-            </path>
-        </foreach>
-    </target>
-
-    <target name="exec-js-samples-testcases" depends="init-python-samples-testcases">
-        <echo message="Houston,we hava a problem..." />
-    </target>
-
-    <target name="exec-php-samples-testcases" depends="exec-js-samples-testcases">
-        <echo message="Houston,we hava a problem..." />
-    </target>
-
-    <target name="exec-python-samples-testcases" depends="">
-        <echo message="Begin to test Python samples..." />
-
-        <hostinfo prefix="host" />
-        <local name="test-samples-casename" />
-        <local name="test.samples.python.name" />
-        <basename property="test-samples-casename" file="${test-case-fullname}" />
-        <basename property="deploy.name" file="${deploy.case.fullname}" suffix=".xml" />
-
-        <tstamp>
-            <format property="testcase.begin.time" pattern="yyyy-MM-dd-hh.mm.ss" />
-        </tstamp>
-        <echo message="This testcase begin time is ${testcase.begin.time}"/>
-
-        <property name="test.samples.python.name" value="com.sequoiadb.testcases-samples.${test-samples-casename}.${deploy.name}-${host.NAME}" />
-
-        <echo file="${reports.path}/TEST-${test.samples.python.name}.xml" message="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot; ?&gt;&#10;&lt;testsuite errors=&quot;0&quot; failures=&quot;0&quot; hostname=&quot;${host.NAME}&quot; name=&quot;${test-samples-casename}&quot; tests=&quot;1&quot;&gt;&#10;" />
-
-        <exec executable="/usr/bin/python" failonerror="false" dir="${samples.testcase.path}/Python" timeout="1200000" outputproperty="screen.output" errorproperty="error.output" resultproperty="ret.code">
-            <arg line=" ${test-samples-casename}" />
-        </exec>
-        <echo message="${screen.output}" />
-
-        <if>
-            <not>
-                <equals arg1="${ret.code}" arg2="0" />
-            </not>
-            <then>
-                <tstamp>
-                    <format property="testcase.failure.end.time" pattern="yyyy-MM-dd-hh.mm.ss" />
-                </tstamp>
-                <echo message="This testcase end time is ${testcase.failure.end.time}"/>
-                <sdbTime beginTime="${testcase.begin.time}" endTime="${testcase.failure.end.time}" output="testcase.failure.timeOutput" />
-                <echo message="The testcase ${test.case.name}.js cost ${testcase.failure.timeOutput} s in total..." />
-
-                 <echo file="${reports.path}/TEST-${test.samples.python.name}.xml" append="true" message="&lt;failure command=&quot;${test-samples-casename}&quot; dir=&quot;${install.path}/sequoiadb/python&quot; time=&quot;${testcase.failure.timeOutput}&quot; returncode=&quot;${ret.code};&quot; &gt;&#10;&lt;![CDATA[errormessage=${screen.output} ]]&gt;&#10;&lt;/failure&gt;&#10;" />
-            </then>
-            <else>
-                <tstamp>
-                    <format property="testcase.end.time" pattern="yyyy-MM-dd-hh.mm.ss" />
-                </tstamp>
-                <echo message="This testcase end time is ${testcase.end.time}"/>
-                <sdbTime beginTime="${testcase.begin.time}" endTime="${testcase.end.time}" output="testcase.timeOutput" />
-                <echo message="The testcase ${test.case.name}.js cost ${testcase.timeOutput} s in total..." />
-            </else>
-        </if>
-        <echo file="${reports.path}/TEST-${test.samples.python.name}.xml" append="true" message="&lt;/testcase&gt;&#10;&lt;/testsuite&gt;&#10;" />
-    </target>
-
-    <target name="test-suite-case" depends="">
-        <hostinfo prefix="host" />
-        <local name="test-suite-casename" />
-        <local name="test.suite.class.name" />
-        <basename property="test-suite-casename" file="${test-suite-fullname}" />
-        <basename property="deploy.name" file="${deploy.case.fullname}" suffix=".xml" />
-        <property name="test.suite.class.name" value="com.sequoiadb.testcases-samples.${test-suite-casename}.${deploy.name}-${host.NAME}.${test-suite-casename}.${test-suite-casename}" />
-
-        <echo file="${reports.path}/TEST-${test.suite.class.name}.xml" message="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot; ?&gt;&#10;&lt;testsuite errors=&quot;0&quot; failures=&quot;0&quot; hostname=&quot;${host.NAME}&quot; name=&quot;${test.suite.class.name}&quot; tests=&quot;1&quot;&gt;&#10;" />
-
-        <chmod perm="u+x">
-            <fileset dir="${test-suite-fullname}" includes="**/*" />
-        </chmod>
-        <foreach target="test-one-case"  param="test-one-case">
-            <fileset dir="${test-suite-fullname}">
-                <include name="*" />
-                <exclude name="*.so" />
-                <exclude name="*.dat" />
-
-                <exclude name="*.php" />
-                <exclude name="*.htm" />
-                <exclude name="*.js" />
-                <exclude name="*.css" />
-                <exclude name="*.dll" />
-                <exclide name="*.cs" />
-            </fileset>
-            <param name="test-suite-casename" value="${test-suite-casename}" />
-            <param name="test-suite-fullname" value="${test-suite-fullname}" />
-            <param name="test.suite.class.name" value="${test.suite.class.name}" />
-        </foreach>
-
-        <echo file="${reports.path}/TEST-${test.suite.class.name}.xml" message="&lt;system-out&gt;&#10;&lt;![CDATA[${on screen}]]&gt;&#10;&lt;/system-out&gt;&#10;&lt;/testsuite&gt;&#10;" append="true" />
-    </target>
-
-    <target name="test-one-case" depends="">
-        <local name="test.real.name" />
-        <basename property="test.real.name" file="${test-one-case}" />
-
-        <echo file="${reports.path}/TEST-${test.suite.class.name}.xml" append="true" message="&lt;testcase classname=&quot;${test.suite.class.name}&quot; name=&quot;${test.real.name}&quot;&gt;&#10;" />
-
-        <tstamp>
-            <format property="testcase.begin.time" pattern="yyyy-MM-dd-hh.mm.ss" />
-        </tstamp>
-        <echo message="This testcase begin time is ${testcase.begin.time}"/>
-
-        <echo message="LD_LIBRARY_PATH is /opt/sequoiadb/lib" />
-        <exec executable="./${test.real.name}" dir="${test-suite-fullname}" timeout="120000" outputproperty="screen.output" resultproperty="ret.code" failonerror="false">
-            <arg line="localhost 50000 &quot;&quot; &quot;&quot;" />
-            <env key="LD_LIBRARY_PATH" path="env.LD_LIBRARY_PATH:/opt/sequoiadb/lib" />
-        </exec>
-        <echo message="${screen.output}" />
-
-        <echo message="the result = ${ret.code} after exec ${test-suite-fullname}/${test.real.name} testcase." />
-        <if>
-            <not>
-                <equals arg1="${ret.code}" arg2="0" />
-            </not>
-            <then>
-                <tstamp>
-                    <format property="testcase.failure.end.time" pattern="yyyy-MM-dd-hh.mm.ss" />
-                </tstamp>
-                <echo message="This testcase end time is ${testcase.failure.end.time}"/>
-                <sdbTime beginTime="${testcase.begin.time}" endTime="${testcase.failure.end.time}" output="testcase.failure.timeOutput" />
-                <echo message="The testcase ${test.case.name}.js cost ${testcase.failure.timeOutput} s in total..." />
-
-                <echo file="${reports.path}/TEST-${test.suite.class.name}.xml" append="true" message="&lt;failure type=&quot;junit.framework.AssertionFailedError&quot; &gt;&#10;&lt;![CDATA[command= ${test-suite-fullname}/${test.real.name} localhost 50000 &quot;&quot; &quot;&quot; ; return code=${ret.code}; time=${testcase.failure.timeOutput}; error message=${error.output} screen=${screen.output}]]&gt;&#10;&lt;/failure&gt;&#10;" />
-            </then>
-            <else>
-                <tstamp>
-                    <format property="testcase.end.time" pattern="yyyy-MM-dd-hh.mm.ss" />
-                </tstamp>
-                <echo message="This testcase end time is ${testcase.end.time}"/>
-                <sdbTime beginTime="${testcase.begin.time}" endTime="${testcase.end.time}" output="testcase.timeOutput" />
-                <echo message="The testcase ${test.case.name}.js cost ${testcase.timeOutput} s in total..." />
-            </else>
-        </if>
-
-        <echo file="${reports.path}/TEST-${test.suite.class.name}.xml" append="true" message="&lt;/testcase&gt;&#10;" /> -->
-    
 </project>
