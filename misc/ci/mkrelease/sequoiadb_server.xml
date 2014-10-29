@@ -251,13 +251,11 @@
             <programArguments>${installdir} ${port} ${svcname} ${dbpath} ${restname} ${installer_pathname}</programArguments>
             <ruleEvaluationLogic>or</ruleEvaluationLogic>
             <ruleList>
-                <compareText>
-                    <logic>equals</logic>
-                    <text>${type}</text>
-                    <value>SMS</value>
-                </compareText>
                 <isTrue>
                     <value>${OM}</value>
+                </isTrue>
+                <isTrue>
+                    <value>${SMS}</value>
                 </isTrue>
             </ruleList>
         </runProgram>
@@ -543,109 +541,76 @@
                     <default>true</default>
                     <cliOptionText>${msg(Install.Paramers.processAutoStart.explanation)}</cliOptionText>
                 </booleanParameter>
-                <choiceParameterGroup>
-                    <name>type</name>
+                <stringParameter>
+                    <name>svcname</name>
+                    <description></description>
+                    <explanation></explanation>
+                    <value>11780</value>
+                    <default>11780</default>
+                    <allowEmptyValue>1</allowEmptyValue>
+                    <ask>0</ask>
+                    <cliOptionName>svcname</cliOptionName>
+                    <cliOptionText>${msg(Installer.Paramers.svcnamePort.explanation)}</cliOptionText>
+                    <ruleEvaluationLogic>or</ruleEvaluationLogic>
+                    <width>40</width>
+                    <ruleList>
+                        <isTrue>
+                            <value>${SMS}</value>
+                        </isTrue>
+                    </ruleList>
+                </stringParameter>
+                <directoryParameter>
+                    <name>dbpath</name>
                     <description></description>
                     <explanation></explanation>
                     <value></value>
-                    <default>DB</default>
-                    <cliOptionName>type</cliOptionName>
-                    <cliOptionText>${msg(Installer.Paramers.installationType.explanation)}</cliOptionText>
-                    <parameterList>
-                        <parameterGroup>
-                            <name>SMS</name>
-                            <explanation></explanation>
-                            <value></value>
-                            <default></default>
-                            <parameterList>
-                                <stringParameter>
-                                    <name>svcname</name>
-                                    <description></description>
-                                    <explanation></explanation>
-                                    <value>11780</value>
-                                    <default>11780</default>
-                                    <allowEmptyValue>1</allowEmptyValue>
-                                    <cliOptionName>svcname</cliOptionName>
-                                    <cliOptionText>${msg(Installer.Paramers.svcnamePort.explanation)}</cliOptionText>
-                                    <ruleEvaluationLogic>or</ruleEvaluationLogic>
-                                    <width>40</width>
-                                    <ruleList>
-                                        <compareValues>
-                                            <logic>equals</logic>
-                                            <value1>${type}</value1>
-                                            <value2>SMS</value2>
-                                        </compareValues>
-                                    </ruleList>
-                                </stringParameter>
-                                <directoryParameter>
-                                    <name>dbpath</name>
-                                    <description></description>
-                                    <explanation></explanation>
-                                    <value></value>
-                                    <default>${platform_install_prefix}/${product_shortname}/database/sms/${svcname}</default>
-                                    <allowEmptyValue>0</allowEmptyValue>
-                                    <cliOptionName>dbpath</cliOptionName>
-                                    <cliOptionText>${msg(Installer.Paramers.dbpath.explanation)}</cliOptionText>
-                                    <mustBeWritable>0</mustBeWritable>
-                                    <mustExist>1</mustExist>
-                                    <ruleEvaluationLogic>or</ruleEvaluationLogic>
-                                    <width>40</width>
-                                    <ruleList>
-                                        <compareValues>
-                                            <logic>equals</logic>
-                                            <value1>${type}</value1>
-                                            <value2>SMS</value2>
-                                        </compareValues>
-                                    </ruleList>
-                                </directoryParameter>
-                                <stringParameter>
-                                    <name>restname</name>
-                                    <description></description>
-                                    <explanation></explanation>
-                                    <value>8000</value>
-                                    <default>8000</default>
-                                    <allowEmptyValue>1</allowEmptyValue>
-                                    <cliOptionName>restname</cliOptionName>
-                                    <cliOptionText>${msg(Installer.Paramers.restPort.explanation)}</cliOptionText>
-                                    <ruleEvaluationLogic>or</ruleEvaluationLogic>
-                                    <width>40</width>
-                                    <ruleList>
-                                        <compareValues>
-                                            <logic>equals</logic>
-                                            <value1>${type}</value1>
-                                            <value2>SMS</value2>
-                                        </compareValues>
-                                    </ruleList>
-                                </stringParameter>
-                            </parameterList>
-                        </parameterGroup>
-                        <parameterGroup>
-                            <name>DB</name>
-                            <explanation></explanation>
-                            <value></value>
-                            <default></default>
-                            <ruleList>
-                                <componentTest>
-                                    <logic>exists</logic>
-                                    <name>${type}</name>
-                                </componentTest>
-                            </ruleList>
-                        </parameterGroup>
-                    </parameterList>
+                    <default>${installdir}/database/sms/${svcname}</default>
+                    <allowEmptyValue>1</allowEmptyValue>
+                    <ask>0</ask>
+                    <cliOptionName>dbpath</cliOptionName>
+                    <cliOptionText>${msg(Installer.Paramers.dbpath.explanation)}</cliOptionText>
+                    <mustBeWritable>0</mustBeWritable>
+                    <mustExist>0</mustExist>
+                    <ruleEvaluationLogic>or</ruleEvaluationLogic>
+                    <width>40</width>
                     <ruleList>
-                        <componentTest>
-                            <logic>exists</logic>
-                            <name>${type}</name>
-                        </componentTest>
+                        <isTrue>
+                            <value>${SMS}</value>
+                        </isTrue>
                     </ruleList>
-                </choiceParameterGroup>
+                </directoryParameter>
+                <stringParameter>
+                    <name>restname</name>
+                    <description></description>
+                    <explanation></explanation>
+                    <value>8000</value>
+                    <default>8000</default>
+                    <allowEmptyValue>1</allowEmptyValue>
+                    <ask>0</ask>
+                    <cliOptionName>restname</cliOptionName>
+                    <cliOptionText>${msg(Installer.Paramers.restPort.explanation)}</cliOptionText>
+                    <ruleEvaluationLogic>or</ruleEvaluationLogic>
+                    <width>40</width>
+                    <ruleList>
+                        <isTrue>
+                            <value>${SMS}</value>
+                        </isTrue>
+                    </ruleList>
+                </stringParameter>
                 <booleanParameter>
-                    <name>OM</name>
+                    <name>SMS</name>
                     <description>${msg(Installer.Paramers.sms.description)}</description>
                     <explanation></explanation>
-                    <value>false</value>
+                    <value></value>
                     <default>false</default>
-                    <cliOptionShow>0</cliOptionShow>
+                    <cliOptionName>SMS</cliOptionName>
+                    <cliOptionText>${msg(Installer.Paramers.installationType.explanation)}</cliOptionText>
+                    <ruleEvaluationLogic>or</ruleEvaluationLogic>
+                    <ruleList>
+                        <isFalse>
+                            <value>${SMS}</value>
+                        </isFalse>
+                    </ruleList>
                 </booleanParameter>
             </parameterList>
         </parameterGroup>
