@@ -21,7 +21,7 @@
    2014-7-26 Zhaobo Tan  Init
 @parameter
    BUS_JSON: the format is: { "InstallHostName": "rhel64-test8", "InstallSvcName": "11820", "InstallPath": "/opt/sequoiadb/database/standalone", "InstallConfig": { "diaglevel": 3, "role": "standalone", "logfilesz": 64, "logfilenum": 20, "transactionon": "false", "preferedinstance": "A", "numpagecleaners": 1, "pagecleaninterval": 10000, "hjbuf": 128, "logbuffsize": 1024, "maxprefpool": 200, "maxreplsync": 10, "numpreload": 0, "sortbuf": 512, "syncstrategy": "none" } }
-   SYS_JSON: the format is: { "AgentPort": "11790", "SdbUser": "sdbadmin", "SdbPasswd": "sdbadmin", "SdbUserGroup": "sdbadmin_group", "User": "root", "Passwd": "sequoiadb" } 
+   SYS_JSON: the format is: { "SdbUser": "sdbadmin", "SdbPasswd": "sdbadmin", "SdbUserGroup": "sdbadmin_group", "User": "root", "Passwd": "sequoiadb" } 
    ENV_JSON:
 @return
    RET_JSON: the format is: {}
@@ -70,8 +70,6 @@ function createStandalone( hostName, svcName, installPath, config, agentPort )
 
 function main()
 {
-    // local agent port
-    var agentPort       = SYS_JSON[AgentPort] ;
     var sdbUser         = SYS_JSON[SdbUser] ;
     var sdbUserGroup    = SYS_JSON[SdbUserGroup] ;
     var user            = SYS_JSON[User] ;
@@ -84,6 +82,8 @@ function main()
     var ssh             = new Ssh( installHostName, user, passwd ) ;
     var osInfo          = System.type() ;
 
+    // get remote or local sdbcm port
+    var agentPort       = getAgentPort( installHostName ) ;
     // change install path owner
     changeDirOwner( ssh, osInfo, installPath, sdbUser, sdbUserGroup ) ;
     // create standalone
@@ -94,4 +94,3 @@ function main()
 
 // execute
    main() ;
-
