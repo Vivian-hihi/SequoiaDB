@@ -10,7 +10,7 @@
         </classpath>
     </taskdef>
 
-    <target name="Test-Python-Samples" depends="Test-Java-Samples">
+    <target name="Test-Python-Samples" depends="">
         <ant antfile="exec-driver-python-test.xml" dir="." target="Test-Python-Samples" inheritAll="true" >
             <property name="excludes.dir.patterns" value="reports*" />
             <property name="includes.dir.patterns" value="*" />
