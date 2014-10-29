@@ -152,6 +152,36 @@
           <stentry>Total free space size of a collection space</stentry>
         </strow>
         <strow>
+          <stentry>TotalDataSize</stentry>
+          <stentry>长整型</stentry>
+          <stentry>集合空间数据文件总大小</stentry>
+        </strow>
+        <strow>
+          <stentry>FreeDataSize</stentry>
+          <stentry>长整型</stentry>
+          <stentry>集合空间数据文件空闲空间大小</stentry>
+        </strow>
+        <strow>
+          <stentry>TotalIndexSize</stentry>
+          <stentry>长整型</stentry>
+          <stentry>集合空间索引文件总大小</stentry>
+        </strow>
+        <strow>
+          <stentry>FreeIndexSize</stentry>
+          <stentry>长整型</stentry>
+          <stentry>集合空间索引文件空闲空间大小</stentry>
+        </strow>
+        <strow>
+          <stentry>TotalLobSize</stentry>
+          <stentry>长整型</stentry>
+          <stentry>集合空间大对象文件总大小</stentry>
+        </strow>
+        <strow>
+          <stentry>FreeLobSize</stentry>
+          <stentry>长整型</stentry>
+          <stentry>集合空间大对象文件空闲空间大小</stentry>
+        </strow>
+        <strow>
           <stentry>Group.GroupName</stentry>
           <stentry>String</stentry>
           <stentry>Group name list of the replset of the collection space</stentry>
