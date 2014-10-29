@@ -225,7 +225,8 @@ namespace engine
                          "", 1, SPT_EVAL_FLAG_NONE, rval, detail ) ;
       if ( rc )
       {
-         PD_LOG_MSG ( PDERROR, "Failed to eval js file for command[%s]: "
+         PD_LOG_MSG ( PDERROR, "%s", _scope->getLastErrMsg() ) ;
+         PD_LOG ( PDDEBUG, "Failed to eval js file for command[%s]: "
                   "%s, rc = %d", name(),
                   _scope->getLastErrMsg(), rc ) ;
          rc = _scope->getLastError() ;
