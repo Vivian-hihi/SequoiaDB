@@ -37,7 +37,7 @@
 
 namespace engine
 {
-   const UINT32 SESSION_SOCKET_DFT_TIMEOUT = 10 ;
+   const UINT32 SESSION_SOCKET_DFT_TIMEOUT = 10000 ;
 
    /*
       _pmdSession implement
