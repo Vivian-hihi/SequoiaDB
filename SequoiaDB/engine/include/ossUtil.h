@@ -43,13 +43,15 @@
 #if defined (_LINUX)
 #include <sys/time.h>
 #include <strings.h>
+#else
+#include <io.h>
 #endif
 #include "oss.h"
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>
-#include <io.h>
+
 #define OSS_TEN_MILLION 10000000
 #define OSS_ONE_MILLION 1000000
 #define OSS_ONE_SEC     (1000)
