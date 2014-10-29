@@ -82,6 +82,7 @@
 			</manifest>
 			<fileset dir="${deploy.path}/hlt/drivers_testcases/java/build" includes="**/*" />
 		</jar>
+		<copy file="${deploy.path}/hlt/drivers_testcases/java/lib/java_test.jar" tofile="${deploy.path}/hlt/samples_testcases/Java/lib/java_test.jar" />
 		<echo message="...over javac and jar the driver java test..." />
 
 		<echo message="...Begin to scons the c and c++ test code ..." />
