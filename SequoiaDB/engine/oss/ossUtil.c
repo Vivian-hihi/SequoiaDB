@@ -392,3 +392,19 @@ UINT32 ossHash ( const CHAR *data, INT32 len )
 }
 #undef get16bits
 
+INT32 ossDup2( int oldFd, int newFd )
+{
+#if defined( _WINDOWS )
+   if ( _dup2( oldFd, newFd ) != 0 )
+   {
+      return SDB_SYS ;
+   }
+#else
+   if ( dup2( oldFd, newFd ) < 0 )
+   {
+      return SDB_SYS ;
+   }
+#endif // _WINDOWS
+   return SDB_OK ;
+}
+

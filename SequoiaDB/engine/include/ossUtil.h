@@ -94,13 +94,13 @@ INT32 ossStrToInt ( const CHAR *pBuffer, INT32 *number ) ;
 #define ossItoa(x,y,z) if (y) { ossSnprintf(y, z, "%d", (INT32)(x) );}
 #define ossLltoa(x,y,z) if (y) { ossSnprintf(y, z, OSS_LL_PRINT_FORMAT, (INT64)(x) );}
 
+INT32 ossDup2( int oldFd, int newFd ) ;
+
 #if defined (_WINDOWS)
    #define  ossDup(fd)                 _dup(fd)
-   #define  ossDup2(oldFd,newFd)       _dup2(oldFd,newFd)
    #define  ossCloseFd(fd)             _close(fd)
 #else
    #define  ossDup(fd)                 dup(fd)
-   #define  ossDup2(oldFd,newFd)       dup2(oldFd,newFd)
    #define  ossCloseFd(fd)             close(fd)
 #endif // _WINDOWS
 
