@@ -321,7 +321,7 @@ static INT32 _send1 ( sdbConnectionHandle cHandle, SOCKET sock,
 
    if ( -1 == sock )
    {
-      rc = SDB_INVALID_HANDLE ;
+      rc = SDB_INVALIDARG ;
       goto error ;
    }
 
@@ -369,7 +369,7 @@ static INT32 _recv ( sdbConnectionHandle cHandle, SOCKET sock,
 
    if ( -1 == sock )
    {
-      rc = SDB_INVALID_HANDLE ;
+      rc = SDB_INVALIDARG ;
       goto error ;
    }
 
@@ -7508,6 +7508,11 @@ SDB_EXPORT INT32 sdbCloseLob( sdbLobHandle *lobHandle )
 
    HANDLE_CHECK( *lobHandle, lob, SDB_HANDLE_TYPE_LOB ) ;
 
+   if ( -1 == lob->_sock )
+   {
+      goto done ;
+   }
+
    rc = clientBuildCloseLobMsg( &lob->_pSendBuffer, &lob->_sendBufferSize,
                                 0, 1, lob->_contextID, 0,
                                 lob->_endianConvert ) ;
@@ -7532,6 +7537,7 @@ SDB_EXPORT INT32 sdbCloseLob( sdbLobHandle *lobHandle )
       goto error ;
    }
 
+done:
    _unregSocket( lob->_connection, &lob->_sock ) ;
 
    if ( lob->_pSendBuffer )
@@ -7546,7 +7552,6 @@ SDB_EXPORT INT32 sdbCloseLob( sdbLobHandle *lobHandle )
    SDB_OSS_FREE( lob ) ;
 
    *lobHandle = SDB_INVALID_HANDLE ;
-done:
    return rc ;
 error:
    goto done ;
