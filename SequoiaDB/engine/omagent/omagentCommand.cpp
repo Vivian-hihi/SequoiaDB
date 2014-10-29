@@ -233,7 +233,6 @@ namespace engine
          BSONObjBuilder bob ;
          bob.append( OMA_FIELD_DETAIL, _scope->getLastErrMsg() ) ;
          retObj = bob.obj() ;
-         PD_LOG_MSG( PDERROR, "%s", _scope->getLastErrMsg() ) ;
          goto error ;
       }
       // adapt the result
