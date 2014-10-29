@@ -40,6 +40,7 @@
         <property name="java_samples.dir" value="${samples.testcase.path}/Java/build" />
         <property name="java_samples.jar.dir" value="${samples.testcase.path}/Java/lib/java_samples.jar" />
         <property name="sequoiadb_samples.jar.dir" value="${samples.testcase.path}/Java/lib/sequoiadb.jar" />
+        <property name="java_test.jar.dir" value="${testcase.path}/java/lib/java_test.jar" />
         <junit printsummary="yes" fork="yes" showoutput="true" timeout="1200000">
             <classpath>
                 <pathelement path="/usr/share/java/junit.jar" />
@@ -47,6 +48,7 @@
 
                 <pathelement path="${sequoiadb_samples.jar.dir}" />
                 <pathelement path="${java_samples.jar.dir}" />
+                <pathelement path="${java_test.jar.dir}" />
             </classpath>
             <formatter type="xml" />
             <batchtest todir="${reports.path}">
