@@ -692,9 +692,14 @@ namespace engine
             _mb.writePtr( finalSize ) ;
          }
 
-      } while (  _mb.length() < CLS_SYNC_MAX_LEN ||
-                ( time( NULL ) - bTime >= CLS_SYNC_MAX_TIME &&
-                   _mb.length() > 0 ) ) ;
+         if ( CLS_SYNC_MAX_LEN <= _mb.length() ||
+              ( time( NULL ) - bTime >= CLS_SYNC_MAX_TIME &&
+               _mb.length() > 0 ) )
+         {
+            break ;
+         }
+
+      } while ( TRUE ) ;
 
       if ( 0 != _mb.length() )
       {
