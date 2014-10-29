@@ -16,12 +16,10 @@
 
 *******************************************************************************/
 /*
-@description: common things for all the js files in current document
+@description: js class for the js files in current document
 @modify list:
    2014-7-26 Zhaobo Tan  Init
 */
-
-// return json object for every business js file
 
 function installTmpCMResult()
 {
