@@ -362,11 +362,10 @@ public class DBCollection {
 	 * @param insertor
 	 *            The Bson object of insertor list, can't be null
 	 * @param flag  
-	 *            FLG_INSERT_CONTONDUP or 0
-	 *            FLG_INSERT_CONTONDUP: bulkInsert will continue when Duplicate 
-	 *                                  key exist.(the duplicate record will be 
-	 *                                  ignored)
-     *            0: bulkInsert will interrupt when Duplicate key exist.
+	 *            available value is FLG_INSERT_CONTONDUP or 0.  
+	 *            if flag = FLG_INSERT_CONTONDUP, bulkInsert will continue when Duplicate 
+	 *            key exist.(the duplicate record will be ignored); 
+     *            if flag = 0, bulkInsert will interrupt when Duplicate key exist.
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
 	public void bulkInsert(List<BSONObject> insertor, int flag)
