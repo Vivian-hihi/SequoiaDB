@@ -1698,7 +1698,7 @@ static JSBool collection_put_lob( JSContext *cx , uintN argc , jsval *vp )
       bson_oid_gen( &oid ) ;
    }
 
-   rc = ossOpen( path, OSS_READONLY, OSS_DEFAULTFILE, file ) ;
+   rc = ossOpen( path, OSS_READONLY|OSS_SHAREREAD, OSS_DEFAULTFILE, file ) ;
    REPORT_RC( SDB_OK == rc, "SdbCollection.putLob(): failed to open file", rc ) ;
 
    rc = sdbOpenLob( *collection, &oid, SDB_LOB_CREATEONLY, &lob ) ;
