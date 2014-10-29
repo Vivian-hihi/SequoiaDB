@@ -49,6 +49,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>
+#include <io.h>
 #define OSS_TEN_MILLION 10000000
 #define OSS_ONE_MILLION 1000000
 #define OSS_ONE_SEC     (1000)
@@ -90,6 +91,16 @@ INT32 ossStrToInt ( const CHAR *pBuffer, INT32 *number ) ;
 
 #define ossItoa(x,y,z) if (y) { ossSnprintf(y, z, "%d", (INT32)(x) );}
 #define ossLltoa(x,y,z) if (y) { ossSnprintf(y, z, OSS_LL_PRINT_FORMAT, (INT64)(x) );}
+
+#if defined (_WINDOWS)
+   #define  ossDup(fd)                 _dup(fd)
+   #define  ossDup2(oldFd,newFd)       _dup2(oldFd,newFd)
+   #define  ossCloseFd(fd)             _close(fd)
+#else
+   #define  ossDup(fd)                 dup(fd)
+   #define  ossDup2(oldFd,newFd)       dup2(oldFd,newFd)
+   #define  ossCloseFd(fd)             close(fd)
+#endif // _WINDOWS
 
 #if defined (_WINDOWS)
 #define ossAtoll(x) _atoi64(x)

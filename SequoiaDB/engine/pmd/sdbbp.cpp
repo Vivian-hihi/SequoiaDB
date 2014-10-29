@@ -139,9 +139,10 @@ INT32 enterDaemonMode ( sptScope *scope ,
    PD_TRACE_ENTRY ( SDB_ENTERDAEMONMODE );
    CHAR *         code        = NULL ;
    BOOLEAN        exit        = FALSE ;
-   FILE           oldStdout   = *stdout ;
+   //FILE           oldStdout   = *stdout ;
    INT32          fd          = -1 ;
-   FILE *         newStdout   = NULL ;
+   INT32          hOutFd      = -1 ;
+   //FILE *         newStdout   = NULL ;
    CHAR *         result      = NULL ;
    bson::BSONObj rval ;
    bson::BSONObj detail ;
@@ -196,10 +197,15 @@ INT32 enterDaemonMode ( sptScope *scope ,
       rc = ossNamedPipeToFd ( b2fPipe , &fd ) ;
       SH_VERIFY_RC
 
-      newStdout = ossFdopen ( fd , "a" ) ;
-      SH_VERIFY_COND ( newStdout , SDB_SYS )
+      //newStdout = ossFdopen ( fd , "a" ) ;
+      //SH_VERIFY_COND ( newStdout , SDB_SYS )
 
-      *stdout = *newStdout ;
+      //*stdout = *newStdout ;
+      hOutFd = ossDup( 1 ) ;
+      rc = ossDup2( fd, 1 ) ;
+      SH_VERIFY_RC
+
+      ossCloseFd( fd ) ;
 
       if ( ossStrcmp ( CMD_QUIT , code ) == 0 )
          exit = TRUE ;
@@ -212,7 +218,10 @@ INT32 enterDaemonMode ( sptScope *scope ,
       ossPrintf ( " %d", sdbGetErrno() ) ;
       result = NULL ;
 
-      *stdout = oldStdout ;
+      //*stdout = oldStdout ;
+      ossCloseFd( 1 ) ;
+      ossDup2( hOutFd, 1 ) ;
+      ossCloseFd( hOutFd ) ;
 
       rc = ossDisconnectNamedPipe ( b2fPipe ) ;
       SH_VERIFY_RC
