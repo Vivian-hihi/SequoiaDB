@@ -28,8 +28,8 @@
         <li><p>Refer <xref href="../../system_require/topics/software_en.dita">System configuration
           requirement </xref> to configure Host Name and change the system kernel params.</p></li>
         <li>Run installation program<p>
-            <codeblock>./sequoiadb-1.0.0-linux-x86_64-installer.run --mode text --type DB</codeblock>
-        </p><note>Parameter type is set as DB by default, when installing DB, the parameter type is unnecessary.</note></li>
+            <codeblock>./sequoiadb-1.0.0-linux-x86_64-installer.run --mode text --type DB/SMS</codeblock>
+        </p><note>type 参数为 DB 和 SMS。Parameter type is set as DB by default, when installing DB, the parameter type is unnecessary.</note></li>
         <li>The system prompt you to choose wizard language <p>
           <codeblock>Language Selection 
 Please select the installation language
@@ -43,11 +43,42 @@ Created with an evaluation version of BitRock InstallBuilder
 
 Welcome to the SequoiaDB Server Setup Wizard.
 
-----------------------------------------------------------------------------
+IMPORTANT: READ CAREFULLY
+
+Two license agreements are presented below.
+
+1. SequoiaDB License Agreement for Evaluation of Programs
+
+2. SequoiaDB End-User License Agreement
+
+If Licensee is obtaining the Program for purposes of productive use (other than evaluation, testing, trial "try or buy," or demonstration): By clicking on the "Accept" button below, Licensee accepts the SequoiaDB End-User License Agreement, without modification.
+
+If Licensee is obtaining the Program for the purpose of evaluation, testing, trial "try or buy," or demonstration (collectively, an "Evaluation"): By clicking on the "Accept" button below, Licensee accepts both (i) the SequoiaDB License Agreement for Evaluation of Programs (the "Evaluation License"), without modification; and (ii) the SequoiaDB End-User License Agreement (the "SELA"), without modification.
+
+The Evaluation License will apply during the term of Licensee's Evaluation.
+
+The SELA will automatically apply if Licensee elects to retain the Program after the Evaluation (or obtain additional copies of the Program for use after the Evaluation) by entering into a procurement agreement.
+
+The Evaluation License and the SELA are not in effect concurrently; neither modifies the other; and each is independent of the other.
+
+The complete text of each of these two license agreements follow.
+
+
+License Agreement for Evaluation of Programs
+
+[1] Agree The License: For More License's Detail, Please Check The License File After Installation
+[2] Read The License
+Please choose an option [1] :</codeblock></p></li>
+              <li><p>是否同意协议：<codeblock>----------------------------------------------------------------------------
+Agree The License
+
+Press [Enter] to continue :
+
+Do you accept this license? [y/n]:</codeblock></p></li>
+              <li><p>按 y 表示同意：<codeblock>----------------------------------------------------------------------------
 Please specify the directory where SequoiaDB Server will be installed.
 
-Installation Directory [/opt/sequoiadb]:</codeblock>
-          </p></li>
+Installation Directory [/opt/sequoiadb]:</codeblock></p></li> 
         <li>After inputting the installation path(installed in <i>/opt/sequoiadb</i> in default). Then you are prompted to enter a user name which used to run <i>sequoiadb service</i><p>
             <codeblock>Confiture user information
 Please insert the desired username and password
