@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
 <topic id="topic_yyl_fly_wj">
-        <title>Linux 版本的 DB 安装</title>
+        <title>Linux 版本安装</title>
   <body>
     <section>
       <title>安装前准备</title>
@@ -22,20 +22,55 @@
       <note>如果有多台服务器，每台机器都需要重复如下步骤安装服务器程序。</note>
       <ul>
           <li><p>参照<xref href="../../system_require/topics/software.dita">系统配置需求</xref>配置好主机名以及修改系统内核参数</p></li>
-          <li><p>运行安装程序<codeblock>./sequoiadb-1.0.0-linux-x86_64-installer.run --mode text --type DB</codeblock></p>
-                  <note>type 参数的默认值为 DB，当安装 DB 时，type 参数可省略。</note></li>
+          <li><p>运行安装程序<codeblock>./sequoiadb-1.0.0-linux-x86_64-installer.run --mode text --type DB/SMS</codeblock></p>
+                  <note>type 参数的默认值为 DB，当安装 DB 时，type 参数可省略。SMS 为安装 OM 服务。</note></li>
           <li><p>程序提示选择向导语言<codeblock>Language Selection 
 Please select the installation language
 [1] English - English       
 [2] Simplified Chinese - 简体中文         
 Please choose an option [1] :2 </codeblock></p></li>
-        <li><p>输入2，选择中文，此时系统提示输入安装目录<codeblock>------------------------------------------------------------
+              <li><p>输入2，选择中文，显示安装协议，默认忽略阅读，如果需要读取全部文件，输入2<codeblock>------------------------------------------------------------
 由 BitRockInstallBuilder 评估本所建立
 ------------------------------------------------------------
 欢迎来到 SequoiaDB Server 安装程序
+
+
+重要信息：请仔细阅读
+
+下面提供了两个许可协议。
+
+1. SequoiaDB 评估程序的最终用户许可协议
+2. SequoiaDB 最终用户许可协议
+
+如果被许可方为了生产性使用目的（而不是为了评估、测试、试用“先试后买”或演示）获得本程序，单击下面的“接受”按钮即表示被许可方接受 SequoiaDB 最终用户许可协议，且不作任何修改。
+
+如果被许可方为了评估、测试、试用“先试后买”或演示（统称为“评估”）目的获得本程序：单击下面的“接受”按钮即表示被许可方同时接受（i）SequoiaDB 评估程序的最终用户许可协议（“评估许可”），且不作任何修改；和（ii）SequoiaDB 最终用户程序许可协议（SELA），且不作任何修改。
+
+在被许可方的评估期间将适用“评估许可”。
+
+如果被许可方通过签署采购协议在评估之后选择保留本程序（或者获得附加的本程序副本供评估之后使用），SequoiaDB 评估程序的最终用户许可协议将自动适用。
+
+“评估许可”和 SequoiaDB 最终用户许可协议不能同时有效；两者之间不能互相修改，并且彼此独立。
+
+这两个许可协议中每个协议的完整文本如下。
+
+评估程序的最终用户许可协议
+
+
+
+[1] 同意以上协议: 了解更多的协议内容，可以在安装后查看协议文件
+[2] 查看详细的协议内容
+请选择选项 [1] :</codeblock></p></li>
+              <li><p>是否同意协议：<codeblock>----------------------------------------------------------------------------
+同意以上协议
+
+按 [Enter] 继续：
+
+您是否接受此软件授权协议？ [y/n]:</codeblock></p></li>
+              <li><p>按 y 表示同意：<codeblock>
 ------------------------------------------------------------ 
 请指定 SequoiaDBServer 将会被安装到的目录 
-安装目录 [/opt/sequoiadb]: </codeblock></p></li>
+安装目录 [/opt/sequoiadb]:</codeblock></p></li> 
         <li><p>输入安装路径后按回车（默认安装在 /opt/sequoiadb），此时系统提示输入用户名，该用户名用于运行 SequoiaDB 服务<codeblock>------------------------------------------------------------
 数据库管理用户配置 
 配置用于启动 SequoiaDB 的用户名和密码 
@@ -51,7 +86,13 @@ Please choose an option [1] :2 </codeblock></p></li>
 是否允许 SequoiaDB 相关进程开机自启动</codeblock></p></li>
         <li><p>SequoiaDB 相关进程开机自启动 [Y/n]：Y，输入 Y，按回车，同意 SequoiaDB 相关进程开机自启动<codeblock>----------------------------------------------------------------
 设定现在已经准备将 SequoiaDB Server 安装到您的电脑 
-您确定要继续? [Y/N]: Y</codeblock></p></li>
+您确定要继续? [Y/N]: Y
+
+
+
+
+是否安装OM服务 [y/N]:</codeblock></p></li>
+              <li><p>是否安装 OM 服务 [y/N]:N，输入 N，按回车，不安装 OM 服务。</p></li>
         <li><p>输入 Y，按回车，系统启动安装，此时需要等待大约1分钟，系统安装完成<codeblock>正在安装 SequoiaDB Server 于您的电脑中，请稍候。
 安装中
 0% ______________ 50% ______________ 100%
