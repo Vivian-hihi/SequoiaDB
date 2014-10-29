@@ -38,11 +38,31 @@
           <stentry>PageSize</stentry>
           <stentry>整型</stentry>
           <stentry>集合空间数据页大小</stentry>
-        </strow>        
+        </strow>
+        <strow>
+          <stentry>LobPageSize</stentry>
+          <stentry>整型</stentry>
+          <stentry>集合空间大对象数据页大小</stentry>
+        </strow>
         <strow>
           <stentry>MaxCapacitySize</stentry>
           <stentry>长整型</stentry>
           <stentry>集合空间的最大容量上限</stentry>
+        </strow>
+        <strow>
+          <stentry>MaxDataCapSize</stentry>
+          <stentry>长整型</stentry>
+          <stentry>集合空间数据文件最大容量上限</stentry>
+        </strow>
+        <strow>
+          <stentry>MaxIndexCapSize</stentry>
+          <stentry>长整型</stentry>
+          <stentry>集合空间索引文件最大容量上限</stentry>
+        </strow>
+        <strow>
+          <stentry>MaxLobCapSize</stentry>
+          <stentry>长整型</stentry>
+          <stentry>集合空间大对象文件最大容量上限</stentry>
         </strow>
         <strow>
           <stentry>NumCollections</stentry>
@@ -63,6 +83,36 @@
           <stentry>FreeSize</stentry>
           <stentry>长整型</stentry>
           <stentry>集合空间的空闲大小</stentry>
+        </strow>
+        <strow>
+          <stentry>TotalDataSize</stentry>
+          <stentry>长整型</stentry>
+          <stentry>集合空间数据文件总大小</stentry>
+        </strow>
+        <strow>
+          <stentry>FreeDataSize</stentry>
+          <stentry>长整型</stentry>
+          <stentry>集合空间数据文件空闲空间大小</stentry>
+        </strow>
+        <strow>
+          <stentry>TotalIndexSize</stentry>
+          <stentry>长整型</stentry>
+          <stentry>集合空间索引文件总大小</stentry>
+        </strow>
+        <strow>
+          <stentry>FreeIndexSize</stentry>
+          <stentry>长整型</stentry>
+          <stentry>集合空间索引文件空闲空间大小</stentry>
+        </strow>
+        <strow>
+          <stentry>TotalLobSize</stentry>
+          <stentry>长整型</stentry>
+          <stentry>集合空间大对象文件总大小</stentry>
+        </strow>
+        <strow>
+          <stentry>FreeLobSize</stentry>
+          <stentry>长整型</stentry>
+          <stentry>集合空间大对象文件空闲空间大小</stentry>
         </strow>
       </simpletable>
     </section>
@@ -90,6 +140,11 @@
           <stentry>集合空间数据页大小</stentry>
         </strow>
         <strow>
+          <stentry>LobPageSize</stentry>
+          <stentry>整型</stentry>
+          <stentry>集合空间大对象数据页大小</stentry>
+        </strow>
+        <strow>
           <stentry>TotalSize</stentry>
           <stentry>长整型</stentry>
           <stentry>集合空间的总大小</stentry>
@@ -98,7 +153,37 @@
           <stentry>FreeSize</stentry>
           <stentry>长整型</stentry>
           <stentry>集合空间的空闲大小</stentry>
-        </strow>        
+        </strow>
+        <strow>
+          <stentry>TotalDataSize</stentry>
+          <stentry>长整型</stentry>
+          <stentry>集合空间数据文件总大小</stentry>
+        </strow>
+        <strow>
+          <stentry>FreeDataSize</stentry>
+          <stentry>长整型</stentry>
+          <stentry>集合空间数据文件空闲空间大小</stentry>
+        </strow>
+        <strow>
+          <stentry>TotalIndexSize</stentry>
+          <stentry>长整型</stentry>
+          <stentry>集合空间索引文件总大小</stentry>
+        </strow>
+        <strow>
+          <stentry>FreeIndexSize</stentry>
+          <stentry>长整型</stentry>
+          <stentry>集合空间索引文件空闲空间大小</stentry>
+        </strow>
+        <strow>
+          <stentry>TotalLobSize</stentry>
+          <stentry>长整型</stentry>
+          <stentry>集合空间大对象文件总大小</stentry>
+        </strow>
+        <strow>
+          <stentry>FreeLobSize</stentry>
+          <stentry>长整型</stentry>
+          <stentry>集合空间大对象文件空闲空间大小</stentry>
+        </strow>
         <strow>
           <stentry>Group.GroupName</stentry>
           <stentry>字符串</stentry>
@@ -116,11 +201,21 @@
     }
   ],
   "PageSize": 65536,
-  "MaxCapacitySize": 8796093022208,
+  "LobPageSize": 262144,
+  "MaxCapacitySize": 26388279066624,  
+  "MaxDataCapSize": 8796093022208,
+  "MaxIndexCapSize": 8796093022208,
+  "MaxLobCapSize": 8796093022208,
   "NumCollections": 4,
   "TotalRecords": 2,
   "TotalSize": 306315264,
   "FreeSize": 265551224,
+  "TotalDataSize": 155254784,
+  "FreeDataSize": 133627904,
+  "TotalIndexSize": 151060480,
+  "FreeIndexSize": 134152171,
+  "TotalLobSize": 352714752,
+  "FreeLobSize": 140771328,
   "Name": "foo"
 }</codeblock>
     </section>
@@ -129,9 +224,16 @@
       <codeblock>> coord.snapshot(SDB_SNAP_COLLECTIONSPACES)
 {
   "Name": "foo",
-  "PageSize": 4096,
+  "PageSize": 4096,  
+  "LobPageSize": 262144,
   "TotalSize": 918945792,
-  "FreeSize": 805183062,
+  "FreeSize": 805183062,  
+  "TotalDataSize": 155254784,
+  "FreeDataSize": 133627904,
+  "TotalIndexSize": 151060480,
+  "FreeIndexSize": 134152171,
+  "TotalLobSize": 352714752,
+  "FreeLobSize": 140771328,
   "Collection": [
     {
       "Name": "bar"

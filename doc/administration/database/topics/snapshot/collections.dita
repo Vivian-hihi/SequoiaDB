@@ -80,6 +80,11 @@
           <stentry>集合的索引页总数</stentry>
         </strow>
         <strow>
+          <stentry>TotalLobPages</stentry>
+          <stentry>整型</stentry>
+          <stentry>集合的大对象页总数</stentry>
+        </strow>
+        <strow>
           <stentry>TotalDataFreeSpace</stentry>
           <stentry>长整型</stentry>
           <stentry>集合的数据空闲空间</stentry>
@@ -192,6 +197,7 @@
       "TotalRecords": 0,
       "TotalDataPages": 0,
       "TotalIndexPages": 6,
+      "TotalLobPages": 0,
       "TotalDataFreeSpace": 0,
       "TotalIndexFreeSpace": 196545
     }
@@ -216,6 +222,7 @@
           "TotalRecords": 1,
           "TotalDataPages": 1,
           "TotalIndexPages": 2,
+          "TotalLobPages": 0,
           "TotalDataFreeSpace": 4004,
           "TotalIndexFreeSpace": 4046,
           "NodeName": "vmsvr2-suse-x64:11820"
