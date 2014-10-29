@@ -7,14 +7,14 @@
 <meta name="copyright" content="(C) Copyright 2005"/>
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
-<meta name="DC.Title" content="Linux 版本的 DB 安装"/>
+<meta name="DC.Title" content="Linux 版本安装"/>
 <meta name="description" content="安装前准备 确保系统满足硬件和软件要求 使用 root 用户权限来安装 SequoiaDB 数据库服务 检查 SequoiaDB 产品软件包与 OS 系统配套 如果需要图形界面模式安装，请确保 X Server 服务正在运行 服务器配置了主机名，且与其他服务器之间可通过主机名建立网络连接（如 ssh 主机名） SequoiaDB 的安装向导需要的参数不接受非英文字符。 安装步骤 说明： ..."/>
 <meta name="DC.Relation" scheme="URI" content="../../../installation/server_installation/topics/server_installation.html"/>
 <meta name="DC.Format" content="XHTML"/>
 <meta name="DC.Identifier" content="topic_yyl_fly_wj"/>
 <link rel="stylesheet" type="text/css" href="../../../commonltr.css"/>
 <link rel="stylesheet" type="text/css" href="../../../assets/webhelp_topic.css"/>
-<title>Linux 版本的 DB 安装</title>
+<title>Linux 版本安装</title>
 <script type="text/javascript" src="../../../assets/jquery-1.3.2.js"> </script><script type="text/javascript" src="../../../assets/jquery-ui-1.8.2.custom.min.js"> </script><script type="text/javascript" src="../../../assets/frames_redirect.js"> </script><script type="text/javascript"><!--
     var prefix = "../../../../index.html";
     var ratingFile = "";
@@ -33,7 +33,7 @@
   if (parent.window.location.pathname == window.location.pathname ) document.write('With Frames');                    
                     --></script></span><a class="link" href="../../../installation/server_installation/topics/server_installation.html" title="SequoiaDB 服务器安装"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">SequoiaDB 服务器安装</span></a>  </div></td><td width="50%"><a class="navheader_parent_path" href="../../topics/install_overview.html" title="安装指南">安装指南</a> / <a class="navheader_parent_path" href="../../../installation/server_installation/topics/server_installation.html" title="SequoiaDB 服务器安装">SequoiaDB 服务器安装</a></td></tr></tbody></table>
 
-        <h1 class="title topictitle1">Linux 版本的 DB 安装</h1>
+        <h1 class="title topictitle1">Linux 版本安装</h1>
 
   <div class="body">
     <div class="section"><h2 class="title sectiontitle">安装前准备</h2>
@@ -69,10 +69,10 @@
           <li class="li"><p class="p">参照<a class="xref" href="../../system_require/topics/software.html">系统配置需求</a>配置好主机名以及修改系统内核参数</p>
 </li>
 
-          <li class="li"><div class="p">运行安装程序<pre class="pre codeblock">./sequoiadb-1.0.0-linux-x86_64-installer.run --mode text --type DB</pre>
+          <li class="li"><div class="p">运行安装程序<pre class="pre codeblock">./sequoiadb-1.0.0-linux-x86_64-installer.run --mode text --type DB/SMS</pre>
 </div>
 
-                  <div class="note note"><span class="notetitle">Note:</span> type 参数的默认值为 DB，当安装 DB 时，type 参数可省略。</div>
+                  <div class="note note"><span class="notetitle">Note:</span> type 参数为 DB 和 SMS，默认值为 DB，当安装 DB 时，type 参数可省略。SMS 为安装 OM 服务。</div>
 </li>
 
           <li class="li"><div class="p">程序提示选择向导语言<pre class="pre codeblock">Language Selection 
@@ -83,16 +83,57 @@ Please choose an option [1] :2 </pre>
 </div>
 </li>
 
-        <li class="li"><div class="p">输入2，选择中文，此时系统提示输入安装目录<pre class="pre codeblock">------------------------------------------------------------
+              <li class="li"><div class="p">输入2，选择中文，显示安装协议，默认忽略阅读，如果需要读取全部文件，输入2<pre class="pre codeblock">------------------------------------------------------------
 由 BitRockInstallBuilder 评估本所建立
 ------------------------------------------------------------
 欢迎来到 SequoiaDB Server 安装程序
------------------------------------------------------------- 
-请指定 SequoiaDBServer 将会被安装到的目录 
-安装目录 [/opt/sequoiadb]: </pre>
+
+
+重要信息：请仔细阅读
+
+下面提供了两个许可协议。
+
+1. SequoiaDB 评估程序的最终用户许可协议
+2. SequoiaDB 最终用户许可协议
+
+如果被许可方为了生产性使用目的（而不是为了评估、测试、试用“先试后买”或演示）获得本程序，单击下面的“接受”按钮即表示被许可方接受 SequoiaDB 最终用户许可协议，且不作任何修改。
+
+如果被许可方为了评估、测试、试用“先试后买”或演示（统称为“评估”）目的获得本程序：单击下面的“接受”按钮即表示被许可方同时接受（i）SequoiaDB 评估程序的最终用户许可协议（“评估许可”），且不作任何修改；和（ii）SequoiaDB 最终用户程序许可协议（SELA），且不作任何修改。
+
+在被许可方的评估期间将适用“评估许可”。
+
+如果被许可方通过签署采购协议在评估之后选择保留本程序（或者获得附加的本程序副本供评估之后使用），SequoiaDB 评估程序的最终用户许可协议将自动适用。
+
+“评估许可”和 SequoiaDB 最终用户许可协议不能同时有效；两者之间不能互相修改，并且彼此独立。
+
+这两个许可协议中每个协议的完整文本如下。
+
+评估程序的最终用户许可协议
+
+
+
+[1] 同意以上协议: 了解更多的协议内容，可以在安装后查看协议文件
+[2] 查看详细的协议内容
+请选择选项 [1] :</pre>
 </div>
 </li>
 
+              <li class="li"><div class="p">是否同意协议：<pre class="pre codeblock">----------------------------------------------------------------------------
+同意以上协议
+
+按 [Enter] 继续：
+
+您是否接受此软件授权协议？ [y/n]:</pre>
+</div>
+</li>
+
+              <li class="li"><div class="p">按 y 表示同意：<pre class="pre codeblock">
+------------------------------------------------------------ 
+请指定 SequoiaDBServer 将会被安装到的目录 
+安装目录 [/opt/sequoiadb]:</pre>
+</div>
+</li>
+ 
         <li class="li"><div class="p">输入安装路径后按回车（默认安装在 /opt/sequoiadb），此时系统提示输入用户名，该用户名用于运行 SequoiaDB 服务<pre class="pre codeblock">------------------------------------------------------------
 数据库管理用户配置 
 配置用于启动 SequoiaDB 的用户名和密码 
@@ -123,8 +164,16 @@ Please choose an option [1] :2 </pre>
 
         <li class="li"><div class="p">SequoiaDB 相关进程开机自启动 [Y/n]：Y，输入 Y，按回车，同意 SequoiaDB 相关进程开机自启动<pre class="pre codeblock">----------------------------------------------------------------
 设定现在已经准备将 SequoiaDB Server 安装到您的电脑 
-您确定要继续? [Y/N]: Y</pre>
+您确定要继续? [Y/N]: Y
+
+
+
+
+是否安装OM服务 [y/N]:</pre>
 </div>
+</li>
+
+              <li class="li"><p class="p">是否安装 OM 服务 [y/N]:N，输入 N，按回车，不安装 OM 服务。</p>
 </li>
 
         <li class="li"><div class="p">输入 Y，按回车，系统启动安装，此时需要等待大约1分钟，系统安装完成<pre class="pre codeblock">正在安装 SequoiaDB Server 于您的电脑中，请稍候。
