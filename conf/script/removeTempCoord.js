@@ -16,7 +16,7 @@
 
 *******************************************************************************/
 /*
-@description: remove virtual coord
+@description: remove temporary coord
 @modify list:
    2014-7-26 Zhaobo Tan  Init
 @parameter
@@ -26,7 +26,6 @@
    RET_JSON: the format is: {}
 */
 
-var SYS_JSON = { "VCoordSvcName": "10000" } ;
 var RET_JSON     = new Object() ;
 var errMsg       = "" ;
 

@@ -16,7 +16,7 @@
 
 *******************************************************************************/
 /*
-@description: create virtual coord
+@description: create temporary coord
 @modify list:
    2014-7-26 Zhaobo Tan  Init
 @parameter

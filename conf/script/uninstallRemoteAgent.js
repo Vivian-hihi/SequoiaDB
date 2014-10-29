@@ -91,11 +91,11 @@ function stopRemoteSdbcmProgram( ssh, osInfo )
          setLastError( SDB_SYS ) ;
          throw SDB_SYS ;
       }
-      // check wether sdb is stop in remote
+      // check wether sdb is stop in target host
       var times = 0 ;
       for ( ; times < OMA_TRY_TIMES; times++ )
       {
-         var isRunning = isSdbcmRunningInRemote ( ssh, osInfo ) ;
+         var isRunning = isSdbcmRunning ( ssh, osInfo ) ;
          if ( isRunning )
          {
             sleep( OMA_SLEEP_TIME ) ;

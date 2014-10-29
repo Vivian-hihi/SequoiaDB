@@ -86,8 +86,7 @@ function getOMInfo()
       }
       else
       {
-         errMsg = "Failed to get OM's info" ;
-         exception_handle( e, errMsg ) ;
+         throw e ;
       }
    }
 }
@@ -203,7 +202,15 @@ function extractOMInfo ( obj )
       retObj[Path] = adaptPath( osInfo, installpath ) + OMA_PATH_BIN_L ;
       // get sdbcm port
       var configfile = adaptPath( osInfo, installpath ) + OMA_FILE_SDBCM_CONF2_L ;
-      retObj[Port] = "" + Oma.getAOmaSvcName("localhost", configfile ) ;
+      try
+      {
+         retObj[Port] = "" + Oma.getAOmaSvcName("localhost", configfile ) ;
+      }
+      catch ( e )
+      {
+         errMsg = "Failed to extract OM's info" ;
+         exception_handle( e, errMsg ) ;
+      }
       // get version
       var sdbcmprog = adaptPath( osInfo, installpath ) + OMA_PROG_BIN_SDBCM_L ;
       var cmd = new Cmd() ;

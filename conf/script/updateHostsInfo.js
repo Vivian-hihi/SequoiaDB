@@ -33,12 +33,12 @@ var errMsg            = "" ;
 @discretion: get local db business install path
 @author: Tanzhaobo
 @parameter
-   ssh[object]: ssh Object
+   localhostip[string]: ip of localhost
    osInfo[string]: os information, "LINUX" or "WINDOWS"
 @return
    installpath[string]: the db business install director
 ***************************************************************************** */
-function getLocalDBInstallPath( ssh, osInfo )
+function getLocalDBInstallPath( localhostip, osInfo )
 {
    var omaInstallInfo = null ;
    var installpath = null ;
@@ -48,7 +48,7 @@ function getLocalDBInstallPath( ssh, osInfo )
    }
    catch( e )
    {
-      errMsg = "Failed to get db install path in host[" + ssh.getLocalIP() + "]" ;
+      errMsg = "Failed to get db install path in host[" + localhostip + "]" ;
       exception_handle( e, errMsg ) ;
    }
    installpath = adaptPath ( osInfo, omaInstallInfo[INSTALL_DIR] ) ;
@@ -59,32 +59,32 @@ function getLocalDBInstallPath( ssh, osInfo )
 @discretion: update host table
 @author: Tanzhaobo
 @parameter
-   ssh[object]: ssh Object
+   localhostip[string]: ip of localhost
    osInfo[string]: os information, "LINUX" or "WINDOWS"
    arr[Array]: update info
 @return void
 ***************************************************************************** */
-function updateHostInfo( ssh, osInfo, arr )
+function updateHostInfo( localhostip, osInfo, arr )
 {
-   var installpath = getLocalDBInstallPath( ssh, osInfo ) ; 
+   var installpath = getLocalDBInstallPath( localhostip, osInfo ) ;
+   var cmd = new Cmd() ;
    if ( OMA_LINUX == osInfo )
    {
-      var sdbpath = installpath + OMA_PROG_BIN_SDB_L ;
-      var sptpath = installpath + OMA_FILE_UPDATE_HOSTS_L ;
+      var omtoolpath = installpath + OMA_PROG_BIN_SDBOMTOOL_L ;
       for ( var i = 0; i < arr.length; i++ )
       {
          var str      = null ;
          var obj      = arr[i] ;
          var hostname = obj[HostName] ;
          var ip       = obj[IP] ;
-         str = sdbpath + ' -e ' +  ' \"var HOSTNAME = \\\"' + hostname + '\\\"; var IP = \\\"' + ip + '\\\" ;\" '  + ' -f ' + sptpath ;
+         str = omtoolpath + ' -m addhost --hostname ' + hostname + ' --ip ' + ip ;
          try
          {
-            ssh.exec( str ) ;
+            cmd.run( str ) ;
          }
          catch ( e )
          {
-            errMsg = "Failed to set info [" + ip + " " + hostname + "] to hosts table in host[" + ssh.getLocalIP() + "]" ;
+            errMsg = "Failed to set info [" + ip + " " + hostname + "] to hosts table in host[" + localhostip + "]" ;
             exception_handle( e, errMsg ) ;
          }
       }
@@ -99,12 +99,12 @@ function updateHostInfo( ssh, osInfo, arr )
 @discretion: update sdbcm config file
 @author: Tanzhaobo
 @parameter
-   ssh[object]: ssh Object
+   localhostip[string]: ip of localhost
    osInfo[string]: os information, "LINUX" or "WINDOWS"
    arr[Array]: update info
 @return void
 ***************************************************************************** */
-function updateSdbcmCfgFile( ssh, osInfo, arr )
+function updateSdbcmCfgFile( lcoalhostip, osInfo, arr )
 {
    var agentport = null ;
    var hostname  = null ;
@@ -115,7 +115,7 @@ function updateSdbcmCfgFile( ssh, osInfo, arr )
    }
    catch ( e )
    {
-      errMsg = "Failed to get oma config info in host [" + ssh.getLocalIP() + "]" ;
+      errMsg = "Failed to get oma config info in host [" + lcoalhostip + "]" ;
       exception_handle( e, errMsg ) ;
    }
    for ( var i = 0; i < arr.length; i++ )
@@ -138,28 +138,25 @@ function updateSdbcmCfgFile( ssh, osInfo, arr )
    }
    catch ( e )
    {
-      errMsg = "Failed to set oma config info in host [" + ssh.getLocalIP() + "]" ;
+      errMsg = "Failed to set oma config info in host [" + lcoalhostip + "]" ;
       exception_handle( e, errMsg ) ;
    }
 }
 
 function main()
 {
-    var ip               = BUS_JSON[IP] ;
-    var user             = BUS_JSON[User] ;
-    var passwd           = BUS_JSON[Passwd] ;
-    var updateInfoArr    = BUS_JSON[HostInfo] ;
-    var osInfo           = null ;
-    var ssh              = null ;
+   var ip               = BUS_JSON[IP] ;
+   var user             = BUS_JSON[User] ;
+   var passwd           = BUS_JSON[Passwd] ;
+   var updateInfoArr    = BUS_JSON[HostInfo] ;
+   var osInfo           = null ;
 
-   // new ssh
-   ssh = new Ssh( ip, user, passwd ) ;
    // get os info
    osInfo = System.type() ;
    // update host table
-   updateHostInfo( ssh, osInfo, updateInfoArr ) ;     
+   updateHostInfo( ip, osInfo, updateInfoArr ) ;     
    // update sdbcm comfig file
-   updateSdbcmCfgFile( ssh, osInfo, updateInfoArr ) ;
+   updateSdbcmCfgFile( ip, osInfo, updateInfoArr ) ;
 
    return RET_JSON ;
 }

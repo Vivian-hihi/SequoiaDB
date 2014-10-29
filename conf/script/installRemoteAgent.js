@@ -259,11 +259,11 @@ function startRemoteSdbcm( ssh, osInfo )
          errMsg = "Failed to start sdbcm in host[" + ssh.getPeerIP() + "]" ;
          exception_handle( e, errMsg ) ;
       }
-      // wait util sdbcm start in remote
+      // wait util sdbcm start in target host
       var times = 0 ;
       for ( ; times < OMA_TRY_TIMES; times++ )
       {
-         var isRunning = isSdbcmRunningInRemote ( ssh, osInfo ) ;
+         var isRunning = isSdbcmRunning ( ssh, osInfo ) ;
          if ( isRunning )
          {
             break ;
@@ -333,31 +333,44 @@ function installRemoteAgent( ssh, osInfo, ip )
    retObj[AgentPort]          = OMA_PORT_INVALID + "";
    retObj[IP]                 = ip ;
 
-   // test whether sdbcm has been installed in local
+   // test whether sdbcm has been installed in local,
+   // if so, no need to push packet 
    var flag = isInLocalHost( ssh ) ;
    if ( flag )
    {
-      retObj[AgentPort] = Oma.getAOmaSvcName("localhost") ;
+      // if sdbcm running in local, get the agent port by sdblist
+      flag = isSdbcmRunning( ssh, osInfo ) ;
+      if ( flag )
+      {
+         retObj[AgentPort] = "" + getSdbcmPort( ssh, osInfo ) ;
+      }
+      else // else, set error
+      {
+         setLastErrMsg( "sdbcm is not running in localhost[" + ssh.getPeerIP() + "]" ) ;
+         setLastError( SDB_SYS ) ;
+         throw SDB_SYS ;
+      }
       return retObj ;
    }
+
    // build directory in remote mechine
    createTmpDir( ssh, osInfo ) ;
    // push sdblist packet to remote
    pushPacket1( ssh, osInfo ) ;
    // push other packet to remote
    pushPacket2( ssh, osInfo ) ; 
-   // check wether sdbcm is running in remote
-   flag = isSdbcmRunningInRemote( ssh, osInfo ) ;
+   // check wether sdbcm is running in target host
+   flag = isSdbcmRunning( ssh, osInfo ) ;
    if ( flag )
    {
-      retObj[AgentPort] = "" + getRemoteSdbcmPort( ssh, osInfo ) ;
+      retObj[AgentPort] = "" + getSdbcmPort( ssh, osInfo ) ;
       return retObj ;
    }
-   // get a port in remote machine for installing sdbcm in remote machine
+   // get a port in remote machine for installing sdbcm in target host
    var port = getAUsablePortFromRemote( ssh, osInfo ) ;
    if ( OMA_PORT_INVALID == port )
    {
-      setLastErrMsg( "Failed to get a usable port in remote host" ) ;
+      setLastErrMsg( "Failed to get a usable port in host[" + ssh.getPeerIP() + "]" ) ;
       setLastError( SDB_SYS ) ;
       throw SDB_SYS ;
    }

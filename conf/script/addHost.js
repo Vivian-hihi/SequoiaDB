@@ -52,6 +52,7 @@ function isMatchLocalInfo( osInfo )
    var installPath      = null ;
    var localAgentPort   = null ;
    var localIP          = getLocalIPAddr() ;
+
    // get local install info
    try
    {
@@ -70,29 +71,19 @@ function isMatchLocalInfo( osInfo )
    }
    adminUser      = localInstallInfo[SDBADMIN_USER] ;
    installPath    = localInstallInfo[INSTALL_DIR] ;
-   try
-   {
-      localAgentPort = Oma.getAOmaSvcName("127.0.0.1") ;
-   }
-   catch ( e )
-   {
-      // when no agent port info in sdbcm.conf, think it to be false
-      errMsg = "Failed to get localhost[" + localIP + "] sdbcm port" ;
-      exception_handle( e, errMsg ) ;
-   }
-   
    // check wether BUS_JSON include info installing in local host
    // if so, get them for compare
    infoArr       = BUS_JSON[HostInfo] ;
    arrLen        = infoArr.length ;
    var sdbUser   = BUS_JSON[SdbUser] ;
-   // first, check sdb user
+   // firstly, check sdb user
    if ( adminUser != sdbUser )
    {
       errMsg = "When install db packet in localhost, sdb admin user[" + sdbUser  + "] does not match current one[" + adminUser + "]" ;
       setLastErrMsg( errMsg ) ;
       return false ;
    }
+
    for( var i = 0; i < arrLen; i++ )
    {
       var obj = infoArr[i] ;
@@ -100,21 +91,35 @@ function isMatchLocalInfo( osInfo )
 
       if ( localIP == ip )
       {
+         var ssh = null ;
+         var user = obj[User] ;
+         var passwd = obj[Passwd] ; 
          var path = obj[InstallPath] ;
          var port = obj[AgentPort] ;
-         // second, check install path
+         // get local agent port
+         try
+         {
+            ssh = new Ssh( ip, user, passwd ) ;
+         }
+         catch ( e )
+         {
+            errMsg = "Failed to ssh to localhost[" + ip + "]" ;
+            exception_handle( e, errMsg ) ;
+         }
+         // secondly, check agent port
+         localAgentPort = getSdbcmPort( ssh, osInfo ) ;
+         if ( localAgentPort != port )
+         {
+            errMsg = "When install db packet in localhost, agent port[" + port  + "] does not match current one[" + localAgentPort  + "]" ;
+            setLastErrMsg( errMsg ) ;
+            return false ;
+         }
+         // thirdly, check install path
          var path1 = adaptPath(osInfo, installPath) ;
          var path2 = adaptPath(osInfo, path) ;
          if ( path1 != path2 )
          {
             errMsg = "When install db packet in localhost, install path[" + path  + "] does not match current one[" + installPath  + "]" ;
-            setLastErrMsg( errMsg ) ;
-            return false ;
-         }
-         // third, check agent port
-         if ( localAgentPort != port )
-         {
-            errMsg = "When install db packet in localhost, agent port[" + port  + "] does not match current one[" + localAgentPort  + "]" ;
             setLastErrMsg( errMsg ) ;
             return false ;
          }
@@ -332,7 +337,7 @@ function main()
    var isMatch = null ;
    try
    {
-      isMatch = isMatchLocalInfo ( osInfo ) ;
+      isMatch = isMatchLocalInfo( osInfo ) ;
       if ( !isMatch )
       {
          RET_JSON[Errno] = SDB_INVALIDARG ;

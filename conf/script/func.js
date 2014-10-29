@@ -202,168 +202,6 @@ function genTimeStamp()
 }
 
 /* *****************************************************************************
-@discretion: get the total number of program about sdbcm in remote host
-             according the result of sdblist
-@author: Tanzhaobo
-@parameter
-   str[string]: the result of sdblist
-@return
-   retNum[number]: the total nunber or -1
-***************************************************************************** */
-function extractTotalNumber( str )
-{
-   var retNum = -1 ;
-   var symbol = "Total:" ;
-
-   var pos = str.lastIndexOf( symbol ) ;
-   if ( -1 != pos )
-   {
-      var subStr = str.substring( pos + symbol.length, str.length ) ;
-      retNum = parseInt( subStr ) ;
-   }
-   return retNum ;
-}
-
-/* *****************************************************************************
-@discretion: get remote sdbcm port according the result of sdblist
-@author: Tanzhaobo
-@parameter
-   str[string]: the result of sdblist
-@return
-   retPort[number]: the port or -1
-***************************************************************************** */
-function extractPort( str )
-{
-   var retPort = -1 ;
-   var symbol = "(" ;
-
-   var pos = str.indexOf( symbol ) ;
-   if ( -1 != pos )
-   {
-      var subStr = str.substring( pos + symbol.length, str.length ) ;
-      retNum = parseInt( subStr ) ;
-   }
-   return retNum ;
-}
-
-/* *****************************************************************************
-@discretion: get remote sdbcm port
-@author: Tanzhaobo
-@parameter
-   ssh[object]: ssh object
-   osInfo[string]: os type
-@exception
-@return
-   retPort[number]: the port of remote sdbcm program
-***************************************************************************** */
-function getRemoteSdbcmPort( ssh, osInfo )
-{
-   var retPort = -1 ;
-   var str = null ;
-
-   if ( OMA_LINUX == osInfo )
-   {
-      var prog = OMA_PATH_TEMP_BIN_DIR_L + OMA_PROG_SDBLIST_L ;
-      var cmd = prog + " -t cm " ;
-      var ret = SDB_OK ;
-      try
-      {
-         str = ssh.exec( cmd ) ;
-      }
-      catch ( e)
-      {
-         ret = ssh.getLastRet() ;
-         if ( ret < 0 )
-         {
-            setLastErrMsg( "Failed to get remote sdbcm status" ) ;
-            setLastError( SDB_SYS ) ;
-            throw SDB_SYS ;
-         }
-         else if ( ret > 0 )
-         {
-            setLastErrMsg( "Remote sdbcm is not running" ) ;
-            setLastError( SDB_SYS ) ;
-            throw SDB_SYS ;
-         }
-      }
-      retPort = extractPort ( str ) ;
-      if ( -1 == retPort )
-      {
-         setLastErrMsg( "Failed to get remote sdbcm's port" ) ;
-         setLastError( SDB_SYS ) ;
-         throw SDB_SYS ;
-      }
-   }
-   else
-   {
-      // TODO:
-   }
-   return retPort ;
-}
-
-/* *****************************************************************************
-@discretion: check whether sdbcm is running in remote host
-@author: Tanzhaobo
-@parameter
-   ssh[object]: ssh object
-   osInfo[string]: os type
-@exception
-@return
-   isRunning[bool]: whether sdbcm is running in remote host
-***************************************************************************** */
-function isSdbcmRunningInRemote( ssh, osInfo )
-{
-   var isRunning = false ;
-   var str = null ;
-   var ret = SDB_OK ;
-   if ( OMA_LINUX == osInfo )
-   {
-      var prog = OMA_PATH_TEMP_BIN_DIR_L + OMA_PROG_SDBLIST_L ;
-      var cmd = prog + " -t cm " ;
-      try
-      {
-         str = ssh.exec( cmd ) ;
-      }
-      catch ( e )
-      {
-         ret = ssh.getLastRet() ;
-         if ( ret > 0 )
-         {
-            isRunning = false ;
-            return isRunning ;
-         }
-         else if ( ret < 0 )
-         {
-            setLastErrMsg( "Failed to get remote sdbcm status" ) ;
-            setLastError( SDB_SYS ) ;
-            throw SDB_SYS ;
-         }
-      }
-      // when sdbcm is running in remote
-      var num = extractTotalNumber ( str ) ;
-      if ( -1 == num )
-      {
-         setLastErrMsg( "Failed to get remote sdbcm status" ) ;
-         setLastError( SDB_SYS ) ;
-         throw SDB_SYS ;
-      }
-      else if ( 0 == num )
-      {
-         isRunning = false ;
-      }
-      else
-      {
-         isRunning = true ;
-      }
-   }
-   else
-   {
-      // TODO:
-   }
-   return isRunning ;
-}
-
-/* *****************************************************************************
 @discretion: check whether it's in local host environment
 @author: Tanzhaobo
 @parameter
@@ -463,6 +301,196 @@ function isReservedPort( port )
       }
    }
    return ret ;
+}
+
+/* *****************************************************************************
+@discretion: get the total number of program about sdbcm in remote host
+             according the result of sdblist
+@author: Tanzhaobo
+@parameter
+   str[string]: the result of sdblist
+@return
+   retNum[number]: the total nunber or -1
+***************************************************************************** */
+function extractTotalNumber( str )
+{
+   var retNum = -1 ;
+   var symbol = "Total:" ;
+
+   var pos = str.lastIndexOf( symbol ) ;
+   if ( -1 != pos )
+   {
+      var subStr = str.substring( pos + symbol.length, str.length ) ;
+      retNum = parseInt( subStr ) ;
+   }
+   return retNum ;
+}
+
+/* *****************************************************************************
+@discretion: get remote sdbcm port according the result of sdblist
+@author: Tanzhaobo
+@parameter
+   str[string]: the result of sdblist
+@return
+   retPort[number]: the port or -1
+***************************************************************************** */
+function extractPort( str )
+{
+   var retPort = -1 ;
+   var symbol = "(" ;
+
+   var pos = str.indexOf( symbol ) ;
+   if ( -1 != pos )
+   {
+      var subStr = str.substring( pos + symbol.length, str.length ) ;
+      retNum = parseInt( subStr ) ;
+   }
+   return retNum ;
+}
+
+/* *****************************************************************************
+@discretion: get sdbcm port in target host
+@author: Tanzhaobo
+@parameter
+   ssh[object]: ssh object
+   osInfo[string]: os type
+@exception
+@return
+   retPort[number]: the port of remote sdbcm program
+***************************************************************************** */
+function getSdbcmPort( ssh, osInfo )
+{
+   var retPort = -1 ;
+   var str = null ;
+
+   if ( OMA_LINUX == osInfo )
+   {
+      var installInfoObj = null ;
+      var installPath = null ;
+      var prog = null ;
+      var cmd = null ;
+      var ret = SDB_OK ;
+      var isLocal = isInLocalHost( ssh ) ;
+      if ( isLocal )
+      {
+         installInfoObj = eval( '(' + Oma.getOmaInstallInfo() + ')' ) ;
+         installPath = adaptPath( osInfo, installInfoObj[INSTALL_DIR] ) ;
+         prog = installPath  + OMA_PROG_BIN_SDBLIST_L ;
+      }
+      else
+      {
+         prog = OMA_PATH_TEMP_BIN_DIR_L + OMA_PROG_SDBLIST_L ;
+      }
+      cmd = prog + " -t cm " ;
+      try
+      {
+         str = ssh.exec( cmd ) ;
+      }
+      catch ( e)
+      {
+         ret = ssh.getLastRet() ;
+         if ( ret < 0 )
+         {
+            setLastErrMsg( "Failed to get remote sdbcm status" ) ;
+            setLastError( SDB_SYS ) ;
+            throw SDB_SYS ;
+         }
+         else if ( ret > 0 )
+         {
+            setLastErrMsg( "Remote sdbcm is not running" ) ;
+            setLastError( SDB_SYS ) ;
+            throw SDB_SYS ;
+         }
+      }
+      retPort = extractPort ( str ) ;
+      if ( -1 == retPort )
+      {
+         setLastErrMsg( "Failed to get remote sdbcm's port" ) ;
+         setLastError( SDB_SYS ) ;
+         throw SDB_SYS ;
+      }
+   }
+   else
+   {
+      // TODO:
+   }
+   return retPort ;
+}
+
+/* *****************************************************************************
+@discretion: check whether sdbcm is running
+@author: Tanzhaobo
+@parameter
+   ssh[object]: ssh object
+   osInfo[string]: os type
+@exception
+@return
+   isRunning[bool]: whether sdbcm is running
+***************************************************************************** */
+function isSdbcmRunning( ssh, osInfo, host )
+{
+   var isRunning = false ;
+   var str = null ;
+   var ret = SDB_OK ;
+   if ( OMA_LINUX == osInfo )
+   {
+      var installInfoObj = null ;
+      var installPath = null ;
+      var prog = null ;
+      var cmd = null ;
+      var isLocal = isInLocalHost( ssh ) ;
+      if ( isLocal )
+      {
+         installInfoObj = eval( '(' + Oma.getOmaInstallInfo() + ')' ) ;
+         installPath = adaptPath( osInfo, installInfoObj[INSTALL_DIR] ) ;
+         prog = installPath  + OMA_PROG_BIN_SDBLIST_L ;
+      }
+      else
+      {
+         prog = OMA_PATH_TEMP_BIN_DIR_L + OMA_PROG_SDBLIST_L ;   
+      }
+      cmd = prog + " -t cm " ;
+      try
+      {
+         str = ssh.exec( cmd ) ;
+      }
+      catch ( e )
+      {
+         ret = ssh.getLastRet() ;
+         if ( ret > 0 )
+         {
+            isRunning = false ;
+            return isRunning ;
+         }
+         else if ( ret < 0 )
+         {
+            setLastErrMsg( "Unkown sdbcm's status in[" + ssh.getPeerIP() + "]" ) ;
+            setLastError( SDB_SYS ) ;
+            throw SDB_SYS ;
+         }
+      }
+      // when sdbcm is running
+      var num = extractTotalNumber ( str ) ;
+      if ( -1 == num )
+      {
+         setLastErrMsg( "Unkown sdbcm's status in[" + ssh.getPeerIP() + "]" ) ;
+         setLastError( SDB_SYS ) ;
+         throw SDB_SYS ;
+      }
+      else if ( 0 == num )
+      {
+         isRunning = false ;
+      }
+      else
+      {
+         isRunning = true ;
+      }
+   }
+   else
+   {
+      // TODO:
+   }
+   return isRunning ;
 }
 
 /* *****************************************************************************
@@ -704,7 +732,6 @@ function getAgentPort( hostname )
    }
    return retPort + "" ;
 }
-
 
 /* *****************************************************************************
 @discretion: get local ip from hosts table
