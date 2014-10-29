@@ -109,14 +109,14 @@
                                                 _id:\"$Name\",\
                                                 Name:{$first:\"$Name\"},\
                                                 PageSize:{$first:\"$PageSize\"},\
-                                                LobPageSize:{$first:\"LobPageSize\"},\
+                                                LobPageSize:{$first:\"$LobPageSize\"},\
                                                 TotalSize:{$sum:\"$TotalSize\"},\
                                                 FreeSize:{$sum:\"$FreeSize\"},\
                                                 TotalDataSize:{$sum:\"$TotalDataSize\"},\
                                                 FreeDataSize:{$sum:\"$FreeDataSize\"},\
                                                 TotalIndexSize:{$sum:\"$TotalIndexSize\"},\
                                                 FreeIndexSize:{$sum:\"$FreeIndexSize\"},\
-                                                TotalLobSize:{$sum:\"TotalLobSize\"},\
+                                                TotalLobSize:{$sum:\"$TotalLobSize\"},\
                                                 FreeLobSize:{$sum:\"$FreeLobSize\"},\
                                                 Collection:{$mergearrayset:\"$Collection\"},\
                                                 Group:{$addtoset:\"$GroupName\"}\
