@@ -37,20 +37,20 @@
     </target>
 
     <target name="Test-Java-Samples" depends="clean-env">
-        <property name="java_test.dir" value="${samples.testcase.path}/Java/build" />
-        <property name="java_test.jar.dir" value="${samples.testcase.path}/Java/lib/java_samples.jar" />
-        <property name="sequoiadb.jar.dir" value="${samples.testcase.path}/Java/lib/sequoiadb.jar" />
+        <property name="java_samples.dir" value="${samples.testcase.path}/Java/build" />
+        <property name="java_samples.jar.dir" value="${samples.testcase.path}/Java/lib/java_samples.jar" />
+        <property name="sequoiadb_samples.jar.dir" value="${samples.testcase.path}/Java/lib/sequoiadb.jar" />
         <junit printsummary="yes" fork="yes" showoutput="true" timeout="1200000">
             <classpath>
                 <pathelement path="/usr/share/java/junit.jar" />
                 <pathelement path="/usr/share/java/junit4.jar" />  <!-- delete -->
 
-                <pathelement path="${sequoiadb.jar.dir}" />
-                <pathelement path="${java_test.jar.dir}" />
+                <pathelement path="${sequoiadb_samples.jar.dir}" />
+                <pathelement path="${java_samples.jar.dir}" />
             </classpath>
             <formatter type="xml" />
             <batchtest todir="${reports.path}">
-                <fileset dir="${java_test.dir}">
+                <fileset dir="${java_samples.dir}">
                     <include name="**/*.*" />
                     <exclude name="**/TestConstant*.*" />
                     <exclude name="**/Replica*.*" />

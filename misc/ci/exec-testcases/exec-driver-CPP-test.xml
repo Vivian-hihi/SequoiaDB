@@ -26,18 +26,18 @@
     <target name="Test-CPP-Samples" depends="Clean-CPP-Reports">
         <hostinfo prefix="host" />
         <echo message="Begin test c++ samples testcases..." />
-        <echo message="Perform the c++ samples testcases,with testcase.path=${samples.testcase.path}/CPP" />
+        <echo message="Perform the c++ samples testcases,with testcase.path=${samples.testcase.path}/CPP/build" />
 
         <basename property="deploy.name" file="${deploy.case.fullname}" suffix=".xml" />
         <property name="test.suite.class.name" value="testcases-samples-cpp.${deploy.name}-${host.NAME}-${parallel.num}" />
 
-        <chmod dir="${samples.testcase.path}/CPP" perm="u+x" includes="*" />
+        <chmod dir="${samples.testcase.path}/CPP/build" perm="u+x" includes="*" />
         <foreach target="test-one-case" param="case-full-name">
-            <fileset dir="${samples.testcase.path}/CPP">
+            <fileset dir="${samples.testcase.path}/CPP/build">
                 <include name="${includes.dir.patterns}" />
                 <exclude name="${excludes.dir.patterns}" />
             </fileset>
-            <param name="testcases.path" value="${samples.testcase.path}/CPP" />
+            <param name="testcases.path" value="${samples.testcase.path}/CPP/build" />
         </foreach>
 
         <replaceregexp match="&lt;testsuite (.*)&gt;" replace="" flags="g" byline="true" encoding="utf-8">
