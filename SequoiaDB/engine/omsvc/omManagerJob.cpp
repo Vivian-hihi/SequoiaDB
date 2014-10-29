@@ -274,6 +274,7 @@ namespace engine
          _mapTargetAgents.insert( _MAPAGENT_VALUE( tmp.hostName, tmp ) ) ;
       }
 
+      if ( _mapTargetAgents.size() > 0 )
       {
          CHAR localHost[ OSS_MAX_HOSTNAME + 1 ] ;
          ossGetHostName( localHost, OSS_MAX_HOSTNAME ) ;
@@ -282,7 +283,7 @@ namespace engine
          {
             omHostContent content ;
             content.hostName = localHost ;
-            content.ip       = localHost ;
+            content.ip       = "127.0.0.1" ;
             string serviceName ;
             _getAgentService( serviceName ) ;
             content.serviceName = serviceName ;
