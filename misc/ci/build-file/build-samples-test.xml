@@ -65,7 +65,6 @@
                 <!-- <exclude name="**/*.static" /> -->
                 <exclude name="**/*.sh" />
                 <exclude name="**/*.txt" />
-                <exclude name="**/README_zh" />
 			</fileset>
 		</copy>
 		<copy todir="${deploy.path}/hlt/samples_testcases/C" file="${build.testcases.C}/sampledb.dat" />
