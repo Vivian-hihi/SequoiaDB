@@ -205,8 +205,6 @@ INT32 enterDaemonMode ( sptScope *scope ,
       rc = ossDup2( fd, 1 ) ;
       SH_VERIFY_RC
 
-      ossCloseFd( fd ) ;
-
       if ( ossStrcmp ( CMD_QUIT , code ) == 0 )
          exit = TRUE ;
 
