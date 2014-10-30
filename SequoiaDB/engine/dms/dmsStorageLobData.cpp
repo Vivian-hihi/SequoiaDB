@@ -276,12 +276,16 @@ namespace engine
          goto error ;
       }
 
+      // reopen when the offset grater than lastSz
       if ( readOffset + len > _lastSz )
       {
-         PD_LOG( PDERROR, "Offset[%lld] grater than last size[%lld] in"
-                 "file[%s]", readOffset, _lastSz, _fileName.c_str() ) ;
-         rc = SDB_SYS ;
-         goto error ;
+         rc = _reopen() ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Failed to reopen file[%s], rc: %d",
+                    _fileName.c_str(), rc ) ;
+            goto error ;
+         }
       }
 
       rc = ossSeek( &_file, readOffset, OSS_SEEK_SET ) ;
