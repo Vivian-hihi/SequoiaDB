@@ -117,6 +117,10 @@ INT32 sptConvertor2::_traverse( JSObject *obj , bson::BSONObjBuilder &builder )
       _appendToBson( name, fieldValue, builder ) ;
    }
 done:
+   if ( NULL != properties )
+   {
+      JS_DestroyIdArray( _cx, properties ) ;
+   }
    return rc ;
 error:
    goto done ;
