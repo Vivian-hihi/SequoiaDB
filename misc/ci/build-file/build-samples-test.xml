@@ -58,7 +58,7 @@
 		</foreach>	
 		<copy todir="${deploy.path}/hlt/samples_testcases/C">
 			<fileset dir="${build.testcases.C}/build">
-				<include name="**/*.*" />
+				<include name="**/*" />
                 <exclude name="**/*.c" />
                 <exclude name="**/*.h" />
                 <exclude name="**/*.bat" />

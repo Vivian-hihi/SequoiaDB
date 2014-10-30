@@ -40,6 +40,7 @@
                 <exclude name="${excludes.dir.patterns}" />
             </fileset>
             <param name="testcases.path" value="${samples.testcase.path}/C" />
+            <param name="test.suite.class.name" value="${test.suite.class.name}" />
         </foreach>
         <echo file="${reports.path}/TEST-${test.suite.class.name}.xml" message="&lt;/testsuite&gt;&#10;" append="true" />
     </target>

@@ -19,14 +19,14 @@
 
     <target name="Test-C-Samples" depends="">
         <ant antfile="exec-driver-C-test.xml" dir="." target="Test-C-Samples" inheritAll="true" >
-            <property name="excludes.dir.patterns" value="" />
+            <property name="excludes.dir.patterns" value="README_zh" />
             <property name="includes.dir.patterns" value="*" />
         </ant>
     </target>
 
     <target name="Test-CPP-Samples" depends="">
         <ant antfile="exec-driver-CPP-test.xml" dir="." target="Test-CPP-Samples" inheritAll="true" >
-            <property name="excludes.dir.patterns" value="rg" />
+            <property name="excludes.dir.patterns" value="README_zh" />
             <property name="includes.dir.patterns" value="*" />
         </ant>
     </target>
