@@ -67,16 +67,23 @@ function getCatalogAddress( addrInfo )
 
 function main()
 {
-   var oma = null ;
+   var oma           = null ;
+   var osInfo        = null ;
+   var omaHostName   = null ;
+   var omaSvcName    = null ;
+   var vCoordSvcName = null ;
+   var cataAddr      = null ;
+   var dataPath      = null ;
+
    try
    {
-      var osInfo        = System.type() ;
-      var omaHostName   = System.getHostName() ;
-      var omaSvcName    = Oma.getAOmaSvcName( "localhost" ) ;
-      var vCoordSvcName = getAUsablePortFromLocal( osInfo ) + "" ;
-      var cataAddr      = getCatalogAddress( BUS_JSON ) ;
-      var dataPath      = OMA_PATH_VCOORD_PATH_L + vCoordSvcName ;
-      oma               = new Oma( omaHostName, omaSvcName ) ;
+      osInfo        = System.type() ;
+      omaHostName   = System.getHostName() ;
+      omaSvcName    = Oma.getAOmaSvcName( "localhost" ) ;
+      vCoordSvcName = getAUsablePortFromLocal( osInfo ) + "" ;
+      cataAddr      = getCatalogAddress( BUS_JSON ) ;
+      dataPath      = OMA_PATH_VCOORD_PATH_L + vCoordSvcName ;
+      oma           = new Oma( omaHostName, omaSvcName ) ;
       // create virtual coord
       oma.createCoord( vCoordSvcName, dataPath, cataAddr ) ;
       // start virtual coord
@@ -90,6 +97,13 @@ function main()
    {
       if ( null != oma && "undefined" != typeof(oma) )
       {
+         try
+         {
+            oma.removeCoord( vCoordSvcName ) ;
+         }
+         catch ( e1 )
+         {
+         }
          try
          {
             oma.close() ;
