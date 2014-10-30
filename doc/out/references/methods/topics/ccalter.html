@@ -43,23 +43,23 @@
 
     <div class="section"><h2 class="title sectiontitle">参数描述</h2>
       <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d105111e26" class="stentry">参数名</th>
+          <th valign="bottom" align="left" id="d105177e26" class="stentry">参数名</th>
 
-          <th valign="bottom" align="left" id="d105111e29" class="stentry">参数类型</th>
+          <th valign="bottom" align="left" id="d105177e29" class="stentry">参数类型</th>
 
-          <th valign="bottom" align="left" id="d105111e32" class="stentry">描述</th>
+          <th valign="bottom" align="left" id="d105177e32" class="stentry">描述</th>
 
-          <th valign="bottom" align="left" id="d105111e35" class="stentry">是否必填</th>
+          <th valign="bottom" align="left" id="d105177e35" class="stentry">是否必填</th>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d105111e26" class="stentry">options</td>
+          <td valign="top" headers="d105177e26" class="stentry">options</td>
 
-          <td valign="top" headers="d105111e29" class="stentry">Json 对象</td>
+          <td valign="top" headers="d105177e29" class="stentry">Json 对象</td>
 
-          <td valign="top" headers="d105111e32" class="stentry">修改的属性。</td>
+          <td valign="top" headers="d105177e32" class="stentry">修改的属性。</td>
 
-          <td valign="top" headers="d105111e35" class="stentry">是</td>
+          <td valign="top" headers="d105177e35" class="stentry">是</td>
 
         </tr>
 </table>
@@ -68,43 +68,43 @@
 
     <div class="section"><h2 class="title sectiontitle">options 中可选的属性格式</h2>
       <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d105111e64" class="stentry">属性名</th>
+          <th valign="bottom" align="left" id="d105177e64" class="stentry">属性名</th>
 
-          <th valign="bottom" align="left" id="d105111e67" class="stentry">描述</th>
+          <th valign="bottom" align="left" id="d105177e67" class="stentry">描述</th>
 
-          <th valign="bottom" align="left" id="d105111e70" class="stentry">格式</th>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d105111e64" class="stentry">ReplSize</td>
-
-          <td valign="top" headers="d105111e67" class="stentry">一次写请求完成副本数。</td>
-
-          <td valign="top" headers="d105111e70" class="stentry">ReplSize:&lt;int32&gt;</td>
+          <th valign="bottom" align="left" id="d105177e70" class="stentry">格式</th>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d105111e64" class="stentry">ShardingKey</td>
+          <td valign="top" headers="d105177e64" class="stentry">ReplSize</td>
 
-          <td valign="top" headers="d105111e67" class="stentry">分区键</td>
+          <td valign="top" headers="d105177e67" class="stentry">一次写请求完成副本数。</td>
 
-          <td valign="top" headers="d105111e70" class="stentry">ShardingKey:{&lt;字段1&gt;:&lt;1|-1&gt;,[&lt;字段2&gt;:&lt;1|-1&gt;, ...]}</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d105111e64" class="stentry">ShardingType</td>
-
-          <td valign="top" headers="d105111e67" class="stentry">分区方式，默认为 range 分区。</td>
-
-          <td valign="top" headers="d105111e70" class="stentry">ShardingType:"hash"|"range"</td>
+          <td valign="top" headers="d105177e70" class="stentry">ReplSize:&lt;int32&gt;</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d105111e64" class="stentry">Partition</td>
+          <td valign="top" headers="d105177e64" class="stentry">ShardingKey</td>
 
-          <td valign="top" headers="d105111e67" class="stentry">分区数，hash 分区时填写，代表了 hash 分区的个数。其值必须是2的幂。范围在[2^3,2^20]。</td>
+          <td valign="top" headers="d105177e67" class="stentry">分区键</td>
 
-          <td valign="top" headers="d105111e70" class="stentry">Partition:&lt;分区数&gt;</td>
+          <td valign="top" headers="d105177e70" class="stentry">ShardingKey:{&lt;字段1&gt;:&lt;1|-1&gt;,[&lt;字段2&gt;:&lt;1|-1&gt;, ...]}</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d105177e64" class="stentry">ShardingType</td>
+
+          <td valign="top" headers="d105177e67" class="stentry">分区方式，默认为 range 分区。</td>
+
+          <td valign="top" headers="d105177e70" class="stentry">ShardingType:"hash"|"range"</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d105177e64" class="stentry">Partition</td>
+
+          <td valign="top" headers="d105177e67" class="stentry">分区数，hash 分区时填写，代表了 hash 分区的个数。其值必须是2的幂。范围在[2^3,2^20]。</td>
+
+          <td valign="top" headers="d105177e70" class="stentry">Partition:&lt;分区数&gt;</td>
 
         </tr>
 </table>
