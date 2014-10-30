@@ -325,7 +325,8 @@ namespace engine
       if ( offset + len > _lastSz )
       {
          PD_LOG( PDERROR, "Offset[%lld] grater than last size[%lld] in"
-                 "file[%s]", offset, _lastSz, _fileName.c_str() ) ;
+                 "file[%s], read len[%d], file size[%lld]", offset, _lastSz,
+                 _fileName.c_str(), len, _fileSz ) ;
          rc = SDB_SYS ;
          goto error ;
       }
