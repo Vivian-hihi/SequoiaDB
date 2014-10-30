@@ -289,7 +289,7 @@ retry:
          need2Remove = groupID != belongTo ;
          goto done ;
       }
-      else if ( !_splitKeyObj.isEmpty() )
+      else if ( !_splitKeyObj.isEmpty() && _splitKeyObj.firstElement().isNumber() )
       {
          INT32 range = clsPartition( page._oid, page._sequence,
                                      catSet->getPartitionBit() ) ;

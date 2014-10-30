@@ -94,7 +94,8 @@ namespace engine
          virtual BOOLEAN   _canSwitchWhenSyncLog() = 0 ;
 
          virtual void      _reset () ;
-         virtual INT32     _onLobFilter( const _dmsLobInfoOnPage &info,
+         virtual INT32     _onLobFilter( const bson::OID &oid,
+                                         UINT32 sequence,
                                          BOOLEAN &need2Send ) = 0 ;
 
       protected:
@@ -198,7 +199,8 @@ namespace engine
       virtual BOOLEAN _isReady() ;
       virtual const CHAR* _onObjFilter ( const CHAR* inBuff, INT32 inSize,
                                          INT32 &outSize ) ;
-      virtual INT32 _onLobFilter( const _dmsLobInfoOnPage &info,
+      virtual INT32 _onLobFilter( const bson::OID &oid,
+                                  UINT32 sequence,
                                   BOOLEAN &need2Send ) ;
       virtual INT32   _onFSMeta ( const CHAR *clFullName ) ;
       virtual INT32   _scanType () const ;
@@ -231,7 +233,8 @@ namespace engine
          virtual INT32   _onFSMeta ( const CHAR *clFullName ) ;
          virtual INT32   _scanType () const ;
          virtual BOOLEAN _canSwitchWhenSyncLog() ;
-         virtual INT32   _onLobFilter( const _dmsLobInfoOnPage &info,
+         virtual INT32   _onLobFilter( const bson::OID &oid,
+                                       UINT32 sequence,
                                        BOOLEAN &need2Send ) ;
 
       protected:

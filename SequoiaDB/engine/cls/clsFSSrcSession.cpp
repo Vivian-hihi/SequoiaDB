@@ -662,7 +662,7 @@ namespace engine
          }
 
          finalSize = _mb.length() ;
-         rc = _onLobFilter( page, need2Send ) ;
+         rc = _onLobFilter( page._oid, page._sequence, need2Send ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "failed to filter lob data:%d", rc ) ;
@@ -1703,8 +1703,9 @@ namespace engine
       return inBuff ;
    }
 
-   INT32 _clsFSSrcSession::_onLobFilter( const _dmsLobInfoOnPage &info,
-                                       BOOLEAN &need2Send )
+   INT32 _clsFSSrcSession::_onLobFilter( const bson::OID &oid,
+                                         UINT32 sequence,
+                                         BOOLEAN &need2Send )
    {
       need2Send = TRUE ;
       return SDB_OK ;
@@ -1835,15 +1836,15 @@ namespace engine
       {
          goto done ;
       }
-      else if ( CLS_IS_LOB_LOG( record.head()._type ) )
+      else if ( _hashShard && CLS_IS_LOB_LOG( record.head()._type ) )
       {
          if ( inEndMap ||
               _lobFetcher.hitEnd() ||
               extLID < _lobFetcher.toBeFetched() )
          {
+            BOOLEAN need2Notify = FALSE ;
             const bson::OID *oid = NULL ;
             const UINT32 *sequence = NULL ;
-            INT32 range = 0 ;
             dpsLogRecord::iterator itr =
                           record.find( DPS_LOG_LOB_OID ) ;
             if ( !itr.valid() )
@@ -1865,9 +1866,16 @@ namespace engine
             }
             sequence = ( const UINT32 * )( itr.value() ) ;
 
-            range = clsPartition( *oid, *sequence, _partitionBit ) ;
-            if ( _rangeKeyObj.firstElement().Int() <= range &&
-                ( !_hasEndRange || range < _rangeEndKeyObj.firstElement().Int() ) )
+            rc = _onLobFilter( *oid, *sequence, need2Notify ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "Split Session[%s]: can not filter the log "
+                       , sessionName() ) ;
+               rc = SDB_SYS ;
+               goto error ;
+            }
+
+            if ( need2Notify )
             {
                _deqLSN.push_back( offset ) ;
             }
@@ -2512,15 +2520,22 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSPLSS__ONLOBFILTER, "_clsSplitSrcSession::_onLobFilter" )
-   INT32 _clsSplitSrcSession::_onLobFilter( const _dmsLobInfoOnPage &info,
+   INT32 _clsSplitSrcSession::_onLobFilter( const bson::OID &oid,
+                                            UINT32 sequence,
                                             BOOLEAN &need2Send )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__CLSSPLSS__ONLOBFILTER ) ;
-      INT32 range = clsPartition( info._oid, info._sequence, _partitionBit ) ;
+      INT32 range = clsPartition( oid, sequence, _partitionBit ) ;
+      if ( !_hashShard || !_rangeKeyObj.firstElement().isNumber() )
+      {
+         need2Send = FALSE ;
+         goto done ;
+      }
 
       need2Send = _rangeKeyObj.firstElement().Int() <= range &&
            ( !_hasEndRange || range < _rangeEndKeyObj.firstElement().Int() ) ;
+   done:
       PD_TRACE_EXITRC( SDB__CLSSPLSS__ONLOBFILTER, rc ) ;
       return rc ;
    }
