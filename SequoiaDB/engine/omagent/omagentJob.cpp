@@ -222,6 +222,11 @@ namespace engine
       PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
                 "Get field[%s] failed, rc: %d", OMA_FIELD_PASSWD, rc ) ;
       info._passwd = pStr ;
+      // _sshPort
+      rc = omaGetStringElement( obj, OMA_FIELD_SSHPORT, &pStr ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                "Get field[%s] failed, rc: %d", OMA_FIELD_SSHPORT, rc ) ;
+      info._sshPort = pStr ;
       // _conf
       pattern = BSON( OMA_FIELD_HOSTNAME       << 1 <<
                       OMA_OPTION_DATAGROUPNAME << 1 <<
@@ -231,7 +236,8 @@ namespace engine
                       OMA_FIELD_SDBPASSWD      << 1 << 
                       OMA_FIELD_SDBUSERGROUP   << 1 <<
                       OMA_FIELD_USER           << 1 <<
-                      OMA_FIELD_PASSWD         << 1 ) ;
+                      OMA_FIELD_PASSWD         << 1 << 
+                      OMA_FIELD_SSHPORT << 1 ) ;
       conf = obj.filterFieldsUndotted( pattern, false ) ;
       info._conf = conf.getOwned() ;
 
@@ -453,6 +459,11 @@ namespace engine
       PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
                 "Get field[%s] failed, rc: %d", OMA_FIELD_PASSWD, rc ) ;
       info._passwd = pStr ;
+      // _sshPort
+      rc = omaGetStringElement( obj, OMA_FIELD_SSHPORT, &pStr ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                "Get field[%s] failed, rc: %d", OMA_FIELD_SSHPORT, rc ) ;
+      info._sshPort = pStr ;
       // _conf
       pattern = BSON( OMA_FIELD_HOSTNAME       << 1 <<
                       OMA_OPTION_DATAGROUPNAME << 1 <<
@@ -462,7 +473,8 @@ namespace engine
                       OMA_FIELD_SDBPASSWD      << 1 << 
                       OMA_FIELD_SDBUSERGROUP   << 1 <<
                       OMA_FIELD_USER           << 1 <<
-                      OMA_FIELD_PASSWD         << 1 ) ;
+                      OMA_FIELD_PASSWD         << 1 <<
+                      OMA_FIELD_SSHPORT        << 1 ) ;
       conf = obj.filterFieldsUndotted( pattern, false ) ;
       info._conf = conf.getOwned() ;
 
@@ -684,6 +696,11 @@ namespace engine
       PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
                 "Get field[%s] failed, rc: %d", OMA_FIELD_PASSWD, rc ) ;
       info._passwd = pStr ;
+      // _sshPort
+      rc = omaGetStringElement( obj, OMA_FIELD_SSHPORT, &pStr ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                "Get field[%s] failed, rc: %d", OMA_FIELD_SSHPORT, rc ) ;
+      info._sshPort = pStr ;
       // _conf
       pattern = BSON( OMA_FIELD_HOSTNAME       << 1 <<
                       OMA_OPTION_DATAGROUPNAME << 1 <<
@@ -693,7 +710,8 @@ namespace engine
                       OMA_FIELD_SDBPASSWD      << 1 <<
                       OMA_FIELD_SDBUSERGROUP   << 1 <<
                       OMA_FIELD_USER           << 1 <<
-                      OMA_FIELD_PASSWD         << 1 ) ;
+                      OMA_FIELD_PASSWD         << 1 <<
+                      OMA_FIELD_SSHPORT        << 1 ) ;
       conf = obj.filterFieldsUndotted( pattern, false ) ;
       info._conf = conf.getOwned() ;
 
@@ -932,6 +950,11 @@ namespace engine
       PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
                 "Get field[%s] failed, rc: %d", OMA_FIELD_PASSWD, rc ) ;
       installInfo._passwd = pStr ;
+      // _sshPort
+      rc = omaGetStringElement( obj, OMA_FIELD_SSHPORT, &pStr ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                "Get field[%s] failed, rc: %d", OMA_FIELD_SSHPORT, rc ) ;
+      installInfo._sshPort = pStr ;
       // _conf
       pattern = BSON( OMA_FIELD_HOSTNAME       << 1 <<
                       OMA_OPTION_DATAGROUPNAME << 1 <<
@@ -941,7 +964,8 @@ namespace engine
                       OMA_FIELD_SDBPASSWD      << 1 <<
                       OMA_FIELD_SDBUSERGROUP   << 1 <<
                       OMA_FIELD_USER           << 1 <<
-                      OMA_FIELD_PASSWD         << 1 ) ;
+                      OMA_FIELD_PASSWD         << 1 <<
+                      OMA_FIELD_SSHPORT        << 1 ) ;
       conf = obj.filterFieldsUndotted( pattern, false ) ;
       installInfo._conf = conf.getOwned() ; 
 

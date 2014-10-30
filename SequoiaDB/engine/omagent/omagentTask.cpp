@@ -917,10 +917,6 @@ namespace engine
       {
          setIsInstallFail( TRUE ) ;
       }
-      else
-      {
-         goto done ;
-      }
       // check whether is there any job failed or not,
       // and whether it's the time to rollback
       for ( it = _jobStatus.begin(); it != _jobStatus.end(); it++ )

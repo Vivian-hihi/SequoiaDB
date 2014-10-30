@@ -63,6 +63,7 @@ namespace engine
       string _sdbUserGroup ;
       string _user ;
       string _passwd ;
+      string _sshPort ;
       BSONObj _conf ;
    } ;
    typedef struct _InstallInfo InstallInfo ;

@@ -55,6 +55,7 @@ namespace engine
       _info._sdbUserGroup  = info._sdbUserGroup ;
       _info._user          = info._user ;
       _info._passwd        = info._passwd ;
+      _info._sshPort       = info._sshPort ;
       _vCoordSvcName       = vCoordSvcName ;
    }
 
@@ -77,7 +78,8 @@ namespace engine
                  OMA_FIELD_SDBPASSWD     << _info._sdbPasswd.c_str() <<
                  OMA_FIELD_SDBUSERGROUP  << _info._sdbUserGroup.c_str() <<
                  OMA_FIELD_USER          << _info._user.c_str() <<
-                 OMA_FIELD_PASSWD        << _info._passwd.c_str() ) ;
+                 OMA_FIELD_PASSWD        << _info._passwd.c_str() <<
+                 OMA_FIELD_SSHPORT       << _info._sshPort.c_str() ) ;
          // build js file arguments
          ossSnprintf( _jsFileArgs, JS_ARG_LEN, "var %s = %s; var %s = %s; ",
                       JS_ARG_BUS, bus.toString(FALSE, TRUE).c_str(),
@@ -119,6 +121,7 @@ namespace engine
       _info._sdbUserGroup  = info._sdbUserGroup ;
       _info._user          = info._user ;
       _info._passwd        = info._passwd ;
+      _info._sshPort       = info._sshPort ;
       _vCoordSvcName       = vCoordSvcName ;
    }
 
@@ -142,7 +145,8 @@ namespace engine
                  OMA_FIELD_SDBPASSWD     << _info._sdbPasswd.c_str() <<
                  OMA_FIELD_SDBUSERGROUP  << _info._sdbUserGroup.c_str() <<
                  OMA_FIELD_USER          << _info._user.c_str() <<
-                 OMA_FIELD_PASSWD        << _info._passwd.c_str() ) ;
+                 OMA_FIELD_PASSWD        << _info._passwd.c_str() <<
+                 OMA_FIELD_SSHPORT       << _info._sshPort.c_str() ) ;
          // build js file arguments
          ossSnprintf( _jsFileArgs, JS_ARG_LEN, "var %s = %s; var %s = %s; ",
                       JS_ARG_BUS, bus.toString(FALSE, TRUE).c_str(),
@@ -184,6 +188,7 @@ namespace engine
       _info._sdbUserGroup  = info._sdbUserGroup ;
       _info._user          = info._user ;
       _info._passwd        = info._passwd ;
+      _info._sshPort       = info._sshPort ;
       _vCoordSvcName       = vCoordSvcName ;
    }
 
@@ -207,7 +212,8 @@ namespace engine
                  OMA_FIELD_SDBPASSWD     << _info._sdbPasswd.c_str() <<
                  OMA_FIELD_SDBUSERGROUP  << _info._sdbUserGroup.c_str() <<
                  OMA_FIELD_USER          << _info._user.c_str() <<
-                 OMA_FIELD_PASSWD        << _info._passwd.c_str() ) ;
+                 OMA_FIELD_PASSWD        << _info._passwd.c_str() <<
+                 OMA_FIELD_SSHPORT       << _info._sshPort.c_str() ) ;
          // build js file arguments
          ossSnprintf( _jsFileArgs, JS_ARG_LEN, "var %s = %s; var %s = %s; ",
                       JS_ARG_BUS, bus.toString(FALSE, TRUE).c_str(),
@@ -250,6 +256,7 @@ namespace engine
       _info._sdbUserGroup  = info._sdbUserGroup ;
       _info._user          = info._user ;
       _info._passwd        = info._passwd ;
+      _info._sshPort       = info._sshPort ;
       _vCoordSvcName       = vCoordSvcName ;
    }
 
@@ -274,7 +281,8 @@ namespace engine
                  OMA_FIELD_SDBPASSWD     << _info._sdbPasswd.c_str() << 
                  OMA_FIELD_SDBUSERGROUP  << _info._sdbUserGroup.c_str() <<
                  OMA_FIELD_USER          << _info._user.c_str() <<
-                 OMA_FIELD_PASSWD        << _info._passwd.c_str() ) ;
+                 OMA_FIELD_PASSWD        << _info._passwd.c_str() <<
+                 OMA_FIELD_SSHPORT       << _info._sshPort.c_str() ) ;
          // build js file arguments
          ossSnprintf( _jsFileArgs, JS_ARG_LEN, "var %s = %s; var %s = %s; ",
                       JS_ARG_BUS, bus.toString(FALSE, TRUE).c_str(),

@@ -116,6 +116,7 @@
 #define OMA_FIELD_AUTHPASSWD                       "AuthPasswd"
 #define OMA_FIELD_CATAADDR                         "CataAddr"
 #define OMA_FIELD_CATASVCNAME                      "CataSvcName"
+#define OMA_FIELD_SSHPORT                          "SshPort"
 
 
 // host info
