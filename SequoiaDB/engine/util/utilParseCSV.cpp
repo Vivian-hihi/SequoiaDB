@@ -180,13 +180,22 @@ INT32 _utilCSVParser::getNextRecord ( UINT32 &startOffset,
             isReadSize = pCursor - _curBuffer ;
             if ( isReadSize > _blockSize && isReadSize < _bufferSize )
             {
+               _pBlock = 0 ;
                //is read size use block number
-               useBlockNum = ( (UINT32)( isReadSize / _blockSize ) ) + 1 ;
-               while ( useBlockNum > 0 )
+               useBlockNum = ( (UINT32)( isReadSize / _blockSize ) ) ;
+               if ( isReadSize % _blockSize > 0 )
+               {
+                  ++useBlockNum ;
+               }
+               while ( TRUE )
                {
                   if ( ppBucket )
                   {
                      ppBucket[_pBlock]->wait_to_get_exclusive_lock() ;
+                  }
+                  if( useBlockNum - 1 == 0 )
+                  {
+                     break ;
                   }
                   ++_pBlock ;
                   --useBlockNum ;
@@ -195,10 +204,9 @@ INT32 _utilCSVParser::getNextRecord ( UINT32 &startOffset,
                _curBuffer = _buffer ;
                pReadBuffer = _buffer + isReadSize ;
                pCursor = pReadBuffer ;
-               newReadSize = isReadSize % _blockSize ;
+               newReadSize = _blockSize - ( isReadSize % _blockSize ) ;
                if ( newReadSize == 0 )
                {
-                  pCursor = _buffer + isReadSize ;
                   ++_pBlock ;
                   continue ;
                }
@@ -218,10 +226,10 @@ INT32 _utilCSVParser::getNextRecord ( UINT32 &startOffset,
                   ppBucket[_pBlock]->wait_to_get_exclusive_lock() ;
                }
                ossMemmove ( _buffer, _curBuffer, isReadSize ) ;
-               newReadSize = _blockSize - isReadSize ;
                _curBuffer = _buffer ;
                pReadBuffer = _buffer + isReadSize ;
                pCursor = pReadBuffer ;
+               newReadSize = _blockSize - isReadSize ;
                if ( newReadSize == 0 )
                {
                   ++_pBlock ;
