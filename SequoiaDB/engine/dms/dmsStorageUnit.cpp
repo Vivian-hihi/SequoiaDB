@@ -125,7 +125,7 @@ namespace engine
       if ( _pLobSu )
       {
          SDB_OSS_DEL _pLobSu ;
-         _pDataSu = NULL ;
+         _pLobSu = NULL ;
       }
       // _pDataSu must be delete at the last
       if ( _pDataSu )
