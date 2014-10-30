@@ -1887,7 +1887,7 @@ namespace engine
 
          goto done ;
       }
-      else
+      else if ( !CLS_IS_LOB_LOG( record.head()._type ) )
       {
          if ( LOG_TYPE_DATA_INSERT == record.head()._type )
          {
