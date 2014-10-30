@@ -162,7 +162,9 @@ function getTask()
 		{
 			updateProgress() ;
 		}
+		progressTimer = 1 ;
 	}, function( jsonArr ){
+		progressTimer = null ;
 		return errorProcess( jsonArr[0]['errno'], jsonArr[0]['detail'] ) ;
 	}, function(){
 		if( progressTimer != null )
