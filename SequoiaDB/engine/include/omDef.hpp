@@ -146,6 +146,7 @@ namespace engine
    #define OM_HOST_FIELD_SAFETY              "Safety"
    #define OM_HOST_FIELD_INSTALLPATH         OM_CLUSTER_FIELD_INSTALLPATH
    #define OM_HOST_FIELD_AGENT_PORT          "AgentPort"
+   #define OM_HOST_FIELD_SSHPORT             "SshPort"
 
    #define OM_CS_DEPLOY_CL_HOSTIDX1          "{name:\"SYSDEPLOY_HOST_IDX1\",key: {"\
                                              OM_HOST_FIELD_NAME":1}, unique: true, enforced: true } "
@@ -275,7 +276,7 @@ namespace engine
    #define  OM_BSON_FIELD_HOST_NAME          OM_HOST_FIELD_NAME
    #define  OM_BSON_FIELD_HOST_USER          OM_HOST_FIELD_USER
    #define  OM_BSON_FIELD_HOST_PASSWD        OM_HOST_FIELD_PASSWORD
-   #define  OM_BSON_FIELD_HOST_SSHPORT       "SshPort"
+   #define  OM_BSON_FIELD_HOST_SSHPORT       OM_HOST_FIELD_SSHPORT
 
    #define  OM_BSON_FIELD_AGENT_PORT         OM_HOST_FIELD_AGENT_PORT
 

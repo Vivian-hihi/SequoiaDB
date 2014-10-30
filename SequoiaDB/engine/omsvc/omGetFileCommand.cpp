@@ -2894,6 +2894,8 @@ namespace engine
                               OM_BSON_FIELD_INSTALL_PATH ) ;
          _generateTableField( builder, OM_HOST_FIELD_AGENT_PORT, *ite, 
                               OM_BSON_FIELD_AGENT_PORT ) ;
+         _generateTableField( builder, OM_HOST_FIELD_SSHPORT, *ite, 
+                              OM_BSON_FIELD_HOST_SSHPORT ) ;
 
          tmp = builder.obj() ;
          rc = rtnInsert( OM_CS_DEPLOY_CL_HOST, tmp, 1, 0, _cb ) ;
@@ -4697,6 +4699,8 @@ namespace engine
       builder.appendElements( bsonConfValue ) ;
       builder.append( OM_BSON_TASKID, (long long)taskID ) ;
       request = builder.obj() ;
+      PD_LOG( PDDEBUG, "install req:%s", 
+              request.toString( false, true ).c_str() ) ;
 
       rc = msgBuildQueryMsg( &pContent, &contentSize, 
                              CMD_ADMIN_PREFIX OM_INSTALL_BUSINESS_REQ, 
@@ -4804,6 +4808,8 @@ namespace engine
                                                 OM_HOST_FIELD_PASSWORD ) ;
          host.clusterName = oneHost.getStringField( 
                                                 OM_HOST_FIELD_CLUSTERNAME ) ;
+         host.sshPort     = oneHost.getStringField( 
+                                                OM_HOST_FIELD_SSHPORT ) ;
          hostMap[ host.hostName ] = host ;
       }
 
@@ -4833,6 +4839,8 @@ namespace engine
             tmpBuilder.append( OM_BSON_FIELD_HOST_USER, iterMap->second.user ) ;
             tmpBuilder.append( OM_BSON_FIELD_HOST_PASSWD, 
                                iterMap->second.passwd ) ;
+            tmpBuilder.append( OM_BSON_FIELD_HOST_SSHPORT, 
+                               iterMap->second.sshPort ) ;
             BSONObj tmp = tmpBuilder.obj() ;
             arrayBuilder.append( tmp ) ;
          }
@@ -6066,6 +6074,8 @@ namespace engine
                                                    OM_HOST_FIELD_INSTALLPATH ) ;
          hostInfo.agentPort   = result.getStringField( 
                                                    OM_HOST_FIELD_AGENT_PORT ) ;
+         hostInfo.sshPort     = result.getStringField( 
+                                                   OM_HOST_FIELD_SSHPORT ) ;
          isExistFlag = TRUE ;
          break ;
       }
@@ -6417,8 +6427,11 @@ namespace engine
                        << OM_BSON_FIELD_HOST_IP << hostInfo.ip 
                        << OM_BSON_FIELD_HOST_USER << hostInfo.user 
                        << OM_BSON_FIELD_HOST_PASSWD << hostInfo.passwd 
-                       << OM_BSON_FIELD_INSTALLPATH << hostInfo.installPath ) ;
+                       << OM_BSON_FIELD_INSTALLPATH << hostInfo.installPath
+                       << OM_BSON_FIELD_HOST_SSHPORT << hostInfo.sshPort ) ;
 
+      PD_LOG( PDDEBUG, "remove host req:%s", 
+              bsonRequest.toString( false, true ).c_str() ) ;
       rc = msgBuildQueryMsg( &pContent, &contentSize, 
                              CMD_ADMIN_PREFIX OM_REMOVE_HOST_REQ, 
                              0, 0, 0, -1, &bsonRequest, NULL, NULL, NULL ) ;

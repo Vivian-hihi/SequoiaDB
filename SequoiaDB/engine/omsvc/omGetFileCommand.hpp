@@ -63,6 +63,7 @@ namespace engine
       string passwd ;
       string installPath ;
       string agentPort ;
+      string sshPort ;
    } ;
 
    struct simpleNodeInfo : public SDBObject
