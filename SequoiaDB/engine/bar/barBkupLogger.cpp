@@ -1109,16 +1109,16 @@ namespace engine
             PD_RC_CHECK( rc, PDERROR, "Failed to backup storage unit[%s] "
                          "index su, rc: %d", su->CSName(), rc ) ;
 
-            // backup lob meta file
-            _curDataType = BAR_DATA_TYPE_RAW_LOBM ;
-            _curOffset = 0 ;
-            rc = _backupSU( su->lob(), cb ) ;
-            PD_RC_CHECK( rc, PDERROR, "Failed to backup storage unit[%s] "
-                         "lob meta su, rc: %d", su->CSName(), rc ) ;
-
-            // backup lob data file
             if ( su->lob()->isOpened() )
             {
+               // backup lob meta file
+               _curDataType = BAR_DATA_TYPE_RAW_LOBM ;
+               _curOffset = 0 ;
+               rc = _backupSU( su->lob(), cb ) ;
+               PD_RC_CHECK( rc, PDERROR, "Failed to backup storage unit[%s] "
+                            "lob meta su, rc: %d", su->CSName(), rc ) ;
+
+               // backup lob data file
                _curDataType = BAR_DATA_TYPE_RAW_LOBD ;
                _curOffset = 0 ;
                rc = _backupLobData( su->lob(), cb ) ;
