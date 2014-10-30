@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
 <topic id="topic_3ml_k3n_xp">
-  <title>独立模式的配置与启动</title>
+  <title>独立模式的部署</title>
   <body>
     <p><b>说明：</b></p>
     <p>&nbsp;&nbsp;（1）本节按照最简部署为例，介绍配置和启动步骤；</p>

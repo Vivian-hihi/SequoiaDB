@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
 <topic id="topic_dpk_n3n_xp">
-  <title>集群模式的配置与启动</title>
+  <title>集群模式的部署</title>
   <body>
     <note>在配置集群模式时，请先确保服务器与主机名的映射关系正确，详细请参考<xref href="../../system_require/topics/software.dita">系统配置需求</xref>，确保各节点之间能相互通信，将节点的防火墙关闭。</note>
     <p><b>说明：</b></p>
