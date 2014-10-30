@@ -1128,13 +1128,14 @@ error :
 
 // PD_TRACE_DECLARE_FUNCTION ( SDB_OSSGETPROCMEMINFO, "ossGetProcMemInfo" )
 INT32 ossGetProcMemInfo( ossProcMemInfo &memInfo,
-                        OSSPID pid )
+                         OSSPID pid )
 {
    INT32 rc = SDB_OK ;
    // PD_TRACE_ENTRY ( SDB_OSSGETPROCMEMINFO );
 #if defined (_WINDOWS)
+   HANDLE handle = GetCurrentProcess() ;
    PROCESS_MEMORY_COUNTERS pmc ;
-   if ( GetProcessMemoryInfo( (HANDLE)pid, &pmc, sizeof( pmc ) ) )
+   if ( GetProcessMemoryInfo( handle, &pmc, sizeof( pmc ) ) )
    {
       memInfo.rss = pmc.WorkingSetSize ;
       memInfo.vSize = pmc.PagefileUsage ;
