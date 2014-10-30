@@ -65,6 +65,13 @@ namespace engine
          return _fileName ;
       }
 
+      OSS_INLINE UINT32 pageSize() const { return _pageSz ; }
+      OSS_INLINE UINT32 pageSizeSquareRoot() const { return _logarithmic ; }
+
+      OSS_INLINE UINT32 getSegmentSize() const { return DMS_SEGMENT_SZ ; }
+      OSS_INLINE UINT32 segmentPages() const { return _segmentPages ; }
+      OSS_INLINE UINT32 segmentPagesSquareRoot() const { return _segmentPagesSquare ; }
+
       INT32 open( const CHAR *path,
                   BOOLEAN createNew,
                   BOOLEAN delWhenExist,
@@ -88,6 +95,11 @@ namespace engine
                   UINT32 &readLen ) ;
 
       INT32 extend( INT64 len ) ;
+
+      INT32 readRaw( UINT64 offset,
+                     UINT32 len,
+                     CHAR *buf,
+                     UINT32 &readLen ) ;
 
    private:
       INT32 _initFileHeader( const dmsStorageInfo &info ) ;
@@ -114,6 +126,9 @@ namespace engine
       INT64             _lastSz ;
       UINT32            _pageSz ;
       UINT32            _logarithmic ;
+
+      UINT32            _segmentPages ;
+      UINT32            _segmentPagesSquare ;
 
    } ;
    typedef class _dmsStorageLobData dmsStorageLobData ;

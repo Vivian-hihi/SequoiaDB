@@ -50,6 +50,8 @@ namespace engine
     _logarithmic( 0 )
    {
       _fileName.assign( fileName ) ;
+      _segmentPages = 0 ;
+      _segmentPagesSquare = 0 ;
       ossMemset( _fullPath, 0, sizeof( _fullPath ) ) ;
    }
 
@@ -295,6 +297,52 @@ namespace engine
       {
          PD_LOG( PDERROR, "failed to read page[%d], rc: %d",
                  page, rc ) ;
+         goto error ;
+      }
+
+      readLen = readFromFile ;
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _dmsStorageLobData::readRaw( UINT64 offset, UINT32 len,
+                                      CHAR * buf, UINT32 &readLen )
+   {
+      INT32 rc = SDB_OK ;
+      SDB_ASSERT( NULL != buf && offset <= _fileSz, "invalid operation" ) ;
+      SINT64 readFromFile = 0 ;
+
+      if ( offset + len > _fileSz )
+      {
+         PD_LOG( PDERROR, "Offset[%lld] grater than file size[%lld] in "
+                 "file[%s]", offset, _fileSz, _fileName.c_str() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      if ( offset + len > _lastSz )
+      {
+         PD_LOG( PDERROR, "Offset[%lld] grater than last size[%lld] in"
+                 "file[%s]", offset, _lastSz, _fileName.c_str() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      rc = ossSeek( &_file, offset, OSS_SEEK_SET ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to seek file[%lld], rc: %d",
+                 offset, rc ) ;
+         goto error ;
+      }
+
+      rc = ossReadN( &_file, len, buf, readFromFile ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to read data[offset: %lld, len: %d], rc: %d",
+                 offset, len, rc ) ;
          goto error ;
       }
 
@@ -586,6 +634,15 @@ namespace engine
       if ( !ossIsPowerOf2( _pageSz, &_logarithmic ) )
       {
          PD_LOG( PDERROR, "Page size[%d] is not power of 2", _pageSz ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      _segmentPages = getSegmentSize() >> _logarithmic ;
+      if ( !ossIsPowerOf2( _segmentPages, &_segmentPagesSquare ) )
+      {
+         PD_LOG( PDERROR, "Segment pages[%u] must be the power of 2",
+                 _segmentPages ) ;
          rc = SDB_SYS ;
          goto error ;
       }

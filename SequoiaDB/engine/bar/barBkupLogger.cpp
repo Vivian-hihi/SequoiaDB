@@ -71,6 +71,8 @@ namespace engine
    */
    #define BAR_SU_FILE_TYPE_DATA          "data"
    #define BAR_SU_FILE_TYPE_INDEX         "index"
+   #define BAR_SU_FILE_TYPE_LOBM          "lobm"
+   #define BAR_SU_FILE_TYPE_LOBD          "lobd"
 
    #define BAR_MAX_EXTENT_DATA_SIZE       (16777216)           // 16MB
    #define BAR_THINCOPY_THRESHOLD_SIZE    (16)                 // MB
@@ -885,6 +887,7 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Failed to open file[%s], rc: %d",
                    fileName.c_str(), rc ) ;
 
+      _isOpened = TRUE ;
       _metaHeader.makeEndTime() ;
 
       rc = _flush( _curFile, (const CHAR *)&_metaHeader,
@@ -967,10 +970,16 @@ namespace engine
       _curOffset   = 0 ;
       _curSequence = 0 ;
       _replStatus  = -1 ;
+      _pExtentBuff = NULL ;
    }
 
    _barBKOfflineLogger::~_barBKOfflineLogger ()
    {
+      if ( _pExtentBuff )
+      {
+         SDB_OSS_FREE( _pExtentBuff ) ;
+         _pExtentBuff = NULL ;
+      }
    }
 
    UINT32 _barBKOfflineLogger::_getBackupType () const
@@ -1100,6 +1109,23 @@ namespace engine
             PD_RC_CHECK( rc, PDERROR, "Failed to backup storage unit[%s] "
                          "index su, rc: %d", su->CSName(), rc ) ;
 
+            // backup lob meta file
+            _curDataType = BAR_DATA_TYPE_RAW_LOBM ;
+            _curOffset = 0 ;
+            rc = _backupSU( su->lob(), cb ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to backup storage unit[%s] "
+                         "lob meta su, rc: %d", su->CSName(), rc ) ;
+
+            // backup lob data file
+            if ( su->lob()->isOpened() )
+            {
+               _curDataType = BAR_DATA_TYPE_RAW_LOBD ;
+               _curOffset = 0 ;
+               rc = _backupLobData( su->lob(), cb ) ;
+               PD_RC_CHECK( rc, PDERROR, "Failed to backup storage unit[%s] "
+                            "lob data su, rc: %d", su->CSName(), rc ) ;
+            }
+
             PD_LOG( PDEVENT, "Complete backup storage: %s", su->CSName() ) ;
 
             _metaHeader._csNum++ ;
@@ -1133,9 +1159,45 @@ namespace engine
       {
          builder.append( BAR_SU_FILE_TYPE, BAR_SU_FILE_TYPE_DATA ) ;
       }
-      else
+      else if ( BAR_DATA_TYPE_RAW_IDX == _curDataType )
       {
          builder.append( BAR_SU_FILE_TYPE, BAR_SU_FILE_TYPE_INDEX ) ;
+      }
+      else if ( BAR_DATA_TYPE_RAW_LOBM == _curDataType )
+      {
+         builder.append( BAR_SU_FILE_TYPE, BAR_SU_FILE_TYPE_LOBM ) ;
+      }
+      else
+      {
+         builder.append( BAR_SU_FILE_TYPE, BAR_SU_FILE_TYPE_LOBD ) ;
+      }
+
+      return builder.obj() ;
+   }
+
+   BSONObj _barBKOfflineLogger::_makeExtentMeta( _dmsStorageLob *pLobSU )
+   {
+      BSONObjBuilder builder ;
+      builder.append( BAR_SU_NAME, pLobSU->getSuName() ) ;
+      builder.append( BAR_SU_FILE_NAME,
+                      pLobSU->getLobData()->getFileName().c_str() ) ;
+      builder.append( BAR_SU_FILE_OFFSET, (long long)_curOffset ) ;
+      builder.append( BAR_SU_SEQUENCE, (INT32)_curSequence ) ;
+      if ( BAR_DATA_TYPE_RAW_DATA == _curDataType )
+      {
+         builder.append( BAR_SU_FILE_TYPE, BAR_SU_FILE_TYPE_DATA ) ;
+      }
+      else if ( BAR_DATA_TYPE_RAW_IDX == _curDataType )
+      {
+         builder.append( BAR_SU_FILE_TYPE, BAR_SU_FILE_TYPE_INDEX ) ;
+      }
+      else if ( BAR_DATA_TYPE_RAW_LOBM == _curDataType )
+      {
+         builder.append( BAR_SU_FILE_TYPE, BAR_SU_FILE_TYPE_LOBM ) ;
+      }
+      else
+      {
+         builder.append( BAR_SU_FILE_TYPE, BAR_SU_FILE_TYPE_LOBD ) ;
       }
 
       return builder.obj() ;
@@ -1300,6 +1362,161 @@ namespace engine
 
          ++segmentID ;
          ++itr ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _barBKOfflineLogger::_backupLobData( _dmsStorageLob * pLobSU,
+                                              _pmdEDUCB * cb )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj metaObj ;
+      barBackupExtentHeader *pHeader = NULL ;
+      BOOLEAN thinCopy  = FALSE ;
+      dmsStorageLobData *pLobData = pLobSU->getLobData() ;
+      UINT64 metaLen    = pLobData->getFileSz() - pLobData->getDataSz() ;
+      UINT32 readLen    = 0 ;
+
+      // thin copy related
+      UINT32 curExtentID = 0 ;
+      UINT32 maxExtNum = BAR_MAX_EXTENT_DATA_SIZE >>
+                         pLobData->pageSizeSquareRoot() ;
+
+      if ( !_pExtentBuff )
+      {
+         _pExtentBuff = ( CHAR* )SDB_OSS_MALLOC( BAR_MAX_EXTENT_DATA_SIZE ) ;
+         if ( !_pExtentBuff )
+         {
+            PD_LOG( PDERROR, "Alloc extent buff failed" ) ;
+            rc = SDB_OOM ;
+            goto error ;
+         }
+      }
+
+      // judge need to thin copy
+      if ( pLobData->getDataSz() >
+           ((UINT64)BAR_THINCOPY_THRESHOLD_SIZE << 20 ) )
+      {
+         FLOAT64 ratio = (FLOAT64)pLobSU->getSMEMgr()->totalFree() /
+                         (FLOAT64)pLobSU->pageNum() ;
+         if ( ratio >= BAR_THINCOPY_THRESHOLD_RATIO )
+         {
+            thinCopy = TRUE ;
+         }
+      }
+
+      while ( _curOffset < pLobData->getFileSz() )
+      {
+         if ( cb->isInterrupted() )
+         {
+            rc = SDB_APP_INTERRUPT ;
+            goto error ;
+         }
+
+         if ( _curOffset < metaLen || !thinCopy )
+         {
+            while ( _curOffset < metaLen )
+            {
+               pHeader = _nextDataExtent( _curDataType ) ;
+               pHeader->_dataSize = metaLen - _curOffset <
+                                    BAR_MAX_EXTENT_DATA_SIZE ?
+                                    metaLen - _curOffset :
+                                    BAR_MAX_EXTENT_DATA_SIZE ;
+               metaObj = _makeExtentMeta( pLobSU ) ;
+               pHeader->setMetaData( metaObj.objdata(), metaObj.objsize() ) ;
+
+               // read data
+               rc = pLobData->readRaw( _curOffset, pHeader->_dataSize,
+                                       _pExtentBuff, readLen ) ;
+               if ( rc )
+               {
+                  PD_LOG( PDERROR, "Read lob file[%s, offset: %lld, len: %lld] "
+                          "failed, rc: %d", pLobData->getFileName().c_str(),
+                          _curOffset, pHeader->_dataSize, rc ) ;
+                  goto error ;
+               }
+               else if ( readLen != pHeader->_dataSize )
+               {
+                  rc = SDB_SYS ;
+                  PD_LOG( PDERROR, "Read lob file[%s, offset: %lld, len: %lld] "
+                          "failed[readLen: %d], rc: %d",
+                          pLobData->getFileName().c_str(), _curOffset,
+                          pHeader->_dataSize, readLen, rc ) ;
+                  goto error ;
+               }
+
+               // write extent header
+               rc = _writeData( (const CHAR *)pHeader,
+                                BAR_BACKUP_EXTENT_HEADER_SIZE, TRUE ) ;
+               PD_RC_CHECK( rc, PDERROR, "Failed to write extent header, "
+                            "rc: %d", rc ) ;
+               // write data
+               rc = _writeData( _pExtentBuff, pHeader->_dataSize, FALSE ) ;
+               PD_RC_CHECK( rc, PDERROR, "Failed to write data, rc: %d", rc ) ;
+
+               _curOffset += pHeader->_dataSize ;
+            }
+         }
+         else
+         {
+            UINT32 num = 0 ;
+            BOOLEAN used = FALSE ;
+            UINT32 maxExtID = curExtentID + pLobSU->segmentPages() ;
+            while ( curExtentID < maxExtID )
+            {
+               rc = _nextThinCopyInfo( pLobSU, curExtentID, maxExtID,
+                                       maxExtNum, num, used ) ;
+               PD_RC_CHECK( rc, PDERROR, "Failed to get next thin copy info, "
+                            "rc: %d", rc ) ;
+
+               pHeader = _nextDataExtent( _curDataType ) ;
+               pHeader->_dataSize = (UINT64)num << pLobData->pageSizeSquareRoot() ;
+               pHeader->_thinCopy = used ? 0 : 1 ;
+               metaObj = _makeExtentMeta( pLobSU ) ;
+               pHeader->setMetaData( metaObj.objdata(), metaObj.objsize() ) ;
+
+               // read data
+               rc = pLobData->readRaw( _curOffset, pHeader->_dataSize,
+                                       _pExtentBuff, readLen ) ;
+               if ( rc )
+               {
+                  PD_LOG( PDERROR, "Read lob file[%s, offset: %lld, len: %lld] "
+                          "failed, rc: %d", pLobData->getFileName().c_str(),
+                          _curOffset, pHeader->_dataSize, rc ) ;
+                  goto error ;
+               }
+               else if ( readLen != pHeader->_dataSize )
+               {
+                  rc = SDB_SYS ;
+                  PD_LOG( PDERROR, "Read lob file[%s, offset: %lld, len: %lld] "
+                          "failed[readLen: %d], rc: %d",
+                          pLobData->getFileName().c_str(), _curOffset,
+                          pHeader->_dataSize, readLen, rc ) ;
+                  goto error ;
+               }
+
+               // write extent header
+               rc = _writeData( (const CHAR *)pHeader,
+                                BAR_BACKUP_EXTENT_HEADER_SIZE, TRUE ) ;
+               PD_RC_CHECK( rc, PDERROR, "Failed to write extent header, "
+                            "rc: %d", rc ) ;
+               if ( used )
+               {
+                  // write data
+                  rc = _writeData( _pExtentBuff, pHeader->_dataSize,
+                                   FALSE ) ;
+                  PD_RC_CHECK( rc, PDERROR, "Failed to write data, rc: %d",
+                               rc ) ;
+               }
+
+               _curOffset += pHeader->_dataSize ;
+               curExtentID += num ;
+            }
+         }
       }
 
    done:
@@ -1976,6 +2193,12 @@ namespace engine
             case BAR_DATA_TYPE_RAW_IDX :
                rc = _processRawIndex( pExtHeader, pBuff ) ;
                break ;
+            case BAR_DATA_TYPE_RAW_LOBM :
+               rc = _processRawLobM( pExtHeader, pBuff ) ;
+               break ;
+            case BAR_DATA_TYPE_RAW_LOBD :
+               rc = _processRawLobD( pExtHeader, pBuff ) ;
+               break ;
             case BAR_DATA_TYPE_REPL_LOG :
                if ( !restoreDPS )
                {
@@ -2034,6 +2257,18 @@ namespace engine
 
    INT32 _barRSOfflineLogger::_processRawIndex( barBackupExtentHeader * pExtHeader,
                                                 const CHAR * pData )
+   {
+      return _writeSU( pExtHeader, pData ) ;
+   }
+
+   INT32 _barRSOfflineLogger::_processRawLobM( barBackupExtentHeader * pExtHeader,
+                                               const CHAR * pData )
+   {
+      return _writeSU( pExtHeader, pData ) ;
+   }
+
+   INT32 _barRSOfflineLogger::_processRawLobD( barBackupExtentHeader * pExtHeader,
+                                               const CHAR * pData )
    {
       return _writeSU( pExtHeader, pData ) ;
    }
@@ -2121,9 +2356,13 @@ namespace engine
       {
          path = _pOptCB->getDbPath() ;
       }
-      else
+      else if ( BAR_DATA_TYPE_RAW_IDX == pExtHeader->_dataType )
       {
          path = _pOptCB->getIndexPath() ;
+      }
+      else
+      {
+         path = _pOptCB->getLobPath() ;
       }
 
       rc = _openSUFile( path, suName, suFileName, sequence  ) ;

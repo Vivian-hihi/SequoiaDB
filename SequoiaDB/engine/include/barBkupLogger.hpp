@@ -56,6 +56,7 @@ namespace engine
    class dpsTransCB ;
    class _pmdOptionsMgr ;
    class _dmsStorageBase ;
+   class _dmsStorageLob ;
    class _pmdEDUCB ;
    class _clsMgr ;
 
@@ -244,6 +245,8 @@ namespace engine
    #define BAR_DATA_TYPE_RAW_DATA                  2     // raw data file data
    #define BAR_DATA_TYPE_RAW_IDX                   3     // raw index file data
    #define BAR_DATA_TYPE_REPL_LOG                  4     // repl log
+   #define BAR_DATA_TYPE_RAW_LOBM                  5     // lob meta
+   #define BAR_DATA_TYPE_RAW_LOBD                  6     // lob data
 
    /*
       _barBackupExtentHeader
@@ -465,7 +468,10 @@ namespace engine
          INT32             _backupSU( _dmsStorageBase *pSU,
                                       _pmdEDUCB *cb ) ;
          INT32             _backupLog( _pmdEDUCB *cb ) ;
+         INT32             _backupLobData( _dmsStorageLob *pLobSU,
+                                           _pmdEDUCB *cb ) ;
          BSONObj           _makeExtentMeta( _dmsStorageBase *pSU ) ;
+         BSONObj           _makeExtentMeta( _dmsStorageLob *pLobSU ) ;
 
       private:
          INT32             _nextThinCopyInfo ( _dmsStorageBase *pSU,
@@ -481,6 +487,7 @@ namespace engine
          UINT32            _curSequence ;
          INT32             _replStatus ;
 
+         CHAR              *_pExtentBuff ;
    } ;
    typedef _barBKOfflineLogger barBKOfflineLogger ;
 
@@ -560,6 +567,10 @@ namespace engine
                                    const CHAR *pData ) ;
          INT32    _processRawIndex( barBackupExtentHeader *pExtHeader,
                                     const CHAR *pData ) ;
+         INT32    _processRawLobM( barBackupExtentHeader *pExtHeader,
+                                   const CHAR *pData ) ;
+         INT32    _processRawLobD( barBackupExtentHeader *pExtHeader,
+                                   const CHAR *pData ) ;
          INT32    _processReplLog( barBackupExtentHeader *pExtHeader,
                                    const CHAR *pData, BOOLEAN isIncData,
                                    _pmdEDUCB *cb ) ;

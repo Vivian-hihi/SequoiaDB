@@ -1066,7 +1066,8 @@ namespace engine
    INT32 _dmsStorageLob::_extendSegments( UINT32 numSeg )
    {
       INT32 rc = SDB_OK ;
-      rc = _data.extend( DMS_SEGMENT_SZ * numSeg ) ;
+      INT64 extentLen = _data.getSegmentSize() ;
+      rc = _data.extend( extentLen * numSeg ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to extend lobd file:%d", rc ) ;
@@ -1153,7 +1154,7 @@ namespace engine
          goto error ;
       }
 
-      _segmentSize = DMS_SEGMENT_SZ / pHeader->_lobdPageSize *
+      _segmentSize = _data.getSegmentSize() / pHeader->_lobdPageSize *
                      DMS_LOB_DATA_MAP_BLK_LEN ;
 
    done:
