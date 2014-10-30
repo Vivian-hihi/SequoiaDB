@@ -26,19 +26,19 @@
     <target name="Test-CPP-Samples" depends="Clean-CPP-Reports">
         <hostinfo prefix="host" />
         <echo message="Begin test c++ samples testcases..." />
-        <echo message="Perform the c++ samples testcases,with testcase.path=${samples.testcase.path}/CPP/build" />
+        <echo message="Perform the c++ samples testcases,with testcase.path=${samples.testcase.path}/CPP" />
 
         <basename property="deploy.name" file="${deploy.case.fullname}" suffix=".xml" />
         <property name="test.suite.class.name" value="testcases-samples-cpp.${deploy.name}-${host.NAME}-${parallel.num}" />
         <echo file="${reports.path}/TEST-${test.suite.class.name}.xml" message="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot; ?&gt;&#10;&lt;testsuite name=&quot;${test.suite.name}&quot; type=&quot;${test-type}&quot; deploy=&quot;${deploy.name}&quot; hostname=&quot;${host.NAME}&quot; tests=&quot;1&quot; failure=&quot;0&quot;&gt;&#10;" />
 
-        <chmod dir="${samples.testcase.path}/CPP/build" perm="u+x" includes="*" />
+        <chmod dir="${samples.testcase.path}/CPP" perm="u+x" includes="*" />
         <foreach target="test-one-case" param="case-full-name">
-            <fileset dir="${samples.testcase.path}/CPP/build">
+            <fileset dir="${samples.testcase.path}/CPP">
                 <include name="${includes.dir.patterns}" />
                 <exclude name="${excludes.dir.patterns}" />
             </fileset>
-            <param name="testcases.path" value="${samples.testcase.path}/CPP/build" />
+            <param name="testcases.path" value="${samples.testcase.path}/CPP" />
             <param name="test.suite.class.name" value="${test.suite.class.name}" />
         </foreach>
         <echo file="${reports.path}/TEST-${test.suite.class.name}.xml" message="&lt;/testsuite&gt;&#10;" append="true" />

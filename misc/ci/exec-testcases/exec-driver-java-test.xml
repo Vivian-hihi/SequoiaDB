@@ -37,37 +37,15 @@
     </target>
 
     <target name="Test-Java-Samples" depends="clean-env">
-        <property name="java_samples.dir" value="${samples.testcase.path}/Java/build" />
-        <property name="java_samples.jar.dir" value="${samples.testcase.path}/Java/lib/java_samples.jar" />
-        <property name="sequoiadb_samples.jar.dir" value="${samples.testcase.path}/Java/lib/sequoiadb.jar" />
-        <property name="java_test.jar.dir" value="${testcase.path}/java/lib/java_test.jar" />
-        <junit printsummary="yes" fork="yes" showoutput="true" timeout="1200000">
+        <java  classname="com.sequoiadb.samples.Index"  resultproperty="ret.code" failonerror="false" >
             <classpath>
-                <pathelement path="/usr/share/java/junit.jar" />
-                <pathelement path="/usr/share/java/junit4.jar" />  <!-- delete -->
-
-                <pathelement path="${sequoiadb_samples.jar.dir}" />
-                <pathelement path="${java_samples.jar.dir}" />
-                <pathelement path="${java_test.jar.dir}" />
-            </classpath>
-            <formatter type="xml" />
-            <batchtest todir="${reports.path}">
-                <fileset dir="${java_samples.dir}">
-                    <include name="**/*.*" />
-                    <exclude name="**/TestConstant*.*" />
-                    <exclude name="**/Replica*.*" />
-                    <exclude name="**/*testdata*/*" />
-                    <exclude name="**/*Constan*.class" />
-                    <exclude name="**/SdbNest.class" />
-                    <exclude name="**/MultiThread*" />   
+                <pathelement path="${samples.testcase.path}/Java" />
+                <fileset dir="${samples.testcase.path}/Java${samples.testcase.path}/Java/lib">
+                        <include name="**/*.jar" />
                 </fileset>
-            </batchtest>
-        </junit>
-        <basename property="deploy.name" file="${deploy.case.fullname}" suffix=".xml" />
-        <replace token='name="com.sequoiadb.test' value='name="com.sequoiadb.testcases-java.${deploy.name}'>
-            <fileset dir="${reports.path}/"  includes="*" />
-        </replace>
-        <echo message="samples java is over , report file is in ${reports.path}" /> 
+            </classpath>
+        </java>
+        <echo message="${ret.code}" />
     </target>
 
     <target name="exec-driver-java-test" depends="clean-env">
