@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
+<topic id="topic_4rj_ncn_xp">
+  <title>手工安装</title>
+  <body>
+    <p><xref href="topics/linux.dita">安装 DB</xref></p>
+    <p><xref href="topics/configuration_start1.dita">手工部署</xref></p>
+  </body>
+</topic>

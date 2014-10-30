@@ -2,7 +2,7 @@
 <!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
 <topic id="topic_ck5_zs4_vp">
   <title>监控管理</title>
-  <body>
+  <body>    
     <p>PHP 监控支持 IE9+、chrome、firefox 等主流浏览器。</p>
     <ul>
       <li>1. 启动 PHP 服务

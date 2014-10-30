@@ -7,7 +7,7 @@
   <topicref href="topics/install_media.dita"></topicref>
   <anchorref href="server_installation/server_installation.ditamap"/>
   <topicref href="topics/start_web.dita"></topicref>
-  <anchorref href="configuration_start/configuration_start.ditamap"/>
+  <!--<anchorref href="configuration_start/configuration_start.ditamap"/>-->
   <topicref href="topics/testEM.dita"></topicref>
   <anchorref href="uninstall/uninstall.ditamap"/>
   <anchorref href="upgrade/upgrade.ditamap"/>

@@ -7,7 +7,7 @@
     <p><xref href="../deploy/topics/overview.dita">规划数据库部署</xref></p>
     <p><xref href="../system_require/topics/system_require.dita">SequoiaDB 产品安装的系统需求</xref></p>
     <p><xref href="install_media.dita">准备安装介质</xref></p>
-    <p><xref href="../server_installation/topics/server_installation.dita">SequoiaDB 服务器安装</xref></p>
-    <p><xref href="../configuration_start/topics/configuration_start.dita">系统配置与启动</xref></p>
+    <p><xref href="../server_installation/topics/server_installation.dita">SequoiaDB 服务器安装部署</xref></p>
+    <p><xref href="topics/start_web.dita">SequoiaDB Web 监控</xref></p>
   </body>
 </topic>

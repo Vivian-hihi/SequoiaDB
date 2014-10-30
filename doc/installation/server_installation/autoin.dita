@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
+<topic id="topic_qgn_4jn_xp">
+  <title>自动安装</title>
+  <body>
+    <p><xref href="topics/linuxom.dita">安装 OM</xref></p>
+    <p><xref href="topics/autoinstall1.dita">OM 部署</xref></p>
+  </body>
+</topic>
