@@ -283,7 +283,7 @@ namespace engine
 
       if ( _pSession )
       {
-         ss << "Session: " << _pSession->sessionName() ;
+         ss << ", Session: " << _pSession->sessionName() ;
       }
       return ss.str() ;
    }
