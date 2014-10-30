@@ -91,15 +91,16 @@ function isMatchLocalInfo( osInfo )
 
       if ( localIP == ip )
       {
-         var ssh = null ;
-         var user = obj[User] ;
-         var passwd = obj[Passwd] ; 
-         var path = obj[InstallPath] ;
-         var port = obj[AgentPort] ;
+         var ssh     = null ;
+         var user    = obj[User] ;
+         var passwd  = obj[Passwd] ; 
+         var path    = obj[InstallPath] ;
+         var port    = obj[AgentPort] ;
+         var sshport = parseInt(obj[SshPort]) ;
          // get local agent port
          try
          {
-            ssh = new Ssh( ip, user, passwd ) ;
+            ssh = new Ssh( ip, user, passwd, sshport ) ;
          }
          catch ( e )
          {
@@ -373,12 +374,12 @@ function main()
          retObj[IP]    = obj[IP] ;
          user          = obj[User] ;
          passwd        = obj[Passwd] ;
-         sshPort       = obj[SshPort] ;
+         sshPort       = parseInt(obj[SshPort]) ;
          agentPort     = obj[AgentPort] ;
          installPath   = obj[InstallPath] ;
 
          // ssh
-         var ssh = new Ssh( ip, user, passwd ) ;
+         var ssh = new Ssh( ip, user, passwd, sshPort ) ;
          // judge whether it's in local host, if so, no need to install
          var isLocal = isInLocalHost( ssh ) ;
          if ( isLocal )

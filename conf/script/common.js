@@ -28,7 +28,6 @@ function installTmpCMResult()
    this.IP                        = "" ;
    this.AgentPort                 = OMA_PORT_INVALID + "" ;
    this.IsNeedUninstall           = false ;
-
 }
 
 function uninstallTmpCMResult()
@@ -36,7 +35,6 @@ function uninstallTmpCMResult()
    this.errno                     = SDB_OK ;
    this.detail                    = "" ;
    this.IP                        = "" ;
-   this.IsOMStop                  = false ;
 }
 
 function addHostResult()

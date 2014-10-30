@@ -763,3 +763,89 @@ function getLocalIPAddr()
    } 
    return localIP ;
 }
+
+/* *****************************************************************************
+@discretion: remove the temp directory and files in remote host
+@author: Tanzhaobo
+@parameter
+   ssh[object]: ssh object
+   osInfo[string]: os type
+@return void
+***************************************************************************** */
+function uninstallRemoteTmpPacket( ssh, osInfo )
+{
+   var cmd = "" ;
+   if ( OMA_LINUX == osInfo )
+   {
+      cmd = "rm -rf " + OMA_PATH_TEMP_OMA_DIR_L2 ;
+      try
+      {
+         ssh.exec( cmd ) ;
+      }
+      catch ( e )
+      {
+         setLastErrMsg( "Failed to remove director[" + OMA_PATH_TEMP_OMA_DIR_L + "] in host [" + ssh.getPeerIP() + "]" ) ;
+         setLastError( SDB_SYS ) ;
+         throw SDB_SYS ;
+      }
+   }
+   else
+   {
+      // TODO:
+   }
+}
+
+/* *****************************************************************************
+@discretion: stop the temporary sdbcm installed in remote host
+@author: Tanzhaobo
+@parameter
+   ssh[object]: ssh object
+   osInfo[string]: os type
+@return void
+***************************************************************************** */
+function stopRemoteSdbcmProgram( ssh, osInfo )
+{
+   var cmd = "" ;
+
+   if ( OMA_LINUX == osInfo )
+   {
+      cmd += OMA_PATH_TEMP_BIN_DIR_L ;
+      cmd += OMA_PROG_SDBCMTOP_L ;
+      cmd += " " + OMA_OPTION_SDBCMART_1 ;
+      try
+      {
+         ssh.exec( cmd ) ;
+      }
+      catch ( e )
+      {
+         setLastErrMsg( "Failed to stop sdbcm in host[" + ssh.getPeerIP() + "]" ) ;
+         setLastError( SDB_SYS ) ;
+         throw SDB_SYS ;
+      }
+      // check wether sdb is stop in target host
+      var times = 0 ;
+      for ( ; times < OMA_TRY_TIMES; times++ )
+      {
+         var isRunning = isSdbcmRunning ( ssh, osInfo ) ;
+         if ( isRunning )
+         {
+            sleep( OMA_SLEEP_TIME ) ;
+         }
+         else
+         {
+            break ;
+         }
+      }
+      if ( OMA_TRY_TIMES <= times )
+      {
+         setLastErrMsg( "Time out, failed to stop sdbcm in host[" + ssh.getPeerIP() + "]" ) ;
+         throw e ;
+      }
+   }
+   else
+   {
+      // TODO: tanzhaobo
+   }
+}
+
+

@@ -20,7 +20,7 @@
 @modify list:
    2014-7-26 Zhaobo Tan  Init
 @parameter
-   BUS_JSON: the format is: { "HostInfo": [ { "IP": "192.168.20.165", "User": "root", "Passwd": "sequoiadb", "InstallPath": "/opt/sequoiadb", "SshPort": "22", "AgentPort": "11790" }, { "HostName": "rhel64-test9", "User": "root", "Passwd": "sequoiadb", "InstallPath": "/opt/sequoiadb", "SshPort": "22", "AgentPort": "11790" } ] } ;
+   BUS_JSON: the format is: { "HostInfo": [ { "IP": "192.168.20.42", "User": "root", "Passwd": "sequoiadb", "SshPort": "22" }, { "IP": "192.168.20.165", "User": "root", "Passwd": "sequoiadb", "SshPort": "22" }, { "IP": "192.168.20.166", "User": "root", "Passwd": "sequoiadb", "SshPort": "22" } ] } ;
    SYS_JSON:
    ENV_JSON:
 @return
@@ -37,14 +37,15 @@ var errMsg         = "" ;
 @parameter
    user[string]: the user name
    passwd[string]: the password
-   hostname[string] the hostname
+   hostname[string]: the hostname
+   sshport[int]: the ssh port
    ip[string]: the ip address
 @note
    either ip or hostname must be specified
 @return
    retStr[string]: the hostname after adapting
 ***************************************************************************** */
-function scanHost( user, passwd, hostname, ip )
+function scanHost( user, passwd, hostname, sshport, ip )
 {
    var ssh             = null ;
    var ping            = null ;
@@ -72,7 +73,7 @@ function scanHost( user, passwd, hostname, ip )
       // ssh
       try
       {
-         ssh = new Ssh( hostname, user, passwd ) ;
+         ssh = new Ssh( hostname, user, passwd, sshport ) ;
          retObj[CanSsh] = true ;
       }
       catch ( e )
@@ -112,7 +113,7 @@ function scanHost( user, passwd, hostname, ip )
       // ssh
       try
       {
-         ssh = new Ssh( ip, user, passwd ) ;
+         ssh = new Ssh( ip, user, passwd, sshport ) ;
          retObj[CanSsh] = true ;
       }
       catch ( e )
@@ -157,6 +158,7 @@ function main()
       var user     = null ;
       var passwd   = null ;
       var hostname = null ;
+      var sshport  = null ;
       var ip       = null ;
       var ret      = null ;
       try
@@ -165,14 +167,15 @@ function main()
          user      = obj[User] ;
          passwd    = obj[Passwd] ;
          hostname  = obj[HostName] ;
+         sshport   = parseInt(obj[SshPort]) ;
          ip        = obj[IP] ;
          if ( undefined != hostname )
          { 
-            ret = scanHost( user, passwd, hostname, null ) ;
+            ret = scanHost( user, passwd, hostname, sshport, null ) ;
          }
          else if ( undefined != ip )
          {
-            ret = scanHost( user, passwd, null, ip ) ;
+            ret = scanHost( user, passwd, null, sshport, ip ) ;
          }
          else
          {

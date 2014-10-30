@@ -83,13 +83,14 @@ function main()
       var ip           = obj[IP] ;
       var user         = obj[User] ;
       var passwd       = obj[Passwd] ;
+      var sshport      = parseInt(obj[Passwd]) ;
       var installPath  = obj[InstallPath] ; 
       var retObj       = new addHostRollbackResult() ;
       retObj[IP]       = ip ;
       try
       {
          // ssh
-         var ssh = new Ssh( ip, user, passwd ) ;
+         var ssh = new Ssh( ip, user, passwd, sshport ) ;
          // judge whether it's in local host, if so, no need to uninstall
          var isLocal = isInLocalHost( ssh ) ;
          if ( isLocal )

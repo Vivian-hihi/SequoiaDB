@@ -31,90 +31,6 @@
 var RET_JSON = new Object() ;
 RET_JSON[HostInfo] = [] ;
 
-/* *****************************************************************************
-@discretion: remove the temp directory and files in remote host
-@author: Tanzhaobo
-@parameter
-   ssh[object]: ssh object
-   osInfo[string]: os type
-@return void
-***************************************************************************** */
-function uninstallRemoteTmpPacket( ssh, osInfo )
-{
-   var cmd = "" ;
-   if ( OMA_LINUX == osInfo )
-   {
-      cmd = "rm -rf " + OMA_PATH_TEMP_OMA_DIR_L2 ;
-      try
-      {
-         ssh.exec( cmd ) ;
-      }
-      catch ( e )
-      {
-         setLastErrMsg( "Failed to remove director[" + OMA_PATH_TEMP_OMA_DIR_L + "] in host [" + ssh.getPeerIP() + "]" ) ;
-         setLastError( SDB_SYS ) ;
-         throw SDB_SYS ;
-      }
-   }
-   else
-   {
-      // TODO:
-   }
-}
-
-/* *****************************************************************************
-@discretion: stop the temporary sdbcm installed in remote host
-@author: Tanzhaobo
-@parameter
-   ssh[object]: ssh object
-   osInfo[string]: os type
-@return void
-***************************************************************************** */
-function stopRemoteSdbcmProgram( ssh, osInfo )
-{
-   var cmd = "" ;
-
-   if ( OMA_LINUX == osInfo )
-   {
-      cmd += OMA_PATH_TEMP_BIN_DIR_L ;
-      cmd += OMA_PROG_SDBCMTOP_L ;
-      cmd += " " + OMA_OPTION_SDBCMART_1 ;
-      try
-      {
-         ssh.exec( cmd ) ;
-      }
-      catch ( e )
-      {
-         setLastErrMsg( "Failed to stop sdbcm in host[" + ssh.getPeerIP() + "]" ) ;
-         setLastError( SDB_SYS ) ;
-         throw SDB_SYS ;
-      }
-      // check wether sdb is stop in target host
-      var times = 0 ;
-      for ( ; times < OMA_TRY_TIMES; times++ )
-      {
-         var isRunning = isSdbcmRunning ( ssh, osInfo ) ;
-         if ( isRunning )
-         {
-            sleep( OMA_SLEEP_TIME ) ;
-         }
-         else
-         {
-            break ;
-         }
-      }
-      if ( OMA_TRY_TIMES <= times )
-      {
-         setLastErrMsg( "Time out, failed to stop sdbcm in host[" + ssh.getPeerIP() + "]" ) ;
-         throw e ;
-      }
-   }
-   else
-   {
-      // TODO: tanzhaobo
-   }
-}
-
 function main()
 {
    var infoArr = BUS_JSON[HostInfo] ;
@@ -134,24 +50,22 @@ function main()
       var ip         = obj[IP] ;
       var user       = obj[User] ;
       var passwd     = obj[Passwd] ;
+      var sshport    = parseInt(obj[SshPort]) ;
       var retObj     = new uninstallTmpCMResult() ;
       retObj[IP]     = ip ;
       try
       {
          // ssh
-         var ssh = new Ssh( ip, user, passwd ) ;
+         var ssh = new Ssh( ip, user, passwd, sshport ) ;
          // check wether it is in localhost,
          // we would not stop local sdbcm
          var flag = isInLocalHost( ssh ) ;
          if ( flag )
          {
-            retObj[IsOMStop] = false ;
             RET_JSON[HostInfo].push( retObj ) ;
             continue ;
          }
-         // stop remote sdbcm program
-         stopRemoteSdbcmProgram( ssh, osInfo ) ;
-         retObj[IsOMStop] = true ;
+
          // remove the packet in remote machine
          uninstallRemoteTmpPacket( ssh, osInfo ) ;
       }

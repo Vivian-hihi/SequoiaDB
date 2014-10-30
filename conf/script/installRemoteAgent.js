@@ -20,8 +20,8 @@
 @modify list:
    2014-7-26 Zhaobo Tan  Init
 @parameter
-   BUS_JSON: the format is: { "HostInfo": [ { "IP": "192.168.20.165", "HostName": "rhel64-test8", "User": "root", "Passwd": "sequoiadb", "InstallPath": "/opt/sequoiadb", "SshPort": "22", "AgentPort": "11790" }, { "IP": "192.168.20.166", "HostName": "rhel64-test9", "User": "root", "Passwd": "sequoiadb", "InstallPath": "/opt/sequoiadb", "SshPort": "22", "AgentPort": "11790" } ] } ;
-   SYS_JSON: the system info: { "ProgPath": "/home/users/tanzhaobo/sequoiadb/bin/" }
+   BUS_JSON: the format is: { "HostInfo": [ { "IP": "192.168.20.42", "HostName": "susetzb", "User": "root", "Passwd": "sequoiadb", "SshPort": "22" }, { "IP": "192.168.20.165", "HostName": "rhel64-test8", "User": "root", "Passwd": "sequoiadb", "SshPort": "22" }, { "IP": "192.168.20.166", "HostName": "rhel64-test9", "User": "root", "Passwd": "sequoiadb", "SshPort": "22" } ] } ;
+   SYS_JSON: the system info: { "ProgPath": "/opt/sequoiadb/bin/" } ;
    ENV_JSON:
 @return
    RET_JSON: the install result: { "HostInfo": [ { "errno": 0, "detail": "", "IsNeedUninstall": true, "AgentPort": "10001", "IP": "192.168.20.165" }, { "errno": 0, "detail": "", "IsNeedUninstall": true, "AgentPort": "10001", "IP": "192.168.20.166" } ] }
@@ -364,6 +364,7 @@ function installRemoteAgent( ssh, osInfo, ip )
    if ( flag )
    {
       retObj[AgentPort] = "" + getSdbcmPort( ssh, osInfo ) ;
+      uninstallRemoteTmpPacket( ssh, osInfo ) ;
       return retObj ;
    }
    // get a port in remote machine for installing sdbcm in target host
@@ -405,11 +406,12 @@ function main()
       var user     = obj[User] ;
       var passwd   = obj[Passwd] ;
       var ip       = obj[IP] ;
+      var sshport  = parseInt(obj[SshPort]) ;
       var ret      = new installTmpCMResult() ;
       ret[IP]      = ip ;
       try
       {
-         ssh = new Ssh( ip, user, passwd ) ;
+         ssh = new Ssh( ip, user, passwd, sshport ) ;
          // install
          ret = installRemoteAgent( ssh, osInfo, ip ) ;
       }

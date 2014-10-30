@@ -20,7 +20,7 @@
 @modify list:
    2014-7-26 Zhaobo Tan  Init
 @parameter
-   BUS_JSON: the format is: { "HostInfo": [ { "IP": "192.168.20.165", "HostName": "rhel64-test8", "User": "root", "Passwd": "sequoiadb", "InstallPath": "/opt/sequoiadb", "SshPort": "22", "AgentPort": "11790" }, { "IP": "192.168.20.166", "HostName": "rhel64-test9", "User": "root", "Passwd": "sequoiadb", "InstallPath": "/opt/sequoiadb", "SshPort": "22", "AgentPort": "11790" } ] }
+   BUS_JSON: the format is: { "HostInfo": [ { "IP": "192.168.20.42", "HostName": "susetzb", "User": "root", "Passwd": "sequoiadb", "SshPort": "22" }, { "IP": "192.168.20.165", "HostName": "rhel64-test8", "User": "root", "Passwd": "sequoiadb", "SshPort": "22" }, { "IP": "192.168.20.166", "HostName": "rhel64-test9", "User": "root", "Passwd": "sequoiadb", "SshPort": "22" } ] } ;
    SYS_JSON:
    ENV_JSON:
 @return
@@ -37,12 +37,13 @@ RET_JSON[HostInfo] = [] ;
    user[string]: the user name
    passwd[string]: the password
    ip[string]: the ip address
+   sshport[int]: ssh port
 @note
    either ip or hostname must be specified
 @return
    retStr[string]: the hostname after adapting
 ***************************************************************************** */
-function basicCheckHost( user, passwd, ip )
+function basicCheckHost( user, passwd, ip, sshport )
 {
    var retObj          = new Object() ;
    retObj[Errno]       = SDB_OK ;
@@ -64,7 +65,7 @@ function basicCheckHost( user, passwd, ip )
    // ssh
    try
    {
-      var ssh = new Ssh( ip, user, passwd ) ;
+      var ssh = new Ssh( ip, user, passwd, sshport ) ;
       retObj[CanSsh] = true ;
    }
    catch ( e )
@@ -94,10 +95,12 @@ function main()
       var user     = obj[User] ;
       var passwd   = obj[Passwd] ;
       var ip       = obj[IP] ;
+      var sshport  = parseInt(obj[SshPort]) ;
       var ret      = null ;
-      ret = basicCheckHost( user, passwd, ip ) ;
+      ret = basicCheckHost( user, passwd, ip, sshport ) ;
       RET_JSON[HostInfo].push( ret ) ;
    }
+
    return RET_JSON ;
 }
 

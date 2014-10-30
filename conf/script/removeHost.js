@@ -21,7 +21,7 @@
 @modify list:
    2014-7-26 Zhaobo Tan  Init
 @parameter
-   BUS_JSON: the format is: { "HostName": "rhel64-test8", "IP": "192.168.20.165", "User": "root", "Passwd": "sequoiadb", "InstallPath": "/opt/sequoiadb" }
+   BUS_JSON: the format is: { "HostName": "rhel64-test8", "IP": "192.168.20.165", "User": "root", "Passwd": "sequoiadb", "InstallPath": "/opt/sequoiadb", "SshPort": "22" }
    SYS_JSON: {}
    ENV_JSON: {}
    OTHER_JSON: {}
@@ -70,11 +70,12 @@ function main()
    var ip          = BUS_JSON[IP] ;
    var user        = BUS_JSON[User] ;
    var passwd      = BUS_JSON[Passwd] ;
+   var sshport     = parseInt(BUS_JSON[SshPort]) ;
    var installPath = BUS_JSON[InstallPath] ;
    // get os infomation
    var osInfo = System.type() ;
    // ssh
-   var ssh = new Ssh( ip, user, passwd ) ;
+   var ssh = new Ssh( ip, user, passwd, sshport ) ;
    // judge whether it's in local mathine, if so, no need to uninstall
    var isLocal = isInLocalHost( ssh ) ;
    if ( isLocal )

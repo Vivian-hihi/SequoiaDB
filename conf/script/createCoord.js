@@ -21,7 +21,7 @@
    2014-7-26 Zhaobo Tan  Init
 @parameter
    BUS_JSON: the format is: { "InstallHostName": "rhel64-test8", "InstallSvcName": "11810", "InstallPath": "/opt/sequoiadb/database/coord", "InstallConfig": { "diaglevel": 3, "role": "coord", "logfilesz": 64, "logfilenum": 20, "transactionon": "false", "preferedinstance": "A", "numpagecleaners": 1, "pagecleaninterval": 10000, "hjbuf": 128, "logbuffsize": 1024, "maxprefpool": 200, "maxreplsync": 10, "numpreload": 0, "sortbuf": 512, "syncstrategy": "none" } } ;
-   SYS_JSON: the format is:  { "VCoordSvcName": "10000", "SdbUser": "sdbadmin", "SdbPasswd": "sdbadmin", "SdbUserGroup": "sdbadmin_group", "User": "root", "Passwd": "sequoiadb" } ;
+   SYS_JSON: the format is:  { "VCoordSvcName": "10000", "SdbUser": "sdbadmin", "SdbPasswd": "sdbadmin", "SdbUserGroup": "sdbadmin_group", "User": "root", "Passwd": "sequoiadb", "SshPort": "22" } ;
 @return
    RET_JSON: the format is: {}
 */
@@ -97,12 +97,13 @@ function main()
    var sdbUserGroup    = SYS_JSON[SdbUserGroup] ;
    var user            = SYS_JSON[User] ;
    var passwd          = SYS_JSON[Passwd] ;
+   var sshport         = parseInt(SYS_JSON[SshPort]) ;
    var installHostName = BUS_JSON[InstallHostName] ;
    var installSvcName  = BUS_JSON[InstallSvcName] ;
    var installPath     = BUS_JSON[InstallPath] ;
    var installConfig   = BUS_JSON[InstallConfig] ;
    var db              = null ;
-   var ssh             = new Ssh( installHostName, user, passwd ) ;
+   var ssh             = new Ssh( installHostName, user, passwd, sshport ) ;
    var osInfo          = System.type() ;
    // change install path owner
    changeDirOwner( ssh, osInfo, installPath, sdbUser, sdbUserGroup ) ;
