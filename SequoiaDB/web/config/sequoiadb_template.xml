@@ -19,7 +19,7 @@
                 		<Name>datagroupnum</Name>
                 		<Type>int</Type>
                 		<Default>1</Default>
-                		<Valid></Valid>
+                		<Valid>1-</Valid>
                 		<Display>edit box</Display>
                 		<Edit>true</Edit>
                 		<Desc>数据分区组的数量</Desc>
