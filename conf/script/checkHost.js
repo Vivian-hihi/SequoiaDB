@@ -221,8 +221,17 @@ function extractOMInfo ( obj )
       }
       catch ( e )
       {
-         errMsg = "Failed to extract OM's info" ;
-         exception_handle( e, errMsg ) ;
+         // version 1.8 sp1 need this error msg
+         if ( (1 == e) && (null == str) )
+         {
+            errMsg = "Incompatible versions" ;
+            exception_handle( e, errMsg ) ;
+         }
+         else
+         {
+            errMsg = "Failed to extract OM's info" ;
+            exception_handle( e, errMsg ) ;
+         }
       }
       var beg = str.indexOf( OMA_MISC_OM_VERSION ) ;
       var end = str.indexOf( '\n' ) ;
