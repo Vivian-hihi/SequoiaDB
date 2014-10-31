@@ -1144,19 +1144,18 @@ SDB_EXPORT INT32 sdbInsert ( sdbCollectionHandle cHandle,
 SDB_EXPORT INT32 sdbInsert1 ( sdbCollectionHandle cHandle,
                               bson *obj, bson_iterator *id ) ;
 
-/** \def FLG_INSERT_CONTONDUP 0x00000001
-    \brief The flags represent whether bulk insert continue when hitting index key duplicate error
- */
+/** The flags represent whether bulk insert continue when hitting index key duplicate error */
 #define FLG_INSERT_CONTONDUP  0x00000001
 
 /** \fn INT32 sdbBulkInsert ( sdbCollectionHandle cHandle,
                               SINT32 flags, bson **obj, SINT32 num )
     \brief Insert a bulk of bson objects into current collection
     \param [in] cHandle The collection handle
-    \param [in] flags FLG_INSERT_CONTONDUP or 0. While FLG_INSERT_CONTONDUP is
-                set, database will not stop inserting when some records contain
-                the same field "_id". However, while 0 is set, database will
-                stop inserting in that case, and return errno code.
+    \param [in] flags FLG_INSERT_CONTONDUP or 0. While FLG_INSERT_CONTONDUP
+                is set, if some records hit index key duplicate error,
+                database will skip them and go on inserting. However, while 0 
+                is set, database will stop inserting in that case, and return
+                errno code.
     \param [in] obj The array of inserted bson objects, cannot be null
     \param [in] num The number of inserted bson objects
     \retval SDB_OK Operation Success

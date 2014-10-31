@@ -84,6 +84,7 @@
 #define SDB_LIST_CS_IN_DOMAIN     11
 #define SDB_LIST_CL_IN_DOMAIN     12
 
+/** The flags represent whether bulk insert continue when hitting index key duplicate error */
 #define FLG_INSERT_CONTONDUP  0x00000001
 
 // client socket timeout value
@@ -595,7 +596,11 @@ namespace sdbclient
                          std::vector<bson::BSONObj> &obj
                        )
     \brief Insert a bulk of bson objects into current collection
-    \param [in] flags FLG_INSERT_CONTONDUP or 0
+    \param [in] flags FLG_INSERT_CONTONDUP or 0. While FLG_INSERT_CONTONDUP
+                is set, if some records hit index key duplicate error,
+                database will skip them and go on inserting. However, while 0 
+                is set, database will stop inserting in that case, and return
+                errno code.
     \param [in] obj The array of inserted bson objects
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
