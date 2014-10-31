@@ -134,9 +134,14 @@ INT32 ossExec ( const CHAR * program,
                 ossResultCode &result,
                 OSSNPIPE * const npHandleStdin,
                 OSSNPIPE * const npHandleStdout,
-                ossIExecHandle *pHandle = NULL ) ;
+                ossIExecHandle *pHandle = NULL,
+                OSSHANDLE *pProcessHandle = NULL ) ;
 
 BOOLEAN  ossIsProcessRunning ( OSSPID pid ) ;
+
+void     ossCloseProcessHandle( OSSHANDLE &handle ) ;
+
+INT32    ossGetExitCodeProcess( OSSHANDLE handle, UINT32 &exitCode ) ;
 
 /*
    get excutable file's working directory
@@ -151,7 +156,8 @@ INT32    ossBuildArguments ( CHAR **pArgumentBuffer,
 
 INT32    ossStartProcess( std::list<const CHAR*> &argv,
                           OSSPID &pid, INT32 flag = 0,
-                          ossResultCode *pRetCode = NULL ) ;
+                          ossResultCode *pRetCode = NULL,
+                          OSSHANDLE *pProcessHandle = NULL ) ;
 
 #if defined (_WINDOWS)
 
@@ -163,7 +169,8 @@ INT32 ossStopService( const CHAR *serviceName,
 
 #elif defined (_LINUX)
 
-INT32 ossWaitChild ( OSSPID pid, ossResultCode &result ) ;
+INT32 ossWaitChild ( OSSPID pid, ossResultCode &result,
+                     BOOLEAN block = TRUE ) ;
 void  ossEnableNameChanges ( const INT32 argc, CHAR **pArgv0 ) ;
 void  ossRenameProcess (  const CHAR *pNewName ) ;
 INT32 ossVerifyPID ( OSSPID inputpid, const CHAR *processName,

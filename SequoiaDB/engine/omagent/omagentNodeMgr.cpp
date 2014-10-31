@@ -646,7 +646,8 @@ namespace engine
       }
       else
       {
-         PD_LOG( PDERROR, "Start node[%s] failed, rc: %d", svcname, rc ) ;
+         PD_LOG( PDERROR, "Start node[%s] failed, rc: %d(%s)", svcname,
+                 rc, getErrDesp( rc ) ) ;
          goto error ;
       }
 

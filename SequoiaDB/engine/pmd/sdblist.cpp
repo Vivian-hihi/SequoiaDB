@@ -608,7 +608,7 @@ namespace engine
       {
          return 0 ;
       }
-      return total > 0 ? 0 : ( rc ? 127 : 1 ) ;
+      return total > 0 ? 0 : ( rc ? SDB_SRC_INVALIDARG : 1 ) ;
    error :
       goto done ;
    }

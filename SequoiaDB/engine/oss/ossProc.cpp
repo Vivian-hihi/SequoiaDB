@@ -110,16 +110,22 @@ BOOLEAN ossIsProcessRunning ( OSSPID pid )
    return isRunning ;
 }
 
+void ossCloseProcessHandle( OSSHANDLE & handle )
+{
+   handle = 0 ;
+}
+
 #define OSS_INVALID_MSG_QUEUE_ID -1
 // Linux wait child process
 // It calls waitpid until the given pid stop
 // PD_TRACE_DECLARE_FUNCTION ( SDB_OSSWAITCHLD, "ossWaitChild" )
-INT32 ossWaitChild ( OSSPID pid, ossResultCode &result )
+INT32 ossWaitChild ( OSSPID pid, ossResultCode &result, BOOLEAN block )
 {
    INT32 rc = SDB_OK ;
    PD_TRACE_ENTRY ( SDB_OSSWAITCHLD );
    INT32 err = 0 ;
    INT32 statuslocation ;
+   INT32 options = block ? WUNTRACED : WNOHANG ;
    // loop until the program finish
    do
    {
@@ -172,14 +178,14 @@ INT32 ossWaitChild ( OSSPID pid, ossResultCode &result )
             result.termcode = OSS_EXIT_TRAP ;
             break ;
          }
-         result.exitcode = (UINT32)-1 ;
+         result.exitcode = SDB_SRC_SYS ;
       }
       else
       {
          // if WIFSIGNALED() true
          INT32 sig = WTERMSIG ( statuslocation ) ;
          switch ( sig )
-                  {
+         {
          case 0 :
             result.termcode = OSS_EXIT_NORMAL ;
             break ;
@@ -523,7 +529,8 @@ INT32 ossExec ( const CHAR * program,
                 ossResultCode &result,
                 OSSNPIPE * const npHandleStdin,
                 OSSNPIPE * const npHandleStdout,
-                ossIExecHandle *pHandle )
+                ossIExecHandle *pHandle,
+                OSSHANDLE *pProcessHandle )
 {
    INT32 rc                                   = SDB_OK ;
    PD_TRACE_ENTRY ( SDB_OSSEXEC );
@@ -584,6 +591,10 @@ INT32 ossExec ( const CHAR * program,
                            flag, npHandleStdin, npHandleStdout ) ;
       if ( SDB_OK == retcode )
       {
+         if ( pProcessHandle )
+         {
+            *pProcessHandle = ( OSSHANDLE )pid ;
+         }
          if ( pHandle )
          {
             pHandle->handleInOutPipe( pid, npHandleStdin, npHandleStdout ) ;
@@ -653,6 +664,10 @@ INT32 ossExec ( const CHAR * program,
       {
          rc = retcode ;
       }
+      if ( pProcessHandle )
+      {
+         *pProcessHandle = ( OSSHANDLE )pid ;
+      }
    }
 done :
    if ( restoreSIGCHLDHandling )
@@ -676,6 +691,30 @@ done :
    return rc ;
 error :
    goto done ;
+}
+
+INT32 ossGetExitCodeProcess( OSSHANDLE handle, UINT32 & exitCode )
+{
+   INT32 rc = SDB_OK ;
+   ossResultCode result ;
+   exitCode = 0 ;
+   rc = ossWaitChild( (OSSPID)handle, result, FALSE ) ;
+   if ( SDB_OK == rc )
+   {
+      switch ( result.termcode )
+      {
+         case OSS_EXIT_NORMAL :
+            exitCode = result.exitcode ;
+            break ;
+         case OSS_EXIT_KILL :
+            exitCode = SDB_SRC_INTERRUPT ;
+            break ;
+         default :
+            exitCode = SDB_SRC_SYS ;
+            break ;
+      }
+   }
+   return rc ;
 }
 
 static CHAR **g_specProgramName = NULL ;
@@ -1039,10 +1078,24 @@ error :
 
 BOOLEAN ossIsProcessRunning ( OSSPID pid )
 {
+   BOOLEAN isRunning = FALSE ;
    HANDLE process = OpenProcess ( SYNCHRONIZE, FALSE, pid ) ;
-   DWORD ret = WaitForSingleObject ( process, 0 ) ;
-   CloseHandle ( process ) ;
-   return ret == WAIT_TIMEOUT ;
+   if ( NULL != process )
+   {
+      DWORD ret = WaitForSingleObject ( process, 0 ) ;
+      CloseHandle ( process ) ;
+      isRunning = ( ret == WAIT_TIMEOUT ) ? TRUE : FALSE ;
+   }
+   return isRunning ;
+}
+
+void ossCloseProcessHandle( OSSHANDLE & handle )
+{
+   if ( NULL != handle )
+   {
+      CloseHandle( handle ) ;
+      handle = NULL ;
+   }
 }
 
 // PD_TRACE_DECLARE_FUNCTION ( SDB_OSSWTINT, "ossWaitInterrupt" )
@@ -1329,7 +1382,8 @@ INT32 ossExec ( const CHAR * program,
                 ossResultCode &result,
                 OSSNPIPE * const npHandleStdin,
                 OSSNPIPE * const npHandleStdout,
-                ossIExecHandle *pHandle )
+                ossIExecHandle *pHandle,
+                OSSHANDLE *pProcessHandle )
 {
    INT32 rc = SDB_OK ;
    PD_TRACE_ENTRY ( SDB_WIN_OSSEXEC );
@@ -1526,6 +1580,11 @@ INT32 ossExec ( const CHAR * program,
    {
       rc = SDB_OK ;
       pid = procInfo.dwProcessId ;
+      if ( pProcessHandle )
+      {
+         *pProcessHandle = procInfo.hProcess ;
+         // need close by caller
+      }
 
       if ( flag & OSS_EXEC_SSAVE )
       {
@@ -1545,18 +1604,21 @@ INT32 ossExec ( const CHAR * program,
             {
                PD_LOG ( PDERROR, "Failed to get exit code for process, "
                         "GetLastError=%d", ossGetLastError() ) ;
-               rc = SDB_SYS ;
+               result.termcode = OSS_EXIT_ERROR ;
+               result.termcode = SDB_SRC_SYS ;
             }
             else
             {
-               rc = SDB_OK ;
                result.termcode = OSS_EXIT_NORMAL ;
                result.exitcode = pgm_rc ;
             }
          } // if ( rc == SDB_OK )
       } // if ( results && ( flag & OSS_EXEC_SSAVE ) )
       CloseHandle ( procInfo.hThread ) ; // close thread handle obj
-      CloseHandle ( procInfo.hProcess ) ; // close process handle obj
+      if ( NULL == pProcessHandle )
+      {
+         CloseHandle ( procInfo.hProcess ) ; // close process handle obj
+      }
    }
 done :
    if ( argBuffer )
@@ -1593,6 +1655,25 @@ error :
    }
    pid = OSS_INVALID_PID ;
    goto done ;
+}
+
+INT32 ossGetExitCodeProcess( OSSHANDLE handle, UINT32 & exitCode )
+{
+   INT32 rc = SDB_OK ;
+   DWORD pgm_rc ;
+   exitCode = 0 ;
+   if ( !GetExitCodeProcess ( handle, &pgm_rc ) )
+   {
+      PD_LOG ( PDERROR, "Failed to get exit code for process, "
+               "GetLastError=%d", ossGetLastError() ) ;
+      rc = SDB_SYS ;
+   }
+   else
+   {
+      rc = SDB_OK ;
+      exitCode = pgm_rc ;
+   }
+   return rc ;
 }
 
 INT32 ossEnumProcesses( std::vector < ossProcInfo > &procs,
@@ -1675,12 +1756,12 @@ error:
 
 OSSUID ossGetCurrentProcessUID()
 {
-   return OSS_INVALID_UID + 1 ;
+   return 0 ;
 }
 
 OSSGID ossGetCurrentProcessGID()
 {
-   return OSS_INVALID_GID + 1 ;
+   return 0 ;
 }
 
 INT32 ossSetCurrentProcessUID( OSSUID uid )
@@ -1867,7 +1948,8 @@ error:
 // PD_TRACE_DECLARE_FUNCTION( SDB_OSS_STARTPROCESS, "ossStartProcess" )
 INT32 ossStartProcess( std::list<const CHAR*> &argv,
                        OSSPID &pid, INT32 flag,
-                       ossResultCode *pRetCode )
+                       ossResultCode *pRetCode,
+                       OSSHANDLE *pProcessHandle )
 {
    INT32 rc = SDB_OK ;
    PD_TRACE_ENTRY ( SDB_OSS_STARTPROCESS );
@@ -1883,7 +1965,8 @@ INT32 ossStartProcess( std::list<const CHAR*> &argv,
    }
 
    rc = ossExec ( pArgumentBuffer, pArgumentBuffer, NULL,
-                  flag, pid, result, NULL, NULL ) ;
+                  flag, pid, result, NULL, NULL, NULL,
+                  pProcessHandle ) ;
    if ( rc )
    {
       PD_LOG ( PDERROR, "Failed to execute [%s], rc = %d",

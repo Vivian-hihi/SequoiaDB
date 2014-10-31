@@ -278,6 +278,7 @@ namespace engine
       CHAR enginePathName[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
       vector< string > configs ;
       vector< utilNodeInfo > nodesInfo ;
+      vector< OSSHANDLE > handles ;
       list<const CHAR*> listArgs ;
       BOOLEAN useAgr    = TRUE ;
       INT32 typeFilter  = SDB_TYPE_DB ;
@@ -372,11 +373,17 @@ namespace engine
       SDB_ASSERT( configs.size() == nodesInfo.size(),
                   "config size must equal with node info size" ) ;
 
+      for ( UINT32 j = 0 ; j < configs.size() ; ++j )
+      {
+         handles.push_back( (OSSHANDLE)0 ) ;
+      }
+
       // start nodes
       for ( UINT32 j = 0 ; j < configs.size() ; ++j )
       {
          ++total ;
          utilNodeInfo &info = nodesInfo[ j ] ;
+         OSSHANDLE &handle = handles[ j ] ;
          // first check
          rc = utilGetServiceByConfigPath( configs[ j ], svcname,
                                           info._svcname ) ;
@@ -396,12 +403,12 @@ namespace engine
                         options.c_str(),
                         svcname.c_str(),
                         listArgs ) ;
-         tmpRC = ossStartProcess( listArgs, info._pid ) ;
+         tmpRC = ossStartProcess( listArgs, info._pid, 0, NULL, &handle ) ;
          if ( tmpRC )
          {
             rc = tmpRC ;
-            ossPrintf( "Error: Start [%s] failed, rc: %d"OSS_NEWLINE,
-                       configs[ j ].c_str(), tmpRC ) ;
+            ossPrintf( "Error: Start [%s] failed, rc: %d(%s)"OSS_NEWLINE,
+                       configs[ j ].c_str(), tmpRC, getErrDesp( rc ) ) ;
             ++failedNum ;
             continue ;
          }
@@ -412,6 +419,9 @@ namespace engine
       for ( UINT32 j = 0 ; j < configs.size() ; ++j )
       {
          utilNodeInfo &info = nodesInfo[ j ] ;
+         OSSHANDLE &handle = handles[ j ] ;
+         UINT32 exitCode = 0 ;
+
          if ( !info._orgname.empty() )
          {
             // alread start node
@@ -433,10 +443,19 @@ namespace engine
          else
          {
             rc = tmpRC ;
-            ossPrintf( "Error: Start [%s] failed, rc: %d"OSS_NEWLINE,
-                       configs[ j ].c_str(), tmpRC ) ;
+            if ( !ossIsProcessRunning( info._pid ) &&
+                 (OSSHANDLE)0 != handle &&
+                 SDB_OK == ossGetExitCodeProcess( handle, exitCode ) )
+            {
+               rc = exitCode ;
+            }
+            ossPrintf( "Error: Start [%s] failed, rc: %d(%s)"OSS_NEWLINE,
+                       configs[ j ].c_str(), rc,
+                       getErrDesp( utilShellRC2RC( rc ) ) ) ;
             ++failedNum ;
          }
+         // close handle
+         ossCloseProcessHandle( handle ) ;
       }
 
       if ( 0 == total )
@@ -452,7 +471,7 @@ namespace engine
 
    done :
       PD_TRACE_EXITRC ( SDB_SDBSTART_MAIN, rc );
-      return SDB_OK == rc ? 0 : 1 ;
+      return SDB_OK == rc ? 0 : utilRC2ShellRC( rc ) ;
    error :
       goto done ;
    }

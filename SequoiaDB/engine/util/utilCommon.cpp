@@ -271,5 +271,74 @@ namespace engine
       return _retObj[ SDB_MAX_ERROR + flags ] ;
    }
 
+   struct _utilShellRCItem
+   {
+      UINT32      _src ;
+      INT32       _rc ;
+      UINT32      _end ;
+   } ;
+   typedef _utilShellRCItem utilShellRCItem ;
+
+   #define MAP_SHELL_RC_ITEM( src, rc )   { src, rc, 0 },
+
+   utilShellRCItem* utilGetShellRCMap()
+   {
+      static utilShellRCItem s_srcMap[] = {
+         // map begin
+         MAP_SHELL_RC_ITEM( SDB_SRC_SUC, SDB_OK )
+         MAP_SHELL_RC_ITEM( SDB_SRC_IO, SDB_IO )
+         MAP_SHELL_RC_ITEM( SDB_SRC_PERM, SDB_PERM )
+         MAP_SHELL_RC_ITEM( SDB_SRC_OOM, SDB_OOM )
+         MAP_SHELL_RC_ITEM( SDB_SRC_INTERRUPT, SDB_INTERRUPT )
+         MAP_SHELL_RC_ITEM( SDB_SRC_SYS, SDB_SYS )
+         MAP_SHELL_RC_ITEM( SDB_SRC_NOSPC, SDB_NOSPC )
+         MAP_SHELL_RC_ITEM( SDB_SRC_TIMEOUT, SDB_TIMEOUT )
+         MAP_SHELL_RC_ITEM( SDB_SRC_NETWORK, SDB_NETWORK )
+         MAP_SHELL_RC_ITEM( SDB_SRC_INVALIDPATH, SDB_INVALIDPATH )
+         MAP_SHELL_RC_ITEM( SDB_SRC_CANNOT_LISTEN, SDB_NET_CANNOT_LISTEN )
+         MAP_SHELL_RC_ITEM( SDB_SRC_CAT_AUTH_FAILED, SDB_CAT_AUTH_FAILED )
+         MAP_SHELL_RC_ITEM( SDB_SRC_INVALIDARG, SDB_INVALIDARG )
+         // map end
+         { 0, 0, 1 }
+      } ;
+      return &s_srcMap[0] ;
+   }
+
+   UINT32 utilRC2ShellRC( INT32 rc )
+   {
+      utilShellRCItem *pEntry = utilGetShellRCMap() ;
+      while( 0 == pEntry->_end )
+      {
+         if ( rc == pEntry->_rc )
+         {
+            return pEntry->_src ;
+         }
+         ++pEntry ;
+      }
+      if ( rc >= 0 )
+      {
+         return rc ;
+      }
+      return SDB_SRC_SYS ;
+   }
+
+   INT32 utilShellRC2RC( UINT32 src )
+   {
+      utilShellRCItem *pEntry = utilGetShellRCMap() ;
+      while( 0 == pEntry->_end )
+      {
+         if ( src == pEntry->_src )
+         {
+            return pEntry->_rc ;
+         }
+         ++pEntry ;
+      }
+      if ( src <= 0 )
+      {
+         return src ;
+      }
+      return SDB_SYS ;
+   }
+
 }
 

@@ -93,7 +93,7 @@ public :
    {
 #if defined (_WINDOWS)
       _handle = INVALID_HANDLE_VALUE ;
-      _overlapped.hEvent = INVALID_HANDLE_VALUE ;
+      _overlapped.hEvent = NULL ;
       _overlappedFlag = 0 ;
 #elif defined (_LINUX)
       _handle = -1 ;

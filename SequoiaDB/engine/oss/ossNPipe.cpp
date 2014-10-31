@@ -368,6 +368,9 @@ INT32 ossCreateNamedPipe ( const CHAR *name,
                fullName.c_str() ) ;
       goto error ;
    }
+
+   ossMemset ( handle._name, 0, sizeof(handle._name) ) ;
+   ossStrncpy ( handle._name, fullName.c_str(), OSS_NPIPE_MAX_NAME_LEN + 1 ) ;
    handle._handle = CreateNamedPipe ( lpwstrName, openMode, pipeMode,
                                       numInstances, outboundBufferSize,
                                       inboundBufferSize, defaultTimeout*1000,
@@ -376,25 +379,10 @@ INT32 ossCreateNamedPipe ( const CHAR *name,
    {
       rc = ossGetLastError () ;
       PD_LOG ( PDERROR, "Failed to create named pipe, error = %d", rc ) ;
-      switch ( rc )
-      {
-      case ERROR_OUT_OF_STRUCTURES :
-      case ERROR_NOT_ENOUGH_MEMORY :
-         rc = SDB_OSS_NORES ;
-         break ;
-      case ERROR_PATH_NOT_FOUND :
-      case ERROR_INVALID_PARAMETER :
-      case ERROR_INVALID_NAME :
-         rc = SDB_INVALIDARG ;
-         break ;
-      default :
-         rc = SDB_SYS ;
-         break ;
-      }
+      goto error ;
    }
-   // we shouldn't jump to error if previous rc is false, because we want to set
-   // handle name regardless whether Create success or not
-   if ( SDB_OK == rc && handle._overlappedFlag )
+
+   if ( handle._overlappedFlag )
    {
       handle._overlapped.Offset = 0 ;
       handle._overlapped.OffsetHigh = 0 ;
@@ -402,15 +390,40 @@ INT32 ossCreateNamedPipe ( const CHAR *name,
                                                 FALSE,   // auto reset
                                                 FALSE,   // init state not set
                                                 NULL ) ; // unnamed
+      if ( NULL == handle._overlapped.hEvent )
+      {
+         PD_LOG( PDERROR, "Create event failed, errno = %d",
+                 ossGetLastError() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
    }
-   ossMemset ( handle._name, 0, sizeof(handle._name) ) ;
-   ossStrncpy ( handle._name, fullName.c_str(), OSS_NPIPE_MAX_NAME_LEN + 1 ) ;
+
 done :
    if ( lpwstrName )
       SDB_OSS_FREE ( lpwstrName ) ;
    PD_TRACE_EXITRC ( SDB_OSSCRTNMP, rc );
    return rc ;
 error :
+   ossDeleteNamedPipe( handle ) ;
+   switch ( rc )
+   {
+   case ERROR_OUT_OF_STRUCTURES :
+   case ERROR_NOT_ENOUGH_MEMORY :
+      rc = SDB_OSS_NORES ;
+      break ;
+   case ERROR_PATH_NOT_FOUND :
+   case ERROR_INVALID_PARAMETER :
+   case ERROR_INVALID_NAME :
+      rc = SDB_INVALIDARG ;
+      break ;
+   default :
+      if ( rc >= 0 )
+      {
+         rc = SDB_SYS ;
+      }
+      break ;
+   }
    goto done ;
 }
 
@@ -526,6 +539,12 @@ INT32 ossOpenNamedPipe ( const CHAR *name,
                                                 FALSE,   // auto reset
                                                 FALSE,   // init state not set
                                                 NULL ) ; // unnamed
+      if ( NULL == handle._overlapped.hEvent )
+      {
+         rc = ossGetLastError () ;
+         PD_LOG( PDERROR, "Failed to create event, error = %d", rc ) ;
+         goto error ;
+      }
    }
    handle._state = action ;
    ossMemset ( handle._name, 0, sizeof(handle._name) ) ;
@@ -536,6 +555,7 @@ done :
    PD_TRACE_EXITRC ( SDB_OSSOPENNMP, rc );
    return rc ;
 error :
+   ossCloseNamedPipe( handle ) ;
    switch ( rc )
    {
    case ERROR_TOO_MANY_OPEN_FILES :
@@ -550,7 +570,10 @@ error :
       rc = SDB_INVALIDARG ;
       break ;
    default :
-      rc = SDB_SYS ;
+      if ( rc >= 0 )
+      {
+         rc = SDB_SYS ;
+      }
       break ;
    }
    goto done ;
@@ -841,10 +864,10 @@ INT32 ossCloseNamedPipe ( OSSNPIPE &handle )
 done :
    handle._handle = INVALID_HANDLE_VALUE ;
    if ( handle._overlappedFlag &&
-        INVALID_HANDLE_VALUE != handle._overlapped.hEvent )
+        NULL != handle._overlapped.hEvent )
    {
       CloseHandle ( handle._overlapped.hEvent ) ;
-      handle._overlapped.hEvent = INVALID_HANDLE_VALUE ;
+      handle._overlapped.hEvent = NULL ;
    }
    PD_TRACE_EXITRC ( SDB_OSSCLSNMP, rc );
    return rc ;

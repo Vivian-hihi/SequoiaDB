@@ -89,8 +89,7 @@
    typedef UINT32               ossValuePtr ;
 #endif
 
-#define SDBRC                INT32
-#define SDB_PAGE_SIZE        4096
+#define SDB_PAGE_SIZE           4096
 
 #if defined (_LINUX)
 typedef INT32 SOCKET ;
@@ -98,12 +97,13 @@ typedef INT32 SOCKET ;
 
 #if defined _LINUX
    #include "pthread.h"
-   typedef pid_t      OSSPID ;
-   typedef pthread_t  OSSTID ;
+   typedef pid_t           OSSPID ;
+   typedef pthread_t       OSSTID ;
+   typedef INT32           OSSHANDLE ;
    #define OSS_INVALID_TID      ( ( OSSTID )NULL )
-   typedef uid_t      OSSUID ;
-   typedef gid_t      OSSGID ;
-   #define OSS_INLINE inline
+   typedef uid_t           OSSUID ;
+   typedef gid_t           OSSGID ;
+   #define OSS_INLINE      inline
    // any attempt to get TLS variable should use OSS_FORCE_INLINE
    // It may avoid calling __tls_get_addr (x86 only)instruction repeatedly if
    // there's any for loop
@@ -117,12 +117,13 @@ typedef INT32 SOCKET ;
    #define OSS_THREAD_LOCAL __thread
 #elif defined _WINDOWS
 
-   typedef DWORD      OSSPID ;
-   typedef DWORD      OSSTID ;
+   typedef DWORD           OSSPID ;
+   typedef DWORD           OSSTID ;
+   typedef HANDLE          OSSHANDLE ;
    #define OSS_INVALID_TID      ( ( OSSTID )0 )
-   typedef DWORD      OSSUID ;
-   typedef DWORD      OSSGID ;
-   #define OSS_INLINE inline
+   typedef DWORD           OSSUID ;
+   typedef DWORD           OSSGID ;
+   #define OSS_INLINE      inline
    // any attempt to get TLS variable should use OSS_FORCE_INLINE
    // It may avoid calling __tls_get_addr (x86 only)instruction repeatedly if
    // there's any for loop
@@ -257,13 +258,41 @@ do {                                               \
    }                                               \
 } while ( FALSE )                                  \
 
+/*
+   Shell return code
+*/
+enum SDB_SHELL_RETURN_CODE
+{
+   SDB_SRC_SUC                = 0,     // succeed
+   SDB_SRC_EMPTY              = 1,     // empty out
+   SDB_SRC_WARNING            = 2,     // warning
+   SDB_SRC_ERROR              = 4,     // error
+   SDB_SRC_SYS                = 8,     // System error
+
+   SDB_SRC_INVALIDARG         = 127,   // invalid argment
+
+   // user define, begin from 128
+   SDB_SRC_IO                 = 128,   // IO Exception
+   SDB_SRC_PERM               = 129,   // Permission Error
+   SDB_SRC_OOM                = 130,   // Out of Memory
+   SDB_SRC_INTERRUPT          = 131,   // Interrupt
+   SDB_SRC_NOSPC              = 133,   // No space is left on disk
+   SDB_SRC_TIMEOUT            = 134,   // Timeout error
+   SDB_SRC_NETWORK            = 135,   // Network error
+   SDB_SRC_INVALIDPATH        = 136,   // Given path is not valid
+   SDB_SRC_CANNOT_LISTEN      = 137,   // Unable to listen the specified address
+   SDB_SRC_CAT_AUTH_FAILED    = 138,   // Catalog authentication failed
+
+   SDB_SRC_MAX                = 255    // max value
+} ;
+
 // define the client return code
 // should always between 0 to 255
-#define SDB_RETURNCODE_OK      0
-#define SDB_RETURNCODE_EMPTY   1
-#define SDB_RETURNCODE_WARNING 2
-#define SDB_RETURNCODE_ERROR   4
-#define SDB_RETURNCODE_SYSTEM  8
+#define SDB_RETURNCODE_OK      SDB_SRC_SUC
+#define SDB_RETURNCODE_EMPTY   SDB_SRC_EMPTY
+#define SDB_RETURNCODE_WARNING SDB_SRC_WARNING
+#define SDB_RETURNCODE_ERROR   SDB_SRC_ERROR
+#define SDB_RETURNCODE_SYSTEM  SDB_SRC_SYS
 
 #endif /* OSSTYPES_H_ */
 

@@ -81,6 +81,12 @@ namespace engine
    */
    BSONObj        utilGetErrorBson( INT32 flags, const CHAR *detail ) ;
 
+   /*
+      util rc to shell return code
+   */
+   UINT32         utilRC2ShellRC( INT32 rc ) ;
+   INT32          utilShellRC2RC( UINT32 src ) ;
+
 }
 
 

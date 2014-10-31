@@ -40,6 +40,7 @@
 #include "pmdDef.hpp"
 #include "utilNodeOpr.hpp"
 #include "ossSocket.hpp"
+#include "utilCommon.hpp"
 
 namespace engine
 {
@@ -336,7 +337,6 @@ namespace engine
       {
          PD_LOG ( PDERROR, "Failed to execute %s, rc: %d",
                   pArgumentBuffer, rc ) ;
-         rc = SDBCM_FAIL ;
          goto error ;
       }
       // verify the executing result
@@ -360,7 +360,7 @@ namespace engine
       }
       else
       {
-         rc = SDBCM_FAIL ;
+         rc = utilShellRC2RC( result.exitcode ) ;
       }
 
    done:

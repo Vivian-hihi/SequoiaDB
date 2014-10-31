@@ -283,7 +283,7 @@ namespace engine
       PD_LOG ( PDEVENT, "Stop sequoiadb, exit code: %d",
                krcb->getExitCode() ) ;
       PD_TRACE_EXITRC ( SDB_PMDMSTTHRDMAIN, rc );
-      return rc ;
+      return utilRC2ShellRC( rc ) ;
    error :
       goto done ;
    }
