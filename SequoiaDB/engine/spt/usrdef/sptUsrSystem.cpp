@@ -1040,7 +1040,8 @@ namespace engine
          }
          catch ( std::exception &e )
          {
-            PD_LOG( PDERROR, "unexpected err happened:%s", e.what() ) ;
+            PD_LOG( PDERROR, "unexpected err happened:%s, content:%s",
+                    e.what(), columns.at( 0 ).c_str() ) ;
             rc = SDB_SYS ;
             goto error ;
          }
