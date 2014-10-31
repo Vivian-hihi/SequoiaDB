@@ -1196,13 +1196,22 @@ namespace engine
          }
       }
 
-      // remove all dir
-      rc = nodeOptions.removeAllDir() ;
-      if ( rc )
+      // ensure path is itself
       {
-         PD_LOG( PDERROR, "Remove node[%s] directorys failed, rc: %d",
-                 pSvcName, rc ) ;
-         goto error ;
+         pmdStartup startupFile ;
+         if ( SDB_OK == startupFile.init( nodeOptions.getDbPath(), FALSE ) )
+         {
+            startupFile.final() ;
+
+            // remove all dir
+            rc = nodeOptions.removeAllDir() ;
+            if ( rc )
+            {
+               PD_LOG( PDERROR, "Remove node[%s] directorys failed, rc: %d",
+                       pSvcName, rc ) ;
+               goto error ;
+            }
+         }
       }
 
       // remove config
