@@ -7538,20 +7538,23 @@ SDB_EXPORT INT32 sdbCloseLob( sdbLobHandle *lobHandle )
    }
 
 done:
-   _unregSocket( lob->_connection, &lob->_sock ) ;
-
-   if ( lob->_pSendBuffer )
+   if ( NULL != lobHandle && SDB_INVALID_HANDLE != *lobHandle )
    {
-      SDB_OSS_FREE ( lob->_pSendBuffer ) ;
-   }
-   if ( lob->_pReceiveBuffer )
-   {
-      SDB_OSS_FREE ( lob->_pReceiveBuffer ) ;
-   }
+      _unregSocket( lob->_connection, &lob->_sock ) ;
 
-   SDB_OSS_FREE( lob ) ;
+      if ( lob->_pSendBuffer )
+      {
+         SDB_OSS_FREE ( lob->_pSendBuffer ) ;
+      }
+      if ( lob->_pReceiveBuffer )
+      {
+         SDB_OSS_FREE ( lob->_pReceiveBuffer ) ;
+      }
 
-   *lobHandle = SDB_INVALID_HANDLE ;
+      SDB_OSS_FREE( lob ) ;
+
+      *lobHandle = SDB_INVALID_HANDLE ;
+   }
    return rc ;
 error:
    goto done ;
