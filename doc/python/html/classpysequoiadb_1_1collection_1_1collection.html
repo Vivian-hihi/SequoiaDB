@@ -161,6 +161,8 @@ def&#160;</td><td class="memItemRight" valign="bottom"><b>__repr__</b></td></tr>
 <tr class="separator:ad7c570b0f461fe6d407f470413e2ebb4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6aa9dd355f9f4a2e40dd5ea139dbf42b"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpysequoiadb_1_1collection_1_1collection.html#a6aa9dd355f9f4a2e40dd5ea139dbf42b">query_one</a></td></tr>
 <tr class="separator:a6aa9dd355f9f4a2e40dd5ea139dbf42b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0421c5ab6b8534bd89a94e258d1684c4"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpysequoiadb_1_1collection_1_1collection.html#a0421c5ab6b8534bd89a94e258d1684c4">explain</a></td></tr>
+<tr class="separator:a0421c5ab6b8534bd89a94e258d1684c4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><pre class="fragment">Collection for SequoiaDB
@@ -353,8 +355,8 @@ Exceptions:
    pysequoiadb.error.SDBBaseError
 Info:
    flags : 0 or 1. 
-   0 : stop insertting record when an error occurred
-   1 : continue insertting records even though error occurred
+   0 : stop insertting when hit index key duplicate error
+   1 : continue insertting records even though index key duplicate error hit
 </pre> 
 </div>
 </div>
@@ -553,6 +555,57 @@ Exceptions:
 Parameters:
    Name         Type  Info:
    idx_name     str   The index name.
+Exceptions:
+   pysequoiadb.error.SDBTypeError
+   pysequoiadb.error.SDBBaseError
+</pre> 
+</div>
+</div>
+<a class="anchor" id="a0421c5ab6b8534bd89a94e258d1684c4"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">def pysequoiadb.collection.collection.explain </td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>self</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>kwargs</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<pre class="fragment">Get the matching documents in current collection.
+
+Parameters:
+   Name              Type     Info:
+   **kwargs                   Useful options are below
+   - condition       dict     The matching rule, update all the
+                              documents if not provided.
+   - selected        dict     The selective rule, return the whole
+                              document if not provided.
+   - order_by        dict     The ordered rule, result set is unordered
+                              if not provided.
+   - hint            dict     The hint, automatically match the optimal
+                              hint if not provided.
+   - num_to_skip     long     Skip the first numToSkip documents,
+                              default is 0L.
+   - num_to_return   long     Only return numToReturn documents,
+                              default is -1L for returning
+                              all results.
+   - flag            int      
+   - options         json     
+Return values:
+   a cursor object of query
 Exceptions:
    pysequoiadb.error.SDBTypeError
    pysequoiadb.error.SDBBaseError
@@ -1317,7 +1370,7 @@ Note:
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Oct 22 2014 17:29:29 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Fri Oct 31 2014 13:13:33 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.7
 </small></address>
