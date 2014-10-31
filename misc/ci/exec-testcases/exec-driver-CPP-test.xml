@@ -52,10 +52,10 @@
         <basename property="deploy.name" file="${deploy.case.fullname}" suffix=".xml" />
         
 
-        <property name="test.suite.class.name" value="testcases-samples-cpp.${deploy.name}-${host.NAME}-${parallel.num}" />
+        
         
         <property name="test.suite.class.name" value="testcases-driver-cpp.${deploy.name}-${host.NAME}-${parallel.num}" />
-        <echo file="${reports.path}/TEST-${test.suite.class.name}.xml" message="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot; ?&gt;&#10;&lt;testsuite name=&quot;${test.suite.name}&quot; type=&quot;${test-type}&quot; deploy=&quot;${deploy.name}&quot; hostname=&quot;${host.NAME}&quot; tests=&quot;1&quot; failure=&quot;0&quot;&gt;&#10;" />
+       <!-- <echo file="${reports.path}/TEST-${test.suite.class.name}.xml" message="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot; ?&gt;&#10;&lt;testsuite name=&quot;${test.suite.name}&quot; type=&quot;${test-type}&quot; deploy=&quot;${deploy.name}&quot; hostname=&quot;${host.NAME}&quot; tests=&quot;1&quot; failure=&quot;0&quot;&gt;&#10;" /> -->
         
         <chmod dir="${CPP.testcase.path}" perm="u+x" includes="*" />
         <foreach target="test-one-sample" param="case-full-name">
@@ -64,6 +64,7 @@
                 <exclude name="${excludes.dir.patterns}" />
             </fileset>
             <param name="testcases.path" value="${CPP.testcase.path}" />
+            <param name="test.suite.class.name" value="${test.suite.class.name}" />
         </foreach>
 
         <replaceregexp match="&lt;testsuite (.*)&gt;" replace="" flags="g" byline="true" encoding="utf-8">
@@ -81,7 +82,8 @@
         <replace token="testsuites" value="testsuite">
             <fileset dir="${reports.path}/"  includes="*" />
         </replace> 
-        <echo file="${reports.path}/TEST-${test.suite.class.name}.xml" message="&lt;/testsuite&gt;&#10;" append="true" /> 
+       <!-- <echo file="${reports.path}/TEST-${test.suite.class.name}.xml" message="&lt;/testsuite&gt;&#10;" append="true" /> -->
+                   
     </target>
 
     <target name="test-one-case" depends="">    
@@ -166,7 +168,7 @@
                 <echo message="The result code is ${ret.code} and it's fail ..." />
                 <echo message="The testcase ${test.case.name} end with ${testcase.failure.end.time} and cost ${testcase.failure.timeOutput} s in total..." />
 
-                <echo file="${reports.path}/TEST-${test.suite.class.name}.xml" append="true" message="&lt;testcase classname=&quot;${test.suite.class.name}&quot; name=&quot;${test.case.name}&quot; begin_time=&quot;${testcase.begin.time}&quot; end_time=&quot;${testcase.failure.end.time}&quot; time=&quot;${testcase.failure.timeOutput}&quot; path=&quot;${testcases.path}&quot; status=&quot;fail&quot;&gt;&#10;&lt;failure&gt;&#10;&lt;![CDATA[&#10;COMMAND= ${command}&#10;RETURNCODE=${ret.code}&#10;ERRORMESSAGE=&#10;${screen.output}&#10;]]&gt;&#10;&lt;/failure&gt;&#10;&lt;/testcase&gt;&#10;" />
+               <!-- <echo file="${reports.path}/TEST-${test.suite.class.name}.xml" append="true" message="&lt;testcase classname=&quot;${test.suite.class.name}&quot; name=&quot;${test.case.name}&quot; begin_time=&quot;${testcase.begin.time}&quot; end_time=&quot;${testcase.failure.end.time}&quot; time=&quot;${testcase.failure.timeOutput}&quot; path=&quot;${testcases.path}&quot; status=&quot;fail&quot;&gt;&#10;&lt;failure&gt;&#10;&lt;![CDATA[&#10;COMMAND= ${command}&#10;RETURNCODE=${ret.code}&#10;ERRORMESSAGE=&#10;${screen.output}&#10;]]&gt;&#10;&lt;/failure&gt;&#10;&lt;/testcase&gt;&#10;" /> -->
 
                 <echo file="${install.path}/${import.file}" append="true" message="{testcase_name:&quot;${test.suite.name}-${test.case.name}&quot;,deploy:&quot;${deploy.name}&quot;,hostname:&quot;${host.NAME}&quot;,time:&quot;${testcase.timeOutput}&quot;,status:&quot;fail&quot;,begin_time:&quot;${testcase.begin.time}&quot;,end_time:&quot;${testcase.end.time}&quot;}&#10;&#10;&#10;" />
             </then>
@@ -178,7 +180,8 @@
                 <echo message="The result code is ${ret.code} and it's succ ..." />
                 <echo message="The testcase ${test.case.name} end with ${testcase.end.time} and cost ${testcase.timeOutput} s in total..." />
 
-                <echo file="${reports.path}/TEST-${test.suite.class.name}.xml" append="true" message="&lt;testcase classname=&quot;${test.suite.class.name}&quot; name=&quot;${test.case.name}&quot; begin_time=&quot;${testcase.begin.time}&quot; end_time=&quot;${testcase.end.time}&quot; time=&quot;${testcase.timeOutput}&quot; path=&quot;${testcases.path}&quot; status=&quot;succ&quot;&gt;&#10;&lt;/testcase&gt;&#10;" />
+              <!--  <echo file="${reports.path}/TEST-${test.suite.class.name}.xml" append="true" message="&lt;testcase classname=&quot;${test.suite.class.name}&quot; name=&quot;${test.case.name}&quot; begin_time=&quot;${testcase.begin.time}&quot; end_time=&quot;${testcase.end.time}&quot; time=&quot;${testcase.timeOutput}&quot; path=&quot;${testcases.path}&quot; status=&quot;succ&quot;&gt;&#10;&lt;/testcase&gt;&#10;" /> -->
+
             </else>
         </if>        
     </target>
