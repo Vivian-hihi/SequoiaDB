@@ -64,7 +64,6 @@
                 <exclude name="${excludes.dir.patterns}" />
             </fileset>
             <param name="testcases.path" value="${CPP.testcase.path}" />
-            <param name="test.suite.class.name" value="${test.suite.class.name}" />
         </foreach>
 
         <replaceregexp match="&lt;testsuite (.*)&gt;" replace="" flags="g" byline="true" encoding="utf-8">
