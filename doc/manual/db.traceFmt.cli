@@ -7,8 +7,8 @@
 .SH "NAME"
 
 .sp 2
-traceFmt - Output information into file according to the
-program's trace.
+traceFmt - To format the binary data into other type of file that
+db.traceOff() exported.
 .SH "SYNOPSIS"
 
 .sp 2
@@ -22,11 +22,12 @@ traceFmt(\fB<formatType>,<input>,<input>\fR)
 .sp 2
 
 .sp 2
-Sequoiadb
+Golbal
 .SH "DESCRIPTION"
 
 .sp 2
-Output information into file according to the program's trace.
+To format the binary data into other type of file that
+db.traceOff() exported.
 .sp 2
 \fBformatType (int)\fR
 .br
@@ -42,7 +43,6 @@ Output information into file according to the program's trace.
 .SH "Examples"
 
 .sp 2
-Output information into file according to the program's trace,
-and print it out.
+格式化输出文件
 .sp 2
 traceFmt(0, "/opt/sequoiadb/trace.dump", "/opt/sequoiadb/trace.flw")
