@@ -2,6 +2,7 @@ package com.sequoiadb.hive;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -28,6 +29,7 @@ import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
+import com.sequoiadb.util.logger;
 
 class SequoiaDBRecord {
 	private byte[] stream = null;
@@ -121,20 +123,16 @@ public class SdbReader extends Thread implements
 				"org.apache.hadoop.hive.ql.udf.generic.GenericUDFOPOr", "$or");
 	}
 
-	public SdbReader(String spaceName, String colName, InputSplit split,
+	public SdbReader( InputSplit split,
 			String[] columns, List<Integer> readColIDs, ExprNodeDesc filterExpr) {
-
 		if (split == null || !(split instanceof SdbSplit)) {
 			throw new IllegalArgumentException(
 					"The split is not SdbSplit type.");
 		}
 		this.readColIDs = readColIDs;
 		this.columnsMap = columns;
-
 		// LOG.info("columns is " + columns.toString());
 		this.sdbSplit = (SdbSplit) split;
-
-		LOG.debug("The split information:" + split.toString());
 		if (sdbSplit.getSdbAddr() == null) {
 			throw new IllegalArgumentException(
 					"The split.sdbAddr is null. split=" + sdbSplit.toString());
@@ -142,6 +140,8 @@ public class SdbReader extends Thread implements
 
 		sdb = new Sequoiadb(sdbSplit.getSdbAddr().getHost(), sdbSplit
 				.getSdbAddr().getPort(), null, null);
+		String spaceName=sdbSplit.getCollectionSpaceName();
+		String colName=sdbSplit.getCollectionName();
 		CollectionSpace space = sdb.getCollectionSpace(spaceName);
 		DBCollection collection = space.getCollection(colName);
 
@@ -158,14 +158,14 @@ public class SdbReader extends Thread implements
 				query = null;
 			}
 		}
-		LOG.debug("query:" + query);
+		LOG.info("query:" + query);
 
 		// BSONObject selector = null;
 		BasicBSONObject selector = new BasicBSONObject();
 		for (String column : parserReadColumns(columnsMap, readColIDs)) {
 			selector.put(column.toLowerCase(), null);
 		}
-		LOG.debug("selector:" + selector);
+		LOG.info("selector:" + selector);
 
 		selectorColIDs = new int[selector.size()];
 
@@ -391,59 +391,36 @@ public class SdbReader extends Thread implements
 		LOG.info("Start get record thread.");
 		while (cursor.hasNextRaw()) {
 			try {
-				// File file = new File("/mnt/chenfool/cloudera/chentest.txt");
-				// BufferedWriter writer = new BufferedWriter(new
-				// FileWriter(file,true));
-
-				// text always start from byte 10 here
+				//BSON 
 				final int TEXT_START_POS = 10;
-				// get the byte array from result buffer, each fields are
-				// seaprated
-				// by
-				// bar
-				// what happen if there's bar in the text? we don't handle and
-				// let
-				// it
-				// break~~~
+				//seaprated by |
 				byte[] record = cursor.getNextRaw();
-				// writer.write((new
-				// String(record))+"****record is **********\n");
 
-				// let's build array of byte array to hold the start pointer and
-				// length
-				// for each field from record buffer
+
+				// each field is a ByteArrayField
 				ByteArrayField[] byteArrayRef = new ByteArrayField[this.selectorColIDs.length];
 
-				// initialize start position and current position
+
 				int startPos = TEXT_START_POS;
 				int i = TEXT_START_POS;
-				// keep track of number of fields we want
-				// sanity check could be done by nFileNum
+
 				int nFileNum = 0;
-				// we are going to iterate the receive buffer and push the start
-				// pointer
-				// + length
-				// into ByteArrayField
-				for (; i < record.length - 1; i++) {
+
+				for (; i < record.length - 2; i++) {
 					if (record[i] == '|') {
+						// 10---'|'
 						ByteArrayField ref = new ByteArrayField(record,
 								startPos, i);
-						// writer.write(ref.toString()+"****ref*********\n");
+
 						byteArrayRef[nFileNum++] = ref;
 						startPos = i + 1;
 					}
 				}
 
-				LOG.info("record:" + new String(record));
-				// must be <=, otherwise for "abc|" will got error for
-				// NullPointer
-				// exception
-				// since the second NULL field was not allocated for new
-				// ByteArrayField
+
 				if (startPos <= i) {
 					ByteArrayField ref = new ByteArrayField(record, startPos, i);
 					byteArrayRef[nFileNum++] = ref;
-					// writer.write(ref.toString()+"****ref  , startPos<=i*********\n");
 				}
 
 				// need to add columnsMap.length since we need to create extra
@@ -472,8 +449,8 @@ public class SdbReader extends Thread implements
 				// fields
 				// into
 				// bar separated format result buffer
+				
 				for (i = 0; i < this.columnsMap.length; i++) {
-
 					// for each columns in the DDL
 					for (int j = 0; j < this.selectorColIDs.length; j++) {
 						// compare with the result fields from SDB
@@ -486,6 +463,7 @@ public class SdbReader extends Thread implements
 							// buffer
 							break;
 						}
+						
 					}
 					// we need to append bar between each field
 					if (pos != recordWithAllColumns.length) {
@@ -494,10 +472,11 @@ public class SdbReader extends Thread implements
 					// String chentest = new String(recordWithAllColumns);
 
 					// writer.write(chentest+"*****recordWithAllColumns*****\n");
-
+					LOG.info("recordWithAllColumns:"+Arrays.toString(recordWithAllColumns));
 				}
 
 				this.queue.put(new SequoiaDBRecord(recordWithAllColumns, pos));
+				
 			} catch (Exception e) {
 				LOG.error("Failed to get a record from sequoiadb.", e);
 				continue;
@@ -535,7 +514,10 @@ public class SdbReader extends Thread implements
 		// String rcWAC = new String(recordWithAllColumns);
 		// LOG.info("byte returned to hive is " + rcWAC );
 		// set the valueHolder from the result buffer, starting from 0 until pos
-		valueHolder.set(record.getStrem(), 0, record.getLength());
+
+		valueHolder.set(record.getStrem(), 0,record.getLength());
+		//String str="1|||";
+		//valueHolder.set(str.getBytes(),0,str.getBytes().length);
 		// writer.close();
 
 		// Record the return record number for get progress

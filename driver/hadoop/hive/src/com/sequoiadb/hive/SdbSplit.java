@@ -3,8 +3,10 @@ package com.sequoiadb.hive;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -14,8 +16,10 @@ import org.apache.hadoop.mapred.FileSplit;
 import org.apache.hadoop.mapred.InputSplit;
 import org.apache.hadoop.mapred.JobConf;
 import org.bson.BSONObject;
+import org.bson.BasicBSONObject;
 import org.bson.types.BasicBSONList;
 
+import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Node;
 import com.sequoiadb.base.ReplicaGroup;
@@ -23,8 +27,9 @@ import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 
 public class SdbSplit extends FileSplit implements InputSplit {
-
-	public static final Log LOG = LogFactory.getLog(SdbSerDe.class.getName());
+	private String collectionSpaceName;
+	private String collectionName;
+	public static final Log LOG = LogFactory.getLog(SdbSplit.class.getName());
 
 	private static final String[] EMPTY_ARRAY = new String[] {};
 	private SdbConnAddr sdbAddr;
@@ -34,9 +39,12 @@ public class SdbSplit extends FileSplit implements InputSplit {
 
 	}
 
-	public SdbSplit(String host, int port, Path dummyPath) {
+	public SdbSplit(String host, int port, String collectionSpaceName,
+			String collectionName, Path dummyPath) {
 		super(dummyPath, 0, 0, EMPTY_ARRAY);
 		this.sdbAddr = new SdbConnAddr(host, port);
+		this.collectionSpaceName = collectionSpaceName;
+		this.collectionName = collectionName;
 	}
 
 	@Override
@@ -45,6 +53,8 @@ public class SdbSplit extends FileSplit implements InputSplit {
 		this.sdbAddr = new SdbConnAddr();
 		sdbAddr.setHost(input.readUTF());
 		sdbAddr.setPort(input.readInt());
+		this.collectionSpaceName=input.readUTF();
+		this.collectionName=input.readUTF();
 
 	}
 
@@ -53,6 +63,8 @@ public class SdbSplit extends FileSplit implements InputSplit {
 		super.write(output);
 		output.writeUTF(this.sdbAddr.getHost());
 		output.writeInt(this.sdbAddr.getPort());
+		output.writeUTF(this.collectionSpaceName);
+		output.writeUTF(this.collectionName);
 	}
 
 	public SdbConnAddr getSdbAddr() {
@@ -72,9 +84,9 @@ public class SdbSplit extends FileSplit implements InputSplit {
 
 	@Override
 	public String toString() {
-
-		return String.format("SdbSplit(sdbaddr=%s)", sdbAddr == null ? "null"
-				: sdbAddr.toString());
+		return "SdbSplit [collectionSpaceName=" + collectionSpaceName
+				+ ", collectionName=" + collectionName + ", sdbAddr=" + sdbAddr
+				+ "]";
 	}
 
 	public static InputSplit[] getSplits(JobConf conf, int numSplits) {
@@ -113,7 +125,6 @@ public class SdbSplit extends FileSplit implements InputSplit {
 			throw lastException;
 		}
 
-		// use snapshot(8,{Name:"tablename"}) for get group information
 		String spaceName = null;
 		String clName = null;
 		if (ConfigurationUtil.getCsName(conf) == null
@@ -127,76 +138,51 @@ public class SdbSplit extends FileSplit implements InputSplit {
 		StringBuilder snapCondBuilder = new StringBuilder();
 		String snapCond = snapCondBuilder.append("{Name:\"").append(spaceName)
 				.append('.').append(clName).append("\"}").toString();
-		// Snapshot 8 information:
-		// {
-		// "_id": {
-		// "$oid": "52e1f6885d7c4d346e2e0c1e"
-		// },
-		// "Name": "metastore.mdsn",
-		// "Version": 1,
-		// "ReplSize": 1,
-		// "CataInfo": [
-		// {
-		// "GroupID": 1000,
-		// "GroupName": "datagroup1"
-		// }
-		// ]
-		// }
-
 		List<InputSplit> splits = new LinkedList<InputSplit>();
-		List<Integer> groupIDList = new LinkedList<Integer>();
-		try {
-			DBCursor cursor = sdb.getSnapshot(8, snapCond, null, null);
-			while (cursor.hasNext()) {
-				BSONObject obj = cursor.getNext();
-				LOG.info("Groups record:" + obj.toString());
-				// Get cataInfo list
-				BasicBSONList cataInfoList = (BasicBSONList) obj
-						.get("CataInfo");
-				for (int i = 0; i < cataInfoList.size(); i++) {
-
-					// Get a catainfo
-					BSONObject cataInfo = (BSONObject) cataInfoList.get(i);
-					Integer groupId = (Integer) cataInfo.get("GroupID");
-
-					// if the table have tow different range on the same group
-					// then the list have to same group.
-					// Don't add the group to split list, to avoid scan twice
-					// on this group.
-					if (groupIDList.contains(groupId)) {
-						continue;
-					}
-					groupIDList.add(groupId);
-
-					// Get group information by groupId
-					ReplicaGroup group = sdb.getReplicaGroup(groupId);
-
-					// Get the slave node's host&port.
-					Node node = group.getSlave();
-
-					String hostName = node.getHostName();
-					Integer port = node.getPort();
-					
-					splits.add(new SdbSplit(hostName, port, tablePaths[0]));
+		DBCollection collection = sdb.getCollectionSpace(spaceName)
+				.getCollection(clName);
+		DBCursor explainCurl = collection.explain(null, null, null, null, 0, 0,
+				0, new BasicBSONObject("Run", false));
+		System.out.println("explain");
+		Set<String> subCls = new HashSet<String>();
+		while (explainCurl.hasNext()) {
+			BSONObject explainBson = explainCurl.getNext();
+			String nodeName = (String) explainBson.get("NodeName");
+			String hostName = nodeName.split(":")[0];
+			int port = Integer.parseInt(nodeName.split(":")[1]);
+			try {
+				List<BSONObject> list = (List<BSONObject>) explainBson
+						.get("SubCollections");
+				for (int i = 0; i < list.size(); i++) {
+					String totalName = (String) list.get(i).get("Name");
+					String[] items = totalName.split("\\.");
+					SdbSplit split=new SdbSplit(hostName, port, items[0], items[1],
+							tablePaths[0]);
+					splits.add(split);
 				}
+			} catch (Exception e) {
+				splits.add(new SdbSplit(hostName, port, spaceName, clName,
+						tablePaths[0]));
 			}
-		} catch (BaseException e) {
-			// If get excepiton, have tow cause:
-			// 1. The SequoiaDB is stand-alone mode, so cannot get snapshot(8);
-			// 2. Get snapshot occurs exception.
-			// Then return just one split, the split get data from coord node,
-			// instead of data node.
-
-			// Set scan split
-			// For SequoiaDB, Just set DataNode connect information
-			splits.add(new SdbSplit(curCoordAddr.getHost(), curCoordAddr
-					.getPort(), tablePaths[0]));
 		}
-		// /////////////////////////////////
-
-		LOG.info("Exit SdbScanNode::getScanRangeLocations");
 		sdb.disconnect();
-
 		return splits.toArray(new InputSplit[splits.size()]);
 	}
+
+	public String getCollectionSpaceName() {
+		return collectionSpaceName;
+	}
+
+	public void setCollectionSpaceName(String collectionSpaceName) {
+		this.collectionSpaceName = collectionSpaceName;
+	}
+
+	public String getCollectionName() {
+		return collectionName;
+	}
+
+	public void setCollectionName(String collectionName) {
+		this.collectionName = collectionName;
+	}
+	
 }

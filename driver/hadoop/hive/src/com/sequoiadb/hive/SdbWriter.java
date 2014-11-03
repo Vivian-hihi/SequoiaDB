@@ -44,7 +44,7 @@ public class SdbWriter implements RecordWriter {
 	public SdbWriter(String connAddr, String spaceName, String colName,
 			int RecoredNum) {
 		
-		LOG.debug("Entry:SdbWriter");
+		LOG.info("Entry:SdbWriter");
 		
 		if (RecoredNum > 0)
 		{

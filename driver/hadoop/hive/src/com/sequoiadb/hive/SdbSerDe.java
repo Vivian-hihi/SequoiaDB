@@ -70,12 +70,14 @@ public class SdbSerDe implements SerDe {
 
 		final String columnString = tbl
 				.getProperty(ConfigurationUtil.COLUMN_MAPPING);
+		LOG.info("columnString:"+columnString);
 		if (StringUtils.isBlank(columnString)) {
 			throw new SerDeException("No column mapping found, use "
 					+ ConfigurationUtil.COLUMN_MAPPING);
 		}
 		final String[] columnNamesArray = ConfigurationUtil
 				.getAllColumns(columnString);
+		
 		fieldCount = columnNamesArray.length;
 		columnNames = new ArrayList<String>(columnNamesArray.length);
 		columnNames.addAll(Arrays.asList(columnNamesArray));

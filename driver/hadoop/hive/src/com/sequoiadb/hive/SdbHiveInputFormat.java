@@ -1,11 +1,14 @@
 package com.sequoiadb.hive;
 
 import com.sequoiadb.hive.SdbReader;
+
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.ql.exec.Utilities;
 import org.apache.hadoop.hive.ql.io.HiveInputFormat;
@@ -22,13 +25,12 @@ import org.apache.hadoop.mapred.Reporter;
 
 public class SdbHiveInputFormat extends
 		HiveInputFormat<LongWritable, BytesWritable> {
-
+	public static final Log LOG = LogFactory.getLog(SdbHiveInputFormat.class.getName());
 	@Override
 	public RecordReader<LongWritable, BytesWritable> getRecordReader(InputSplit inputSplit, JobConf jobConf,
 			Reporter Reporter) throws IOException {
-		
+		LOG.info("inputSplit:"+inputSplit);
 		Configuration conf = new Configuration( jobConf );
-//		List<Integer> readColIDs = ColumnProjectionUtils.getReadColumnIDs(jobConf);
 		List<Integer> readColIDs = ColumnProjectionUtils.getReadColumnIDs( conf );
 		
 		String columnString = jobConf.get(ConfigurationUtil.COLUMN_MAPPING);
@@ -78,26 +80,16 @@ public class SdbHiveInputFormat extends
 			
 			
 		}
-		String spaceName = null;
-		String colName = null;
-		if( ConfigurationUtil.getCsName(jobConf) == null && ConfigurationUtil.getClName(jobConf) == null ){
-			spaceName = ConfigurationUtil.getSpaceName(jobConf);
-			colName = ConfigurationUtil.getCollectionName(jobConf);
-		}else{
-			spaceName = ConfigurationUtil.getCsName(jobConf);
-			colName = ConfigurationUtil.getClName(jobConf);
-		}
-		
-		//RecordReader<LongWritable, BytesWritable> sdbr = new SdbReader(spaceName,colName, inputSplit,	columns, readColIDs, filterExpr);
-		
-		
-		return new SdbReader(spaceName,colName, inputSplit,	columns, readColIDs, filterExpr);
+	
+		return new SdbReader(inputSplit,	columns, readColIDs, filterExpr);
 		
 	}
 
 	@Override
 	public InputSplit[] getSplits(JobConf jobConf, int numSplits) throws IOException {
-		return SdbSplit.getSplits(jobConf,numSplits);
+		 InputSplit[] splits=SdbSplit.getSplits(jobConf,numSplits);
+		return splits;
+		
 	}
 	
 	/*

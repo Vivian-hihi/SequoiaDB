@@ -91,6 +91,7 @@ public class SdbHiveStorageHandler implements HiveStorageHandler {
 	}
 
 	private class DummyMetaHook implements HiveMetaHook {
+		
 
 		@Override
 		public void commitCreateTable(
@@ -132,8 +133,6 @@ public class SdbHiveStorageHandler implements HiveStorageHandler {
 				
 				if( sdb.isCollectionSpaceExist(spaceName) ){
 					sdb.dropCollectionSpace(spaceName);
-//				CollectionSpace space = sdb.getCollectionSpace(spaceName);
-//				space.dropCollection(dbCollection);
 				}
 				sdb.disconnect();
 				

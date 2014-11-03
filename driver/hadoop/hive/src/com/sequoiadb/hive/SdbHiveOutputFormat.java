@@ -27,7 +27,7 @@ public class SdbHiveOutputFormat implements OutputFormat<NullWritable, BytesWrit
 			Properties tableProperties, Progressable progress)
 			throws IOException {
 
-		LOG.debug("Entry SdbHiveOutputFormat::getHiveRecordWriter");
+		LOG.info("Entry SdbHiveOutputFormat::getHiveRecordWriter");
 		
 		String spaceName = null;
 		String colName = null;
