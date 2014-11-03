@@ -33,7 +33,7 @@
 
 	<target name="Standalone" depends="">
 		<hostinfo prefix="host" />
-		<property name="test-type-list" value="driver-CPP" />
+		<property name="test-type-list" value="basic,driver-C,driver-CPP" />
 		<property name="copy.test.log" value="true"/>
 		<!-- <property name="import.file.name" value="basic-testcases-time.json" /> -->
 
