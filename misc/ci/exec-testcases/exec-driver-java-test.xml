@@ -36,7 +36,7 @@
         <mkdir dir="${reports.path}" />
     </target>
 
-    <target name="Test-Java-Samples" depends="clean-env">
+    <!-- <target name="Test-Java-Samples" depends="clean-env">
         <java  classname="com.sequoiadb.samples.Index"  resultproperty="ret.code" failonerror="false" >
             <classpath>
                 <pathelement path="${samples.testcase.path}/Java" />
@@ -46,7 +46,7 @@
             </classpath>
         </java>
         <echo message="${ret.code}" />
-    </target>
+    </target> -->
 
     <target name="exec-driver-java-test" depends="clean-env">
         <junit printsummary="yes" fork="yes" showoutput="true" timeout="1200000">

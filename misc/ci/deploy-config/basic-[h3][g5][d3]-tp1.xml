@@ -159,7 +159,8 @@
 
 	<target name="H3-G5-D3" depends="">
 		<hostinfo prefix="host" />
-		<property name="test-type-list" value="basic,ant" />
+		<!-- <property name="test-type-list" value="basic,ant" /> -->
+		<property name="test-type-list" value="driver-CPP,driver-C,driver-php,driver-python,driver-java" />
 		<property name="copy.test.log" value="true"/>
 		<!-- <property name="import.file.name" value="basic-testcases-time.json" /> -->
 
