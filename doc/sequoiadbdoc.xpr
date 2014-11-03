@@ -552,8 +552,11 @@
                 <folder name="images"/>
                 <folder name="tasks"/>
                 <folder name="topics">
+                    <file name="installation/server_installation/topics/autoinstall1_en.dita"/>
                     <file name="installation/server_installation/topics/autoinstall1.dita"/>
+                    <file name="installation/server_installation/topics/cluster1_en.dita"/>
                     <file name="installation/server_installation/topics/cluster1.dita"/>
+                    <file name="installation/server_installation/topics/configuration_start1_en.dita"/>
                     <file name="installation/server_installation/topics/configuration_start1.dita"/>
                     <file name="installation/server_installation/topics/linux_en.dita"/>
                     <file name="installation/server_installation/topics/linux.dita"/>
@@ -561,11 +564,17 @@
                     <file name="installation/server_installation/topics/linuxom.dita"/>
                     <file name="installation/server_installation/topics/server_installation_en.dita"/>
                     <file name="installation/server_installation/topics/server_installation.dita"/>
+                    <file name="installation/server_installation/topics/stanalone1_en.dita"/>
                     <file name="installation/server_installation/topics/stanalone1.dita"/>
                 </folder>
+                <file name="installation/server_installation/autoin_en.dita"/>
+                <file name="installation/server_installation/autoin_en.ditamap"/>
                 <file name="installation/server_installation/autoin.dita"/>
                 <file name="installation/server_installation/autoin.ditamap"/>
+                <file name="installation/server_installation/configuration_start1_en.ditamap"/>
                 <file name="installation/server_installation/configuration_start1.ditamap"/>
+                <file name="installation/server_installation/manualin_en.dita"/>
+                <file name="installation/server_installation/manualin_en.ditamap"/>
                 <file name="installation/server_installation/manualin.dita"/>
                 <file name="installation/server_installation/manualin.ditamap"/>
                 <file name="installation/server_installation/server_installation_en.ditamap"/>

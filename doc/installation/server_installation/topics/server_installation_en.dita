@@ -1,27 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
 <topic id="topic_j3r_5jy_wj">
-  <title>Installation of SequoiaDB Server</title>
-  <body>
-    <p>Availible system of installation :</p>
-    <simpletable>
-      <sthead>
-        <stentry>Installation</stentry>
-        <stentry>Linux</stentry>        
-      </sthead>
-      <strow>
-        <stentry>Wizard Installation</stentry>
-        <stentry>Yes</stentry>        
-      </strow>
-    </simpletable>
-    <section><title>Wizard Installation</title><p>Wizard installation is a GUI installation program
-        available for Linux and Windows. It is easy to install through the GUI program. It is used
-        to show settings and install SequoiaDB server.</p>In Linux, X Server is essential to show
-      GUI. It there is no X Server in Linux, users can choose to install through text
-      interface.</section>
-  <p>
-    <xref href="linux_en.dita">Installation of Linux version DB</xref>    
-  </p>
-    <p><xref href="linuxom_en.dita">Installation of Linux version OM</xref></p>
+  <title>SequoiaDB 服务器安装部署</title>
+  <body>    
+    <p>安装部署分为自动化安装和手工安装两种方式，用户可以选择其中一种进行安装：</p>
+    <p><xref href="../autoin_en.dita">自动化安装部署</xref></p>
+    <p><xref href="../manualin_en.dita">手工安装部署</xref></p>   
   </body>
 </topic>
