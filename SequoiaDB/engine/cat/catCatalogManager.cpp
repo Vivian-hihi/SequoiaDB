@@ -1645,7 +1645,10 @@ namespace engine
       if ( mask & CAT_MASK_COMPRESSED )
       {
          UINT32 attr = 0 ;
-         attr |= DMS_MB_ATTR_COMPRESSED ;
+         if ( clInfo._isCompressed )
+         {
+            attr |= DMS_MB_ATTR_COMPRESSED ;
+         }
          builder.append( CAT_ATTRIBUTE_NAME, attr ) ;
       }
       if ( mask & CAT_MASK_SHDKEY )
