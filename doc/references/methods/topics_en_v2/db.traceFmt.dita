@@ -5,7 +5,7 @@
   <body>
     <section>
       <title>NAME</title>
-      <p>traceFmt - 将db.traceOff()导出来的二进制文件格式化为另外文件输出 </p>
+      <p>traceFmt - To format the binary data into other type of file that db.traceOff() exported.</p>
     </section>
     <section>
       <title>SYNOPSIS</title>
@@ -17,7 +17,7 @@
     </section>
     <section>
       <title>DESCRIPTION</title> 
-      <p>将db.traceOff()导出来的二进制文件格式化为另外文件输出 </p>
+      <p>To format the binary data into other type of file that db.traceOff() exported.</p>
       <parml>
         <plentry>
           <pt>formatType (int)</pt>

@@ -80,8 +80,8 @@
         </strow>
         <strow>
           <stentry>TotalLobPages</stentry>
-          <stentry>整型</stentry>
-          <stentry>集合的大对象页总数</stentry>
+          <stentry>Integer</stentry>
+          <stentry>Pages number of LOBs in the collection</stentry>
         </strow>
         <strow>
           <stentry>TotalDataFreeSpace</stentry>

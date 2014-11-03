@@ -39,8 +39,8 @@
         </strow>
         <strow>
           <stentry>LobPageSize</stentry>
-          <stentry>整型</stentry>
-          <stentry>集合空间大对象数据页大小</stentry>
+          <stentry>Integer</stentry>
+          <stentry>Pages number of LOB in the collection</stentry>
         </strow>
         <strow>
           <stentry>MaxCapacitySize</stentry>
@@ -49,18 +49,18 @@
         </strow>
         <strow>
           <stentry>MaxDataCapSize</stentry>
-          <stentry>长整型</stentry>
-          <stentry>集合空间数据文件最大容量上限</stentry>
+          <stentry>Long Integer</stentry>
+          <stentry>Maximum data file capacity size of the collection space</stentry>
         </strow>
         <strow>
           <stentry>MaxIndexCapSize</stentry>
-          <stentry>长整型</stentry>
-          <stentry>集合空间索引文件最大容量上限</stentry>
+          <stentry>Long Integer</stentry>
+          <stentry>Maximum index file capacity size of the collection space</stentry>
         </strow>
         <strow>
           <stentry>MaxLobCapSize</stentry>
-          <stentry>长整型</stentry>
-          <stentry>集合空间大对象文件最大容量上限</stentry>
+          <stentry>Long Integer</stentry>
+          <stentry>Maximum LOB file capacity size of the collection space</stentry>
         </strow>
         <strow>
           <stentry>NumCollections</stentry>
@@ -84,33 +84,33 @@
         </strow>
         <strow>
           <stentry>TotalDataSize</stentry>
-          <stentry>长整型</stentry>
-          <stentry>集合空间数据文件总大小</stentry>
+          <stentry>Long Integer</stentry>
+          <stentry>Total size of all the data files in the collection space</stentry>
         </strow>
         <strow>
           <stentry>FreeDataSize</stentry>
-          <stentry>长整型</stentry>
-          <stentry>集合空间数据文件空闲空间大小</stentry>
+          <stentry>Long Integer</stentry>
+          <stentry>Size of total available data file storing space of the collection space </stentry>
         </strow>
         <strow>
           <stentry>TotalIndexSize</stentry>
-          <stentry>长整型</stentry>
-          <stentry>集合空间索引文件总大小</stentry>
+          <stentry>Long Integer</stentry>
+          <stentry>Total size of all the index files in the collection space</stentry>
         </strow>
         <strow>
           <stentry>FreeIndexSize</stentry>
-          <stentry>长整型</stentry>
-          <stentry>集合空间索引文件空闲空间大小</stentry>
+          <stentry>Long Integer</stentry>
+          <stentry>Size of total available index file storing space of the collection space</stentry>
         </strow>
         <strow>
           <stentry>TotalLobSize</stentry>
-          <stentry>长整型</stentry>
-          <stentry>集合空间大对象文件总大小</stentry>
+          <stentry>Long Integer</stentry>
+          <stentry>Total size of all the LOB files in the collection space</stentry>
         </strow>
         <strow>
           <stentry>FreeLobSize</stentry>
-          <stentry>长整型</stentry>
-          <stentry>集合空间大对象文件空闲空间大小</stentry>
+          <stentry>Long Integer</stentry>
+          <stentry>Size of total available LOB file storing space of the collection space</stentry>
         </strow>
       </simpletable>
     </section>    
@@ -138,8 +138,8 @@
         </strow>
         <strow>
           <stentry>LobPageSize</stentry>
-          <stentry>整型</stentry>
-          <stentry>集合空间大对象数据页大小</stentry>
+          <stentry>Integer</stentry>
+          <stentry>Pages number of LOB in the collection</stentry>
         </strow>
         <strow>
           <stentry>TotalSize</stentry>
@@ -153,33 +153,33 @@
         </strow>
         <strow>
           <stentry>TotalDataSize</stentry>
-          <stentry>长整型</stentry>
-          <stentry>集合空间数据文件总大小</stentry>
+          <stentry>Long Integer</stentry>
+          <stentry>Total size of all the data files in the collection space</stentry>
         </strow>
         <strow>
           <stentry>FreeDataSize</stentry>
-          <stentry>长整型</stentry>
-          <stentry>集合空间数据文件空闲空间大小</stentry>
+          <stentry>Long Integer</stentry>
+          <stentry>Size of total available data file storing space of the collection space</stentry>
         </strow>
         <strow>
           <stentry>TotalIndexSize</stentry>
-          <stentry>长整型</stentry>
-          <stentry>集合空间索引文件总大小</stentry>
+          <stentry>Long Integer</stentry>
+          <stentry>Total size of all the index files in the collection space</stentry>
         </strow>
         <strow>
           <stentry>FreeIndexSize</stentry>
-          <stentry>长整型</stentry>
-          <stentry>集合空间索引文件空闲空间大小</stentry>
+          <stentry>Long Integer</stentry>
+          <stentry>Size of total available index file storing space of the collection space</stentry>
         </strow>
         <strow>
           <stentry>TotalLobSize</stentry>
-          <stentry>长整型</stentry>
-          <stentry>集合空间大对象文件总大小</stentry>
+          <stentry>Long Integer</stentry>
+          <stentry>Total size of all the LOB files in the collection space</stentry>
         </strow>
         <strow>
           <stentry>FreeLobSize</stentry>
-          <stentry>长整型</stentry>
-          <stentry>集合空间大对象文件空闲空间大小</stentry>
+          <stentry>Long Integer</stentry>
+          <stentry>Size of total available LOB file storing space of the collection space</stentry>
         </strow>
         <strow>
           <stentry>Group.GroupName</stentry>
