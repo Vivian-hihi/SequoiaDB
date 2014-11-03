@@ -58,7 +58,7 @@
        <!-- <echo file="${reports.path}/TEST-${test.suite.class.name}.xml" message="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot; ?&gt;&#10;&lt;testsuite name=&quot;${test.suite.name}&quot; type=&quot;${test-type}&quot; deploy=&quot;${deploy.name}&quot; hostname=&quot;${host.NAME}&quot; tests=&quot;1&quot; failure=&quot;0&quot;&gt;&#10;" /> -->
         
         <chmod dir="${CPP.testcase.path}" perm="u+x" includes="*" />
-        <foreach target="test-one-sample" param="case-full-name">
+        <foreach target="test-one-case" param="case-full-name">
             <fileset dir="${CPP.testcase.path}">
                 <include name="${includes.dir.patterns}" />
                 <exclude name="${excludes.dir.patterns}" />
