@@ -3,6 +3,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System;
 using SequoiaDB.Bson;
+using System.IO;
 
 /** \namespace SequoiaDB
  *  \brief SequoiaDB Driver for C#.Net
@@ -217,6 +218,43 @@ namespace SequoiaDB
             if (connection == null)
                 return true;
             return connection.IsClosed();
+        }
+
+        /** \fn bool IsValid()
+         *  \brief Judge wether the connection is is valid or not
+         *  \return If the connection is valid, return true
+         */
+        public bool IsValid()
+        {
+            if (connection == null || connection.IsClosed())
+            {
+                return false;
+            }
+            int flags = -1;
+            // send a lightweight query msg to engine to check
+            // wether connection is ok or not
+            try
+            {
+                long[] contextIds = new long[] { -1 };
+                byte[] request = SDBMessageHelper.BuildKillCursorMsg(contextIds, isBigEndian);
+
+                connection.SendMessage(request);
+                SDBMessage rtnSDBMessage = SDBMessageHelper.MsgExtractReply(connection.ReceiveMessage(isBigEndian), isBigEndian);
+                flags = rtnSDBMessage.Flags;
+                if (flags != 0)
+                {
+                    throw new BaseException(flags);
+                }
+            }
+            catch (IOException e)
+            {
+                return false;
+            }
+            catch (BaseException e)
+            {
+                return false;
+            }
+            return true;
         }
 
         /** \fn void CreateUser(string username, string password)

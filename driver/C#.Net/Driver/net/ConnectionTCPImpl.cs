@@ -83,9 +83,14 @@ namespace SequoiaDB
 
         public bool IsClosed()
         {
-            if (connection == null)
+            if ( connection == null || !connection.Connected )
+            {
                 return true;
-            return connection.Connected;
+            }
+            else
+            {
+                return false;
+            }
         }
 
         public void ChangeConfigOptions(ConfigOptions opts)
@@ -101,8 +106,8 @@ namespace SequoiaDB
             {
                 if ( null != connection )
                 {
-			output.Write(msg, 0, msg.Length);
-		   }
+			        output.Write(msg, 0, msg.Length);
+		        }
             }
             catch (IOException e)
             {
@@ -116,39 +121,49 @@ namespace SequoiaDB
 
         public byte[] ReceiveMessage(bool isBigEndian)
         {
-            byte[] buf = new byte[4];
-            int rtn = input.Read(buf, 0, 4);
-            if (rtn != 4)
+            try
             {
-               logger.Error("Expect 4-byte message length but got:::" + rtn);
-               Close();
-               throw new IOException("Expect 4-byte message length");
-            }
+                byte[] buf = new byte[4];
+                int rtn = input.Read(buf, 0, 4);
+                if (rtn != 4)
+                {
+                    logger.Error("Expect 4-byte message length but got:::" + rtn);
+                    Close();
+                    throw new IOException("Expect 4-byte message length");
+                }
 
-            int msgSize = Helper.ByteToInt(buf, isBigEndian);
+                int msgSize = Helper.ByteToInt(buf, isBigEndian);
 
-            byte[] rtnBuf = new byte[msgSize];
-            Array.Copy(buf, rtnBuf, 4);
-            rtn = 4;
-            int retSize = 0;
-            while (rtn < msgSize)
-            {
-                retSize = input.Read(rtnBuf, rtn, msgSize - rtn);
-                if (-1 == retSize)
+                byte[] rtnBuf = new byte[msgSize];
+                Array.Copy(buf, rtnBuf, 4);
+                rtn = 4;
+                int retSize = 0;
+                while (rtn < msgSize)
+                {
+                    retSize = input.Read(rtnBuf, rtn, msgSize - rtn);
+                    if (-1 == retSize)
+                    {
+                        Close();
+                        throw new IOException("Failed to read from socket");
+                    }
+                    rtn += retSize;
+                }
+
+                if (rtn != msgSize)
                 {
                     Close();
-                    throw new IOException("Failed to read from socket");
+                    throw new IOException("Message length in header incorrect");
                 }
-                rtn += retSize;
+                return rtnBuf;
             }
-
-            if (rtn != msgSize)
+            catch (IOException e)
             {
-                Close();
-                throw new IOException("Message length in header incorrect");
+                throw e;
             }
-
-            return rtnBuf;
+            catch (SystemException)
+            {
+                throw new BaseException("SDB_NETWORK");
+            }
         }
 
         public byte[] ReceiveMessage(int msgSize)

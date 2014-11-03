@@ -116,6 +116,29 @@ namespace DriverTest
         }
 
         [TestMethod()]
+        public void IsValidTest()
+        {
+            bool result = false;
+            Sequoiadb sdb2 = new Sequoiadb(config.conf.Coord.Address);
+            System.Console.WriteLine(config.conf.Coord.Address.ToString());
+            sdb2.Connect("", "");
+            Assert.IsNotNull(sdb2.Connection);
+            // check before disconnect
+            result = sdb2.IsValid();
+            Assert.IsTrue(result);
+            // check after disconnect
+            sdb2.Disconnect();
+            result = sdb2.IsValid();
+            Assert.IsFalse(result);
+            // check after shutdown database manually
+            sdb2 = new Sequoiadb(config.conf.Coord.Address);
+            sdb2.Connect("", "");
+            result = true;
+            result = sdb2.IsValid();
+            Assert.IsFalse(result);
+        }
+
+        [TestMethod()]
         [Ignore]
         public void IsClosedTest()
         {
@@ -132,7 +155,7 @@ namespace DriverTest
             //result = sdb2.IsClosed();
             Assert.IsTrue(true);
         }
-         
+
         [TestMethod()]
         public void CollectionSpaceTest()
         {
