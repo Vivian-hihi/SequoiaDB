@@ -4,15 +4,15 @@
   <Password></Password>
 
   <Coord>
-    <Address>192.168.20.40:12340</Address>
+    <Address>192.168.20.42:11810</Address>
   </Coord>
 
   <Catalog>
-    <Address>192.168.20.40:30000</Address>
+    <Address>192.168.20.42:11800</Address>
   </Catalog>
 
   <Data>
-    <Address>192.168.20.40:51000</Address>
+    <Address>192.168.20.42:11830</Address>
   </Data>
 
   <Groups>
@@ -20,9 +20,9 @@
       <GroupName>testgroup</GroupName>
       <Nodes>
         <Node>
-          <HostName>ubuntu-dev1</HostName>
+          <HostName>susetzb</HostName>
           <Port>40000</Port>
-          <DBPath>/home/users/tanzhaobo/data/database/data/40000</DBPath>
+          <DBPath>/opt/sequoiadb/database/data/40000</DBPath>
           <DiagLevel>5</DiagLevel>
         </Node>
       </Nodes>
@@ -31,21 +31,21 @@
       <GroupName>testgroup1</GroupName>
       <Nodes>
         <Node>
-          <HostName>ubuntu-dev1</HostName>
+          <HostName>susetzb</HostName>
           <Port>45000</Port>
-          <DBPath>/home/users/tanzhaobo/data/database/data/45000</DBPath>
+          <DBPath>/opt/sequoiadb/database/data/45000</DBPath>
           <DiagLevel>5</DiagLevel>
         </Node>
         <Node>
-          <HostName>ubuntu-dev1</HostName>
+          <HostName>susetzb</HostName>
           <Port>46000</Port>
-          <DBPath>/home/users/tanzhaobo/data/database/data/46000</DBPath>
+          <DBPath>/opt/sequoiadb/database/data/46000</DBPath>
           <DiagLevel>5</DiagLevel>
         </Node>
         <Node>
-          <HostName>ubuntu-dev1</HostName>
+          <HostName>susetzb</HostName>
           <Port>47000</Port>
-          <DBPath>/home/users/tanzhaobo/data/database/data/47000</DBPath>
+          <DBPath>/opt/sequoiadb/database/data/47000</DBPath>
           <DiagLevel>5</DiagLevel>
         </Node>
       </Nodes>
@@ -54,21 +54,21 @@
       <GroupName>testgroup2</GroupName>
       <Nodes>
         <Node>
-          <HostName>ubuntu-dev1</HostName>
+          <HostName>susetzb</HostName>
           <Port>55000</Port>
-          <DBPath>/home/users/tanzhaobo/data/database/data/55000</DBPath>
+          <DBPath>/opt/sequoiadb/database/data/55000</DBPath>
           <DiagLevel>5</DiagLevel>
         </Node>
         <Node>
-          <HostName>ubuntu-dev1</HostName>
+          <HostName>susetzb</HostName>
           <Port>56000</Port>
-          <DBPath>/home/users/tanzhaobo/data/database/data/56000</DBPath>
+          <DBPath>/opt/sequoiadb/database/data/56000</DBPath>
           <DiagLevel>5</DiagLevel>
         </Node>
         <Node>
-          <HostName>ubuntu-dev1</HostName>
+          <HostName>susetzb</HostName>
           <Port>57000</Port>
-          <DBPath>/home/users/tanzhaobo/data/database/data/57000</DBPath>
+          <DBPath>/opt/sequoiadb/database/data/57000</DBPath>
           <DiagLevel>5</DiagLevel>
         </Node>
       </Nodes>

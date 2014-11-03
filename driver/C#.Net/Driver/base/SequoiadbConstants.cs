@@ -48,6 +48,12 @@ namespace SequoiaDB
         public const string SESSIONS = "sessions";
         public const string SESSIONS_CUR = "sessions current";
         public const string STOREUNITS = "storageunits";
+        public const string PROCEDURES = "procedures";
+        public const string DOMAINS = "domains";
+        public const string TASKS = "tasks";
+        public const string CS_IN_DOMAIN = "collectionspaces in domain";
+        public const string CL_IN_DOMAIN = "collections in domain";
+
         public const string COLLECTION = "collection";
         public const string CREATE_INX = "create index";
         public const string DROP_INX = "drop index";

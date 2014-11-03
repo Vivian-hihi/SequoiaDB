@@ -258,24 +258,38 @@ namespace DriverTest
             bson = cursor.Next();
             Assert.IsNotNull(bson);
 
+            if (Constants.isClusterEnv(sdb))
+            {
+                cursor = sdb.GetSnapshot(SDBConst.SDB_SNAP_CATALOG, dummy, dummy, dummy);
+                Assert.IsNotNull(cursor);
+                BsonDocument obj = cursor.Next();
+                Assert.IsNotNull(obj);
+            }
             sdb2.Disconnect();
         }
 
         [TestMethod()]
         public void GetListTest()
         {
-
             BsonDocument dummy = new BsonDocument();
-            DBCursor cursor = sdb.GetList(SDBConst.SDB_LIST_COLLECTIONS, dummy, dummy, dummy);
-            Assert.IsNotNull(cursor);
-            BsonDocument bson = cursor.Next();
-            Assert.IsNotNull(bson);
-
+            BsonDocument bson = null;
+            DBCursor cursor = null;
+            // list cs
             cursor = sdb.GetList(SDBConst.SDB_LIST_COLLECTIONSPACES, dummy, dummy, dummy);
             Assert.IsNotNull(cursor);
             bson = cursor.Next();
             Assert.IsNotNull(bson);
 
+            // list cl
+            cursor = sdb.GetList(SDBConst.SDB_LIST_COLLECTIONS, dummy, dummy, dummy);
+            Assert.IsNotNull(cursor);
+            bson = cursor.Next();
+            Assert.IsNotNull(bson);
+
+            BsonDocument obj = new BsonDocument("test", "test");
+            coll.Insert(obj);
+
+            // list groups
             // check whether it is in the cluster environment or not
             if (Constants.isClusterEnv(sdb))
             {
@@ -284,6 +298,19 @@ namespace DriverTest
                 bson = cursor.Next();
                 Assert.IsNotNull(bson);
             }
+
+            // list task
+            cursor = sdb.GetList(SDBConst.SDB_LIST_TASKS, dummy, dummy, dummy);
+            Assert.IsNotNull(cursor);
+
+            // TODO:
+            // list domains
+
+            // list stored procedure
+            cursor = sdb.GetList(SDBConst.SDB_LIST_STOREPROCEDURES, dummy, dummy, dummy);
+            Assert.IsNotNull(cursor);
+
+            // list all the contexts
             if (Constants.isClusterEnv(sdb))
             {
                 sdb.Disconnect();
@@ -295,31 +322,30 @@ namespace DriverTest
             bson = cursor.Next();
             Assert.IsNotNull(bson);
 
+            // list current context
             cursor = sdb.GetList(SDBConst.SDB_LIST_CONTEXTS_CURRENT, dummy, dummy, dummy);
             Assert.IsNotNull(cursor);
             bson = cursor.Next();
             Assert.IsNotNull(bson);
 
+            // list all the sessions 
             cursor = sdb.GetList(SDBConst.SDB_LIST_SESSIONS, dummy, dummy, dummy);
             Assert.IsNotNull(cursor);
             bson = cursor.Next();
             Assert.IsNotNull(bson);
 
+            // list current session
             cursor = sdb.GetList(SDBConst.SDB_LIST_SESSIONS_CURRENT, dummy, dummy, dummy);
             Assert.IsNotNull(cursor);
             bson = cursor.Next();
             Assert.IsNotNull(bson);
 
-            if (Constants.isClusterEnv(sdb))
-            {
-                sdb.Disconnect();
-                sdb = new Sequoiadb(config.conf.Catalog.Address);
-                sdb.Connect(config.conf.UserName, config.conf.Password);
-            }
+            // list storge units
             cursor = sdb.GetList(SDBConst.SDB_LIST_STORAGEUNITS, dummy, dummy, dummy);
             Assert.IsNotNull(cursor);
             bson = cursor.Next();
             Assert.IsNotNull(bson);
+
         }
 
         [TestMethod()]

@@ -524,6 +524,7 @@ namespace SequoiaDB
          *      SDB_SNAP_COLLECTIONSPACES
          *      SDB_SNAP_DATABASE
          *      SDB_SNAP_SYSTEM
+         *      SDB_SNAP_CATALOG
          *  \param matcher The matching condition or null
          *  \param selector The selective rule or null
          *  \param orderBy The ordered rule or null
@@ -612,6 +613,11 @@ namespace SequoiaDB
          *      SDB_LIST_COLLECTIONSPACES
          *      SDB_LIST_STORAGEUNITS
          *      SDB_LIST_GROUPS
+         *      SDB_LIST_STOREPROCEDURES
+         *      SDB_LIST_DOMAINS
+         *      SDB_LIST_TASKS
+         *      SDB_LIST_CS_IN_DOMAIN
+         *      SDB_LIST_CL_IN_DOMAIN
          *  \return A DBCursor of all the fitted objects or null
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
@@ -635,6 +641,12 @@ namespace SequoiaDB
          *      SDB_LIST_COLLECTIONSPACES
          *      SDB_LIST_STORAGEUNITS
          *      SDB_LIST_GROUPS
+         *      SDB_LIST_STOREPROCEDURES
+         *      SDB_LIST_DOMAINS
+         *      SDB_LIST_TASKS
+         *      SDB_LIST_CS_IN_DOMAIN
+         *      SDB_LIST_CL_IN_DOMAIN
+         *      
          *  \param matcher The matching condition or null
          *  \param selector The selective rule or null
          *  \param orderBy The ordered rule or null
@@ -679,6 +691,26 @@ namespace SequoiaDB
                 case SDBConst.SDB_LIST_GROUPS:
                     command = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.LIST_CMD + " " + 
                            SequoiadbConstants.GROUPS;
+                    break;
+                case SDBConst.SDB_LIST_STOREPROCEDURES:
+                    command = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.LIST_CMD + " " +
+                           SequoiadbConstants.PROCEDURES;
+                    break;
+                case SDBConst.SDB_LIST_DOMAINS:
+                    command = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.LIST_CMD + " " +
+                           SequoiadbConstants.DOMAINS;
+                    break;
+                case SDBConst.SDB_LIST_TASKS:
+                    command = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.LIST_CMD + " " +
+                           SequoiadbConstants.TASKS;
+                    break;
+                case SDBConst.SDB_LIST_CS_IN_DOMAIN:
+                    command = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.LIST_CMD + " " +
+                           SequoiadbConstants.CS_IN_DOMAIN;
+                    break;
+                case SDBConst.SDB_LIST_CL_IN_DOMAIN:
+                    command = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.LIST_CMD + " " +
+                           SequoiadbConstants.CL_IN_DOMAIN;
                     break;
                 default:
                     throw new BaseException("SDB_INVALIDARG");

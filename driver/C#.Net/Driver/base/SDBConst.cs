@@ -32,6 +32,11 @@
         public const int SDB_LIST_COLLECTIONSPACES = 5;
         public const int SDB_LIST_STORAGEUNITS     = 6;
         public const int SDB_LIST_GROUPS           = 7;
+        public const int SDB_LIST_STOREPROCEDURES  = 8;
+        public const int SDB_LIST_DOMAINS          = 9;
+        public const int SDB_LIST_TASKS            = 10;
+        public const int SDB_LIST_CS_IN_DOMAIN     = 11;
+        public const int SDB_LIST_CL_IN_DOMAIN     = 12;
 
         public enum NodeStatus
         {
