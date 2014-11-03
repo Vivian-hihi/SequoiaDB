@@ -137,12 +137,23 @@ namespace DriverTest
         public void CollectionSpaceTest()
         {
             string csName = "Test";
+            string csName2 = "Test2";
+            BsonDocument option = new BsonDocument();
+            option.Add(SequoiadbConstants.FIELD_PAGESIZE, 4096);
 
             if (!sdb.IsCollectionSpaceExist(csName))
+            {
+                // default and with page size
                 sdb.CreateCollectionSpace(csName);
+            }
             Assert.IsTrue(sdb.IsCollectionSpaceExist(csName));
             sdb.DropCollectionSpace(csName);
             Assert.IsFalse(sdb.IsCollectionSpaceExist(csName));
+            // with options
+            sdb.CreateCollectionSpace(csName2, option);
+            Assert.IsTrue(sdb.IsCollectionSpaceExist(csName2));
+            sdb.DropCollectionSpace(csName2);
+            Assert.IsFalse(sdb.IsCollectionSpaceExist(csName2));
         }
 
         [TestMethod()]

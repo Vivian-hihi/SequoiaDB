@@ -333,8 +333,8 @@ namespace SequoiaDB
 
         }
 
-        /** \fn void CreateCollectionSpace(string csName)
-         *  \brief Create the named collection space with default SDB_PAGESIZE_4K
+        /** \fn CollectionSpace CreateCollectionSpace(string csName)
+         *  \brief Create the named collection space with default SDB_PAGESIZE_64K
          *  \param csName The collection space name
          *  \return The collection space handle
          *  \exception SequoiaDB.BaseException
@@ -345,7 +345,7 @@ namespace SequoiaDB
             return CreateCollectionSpace(csName, SDBConst.SDB_PAGESIZE_DEFAULT);
         }
 
-        /** \fn void CreateCollectionSpace(string csName, int pageSize)
+        /** \fn CollectionSpace CreateCollectionSpace(string csName, int pageSize)
          *  \brief Create the named collection space
          *  \param csName The collection space name
          *  \param pageSize The Page Size as below
@@ -373,7 +373,35 @@ namespace SequoiaDB
                 throw new BaseException("SDB_INVALIDARG");
             }
 
-            SDBMessage rtn = CreateCS(csName, pageSize);
+            BsonDocument options = new BsonDocument();
+            options.Add(SequoiadbConstants.FIELD_PAGESIZE, pageSize);
+            SDBMessage rtn = CreateCS(csName, options);
+            int flags = rtn.Flags;
+            if (flags != 0)
+                throw new BaseException(flags);
+
+            return new CollectionSpace(this, csName.Trim());
+        }
+
+        /** \fn CollectionSpace CreateCollectionSpace(string csName, BsonDocument options)
+         *  \brief Create the named collection space
+         *  \param csName The collection space name
+         *  \param options The options specified by user, e.g. {"PageSize": 4096, "Domain": "mydomain"}
+         *  
+         *      PageSize   : Assign the pagesize of the collection space
+         *      Domain     : Assign which domain does current collection space belong to
+         *  \return The collection space handle
+         *  \exception SequoiaDB.BaseException
+         *  \exception System.Exception
+         */
+        public CollectionSpace CreateCollectionSpace(string csName, BsonDocument options)
+        {
+            if (csName == null )
+            {
+                throw new BaseException("SDB_INVALIDARG");
+            }
+
+            SDBMessage rtn = CreateCS(csName, options);
             int flags = rtn.Flags;
             if (flags != 0)
                 throw new BaseException(flags);
@@ -1251,8 +1279,7 @@ namespace SequoiaDB
                 return null;
         }
 
-
-        private SDBMessage CreateCS(string csName, int pageSize)
+        private SDBMessage CreateCS(string csName, BsonDocument options)
         {
             string commandString = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.CREATE_CMD + " " + SequoiadbConstants.COLSPACE;
             BsonDocument cObj = new BsonDocument();
@@ -1260,7 +1287,7 @@ namespace SequoiaDB
             SDBMessage sdbMessage = new SDBMessage();
 
             cObj.Add(SequoiadbConstants.FIELD_NAME, csName);
-            cObj.Add(SequoiadbConstants.FIELD_PAGESIZE, pageSize);
+            cObj.Add(options);
             sdbMessage.Matcher = cObj;
             sdbMessage.CollectionFullName = commandString;
 
