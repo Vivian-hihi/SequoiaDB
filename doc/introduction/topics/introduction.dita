@@ -4,7 +4,7 @@
   <title>SequoiaDB 数据库概述</title>
   <body>
     <p>SequoiaDB 数据库是一款新型企业级分布式非关系型数据库，帮助企业用户降低 IT 成本，并对大数据的存储与分析提供了一个坚实，可靠，高效与灵活的底层平台。</p>
-    <section>
+    <!--<section>
       <title>优势</title>
       <ul id="sequoiadb_introduction_advantages">
         <li>通过非结构化存储与分布式处理，提供了近线性的水平扩张能力，让底层的存储不再成为瓶颈</li>
@@ -14,6 +14,29 @@
         <li>提供了最终一致性的保障，从根本上杜绝数据缺失</li>
         <li>提供了在线应用与大数据分析的后台数据库的结合，通过读写分离机制做到同系统中数据分析与在线业务互不干扰</li>
       </ul>
+    </section>-->
+    <section><title>SequoiaDB version 1.10 版本说明</title>
     </section>
+    <section><title>接口变更：</title>
+      <p>1) 新增 Python 驱动</p>
+      <p>2) 添加 lob 的 c++、java、c#、python 驱动</p>
+      <p>3) sdbcm/sdbstart 启动的节点会自动切换到 SequoiaDB 安装账号运行</p>
+      <p>4) Sdb 增加 db.createCoordRG()、db.getCoordRG()、db.removeCoordRG()、db.getCatalogRG()、collection.findOne()、collection.putLob()、collection.getLob()、collection.deleteLob()、collection.listLobs() 接口</p></section>
+    <section><title>主要特性列表：</title>
+      <p>1) 实现大型对象（LOB）的读写删功能，支持超过 16MB 数据存入数据库（如电影，图片等）</p>
+      <p>2) 实现自动化部署安装功能，提供 Web 界面的安装部署向导</p>
+      <p>3) 增加 findOne 接口，提升查询性能</p>
+      <p>4) 访问计划字段修正，并且增加 Run:true/false 来控制访问计划是否需要具体执行</p>
+      <p>5) 提供集群数据一致性校验功能</p>
+      <p>6) 提供 forceSession 功能</p>
+      <p>7) 增加 invalidateCache 使用户可以在外部选择清除某个节点的缓存信息</p>
+      <p>8) Coord 加入 Catalog 管理，能够通过 Coord 创建 Coord</p>
+      <p>9) 通过 sdb 工具直连 cm 可以创建 standalone、coord、om 节点，并能启停节点</p>
+      <p>10) 优化存储过程，实现存储过程继承当前会话的鉴权信息，并且存储过程执行的错误能在 sdb 获取</p>
+      <p>11) sequoaidb 在 root 账号下运行自动切换至 sdbamdin</p>
+      <p>12) 事务在节点升主、降备、退出、启动时优化</p>
+      <p>13) 以^开头的正则表达式能匹配索引， SQL 中的 like 能匹配索引</p></section>
+    <section><title>工具：</title>
+      <p>1) Sdblist、sdbstart、sdbstop 工具优化</p></section>    
   </body>
 </topic>
