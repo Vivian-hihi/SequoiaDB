@@ -26,7 +26,6 @@
 			<ant antfile="deploy-software-in-host.xml" dir="." inheritAll="false">
 				<property name="install.package.fullname" value="${install.package.fullname}" />
 				<property name="deploy.host.name" value="${test.machine.no1.basic}" />
-				<!-- <property name="coord.service.port" value="${coord.service.port}" /> -->
 				<property name="is.standalone.mode" value="false" />
 				<property name="is.coord.master" value="true"/>
 				<property name="catalog.addrs" value="${test.machine.no1.data}:30003,${test.machine.no2.data}:30003,${test.machine.no3.data}:30003" />
@@ -160,7 +159,7 @@
 	<target name="H3-G5-D3" depends="">
 		<hostinfo prefix="host" />
 		<!-- <property name="test-type-list" value="basic,ant" /> -->
-		<property name="test-type-list" value="driver-CPP,driver-C,driver-python,driver-java" />
+		<property name="test-type-list" value="driver-C,driver-python,driver-java" />
 		<property name="copy.test.log" value="true"/>
 		<!-- <property name="import.file.name" value="basic-testcases-time.json" /> -->
 
