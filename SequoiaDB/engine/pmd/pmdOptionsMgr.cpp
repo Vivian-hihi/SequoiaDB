@@ -937,6 +937,7 @@ namespace engine
       _pagecleanNum        = PMD_DFT_NUMPAGECLEAN ;
       _pagecleanInterval   = PMD_DFT_PAGECLEANINTERVAL ;
       _dialogFileNum       = 0 ;
+      _directIOInLob       = FALSE ;
 
       // other configs
       ossMemset( _krcbConfPath, 0, sizeof( _krcbConfPath ) ) ;
@@ -1120,6 +1121,9 @@ namespace engine
                FALSE, TRUE, PMD_DFT_PAGECLEANINTERVAL ) ;
       rdvMinMax ( pEX, _pagecleanInterval, PMD_MIN_PAGECLEANINTERVAL,
                   -1, TRUE ) ;
+
+      rdxBooleanS( pEX, PMD_OPTION_DIRECT_IO_IN_LOB, _directIOInLob,
+                   FALSE, TRUE, FALSE, FALSE ) ;
       // end map
 
       return getResult () ;
