@@ -138,7 +138,7 @@ SdbDomain.prototype.help = function( val ) {
    if ( val == undefined )
    {
       println("Domain methods:") ;
-      println("   domain.help(<method>)           help on specified method of domain, e.g. domain.help(\'alter\')");
+      println("   domain.help(<method>)       help on specified method of domain, e.g. domain.help(\'alter\')");
       man( "domain" ) ;
    }
    else
