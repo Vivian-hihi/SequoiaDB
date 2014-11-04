@@ -755,4 +755,18 @@
       </detail>
       <typeofweb>str</typeofweb>
    </opt>
+
+   <opt>
+      <name>PMD_OPTION_DIRECT_IO_IN_LOB</name>
+      <long>directioinlob</long>
+      <description>
+         <en>Open direct io in large object</en>
+         <cn>在大对象功能中关闭文件系统缓存</cn>
+      </description>
+      <detail>
+         <en>If it is not spcified, the default value is "false"</en>
+         <cn>如果不指定，默认值为"false"</cn>
+      </detail>
+      <typeofweb>boolean</typeofweb>
+   </opt>
 </optlist>
