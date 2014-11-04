@@ -220,7 +220,10 @@ dmsFiles = [
       "dms/dmsTmpBlkUnit.cpp",
       "dms/dmsCompress.cpp",
       "dms/dmsStorageLob.cpp",
-      "dms/dmsStorageLobData.cpp"
+      "dms/dmsStorageLobData.cpp",
+      "dms/dmsLobDirectBuffer.cpp",
+      "dms/dmsLobDirectInBuffer.cpp",
+      "dms/dmsLobDirectOutBuffer.cpp"
       ]
 
 ixmFiles = [

@@ -37,6 +37,7 @@
 #include "dmsLobDef.hpp"
 #include "ossIO.hpp"
 #include "dmsStorageBase.hpp"
+#include "pmdEDU.hpp"
 
 namespace engine
 {
@@ -75,7 +76,8 @@ namespace engine
       INT32 open( const CHAR *path,
                   BOOLEAN createNew,
                   BOOLEAN delWhenExist,
-                  const dmsStorageInfo &info ) ;
+                  const dmsStorageInfo &info,
+                  _pmdEDUCB *cb ) ;
 
       BOOLEAN isOpened() const ;
 
@@ -86,11 +88,13 @@ namespace engine
       INT32 write( DMS_LOB_PAGEID page,
                    const CHAR *data,
                    UINT32 len,
-                   UINT32 offset ) ;
+                   UINT32 offset,
+                   _pmdEDUCB *cb ) ;
 
       INT32 read( DMS_LOB_PAGEID page,
                   UINT32 len,
                   UINT32 offset,
+                  _pmdEDUCB *cb,
                   CHAR *buf,
                   UINT32 &readLen ) ;
 
@@ -102,11 +106,14 @@ namespace engine
                      UINT32 &readLen ) ;
 
    private:
-      INT32 _initFileHeader( const dmsStorageInfo &info ) ;
+      INT32 _initFileHeader( const dmsStorageInfo &info,
+                             _pmdEDUCB *cb ) ;
 
-      INT32 _validateFile( const dmsStorageInfo &info ) ;
+      INT32 _validateFile( const dmsStorageInfo &info,
+                           _pmdEDUCB *cb ) ;
 
-      INT32 _getFileHeader( _dmsStorageUnitHeader &header ) ;
+      INT32 _getFileHeader( _dmsStorageUnitHeader &header,
+                            _pmdEDUCB *cb ) ;
 
       OSS_INLINE SINT64 getSeek( DMS_LOB_PAGEID page,
                                  UINT32 offset ) const
@@ -126,7 +133,7 @@ namespace engine
       INT64             _lastSz ;
       UINT32            _pageSz ;
       UINT32            _logarithmic ;
-
+      BOOLEAN           _isDirect ;
       UINT32            _segmentPages ;
       UINT32            _segmentPagesSquare ;
 

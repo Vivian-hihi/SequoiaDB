@@ -35,6 +35,8 @@
 #include "dpsOp2Record.hpp"
 #include "pmd.hpp"
 #include "dpsTransCB.hpp"
+#include "dmsTrace.hpp"
+#include "pdTrace.hpp"
 
 namespace engine
 {
@@ -84,11 +86,13 @@ namespace engine
       _dmsBME = NULL ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGELOB_OPEN, "_dmsStorageLob::open" )
    INT32 _dmsStorageLob::open( const CHAR *path,
                                BOOLEAN createNew,
                                BOOLEAN rmWhenExist )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__DMSSTORAGELOB_OPEN ) ;
 
       // copy path
       ossStrncpy( _path, path, OSS_MAX_PATHSIZE ) ;
@@ -103,12 +107,15 @@ namespace engine
          rc = _openLob( path, createNew, rmWhenExist ) ;
       }
 
+      PD_TRACE_EXITRC( SDB__DMSSTORAGELOB_OPEN, rc ) ;
       return rc ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGELOB__DELAYOPEN, "_dmsStorageLob::_delayOpen" )
    INT32 _dmsStorageLob::_delayOpen()
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__DMSSTORAGELOB__DELAYOPEN ) ;
 
       _delayOpenLatch.get() ;
 
@@ -137,17 +144,19 @@ namespace engine
 
    done:
       _delayOpenLatch.release() ;
+      PD_TRACE_EXITRC( SDB__DMSSTORAGELOB__DELAYOPEN, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGELOB__OPENLOB, "_dmsStorageLob::_openLob" )
    INT32 _dmsStorageLob::_openLob( const CHAR *path,
                                    BOOLEAN createNew,
                                    BOOLEAN rmWhenExist )
    {
       INT32 rc = SDB_OK ;
-
+      PD_TRACE_ENTRY( SDB__DMSSTORAGELOB__OPENLOB ) ;
       rc = openStorage( path, createNew, rmWhenExist ) ;
       if ( SDB_OK != rc )
       {
@@ -160,7 +169,8 @@ namespace engine
          goto error ;
       }
 
-      rc = _data.open( path, createNew, rmWhenExist, *_pStorageInfo ) ;
+      rc = _data.open( path, createNew, rmWhenExist,
+                       *_pStorageInfo, pmdGetThreadEDUCB() ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to open lobd file:%s, rc:%d",
@@ -177,6 +187,7 @@ namespace engine
       }
 
    done:
+      PD_TRACE_EXITRC( SDB__DMSSTORAGELOB__OPENLOB, rc ) ;
       return rc ;
    error:
       _data.close() ;
@@ -190,9 +201,11 @@ namespace engine
       goto error ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGELOB_REMOVESTORAGEFILES, "_dmsStorageLob::removeStorageFiles" )
    void _dmsStorageLob::removeStorageFiles()
    {
       INT32 rc = removeStorage() ;
+      PD_TRACE_ENTRY( SDB__DMSSTORAGELOB_REMOVESTORAGEFILES ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to remove file:%d", rc ) ;
@@ -204,6 +217,7 @@ namespace engine
          PD_LOG( PDERROR, "failed to remove file:%d", rc ) ;
       }
 
+      PD_TRACE_EXIT( SDB__DMSSTORAGELOB_REMOVESTORAGEFILES ) ;
       return ;
    }
 
@@ -212,12 +226,14 @@ namespace engine
       return _data.isOpened() ;
    }
 
+    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGELOB_GETLOBMETA, "_dmsStorageLob::getLobMeta" )
    INT32 _dmsStorageLob::getLobMeta( const bson::OID &oid,
                                      dmsMBContext *mbContext,
                                      pmdEDUCB *cb,
                                      _dmsLobMeta &meta )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__DMSSTORAGELOB_GETLOBMETA ) ;
       UINT32 readSz = 0 ;
       dmsLobRecord piece ;
       piece.set( &oid, DMS_LOB_META_SEQUENCE, 0,
@@ -246,12 +262,14 @@ namespace engine
          goto error ;
       }
    done:
+      PD_TRACE_EXITRC( SDB__DMSSTORAGELOB_GETLOBMETA, rc ) ;
       return rc ;
    error:
       meta.clear() ;
       goto done ;
    }
 
+    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGELOB_WRITELOBMETA, "_dmsStorageLob::writeLobMeta" )
    INT32 _dmsStorageLob::writeLobMeta( const bson::OID &oid,
                                        dmsMBContext *mbContext,
                                        pmdEDUCB *cb,
@@ -260,6 +278,7 @@ namespace engine
                                        SDB_DPSCB *dpsCB )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__DMSSTORAGELOB_WRITELOBMETA ) ;
       dmsLobRecord piece ;
       piece.set( &oid, DMS_LOB_META_SEQUENCE, 0,
                  sizeof( meta ), ( const CHAR * )( &meta ) ) ;
@@ -282,19 +301,20 @@ namespace engine
          }
       }
    done:
+      PD_TRACE_EXITRC( SDB__DMSSTORAGELOB_WRITELOBMETA, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
-   /// TODO: add a mutil-write interface to increase
-   /// sequential writeing.
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGELOB_WRITE, "_dmsStorageLob::write" )
    INT32 _dmsStorageLob::write( const dmsLobRecord &record,
                                 dmsMBContext *mbContext,
                                 pmdEDUCB *cb,
                                 SDB_DPSCB *dpscb )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__DMSSTORAGELOB_WRITE ) ;
       SDB_ASSERT( NULL != mbContext && NULL != cb, "can not be null" ) ;
       SDB_ASSERT( 0 == record._offset, "must be zero" ) ;
       DMS_LOB_PAGEID page = DMS_LOB_INVALID_PAGEID ;
@@ -389,7 +409,7 @@ namespace engine
       }
 
       rc = _data.write( page, record._data, record._dataLen,
-                        record._offset ) ;
+                        record._offset, cb ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to write data to cl:%s, rc:%d",
@@ -436,6 +456,8 @@ namespace engine
       {
          transCB->releaseLogSpace( logRecord.head()._length ) ;
       }
+
+      PD_TRACE_EXITRC( SDB__DMSSTORAGELOB_WRITE, rc ) ;
       return rc ;
    error:
       if ( DMS_LOB_INVALID_PAGEID != page )
@@ -445,12 +467,14 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGELOB_UPDATE, "_dmsStorageLob::update" )
    INT32 _dmsStorageLob::update( const dmsLobRecord &record,
                                  dmsMBContext *mbContext,
                                  pmdEDUCB *cb,
                                  SDB_DPSCB *dpscb )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__DMSSTORAGELOB_UPDATE ) ;
       SDB_ASSERT( NULL != mbContext && NULL != cb, "can not be null" ) ;
       SDB_ASSERT( 0 == record._offset, "must be zero" ) ;
       SDB_ASSERT( _dmsHeader->_lobdPageSize <= DMS_PAGE_SIZE512K,
@@ -523,7 +547,7 @@ namespace engine
                     mbContext->mb()->_collectionName,
                     clNameLen + 1 ) ; /// +1 for '\0'
 
-         rc = _data.read( page, blk->_dataLen, 0, oldData, oldLen ) ;
+         rc = _data.read( page, blk->_dataLen, 0, cb, oldData, oldLen ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "failed to read data from file:%d", rc ) ;
@@ -570,7 +594,7 @@ namespace engine
       }
 
       rc = _data.write( page, record._data, record._dataLen,
-                        record._offset ) ;
+                        record._offset, cb ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to write data to cl:%s, rc:%d",
@@ -609,6 +633,7 @@ namespace engine
       {
          transCB->releaseLogSpace( logRecord.head()._length ) ;
       }
+      PD_TRACE_EXITRC( SDB__DMSSTORAGELOB_UPDATE, rc ) ;
       return rc ;
    error:
       if ( DMS_LOB_INVALID_PAGEID != page )
@@ -618,6 +643,7 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGELOB_READ, "_dmsStorageLob::read" )
    INT32 _dmsStorageLob::read( const dmsLobRecord &record,
                                dmsMBContext *mbContext,
                                pmdEDUCB *cb,
@@ -625,6 +651,7 @@ namespace engine
                                UINT32 &readLen )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__DMSSTORAGELOB_READ ) ;
       DMS_LOB_PAGEID page = DMS_LOB_INVALID_PAGEID ;
       _dmsLobDataMapBlk *blk = NULL ;
       BOOLEAN locked = mbContext->isMBLock() ;
@@ -662,7 +689,8 @@ namespace engine
          goto error ;
       }
 
-      rc = _data.read( page, record._dataLen, record._offset, buf, readLen ) ;
+      rc = _data.read( page, record._dataLen, record._offset,
+                       cb, buf, readLen ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to read data from file:%d", rc ) ;
@@ -673,17 +701,19 @@ namespace engine
       {
          mbContext->mbUnlock() ;
       }
+      PD_TRACE_EXITRC( SDB__DMSSTORAGELOB_READ, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
-
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGELOB__ALLOCATEPAGE, "_dmsStorageLob::_allocatePage" )
    INT32 _dmsStorageLob::_allocatePage( const dmsLobRecord &record,
                                         dmsMBContext *context,
                                         DMS_LOB_PAGEID &page )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__DMSSTORAGELOB__ALLOCATEPAGE ) ;
       SDB_ASSERT( NULL != record._oid && 0 <= record._sequence &&
                   record._dataLen <= getLobdPageSize() &&
                   0 == record._offset, "invalid lob record" ) ;
@@ -697,16 +727,19 @@ namespace engine
       context->mbStat()->_totalLobPages += 1 ;
 
    done:
+      PD_TRACE_EXITRC( SDB__DMSSTORAGELOB__ALLOCATEPAGE, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGELOB__FILLPAGE, "_dmsStorageLob::_fillPage" )
    INT32 _dmsStorageLob::_fillPage( const dmsLobRecord &record,
                                     DMS_LOB_PAGEID page,
                                     dmsMBContext *context )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__DMSSTORAGELOB__FILLPAGE ) ;
       _dmsLobDataMapBlk *blk = NULL ;
 
       ossValuePtr extent = extentAddr( page ) ;
@@ -735,17 +768,20 @@ namespace engine
       }
 
    done:
+      PD_TRACE_EXITRC( SDB__DMSSTORAGELOB__FILLPAGE, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGELOB_REMOVE, "_dmsStorageLob::remove" )
    INT32 _dmsStorageLob::remove( const dmsLobRecord &record,
                                  dmsMBContext *mbContext,
                                  pmdEDUCB *cb,
                                  SDB_DPSCB *dpscb )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__DMSSTORAGELOB_REMOVE ) ;
       UINT32 bucketNumber = 0 ;
       _dmsLobDataMapBlk *blk = NULL ;
       DMS_LOB_PAGEID page = DMS_LOB_INVALID_PAGEID ;
@@ -811,7 +847,8 @@ namespace engine
                     mbContext->mb()->_collectionName,
                     clNameLen + 1 ) ;
 
-         rc = _data.read( page, blk->_dataLen, 0, oldData, oldLen ) ;
+         rc = _data.read( page, blk->_dataLen, 0,
+                          cb, oldData, oldLen ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "failed to read data from file:%d", rc ) ;
@@ -891,6 +928,7 @@ namespace engine
       {
          transCB->releaseLogSpace( logRecord.head()._length ) ;
       }
+      PD_TRACE_EXITRC( SDB__DMSSTORAGELOB_REMOVE, rc ) ;
       return rc ;
    error:
       goto done ;
@@ -901,6 +939,7 @@ namespace engine
       return _releaseSpace( page, 1 ) ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGELOB__FIND, "_dmsStorageLob::_find" )
    INT32 _dmsStorageLob::_find( const _dmsLobRecord &record,
                                 UINT32 clID,
                                 DMS_LOB_PAGEID &page,
@@ -908,6 +947,7 @@ namespace engine
                                 UINT32 *bucket )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__DMSSTORAGELOB__FIND ) ;
       UINT32 bucketNumber = _getBucket( record._hash ) ;
       DMS_LOB_PAGEID pageInBucket = _dmsBME->_buckets[bucketNumber] ;
       while ( DMS_LOB_INVALID_PAGEID != pageInBucket )
@@ -942,16 +982,19 @@ namespace engine
          *bucket = bucketNumber ;
       }
    done:
+      PD_TRACE_EXITRC( SDB__DMSSTORAGELOB__FIND, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGELOB__PUSH2BUCKET, "_dmsStorageLob::_push2Bucket" )
    INT32 _dmsStorageLob::_push2Bucket( UINT32 bucket,
                                        DMS_LOB_PAGEID pageId,
                                        _dmsLobDataMapBlk &blk )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__DMSSTORAGELOB__PUSH2BUCKET ) ;
       DMS_LOB_PAGEID &pageInBucket = _dmsBME->_buckets[bucket] ;
 
       /// empty bucket
@@ -994,14 +1037,17 @@ namespace engine
          } while ( TRUE ) ;
       }
    done:
+      PD_TRACE_EXITRC( SDB__DMSSTORAGELOB__PUSH2BUCKET, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGELOB__ONCREATE, "_dmsStorageLob::_onCreate" )
    INT32 _dmsStorageLob::_onCreate( OSSFILE *file, UINT64 curOffSet )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__DMSSTORAGELOB__ONCREATE ) ;
       SDB_ASSERT( DMS_BME_OFFSET == curOffSet, "invalid offset" ) ;
 
       _dmsBucketsManagementExtent *bme =
@@ -1027,14 +1073,17 @@ namespace engine
          SDB_OSS_DEL bme ;
          bme = NULL ;
       }
+      PD_TRACE_EXITRC( SDB__DMSSTORAGELOB__ONCREATE, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGELOB__ONMAPMETA, "_dmsStorageLob::_onMapMeta" )
    INT32 _dmsStorageLob::_onMapMeta( UINT64 curOffSet )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__DMSSTORAGELOB__ONMAPMETA ) ;
       rc = map ( DMS_BME_OFFSET, DMS_BME_SZ, (void**)&_dmsBME ) ;
       if ( rc )
       {
@@ -1042,6 +1091,7 @@ namespace engine
          goto error ;
       }
    done:
+      PD_TRACE_EXITRC( SDB__DMSSTORAGELOB__ONMAPMETA, rc ) ;
       return rc ;
    error:
       goto done ;
@@ -1063,9 +1113,11 @@ namespace engine
       return DMS_BME_OFFSET + DMS_BME_SZ ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGELOB__EXTENDSEGMENTS, "_dmsStorageLob::_extendSegments" )
    INT32 _dmsStorageLob::_extendSegments( UINT32 numSeg )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__DMSSTORAGELOB__EXTENDSEGMENTS ) ;
       INT64 extentLen = _data.getSegmentSize() ;
       rc = _data.extend( extentLen * numSeg ) ;
       if ( SDB_OK != rc )
@@ -1081,6 +1133,7 @@ namespace engine
          goto error ;
       }
    done:
+      PD_TRACE_EXITRC( SDB__DMSSTORAGELOB__EXTENDSEGMENTS, rc ) ;
       return rc ;
    error:
       goto done ;
@@ -1163,6 +1216,7 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGELOB_READPAGE, "_dmsStorageLob::_readPage" )
    INT32 _dmsStorageLob::readPage( DMS_LOB_PAGEID &pos,
                                    BOOLEAN onlyMetaPage,
                                    _pmdEDUCB *cb,
@@ -1170,6 +1224,7 @@ namespace engine
                                    dmsLobInfoOnPage &page )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__DMSSTORAGELOB_READPAGE ) ;
       DMS_LOB_PAGEID current = pos ;
       BOOLEAN locked = mbContext->isMBLock() ;
 
@@ -1236,16 +1291,19 @@ namespace engine
       {
          mbContext->mbUnlock() ;
       }
+      PD_TRACE_EXITRC( SDB__DMSSTORAGELOB_READPAGE, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGELOB__REMOVEPAGE, "_dmsStorageLob::_removePage" )
    INT32 _dmsStorageLob::_removePage( DMS_LOB_PAGEID page,
                                       const _dmsLobDataMapBlk *blk,
                                       const UINT32 *bucket )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__DMSSTORAGELOB__REMOVEPAGE ) ;
       UINT32 bucketNumber = 0 ;     
 
       if ( NULL != bucket )
@@ -1315,16 +1373,19 @@ namespace engine
       _dmsData->_mbStatInfo[ blk->_mbID ]._totalLobPages -= 1 ;
       _releasePage( page ) ;
    done:
+      PD_TRACE_EXITRC( SDB__DMSSTORAGELOB__REMOVEPAGE, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGELOB_TRUNCATE, "_dmsStorageLob::truncate" )
    INT32 _dmsStorageLob::truncate( dmsMBContext *mbContext,
                                    _pmdEDUCB *cb,
                                    SDB_DPSCB *dpscb )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__DMSSTORAGELOB_TRUNCATE ) ;
       DMS_LOB_PAGEID current = -1 ;
       BOOLEAN locked = FALSE ;
       BOOLEAN needPanic = FALSE ;
@@ -1459,6 +1520,7 @@ namespace engine
       {
          transCB->releaseLogSpace( logRecord.head()._length ) ;
       }
+      PD_TRACE_EXITRC( SDB__DMSSTORAGELOB_TRUNCATE, rc ) ;
       return rc ;
    error:
       if ( needPanic )

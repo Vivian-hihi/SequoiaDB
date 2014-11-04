@@ -175,6 +175,9 @@ namespace engine
       _pTransNodeMap    = NULL ;
       _transRC          = SDB_OK ;
 
+      _alignedMem       = NULL ;
+      _alignedMemSize   = 0 ;
+
       _curRequestID     = 1 ;
 
       _monCfgCB = *( (monConfigCB*)(pmdGetKRCB()->getMonCB()) ) ;
@@ -234,6 +237,7 @@ namespace engine
 
 #if defined ( SDB_ENGINE )
       clearTransInfo() ;
+      releaseAlignedMemory() ;
 #endif // SDB_ENGINE
 
       // release buff
@@ -922,6 +926,40 @@ namespace engine
          return TRUE;
       }
       return FALSE;
+   }
+
+   void *_pmdEDUCB::getAlignedMemory( UINT32 alignment, UINT32 size )
+   {
+      SDB_ASSERT( alignment == OSS_FILE_DIRECT_IO_ALIGNMENT,
+                  "rewrite this function if u want to use new alignment" ) ;
+      if ( _alignedMemSize < size )
+      {
+         if ( NULL != _alignedMem )
+         {
+            SDB_OSS_ORIGINAL_FREE( _alignedMem ) ;
+            _alignedMemSize = 0 ;
+            _alignedMem = NULL ; 
+         }
+
+         _alignedMem = ossAlignedAlloc( alignment, size ) ;
+         if ( NULL != _alignedMem )
+         {
+            _alignedMemSize = size ;
+         }
+      }
+      return _alignedMem ;
+   }
+
+   void _pmdEDUCB::releaseAlignedMemory()
+   {
+      if ( NULL != _alignedMem )
+      {
+         SDB_OSS_ORIGINAL_FREE( _alignedMem ) ;
+         _alignedMem = NULL ;
+         _alignedMemSize = 0 ;
+      }
+
+      return ;
    }
 #endif // SDB_ENGINE
 

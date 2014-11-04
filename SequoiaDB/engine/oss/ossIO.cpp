@@ -1763,7 +1763,9 @@ error :
  *      SDB_INVALID_FILE_TYPE (invalid input arguments)
  */
  // PD_TRACE_DECLARE_FUNCTION ( SDB_OSSEXTFILE, "ossExtendFile" )
-INT32 ossExtendFile ( OSSFILE *pFile, const INT64 incrementSize )
+INT32 ossExtendFile ( OSSFILE *pFile,
+                      const INT64 incrementSize,
+                      BOOLEAN direct )
 {
    // declare variables at top
    INT32    rc         = SDB_OK ;
@@ -1775,6 +1777,12 @@ INT32 ossExtendFile ( OSSFILE *pFile, const INT64 incrementSize )
 
    // sanity check, only take effect in debug build
    SDB_ASSERT ( pFile, "input file is NULL" ) ;
+
+   if ( direct )
+   {
+      SDB_ASSERT( 0 == incrementSize % OSS_FILE_DIRECT_IO_ALIGNMENT,
+                  "incrementSize must be aligned" ) ;
+   }
 
    // seek to end of the file
    rc = ossSeek( pFile, 0, OSS_SEEK_END ) ;
@@ -1794,7 +1802,15 @@ INT32 ossExtendFile ( OSSFILE *pFile, const INT64 incrementSize )
 #define OSS_EXTEND_DELTA 134217728
    loop       = incrementSize / ( OSS_EXTEND_DELTA ) ;
    remainder  = incrementSize % ( OSS_EXTEND_DELTA ) ;
-   pBuffer    = (CHAR*) SDB_OSS_MALLOC ( OSS_EXTEND_DELTA ) ;
+   if ( direct )
+   {
+      pBuffer = ( CHAR * )ossAlignedAlloc( OSS_FILE_DIRECT_IO_ALIGNMENT,
+                                           OSS_EXTEND_DELTA ) ;
+   }
+   else
+   {
+      pBuffer    = (CHAR*) SDB_OSS_MALLOC ( OSS_EXTEND_DELTA ) ;
+   }
 
    // always check allocation result
    SDB_VALIDATE_GOTOERROR ( pBuffer, SDB_OOM,
@@ -1831,7 +1847,16 @@ INT32 ossExtendFile ( OSSFILE *pFile, const INT64 incrementSize )
 done :
    // final clean up here, if pBuffer is allocated, we need to free
    if ( pBuffer )
-      SDB_OSS_FREE ( pBuffer ) ;
+   {
+      if ( direct )
+      {
+         SDB_OSS_ORIGINAL_FREE( pBuffer ) ;
+      }
+      else
+      {
+         SDB_OSS_FREE ( pBuffer ) ;
+      }
+   }
    PD_TRACE_EXITRC ( SDB_OSSEXTFILE, rc );
    return rc;
 error :

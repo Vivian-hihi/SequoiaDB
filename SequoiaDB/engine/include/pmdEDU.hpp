@@ -381,6 +381,9 @@ namespace engine
       void dumpInfo ( monEDUSimple &simple ) ;
       void dumpInfo ( monEDUFull &full ) ;
 
+      void *getAlignedMemory( UINT32 alignment, UINT32 size ) ;
+      void releaseAlignedMemory() ;
+
    #endif // SDB_ENGINE
 
    protected:
@@ -460,6 +463,10 @@ namespace engine
       DpsTransCBLockList      _transLockLst ;
       DpsTransNodeMap         *_pTransNodeMap ;
       INT32                   _transRC ;
+
+      /// aligned memory.
+      void                    *_alignedMem ;
+      UINT32                   _alignedMemSize ;
    #endif // SDB_ENGINE
 
    };
