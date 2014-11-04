@@ -49,4 +49,4 @@ db.traceOn(10000000);
 Turn on the tracefunction of the database engine, and specify the
 module's name to be traced and add a breakpoint to trace.
 .sp 2
-db.traceOn(10000000, "cls, dms mth", "_dmsTempCB::init") ;
+db.traceOn(10000000, "cls, dms, mth", "_dmsTempCB::init") ;

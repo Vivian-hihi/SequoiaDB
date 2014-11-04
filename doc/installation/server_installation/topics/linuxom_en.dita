@@ -28,7 +28,7 @@
         <li><p>Refer <xref href="../../system_require/topics/software_en.dita">System configuration
           requirement </xref> to configure Host Name and change the system kernel params.</p></li>
         <li>Run installation program<p>
-          <codeblock>./sequoiadb-1.0.0-linux-x86_64-installer.run --mode text --type SMS --svcname 11780 --dbpath /opt/sequoiadb/database/sms/11780 --restname 8000</codeblock></p>
+          <codeblock>./sequoiadb-1.0.0-linux-x86_64-installer.run --mode text --SMS true</codeblock></p>
           <note>Parameter typeis set to DB by default, when installing OM, type must be set first. Svcname, dbpath and restname , these three parameters only need to be pre-set when installing OM.</note></li>
         <li>The system prompt you to choose wizard language <p>
           <codeblock>Language Selection 

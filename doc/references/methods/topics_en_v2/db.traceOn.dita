@@ -38,7 +38,7 @@
       <p>Turn on the trace function of the database engine. Default is all the modules.</p>
       <codeblock>db.traceOn(10000000);</codeblock>
       <p>Turn on the tracefunction of the database engine, and specify the module's name to be traced and add a breakpoint to trace.</p>
-      <codeblock>db.traceOn(10000000, "cls, dms mth", "_dmsTempCB::init") ;</codeblock>
+      <codeblock>db.traceOn(10000000, "cls, dms, mth", "_dmsTempCB::init") ;</codeblock>
     </section>
   </body>
 </topic>

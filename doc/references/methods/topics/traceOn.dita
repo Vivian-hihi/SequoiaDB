@@ -37,7 +37,7 @@
     <section><title>示例</title>
       <ul>
         <li>开启数据库引擎程序跟踪的功能，默认为所有模块：<codeblock>db.traceOn(10000000);</codeblock></li>
-        <li>开户数据库引擎程序跟踪功能，指定跟踪的模块名称和指定断点进行跟踪：<codeblock>db.traceOn(10000000, "cls, dms mth", "_dmsTempCB::init") ;</codeblock></li>
+        <li>开户数据库引擎程序跟踪功能，指定跟踪的模块名称和指定断点进行跟踪：<codeblock>db.traceOn(10000000, "cls, dms, mth", "_dmsTempCB::init") ;</codeblock></li>
       </ul>      
     </section>
   </body>
