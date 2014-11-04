@@ -7,14 +7,6 @@
 
 <project name="deploy-test-in-host" default="Deploy-Test-In-Host">
 	<property file="ci.test.properties" />
-	<!-- <property name="is.standalone.mode" value="false" />
-	<property name="catalog.addrs" value="" />
-	<property name="is.coord.master" value="true" /> -->
-	<!-- <taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
-		<classpath>
-			<pathelement location="${test.machine.deploy.path}/deploy/ant-sdbtasks/ant-sdbtasks.jar" />
-		</classpath>
-	</taskdef>  -->
 
 	<target name="Clean-Deploy-In-Host" depends="">
 		<stafTools workHost="${deploy.host.name}" workType="delete" fileName="${test.machine.deploy.path}" failonerror="false" />

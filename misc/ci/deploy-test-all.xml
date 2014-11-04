@@ -15,7 +15,6 @@
 	<property name="deploy.config.path" value="${ci.script.file.path}/deploy-config" />
 	<property name="release.path" value="${WORKSPACE}/release" />
 	<property file="${release.path}/build.version" />
-	<!-- <property name="is.test" value="true" /> -->
 	<taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
 		<classpath>
 			<fileset dir="${WORKSPACE}/deploy/ant-sdbtasks/" includes="*.jar" />
@@ -32,15 +31,6 @@
 		<delete dir="${WORKSPACE}/reports" />
 		<mkdir dir="${WORKSPACE}/reports" />
 	</target>
-
-	<!-- <target name="Deploy-Test-All" depends="Clean-Last-Build-Reports">
-		<foreach target="Deploy-And-Test-Case" param="deploy.case.fullname">
-			<path>
-				<fileset dir="${deploy.config.path}" includes="${test.environment}-${deploy.conffile.wildcard}.xml" />
-			</path>
-			<param name="deploy.file.fullname" value="${WORKSPACE}/${deploy.tar.file.name}" />
-		</foreach>
-	</target> -->
 
 	<target name="Deploy-Test-All" depends="Clean-Last-Build-Reports">
 		<if>
@@ -66,21 +56,6 @@
 					</path>
 					<param name="deploy.file.fullname" value="${WORKSPACE}/${deploy.tar.file.name}" />
 				</foreach>
-
-				<!-- <parallel>
-					<foreach target="Deploy-And-Test-Case" param="deploy.case.fullname">
-						<path>
-							<fileset file="${test.environment}-[h1][g1][d1]-tp1.xml" />
-						</path>
-						<param name="deploy.file.fullname" value="${WORKSPACE}/${deploy.tar.file.name}" />
-					</foreach>
-					<foreach target="Deploy-And-Test-Case" param="deploy.case.fullname">
-						<path>
-							<fileset file="${test.environment}-standalone-tp1.xml" />
-						</path>
-						<param name="deploy.file.fullname" value="${WORKSPACE}/${deploy.tar.file.name}" />
-					</foreach>
-				</parallel> -->
 			</then>
 			<else>
 				<foreach target="Deploy-And-Test-Case" param="deploy.case.fullname">
