@@ -66,7 +66,7 @@ public class Domain {
 	
 	/**
 	 * @fn void alterDomain(BSONObject options)
-	 * @brief Alter the domains.
+	 * @brief Alter the current domain.
 	 * @param options the options user wants to alter
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
