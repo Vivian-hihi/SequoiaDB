@@ -1404,7 +1404,7 @@ public class Sequoiadb {
 	 * @param domainName the name of the domain
      * @param options the options for the domain. The options are as below:
      *<ul>
-     *<li>Group: the list of the names of replica groups that the domain contains.
+     *<li>Group: the list of the replica groups' names which the domain is going to contain.
      *           eg: { "Group": [ "group1", "group2", "group3" ] }
      *           If this argument is not included, the domain will contain all replica groups in the cluster.
      *</ul>
@@ -1419,7 +1419,10 @@ public class Sequoiadb {
 		
 		BSONObject newObj = new BasicBSONObject();
 		newObj.put(SequoiadbConstants.FIELD_NAME_NAME, domainName);
-		newObj.put(SequoiadbConstants.FIELD_NAME_OPTIONS, options);
+		if (null != options)
+		{
+		   newObj.put(SequoiadbConstants.FIELD_NAME_OPTIONS, options);
+		}
 		// command
 		SDBMessage rtn = adminCommand( SequoiadbConstants.CMD_NAME_CREATE_DOMAIN,
 				                       0, 0, 0, -1, newObj,
@@ -1472,13 +1475,17 @@ public class Sequoiadb {
 	}
 	
 	/**
-	 * @fn DBCursor listDomains(String domainName)
-	 * @brief Drop a domain.
-	 * @param domainName the name of the domain
+	 * @fn DBCursor listDomains(BSONObject matcher, BSONObject selector,
+                                BSONObject orderBy, BSONObject hint)
+	 * @brief List domains.
+	 * @param matcher the matching rule, return all the documents if null
+	 * @param selector the selective rule, return the whole document if null
+	 * @param orderBy the ordered rule, never sort if null
+	 * @param hint the hint, automatically match the optimal hint if null
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
 	public DBCursor listDomains(BSONObject matcher, BSONObject selector,
-                           BSONObject orderBy, BSONObject hint) throws BaseException {
+                                BSONObject orderBy, BSONObject hint) throws BaseException {
 		 	return getList(SDB_LIST_DOMAINS, 0, 0, 0, -1, matcher, selector, orderBy, hint);
 	}
 	
