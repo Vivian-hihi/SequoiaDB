@@ -94,30 +94,27 @@ public class Domain {
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
 	public DBCursor listCSInDomain() throws BaseException {
-		// append argument
-		BSONObject matcher = new BasicBSONObject();
-		BSONObject selector = new BasicBSONObject();
-		matcher.put(SequoiadbConstants.FIELD_NAME_DOMAIN, this.name);
-		selector.put(SequoiadbConstants.FIELD_NAME_NAME, null);
-		// get cs in current domain 
-		DBCursor cursor = this.sequoiadb.getList(Sequoiadb.SDB_LIST_CS_IN_DOMAIN, matcher, selector, null);
-		return cursor;
+		return listCSCL(Sequoiadb.SDB_LIST_CS_IN_DOMAIN);
 	}
 	
 	/**
 	 * @fn DBCursor listCLInDomain()
-	 * @brief List all the collection in current domain.
+	 * @brief List all the collections in current domain.
 	 * @return the cursor of result
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
 	public DBCursor listCLInDomain() throws BaseException {
+		return listCSCL(Sequoiadb.SDB_LIST_CL_IN_DOMAIN);
+	}
+	
+	private DBCursor listCSCL(int type) throws BaseException {
 		// append argument
 		BSONObject matcher = new BasicBSONObject();
 		BSONObject selector = new BasicBSONObject();
 		matcher.put(SequoiadbConstants.FIELD_NAME_DOMAIN, this.name);
 		selector.put(SequoiadbConstants.FIELD_NAME_NAME, null);
-		// get cs in current domain 
-		DBCursor cursor = this.sequoiadb.getList(Sequoiadb.SDB_LIST_CL_IN_DOMAIN, matcher, selector, null);
+		// get cs or cl in current domain 
+		DBCursor cursor = this.sequoiadb.getList(type, matcher, selector, null);
 		return cursor;
 	}
 	
