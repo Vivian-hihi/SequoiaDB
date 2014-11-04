@@ -67,7 +67,19 @@ public class Domain {
 	/**
 	 * @fn void alterDomain(BSONObject options)
 	 * @brief Alter the current domain.
-	 * @param options the options user wants to alter
+     * @param options the options user wants to alter:
+     *<ul>
+     *<li>Groups:    The list of replica groups' names which the domain is going to contain.
+     *               eg: { "Groups": [ "group1", "group2", "group3" ] }, it means that domain
+     *               changes to contain "group1", "group2" and "group3".
+     *               We can add or remove groups in current domain. However, if a group has data
+     *               in it, remove it out of domain will be failing.
+     *<li>AutoSplit: Alter current domain to have the ability of automatically split or not. 
+     *               If this option is set to be true, while creating collection(ShardingType is "hash") in this domain,
+     *               the data of this collection will be split(hash split) into all the groups in this domain automatically.
+     *               However, it won't automatically split data into those groups which were add into this domain later.
+     *               eg: { "Groups": [ "group1", "group2", "group3" ], "AutoSplit: true" }
+     *</ul>
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
 	public void alterDomain(BSONObject options) throws BaseException {

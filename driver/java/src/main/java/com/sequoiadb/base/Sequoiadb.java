@@ -1412,7 +1412,7 @@ public class Sequoiadb {
      *               However, it won't automatically split data into those groups which were add into this domain later.
      *               eg: { "Groups": [ "group1", "group2", "group3" ], "AutoSplit: true" }
      *</ul>
-     * return the created Domain instance
+     * @return the created Domain instance
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
 	public Domain createDomain(String domainName, BSONObject options) throws BaseException {
