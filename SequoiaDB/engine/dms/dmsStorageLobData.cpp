@@ -452,6 +452,11 @@ namespace engine
       OSSFILE file ;
       UINT32 mode = OSS_READWRITE | OSS_SHAREREAD  ;
 
+      if ( _isDirect )
+      {
+         mode |= OSS_DIRECTIO ;
+      }
+
       rc = ossOpen( _fullPath, mode, OSS_RU|OSS_WU|OSS_RG, file ) ;
       if ( SDB_OK != rc )
       {
