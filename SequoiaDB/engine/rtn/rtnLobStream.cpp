@@ -394,7 +394,7 @@ namespace engine
       }
 
       /// data may be cached.
-      if ( !_pool.empty() && _pool.match( _offset ) )
+      if ( _pool.match( _offset ) )
       {
          rc = _readFromPool( len, context, cb, readLen ) ;
          if ( SDB_OK != rc )
@@ -404,21 +404,13 @@ namespace engine
          }
 
          _offset += readLen ;
-         if ( _pool.empty() )
-         {
-            _pool.clear() ;
-         }
-
          goto done ;
       }
 
-      /// TODO: keep useful data in cache rather than clear all.
-      /// eg: offset is 10, data offset in cache is 8. we'd better
-      /// read data in cache.
-      _pool.clear() ; 
+      /// clear cache when we can not get data from it.
+      _pool.clear() ;
 
-      /// TODO: when changing page size is accepted, we should
-      /// create read piece by read size rather than piece num.
+      /// reset the read len of a suitable value
       rc = _lw.prepare2Read( _meta._lobLen,
                              _offset, len,
                              tuples ) ;
@@ -545,8 +537,8 @@ namespace engine
       PD_TRACE_ENTRY( SDB_RTNLOBSTREAM__READFROMPOOL ) ;
       const CHAR *data = NULL ;
       _MsgLobTuple tuple ;
-      tuple.columns.len = len <= _pool.getDataSize() ?
-                          len : _pool.getDataSize() ;
+      tuple.columns.len = len <= _pool.getLastDataSize() ?
+                          len : _pool.getLastDataSize() ;
       tuple.columns.offset = _offset ;
       tuple.columns.sequence = 0 ; /// it is useless column now.
       UINT32 needLen = tuple.columns.len ;
@@ -588,10 +580,6 @@ namespace engine
          goto error ;
       }
 
-      if ( _pool.empty() )
-      {
-         _pool.clear() ;
-      }
    done:
       PD_TRACE_EXITRC( SDB_RTNLOBSTREAM__READFROMPOOL, rc ) ;
       return rc ;

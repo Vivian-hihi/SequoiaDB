@@ -54,6 +54,14 @@ namespace engine
          UINT32 len ;
          const CHAR *data ;
 
+         tuple()
+         :offset( -1 ),
+          len( 0 ),
+          data( NULL )
+         {
+
+         }
+
          tuple( SINT64 o,
                 UINT32 l,
                 const CHAR *d )
@@ -62,6 +70,29 @@ namespace engine
           data( d )
          {
 
+         }
+
+         tuple( const tuple &t )
+         :offset( t.offset ),
+          len( t.len ),
+          data( t.data )
+         {
+
+         }
+
+         tuple &operator=( const tuple &t  )
+         {
+            offset = t.offset ;
+            len = t.len ;
+            data = t.data ;
+            return *this ;
+         }
+
+         void clear()
+         {
+            offset = -1 ;
+            len = 0 ;
+            data = NULL ;
          }
       } ;
 
@@ -78,31 +109,19 @@ namespace engine
 
       void entrust( CHAR *buf ) ;
 
-      BOOLEAN empty() const
+      UINT32 getLastDataSize() const
       {
-         return 0 == _dataSz ;
+         return _lastDataSz ;
       }
 
-      UINT32 getDataSize() const
-      {
-         return _dataSz ;
-      }
-
-      BOOLEAN match( SINT64 offset ) const
-      {
-         if ( !_pool.empty() )
-         {
-            return offset == _pool[_current].offset ;
-         }
-         else
-         {
-            return FALSE ;
-         }
-      }
+      BOOLEAN match( SINT64 offset ) ;
 
       BOOLEAN next( UINT32 len, const CHAR **data, UINT32 &read ) ;
 
       void clear() ;
+
+   private:
+      void _seek( SINT64 ) ;
 
    private:
       struct compare
@@ -117,8 +136,10 @@ namespace engine
       UINT32 _bufSz ;
       std::vector<tuple> _pool ;
       std::list<CHAR *> _toBeFreed ;
+      UINT32 _lastDataSz ;
       UINT32 _dataSz ;
       SINT32 _current ;
+      tuple _currentTuple ;
       friend class _rtnLobStream ;
    } ;
    typedef class _rtnLobDataPool rtnLobDataPool ;

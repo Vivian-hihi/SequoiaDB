@@ -34,6 +34,8 @@
 #include "rtnLobDataPool.hpp"
 #include "pd.hpp"
 #include "ossUtil.hpp"
+#include "rtnTrace.hpp"
+#include "pdTrace.hpp"
 #include <algorithm>
 
 using namespace std ;
@@ -43,6 +45,7 @@ namespace engine
    _rtnLobDataPool::_rtnLobDataPool()
    :_buf( NULL ),
     _bufSz( 0 ),
+    _lastDataSz( 0 ),
     _dataSz( 0 ),
     _current( -1 )
    {
@@ -61,9 +64,39 @@ namespace engine
       }
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNLOBDATAPOOL_MATCH, "_rtnLobDataPool::match" )
+   BOOLEAN _rtnLobDataPool::match( SINT64 offset )
+   {
+      PD_TRACE_ENTRY( SDB_RTNLOBDATAPOOL_MATCH ) ;
+      BOOLEAN matched = FALSE ;
+      if ( _pool.empty() )
+      {
+         /// do nothing.
+      }
+      else if ( offset == _currentTuple.offset )
+      {
+         matched = TRUE ;
+      }
+      else
+      {
+         const tuple &first = _pool[0] ;
+         if ( first.offset <= offset &&
+              offset < ( first.offset + _dataSz ) )
+         {
+            _seek( offset ) ;
+            matched = TRUE ;
+         }
+      }
+
+      PD_TRACE_EXIT( SDB_RTNLOBDATAPOOL_MATCH ) ;
+      return matched ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNLOBDATAPOOL_ALLOCATE, "_rtnLobDataPool::allocate" )
    INT32 _rtnLobDataPool::allocate( UINT32 len, CHAR **buf )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_RTNLOBDATAPOOL_ALLOCATE ) ;
       SDB_ASSERT( NULL != buf, "can not be null" ) ;
       
       if ( len <= _bufSz )
@@ -87,6 +120,7 @@ namespace engine
       _bufSz = len ;
       *buf = _buf ;
    done:
+      PD_TRACE_EXITRC( SDB_RTNLOBDATAPOOL_ALLOCATE, rc ) ;
       return rc ;
    error:
       goto done ;
@@ -98,55 +132,63 @@ namespace engine
       return ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNLOBDATAPOOL_NEXT, "_rtnLobDataPool::next" )
    BOOLEAN _rtnLobDataPool::next( UINT32 len, const CHAR **buf, UINT32 &read )
    {
       BOOLEAN res = FALSE ;
+      PD_TRACE_ENTRY( SDB_RTNLOBDATAPOOL_NEXT ) ;
 
       if ( 0 <= _current )
       {
          SDB_ASSERT( _pool.size() > ( UINT32 )_current, "impossible" ) ;
-         tuple &t = _pool[_current] ;
-         UINT32 realLen = len <= t.len ? len : t.len ;
-         *buf = t.data ;
+         UINT32 realLen = len <= _currentTuple.len ? len : _currentTuple.len ;
+         *buf = _currentTuple.data ;
          read = realLen ;
-         t.len -= realLen ;
-         _dataSz -= realLen ;
+         _currentTuple.len -= realLen ;
+         _lastDataSz -= realLen ;
          res = TRUE ;
 
-         if ( 0 == t.len )
+         if ( 0 == _currentTuple.len )
          {
             ++_current ;
             if ( _pool.size() == ( UINT32 )_current )
             {
                _current = -1 ;
-               SDB_ASSERT( 0 == _dataSz, "must be zero" ) ;
+               _currentTuple.clear() ;
+               SDB_ASSERT( 0 == _lastDataSz, "must be zero" ) ;
             }
+
+            _currentTuple = _pool[_current] ;
          }
          else
          {
-            t.data += realLen ;
-            t.offset += realLen ;
+            _currentTuple.data += realLen ;
+            _currentTuple.offset += realLen ;
          }
       }
 
+      PD_TRACE_EXIT( SDB_RTNLOBDATAPOOL_NEXT ) ;
       return res ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNLOBDATAPOOL_PUSH, "_rtnLobDataPool::push" )
    INT32 _rtnLobDataPool::push( const CHAR *data, UINT32 len,
                                 SINT64 offset )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_RTNLOBDATAPOOL_PUSH ) ;
       SDB_ASSERT( NULL != data, "can not be null" ) ;
       _pool.push_back( tuple( offset, len, data ) ) ;
+      _lastDataSz += len ;
       _dataSz += len ;
-   done:
+      PD_TRACE_EXITRC( SDB_RTNLOBDATAPOOL_PUSH, rc ) ;
       return rc ;
-   error:
-      goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNLOBDATAPOOL_PUSHDONE, "_rtnLobDataPool::pushDone" )
    void _rtnLobDataPool::pushDone()
    {
+      PD_TRACE_ENTRY( SDB_RTNLOBDATAPOOL_PUSHDONE ) ;
       if ( 1 < _pool.size() )
       {
          std::sort( _pool.begin(), _pool.end(), compare() ) ;
@@ -168,20 +210,55 @@ namespace engine
       }
 #endif
       _current = 0 ;
+      _currentTuple = _pool[_current ] ;
+      PD_TRACE_EXIT( SDB_RTNLOBDATAPOOL_PUSHDONE ) ;
       return ;
    }
 
    void _rtnLobDataPool::clear()
    {
       _pool.clear() ;
+      _lastDataSz = 0 ;
       _dataSz = 0 ;
       _current = -1 ;
+      _currentTuple.clear() ;
       std::list<CHAR *>::iterator itr = _toBeFreed.begin() ;
       for ( ; itr != _toBeFreed.end(); ++itr )
       {
          SDB_OSS_FREE( *itr ) ;
       }
       _toBeFreed.clear() ;
+      return ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNLOBDATAPOOL__SEEK, "_rtnLobDataPool::_seek" )
+   void _rtnLobDataPool::_seek( SINT64 offset )
+   {
+      PD_TRACE_ENTRY( SDB_RTNLOBDATAPOOL__SEEK ) ;
+      UINT32 totalSeek = 0 ;
+      std::vector<tuple>::const_iterator itr = _pool.begin() ;
+      for ( UINT32 i = 0 ; itr != _pool.end(); ++itr, ++i )
+      {
+         _currentTuple = *itr ;
+         _current = i ;
+         SDB_ASSERT( _currentTuple.offset <= offset, "impossible" ) ;
+         SINT64 seekLen = offset - _currentTuple.offset ;
+         if ( seekLen < ( SINT64 )( _currentTuple.len ) )
+         {
+            _currentTuple.offset += seekLen ;
+            _currentTuple.len -= seekLen ;
+            _currentTuple.data += seekLen ;
+            totalSeek += seekLen ;
+            break ;
+         }
+         else
+         {
+            totalSeek += _currentTuple.len ;
+         }
+      }
+
+      _lastDataSz = _dataSz - totalSeek ;
+      PD_TRACE_EXIT( SDB_RTNLOBDATAPOOL__SEEK ) ;
       return ;
    }
 }
