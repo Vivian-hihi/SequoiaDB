@@ -1404,9 +1404,13 @@ public class Sequoiadb {
 	 * @param domainName the name of the domain
      * @param options the options for the domain. The options are as below:
      *<ul>
-     *<li>Group: the list of the replica groups' names which the domain is going to contain.
-     *           eg: { "Group": [ "group1", "group2", "group3" ] }
-     *           If this argument is not included, the domain will contain all replica groups in the cluster.
+     *<li>Groups:    the list of the replica groups' names which the domain is going to contain.
+     *               eg: { "Groups": [ "group1", "group2", "group3" ] }
+     *               If this argument is not included, the domain will contain all replica groups in the cluster.
+     *<li>AutoSplit: If this option is set to be true, while creating collection(ShardingType is "hash") in this domain,
+     *               the data of this collection will be split(hash split) into all the groups in this domain automatically.
+     *               However, it won't automatically split data into those groups which were add into this domain later.
+     *               eg: { "Groups": [ "group1", "group2", "group3" ], "AutoSplit: true" }
      *</ul>
      * return the created Domain instance
 	 * @exception com.sequoiadb.exception.BaseException
