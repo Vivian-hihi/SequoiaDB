@@ -1994,6 +1994,17 @@ namespace sdbclient
 /** \fn INT32 alterDomain( const bson::BSONObj &options ) ;
     \brief Alter the current domain.
     \param [in] options The options user wants to alter
+
+        Groups:    The list of replica groups' names which the domain is going to contain.
+                   eg: { "Groups": [ "group1", "group2", "group3" ] }, it means that domain
+                   changes to contain "group1" "group2" or "group3".
+                   We can add or remove groups in current domain. However, if a group has data
+                   in it, remove it out of domain will be failing.
+        AutoSplit: Alter current domain to have the ability of automatically split or not. 
+                   If this option is set to be true, while creating collection(ShardingType is "hash") in this domain,
+                   the data of this collection will be split(hash split) into all the groups in this domain automatically.
+                   However, it won't automatically split data into those groups which were add into this domain later.
+                   eg: { "Groups": [ "group1", "group2", "group3" ], "AutoSplit: true" }
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
@@ -3628,9 +3639,13 @@ namespace sdbclient
     \param [in] pDomainName The name of the domain
     \param [in] options The options for the domain. The options are as below:
 
-        Group: The list of name for replica groups that the domain contains.
-               eg: { "Group": [ "group1", "group2", "group3" ] }
-               If this argument is not included, the domain will contain all replica groups in the cluster.
+        Groups:    The list of replica groups' names which the domain is going to contain.
+                   eg: { "Groups": [ "group1", "group2", "group3" ] }
+                   If this argument is not included, the domain will contain all replica groups in the cluster.
+        AutoSplit: If this option is set to be true, while creating collection(ShardingType is "hash") in this domain,
+                   the data of this collection will be split(hash split) into all the groups in this domain automatically.
+                   However, it won't automatically split data into those groups which were add into this domain later.
+                   eg: { "Groups": [ "group1", "group2", "group3" ], "AutoSplit: true" }
     \param [out] domain The created sdbDomain object
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
