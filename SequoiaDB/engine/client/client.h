@@ -526,8 +526,10 @@ SDB_EXPORT INT32 sdbCreateCollectionSpace ( sdbConnectionHandle cHandle,
     \brief Create the specified collection space
     \param [in] cHandle The database connection handle
     \param [in] pCollectionSpaceName The name of collection space
-    \param [in] options The options specified by user
+    \param [in] options The options specified by user, e.g. {"PageSize": 4096, "Domain": "mydomain"}.
 
+        PageSize   : Assign the pagesize of the collection space
+        Domain     : Assign which domain does current collection space belong to
     \param [out] handle The collection space handle
                                 when fail to create collection space,
                                 *handle == -1 and error code is return
@@ -1777,7 +1779,7 @@ SDB_EXPORT INT32 sdbListDomains ( sdbConnectionHandle cHandle,
 
 /** \fn INT32 sdbAlterDomain( sdbDomainHandle cHandle,
                               const bson *options ) ;
-    \brief alter the domains.
+    \brief alter the current domain.
     \param [in] cHandle The domain handle
     \param [in] options The options user wants to alter
     \retval SDB_OK Operation Success

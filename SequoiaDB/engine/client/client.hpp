@@ -1992,7 +1992,7 @@ namespace sdbclient
       }
 
 /** \fn INT32 alterDomain( const bson::BSONObj &options ) ;
-    \brief Alter the domains.
+    \brief Alter the current domain.
     \param [in] options The options user wants to alter
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
@@ -2975,6 +2975,20 @@ namespace sdbclient
 //                                              options, cs ) ;
 //      }
 
+/** \fn INT32 createCollectionSpace ( const CHAR *pCollectionSpaceName,
+                                      const bson::BSONObj &options,
+                                      sdbCollectionSpace &cs
+                                     )
+    \brief Create collection space with specified pagesize.
+    \param [in] pCollectionSpaceName The name of collection space.
+    \param [in] options The options specified by user, e.g. {"PageSize": 4096, "Domain": "mydomain"}.
+
+        PageSize   : Assign the pagesize of the collection space
+        Domain     : Assign which domain does current collection space belong to
+    \param [out] cs The return collection space object of creation.
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
       INT32 createCollectionSpace ( const CHAR *pCollectionSpaceName,
                                     const bson::BSONObj &options,
                                     sdbCollectionSpace &cs
