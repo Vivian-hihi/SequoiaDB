@@ -32,7 +32,7 @@
         <plentry>
           <pt>接口变更：</pt>
           <pd></pd>                    
-        </plentry>        
+        </plentry>
       </parml>      
       <ul><li><p></p>新增 Python 驱动</li>
         <li><p></p>添加 lob 的 c++、java、c#、python 驱动</li>

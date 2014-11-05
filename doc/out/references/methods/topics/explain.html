@@ -8,7 +8,7 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="cursor.explain()"/>
-<meta name="description" content="cursor.explain([opation]) 返回查询的访问计划。 参数描述 参数名 参数类型 描述 是否必填 option json 对象 访问计划执行参数，目前有 Run 字段项，表示是否执行访问计划，true 表示执行访问计划，获取数据和时间信息，false 表示只获取访问计划的信息，并不执行 否，默认为 false 访问计划描述 字段名 类型 描述 Name string 集合名 ..."/>
+<meta name="description" content="cursor.explain([option]) 返回查询的访问计划。 参数描述 参数名 参数类型 描述 是否必填 option json 对象 访问计划执行参数，目前有 Run 字段项，表示是否执行访问计划，true 表示执行访问计划，获取数据和时间信息，false 表示只获取访问计划的信息，并不执行 否，默认为 false 访问计划描述 字段名 类型 描述 Name string 集合名 ..."/>
 <meta name="DC.Relation" scheme="URI" content="../../../references/methods/jscursor.html"/>
 <meta name="DC.Format" content="XHTML"/>
 <meta name="DC.Identifier" content="topic_j1m_lt3_44"/>
@@ -36,7 +36,7 @@
   <h1 class="title topictitle1">cursor.explain()</h1>
 
   <div class="body">
-    <div class="section"><h2 class="title sectiontitle">cursor.explain([opation])</h2>
+    <div class="section"><h2 class="title sectiontitle">cursor.explain([option])</h2>
       <p class="p">返回查询的访问计划。</p>
 
     </div>
@@ -190,7 +190,7 @@
         <li class="li">
           <p class="p">foo.bar 是一个水平分区集合，分布在三个复制组上。</p>
 
-          <div class="p"><pre class="pre codeblock">db.foo.bar.find().sort({b:1}).explain()</pre>
+          <div class="p"><pre class="pre codeblock">db.foo.bar.find().sort({b:1}).explain({Run:true})</pre>
 </div>
 
           返回：

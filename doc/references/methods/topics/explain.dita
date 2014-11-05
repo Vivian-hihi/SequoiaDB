@@ -3,7 +3,7 @@
 <topic id="topic_j1m_lt3_44">
   <title>cursor.explain()</title>
   <body>
-    <section><title>cursor.explain([opation])</title>
+    <section><title>cursor.explain([option])</title>
       <p>返回查询的访问计划。</p>
     </section>
     <section><title>参数描述</title>
@@ -103,7 +103,7 @@
       <ul>
         <li>
           <p>foo.bar 是一个水平分区集合，分布在三个复制组上。</p>
-          <p><codeblock>db.foo.bar.find().sort({b:1}).explain()</codeblock></p>
+          <p><codeblock>db.foo.bar.find().sort({b:1}).explain({Run:true})</codeblock></p>
           返回：
           <codeblock>{
   "Name": "foo.bar",

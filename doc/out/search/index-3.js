@@ -1,5 +1,4 @@
 //Auto generated index for searching.
-w["x64:40020"]="1222*1";
 w["x64（64"]="727*2";
 w["x64（64位"]="727*2";
 w["x64，ip"]="3*3";
