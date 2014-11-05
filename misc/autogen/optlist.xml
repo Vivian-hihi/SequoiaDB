@@ -769,4 +769,18 @@
       </detail>
       <typeofweb>boolean</typeofweb>
    </opt>
+
+   <opt>
+      <name>PMD_OPTION_SPARSE_FILE</name>
+      <long>sparsefile</long>
+      <description>
+         <en>extend the file as a sparse file</en>
+         <cn>当扩展文件时，使用稀疏文件功能</cn>
+      </description>
+      <detail>
+         <en>If it is not spcified, the default value is "false"</en>
+         <cn>如果不指定，默认值为"false"</cn>
+      </detail>
+      <typeofweb>boolean</typeofweb>
+  </opt>
 </optlist>

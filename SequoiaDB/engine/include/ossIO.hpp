@@ -487,8 +487,7 @@ INT32 ossGetFileSize(OSSFILE *pFile, INT64 *pfsize);
  *      SDB_INVALID_FILE_TYPE (invalid input arguments)
  */
 INT32 ossExtendFile(OSSFILE *pFile,
-                    const INT64 incrementSize,
-                    BOOLEAN direct = FALSE );
+                    const INT64 incrementSize ) ;
 
 INT32 ossTruncateFile ( OSSFILE *pFile, const INT64 fileLen ) ;
 

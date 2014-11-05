@@ -938,6 +938,7 @@ namespace engine
       _pagecleanInterval   = PMD_DFT_PAGECLEANINTERVAL ;
       _dialogFileNum       = 0 ;
       _directIOInLob       = FALSE ;
+      _sparseFile          = FALSE ;
 
       // other configs
       ossMemset( _krcbConfPath, 0, sizeof( _krcbConfPath ) ) ;
@@ -1123,6 +1124,9 @@ namespace engine
                   -1, TRUE ) ;
 
       rdxBooleanS( pEX, PMD_OPTION_DIRECT_IO_IN_LOB, _directIOInLob,
+                   FALSE, TRUE, FALSE, FALSE ) ;
+
+      rdxBooleanS( pEX, PMD_OPTION_SPARSE_FILE, _sparseFile,
                    FALSE, TRUE, FALSE, FALSE ) ;
       // end map
 

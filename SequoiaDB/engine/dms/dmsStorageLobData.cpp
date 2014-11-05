@@ -45,6 +45,12 @@ namespace engine
    #define DMS_LOBD_EYECATCHER            "SDBLOBD"
    #define DMS_LOBD_EYECATCHER_LEN        8
 
+   const UINT32 DMS_LOBD_EXTEND_LEN = 32 * 1024 * 1024 ;
+
+   #define DMS_LOBD_FLAG_NULL 0x00000
+   #define DMS_LOBD_FLAG_DIRECT 0x00001
+   #define DMS_LOBD_FLAG_SPARSE 0x00002
+
    /*
       _dmsStorageLobData implement
    */
@@ -53,13 +59,21 @@ namespace engine
     _lastSz( 0 ),
     _pageSz( 0 ),
     _logarithmic( 0 ),
-    _isDirect( FALSE )
+    _flags( DMS_LOBD_FLAG_NULL )
    {
       _fileName.assign( fileName ) ;
       _segmentPages = 0 ;
       _segmentPagesSquare = 0 ;
       ossMemset( _fullPath, 0, sizeof( _fullPath ) ) ;
-      _isDirect = pmdGetOptionCB()->useDirectIOInLob() ;
+      if ( pmdGetOptionCB()->useDirectIOInLob() )
+      {
+         _flags |= DMS_LOBD_FLAG_DIRECT ;
+      }
+      if ( pmdGetOptionCB()->sparseFile() )
+      {
+         _flags |= DMS_LOBD_FLAG_SPARSE ;
+      }
+
    }
 
    _dmsStorageLobData::~_dmsStorageLobData()
@@ -92,7 +106,7 @@ namespace engine
          }
       }
 
-      if ( _isDirect )
+      if ( OSS_BIT_TEST( _flags, DMS_LOBD_FLAG_DIRECT ) )
       {
          mode |= OSS_DIRECTIO ;
       }
@@ -171,7 +185,7 @@ namespace engine
       INT64 tmpSz = _fileSz ;
       INT32 mode = OSS_READWRITE | OSS_SHAREREAD ;
 
-      if ( _isDirect )
+      if ( OSS_BIT_TEST( _flags, DMS_LOBD_FLAG_DIRECT ) )
       {
          mode |= OSS_DIRECTIO ;
       }
@@ -275,7 +289,7 @@ namespace engine
          goto error ;
       }
 
-      if ( !_isDirect )
+      if ( !OSS_BIT_TEST( _flags, DMS_LOBD_FLAG_DIRECT ) )
       {
          t.buf = ( void * )data ;
          t.size = len ;
@@ -323,7 +337,7 @@ namespace engine
       dmsLobDirectBuffer::tuple t ;
       INT64 readOffset = 0 ;
       
-      if ( !_isDirect )
+      if ( !OSS_BIT_TEST( _flags, DMS_LOBD_FLAG_DIRECT ) )
       {
          t.buf = buf ;
          t.size = len ;
@@ -379,7 +393,7 @@ namespace engine
 
       readLen = len ;
 
-      if ( _isDirect )
+      if ( OSS_BIT_TEST( _flags, DMS_LOBD_FLAG_DIRECT ) )
       {
          buffer.copy2UsrBuf( t ) ;
       }
@@ -396,10 +410,10 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_DMSSTORAGELOBDATA_READRAW ) ;
-      SDB_ASSERT( NULL != buf && offset <= _fileSz, "invalid operation" ) ;
+      SDB_ASSERT( NULL != buf && ( SINT64 )offset <= _fileSz, "invalid operation" ) ;
       SINT64 readFromFile = 0 ;
 
-      if ( offset + len > _fileSz )
+      if ( ( SINT64 )(offset + len) > _fileSz )
       {
          PD_LOG( PDERROR, "Offset[%lld] grater than file size[%lld] in "
                  "file[%s]", offset, _fileSz, _fileName.c_str() ) ;
@@ -408,7 +422,7 @@ namespace engine
       }
 
       // reopen when the offset grater than lastSz
-      if ( offset + len > _lastSz )
+      if ( ( SINT64 )(offset + len) > _lastSz )
       {
          rc = _reopen() ;
          if ( rc )
@@ -448,11 +462,50 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_DMSSTORAGELOBDATA_EXTEND ) ;
+      do
+      {
+         rc = _extend( len ) ;
+         if ( SDB_INVALIDARG == rc &&
+              OSS_BIT_TEST( _flags, DMS_LOBD_FLAG_SPARSE ) )
+         {
+            PD_LOG( PDWARNING, "this filesystem may not support sparse file"
+                    ", we should try again" ) ;
+            OSS_BIT_CLEAR( _flags, DMS_LOBD_FLAG_SPARSE ) ;
+            rc = SDB_OK ;
+            continue ;
+         }
+         else if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to extend file:%d", rc ) ;
+            goto error ;
+         }
+         else
+         {
+            break ;
+         }
+     
+      } while (  TRUE ) ; 
+   done:
+      PD_TRACE_EXITRC( SDB_DMSSTORAGELOBDATA_EXTEND, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_DMSSTORAGELOBDATA__EXTEND, "_dmsStorageLobData::_extend" )
+   INT32 _dmsStorageLobData::_extend( INT64 len )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_DMSSTORAGELOBDATA__EXTEND ) ;
       SDB_ASSERT( 0 < len, "invalid extend size" ) ;
+      SDB_ASSERT( 0 == len % OSS_FILE_DIRECT_IO_ALIGNMENT, "impossible" ) ;
       OSSFILE file ;
       UINT32 mode = OSS_READWRITE | OSS_SHAREREAD  ;
+      /// free in done.
+      CHAR *extendBuf = NULL ;
+      UINT32 bufSize = DMS_LOBD_EXTEND_LEN ;
 
-      if ( _isDirect )
+      if ( OSS_BIT_TEST( _flags, DMS_LOBD_FLAG_DIRECT ) )
       {
          mode |= OSS_DIRECTIO ;
       }
@@ -488,14 +541,78 @@ namespace engine
       }
 #endif // _DEBUG
 
-      rc = ossExtendFile( &file, len, _isDirect ) ;
-      if ( SDB_OK != rc )
+      if ( !OSS_BIT_TEST( _flags, DMS_LOBD_FLAG_SPARSE ) &&
+           !OSS_BIT_TEST( _flags, DMS_LOBD_FLAG_DIRECT ) )
       {
-         PD_LOG( PDERROR, "failed to extend file:%s, rc:%d",
-                 _fileName.c_str(), rc ) ;
-         goto error ;
+         rc = ossExtendFile( &file, len ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to extend file:%d", rc ) ;
+            goto error ;
+         }
       }
+      else
+      {
+         SINT64 extendSize = len ;
 
+         rc = ossSeek( &file, 0, OSS_SEEK_END ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to seek to the end of file:%d", rc ) ;
+            goto error ;
+         }
+
+         if ( OSS_BIT_TEST( _flags, DMS_LOBD_FLAG_SPARSE ) )
+         {
+            rc = ossSeek( &file,
+                          len - OSS_FILE_DIRECT_IO_ALIGNMENT,
+                          OSS_SEEK_CUR ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "failed to seek offset[%lld](OSS_SEEK_CUR), rc:%d",
+                       len - OSS_FILE_DIRECT_IO_ALIGNMENT, rc ) ;
+               goto error ;
+            }
+            else
+            {
+               /// we only need to write some bytes at the end of file.
+               bufSize = OSS_FILE_DIRECT_IO_ALIGNMENT ;
+               extendSize = OSS_FILE_DIRECT_IO_ALIGNMENT ;
+            }
+         }
+
+         if ( OSS_BIT_TEST( _flags, DMS_LOBD_FLAG_DIRECT ) )
+         {
+            extendBuf = ( CHAR * )ossAlignedAlloc(
+                                          OSS_FILE_DIRECT_IO_ALIGNMENT,
+                                          bufSize ) ;
+         }
+         else
+         {
+            extendBuf = (CHAR*) SDB_OSS_MALLOC ( bufSize ) ;
+         }
+
+         if ( NULL == extendBuf )
+         {
+            PD_LOG( PDERROR, "failed to allcate mem." ) ;
+            rc = SDB_OOM ;
+            goto error ;
+         }
+
+         do
+         {
+            SINT64 writeSize = bufSize <= extendSize ?
+                               bufSize : extendSize ;
+            rc = ossWriteN( &file, extendBuf, writeSize ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "failed to write file:%d", rc ) ;
+               goto error ;
+            }
+            extendSize -= writeSize ;
+         } while ( 0 < extendSize ) ;
+      }
+      
 #ifdef _DEBUG
       {
          SINT64 sizeAfterExtend = 0 ;
@@ -518,7 +635,6 @@ namespace engine
          }
       }
 #endif // _DEBUG
-
       _fileSz += len ;
 
    done:
@@ -531,7 +647,19 @@ namespace engine
             PD_LOG( PDERROR, "failed to close file after extend:%d", rcTmp ) ;
          }
       }
-      PD_TRACE_EXITRC( SDB_DMSSTORAGELOBDATA_EXTEND, rc ) ;
+
+      if ( NULL != extendBuf )
+      {
+         if ( OSS_BIT_TEST( _flags, DMS_LOBD_FLAG_DIRECT ) )
+         {
+            SDB_OSS_ORIGINAL_FREE( extendBuf ) ;
+         }
+         else
+         {
+            SDB_OSS_FREE( extendBuf ) ;
+         }
+      }
+      PD_TRACE_EXITRC( SDB_DMSSTORAGELOBDATA__EXTEND, rc ) ;
       return rc ;
    truncate:
       {
@@ -638,7 +766,7 @@ namespace engine
          goto error ;
       }
 
-      if ( _isDirect )
+      if ( OSS_BIT_TEST( _flags, DMS_LOBD_FLAG_DIRECT ) )
       {
          rc = buffer.getAlignedTuple( t ) ;
          if ( SDB_OK != rc )
@@ -814,7 +942,7 @@ namespace engine
                                     0, cb ) ;
       _dmsLobDirectBuffer::tuple t ;
 
-      if ( !_isDirect )
+      if ( !OSS_BIT_TEST( _flags, DMS_LOBD_FLAG_DIRECT ) )
       {
          t.buf = &header ;
          t.size = sizeof( header ) ;
@@ -838,7 +966,7 @@ namespace engine
          goto error ;
       }
 
-      if ( _isDirect )
+      if ( OSS_BIT_TEST( _flags, DMS_LOBD_FLAG_DIRECT ) )
       {
          buffer.copy2UsrBuf( t ) ;
       }

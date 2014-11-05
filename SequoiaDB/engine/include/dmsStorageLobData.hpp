@@ -125,6 +125,8 @@ namespace engine
 
       INT32 _reopen() ;
 
+      INT32 _extend( INT64 len ) ;
+
    private:
       std::string       _fileName ;
       CHAR              _fullPath[ OSS_MAX_PATHSIZE + 1 ] ;
@@ -133,7 +135,7 @@ namespace engine
       INT64             _lastSz ;
       UINT32            _pageSz ;
       UINT32            _logarithmic ;
-      BOOLEAN           _isDirect ;
+      UINT32            _flags ; 
       UINT32            _segmentPages ;
       UINT32            _segmentPagesSquare ;
 
