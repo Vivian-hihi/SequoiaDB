@@ -311,7 +311,6 @@
 			<arg line="build sequoiadb_server.xml --setvars project.version=${project.version}  --setvars platform=${os.and.platform} --setvars project.outputDirectory=${RELEASE_DIR}" />
 		</exec>
 		<echo message="Make relase package completed." />
-
 <!-- 		<echo message="os.name=${os.name}, os.arch=${os.arch}" />
 		<if>
 			<equals arg1="${os.arch}" arg2="amd64" />
