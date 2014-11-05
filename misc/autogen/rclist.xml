@@ -2194,5 +2194,14 @@
          </description>
       </code>
 
+      <code>
+         <name>SDB_LOB_HAS_OPEN</name>
+         <description>
+            <en>Lob has been open</en>
+            <cn>大对象已打开</cn>
+         </description>
+      </code>
+
+
    </codelist>
 </rclist>
