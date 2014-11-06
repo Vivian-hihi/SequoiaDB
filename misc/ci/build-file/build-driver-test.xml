@@ -125,7 +125,7 @@
 			<arg line=" --lib_path=${lib.dir}/lib --include_path=${lib.dir}/include" />
 		</exec>
 		<copy todir="${deploy.path}/hlt/drivers_testcases/C/build">
-			<fileset dir="${build.testcases}/../lob_testcases/build_test" includes="*static" />
+			<fileset dir="${build.testcases}/../lob_testcases/build_test" includes="*" />
 		</copy>
 		<echo message="Complete scons the lob testcases" />
 
