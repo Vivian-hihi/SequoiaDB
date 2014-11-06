@@ -2,7 +2,7 @@
 <!--@param ${WORKSPACE} : The path where jenkins user's path .-->
 <!--@param ${lib.dir} : The path where all lib's directory .-->
 <!--@param ${jdk.name} : The javac file path-->
-<project name="build-driver-test" default="build-driver-test">
+<project name="Build-Driver-Testcases" default="Build-Driver-Testcases">
 	<!-- <property name="build.testcases.java" value="${build.testcases}/java/" /> -->
 	<!-- <property name="build.testcases.CPP" value="${build.testcases}/CPP" />
 	<property name="build.testcases.C" value="${build.testcases}/C" /> -->
