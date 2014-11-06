@@ -2,21 +2,22 @@
 <!--@param ${javac.base.dir} : The path where the javac.base.dir is -->
 <!--@param ${base.path} : The root path is-->
 
-<project name="ant-sdbtasks" default="jar" basedir=".">
+<project name="Build-Sdbtasks-Jar" default="Jar-Ant-Sdbtasks">
 	<property name="build.dir" value="${base.path}/build_ant_sdbtask" />
-	<taskdef resource="net/sf/antcontrib/antlib.xml">
+	<!-- <taskdef resource="net/sf/antcontrib/antlib.xml">
 		<classpath>
 			<pathelement location="/usr/share/java/ant-contrib.jar" />
-			<pathelement location="C:\Tools\ant-contrib-1.0b3-bin\ant-contrib\ant-contrib-1.0b5.jar" />
 		</classpath>
-	</taskdef>
+	</taskdef> -->
 	
-	<target name="clean" depends="">
+	<target name="Clean-Last-Buildfile" depends="">
+		<echo message="Begin to clean last build file" />
 		<delete dir="${build.dir}" />
 		<mkdir dir="${build.dir}/lib" />
+		<echo message="Clean build file completed" />
 	</target>
 
-	<target name="compile" depends="clean">
+	<target name="Compile-Ant-Sdbtasks" depends="Clean-Last-Buildfile">
 		<echo message="os.name=${os.name}, os.arch=${os.arch}" />
 		<if>
 			<equals arg1="${os.name}" arg2="Linux" />
@@ -43,7 +44,6 @@
 			</else>
 		</if>
 
-		<echo message="javac srcdir=${source.dir} destdir=${target.dir} debug=true classpath=null fork=yes executable=${javac.base.dir}/java/${jdk.name}/bin/javac " />
 		<javac srcdir="${base.path}/src" destdir="${build.dir}" debug="true" debuglevel="lines,vars,source" classpath="" fork="yes" executable="${javac.base.dir}/java/${jdk.name}/bin/javac">
 			<classpath>
 				<fileset dir="${base.path}/lib" includes="*.jar"/>
@@ -51,13 +51,13 @@
 			</classpath>
 		</javac>
 
-		<unjar dest="${build.dir}" src="${java.driver.jar}" />
+		<unjar src="${java.driver.jar}" dest="${build.dir}"  />
 		<unjar src="${base.path}/lib/JSTAF.jar" dest="${build.dir}" />
 		<unjar src="${base.path}/lib/ant-contrib.jar" dest="${build.dir}" />
 		<copy file="${base.path}/src/com/sequoiadb/ant/ant-sdbtasks.xml" tofile="${build.dir}/com/sequoiadb/ant/ant-sdbtasks.xml" />
 	</target>
 
-	<target name="jar" depends="compile">
+	<target name="Jar-Ant-Sdbtasks" depends="Compile-Ant-Sdbtasks">
 		<jar file="${base.path}/ant-sdbtasks.jar">
 			<manifest>
 				<attribute name="Version" value="1.0" />
