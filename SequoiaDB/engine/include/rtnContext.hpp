@@ -922,7 +922,7 @@ namespace engine
 
    private:
       INT32 _tryLock( const CHAR *pCollectionName,
-                     _pmdEDUCB *cb );
+                      _pmdEDUCB *cb );
 
       INT32 _releaseLock( _pmdEDUCB *cb );
 
@@ -933,10 +933,14 @@ namespace engine
       SDB_DPSCB            *_pDpsCB;
       _clsCatalogAgent     *_pCatAgent;
       dpsTransCB           *_pTransCB;
-      CHAR                 _name[ DMS_COLLECTION_FULL_NAME_SZ + 1 ];
-      BOOLEAN              _gotDmsCBWrite;
+      std::string          _collectionName ;
+      std::string          _clShortName ;
+      BOOLEAN              _gotDmsCBWrite ;
+      BOOLEAN              _hasLock ;
       UINT32               _logicCSID;
-      UINT16               _clID;
+
+      _dmsStorageUnit      *_su ;
+      _dmsMBContext        *_mbContext ;
    };
    typedef class _rtnContextDelCL rtnContextDelCL;
 

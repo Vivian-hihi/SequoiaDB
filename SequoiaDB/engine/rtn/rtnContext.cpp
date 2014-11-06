@@ -138,12 +138,13 @@ namespace engine
       INT32 offset      = 0 ;
       INT32 recordNum   = 0 ;
 
-      if ( num >= _recordNum )
+      if ( num >= (UINT32)_recordNum )
       {
          goto done ;
       }
 
-      while( ossAlign4( (UINT32)offset ) < _buffSize && recordNum < num )
+      while( ossAlign4( (UINT32)offset ) < (UINT32)_buffSize &&
+             (UINT32)recordNum < num )
       {
          offset = ossAlign4( (UINT32)offset ) ;
          try
@@ -4428,53 +4429,54 @@ namespace engine
       _pDpsCB        = pmdGetKRCB()->getDPSCB() ;
       _pCatAgent     = pmdGetKRCB()->getClsCB ()->getCatAgent () ;
       _pTransCB      = pmdGetKRCB()->getTransCB();
-      _gotDmsCBWrite = FALSE;
+      _gotDmsCBWrite = FALSE ;
+      _hasLock       = FALSE ;
       _logicCSID     = DMS_INVALID_LOGICCSID;
-      _clID          = DMS_INVALID_MBID;
-      ossMemset( _name, 0, DMS_COLLECTION_FULL_NAME_SZ + 1 );
+      _mbContext     = NULL ;
+      _su            = NULL ;
    }
 
    _rtnContextDelCL::~_rtnContextDelCL()
    {
       pmdEDUMgr *eduMgr    = pmdGetKRCB()->getEDUMgr() ;
       pmdEDUCB *cb         = eduMgr->getEDUByID( eduID() ) ;
-      _clean( cb );
+      _clean( cb ) ;
    }
 
    INT32 _rtnContextDelCL::_tryLock( const CHAR *pCollectionName,
                                      _pmdEDUCB *cb )
    {
-      INT32 rc = SDB_OK;
+      INT32 rc                = SDB_OK ;
+      dmsStorageUnitID suID   = DMS_INVALID_CS ;
+      const CHAR *pCollectionShortName = NULL;
+
+      rc = rtnResolveCollectionNameAndLock ( pCollectionName, _pDmsCB,
+                                             &_su, &pCollectionShortName,
+                                             suID ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to resolve collection name"
+                   "(collection:%s, rc: %d)", pCollectionName, rc ) ;
 
       // lock collection
-      if ( _pDpsCB )
+      if ( _pDpsCB && _pTransCB->isTransOn() )
       {
-         dmsStorageUnit *su      = NULL;
-         dmsStorageUnitID suID   = DMS_INVALID_CS;
-         UINT32 logicCSID        = DMS_INVALID_LOGICCSID;
-         UINT16 clID             = DMS_INVALID_MBID;
-         const CHAR *pCollectionShortName = NULL;
          _releaseLock( cb ) ;
 
-         rc = rtnResolveCollectionNameAndLock ( pCollectionName, _pDmsCB, &su,
-                                                &pCollectionShortName, suID ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to resolve collection name"
-                      "(collection:%s, rc: %d)", pCollectionName, rc ) ;
+         rc = _su->data()->getMBContext( &_mbContext, pCollectionShortName,
+                                         EXCLUSIVE ) ;
+         PD_RC_CHECK( rc, PDERROR, "Get collection[%s] mb context failed, "
+                      "rc: %d", pCollectionName, rc ) ;
 
-         rc = su->data()->findCollection ( pCollectionShortName, clID ) ;
-         logicCSID = su->LogicalCSID();
-         _pDmsCB->suUnlock ( suID );
-         PD_RC_CHECK( rc, PDERROR, "Failed to find the collection"
-                      "(collection:%s, rc: %d)", pCollectionName, rc ) ;
-
-         rc = _pTransCB->transLockTryX( cb, logicCSID, clID ) ;
+         rc = _pTransCB->transLockTryX( cb, _su->LogicalCSID(),
+                                        _mbContext->mbID() ) ;
          PD_RC_CHECK( rc, PDERROR,
                       "Get transaction-lock of collection(%s) failed(rc=%d)",
                       pCollectionName, rc ) ;
-         ossStrcpy( _name, pCollectionName ) ;
-         _logicCSID  = logicCSID ;
-         _clID       = clID ;
+
+         _collectionName = pCollectionName ;
+         _clShortName    = pCollectionShortName ;
+         _hasLock = TRUE ;
       }
+
    done:
       return rc ;
    error:
@@ -4483,15 +4485,12 @@ namespace engine
 
    INT32 _rtnContextDelCL::_releaseLock( _pmdEDUCB *cb )
    {
-      INT32 rc = SDB_OK;
-      if ( cb && _pDpsCB && ( _logicCSID != DMS_INVALID_LOGICCSID ) )
+      if ( cb && _hasLock )
       {
-         _pTransCB->transLockRelease( cb, _logicCSID, _clID ) ;
-         ossMemset( _name, 0, DMS_COLLECTION_FULL_NAME_SZ + 1 ) ;
-         _logicCSID  = DMS_INVALID_LOGICCSID;
-         _clID       = DMS_INVALID_MBID;
+         _pTransCB->transLockRelease( cb, _logicCSID, _mbContext->mbID() ) ;
+         _hasLock = FALSE ;
       }
-      return rc ;
+      return SDB_OK ;
    }
 
    RTN_CONTEXT_TYPE _rtnContextDelCL::getType () const
@@ -4528,26 +4527,35 @@ namespace engine
                                     rtnContextBuf &buffObj,
                                     INT64 &startPos, _pmdEDUCB *cb )
    {
-      INT32 rc = SDB_OK;
+      INT32 rc = SDB_OK ;
       if ( !isOpened() )
       {
          rc = SDB_DMS_CONTEXT_IS_CLOSE;
          goto error ;
       }
       _pCatAgent->lock_w () ;
-      _pCatAgent->clear ( _name ) ;
+      _pCatAgent->clear ( _collectionName.c_str() ) ;
       _pCatAgent->release_w () ;
-      pmdGetKRCB()->getClsCB()->invalidateCata( _name ) ;
+      pmdGetKRCB()->getClsCB()->invalidateCata( _collectionName.c_str() ) ;
 
       PD_CHECK( pmdIsPrimary(), SDB_CLS_NOT_PRIMARY, error, PDERROR,
                 "Failed to drop cs before phase2(%d)", rc );
 
-      rc = rtnDropCollectionCommand( _name, cb, _pDmsCB, _pDpsCB ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to drop collection[%s], rc: %d",
-                   _name, rc ) ;
+      // drop collection
+      rc = _su->data()->dropCollection ( _clShortName.c_str(), cb, _pDpsCB,
+                                         TRUE, _mbContext ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to drop collection %s, rc: %d",
+                  _collectionName.c_str(), rc ) ;
+         goto error ;
+      }
+      _su->getAPM()->invalidatePlans ( _clShortName.c_str() ) ;
+
       _clean( cb ) ;
       _isOpened = FALSE ;
       rc = SDB_DMS_EOC ;
+
    done:
       return rc;
    error:
@@ -4562,11 +4570,22 @@ namespace engine
       {
          PD_LOG( PDERROR, "release lock failed, rc: %d", rcTmp ) ;
       }
+      if ( _su && _mbContext )
+      {
+         _su->data()->releaseMBContext( _mbContext ) ;
+      }
+      // unlock su
+      if ( _pDmsCB && _su )
+      {
+         _pDmsCB->suUnlock ( _su->CSID() ) ;
+         _su = NULL ;
+      }
       if ( _gotDmsCBWrite )
       {
          _pDmsCB->writeDown() ;
          _gotDmsCBWrite = FALSE ;
       }
+      _isOpened = FALSE ;
    }
 
    _rtnContextDelMainCL::_rtnContextDelMainCL( SINT64 contextID, UINT64 eduID )
