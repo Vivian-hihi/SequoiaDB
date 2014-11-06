@@ -50,7 +50,7 @@
 
 	<target name="Build-Driver-Testcases" depends="Build-Sdbtasks-Jar">
 		<echo message="Begin to build the driver testcases" />
-		<ant antfile="${ci.script.path}/build-file/build-driver-test.xml" target="build-driver-test">
+		<ant antfile="${ci.script.path}/build-file/build-driver-test.xml">
 			<property name="build.testcases" value="${build.testcases}/drivers_testcases" />
 			<property name="deploy.path" value="${deploy.path}" />
 			<!-- <property name="WORKSPACE" value="${WORKSPACE}" /> -->
@@ -89,7 +89,7 @@
 		<copy todir="${deploy.path}/hlt/php_testcases">
 			<fileset dir="${build.testcases}/drivers_testcases/php" includes="**/*" />
 		</copy>
-		<copy todir="${deploy.path}/hlt/sql_testcases">
+		<!-- <copy todir="${deploy.path}/hlt/sql_testcases">
 			<fileset dir="${build.testcases}/sql_testcases" includes="**/*" />
 		</copy>
 		<copy todir="${deploy.path}/hlt/unusual_testcases">
@@ -97,7 +97,7 @@
 		</copy>
 		<copy todir="${deploy.path}/hlt/samples_testcases">
 			<fileset dir="${WORKSPACE}/sequoiadb/client/samples" includes="**/*" />
-		</copy>
+		</copy> -->
 		<copy file="${ci.script.path}/ci.test.properties" todir="${deploy.path}" />
 		<copy todir="${deploy.path}">
 			<fileset dir="${ci.script.path}/exec-testcases" includes="exec*.xml" />
