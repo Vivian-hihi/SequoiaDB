@@ -357,7 +357,6 @@ namespace engine
    INT32 restoreSysInit ()
    {
       INT32 rc = SDB_OK ;
-      pmdKRCB *krcb = pmdGetKRCB() ;
 
       // check sequoaidb is not running
       rc = pmdGetStartup().init( pmdGetOptionCB()->getDbPath() ) ;
@@ -441,7 +440,6 @@ namespace engine
    {
       INT32      rc       = SDB_OK ;
       pmdKRCB   *krcb     = pmdGetKRCB () ;
-      pmdEDUMgr *eduMgr   = krcb->getEDUMgr () ;
       EDUID      agentEDU = PMD_INVALID_EDUID ;
       CHAR diaglog[ OSS_MAX_PATHSIZE + 1 ] = {0} ;
       rsOptionMgr optMgr ;
