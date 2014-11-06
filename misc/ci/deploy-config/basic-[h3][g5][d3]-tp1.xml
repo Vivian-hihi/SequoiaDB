@@ -160,7 +160,7 @@
 		<hostinfo prefix="host" />
 		<!-- <property name="test-type-list" value="basic,ant" /> -->
 		<!-- <property name="test-type-list" value="driver-CPP,driver-C,driver-python,driver-java,driver-php" /> -->
-		<property name="test-type-list" value="driver-C" />
+		<property name="test-type-list" value="driver-C,driver-php" />
 		<property name="copy.test.log" value="true"/>
 		<!-- <property name="import.file.name" value="basic-testcases-time.json" /> -->
 

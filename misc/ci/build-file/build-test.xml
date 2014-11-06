@@ -86,9 +86,9 @@
 		<copy todir="${deploy.path}/hlt/js_testcases">
 			<fileset dir="${build.testcases}/js_testcases" includes="**/*" />
 		</copy>
-		<copy todir="${deploy.path}/hlt/php_testcases">
+		<!-- <copy todir="${deploy.path}/hlt/php_testcases">
 			<fileset dir="${build.testcases}/drivers_testcases/php" includes="**/*" />
-		</copy>
+		</copy> -->
 		<!-- <copy todir="${deploy.path}/hlt/sql_testcases">
 			<fileset dir="${build.testcases}/sql_testcases" includes="**/*" />
 		</copy>

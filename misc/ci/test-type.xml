@@ -113,13 +113,13 @@
 				<sdbtest host="${test.host.NAME}" testscript="${test.machine.deploy.path}/deploy/exec-driver-php-test.xml" remotereports="${testcase.path}/drivers_testcases/php/reports" masterreports="${test.reports.path}" >
 					<param name="ci.properties.path" value="${test.machine.software.path}/ci.test.properties" />
 					<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
-					<param name="php.testcase.path" value="${testcase.path}/php_testcases" />
+					<param name="php.testcase.path" value="${testcase.path}/drivers_testcases/php" />
 					<param name="deploy.case.fullname" value="${deploy.case.fullname}" />
 					<param name="excludes.dir.patterns" value="tools" />
 					<param name="includes.dir.patterns" value="*" />
 
 					<param name="php-bin.dir" value="/opt/sequoiadb/tools/server/php/bin" />
-					<param name="phpunit.phar.dir" value="${testcase.path}/php_testcases/tools/phpunit.phar" />
+					<param name="phpunit.phar.dir" value="${testcase.path}/drivers_testcases/php/tools/phpunit.phar" />
 				</sdbtest>
 				<echo message="... Test php driver is over ..." />
 			</case>

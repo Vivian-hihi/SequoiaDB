@@ -76,7 +76,7 @@
 			</manifest>
 			<fileset dir="${deploy.path}/hlt/drivers_testcases/java/build" includes="**/*" />
 		</jar>
-		<copy file="${deploy.path}/hlt/drivers_testcases/java/lib/java_test.jar" tofile="${deploy.path}/hlt/samples_testcases/Java/lib/java_test.jar" />
+		<!-- <copy file="${deploy.path}/hlt/drivers_testcases/java/lib/java_test.jar" tofile="${deploy.path}/hlt/samples_testcases/Java/lib/java_test.jar" /> -->
 		<echo message="Complete javac and jar the driver java testcases" />
 
 		<!-- <delete dir="${WORKSPACE}/sequoiadb/client/lib" failonerror="false" />
@@ -134,5 +134,11 @@
 			<fileset dir="${build.testcases}/python" includes="**/*" />
 		</copy>
 		<echo message="Complete copy the python testcases" />
+
+		<echo message="Begin to copy the php testcases" />
+		<copy todir="${deploy.path}/hlt/drivers_testcases/php">
+			<fileset dir="${build.testcases}/php" includes="**/*" />
+		</copy>
+		<echo message="Complete copy the php testcases" />
 	</target>
 </project>
