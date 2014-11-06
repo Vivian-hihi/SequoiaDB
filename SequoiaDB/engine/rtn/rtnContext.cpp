@@ -4456,6 +4456,9 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Failed to resolve collection name"
                    "(collection:%s, rc: %d)", pCollectionName, rc ) ;
 
+      _collectionName = pCollectionName ;
+      _clShortName    = pCollectionShortName ;
+
       // lock collection
       if ( _pDpsCB && _pTransCB->isTransOn() )
       {
@@ -4471,9 +4474,6 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR,
                       "Get transaction-lock of collection(%s) failed(rc=%d)",
                       pCollectionName, rc ) ;
-
-         _collectionName = pCollectionName ;
-         _clShortName    = pCollectionShortName ;
          _hasLock = TRUE ;
       }
 
