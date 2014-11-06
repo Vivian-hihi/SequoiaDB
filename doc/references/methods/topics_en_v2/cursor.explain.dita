@@ -83,7 +83,7 @@
     <section>
       <title>Examples</title>
       <p>Suppose foo.bar is a horizontal-partitioning collection splitted in three replica groups.</p>
-      <codeblock>db.foo.bar.find().sort({b:1}).explain()</codeblock>
+      <codeblock>db.foo.bar.find().sort({b:1}).explain({Run:true})</codeblock>
       <p>Return:</p>
       <codeblock>{
   "Name": "foo.bar",

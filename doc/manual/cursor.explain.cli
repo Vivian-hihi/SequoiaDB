@@ -97,7 +97,7 @@ Return the access plan of the current cursor.
 Suppose foo.bar is a horizontal-partitioning collection splitted
 in three replica groups.
 .sp 2
-db.foo.bar.find().sort({b:1}).explain()
+db.foo.bar.find().sort({b:1}).explain({Run:true})
 .sp 2
 Return:
 .sp 2

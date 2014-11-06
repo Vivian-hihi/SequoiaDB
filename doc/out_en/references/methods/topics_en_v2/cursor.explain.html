@@ -156,7 +156,7 @@ Cursor
       
       <p class="p">Suppose foo.bar is a horizontal-partitioning collection splitted in three replica groups.</p>
 
-      <pre class="pre codeblock">db.foo.bar.find().sort({b:1}).explain()</pre>
+      <pre class="pre codeblock">db.foo.bar.find().sort({b:1}).explain({Run:true})</pre>
 
       <p class="p">Return:</p>
 
