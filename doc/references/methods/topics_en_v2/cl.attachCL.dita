@@ -33,7 +33,7 @@
     <section>
       <title>Examples</title>
       <p>Mount the child partition-collections to the specified main collection.</p>
-      <codeblock>db.foo.year.attachCL("foo2.January",{LowBound:{date:"20130101"},UpBound:{date:"20130131"}}</codeblock>      
+      <codeblock>db.foo.year.attachCL("foo2.January",{LowBound:{date:"20130101"},UpBound:{date:"20130131"}})</codeblock>      
     </section>
   </body>
 </topic>

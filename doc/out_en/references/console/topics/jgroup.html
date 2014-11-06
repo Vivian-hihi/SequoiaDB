@@ -52,7 +52,7 @@
       
       <ul class="ul">
         <li class="li">$group 使用如下
-            <pre class="pre codeblock">db.collectionspace.collection.aggregate({$group:{_id:"$major",avg_score:{<a class="xref" href="javg.html">$avg</a>:"$score",Major:{<a class="xref" href="jfirst.html">$first</a>:"$major"}}})</pre>
+            <pre class="pre codeblock">db.collectionspace.collection.aggregate({$group:{_id:"$major",avg_score:{<a class="xref" href="javg.html">$avg</a>:"$score"},Major:{<a class="xref" href="jfirst.html">$first</a>:"$major"}}})</pre>
 
           <div class="p">该操作表示从集合 collection 中读取记录，并按 major 字段进行分组。在返回的结果集中，取各分组的第一条记录的 major 字段，重命名为 Major；对各分组中的 score 字段值求平均值，重命名为 avg_score。返回如下所示：<pre class="pre codeblock">{
   "avg_score": 82,

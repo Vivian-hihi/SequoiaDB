@@ -31,7 +31,7 @@
     <section><title>示例</title>
       <ul>
         <li><p>在主分区集合的指定区间下挂载子分区集合</p>
-          <p><codeblock>db.foo.year.attachCL("foo2.January",{LowBound:{date:"20130101"},UpBound:{date:"20130131"}}</codeblock></p></li>
+          <p><codeblock>db.foo.year.attachCL("foo2.January",{LowBound:{date:"20130101"},UpBound:{date:"20130131"}})</codeblock></p></li>
       </ul>      
     </section>
   </body>

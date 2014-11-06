@@ -46,4 +46,4 @@ Attach child partition-collections to the main partition.
 Mount the child partition-collections to the specified main
 collection.
 .sp 2
-db.foo.year.attachCL("foo2.January",{LowBound:{date:"20130101"},UpBound:{date:"20130131"}}
+db.foo.year.attachCL("foo2.January",{LowBound:{date:"20130101"},UpBound:{date:"20130131"}})

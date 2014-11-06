@@ -14,7 +14,7 @@ Multiple grouping key: {_id:{field1:"$field1",field2:"$field2",...}}</codeblock>
     <section>
       <title>Example</title>
       <ul>
-        <li>$group using the following: <codeblock>db.collectionspace.collection.aggregate({$group:{_id:"$major",avg_score:{<xref href="javg_en.dita">$avg</xref>:"$score",Major:{<xref href="jfirst_en.dita">$first</xref>:"$major"}}})</codeblock>
+        <li>$group using the following: <codeblock>db.collectionspace.collection.aggregate({$group:{_id:"$major",avg_score:{<xref href="javg_en.dita">$avg</xref>:"$score"},Major:{<xref href="jfirst_en.dita">$first</xref>:"$major"}}})</codeblock>
           <p>This operation reads the records from the collection represents the collection, grouped
             accrding to major fields. In the result set, taking the first record of each grouping of
             major fields, rename Major, field to score the value of each packet average, rename
