@@ -260,7 +260,7 @@ public class SdbReader extends Thread implements
 							constantList.get(0));
 				}
 
-				bson.put(columnList.get(0).toUpperCase(), compObj);
+				bson.put(columnList.get(0).toLowerCase(), compObj);
 
 			} else if (LOGIC_BSON_TABLE.containsKey(funcName)) {
 

@@ -143,7 +143,6 @@ public class SdbSplit extends FileSplit implements InputSplit {
 				.getCollection(clName);
 		DBCursor explainCurl = collection.explain(null, null, null, null, 0, 0,
 				0, new BasicBSONObject("Run", false));
-		System.out.println("explain");
 		Set<String> subCls = new HashSet<String>();
 		while (explainCurl.hasNext()) {
 			BSONObject explainBson = explainCurl.getNext();
