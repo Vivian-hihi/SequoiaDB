@@ -62,7 +62,7 @@
 		   <property name="JDK.VERIONS.5" value="${choise.jdk5}" />
 		   <property name="base.dir" value="${WORKSPACE}/sequoiadb/driver/java" />
 		</ant>
-		<!-- <ant antfile="${WORKSPACE}/sequoiadb/driver/hadoop/hive/build.xml">
+		<ant antfile="${WORKSPACE}/sequoiadb/driver/hadoop/hive/build.xml">
 			<property name="java.driver.jar" value="${CODE_DIR}/driver/java/${java.driver.jar.name}"/>
 			<property name="javac.base.dir" value="${WORKSPACE}/sequoiadb/"/>
 			<property name="root.dir" value="${WORKSPACE}/sequoiadb/driver/hadoop/hive/"/>
@@ -79,7 +79,7 @@
 			<property name="hadoop.version" value="2.2" />
 			<property name="basedir" value="${CODE_DIR}/driver/hadoop/hadoop-connector" />
 			<property name="java.driver.jar" value="${CODE_DIR}/driver/java/${java.driver.jar.name}"/>
-		</ant> -->
+		</ant>
 
 		<chmod file="${WORKSPACE}/sequoiadb/thirdparty/php/retriConfig.sh" perm="a+x" />
 		<echo message="/usr/bin/gcc  ${CODE_DIR}/misc/ci/exec-tools/print_version.c -o ${CODE_DIR}/misc/ci/exec-tools/print_version -I${CODE_DIR}/SequoiaDB/engine/include" />
@@ -117,11 +117,11 @@
 
     	<copy file="${CODE_DIR}/driver/C#.Net/build/release/sdbcs.dll" tofile="${DRIVER.DIR}/CSharp/sdbcs.dll" />
 		<copy file="${CODE_DIR}/driver/java/${java.driver.jar.name}" todir="${DRIVER.DIR}/java" />
-		<!-- <copy file="${CODE_DIR}/driver/hadoop/hive/${open.source.hive_connector.filename}" tofile="${DRIVER.DIR}/hadoop/${open.source.hive_connector.filename}" />
+		<copy file="${CODE_DIR}/driver/hadoop/hive/${open.source.hive_connector.filename}" tofile="${DRIVER.DIR}/hadoop/${open.source.hive_connector.filename}" />
     	<copy file="${CODE_DIR}/driver/hadoop/hive/${cdh.hive_connector.filename}" tofile="${DRIVER.DIR}/hadoop/${cdh.hive_connector.filename}" />
     	<copy todir="${DRIVER.DIR}/hadoop" >
     		<fileset dir="${CODE_DIR}/driver/hadoop/hadoop-connector" includes="**/hadoop-connector*.jar" />
-    	</copy> -->
+    	</copy>
 		<copy todir="${DRIVER.DIR}/lib">
 			<fileset dir="${CODE_DIR}/client/lib/" includes="*" />
 		</copy>
@@ -246,8 +246,8 @@
 			<fileset dir="${DRIVER.DIR}/python" />
 		</copy>
 		<copy file="${CODE_DIR}/driver/java/${java.driver.jar.name}" todir="${RELEASE_DIR}/sequoiadb/java" />
-		<!-- <copy file="${CODE_DIR}/driver/hadoop/hive/${open.source.hive_connector.filename}" tofile="${RELEASE_DIR}/sequoiadb/hadoop/${open.source.hive_connector.filename}" />
-		<copy file="${CODE_DIR}/driver/hadoop/hive/${cdh.hive_connector.filename}" tofile="${RELEASE_DIR}/sequoiadb/hadoop/${cdh.hive_connector.filename}" /> -->
+		<copy file="${CODE_DIR}/driver/hadoop/hive/${open.source.hive_connector.filename}" tofile="${RELEASE_DIR}/sequoiadb/hadoop/${open.source.hive_connector.filename}" />
+		<copy file="${CODE_DIR}/driver/hadoop/hive/${cdh.hive_connector.filename}" tofile="${RELEASE_DIR}/sequoiadb/hadoop/${cdh.hive_connector.filename}" />
 
 		<copy file="${CODE_DIR}/driver/postgresql/sdb_fdw.so" tofile="${RELEASE_DIR}/sequoiadb/postgresql/sdb_fdw.so" />
 		
