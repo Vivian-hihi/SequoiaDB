@@ -244,13 +244,17 @@ public class Sequoiadb {
 		if (options == null)
 			opts = new ConfigOptions();
 		int size = connStrings.size();
+		if (0 == size)
+		{
+			throw new BaseException("SDB_INVALIDARG", "Address list is empty");
+		}
 		Random random = new Random();
 		int count = random.nextInt(size);
 		int mark = count;
 		do
 		{
-			String str = connStrings.get(count);
 			count = ++count % size;
+			String str = connStrings.get(count);
 			try
 			{
 				// connect
@@ -270,12 +274,14 @@ public class Sequoiadb {
 			}
 			catch (BaseException e)
 			{
+				if ( mark == count)
+				{
+					throw new BaseException("SDB_NET_CANNOT_CONNECT");
+				}
 				continue;
 			}
 			break;
 		} while (mark != count);
-		if (size == count)
-			throw new BaseException("SDB_NET_CANNOT_CONNECT");
 	}
 	
 	/**

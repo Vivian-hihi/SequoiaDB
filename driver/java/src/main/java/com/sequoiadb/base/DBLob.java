@@ -324,7 +324,7 @@ class DBLobConcrete implements DBLob {
      */
     public void write( byte[] b ) throws BaseException {
         if ( !_isOpen ) {
-            throw new BaseException( "SDB_IO", "lob is not open" );
+            throw new BaseException( "SDB_LOB_NOT_OPEN", "lob is not open" );
         }
 
         if ( b == null ) {
@@ -365,7 +365,7 @@ class DBLobConcrete implements DBLob {
      */
     public int read( byte[] b ) throws BaseException {
         if ( !_isOpen ) {
-            throw new BaseException( "SDB_IO", "lob is not open" );
+            throw new BaseException( "SDB_LOB_NOT_OPEN", "lob is not open" );
         }
         
         if ( b == null ) {
@@ -393,7 +393,7 @@ class DBLobConcrete implements DBLob {
      */
     public void seek( long size, int seekType ) throws BaseException {
         if ( !_isOpen ) {
-            throw new BaseException( "SDB_IO", "lob is not open" );
+            throw new BaseException( "SDB_LOB_NOT_OPEN", "lob is not open" );
         }
 
         if ( _mode != SDB_LOB_READ ) {
