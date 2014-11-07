@@ -4431,7 +4431,6 @@ namespace engine
       _pTransCB      = pmdGetKRCB()->getTransCB();
       _gotDmsCBWrite = FALSE ;
       _hasLock       = FALSE ;
-      _logicCSID     = DMS_INVALID_LOGICCSID;
       _mbContext     = NULL ;
       _su            = NULL ;
    }
@@ -4462,8 +4461,6 @@ namespace engine
       // lock collection
       if ( _pDpsCB && _pTransCB->isTransOn() )
       {
-         _releaseLock( cb ) ;
-
          rc = _su->data()->getMBContext( &_mbContext, pCollectionShortName,
                                          EXCLUSIVE ) ;
          PD_RC_CHECK( rc, PDERROR, "Get collection[%s] mb context failed, "
@@ -4487,7 +4484,8 @@ namespace engine
    {
       if ( cb && _hasLock )
       {
-         _pTransCB->transLockRelease( cb, _logicCSID, _mbContext->mbID() ) ;
+         _pTransCB->transLockRelease( cb, _su->LogicalCSID(),
+                                      _mbContext->mbID() ) ;
          _hasLock = FALSE ;
       }
       return SDB_OK ;

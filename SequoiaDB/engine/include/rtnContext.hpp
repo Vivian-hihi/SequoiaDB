@@ -937,7 +937,6 @@ namespace engine
       std::string          _clShortName ;
       BOOLEAN              _gotDmsCBWrite ;
       BOOLEAN              _hasLock ;
-      UINT32               _logicCSID;
 
       _dmsStorageUnit      *_su ;
       _dmsMBContext        *_mbContext ;
