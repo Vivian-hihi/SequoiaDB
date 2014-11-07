@@ -129,7 +129,7 @@ namespace engine
                while(*regex)
                {
                   CHAR c = *(regex++);
-                  if( ossStrchr("?*\\^$.[()+{", c) ||
+                  if( ossStrchr("|?*\\^$.[()+{", c) ||
                       ( ossStrchr("# ", c) && extended ))
                   {
                      return FALSE;
