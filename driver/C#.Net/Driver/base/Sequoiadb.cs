@@ -155,28 +155,28 @@ namespace SequoiaDB
                 else if (serverAddresses != null)
                 {
                     int size = serverAddresses.Length;
-                    int count = 0;
-                    for (int i = 0; i < size; i++)
+                    Random random = new Random();
+                    int count = random.Next(size);
+                    int mark = count;
+                    do
                     {
-                        // try to connect
+                        count = ++count % size;
                         try
                         {
-                            ServerAddress conn = serverAddresses[i];
+                            ServerAddress conn = serverAddresses[count];
                             connection = new ConnectionTCPImpl(conn, opts);
                             connection.Connect();
                         }
                         catch (System.Exception e)
                         {
-                            count++;
+                            if (mark == count)
+                            {
+                                throw new BaseException("SDB_NET_CANNOT_CONNECT");
+                            }
                             continue;
                         }
                         break;
-                    }
-                    if (count == size)
-                    {
-                        connection = null;
-                        throw new BaseException("SDB_NET_CANNOT_CONNECT");
-                    }
+                    } while(mark != count);
                 }
                 else
                 {

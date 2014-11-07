@@ -209,7 +209,7 @@ namespace DriverTest
             Assert.IsNotNull(obj);
             obj = cursor.Next();
             Assert.IsNotNull(obj);
-            // TODO:
+            // DO:
             cursor.Close();
             // close
             try
@@ -218,7 +218,7 @@ namespace DriverTest
             }catch( BaseException e )
             {
                 Console.WriteLine("After close cursor, call Close() get errno " +　e.ErrorCode );
-                Assert.IsTrue( e.ErrorType.Equals("SDB_RTN_CONTEXT_NOTEXIST") );
+                Assert.IsTrue(e.ErrorType.Equals("SDB_DMS_CONTEXT_IS_CLOSE"));
             }
             // current
             try
@@ -228,7 +228,7 @@ namespace DriverTest
             catch (BaseException e)
             {
                 Console.WriteLine("After close cursor, call Current() get errno " + e.ErrorCode);
-                Assert.IsTrue(e.ErrorType.Equals("SDB_RTN_CONTEXT_NOTEXIST"));
+                Assert.IsTrue(e.ErrorType.Equals("SDB_DMS_CONTEXT_IS_CLOSE"));
             }
             // next
             try
@@ -238,7 +238,7 @@ namespace DriverTest
             catch (BaseException e)
             {
                 Console.WriteLine("After close cursor, call Next() get errno " + e.ErrorCode);
-                Assert.IsTrue(e.ErrorType.Equals("SDB_RTN_CONTEXT_NOTEXIST"));
+                Assert.IsTrue(e.ErrorType.Equals("SDB_DMS_CONTEXT_IS_CLOSE"));
             }
 
         }

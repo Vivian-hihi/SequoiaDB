@@ -77,6 +77,7 @@
 
 </TestConfig>
 
+
 <!--
 <?xml version="1.0" encoding="utf-8" ?>
 <TestConfig>
@@ -84,20 +85,20 @@
   <Password></Password>
 
   <Coord>
-    <Address>192.168.30.165:11810</Address>
+    <Address>192.168.30.161:50000</Address>
   </Coord>
 
   <Catalog>
-    <Address>192.168.30.165:30000</Address>
+    <Address>192.168.30.161:30000</Address>
   </Catalog>
 
   <Data>
-    <Address>192.168.30.165:25100</Address>
+    <Address>192.168.30.161:25100</Address>
   </Data>
 
   <Groups>
     <Group>
-      <GroupName>testgroup</GroupName>
+      <GroupName>group1</GroupName>
       <Nodes>
         <Node>
           <HostName>rhel</HostName>
@@ -156,4 +157,5 @@
   </Groups>
 
 </TestConfig>
-  -->
+-->  
+

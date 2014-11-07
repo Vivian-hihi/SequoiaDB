@@ -90,14 +90,15 @@ namespace DriverTest
         public void Connect_With_Serval_Arg_Test()
         {
 		    List<string> list = new List<string>();
-	        list.Add("192.168.20.35:12340");
-	        list.Add("192.168.20.36:12340");
-	        list.Add("123:123");
-	        list.Add("");
-	        list.Add("192.168.20.40");
-	        list.Add("localhost:50000");
-	        list.Add("localhost:11810");
-	        list.Add("localhost:12340");
+            list.Add("192.168.20.35:12340");
+            list.Add("192.168.20.36:12340");
+            list.Add("123:123");
+            list.Add("");
+            list.Add("192.168.20.40");
+            list.Add("192.168.30.161:11810");
+            list.Add("localhost:50000");
+            list.Add("192.168.20.42:11810");
+            list.Add("localhost:12340");
             list.Add("192.168.20.40:12340");
 
 	        ConfigOptions options = new ConfigOptions();
@@ -130,12 +131,14 @@ namespace DriverTest
             sdb2.Disconnect();
             result = sdb2.IsValid();
             Assert.IsFalse(result);
+            /*
             // check after shutdown database manually
             sdb2 = new Sequoiadb(config.conf.Coord.Address);
             sdb2.Connect("", "");
             result = true;
             result = sdb2.IsValid();
             Assert.IsFalse(result);
+             */
         }
 
         [TestMethod()]
@@ -749,13 +752,13 @@ namespace DriverTest
         // */
 
         [TestMethod()]
-        //[Ignore]
+        [Ignore]
         public void setSessionAttrTest()
         {
             // create another node
-            string host = "ubuntu-dev1";
-            int port = 52000;
-            string dataPath = "/home/users/tanzhaobo/data/database/data2";
+            string host = "192.168.20.42";
+            int port = 55555;
+            string dataPath = "/opt/sequoiadb/database/data/55555";
             string groupName = "group1";
             ReplicaGroup rg = null;
             try

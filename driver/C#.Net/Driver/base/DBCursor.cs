@@ -74,7 +74,7 @@ namespace SequoiaDB
         {
             if ( isClosed )
             {
-                throw new BaseException("SDB_RTN_CONTEXT_NOTEXIST");
+                throw new BaseException("SDB_DMS_CONTEXT_IS_CLOSE");
             }
             if (index == -1 && hasMore)
                 ReadNextBuffer();
@@ -99,7 +99,7 @@ namespace SequoiaDB
         {
             if ( isClosed )
             {
-                throw new BaseException("SDB_RTN_CONTEXT_NOTEXIST");
+                throw new BaseException("SDB_DMS_CONTEXT_IS_CLOSE");
             }
             if ( index == -1 )
                 return Next();
@@ -116,7 +116,7 @@ namespace SequoiaDB
         {
             if ( isClosed || connection == null || contextId == -1 )
             {
-                throw new BaseException("SDB_RTN_CONTEXT_NOTEXIST");
+                throw new BaseException("SDB_DMS_CONTEXT_IS_CLOSE");
             }
             KillCursor();
             isClosed = true;

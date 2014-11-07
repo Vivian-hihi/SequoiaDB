@@ -39,7 +39,7 @@ namespace DriverTest
         {
             string errorType = "SDB_DMS_EOC";
             BaseException ex = new BaseException(errorType);
-            Assert.AreEqual("end of collection", ex.Message);
+            Assert.IsTrue(ex.Message.ToString().Equals("End of collection"));
         }
     }
 }

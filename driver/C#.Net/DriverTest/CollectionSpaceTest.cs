@@ -67,8 +67,8 @@ namespace DriverTest
         [TestMethod()]
         public void CollectionTest()
         {
-            string csName = "TestCS";
-            string clName = "TestCL";
+            string csName = "testCS1";
+            string clName = "testCL1";
             CollectionSpace cs = null;
             Sequoiadb sdb = new Sequoiadb(config.conf.Coord.Address);
             sdb.Connect(config.conf.UserName, config.conf.Password);
