@@ -1088,7 +1088,14 @@ namespace engine
       {
       case String:
       case Symbol:
-         return me._re->PartialMatch( e.valuestr() ) ;
+         if ( me._goSimpleMatch )
+         {
+            return ossStrstr( e.valuestr(), me._regex ) != NULL ;
+         }
+         else
+         {
+            return me._re->PartialMatch( e.valuestr() ) ;
+         }
       case RegEx:
          return !ossStrcmp( me._regex, e.regex() ) &&
                 !ossStrcmp( me._flags, e.regexFlags() ) ;

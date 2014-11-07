@@ -40,6 +40,7 @@
 #define MTHMATCHER_HPP_
 #include "core.hpp"
 #include "oss.hpp"
+#include "ossUtil.hpp"
 #include "pd.hpp"
 #include "rtnPredicate.hpp"
 #include <vector>
@@ -101,6 +102,46 @@ namespace engine
       class _REMatchElement : public SDBObject
       {
       private :
+         OSS_INLINE BOOLEAN _isPureWords(const char* regex, 
+                                         const char* flags)
+         {
+            BOOLEAN extended = FALSE;
+            if(flags)
+            {
+               while (*flags)
+               {
+                  switch (*(flags++))
+                  {
+                  case 'm': // multiline
+                  case 's':
+                     continue;
+                  case 'x': // extended
+                     extended = TRUE;
+                     continue;
+                  default:
+                     return FALSE ;
+                  }
+               }
+            }
+            if(regex)
+            {
+               //check if the regex contains metacharacters
+               while(*regex)
+               {
+                  CHAR c = *(regex++);
+                  if( ossStrchr("?*\\^$.[()+{", c) ||
+                      ( ossStrchr("# ", c) && extended ))
+                  {
+                     return FALSE;
+                  }
+               } 
+            }
+            else
+            {
+               return FALSE;
+            }
+            return TRUE;
+         }
          OSS_INLINE pcrecpp::RE_Options flags2options(const char* flags)
          {
             pcrecpp::RE_Options options;
@@ -123,12 +164,14 @@ namespace engine
          const CHAR *_fieldName ;
          const CHAR *_regex ;
          const CHAR *_flags ;
+         BOOLEAN _goSimpleMatch ;
          boost::shared_ptr<RE> _re ;
          _REMatchElement ( const BSONElement &e )
          {
             _fieldName = e.fieldName() ;
             _regex = e.regex() ;
             _flags = e.regexFlags() ;
+            _goSimpleMatch = _isPureWords(_regex, _flags);
             _re.reset ( new RE(_regex, flags2options(_flags) )) ;
          }
          _REMatchElement ( const CHAR *fieldName, const CHAR *regex,
@@ -137,6 +180,7 @@ namespace engine
             _fieldName = fieldName ;
             _regex = regex ;
             _flags = options ;
+            _goSimpleMatch = _isPureWords(_regex, _flags);
             _re.reset ( new RE(_regex, flags2options(_flags) )) ;
          }
       } ;
