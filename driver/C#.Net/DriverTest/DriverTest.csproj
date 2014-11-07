@@ -62,9 +62,11 @@
     <Compile Include="Constants.cs" />
     <Compile Include="DBCollectionTest.cs" />
     <Compile Include="DBCursorTest.cs" />
+    <Compile Include="DomainTest.cs" />
     <Compile Include="HelperTest.cs" />
     <Compile Include="LoggerTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="DBLobTest.cs" />
     <Compile Include="ReplicaGroupTest.cs" />
     <Compile Include="SequoiadbTest.cs" />
   </ItemGroup>

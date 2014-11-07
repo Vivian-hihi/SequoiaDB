@@ -17,58 +17,58 @@
 
   <Groups>
     <Group>
-      <GroupName>testgroup</GroupName>
+      <GroupName>group1</GroupName>
       <Nodes>
         <Node>
           <HostName>susetzb</HostName>
-          <Port>40000</Port>
-          <DBPath>/opt/sequoiadb/database/data/40000</DBPath>
+          <Port>11830</Port>
+          <DBPath>/opt/sequoiadb/database/data/11830</DBPath>
           <DiagLevel>5</DiagLevel>
         </Node>
       </Nodes>
     </Group>
     <Group>
-      <GroupName>testgroup1</GroupName>
+      <GroupName>group2</GroupName>
       <Nodes>
         <Node>
           <HostName>susetzb</HostName>
-          <Port>45000</Port>
-          <DBPath>/opt/sequoiadb/database/data/45000</DBPath>
+          <Port>41000</Port>
+          <DBPath>/opt/sequoiadb/database/data/41000</DBPath>
           <DiagLevel>5</DiagLevel>
         </Node>
         <Node>
           <HostName>susetzb</HostName>
-          <Port>46000</Port>
-          <DBPath>/opt/sequoiadb/database/data/46000</DBPath>
+          <Port>42000</Port>
+          <DBPath>/opt/sequoiadb/database/data/42000</DBPath>
           <DiagLevel>5</DiagLevel>
         </Node>
         <Node>
           <HostName>susetzb</HostName>
-          <Port>47000</Port>
-          <DBPath>/opt/sequoiadb/database/data/47000</DBPath>
+          <Port>43000</Port>
+          <DBPath>/opt/sequoiadb/database/data/43000</DBPath>
           <DiagLevel>5</DiagLevel>
         </Node>
       </Nodes>
     </Group>
     <Group>
-      <GroupName>testgroup2</GroupName>
+      <GroupName>group3</GroupName>
       <Nodes>
         <Node>
           <HostName>susetzb</HostName>
-          <Port>55000</Port>
-          <DBPath>/opt/sequoiadb/database/data/55000</DBPath>
+          <Port>51000</Port>
+          <DBPath>/opt/sequoiadb/database/data/51000</DBPath>
           <DiagLevel>5</DiagLevel>
         </Node>
         <Node>
           <HostName>susetzb</HostName>
-          <Port>56000</Port>
-          <DBPath>/opt/sequoiadb/database/data/56000</DBPath>
+          <Port>52000</Port>
+          <DBPath>/opt/sequoiadb/database/data/52000</DBPath>
           <DiagLevel>5</DiagLevel>
         </Node>
         <Node>
           <HostName>susetzb</HostName>
-          <Port>57000</Port>
-          <DBPath>/opt/sequoiadb/database/data/57000</DBPath>
+          <Port>53000</Port>
+          <DBPath>/opt/sequoiadb/database/data/53000</DBPath>
           <DiagLevel>5</DiagLevel>
         </Node>
       </Nodes>

@@ -16,10 +16,10 @@ namespace SequoiaDB
        private Sequoiadb sdb;
        internal bool isBigEndian = false;
 
-        /** \property Name
-         *  \brief Return the name of current collection space
-         *  \return The collection space name
-         */
+       /** \property Name
+        *  \brief Return the name of current collection space
+        *  \return The collection space name
+        */
        public string Name
        {
            get { return name; }
@@ -42,12 +42,12 @@ namespace SequoiaDB
         }
 
         /** \fn DBCollection GetCollection(string collectionName)
-          *  \brief Get the named collection
-          *  \param collectionName The collection name
-          *  \return The DBCollection handle
-          *  \exception SequoiaDB.BaseException
-          *  \exception System.Exception
-          */
+         *  \brief Get the named collection
+         *  \param collectionName The collection name
+         *  \return The DBCollection handle
+         *  \exception SequoiaDB.BaseException
+         *  \exception System.Exception
+         */
         public DBCollection GetCollection(string collectionName)
         {
             if (IsCollectionExist(collectionName))
@@ -57,12 +57,12 @@ namespace SequoiaDB
         }
 
         /** \fn bool IsCollectionExist(string colName)
-          *  \brief Verify the existence of collection in current colleciont space
-          *  \param colName The collection name
-          *  \return True if collection existed or False if not existed
-          *  \exception SequoiaDB.BaseException
-          *  \exception System.Exception
-          */
+         *  \brief Verify the existence of collection in current colleciont space
+         *  \param colName The collection name
+         *  \return True if collection existed or False if not existed
+         *  \exception SequoiaDB.BaseException
+         *  \exception System.Exception
+         */
         public bool IsCollectionExist(string colName)
         {
             string command = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.TEST_CMD + " "
@@ -81,12 +81,12 @@ namespace SequoiaDB
         }
 
         /** \fn DBCollection CreateCollection(string collectionName)
-          *  \brief Create the named collection in current collection space
-          *  \param collectionName The collection name
-          *  \return The DBCollection handle
-          *  \exception SequoiaDB.BaseException
-          *  \exception System.Exception
-          */
+         *  \brief Create the named collection in current collection space
+         *  \param collectionName The collection name
+         *  \return The DBCollection handle
+         *  \exception SequoiaDB.BaseException
+         *  \exception System.Exception
+         */
         public DBCollection CreateCollection(string collectionName) 
         {
             SDBMessage rtn = AdminCommand(SequoiadbConstants.CREATE_CMD, SequoiadbConstants.COLLECTION,
@@ -99,13 +99,13 @@ namespace SequoiaDB
         }
 
         /** \fn DBCollection CreateCollection(string collectionName, BsonDocument options)
-           *  \brief Create the named collection in current collection space
-           *  \param collectionName The collection name
-           *  \param options The options
-           *  \return The DBCollection handle
-           *  \exception SequoiaDB.BaseException
-           *  \exception System.Exception
-           */
+         *  \brief Create the named collection in current collection space
+         *  \param collectionName The collection name
+         *  \param options The options
+         *  \return The DBCollection handle
+         *  \exception SequoiaDB.BaseException
+         *  \exception System.Exception
+         */
         public DBCollection CreateCollection(string collectionName, BsonDocument options)
         {
             string command = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.CREATE_CMD + " "
@@ -132,11 +132,11 @@ namespace SequoiaDB
         }
 
         /** \fn void DropCollection(string collectionName)
-          *  \brief Remove the named collection of current collection space
-          *  \param collectionName The collection name
-          *  \exception SequoiaDB.BaseException
-          *  \exception System.Exception
-          */
+         *  \brief Remove the named collection of current collection space
+         *  \param collectionName The collection name
+         *  \exception SequoiaDB.BaseException
+         *  \exception System.Exception
+         */
         public void DropCollection(string collectionName)
         {
             SDBMessage rtn = AdminCommand(SequoiadbConstants.DROP_CMD, SequoiadbConstants.COLLECTION,
@@ -176,6 +176,7 @@ namespace SequoiaDB
         private SDBMessage AdminCommand(string command, BsonDocument matcher, BsonDocument selector,
                                          BsonDocument orderBy, BsonDocument hint)
         {
+            BsonDocument dummyObj = new BsonDocument();
             IConnection connection = sdb.Connection;
             SDBMessage sdbMessage = new SDBMessage();
             sdbMessage.CollectionFullName = command;
@@ -187,10 +188,42 @@ namespace SequoiaDB
             sdbMessage.RequestID = 0;
             sdbMessage.SkipRowsCount = 0;
             sdbMessage.ReturnRowsCount = -1;
-            sdbMessage.Matcher = matcher;
-            sdbMessage.Selector = selector;
-            sdbMessage.OrderBy = orderBy;
-            sdbMessage.Hint = hint;
+            // matcher
+            if (null == matcher)
+            {
+                sdbMessage.Matcher = dummyObj;
+            }
+            else
+            {
+                sdbMessage.Matcher = matcher;
+            }
+            // selector
+            if (null == selector)
+            {
+                sdbMessage.Selector = dummyObj;
+            }
+            else
+            {
+                sdbMessage.Selector = selector;
+            }
+            // orderBy
+            if (null == orderBy)
+            {
+                sdbMessage.OrderBy = dummyObj;
+            }
+            else
+            {
+                sdbMessage.OrderBy = orderBy;
+            }
+            // hint
+            if (null == hint)
+            {
+                sdbMessage.Hint = dummyObj;
+            }
+            else
+            {
+                sdbMessage.Hint = hint;
+            }
 
             byte[] request = SDBMessageHelper.BuildQueryRequest(sdbMessage, isBigEndian);
             connection.SendMessage(request);

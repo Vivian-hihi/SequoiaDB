@@ -27,6 +27,8 @@ namespace SequoiaDB
         public const string ADMIN_PROMPT = "$";
         public const string LIST_CMD = "list";
         public const string TEST_CMD = "test";
+        public const string ADD_CMD = "add";
+        public const string ALTER_CMD = "alter";
         public const string CREATE_CMD = "create";
 	    public const string REMOVE_CMD = "remove";
         public const string RENAME_CMD = "rename";
@@ -49,6 +51,7 @@ namespace SequoiaDB
         public const string SESSIONS_CUR = "sessions current";
         public const string STOREUNITS = "storageunits";
         public const string PROCEDURES = "procedures";
+        public const string DOMAIN = "domain";
         public const string DOMAINS = "domains";
         public const string TASKS = "tasks";
         public const string CS_IN_DOMAIN = "collectionspaces in domain";
@@ -75,6 +78,7 @@ namespace SequoiaDB
         public const string REMOVE_BACKUP_CMD = "remove backup";
         public const string CRT_PROCEDURES_CMD = "create procedures";
         public const string RM_PROCEDURES_CMD = "remove procedures";
+        public const string LIST_LOBS_CMD = "list lobs";
 
 
         public const string OID = "_id";
@@ -96,6 +100,7 @@ namespace SequoiaDB
         public const string FIELD_COLLECTION = "Collection";
         public const string FIELD_COLLECTIONSPACE = "CollectionSpace";
         public const string FIELD_GROUP = "Group";
+        public const string FIELD_GROUPS = "Groups";
         public const string FIELD_GROUPNAME = "GroupName";
         public const string FIELD_HOSTNAME = "HostName";
         public const string FIELD_SERVICE = "Service";
@@ -114,7 +119,12 @@ namespace SequoiaDB
 	    public const string FIELD_DESP = "Description";
 	    public const string FIELD_ENSURE_INC = "EnsureInc";
         public const string FIELD_OVERWRITE = "OverWrite";
-
+        public const string FIELD_OPTIONS = "Options";
+        public const string FIELD_DOMAIN = "Domain";
+        public const string FIELD_LOB_OID = "Oid";
+        public const string FIELD_LOB_OPEN_MODE = "Mode";
+        public const string FIELD_LOB_SIZE = "Size";
+        public const string FIELD_LOB_CREATTIME = "CreateTime";
 
         public const string IXM_NAME = "name";
         public const string IXM_KEY = "key";
@@ -132,6 +142,10 @@ namespace SequoiaDB
         public const int SDB_DMS_EOC = (int) Errors.errors.SDB_DMS_EOC; 
 
         public static readonly byte[] ZERO_NODEID = new byte[12] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+	    public const int DEFAULT_VERSION    = 0;
+	    public const short DEFAULT_W        = 1;
+	    public const int DEFAULT_FLAGS      = 0;
+	    public const long DEFAULT_CONTEXTID = -1;
     }
 
     internal enum Operation : int
@@ -157,7 +171,14 @@ namespace SequoiaDB
 
         MSG_AUTH_VERIFY_REQ = 7000,
         MSG_AUTH_CRTUSR_REQ = 7001,
-        MSG_AUTH_DELUSR_REQ = 7002
+        MSG_AUTH_DELUSR_REQ = 7002,
+
+        MSG_BS_LOB_OPEN_REQ = 8001, 
+		MSG_BS_LOB_WRITE_REQ = 8002,
+        MSG_BS_LOB_READ_REQ = 8003,
+		MSG_BS_LOB_REMOVE_REQ = 8004,
+        MSG_BS_LOB_UPDATE_REQ = 8005,
+		MSG_BS_LOB_CLOSE_REQ = 8006
     };
 
     internal enum PreferInstanceType : int

@@ -387,12 +387,45 @@ namespace SequoiaDB
                                         BsonDocument arg3, BsonDocument arg4)
         {
             IConnection connection = sdb.Connection;
+            BsonDocument dummyObj = new BsonDocument();
             SDBMessage sdbMessage = new SDBMessage();
 
-            sdbMessage.Matcher = arg1;
-            sdbMessage.Selector = arg2;
-            sdbMessage.OrderBy = arg3;
-            sdbMessage.Hint = arg4;
+            // arg1
+            if (null == arg1)
+            {
+                sdbMessage.Matcher = dummyObj;
+            }
+            else
+            {
+                sdbMessage.Matcher = arg1;
+            }
+            // arg2
+            if (null == arg2)
+            {
+                sdbMessage.Selector = dummyObj;
+            }
+            else
+            {
+                sdbMessage.Selector = arg2;
+            }
+            // arg3
+            if (null == arg3)
+            {
+                sdbMessage.OrderBy = dummyObj;
+            }
+            else
+            {
+                sdbMessage.OrderBy = arg3;
+            }
+            // arg4
+            if (null == arg4)
+            {
+                sdbMessage.Hint = dummyObj;
+            }
+            else
+            {
+                sdbMessage.Hint = arg4;
+            }
             sdbMessage.CollectionFullName = command;
             sdbMessage.Flags = 0;
             sdbMessage.NodeID = SequoiadbConstants.ZERO_NODEID;

@@ -61,7 +61,7 @@ namespace SequoiaDB
 
         /** \fn Sequoiadb(List<string> connStrings)
          *  \brief Constructor
-         *  \param connStrings Remote server addresses "IP : Port" or "IP"(port is 11810)
+         *  \param connStrings Remote server addresses "IP : Port"
          */
         public Sequoiadb(List<string> connStrings)
         {
@@ -721,7 +721,7 @@ namespace SequoiaDB
          *  \exception System.Exception
          */
         public DBCursor GetList(int listType, BsonDocument matcher, BsonDocument selector,
-                                          BsonDocument orderBy)
+                                BsonDocument orderBy)
         {
             string command = null;
             switch (listType)
@@ -1124,7 +1124,142 @@ namespace SequoiaDB
             connection.SendMessage(request);
         }
 
+        /** \fn bool IsDomainExist(string dmName)
+         *  \brief Verify the existence of domain in current database
+         *  \param dmName The domain name
+         *  \return True if collection existed or False if not existed
+         *  \exception SequoiaDB.BaseException
+         *  \exception System.Exception
+         */
+        public bool IsDomainExist(string dmName)
+        {
+            if (null == dmName || dmName.Equals(""))
+            {
+                throw new BaseException("SDB_INVALIDARG");
+            }
+            BsonDocument matcher = new BsonDocument();
+            matcher.Add(SequoiadbConstants.FIELD_NAME, dmName);
+            DBCursor cursor = GetList(SDBConst.SDB_LIST_DOMAINS, matcher, null, null);
+            if (null != cursor && null != cursor.Next())
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
 
+        /** \fn Domain createDomain(string domainName, BsonDocument options)
+         *  \brief Create a domain.
+         *  \param domainName The name of the domain
+         *  \param options The options for the domain. The options are as below:
+         *  
+         *      Group:     the list of replica groups' names which the domain is going to contain.
+         *                 eg: { "Group": [ "group1", "group2", "group3" ] }
+         *                 If this argument is not included, the domain will contain all replica groups in the cluster.
+         *      AutoSplit: If this option is set to be true, while creating collection(ShardingType is "hash") in this domain,
+         *                 the data of this collection will be split(hash split) into all the groups in this domain automatically.
+         *                 However, it won't automatically split data into those groups which were add into this domain later.
+         *                 eg: { "Groups": [ "group1", "group2", "group3" ], "AutoSplit: true" }
+         *  \return The created Domain instance
+         *  \exception SequoiaDB.BaseException
+         *  \exception System.Exception
+         */
+        public Domain createDomain(string domainName, BsonDocument options)
+        {
+            // check
+            if (null == domainName || domainName.Equals(""))
+            {
+                throw new BaseException("SDB_INVALIDARG");
+            }
+            if (IsDomainExist(domainName))
+            {
+                throw new BaseException("SDB_CAT_DOMAIN_EXIST");
+            }
+            // build object
+            BsonDocument newObj = new BsonDocument();
+            newObj.Add(SequoiadbConstants.FIELD_NAME, domainName);
+            if (null != options)
+            {
+                newObj.Add(SequoiadbConstants.FIELD_OPTIONS, options);
+            }
+            // build cmd
+            string command = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.CREATE_CMD
+                             + " " + SequoiadbConstants.DOMAIN;
+            // run command
+            SDBMessage rtn = AdminCommand(command, newObj, null, null, null);
+            int flags = rtn.Flags;
+            if (flags != 0)
+            {
+                throw new BaseException(flags);
+            }
+            return new Domain(this, domainName);
+        }
+
+        /** \fn void dropDomain(string domainName)
+         *  \brief Drop a domain.
+         *  \param domainName The name of the domain
+         *  \return The created Domain instance
+         *  \exception SequoiaDB.BaseException
+         *  \exception System.Exception
+         */
+        public void dropDomain(string domainName)
+        {
+            // check
+            if (null == domainName || domainName.Equals(""))
+            {
+                throw new BaseException("SDB_INVALIDARG");
+            }
+            // build object
+            BsonDocument newObj = new BsonDocument();
+            newObj.Add(SequoiadbConstants.FIELD_NAME, domainName);
+            // build cmd
+            string command = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.DROP_CMD
+                             + " " + SequoiadbConstants.DOMAIN;
+            // run command
+            SDBMessage rtn = AdminCommand(command, newObj, null, null, null);
+            int flags = rtn.Flags;
+            if (flags != 0)
+            {
+                throw new BaseException(flags);
+            }
+        }
+
+        /** \fn Domain getDomain(string domainName)
+         *  \brief Get the specified domain.
+         *  \param domainName The name of the domain
+         *  \return The created Domain instance
+         *  \exception SequoiaDB.BaseException
+         *  \exception System.Exception
+         */
+        public Domain getDomain(string domainName)
+        {
+            if (IsDomainExist(domainName))
+            {
+                return new Domain(this, domainName);
+            }
+            else
+            {
+                throw new BaseException("SDB_CAT_DOMAIN_NOT_EXIST");
+            }
+        }
+
+        /** \fn DBCursor listDomains(BsonDocument matcher, BsonDocument selector,
+         *                           BsonDocument orderBy)
+         *  \brief List domains.
+         *  \param matcher The matching rule, return all the documents if null
+         *  \param selector The selective rule, return the whole document if null
+         *  \param orderBy The ordered rule, never sort if null
+         *  \return the cursor of the result.
+         *  \exception SequoiaDB.BaseException
+         *  \exception System.Exception
+         */
+        public DBCursor listDomains(BsonDocument matcher, BsonDocument selector,
+                                    BsonDocument orderBy, BsonDocument hint)
+        {
+            return GetList(SDBConst.SDB_LIST_DOMAINS, matcher, selector, orderBy);
+        }
 
         /** \fn DBCursor ListReplicaGroups()
          *  \brief Get all the groups
@@ -1385,6 +1520,7 @@ namespace SequoiaDB
         private SDBMessage AdminCommand(string command, BsonDocument matcher, BsonDocument selector,
                                         BsonDocument orderBy, BsonDocument hint)
         {
+            BsonDocument dummyObj = new BsonDocument();
             SDBMessage sdbMessage = new SDBMessage();
             sdbMessage.CollectionFullName = command;
             sdbMessage.Version = 0;
@@ -1395,10 +1531,42 @@ namespace SequoiaDB
             sdbMessage.RequestID = 0;
             sdbMessage.SkipRowsCount = 0;
             sdbMessage.ReturnRowsCount = -1;
-            sdbMessage.Matcher = matcher;
-            sdbMessage.Selector = selector;
-            sdbMessage.OrderBy = orderBy;
-            sdbMessage.Hint = hint;
+            // matcher
+            if (null == matcher)
+            {
+                sdbMessage.Matcher = dummyObj;
+            }
+            else
+            {
+                sdbMessage.Matcher = matcher;
+            }
+            // selector
+            if (null == selector)
+            {
+                sdbMessage.Selector = dummyObj;
+            }
+            else
+            {
+                sdbMessage.Selector = selector;
+            }
+            // orderBy
+            if (null == orderBy)
+            {
+                sdbMessage.OrderBy = dummyObj;
+            }
+            else
+            {
+                sdbMessage.OrderBy = orderBy;
+            }
+            // hint
+            if (null == hint)
+            {
+                sdbMessage.Hint = dummyObj;
+            }
+            else
+            {
+                sdbMessage.Hint = hint;
+            }
 
             byte[] request = SDBMessageHelper.BuildQueryRequest(sdbMessage, isBigEndian);
             if(connection == null)

@@ -30,6 +30,15 @@ namespace SequoiaDB
             get { return name; }
         }
 
+        /** \property FullName
+         *  \brief Return the full name of current collection
+         *  \return The collection name
+         */
+        public string FullName
+        {
+            get { return collectionFullName; }
+        }
+
         /** \property CollSpace
          *  \ brief Return the Collection Space handle of current collection
          *  \return CollectionSpace object
@@ -744,7 +753,7 @@ namespace SequoiaDB
             return new DBCursor(rtnSDBMessage, this);
         }
 
-        /** \fn void attachCollection (string subClFullName, BsonDocument options)
+        /** \fn void AttachCollection (string subClFullName, BsonDocument options)
          * \brief Attach the specified collection.
          * \param subClFullName The name of the subcollection
          * \param options The low boudary and up boudary
@@ -753,7 +762,7 @@ namespace SequoiaDB
          * \exception SequoiaDB.BaseException
          * \exception System.Exception
          */
-        public void attachCollection(string subClFullName, BsonDocument options)
+        public void AttachCollection(string subClFullName, BsonDocument options)
         {
             // check argument
             if (subClFullName == null || subClFullName.Equals("") ||
@@ -780,14 +789,14 @@ namespace SequoiaDB
                 throw new BaseException(flags);
         }
 
-        /** \fn void detachCollection(string subClFullName)
+        /** \fn void DetachCollection(string subClFullName)
          * \brief Detach the specified collection.
          * \param subClFullName The name of the subcollection
          * \retval void
          * \exception SequoiaDB.BaseException
          * \exception System.Exception
          */
-        public void detachCollection(string subClFullName)
+        public void DetachCollection(string subClFullName)
         {
             // check argument
             if (subClFullName == null || subClFullName.Equals("") ||
@@ -810,6 +819,115 @@ namespace SequoiaDB
                 throw new BaseException(flags);
         }
 
+        /** \fn DBCursor ListLobs()
+         * \brief List all of the lobs in current collection
+         * \retval DBCursor of lobs
+         * \exception SequoiaDB.BaseException
+         * \exception System.Exception
+         */
+        public DBCursor ListLobs()
+        {
+            DBCursor cursor = null;
+            // build command
+            string command = SequoiadbConstants.ADMIN_PROMPT
+                + SequoiadbConstants.LIST_LOBS_CMD;
+            // build a bson to send
+            BsonDocument newObj = new BsonDocument();
+            newObj.Add(SequoiadbConstants.FIELD_COLLECTION, collectionFullName);
+            // run command
+            BsonDocument dummyObj = new BsonDocument();
+            SDBMessage rtnSDBMessage = AdminCommand(command, newObj, dummyObj, dummyObj, dummyObj, 0, -1);
+            // check the return flag
+            int flags = rtnSDBMessage.Flags;
+            if (flags != 0)
+            {
+                int errCode = new BaseException("SDB_DMS_EOC").ErrorCode;
+                if (errCode == flags)
+                {
+                    return cursor;
+                }
+                else
+                {
+                    throw new BaseException(flags);
+                }
+            }
+            cursor = new DBCursor(rtnSDBMessage, this);
+            return cursor;
+        }
+
+        /** \fn DBLob CreateLob()
+         * \brief Create a large object
+         * \exception SequoiaDB.BaseException
+         * \exception System.Exception
+         */
+        public DBLob CreateLob()
+        {
+            return CreateLob(ObjectId.Empty);
+        }
+
+        /** \fn DBLob CreateLob(ObjectId id)
+         * \brief Create a large object with specified oid
+         * \param id The oid for the creating lob
+         * \exception SequoiaDB.BaseException
+         * \exception System.Exception
+         */
+        public DBLob CreateLob(ObjectId id)
+        {
+            DBLob lob = new DBLob(this);
+            lob.Open(id, DBLob.SDB_LOB_CREATEONLY);
+            return lob;
+        }
+
+        /** \fn DBLob OpenLob(ObjectId id)
+         * \brief Open an existing lob with the speceifed oid
+         * \param id The oid of the existing lob
+         * \exception SequoiaDB.BaseException
+         * \exception System.Exception
+         */
+        public DBLob OpenLob(ObjectId id)
+        {
+            DBLob lob = new DBLob(this);
+            lob.Open(id, DBLob.SDB_LOB_READ);
+            return lob;
+        }
+
+        /** \fn DBLob RemoveLob(ObjectId id)
+         * \brief Remove an existing lob with the speceifed oid
+         * \param id The oid of the existing lob
+         * \exception SequoiaDB.BaseException
+         * \exception System.Exception
+         */
+        public void RemoveLob(ObjectId id)
+        {
+            BsonDocument newObj = new BsonDocument();
+            newObj.Add(SequoiadbConstants.FIELD_COLLECTION, collectionFullName);
+            newObj.Add(SequoiadbConstants.FIELD_LOB_OID, id);
+
+            SDBMessage sdbMessage = new SDBMessage();
+            // MsgHeader
+            sdbMessage.OperationCode = Operation.MSG_BS_LOB_REMOVE_REQ;
+            sdbMessage.NodeID = SequoiadbConstants.ZERO_NODEID;
+            sdbMessage.RequestID = 0;
+            // the rest part of _MsgOpLOb
+            sdbMessage.Version = SequoiadbConstants.DEFAULT_VERSION;
+            sdbMessage.W = SequoiadbConstants.DEFAULT_W;
+            sdbMessage.Padding = (short)0;
+            sdbMessage.Flags = SequoiadbConstants.DEFAULT_FLAGS;
+            sdbMessage.ContextIDList = new List<long>();
+            sdbMessage.ContextIDList.Add(SequoiadbConstants.DEFAULT_CONTEXTID);
+            sdbMessage.Matcher = newObj;
+
+
+            byte[] request = SDBMessageHelper.BuildRemoveLobRequest(sdbMessage, isBigEndian);
+            connection.SendMessage(request);
+            SDBMessage rtnSDBMessage = SDBMessageHelper.MsgExtractReply(connection.ReceiveMessage(isBigEndian), isBigEndian);
+            int flags = rtnSDBMessage.Flags;
+            if (flags != 0)
+            {
+                throw new BaseException(flags);
+            }
+
+        }
 
         private void _Update(int flag, BsonDocument matcher, BsonDocument modifier, BsonDocument hint)
         {
@@ -844,8 +962,8 @@ namespace SequoiaDB
         private SDBMessage AdminCommand(string command, BsonDocument query, BsonDocument selector, BsonDocument orderBy,
             BsonDocument hint, long skipRows, long returnRows) 
         {
+            BsonDocument dummyObj = new BsonDocument();
             SDBMessage sdbMessage = new SDBMessage();
-
             sdbMessage.CollectionFullName = command;
             sdbMessage.Version = 0;
             sdbMessage.W = 0;
@@ -855,10 +973,42 @@ namespace SequoiaDB
             sdbMessage.RequestID = 0;
             sdbMessage.SkipRowsCount = skipRows;
             sdbMessage.ReturnRowsCount = returnRows;
-            sdbMessage.Matcher = query;
-            sdbMessage.Selector = selector;
-            sdbMessage.OrderBy = orderBy;
-            sdbMessage.Hint = hint;
+            // matcher
+            if (null == query)
+            {
+                sdbMessage.Matcher = dummyObj;
+            }
+            else
+            {
+                sdbMessage.Matcher = query;
+            }
+            // selector
+            if (null == selector)
+            {
+                sdbMessage.Selector = dummyObj;
+            }
+            else
+            {
+                sdbMessage.Selector = selector;
+            }
+            // orderBy
+            if (null == orderBy)
+            {
+                sdbMessage.OrderBy = dummyObj;
+            }
+            else
+            {
+                sdbMessage.OrderBy = orderBy;
+            }
+            // hint
+            if (null == hint)
+            {
+                sdbMessage.Hint = dummyObj;
+            }
+            else
+            {
+                sdbMessage.Hint = hint;
+            }
 
             byte[] request = SDBMessageHelper.BuildQueryRequest(sdbMessage, isBigEndian);
             connection.SendMessage(request);

@@ -197,8 +197,8 @@ namespace SequoiaDB
             {
                 return;
             }
-            long[] contestIds = new long[1] { contextId };
-            byte[] request = SDBMessageHelper.BuildKillCursorMsg(contestIds, isBigEndian);
+            long[] contextIds = new long[1] { contextId };
+            byte[] request = SDBMessageHelper.BuildKillCursorMsg(contextIds, isBigEndian);
             connection.SendMessage(request);
             connection = null;
             contextId = -1;

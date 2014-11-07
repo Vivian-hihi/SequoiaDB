@@ -778,7 +778,7 @@ namespace DriverTest
                     {"UpBound", new BsonDocument{{"id", num}}}
                 };
                 string subCLFullName = cs.Name+"."+ subCLName;
-                mainCL.attachCollection(subCLFullName, options);
+                mainCL.AttachCollection(subCLFullName, options);
                 // insert some records
                 List<BsonDocument> insertor = new List<BsonDocument>();
                 for (int i = 0; i < num + 10; i++)
@@ -830,7 +830,7 @@ namespace DriverTest
                 Assert.IsTrue(0 == count);
                 // case 2: test detachCollection
                 // TODO:
-                mainCL.detachCollection(subCLFullName);
+                mainCL.DetachCollection(subCLFullName);
                 // check
                 try
                 {

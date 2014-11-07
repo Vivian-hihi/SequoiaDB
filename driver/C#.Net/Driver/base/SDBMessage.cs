@@ -3,8 +3,8 @@ using SequoiaDB.Bson;
 
 namespace SequoiaDB
 {
-   internal class SDBMessage
-   {
+    internal class SDBMessage
+    {
         public int RequestLength { get; set; }
         public  ulong RequestID { get; set; }
         public Operation OperationCode { get; set; }
@@ -36,5 +36,16 @@ namespace SequoiaDB
         public List<long> ContextIDList { get; set; }
         public string MessageText { get; set; }
         public int rc { get; set; }
+        // for lob
+        public uint BsonLen { get; set; }
+        public uint LobLen { get; set; }
+        public uint LobSequence { get; set; }
+        public long LobOffset { get; set; }
+        public byte[] lobBuff;
+        public byte[] LobBuff
+        {
+            get { return lobBuff; }
+            set { lobBuff = value; }
+        }
    }
 }

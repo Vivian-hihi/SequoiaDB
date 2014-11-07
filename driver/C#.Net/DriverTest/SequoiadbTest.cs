@@ -337,8 +337,17 @@ namespace DriverTest
             cursor = sdb.GetList(SDBConst.SDB_LIST_TASKS, dummy, dummy, dummy);
             Assert.IsNotNull(cursor);
 
-            // TODO:
             // list domains
+            if (Constants.isClusterEnv(sdb))
+            {
+                string dmName = "testListDomain";
+                Domain dm = sdb.createDomain(dmName, null);
+                cursor = null;
+                cursor = sdb.listDomains(null, null, null, null);
+                Assert.IsNotNull(cursor);
+                Assert.IsNotNull(cursor.Next());
+                sdb.dropDomain(dmName);
+            }
 
             // list stored procedure
             cursor = sdb.GetList(SDBConst.SDB_LIST_STOREPROCEDURES, dummy, dummy, dummy);
