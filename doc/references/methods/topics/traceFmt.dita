@@ -4,7 +4,7 @@
   <title>traceFmt()</title>
   <body>
     <section><title>traceFmt(&lt;formatType>,&lt;input>,&lt;output>)</title>
-      <p>将 db.traceOff() 导出来的二进制文件格式化为另外文件输出。</p>
+      <p>将 db.traceOff() 导出来的二进制文件格式化为文本文件输出。</p>
     </section>
     <section><title>参数描述</title>
       <simpletable id="references_method_createNode_table">
