@@ -21,7 +21,7 @@ import com.ibm.staf.STAFResult;
  * 
  */
 public class SdbTest extends Task {
-	private String maxWaitTime = "30m";
+	private String maxWaitTime = "1000m";
 	
 	private boolean getLogBack = true;
 	

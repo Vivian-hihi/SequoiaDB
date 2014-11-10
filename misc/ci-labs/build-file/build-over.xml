@@ -3,83 +3,50 @@
 <!--@param ${BUILD_NUMBER}:  The build number. this param pass by jenkins-->
 
 <project name="copy_tar_build" default="copy_tar_build">
-	<property file="${WORKSPACE}/sequoiadb/misc/ci-labs/ci.build.properties" />	
-	<taskdef resource="net/sf/antcontrib/antlib.xml">
+	<property file="${WORKSPACE}/sequoiadb/misc/ci/ci.build.properties" />	
+ 	<taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
 		<classpath>
-			<pathelement location="/usr/share/java/ant-contrib.jar" />
+			<pathelement location="${WORKSPACE}/sequoiadb/misc/ci/exec-tools/ant-sdbtasks.jar" />
 		</classpath>
-	</taskdef>
+	</taskdef> 
 
-	<target name="clean" depends="">
-	</target>
-
-	<target name="copy_tar_build" depends="clean">
-		<property environment="env" />
+	<target name="copy_tar_build" depends="">
 		<property name="software.package.name" value="${project.name}-${project.version}-${os.and.platform}-installer.run" />
 		<property name="driver.package.name" value="${project.name}-driver-${project.version}-${os.and.platform}.tar.gz" />
 
-		<echo message="Begin to copy the ${software.package.name} ${driver.package.name} with STAF.PATH=${STAF.PATH},env.PATH=${env.PATH} " />
-
+		<echo message="Begin to copy the ${software.package.name} ${driver.package.name} ..." />
 		<copy file="${release.path}/${software.package.name}" tofile="${release.path}/${software.package.name}.${BUILD_NUMBER}" />
 		<copy file="${release.path}/${driver.package.name}" tofile="${release.path}/${driver.package.name}.${BUILD_NUMBER}" />
 
-		<echo message="${STAF.PATH}\bin\staf LOCAL FS COPY FILE ${release.path}/${software.package.name}.${BUILD_NUMBER} TODIRECTORY ${copy_tar} TOMACHINE ${target.deploy_tar_gz.ip}" />
-		<exec command="${STAF.PATH}\bin\staf LOCAL FS COPY FILE ${release.path}/${software.package.name}.${BUILD_NUMBER} TODIRECTORY ${copy_tar} TOMACHINE ${target.deploy_tar_gz.ip}" dir="${STAF.PATH}" failonerror="true" failifexecutionfails="true">
-			<env key="PATH" path="${env.PATH}:${STAF.PATH}/bin" />
-			<env key="LD_LIBRARY_PATH" path="${env.LD_LIBRARY_PATH}:${STAF.PATH}/lib" />
-			<env key="STAFCONVDIR" path="${STAF.PATH}/codepage" />
-		</exec>
-
-		<echo message="${STAF.PATH}\bin\staf LOCAL FS COPY FILE ${release.path}/${driver.package.name}.${BUILD_NUMBER} TODIRECTORY ${copy_tar} TOMACHINE ${target.deploy_tar_gz.ip}" />
-		<exec command="${STAF.PATH}\bin\staf LOCAL FS COPY FILE ${release.path}/${driver.package.name}.${BUILD_NUMBER} TODIRECTORY ${copy_tar} TOMACHINE ${target.deploy_tar_gz.ip}" dir="${STAF.PATH}" failonerror="true" failifexecutionfails="true">
-			<env key="PATH" path="${env.PATH}:${STAF.PATH}/bin" />
-			<env key="LD_LIBRARY_PATH" path="${env.LD_LIBRARY_PATH}:${STAF.PATH}/lib" />
-			<env key="STAFCONVDIR" path="${STAF.PATH}/codepage" />
-		</exec>
-
+		<stafTools workType="copy" workHost="LOCAL" fileName="${release.path}/${software.package.name}.${BUILD_NUMBER}" saveDir="${copy_tar}" toHost="${target.deploy_tar_gz.ip}" />
+		<stafTools workType="copy" workHost="LOCAL" fileName="${release.path}/${driver.package.name}.${BUILD_NUMBER}" saveDir="${copy_tar}" toHost="${target.deploy_tar_gz.ip}" />
 		<echo message="delete the file ${copy_tar}/build.version" />
-		<exec command="${STAF.PATH}/bin/staf LOCAL FS DELETE ENTRY ${copy_tar}/build.version RECURSE CONFIRM" failifexecutionfails="true">
-			<env key="PATH" path="${env.PATH}:${STAF.PATH}/bin" />
-			<env key="LD_LIBRARY_PATH" path="${env.LD_LIBRARY_PATH}:${STAF.PATH}/lib" />
-			<env key="STAFCONVDIR" path="${STAF.PATH}/codepage" />
-		</exec>
+		<stafTools workType="delete" workHost="LOCAL" fileName="${copy_tar}/build.version" failonerror="false" />
 
 		<if>
 			<equals arg1="${compile.debug}" arg2="false" />
 			<then>
-				<propertyfile file="${WORKSPACE}/sequoiadb/misc/ci-labs/build.version" comment="true">
+				<propertyfile file="${WORKSPACE}/sequoiadb/misc/ci/build.version" comment="true">
 					<entry key="BUILD.NUMBER" value="${BUILD_NUMBER}" type="string" />
 					<entry key="BUILD.INSTALL.FILENAME" value="${software.package.name}" type="string" />
-					<entry key="BUILD.DRIVER.FILENAME" value="${driver.package.name}" type="string" />								
+					<entry key="BUILD.DRIVER.FILENAME" value="${driver.package.name}" type="string" />			
 					<entry key="RELEASE.NUMBER" value="${BUILD_NUMBER}" type="string"/>			
 				</propertyfile>
 			</then>
 			<else>
-				<propertyfile file="${WORKSPACE}/sequoiadb/misc/ci-labs/build.version" comment="true">
+				<propertyfile file="${WORKSPACE}/sequoiadb/misc/ci/build.version" comment="true">
 					<entry key="BUILD.NUMBER" value="${BUILD_NUMBER}" type="string" />
 					<entry key="BUILD.INSTALL.FILENAME" value="${software.package.name}" type="string" />
-					<entry key="BUILD.DRIVER.FILENAME" value="${driver.package.name}" type="string" />							
+					<entry key="BUILD.DRIVER.FILENAME" value="${driver.package.name}" type="string" />
 				</propertyfile>
 			</else>
 		</if>
-
-		<exec command="${STAF.PATH}\bin\staf LOCAL FS COPY FILE ${WORKSPACE}/sequoiadb/misc/ci-labs/build.version TODIRECTORY ${copy_tar} TOMACHINE LOCAL" dir="${STAF.PATH}" failonerror="true" failifexecutionfails="true">
-			<env key="PATH" path="${env.PATH}:${STAF.PATH}/bin" />
-			<env key="LD_LIBRARY_PATH" path="${env.LD_LIBRARY_PATH}:${STAF.PATH}/lib" />
-			<env key="STAFCONVDIR" path="${STAF.PATH}/codepage" />
-		</exec>
-		
-		<echo message="${STAF.PATH}\bin\staf LOCAL PROCESS START  SHELL COMMAND /usr/bin/find ${copy_tar} -mtime +7 -delete; WORKDIR ${copy_tar} WAIT 30m" />
-		<exec command="${STAF.PATH}\bin\staf LOCAL PROCESS START  SHELL COMMAND /usr/bin/find ${copy_tar} -mtime +7 -delete; WORKDIR ${copy_tar} WAIT 30m" dir="${STAF.PATH}" failonerror="false" failifexecutionfails="true">
-			<env key="PATH" path="${env.PATH}:${STAF.PATH}/bin" />
-			<env key="LD_LIBRARY_PATH" path="${env.LD_LIBRARY_PATH}:${STAF.PATH}/lib" />
-			<env key="STAFCONVDIR" path="${STAF.PATH}/codepage" />
-		</exec>
+		<stafTools workType="copy" workHost="LOCAL" fileName="${WORKSPACE}/sequoiadb/misc/ci/build.version" saveDir="${copy_tar}" toHost="LOCAL" failonerror="true" />
+		<stafTools workType="shell" workHost="LOCAL" common="/usr/bin/find ${copy_tar} -mtime +7 -delete;" workDir="${copy_tar}" waitTime="30m" />
 
 		<delete file="${release.path}/${software.package.name}.${BUILD_NUMBER}" />
 		<delete file="${release.path}/${driver.package.name}.${BUILD_NUMBER}" />		
 	</target>
-
 </project>
 
 

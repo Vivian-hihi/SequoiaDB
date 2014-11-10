@@ -16,16 +16,12 @@ public class stafTools extends Task{
 	String fileName=null;
 	String saveDir=null;
 	String waitTime="30m";
-	boolean failonerror = true;
-	boolean faillifexecutionfails=true;
+	boolean failonerror = false;
 	public void setWorkHost( String value ){
 		workHost = value;
 	}
 	public void setFailonerror( boolean value ){
 		this.failonerror = value;
-	}
-	public void setFaillifexecutionfails(boolean value){
-		this.faillifexecutionfails=value;
 	}
 	public void setWorkType( String value ){
 		workType = value;
@@ -66,14 +62,24 @@ public class stafTools extends Task{
 			if(workType.equals("copy"))
 			{
 				System.out.println("copy work");
-				request = "COPY FILE " + fileName+ " TODIRECTORY "+ saveDir+ " TOMACHINE "+ toHost ; 	
+				request = "COPY FILE " 
+						+ fileName
+						+ " TODIRECTORY "
+						+ saveDir
+						+ " TOMACHINE "
+						+ toHost ; 
+				
 				System.out.println("exec: staf " + workHost+ " FS " + request);
 				result = handle.submit2( workHost , "FS", request);
 				if( failonerror ){
 					if (result.rc != STAFResult.Ok) {
 						throw new BuildException(STAFResultToString(result));
+					}else{
+						System.out.println("The operation has been successful...");
 					}
 				}
+				
+				
 			}
 			if( workType.equals("shell"))
 			{
@@ -84,11 +90,12 @@ public class stafTools extends Task{
 				if( failonerror){
 					if (result.rc != STAFResult.Ok) {
 						throw new BuildException(STAFResultToString(result));
+					}else{
+						System.out.println("The operation has been successful...");
 					}
 				}
 			}
 			
-			///dost not test , I don't know is it work
 			if( workType.equals("delete")){
 				System.out.println("delete work");
 				request = "DELETE ENTRY " + fileName + " RECURSE CONFIRM ";
@@ -97,10 +104,12 @@ public class stafTools extends Task{
 				if( failonerror ){
 					if (result.rc != STAFResult.Ok) {
 						throw new BuildException(STAFResultToString(result));
+					}else{
+						System.out.println("The operation has been successful...");
 					}
 				}
 			}
-			///dost not test , I don't know is it work
+			
 			if( workType.equals("get")){
 				System.out.println("get work");
 				request = "GET FILE " + fileName + " TEXT ";
@@ -109,22 +118,26 @@ public class stafTools extends Task{
 				if( failonerror ){
 					if (result.rc != STAFResult.Ok) {
 						throw new BuildException(STAFResultToString(result));
-					}
-				}
-			}
-			///dost not test,I don't know is it work
-			if(workType.equals("create")){
-				System.out.println("create work");
-				request="CREATE DIRECTORY"+fileName;
-				System.out.println("exec:staf "+workHost+"FS"+request);
-				result=handle.submit2(workHost,"FS",request);
-				if(failonerror){
-					if(result.rc!=STAFResult.Ok){
-						throw new BuildException(STAFResultToString(result));
+					}else{
+						System.out.println("The operation has been successful...");
 					}
 				}
 			}
 
+			if(workType.equals("create")){
+				System.out.println("create work");
+				request="CREATE DIRECTORY "+fileName;
+				System.out.println("exec: staf "+workHost+" FS "+request);
+				result=handle.submit2(workHost,"FS",request);
+				if(failonerror){
+					if(result.rc!=STAFResult.Ok){
+						throw new BuildException(STAFResultToString(result));
+					}else{
+						System.out.println("The operation has been successful...");
+					}
+				}
+			}
+			
 		} catch (STAFException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

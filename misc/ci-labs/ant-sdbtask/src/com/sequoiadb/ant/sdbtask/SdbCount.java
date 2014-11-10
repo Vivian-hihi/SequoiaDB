@@ -35,7 +35,7 @@ public class SdbCount extends Task {
 
    public JsonElement createQuery() {
       if (record != null) {
-         throw new BuildException("Error: cannt set more than one record.");
+         throw new BuildException("Error: cannot set more than one record.");
       }
 
       record = new JsonElement();
@@ -58,8 +58,12 @@ public class SdbCount extends Task {
 
          if (record != null) {
             size = cl.getCount(record.toBSONObj());
+            System.out.println("size="+size);
+            System.out.println("CountProp="+CountProp);
          } else {
             size = cl.getCount((BSONObject)null);
+            System.out.println("size="+size);
+            System.out.println("CountProp="+CountProp);
          }
 
          this.getProject().setProperty(CountProp, Long.toString(size));

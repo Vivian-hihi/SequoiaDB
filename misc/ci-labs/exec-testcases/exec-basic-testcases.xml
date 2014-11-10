@@ -1,109 +1,126 @@
-<!--@param ${testcase.path}: The path where test case direcotry.-->
-<!--@param ${install.path}: The path where sequoiadb installed.-->
+<!--@param ${basic.testcase.path}: The path where test case direcotry.-->
+
 <!--@param ${antTask.jar.path}: The antTask.jar's path.-->
 <!--@param ${reports.path}: The path where test case direcotry.-->
 <!--@param ${test.package.name}: The name of test package name,.-->
 <!--@param ${parallel.num}:  The parallel number when parallel in same host.-->
 <!--@param ${excludes.dir.patterns}: A comma- or space-sparated list of patterns of directories that must be excluded.-->
-<!--@param ${to.copy.test.log}: If it is true ,then copy the test log for everyone to down them , default is true-->
 <!--@param ${ci.properties.path}: where is the ci.properties file -->
 <!--@param ${report.suffix}:this is for long time test, default is NULL-->
-<project name="test-basic-testcases" default="test-basic-testcases">
-	
-	<property name="report.suffix" value="" />
+
+<!--@param ${WORKSPACE}: where the working space is it-->
+<!--@param ${ci.script.file.path} : where the ci.test.properties file is it -->
+
+<project name="Exec-Basic-Testcases" default="Test-Basic-Testcases">
+	<hostinfo prefix="host" />
 	<property file="${ci.properties.path}" />
-	<property name="to.copy.test.log" value="true"/>
-	<property name="excludes.dir.patterns" value="" />
 	<property name="sdb.fullname" value="${install.path}/sequoiadb/bin/sdb" />
+	<property name="import.file" value="${host.NAME}-testcases-time.json" />
+	<property name="import.cmd" value="ant -l deploy-test-result.log -f deploy-test-result.xml -Dant.sdb.tasks.path=${antTask.jar.path} -Dproperties.dir=${ci.properties.path} -Dcoord.service.port=11810 -Dcs.name=basic_testcases -Dcl.name=year_2014 -Dimport.file=${import.file}" />
+	<property name="delete.uninstall.config" value="find /tmp -name 'bitrock_installer*.log' -delete" />
 	<taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
 		<classpath>
 			<fileset dir="${antTask.jar.path}" includes="*.jar" />
 		</classpath>
 	</taskdef>
 
-	<target name="clean-test-reports" depends="">
-		<echo message="Begin to clean test result reports..." />
-		<delete dir="${testcase.path}/reports${parallel.num}" />
+	<target name="Clean-Basic-Reports" depends="">
+		<echo message="Reports' path is ${reports.path}" />
+		<delete dir="${reports.path}" failonerror="false" />
+		<mkdir dir="${reports.path}" />
+		<stafTools worktype="delete" workHost="bl465-4" fileName="${install.path}/${import.file}" failonerror="false" />
+		<stafTools worktype="delete" workHost="${host.NAME}" fileName="${install.path}/${import.file}" failonerror="false" />
+		<stafTools worktype="shell" workHost="${host.NAME}" workDir="/tmp" common="${delete.uninstall.config}" failonerror="false" />
 		<echo message="Clean deploy result reports compeleted." />
 	</target>
 
-	<target name="test-basic-testcases" depends="clean-test-reports">
-		<echo message="Begin test basic testcases..." />
-		<mkdir dir="${reports.path}" />
-		<echo message="perform the base-bussiness testcases,with testcase.path=${testcase.path}" />
-		<chmod file="${install.path}/sequoiadb/bin/sdb" perm="u+x" />
-
-		<property name="sdb.cmd.allPrepare" value="-e &quot;var COORDSVCNAME=${coord.service.port} ;&quot; -f &quot;${testcase.path}/libs/func.js ,${testcase.path}/libs/all_prepare.js&quot;" />
-		<property name="sdb.cmd.allClean" value="-e &quot;var COORDSVCNAME=${coord.service.port} ;&quot; -f &quot;${testcase.path}/libs/func.js ,${testcase.path}/libs/all_clean.js&quot;" />
-
-		<echo message="Exec:${sdb.fullname} ${sdb.cmd.allPrepare}" />
-		<exec executable="${sdb.fullname}" dir="" timeout="300000" outputproperty="screen.output" errorproperty="error.output" resultproperty="allPrepare.ret.code">
-			<arg line="${sdb.cmd.allPrepare}" />
-		</exec>
-
+	<target name="Test-Basic-Samples" depends="">
+		<echo message="Begin test basic samples testcases..." />
+		<echo message="Perform the basic samples testcases,with testcase.path=${samples.testcase.path}/JS" />
 		<foreach target="test-one-suite" param="test.suite.fullname">
 			<path>
-				<dirset dir="${testcase.path}/js" excludes="${excludes.dir.patterns}" />
+				<dirset dir="${samples.testcase.path}/JS" includes="${includes.dir.patterns}" excludes="${excludes.dir.patterns}" />
 			</path>
-			<param name="testcase.path" value="${testcase.path}" />
-			<param name="sdb.fullname" value="${install.path}/sequoiadb/bin/sdb" />
+			<param name="testcases.path" value="${samples.testcase.path}/JS" />
+			<param name="test-type" value="samples-basic" />
+			<param name="includes.case.patterns" value="*.js" />
+			<param name="excludes.case.patterns" value="" />
+		</foreach>
+	</target>
+
+	<target name="Test-Basic-Testcases" depends="Clean-Basic-Reports">
+		<echo message="Begin test basic testcases..." />
+		<echo message="Perform the basic testcases,with testcase.path=${basic.testcase.path}/js" />
+
+		<property name="sdb.cmd.allPrepare" value=" -e &quot;var COORDSVCNAME=${coord.service.port};&quot; -f &quot;${basic.testcase.path}/libs/func.js,${basic.testcase.path}/libs/all_prepare.js&quot;" />
+		<echo message="Exec:${sdb.fullname} ${sdb.cmd.allPrepare}" />
+		<exec executable="${sdb.fullname}" dir="" timeout="100000" outputproperty="allPrepare.screen.output"  resultproperty="allPrepare.ret.code">
+			<arg line="${sdb.cmd.allPrepare}" />
+		</exec>
+		<echo message="${allPrepare.screen.output}" />
+
+		<foreach target="test-one-suite" param="test.suite.fullname" >
+			<path>
+				<dirset dir="${basic.testcase.path}/js" includes="${includes.dir.patterns}" excludes="${excludes.dir.patterns}" />
+			</path>
+			<param name="testcases.path" value="${basic.testcase.path}" />
+			<param name="test-type" value="basic" />
+			<param name="includes.case.patterns" value="*.js" />
+			<param name="excludes.case.patterns" value="commlib.js" />
 		</foreach>
 
+		<property name="sdb.cmd.allClean" value=" -e &quot;var COORDSVCNAME=${coord.service.port};&quot; -f &quot;${basic.testcase.path}/libs/func.js,${basic.testcase.path}/libs/all_clean.js&quot;" />
 		<echo message="Exec:${sdb.fullname} ${sdb.cmd.allClean}" />
-		<exec executable="${sdb.fullname}" dir="" timeout="300000" outputproperty="screen.output" errorproperty="error.output" resultproperty="allClean.ret.code">
+		<exec executable="${sdb.fullname}" dir="" timeout="100000" outputproperty="allClean.screen.output" resultproperty="allClean.ret.code">
 			<arg line="${sdb.cmd.allClean}" />
 		</exec>
+		<echo message="${allClean.screen.output}" />
+
+		<stafTools workType="copy" workHost="${host.NAME}" fileName="${install.path}/${import.file}"  toHost="bl465-4" saveDir="${install.path}" />
+		<stafTools workType="shell" workHost="${host.NAME}" workDir="${test.machine.software.path}" common="${import.cmd}" failonerror="false" />
+		<stafTools workType="get" workHost="${host.NAME}" fileName="${test.machine.software.path}/deploy-test-result.log" />
 	</target>
 
 	<target name="test-one-suite" depends="">
 		<basename property="test.suite.name" file="${test.suite.fullname}" />
-		<hostinfo prefix="host" />
-		<property name="test.suite.class.name" value="com.sequoiadb.testcases-js.${test.package.name}.${host.NAME}-${parallel.num}-${test.suite.name}" />
-		
-		<tstamp>
-			<format property="testsuite.begin.time" pattern="yyyy-MM-dd-hh.mm.ss" />
-		</tstamp>
-		<echo message="now testsuite ${test.suite.name} at ${testsuite.begin.time}"/>
+		<basename property="deploy.name" file="${deploy.case.fullname}" suffix=".xml" />
+		<property name="test.suite.class.name" value="testcases-${test-type}.${deploy.name}-${host.NAME}-${parallel.num}-${test.suite.name}" />
 
-		<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" message="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&#10;&lt;testsuite errors=&quot;0&quot; failures=&quot;0&quot; hostname=&quot;${host.NAME}&quot; name=&quot;${test.suite.class.name}&quot; tests=&quot;1&quot; time=&quot;0.55&quot; timestamp=&quot;${testsuite.begin.time}&quot;&gt;&#10;" />
+		<echo message="Now testsuite ${test.suite.name} ..." />
+		<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" message="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot; ?&gt;&#10;&lt;testsuite name=&quot;${test.suite.name}&quot; type=&quot;${test-type}&quot; deploy=&quot;${deploy.name}&quot; hostname=&quot;${host.NAME}&quot; tests=&quot;1&quot; failure=&quot;0&quot;&gt;&#10;" />
 
-		<available file="${test.suite.fullname}/commlib.js" property="commlib.exist" />
+		<available property="commlib.exist" file="${test.suite.fullname}/commlib.js" />
 		<if>
 			<isset property="commlib.exist" />
 			<then>
 				<echo message="${test.suite.fullname}/commlib is exist , then test will add it " />
-				<sdbProperty name="commlib.option" value=",${test.suite.fullname}/commlib.js" />
+				<sdbProperty name="commlib.option" value="${test.suite.fullname}/commlib.js" />
 			</then>	
 			<else>
 				<echo message="${test.suite.fullname}/commlib is not exist , then test will not add it" />
 				<sdbProperty name="commlib.option" value="" />
 			</else>
 		</if>
-		
+
 		<foreach target="test-one-case" param="test.case.fullname">
-			<fileset dir="${test.suite.fullname}" includes="*.js" excludes="commlib.js" />
-			<param name="testcase.path" value="${testcase.path}" />
-			<param name="sdb.fullname" value="${sdb.fullname}" />
-			<param name="host.NAME" value="${host.NAME}" />
-			<param name="parallel.num" value="${parallel.num}" />
+			<fileset dir="${test.suite.fullname}" includes="${includes.case.patterns}" excludes="${excludes.case.patterns}" />
+			<param name="testcases.path" value="${testcases.path}" />
+			<param name="test-type" value="${test-type}" />
 			<param name="test.suite.class.name" value="${test.suite.class.name}" />
+
+			<param name="host.NAME" value="${host.NAME}" />
 			<param name="commlib.option" value="${commlib.option}" />
+			<param name="test.suite.name" value="${test.suite.name}" />
+			<param name="deploy.name" value="${deploy.name}" />
 		</foreach>
 
-		<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" message="&lt;system-out&gt;&#10;&lt;![CDATA[${on screen}]]&gt;&#10;&lt;/system-out&gt;&#10;&lt;/testsuite&gt;&#10;${testsuite.end.time}&quot;&gt;&#10;" append="true" />
-
-		<tstamp>
-			<format property="testsuite.end.time" pattern="yyyy-MM-dd-hh.mm.ss" />
-		</tstamp>
-		<echo message="now testsuite ${test.suite.name} compeleted at ${testsuite.end.time}"/>
+		<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" message="&lt;/testsuite&gt;&#10;" append="true" />
 	</target>
 
-
 	<target name="test-one-case" depends="">
-		<exec executable="${sdb.fullname}" timeout="300000" dir="" outputproperty="db.RG.info" resultproperty="ret.code.forShards">
-			<arg line=" -s &quot; db = new Sdb('localhost',50000);var rg = db.listReplicaGroups();println(rg);db.close(); &quot;" />
+		<exec executable="${sdb.fullname}" timeout="100000" dir="" outputproperty="db.RG.info" resultproperty="ret.code.forShards">
+			<arg line=" -s &quot; db = new Sdb('localhost',${coord.service.port});var rg = db.listReplicaGroups();println(rg);db.close(); &quot;" />
 		</exec>
-		
 		<if>
 			<not>
 				<equals arg1="${ret.code.forShards}" arg2="0" />
@@ -112,204 +129,119 @@
 				<sdbProperty name="db.RG.info" value="this env is standalone , host is ${test.machine.no2.basic}"/>
 			</then>
 		</if>
-		<if>
-	     	<equals arg1="${os.arch}" arg2="ppc64" />
-	   		<then>
-	   	  		<property name="URL.download.pre" value="http://192.168.30.150:8080" />
-	   		</then>
-	   		<else>
-	    		<property name="URL.download.pre" value="http://192.168.30.184:8080" />
-	   		</else>
-   		</if>
-
-		<basename property="test.case.name" file="${test.case.fullname}" suffix=".js" />
 		
-		<exec executable="sed">
-			<arg line="-i 's/^\xEF\xBB\xBF//g'  ${test.case.fullname}"/>
-		</exec>	
-		<exec executable="sed">
-			<arg line="-i 's/^\xEF\xBB\xBF//g'  ${testcase.path}/libs/func.js"/>
-		</exec>
-
 		<tstamp>
 			<format property="testcase.begin.time" pattern="yyyy-MM-dd-hh.mm.ss" />
 		</tstamp>
-		<echo message="now testcase ${test.case.name}.js at ${testcase.begin.time}"/>
-		<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" append="true" message="&lt;testcase classname=&quot;${test.suite.class.name}&quot; name=&quot;${test.case.name}&quot; time=&quot;${testcase.begin.time}&quot;&gt;&#10;" />
-    
-	    <property name="CS_PRIX_TMP" value="${host.NAME}${parallel.num}${test.case.name}"/>
-	    <sdbprefix prefixName="CS_PRIX">
-	    	 <param name="${host.NAME}" value="${host.NAME}" />
-	    	 <param name="${test.case.name}" value="${test.case.name}" />
-	    	 <param name="${parallel.num}" value="${parallel.num}" />
-	    </sdbprefix>
 
-		<property name="sdb.cmd.argument" value="-e &quot;var CSPREFIX='${CS_PRIX}' ; var COORDSVCNAME='${coord.service.port}';&quot; -f &quot;${testcase.path}/libs/func.js ${commlib.option} ,${test.case.fullname}&quot;" />
-		<property name="sdb.cmd.beforeUsecase" value="-e &quot; var COORDSVCNAME='${coord.service.port}' ;&quot; -f &quot;${testcase.path}/libs/func.js ${commlib.option} ,${testcase.path}/libs/before_usecase.js&quot;" />
-		<property name="sdb.cmd.afterUsecase" value="-e &quot; var COORDSVCNAME='${coord.service.port}' ;&quot; -f &quot;${testcase.path}/libs/func.js ${commlib.option} ,${testcase.path}/libs/after_usecase.js&quot;" />
-		
-		<sdbProperty name="testBeginStr" value="begin test,file is ${test.case.fullname}.${parallel.num}" />
-		<sdbProperty name="testEndStr" value="over test,file is ${test.case.fullname}.${parallel.num}" />
-		
-		<exec executable="${sdb.fullname}" dir="" timeout="300000">
-		  <arg line=" -s &quot; db = new Sdb('localhost',50000);db.msg('${testBeginStr}');db.close(); &quot;" />
+		<basename property="test.case.name" file="${test.case.fullname}" suffix=".js" />
+		<exec executable="sed">
+			<arg line="-i 's/^\xEF\xBB\xBF//g'  ${test.case.fullname}"/>
 		</exec>
-	
-		<echo message="Exec:${sdb.fullname} ${sdb.cmd.beforeUsecase}" />
-		<exec executable="${sdb.fullname}" dir="" timeout="1200000" outputproperty="screen.output" errorproperty="error.output" resultproperty="beforeUsecase.ret.code">
-			<arg line="${sdb.cmd.beforeUsecase}" />
+		<exec executable="sed">
+			<arg line="-i 's/^\xEF\xBB\xBF//g'  ${testcases.path}/libs/func.js"/>
 		</exec>
+		<echo message="Now testcase ${test.case.name}.js begin with ${testcase.begin.time}"/>
 
-		<echo message="Exec:${sdb.fullname} ${sdb.cmd.argument}" />
-		<exec executable="${sdb.fullname}" dir="" timeout="1200000" outputproperty="screen.output" errorproperty="error.output" resultproperty="ret.code">
-			<arg line="${sdb.cmd.argument}" />
+		<sdbprefix prefixName="CS_PRIX">
+			<param name="${host.NAME}" value="${host.NAME}" />
+			<param name="${test.case.name}" value="${test.case.name}" />
+			<param name="${parallel.num}" value="${parallel.num}" />
+			<!-- <param name="${parallel.count}" value="${parallel.count}" /> -->
+		</sdbprefix>
+
+		<echo message="################################################" />
+		<echo message="CS_PRIX=${CS_PRIX}" />
+		<echo message="################################################" />
+
+		<sdbProperty name="testBeginStr" value="begin test,file is ${test.case.fullname}" />
+		<sdbProperty name="testEndStr" value="over test,file is ${test.case.fullname}" />
+		<exec executable="${sdb.fullname}" dir="" timeout="100000">
+			<arg line=" -s &quot; db = new Sdb('localhost',${coord.service.port});db.msg('${testBeginStr}');db.close(); &quot;" />
 		</exec>
 
-		<echo message="Exec:${sdb.fullname} ${sdb.cmd.afterUsecase}" />
-		<exec executable="${sdb.fullname}" dir="" timeout="1200000" outputproperty="screen.output" errorproperty="error.output" resultproperty="afterUsecase.ret.code">
-			<arg line="${sdb.cmd.afterUsecase}" />
+		<if>
+			<equals arg1="${test-type}" arg2="basic" />
+			<then>
+				<property name="sdb.cmd.beforeTestcase" value=" -e &quot; var COORDSVCNAME='${coord.service.port}' ;&quot; -f &quot;${testcases.path}/libs/func.js,${testcases.path}/libs/before_usecase.js&quot;" />
+				<echo message="Exec:${sdb.fullname}${sdb.cmd.beforeTestcase}" />
+				<exec executable="${sdb.fullname}" dir="" timeout="900000" outputproperty="beforeTestcase.screen.output" resultproperty="beforeTestcase.ret.code">
+					<arg line="${sdb.cmd.beforeTestcase}" />
+				</exec>
+				<echo message="${beforeTestcase.screen.output}" />
+
+				<property name="sdb.cmd.argument" value=" -e &quot;var CSPREFIX='${CS_PRIX}';var COORDSVCNAME='${coord.service.port}';&quot; -f &quot;${testcases.path}/libs/func.js,${commlib.option},${test.case.fullname}&quot;" />
+				<property name="command" value="${sdb.fullname}${sdb.cmd.argument}" />
+				<echo message="Command:${command}" />
+				<echo message="The testcase ${test.case.fullname} path on ${testcases.path}" />
+				<exec executable="${sdb.fullname}" dir="" timeout="900000" outputproperty="screen.output" resultproperty="ret.code" failonerror="false">
+					<arg line="${sdb.cmd.argument}" />
+				</exec>
+				<echo message="${screen.output}" />
+				
+				<property name="sdb.cmd.afterTestcase" value=" -e &quot; var COORDSVCNAME='${coord.service.port}' ;&quot; -f &quot;${testcases.path}/libs/func.js,${testcases.path}/libs/after_usecase.js&quot;" />
+				<echo message="Exec:${sdb.fullname} ${sdb.cmd.afterTestcase}" />
+				<exec executable="${sdb.fullname}" dir="" timeout="900000" outputproperty="afterTestcase.screen.output" resultproperty="afterTestcase.ret.code">
+					<arg line="${sdb.cmd.afterTestcase}" />
+				</exec>
+				<echo message="${afterTestcase.screen.output}" />
+			</then>
+			<else>
+				<property name="sdb.cmd.argument" value=" -e &quot;var CSPREFIX='${CS_PRIX}';var COORDSVCNAME='${coord.service.port}';&quot; -f &quot;${commlib.option},${test.case.fullname}&quot;" />
+				<property name="command" value="${sdb.fullname}${sdb.cmd.argument}" />
+				<echo message="Command:${command}" />
+				<echo message="The testcase ${test.case.fullname} path on ${testcases.path}" />
+				<exec executable="${sdb.fullname}" dir="" timeout="900000" outputproperty="screen.output" resultproperty="ret.code" failonerror="false">
+					<arg line="${sdb.cmd.argument}" />
+				</exec>
+				<echo message="${screen.output}" />
+			</else>
+		</if>
+		<exec executable="${sdb.fullname}" dir="" timeout="100000">
+			<arg line=" -s &quot; db = new Sdb('localhost',${coord.service.port});db.msg('${testEndStr}');db.close(); &quot;" />
 		</exec>
 
-		<echo message="the result = ${ret.code} after exec ${test.case.fullname}.${parallel.num} testcase." />
-		<exec executable="${sdb.fullname}" dir="" timeout="300000">
-			<arg line=" -s &quot; db = new Sdb('localhost',50000);db.msg('${testEndStr}');db.close(); &quot;" />
-		</exec>
-		
 		<if>
 			<not>
 				<equals arg1="${ret.code}" arg2="0" />
 			</not>
-			<then>	
-				<trycatch>
-					<try>
-						<if>
-							<equals arg1="${to.copy.test.log}" arg2="true" />
-							<then>
-								<echo message="to.copy.test.log is true , then copy all test log to ${save.testLog.hostname}:${save.testLog.dir}"/>
-								
-								<tstamp>
-									<format property="current.time.log" pattern="MM-dd-hh.mm.ss" />
-								</tstamp>
+			<then>
+				<tstamp>
+					<format property="testcase.failure.end.time" pattern="yyyy-MM-dd-hh.mm.ss" />
+				</tstamp>
+				<sdbTime beginTime="${testcase.begin.time}" endTime="${testcase.failure.end.time}" output="testcase.failure.timeOutput" />
+				<echo message="The result code is ${ret.code} and it's fail ..." />
+				<echo message="The testcase ${test.case.name}.js end with ${testcase.failure.end.time} and cost ${testcase.failure.timeOutput} s in total..." />
 
-								<echo message="mkdir ${test.machine.deploy.path}/${host.NAME}-${parallel.num}-${current.time.log}" />
-								<mkdir dir="${test.machine.deploy.path}/${host.NAME}-${parallel.num}-${current.time.log}" />
-								
-								<if>
-									<not>
-										<equals arg1="${ret.code.forShards}" arg2="0" />
-									</not>
-									<then>
-										<sdbCopyAndTar fileHostName="LOCAL" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/database" savePath="${test.machine.deploy.path}/${host.NAME}-${parallel.num}-${current.time.log}" />
-									</then>
-									<else>
-										<sdbCopyAndTar fileHostName="${test.machine.no1.basic}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/database" savePath="${test.machine.deploy.path}/${host.NAME}-${parallel.num}-${current.time.log}" />
-										<sdbCopyAndTar fileHostName="${test.machine.no2.basic}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/database" savePath="${test.machine.deploy.path}/${host.NAME}-${parallel.num}-${current.time.log}" />
-										<sdbCopyAndTar fileHostName="${test.machine.no3.basic}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/database" savePath="${test.machine.deploy.path}/${host.NAME}-${parallel.num}-${current.time.log}" />
-									</else>
-								</if>
+				<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" append="true" message="&lt;testcase classname=&quot;${test.suite.class.name}&quot; name=&quot;${test.case.name}&quot; begin_time=&quot;${testcase.begin.time}&quot; end_time=&quot;${testcase.failure.end.time}&quot; time=&quot;${testcase.failure.timeOutput}&quot; path=&quot;${testcases.path}&quot; status=&quot;fail&quot;&gt;&#10;&lt;failure&gt;&#10;&lt;![CDATA[&#10;COMMAND= ${command}&#10;RETURNCODE=${ret.code}&#10;ERRORMESSAGE=&#10;${screen.output}&#10;TESTBEGINSTR=${testBeginStr}&#10;TESTENDSTR=${testEndStr}&#10;DB.LISTREPLICAGROUP:&#10;${db.RG.info}]]&gt;&#10;&lt;/failure&gt;&#10;&lt;/testcase&gt;&#10;" />
 
-								<tar basedir="${test.machine.deploy.path}" destfile="${test.machine.deploy.path}/${host.NAME}-${parallel.num}-${current.time.log}.tar.gz" compression="gzip" includes="${host.NAME}-${parallel.num}-${current.time.log}/**" />
-								<stafTools workHost="${host.NAME}" fileName="${test.machine.deploy.path}/${host.NAME}-${parallel.num}-${current.time.log}.tar.gz" workType="copy" toHost="${save.testLog.hostname}" workDir="${test.machine.deploy.path}" saveDir="${save.testLog.dir}" />
-						  		<sdbProperty name="delete.diaglogFile" value="dir=$(find /opt/sequoiadb/database -name diaglog); for d in $dir ; do echo rm -f $d/* ; rm -f $d/* ; done" />
-						
-								<if>
-									<not>
-										<equals arg1="${ret.code.forShards}" arg2="0" />
-									</not>
-									<then>
-										<stafTools workType="shell" workHost="LOCAL" workDir="${install.path}/sequoiadb/database" common="${delete.diaglogFile}" failonerror="false" />
-									</then>
-									<else>
-										<stafTools workType="shell" workHost="${test.machine.no1.basic}" workDir="${install.path}/sequoiadb/database" common="${delete.diaglogFile}" failonerror="false" />
-										<stafTools workType="shell" workHost="${test.machine.no2.basic}" workDir="${install.path}/sequoiadb/database" common="${delete.diaglogFile}" failonerror="false" />
-										<stafTools workType="shell" workHost="${test.machine.no3.basic}" workDir="${install.path}/sequoiadb/database" common="${delete.diaglogFile}" failonerror="false" />
-									</else>
-								</if>
-
-								<echo message="rm -f ${test.machine.deploy.path}/${host.NAME}-${parallel.num}-${current.time.log}" />
-								<delete file="${test.machine.deploy.path}/${host.NAME}-${parallel.num}-${current.time.log}.tar.gz" failonerror="false" />
-								<delete dir="${test.machine.deploy.path}/${host.NAME}-${parallel.num}-${current.time.log}" failonerror="false"/>
-							</then>
-				 		</if>
-				 	</try>
-					<catch>
-						<echo message="copy log for download code fail" />
-					</catch>
-
-					<finally>  	
-					  	<if>
-				        	<not>
-				        		<equals arg1="${allPrepare.ret.code}" arg2="0" />
-				        	</not>
-				        	<then>
-				        		<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" append="true" message="The allPrepare.ret.code.js failed..." />
-				        	</then>
-					  	</if>
-					  	<if>
-				        	<not>
-				        		<equals arg1="${allClean.ret.code}" arg2="0" />
-				        	</not>
-				        	<then>
-				        		<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" append="true" message="The allClean.js failed..." />
-				        	</then>
-					  	</if>
-					  	<if>
-				        	<not>
-				        		<equals arg1="${beforeUsecase.ret.code}" arg2="0" />
-				        	</not>
-				        	<then>
-				        		<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" append="true" message="The before_usecase.js failed..." />
-				        	</then>
-					  	</if>
-					  	<if>
-					  		<not>
-					  			<equals arg1="${afterUsecase.ret.code}" arg2="0" />
-					  		</not>
-					  		<then>
-				        		<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" append="true" message="The after_usecase.js failed..." />		
-					  		</then>
-					  	</if>
-						<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" append="true" message="&lt;failure type=&quot;junit.framework.AssertionFailedError&quot;&gt;&#10;&lt;![CDATA[command= ${sdb.fullname} ${sdb.cmd.argument};return code=${ret.code}; time=${current.time}; error message=${error.output} &#10; screen=&#10; ${screen.output}&#10;&#10;testBeginStr=${testBeginStr} &#10;testEndStr=${testEndStr} &#10;db.listReplicaGroups() : &#10;${db.RG.info} &#10;&#10;download the test log :&#10;${URL.download.pre}/${host.NAME}-${parallel.num}-${current.time.log}.tar.gz]]&gt;&#10;&lt;/failure&gt;&#10;" />
-					
-						<sdbHaveMaster waitTime="10" propertyName="haveMaster" groupName="1" hostName="localhost" failonerror="false" />
-						<echo message="${haveMaster}" />
-
-						<if>
-							<equals arg1="${haveMaster}" arg2="true"/>
-							<then>
-								<echo message="haveMaster is true"/>
-									<sdbClearEnvCS hostName="localhost" port="50000" csprefix="${CS_PRIX}"/>
-								</then>
-
-							<else>
-								<echo message="test is failed , CS_PRIX is ${CS_PRIX} , but when drop the cs , there are no catalog master node" />
-							</else>
-						</if>
-					</finally>
-				</trycatch>
+				<echo file="${install.path}/${import.file}" append="true" message="{testcase_name:&quot;${test.suite.name}-${test.case.name}&quot;,deploy:&quot;${deploy.name}&quot;,hostname:&quot;${host.NAME}&quot;,time:&quot;${testcase.timeOutput}&quot;,status:&quot;fail&quot;,begin_time:&quot;${testcase.begin.time}&quot;,end_time:&quot;${testcase.end.time}&quot;}&#10;&#10;&#10;" />
 			</then>
+			<else>
+				<tstamp>
+					<format property="testcase.end.time" pattern="yyyy-MM-dd-hh.mm.ss" />
+				</tstamp>
+				<sdbTime beginTime="${testcase.begin.time}" endTime="${testcase.end.time}" output="testcase.timeOutput" />
+				<echo message="The result code is ${ret.code} and it's succ ..." />
+				<echo message="The testcase ${test.case.name}.js end with ${testcase.end.time} and cost ${testcase.timeOutput} s in total..." />
+
+				<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" append="true" message="&lt;testcase classname=&quot;${test.suite.class.name}&quot; name=&quot;${test.case.name}&quot; begin_time=&quot;${testcase.begin.time}&quot; end_time=&quot;${testcase.end.time}&quot; time=&quot;${testcase.timeOutput}&quot; path=&quot;${testcases.path}&quot; status=&quot;succ&quot;&gt;&#10;&lt;/testcase&gt;&#10;" />
+
+				<echo file="${install.path}/${import.file}" append="true" message="{testcase_name:&quot;${test.suite.name}-${test.case.name}&quot;,deploy:&quot;${deploy.name}&quot;,hostname:&quot;${host.NAME}&quot;,time:&quot;${testcase.timeOutput}&quot;,status:&quot;succ&quot;,begin_time:&quot;${testcase.begin.time}&quot;,end_time:&quot;${testcase.end.time}&quot;}&#10;&#10;&#10;" />
+			</else>
 		</if>
 
 		<sdbHaveMaster waitTime="10" propertyName="haveMaster" groupName="1" hostName="localhost" failonerror="false" />
-			<echo message="${haveMaster}"/>
-			<if>
-				<equals arg1="${haveMaster}" arg2="true"/>
-				<then>
-					<echo message="haveMaster is true"/>
-					<sdbClearEnvCS hostName="localhost" port="50000" csprefix="${CS_PRIX}"/>
-				</then>
-
-				<else>
-					<echo message="test is failed , CS_PRIX is ${CS_PRIX} , but when drop the cs , there are no catalog master node" />
-				</else>
-			</if>
-		
-			<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" append="true" message="&lt;/testcase&gt;&#10;" />
-		
-		<tstamp>
-			<format property="testcase.end.time" pattern="yyyy-MM-dd-hh.mm.ss" />
-		</tstamp>
-		<echo message="This testcase end time is ${testcase.end.time}"/>
+		<echo message="${haveMaster}" />
+		<if>
+			<equals arg1="${haveMaster}" arg2="true"/>
+			<then>
+				<echo message="haveMaster is true"/>
+				<sdbClearEnvCS hostName="localhost" port="50000" csprefix="${CS_PRIX}"/>
+			</then>
+			<else>
+				<echo message="test is failed , CS_PRIX is ${CS_PRIX} , but when drop the cs , there are no catalog master node" />
+			</else>
+		</if>
 	</target>
-	
 </project>

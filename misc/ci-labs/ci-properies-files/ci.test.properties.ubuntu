@@ -18,14 +18,14 @@ cata.service.port=30000
 data.service.port=21100
 sharingbreak=20000
 
-jenkins.master.ip=suse-test1.control
-test.machine.no1.basic=suse-test2.control
-test.machine.no2.basic=suse-test3.control
-test.machine.no3.basic=suse-test4.control
+jenkins.master.ip=ubun-test1
+test.machine.no1.basic=ubun-test2
+test.machine.no2.basic=ubun-test3
+test.machine.no3.basic=ubun-test4
 
-test.machine.no1.data=suse-test2
-test.machine.no2.data=suse-test3
-test.machine.no3.data=suse-test4
+test.machine.no1.data=ubun-test2
+test.machine.no2.data=ubun-test3
+test.machine.no3.data=ubun-test4
 
 basic_list1=collectionAlter,domain,createIndex
 basic_list2=dropCL,dropCS,dropIndex,insert,listCL,listCS,operators,procedures,aggregate,bakupRestore,countHint,createCL,createCS,cursor,delete,sql,subCL,syndate,update,upsert
