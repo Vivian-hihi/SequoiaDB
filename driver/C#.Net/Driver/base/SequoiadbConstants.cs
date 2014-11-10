@@ -78,6 +78,7 @@ namespace SequoiaDB
         public const string REMOVE_BACKUP_CMD = "remove backup";
         public const string CRT_PROCEDURES_CMD = "create procedures";
         public const string RM_PROCEDURES_CMD = "remove procedures";
+        public const string ALTER_COLLECTION = "alter collection";
         public const string LIST_LOBS_CMD = "list lobs";
 
 
@@ -97,6 +98,7 @@ namespace SequoiaDB
         public const string FIELD_PAGESIZE = "PageSize";
         public const string FIELD_INDEX = "Index";
         public const string FIELD_TOTAL = "Total";
+        public const string FIELD_HINT = "Hint";
         public const string FIELD_COLLECTION = "Collection";
         public const string FIELD_COLLECTIONSPACE = "CollectionSpace";
         public const string FIELD_GROUP = "Group";

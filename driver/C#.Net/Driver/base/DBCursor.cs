@@ -119,6 +119,7 @@ namespace SequoiaDB
 
         /** \fn void Close()
          *  \brief Close current cursor
+         *  \return void
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
          */

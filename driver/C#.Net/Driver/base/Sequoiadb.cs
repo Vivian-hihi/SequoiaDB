@@ -93,6 +93,7 @@ namespace SequoiaDB
 
         /** \fn void Connect()
          *  \brief Connect to remote Sequoiadb database server
+         *  \return void
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
          */
@@ -105,6 +106,7 @@ namespace SequoiaDB
          *  \brief Connect to remote Sequoiadb database server
          *  \username Sequoiadb connection user name
          *  \password Sequoiadb connection password
+         *  \return void
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
          */
@@ -120,6 +122,7 @@ namespace SequoiaDB
          *  \username Sequoiadb connection user name
          *  \password Sequoiadb connection password
          *  \options The options for connection
+         *  \return void
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
          */
@@ -198,6 +201,7 @@ namespace SequoiaDB
 
         /** \fn Disconnect()
          *  \brief Disconnect the remote server
+         *  \return void
          *  \exception System.Exception
          */
         public void Disconnect()
@@ -261,6 +265,7 @@ namespace SequoiaDB
          *  \brief Add an user in current database
          *  \username Sequoiadb connection user name
          *  \password Sequoiadb connection password
+         *  \return void
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
          */
@@ -286,6 +291,7 @@ namespace SequoiaDB
          *  \brief Remove the user from current database
          *  \username Sequoiadb connection user name
          *  \password Sequoiadb connection password
+         *  \return void
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
          */
@@ -309,6 +315,7 @@ namespace SequoiaDB
 
         /** \fn void TransactionBegin()
          *  \brief Begin the database transaction
+         *  \return void
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
          */
@@ -324,6 +331,7 @@ namespace SequoiaDB
 
         /** \fn void TransactionCommit()
          *  \brief Commit the database transaction
+         *  \return void
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
          */
@@ -339,6 +347,7 @@ namespace SequoiaDB
 
         /** \fn void TransactionRollback()
          *  \brief Rollback the database transaction
+         *  \return void
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
          */
@@ -354,6 +363,7 @@ namespace SequoiaDB
 
         /** \fn void ChangeConnectionOptions(ConfigOptions opts)
          *  \brief Change the connection options
+         *  \return void
          *  \param opts The connection options
          *  \exception System.Exception
          */
@@ -502,7 +512,7 @@ namespace SequoiaDB
         }
         /** \fn DBCursor ListCollectionSpaces()
          *  \brief List all the collecion space
-         *  \rerurn A DBCursor of all the collection space or null
+         *  \return A DBCursor of all the collection space or null
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
          */
@@ -513,7 +523,7 @@ namespace SequoiaDB
 
         /** \fn DBCursor ListCollections()
          *  \brief List all the collecion space
-         *  \rerurn A DBCursor of all the collection or null
+         *  \return A DBCursor of all the collection or null
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
          */
@@ -1116,6 +1126,7 @@ namespace SequoiaDB
          *  \brief Close all the cursors created in current connection, 
          *         we can't use those cursors to get data from db engine again,
          *         but, there are some data cache in local
+         *  \return void
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
          */

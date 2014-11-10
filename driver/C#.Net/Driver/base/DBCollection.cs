@@ -161,10 +161,8 @@ namespace SequoiaDB
 		 *	                    BsonDocument splitCondition,
 		 *	                    BsonDocument splitEndCondition)
 	     *  \brief Split the specified collection from source group to target group by range asynchronously.
-	     *  \param sourceGroupName
-	     *            the source group name
-	     *  \param destGroupName
-	     *            the destination group name
+         *  \param sourceGroupName the source group name
+         *  \param destGroupName the destination group name
          *  \param splitCondition
 	     *            the split condition
          *  \param splitEndCondition
@@ -222,10 +220,8 @@ namespace SequoiaDB
 		 *	                    String destGroupName,
 		 *	                    double percent)
 	     *  \brief Split the specified collection from source group to target group by percent asynchronously.
-	     *  \param sourceGroupName
-	     *            the source group name
-	     *  \param destGroupName
-	     *            the destination group name
+         *  \param sourceGroupName the source group name
+         *  \param destGroupName the destination group name
          *  \param percent
 	     *            the split percent, Range:(0,100]
          *  \return return the task id, we can use the return id to manage the sharding which is run backgroup.
@@ -563,6 +559,47 @@ namespace SequoiaDB
             return new DBCursor(rtnSDBMessage, this);
         }
 
+        /** \fn DBCursor Explain(BsonDocument query, BsonDocument selector, BsonDocument orderBy, BsonDocument hint,
+         *                       long skipRows, long returnRows, int flag, BsonDocument options) 
+         *  \brief Find documents of current collection
+         *  \param query The matching condition
+         *  \paramselector The selective rule
+         *  \param orderBy The ordered rule
+         *  \param hint One of the indexs in current collection, using default index to query if not provided
+         *           eg:{"":"ageIndex"}
+         *  \param skipRows Skip the first numToSkip documents, default is 0
+         *  \param returnRows Only return numToReturn documents, default is -1 for returning all results
+         *  \param flag the flag is used to choose the way to query, the optional options are as below:
+         *
+         *      DBQuery.FLG_QUERY_FORCE_HINT(0x00000080)      : Force to use specified hint to query, if database have no index assigned by the hint, fail to query
+         *      DBQuery.FLG_QUERY_PARALLED(0x00000100)        : Enable paralled sub query
+         *      DBQuery.FLG_QUERY_WITH_RETURNDATA(0x00000200) : In general, query won't return data until cursor get from database,
+         *                                                      when add this flag, return data in query response, it will be more high-performance
+         *  \param [in] options The rules of query explain, the options are as below:
+         *
+         *      Run     : Whether execute query explain or not, true for excuting query explain then get
+         *                the data and time information; false for not excuting query explain but get the
+         *                query explain information only. e.g. {Run:true}
+         *  \return The DBCursor of matching documents or null
+         *  \exception SequoiaDB.BaseException
+         *  \exception System.Exception
+         */
+        public DBCursor Explain(BsonDocument query, BsonDocument selector, BsonDocument orderBy, BsonDocument hint,
+                                long skipRows, long returnRows, int flag, BsonDocument options)
+        {
+            BsonDocument newObj = new BsonDocument();
+            if (null != hint)
+            {
+                newObj.Add(SequoiadbConstants.FIELD_HINT, hint);
+            }
+            if (null != options)
+            {
+                newObj.Add(SequoiadbConstants.FIELD_OPTIONS, options);
+            }
+
+            return Query(query, selector, orderBy, newObj, skipRows, returnRows, flag | DBQuery.FLG_QUERY_EXPLAIN);
+        }
+
         /** \fn DBCursor GetIndexes()
          *  \brief Get all the indexes of current collection
          *  \return A cursor of all indexes or null
@@ -855,6 +892,42 @@ namespace SequoiaDB
                 throw new BaseException(flags);
         }
 
+        /** \fn void Alter(BsonDocument options)
+         * \brief Alter the attributes of current collection
+         * \param options The options for altering current collection:
+         *
+         *     ReplSize     : Assign how many replica nodes need to be synchronized when a write request(insert, update, etc) is executed
+         *     ShardingKey  : Assign the sharding key
+         *     ShardingType : Assign the sharding type
+         *     Partition    : When the ShardingType is "hash", need to assign Partition, it's the bucket number for hash, the range is [2^3,2^20]
+         *                    e.g. {RepliSize:0, ShardingKey:{a:1}, ShardingType:"hash", Partition:1024}
+         * \note Can't alter attributes about split in partition collection; After altering a collection to
+         *       be a partition collection, need to split this collection manually
+         * \exception SequoiaDB.BaseException
+         * \exception System.Exception
+         */
+        public void Alter(BsonDocument options)
+        {
+            // check argument
+            if (null == options)
+            {
+                throw new BaseException("SDB_INVALIDARG");
+            }
+            // build a bson to send
+            BsonDocument newObj = new BsonDocument();
+            newObj.Add(SequoiadbConstants.FIELD_NAME, collectionFullName);
+            newObj.Add(SequoiadbConstants.FIELD_OPTIONS, options);
+            // build command
+            string commandString = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.ALTER_COLLECTION;
+            BsonDocument dummyObj = new BsonDocument();
+            // run command
+            SDBMessage rtnSDBMessage = AdminCommand(commandString, newObj, dummyObj, dummyObj, dummyObj, 0, -1, 0);
+            // check the return flag
+            int flags = rtnSDBMessage.Flags;
+            if (flags != 0)
+                throw new BaseException(flags);
+        }
+
         /** \fn DBCursor ListLobs()
          * \brief List all of the lobs in current collection
          * \retval DBCursor of lobs
@@ -893,6 +966,7 @@ namespace SequoiaDB
 
         /** \fn DBLob CreateLob()
          * \brief Create a large object
+         * \return The newly created lob object
          * \exception SequoiaDB.BaseException
          * \exception System.Exception
          */

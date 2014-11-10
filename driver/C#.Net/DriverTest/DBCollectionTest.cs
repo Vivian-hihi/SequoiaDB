@@ -881,5 +881,87 @@ namespace DriverTest
             }
         }
 
+        [TestMethod()]
+        public void AlterCollectionTest()
+        {
+            DBCollection coll = null;
+            BsonDocument options = null;
+            string clName_alter = "alterCLTest";
+            string fullName = null;
+            int partition = 0;
+            string type = null;
+            int rs = -1;
+            coll = cs.CreateCollection(clName_alter);
+            fullName = coll.CollSpace.Name + "." + clName_alter;
+            // alter collecton attrubute
+            options = new BsonDocument {
+                {"ReplSize", 0},
+                {"ShardingKey", new BsonDocument{{"a",1}}},
+                {"ShardingType", "hash"},
+                {"Partition", 4096}
+            };
+            coll.Alter(options);
+            // check
+            BsonDocument matcher = new BsonDocument { {"Name", fullName} };
+            DBCursor cur = sdb.GetSnapshot(8, matcher, null, null );
+            BsonDocument obj = cur.Next();
+            if (null == obj)
+            {
+                Assert.Fail();
+            }
+            try
+            {
+                rs = obj["ReplSize"].AsInt32;
+                Assert.IsTrue(7 == rs);
+                partition = obj["Partition"].AsInt32;
+                Assert.IsTrue(4096 == partition);
+                type = obj["ShardingType"].AsString;
+                Assert.IsTrue(type.Equals("hash"));
+            }
+            catch(System.Exception e)
+            {
+                Assert.Fail();
+            }
+        }
+
+        [TestMethod()]
+        public void QueryExplainTest()
+        {
+            int num = 100;
+            int i = 0;
+            string indexName = "QueryExpalinIndex";
+            BsonDocument index = new BsonDocument
+            {
+                {"age", 1}
+            };
+            // create index
+            coll.CreateIndex(indexName, index, false, false);
+            // insert records
+            for (; i < num; i++)
+            {
+                BsonDocument obj = new BsonDocument{
+                    {"firstName", "John"},
+                    {"lastName", "Smith"},
+                    {"age", i}
+                };
+                coll.Insert(obj);
+            }
+            // query explain
+            BsonDocument cond = new BsonDocument { { "age", new BsonDocument { { "$gt", 50 } } } };
+            BsonDocument sel = new BsonDocument { { "age", "" } };
+            BsonDocument orderBy = new BsonDocument { { "age", -1 } };
+            BsonDocument hint = new BsonDocument { { "", indexName } };
+            BsonDocument options = new BsonDocument { { "Run", true } };
+            DBCursor cur = coll.Explain(cond, sel, orderBy, hint, 47, 3, 0, options);
+            Assert.IsNotNull(cur);
+            BsonDocument record = cur.Next();
+            int indexRead = record["IndexRead"].AsInt32;
+            Assert.IsTrue(50 == indexRead);
+            int dataRead = record["DataRead"].AsInt32;
+            Assert.IsTrue(49 == dataRead);
+            int returnNum = record["ReturnNum"].AsInt32;
+            Assert.IsTrue(2 == returnNum);
+        }
+
     }
 }

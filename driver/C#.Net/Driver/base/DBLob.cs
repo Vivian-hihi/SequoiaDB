@@ -136,6 +136,7 @@ namespace SequoiaDB
 
         /** \fn          Close()
           * \brief       Close the lob
+          * \return void
           * \exception SequoiaDB.BaseException
           * \exception System.Exception
           */
@@ -194,7 +195,7 @@ namespace SequoiaDB
         }
 
         /** \fn          Read( byte[] b )
-         *  \brief       Reads up to <code>b.length</code> bytes of data from this 
+         *  \brief       Reads up to b.length bytes of data from this 
          *               lob into an array of bytes. 
          *  \param       b   the buffer into which the data is read.
          *  \return      the total number of bytes read into the buffer, or
@@ -222,7 +223,7 @@ namespace SequoiaDB
         }
 
         /** \fn          Write( byte[] b )
-         *  \brief       Writes <code>b.length</code> bytes from the specified 
+         *  \brief       Writes b.length bytes from the specified 
          *               byte array to this lob. 
          *  \param       b   the data.
          *  \exception SequoiaDB.BaseException
@@ -300,7 +301,7 @@ namespace SequoiaDB
             _size += b.Length;
         }
 
-        /** \fn          seek( long size, int seekType )
+        /** \fn          void Seek( long size, int seekType )
          *  \brief       Change the read position of the lob. The new position is 
          *               obtained by adding <code>size</code> to the position 
          *               specified by <code>seekType</code>. If <code>seekType</code> 
@@ -309,6 +310,7 @@ namespace SequoiaDB
          *               position of lob, or the end of lob.
          *  \param       size the adding size.
          *  \param       seekType  SDB_LOB_SEEK_SET/SDB_LOB_SEEK_CUR/SDB_LOB_SEEK_END
+         *  \return void
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
          */
@@ -364,7 +366,7 @@ namespace SequoiaDB
         }
 
         /** \fn          ObjectId GetID()
-         *  \brief       get the lob's id
+         *  \brief       Get the lob's id
          *  \return      the lob's id
          */
         public ObjectId GetID()
@@ -372,8 +374,8 @@ namespace SequoiaDB
             return _id;
         }
 
-        /** \fn          long getSize()
-         *  \brief       get the size of lob
+        /** \fn          long GetSize()
+         *  \brief       Get the size of lob
          *  \return      the lob's size
          */
         public long GetSize()
@@ -381,8 +383,9 @@ namespace SequoiaDB
             return _size;
         }
 
-        /** \fn          long getCreateTime()
+        /** \fn          long GetCreateTime()
          *  \brief       get the create time of lob
+         *  \return The lob's create time
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
          */
