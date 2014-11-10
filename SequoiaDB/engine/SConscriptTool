@@ -21,6 +21,10 @@ migFiles = [
       "mig/migImport.cpp"
       ]
 
+migLobFiles = [
+      "mig/migLobTool.cpp"
+]
+
 sdbExportMain = [
       "pmd/sdbexprt.cpp"
       ]
@@ -31,6 +35,10 @@ sdbImportMain = [
 
 sdbLoadMain = [
       "pmd/sdbLoad.cpp"
+      ]
+
+sdbLobToolMain = [
+      "pmd/sdblobtool.cpp"
       ]
 
 msgFiles = [
@@ -200,11 +208,13 @@ clientFiles = [
 
 clientCppFiles = [
       "client/clientcpp.cpp",
+      "client/common.c",
+      "client/network.c",
       "bson/bsonobj.cpp",
       "bson/oid.cpp",
       "bson/base64.cpp",
       "bson/md5.c",
-      "bson/nonce.cpp"
+      "bson/nonce.cpp",
       ]
 ncursesFiles = [
       "ncurses/./tty/hardscroll.c",
@@ -427,6 +437,7 @@ toolEnv.StaticLibrary('pmd', pmdFiles)
 toolEnv.StaticLibrary('util', utilFiles)
 #mig
 toolEnv.StaticLibrary('mig', migFiles)
+toolEnv.StaticLibrary('miglob', migLobFiles)
 #msg
 toolEnv.StaticLibrary('msg', msgFiles)
 #net
@@ -483,6 +494,10 @@ sdbcmart = toolEnv.Program("sdbcmart", sdbcmartMain,
 sdbcmtop = toolEnv.Program("sdbcmtop", sdbcmtopMain,
          LIBDEPS=["pd","oss", "util"],
          _LIBDEPS='$_LIBDEPS_OBJS' )
+
+sdblobtool = toolEnv.Program("sdblobtool", sdbLobToolMain,
+         LIBDEPS=["pd","oss", "util", "miglob","clientcpp"],
+         _LIBDEPS='$_LIBDEPS_OBJS' )
 if linux:
    sdbtop = toolEnv.Program("sdbtop", sdbtopMain,
             LIBDEPS=["mig","oss","pd","util","client","clientcpp","ncurses"],
@@ -515,6 +530,7 @@ toolEnv.Install( '#/bin', sdbcm )
 toolEnv.Install( '#/bin', sdbcmd )
 toolEnv.Install( '#/bin', sdbcmart )
 toolEnv.Install( '#/bin', sdbcmtop )
+toolEnv.Install( '#/bin', sdblobtool )
 toolEnv.Install( '#/conf/script/', "spt/error.js" )
 if linux:
    toolEnv.Install( '#/bin', sdbtop )
