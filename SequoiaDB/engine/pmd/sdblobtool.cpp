@@ -1,0 +1,208 @@
+/*******************************************************************************
+
+   Copyright (C) 2011-2014 SequoiaDB Ltd.
+
+   This program is free software: you can redistribute it and/or modify
+   it under the term of the GNU Affero General Public License, version 3,
+   as published by the Free Software Foundation.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warrenty of
+   MARCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program. If not, see <http://www.gnu.org/license/>.
+
+   Source File Name = sdblobtool.cpp
+
+   Descriptive Name =
+
+   Dependencies: N/A
+
+   Restrictions: N/A
+
+   Change Activity:
+   defect Date        Who Description
+   ====== =========== === ==============================================
+          07/31/2014  YW  Initial Draft
+
+   Last Changed =
+
+*******************************************************************************/
+
+#include "pd.hpp"
+#include "migLobTool.hpp"
+#include "utilParam.hpp"
+#include "pmdDef.hpp"
+#include <iostream>
+
+using namespace std ;
+
+#define LOG_FILE "sdblobtool.log"
+
+#define COMMANDS_OPTIONS \
+        ( PMD_COMMANDS_STRING("help", ",h"), "Help" )\
+        ( PMD_COMMANDS_STRING("version", ",v"), "Version" )\
+        ( MIG_HOSTNAME, boost::program_options::value<string>(), "The hostname of coord. Default value is localhost." )\
+        ( MIG_SERVICE, boost::program_options::value<string>(), "The service name of coord. Default value is \"11810\"." )\
+        ( MIG_USRNAME, boost::program_options::value<string>(), "Username" )\
+        ( MIG_PASSWD, boost::program_options::value<string>(), "Password" )\
+        ( MIG_OP, boost::program_options::value<string>(), "import/export" )\
+        ( MIG_CL, boost::program_options::value<string>(), "Full name of collection, eg:\"foo.bar\"" )\
+        ( MIG_FILE, boost::program_options::value<string>(), "Full path of file" )
+
+static void initDesc( po::options_description &desc )
+{
+   PMD_ADD_PARAM_OPTIONS_BEGIN ( desc )
+      COMMANDS_OPTIONS
+   PMD_ADD_PARAM_OPTIONS_END
+}
+
+static INT32 parseCmdLine( const po::options_description &desc,
+                           const po::variables_map &vm,
+                           bson::BSONObj &obj,
+                           BOOLEAN &doNothing )
+{
+   INT32 rc = SDB_OK ;
+   bson::BSONObjBuilder builder ;
+   doNothing = FALSE ;
+
+   if ( vm.count( "help" ) )
+   {
+      cout << desc << endl ;
+      doNothing = TRUE ;
+      goto done ;
+   }
+
+   if ( vm.count( "version" ) )
+   {
+      doNothing = TRUE ;
+      goto done ;
+   }
+
+   if ( !vm.count( MIG_HOSTNAME ) )
+   {
+      builder.append( MIG_HOSTNAME, "localhost" ) ;
+   }
+   else
+   {
+      builder.append( MIG_HOSTNAME, vm[MIG_HOSTNAME].as<string>() ) ;
+   }
+
+   if ( !vm.count( MIG_SERVICE ) )
+   {
+      builder.append( MIG_SERVICE, "11810" ) ;
+   }
+   else
+   {
+      builder.append( MIG_SERVICE, vm[MIG_SERVICE].as<string>() ) ;
+   }
+
+   if ( vm.count( MIG_USRNAME ) )
+   {
+      builder.append( MIG_USRNAME, vm[MIG_USRNAME].as<string>() ) ;
+   }
+
+   if ( vm.count( MIG_PASSWD ) )
+   {
+      builder.append( MIG_PASSWD, vm[MIG_PASSWD].as<string>() ) ;
+   }
+
+   if ( !vm.count( MIG_OP ) )
+   {
+      PD_LOG( PDERROR, "operation type is not specified" ) ;
+      cerr << "Error: opteration type must be specified" << endl ;
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+   else if ( 0 == vm[MIG_OP].as<string>().compare(MIG_OP_IMPRT) ||
+             0 == vm[MIG_OP].as<string>().compare(MIG_OP_EXPRT ) )
+   {
+      builder.append( MIG_OP, vm[MIG_OP].as<string>() ) ;
+   }
+   else
+   {
+      PD_LOG( PDERROR, "invalid operation type:%s",
+              vm[MIG_OP].as<string>().c_str() ) ;
+      cerr << "Error: invalid operation type:" << vm[MIG_OP].as<string>() << endl ;
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   if ( !vm.count( MIG_CL ) )
+   {
+      PD_LOG( PDERROR, "collection is not specified" ) ;
+      cerr << "Error: collection must be specified" << endl ;
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+   builder.append( MIG_CL, vm[MIG_CL].as<string>() ) ;
+
+   if ( !vm.count( MIG_FILE ) )
+   {
+      PD_LOG( PDERROR, "local file is not specified" ) ;
+      cerr << "Error: local file must be specified" << endl ;
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+   builder.append( MIG_FILE, vm[MIG_FILE].as<string>() ) ;
+
+   obj = builder.obj() ;
+done:
+   return rc ;
+error:
+   goto done ;
+}
+
+INT32 main( INT32 argc, CHAR *argv[] )
+{
+   INT32 rc = SDB_OK ;
+   po::options_description desc ( "Command options" ) ;
+   po::variables_map vm ;
+   bson::BSONObj options ;
+   BOOLEAN doNothing = FALSE ;
+   lobtool::migLobTool tool ;
+   
+   sdbEnablePD( LOG_FILE ) ;
+
+   cout << "Version: 1.0" << endl ;
+
+   initDesc( desc ) ;
+
+   rc = engine::utilReadCommandLine( argc, argv, desc, vm, TRUE ) ;
+   if ( SDB_OK != rc )
+   {
+      PD_LOG( PDERROR, "invalid arguments" ) ;
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   rc = parseCmdLine( desc, vm, options, doNothing ) ;
+   if ( SDB_OK != rc )
+   {
+      PD_LOG( PDERROR, "invalid arguments" ) ;
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   if ( doNothing )
+   {
+      goto done ;
+   }
+
+   rc = tool.exec( options ) ;
+   if ( SDB_OK != rc )
+   {
+      PD_LOG( PDERROR, "failed to export lob:%d", rc ) ;
+      goto error ;
+   }
+done:
+   return rc ;
+error:
+   cerr << "Error: failed to export lob, rc:" << rc
+        << " Error Desc: " << getErrDesp(rc ) << endl ;
+   cerr << "Error: get details in log file: " << LOG_FILE << endl ;
+   goto done ;
+}
+
