@@ -13,9 +13,37 @@ namespace SequoiaDB
    {
         private long skipRowsCount = 0;
         private long returnRowsCount = -1;
+        private int flag = 0;
+
+	    /** \memberof FLG_QUERY_STRINGOUT 0x00000001
+	     *  \brief Normally, query return bson stream, 
+	     *         when this flag is added, query return binary data stream
+	     */
+	    public const int FLG_QUERY_STRINGOUT = 0x00000001;
+	
+	    /** \memberof FLG_INSERT_CONTONDUP 0x00000080
+	     *  \brief Force to use specified hint to query,
+	     *         if database have no index assigned by the hint, fail to query
+	     */
+	    public const int FLG_QUERY_FORCE_HINT = 0x00000080;
+	
+	    /** \memberof FLG_QUERY_PARALLED 0x00000100
+	     *  \brief Enable paralled sub query
+	     */
+	    public const int FLG_QUERY_PARALLED = 0x00000100;
+	
+	    /** \memberof FLG_QUERY_WITH_RETURNDATA 0x00000200
+         *  \brief Return data in query response
+         */
+	    public const int FLG_QUERY_WITH_RETURNDATA = 0x00000200;
+	
+	    /** \memberof FLG_QUERY_EXPLAIN 0x00000400
+	     *  \brief Explain query
+	     */
+        public const int FLG_QUERY_EXPLAIN = 0x00000400;
 
        /** \property Matcher
-        *  \brief matching rule
+        *  \brief Matching rule
         */
         public BsonDocument Matcher { get; set; }
 
@@ -25,22 +53,22 @@ namespace SequoiaDB
         public BsonDocument Selector { get; set; }
 
         /** \property OrderBy
-         *  \brief ordered rule
+         *  \brief Ordered rule
          */
         public BsonDocument OrderBy { get; set; }
 
         /** \property Hint
-         *  \brief sepecified access plan
+         *  \brief Sepecified access plan
          */
         public BsonDocument Hint { get; set; }
 
         /** \property Modifier
-         *  \brief modified rule
+         *  \brief Modified rule
          */
         public BsonDocument Modifier { get; set; }
 
         /** \property SkipRowsCount
-         *  \brief documents to skip
+         *  \brief Documents to skip
          */
         public long SkipRowsCount
         {
@@ -49,12 +77,22 @@ namespace SequoiaDB
         }
 
         /** \property ReturnRowsCount
-         *  \brief documents to return
+         *  \brief Documents to return
          */
         public long ReturnRowsCount
         {
             get { return returnRowsCount; }
             set { returnRowsCount = value; }
         }
+
+        /** \property Flag
+         *  \brief Query flag
+         */
+        public int Flag
+        {
+            get { return flag; }
+            set { flag = value; }
+        }
+
    }
 }

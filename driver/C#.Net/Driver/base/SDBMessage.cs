@@ -31,7 +31,7 @@ namespace SequoiaDB
         public long SkipRowsCount { get; set; }
         public long ReturnRowsCount { get; set; }
         public int StartFrom { get; set; }
-        public int ReturnRowsCount2 { get; set; }
+        public int NumReturned { get; set; }
         public int KillCount { get; set; }
         public List<long> ContextIDList { get; set; }
         public string MessageText { get; set; }

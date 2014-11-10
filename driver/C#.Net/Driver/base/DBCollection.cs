@@ -119,7 +119,7 @@ namespace SequoiaDB
                 matcher.Add(SequoiadbConstants.FIELD_SPLITENDQUERY, splitEndCondition);
 
             BsonDocument dummyObj = new BsonDocument();
-            SDBMessage rtn = AdminCommand(command, matcher, dummyObj, dummyObj, dummyObj, -1, -1);
+            SDBMessage rtn = AdminCommand(command, matcher, dummyObj, dummyObj, dummyObj, -1, -1, 0);
             int flags = rtn.Flags;
             if (flags != 0)
                 throw new BaseException(flags);
@@ -150,7 +150,7 @@ namespace SequoiaDB
             matcher.Add(SequoiadbConstants.FIELD_SPLITPERCENT, percent);
 
             BsonDocument dummyObj = new BsonDocument();
-            SDBMessage rtn = AdminCommand(command, matcher, dummyObj, dummyObj, dummyObj, -1, -1);
+            SDBMessage rtn = AdminCommand(command, matcher, dummyObj, dummyObj, dummyObj, -1, -1, 0);
             int flags = rtn.Flags;
             if (flags != 0)
                 throw new BaseException(flags);
@@ -201,7 +201,7 @@ namespace SequoiaDB
             string commandString = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.SPLIT_CMD;
             // run command
             BsonDocument dummyObj = new BsonDocument();
-            SDBMessage rtnSDBMessage = AdminCommand(commandString, asyncObj, dummyObj, dummyObj, dummyObj, 0, -1);
+            SDBMessage rtnSDBMessage = AdminCommand(commandString, asyncObj, dummyObj, dummyObj, dummyObj, 0, -1, 0);
             // check return flag
             int flags = rtnSDBMessage.Flags;
             if (flags != 0)
@@ -253,7 +253,7 @@ namespace SequoiaDB
             string commandString = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.SPLIT_CMD;
             // run command
             BsonDocument dummyObj = new BsonDocument();
-            SDBMessage rtnSDBMessage = AdminCommand(commandString, asyncObj, dummyObj, dummyObj, dummyObj, 0, -1);
+            SDBMessage rtnSDBMessage = AdminCommand(commandString, asyncObj, dummyObj, dummyObj, dummyObj, 0, -1, 0);
             // check return flag
             int flags = rtnSDBMessage.Flags;
             if (flags != 0)
@@ -465,8 +465,9 @@ namespace SequoiaDB
             BsonDocument hint = query.Hint;
             long skipRows = query.SkipRowsCount;
             long returnRows = query.ReturnRowsCount;
+            int flag = query.Flag;
 
-            return Query(matcher, selector, orderBy, hint, skipRows, returnRows);
+            return Query(matcher, selector, orderBy, hint, skipRows, returnRows, flag);
         }
 
         /** \fn DBCursor Query(BsonDocument query, BsonDocument selector, BsonDocument orderBy, BsonDocument hint)
@@ -486,7 +487,7 @@ namespace SequoiaDB
         }
 
         /** \fn DBCursor Query(BsonDocument query, BsonDocument selector, BsonDocument orderBy, BsonDocument hint, 
-         *   long skipRows, long returnRows) 
+         *                     long skipRows, long returnRows) 
          *  \brief Find documents of current collection
          *  \param query The matching condition
          *  \paramselector The selective rule
@@ -500,10 +501,37 @@ namespace SequoiaDB
          *  \exception System.Exception
          */
         public DBCursor Query(BsonDocument query, BsonDocument selector, BsonDocument orderBy, BsonDocument hint,
-            long skipRows, long returnRows)
+                              long skipRows, long returnRows)
+        {
+            return Query(query, selector, orderBy, hint, skipRows, returnRows, 0);
+        }
+
+        /** \fn DBCursor Query(BsonDocument query, BsonDocument selector, BsonDocument orderBy, BsonDocument hint, 
+         *                     long skipRows, long returnRows, int flag) 
+         *  \brief Find documents of current collection
+         *  \param query The matching condition
+         *  \paramselector The selective rule
+         *  \param orderBy The ordered rule
+         *  \param hint One of the indexs in current collection, using default index to query if not provided
+         *           eg:{"":"ageIndex"}
+         *  \param skipRows Skip the first numToSkip documents, default is 0
+         *  \param returnRows Only return numToReturn documents, default is -1 for returning all results
+         *  \param flag the flag is used to choose the way to query, the optional options are as below:
+         *
+         *      DBQuery.FLG_QUERY_FORCE_HINT(0x00000080)      : Force to use specified hint to query, if database have no index assigned by the hint, fail to query
+         *      DBQuery.FLG_QUERY_PARALLED(0x00000100)        : Enable paralled sub query
+         *      DBQuery.FLG_QUERY_WITH_RETURNDATA(0x00000200) : In general, query won't return data until cursor get from database,
+         *                                                      when add this flag, return data in query response, it will be more high-performance
+         *
+         *  \return The DBCursor of matching documents or null
+         *  \exception SequoiaDB.BaseException
+         *  \exception System.Exception
+         */
+        public DBCursor Query(BsonDocument query, BsonDocument selector, BsonDocument orderBy, BsonDocument hint,
+                              long skipRows, long returnRows, int flag)
         {
             BsonDocument dummyObj = new BsonDocument();
-            if ( query == null )
+            if (query == null)
                 query = dummyObj;
             if (selector == null)
                 selector = dummyObj;
@@ -511,8 +539,16 @@ namespace SequoiaDB
                 orderBy = dummyObj;
             if (hint == null)
                 hint = dummyObj;
+            if (returnRows == 0)
+            {
+                returnRows = -1;
+            }
+            if (returnRows == 1)
+            {
+                flag = flag | DBQuery.FLG_QUERY_WITH_RETURNDATA;
+            }
             SDBMessage rtnSDBMessage = AdminCommand(collectionFullName, query, selector,
-                orderBy, hint, skipRows, returnRows);
+                                                    orderBy, hint, skipRows, returnRows, flag);
             int flags = rtnSDBMessage.Flags;
             if (flags != 0)
                 if (flags == SequoiadbConstants.SDB_DMS_EOC)
@@ -540,7 +576,7 @@ namespace SequoiaDB
             BsonDocument obj = new BsonDocument();
             obj.Add(SequoiadbConstants.FIELD_COLLECTION, collectionFullName);
 
-            SDBMessage rtn = AdminCommand(commandString, dummyObj, dummyObj, dummyObj, obj, -1, -1);
+            SDBMessage rtn = AdminCommand(commandString, dummyObj, dummyObj, dummyObj, obj, -1, -1, 0);
 
             int flags = rtn.Flags;
             if (flags != 0)
@@ -575,7 +611,7 @@ namespace SequoiaDB
             conndition.Add(SequoiadbConstants.IXM_INDEXDEF + "." + SequoiadbConstants.IXM_NAME,
                     name);
 
-            SDBMessage rtn = AdminCommand(commandString, conndition, dummyObj, dummyObj, obj, -1, -1);
+            SDBMessage rtn = AdminCommand(commandString, conndition, dummyObj, dummyObj, obj, -1, -1, 0);
 
             int flags = rtn.Flags;
             if (flags != 0)
@@ -614,7 +650,7 @@ namespace SequoiaDB
             createObj.Add(SequoiadbConstants.FIELD_COLLECTION, collectionFullName);
             createObj.Add(SequoiadbConstants.FIELD_INDEX, obj);
 
-            SDBMessage rtn = AdminCommand(commandString, createObj, dummyObj, dummyObj, dummyObj, -1, -1);
+            SDBMessage rtn = AdminCommand(commandString, createObj, dummyObj, dummyObj, dummyObj, -1, -1, 0);
 
             int flags = rtn.Flags;
             if (flags != 0)
@@ -636,7 +672,7 @@ namespace SequoiaDB
             index.Add("", name);
             dropObj.Add(SequoiadbConstants.FIELD_COLLECTION, collectionFullName);
             dropObj.Add(SequoiadbConstants.FIELD_INDEX, index);
-            SDBMessage rtn = AdminCommand(commandString, dropObj, dummyObj, dummyObj, dummyObj, -1, -1);
+            SDBMessage rtn = AdminCommand(commandString, dropObj, dummyObj, dummyObj, dummyObj, -1, -1, 0);
             int flags = rtn.Flags;
             if (flags != 0)
                 throw new BaseException(flags);
@@ -657,7 +693,7 @@ namespace SequoiaDB
             if (condition == null)
                 condition = dummyObj;
             hint.Add(SequoiadbConstants.FIELD_COLLECTION, collectionFullName);
-            SDBMessage rtnSDBMessage = AdminCommand(commandString, condition, dummyObj, dummyObj, hint, 0, -1);
+            SDBMessage rtnSDBMessage = AdminCommand(commandString, condition, dummyObj, dummyObj, hint, 0, -1, 0);
             int flags = rtnSDBMessage.Flags;
             if (flags != 0)
                 throw new BaseException(flags);
@@ -739,7 +775,7 @@ namespace SequoiaDB
             BsonDocument hint1 = new BsonDocument();
             hint1.Add(SequoiadbConstants.FIELD_COLLECTION, collectionFullName);
             SDBMessage rtnSDBMessage = AdminCommand(commandString, query, hint, orderBy,
-                                                     hint1, skipRows, returnRows);
+                                                     hint1, skipRows, returnRows, 0);
             int flags = rtnSDBMessage.Flags;
             if (flags != 0)
                 if (flags == SequoiadbConstants.SDB_DMS_EOC)
@@ -782,7 +818,7 @@ namespace SequoiaDB
             // build commond
             string commandString = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.LINK_CL;
             BsonDocument dummyObj = new BsonDocument();
-            SDBMessage rtnSDBMessage = AdminCommand(commandString, attObj, dummyObj, dummyObj, dummyObj, 0, -1);
+            SDBMessage rtnSDBMessage = AdminCommand(commandString, attObj, dummyObj, dummyObj, dummyObj, 0, -1, 0);
             // check the return flag
             int flags = rtnSDBMessage.Flags;
             if (flags != 0)
@@ -812,7 +848,7 @@ namespace SequoiaDB
             string commandString = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.UNLINK_CL;
             BsonDocument dummyObj = new BsonDocument();
             // run command
-            SDBMessage rtnSDBMessage = AdminCommand(commandString, detObj, dummyObj, dummyObj, dummyObj, 0, -1);
+            SDBMessage rtnSDBMessage = AdminCommand(commandString, detObj, dummyObj, dummyObj, dummyObj, 0, -1, 0);
             // check the return flag
             int flags = rtnSDBMessage.Flags;
             if (flags != 0)
@@ -836,7 +872,7 @@ namespace SequoiaDB
             newObj.Add(SequoiadbConstants.FIELD_COLLECTION, collectionFullName);
             // run command
             BsonDocument dummyObj = new BsonDocument();
-            SDBMessage rtnSDBMessage = AdminCommand(command, newObj, dummyObj, dummyObj, dummyObj, 0, -1);
+            SDBMessage rtnSDBMessage = AdminCommand(command, newObj, dummyObj, dummyObj, dummyObj, 0, -1, 0);
             // check the return flag
             int flags = rtnSDBMessage.Flags;
             if (flags != 0)
@@ -960,7 +996,7 @@ namespace SequoiaDB
         }
 
         private SDBMessage AdminCommand(string command, BsonDocument query, BsonDocument selector, BsonDocument orderBy,
-            BsonDocument hint, long skipRows, long returnRows) 
+            BsonDocument hint, long skipRows, long returnRows, int flag) 
         {
             BsonDocument dummyObj = new BsonDocument();
             SDBMessage sdbMessage = new SDBMessage();
@@ -968,7 +1004,7 @@ namespace SequoiaDB
             sdbMessage.Version = 0;
             sdbMessage.W = 0;
             sdbMessage.Padding = 0;
-            sdbMessage.Flags = 0;
+            sdbMessage.Flags = flag;
             sdbMessage.NodeID = SequoiadbConstants.ZERO_NODEID;
             sdbMessage.RequestID = 0;
             sdbMessage.SkipRowsCount = skipRows;
@@ -1029,7 +1065,7 @@ namespace SequoiaDB
                 sdbMessage.NodeID = SequoiadbConstants.ZERO_NODEID;
                 sdbMessage.ContextIDList = contextIDs;
                 sdbMessage.RequestID = requestID;
-                sdbMessage.ReturnRowsCount2 = -1;
+                sdbMessage.NumReturned = -1;
 
                 byte[] request = SDBMessageHelper.BuildGetMoreRequest(sdbMessage, isBigEndian);
                 connection.SendMessage(request);

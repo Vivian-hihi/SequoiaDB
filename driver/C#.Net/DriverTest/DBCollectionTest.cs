@@ -314,6 +314,37 @@ namespace DriverTest
             Assert.IsTrue(count == 5);
         }
 
+        [TestMethod()]
+        public void QueryOneTest()
+        {
+            for (int i = 0; i < 10; ++i)
+            {
+                string date = DateTime.Now.ToString();
+                BsonDocument insertor = new BsonDocument();
+                insertor.Add("operation", "Query");
+                insertor.Add("date", date);
+                coll.Insert(insertor);
+            }
+            BsonDocument matcher = new BsonDocument();
+            DBQuery query = new DBQuery();
+            matcher.Add("operation", "Query");
+            query.Matcher = matcher;
+            query.ReturnRowsCount = 5;
+            query.SkipRowsCount = 5;
+            query.Flag = DBQuery.FLG_QUERY_WITH_RETURNDATA;
+            DBCursor cursor = coll.Query(query);
+            Assert.IsNotNull(cursor);
+            sdb.closeAllCursors();
+            int count = 0;
+            while (cursor.Next() != null)
+            {
+                ++count;
+                BsonDocument bson = cursor.Current();
+                Assert.IsNotNull(bson);
+            }
+            Assert.IsTrue(count == 5);
+        }
+
         /// <summary>
         ///Testing for Indexes: create index, get indexes, drop index
         ///</summary>

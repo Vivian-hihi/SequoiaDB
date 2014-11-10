@@ -521,7 +521,7 @@ namespace SequoiaDB
         {
             ulong requestID = sdbMessage.RequestID;
             long contextId = sdbMessage.ContextIDList[0];
-            int returnRowsCount2 = sdbMessage.ReturnRowsCount2;
+            int numReturned = sdbMessage.NumReturned;
             byte[] nodeID = sdbMessage.NodeID;
 
             int messageLength = MESSAGE_OPGETMORE_LENGTH;
@@ -532,7 +532,7 @@ namespace SequoiaDB
             if (isBigEndian)
                 buf.IsBigEndian = true;
             buf.PushLong(contextId);
-            buf.PushInt(returnRowsCount2);
+            buf.PushInt(numReturned);
             fieldList.Add(buf.ToByteArray());
 
             byte[] msgInByteArray = Helper.ConcatByteArray(fieldList);
@@ -1108,10 +1108,10 @@ namespace SequoiaDB
             tmp = Helper.SplitByteArray(remaining, 4);
             byte[] returnRows = tmp[0];
             remaining = tmp[1];
-            int returnRowsCount = Helper.ByteToInt(returnRows, isBigEndian);
-            sdbMessage.ReturnRowsCount2 = returnRowsCount;
+            int numReturned = Helper.ByteToInt(returnRows, isBigEndian);
+            sdbMessage.NumReturned = numReturned;
 
-            if (returnRowsCount > 0)
+            if (numReturned > 0)
             {
                 List<BsonDocument> objList = ExtractBsonObject(remaining, isBigEndian);
                 sdbMessage.ObjectList = objList;
@@ -1192,8 +1192,8 @@ namespace SequoiaDB
             tmp = Helper.SplitByteArray(remaining, 4);
             byte[] returnRows = tmp[0];
             remaining = tmp[1];
-            int returnRowsCount = Helper.ByteToInt(returnRows, isBigEndian);
-            sdbMessage.ReturnRowsCount2 = returnRowsCount;
+            int numReturned = Helper.ByteToInt(returnRows, isBigEndian);
+            sdbMessage.NumReturned = numReturned;
             sdbMessage.ObjectList = null;
             /// extract info from _MsgLobTuple
             // if nothing wrong, we are going to extract MsgLobTuple

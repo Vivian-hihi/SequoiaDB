@@ -36,7 +36,8 @@ namespace SequoiaDB
             sdbMessage.NodeID = SequoiadbConstants.ZERO_NODEID;
             sdbMessage.ContextIDList = rtnSDBMessage.ContextIDList;
             contextId = sdbMessage.ContextIDList[0];
-            sdbMessage.ReturnRowsCount2 = -1;    // return data count
+            sdbMessage.NumReturned = -1;    // return data count
+            list = rtnSDBMessage.ObjectList; // while using fineOne, ObjectList may have data
             hasMore = true;
             isBigEndian = dbc.isBigEndian;
             isClosed = false;
@@ -52,7 +53,8 @@ namespace SequoiaDB
             sdbMessage.NodeID = SequoiadbConstants.ZERO_NODEID;
             sdbMessage.ContextIDList = rtnSDBMessage.ContextIDList;
             contextId = sdbMessage.ContextIDList[0];
-            sdbMessage.ReturnRowsCount2 = -1;    // return data count
+            sdbMessage.NumReturned = -1;    // return data count
+            list = rtnSDBMessage.ObjectList; // while using fineOne, ObjectList may have data
             hasMore = true;
             isBigEndian = sdb.isBigEndian;
             isClosed = false;
@@ -76,15 +78,23 @@ namespace SequoiaDB
             {
                 throw new BaseException("SDB_DMS_CONTEXT_IS_CLOSE");
             }
-            if (index == -1 && hasMore)
+            // when using findOne, list may contain data while index is -1
+            if ((index == -1) && hasMore && (list == null))
+            {
                 ReadNextBuffer();
-            if ( list == null )
+            }
+            if (list == null)
+            {
                 return null;
+            }
             if (index < list.Count - 1)
+            {
                 return list[++index];
+            }
             else
             {
                 index = -1;
+                list = null;
                 return Next();
             }
         }
@@ -114,9 +124,9 @@ namespace SequoiaDB
          */
         public void Close()
         {
-            if ( isClosed || connection == null || contextId == -1 )
+            if (isClosed)
             {
-                throw new BaseException("SDB_DMS_CONTEXT_IS_CLOSE");
+                return;
             }
             KillCursor();
             isClosed = true;
@@ -166,8 +176,18 @@ namespace SequoiaDB
 
         private void ReadNextBuffer()
         {
-            if (connection == null || contextId == -1)
+            if (connection == null)
+            {
                 throw new BaseException("SDB_NOT_CONNECTED");
+            }
+            if (-1 == contextId)
+            {
+                hasMore = false;
+                index = -1;
+                dbc = null;
+                list = null;
+                return;
+            }
 
             sdbMessage.RequestID = reqId;
             byte[] request = SDBMessageHelper.BuildGetMoreRequest(sdbMessage, isBigEndian);
@@ -175,15 +195,17 @@ namespace SequoiaDB
             SDBMessage rtnSDBMessage = SDBMessageHelper.MsgExtractReply(connection.ReceiveMessage(isBigEndian), isBigEndian);
             
             int flags = rtnSDBMessage.Flags;
-            if (flags == SequoiadbConstants.SDB_DMS_EOC || contextId != rtnSDBMessage.ContextIDList[0])
+            if (flags == SequoiadbConstants.SDB_DMS_EOC)
             {
                 hasMore = false;
                 index = -1 ;
                 dbc = null ;
                 list = null;
             }
-            else if ( flags != 0 )
+            else if (flags != 0)
+            {
                 throw new BaseException(flags);
+            }
             else
             {
                 reqId = rtnSDBMessage.RequestID;

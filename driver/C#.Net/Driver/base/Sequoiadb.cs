@@ -1114,12 +1114,14 @@ namespace SequoiaDB
 
         /** \fn void closeAllCursors()
          *  \brief Close all the cursors created in current connection, 
-         *         we can't use those cursors to get data again.
+         *         we can't use those cursors to get data from db engine again,
+         *         but, there are some data cache in local
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
          */
         public void closeAllCursors()
         {
+            // TODO: it's better for us to use DBCursor::Close() to close all the cursor
             byte[] request = SDBMessageHelper.BuildKillAllContextsRequest(Operation.OP_KILL_ALL_CONTEXTS, isBigEndian);
             connection.SendMessage(request);
         }
@@ -1589,7 +1591,7 @@ namespace SequoiaDB
                 sdbMessage.NodeID = SequoiadbConstants.ZERO_NODEID;
                 sdbMessage.ContextIDList = contextIDs;
                 sdbMessage.RequestID = requestID;
-                sdbMessage.ReturnRowsCount2 = -1;
+                sdbMessage.NumReturned = -1;
 
                 byte[] request = SDBMessageHelper.BuildGetMoreRequest(sdbMessage, isBigEndian);
                 connection.SendMessage(request);
