@@ -1939,7 +1939,8 @@ SDB_EXPORT INT32 sdbGetLobSize( sdbLobHandle lobHandle,
  *                                 UINT64 *millis )
  *  \brief get lob's create time
  *  \param [in] lobHandle The large object handle
- *  \param [out] millis The create time in milliseconds of lob
+ *  \param [out] millis The create time in milliseconds of lob,
+                 while open a new lob, the create time is 0
  *  \retval SDB_OK Operation Success
  *  \retval Others Operation Fail
  */

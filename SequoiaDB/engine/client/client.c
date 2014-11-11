@@ -7139,6 +7139,8 @@ SDB_EXPORT INT32 sdbOpenLob( sdbCollectionHandle cHandle,
    ossMemcpy( lobStruct->_oid, oid, 12 ) ;
    lobStruct->_contextID = contextID ;
    lobStruct->_mode = mode ;
+   lobStruct->_lobSize = 0 ;
+   lobStruct->_createTime = 0 ;
 
    _regSocket( cs->_connection, &lobStruct->_sock ) ;
 
@@ -7251,6 +7253,8 @@ SDB_EXPORT INT32 sdbWriteLob( sdbLobHandle lobHandle,
 
       totalLen += sendLen ;
    } while ( totalLen < len ) ;
+   // for get lob's size while create a lob for writing
+   lob->_lobSize += len ;
 done:
    return rc ;
 error:
@@ -7699,12 +7703,6 @@ SDB_EXPORT INT32 sdbGetLobSize( sdbLobHandle lobHandle,
 
    HANDLE_CHECK( lobHandle, lob, SDB_HANDLE_TYPE_LOB ) ;
 
-   if ( SDB_LOB_READ != lob->_mode || -1 == lob->_contextID )
-   {
-      rc = SDB_INVALIDARG ;
-      goto error ;
-   }
-
    *size = lob->_lobSize ;
 done:
    return rc ;
@@ -7719,12 +7717,6 @@ SDB_EXPORT INT32 sdbGetLobCreateTime( sdbLobHandle lobHandle,
    sdbLobStruct *lob = ( sdbLobStruct * )lobHandle ;
 
    HANDLE_CHECK( lobHandle, lob, SDB_HANDLE_TYPE_LOB ) ;
-
-   if ( SDB_LOB_READ != lob->_mode || -1 == lob->_contextID )
-   {
-      rc = SDB_INVALIDARG ;
-      goto error ;
-   }
 
    *millis = lob->_createTime ;
 done:
