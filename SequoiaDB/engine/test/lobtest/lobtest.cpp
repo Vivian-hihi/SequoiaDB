@@ -411,6 +411,83 @@ TEST(lobTest, cache_1)
    ASSERT_EQ( SDB_OK, rc ) ;
 }
 
+TEST(lobTest, cache_2)
+{
+   INT32 rc = SDB_OK ;
+   sdbConnectionHandle conn = SDB_INVALID_HANDLE ;
+   sdbCollectionHandle cl = SDB_INVALID_HANDLE ;
+   sdbLobHandle lob = SDB_INVALID_HANDLE ;
+   bson_oid_t oid ;
+   bson_oid_gen( &oid ) ;
+
+   rc = sdbConnect( "localhost", "11810", "", "", &conn ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   rc = sdbGetCollection( conn, "foo.bar", &cl ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   const UINT32 bufSize = 1024 * 1024 * 10 + 1924 ;
+   CHAR *buf = new CHAR[bufSize] ;
+   for ( UINT32 j = 0 ; j < bufSize; ++j )
+   {
+      buf[j] = ( CHAR )rand() ;
+   }
+
+   rc = sdbOpenLob( cl, &oid, SDB_LOB_CREATEONLY, &lob ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   SINT64 totalWriteLen = 0 ;
+   while ( totalWriteLen < bufSize )
+   {
+      UINT32 writeLen = bufSize - totalWriteLen < 1844 ? bufSize - totalWriteLen : 1844 ;
+      rc = sdbWriteLob( lob, buf + totalWriteLen, writeLen ) ;
+      ASSERT_EQ( SDB_OK, rc ) ;
+      totalWriteLen += writeLen ;
+   }
+   ASSERT_EQ( totalWriteLen, bufSize ) ;
+   rc = sdbCloseLob( &lob ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   const UINT32 needRead = 1000 ;
+   CHAR readBuf[needRead] ;
+
+   for ( UINT32 i = 0; i < 10; ++i )
+   {
+      cout << i << endl ;
+      UINT32 readLen = 0 ;
+      rc = sdbOpenLob( cl, &oid, SDB_LOB_READ, &lob ) ;
+      ASSERT_EQ( SDB_OK, rc ) ;
+      SINT64 seekSize = rand() % bufSize ;
+      rc = sdbSeekLob( lob, seekSize, SDB_LOB_SEEK_SET ) ;
+      ASSERT_EQ( SDB_OK, rc ) ;
+      rc = sdbReadLob( lob, needRead, readBuf, &readLen ) ;
+      ASSERT_EQ( SDB_OK, rc ) ;
+      ASSERT_LE( readLen, needRead ) ;
+      if ( 0 != memcmp( buf + seekSize, readBuf, readLen ))
+      {
+         ASSERT_TRUE( false ) ;
+      }
+      
+      for ( UINT32 j = 0; j < 1000; ++j )
+      {
+         SINT64 newSeek = rand() % readLen ;
+         rc = sdbSeekLob( lob, seekSize + newSeek, SDB_LOB_SEEK_SET ) ;
+         ASSERT_EQ( SDB_OK, rc ) ;
+         rc = sdbReadLob( lob, needRead, readBuf, &readLen ) ;
+         ASSERT_EQ( SDB_OK, rc ) ;
+         ASSERT_LE( readLen, needRead ) ;
+         if ( 0 != memcmp( buf + seekSize + newSeek, readBuf, readLen ))
+         {
+            ASSERT_TRUE( false ) ;
+         }
+      }
+
+      rc = sdbCloseLob( &lob ) ;
+      ASSERT_EQ( SDB_OK, rc ) ;
+   }
+
+   rc = sdbRemoveLob( cl, &oid ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+}
+
 void remove_1()
 {
    INT32 rc = SDB_OK ;
@@ -574,8 +651,6 @@ TEST(lobTest, hugeLob)
    rc = sdbCloseLob( &lob ) ;
    ASSERT_EQ( SDB_OK, rc ) ;
    cout << "write done" << endl ;
-
-   getchar() ;
 
    rc = sdbOpenLob( cl, &oid, SDB_LOB_READ, &lob ) ;
    ASSERT_EQ( SDB_OK, rc ) ;
