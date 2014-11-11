@@ -36,211 +36,416 @@
 #include "oss.hpp"
 #include <map>
 #include "../bson/bson.h"
+#include "omCommandInterface.hpp"
 
 using namespace bson;
 
 namespace engine
 {
-   class sdbConfTemplate : public SDBObject
+   class nodeCounter
    {
       public:
-         string businessType ;
-         string deployMod ;
-         INT32 replicaNum ;
-         INT32 dataNum ;
-         INT32 dataGroupNum ;
-         INT32 catalogNum ;
-         INT32 coordNum ;
-         string transaction ;
+         nodeCounter() ;
+         ~nodeCounter() ;
 
       public:
-         void init() ;
+         void                 increaseNode( const string &role ) ;
+         INT32                getNodeCount( const string &role ) ;
+         INT32                getNodeCount() ;
+
+
+      private:
+         map<string, UINT32>  _mapCounter ;
    } ;
 
-   class sdbConfDetail : public SDBObject
+   class businessNodeCounter : public SDBObject
    {
       public:
-         string   dbPath ;
-         INT32    svcName ;
-         INT32    dialevel ;
-         string   role ;
-         INT32    logFileSize ;
-         INT32    logFileNum ;
-         BOOLEAN  transaction ;
-         string   preferedInstance ;
-         INT32    numPageCleaner ;
-         INT32    pageCleanInterval ;
-
-         string   dataGroupID ;
-         string   hostName ;
-         string   diskName ;
-         string   user ;         /* root user */ 
-         string   passwd ;       /* root passwd */
-
-         map<string, string> additionalConfMap ;
+         businessNodeCounter( const string &businessName ) ;
+         ~businessNodeCounter() ;
 
       public:
-         void init() ;
+         void                 addNode( const string &role ) ;
+
+      private:
+         string               _businessName ;
+         nodeCounter          _counter ;
+   } ;
+
+   class diskNodeCounter : public SDBObject
+   {
+      public:
+         diskNodeCounter( const string &diskName ) ;
+         ~diskNodeCounter() ;
+
+      public:
+         INT32                addNode( const string &businessName, 
+                                       const string &role ) ;
+         INT32                getNodeCount() ;
+         INT32                getNodeCount( const string &role ) ;
+
+      private:
+         string               _diskName ;
+         map<string, businessNodeCounter*> _mapBusinessCounter ;
+         nodeCounter          _counter ;
+   } ;
+
+   class hostNodeCounter : public SDBObject
+   {
+      public:
+         hostNodeCounter( const string &hostName ) ;
+         ~hostNodeCounter() ;
+
+      public:
+         INT32                addNode( const string &diskName,
+                                       const string &businessName, 
+                                       const string &role ) ;
+         INT32                getNodeCount( const string &role ) ;
+
+         INT32                getNodeCount() ;
+
+         INT32                getNodeCountInDisk( const string &diskName ) ;
+         INT32                getNodeCountInDisk( const string &diskName, 
+                                                  const string &role ) ;
+
+      private:
+         string               _hostName ;
+         map<string, diskNodeCounter *>  _mapDiskCounter ;
+         nodeCounter          _counter ;
+   } ;
+
+   class clusterNodeCounter
+   {
+      public:
+         clusterNodeCounter() ;
+         ~clusterNodeCounter() ;
+
+      public:
+         INT32                addNode( const string &hostName,
+                                       const string &diskName,
+                                       const string &businessName, 
+                                       const string &role, 
+                                       const string &groupName ) ;
+
+         INT32                getCountInHost( const string &hostName, 
+                                              const string &role ) ;
+         INT32                getCountInHost( const string &hostName ) ;
+
+         INT32                getCountInDisk( const string &hostName,
+                                              const string &diskName,
+                                              const string &role ) ;
+         INT32                getCountInDisk( const string &hostName,
+                                              const string &diskName ) ;
+
+         INT32                increaseGroupID() ;
+         void                 clear() ;
+
+      private:
+         map<string, hostNodeCounter *>  _mapHostNodeCounter ;
+         nodeCounter          _counter ;
+         INT32                _availableGroupID ;
    } ;
 
    class rangeValidator : public SDBObject
    {
       public:
-         rangeValidator( string type, const CHAR *value ) ;
-         rangeValidator( string type, const CHAR *begin, const CHAR *end, 
+         rangeValidator( const string &type, const CHAR *value ) ;
+         rangeValidator( const string &type, const CHAR *begin, const CHAR *end, 
                          BOOLEAN isClosed = TRUE ) ;
          ~rangeValidator() ;
 
       public:
-         BOOLEAN     isValid( const string &value ) ;
-         string      getMinValidValue() ;
+         BOOLEAN        isValid( const string &value ) ;
+         string         getType() ;
 
       private:
-         INT32       _compare( string left, string right ) ;
+         INT32          _compare( string left, string right ) ;
       private:
-         string      _type ;
-         BOOLEAN     _isClosed ;
-         BOOLEAN     _isValidAll ;
-         string      _begin ;
-         string      _end ;
+         string         _type ;
+         BOOLEAN        _isClosed ;
+         BOOLEAN        _isValidAll ;
+         string         _begin ;
+         string         _end ;
    } ;
 
-   class omConfigItem : public SDBObject
+   class confValidator : public SDBObject
    {
       public:
-         omConfigItem() ;
-         ~omConfigItem() ;
+         confValidator() ;
+         ~confValidator() ;
 
       public:
-         INT32       init( const BSONObj &bsonItem ) ;
-         string      getDefaultValue() ;
-         string      getItemName() ;
-         string      getType() ;
-         BOOLEAN     isValid( const string &value ) ;
-         string      getMinValidValue() ;
-         string      getValidString() ;
-         string      getErrorDetail() ;
+         INT32          init( const string &type, const string &validateStr ) ;
+         BOOLEAN        isValid( const string &value ) ;
+         string         getType() ;
 
       private:
-         void        _addRange( const string &value ) ;
+         void           _clear() ;
+         rangeValidator *_createrangeValidator( const string &value ) ;
 
       private:
-         string      _name ;
-         string      _type ;
-         string      _defaultValue ;
-         string      _valid ;
-         string      _webName ;
-         string      _display ;
-         string      _edit ;
-         string      _desc ;
-         string      _level ;
+         string                 _type ;
          list<rangeValidator *> _validatorList ;
          typedef list<rangeValidator *>::iterator VALIDATORLIST_ITER ;
-
-         string      _errorDetail ;
    } ;
 
-   struct omNodeInfo : public SDBObject
-   {
-      string role ;
-      string dbPath ;
-      string dataGroupName ;
-      string businessName ;
-      INT32  svcName ;
-   } ;
-
-   struct omDiskInfo : public SDBObject
-   {
-      string  diskName ;
-      string  mountPath ;
-      UINT64  totalSize ;
-      UINT64  freeSize ;
-      BOOLEAN isUsed ;
-      INT32   standAloneCount ;
-      INT32   coordCount ;
-      INT32   catalogCount ;
-      INT32   dataCount ;
-      void    init() ;
-      INT32   getNodeCount( string role ) ;
-      INT32   getNodeCount() ;
-   } ;
-
-   struct hostNodeCounter : public SDBObject
-   {
-      INT32    unUsedDiskCount ;
-      INT32    diskCount ;
-      INT32    standAloneCount ;
-      INT32    coordCount ;
-      INT32    catalogCount ;
-      INT32    dataCount ;
-
-      INT32    getNodeCount( string role ) ;
-      INT32    getNodeCount() ;
-      INT32    getDiskCount() ;
-      INT32    getUnusedDiskCount() ;
-   } ;
-
-   class omHostInfo : public SDBObject
+   class confProperty : public SDBObject
    {
       public:
-         omHostInfo() ;
-         ~omHostInfo() ;
+         confProperty() ;
+         ~confProperty() ;
 
       public:
-         INT32      init( const BSONObj &hostInfo, const BSONObj &config,
-                          map<string, omConfigItem*> *confDetailMap,
-                          string businessName ) ;
-         INT32      assign( string businessType, string role, 
-                            string dataGroupID, sdbConfDetail &confDetail ) ;
-         INT32      getAvailableGroupID() ;
-         INT32      getNodeCount( string role ) ;
-         INT32      getNodeCount() ;
-         INT32      getDiskCount() ;
-         INT32      getUnusedDiskCount() ;
-         void       getNodeInfo( hostNodeCounter &nodeCounter ) ;
-
-         string     getHostName() ;
-
-         INT32      checkDBPath( string dbPath ) ;
-         BOOLEAN    isDiskExist( string dbPath ) ;
-         BOOLEAN    isDbPathExist( string dbPath ) ;
-         void       extractPath( const string path, 
-                                 list<string> &combination ) ;
-         BOOLEAN    isSamePath( const string leftPath, 
-                                const string rightPath ) ;
-         BOOLEAN    isSvcNameConflict( string svcName ) ;
-         INT32      addNode( const BSONObj &config ) ;
-         string     getErrorDetail() ;
+         INT32          init( const BSONObj &property ) ;
+         string         getDefaultValue() ;
+         string         getItemName() ;
+         string         getType() ;
+         BOOLEAN        isValid( const string &value ) ;
+         string         getValidString() ;
+         string         getErrorDetail() ;
 
       private:
-         INT32      _initNodeInfo( const BSONObj &config ) ;
-         INT32      _initCounter() ;
-         void       _ignoreLocalService( INT32 &service ) ;
-         void       _increaseNodeCount( string dbpath, string role ) ;
-         void       _getBestDisk( string role, omDiskInfo &disk ) ;
+         string         _name ;
+         string         _type ;
+         string         _defaultValue ;
+         string         _validateStr ;
+         confValidator  _confValidator ;
+   } ;
+
+   class omNodeConf : public SDBObject
+   {
+      public:
+         omNodeConf() ;
+         omNodeConf( const omNodeConf &right ) ;
+         ~omNodeConf() ;
+
+      public:
+         void              setDbPath( const string &dbpath ) ;
+         void              setSvcName( const string &svcName ) ;
+         void              setRole( const string &role ) ;
+         void              setDataGroupName( const string &dataGroupName ) ;
+         void              setHostName( const string &hostName ) ;
+         void              setDiskName( const string &diskName ) ;
+         void              setAdditionalConf( const string &key, 
+                                              const string &value ) ;
+
+         string            getDbPath() ;
+         string            getSvcName() ;
+         string            getRole() ;
+         string            getDataGroupName() ;
+         string            getHostName() ;
+         string            getDiskName() ;
+         string            getAdditionlConf( const string &key ) ;
+         const map<string, string> * getAdditionalMap() ;
+
 
       private:
-         hostNodeCounter  _nodeCounter ;
-         string           _ip ;
-         string           _hostName ;
-         INT32            _availableSvcName ;
-         INT32            _availableGroupID ;
-         string           _businessName ;    
-         /* save the businessName to handle this situation: 
-               two business are install in the same host.
-         */ 
+         //**********configure******************
+         string            _dbPath ;
+         string            _svcName ;
+         string            _role ;
 
-         map<string, omConfigItem*> *_pConfDetailMap ;
+         map<string, string> _additionalConfMap ;
+         //*************************************
 
-         list<omDiskInfo> _diskList ;
-         typedef list<omDiskInfo>::iterator DISKINFO_ITER ;
+         //***********other attribute***********
+         string            _dataGroupName ;
+         string            _hostName ;
+         string            _diskName ;
+         //*************************************
+   } ;
 
-         list<omNodeInfo> _nodeInfoList ;
-         typedef list<omNodeInfo>::iterator NODEINFOLIST_ITER ;
+   class propertyContainer : public SDBObject
+   {
+      public:
+         propertyContainer() ;
+         ~propertyContainer() ;
 
-         set<string>      _usedDiskSet ;
+      public:
+         INT32          addProperty( const BSONObj &property ) ;
+         INT32          checkValue( const string &name, const string &value ) ;
+         BOOLEAN        isAllPropertySet() ;
+         void           clear() ;
 
-         string           _errorDetail ;
+         INT32          createSample( omNodeConf &sample ) ;
+
+         string         getDefaultValue( const string name ) ;
+
+      private:
+         confProperty*  _getConfProperty( const string &name ) ;
+
+      private:
+         confProperty                  *_dbPathProperty ;
+         confProperty                  *_roleProperty ;
+         confProperty                  *_svcNameProperty ;
+         map<string, confProperty*>    _additionalPropertyMap ;
+   } ;
+
+   struct hostResource
+   {
+      string path ;
+      string svcName ;
+      string replname ;
+      string shardname ;
+      string catalogname ;
+      string httpname ;
+   } ;
+
+   class hostHardWare : public SDBObject
+   {
+      public:
+         hostHardWare( const string &hostName, propertyContainer *pc, 
+                       clusterNodeCounter *nodeCounter ) ;
+         ~hostHardWare() ;
+
+      public:
+         INT32                addDisk( const string &diskName, 
+                                       const string &mountPath,
+                                       UINT64 totalSize, UINT64 freeSize ) ;
+         string               getName() ;
+         INT32                occupayResource( const string &path, 
+                                               const string &svcName ) ;
+
+         string               getDiskName( const string &dbPath ) ;
+         string               getMountPath( const string &dbPath ) ;
+
+         INT32                getDiskCount() ;
+
+         // get the disk count that no used before
+         INT32                getFreeDiskCount() ;
+
+         INT32                createNode( const string &role, 
+                                          simpleDiskInfo **diskInfo, 
+                                          string &svcName ) ;
+
+         BOOLEAN              isDiskExist( const string &dbPath ) ;
+         BOOLEAN              isPathOccupayed( const string &dbPath ) ;
+         BOOLEAN              isSvcNameOccupayed( const string &svcName ) ;
+      private:
+         simpleDiskInfo*      _getDiskInfo( const string dbPath ) ;
+         simpleDiskInfo*      _getBestDisk( const string &role ) ;
+
+      private:
+         string                      _hostName ;
+         map<string, simpleDiskInfo> _mapDisk ;
+         set<string>                 _inUseDisk ;
+         list<hostResource>          _resourceList ;
+         propertyContainer           *_propertyContainer ;
+         clusterNodeCounter          *_nodeCounter ;
+         string                      _availableSvcName ;
+   } ;
+
+   class omCluster 
+   {
+      public:
+         omCluster() ;
+         ~omCluster() ;
+
+      public:
+         void                 setPropertyContainer( propertyContainer *pc ) ;
+         INT32                addHost( const BSONObj &host, 
+                                       const BSONObj &config ) ;
+         INT32                createNode( const string &businessType,
+                                          const string &businessName,
+                                          const string &role,
+                                          const string &groupName,
+                                          string &hostName, string &diskName, 
+                                          string &svcName, string &dbPath ) ;
+         INT32                getHostNum() ;
+
+         INT32                increaseGroupID() ;
+
+         void                 clear() ;
+
+         INT32                checkAndAddNode( const string &businessName,
+                                               omNodeConf *node ) ;
+
+      private:
+         hostHardWare*        _getBestHost( const string role ) ;
+
+      private:
+         map<string, hostHardWare*> _mapHost ;
+         clusterNodeCounter         _nodeCounter ;
+         propertyContainer          *_propertyContainer ;
+   } ;
+
+   class omConfTemplate : public SDBObject
+   {
+      public:
+         omConfTemplate() ;
+         ~omConfTemplate() ;
+
+      public:
+         INT32             init( const BSONObj &bsonTemplate ) ;
+         string            getBusinessType() ;
+         string            getBusinessName() ;
+         string            getClusterName() ;
+         string            getDeployMod() ;
+         INT32             getReplicaNum() ;
+         INT32             getDataNum() ;
+         INT32             getDataGroupNum() ;
+         INT32             getCatalogNum() ;
+         INT32             getCoordNum() ;
+
+         void              setCoordNum( INT32 coordNum ) ;
+
+      public:
+         void              clear() ;
+
+      private:
+         BOOLEAN           _isAllProperySet() ;
+         INT32             _setPropery( BSONObj &property ) ;
+
+      private:
+         string            _businessType ;
+         string            _businessName ;
+         string            _clusterName ;
+         string            _deployMod ;
+         INT32             _replicaNum ;
+         INT32             _dataNum ;
+         INT32             _catalogNum ;
+         INT32             _dataGroupNum ;
+         INT32             _coordNum ;
+   } ;
+
+   /*
+   newBusinessConf:
+   {
+      "BusinessType":"sequoiadb", "BusinessName":"b1", "DeployMod":"xx", 
+      "ClusterName":"c1", 
+      "Config":
+      [
+         {"HostName": "host1", "datagroupname": "", 
+          "dbpath": "/home/db2/standalone/11830", "svcname": "11830", ...}
+         ,...
+      ]
+   }
+   */
+   class omBusinessConfigure : public SDBObject
+   {
+      public:
+         omBusinessConfigure() ;
+         ~omBusinessConfigure() ;
+
+      public:
+         INT32             init( propertyContainer *pc,
+                                 const BSONObj &business ) ;
+         void              clear() ;
+
+         void              getNodeList( list<omNodeConf> &nodeList ) ;
+
+         string            getBusinessName() ;
+      private:
+         INT32             _innerCheck() ;
+         INT32             _setNodeConf( BSONObj &oneNode, 
+                                         omNodeConf &nodeConf ) ;
+      private:
+         list<omNodeConf>  _nodeList ;
+         string            _businessType ;
+         string            _businessName ;
+         string            _deployMod ;
+         string            _clusterName ;
+         propertyContainer *_propertyContainer ;
    } ;
 
    class omConfigGenerator : public SDBObject
@@ -251,7 +456,7 @@ namespace engine
 
       public:
          INT32       generateSDBConfig( const BSONObj &bsonTemplate, 
-                                        const BSONObj &bsonConfigDetails, 
+                                        const BSONObj &confProperties, 
                                         const BSONObj &bsonHostInfo, 
                                         BSONObj &bsonConfig ) ;
 
@@ -262,56 +467,28 @@ namespace engine
          string      getErrorDetail() ;
 
       private:
-         INT32       _parseTemplate( const BSONObj &bsonTemplate ) ;
-         INT32       _parseHostInfo( string businessName, 
-                                     const BSONObj &bsonHostInfo ) ;
-         void        _addToItemMap( const string &itemName, 
-                                    omConfigItem* pItem ) ;
-         INT32       _parseConfigDetail( const BSONObj &bsonConfigDetails ) ;
-         INT32       _generateConfig( BSONObj &bsonConfig ) ;
-         INT32       _getAvailableGroupID() ;
-         string      _calculateGroupID( INT32 baseGroupdID, INT32 dataIndex,
-                                        INT32 maxDataNumber, 
-                                        INT32 maxGroupNumber ) ;
-         INT32       _generateClusterConfig( list<sdbConfDetail> &configList ) ;
-         omHostInfo* _getBestHost( string role ) ;
-         INT32       _generateStandAloneConfig( 
-                                             list<sdbConfDetail> &configList ) ;
-         void        _clear() ;
-         INT32       _setTemplateValue( const BSONObj &templateItem ) ;
-         BOOLEAN     _isAllTemplateSet() ;
-         INT32       _setConfDetailValue( const BSONObj &oneProperty ) ;
-         BOOLEAN     _isAllConfDetailSet() ;
+         INT32       _parseProperties( const BSONObj &confProperties ) ;
+         INT32       _parseCluster( const BSONObj &bsonHostInfo ) ;
 
-         omHostInfo *_getHost( string hostName ) ;
-         void        _resolveConfValue( BSONObj &bsonConfValue ) ;
-         INT32       _checkConfValue( const BSONObj &bsonConfValue ) ;
-         INT32       _checkDistributionCount() ;
-         INT32       _parseAllConf( const BSONObj &bsonAllConf ) ;
-         void        _getNodeCount( INT32 &standaloneNum, INT32 &coordNum,
-                                    INT32 &catalogNum, INT32 &dataNum ) ;
-         INT32       _checkExistHost() ;
+         INT32       _generate( BSONObj &bsonConfig ) ;
+         INT32       _generateCluster( list<omNodeConf> &nodeList ) ;
+         INT32       _generateStandAlone( list<omNodeConf> &nodeList ) ;
 
+         INT32       _parseNewBusiness( const BSONObj &newBusinessConf ) ;
 
       private:
-         sdbConfTemplate               _confTemplate ;
-         sdbConfDetail                 _confDetailSample ;
-         string                        _errorDetail ;
-         string                        _businessName ;
-         string                        _businessType ;
-         string                        _clusterName ;
-         string                        _deployMod ;
-         map<string, omConfigItem*>    _confDetailMap ;
-         // typedef map<string, omConfigItem*>::value_type CONFIGITEMMAP_TYPE ;
-         // typedef map<string, omConfigItem*>::iterator CONFIGITEMMAP_ITER ;
-         map<string, omHostInfo*>      _hostInfoMap ;
-         typedef map<string, omHostInfo*>::iterator HOSTINFOMAP_ITER ;
-         typedef map<string, omHostInfo*>::value_type HOSTINFOMAP_TYPE ;
-   } ;
+         omConfTemplate    _template ;
+         propertyContainer _propertyContainer ;
+         omNodeConf        _nodeSample ;
+         omCluster         _cluster ;
+         string            _errorDetail ;
 
-   typedef map<string, omConfigItem*>::value_type CONFIGITEMMAP_TYPE ;
-   typedef map<string, omConfigItem*>::iterator CONFIGITEMMAP_ITER ;
+         //check
+         omBusinessConfigure _businessConf ;
+   } ;
 }
 
-#endif  /*OM_CONFIG_GENERATOR_HPP__*/ 
+
+#endif /*OM_CONFIG_GENERATOR_HPP__*/
+
 

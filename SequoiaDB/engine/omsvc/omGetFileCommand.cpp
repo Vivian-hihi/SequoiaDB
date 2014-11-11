@@ -935,7 +935,6 @@ namespace engine
       BSONObj bsonHostInfo ;
       BSONElement element ;
 
-
       _restAdaptor->getQuery( _restSession, OM_REST_FIELD_HOST_INFO, 
                               &pHostInfo ) ;
       if ( NULL == pHostInfo )
@@ -3683,6 +3682,7 @@ namespace engine
    INT32 omConfigBusinessCommand::_fillTemplateInfo( BSONObj &bsonTemplate )
    {
       INT32 rc = SDB_OK ;
+      string clusterName ;
       string businessType ;
       string deployMod ;
       string businessName ;
@@ -3694,6 +3694,7 @@ namespace engine
       BSONArrayBuilder arrayBuilder ;
       BSONObj properties ;
 
+      clusterName  = bsonTemplate.getStringField( OM_BSON_FIELD_CLUSTER_NAME ) ;
       businessType = bsonTemplate.getStringField( OM_BSON_BUSINESS_TYPE ) ;
       deployMod    = bsonTemplate.getStringField( OM_BSON_DEPLOY_MOD ) ;
       businessName = bsonTemplate.getStringField( OM_BSON_BUSINESS_NAME ) ;
@@ -3730,6 +3731,7 @@ namespace engine
          goto error ;
       }
 
+      builder.append( OM_BSON_FIELD_CLUSTER_NAME, businessName ) ;
       builder.append( OM_BSON_BUSINESS_TYPE, businessType ) ;
       builder.append( OM_BSON_DEPLOY_MOD, deployMod ) ;
       builder.append( OM_BSON_BUSINESS_NAME, businessName ) ;
