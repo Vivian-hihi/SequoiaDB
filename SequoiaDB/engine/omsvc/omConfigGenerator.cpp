@@ -2256,6 +2256,8 @@ namespace engine
 
       {
          string transaction = "" ;
+         string hostName    = "" ;
+         string svcName     = "" ;
          list<omNodeConf>::iterator iter = _nodeList.begin() ;
          while( iter != _nodeList.end() )
          {
@@ -2263,14 +2265,20 @@ namespace engine
             if ( iter == _nodeList.begin() )
             {
                transaction = tmp ;
+               hostName    = iter->getHostName() ;
+               svcName     = iter->getSvcName() ;
             }
             else
             {
                if ( transaction != tmp )
                {
                   rc = SDB_INVALIDARG ;
-                  PD_LOG_MSG( PDERROR, "transaction exist conflict value:v1=%s,"
-                              "v2=%s", transaction.c_str(), tmp.c_str() ) ;
+                  PD_LOG_MSG( PDERROR, "transaction exist conflict value:"
+                              "host1=%s,svcname=%s,transaction=%s;host2=%s,"
+                              "svcname=%s,transaction=%s", hostName.c_str(),
+                              svcName.c_str(), transaction.c_str(), 
+                              iter->getHostName().c_str(), 
+                              iter->getSvcName().c_str(), tmp.c_str() ) ;
                   goto error ;
                }
             }
