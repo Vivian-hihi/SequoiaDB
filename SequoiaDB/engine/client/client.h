@@ -915,12 +915,18 @@ SDB_EXPORT INT32 sdbCreateCollection1 ( sdbCSHandle cHandle,
                                   bson *options  )
     \brief Alter the specified collection
     \param [in] cHandle The colleciton handle
-    \param [in] options The modified options as following:
-                        ReplSize Number of replnodes for sync write
+    \param [in] options The options are as following:
+
+        ReplSize     : Assign how many replica nodes need to be synchronized when a write request(insert, update, etc) is executed
+        ShardingKey  : Assign the sharding key
+        ShardingType : Assign the sharding type
+        Partition    : When the ShardingType is "hash", need to assign Partition, it's the bucket number for hash, the range is [2^3,2^20]
+                       e.g. {RepliSize:0, ShardingKey:{a:1}, ShardingType:"hash", Partition:1024}
+    \note Can't alter attributes about split in partition collection; After altering a collection to
+          be a partition collection, need to split this collection manually
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
-
 SDB_EXPORT INT32 sdbAlterCollection ( sdbCollectionHandle cHandle,
                                       bson *options  ) ;
 
@@ -1330,7 +1336,11 @@ SDB_EXPORT INT32 sdbQuery ( sdbCollectionHandle cHandle,
     \param [in] flags The flags of query
     \param [in] numToSkip Skip the first numToSkip documents, never skip if this parameter is 0
     \param [in] numToReturn Only return numToReturn documents, return all if this parameter is -1
-    \param [in] options the rules of explain
+    \param [in] options the rules of explain, the options are as below:
+
+        Run     : Whether execute query explain or not, true for excuting query explain then get
+                  the data and time information; false for not excuting query explain but get the
+                  query explain information only. e.g. {Run:true}
     \param [out] handle The cursor handle of current query
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
