@@ -62,7 +62,7 @@ public class Helper {
 			}
 			return outputStream.toByteArray();
 		} catch (Exception e) {
-			throw new BaseException("SDB_SYS");
+			throw new BaseException("SDB_SYS", e);
 		}
 	}
 

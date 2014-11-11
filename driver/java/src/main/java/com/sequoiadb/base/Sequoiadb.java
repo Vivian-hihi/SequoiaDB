@@ -217,7 +217,7 @@ public class Sequoiadb {
 		}
 		catch (UnknownHostException e)
 		{
-			throw new BaseException("SDB_NETWORK", connString);
+			throw new BaseException("SDB_NETWORK", connString, e);
 		}
 		// authentication
 		this.userName = username;
@@ -342,7 +342,7 @@ public class Sequoiadb {
 		}
 		catch (UnknownHostException e)
 		{
-			throw new BaseException("SDB_NETWORK", addr, port);
+			throw new BaseException("SDB_NETWORK", addr, port, e);
 		}
 		// authentication
 		this.userName = username;
@@ -975,7 +975,7 @@ public class Sequoiadb {
 	{
 		// check the argument
 		if ( null == code || code.equals("") ){
-			throw new BaseException("SDB_INVALIDARG");
+			throw new BaseException("SDB_INVALIDARG", code);
 		}
 		// build code type bson
 		BSONObject newobj = new BasicBSONObject();
@@ -1002,7 +1002,7 @@ public class Sequoiadb {
 	{
 		// check the argument
 		if ( null == name || name.equals("") ) {
-			throw new BaseException("SDB_INVALIDARG");
+			throw new BaseException("SDB_INVALIDARG", name);
 		}
 		// append the name to a bson
 		BSONObject newobj = new BasicBSONObject();
@@ -1142,7 +1142,7 @@ public class Sequoiadb {
 					continue ;
 				}
 				else{
-					throw new BaseException("SDB_INVALIDARG");
+					throw new BaseException("SDB_INVALIDARG", key);
 				}
 			}
 		}

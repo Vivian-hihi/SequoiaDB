@@ -179,7 +179,7 @@ public class SDBMessageHelper {
 		} catch (UnsupportedEncodingException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-			throw new BaseException("SDB_INVALIDARG");
+			throw new BaseException("SDB_INVALIDARG", e);
 		}
 	}
 
@@ -283,7 +283,7 @@ public class SDBMessageHelper {
 		} catch (UnsupportedEncodingException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-			throw new BaseException("SDB_INVALIDARG");
+			throw new BaseException("SDB_INVALIDARG", e);
 		}
 	}
 
@@ -335,7 +335,7 @@ public class SDBMessageHelper {
 		} catch (UnsupportedEncodingException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-			throw new BaseException("SDB_INVALIDARG");
+			throw new BaseException("SDB_INVALIDARG", e);
 		}
 	}
 	
@@ -410,7 +410,7 @@ public class SDBMessageHelper {
 		} catch (UnsupportedEncodingException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-			throw new BaseException("SDB_INVALIDARG");
+			throw new BaseException("SDB_INVALIDARG", e);
 		}
 	}
 
@@ -490,7 +490,7 @@ public class SDBMessageHelper {
 		} catch (UnsupportedEncodingException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-			throw new BaseException("SDB_INVALIDARG");
+			throw new BaseException("SDB_INVALIDARG", e);
 		}
 	}
 
@@ -529,7 +529,7 @@ public class SDBMessageHelper {
 			return msgInByteArray;
 		} catch (java.io.UnsupportedEncodingException e) {
 			e.printStackTrace();
-			throw new BaseException("SDB_INVALIDARG");
+			throw new BaseException("SDB_INVALIDARG", e);
 		}
 	}
 	
@@ -589,7 +589,7 @@ public class SDBMessageHelper {
 			return messageLength;
 		} catch (java.io.UnsupportedEncodingException e) {
 			e.printStackTrace();
-			throw new BaseException("SDB_INVALIDARG");
+			throw new BaseException("SDB_INVALIDARG", e);
 		}
 	}
 
@@ -618,7 +618,7 @@ public class SDBMessageHelper {
 		int MessageLength = byteBuffer.getInt();
 
 		if (MessageLength < MESSAGE_HEADER_LENGTH) {
-			throw new BaseException("SDB_INVALIDSIZE");
+			throw new BaseException("SDB_INVALIDSIZE", MessageLength);
 		}
 
 		// Request message length
@@ -736,7 +736,7 @@ public class SDBMessageHelper {
         int MessageLength = byteBuffer.getInt();
 
         if (MessageLength < MESSAGE_HEADER_LENGTH) {
-            throw new BaseException("SDB_INVALIDSIZE");
+            throw new BaseException("SDB_INVALIDSIZE", MessageLength);
         }
 
         // Request message length
@@ -782,7 +782,7 @@ public class SDBMessageHelper {
         int MessageLength = byteBuffer.getInt();
 
         if (MessageLength < MESSAGE_HEADER_LENGTH) {
-            throw new BaseException("SDB_INVALIDSIZE");
+            throw new BaseException("SDB_INVALIDSIZE", MessageLength);
         }
 
         // Request message length
@@ -838,7 +838,7 @@ public class SDBMessageHelper {
 		int MessageLength = byteBuffer.getInt();
 
 		if (MessageLength < MESSAGE_HEADER_LENGTH) {
-			throw new BaseException("SDB_INVALIDSIZE");
+			throw new BaseException("SDB_INVALIDSIZE", MessageLength);
 		}
 
 		// Request message length
@@ -1079,7 +1079,7 @@ public class SDBMessageHelper {
 			BSONObject o1 = (BSONObject) cb.get();
 			return o1;
 		} catch (IOException e) {
-			throw new BaseException("SDB_INVALIDARG");
+			throw new BaseException("SDB_INVALIDARG", e);
 		}
 	}
 

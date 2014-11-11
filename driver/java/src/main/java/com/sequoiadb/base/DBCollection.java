@@ -247,7 +247,7 @@ public class DBCollection {
 		}
 		catch (Exception e)
 		{
-			throw new BaseException("SDB_INVALIDARG", type);
+			throw new BaseException("SDB_INVALIDARG", type, e);
 		}
 		BSONObject matcher = new BasicBSONObject();
 		BSONObject modifer = new BasicBSONObject(); 
@@ -314,7 +314,7 @@ public class DBCollection {
 				objs.add(BasicBSONObject.typeToBson(it.next()));
 			}
 		} catch (Exception e) {
-			throw new BaseException("SDB_INVALIDARG", type);
+			throw new BaseException("SDB_INVALIDARG", type, e);
 		}
 		BSONObject matcher = new BasicBSONObject();
 		BSONObject modifer = new BasicBSONObject();
@@ -1158,7 +1158,7 @@ public class DBCollection {
 			try{
 				newobj.put(SequoiadbConstants.FIELD_NAME_HINT, hint);
 			}catch(Exception e){
-				throw new BaseException("SDB_SYS", hint);
+				throw new BaseException("SDB_SYS", e);
 			}
 		}
 		SDBMessage rtnSDBMessage = adminCommand(commandString, condition,
@@ -1222,7 +1222,8 @@ public class DBCollection {
 		if((null == sourceGroupName || sourceGroupName.equals("")) ||
 		   (null == destGroupName || destGroupName.equals("")) ||
 		    null == splitCondition){
-			 throw new BaseException("SDB_INVALIDARG");
+			 throw new BaseException("SDB_INVALIDARG", sourceGroupName, 
+			         destGroupName, splitCondition);
 		  }
 		BSONObject obj = new BasicBSONObject();
 		obj.put(SequoiadbConstants.FIELD_NAME_NAME, collectionFullName);
@@ -1260,7 +1261,8 @@ public class DBCollection {
 		if((null == sourceGroupName || sourceGroupName.equals("")) ||
 		   (null == destGroupName || destGroupName.equals("")) ||
 		   (percent <= 0.0 || percent > 100.0)){
-			 throw new BaseException("SDB_INVALIDARG");
+			 throw new BaseException("SDB_INVALIDARG", sourceGroupName,
+			         destGroupName, percent);
 		  }
 		BSONObject obj = new BasicBSONObject();
 		obj.put(SequoiadbConstants.FIELD_NAME_NAME, collectionFullName);
@@ -1508,7 +1510,8 @@ public class DBCollection {
 		if ( null == subClFullName || subClFullName.equals("") ||
 		     null == options ||
 		     null == collectionFullName || collectionFullName.equals("") ) {
-			throw new BaseException("SDB_INVALIDARG");
+			throw new BaseException("SDB_INVALIDARG", subClFullName,
+			        options, collectionFullName);
 		}
 		// command
 		String command = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.CMD_NAME_ATTACH_CL;
@@ -1539,7 +1542,7 @@ public class DBCollection {
 		// check arguments
 		if ( null == subClFullName || subClFullName.equals("") ||
 		     null == collectionFullName || collectionFullName.equals("") ) {
-			throw new BaseException("SDB_INVALIDARG");
+			throw new BaseException("SDB_INVALIDARG", subClFullName);
 		}
 		// command
 		String command = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.CMD_NAME_DETACH_CL;

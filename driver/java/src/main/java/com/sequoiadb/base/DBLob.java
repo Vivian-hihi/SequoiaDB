@@ -245,7 +245,7 @@ class DBLobConcrete implements DBLob {
         List<BSONObject> objList = resMessage.getObjectList();
         if ( objList.size() != 1 ) {
             throw new BaseException( "SDB_NET_BROKEN_MSG", 
-                    "response is not invalid from sequoiadb" );
+                    "objList.size()="+objList.size() );
         }
         
         BSONObject obj =  objList.get(0);

@@ -92,7 +92,7 @@ public class ConnectionTCPImpl implements IConnection {
 				logger.getInstance().debug(0, "leave connect\n");
 				return;
 			} catch (IOException ioe) {
-				lastError = new BaseException("SDB_NETWORK");
+				lastError = new BaseException("SDB_NETWORK", ioe);
 				close();
 			}
 			// when we come here, it means network error, let's try until
@@ -300,7 +300,7 @@ public class ConnectionTCPImpl implements IConnection {
 				output.write(msg);
 			}
 		} catch (IOException e) {
-			throw new BaseException("SDB_NETWORK");
+			throw new BaseException("SDB_NETWORK", e);
 		}
 		logger.getInstance().debug(0, "leave sendMessage\n");
 	}
@@ -316,7 +316,7 @@ public class ConnectionTCPImpl implements IConnection {
             	throw new BaseException("SDB_NETWORK");
             }
         } catch (IOException e) {
-            	throw new BaseException("SDB_NETWORK");
+            	throw new BaseException("SDB_NETWORK", e);
         }
 		logger.getInstance().debug(0, "leave sendMessage2\n");
 	}

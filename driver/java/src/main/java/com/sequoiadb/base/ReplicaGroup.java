@@ -91,7 +91,7 @@ public class ReplicaGroup {
 		} catch (BaseException e) {
 			throw e;
 		} catch (Exception e) {
-			throw new BaseException("SDB_SYS");
+			throw new BaseException("SDB_SYS", e);
 		}
 	}
 

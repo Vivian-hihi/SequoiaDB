@@ -148,7 +148,7 @@ public class DBCursor {
 	 */
 	public BSONObject getNext() throws BaseException {
 		if (connection == null)
-			throw new BaseException("SDB_RTN_CONTEXT_NOTEXIST");
+			throw new BaseException("SDB_RTN_CONTEXT_NOTEXIST", connection);
 		if (times == 0)
 			hasNext();
 		if (hasMore) {
@@ -171,7 +171,7 @@ public class DBCursor {
 	 */
 	public byte[] getNextRaw() throws BaseException {
 		if (connection == null)
-			throw new BaseException("SDB_RTN_CONTEXT_NOTEXIST");
+			throw new BaseException("SDB_RTN_CONTEXT_NOTEXIST", connection);
 		if (times == 0)
 			hasNextRaw();
 		if (hasMore) {
