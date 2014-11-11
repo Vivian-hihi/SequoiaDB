@@ -2582,8 +2582,8 @@ namespace engine
       {
          PD_LOG ( PDERROR, "context %lld does not exist",
                   header->contextID ) ;
-         rc = SDB_RTN_CONTEXT_NOTEXIST ;
-         goto error ;
+         /// lob has already been closed.
+         goto done ;
       }
 
       if ( RTN_CONTEXT_SHARD_OF_LOB != context->getType() )
