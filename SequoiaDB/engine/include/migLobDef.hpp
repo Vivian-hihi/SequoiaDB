@@ -47,6 +47,7 @@ namespace lobtool
 #define MIG_CL "collection"
 #define MIG_OP "operation"
 #define MIG_FILE "file"
+#define MIG_IGNOREFE "ignorefe"
 
 #define MIG_OP_IMPRT "import"
 #define MIG_OP_EXPRT "export"
@@ -68,6 +69,7 @@ enum MIG_OP_TYPE
       const CHAR *collection ;
       const CHAR *file ;
       MIG_OP_TYPE type ;
+      BOOLEAN ignorefe ;
 
       migOptions()
       :hostname( NULL ),
@@ -76,7 +78,8 @@ enum MIG_OP_TYPE
        passwd( NULL ),
        collection( NULL ),
        file( NULL ),
-       type( MIG_OP_TYPE_IMPRT )
+       type( MIG_OP_TYPE_IMPRT ),
+       ignorefe( FALSE )
       {
 
       }
@@ -89,7 +92,8 @@ enum MIG_OP_TYPE
       UINT32 version ;
       UINT32 pad1 ; 
       UINT64 totalNum ;
-      CHAR pad[65512] ;
+      UINT64 crtTime ;
+      CHAR pad[65504] ;
 
       migFileHeader()
       {
@@ -97,6 +101,21 @@ enum MIG_OP_TYPE
          ossMemset( this, 0, sizeof( migFileHeader ) ) ;
          ossMemcpy( this, MIG_FILE_EYE, ossStrlen( MIG_FILE_EYE ) + 1 ) ;
          version = MIG_LOB_TOOL_VERSION ;
+      }
+
+      std::string toString() const
+      {
+         std::stringstream ss ;
+         CHAR szTimestmpStr[ OSS_TIMESTAMP_STRING_LEN + 1 ] = { 0 } ;
+         ossTimestamp t ;
+         t.time = crtTime / 1000 ;
+         t.microtm = ( crtTime - ( t.time * 1000 ) ) * 1000 ;
+         ossTimestampToString( t, szTimestmpStr ) ;
+
+         ss << "File version: " << version
+            << " TotalNum: " << totalNum
+            << " CreateTime: " << szTimestmpStr ;
+         return ss.str() ;
       }
    } ;
 }

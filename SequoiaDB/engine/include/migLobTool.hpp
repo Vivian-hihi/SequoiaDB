@@ -52,9 +52,37 @@ namespace lobtool
       INT32 exec( const bson::BSONObj &options ) ;
 
    private:
+      INT32 _exportLob( const migOptions &ops ) ;
+
+      INT32 _importLob( const migOptions &ops ) ;
+
+   private:
+      struct imprtIterator
+      {
+         UINT32 loadSize ;
+         UINT32 start ;
+         imprtIterator()
+         :loadSize( 0 ),
+          start( 0 )
+         {
+
+         }
+
+        BOOLEAN empty() const
+        {
+           return 0 == loadSize || start == loadSize ;
+        }
+
+        UINT32 keepSize() const
+        {
+           return loadSize - start ;
+        }
+      } ;
+   private:
       INT32 _createFile( const CHAR *fullPath ) ;
 
-      INT32 _openFile( const CHAR *fullPath ) ;
+      INT32 _openFile( const CHAR *fullPath,
+                       const migFileHeader *&header ) ;
 
       INT32 _write( const CHAR *buf, UINT32 size ) ;
 
@@ -64,13 +92,19 @@ namespace lobtool
 
       void _closeDB() ;
 
-      INT32 _exportLob( const migOptions &ops ) ;
-
       INT32 _append2File( const bson::BSONObj &obj ) ;
 
       INT32 _truncate( INT64 len ) ;
 
       INT32 _refreshHeader( UINT64 totalNum ) ;
+
+      INT32 _sendLobFromFile( BOOLEAN ignorefe,
+                              imprtIterator &itr,
+                              BOOLEAN &skip ) ;
+
+      INT32 _getLobMeta( const imprtIterator &itr,
+                         bson::OID &oid, SINT64 &len,
+                         SINT32 &objLen ) ;
 
    private:
       OSSFILE _file ;

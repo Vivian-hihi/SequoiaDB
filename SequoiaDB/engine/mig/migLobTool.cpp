@@ -39,7 +39,7 @@ using namespace sdbclient ;
 
 namespace lobtool 
 {
-const UINT32 BUF_SIZE = 1024 * 1024 ;
+const UINT32 BUF_SIZE = 2 * 1024 * 1024 ;
 
    _migLobTool::_migLobTool()
    :_buf( NULL ),
@@ -175,6 +175,16 @@ const UINT32 BUF_SIZE = 1024 * 1024 ;
          goto error ;
       }
 
+      ele = options.getField( MIG_IGNOREFE ) ;
+      if ( Bool != ele.type() )
+      {
+         PD_LOG( PDERROR, "invalid type of %s, options:%s",
+                 MIG_IGNOREFE, options.toString( FALSE, TRUE ).c_str() ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      ops.ignorefe = ele.Bool() ;
+
       rc = _initDB( ops ) ;
       if ( SDB_OK != rc )
       {
@@ -186,6 +196,10 @@ const UINT32 BUF_SIZE = 1024 * 1024 ;
       if ( MIG_OP_TYPE_EXPRT == ops.type )
       {
          rc = _exportLob( ops ) ;
+      }
+      else if ( MIG_OP_TYPE_IMPRT == ops.type )
+      {
+         rc = _importLob( ops ) ;
       }
 
       if ( SDB_OK != rc )
@@ -303,14 +317,228 @@ const UINT32 BUF_SIZE = 1024 * 1024 ;
       goto done ;
    }
 
+   INT32 _migLobTool::_importLob( const migOptions &ops )
+   {
+      INT32 rc = SDB_OK ;
+      const migFileHeader *header = NULL ;
+      UINT64 totalNum = 0 ;
+      imprtIterator itr ;
+      SINT64 totalImport = 0 ;
+      BOOLEAN skip = FALSE ;
+      PD_LOG( PDEVENT, "begin to import lob" ) ;
+
+      rc = _openFile( ops.file, header ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to open file:%s", ops.file ) ;
+         goto error ;
+      }
+
+      /// header will be invalid.
+      totalNum = header->totalNum ;
+      for ( UINT64 i = 0; i < totalNum; ++i )
+      {
+         skip = FALSE ;
+         rc = _sendLobFromFile( ops.ignorefe, itr, skip ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to send lob:%d", rc ) ;
+            goto error ;
+         }
+         else if ( !skip )
+         {
+            ++totalImport ;
+         }
+      }
+
+      PD_LOG( PDEVENT, "lob importing has been done, total num:%lld", totalImport ) ;
+      cout << "lob importing has been done, total num:" << totalImport << endl ;
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   enum IMPRT_STATUS
+   {
+      IMPRT_STATUS_META = 1,
+      IMPRT_STATUS_BODY,
+      IMPRT_STATUS_SEEK,
+   } ;
+
+   INT32 _migLobTool::_sendLobFromFile( BOOLEAN ignorefe,
+                                        imprtIterator &itr,
+                                        BOOLEAN &skip )
+   {
+      INT32 rc = SDB_OK ;
+      sdbLob lob ;
+      SINT64 lobLen = 0 ;
+      bson::OID oid ;
+      IMPRT_STATUS status  = IMPRT_STATUS_META ;
+      SINT64 seekSize = 0 ;
+
+      do
+      {
+         if ( itr.empty() )
+         {
+            SINT64 read = 0 ;
+            rc = ossReadN( &_file, _bufSize, _buf, read ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "failed t read file:%d", rc ) ;
+               goto error ;
+            }
+            itr.loadSize = read ;
+            itr.start = 0 ;
+            continue ;
+         }
+
+         if ( IMPRT_STATUS_META == status )
+         {
+            bson::OID oid ;
+            SINT32 objLen = 0 ;
+            SINT64 aligned = 0 ;
+
+            rc = _getLobMeta( itr, oid, lobLen, objLen ) ;
+            if ( SDB_OK != rc )
+            {
+               goto error ;
+            }
+
+            aligned = ossRoundUpToMultipleX( lobLen + objLen,
+                                             OSS_FILE_DIRECT_IO_ALIGNMENT ) ;
+
+            rc = _cl.createLob( lob, &oid ) ;
+            if ( SDB_FE == rc && ignorefe )
+            {
+               status = IMPRT_STATUS_SEEK ;
+               seekSize = aligned - objLen ;
+               rc = SDB_OK ;
+            }
+            else if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "failed to open lob[%s], rc:%d",
+                       oid.str().c_str(), rc ) ;
+               goto error ;
+            }
+            else
+            {
+               status = IMPRT_STATUS_BODY ;
+               seekSize = aligned - lobLen - objLen ;
+            }
+
+            itr.start += objLen ;
+         }
+         else if ( IMPRT_STATUS_BODY == status )
+         {
+            SINT64 needWrite = itr.keepSize() <= lobLen ?
+                               itr.keepSize() : lobLen ;
+            rc = lob.write( _buf + itr.start,
+                            needWrite ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "failed to write lob, rc:%d", rc ) ;
+               goto error ;
+            }
+            lobLen -= needWrite ;
+            itr.start += needWrite ;
+            if ( 0 == lobLen )
+            {
+               break ;
+            }
+         }
+         else
+         {
+            UINT32 seek = itr.keepSize() <= seekSize ?
+                          itr.keepSize() : seekSize ;
+            itr.start += seek ;
+            seekSize -= seek ;
+            if ( 0 == seekSize )
+            {
+               break ;
+            }
+         }
+      } while ( TRUE ) ;
+
+      if ( IMPRT_STATUS_SEEK != status )
+      {
+         rc = lob.close() ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to close lob:%d", rc ) ;
+            goto error ;
+         }
+
+         SDB_ASSERT( seekSize <= itr.keepSize(), "impossible" ) ;
+         itr.start += seekSize ;
+         skip = FALSE ;
+      }
+      else
+      {
+         skip = TRUE ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _migLobTool::_getLobMeta( const imprtIterator &itr,
+                                   bson::OID &oid, SINT64 &len,
+                                   SINT32 &objLen )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj obj ;
+      BSONElement ele ;
+      const UINT32 *bsonLen = ( const UINT32 * )( _buf + itr.start ) ;
+      if ( itr.keepSize() < *bsonLen )
+      {
+         PD_LOG( PDERROR, "bson len:%d, keep in memory:%d."
+                 " this tool's version may not match the file's version" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      obj = BSONObj( _buf + itr.start ) ;
+      ele = obj.getField( FIELD_NAME_LOB_OID ) ;
+      if ( jstOID != ele.type() )
+      {
+         PD_LOG( PDERROR, "invalid bson object in file:%s",
+                 obj.toString( FALSE, TRUE ).c_str() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+      oid = ele.OID() ;
+
+      ele = obj.getField( FIELD_NAME_LOB_SIZE ) ;
+      if ( NumberInt != ele.type() &&
+           NumberLong != ele.type() )
+      {
+         PD_LOG( PDERROR, "invalid bson object in file:%s",
+                 obj.toString( FALSE, TRUE ).c_str() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+      len = ele.Long() ;
+
+      objLen = obj.objsize() ;
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 _migLobTool::_refreshHeader( UINT64 totalNum )
    {
       INT32 rc = SDB_OK ;
       migFileHeader *header = NULL ;
+      ossTimestamp t ;
+      ossGetCurrentTime( t ) ;
 
       _initFileHeader( ( migFileHeader * )_buf ) ;
       header = ( migFileHeader * )_buf ;
       header->totalNum = totalNum ;
+      header->crtTime = t.time * 1000 + t.microtm / 1000 ;
       rc = ossSeek( &_file, 0, OSS_SEEK_SET ) ;
       if ( SDB_OK != rc )
       {
@@ -408,6 +636,7 @@ const UINT32 BUF_SIZE = 1024 * 1024 ;
       {
          UINT32 aligned = ossRoundUpToMultipleX( _written,
                                                  OSS_FILE_DIRECT_IO_ALIGNMENT ) ;
+         ossMemset( _buf + _written, 0, aligned - _written ) ;
          SDB_ASSERT( aligned <= _bufSize, "impossible" ) ;
          rc = ossWriteN( &_file, _buf, aligned ) ;
          if ( SDB_OK != rc )
@@ -520,6 +749,56 @@ const UINT32 BUF_SIZE = 1024 * 1024 ;
    {
       _db.disconnect() ;
       return ;
+   }
+
+   INT32 _migLobTool::_openFile( const CHAR *fullPath,
+                                 const migFileHeader *&header )
+   {
+      INT32 rc = SDB_OK ;
+      SDB_ASSERT( NULL != fullPath, "can not be null" ) ;
+      SINT64 read = 0 ;
+      UINT32 mode = OSS_READONLY |
+                    OSS_SHAREREAD |
+                    OSS_DIRECTIO ;
+      rc = ossOpen( fullPath, mode, OSS_RU|OSS_WU|OSS_RG, _file ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to open file:%s, rc:%d",
+                 fullPath, rc ) ;
+         goto error ;
+      }
+
+      rc = ossReadN( &_file, sizeof( migFileHeader ),
+                     _buf, read ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to read file:%s, rc:%d",
+                 fullPath, rc ) ;
+         goto error ;
+      }
+
+      header = ( const migFileHeader * )_buf ;
+      if ( 0 != ossStrcmp( header->eyeCatcher,
+                           MIG_FILE_EYE ) )
+      {
+         PD_LOG( PDERROR, "invalid file header" ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      if ( MIG_LOB_TOOL_VERSION != header->version )
+      {
+         PD_LOG( PDERROR, "invalid file version:%d", header->version ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      cout << header->toString() << endl ;      
+   done:
+      return rc ;
+   error:
+      header = NULL ;
+      goto done ;
    }
 
    INT32 _migLobTool::_createFile( const CHAR *fullPath )

@@ -50,7 +50,8 @@ using namespace std ;
         ( MIG_PASSWD, boost::program_options::value<string>(), "Password" )\
         ( MIG_OP, boost::program_options::value<string>(), "import/export" )\
         ( MIG_CL, boost::program_options::value<string>(), "Full name of collection, eg:\"foo.bar\"" )\
-        ( MIG_FILE, boost::program_options::value<string>(), "Full path of file" )
+        ( MIG_FILE, boost::program_options::value<string>(), "Full path of file" )\
+        ( MIG_IGNOREFE, "When operation is \"import\", skip the lob which exists in collection" )
 
 static void initDesc( po::options_description &desc )
 {
@@ -148,6 +149,8 @@ static INT32 parseCmdLine( const po::options_description &desc,
    }
    builder.append( MIG_FILE, vm[MIG_FILE].as<string>() ) ;
 
+   builder.appendBool( MIG_IGNOREFE, vm.count( MIG_IGNOREFE ) ) ;
+
    obj = builder.obj() ;
 done:
    return rc ;
@@ -166,7 +169,7 @@ INT32 main( INT32 argc, CHAR *argv[] )
    
    sdbEnablePD( LOG_FILE ) ;
 
-   cout << "Version: 1.0" << endl ;
+   cout << "Version of tool: 1.0" << endl ;
 
    initDesc( desc ) ;
 
@@ -194,13 +197,13 @@ INT32 main( INT32 argc, CHAR *argv[] )
    rc = tool.exec( options ) ;
    if ( SDB_OK != rc )
    {
-      PD_LOG( PDERROR, "failed to export lob:%d", rc ) ;
+      PD_LOG( PDERROR, "failed to execute operation:%d", rc ) ;
       goto error ;
    }
 done:
    return rc ;
 error:
-   cerr << "Error: failed to export lob, rc:" << rc
+   cerr << "Error: failed to complete operation, rc:" << rc
         << " Error Desc: " << getErrDesp(rc ) << endl ;
    cerr << "Error: get details in log file: " << LOG_FILE << endl ;
    goto done ;
