@@ -205,15 +205,14 @@ namespace sdbclient
       }
 
 /** \fn INT32 close ()
-      \brief Close the cursor's connection to database, we can't use this handle
-             to get data again.
+      \brief Close the cursor's connection to database.
       \retval SDB_OK Operation Success
       \retval Others Operation Fail
 */
       INT32 close ()
       {
          if ( !pCursor )
-            return SDB_NOT_CONNECTED ;
+            return SDB_OK ;
          return pCursor->close () ;
       }
 
@@ -2069,19 +2068,27 @@ namespace sdbclient
 
       virtual INT32 close () = 0 ;
 
-      virtual INT32 isClosed( BOOLEAN &flag ) = 0 ;
-
       virtual INT32 read ( UINT32 len, CHAR *buf, UINT32 *read ) = 0 ;
 
       virtual INT32 write ( const CHAR *buf, UINT32 len ) = 0 ;
 
       virtual INT32 seek ( SINT64 size, SDB_LOB_SEEK whence ) = 0 ;
 
+      virtual INT32 isClosed( BOOLEAN &flag ) = 0 ;
+
       virtual INT32 getOid( bson::OID &oid ) = 0 ;
 
       virtual INT32 getSize( SINT64 *size ) = 0 ;
          
       virtual INT32 getCreateTime ( UINT64 *millis ) = 0 ;
+
+      virtual BOOLEAN isClosed() = 0 ;
+
+      virtual bson::OID getOid() = 0 ;
+
+      virtual SINT64 getSize() = 0 ;
+         
+      virtual UINT64 getCreateTime () = 0 ;
 
    } ;
 
@@ -2125,22 +2132,9 @@ namespace sdbclient
       INT32 close ()
       {
          if ( !pLob )
-            return SDB_SYS ;
+            return SDB_OK ;
          return pLob->close() ;
       }
-
-/** \fn INT32 isClosed( BOOLEAN &flag )
-    \brief Test whether lob has been closed or not.
-    \param [out] flag TRUE for lob has been closed, FALSE for not.
-    \retval SDB_OK Operation Success
-    \retval Others Operation Fail
-*/
-    INT32 isClosed( BOOLEAN &flag )
-    {
-       if ( !pLob )
-         return SDB_SYS ;
-       return pLob->isClosed ( flag ) ;
-    }
 
 /** \fn INT32 read ( UINT32 len, CHAR *buf, UINT32 *read )
     \brief Read lob.
@@ -2185,11 +2179,37 @@ namespace sdbclient
          return pLob->seek( size, whence ) ;
       }
 
+/** \fn INT32 isClosed( BOOLEAN &flag )
+    \brief Test whether lob has been closed or not.
+    \param [out] flag TRUE for lob has been closed, FALSE for not.
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+    \deprecated Deprecated in version 2.x. Use "BOOLEAN isClosed()" instead
+*/
+    INT32 isClosed( BOOLEAN &flag )
+    {
+       if ( !pLob )
+         return SDB_SYS ;
+       return pLob->isClosed ( flag ) ;
+    }
+
+/** \fn BOOLEAN isClosed()
+    \brief Test whether lob has been closed or not.
+    \retval TRUE for lob has been closed, FALSE for not.
+*/
+    BOOLEAN isClosed()
+    {
+       if ( !pLob )
+         return TRUE ;
+       return pLob->isClosed () ;
+    }
+
 /** \fn INT32 getOid ( bson::OID &oid )
     \brief Get the lob's oid.
     \param [out] oid The oid of the lob
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
+    \deprecated Deprecated in version 2.x. Use "bson::OID getOid ()" instead
 */
       INT32 getOid ( bson::OID &oid )
       {
@@ -2198,11 +2218,23 @@ namespace sdbclient
          return pLob->getOid( oid ) ;
       }
 
+/** \fn bson::OID getOid ()
+    \brief Get the lob's oid.
+    \retval The oid of the lob or a empty Oid bson::OID() when the lob is not be opened or has been closed
+*/
+      bson::OID getOid ()
+      {
+         if ( !pLob )
+            return bson::OID();
+         return pLob->getOid() ;
+      }
+
 /** \fn INT32 getSize ( SINT64 *size )
     \brief Get the lob's size.
     \param [out] size The size of lob
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
+    \deprecated Deprecated in version 2.x. Use "SINT64 getSize ()" instead
 */
       INT32 getSize ( SINT64 *size )
       {
@@ -2211,17 +2243,40 @@ namespace sdbclient
          return pLob->getSize( size ) ;
       }
 
+/** \fn SINT64 getSize ()
+    \brief Get the lob's size.
+    \reval The size of lob, or -1 when the lob is not be opened or has been closed
+*/
+      SINT64 getSize ()
+      {
+         if ( !pLob )
+            return -1 ;
+         return pLob->getSize();
+      }
+
 /** \fn INT32 getCreateTime ( UINT64 *millis )
     \brief Get lob's create time.
     \param [out] millis The create time in milliseconds of lob
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
+    \deprecated Deprecated in version 2.x. Use "UINT64 getCreateTime ()" instead
 */
       INT32 getCreateTime ( UINT64 *millis )
       {
          if ( !pLob )
             return SDB_SYS ;
          return pLob->getCreateTime( millis ) ;
+      }
+
+/** \fn UINT64 getCreateTime ()
+    \brief Get lob's create time.
+    \retval The create time in milliseconds of lob or -1 when the lob does not be opened or has been closed
+*/
+      UINT64 getCreateTime ()
+      {
+         if ( !pLob )
+            return -1 ;
+         return pLob->getCreateTime() ;
       }
       
    } ;
@@ -2442,7 +2497,8 @@ namespace sdbclient
 
       // connection is closed
       virtual INT32 isValid( BOOLEAN *result ) = 0 ;
-
+      virtual BOOLEAN isValid() = 0 ;
+      
       // domain
       virtual INT32 createDomain ( const CHAR *pDomainName,
                                    const bson::BSONObj &options,
@@ -3635,12 +3691,25 @@ namespace sdbclient
     \param [out] result the output result
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
+    \deprecated Deprecated in version 2.x. Use "BOOLEAN isValid ()" instead.
 */
       INT32 isValid ( BOOLEAN *result )
       {
          if ( !pSDB )
             return SDB_SYS ;
-         return pSDB->isValid ( result) ;
+         return pSDB->isValid ( result ) ;
+      }
+
+
+/** \fn BOOLEAN isValid () ;
+    \brief Judge whether the connection is valid.
+    \retval TRUE for the connection is valid while FALSE for not
+*/
+      BOOLEAN isValid ()
+      {
+         if ( !pSDB )
+            return FALSE ;
+         return pSDB->isValid () ;
       }
 
 /** \fn INT32 createDomain ( const CHAR *pDomainName,

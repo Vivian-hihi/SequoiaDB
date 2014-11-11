@@ -712,19 +712,27 @@ namespace sdbclient
 
       virtual INT32 close () ;
 
-      virtual INT32 isClosed( BOOLEAN &flag ) ;
-
       virtual INT32 read ( UINT32 len, CHAR *buf, UINT32 *read ) ;
 
       virtual INT32 write ( const CHAR *buf, UINT32 len ) ;
 
       virtual INT32 seek ( SINT64 size, SDB_LOB_SEEK whence ) ;
 
+      virtual INT32 isClosed( BOOLEAN &flag ) ;
+
       virtual INT32 getOid( bson::OID &oid ) ;
 
       virtual INT32 getSize( SINT64 *size ) ;
          
       virtual INT32 getCreateTime ( UINT64 *millis ) ;
+
+      virtual BOOLEAN isClosed() ;
+
+      virtual bson::OID getOid() ;
+
+      virtual SINT64 getSize() ;
+         
+      virtual UINT64 getCreateTime () ;
       
    } ;
 
@@ -1150,6 +1158,7 @@ namespace sdbclient
 
       // connection is closed
       INT32 isValid( BOOLEAN *result ) ;
+      BOOLEAN isValid() ;
 
       // domain
       INT32 createDomain ( const CHAR *pDomainName,

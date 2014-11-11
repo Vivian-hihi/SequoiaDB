@@ -2505,6 +2505,8 @@ namespace sdbclient
       ((_sdbLobImpl*)*lob)->_contextID = contextID ;
       ((_sdbLobImpl*)*lob)->_isOpen = TRUE ;
       ((_sdbLobImpl*)*lob)->_mode = SDB_LOB_CREATEONLY ;
+      ((_sdbLobImpl*)*lob)->_lobSize = 0 ;
+      ((_sdbLobImpl*)*lob)->_createTime = 0 ;
 
    done:
       if ( locked )
@@ -4096,8 +4098,8 @@ namespace sdbclient
    _isOpen( FALSE ),
    _contextID ( -1 ),
    _mode( -1 ),
-   _createTime( 0 ),
-   _lobSize( 0 ),
+   _createTime( -1 ),
+   _lobSize( -1 ),
    _currentOffset( 0 ),
    _cachedOffset( 0 ),
    _cachedSize( 0 ),
@@ -4156,8 +4158,8 @@ namespace sdbclient
       _contextID = -1 ;
       _mode = -1 ;
       _oid = bson::OID() ;
-      _createTime = 0 ;
-      _lobSize = 0 ;
+      _createTime = -1 ;
+      _lobSize = -1 ;
       _currentOffset = 0 ;
       _cachedOffset = 0 ;
       _cachedSize = 0 ;
@@ -4331,29 +4333,6 @@ namespace sdbclient
       if ( locked )
          _connection->unlock() ;
       PD_TRACE_EXIT ( SDB_CLIENT__ONCEREAD );
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   //PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_ISCLOSED, "_sdbLobImpl::isClosed" )
-    INT32 _sdbLobImpl::isClosed( BOOLEAN &flag )
-   {
-      PD_TRACE_ENTRY ( SDB_CLIENT_ISCLOSED ) ;
-      INT32 rc = SDB_OK ;
-      BOOLEAN locked = FALSE ;
-      if ( NULL == _connection )
-      {
-         rc = SDB_NOT_CONNECTED ;
-         goto error ;
-      }
-      _connection->lock() ;
-      locked = TRUE ;
-      flag = !_isOpen ;
-   done:
-      if ( locked )
-         _connection->unlock() ;
-      PD_TRACE_EXITRC ( SDB_CLIENT_ISCLOSED, rc );
       return rc ;
    error:
       goto done ;
@@ -4588,7 +4567,8 @@ namespace sdbclient
          
          totalLen += sendLen ;
       } while ( totalLen < len ) ;
-      
+      // for read lob's size while creating a lob and write things to it
+      _lobSize += len ;
    done:
       if ( locked )
          _connection->unlock() ;
@@ -4669,12 +4649,21 @@ namespace sdbclient
       goto done ;
    }
 
-   //PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_GETOID, "_sdbLobImpl::getOid" )
+   //PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_ISCLOSED2, "_sdbLobImpl::isClosed" )
+    INT32 _sdbLobImpl::isClosed( BOOLEAN &flag )
+   {
+      PD_TRACE_ENTRY ( SDB_CLIENT_ISCLOSED2 ) ;
+      INT32 rc = SDB_OK ;
+      flag = isClosed();
+      PD_TRACE_EXIT ( SDB_CLIENT_ISCLOSED2 );
+      return rc ;
+   }
+
+   //PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_GETOID2, "_sdbLobImpl::getOid" )
    INT32 _sdbLobImpl::getOid( bson::OID &oid )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_GETOID ) ;
+      PD_TRACE_ENTRY ( SDB_CLIENT_GETOID2 ) ;
       INT32 rc = SDB_OK ;
-      BOOLEAN locked = FALSE ;
 
       // check
       if (  !_connection )
@@ -4682,73 +4671,40 @@ namespace sdbclient
          rc = SDB_NOT_CONNECTED ;
          goto error;
       }
-      // check wether lob has been open or not
-      _connection->lock() ;
-      locked = TRUE ;
-      if ( !_isOpen )
-      {
-         rc = SDB_LOB_NOT_OPEN ;
-         goto error ;
-      }
-      locked = FALSE;
-      _connection->unlock() ;
-      // get oid
-      oid = _oid ;
+      oid = getOid() ;
    done:
-      if ( locked )
-         _connection->unlock() ;
-      PD_TRACE_EXITRC ( SDB_CLIENT_GETOID, rc );
+      PD_TRACE_EXITRC ( SDB_CLIENT_GETOID2, rc );
       return rc ;
    error:
       goto done ;
    }
    
-   //PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_GETSIZE, "_sdbLobImpl::getSize" )
+   //PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_GETSIZE2, "_sdbLobImpl::getSize" )
    INT32 _sdbLobImpl::getSize( SINT64 *size )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_GETSIZE ) ;
+      PD_TRACE_ENTRY ( SDB_CLIENT_GETSIZE2 ) ;
       INT32 rc = SDB_OK ;
-      BOOLEAN locked = FALSE ;
 
       // check
       if (  !_connection )
       {
          rc = SDB_NOT_CONNECTED ;
-         goto done;
-      }
-      // check wether lob has been open or not
-      _connection->lock() ;
-      locked = TRUE ;
-      if ( !_isOpen )
-      {
-         rc = SDB_LOB_NOT_OPEN ;
-         goto error ;
-      }
-      locked = FALSE;
-      _connection->unlock() ;
-      // check
-      if ( SDB_LOB_READ != _mode || -1 == _contextID )
-      {
-         rc = SDB_INVALIDARG ;
-         goto error ;
+         goto error;
       }
       // get size
-      *size = _lobSize ;
+      *size = getSize() ;
    done:
-      if ( locked )
-         _connection->unlock() ;
-      PD_TRACE_EXITRC ( SDB_CLIENT_GETSIZE, rc );
+      PD_TRACE_EXITRC ( SDB_CLIENT_GETSIZE2, rc );
       return rc ;
    error:
       goto done ;
    }
 
-   //PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_GETCREATETIME, "_sdbLobImpl::getCreateTime" )
+   //PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_GETCREATETIME2, "_sdbLobImpl::getCreateTime" )
    INT32 _sdbLobImpl::getCreateTime ( UINT64 *millis )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_GETCREATETIME ) ;
+      PD_TRACE_ENTRY ( SDB_CLIENT_GETCREATETIME2 ) ;
       INT32 rc = SDB_OK ;
-      BOOLEAN locked = FALSE ;
 
       // check
       if (  !_connection )
@@ -4756,31 +4712,83 @@ namespace sdbclient
          rc = SDB_NOT_CONNECTED ;
          goto done;
       }
-      // check wether lob has been open or not
-      _connection->lock() ;
-      locked = TRUE ;
-      if ( !_isOpen )
-      {
-         rc = SDB_LOB_NOT_OPEN ;
-         goto error ;
-      }
-      locked = FALSE;
-      _connection->unlock() ;
-      // check
-      if ( SDB_LOB_READ != _mode || -1 == _contextID )
-      {
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
-      // get time
-      *millis = _createTime ;
+      *millis = getCreateTime() ;
    done:
-      if ( locked )
-         _connection->unlock() ;
-      PD_TRACE_EXITRC ( SDB_CLIENT_GETCREATETIME, rc );
+      PD_TRACE_EXITRC ( SDB_CLIENT_GETCREATETIME2, rc );
       return rc ;
    error:
       goto done ;
+   }
+
+   //PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_ISCLOSED, "_sdbLobImpl::isClosed" )
+    BOOLEAN _sdbLobImpl::isClosed()
+   {
+      PD_TRACE_ENTRY ( SDB_CLIENT_ISCLOSED ) ;
+      BOOLEAN flag = TRUE ;
+      if ( NULL == _connection )
+      {
+         return flag ;
+      }
+      _connection->lock() ;
+      flag = !_isOpen ;
+      _connection->unlock() ;
+      PD_TRACE_EXIT ( SDB_CLIENT_ISCLOSED ) ;
+      return flag ;
+   }
+
+   //PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_GETOID, "_sdbLobImpl::getOid" )
+   bson::OID _sdbLobImpl::getOid()
+   {
+      PD_TRACE_ENTRY ( SDB_CLIENT_GETOID ) ;
+      bson::OID oid = bson::OID() ;
+      // check
+      if (  !_connection )
+      {
+         return oid ;
+      }
+      _connection->lock() ;
+      // get oid
+      oid = _oid ;
+      _connection->unlock() ;
+      PD_TRACE_EXIT ( SDB_CLIENT_GETOID ) ;
+      return oid ;
+   }
+   
+   //PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_GETSIZE, "_sdbLobImpl::getSize" )
+   SINT64 _sdbLobImpl::getSize()
+   {
+      PD_TRACE_ENTRY ( SDB_CLIENT_GETSIZE ) ;
+      SINT64 size = 0 ;
+
+      // check
+      if ( !_connection )
+      {
+         return -1 ;
+      }
+      _connection->lock() ;
+      // get size
+      size = _lobSize ;
+      _connection->unlock() ;
+      PD_TRACE_EXIT ( SDB_CLIENT_GETSIZE );
+      return size ;
+   }
+
+   //PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_GETCREATETIME, "_sdbLobImpl::getCreateTime" )
+   UINT64 _sdbLobImpl::getCreateTime ()
+   {
+      PD_TRACE_ENTRY ( SDB_CLIENT_GETCREATETIME ) ;
+      UINT64 millis = 0 ;
+      // check
+      if ( !_connection )
+      {
+         return -1 ;
+      }
+      _connection->lock() ;
+      // get time
+      millis = _createTime ;
+      _connection->unlock() ;
+      PD_TRACE_EXIT ( SDB_CLIENT_GETCREATETIME );
+      return millis ;
    }
 
    /*
@@ -7070,10 +7078,10 @@ namespace sdbclient
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_IS_VALID, "_sdbImpl::isValid" )
+   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_IS_VALID2, "_sdbImpl::isValid" )
    INT32 _sdbImpl::isValid( BOOLEAN *result )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_IS_VALID ) ;
+      PD_TRACE_ENTRY ( SDB_CLIENT_IS_VALID2 ) ;
       INT32 rc = SDB_OK ;
       // check argument
       if ( result == NULL )
@@ -7081,21 +7089,31 @@ namespace sdbclient
          rc = SDB_INVALIDARG ;
          goto error ;
       }
+      *result = isValid() ;
+   done :
+      PD_TRACE_EXITRC ( SDB_CLIENT_IS_VALID2, rc );
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_IS_VALID, "_sdbImpl::isValid" )
+   BOOLEAN _sdbImpl::isValid()
+   {
+      PD_TRACE_ENTRY ( SDB_CLIENT_IS_VALID ) ;
+      BOOLEAN flag = FALSE ;
       // if client don't connect to database or
       // it had closed the connection
       if ( _sock == NULL )
       {
-         *result = FALSE ;
+         flag = FALSE ;
       }
       else
       {
-         *result =  _sock->isConnected() ;
+         flag =  _sock->isConnected() ;
       }
-   done :
-      PD_TRACE_EXITRC ( SDB_CLIENT_IS_VALID, rc );
-      return rc ;
-   error :
-      goto done ;
+      PD_TRACE_EXIT ( SDB_CLIENT_IS_VALID );
+      return flag ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_CREATEDOMAIN, "_sdbImpl::createDomain" )
