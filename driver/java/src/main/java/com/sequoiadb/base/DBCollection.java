@@ -599,8 +599,20 @@ public class DBCollection {
      *            skip the first numToSkip documents, never skip if this parameter is 0
      * @param returnRows
      *            only return returnRows documents, return all if this parameter is -1
-     * @param flag the flag is used to choose the way to query, the optional options are as below:  
-     * @param options the options of explian
+     * @param flag the flag is used to choose the way to query, the optional options are as below:
+     *<ul>
+     * <li>DBQuery.FLG_QUERY_STRINGOUT
+     * <li>DBQuery.FLG_QUERY_FORCE_HINT 
+     * <li>DBQuery.FLG_QUERY_PARALLED
+     * <li>DBQuery.FLG_QUERY_WITH_RETURNDATA
+     * <li>DBQuery.FLG_QUERY_EXPLAIN
+     *</ul>
+     * @param options The rules of query explain, the options are as below:
+     *<ul>
+     *<li>Run     : Whether execute query explain or not, true for excuting query explain then get
+     *              the data and time information; false for not excuting query explain but get the
+     *              query explain information only. e.g. {Run:true}
+     *</ul>
      * @return a DBCursor instance of the result
      * @exception com.sequoiadb.exception.BaseException
      */
@@ -1545,11 +1557,20 @@ public class DBCollection {
 	}
 	
 	/**
-	 * @fn void alterCollection( BSONObject options )
-	 * @brief Alter the attribute of current collection.
-	 * @param options The options for alter the attribute of current collection, the options are as below: 
+	 * @fn void alterCollection ( BSONObject options )
+     * @brief Alter the attributes of current collection.
+     * @param options The options for altering current collection are as below:
+     *<ul>
+     *<li>ReplSize     : Assign how many replica nodes need to be synchronized when a write request(insert, update, etc) is executed
+     *<li>ShardingKey   : Assign the sharding key
+     *<li>ShardingType        : Assign the sharding type
+     *<li>Partition        : When the ShardingType is "hash", need to assign Partition, it's the bucket number for hash, the range is [2^3,2^20].
+     *                       e.g. {RepliSize:0, ShardingKey:{a:1}, ShardingType:"hash", Partition:1024}
+     *</ul>
+     * @note Can't alter attributes about split in partition collection; After altering a collection to
+     *       be a partition collection, need to split this collection manually
 	 * @exception com.sequoiadb.exception.BaseException
-	 */
+	 */	
 	public void alterCollection( BSONObject options ) throws BaseException {
 		// check arguments
 		if ( null == options ) {

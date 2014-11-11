@@ -485,7 +485,7 @@ public class Sequoiadb {
 	}
 
 	/**
-	 * @fn void createCollectionSpace(String collectionSpaceName, int pageSize)
+	 * @fn CollectionSpace createCollectionSpace(String collectionSpaceName, int pageSize)
 	 * @brief Create collection space.
 	 * @param csName The name of collection space
 	 * @param pageSize The Page Size as below:
@@ -497,6 +497,7 @@ public class Sequoiadb {
 	 * <li> SDB_PAGESIZE_64K
 	 * <li> SDB_PAGESIZE_DEFAULT
 	 * </ul>
+	 * @return the newly created collection space object
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
 	public CollectionSpace createCollectionSpace(String csName, int pageSize)
@@ -523,12 +524,13 @@ public class Sequoiadb {
 	/**
 	 * @fn CollectionSpace createCollectionSpace(String csName, BSONObject options)
 	 * @brief Create collection space.
-	 * @param csName The name of the created collection space
+	 * @param csName The name of collection space
 	 * @param options Contains configuration informations for create collection space. The options are as below:
-     *<ul>
-     *<li>PageSize   : Assign how large the page size is for the collection, it will create a collection space with default page size(current it's 64k) if not assign this option
-     *<li>Domain     : Assign which domain does this collection space belong to, this collection space belongs to system domain if not assign this option
-     *</ul>
+	 * <ul>
+	 * <li>PageSize    : Assign how large the page size is for the collection created in this collection space, default to be 64K 
+	 * <li>Domain    : Assign which domain does current collection space belong to, it will belongs to the system domain if not assign this option
+	 * </ul>
+	 * @return the newly created collection space object
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
 	public CollectionSpace createCollectionSpace(String csName, BSONObject options)
@@ -1403,22 +1405,22 @@ public class Sequoiadb {
 		else
 			return false;
 	}
-	
+
 	/**
 	 * @fn Domain createDomain(String domainName, BSONObject options)
 	 * @brief Create a domain.
-	 * @param domainName the name of the domain
-     * @param options the options for the domain. The options are as below:
-     *<ul>
-     *<li>Groups:    the list of the replica groups' names which the domain is going to contain.
-     *               eg: { "Groups": [ "group1", "group2", "group3" ] }
-     *               If this argument is not included, the domain will contain all replica groups in the cluster.
-     *<li>AutoSplit: If this option is set to be true, while creating collection(ShardingType is "hash") in this domain,
-     *               the data of this collection will be split(hash split) into all the groups in this domain automatically.
-     *               However, it won't automatically split data into those groups which were add into this domain later.
-     *               eg: { "Groups": [ "group1", "group2", "group3" ], "AutoSplit: true" }
-     *</ul>
-     * @return the created Domain instance
+	 * @param domainName The name of the creating domain
+	 * @param options The options for the domain. The options are as below:
+	 * <ul>
+	 * <li>Groups    : the list of the replica groups' names which the domain is going to contain.
+     *                 eg: { "Groups": [ "group1", "group2", "group3" ] }
+     *                 If this argument is not included, the domain will contain all replica groups in the cluster. 
+	 * <li>AutoSplit    : If this option is set to be true, while creating collection(ShardingType is "hash") in this domain,
+     *                    the data of this collection will be split(hash split) into all the groups in this domain automatically.
+     *                    However, it won't automatically split data into those groups which were add into this domain later.
+     *                    eg: { "Groups": [ "group1", "group2", "group3" ], "AutoSplit: true" }
+	 * </ul>
+	 * @return the newly created collection space object
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
 	public Domain createDomain(String domainName, BSONObject options) throws BaseException {
