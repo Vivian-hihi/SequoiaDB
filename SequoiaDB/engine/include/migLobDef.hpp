@@ -48,16 +48,23 @@ namespace lobtool
 #define MIG_OP "operation"
 #define MIG_FILE "file"
 #define MIG_IGNOREFE "ignorefe"
+#define MIG_DST_HOST "dsthost"
+#define MIG_DST_SERVICE "dstservice"
+#define MIG_DST_CL "dstcollection"
+#define MIG_DST_USRNAME "dstusrname"
+#define MIG_DST_PASSWD "dstpasswd"
 
 #define MIG_OP_IMPRT "import"
 #define MIG_OP_EXPRT "export"
+#define MIG_OP_MIGRATION "migration"
 
 #define MIG_LOB_TOOL_VERSION 1
 
 enum MIG_OP_TYPE
 {
    MIG_OP_TYPE_IMPRT = 1,
-   MIG_OP_TYPE_EXPRT
+   MIG_OP_TYPE_EXPRT,
+   MIG_OP_TYPE_MIGRATION
 } ;
 
    struct migOptions
@@ -70,6 +77,11 @@ enum MIG_OP_TYPE
       const CHAR *file ;
       MIG_OP_TYPE type ;
       BOOLEAN ignorefe ;
+      const CHAR *dsthost ;
+      const CHAR *dstservice ;
+      const CHAR *dstcl ;
+      const CHAR *dstusrname ;
+      const CHAR *dstpasswd ;
 
       migOptions()
       :hostname( NULL ),
@@ -79,7 +91,12 @@ enum MIG_OP_TYPE
        collection( NULL ),
        file( NULL ),
        type( MIG_OP_TYPE_IMPRT ),
-       ignorefe( FALSE )
+       ignorefe( FALSE ),
+       dsthost( NULL ),
+       dstservice( NULL ),
+       dstcl( NULL ),
+       dstusrname( NULL ),
+       dstpasswd( NULL )
       {
 
       }

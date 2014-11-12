@@ -79,6 +79,33 @@ const UINT32 BUF_SIZE = 2 * 1024 * 1024 ;
          goto error ;
       }
 
+      ele = options.getField( MIG_OP ) ;
+      if ( String != ele.type() )
+      {
+         PD_LOG( PDERROR, "invalid type of %s, options:%s",
+                 MIG_OP, options.toString( FALSE, TRUE ).c_str() ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      else if ( 0 == ossStrcmp( ele.valuestr(), MIG_OP_IMPRT ) )
+      {
+         ops.type = MIG_OP_TYPE_IMPRT ;
+      }
+      else if ( 0 == ossStrcmp( ele.valuestr(), MIG_OP_EXPRT ) )
+      {
+         ops.type = MIG_OP_TYPE_EXPRT ;
+      }
+      else if ( 0 == ossStrcmp( ele.valuestr(), MIG_OP_MIGRATION ) )
+      {
+         ops.type = MIG_OP_TYPE_MIGRATION ;
+      }
+      else
+      {
+         PD_LOG( PDERROR, "unknown operation type:%s", ele.valuestr() ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
       ele = options.getField( MIG_HOSTNAME ) ;
       if ( String != ele.type() )
       {
@@ -99,19 +126,23 @@ const UINT32 BUF_SIZE = 2 * 1024 * 1024 ;
       }
       ops.service = ele.valuestr() ;
 
-      ele = options.getField( MIG_FILE ) ;
-      if ( String != ele.type() )
+      if ( MIG_OP_TYPE_MIGRATION != ops.type )
       {
-         PD_LOG( PDERROR, "invalid type of %s, options:%s",
-                 MIG_FILE, options.toString( FALSE, TRUE ).c_str() ) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
+         ele = options.getField( MIG_FILE ) ;
+         if ( String != ele.type() )
+         {
+            PD_LOG( PDERROR, "invalid type of %s, options:%s",
+                    MIG_FILE, options.toString( FALSE, TRUE ).c_str() ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+         ops.file = ele.valuestr() ;
       }
-      ops.file = ele.valuestr() ;
+
       ele = options.getField( MIG_USRNAME ) ;
       if ( ele.eoo() )
       {
-         ops.usrname = "" ;
+        ops.usrname = "" ;
       }
       else if ( String != ele.type() )
       {
@@ -152,38 +183,90 @@ const UINT32 BUF_SIZE = 2 * 1024 * 1024 ;
       }
       ops.collection = ele.valuestr() ;
 
-      ele = options.getField( MIG_OP ) ;
-      if ( String != ele.type() )
-      {
-         PD_LOG( PDERROR, "invalid type of %s, options:%s",
-                 MIG_OP, options.toString( FALSE, TRUE ).c_str() ) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
-      else if ( 0 == ossStrcmp( ele.valuestr(), MIG_OP_IMPRT ) )
-      {
-         ops.type = MIG_OP_TYPE_IMPRT ;
-      }
-      else if ( 0 == ossStrcmp( ele.valuestr(), MIG_OP_EXPRT ) )
-      {
-         ops.type = MIG_OP_TYPE_EXPRT ;
-      }
-      else
-      {
-         PD_LOG( PDERROR, "unknown operation type:%s", ele.valuestr() ) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
-
       ele = options.getField( MIG_IGNOREFE ) ;
-      if ( Bool != ele.type() )
+      if ( ele.eoo() )
+      {
+         ops.ignorefe = FALSE ;
+      }
+      else if ( Bool != ele.type() )
       {
          PD_LOG( PDERROR, "invalid type of %s, options:%s",
                  MIG_IGNOREFE, options.toString( FALSE, TRUE ).c_str() ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }
-      ops.ignorefe = ele.Bool() ;
+      else
+      {
+         ops.ignorefe = ele.Bool() ;
+      }
+
+      if ( MIG_OP_TYPE_MIGRATION == ops.type )
+      {
+         ele = options.getField( MIG_DST_HOST ) ;
+         if ( String == ele.type() )
+         {
+            ops.dsthost = ele.valuestr() ;
+         }
+         else
+         {
+            PD_LOG( PDERROR, "invalid type of %s, options:%s",
+                    MIG_DST_HOST, options.toString( FALSE, TRUE ).c_str() ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+
+         ele = options.getField( MIG_DST_SERVICE ) ;
+         if ( String == ele.type() )
+         {
+            ops.dstservice = ele.valuestr() ;
+         }
+         else
+         {
+            PD_LOG( PDERROR, "invalid type of %s, options:%s",
+                    MIG_DST_SERVICE, options.toString( FALSE, TRUE ).c_str() ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;         
+         }
+
+         ele = options.getField( MIG_DST_USRNAME ) ;
+         if ( String == ele.type() )
+         {
+            ops.dstusrname = ele.valuestr() ;
+         }
+         else
+         {
+            PD_LOG( PDERROR, "invalid type of %s, options:%s",
+                    MIG_DST_USRNAME, options.toString( FALSE, TRUE ).c_str() ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+
+         ele = options.getField( MIG_DST_PASSWD ) ;
+         if ( String == ele.type() )
+         {
+            ops.dstpasswd = ele.valuestr() ;
+         }
+         else
+         {
+            PD_LOG( PDERROR, "invalid type of %s, options:%s",
+                    MIG_DST_PASSWD, options.toString( FALSE, TRUE ).c_str() ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+
+         ele = options.getField( MIG_DST_CL ) ;
+         if ( String == ele.type() )
+         {
+            ops.dstcl = ele.valuestr() ;
+         }
+         else
+         {
+            PD_LOG( PDERROR, "invalid type of %s, options:%s",
+                    MIG_DST_CL, options.toString( FALSE, TRUE ).c_str() ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+      }
 
       rc = _initDB( ops ) ;
       if ( SDB_OK != rc )
@@ -201,6 +284,10 @@ const UINT32 BUF_SIZE = 2 * 1024 * 1024 ;
       {
          rc = _importLob( ops ) ;
       }
+      else if ( MIG_OP_TYPE_MIGRATION == ops.type )
+      {
+         rc = _migrate( ops ) ;
+      }
 
       if ( SDB_OK != rc )
       {
@@ -214,6 +301,186 @@ const UINT32 BUF_SIZE = 2 * 1024 * 1024 ;
    error:
       goto done ;
    }
+
+   INT32 _migLobTool::_migrate( const migOptions &ops )
+   {
+      INT32 rc = SDB_OK ;
+      bson::BSONObj obj ;
+      sdbclient::sdbCursor cursor ;
+      sdbclient::sdb dstDB ;
+      sdbclient::sdbCollection dstCL ;
+      UINT64 totalNum = 0 ;
+
+      PD_LOG( PDEVENT, "begin to migrate lob" ) ;
+      rc = dstDB.connect( ops.dsthost, ops.dstservice,
+                          ops.dstusrname, ops.dstpasswd ) ;
+
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to connect dst db:%d", rc ) ;
+         goto error ;
+      }
+
+      rc = dstDB.getCollection( ops.dstcl, dstCL ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to get dst collection:%s, rc:%d",
+                 ops.dstcl, rc ) ;
+         goto error ;
+      }
+
+      rc = _cl.listLobs( cursor ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to list lobs in collection:%s, rc:%d",
+                 ops.collection, rc ) ;
+         goto error ;
+      }
+
+      do
+      {
+         rc = cursor.next( obj ) ;
+         if ( SDB_OK == rc )
+         {
+            BSONElement oid ;
+            BSONElement available ;
+
+            oid = obj.getField( FIELD_NAME_LOB_OID ) ;
+            if ( jstOID != oid.type() )
+            {
+               PD_LOG( PDERROR, "invalid object:%s",
+                       obj.toString( FALSE, TRUE ).c_str() ) ;
+               rc = SDB_SYS ;
+               goto error ;
+            }
+
+            available = obj.getField( FIELD_NAME_LOB_AVAILABLE ) ;
+            if ( Bool != available.type() )
+            {
+               PD_LOG( PDERROR, "invalid object:%s",
+                       obj.toString( FALSE, TRUE ).c_str() ) ;
+               rc = SDB_SYS ;
+               goto error ;
+            }
+
+            if ( !available.Bool() )
+            {
+               continue ;
+            }
+
+            rc = _migrateLob2Dst( oid.OID(), dstCL ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "failed to migrate lob:%s, rc:%d",
+                       obj.toString( FALSE, TRUE ).c_str(), rc ) ;
+               if ( SDB_FE == rc && ops.ignorefe )
+               {
+                  rc = SDB_OK ;
+                  continue ;
+               }
+               else
+               {
+                  goto error ;
+               }
+            }
+
+            ++totalNum ;
+         }
+         else if ( SDB_DMS_EOC == rc )
+         {
+            rc = SDB_OK ;
+            break ;
+         }
+         else
+         {
+            PD_LOG( PDERROR, "failed to get next lob:%d", rc ) ;
+            goto error ;
+         }
+      } while ( TRUE ) ;
+
+      PD_LOG( PDEVENT, "lob migration has been done, total num:%lld", totalNum ) ;
+      cout << "lob migration has been done, total num:" << totalNum << endl ;
+   done:
+      dstDB.disconnect() ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _migLobTool::_migrateLob2Dst( const bson::OID &oid,
+                                       sdbclient::sdbCollection &cl )
+   {
+      INT32 rc = SDB_OK ;
+      sdbLob src ;
+      sdbLob dst ;
+
+      rc = cl.createLob( dst, &oid ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to create lob:%s, rc:%d",
+                 oid.str().c_str(), rc ) ;
+         goto error ;
+      }
+
+      rc = _cl.openLob( src, oid ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to open lob[%s] in src collection, rc:%d",
+                 oid.str().c_str(), rc ) ;
+         goto error ;
+      }
+
+      do
+      {
+         UINT32 read = 0 ;
+         rc = src.read( _bufSize,
+                        _buf,
+                        &read ) ;
+         if ( SDB_EOF == rc )
+         {
+            rc = SDB_OK ;
+            break ;
+         }
+         else if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to read lob[%s], rc:%d",
+                    oid.str().c_str(), rc ) ;
+            goto error ;
+         }
+         _written += read ;
+
+         rc = dst.write( _buf, _written ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to write lob[%s], rc:%d",
+                    oid.str().c_str(), rc ) ;
+            goto error ;
+         }
+         _written = 0 ;
+      } while ( TRUE ) ;
+
+      rc = dst.close() ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to close lob:%s, rc:%d",
+                 oid.str().c_str(), rc ) ;
+         goto error ;
+      }
+   done:
+      src.close() ;
+      return rc ;
+   error:
+      {
+      BOOLEAN closed = TRUE ;
+      dst.isClosed( closed ) ;
+      if ( !closed )
+      {
+         dst.close() ;
+      }
+      cl.removeLob( oid ) ;
+      }
+      goto done ;
+   }                      
 
    INT32 _migLobTool::_exportLob( const migOptions &ops )
    {

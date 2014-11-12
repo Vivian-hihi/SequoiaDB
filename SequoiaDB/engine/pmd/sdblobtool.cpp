@@ -44,14 +44,19 @@ using namespace std ;
 #define COMMANDS_OPTIONS \
         ( PMD_COMMANDS_STRING("help", ",h"), "Help" )\
         ( PMD_COMMANDS_STRING("version", ",v"), "Version" )\
-        ( MIG_HOSTNAME, boost::program_options::value<string>(), "The hostname of coord. Default value is localhost." )\
+        ( MIG_HOSTNAME, boost::program_options::value<string>(), "The host name of coord. Default value is localhost." )\
         ( MIG_SERVICE, boost::program_options::value<string>(), "The service name of coord. Default value is \"11810\"." )\
         ( MIG_USRNAME, boost::program_options::value<string>(), "Username" )\
         ( MIG_PASSWD, boost::program_options::value<string>(), "Password" )\
-        ( MIG_OP, boost::program_options::value<string>(), "import/export" )\
+        ( MIG_OP, boost::program_options::value<string>(), "import/export/migration" )\
         ( MIG_CL, boost::program_options::value<string>(), "Full name of collection, eg:\"foo.bar\"" )\
         ( MIG_FILE, boost::program_options::value<string>(), "Full path of file" )\
-        ( MIG_IGNOREFE, "When operation is \"import\", skip the lob which exists in collection" )
+        ( MIG_IGNOREFE, "When operation is \"import\" or \"migration\", skip the lob which exists in collection" )\
+        ( MIG_DST_HOST, boost::program_options::value<string>(), "The hostname of destination coord. Default value is localhost.(Specify it when use migration)" )\
+        ( MIG_DST_SERVICE, boost::program_options::value<string>(), "The service name of destination coord. Default value is localhost.(Specify it when use migration)" )\
+        ( MIG_DST_USRNAME, boost::program_options::value<string>(), "Destination username(Specify it when use migration)" )\
+        ( MIG_DST_PASSWD, boost::program_options::value<string>(), "Destination password(Specify it when use migration)" )\
+        ( MIG_DST_CL, boost::program_options::value<string>(), "Destination collection(Specify it when use migration)" )
 
 static void initDesc( po::options_description &desc )
 {
@@ -68,6 +73,8 @@ static INT32 parseCmdLine( const po::options_description &desc,
    INT32 rc = SDB_OK ;
    bson::BSONObjBuilder builder ;
    doNothing = FALSE ;
+   std::string optype ;
+   BOOLEAN isMig = FALSE ;
 
    if ( vm.count( "help" ) )
    {
@@ -104,10 +111,18 @@ static INT32 parseCmdLine( const po::options_description &desc,
    {
       builder.append( MIG_USRNAME, vm[MIG_USRNAME].as<string>() ) ;
    }
+   else
+   {
+      builder.append( MIG_USRNAME, "" ) ;
+   }
 
    if ( vm.count( MIG_PASSWD ) )
    {
       builder.append( MIG_PASSWD, vm[MIG_PASSWD].as<string>() ) ;
+   }
+   else
+   {
+      builder.append( MIG_PASSWD, "" ) ;
    }
 
    if ( !vm.count( MIG_OP ) )
@@ -117,18 +132,11 @@ static INT32 parseCmdLine( const po::options_description &desc,
       rc = SDB_INVALIDARG ;
       goto error ;
    }
-   else if ( 0 == vm[MIG_OP].as<string>().compare(MIG_OP_IMPRT) ||
-             0 == vm[MIG_OP].as<string>().compare(MIG_OP_EXPRT ) )
-   {
-      builder.append( MIG_OP, vm[MIG_OP].as<string>() ) ;
-   }
    else
    {
-      PD_LOG( PDERROR, "invalid operation type:%s",
-              vm[MIG_OP].as<string>().c_str() ) ;
-      cerr << "Error: invalid operation type:" << vm[MIG_OP].as<string>() << endl ;
-      rc = SDB_INVALIDARG ;
-      goto error ;
+      optype = vm[MIG_OP].as<string>() ;
+      builder.append( MIG_OP, optype ) ;
+      isMig = ( 0 == optype.compare( MIG_OP_MIGRATION ) ) ;
    }
 
    if ( !vm.count( MIG_CL ) )
@@ -140,16 +148,70 @@ static INT32 parseCmdLine( const po::options_description &desc,
    }
    builder.append( MIG_CL, vm[MIG_CL].as<string>() ) ;
 
-   if ( !vm.count( MIG_FILE ) )
+   if ( !isMig )
    {
-      PD_LOG( PDERROR, "local file is not specified" ) ;
-      cerr << "Error: local file must be specified" << endl ;
-      rc = SDB_INVALIDARG ;
-      goto error ;
+      if ( !vm.count( MIG_FILE ) )
+      {
+         PD_LOG( PDERROR, "local file is not specified" ) ;
+         cerr << "Error: local file must be specified" << endl ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      builder.append( MIG_FILE, vm[MIG_FILE].as<string>() ) ;
    }
-   builder.append( MIG_FILE, vm[MIG_FILE].as<string>() ) ;
 
    builder.appendBool( MIG_IGNOREFE, vm.count( MIG_IGNOREFE ) ) ;
+
+   if ( !vm.count( MIG_DST_HOST ) )
+   {
+      builder.append( MIG_DST_HOST, "localhost" ) ;
+   }
+   else
+   {
+      builder.append( MIG_DST_HOST, vm[MIG_DST_HOST].as<string>() ) ;
+   }
+
+   if ( !vm.count( MIG_DST_SERVICE ) )
+   {
+      builder.append( MIG_DST_SERVICE, "11810" ) ;
+   }
+   else
+   {
+      builder.append( MIG_DST_SERVICE, vm[MIG_DST_SERVICE].as<string>() ) ;
+   }
+
+   if ( vm.count( MIG_DST_USRNAME ) )
+   {
+      builder.append( MIG_DST_USRNAME, vm[MIG_DST_USRNAME].as<string>() ) ;
+   }
+   else
+   {
+      builder.append( MIG_DST_USRNAME, "" ) ;
+   }
+
+   if ( vm.count( MIG_DST_PASSWD ) )
+   {
+      builder.append( MIG_DST_PASSWD, vm[MIG_DST_PASSWD].as<string>() ) ;
+   }
+   else
+   {
+      builder.append( MIG_DST_PASSWD, "" ) ;
+   }
+
+   if ( isMig )
+   {
+      if ( vm.count( MIG_DST_CL ) )
+      {
+         builder.append( MIG_DST_CL, vm[MIG_DST_CL].as<string>() ) ; 
+      }
+      else
+      {
+         cout << "Error: destination collection must be specified" << endl ;
+         PD_LOG( PDERROR, "destination collection must be specified" ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+   }
 
    obj = builder.obj() ;
 done:

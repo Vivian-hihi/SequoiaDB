@@ -56,6 +56,8 @@ namespace lobtool
 
       INT32 _importLob( const migOptions &ops ) ;
 
+      INT32 _migrate( const migOptions &ops ) ;
+
    private:
       struct imprtIterator
       {
@@ -105,6 +107,9 @@ namespace lobtool
       INT32 _getLobMeta( const imprtIterator &itr,
                          bson::OID &oid, SINT64 &len,
                          SINT32 &objLen ) ;
+
+      INT32 _migrateLob2Dst( const bson::OID &oid,
+                             sdbclient::sdbCollection &cl ) ;
 
    private:
       OSSFILE _file ;
