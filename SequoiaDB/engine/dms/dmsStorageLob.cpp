@@ -333,13 +333,6 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR, "Delay open failed in write, rc: %d", rc ) ;
       }
 
-      if ( !isOpened() )
-      {
-         rc = SDB_SYS ;
-         PD_LOG( PDERROR, "File[%s] is not open in write", getSuName() ) ;
-         goto error ;
-      }
-
       if ( NULL != dpscb )
       {
          UINT32 csNameLen = ossStrlen( getSuName() ) ;
@@ -389,6 +382,13 @@ namespace engine
       {
          rc = mbContext->mbLock( EXCLUSIVE ) ;
          PD_RC_CHECK( rc, PDERROR, "dms mb context lock failed, rc: %d", rc ) ;
+      }
+
+      if ( !isOpened() )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "File[%s] is not open in write", getSuName() ) ;
+         goto error ;
       }
 
       if ( !dmsAccessAndFlagCompatiblity ( mbContext->mb()->_flag,
@@ -500,17 +500,17 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR, "Delay open failed in update, rc: %d", rc ) ;
       }
 
+      if ( !locked )
+      {
+         rc = mbContext->mbLock( EXCLUSIVE ) ;
+         PD_RC_CHECK( rc, PDERROR, "dms mb context lock failed, rc: %d", rc ) ;
+      }
+
       if ( !isOpened() )
       {
          rc = SDB_SYS ;
          PD_LOG( PDERROR, "File[%s] is not open in update", getSuName() ) ;
          goto error ;
-      }
-
-      if ( !locked )
-      {
-         rc = mbContext->mbLock( EXCLUSIVE ) ;
-         PD_RC_CHECK( rc, PDERROR, "dms mb context lock failed, rc: %d", rc ) ;
       }
 
       if ( !dmsAccessAndFlagCompatiblity ( mbContext->mb()->_flag,
@@ -802,17 +802,17 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR, "Delay open failed in remove, rc: %d", rc ) ;
       }
 
+      if ( !locked )
+      {
+         rc = mbContext->mbLock( EXCLUSIVE ) ;
+         PD_RC_CHECK( rc, PDERROR, "dms mb context lock failed, rc: %d", rc ) ;
+      }
+
       if ( !isOpened() )
       {
          rc = SDB_SYS ;
          PD_LOG( PDERROR, "File[%s] is not open in remove", getSuName() ) ;
          goto error ;
-      }
-
-      if ( !locked )
-      {
-         rc = mbContext->mbLock( EXCLUSIVE ) ;
-         PD_RC_CHECK( rc, PDERROR, "dms mb context lock failed, rc: %d", rc ) ;
       }
 
       if ( !dmsAccessAndFlagCompatiblity ( mbContext->mb()->_flag,
