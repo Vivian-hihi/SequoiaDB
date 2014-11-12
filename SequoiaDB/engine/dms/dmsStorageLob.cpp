@@ -662,17 +662,17 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR, "Delay open failed in read, rc: %d", rc ) ;
       }
 
+      if ( !locked )
+      {
+         rc = mbContext->mbLock( SHARED ) ;
+         PD_RC_CHECK( rc, PDERROR, "dms mb context lock failed, rc: %d", rc ) ;
+      }
+
       if ( !isOpened() )
       {
          rc = SDB_SYS ;
          PD_LOG( PDERROR, "File[%s] is not open in read", getSuName() ) ;
          goto error ;
-      }
-
-      if ( !locked )
-      {
-         rc = mbContext->mbLock( SHARED ) ;
-         PD_RC_CHECK( rc, PDERROR, "dms mb context lock failed, rc: %d", rc ) ;
       }
 
       rc = _find( record, mbContext->clLID(), page, blk ) ;
@@ -1234,6 +1234,12 @@ namespace engine
          goto error ;
       }
 
+      if ( _needDelayOpen )
+      {
+         rc = _delayOpen() ;
+         PD_RC_CHECK( rc, PDERROR, "Delay open failed in read, rc: %d", rc ) ;
+      }
+
       if ( !locked )
       {
          rc = mbContext->mbLock( SHARED ) ;
@@ -1242,6 +1248,13 @@ namespace engine
             PD_LOG( PDERROR, "failed to get lock:%d", rc ) ;
             goto error ;
          }
+      }
+
+      if ( !isOpened() )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "File[%s] is not open in read", getSuName() ) ;
+         goto error ;
       }
 
       do
