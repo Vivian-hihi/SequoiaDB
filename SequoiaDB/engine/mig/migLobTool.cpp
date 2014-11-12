@@ -477,7 +477,11 @@ const UINT32 BUF_SIZE = 2 * 1024 * 1024 ;
       {
          dst.close() ;
       }
-      cl.removeLob( oid ) ;
+
+      if ( SDB_FE != rc )
+      {
+         cl.removeLob( oid ) ;
+      }
       }
       goto done ;
    }                      
