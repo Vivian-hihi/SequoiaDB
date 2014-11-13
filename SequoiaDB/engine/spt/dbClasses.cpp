@@ -3775,7 +3775,7 @@ error:
 static JSBool domain_list_group( JSContext *cx, uintN argc, jsval *vp )
 {
    INT32 rc = SDB_OK ;
-   PD_TRACE_ENTRY( SDB_DOMAIN_LIST_CS ) ;
+   PD_TRACE_ENTRY( SDB_DOMAIN_LIST_GROUP ) ;
    JSBool ret = JS_TRUE ;
    sdbDomainHandle *domain = NULL ;
    sdbCursorHandle *handle = NULL ;
@@ -3800,7 +3800,7 @@ static JSBool domain_list_group( JSContext *cx, uintN argc, jsval *vp )
    JS_SET_RVAL ( cx , vp , OBJECT_TO_JSVAL ( objCursor ) ) ;
    VERIFY ( JS_SetPrivate ( cx , objCursor , handle ) ) ;
 done:
-   PD_TRACE_EXIT( SDB_DOMAIN_LIST_CS ) ;
+   PD_TRACE_EXIT( SDB_DOMAIN_LIST_GROUP ) ;
    return ret ;
 error:
    SAFE_RELEASE_CURSOR ( handle ) ;
