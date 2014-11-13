@@ -1835,6 +1835,17 @@ SDB_EXPORT INT32 sdbListCollectionSpacesInDomain( sdbDomainHandle cHandle,
 SDB_EXPORT INT32 sdbListCollectionsInDomain( sdbDomainHandle cHandle,
                                              sdbCursorHandle *cursor ) ;
 
+/** \fn INT32 sdbListGroupsInDomain( sdbDomainHandle cHandle,
+                                     sdbCursorHandle *cursor ) ;
+    \brief list the groups in domain.
+    \param [in] cHandle The domain handle
+    \param [out] handle The cusor handle of result
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+SDB_EXPORT INT32 sdbListGroupsInDomain( sdbDomainHandle cHandle,
+                                        sdbCursorHandle *cursor ) ;
+
 /** \fn INT32 sdbInvalidateCache( sdbConnectionHandle cHandle,
                                   bson *condition )
     \brief invalidate cache on specified nodes.

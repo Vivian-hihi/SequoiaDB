@@ -6988,6 +6988,39 @@ error:
    goto done ;
 }
 
+SDB_EXPORT INT32 sdbListGroupsInDomain( sdbDomainHandle cHandle,
+                                        sdbCursorHandle *cursor )
+{
+   INT32 rc = SDB_OK ;
+   sdbDomainStruct *s = ( sdbDomainStruct * )cHandle ;
+   sdbConnectionHandle conn = SDB_INVALID_HANDLE ;
+   bson condition ;
+   BOOLEAN bsoninit = FALSE ;
+
+   HANDLE_CHECK( cHandle, s, SDB_HANDLE_TYPE_DOMAIN ) ;
+   if ( !cursor )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   BSON_INIT( condition ) ;
+   BSON_APPEND( condition, FIELD_NAME_NAME, s->_domainName, string) ;
+   BSON_FINISH( condition ) ;
+
+   conn = s->_connection ;
+   rc = sdbListDomains( conn, &condition, NULL, NULL, cursor ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+done:
+   BSON_DESTROY( condition ) ;
+   return rc ;
+error:
+   goto done ;
+}
+
 SDB_EXPORT INT32 sdbInvalidateCache( sdbConnectionHandle cHandle,
                                      bson *condition )
 {

@@ -105,7 +105,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNCONTEXTLISTLOB__PREPAGEDATA ) ;
       BSONObj obj ;
-      for ( INT32 i = 0; i < 10; ++i )
+      for ( INT32 i = 0; i < 100; ++i )
       {
          rc = _fetchLobHead ?_getMetaInfo( cb, obj ) :
                              _getSequenceInfo( cb, obj ) ;
