@@ -35,6 +35,7 @@
 #include "migLobTool.hpp"
 #include "utilParam.hpp"
 #include "pmdDef.hpp"
+#include "ossVer.hpp"
 #include <iostream>
 
 using namespace std ;
@@ -231,7 +232,7 @@ INT32 main( INT32 argc, CHAR *argv[] )
    
    sdbEnablePD( LOG_FILE ) ;
 
-   cout << "Version of tool: 1.0" << endl ;
+   ossPrintVersion("sdblobtool version") ;
 
    initDesc( desc ) ;
 
