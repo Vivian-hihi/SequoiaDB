@@ -264,7 +264,7 @@
         <strow>
           <stentry>-23</stentry>
           <stentry>集合不存在</stentry>
-          <stentry>1. 检查集合相关参数是填写写正确。<fig></fig>2. 检查相关集合是否存在。</stentry>          
+          <stentry>1. 检查集合相关参数是否填写正确。<fig></fig>2. 检查相关集合是否存在。</stentry>          
         </strow>                      
       </simpletable>      
     </section>
