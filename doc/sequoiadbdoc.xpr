@@ -169,6 +169,7 @@
                             <file name="administration/database/database_tool/topics/export.dita"/>
                             <file name="administration/database/database_tool/topics/import_en.dita"/>
                             <file name="administration/database/database_tool/topics/import.dita"/>
+                            <file name="administration/database/database_tool/topics/lob_tool.dita"/>
                             <file name="administration/database/database_tool/topics/sdbinspect_en.dita"/>
                             <file name="administration/database/database_tool/topics/sdbinspect.dita"/>
                             <file name="administration/database/database_tool/topics/sdbinspt_en.dita"/>

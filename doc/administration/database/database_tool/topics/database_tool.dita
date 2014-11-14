@@ -10,5 +10,6 @@
     <p><xref href="tool_sdbtop.dita">数据库性能监控工具 — sdbtop</xref></p>
     <p><xref href="sdbinspect.dita">数据库集群节点数据一致性检测工具 — sdbinspect</xref></p>
     <p><xref href="sdbsupport.dita">数据库信息收集工具 — sdbsupport</xref></p>
+    <p><xref href="lob_tool.dita">大对象（LOB）工具 — sdblobtool</xref></p>
   </body>
 </topic>
