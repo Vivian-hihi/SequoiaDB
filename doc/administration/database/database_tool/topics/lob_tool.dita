@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
 <topic id="topic_lwx_vjs_bq">
-  <title>LOB 工具 — sdblobtool</title>
+  <title>大对象（LOB）工具 — sdblobtool</title>
   <body>
     <p>sdblobtool 是一款用于管理集合大对象的工具。</p>
     <section>
