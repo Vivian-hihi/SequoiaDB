@@ -1,5 +1,4 @@
 //Auto generated index for searching.
-w["yyyy-mm-dd-hh"]="44*1,50*2,1188*1";
 w["yyyy-mm-dd-hh.mm.ss.ffffff"]="44*1,50*4";
 w["yyyy-mm-dd-hh:mm:ss"]="1188*1";
 w["y，按回车，同意"]="724*1,725*1";
