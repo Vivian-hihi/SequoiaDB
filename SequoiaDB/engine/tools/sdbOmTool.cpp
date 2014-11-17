@@ -237,12 +237,12 @@ namespace engine
          vector<string> columns ;
          boost::algorithm::split( columns, *itr, boost::is_any_of("\t ") ) ;
 
-         for ( vector<string>::iterator itr2 = columns.begin();
-               itr2 != columns.end(); )
+         for ( vector<string>::iterator itr2 = columns.begin() ;
+               itr2 != columns.end() ; )
          {
             if ( itr2->empty() )
             {
-               columns.erase( itr2++ ) ;
+               itr2 = columns.erase( itr2 ) ;
             }
             else
             {
