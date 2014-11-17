@@ -130,6 +130,8 @@
 		</copy>
 
 		<copy file="${CODE_DIR}/driver/postgresql/sdb_fdw.so" tofile="${DRIVER.DIR}/postgresql/sdb_fdw.so" />
+		<copy file="${CODE_DIR}/driver/postgresql/sdb_fdw.control" tofile="${DRIVER.DIR}/postgresql/sdb_fdw.control" />
+		<copy file="${CODE_DIR}/driver/postgresql/sdb_fdw--1.0.sql" tofile="${DRIVER.DIR}/postgresql/sdb_fdw--1.0.sql" />
 
 	  	<property name="test-type-linux-list" value="5.3.3,5.3.8,5.3.10,5.3.15,5.4.6,5.5.0" />
 	  	<property name="test-type-win32-list" value="5.3.18,5.4.15" />
@@ -250,6 +252,8 @@
 		<copy file="${CODE_DIR}/driver/hadoop/hive/${cdh.hive_connector.filename}" tofile="${RELEASE_DIR}/sequoiadb/hadoop/${cdh.hive_connector.filename}" />
 
 		<copy file="${CODE_DIR}/driver/postgresql/sdb_fdw.so" tofile="${RELEASE_DIR}/sequoiadb/postgresql/sdb_fdw.so" />
+		<copy file="${CODE_DIR}/driver/postgresql/sdb_fdw.control" tofile="${RELEASE_DIR}/sequoiadb/postgresql/sdb_fdw.control" />
+		<copy file="${CODE_DIR}/driver/postgresql/sdb_fdw--1.0.sql" tofile="${RELEASE_DIR}/sequoiadb/postgresql/sdb_fdw--1.0.sql" />
 		
 		<if>
 			<equals arg1="${os.arch}" arg2="ppc64" />
