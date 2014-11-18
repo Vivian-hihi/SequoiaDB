@@ -57,32 +57,6 @@
         </replace>          
     </target>
 
-    <!-- <target name="Check_CPP_Testcases_Report" depends="Test-Driver-CPP">
-        <trycatch property="e">
-            <try>
-                <xmlproperty collapseAttributes="true">
-                    <fileset dir="${reports.path}" includes="*" />
-                </xmlproperty>
-            </try>
-            <catch>
-                <echo message="error=${e}" />
-                <property name="error_code" value="-1" />
-                <echo message="error_code=${error_code}" />
-            </catch>
-        </trycatch>
-        <if>
-            <equals arg1="${error_code}" arg2="-1" />
-            <then>
-                <copy todir="/opt/error_test_report" >
-                    <fileset dir="${reports.path}" includes="**/*" />
-                </copy>
-                <delete includeemptydirs="true">
-                    <fileset dir="${reports.path}" includes="**/*" />
-                </delete>
-            </then>
-        </if>
-    </target> -->
-
     <target name="test-one-case">    
         <echo message="Exec ${case-full-name} ${append}" />
         <echo message="Env:LD_LIBRARY_PATH=/opt/sequoiadb/lib" />
@@ -99,32 +73,44 @@
         <echo message="Env:LD_LIBRARY_PATH=/opt/sequoiadb/lib" />
         <echo message="The testcase ${test.case.name} path on ${testcases.path}" />
 
-        <exec executable="${case-full-name}" dir="${testcases.path}" timeout="1200000" outputproperty="screen.output" resultproperty="ret.code" failonerror="false">
-            <arg line=" ${append} " />
-            <env key="LD_LIBRARY_PATH" path="${LD_LIBRARY_PATH}:/opt/sequoiadb/lib" />
-        </exec>
-        <echo message="${screen.output}" />
-        <echo message="The result = ${ret.code} after exec ${test.case.name} testcase." />
-
-        <trycatch property="e">
+        <trycatch>
             <try>
-                <xmlproperty file="${reports.path}/${test.case.name}.xml" collapseAttributes="true" />
+                <echo message="############################begin" />
+                <exec executable="${case-full-name}" dir="${testcases.path}" timeout="1200000" outputproperty="screen.output" resultproperty="ret.code" failonerror="false">
+                    <arg line=" ${append} " />
+                    <env key="LD_LIBRARY_PATH" path="${LD_LIBRARY_PATH}:/opt/sequoiadb/lib" />
+                </exec>
+                <echo message="############################end" />
             </try>
-            <catch>
-                <echo message="error=${e}" />
-                <property name="error_code" value="-1" />
-                <echo message="error_code=${error_code}" />
-            </catch>
+            <catch></catch>
             <finally>
-                <if>
-                    <equals arg1="${error_code}" arg2="-1" />
-                    <then>
-                        <copy file="${reports.path}/${test.case.name}.xml" todir="/opt/error_test_report" />
-                        <delete file="${reports.path}/${test.case.name}.xml" />
-                    </then>
-                </if>
+                <trycatch property="e">
+                    <try>
+                        <xmlproperty file="${reports.path}/${test.case.name}.xml" includeSemanticAttribute="true" />
+                        <echo message="############################hello" /> 
+                    </try>
+                    <catch>
+                        <echo message="error=${e}" />
+                        <property name="error_code" value="-1" />
+                        <echo message="error_code=${error_code}" />
+                    </catch>
+                    <finally>
+                        <if>
+                            <equals arg1="${error_code}" arg2="-1" />
+                            <then>
+                                <echo message="############################world" />
+                                <copy file="${reports.path}/${test.case.name}.xml" todir="/opt/error_test_report" />
+                                <delete file="${reports.path}/${test.case.name}.xml" />
+                            </then>
+                        </if>
+                    </finally>
+                </trycatch>
+                <echo message="${screen.output}" />
+                <echo message="The result = ${ret.code} after exec ${test.case.name} testcase." />
             </finally>
         </trycatch>
+
+        
     </target>
 </project>
 
