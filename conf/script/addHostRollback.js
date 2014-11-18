@@ -74,7 +74,7 @@ function main()
    {
       return RET_JSON ;
    }
-   // get os infomation
+   // get os information
    var osInfo = System.type() ;
    for ( var i = 0; i < arrLen; i++ )
    {
@@ -83,7 +83,7 @@ function main()
       var ip           = obj[IP] ;
       var user         = obj[User] ;
       var passwd       = obj[Passwd] ;
-      var sshport      = parseInt(obj[Passwd]) ;
+      var sshport      = parseInt(obj[SshPort]) ;
       var installPath  = obj[InstallPath] ; 
       var retObj       = new addHostRollbackResult() ;
       retObj[IP]       = ip ;
