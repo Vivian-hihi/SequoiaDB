@@ -70,18 +70,20 @@
                 <property name="error_code" value="-1" />
                 <echo message="error_code=${error_code}" />
             </catch>
+            <finally>
+                <if>
+                    <equals arg1="${error_code}" arg2="-1" />
+                    <then>
+                        <copy todir="/opt/error_test_report" >
+                            <fileset dir="${reports.path}" includes="**/*" />
+                        </copy>
+                        <delete includeemptydirs="true">
+                            <fileset dir="${reports.path}" includes="**/*" />
+                        </delete>
+                    </then>
+                </if>
+            </finally>
         </trycatch>
-        <if>
-            <equals arg1="${error_code}" arg2="-1" />
-            <then>
-                <copy todir="/opt/error_test_report" >
-                    <fileset dir="${reports.path}" includes="**/*" />
-                </copy>
-                <delete includeemptydirs="true">
-                    <fileset dir="${reports.path}" includes="**/*" />
-                </delete>
-            </then>
-        </if>
     </target>
 
     <target name="test-one-case">  

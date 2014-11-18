@@ -104,7 +104,33 @@
             <env key="LD_LIBRARY_PATH" path="${LD_LIBRARY_PATH}:/opt/sequoiadb/lib" />
         </exec>
         <echo message="${screen.output}" />
-        <echo message="The result = ${ret.code} after exec ${test.case.name} testcase." />     
+        <echo message="The result = ${ret.code} after exec ${test.case.name} testcase." />
+
+        <trycatch property="e">
+            <try>
+                <xmlproperty file="${reports.path}/${test.case.name}.xml" collapseAttributes="true" />
+            </try>
+            <catch>
+                <echo message="error=${e}" />
+                <property name="error_code" value="-1" />
+                <echo message="error_code=${error_code}" />
+            </catch>
+            <finally>
+                <if>
+                    <equals arg1="${error_code}" arg2="-1" />
+                    <then>
+                        <copy file="${reports.path}/${test.case.name}.xml" todir="/opt/error_test_report" />
+                        <<!-- copy todir="/opt/error_test_report" >
+                            <fileset dir="${reports.path}" includes="**/*" />
+                        </copy> -->
+                        <delete file="${reports.path}/${test.case.name}.xml" />
+                        <!-- <delete includeemptydirs="true">
+                            <fileset dir="${reports.path}" includes="**/*" />
+                        </delete> -->
+                    </then>
+                </if>
+            </finally>
+        </trycatch>
     </target>
 </project>
 
