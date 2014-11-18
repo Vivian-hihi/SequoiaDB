@@ -8,7 +8,7 @@
 
 <!--@param ${test_name}: will not test name. -->
 
-<project name="Exec-CPP-Testcases" default="Check_CPP_Testcases_Report">
+<project name="Exec-CPP-Testcases" default="Test-Driver-CPP">
     <property name="append" value=" --gtest_filter=${includes.dir.patterns}  --gtest_output=xml:${reports.path}/ " />
     <taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
         <classpath>
@@ -57,7 +57,7 @@
         </replace>          
     </target>
 
-    <target name="Check_CPP_Testcases_Report" depends="Test-Driver-CPP">
+    <!-- <target name="Check_CPP_Testcases_Report" depends="Test-Driver-CPP">
         <trycatch property="e">
             <try>
                 <xmlproperty collapseAttributes="true">
@@ -81,7 +81,7 @@
                 </delete>
             </then>
         </if>
-    </target>
+    </target> -->
 
     <target name="test-one-case">    
         <echo message="Exec ${case-full-name} ${append}" />
