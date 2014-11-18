@@ -61,7 +61,7 @@
     <target name="Check_C_Testcases_Report" depends="Test-Driver-C">
         <trycatch property="e">
             <try>
-                <xmlproperty validate="true">
+                <xmlproperty semanticAttributes="true">
                     <fileset dir="${reports.path}" includes="*" />
                 </xmlproperty>
             </try>
