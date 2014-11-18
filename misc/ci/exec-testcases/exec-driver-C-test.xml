@@ -8,7 +8,7 @@
 
 <!--@param ${test_name}: will not test name. -->
 
-<project name="Exec-C-Testcases" default="Test-Driver-C">
+<project name="Exec-C-Testcases" default="Check_C_Testcases_Report">
     <property file="${ci.properties.path}" />
     <property name="append" value=" --gtest_filter=${includes.dir.patterns}  --gtest_output=xml:${reports.path}/ " />
     <taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
@@ -17,7 +17,7 @@
         </classpath>
     </taskdef>
 
-    <target name="Clean-C-Reports" depends="">
+    <target name="Clean-C-Reports">
         <echo message="Reports' path is ${reports.path}" />
         <delete dir="${reports.path}" failonerror="false" />
         <mkdir dir="${reports.path}" />
@@ -58,7 +58,33 @@
         </replace> 
     </target>
 
-    <target name="test-one-case" depends="">  
+    <target name="Check_C_Testcases_Report" depends="Test-Driver-C">
+        <trycatch property="e">
+            <try>
+                <xmlproperty validate="true">
+                    <fileset dir="${reports.path}" includes="*" />
+                </xmlproperty>
+            </try>
+            <catch>
+                <echo message="error=${e}" />
+                <property name="error_code" value="-1" />
+                <echo message="error_code=${error_code}" />
+            </catch>
+        </trycatch>
+        <if>
+            <equals arg1="${error_code}" arg2="-1" />
+            <then>
+                <copy todir="/opt/error_test_report" >
+                    <fileset dir="${reports.path}" includes="**/*" />
+                </copy>
+                <delete includeemptydirs="true">
+                    <fileset dir="${reports.path}" includes="**/*" />
+                </delete>
+            </then>
+        </if>
+    </target>
+
+    <target name="test-one-case">  
         <echo message="Exec ${case-full-name} ${append}" />
         <echo message="Env:LD_LIBRARY_PATH=/opt/sequoiadb/lib" />
         <echo message="####case-full-name=${case-full-name}####" />
@@ -79,7 +105,7 @@
             <env key="LD_LIBRARY_PATH" path="${LD_LIBRARY_PATH}:/opt/sequoiadb/lib" />
         </exec>
         <echo message="${screen.output}" />
-        <echo message="The result = ${ret.code} after exec ${test.case.name} testcase." />       
+        <echo message="The result = ${ret.code} after exec ${test.case.name} testcase." />    
     </target>
 </project>
 

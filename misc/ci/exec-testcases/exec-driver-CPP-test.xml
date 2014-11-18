@@ -8,7 +8,7 @@
 
 <!--@param ${test_name}: will not test name. -->
 
-<project name="Exec-CPP-Testcases" default="Test-Driver-CPP">
+<project name="Exec-CPP-Testcases" default="Check_CPP_Testcases_Report">
     <property name="append" value=" --gtest_filter=${includes.dir.patterns}  --gtest_output=xml:${reports.path}/ " />
     <taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
         <classpath>
@@ -16,7 +16,7 @@
         </classpath>
     </taskdef>
 
-    <target name="Clean-CPP-Reports" depends="">
+    <target name="Clean-CPP-Reports">
         <echo message="Reports' path is ${reports.path}" />
         <delete dir="${reports.path}" failonerror="false" />
         <mkdir dir="${reports.path}" />
@@ -57,7 +57,33 @@
         </replace>          
     </target>
 
-    <target name="test-one-case" depends="">    
+    <target name="Check_CPP_Testcases_Report" depends="Test-Driver-CPP">
+        <trycatch property="e">
+            <try>
+                <xmlproperty validate="true">
+                    <fileset dir="${reports.path}" includes="*" />
+                </xmlproperty>
+            </try>
+            <catch>
+                <echo message="error=${e}" />
+                <property name="error_code" value="-1" />
+                <echo message="error_code=${error_code}" />
+            </catch>
+        </trycatch>
+        <if>
+            <equals arg1="${error_code}" arg2="-1" />
+            <then>
+                <copy todir="/opt/error_test_report" >
+                    <fileset dir="${reports.path}" includes="**/*" />
+                </copy>
+                <delete includeemptydirs="true">
+                    <fileset dir="${reports.path}" includes="**/*" />
+                </delete>
+            </then>
+        </if>
+    </target>
+
+    <target name="test-one-case">    
         <echo message="Exec ${case-full-name} ${append}" />
         <echo message="Env:LD_LIBRARY_PATH=/opt/sequoiadb/lib" />
         <echo message="####case-full-name=${case-full-name}####" />
