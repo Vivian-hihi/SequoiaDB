@@ -60,7 +60,7 @@
     <target name="Check_CPP_Testcases_Report" depends="Test-Driver-CPP">
         <trycatch property="e">
             <try>
-                <xmlproperty semanticAttributes="true">
+                <xmlproperty collapseAttributes="true">
                     <fileset dir="${reports.path}" includes="*" />
                 </xmlproperty>
             </try>
