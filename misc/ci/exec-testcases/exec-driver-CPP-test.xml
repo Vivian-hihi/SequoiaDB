@@ -120,13 +120,7 @@
                     <equals arg1="${error_code}" arg2="-1" />
                     <then>
                         <copy file="${reports.path}/${test.case.name}.xml" todir="/opt/error_test_report" />
-                        <<!-- copy todir="/opt/error_test_report" >
-                            <fileset dir="${reports.path}" includes="**/*" />
-                        </copy> -->
                         <delete file="${reports.path}/${test.case.name}.xml" />
-                        <!-- <delete includeemptydirs="true">
-                            <fileset dir="${reports.path}" includes="**/*" />
-                        </delete> -->
                     </then>
                 </if>
             </finally>
