@@ -41,7 +41,7 @@ namespace lobtool
 {
 #define MIG_FILE_EYE "SDBLOBF"
 #define MIG_HOSTNAME "hostname"
-#define MIG_SERVICE "service"
+#define MIG_SERVICE "svcname"
 #define MIG_USRNAME "usrname"
 #define MIG_PASSWD "passwd"
 #define MIG_CL "collection"
