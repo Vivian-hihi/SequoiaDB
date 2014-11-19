@@ -4716,8 +4716,6 @@ namespace sdbclient
    done:
       PD_TRACE_EXITRC ( SDB_CLIENT_GETCREATETIME2, rc );
       return rc ;
-   error:
-      goto done ;
    }
 
    //PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_ISCLOSED, "_sdbLobImpl::isClosed" )
