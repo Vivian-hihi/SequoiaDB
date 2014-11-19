@@ -42,7 +42,7 @@
           <stentry>否</stentry>
         </strow>
         <strow>
-          <stentry>service</stentry>
+          <stentry>svcname</stentry>
           <stentry>Coord 服务名</stentry>
           <stentry>11810</stentry>
           <stentry>否</stentry>
@@ -93,7 +93,7 @@
           <stentry>否</stentry>
         </strow>
         <strow>
-          <stentry>service</stentry>
+          <stentry>svcname</stentry>
           <stentry>Coord 服务名</stentry>
           <stentry>11810</stentry>
           <stentry>否</stentry>
@@ -156,7 +156,7 @@
           <stentry>否</stentry>
         </strow>
         <strow>
-          <stentry>service</stentry>
+          <stentry>svcname</stentry>
           <stentry>Coord 服务名</stentry>
           <stentry>11810</stentry>
           <stentry>否</stentry>
@@ -270,9 +270,9 @@
     </section>
     <section>
       <title>示例</title>      
-      <p>将集合 foo.bar 中的大对象导出至本地文件 mylob 中。<codeblock>./sdblobtool --operation export --hostname 192.168.1.1 --service 11810 --collection foo.bar --file /opt/mylob</codeblock></p>
-      <p>将本地文件 mylob 中的大对象导入至集合 foo.bar 中，当遇到已存在的大对象时直接跳过。<codeblock>./sdblobtool --operation import --hostname 192.168.1.1 --service 11810 --collection foo.bar --file /opt/mylob --ignorefe</codeblock></p>
-      <p>将集合中的大对象复制到另一个集合中。<codeblock>./sdblobtool --operation migration --hostname 192.168.1.1 --service 11810 --collection foo.bar --dsthost 192.168.1.2 --dstservice 11810 --dstcollection foo.bar1</codeblock></p>      
+      <p>将集合 foo.bar 中的大对象导出至本地文件 mylob 中。<codeblock>./sdblobtool --operation export --hostname 192.168.1.1 --svcname 11810 --collection foo.bar --file /opt/mylob</codeblock></p>
+      <p>将本地文件 mylob 中的大对象导入至集合 foo.bar 中，当遇到已存在的大对象时直接跳过。<codeblock>./sdblobtool --operation import --hostname 192.168.1.1 --svcname 11810 --collection foo.bar --file /opt/mylob --ignorefe</codeblock></p>
+      <p>将集合中的大对象复制到另一个集合中。<codeblock>./sdblobtool --operation migration --hostname 192.168.1.1 --svcname 11810 --collection foo.bar --dsthost 192.168.1.2 --dstservice 11810 --dstcollection foo.bar1</codeblock></p>      
     </section>    
   </body>
 </topic>
