@@ -58,7 +58,6 @@ namespace engine
       dmsExtentID indexCBExtent = DMS_INVALID_EXTENT ;
       INT64 costEstimation = 0 ;
       INT32 dir = 1 ;
-      _estimateDetail detail ;
 
       rc = _su->index()->getIndexCBExtent( mbContext, pIndexName,
                                            indexCBExtent ) ;
@@ -69,7 +68,7 @@ namespace engine
 
       // call estimate index to get estimation and most importantly the scan
       // direction
-      rc = _estimateIndex ( indexCBExtent, costEstimation, dir, detail ) ;
+      rc = _estimateIndex ( indexCBExtent, costEstimation, dir ) ;
       if ( rc )
       {
          if ( SDB_IXM_UNEXPECTED_STATUS == rc )
@@ -80,7 +79,7 @@ namespace engine
          goto error ;
       }
 
-      rc = _useIndex ( indexCBExtent, dir, predSet, detail.matchAll ) ;
+      rc = _useIndex ( indexCBExtent, dir, predSet ) ;
 
    done :
       PD_TRACE_EXITRC ( SDB__OPTACCPLAN__OPTHINT, rc );
@@ -100,7 +99,6 @@ namespace engine
       dmsExtentID indexCBExtent = DMS_INVALID_EXTENT ;
       INT64 costEstimation = 0 ;
       INT32 dir = 1 ;
-      _estimateDetail detail ;
 
       rc = _su->index()->getIndexCBExtent( mbContext, indexOID,
                                            indexCBExtent ) ;
@@ -110,7 +108,7 @@ namespace engine
       }
       // call estimate index to get estimation and most importantly the scan
       // direction
-      rc = _estimateIndex ( indexCBExtent, costEstimation, dir, detail ) ;
+      rc = _estimateIndex ( indexCBExtent, costEstimation, dir ) ;
       if ( rc )
       {
          if ( SDB_IXM_UNEXPECTED_STATUS == rc )
@@ -120,7 +118,7 @@ namespace engine
          }
          goto error ;
       }
-      rc = _useIndex ( indexCBExtent, dir, predSet, detail.matchAll ) ;
+      rc = _useIndex ( indexCBExtent, dir, predSet ) ;
 
    done :
       PD_TRACE_EXITRC ( SDB__OPTACCPLAN__OPTHINT2, rc );
@@ -202,8 +200,7 @@ namespace engine
    PD_TRACE_DECLARE_FUNCTION ( SDB__OPTACCPLAN__ESTINX, "_optAccessPlan::_estimateIndex" )
    INT32 _optAccessPlan::_estimateIndex ( dmsExtentID indexCBExtent,
                                           INT64 &costEstimation,
-                                          INT32 &dir,
-                                          _estimateDetail &detail )
+                                          INT32 &dir )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__OPTACCPLAN__ESTINX );
@@ -323,12 +320,6 @@ namespace engine
          queryFactor = OSS_MAX(0.0f, queryFactor) ;
 
          costEstimation = costEstimation*queryFactor*orderFactor ;
-         //detail.matchAll = ( 0 != matchedFields ) &&
-         //                  ( matchedFields == nQueryFields ) &&
-         //                  matchedFields <= idxPattern.nFields() ;
-         // some predicates need to compare with record.(eg: $not, $regex)
-         // we have not found a way to solve this problem -- yunwu
-         detail.matchAll = FALSE ;
       }
       PD_LOG ( PDDEBUG, "Index Scan Estimation: %s : %d",
                indexCB.getName (), costEstimation ) ;
@@ -345,8 +336,7 @@ namespace engine
                                           INT32 indexID,
                                           INT64 &costEstimation,
                                           INT32 &dir,
-                                          dmsExtentID &indexCBExtent,
-                                          _estimateDetail &detail )
+                                          dmsExtentID &indexCBExtent )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__OPTACCPLAN__ESTINX2 ) ;
@@ -357,7 +347,7 @@ namespace engine
       {
          goto done ;
       }
-      rc = _estimateIndex ( indexCBExtent, costEstimation, dir, detail ) ;
+      rc = _estimateIndex ( indexCBExtent, costEstimation, dir ) ;
 
    done :
       PD_TRACE_EXITRC ( SDB__OPTACCPLAN__ESTINX2, rc );
@@ -374,8 +364,7 @@ namespace engine
    PD_TRACE_DECLARE_FUNCTION ( SDB__OPTACCPLAN__USEINX, "_optAccessPlan::_useIndex" )
    INT32 _optAccessPlan::_useIndex ( dmsExtentID indexCBExtent,
                                      INT32 dir,
-                                     const rtnPredicateSet &predSet,
-                                     BOOLEAN matchAll )
+                                     const rtnPredicateSet &predSet )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__OPTACCPLAN__USEINX );
@@ -437,7 +426,6 @@ namespace engine
          const CHAR *idxName = indexCB.getName() ;
          ossMemcpy( _idxName, idxName, ossStrlen( idxName ) ) ;
          }
-         _matcher.setMatchesAll( matchAll ) ;
       }
 
    done :
@@ -452,7 +440,6 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       dmsMBContext *mbContext = NULL ;
-      BOOLEAN matchAll = FALSE ;
 
       PD_TRACE_ENTRY ( SDB__OPTACCPLAN_OPT ) ;
 
@@ -491,8 +478,7 @@ namespace engine
                INT64 costEst ;
                dmsExtentID extID ;
                INT32 dir ;
-               _estimateDetail detail ;
-               rc = _estimateIndex ( mbContext, i, costEst, dir, extID, detail ) ;
+               rc = _estimateIndex ( mbContext, i, costEst, dir, extID ) ;
                if ( SDB_IXM_NOTEXIST == rc )
                {
                   break ;
@@ -501,7 +487,6 @@ namespace engine
                {
                   if ( costEst < bestCostEstimation )
                   {
-                     matchAll = detail.matchAll ;
                      bestMatchedIndexCBExtent = extID ;
                      bestMatchedIndexDirection = dir ;
                      bestCostEstimation = costEst ;
@@ -521,7 +506,7 @@ namespace engine
                PD_LOG ( PDDEBUG, "Use Index Scan" ) ;
                rc = _useIndex ( bestMatchedIndexCBExtent,
                                 bestMatchedIndexDirection,
-                                predSet, matchAll ) ;
+                                predSet ) ;
                if ( rc )
                {
                   PD_LOG ( PDWARNING, "Failed to use index %d",

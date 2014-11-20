@@ -99,17 +99,6 @@ namespace engine
       ossAtomicSigned32 _useCount ;
       BOOLEAN _sortRequired ; // whether we need to explicit sort the resultset
    private:
-      struct _estimateDetail
-      {
-         BOOLEAN matchAll ;
-         _estimateDetail()
-         :matchAll( FALSE )
-         {
-
-         }
-      } ;
-
-   private:
       INT32 _optimizeHint ( _dmsMBContext *mbContext,
                             const CHAR *pIndexName,
                             const rtnPredicateSet &predSet ) ;
@@ -124,18 +113,17 @@ namespace engine
 
       // output cost estimation, dir, and indexCBExtent
       INT32 _estimateIndex ( dmsExtentID indexCBExtent, INT64 &costEstimation,
-                             INT32 &dir, _estimateDetail &detail ) ;
+                             INT32 &dir ) ;
 
       INT32 _estimateIndex ( _dmsMBContext *mbContext, INT32 indexID,
                              INT64 &costEstimation, INT32 &dir,
-                             dmsExtentID &indexCBExtent, _estimateDetail &detail ) ;
+                             dmsExtentID &indexCBExtent ) ;
 
       void _estimateTBScan ( INT64 &costEstimation ) ;
 
       INT32 _useIndex ( dmsExtentID indexCBExtent,
                         INT32 dir,
-                        const rtnPredicateSet &predSet,
-                        BOOLEAN matchAll ) ;
+                        const rtnPredicateSet &predSet ) ;
 
    public :
       _optAccessPlan ( _dmsStorageUnit *su, const CHAR *collectionName,

@@ -380,10 +380,6 @@ namespace engine
                       vector<INT64> *dollarList = NULL ) ;
       BOOLEAN isInitialized () { return _initialized ; }
       BOOLEAN isMatchesAll() { return _matchesAll ; }
-      void setMatchesAll( BOOLEAN matchesAll )
-      {
-         _matchesAll = matchesAll ;
-      }
       const rtnPredicateSet &getPredicateSet ()
       {
          return _predicateSet ;
