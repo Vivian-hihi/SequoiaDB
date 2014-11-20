@@ -323,9 +323,12 @@ namespace engine
          queryFactor = OSS_MAX(0.0f, queryFactor) ;
 
          costEstimation = costEstimation*queryFactor*orderFactor ;
-         detail.matchAll = ( 0 != matchedFields ) &&
-                           ( matchedFields == nQueryFields ) &&
-                           matchedFields <= idxPattern.nFields() ;
+         //detail.matchAll = ( 0 != matchedFields ) &&
+         //                  ( matchedFields == nQueryFields ) &&
+         //                  matchedFields <= idxPattern.nFields() ;
+         // some predicates need to compare with record.(eg: $not, $regex)
+         // we have not found a way to solve this problem -- yunwu
+         detail.matchAll = FALSE ;
       }
       PD_LOG ( PDDEBUG, "Index Scan Estimation: %s : %d",
                indexCB.getName (), costEstimation ) ;
