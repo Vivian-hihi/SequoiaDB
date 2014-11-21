@@ -129,7 +129,7 @@ static INT32 parseCmdLine( const po::options_description &desc,
    if ( !vm.count( MIG_OP ) )
    {
       PD_LOG( PDERROR, "operation type is not specified" ) ;
-      cerr << "Error: opteration type must be specified" << endl ;
+      cerr << "Error: operation type must be specified" << endl ;
       rc = SDB_INVALIDARG ;
       goto error ;
    }
