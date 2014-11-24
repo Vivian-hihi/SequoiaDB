@@ -840,6 +840,7 @@
                     <file name="references/methods/topics/csort.dita"/>
                     <file name="references/methods/topics/dbaggregate_en.dita"/>
                     <file name="references/methods/topics/dbaggregate.dita"/>
+                    <file name="references/methods/topics/dbclose.dita"/>
                     <file name="references/methods/topics/dbcount_en.dita"/>
                     <file name="references/methods/topics/dbcount.dita"/>
                     <file name="references/methods/topics/dbinsert_en.dita"/>

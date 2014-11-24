@@ -5,6 +5,7 @@
  <topicref href="jssequoiadb.dita">
    <topicref href="topics/backupoffline.dita"/>
    <topicref href="cancelTask.dita"/>
+   <topicref href="topics/dbclose.dita"/>
    <topicref href="topics/createcatarg.dita"/>
    <topicref href="topics/createCS.dita"/>
    <topicref href="topics/createDomain.dita"/>

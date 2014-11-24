@@ -48,35 +48,35 @@
     <div class="section"><h2 class="title sectiontitle">参数描述</h2><p class="p"/>
 
       <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d115507e27" class="stentry">参数名</th>
+          <th valign="bottom" align="left" id="d115646e27" class="stentry">参数名</th>
 
-          <th valign="bottom" align="left" id="d115507e30" class="stentry">参数类型</th>
+          <th valign="bottom" align="left" id="d115646e30" class="stentry">参数类型</th>
 
-          <th valign="bottom" align="left" id="d115507e33" class="stentry">描述</th>
+          <th valign="bottom" align="left" id="d115646e33" class="stentry">描述</th>
 
-          <th valign="bottom" align="left" id="d115507e36" class="stentry">是否必填</th>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d115507e27" class="stentry">doc|docs</td>
-
-          <td valign="top" headers="d115507e30" class="stentry">Json 对象</td>
-
-          <td valign="top" headers="d115507e33" class="stentry">文档记录。doc 为一条记录，docs 为多条记录。</td>
-
-          <td valign="top" headers="d115507e36" class="stentry">是</td>
+          <th valign="bottom" align="left" id="d115646e36" class="stentry">是否必填</th>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d115507e27" class="stentry">flag</td>
+          <td valign="top" headers="d115646e27" class="stentry">doc|docs</td>
 
-          <td valign="top" headers="d115507e30" class="stentry">Int</td>
+          <td valign="top" headers="d115646e30" class="stentry">Json 对象</td>
 
-          <td valign="top" headers="d115507e33" class="stentry">可取 SDB_INSERT_RETURN_ID 或者 SDB_INSERT_CONTONDUP。<div class="fig fignone"/>
+          <td valign="top" headers="d115646e33" class="stentry">文档记录。doc 为一条记录，docs 为多条记录。</td>
+
+          <td valign="top" headers="d115646e36" class="stentry">是</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d115646e27" class="stentry">flag</td>
+
+          <td valign="top" headers="d115646e30" class="stentry">Int</td>
+
+          <td valign="top" headers="d115646e33" class="stentry">可取 SDB_INSERT_RETURN_ID 或者 SDB_INSERT_CONTONDUP。<div class="fig fignone"/>
 前者在插入单条记录时有效，表示插入记录后返回记录中“_id”字段内容；后者在插入多条记录时有效，表示在插入的记录中，若存在“_id”字段内容重复的记录时，将跳过<div class="fig fignone"/>
 这些存在重复“_id”的记录继续插入后面记录。默认情况下，当存在重复“_id”字段内容的记录时，将停止插入后面的记录。</td>
 
-          <td valign="top" headers="d115507e36" class="stentry">否</td>
+          <td valign="top" headers="d115646e36" class="stentry">否</td>
 
         </tr>
 </table>
