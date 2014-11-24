@@ -105,7 +105,7 @@ namespace DriverTest
             /// getDomain
             try
             {
-               dm = sdb.getDomain(dmName);
+               dm = sdb.GetDomain(dmName);
             }
             catch(BaseException e)
             {
@@ -114,7 +114,7 @@ namespace DriverTest
             
             /// createDomain
             dm = null;
-            dm = sdb.createDomain(dmName, options);
+            dm = sdb.CreateDomain(dmName, options);
             Assert.IsNotNull(dm);
 
             /// IsDomainExist
@@ -124,11 +124,11 @@ namespace DriverTest
 
             /// getDomain
             dm = null;
-            dm = sdb.getDomain(dmName);
+            dm = sdb.GetDomain(dmName);
             Assert.IsNotNull(dm);
 
             /// listDomains
-            cur = sdb.listDomains(null, null, null, null);
+            cur = sdb.ListDomains(null, null, null, null);
             Assert.IsNotNull(cur);
             record = cur.Next();
             Assert.IsNotNull(record);
@@ -150,13 +150,13 @@ namespace DriverTest
             opts2.Add("AutoSplit", true);
             DBCollection cl = cs.CreateCollection(clName, opts2);
             /// listCS
-            cur = dm.listCS();
+            cur = dm.ListCS();
             Assert.IsNotNull(cur);
             record = cur.Next();
             Assert.IsNotNull(record);
 
             /// listCL
-            cur = dm.listCL();
+            cur = dm.ListCL();
             Assert.IsNotNull(cur);
             record = cur.Next();
             Assert.IsNotNull(record);
@@ -170,19 +170,19 @@ namespace DriverTest
             BsonArray arr2 = new BsonArray();
             opts3.Add("Groups", arr2);
             opts3.Add("AutoSplit", false);
-            dm.alter(opts3);
+            dm.Alter(opts3);
 
             /// listDomains
-            cur = sdb.listDomains(null, null, null, null);
+            cur = sdb.ListDomains(null, null, null, null);
             Assert.IsNotNull(cur);
             record = cur.Next();
             Assert.IsNotNull(record);
             
             /// dropDomain
-            sdb.dropDomain(dmName);
+            sdb.DropDomain(dmName);
 
             /// listDomains
-            cur = sdb.listDomains(null, null, null, null);
+            cur = sdb.ListDomains(null, null, null, null);
             Assert.IsNotNull(cur);
             record = cur.Next();
             Assert.IsNull(record);

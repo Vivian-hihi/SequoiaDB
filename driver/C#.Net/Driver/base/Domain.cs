@@ -41,7 +41,7 @@ namespace SequoiaDB
             this.isBigEndian = sdb.isBigEndian;
         }
 
-        /** \fn void alter(BsonDocumet options)
+        /** \fn void Alter(BsonDocumet options)
          *  \brief Alter current domain.
          *  \param [in] options The options user wants to alter
          *  
@@ -58,7 +58,7 @@ namespace SequoiaDB
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
          */
-        public void alter(BsonDocument options)
+        public void Alter(BsonDocument options)
         {
             // check
             if (null == options)
@@ -82,15 +82,15 @@ namespace SequoiaDB
             }
         }
 
-        /** \fn DBCursor listCS()
+        /** \fn DBCursor ListCS()
          *  \brief List all the collection spaces in current domain.
          *  \return The DBCursor of result
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
          */
-        public DBCursor listCS()
+        public DBCursor ListCS()
         {
-            return listCSCL(SDBConst.SDB_LIST_CS_IN_DOMAIN);
+            return ListCSCL(SDBConst.SDB_LIST_CS_IN_DOMAIN);
         }
 
         /** \fn DBCursor listCL()
@@ -99,12 +99,12 @@ namespace SequoiaDB
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
          */
-        public DBCursor listCL()
+        public DBCursor ListCL()
         {
-            return listCSCL(SDBConst.SDB_LIST_CL_IN_DOMAIN);
+            return ListCSCL(SDBConst.SDB_LIST_CL_IN_DOMAIN);
         }
 
-        private DBCursor listCSCL(int type)
+        private DBCursor ListCSCL(int type)
         {
             // append argument
             BsonDocument matcher = new BsonDocument();

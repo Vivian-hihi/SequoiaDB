@@ -190,7 +190,7 @@ namespace SequoiaDB
                 // authentication
                 try
                 {
-                    auth();
+                    Auth();
                 }
                 catch (BaseException e)
                 {
@@ -368,7 +368,7 @@ namespace SequoiaDB
             connection.ChangeConfigOptions(opts);
             try
             {
-                auth();
+                Auth();
             }
             catch (BaseException e)
             {
@@ -830,7 +830,7 @@ namespace SequoiaDB
                 throw new BaseException(flags);
         }
 
-        /** \fn void backupOffline(BsonDocument options)
+        /** \fn void BackupOffline(BsonDocument options)
          *  \brief Backup the whole database or specifed replica group.
          *  \param options Contains a series of backup configuration infomations. 
          *         Backup the whole cluster if null. The "options" contains 5 options as below. 
@@ -849,7 +849,7 @@ namespace SequoiaDB
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
          */
-        public void backupOffline(BsonDocument options)
+        public void BackupOffline(BsonDocument options)
         {
             // check argument
             if (options == null || options.ElementCount == 0)
@@ -880,7 +880,7 @@ namespace SequoiaDB
             }
         }
 
-        /** \fn DBCursor listBackup(BsonDocument options, BsonDocument matcher,
+        /** \fn DBCursor ListBackup(BsonDocument options, BsonDocument matcher,
 		 *	                        BsonDocument selector, BsonDocument orderBy)
          *  \brief List the backups.
          *  \param options Contains configuration infomations for remove backups, list all the backups in the default backup path if null.
@@ -898,7 +898,7 @@ namespace SequoiaDB
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
          */
-        public DBCursor listBackup(BsonDocument options, BsonDocument matcher,
+        public DBCursor ListBackup(BsonDocument options, BsonDocument matcher,
 	   	                           BsonDocument selector, BsonDocument orderBy)
         {
             // check argument
@@ -933,7 +933,7 @@ namespace SequoiaDB
             return cursor;
         }
 
-        /** \fn void removeBackup ( BsonDocument options )
+        /** \fn void RemoveBackup ( BsonDocument options )
          *  \brief Remove the backups.
          *  \param options Contains configuration infomations for remove backups, remove all the backups in the default backup path if null.
          *                 The "options" contains 3 options as below. All the elements in options are optional.
@@ -947,7 +947,7 @@ namespace SequoiaDB
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
          */
-        public void removeBackup(BsonDocument options)
+        public void RemoveBackup(BsonDocument options)
         {
             // check argument
             if (options != null)
@@ -976,7 +976,7 @@ namespace SequoiaDB
             }
         }
 
-        /** \fn DBCursor listTasks(BsonDocument matcher, BsonDocument selector, BsonDocument orderBy, BsonDocument hint)
+        /** \fn DBCursor ListTasks(BsonDocument matcher, BsonDocument selector, BsonDocument orderBy, BsonDocument hint)
          *  \brief List the tasks.
          *  \param matcher The matching rule, return all the documents if null
          *  \param selector The selective rule, return the whole document if null
@@ -985,7 +985,7 @@ namespace SequoiaDB
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
          */
-        public DBCursor listTasks(BsonDocument matcher, BsonDocument selector, BsonDocument orderBy, BsonDocument hint)
+        public DBCursor ListTasks(BsonDocument matcher, BsonDocument selector, BsonDocument orderBy, BsonDocument hint)
         {
             // build command
             string commandString = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.LIST_TASK_CMD;
@@ -1003,13 +1003,13 @@ namespace SequoiaDB
             return cursor;
         }
 
-        /** \fn void waitTasks(List<long> taskIDs)
+        /** \fn void WaitTasks(List<long> taskIDs)
          *  \brief Wait the tasks to finish.
          *  \param taskIDs The list of task id
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
          */
-        public void waitTasks(List<long> taskIDs)
+        public void WaitTasks(List<long> taskIDs)
         {
             // check arguments
             if (taskIDs == null || taskIDs.Count == 0)
@@ -1034,13 +1034,13 @@ namespace SequoiaDB
             }
         }
 
-        /** \fn void cancelTask(long taskIDs, bool isAsync)
+        /** \fn void CancelTask(long taskIDs, bool isAsync)
          *  \brief Cancel the specified task.
          *  \param taskID The task id
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
          */
-        public void cancelTask(long taskID, bool isAsync)
+        public void CancelTask(long taskID, bool isAsync)
         {
             // check arguments
             if (taskID <= 0)
@@ -1063,7 +1063,7 @@ namespace SequoiaDB
             }
         }
 
-        /** \fn void setSessionAttr(BsonDocument options)
+        /** \fn void SetSessionAttr(BsonDocument options)
          *  \brief Set the attributes of the session.
          *  \param options The configuration options for session.The options are as below:
          *  
@@ -1074,7 +1074,7 @@ namespace SequoiaDB
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
          */
-        public void setSessionAttr(BsonDocument options)
+        public void SetSessionAttr(BsonDocument options)
         {
             // check argument
             if (options == null || !options.Contains(SequoiadbConstants.FIELD_PREFERED_INSTANCE))
@@ -1118,7 +1118,7 @@ namespace SequoiaDB
                 throw new BaseException(flags);
         }
 
-        /** \fn void closeAllCursors()
+        /** \fn void CloseAllCursors()
          *  \brief Close all the cursors created in current connection, 
          *         we can't use those cursors to get data from db engine again,
          *         but, there are some data cache in local
@@ -1126,7 +1126,7 @@ namespace SequoiaDB
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
          */
-        public void closeAllCursors()
+        public void CloseAllCursors()
         {
             // TODO: it's better for us to use DBCursor::Close() to close all the cursor
             byte[] request = SDBMessageHelper.BuildKillAllContextsRequest(Operation.OP_KILL_ALL_CONTEXTS, isBigEndian);
@@ -1159,7 +1159,7 @@ namespace SequoiaDB
             }
         }
 
-        /** \fn Domain createDomain(string domainName, BsonDocument options)
+        /** \fn Domain CreateDomain(string domainName, BsonDocument options)
          *  \brief Create a domain.
          *  \param domainName The name of the domain
          *  \param options The options for the domain. The options are as below:
@@ -1175,7 +1175,7 @@ namespace SequoiaDB
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
          */
-        public Domain createDomain(string domainName, BsonDocument options)
+        public Domain CreateDomain(string domainName, BsonDocument options)
         {
             // check
             if (null == domainName || domainName.Equals(""))
@@ -1206,14 +1206,14 @@ namespace SequoiaDB
             return new Domain(this, domainName);
         }
 
-        /** \fn void dropDomain(string domainName)
+        /** \fn void DropDomain(string domainName)
          *  \brief Drop a domain.
          *  \param domainName The name of the domain
          *  \return The created Domain instance
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
          */
-        public void dropDomain(string domainName)
+        public void DropDomain(string domainName)
         {
             // check
             if (null == domainName || domainName.Equals(""))
@@ -1235,14 +1235,14 @@ namespace SequoiaDB
             }
         }
 
-        /** \fn Domain getDomain(string domainName)
+        /** \fn Domain GetDomain(string domainName)
          *  \brief Get the specified domain.
          *  \param domainName The name of the domain
          *  \return The created Domain instance
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
          */
-        public Domain getDomain(string domainName)
+        public Domain GetDomain(string domainName)
         {
             if (IsDomainExist(domainName))
             {
@@ -1254,7 +1254,7 @@ namespace SequoiaDB
             }
         }
 
-        /** \fn DBCursor listDomains(BsonDocument matcher, BsonDocument selector,
+        /** \fn DBCursor ListDomains(BsonDocument matcher, BsonDocument selector,
          *                           BsonDocument orderBy)
          *  \brief List domains.
          *  \param matcher The matching rule, return all the documents if null
@@ -1264,7 +1264,7 @@ namespace SequoiaDB
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
          */
-        public DBCursor listDomains(BsonDocument matcher, BsonDocument selector,
+        public DBCursor ListDomains(BsonDocument matcher, BsonDocument selector,
                                     BsonDocument orderBy, BsonDocument hint)
         {
             return GetList(SDBConst.SDB_LIST_DOMAINS, matcher, selector, orderBy);
@@ -1634,7 +1634,7 @@ namespace SequoiaDB
             return SDBMessageHelper.ExtractSysInfoReply(connection.ReceiveMessage(128), ref osType );
         }
 
-        private void auth()
+        private void Auth()
         {
             MD5 md5 = MD5.Create();
             byte[] data = md5.ComputeHash(Encoding.Default.GetBytes(password));

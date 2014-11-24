@@ -215,7 +215,7 @@ namespace DriverTest
             try
             {
                 cursor.Close();
-            }catch( BaseException e )
+            }catch( BaseException )
             {
                 Assert.Fail();
                 //Console.WriteLine("After close cursor, call Close() get errno " +　e.ErrorCode );
@@ -263,7 +263,7 @@ namespace DriverTest
             obj = cursor1.Next();
             obj = cursor2.Next();
             // DO:
-            sdb.closeAllCursors();
+            sdb.CloseAllCursors();
             // cursor
             try
             {
@@ -290,12 +290,33 @@ namespace DriverTest
                 obj = cursor2.Current();
                 cursor2.Close();
             }
-            catch (BaseException e)
+            catch (BaseException)
             {
                 Assert.Fail();
                 //int eno = e.ErrorCode;
                 //Assert.IsTrue(e.ErrorType.Equals("SDB_RTN_CONTEXT_NOTEXIST"));
             }
+        }
+
+        [TestMethod()]
+        public void EmptyCursorTest()
+        {
+            int count = 0;
+            BsonDocument insertor1 = new BsonDocument();
+            insertor1.Add("Last Name", "怪");
+            insertor1.Add("First Name", "啊");
+            insertor1.Add("Address", "SYSU");
+            coll.Insert(insertor1);
+
+            BsonDocument dummy = new BsonDocument();
+            DBCursor cursor = coll.Query(dummy, dummy, dummy, dummy);
+            Assert.IsNotNull(cursor);
+            BsonDocument obj = new BsonDocument();
+            while (null != (obj = cursor.Next()))
+            {
+                count++;
+            }
+            Assert.AreEqual(1, count);
         }
 
         [TestMethod()]

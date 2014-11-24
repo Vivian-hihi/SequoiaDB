@@ -334,7 +334,7 @@ namespace DriverTest
             query.Flag = DBQuery.FLG_QUERY_WITH_RETURNDATA;
             DBCursor cursor = coll.Query(query);
             Assert.IsNotNull(cursor);
-            sdb.closeAllCursors();
+            sdb.CloseAllCursors();
             int count = 0;
             while (cursor.Next() != null)
             {
@@ -419,6 +419,35 @@ namespace DriverTest
             condition.Add("operation", "BulkInsert");
             long count = coll.GetCount(condition);
             Assert.IsTrue(count == 10);
+        }
+
+        [TestMethod()]
+        public void UpdateInEmptyCLTest()
+        {
+            BsonDocument updater = new BsonDocument();
+            BsonDocument matcher = new BsonDocument();
+            BsonDocument modifier = new BsonDocument();
+            BsonDocument hint = new BsonDocument();
+            BsonDocument tempMatcher = new BsonDocument();
+            DBQuery query = new DBQuery();
+            matcher.Add("operation", new BsonDocument("$et", "Update"));
+            query.Matcher = matcher;
+
+            long count = coll.GetCount(matcher);
+            Assert.IsTrue(count == 0);
+
+            // update but insert
+            updater.Add("operation", "Update");
+            updater.Add("type", "Insert");
+            modifier.Add("$set", updater);
+            tempMatcher.Add("type", new BsonDocument("$et", "Insert"));
+            coll.Update(matcher, modifier, hint);
+            count = coll.GetCount(tempMatcher);
+            Assert.IsTrue(count == 0);
+            DBCursor cursor = coll.Query(query);
+            Assert.IsNotNull(cursor);
+            BsonDocument rtn = cursor.Next();
+            Assert.IsNull(rtn);
         }
 
         [TestMethod()]
@@ -918,10 +947,47 @@ namespace DriverTest
                 type = obj["ShardingType"].AsString;
                 Assert.IsTrue(type.Equals("hash"));
             }
-            catch(System.Exception e)
+            catch(System.Exception)
             {
                 Assert.Fail();
             }
+        }
+
+        [TestMethod()]
+        public void QueryExplainAPITest()
+        {
+            int num = 100;
+            int i = 0;
+            string indexName = "QueryExpalinIndex";
+            BsonDocument index = new BsonDocument
+            {
+                {"age", 1}
+            };
+            // create index
+            coll.CreateIndex(indexName, index, false, false);
+            // insert records
+            for (; i < num; i++)
+            {
+                BsonDocument obj = new BsonDocument{
+                    {"firstName", "John"},
+                    {"lastName", "Smith"},
+                    {"age", i}
+                };
+                coll.Insert(obj);
+            }
+            // query explain
+            BsonDocument cond = new BsonDocument { { "age", new BsonDocument { { "$gt", 50 } } } };
+            BsonDocument sel = new BsonDocument { { "age", "" } };
+            BsonDocument orderBy = new BsonDocument { { "age", -1 } };
+            BsonDocument hint = new BsonDocument { { "", indexName } };
+            BsonDocument options = new BsonDocument { { "Run", true } };
+            DBCursor cur = coll.Explain(cond, sel, orderBy, hint, 47, 3, 0, options);
+            Assert.IsNotNull(cur);
+            BsonDocument record = cur.Next();
+            int indexRead = record["IndexRead"].AsInt32;
+            Assert.IsTrue(50 == indexRead);
+            int dataRead = record["DataRead"].AsInt32;
+            Assert.IsTrue(49 == dataRead);
         }
 
         [TestMethod()]

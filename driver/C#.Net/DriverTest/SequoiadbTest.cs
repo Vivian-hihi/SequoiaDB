@@ -90,6 +90,7 @@ namespace DriverTest
         public void Connect_With_Serval_Arg_Test()
         {
 		    List<string> list = new List<string>();
+            
             list.Add("192.168.20.35:12340");
             list.Add("192.168.20.36:12340");
             list.Add("123:123");
@@ -98,6 +99,7 @@ namespace DriverTest
             list.Add("192.168.30.161:11810");
             list.Add("localhost:50000");
             list.Add("192.168.20.42:11810");
+            list.Add("192.168.20.165:11810");
             list.Add("localhost:12340");
             list.Add("192.168.20.40:12340");
 
@@ -250,6 +252,26 @@ namespace DriverTest
         }
 
         [TestMethod()]
+        public void ExecTest2()
+        {
+            // insert English
+            string sqlInsert = "update " + csName + "." + cName +
+                " set GoodCode='{0}', Count={1} where SaleRID='{2}'";
+            sqlInsert = string.Format(sqlInsert, DateTime.Now.ToLongTimeString(), DateTime.Now.Millisecond, "1234567");
+            try
+            {
+                sdb.ExecUpdate(sqlInsert);
+            }
+            catch (BaseException e)
+            {
+                Assert.Fail();
+                string errInfo = e.Message;
+                Console.WriteLine("The error info is: " + errInfo);
+                Assert.IsFalse(1 == 1);
+            }
+        }
+
+        [TestMethod()]
         public void GetSnapshotTest()
         {
             Sequoiadb sdb2 = new Sequoiadb(config.conf.Coord.Address);
@@ -344,12 +366,12 @@ namespace DriverTest
             if (Constants.isClusterEnv(sdb))
             {
                 string dmName = "testListDomain";
-                Domain dm = sdb.createDomain(dmName, null);
+                Domain dm = sdb.CreateDomain(dmName, null);
                 cursor = null;
-                cursor = sdb.listDomains(null, null, null, null);
+                cursor = sdb.ListDomains(null, null, null, null);
                 Assert.IsNotNull(cursor);
                 Assert.IsNotNull(cursor.Next());
-                sdb.dropDomain(dmName);
+                sdb.DropDomain(dmName);
             }
 
             // list stored procedure
@@ -791,7 +813,7 @@ namespace DriverTest
                 Assert.IsNotNull(sdb2.Connection);
                 // TODO:
                 BsonDocument conf = new BsonDocument("PreferedInstance", "m");
-                sdb2.setSessionAttr(conf);
+                sdb2.SetSessionAttr(conf);
                 // check
                 // record the slave note "TotalDataRead" before query
                 Sequoiadb sddb = new Sequoiadb(host, port);
@@ -853,7 +875,7 @@ namespace DriverTest
             }
             try
             {
-                sdb2.setSessionAttr(conf);
+                sdb2.SetSessionAttr(conf);
             }
             catch (BaseException e) 
             {
