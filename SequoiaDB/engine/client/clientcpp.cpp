@@ -4710,7 +4710,7 @@ namespace sdbclient
       if (  !_connection )
       {
          rc = SDB_NOT_CONNECTED ;
-         goto done;
+         goto error;
       }
       *millis = getCreateTime() ;
    done:
