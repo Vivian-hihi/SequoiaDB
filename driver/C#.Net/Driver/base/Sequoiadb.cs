@@ -170,7 +170,7 @@ namespace SequoiaDB
                             connection = new ConnectionTCPImpl(conn, opts);
                             connection.Connect();
                         }
-                        catch (System.Exception e)
+                        catch (System.Exception)
                         {
                             if (mark == count)
                             {
@@ -250,11 +250,7 @@ namespace SequoiaDB
                     throw new BaseException(flags);
                 }
             }
-            catch (IOException e)
-            {
-                return false;
-            }
-            catch (BaseException e)
+            catch (System.Exception)
             {
                 return false;
             }

@@ -113,7 +113,7 @@ namespace SequoiaDB
             {
                 throw e;
             }
-            catch (SystemException)
+            catch (System.Exception)
             {
                 throw new BaseException("SDB_NET_SEND_ERR");
             }
@@ -124,31 +124,43 @@ namespace SequoiaDB
             try
             {
                 byte[] buf = new byte[4];
-                int rtn = input.Read(buf, 0, 4);
-                if (rtn != 4)
+                int rtn = 0;
+                int retSize = 0;
+                // get the total length of the message
+                while (rtn < 4)
                 {
-                    logger.Error("Expect 4-byte message length but got:::" + rtn);
-                    Close();
-                    throw new IOException("Expect 4-byte message length");
+                    try
+                    {
+                        retSize = input.Read(buf, rtn, 4 - rtn);
+                    }
+                    catch (System.Exception)
+                    {
+                        logger.Error("Expect 4-byte message length but got:::" + rtn);
+                        Close();
+                        throw new IOException("Expect 4-byte message length");
+                    }
+                    rtn += retSize;
                 }
-
                 int msgSize = Helper.ByteToInt(buf, isBigEndian);
-
+                // get the rest part of message
                 byte[] rtnBuf = new byte[msgSize];
                 Array.Copy(buf, rtnBuf, 4);
                 rtn = 4;
-                int retSize = 0;
+                retSize = 0;
                 while (rtn < msgSize)
                 {
-                    retSize = input.Read(rtnBuf, rtn, msgSize - rtn);
-                    if (-1 == retSize)
+                    try
+                    {
+                        retSize = input.Read(rtnBuf, rtn, msgSize - rtn);
+                    }
+                    catch (System.Exception)
                     {
                         Close();
                         throw new IOException("Failed to read from socket");
                     }
                     rtn += retSize;
                 }
-
+                // check
                 if (rtn != msgSize)
                 {
                     Close();
@@ -160,7 +172,7 @@ namespace SequoiaDB
             {
                 throw e;
             }
-            catch (SystemException)
+            catch (System.Exception)
             {
                 throw new BaseException("SDB_NETWORK");
             }
@@ -188,7 +200,7 @@ namespace SequoiaDB
                 throw new IOException("Message length in header incorrect");
             }
 
-            return rtnBuf;
+            return rtnBuf; 
         }
     }
 }

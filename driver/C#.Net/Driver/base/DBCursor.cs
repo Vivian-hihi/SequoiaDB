@@ -62,8 +62,6 @@ namespace SequoiaDB
 
         ~DBCursor()
         {
-            if (connection != null && contextId != -1)
-                KillCursor();
         }
 
         /** \fn BsonDocument Next()
@@ -216,13 +214,20 @@ namespace SequoiaDB
 
         private void KillCursor()
         {
-            if (connection == null || contextId == -1)
+            if ((connection == null) || 
+                (connection.IsClosed()) || 
+                (contextId == -1))
             {
                 return;
             }
             long[] contextIds = new long[1] { contextId };
             byte[] request = SDBMessageHelper.BuildKillCursorMsg(contextIds, isBigEndian);
             connection.SendMessage(request);
+            SDBMessage rtnSDBMessage = SDBMessageHelper.MsgExtractReply(connection.ReceiveMessage(isBigEndian), isBigEndian);
+            int flags = rtnSDBMessage.Flags;
+            if (flags != 0)
+                throw new BaseException(flags);
+
             connection = null;
             contextId = -1;
         }
