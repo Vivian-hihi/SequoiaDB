@@ -102,7 +102,7 @@ namespace Sample
 
             try
             {
-                ObjectId id = dbc.Insert(insertor1);
+                BsonValue id = dbc.Insert(insertor1);
                 Console.WriteLine("Successfully inserted english records, object ID = {0}", id.ToString());
             }
             catch (BaseException e)
@@ -118,7 +118,7 @@ namespace Sample
 
             try
             {
-                ObjectId id = dbc.Insert(insertor2);
+                BsonValue id = dbc.Insert(insertor2);
                 Console.WriteLine("Successfully inserted chinese records, object ID = {0}", id.ToString());
             }
             catch (BaseException e)
