@@ -276,6 +276,11 @@ namespace engine
       // is destroyed, so we need this list to hold those BSONObjBuilder
       vector<BSONObjBuilder*> _builderList ;
 
+      /// we can convert all the fields in pattern into predicates.
+      /// eg: {a:1, b:1} --> [a:1] and [b:1] it is totally converted.
+      /// {$or:[{a:1},{b:1}]} -> none predicate.
+      BOOLEAN _totallyConverted ;
+
       INT32 _createLME ( LogicMatchElement *lme,
                          LogicMatchElement **clme,
                          INT32   logicType,
@@ -352,6 +357,7 @@ namespace engine
          _rlme        = NULL ;
          _initialized = FALSE ;
          _matchesAll  = TRUE ;
+         _totallyConverted = TRUE ;
       }
       ~_mthMatcher ()
       {
@@ -387,6 +393,16 @@ namespace engine
       BSONObj &getMatchPattern ()
       {
          return _matchPattern ;
+      }
+
+      BOOLEAN totallyConverted() const
+      {
+         return _totallyConverted ;
+      }
+
+      void setMatchesAll( BOOLEAN matchesAll )
+      {
+         _matchesAll = matchesAll ;
       }
    } ;
    typedef class _mthMatcher mthMatcher ;
