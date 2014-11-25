@@ -560,6 +560,10 @@ namespace engine
       trimLeft( disk.mountPath, " " ) ;
       trimRight( disk.mountPath, " " ) ;
       trimRight( disk.mountPath, OSS_FILE_SEP ) ;
+      if ( disk.mountPath == "" )
+      {
+         disk.mountPath = OSS_FILE_SEP ;
+      }
       disk.totalSize = totalSize ;
       disk.freeSize  = freeSize ;
 
@@ -578,7 +582,7 @@ namespace engine
       return _mapDisk.size() ;
    }
 
-   simpleDiskInfo *hostHardWare::_getDiskInfo( const string dbPath )
+   simpleDiskInfo *hostHardWare::_getDiskInfo( const string &dbPath )
    {
       INT32 maxFitSize          = 0 ;
       simpleDiskInfo *pDiskInfo = NULL ;
@@ -992,7 +996,7 @@ namespace engine
           rule3: the less the better which host contains node's count
                  ( all the roles )
    */
-   hostHardWare* omCluster::_getBestHost( const string role )
+   hostHardWare* omCluster::_getBestHost( const string &role )
    {
       map<string, hostHardWare*>::iterator iter ;
       hostHardWare *bestHost = NULL ;
@@ -1991,7 +1995,7 @@ namespace engine
       return SDB_OK ;
    }
 
-   string propertyContainer::getDefaultValue( const string name )
+   string propertyContainer::getDefaultValue( const string &name )
    {
       confProperty *property = _getConfProperty( name ) ;
       if ( NULL != property )

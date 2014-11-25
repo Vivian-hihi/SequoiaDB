@@ -269,7 +269,7 @@ namespace engine
 
          INT32          createSample( omNodeConf &sample ) ;
 
-         string         getDefaultValue( const string name ) ;
+         string         getDefaultValue( const string &name ) ;
 
       private:
          confProperty*  _getConfProperty( const string &name ) ;
@@ -322,7 +322,7 @@ namespace engine
          BOOLEAN              isPathOccupayed( const string &dbPath ) ;
          BOOLEAN              isSvcNameOccupayed( const string &svcName ) ;
       private:
-         simpleDiskInfo*      _getDiskInfo( const string dbPath ) ;
+         simpleDiskInfo*      _getDiskInfo( const string &dbPath ) ;
          simpleDiskInfo*      _getBestDisk( const string &role ) ;
 
       private:
@@ -361,7 +361,7 @@ namespace engine
                                                omNodeConf *node ) ;
 
       private:
-         hostHardWare*        _getBestHost( const string role ) ;
+         hostHardWare*        _getBestHost( const string &role ) ;
 
       private:
          map<string, hostHardWare*> _mapHost ;
