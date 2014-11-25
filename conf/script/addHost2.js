@@ -101,7 +101,7 @@ function createTmpDir( ssh, osInfo )
       }
       catch( e )
       {
-         errMsg = "Failed to create tmp director in check host" ;
+         errMsg = "Failed to create tmp director in add host[" + ssh.getPeerIP() + "]"  ;
          exception_handle( e, errMsg ) ;
       }
    }
@@ -151,6 +151,39 @@ function pushInstallPacket( ssh, osInfo, packet )
       // push packet in windows
    }
 }
+
+/* *****************************************************************************
+@discretion: uninstall db packet in remote host when install failed
+@author: Tanzhaobo
+@parameter
+   ssh[object]: ssh object
+   osInfo[string]: os type
+   path[string]: the path db installed in
+@return void
+***************************************************************************** */
+function uninstallDBPacket ( ssh, osInfo, path )
+{
+   var cmd = "" ;
+   var path = adaptPath( osInfo, path ) ;
+   if ( OMA_LINUX == osInfo )
+   {
+      cmd = path + OMA_PROG_UNINSTALL_L ;
+      try
+      {
+         ssh.exec( "chmod a+x " + cmd ) ;
+         ssh.exec( cmd + " --mode unattended " ) ;
+      }
+      catch ( e )
+      {
+      }
+   }
+   else
+   {
+      // DOTO: tanzhaobo
+      // windows
+   }
+}
+
 
 /* *****************************************************************************
 @discretion: push install packet to remote host
@@ -258,7 +291,28 @@ function main()
       }
       // push packet to remote host
       pushInstallPacket( ssh, osInfo, installPacket ) ;
-      installDBPacket( ssh, osInfo, sdbUser, sdbPasswd, installPacket, installPath ) ;
+      // install db packet
+      try
+      {
+         installDBPacket( ssh, osInfo, sdbUser, sdbPasswd, installPacket, installPath ) ;
+      }
+      catch ( e )
+      {
+         // save the real error
+         errMsg = getLastErrMsg() ;
+         var errno = null ;
+         if ( "number" == typeof(e) && e < 0 )
+            errno = e ;
+         else
+            errno = SDB_SYS ;   
+         // when install failed try to remove the packet
+         uninstallDBPacket( ssh, osInfo, installPath ) ;
+         // recover real error
+         e = errno ;
+         setLastError( e ) ;
+         setLastErrMsg( errMsg ) ;
+         throw e ;
+      }
       RET_JSON[HasInstall] = true ;
    }
    catch ( e )
