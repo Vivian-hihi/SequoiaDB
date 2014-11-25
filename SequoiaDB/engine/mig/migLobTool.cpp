@@ -656,7 +656,7 @@ const UINT32 BUF_SIZE = 2 * 1024 * 1024 ;
             rc = ossReadN( &_file, _bufSize, _buf, read ) ;
             if ( SDB_OK != rc )
             {
-               PD_LOG( PDERROR, "failed t read file:%d", rc ) ;
+               PD_LOG( PDERROR, "failed to read file:%d", rc ) ;
                goto error ;
             }
             itr.loadSize = read ;

@@ -236,7 +236,7 @@ INT32 main( INT32 argc, CHAR *argv[] )
 
    initDesc( desc ) ;
 
-   rc = engine::utilReadCommandLine( argc, argv, desc, vm, TRUE ) ;
+   rc = engine::utilReadCommandLine( argc, argv, desc, vm, FALSE ) ;
    if ( SDB_OK != rc )
    {
       PD_LOG( PDERROR, "invalid arguments" ) ;
