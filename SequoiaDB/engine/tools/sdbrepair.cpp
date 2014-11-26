@@ -304,7 +304,7 @@ void inspectCollections ( OSSFILE &file )
    // repair flag
    for ( UINT32 i = 0 ; i < DMS_MME_SLOTS ; ++i )
    {
-      mb = (( dmsMB** )gMMEBuff)[ i ] ;
+      mb = (( dmsMB** )&gMMEBuff)[ i ] ;
 
       if ( DMS_MB_FLAG_FREE != mb->_flag &&
            !OSS_BIT_TEST ( mb->_flag, DMS_MB_FLAG_DROPED ) )
