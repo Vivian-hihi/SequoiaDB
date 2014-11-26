@@ -420,6 +420,10 @@ sdbdpsdumpFiles = [
 sdbOmToolMain = [
       "tools/sdbOmTool.cpp"
       ]
+	  
+sdbRepairMain = [
+      "tools/sdbrepair.cpp"
+      ]
 
 #BSON
 toolEnv.StaticLibrary('bson', bsonFiles)
@@ -505,6 +509,10 @@ if linux:
 sdbmemcheck = toolEnv.Program("sdbmemcheck", sdbmemcheckFiles,
           LIBDEPS=["oss","pd", "util"],
           _LIBDEPS='$_LIBDEPS_OBJS' )
+		  
+sdbrepair = toolEnv.Program("sdbrepair", sdbRepairMain,
+          LIBDEPS=["oss", "pd", "util"],
+          _LIBDEPS='$_LIBDEPS_OBJS' )
 
 sdbdpsdump = toolEnv.Program("sdbdpsdump", sdbdpsdumpFiles,
           LIBDEPS=["oss","pd","pmd","bson","dps", "util"],
@@ -536,6 +544,7 @@ if linux:
    toolEnv.Install( '#/bin', sdbtop )
 toolEnv.Install( '#/tools', sdbload2 )
 toolEnv.Install( '#/tools', sdbmemcheck )
+toolEnv.Install( '#/tools', sdbrepair )
 toolEnv.Install( '#/bin', sdbdpsdump )
 toolEnv.Install( '#/bin', sdbinspect )
 if linux:
