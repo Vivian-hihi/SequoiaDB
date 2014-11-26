@@ -12,7 +12,6 @@ doc
 driver
 site_scons
 java/jdk_linux64
-license
 misc
 thirdparty/parser/sm/js/jsd
 thirdparty/parser/sm/js/src
