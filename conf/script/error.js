@@ -276,6 +276,7 @@ var SDB_LOB_IS_NOT_AVAILABLE         = -269  ; // LOB is not useable;
 var SDB_MIG_DATA_NON_UTF             = -270  ; // Data is not in UTF-8 format;
 var SDB_OMA_TASK_FAIL                = -271  ; // Task failed;
 var SDB_LOB_NOT_OPEN                 = -272  ; // Lob does not open;
+var SDB_LOB_HAS_OPEN                 = -273  ; // Lob has been open;
 
 function _getErr (errCode) {
    var errDesp = [ 
@@ -551,7 +552,8 @@ function _getErr (errCode) {
                    "LOB is not useable",
                    "Data is not in UTF-8 format",
                    "Task failed",
-                   "Lob does not open"
+                   "Lob does not open",
+                   "Lob has been open"
    ]; 
    var index = -errCode ;
    if ( index < 0 || index >= errDesp.length ) 

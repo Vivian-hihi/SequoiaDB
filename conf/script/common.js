@@ -45,6 +45,12 @@ function addHostResult()
    this.HasInstall                = false ;
 }
 
+function checkAddHostInfoResult()
+{
+   this.errno                     = SDB_OK ;
+   this.detail                    = "" ;
+}
+
 function addHostRollbackResult()
 {
    this.errno                     = SDB_OK ;

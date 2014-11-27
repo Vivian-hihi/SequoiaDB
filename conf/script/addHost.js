@@ -322,7 +322,7 @@ function main()
       RET_JSON[Detail] = "Not specified any hosts to add" ;
       return RET_JSON ;
    }
-   // get os infomation
+   // get os information
    try
    {
       osInfo = System.type() ;

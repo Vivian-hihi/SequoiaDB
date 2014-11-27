@@ -41,7 +41,7 @@ function main()
       setLastError( SDB_INVALIDARG ) ;
       throw SDB_INVALIDARG ;
    }
-   // get os infomation
+   // get os information
    var osInfo = System.type() ;
    for ( var i = 0; i < arrLen; i++ )
    {

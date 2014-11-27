@@ -748,8 +748,10 @@ function getLocalIPAddr()
    {
       if ( OMA_LINUX == osInfo )
       {
-         localIP = cmd.run("hostname -i") ;
-         localIP = removeLineBreak( localIP ) ; 
+         var str = cmd.run("hostname -i") ;
+         str = removeLineBreak( str ) ; 
+         var arr = str.split(" ") ;
+         localIP = arr[0] ;
       }
       else
       {
