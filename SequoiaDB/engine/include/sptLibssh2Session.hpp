@@ -34,6 +34,8 @@
 #define SPT_LIBSSH2SESSION_HPP_
 
 #include "sptSshSession.hpp"
+
+#define OPENSSL_THREAD_DEFINES
 #include "libssh2.h"
 
 class _OSS_FILE ;
