@@ -48,6 +48,7 @@ using namespace bson ;
 
 #define OMA_INVALID_TASKID     (0)
 
+#define OMA_TASK_NAME_ADD_HOST                "add host task"
 #define OMA_TASK_NAME_INSTALL_DB_BUSINESS     "install db business task"
 #define OMA_TASK_NAME_REMOVE_DB_BUSINESS      "remove db business task"
 
@@ -56,8 +57,9 @@ namespace engine
 {
    enum OMA_TASK_TYPE
    {
-      OMA_TASK_INSTALL_DB         = 0, // install db business
-      OMA_TASK_REMOVE_DB          = 1, // remove db business
+      OMA_TASK_ADD_HOST           = 0, // add host
+      OMA_TASK_INSTALL_DB         = 1, // install db business
+      OMA_TASK_REMOVE_DB          = 2, // remove db business
 
       OMA_TASK_UNKNOW             = 255
    } ;
@@ -101,11 +103,14 @@ namespace engine
 
          virtual const CHAR*   taskName () const = 0 ;
 
+      private:
+         ossSpinSLatch                        _latch ;
+
       protected:
          UINT64                               _taskID ;
          OMA_TASK_STATUS                      _status ;
-         ossSpinSLatch                        _taskLatch ;
-         ossSpinSLatch                        _jobLatch ;
+//         ossSpinSLatch                        _taskLatch ;
+//         ossSpinSLatch                        _jobLatch ;
          map< string, OMA_JOB_STATUS >        _jobStatus ;
    } ;
    typedef _omaTask omaTask ;
@@ -142,6 +147,76 @@ namespace engine
    */
    _omaTaskMgr* getTaskMgr() ;
 
+
+   /*
+      add host task
+   */
+   class _omaAddHostTask : public _omaTask
+   {
+      public:
+         _omaAddHostTask ( UINT64 taskID ) ;
+         virtual ~_omaAddHostTask () ;
+
+      public:
+         virtual OMA_TASK_TYPE taskType () const { return _taskType ; }
+         virtual const CHAR*   taskName () const { return _taskName.c_str() ; }
+
+      public:
+         INT32 init( BSONObj &addHostRawInfo,
+                     vector<AddHostInfo> addHostInfo ) ;
+         // start job
+         INT32 doit() ;
+         
+      public:
+         // respond query of add host progress
+         virtual INT32 queryProgress( BSONObj &progress ) ;
+
+      public:
+         void setTaskStage( OMA_OPT_STAGE stage ) ;
+         void setIsTaskFail( BOOLEAN isFail ) ;
+         BOOLEAN getIsTaskFail() ;
+         void setIsAddHostFail( BOOLEAN isFail ) ;
+         BOOLEAN getIsAddHostFail() ;
+         void setIsTaskFinish( BOOLEAN isFinish ) ;
+
+      public:
+         AddHostInfo* getAddHostItem() ;
+         AddHostInfo* getRbHostItem() ;
+         BOOLEAN registerJob( string jobName ) ;
+         INT32 updateJobStatus( string jobName, OMA_JOB_STATUS status ) ;
+         INT32 updateProgressStatus( INT32 serialNum, AddHostPS ps,
+                                     BOOLEAN isFinish = FALSE ) ;
+
+      private:
+         INT32 _checkHostInfo() ;
+         INT32 _addHost() ;
+         INT32 _rollback() ;
+         void _getRollbackInfo() ;
+         void _buildErrMsg() ;
+         BOOLEAN _hasUninstallHost() ;
+         void _collectProgressInfo() ;
+
+      private:
+         // add host raw info
+         BSONObj                      _addHostRawInfo ;
+         // add host info
+         vector<AddHostInfo>          _addHostInfo ;
+         // rollback host info
+         vector<AddHostInfo>          _rollbackInfo ;
+
+         ossSpinSLatch                _taskLatch ;
+
+         string                       _taskName ;
+         OMA_TASK_TYPE                _taskType ;
+         OMA_OPT_STAGE                _stage ;
+         BOOLEAN                      _isTaskFinish ;
+         BOOLEAN                      _isAddHostFail ;
+         BOOLEAN                      _isTaskFail ;
+         CHAR                         _detail[OMA_BUFF_SIZE + 1] ; 
+   } ;
+   typedef _omaAddHostTask omaAddHostTask ;
+   
+
    /*
       install database business
    */
@@ -174,7 +249,7 @@ namespace engine
          virtual INT32 queryProgress( BSONObj &progress ) ;
 
       public:
-         void setTaskStage( OMA_INSTALL_DB_STAGE stage ) ;
+         void setTaskStage( OMA_OPT_STAGE stage ) ;
          void setIsInstallFinish( BOOLEAN isFinish ) ;
          void setIsRollbackFinish( BOOLEAN isFinish ) ;
          void setIsRemoveVCoordFinish( BOOLEAN isFinish ) ;
@@ -238,7 +313,7 @@ namespace engine
          ossSpinSLatch                        _jobLatch ;
          OMA_TASK_TYPE                        _taskType ;
          string                               _taskName ;
-         OMA_INSTALL_DB_STAGE                 _stage ;
+         OMA_OPT_STAGE                        _stage ;
          BOOLEAN                              _isStandalone ;
          BOOLEAN                              _isInstallFinish ;
          BOOLEAN                              _isRollbackFinish ;

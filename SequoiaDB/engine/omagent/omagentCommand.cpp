@@ -50,6 +50,7 @@ namespace engine
    IMPLEMENT_OACMD_AUTO_REGISTER( _omaCheckHost )
    IMPLEMENT_OACMD_AUTO_REGISTER( _omaUninstallRemoteAgent )
    IMPLEMENT_OACMD_AUTO_REGISTER( _omaAddHost )
+//   IMPLEMENT_OACMD_AUTO_REGISTER( _omaAddHost2 )
    IMPLEMENT_OACMD_AUTO_REGISTER( _omaRemoveHost )
    IMPLEMENT_OACMD_AUTO_REGISTER( _omaInsDBBus )
    IMPLEMENT_OACMD_AUTO_REGISTER( _omaUninsDBBus )
@@ -710,59 +711,7 @@ namespace engine
    error :
       goto done ;
    }
-/*
-   INT32 _omaAddHost::doit ( BSONObj &retObj )
-   {
-      INT32 rc = SDB_OK ;
-      BSONObj detail ;
-      BSONObj rval ;
 
-      rc = getExcuteJsContent( _content ) ;
-      if ( rc )
-      {
-         PD_LOG ( PDERROR, "Failed to get js file's content to "
-                  "excute, rc = %d", rc ) ;
-         goto error ;
-      }
-      // get scope
-      _scope = sdbGetOMAgentMgr()->getScope() ;
-      if ( !_scope )
-      {
-         rc = SDB_OOM ;
-         PD_LOG_MSG ( PDERROR, "Failed to get scope, rc = %d", rc ) ;
-         goto error ;
-      }
-      // execute js
-      rc = _scope->eval( _content.c_str(), _content.size(),
-                         "", 1, 1, rval, detail ) ;
-
-      if ( rc )
-      {
-         PD_LOG_MSG ( PDERROR, "Failed to eval js file for command[%s]: "
-                  "%s, rc = %d", name(),
-                  _scope->getLastErrMsg(), rc ) ;
-         rc = _scope->getLastError() ;
-         BSONObjBuilder bob ;
-         bob.append( OMA_FIELD_DETAIL, _scope->getLastErrMsg() ) ;
-         retObj = bob.obj() ;
-         PD_LOG_MSG(PDERROR, "%s", _scope->getLastErrMsg() ) ;
-         goto error ;
-      }
-      // adapt the result
-      rc = final ( rval, retObj ) ;
-      if ( rc )
-      {
-         PD_LOG_MSG ( PDERROR, "Failed to extract result for command[%s], "
-                  "rc = %d", name(), rc ) ;
-         goto error ;
-      }
-
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-*/
    INT32 _omaAddHost::final ( BSONObj &rval, BSONObj &retObj )
    {
       INT32 rc = SDB_OK ;
@@ -1065,6 +1014,40 @@ namespace engine
       return rc ;
    error:
       goto done ;
+   }
+
+   /******************************* add host2 ********************************/
+   /*
+      _omaAddHost2
+   */
+   _omaAddHost2::_omaAddHost2 ()
+   {
+   }
+
+   _omaAddHost2::~_omaAddHost2 ()
+   {
+   }
+
+   INT32 _omaAddHost2::init( const CHAR *pAddHostInfo )
+   {
+      INT32 rc = SDB_OK ;
+      EDUID startaddHostTaskJobID = PMD_INVALID_EDUID ;
+      rc = startAddHostTaskJob ( pAddHostInfo, &startaddHostTaskJobID ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to start add hosts task "
+                 "job, rc = %d", rc ) ;
+         goto error ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _omaAddHost2::doit( BSONObj &retObj )
+   {
+      return SDB_OK ;
    }
 
    /******************************* remove host ********************************/

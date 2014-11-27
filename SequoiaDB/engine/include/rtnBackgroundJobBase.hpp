@@ -54,16 +54,19 @@ namespace engine
       RTN_JOB_RESTORE            = 7,
       RTN_JOB_REPLSYNC           = 8,
       RTN_JOB_PAGECLEANER        = 9,
-      RTN_JOB_CREATESTANDALONE   = 10, // create standalone
-      RTN_JOB_CREATECATALOG      = 11, // create catalog
-      RTN_JOB_CREATECOORD        = 12, // create coord
-      RTN_JOB_CREATEDATA         = 13, // create data node
-      RTN_JOB_STARTNODE          = 14, // start node
-      RTN_JOB_CMSYNC             = 15, // cm and cmd sync info
-      RTN_JOB_REMOVEVIRTUALCOORD = 16, // remove virtual coord
-      RTN_JOB_STARTINSDBBUSTASK  = 17, // start install db business task
-      RTN_JOB_STARTRMDBBUSTASK   = 18, // start remove db business task
-      RTN_JOB_INSDBBUSTASKRB     = 19, // install db business task rollback
+      RTN_JOB_ADDHOST            = 10, // add host
+      RTN_JOB_RMHOST             = 12, // remove host
+      RTN_JOB_CREATESTANDALONE   = 12, // create standalone
+      RTN_JOB_CREATECATALOG      = 13, // create catalog
+      RTN_JOB_CREATECOORD        = 14, // create coord
+      RTN_JOB_CREATEDATA         = 15, // create data node
+      RTN_JOB_STARTNODE          = 16, // start node
+      RTN_JOB_CMSYNC             = 17, // cm and cmd sync info
+      RTN_JOB_REMOVEVIRTUALCOORD = 18, // remove virtual coord
+      RTN_JOB_STARTINSDBBUSTASK  = 19, // start install db business task
+      RTN_JOB_STARTRMDBBUSTASK   = 20, // start remove db business task
+      RTN_JOB_INSDBBUSTASKRB     = 21, // install db business task rollback
+      RTN_JOB_STARTADDHOSTTASK   = 22, // start add host task
 
       RTN_JOB_MAX
    } ;

@@ -38,6 +38,631 @@ namespace engine
 {
 
    /*
+      add host job
+   */
+   _omaAddHostJob::_omaAddHostJob ( string jobName, _omaAddHostTask *pTask )
+   {
+      _jobName = jobName ;
+      _pTask = pTask ;
+   }
+
+   _omaAddHostJob::~_omaAddHostJob()
+   {
+   }
+
+   RTN_JOB_TYPE _omaAddHostJob::type () const
+   {
+      return RTN_JOB_ADDHOST ;
+   }
+
+   const CHAR* _omaAddHostJob::name () const
+   {
+      return _jobName.c_str() ;
+   }
+
+   BOOLEAN _omaAddHostJob::muteXOn ( const _rtnBaseJob *pOther )
+   {
+      return FALSE ;
+   }
+
+   INT32 _omaAddHostJob::doit()
+   {
+      INT32 rc = SDB_OK ;
+      INT32 tmpRc = SDB_OK ;
+
+      // if other jobs have no problems
+      // ( _omaAddHostTask::_isAddHostFail == FALSE )
+      // register current job to task, and set current to be running
+      BOOLEAN flag = _pTask->registerJob( _jobName ) ;
+      if ( !flag )
+      {
+         PD_LOG ( PDWARNING, "No need to run job[%s], some other jobs had "
+                  "failed", _jobName.c_str() ) ;
+         goto done ;
+      }
+      
+      while( TRUE )
+      {
+         CHAR desc [OMA_BUFF_SIZE + 1] = { 0 } ;
+         const CHAR *pErrMsg = NULL ;
+         AddHostInfo *pInfo = NULL ;
+         AddHostPS ps = { 0, "", "", FALSE } ;
+         INT32 errNum = 0 ;
+         BSONObj retObj ;
+
+         // get a host item to install
+         // if no host item need to install, let this backgroud
+         // thread finish
+         pInfo = _pTask->getAddHostItem() ;
+         if ( NULL == pInfo )
+         {
+            _pTask->updateJobStatus( _jobName, OMA_JOB_STATUS_FINISH ) ;
+            goto done ;
+         }
+
+         // befor install the host
+         // check wether there are some threads had been failing
+         if ( _pTask->getIsAddHostFail() )
+         {
+            rc = SDB_SYS ;
+            PD_LOG ( PDEVENT, "Stop running job[%s], for some other jobs"
+                     "had failed", _jobName.c_str() ) ;
+            goto error ;
+         }
+         // before install the host, update the progress status
+         ossSnprintf( desc, OMA_BUFF_SIZE, "Adding host[%s]",
+                      pInfo->_item._ip.c_str() ) ;
+         ps._desc = desc ;
+         rc = _pTask->updateProgressStatus( pInfo->_serialNum, ps ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Failed to update add host[%s] progress status, "
+                    "rc = %d", pInfo->_item._ip.c_str(), rc ) ;
+            goto error ;
+         }
+
+         // add host
+         _omaRunAddHost runCmd( *pInfo ) ;
+         rc = runCmd.init( NULL ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Job failed to init for adding host[%s], "
+                    "rc = %d", pInfo->_item._ip.c_str(), rc ) ;
+            goto error ;
+         }
+         rc = runCmd.doit( retObj ) ;
+         // failed in CPP, not execute js file yet
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Failed to add host[%s], "
+                    "rc = %d", pInfo->_item._ip.c_str(), rc ) ;
+            // if we can't get field "detail", it means we failed in CPP,
+            // we had not executed js file yet
+            tmpRc = omaGetStringElement ( retObj, OMA_FIELD_DETAIL, &pErrMsg ) ;
+            if ( tmpRc )
+            {
+               pErrMsg = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+               if ( NULL == pErrMsg )
+               {
+                  pErrMsg = "Not exeute js file yet" ;
+               }
+            }
+            ossSnprintf( desc, OMA_BUFF_SIZE, "Failed to add host[%s]",
+                         pInfo->_item._ip.c_str() ) ;
+            PD_LOG_MSG ( PDERROR, "%s: %s", desc, pErrMsg ) ;
+            ps._errno = rc ;
+            ps._errMsg = pErrMsg ;
+            ps._desc = desc ;
+            ps._hasInstall = FALSE ;
+            _pTask->updateProgressStatus( pInfo->_serialNum, ps, TRUE ) ;
+            goto error ;
+         }
+         // extract "errno"
+         rc = omaGetIntElement ( retObj, OMA_FIELD_ERRNO, errNum ) ;
+         if ( rc )
+         {
+            ossSnprintf( desc, OMA_BUFF_SIZE, "Failed to add host[%s]",
+                         pInfo->_item._ip.c_str() ) ;
+            pErrMsg = "Failed to get return error number" ;
+            PD_LOG_MSG ( PDERROR, "%s: %s", desc, pErrMsg ) ;
+            ps._errno = rc ;
+            ps._errMsg = pErrMsg ;
+            ps._desc = desc ;
+            ps._hasInstall = FALSE ;
+            _pTask->updateProgressStatus( pInfo->_serialNum, ps, TRUE ) ;
+            goto error ;
+         }
+         // to see whether execute js successfully or not
+         if ( SDB_OK != errNum )
+         {
+            // try to get wether db packet had been install or not
+            rc = omaGetBooleanElement ( retObj, OMA_FIELD_HASINSTALL,
+                                        ps._hasInstall ) ;
+            if ( SDB_OK != rc )
+            {
+               // if we failed to get assume it to be false
+               // because js file had remove the newly install db packet
+               PD_LOG ( PDWARNING, "Failed to add host[%s], but js file didn't"
+                        "tell wether db packet had been installed or not, "
+                        "assume it had not been installed, rc = %d",
+                        pInfo->_item._ip.c_str(), tmpRc ) ;
+               ps._hasInstall = FALSE ;
+            }
+            // get error detail
+            rc = omaGetStringElement ( retObj, OMA_FIELD_DETAIL, &pErrMsg ) ;
+            if ( SDB_OK != rc )
+            {
+               pErrMsg = "Js not return error detail" ;
+            }
+            ossSnprintf( desc, OMA_BUFF_SIZE, "Failed to add host[%s]",
+                         pInfo->_item._ip.c_str() ) ;
+            PD_LOG_MSG ( PDERROR, "%s: %s", desc, pErrMsg ) ;
+            ps._errno = errNum ;
+            ps._errMsg = pErrMsg ;
+            ps._desc = desc ;
+            _pTask->updateProgressStatus( pInfo->_serialNum, ps, TRUE ) ;
+            goto error ;
+         }
+         else
+         {
+            ossSnprintf( desc, OMA_BUFF_SIZE, "Finish adding host[%s]",
+                         pInfo->_item._ip.c_str() ) ;
+            PD_LOG ( PDEVENT, "Sucessed to add host[%s]",
+                     pInfo->_item._ip.c_str() ) ;
+            ps._desc = desc ;
+            // try to get wether db packet had been install or not
+            rc = omaGetBooleanElement ( retObj, OMA_FIELD_HASINSTALL,
+                                           ps._hasInstall ) ;
+            if ( tmpRc )
+            {
+               // the result from js file does not contain field OMA_FIELD_HASINSTALL,
+               // assume it has not been installed, don't remove it, for we don't know
+               // the db packet is installed by us or other people
+               PD_LOG ( PDWARNING, "Succeed to add host[%s], but js file didn't"
+                        "tell wether db packet had been installed or not, "
+                        "assume it had not been installed, rc = %d",
+                        pInfo->_item._ip.c_str(), tmpRc ) ;
+               ps._hasInstall = FALSE ;
+            }
+            // after add host, update the progress status
+            _pTask->updateProgressStatus( pInfo->_serialNum, ps, TRUE ) ;
+         }
+      }
+      // set job status to be successful
+      _pTask->updateJobStatus( _jobName, OMA_JOB_STATUS_FINISH ) ;
+
+   done:
+      return rc ;
+   error:
+      _pTask->setIsAddHostFail( TRUE ) ;
+      _pTask->updateJobStatus( _jobName, OMA_JOB_STATUS_FAIL ) ;
+      goto done ;
+   }
+
+   /*
+      rollback host job
+   */
+   _omaRbHostJob::_omaRbHostJob ( string jobName, _omaAddHostTask *pTask )
+   {
+      _jobName = jobName ;
+      _pTask = pTask ;
+   }
+
+   _omaRbHostJob::~_omaRbHostJob()
+   {
+   }
+
+   RTN_JOB_TYPE _omaRbHostJob::type () const
+   {
+      return RTN_JOB_RMHOST ;
+   }
+
+   const CHAR* _omaRbHostJob::name () const
+   {
+      return _jobName.c_str() ;
+   }
+
+   BOOLEAN _omaRbHostJob::muteXOn ( const _rtnBaseJob *pOther )
+   {
+      return FALSE ;
+   }
+
+   INT32 _omaRbHostJob::doit()
+   {
+      INT32 rc = SDB_OK ;
+      INT32 tmpRc = SDB_OK ;
+
+      // register current job to task, and set current to be running
+      _pTask->registerJob( _jobName ) ;
+      
+      while( TRUE )
+      {
+         BOOLEAN hasUninstall = FALSE ;
+         CHAR desc [OMA_BUFF_SIZE + 1] = { 0 } ;
+         const CHAR *pErrMsg = NULL ;
+         AddHostInfo *pInfo = NULL ;
+         AddHostPS ps = { 0, "", "", FALSE } ;
+         INT32 errNum = 0 ;
+         BSONObj retObj ;
+
+         // get a host item to uninstall
+         // if no host item need to uninstall, let this backgroud
+         // thread finish
+         pInfo = _pTask->getRbHostItem() ;
+         if ( NULL == pInfo )
+         {
+            _pTask->updateJobStatus( _jobName, OMA_JOB_STATUS_FINISH ) ;
+            goto done ;
+         }
+         // before remove the host, update the progress status
+         ossSnprintf( desc, OMA_BUFF_SIZE, "Removing host[%s]",
+                      pInfo->_item._ip.c_str() ) ;
+         ps._desc = desc ;
+         rc = _pTask->updateProgressStatus( pInfo->_serialNum, ps ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Failed to update remove host[%s] progress status, "
+                    "rc = %d", pInfo->_item._ip.c_str(), rc ) ;
+            goto error ;
+         }
+
+         // remove host
+         _omaRunRmHost runCmd( *pInfo ) ;
+         rc = runCmd.init( NULL ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Job failed to init for removing host[%s], "
+                    "rc = %d", pInfo->_item._ip.c_str(), rc ) ;
+            goto error ;
+         }
+         rc = runCmd.doit( retObj ) ;
+         // failed in CPP, not excute js file yet
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Failed to remove host[%s], "
+                    "rc = %d", pInfo->_item._ip.c_str(), rc ) ;
+            // if we can't get field "detail", it means we failed in CPP,
+            // we had not executed js file yet
+            tmpRc= omaGetStringElement ( retObj, OMA_FIELD_DETAIL, &pErrMsg ) ;
+            if ( tmpRc )
+            {
+               pErrMsg = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+               if ( NULL == pErrMsg )
+               {
+                  pErrMsg = "no exeute js file yet" ;
+               }
+            }
+            ossSnprintf( desc, OMA_BUFF_SIZE, "Failed to remove host[%s]",
+                         pInfo->_item._ip.c_str() ) ;
+            PD_LOG_MSG ( PDERROR, "%s: %s", desc, pErrMsg ) ;
+            ps._errno = rc ;
+            ps._errMsg = pErrMsg ;
+            ps._desc = desc ;
+            ps._hasInstall = TRUE ;
+
+            // after add host, update progress status
+            _pTask->updateProgressStatus( pInfo->_serialNum, ps, TRUE ) ;
+            goto error ;
+         }
+         // extract "errno"
+         rc = omaGetIntElement ( retObj, OMA_FIELD_ERRNO, errNum ) ;
+         if ( rc )
+         {
+            ossSnprintf( desc, OMA_BUFF_SIZE, "Failed to remove host[%s]",
+                         pInfo->_item._ip.c_str() ) ;
+            pErrMsg = "Failed to get return error number" ;
+            PD_LOG_MSG ( PDERROR, "%s: %s", desc, pErrMsg ) ;
+            ps._errno = rc ;
+            ps._errMsg = pErrMsg ;
+            ps._desc = desc ;
+            ps._hasInstall = TRUE ;
+            _pTask->updateProgressStatus( pInfo->_serialNum, ps, TRUE ) ;
+            goto error ;
+         }
+         // to see whether execute js successfully or not
+         if ( SDB_OK != errNum )
+         {
+            // try to get wether db packet had been uninstall or not
+            rc = omaGetBooleanElement ( retObj, OMA_FIELD_HASUNINSTALL,
+                                        hasUninstall ) ;
+            if ( SDB_OK != rc )
+            {
+               // if we failed to get field, assume it to be false
+               PD_LOG ( PDWARNING, "Failed to add host[%s], but js file didn't"
+                        "tell wether db packet had been uninstalled or not, "
+                        "assume it had not been uninstalled, rc = %d",
+                        pInfo->_item._ip.c_str(), rc ) ;
+               hasUninstall = FALSE ;
+            }
+            // get error detail
+            rc = omaGetStringElement ( retObj, OMA_FIELD_DETAIL, &pErrMsg ) ;
+            if ( SDB_OK != rc )
+            {
+               pErrMsg = "Js not return error detail" ;
+            }
+            ossSnprintf( desc, OMA_BUFF_SIZE, "Failed to remove host[%s]",
+                         pInfo->_item._ip.c_str() ) ;
+            PD_LOG_MSG ( PDERROR, "%s: %s", desc, pErrMsg ) ;
+            ps._errno = errNum ;
+            ps._errMsg = pErrMsg ;
+            ps._desc = desc ;
+            ps._hasInstall = !hasUninstall ;
+            _pTask->updateProgressStatus( pInfo->_serialNum, ps, TRUE ) ;
+            goto error ;
+         }
+         else
+         {
+            ossSnprintf( desc, OMA_BUFF_SIZE, "Finish removing host[%s]",
+                         pInfo->_item._ip.c_str() ) ;
+            PD_LOG ( PDEVENT, "Sucessed to remove host[%s]",
+                     pInfo->_item._ip.c_str() ) ;
+            ps._desc = desc ;
+            // try to get wether db packet had been uninstall or not
+            rc = omaGetBooleanElement ( retObj, OMA_FIELD_HASUNINSTALL,
+                                        hasUninstall ) ;
+            if ( rc )
+            {
+               // the result from js file does not contain field OMA_FIELD_HASUNINSTALL,
+               // assume it has not been uninstall
+               PD_LOG ( PDWARNING, "Succeed to remove host[%s], but js file didn't"
+                        "tell wether db packet had been uninstalled or not, "
+                        "assume it has not been uninstalled, rc = %d",
+                        pInfo->_item._ip.c_str(), rc ) ;
+               hasUninstall = FALSE ;
+            }
+            ps._hasInstall = !hasUninstall ;
+            // after add host, update the progress status
+            _pTask->updateProgressStatus( pInfo->_serialNum, ps, TRUE ) ;
+         }
+      }
+      // set job status to be successful
+      _pTask->updateJobStatus( _jobName, OMA_JOB_STATUS_FINISH ) ;
+
+   done:
+      return rc ;
+   error:
+      _pTask->updateJobStatus( _jobName, OMA_JOB_STATUS_FAIL ) ;
+      goto done ;
+   }
+
+   /*
+      star add host task job
+   */
+   _omaStartAddHostTaskJob::_omaStartAddHostTaskJob ( BSONObj &addHostInfo )
+   {
+      _addHostInfoObj = addHostInfo.getOwned() ;
+      _jobName = OMA_JOB_START_ADD_HOST_TASK ;
+      _pTask = NULL ;
+   }
+
+   _omaStartAddHostTaskJob::~_omaStartAddHostTaskJob()
+   {
+   }
+
+   RTN_JOB_TYPE _omaStartAddHostTaskJob::type () const
+   {
+      return RTN_JOB_STARTADDHOSTTASK ;
+   }
+
+   const CHAR* _omaStartAddHostTaskJob::name () const
+   {
+      return _jobName.c_str() ;
+   }
+
+   BOOLEAN _omaStartAddHostTaskJob::muteXOn ( const _rtnBaseJob *pOther )
+   {
+      return FALSE ;
+   }
+
+   INT32 _omaStartAddHostTaskJob::init()
+   {
+      INT32 rc = SDB_OK ;
+      BSONElement ele ;
+
+      // parse arguments
+      PD_LOG ( PDDEBUG, "Add host passes argument: %s",
+               _addHostInfoObj.toString( FALSE, TRUE ).c_str() ) ;
+      // get taskID from omsvc
+      ele = _addHostInfoObj.getField( OMA_FIELD_TASKID ) ;
+      if ( NumberInt != ele.type() && NumberLong != ele.type() )
+      {
+         PD_LOG_MSG ( PDERROR, "Receive invalid task id from omsvc" ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      _taskID = ele.numberLong() ;
+      // get add host info
+      rc = _initAddHostsInfo( _addHostInfoObj ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to get add host info, rc = %d", rc ) ;
+         goto error ;
+      }
+      
+   done:
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   INT32 _omaStartAddHostTaskJob::init2()
+   {
+      INT32 rc                         = SDB_OK ;
+      _omaTaskMgr *pTaskMgr            = getTaskMgr() ;
+      
+      // remove last task with the same name
+      rc = pTaskMgr->removeTask ( OMA_TASK_NAME_ADD_HOST ) ;
+      if ( rc )
+      {
+         PD_LOG_MSG( PDERROR, "Failed to remove task[%s], "
+                     "rc = %d", OMA_TASK_NAME_ADD_HOST, rc ) ;
+         goto error ;
+      }
+      // create add host task
+      _pTask = SDB_OSS_NEW _omaAddHostTask( _taskID ) ;
+      if ( !_pTask )
+      {
+         rc = SDB_OOM ;
+         PD_LOG_MSG( PDERROR, "Failed to create add host task, "
+                     "rc = %d", rc ) ;
+         goto error ;
+      }
+      // register add host task
+      pTaskMgr->addTask( _pTask, _taskID ) ;
+      rc = _pTask->init( _addHostInfoObj, _addHostInfo ) ;
+      if ( rc )
+      {
+         PD_LOG_MSG( PDERROR, "Failed to init in add host task, "
+                     "rc = %d", rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _omaStartAddHostTaskJob::doit()
+   {
+      INT32 rc = SDB_OK ;
+      rc = _pTask->doit() ;
+      if ( rc )
+      {
+         PD_LOG_MSG( PDERROR, "Failed to do add host task, "
+                     "rc = %d", rc ) ;
+         goto error ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _omaStartAddHostTaskJob::_initAddHostsInfo( BSONObj &info )
+   {
+      INT32 rc                   = SDB_OK ;
+      const CHAR *pSdbUser       = NULL ;
+      const CHAR *pSdbPasswd     = NULL ;
+      const CHAR *pSdbUserGroup  = NULL ;
+      const CHAR *pInstallPacket = NULL ;
+      const CHAR *pStr           = NULL ;
+      BSONElement ele ;
+      
+      // get add hosts info
+      // SdbUser
+      rc = omaGetStringElement( info, OMA_FIELD_SDBUSER, &pSdbUser ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                "Get field[%s] failed, rc: %d",
+                OMA_FIELD_SDBUSER, rc ) ;
+      // SdbPasswd
+      rc = omaGetStringElement( info, OMA_FIELD_SDBPASSWD, &pSdbPasswd ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                "Get field[%s] failed, rc: %d",
+                OMA_FIELD_SDBPASSWD, rc ) ;
+      // SdbUserGroup
+      rc = omaGetStringElement( info, OMA_FIELD_SDBUSERGROUP, &pSdbUserGroup ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                "Get field[%s] failed, rc: %d",
+                OMA_FIELD_SDBUSERGROUP, rc ) ;
+      // InstallPacket
+      rc = omaGetStringElement( info, OMA_FIELD_INSTALLPACKET, &pInstallPacket ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                "Get field[%s] failed, rc: %d",
+                OMA_FIELD_INSTALLPACKET, rc ) ;
+      // get every item
+      ele = info.getField( OMA_FIELD_HOSTINFO ) ;
+      if ( Array != ele.type() )
+      {
+         PD_LOG_MSG ( PDERROR, "Receive wrong format add hosts"
+                      "info from omsvc" ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      else
+      {
+         BSONObjIterator itr( ele.embeddedObject() ) ;
+         INT32 serialNum = 0 ;
+         while( itr.more() )
+         {
+            AddHostInfo hostInfo ;
+            AddHostItem hostItem ;
+            hostInfo._serialNum = serialNum++ ;
+            hostInfo._flag = FALSE ;
+            hostInfo._isFinish = FALSE ; 
+            hostInfo._ps._errno = 0 ;
+            hostInfo._ps._errMsg = "" ;
+            hostInfo._ps._desc = "" ;
+            hostInfo._ps._hasInstall = FALSE ;
+            hostInfo._common._sdbUser = pSdbUser ;
+            hostInfo._common._sdbPasswd = pSdbPasswd ;
+            hostInfo._common._userGroup = pSdbUserGroup ;
+            hostInfo._common._installPacket = pInstallPacket ;
+            BSONObj item ;
+            ele = itr.next() ;
+            if ( Object != ele.type() )
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG_MSG ( PDERROR, "Receive wrong format bson from omsvc" ) ;
+               goto error ;
+            }
+            item = ele.embeddedObject() ;
+            // IP
+            rc = omaGetStringElement( item, OMA_FIELD_IP, &pStr ) ;
+            PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                      "Get field[%s] failed, rc: %d",
+                      OMA_FIELD_IP, rc ) ;
+            hostItem._ip = pStr ;
+            // HostName
+            rc = omaGetStringElement( item, OMA_FIELD_HOSTNAME, &pStr ) ;
+            PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                      "Get field[%s] failed, rc: %d",
+                      OMA_FIELD_HOSTNAME, rc ) ;
+            hostItem._hostName = pStr ;
+            // User
+            rc = omaGetStringElement( item, OMA_FIELD_USER, &pStr ) ;
+            PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                      "Get field[%s] failed, rc: %d",
+                      OMA_FIELD_USER, rc ) ;
+            hostItem._user = pStr ;
+            // Passwd
+            rc = omaGetStringElement( item, OMA_FIELD_PASSWD, &pStr ) ;
+            PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                      "Get field[%s] failed, rc: %d",
+                      OMA_FIELD_PASSWD, rc ) ;
+            hostItem._passwd = pStr ;
+            // SshPort
+            rc = omaGetStringElement( item, OMA_FIELD_SSHPORT, &pStr ) ;
+            PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                      "Get field[%s] failed, rc: %d",
+                      OMA_FIELD_SSHPORT, rc ) ;
+            hostItem._sshPort = pStr ;
+            // AgentPort
+            rc = omaGetStringElement( item, OMA_FIELD_AGENTPORT, &pStr ) ;
+            PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                      "Get field[%s] failed, rc: %d",
+                      OMA_FIELD_AGENTPORT, rc ) ;
+            hostItem._agentPort = pStr ;
+            // InstallPath
+            rc = omaGetStringElement( item, OMA_FIELD_INSTALLPATH, &pStr ) ;
+            PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                      "Get field[%s] failed, rc: %d",
+                      OMA_FIELD_INSTALLPATH, rc ) ;
+            hostItem._installPath = pStr ;
+
+            hostInfo._item = hostItem ;
+            _addHostInfo.push_back( hostInfo ) ;
+         }
+      }
+      
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+
+   /*
        omagent create standalone job
    */
    _omaCreateStandaloneJob::_omaCreateStandaloneJob (
@@ -1000,13 +1625,13 @@ namespace engine
    }
 
    /*
-      install db business task rollback job
+      install db business task job
    */
    _omaStartInsDBBusTaskJob::_omaStartInsDBBusTaskJob ( BSONObj &installInfo )
    {
       _isStandalone = FALSE ;
       _installInfoObj = installInfo.getOwned() ;
-      _name = OMA_JOB_START_INSTALL_DB_BUSINESS ;
+      _name = OMA_JOB_START_INSTALL_DB_BUS_TASK ;
       _pTask = NULL ;
    }
 
@@ -1223,7 +1848,7 @@ namespace engine
    {
       _isStandalone = FALSE ;
       _uninstallInfoObj = uninstallInfo.getOwned() ;
-      _name = OMA_JOB_START_REMOVE_DB_BUSINESS ;
+      _name = OMA_JOB_START_REMOVE_DB_BUS_TASK ;
       _pTask = NULL ;
    }
 
@@ -1500,7 +2125,7 @@ namespace engine
       BSONObj retObj ;
 
       // set task stage
-      _pTask->setTaskStage( OMA_INSTALL_ROLLBACK ) ;
+      _pTask->setTaskStage( OMA_OPT_ROLLBACK ) ;
       // get rollback info
       rc = _getRollbackInfo ( info ) ;
       if ( rc )
@@ -1930,6 +2555,116 @@ namespace engine
       goto done ;
    }
 
+   // start job
+
+   INT32 startAddHostJob( string jobName, _omaAddHostTask *pTask, EDUID *pEDUID )
+   {
+      INT32 rc = SDB_OK ;
+      BOOLEAN returnResult = FALSE ;
+      _omaAddHostJob *pJob = NULL ;
+
+      pJob = SDB_OSS_NEW _omaAddHostJob( jobName, pTask ) ;
+      if ( !pJob )
+      {
+         PD_LOG ( PDERROR, "Failed to alloc memory for "
+                  "adding host job" ) ;
+         rc = SDB_OOM ;
+         goto error ;
+      }
+      rc = rtnGetJobMgr()->startJob( pJob, RTN_JOB_MUTEX_NONE, pEDUID,
+                                     returnResult ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to start add host job, rc = %d", rc ) ;
+         goto done ;
+      }
+      
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 startRbHostJob( string jobName, _omaAddHostTask *pTask, EDUID *pEDUID )
+   {
+      INT32 rc = SDB_OK ;
+      BOOLEAN returnResult = FALSE ;
+      _omaRbHostJob *pJob = NULL ;
+
+      pJob = SDB_OSS_NEW _omaRbHostJob( jobName, pTask ) ;
+      if ( !pJob )
+      {
+         PD_LOG ( PDERROR, "Failed to alloc memory for "
+                  "adding host job" ) ;
+         rc = SDB_OOM ;
+         goto error ;
+      }
+      rc = rtnGetJobMgr()->startJob( pJob, RTN_JOB_MUTEX_NONE, pEDUID,
+                                     returnResult ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to start remove host job, rc = %d", rc ) ;
+         goto done ;
+      }
+      
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 startAddHostTaskJob ( const CHAR *pAddHostInfo, EDUID *pEDUID )
+   {
+      INT32 rc = SDB_OK ;
+      BOOLEAN returnResult = FALSE ;
+      _omaStartAddHostTaskJob *pJob = NULL ;
+
+      try
+      {
+         BSONObj info( pAddHostInfo ) ;
+         pJob = SDB_OSS_NEW _omaStartAddHostTaskJob( info ) ;
+         if ( !pJob )
+         {
+            PD_LOG ( PDERROR, "Failed to alloc memory for starting "
+                     "add host job" ) ;
+            rc = SDB_OOM ;
+            goto error ;
+         }
+         rc = pJob->init() ;
+         if ( rc )
+         {
+            PD_LOG ( PDERROR, "Failded to init in add host task, "
+                     "rc = %d", rc) ;
+            goto error ;
+         }
+         rc = pJob->init2() ;
+         if ( rc )
+         {
+            PD_LOG ( PDERROR, "Failded to init in add host task, "
+                     "rc = %d", rc) ;
+            goto error ;
+         }
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG ( PDERROR, "Occur error, exception is: %s", e.what() ) ;
+         goto error ;
+      }
+      rc = rtnGetJobMgr()->startJob( pJob, RTN_JOB_MUTEX_NONE, pEDUID,
+                                     returnResult ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to start add host job, rc = %d", rc ) ;
+         goto done ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 startCreateStandaloneJob ( _omaInsDBBusTask *pTask,
                                     EDUID *pEDUID )
    {
@@ -2079,7 +2814,8 @@ namespace engine
                                      returnResult ) ;
       if ( rc )
       {
-         PD_LOG ( PDERROR, "Failed to start job, rc = %d", rc ) ;
+         PD_LOG ( PDERROR, "Failed to start install db business job,"
+                  "rc = %d", rc ) ;
          goto done ;
       }
 

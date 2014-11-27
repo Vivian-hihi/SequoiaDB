@@ -111,6 +111,7 @@ namespace engine
    } ;
    typedef struct _RollbackInfo RollbackInfo ;
 
+   /// add host 
    struct _AddHost
    {
       std::string _ip ;
@@ -119,6 +120,59 @@ namespace engine
       std::string _installPath ;
    } ;
    typedef struct _AddHost AddHost ;
+
+   struct _AddHostProgressStatus
+   {
+      INT32 _errno ;
+      string _errMsg ;
+      string _desc ;
+      BOOLEAN _hasInstall ;
+   } ;
+   typedef struct _AddHostProgressStatus AddHostPS ;
+
+   struct _AddHostCommon
+   {
+      string _sdbUser ;
+      string _sdbPasswd ;
+      string _userGroup ;
+      string _installPacket ;
+   } ;
+   typedef struct _AddHostCommon AddHostCommon ;
+
+   struct _AddHostItem
+   {
+      string _ip ;
+      string _hostName ;
+      string _user ;
+      string _passwd ;
+      string _sshPort ;
+      string _agentPort ;
+      string _installPath ;
+   } ;
+   typedef struct _AddHostItem AddHostItem ;
+
+   struct _AddHostInfo
+   {
+      INT32 _serialNum ;
+      BOOLEAN _flag ; // to mark wether the host has been handled or not
+      BOOLEAN _isFinish ; // whether install or remove host is finish
+      AddHostPS _ps ;
+      AddHostCommon _common ;
+      AddHostItem _item ; // add host info
+   } ;
+   typedef struct _AddHostInfo AddHostInfo ;
+
+/*
+   enum OMA_ADDHOST_STATUS
+   {
+      OMA_ADDHOST_INIT         = 1 ,
+      OMA_ADDHOST_RUNNING      = 2 ,
+      OMA_ADDHOST_FINISH       = 3 ,
+      OMA_ADDHOST_FAIL         = 4 ,
+
+      OMA_ADDHOST_END          = 10
+   } ;
+*/
 
    enum OMA_JOB_STATUS
    {
@@ -130,12 +184,12 @@ namespace engine
       OMA_JOB_STATUS_END          = 10
    } ;
 
-   enum OMA_INSTALL_DB_STAGE
+   enum OMA_OPT_STAGE
    {
-      OMA_INSTALL_INSTALL         = 1,
-      OMA_INSTALL_ROLLBACK        = 2,
+      OMA_OPT_INSTALL         = 1,
+      OMA_OPT_ROLLBACK        = 2,
 
-      OMA_INSTALL_END             = 10
+      OMA_OPT_END             = 10
    } ;
 
 }

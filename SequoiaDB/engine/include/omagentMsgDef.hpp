@@ -105,6 +105,7 @@
 #define OMA_FIELD_INSTALLHOSTNAME                  "InstallHostName"
 #define OMA_FIELD_INSTALLHOSTS                     "InstallHosts"
 #define OMA_FIELD_INSTALLSVCNAME                   "InstallSvcName"
+#define OMA_FIELD_INSTALLPACKET                    "InstallPacket"
 #define OMA_FIELD_INSTALLPATH2                     "InstallPath"
 #define OMA_FIELD_INSTALLCONFIG                    "InstallConfig"
 #define OMA_FIELD_UNINSTALLHOSTNAME                "UninstallHostName"

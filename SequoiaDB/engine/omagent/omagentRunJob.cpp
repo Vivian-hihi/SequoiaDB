@@ -41,6 +41,252 @@ namespace engine
 {
 
    /*
+      _omaRunAddHost
+   */
+   _omaRunAddHost::_omaRunAddHost ( AddHostInfo &info )
+   {
+      _addHostInfo = info ;
+   }
+
+   _omaRunAddHost::~_omaRunAddHost ()
+   {
+   }
+
+   INT32 _omaRunAddHost::init( const CHAR *pInstallInfo )
+   {
+      INT32 rc = SDB_OK ;
+      try
+      {
+         BSONObj bus ;
+         rc = _getAddHostInfo( bus ) ;
+         if ( rc )
+         {
+            PD_LOG ( PDERROR, "Failed to get add host info for js file, "
+                     "rc = %d", rc ) ;
+            goto error ;
+         }
+
+         // build js file arguments
+         ossSnprintf( _jsFileArgs, JS_ARG_LEN, "var %s = %s; ",
+                      JS_ARG_BUS, bus.toString(FALSE, TRUE).c_str() ) ;
+         PD_LOG ( PDDEBUG, "Add hosts passes argument: %s",
+                  _jsFileArgs ) ;
+         rc = addJsFile( FILE_ADD_HOST2, _jsFileArgs ) ;
+         if ( rc )
+         {
+            PD_LOG ( PDERROR, "Failed to add js file[%s], rc = %d ",
+                     FILE_ADD_HOST2, rc ) ;
+            goto error ;
+         }
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG ( PDERROR, "Failed to build bson, exception is: %s",
+                  e.what() ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   INT32 _omaRunAddHost::_getAddHostInfo( BSONObj &retObj )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObjBuilder builder ;
+      BSONObjBuilder bob ;
+      BSONObj subObj ;
+
+      // the output bson format
+      // {
+      //  "SdbUser":"sdbadmin",
+      //  "SdbPasswd":"sdbadmin",
+      //  "SdbUserGroup":"sdbadmin_group",
+      //  "InstallPacket":"/home/users/tanzhaobo/sequoiadb/bin/../packet/sequoiadb-1.8-linux_x86_64-installer.run",
+      //  "HostInfo":{"IP":"192.168.20.42","HostName":"susetzb","User":"root","Passwd":"sequoiadb","SshPort":"22","AgentPort":"11790","InstallPath":"/opt/sequoiadb"}
+      // }
+
+      try
+      {
+         //build subObj
+         bob.append( OMA_FIELD_IP, _addHostInfo._item._ip.c_str() ) ;
+         bob.append( OMA_FIELD_HOSTNAME, _addHostInfo._item._hostName.c_str() ) ;
+         bob.append( OMA_FIELD_USER, _addHostInfo._item._user.c_str() ) ;
+         bob.append( OMA_FIELD_PASSWD, _addHostInfo._item._passwd.c_str() ) ;
+         bob.append( OMA_FIELD_SSHPORT, _addHostInfo._item._sshPort.c_str() ) ;
+         bob.append( OMA_FIELD_AGENTPORT, _addHostInfo._item._agentPort.c_str() ) ;
+         bob.append( OMA_FIELD_INSTALLPATH, _addHostInfo._item._installPath.c_str() ) ;
+         subObj = bob.obj() ;
+
+         // build retObj
+         builder.append( OMA_FIELD_SDBUSER,
+                         _addHostInfo._common._sdbUser.c_str() ) ;
+         builder.append( OMA_FIELD_SDBPASSWD,
+                         _addHostInfo._common._sdbPasswd.c_str() ) ;
+         builder.append( OMA_FIELD_SDBUSERGROUP,
+                         _addHostInfo._common._userGroup.c_str() ) ;
+         builder.append( OMA_FIELD_INSTALLPACKET,
+                         _addHostInfo._common._installPacket.c_str() ) ;
+         builder.append( OMA_FIELD_HOSTINFO, subObj ) ;
+         retObj = builder.obj() ;
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG ( PDERROR, "Failed to build bson for add host, "
+                      "exception is: %s", e.what() ) ;
+         goto error ;
+      }
+      
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   /*
+       _omaRunRmHost
+   */
+   _omaRunRmHost::_omaRunRmHost( AddHostInfo &info )
+   {
+      _RmHostInfo = info ;
+   }
+
+   _omaRunRmHost::~_omaRunRmHost()
+   {
+   }
+
+   INT32 _omaRunRmHost::init( const CHAR *pInstallInfo )
+   {
+      INT32 rc = SDB_OK ;
+      try
+      {
+         BSONObj bus ;
+         rc = _getRmHostInfo( bus ) ;
+         if ( rc )
+         {
+            PD_LOG ( PDERROR, "Failed to get remove host info for js file, "
+                     "rc = %d", rc ) ;
+            goto error ;
+         }
+         // build js file arguments
+         ossSnprintf( _jsFileArgs, JS_ARG_LEN, "var %s = %s; ",
+                      JS_ARG_BUS, bus.toString(FALSE, TRUE).c_str() ) ;
+         PD_LOG ( PDDEBUG, "Remove host passes argument: %s",
+                  _jsFileArgs ) ;
+         rc = addJsFile( FILE_ADDHOST_ROLLBACK2, _jsFileArgs ) ;
+         if ( rc )
+         {
+            PD_LOG ( PDERROR, "Failed to add js file[%s], rc = %d ",
+                     FILE_ADDHOST_ROLLBACK2, rc ) ;
+            goto error ;
+         }
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG ( PDERROR, "Failed to build bson, exception is: %s",
+                  e.what() ) ;
+         goto error ;
+      }
+   done:
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   INT32 _omaRunRmHost::_getRmHostInfo( BSONObj &retObj )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObjBuilder builder ;
+      BSONObjBuilder bob ;
+      BSONObj subObj ;
+
+      // the output bson format
+      // { "HostInfo":
+      //    { "IP": "192.168.20.165", "HostName": "rhel64-test8",
+      //      "User": "root", "Passwd": "sequoiadb", "SshPort": "22",
+      //      "AgentPort": "11790", "InstallPath": "/opt/sequoiadb" }
+      // } 
+      
+      try
+      {
+         //build subObj
+         bob.append( OMA_FIELD_IP, _RmHostInfo._item._ip.c_str() ) ;
+         bob.append( OMA_FIELD_HOSTNAME, _RmHostInfo._item._hostName.c_str() ) ;
+         bob.append( OMA_FIELD_USER, _RmHostInfo._item._user.c_str() ) ;
+         bob.append( OMA_FIELD_PASSWD, _RmHostInfo._item._passwd.c_str() ) ;
+         bob.append( OMA_FIELD_SSHPORT, _RmHostInfo._item._sshPort.c_str() ) ;
+         bob.append( OMA_FIELD_AGENTPORT, _RmHostInfo._item._agentPort.c_str() ) ;
+         bob.append( OMA_FIELD_INSTALLPATH, _RmHostInfo._item._installPath.c_str() ) ;
+         subObj = bob.obj() ;
+
+         // build retObj
+         builder.append( OMA_FIELD_HOSTINFO, subObj ) ;
+         retObj = builder.obj() ;
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG ( PDERROR, "Failed to build bson for add host, "
+                      "exception is: %s", e.what() ) ;
+         goto error ;
+      }
+      
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   /*
+      _omaRunCheckAddHostInfo
+   */
+   _omaRunCheckAddHostInfo::_omaRunCheckAddHostInfo()
+   {
+   }
+
+   _omaRunCheckAddHostInfo::~_omaRunCheckAddHostInfo()
+   {
+   }
+
+   INT32 _omaRunCheckAddHostInfo::init ( const CHAR *pInstallInfo )
+   {
+      INT32 rc = SDB_OK ;
+      try
+      {
+         BSONObj obj( pInstallInfo ) ;
+
+         // build js file arguments
+         ossSnprintf( _jsFileArgs, JS_ARG_LEN, "var %s = %s; ",
+                      JS_ARG_BUS, obj.toString(FALSE, TRUE).c_str() ) ;
+         PD_LOG ( PDDEBUG, "Check add host information passes argument: %s",
+                  _jsFileArgs ) ;
+         rc = addJsFile( FIEL_CHECK_ADD_HOST_INFO, _jsFileArgs ) ;
+         if ( rc )
+         {
+            PD_LOG ( PDERROR, "Failed to add js file[%s], rc = %d ",
+                     FIEL_CHECK_ADD_HOST_INFO, rc ) ;
+            goto error ;
+         }
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG ( PDERROR, "Failed to build bson, exception is: %s",
+                  e.what() ) ;
+         goto error ;
+      }
+   done:
+      return rc ;
+   error:
+     goto done ;
+   }
+
+   /*
       _omaRunCreateStandaloneJob
    */
    _omaRunCreateStandaloneJob::_omaRunCreateStandaloneJob( string &vCoordSvcName,

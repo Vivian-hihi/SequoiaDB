@@ -50,6 +50,81 @@ namespace engine
    class _omaInsDBBusTask ;
 
    /*
+      add host job
+   */
+   class _omaAddHostJob : public _rtnBaseJob
+   {
+      public:
+         _omaAddHostJob ( string jobName, _omaAddHostTask *pTask ) ;
+         virtual ~_omaAddHostJob () ;
+
+      public:
+         virtual RTN_JOB_TYPE type () const ;
+         virtual const CHAR*  name () const ;
+         virtual BOOLEAN      muteXOn ( const _rtnBaseJob *pOther ) ;
+         virtual INT32        doit () ;
+
+     private:
+         string                   _jobName ;
+         _omaAddHostTask*         _pTask ;
+   } ; 
+
+
+   /*
+      rollback host job
+   */
+   class _omaRbHostJob : public _rtnBaseJob
+   {
+      public:
+         _omaRbHostJob ( string jobName, _omaAddHostTask *pTask ) ;
+         virtual ~_omaRbHostJob () ;
+
+      public:
+         virtual RTN_JOB_TYPE type () const ;
+         virtual const CHAR*  name () const ;
+         virtual BOOLEAN      muteXOn ( const _rtnBaseJob *pOther ) ;
+         virtual INT32        doit () ;
+
+     private:
+         string                             _jobName ;
+         _omaAddHostTask*                   _pTask ;
+   } ; 
+
+   /*
+      start add host task job
+      it's just a backgroud thread to arrange
+      a backgroud task to do the actual add host job
+   */
+   class _omaStartAddHostTaskJob : public _rtnBaseJob
+   {
+      public:
+         _omaStartAddHostTaskJob(BSONObj& addHostInfo) ;
+         virtual ~_omaStartAddHostTaskJob() ;
+
+      public:
+         virtual RTN_JOB_TYPE type () const ;
+         virtual const CHAR*  name () const ;
+         virtual BOOLEAN      muteXOn ( const _rtnBaseJob *pOther ) ;
+         virtual INT32        doit () ;
+         INT32                init() ;
+         INT32                init2() ;
+
+      private:
+         INT32 _initAddHostsInfo( BSONObj &info ) ;
+
+      private:
+         // raw add host info
+         BSONObj                     _addHostInfoObj ;
+         // job name
+         string                      _jobName ;
+         // add host info
+         vector<AddHostInfo>         _addHostInfo ;
+         // task info
+         INT64                       _taskID ;
+         _omaAddHostTask*            _pTask ;
+   } ;
+ 
+   /*
       create standalone job
    */
    class _omaCreateStandaloneJob : public _rtnBaseJob
@@ -323,6 +398,16 @@ namespace engine
          string                      _vCoordSvcName ;
          _omaInsDBBusTask            *_pTask ;
    } ;
+
+
+   // start add host job
+   INT32 startAddHostJob( string jobName, _omaAddHostTask *pTask, EDUID *pEDUID ) ;
+
+   // start rollback host job
+   INT32 startRbHostJob( string jobName, _omaAddHostTask *pTask, EDUID *pEDUID ) ;
+
+   // start add host task job
+   INT32 startAddHostTaskJob ( const CHAR *pAddHostInfo, EDUID *pEDUID ) ;
 
    // start create standalone job
    INT32 startCreateStandaloneJob ( _omaInsDBBusTask *pTask,

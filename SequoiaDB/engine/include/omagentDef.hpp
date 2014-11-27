@@ -129,6 +129,7 @@ namespace engine
    #define OMA_CMD_CRRATE_VIRTUAL_COORD               "create virtual coord"
    #define OMA_CMD_REMOVE_VIRTUAL_COORD               "remove virtual coord"
    #define OMA_CMD_ROLLBACK_ADD_HOSTS                 "rollback add hosts"
+   #define OMA_CMD_RM_HOST                            "remove host"
    #define OMA_CMD_RUN_CREATE_STANDALONE              "run create standalone job"
    #define OMA_CMD_RUN_CREATE_COORD                   "run create coord job"
    #define OMA_CMD_RUN_CREATE_CATALOG                 "run create catalog job"
@@ -141,11 +142,14 @@ namespace engine
    /*
       oma job
    */
+   #define OMA_JOB_ADDHOST                            "add host job"
+   #define OMA_JOB_ROLLBACKHOST                       "rollback host job"
+   #define OMA_JOB_START_ADD_HOST_TASK                "start add host task job"
    #define OMA_JOB_CREATE_STANDALONE                  "create standalone job"
    #define OMA_JOB_CREATE_CATALOG                     "create catalog job"
    #define OMA_JOB_CREATE_COORD                       "create coord job"
-   #define OMA_JOB_START_INSTALL_DB_BUSINESS          "start install db business job"
-   #define OMA_JOB_START_REMOVE_DB_BUSINESS           "start remove db business job"
+   #define OMA_JOB_START_INSTALL_DB_BUS_TASK          "start install db business task job"
+   #define OMA_JOB_START_REMOVE_DB_BUS_TASK           "start remove db business task job"
    #define OMA_JOB_ROLLBACK_INSTALL_DB_BUSINESS       "rollback install db business job"
    #define OMA_JOB_ROLLBACK_STANDALONE                "rollback create standalone job"
    #define OMA_JOB_ROLLBACK_CATALOG                   "rollback create catalog job"
@@ -167,10 +171,13 @@ namespace engine
    #define FILE_CHECK_HOST_ITEM             "checkHostItem.js"
    #define FILE_UNINSTALL_REMOTE_AGENT      "uninstallRemoteAgent.js"
    #define FILE_ADD_HOST                    "addHost.js"
+   #define FILE_ADD_HOST2                   "addHost2.js"
+   #define FIEL_CHECK_ADD_HOST_INFO         "checkAddHostInfo.js"
    #define FILE_REMOVE_HOST                 "removeHost.js"
    #define FILE_CREATE_TEMP_COORD           "createTempCoord.js"
    #define FILE_REMOVE_TEMP_COORD           "removeTempCoord.js"
    #define FILE_ADDHOST_ROLLBACK            "addHostRollback.js"
+   #define FILE_ADDHOST_ROLLBACK2            "addHostRollback2.js"
    #define FILE_UPDATE_HOSTS_INFO           "updateHostsInfo.js"
    #define FILE_UPDATE_HOSTS                "updateHosts.js"
 
