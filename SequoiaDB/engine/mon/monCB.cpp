@@ -113,6 +113,29 @@ namespace engine
 
       return *this ;
    }
+   _monAppCB &_monAppCB::operator+= ( const _monAppCB &rhs )
+   {
+      totalDataRead              += rhs.totalDataRead ;
+      totalIndexRead             += rhs.totalIndexRead ;
+      totalDataWrite             += rhs.totalDataWrite ;
+      totalIndexWrite            += rhs.totalIndexWrite ;
+
+      totalUpdate                += rhs.totalUpdate ;
+      totalDelete                += rhs.totalDelete ;
+      totalInsert                += rhs.totalInsert ;
+      totalSelect                += rhs.totalSelect ;
+      totalRead                  += rhs.totalRead ;
+
+      totalReadTime              += rhs.totalReadTime ;
+      totalWriteTime             += rhs.totalWriteTime ;
+      _connectTimestamp.time     += rhs._connectTimestamp.time;
+      _connectTimestamp.microtm  += rhs._connectTimestamp.microtm ;
+
+      _readTimeSpent             += rhs._readTimeSpent ;
+      _writeTimeSpent            += rhs._writeTimeSpent ;
+
+      return *this ;
+   }
 
    void _monAppCB::reset()
    {

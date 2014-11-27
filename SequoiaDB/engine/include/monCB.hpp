@@ -405,6 +405,7 @@ namespace engine
       _monAppCB() ;
 
       _monAppCB &operator= ( const _monAppCB &rhs ) ;
+      _monAppCB &operator+= ( const _monAppCB &rhs ) ;
 
       void recordConnectTimestamp()
       {
