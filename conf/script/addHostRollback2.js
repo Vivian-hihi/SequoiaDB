@@ -28,10 +28,6 @@
    RET_JSON: the format is: {"errno":0,"detail":"","IP":"192.168.20.165","HasUninstall":true}
 */
 
-// println
-//var BUS_JSON = { "HostInfo": { "IP": "192.168.20.165", "HostName": "rhel64-test8", "User": "root", "Passwd": "sequoiadb", "SshPort": "22", "AgentPort": "11790", "InstallPath": "/opt/sequoiadb" } } ;
-
-
 var RET_JSON       = new addHostRollbackResult() ;
 var errMsg         = "" ;
 
@@ -123,7 +119,6 @@ function main()
       if ( isLocal )
       {
          RET_JSON[HasUninstall] = true ;
-//println("RET_JSON is:" + JSON.stringify(RET_JSON))
          return RET_JSON ; 
       }
       // uninstall business packet from remote host
@@ -137,7 +132,6 @@ function main()
    }
 
    // return the result
-//println("RET_JSON is:" + JSON.stringify(RET_JSON))
    return RET_JSON ;
 }
 
