@@ -163,9 +163,19 @@ function uninstallDBPacket ( ssh, osInfo, path )
    var path = adaptPath( osInfo, path ) ;
    if ( OMA_LINUX == osInfo )
    {
-      cmd = path + OMA_PROG_UNINSTALL_L ;
+      // try to stop sdbcm
       try
       {
+         cmd = path + OMA_PROG_BIN_SDBCMTOP_L ; 
+         ssh.exec( cmd ) ;
+      }
+      catch ( e )
+      {
+      }
+      // remove db packet
+      try
+      {
+         cmd = path + OMA_PROG_UNINSTALL_L ;
          ssh.exec( "chmod a+x " + cmd ) ;
          ssh.exec( cmd + " --mode unattended " ) ;
       }
