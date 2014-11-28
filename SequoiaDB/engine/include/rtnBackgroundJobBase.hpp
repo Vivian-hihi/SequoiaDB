@@ -55,7 +55,7 @@ namespace engine
       RTN_JOB_REPLSYNC           = 8,
       RTN_JOB_PAGECLEANER        = 9,
       RTN_JOB_ADDHOST            = 10, // add host
-      RTN_JOB_RMHOST             = 12, // remove host
+      RTN_JOB_RMHOST             = 11, // remove host
       RTN_JOB_CREATESTANDALONE   = 12, // create standalone
       RTN_JOB_CREATECATALOG      = 13, // create catalog
       RTN_JOB_CREATECOORD        = 14, // create coord
