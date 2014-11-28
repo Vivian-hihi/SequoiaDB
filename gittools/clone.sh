@@ -25,6 +25,8 @@ rm -rf $1/* 2>/dev/null
 # manually build SequoiaDB/engine/include/ossVer_Autogen.h
 # replace WCREV to svn version
 echo "Build svn version"
+# just in case SVN use chinese
+export LANG='en_US'
 sed "s/WCREV/$(svn info | grep Revision | awk '{print $2}')/g" $ROOTPATH/misc/autogen/ossVer.tmp > $ROOTPATH/oss.tmp
 # replace $ to empty string and replace ossVer_autogen.h
 sed 's/\$//g' $ROOTPATH/oss.tmp > $ROOTPATH/SequoiaDB/engine/include/ossVer_Autogen.h
