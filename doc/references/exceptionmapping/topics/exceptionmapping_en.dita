@@ -1092,6 +1092,14 @@
             <stentry>Task failed</stentry>
             <stentry>-271</stentry>
          </strow>
+         <strow>
+            <stentry>Lob does not open</stentry>
+            <stentry>-272</stentry>
+         </strow>
+         <strow>
+            <stentry>Lob has been open</stentry>
+            <stentry>-273</stentry>
+         </strow>
       </simpletable>
    </body>
 </topic>

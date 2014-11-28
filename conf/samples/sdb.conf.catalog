@@ -90,3 +90,12 @@ numpagecleaners=1
 # The minimal interval between two cleanup actions for each collection space (in ms, default 10000, min 1000 )
 pagecleaninterval=10000
 
+# Large object file path
+# lobpath=
+
+# Open direct io in large object
+# directioinlob=
+
+# extend the file as a sparse file
+# sparsefile=
+

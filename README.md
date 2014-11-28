@@ -120,7 +120,7 @@ Building Drivers:
 		scons --client
 	PHP Client:
 		cd driver/php5
-		scons --phpversion=5.3.10
+		scons --phpversion=5.4.6
 		Note:
 			PHP source code is located in thirdparty/php directory
 			The dir name must be "php-<version>"

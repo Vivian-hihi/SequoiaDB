@@ -228,6 +228,25 @@
 					<stentry>The minimum interval between two cleanup actions for each CS
              Unit: ms, Default: 10000, Min: 1000</stentry>
 				</strow>
+				<strow>
+					<stentry>--lobpath</stentry>
+					<stentry>--</stentry>
+					<stentry>str</stentry>
+					<stentry>1. It specifies the catalog of lob. 
+             2. If it is not specified, the default path is &quot;Data file path&quot;.</stentry>
+				</strow>
+				<strow>
+					<stentry>--directioinlob</stentry>
+					<stentry>--</stentry>
+					<stentry>boolean</stentry>
+					<stentry>If it is not spcified, the default value is &quot;false&quot;</stentry>
+				</strow>
+				<strow>
+					<stentry>--sparsefile</stentry>
+					<stentry>--</stentry>
+					<stentry>boolean</stentry>
+					<stentry>If it is not spcified, the default value is &quot;false&quot;</stentry>
+				</strow>
 			</simpletable>
 			<note>
 				<p>SequoiaDB supports setting configuration with command line,configuration file, or both of them. When both of them are used, parameters in command line will overwrite those in configuration file.</p>

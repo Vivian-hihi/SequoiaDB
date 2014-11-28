@@ -307,4 +307,6 @@ const CHAR* getErrDesp ( INT32 errCode );
 #define SDB_LOB_IS_NOT_AVAILABLE        -269  /**< LOB is not useable */
 #define SDB_MIG_DATA_NON_UTF            -270  /**< Data is not in UTF-8 format */
 #define SDB_OMA_TASK_FAIL               -271  /**< Task failed */
+#define SDB_LOB_NOT_OPEN                -272  /**< Lob does not open */
+#define SDB_LOB_HAS_OPEN                -273  /**< Lob has been open */
 #endif /* OSSERR_HPP_ */

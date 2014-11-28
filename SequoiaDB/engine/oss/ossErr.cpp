@@ -294,7 +294,9 @@ const CHAR* getErrDesp ( INT32 errCode )
                    "LOB sequence does not exist",
                    "LOB is not useable",
                    "Data is not in UTF-8 format",
-                   "Task failed"
+                   "Task failed",
+                   "Lob does not open",
+                   "Lob has been open"
     };
     if ( code < 0 || (UINT32)code >= (sizeof ( errDesp ) / sizeof ( CHAR* )) )
         return "unknown error";
