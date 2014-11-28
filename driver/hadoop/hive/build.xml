@@ -17,7 +17,7 @@
 	</taskdef>
 
 	<property name="root.dir" value="." />
-	<property name="java.driver.jar" value="../../../../release/sequoiadb.jar" />
+	<property name="java.driver.jar" value="${basedir}/../../java/sequoiadb.jar" />
 	<property name="javac.base.dir" value="../../../" />
 
 	<property name="open.source.target.dir" value="${root.dir}/build_open_source" />
