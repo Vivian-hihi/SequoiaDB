@@ -344,13 +344,13 @@ sdbConnectionHandle sdbGetConnectionHandle( const char *host,
          if ( tmpConnection->transLevel <= 0 )
          {
             tmpConnection->transLevel = 1 ;
-            rc = sdbTransactionBegin( tmpConnection->hConnection ) ;
-            if ( SDB_OK != rc )
-            {
-               ereport( ERROR, ( errcode( ERRCODE_FDW_ERROR ), 
-                        errmsg( "begin transaction failed:rc=%d", rc ) ) ) ;
-               return SDB_INVALID_HANDLE ;
-            }
+//            rc = sdbTransactionBegin( tmpConnection->hConnection ) ;
+//            if ( SDB_OK != rc )
+//            {
+//               ereport( ERROR, ( errcode( ERRCODE_FDW_ERROR ), 
+//                        errmsg( "begin transaction failed:rc=%d", rc ) ) ) ;
+//               return SDB_INVALID_HANDLE ;
+//            }
          }
          
          return tmpConnection->hConnection;
@@ -408,13 +408,13 @@ sdbConnectionHandle sdbGetConnectionHandle( const char *host,
    connect->transLevel    = 1 ;
    pool->numConnections++ ;
 
-   rc = sdbTransactionBegin( connect->hConnection ) ;
-   if ( SDB_OK != rc )
-   {
-      ereport( ERROR, ( errcode( ERRCODE_FDW_ERROR ), 
-               errmsg( "begin transaction failed:rc=%d", rc ) ) ) ;
-      return SDB_INVALID_HANDLE ;
-   }
+//   rc = sdbTransactionBegin( connect->hConnection ) ;
+//   if ( SDB_OK != rc )
+//   {
+//      ereport( ERROR, ( errcode( ERRCODE_FDW_ERROR ), 
+//               errmsg( "begin transaction failed:rc=%d", rc ) ) ) ;
+//      return SDB_INVALID_HANDLE ;
+//   }
 
    return hConnection ;
 }
@@ -3360,11 +3360,11 @@ static void SdbFdwXactCallback( XactEvent event, void *arg )
       switch( event )
       {
       case XACT_EVENT_COMMIT :
-         sdbTransactionCommit( pool->connList[count].hConnection ) ;
+         //sdbTransactionCommit( pool->connList[count].hConnection ) ;
          pool->connList[count].transLevel = 0 ;
          break ;
       case XACT_EVENT_ABORT :
-         sdbTransactionRollback( pool->connList[count].hConnection ) ;
+         //sdbTransactionRollback( pool->connList[count].hConnection ) ;
          pool->connList[count].transLevel = 0 ;
          break ;
       default :
