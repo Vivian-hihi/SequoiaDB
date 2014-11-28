@@ -125,6 +125,7 @@ Building Drivers:
 			PHP source code is located in thirdparty/php directory
 			The dir name must be "php-<version>"
 	Python Client:
+                <python-devel package is required>
 		cd driver/python
 		scons
 	Java Client:
