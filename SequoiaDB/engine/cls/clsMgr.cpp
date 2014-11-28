@@ -330,7 +330,17 @@ namespace engine
 
       if ( SDB_SESSION_REPL == sessionType )
       {
-         pSession = SDB_OSS_NEW _clsReplSession ( sessionID ) ;
+         UINT32 nodeID = 0 ;
+         UINT32 tid = 0 ;
+         ossUnpack32From64( sessionID, nodeID, tid ) ;
+
+         // nodeid the same with self node, start type must be ACTIVE,
+         // can't create session
+         if ( PMD_SESSION_PASSIVE != startType ||
+              pmdGetNodeID().columns.nodeID != nodeID )
+         {
+            pSession = SDB_OSS_NEW _clsReplSession ( sessionID ) ;
+         }
       }
       else if ( SDB_SESSION_FS_DST == sessionType )
       {
