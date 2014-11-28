@@ -779,6 +779,15 @@ int sdbSetBsonValue( sdbbson *bsonObj, const char *name, Datum valueDatum,
          sdbbson_append_timestamp( bsonObj, name, &bson_time ) ;
          break ;
       }
+      case BYTEAOID :
+      {
+			CHAR *buff = VARDATA( ( bytea * )DatumGetPointer( valueDatum ) );
+			INT32 len  = VARSIZE( ( bytea * )DatumGetPointer( valueDatum ) ) 
+			             - VARHDRSZ;
+         sdbbson_append_binary( bsonObj, name, BSON_BINDATA, buff, len ) ;
+         //sdbbson_append_string( bsonObj, name, outputString ) ;
+         break ;
+      }
 
       case TEXTARRAYOID:
       case INT4ARRAYOID:
@@ -2082,6 +2091,14 @@ static BOOLEAN sdbColumnTypesCompatible( sdbbson_type sdbbsonType, Oid columnTyp
          compatibleType = TRUE ;
       break ;
    }
+   case BYTEAOID :
+   {
+      if ( ( BSON_BINDATA == sdbbsonType ) )
+      {
+         compatibleType = TRUE ;
+      }
+      break ;
+   }
    default :
    {
       ereport( ERROR,( errcode( ERRCODE_FDW_INVALID_DATA_TYPE ),
@@ -2198,6 +2215,19 @@ static Datum sdbColumnValue( sdbbson_iterator *sdbbsonIterator, Oid columnTypeId
       Datum timestampDatum = TimestampGetDatum( timestamp ) ;
       //Convert timestamp at GMT to local timestamp
       columnValue = DirectFunctionCall1( timestamptz_timestamp, timestampDatum ) ;
+      break ;
+   }
+   case BYTEAOID :
+   {
+      const CHAR *buff = sdbbson_iterator_bin_data( sdbbsonIterator ) ;
+      INT32 len        = sdbbson_iterator_bin_len( sdbbsonIterator ) ;
+
+      bytea *result = (bytea *)palloc( len + VARHDRSZ ) ;
+      memcpy( VARDATA(result), buff, len ) ;
+      SET_VARSIZE(result, len + VARHDRSZ) ;
+
+      columnValue = PointerGetDatum(result) ;
+      
       break ;
    }
    default :
