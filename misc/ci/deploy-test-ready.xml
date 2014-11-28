@@ -28,22 +28,24 @@
 				<replace file="${release.path}/build.version.local" token="BUILD.NUMBER" value="BUILD.NUMBER.LOCAL" />
 				<replace file="${release.path}/build.version.local" token="BUILD.INSTALL.FILENAME" value="BUILD.INSTALL.FILENAME.LOCAL" />
 				<replace file="${release.path}/build.version.local" token="BUILD.DRIVER.FILENAME" value="BUILD.DRIVER.FILENAME.LOCAL" />
-				<property file="${release.path}/build.version" />
+				<property file="${release.path}/build.version.local" />
 			</then>
 			<else>
 				<echo message="build.version is not exist " />
 				<property name="BUILD.NUMBER.LOCAL" value="-1" />
 			</else>
 		</if>
-		<echo message="check build.version is OK , now check the version is old " />
+		<echo message="check build.version is OK , now check the version is old?" />
 		<delete file="${release.path}/build.version" failonerror="false" />
 		<mkdir dir="${release.path}" />	
 		<copy file="${ci.script.path}/ci-properies-files/ci.test.properties.${os.publish.name}" tofile="${ci.script.path}/ci.test.properties" />
 		<property file="${ci.script.path}/ci.test.properties" />
 		
 		<stafTools workType="copy" workHost="${target.deploy_tar_gz.ip}" fileName="${copy_tar}/build.version" saveDir="${release.path}" toHost="${local.ADDR4}" />
-
-		<echo message="now software is ${BUILD.NUMBER.LOCAL}" />
+    <property file="${release.path}/build.version" />
+    
+		<echo message="Old software is ${BUILD.NUMBER.LOCAL}" />
+		<echo message="New software is ${BUILD.NUMBER}" />
 		<if>
 			<not>
 				<equals arg1="${BUILD.NUMBER}" arg2="${BUILD.NUMBER.LOCAL}" />
