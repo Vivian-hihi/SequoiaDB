@@ -154,6 +154,9 @@ namespace engine
                   _latch.get() ;
                   // need to release remove latch for job to delete
                   _latchRemove.release() ;
+                  // need to re-value for it
+                  it = _mapJobs.begin() ;
+                  continue ;
                }
             }
             ++it ;
