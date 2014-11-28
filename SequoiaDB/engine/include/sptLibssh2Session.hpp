@@ -34,13 +34,11 @@
 #define SPT_LIBSSH2SESSION_HPP_
 
 #include "sptSshSession.hpp"
-
-#define OPENSSL_THREAD_DEFINES
 #include "libssh2.h"
 
 class _OSS_FILE ;
 namespace engine
-{
+{ 
    class _sptLibssh2Session : public _sptSshSession
    {
    public:
@@ -95,11 +93,11 @@ namespace engine
       INT32 _wirte2File( _OSS_FILE *file, const CHAR *buf, SINT64 len ) ;
 
       void _getLastError( std::string &errMsg ) ;
+
    private:
       LIBSSH2_SESSION *_session ;
       LIBSSH2_CHANNEL *_channel ;
       std::string _errmsg ;
-
    } ;
    typedef class _sptLibssh2Session sptLibssh2Session ;
 }

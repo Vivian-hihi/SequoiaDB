@@ -33,6 +33,8 @@
 #include "sptLibssh2Session.hpp"
 #include "pd.hpp"
 #include "ossIO.hpp"
+#include "ossLatch.hpp"
+#include <openssl/crypto.h>
 
 using namespace std ;
 
@@ -50,6 +52,51 @@ namespace engine
 
    #define MAX_OUT_STRING_LEN    ( 64 * 1024 )
    #define READ_OUT_STR_LINE_LEN ( 1024 )
+   
+   static ossSpinSLatch *locks = NULL ;
+
+   // callback function 1
+   void lock_callback( INT32 mode, INT32 type, CHAR *file, INT32 line )
+   {
+      if ( mode & CRYPTO_LOCK )
+         locks[type].get() ;
+      else
+         locks[type].release() ;
+   }
+
+   // callback function 2
+   UINT64 thread_id( void )
+   {
+      return (UINT64)ossGetCurrentThreadID() ;
+   }
+
+   // set 2 callback functions
+   void ssh2_user_init( void )
+   {
+      if ( NULL == locks )
+      {
+         /// _locks is delete[] in ssh2_user_cleanup
+         locks = SDB_OSS_NEW ossSpinSLatch[CRYPTO_num_locks()] ;
+         if ( NULL == locks )
+         {
+            PD_LOG ( PDERROR, "Failed to new[] memory, rc = %d", SDB_OOM ) ;
+            ossPanic() ;
+         }
+         // TODO: have not macro for "unsigned long"
+         CRYPTO_set_id_callback( (unsigned long(*)())thread_id) ;
+         CRYPTO_set_locking_callback((void(*)(INT32, INT32, const CHAR*, INT32))lock_callback) ;
+      }
+   }
+
+   void ssh2_user_cleanup( void )
+   {
+      /// when nobody use _locks, delete[] it
+      if ( NULL != locks )
+      {
+         SDB_OSS_DEL[] locks ;
+         locks = NULL ;
+      }
+   }
 
    /*
       _sptLibSshAssit implement
@@ -65,11 +112,13 @@ namespace engine
    _sptLibSshAssit::_sptLibSshAssit()
    {
       libssh2_init( 0 ) ;
+      ssh2_user_init() ;
    }
 
    _sptLibSshAssit::~_sptLibSshAssit()
    {
       libssh2_exit() ;
+      ssh2_user_cleanup() ;
    }
 
    _sptLibSshAssit s_libSshAssit ;
@@ -119,7 +168,6 @@ namespace engine
     _session( NULL ),
     _channel( NULL )
    {
-
    }
 
    _sptLibssh2Session::~_sptLibssh2Session()
@@ -689,4 +737,5 @@ namespace engine
    error:
       goto done ;
    }
+
 }
