@@ -1,37 +1,20 @@
-/*******************************************************************************
-
-   Copyright (C) 2011-2014 SequoiaDB Ltd.
-
-   This program is free software: you can redistribute it and/or modify
-   it under the term of the GNU Affero General Public License, version 3,
-   as published by the Free Software Foundation.
-
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warrenty of
-   MARCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-   GNU Affero General Public License for more details.
-
-   You should have received a copy of the GNU Affero General Public License
-   along with this program. If not, see <http://www.gnu.org/license/>.
-
-   Source File Name = apropos_db.h
-
-   Descriptive Name =
-
-   When/how to use:
-
-   Dependencies: N/A
-
-   Restrictions: N/A
-
-   Change Activity:
-   defect Date        Who Description
-   ====== =========== === ==============================================
-          12/1/2014  ly  Initial Draft
-
-   Last Changed =
-
-*******************************************************************************/
+/*	$Id: apropos_db.h,v 1.13 2012/03/24 01:46:25 kristaps Exp $ */
+/*
+ * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
+ *
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
+ 
 #ifndef APROPOS_H
 #define APROPOS_H
 
