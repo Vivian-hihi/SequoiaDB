@@ -14,6 +14,23 @@
    You should have received a copy of the GNU Affero General Public License
    along with this program. If not, see <http://www.gnu.org/license/>.
 
+   Source File Name = sptParseTroff.hpp
+
+   Descriptive Name =
+
+   When/how to use:
+
+   Dependencies: N/A
+
+   Restrictions: N/A
+
+   Change Activity:
+   defect Date        Who Description
+   ====== =========== === ==============================================
+          11/28/2012  YW  Initial Draft
+
+   Last Changed =
+
 *******************************************************************************/
 #ifndef SPTPARSETROFF_HPP__
 #define SPTPARSETROFF_HPP__
