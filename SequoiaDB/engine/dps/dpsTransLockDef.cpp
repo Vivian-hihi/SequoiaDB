@@ -14,6 +14,24 @@
    You should have received a copy of the GNU Affero General Public License
    along with this program. If not, see <http://www.gnu.org/license/>.
 
+   Source File Name = dpsTransLockDef.cpp
+
+   Descriptive Name =
+
+   When/how to use: this program may be used on binary and text-formatted
+   versions of runtime component. This file contains code logic for
+   common functions for coordinator node.
+
+   Dependencies: N/A
+
+   Restrictions: N/A
+
+   Change Activity:
+   defect Date        Who Description
+   ====== =========== === ==============================================
+
+   Last Changed =
+
 *******************************************************************************/
 
 #include "dpsTransLockDef.hpp"
