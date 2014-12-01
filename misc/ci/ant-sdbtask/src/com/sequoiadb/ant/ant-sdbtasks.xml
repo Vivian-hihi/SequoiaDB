@@ -61,4 +61,6 @@
     <taskdef name="getMethod" classname="net.sf.antcontrib.net.httpclient.GetMethodTask" onerror="ignore" />
     <taskdef name="headMethod" classname="net.sf.antcontrib.net.httpclient.HeadMethodTask" onerror="ignore" />
     <taskdef name="importurl" classname="net.sf.antcontrib.net.URLImportTask" onerror="ignore"/>
+
+    <taskdef name="junit" classname="org.apache.tools.ant.taskdefs.optional.junit.JUnitTask" onerror="ignore"/>
 </antlib>

@@ -4,13 +4,8 @@
 
 <project name="Build-Sdbtasks-Jar" default="Jar-Ant-Sdbtasks">
 	<property name="build.dir" value="${base.path}/build_ant_sdbtask" />
-	<!-- <taskdef resource="net/sf/antcontrib/antlib.xml">
-		<classpath>
-			<pathelement location="/usr/share/java/ant-contrib.jar" />
-		</classpath>
-	</taskdef> -->
-	
-	<target name="Clean-Last-Buildfile" depends="">
+
+	<target name="Clean-Last-Buildfile">
 		<echo message="Begin to clean last build file" />
 		<delete dir="${build.dir}" />
 		<mkdir dir="${build.dir}/lib" />
@@ -54,6 +49,8 @@
 		<unjar src="${java.driver.jar}" dest="${build.dir}"  />
 		<unjar src="${base.path}/lib/JSTAF.jar" dest="${build.dir}" />
 		<unjar src="${base.path}/lib/ant-contrib.jar" dest="${build.dir}" />
+		<unjar src="${base.path}/lib/junit.jar" dest="${build.dir}" />
+		<unjar src="${base.path}/lib/ant-junit.jar" dest="${build.dir}" />
 		<copy file="${base.path}/src/com/sequoiadb/ant/ant-sdbtasks.xml" tofile="${build.dir}/com/sequoiadb/ant/ant-sdbtasks.xml" />
 	</target>
 

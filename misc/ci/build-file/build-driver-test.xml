@@ -3,18 +3,7 @@
 <!--@param ${lib.dir} : The path where all lib's directory .-->
 <!--@param ${jdk.name} : The javac file path-->
 <project name="Build-Driver-Testcases" default="Build-Driver-Testcases">
-	<!-- <property name="build.testcases.java" value="${build.testcases}/java/" /> -->
-	<!-- <property name="build.testcases.CPP" value="${build.testcases}/CPP" />
-	<property name="build.testcases.C" value="${build.testcases}/C" /> -->
-<!-- 	<property name="junit.jar.dir" value="/usr/share/java/junit.jar" /> -->
-	<property name="junit4.jar.dir" value="/usr/share/java/junit4.jar" />
-	<!-- <property name="sequoiadb.jar.dir" value="${lib.dir}/java/sequoiadb.jar" /> -->
-	<!-- <property name="deploy.path" value="${WORKSPACE}/deploy" /> -->
-<!-- 	<taskdef resource="net/sf/antcontrib/antlib.xml">
-		<classpath>
-			<pathelement location="/usr/share/java/ant-contrib.jar" />
-		</classpath>
-	</taskdef> -->
+	<!-- <property name="junit4.jar.dir" value="/usr/share/java/junit4.jar" /> -->
 
 	<target name="Clean-Driver-Testcases">
 		<echo message="Begin to clean driver env" />
@@ -66,7 +55,7 @@
 		<echo message="Begin to javac the driver java testcases" />
 		<javac srcdir="${build.testcases}/java" destdir="${deploy.path}/hlt/drivers_testcases/java/build" fork="yes" debug="true" executable="${deploy.path}/../sequoiadb/java/${jdk.name}/bin/javac" includeAntRuntime="false" includeJavaRuntime="false" encoding="GBK">
 			<classpath>
-				<pathelement location="${junit4.jar.dir}" />
+				<pathelement location="${WORKSPACE}/deploy/ant-sdbtasks/ant-sdbtasks.jar" />
 				<pathelement location="${lib.dir}/java/sequoiadb.jar" />
 			</classpath>
 		</javac>
@@ -76,14 +65,8 @@
 			</manifest>
 			<fileset dir="${deploy.path}/hlt/drivers_testcases/java/build" includes="**/*" />
 		</jar>
-		<!-- <copy file="${deploy.path}/hlt/drivers_testcases/java/lib/java_test.jar" tofile="${deploy.path}/hlt/samples_testcases/Java/lib/java_test.jar" /> -->
 		<echo message="Complete javac and jar the driver java testcases" />
 
-		<!-- <delete dir="${WORKSPACE}/sequoiadb/client/lib" failonerror="false" />
-		<mkdir dir="${WORKSPACE}/sequoiadb/client/lib" />
-		<copy todir="${WORKSPACE}/sequoiadb/client/lib" failonerror="true">
-			<fileset dir="${lib.dir}/lib" includes="**/*.a" />
-		</copy> -->
 		<echo message="Begin to scons the c and c++ testcases" />
 		<echo message="Exec: scons ${build.testcases}/C lib_path=${lib.dir}/lib include_path=${lib.dir}/include " />
 		<exec executable="scons" dir="${build.testcases}/C" failonerror="true">
@@ -115,9 +98,6 @@
 			<fileset dir="${build.testcases}/CPP/staticlib/build_test" includes="*static" />
 		</copy>
 		<echo message="Complete scons the c and cpp testcases" />
-
-		<!-- <copy file="${lib.dir}/lib/libsdbc.so" todir="${WORKSPACE}/deploy/hlt/drivers_testcases/C/lib" />
-		<copy file="${lib.dir}/lib/libsdbcpp.so" todir="${WORKSPACE}/deploy/hlt/drivers_testcases/CPP/lib" /> -->
 
 		<echo message="Begin to scons the lob testcases" />
 		<echo message="Exec: scons ${build.testcases}/../lob_testcases lib_path=${lib.dir}/lib include_path=${lib.dir}/include " />

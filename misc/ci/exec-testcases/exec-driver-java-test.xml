@@ -11,9 +11,15 @@
     </path> -->
     <taskdef name="junit" classname="org.apache.tools.ant.taskdefs.optional.junit.JUnitTask">
         <classpath>
-            <pathelement location="/usr/share/java/ant-junit.jar" />
+            <pathelement location="${antTask.jar.path}/ant-sdbtasks.jar" />
         </classpath>
     </taskdef>
+
+    <!-- <taskdef name="junit" classname="org.apache.tools.ant.taskdefs.optional.junit.JUnitTask">
+        <classpath>
+            <pathelement location="/usr/share/java/ant-junit.jar" />
+        </classpath>
+    </taskdef> -->
 
     <!-- <taskdef name="junit" classname="org.junit.Test">
         <classpath>
@@ -51,8 +57,9 @@
     <target name="exec-driver-java-test" depends="clean-env">
         <junit printsummary="yes" fork="yes" showoutput="true" timeout="1200000">
             <classpath>
-                <pathelement path="/usr/share/java/junit.jar" />
-                <pathelement path="/usr/share/java/junit4.jar" />  <!-- delete -->
+                <!-- <pathelement path="/usr/share/java/junit.jar" />
+                <pathelement path="/usr/share/java/junit4.jar" /> -->  
+                <pathelement path="${antTask.jar.path}/ant-sdbtasks.jar" />
 
                 <pathelement path="${sequoiadb.jar.dir}" />
                 <pathelement path="${java_test.jar.dir}" />

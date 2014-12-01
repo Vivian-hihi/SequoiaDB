@@ -130,6 +130,7 @@
 					<param name="testcase.path" value="${test.machine.deploy.path}/deploy/hlt/drivers_testcases" />
 					<param name="install.path" value="${install.path}" />
 					<param name="deploy.case.fullname" value="${deploy.case.fullname}" />
+					<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
 				</sdbtest>
 				<echo message="... test java driver is over ..." />
 			</case>
