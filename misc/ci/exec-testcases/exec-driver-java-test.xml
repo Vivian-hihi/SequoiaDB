@@ -10,15 +10,6 @@
         </classpath>
     </taskdef>
 
-    <!-- <macrodef name="checkReport">
-        <attribute name="name" default="" />
-        <attribute name="reportPath" default="${reports.path}" />
-        <element name="some-tasks" optional="yes" />
-        <sequential>
-            <echo message="@{message}" />
-        </sequential>
-    </macrodef> -->
-
     <target name="Clean-Java-Reports" depends="">
         <delete dir="${reports.path}" failonerror="false" />
         <mkdir dir="${reports.path}" />
