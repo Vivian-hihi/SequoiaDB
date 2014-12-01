@@ -125,14 +125,13 @@
 			</case>
 
 			<case value="driver-java">
-				<echo message="... test the java driver ..." />
-				<sdbtest host="${test.host.NAME}" testscript="${test.machine.deploy.path}/deploy/exec-driver-java-test.xml" remotereports="${test.machine.deploy.path}/deploy/hlt/drivers_testcases/java/reports" masterreports="${test.reports.path}" >
-					<param name="testcase.path" value="${test.machine.deploy.path}/deploy/hlt/drivers_testcases" />
-					<param name="install.path" value="${install.path}" />
-					<param name="deploy.case.fullname" value="${deploy.case.fullname}" />
+				<echo message="... Test java driver ..." />
+				<sdbtest host="${test.host.NAME}" testscript="${test.machine.deploy.path}/deploy/exec-driver-java-test.xml" remotereports="${testcase.path}/drivers_testcases/java/reports" masterreports="${test.reports.path}" >
 					<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
+					<param name="java.testcase.path" value="${testcase.path}/drivers_testcases/java" />
+					<param name="deploy.case.fullname" value="${deploy.case.fullname}" />
 				</sdbtest>
-				<echo message="... test java driver is over ..." />
+				<echo message="... Test java driver is over ..." />
 			</case>
 
 			<case value="driver-C">
