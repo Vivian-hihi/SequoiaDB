@@ -55,77 +55,110 @@ namespace engine
       CLS_SESSION_STATUS_FULL_SYNC = 3,
    } ;
 
-   class _clsReplSession : public _pmdAsyncSession
+   /*
+      _clsReplDstSession define
+   */
+   class _clsReplDstSession : public _pmdAsyncSession
    {
-   DECLARE_OBJ_MSG_MAP()
-   public:
-      _clsReplSession ( UINT64 sessionID ) ;
-      virtual ~_clsReplSession () ;
+      DECLARE_OBJ_MSG_MAP()
+      public:
+         _clsReplDstSession ( UINT64 sessionID ) ;
+         virtual ~_clsReplDstSession () ;
 
-      virtual SDB_SESSION_TYPE sessionType() const ;
+         virtual SDB_SESSION_TYPE sessionType() const ;
 
-      virtual EDU_TYPES eduType () const ;
-      virtual void    onRecieve ( const NET_HANDLE netHandle,
-                                  MsgHeader * msg ) ;
-      // called by net io thread
-      virtual BOOLEAN timeout ( UINT32 interval ) ;
-      // called by self thread
-      virtual void    onTimer ( UINT64 timerID, UINT32 interval ) ;
-      virtual void   _onAttach () ;
-      virtual void   _onDetach () ;
+         virtual EDU_TYPES eduType () const ;
 
-   public:
-      INT32 handleSyncReq( NET_HANDLE handle, MsgHeader* header ) ;
+         // called by net io thread
+         virtual BOOLEAN timeout ( UINT32 interval ) ;
+         // called by self thread
+         virtual void    onTimer ( UINT64 timerID, UINT32 interval ) ;
+         virtual void   _onAttach () ;
+         virtual void   _onDetach () ;
 
-      INT32 handleSyncRes( NET_HANDLE handle, MsgHeader* header ) ;
+      public:
+         INT32 handleSyncRes( NET_HANDLE handle, MsgHeader* header ) ;
 
-      INT32 handleVirSyncReq( NET_HANDLE handle, MsgHeader* header ) ;
+         INT32 handleNotify( NET_HANDLE handle, MsgHeader* header ) ;
 
-      INT32 handleNotify( NET_HANDLE handle, MsgHeader* header ) ;
+         INT32 handleConsultRes( NET_HANDLE handle, MsgHeader *header ) ;
 
-      INT32 handleConsultReq( NET_HANDLE handle, MsgHeader *header ) ;
+      private:
 
-      INT32 handleConsultRes( NET_HANDLE handle, MsgHeader *header ) ;
+         INT32 _replayLog( const CHAR *logs, const UINT32 &len, UINT32 &num ) ;
 
+         INT32 _replay( dpsLogRecordHeader *header ) ;
 
-   private:
-      INT32 _syncLog( const NET_HANDLE &handle,
-                      const MsgReplSyncReq *req ) ;
+         void _sendSyncReq( DPS_LSN *pCompleteLSN = NULL ) ;
 
-      INT32 _replayLog( const CHAR *logs, const UINT32 &len, UINT32 &num ) ;
+         void _sendConsultReq() ;
 
-      INT32 _replay( dpsLogRecordHeader *header ) ;
+         INT32 _rollback( const CHAR *log ) ;
 
-      void _sendSyncReq( DPS_LSN *pCompleteLSN = NULL ) ;
+         void  _fullSync() ;
 
-      void _sendVirSyncReq() ;
+      private:
+         _dpsMessageBlock              _mb ;
+         clsSrcSelector                _selector ;
+         _dpsLogWrapper                *_logger ;
+         _clsSyncManager               *_sync ;
+         _clsReplicateSet              *_repl ;
+         _clsBucket                    *_pReplBucket ;
+         _clsReplayer                  _replayer ;
+         MsgRouteID                    _syncSrc ;
+         CLS_SESSION_STATUS            _status ;
+         BOOLEAN                       _quit ;
+         BOOLEAN                       _isFirstToSync ;
+         UINT32                        _timeout ;
+         UINT64                        _requestID ;
+         UINT32                        _syncFailedNum ;
 
-      void _sendConsultReq() ;
+         DPS_LSN                       _completeLSN ;
+         DPS_LSN                       _consultLsn ;
+   } ;
 
-      INT32 _rollback( const CHAR *log ) ;
+   typedef _clsReplDstSession clsReplDstSession ;
 
-      void _fullSync() ;
+   /*
+      _clsReplSrcSession define
+   */
+   class _clsReplSrcSession : public _pmdAsyncSession
+   {
+      DECLARE_OBJ_MSG_MAP()
+      public:
+         _clsReplSrcSession ( UINT64 sessionID ) ;
+         virtual ~_clsReplSrcSession () ;
 
-   private:
-      _dpsMessageBlock              _mb ;
-      clsSrcSelector                _selector ;
-      _dpsLogWrapper                *_logger ;
-      _clsSyncManager               *_sync ;
-      _clsReplicateSet              *_repl ;
-      _clsBucket                    *_pReplBucket ;
-      _clsReplayer                  _replayer ;
-      MsgRouteID                    _syncSrc ;
-      CLS_SESSION_STATUS            _status ;
-      BOOLEAN                       _quit ;
-      BOOLEAN                       _isFirstToSync ;
-      UINT32                        _timeout ;
-      UINT64                        _requestID ;
-      UINT32                        _syncFailedNum ;
+         virtual SDB_SESSION_TYPE sessionType() const ;
 
-      DPS_LSN                       _completeLSN ;
-      DPS_LSN                       _consultLsn ;
-   };
+         virtual EDU_TYPES eduType () const ;
+         virtual void    onRecieve ( const NET_HANDLE netHandle,
+                                     MsgHeader * msg ) ;
+         // called by net io thread
+         virtual BOOLEAN timeout ( UINT32 interval ) ;
+         // called by self thread
+         virtual void    onTimer ( UINT64 timerID, UINT32 interval ) ;
 
+      public:
+         INT32 handleSyncReq( NET_HANDLE handle, MsgHeader* header ) ;
+
+         INT32 handleVirSyncReq( NET_HANDLE handle, MsgHeader* header ) ;
+
+         INT32 handleConsultReq( NET_HANDLE handle, MsgHeader *header ) ;
+
+      private:
+         INT32 _syncLog( const NET_HANDLE &handle,
+                         const MsgReplSyncReq *req ) ;
+
+      private:
+         _dpsMessageBlock              _mb ;
+         _dpsLogWrapper                *_logger ;
+         _clsSyncManager               *_sync ;
+         _clsReplicateSet              *_repl ;
+         BOOLEAN                       _quit ;
+         UINT32                        _timeout ;
+   } ;
+   typedef _clsReplSrcSession clsReplSrcSession ;
 
 }
 

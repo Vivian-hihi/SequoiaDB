@@ -43,18 +43,18 @@ namespace engine
 
    #define CLS_REPL_MAX_TIME           (2)
 
-   BEGIN_OBJ_MSG_MAP( _clsReplSession , _pmdAsyncSession )
+   /*
+      _clsReplDstSession implement
+   */
+   BEGIN_OBJ_MSG_MAP( _clsReplDstSession , _pmdAsyncSession )
       //ON_MSG
-      ON_MSG( MSG_CLS_SYNC_REQ, handleSyncReq )
       ON_MSG( MSG_CLS_SYNC_RES, handleSyncRes )
       ON_MSG( MSG_CLS_SYNC_NOTIFY, handleNotify )
-      ON_MSG( MSG_CLS_SYNC_VIR_REQ, handleVirSyncReq )
-      ON_MSG( MSG_CLS_CONSULTATION_REQ, handleConsultReq )
       ON_MSG( MSG_CLS_CONSULTATION_RES, handleConsultRes )
    END_OBJ_MSG_MAP()
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSREPSN__CLSREPSN, "_clsReplSession::_clsReplSession" )
-   _clsReplSession::_clsReplSession ( UINT64 sessionID )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSDSTREPSN__CLSDSTREPSN, "_clsReplDstSession::_clsReplDstSession" )
+   _clsReplDstSession::_clsReplDstSession ( UINT64 sessionID )
       :_pmdAsyncSession ( sessionID ),
        _mb( CLS_SYNC_DEF_LEN ),
        _status( CLS_SESSION_STATUS_SYNC ),
@@ -62,7 +62,7 @@ namespace engine
        _timeout( 0 ),
        _consultLsn()
    {
-      PD_TRACE_ENTRY ( SDB__CLSREPSN__CLSREPSN );
+      PD_TRACE_ENTRY ( SDB__CLSDSTREPSN__CLSDSTREPSN );
       _logger = pmdGetKRCB()->getDPSCB() ;
       _sync = sdbGetReplCB()->syncMgr() ;
       _repl = sdbGetReplCB() ;
@@ -74,55 +74,33 @@ namespace engine
 
       _syncSrc.value = MSG_INVALID_ROUTEID ;
 
-      PD_TRACE_EXIT ( SDB__CLSREPSN__CLSREPSN );
+      PD_TRACE_EXIT ( SDB__CLSDSTREPSN__CLSDSTREPSN );
    }
 
-   _clsReplSession::~_clsReplSession ()
+   _clsReplDstSession::~_clsReplDstSession ()
    {
    }
 
-   SDB_SESSION_TYPE _clsReplSession::sessionType() const
+   SDB_SESSION_TYPE _clsReplDstSession::sessionType() const
    {
-      return SDB_SESSION_REPL ;
+      return SDB_SESSION_REPL_DST ;
    }
 
-   EDU_TYPES _clsReplSession::eduType () const
+   EDU_TYPES _clsReplDstSession::eduType () const
    {
       return EDU_TYPE_REPLAGENT ;
    }
 
-   void _clsReplSession::onRecieve ( const NET_HANDLE netHandle,
-                                     MsgHeader * msg )
-   {
-      if ( !isStartActive() )
-      {
-         _timeout = 0 ;
-      }
-   }
-
-   BOOLEAN _clsReplSession::timeout( UINT32 interval )
+   BOOLEAN _clsReplDstSession::timeout( UINT32 interval )
    {
       return _quit ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSREPSN_ONTIMER, "_clsReplSession::onTimer" )
-   void _clsReplSession::onTimer( UINT64 timerID, UINT32 interval )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSDSTREPSN_ONTIMER, "_clsReplDstSession::onTimer" )
+   void _clsReplDstSession::onTimer( UINT64 timerID, UINT32 interval )
    {
-      PD_TRACE_ENTRY ( SDB__CLSREPSN_ONTIMER ) ;
+      PD_TRACE_ENTRY ( SDB__CLSDSTREPSN_ONTIMER ) ;
       _timeout += interval ;
-
-      if ( ! isStartActive() )
-      {
-         //if the peer node no msg a long time,need to quit
-         if ( CLS_DST_SESSION_NO_MSG_TIME < _timeout )
-         {
-            PD_LOG ( PDEVENT, "Sync Session[%s] peer node a long time no msg, "
-                     "quit", sessionName() ) ;
-            _quit = TRUE ;
-         }
-
-         goto done ;
-      }
 
       _selector.timeout( interval ) ;
 
@@ -197,97 +175,62 @@ namespace engine
       }
 
    done:
-      PD_TRACE1 ( SDB__CLSREPSN_ONTIMER, PD_PACK_INT(_quit) ) ;
-      PD_TRACE_EXIT ( SDB__CLSREPSN_ONTIMER );
+      PD_TRACE1 ( SDB__CLSDSTREPSN_ONTIMER, PD_PACK_INT(_quit) ) ;
+      PD_TRACE_EXIT ( SDB__CLSDSTREPSN_ONTIMER );
       return  ;
    }
 
-   void _clsReplSession::_onAttach()
+   void _clsReplDstSession::_onAttach()
    {
-      if ( isStartActive() )
+      // if start form crash, should full sync
+      if ( !pmdGetStartup().isOK() )
       {
-         // if start form crash, should full sync
-         if ( !pmdGetStartup().isOK() )
+         _status = CLS_SESSION_STATUS_FULL_SYNC ;
+         _repl->setFullSync( TRUE ) ;
+      }
+      else
+      {
+         _repl->setFullSync( FALSE ) ;
+      }
+
+      // full sync to repl sync, need to reset repl bucket
+      _pReplBucket->reset() ;
+   }
+
+   void _clsReplDstSession::_onDetach()
+   {
+      if ( _pReplBucket->waitEmptyAndRollback() )
+      {
+         DPS_LSN expectLSN = _pReplBucket->completeLSN() ;
+         INT32 rcTmp = _logger->move( expectLSN.offset, expectLSN.version ) ;
+         if ( rcTmp )
          {
-            _status = CLS_SESSION_STATUS_FULL_SYNC ;
-            _repl->setFullSync( TRUE ) ;
+            PD_LOG( PDERROR, "Sync Session[%s]: Failed to move lsn to "
+                    "[%u, %llu], rc: %d", sessionName(), expectLSN.version,
+                    expectLSN.offset, rcTmp ) ;
          }
          else
          {
-            _repl->setFullSync( FALSE ) ;
+            PD_LOG( PDEVENT, "Sync Session[%s]: Move lsn to [%u, %llu]",
+                    sessionName(), expectLSN.version, expectLSN.offset ) ;
          }
-
-         // full sync to repl sync, need to reset repl bucket
-         _pReplBucket->reset() ;
       }
-   }
+      _pReplBucket->close() ;
 
-   void _clsReplSession::_onDetach()
-   {
-      if ( isStartActive() )
-      {
-         if ( _pReplBucket->waitEmptyAndRollback() )
-         {
-            DPS_LSN expectLSN = _pReplBucket->completeLSN() ;
-            INT32 rcTmp = _logger->move( expectLSN.offset, expectLSN.version ) ;
-            if ( rcTmp )
-            {
-               PD_LOG( PDERROR, "Sync Session[%s]: Failed to move lsn to "
-                       "[%u, %llu], rc: %d", sessionName(), expectLSN.version,
-                       expectLSN.offset, rcTmp ) ;
-            }
-            else
-            {
-               PD_LOG( PDEVENT, "Sync Session[%s]: Move lsn to [%u, %llu]",
-                       sessionName(), expectLSN.version, expectLSN.offset ) ;
-            }
-         }
-         _pReplBucket->close() ;
-      }
-
-      if ( isStartActive() && CLS_SESSION_STATUS_FULL_SYNC != _status
-           && CLS_BS_CLOSED != _repl->getStatus() )
+      if ( CLS_SESSION_STATUS_FULL_SYNC != _status &&
+           CLS_BS_CLOSED != _repl->getStatus() )
       {
          pmdGetKRCB()->getClsCB()->startInnerSession( CLS_REPL,
                                                       CLS_TID_REPL_SYC ) ;
       }
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSREPSN_HNDSYNCREQ, "_clsReplSession::handleSyncReq" )
-   INT32 _clsReplSession::handleSyncReq( NET_HANDLE handle, MsgHeader* header )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB__CLSREPSN_HNDSYNCREQ );
-      SDB_ASSERT( NULL != header, "header should not be NULL" ) ;
-      MsgReplSyncReq *msg = ( MsgReplSyncReq * )header ;
-
-      if ( DPS_INVALID_LSN_OFFSET != msg->completeNext.offset )
-      {
-         _sync->complete( msg->identity, msg->completeNext,
-                          CLS_TID( _sessionID ) ) ;
-      }
-      else
-      {
-         _sync->complete( msg->identity, msg->next,
-                          CLS_TID( _sessionID ) ) ;
-      }
-
-      // not ok, not reply
-      if ( pmdGetStartup().isOK() )
-      {
-         rc = _syncLog( handle, msg ) ;
-      }
-
-      PD_TRACE_EXITRC ( SDB__CLSREPSN_HNDSYNCREQ, rc );
-      return rc ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSREPSN_HNDSYNCRES, "_clsReplSession::handleSyncRes" )
-   INT32 _clsReplSession::handleSyncRes( NET_HANDLE handle, MsgHeader* header )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSDSTREPSN_HNDSYNCRES, "_clsReplDstSession::handleSyncRes" )
+   INT32 _clsReplDstSession::handleSyncRes( NET_HANDLE handle, MsgHeader* header )
    {
       SDB_ASSERT( NULL != header, "header should not be NULL" ) ;
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB__CLSREPSN_HNDSYNCRES );
+      PD_TRACE_ENTRY ( SDB__CLSDSTREPSN_HNDSYNCRES );
 
       /// 1. some validate.
       MsgReplSyncRes *msg = ( MsgReplSyncRes * )header ;
@@ -420,28 +363,15 @@ namespace engine
       }
 
    done:
-      PD_TRACE_EXITRC ( SDB__CLSREPSN_HNDSYNCRES, rc ) ;
+      PD_TRACE_EXITRC ( SDB__CLSDSTREPSN_HNDSYNCRES, rc ) ;
       return rc ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSREPSN_HNDVIRSYNCREQ, "_clsReplSession::handleVirSyncReq" )
-   INT32 _clsReplSession::handleVirSyncReq( NET_HANDLE handle,
-                                            MsgHeader* header )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSDSTREPSN_HNDNTF, "_clsReplDstSession::handleNotify" )
+   INT32 _clsReplDstSession::handleNotify( NET_HANDLE handle, MsgHeader* header )
    {
       SDB_ASSERT( NULL != header, "header should not be NULL" ) ;
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB__CLSREPSN_HNDVIRSYNCREQ );
-      MsgReplVirSyncReq *msg = ( MsgReplVirSyncReq * )header ;
-      _sync->complete( msg->from, msg->next, CLS_TID( _sessionID ) ) ;
-      PD_TRACE_EXITRC ( SDB__CLSREPSN_HNDVIRSYNCREQ, rc );
-      return rc ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSREPSN_HNDNTF, "_clsReplSession::handleNotify" )
-   INT32 _clsReplSession::handleNotify( NET_HANDLE handle, MsgHeader* header )
-   {
-      SDB_ASSERT( NULL != header, "header should not be NULL" ) ;
-      PD_TRACE_ENTRY ( SDB__CLSREPSN_HNDNTF );
+      PD_TRACE_ENTRY ( SDB__CLSDSTREPSN_HNDNTF );
       if ( CLS_SESSION_STATUS_SYNC != _status )
       {
          PD_LOG ( PDDEBUG, "Sync Session[%s]: Status[%d] not expected, ignore",
@@ -451,132 +381,17 @@ namespace engine
 
       _sendSyncReq() ;
    done:
-      PD_TRACE_EXIT ( SDB__CLSREPSN_HNDNTF );
+      PD_TRACE_EXIT ( SDB__CLSDSTREPSN_HNDNTF );
       return SDB_OK ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSREPSN_HNDCSTREQ, "_clsReplSession::handleConsultReq" )
-   INT32 _clsReplSession::handleConsultReq( NET_HANDLE handle,
-                                            MsgHeader* header )
-   {
-      PD_TRACE_ENTRY ( SDB__CLSREPSN_HNDCSTREQ );
-      SDB_ASSERT( NULL != header, "header should not be NULL" ) ;
-      _MsgReplConsultation *msg = ( _MsgReplConsultation * )header ;
-      _MsgReplConsultationRes res ;
-      res.header.header.TID = msg->header.TID ;
-      res.header.header.routeID = msg->header.routeID ;
-      res.header.header.requestID = msg->header.requestID ;
-      time_t bTime = time(NULL) ;
-
-      if ( msg->current.invalid() )
-      {
-         res.header.res = SDB_CLS_CONSULT_FAILED ;
-         goto done ;
-      }
-
-      {
-      DPS_LSN fLsn ;
-      DPS_LSN mLsn ;
-      DPS_LSN eLsn ;
-      _logger->getLsnWindow( fLsn, mLsn, eLsn ) ;
-      PD_LOG( PDEVENT, "Sync Session[%s]: Recv a consult req. "
-              "[remote offset:%lld, remote ver:%d, local foffset:%lld, "
-              "local fver:%d], local eoffset:%lld, local ever:%d]",
-              sessionName(), msg->current.offset, msg->current.version,
-              fLsn.offset, fLsn.version, eLsn.offset, eLsn.version ) ;
-
-      if ( eLsn.invalid() )
-      {
-         res.header.res = SDB_CLS_CONSULT_FAILED ;
-         goto done ;
-      }
-      /// remote version 
-      else if ( 0 < fLsn.compare( msg->current )/* ||
-                0 > eLsn.compareVersion(  msg->current.version - 1 )*/ )
-      {
-         res.header.res = SDB_CLS_CONSULT_FAILED ;
-         goto done ;
-      }
-      else if ( eLsn.compareVersion ( msg->current.version ) <= 0 &&
-                eLsn.compareOffset ( msg->current.offset ) < 0 )
-      {
-         res.header.res = SDB_OK ;
-         res.returnTo = eLsn ;
-         goto done ;
-      }
-      else
-      {
-         _mb.clear() ;
-         DPS_LSN search = msg->current ;
-         /// finally, try again.
-         if ( SDB_OK == _logger->searchHeader( search, &_mb ) )
-         {
-            if ( ((dpsLogRecordHeader *)(_mb.offset(0)))->_version ==
-                  msg->current.version )
-            {
-               res.header.res = SDB_OK ;
-               res.returnTo = search ;
-               goto done ;
-            }
-
-            /// find the same offset, we search pre from this offset.
-            search.offset = ((dpsLogRecordHeader *)(_mb.offset(0)))->_preLsn ;
-         }
-         else
-         {
-            search.offset = eLsn.offset ;
-         }
-
-         DPS_LSN returnTo ;
-         /// we try to find the lsn whose version is equal to
-         /// remote minus one.
-         do
-         {
-            _mb.clear() ;
-            if ( SDB_OK != _logger->searchHeader( search, &_mb ) )
-            {
-               break ;
-            }
-            else
-            {
-               returnTo.offset = ((dpsLogRecordHeader *)(_mb.offset(0)))->_lsn ;
-               returnTo.version = ((dpsLogRecordHeader *)(_mb.offset(0)))->
-                                  _version ;
-               search.offset = ((dpsLogRecordHeader *)(_mb.offset(0)))->_preLsn;
-            }
-         }while ( returnTo.compareOffset( msg->current.offset ) < 0 ||
-                  ( 0 < returnTo.compareVersion( search.version - 1 ) &&
-                    time( NULL ) - bTime <= CLS_REPL_MAX_TIME ) ) ;
-
-         /// we do not know whether remote can rollback.
-         /// but we'd better to send back.
-         if ( returnTo.invalid() )
-         {
-            res.returnTo = fLsn ;
-         }
-         else
-         {
-            res.returnTo = returnTo ;
-         }
-         res.header.res = SDB_OK ;
-      }
-      }
-   done:
-      PD_LOG( PDEVENT, "Sync Session[%s]: Consult[res:%d, return offset:%lld, "
-              "return version:%d]", sessionName(), res.header.res,
-              res.returnTo.offset, res.returnTo.version ) ;
-      routeAgent()->syncSend( handle, &res ) ;
-      PD_TRACE_EXIT ( SDB__CLSREPSN_HNDCSTREQ );
-      return SDB_OK ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSREPSN_HNDSSTRES, "_clsReplSession::handleConsultRes" )
-   INT32 _clsReplSession::handleConsultRes( NET_HANDLE handle,
-                                            MsgHeader *header )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSDSTREPSN_HNDSSTRES, "_clsReplDstSession::handleConsultRes" )
+   INT32 _clsReplDstSession::handleConsultRes( NET_HANDLE handle,
+                                               MsgHeader *header )
    {
       SDB_ASSERT( NULL != header, "header should not be NULL" ) ;
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB__CLSREPSN_HNDSSTRES );
+      PD_TRACE_ENTRY ( SDB__CLSDSTREPSN_HNDSSTRES );
 
       if ( CLS_SESSION_STATUS_CONSULT != _status )
       {
@@ -659,8 +474,7 @@ namespace engine
             DPS_LSN rollback = _logger->getCurrentLsn() ;
             DPS_LSN point ;
             point.offset = ((dpsLogRecordHeader *)( _mb.offset(0) ))->_lsn ;
-            point.version = ((dpsLogRecordHeader *)( _mb.offset(0) ))->
-                            _version ;
+            point.version = ((dpsLogRecordHeader *)( _mb.offset(0) ))->_version ;
 
             if ( 0 != point.compareVersion(msg->returnTo.version ) )
             {
@@ -730,21 +544,16 @@ namespace engine
          sdbGetTransCB()->syncTransInfoFromLocal( beginLsn.offset ) ;
          sdbGetTransCB()->setIsNeedSyncTrans( FALSE ) ;
       }
-      PD_TRACE_EXIT ( SDB__CLSREPSN_HNDSSTRES ) ;
+      PD_TRACE_EXIT ( SDB__CLSDSTREPSN_HNDSSTRES ) ;
       return SDB_OK ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSREPSN__FULLSYNC, "_clsReplSession::_fullSync" )
-   void _clsReplSession::_fullSync()
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSDSTREPSN__FULLSYNC, "_clsReplDstSession::_fullSync" )
+   void _clsReplDstSession::_fullSync()
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB__CLSREPSN__FULLSYNC ) ;
+      PD_TRACE_ENTRY ( SDB__CLSDSTREPSN__FULLSYNC ) ;
       clsCB *pClsCB = pmdGetKRCB()->getClsCB() ;
-
-      if ( !isStartActive() )
-      {
-         goto done ;
-      }
 
       _status = CLS_SESSION_STATUS_FULL_SYNC ;
 
@@ -763,8 +572,7 @@ namespace engine
          goto done ;
       }
 
-      SDB_ASSERT( 0 < sdbGetReplCB()->groupSize(),
-                  "impossible" ) ;
+      SDB_ASSERT( 0 < sdbGetReplCB()->groupSize(), "impossible" ) ;
 
       // if the group size is 1, then rebuild, otherwise full sync
       if ( 1 >=  pClsCB->getReplCB()->groupSize() || pmdIsPrimary() )
@@ -811,7 +619,7 @@ namespace engine
       }
 
    done:
-      PD_TRACE_EXIT ( SDB__CLSREPSN__FULLSYNC ) ;
+      PD_TRACE_EXIT ( SDB__CLSDSTREPSN__FULLSYNC ) ;
       return ;
    error:
       PD_LOG ( PDSEVERE, "Sync Session[%s]: Local database rebuild failed "
@@ -820,11 +628,11 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSREPSN__RLBCK, "_clsReplSession::_rollback" )
-   INT32 _clsReplSession::_rollback( const CHAR *log )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSDSTREPSN__RLBCK, "_clsReplDstSession::_rollback" )
+   INT32 _clsReplDstSession::_rollback( const CHAR *log )
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB__CLSREPSN__RLBCK );
+      PD_TRACE_ENTRY ( SDB__CLSDSTREPSN__RLBCK );
       const dpsLogRecordHeader *header = (const dpsLogRecordHeader *)log;
       PD_LOG( PDDEBUG, "Sync Session[%s]: Begin to rollback lsn:[%lld, %d]",
               sessionName(), header->_lsn, header->_version ) ;
@@ -848,37 +656,16 @@ namespace engine
       }
 
    done:
-      PD_TRACE_EXITRC ( SDB__CLSREPSN__RLBCK, rc );
+      PD_TRACE_EXITRC ( SDB__CLSDSTREPSN__RLBCK, rc );
       return rc ;
    error:
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSREPSN__SNDVSYNCREQ, "_clsReplSession::_sendVirSyncReq" )
-   void _clsReplSession::_sendVirSyncReq()
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSDSTREPSN__SNDSYNCREQ, "_clsReplDstSession::_sendSyncReq" )
+   void _clsReplDstSession::_sendSyncReq( DPS_LSN *pCompleteLSN )
    {
-      PD_TRACE_ENTRY( SDB__CLSREPSN__SNDSYNCREQ ) ;
-
-      _syncSrc = _selector.selected() ;
-      if ( MSG_INVALID_ROUTEID != _syncSrc.value )
-      {
-         _MsgReplVirSyncReq msg ;
-         msg.header.TID = CLS_TID( _sessionID ) ;
-         msg.next = _logger->expectLsn() ;
-         msg.from = routeAgent()->localID() ;
-         routeAgent()->syncSend( _syncSrc, &msg ) ;
-         PD_LOG( PDDEBUG, "Sync Session[%s]: Send vir sync req to [node: %d] "
-                 "[group:%d], lsn: [%lld][%d]", sessionName(),
-                 _syncSrc.columns.nodeID, _syncSrc.columns.groupID,
-                 msg.next.offset, msg.next.version ) ;
-      }
-      PD_TRACE_EXIT( SDB__CLSREPSN__SNDSYNCREQ ) ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSREPSN__SNDSYNCREQ, "_clsReplSession::_sendSyncReq" )
-   void _clsReplSession::_sendSyncReq( DPS_LSN *pCompleteLSN )
-   {
-      PD_TRACE_ENTRY ( SDB__CLSREPSN__SNDSYNCREQ );
+      PD_TRACE_ENTRY ( SDB__CLSDSTREPSN__SNDSYNCREQ );
 
       _syncSrc = _selector.selected() ;
 
@@ -916,14 +703,14 @@ namespace engine
                  msg.completeNext.offset, msg.completeNext.version ) ;
       }
 
-      PD_TRACE_EXIT ( SDB__CLSREPSN__SNDSYNCREQ ) ;
+      PD_TRACE_EXIT ( SDB__CLSDSTREPSN__SNDSYNCREQ ) ;
       return ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSREPSN__SNDCSTREQ, "_clsReplSession::_sendConsultReq" )
-   void _clsReplSession::_sendConsultReq()
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSDSTREPSN__SNDCSTREQ, "_clsReplDstSession::_sendConsultReq" )
+   void _clsReplDstSession::_sendConsultReq()
    {
-      PD_TRACE_ENTRY ( SDB__CLSREPSN__SNDCSTREQ );
+      PD_TRACE_ENTRY ( SDB__CLSDSTREPSN__SNDCSTREQ );
 
       if ( CLS_SESSION_STATUS_CONSULT != _status )
       {
@@ -963,16 +750,16 @@ namespace engine
       }
 
    done:
-      PD_TRACE_EXIT ( SDB__CLSREPSN__SNDCSTREQ );
+      PD_TRACE_EXIT ( SDB__CLSDSTREPSN__SNDCSTREQ );
       return ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSREPSN__REPLG, "_clsReplSession::_replayLog" )
-   INT32 _clsReplSession::_replayLog( const CHAR *logs, const UINT32 &len,
-                                      UINT32 &num )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSDSTREPSN__REPLG, "_clsReplDstSession::_replayLog" )
+   INT32 _clsReplDstSession::_replayLog( const CHAR *logs, const UINT32 &len,
+                                         UINT32 &num )
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB__CLSREPSN__REPLG ) ;
+      PD_TRACE_ENTRY ( SDB__CLSDSTREPSN__REPLG ) ;
 
       dpsLogRecordHeader *recordHeader = NULL ;
       const CHAR *log = logs ;
@@ -1032,7 +819,7 @@ namespace engine
       }
 
    done:
-      PD_TRACE_EXITRC ( SDB__CLSREPSN__REPLG, rc );
+      PD_TRACE_EXITRC ( SDB__CLSDSTREPSN__REPLG, rc );
       return rc ;
    error:
       if ( _pReplBucket->waitEmptyAndRollback() )
@@ -1066,7 +853,7 @@ namespace engine
       goto done ;
    }
 
-   INT32 _clsReplSession::_replay( dpsLogRecordHeader *header )
+   INT32 _clsReplDstSession::_replay( dpsLogRecordHeader *header )
    {
       if ( _pReplBucket->maxReplSync() > 0 )
       {
@@ -1078,12 +865,237 @@ namespace engine
       }
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSREPSN__SYNCLOG, "_clsReplSession::_syncLog" )
-   INT32 _clsReplSession::_syncLog( const NET_HANDLE &handle,
-                                    const MsgReplSyncReq *req )
+   /*
+      _clsReplSrcSession implement
+   */
+   BEGIN_OBJ_MSG_MAP( _clsReplSrcSession , _pmdAsyncSession )
+      //ON_MSG
+      ON_MSG( MSG_CLS_SYNC_REQ, handleSyncReq )
+      ON_MSG( MSG_CLS_SYNC_VIR_REQ, handleVirSyncReq )
+      ON_MSG( MSG_CLS_CONSULTATION_REQ, handleConsultReq )
+   END_OBJ_MSG_MAP()
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSRCREPSN__CLSREPSN, "_clsReplSrcSession::_clsReplSrcSession" )
+   _clsReplSrcSession::_clsReplSrcSession ( UINT64 sessionID )
+      :_pmdAsyncSession ( sessionID ),
+       _mb( CLS_SYNC_DEF_LEN ),
+       _quit( FALSE ),
+       _timeout( 0 )
+   {
+      PD_TRACE_ENTRY ( SDB__CLSSRCREPSN__CLSREPSN );
+
+      _logger = pmdGetKRCB()->getDPSCB() ;
+      _sync = sdbGetReplCB()->syncMgr() ;
+      _repl = sdbGetReplCB() ;
+
+      PD_TRACE_EXIT ( SDB__CLSSRCREPSN__CLSREPSN );
+   }
+
+   _clsReplSrcSession::~_clsReplSrcSession ()
+   {
+   }
+
+   SDB_SESSION_TYPE _clsReplSrcSession::sessionType() const
+   {
+      return SDB_SESSION_REPL_SRC ;
+   }
+
+   EDU_TYPES _clsReplSrcSession::eduType () const
+   {
+      return EDU_TYPE_REPLAGENT ;
+   }
+
+   void _clsReplSrcSession::onRecieve ( const NET_HANDLE netHandle,
+                                        MsgHeader * msg )
+   {
+      _timeout = 0 ;
+   }
+
+   BOOLEAN _clsReplSrcSession::timeout( UINT32 interval )
+   {
+      return _quit ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSRCREPSN_ONTIMER, "_clsReplSrcSession::onTimer" )
+   void _clsReplSrcSession::onTimer( UINT64 timerID, UINT32 interval )
+   {
+      PD_TRACE_ENTRY ( SDB__CLSSRCREPSN_ONTIMER ) ;
+      _timeout += interval ;
+
+      //if the peer node no msg a long time,need to quit
+      if ( CLS_DST_SESSION_NO_MSG_TIME < _timeout )
+      {
+         PD_LOG ( PDEVENT, "Sync Session[%s] peer node a long time no msg, "
+                  "quit", sessionName() ) ;
+         _quit = TRUE ;
+      }
+
+      PD_TRACE1 ( SDB__CLSSRCREPSN_ONTIMER, PD_PACK_INT(_quit) ) ;
+      PD_TRACE_EXIT ( SDB__CLSSRCREPSN_ONTIMER );
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSRCREPSN_HNDSYNCREQ, "_clsReplSrcSession::handleSyncReq" )
+   INT32 _clsReplSrcSession::handleSyncReq( NET_HANDLE handle, MsgHeader* header )
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB__CLSREPSN__SYNCLOG );
+      PD_TRACE_ENTRY ( SDB__CLSSRCREPSN_HNDSYNCREQ );
+      SDB_ASSERT( NULL != header, "header should not be NULL" ) ;
+      MsgReplSyncReq *msg = ( MsgReplSyncReq * )header ;
+
+      if ( DPS_INVALID_LSN_OFFSET != msg->completeNext.offset )
+      {
+         _sync->complete( msg->identity, msg->completeNext,
+                          CLS_TID( _sessionID ) ) ;
+      }
+      else
+      {
+         _sync->complete( msg->identity, msg->next,
+                          CLS_TID( _sessionID ) ) ;
+      }
+
+      // not ok, not reply
+      if ( pmdGetStartup().isOK() )
+      {
+         rc = _syncLog( handle, msg ) ;
+      }
+
+      PD_TRACE_EXITRC ( SDB__CLSSRCREPSN_HNDSYNCREQ, rc );
+      return rc ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSRCREPSN_HNDVIRSYNCREQ, "_clsReplSrcSession::handleVirSyncReq" )
+   INT32 _clsReplSrcSession::handleVirSyncReq( NET_HANDLE handle,
+                                               MsgHeader* header )
+   {
+      SDB_ASSERT( NULL != header, "header should not be NULL" ) ;
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB__CLSSRCREPSN_HNDVIRSYNCREQ );
+      MsgReplVirSyncReq *msg = ( MsgReplVirSyncReq * )header ;
+      _sync->complete( msg->from, msg->next, CLS_TID( _sessionID ) ) ;
+      PD_TRACE_EXITRC ( SDB__CLSSRCREPSN_HNDVIRSYNCREQ, rc );
+      return rc ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSRCREPSN_HNDCSTREQ, "_clsReplSrcSession::handleConsultReq" )
+   INT32 _clsReplSrcSession::handleConsultReq( NET_HANDLE handle,
+                                               MsgHeader* header )
+   {
+      PD_TRACE_ENTRY ( SDB__CLSSRCREPSN_HNDCSTREQ );
+      SDB_ASSERT( NULL != header, "header should not be NULL" ) ;
+      _MsgReplConsultation *msg = ( _MsgReplConsultation * )header ;
+      _MsgReplConsultationRes res ;
+      res.header.header.TID = msg->header.TID ;
+      res.header.header.routeID = msg->header.routeID ;
+      res.header.header.requestID = msg->header.requestID ;
+      time_t bTime = time(NULL) ;
+
+      if ( msg->current.invalid() )
+      {
+         res.header.res = SDB_CLS_CONSULT_FAILED ;
+         goto done ;
+      }
+
+      {
+      DPS_LSN fLsn ;
+      DPS_LSN mLsn ;
+      DPS_LSN eLsn ;
+      _logger->getLsnWindow( fLsn, mLsn, eLsn ) ;
+      PD_LOG( PDEVENT, "Sync Session[%s]: Recv a consult req. "
+              "[remote offset:%lld, remote ver:%d, local foffset:%lld, "
+              "local fver:%d], local eoffset:%lld, local ever:%d]",
+              sessionName(), msg->current.offset, msg->current.version,
+              fLsn.offset, fLsn.version, eLsn.offset, eLsn.version ) ;
+
+      if ( eLsn.invalid() )
+      {
+         res.header.res = SDB_CLS_CONSULT_FAILED ;
+         goto done ;
+      }
+      /// remote version 
+      else if ( 0 < fLsn.compare( msg->current )/* ||
+                0 > eLsn.compareVersion(  msg->current.version - 1 )*/ )
+      {
+         res.header.res = SDB_CLS_CONSULT_FAILED ;
+         goto done ;
+      }
+      else if ( eLsn.compareVersion ( msg->current.version ) <= 0 &&
+                eLsn.compareOffset ( msg->current.offset ) < 0 )
+      {
+         res.header.res = SDB_OK ;
+         res.returnTo = eLsn ;
+         goto done ;
+      }
+      else
+      {
+         _mb.clear() ;
+         DPS_LSN search = msg->current ;
+         /// finally, try again.
+         if ( SDB_OK == _logger->searchHeader( search, &_mb ) )
+         {
+            if ( ((dpsLogRecordHeader *)(_mb.offset(0)))->_version ==
+                  msg->current.version )
+            {
+               res.header.res = SDB_OK ;
+               res.returnTo = search ;
+               goto done ;
+            }
+
+            /// find the same offset, we search pre from this offset.
+            search.offset = ((dpsLogRecordHeader *)(_mb.offset(0)))->_preLsn ;
+         }
+         else
+         {
+            search.offset = eLsn.offset ;
+         }
+
+         DPS_LSN returnTo ;
+         /// we try to find the lsn whose version is equal to
+         /// remote minus one.
+         do
+         {
+            _mb.clear() ;
+            if ( SDB_OK != _logger->searchHeader( search, &_mb ) )
+            {
+               break ;
+            }
+            else
+            {
+               returnTo.offset = ((dpsLogRecordHeader *)(_mb.offset(0)))->_lsn ;
+               returnTo.version = ((dpsLogRecordHeader *)(_mb.offset(0)))->_version ;
+               search.offset = ((dpsLogRecordHeader *)(_mb.offset(0)))->_preLsn;
+            }
+         }while ( returnTo.compareOffset( msg->current.offset ) < 0 ||
+                  ( 0 < returnTo.compareVersion( search.version - 1 ) &&
+                    time( NULL ) - bTime <= CLS_REPL_MAX_TIME ) ) ;
+
+         /// we do not know whether remote can rollback.
+         /// but we'd better to send back.
+         if ( returnTo.invalid() )
+         {
+            res.returnTo = fLsn ;
+         }
+         else
+         {
+            res.returnTo = returnTo ;
+         }
+         res.header.res = SDB_OK ;
+      }
+      }
+   done:
+      PD_LOG( PDEVENT, "Sync Session[%s]: Consult[res:%d, return offset:%lld, "
+              "return version:%d]", sessionName(), res.header.res,
+              res.returnTo.offset, res.returnTo.version ) ;
+      routeAgent()->syncSend( handle, &res ) ;
+      PD_TRACE_EXIT ( SDB__CLSSRCREPSN_HNDCSTREQ );
+      return SDB_OK ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSRCREPSN__SYNCLOG, "_clsReplSrcSession::_syncLog" )
+   INT32 _clsReplSrcSession::_syncLog( const NET_HANDLE &handle,
+                                       const MsgReplSyncReq *req )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB__CLSSRCREPSN__SYNCLOG );
       time_t bTime = time( NULL ) ;
       MsgReplSyncRes msg ;
       if ( DPS_INVALID_LSN_OFFSET == req->next.offset )
@@ -1225,7 +1237,7 @@ namespace engine
       }
 
    done:
-      PD_TRACE_EXITRC ( SDB__CLSREPSN__SYNCLOG, rc );
+      PD_TRACE_EXITRC ( SDB__CLSSRCREPSN__SYNCLOG, rc );
       return rc ;
    }
 

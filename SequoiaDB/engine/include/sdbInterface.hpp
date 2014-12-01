@@ -91,7 +91,8 @@ namespace engine
    {
       SDB_SESSION_LOCAL       = 0,
       SDB_SESSION_REST,
-      SDB_SESSION_REPL,
+      SDB_SESSION_REPL_DST,
+      SDB_SESSION_REPL_SRC,
       SDB_SESSION_SHARD,
       SDB_SESSION_FS_SRC,
       SDB_SESSION_FS_DST,
