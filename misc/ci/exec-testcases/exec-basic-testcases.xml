@@ -121,7 +121,7 @@
 		<exec executable="${sdb.fullname}" timeout="100000" dir="" outputproperty="db.RG.info" resultproperty="ret.code.forShards">
 			<arg line=" -s &quot; db = new Sdb('localhost',${coord.service.port});var rg = db.listReplicaGroups();println(rg);db.close(); &quot;" />
 		</exec>
-		<exec executable="${sdb.fullname}" timeout="100000" dir="" outputproperty="SDB.VERSION.INFO" resultproperty="ret.sdb.version.exec"
+		<exec executable="${sdb.fullname}" timeout="100000" dir="" outputproperty="SDB.VERSION.INFO" resultproperty="ret.sdb.version.exec">
 			<arg line=" --version" />
 		</exec>
 		<if>
