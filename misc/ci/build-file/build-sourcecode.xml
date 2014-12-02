@@ -115,7 +115,7 @@
 		<mkdir dir="${DRIVER.DIR}/samples" />
 		<mkdir dir="${DRIVER.DIR}/postgresql" />
 
-    	<copy file="${CODE_DIR}/driver/C#.Net/build/release/sdbcs.dll" tofile="${DRIVER.DIR}/CSharp/sdbcs.dll" />
+    	<copy file="${CODE_DIR}/driver/C#.Net/build/release/sequoiadb.dll" tofile="${DRIVER.DIR}/CSharp/sequoiadb.dll" />
 		<copy file="${CODE_DIR}/driver/java/${java.driver.jar.name}" todir="${DRIVER.DIR}/java" />
 		<copy file="${CODE_DIR}/driver/hadoop/hive/${open.source.hive_connector.filename}" tofile="${DRIVER.DIR}/hadoop/${open.source.hive_connector.filename}" />
     	<copy file="${CODE_DIR}/driver/hadoop/hive/${cdh.hive_connector.filename}" tofile="${DRIVER.DIR}/hadoop/${cdh.hive_connector.filename}" />
@@ -237,7 +237,7 @@
 		<copy todir="${RELEASE_DIR}/sequoiadb/samples">
 			<fileset dir="${CODE_DIR}/client/samples/" />
 		</copy>
-		<copy file="${CODE_DIR}/driver/C#.Net/build/release/sdbcs.dll" tofile="${RELEASE_DIR}/sequoiadb/CSharp/sdbcs.dll" />
+		<copy file="${CODE_DIR}/driver/C#.Net/build/release/sequoiadb.dll" tofile="${RELEASE_DIR}/sequoiadb/CSharp/sequoiadb.dll" />
 		<!-- <copy todir="${RELEASE_DIR}/sequoiadb/hadoop" >
     		<fileset dir="${CODE_DIR}/driver/hadoop/hadoop-connector" includes="**/hadoop-connector*.jar" />
     	</copy> -->
