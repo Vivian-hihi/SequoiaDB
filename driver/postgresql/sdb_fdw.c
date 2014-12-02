@@ -901,12 +901,16 @@ void sdbGetColumnKeyInfo( SdbExecState *fdw_state )
          NULL, &cursor ) ;
    if ( SDB_OK != rc )
    {
-      sdbPrintBson( &condition, WARNING ) ;
-      sdbPrintBson( &selector, WARNING ) ;
+      if ( rc != SDB_RTN_COORD_ONLY )
+      {
+         sdbPrintBson( &condition, WARNING ) ;
+         sdbPrintBson( &selector, WARNING ) ;
+         ereport( WARNING, ( errcode( ERRCODE_FDW_ERROR ), 
+                  errmsg( "sdbGetSnapshot failed:rc=%d", rc ) ) ) ;
+      }
+
       sdbbson_destroy( &condition ) ;
       sdbbson_destroy( &selector ) ;
-      ereport( WARNING, ( errcode( ERRCODE_FDW_ERROR ), 
-            errmsg( "sdbGetSnapshot failed:rc=%d", rc ) ) ) ;
       return ;
    }
 
