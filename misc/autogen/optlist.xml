@@ -383,6 +383,22 @@
    </opt>
 
    <opt>
+      <name>PMD_OPTION_OM_ADDR</name>
+      <long>omaddr</long>
+      <description>
+         <en>OM addr (hostname1:servicename1,hostname2:servicename2,...)</en>
+         <cn>操作维护节点地址(hostname1:servicename1,hostname2:servicename2,...)</cn>
+      </description>
+      <detail>
+         <en>1. It specifies the address of om node. The format is "hostname1:catalogname1,hostname2:catalogname2,...".<fig></fig>
+             2. It should specify address of at least one om node.</en>
+         <cn>1.指定操作维护节点的地址。配置形式为"hostname1:catalogname1,hostname2:catalogname2,..."。<fig></fig>
+             2.需要至少指定一个操作维护节点的地址。</cn>
+      </detail>
+      <typeofweb>str</typeofweb>
+   </opt>
+
+   <opt>
       <name>PMD_OPTION_LOGFILESZ</name>
       <long>logfilesz</long>
       <short>f</short>
@@ -783,4 +799,5 @@
       </detail>
       <typeofweb>boolean</typeofweb>
   </opt>
+
 </optlist>
