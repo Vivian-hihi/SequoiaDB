@@ -494,11 +494,14 @@ namespace engine
       pmdAddrPair addrItem ;
 
       if ( !pAddressLine || !pItemSep || !pInnerSep ||
-           pAddressLine[ 0 ] == 0 || pItemSep[ 0 ] == 0 ||
-           pInnerSep[ 0 ] == 0 )
+           pItemSep[ 0 ] == 0 || pInnerSep[ 0 ] == 0 )
       {
          rc = SDB_INVALIDARG ;
          goto error ;
+      }
+      else if ( pAddressLine[ 0 ] == 0 )
+      {
+         goto done ;
       }
 
       boost::algorithm::split( addrs, pAddressLine,
