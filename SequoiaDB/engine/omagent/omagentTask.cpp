@@ -38,7 +38,7 @@
 #include "pmdEDU.hpp"
 
 
-#define ADD_HOST_MAX_THREAD_NUM 10
+#define ADD_HOST_MAX_THREAD_NUM 3
 
 namespace engine
 {
@@ -514,9 +514,22 @@ namespace engine
             {
                string ip = it->_item._ip ;
                string desc = it->_ps._desc ;
+               BSONObjBuilder bob ;
                BSONObj result ;
-               result = BSON ( OMA_FIELD_IP << ip.c_str() <<
-                               OMA_FIELD_DESC << desc.c_str() ) ;
+               bob.append( OMA_FIELD_IP, ip.c_str() ) ;
+               bob.appendBool( OMA_FIELD_HASFINISH,
+                               ( (TRUE == it->_isFinish) ? 1 : 0 ) ) ;
+               if ( SDB_OK != it->_ps._errno )
+               {
+                  bob.appendBool( OMA_FIELD_HASERROR, 1 ) ;
+                  bob.append( OMA_FIELD_DESC, it->_ps._errMsg.c_str() ) ;
+               }
+               else
+               {
+                  bob.appendBool( OMA_FIELD_HASERROR, 0 ) ;
+                  bob.append( OMA_FIELD_DESC, desc.c_str() ) ;
+               }
+               result = bob.obj() ;
                bab.append ( result ) ;
                it++ ;
             } 
@@ -528,9 +541,22 @@ namespace engine
             {
                string ip = it->_item._ip ;
                string desc = it->_ps._desc ;
+               BSONObjBuilder bob ;
                BSONObj result ;
-               result = BSON ( OMA_FIELD_IP << ip.c_str() <<
-                               OMA_FIELD_DESC << desc.c_str() ) ;
+               bob.append( OMA_FIELD_IP, ip.c_str() ) ;
+               bob.appendBool( OMA_FIELD_HASFINISH,
+                               ( (TRUE == it->_isFinish) ? 1 : 0 ) ) ;
+               if ( SDB_OK != it->_ps._errno )
+               {
+                  bob.appendBool( OMA_FIELD_HASERROR, 1 ) ;
+                  bob.append( OMA_FIELD_DESC, it->_ps._errMsg.c_str() ) ;
+               }
+               else
+               {
+                  bob.appendBool( OMA_FIELD_HASERROR, 0 ) ;
+                  bob.append( OMA_FIELD_DESC, desc.c_str() ) ;
+               }
+               result = bob.obj() ;
                bab.append ( result ) ;
                it++ ;
             } 
