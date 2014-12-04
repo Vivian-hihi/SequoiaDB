@@ -357,6 +357,15 @@ namespace engine
       }
    }
 
+   void _omAgentOptions::setCMServiceName( const CHAR * serviceName )
+   {
+      if ( serviceName && *serviceName )
+      {
+         ossStrncpy( _cmServiceName, serviceName, OSS_MAX_SERVICENAME ) ;
+         _cmServiceName[ OSS_MAX_SERVICENAME ] = 0 ;
+      }
+   }
+
    void _omAgentOptions::lock( INT32 type )
    {
       if ( SHARED == type )

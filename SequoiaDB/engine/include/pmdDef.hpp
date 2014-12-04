@@ -240,6 +240,7 @@ namespace engine
    #endif // _LINUX
    #define PMD_OPTION_TYPE             "type"
    #define PMD_OPTION_CURUSER          "I"
+   #define PMD_OPTION_PORT             "port"
 
    #define ENGINE_NPIPE_MSG_PID        "$pid"
    #define ENGINE_NPIPE_MSG_SHUTDOWN   "$shutdown"

@@ -52,6 +52,7 @@ namespace engine
 
    #define COMMANDS_HIDE_OPTIONS \
       ( PMD_OPTION_CURUSER, "use current user" ) \
+      ( PMD_OPTION_PORT, boost::program_options::value<string>(), "agent port" ) \
 
    void displayArg ( po::options_description &desc )
    {
@@ -175,6 +176,11 @@ namespace engine
       if ( vm.count( PMD_OPTION_CURUSER ) )
       {
          sdbGetOMAgentOptions()->setCurUser() ;
+      }
+      if ( vm.count( PMD_OPTION_PORT ) )
+      {
+         string svcname = vm[ PMD_OPTION_TYPE ].as<string>() ;
+         sdbGetOMAgentOptions()->setCMServiceName( svcname.c_str() ) ;
       }
       setPDLevel( sdbGetOMAgentOptions()->getDiagLevel() ) ;
 

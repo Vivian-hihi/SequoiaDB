@@ -76,6 +76,7 @@ namespace engine
 
    #define COMMANDS_HIDE_OPTIONS \
       ( PMD_OPTION_CURUSER, "use current user" ) \
+      ( PMD_OPTION_PORT, boost::program_options::value<string>(), "agent port" ) \
 
    void displayArg ( po::options_description &desc )
    {

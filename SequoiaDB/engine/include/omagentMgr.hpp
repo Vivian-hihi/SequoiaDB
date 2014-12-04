@@ -92,6 +92,8 @@ namespace engine
          void        setCurUser() { _useCurUser = TRUE ; }
          BOOLEAN     isUseCurUser() const { return _useCurUser ; }
 
+         void        setCMServiceName( const CHAR *serviceName ) ;
+
          void            lock( INT32 type = SHARED ) ;
          void            unLock( INT32 type = SHARED ) ;
 
