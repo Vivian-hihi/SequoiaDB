@@ -49,6 +49,7 @@
 
 #include <string>
 #include <iostream>
+#include <vector>
 #include "../bson/bson.h"
 
 using namespace std ;
@@ -135,6 +136,14 @@ namespace engine
    class _pmdCfgRecord : public SDBObject
    {
       public:
+         typedef class _pmdAddrPair
+         {
+            public :
+               CHAR _host[ OSS_MAX_HOSTNAME + 1 ] ;
+               CHAR _service[ OSS_MAX_SERVICENAME + 1 ] ;
+         } pmdAddrPair ;
+
+      public:
          _pmdCfgRecord () ;
          virtual ~_pmdCfgRecord () ;
 
@@ -153,6 +162,20 @@ namespace engine
          INT32 toString( std::string &str ) ;
 
          UINT32 getChangeID () const { return _changeID ; }
+
+      protected:
+         /*
+            Parse address line(192.168.20.106:5000,192.168.30.102:1000...) to
+            pmdAddrPair
+         */
+         INT32 parseAddressLine( const CHAR *pAddressLine,
+                                 vector< pmdAddrPair > &vecAddr,
+                                 const CHAR *pItemSep = ",",
+                                 const CHAR *pInnerSep = ":" ) ;
+
+         string makeAddressLine( vector< pmdAddrPair > &vecAddr,
+                                 CHAR chItemSep = ',',
+                                 CHAR chInnerSep = ':' ) ;
 
       protected:
          virtual INT32 doDataExchange( pmdCfgExchange *pEX ) = 0 ;
@@ -219,20 +242,10 @@ namespace engine
          _pmdOptionsMgr() ;
          ~_pmdOptionsMgr() ;
 
-      public:
-         typedef class _pmdAddrPair
-         {
-            public :
-               CHAR _host[ OSS_MAX_HOSTNAME + 1 ] ;
-               CHAR _service[ OSS_MAX_SERVICENAME + 1 ] ;
-         } pmdAddrPair ;
-
       protected:
          virtual INT32 doDataExchange( pmdCfgExchange *pEX ) ;
          virtual INT32 postLoaded() ;
          virtual INT32 preSaving() ;
-
-         INT32    _parseCatAddr() ;
 
       public:
 
@@ -329,9 +342,9 @@ namespace engine
          {
             return _krcbSvcName ;
          }
-         OSS_INLINE const _pmdOptionsMgr::_pmdAddrPair *catAddrs() const
+         OSS_INLINE vector< _pmdOptionsMgr::_pmdAddrPair > catAddrs() const
          {
-            return _cat ;
+            return _vecCat ;
          }
          OSS_INLINE const CHAR *getTmpPath() const
          {
@@ -441,7 +454,7 @@ namespace engine
          CHAR        _krcbConfPath[ OSS_MAX_PATHSIZE + 1 ] ;
          CHAR        _krcbConfFile[ OSS_MAX_PATHSIZE + 1 ] ;
          CHAR        _krcbCatFile[ OSS_MAX_PATHSIZE + 1 ] ;
-         pmdAddrPair _cat[ CATA_NODE_MAX_NUM ] ;
+         vector< pmdAddrPair >   _vecCat ;
          UINT16      _krcbSvcPort ;
          std::string _exePath ;
 

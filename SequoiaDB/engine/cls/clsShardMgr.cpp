@@ -121,7 +121,7 @@ namespace engine
       UINT16 catNID = CATA_NODE_ID_BEGIN + CLS_REPLSET_MAX_NODE_SIZE ;
       MsgRouteID id ;
       pmdOptionsCB *optCB = pmdGetOptionCB() ;
-      const _pmdOptionsMgr::_pmdAddrPair *pCatAddrs = optCB->catAddrs() ;
+      vector< _pmdOptionsMgr::_pmdAddrPair > catAddrs = optCB->catAddrs() ;
 
       if ( !_pNetRtAgent )
       {
@@ -130,16 +130,16 @@ namespace engine
       }
 
       // init param
-      for ( UINT32 i = 0 ; i < CATA_NODE_MAX_NUM ; ++i )
+      for ( UINT32 i = 0 ; i < catAddrs.size() ; ++i )
       {
-         if ( 0 == pCatAddrs[i]._host[ 0 ] )
+         if ( 0 == catAddrs[i]._host[ 0 ] )
          {
             break ;
          }
          id.columns.groupID = catGID ;
          id.columns.nodeID = catNID++ ;
          id.columns.serviceID = MSG_ROUTE_CAT_SERVICE ;
-         setCatlogInfo( id, pCatAddrs[i]._host, pCatAddrs[i]._service ) ;
+         setCatlogInfo( id, catAddrs[i]._host, catAddrs[i]._service ) ;
       }
 
       if ( _vecCatlog.size() == 0 )

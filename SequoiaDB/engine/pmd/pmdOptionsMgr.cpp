@@ -60,9 +60,6 @@ namespace engine
 
    #define JUDGE_RC( rc ) if ( SDB_OK != rc ) { goto error ; }
 
-   #define PMD_OPTION_CATALOG_ADDR_SPLITER            ","
-   #define PMD_OPTION_CATALOG_ADDR_FIELD_SPLITER      ":"
-
    #define PMD_OPTION_BRK_TIME_DEFAULT (5000)
    #define PMD_MAX_PREF_POOL           (200)
    #define PMD_MAX_SUB_QUERY           (10)
@@ -487,6 +484,89 @@ namespace engine
       return SDB_OK ;
    }
 
+   INT32 _pmdCfgRecord::parseAddressLine( const CHAR * pAddressLine,
+                                          vector < _pmdCfgRecord::pmdAddrPair > & vecAddr,
+                                          const CHAR * pItemSep,
+                                          const CHAR * pInnerSep )
+   {
+      INT32 rc = SDB_OK ;
+      vector<string> addrs ;
+      pmdAddrPair addrItem ;
+
+      if ( !pAddressLine || !pItemSep || !pInnerSep ||
+           pAddressLine[ 0 ] == 0 || pItemSep[ 0 ] == 0 ||
+           pInnerSep[ 0 ] == 0 )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      boost::algorithm::split( addrs, pAddressLine,
+                               boost::algorithm::is_any_of(
+                               pItemSep ) ) ;
+      if ( CLS_REPLSET_MAX_NODE_SIZE < addrs.size() )
+      {
+         std::cerr << "addr more than max member size" << endl ;
+         goto error ;
+      }
+
+      for ( vector<string>::iterator itr = addrs.begin() ;
+            itr != addrs.end() ;
+            ++itr )
+      {
+         vector<string> pair ;
+         string tmp = *itr ;
+         boost::algorithm::trim( tmp ) ;
+         boost::algorithm::split( pair, tmp,
+                                  boost::algorithm::is_any_of(
+                                  pInnerSep ) ) ;
+         if ( pair.size() != 2 )
+         {
+            continue ;
+         }
+         UINT32 cpLen = pair.at(0).size() < OSS_MAX_HOSTNAME ?
+                        pair.at(0).size() : OSS_MAX_HOSTNAME ;
+         ossMemcpy( addrItem._host, pair.at(0).c_str(), cpLen ) ;
+         addrItem._host[cpLen] = '\0' ;
+         cpLen = pair.at(1).size() < OSS_MAX_SERVICENAME ?
+                 pair.at(1).size() : OSS_MAX_SERVICENAME ;
+         ossMemcpy( addrItem._service, pair.at(1).c_str(),cpLen ) ;
+         addrItem._service[cpLen] = '\0' ;
+         vecAddr.push_back( addrItem ) ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   string _pmdCfgRecord::makeAddressLine( vector < _pmdCfgRecord::pmdAddrPair > & vecAddr,
+                                          CHAR chItemSep,
+                                          CHAR chInnerSep )
+   {
+      UINT32 count = 0 ;
+      stringstream ss ;
+      for ( UINT32 i = 0; i < vecAddr.size() ; ++i )
+      {
+         pmdAddrPair &item = vecAddr[ i ] ;
+         if ( '\0' != item._host[ 0 ] )
+         {
+            if ( 0 != count )
+            {
+               ss << chItemSep ;
+            }
+            ss << item._host << chInnerSep << item._service ;
+            ++count ;
+         }
+         else
+         {
+            break ;
+         }
+      }
+      return ss.str() ;
+   }
+
    INT32 _pmdCfgRecord::rdxString( pmdCfgExchange *pEX, const CHAR *pFieldName,
                                    CHAR *pValue, UINT32 len, BOOLEAN required,
                                    BOOLEAN allowRunChg,
@@ -907,7 +987,7 @@ namespace engine
       ossMemset( _krcbRole, 0, PMD_MAX_ENUM_STR_LEN + 1) ;
       ossMemset( _syncStrategyStr, 0, PMD_MAX_ENUM_STR_LEN + 1) ;
       ossMemset( _prefReplStr, 0, PMD_MAX_ENUM_STR_LEN + 1 ) ;
-      ossMemset( _catAddrLine, 0, OSS_MAX_PATHSIZE + 1) ;
+      ossMemset( _catAddrLine, 0, OSS_MAX_PATHSIZE + 1 ) ;
       ossMemset( _dmsTmpBlkPath, 0, OSS_MAX_PATHSIZE + 1 ) ;
       ossMemset( _krcbLobPath, 0, OSS_MAX_PATHSIZE + 1 ) ;
 
@@ -944,11 +1024,6 @@ namespace engine
       ossMemset( _krcbConfPath, 0, sizeof( _krcbConfPath ) ) ;
       ossMemset( _krcbConfFile, 0, sizeof( _krcbConfFile ) ) ;
       ossMemset( _krcbCatFile, 0, sizeof( _krcbCatFile ) ) ;
-      for ( UINT32 i = 0; i < CATA_NODE_MAX_NUM ; ++i )
-      {
-         ossMemset( _cat[i]._host, 0, OSS_MAX_HOSTNAME + 1 ) ;
-         ossMemset( _cat[i]._service, 0, OSS_MAX_SERVICENAME + 1 ) ;
-      }
       _krcbSvcPort         = OSS_DFT_SVCPORT ;
    }
 
@@ -1337,7 +1412,7 @@ namespace engine
          _memDebugSize = OSS_MAX ( _memDebugSize, SDB_MEMDEBUG_MINGUARDSIZE ) ;
       }
 
-      rc = _parseCatAddr () ;
+      rc = parseAddressLine( _catAddrLine, _vecCat ) ;
       if ( rc )
       {
          goto error ;
@@ -1363,74 +1438,10 @@ namespace engine
       goto done ;
    }
 
-   INT32 _pmdOptionsMgr::_parseCatAddr ()
-   {
-      INT32 rc = SDB_OK ;
-      vector<string> addrs ;
-      UINT32 i = 0 ;
-
-      boost::algorithm::split( addrs, _catAddrLine,
-                               boost::algorithm::is_any_of(
-                               PMD_OPTION_CATALOG_ADDR_SPLITER ) ) ;
-      if ( CATA_NODE_MAX_NUM < addrs.size() )
-      {
-         std::cerr << "catalog addr more than max cat number" << endl ;
-         goto error ;
-      }
-
-      for ( vector<string>::iterator itr = addrs.begin() ;
-            itr != addrs.end() ;
-            ++itr )
-      {
-         vector<string> pair ;
-         string tmp = *itr ;
-         boost::algorithm::trim( tmp ) ;
-         boost::algorithm::split( pair, tmp,
-                                  boost::algorithm::is_any_of(
-                                  PMD_OPTION_CATALOG_ADDR_FIELD_SPLITER ) ) ;
-         if ( pair.size() != 2 )
-         {
-            continue ;
-         }
-         UINT32 cpLen = pair.at(0).size() < OSS_MAX_HOSTNAME ?
-                        pair.at(0).size() : OSS_MAX_HOSTNAME ;
-         ossMemcpy( _cat[i]._host, pair.at(0).c_str(), cpLen ) ;
-         (_cat[i]._host)[cpLen] = '\0' ;
-         cpLen = pair.at(1).size() < OSS_MAX_SERVICENAME ?
-                 pair.at(1).size() : OSS_MAX_SERVICENAME ;
-         ossMemcpy( _cat[i]._service, pair.at(1).c_str(),cpLen ) ;
-         (_cat[i]._service)[cpLen] = '\0' ;
-         ++i ;
-      }
-
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
    INT32 _pmdOptionsMgr::preSaving ()
    {
-      UINT32 count = 0 ;
-      stringstream ss ;
-      for ( UINT32 i = 0; i < CATA_NODE_MAX_NUM ; ++i )
-      {
-         if ( '\0' != _cat[i]._host[0] )
-         {
-            if ( 0 != count )
-            {
-               ss << "," ;
-            }
-            ss << _cat[i]._host << ":" << _cat[i]._service ;
-            ++count ;
-         }
-         else
-         {
-            break ;
-         }
-      }
-      string catAddr = ss.str() ;
-      ossStrncpy( _catAddrLine, catAddr.c_str(), OSS_MAX_PATHSIZE ) ;
+      string addr = makeAddressLine( _vecCat ) ;
+      ossStrncpy( _catAddrLine, addr.c_str(), OSS_MAX_PATHSIZE ) ;
       _catAddrLine[ OSS_MAX_PATHSIZE ] = 0 ;
 
       clsStrategy2String( _syncStrategy, _syncStrategyStr,
@@ -1779,27 +1790,37 @@ namespace engine
 
    void _pmdOptionsMgr::clearCatAddr()
    {
-      for ( UINT32 i = 0 ; i < CATA_NODE_MAX_NUM ; ++i )
-      {
-         _cat[i]._host[0] = '\0' ;
-         _cat[i]._service[0] = '\0' ;
-      }
+      _vecCat.clear() ;
    }
 
    void _pmdOptionsMgr::setCatAddr( const CHAR *host,
                                     const CHAR *service )
    {
-      for ( UINT32 i = 0 ; i < CATA_NODE_MAX_NUM ; ++i )
+      BOOLEAN hasSet = FALSE ;
+
+      for ( UINT32 i = 0 ; i < _vecCat.size() ; ++i )
       {
-         if ( '\0' == _cat[i]._host[0] )
+         if ( '\0' == _vecCat[i]._host[0] )
          {
-            ossMemcpy( _cat[i]._host, host, ossStrlen(host) + 1 ) ;
-            ossMemcpy( _cat[i]._service, service, ossStrlen(service)+1 ) ;
+            ossStrncpy( _vecCat[i]._host, host, OSS_MAX_HOSTNAME ) ;
+            _vecCat[i]._host[ OSS_MAX_HOSTNAME ] = 0 ;
+            ossStrncpy( _vecCat[i]._service, service, OSS_MAX_SERVICENAME ) ;
+            _vecCat[i]._service[ OSS_MAX_SERVICENAME ] = 0 ;
+            hasSet = TRUE ;
             break ;
          }
       }
-   }
 
+      if ( !hasSet && _vecCat.size() < CATA_NODE_MAX_NUM )
+      {
+         pmdAddrPair addr ;
+         ossStrncpy( addr._host, host, OSS_MAX_HOSTNAME ) ;
+         addr._host[ OSS_MAX_HOSTNAME ] = 0 ;
+         ossStrncpy( addr._service, service, OSS_MAX_SERVICENAME ) ;
+         addr._service[ OSS_MAX_SERVICENAME ] = 0 ;
+         _vecCat.push_back( addr ) ;
+      }
+   }
 
 }
 

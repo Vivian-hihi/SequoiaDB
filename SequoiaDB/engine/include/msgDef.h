@@ -404,6 +404,8 @@
 #define INVALID_GROUPID                      0
 #define CATALOG_GROUPID                      1
 #define COORD_GROUPID                        2
+#define OM_GROUPID                           3
+#define OMAGENT_GROUPID                      4
 #define CATALOG_GROUPNAME                    SYS_PREFIX"CatalogGroup"
 #define COORD_GROUPNAME                      SYS_PREFIX"Coord"
 #define NODE_NAME_SERVICE_SEP                ":"

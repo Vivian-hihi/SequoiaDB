@@ -35,6 +35,8 @@
 #include "omagentSession.hpp"
 #include "pmd.hpp"
 
+using namespace bson ;
+
 namespace engine
 {
    /*
@@ -51,6 +53,7 @@ namespace engine
       _restartCount        = -1 ;
       _restartInterval     = 0 ;
       _autoStart           = FALSE ;
+      _isGeneralAgent      = FALSE ;
       _diagLevel           = PDWARNING ;
 
       ossMemset( _cfgFileName, 0, sizeof( _cfgFileName ) ) ;
@@ -58,6 +61,7 @@ namespace engine
       ossMemset( _scriptPath, 0, sizeof( _scriptPath ) ) ;
       ossMemset( _startProcFile, 0, sizeof( _startProcFile ) ) ;
       ossMemset( _stopProcFile, 0, sizeof( _stopProcFile ) ) ;
+      ossMemset( _omAddress, 0, sizeof( _omAddress ) ) ;
 
       // defaut service name
       ossSnprintf( _cmServiceName, OSS_MAX_SERVICENAME, "%u",
@@ -112,7 +116,11 @@ namespace engine
          ( SDBCM_AUTO_START, po::value<string>(),
          "start sequoiadb node automatically when CM start" )
          ( SDBCM_DIALOG_LEVEL, po::value<INT32>(),
-         "Dialog level" )
+         "Dialog level" ),
+         ( SDBCM_CONF_OMADDR, po::value<string>(),
+         "OM address" ),
+         ( SDBCM_CONF_ISGENERAL, po::value<string>(),
+         "Is general agent" )
       PMD_ADD_PARAM_OPTIONS_END
 
       if ( !pRootPath )
@@ -196,6 +204,28 @@ namespace engine
       goto done ;
    }
 
+   INT32 _omAgentOptions::save()
+   {
+      INT32 rc = SDB_OK ;
+      std::string line ;
+
+      rc = pmdCfgRecord::toString( line ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to get the line str:%d", rc ) ;
+         goto error ;
+      }
+
+      rc = utilWriteConfigFile( _cfgFileName, line.c_str(), FALSE ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to write config[%s], rc: %d",
+                   _cfgFileName, rc ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 _omAgentOptions::doDataExchange( pmdCfgExchange * pEX )
    {
       resetResult () ;
@@ -224,6 +254,12 @@ namespace engine
       // --DiagLevel
       rdxInt( pEX, SDBCM_DIALOG_LEVEL, _diagLevel, FALSE, TRUE,
               _diagLevel ) ;
+      // --OMAddress
+      rdxString( pEX, SDBCM_CONF_OMADDR, _omAddress, sizeof( _omAddress ),
+                 FALSE, FALSE, "", FALSE ) ;
+      // --IsGeneral
+      rdxBooleanS( pEX, SDBCM_CONF_ISGENERAL, _isGeneralAgent, FALSE,
+                   FALSE, FALSE, FALSE ) ;
 
       //  end map configs }}
 
@@ -244,10 +280,105 @@ namespace engine
       }
       rc = SDB_OK ;
 
+      // parse om address line
+      if ( 0 != _omAddress[ 0 ] )
+      {
+         rc = parseAddressLine( _omAddress, _vecOMAddr ) ;
+         PD_RC_CHECK( rc, PDERROR, "Parse om address[%s] failed, rc: %d",
+                      _omAddress, rc ) ;
+      }
+
    done:
       return rc ;
    error:
       goto done ;
+   }
+
+   INT32 _omAgentOptions::preSaving()
+   {
+      string omAddrLine = makeAddressLine( _vecOMAddr ) ;
+      ossStrncpy( _omAddress, omAddrLine.c_str(), OSS_MAX_PATHSIZE ) ;
+      _omAddress[ OSS_MAX_PATHSIZE ] = 0 ;
+
+      return SDB_OK ;
+   }
+
+   void _omAgentOptions::addOMAddr( const CHAR * host, const CHAR * service )
+   {
+      if ( _vecOMAddr.size() < CLS_REPLSET_MAX_NODE_SIZE )
+      {
+         pmdAddrPair addr ;
+         ossStrncpy( addr._host, host, OSS_MAX_HOSTNAME ) ;
+         addr._host[ OSS_MAX_HOSTNAME ] = 0 ;
+         ossStrncpy( addr._service, service, OSS_MAX_SERVICENAME ) ;
+         addr._service[ OSS_MAX_SERVICENAME ] = 0 ;
+         _vecOMAddr.push_back( addr ) ;
+
+         if ( !_isGeneralAgent &&
+              0 == ossStrcmp( host, pmdGetKRCB()->getHostName() ) )
+         {
+            _isGeneralAgent = TRUE ;
+         }
+
+         string str = makeAddressLine( _vecOMAddr ) ;
+         ossStrncpy( _omAddress, str.c_str(), OSS_MAX_PATHSIZE ) ;
+         _omAddress[ OSS_MAX_PATHSIZE ] = 0 ;
+      }
+   }
+
+   void _omAgentOptions::delOMAddr( const CHAR * host, const CHAR * service )
+   {
+      BOOLEAN removed = FALSE ;
+      _isGeneralAgent = FALSE ;
+      vector< pmdAddrPair >::iterator it = _vecOMAddr.begin() ;
+      while ( it != _vecOMAddr.end() )
+      {
+         pmdAddrPair &addr = *it ;
+         if ( 0 == ossStrcmp( host, addr._host ) &&
+              0 == ossStrcmp( service, addr._service ) )
+         {
+            it = _vecOMAddr.erase( it ) ;
+            removed = TRUE ;
+            continue ;
+         }
+         if ( !_isGeneralAgent &&
+              0 == ossStrcmp( addr._host, pmdGetKRCB()->getHostName() ) )
+         {
+            _isGeneralAgent = TRUE ;
+         }
+         ++it ;
+      }
+
+      if ( removed )
+      {
+         string str = makeAddressLine( _vecOMAddr ) ;
+         ossStrncpy( _omAddress, str.c_str(), OSS_MAX_PATHSIZE ) ;
+         _omAddress[ OSS_MAX_PATHSIZE ] = 0 ;
+      }
+   }
+
+   void _omAgentOptions::lock( INT32 type )
+   {
+      if ( SHARED == type )
+      {
+         _latch.get_shared() ;
+      }
+      else
+      {
+         _latch.get() ;
+      }
+   }
+
+   void _omAgentOptions::unLock( INT32 type )
+   {
+      if ( SHARED == type )
+      {
+         _latch.release_shared() ;
+      }
+      else
+      {
+         _latch.release() ;
+      }
    }
 
    /*
@@ -328,6 +459,8 @@ namespace engine
       _oneSecTimer         = NET_INVALID_TIMER_ID ;
       _nodeMonitorTimer    = NET_INVALID_TIMER_ID ;
       _watchAndCleanTimer  = NET_INVALID_TIMER_ID ;
+      _primaryPos          = -1 ;
+      _taskID              = 0 ;
    }
 
    _omAgentMgr::~_omAgentMgr()
@@ -350,9 +483,22 @@ namespace engine
       const CHAR *hostName = pmdGetKRCB()->getHostName() ;
       const CHAR *cmService = _options.getCMServiceName() ;
       MsgRouteID nodeID ;
-      nodeID.value = MSG_INVALID_ROUTEID ;
+
+      // init om addr
+      _initOMAddr( _vecOmNode ) ;
+      if ( _vecOmNode.size() > 0 )
+      {
+         _primaryPos = 0 ;
+      }
+      else
+      {
+         _primaryPos = -1 ;
+      }
 
       // 1. create listen
+      nodeID.columns.groupID = OMAGENT_GROUPID ;
+      nodeID.columns.nodeID = 1 ;
+      nodeID.columns.serviceID = MSG_ROUTE_LOCAL_SERVICE ;
       _netAgent.updateRoute( nodeID, hostName, cmService ) ;
       rc = _netAgent.listen( nodeID ) ;
       if ( rc )
@@ -392,6 +538,46 @@ namespace engine
       return rc ;
    error:
       goto done ;
+   }
+
+   void _omAgentMgr::_initOMAddr( vector< MsgRouteID > &vecNode )
+   {
+      MsgRouteID nodeID ;
+      MsgRouteID srcID ;
+      UINT16 omNID = 1 ;
+      _netRoute *pRoute = _netAgent.getRoute() ;
+      INT32 rc = SDB_OK ;
+
+      vector< _pmdOptionsMgr::_pmdAddrPair > omAddrs = _options.omAddrs() ;
+      // init om addr
+      for ( UINT32 i = 0 ; i < omAddrs.size() ; ++i )
+      {
+         if ( 0 == omAddrs[i]._host[ 0 ] )
+         {
+            break ;
+         }
+         nodeID.columns.groupID = OM_GROUPID ;
+         nodeID.columns.nodeID = omNID++ ;
+         nodeID.columns.serviceID = MSG_ROUTE_OM_SERVICE ;
+
+         if ( SDB_OK == pRoute->route( omAddrs[ i ]._host,
+                                       omAddrs[ i ]._service,
+                                       MSG_ROUTE_OM_SERVICE,
+                                       srcID ) )
+         {
+            rc = _netAgent.updateRoute( srcID, nodeID ) ;
+         }
+         else
+         {
+            rc = _netAgent.updateRoute( nodeID, omAddrs[ i ]._host,
+                                        omAddrs[ i ]._service ) ;
+         }
+
+         if ( SDB_OK == rc )
+         {
+            vecNode.push_back( nodeID ) ;
+         }
+      }
    }
 
    INT32 _omAgentMgr::active()
@@ -498,6 +684,46 @@ namespace engine
       _timerHandler.detach() ;
    }
 
+   void _omAgentMgr::onConfigChange()
+   {
+      vector< MsgRouteID >::iterator it ;
+      BOOLEAN bFound = FALSE ;
+      vector< MsgRouteID > vecNodes ;
+      _initOMAddr( vecNodes ) ;
+
+      ossScopedLock lock( &_mgrLatch, EXCLUSIVE ) ;
+
+      it = _vecOmNode.begin() ;
+      while ( it != _vecOmNode.end() )
+      {
+         // if not found, need to delete
+         bFound = FALSE ;
+         for ( UINT32 i = 0 ; i < vecNodes.size() ; ++i )
+         {
+            if ( vecNodes[ i ].value == (*it).value )
+            {
+               bFound = TRUE ;
+               break ;
+            }
+         }
+
+         if ( !bFound )
+         {
+            _netAgent.delRoute( *it ) ;
+         }
+         ++it ;
+      }
+      _vecOmNode = vecNodes ;
+      if ( _vecOmNode.size() > 0 )
+      {
+         _primaryPos = 0 ;
+      }
+      else
+      {
+         _primaryPos = -1 ;
+      }
+   }
+
    void _omAgentMgr::onTimer( UINT64 timerID, UINT32 interval )
    {
       if ( _oneSecTimer == timerID )
@@ -544,6 +770,93 @@ namespace engine
    void _omAgentMgr::releaseScope( sptScope * pScope )
    {
       _sptScopePool.releaseScope( pScope ) ;
+   }
+
+   INT32 _omAgentMgr::sendToOM( MsgHeader * msg, INT32 * pSendNum )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( pSendNum )
+      {
+         *pSendNum = 0 ;
+      }
+
+      ossScopedLock lock( &_mgrLatch, SHARED ) ;
+
+      INT32 tmpPrimary = _primaryPos ;
+
+      if ( _vecOmNode.size() == 0 )
+      {
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      // primary node exist
+      if ( tmpPrimary >= 0 && tmpPrimary < _vecOmNode.size() )
+      {
+         rc = _netAgent.syncSend ( _vecOmNode[tmpPrimary],
+                                   (void*)msg ) ;
+         if ( rc != SDB_OK )
+         {
+            PD_LOG ( PDWARNING,
+                     "Send message to primary om[%d] failed[rc:%d]",
+                     _vecOmNode[tmpPrimary].columns.nodeID,
+                     rc ) ;
+            _primaryPos = -1 ;
+            //will send to all om node
+         }
+         else
+         {
+            if ( pSendNum )
+            {
+               *pSendNum = 1 ;
+            }
+            goto done ;
+         }
+      }
+
+      //send to all om node
+      {
+         UINT32 index = 0 ;
+         INT32 rc1 = SDB_OK ;
+         rc = SDB_NET_SEND_ERR ;
+
+         while ( index < _vecOmNode.size () )
+         {
+            rc1 = _netAgent.syncSend ( _vecOmNode[index], (void*)msg ) ;
+            if ( rc1 == SDB_OK )
+            {
+               rc = rc1 ;
+               if ( pSendNum )
+               {
+                  ++(*pSendNum) ;
+               }
+            }
+            else
+            {
+               PD_LOG ( PDWARNING, "Send message to om[%s] failed[rc:%d]. "
+                        "It is possible because the remote service was not "
+                        "started yet",
+                        _vecOmNode[index].columns.nodeID,
+                        rc1 ) ;
+            }
+
+            index++ ;
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _omAgentMgr::startTaskCheck( const BSONObj & match )
+   {
+      ossScopedLock lock ( &_mgrLatch, EXCLUSIVE ) ;
+      _mapTaskQuery[++_taskID] = match.copy() ;
+
+      return SDB_OK ;
    }
 
    /*

@@ -184,6 +184,10 @@ namespace engine
             {
                continue ;
             }
+            else if ( 0 == ossStrcmp( e.fieldName(), PMD_OPTION_SVCNAME ) )
+            {
+               _svcName = e.valuestrsafe() ;
+            }
             else if ( 0 == ossStrcmp( e.fieldName(), PMD_OPTION_ROLE ) )
             {
                if ( 0 == ossStrcmp( e.valuestrsafe(),
@@ -221,8 +225,46 @@ namespace engine
    INT32 _omaCreateNodeCmd::doit( BSONObj & retObj )
    {
       BSONObj dummy ;
-      return sdbGetOMAgentMgr()->getNodeMgr()->addANode( _config.objdata(),
-                                                         dummy.objdata() ) ;
+      INT32 rc = SDB_OK ;
+      BOOLEAN locked = FALSE ;
+
+      // if om node has already exist, can't create another
+      if ( 0 == ossStrcmp( _roleStr.c_str(), SDB_ROLE_OM_STR ) )
+      {
+         sdbGetOMAgentOptions()->lock( EXCLUSIVE ) ;
+         locked = TRUE ;
+
+         if ( sdbGetOMAgentOptions()->omAddrs().size() > 0 )
+         {
+            PD_LOG( PDERROR, "OM node[%s] has already exist, can't create "
+                    "another", sdbGetOMAgentOptions()->getOMAddress() ) ;
+            rc = SDBCM_NODE_EXISTED ;
+            goto error ;
+         }
+      }
+
+      rc = sdbGetOMAgentMgr()->getNodeMgr()->addANode( _config.objdata(),
+                                                       dummy.objdata() ) ;
+      // if create om, need to add om address to config, and then
+      // save config
+      if ( SDB_OK == rc &&
+           0 == ossStrcmp( _roleStr.c_str(), SDB_ROLE_OM_STR ) )
+      {
+         sdbGetOMAgentOptions()->addOMAddr( pmdGetKRCB()->getHostName(),
+                                            _svcName.c_str() ) ;
+         sdbGetOMAgentOptions()->save() ;
+         // notify change
+         sdbGetOMAgentMgr()->onConfigChange() ;
+      }
+
+   done:
+      if ( locked )
+      {
+         sdbGetOMAgentOptions()->unLock( EXCLUSIVE ) ;
+      }
+      return rc ;
+   error:
+      goto done ;
    }
 
    /*
@@ -246,9 +288,35 @@ namespace engine
    INT32 _omaRemoveNodeCmd::doit( BSONObj & retObj )
    {
       BSONObj dummy ;
-      return sdbGetOMAgentMgr()->getNodeMgr()->rmANode( _config.objdata(),
-                                                        dummy.objdata(),
-                                                        _roleStr.c_str() ) ;
+      INT32 rc = SDB_OK ;
+      BOOLEAN locked = FALSE ;
+
+      if ( 0 == ossStrcmp( _roleStr.c_str(), SDB_ROLE_OM_STR ) )
+      {
+         sdbGetOMAgentOptions()->lock( EXCLUSIVE ) ;
+         locked = TRUE ;
+      }
+
+      rc = sdbGetOMAgentMgr()->getNodeMgr()->rmANode( _config.objdata(),
+                                                      dummy.objdata(),
+                                                      _roleStr.c_str() ) ;
+      // if remove om node, need to rm the node from config, and the save
+      if ( SDB_OK == rc &&
+           0 == ossStrcmp( _roleStr.c_str(), SDB_ROLE_OM_STR ) )
+      {
+         sdbGetOMAgentOptions()->delOMAddr( pmdGetKRCB()->getHostName(),
+                                            _svcName.c_str() ) ;
+         sdbGetOMAgentOptions()->save() ;
+         // notify change
+         sdbGetOMAgentMgr()->onConfigChange() ;
+      }
+
+      if ( locked )
+      {
+         sdbGetOMAgentOptions()->unLock( EXCLUSIVE ) ;
+      }
+
+      return rc ;
    }
 
    /*

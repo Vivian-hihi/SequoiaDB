@@ -53,11 +53,16 @@ namespace engine
       public:
          ~_netRoute() ;
          INT32 route( const _MsgRouteID &id,
-                      CHAR *host,
-                      CHAR *service ) ;
+                      CHAR *host, UINT32 hostLen,
+                      CHAR *service, UINT32 svcLen ) ;
 
          INT32 route( const _MsgRouteID &id,
                       _netRouteNode &node ) ;
+
+         INT32 route( const CHAR* host,
+                      const CHAR* service,
+                      MSG_ROUTE_SERVICE_TYPE type,
+                      _MsgRouteID &id ) ;
 
          /// return err when update an existing node.
          INT32 update( const _MsgRouteID &id,
@@ -65,13 +70,14 @@ namespace engine
                        const CHAR *service,
                        BOOLEAN *newAdd = NULL ) ;
          INT32 update( const _MsgRouteID &id,
-                       const _netRouteNode &node ) ;
+                       const _netRouteNode &node,
+                       BOOLEAN *newAdd = NULL ) ;
          INT32 update( const _MsgRouteID &oldID,
                        const _MsgRouteID &newID ) ;
 
          void  del( const _MsgRouteID &id, BOOLEAN &hasDel ) ;
 
-         void clear() ;
+         void  clear() ;
 
          OSS_INLINE void setLocal( const _MsgRouteID &id )
          {

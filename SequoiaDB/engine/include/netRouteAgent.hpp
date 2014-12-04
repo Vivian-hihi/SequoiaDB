@@ -53,6 +53,9 @@ namespace engine
       public:
          _netRouteAgent( _netMsgHandler *handler ) ;
 
+         _netRoute* getRoute() { return &_route ; }
+         _netFrame* getFrame() { return &_frame ; }
+
       public:
          OSS_INLINE void run()
          {

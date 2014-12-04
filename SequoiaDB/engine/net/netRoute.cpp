@@ -49,8 +49,8 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__NETRT_ROUTE, "_netRoute::route" )
    INT32 _netRoute::route( const _MsgRouteID &id,
-                           CHAR *host,
-                           CHAR *service )
+                           CHAR *host, UINT32 hostLen,
+                           CHAR *service, UINT32 svcLen )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__NETRT_ROUTE );
@@ -72,9 +72,9 @@ namespace engine
       else
       {
          /// set des len with local value.
-         clsStrcpy( itr->second._host, host, sizeof( itr->second._host ) ) ;
+         clsStrcpy( itr->second._host, host, hostLen ) ;
          clsStrcpy( ((itr->second._service)[id.columns.serviceID]).c_str(),
-                    service, OSS_MAX_SERVICENAME + 1 ) ;
+                    service, svcLen ) ;
       }
    done:
       _mtx.release_shared() ;
@@ -111,6 +111,28 @@ namespace engine
       return rc ;
    error:
       goto done ;
+   }
+
+   INT32 _netRoute::route( const CHAR *host, const CHAR *service,
+                           MSG_ROUTE_SERVICE_TYPE type, _MsgRouteID &id )
+   {
+      INT32 rc = SDB_NET_ROUTE_NOT_FOUND ;
+      _mtx.get_shared() ;
+      map<UINT64, _netRouteNode>::const_iterator itr = _route.begin() ;
+      while( itr != _route.end() )
+      {
+         const _netRouteNode &nodeInfo = itr->second ;
+         if ( 0 == ossStrcmp( nodeInfo._host, host ) &&
+              0 == ossStrcmp( nodeInfo._service[ type ].c_str(), service ) )
+         {
+            rc = SDB_OK ;
+            id.value = itr->first ;
+            break ;
+         }
+      }
+
+      _mtx.release_shared() ;
+      return rc ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__NETRT_UPDATE, "_netRoute::update" )
@@ -201,7 +223,8 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__NETRT_UPDATE3, "_netRoute::update" )
    INT32 _netRoute::update( const _MsgRouteID &id,
-                            const _netRouteNode &node )
+                            const _netRouteNode &node,
+                            BOOLEAN *newAdd )
    {
       INT32 rc = SDB_NET_UPDATE_EXISTING_NODE ;
       PD_TRACE_ENTRY ( SDB__NETRT_UPDATE3 );
@@ -209,6 +232,20 @@ namespace engine
       tmp.columns.serviceID = 0 ;
       _mtx.get() ;
       _netRouteNode &update = _route[tmp.value] ;
+
+      if ( newAdd )
+      {
+         if ( MSG_INVALID_ROUTEID == update._id.value &&
+              0 == node._host[0] )
+         {
+            *newAdd = TRUE ;
+         }
+         else
+         {
+            *newAdd = FALSE ;
+         }
+      }
+
       if ( update._id.value != tmp.value )
       {
          update._id.value = tmp.value ;

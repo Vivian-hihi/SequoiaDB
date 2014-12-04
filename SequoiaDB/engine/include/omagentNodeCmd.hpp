@@ -100,7 +100,7 @@ namespace engine
       protected:
          BSONObj        _config ;
          string         _roleStr ;
-
+         string         _svcName ;
    } ;
 
    /*
