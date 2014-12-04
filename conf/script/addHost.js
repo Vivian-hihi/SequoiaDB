@@ -51,7 +51,7 @@ function isMatchLocalInfo( osInfo )
    var adminUser        = null ;
    var installPath      = null ;
    var localAgentPort   = null ;
-   var localIP          = getLocalIPAddr() ;
+   var localIP          = getLocalIP() ;
 
    // get local install info
    try

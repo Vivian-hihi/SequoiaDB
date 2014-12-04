@@ -171,10 +171,14 @@ function main()
          ip        = obj[IP] ;
          if ( undefined != hostname )
          { 
+            if ( "localhost" == hostname )
+               hostname = getLocalHostName() ;
             ret = scanHost( user, passwd, hostname, sshport, null ) ;
          }
          else if ( undefined != ip )
          {
+            if ( "127.0.0.1" == ip )
+               ip = getLocalIP() ;
             ret = scanHost( user, passwd, null, sshport, ip ) ;
          }
          else

@@ -734,24 +734,30 @@ function getAgentPort( hostname )
 }
 
 /* *****************************************************************************
-@discretion: get local ip from hosts table
+@discretion: get local host name or ip address from hosts table
 @parameter void
 @return
-   localIP[string]: local ip address
+   retStr[string]: local host name or ip address
 ***************************************************************************** */
-function getLocalIPAddr()
+function _getLocalHostNameOrIP( type )
 {
-   var localIP = null ;
+   var retStr = null ;
    var cmd = new Cmd() ;
    var osInfo = System.type() ;
    try
    {
       if ( OMA_LINUX == osInfo )
       {
-         var str = cmd.run("hostname -i") ;
-         str = removeLineBreak( str ) ; 
+         var str = null ;
+         if ( "hostname" == type )
+            str = cmd.run( "hostname" ) ;
+         else if ( "ip" == type )
+            str = cmd.run("hostname -i") ;
+         else
+           throw SDB_INVALIDARG ;
+         str = removeLineBreak( str ) ;
          var arr = str.split(" ") ;
-         localIP = arr[0] ;
+         retStr = arr[0] ;
       }
       else
       {
@@ -760,10 +766,32 @@ function getLocalIPAddr()
    }
    catch ( e )
    {
-      errMsg = "Failed to get localhost ip address" ;
-      exception_handle( e, errMsg ) ;   
-   } 
-   return localIP ;
+      errMsg = "Failed to get localhost host name or ip address" ;
+      exception_handle( e, errMsg ) ;
+   }
+   return retStr ;
+}
+
+/* *****************************************************************************
+@discretion: get local host name from hosts table
+@parameter void
+@return
+   [string]: local host name
+***************************************************************************** */
+function getLocalHostName()
+{
+   return _getLocalHostNameOrIP( "hostname" ) ;
+}
+
+/* *****************************************************************************
+@discretion: get local ip from hosts table
+@parameter void
+@return
+   [string]: local ip address
+***************************************************************************** */
+function getLocalIP()
+{
+   return _getLocalHostNameOrIP( "ip" ) ;
 }
 
 /* *****************************************************************************
