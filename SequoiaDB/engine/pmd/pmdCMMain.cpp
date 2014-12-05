@@ -179,7 +179,7 @@ namespace engine
       }
       if ( vm.count( PMD_OPTION_PORT ) )
       {
-         string svcname = vm[ PMD_OPTION_TYPE ].as<string>() ;
+         string svcname = vm[ PMD_OPTION_PORT ].as<string>() ;
          sdbGetOMAgentOptions()->setCMServiceName( svcname.c_str() ) ;
          sdbGetOMAgentOptions()->save() ;
       }
