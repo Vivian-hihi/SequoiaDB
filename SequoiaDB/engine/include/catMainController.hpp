@@ -73,6 +73,7 @@ namespace engine
       virtual void   detachCB( _pmdEDUCB *cb ) ;
 
       ossEvent* getAttachEvent() { return &_attachEvent ; }
+      ossEvent* getChangeEvent() { return &_changeEvent ; }
 
    public:
       INT32 handleMsg( const NET_HANDLE &handle,
@@ -144,6 +145,8 @@ namespace engine
 
       ossEvent          _attachEvent ;
       BOOLEAN           _isActived ;
+
+      ossEvent          _changeEvent ;
    } ;
 
 }

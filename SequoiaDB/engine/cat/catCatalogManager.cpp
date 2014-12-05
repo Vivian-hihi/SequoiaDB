@@ -66,16 +66,19 @@ namespace engine
       _pDpsCB     = NULL ;
       _pCatCB     = NULL ;
       _pDmsCB     = NULL ;
+      _changeEvent.signal() ;
    }
 
    INT32 catCatalogueManager::_onActiveEvent( pmdEDUEvent *event )
    {
       _taskMgr.setTaskID( catGetMaxTaskID( _pEduCB ) ) ;
+      _changeEvent.signal() ;
       return SDB_OK ;
    }
 
    INT32 catCatalogueManager::_onDeactiveEvent( pmdEDUEvent *event )
    {
+      _changeEvent.signal() ;
       return SDB_OK ;
    }
 

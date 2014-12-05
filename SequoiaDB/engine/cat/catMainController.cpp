@@ -75,6 +75,7 @@ namespace engine
       _pEDUCB              = NULL ;
 
       _isActived           = FALSE ;
+      _changeEvent.signal() ;
    }
 
    catMainController::~catMainController()
@@ -427,22 +428,30 @@ namespace engine
       }
       _isActived = TRUE ;
 
+      _pCatCB->getCatNodeMgr()->getChangeEvent()->reset() ;
       rc = _pEduMgr->postEDUPost( _nodeManagerEDUID, PMD_EDU_EVENT_ACTIVE ) ;
       if ( rc )
       {
+         _pCatCB->getCatNodeMgr()->getChangeEvent()->signal() ;
          PD_LOG( PDERROR, "Failed to post active event to node manager, "
                  "rc: %d", rc ) ;
          goto error ;
       }
+      _pCatCB->getCatlogueMgr()->getChangeEvent()->reset() ;
       rc = _pEduMgr->postEDUPost( _catalogManagerEDUID, PMD_EDU_EVENT_ACTIVE ) ;
       if ( rc )
       {
+         _pCatCB->getCatlogueMgr()->getChangeEvent()->signal() ;
          PD_LOG( PDERROR, "Failed to post active event to catalog manager, "
                  "rc: %d", rc ) ;
          goto error ;
       }
 
+      _pCatCB->getCatlogueMgr()->getChangeEvent()->wait( OSS_ONE_SEC * 120 ) ;
+      _pCatCB->getCatNodeMgr()->getChangeEvent()->wait( OSS_ONE_SEC * 120 ) ;
+
    done:
+      _changeEvent.signal() ;
       PD_TRACE_EXITRC ( SDB_CATMAINCT_ACTIVE, rc ) ;
       return rc ;
    error:
@@ -455,23 +464,31 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_CATMAINCT_DEACTIVE ) ;
 
+      _pCatCB->getCatNodeMgr()->getChangeEvent()->reset() ;
       rc = _pEduMgr->postEDUPost( _nodeManagerEDUID, PMD_EDU_EVENT_DEACTIVE ) ;
       if ( rc )
       {
+         _pCatCB->getCatNodeMgr()->getChangeEvent()->signal() ;
          PD_LOG( PDERROR, "Post deactive event to node manager failed, "
                  "rc: %d", rc ) ;
          // run continue
       }
+      _pCatCB->getCatlogueMgr()->getChangeEvent()->reset() ;
       rc = _pEduMgr->postEDUPost( _catalogManagerEDUID,
                                   PMD_EDU_EVENT_DEACTIVE ) ;
       if ( rc )
       {
+         _pCatCB->getCatlogueMgr()->getChangeEvent()->signal() ;
          PD_LOG( PDERROR, "Post deactive event to catalog manager failed, "
                  "rc: %d", rc ) ;
          // run continue
       }
 
+      _pCatCB->getCatlogueMgr()->getChangeEvent()->wait() ;
+      _pCatCB->getCatNodeMgr()->getChangeEvent()->wait() ;
+
       _isActived = FALSE ;
+      _changeEvent.signal() ;
 
       PD_TRACE_EXITRC ( SDB_CATMAINCT_DEACTIVE, rc ) ;
       return rc ;

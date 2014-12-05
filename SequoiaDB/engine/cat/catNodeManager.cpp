@@ -66,6 +66,7 @@ namespace engine
       _pRtnCB = NULL ;
       _pCatCB = NULL ;
       _pEduCB = NULL ;
+      _changeEvent.signal() ;
    }
 
    catNodeManager::~catNodeManager()
@@ -175,6 +176,7 @@ namespace engine
       _status = SDB_CAT_MODULE_ACTIVE ;
 
    done :
+      _changeEvent.signal() ;
       PD_TRACE_EXITRC ( SDB_CATNODEMGR_ACTIVE, rc ) ;
       return rc;
    error :
@@ -190,6 +192,7 @@ namespace engine
    {
       PD_TRACE_ENTRY ( SDB_CATNODEMGR_DEACTIVE ) ;
       _status = SDB_CAT_MODULE_DEACTIVE;
+      _changeEvent.signal() ;
       PD_TRACE_EXIT ( SDB_CATNODEMGR_DEACTIVE ) ;
       return SDB_OK ;
    }

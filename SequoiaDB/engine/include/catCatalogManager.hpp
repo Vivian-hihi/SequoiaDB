@@ -143,6 +143,8 @@ namespace engine
       virtual void   attachCB( _pmdEDUCB *cb ) ;
       virtual void   detachCB( _pmdEDUCB *cb ) ;
 
+      ossEvent*      getChangeEvent() { return &_changeEvent ; }
+
    protected:
       virtual INT32 _defaultMsgFunc ( NET_HANDLE handle,
                                       MsgHeader* msg ) ;
@@ -284,6 +286,8 @@ namespace engine
       _dpsLogWrapper       *_pDpsCB;
       pmdEDUCB             *_pEduCB;
       clsTaskMgr           _taskMgr ;
+
+      ossEvent             _changeEvent ;
 
    } ;
 }

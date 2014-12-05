@@ -471,7 +471,12 @@ namespace engine
          EDUID eduID = pEDUMgr->getSystemEDU( EDU_TYPE_CATMAINCONTROLLER ) ;
          if ( PMD_INVALID_EDUID != eduID )
          {
-            pEDUMgr->postEDUPost( eduID, eventType ) ;
+            _catMainCtrl.getChangeEvent()->reset() ;
+            if ( SDB_OK != pEDUMgr->postEDUPost( eduID, eventType ) )
+            {
+               _catMainCtrl.getChangeEvent()->signal() ;
+            }
+            _catMainCtrl.getChangeEvent()->wait() ;
          }
       }
    }
