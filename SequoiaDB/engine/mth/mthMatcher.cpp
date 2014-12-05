@@ -1471,6 +1471,11 @@ namespace engine
       (*clme)->_logicType = logicType ;
       (*clme)->_isRegex = isRegex ;
 
+      if ( MTH_LOGIC_OR == logicType )
+      {
+         _totallyConverted = FALSE ;
+      }
+
    done :
       PD_TRACE_EXITRC ( SDB__MTHMACH__CRTLME, rc );
       return rc ;
