@@ -49,6 +49,7 @@ namespace engine
    */
    _omAgentOptions::_omAgentOptions()
    {
+      ossMemset( _dftSvcName, 0, sizeof( _dftSvcName ) ) ;
       ossMemset( _cmServiceName, 0, sizeof( _cmServiceName ) ) ;
       _restartCount        = -1 ;
       _restartInterval     = 0 ;
@@ -64,7 +65,7 @@ namespace engine
       ossMemset( _omAddress, 0, sizeof( _omAddress ) ) ;
 
       // defaut service name
-      ossSnprintf( _cmServiceName, OSS_MAX_SERVICENAME, "%u",
+      ossSnprintf( _dftSvcName, OSS_MAX_SERVICENAME, "%u",
                    SDBCM_DFT_PORT ) ;
 
       _useCurUser = FALSE ;
@@ -235,13 +236,13 @@ namespace engine
       // {{ map configs begin
 
       // --defaultPort
-      rdxString( pEX, SDBCM_CONF_DFTPORT , _cmServiceName,
-                 sizeof( _cmServiceName ), FALSE, FALSE,
-                 _cmServiceName ) ;
+      rdxString( pEX, SDBCM_CONF_DFTPORT , _dftSvcName,
+                 sizeof( _dftSvcName ), FALSE, FALSE,
+                 _dftSvcName ) ;
       // --$hostname$_Port
       rdxString( pEX, _hostKey.c_str(), _cmServiceName,
                  sizeof( _cmServiceName ), FALSE, FALSE,
-                 _cmServiceName ) ;
+                 _dftSvcName ) ;
       // --RestartCount
       rdxInt( pEX, SDBCM_RESTART_COUNT, _restartCount, FALSE, TRUE,
               _restartCount ) ;

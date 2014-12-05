@@ -105,6 +105,7 @@ namespace engine
       private:
          string                     _hostKey ;
 
+         CHAR                       _dftSvcName[ OSS_MAX_SERVICENAME + 1 ] ;
          CHAR                       _cmServiceName[ OSS_MAX_SERVICENAME + 1 ] ;
          // -1: always restart, 0: nerver restart
          INT32                      _restartCount ;
