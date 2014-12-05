@@ -129,6 +129,7 @@ namespace engine
             id.value = itr->first ;
             break ;
          }
+         ++itr ;
       }
 
       _mtx.release_shared() ;
