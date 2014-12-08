@@ -36,6 +36,7 @@
 #include "utilParam.hpp"
 #include "pmdDef.hpp"
 #include "ossVer.hpp"
+#include "utilCommon.hpp"
 #include <iostream>
 
 using namespace std ;
@@ -264,6 +265,10 @@ INT32 main( INT32 argc, CHAR *argv[] )
       goto error ;
    }
 done:
+   if ( SDB_OK != rc )
+   {
+      rc = utilRC2ShellRC( rc ) ;
+   }
    return rc ;
 error:
    cerr << "Error: failed to complete operation, rc:" << rc
