@@ -231,7 +231,7 @@ namespace engine
    {
       resetResult () ;
 
-      pEX->setCfgStep( PMD_CFG_STEP_REINIT ) ;
+      pEX->setCfgStep( PMD_CFG_STEP_INIT ) ;
 
       // {{ map configs begin
 
