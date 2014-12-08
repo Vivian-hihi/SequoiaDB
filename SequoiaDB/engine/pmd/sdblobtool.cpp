@@ -267,7 +267,7 @@ INT32 main( INT32 argc, CHAR *argv[] )
 done:
    if ( SDB_OK != rc )
    {
-      rc = utilRC2ShellRC( rc ) ;
+      rc = engine::utilRC2ShellRC( rc ) ;
    }
    return rc ;
 error:
