@@ -76,13 +76,6 @@ function isMatchLocalInfo( osInfo )
    infoArr       = BUS_JSON[HostInfo] ;
    arrLen        = infoArr.length ;
    var sdbUser   = BUS_JSON[SdbUser] ;
-   // firstly, check sdb user
-   if ( adminUser != sdbUser )
-   {
-      errMsg = "When install db packet in localhost, sdb admin user[" + sdbUser  + "] does not match current one[" + adminUser + "]" ;
-      setLastErrMsg( errMsg ) ;
-      return false ;
-   }
 
    for( var i = 0; i < arrLen; i++ )
    {
@@ -106,6 +99,13 @@ function isMatchLocalInfo( osInfo )
          {
             errMsg = "Failed to ssh to localhost[" + ip + "]" ;
             exception_handle( e, errMsg ) ;
+         }
+         // firstly, check sdb user
+         if ( adminUser != sdbUser )
+         {
+            errMsg = "When install db packet in localhost, sdb admin user[" + sdbUser  + "] does not match current one[" + adminUser + "]" ;
+            setLastErrMsg( errMsg ) ;
+            return false ;
          }
          // secondly, check agent port
          localAgentPort = getSdbcmPort( ssh, osInfo ) ;

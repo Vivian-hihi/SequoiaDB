@@ -170,7 +170,8 @@ var OMA_PORT_INVALID                  = -1 ;
 var OMA_PORT_TEMP_AGENT_PORT          = 10000 ;
 var OMA_RESERVED_PORT = [ 11790, [11800, 11804], [11810, 11814], [11820, 11824], 30000, 50000, 60000 ] ;
 // option
-var OMA_OPTION_SDBCMART_1             = "--I" ;
+var OMA_OPTION_SDBCMART_I             = "--I" ;
+var OMA_OPTION_SDBCMART_PORT          = "--port" ;
 
 // other
 var OMA_NEW_LINE_L                    = "\n" ;

@@ -171,85 +171,24 @@ function pushPacket2( ssh, osInfo )
 }
 
 /* *****************************************************************************
-@discretion: modify a sdbcm config file then send it to remote host for
-             installing a temp sdbcm
-@author: Tanzhaobo
-@parameter
-   ssh[object]: ssh object
-   osInfo[string]: os type
-   port[number]: a port for remote sdbcm program
-@return void
-***************************************************************************** */
-function modifyAndSendConfigFile( ssh, osInfo, port )
-{
-   if ( OMA_LINUX == osInfo )
-   {
-      // cp sdbcm config file to /tmp and then modify it
-      var src = Oma.getOmaConfigFile() ;
-      var dst = OMA_PATH_TEMP_TEMP_DIR_L + OMA_FILE_SDBCM_CONF ;
-      var ret = SDB_OK ;
-      try
-      {
-         // copy a config file to local tmp directory then modify it
-         File.mkdir( OMA_PATH_TEMP_TEMP_DIR_L ) ;
-      }
-      catch ( e )
-      {
-         errMsg = "Failed to make directory[" + OMA_PATH_TEMP_TEMP_DIR_L + "] in host[" + ssh.getLocalIP() + "]" ;
-         exception_handle( e, errMsg ) ;
-      }
-      try
-      {
-         File.copy( src, dst ) ;
-      }
-      catch ( e )
-      {
-         errMsg = "Failed to copy[" + src + "] to [" + dst + "] in host[" + ssh.getLocalIP() + "]" ;
-         exception_handle( e, errMsg ) ;
-      }
-      // modify config file
-      var obj = eval( '(' + Oma.getOmaConfigs( dst ) + ')' ) ;
-      var str = "" ;
-      try
-      {
-         str = ssh.exec("hostname") ;
-         str = removeLineBreak( str ) + OMA_MISC_CONFIG_PORT ;
-      }
-      catch ( e )
-      {
-         errMsg = "Failed to modify config file in host[" + ssh.getLocalIP() + "]" ;
-         exception_handle( e, errMsg ) ;
-      }
-      obj[DefaultPort] = port + "" ;
-      obj[str] = port + "" ;
-      Oma.setOmaConfigs( obj, dst ) ;
-      // send the config file to remote host
-      src = dst
-      dst = OMA_PATH_TEMP_CONF_DIR_L + OMA_FILE_SDBCM_CONF ;
-      ssh.push( src, dst ) ;
-   }
-   else
-   {
-      // TODO:
-   }
-}
-
-/* *****************************************************************************
 @discretion: start sdbcm program in remote or local host
 @author: Tanzhaobo
 @parameter
    ssh[object]: ssh object
    osInfo[string]: os type
+   port[string]: port for remote sdbcm
 @return void
 ***************************************************************************** */
-function startRemoteSdbcm( ssh, osInfo )
+function startRemoteSdbcm( ssh, osInfo, port )
 {
    var cmd = "" ;
    if ( OMA_LINUX == osInfo )
    {
       cmd += OMA_PATH_TEMP_BIN_DIR_L ;
       cmd += OMA_PROG_SDBCMART_L ;
-      cmd += " " + OMA_OPTION_SDBCMART_1 ;
+      cmd += " " + OMA_OPTION_SDBCMART_I ;
+      cmd += " " + OMA_OPTION_SDBCMART_PORT ;
+      cmd += " " + port ;
       try
       {
          ssh.exec( cmd ) ;
@@ -283,32 +222,6 @@ function startRemoteSdbcm( ssh, osInfo )
    else
    {
       // TODO:
-   }
-}
-
-/* *****************************************************************************
-@discretion: clean up the temp directory
-@author: Tanzhaobo
-@parameter
-   ssh[object]: ssh object
-   osInfo[string]: os type
-@return void
-***************************************************************************** */
-function cleanup( ssh, osInfo )
-{
-   try
-   {
-      if ( OMA_LINUX == osInfo )
-      {
-         File.remove( OMA_PATH_TEMP_OMA_DIR_L ) ;
-      }
-      else
-      {
-         // TODO:
-      }
-   }
-   catch ( e )
-   {
    }
 }
 
@@ -375,12 +288,8 @@ function installRemoteAgent( ssh, osInfo, ip )
       setLastError( SDB_SYS ) ;
       throw SDB_SYS ;
    }
-   // modify sdbcm config file and push in to remote mechine
-   modifyAndSendConfigFile( ssh, osInfo, port ) ;
    // start the sdbcm program in remote
-   startRemoteSdbcm( ssh, osInfo ) ;
-   // wait until sdbcm start in remote and clean up
-   cleanup( ssh, osInfo ) ;
+   startRemoteSdbcm( ssh, osInfo, port ) ;
 
    retObj[AgentPort] = port + "" ;
    retObj[IsNeedUninstall] = true ;
