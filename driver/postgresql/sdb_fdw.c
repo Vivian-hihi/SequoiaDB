@@ -672,6 +672,7 @@ UINT64 deserializeUint64( Const *constant )
 int sdbSetBsonValue( sdbbson *bsonObj, const char *name, Datum valueDatum, 
          Oid columnType, INT32 columnTypeMod )
 {
+   INT32 rc = SDB_OK ;
    switch( columnType )
    {
       case INT2OID :
@@ -808,7 +809,11 @@ int sdbSetBsonValue( sdbbson *bsonObj, const char *name, Datum valueDatum,
          sdbbson_append_start_array( bsonObj, name ) ;
          while ( array_iterate( iterator, &datumTmp, &isNull ) )
          {
-            sdbSetBsonValue( bsonObj, "", datumTmp, element_type, 0 ) ;
+            rc = sdbSetBsonValue( bsonObj, "", datumTmp, element_type, 0 ) ;
+            if ( SDB_OK != rc )
+            {
+               break ;
+            }
          }
          sdbbson_append_finish_array( bsonObj ) ;
 
@@ -828,7 +833,7 @@ int sdbSetBsonValue( sdbbson *bsonObj, const char *name, Datum valueDatum,
       }
    }
 
-   return 0 ;
+   return rc ;
 }
 
 UINT64 sdbCreateBsonRecordAddr(  )
@@ -1174,7 +1179,8 @@ INT32 sdbRecurOperExpr( OpExpr *opr, SdbExprTreeState *expr_state,
       elog( DEBUG1, " Var is null " ) ;
       goto error ;
    }
-   
+   elog( DEBUG1, "var info:table_index=%d, varno=%d, valevelsup=%d", 
+                 expr_state->foreign_table_index, var->varno, var->varlevelsup ) ;
    if ( ( var->varno != expr_state->foreign_table_index )
           || ( var->varlevelsup != 0 ) )
    {
@@ -1655,6 +1661,15 @@ Expr *sdbFindArgumentOfType( List *argumentList, NodeTag argumentType )
       {
          foundArgument = argument ;
          break ;
+      }
+      else if ( nodeTag( argument ) == T_RelabelType )
+      {
+         RelabelType *relabel = (RelabelType *)argument ;
+         if ( nodeTag( relabel->arg ) == argumentType )
+         {
+            foundArgument = relabel->arg ;
+            break ;
+         }
       }
    }
    return foundArgument ;
