@@ -457,6 +457,10 @@ INT32 migImport::_run ( INT32 &total, INT32 &succeed )
                   succ += bsonObjNum ;
                }
                bsonObjNum = 0 ;
+               if ( rc && _pMigArg->errorStop )
+               {
+                  goto error ;
+               }
             }
             PD_LOG ( PDEVENT, "Import Successfully" ) ;
             rc = SDB_OK ;
