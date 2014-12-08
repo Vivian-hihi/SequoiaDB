@@ -45,13 +45,13 @@
    } \
 }
 
-#define PRINTFNAME(in,out) \
+/*#define PRINTFNAME(in,out) \
 { \
    INT32 len = ossStrlen ( (in) ) + 64 ; \
    CHAR *temp = (CHAR *)emalloc ( len ) ; \
    ossSnprintf ( temp, len, "{\"Name\":%s}", (in) ) ; \
    out = temp ; \
-}
+}*/
 
 #define GETCLASSFROMZVAL(obj,name,classname,out) \
 { \
@@ -3422,7 +3422,7 @@ PHP_SEQUOIADB_API void php_json_encode ( CHAR **buf,
          if ( len > 0 )
          {
             CHAR *data = Z_STRVAL_P(val) ;
-            CHAR *temp = (CHAR *)emalloc ( len ) ;
+            /*CHAR *temp = (CHAR *)emalloc ( len ) ;
             ossMemset ( temp, 0, len ) ;
             for ( INT32 i = 0, k = 0; i < len && k < valLen; ++i, ++k )
             {
@@ -3456,9 +3456,9 @@ PHP_SEQUOIADB_API void php_json_encode ( CHAR **buf,
                }
                }
                ++data ;
-            }
+            }*/
             append ( buf, bufSize, leftLen,
-                     temp,ossStrlen(temp)  TSRMLS_CC ) ;
+                     data, valLen  TSRMLS_CC ) ;
          }
          append ( buf, bufSize, leftLen, "\"", 1 TSRMLS_CC ) ;
          break ;
