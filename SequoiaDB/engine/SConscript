@@ -85,7 +85,8 @@ pmdFiles = [
       "pmd/pmdPreLoader.cpp",
       "pmd/pmdRestSvc.cpp",
       "pmd/pmdController.cpp",
-      "pmd/pmdEDUEntryPoint.cpp"
+      "pmd/pmdEDUEntryPoint.cpp",
+      "pmd/pmdProcessor.cpp"
       ]
 migFiles = [
       "mig/migLoad.cpp"

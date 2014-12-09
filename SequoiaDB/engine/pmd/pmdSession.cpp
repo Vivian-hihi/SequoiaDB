@@ -39,6 +39,7 @@
 #include "pmdCB.hpp"
 #include "msgAuth.hpp"
 #include "rtnLob.hpp"
+#include "pmdProcessor.hpp"
 
 using namespace bson ;
 
@@ -91,6 +92,20 @@ namespace engine
       }
    }
 
+   INT32 _pmdLocalSession::_attachProcessor( _IProcessor *processor )
+   {
+      SDB_ASSERT( NULL != processor, "" ) ;
+      _processor = processor ;
+      return _processor->attachSession( this ) ;
+   }
+
+   void _pmdLocalSession::_detachProcessor()
+   {
+      SDB_ASSERT( NULL != _processor, "" ) ;
+      _processor->detachSession() ;
+      _processor = NULL ;
+   }
+
    void _pmdLocalSession::_onDetach ()
    {
       // rollback transaction
@@ -121,6 +136,7 @@ namespace engine
       CHAR *pBuff             = NULL ;
       INT32 buffSize          = 0 ;
       pmdEDUMgr *pmdEDUMgr    = NULL ;
+      _DataProcessor dataProcessor ;
 
       if ( !_pEDUCB )
       {
@@ -129,6 +145,7 @@ namespace engine
       }
 
       pmdEDUMgr               = _pEDUCB->getEDUMgr() ;
+      _attachProcessor( &dataProcessor ) ;
 
       while ( !_pEDUCB->isDisconnected() && !_socket.isClosed() )
       {
@@ -222,6 +239,7 @@ namespace engine
       } // end while
 
    done:
+      _detachProcessor() ;
       disconnect() ;
       return rc ;
    error:
@@ -429,6 +447,7 @@ namespace engine
       INT32 rc          = SDB_OK ;
       const CHAR *pBody = NULL ;
       INT32 bodyLen     = 0 ;
+      rtnContextBuf contextBuff ;
 
       // prepare
       rc = _onMsgBegin( msg ) ;
@@ -442,11 +461,40 @@ namespace engine
          {
             rc = SDB_AUTH_AUTHORITY_FORBIDDEN ;
          }
+         else if ( MSG_BS_INTERRUPTE == msg->opCode )
+         {
+            rc = _onInterruptMsg( msg ) ;
+         }
+         else if ( MSG_BS_DISCONNECT == msg->opCode )
+         {
+            PD_LOG( PDEVENT, "Session[%s, %d] recv disconnect msg",
+                    sessionName(), eduID() ) ;
+            disconnect() ;
+         }
          else
          {
-            rc = _processOPMsg( msg, _replyHeader.contextID, &pBody,
-                                bodyLen, _replyHeader.numReturned,
-                                _replyHeader.startFrom ) ;
+            rc = _processor->processMsg( msg, _pDPSCB, contextBuff, 
+                                         _replyHeader.contextID, 
+                                         _replyHeader.startFrom ) ;
+            pBody     = contextBuff.data() ;
+            bodyLen   = contextBuff.size() ;
+            _replyHeader.numReturned = contextBuff.recordNum() ;
+            if ( SDB_OK != rc )
+            {
+               if ( _needRollback )
+               {
+                  INT32 rcTmp = rtnTransRollback( eduCB(), _pDPSCB ) ;
+                  if ( rcTmp )
+                  {
+                     PD_LOG( PDERROR, "Session[%s] failed to rollback trans "
+                             "info, rc: %d", sessionName(), rcTmp ) ;
+                  }
+                  _needRollback = FALSE ;
+               }
+            }
+//            rc = _processOPMsg( msg, _replyHeader.contextID, &pBody,
+//                                bodyLen, _replyHeader.numReturned,
+//                                _replyHeader.startFrom ) ;
          }
       }
 

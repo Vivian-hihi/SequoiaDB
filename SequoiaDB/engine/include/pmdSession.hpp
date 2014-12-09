@@ -37,6 +37,7 @@
 #include "msg.h"
 #include "pmdDef.hpp"
 #include "rtnContext.hpp"
+#include "pmdProcessorBase.hpp"
 
 #include <map>
 #include "../bson/bson.h"
@@ -84,6 +85,9 @@ namespace engine
          INT32          _reply( MsgOpReply* responseMsg, const CHAR *pBody,
                                 INT32 bodyLen ) ;
 
+         INT32          _attachProcessor( _IProcessor *processor ) ;
+         void           _detachProcessor() ;
+
       protected:
          virtual void            _onAttach () ;
          virtual void            _onDetach () ;
@@ -128,6 +132,8 @@ namespace engine
          rtnContextBuf        _contextBuff ;
 
          BSONObj              _errorInfo ;
+
+         _IProcessor          *_processor ;
 
    } ;
    typedef _pmdLocalSession pmdLocalSession ;
