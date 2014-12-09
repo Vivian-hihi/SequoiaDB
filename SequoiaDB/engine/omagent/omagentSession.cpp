@@ -339,7 +339,8 @@ namespace engine
       // handle command
       if ( omaIsCommand ( pCollectionName ) )
       {
-         PD_LOG( PDDEBUG, "Omagent receive command: %s", pCollectionName ) ;
+         PD_LOG( PDDEBUG, "Omagent receive command: %s, argument: %s",
+                 pCollectionName, BSONObj(pQuery).toString().c_str() ) ;
 
          rc = omaParseCommand ( pCollectionName, &pCommand ) ;
          if ( SDB_OK != rc )
