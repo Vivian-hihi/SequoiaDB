@@ -9,7 +9,7 @@
     </section>
     <section><title>Format</title>
       <p>The format of bindat is as follow:</p>
-      <codeblock>{ "$binary" : "&lt;data&gt;", "$type" : "&lt;type&gt;" }</codeblock>
+      <codeblock>{ "$binary" : "&lt;data&gt;", "$type" : &lt;type&gt; }</codeblock>
       <p>In this format, "data" should be encoded with Base64. "Type" is a decimal value between 0
         and 255. Users can choose type values in this range to identify types in applications.</p>
       <p>Base64 is an universal format of transforming data, which is mainly transforming bindata

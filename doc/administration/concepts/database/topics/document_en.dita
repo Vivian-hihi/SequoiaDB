@@ -71,7 +71,7 @@ than one fiels with the same name, see your driver's documentation for more info
         <strow>
           <stentry>Bindata</stentry>
           <stentry>Base64 binary data</stentry>
-          <stentry>{ "key" : { "$binary" : "aGVsbG8gd29ybGQ=", "$type" : "1" } }</stentry>
+          <stentry>{ "key" : { "$binary" : "aGVsbG8gd29ybGQ=", "$type" : 1 } }</stentry>
         </strow>
         <strow>
           <stentry>Regex</stentry>

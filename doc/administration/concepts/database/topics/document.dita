@@ -65,7 +65,7 @@
         <strow>
           <stentry>二进制数据</stentry>
           <stentry>Base64 形式的二进制数据</stentry>
-          <stentry>{ "key" : { "$binary" : "aGVsbG8gd29ybGQ=", "$type" : "1" } }</stentry>
+          <stentry>{ "key" : { "$binary" : "aGVsbG8gd29ybGQ=", "$type" : 1 } }</stentry>
         </strow>
         <strow>
           <stentry>正则表达式</stentry>

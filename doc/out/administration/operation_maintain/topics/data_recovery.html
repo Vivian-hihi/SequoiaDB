@@ -41,139 +41,139 @@
     <div class="section"><h2 class="title sectiontitle">数据恢复工具参数说明</h2>
       
       <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d44741e22" class="stentry">参数</th>
+          <th valign="bottom" align="left" id="d44882e22" class="stentry">参数</th>
 
-          <th valign="bottom" align="left" id="d44741e25" class="stentry">缩写</th>
+          <th valign="bottom" align="left" id="d44882e25" class="stentry">缩写</th>
 
-          <th valign="bottom" align="left" id="d44741e28" class="stentry">说明</th>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d44741e22" class="stentry">--bkpath</td>
-
-          <td valign="top" headers="d44741e25" class="stentry">-p</td>
-
-          <td valign="top" headers="d44741e28" class="stentry">备份源数据所在路径。</td>
+          <th valign="bottom" align="left" id="d44882e28" class="stentry">说明</th>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d44741e22" class="stentry">--increaseid</td>
+          <td valign="top" headers="d44882e22" class="stentry">--bkpath</td>
 
-          <td valign="top" headers="d44741e25" class="stentry">-i</td>
+          <td valign="top" headers="d44882e25" class="stentry">-p</td>
 
-          <td valign="top" headers="d44741e28" class="stentry">需要恢复到第几次增量备份，缺省恢复到最后一次。</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d44741e22" class="stentry">--bkname</td>
-
-          <td valign="top" headers="d44741e25" class="stentry">-n</td>
-
-          <td valign="top" headers="d44741e28" class="stentry">需要恢复的备份名。</td>
+          <td valign="top" headers="d44882e28" class="stentry">备份源数据所在路径。</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d44741e22" class="stentry">--action</td>
+          <td valign="top" headers="d44882e22" class="stentry">--increaseid</td>
 
-          <td valign="top" headers="d44741e25" class="stentry">-a</td>
+          <td valign="top" headers="d44882e25" class="stentry">-i</td>
 
-          <td valign="top" headers="d44741e28" class="stentry">恢复行为，“restore”表示恢复，“list”表示查看备份信息，缺省为“restore”。</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d44741e22" class="stentry">--isSelf</td>
-
-          <td valign="top" headers="d44741e25" class="stentry"> </td>
-
-          <td valign="top" headers="d44741e28" class="stentry">是否为恢复本节点数据，缺省为“true”；当取值为“false”时，根据如下参数将数据恢复至指定路径：</td>
+          <td valign="top" headers="d44882e28" class="stentry">需要恢复到第几次增量备份，缺省恢复到最后一次。</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d44741e22" class="stentry">--dbpath</td>
+          <td valign="top" headers="d44882e22" class="stentry">--bkname</td>
 
-          <td valign="top" headers="d44741e25" class="stentry"> </td>
+          <td valign="top" headers="d44882e25" class="stentry">-n</td>
 
-          <td valign="top" headers="d44741e28" class="stentry">必须配置，数据文件目录。</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d44741e22" class="stentry">--confpath</td>
-
-          <td valign="top" headers="d44741e25" class="stentry"> </td>
-
-          <td valign="top" headers="d44741e28" class="stentry">必须配置，配置文件路径。</td>
+          <td valign="top" headers="d44882e28" class="stentry">需要恢复的备份名。</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d44741e22" class="stentry">--svcname</td>
+          <td valign="top" headers="d44882e22" class="stentry">--action</td>
 
-          <td valign="top" headers="d44741e25" class="stentry"> </td>
+          <td valign="top" headers="d44882e25" class="stentry">-a</td>
 
-          <td valign="top" headers="d44741e28" class="stentry">必须配置，本地服务名或端口。</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d44741e22" class="stentry">--indexpath</td>
-
-          <td valign="top" headers="d44741e25" class="stentry"> </td>
-
-          <td valign="top" headers="d44741e28" class="stentry">索引文件目录。</td>
+          <td valign="top" headers="d44882e28" class="stentry">恢复行为，“restore”表示恢复，“list”表示查看备份信息，缺省为“restore”。</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d44741e22" class="stentry">--logpath</td>
+          <td valign="top" headers="d44882e22" class="stentry">--isSelf</td>
 
-          <td valign="top" headers="d44741e25" class="stentry"> </td>
+          <td valign="top" headers="d44882e25" class="stentry"> </td>
 
-          <td valign="top" headers="d44741e28" class="stentry">日志文件目录。</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d44741e22" class="stentry">--diagpath</td>
-
-          <td valign="top" headers="d44741e25" class="stentry"> </td>
-
-          <td valign="top" headers="d44741e28" class="stentry">诊断日志文件目录。</td>
+          <td valign="top" headers="d44882e28" class="stentry">是否为恢复本节点数据，缺省为“true”；当取值为“false”时，根据如下参数将数据恢复至指定路径：</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d44741e22" class="stentry">--bkuppath</td>
+          <td valign="top" headers="d44882e22" class="stentry">--dbpath</td>
 
-          <td valign="top" headers="d44741e25" class="stentry"> </td>
+          <td valign="top" headers="d44882e25" class="stentry"> </td>
 
-          <td valign="top" headers="d44741e28" class="stentry">备份文件目录。</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d44741e22" class="stentry">--replname</td>
-
-          <td valign="top" headers="d44741e25" class="stentry"> </td>
-
-          <td valign="top" headers="d44741e28" class="stentry">复制通讯服务名或端口。</td>
+          <td valign="top" headers="d44882e28" class="stentry">必须配置，数据文件目录。</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d44741e22" class="stentry">--shardname</td>
+          <td valign="top" headers="d44882e22" class="stentry">--confpath</td>
 
-          <td valign="top" headers="d44741e25" class="stentry"> </td>
+          <td valign="top" headers="d44882e25" class="stentry"> </td>
 
-          <td valign="top" headers="d44741e28" class="stentry">分区通讯服务名或端口。</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d44741e22" class="stentry">--catalogname</td>
-
-          <td valign="top" headers="d44741e25" class="stentry"> </td>
-
-          <td valign="top" headers="d44741e28" class="stentry">编目通讯服务名或端口。</td>
+          <td valign="top" headers="d44882e28" class="stentry">必须配置，配置文件路径。</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d44741e22" class="stentry">--httpname</td>
+          <td valign="top" headers="d44882e22" class="stentry">--svcname</td>
 
-          <td valign="top" headers="d44741e25" class="stentry"> </td>
+          <td valign="top" headers="d44882e25" class="stentry"> </td>
 
-          <td valign="top" headers="d44741e28" class="stentry">REST 服务名或端口。</td>
+          <td valign="top" headers="d44882e28" class="stentry">必须配置，本地服务名或端口。</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d44882e22" class="stentry">--indexpath</td>
+
+          <td valign="top" headers="d44882e25" class="stentry"> </td>
+
+          <td valign="top" headers="d44882e28" class="stentry">索引文件目录。</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d44882e22" class="stentry">--logpath</td>
+
+          <td valign="top" headers="d44882e25" class="stentry"> </td>
+
+          <td valign="top" headers="d44882e28" class="stentry">日志文件目录。</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d44882e22" class="stentry">--diagpath</td>
+
+          <td valign="top" headers="d44882e25" class="stentry"> </td>
+
+          <td valign="top" headers="d44882e28" class="stentry">诊断日志文件目录。</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d44882e22" class="stentry">--bkuppath</td>
+
+          <td valign="top" headers="d44882e25" class="stentry"> </td>
+
+          <td valign="top" headers="d44882e28" class="stentry">备份文件目录。</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d44882e22" class="stentry">--replname</td>
+
+          <td valign="top" headers="d44882e25" class="stentry"> </td>
+
+          <td valign="top" headers="d44882e28" class="stentry">复制通讯服务名或端口。</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d44882e22" class="stentry">--shardname</td>
+
+          <td valign="top" headers="d44882e25" class="stentry"> </td>
+
+          <td valign="top" headers="d44882e28" class="stentry">分区通讯服务名或端口。</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d44882e22" class="stentry">--catalogname</td>
+
+          <td valign="top" headers="d44882e25" class="stentry"> </td>
+
+          <td valign="top" headers="d44882e28" class="stentry">编目通讯服务名或端口。</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d44882e22" class="stentry">--httpname</td>
+
+          <td valign="top" headers="d44882e25" class="stentry"> </td>
+
+          <td valign="top" headers="d44882e28" class="stentry">REST 服务名或端口。</td>
 
         </tr>
 </table>

@@ -8,7 +8,7 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="二进制数据"/>
-<meta name="description" content="概念 在 SequoiaDB 中的数据使用 JSON 形式访问，因此对于二进制的数据需要用户使用 Base64 方式进行编码，之后以字符串的形式发送至数据库。 格式 二进制数据的表达形式如下： { &#34;$binary&#34; : &#34;&lt;数据&gt;&#34;, &#34;$type&#34; : &#34;&lt;类型&gt;&#34; } 其中“数据”必须为 Base64 ..."/>
+<meta name="description" content="概念 在 SequoiaDB 中的数据使用 JSON 形式访问，因此对于二进制的数据需要用户使用 Base64 方式进行编码，之后以字符串的形式发送至数据库。 格式 二进制数据的表达形式如下： { &#34;$binary&#34; : &#34;&lt;数据&gt;&#34;, &#34;$type&#34; : &lt;类型&gt; } 其中“数据”必须为 Base64 ..."/>
 <meta name="DC.Relation" scheme="URI" content="../../../../administration/concepts/database/topics/document.html"/>
 <meta name="DC.Format" content="XHTML"/>
 <meta name="DC.Identifier" content="administration_concepts_database_bindata"/>
@@ -46,7 +46,7 @@
       
       <p class="p">二进制数据的表达形式如下：</p>
 
-      <pre class="pre codeblock">{ "$binary" : "&lt;数据&gt;", "$type" : "&lt;类型&gt;" }</pre>
+      <pre class="pre codeblock">{ "$binary" : "&lt;数据&gt;", "$type" : &lt;类型&gt; }</pre>
 
       <p class="p">其中“数据”必须为 Base64 编码的数据，“类型”为0-255之间的十进制数值，用户可以任意指定该范围之间的类型作为应用程序中的类型标示。</p>
 
@@ -60,7 +60,7 @@
       
       <p class="p">例如：字符串“hello world”被 Base64 编码后的数据为“aGVsbG8gd29ybGQ=”。包含“hello world”二进制数据，且类型为1的 JSON 数据为：</p>
 
-      <pre class="pre codeblock">{ "key" : { "$binary" : "aGVsbG8gd29ybGQ=", "$type" : "1" } }</pre>
+      <pre class="pre codeblock">{ "key" : { "$binary" : "aGVsbG8gd29ybGQ=", "$type" : 1 } }</pre>
 
     </div>
 
