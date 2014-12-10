@@ -22,7 +22,7 @@
     <section>
       <title>Examples</title>
       <p>Select records with the value of "age" greater than 5 in the collection "bar" return the result set in the type of array.</p>
-      <codeblock>db.foo.bar.find({age:{$gt:10}}).size()</codeblock>
+      <codeblock>db.foo.bar.find({age:{$gt:10}}).toArray()</codeblock>
       <codeblock>Return:{
   "_id": {
     "$oid": "516a76a1c9565daf06030000"
