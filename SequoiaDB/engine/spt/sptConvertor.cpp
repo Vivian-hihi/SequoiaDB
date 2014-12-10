@@ -419,6 +419,13 @@ BOOLEAN sptConvertor::_addSpecialObj( JSObject *obj,
       }
 
       decodeSize = getDeBase64Size( strBin.c_str() ) ;
+      if ( decodeSize <= 1 )
+      {
+         PD_LOG( PDERROR, "invalid decode size:%d", decodeSize ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
       decode = ( CHAR * )SDB_OSS_MALLOC( decodeSize ) ;
       if ( NULL == decode )
       {
@@ -435,8 +442,9 @@ BOOLEAN sptConvertor::_addSpecialObj( JSObject *obj,
          goto error ;
       }
 
+      /// we can not push '\0' to bson
       bson_append_binary( bs, key, binType,
-                          decode, decodeSize ) ;
+                          decode, decodeSize - 1 ) ;
       SDB_OSS_FREE( decode ) ;
 
    }
