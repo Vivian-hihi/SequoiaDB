@@ -47,8 +47,6 @@ namespace engine
          virtual ~_DataProcessor() ;
 
       public:
-         virtual INT32           attachSession( ISession *pSession ) ;
-         virtual void            detachSession() ;
          virtual INT32           processMsg( MsgHeader *msg, 
                                              SDB_DPSCB *dpsCB,
                                              rtnContextBuf &contextBuff, 
@@ -56,6 +54,10 @@ namespace engine
                                              INT32 &startPos ) ;
 
          virtual const CHAR *    getName() ;
+
+      public:
+         virtual INT32           attachSession( ISession *pSession ) ;
+         virtual void            detachSession() ;
 
       protected:
          INT32                   _onMsgReqMsg( MsgHeader * msg ) ;

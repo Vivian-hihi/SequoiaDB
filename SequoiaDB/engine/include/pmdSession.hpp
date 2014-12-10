@@ -67,14 +67,13 @@ namespace engine
 
          INT32             run() ;
 
+         INT32          attachProcessor( _IProcessor *processor ) ;
+         void           detachProcessor() ;
+
       protected:
          INT32          _processMsg( MsgHeader *msg ) ;
          virtual INT32  _onMsgBegin( MsgHeader *msg ) ;
          virtual void   _onMsgEnd( INT32 result, MsgHeader *msg ) ;
-
-         virtual INT32  _processOPMsg( MsgHeader *msg, INT64 &contextID,
-                                       const CHAR **ppBody, INT32 &bodyLen,
-                                       INT32 &returnNum, INT32 &startPos ) ;
 
          virtual INT32  _onAuth( MsgHeader *msg ) ;
 
@@ -85,9 +84,6 @@ namespace engine
          INT32          _reply( MsgOpReply* responseMsg, const CHAR *pBody,
                                 INT32 bodyLen ) ;
 
-         INT32          _attachProcessor( _IProcessor *processor ) ;
-         void           _detachProcessor() ;
-
       protected:
          virtual void            _onAttach () ;
          virtual void            _onDetach () ;
@@ -95,30 +91,7 @@ namespace engine
       // message process functions
       protected:
 
-         INT32 _onInsertReqMsg( MsgHeader *msg ) ;
-         INT32 _onUpdateReqMsg( MsgHeader *msg ) ;
-         INT32 _onDelReqMsg( MsgHeader *msg ) ;
          INT32 _onInterruptMsg( MsgHeader *msg ) ;
-         INT32 _onMsgReqMsg( MsgHeader *msg ) ;
-         INT32 _onQueryReqMsg( MsgHeader *msg, _rtnContextBuf &buffObj,
-                               INT32 &startingPos, INT64 &contextID ) ;
-         INT32 _onGetMoreReqMsg( MsgHeader *msg, _rtnContextBuf &buffObj,
-                                 INT32 &startingPos, INT64 &contextID ) ;
-         INT32 _onKillContextsReqMsg( MsgHeader *msg ) ;
-         INT32 _onSQLMsg( MsgHeader *msg, INT64 &contextID ) ;
-         INT32 _onTransBeginMsg () ;
-         INT32 _onTransCommitMsg () ;
-         INT32 _onTransRollbackMsg () ;
-         INT32 _onAggrReqMsg( MsgHeader *msg, INT64 &contextID ) ;
-         INT32 _onOpenLobMsg( MsgHeader *msg, INT64 &contextID,
-                              rtnContextBuf &buffObj ) ;
-         INT32 _onWriteLobMsg( MsgHeader *msg ) ;
-         INT32 _onReadLobMsg( MsgHeader *msg,
-                              rtnContextBuf &buffObj ) ;
-         INT32 _onCloseLobMsg( MsgHeader *msg ) ;
-         INT32 _onRemoveLobMsg( MsgHeader *msg ) ;
-         INT32 _onGetLobMeta( MsgHeader *msg,
-                              rtnContextBuf &buffObj ) ;
 
       protected:
          BOOLEAN              _authOK ;

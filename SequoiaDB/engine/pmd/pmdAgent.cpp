@@ -55,6 +55,7 @@
 #include "pdTrace.hpp"
 #include "pmdTrace.hpp"
 #include "pmdCB.hpp"
+#include "pmdProcessor.hpp"
 
 using namespace bson ;
 
@@ -1656,9 +1657,19 @@ namespace engine
       PD_TRACE_ENTRY ( SDB_PMDLOCALAGENTENTPNT );
 
       SOCKET s = *(( SOCKET *) &arg ) ;
+
       pmdLocalSession localSession( s ) ;
       localSession.attach( cb ) ;
+
+      _DataProcessor dataProcessor ;
+      dataProcessor.attachSession( &localSession ) ;
+      localSession.attachProcessor( &dataProcessor ) ;
+      
       rc = localSession.run() ;
+
+      localSession.detachProcessor() ;
+      dataProcessor.detachSession() ;
+      
       localSession.detach() ;
 
       PD_TRACE_EXITRC ( SDB_PMDLOCALAGENTENTPNT, rc );

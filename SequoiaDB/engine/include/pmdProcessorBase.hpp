@@ -47,8 +47,6 @@ namespace engine
          virtual ~_IProcessor() {}
 
       public:
-         virtual INT32           attachSession( ISession *pSession ) = 0 ;
-         virtual void            detachSession() = 0 ;
 
          virtual INT32           processMsg( MsgHeader *msg, 
                                              SDB_DPSCB *dpsCB,
