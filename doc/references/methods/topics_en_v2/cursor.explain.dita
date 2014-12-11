@@ -9,7 +9,7 @@
     </section>
     <section>
       <title>SYNOPSIS</title>
-      <p></p><apiname>cousor.explain</apiname>(<parmname>[option]</parmname>)
+      <p></p><apiname>cursor.explain</apiname>(<parmname>[option]</parmname>)
     </section>
     <section>
       <title>CATEGORY</title>
