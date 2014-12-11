@@ -54,7 +54,6 @@ namespace engine
    INT32 rtnGetMore ( SINT64 contextID,         // input, context id
                       SINT32 maxNumToReturn,    // input, max record to read
                       rtnContextBuf &buffObj,   // output
-                      SINT64 &startingPos,      // output, the starting pos
                       pmdEDUCB *cb,             // input educb
                       SDB_RTNCB *rtnCB          // input runtimecb
                       )
@@ -84,7 +83,7 @@ namespace engine
          goto error ;
       }
 
-      rc = context->getMore( maxNumToReturn, buffObj, startingPos, cb ) ;
+      rc = context->getMore( maxNumToReturn, buffObj, cb ) ;
       if ( rc )
       {
          if ( SDB_DMS_EOC == rc )

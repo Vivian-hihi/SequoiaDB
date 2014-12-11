@@ -284,7 +284,7 @@ namespace engine
 
          virtual INT32    getMore( INT32 maxNumToReturn,
                                    rtnContextBuf &buffObj,
-                                   INT64 &startPos, _pmdEDUCB *cb ) ;
+                                   _pmdEDUCB *cb ) ;
 
          OSS_INLINE BOOLEAN  isEmpty () const ;
 
@@ -812,7 +812,7 @@ namespace engine
                   BOOLEAN includeShardingOrder = FALSE );
 
       virtual INT32 getMore( INT32 maxNumToReturn, rtnContextBuf &buffObj,
-                             INT64 &startPos, _pmdEDUCB *cb );
+                             _pmdEDUCB *cb ) ;
 
       INT32 addSubContext( SINT64 contextID );
 
@@ -885,7 +885,7 @@ namespace engine
                   _pmdEDUCB *cb );
 
       virtual INT32 getMore( INT32 maxNumToReturn, rtnContextBuf &buffObj,
-                              INT64 &startPos, _pmdEDUCB *cb );
+                             _pmdEDUCB *cb );
 
    protected:
       virtual INT32 _prepareData( _pmdEDUCB *cb ){ return SDB_DMS_EOC; };
@@ -926,7 +926,7 @@ namespace engine
                   _pmdEDUCB *cb );
 
       virtual INT32 getMore( INT32 maxNumToReturn, rtnContextBuf &buffObj,
-                              INT64 &startPos, _pmdEDUCB *cb );
+                             _pmdEDUCB *cb );
 
    protected:
       virtual INT32 _prepareData( _pmdEDUCB *cb ){ return SDB_DMS_EOC; };
@@ -971,7 +971,7 @@ namespace engine
                   _pmdEDUCB *cb );
 
       virtual INT32 getMore( INT32 maxNumToReturn, rtnContextBuf &buffObj,
-                              INT64 &startPos, _pmdEDUCB *cb );
+                             _pmdEDUCB *cb ) ;
 
    protected:
       virtual INT32 _prepareData( _pmdEDUCB *cb ){ return SDB_DMS_EOC; };

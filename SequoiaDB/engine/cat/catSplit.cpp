@@ -483,7 +483,6 @@ namespace engine
       INT64 contextID = -1 ;
 
       rtnContextBuf buffObj ;
-      INT64 startPos = 0 ;
 
       rc = rtnQuery( CAT_TASK_INFO_COLLECTION, dummyObj, match, dummyObj,
                      dummyObj, 0, cb, 0, -1, dmsCB, rtnCB, contextID ) ;
@@ -491,7 +490,7 @@ namespace engine
 
       while ( SDB_OK == rc )
       {
-         rc = rtnGetMore( contextID, -1, buffObj, startPos, cb, rtnCB ) ;
+         rc = rtnGetMore( contextID, -1, buffObj, cb, rtnCB ) ;
          if ( rc )
          {
             if ( SDB_DMS_EOC == rc )

@@ -421,7 +421,6 @@ namespace engine
        *******************************************************************/
       {
          rtnContextBuf buffObj ;
-         SINT64 startingPos = 0 ;
          // open and init temp file
          dmsReorgUnit ru ( fullFilePath, su->getPageSize() ) ;
          rc = ru.open ( TRUE ) ;
@@ -444,7 +443,7 @@ namespace engine
          while ( TRUE )
          {
             // can't use rtnGetMore function, because don't to release context
-            rc = context->getMore( 1, buffObj, startingPos, cb ) ;
+            rc = context->getMore( 1, buffObj, cb ) ;
             if ( rc )
             {
                if ( SDB_DMS_EOC != rc )

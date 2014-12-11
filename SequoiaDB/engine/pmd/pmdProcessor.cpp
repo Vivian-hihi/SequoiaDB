@@ -91,7 +91,7 @@ namespace engine
    INT32 _DataProcessor::processMsg( MsgHeader *msg, 
                                      SDB_DPSCB *dpsCB,
                                      rtnContextBuf &contextBuff, 
-                                     INT64 &contextID, INT32 &startPos )
+                                     INT64 &contextID )
    {
       INT32 rc = SDB_OK ;
 
@@ -111,14 +111,13 @@ namespace engine
             rc = _onInsertReqMsg( msg ) ;
             break ;
          case MSG_BS_QUERY_REQ :
-            rc = _onQueryReqMsg( msg, dpsCB, contextBuff, startPos, 
-                                 contextID ) ;
+            rc = _onQueryReqMsg( msg, dpsCB, contextBuff, contextID ) ;
             break ;
          case MSG_BS_DELETE_REQ :
             rc = _onDelReqMsg( msg, dpsCB ) ;
             break ;
          case MSG_BS_GETMORE_REQ :
-            rc = _onGetMoreReqMsg( msg, contextBuff, startPos, contextID ) ;
+            rc = _onGetMoreReqMsg( msg, contextBuff, contextID ) ;
             break ;
          case MSG_BS_KILL_CONTEXT_REQ :
             rc = _onKillContextsReqMsg( msg ) ;
@@ -278,7 +277,6 @@ namespace engine
    INT32 _DataProcessor::_onQueryReqMsg( MsgHeader * msg,
                                          SDB_DPSCB *dpsCB,
                                          _rtnContextBuf &buffObj,
-                                         INT32 &startingPos,
                                          INT64 &contextID )
    {
       INT32 rc = SDB_OK ;
@@ -331,14 +329,12 @@ namespace engine
 
             if ( ( flags & FLG_QUERY_WITH_RETURNDATA ) && NULL != pContext )
             {
-               INT64 startPos64 = 0 ;
-               rc = pContext->getMore( -1, buffObj, startPos64, _pEDUCB ) ;
+               rc = pContext->getMore( -1, buffObj, _pEDUCB ) ;
                if ( rc || pContext->eof() )
                {
                   _pRTNCB->contextDelete( contextID, _pEDUCB ) ;
                   contextID = -1 ;
                }
-               startingPos = ( INT32 )startPos64 ;
 
                if ( SDB_DMS_EOC == rc )
                {
@@ -449,12 +445,10 @@ namespace engine
 
    INT32 _DataProcessor::_onGetMoreReqMsg( MsgHeader * msg,
                                            rtnContextBuf &buffObj,
-                                           INT32 &startingPos,
                                            INT64 &contextID )
    {
       INT32 rc         = SDB_OK ;
       INT32 numToRead  = 0 ;
-      INT64 startPos64 = 0 ;
 
       rc = msgExtractGetMore ( (CHAR*)msg, &numToRead, &contextID ) ;
       PD_RC_CHECK( rc, PDERROR, "Session[%s] extract get more msg failed, "
@@ -468,10 +462,7 @@ namespace engine
       PD_LOG ( PDDEBUG, "GetMore: contextID:%lld\nnumToRead: %d", contextID,
                numToRead ) ;
 
-      rc = rtnGetMore ( contextID, numToRead, buffObj, startPos64,
-                        _pEDUCB, _pRTNCB ) ;
-
-      startingPos = ( INT32 )startPos64 ;
+      rc = rtnGetMore ( contextID, numToRead, buffObj, _pEDUCB, _pRTNCB ) ;
 
    done:
       return rc ;

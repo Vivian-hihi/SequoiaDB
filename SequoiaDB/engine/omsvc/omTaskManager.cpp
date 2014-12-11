@@ -574,9 +574,7 @@ namespace engine
       while ( TRUE )
       {
          rtnContextBuf buffObj ;
-         SINT64 startingPos = 0 ;
-         rc = rtnGetMore ( contextID, 1, buffObj, startingPos, cb, 
-                           pKRCB->getRTNCB() ) ;
+         rc = rtnGetMore ( contextID, 1, buffObj, cb, pKRCB->getRTNCB() ) ;
          if ( rc )
          {
             if ( SDB_DMS_EOC == rc )
@@ -1378,8 +1376,7 @@ namespace engine
       while ( TRUE )
       {
          rtnContextBuf buffObj ;
-         SINT64 startingPos = 0 ;
-         rc = rtnGetMore ( contextID, 1, buffObj, startingPos, cb, pRtnCB ) ;
+         rc = rtnGetMore ( contextID, 1, buffObj, cb, pRtnCB ) ;
          if ( rc )
          {
             if ( SDB_DMS_EOC == rc )
@@ -1437,8 +1434,7 @@ namespace engine
       while ( TRUE )
       {
          rtnContextBuf buffObj ;
-         SINT64 startingPos = 0 ;
-         rc = rtnGetMore ( contextID, 1, buffObj, startingPos, cb, pRtnCB ) ;
+         rc = rtnGetMore ( contextID, 1, buffObj, cb, pRtnCB ) ;
          if ( rc )
          {
             if ( SDB_DMS_EOC == rc )

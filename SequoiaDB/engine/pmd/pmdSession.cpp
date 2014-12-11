@@ -135,7 +135,6 @@ namespace engine
       CHAR *pBuff             = NULL ;
       INT32 buffSize          = 0 ;
       pmdEDUMgr *pmdEDUMgr    = NULL ;
-      _DataProcessor dataProcessor ;
 
       if ( !_pEDUCB )
       {
@@ -471,11 +470,11 @@ namespace engine
          else
          {
             rc = _processor->processMsg( msg, _pDPSCB, contextBuff, 
-                                         _replyHeader.contextID, 
-                                         _replyHeader.startFrom ) ;
+                                         _replyHeader.contextID ) ;
             pBody     = contextBuff.data() ;
             bodyLen   = contextBuff.size() ;
             _replyHeader.numReturned = contextBuff.recordNum() ;
+            _replyHeader.startFrom = (INT32)contextBuff.getStartFrom() ;
             if ( SDB_OK != rc )
             {
                if ( _needRollback )

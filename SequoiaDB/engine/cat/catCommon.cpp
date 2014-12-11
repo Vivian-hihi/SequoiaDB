@@ -304,8 +304,7 @@ namespace engine
       while ( TRUE )
       {
          rtnContextBuf buffObj ;
-         SINT64 startingPos = 0 ;
-         rc = rtnGetMore ( contextID, -1, buffObj, startingPos, cb, rtnCB ) ;
+         rc = rtnGetMore ( contextID, -1, buffObj, cb, rtnCB ) ;
          if ( rc )
          {
             if ( SDB_DMS_EOC == rc )
@@ -368,7 +367,6 @@ namespace engine
       BSONObj dummyObj ;
 
       rtnContextBuf buffObj ;
-      INT64 startingPos       = 0 ;
 
       PD_TRACE_ENTRY ( SDB_CATGETONEOBJ ) ;
       // query
@@ -378,7 +376,7 @@ namespace engine
                    collectionName, rc ) ;
 
       // get more
-      rc = rtnGetMore( contextID, 1, buffObj, startingPos, cb, rtnCB ) ;
+      rc = rtnGetMore( contextID, 1, buffObj, cb, rtnCB ) ;
       if ( rc )
       {
          if ( SDB_DMS_EOC == rc )
@@ -1189,7 +1187,6 @@ namespace engine
       BSONObj orderby = BSON( CAT_TASKID_NAME << -1 ) ;
 
       rtnContextBuf buffObj ;
-      INT64 startingPos       = 0 ;
 
       // query
       rc = rtnQuery( CAT_TASK_INFO_COLLECTION, dummyObj, dummyObj, orderby,
@@ -1198,7 +1195,7 @@ namespace engine
                    CAT_TASK_INFO_COLLECTION, rc ) ;
 
       // get more
-      rc = rtnGetMore( contextID, 1, buffObj, startingPos, cb, rtnCB ) ;
+      rc = rtnGetMore( contextID, 1, buffObj, cb, rtnCB ) ;
       if ( rc )
       {
          if ( SDB_DMS_EOC == rc )

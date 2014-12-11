@@ -40,6 +40,9 @@
 
 namespace engine
 {
+   /*
+      _IProcessor define
+   */
    class _IProcessor : public SDBObject
    {
       public:
@@ -51,11 +54,13 @@ namespace engine
          virtual INT32           processMsg( MsgHeader *msg, 
                                              SDB_DPSCB *dpsCB,
                                              rtnContextBuf &contextBuff, 
-                                             INT64 &contextID, 
-                                             INT32 &startPos ) = 0 ;
+                                             INT64 &contextID ) = 0 ;
 
          virtual const CHAR *    getName() = 0 ;
+
    } ;
+   typedef _IProcessor IProcessor ;
+
 }
 
 #endif /*PMD_PROCESSORBASE_HPP_*/

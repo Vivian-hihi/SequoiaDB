@@ -108,7 +108,6 @@ namespace engine
       INT32 rc            = SDB_OK;
 
       rtnContextBuf buffObj ;
-      SINT64 sStartingPos = 0;
 
       PD_TRACE_ENTRY ( SDB_CATNODEMGR_ACTIVE ) ;
       BSONObj boEmpty;
@@ -128,8 +127,7 @@ namespace engine
       }
       while ( TRUE )
       {
-         rc = rtnGetMore( sContextID, 1, buffObj, sStartingPos, _pEduCB,
-                          _pRtnCB ) ;
+         rc = rtnGetMore( sContextID, 1, buffObj, _pEduCB, _pRtnCB ) ;
          if ( rc )
          {
             if ( SDB_DMS_EOC == rc )
@@ -1525,7 +1523,6 @@ namespace engine
       CHAR szBuf[ OP_MAXNAMELENGTH+1 ] = {0};
 
       rtnContextBuf buffObj ;
-      SINT64 sStartingPos              = 0;
       BOOLEAN found                    = FALSE ;
       const CHAR *strShardServiceName  = NULL ;
       PD_TRACE_ENTRY ( SDB_CATNODEMGR_GETNODEINFO ) ;
@@ -1582,7 +1579,7 @@ namespace engine
          }
          // we only call GetMore ONCE, so we have to manually destroy
          // context id
-         rc = rtnGetMore( sContextID, 1, buffObj, sStartingPos, _pEduCB,
+         rc = rtnGetMore( sContextID, 1, buffObj, _pEduCB,
                           _pRtnCB );
          if ( rc )
          {
@@ -1906,7 +1903,6 @@ namespace engine
       rtnContextDump *context = NULL ;
       SINT64 contextID = -1 ;
       rtnContextBuf buffObj ;
-      SINT64 start = 0 ;
       rc = _pRtnCB->contextNew ( RTN_CONTEXT_DUMP, (rtnContext**)&context,
                                  contextID, _pEduCB ) ;
       if ( SDB_OK != rc )
@@ -1925,7 +1921,7 @@ namespace engine
          goto error ;
       }
 
-      rc = rtnGetMore( contextID, 1, buffObj, start, _pEduCB, _pRtnCB ) ;
+      rc = rtnGetMore( contextID, 1, buffObj, _pEduCB, _pRtnCB ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to rtn getmore:%d",rc ) ;

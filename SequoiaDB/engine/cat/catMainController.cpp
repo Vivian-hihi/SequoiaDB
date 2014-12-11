@@ -532,14 +532,13 @@ namespace engine
       MsgOpGetMore *pGetMore = (MsgOpGetMore*)pMsg ;
 
       rtnContextBuf buffObj ;
-      SINT64 startingPos     = 0 ;
       SINT32 msgLen          = 0 ;
       MsgOpReply *pReply     = NULL ;
 
       PD_TRACE_ENTRY ( SDB_CATMAINCT_GETMOREMSG ) ;
       // send the reply whether successful or not
       rc = rtnGetMore( pGetMore->contextID, pGetMore->numToReturn,
-                       buffObj, startingPos, _pEDUCB, _pRtnCB ) ;
+                       buffObj, _pEDUCB, _pRtnCB ) ;
       if ( rc )
       {
          _delContextByID( pGetMore->contextID, FALSE );
@@ -559,7 +558,7 @@ namespace engine
       pReply->header.routeID.value = 0 ;
       pReply->header.requestID     = pGetMore->header.requestID ;
       pReply->contextID            = pGetMore->contextID ;
-      pReply->startFrom            = startingPos ;
+      pReply->startFrom            = (INT32)buffObj.getStartFrom() ;
       pReply->numReturned          = buffObj.recordNum() ;
       pReply->flags                = rc ;
       PD_TRACE1 ( SDB_CATMAINCT_GETMOREMSG,

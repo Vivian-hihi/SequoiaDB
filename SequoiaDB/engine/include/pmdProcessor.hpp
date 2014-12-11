@@ -50,8 +50,7 @@ namespace engine
          virtual INT32           processMsg( MsgHeader *msg, 
                                              SDB_DPSCB *dpsCB,
                                              rtnContextBuf &contextBuff, 
-                                             INT64 &contextID, 
-                                             INT32 &startPos ) ;
+                                             INT64 &contextID ) ;
 
          virtual const CHAR *    getName() ;
 
@@ -67,13 +66,11 @@ namespace engine
          INT32                   _onQueryReqMsg( MsgHeader * msg,
                                                  SDB_DPSCB *dpsCB,
                                                  _rtnContextBuf &buffObj,
-                                                 INT32 &startingPos,
                                                  INT64 &contextID ) ;
          INT32                   _onDelReqMsg( MsgHeader * msg, 
                                                SDB_DPSCB *dpsCB ) ;
          INT32                   _onGetMoreReqMsg( MsgHeader * msg,
                                                    rtnContextBuf &buffObj,
-                                                   INT32 &startingPos,
                                                    INT64 &contextID ) ;
          INT32                   _onKillContextsReqMsg( MsgHeader *msg ) ;
          INT32                   _onSQLMsg( MsgHeader *msg, INT64 &contextID ) ;
