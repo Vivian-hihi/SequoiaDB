@@ -40,11 +40,14 @@
 
 namespace engine
 {
-   class _DataProcessor : public _IProcessor
+   /*
+      _pmdDataProcessor define
+   */
+   class _pmdDataProcessor : public _IProcessor
    {
       public:
-         _DataProcessor() ;
-         virtual ~_DataProcessor() ;
+         _pmdDataProcessor() ;
+         virtual ~_pmdDataProcessor() ;
 
       public:
          virtual INT32           processMsg( MsgHeader *msg, 
@@ -97,6 +100,8 @@ namespace engine
          _SDB_DMSCB *            _pDMSCB ;
          _SDB_RTNCB *            _pRTNCB ;
    } ;
+   typedef _pmdDataProcessor pmdDataProcessor ;
+
 }
 
 #endif  /*PMD_PROCESSOR_HPP_*/

@@ -44,14 +44,14 @@ using namespace bson ;
 
 namespace engine
 {
-   _DataProcessor::_DataProcessor()
+   _pmdDataProcessor::_pmdDataProcessor()
    {
       _SDB_KRCB *pkrcb = pmdGetKRCB() ;
       _pDMSCB = pkrcb->getDMSCB() ;
       _pRTNCB = pkrcb->getRTNCB() ;
    }
 
-   INT32 _DataProcessor::attachSession( ISession *session )
+   INT32 _pmdDataProcessor::attachSession( ISession *session )
    {
       _pSession = session ;
       SDB_SESSION_TYPE sessionType = _pSession->sessionType() ;
@@ -77,21 +77,21 @@ namespace engine
       return SDB_OK ;
    }
 
-   void _DataProcessor::detachSession()
+   void _pmdDataProcessor::detachSession()
    {
       _pSession = NULL ;
       _pEDUCB   = NULL ;
    }
 
-   _DataProcessor::~_DataProcessor()
+   _pmdDataProcessor::~_pmdDataProcessor()
    {
 
    }
 
-   INT32 _DataProcessor::processMsg( MsgHeader *msg, 
-                                     SDB_DPSCB *dpsCB,
-                                     rtnContextBuf &contextBuff, 
-                                     INT64 &contextID )
+   INT32 _pmdDataProcessor::processMsg( MsgHeader *msg, 
+                                        SDB_DPSCB *dpsCB,
+                                        rtnContextBuf &contextBuff, 
+                                        INT64 &contextID )
    {
       INT32 rc = SDB_OK ;
 
@@ -172,12 +172,12 @@ namespace engine
       return rc ;
    }
 
-   INT32 _DataProcessor::_onMsgReqMsg( MsgHeader * msg )
+   INT32 _pmdDataProcessor::_onMsgReqMsg( MsgHeader * msg )
    {
       return rtnMsg( (MsgOpMsg*)msg ) ;
    }
 
-   INT32 _DataProcessor::_onUpdateReqMsg( MsgHeader * msg, SDB_DPSCB *dpsCB )
+   INT32 _pmdDataProcessor::_onUpdateReqMsg( MsgHeader * msg, SDB_DPSCB *dpsCB )
    {
       INT32 rc    = SDB_OK ;
       INT32 flags = 0 ;
@@ -227,7 +227,7 @@ namespace engine
       goto done ;
    }
 
-   INT32 _DataProcessor::_onInsertReqMsg( MsgHeader * msg )
+   INT32 _pmdDataProcessor::_onInsertReqMsg( MsgHeader * msg )
    {
       INT32 rc    = SDB_OK ;
       INT32 flag  = 0 ;
@@ -274,10 +274,10 @@ namespace engine
       goto done ;
    }
 
-   INT32 _DataProcessor::_onQueryReqMsg( MsgHeader * msg,
-                                         SDB_DPSCB *dpsCB,
-                                         _rtnContextBuf &buffObj,
-                                         INT64 &contextID )
+   INT32 _pmdDataProcessor::_onQueryReqMsg( MsgHeader * msg,
+                                            SDB_DPSCB *dpsCB,
+                                            _rtnContextBuf &buffObj,
+                                            INT64 &contextID )
    {
       INT32 rc = SDB_OK ;
       INT32 flags = 0 ;
@@ -398,7 +398,7 @@ namespace engine
       goto done ;
    }
 
-   INT32 _DataProcessor::_onDelReqMsg( MsgHeader * msg, SDB_DPSCB *dpsCB )
+   INT32 _pmdDataProcessor::_onDelReqMsg( MsgHeader * msg, SDB_DPSCB *dpsCB )
    {
       INT32 rc    = SDB_OK ;
       INT32 flags = 0 ;
@@ -443,9 +443,9 @@ namespace engine
       goto done ;
    }
 
-   INT32 _DataProcessor::_onGetMoreReqMsg( MsgHeader * msg,
-                                           rtnContextBuf &buffObj,
-                                           INT64 &contextID )
+   INT32 _pmdDataProcessor::_onGetMoreReqMsg( MsgHeader * msg,
+                                              rtnContextBuf &buffObj,
+                                              INT64 &contextID )
    {
       INT32 rc         = SDB_OK ;
       INT32 numToRead  = 0 ;
@@ -470,7 +470,7 @@ namespace engine
       goto done ;
    }
 
-   INT32 _DataProcessor::_onKillContextsReqMsg( MsgHeader *msg )
+   INT32 _pmdDataProcessor::_onKillContextsReqMsg( MsgHeader *msg )
    {
       PD_LOG ( PDDEBUG, "session[%s] _onKillContextsReqMsg", 
                _pSession->sessionName() ) ;
@@ -497,7 +497,7 @@ namespace engine
       goto done ;
    }
 
-   INT32 _DataProcessor::_onSQLMsg( MsgHeader *msg, INT64 &contextID )
+   INT32 _pmdDataProcessor::_onSQLMsg( MsgHeader *msg, INT64 &contextID )
    {
       CHAR *sql = NULL ;
       INT32 rc = SDB_OK ;
@@ -515,7 +515,7 @@ namespace engine
       goto done ;
    }
 
-   INT32 _DataProcessor::_onTransBeginMsg ()
+   INT32 _pmdDataProcessor::_onTransBeginMsg ()
    {
       INT32 rc = SDB_OK ;
       if ( pmdGetDBRole() != SDB_ROLE_STANDALONE )
@@ -536,7 +536,7 @@ namespace engine
       goto done ;
    }
 
-   INT32 _DataProcessor::_onTransCommitMsg ( SDB_DPSCB *dpsCB )
+   INT32 _pmdDataProcessor::_onTransCommitMsg ( SDB_DPSCB *dpsCB )
    {
       INT32 rc = SDB_OK ;
       if ( pmdGetDBRole() != SDB_ROLE_STANDALONE )
@@ -557,7 +557,7 @@ namespace engine
       goto done ;
    }
 
-   INT32 _DataProcessor::_onTransRollbackMsg ( SDB_DPSCB *dpsCB )
+   INT32 _pmdDataProcessor::_onTransRollbackMsg ( SDB_DPSCB *dpsCB )
    {
       INT32 rc = SDB_OK ;
       if ( pmdGetDBRole() != SDB_ROLE_STANDALONE )
@@ -578,7 +578,7 @@ namespace engine
       goto done ;
    }
 
-   INT32 _DataProcessor::_onAggrReqMsg( MsgHeader *msg, INT64 &contextID )
+   INT32 _pmdDataProcessor::_onAggrReqMsg( MsgHeader *msg, INT64 &contextID )
    {
       INT32 rc    = SDB_OK ;
       CHAR *pObjs = NULL ;
@@ -611,9 +611,9 @@ namespace engine
       goto done ;
    }
 
-   INT32 _DataProcessor::_onOpenLobMsg( MsgHeader *msg, SDB_DPSCB *dpsCB,
-                                        SINT64 &contextID,
-                                        rtnContextBuf &buffObj )
+   INT32 _pmdDataProcessor::_onOpenLobMsg( MsgHeader *msg, SDB_DPSCB *dpsCB,
+                                           SINT64 &contextID,
+                                           rtnContextBuf &buffObj )
    {
       INT32 rc = SDB_OK ;
       const MsgOpLob *header = NULL ;
@@ -641,7 +641,7 @@ namespace engine
       goto done ;
    }
 
-   INT32 _DataProcessor::_onWriteLobMsg( MsgHeader *msg )
+   INT32 _pmdDataProcessor::_onWriteLobMsg( MsgHeader *msg )
    {
       INT32 rc         = SDB_OK ;
       UINT32 len       = 0 ;
@@ -669,8 +669,8 @@ namespace engine
       goto done ;
    }
 
-   INT32 _DataProcessor::_onReadLobMsg( MsgHeader *msg,
-                                        rtnContextBuf &buffObj )
+   INT32 _pmdDataProcessor::_onReadLobMsg( MsgHeader *msg,
+                                           rtnContextBuf &buffObj )
    {
       INT32 rc = SDB_OK ;
       const MsgOpLob *header = NULL ;
@@ -702,7 +702,7 @@ namespace engine
       goto done ;
    }
 
-   INT32 _DataProcessor::_onCloseLobMsg( MsgHeader *msg )
+   INT32 _pmdDataProcessor::_onCloseLobMsg( MsgHeader *msg )
    {
       INT32 rc = SDB_OK ;
       const MsgOpLob *header = NULL ;
@@ -726,7 +726,7 @@ namespace engine
       goto done ;
    }
 
-   INT32 _DataProcessor::_onRemoveLobMsg( MsgHeader *msg, SDB_DPSCB *dpsCB )
+   INT32 _pmdDataProcessor::_onRemoveLobMsg( MsgHeader *msg, SDB_DPSCB *dpsCB )
    {
       INT32 rc = SDB_OK ;
       BSONObj meta ;
@@ -751,14 +751,10 @@ namespace engine
       goto done ;
    }
 
-   const CHAR* _DataProcessor::getName()
+   const CHAR* _pmdDataProcessor::getName()
    {
-      return "_DataProcessor" ;
+      return "DataProcessor" ;
    }
+
 }
-
-
-
-
-
 

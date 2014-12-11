@@ -1658,7 +1658,7 @@ namespace engine
       pmdLocalSession localSession( s ) ;
       localSession.attach( cb ) ;
 
-      _DataProcessor dataProcessor ;
+      pmdDataProcessor dataProcessor ;
       dataProcessor.attachSession( &localSession ) ;
       localSession.attachProcessor( &dataProcessor ) ;
 
