@@ -751,9 +751,19 @@ namespace engine
       goto done ;
    }
 
-   const CHAR* _pmdDataProcessor::getName()
+   const CHAR* _pmdDataProcessor::processorName() const
    {
       return "DataProcessor" ;
+   }
+
+   SDB_PROCESSOR_TYPE _pmdDataProcessor::processorType() const
+   {
+      return SDB_PROCESSOR_DATA ;
+   }
+
+   ISession* _pmdDataProcessor::getSession()
+   {
+      return _pSession ;
    }
 
 }

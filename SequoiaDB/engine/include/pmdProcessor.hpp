@@ -55,7 +55,9 @@ namespace engine
                                              rtnContextBuf &contextBuff, 
                                              INT64 &contextID ) ;
 
-         virtual const CHAR *    getName() ;
+         virtual const CHAR*           processorName() const ;
+         virtual SDB_PROCESSOR_TYPE    processorType() const ;
+         virtual ISession*             getSession() ;
 
       public:
          virtual INT32           attachSession( ISession *pSession ) ;
