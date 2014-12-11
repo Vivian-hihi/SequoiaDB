@@ -111,6 +111,8 @@ namespace engine
    */
    _rtnObjBuff::_rtnObjBuff ( const _rtnObjBuff &right )
    {
+      _owned = FALSE ;
+      _pBuff = NULL ;
       this->operator=( right ) ;
    }
 
