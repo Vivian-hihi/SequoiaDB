@@ -116,6 +116,11 @@ namespace engine
 
    _rtnObjBuff::~_rtnObjBuff ()
    {
+      if ( _pBuff && _owned )
+      {
+         SDB_OSS_FREE( (CHAR*)_pBuff ) ;
+      }
+      _owned = FALSE ;
       _pBuff = NULL ;
       _buffSize = 0 ;
       _recordNum = 0 ;
@@ -124,6 +129,11 @@ namespace engine
 
    _rtnObjBuff& _rtnObjBuff::operator=( const _rtnObjBuff &right )
    {
+      if ( _pBuff && _owned )
+      {
+         SDB_OSS_FREE( (CHAR*)_pBuff ) ;
+      }
+      _owned = FALSE ;
       _pBuff = right._pBuff ;
       _buffSize = right._buffSize ;
       _recordNum = right._recordNum ;
@@ -176,16 +186,37 @@ namespace engine
       goto done ;
    }
 
+   INT32 _rtnObjBuff::getOwned()
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( !_owned && _pBuff )
+      {
+         CHAR *pBuff = ( CHAR* )SDB_OSS_MALLOC( _buffSize ) ;
+         if ( pBuff )
+         {
+            _pBuff = pBuff ;
+            _owned = TRUE ;
+         }
+         else
+         {
+            rc = SDB_OOM ;
+         }
+      }
+      return rc ;
+   }
+
    /*
       _rtnContextBuf implement
    */
-   _rtnContextBuf::_rtnContextBuf ()
+   _rtnContextBuf::_rtnContextBuf()
    :_rtnObjBuff( NULL, 0, 0 )
    {
       _pBuffCounter  = NULL ;
       _pBuffLock     = NULL ;
       _released      = TRUE ;
       _context       = NULL ;
+      _startFrom     = 0 ;
    }
 
    _rtnContextBuf::_rtnContextBuf( const _rtnContextBuf &right )
@@ -196,6 +227,7 @@ namespace engine
       _released     = right._released ;
       _context      = right._context ;
       _object       = right._object ;
+      _startFrom    = right._startFrom ;
 
       if ( !_released )
       {
@@ -211,6 +243,7 @@ namespace engine
       _pBuffLock     = NULL ;
       _released      = TRUE ;
       _context       = NULL ;
+      _startFrom     = 0 ;
    }
 
    _rtnContextBuf::_rtnContextBuf( const BSONObj &obj )
@@ -221,11 +254,23 @@ namespace engine
       _released      = TRUE ;
       _context       = NULL ;
       _object        = obj ;
+      _startFrom     = 0 ;
    }
 
    _rtnContextBuf::~_rtnContextBuf()
    {
       release () ;
+   }
+
+   INT32 _rtnContextBuf::getOwned()
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( !_pBuffCounter )
+      {
+         rc = _rtnObjBuff::getOwned() ;
+      }
+      return rc ;
    }
 
    _rtnContextBuf& _rtnContextBuf::operator=( const _rtnContextBuf &right )
@@ -240,6 +285,7 @@ namespace engine
       _released = right._released ;
       _context  = right._context ;
       _object   = right._object ;
+      _startFrom = right._startFrom ;
 
       // increase counter
       if ( !_released && NULL != _pBuffCounter )
@@ -275,6 +321,7 @@ namespace engine
       _buffSize      = 0 ;
       _recordNum     = 0 ;
       _curOffset     = 0 ;
+      _startFrom     = 0 ;
    }
 
    void _rtnContextBuf::_reference( INT32 * pCounter, ossRWMutex *pMutex )
@@ -714,6 +761,7 @@ namespace engine
          _bufferCurrentOffset = ossAlign4( (UINT32)_bufferCurrentOffset ) ;
          buffObj._pBuff = &_pResultBuffer[ _bufferCurrentOffset ] ;
          startPos = _totalRecords - _bufferNumRecords ;
+         buffObj._startFrom = startPos ;
 
          // return cur all
          if ( maxNumToReturn < 0 )
