@@ -50,7 +50,7 @@
 		<unjar src="${base.path}/lib/JSTAF.jar" dest="${build.dir}" />
 		<unjar src="${base.path}/lib/ant-contrib.jar" dest="${build.dir}" />
 		<unjar src="${base.path}/lib/junit.jar" dest="${build.dir}" />
-		<!-- <unjar src="${base.path}/lib/junit-suse.jar" dest="${build.dir}" /> -->
+		<unjar src="${base.path}/lib/junit-suse.jar" dest="${build.dir}" />
 		<unjar src="${base.path}/lib/ant-junit.jar" dest="${build.dir}" />
 		<copy file="${base.path}/src/com/sequoiadb/ant/ant-sdbtasks.xml" tofile="${build.dir}/com/sequoiadb/ant/ant-sdbtasks.xml" />
 	</target>
