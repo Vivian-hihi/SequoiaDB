@@ -57,7 +57,7 @@ namespace engine
    INT32 _pmdDataProcessor::attachSession( ISession *session )
    {
       _pSession = session ;
-      SDB_ASSERT( _pClient, "Session can't be NULL" ) ;
+      SDB_ASSERT( _pSession, "Session can't be NULL" ) ;
       _pClient  = _pSession->getClient() ;
       SDB_ASSERT( _pClient, "Client can't be NULL" ) ;
 
