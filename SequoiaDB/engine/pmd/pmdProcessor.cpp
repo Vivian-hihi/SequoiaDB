@@ -46,17 +46,24 @@ namespace engine
 {
    _pmdDataProcessor::_pmdDataProcessor()
    {
-      _SDB_KRCB *pkrcb = pmdGetKRCB() ;
-      _pDMSCB = pkrcb->getDMSCB() ;
-      _pRTNCB = pkrcb->getRTNCB() ;
+      _SDB_KRCB *pkrcb  = pmdGetKRCB() ;
+      _pDMSCB           = pkrcb->getDMSCB() ;
+      _pRTNCB           = pkrcb->getRTNCB() ;
+      _pSession         = NULL ;
+      _pClient          = NULL ;
+      _pEDUCB           = NULL ;
    }
 
    INT32 _pmdDataProcessor::attachSession( ISession *session )
    {
       _pSession = session ;
+      SDB_ASSERT( _pClient, "Session can't be NULL" ) ;
+      _pClient  = _pSession->getClient() ;
+      SDB_ASSERT( _pClient, "Client can't be NULL" ) ;
+
       SDB_SESSION_TYPE sessionType = _pSession->sessionType() ;
-      SDB_ASSERT( SDB_SESSION_LOCAL == sessionType 
-                  || SDB_SESSION_SHARD == sessionType, "" ) ;
+      SDB_ASSERT( SDB_SESSION_LOCAL == sessionType ||
+                  SDB_SESSION_SHARD == sessionType, "" ) ;
 
       if ( SDB_SESSION_LOCAL == sessionType )
       {
@@ -80,6 +87,7 @@ namespace engine
    void _pmdDataProcessor::detachSession()
    {
       _pSession = NULL ;
+      _pClient  = NULL ;
       _pEDUCB   = NULL ;
    }
 
@@ -91,16 +99,36 @@ namespace engine
    INT32 _pmdDataProcessor::processMsg( MsgHeader *msg, 
                                         SDB_DPSCB *dpsCB,
                                         rtnContextBuf &contextBuff, 
-                                        INT64 &contextID )
+                                        INT64 &contextID,
+                                        BOOLEAN &needReply )
    {
       INT32 rc = SDB_OK ;
 
+      SDB_ASSERT( _pSession && _pClient, "Must attach session at first" ) ;
+
+      if ( MSG_AUTH_VERIFY_REQ == msg->opCode )
+      {
+         rc = _pClient->authenticate( msg ) ;
+      }
+      else if ( MSG_BS_INTERRUPTE == msg->opCode )
+      {
+         rc = _onInterruptMsg( msg, dpsCB ) ;
+      }
+      else if ( MSG_BS_INTERRUPTE_SELF == msg->opCode )
+      {
+         rc = _onInterruptSelfMsg() ;
+      }
+      else if ( MSG_BS_DISCONNECT == msg->opCode )
+      {
+         rc = _onDisconnectMsg() ;
+      }
+      else if ( !_pClient->isAuthed() )
+      {
+         rc = SDB_AUTH_AUTHORITY_FORBIDDEN ;
+      }
+
       switch( msg->opCode )
       {
-         //TODO: 该消息由session处理
-//         case MSG_BS_INTERRUPTE :
-//            rc = _onInterruptMsg( msg ) ;
-//            break ;
          case MSG_BS_MSG_REQ :
             rc = _onMsgReqMsg( msg ) ;
             break ;
@@ -122,12 +150,6 @@ namespace engine
          case MSG_BS_KILL_CONTEXT_REQ :
             rc = _onKillContextsReqMsg( msg ) ;
             break ;
-         //TODO: 该消息由session处理
-//         case MSG_BS_DISCONNECT :
-//            PD_LOG( PDEVENT, "Session[%s, %d] recv disconnect msg",
-//                    sessionName(), eduID() ) ;
-//            disconnect() ;
-//            break ;
          case MSG_BS_SQL_REQ :
             rc = _onSQLMsg( msg, contextID ) ;
             break ;
@@ -749,6 +771,43 @@ namespace engine
       return rc ;
    error:
       goto done ;
+   }
+
+   INT32 _pmdDataProcessor::_onInterruptMsg( MsgHeader *msg, SDB_DPSCB *dpsCB )
+   {
+      PD_LOG ( PDEVENT, "Session[%s, %lld] recieved interrupt msg",
+               _pSession->sessionName(), _pEDUCB->getID() ) ;
+
+      // delete all contextID, rollback transaction
+      INT64 contextID = -1 ;
+      while ( -1 != ( contextID = _pEDUCB->contextPeek() ) )
+      {
+         _pRTNCB->contextDelete ( contextID, NULL ) ;
+      }
+
+      INT32 rcTmp = rtnTransRollback( _pEDUCB, dpsCB );
+      if ( rcTmp )
+      {
+         PD_LOG ( PDERROR, "Failed to rollback(rc=%d)", rcTmp );
+      }
+      _pEDUCB->clearTransInfo() ;
+
+      return SDB_OK ;
+   }
+
+   INT32 _pmdDataProcessor::_onInterruptSelfMsg()
+   {
+      PD_LOG( PDEVENT, "Session[%s, %lld] recv interrupt self msg",
+              _pSession->sessionName(), _pEDUCB->getID() ) ;
+      return SDB_OK ;
+   }
+
+   INT32 _pmdDataProcessor::_onDisconnectMsg()
+   {
+      PD_LOG( PDEVENT, "Session[%s, %lld] recv disconnect msg",
+              _pSession->sessionName(), _pEDUCB->getID() ) ;
+      _pClient->disconnect() ;
+      return SDB_OK ;
    }
 
    const CHAR* _pmdDataProcessor::processorName() const

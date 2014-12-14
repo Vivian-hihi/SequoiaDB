@@ -87,6 +87,8 @@ namespace engine
 
          void stop() ;
 
+         NET_EH getEventHandle( const NET_HANDLE &handle ) ;
+
          /// can only be called for once. non-reentrant
          INT32 listen( const CHAR *hostName,
                        const CHAR *serviceName ) ;

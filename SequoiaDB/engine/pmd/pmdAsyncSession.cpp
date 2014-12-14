@@ -127,6 +127,7 @@ namespace engine
       _eduID  = cb->getID() ;
       _pEDUCB->setName( sessionName() ) ;
       _pEDUCB->attachSession( this ) ;
+      _client.attachCB( cb ) ;
 
       // since the object can be only attached by one thread, we use try_get
       // here just in case someone forgot to release the latch
@@ -161,6 +162,7 @@ namespace engine
 
       _onDetach () ;
 
+      _client.detachCB() ;
       _pEDUCB->detachSession() ;
       _latchOut.release () ;
       _pEDUCB = NULL ;
@@ -263,6 +265,8 @@ namespace engine
       if ( _pMeta )
       {
          _netHandle = _pMeta->getHandle() ;
+         _client.setClientInfo( _pSessionMgr->getRouteAgent(),
+                                _netHandle ) ;
       }
       else
       {

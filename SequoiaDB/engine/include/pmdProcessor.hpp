@@ -53,7 +53,8 @@ namespace engine
          virtual INT32           processMsg( MsgHeader *msg, 
                                              SDB_DPSCB *dpsCB,
                                              rtnContextBuf &contextBuff, 
-                                             INT64 &contextID ) ;
+                                             INT64 &contextID,
+                                             BOOLEAN &needReply ) ;
 
          virtual const CHAR*           processorName() const ;
          virtual SDB_PROCESSOR_TYPE    processorType() const ;
@@ -94,11 +95,15 @@ namespace engine
          INT32                   _onCloseLobMsg( MsgHeader *msg ) ;
          INT32                   _onRemoveLobMsg( MsgHeader *msg, 
                                                   SDB_DPSCB *dpsCB ) ;
+         INT32                   _onInterruptMsg( MsgHeader *msg,
+                                                  SDB_DPSCB *dpsCB ) ;
+         INT32                   _onInterruptSelfMsg() ;
+         INT32                   _onDisconnectMsg() ;
 
       protected:
          _ISession *             _pSession ;
+         _IClient*               _pClient ;
          _pmdEDUCB *             _pEDUCB ;
-         _SDB_KRCB *             _pKRCB ;
          _SDB_DMSCB *            _pDMSCB ;
          _SDB_RTNCB *            _pRTNCB ;
    } ;

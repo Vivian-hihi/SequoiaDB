@@ -75,8 +75,6 @@ namespace engine
          virtual INT32  _onMsgBegin( MsgHeader *msg ) ;
          virtual void   _onMsgEnd( INT32 result, MsgHeader *msg ) ;
 
-         virtual INT32  _onAuth( MsgHeader *msg ) ;
-
          INT32          _recvSysInfoMsg( UINT32 msgSize, CHAR **ppBuff,
                                          INT32 &buffLen ) ;
          INT32          _processSysInfoRequest( const CHAR *msg ) ;
@@ -91,10 +89,7 @@ namespace engine
       // message process functions
       protected:
 
-         INT32 _onInterruptMsg( MsgHeader *msg ) ;
-
       protected:
-         BOOLEAN              _authOK ;
          _SDB_DMSCB           *_pDMSCB ;
          _dpsLogWrapper       *_pDPSCB ;
          _SDB_RTNCB           *_pRTNCB ;

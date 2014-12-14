@@ -286,6 +286,12 @@ namespace engine
       SDB_TYPE_MAX
    } ;
 
+   /*
+      other define
+   */
+   #define PMD_IPADDR_LEN              ( 40 )
+   #define PMD_CLIENTNAME_LEN          ( 64 )
+
 }
 
 #endif // PMD_DEF_HPP__
