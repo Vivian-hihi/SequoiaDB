@@ -37,6 +37,9 @@
 		<stafTools workType="get" workHost="${deploy.host.name}" fileName="${test.machine.software.path}/install-basic-in-host.log" />
 
 		<stafTools workType="copy" workHost="LOCAL" fileName="${basedir}/deploy-test-result.xml" saveDir="${test.machine.software.path}" toHost="${deploy.host.name}" />
+		<stafTools workType="shell" workHost="${deploy.host.name}" workDir="${test.machine.software.path}" waitTime="30m" common="vim /etc/profile" />
+		<stafTools workType="shell" workHost="${deploy.host.name}" workDir="${test.machine.software.path}" waitTime="30m" common="echo 'ulimit -c unlimited' >> /etc/profile" />
+		<stafTools workType="shell" workHost="${deploy.host.name}" workDir="${test.machine.software.path}" waitTime="30m" common="source /etc/profile" />
 	</target>
 </project>
 
