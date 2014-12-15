@@ -25,17 +25,22 @@ java -jar lib/dost.jar /i:E:\sequoiadb\doc\references\methods\topics_en_v2\cs.cr
 java -jar lib/dost.jar /i:E:\sequoiadb\doc\references\methods\topics_en_v2\cs.dropCL.dita /transtype:troff /outdir:E:\sequoiadb\doc\manual
 java -jar lib/dost.jar /i:E:\sequoiadb\doc\references\methods\topics_en_v2\cs.getCL.dita /transtype:troff /outdir:E:\sequoiadb\doc\manual
 
-::cursor
-java -jar lib/dost.jar /i:E:\sequoiadb\doc\references\methods\topics_en_v2\cursor.close.dita /transtype:troff /outdir:E:\sequoiadb\doc\manual
-java -jar lib/dost.jar /i:E:\sequoiadb\doc\references\methods\topics_en_v2\cursor.current.dita /transtype:troff /outdir:E:\sequoiadb\doc\manual
-java -jar lib/dost.jar /i:E:\sequoiadb\doc\references\methods\topics_en_v2\cursor.explain.dita /transtype:troff /outdir:E:\sequoiadb\doc\manual
-java -jar lib/dost.jar /i:E:\sequoiadb\doc\references\methods\topics_en_v2\cursor.hint.dita /transtype:troff /outdir:E:\sequoiadb\doc\manual
-java -jar lib/dost.jar /i:E:\sequoiadb\doc\references\methods\topics_en_v2\cursor.limit.dita /transtype:troff /outdir:E:\sequoiadb\doc\manual
-java -jar lib/dost.jar /i:E:\sequoiadb\doc\references\methods\topics_en_v2\cursor.next.dita /transtype:troff /outdir:E:\sequoiadb\doc\manual
-java -jar lib/dost.jar /i:E:\sequoiadb\doc\references\methods\topics_en_v2\cursor.size.dita /transtype:troff /outdir:E:\sequoiadb\doc\manual
-java -jar lib/dost.jar /i:E:\sequoiadb\doc\references\methods\topics_en_v2\cursor.skip.dita /transtype:troff /outdir:E:\sequoiadb\doc\manual
-java -jar lib/dost.jar /i:E:\sequoiadb\doc\references\methods\topics_en_v2\cursor.sort.dita /transtype:troff /outdir:E:\sequoiadb\doc\manual
-java -jar lib/dost.jar /i:E:\sequoiadb\doc\references\methods\topics_en_v2\cursor.toArray.dita /transtype:troff /outdir:E:\sequoiadb\doc\manual
+::count.hint
+java -jar lib/dost.jar /i:E:\sequoiadb\doc\references\methods\topics_en_v2\count.hint.dita /transtype:troff /outdir:E:\sequoiadb\doc\manual
+
+::query
+java -jar lib/dost.jar /i:E:\sequoiadb\doc\references\methods\topics_en_v2\query_curs.close.dita /transtype:troff /outdir:E:\sequoiadb\doc\manual
+java -jar lib/dost.jar /i:E:\sequoiadb\doc\references\methods\topics_en_v2\query_curs.current.dita /transtype:troff /outdir:E:\sequoiadb\doc\manual
+java -jar lib/dost.jar /i:E:\sequoiadb\doc\references\methods\topics_en_v2\query_curs.next.dita /transtype:troff /outdir:E:\sequoiadb\doc\manual
+java -jar lib/dost.jar /i:E:\sequoiadb\doc\references\methods\topics_en_v2\query_cond.hint.dita /transtype:troff /outdir:E:\sequoiadb\doc\manual
+java -jar lib/dost.jar /i:E:\sequoiadb\doc\references\methods\topics_en_v2\query_cond.limit.dita /transtype:troff /outdir:E:\sequoiadb\doc\manual
+java -jar lib/dost.jar /i:E:\sequoiadb\doc\references\methods\topics_en_v2\query_cond.skip.dita /transtype:troff /outdir:E:\sequoiadb\doc\manual
+java -jar lib/dost.jar /i:E:\sequoiadb\doc\references\methods\topics_en_v2\query_cond.sort.dita /transtype:troff /outdir:E:\sequoiadb\doc\manual
+java -jar lib/dost.jar /i:E:\sequoiadb\doc\references\methods\topics_en_v2\query_gen.size.dita /transtype:troff /outdir:E:\sequoiadb\doc\manual
+java -jar lib/dost.jar /i:E:\sequoiadb\doc\references\methods\topics_en_v2\query_gen.count.dita /transtype:troff /outdir:E:\sequoiadb\doc\manual
+java -jar lib/dost.jar /i:E:\sequoiadb\doc\references\methods\topics_en_v2\query_gen.explain.dita /transtype:troff /outdir:E:\sequoiadb\doc\manual
+java -jar lib/dost.jar /i:E:\sequoiadb\doc\references\methods\topics_en_v2\query_gen.toArray.dita /transtype:troff /outdir:E:\sequoiadb\doc\manual
+java -jar lib/dost.jar /i:E:\sequoiadb\doc\references\methods\topics_en_v2\query_gen.[i].dita /transtype:troff /outdir:E:\sequoiadb\doc\manual
 
 ::sequoiadb
 java -jar lib/dost.jar /i:E:\sequoiadb\doc\references\methods\topics_en_v2\db.backupOffline.dita /transtype:troff /outdir:E:\sequoiadb\doc\manual
@@ -53,7 +58,7 @@ java -jar lib/dost.jar /i:E:\sequoiadb\doc\references\methods\topics_en_v2\db.ev
 java -jar lib/dost.jar /i:E:\sequoiadb\doc\references\methods\topics_en_v2\db.exec.dita /transtype:troff /outdir:E:\sequoiadb\doc\manual
 java -jar lib/dost.jar /i:E:\sequoiadb\doc\references\methods\topics_en_v2\db.execUpdate.dita /transtype:troff /outdir:E:\sequoiadb\doc\manual
 java -jar lib/dost.jar /i:E:\sequoiadb\doc\references\methods\topics_en_v2\db.flushConfigure.dita /transtype:troff /outdir:E:\sequoiadb\doc\manual
-java -jar lib/dost.jar /i:E:\sequoiadb\doc\references\methods\topics_en_v2\db.interrupt.dita /transtype:troff /outdir:E:\sequoiadb\doc\manual
+java -jar lib/dost.jar /i:E:\sequoiadb\doc\references\methods\topics_en_v2\db.forceSession.dita /transtype:troff /outdir:E:\sequoiadb\doc\manual
 java -jar lib/dost.jar /i:E:\sequoiadb\doc\references\methods\topics_en_v2\db.getCS.dita /transtype:troff /outdir:E:\sequoiadb\doc\manual
 java -jar lib/dost.jar /i:E:\sequoiadb\doc\references\methods\topics_en_v2\db.getDomain.dita /transtype:troff /outdir:E:\sequoiadb\doc\manual
 java -jar lib/dost.jar /i:E:\sequoiadb\doc\references\methods\topics_en_v2\db.getRG.dita /transtype:troff /outdir:E:\sequoiadb\doc\manual
