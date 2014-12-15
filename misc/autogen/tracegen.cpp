@@ -74,7 +74,7 @@ void TraceGen::genList ()
         " */\n";
       fout1<<std::left<<comment<<endl;
       fout1 << "/* This list file is automatically generated," <<
-               "you shoud NOT modify this file anyway! */" << endl ;
+               "you shoud NOT modify this file anyway! test comment*/" << endl ;
       fout1 << "#include \"core.hpp\"" << endl ;
       fout1 << "static const CHAR *_pTraceFunctionList[] = {" << endl ;
 
