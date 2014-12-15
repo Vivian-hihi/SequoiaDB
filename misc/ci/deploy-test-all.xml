@@ -96,7 +96,6 @@
 		<if>
 			<equals arg1="${is.test}" arg2="true" />
 			<then>
-				<!-- <ant antfile="${deploy.case.fullname}" dir="${ci.script.file.path}" target="Test" inheritAll="true"> -->
 				<ant antfile="${deploy.case.fullname}" dir="${ci.script.file.path}" inheritAll="true">
 					<property name="test.reports.path" value="${WORKSPACE}/reports" />
 					<property name="deploy.case.fullname" value="${deploy.case.fullname}" />
@@ -104,6 +103,7 @@
 					<property name="test.environment" value="${test.environment}" />
 					<property name="deploy.conffile.wildcard" value="${deploy.conffile.wildcard}" />
 					<property name="ci.script.file.path" value="${ci.script.file.path}" />
+					<property name="BUILD_NUMBER" value="${BUILD_NUMBER}" />
 				</ant>
 			</then>
 		</if>
