@@ -29,3 +29,6 @@ build.py
 script/cppkgfiles.sh
 script/package.py
 script/pkgrpm.sh
+script/sequoiadb
+script/sdbwsart
+script/sdbwstop
