@@ -9,7 +9,7 @@
     </section>
     <section>
       <title>SYNOPSIS</title>
-      <p></p><apiname>query[i]</apiname>
+      <p></p><apiname>query[i]</apiname>()
     </section>
     <section>
       <title>CATEGORY</title>

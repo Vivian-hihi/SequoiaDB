@@ -7,17 +7,17 @@
 <meta name="copyright" content="(C) Copyright 2005"/>
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
-<meta name="DC.Title" content="cursor.skip()"/>
-<meta name="description" content="cursor.skip(&lt;num&gt;) 指定结果集从哪条记录开始返回。 参数描述 参数名 参数类型 描述 是否必填 num int 自定义结果集从哪条记录返回。 否 格式 cousor.skip() 方法的定义格式包含 num 参数，它是 int 类型。如果不设定 num 的内容或者设定 num 的值为0，相当于返回所有的结果集；如果想从结果集的第3条记录开始返回，可是设置 num 的值等于2。 ..."/>
+<meta name="DC.Title" content="query.skip()"/>
+<meta name="description" content="query.skip(&lt;num&gt;) 指定结果集从哪条记录开始返回。 参数描述 参数名 参数类型 描述 是否必填 num int 自定义结果集从哪条记录返回。 否 格式 query.skip() 方法的定义格式包含 num 参数，它是 int 类型。如果不设定 num 的内容或者设定 num 的值为0，相当于返回所有的结果集；如果想从结果集的第3条记录开始返回，可是设置 num 的值等于2。 示例 ..."/>
 <meta name="DC.Relation" scheme="URI" content="hint.html"/>
-<meta name="DC.Relation" scheme="URI" content="ccurrent.html"/>
+<meta name="DC.Relation" scheme="URI" content="climit.html"/>
 <meta name="DC.Relation" scheme="URI" content="find.html"/>
 <meta name="DC.Relation" scheme="URI" content="../../console/topics/gt.html"/>
 <meta name="DC.Format" content="XHTML"/>
 <meta name="DC.Identifier" content="references_methods_skip"/>
 <link rel="stylesheet" type="text/css" href="../../../commonltr.css"/>
 <link rel="stylesheet" type="text/css" href="../../../assets/webhelp_topic.css"/>
-<title>cursor.skip()</title>
+<title>query.skip()</title>
 <script type="text/javascript" src="../../../assets/jquery-1.3.2.js"> </script><script type="text/javascript" src="../../../assets/jquery-ui-1.8.2.custom.min.js"> </script><script type="text/javascript" src="../../../assets/frames_redirect.js"> </script><script type="text/javascript"><!--
     var prefix = "../../../../index.html";
     var ratingFile = "";
@@ -36,33 +36,33 @@
   if (parent.window.location.pathname == window.location.pathname ) document.write('With Frames');                    
                     --></script></span></div></td><td width="50%"/></tr></tbody></table>
 
-  <h1 class="title topictitle1">cursor.skip()</h1>
+  <h1 class="title topictitle1">query.skip()</h1>
 
   <div class="body">
-    <div class="section"><h2 class="title sectiontitle">cursor.skip(&lt;num&gt;)</h2>
+    <div class="section"><h2 class="title sectiontitle">query.skip(&lt;num&gt;)</h2>
       <p class="p">指定结果集从哪条记录开始返回。</p>
 
     </div>
 
     <div class="section"><h2 class="title sectiontitle">参数描述</h2>
       <a name="references_methods_skip__references_method_skip_table"><!-- --></a><table cellpadding="4" cellspacing="0" summary="" id="references_methods_skip__references_method_skip_table" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d149772e26" class="stentry">参数名</th>
+          <th valign="bottom" align="left" id="d149787e26" class="stentry">参数名</th>
 
-          <th valign="bottom" align="left" id="d149772e29" class="stentry">参数类型</th>
+          <th valign="bottom" align="left" id="d149787e29" class="stentry">参数类型</th>
 
-          <th valign="bottom" align="left" id="d149772e32" class="stentry">描述</th>
+          <th valign="bottom" align="left" id="d149787e32" class="stentry">描述</th>
 
-          <th valign="bottom" align="left" id="d149772e35" class="stentry">是否必填</th>
+          <th valign="bottom" align="left" id="d149787e35" class="stentry">是否必填</th>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d149772e26" class="stentry">num         </td>
+          <td valign="top" headers="d149787e26" class="stentry">num         </td>
 
-          <td valign="top" headers="d149772e29" class="stentry">int                </td>
+          <td valign="top" headers="d149787e29" class="stentry">int                </td>
 
-          <td valign="top" headers="d149772e32" class="stentry">自定义结果集从哪条记录返回。        </td>
+          <td valign="top" headers="d149787e32" class="stentry">自定义结果集从哪条记录返回。        </td>
 
-          <td valign="top" headers="d149772e35" class="stentry">否</td>
+          <td valign="top" headers="d149787e35" class="stentry">否</td>
 
         </tr>
 </table>
@@ -72,7 +72,7 @@
 
     <div class="section"><h2 class="title sectiontitle">格式</h2>
       
-      <p class="p">cousor.skip() 方法的定义格式包含 num 参数，它是 int 类型。如果不设定 num 的内容或者设定 num 的值为0，相当于返回所有的结果集；如果想从结果集的第3条记录开始返回，可是设置 num 的值等于2。</p>
+      <p class="p">query.skip() 方法的定义格式包含 num 参数，它是 int 类型。如果不设定 num 的内容或者设定 num 的值为0，相当于返回所有的结果集；如果想从结果集的第3条记录开始返回，可是设置 num 的值等于2。</p>
 
 
     </div>
@@ -99,8 +99,8 @@
   </div>
 
   <div class="related-links"><div class="relinfo"><strong>Related information</strong><br/>
-<div><a class="navheader_parent_path" href="hint.html" title="cursor.hint()">cursor.hint()</a></div>
-<div><a class="navheader_parent_path" href="ccurrent.html" title="cursor.current()">cursor.current()</a></div>
+<div><a class="navheader_parent_path" href="hint.html" title="query.hint()">query.hint()</a></div>
+<div><a class="navheader_parent_path" href="climit.html" title="query.limit()">query.limit()</a></div>
 <div><a class="navheader_parent_path" href="find.html" title="db.collectionspace.collection.find()">db.collectionspace.collection.find()</a></div>
 <div><a class="navheader_parent_path" href="../../console/topics/gt.html" title="$gt">$gt</a></div>
 </div>
