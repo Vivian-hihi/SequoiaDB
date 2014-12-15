@@ -61,7 +61,7 @@
 
 	<target name="test-one-case" depends="">	
 		<tstamp>
-			<format property="testcase.begin.time" pattern="yyyy-MM-dd-hh.mm.ss" />
+			<format property="testcase.begin.time" pattern="yyyy.MM.dd-HH.mm.ss" />
 		</tstamp>
 
 		<basename property="test.case.name" file="${test.case.fullname}" suffix=".xml" />
@@ -108,7 +108,7 @@
 			</not>
 			<then>
 				<tstamp>
-					<format property="testcase.failure.end.time" pattern="yyyy-MM-dd-hh.mm.ss" />
+					<format property="testcase.failure.end.time" pattern="yyyy.MM.dd-HH.mm.ss" />
 				</tstamp>
 				<sdbTime beginTime="${testcase.begin.time}" endTime="${testcase.failure.end.time}" output="testcase.failure.timeOutput" />
 				<echo message="The result code is ${ret.code} and it's fail ..." />
@@ -118,7 +118,7 @@
 			</then>
 			<else>
 				<tstamp>
-					<format property="testcase.end.time" pattern="yyyy-MM-dd-hh.mm.ss" />
+					<format property="testcase.end.time" pattern="yyyy.MM.dd-HH.mm.ss" />
 				</tstamp>
 				<sdbTime beginTime="${testcase.begin.time}" endTime="${testcase.end.time}" output="testcase.timeOutput" />
 				<echo message="The result code is ${ret.code} and it's succ ..." />
