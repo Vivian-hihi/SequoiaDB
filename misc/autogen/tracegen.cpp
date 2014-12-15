@@ -42,9 +42,6 @@ void TraceGen::genList ()
       }
 
       string comment =
-        "/** \\file ossErr.h\n"
-        "    \\brief The meaning of the error code.\n"
-        "*/\n"
         "/*    Copyright 2012 SequoiaDB Inc.\n"
         " *\n"
         " *    Licensed under the Apache License, Version 2.0 (the \"License\");\n"
