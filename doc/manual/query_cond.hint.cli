@@ -1,14 +1,13 @@
 .TH COMMAND * 2014-04-08 "SequoiaDB" "Sequoiadb Method's Manual"
 .ad l.ll 72.ce 1000
-\fBcount.hint()\fR
+\fBquery.hint()\fR
 .ce 0
 .sp 2
 
 .SH "NAME"
 
 .sp 2
-hint - Use the specified index to get the amount of matching
-records in current collection.
+hint - Enumerate the result set according to the specified index.
 .SH "SYNOPSIS"
 
 .sp 2
@@ -16,18 +15,17 @@ records in current collection.
 .sp 2
 
 .sp 2
-count.hint(\fB[hint]\fR)
+query.hint(\fB[hint]\fR)
 .SH "CATEGORY"
 
 .sp 2
 
 .sp 2
-Count
+Query
 .SH "DESCRIPTION"
 
 .sp 2
-Use the specified index to get the amount of matching records in
-current collection.
+Enumerate the result set according to the specified index.
 .sp 2
 \fBhint (json object)\fR
 .br
@@ -35,7 +33,7 @@ current collection.
 .sp 2
        \fBFormat\fR
 .br
-              The method "count.hint()" contains parameter
+              The method "query.hint()" contains parameter
               "hint". If it is not specified, the query will not
               use index to visit records. The parameter "hint"
               contains a one-field json object. The field name is
@@ -47,7 +45,7 @@ current collection.
 .SH "Examples"
 
 .sp 2
-Get the amount of records contain field "age" in the collection
-"bar" according to index "ageIndex".
+Enumerate the records contain field "age" in the collection "bar"
+according to index "ageIndex" and return the result set.
 .sp 2
-db.foo.bar.count({age:{$exists:1}}).hint({"":"ageIndex"})
+db.foo.bar.find({age:{$exists:1}}).hint({"":"ageIndex"})
