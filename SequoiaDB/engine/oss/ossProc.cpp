@@ -129,7 +129,7 @@ INT32 ossWaitChild ( OSSPID pid, ossResultCode &result, BOOLEAN block )
    // loop until the program finish
    do
    {
-      rc = waitpid ( pid, &statuslocation, WUNTRACED ) ;
+      rc = waitpid ( pid, &statuslocation, options ) ;
       err = errno ;
    } while ( -1 == rc && EINTR == err ) ;
 
