@@ -34,6 +34,8 @@
 #include "omagentMgr.hpp"
 #include "omagentSession.hpp"
 #include "pmd.hpp"
+#include "msgMessage.hpp"
+#include "omagentUtil.hpp"
 
 using namespace bson ;
 
@@ -455,7 +457,8 @@ namespace engine
       omAgentMgr Message MAP
    */
    BEGIN_OBJ_MSG_MAP( _omAgentMgr, _pmdObjBase )
-      
+      // TODO: add the map function here
+      // tzb
    END_OBJ_MSG_MAP()
 
    /*
@@ -867,6 +870,147 @@ namespace engine
       _mapTaskQuery[++_taskID] = match.copy() ;
 
       return SDB_OK ;
+   }
+
+   INT32 _omAgentMgr::_onOMQueryTaskRes ( NET_HANDLE handle, MsgHeader * msg )
+   {
+      MsgOpReply *res = ( MsgOpReply* )msg ;
+      PD_LOG ( PDDEBUG, "Recieve omsvc query task response[requestID:%lld, "
+               "flag: %d]", msg->requestID, res->flags ) ;
+
+      INT32 rc = SDB_OK ;
+      INT32 flag = 0 ;
+      INT64 contextID = -1 ;
+      INT32 startFrom = 0 ;
+      INT32 numReturned = 0 ;
+      vector<BSONObj> objList ;
+
+      // need to clear the query task
+      if ( SDB_DMS_EOC == res->flags ||
+           SDB_CAT_TASK_NOTFOUND == res->flags )
+      {
+         _mgrLatch.get_shared () ;
+         _mapTaskQuery.erase ( msg->requestID ) ;
+         _mgrLatch.release_shared () ;
+         PD_LOG ( PDINFO, "The query task[%lld] has 0 jobs", msg->requestID ) ;
+      }
+      else if ( SDB_OK != res->flags )
+      {
+         PD_LOG ( PDERROR, "Query task[%lld] failed[rc=%d]",
+                  msg->requestID, res->flags ) ;
+         goto error ;
+      }
+      else
+      {
+         rc = msgExtractReply ( (CHAR *)msg, &flag, &contextID, &startFrom,
+                                &numReturned, objList ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG ( PDERROR, "Failed to extract task infos from omsvc, "
+                     "rc = %d", rc ) ;
+            goto error ;
+         }
+         // find the task query map, and remove it
+         {
+            ossScopedLock lock ( &_mgrLatch, EXCLUSIVE ) ;
+            MAPTASKQUERY::iterator it = _mapTaskQuery.find ( msg->requestID ) ;
+            if ( it == _mapTaskQuery.end() )
+            {
+               PD_LOG ( PDWARNING, "The query task response[%lld] is not exist",
+                        msg->requestID ) ;
+               rc = SDB_INVALIDARG ;
+               goto error ;
+            }
+            //remove the query task
+            _mapTaskQuery.erase ( it ) ;
+         }
+
+         PD_LOG ( PDINFO, "The query task[%lld] has %d jobs", msg->requestID,
+                  numReturned ) ;
+
+         // add task inner session
+         {
+            UINT32 index = 0 ;
+            while ( index < objList.size() )
+            {
+               _startTask ( objList[index].objdata() ) ;
+               ++index ;
+            }
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _omAgentMgr::_startTask( const CHAR * objdata )
+   {
+      INT32 rc = SDB_OK ;
+      INT32 taskType = OMA_TASK_UNKNOW ;
+      EDUID eduID = PMD_INVALID_EDUID ;
+      BSONObj obj ;
+      BSONObj data ;
+      
+      // get task type and task detail
+      try
+      {
+         obj = BSONObj( objdata ).copy() ;
+         rc = omaGetIntElement( obj, OMA_FIELD_TASKTYPE, taskType ) ;
+         PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                   "Get field[%s] failed, rc: %d", OMA_FIELD_TASKTYPE, rc ) ;
+         rc = omaGetObjElement( obj, OMA_FIELD_DETAIL, data ) ;
+         PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                   "Get field[%s] failed, rc: %d", OMA_FIELD_DETAIL, rc ) ;
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG ( PDERROR, "omagent start task exception: %s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+      
+      // run task as a background job
+      switch ( taskType )
+      {
+         case OMA_TASK_ADD_HOST :
+            rc = startAddHostTaskJob( data.objdata(), &eduID ) ;
+            if ( rc )
+            {
+               PD_LOG( PDERROR, "Failed to start add hosts task "
+                       "rc = %d", rc ) ;
+               goto error ;
+            }
+            break ;
+         case OMA_TASK_INSTALL_DB :
+            rc = startInsDBBusTaskJob( data.objdata(), &eduID ) ;
+            if ( rc )
+            {
+               PD_LOG( PDERROR, "Failed to start install db business task "
+                       "rc = %d", rc ) ;
+               goto error ;
+            }
+            break ;
+         case OMA_TASK_REMOVE_DB :
+            rc = startRmDBBusTaskJob( data.objdata(), &eduID ) ;
+            if ( rc )
+            {
+               PD_LOG( PDERROR, "Failed to start add hosts task "
+                       "rc = %d", rc ) ;
+               goto error ;
+            }
+            break ;
+         default :
+            PD_LOG ( PDERROR, "Unknow task type[%d]", taskType ) ;
+            rc = SDB_INVALIDARG ;
+            break ;
+      }
+      
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    /*

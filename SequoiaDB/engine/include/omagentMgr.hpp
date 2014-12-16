@@ -43,6 +43,8 @@
 #include "ossEvent.hpp"
 #include "omagentNodeMgr.hpp"
 #include "sptContainer.hpp"
+#include "omagentTask.hpp"
+#include "omagentJob.hpp"
 
 #include <string>
 
@@ -214,6 +216,10 @@ namespace engine
 
       protected:
          void            _initOMAddr( vector< MsgRouteID > &vecNode ) ;
+         INT32           _onOMQueryTaskRes( NET_HANDLE handle, MsgHeader *msg ) ;
+
+      private:
+         INT32           _startTask( const CHAR * objdata ) ;
 
       private:
          omAgentOptions             _options ;
