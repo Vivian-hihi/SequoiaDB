@@ -49,6 +49,8 @@ namespace engine
    {
       DECLARE_OACMD_AUTO_REGISTER()
 
+      virtual BOOLEAN needCheckBusiness() const { return FALSE ; }
+
       public:
          _omaShutdownCmd() ;
          virtual ~_omaShutdownCmd() ;
@@ -65,6 +67,8 @@ namespace engine
    class _omaSetPDLevelCmd : public _omaCommand
    {
       DECLARE_OACMD_AUTO_REGISTER()
+
+      virtual BOOLEAN needCheckBusiness() const { return FALSE ; }
 
       public:
          _omaSetPDLevelCmd() ;
@@ -86,6 +90,8 @@ namespace engine
    class _omaCreateNodeCmd : public _omaCommand
    {
       DECLARE_OACMD_AUTO_REGISTER()
+
+      virtual BOOLEAN needCheckBusiness() const { return FALSE ; }
 
       public:
          _omaCreateNodeCmd() ;
@@ -124,6 +130,8 @@ namespace engine
    class _omaStartNodeCmd : public _omaCommand
    {
       DECLARE_OACMD_AUTO_REGISTER()
+
+      virtual BOOLEAN needCheckBusiness() const { return FALSE ; }
 
       public:
          _omaStartNodeCmd() ;
