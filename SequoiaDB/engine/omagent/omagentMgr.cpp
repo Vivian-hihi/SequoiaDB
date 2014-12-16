@@ -119,9 +119,9 @@ namespace engine
          ( SDBCM_AUTO_START, po::value<string>(),
          "start sequoiadb node automatically when CM start" )
          ( SDBCM_DIALOG_LEVEL, po::value<INT32>(),
-         "Dialog level" ),
+         "Dialog level" )
          ( SDBCM_CONF_OMADDR, po::value<string>(),
-         "OM address" ),
+         "OM address" )
          ( SDBCM_CONF_ISGENERAL, po::value<string>(),
          "Is general agent" )
       PMD_ADD_PARAM_OPTIONS_END
@@ -506,6 +506,14 @@ namespace engine
       else
       {
          _primaryPos = -1 ;
+      }
+
+      // if is gerenal agent, need to restore
+      if ( _options.isGeneralAgent() )
+      {
+         pmdGetKRCB()->setBusinessOK( FALSE ) ;
+         startTaskCheck( BSON( FIELD_NAME_HOST <<
+                               pmdGetKRCB()->getHostName() ) ) ;
       }
 
       // 1. create listen
