@@ -38,7 +38,6 @@
 #ifndef RTNCONTEXT_HPP_
 #define RTNCONTEXT_HPP_
 
-#include "rtnContextBuff.hpp"
 #include "dms.hpp"
 #include "pd.hpp"
 #include "ossMem.hpp"
@@ -57,6 +56,7 @@
 #include "rtnQueryOptions.hpp"
 #include "dmsLobDef.hpp"
 #include "rtnLocalLobStream.hpp"
+#include "rtnContextBuff.hpp"
 
 #include <map>
 
@@ -73,7 +73,6 @@ namespace engine
    class _dmsMBContext ;
    class _rtnContextBase ;
    class netMultiRouteAgent ;
-   class _rtnContextBase ;
 
    /*
       _rtnPrefWatcher define
@@ -150,7 +149,6 @@ namespace engine
    */
    class _rtnContextBase : public SDBObject
    {
-      //friend class _SDB_RTNCB ;
       friend class _rtnContextParaData ;
       public:
          _rtnContextBase ( INT64 contextID, UINT64 eduID ) ;
