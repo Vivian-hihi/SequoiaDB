@@ -36,6 +36,7 @@
 
 *******************************************************************************/
 #include "rtnContextBuff.hpp"
+#include "rtnContext.hpp"
 
 using namespace bson;
 
