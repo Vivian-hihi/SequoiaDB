@@ -1398,7 +1398,7 @@ namespace engine
       }
 
       // judge need to thin copy
-      if ( pLobData->getDataSz() >
+      if ( (UINT64)pLobData->getDataSz() >
            ((UINT64)BAR_THINCOPY_THRESHOLD_SIZE << 20 ) )
       {
          FLOAT64 ratio = (FLOAT64)pLobSU->getSMEMgr()->totalFree() /
@@ -1409,7 +1409,7 @@ namespace engine
          }
       }
 
-      while ( _curOffset < pLobData->getFileSz() )
+      while ( _curOffset < (UINT64)pLobData->getFileSz() )
       {
          if ( cb->isInterrupted() )
          {
