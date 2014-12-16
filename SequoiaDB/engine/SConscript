@@ -127,8 +127,8 @@ utilFiles = [
       ]
 
 rtnFiles = [
-      "rtn/rtnContextBuff.cpp",
       "rtn/rtnContext.cpp",
+      "rtn/rtnContextBuff.cpp",
       "rtn/rtnUpdate.cpp",
       "rtn/rtnInsert.cpp",
       "rtn/rtnDelete.cpp",
