@@ -47,6 +47,7 @@
 #include "omagentJob.hpp"
 
 #include <string>
+#include <map>
 
 using namespace std ;
 using namespace bson ;
@@ -96,8 +97,8 @@ namespace engine
 
          void        setCMServiceName( const CHAR *serviceName ) ;
 
-         void            lock( INT32 type = SHARED ) ;
-         void            unLock( INT32 type = SHARED ) ;
+         void        lock( INT32 type = SHARED ) ;
+         void        unLock( INT32 type = SHARED ) ;
 
       protected:
          virtual INT32 doDataExchange( pmdCfgExchange *pEX ) ;
@@ -181,6 +182,7 @@ namespace engine
       DECLARE_OBJ_MSG_MAP()
 
       typedef std::map<UINT64, BSONObj>         MAPTASKQUERY ;
+      typedef MAPTASKQUERY                      MAP_TASKINFO ;
 
       public:
          _omAgentMgr() ;
@@ -214,12 +216,21 @@ namespace engine
 
          INT32           startTaskCheck ( const BSONObj& match ) ;
 
+         BOOLEAN         isTaskInfoExist( UINT64 taskID ) ;
+         void            registerTaskInfo( UINT64 taskID, const BSONObj &obj ) ;
+         void            submitTaskInfo( UINT64 taskID ) ;
+
       protected:
          void            _initOMAddr( vector< MsgRouteID > &vecNode ) ;
-         INT32           _onOMQueryTaskRes( NET_HANDLE handle, MsgHeader *msg ) ;
+         INT32           _onOMQueryTaskRes( NET_HANDLE handle,
+                                            MsgHeader *msg ) ;
+         INT32           _prepareTask() ;
+         INT32           _sendQueryTaskReq ( UINT64 requestID,
+                                             const CHAR *clFullName,
+                                             const BSONObj* match ) ;
 
       private:
-         INT32           _startTask( const CHAR * objdata ) ;
+         INT32           _startTask( const BSONObj &obj ) ;
 
       private:
          omAgentOptions             _options ;
@@ -242,6 +253,7 @@ namespace engine
 
          UINT64                     _taskID ;
          MAPTASKQUERY               _mapTaskQuery ;
+         MAP_TASKINFO               _mapTaskInfo ;
 
    } ;
 

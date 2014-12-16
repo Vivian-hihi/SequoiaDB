@@ -458,7 +458,7 @@ namespace engine
    */
    BEGIN_OBJ_MSG_MAP( _omAgentMgr, _pmdObjBase )
       // TODO: add the map function here
-      // tzb
+      ON_MSG( MSG_BS_QUERY_RES, _onOMQueryTaskRes )
    END_OBJ_MSG_MAP()
 
    /*
@@ -679,7 +679,7 @@ namespace engine
 
       // 4. set force
       _sessionMgr.setForced() ;
-      
+
       return SDB_OK ;
    }
 
@@ -745,12 +745,69 @@ namespace engine
       }
    }
 
+   INT32 _omAgentMgr::_prepareTask()
+   {
+      INT32 rc = SDB_OK ;
+      ossScopedLock lock ( &_mgrLatch, SHARED ) ;
+      MAPTASKQUERY::iterator it = _mapTaskQuery.begin () ;
+      while ( it != _mapTaskQuery.end() )
+      {
+         // send query msg to catalog
+         rc = _sendQueryTaskReq ( it->first, OM_CS_DEPLOY_CL_TASKINFO,
+                                  &(it->second) ) ;
+         if ( SDB_OK != rc )
+         {
+            break ;
+         }
+         ++it ;
+      }
+      return rc ;
+   }
+
+   INT32 _omAgentMgr::_sendQueryTaskReq ( UINT64 requestID,
+                                          const CHAR * clFullName,
+                                          const BSONObj* match )
+   {
+      CHAR *pBuff = NULL ;
+      INT32 buffSize = 0 ;
+      MsgHeader *msg = NULL ;
+      INT32 rc = SDB_OK ;
+
+      rc = msgBuildQueryMsg ( &pBuff, &buffSize, clFullName, 0, requestID,
+                              0, -1, match, NULL, NULL, NULL ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+      msg = ( MsgHeader* )pBuff ;
+      msg->TID = 0 ;
+      msg->routeID.value = 0 ;
+
+      // send msg
+      rc = sendToOM( msg ) ;
+      PD_LOG ( PDDEBUG, "Send query[%s] to om[rc:%d]",
+               match->toString().c_str(), rc ) ;
+
+   done:
+      if ( pBuff )
+      {
+         SDB_OSS_FREE ( pBuff ) ;
+         pBuff = NULL ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
+
    void _omAgentMgr::onTimer( UINT64 timerID, UINT32 interval )
    {
       if ( _oneSecTimer == timerID )
       {
          //Check _deqShdDeletingSessions
          _sessionMgr.onTimer( interval ) ;
+
+         //prepare task
+         _prepareTask() ;
       }
       else if ( _nodeMonitorTimer == timerID )
       {
@@ -813,7 +870,7 @@ namespace engine
       }
 
       // primary node exist
-      if ( tmpPrimary >= 0 && tmpPrimary < _vecOmNode.size() )
+      if ( tmpPrimary >= 0 && (UINT32)tmpPrimary < _vecOmNode.size() )
       {
          rc = _netAgent.syncSend ( _vecOmNode[tmpPrimary],
                                    (void*)msg ) ;
@@ -880,7 +937,7 @@ namespace engine
       return SDB_OK ;
    }
 
-   INT32 _omAgentMgr::_onOMQueryTaskRes ( NET_HANDLE handle, MsgHeader * msg )
+   INT32 _omAgentMgr::_onOMQueryTaskRes ( NET_HANDLE handle, MsgHeader *msg )
    {
       MsgOpReply *res = ( MsgOpReply* )msg ;
       PD_LOG ( PDDEBUG, "Recieve omsvc query task response[requestID:%lld, "
@@ -897,9 +954,9 @@ namespace engine
       if ( SDB_DMS_EOC == res->flags ||
            SDB_CAT_TASK_NOTFOUND == res->flags )
       {
-         _mgrLatch.get_shared () ;
+         _mgrLatch.get() ;
          _mapTaskQuery.erase ( msg->requestID ) ;
-         _mgrLatch.release_shared () ;
+         _mgrLatch.release() ;
          PD_LOG ( PDINFO, "The query task[%lld] has 0 jobs", msg->requestID ) ;
       }
       else if ( SDB_OK != res->flags )
@@ -939,9 +996,27 @@ namespace engine
          // add task inner session
          {
             UINT32 index = 0 ;
+            UINT64 taskID = 0 ;
             while ( index < objList.size() )
             {
-               _startTask ( objList[index].objdata() ) ;
+               BSONObj tmpObj = objList[index].getOwned() ;
+               BSONElement e = tmpObj.getField( OM_TASKINFO_FIELD_TASKID ) ;
+               if ( !e.isNumber() )
+               {
+                  PD_LOG( PDERROR, "Get taskid from obj[%s] failed",
+                          tmpObj.toString().c_str() ) ;
+                  ++index ;
+                  continue ;
+               }
+               taskID = (UINT64)e.numberLong() ;
+
+               if ( !isTaskInfoExist( taskID ) )
+               {
+                  if ( SDB_OK == _startTask ( tmpObj ) )
+                  {
+                     registerTaskInfo( taskID, tmpObj ) ;
+                  }
+               }
                ++index ;
             }
          }
@@ -953,18 +1028,50 @@ namespace engine
       goto done ;
    }
 
-   INT32 _omAgentMgr::_startTask( const CHAR * objdata )
+   BOOLEAN _omAgentMgr::isTaskInfoExist( UINT64 taskID )
+   {
+      ossScopedLock lock( &_mgrLatch, SHARED ) ;
+      MAP_TASKINFO::iterator it = _mapTaskInfo.find( taskID ) ;
+      if ( it == _mapTaskInfo.end() )
+      {
+         return FALSE ;
+      }
+      return TRUE ;
+   }
+
+   void _omAgentMgr::registerTaskInfo( UINT64 taskID, const BSONObj &obj )
+   {
+      ossScopedLock lock( &_mgrLatch, EXCLUSIVE ) ;
+      _mapTaskInfo[ taskID ] = obj.getOwned() ;
+   }
+
+   void _omAgentMgr::submitTaskInfo( UINT64 taskID )
+   {
+      ossScopedLock lock( &_mgrLatch, EXCLUSIVE ) ;
+
+      MAP_TASKINFO::iterator it = _mapTaskInfo.find( taskID ) ;
+      if ( it != _mapTaskInfo.end() )
+      {
+         _mapTaskInfo.erase( it ) ;
+      }
+
+      if ( _mapTaskInfo.size() == 0 && !pmdGetKRCB()->isBusinessOK() )
+      {
+         // restore ok
+         pmdGetKRCB()->setBusinessOK( TRUE ) ;
+      }
+   }
+
+   INT32 _omAgentMgr::_startTask( const BSONObj &obj )
    {
       INT32 rc = SDB_OK ;
       INT32 taskType = OMA_TASK_UNKNOW ;
       EDUID eduID = PMD_INVALID_EDUID ;
-      BSONObj obj ;
       BSONObj data ;
-      
+
       // get task type and task detail
       try
       {
-         obj = BSONObj( objdata ).copy() ;
          rc = omaGetIntElement( obj, OMA_FIELD_TASKTYPE, taskType ) ;
          PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
                    "Get field[%s] failed, rc: %d", OMA_FIELD_TASKTYPE, rc ) ;
@@ -978,7 +1085,7 @@ namespace engine
          rc = SDB_SYS ;
          goto error ;
       }
-      
+
       // run task as a background job
       switch ( taskType )
       {
@@ -1014,7 +1121,7 @@ namespace engine
             rc = SDB_INVALIDARG ;
             break ;
       }
-      
+
    done:
       return rc ;
    error:
