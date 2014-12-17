@@ -148,7 +148,7 @@ namespace engine
 
 
    class RestToMSGTransfer ;
-   
+
    /*
       _pmdRestSession define
    */
@@ -162,7 +162,7 @@ namespace engine
          virtual INT32     getServiceType() const ;
          virtual SDB_SESSION_TYPE sessionType() const ;
 
-         INT32             run() ;
+         virtual INT32     run() ;
 
          // run1() will take place of run()
          INT32             run1() ;
