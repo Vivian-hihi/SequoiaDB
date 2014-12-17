@@ -270,9 +270,18 @@ namespace engine
          }
       }
 
-      // reallocate memory
-      _pResultBuffer = (CHAR*)SDB_OSS_REALLOC( _pResultBuffer,
-                                               RTN_BUFF_TO_PTR_SIZE( _resultBufferSize ) ) ;
+      if ( NULL == _pResultBuffer )
+      {
+         _pResultBuffer = ( CHAR* )SDB_OSS_MALLOC(
+                                 RTN_BUFF_TO_PTR_SIZE( _resultBufferSize ) ) ;
+      }
+      else
+      {
+         // reallocate memory
+         _pResultBuffer = (CHAR*)SDB_OSS_REALLOC(
+                                 RTN_BUFF_TO_REAL_PTR( _pResultBuffer ),
+                                 RTN_BUFF_TO_PTR_SIZE( _resultBufferSize ) ) ;
+      }
       // if reallocation fail, we exit
       if ( !_pResultBuffer )
       {
