@@ -196,7 +196,7 @@ namespace engine
          SDB_DPSCB *dpsCB = pmdGetKRCB()->getDPSCB() ;
          BSONObj hint = BSON( "" << AUTH_USR_INDEX_NAME ) ;
          rc = rtnUpdate( AUTH_USR_COLLECTION, condition, obj, hint,
-                         0, cb, dmsCB, dpsCB, &updatedNum ) ;
+                         0, cb, dmsCB, dpsCB, 1, &updatedNum ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "failed to update passwd for %s in %s:rc=%d", 
