@@ -275,6 +275,8 @@ namespace engine
          INT32       _convertSplit( restAdaptor *pAdaptor, MsgHeader **msg ) ;
          INT32       _convertListGroups( restAdaptor *pAdaptor,
                                          MsgHeader **msg ) ;
+         INT32       _convertAlterCollection( restAdaptor *pAdaptor,
+                                              MsgHeader **msg ) ;
 
       private:
          pmdRestSession    *_restSession ;

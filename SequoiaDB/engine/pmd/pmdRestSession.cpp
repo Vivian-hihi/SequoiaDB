@@ -468,7 +468,10 @@ namespace engine
          if ( contextBuff.recordNum() != 0 )
          {
             BSONObj errorInfo( contextBuff.data() ) ;
-            builder.append( OM_REST_RES_RETCODE, rc ) ;
+            if ( !errorInfo.hasField( OM_REST_RES_RETCODE ) )
+            {
+               builder.append( OM_REST_RES_RETCODE, rc ) ;
+            }
             builder.appendElements( errorInfo ) ;
          }
          else
@@ -976,6 +979,10 @@ namespace engine
       else if ( ossStrcasecmp( pSubCommand, CMD_NAME_LIST_GROUPS ) == 0 )
       {
          rc = _convertListGroups( pAdaptor, msg ) ;
+      }
+      else if ( ossStrcasecmp( pSubCommand, CMD_NAME_ALTER_COLLECTION ) == 0 )
+      {
+         rc = _convertAlterCollection( pAdaptor, msg ) ;
       }
       else
       {
@@ -1543,6 +1550,63 @@ namespace engine
       goto done ;
    }
 
+   INT32 RestToMSGTransfer::_convertAlterCollection( restAdaptor *pAdaptor,
+                                                     MsgHeader **msg )
+   {
+      INT32 rc              = SDB_OK ;
+      CHAR *pBuff           = NULL ;
+      INT32 buffSize        = 0 ;
+      const CHAR *pCommand  = CMD_ADMIN_PREFIX CMD_NAME_ALTER_COLLECTION ;
+      const CHAR *pOption   = NULL ;
+      const CHAR *pCollection = NULL ;
+      BSONObj option ;
+      BSONObj query ;
+
+      pAdaptor->getQuery( _restSession, REST_KEY_NAME_NAME, &pCollection ) ;
+      if ( NULL == pCollection )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "get collection's %s failed", 
+                     REST_KEY_NAME_NAME ) ;
+         goto error ;
+      }
+
+      pAdaptor->getQuery( _restSession, REST_KEY_NAME_OPTION, &pOption ) ;
+      if ( NULL == pOption )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "get alter collection's %s failed", 
+                     REST_KEY_NAME_OPTION ) ;
+         goto error ;
+      }
+      
+      rc = fromjson( pOption, option ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG_MSG( PDERROR, "field's format error:field=%s, value=%s", 
+                     REST_KEY_NAME_OPTION, pOption ) ;
+         goto error ;
+      }
+
+      query = BSON( FIELD_NAME_NAME << pCollection 
+                    << FIELD_NAME_OPTIONS << option ) ;
+      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0, 0, -1, &query, 
+                             NULL, NULL, NULL ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG_MSG( PDERROR, "build command failed:command=%s, rc=%d", 
+                     pCommand, rc ) ;
+         goto error ;
+      }
+
+      *msg = ( MsgHeader * )pBuff ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 RestToMSGTransfer::_convertSplit( restAdaptor *pAdaptor,
                                            MsgHeader **msg )
    {
@@ -1556,11 +1620,15 @@ namespace engine
       const CHAR *pCollection    = NULL ;
       const CHAR *pSplitQuery    = NULL ;
       const CHAR *pSplitEndQuery = NULL ;
-      bool bAsync = false ;
+      const CHAR *pPercent = NULL ;
+      BOOLEAN isUsePercent = FALSE ;
+      INT32 percent        = 0 ;
+      bool bAsync   = false ;
       BSONObj splitQuery ;
       BSONObj splitEndQuery ;
       BSONObj query ;
 
+      //1.REST_KEY_NAME_NAME & FIELD_NAME_SOURCE & FIELD_NAME_TARGET must exist
       pAdaptor->getQuery( _restSession, REST_KEY_NAME_NAME, 
                           &pCollection ) ;
       if ( NULL == pCollection )
@@ -1587,33 +1655,43 @@ namespace engine
          goto error ;
       }
 
-      pAdaptor->getQuery( _restSession, FIELD_NAME_SPLITQUERY, &pSplitQuery ) ;
-      if ( NULL == pSplitQuery )
+      //2.FIELD_NAME_SPLITENDQUERY pr FIELD_NAME_SPLITPERCENT must exist one 
+      pAdaptor->getQuery( _restSession, FIELD_NAME_SPLITPERCENT, &pPercent ) ;
+      if ( NULL == pPercent )
       {
-         rc = SDB_INVALIDARG ;
-         PD_LOG_MSG( PDERROR, "get split's %s failed", FIELD_NAME_SPLITQUERY ) ;
-         goto error ;
-      }
+         pAdaptor->getQuery( _restSession, FIELD_NAME_SPLITQUERY, &pSplitQuery ) ;
+         if ( NULL == pSplitQuery )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG_MSG( PDERROR, "get split's %s failed", FIELD_NAME_SPLITQUERY ) ;
+            goto error ;
+         }
 
-      rc = fromjson( pSplitQuery, splitQuery ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG_MSG( PDERROR, "field's format error:field=%s,value=%s", 
-                     FIELD_NAME_SPLITQUERY, pSplitQuery ) ;
-         goto error ;
-      }
-
-      pAdaptor->getQuery( _restSession, FIELD_NAME_SPLITENDQUERY, 
-                          &pSplitEndQuery ) ;
-      if ( NULL != pSplitEndQuery )
-      {
-         rc = fromjson( pSplitEndQuery, splitEndQuery ) ;
+         rc = fromjson( pSplitQuery, splitQuery ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG_MSG( PDERROR, "field's format error:field=%s,value=%s", 
-                        FIELD_NAME_SPLITENDQUERY, pSplitEndQuery ) ;
+                        FIELD_NAME_SPLITQUERY, pSplitQuery ) ;
             goto error ;
          }
+
+         pAdaptor->getQuery( _restSession, FIELD_NAME_SPLITENDQUERY, 
+                             &pSplitEndQuery ) ;
+         if ( NULL != pSplitEndQuery )
+         {
+            rc = fromjson( pSplitEndQuery, splitEndQuery ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG_MSG( PDERROR, "field's format error:field=%s,value=%s", 
+                           FIELD_NAME_SPLITENDQUERY, pSplitEndQuery ) ;
+               goto error ;
+            }
+         }
+      }
+      else 
+      {
+         isUsePercent = TRUE ;
+         percent      = ossAtoi( pPercent ) ;
       }
 
       pAdaptor->getQuery( _restSession, FIELD_NAME_ASYNC, &pAsync ) ;
@@ -1625,11 +1703,21 @@ namespace engine
          }
       }
 
-      query = BSON( FIELD_NAME_NAME << pCollection << FIELD_NAME_SOURCE
-                    << pSource << FIELD_NAME_TARGET << pTarget 
-                    << FIELD_NAME_SPLITQUERY << splitQuery 
-                    << FIELD_NAME_SPLITENDQUERY << splitEndQuery
-                    << FIELD_NAME_ASYNC << bAsync ) ;
+      if ( isUsePercent )
+      {
+         query = BSON( FIELD_NAME_NAME << pCollection << FIELD_NAME_SOURCE
+                       << pSource << FIELD_NAME_TARGET << pTarget 
+                       << FIELD_NAME_SPLITPERCENT << ( FLOAT64 )percent
+                       << FIELD_NAME_ASYNC << bAsync ) ;
+      }
+      else
+      {
+         query = BSON( FIELD_NAME_NAME << pCollection << FIELD_NAME_SOURCE
+                       << pSource << FIELD_NAME_TARGET << pTarget 
+                       << FIELD_NAME_SPLITQUERY << splitQuery 
+                       << FIELD_NAME_SPLITENDQUERY << splitEndQuery
+                       << FIELD_NAME_ASYNC << bAsync ) ;
+      }
 
       rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0, 0, -1, &query, 
                              NULL, NULL, NULL ) ;
