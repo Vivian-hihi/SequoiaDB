@@ -35,7 +35,6 @@ script/sdbwstop
 license/license_en.txt
 license/license_zh.txt
 tools/sdbsupport/readme.txt
-tools/sdbsupport/sdbdpsdump
 tools/sdbsupport/sdbsupportfunc1.sh
 tools/sdbsupport/sdbsupportfunc2.sh
 tools/sdbsupport/sdbsupport.sh
