@@ -47,6 +47,7 @@ public class BSONWritable implements WritableComparable {
     }
 
     public BSONWritable( BSONObject doc ){
+    	this();
         setBson(doc);
     }
 
