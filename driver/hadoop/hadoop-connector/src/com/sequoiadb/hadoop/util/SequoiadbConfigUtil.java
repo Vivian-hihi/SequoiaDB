@@ -158,7 +158,8 @@ public class SequoiadbConfigUtil {
 	}
 	
 	public static String  getPreferenceInstance( Configuration conf ){
-		return conf.get(JOB_PREFEREDINSTANCE,"slave");
+		
+		return conf.get(JOB_PREFEREDINSTANCE,null);
 	}
 	public static String getInputUser(Configuration conf){
 		return conf.get(JOB_INPUT_USER,null);

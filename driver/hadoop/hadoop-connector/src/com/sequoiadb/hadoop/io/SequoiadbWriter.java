@@ -74,7 +74,6 @@ public class SequoiadbWriter<K, V> extends RecordWriter<K, V> {
 		super();
 		this.sequoiadb = new Sequoiadb(sdbConnAddr.getHost(),
 				sdbConnAddr.getPort(), user, passwd);
-		log.info("collectionSpaceName:"+collectionSpaceName+"---collectionName:"+collectionName);
 		
 		CollectionSpace space=null;
 		if(sequoiadb.isCollectionSpaceExist(collectionSpaceName)){
@@ -106,7 +105,6 @@ public class SequoiadbWriter<K, V> extends RecordWriter<K, V> {
 		super();
 		this.sequoiadb = new Sequoiadb(sdbConnAddr.getHost(),
 				sdbConnAddr.getPort(), user, passwd);
-		log.info("collectionSpaceName:"+collectionSpaceName+"---collectionName:"+collectionName);
 		
 		CollectionSpace space=null;
 		if(sequoiadb.isCollectionSpaceExist(collectionSpaceName)){
