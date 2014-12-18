@@ -265,6 +265,8 @@ namespace engine
                                          MsgHeader **msg ) ;
          INT32       _convertAlterCollection( restAdaptor *pAdaptor,
                                               MsgHeader **msg ) ;
+         INT32       _convertGetCount( restAdaptor *pAdaptor, 
+                                       MsgHeader **msg ) ;
 
       private:
          pmdRestSession    *_restSession ;

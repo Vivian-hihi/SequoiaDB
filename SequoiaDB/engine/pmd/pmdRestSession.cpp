@@ -984,6 +984,10 @@ namespace engine
       {
          rc = _convertAlterCollection( pAdaptor, msg ) ;
       }
+      else if ( ossStrcasecmp( pSubCommand, CMD_NAME_GET_COUNT ) == 0 )
+      {
+         rc = _convertGetCount( pAdaptor, msg ) ;
+      }
       else
       {
          PD_LOG_MSG( PDERROR, "unsupported command:command=%s", pSubCommand ) ;
@@ -1306,13 +1310,6 @@ namespace engine
          if ( NULL != pReturnRow )
          {
             returnRow = ossAtoi( pReturnRow ) ;
-            if ( returnRow > REST_QUERY_MAX_RETURN_ROW )
-            {
-               rc = SDB_INVALIDARG ;
-               PD_LOG_MSG( PDERROR, "%s is too long, max is %d", 
-                           FIELD_NAME_RETURN_NUM, REST_QUERY_MAX_RETURN_ROW ) ;
-               goto error ;
-            }
          }
 
 
@@ -1746,6 +1743,80 @@ namespace engine
 
       rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0, 0, -1, NULL, 
                              NULL, NULL, NULL ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG_MSG( PDERROR, "build command failed:command=%s, rc=%d", 
+                     pCommand, rc ) ;
+         goto error ;
+      }
+
+      *msg = ( MsgHeader * )pBuff ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 RestToMSGTransfer::_convertGetCount( restAdaptor *pAdaptor,
+                                              MsgHeader **msg )
+   {
+      INT32 rc              = SDB_OK ;
+      CHAR *pBuff           = NULL ;
+      INT32 buffSize        = 0 ;
+      const CHAR *pCommand  = CMD_ADMIN_PREFIX CMD_NAME_GET_COUNT ;
+      const CHAR *pCollection = NULL ;
+      const CHAR *pMatcher    = NULL ;
+      const CHAR *pHint       = NULL ;
+      BSONObj matcher ;
+      BSONObj hint ;
+
+      pAdaptor->getQuery( _restSession, FIELD_NAME_NAME, 
+                          &pCollection ) ;
+      if ( NULL == pCollection )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "get collection's %s failed", FIELD_NAME_NAME ) ;
+         goto error ;
+      }
+
+      pAdaptor->getQuery( _restSession, REST_KEY_NAME_MATCHER, &pMatcher ) ;
+      if ( NULL != pMatcher )
+      {
+         rc = fromjson( pMatcher, matcher ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG_MSG( PDERROR, "field's format error:field=%s,value=%s", 
+                        REST_KEY_NAME_MATCHER, pMatcher ) ;
+            goto error ;
+         }
+      }
+
+      pAdaptor->getQuery( _restSession, FIELD_NAME_HINT, &pHint ) ;
+      if ( NULL != pHint )
+      {
+         rc = fromjson( pHint, hint ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG_MSG( PDERROR, "field's format error:field=%s,value=%s", 
+                        FIELD_NAME_HINT, pHint ) ;
+            goto error ;
+         }
+      }
+
+      {
+         BSONObjBuilder builder ;
+         builder.append( FIELD_NAME_COLLECTION, pCollection ) ;
+         if ( !hint.isEmpty() )
+         {
+            builder.append( FIELD_NAME_HINT, hint ) ;
+         }
+
+         hint = builder.obj() ;
+      }
+      
+      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0, 0, -1, &matcher, 
+                             NULL, NULL, &hint ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG_MSG( PDERROR, "build command failed:command=%s, rc=%d", 
