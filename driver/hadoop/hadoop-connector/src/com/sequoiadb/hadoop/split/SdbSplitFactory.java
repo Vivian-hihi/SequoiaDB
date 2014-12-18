@@ -62,6 +62,10 @@ public class SdbSplitFactory {
 
 		String urls = SequoiadbConfigUtil.getInputURL(conf);
 		SdbConnAddr[] sdbConnAddrs = SequoiadbConfigUtil.getAddrList(urls);
+		
+		String user = SequoiadbConfigUtil.getInputUser(conf);
+		String passwd = SequoiadbConfigUtil.getInputPasswd(conf);
+		
 		String preferedInstance=SequoiadbConfigUtil.getPreferenceInstance(conf);
 		String collectionName = SequoiadbConfigUtil.getInCollectionName(conf);
 		String collectionSpaceName = SequoiadbConfigUtil.getInCollectionSpaceName(conf);
@@ -74,7 +78,28 @@ public class SdbSplitFactory {
 		for (int i = 0; i < sdbConnAddrs.length; i++) {
 			try {
 				sdb = new Sequoiadb(sdbConnAddrs[i].getHost(),
-						sdbConnAddrs[i].getPort(), null, null);
+						sdbConnAddrs[i].getPort(), user, passwd);
+				
+				//check preferedInstance's type
+				if (preferedInstance.equalsIgnoreCase("slave")){
+					preferedInstance = "S";
+				}else if(preferedInstance.equalsIgnoreCase("master")){
+					preferedInstance = "M";
+				}else if(preferedInstance.equalsIgnoreCase("anyone")){
+					preferedInstance = "A";
+				}else if(preferedInstance.equalsIgnoreCase("node1") ||
+						 preferedInstance.equalsIgnoreCase("node2") ||
+						 preferedInstance.equalsIgnoreCase("node3") ||
+						 preferedInstance.equalsIgnoreCase("node4") ||
+						 preferedInstance.equalsIgnoreCase("node5") ||
+						 preferedInstance.equalsIgnoreCase("node6") ||
+						 preferedInstance.equalsIgnoreCase("node7"))
+				{
+					preferedInstance = preferedInstance.substring(4, 5);
+				}else{
+					log.warn("conf set 'preferedInstance' = " + preferedInstance + ", this type is undefine, use preferedInstance = 'slave'");
+					preferedInstance = "S";
+				}
 				sdb.setSessionAttr(new BasicBSONObject("PreferedInstance",preferedInstance));
 				break;
 			} catch (BaseException e) {
@@ -110,8 +135,10 @@ public class SdbSplitFactory {
     		try {
     			queryBson = (BSONObject) JSON.parse( queryStr );
 			} catch (Exception e) {
-				throw new IllegalArgumentException(
-						"sequoiadb.query.json is wrong");
+				queryBson = null;
+				log.warn("query string is error");
+//				throw new IllegalArgumentException(
+//						"sequoiadb.query.json is wrong");
 			}
     	}
     	if ( selectorStr != null){ 
@@ -119,8 +146,10 @@ public class SdbSplitFactory {
     			selectorBson = (BSONObject) JSON.parse( selectorStr );
     			selectorBson.put("_id", null);
 			} catch (Exception e) {
-				throw new IllegalArgumentException(
-						"sequoiadb.selector.json is wrong");
+				selectorBson = null;
+				log.warn("selector string is error");
+//				throw new IllegalArgumentException(
+//						"sequoiadb.selector.json is wrong");
 			}
     	}
     	log.info("explain");

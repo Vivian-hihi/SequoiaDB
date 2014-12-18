@@ -50,6 +50,10 @@ public class SequoiadbBlockReader extends RecordReader<Object, BSONWritable> {
     	if(inputSplit==null||!(inputSplit instanceof SdbBlockSplit)){
     		throw new IllegalArgumentException("the inputsplit is not SdbBlockSplit" );
     	}
+    	
+		String user = SequoiadbConfigUtil.getInputUser(conf);
+		String passwd = SequoiadbConfigUtil.getInputPasswd(conf);
+		
     	String collectionName = SequoiadbConfigUtil.getInCollectionName(conf);
 		String collectionSpaceName = SequoiadbConfigUtil.getInCollectionSpaceName(conf);
 		String queryStr = SequoiadbConfigUtil.getQueryString(conf);
@@ -61,7 +65,7 @@ public class SequoiadbBlockReader extends RecordReader<Object, BSONWritable> {
     		throw new IllegalArgumentException(" the SdbBlockSplit.sdbaddr is null");
     	}
     	
-    	this.sequoiadb = new Sequoiadb(this.sdbBlockSplit.getSdbAddr().getHost(), this.sdbBlockSplit.getSdbAddr().getPort(),null,null);
+    	this.sequoiadb = new Sequoiadb(this.sdbBlockSplit.getSdbAddr().getHost(), this.sdbBlockSplit.getSdbAddr().getPort(),user,passwd);
     	CollectionSpace collectionSpace=sequoiadb.getCollectionSpace(collectionSpaceName);
     	if(collectionSpace==null){
     		throw new IllegalArgumentException(" the CS not exists");
@@ -88,6 +92,8 @@ public class SequoiadbBlockReader extends RecordReader<Object, BSONWritable> {
     		try {
     			queryBson = (BSONObject) JSON.parse( queryStr );
 			} catch (Exception e) {
+				log.warn("query string is error");
+				queryBson = null;
 			}
     		log.info( "queryBson = " + queryBson.toString() );
     	}
@@ -96,6 +102,8 @@ public class SequoiadbBlockReader extends RecordReader<Object, BSONWritable> {
     			selectorBson = (BSONObject) JSON.parse( selectorStr );
     			selectorBson.put("_id", null);
 			} catch (Exception e) {
+				log.warn("selector string is error");
+				selectorBson = null;
 				
 			}
     		log.info( "selectorBson = " + selectorBson.toString() );
