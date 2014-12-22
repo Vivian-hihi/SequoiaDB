@@ -48,7 +48,6 @@
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/shared_ptr.hpp>
 #include <map>
-using namespace boost ;
 using namespace boost::asio ;
 using namespace boost::asio::ip ;
 // the caller is taking message as input, and may or may not allocate reply

@@ -46,7 +46,6 @@
 #include <boost/spirit/include/classic_ast.hpp>
 #include <boost/spirit/include/classic_core.hpp>
 
-using namespace boost ;
 using namespace BOOST_SPIRIT_CLASSIC_NS ;
 using namespace boost::spirit ;
 
