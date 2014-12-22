@@ -50,24 +50,6 @@
 
 namespace engine
 {
-   /*class _restConvertMsg : public SDBObject
-   {
-   public:
-      INT32 buildInsertMsg ( CHAR **ppBuffer,
-                             INT32 *pBufferSize,
-                             const CHAR *pCollectionName,
-                             const CHAR *pInsertor ) ;
-      INT32 buildQueryMsg( CHAR **ppBuffer,
-                           INT32 *pBufferSize,
-                           const CHAR *pCollectionName,
-                           SINT64 numToSkip,
-                           SINT64 numToReturn,
-                           const CHAR *pCondition,
-                           const CHAR *pSelector,
-                           const CHAR *pOrderby,
-                           const CHAR *pHint ) ;
-   } ;*/
-
    class restAdaptor : public SDBObject
    {
    private:
@@ -95,10 +77,6 @@ namespace engine
                                             CHAR *pBuffer,
                                             INT32 bufferSize,
                                             INT32 &bodyOffset ) ;
-      /*INT32 _switchMsg( httpConnection *pHttpCon,
-                        HTTP_PARSE_COMMON common,
-                        CHAR **ppMsg,
-                        INT32 &msgSize ) ;*/
       INT32 _convertMsg( pmdRestSession *pSession,
                          HTTP_PARSE_COMMON &common,
                          CHAR **ppMsg,
@@ -106,13 +84,13 @@ namespace engine
       void _getQuery( httpConnection *pHttpCon,
                       const CHAR *pKey,
                       const CHAR **ppValue ) ;
-      /*INT32 _query2Msg( httpConnection *pHttpCon,
-                        HTTP_PARSE_COMMON &common,
-                        CHAR **ppMsg,
-                        INT32 &msgSize ) ;*/
-      INT32 _getStringLen( httpConnection *pHttpCon,
-                           const CHAR *pBuff ) ;
       void _paraInit( httpConnection *pHttpCon ) ;
+      INT32 _sendHttpHeader( pmdRestSession *pSession,
+                             HTTP_RESPONSE_CODE rspCode ) ;
+      INT32 _sendHttpChunk( pmdRestSession *pSession,
+                            const CHAR *pBuffer,
+                            INT32 length ) ;
+      INT32 _setResponseType( pmdRestSession *pSession ) ;
    public:
       restAdaptor() ;
       ~restAdaptor() ;
@@ -144,6 +122,7 @@ namespace engine
                             const CHAR *pBuffer,
                             INT32 length,
                             INT32 number = 0 ) ;
+      INT32 setChunkModal( pmdRestSession *pSession ) ;
       HTTP_FILE_TYPE getFileType( pmdRestSession *pSession ) ;
       void clearHtttpBody( pmdRestSession *pSession ) ;
    } ;
