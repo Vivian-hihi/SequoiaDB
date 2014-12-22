@@ -512,17 +512,24 @@ namespace engine
                {
                   _pRTNCB->contextDelete( contextID, _pEDUCB ) ;
                   contextID = -1 ;
-                  if ( SDB_DMS_EOC == rc )
+                  if ( SDB_DMS_EOC != rc )
                   {
-                     rc = SDB_OK ;
+                     PD_LOG( PDERROR, "getmore failed:rc=%d", rc ) ;
+                     goto error ;
                   }
 
+                  rc = SDB_OK ;
                   break ;
                }
 
-               pAdaptor->appendHttpBody( this, tmpContextBuff.data(), 
-                                         tmpContextBuff.size(), 
-                                         tmpContextBuff.recordNum() ) ;
+               rc = pAdaptor->appendHttpBody( this, tmpContextBuff.data(), 
+                                              tmpContextBuff.size(), 
+                                              tmpContextBuff.recordNum() ) ;
+               if ( SDB_OK != rc )
+               {
+                  PD_LOG( PDERROR, "append http body failed:rc=%d", rc ) ;
+                  goto error ;
+               }
             }
          }
       }
