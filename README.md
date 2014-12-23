@@ -75,8 +75,8 @@ Building Prerequisites:
 -----------------
 	scons ( 2.3.0 )
 	ant ( 1.8.2 )
-        Python ( 2.7.3 )
-        PostgreSQL ( 9.3.4 )
+	Python ( 2.7.3 )
+	PostgreSQL ( 9.3.4 )
 	Linux x86-64:
 		g++ ( 4.3.4 )
 		gcc ( 4.3.4 )
