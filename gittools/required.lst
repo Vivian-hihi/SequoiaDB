@@ -46,6 +46,4 @@ tools/sdbsupport/expect/readme.txt
 tools/sdbsupport/expect/tcl
 tools/sdbsupport/lib/tcl8.4
 tools/server/php_linux
-tools/server/php_power
-tools/server/php_win
 package/conf/rpm/sequoiadb.spec
