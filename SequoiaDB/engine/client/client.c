@@ -56,6 +56,19 @@ do                                                      \
    }                                                    \
 }while( FALSE )
 
+#define CHECK_RET_MSGHEADER( pSendBuf, pRecvBuf, connHandle ) \
+do                                                            \
+{                                                             \
+   rc = clientCheckRetMsgHeader( pSendBuf, pRecvBuf ) ;       \
+   if ( SDB_OK != rc )                                        \
+   {                                                          \
+      if ( SDB_UNEXPECTED_RESULT == rc )                      \
+      {                                                       \
+         _sdbDisconnect_inner( connHandle ) ;                 \
+      }                                                       \
+      goto error ;                                            \
+   }                                                          \
+}while( FALSE )
 
 #define ALLOC_HANDLE( handle, type )                      \
 do                                                        \
@@ -551,6 +564,8 @@ static INT32 _readNextBuffer ( sdbCursorHandle cursor )
    {
       goto error ;
    }
+   CHECK_RET_MSGHEADER( pCursor->_pSendBuffer, pCursor->_pReceiveBuffer,
+                        pCursor->_connection ) ;
 done :
    return rc ;
 error :
@@ -595,6 +610,8 @@ static INT32 _runCommand ( sdbConnectionHandle cHandle, SOCKET sock,
    {
       goto error ;
    }
+   CHECK_RET_MSGHEADER( *ppSendBuffer, *ppReceiveBuffer, cHandle ) ;
+
 done :
    return rc ;
 error :
@@ -897,6 +914,8 @@ static INT32 __sdbUpdate ( sdbCollectionHandle cHandle,
    {
       goto error ;
    }
+   CHECK_RET_MSGHEADER( cs->_pSendBuffer, cs->_pReceiveBuffer,
+                        cs->_connection ) ;
 done :
    return rc ;
 error :
@@ -1034,6 +1053,8 @@ static INT32 _sdbGetList ( sdbConnectionHandle cHandle,
       goto error ;
    }
 
+   CHECK_RET_MSGHEADER( connection->_pSendBuffer, connection->_pReceiveBuffer,
+		        cHandle ) ;
    ALLOC_HANDLE( cursor, sdbCursorStruct ) ;
    INIT_CURSOR ( cursor, connection, connection, contextID ) ;
 
@@ -1279,7 +1300,9 @@ SDB_EXPORT INT32 sdbConnect ( const CHAR *pHostName, const CHAR *pServiceName,
    {
       goto error ;
    }
-
+   // check return msg header
+   CHECK_RET_MSGHEADER( connection->_pSendBuffer, connection->_pReceiveBuffer,
+                        (sdbConnectionHandle)connection ) ;
    // set the return handle
    *handle = (sdbConnectionHandle)connection ;
 done:
@@ -1483,6 +1506,8 @@ SDB_EXPORT INT32 sdbGetDataBlocks ( sdbCollectionHandle cHandle,
       goto error ;
    }
 
+   // check return msg header
+   CHECK_RET_MSGHEADER( cs->_pSendBuffer, cs->_pReceiveBuffer, cHandle ) ;
    ALLOC_HANDLE( cursor, sdbCursorStruct ) ;
    INIT_CURSOR ( cursor, cs->_connection, cs, contextID ) ;
 
@@ -1559,6 +1584,8 @@ SDB_EXPORT INT32 sdbGetQueryMeta ( sdbCollectionHandle cHandle,
       goto error ;
    }
 
+   // check return msg header
+   CHECK_RET_MSGHEADER( cs->_pSendBuffer, cs->_pReceiveBuffer, cHandle ) ;
    ALLOC_HANDLE( cursor, sdbCursorStruct ) ;
    INIT_CURSOR( cursor, cs->_connection, cs, contextID ) ;
 
@@ -1643,7 +1670,9 @@ SDB_EXPORT INT32 sdbGetSnapshot ( sdbConnectionHandle cHandle,
    {
       goto error ;
    }
-
+   // check return msg header
+   CHECK_RET_MSGHEADER( connection->_pSendBuffer, connection->_pReceiveBuffer,
+                        cHandle ) ;
    ALLOC_HANDLE( cursor, sdbCursorStruct ) ;
    INIT_CURSOR( cursor, connection, connection, contextID ) ;
    // register cursor in connection
@@ -1710,6 +1739,9 @@ SDB_EXPORT INT32 sdbCreateUsr( sdbConnectionHandle cHandle,
    {
       goto error ;
    }
+   // check return msg header
+   CHECK_RET_MSGHEADER( connection->_pSendBuffer, connection->_pReceiveBuffer,
+                        cHandle ) ;
 done:
   return rc ;
 error:
@@ -1760,6 +1792,9 @@ SDB_EXPORT INT32 sdbRemoveUsr( sdbConnectionHandle cHandle,
    {
       goto error ;
    }
+   // check return msg header
+   CHECK_RET_MSGHEADER( connection->_pSendBuffer, connection->_pReceiveBuffer,
+                        cHandle ) ;
 done:
   return rc ;
 error:
@@ -3165,6 +3200,9 @@ SDB_EXPORT INT32 sdbFlushConfigure( sdbConnectionHandle cHandle,
    {
       goto error ;
    }
+   // check return msg header
+   CHECK_RET_MSGHEADER( connection->_pSendBuffer, connection->_pReceiveBuffer,
+                        cHandle ) ;
 done:
    return rc ;
 error:
@@ -3219,6 +3257,9 @@ SDB_EXPORT INT32 sdbCrtJSProcedure( sdbConnectionHandle cHandle,
    {
       goto error ;
    }
+   // check return msg header
+   CHECK_RET_MSGHEADER( connection->_pSendBuffer, connection->_pReceiveBuffer,
+                        cHandle ) ;
 done:
    BSON_DESTROY( bs ) ;
    return rc ;
@@ -3272,6 +3313,9 @@ SDB_EXPORT INT32 sdbRmProcedure( sdbConnectionHandle cHandle,
    {
       goto error ;
    }
+   // check return msg header
+   CHECK_RET_MSGHEADER( connection->_pSendBuffer, connection->_pReceiveBuffer,
+                        cHandle ) ;
 done:
    BSON_DESTROY( bs ) ;
    return rc ;
@@ -3344,7 +3388,9 @@ SDB_EXPORT INT32 sdbEvalJS(sdbConnectionHandle cHandle,
    {
       goto error ;
    }
-
+   // check return msg header
+   CHECK_RET_MSGHEADER( connection->_pSendBuffer, connection->_pReceiveBuffer,
+                        cHandle ) ;
    ALLOC_HANDLE( cursor, sdbCursorStruct ) ;
    INIT_CURSOR( cursor, connection, connection, contextID );
 
@@ -3562,6 +3608,9 @@ SDB_EXPORT INT32 sdbAlterCollection ( sdbCollectionHandle cHandle,
    {
       goto error ;
    }
+   // check return msg header
+   CHECK_RET_MSGHEADER( cs->_pSendBuffer, cs->_pReceiveBuffer,
+                        cs->_connection) ;
 done :
    BSON_DESTROY( newObj ) ;
    return rc ;
@@ -3689,6 +3738,9 @@ SDB_EXPORT INT32 sdbSplitCollection ( sdbCollectionHandle cHandle,
    {
       goto error ;
    }
+   // check return msg header
+   CHECK_RET_MSGHEADER( cs->_pSendBuffer, cs->_pReceiveBuffer,
+                        cs->_connection ) ;
 done :
    BSON_DESTROY( newObj ) ;
    return rc ;
@@ -3764,6 +3816,9 @@ SDB_EXPORT INT32 sdbSplitCLAsync ( sdbCollectionHandle cHandle,
    {
       goto error ;
    }
+   // check return msg header
+   CHECK_RET_MSGHEADER( cs->_pSendBuffer, cs->_pReceiveBuffer,
+                        cs->_connection ) ;
    // build a cursor
    ALLOC_HANDLE( cursor, sdbCursorStruct ) ;
    INIT_CURSOR( cursor, cs->_connection, cs, contextID ) ;
@@ -3852,6 +3907,9 @@ SDB_EXPORT INT32 sdbSplitCollectionByPercent( sdbCollectionHandle cHandle,
    {
       goto error ;
    }
+   // check return msg header
+   CHECK_RET_MSGHEADER( cs->_pSendBuffer, cs->_pReceiveBuffer,
+                        cs->_connection ) ;
 done :
    BSON_DESTROY( newObj ) ;
    return rc ;
@@ -3920,7 +3978,9 @@ SDB_EXPORT INT32 sdbSplitCLByPercentAsync ( sdbCollectionHandle cHandle,
    {
       goto error ;
    }
-
+   // check return msg header
+   CHECK_RET_MSGHEADER( cs->_pSendBuffer, cs->_pReceiveBuffer,
+                        cs->_connection ) ;
    ALLOC_HANDLE( cursor, sdbCursorStruct ) ;
    INIT_CURSOR( cursor, cs->_connection, cs, contextID );
    ossMemcpy ( cursor->_collectionFullName, cs->_collectionFullName,
@@ -4080,6 +4140,9 @@ SDB_EXPORT INT32 sdbCreateIndex ( sdbCollectionHandle cHandle,
    {
       goto error ;
    }
+   // check return msg header
+   CHECK_RET_MSGHEADER( cs->_pSendBuffer, cs->_pReceiveBuffer,
+                        cs->_connection ) ;
 done :
    BSON_DESTROY( indexObj ) ;
    BSON_DESTROY( newObj ) ;
@@ -4151,7 +4214,9 @@ SDB_EXPORT INT32 sdbGetIndexes ( sdbCollectionHandle cHandle,
    {
       goto error ;
    }
-
+   // check return msg header
+   CHECK_RET_MSGHEADER( cs->_pSendBuffer, cs->_pReceiveBuffer,
+                        cs->_connection ) ;
    ALLOC_HANDLE( cursor, sdbCursorStruct ) ;
    INIT_CURSOR( cursor, cs->_connection, cs, contextID ) ;
    ossMemcpy ( cursor->_collectionFullName, cs->_collectionFullName,
@@ -4227,6 +4292,9 @@ SDB_EXPORT INT32 sdbDropIndex ( sdbCollectionHandle cHandle,
    {
       goto error ;
    }
+   // check return msg header
+   CHECK_RET_MSGHEADER( cs->_pSendBuffer, cs->_pReceiveBuffer,
+                        cs->_connection ) ;
 done :
    BSON_DESTROY( indexObj ) ;
    BSON_DESTROY( newObj ) ;
@@ -4304,7 +4372,9 @@ SDB_EXPORT INT32 sdbGetCount1 ( sdbCollectionHandle cHandle,
    {
       goto error ;
    }
-
+   // check return msg header
+   CHECK_RET_MSGHEADER( cs->_pSendBuffer, cs->_pReceiveBuffer,
+                        cs->_connection ) ;
    ALLOC_HANDLE( cursor, sdbCursorStruct ) ;
    INIT_CURSOR( cursor, cs->_connection, cs, contextID ) ;
    ossMemcpy ( cursor->_collectionFullName, cs->_collectionFullName,
@@ -4383,6 +4453,9 @@ SDB_EXPORT INT32 sdbInsert1 ( sdbCollectionHandle cHandle,
    {
       goto error ;
    }
+   // check return msg header
+   CHECK_RET_MSGHEADER( cs->_pSendBuffer, cs->_pReceiveBuffer,
+                        cs->_connection ) ;
 done :
    if ( id )
    {
@@ -4454,6 +4527,9 @@ SDB_EXPORT INT32 sdbBulkInsert ( sdbCollectionHandle cHandle,
    {
       goto error ;
    }
+   // check return msg header
+   CHECK_RET_MSGHEADER( cs->_pSendBuffer, cs->_pReceiveBuffer,
+                        cs->_connection ) ;
 done :
    return rc ;
 error :
@@ -4594,6 +4670,9 @@ SDB_EXPORT INT32 sdbDelete ( sdbCollectionHandle cHandle,
    {
       goto error ;
    }
+   // check return msg header
+   CHECK_RET_MSGHEADER( cs->_pSendBuffer, cs->_pReceiveBuffer,
+                        cs->_connection ) ;
 done :
    return rc ;
 error :
@@ -4714,7 +4793,8 @@ SDB_EXPORT INT32 sdbQuery1 ( sdbCollectionHandle cHandle,
    {
       goto error ;
    }
-
+   CHECK_RET_MSGHEADER( cs->_pSendBuffer, cs->_pReceiveBuffer,
+                        cs->_connection ) ;
    ALLOC_HANDLE( cursor, sdbCursorStruct ) ;
    INIT_CURSOR( cursor, cs->_connection, cs, contextID ) ;
    ossMemcpy ( cursor->_collectionFullName, cs->_collectionFullName,
@@ -5251,6 +5331,9 @@ SDB_EXPORT INT32 sdbCloseCursor ( sdbCursorHandle cHandle )
                        (MsgHeader**)&cs->_pReceiveBuffer,
                        &cs->_receiveBufferSize, &contextID,
                        &result, cs->_endianConvert ) ;
+   // check return msg header
+   CHECK_RET_MSGHEADER( cs->_pSendBuffer, cs->_pReceiveBuffer,
+                        cs->_connection ) ;
    // unregister from connection
    _unregCursor ( cs->_connection, cHandle ) ;
    cs->_contextID = -1 ;
@@ -5545,7 +5628,9 @@ SDB_EXPORT INT32 sdbTraceStatus ( sdbConnectionHandle cHandle,
    {
       goto error ;
    }
-
+   // check return msg header
+   CHECK_RET_MSGHEADER( connection->_pSendBuffer, connection->_pReceiveBuffer,
+                        cHandle ) ;
    ALLOC_HANDLE( cursor, sdbCursorStruct ) ;
    INIT_CURSOR( cursor, connection, connection, contextID );
 
@@ -5613,6 +5698,9 @@ SDB_EXPORT INT32 sdbExecUpdate( sdbConnectionHandle cHandle,
    {
       goto error ;
    }
+   // check return msg header
+   CHECK_RET_MSGHEADER( connection->_pSendBuffer, connection->_pReceiveBuffer,
+                        cHandle ) ;
 done :
    return rc ;
 error :
@@ -5664,7 +5752,9 @@ SDB_EXPORT INT32 sdbExec( sdbConnectionHandle cHandle,
    {
       goto error ;
    }
-
+   // check return msg header
+   CHECK_RET_MSGHEADER( connection->_pSendBuffer, connection->_pReceiveBuffer,
+                        cHandle ) ;
    ALLOC_HANDLE( cursor, sdbCursorStruct ) ;
    INIT_CURSOR( cursor, connection, connection, contextID ) ;
    // register cursor in connection
@@ -5721,6 +5811,9 @@ SDB_EXPORT INT32 sdbTransactionBegin( sdbConnectionHandle cHandle )
    {
       goto error ;
    }
+   // check return msg header
+   CHECK_RET_MSGHEADER( connection->_pSendBuffer, connection->_pReceiveBuffer,
+                        cHandle ) ;
 done :
    return rc ;
 error :
@@ -5758,6 +5851,9 @@ SDB_EXPORT INT32 sdbTransactionCommit( sdbConnectionHandle cHandle )
    {
       goto error ;
    }
+   // check return msg header
+   CHECK_RET_MSGHEADER( connection->_pSendBuffer, connection->_pReceiveBuffer,
+                        cHandle ) ;
 done :
    return rc ;
 error :
@@ -5795,6 +5891,9 @@ SDB_EXPORT INT32 sdbTransactionRollback( sdbConnectionHandle cHandle )
    {
       goto error ;
    }
+   // check return msg header
+   CHECK_RET_MSGHEADER( connection->_pSendBuffer, connection->_pReceiveBuffer,
+                        cHandle ) ;
 done :
    return rc ;
 error :
@@ -6054,7 +6153,9 @@ SDB_EXPORT INT32 sdbAggregate ( sdbCollectionHandle cHandle,
    {
       goto error;
    }
-
+   // check return msg header
+   CHECK_RET_MSGHEADER( sdbCL->_pSendBuffer, sdbCL->_pReceiveBuffer,
+                        sdbCL->_connection ) ;
    ALLOC_HANDLE( cursor, sdbCursorStruct );
    INIT_CURSOR( cursor, sdbCL->_connection, sdbCL, contextID );
    // register cursor in connection
@@ -6130,6 +6231,8 @@ SDB_EXPORT INT32 sdbAttachCollection ( sdbCollectionHandle cHandle,
    {
       goto error ;
    }
+   CHECK_RET_MSGHEADER( cs->_pSendBuffer, cs->_pReceiveBuffer,
+                        cs->_connection ) ;
 done :
    BSON_DESTROY( newObj ) ;
    return rc ;
@@ -6185,6 +6288,9 @@ SDB_EXPORT INT32 sdbDetachCollection( sdbCollectionHandle cHandle,
    {
       goto error ;
    }
+   // check the return header
+   CHECK_RET_MSGHEADER( cs->_pSendBuffer, cs->_pReceiveBuffer,
+                        cs->_connection ) ;
 done :
    BSON_DESTROY( newObj ) ;
    return rc ;
@@ -6242,6 +6348,9 @@ SDB_EXPORT INT32 sdbBackupOffline ( sdbConnectionHandle cHandle,
    {
       goto error ;
    }
+   // check the return header
+   CHECK_RET_MSGHEADER( connection->_pSendBuffer, connection->_pReceiveBuffer,
+                        cHandle ) ;
 done :
    BSON_DESTROY( newObj ) ;
    return rc ;
@@ -6309,7 +6418,9 @@ SDB_EXPORT INT32 sdbListBackup ( sdbConnectionHandle cHandle,
    {
       goto error ;
    }
-
+   // check the return header
+   CHECK_RET_MSGHEADER( connection->_pSendBuffer, connection->_pReceiveBuffer,
+                        cHandle ) ;
    ALLOC_HANDLE( cursor, sdbCursorStruct ) ;
    INIT_CURSOR( cursor, connection, connection, contextID ) ;
 
@@ -6381,6 +6492,9 @@ SDB_EXPORT INT32 sdbRemoveBackup ( sdbConnectionHandle cHandle,
    {
       goto error ;
    }
+   // check the return header
+   CHECK_RET_MSGHEADER( connection->_pSendBuffer, connection->_pReceiveBuffer,
+                        cHandle ) ;
 done :
    BSON_DESTROY( newObj ) ;
    return rc ;
@@ -6478,6 +6592,9 @@ SDB_EXPORT INT32 sdbWaitTasks ( sdbConnectionHandle cHandle,
    {
       goto error ;
    }
+   // check the return header
+   CHECK_RET_MSGHEADER( connection->_pSendBuffer, connection->_pReceiveBuffer,
+                        cHandle ) ;
 done :
    BSON_DESTROY( newObj ) ;
    return rc ;
@@ -6535,6 +6652,9 @@ SDB_EXPORT INT32 sdbCancelTask ( sdbConnectionHandle cHandle,
    {
       goto error ;
    }
+   // check the return header
+   CHECK_RET_MSGHEADER( connection->_pSendBuffer, connection->_pReceiveBuffer,
+                        cHandle ) ;
 done :
    BSON_DESTROY( newObj ) ;
    return rc ;
@@ -6637,6 +6757,9 @@ SDB_EXPORT INT32 sdbSetSessionAttr ( sdbConnectionHandle cHandle,
    {
       goto error ;
    }
+   // check the return header
+   CHECK_RET_MSGHEADER( connection->_pSendBuffer, connection->_pReceiveBuffer,
+                        cHandle ) ;
 done :
    BSON_DESTROY( newObj ) ;
    return rc ;
@@ -6680,6 +6803,9 @@ SDB_EXPORT INT32 _sdbMsg ( sdbConnectionHandle cHandle, const CHAR *msg )
    {
       goto error ;
    }
+   // check the return header
+   CHECK_RET_MSGHEADER( connection->_pSendBuffer, connection->_pReceiveBuffer,
+                        cHandle ) ;
 done :
    return rc ;
 error :
@@ -7159,7 +7285,9 @@ SDB_EXPORT INT32 sdbOpenLob( sdbCollectionHandle cHandle,
    {
       goto error ;
    }
-
+   // check the return header
+   CHECK_RET_MSGHEADER( cs->_pSendBuffer, cs->_pReceiveBuffer,
+                        cs->_connection ) ;
    bsonBuf = cs->_pReceiveBuffer + sizeof( MsgOpReply ) ;
    if ( BSON_OK != bson_init_finished_data( &obj, bsonBuf ) )
    {
@@ -7283,7 +7411,9 @@ SDB_EXPORT INT32 sdbWriteLob( sdbLobHandle lobHandle,
       {
          goto error ;
       }
-
+      // check the return header
+      CHECK_RET_MSGHEADER( lob->_pSendBuffer, lob->_pReceiveBuffer,
+                           lob->_connection ) ;
       totalLen += sendLen ;
    } while ( totalLen < len ) ;
    // for get lob's size while create a lob for writing
@@ -7405,7 +7535,9 @@ static INT32 sdbOnceRead( sdbLobStruct *lob,
    {
       goto error ;
    }
-
+   // check the return header
+   CHECK_RET_MSGHEADER( lob->_pSendBuffer, lob->_pReceiveBuffer,
+                        lob->_connection ) ;
    reply = ( const MsgOpReply * )( lob->_pReceiveBuffer ) ;
    if ( ( UINT32 )( reply->header.messageLength ) <
         ( sizeof( MsgOpReply ) + sizeof( MsgLobTuple ) ) )
@@ -7573,7 +7705,9 @@ SDB_EXPORT INT32 sdbCloseLob( sdbLobHandle *lobHandle )
    {
       goto error ;
    }
-
+   // check the return header
+   CHECK_RET_MSGHEADER( lob->_pSendBuffer, lob->_pReceiveBuffer,
+                        lob->_connection ) ;
 done:
    if ( NULL != lobHandle && SDB_INVALID_HANDLE != *lobHandle )
    {
@@ -7666,6 +7800,9 @@ SDB_EXPORT INT32 sdbRemoveLob( sdbCollectionHandle cHandle,
    {
       goto error ;
    }
+   // check the return header
+   CHECK_RET_MSGHEADER( cs->_pSendBuffer, cs->_pReceiveBuffer,
+                        cs->_connection ) ;
 done:
    bson_destroy( &meta ) ;
    return rc ;
@@ -7793,7 +7930,9 @@ static INT32 _sdbRunCmdOfLob( sdbCollectionHandle cHandle,
    {
       goto error ;
    }
-
+   // check the return header
+   CHECK_RET_MSGHEADER( cs->_pSendBuffer, cs->_pReceiveBuffer,
+                        cs->_connection ) ;
    if ( -1 != contextID && NULL != cursorHandle )
    {
       ALLOC_HANDLE( cursor, sdbCursorStruct ) ;

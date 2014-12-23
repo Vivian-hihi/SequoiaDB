@@ -83,6 +83,20 @@ namespace sdbclient
       return randVal ;
    }
 
+#define CHECK_RET_MSGHEADER( pSendBuf, pRecvBuf, pConnect )   \
+do                                                            \
+{                                                             \
+   rc = clientCheckRetMsgHeader( pSendBuf, pRecvBuf ) ;       \
+   if ( SDB_OK != rc )                                        \
+   {                                                          \
+      if ( SDB_UNEXPECTED_RESULT == rc )                      \
+      {                                                       \
+         pConnect->disconnect() ;                             \
+      }                                                       \
+      goto error ;                                            \
+   }                                                          \
+}while( FALSE )
+
    static INT32 clientSocketSend ( ossSocket *pSock,
                                    CHAR *pBuffer,
                                    INT32 sendSize )
@@ -247,7 +261,8 @@ namespace sdbclient
       {
          goto error ;
       }
-
+      // check return msg header
+      CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, _connection ) ;
    done :
       if ( locked )
       {
@@ -301,6 +316,8 @@ namespace sdbclient
       {
          goto error ;
       }
+      // check return msg header
+      CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, _connection ) ;
    done :
       if ( locked )
       {
@@ -536,6 +553,8 @@ namespace sdbclient
       {
          goto error ;
       }
+      // check return msg header
+      CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, _connection ) ;
       _contextID = -1 ;
       _isClosed = TRUE ;
       // unreg from _connecton  and _collection
@@ -1003,6 +1022,8 @@ namespace sdbclient
       {
          goto error ;
       }
+      // check return msg header
+      CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, _connection ) ;
       cursor = (_sdbCursor*)( new(std::nothrow) sdbCursorImpl () ) ;
       if ( !cursor )
       {
@@ -1104,6 +1125,8 @@ namespace sdbclient
       {
          goto error ;
       }
+      // check return msg header
+      CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, _connection ) ;
    exit:
       PD_TRACE_EXITRC ( SDB_CLIENT_BULKINSERT, rc );
       return rc ;
@@ -1152,6 +1175,8 @@ namespace sdbclient
       {
          goto error ;
       }
+      // check return msg header
+      CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, _connection ) ;
       if ( id )
       {
          *id = temp.getField ( CLIENT_RECORD_ID_FIELD ).__oid();
@@ -1217,6 +1242,8 @@ namespace sdbclient
       {
          goto error ;
       }
+      // check return msg header
+      CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, _connection ) ;
    exit:
       PD_TRACE_EXITRC ( SDB_CLIENT__UPDATE, rc );
       return rc ;
@@ -1261,6 +1288,8 @@ namespace sdbclient
       {
          goto error ;
       }
+      // check return msg header
+      CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, _connection ) ;
    exit:
       PD_TRACE_EXITRC ( SDB_CLIENT_DEL, rc );
       return rc ;
@@ -1329,6 +1358,8 @@ namespace sdbclient
       {
          goto error ;
       }
+      // check return msg header
+      CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, _connection ) ;
       // build cursor
       if ( *cursor )
       {
@@ -1412,6 +1443,8 @@ namespace sdbclient
       {
          goto error ;
       }
+      // check return msg header
+      CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, _connection ) ;
       if ( *cursor )
       {
          delete *cursor ;
@@ -1567,6 +1600,8 @@ namespace sdbclient
       {
          goto error ;
       }
+      // check return msg header
+      CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, _connection ) ;
    done :
       if ( locked )
          _connection->unlock () ;
@@ -1622,6 +1657,8 @@ namespace sdbclient
       {
          goto error ;
       }
+      // check return msg header
+      CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, _connection ) ;
       if ( *cursor )
       {
          delete *cursor ;
@@ -1690,6 +1727,8 @@ namespace sdbclient
       {
          goto error ;
       }
+      // check return msg header
+      CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, _connection ) ;
     done :
       if ( locked )
          _connection->unlock () ;
@@ -1737,6 +1776,8 @@ namespace sdbclient
       {
          goto error ;
       }
+      // check return msg header
+      CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, _connection ) ;
    done :
       if ( locked )
          _connection->unlock () ;
@@ -1785,6 +1826,8 @@ namespace sdbclient
       {
          goto error ;
       }
+      // check return msg header
+      CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, _connection ) ;
    done :
       if ( locked )
          _connection->unlock () ;
@@ -1842,7 +1885,8 @@ namespace sdbclient
       {
          goto error ;
       }
-
+      // check return msg header
+      CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, _connection ) ;
    done :
       if ( locked )
          _connection->unlock () ;
@@ -1904,7 +1948,8 @@ namespace sdbclient
       {
          goto error ;
       }
-
+      // check return msg header
+      CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, _connection ) ;
    done :
       if ( locked )
          _connection->unlock () ;
@@ -1975,6 +2020,8 @@ namespace sdbclient
       {
          goto error ;
       }
+      // check return msg header
+      CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, _connection ) ;
       cursor = (_sdbCursor*) (new(std::nothrow) sdbCursorImpl () ) ;
       if ( !cursor  )
       {
@@ -2081,6 +2128,8 @@ namespace sdbclient
       {
          goto error ;
       }
+      // check return msg header
+      CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, _connection ) ;
       cursor = (_sdbCursor*) (new(std::nothrow) sdbCursorImpl () ) ;
       if ( !cursor  )
       {
@@ -2166,6 +2215,8 @@ namespace sdbclient
       {
          goto error ;
       }
+      // check return msg header
+      CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, _connection ) ;
       if ( *cursor )
       {
          delete *cursor ;
@@ -2247,6 +2298,8 @@ namespace sdbclient
       {
          goto error ;
       }
+      // check return msg header
+      CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, _connection ) ;
    done:
       if ( locked )
       {
@@ -2306,7 +2359,9 @@ namespace sdbclient
       {
          goto error ;
       }
-      done:
+      // check return msg header
+      CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, _connection ) ;
+   done:
       if ( locked )
       {
          _connection->unlock () ;
@@ -2475,6 +2530,8 @@ namespace sdbclient
       {
          goto error ;
       }
+      // check return msg header
+      CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, _connection ) ;
       // get reply bson from received msg
       bsonBuf = _pReceiveBuffer + sizeof( MsgOpReply ) ;
       try
@@ -2574,6 +2631,8 @@ namespace sdbclient
       {
          goto error ;
       }
+      // check return msg header
+      CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, _connection ) ;
    done:
       if ( locked )
          _connection->unlock() ;
@@ -2639,6 +2698,8 @@ namespace sdbclient
       {
          goto error ;
       }
+      // check return msg header
+      CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, _connection ) ;
       // get reply bson from received msg
       bsonBuf = _pReceiveBuffer + sizeof( MsgOpReply ) ;
       try
@@ -2804,6 +2865,8 @@ namespace sdbclient
       {
          goto error ;
       }
+      // check return msg header
+      CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, _connection ) ;
       // build return cursor object
       if ( -1 != contextID )
       {
@@ -2939,6 +3002,8 @@ namespace sdbclient
          }
          goto error ;
       }
+      // check return msg header
+      CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, _connection ) ;
       sns = SDB_NODE_ACTIVE ;
    done :
       if ( _pSendBuffer )
@@ -4283,7 +4348,8 @@ namespace sdbclient
       {
          goto error ;
       }
-
+      // check return msg header
+      CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, _connection ) ;
       reply = ( const MsgOpReply * )( _pReceiveBuffer ) ;
       if ( ( UINT32 )( reply->header.messageLength ) <
            ( sizeof( MsgOpReply ) + sizeof( MsgLobTuple ) ) )
@@ -4385,6 +4451,8 @@ namespace sdbclient
       {
          goto error ;
       }
+      // check return msg header
+      CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, _connection ) ;
       // release the resource hold in _sdbLobImpl
       // and cleanup data member of this object
       _cleanup() ;
@@ -4562,6 +4630,8 @@ namespace sdbclient
          {
             goto error ;
          }
+         // check return msg header
+         CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, _connection ) ;
          locked = FALSE ;
          _connection->unlock() ;
          
@@ -5001,6 +5071,8 @@ namespace sdbclient
       {
          goto error ;
       }
+      // check return msg header
+      CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, this ) ;
    done :
       if ( locked )
       {
@@ -5121,6 +5193,8 @@ namespace sdbclient
       {
          goto error ;
       }
+      // check return msg header
+      CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, this ) ;
    done :
       if ( locked )
       {
@@ -5177,6 +5251,8 @@ namespace sdbclient
       {
          goto error ;
       }
+      // check return msg header
+      CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, this ) ;
    done :
       if ( locked )
       {
@@ -5261,6 +5337,8 @@ namespace sdbclient
       {
          goto error ;
       }
+      // check return msg header
+      CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, this ) ;
       if ( *result )
       {
          delete *result ;
@@ -5400,6 +5478,8 @@ namespace sdbclient
       {
          goto error ;
       }
+      // check return msg header
+      CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, this ) ;
       if ( *result )
       {
          delete *result ;
@@ -5640,6 +5720,8 @@ namespace sdbclient
       {
          goto error ;
       }
+      // check return msg header
+      CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, this ) ;
    done :
       unlock () ;
       PD_TRACE_EXITRC ( SDB_CLIENT__RUNCOMMAND, rc );
@@ -6222,6 +6304,8 @@ namespace sdbclient
       {
          goto error ;
       }
+      // check return msg header
+      CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, this ) ;
    done :
       if ( locked )
       {
@@ -6269,6 +6353,8 @@ namespace sdbclient
       {
          goto error ;
       }
+      // check return msg header
+      CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, this ) ;
       if ( *result )
       {
          delete *result ;
@@ -6321,6 +6407,8 @@ namespace sdbclient
       {
          goto error ;
       }
+      // check return msg header
+      CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, this ) ;
    done :
       if ( locked )
       {
@@ -6359,6 +6447,8 @@ namespace sdbclient
       {
          goto error ;
       }
+      // check return msg header
+      CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, this ) ;
    done :
       if ( locked )
       {
@@ -6396,6 +6486,8 @@ namespace sdbclient
       {
          goto error ;
       }
+      // check return msg header
+      CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, this ) ;
    done :
       if ( locked )
       {
@@ -6437,6 +6529,8 @@ namespace sdbclient
       {
          goto error ;
       }
+      // check return msg header
+      CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, this ) ;
    done:
       if ( locked )
       {
@@ -6489,6 +6583,8 @@ namespace sdbclient
       {
          goto error ;
       }
+      // check return msg header
+      CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, this ) ;
    done:
       if ( locked )
       {
@@ -6536,6 +6632,8 @@ namespace sdbclient
       {
          goto error ;
       }
+      // check return msg header
+      CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, this ) ;
    done:
       if ( locked )
       {
@@ -6593,6 +6691,8 @@ namespace sdbclient
       {
          goto error ;
       }
+      // check return msg header
+      CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, this ) ;
       if ( *cursor )
       {
          delete *cursor ;
@@ -6656,6 +6756,8 @@ namespace sdbclient
       {
          goto error ;
       }
+      // check return msg header
+      CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, this ) ;
    done :
       PD_TRACE_EXITRC ( SDB_CLIENT_BACKUPOFFLINE, rc ) ;
       return rc ;
@@ -6709,7 +6811,8 @@ namespace sdbclient
       {
          goto error ;
       }
-
+      // check return msg header
+      CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, this ) ;
       if ( *cursor )
       {
          delete *cursor ;
@@ -6771,6 +6874,8 @@ namespace sdbclient
       {
          goto error ;
       }
+      // check return msg header
+      CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, this ) ;
    done :
       PD_TRACE_EXITRC ( SDB_CLIENT_REMOVEBACKUP, rc ) ;
       return rc ;
@@ -6856,6 +6961,8 @@ namespace sdbclient
       {
          goto error ;
       }
+      // check return msg header
+      CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, this ) ;
    done :
       if ( locked )
       {
@@ -6921,6 +7028,8 @@ namespace sdbclient
       {
          goto error ;
       }
+      // check return msg header
+      CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, this ) ;
    done :
       if ( locked )
       {
@@ -7046,6 +7155,8 @@ namespace sdbclient
       {
          goto error ;
       }
+      // check return msg header
+      CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, this ) ;
    done :
       if ( locked )
          unlock() ;
