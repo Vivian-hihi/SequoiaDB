@@ -20,6 +20,7 @@ thirdparty/parser/sm/js/lib/release/linux64
 thirdparty/php/linux/php-5.4.6
 thirdparty/php/linux/retriConfig.sh
 thirdparty/php/linux/forlinux
+thirdparty/README
 SequoiaDB
 SConstruct
 README.md
