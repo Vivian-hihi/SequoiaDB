@@ -98,6 +98,7 @@ namespace engine
    {
       _pCatCB->getMainController()->detachCB( cb ) ;
       _pEduCB = NULL ;
+      _changeEvent.signal() ;
    }
 
    // when the node switch to  primary will call this fun

@@ -106,6 +106,7 @@ namespace engine
       if ( EDU_TYPE_CATMAINCONTROLLER == cb->getType() )
       {
          _pEDUCB = NULL ;
+         _changeEvent.signal() ;
       }
       else if ( EDU_TYPE_CATCATALOGUEMANAGER == cb->getType() )
       {
@@ -484,8 +485,8 @@ namespace engine
          // run continue
       }
 
-      _pCatCB->getCatlogueMgr()->getChangeEvent()->wait() ;
-      _pCatCB->getCatNodeMgr()->getChangeEvent()->wait() ;
+      _pCatCB->getCatlogueMgr()->getChangeEvent()->wait( OSS_ONE_SEC * 120 ) ;
+      _pCatCB->getCatNodeMgr()->getChangeEvent()->wait( OSS_ONE_SEC * 120 ) ;
 
       _isActived = FALSE ;
       _changeEvent.signal() ;
