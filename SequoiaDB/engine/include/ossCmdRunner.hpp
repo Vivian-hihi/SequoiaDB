@@ -14,7 +14,7 @@
    You should have received a copy of the GNU Affero General Public License
    along with this program. If not, see <http://www.gnu.org/license/>.
 
-   Source File Name = sptCmdRunner.hpp
+   Source File Name = ossCmdRunner.hpp
 
    Dependencies: N/A
 
@@ -29,8 +29,8 @@
 
 *******************************************************************************/
 
-#ifndef SPT_CMDRUNNER_HPP_
-#define SPT_CMDRUNNER_HPP_
+#ifndef SPT_OSSRUNNER_HPP_
+#define SPT_OSSRUNNER_HPP_
 
 #include "core.hpp"
 #include "oss.hpp"
@@ -46,11 +46,11 @@ using namespace std ;
 
 namespace engine
 {
-   class _sptCmdRunner : public SDBObject, public ossIExecHandle
+   class _ossCmdRunner : public SDBObject, public ossIExecHandle
    {
    public:
-      _sptCmdRunner() ;
-      virtual ~_sptCmdRunner() ;
+      _ossCmdRunner() ;
+      virtual ~_ossCmdRunner() ;
 
    public:
       /*
@@ -87,8 +87,8 @@ namespace engine
       INT64          _timeout ;
 
    } ;
-   typedef class _sptCmdRunner sptCmdRunner ;
+   typedef class _ossCmdRunner ossCmdRunner ;
 }
 
-#endif
+#endif // SPT_OSSRUNNER_HPP_
 
