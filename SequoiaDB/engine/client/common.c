@@ -280,10 +280,10 @@ INT32 clientCheckRetMsgHeader( const CHAR *pSendBuf, const CHAR *pRecvBuf )
       goto done ;
    }
    sendOpCode = ((MsgHeader*)pSendBuf)->opCode ;
-   recvOpCode = GET_REQUEST_TYPE(((MsgHeader*)pRecvBuf)->opCode) ;
-   if ( sendOpCode != recvOpCode )
+   recvOpCode = ((MsgHeader*)pRecvBuf)->opCode ;
+   if ( MAKE_REPLY_TYPE( sendOpCode ) != recvOpCode )
    {
-      rc = SDB_UNEXPECTED_RESULT ;
+//      rc = SDB_UNEXPECTED_RESULT ;
       goto error ;
    }
 done:
