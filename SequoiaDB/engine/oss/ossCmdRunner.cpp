@@ -130,7 +130,8 @@ namespace engine
 
    INT32 _ossCmdRunner::exec( const CHAR *cmd, UINT32 &exit,
                               BOOLEAN isBackground,
-                              INT64 timeout )
+                              INT64 timeout,
+                              BOOLEAN needResize )
    {
       INT32 rc = SDB_OK ;
       SDB_ASSERT( NULL != cmd, "can not be null" ) ;
@@ -139,13 +140,18 @@ namespace engine
       CHAR *arguments = NULL ;
       INT32 argLen = 0 ;
       ossResultCode res ;
-      INT32 flags = OSS_EXEC_SSAVE | OSS_EXEC_NORESIZEARGV |
-                    OSS_EXEC_NODETACHED ;
+      INT32 flags = OSS_EXEC_SSAVE | OSS_EXEC_NODETACHED ;
 
       if ( isBackground )
       {
-         flags = OSS_EXEC_NORESIZEARGV ;
+         flags = 0 ;
       }
+
+      if ( !needResize )
+      {
+         flags |= OSS_EXEC_NORESIZEARGV ;
+      }
+
       res.exitcode = 0 ;
       res.termcode = 0 ;
       _timeout     = timeout ;
