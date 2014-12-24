@@ -145,7 +145,7 @@ public class SequoiadbWriter<K, V> extends RecordWriter<K, V> {
 
 	@Override
 	public void write(K key, V value) throws IOException, InterruptedException {
-		log.info("write");
+//		log.info("write");
 		BSONObject bson = null;
 
 		if (value != null) {
