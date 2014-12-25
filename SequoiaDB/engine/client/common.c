@@ -273,14 +273,14 @@ INT32 clientCheckRetMsgHeader( const CHAR *pSendBuf, const CHAR *pRecvBuf )
 {
    INT32 rc = SDB_OK ;
    INT32 sendOpCode = 0 ;
-   INT32 recvOpCode = 0 ;
+   UINT32 recvOpCode = 0 ;
    if ( NULL == pSendBuf || NULL == pRecvBuf )
    {
       rc = SDB_INVALIDARG ;
       goto done ;
    }
    sendOpCode = ((MsgHeader*)pSendBuf)->opCode ;
-   recvOpCode = ((MsgHeader*)pRecvBuf)->opCode ;
+   recvOpCode = (UINT32)(((MsgHeader*)pRecvBuf)->opCode) ;
    if ( MAKE_REPLY_TYPE( sendOpCode ) != recvOpCode )
    {
 //      rc = SDB_UNEXPECTED_RESULT ;
