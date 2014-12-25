@@ -237,6 +237,10 @@ class DBLobConcrete implements DBLob {
         
         SDBMessage resMessage = SDBMessageHelper.msgExtractLobOpenReply( res );
         displayResponse( resMessage );
+        if ( resMessage.getOperationCode() != Operation.MSG_BS_LOB_OPEN_RES) {
+            throw new BaseException("SDB_UNKNOWN_MESSAGE", 
+                    resMessage.getOperationCode());
+        }
         int flag = resMessage.getFlags();
         if ( 0 != flag ) {
             throw new BaseException( flag, openLob );
@@ -307,6 +311,10 @@ class DBLobConcrete implements DBLob {
         
         SDBMessage resMessage = SDBMessageHelper.msgExtractReply( res );
         displayResponse( resMessage );
+        if ( resMessage.getOperationCode() != Operation.MSG_BS_LOB_CLOSE_RES) {
+            throw new BaseException("SDB_UNKNOWN_MESSAGE", 
+                    resMessage.getOperationCode());
+        }
         int flag = resMessage.getFlags();
         if ( 0 != flag ) {
             throw new BaseException( flag );
@@ -435,6 +443,10 @@ class DBLobConcrete implements DBLob {
         
         SDBMessage resMessage = SDBMessageHelper.msgExtractLobReadReply( res );
         displayResponse( resMessage );
+        if ( resMessage.getOperationCode() != Operation.MSG_BS_LOB_READ_RES) {
+            throw new BaseException("SDB_UNKNOWN_MESSAGE", 
+                    resMessage.getOperationCode());
+        }
         int flag = resMessage.getFlags();
         
         // meet the end of the lob
@@ -492,6 +504,10 @@ class DBLobConcrete implements DBLob {
         
         SDBMessage resMessage = SDBMessageHelper.msgExtractReply( res );
         displayResponse( resMessage );
+        if ( resMessage.getOperationCode() != Operation.MSG_BS_LOB_WRITE_RES) {
+            throw new BaseException("SDB_UNKNOWN_MESSAGE", 
+                    resMessage.getOperationCode());
+        }
         int flag = resMessage.getFlags();
         if ( 0 != flag ) {
             throw new BaseException( flag );

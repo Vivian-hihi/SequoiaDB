@@ -6,6 +6,7 @@ import java.nio.ByteOrder;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 
+import com.sequoiadb.base.SequoiadbConstants.Operation;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.util.SDBMessageHelper;
 
@@ -227,12 +228,13 @@ public class Node {
 		sdbMessage.setNodeID(SequoiadbConstants.ZERO_NODEID);
 		// sdbMessage.setResponseTo(reqId);
 		// reqId++;
-		sdbMessage.setRequestID(0);
+		sdbMessage.setRequestID(rg.getSequoiadb().getNextRequstID());
 		sdbMessage.setSkipRowsCount(-1);
 		sdbMessage.setReturnRowsCount(-1);
 		sdbMessage.setSelector(dummyObj);
 		sdbMessage.setOrderBy(dummyObj);
 		sdbMessage.setHint(dummyObj);
+		sdbMessage.setOperationCode(Operation.OP_QUERY);
 
 		boolean endianConver = this.rg.getSequoiadb().endianConvert;
 		byte[] request = SDBMessageHelper.buildQueryRequest(sdbMessage,
@@ -241,6 +243,7 @@ public class Node {
 
 		ByteBuffer byteBuffer = this.rg.getSequoiadb().getConnection().receiveMessage(endianConver);
 		SDBMessage rtnSDBMessage = SDBMessageHelper.msgExtractReply(byteBuffer);
+		SDBMessageHelper.checkMessage(sdbMessage, rtnSDBMessage);
 
 		return rtnSDBMessage;
 	}

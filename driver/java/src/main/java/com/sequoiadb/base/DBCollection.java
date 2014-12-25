@@ -195,12 +195,17 @@ public class DBCollection {
 			tmp = objId;
 		}
 		
-		int message_length = SDBMessageHelper.buildInsertRequest(insert_buffer, collectionFullName, insertor);
+		int message_length = SDBMessageHelper.buildInsertRequest(insert_buffer, 
+		        sequoiadb.getNextRequstID(), collectionFullName, insertor);
 
 		connection.sendMessage(insert_buffer.array(), message_length);
 		
 		ByteBuffer byteBuffer = connection.receiveMessage(sequoiadb.endianConvert);
 		SDBMessage rtnSDBMessage = SDBMessageHelper.msgExtractReply(byteBuffer);
+		if ( rtnSDBMessage.getOperationCode() != Operation.OP_INSERT_RES) {
+		    throw new BaseException("SDB_UNKNOWN_MESSAGE", 
+		            rtnSDBMessage.getOperationCode());
+		}
 		int flags = rtnSDBMessage.getFlags();
 		if (flags != 0) {
 			throw new BaseException(flags, insertor.toString());
@@ -389,12 +394,17 @@ public class DBCollection {
 		}
 
 		int messageLength = SDBMessageHelper.buildBulkInsertRequest(
-				insert_buffer, collectionFullName, insertor, flag);
+				insert_buffer, sequoiadb.getNextRequstID(), collectionFullName, 
+				insertor, flag);
 
 		connection.sendMessage(insert_buffer.array(), messageLength);
 		
 		ByteBuffer byteBuffer = connection.receiveMessage(sequoiadb.endianConvert);
 		SDBMessage rtnSDBMessage = SDBMessageHelper.msgExtractReply(byteBuffer);
+		if ( rtnSDBMessage.getOperationCode() != Operation.OP_INSERT_RES) {
+            throw new BaseException("SDB_UNKNOWN_MESSAGE", 
+                    rtnSDBMessage.getOperationCode());
+        }
 		int flags = rtnSDBMessage.getFlags();
 		if (flags != 0)
 			throw new BaseException(flags, insertor);
@@ -486,9 +496,10 @@ public class DBCollection {
 		// sdbMessage.setResponseTo(reqId);
 		// reqId++;
 		sdbMessage.setCollectionFullName(collectionFullName);
-		sdbMessage.setRequestID(0);
+		sdbMessage.setRequestID(sequoiadb.getNextRequstID());
 		sdbMessage.setMatcher(matcher);
 		sdbMessage.setHint(hint);
+		sdbMessage.setOperationCode(Operation.OP_DELETE);
 
 		byte[] request = SDBMessageHelper.buildDeleteRequest(sdbMessage,
 				sequoiadb.endianConvert);
@@ -496,6 +507,7 @@ public class DBCollection {
 		
 		ByteBuffer byteBuffer = connection.receiveMessage(sequoiadb.endianConvert);
 		SDBMessage rtnSDBMessage = SDBMessageHelper.msgExtractReply(byteBuffer);
+		SDBMessageHelper.checkMessage(sdbMessage, rtnSDBMessage);
 		int flags = rtnSDBMessage.getFlags();
 		if (flags != 0) {
 			throw new BaseException(flags, matcher, hint);
@@ -1419,14 +1431,17 @@ public class DBCollection {
 			insert_buffer.clear();
 		}
 
-		int messageLength = SDBMessageHelper.buildAggrRequest(insert_buffer,
-				                                              collectionFullName,
-				                                              obj);
+		int messageLength = SDBMessageHelper.buildAggrRequest(insert_buffer, 
+		        sequoiadb.getNextRequstID(), collectionFullName, obj);
 		
 		connection.sendMessage(insert_buffer.array(), messageLength);
 		
 		ByteBuffer byteBuffer = connection.receiveMessage(sequoiadb.endianConvert);
 		SDBMessage rtnSDBMessage = SDBMessageHelper.msgExtractReply(byteBuffer);
+		if ( rtnSDBMessage.getOperationCode() != Operation.OP_AGGREGATE_RES) {
+            throw new BaseException("SDB_UNKNOWN_MESSAGE", 
+                    rtnSDBMessage.getOperationCode());
+        }
 		DBCursor cursor = null;
 		int flags = rtnSDBMessage.getFlags();
 		if (flags != 0) {
@@ -1619,20 +1634,22 @@ public class DBCollection {
 		sdbMessage.setNodeID(SequoiadbConstants.ZERO_NODEID);
 		// sdbMessage.setResponseTo(reqId);
 		// reqId++;
-		sdbMessage.setRequestID(0);
+		sdbMessage.setRequestID(sequoiadb.getNextRequstID());
 		sdbMessage.setSkipRowsCount(skipRows);
 		sdbMessage.setReturnRowsCount(returnRows);
 		sdbMessage.setMatcher(query);
 		sdbMessage.setSelector(selector);
 		sdbMessage.setOrderBy(orderBy);
 		sdbMessage.setHint(hint);
+		sdbMessage.setOperationCode(Operation.OP_QUERY);
 
 		byte[] request = SDBMessageHelper.buildQueryRequest(sdbMessage,
 				sequoiadb.endianConvert);
-		connection.sendMessage(request);
+		connection.sendMessage(request); 
 		
 		ByteBuffer byteBuffer = connection.receiveMessage(sequoiadb.endianConvert);
 		SDBMessage rtnSDBMessage = SDBMessageHelper.msgExtractReply(byteBuffer);
+		SDBMessageHelper.checkMessage(sdbMessage, rtnSDBMessage);
 
 		return rtnSDBMessage;
 	}
@@ -1652,6 +1669,7 @@ public class DBCollection {
 			sdbMessage.setContextIDList(contextIds);
 			sdbMessage.setRequestID(reqId);
 			sdbMessage.setNumReturned(-1);
+			sdbMessage.setOperationCode(Operation.OP_GETMORE);
 
 			byte[] request = SDBMessageHelper.buildGetMoreRequest(sdbMessage,
 					sequoiadb.endianConvert);
@@ -1659,6 +1677,7 @@ public class DBCollection {
 			
 			ByteBuffer byteBuffer = connection.receiveMessage(sequoiadb.endianConvert);
 			rtnSDBMessage = SDBMessageHelper.msgExtractReply(byteBuffer);
+			SDBMessageHelper.checkMessage(sdbMessage, rtnSDBMessage);
 
 			int flags = rtnSDBMessage.getFlags();
 			if (flags != 0) {
@@ -1693,10 +1712,11 @@ public class DBCollection {
 		sdbMessage.setFlags(flag);
 		sdbMessage.setNodeID(SequoiadbConstants.ZERO_NODEID);
 		sdbMessage.setCollectionFullName(collectionFullName);
-		sdbMessage.setRequestID(0);
+		sdbMessage.setRequestID(sequoiadb.getNextRequstID());
 		sdbMessage.setMatcher(matcher);
 		sdbMessage.setModifier(modifier);
 		sdbMessage.setHint(hint);
+		sdbMessage.setOperationCode(Operation.OP_UPDATE);
 
 		byte[] request = SDBMessageHelper.buildUpdateRequest(sdbMessage,
 				sequoiadb.endianConvert);
@@ -1704,6 +1724,7 @@ public class DBCollection {
 		
 		ByteBuffer byteBuffer = connection.receiveMessage(sequoiadb.endianConvert);
 		SDBMessage rtnSDBMessage = SDBMessageHelper.msgExtractReply(byteBuffer);
+		SDBMessageHelper.checkMessage(sdbMessage, rtnSDBMessage);
 		int flags = rtnSDBMessage.getFlags();
 		if (flags != 0)
 			throw new BaseException(flags, matcher, modifier, hint);
@@ -1786,12 +1807,16 @@ public class DBCollection {
                 collectionFullName );
         removeObj.put( SequoiadbConstants.FIELD_NAME_LOB_OID, lobID );
 
-        byte[] request = SDBMessageHelper.generateRemoveLobRequest( removeObj, 
-                                sequoiadb.endianConvert );
+        byte[] request = SDBMessageHelper.generateRemoveLobRequest(removeObj,
+                sequoiadb.getNextRequstID(), sequoiadb.endianConvert );
         connection.sendMessage( request, request.length );
         ByteBuffer res = connection.receiveMessage(sequoiadb.endianConvert);
         
-        SDBMessage resMessage = SDBMessageHelper.msgExtractLobOpenReply( res );
+        SDBMessage resMessage = SDBMessageHelper.msgExtractLobRemoveReply( res );
+        if ( resMessage.getOperationCode() != Operation.MSG_BS_LOB_REMOVE_RES) {
+            throw new BaseException("SDB_UNKNOWN_MESSAGE", 
+                    resMessage.getOperationCode());
+        }
         int flag = resMessage.getFlags();
         if ( 0 != flag ) {
             throw new BaseException( flag, removeObj );
