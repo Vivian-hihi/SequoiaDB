@@ -283,7 +283,7 @@ INT32 clientCheckRetMsgHeader( const CHAR *pSendBuf, const CHAR *pRecvBuf )
    recvOpCode = (UINT32)(((MsgHeader*)pRecvBuf)->opCode) ;
    if ( MAKE_REPLY_TYPE( sendOpCode ) != recvOpCode )
    {
-//      rc = SDB_UNEXPECTED_RESULT ;
+      rc = SDB_UNEXPECTED_RESULT ;
       goto error ;
    }
 done:
