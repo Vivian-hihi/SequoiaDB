@@ -120,7 +120,7 @@
 		<copy file="${CODE_DIR}/driver/hadoop/hive/${open.source.hive_connector.filename}" tofile="${DRIVER.DIR}/hadoop/${open.source.hive_connector.filename}" />
     	<copy file="${CODE_DIR}/driver/hadoop/hive/${cdh.hive_connector.filename}" tofile="${DRIVER.DIR}/hadoop/${cdh.hive_connector.filename}" />
     	<copy todir="${DRIVER.DIR}/hadoop" >
-    		<fileset dir="${CODE_DIR}/driver/hadoop/hadoop-connector" includes="**/hadoop-connector*.jar" />
+    		<fileset dir="${CODE_DIR}/driver/hadoop/hadoop-connector" includes="**/hadoop-connector-*.jar" />
     	</copy>
 		<copy todir="${DRIVER.DIR}/lib">
 			<fileset dir="${CODE_DIR}/client/lib/" includes="*" />
