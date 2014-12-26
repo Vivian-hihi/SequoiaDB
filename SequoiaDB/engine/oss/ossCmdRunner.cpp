@@ -131,7 +131,8 @@ namespace engine
    INT32 _ossCmdRunner::exec( const CHAR *cmd, UINT32 &exit,
                               BOOLEAN isBackground,
                               INT64 timeout,
-                              BOOLEAN needResize )
+                              BOOLEAN needResize,
+                              OSSHANDLE *pHandle )
    {
       INT32 rc = SDB_OK ;
       SDB_ASSERT( NULL != cmd, "can not be null" ) ;
@@ -175,7 +176,7 @@ namespace engine
       _readResult = SDB_OK ;
       _outStr = "" ;
       rc = ossExec( arguments, arguments, NULL, flags,
-                    _id, res, NULL, &_out, this ) ;
+                    _id, res, NULL, &_out, this, pHandle ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to exec cmd:%s, rc:%d",
@@ -233,6 +234,10 @@ namespace engine
          rc = ossReadNamedPipe( _out, buff, OSS_MAX_PATHSIZE, &readLen ) ;
          if ( SDB_OK != rc )
          {
+            if ( SDB_TIMEOUT == rc )
+            {
+               continue ;
+            }
             if ( SDB_EOF != rc )
             {
                PD_LOG( PDERROR, "failed to read data from pipe:%d", rc ) ;

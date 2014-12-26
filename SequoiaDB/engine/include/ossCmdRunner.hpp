@@ -59,7 +59,8 @@ namespace engine
       INT32 exec( const CHAR *cmd, UINT32 &exit,
                   BOOLEAN isBackground = FALSE,
                   INT64 timeout = -1,
-                  BOOLEAN needResize = FALSE ) ;
+                  BOOLEAN needResize = FALSE,
+                  OSSHANDLE *pHandle = NULL ) ;
 
       INT32 done() ;
 
