@@ -39,9 +39,9 @@
 #include "ossFeat.h"
 
 #if defined (_WINDOWS)
-   #define OSS_NEWLINE "\r\n"
-#else
    #define OSS_NEWLINE "\n"
+#else
+   #define OSS_NEWLINE "\r\n"
    #define SDB_INVALID_FH (-1)
 #endif
 // platform dependent data types
