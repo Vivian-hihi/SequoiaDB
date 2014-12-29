@@ -665,7 +665,8 @@ INT32 migExport::init( migExprtArg *pMigArg )
    }
    _isOpen = TRUE ;
 
-   rc = _decodeBson.init( _pMigArg->delChar, _pMigArg->delField ) ;
+   rc = _decodeBson.init( _pMigArg->delChar, _pMigArg->delField,
+                          _pMigArg->includeBinary, _pMigArg->includeRegex ) ;
    if ( rc )
    {
       PD_LOG ( PDERROR, "Failed to call init, rc=%d", rc ) ;
