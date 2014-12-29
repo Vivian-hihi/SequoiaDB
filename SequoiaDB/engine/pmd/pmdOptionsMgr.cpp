@@ -61,7 +61,7 @@ namespace engine
    #define JUDGE_RC( rc ) if ( SDB_OK != rc ) { goto error ; }
 
    #define PMD_OPTION_BRK_TIME_DEFAULT (5000)
-   #define PMD_MAX_PREF_POOL           (200)
+   #define PMD_MAX_PREF_POOL           (0) // modify 200 to 0
    #define PMD_MAX_SUB_QUERY           (10)
    #define PMD_MIN_SORTBUF_SZ          (RTN_SORT_MIN_BUFSIZE)
    #define PMD_DEFAULT_SORTBUF_SZ      (256)

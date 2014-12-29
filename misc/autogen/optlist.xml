@@ -456,13 +456,13 @@
       <name>PMD_OPTION_MAX_PREF_POOL</name>
       <long>maxprefpool</long>
       <description>
-         <en>The maximum number of prefetchers, default:200, value range:[0,1000]</en>
-         <cn>数据预取代理池最大数量,默认值:200,取值范围:[0,1000]</cn>
+         <en>The maximum number of prefetchers, default:0, value range:[0,1000]</en>
+         <cn>数据预取代理池最大数量,默认值:0,取值范围:[0,1000]</cn>
       </description>
       <type>int</type>
       <detail>
-         <en>The maximum number of prefetchers, default:200, value range:[0,1000]</en>
-         <cn>数据预取代理池最大数量,默认值:200,取值范围:[0,1000]</cn>
+         <en>The maximum number of prefetchers, default:0, value range:[0,1000]</en>
+         <cn>数据预取代理池最大数量,默认值:0,取值范围:[0,1000]</cn>
       </detail>
       <typeofweb>num</typeofweb>
    </opt>
