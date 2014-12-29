@@ -71,7 +71,7 @@ namespace engine
    #define PMD_DFT_REPL_BUCKET_SIZE    (32)
    #define PMD_DFT_INDEX_SCAN_STEP     (100)
    #define PMD_DFT_START_SHIFT_TIME    (600)
-   #define PMD_DFT_NUMPAGECLEAN        (1)
+   #define PMD_DFT_NUMPAGECLEAN        (0)
    #define PMD_MAX_NUMPAGECLEAN        (50)
    #define PMD_DFT_PAGECLEANINTERVAL   (10000)
    #define PMD_MIN_PAGECLEANINTERVAL   (1000)
