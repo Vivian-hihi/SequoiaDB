@@ -160,6 +160,7 @@ INT32 _utilJSONParser::getNextRecord ( UINT32 &startOffset,
       {
          if ( _pBlock >= _blockNum )
          {
+            BOOLEAN isFullBlock = FALSE ;
             isReadSize = pCursor - _curBuffer ;
             if ( isReadSize > _blockSize && isReadSize < _bufferSize )
             {
@@ -187,12 +188,13 @@ INT32 _utilJSONParser::getNextRecord ( UINT32 &startOffset,
                _curBuffer = _buffer ;
                pReadBuffer = _buffer + isReadSize ;
                pCursor = pReadBuffer ;
-               newReadSize = _blockSize - ( isReadSize % _blockSize ) ;
-               if ( newReadSize == 0 )
+               isFullBlock = ( isReadSize % _blockSize == 0 ) ;
+               if( TRUE == isFullBlock )
                {
                   ++_pBlock ;
                   continue ;
                }
+               newReadSize = _blockSize - ( isReadSize % _blockSize ) ;
                //ossMemset ( _buffer + isReadSize, 0, newReadSize ) ;
             }
             else
@@ -275,6 +277,7 @@ size %d, clear bucket data", _bufferSize ) ;
               '{' == *pCursor )
          {
             isRecordFirst = TRUE ;
+            _curBuffer = pCursor ;
          }
          else if ( !isRecordFirst &&
                    '{' != *pCursor )
