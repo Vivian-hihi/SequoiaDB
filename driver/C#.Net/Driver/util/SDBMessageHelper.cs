@@ -8,7 +8,6 @@ namespace SequoiaDB
 {
     class SDBMessageHelper
     {
-        private static readonly Logger logger = new Logger("SDBMessageHelper");
         // msg.h
         private const int MESSAGE_HEADER_LENGTH = 28;
         private const int MESSAGE_OPQUERY_LENGTH = 61;
@@ -19,6 +18,8 @@ namespace SequoiaDB
         private const int MESSAGE_KILLCURSOR_LENGTH = 36;
         private const int MESSAGE_OPLOB_LENGTH = 52;
         private const int MESSAGE_LOBTUPLE_LENGTH = 16;
+
+        private static readonly Logger logger = new Logger("SDBMessageHelper");
 
         internal static SDBMessage CheckRetMsgHeader(SDBMessage sendMsg, SDBMessage rtnMsg)
         {

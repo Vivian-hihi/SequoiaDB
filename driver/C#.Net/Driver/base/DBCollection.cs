@@ -19,7 +19,7 @@ namespace SequoiaDB
         private IConnection connection;
         internal bool isBigEndian = false;
 
-        private readonly Logger logger = new Logger("DBCollection");
+        //private readonly Logger logger = new Logger("DBCollection");
 
         /** \property Name
          *  \brief Return the name of current collection
@@ -557,8 +557,6 @@ namespace SequoiaDB
                     return null;
                 else
                 {
-                    if (logger.IsDebugEnabled)
-                        logger.Debug("Return flags==>" + String.Format("0:X", flags) + "<==");
                     throw new BaseException(flags);
                 }
 
@@ -627,8 +625,6 @@ namespace SequoiaDB
                     return null;
                 else
                 {
-                    if (logger.IsDebugEnabled)
-                        logger.Debug("Return flags==>" + String.Format("0:X", flags) + "<==");
                     throw new BaseException(flags);
                 }
 
@@ -662,8 +658,6 @@ namespace SequoiaDB
                     return null;
                 else
                 {
-                    if (logger.IsDebugEnabled)
-                        logger.Debug("Return flags==>" + String.Format("0:X", flags) + "<==");
                     throw new BaseException(flags);
                 }
 
@@ -782,8 +776,6 @@ namespace SequoiaDB
                     return null;
                 else
                 {
-                    if (logger.IsDebugEnabled)
-                        logger.Debug("Return flags==>" + String.Format("0:X", flags) + "<==");
                     throw new BaseException(flags);
                 }
 
@@ -827,8 +819,6 @@ namespace SequoiaDB
                     return null;
                 else
                 {
-                    if (logger.IsDebugEnabled)
-                        logger.Debug("Return flags==>" + String.Format("0:X", flags) + "<==");
                     throw new BaseException(flags);
                 }
             return new DBCursor(rtnSDBMessage, this);
@@ -1164,8 +1154,6 @@ namespace SequoiaDB
                         hasMore = false;
                     else
                     {
-                        if (logger.IsDebugEnabled)
-                            logger.Debug("Return flags==>" + String.Format("0:X", flags) + "<==");
                         throw new BaseException(flags);
                     }
                 else
