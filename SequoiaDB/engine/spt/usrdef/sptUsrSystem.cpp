@@ -997,6 +997,10 @@ namespace engine
       INT32 rc = SDB_OK ;
       BSONArrayBuilder arrBuilder ;
       vector<string> splited ;
+      UINT32 coreNum = 0 ;
+      stringstream info ;
+      string frequency = "unknown" ;
+
       boost::algorithm::split( splited, buf, boost::is_any_of("\r\n") ) ;
       for ( vector<string>::iterator itr = splited.begin();
             itr != splited.end();
@@ -1031,9 +1035,6 @@ namespace engine
             rc = SDB_SYS ;
             goto error ;
          }
-         UINT32 coreNum = 0 ;
-         stringstream info ;
-         string *frequency = NULL ;
          try
          {
             coreNum = boost::lexical_cast<UINT32>( columns.at( 0 ) ) ;
@@ -1052,31 +1053,23 @@ namespace engine
             {
                if ( i == columns.size() - 2 )
                {
-                  frequency = &( columns.at( columns.size() - 1 ) ) ;
+                  frequency = columns.at( columns.size() - 1 ) ;
                   break ;
-               }
-               else
-               {
-                  rc = SDB_SYS ;
-                  goto error ;
                }
             }
 
             info << columns.at( i ) << " " ;
          }
-
-         if ( NULL == frequency )
-         {
-            rc = SDB_SYS ;
-            goto error ;
-         }
-         arrBuilder << BSON( SPT_USR_SYSTEM_CORE << coreNum
-                             << SPT_USR_SYSTEM_INFO << info.str()
-                             << SPT_USR_SYSTEM_FREQ << *frequency ) ;
       }
 
-      builder.append( SPT_USR_SYSTEM_CPUS, arrBuilder.arr() ) ;
    done:
+      arrBuilder << BSON( SPT_USR_SYSTEM_CORE << coreNum
+                          << SPT_USR_SYSTEM_INFO << info.str()
+                          << SPT_USR_SYSTEM_FREQ << frequency ) ;
+      
+      builder.append( SPT_USR_SYSTEM_CPUS, arrBuilder.arr() ) ;
+      // if we can't extract cpu info, just fill empty, do not return error 
+      rc = SDB_OK ;
       return rc ;
    error:
       goto done ;
