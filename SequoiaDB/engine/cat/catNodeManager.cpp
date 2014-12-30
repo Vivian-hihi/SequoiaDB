@@ -1557,14 +1557,42 @@ namespace engine
             rc = SDB_INVALIDARG ;
             goto error ;
          }
+         BSONElement beHostIP = boReq.getField( CAT_IP_FIELD_NAME );
+         if ( beHostIP.type() == Array )
+         {
+            BSONArrayBuilder hostNameArrayBuilder;
 
-         //{Group:{$elemMatch:{HostName:*****, Service.Name:****}}}
-         boMatcher = BSON( FIELD_NAME_GROUP
-                           << BSON("$elemMatch"
-                                 << BSON(CAT_MATCHER_HOST_NAME
-                                          << beHostName.valuestr()
-                                       << CAT_MATCHER_SERVICE_NAME
-                                          << strShardServiceName )));
+            hostNameArrayBuilder.append( BSON(CAT_MATCHER_HOST_NAME << beHostName.valuestr()));
+
+            BSONObjIterator iter( beHostIP.embeddedObject() );
+            while ( iter.more() )
+            {
+               BSONElement ip = iter.next();
+               if (ip.type() != String)
+               {
+                  continue;
+               }
+
+               hostNameArrayBuilder.append( BSON(CAT_MATCHER_HOST_NAME << ip.valuestr()));
+            }
+
+            //{Group:{$elemMatch:{ $or:[{HostName:***},{HostName:*ip*},***], Service.Name:***}}}
+            boMatcher = BSON( FIELD_NAME_GROUP
+                              << BSON("$elemMatch"
+                                    << BSON( "$or" << hostNameArrayBuilder.arr()
+                                          << CAT_MATCHER_SERVICE_NAME
+                                             << strShardServiceName )));
+         }
+         else
+         {
+            //{Group:{$elemMatch:{HostName:*****, Service.Name:****}}}
+            boMatcher = BSON( FIELD_NAME_GROUP
+                              << BSON("$elemMatch"
+                                    << BSON(CAT_MATCHER_HOST_NAME
+                                             << beHostName.valuestr()
+                                          << CAT_MATCHER_SERVICE_NAME
+                                             << strShardServiceName )));
+         }
 
          // copy collection name into buffer
          ossStrncpy( szBuf, CAT_NODE_INFO_COLLECTION, OP_MAXNAMELENGTH);
@@ -1645,7 +1673,34 @@ namespace engine
                      if ( ossStrcmp ( beHostNameTmp.valuestr(),
                                       beHostName.valuestr() ) != 0 )
                      {
-                        continue ;
+                        if ( beHostIP.type() != Array )
+                        {
+                           continue;
+                        }
+
+                        // check if it's IP
+                        BOOLEAN isIP = FALSE;
+                        BSONObjIterator iter( beHostIP.embeddedObject() );
+                        while ( iter.more() )
+                        {
+                           BSONElement ip = iter.next();
+                           if (ip.type() != String)
+                           {
+                              continue ;
+                           }
+
+                           if (ossStrcmp ( beHostNameTmp.valuestr(),
+                                      ip.valuestr() ) == 0 )
+                           {
+                              isIP = TRUE;
+                              break;
+                           }
+                        }
+
+                        if ( !isIP )
+                        {
+                           continue ;
+                        }
                      }
                      // make sure the service name is also array
                      if ( beServiceTmp.eoo() || beServiceTmp.type()!=Array )

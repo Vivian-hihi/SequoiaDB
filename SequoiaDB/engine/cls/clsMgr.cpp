@@ -1265,6 +1265,27 @@ namespace engine
 
       bsonBuilder.appendArray ( CAT_SERVICE_FIELD_NAME, arrayBuilder.arr() ) ;
 
+      // append IP address
+      ossIPInfo ipInfo ;
+      if ( ipInfo.getIPNum() > 0 )
+      {
+         BSONArrayBuilder ipArray ;
+
+         ossIP* ip = ipInfo.getIPs() ;
+         for ( INT32 i = ipInfo.getIPNum(); i > 0; i-- )
+         {
+            // skip loopback IP
+            if (0 != ossStrncmp( ip->ipAddr, OSS_LOOPBACK_IP,
+                                 ossStrlen(OSS_LOOPBACK_IP)) )
+            {
+               ipArray.append( ip->ipAddr ) ;
+            }
+            ip++ ;
+         }
+
+         bsonBuilder.appendArray ( CAT_IP_FIELD_NAME, ipArray.arr() ) ;
+      }
+
       BSONObj regObj = bsonBuilder.obj () ;
       UINT32 length = regObj.objsize () + sizeof ( MsgCatRegisterReq ) ;
       // free by end of the function
