@@ -57,8 +57,10 @@
 #include <vector>
 #include <string>
 #include <list>
+#include <boost/algorithm/string.hpp>
 
-using namespace std;
+using namespace std ;
+using namespace boost::algorithm ;
 
 namespace engine
 {
@@ -453,6 +455,10 @@ namespace engine
                string outString ;
                runner->read( outString ) ;
                utilStrTrim( outString ) ;
+#if defined( _WINDOWS )
+               // need to remove all '\r'
+               erase_all( outString, "\r" ) ;
+#endif // _WINDOWS
                if ( !outString.empty() )
                {
                   ossPrintf( "%s: %u bytes out==>%s%s%s<=="OSS_NEWLINE,
