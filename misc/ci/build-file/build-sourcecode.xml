@@ -238,9 +238,9 @@
 			<fileset dir="${CODE_DIR}/client/samples/" />
 		</copy>
 		<copy file="${CODE_DIR}/driver/C#.Net/build/release/sequoiadb.dll" tofile="${RELEASE_DIR}/sequoiadb/CSharp/sequoiadb.dll" />
-		<!-- <copy todir="${RELEASE_DIR}/sequoiadb/hadoop" >
-    		<fileset dir="${CODE_DIR}/driver/hadoop/hadoop-connector" includes="**/hadoop-connector*.jar" />
-    	</copy> -->
+		<copy todir="${RELEASE_DIR}/sequoiadb/hadoop" >
+    		<fileset dir="${CODE_DIR}/driver/hadoop/hadoop-connector" includes="**/hadoop-connector-*.jar" />
+    	</copy>
     	<copy todir="${RELEASE_DIR}/sequoiadb/conf/script">
     		<fileset dir="${CODE_DIR}/conf/script" includes="**/*" />
     	</copy>
