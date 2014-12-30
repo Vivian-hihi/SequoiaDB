@@ -9,7 +9,6 @@ namespace SequoiaDB
     {
         private TcpClient client;
         private ManualResetEvent timeoutObject;
-        private bool isConn;
         private Exception socketException = new BaseException("SDB_NET_CANNOT_CONNECT");
 
         //private static readonly Logger logger = new Logger("TimeOutSocket2");
@@ -18,7 +17,6 @@ namespace SequoiaDB
         {
             this.client = new TcpClient();
             this.timeoutObject = new ManualResetEvent(false);
-            this.isConn = false;
         }
 
         internal TcpClient Connect(IPEndPoint remoteEndPoint, int timeoutMSec)
@@ -36,8 +34,7 @@ namespace SequoiaDB
             timeoutObject.Reset();
             if (timeoutObject.WaitOne(timeoutMSec, false))
             {
-                if (isConn)
-                //if (client.Connected)
+                if (client.Connected)
                 {
                     return client;
                 }
@@ -58,12 +55,10 @@ namespace SequoiaDB
         {
             try
             {
-                isConn = false;
                 TcpClient client = asyncResult.AsyncState as TcpClient;
                 if (client != null && client.Client != null)
                 {
                     client.EndConnect(asyncResult);
-                    isConn = true;
                 }
                 else
                 {
@@ -72,7 +67,6 @@ namespace SequoiaDB
             }
             catch (Exception)
             {
-                isConn = false;
                 socketException = new BaseException("SDB_NET_CANNOT_CONNECT");
             }
             finally
