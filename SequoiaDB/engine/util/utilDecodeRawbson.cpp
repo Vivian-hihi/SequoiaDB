@@ -48,42 +48,44 @@
 
 CHAR *utilDecodeBson::_trimLeft( CHAR *pCursor, INT32 &size )
 {
+   INT32 tempSize = size ;
    for ( INT32 i = 0; i < size; ++i )
    {
       switch( *pCursor )
       {
       case UTIL_DE_STR_TABLE:
-      case UTIL_DE_STR_CR:
-      case UTIL_DE_STR_LF:
       case UTIL_DE_STR_SPACE:
          ++pCursor ;
+         --tempSize ;
          break ;
       case 0:
       default:
-         size -= i ;
+         size = tempSize ;
          return pCursor ;
       }
    }
+   size = tempSize ;
    return pCursor ;
 }
 
 CHAR *utilDecodeBson::_trimRight ( CHAR *pCursor, INT32 &size )
 {
+   INT32 tempSize = size ;
    for ( INT32 i = 1; i <= size; ++i )
    {
       switch( *( pCursor + ( size - i ) ) )
       {
       case UTIL_DE_STR_TABLE:
-      case UTIL_DE_STR_CR:
-      case UTIL_DE_STR_LF:
       case UTIL_DE_STR_SPACE:
+         --tempSize ;
          break ;
       case 0:
       default:
-         size -= ( i - 1 ) ;
+         size = tempSize ;
          return pCursor ;
       }
    }
+   size = tempSize ;
    return pCursor ;
 }
 
@@ -119,6 +121,32 @@ INT32 utilDecodeBson::init( CHAR delChar, CHAR delField,
       PD_LOG ( PDERROR, "delchar does not like delfield" ) ;
       goto error ;
    }
+   else if ( UTIL_DE_STR_SPACE == delChar )
+   {
+      rc = SDB_INVALIDARG ;
+      PD_LOG ( PDERROR, "delchar can not be a space" ) ;
+      goto error ;
+   }
+   else if ( UTIL_DE_STR_TABLE == delChar )
+   {
+      rc = SDB_INVALIDARG ;
+      PD_LOG ( PDERROR, "delchar can not be a tab" ) ;
+      goto error ;
+   }
+
+   if ( UTIL_DE_STR_SPACE == delField )
+   {
+      rc = SDB_INVALIDARG ;
+      PD_LOG ( PDERROR, "delfield can not be a space" ) ;
+      goto error ;
+   }
+   else if ( UTIL_DE_STR_TABLE == delField )
+   {
+      rc = SDB_INVALIDARG ;
+      PD_LOG ( PDERROR, "delfield can not be a tab" ) ;
+      goto error ;
+   }
+
    _delChar = delChar ;
    _delField = delField ;
    _includeBinary = includeBinary ;
