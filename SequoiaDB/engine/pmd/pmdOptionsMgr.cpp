@@ -1327,7 +1327,8 @@ namespace engine
       rdvMinMax( pEX, _maxPrefPool, 0, 1000, TRUE ) ;
       // --maxsubquery
       rdxUInt( pEX, PMD_OPTION_MAX_SUB_QUERY, _maxSubQuery, FALSE, TRUE,
-               PMD_MAX_SUB_QUERY ) ;
+               PMD_MAX_SUB_QUERY <= _maxPrefPool ?
+               PMD_MAX_SUB_QUERY : _maxPrefPool ) ;
       rdvMinMax( pEX, _maxSubQuery, 0, _maxPrefPool, TRUE ) ;
       // --maxreplsync
       rdxUInt( pEX, PMD_OPTION_MAX_REPL_SYNC, _maxReplSync, FALSE, TRUE,
