@@ -278,6 +278,7 @@ namespace SequoiaDB
             if (insertor == null)
                 throw new BaseException("SDB_INVALIDARG");
             SDBMessage sdbMessage = new SDBMessage();
+            sdbMessage.OperationCode = Operation.OP_INSERT;
             sdbMessage.Version = 0;
             sdbMessage.W = 0;
             sdbMessage.Padding = 0;
@@ -303,6 +304,7 @@ namespace SequoiaDB
             byte[] request = SDBMessageHelper.BuildInsertRequest(sdbMessage, isBigEndian);
             connection.SendMessage(request);
             SDBMessage rtnSDBMessage = SDBMessageHelper.MsgExtractReply(connection.ReceiveMessage(isBigEndian), isBigEndian);
+            rtnSDBMessage = SDBMessageHelper.CheckRetMsgHeader(sdbMessage, rtnSDBMessage);
             int flags = rtnSDBMessage.Flags;
             if (flags != 0)
                 throw new BaseException(flags);
@@ -322,6 +324,7 @@ namespace SequoiaDB
             if ( insertor == null || insertor.Count == 0 )
                 throw new BaseException("SDB_INVALIDARG");
             SDBMessage sdbMessage = new SDBMessage();
+            sdbMessage.OperationCode = Operation.OP_INSERT;
             sdbMessage.Version = 0;
             sdbMessage.W = 0;
             sdbMessage.Padding = 0;
@@ -341,6 +344,7 @@ namespace SequoiaDB
             }
             connection.SendMessage(request);
             SDBMessage rtnSDBMessage = SDBMessageHelper.MsgExtractReply(connection.ReceiveMessage(isBigEndian), isBigEndian);
+            rtnSDBMessage = SDBMessageHelper.CheckRetMsgHeader(sdbMessage, rtnSDBMessage);
             int flags = rtnSDBMessage.Flags;
             if (flags != 0)
                 throw new BaseException(flags);
@@ -371,8 +375,9 @@ namespace SequoiaDB
             if (matcher == null)
                 matcher = dummyObj;
             if (hint == null)
-                hint = dummyObj;        
+                hint = dummyObj;
 
+            sdbMessage.OperationCode = Operation.OP_DELETE;
             sdbMessage.Version = 0;
             sdbMessage.W = 0;
             sdbMessage.Padding = 0;
@@ -387,6 +392,7 @@ namespace SequoiaDB
             byte[] request = SDBMessageHelper.BuildDeleteRequest(sdbMessage, isBigEndian);
             connection.SendMessage(request);
             SDBMessage rtnSDBMessage = SDBMessageHelper.MsgExtractReply(connection.ReceiveMessage(isBigEndian), isBigEndian);
+            rtnSDBMessage = SDBMessageHelper.CheckRetMsgHeader(sdbMessage, rtnSDBMessage);
             int flags = rtnSDBMessage.Flags;
             if (flags != 0)
             {
@@ -751,6 +757,7 @@ namespace SequoiaDB
             if ( obj == null || obj.Count == 0 )
                 throw new BaseException("SDB_INVALIDARG");
             SDBMessage sdbMessage = new SDBMessage();
+            sdbMessage.OperationCode = Operation.OP_AGGREGATE;
             sdbMessage.Version = 0;
             sdbMessage.W = 0;
             sdbMessage.Padding = 0;
@@ -768,6 +775,7 @@ namespace SequoiaDB
             }
             connection.SendMessage(request);
             SDBMessage rtnSDBMessage = SDBMessageHelper.MsgExtractReply(connection.ReceiveMessage(isBigEndian), isBigEndian);
+            rtnSDBMessage = SDBMessageHelper.CheckRetMsgHeader(sdbMessage, rtnSDBMessage);
             int flags = rtnSDBMessage.Flags;
             if (flags != 0)
                 if (flags == SequoiadbConstants.SDB_DMS_EOC)
@@ -1031,6 +1039,7 @@ namespace SequoiaDB
             byte[] request = SDBMessageHelper.BuildRemoveLobRequest(sdbMessage, isBigEndian);
             connection.SendMessage(request);
             SDBMessage rtnSDBMessage = SDBMessageHelper.MsgExtractReply(connection.ReceiveMessage(isBigEndian), isBigEndian);
+            rtnSDBMessage = SDBMessageHelper.CheckRetMsgHeader(sdbMessage, rtnSDBMessage);
             int flags = rtnSDBMessage.Flags;
             if (flags != 0)
             {
@@ -1050,6 +1059,7 @@ namespace SequoiaDB
                 hint = dummyObj;
             SDBMessage sdbMessage = new SDBMessage();
 
+            sdbMessage.OperationCode = Operation.OP_UPDATE;
             sdbMessage.Version = 0;
             sdbMessage.W = 0;
             sdbMessage.Padding = 0;
@@ -1064,6 +1074,7 @@ namespace SequoiaDB
             byte[] request = SDBMessageHelper.BuildUpdateRequest(sdbMessage, isBigEndian);
             connection.SendMessage(request);
             SDBMessage rtnSDBMessage = SDBMessageHelper.MsgExtractReply(connection.ReceiveMessage(isBigEndian), isBigEndian);
+            rtnSDBMessage = SDBMessageHelper.CheckRetMsgHeader(sdbMessage, rtnSDBMessage);
             int flags = rtnSDBMessage.Flags;
             if (flags != 0)
                 throw new BaseException(flags);
@@ -1074,6 +1085,7 @@ namespace SequoiaDB
         {
             BsonDocument dummyObj = new BsonDocument();
             SDBMessage sdbMessage = new SDBMessage();
+            sdbMessage.OperationCode = Operation.OP_QUERY;
             sdbMessage.CollectionFullName = command;
             sdbMessage.Version = 0;
             sdbMessage.W = 0;
@@ -1123,7 +1135,7 @@ namespace SequoiaDB
             byte[] request = SDBMessageHelper.BuildQueryRequest(sdbMessage, isBigEndian);
             connection.SendMessage(request);
             SDBMessage rtnSDBMessage = SDBMessageHelper.MsgExtractReply(connection.ReceiveMessage(isBigEndian), isBigEndian);
-
+            rtnSDBMessage = SDBMessageHelper.CheckRetMsgHeader(sdbMessage, rtnSDBMessage);
             return rtnSDBMessage;
         }
 
@@ -1136,6 +1148,7 @@ namespace SequoiaDB
             while (hasMore)
             {
                 SDBMessage sdbMessage = new SDBMessage();
+                sdbMessage.OperationCode = Operation.OP_GETMORE;
                 sdbMessage.NodeID = SequoiadbConstants.ZERO_NODEID;
                 sdbMessage.ContextIDList = contextIDs;
                 sdbMessage.RequestID = requestID;
@@ -1144,7 +1157,7 @@ namespace SequoiaDB
                 byte[] request = SDBMessageHelper.BuildGetMoreRequest(sdbMessage, isBigEndian);
                 connection.SendMessage(request);
                 rtnSDBMessage = SDBMessageHelper.MsgExtractReply(connection.ReceiveMessage(isBigEndian), isBigEndian);
-
+                rtnSDBMessage = SDBMessageHelper.CheckRetMsgHeader(sdbMessage, rtnSDBMessage);
                 int flags = rtnSDBMessage.Flags;
                 if (flags != 0)
                     if (flags == SequoiadbConstants.SDB_DMS_EOC)

@@ -20,8 +20,18 @@ namespace SequoiaDB
         private const int MESSAGE_OPLOB_LENGTH = 52;
         private const int MESSAGE_LOBTUPLE_LENGTH = 16;
 
+        internal static SDBMessage CheckRetMsgHeader(SDBMessage sendMsg, SDBMessage rtnMsg)
+        {
+            uint sendOpCode = (uint)sendMsg.OperationCode;
+            uint recvOpCode = (uint)rtnMsg.OperationCode;
+            if ((sendOpCode | 0x80000000) != recvOpCode)
+                rtnMsg.Flags = (int)Errors.errors.SDB_UNEXPECTED_RESULT;
+            return rtnMsg;
+        }
+
         internal static byte[] BuildQueryRequest(SDBMessage sdbMessage, bool isBigEndian)
         {
+            int opCode = (int)sdbMessage.OperationCode;
             string collectionName = sdbMessage.CollectionFullName;
             int version = sdbMessage.Version;
             short w = sdbMessage.W;
@@ -54,7 +64,7 @@ namespace SequoiaDB
                 + Helper.RoundToMultipleXLength(hint.Length, 4);
 
             List<byte[]> fieldList = new List<byte[]>();
-            fieldList.Add(AssembleHeader(messageLength, requestID, nodeID, (int)Operation.OP_QUERY, isBigEndian));
+            fieldList.Add(AssembleHeader(messageLength, requestID, nodeID, opCode, isBigEndian));
             ByteBuffer buf = new ByteBuffer(32);
             if (isBigEndian)
                 buf.IsBigEndian = true;
@@ -92,6 +102,7 @@ namespace SequoiaDB
 
         internal static byte[] BuildInsertRequest(SDBMessage sdbMessage, bool isBigEndian)
         {
+            int opCode = (int)sdbMessage.OperationCode;
             string collectionName = sdbMessage.CollectionFullName;
             int version = sdbMessage.Version;
             short w = sdbMessage.W;
@@ -116,7 +127,7 @@ namespace SequoiaDB
             // we need byte[] while sending
             List<byte[]> fieldList = new List<byte[]>();
             // let's put the packet head into list
-            fieldList.Add(AssembleHeader(messageLength, requestID, nodeID, (int)Operation.OP_INSERT, isBigEndian));
+            fieldList.Add(AssembleHeader(messageLength, requestID, nodeID, opCode, isBigEndian));
             ByteBuffer buf = new ByteBuffer(16);
             if (isBigEndian)
                 buf.IsBigEndian = true;
@@ -169,7 +180,7 @@ namespace SequoiaDB
                 buf.IsBigEndian = true;
             buf.PushInt(messageLength);
             buf.PushByteArray(remainning);
-            buf.PushByteArray(Helper.RoundToMultipleX(insertor, 4));           
+            buf.PushByteArray(Helper.RoundToMultipleX(insertor, 4));
 
             if (logger.IsDebugEnabled)
             {
@@ -185,6 +196,7 @@ namespace SequoiaDB
 
         internal static byte[] BuildDeleteRequest(SDBMessage sdbMessage, bool isBigEndian)
         {
+            int opCode = (int)sdbMessage.OperationCode;
             string collectionName = sdbMessage.CollectionFullName;
             int version = sdbMessage.Version;
             short w = sdbMessage.W;
@@ -209,7 +221,7 @@ namespace SequoiaDB
                 + Helper.RoundToMultipleXLength(hint.Length, 4);
 
             List<byte[]> fieldList = new List<byte[]>();
-            fieldList.Add(AssembleHeader(messageLength, requestID, nodeID, (int)Operation.OP_DELETE, isBigEndian));
+            fieldList.Add(AssembleHeader(messageLength, requestID, nodeID, opCode, isBigEndian));
             ByteBuffer buf = new ByteBuffer(16);
             if (isBigEndian)
                 buf.IsBigEndian = true;
@@ -245,6 +257,7 @@ namespace SequoiaDB
 
         internal static byte[] BuildUpdateRequest(SDBMessage sdbMessage, bool isBigEndian)
         {
+            int opCode = (int)sdbMessage.OperationCode;
             string collectionName = sdbMessage.CollectionFullName;
             int version = sdbMessage.Version;
             short w = sdbMessage.W;
@@ -272,7 +285,7 @@ namespace SequoiaDB
                 + Helper.RoundToMultipleXLength(modifier.Length, 4);
 
             List<byte[]> fieldList = new List<byte[]>();
-            fieldList.Add(AssembleHeader(messageLength, requestID, nodeID, (int)Operation.OP_UPDATE, isBigEndian));
+            fieldList.Add(AssembleHeader(messageLength, requestID, nodeID, opCode, isBigEndian));
             ByteBuffer buf = new ByteBuffer(16);
             if (isBigEndian)
                 buf.IsBigEndian = true;
@@ -309,6 +322,7 @@ namespace SequoiaDB
 
         internal static byte[] BuildSqlMsg(SDBMessage sdbMessage, string sql, bool isBigEndian)
         {
+            int opCode = (int)sdbMessage.OperationCode;
             ulong requestID = sdbMessage.RequestID;
             byte[] nodeID = sdbMessage.NodeID;
             byte[] sqlBytes = System.Text.Encoding.UTF8.GetBytes(sql);
@@ -317,7 +331,7 @@ namespace SequoiaDB
                 MESSAGE_HEADER_LENGTH + sqlLen, 4);
 
             List<byte[]> fieldList = new List<byte[]>();
-            fieldList.Add(AssembleHeader(messageLength, requestID, nodeID, (int)Operation.OP_SQL, isBigEndian));
+            fieldList.Add(AssembleHeader(messageLength, requestID, nodeID, opCode, isBigEndian));
             byte[] newArray = new byte[sqlLen];
             for (int i = 0; i < sqlLen - 1; i++)
                 newArray[i] = sqlBytes[i];
@@ -338,8 +352,10 @@ namespace SequoiaDB
             return msgInByteArray;
         }
 
-        internal static byte[] BuildAuthMsg(ulong requestID, string username, string passwd, bool isBigEndian)
+        internal static byte[] BuildAuthMsg(SDBMessage sdbMessage, string username, string passwd, bool isBigEndian)
         {
+            int opCode = (int)sdbMessage.OperationCode;
+            ulong requestID = sdbMessage.RequestID; 
             byte[] nodeID = SequoiadbConstants.ZERO_NODEID;
             BsonDocument auth = new BsonDocument();
             auth.Add(SequoiadbConstants.SDB_AUTH_USER, username);
@@ -355,7 +371,7 @@ namespace SequoiaDB
 
             List<byte[]> fieldList = new List<byte[]>();
             fieldList.Add(AssembleHeader(messageLength, requestID, nodeID,
-                            (int)Operation.MSG_AUTH_VERIFY_REQ, isBigEndian));
+                                         opCode, isBigEndian));
 
             fieldList.Add(Helper.RoundToMultipleX(authbyte, 4));
 
@@ -373,8 +389,10 @@ namespace SequoiaDB
             return msgInByteArray;
         }
 
-        internal static byte[] BuildAuthCrtMsg(ulong requestID, string username, string passwd, bool isBigEndian)
+        internal static byte[] BuildAuthCrtMsg(SDBMessage sdbMessage , string username, string passwd, bool isBigEndian)
         {
+            int opCode = (int)sdbMessage.OperationCode ;
+            ulong requestID = sdbMessage.RequestID;
             byte[] nodeID = SequoiadbConstants.ZERO_NODEID;
             BsonDocument auth = new BsonDocument();
             auth.Add(SequoiadbConstants.SDB_AUTH_USER, username);
@@ -390,7 +408,7 @@ namespace SequoiaDB
 
             List<byte[]> fieldList = new List<byte[]>();
             fieldList.Add(AssembleHeader(messageLength, requestID, nodeID,
-                            (int)Operation.MSG_AUTH_CRTUSR_REQ, isBigEndian));
+                                         opCode, isBigEndian));
 
             fieldList.Add(Helper.RoundToMultipleX(authbyte, 4));
 
@@ -408,8 +426,10 @@ namespace SequoiaDB
             return msgInByteArray;
         }
 
-        internal static byte[] BuildAuthDelMsg(ulong requestID, string username, string passwd, bool isBigEndian)
+        internal static byte[] BuildAuthDelMsg(SDBMessage sdbMessage, string username, string passwd, bool isBigEndian)
         {
+            ulong requestID = sdbMessage.RequestID;
+            int opCode = (int)sdbMessage.OperationCode;
             byte[] nodeID = SequoiadbConstants.ZERO_NODEID;
             BsonDocument auth = new BsonDocument();
             auth.Add(SequoiadbConstants.SDB_AUTH_USER, username);
@@ -425,7 +445,7 @@ namespace SequoiaDB
 
             List<byte[]> fieldList = new List<byte[]>();
             fieldList.Add(AssembleHeader(messageLength, requestID, nodeID,
-                            (int)Operation.MSG_AUTH_DELUSR_REQ, isBigEndian));
+                                         opCode, isBigEndian));
 
             fieldList.Add(Helper.RoundToMultipleX(authbyte, 4));
 
@@ -463,15 +483,17 @@ namespace SequoiaDB
             return msgInByteArray;
         }
 
-        internal static byte[] BuildKillCursorMsg(long[] contextIDs, bool isBigEndian)
+        internal static byte[] BuildKillCursorMsg(SDBMessage sdbMessage, bool isBigEndian)
         {
+            int opCode = (int)sdbMessage.OperationCode;
+            List<long> contextIDs = sdbMessage.ContextIDList;
             ulong requestID = 0;
             byte[] nodeID = SequoiadbConstants.ZERO_NODEID;
-            int lenContextIDs = sizeof(long) * contextIDs.Length;
+            int lenContextIDs = sizeof(long) * contextIDs.Count;
             int messageLength = MESSAGE_KILLCURSOR_LENGTH + lenContextIDs;
 
             List<byte[]> fieldList = new List<byte[]>();
-            fieldList.Add(AssembleHeader(messageLength, requestID, nodeID, (int)Operation.OP_KILL_CONTEXT, isBigEndian));
+            fieldList.Add(AssembleHeader(messageLength, requestID, nodeID, opCode, isBigEndian));
             ByteBuffer buf = new ByteBuffer(8 + lenContextIDs);
             if (isBigEndian)
                 buf.IsBigEndian = true;
@@ -479,7 +501,7 @@ namespace SequoiaDB
             int numContexts = 1;
             buf.PushInt(zero);
             buf.PushInt(numContexts);
-            foreach ( long contextID in contextIDs )
+            foreach (long contextID in contextIDs)
                 buf.PushLong(contextID);
 
             fieldList.Add(buf.ToByteArray());
@@ -497,9 +519,10 @@ namespace SequoiaDB
             return msgInByteArray;
         }
 
-        internal static byte[] BuildTransactionRequest(Operation opcode, bool isBigEndian)
+        internal static byte[] BuildTransactionRequest(SDBMessage sdbMessage, bool isBigEndian)
         {
-            ulong requestID = 0;
+            int opcode = (int)sdbMessage.OperationCode;
+            ulong requestID = sdbMessage.RequestID;
             byte[] nodeID = SequoiadbConstants.ZERO_NODEID;
             int messageLength = Helper.RoundToMultipleXLength(MESSAGE_HEADER_LENGTH, 4);
 
@@ -519,6 +542,7 @@ namespace SequoiaDB
 
         internal static byte[] BuildGetMoreRequest(SDBMessage sdbMessage, bool isBigEndian)
         {
+            int opCode = (int)sdbMessage.OperationCode;
             ulong requestID = sdbMessage.RequestID;
             long contextId = sdbMessage.ContextIDList[0];
             int numReturned = sdbMessage.NumReturned;
@@ -527,7 +551,7 @@ namespace SequoiaDB
             int messageLength = MESSAGE_OPGETMORE_LENGTH;
 
             List<byte[]> fieldList = new List<byte[]>();
-            fieldList.Add(AssembleHeader(messageLength, requestID, nodeID, (int)Operation.OP_GETMORE, isBigEndian));
+            fieldList.Add(AssembleHeader(messageLength, requestID, nodeID, opCode, isBigEndian));
             ByteBuffer buf = new ByteBuffer(12);
             if (isBigEndian)
                 buf.IsBigEndian = true;
@@ -552,6 +576,7 @@ namespace SequoiaDB
 
 	    internal static byte[] BuildAggrRequest(SDBMessage sdbMessage, bool isBigEndian)
         {
+            int opCode = (int)sdbMessage.OperationCode;
             string collectionName = sdbMessage.CollectionFullName;
             int version = sdbMessage.Version;
             short w = sdbMessage.W;
@@ -574,7 +599,7 @@ namespace SequoiaDB
                 + Helper.RoundToMultipleXLength(insertor.Length, 4);
 
             List<byte[]> fieldList = new List<byte[]>();
-            fieldList.Add(AssembleHeader(messageLength, requestID, nodeID, (int)Operation.OP_AGGREGATE, isBigEndian));
+            fieldList.Add(AssembleHeader(messageLength, requestID, nodeID, opCode, isBigEndian));
             ByteBuffer buf = new ByteBuffer(16);
             if (isBigEndian)
                 buf.IsBigEndian = true;
@@ -639,9 +664,9 @@ namespace SequoiaDB
             return buf.ToByteArray();
         }
 
-        internal static byte[] BuildKillAllContextsRequest(Operation opcode, bool isBigEndian)
+        internal static byte[] BuildKillAllContextsRequest(SDBMessage sdbMessage, bool isBigEndian)
         {
-            return BuildTransactionRequest( opcode, isBigEndian);
+            return BuildTransactionRequest(sdbMessage, isBigEndian);
         }
 
         internal static byte[] BuildOpenLobRequest(SDBMessage sdbMessage, bool isBigEndian)
