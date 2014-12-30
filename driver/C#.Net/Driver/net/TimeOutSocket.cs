@@ -7,18 +7,24 @@ namespace SequoiaDB
 {
     class TimeOutSocket
     {
-        private static ManualResetEvent timeoutObject = new ManualResetEvent(false);
-        private static bool connected = false;
-        private static Exception socketException;
+        private TcpClient client;
+        private ManualResetEvent timeoutObject;
+        private bool isConn;
+        private Exception socketException = new BaseException("SDB_NET_CANNOT_CONNECT");
 
-        internal static TcpClient Connect(IPEndPoint remoteEndPoint, int timeoutMSec)
+        //private static readonly Logger logger = new Logger("TimeOutSocket2");
+
+        internal TimeOutSocket()
         {
-            timeoutObject.Reset();
-            socketException = null;
+            this.client = new TcpClient();
+            this.timeoutObject = new ManualResetEvent(false);
+            this.isConn = false;
+        }
 
+        internal TcpClient Connect(IPEndPoint remoteEndPoint, int timeoutMSec)
+        {
             string servIP = Convert.ToString(remoteEndPoint.Address);
             int servPort = remoteEndPoint.Port;
-            TcpClient client = new TcpClient();
             try
             {
                 client.BeginConnect(servIP, servPort, new AsyncCallback(CallBackMethod), client);
@@ -27,13 +33,19 @@ namespace SequoiaDB
             {
                 throw new BaseException("SDB_NET_CANNOT_CONNECT");
             }
-
+            timeoutObject.Reset();
             if (timeoutObject.WaitOne(timeoutMSec, false))
             {
-                if (connected)
+                if (isConn)
+                //if (client.Connected)
+                {
                     return client;
+                }
                 else
+                {
+                    client.Close();
                     throw socketException;
+                }
             }
             else
             {
@@ -42,21 +54,25 @@ namespace SequoiaDB
             }
         }
 
-        private static void CallBackMethod(IAsyncResult asyncResult)
+        private void CallBackMethod(IAsyncResult asyncResult)
         {
             try
             {
-                connected = false;
+                isConn = false;
                 TcpClient client = asyncResult.AsyncState as TcpClient;
-                if (client.Client != null)
+                if (client != null && client.Client != null)
                 {
                     client.EndConnect(asyncResult);
-                    connected = true;
+                    isConn = true;
+                }
+                else
+                {
+                    throw new BaseException("SDB_NET_CANNOT_CONNECT");
                 }
             }
             catch (Exception)
             {
-                connected = false;
+                isConn = false;
                 socketException = new BaseException("SDB_NET_CANNOT_CONNECT");
             }
             finally
