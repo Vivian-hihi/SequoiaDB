@@ -202,7 +202,7 @@ Running:
 		> db.help() ;
 
 
-	To run in cluster mode, please refer SequoiaDB Infomation Center.
+	To run in cluster mode, please refer SequoiaDB Information Center.
 
 
 Documentation:
