@@ -84,8 +84,14 @@
 
 	<target name="test-one-case" depends="">	
 		<tstamp>
-			<format property="testcase.begin.time" pattern="yyyy.MM.dd-HH.mm.ss" />
+			<format property="testcase.begin.time" pattern="yyyy-MM-dd HH:mm:ss" />
 		</tstamp>
+		<echo message="#########################################################" />
+		<echo message="time=${testcase.begin.time}" />
+		<echo message="DSTAMP=${DSTAMP}" />
+		<echo message="TSTAMP=${TSTAMP}" />
+		<echo message="TODAY=${TODAY}" />
+		<echo message="#########################################################" />
 
 		<basename property="test.case.name" file="${test.case.fullname}" suffix=".py" />
 		<exec executable="sed">
