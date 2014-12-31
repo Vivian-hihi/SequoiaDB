@@ -159,7 +159,9 @@ namespace engine
          if ( useShell )
          {
             string shellcmd = "/bin/sh -c " ;
+            shellcmd += "\"" ;
             shellcmd += cmd ;
+            shellcmd += "\"" ;
             cmd = shellcmd ;
          }
       }
@@ -248,7 +250,9 @@ namespace engine
          if ( useShell )
          {
             string shellcmd = "/bin/sh -c " ;
+            shellcmd += "\"" ;
             shellcmd += cmd ;
+            shellcmd += "\"" ;
             cmd = shellcmd ;
          }
       }
