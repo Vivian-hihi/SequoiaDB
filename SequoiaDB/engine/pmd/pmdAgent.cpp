@@ -1259,6 +1259,7 @@ namespace engine
       pmdKRCB *krcb              = pmdGetKRCB() ;
       monDBCB *mondbcb           = krcb->getMonDBCB () ;
       SDB_ROLE dbrole            = krcb->getDBRole () ;
+      INT32 opCode               = 0 ;
 
       // create socket
       ossSocket sock ( &s, PMD_AGENT_SOCKET_DFT_TIMEOUT ) ;
@@ -1441,6 +1442,8 @@ namespace engine
          // is large enought o put packetLength+1 bytes, so it's safe to set 0
          // at end of the packet
          pReceiveBuffer[packetLength] = 0 ;
+         // get opCode
+         opCode = ((MsgHeader*)pReceiveBuffer)->opCode ;
          // mark agent is doing something
          if ( SDB_OK != ( rc = eduMgr->activateEDU ( cb )) )
          {
@@ -1500,7 +1503,8 @@ namespace engine
                replyHeader.numReturned = buffObj.recordNum() ;
                replyHeader.header.messageLength += buffObj.size() ;
             }
-
+            // fill the return opCode
+            replyHeader.header.opCode = MAKE_REPLY_TYPE(opCode) ;
             // we want to reserve rc from pmdProcessAgentRequest, let's use
             // another sendRC
             sendRC = SDB_OK ;
