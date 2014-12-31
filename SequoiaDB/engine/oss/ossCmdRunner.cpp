@@ -156,12 +156,16 @@ namespace engine
       {
          argv.push_back( "/bin/sh" ) ;
          argv.push_back( "-c" ) ;
+         argv.push_back( cmd ) ;
       }
-      std::vector<std::string> vecArgs ;
-      vecArgs = boost::program_options::split_unix( cmd ) ;
-      for ( UINT32 i = 0 ; i < vecArgs.size() ; ++i )
+      else
       {
-         argv.push_back( vecArgs[ i ].c_str() ) ;
+         std::vector<std::string> vecArgs ;
+         vecArgs = boost::program_options::split_unix( cmd ) ;
+         for ( UINT32 i = 0 ; i < vecArgs.size() ; ++i )
+         {
+            argv.push_back( vecArgs[ i ].c_str() ) ;
+         }
       }
 #else
       argv.push_back( cmd ) ;
