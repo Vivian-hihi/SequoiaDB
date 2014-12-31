@@ -8,7 +8,6 @@ client/admin/admintpl
 conf
 thirdparty/crypto/openssl-1.0.1c/include
 thirdparty/crypto/openssl-1.0.1c/lib/linux64
-doc
 driver
 site_scons
 java/jdk_linux64
@@ -33,8 +32,6 @@ script/pkgrpm.sh
 script/sequoiadb
 script/sdbwsart
 script/sdbwstop
-license/license_en.txt
-license/license_zh.txt
 tools/sdbsupport/readme.txt
 tools/sdbsupport/sdbsupportfunc1.sh
 tools/sdbsupport/sdbsupportfunc2.sh
