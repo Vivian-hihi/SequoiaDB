@@ -15,11 +15,6 @@
 <project name="H3-G1-D3" default="H3-G1-D3">
 	<property name="properties.dir" value="${basedir}/../ci.test.properties" />
 	<property file="${properties.dir}" />
-	<!-- <taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
-		<classpath>
-			<pathelement location="${WORKSPACE}/deploy/ant-sdbtasks/ant-sdbtasks.jar" />
-		</classpath>
-	</taskdef>  -->
 
 	<target name="Deploy" depends="">
 		<parallel>
@@ -86,10 +81,8 @@
 
 	<target name="H3-G1-D3" depends="">
 		<hostinfo prefix="host" />
-		<property name="test-type-list" value="driver-java" />
+		<property name="test-type-list" value="basic,driver-java" />
 		<property name="copy.test.log" value="true"/>
-		<!-- <property name="import.file.name" value="basic-testcases-time.json" /> -->
-		<!-- <property name="test-type-list" value="driver-java" /> -->
 		<parallel>
 			<ant antfile="deploy-test-in-host.xml" dir="." inheritAll="false">
 				<property name="deploy.file.fullname" value="${deploy.file.fullname}" />
@@ -108,24 +101,16 @@
 		<for list="${test-type-list}" param="Test-Type">
 			<sequential>
 				<antfetch antfile="${WORKSPACE}/sequoiadb/misc/ci/test-type.xml" dir="." inheritAll="false" >
-					<!-- <property name="test.machine.deploy.path" value="${test.machine.deploy.path}" /> -->
-					<!-- <property name="install.path" value="${install.path}" /> -->
 					<property name="deploy.case.fullname" value="${deploy.case.fullname}" />
 					<property name="test.reports.path" value="${test.reports.path}" />
 					<property name="Test-Type" value="@{Test-Type}" />
-					<!-- <property name="import.file.name" value="${import.file.name}" /> -->
 					<property name="parallel.flag" value="parallel" />
 					<property name="WORKSPACE" value="${WORKSPACE}" />
 					<property name="ci.script.file.path" value="${ci.script.file.path}" />
 					<property name="test.host.NAME" value="${test.machine.no2.basic}" />
-					<!-- <property name="parallel.count" value="1" /> -->
 				</antfetch>
 			</sequential>
 		</for>
-
-		<!-- <echo message="####################################################" />
-		<echo message="test=${import.file}" />
-		<echo message="####################################################" /> -->
 
 		<trycatch>
 			<try>
