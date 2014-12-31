@@ -143,6 +143,28 @@ namespace engine
       }
       rc = SDB_OK ;
 
+#if defined( _LINUX )
+      {
+         UINT32 useShell = TRUE ;
+         // useShell, default : 1
+         rc = arg.getNative( 3, (void*)&useShell, SPT_NATIVE_INT32 ) ;
+         if ( SDB_OK != rc && SDB_OUT_OF_BOUND != rc )
+         {
+            rc = SDB_INVALIDARG ;
+            detail = BSON( SPT_ERR << "useShell should be a number" ) ;
+            goto error ;
+         }
+         rc = SDB_OK ;
+
+         if ( useShell )
+         {
+            string shellcmd = "/bin/sh -c " ;
+            shellcmd += cmd ;
+            cmd = shellcmd ;
+         }
+      }
+#endif // _LINUX
+
       _strOut = "" ;
       _retCode = 0 ;
       rc = runner.exec( cmd.c_str(), _retCode, FALSE,
@@ -210,6 +232,28 @@ namespace engine
          cmd += ev ;
       }
 
+#if defined( _LINUX )
+      {
+         UINT32 useShell = TRUE ;
+         // useShell, default : 1
+         rc = arg.getNative( 2, (void*)&useShell, SPT_NATIVE_INT32 ) ;
+         if ( SDB_OK != rc && SDB_OUT_OF_BOUND != rc )
+         {
+            rc = SDB_INVALIDARG ;
+            detail = BSON( SPT_ERR << "useShell should be a number" ) ;
+            goto error ;
+         }
+         rc = SDB_OK ;
+
+         if ( useShell )
+         {
+            string shellcmd = "/bin/sh -c " ;
+            shellcmd += cmd ;
+            cmd = shellcmd ;
+         }
+      }
+#endif // _LINUX
+
       _strOut = "" ;
       _retCode = 0 ;
       rc = runner.exec( cmd.c_str(), _retCode, TRUE ) ;
@@ -252,8 +296,8 @@ namespace engine
       stringstream ss ;
       ss << "Cmd functions:" << endl
          << " var cmd = new Cmd()" << endl
-         << "   run( cmd, [args], [timeout] )  timeout(ms), default 0: never timeout" << endl
-         << "   start( cmd, [args] )" << endl
+         << "   run( cmd, [args], [timeout], [useShell] )  timeout(ms), default 0: never timeout" << endl
+         << "   start( cmd, [args], [useShell] )" << endl
          << "   getLastRet()" << endl
          << "   getLastOut()" << endl ;
       rval.setStringVal( "", ss.str().c_str() ) ;
