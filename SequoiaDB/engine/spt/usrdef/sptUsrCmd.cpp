@@ -297,7 +297,8 @@ namespace engine
       ss << "Cmd functions:" << endl
          << " var cmd = new Cmd()" << endl
          << "   run( cmd, [args], [timeout], [useShell] )  timeout(ms), default 0: never timeout" << endl
-         << "   start( cmd, [args], [useShell] )" << endl
+         << "        useShell 0/1, default 1" << endl ;
+         << "   start( cmd, [args], [useShell] )  useShell 0/1, default 1" << endl
          << "   getLastRet()" << endl
          << "   getLastOut()" << endl ;
       rval.setStringVal( "", ss.str().c_str() ) ;
