@@ -111,6 +111,7 @@ namespace engine
       string cmd ;
       string ev ;
       UINT32 timeout = 0 ;
+      UINT32 useShell = TRUE ;
       ossCmdRunner runner ;
 
       rc = arg.getString( 0, cmd ) ;
@@ -143,34 +144,21 @@ namespace engine
       }
       rc = SDB_OK ;
 
-#if defined( _LINUX )
+      // useShell, default : 1
+      rc = arg.getNative( 3, (void*)&useShell, SPT_NATIVE_INT32 ) ;
+      if ( SDB_OK != rc && SDB_OUT_OF_BOUND != rc )
       {
-         UINT32 useShell = TRUE ;
-         // useShell, default : 1
-         rc = arg.getNative( 3, (void*)&useShell, SPT_NATIVE_INT32 ) ;
-         if ( SDB_OK != rc && SDB_OUT_OF_BOUND != rc )
-         {
-            rc = SDB_INVALIDARG ;
-            detail = BSON( SPT_ERR << "useShell should be a number" ) ;
-            goto error ;
-         }
-         rc = SDB_OK ;
-
-         if ( useShell )
-         {
-            string shellcmd = "/bin/sh -c " ;
-            shellcmd += "\"" ;
-            shellcmd += cmd ;
-            shellcmd += "\"" ;
-            cmd = shellcmd ;
-         }
+         rc = SDB_INVALIDARG ;
+         detail = BSON( SPT_ERR << "useShell should be a number" ) ;
+         goto error ;
       }
-#endif // _LINUX
+      rc = SDB_OK ;
 
       _strOut = "" ;
       _retCode = 0 ;
       rc = runner.exec( cmd.c_str(), _retCode, FALSE,
-                        0 == timeout ? -1 : (INT64)timeout ) ;
+                        0 == timeout ? -1 : (INT64)timeout,
+                        FALSE, NULL, useShell ? TRUE : FALSE ) ;
       if ( SDB_OK != rc )
       {
          stringstream ss ;
@@ -212,6 +200,7 @@ namespace engine
       string cmd ;
       string ev ;
       ossCmdRunner runner ;
+      UINT32 useShell = TRUE ;
 
       rc = arg.getString( 0, cmd ) ;
       if ( SDB_OK != rc )
@@ -234,33 +223,20 @@ namespace engine
          cmd += ev ;
       }
 
-#if defined( _LINUX )
+      // useShell, default : 1
+      rc = arg.getNative( 2, (void*)&useShell, SPT_NATIVE_INT32 ) ;
+      if ( SDB_OK != rc && SDB_OUT_OF_BOUND != rc )
       {
-         UINT32 useShell = TRUE ;
-         // useShell, default : 1
-         rc = arg.getNative( 2, (void*)&useShell, SPT_NATIVE_INT32 ) ;
-         if ( SDB_OK != rc && SDB_OUT_OF_BOUND != rc )
-         {
-            rc = SDB_INVALIDARG ;
-            detail = BSON( SPT_ERR << "useShell should be a number" ) ;
-            goto error ;
-         }
-         rc = SDB_OK ;
-
-         if ( useShell )
-         {
-            string shellcmd = "/bin/sh -c " ;
-            shellcmd += "\"" ;
-            shellcmd += cmd ;
-            shellcmd += "\"" ;
-            cmd = shellcmd ;
-         }
+         rc = SDB_INVALIDARG ;
+         detail = BSON( SPT_ERR << "useShell should be a number" ) ;
+         goto error ;
       }
-#endif // _LINUX
+      rc = SDB_OK ;
 
       _strOut = "" ;
       _retCode = 0 ;
-      rc = runner.exec( cmd.c_str(), _retCode, TRUE ) ;
+      rc = runner.exec( cmd.c_str(), _retCode, TRUE, -1, FALSE, NULL,
+                        useShell ? TRUE : FALSE ) ;
       if ( SDB_OK != rc )
       {
          stringstream ss ;
