@@ -406,7 +406,11 @@ void RCGen::genDoc ()
    if ( fout == NULL )
    {
       cout << "can't open file: " << docpath << endl ;
-      exit (-1) ;
+      cout << "please ignore this error if it's github build" << endl ;
+      // return instead of exit with -1
+      // because in github build we don't have doc anymore
+      return ;
+      // exit (-1) ;
    }
 
    fout << std::left ;
