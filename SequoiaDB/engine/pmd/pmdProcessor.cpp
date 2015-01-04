@@ -841,11 +841,23 @@ namespace engine
 
    _pmdCoordProcessor::~_pmdCoordProcessor()
    {
+      if ( NULL != _pEDUCB )
+      {
+         netMultiRouteAgent *pRouteAgent 
+                                 = pmdGetKRCB()->getCoordCB()->getRouteAgent() ;
+         pRouteAgent->delSession( _pEDUCB->getTID() );
+      }
+
+      _pSession = NULL ;
+      _pClient  = NULL ;
+      _pEDUCB   = NULL ;
+
       if ( NULL != _pErrorObj )
       {
          SDB_OSS_DEL _pErrorObj ;
          _pErrorObj = NULL ;
       }
+
       if ( NULL != _pResultBuff )
       {
          //TODO:
@@ -895,8 +907,12 @@ namespace engine
                                  dynamic_cast<_pmdRestSession*>( _pSession ) ;
          SDB_ASSERT( NULL != pRestSession, "" ) ;
          _pEDUCB = pRestSession->eduCB() ;
-         netMultiRouteAgent *pRouteAgent 
-                                 = pmdGetKRCB()->getCoordCB()->getRouteAgent() ;
+      }
+
+      _CoordCB *pCoordCB = pmdGetKRCB()->getCoordCB() ;
+      if ( NULL != pCoordCB )
+      {
+         netMultiRouteAgent *pRouteAgent = pCoordCB->getRouteAgent() ;
          rc = pRouteAgent->addSession( _pEDUCB );
          if ( SDB_OK != rc )
          {
@@ -909,16 +925,17 @@ namespace engine
 
    void _pmdCoordProcessor::detachSession()
    {
-      if ( NULL != _pEDUCB )
-      {
-         netMultiRouteAgent *pRouteAgent 
-                                 = pmdGetKRCB()->getCoordCB()->getRouteAgent() ;
-         pRouteAgent->delSession( _pEDUCB->getTID() );
-      }
+      //TODO: 放到析构里去处理
+//      if ( NULL != _pEDUCB )
+//      {
+//         netMultiRouteAgent *pRouteAgent 
+//                                 = pmdGetKRCB()->getCoordCB()->getRouteAgent() ;
+//         pRouteAgent->delSession( _pEDUCB->getTID() );
+//      }
 
-      _pSession = NULL ;
-      _pClient  = NULL ;
-      _pEDUCB   = NULL ;
+//      _pSession = NULL ;
+//      _pClient  = NULL ;
+//      _pEDUCB   = NULL ;
    }
 
    INT32 _pmdCoordProcessor::_processCoordMsg( MsgHeader *msg, 
@@ -935,8 +952,6 @@ namespace engine
       }
       if ( NULL != _pResultBuff )
       {
-         //TODO:
-         //SDB_OSS_DEL _pResultBuff ;
          _pResultBuff = NULL ;
       }
       CoordCB *pCoordcb  = _pKrcb->getCoordCB();
@@ -1016,6 +1031,12 @@ namespace engine
       else
       {
          SDB_ASSERT( _pResultBuff == NULL, "Result must be NULL" ) ;
+         // for fake returnnum
+         if ( replyHeader.numReturned != 0 )
+         {
+            contextBuff   = rtnContextBuf( (CHAR *)&replyHeader, 0, 
+                                           replyHeader.numReturned ) ;
+         }
       }
 
       if ( rc && contextBuff.size() == 0 )
@@ -1057,8 +1078,16 @@ namespace engine
       _replyHeader.startFrom            = 0 ;
 
       rc = _processCoordMsg( msg, _replyHeader, contextBuff ) ;
+      if ( MSG_AUTH_VERIFY_REQ == msg->opCode && SDB_CAT_NO_ADDR_LIST == rc )
+      {
+         rc = SDB_OK ;
+      }
+
+      contextID = _replyHeader.contextID ;
+
       if ( SDB_COORD_UNKNOWN_OP_REQ == rc )
       {
+         contextBuff.release() ;
          rc = _pmdDataProcessor::processMsg( msg, dpsCB, contextBuff, contextID, 
                                              needReply ) ;
       }
@@ -1080,8 +1109,6 @@ namespace engine
          _replyHeader.numReturned = contextBuff.recordNum() ;
          _replyHeader.header.messageLength += contextBuff.size() ;
       }
-
-      contextID = _replyHeader.contextID ;
 
       return rc ;
    }
