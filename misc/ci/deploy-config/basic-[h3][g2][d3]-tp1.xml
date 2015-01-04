@@ -157,7 +157,7 @@
 					<then>
 						<echo message="The copy.test.log is true , then copy all test log to ${save.testLog.hostname}:${save.testLog.dir}"/>
 						<tstamp>
-							<format property="current.time.log" pattern="yyyy.MM.dd-HH.mm.ss" />
+							<format property="current.time.log" pattern="yyyy-MM-dd-hh.mm.ss a" />
 						</tstamp>
 
 						<property name="test.log.path" value="${test.reports.path}/${test.environment}-${deploy.conffile.wildcard}-${host.NAME}-${current.time.log}-${BUILD_NUMBER}" />
