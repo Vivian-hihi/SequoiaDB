@@ -110,10 +110,7 @@
 	<target name="H3-G2-D3" depends="">
 		<hostinfo prefix="host" />
 		<property name="test-type-list" value="driver-python" />
-		<!-- <property name="test-type-list" value="samples" /> -->
-		<!-- <property name="test-type-list" value="driver-CPP" /> -->
 		<property name="copy.test.log" value="true"/>
-		<!-- <property name="import.file.name" value="basic-testcases-time.json" /> -->
 
 		<parallel>
 			<ant antfile="deploy-test-in-host.xml" dir="." inheritAll="false">
