@@ -64,16 +64,19 @@
 					<confitem name="diaglevel" value="5" />
 					<confitem name="transactionon" value="true" />
 					<confitem name="sharingbreak" value="20000" />
+					<confitem name="diagnum" value="80" />
 				</node>
 				<node host="${test.machine.no2.data}" baseport="${data.service.port}" dbpath="${install.path}/sequoiadb/database/data/${data.service.port}">
 					<confitem name="diaglevel" value="5" />
 					<confitem name="transactionon" value="true" />
 					<confitem name="sharingbreak" value="20000" />
+					<confitem name="diagnum" value="80" />
 				</node>
 				<node host="${test.machine.no3.data}" baseport="${data.service.port}" dbpath="${install.path}/sequoiadb/database/data/${data.service.port}">
 					<confitem name="diaglevel" value="5" />
 					<confitem name="transactionon" value="true" />
 					<confitem name="sharingbreak" value="20000" />
+					<confitem name="diagnum" value="80" />
 				</node>
 			</datagroup>
 		</sdbdeploy>	

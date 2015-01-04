@@ -10,14 +10,8 @@
 
 <project name="Install-Software" default="install-software">
 	<property file="${test.basedir}/ci.test.properties" />
-	<!-- <property environment="env" /> -->
 	<property name="db.path" value="${install.path}/sequoiadb" />
 
-	<!-- <property name="host.name" value="${NAME}" /> -->
-	<!-- <property name="host.ip" value="${ADDR4}" /> -->
-	<!-- <property name="install.package.path" value="${test.basedir}" /> -->
-	<!-- <property name="is.standalone.mode" value="false" /> -->
-	
 	<taskdef resource="net/sf/antcontrib/antlib.xml">
 		<classpath>
 			<pathelement location="/usr/share/java/ant-contrib.jar" />

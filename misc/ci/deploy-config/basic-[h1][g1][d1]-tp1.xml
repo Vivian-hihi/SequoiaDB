@@ -46,6 +46,7 @@
 					<confitem name="diaglevel" value="5" />
 					<confitem name="transactionon" value="true" />
 					<confitem name="sharingbreak" value="20000" />
+					<confitem name="diagnum" value="80" />
 				</node>
 			</datagroup>
 		</sdbdeploy>
