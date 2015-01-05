@@ -166,10 +166,8 @@ namespace engine
       EDU_TYPE_AGENT_BEGIN,
 
       EDU_TYPE_AGENT,
-      EDU_TYPE_COORDAGENT,
       EDU_TYPE_SHARDAGENT,
       EDU_TYPE_REPLAGENT,
-      EDU_TYPE_HTTPAGENT,
       EDU_TYPE_RESTAGENT,
 
       // Agent EDU Type END

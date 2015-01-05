@@ -117,15 +117,6 @@ namespace engine
          // now we have a tcp socket for a new connection, let's get an 
          // agent, Note the new new socket sent passing to startEDU
          rc = eduMgr->startEDU ( EDU_TYPE_AGENT, pData, &agentEDU ) ;
-//         if ( SDB_ROLE_COORD != dbrole )
-//         {
-//            rc = eduMgr->startEDU ( EDU_TYPE_AGENT, pData, &agentEDU ) ;
-//         }
-//         else
-//         {
-//            rc = eduMgr->startEDU ( EDU_TYPE_COORDAGENT, pData, &agentEDU ) ;
-//         }
-
          if ( rc )
          {
             PD_LOG( ( rc == SDB_QUIESCED ? PDWARNING : PDERROR ),
