@@ -66,11 +66,25 @@
 
       <p class="p">    sequoiadb.input.url: Specify the URL of the SequoiaDB which acts as an input source, the format is: hostname1:port1, hostname2:port2,</p>
 
+        <p class="p">    sequoiadb.input.user：指定输入源的 SequoiaDB 用户，默认为 null。</p>
+
+        <p class="p">    sequoiadb.input.passwd：指定输入源的 SequoiaDB 连接密码，默认为 null。</p>
+
       <p class="p">    sequoiadb.in.collectionspace: Specify the collection space which acts as an input source.</p>
 
       <p class="p">    sequoiadb.in.collection: Specify the collection which acts as an input source.</p>
 
+        <p class="p">    sequoiadb.query.json：指定输入源的查询条件，使用 json 结构，默认为 null。</p>
+
+        <p class="p">    sequoiadb.selector.json：指定输入源的字段筛选，使用 json 结构，默认为 null。</p>
+
+        <p class="p">    sequoiadb.preferedinstance：指定从 SequoiaDB 中获取数据时，连接哪个数据节点，默认为 anyone，可填值：[slave/master/anyone/node(1-7)]。</p>
+
       <p class="p">    sequoiadb.output.url: Specify the URL of the SequoiaDB which acts as an output target.</p>
+
+        <p class="p">    sequoiadb.output.user：指定输出源的 SequoiaDB 用户，默认为 null。</p>
+
+        <p class="p">    sequoiadb.output.passwd：指定输出源的 SequoiaDB 连接密码，默认为 null。</p>
 
       <p class="p">    sequoiadb.out.collectionspace: Specify the collection space which acts as an output target.</p>
 
@@ -155,12 +169,13 @@
      * @author gaoshengjie
      *  read the data, count penple in a province
      */
-    static class ProvinceMapper extends Mapper&lt;Object, BSONObject,IntWritable,IntWritable&gt;{
+    static class ProvinceMapper extends Mapper&lt;Object, BSONWritable,IntWritable,IntWritable&gt;{
         private static final IntWritable ONE=new IntWritable(1);
         @Override
-        protected void map(Object key, BSONObject value, Context context)
-                throws IOException, InterruptedException {
-            int province=(Integer) value.get("province_code");
+        protected void map(Object key, BSONWritable value, Context context)
+                throws IOException, InterruptedException {                
+                       BSONObject obj = value.getBson();
+            int province=(Integer) obj.get("province_code");
             context.write(new IntWritable(province), ONE);
         }
             

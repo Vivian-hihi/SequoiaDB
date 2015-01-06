@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
+<topic id="references_method_removeRG">
+  <title>db.removeCatalogRG()</title>
+  <body>
+    <section><title>db.removeCatalogRG()</title>
+      <p>删除编目分区组。</p>
+    </section>
+   
+    <section><title>示例</title>
+      <ul>
+        <li><p>删除编目分区组 </p>
+          <p><codeblock>db.removeCatalogRG()</codeblock></p></li>
+      </ul>
+      <note> <ul><li>删除编目分区组，要求编目分区组上已经没有数据节点及协调节点的信息。删除编目分区组将会把该组中所有的编目节点都删除。</li></ul>
+      </note>
+    </section>
+  </body>
+  <related-links>
+    <link href="removeRG.dita" format="dita" type="topic"></link>
+    <link href="removeCoordRG.dita" format="dita" type="topic"></link>
+  </related-links>
+</topic>

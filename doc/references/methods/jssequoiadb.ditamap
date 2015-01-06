@@ -7,6 +7,7 @@
    <topicref href="cancelTask.dita"/>
    <topicref href="topics/dbclose.dita"/>
    <topicref href="topics/createcatarg.dita"/>
+   <topicref href="topics/createCoordRG.dita"/>
    <topicref href="topics/createCS.dita"/>
    <topicref href="topics/createDomain.dita"/>
    <topicref href="topics/createProcedures.dita"/>
@@ -20,6 +21,8 @@
   <topicref href="topics/execUpdate.dita"/>
   <topicref href="flushConfigure.dita"/>
   <topicref href="topics/interrupt.dita"/>
+  <topicref href="topics/getCatalogRG.dita"/>
+  <topicref href="topics/getCoordRG.dita"/>
   <topicref href="topics/getCS.dita"/>
   <topicref href="topics/getDomain.dita"/>
   <topicref href="topics/getRG.dita"/>  
@@ -33,6 +36,8 @@
   <topicref href="topics/listReplicaGroups.dita"/>
   <topicref href="listTasks.dita"/>
   <topicref href="removeBackup.dita"/>
+  <topicref href="topics/removeCatalogRG.dita"/>
+  <topicref href="topics/removeCoordRG.dita"/>
   <topicref href="topics/removeProcedures.dita"/>
   <topicref href="topics/removeRG.dita"/>
   <topicref href="topics/resetSnapshot.dita"/>

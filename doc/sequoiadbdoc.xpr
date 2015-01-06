@@ -819,6 +819,7 @@
                     <file name="references/methods/topics/createcatarg.dita"/>
                     <file name="references/methods/topics/createCL_en.dita"/>
                     <file name="references/methods/topics/createCL.dita"/>
+                    <file name="references/methods/topics/createCoordRG.dita"/>
                     <file name="references/methods/topics/createCS_en.dita"/>
                     <file name="references/methods/topics/createCS.dita"/>
                     <file name="references/methods/topics/createDomain.dita"/>
@@ -879,8 +880,10 @@
                     <file name="references/methods/topics/findOne.dita"/>
                     <file name="references/methods/flushConfigure_en.dita"/>
                     <file name="references/methods/flushConfigure.dita"/>
+                    <file name="references/methods/topics/getCatalogRG.dita"/>
                     <file name="references/methods/topics/getCL_en.dita"/>
                     <file name="references/methods/topics/getCL.dita"/>
+                    <file name="references/methods/topics/getCoordRG.dita"/>
                     <file name="references/methods/topics/getCS_en.dita"/>
                     <file name="references/methods/topics/getCS.dita"/>
                     <file name="references/methods/topics/getDetail_en.dita"/>
@@ -951,6 +954,8 @@
                     <file name="references/methods/topics/remove.dita"/>
                     <file name="references/methods/removeBackup_en.dita"/>
                     <file name="references/methods/removeBackup.dita"/>
+                    <file name="references/methods/topics/removeCatalogRG.dita"/>
+                    <file name="references/methods/topics/removeCoordRG.dita"/>
                     <file name="references/methods/topics/removenode_en.dita"/>
                     <file name="references/methods/topics/removenode.dita"/>
                     <file name="references/methods/topics/removeProcedures_en.dita"/>

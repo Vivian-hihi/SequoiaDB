@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
+<topic id="references_method_createRG">
+  <title>db.getCoordRG()</title>
+  <body>
+    <section><title>db.getCoordRG()</title>
+      <p>获取协调分区组的引用。</p>
+    </section>
+
+    <section><title>示例</title>
+      <ul>
+        <li><p>获取协调分区组的引用</p>
+         <p><codeblock>var rg = db.getCoordRG()</codeblock></p></li>      
+      </ul>
+    </section>
+  </body>
+  <related-links>
+    <link href="getRG.dita" format="dita" type="topic"></link>
+    <link href="getCatalogRG.dita" format="dita" type="topic"></link>
+  </related-links>
+</topic>

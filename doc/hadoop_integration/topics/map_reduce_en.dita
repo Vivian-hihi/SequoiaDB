@@ -21,9 +21,16 @@
       <p><b>The Configuration of SequoiaDB &amp; MapReduce</b></p>
       <p>&nbsp;&nbsp;&nbsp;&nbsp;Put the configuration file named sequoiadb-hadoop.xml into the root directory of the source code of the project.</p>
       <p>&nbsp;&nbsp;&nbsp;&nbsp;sequoiadb.input.url: Specify the URL of the SequoiaDB which acts as an input source, the format is: hostname1:port1, hostname2:port2,</p>
+        <p>&nbsp;&nbsp;&nbsp;&nbsp;sequoiadb.input.user：指定输入源的 SequoiaDB 用户，默认为 null。</p>
+        <p>&nbsp;&nbsp;&nbsp;&nbsp;sequoiadb.input.passwd：指定输入源的 SequoiaDB 连接密码，默认为 null。</p>
       <p>&nbsp;&nbsp;&nbsp;&nbsp;sequoiadb.in.collectionspace: Specify the collection space which acts as an input source.</p>
       <p>&nbsp;&nbsp;&nbsp;&nbsp;sequoiadb.in.collection: Specify the collection which acts as an input source.</p>
+        <p>&nbsp;&nbsp;&nbsp;&nbsp;sequoiadb.query.json：指定输入源的查询条件，使用 json 结构，默认为 null。</p>
+        <p>&nbsp;&nbsp;&nbsp;&nbsp;sequoiadb.selector.json：指定输入源的字段筛选，使用 json 结构，默认为 null。</p>
+        <p>&nbsp;&nbsp;&nbsp;&nbsp;sequoiadb.preferedinstance：指定从 SequoiaDB 中获取数据时，连接哪个数据节点，默认为 anyone，可填值：[slave/master/anyone/node(1-7)]。</p>
       <p>&nbsp;&nbsp;&nbsp;&nbsp;sequoiadb.output.url: Specify the URL of the SequoiaDB which acts as an output target.</p>
+        <p>&nbsp;&nbsp;&nbsp;&nbsp;sequoiadb.output.user：指定输出源的 SequoiaDB 用户，默认为 null。</p>
+        <p>&nbsp;&nbsp;&nbsp;&nbsp;sequoiadb.output.passwd：指定输出源的 SequoiaDB 连接密码，默认为 null。</p>
       <p>&nbsp;&nbsp;&nbsp;&nbsp;sequoiadb.out.collectionspace: Specify the collection space which acts as an output target.</p>
       <p>&nbsp;&nbsp;&nbsp;&nbsp;sequoiadb.out.collection: Specify the collection which acts as an output target.</p>
       <p>&nbsp;&nbsp;&nbsp;&nbsp;sequoiadb.out.bulknum: Specify the number of records that are written into SequoiaDB for each time in order to optimize the write performance.</p>
@@ -99,12 +106,13 @@
      * @author gaoshengjie
      *  read the data, count penple in a province
      */
-    static class ProvinceMapper extends Mapper&lt;Object, BSONObject,IntWritable,IntWritable>{
+    static class ProvinceMapper extends Mapper&lt;Object, BSONWritable,IntWritable,IntWritable>{
         private static final IntWritable ONE=new IntWritable(1);
         @Override
-        protected void map(Object key, BSONObject value, Context context)
-                throws IOException, InterruptedException {
-            int province=(Integer) value.get("province_code");
+        protected void map(Object key, BSONWritable value, Context context)
+                throws IOException, InterruptedException {                
+                       BSONObject obj = value.getBson();
+            int province=(Integer) obj.get("province_code");
             context.write(new IntWritable(province), ONE);
         }
             
