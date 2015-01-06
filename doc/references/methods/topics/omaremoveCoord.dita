@@ -28,7 +28,7 @@
     </note></p>
     <section><title>示例</title>
       <ul>
-        <li>在集群中删除一个端口号为11810的 coord 节点<codeblock>oma.removeCoord(11810)</codeblock></li>        
+        <li>在集群中删除一个端口号为11810的 coord 节点<codeblock>oma.removeCoord("11810")</codeblock></li>        
       </ul>      
     </section>
   </body>
