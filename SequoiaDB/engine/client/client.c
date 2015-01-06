@@ -2221,7 +2221,7 @@ SDB_EXPORT INT32 sdbCreateNode ( sdbReplicaGroupHandle cHandle,
             continue ;
          }
 
-         bson_append_element( &configure, NULL, &it ) ;
+         bson_append_element( &configuration, NULL, &it ) ;
       } // while
    } // if ( configure )
    BSON_FINISH ( configuration ) ;
