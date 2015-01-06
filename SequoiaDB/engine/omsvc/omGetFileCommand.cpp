@@ -350,7 +350,7 @@ namespace engine
       }
 
       bsonAuth = BSON( SDB_AUTH_USER << user 
-                      << SDB_AUTH_PASSWD << oldPasswd ) ;
+                       << SDB_AUTH_PASSWD << oldPasswd ) ;
       rc = sdbGetOMManager()->authenticate( bsonAuth, _cb ) ;
       if ( SDB_OK != rc )
       {
@@ -549,6 +549,69 @@ namespace engine
    {
    }
 
+   INT32 omQueryClusterCommand::_getQueryPara( BSONObj &selector, 
+                                               BSONObj &matcher,
+                                               BSONObj order, BSONObj hint )
+   {
+      const CHAR *pSelector = NULL ;
+      const CHAR *pMatcher  = NULL ;
+      const CHAR *pOrder    = NULL ;
+      const CHAR *pHint     = NULL ;
+      INT32 rc = SDB_OK ;
+      _restAdaptor->getQuery(_restSession, FIELD_NAME_SELECTOR, &pSelector ) ;
+      if ( NULL != pSelector )
+      {
+         rc = fromjson( pSelector, selector ) ;
+         if ( rc )
+         {
+            PD_LOG_MSG( PDERROR, "change rest field to BSONObj failed:src=%s,"
+                        "rc=%d", pSelector, rc ) ;
+            goto error ;
+         }
+      }
+
+      _restAdaptor->getQuery(_restSession, FIELD_NAME_FILTER, &pMatcher ) ;
+      if ( NULL != pMatcher )
+      {
+         rc = fromjson( pMatcher, matcher ) ;
+         if ( rc )
+         {
+            PD_LOG_MSG( PDERROR, "change rest field to BSONObj failed:src=%s,"
+                        "rc=%d", pMatcher, rc ) ;
+            goto error ;
+         }
+      }
+
+      _restAdaptor->getQuery(_restSession, FIELD_NAME_SORT, &pOrder ) ;
+      if ( NULL != pOrder )
+      {
+         rc = fromjson( pOrder, order ) ;
+         if ( rc )
+         {
+            PD_LOG_MSG( PDERROR, "change rest field to BSONObj failed:src=%s,"
+                        "rc=%d", pOrder, rc ) ;
+            goto error ;
+         }
+      }
+
+      _restAdaptor->getQuery(_restSession, FIELD_NAME_HINT, &pHint ) ;
+      if ( NULL != pHint )
+      {
+         rc = fromjson( pHint, hint ) ;
+         if ( rc )
+         {
+            PD_LOG_MSG( PDERROR, "change rest field to BSONObj failed:src=%s,"
+                        "rc=%d", pHint, rc ) ;
+            goto error ;
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 omQueryClusterCommand::doCommand()
    {
       BSONObjBuilder bsonBuilder ;
@@ -559,6 +622,15 @@ namespace engine
       BSONObj result ;
       SINT64 contextID = -1 ;
       INT32 rc         = SDB_OK ;
+
+      rc = _getQueryPara( selector, matcher, order, hint ) ;
+      if ( SDB_OK != rc )
+      {
+         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         PD_LOG( PDERROR, "%s,rc=%d", _errorDetail.c_str(), rc ) ;
+         _sendErrorRes2Web( rc, _errorDetail ) ;
+         goto error ;
+      }
 
       rc = rtnQuery( OM_CS_DEPLOY_CL_CLUSTER, selector, matcher, order, hint, 0, 
                      _cb, 0, -1, _pDMSCB, _pRTNCB, contextID );
@@ -573,7 +645,6 @@ namespace engine
 
       while ( TRUE )
       {
-         BSONObj tmp ;
          rtnContextBuf buffObj ;
          rc = rtnGetMore ( contextID, 1, buffObj, _cb, _pRTNCB ) ;
          if ( rc )
@@ -592,19 +663,8 @@ namespace engine
             goto error ;
          }
 
-         BSONObj result( buffObj.data() ) ;
-         tmp = BSON( OM_BSON_FIELD_CLUSTER_NAME 
-                     << result.getStringField( OM_CLUSTER_FIELD_NAME )
-                     << OM_BSON_FIELD_CLUSTER_DESC
-                     << result.getStringField( OM_CLUSTER_FIELD_DESC )
-                     << OM_BSON_FIELD_SDB_USER
-                     << result.getStringField( OM_CLUSTER_FIELD_SDBUSER )
-                     << OM_BSON_FIELD_SDB_USERGROUP
-                     << result.getStringField( OM_CLUSTER_FIELD_SDBUSERGROUP )
-                     << OM_BSON_FIELD_INSTALLPATH
-                     << result.getStringField( OM_CLUSTER_FIELD_INSTALLPATH )) ;
-         rc = _restAdaptor->appendHttpBody( _restSession, tmp.objdata(), 
-                                            tmp.objsize(), 1 ) ;
+         rc = _restAdaptor->appendHttpBody( _restSession, buffObj.data(), 
+                                            buffObj.size(), 1 ) ;
          if ( rc )
          {
             _errorDetail = string( "falied to append http body" ) ;
@@ -731,6 +791,7 @@ namespace engine
    void omScanHostCommand::_filterExistHost( list<omScanHostInfo> &hostInfoList, 
                                              list<BSONObj> &hostResult )
    {
+      set<string> hostNameSet ;
       list<omScanHostInfo>::iterator iter = hostInfoList.begin() ;
       while ( iter != hostInfoList.end() )
       {
@@ -745,6 +806,29 @@ namespace engine
             hostResult.push_back( tmp ) ;
             hostInfoList.erase( iter++ ) ;
             continue ;
+         }
+         else
+         {
+            if ( hostNameSet.find( iter->hostName ) != hostNameSet.end()
+                 || hostNameSet.find( iter->ip ) != hostNameSet.end() )
+            {
+               PD_LOG( PDWARNING, "host is duplicate in request, ignored:"
+                       "host=%s,ip=%s", iter->hostName.c_str(), 
+                       iter->ip.c_str() ) ;
+               hostInfoList.erase( iter++ ) ;
+               continue ;
+            }
+            else
+            {
+               if ( !iter->hostName.empty() )
+               {
+                  hostNameSet.insert( iter->hostName ) ;
+               }
+               if ( !iter->ip.empty() )
+               {
+                  hostNameSet.insert( iter->ip ) ;
+               }
+            }
          }
 
          iter++ ;
@@ -961,7 +1045,7 @@ namespace engine
          BSONObjIterator i( element.embeddedObject() ) ;
          while ( i.more() )
          {
-            omScanHostInfo host;
+            omScanHostInfo host ;
             BSONObjBuilder builder ;
             BSONObj tmp ;
             BSONElement ele = i.next() ;

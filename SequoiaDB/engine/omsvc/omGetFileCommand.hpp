@@ -173,6 +173,9 @@ namespace engine
       public:
          virtual INT32   doCommand() ;
 
+      protected:
+         INT32           _getQueryPara( BSONObj &selector, BSONObj &matcher,
+                                        BSONObj order, BSONObj hint ) ;
    };
 
    struct omScanHostInfo
