@@ -998,6 +998,7 @@ namespace engine
       }
       // build full config and write file
       {
+         pmdOptionsCB nodeOptions ;
          stringstream ss ;
          ss << PMD_OPTION_SVCNAME << "=" << pSvcName << endl ;
          ss << PMD_OPTION_DBPATH << "=" << dbPath << endl ;
@@ -1012,6 +1013,15 @@ namespace engine
             goto error ;
          }
          createCfgFile = TRUE ;
+
+         // read and check config
+         rc = nodeOptions.initFromFile( cfgFile, FALSE ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Extract node[%s] config failed, rc: %d",
+                    pSvcName, rc ) ;
+            goto error ;
+         }
       }
 
       if ( isModify || !arg2 )
