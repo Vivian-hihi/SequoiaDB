@@ -85,6 +85,8 @@ namespace engine
          virtual INT32   doCommand() ;
 
       protected:
+         void            _sendOKRes2Web() ;
+         void            _setOPResult( INT32 rc, const CHAR* detail ) ;
          void            _sendErrorRes2Web( INT32 rc, const CHAR* detail ) ;
          void            _sendErrorRes2Web( INT32 rc, const string &detail ) ;
          void            _decryptPasswd( const string &encryptPasswd, 
@@ -227,7 +229,7 @@ namespace engine
          void            _generateArray( list<BSONObj> &hostInfoList, 
                                          const string &arrayKeyName, 
                                          BSONObj &result ) ;
-         void            _sendOkRes2Web( list<BSONObj> &hostResult ) ;
+         void            _sendResult2Web( list<BSONObj> &hostResult ) ;
          INT32           _sendMsgToLocalAgent( omManager *om,
                                                pmdRemoteSession *remoteSession, 
                                                MsgHeader *pMsg ) ;

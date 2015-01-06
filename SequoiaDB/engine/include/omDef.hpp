@@ -190,6 +190,7 @@ namespace engine
 
    //#define  OM_REST_RES_RETCODE              OP_ERRNOFIELD
    #define  OM_REST_RES_RETCODE              OP_ERRNOFIELD
+   #define  OM_REST_RES_DESP                 OP_ERRDESP_FIELD
    #define  OM_REST_RES_DETAIL               OP_ERR_DETAIL
    #define  OM_REST_RES_LOCAL                "local"
 

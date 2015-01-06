@@ -59,12 +59,23 @@ namespace engine
    {
    }
 
-   void omAuthCommand::_sendErrorRes2Web( INT32 rc, const CHAR* detail )
+   void omAuthCommand::_setOPResult( INT32 rc, const CHAR* detail )
    {
       BSONObj res = BSON( OM_REST_RES_RETCODE << rc 
+                          << OM_REST_RES_DESP << getErrDesp( rc )
                           << OM_REST_RES_DETAIL << detail ) ;
 
       _restAdaptor->setOPResult( _restSession, rc, res ) ;
+   }
+
+   void omAuthCommand::_sendOKRes2Web()
+   {
+      _sendErrorRes2Web( SDB_OK, "" ) ;
+   }
+
+   void omAuthCommand::_sendErrorRes2Web( INT32 rc, const CHAR* detail )
+   {
+      _setOPResult( rc, detail ) ;
       _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
    }
 
@@ -154,8 +165,6 @@ namespace engine
       BSONObjBuilder resBuilder ;
       BSONObj bsonRes ;
       BSONObj bsonAuth ;
-//      md5::md5digest digest ;
-//      string realPasswd ;
 
       _restAdaptor->getQuery( _restSession, OM_REST_FIELD_LOGIN_NAME, 
                               &pUserName ) ;
@@ -213,13 +222,9 @@ namespace engine
          goto error ;
       }
 
-      resBuilder.append( OM_REST_RES_RETCODE, rc ) ;
-      resBuilder.append( OM_REST_RES_LOCAL, "/"OM_REST_INDEX_HTML ) ;
       _restAdaptor->appendHttpHeader( _restSession, FIELD_NAME_SESSIONID, 
                                       _restSession->getSessionID() ) ;
-      _restAdaptor->setOPResult( _restSession, rc, resBuilder.obj() ) ;
-      _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
-
+      _sendOKRes2Web() ;
    done:
       return rc ;
    error:
@@ -239,16 +244,8 @@ namespace engine
 
    INT32 omLogoutCommand::doCommand()
    {
-      INT32 rc = SDB_OK ;
-
       _restSession->doLogout() ;
-
-      BSONObjBuilder resBuilder ;
-      resBuilder.append( OM_REST_RES_RETCODE, rc ) ;
-      resBuilder.append( OM_REST_RES_LOCAL, "/"OM_REST_LOGIN_HTML ) ;
-      _restAdaptor->setOPResult( _restSession, rc, resBuilder.obj() ) ;
-      _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
-
+      _sendOKRes2Web() ;
       return SDB_OK ;
    }
 
@@ -352,9 +349,6 @@ namespace engine
          goto error ;
       }
 
-//      _decryptPasswd( oldPasswd, time, oldDecryptPasswd ) ;
-//      md5::md5( ( const void * )oldDecryptPasswd.c_str(), 
-//                oldDecryptPasswd.length(), oldDigest) ;
       bsonAuth = BSON( SDB_AUTH_USER << user 
                       << SDB_AUTH_PASSWD << oldPasswd ) ;
       rc = sdbGetOMManager()->authenticate( bsonAuth, _cb ) ;
@@ -374,9 +368,6 @@ namespace engine
          goto error ;
       }
 
-//      _decryptPasswd( newPasswd, time, newDecryptPasswd ) ;
-//      md5::md5( ( const void * )newDecryptPasswd.c_str(), 
-//                newDecryptPasswd.length(), newDigest) ;
       rc = sdbGetOMManager()->authUpdatePasswd( user, oldPasswd, newPasswd,
                                                 _cb ) ;
       if ( SDB_OK != rc )
@@ -386,13 +377,7 @@ namespace engine
          goto error ;
       }
 
-      {
-         BSONObjBuilder resBuilder ;
-         resBuilder.append( OM_REST_RES_RETCODE, rc ) ;
-         _restAdaptor->setOPResult( _restSession, rc, resBuilder.obj() ) ;
-         _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
-      }
-
+      _sendOKRes2Web() ;
    done:
       return rc ;
    error:
@@ -418,19 +403,11 @@ namespace engine
                                    &sessionID ) ;
       if ( NULL != sessionID && _restSession->isAuthOK() )
       {
-         bsonBuilder.append( OM_REST_RES_RETCODE, SDB_OK ) ;
-         _restAdaptor->setOPResult( _restSession, SDB_OK, bsonBuilder.obj() ) ;
-         _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
+         _sendOKRes2Web() ;
       }
       else
       {
-         PD_LOG( PDEVENT, "OM: redirect to:%s", OM_REST_LOGIN_HTML ) ;
-         bsonBuilder.append( OM_REST_RES_RETCODE, 
-                             SDB_AUTH_AUTHORITY_FORBIDDEN ) ;
-         bsonBuilder.append( OM_REST_RES_LOCAL, "/"OM_REST_LOGIN_HTML ) ;
-         _restAdaptor->setOPResult( _restSession, SDB_AUTH_AUTHORITY_FORBIDDEN, 
-                                    bsonBuilder.obj() ) ;
-         _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
+         _sendErrorRes2Web( SDB_AUTH_AUTHORITY_FORBIDDEN, "" ) ;
       }
 
       return SDB_OK ;
@@ -554,11 +531,7 @@ namespace engine
          goto error ;
       }
 
-      resBuilder.append( OM_REST_RES_RETCODE, SDB_OK ) ;
-      resBuilder.append( OM_BSON_FIELD_CLUSTER_NAME, clusterName.c_str() ) ;
-      _restAdaptor->setOPResult( _restSession, SDB_OK, resBuilder.obj() ) ;
-      _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
-
+      _sendOKRes2Web() ;
    done:
       return rc ;
    error:
@@ -641,10 +614,7 @@ namespace engine
          }
       }
 
-      bsonBuilder.append( OM_REST_RES_RETCODE, SDB_OK ) ;
-      result = bsonBuilder.obj() ;
-      _restAdaptor->setOPResult( _restSession, SDB_OK, result ) ;
-      _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
+      _sendOKRes2Web() ;
 
    done:
       if ( -1 != contextID )
@@ -729,7 +699,7 @@ namespace engine
       return ;
    }
 
-   void omScanHostCommand::_sendOkRes2Web( list<BSONObj> &hostResult )
+   void omScanHostCommand::_sendResult2Web( list<BSONObj> &hostResult )
    {
       INT32 rc = SDB_OK ;
       BSONObjBuilder bsonBuilder ;
@@ -749,9 +719,7 @@ namespace engine
          iter++ ;
       }
 
-      bsonBuilder.append( OM_REST_RES_RETCODE, SDB_OK ) ;
-      _restAdaptor->setOPResult( _restSession, SDB_OK, bsonBuilder.obj() ) ;
-      _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
+      _sendOKRes2Web() ;
 
    done:
       return ;
@@ -1178,7 +1146,7 @@ namespace engine
       _filterExistHost( hostInfoList, bsonResult ) ;
       if ( hostInfoList.size() == 0 )
       {
-         _sendOkRes2Web( bsonResult ) ;
+         _sendResult2Web( bsonResult ) ;
          goto done ;
       }
 
@@ -1250,7 +1218,7 @@ namespace engine
          goto error ;
       }
 
-      _sendOkRes2Web( bsonResult ) ;
+      _sendResult2Web( bsonResult ) ;
 
    done:
       _clearSession( om, remoteSession ) ;
@@ -2227,7 +2195,7 @@ namespace engine
       _filterExistHost( hostInfoList, hostResult ) ;
       if ( hostInfoList.size() == 0 )
       {
-         _sendOkRes2Web( hostResult ) ;
+         _sendResult2Web( hostResult ) ;
          goto done ;
       }
 
@@ -2249,7 +2217,7 @@ namespace engine
          goto error ;
       }
 
-      _sendOkRes2Web( hostResult ) ;
+      _sendResult2Web( hostResult ) ;
 
    done:
       return rc; 
@@ -3055,10 +3023,7 @@ namespace engine
 //      bsonBuilder.append( OM_BSON_TASKID, (long long)taskID ) ;
 
       sdbGetOMManager()->updateClusterVersion( clusterName ) ;
-      bsonBuilder.append( OM_REST_RES_RETCODE, SDB_OK ) ;
-      _restAdaptor->setOPResult( _restSession, SDB_OK, bsonBuilder.obj() ) ;
-      _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
-
+      _sendOKRes2Web() ;
    done:
       return rc ;
    error:
@@ -3197,9 +3162,7 @@ namespace engine
          iter++ ;
       }
 
-      opBuilder.append( OM_REST_RES_RETCODE, SDB_OK ) ;
-      _restAdaptor->setOPResult( _restSession, SDB_OK, opBuilder.obj() ) ;
-      _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
+      _sendOKRes2Web() ;
 
       return ;
    }
@@ -3479,9 +3442,7 @@ namespace engine
 
       _restAdaptor->appendHttpBody( _restSession, bsonBusiness.objdata(), 
                                     bsonBusiness.objsize(), 1 ) ;
-      opBuilder.append( OM_REST_RES_RETCODE, SDB_OK ) ;
-      _restAdaptor->setOPResult( _restSession, SDB_OK, opBuilder.obj() ) ;
-      _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
+      _sendOKRes2Web() ;
    done:
       return rc ;
    error:
@@ -3594,9 +3555,7 @@ namespace engine
          iter++ ;
       }
 
-      opBuilder.append( OM_REST_RES_RETCODE, SDB_OK ) ;
-      _restAdaptor->setOPResult( _restSession, SDB_OK, opBuilder.obj() ) ;
-      _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
+      _sendOKRes2Web() ;
 
    done:
       return rc ;
@@ -4416,9 +4375,7 @@ namespace engine
       _restAdaptor->appendHttpBody( _restSession, bsonConfig.objdata(),
                                     bsonConfig.objsize(), 1 ) ;
 
-      opBuilder.append( OM_REST_RES_RETCODE, SDB_OK ) ;
-      _restAdaptor->setOPResult( _restSession, SDB_OK, opBuilder.obj() ) ;
-      _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
+      _sendOKRes2Web() ;
 
    done:
       return rc ;
@@ -5015,9 +4972,7 @@ namespace engine
          BSONObj appendInfo = BSON( OM_BSON_TASKID << (long long)taskID) ;
          _restAdaptor->appendHttpBody( _restSession, appendInfo.objdata(), 
                                        appendInfo.objsize(), 1 ) ;
-         BSONObj result = BSON( OM_REST_RES_RETCODE << SDB_OK ) ;
-         _restAdaptor->setOPResult( _restSession, SDB_OK, result ) ;
-         _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
+         _sendOKRes2Web() ;
       }
 
    done:
@@ -5087,9 +5042,7 @@ namespace engine
          op = opBuilder.obj() ;
          _restAdaptor->appendHttpBody( _restSession, op.objdata(), 
                                        op.objsize(), 1 ) ;
-         BSONObj result = BSON( OM_REST_RES_RETCODE << SDB_OK ) ;
-         _restAdaptor->setOPResult( _restSession, SDB_OK, result ) ;
-         _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
+         _sendOKRes2Web() ;
       }
 
    done:
@@ -5173,9 +5126,7 @@ namespace engine
          iter++ ;
       }
 
-      opBuilder.append( OM_REST_RES_RETCODE, SDB_OK ) ;
-      _restAdaptor->setOPResult( _restSession, SDB_OK, opBuilder.obj() ) ;
-      _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
+      _sendOKRes2Web() ;
 
       return ;
    }
@@ -5296,9 +5247,7 @@ namespace engine
                                           task.objsize(), 1 ) ;
          }
 
-         BSONObj result = BSON( OM_REST_RES_RETCODE << rc ) ;
-         _restAdaptor->setOPResult( _restSession, rc, result ) ;
-         _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
+         _sendOKRes2Web() ;
       }
 
    done:
@@ -5404,9 +5353,7 @@ namespace engine
          iter++ ;
       }
 
-      opBuilder.append( OM_REST_RES_RETCODE, SDB_OK ) ;
-      _restAdaptor->setOPResult( _restSession, SDB_OK, opBuilder.obj() ) ;
-      _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
+      _sendOKRes2Web() ;
 
       return ;
    }
@@ -5553,9 +5500,7 @@ namespace engine
                                        nodeInfo.objsize(), 1 ) ;
       }
 
-      opBuilder.append( OM_REST_RES_RETCODE, SDB_OK ) ;
-      _restAdaptor->setOPResult( _restSession, SDB_OK, opBuilder.obj() ) ;
-      _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
+      _sendOKRes2Web() ;
 
       return ;
    }
@@ -5773,9 +5718,7 @@ namespace engine
          iter++ ;
       }
 
-      opBuilder.append( OM_REST_RES_RETCODE, SDB_OK ) ;
-      _restAdaptor->setOPResult( _restSession, SDB_OK, opBuilder.obj() ) ;
-      _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
+      _sendOKRes2Web() ;
 
       return ;
    }
@@ -5800,9 +5743,7 @@ namespace engine
                                        businessInfo.objsize(), 1 ) ;
       }
 
-      opBuilder.append( OM_REST_RES_RETCODE, SDB_OK ) ;
-      _restAdaptor->setOPResult( _restSession, SDB_OK, opBuilder.obj() ) ;
-      _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
+      _sendOKRes2Web() ;
 
       return ;
    }
@@ -6280,9 +6221,7 @@ namespace engine
          goto error ;
       }
 
-      result = BSON( OM_REST_RES_RETCODE << SDB_OK ) ;
-      _restAdaptor->setOPResult( _restSession, SDB_OK, result ) ;
-      _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
+      _sendOKRes2Web() ;
 
    done:
       return rc ;
@@ -6566,9 +6505,7 @@ namespace engine
 
       sdbGetOMManager()->updateClusterVersion( hostInfo.clusterName ) ;
 
-      result = BSON( OM_REST_RES_RETCODE << SDB_OK ) ;
-      _restAdaptor->setOPResult( _restSession, SDB_OK, result ) ;
-      _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
+      _sendOKRes2Web() ;
 
    done:
       return rc ;
@@ -6874,11 +6811,8 @@ namespace engine
 
       if ( !isBusinessExist )
       {
-         BSONObj result = BSON( OM_REST_RES_RETCODE << SDB_DMS_RECORD_NOTEXIST 
-                            << OM_REST_RES_DETAIL 
-                            << ( string( pBusinessName ) + " is not exist" ) ) ;
-         _restAdaptor->setOPResult( _restSession, SDB_OK, result ) ;
-         _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
+         string detail = string( pBusinessName ) + " is not exist" ;
+         _sendErrorRes2Web( SDB_DMS_RECORD_NOTEXIST, detail ) ;
          goto done ;
       }
 
@@ -6913,9 +6847,7 @@ namespace engine
          BSONObj appendInfo = BSON( OM_BSON_TASKID << (long long)taskID) ;
          _restAdaptor->appendHttpBody( _restSession, appendInfo.objdata(), 
                                        appendInfo.objsize(), 1 ) ;
-         BSONObj result = BSON( OM_REST_RES_RETCODE << SDB_OK ) ;
-         _restAdaptor->setOPResult( _restSession, SDB_OK, result ) ;
-         _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
+         _sendOKRes2Web() ;
       }
 
    done:
@@ -7575,9 +7507,7 @@ namespace engine
 
       _restAdaptor->appendHttpBody( _restSession, bsonStatus.objdata(), 
                                     bsonStatus.objsize(), 1 ) ;
-      result = BSON( OM_REST_RES_RETCODE << SDB_OK ) ;
-      _restAdaptor->setOPResult( _restSession, SDB_OK, result ) ;
-      _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
+      _sendOKRes2Web() ;
 
    done:
       return rc ;
@@ -7922,9 +7852,7 @@ namespace engine
                          << OM_BSON_FIELD_REDUNDANCY_RATE << redundancyRate ) ;
          _restAdaptor->appendHttpBody( _restSession, predict.objdata(), 
                                        predict.objsize(), 1) ;
-         result = BSON( OM_REST_RES_RETCODE << SDB_OK ) ;
-         _restAdaptor->setOPResult( _restSession, SDB_OK, result ) ;
-         _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
+         _sendOKRes2Web() ;
       }
 
    done:
