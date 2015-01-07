@@ -282,9 +282,8 @@ namespace engine
    #define  OM_CHECK_HOST_REQ                "check host"
 
    // sub command with agent
-   #define  OM_BASIC_CHECK_REQ               "basic check"
-   #define  OM_INSTALL_REMOTE_AGENT          "install remote agent"
-   #define  OM_UNINSTALL_REMOTE_AGENT        "uninstall remote agent"
+   #define  OM_PRE_CHECK_HOST                "pre-check host"
+   #define  OM_POST_CHECK_HOST               "post-check host"
 
    #define  OM_BSON_FIELD_OS                 "OS"
    #define  OM_BSON_FIELD_OM                 "OM"

@@ -68,6 +68,59 @@ namespace engine
       _restAdaptor->setOPResult( _restSession, rc, res ) ;
    }
 
+   INT32 omAuthCommand::_queryTable( const string &tableName, 
+                                    const BSONObj &selector, 
+                                    const BSONObj &matcher,
+                                    const BSONObj &order, 
+                                    const BSONObj &hint, SINT32 flag,
+                                    SINT64 numSkip, SINT64 numReturn, 
+                                    list<BSONObj> &records )
+   {
+      INT32 rc         = SDB_OK ;
+      SINT64 contextID = -1 ;
+      rc = rtnQuery( tableName.c_str(), selector, matcher, order, hint, flag, 
+                     _cb, numSkip, numReturn, _pDMSCB, _pRTNCB, contextID );
+      if ( rc )
+      {
+         PD_LOG_MSG( PDERROR, "fail to query table:name=%s,rc=%d", 
+                     tableName.c_str(), rc ) ;
+         goto error ;
+      }
+
+      while ( TRUE )
+      {
+         rtnContextBuf buffObj ;
+         rc = rtnGetMore ( contextID, 1, buffObj, _cb, _pRTNCB ) ;
+         if ( rc )
+         {
+            if ( SDB_DMS_EOC == rc )
+            {
+               rc = SDB_OK ;
+               break ;
+            }
+
+            _pRTNCB->contextDelete( contextID, _cb ) ;
+            contextID = -1 ;
+            PD_LOG_MSG( PDERROR, "failed to get record from table:name=%s,"
+                        "rc=%d", tableName.c_str(), rc ) ;
+            goto error ;
+         }
+
+         BSONObj result( buffObj.data() ) ;
+         result.getOwned() ;
+         records.push_back( result );
+      }
+
+   done:
+      if ( -1 != contextID )
+      {
+         _pRTNCB->contextDelete ( contextID, _cb ) ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
+
    void omAuthCommand::_sendOKRes2Web()
    {
       _sendErrorRes2Web( SDB_OK, "" ) ;
@@ -620,8 +673,9 @@ namespace engine
       BSONObj order ;
       BSONObj hint ;
       BSONObj result ;
-      SINT64 contextID = -1 ;
       INT32 rc         = SDB_OK ;
+      list<BSONObj> records ;
+      list<BSONObj>::iterator iter ;
 
       rc = _getQueryPara( selector, matcher, order, hint ) ;
       if ( SDB_OK != rc )
@@ -632,55 +686,33 @@ namespace engine
          goto error ;
       }
 
-      rc = rtnQuery( OM_CS_DEPLOY_CL_CLUSTER, selector, matcher, order, hint, 0, 
-                     _cb, 0, -1, _pDMSCB, _pRTNCB, contextID );
-      if ( rc )
+      rc = _queryTable( OM_CS_DEPLOY_CL_CLUSTER, selector, matcher, order, 
+                        hint, 0, 0, -1, records ) ;
+      if ( SDB_OK != rc )
       {
-         _errorDetail = string( "fail to query table:" ) 
-                        + OM_CS_DEPLOY_CL_CLUSTER ;
-         PD_LOG( PDERROR, "%s,rc=%d", _errorDetail.c_str(), rc ) ;
-         _sendErrorRes2Web( rc, _errorDetail ) ;
-         goto error ;
+         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         PD_LOG( PDERROR, "query table failed:rc=%d", rc ) ;
       }
 
-      while ( TRUE )
+      iter = records.begin() ;
+      while ( iter != records.end() )
       {
-         rtnContextBuf buffObj ;
-         rc = rtnGetMore ( contextID, 1, buffObj, _cb, _pRTNCB ) ;
+         rc = _restAdaptor->appendHttpBody( _restSession, iter->objdata(), 
+                                            iter->objsize(), 1 ) ;
          if ( rc )
          {
-            if ( SDB_DMS_EOC == rc )
-            {
-               rc = SDB_OK ;
-               break ;
-            }
-
-            contextID = -1 ;
-            _errorDetail = string( "failed to get record from table:" )
-                           + OM_CS_DEPLOY_CL_CLUSTER ;
-            PD_LOG( PDERROR, "%s,rc=%d", _errorDetail.c_str(), rc ) ;
+            PD_LOG_MSG( PDERROR, "falied to append http body:rc=%d", rc ) ;
+            _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
             _sendErrorRes2Web( rc, _errorDetail ) ;
             goto error ;
          }
 
-         rc = _restAdaptor->appendHttpBody( _restSession, buffObj.data(), 
-                                            buffObj.size(), 1 ) ;
-         if ( rc )
-         {
-            _errorDetail = string( "falied to append http body" ) ;
-            PD_LOG( PDERROR, "%s:rc=%d", _errorDetail.c_str(), rc ) ;
-            _sendErrorRes2Web( rc, _errorDetail ) ;
-            goto error ;
-         }
+         iter++ ;
       }
 
       _sendOKRes2Web() ;
 
    done:
-      if ( -1 != contextID )
-      {
-         _pRTNCB->contextDelete ( contextID, _cb ) ;
-      }
       return rc ;
    error:
       goto done ;
@@ -824,7 +856,7 @@ namespace engine
                {
                   hostNameSet.insert( iter->hostName ) ;
                }
-               if ( !iter->ip.empty() )
+               else if ( !iter->ip.empty() )
                {
                   hostNameSet.insert( iter->ip ) ;
                }
@@ -1364,121 +1396,6 @@ namespace engine
       _eraseFromListByHost( hostInfoList, hostName ) ;
    }
 
-   // check ping and ssh
-   INT32 omCheckHostCommand::_doBasicCheck( list<omScanHostInfo> &hostInfoList, 
-                                            list<BSONObj> &hostResult )
-   {
-      INT32 rc          = SDB_OK ;
-      CHAR *pContent    = NULL ;
-      INT32 contentSize = 0 ;
-      SINT32 flag       = SDB_OK ;
-      MsgHeader *pMsg   = NULL ;
-      omManager *om     = NULL ;
-      pmdRemoteSession *remoteSession = NULL ;
-      BSONObj bsonRequest ;
-      BSONObj result ;
-      BSONElement rcElement ;
-      BSONElement hostElement ;
-
-      _generateHostList( hostInfoList, bsonRequest ) ;
-      rc = msgBuildQueryMsg( &pContent, &contentSize, 
-                             CMD_ADMIN_PREFIX OM_BASIC_CHECK_REQ, 
-                             0, 0, 0, -1, &bsonRequest, NULL, NULL, NULL ) ;
-      if ( SDB_OK != rc )
-      {
-         _errorDetail = string( "build query msg failed:cmd=" ) 
-                        + OM_BASIC_CHECK_REQ ;
-         PD_LOG(PDERROR, "%s,rc=%d", _errorDetail.c_str(), rc ) ;
-         goto error ;
-      }
-
-      // create remote session
-      om            = sdbGetOMManager() ;
-      remoteSession = om->getRSManager()->addSession( _cb, 
-                                                      OM_BASICCHECK_INTERVAL,
-                                                      NULL ) ;
-      if ( NULL == remoteSession )
-      {
-         rc = SDB_OOM ;
-         _errorDetail = "add remote session failed" ;
-         PD_LOG( PDERROR, "%s:rc=%d", _errorDetail.c_str(), rc ) ;
-         SDB_OSS_FREE( pContent ) ;
-         goto error ;
-      }
-
-      // send message to agent
-      pMsg = (MsgHeader *)pContent ;
-      rc   = _sendMsgToLocalAgent( om, remoteSession, pMsg ) ;
-      if ( SDB_OK != rc )
-      {
-         _errorDetail = "send message to agent failed" ;
-         PD_LOG( PDERROR, "%s:rc=%d", _errorDetail.c_str(), rc ) ;
-         SDB_OSS_FREE( pContent ) ;
-         remoteSession->clearSubSession() ;
-         goto error ;
-      }
-
-      // receiving for agent's response
-      rc = _receiveFromAgent( remoteSession, flag, result ) ;
-      if ( SDB_OK != rc )
-      {
-         _errorDetail = "receive response from agent failed" ;
-         PD_LOG( PDERROR, "%s:rc=%d", _errorDetail.c_str(), rc ) ;
-         goto error ;
-      }
-
-      if ( SDB_OK != flag )
-      {
-         rc = flag ;
-         _errorDetail = result.getStringField( OM_REST_RES_DETAIL ) ;
-         PD_LOG( PDERROR, "agent process failed:detail=%s,rc=%d", 
-                 _errorDetail.c_str(), rc ) ;
-         goto error ;
-      }
-
-      hostElement = result.getField( OM_BSON_FIELD_HOST_INFO ) ;
-      if ( hostElement.isNull() || Array != hostElement.type() )
-      {
-         _errorDetail = string( "agent's response is unrecognized:" ) 
-                        + string(OM_BSON_FIELD_HOST_INFO) 
-                        + " is not array type" ;
-         rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
-         goto error ;
-      }
-      {
-         BSONObjIterator i( hostElement.embeddedObject() ) ;
-         while ( i.more() )
-         {
-            INT32 tmpRc ;
-            BSONElement ele = i.next() ;
-            BSONObj oneHost = ele.embeddedObject() ;
-            rcElement       = oneHost.getField( OM_REST_RES_RETCODE ) ;
-            if ( rcElement.eoo() || NumberInt != rcElement.type() )
-            {
-               _errorDetail = string( "agent's response is unrecognized:host=" )
-                              + oneHost.toString() ;
-               rc = SDB_UNEXPECTED_RESULT ;
-               PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
-               goto error ;
-            }
-            // remove the basic check failure host to the hostResult 
-            tmpRc = rcElement.Int() ;
-            if ( SDB_OK != tmpRc )
-            {
-               hostResult.push_back( oneHost ) ;
-               _eraseFromList( hostInfoList, oneHost ) ;
-            }
-         }
-      }
-
-   done:
-      _clearSession( om, remoteSession ) ;
-      return rc ;
-   error:
-      goto done ;
-   }
-
    void omCheckHostCommand::_updateUninstallFlag( 
                                             list<omScanHostInfo> &hostInfoList, 
                                             const string &ip, 
@@ -1519,13 +1436,12 @@ namespace engine
 
       _generateHostList( hostInfoList, bsonRequest ) ;
       rc = msgBuildQueryMsg( &pContent, &contentSize, 
-                             CMD_ADMIN_PREFIX OM_INSTALL_REMOTE_AGENT, 
+                             CMD_ADMIN_PREFIX OM_PRE_CHECK_HOST, 
                              0, 0, 0, -1, &bsonRequest, NULL, NULL, NULL ) ;
       if ( SDB_OK != rc )
       {
-         _errorDetail = string( "build query msg failed:cmd=" ) 
-                        + OM_INSTALL_REMOTE_AGENT ;
-         PD_LOG(PDERROR, "%s,rc=%d", _errorDetail.c_str(), rc ) ;
+         PD_LOG_MSG( PDERROR, "build query msg failed:cmd=%s,rc=%d", 
+                     OM_PRE_CHECK_HOST, rc ) ;
          goto error ;
       }
 
@@ -1537,8 +1453,7 @@ namespace engine
       if ( NULL == remoteSession )
       {
          rc = SDB_OOM ;
-         _errorDetail = "addSession failed" ;
-         PD_LOG( PDERROR, "addSession failed" ) ;
+         PD_LOG_MSG( PDERROR, "addSession failed:rc=%d", rc ) ;
          SDB_OSS_FREE( pContent ) ;
          goto error ;
       }
@@ -1548,8 +1463,7 @@ namespace engine
       rc   = _sendMsgToLocalAgent( om, remoteSession, pMsg ) ;
       if ( SDB_OK != rc )
       {
-         _errorDetail = "send message to local agent failed" ;
-         PD_LOG( PDERROR, "%s:rc=%d", _errorDetail.c_str(), rc ) ;
+         PD_LOG_MSG( PDERROR, "send message to local agent failed:rc=%d", rc ) ;
          SDB_OSS_FREE( pContent ) ;
          remoteSession->clearSubSession() ;
          goto error ;
@@ -1559,17 +1473,15 @@ namespace engine
       rc = _receiveFromAgent( remoteSession, flag, result ) ;
       if ( SDB_OK != rc )
       {
-         _errorDetail = "receive from agent failed" ;
-         PD_LOG( PDERROR, "%s:rc=%d", _errorDetail.c_str(), rc ) ;
+         PD_LOG_MSG( PDERROR, "receive from agent failed:rc=%d", rc ) ;
          goto error ;
       }
 
       if ( SDB_OK != flag )
       {
          rc = flag ;
-         _errorDetail = result.getStringField( OM_REST_RES_DETAIL ) ;
-         PD_LOG( PDERROR, "agent process failed:detail=%s,rc=%d", 
-                 _errorDetail.c_str(), rc ) ;
+         PD_LOG_MSG( PDERROR, "agent process failed:detail=%s,rc=%d", 
+                     result.getStringField( OM_REST_RES_DETAIL ), rc ) ;
          goto error ;
       }
 
@@ -1779,15 +1691,13 @@ namespace engine
       if ( NULL == remoteSession )
       {
          rc = SDB_OOM ;
-         _errorDetail = "addSession failed" ;
-         PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
+         PD_LOG_MSG( PDERROR, "addSession failed:rc=%d", rc ) ;
          goto error ;
       }
       rc = _addCheckHostReq( om, remoteSession, hostInfoList ) ;
       if ( SDB_OK != rc )
       {
-         _errorDetail = "generate check host request failed" ;
-         PD_LOG( PDERROR, "%s:rc=%d", _errorDetail.c_str(), rc ) ;
+         PD_LOG_MSG( PDERROR, "generate check host request failed:rc=%d", rc ) ;
          goto done ;
       }
 
@@ -1795,8 +1705,7 @@ namespace engine
       rc = _getAllReplay( remoteSession, &subSessionVec ) ;
       if ( SDB_OK != rc )
       {
-         _errorDetail = "wait agent's replay failed" ;
-         PD_LOG( PDERROR, "%s:rc=%d", _errorDetail.c_str(), rc ) ;
+         PD_LOG_MSG( PDERROR, "wait agent's replay failed:rc=%d", rc ) ;
          goto error ;
       }
 
@@ -1809,21 +1718,23 @@ namespace engine
          SINT32 startFrom          = 0 ;
          SINT32 numReturned        = 0 ;
          MsgHeader* pRspMsg        = NULL ;
-         pmdSubSession *subSession = subSessionVec[i] ;         
+         pmdSubSession *subSession = subSessionVec[i] ;
+         string errorMsg ;
          if ( subSession->isDisconnect() )
          {
-            PD_LOG(PDERROR, "session disconnected:id=%s,rc=%d", 
-                   routeID2String(subSession->getNodeID()).c_str(), rc ) ;
+            PD_LOG( PDERROR, "session disconnected:id=%s,rc=%d", 
+                    routeID2String(subSession->getNodeID()).c_str(), rc ) ;
             continue ;
          }
 
          pRspMsg = subSession->getRspMsg() ;
          if ( NULL == pRspMsg )
          {
-            _errorDetail = "receive null response from agent" ;
+            errorMsg = "receive null response from agent" ;
+            PD_LOG( PDERROR, "%s", errorMsg.c_str() ) ;
             _errorCheckHostEnv( hostInfoList, hostResult, 
                                 subSession->getNodeID(), SDB_UNEXPECTED_RESULT,
-                                _errorDetail ) ;
+                                errorMsg ) ;
             continue ;
          }
 
@@ -1831,9 +1742,10 @@ namespace engine
                                &numReturned, objVec ) ;
          if ( SDB_OK != rc )
          {
-            _errorDetail = "extract reply failed" ;
+            errorMsg = "extract reply failed" ;
+            PD_LOG( PDERROR, "%s:rc=%d", errorMsg.c_str(), rc ) ;
             _errorCheckHostEnv( hostInfoList, hostResult, 
-                                subSession->getNodeID(), rc, _errorDetail ) ;
+                                subSession->getNodeID(), rc, errorMsg ) ;
             continue ;
          }
 
@@ -1841,19 +1753,19 @@ namespace engine
          {
             if ( objVec.size() > 0 )
             {
-               _errorDetail = objVec[0].getStringField( OM_REST_RES_DETAIL ) ;
+               errorMsg = objVec[0].getStringField( OM_REST_RES_DETAIL ) ;
             }
             _errorCheckHostEnv( hostInfoList, hostResult, 
-                                subSession->getNodeID(), flag, _errorDetail ) ;
+                                subSession->getNodeID(), flag, errorMsg ) ;
             continue ;
          }
 
          if ( 1 != objVec.size() )
          {
-            _errorDetail = "unexpected response size" ;
+            errorMsg = "unexpected response size" ;
             _errorCheckHostEnv( hostInfoList, hostResult, 
                                 subSession->getNodeID(), SDB_UNEXPECTED_RESULT, 
-                                _errorDetail ) ;
+                                errorMsg ) ;
             continue ;
          }
 
@@ -1861,15 +1773,15 @@ namespace engine
          rc = _checkResFormat( result ) ;
          if ( SDB_OK != rc )
          {
-            _errorDetail = "agent's response format error" ;
+            errorMsg = "agent's response format error" ;
             _errorCheckHostEnv( hostInfoList, hostResult, 
-                                subSession->getNodeID(), rc, _errorDetail ) ;
+                                subSession->getNodeID(), rc, errorMsg ) ;
             continue ;
          }
 
          _updateDiskInfo( result ) ;
          hostResult.push_back( result ) ;
-         //TODO: get /etc/hosts, and check 
+         //TODO: check unsupported OM version
          _eraseFromList( hostInfoList, result ) ;
       }
 
@@ -2055,12 +1967,12 @@ namespace engine
 
       _generateUninstallReq( hostInfoList, bsonRequest ) ;
       rc = msgBuildQueryMsg( &pContent, &contentSize, 
-                             CMD_ADMIN_PREFIX OM_UNINSTALL_REMOTE_AGENT, 
+                             CMD_ADMIN_PREFIX OM_POST_CHECK_HOST, 
                              0, 0, 0, -1, &bsonRequest, NULL, NULL, NULL ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG(PDERROR, "build query msg failed:cmd=%s,rc=%d", 
-                OM_UNINSTALL_REMOTE_AGENT, rc ) ;
+                OM_POST_CHECK_HOST, rc ) ;
          goto error ;
       }
 
@@ -2107,7 +2019,7 @@ namespace engine
       rc = _installAgent( hostInfoList, hostResult ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG(PDERROR, "%s:rc=%d", _errorDetail.c_str(), rc ) ;
+         PD_LOG(PDERROR, "install agent failed:rc=%d", rc ) ;
          goto error ;
       }
 
@@ -2116,7 +2028,7 @@ namespace engine
       rc = _checkHostEnv( hostInfoList, hostResult ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG(PDERROR, "%s:rc=%d", _errorDetail.c_str(), rc ) ;
+         PD_LOG(PDERROR, "check host env failed:rc=%d", rc ) ;
          goto error ;
       }
 
@@ -2145,9 +2057,9 @@ namespace engine
                               &pHostInfo ) ;
       if ( NULL == pHostInfo )
       {
-         _errorDetail = string( OM_REST_FIELD_HOST_INFO ) + " is null" ;
          rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
+         PD_LOG_MSG( PDERROR, "%s is null:rc=%d", OM_REST_FIELD_HOST_INFO, 
+                     rc ) ;
          goto error ;
       }
 
@@ -2156,7 +2068,6 @@ namespace engine
       {
          PD_LOG_MSG( PDERROR, "change rest field to BSONObj failed:src=%s,"
                      "rc=%d", pHostInfo, rc ) ;
-         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
          goto error ;
       }
 
@@ -2169,25 +2080,23 @@ namespace engine
       clusterName      = bsonHostInfo.getStringField( 
                                                 OM_BSON_FIELD_CLUSTER_NAME ) ;
       if ( 0 == ossStrlen( pGlobalUser ) || 0 == ossStrlen( pGlobalPasswd )
-           || 0 == ossStrlen( pGlobalSshPort ) || 0 == clusterName.length()
-           || 0 == ossStrlen( pGlobalAgentPort ) )
+           || 0 == ossStrlen( pGlobalSshPort ) || 0 == clusterName.length() )
       {
-         _errorDetail = string( OM_BSON_FIELD_HOST_USER ) + " is null"
-                        + " or " + OM_BSON_FIELD_HOST_PASSWD + " is null"
-                        + " or " + OM_BSON_FIELD_HOST_SSHPORT + " is null"
-                        + " or " + OM_BSON_FIELD_CLUSTER_NAME + " is null" ;
          rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
+         PD_LOG_MSG( PDERROR, "parameter is empty:%s=%s,%s=%d,%s=%s,%s=%s", 
+                     OM_BSON_FIELD_HOST_USER, pGlobalUser, 
+                     OM_BSON_FIELD_HOST_PASSWD, ossStrlen( pGlobalPasswd ),
+                     OM_BSON_FIELD_HOST_SSHPORT, pGlobalSshPort,
+                     OM_BSON_FIELD_CLUSTER_NAME, clusterName.c_str() ) ;
          goto error ;
       }
 
       element = bsonHostInfo.getField( OM_BSON_FIELD_HOST_INFO ) ;
-      if ( element.isNull() || Array != element.type() )
+      if ( Array != element.type() )
       {
-         _errorDetail = string( OM_BSON_FIELD_HOST_INFO ) 
-                        + " is not array type" ;
          rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR, "%s:type=%d", _errorDetail.c_str(), element.type() ) ;
+         PD_LOG_MSG( PDERROR, "%s is not array type:type=%d", 
+                     OM_BSON_FIELD_HOST_INFO, element.type() ) ;
          goto error ;
       }
 
@@ -2205,7 +2114,6 @@ namespace engine
                PD_LOG_MSG( PDERROR, "rest info is invalid, element of %s "
                            "is not Object type:type=%d", 
                            OM_BSON_FIELD_HOST_INFO, ele.type() ) ;
-               _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
                goto error ;
             }
 
@@ -2241,11 +2149,9 @@ namespace engine
 
             if ( host.ip=="" || host.hostName=="" )
             {
-               _errorDetail = string( "rest field miss:" ) 
-                              + OM_BSON_FIELD_HOST_IP + " or " 
-                              + OM_BSON_FIELD_HOST_NAME ;
                rc = SDB_INVALIDARG ;
-               PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
+               PD_LOG_MSG( PDERROR, "rest field miss:%s or %s", 
+                           OM_BSON_FIELD_HOST_IP, OM_BSON_FIELD_HOST_NAME ) ;
                goto error ;
             }
 
@@ -2271,6 +2177,7 @@ namespace engine
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "fail to get host list:rc=%d", rc ) ;
+         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
       }
@@ -2283,20 +2190,11 @@ namespace engine
          goto done ;
       }
 
-      // move the check failed host to the hostResult
-      PD_LOG( PDEVENT, "start to do BasicCheck" ) ;
-      rc = _doBasicCheck( hostInfoList, hostResult ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "do basic check failed:rc=%d", rc ) ;
-         _sendErrorRes2Web( rc, _errorDetail ) ;
-         goto error ;
-      }
-
       rc = _doCheck( hostInfoList, hostResult ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "do check failed:rc=%d", rc ) ;
+         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
       }

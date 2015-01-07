@@ -109,10 +109,10 @@ namespace engine
       oma command define
    */
    #define OMA_CMD_SCAN_HOST                          OM_SCAN_HOST_REQ
-   #define OMA_CMD_BASIE_CHECK_HOST                   OM_BASIC_CHECK_REQ
-   #define OMA_CMD_INSTALL_REMOTE_AGENT               OM_INSTALL_REMOTE_AGENT
+   #define OMA_CMD_BASIE_CHECK_HOST                   ""
+   #define OMA_CMD_PRE_CHECK_HOST                     OM_PRE_CHECK_HOST
    #define OMA_CMD_CHECK_HOST                         OM_CHECK_HOST_REQ
-   #define OMA_CMD_UNINSTALL_REMOTE_AGENT             OM_UNINSTALL_REMOTE_AGENT
+   #define OMA_CMD_POST_CHECK_HOST                    OM_POST_CHECK_HOST
    #define OMA_CMD_ADD_HOST                           OM_ADD_HOST_REQ
    #define OMA_CMD_REMOVE_HOST                        OM_REMOVE_HOST_REQ
    #define OMA_CMD_INSTALL_DB_BUSINESS                OM_INSTALL_BUSINESS_REQ

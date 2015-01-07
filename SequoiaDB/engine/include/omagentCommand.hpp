@@ -206,7 +206,7 @@ namespace engine
       public:
          _omaInstallRemoteAgent () ;
          ~_omaInstallRemoteAgent () ;
-         virtual const CHAR* name () { return OMA_CMD_INSTALL_REMOTE_AGENT ; }
+         virtual const CHAR* name () { return OMA_CMD_PRE_CHECK_HOST ; }
          virtual INT32 init ( const CHAR *pInstallInfo ) ;
       private:
          INT32 _getProgPath( CHAR *path, INT32 len ) ;
@@ -236,7 +236,7 @@ namespace engine
       public:
          _omaUninstallRemoteAgent () ;
          ~_omaUninstallRemoteAgent () ;
-         virtual const CHAR* name () { return OMA_CMD_UNINSTALL_REMOTE_AGENT ; }
+         virtual const CHAR* name () { return OMA_CMD_POST_CHECK_HOST ; }
          virtual INT32 init ( const CHAR *pInstallInfo ) ;
    } ;
 

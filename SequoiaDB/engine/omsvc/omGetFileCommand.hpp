@@ -97,6 +97,14 @@ namespace engine
                                          string &sdbPasswd, 
                                          string &sdbUserGroup ) ;
 
+         INT32           _queryTable( const string &tableName, 
+                                      const BSONObj &selector, 
+                                      const BSONObj &matcher,
+                                      const BSONObj &order, 
+                                      const BSONObj &hint, SINT32 flag,
+                                      SINT64 numSkip, SINT64 numReturn, 
+                                      list<BSONObj> &records ) ;
+
       protected:
          restAdaptor*    _restAdaptor ;
          pmdRestSession* _restSession ;
@@ -274,8 +282,6 @@ namespace engine
       private:
          INT32           _getCheckHostList( string &clusterName, 
                                           list<omScanHostInfo> &hostInfoList ) ;
-         INT32           _doBasicCheck( list<omScanHostInfo> &hostInfoList, 
-                                        list<BSONObj> &hostResult ) ;
          INT32           _doCheck( list<omScanHostInfo> &hostInfoList, 
                                         list<BSONObj> &hostResult ) ;
 
