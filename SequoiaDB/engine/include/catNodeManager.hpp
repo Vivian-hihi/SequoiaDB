@@ -83,7 +83,6 @@ namespace engine
                                BOOLEAN writable ) ;
 
       INT32 processCmdCreateGrp( const CHAR *pQuery ) ;
-      INT32 processCmdCreateDomain( const CHAR *pQuery ) ;
       INT32 processCmdCreateNode( const CHAR *pQuery ) ;
       INT32 processCmdUpdateNode( const CHAR *pQuery, const CHAR *pSelector ) ;
       INT32 processCmdDelNode( const CHAR *pQuery ) ;

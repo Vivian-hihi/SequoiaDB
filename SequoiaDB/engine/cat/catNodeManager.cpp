@@ -549,9 +549,6 @@ namespace engine
          case MSG_CAT_CREATE_GROUP_REQ :
             rc = processCmdCreateGrp( pQuery ) ;
             break ;
-         case MSG_CAT_CREATE_DOMAIN_REQ :
-            rc = processCmdCreateDomain( pQuery ) ;
-            break ;
          case MSG_CAT_CREATE_NODE_REQ :
             rc = processCmdCreateNode( pQuery ) ;
             break ;
@@ -642,66 +639,6 @@ namespace engine
 
    done:
       PD_TRACE_EXITRC ( SDB_CATNODEMGR_CREATENODE, rc ) ;
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   INT32 catNodeManager::processCmdCreateDomain( const CHAR *pQuery )
-   {
-      INT32 rc = SDB_OK ;
-      const CHAR *domainName = NULL ;
-      BOOLEAN exist = FALSE ;
-
-      try
-      {
-         BSONObj boQuery( pQuery ) ;
-         rc = rtnGetStringElement( boQuery, CAT_DOMAIN_NAME, &domainName ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to get the field: %s, rc: %d",
-                      CAT_DOMAIN_NAME, rc ) ;
-      }
-      catch( std::exception &e )
-      {
-         rc = SDB_SYS ;
-         PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
-         goto error ;
-      }
-
-      // check domain name valid
-      rc = catDomainNameValidate( domainName ) ;
-      PD_RC_CHECK( rc, PDERROR, "Domain name[%s] is invalid", domainName ) ;
-
-      // check domain whether exist or not
-      rc = catDomainCheck( domainName, exist, _pEduCB ) ;
-      PD_RC_CHECK( rc, PDERROR, "Check domain[%s] exist failed, rc: %d",
-                   domainName, rc ) ;
-      PD_CHECK( FALSE == exist, SDB_CAT_DOMAIN_EXIST, error, PDERROR,
-                "Create domain failed, the domain[%s] existed",
-                domainName ) ;
-
-      // construct obj into collection
-      try
-      {
-         BSONObjBuilder bobDomainInfo ;
-         bobDomainInfo.append( CAT_DOMAIN_NAME, domainName ) ;
-         BSONArrayBuilder arrayBuild ;
-         bobDomainInfo.append( CAT_GROUP_NAME, arrayBuild.arr() ) ;
-         BSONObj boDomainInfo = bobDomainInfo.obj() ;
-
-         rc = rtnInsert( CAT_DOMAIN_COLLECTION, boDomainInfo, 1, 0,
-                        _pEduCB, _pDmsCB, _pDpsCB, _majoritySize() ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to insert domain info[%s] to "
-                      "collection, rc: %d", boDomainInfo.toString().c_str(),
-                      rc ) ;
-      }
-      catch( std::exception &e )
-      {
-         rc = SDB_SYS ;
-         PD_LOG ( PDERROR, "Occured exception: %s", e.what() ) ;
-         goto error ;
-      }
-
-   done:
       return rc ;
    error:
       goto done ;
