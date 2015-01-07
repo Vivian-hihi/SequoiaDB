@@ -108,6 +108,7 @@ var searchData=
   ['sdblistcollectionspaces',['sdbListCollectionSpaces',['../client_8h.html#acb311f4062f247f47801ddd13a83a342',1,'client.h']]],
   ['sdblistcollectionspacesindomain',['sdbListCollectionSpacesInDomain',['../client_8h.html#aa6d4d7eeeff9ac9a6849959df8d51b34',1,'client.h']]],
   ['sdblistdomains',['sdbListDomains',['../client_8h.html#a5dd88300784507649e3b95d15e2d7c41',1,'client.h']]],
+  ['sdblistgroupsindomain',['sdbListGroupsInDomain',['../client_8h.html#aa7c7ecc4a7736ce7bfdd06611be728dd',1,'client.h']]],
   ['sdblistlobpieces',['sdbListLobPieces',['../client_8h.html#afd9f14b11631d48a17b6dd32a891a6dd',1,'client.h']]],
   ['sdblistlobs',['sdbListLobs',['../client_8h.html#a40a36bfde58fd6b3199db60838970060',1,'client.h']]],
   ['sdblistprocedures',['sdbListProcedures',['../client_8h.html#ad57bf123984366e3bf51c518a323dc8f',1,'client.h']]],

@@ -536,7 +536,7 @@ SDB_EXPORT INT32&#160;</td><td class="memItemRight" valign="bottom"><b>_sdbMsg</
 <tr class="memdesc:a5dd88300784507649e3b95d15e2d7c41"><td class="mdescLeft">&#160;</td><td class="mdescRight">List the domains.  <a href="#a5dd88300784507649e3b95d15e2d7c41"></a><br/></td></tr>
 <tr class="separator:a5dd88300784507649e3b95d15e2d7c41"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9e0f5374ef4f6a0ea3bcee786651a90f"><td class="memItemLeft" align="right" valign="top">SDB_EXPORT INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="client_8h.html#a9e0f5374ef4f6a0ea3bcee786651a90f">sdbAlterDomain</a> (sdbDomainHandle cHandle, const bson *options)</td></tr>
-<tr class="memdesc:a9e0f5374ef4f6a0ea3bcee786651a90f"><td class="mdescLeft">&#160;</td><td class="mdescRight">alter the domains.  <a href="#a9e0f5374ef4f6a0ea3bcee786651a90f"></a><br/></td></tr>
+<tr class="memdesc:a9e0f5374ef4f6a0ea3bcee786651a90f"><td class="mdescLeft">&#160;</td><td class="mdescRight">alter the current domain.  <a href="#a9e0f5374ef4f6a0ea3bcee786651a90f"></a><br/></td></tr>
 <tr class="separator:a9e0f5374ef4f6a0ea3bcee786651a90f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa6d4d7eeeff9ac9a6849959df8d51b34"><td class="memItemLeft" align="right" valign="top">SDB_EXPORT INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="client_8h.html#aa6d4d7eeeff9ac9a6849959df8d51b34">sdbListCollectionSpacesInDomain</a> (sdbDomainHandle cHandle, sdbCursorHandle *cursor)</td></tr>
 <tr class="memdesc:aa6d4d7eeeff9ac9a6849959df8d51b34"><td class="mdescLeft">&#160;</td><td class="mdescRight">list the collection spaces in domain.  <a href="#aa6d4d7eeeff9ac9a6849959df8d51b34"></a><br/></td></tr>
@@ -544,6 +544,9 @@ SDB_EXPORT INT32&#160;</td><td class="memItemRight" valign="bottom"><b>_sdbMsg</
 <tr class="memitem:a77de96243b2649ba3ae110c4afee4647"><td class="memItemLeft" align="right" valign="top">SDB_EXPORT INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="client_8h.html#a77de96243b2649ba3ae110c4afee4647">sdbListCollectionsInDomain</a> (sdbDomainHandle cHandle, sdbCursorHandle *cursor)</td></tr>
 <tr class="memdesc:a77de96243b2649ba3ae110c4afee4647"><td class="mdescLeft">&#160;</td><td class="mdescRight">list the collections in domain.  <a href="#a77de96243b2649ba3ae110c4afee4647"></a><br/></td></tr>
 <tr class="separator:a77de96243b2649ba3ae110c4afee4647"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa7c7ecc4a7736ce7bfdd06611be728dd"><td class="memItemLeft" align="right" valign="top">SDB_EXPORT INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="client_8h.html#aa7c7ecc4a7736ce7bfdd06611be728dd">sdbListGroupsInDomain</a> (sdbDomainHandle cHandle, sdbCursorHandle *cursor)</td></tr>
+<tr class="memdesc:aa7c7ecc4a7736ce7bfdd06611be728dd"><td class="mdescLeft">&#160;</td><td class="mdescRight">list the groups in domain.  <a href="#aa7c7ecc4a7736ce7bfdd06611be728dd"></a><br/></td></tr>
+<tr class="separator:aa7c7ecc4a7736ce7bfdd06611be728dd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a002d23a4b7205c5e903fff039c14ca25"><td class="memItemLeft" align="right" valign="top">SDB_EXPORT INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="client_8h.html#a002d23a4b7205c5e903fff039c14ca25">sdbInvalidateCache</a> (sdbConnectionHandle cHandle, bson *condition)</td></tr>
 <tr class="memdesc:a002d23a4b7205c5e903fff039c14ca25"><td class="mdescLeft">&#160;</td><td class="mdescRight">invalidate cache on specified nodes.  <a href="#a002d23a4b7205c5e903fff039c14ca25"></a><br/></td></tr>
 <tr class="separator:a002d23a4b7205c5e903fff039c14ca25"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -1015,10 +1018,16 @@ SDB_EXPORT INT32&#160;</td><td class="memItemRight" valign="bottom"><b>_sdbMsg</
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">cHandle</td><td>The colleciton handle </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">options</td><td>The modified options as following: ReplSize Number of replnodes for sync write </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">options</td><td>The options are as following: <pre class="fragment">ReplSize     : Assign how many replica nodes need to be synchronized when a write request(insert, update, etc) is executed
+ShardingKey  : Assign the sharding key
+ShardingType : Assign the sharding type
+Partition    : When the ShardingType is "hash", need to assign Partition, it's the bucket number for hash, the range is [2^3,2^20]
+               e.g. {RepliSize:0, ShardingKey:{a:1}, ShardingType:"hash", Partition:1024}
+</pre> </td></tr>
   </table>
   </dd>
 </dl>
+<dl class="section note"><dt>Note</dt><dd>Can't alter attributes about split in partition collection; After altering a collection to be a partition collection, need to split this collection manually </dd></dl>
 <dl class="retval"><dt>Return values</dt><dd>
   <table class="retval">
     <tr><td class="paramname">SDB_OK</td><td>Operation Success </td></tr>
@@ -1053,11 +1062,21 @@ SDB_EXPORT INT32&#160;</td><td class="memItemRight" valign="bottom"><b>_sdbMsg</
       </table>
 </div><div class="memdoc">
 
-<p>alter the domains. </p>
+<p>alter the current domain. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">cHandle</td><td>The domain handle </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">options</td><td>The options user wants to alter </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">options</td><td>The options user wants to alter <pre class="fragment">Groups:    The list of replica groups' names which the domain is going to contain.
+           eg: { "Groups": [ "group1", "group2", "group3" ] }, it means that domain
+           changes to contain "group1" "group2" or "group3".
+           We can add or remove groups in current domain. However, if a group has data
+           in it, remove it out of domain will be failing.
+AutoSplit: Alter current domain to have the ability of automatically split or not. 
+           If this option is set to be true, while creating collection(ShardingType is "hash") in this domain,
+           the data of this collection will be split(hash split) into all the groups in this domain automatically.
+           However, it won't automatically split data into those groups which were add into this domain later.
+           eg: { "Groups": [ "group1", "group2", "group3" ], "AutoSplit: true" }
+</pre> </td></tr>
   </table>
   </dd>
 </dl>
@@ -1730,7 +1749,9 @@ SDB_PAGESIZE_DEFAULT
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">cHandle</td><td>The database connection handle </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">pCollectionSpaceName</td><td>The name of collection space </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">options</td><td>The options specified by user</td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">options</td><td>The options specified by user, e.g. {"PageSize": 4096, "Domain": "mydomain"}. <pre class="fragment">PageSize   : Assign the pagesize of the collection space
+Domain     : Assign which domain does current collection space belong to
+</pre> </td></tr>
     <tr><td class="paramdir">[out]</td><td class="paramname">handle</td><td>The collection space handle when fail to create collection space, *handle == -1 and error code is return </td></tr>
   </table>
   </dd>
@@ -1786,9 +1807,13 @@ SDB_PAGESIZE_DEFAULT
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">cHandle</td><td>The database connection handle </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">pDomainName</td><td>The name of the domain </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">options</td><td>The options for the domain. The options are as below: <pre class="fragment">Group: The list of name for replica groups that the domain contains.
-       eg: { "Group": [ "group1", "group2", "group3" ] }
-       If this argument is not included, the domain will contain all replica groups in the cluster.
+    <tr><td class="paramdir">[in]</td><td class="paramname">options</td><td>The options for the domain. The options are as below: <pre class="fragment">Groups:    The list of replica groups' names which the domain is going to contain.
+           eg: { "Groups": [ "group1", "group2", "group3" ] }
+           If this argument is not included, the domain will contain all replica groups in the cluster.
+AutoSplit: If this option is set to be true, while creating collection(ShardingType is "hash") in this domain,
+           the data of this collection will be split(hash split) into all the groups in this domain automatically.
+           However, it won't automatically split data into those groups which were add into this domain later.
+           eg: { "Groups": [ "group1", "group2", "group3" ], "AutoSplit: true" }
 </pre> </td></tr>
     <tr><td class="paramdir">[out]</td><td class="paramname">handle</td><td>The domain handle </td></tr>
   </table>
@@ -2695,7 +2720,10 @@ SDB_PAGESIZE_DEFAULT
     <tr><td class="paramdir">[in]</td><td class="paramname">flags</td><td>The flags of query </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">numToSkip</td><td>Skip the first numToSkip documents, never skip if this parameter is 0 </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">numToReturn</td><td>Only return numToReturn documents, return all if this parameter is -1 </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">options</td><td>the rules of explain </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">options</td><td>the rules of explain, the options are as below: <pre class="fragment">Run     : Whether execute query explain or not, true for excuting query explain then get
+          the data and time information; false for not excuting query explain but get the
+          query explain information only. e.g. {Run:true}
+</pre> </td></tr>
     <tr><td class="paramdir">[out]</td><td class="paramname">handle</td><td>The cursor handle of current query </td></tr>
   </table>
   </dd>
@@ -3395,7 +3423,7 @@ SDB_LIST_TASKS            : Get the list of the tasks ( only applicable in shard
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">lobHandle</td><td>The large object handle </td></tr>
-    <tr><td class="paramdir">[out]</td><td class="paramname">millis</td><td>The create time in milliseconds of lob </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">millis</td><td>The create time in milliseconds of lob, while open a new lob, the create time is 0 </td></tr>
   </table>
   </dd>
 </dl>
@@ -4508,6 +4536,48 @@ Name        : Assign the backups with specifed name to be list
 
 </div>
 </div>
+<a class="anchor" id="aa7c7ecc4a7736ce7bfdd06611be728dd"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">INT32 sdbListGroupsInDomain </td>
+          <td>(</td>
+          <td class="paramtype">sdbDomainHandle&#160;</td>
+          <td class="paramname"><em>cHandle</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">sdbCursorHandle *&#160;</td>
+          <td class="paramname"><em>cursor</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>list the groups in domain. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">cHandle</td><td>The domain handle </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">handle</td><td>The cusor handle of result </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname">SDB_OK</td><td>Operation Success </td></tr>
+    <tr><td class="paramname">Others</td><td>Operation Fail </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <a class="anchor" id="afd9f14b11631d48a17b6dd32a891a6dd"></a>
 <div class="memitem">
 <div class="memproto">
@@ -4925,6 +4995,7 @@ Name        : Assign the backups with specifed name to be list
   </table>
   </dd>
 </dl>
+<dl class="section note"><dt>Note</dt><dd>sort will be ignored when sort key is not exist in result set </dd></dl>
 <dl class="retval"><dt>Return values</dt><dd>
   <table class="retval">
     <tr><td class="paramname">SDB_OK</td><td>Operation Success </td></tr>
@@ -5020,6 +5091,7 @@ FLG_QUERY_WITH_RETURNDATA(0x00000200) : In general, query won't return data unti
   </table>
   </dd>
 </dl>
+<dl class="section note"><dt>Note</dt><dd>sort will be ignored when sort key is not exist in result set </dd></dl>
 <dl class="retval"><dt>Return values</dt><dd>
   <table class="retval">
     <tr><td class="paramname">SDB_OK</td><td>Operation Success </td></tr>
@@ -6547,7 +6619,7 @@ util   : Utilities
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Oct 31 2014 11:49:55 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Wed Jan 7 2015 18:11:04 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.2
 </small></address>
