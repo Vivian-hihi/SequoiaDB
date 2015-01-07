@@ -105,7 +105,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:a81faf2aea84005ea27b1d7755fe1f00c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the name of current domain.  <a href="#a81faf2aea84005ea27b1d7755fe1f00c"></a><br/></td></tr>
 <tr class="separator:a81faf2aea84005ea27b1d7755fe1f00c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac9bc39c02e6e63c461a775651e0a6f5d"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdbDomain.html#ac9bc39c02e6e63c461a775651e0a6f5d">alterDomain</a> (const bson::BSONObj &amp;options)</td></tr>
-<tr class="memdesc:ac9bc39c02e6e63c461a775651e0a6f5d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Alter the domains.  <a href="#ac9bc39c02e6e63c461a775651e0a6f5d"></a><br/></td></tr>
+<tr class="memdesc:ac9bc39c02e6e63c461a775651e0a6f5d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Alter the current domain.  <a href="#ac9bc39c02e6e63c461a775651e0a6f5d"></a><br/></td></tr>
 <tr class="separator:ac9bc39c02e6e63c461a775651e0a6f5d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9386a9a833b1d37bd37bef097f63f461"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdbDomain.html#a9386a9a833b1d37bd37bef097f63f461">listCollectionSpacesInDomain</a> (<a class="el" href="classsdbclient_1_1sdbCursor.html">sdbCursor</a> &amp;cursor)</td></tr>
 <tr class="memdesc:a9386a9a833b1d37bd37bef097f63f461"><td class="mdescLeft">&#160;</td><td class="mdescRight">List all the collection spaces in current domain.  <a href="#a9386a9a833b1d37bd37bef097f63f461"></a><br/></td></tr>
@@ -144,10 +144,20 @@ Public Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Alter the domains. </p>
+<p>Alter the current domain. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">options</td><td>The options user wants to alter </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">options</td><td>The options user wants to alter <pre class="fragment">Groups:    The list of replica groups' names which the domain is going to contain.
+           eg: { "Groups": [ "group1", "group2", "group3" ] }, it means that domain
+           changes to contain "group1" "group2" or "group3".
+           We can add or remove groups in current domain. However, if a group has data
+           in it, remove it out of domain will be failing.
+AutoSplit: Alter current domain to have the ability of automatically split or not. 
+           If this option is set to be true, while creating collection(ShardingType is "hash") in this domain,
+           the data of this collection will be split(hash split) into all the groups in this domain automatically.
+           However, it won't automatically split data into those groups which were add into this domain later.
+           eg: { "Groups": [ "group1", "group2", "group3" ], "AutoSplit: true" }
+</pre> </td></tr>
   </table>
   </dd>
 </dl>
@@ -293,7 +303,7 @@ Public Attributes</h2></td></tr>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Oct 31 2014 11:44:50 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Wed Jan 7 2015 18:11:10 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.2
 </small></address>

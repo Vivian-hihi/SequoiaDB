@@ -166,8 +166,8 @@ INT32&#160;</td><td class="memItemRight" valign="bottom"><b>createCollectionSpac
 <tr class="memitem:a52f05987880262c5f1451b71aac819ae"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdb.html#a52f05987880262c5f1451b71aac819ae">createCollectionSpace</a> (const CHAR *pCollectionSpaceName, INT32 iPageSize, <a class="el" href="classsdbclient_1_1sdbCollectionSpace.html">sdbCollectionSpace</a> &amp;cs)</td></tr>
 <tr class="memdesc:a52f05987880262c5f1451b71aac819ae"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create collection space with specified pagesize.  <a href="#a52f05987880262c5f1451b71aac819ae"></a><br/></td></tr>
 <tr class="separator:a52f05987880262c5f1451b71aac819ae"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4d082a5292b3bf2aa2e9925c8c3d953e"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a4d082a5292b3bf2aa2e9925c8c3d953e"></a>
-INT32&#160;</td><td class="memItemRight" valign="bottom"><b>createCollectionSpace</b> (const CHAR *pCollectionSpaceName, const bson::BSONObj &amp;options, <a class="el" href="classsdbclient_1_1sdbCollectionSpace.html">sdbCollectionSpace</a> &amp;cs)</td></tr>
+<tr class="memitem:a4d082a5292b3bf2aa2e9925c8c3d953e"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdb.html#a4d082a5292b3bf2aa2e9925c8c3d953e">createCollectionSpace</a> (const CHAR *pCollectionSpaceName, const bson::BSONObj &amp;options, <a class="el" href="classsdbclient_1_1sdbCollectionSpace.html">sdbCollectionSpace</a> &amp;cs)</td></tr>
+<tr class="memdesc:a4d082a5292b3bf2aa2e9925c8c3d953e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create collection space with specified pagesize.  <a href="#a4d082a5292b3bf2aa2e9925c8c3d953e"></a><br/></td></tr>
 <tr class="separator:a4d082a5292b3bf2aa2e9925c8c3d953e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0c100a59139cfbf4eaf05c67eb2c98d4"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdb.html#a0c100a59139cfbf4eaf05c67eb2c98d4">dropCollectionSpace</a> (const CHAR *pCollectionSpaceName)</td></tr>
 <tr class="memdesc:a0c100a59139cfbf4eaf05c67eb2c98d4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Remove the specified collection space.  <a href="#a0c100a59139cfbf4eaf05c67eb2c98d4"></a><br/></td></tr>
@@ -292,6 +292,9 @@ INT32&#160;</td><td class="memItemRight" valign="bottom"><b>listTasks</b> (<a cl
 <tr class="memitem:a587e82a600dfefaab2872df189e08ca4"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdb.html#a587e82a600dfefaab2872df189e08ca4">isValid</a> (BOOLEAN *result)</td></tr>
 <tr class="memdesc:a587e82a600dfefaab2872df189e08ca4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Judge whether the connection is valid.  <a href="#a587e82a600dfefaab2872df189e08ca4"></a><br/></td></tr>
 <tr class="separator:a587e82a600dfefaab2872df189e08ca4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a88eb7a1f8f9687024b3803fa130b8445"><td class="memItemLeft" align="right" valign="top">BOOLEAN&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdb.html#a88eb7a1f8f9687024b3803fa130b8445">isValid</a> ()</td></tr>
+<tr class="memdesc:a88eb7a1f8f9687024b3803fa130b8445"><td class="mdescLeft">&#160;</td><td class="mdescRight">Judge whether the connection is valid.  <a href="#a88eb7a1f8f9687024b3803fa130b8445"></a><br/></td></tr>
+<tr class="separator:a88eb7a1f8f9687024b3803fa130b8445"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a615990b4893d5c2e41629c22b8c16997"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdb.html#a615990b4893d5c2e41629c22b8c16997">createDomain</a> (const CHAR *pDomainName, const bson::BSONObj &amp;options, <a class="el" href="classsdbclient_1_1sdbDomain.html">sdbDomain</a> &amp;domain)</td></tr>
 <tr class="memdesc:a615990b4893d5c2e41629c22b8c16997"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create a domain.  <a href="#a615990b4893d5c2e41629c22b8c16997"></a><br/></td></tr>
 <tr class="separator:a615990b4893d5c2e41629c22b8c16997"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -850,6 +853,65 @@ SDB_PAGESIZE_DEFAULT
 
 </div>
 </div>
+<a class="anchor" id="a4d082a5292b3bf2aa2e9925c8c3d953e"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">INT32 sdbclient::sdb::createCollectionSpace </td>
+          <td>(</td>
+          <td class="paramtype">const CHAR *&#160;</td>
+          <td class="paramname"><em>pCollectionSpaceName</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const bson::BSONObj &amp;&#160;</td>
+          <td class="paramname"><em>options</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classsdbclient_1_1sdbCollectionSpace.html">sdbCollectionSpace</a> &amp;&#160;</td>
+          <td class="paramname"><em>cs</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Create collection space with specified pagesize. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">pCollectionSpaceName</td><td>The name of collection space. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">options</td><td>The options specified by user, e.g. {"PageSize": 4096, "Domain": "mydomain"}. <pre class="fragment">PageSize   : Assign the pagesize of the collection space
+Domain     : Assign which domain does current collection space belong to
+</pre> </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">cs</td><td>The return collection space object of creation. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname">SDB_OK</td><td>Operation Success </td></tr>
+    <tr><td class="paramname">Others</td><td>Operation Fail </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <a class="anchor" id="a615990b4893d5c2e41629c22b8c16997"></a>
 <div class="memitem">
 <div class="memproto">
@@ -892,9 +954,13 @@ SDB_PAGESIZE_DEFAULT
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">pDomainName</td><td>The name of the domain </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">options</td><td>The options for the domain. The options are as below: <pre class="fragment">Group: The list of name for replica groups that the domain contains.
-       eg: { "Group": [ "group1", "group2", "group3" ] }
-       If this argument is not included, the domain will contain all replica groups in the cluster.
+    <tr><td class="paramdir">[in]</td><td class="paramname">options</td><td>The options for the domain. The options are as below: <pre class="fragment">Groups:    The list of replica groups' names which the domain is going to contain.
+           eg: { "Groups": [ "group1", "group2", "group3" ] }
+           If this argument is not included, the domain will contain all replica groups in the cluster.
+AutoSplit: If this option is set to be true, while creating collection(ShardingType is "hash") in this domain,
+           the data of this collection will be split(hash split) into all the groups in this domain automatically.
+           However, it won't automatically split data into those groups which were add into this domain later.
+           eg: { "Groups": [ "group1", "group2", "group3" ], "AutoSplit: true" }
 </pre> </td></tr>
     <tr><td class="paramdir">[out]</td><td class="paramname">domain</td><td>The created <a class="el" href="classsdbclient_1_1sdbDomain.html" title="Database operation interfaces of domain.">sdbDomain</a> object </td></tr>
   </table>
@@ -1827,6 +1893,38 @@ SDB_SNAP_CATA           : Get catalog's snapshot
   </table>
   </dd>
 </dl>
+<dl class="deprecated"><dt><b><a class="el" href="deprecated.html#_deprecated000009">Deprecated:</a></b></dt><dd>Deprecated in version 2.x. Use "BOOLEAN isValid ()" instead. </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="a88eb7a1f8f9687024b3803fa130b8445"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">BOOLEAN sdbclient::sdb::isValid </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Judge whether the connection is valid. </p>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname">TRUE</td><td>for the connection is valid while FALSE for not </td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -2632,7 +2730,7 @@ Name        : Assign the backups with specifed name to be remove
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Oct 31 2014 11:44:51 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Wed Jan 7 2015 18:11:10 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.2
 </small></address>
