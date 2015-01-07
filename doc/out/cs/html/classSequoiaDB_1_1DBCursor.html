@@ -69,7 +69,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
      onmouseover="return searchBox.OnSearchSelectShow()"
      onmouseout="return searchBox.OnSearchSelectHide()"
      onkeydown="return searchBox.OnSearchSelectKey(event)">
-<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Properties</a></div>
+<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Variables</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&#160;</span>Properties</a></div>
 
 <!-- iframe showing the search results (closed by default) -->
 <div id="MSearchResultsWindow">
@@ -103,22 +103,46 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:add4e07be0f2edaaf98f3255ed54d299b"><td class="memItemLeft" align="right" valign="top">BsonDocument&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaDB_1_1DBCursor.html#add4e07be0f2edaaf98f3255ed54d299b">Current</a> ()</td></tr>
 <tr class="memdesc:add4e07be0f2edaaf98f3255ed54d299b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the current Bson of this cursor.  <a href="#add4e07be0f2edaaf98f3255ed54d299b"></a><br/></td></tr>
 <tr class="separator:add4e07be0f2edaaf98f3255ed54d299b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8d9dc052aa51c2b8d51dd4542af7c526"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a8d9dc052aa51c2b8d51dd4542af7c526"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaDB_1_1DBCursor.html#a8d9dc052aa51c2b8d51dd4542af7c526">Close</a> ()</td></tr>
-<tr class="memdesc:a8d9dc052aa51c2b8d51dd4542af7c526"><td class="mdescLeft">&#160;</td><td class="mdescRight">Close current cursor </p>
-<dl class="exception"><dt>Exceptions</dt><dd>
-  <table class="exception">
-    <tr><td class="paramname"><a class="el" href="classSequoiaDB_1_1BaseException.html" title="Database operation exception.">SequoiaDB.BaseException</a></td><td></td></tr>
-    <tr><td class="paramname">System.Exception.</td><td></td></tr>
-  </table>
-  </dd>
-</dl>
-<br/></td></tr>
+<tr class="memitem:a8d9dc052aa51c2b8d51dd4542af7c526"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaDB_1_1DBCursor.html#a8d9dc052aa51c2b8d51dd4542af7c526">Close</a> ()</td></tr>
+<tr class="memdesc:a8d9dc052aa51c2b8d51dd4542af7c526"><td class="mdescLeft">&#160;</td><td class="mdescRight">Close current cursor.  <a href="#a8d9dc052aa51c2b8d51dd4542af7c526"></a><br/></td></tr>
 <tr class="separator:a8d9dc052aa51c2b8d51dd4542af7c526"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Database collection cursor. </p>
 </div><h2 class="groupheader">Member Function Documentation</h2>
+<a class="anchor" id="a8d9dc052aa51c2b8d51dd4542af7c526"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void SequoiaDB.DBCursor.Close </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Close current cursor. </p>
+<dl class="section return"><dt>Returns</dt><dd>void </dd></dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname"><a class="el" href="classSequoiaDB_1_1BaseException.html" title="Database operation exception.">SequoiaDB.BaseException</a></td><td></td></tr>
+    <tr><td class="paramname">System.Exception</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <a class="anchor" id="add4e07be0f2edaaf98f3255ed54d299b"></a>
 <div class="memitem">
 <div class="memproto">
@@ -191,7 +215,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Sun Jul 6 2014 16:02:31 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Wed Jan 7 2015 18:10:56 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.2
 </small></address>

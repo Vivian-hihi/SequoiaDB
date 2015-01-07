@@ -69,7 +69,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
      onmouseover="return searchBox.OnSearchSelectShow()"
      onmouseout="return searchBox.OnSearchSelectHide()"
      onkeydown="return searchBox.OnSearchSelectKey(event)">
-<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Properties</a></div>
+<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Variables</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&#160;</span>Properties</a></div>
 
 <!-- iframe showing the search results (closed by default) -->
 <div id="MSearchResultsWindow">
@@ -143,6 +143,12 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:add82d3a88266de40b8090e6e7c260066"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classSequoiaDB_1_1DBCursor.html">DBCursor</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaDB_1_1DBCollection.html#add82d3a88266de40b8090e6e7c260066">Query</a> (BsonDocument query, BsonDocument selector, BsonDocument orderBy, BsonDocument hint, long skipRows, long returnRows)</td></tr>
 <tr class="memdesc:add82d3a88266de40b8090e6e7c260066"><td class="mdescLeft">&#160;</td><td class="mdescRight">Find documents of current collection.  <a href="#add82d3a88266de40b8090e6e7c260066"></a><br/></td></tr>
 <tr class="separator:add82d3a88266de40b8090e6e7c260066"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1c31a90e8cfd456a4fd16b08ef290f14"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classSequoiaDB_1_1DBCursor.html">DBCursor</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaDB_1_1DBCollection.html#a1c31a90e8cfd456a4fd16b08ef290f14">Query</a> (BsonDocument query, BsonDocument selector, BsonDocument orderBy, BsonDocument hint, long skipRows, long returnRows, int flag)</td></tr>
+<tr class="memdesc:a1c31a90e8cfd456a4fd16b08ef290f14"><td class="mdescLeft">&#160;</td><td class="mdescRight">Find documents of current collection.  <a href="#a1c31a90e8cfd456a4fd16b08ef290f14"></a><br/></td></tr>
+<tr class="separator:a1c31a90e8cfd456a4fd16b08ef290f14"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a440565fcef581f92742e8cbeab24869e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classSequoiaDB_1_1DBCursor.html">DBCursor</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaDB_1_1DBCollection.html#a440565fcef581f92742e8cbeab24869e">Explain</a> (BsonDocument query, BsonDocument selector, BsonDocument orderBy, BsonDocument hint, long skipRows, long returnRows, int flag, BsonDocument options)</td></tr>
+<tr class="memdesc:a440565fcef581f92742e8cbeab24869e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Find documents of current collection.  <a href="#a440565fcef581f92742e8cbeab24869e"></a><br/></td></tr>
+<tr class="separator:a440565fcef581f92742e8cbeab24869e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a79507cfca415691ace38241e36963614"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classSequoiaDB_1_1DBCursor.html">DBCursor</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaDB_1_1DBCollection.html#a79507cfca415691ace38241e36963614">GetIndexes</a> ()</td></tr>
 <tr class="memdesc:a79507cfca415691ace38241e36963614"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get all the indexes of current collection.  <a href="#a79507cfca415691ace38241e36963614"></a><br/></td></tr>
 <tr class="separator:a79507cfca415691ace38241e36963614"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -164,18 +170,39 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:afb3918371ea6bac5f61b4b34bee08d0b"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classSequoiaDB_1_1DBCursor.html">DBCursor</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaDB_1_1DBCollection.html#afb3918371ea6bac5f61b4b34bee08d0b">GetQueryMeta</a> (BsonDocument query, BsonDocument orderBy, BsonDocument hint, long skipRows, long returnRows)</td></tr>
 <tr class="memdesc:afb3918371ea6bac5f61b4b34bee08d0b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the index blocks' or data blocks' infomations for concurrent query.  <a href="#afb3918371ea6bac5f61b4b34bee08d0b"></a><br/></td></tr>
 <tr class="separator:afb3918371ea6bac5f61b4b34bee08d0b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9f7ccfd91e2281a2f4b825e18996dc49"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaDB_1_1DBCollection.html#a9f7ccfd91e2281a2f4b825e18996dc49">attachCollection</a> (string subClFullName, BsonDocument options)</td></tr>
-<tr class="memdesc:a9f7ccfd91e2281a2f4b825e18996dc49"><td class="mdescLeft">&#160;</td><td class="mdescRight">Attach the specified collection.  <a href="#a9f7ccfd91e2281a2f4b825e18996dc49"></a><br/></td></tr>
-<tr class="separator:a9f7ccfd91e2281a2f4b825e18996dc49"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a131eabb7f64eb1bc8227bf98a1e02731"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaDB_1_1DBCollection.html#a131eabb7f64eb1bc8227bf98a1e02731">detachCollection</a> (string subClFullName)</td></tr>
-<tr class="memdesc:a131eabb7f64eb1bc8227bf98a1e02731"><td class="mdescLeft">&#160;</td><td class="mdescRight">Detach the specified collection.  <a href="#a131eabb7f64eb1bc8227bf98a1e02731"></a><br/></td></tr>
-<tr class="separator:a131eabb7f64eb1bc8227bf98a1e02731"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2ea5979bb8aa0a26d309163def344f94"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaDB_1_1DBCollection.html#a2ea5979bb8aa0a26d309163def344f94">AttachCollection</a> (string subClFullName, BsonDocument options)</td></tr>
+<tr class="memdesc:a2ea5979bb8aa0a26d309163def344f94"><td class="mdescLeft">&#160;</td><td class="mdescRight">Attach the specified collection.  <a href="#a2ea5979bb8aa0a26d309163def344f94"></a><br/></td></tr>
+<tr class="separator:a2ea5979bb8aa0a26d309163def344f94"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abf4521c015df5179439631da5b243c27"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaDB_1_1DBCollection.html#abf4521c015df5179439631da5b243c27">DetachCollection</a> (string subClFullName)</td></tr>
+<tr class="memdesc:abf4521c015df5179439631da5b243c27"><td class="mdescLeft">&#160;</td><td class="mdescRight">Detach the specified collection.  <a href="#abf4521c015df5179439631da5b243c27"></a><br/></td></tr>
+<tr class="separator:abf4521c015df5179439631da5b243c27"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a97263903a28ea299ea68a4a4d67819cd"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaDB_1_1DBCollection.html#a97263903a28ea299ea68a4a4d67819cd">Alter</a> (BsonDocument options)</td></tr>
+<tr class="memdesc:a97263903a28ea299ea68a4a4d67819cd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Alter the attributes of current collection.  <a href="#a97263903a28ea299ea68a4a4d67819cd"></a><br/></td></tr>
+<tr class="separator:a97263903a28ea299ea68a4a4d67819cd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5d9ffe9e42c53348655a29be7767b7c6"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classSequoiaDB_1_1DBCursor.html">DBCursor</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaDB_1_1DBCollection.html#a5d9ffe9e42c53348655a29be7767b7c6">ListLobs</a> ()</td></tr>
+<tr class="memdesc:a5d9ffe9e42c53348655a29be7767b7c6"><td class="mdescLeft">&#160;</td><td class="mdescRight">List all of the lobs in current collection.  <a href="#a5d9ffe9e42c53348655a29be7767b7c6"></a><br/></td></tr>
+<tr class="separator:a5d9ffe9e42c53348655a29be7767b7c6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a98ba855de3079d433baffd391583505a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classSequoiaDB_1_1DBLob.html">DBLob</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaDB_1_1DBCollection.html#a98ba855de3079d433baffd391583505a">CreateLob</a> ()</td></tr>
+<tr class="memdesc:a98ba855de3079d433baffd391583505a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create a large object.  <a href="#a98ba855de3079d433baffd391583505a"></a><br/></td></tr>
+<tr class="separator:a98ba855de3079d433baffd391583505a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a58f89841006ba1ca87718722ecf2952f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classSequoiaDB_1_1DBLob.html">DBLob</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaDB_1_1DBCollection.html#a58f89841006ba1ca87718722ecf2952f">CreateLob</a> (ObjectId id)</td></tr>
+<tr class="memdesc:a58f89841006ba1ca87718722ecf2952f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create a large object with specified oid.  <a href="#a58f89841006ba1ca87718722ecf2952f"></a><br/></td></tr>
+<tr class="separator:a58f89841006ba1ca87718722ecf2952f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa57b5e56580789a0bbb04312947be3b9"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classSequoiaDB_1_1DBLob.html">DBLob</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaDB_1_1DBCollection.html#aa57b5e56580789a0bbb04312947be3b9">OpenLob</a> (ObjectId id)</td></tr>
+<tr class="memdesc:aa57b5e56580789a0bbb04312947be3b9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Open an existing lob with the speceifed oid.  <a href="#aa57b5e56580789a0bbb04312947be3b9"></a><br/></td></tr>
+<tr class="separator:aa57b5e56580789a0bbb04312947be3b9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad279d81752b315cda9ec48445ad999a1"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaDB_1_1DBCollection.html#ad279d81752b315cda9ec48445ad999a1">RemoveLob</a> (ObjectId id)</td></tr>
+<tr class="memdesc:ad279d81752b315cda9ec48445ad999a1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Remove an existing lob with the speceifed oid.  <a href="#ad279d81752b315cda9ec48445ad999a1"></a><br/></td></tr>
+<tr class="separator:ad279d81752b315cda9ec48445ad999a1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="properties"></a>
 Properties</h2></td></tr>
 <tr class="memitem:ab650e2ee5e37810a76d596351a2d5d71"><td class="memItemLeft" align="right" valign="top">string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaDB_1_1DBCollection.html#ab650e2ee5e37810a76d596351a2d5d71">Name</a><code> [get]</code></td></tr>
 <tr class="memdesc:ab650e2ee5e37810a76d596351a2d5d71"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return the name of current collection.  <a href="#ab650e2ee5e37810a76d596351a2d5d71"></a><br/></td></tr>
 <tr class="separator:ab650e2ee5e37810a76d596351a2d5d71"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af6a421add5e262d63f1dd37f9bcdbaaa"><td class="memItemLeft" align="right" valign="top">string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaDB_1_1DBCollection.html#af6a421add5e262d63f1dd37f9bcdbaaa">FullName</a><code> [get]</code></td></tr>
+<tr class="memdesc:af6a421add5e262d63f1dd37f9bcdbaaa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return the full name of current collection.  <a href="#af6a421add5e262d63f1dd37f9bcdbaaa"></a><br/></td></tr>
+<tr class="separator:af6a421add5e262d63f1dd37f9bcdbaaa"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af260a2a0eab053c5702fe7ddc96f13d9"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classSequoiaDB_1_1CollectionSpace.html">CollectionSpace</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaDB_1_1DBCollection.html#af260a2a0eab053c5702fe7ddc96f13d9">CollSpace</a><code> [get]</code></td></tr>
 <tr class="separator:af260a2a0eab053c5702fe7ddc96f13d9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
@@ -222,7 +249,7 @@ Properties</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="a9f7ccfd91e2281a2f4b825e18996dc49"></a>
+<a class="anchor" id="a97263903a28ea299ea68a4a4d67819cd"></a>
 <div class="memitem">
 <div class="memproto">
 <table class="mlabels">
@@ -230,7 +257,52 @@ Properties</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">void SequoiaDB.DBCollection.attachCollection </td>
+          <td class="memname">void SequoiaDB.DBCollection.Alter </td>
+          <td>(</td>
+          <td class="paramtype">BsonDocument&#160;</td>
+          <td class="paramname"><em>options</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Alter the attributes of current collection. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">options</td><td>The options for altering current collection: <pre class="fragment">ReplSize     : Assign how many replica nodes need to be synchronized when a write request(insert, update, etc) is executed
+ShardingKey  : Assign the sharding key
+ShardingType : Assign the sharding type
+Partition    : When the ShardingType is "hash", need to assign Partition, it's the bucket number for hash, the range is [2^3,2^20]
+               e.g. {RepliSize:0, ShardingKey:{a:1}, ShardingType:"hash", Partition:1024}
+</pre> </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section note"><dt>Note</dt><dd>Can't alter attributes about split in partition collection; After altering a collection to be a partition collection, need to split this collection manually </dd></dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname"><a class="el" href="classSequoiaDB_1_1BaseException.html" title="Database operation exception.">SequoiaDB.BaseException</a></td><td></td></tr>
+    <tr><td class="paramname">System.Exception</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="a2ea5979bb8aa0a26d309163def344f94"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void SequoiaDB.DBCollection.AttachCollection </td>
           <td>(</td>
           <td class="paramtype">string&#160;</td>
           <td class="paramname"><em>subClFullName</em>, </td>
@@ -392,6 +464,78 @@ Properties</h2></td></tr>
 
 </div>
 </div>
+<a class="anchor" id="a98ba855de3079d433baffd391583505a"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classSequoiaDB_1_1DBLob.html">DBLob</a> SequoiaDB.DBCollection.CreateLob </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Create a large object. </p>
+<dl class="section return"><dt>Returns</dt><dd>The newly created lob object </dd></dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname"><a class="el" href="classSequoiaDB_1_1BaseException.html" title="Database operation exception.">SequoiaDB.BaseException</a></td><td></td></tr>
+    <tr><td class="paramname">System.Exception</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="a58f89841006ba1ca87718722ecf2952f"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classSequoiaDB_1_1DBLob.html">DBLob</a> SequoiaDB.DBCollection.CreateLob </td>
+          <td>(</td>
+          <td class="paramtype">ObjectId&#160;</td>
+          <td class="paramname"><em>id</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Create a large object with specified oid. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">id</td><td>The oid for the creating lob </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname"><a class="el" href="classSequoiaDB_1_1BaseException.html" title="Database operation exception.">SequoiaDB.BaseException</a></td><td></td></tr>
+    <tr><td class="paramname">System.Exception</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <a class="anchor" id="a47bcd33d34f5605a9a6fbf9a9fda3670"></a>
 <div class="memitem">
 <div class="memproto">
@@ -481,7 +625,7 @@ Properties</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="a131eabb7f64eb1bc8227bf98a1e02731"></a>
+<a class="anchor" id="abf4521c015df5179439631da5b243c27"></a>
 <div class="memitem">
 <div class="memproto">
 <table class="mlabels">
@@ -489,7 +633,7 @@ Properties</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">void SequoiaDB.DBCollection.detachCollection </td>
+          <td class="memname">void SequoiaDB.DBCollection.DetachCollection </td>
           <td>(</td>
           <td class="paramtype">string&#160;</td>
           <td class="paramname"><em>subClFullName</em></td><td>)</td>
@@ -555,6 +699,105 @@ Properties</h2></td></tr>
   </table>
   </dd>
 </dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname"><a class="el" href="classSequoiaDB_1_1BaseException.html" title="Database operation exception.">SequoiaDB.BaseException</a></td><td></td></tr>
+    <tr><td class="paramname">System.Exception</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="a440565fcef581f92742e8cbeab24869e"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classSequoiaDB_1_1DBCursor.html">DBCursor</a> SequoiaDB.DBCollection.Explain </td>
+          <td>(</td>
+          <td class="paramtype">BsonDocument&#160;</td>
+          <td class="paramname"><em>query</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">BsonDocument&#160;</td>
+          <td class="paramname"><em>selector</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">BsonDocument&#160;</td>
+          <td class="paramname"><em>orderBy</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">BsonDocument&#160;</td>
+          <td class="paramname"><em>hint</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">long&#160;</td>
+          <td class="paramname"><em>skipRows</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">long&#160;</td>
+          <td class="paramname"><em>returnRows</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>flag</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">BsonDocument&#160;</td>
+          <td class="paramname"><em>options</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Find documents of current collection. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir"></td><td class="paramname">query</td><td>The matching condition  The selective rule </td></tr>
+    <tr><td class="paramdir"></td><td class="paramname">orderBy</td><td>The ordered rule </td></tr>
+    <tr><td class="paramdir"></td><td class="paramname">hint</td><td>One of the indexs in current collection, using default index to query if not provided eg:{"":"ageIndex"} </td></tr>
+    <tr><td class="paramdir"></td><td class="paramname">skipRows</td><td>Skip the first numToSkip documents, default is 0 </td></tr>
+    <tr><td class="paramdir"></td><td class="paramname">returnRows</td><td>Only return numToReturn documents, default is -1 for returning all results </td></tr>
+    <tr><td class="paramdir"></td><td class="paramname">flag</td><td>the flag is used to choose the way to query, the optional options are as below: <pre class="fragment">DBQuery.FLG_QUERY_FORCE_HINT(0x00000080)      : Force to use specified hint to query, if database have no index assigned by the hint, fail to query
+DBQuery.FLG_QUERY_PARALLED(0x00000100)        : Enable paralled sub query
+DBQuery.FLG_QUERY_WITH_RETURNDATA(0x00000200) : In general, query won't return data until cursor get from database,
+                                                when add this flag, return data in query response, it will be more high-performance
+</pre> </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">options</td><td>The rules of query explain, the options are as below: <pre class="fragment">Run     : Whether execute query explain or not, true for excuting query explain then get
+          the data and time information; false for not excuting query explain but get the
+          query explain information only. e.g. {Run:true}
+</pre> </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>The <a class="el" href="classSequoiaDB_1_1DBCursor.html" title="Database collection cursor.">DBCursor</a> of matching documents or null </dd></dl>
 <dl class="exception"><dt>Exceptions</dt><dd>
   <table class="exception">
     <tr><td class="paramname"><a class="el" href="classSequoiaDB_1_1BaseException.html" title="Database operation exception.">SequoiaDB.BaseException</a></td><td></td></tr>
@@ -790,6 +1033,83 @@ Properties</h2></td></tr>
 
 </div>
 </div>
+<a class="anchor" id="a5d9ffe9e42c53348655a29be7767b7c6"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classSequoiaDB_1_1DBCursor.html">DBCursor</a> SequoiaDB.DBCollection.ListLobs </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>List all of the lobs in current collection. </p>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname"><a class="el" href="classSequoiaDB_1_1DBCursor.html" title="Database collection cursor.">DBCursor</a></td><td>of lobs </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname"><a class="el" href="classSequoiaDB_1_1BaseException.html" title="Database operation exception.">SequoiaDB.BaseException</a></td><td></td></tr>
+    <tr><td class="paramname">System.Exception</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="aa57b5e56580789a0bbb04312947be3b9"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classSequoiaDB_1_1DBLob.html">DBLob</a> SequoiaDB.DBCollection.OpenLob </td>
+          <td>(</td>
+          <td class="paramtype">ObjectId&#160;</td>
+          <td class="paramname"><em>id</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Open an existing lob with the speceifed oid. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">id</td><td>The oid of the existing lob </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname"><a class="el" href="classSequoiaDB_1_1BaseException.html" title="Database operation exception.">SequoiaDB.BaseException</a></td><td></td></tr>
+    <tr><td class="paramname">System.Exception</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <a class="anchor" id="a506a6e77561213842bfae13f8d6ee140"></a>
 <div class="memitem">
 <div class="memproto">
@@ -852,6 +1172,7 @@ Properties</h2></td></tr>
   </table>
   </dd>
 </dl>
+<dl class="section note"><dt>Note</dt><dd>sort will be ignored when sort key is not exist in result </dd></dl>
 <dl class="section return"><dt>Returns</dt><dd>The <a class="el" href="classSequoiaDB_1_1DBCursor.html" title="Database collection cursor.">DBCursor</a> of matching documents or null </dd></dl>
 <dl class="exception"><dt>Exceptions</dt><dd>
   <table class="exception">
@@ -917,6 +1238,7 @@ Properties</h2></td></tr>
   </table>
   </dd>
 </dl>
+<dl class="section note"><dt>Note</dt><dd>sort will be ignored when sort key is not exist in result </dd></dl>
 <dl class="section return"><dt>Returns</dt><dd>The <a class="el" href="classSequoiaDB_1_1DBCursor.html" title="Database collection cursor.">DBCursor</a> of matching documents or null </dd></dl>
 <dl class="exception"><dt>Exceptions</dt><dd>
   <table class="exception">
@@ -995,7 +1317,137 @@ Properties</h2></td></tr>
   </table>
   </dd>
 </dl>
+<dl class="section note"><dt>Note</dt><dd>sort will be ignored when sort key is not exist in result </dd></dl>
 <dl class="section return"><dt>Returns</dt><dd>The <a class="el" href="classSequoiaDB_1_1DBCursor.html" title="Database collection cursor.">DBCursor</a> of matching documents or null </dd></dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname"><a class="el" href="classSequoiaDB_1_1BaseException.html" title="Database operation exception.">SequoiaDB.BaseException</a></td><td></td></tr>
+    <tr><td class="paramname">System.Exception</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="a1c31a90e8cfd456a4fd16b08ef290f14"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classSequoiaDB_1_1DBCursor.html">DBCursor</a> SequoiaDB.DBCollection.Query </td>
+          <td>(</td>
+          <td class="paramtype">BsonDocument&#160;</td>
+          <td class="paramname"><em>query</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">BsonDocument&#160;</td>
+          <td class="paramname"><em>selector</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">BsonDocument&#160;</td>
+          <td class="paramname"><em>orderBy</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">BsonDocument&#160;</td>
+          <td class="paramname"><em>hint</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">long&#160;</td>
+          <td class="paramname"><em>skipRows</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">long&#160;</td>
+          <td class="paramname"><em>returnRows</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>flag</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Find documents of current collection. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">query</td><td>The matching condition  The selective rule </td></tr>
+    <tr><td class="paramname">orderBy</td><td>The ordered rule </td></tr>
+    <tr><td class="paramname">hint</td><td>One of the indexs in current collection, using default index to query if not provided eg:{"":"ageIndex"} </td></tr>
+    <tr><td class="paramname">skipRows</td><td>Skip the first numToSkip documents, default is 0 </td></tr>
+    <tr><td class="paramname">returnRows</td><td>Only return numToReturn documents, default is -1 for returning all results </td></tr>
+    <tr><td class="paramname">flag</td><td>the flag is used to choose the way to query, the optional options are as below: <pre class="fragment">DBQuery.FLG_QUERY_FORCE_HINT(0x00000080)      : Force to use specified hint to query, if database have no index assigned by the hint, fail to query
+DBQuery.FLG_QUERY_PARALLED(0x00000100)        : Enable paralled sub query
+DBQuery.FLG_QUERY_WITH_RETURNDATA(0x00000200) : In general, query won't return data until cursor get from database,
+                                                when add this flag, return data in query response, it will be more high-performance
+</pre></td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section note"><dt>Note</dt><dd>sort will be ignored when sort key is not exist in result </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>The <a class="el" href="classSequoiaDB_1_1DBCursor.html" title="Database collection cursor.">DBCursor</a> of matching documents or null </dd></dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname"><a class="el" href="classSequoiaDB_1_1BaseException.html" title="Database operation exception.">SequoiaDB.BaseException</a></td><td></td></tr>
+    <tr><td class="paramname">System.Exception</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="ad279d81752b315cda9ec48445ad999a1"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classSequoiaDB_1_1DBLob.html">DBLob</a> SequoiaDB.DBCollection.RemoveLob </td>
+          <td>(</td>
+          <td class="paramtype">ObjectId&#160;</td>
+          <td class="paramname"><em>id</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Remove an existing lob with the speceifed oid. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">id</td><td>The oid of the existing lob </td></tr>
+  </table>
+  </dd>
+</dl>
 <dl class="exception"><dt>Exceptions</dt><dd>
   <table class="exception">
     <tr><td class="paramname"><a class="el" href="classSequoiaDB_1_1BaseException.html" title="Database operation exception.">SequoiaDB.BaseException</a></td><td></td></tr>
@@ -1172,12 +1624,10 @@ Properties</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Split the specified collection from source group to target group by range asynchronously. </p>
-<pre class="fragment">\param sourceGroupName
-          the source group name
-\param destGroupName
-          the destination group name
-</pre> <dl class="params"><dt>Parameters</dt><dd>
+<dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
+    <tr><td class="paramname">sourceGroupName</td><td>the source group name </td></tr>
+    <tr><td class="paramname">destGroupName</td><td>the destination group name </td></tr>
     <tr><td class="paramname">splitCondition</td><td>the split condition </td></tr>
     <tr><td class="paramname">splitEndCondition</td><td>the split end condition or null eg:If we create a collection with the option {ShardingKey:{"age":1},ShardingType:"Hash",Partition:2^10}, we can fill {age:30} as the splitCondition, and fill {age:60} as the splitEndCondition. when split, the targe group will get the records whose age's hash values are in [30,60). If splitEndCondition is null, they are in [30,max). </td></tr>
   </table>
@@ -1234,12 +1684,10 @@ Properties</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Split the specified collection from source group to target group by percent asynchronously. </p>
-<pre class="fragment">\param sourceGroupName
-          the source group name
-\param destGroupName
-          the destination group name
-</pre> <dl class="params"><dt>Parameters</dt><dd>
+<dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
+    <tr><td class="paramname">sourceGroupName</td><td>the source group name </td></tr>
+    <tr><td class="paramname">destGroupName</td><td>the destination group name </td></tr>
     <tr><td class="paramname">percent</td><td>the split percent, Range:(0,100] </td></tr>
   </table>
   </dd>
@@ -1435,6 +1883,29 @@ Properties</h2></td></tr>
 
 </div>
 </div>
+<a class="anchor" id="af6a421add5e262d63f1dd37f9bcdbaaa"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">SequoiaDB.DBCollection.FullName</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">get</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Return the full name of current collection. </p>
+<dl class="section return"><dt>Returns</dt><dd>The collection name </dd></dl>
+
+</div>
+</div>
 <a class="anchor" id="ab650e2ee5e37810a76d596351a2d5d71"></a>
 <div class="memitem">
 <div class="memproto">
@@ -1464,7 +1935,7 @@ Properties</h2></td></tr>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Sun Jul 6 2014 16:02:31 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Wed Jan 7 2015 18:10:56 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.2
 </small></address>
