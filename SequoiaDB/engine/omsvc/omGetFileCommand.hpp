@@ -391,10 +391,6 @@ namespace engine
          void            _sendHostInfo2Web( list<BSONObj> &hosts ) ;
 
       private:
-         INT32           _listHostByCluster( const string &cluster, 
-                                             list<BSONObj> &hosts ) ;
-         INT32           _listHostByBusiness( const string &business, 
-                                              list<BSONObj> &hosts ) ;
    } ;
 
    class omQueryHostCommand : public omListHostCommand
