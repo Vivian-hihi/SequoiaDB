@@ -812,6 +812,83 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATADDGRP2DOMAIN, "catAddGroup2Domain" )
+   INT32 catAddGroup2Domain( const CHAR *domainName, const CHAR *groupName,
+                             INT32 groupID, pmdEDUCB *cb,
+                             _SDB_DMSCB *dmsCB, _dpsLogWrapper *dpsCB,
+                             INT16 w )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY ( SDB_CATADDGRP2DOMAIN ) ;
+      BSONObj boMatcher = BSON( CAT_DOMAINNAME_NAME << domainName ) ;
+
+      BSONObjBuilder updateBuild ;
+      BSONObjBuilder sub( updateBuild.subobjStart("$addtoset") ) ;
+
+      BSONObj newGroupObj = BSON( CAT_GROUPID_NAME << groupID <<
+                                  CAT_GROUPNAME_NAME << groupName ) ;
+      BSONObjBuilder sub2( sub.subarrayStart( CAT_GROUPS_NAME ) ) ;
+      sub2.append( "0", newGroupObj ) ;
+      sub2.done() ;
+
+      sub.done() ;
+      BSONObj updator = updateBuild.obj() ;
+      BSONObj hint ;
+
+      rc = rtnUpdate( CAT_DOMAIN_COLLECTION, boMatcher, updator,
+                      hint, 0, cb, dmsCB, dpsCB, w ) ;
+
+      PD_RC_CHECK( rc, PDERROR, "Failed to update collection: %s, match: %s, "
+                   "updator: %s, rc: %d", CAT_DOMAIN_COLLECTION,
+                   boMatcher.toString().c_str(),
+                   updator.toString().c_str(), rc ) ;
+
+   done:
+      PD_TRACE_EXITRC ( SDB_CATADDGRP2DOMAIN, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATDELGRPFROMDOMAIN, "catDelGroupFromDomain" )
+   INT32 catDelGroupFromDomain( const CHAR *domainName, const CHAR *groupName,
+                                INT32 groupID, pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
+                                _dpsLogWrapper *dpsCB, INT16 w )
+   {
+      INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY ( SDB_CATDELGRPFROMDOMAIN ) ;
+      BSONObj modifier = BSON( "$pull" << BSON( CAT_GROUPS_NAME <<
+                               BSON( CAT_GROUPID_NAME << groupID <<
+                                     CAT_GROUPNAME_NAME << groupName ) ) ) ;
+      BSONObj matcher ;
+      BSONObj dummy ;
+
+      if ( domainName )
+      {
+         matcher = BSON( CAT_DOMAINNAME_NAME << domainName ) ;
+      }
+      // remove from all domain
+      else
+      {
+         matcher = BSON( CAT_GROUPS_NAME"."CAT_GROUPID_NAME << groupID ) ;
+      }
+
+      rc = rtnUpdate( CAT_DOMAIN_COLLECTION, matcher, modifier,
+                      dummy, 0, cb, dmsCB, dpsCB, w ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to update collection: %s, match: %s, "
+                   "updator: %s, rc: %d", CAT_COLLECTION_SPACE_COLLECTION,
+                   matcher.toString().c_str(), modifier.toString().c_str(),
+                   rc ) ;
+
+   done:
+      PD_TRACE_EXITRC ( SDB_CATDELGRPFROMDOMAIN, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CAATADDCL2CS, "catAddCL2CS" )
    INT32 catAddCL2CS( const CHAR * csName, const CHAR * clName,
                       INT32 *pGroupID, const CHAR *groupName,

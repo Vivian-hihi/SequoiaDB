@@ -1867,6 +1867,16 @@ namespace engine
          pmdGetKRCB()->getCATLOGUECB()->removeGroupID( groupID ) ;
          isDeleted = TRUE ;
 
+         // remove from all domain
+         rc = catDelGroupFromDomain( NULL, groupName, groupID, _pEduCB,
+                                     _pDmsCB, _pDpsCB, 1 ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Remove group[%s] from domain failed, rc: %d",
+                    groupName, rc ) ;
+            goto error ;
+         }
+
          matcher = BSON( FIELD_NAME_GROUPNAME << groupName ) ;
          rc = rtnDelete( CAT_NODE_INFO_COLLECTION, matcher,
                          BSONObj(), 0, _pEduCB, _pDmsCB, _pDpsCB,
