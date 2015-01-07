@@ -68,13 +68,13 @@
 <tr class="strow">
           <td valign="top" headers="d20535e36" class="stentry">--hostname arg</td>
 
-          <td valign="top" headers="d20535e39" class="stentry">-N arg</td>
+          <td valign="top" headers="d20535e39" class="stentry">-s arg</td>
 
           <td valign="top" headers="d20535e42" class="stentry">所需要收集的信息的主机名字 </td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d20535e36" class="stentry">--svcport arg</td>
+          <td valign="top" headers="d20535e36" class="stentry">--svcname arg</td>
 
           <td valign="top" headers="d20535e39" class="stentry">-p arg</td>
 
@@ -82,9 +82,25 @@
 
         </tr>
 <tr class="strow">
+          <td valign="top" headers="d20535e36" class="stentry">--user arg</td>
+
+          <td valign="top" headers="d20535e39" class="stentry">-u arg</td>
+
+          <td valign="top" headers="d20535e42" class="stentry">数据库用户名</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d20535e36" class="stentry">--password arg</td>
+
+          <td valign="top" headers="d20535e39" class="stentry">-w arg</td>
+
+          <td valign="top" headers="d20535e42" class="stentry">数据库用户密码</td>
+
+        </tr>
+<tr class="strow">
           <td valign="top" headers="d20535e36" class="stentry">--snapshot</td>
 
-          <td valign="top" headers="d20535e39" class="stentry">-s</td>
+          <td valign="top" headers="d20535e39" class="stentry">-n</td>
 
           <td valign="top" headers="d20535e42" class="stentry">收集快照信息</td>
 
@@ -333,19 +349,19 @@
 
       <p class="p">4.	收集指定主机信息。</p>
 
-      <pre class="pre codeblock">./sdbsuport.sh -N htest2</pre>
+      <pre class="pre codeblock">./sdbsuport.sh -s htest2</pre>
 
       <p class="p">5.	收集指定主机指定端口信息。</p>
 
-      <pre class="pre codeblock">./sdbsuppor.sh -N htest3 -p 50000</pre>
+      <pre class="pre codeblock">./sdbsuppor.sh -s htest3 -p 50000</pre>
 
       <p class="p">6.	收集操作系统信息。</p>
 
-      <pre class="pre codeblock">./sdbsupport.h --sinfo</pre>
+      <pre class="pre codeblock">./sdbsupport.h --osinfo</pre>
 
       <p class="p">7.	收集特定主机特定端口的日志信息及快照信息。</p>
 
-      <pre class="pre codeblock">./sdbsupport.sh -N htest2 -p 11810 --snapshot --log</pre>
+      <pre class="pre codeblock">./sdbsupport.sh -s htest2 -p 11810 --snapshot --log</pre>
 
     </div>
 
