@@ -1496,18 +1496,18 @@ namespace engine
             BSONObj mainCLObj;
             clsCatalogSet mainCataInfo( cataInfo.getMainCLName().c_str() );
             rc = catCheckCollectionExist( cataInfo.getMainCLName().c_str(),
-                                       isMainExist, mainCLObj, cb );
+                                          isMainExist, mainCLObj, cb );
             PD_RC_CHECK( rc, PDERROR,
-                        "failed to get main-collection info(rc=%d)",
-                        rc );
+                         "Failed to get main-collection info(rc=%d)",
+                         rc );
             if (!isMainExist )
             {
                goto done;
             }
             rc = mainCataInfo.updateCatSet( mainCLObj );
             PD_RC_CHECK( rc, PDERROR,
-                        "failed to parse catalog-info of main-collection(%s)",
-                        cataInfo.getMainCLName().c_str() );
+                         "Failed to parse catalog-info of main-collection(%s)",
+                         cataInfo.getMainCLName().c_str() );
             if ( !mainCataInfo.isMainCL() )
             {
                PD_LOG( PDWARNING, "main-collection have been changed" );
@@ -1516,15 +1516,15 @@ namespace engine
 
             rc = mainCataInfo.delSubCL( clFullName );
             PD_RC_CHECK( rc, PDERROR,
-                        "failed to delete the sub-collection(rc=%d)",
-                        rc );
+                         "Failed to delete the sub-collection(rc=%d)",
+                         rc );
             {
             BSONObj newMainCLObj = mainCataInfo.toCataInfoBson();
             rc = catUpdateCatalog( cataInfo.getMainCLName().c_str(),
-                                 newMainCLObj, cb, w );
+                                   newMainCLObj, cb, w );
             PD_RC_CHECK( rc, PDERROR,
-                        "failed to update the catalog of main-collection(%s)",
-                        cataInfo.getMainCLName().c_str() );
+                         "Failed to update the catalog of main-collection(%s)",
+                         cataInfo.getMainCLName().c_str() );
             }
          }
          // 5) delete sub-collection( if it is main-collection )
@@ -1534,13 +1534,13 @@ namespace engine
             std::vector< std::string >::iterator iterLst;
             rc = cataInfo.getSubCLList( subCLLst );
             PD_RC_CHECK( rc, PDERROR,
-                        "failed to get sub-collection list(rc=%d)" );
+                         "Failed to get sub-collection list(rc=%d)" );
             iterLst = subCLLst.begin();
             while( iterLst != subCLLst.end() )
             {
                std::vector<UINT32>  groupList;
                rc = catUnlinkCL( clFullName, iterLst->c_str(), cb,
-                                 dmsCB, dpsCB, w, groupList );
+                                 dmsCB, dpsCB, w, groupList ) ;
                if ( SDB_DMS_NOTEXIST == rc )
                {
                   rc = SDB_OK;
@@ -1548,19 +1548,19 @@ namespace engine
                   continue;
                }
                PD_RC_CHECK( rc, PDERROR,
-                           "failed to unlink the sub-collection(%s) "
-                           "from main-collection(%s)(rc=%d)",
-                           clFullName, iterLst->c_str(), rc );
+                            "Failed to unlink the sub-collection(%s) "
+                            "from main-collection(%s)(rc=%d)",
+                            clFullName, iterLst->c_str(), rc );
                if ( delSubCL )
                {
-                  rc = catRemoveCLEx( iterLst->c_str(), cb, dmsCB, dpsCB, w );
+                  rc = catRemoveCLEx( iterLst->c_str(), cb, dmsCB, dpsCB, w ) ;
                   PD_CHECK( SDB_OK == rc || SDB_DMS_NOTEXIST == rc, rc, error,
-                           PDERROR,
-                           "failed to remove the sub-collection(%s)(rc=%d)",
-                           iterLst->c_str(), rc );
-                  rc = SDB_OK;
+                            PDERROR,
+                            "Failed to remove the sub-collection(%s)(rc=%d)",
+                            iterLst->c_str(), rc ) ;
+                  rc = SDB_OK ;
                }
-               ++iterLst;
+               ++iterLst ;
             }
          }
       }
