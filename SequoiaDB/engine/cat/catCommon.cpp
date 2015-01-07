@@ -1881,21 +1881,21 @@ namespace engine
       {
          // check sub-collection
          rc = catCheckCollectionExist( subCLName, isSubExist, subCLObj, cb );
-         PD_RC_CHECK(rc, PDERROR,
-                     "failed to get sub-collection info(rc=%d)",
-                     rc );
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to get sub-collection info(rc=%d)",
+                      rc );
          PD_CHECK( isSubExist, SDB_DMS_NOTEXIST, error, PDERROR,
-                  "sub-collection is not exist!" );
+                   "Sub-collection is not exist!" );
          {
          BSONElement beMainCLName = subCLObj.getField( CAT_MAINCL_NAME );
          if ( beMainCLName.type() == String )
          {
             std::string strMainCLName = beMainCLName.str();
             PD_CHECK( 0 == ossStrcmp( strMainCLName.c_str(), mainCLName ),
-                     SDB_INVALIDARG, error, PDERROR,
-                     "failed to unlink sub-collection(%s), "
-                     "the original main-collection is %s not %s",
-                     subCLName, strMainCLName.c_str(), mainCLName );
+                      SDB_INVALIDARG, error, PDERROR,
+                      "Failed to unlink sub-collection(%s), "
+                      "the original main-collection is %s not %s",
+                      subCLName, strMainCLName.c_str(), mainCLName );
             needUpdateSubCL = TRUE;
          }
          }
@@ -1905,23 +1905,23 @@ namespace engine
          BSONElement beCataInfo = subCLObj.getField( CAT_CATALOGINFO_NAME );
          BSONObj boCataInfo;
          PD_CHECK( beCataInfo.type() == Array, SDB_INVALIDARG, error, PDERROR,
-                  "invalid sub-collecton, failed to get the field(%s)",
-                  CAT_CATALOGINFO_NAME );
+                   "Invalid sub-collecton, failed to get the field(%s)",
+                   CAT_CATALOGINFO_NAME );
          boCataInfo = beCataInfo.embeddedObject();
          BSONObjIterator iterArr( boCataInfo );
          while ( iterArr.more() )
          {
             BSONElement beTmp = iterArr.next();
             PD_CHECK( beTmp.type() == Object, SDB_INVALIDARG, error, PDERROR,
-                     "invalid catalog info(%s)", subCLName );
+                      "Invalid catalog info(%s)", subCLName );
             BSONObj boTmp = beTmp.embeddedObject();
             BSONElement beGroupId = boTmp.getField( CAT_GROUPID_NAME );
             PD_CHECK( beGroupId.isNumber(), SDB_INVALIDARG, error, PDERROR,
-                     "failed to get the field(%s)", CAT_GROUPID_NAME );
+                      "Failed to get the field(%s)", CAT_GROUPID_NAME );
             groupList.push_back( beGroupId.numberInt() );
          }
          PD_CHECK( groupList.size() != 0, SDB_SYS, error, PDERROR,
-                  "the collection(%s) has no group-info!", subCLName );
+                   "The collection(%s) has no group-info!", subCLName );
          }
 
          // check main-collection
@@ -1933,36 +1933,30 @@ namespace engine
          {
             rc = cataInfo.updateCatSet( mainCLObj );
             PD_RC_CHECK( rc, PDERROR,
-                        "failed to parse catalog-info of main-collection(%s)",
-                        mainCLName );
+                         "Failed to parse catalog-info of main-collection(%s)",
+                         mainCLName );
             PD_CHECK( cataInfo.isMainCL(), SDB_INVALID_MAIN_CL, error, PDERROR,
-                     "source collection must be main-collection!" );
+                      "Source collection must be main-collection!" );
 
             rc = cataInfo.delSubCL( subCLName );
             PD_RC_CHECK( rc, PDERROR,
-                        "failed to delete the sub-collection(rc=%d)",
-                        rc );
+                         "Failed to delete the sub-collection(rc=%d)",
+                         rc );
          }
 
          // update sub-collection catalog info
          if ( needUpdateSubCL )
          {
-            BSONObjBuilder subClBuilder;
-            subClBuilder.appendElements( subCLObj );
-            subClBuilder.append( CAT_MAINCL_NAME, mainCLName );
-            BSONObj newSubCLObj = subClBuilder.done();
-            rc = catUpdateCatalog( subCLName, newSubCLObj, cb, w );
-
-            BSONObj emptyObj;
+            BSONObj emptyObj ;
             BSONObj match = BSON( CAT_CATALOGNAME_NAME << subCLName );
             BSONObj updator = BSON( "$inc" << BSON( CAT_VERSION_NAME << 1 ) <<
                                     "$unset" << BSON( CAT_MAINCL_NAME << "" ) );
             rc = rtnUpdate( CAT_COLLECTION_INFO_COLLECTION, match, updator,
-                           emptyObj, 0, cb, dmsCB, dpsCB, w );
+                            emptyObj, 0, cb, dmsCB, dpsCB, w );
             PD_RC_CHECK( rc, PDERROR,
-                        "failed to update the catalog of sub-collection(%s)",
-                        subCLName );
-            needUpdateSubCL = FALSE;
+                         "Failed to update the catalog of sub-collection(%s)",
+                         subCLName ) ;
+            needUpdateSubCL = FALSE ;
          }
 
          // update main-collection catalog info
