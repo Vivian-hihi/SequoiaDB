@@ -229,6 +229,12 @@ namespace engine
    // *********************om rest login_req***************************
    #define  OM_LOGIN_REQ                     "login"
 
+   #define  OM_REST_HEAD_SESSIONID           "SdbSessionID"
+   #define  OM_REST_HEAD_LANGUAGE            "SdbLanguage"
+
+   #define  OM_REST_LANGUAGE_EN              "en"
+   #define  OM_REST_LANGUAGE_ZH_CN           "zh-CN"
+
    #define  OM_REST_FIELD_LOGIN_NAME         "User"
    #define  OM_REST_FIELD_LOGIN_PASSWD       "Passwd"
    #define  OM_REST_FIELD_TIMESTAMP          "Timestamp"
@@ -367,10 +373,11 @@ namespace engine
    // *****************************************************************
 
    // om rest query_business_type_req
-   #define  OM_QUERY_BUSINESS_TYPE_REQ       "query business type"
+   #define  OM_QUERY_BUSINESS_TYPE_REQ       "list business type"
 
    #define  OM_BUSINESS_CONFIG_SUBDIR        "config"
-   #define  OM_BUSINESS_FILE_NAME            "business.xml"
+   #define  OM_BUSINESS_FILE_NAME            "business"
+   #define  OM_BUSINESS_FILE_TYPE            ".xml"
 
    #define  OM_XMLATTR_KEY                   "<xmlattr>"
    #define  OM_XMLATTR_TYPE                  "<xmlattr>.type"
@@ -379,13 +386,12 @@ namespace engine
    #define  OM_BSON_BUSINESS_LIST            "BusinessList"
    #define  OM_BSON_BUSINESS_TYPE            OM_BUSINESS_FIELD_TYPE
    #define  OM_BSON_BUSINESS_NAME            OM_BUSINESS_FIELD_NAME
-   #define  OM_BSON_BUSINESS_DESC            "BusinessDesc"
    // *****************************************************************
 
    // om rest query_business_template_req
    #define  OM_QUERY_BUSINESS_TEMPLATE_REQ   "query business template"
 
-   #define  OM_TEMPLATE_FILE_NAME            "_template.xml"
+   #define  OM_TEMPLATE_FILE_NAME            "_template"
 
    #define  OM_REST_BUSINESS_TYPE            OM_BSON_BUSINESS_TYPE
 

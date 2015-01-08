@@ -97,6 +97,8 @@ namespace engine
                                          string &sdbPasswd, 
                                          string &sdbUserGroup ) ;
 
+         INT32           _getQueryPara( BSONObj &selector, BSONObj &matcher,
+                                        BSONObj order, BSONObj hint) ;
          INT32           _queryTable( const string &tableName, 
                                       const BSONObj &selector, 
                                       const BSONObj &matcher,
@@ -104,10 +106,13 @@ namespace engine
                                       const BSONObj &hint, SINT32 flag,
                                       SINT64 numSkip, SINT64 numReturn, 
                                       list<BSONObj> &records ) ;
+         string          _getLanguage() ;
+         void            _setFileLanguageSep() ;
 
       protected:
          restAdaptor*    _restAdaptor ;
          pmdRestSession* _restSession ;
+         string          _languageFileSep ;
    };
 
    class omLogoutCommand : public omAuthCommand
@@ -180,10 +185,6 @@ namespace engine
 
       public:
          virtual INT32   doCommand() ;
-
-      protected:
-         INT32           _getQueryPara( BSONObj &selector, BSONObj &matcher,
-                                        BSONObj order, BSONObj hint ) ;
    };
 
    struct omScanHostInfo
@@ -426,6 +427,8 @@ namespace engine
                                      BSONArrayBuilder &arrayBuilder ) ;
          BOOLEAN        _isStringValue( ptree &pt ) ;
          BOOLEAN        _isArray( ptree &pt ) ;
+
+         INT32          _getBusinessList( list<BSONObj> &businessList ) ;
 
       protected:
          string          _rootPath ;

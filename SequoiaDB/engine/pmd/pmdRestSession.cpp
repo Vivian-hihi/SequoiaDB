@@ -225,7 +225,8 @@ namespace engine
          if ( !_pSessionInfo )
          {
             // find session id
-            pAdptor->getHttpHeader( this, FIELD_NAME_SESSIONID, &pSessionID ) ;
+            pAdptor->getHttpHeader( this, OM_REST_HEAD_SESSIONID, 
+                                    &pSessionID ) ;
             // if 'SessionID' exist, attach the sessionInfo
             if ( pSessionID )
             {

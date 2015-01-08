@@ -68,6 +68,90 @@ namespace engine
       _restAdaptor->setOPResult( _restSession, rc, res ) ;
    }
 
+   string omAuthCommand::_getLanguage()
+   {
+      const CHAR *pLanguage = NULL ;
+      _restAdaptor->getHttpHeader( _restSession, OM_REST_HEAD_LANGUAGE, 
+                                   &pLanguage ) ;
+      if ( NULL != pLanguage 
+           && ossStrcasecmp( pLanguage, OM_REST_LANGUAGE_EN ) == 0 )
+      {
+         return OM_REST_LANGUAGE_EN ;
+      }
+      else
+      {
+         return OM_REST_LANGUAGE_ZH_CN ;
+      }
+   }
+
+   void omAuthCommand::_setFileLanguageSep()
+   {
+      string language = _getLanguage() ;
+      _languageFileSep = "_" + language ;
+   }
+
+   INT32 omAuthCommand::_getQueryPara( BSONObj &selector,  BSONObj &matcher,
+                                       BSONObj order, BSONObj hint )
+   {
+      const CHAR *pSelector = NULL ;
+      const CHAR *pMatcher  = NULL ;
+      const CHAR *pOrder    = NULL ;
+      const CHAR *pHint     = NULL ;
+      INT32 rc = SDB_OK ;
+      _restAdaptor->getQuery(_restSession, FIELD_NAME_SELECTOR, &pSelector ) ;
+      if ( NULL != pSelector )
+      {
+         rc = fromjson( pSelector, selector ) ;
+         if ( rc )
+         {
+            PD_LOG_MSG( PDERROR, "change rest field to BSONObj failed:src=%s,"
+                        "rc=%d", pSelector, rc ) ;
+            goto error ;
+         }
+      }
+
+      _restAdaptor->getQuery(_restSession, FIELD_NAME_FILTER, &pMatcher ) ;
+      if ( NULL != pMatcher )
+      {
+         rc = fromjson( pMatcher, matcher ) ;
+         if ( rc )
+         {
+            PD_LOG_MSG( PDERROR, "change rest field to BSONObj failed:src=%s,"
+                        "rc=%d", pMatcher, rc ) ;
+            goto error ;
+         }
+      }
+
+      _restAdaptor->getQuery(_restSession, FIELD_NAME_SORT, &pOrder ) ;
+      if ( NULL != pOrder )
+      {
+         rc = fromjson( pOrder, order ) ;
+         if ( rc )
+         {
+            PD_LOG_MSG( PDERROR, "change rest field to BSONObj failed:src=%s,"
+                        "rc=%d", pOrder, rc ) ;
+            goto error ;
+         }
+      }
+
+      _restAdaptor->getQuery(_restSession, FIELD_NAME_HINT, &pHint ) ;
+      if ( NULL != pHint )
+      {
+         rc = fromjson( pHint, hint ) ;
+         if ( rc )
+         {
+            PD_LOG_MSG( PDERROR, "change rest field to BSONObj failed:src=%s,"
+                        "rc=%d", pHint, rc ) ;
+            goto error ;
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 omAuthCommand::_queryTable( const string &tableName, 
                                     const BSONObj &selector, 
                                     const BSONObj &matcher,
@@ -107,8 +191,7 @@ namespace engine
          }
 
          BSONObj result( buffObj.data() ) ;
-         result.getOwned() ;
-         records.push_back( result );
+         records.push_back( result.copy() );
       }
 
    done:
@@ -235,13 +318,8 @@ namespace engine
          goto error ;
       }
 
-//      _decryptPasswd( pPasswd, pTime, realPasswd ) ;
-//      md5::md5( ( const void * )realPasswd.c_str(), realPasswd.length(), 
-//                digest) ;
       authBuilder.append( SDB_AUTH_USER, pUserName ) ;
       authBuilder.append( SDB_AUTH_PASSWD, pPasswd ) ;
-      //21232f297a57a5a743894a0e4a801fc3
-//      authBuilder.append( SDB_AUTH_PASSWD, md5::digestToString( digest ) ) ;
       bsonAuth = authBuilder.obj() ;
       rc = sdbGetOMManager()->authenticate( bsonAuth, _cb ) ;
       if ( SDB_OK != rc )
@@ -275,7 +353,7 @@ namespace engine
          goto error ;
       }
 
-      _restAdaptor->appendHttpHeader( _restSession, FIELD_NAME_SESSIONID, 
+      _restAdaptor->appendHttpHeader( _restSession, OM_REST_HEAD_SESSIONID, 
                                       _restSession->getSessionID() ) ;
       _sendOKRes2Web() ;
    done:
@@ -452,7 +530,7 @@ namespace engine
    {
       BSONObjBuilder bsonBuilder ;
       const CHAR* sessionID = NULL ;
-      _restAdaptor->getHttpHeader( _restSession, FIELD_NAME_SESSIONID, 
+      _restAdaptor->getHttpHeader( _restSession, OM_REST_HEAD_SESSIONID, 
                                    &sessionID ) ;
       if ( NULL != sessionID && _restSession->isAuthOK() )
       {
@@ -600,69 +678,6 @@ namespace engine
 
    omQueryClusterCommand::~omQueryClusterCommand()
    {
-   }
-
-   INT32 omQueryClusterCommand::_getQueryPara( BSONObj &selector, 
-                                               BSONObj &matcher,
-                                               BSONObj order, BSONObj hint )
-   {
-      const CHAR *pSelector = NULL ;
-      const CHAR *pMatcher  = NULL ;
-      const CHAR *pOrder    = NULL ;
-      const CHAR *pHint     = NULL ;
-      INT32 rc = SDB_OK ;
-      _restAdaptor->getQuery(_restSession, FIELD_NAME_SELECTOR, &pSelector ) ;
-      if ( NULL != pSelector )
-      {
-         rc = fromjson( pSelector, selector ) ;
-         if ( rc )
-         {
-            PD_LOG_MSG( PDERROR, "change rest field to BSONObj failed:src=%s,"
-                        "rc=%d", pSelector, rc ) ;
-            goto error ;
-         }
-      }
-
-      _restAdaptor->getQuery(_restSession, FIELD_NAME_FILTER, &pMatcher ) ;
-      if ( NULL != pMatcher )
-      {
-         rc = fromjson( pMatcher, matcher ) ;
-         if ( rc )
-         {
-            PD_LOG_MSG( PDERROR, "change rest field to BSONObj failed:src=%s,"
-                        "rc=%d", pMatcher, rc ) ;
-            goto error ;
-         }
-      }
-
-      _restAdaptor->getQuery(_restSession, FIELD_NAME_SORT, &pOrder ) ;
-      if ( NULL != pOrder )
-      {
-         rc = fromjson( pOrder, order ) ;
-         if ( rc )
-         {
-            PD_LOG_MSG( PDERROR, "change rest field to BSONObj failed:src=%s,"
-                        "rc=%d", pOrder, rc ) ;
-            goto error ;
-         }
-      }
-
-      _restAdaptor->getQuery(_restSession, FIELD_NAME_HINT, &pHint ) ;
-      if ( NULL != pHint )
-      {
-         rc = fromjson( pHint, hint ) ;
-         if ( rc )
-         {
-            PD_LOG_MSG( PDERROR, "change rest field to BSONObj failed:src=%s,"
-                        "rc=%d", pHint, rc ) ;
-            goto error ;
-         }
-      }
-
-   done:
-      return rc ;
-   error:
-      goto done ;
    }
 
    INT32 omQueryClusterCommand::doCommand()
@@ -3122,34 +3137,39 @@ namespace engine
    {
       INT32 rc                  = SDB_OK ;
       const CHAR *pHostName     = NULL ;
-      BSONObj hostInfo ;
+      BSONObj selector ;
+      BSONObj matcher ;
+      BSONObj order ;
+      BSONObj hint ;
       list<BSONObj> hosts ;
 
       _restAdaptor->getQuery( _restSession, OM_REST_HOST_NAME, &pHostName ) ;
       if( NULL == pHostName )
       {
-         _errorDetail = "rest field miss:" + string( OM_REST_HOST_NAME ) ;
          rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
+         PD_LOG( PDERROR, "rest field miss:%s", OM_REST_HOST_NAME ) ;
+         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
       }
 
-      rc = _getHostInfo( pHostName, hostInfo ) ;
+      rc = _getQueryPara( selector, matcher, order, hint ) ;
       if ( SDB_OK != rc )
       {
-         if ( SDB_DMS_EOC != rc )
-         {
-            PD_LOG( PDERROR, "_getHostInfo failed:rc=%d", rc ) ;
-            _sendErrorRes2Web( rc, _errorDetail ) ;
-            goto error ;
-         }
-         rc = SDB_OK ;
+         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         PD_LOG( PDERROR, "%s,rc=%d", _errorDetail.c_str(), rc ) ;
+         _sendErrorRes2Web( rc, _errorDetail ) ;
+         goto error ;
       }
 
-      if ( !hostInfo.isEmpty() )
+      rc = _queryTable( OM_CS_DEPLOY_CL_HOST, selector, matcher, order, hint, 
+                        0, 0, -1, hosts ) ;
+      if ( SDB_OK != rc )
       {
-         hosts.push_back( hostInfo ) ;
+         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         PD_LOG( PDERROR, "%s,rc=%d", _errorDetail.c_str(), rc ) ;
+         _sendErrorRes2Web( rc, _errorDetail ) ;
+         goto error ;
       }
 
       _sendHostInfo2Web( hosts ) ;
@@ -3304,9 +3324,7 @@ namespace engine
       catch( std::exception &e )
       {
          rc = SDB_INVALIDPATH ;
-         _errorDetail = string( "parse file failed:file=" ) + file + ",err=" 
-                        + e.what() ;
-         PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
+         PD_LOG_MSG( PDERROR, "%s", e.what() ) ;
          goto error ;
       }
    done:
@@ -3315,25 +3333,77 @@ namespace engine
       goto done ;
    }
 
-   INT32 omQueryBusinessTypeCommand::doCommand()
+   INT32 omQueryBusinessTypeCommand::_getBusinessList( 
+                                               list<BSONObj> &businessList )
    {
-      INT32 rc             = SDB_OK ;
-      string businessFile  = _rootPath + OSS_FILE_SEP 
-                             + OM_BUSINESS_CONFIG_SUBDIR
-                             + OSS_FILE_SEP + OM_BUSINESS_FILE_NAME ;
-      BSONObjBuilder opBuilder ;
-      BSONObj bsonBusiness ;
-      rc = _readConfigFile( businessFile, bsonBusiness ) ;
+      INT32 rc = SDB_OK ;
+      string businessFile ;
+      BSONObj fileContent ;
+
+      businessFile = _rootPath + OSS_FILE_SEP + OM_BUSINESS_CONFIG_SUBDIR
+                     + OSS_FILE_SEP + OM_BUSINESS_FILE_NAME
+                     + _languageFileSep + OM_BUSINESS_FILE_TYPE ;
+
+      rc = _readConfigFile( businessFile, fileContent ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "read business file failed:file=%s", 
                  businessFile.c_str() ) ;
+         goto error ;
+      }
+
+      {
+         BSONObj businessArray = fileContent.getObjectField(
+                                                       OM_BSON_BUSINESS_LIST ) ;
+         BSONObjIterator iter( businessArray ) ;
+         while( iter.more() )
+         {
+            BSONElement ele      = iter.next() ;
+            if ( Object != ele.type() )
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG_MSG( PDERROR, "field is not Object:field=%s,type=%d",
+                           OM_BSON_BUSINESS_LIST, ele.type() ) ;
+               goto error ;
+            }
+
+            BSONObj oneBusiness = ele.embeddedObject() ;
+            businessList.push_back( oneBusiness.copy() ) ;
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omQueryBusinessTypeCommand::doCommand()
+   {
+      INT32 rc = SDB_OK ;
+      list<BSONObj> businessList ;
+
+      _setFileLanguageSep() ;
+
+      rc = _getBusinessList( businessList ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "_getBusinessList failed:rc=%d", rc ) ;
+         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
       }
 
-      _restAdaptor->appendHttpBody( _restSession, bsonBusiness.objdata(), 
-                                    bsonBusiness.objsize(), 1 ) ;
+      {
+         list<BSONObj>::iterator iter = businessList.begin() ;
+         while ( iter != businessList.end() )
+         {
+            
+            _restAdaptor->appendHttpBody( _restSession, iter->objdata(), 
+                                          iter->objsize(), 1 ) ;
+            iter++ ;
+         }
+      }
       _sendOKRes2Web() ;
    done:
       return rc ;
@@ -3428,8 +3498,10 @@ namespace engine
          goto error ;
       }
 
+      _setFileLanguageSep() ;
       templateFile = _rootPath + OSS_FILE_SEP + OM_BUSINESS_CONFIG_SUBDIR 
-                     + OSS_FILE_SEP + pBusinessType + OM_TEMPLATE_FILE_NAME ;
+                     + OSS_FILE_SEP + pBusinessType + OM_TEMPLATE_FILE_NAME
+                     + _languageFileSep + OM_BUSINESS_FILE_TYPE ;
       rc = _readConfTemplate( pBusinessType, templateFile, deployModList ) ;
       if ( SDB_OK != rc )
       {
@@ -3544,7 +3616,8 @@ namespace engine
       businessName = bsonTemplate.getStringField( OM_BSON_BUSINESS_NAME ) ;
 
       file = _rootPath + OSS_FILE_SEP + OM_BUSINESS_CONFIG_SUBDIR 
-             + OSS_FILE_SEP + businessType + OM_TEMPLATE_FILE_NAME ;
+             + OSS_FILE_SEP + businessType + OM_TEMPLATE_FILE_NAME
+             + _languageFileSep + OM_BUSINESS_FILE_TYPE ;
       rc = _readConfTemplate( businessType, file, deployModList ) ;
       if ( SDB_OK != rc )
       {
@@ -4230,6 +4303,9 @@ namespace engine
       BSONObj bsonConfigDetail ;
       BSONObj bsonConfig ;
       BSONObjBuilder opBuilder ;
+
+      _setFileLanguageSep() ;
+
       rc = _getTemplateInfo( bsonTemplate, bsonHostInfo ) ;
       if ( SDB_OK != rc )
       {
@@ -4382,7 +4458,8 @@ namespace engine
       string confDetailFile ;
 
       templateFile   = _rootPath + OSS_FILE_SEP + OM_BUSINESS_CONFIG_SUBDIR 
-                       + OSS_FILE_SEP + businessType + OM_TEMPLATE_FILE_NAME ;
+                       + OSS_FILE_SEP + businessType + OM_TEMPLATE_FILE_NAME
+                       + _languageFileSep + OM_BUSINESS_FILE_TYPE ;
       rc = _readConfTemplate( businessType, templateFile, deployModList ) ;
       if ( SDB_OK != rc )
       {
@@ -4786,6 +4863,8 @@ namespace engine
       BSONObj bsonAllConf ;
       UINT64 taskID ;
       omTaskManager *taskManager = sdbGetOMManager()->getTaskManager() ;
+
+      _setFileLanguageSep() ;
 
       rc = _getRestInfo( bsonConfValue ) ;
       if ( SDB_OK != rc )
