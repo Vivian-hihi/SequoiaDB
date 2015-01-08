@@ -153,6 +153,7 @@ namespace engine
 
    INT32 rtnSort ( rtnContext **ppContext,
                    const BSONObj &orderBy,
+                   const BSONObj &selector,
                    _pmdEDUCB *cb,
                    SINT64 numToSkip,
                    SINT64 numToReturn,
