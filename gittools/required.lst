@@ -36,11 +36,5 @@ tools/sdbsupport/readme.txt
 tools/sdbsupport/sdbsupportfunc1.sh
 tools/sdbsupport/sdbsupportfunc2.sh
 tools/sdbsupport/sdbsupport.sh
-tools/sdbsupport/expect/expect
-tools/sdbsupport/expect/install.sh
-tools/sdbsupport/expect/libtcl8.4.so
-tools/sdbsupport/expect/readme.txt
-tools/sdbsupport/expect/tcl
-tools/sdbsupport/lib/tcl8.4
 tools/server/php_linux
 package/conf/rpm/sequoiadb.spec

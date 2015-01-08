@@ -12,5 +12,6 @@ else
    echo "Usage: $0 [destinationPath]" >&2
    exit 1
 fi
-find ${DESTPATH} -name ".svn" -exec rm -rf {} \; 2>/dev/null
+sleep 5
+find ${DESTPATH} -name ".svn" -exec rm -rf {} \;
 exit 0
