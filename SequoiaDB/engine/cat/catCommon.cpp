@@ -826,8 +826,8 @@ namespace engine
       BSONObjBuilder updateBuild ;
       BSONObjBuilder sub( updateBuild.subobjStart("$addtoset") ) ;
 
-      BSONObj newGroupObj = BSON( CAT_GROUPID_NAME << groupID <<
-                                  CAT_GROUPNAME_NAME << groupName ) ;
+      BSONObj newGroupObj = BSON( CAT_GROUPNAME_NAME << groupName <<
+                                  CAT_GROUPID_NAME << groupID ) ;
       BSONObjBuilder sub2( sub.subarrayStart( CAT_GROUPS_NAME ) ) ;
       sub2.append( "0", newGroupObj ) ;
       sub2.done() ;
@@ -860,12 +860,12 @@ namespace engine
 
       PD_TRACE_ENTRY ( SDB_CATDELGRPFROMDOMAIN ) ;
       BSONObj modifier = BSON( "$pull" << BSON( CAT_GROUPS_NAME <<
-                               BSON( CAT_GROUPID_NAME << groupID <<
-                                     CAT_GROUPNAME_NAME << groupName ) ) ) ;
+                               BSON( CAT_GROUPNAME_NAME << groupName <<
+                                     CAT_GROUPID_NAME << groupID ) ) ) ;
       BSONObj matcher ;
       BSONObj dummy ;
 
-      if ( domainName )
+      if ( domainName && domainName[0] != 0 )
       {
          matcher = BSON( CAT_DOMAINNAME_NAME << domainName ) ;
       }
