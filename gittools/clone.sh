@@ -59,6 +59,13 @@ if [ $? -ne 0 ]; then
    exit 1
 fi
 
+# make sure there's no svn directory exist
+output=`find $1 -name ".svn" -print`
+if [ x"$output" != x ]; then
+   echo "SVN subdirectory exist"
+   exit 1
+fi
+
 # remove comments
 echo "Remove all comments from $1"
 $SCRIPTPATH/removeCommentForSource.sh $1
