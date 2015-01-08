@@ -1653,8 +1653,8 @@ namespace engine
       {
          _lock.release() ;
          rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR, "task is not exist:taskID="OSS_LL_PRINT_FORMAT, 
-                 taskID ) ;
+         PD_LOG_MSG( PDERROR, "task is not exist:taskID="OSS_LL_PRINT_FORMAT, 
+                     taskID ) ;
          goto error ;
       }
       shareTask = iter->second ;
@@ -1664,8 +1664,8 @@ namespace engine
       rc = shareTask->cancel() ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "cancel task failed:taskID="OSS_LL_PRINT_FORMAT
-                 ",rc=%d", taskID, rc ) ;
+         PD_LOG_MSG( PDERROR, "cancel task failed:taskID="OSS_LL_PRINT_FORMAT
+                     ",rc=%d", taskID, rc ) ;
          goto error ;
       }
 

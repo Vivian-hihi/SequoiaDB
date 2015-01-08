@@ -414,7 +414,7 @@ namespace engine
    // om rest config_business_req
    #define  OM_CONFIG_BUSINESS_REQ           "config business"
 
-   #define  OM_CONFIG_ITEM_FILE_NAME         "_config.xml"
+   #define  OM_CONFIG_ITEM_FILE_NAME         "_config"
    #define  OM_XML_CONFIG                    "config"
 
    #define  OM_REST_TEMPLATE_INFO            "TemplateInfo"

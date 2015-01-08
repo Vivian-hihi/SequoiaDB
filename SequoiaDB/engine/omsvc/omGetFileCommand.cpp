@@ -3448,7 +3448,14 @@ namespace engine
          BSONObjIterator iter( deployMods ) ;
          while ( iter.more() )
          {
-            BSONElement ele      = iter.next() ;
+            BSONElement ele = iter.next() ;
+            if ( ele.type() != Object )
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG_MSG( PDERROR, "field's element is not Object:field=%s"
+                           ",type=%d", OM_BSON_DEPLOY_MOD_LIST, ele.type() ) ;
+               goto error ;
+            }
             BSONObj oneDeployMod = ele.embeddedObject() ;
             deployModList.push_back( oneDeployMod.copy()) ;
          }
@@ -3507,6 +3514,7 @@ namespace engine
       {
          PD_LOG( PDERROR, "read template file failed:file=%s:rc=%d", 
                  templateFile.c_str(), rc ) ;
+         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
       }
@@ -3574,8 +3582,8 @@ namespace engine
                if ( !oneProperty.hasField( OM_BSON_PROPERTY_VALUE ) )
                {
                   rc = SDB_INVALIDARG ;
-                  PD_LOG( PDERROR, "propery have not value:name=%s", 
-                          name.c_str() ) ;
+                  PD_LOG_MSG( PDERROR, "propery have not value:name=%s", 
+                              name.c_str() ) ;
                   goto error ;
                }
 
@@ -3586,7 +3594,8 @@ namespace engine
       }
 
       rc = SDB_INVALIDARG ;
-      PD_LOG( PDERROR, "propery is not found:name=%s", propertyName.c_str() ) ;
+      PD_LOG_MSG( PDERROR, "propery is not found:name=%s", 
+                  propertyName.c_str() ) ;
       goto error ;
 
    done:
@@ -3642,9 +3651,8 @@ namespace engine
       if ( iterList == deployModList.end() )
       {
          rc = SDB_INVALIDARG ;
-         _errorDetail = string( OM_BSON_DEPLOY_MOD ) + " is not exist:mode=" 
-                        + deployMod ;
-         PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
+         PD_LOG_MSG( PDERROR, "%s is not existed:mode=%s", OM_BSON_DEPLOY_MOD, 
+                     deployMod.c_str() ) ;
          goto error ;
       }
 
@@ -3688,9 +3696,8 @@ namespace engine
             rc = _getPropertyNameValue( bsonTemplate, propertyName, value ) ;
             if ( SDB_OK != rc )
             {
-               _errorDetail = string( "template miss property:" ) 
-                              + propertyName ;
-               PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
+               PD_LOG( PDERROR, "template miss property:%s", 
+                       propertyName.c_str() ) ;
                goto error ;
             }
             propertyBuilder.append( OM_BSON_PROPERTY_VALUE, value ) ;
@@ -3729,9 +3736,8 @@ namespace engine
                      hint, 0, _cb, 0, -1, _pDMSCB, _pRTNCB, contextID );
       if ( rc )
       {
-         _errorDetail = string( "fail to query table:" ) 
-                        + OM_CS_DEPLOY_CL_CONFIGURE ;
-         PD_LOG( PDERROR, "%s,rc=%d", _errorDetail.c_str(), rc ) ;
+         PD_LOG_MSG( PDERROR, "fail to query table:%s,rc=%d",
+                     OM_CS_DEPLOY_CL_CONFIGURE, rc ) ;
          goto error ;
       }
 
@@ -3749,9 +3755,8 @@ namespace engine
             }
 
             contextID = -1 ;
-            _errorDetail = string( "failed to get record from table:" )
-                           + OM_CS_DEPLOY_CL_CONFIGURE ;
-            PD_LOG( PDERROR, "%s,rc=%d", _errorDetail.c_str(), rc ) ;
+            PD_LOG_MSG( PDERROR, "failed to get record from table:%s,rc=%d", 
+                        OM_CS_DEPLOY_CL_CONFIGURE, rc ) ;
             goto error ;
          }
 
@@ -3820,12 +3825,12 @@ namespace engine
       if ( existType != "" )
       {
          rc = SDB_INVALIDARG ;
-         _errorDetail = string( "business conflict with same name:exist=[" ) 
-                        + businessName + "," + existType + "," 
-                        + existDeployMod + "," + existClusterName + "] new=["
-                        + businessName + "," + businessType + "," 
-                        + deployMod + "," + clusterName + "]" ;
-         PD_LOG( PDERROR, "%s:rc=%d", _errorDetail.c_str(), rc ) ;
+         PD_LOG_MSG( PDERROR, "business conflict with same name:"
+                     "exist=[%s,%s,%s,%s] new=[%s,%s,%s,%s]", 
+                     businessName.c_str(), existType.c_str(),
+                     existDeployMod.c_str(), existClusterName.c_str(), 
+                     businessName.c_str(), businessType.c_str(), 
+                     deployMod.c_str(), clusterName.c_str() ) ;
          goto error ;
       }
 
@@ -3855,9 +3860,8 @@ namespace engine
                      hint, 0, _cb, 0, -1, _pDMSCB, _pRTNCB, contextID );
       if ( rc )
       {
-         _errorDetail = string( "fail to query table:" ) 
-                        + OM_CS_DEPLOY_CL_BUSINESS ;
-         PD_LOG( PDERROR, "%s,rc=%d", _errorDetail.c_str(), rc ) ;
+         PD_LOG_MSG( PDERROR, "fail to query table:%s,rc=%d", 
+                     OM_CS_DEPLOY_CL_BUSINESS, rc ) ;
          goto error ;
       }
 
@@ -3875,9 +3879,8 @@ namespace engine
             }
 
             contextID = -1 ;
-            _errorDetail = string( "failed to get record from table:" )
-                           + OM_CS_DEPLOY_CL_BUSINESS ;
-            PD_LOG( PDERROR, "%s,rc=%d", _errorDetail.c_str(), rc ) ;
+            PD_LOG_MSG( PDERROR, "failed to get record from table:%s,rc=%d", 
+                        OM_CS_DEPLOY_CL_BUSINESS, rc ) ;
             goto error ;
          }
 
@@ -3947,8 +3950,6 @@ namespace engine
                   PD_LOG_MSG( PDERROR, "element of %s should be Object type"
                               ":type=%d", OM_BSON_FIELD_HOST_INFO, 
                               ele.type() ) ;
-                  _errorDetail = pmdGetThreadEDUCB()->getInfo( 
-                                                             EDU_INFO_ERROR ) ;
                   goto error ;
                }
 
@@ -3970,9 +3971,8 @@ namespace engine
                      _cb, 0, -1, _pDMSCB, _pRTNCB, contextID );
       if ( rc )
       {
-         _errorDetail = string( "fail to query table:" ) 
-                        + OM_CS_DEPLOY_CL_HOST ;
-         PD_LOG( PDERROR, "%s,rc=%d", _errorDetail.c_str(), rc ) ;
+         PD_LOG_MSG( PDERROR, "fail to query table:%s,rc=%d", 
+                     OM_CS_DEPLOY_CL_HOST, rc ) ;
          goto error ;
       }
 
@@ -3992,9 +3992,8 @@ namespace engine
             }
 
             contextID = -1 ;
-            _errorDetail = string( "failed to get record from table:" )
-                           + OM_CS_DEPLOY_CL_HOST ;
-            PD_LOG( PDERROR, "%s,rc=%d", _errorDetail.c_str(), rc ) ;
+            PD_LOG_MSG( PDERROR, "failed to get record from table:%s,rc=%d", 
+                        OM_CS_DEPLOY_CL_HOST, rc ) ;
             goto error ;
          }
 
@@ -4030,9 +4029,8 @@ namespace engine
       if ( !isRecordFetched )
       {
          rc = SDB_DMS_RECORD_NOTEXIST ;
-         _errorDetail = string( "host is not exist:host=" ) 
-                        + condition.toString() ;
-         PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
+         PD_LOG_MSG( PDERROR, "host is not exist:host=%s", 
+                     condition.toString().c_str() ) ;
          goto error ;
       }
 
@@ -4080,13 +4078,12 @@ namespace engine
       BSONObj filter ;
       BSONObjBuilder hostInfoBuilder ;
       _restAdaptor->getQuery( _restSession, OM_REST_TEMPLATE_INFO, 
-                             &pInfo ) ;
+                              &pInfo ) ;
       if ( NULL == pInfo )
       {
-         _errorDetail = "rest field:" + string( OM_REST_TEMPLATE_INFO ) 
-                        + " is null" ;
          rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
+         PD_LOG_MSG( PDERROR, "rest field is null:field=%s", 
+                     OM_REST_TEMPLATE_INFO ) ;
          goto error ;
       }
 
@@ -4095,11 +4092,10 @@ namespace engine
       {
          PD_LOG_MSG( PDERROR, "change rest field to BSONObj failed:src=%s,"
                      "rc=%d", pInfo, rc ) ;
-         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
          goto error ;
       }
 
-      filter       = BSON( OM_BSON_FIELD_HOST_INFO << "" ) ;
+      filter = BSON( OM_BSON_FIELD_HOST_INFO << "" ) ;
       /*{
            "ClusterName":"c1","BusinessType":"sequoiadb", "BusinessName":"b1",
            "ClusterType": "standalone", 
@@ -4111,8 +4107,8 @@ namespace engine
       if ( _clusterName == "" )
       {
          rc = SDB_INVALIDARG ;
-         _errorDetail = string( OM_BSON_FIELD_CLUSTER_NAME ) + " is empty" ;
-         PD_LOG( PDERROR, "%s:rc=%d", _errorDetail.c_str(), rc ) ;
+         PD_LOG_MSG( PDERROR, "%s is empty:rc=%d", OM_BSON_FIELD_CLUSTER_NAME, 
+                     rc ) ;
          goto error ;
       }
 
@@ -4120,8 +4116,8 @@ namespace engine
       if ( _businessType == "" )
       {
          rc = SDB_INVALIDARG ;
-         _errorDetail = string( OM_BSON_BUSINESS_TYPE ) + " is empty" ;
-         PD_LOG( PDERROR, "%s:rc=%d", _errorDetail.c_str(), rc ) ;
+         PD_LOG_MSG( PDERROR, "%s is empty:rc=%d", OM_BSON_BUSINESS_TYPE , 
+                     rc ) ;
          goto error ;
       }
 
@@ -4129,8 +4125,8 @@ namespace engine
       if ( _businessName == "" )
       {
          rc = SDB_INVALIDARG ;
-         _errorDetail = string( OM_BSON_BUSINESS_NAME ) + " is empty" ;
-         PD_LOG( PDERROR, "%s:rc=%d", _errorDetail.c_str(), rc ) ;
+         PD_LOG_MSG( PDERROR, "%s is empty:rc=%d", OM_BSON_BUSINESS_NAME, 
+                     rc ) ;
          goto error ;
       }
 
@@ -4138,8 +4134,7 @@ namespace engine
       if ( _deployMod == "" )
       {
          rc = SDB_INVALIDARG ;
-         _errorDetail = string( OM_BSON_DEPLOY_MOD ) + " is empty" ;
-         PD_LOG( PDERROR, "%s:rc=%d", _errorDetail.c_str(), rc ) ;
+         PD_LOG_MSG( PDERROR, "%s is empty:rc=%d", OM_BSON_DEPLOY_MOD, rc ) ;
          goto error ;
       }
 
@@ -4205,14 +4200,13 @@ namespace engine
       businessType = bsonTemplate.getStringField( OM_REST_BUSINESS_TYPE ) ;
       if ( businessType.length() == 0 )
       {
-         _errorDetail = string( OM_REST_BUSINESS_TYPE ) + " is null" ;
          rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
+         PD_LOG_MSG( PDERROR, "%s is null", OM_REST_BUSINESS_TYPE ) ;
          goto error ;
       }
       confDetailFile = _rootPath + OSS_FILE_SEP + OM_BUSINESS_CONFIG_SUBDIR 
-                       + OSS_FILE_SEP + businessType 
-                       + OM_CONFIG_ITEM_FILE_NAME ;
+                       + OSS_FILE_SEP + businessType + OM_CONFIG_ITEM_FILE_NAME
+                       + _languageFileSep + OM_BUSINESS_FILE_TYPE ;
 
       rc = _readConfDetail(confDetailFile, bsonConfDetail ) ;
       if( SDB_OK != rc )
@@ -4279,8 +4273,7 @@ namespace engine
                                             bsonHostInfo, tmpConf ) ;
       if ( SDB_OK != rc )
       {
-         _errorDetail = confGenerator.getErrorDetail() ;
-         PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
+         PD_LOG_MSG( PDERROR, "%s", confGenerator.getErrorDetail().c_str() ) ;
          goto error ;
       }
 
@@ -4310,6 +4303,7 @@ namespace engine
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "get config info failed:rc=%d", rc ) ;
+         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
       }
@@ -4319,6 +4313,7 @@ namespace engine
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "_checkBusiness failed:rc=%d", rc ) ;
+         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
       }
@@ -4327,6 +4322,7 @@ namespace engine
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "get config item failed:rc=%d", rc ) ;
+         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
       }
@@ -4336,6 +4332,7 @@ namespace engine
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "generate config failed:rc=%d", rc ) ;
+         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
       }
@@ -4399,29 +4396,34 @@ namespace engine
                                                  BSONObj &bsonHostInfo )
    {
       INT32 rc = SDB_OK ;
-
-      BSONObjBuilder conditionBuilder ;
       BSONObj condition ;
       BSONObjBuilder builder ;
       BSONArrayBuilder arrayBuilder ;
       BSONObj config ;
       set<string> tmpHost ;
+      set<string>::iterator iterSet ;
 
-      conditionBuilder.append( OM_BSON_FIELD_HOST_NAME, "" ) ;
-      condition = conditionBuilder.obj() ;
+      condition = BSON( OM_BSON_FIELD_HOST_NAME << "" ) ;
       config    = bsonConfValue.getObjectField( OM_BSON_FIELD_CONFIG ) ;
       {
          BSONObjIterator iter( config ) ;
          while ( iter.more() )
          {
             BSONElement ele = iter.next() ;
+            if ( ele.type() != Object )
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG_MSG( PDERROR, "field's element is not Object:field=%s"
+                           ",type=%d", OM_BSON_FIELD_CONFIG, ele.type() ) ;
+               goto error ;
+            }
             BSONObj oneNode = ele.embeddedObject() ;
             BSONObj host    = oneNode.filterFieldsUndotted(condition, true );
             tmpHost.insert( host.getStringField( OM_BSON_FIELD_HOST_NAME ) ) ;
          }
       }
 
-      set<string>::iterator iterSet = tmpHost.begin() ;
+      iterSet = tmpHost.begin() ;
       while( iterSet != tmpHost.end() )
       {
          BSONObj host = BSON( OM_BSON_FIELD_HOST_NAME << *iterSet ) ;
@@ -4457,9 +4459,9 @@ namespace engine
       BSONObj bsonDetail ;
       string confDetailFile ;
 
-      templateFile   = _rootPath + OSS_FILE_SEP + OM_BUSINESS_CONFIG_SUBDIR 
-                       + OSS_FILE_SEP + businessType + OM_TEMPLATE_FILE_NAME
-                       + _languageFileSep + OM_BUSINESS_FILE_TYPE ;
+      templateFile = _rootPath + OSS_FILE_SEP + OM_BUSINESS_CONFIG_SUBDIR 
+                     + OSS_FILE_SEP + businessType + OM_TEMPLATE_FILE_NAME
+                     + _languageFileSep + OM_BUSINESS_FILE_TYPE ;
       rc = _readConfTemplate( businessType, templateFile, deployModList ) ;
       if ( SDB_OK != rc )
       {
@@ -4483,15 +4485,15 @@ namespace engine
       if ( iterList == deployModList.end() )
       {
          rc = SDB_INVALIDARG ;
-         _errorDetail = string( OM_BSON_DEPLOY_MOD ) + " is not exist:"
-                        + deployMod ;
-         PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
+         PD_LOG_MSG( PDERROR, "%s is not exsit:", OM_BSON_DEPLOY_MOD, 
+                     deployMod.c_str() ) ;
          goto error ;
       }
 
       confDetailFile = _rootPath + OSS_FILE_SEP + OM_BUSINESS_CONFIG_SUBDIR 
                        + OSS_FILE_SEP + businessType 
-                       + OM_CONFIG_ITEM_FILE_NAME ;
+                       + OM_CONFIG_ITEM_FILE_NAME + _languageFileSep 
+                       + OM_BUSINESS_FILE_TYPE ;
       rc = _readConfDetail( confDetailFile, bsonDetail ) ;
       if ( SDB_OK != rc )
       {
@@ -4514,7 +4516,6 @@ namespace engine
                PD_LOG_MSG( PDERROR, "config info is invalid, element of %s "
                            "is not Object type:type=%d", 
                            OM_BSON_PROPERTY_ARRAY, ele.type() ) ;
-               _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
                goto error ;
             }
             BSONObj tmp      = ele.embeddedObject() ;
@@ -4532,7 +4533,6 @@ namespace engine
                PD_LOG_MSG( PDERROR, "config info is invalid, element of %s "
                            "is not Object type:type=%d", 
                            OM_BSON_PROPERTY_ARRAY, ele.type() ) ;
-               _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
                goto error ;
             }
             BSONObj tmp      = ele.embeddedObject() ;
@@ -4625,9 +4625,8 @@ namespace engine
                              0, 0, 0, -1, &request, NULL, NULL, NULL ) ;
       if ( SDB_OK != rc )
       {
-         _errorDetail = string( "build msg failed:cmd=" ) 
-                        + OM_INSTALL_BUSINESS_REQ ;
-         PD_LOG( PDERROR, "%s,rc=%d", _errorDetail.c_str(), rc ) ;
+         PD_LOG_MSG( PDERROR, "build msg failed:cmd=%s,rc=%d", 
+                     OM_INSTALL_BUSINESS_REQ, rc ) ;
          goto error ;
       }
 
@@ -4638,8 +4637,7 @@ namespace engine
       if ( NULL == remoteSession )
       {
          rc = SDB_OOM ;
-         _errorDetail = "create remote session failed" ;
-         PD_LOG( PDERROR, "%s:rc=%d", _errorDetail.c_str(), rc ) ;
+         PD_LOG_MSG( PDERROR, "create remote session failed:rc=%d", rc ) ;
          SDB_OSS_FREE( pContent ) ;
          goto error ;
       }
@@ -4649,8 +4647,7 @@ namespace engine
       rc   = _sendMsgToLocalAgent( om, remoteSession, pMsg ) ;
       if ( SDB_OK != rc )
       {
-         _errorDetail = "send message to agent failed" ;
-         PD_LOG( PDERROR, "%s:rc=%d", _errorDetail.c_str(), rc ) ;
+         PD_LOG_MSG( PDERROR, "send message to agent failed:rc=%d", rc ) ;
          SDB_OSS_FREE( pContent ) ;
          remoteSession->clearSubSession() ;
          goto error ;
@@ -4660,8 +4657,7 @@ namespace engine
       rc = _receiveFromAgent( remoteSession, flag, result ) ;
       if ( SDB_OK != rc )
       {
-         _errorDetail = "receive from agent failed" ;
-         PD_LOG( PDERROR, "%s:rc=%d", _errorDetail.c_str(), rc ) ;
+         PD_LOG_MSG( PDERROR, "receive from agent failed:rc=%d", rc ) ;
          goto error ;
       }
 
@@ -4669,8 +4665,8 @@ namespace engine
       {
          rc = flag ;
          _errorDetail = result.getStringField( OM_REST_RES_DETAIL ) ;
-         PD_LOG( PDERROR, "agent process failed:detail=%s,rc=%d", 
-                 _errorDetail.c_str(), rc ) ;
+         PD_LOG_MSG( PDERROR, "agent process failed:detail=%s,rc=%d", 
+                     _errorDetail.c_str(), rc ) ;
          goto error ;
       }
    done:
@@ -4794,10 +4790,8 @@ namespace engine
       _restAdaptor->getQuery( _restSession, OM_REST_CONFIG_INFO, &pInfo ) ;
       if ( NULL == pInfo )
       {
-         _errorDetail = "rest field:" + string( OM_REST_CONFIG_INFO )
-                        + " is null" ;
          rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
+         PD_LOG( PDERROR, "rest field is null:field=%s", OM_REST_CONFIG_INFO ) ;
          goto error ;
       }
 
@@ -4806,7 +4800,6 @@ namespace engine
       {
          PD_LOG_MSG( PDERROR, "change rest field to BSONObj failed:src=%s,"
                      "rc=%d", pInfo, rc ) ;
-         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
          goto error ;
       }
 
@@ -4815,8 +4808,7 @@ namespace engine
       if ( _clusterName == "" )
       {
          rc = SDB_INVALIDARG ;
-         _errorDetail = string( OM_BSON_FIELD_CLUSTER_NAME ) + " is empty" ;
-         PD_LOG( PDERROR, "%s:rc=%d", _errorDetail.c_str(), rc ) ;
+         PD_LOG_MSG( PDERROR, "%s is empty", OM_BSON_FIELD_CLUSTER_NAME ) ;
          goto error ;
       }
 
@@ -4824,8 +4816,7 @@ namespace engine
       if ( _businessType == "" )
       {
          rc = SDB_INVALIDARG ;
-         _errorDetail = string( OM_BSON_BUSINESS_TYPE ) + " is empty" ;
-         PD_LOG( PDERROR, "%s:rc=%d", _errorDetail.c_str(), rc ) ;
+         PD_LOG_MSG( PDERROR, "%s is empty", OM_BSON_BUSINESS_TYPE ) ;
          goto error ;
       }
 
@@ -4833,8 +4824,7 @@ namespace engine
       if ( _businessName == "" )
       {
          rc = SDB_INVALIDARG ;
-         _errorDetail = string( OM_BSON_BUSINESS_NAME ) + " is empty" ;
-         PD_LOG( PDERROR, "%s:rc=%d", _errorDetail.c_str(), rc ) ;
+         PD_LOG_MSG( PDERROR, "%s is empty", OM_BSON_BUSINESS_NAME ) ;
          goto error ;
       }
 
@@ -4842,8 +4832,7 @@ namespace engine
       if ( _deployMod == "" )
       {
          rc = SDB_INVALIDARG ;
-         _errorDetail = string( OM_BSON_DEPLOY_MOD ) + " is empty" ;
-         PD_LOG( PDERROR, "%s:rc=%d", _errorDetail.c_str(), rc ) ;
+         PD_LOG_MSG( PDERROR, "%s is empty", OM_BSON_DEPLOY_MOD ) ;
          goto error ;
       }
 
@@ -4870,6 +4859,7 @@ namespace engine
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "_getRestInfo failed:rc=%d", rc ) ;
+         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
       }
@@ -4879,6 +4869,7 @@ namespace engine
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "_checkBusiness failed:rc=%d", rc ) ;
+         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
       }
@@ -4887,6 +4878,7 @@ namespace engine
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "_combineConfDetail failed:rc=%d", rc ) ;
+         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
       }
@@ -4895,6 +4887,7 @@ namespace engine
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "get host info failed:rc=%d", rc ) ;
+         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
       }
@@ -4923,6 +4916,7 @@ namespace engine
       rc = _applyInstallRequest( bsonConfValue, taskID ) ;
       if ( SDB_OK != rc )
       {
+         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
          taskManager->cancelTask( taskID, _errorDetail ) ;
          PD_LOG( PDERROR, "_applyInstallRequest failed:rc=%d", rc ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
@@ -4932,9 +4926,9 @@ namespace engine
       rc = taskManager->enableTask( taskID ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG_MSG( PDERROR, "enable task failed:taskID="OSS_LL_PRINT_FORMAT
-                 "rc=%d", taskID, rc ) ;
          _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         PD_LOG( PDERROR, "enable task failed:taskID="OSS_LL_PRINT_FORMAT
+                 "rc=%d", taskID, rc ) ;
          taskManager->cancelTask( taskID, _errorDetail ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
