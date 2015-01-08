@@ -239,10 +239,6 @@ namespace engine
                               INT32 &groupID,
                               std::map<string, INT32> &splitRange ) ;
 
-      INT32 _getGroupFromCsObjRandly( const BSONObj &csObj,
-                                      std::string &groupName,
-                                      INT32 &groupID ) ;
-
       INT32 _autoHashSplit( const BSONObj &clObj, std::vector<UINT64> &taskIDs,
                             const CHAR *srcGroupName = NULL,
                             const map<string, INT32> *dstIDs = NULL ) ;

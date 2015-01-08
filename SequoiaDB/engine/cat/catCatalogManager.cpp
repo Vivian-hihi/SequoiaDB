@@ -2571,8 +2571,9 @@ namespace engine
                             dummy, condition, dummy, _pEduCB, res ) ;
          if ( SDB_OK == rc )
          {
-            PD_LOG( PDERROR, "clear data(of this domain) before rmove it from domain."
-                    " groups to be removed[%s]", objToBeRemoved.toString( TRUE, TRUE ).c_str() ) ;
+            PD_LOG( PDERROR, "clear data(of this domain) before remove it "
+                    "from domain. groups to be removed[%s]",
+                    objToBeRemoved.toString( TRUE, TRUE ).c_str() ) ;
             rc = SDB_DOMAIN_IS_OCCUPIED ;
             goto error ;
          }
@@ -2619,21 +2620,21 @@ namespace engine
          if ( !isSysDomain )
          {
             rc = catGetDomainGroups( domainObj, groupsOfDomain ) ;
-            PD_RC_CHECK( rc, PDERROR, "Failed to get groups from domain info[%s], "
-                         "rc: %d", domainObj.toString().c_str(), rc ) ;
-            
+            PD_RC_CHECK( rc, PDERROR, "Failed to get groups from domain "
+                         "info[%s], rc: %d", domainObj.toString().c_str(),
+                         rc ) ;
             {
-            map<string, INT32>::const_iterator itr =
-                                       groupsOfDomain.find( clInfo._gpSpecified ) ;
-            if ( groupsOfDomain.end() == itr )
-            {
-               PD_LOG( PDERROR, "[%s] is not a group of domain [%s]",
-                       clInfo._gpSpecified, domain ) ;
-               rc = SDB_CAT_GROUP_NOT_IN_DOMAIN ;
-               goto error ;
-            }
+               map<string, INT32>::const_iterator itr =
+                  groupsOfDomain.find( clInfo._gpSpecified ) ;
+               if ( groupsOfDomain.end() == itr )
+               {
+                  PD_LOG( PDERROR, "[%s] is not a group of domain [%s]",
+                          clInfo._gpSpecified, domain ) ;
+                  rc = SDB_CAT_GROUP_NOT_IN_DOMAIN ;
+                  goto error ;
+               }
 
-            groupID = itr->second ;
+               groupID = itr->second ;
             }
             /// if the group is a group of domain, it surely exsits.
          }
@@ -2643,8 +2644,8 @@ namespace engine
             PD_RC_CHECK( rc, PDERROR, "Get group[%s] info failed, rc: %d",
                          clInfo._gpSpecified, rc ) ;
             rc = rtnGetIntElement( gpObj, CAT_GROUPID_NAME, groupID ) ;
-            PD_RC_CHECK( rc, PDERROR, "Get groupid of group[%s] info failed, rc: %d",
-                         clInfo._gpSpecified, rc ) ;
+            PD_RC_CHECK( rc, PDERROR, "Get groupid of group[%s] info failed, "
+                         "rc: %d", clInfo._gpSpecified, rc ) ;
          }
 
          groupName.assign( clInfo._gpSpecified ) ;
@@ -2652,15 +2653,40 @@ namespace engine
       /// get a group from groups of cs.
       else
       {
-         rc = _getGroupFromCsObjRandly( csObj, groupName,
-                                        groupID ) ;
-         PD_RC_CHECK( rc, PDERROR, "Assign group id failed, rc: %d", rc ) ;
+         vector< INT32 > vecGroupID ;
+         rc = catGetCSGroups( csObj, vecGroupID ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Get groups from collectionspace obj[%s] "
+                    "failed, rc: %d", csObj.toString().c_str(), rc ) ;
+            goto error ;
+         }
+
+         if ( 0 == vecGroupID.size() && !isSysDomain )
+         {
+            rc = catGetDomainGroups( domainObj, vecGroupID ) ;
+            if ( rc )
+            {
+               PD_LOG( PDERROR, "Get groups from domain obj[%s] failed, "
+                       "rc: %d", domainObj.toString().c_str(), rc ) ;
+               goto error ;
+            }
+         }
+
+         rc = _assignGroup( &vecGroupID, groupID ) ;
+         PD_RC_CHECK( rc, PDERROR, "Assign group for collection[%s] "
+                      "failed, rc: %d", clInfo._pCLName, rc ) ;
+
+         rc = catGroupID2Name( groupID, groupName, _pEduCB ) ;
+         PD_RC_CHECK( rc, PDERROR, "Group id[%d] to group name failed, "
+                      "rc: %d", groupID, rc ) ;
 
          if ( !isSysDomain )
          {
             rc = catGetDomainGroups( domainObj, splitRange ) ;
-            PD_RC_CHECK( rc, PDERROR, "Failed to get groups from domain info[%s], "
-                         "rc: %d", domainObj.toString().c_str(), rc ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to get groups from domain "
+                         "info[%s], rc: %d", domainObj.toString().c_str(),
+                         rc ) ;
          }
       }
 
@@ -2672,55 +2698,6 @@ namespace engine
       groupID = CAT_INVALID_GROUPID ;
       groupName.clear() ;
       splitRange.clear() ; 
-      goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR__GETGPFROMCS, "catCatalogueManager::_getGroupAndSplitFromCsObjRandly" )   
-   INT32 catCatalogueManager::
-                     _getGroupFromCsObjRandly( const BSONObj &csObj,
-                                               std::string &groupName,
-                                               INT32 &groupID )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB_CATALOGMGR__GETGPFROMCS ) ;
-
-      BSONElement groups = csObj.getField( CAT_GROUP_NAME ) ;
-      if ( Array != groups.type() )
-      {
-         PD_LOG( PDERROR, "invalid cs obj:[%s]", csObj.toString().c_str() ) ;
-         rc = SDB_SYS ;
-         goto error ;
-      }
-
-      {
-      INT32 tmpID = CAT_INVALID_GROUPID ;
-      const CHAR *tmpName = NULL ;
-      BSONObj gpsObj = groups.embeddedObject() ;
-      BSONObj objPair ;
-      UINT32 rand = ossRand() % gpsObj.nFields() ;
-      std::stringstream ss ;
-      ss << rand ;
-      BSONElement elePair = gpsObj.getField(ss.str().c_str()) ;
-      PD_CHECK( Object == elePair.type(), SDB_INVALIDARG, error, PDERROR,
-                      "CS group ele type is not Object, CS info: %s",
-                      csObj.toString().c_str() ) ;
-      objPair = elePair.embeddedObject() ;
-      rc = rtnGetIntElement( objPair, CAT_GROUPID_NAME, tmpID ) ;
-      PD_RC_CHECK( rc, PDERROR, "Get CS group id failed, rc: %d, "
-                   "CS info: %s", rc, csObj.toString().c_str() ) ;
-      rc = rtnGetStringElement( objPair, CAT_GROUPNAME_NAME, &tmpName ) ;
-      PD_RC_CHECK( rc, PDERROR, "Get CS group name failed, rc: %d, "
-                   "CS info: %s", rc, csObj.toString().c_str() ) ;
-
-      groupID = tmpID ;
-      groupName.assign( tmpName ) ;
-      }
-   done:
-      PD_TRACE_EXITRC( SDB_CATALOGMGR__GETGPFROMCS, rc ) ;
-      return rc ;
-   error:
-      groupName.clear() ;
-      groupID = CAT_INVALID_GROUPID ;
       goto done ;
    }
 
