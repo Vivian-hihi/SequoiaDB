@@ -120,10 +120,6 @@ namespace engine
       const CHAR *regex = NULL ;
       const CHAR *options = NULL ;
       SDB_ASSERT ( ele.type() != Undefined, "Undefined element type" ) ;
-      if ( isNot )
-      {
-         _totallyConverted = FALSE ;
-      }
 
       // then check element type
       switch ( ele.type() )
@@ -1009,15 +1005,6 @@ namespace engine
             goto error ;
          }
       }
-
-      if ( BSONObj::GT != type &&
-           BSONObj::GTE != type &&
-           BSONObj::LT != type &&
-           BSONObj::LTE != type &&
-           BSONObj::Equality != type )
-      {
-         _totallyConverted = FALSE ;
-      }
    done :
       PD_TRACE_EXITRC ( SDB__MTHMACH__INJELE, rc );
       return rc ;
@@ -1072,6 +1059,8 @@ namespace engine
          _setWeight ( _rlme ) ;
          //sort the logic match element tree
          _sortLME ( _rlme ) ;
+         // check if elements were totally converted to predicates.
+         _checkTotallyConverted( _rlme ) ;
          if ( !_predicateSet.isValid() )
          {
             rc = SDB_RTN_INVALID_PREDICATES ;
@@ -1470,11 +1459,6 @@ namespace engine
       }
       (*clme)->_logicType = logicType ;
       (*clme)->_isRegex = isRegex ;
-
-      if ( MTH_LOGIC_OR == logicType )
-      {
-         _totallyConverted = FALSE ;
-      }
 
    done :
       PD_TRACE_EXITRC ( SDB__MTHMACH__CRTLME, rc );
@@ -2262,6 +2246,46 @@ namespace engine
       return rc ;
    error :
       goto done ;
+   }
+
+   PD_TRACE_DECLARE_FUNCTION ( SDB__MTHMACH__CHKTOTALLYCONVERTED, "_mthMatcher::_checkTotallyConverted" )
+   void _mthMatcher::_checkTotallyConverted( LogicMatchElement *ele )
+   {
+      const LogicMatchElement *lme = ele ;
+      if ( MTH_LOGIC_OR == lme->_logicType ||
+           MTH_LOGIC_NOT == lme->_logicType )
+      {
+         _totallyConverted = FALSE ;
+      }
+      else if ( MTH_LOGIC_OTHER == lme->_logicType )
+      {
+         const _MatchElement *me = lme->_me ;
+         if ( lme->_isRegex ||
+              ( BSONObj::Equality != me->_op &&
+                BSONObj::GT != me->_op &&
+                BSONObj::GTE != me->_op &&
+                BSONObj::LT != me->_op &&
+                BSONObj::LTE != me->_op ) )
+         {
+            _totallyConverted = FALSE ;
+         }
+      }
+      else
+      {
+         SDB_ASSERT( MTH_LOGIC_AND == lme->_logicType,
+                     "logictype must be and" ) ;
+         vector<_LogicMatchElement *>::const_iterator itr =
+                                      lme->_vlme.begin() ;
+         for ( ; itr != lme->_vlme.end(); ++itr )
+         {
+            _checkTotallyConverted( *itr ) ;
+            if ( !_totallyConverted )
+            {
+               break ;
+            }
+         }
+      }
+      return ;
    }
 
    /*PD_TRACE_DECLARE_FUNCTION ( SDB__MTHMACH_GETDOLLARNUMBER,"_mthMatcher::_getDollarNumber" )

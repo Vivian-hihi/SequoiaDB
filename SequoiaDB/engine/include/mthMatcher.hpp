@@ -344,6 +344,7 @@ namespace engine
       void _setWeight ( LogicMatchElement *lme, BSONObj::MatchType op ) ;
       static BOOLEAN compare ( LogicMatchElement *l1, LogicMatchElement *l2 ) ;
       void _sortLME ( LogicMatchElement *lme ) ;
+      void _checkTotallyConverted( LogicMatchElement *lme ) ;
       void _countElement ( const BSONElement &ele, UINT32 &countOp ) ;
       BOOLEAN _checkValue( const BSONElement &ele, BOOLEAN isRoot = FALSE ) ;
       BOOLEAN _checkValueNonRec( const BSONElement &ele ) ;
