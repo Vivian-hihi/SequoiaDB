@@ -73,7 +73,7 @@
 #define REST_STRING_TEXT_PNG      "image/png"
 #define REST_STRING_TEXT_BMP      "image/bmp"
 #define REST_STRING_TEXT_JPG      "image/jpeg"
-#define REST_STRING_TEXT_GIF      "text/gif"
+#define REST_STRING_TEXT_GIF      "image/gif"
 #define REST_STRING_CONLEN_SIZE   "0"
 #define REST_STRING_CHUNKED       "chunked"
 
