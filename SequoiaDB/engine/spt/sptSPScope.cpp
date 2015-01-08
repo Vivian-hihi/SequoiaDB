@@ -409,7 +409,11 @@ namespace engine
 
          if ( NULL != strException )
          {
-            ossPrintf ( "Uncaught exception: %s\n" , strException ) ;
+            std::stringstream ss ;
+            ss << "uncaught exception:" ;
+            ss << strException ;
+            sdbReportError( NULL, 0, ss.str().c_str(), TRUE ) ;
+            //ossPrintf ( "Uncaught exception: %s\n" , strException ) ;
             detail = BSON( "exception" << strException ) ;
             SAFE_JS_FREE( _context, strException ) ;
          }

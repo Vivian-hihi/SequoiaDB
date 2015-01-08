@@ -74,6 +74,9 @@ namespace engine
    void     sdbReportError( JSContext *cx, const char *msg,
                             JSErrorReport *report ) ;
 
+   void     sdbReportError( const CHAR *filename, UINT32 lineno,
+                            const CHAR *msg, BOOLEAN isException ) ;
+
 }
 
 #endif //SPTCOMMON_HPP__
