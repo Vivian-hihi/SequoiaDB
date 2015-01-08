@@ -2269,6 +2269,12 @@ namespace engine
          {
             _totallyConverted = FALSE ;
          }
+         /// SEQUOIADBMAINSTREAM-497
+         else if ( BSONObj::Equality == me->_op &&
+                   Array == me->_toMatch.type() )
+         {
+            _totallyConverted = FALSE ;
+         }
       }
       else
       {

@@ -70,23 +70,32 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__MTHSEL_LDPATTERN );
-      _selectorPattern = selectorPattern.copy() ;
-      BSONObjIterator i(_selectorPattern) ;
-      INT32 eleNum = 0 ;
-      while ( i.more() )
+      try
       {
-         rc = _addSelector( i.next() ) ;
-         if ( rc )
+         _selectorPattern = selectorPattern.copy() ;
+         BSONObjIterator i(_selectorPattern) ;
+         INT32 eleNum = 0 ;
+         while ( i.more() )
          {
-            PD_LOG ( PDERROR, "Failed to parse match pattern[%s, pos: %d], "
-                     "rc: %d", selectorPattern.toString().c_str(), eleNum,
-                     rc ) ;
-            goto error ;
+            rc = _addSelector( i.next() ) ;
+            if ( rc )
+            {
+               PD_LOG ( PDERROR, "Failed to parse match pattern[%s, pos: %d], "
+                        "rc: %d", selectorPattern.toString().c_str(), eleNum,
+                        rc ) ;
+               goto error ;
+            }
+            eleNum ++ ;
          }
-         eleNum ++ ;
+         std::sort( _selectorElements.begin(), _selectorElements.end(),
+                    _selectorElementsSort ) ;
       }
-      std::sort( _selectorElements.begin(), _selectorElements.end(),
-                 _selectorElementsSort ) ;
+      catch ( std::exception &e )
+      {
+         PD_LOG( PDERROR, "unexpected errer happened:%s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
 
       _initialized = TRUE ;
 

@@ -3899,6 +3899,7 @@ namespace engine
    }
 
    INT32 _rtnContextSort::open( const BSONObj &orderby,
+                                const BSONObj &selector,
                                 rtnContext *context,
                                 pmdEDUCB *cb,
                                 SINT64 numToSkip,
@@ -3922,6 +3923,16 @@ namespace engine
       _hitEnd = FALSE ;
       _skip = numToSkip ;
       _limit = numToReturn ;
+
+      if ( !selector.isEmpty() )
+      {
+         rc = _selector.loadPattern( selector ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to load selector pattern:%d", rc ) ;
+            goto error ;
+         }
+      }
 
       if ( RTN_CONTEXT_DATA == context->getType() )
       {
@@ -3977,7 +3988,24 @@ namespace engine
          }
          else
          {
-            rc = append( obj ) ;
+            const BSONObj *record = NULL ;
+            BSONObj selected ;
+            if ( _selector.isInitialized() )
+            {
+               rc = _selector.select( obj, selected ) ;
+               if ( SDB_OK != rc )
+               {
+                  PD_LOG( PDERROR, "failed to select fields from obj:%d", rc ) ;
+                  goto error ;
+               }
+               record = &selected ;
+            }
+            else
+            {
+               record = &obj ;
+            }
+   
+            rc = append( *record ) ;
             PD_RC_CHECK( rc, PDERROR, "Append obj[%s] failed, rc: %d",
                       obj.toString().c_str(), rc ) ;
 

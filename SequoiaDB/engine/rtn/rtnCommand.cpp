@@ -53,6 +53,10 @@ using namespace bson ;
 
 namespace engine
 {
+   extern void buildNewSelector( const BSONObj &,
+                                 const BSONObj &,
+                                 BSONObj & ) ;
+
    _rtnCommand::_rtnCommand ()
    {
       _fromService = 0 ;
@@ -2217,6 +2221,7 @@ namespace engine
       SDB_ASSERT ( pContextID, "context id can't be NULL" ) ;
       PD_TRACE_ENTRY ( SDB__RTNTRACESTATUS_DOIT ) ;
       rtnContextDump *context = NULL ;
+      BSONObj newSelector ;
 
       *pContextID = -1 ;
       // create cursors
@@ -2235,7 +2240,10 @@ namespace engine
          BSONObj selector ( _selectBuff ) ;
          BSONObj orderBy ( _orderByBuff ) ;
 
-         rc = context->open( selector, selector,
+         buildNewSelector( selector, orderBy, newSelector ) ;
+
+         rc = context->open( newSelector.isEmpty() ? selector : newSelector,
+                             matcher,
                              orderBy.isEmpty() ? _numToReturn : -1,
                              orderBy.isEmpty() ? _numToSkip : 0 ) ;
          PD_RC_CHECK( rc, PDERROR, "Open context failed, rc: %d", rc ) ;
@@ -2246,7 +2254,10 @@ namespace engine
 
          if ( !orderBy.isEmpty() )
          {
-            rc = rtnSort( (rtnContext**)&context, orderBy, cb, _numToSkip,
+            rc = rtnSort( (rtnContext**)&context,
+                          orderBy,
+                          newSelector.isEmpty() ? BSONObj() : selector,
+                          cb, _numToSkip,
                           _numToReturn, rtnCB, *pContextID ) ;
             PD_RC_CHECK( rc, PDERROR, "Failed to sort, rc: %d", rc ) ;
          }

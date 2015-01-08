@@ -160,6 +160,7 @@ namespace engine
 
    INT32 rtnSort ( rtnContext **ppContext,
                    const BSONObj &orderBy,
+                   const BSONObj &selector,
                    _pmdEDUCB *cb,
                    SINT64 numToSkip,
                    SINT64 numToReturn,
@@ -179,6 +180,7 @@ namespace engine
       }
 
       rc = ((_rtnContextSort *)(*ppContext))->open( orderBy,
+                                                    selector,
                                                     dataSrc,
                                                     cb,
                                                     numToSkip,
@@ -201,6 +203,55 @@ namespace engine
          contextID = -1 ;
       }
       goto done ;
+   }
+
+   struct fieldCompare
+   {
+      BOOLEAN operator()( const CHAR *a, const CHAR *b ) const
+      {
+         return ossStrcmp( a, b ) < 0 ;
+      }
+   } ;
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNBUILDNEWSELECTOR, "_buildNewSelector" )
+   void buildNewSelector( const BSONObj &original,
+                          const BSONObj &orderBy,
+                          BSONObj &newSelector )
+   {
+      PD_TRACE_ENTRY( SDB__RTNBUILDNEWSELECTOR ) ;
+
+      if ( !original.isEmpty() &&
+           !orderBy.isEmpty() )
+      {
+         BOOLEAN pushed = FALSE ;
+         std::set<const CHAR *, fieldCompare> addList ;
+         BSONObjBuilder builder ;
+         BSONObjIterator itr( orderBy ) ;
+         while ( itr.more() )
+         {
+            BSONElement ele = itr.next() ;
+            const CHAR *fieldName = ele.fieldName() ;
+            if ( !original.hasElement( fieldName ) &&
+                 0 == addList.count( fieldName ) )
+            {
+               if ( !pushed )
+               {
+                  builder.appendElements( original ) ;
+                  pushed = TRUE ;    
+               }
+
+               builder.appendNull( fieldName ) ;
+               addList.insert( fieldName ) ;
+            }
+         }
+
+         if ( pushed )
+         {
+            newSelector = builder.obj() ;
+         }
+      }
+      PD_TRACE_EXIT( SDB__RTNBUILDNEWSELECTOR ) ;
+      return  ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNQUERY, "rtnQuery" )
@@ -238,11 +289,15 @@ namespace engine
 
       BSONObj hintTmp = hint ;
       BSONObj blockObj ;
+      BSONObj newSelector ;
       BSONObj *pBlockObj = NULL ;
       const CHAR *indexName = NULL ;
       const CHAR *scanType  = NULL ;
       INT32 indexLID = DMS_INVALID_EXTENT ;
       INT32 direction = 0 ;
+
+      /// build new selector if need
+      buildNewSelector( selector, orderBy, newSelector ) ;
 
       if ( FLG_QUERY_EXPLAIN & flags )
       {
@@ -357,7 +412,8 @@ namespace engine
       }
 
       // open context
-      rc = dataContext->open( su, mbContext, plan, cb, selector,
+      rc = dataContext->open( su, mbContext, plan, cb,
+                              newSelector.isEmpty() ? selector :newSelector,
                               plan->sortRequired() ? -1 : numToReturn,
                               plan->sortRequired() ? 0 : numToSkip,
                               pBlockObj, direction ) ;
@@ -379,7 +435,10 @@ namespace engine
       // temp table index
       if ( dataContext->getPlan()->sortRequired() )
       {
-         rc = rtnSort ( (rtnContext**)&dataContext, orderBy, cb, numToSkip,
+         rc = rtnSort ( (rtnContext**)&dataContext,
+                        orderBy,
+                        newSelector.isEmpty() ? BSONObj() : selector,
+                        cb, numToSkip,
                         numToReturn, rtnCB, contextID ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to sort, rc: %d", rc ) ;
       }
