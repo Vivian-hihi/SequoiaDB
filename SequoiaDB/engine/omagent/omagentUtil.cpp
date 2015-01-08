@@ -360,8 +360,8 @@ namespace engine
          string nodeOut = omPickNodeOutString( outString, pSvcName ) ;
          if ( !nodeOut.empty() )
          {
-            PD_LOG( PDERROR, "node[%s] start failed, out info:%s%s",
-                    pSvcName, OSS_NEWLINE, nodeOut.c_str() ) ;
+            PD_LOG( PDERROR, "node[%s] start[cmd: %s] failed, out info:%s%s",
+                    pSvcName, cmdline.c_str(), OSS_NEWLINE, nodeOut.c_str() ) ;
          }
       }
 
