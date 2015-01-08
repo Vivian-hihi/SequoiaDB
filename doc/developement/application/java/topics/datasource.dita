@@ -17,7 +17,7 @@ ArrayList&lt;String> urls = new ArrayList&lt;String>();
 ConfigOptions nwOpt = new ConfigOptions();          // 定义连接选项
 SequoiadbOption dsOpt = new SequoiadbOption();	    // 定义连接池选项
 		
-urls.add("ubuntu-dev1:11810");
+urls.add("ubuntu-dev1:11810");                      // 添加连接地址（只需添加协调节点地址）
 urls.add("ubuntu-dev2:11810");
 urls.add("ubuntu-dev3:11810");
 		

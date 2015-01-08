@@ -17,7 +17,7 @@ ArrayList&lt;String> urls = new ArrayList&lt;String>();
 ConfigOptions nwOpt = new ConfigOptions();          // define connection options
 SequoiadbOption dsOpt = new SequoiadbOption();	    // define connection pool options
 		
-urls.add("ubuntu-dev1:11810");
+urls.add("ubuntu-dev1:11810");                      // add connection address(only need to add coord node's address)
 urls.add("ubuntu-dev2:11810");
 urls.add("ubuntu-dev3:11810");
 		
