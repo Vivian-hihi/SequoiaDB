@@ -3062,13 +3062,29 @@ namespace engine
       }
       else if ( NULL != pBusiness )
       {
+         list<BSONObj> tmpRecords ;
          BSONObj selector = BSON( OM_CONFIGURE_FIELD_HOSTNAME << 1 ) ;
          BSONObj matcher  = BSON( OM_CONFIGURE_FIELD_BUSINESSNAME 
                                   << pBusiness ) ;
          BSONObj order ;
          BSONObj hint ;
          rc = _queryTable( OM_CS_DEPLOY_CL_CONFIGURE, selector, matcher, order, 
-                           hint, 0, 0, -1, records ) ;
+                           hint, 0, 0, -1, tmpRecords ) ;
+         if ( SDB_OK == rc && tmpRecords.size() > 0 )
+         {
+            selector = BSON( OM_HOST_FIELD_NAME << 1 << OM_HOST_FIELD_IP << 1) ;
+            BSONArrayBuilder arrBuilder ;
+            list<BSONObj>::iterator iter = tmpRecords.begin() ;
+            while ( iter != tmpRecords.end() )
+            {
+               arrBuilder.append( *iter ) ;
+               iter++ ;
+            }
+            
+            matcher  = BSON( "$or" << arrBuilder.arr() ) ;
+            rc = _queryTable( OM_CS_DEPLOY_CL_HOST, selector, matcher, 
+                              order, hint, 0, 0, -1, records ) ;
+         }
       }
       else
       {

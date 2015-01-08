@@ -55,7 +55,6 @@ namespace engine
       PD_TRACE_ENTRY ( SDB_PMDTCPLSTNENTPNT ) ;
       pmdKRCB *krcb = pmdGetKRCB() ;
       monDBCB *mondbcb = krcb->getMonDBCB () ;
-      SDB_ROLE dbrole = krcb->getDBRole () ;
       pmdEDUMgr * eduMgr = cb->getEDUMgr() ;
       EDUID agentEDU = PMD_INVALID_EDUID ;
       ossSocket *pListerner = ( ossSocket* )pData ;
