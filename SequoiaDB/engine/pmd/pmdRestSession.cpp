@@ -735,16 +735,16 @@ namespace engine
          {
             commandIf = SDB_OSS_NEW omQueryHostCommand( pAdptor, this ) ;
          }
-         else if ( ossStrcasecmp( pSubCommand, OM_QUERY_BUSINESS_TYPE_REQ ) 
+         else if ( ossStrcasecmp( pSubCommand, OM_LIST_BUSINESS_TYPE_REQ ) 
                                                                           == 0 )
          {
-            commandIf = SDB_OSS_NEW omQueryBusinessTypeCommand( pAdptor, this, 
+            commandIf = SDB_OSS_NEW omListBusinessTypeCommand( pAdptor, this, 
                                        _wwwRootPath.c_str(), pFilePath ) ;
          }
          else if ( ossStrcasecmp( pSubCommand, 
-                                  OM_QUERY_BUSINESS_TEMPLATE_REQ ) == 0 )
+                                  OM_GET_BUSINESS_TEMPLATE_REQ ) == 0 )
          {
-            commandIf = SDB_OSS_NEW omQueryBusinessTemplateCommand( pAdptor, 
+            commandIf = SDB_OSS_NEW omGetBusinessTemplateCommand( pAdptor, 
                                        this, _wwwRootPath.c_str(), pFilePath ) ;
          }
          else if ( ossStrcasecmp( pSubCommand, OM_CONFIG_BUSINESS_REQ ) == 0 )

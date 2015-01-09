@@ -3040,12 +3040,13 @@ namespace engine
 
    void omListHostCommand::_sendHostInfo2Web( list<BSONObj> &hosts )
    {
-      BSONObjBuilder opBuilder ;
+      BSONObj filter = BSON( OM_HOST_FIELD_PASSWORD << "" ) ;
       list<BSONObj>::iterator iter = hosts.begin() ;
       while ( iter != hosts.end() )
       {
-         _restAdaptor->appendHttpBody( _restSession, (*iter).objdata(), 
-                                       (*iter).objsize(), 1 ) ;
+         BSONObj tmp = iter->filterFieldsUndotted( filter, false ) ;
+         _restAdaptor->appendHttpBody( _restSession, tmp.objdata(), 
+                                       tmp.objsize(), 1 ) ;
          iter++ ;
       }
 
@@ -3135,23 +3136,12 @@ namespace engine
 
    INT32 omQueryHostCommand::doCommand()
    {
-      INT32 rc                  = SDB_OK ;
-      const CHAR *pHostName     = NULL ;
+      INT32 rc = SDB_OK ;
       BSONObj selector ;
       BSONObj matcher ;
       BSONObj order ;
       BSONObj hint ;
       list<BSONObj> hosts ;
-
-      _restAdaptor->getQuery( _restSession, OM_REST_HOST_NAME, &pHostName ) ;
-      if( NULL == pHostName )
-      {
-         rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR, "rest field miss:%s", OM_REST_HOST_NAME ) ;
-         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
-         _sendErrorRes2Web( rc, _errorDetail ) ;
-         goto error ;
-      }
 
       rc = _getQueryPara( selector, matcher, order, hint ) ;
       if ( SDB_OK != rc )
@@ -3180,23 +3170,23 @@ namespace engine
       goto done ;
    }
 
-   // *****************omQueryBusinessTypeCommand *****************************
-   omQueryBusinessTypeCommand::omQueryBusinessTypeCommand( 
+   // *****************omListBusinessTypeCommand *****************************
+   omListBusinessTypeCommand::omListBusinessTypeCommand( 
                                                 restAdaptor *pRestAdaptor, 
                                                 pmdRestSession *pRestSession, 
                                                 const CHAR *pRootPath, 
                                                 const CHAR *pSubPath )
-                               :omCreateClusterCommand( pRestAdaptor, 
-                                                        pRestSession ),
-                                _rootPath( pRootPath ), _subPath( pSubPath )
+                             :omCreateClusterCommand( pRestAdaptor, 
+                                                      pRestSession ),
+                              _rootPath( pRootPath ), _subPath( pSubPath )
    {
    }
 
-   omQueryBusinessTypeCommand::~omQueryBusinessTypeCommand()
+   omListBusinessTypeCommand::~omListBusinessTypeCommand()
    {
    }
 
-   BOOLEAN omQueryBusinessTypeCommand::_isArray( ptree &pt )
+   BOOLEAN omListBusinessTypeCommand::_isArray( ptree &pt )
    {
       BOOLEAN isArr = FALSE ;
       string type ;
@@ -3220,7 +3210,7 @@ namespace engine
       return isArr ;
    }
 
-   BOOLEAN omQueryBusinessTypeCommand::_isStringValue( ptree &pt )
+   BOOLEAN omListBusinessTypeCommand::_isStringValue( ptree &pt )
    {
       BOOLEAN isStringV = FALSE ;
       if ( _isArray( pt ) )
@@ -3256,7 +3246,7 @@ namespace engine
       return isStringV ;
    }
 
-   void omQueryBusinessTypeCommand::_parseArray( ptree &pt, 
+   void omListBusinessTypeCommand::_parseArray( ptree &pt, 
                                             BSONArrayBuilder &arrayBuilder )
    {
       ptree::iterator ite = pt.begin() ;
@@ -3275,7 +3265,7 @@ namespace engine
       }
    }
 
-   void omQueryBusinessTypeCommand::_recurseParseObj( ptree &pt, BSONObj &out )
+   void omListBusinessTypeCommand::_recurseParseObj( ptree &pt, BSONObj &out )
    {
       BSONObjBuilder builder ;
       ptree::iterator ite = pt.begin() ;
@@ -3311,8 +3301,8 @@ namespace engine
       out = builder.obj() ;
    }
 
-   INT32 omQueryBusinessTypeCommand::_readConfigFile( const string &file, 
-                                                      BSONObj &obj )
+   INT32 omListBusinessTypeCommand::_readConfigFile( const string &file, 
+                                                     BSONObj &obj )
    {
       INT32 rc = SDB_OK ;
       try
@@ -3333,7 +3323,7 @@ namespace engine
       goto done ;
    }
 
-   INT32 omQueryBusinessTypeCommand::_getBusinessList( 
+   INT32 omListBusinessTypeCommand::_getBusinessList( 
                                                list<BSONObj> &businessList )
    {
       INT32 rc = SDB_OK ;
@@ -3342,7 +3332,7 @@ namespace engine
 
       businessFile = _rootPath + OSS_FILE_SEP + OM_BUSINESS_CONFIG_SUBDIR
                      + OSS_FILE_SEP + OM_BUSINESS_FILE_NAME
-                     + _languageFileSep + OM_BUSINESS_FILE_TYPE ;
+                     + _languageFileSep + OM_CONFIG_FILE_TYPE ;
 
       rc = _readConfigFile( businessFile, fileContent ) ;
       if ( SDB_OK != rc )
@@ -3378,7 +3368,7 @@ namespace engine
       goto done ;
    }
 
-   INT32 omQueryBusinessTypeCommand::doCommand()
+   INT32 omListBusinessTypeCommand::doCommand()
    {
       INT32 rc = SDB_OK ;
       list<BSONObj> businessList ;
@@ -3411,24 +3401,24 @@ namespace engine
       goto done ;
    }
 
-   // *****************omQueryBusinessTemplateCommand *****************************
-   omQueryBusinessTemplateCommand::omQueryBusinessTemplateCommand( 
+   // *****************omGetBusinessTemplateCommand *****************************
+   omGetBusinessTemplateCommand::omGetBusinessTemplateCommand( 
                                                    restAdaptor *pRestAdaptor, 
                                                    pmdRestSession *pRestSession, 
                                                    const CHAR *pRootPath, 
                                                    const CHAR *pSubPath )
-                                  :omQueryBusinessTypeCommand( pRestAdaptor, 
-                                                               pRestSession, 
-                                                               pRootPath,
-                                                               pSubPath )
+                                :omListBusinessTypeCommand( pRestAdaptor, 
+                                                            pRestSession, 
+                                                            pRootPath,
+                                                            pSubPath )
    {
    }
 
-   omQueryBusinessTemplateCommand::~omQueryBusinessTemplateCommand()
+   omGetBusinessTemplateCommand::~omGetBusinessTemplateCommand()
    {
    }
 
-   INT32 omQueryBusinessTemplateCommand::_readConfTemplate( 
+   INT32 omGetBusinessTemplateCommand::_readConfTemplate( 
                                                 const string &businessType, 
                                                 const string &file, 
                                                 list<BSONObj> &deployModList ) 
@@ -3467,8 +3457,8 @@ namespace engine
       goto done ;
    }
 
-   INT32 omQueryBusinessTemplateCommand::_readConfDetail( const string &file, 
-                                                       BSONObj &bsonConfDetail )
+   INT32 omGetBusinessTemplateCommand::_readConfDetail( const string &file, 
+                                                        BSONObj &bsonConfDetail )
    {
       INT32 rc = SDB_OK ;
       rc = _readConfigFile( file, bsonConfDetail ) ;
@@ -3484,7 +3474,7 @@ namespace engine
       goto done ;
    }
 
-   INT32 omQueryBusinessTemplateCommand::doCommand()
+   INT32 omGetBusinessTemplateCommand::doCommand()
    {
       INT32 rc                  = SDB_OK ;
       const CHAR* pBusinessType = NULL ;
@@ -3508,7 +3498,7 @@ namespace engine
       _setFileLanguageSep() ;
       templateFile = _rootPath + OSS_FILE_SEP + OM_BUSINESS_CONFIG_SUBDIR 
                      + OSS_FILE_SEP + pBusinessType + OM_TEMPLATE_FILE_NAME
-                     + _languageFileSep + OM_BUSINESS_FILE_TYPE ;
+                     + _languageFileSep + OM_CONFIG_FILE_TYPE ;
       rc = _readConfTemplate( pBusinessType, templateFile, deployModList ) ;
       if ( SDB_OK != rc )
       {
@@ -3541,10 +3531,10 @@ namespace engine
                                                   pmdRestSession *pRestSession, 
                                                   const CHAR *pRootPath, 
                                                   const CHAR *pSubPath )
-                           :omQueryBusinessTemplateCommand( pRestAdaptor, 
-                                                            pRestSession, 
-                                                            pRootPath,
-                                                            pSubPath)
+                           :omGetBusinessTemplateCommand( pRestAdaptor, 
+                                                          pRestSession, 
+                                                          pRootPath,
+                                                          pSubPath)
    {
    }
 
@@ -3626,7 +3616,7 @@ namespace engine
 
       file = _rootPath + OSS_FILE_SEP + OM_BUSINESS_CONFIG_SUBDIR 
              + OSS_FILE_SEP + businessType + OM_TEMPLATE_FILE_NAME
-             + _languageFileSep + OM_BUSINESS_FILE_TYPE ;
+             + _languageFileSep + OM_CONFIG_FILE_TYPE ;
       rc = _readConfTemplate( businessType, file, deployModList ) ;
       if ( SDB_OK != rc )
       {
@@ -4206,7 +4196,7 @@ namespace engine
       }
       confDetailFile = _rootPath + OSS_FILE_SEP + OM_BUSINESS_CONFIG_SUBDIR 
                        + OSS_FILE_SEP + businessType + OM_CONFIG_ITEM_FILE_NAME
-                       + _languageFileSep + OM_BUSINESS_FILE_TYPE ;
+                       + _languageFileSep + OM_CONFIG_FILE_TYPE ;
 
       rc = _readConfDetail(confDetailFile, bsonConfDetail ) ;
       if( SDB_OK != rc )
@@ -4461,7 +4451,7 @@ namespace engine
 
       templateFile = _rootPath + OSS_FILE_SEP + OM_BUSINESS_CONFIG_SUBDIR 
                      + OSS_FILE_SEP + businessType + OM_TEMPLATE_FILE_NAME
-                     + _languageFileSep + OM_BUSINESS_FILE_TYPE ;
+                     + _languageFileSep + OM_CONFIG_FILE_TYPE ;
       rc = _readConfTemplate( businessType, templateFile, deployModList ) ;
       if ( SDB_OK != rc )
       {
@@ -4493,7 +4483,7 @@ namespace engine
       confDetailFile = _rootPath + OSS_FILE_SEP + OM_BUSINESS_CONFIG_SUBDIR 
                        + OSS_FILE_SEP + businessType 
                        + OM_CONFIG_ITEM_FILE_NAME + _languageFileSep 
-                       + OM_BUSINESS_FILE_TYPE ;
+                       + OM_CONFIG_FILE_TYPE ;
       rc = _readConfDetail( confDetailFile, bsonDetail ) ;
       if ( SDB_OK != rc )
       {

@@ -372,12 +372,12 @@ namespace engine
 
    // *****************************************************************
 
-   // om rest query_business_type_req
-   #define  OM_QUERY_BUSINESS_TYPE_REQ       "list business type"
+   // om rest list_business_type_req
+   #define  OM_LIST_BUSINESS_TYPE_REQ        "list business type"
 
    #define  OM_BUSINESS_CONFIG_SUBDIR        "config"
    #define  OM_BUSINESS_FILE_NAME            "business"
-   #define  OM_BUSINESS_FILE_TYPE            ".xml"
+   #define  OM_CONFIG_FILE_TYPE              ".xml"
 
    #define  OM_XMLATTR_KEY                   "<xmlattr>"
    #define  OM_XMLATTR_TYPE                  "<xmlattr>.type"
@@ -388,8 +388,8 @@ namespace engine
    #define  OM_BSON_BUSINESS_NAME            OM_BUSINESS_FIELD_NAME
    // *****************************************************************
 
-   // om rest query_business_template_req
-   #define  OM_QUERY_BUSINESS_TEMPLATE_REQ   "query business template"
+   // om rest get_business_template_req
+   #define  OM_GET_BUSINESS_TEMPLATE_REQ     "get business template"
 
    #define  OM_TEMPLATE_FILE_NAME            "_template"
 
