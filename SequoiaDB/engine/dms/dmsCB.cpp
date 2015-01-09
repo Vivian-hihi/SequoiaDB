@@ -1405,15 +1405,13 @@ namespace engine
 
    void _SDB_DMSCB::aquireCSMutex( const CHAR *pCSName )
    {
-      UINT32 pos = ossHash( pCSName, ossStrlen( pCSName ) ) %
-                   DMS_CS_MUTEX_BUCKET_SIZE ;
+      UINT32 pos = ossHash( pCSName ) % DMS_CS_MUTEX_BUCKET_SIZE ;
       _vecCSMutex[ pos ]->get() ;
    }
 
    void _SDB_DMSCB::releaseCSMutex( const CHAR *pCSName )
    {
-      UINT32 pos = ossHash( pCSName, ossStrlen( pCSName ) ) %
-                   DMS_CS_MUTEX_BUCKET_SIZE ;
+      UINT32 pos = ossHash( pCSName ) % DMS_CS_MUTEX_BUCKET_SIZE ;
       _vecCSMutex[ pos ]->release() ;
    }
 
