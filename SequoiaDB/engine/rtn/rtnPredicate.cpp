@@ -630,7 +630,7 @@ namespace engine
    }
    // return TRUE when l and r are intersect, and result is set to the intersect
    // of l and r
-   PD_TRACE_DECLARE_FUNCTION ( SDB_PREDOVERLAP, "predicatesOverlap" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_PREDOVERLAP, "predicatesOverlap" )
    BOOLEAN predicatesOverlap ( const rtnStartStopKey &l,
                                const rtnStartStopKey &r,
                                rtnStartStopKey &result )
@@ -897,13 +897,15 @@ namespace engine
       PD_TRACE_ENTRY ( SDB_RTNPRED_RTNPRED ) ;
       _isInitialized = FALSE ;
       INT32 op = e.getGtLtOp() ;
-      if ( !isNot && !e.eoo() && e.type() != RegEx && op == BSONObj::opIN )
+      if ( ( !isNot && !e.eoo() && e.type() != RegEx && op == BSONObj::opIN )
+           || ( e.type() == Array && op == BSONObj::Equality ) )
       {
-         // for IN statement without isNot
+         // for IN statement without isNot or if the element type is array 
+         // and we want equality match {c1:{$et:[1,2,3]}}
          set<BSONElement, element_lt> vals ;
          vector<rtnPredicate> regexes ;
          BSONObjIterator i ( e.embeddedObject() ) ;
-         // for each of the element in the $in array
+         // for each element in the array
          while ( i.more() )
          {
             BSONElement ie = i.next() ;
@@ -946,14 +948,6 @@ namespace engine
          {
             *this |= *i ;
          }
-         _isInitialized = TRUE ;
-         return ;
-      }
-      // if the element type is array and we want equality match
-      // {c1:{$eq:[1,2,3]}}
-      if ( e.type() == Array && op == BSONObj::Equality )
-      {
-         _startStopKeys.push_back ( rtnStartStopKey ( e ) ) ;
          _isInitialized = TRUE ;
          return ;
       }
