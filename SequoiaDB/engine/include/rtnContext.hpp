@@ -565,7 +565,9 @@ namespace engine
 
          void     addSubDone( _pmdEDUCB *cb ) ;
 
-         INT32    open( const BSONObj &orderBy, INT64 numToReturn = -1,
+         INT32    open( const BSONObj &orderBy,
+                        const BSONObj &selector,
+                        INT64 numToReturn = -1,
                         INT64 numToSkip = 0 ) ;
          INT32    reopen () ;
 
@@ -610,7 +612,7 @@ namespace engine
          BOOLEAN                    _preRead ;
 
          _ixmIndexKeyGen            *_keyGen ;
-
+         mthSelector                _selector ;
    } ;
    typedef _rtnContextCoord rtnContextCoord ;
 

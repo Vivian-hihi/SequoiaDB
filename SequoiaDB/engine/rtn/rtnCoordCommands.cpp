@@ -349,7 +349,8 @@ namespace engine
                   "context(rc=%d)", rc ) ;
          goto error ;
       }
-      rc = pContext->open( BSONObj(), pSrc->numToReturn, pSrc->numToSkip ) ;
+      rc = pContext->open( BSONObj(), BSONObj(),
+                           pSrc->numToReturn, pSrc->numToSkip ) ;
       PD_RC_CHECK( rc, PDERROR, "Open context failed, rc: %d", rc ) ;
 
       // forward source request to dest
@@ -489,6 +490,7 @@ namespace engine
       }
 
       rc = ( ( rtnContextCoord * )context )->open( options._orderBy,
+                                                   options._selector,
                                                    options._limit,
                                                    options._skip ) ;
       if ( SDB_OK != rc )
@@ -1153,7 +1155,8 @@ namespace engine
                                   contextID, cb ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to create context, rc: %d", rc ) ;
          // open context
-         rc = pContext->open( orderBy, numToReturn, numToSkip ) ;
+         // ignore SEQUOIADBMAINSTREAM-506 -- yunwu
+         rc = pContext->open( orderBy, BSONObj(), numToReturn, numToSkip ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to open context, rc: %d", rc ) ;
       }
       // send backup msg
@@ -2033,7 +2036,9 @@ namespace engine
                      "context(rc=%d)", rc ) ;
             break;
          }
-         rc = pContext->open( boOrderBy, pSrc->numToReturn, pSrc->numToSkip ) ;
+
+         /// ignore SEQUOIADBMAINSTREAM-506 --yunwu
+         rc = pContext->open( boOrderBy, BSONObj(), pSrc->numToReturn, pSrc->numToSkip ) ;
          if ( rc != SDB_OK )
          {
             PD_LOG( PDERROR, "Open context failed, rc: %d", rc ) ;
@@ -2277,7 +2282,8 @@ namespace engine
          goto error;
       }
 
-      rcTmp = pContext->open( boOrderBy, numToReturn, numToSkip ) ;
+      /// ignore SEQUOIADBMAINSTREAM-506 --yunwu
+      rcTmp = pContext->open( boOrderBy, BSONObj(), numToReturn, numToSkip ) ;
       if ( rcTmp )
       {
          if ( SDB_OK == rc )
@@ -2966,7 +2972,7 @@ namespace engine
       rc = pRtncb->contextNew( RTN_CONTEXT_COORD, (rtnContext **)&pContext,
                                contextID, cb );
       PD_RC_CHECK( rc, PDERROR, "failed to  create context(rc=%d)", rc );
-      rc = pContext->open( boEmpty, -1, 0 );
+      rc = pContext->open( boEmpty, boEmpty, -1, 0 );
       PD_RC_CHECK( rc, PDERROR, "open context failed(rc=%d)", rc ) ;
       do
       {
@@ -3437,7 +3443,7 @@ namespace engine
             PD_LOG ( PDERROR, "failed to allocate context(rc=%d)", rc );
             break;
          }
-         rc = pContext->open( BSONObj(), pSrc->numToReturn, pSrc->numToSkip ) ;
+         rc = pContext->open( BSONObj(), BSONObj(), pSrc->numToReturn, pSrc->numToSkip ) ;
          if ( rc != SDB_OK )
          {
             PD_LOG( PDERROR, "Open context failed, rc: %d", rc ) ;
@@ -6726,9 +6732,13 @@ namespace engine
                        "error:%s", e.what() ) ;
       }
 
-      rc = executeQuery( pReceiveBuffer, boQuery, boOrderBy,
-                        strCollectionName.c_str(), pRouteAgent,
-                        cb, pContext ) ;
+      /// ignore SEQUOIADBMAINSTREAM-506
+      rc = executeQuery( pReceiveBuffer, boQuery,
+                         BSONObj(),
+                         boOrderBy,
+                         strCollectionName.c_str(),
+                         pRouteAgent,
+                         cb, pContext ) ;
       PD_RC_CHECK( rc, PDERROR,
                   "query failed(rc=%d)", rc ) ;
 
@@ -9639,7 +9649,7 @@ retry:
          goto error ;
       }
 
-      rc = context->open( BSONObj() ) ;
+      rc = context->open( BSONObj(), BSONObj() ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to open context:%d", rc ) ;

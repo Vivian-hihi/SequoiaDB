@@ -2299,7 +2299,9 @@ namespace engine
       return RTN_CONTEXT_COORD ;
    }
 
-   INT32 _rtnContextCoord::open( const BSONObj & orderBy, INT64 numToReturn,
+   INT32 _rtnContextCoord::open( const BSONObj &orderBy,
+                                 const BSONObj &selector,
+                                 INT64 numToReturn,
                                  INT64 numToSkip )
    {
       INT32 rc = SDB_OK ;
@@ -2326,6 +2328,15 @@ namespace engine
       _keyGen = SDB_OSS_NEW _ixmIndexKeyGen( _orderBy ) ;
       PD_CHECK( _keyGen != NULL, SDB_OOM, error, PDERROR,
                "malloc failed!" ) ;
+      if ( !selector.isEmpty() )
+      {
+         rc = _selector.loadPattern ( selector ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to load selector pattern:%d", rc ) ;
+            goto error ;
+         }
+      }
 
       _isOpened = TRUE ;
       _hitEnd = FALSE ;
@@ -2935,7 +2946,25 @@ namespace engine
                try
                {
                   BSONObj obj( pData ) ;
-                  rc = append( obj ) ;
+                  BSONObj selected ;
+                  const BSONObj *record = NULL ;
+
+                  if ( !_selector.isInitialized() )
+                  {
+                     record = &obj ;
+                  }
+                  else
+                  {
+                     rc = _selector.select( obj, selected ) ;
+                     if ( SDB_OK != rc )
+                     {
+                        PD_LOG( PDERROR, "failed to select fields from obj:%d", rc ) ;
+                        goto error ;
+                     }
+                     record = &selected ;
+                  }
+
+                  rc = append( *record ) ;
                   PD_RC_CHECK( rc, PDERROR, "Append obj[%s] failed, rc: %d",
                                obj.toString().c_str(), rc ) ;
                }
