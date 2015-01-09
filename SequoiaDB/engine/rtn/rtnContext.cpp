@@ -4362,6 +4362,7 @@ namespace engine
       _pTransCB      = pmdGetKRCB()->getTransCB();
       _gotDmsCBWrite = FALSE ;
       _hasLock       = FALSE ;
+      _hasDropped    = FALSE ;
       _mbContext     = NULL ;
       _su            = NULL ;
    }
@@ -4430,7 +4431,7 @@ namespace engine
    INT32 _rtnContextDelCL::open( const CHAR *pCollectionName,
                                  _pmdEDUCB *cb )
    {
-      INT32 rc = SDB_OK;
+      INT32 rc = SDB_OK ;
       SDB_ASSERT( pCollectionName, "pCollectionName can't be null!" );
       PD_CHECK( pCollectionName, SDB_INVALIDARG, error, PDERROR,
                "pCollectionName is null!" );
@@ -4457,6 +4458,7 @@ namespace engine
                                     _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
+
       if ( !isOpened() )
       {
          rc = SDB_DMS_CONTEXT_IS_CLOSE;
@@ -4479,6 +4481,7 @@ namespace engine
                   _collectionName.c_str(), rc ) ;
          goto error ;
       }
+      _hasDropped = TRUE ;
       _su->getAPM()->invalidatePlans ( _clShortName.c_str() ) ;
 
       _clean( cb ) ;
@@ -4506,8 +4509,16 @@ namespace engine
       // unlock su
       if ( _pDmsCB && _su )
       {
+         string csname = _su->CSName() ;
          _pDmsCB->suUnlock ( _su->CSID() ) ;
          _su = NULL ;
+
+         if ( _hasDropped && SDB_ROLE_DATA == pmdGetDBRole() )
+         {
+            // drop empty collection space, ignore errors
+            _pDmsCB->dropEmptyCollectionSpace( csname.c_str(),
+                                               cb, _pDpsCB ) ;
+         }
       }
       if ( _gotDmsCBWrite )
       {

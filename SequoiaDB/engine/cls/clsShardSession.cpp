@@ -600,7 +600,11 @@ namespace engine
       }
       rc = rtnCreateCollectionSpaceCommand( csName, _pEDUCB, _pDmsCB, _pDpsCB,
                                             pageSize, lobPageSize, FALSE ) ;
-      if ( SDB_OK != rc )
+      if ( SDB_DMS_CS_EXIST == rc )
+      {
+         rc = SDB_OK ;
+      }
+      else if ( SDB_OK != rc )
       {
          PD_LOG( PDWARNING, "Create collection space[%s] by catalog failed, rc:"
                  " %d", csName, rc ) ;
@@ -670,8 +674,8 @@ namespace engine
             if ( SDB_OK != rc && SDB_DMS_EXIST != rc )
             {
                PD_RC_CHECK( rc, PDERROR,
-                           "create sub-collection(%s) failed(rc=%d)",
-                           iter->c_str(), rc );
+                            "create sub-collection(%s) failed(rc=%d)",
+                            iter->c_str(), rc );
             }
             rc = SDB_OK;
             ++iter;
@@ -691,6 +695,10 @@ namespace engine
          rc = rtnCreateCollectionCommand( clFullName, shardingKey, attribute,
                                           _pEDUCB, _pDmsCB, _pDpsCB, 0,
                                           FALSE ) ;
+         if ( SDB_DMS_EXIST == rc )
+         {
+            rc = SDB_OK ;
+         }
       }
       if ( SDB_OK != rc )
       {

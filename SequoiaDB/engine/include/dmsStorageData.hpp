@@ -568,6 +568,8 @@ namespace engine
 
          OSS_INLINE const dmsMBStatInfo* getMBStatInfo( UINT16 mbID ) const ;
 
+         OSS_INLINE UINT32 getCollectionNum() ;
+
          // update extent logical id and expanded meta
          // must hold mb exclusive lock
          INT32         addExtent2Meta( dmsExtentID extID, dmsExtent *extent,
@@ -663,7 +665,7 @@ namespace engine
          void           _initializeMME () ;
 
          OSS_INLINE void    _collectionNameInsert ( const CHAR *pName,
-                                                UINT16 mbID ) ;
+                                                    UINT16 mbID ) ;
          OSS_INLINE UINT16  _collectionNameLookup ( const CHAR *pName ) ;
          OSS_INLINE void    _collectionNameRemove ( const CHAR *pName ) ;
          OSS_INLINE void    _collectionNameMapCleanup () ;
@@ -791,6 +793,11 @@ namespace engine
          SDB_OSS_FREE( const_cast<CHAR *>(it->first) ) ;
       }
       _collectionNameMap.clear() ;
+   }
+   OSS_INLINE UINT32 _dmsStorageData::getCollectionNum()
+   {
+      ossScopedLock lock( &_metadataLatch, SHARED ) ;
+      return (UINT32)_collectionNameMap.size() ;
    }
    OSS_INLINE ossValuePtr _dmsStorageData::recordAddr( const dmsRecordID &record )
    {

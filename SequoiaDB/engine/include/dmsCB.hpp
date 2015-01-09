@@ -98,15 +98,6 @@ namespace engine
    class _SDB_DMSCB : public _IControlBlock
    {
    private :
-   #ifdef DMSCB_XLOCK
-   #undef DMSCB_XLOCK
-   #endif
-   #define DMSCB_XLOCK ossScopedLock _lock(&_mutex, EXCLUSIVE) ;
-   #ifdef DMSCB_SLOCK
-   #undef DMSCB_SLOCK
-   #endif
-   #define DMSCB_SLOCK ossScopedLock _lock(&_mutex, SHARED) ;
-
       ossSpinSLatch _mutex ;
 
       struct cmp_cscb
@@ -121,6 +112,9 @@ namespace engine
       std::vector<SDB_DMS_CSCB*>          _delCscbVec ;
       std::vector<ossRWMutex*>            _latchVec ;
       std::vector<dmsStorageUnitID>       _freeList ;
+
+      // collection spaces mutex in create and drop operations
+      std::vector< ossSpinXLatch* >       _vecCSMutex ;
 
       // represent the last page clean timestamp for a given storage unit
       typedef std::pair<ossTick,dmsStorageUnitID>  _pageCleanHistory ;
@@ -151,7 +145,8 @@ namespace engine
       void _CSCBRelease ( dmsStorageUnitID suID,
                           OSS_LATCH_MODE lockType = SHARED ) ;
       INT32 _CSCBNameRemove ( const CHAR *pName, _pmdEDUCB *cb,
-                              SDB_DPSCB *dpsCB, SDB_DMS_CSCB *&pCSCB ) ;
+                              SDB_DPSCB *dpsCB, BOOLEAN onlyEmpty,
+                              SDB_DMS_CSCB *&pCSCB ) ;
       INT32 _CSCBNameRemoveP1 ( const CHAR *pName,
                                 _pmdEDUCB *cb,
                                 SDB_DPSCB *dpsCB ) ;
@@ -166,7 +161,8 @@ namespace engine
       INT32 _joinPageCleanSU ( dmsStorageUnitID suID ) ;
 
       INT32 _delCollectionSpace ( const CHAR *pName, _pmdEDUCB *cb,
-                                  SDB_DPSCB *dpsCB, BOOLEAN removeFile ) ;
+                                  SDB_DPSCB *dpsCB, BOOLEAN removeFile,
+                                  BOOLEAN onlyEmpty ) ;
 
    public:
       _SDB_DMSCB() ;
@@ -194,6 +190,8 @@ namespace engine
                                  SDB_DPSCB *dpsCB ) ;
       INT32 dropCollectionSpace ( const CHAR *pName, _pmdEDUCB *cb,
                                   SDB_DPSCB *dpsCB ) ;
+      INT32 dropEmptyCollectionSpace( const CHAR *pName, _pmdEDUCB *cb,
+                                      SDB_DPSCB *dpsCB ) ;
       INT32 unloadCollectonSpace( const CHAR *pName, _pmdEDUCB *cb ) ;
 
       void dumpInfo ( std::set<monCollection> &collectionList,
@@ -266,6 +264,9 @@ namespace engine
       {
          return _dmsCBState ;
       }
+
+      void  aquireCSMutex( const CHAR *pCSName ) ;
+      void  releaseCSMutex( const CHAR *pCSName ) ;
 
    } ;
    typedef class _SDB_DMSCB SDB_DMSCB ;
