@@ -91,7 +91,7 @@ namespace engine
    }
 
    INT32 omAuthCommand::_getQueryPara( BSONObj &selector,  BSONObj &matcher,
-                                       BSONObj order, BSONObj hint )
+                                       BSONObj &order, BSONObj &hint )
    {
       const CHAR *pSelector = NULL ;
       const CHAR *pMatcher  = NULL ;
@@ -3096,7 +3096,7 @@ namespace engine
                arrBuilder.append( *iter ) ;
                iter++ ;
             }
-            
+
             matcher  = BSON( "$or" << arrBuilder.arr() ) ;
             rc = _queryTable( OM_CS_DEPLOY_CL_HOST, selector, matcher, 
                               order, hint, 0, 0, -1, records ) ;
@@ -3388,7 +3388,7 @@ namespace engine
          list<BSONObj>::iterator iter = businessList.begin() ;
          while ( iter != businessList.end() )
          {
-            
+
             _restAdaptor->appendHttpBody( _restSession, iter->objdata(), 
                                           iter->objsize(), 1 ) ;
             iter++ ;
@@ -5357,7 +5357,7 @@ namespace engine
    }
 
    void omQueryNodeConfCommand::_expandNodeInfo( BSONObj &oneConfig, 
-                                                 string svcName,
+                                                 const string &svcName,
                                                  BSONObj &nodeinfo )
    {
       string hostName ;
@@ -5386,7 +5386,8 @@ namespace engine
       }
    }
 
-   INT32 omQueryNodeConfCommand::_getNodeInfo( string hostName, string svcName, 
+   INT32 omQueryNodeConfCommand::_getNodeInfo( const string &hostName, 
+                                               const string &svcName, 
                                                BSONObj &nodeinfo )
    {
       BSONObjBuilder bsonBuilder ;
@@ -5447,41 +5448,36 @@ namespace engine
 
    void omQueryNodeConfCommand::_sendNodeInfo2Web( BSONObj &nodeInfo )
    {
-      BSONObjBuilder opBuilder ;
-
-      if ( !nodeInfo.isEmpty() )
-      {
-         _restAdaptor->appendHttpBody( _restSession, nodeInfo.objdata(), 
-                                       nodeInfo.objsize(), 1 ) ;
-      }
-
+      _restAdaptor->appendHttpBody( _restSession, nodeInfo.objdata(), 
+                                    nodeInfo.objsize(), 1 ) ;
       _sendOKRes2Web() ;
-
       return ;
    }
 
    INT32 omQueryNodeConfCommand::doCommand()
    {
-      INT32 rc                 = SDB_OK ;
-      const CHAR *svcName      = NULL ;
-      const CHAR *hostName     = NULL ;
+      INT32 rc = SDB_OK ;
+      const CHAR* pHostName = NULL ;
+      const CHAR* pSvcName  = NULL ;
       BSONObj nodeInfo ;
 
-      _restAdaptor->getQuery( _restSession, OM_REST_HOST_NAME, &hostName ) ;
-      _restAdaptor->getQuery( _restSession, OM_REST_SVCNAME, &svcName ) ;
-      if ( NULL == hostName || NULL == svcName )
+      _restAdaptor->getQuery( _restSession, OM_REST_HOST_NAME, &pHostName ) ;
+      _restAdaptor->getQuery( _restSession, OM_REST_SVCNAME, &pSvcName ) ;
+      if ( NULL == pHostName || NULL == pSvcName )
       {
-         _errorDetail = "rest field miss:" + string( OM_REST_HOST_NAME ) 
-                        + " or " + OM_REST_SVCNAME ;
          rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
+         PD_LOG_MSG( PDERROR, "rest field miss:field=%s or field=%s", 
+                     OM_REST_HOST_NAME, OM_REST_SVCNAME ) ;
+         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
       }
-      rc = _getNodeInfo( hostName, svcName, nodeInfo ) ;
+
+      rc = _getNodeInfo( pHostName, pSvcName, nodeInfo ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
+         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         PD_LOG( PDERROR, "get node info failed:rc=", rc ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
       }
@@ -5510,152 +5506,64 @@ namespace engine
       const CHAR *pClusterName  = NULL ;
       const CHAR *pHostName     = NULL ;
       list<BSONObj> businessList ;
+      BSONObj order ;
+      BSONObj hint ;
+      BSONObj selector ;
+      BSONObj matcher ;
 
       _restAdaptor->getQuery( _restSession, OM_REST_CLUSTER_NAME, 
                               &pClusterName ) ;
       _restAdaptor->getQuery( _restSession, OM_REST_HOST_NAME, &pHostName ) ;
       if ( NULL != pClusterName )
       {
-         rc = _getBusinessList( pClusterName, businessList ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDERROR, "_getBusinessList failed:rc=%d", rc ) ;
-            _sendErrorRes2Web( rc, _errorDetail ) ;
-            goto error ;
-         }
+         selector = BSON( OM_BUSINESS_FIELD_NAME << 1 
+                          << OM_BUSINESS_FIELD_TYPE << 1 ) ;
+         matcher = BSON( OM_BUSINESS_FIELD_CLUSTERNAME << pClusterName ) ;
+         rc = _queryTable( OM_CS_DEPLOY_CL_BUSINESS, selector, matcher, order,
+                           hint, 0, 0, -1, businessList ) ;
       }
       else if ( NULL != pHostName )
       {
-         rc = _getBusinessListByHost( pHostName, businessList ) ;
-         if ( SDB_OK != rc )
+         list<BSONObj> tmpRecords ;
+         selector = BSON( OM_CONFIGURE_FIELD_BUSINESSNAME << 1 ) ;
+         matcher  = BSON( OM_CONFIGURE_FIELD_HOSTNAME << pHostName ) ;
+         rc = _queryTable( OM_CS_DEPLOY_CL_CONFIGURE, selector, matcher, order,
+                           hint, 0, 0, -1, tmpRecords ) ;
+         if ( SDB_OK == rc && tmpRecords.size() > 0 )
          {
-            PD_LOG( PDERROR, "_getBusinessListByHost failed:rc=%d", rc ) ;
-            _sendErrorRes2Web( rc, _errorDetail ) ;
-            goto error ;
+            BSONArrayBuilder arrBuilder ;
+            list<BSONObj>::iterator iter = tmpRecords.begin() ;
+            while ( iter != tmpRecords.end() )
+            {
+               arrBuilder.append( *iter ) ;
+               iter++ ;
+            }
+
+            selector = BSON( OM_BUSINESS_FIELD_NAME << 1 
+                             << OM_BUSINESS_FIELD_TYPE << 1 ) ;
+            matcher  = BSON( "$or" << arrBuilder.arr() ) ;
+            rc = _queryTable( OM_CS_DEPLOY_CL_BUSINESS, selector, matcher, 
+                              order, hint, 0, 0, -1, businessList ) ;
          }
       }
       else
       {
-         _errorDetail = "rest field miss:" + string( OM_REST_CLUSTER_NAME ) 
-                        + " or " + OM_REST_HOST_NAME ;
-         rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
+         selector = BSON( OM_BUSINESS_FIELD_NAME << 1 
+                          << OM_BUSINESS_FIELD_TYPE << 1) ;
+         rc = _queryTable( OM_CS_DEPLOY_CL_BUSINESS, selector, matcher, order,
+                           hint, 0, 0, -1, businessList ) ;
+      }
+
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "list business failed:rc=%d", rc ) ;
+         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
       }
 
       _sendBusinessList2Web( businessList ) ;
    done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   INT32 omListBusinessCommand::_getBusinessList( string clusterName,
-                                                  list<BSONObj> &businessList )
-   {
-      INT32 rc = SDB_OK ;
-      BSONObj selector ;
-      BSONObj matcher ;
-      BSONObj order ;
-      BSONObj hint ;
-      SINT64 contextID = -1 ;
-
-      selector = BSON( OM_BUSINESS_FIELD_NAME << "" 
-                       << OM_BUSINESS_FIELD_TYPE << "" ) ;
-      matcher  = BSON( OM_BUSINESS_FIELD_CLUSTERNAME << clusterName ) ;
-      rc = rtnQuery( OM_CS_DEPLOY_CL_BUSINESS, selector, matcher, order, hint, 0, 
-                     _cb, 0, -1, _pDMSCB, _pRTNCB, contextID );
-      if ( rc )
-      {
-         _errorDetail = string( "fail to query table:" ) 
-                        + OM_CS_DEPLOY_CL_BUSINESS ;
-         PD_LOG( PDERROR, "%s,rc=%d", _errorDetail.c_str(), rc ) ;
-         goto error ;
-      }
-
-      while ( TRUE )
-      {
-         rtnContextBuf buffObj ;
-         rc = rtnGetMore ( contextID, 1, buffObj, _cb, _pRTNCB ) ;
-         if ( rc )
-         {
-            if ( SDB_DMS_EOC == rc )
-            {
-               rc = SDB_OK ;
-               break ;
-            }
-
-            contextID = -1 ;
-            _errorDetail = string( "failed to get record from table:" )
-                           + OM_CS_DEPLOY_CL_BUSINESS ;
-            PD_LOG( PDERROR, "%s,rc=%d", _errorDetail.c_str(), rc ) ;
-            goto error ;
-         }
-
-         BSONObj record( buffObj.data() ) ;
-         businessList.push_back( record.copy() ) ;
-      }
-   done:
-      if ( -1 != contextID )
-      {
-         _pRTNCB->contextDelete ( contextID, _cb ) ;
-      }
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   INT32 omListBusinessCommand::_getBusinessListByHost( string hostName,
-                                                    list<BSONObj> &businessList )
-   {
-      INT32 rc = SDB_OK ;
-      BSONObj selector ;
-      BSONObj matcher ;
-      BSONObj order ;
-      BSONObj hint ;
-      SINT64 contextID = -1 ;
-
-      selector = BSON( OM_CONFIGURE_FIELD_BUSINESSNAME << "" 
-                       << OM_BUSINESS_FIELD_TYPE << "" ) ;
-      matcher  = BSON( OM_CONFIGURE_FIELD_HOSTNAME << hostName ) ;
-      rc = rtnQuery( OM_CS_DEPLOY_CL_CONFIGURE, selector, matcher, order, hint, 
-                     0, _cb, 0, -1, _pDMSCB, _pRTNCB, contextID );
-      if ( rc )
-      {
-         _errorDetail = string( "fail to query table:" ) 
-                        + OM_CS_DEPLOY_CL_CONFIGURE ;
-         PD_LOG( PDERROR, "%s,rc=%d", _errorDetail.c_str(), rc ) ;
-         goto error ;
-      }
-
-      while ( TRUE )
-      {
-         rtnContextBuf buffObj ;
-         rc = rtnGetMore ( contextID, 1, buffObj, _cb, _pRTNCB ) ;
-         if ( rc )
-         {
-            if ( SDB_DMS_EOC == rc )
-            {
-               rc = SDB_OK ;
-               break ;
-            }
-
-            contextID = -1 ;
-            _errorDetail = string( "failed to get record from table:" )
-                           + OM_CS_DEPLOY_CL_CONFIGURE ;
-            PD_LOG( PDERROR, "%s,rc=%d", _errorDetail.c_str(), rc ) ;
-            goto error ;
-         }
-
-         BSONObj record( buffObj.data() ) ;
-         businessList.push_back( record.copy() ) ;
-      }
-   done:
-      if ( -1 != contextID )
-      {
-         _pRTNCB->contextDelete ( contextID, _cb ) ;
-      }
       return rc ;
    error:
       goto done ;
@@ -5689,13 +5597,15 @@ namespace engine
    {
    }
 
-   void omQueryBusinessCommand::_sendBusinessInfo2Web( BSONObj &businessInfo )
+   void omQueryBusinessCommand::_sendBusinessInfo2Web( 
+                                                  list<BSONObj> &businessInfo )
    {
-      BSONObjBuilder opBuilder ;
-      if ( !businessInfo.isEmpty() )
+      list<BSONObj>::iterator iter = businessInfo.begin() ;
+      while ( iter != businessInfo.end() )
       {
-         _restAdaptor->appendHttpBody( _restSession, businessInfo.objdata(), 
-                                       businessInfo.objsize(), 1 ) ;
+         _restAdaptor->appendHttpBody( _restSession, iter->objdata(), 
+                                       iter->objsize(), 1 ) ;
+         iter++ ;
       }
 
       _sendOKRes2Web() ;
@@ -5705,31 +5615,31 @@ namespace engine
 
    INT32 omQueryBusinessCommand::doCommand()
    {
-      INT32 rc                 = SDB_OK ;
-      const CHAR *businessName = NULL ;
-      BSONObj businessInfo ;
+      INT32 rc = SDB_OK ;
+      BSONObj selector ; 
+      BSONObj matcher ;
+      BSONObj order ;
+      BSONObj hint ;
+      list<BSONObj> businessInfo ;
 
-      _restAdaptor->getQuery( _restSession, OM_REST_BUSINESS_NAME, 
-                              &businessName ) ;
-      if ( NULL == businessName )
+      rc = _getQueryPara( selector, matcher, order, hint ) ;
+      if ( SDB_OK != rc )
       {
-         _errorDetail = "rest field miss:" + string( OM_REST_BUSINESS_NAME ) ;
-         rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
+         PD_LOG( PDERROR, "get query parameter failed:rc=%d", rc ) ;
+         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
       }
 
-      rc = _getBusinessInfo( businessName, businessInfo ) ;
+      rc = _queryTable( OM_CS_DEPLOY_CL_BUSINESS, selector, matcher, order, 
+                        hint, 0, 0, -1, businessInfo ) ;
       if ( SDB_OK != rc )
       {
-         if ( SDB_DMS_EOC != rc )
-         {
-            PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
-            _sendErrorRes2Web( rc, _errorDetail ) ;
-            goto error ;
-         }
-         rc = SDB_OK ;
+         PD_LOG( PDERROR, "query table failed:table=%s,rc=%d", 
+                 OM_CS_DEPLOY_CL_BUSINESS, rc ) ;
+         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         _sendErrorRes2Web( rc, _errorDetail ) ;
+         goto error ;
       }
 
       _sendBusinessInfo2Web( businessInfo ) ;

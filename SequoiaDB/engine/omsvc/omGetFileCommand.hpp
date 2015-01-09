@@ -98,7 +98,7 @@ namespace engine
                                          string &sdbUserGroup ) ;
 
          INT32           _getQueryPara( BSONObj &selector, BSONObj &matcher,
-                                        BSONObj order, BSONObj hint) ;
+                                        BSONObj &order, BSONObj &hint) ;
          INT32           _queryTable( const string &tableName, 
                                       const BSONObj &selector, 
                                       const BSONObj &matcher,
@@ -614,14 +614,14 @@ namespace engine
       public:
          virtual INT32  doCommand() ;
 
-      protected:
-         INT32          _getNodeInfo( string businessName, string svcName,
-                                      BSONObj &nodeInfo ) ;
-
       private:
-         void           _sendNodeInfo2Web( BSONObj &nodeInfo ) ;
-         void           _expandNodeInfo( BSONObj &oneConfig, string svcName,
+         INT32          _getNodeInfo( const string &hostName, 
+                                      const string &svcName, 
+                                      BSONObj &nodeinfo ) ;
+         void           _expandNodeInfo( BSONObj &oneConfig, 
+                                         const string &svcName,
                                          BSONObj &nodeinfo ) ;
+         void           _sendNodeInfo2Web( BSONObj &nodeList ) ;
    } ;
 
    class omQueryBusinessCommand : public omAuthCommand
@@ -635,7 +635,7 @@ namespace engine
          virtual INT32  doCommand() ;
 
       private:
-         void           _sendBusinessInfo2Web( BSONObj &businessInfo ) ;
+         void           _sendBusinessInfo2Web( list<BSONObj> &businessInfo ) ;
    } ;
 
    class omListBusinessCommand : public omAuthCommand
@@ -649,10 +649,6 @@ namespace engine
          virtual INT32  doCommand() ;
 
       private:
-         INT32          _getBusinessList( string clusterName,
-                                          list<BSONObj> &businessList ) ;
-         INT32          _getBusinessListByHost( string hostName,
-                                                list<BSONObj> &businessList ) ;
          void           _sendBusinessList2Web( list<BSONObj> &businessList ) ;
    };
 
