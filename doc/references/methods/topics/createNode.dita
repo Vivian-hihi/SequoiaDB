@@ -18,7 +18,7 @@
         <strow>
           <stentry>host </stentry>
           <stentry>string                   </stentry>
-          <stentry>指定节点的主机名。 </stentry>
+          <stentry>指定节点的主机名或者主机IP。 </stentry>
           <stentry>是                   </stentry>
         </strow>
         <strow>
@@ -43,11 +43,12 @@
       
     </section>
     <section><title>格式</title>
-      <p>rg.createNode() 方法的定义格式有四个参数：host，service，dbpath，config，如上表所示，前三个参数的类型都是字符串型，必填；最后一个是 Json 对象，选填。<codeblock>("&lt;主机名>","&lt;端口号>","&lt;节点路径>,"[{&lt;configParam>:value,...}])</codeblock></p>
+      <p>rg.createNode() 方法的定义格式有四个参数：host，service，dbpath，config，如上表所示，前三个参数的类型都是字符串型，必填；最后一个是 Json 对象，选填。<codeblock>("&lt;主机>","&lt;端口号>","&lt;节点路径>,"[{&lt;configParam>:value,...}])</codeblock></p>
     </section>
     <section><title>示例</title>
       <ul>
-        <li>在分区组 group 中创建一个端口号为11800的节点，指定日志文件大小为64MB<codeblock>rg.createNode("vmsvr2-suse-x64",11800,"/opt/sequoiadb/data/11800",{logfilesz:64})</codeblock></li>
+        <li>在分区组 group 中创建一个端口号为11800的节点，指定日志文件大小为64MB<codeblock>rg.createNode("vmsvr2-suse-x64",11800,"/opt/sequoiadb/data/11800",{logfilesz:64})</codeblock>
+          <codeblock>rg.createNode("192.168.20.181",11800,"/opt/sequoiadb/data/11800",{logfilesz:64})</codeblock></li>
       </ul>
       <p><note>
         <p>在一个分区组中能创建多个节点，但是连个节点的端口号必须相差5以上。因为系统为每个节点后台控制了5个通信接口。</p>

@@ -35,7 +35,7 @@
       <p> createUsr() 方法的定义格式 name 和 password 两个参数，两个参数都是字符串类型，且可以为空串。 </p>
       <p><codeblock>("&lt;用户名>","&lt;密码>")</codeblock></p>
       <note><p>当为数据库设置了用户名和密码时，那么只能使用正确的用户名和密码才能登录数据库进行相关操作。此时登录数据库的命令如下格式：
-        <codeblock>db = new Sdb("&lt;hostname>","&lt;port>","&lt;name>","&lt;password>")</codeblock></p></note>
+        <codeblock>db = new Sdb("&lt;host>","&lt;port>","&lt;name>","&lt;password>")</codeblock></p></note>
     </section>
     <section><title>示例</title>
       <ul>

@@ -18,7 +18,7 @@
         <strow>
           <stentry>host</stentry>
           <stentry>string</stentry>
-          <stentry>指定编目节点的主机名。</stentry>
+          <stentry>指定编目节点的主机名或者主机IP。</stentry>
           <stentry>是</stentry>
         </strow>
         <strow>
@@ -44,7 +44,7 @@
     </section>
     <section><title>格式</title>
       <p>createCataRG() 方法的定义格式有 host，service，dbpath，config 四个参数，host，dbpath 为字符串类型，service 为整数型，config 为 json 对象，格式如下：</p>
-      <p><codeblock>{"&lt;主机名>",&lt;端口号>,"&lt;数据文件路径>",[数据库配置参数对象]}</codeblock></p>
+      <p><codeblock>{"&lt;主机名/主机IP>",&lt;端口号>,"&lt;数据文件路径>",[数据库配置参数对象]}</codeblock></p>
       <note>
         <ul>
           <li>请确保数据文件存放路径的权限，如果 SequoiaDB 采用的默认安装，那么给路径赋予 sdbadmin 权限。</li>
@@ -56,6 +56,7 @@
         <li>
           <p>在名为：sdbserver1 的主机上创建一个编目节点组，服务端口为：11800，数据文件存放路径为：/opt/sequoiadb/database/cata/11800</p>
           <codeblock>db.createCataRG("sdbserver1", 11800, "/opt/sequoiadb/database/cata/11800")</codeblock>
+          <codeblock>db.createCataRG("192.168.1.10", 11800, "/opt/sequoiadb/database/cata/11800")</codeblock>
         </li>        
       </ul>
     </section>
