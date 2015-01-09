@@ -4362,7 +4362,6 @@ namespace engine
       _pTransCB      = pmdGetKRCB()->getTransCB();
       _gotDmsCBWrite = FALSE ;
       _hasLock       = FALSE ;
-      _hasDropped    = FALSE ;
       _mbContext     = NULL ;
       _su            = NULL ;
    }
