@@ -1583,14 +1583,7 @@ namespace engine
    done :
       if ( DMS_INVALID_CS != suID )
       {
-         string csname = su->CSName() ;
          dmsCB->suUnlock ( suID ) ;
-
-         if ( SDB_OK == rc && SDB_ROLE_DATA == pmdGetDBRole() )
-         {
-            // drop empty collection space, ignore errors
-            dmsCB->dropEmptyCollectionSpace( csname.c_str(), cb, dpsCB ) ;
-         }
       }
       if ( writable )
       {

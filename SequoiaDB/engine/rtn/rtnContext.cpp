@@ -4481,7 +4481,6 @@ namespace engine
                   _collectionName.c_str(), rc ) ;
          goto error ;
       }
-      _hasDropped = TRUE ;
       _su->getAPM()->invalidatePlans ( _clShortName.c_str() ) ;
 
       _clean( cb ) ;
@@ -4509,16 +4508,8 @@ namespace engine
       // unlock su
       if ( _pDmsCB && _su )
       {
-         string csname = _su->CSName() ;
          _pDmsCB->suUnlock ( _su->CSID() ) ;
          _su = NULL ;
-
-         if ( _hasDropped && SDB_ROLE_DATA == pmdGetDBRole() )
-         {
-            // drop empty collection space, ignore errors
-            _pDmsCB->dropEmptyCollectionSpace( csname.c_str(),
-                                               cb, _pDpsCB ) ;
-         }
       }
       if ( _gotDmsCBWrite )
       {

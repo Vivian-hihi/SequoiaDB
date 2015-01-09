@@ -840,7 +840,6 @@ namespace engine
       std::string          _clShortName ;
       BOOLEAN              _gotDmsCBWrite ;
       BOOLEAN              _hasLock ;
-      BOOLEAN              _hasDropped ;
 
       _dmsStorageUnit      *_su ;
       _dmsMBContext        *_mbContext ;
