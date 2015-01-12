@@ -2187,11 +2187,6 @@ namespace engine
             goto done ;
          }
 
-         // drop cs when no collections, ignore errors
-         pmdGetKRCB()->getDMSCB()->dropEmptyCollectionSpace(
-            dmsGetCSNameFromFullName( _curCollecitonName ).c_str(), eduCB(),
-            pmdGetKRCB()->getDPSCB() ) ;
-
          MsgClsFSEndRes res ;
          res.header.header.requestID = header->requestID ;
          res.header.header.routeID = header->routeID ;

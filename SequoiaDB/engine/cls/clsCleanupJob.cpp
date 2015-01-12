@@ -208,6 +208,13 @@ namespace engine
             {
                rc = SDB_OK ;
             }
+            else if ( SDB_OK == rc )
+            {
+               // drop empty collectionspace, ignore errors
+               _dmsCB->dropEmptyCollectionSpace(
+                        dmsGetCSNameFromFullName( _clFullName ).c_str(),
+                        eduCB(), _dpsCB ) ;
+            }
             pTaskMgr->releaseReg( SHARED ) ;
             goto done ;
          }
@@ -461,6 +468,13 @@ retry:
                if ( SDB_DMS_CS_NOTEXIST == rc || SDB_DMS_NOTEXIST == rc )
                {
                   rc = SDB_OK ;
+               }
+               else if ( SDB_OK == rc )
+               {
+                  // drop empty collectionspace, ignore errors
+                  _dmsCB->dropEmptyCollectionSpace(
+                           dmsGetCSNameFromFullName( _clFullName ).c_str(),
+                           eduCB(), _dpsCB ) ;
                }
                pTaskMgr->releaseReg( SHARED ) ;
                goto done ;
