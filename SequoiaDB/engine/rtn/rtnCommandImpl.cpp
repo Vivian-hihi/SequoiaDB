@@ -827,8 +827,9 @@ namespace engine
       if ( !orderBy.isEmpty() )
       {
          rc = rtnSort( (rtnContext**)&context,
+                       orderBy,
                        newSelector.isEmpty() ? BSONObj() : selector,
-                       orderBy, cb, numToSkip,
+                       cb, numToSkip,
                        numToReturn, rtnCB, contextID ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to sort, rc: %d", rc ) ;
       }
