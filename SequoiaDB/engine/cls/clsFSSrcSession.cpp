@@ -2189,7 +2189,7 @@ namespace engine
 
          // drop cs when no collections, ignore errors
          pmdGetKRCB()->getDMSCB()->dropEmptyCollectionSpace(
-            dmsGetCSNameFromFullName( _curCollecitonName ), eduCB(),
+            dmsGetCSNameFromFullName( _curCollecitonName ).c_str(), eduCB(),
             pmdGetKRCB()->getDPSCB() ) ;
 
          MsgClsFSEndRes res ;
