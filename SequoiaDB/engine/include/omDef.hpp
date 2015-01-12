@@ -531,13 +531,6 @@ namespace engine
 
 
 
-
-   // agent query task req
-   #define AGENT_QUERY_TASK_REQ              "query task"
-   //******************************************************************
-
-
-
    // agent default localhost
    #define  OM_DEFAULT_LOCAL_HOST            "localhost"
    // agent default port
