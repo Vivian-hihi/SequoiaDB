@@ -1863,6 +1863,19 @@ namespace engine
             goto error ;
          }
 
+         /// confirm that no there is no task in this group.
+         matcher = BSON( FIELD_NAME_TARGETID << groupID ) ;
+         rc = _count( CAT_TASK_INFO_COLLECTION, matcher, count ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to count collection: %s, match: "
+                      "%s, rc: %d", CAT_TASK_INFO_COLLECTION,
+                      matcher.toString().c_str(), rc ) ;
+         if ( 0 != count )
+         {
+            PD_LOG( PDERROR, "can not remove a group with task in it" ) ;
+            rc = SDB_CAT_RM_GRP_FORBIDDEN ;
+            goto error ;
+         }
+
          // remove group
          pmdGetKRCB()->getCATLOGUECB()->removeGroupID( groupID ) ;
          isDeleted = TRUE ;
