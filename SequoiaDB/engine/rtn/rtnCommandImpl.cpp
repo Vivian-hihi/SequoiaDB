@@ -1405,7 +1405,6 @@ namespace engine
                                                TRUE ) ;
       PD_TRACE_EXITRC ( SDB_RTNDROPCSCOMMAND, rc ) ;
       return rc ;
-
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNDROPCSP1, "rtnDropCollectionSpaceP1" )

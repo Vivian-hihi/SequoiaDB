@@ -4379,6 +4379,7 @@ namespace engine
       _pTransCB      = pmdGetKRCB()->getTransCB();
       _gotDmsCBWrite = FALSE ;
       _hasLock       = FALSE ;
+      _hasDropped    = FALSE ;
       _mbContext     = NULL ;
       _su            = NULL ;
    }
@@ -4498,6 +4499,7 @@ namespace engine
          goto error ;
       }
       _su->getAPM()->invalidatePlans ( _clShortName.c_str() ) ;
+      _hasDropped = TRUE ;
 
       _clean( cb ) ;
       _isOpened = FALSE ;
@@ -4524,8 +4526,15 @@ namespace engine
       // unlock su
       if ( _pDmsCB && _su )
       {
+         string csname = _su->CSName() ;
          _pDmsCB->suUnlock ( _su->CSID() ) ;
          _su = NULL ;
+
+         if ( _hasDropped )
+         {
+            // ignore errors
+            _pDmsCB->dropEmptyCollectionSpace( csname.c_str(), cb, _pDpsCB ) ;
+         }
       }
       if ( _gotDmsCBWrite )
       {
