@@ -2799,7 +2799,7 @@ namespace engine
 
          if ( ( _numToReturn < 0 || recordNum <= _numToReturn ) &&
               ( buffEndOffset() + pSubContext->getRemainLen() <=
-                RTN_RESULTBUFFER_SIZE_MAX ) )
+                RTN_RESULTBUFFER_SIZE_MAX ) && !_selector.isInitialized() )
          {
             rc = appendObjs( pSubContext->front(),
                              (INT32)pSubContext->getRemainLen(), recordNum ) ;
@@ -2829,7 +2829,24 @@ namespace engine
                try
                {
                   BSONObj boRecord( pData ) ;
-                  rc = append( boRecord ) ;
+                  BSONObj boSelected ;
+                  BSONObj *boRealRecord = NULL ;
+                  if ( !_selector.isInitialized() )
+                  {
+                     boRealRecord = &boRecord ;
+                  }
+                  else
+                  {
+                     rc = _selector.select( boRecord, boSelected ) ;
+                     if ( SDB_OK != rc )
+                     {
+                        PD_LOG( PDERROR, "failed to select fields:%d", rc ) ;
+                        goto error ;
+                     }
+                     boRealRecord = &boSelected ;
+                  }
+
+                  rc = append( *boRealRecord ) ;
                   PD_RC_CHECK( rc, PDERROR, "Append obj[%s] failed, rc: %d",
                                boRecord.toString().c_str(), rc ) ;
                }

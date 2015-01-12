@@ -683,7 +683,7 @@ namespace engine
                              pCollectionName,
                              flag, pSrc->header.requestID,
                              numToSkip, numToReturn,
-                             &query, &selector,
+                             &query, &newSelector,
                              &orderBy, &hint ) ;
       if ( SDB_OK != rc )
       {
