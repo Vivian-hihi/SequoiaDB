@@ -54,9 +54,6 @@ using namespace bson ;
 
 namespace engine
 {
-   extern void buildNewSelector( const BSONObj &original,
-                                 const BSONObj &orderBy,
-                                 BSONObj &newSelector ) ;
    /***********************************************
     * Totally 5 types of commands
     * 1) create
@@ -677,9 +674,6 @@ namespace engine
       SDB_ASSERT ( dmsCB, "dmsCB can't be NULL" ) ;
       SDB_ASSERT ( rtnCB, "runtimeCB can't be NULL" ) ;
       rtnContextDump *context = NULL ;
-      BSONObj newSelector ;
-
-      buildNewSelector( selector, orderBy, newSelector ) ;
 
       // create cursors
       rc = rtnCB->contextNew ( RTN_CONTEXT_DUMP, (rtnContext**)&context,
@@ -689,7 +683,7 @@ namespace engine
          PD_LOG ( PDERROR, "Failed to create new context, rc: %d", rc ) ;
          goto error ;
       }
-      rc = context->open( newSelector.isEmpty() ? selector : newSelector,
+      rc = context->open( selector,
                           matcher,
                           orderBy.isEmpty() ? numToReturn : -1,
                           orderBy.isEmpty() ? numToSkip : 0 ) ;
@@ -725,9 +719,8 @@ namespace engine
       {
          rc = rtnSort( (rtnContext**)&context,
                        orderBy,
-                       newSelector.isEmpty() ? BSONObj() : selector,
                        cb, numToSkip,
-                       numToReturn, rtnCB, contextID ) ;
+                       numToReturn, contextID ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to sort, rc: %d", rc ) ;
       }
 
@@ -764,7 +757,6 @@ namespace engine
       SDB_ASSERT ( dmsCB, "dmsCB can't be NULL" ) ;
       SDB_ASSERT ( rtnCB, "runtimeCB can't be NULL" ) ;
       rtnContextDump *context = NULL ;
-      BSONObj newSelector ;
 
       // create cursors
       rc = rtnCB->contextNew ( RTN_CONTEXT_DUMP, (rtnContext**)&context,
@@ -775,9 +767,7 @@ namespace engine
          goto error ;
       }
 
-      buildNewSelector( selector, orderBy, newSelector ) ;
-
-      rc = context->open( newSelector.isEmpty() ? selector : newSelector,
+      rc = context->open( selector,
                           matcher,
                           orderBy.isEmpty() ? numToReturn : -1,
                           orderBy.isEmpty() ? numToSkip : 0 ) ;
@@ -828,9 +818,8 @@ namespace engine
       {
          rc = rtnSort( (rtnContext**)&context,
                        orderBy,
-                       newSelector.isEmpty() ? BSONObj() : selector,
                        cb, numToSkip,
-                       numToReturn, rtnCB, contextID ) ;
+                       numToReturn, contextID ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to sort, rc: %d", rc ) ;
       }
 
@@ -866,7 +855,6 @@ namespace engine
       SDB_ASSERT ( dmsCB, "dmsCB can't be NULL" ) ;
       SDB_ASSERT ( rtnCB, "runtimeCB can't be NULL" ) ;
       rtnContextDump *context = NULL ;
-      BSONObj newSelector ;
 
       // create cursors
       rc = rtnCB->contextNew ( RTN_CONTEXT_DUMP, (rtnContext**)&context,
@@ -877,8 +865,7 @@ namespace engine
          goto error ;
       }
 
-      buildNewSelector( selector, orderBy, newSelector ) ;
-      rc = context->open( newSelector.isEmpty() ? selector : newSelector,
+      rc = context->open( selector,
                           matcher,
                           orderBy.isEmpty() ? numToReturn : -1,
                           orderBy.isEmpty() ? numToSkip : 0 ) ;
@@ -978,9 +965,8 @@ namespace engine
       if ( !orderBy.isEmpty() )
       {
          rc = rtnSort( (rtnContext**)&context, orderBy,
-                       newSelector.isEmpty() ? BSONObj() : selector,
                        cb, numToSkip,
-                       numToReturn, rtnCB, contextID ) ;
+                       numToReturn, contextID ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to sort, rc: %d", rc ) ;
       }
 

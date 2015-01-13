@@ -153,12 +153,9 @@ namespace engine
 
    INT32 rtnSort ( rtnContext **ppContext,
                    const BSONObj &orderBy,
-                   const BSONObj &selector,
                    _pmdEDUCB *cb,
                    SINT64 numToSkip,
                    SINT64 numToReturn,
-   //                SDB_DMSCB *dmsCB,
-                   SDB_RTNCB *rtnCB,
                    SINT64 &contextID ) ;
 
    // traversal the collection from a given key
