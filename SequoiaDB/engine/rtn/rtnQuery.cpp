@@ -240,11 +240,25 @@ namespace engine
          BSONObjIterator itr( orderBy ) ;
          while ( itr.more() )
          {
+            /// find({}, {a:null}).sort({a.b:1})
+            /// we do not want to clear it's selector when 
+            /// query is like above. --yunwu
             BSONElement ele = itr.next() ;
             const CHAR *fieldName = ele.fieldName() ;
-            if ( !original.hasElement( fieldName ) )
+            CHAR *c = ( CHAR * )ossStrchr( fieldName, '.' ) ;
+            if ( NULL != c )
+            {
+               *c = '\0' ;
+            }
+            BOOLEAN has = original.hasElement( fieldName ) ;
+            if ( NULL != c )
+            {
+               *c = '.' ;
+            }
+            if ( !has )
             {
                needReset = TRUE ;
+               break ;
             }
          }
       }
