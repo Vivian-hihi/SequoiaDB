@@ -4900,7 +4900,7 @@ namespace engine
       INT64 queryContextID = -1 ;
       rtnContextBuf ctxBuf ;
       _optAccessPlan *plan = NULL ;
-      CHAR hostName[OSS_MAX_HOSTNAME + 1] = { 0 } ;
+      const CHAR* hostName = NULL ;
       stringstream ss ;
       _rtnContextBase *contextOfQuery = NULL ;
 
@@ -4937,12 +4937,7 @@ namespace engine
       _builder.append( FIELD_NAME_INDEXNAME,
                        plan->getIndexName() ) ; 
       _builder.appendBool( FIELD_NAME_USE_EXT_SORT, plan->sortRequired() ) ;
-      rc = ossGetHostName( hostName, OSS_MAX_HOSTNAME ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to get hostname:%d", rc ) ;
-         goto error ;
-      }
+      hostName = pmdGetKRCB()->getHostName() ;
       ss << hostName << ":" << pmdGetOptionCB()->getServiceAddr() ;
       _builder.append( FIELD_NAME_NODE_NAME, ss.str() ) ;
 
