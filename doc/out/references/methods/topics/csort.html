@@ -77,9 +77,7 @@
       <div class="p"><pre class="pre codeblock">{&lt;字段名1&gt;:&lt;-1|1&gt;,&lt;字段名2&gt;:&lt;-1|1&gt;,...}</pre>
 </div>
 
-      <div class="note note"><span class="notetitle">Note:</span> <p class="p">当<a class="xref" href="find.html">find()</a>方法使用sel选项，若该选项没有包含sort()指定的排序字段，此时sort()方法设置的排序无意义，从而被自动忽略。</p>
-</div>
-
+      
     </div>
 
     <div class="section"><h2 class="title sectiontitle">示例</h2>
@@ -95,17 +93,7 @@
 
         </li>
 
-        <li class="li">
-          <p class="p">指定一个无效的排序字段。</p>
-
-          <div class="p"><pre class="pre codeblock">db.foo.bar.find({age:{<a class="xref" href="../../console/topics/gt.html">$gt</a>:20}},{age:"",name:""}).sort({"sex":1})</pre>
-</div>
-
-          <div class="note note"><span class="notetitle">Note:</span> <p class="p">因为"sex"字段并不存在<a class="xref" href="find.html">find()</a>方法的sel选项{age:"",name:""}中，所以sort()指定的排序字段{"sex":1}将被忽略。</p>
-</div>
-
-        </li>
-
+        
       </ul>
       
     </div>
