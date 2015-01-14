@@ -245,20 +245,23 @@ namespace engine
             /// query is like above. --yunwu
             BSONElement ele = itr.next() ;
             const CHAR *fieldName = ele.fieldName() ;
-            CHAR *c = ( CHAR * )ossStrchr( fieldName, '.' ) ;
-            if ( NULL != c )
+            if ( !original.hasElement( fieldName ) )
             {
+               CHAR *c = ( CHAR * )ossStrchr( fieldName, '.' ) ;
+               if ( NULL == c )
+               {
+                  needReset = TRUE ;
+                  break ;
+               }
+
                *c = '\0' ;
-            }
-            BOOLEAN has = original.hasElement( fieldName ) ;
-            if ( NULL != c )
-            {
+               BOOLEAN has = original.hasElement( fieldName ) ;
                *c = '.' ;
-            }
-            if ( !has )
-            {
-               needReset = TRUE ;
-               break ;
+               if ( !has )
+               {
+                  needReset = TRUE ;
+                  break ;
+               }
             }
          }
       }
