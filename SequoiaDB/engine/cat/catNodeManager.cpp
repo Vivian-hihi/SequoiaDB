@@ -1925,6 +1925,7 @@ namespace engine
          PD_LOG( PDERROR, "failed to rtn count:%d",rc ) ;
          goto error ;
       }
+      SDB_ASSERT( totalCount >= 0, "totalCount must be greater than or equal 0") ;
 
       count = static_cast<UINT64>( totalCount ) ;
 
@@ -2052,6 +2053,7 @@ namespace engine
       try
       {
          const CHAR *groupName = NULL ;
+         const CHAR *hostName = NULL ;
          BSONObj boGroupInfo ;
 
          BSONObj boNodeInfo( pQuery ) ;
@@ -2059,6 +2061,10 @@ namespace engine
                                    &groupName ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to get the field[%s], rc: %d",
                       FIELD_NAME_GROUPNAME, rc ) ;
+         rc = rtnGetStringElement( boNodeInfo, FIELD_NAME_HOST,
+                                   &hostName ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to get the field[%s], rc: %d",
+                      FIELD_NAME_HOST, rc ) ;
 
          rc = catGetGroupObj( groupName, FALSE, boGroupInfo, _pEduCB ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to get group[%s] info, rc: %d",
@@ -2081,6 +2087,27 @@ namespace engine
                       "reached the maximum number of nodes!" ) ;
          }
          }
+
+         // check if 'localhost' or '127.0.0.1' is used
+         {
+         bool isLocalHost = FALSE;
+         if ( 0 == ossStrcmp( hostName, OSS_LOCALHOST ) ||
+              0 == ossStrcmp( hostName, OSS_LOOPBACK_IP ) )
+         {
+            isLocalHost = TRUE;
+         }
+
+         bool isValid = FALSE;
+         rc = _checkLocalHost( isValid ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to get localhost existing info, rc: %d", rc ) ;
+
+         PD_CHECK( !(isLocalHost ^ isValid),
+                   SDB_CAT_LOCALHOST_CONFLICT, error, PDERROR,
+                   "'localhost' and '127.0.0.1' cannot be used mixed with " \
+                   "other hostname and IP address" );
+         }
+
          if ( 0 == ossStrcmp( groupName, CATALOG_GROUPNAME ) ||
               0 == ossStrcmp( groupName, COORD_GROUPNAME ) )
          {
@@ -2569,5 +2596,49 @@ namespace engine
    INT16 catNodeManager::_majoritySize()
    {
       return _pCatCB->majoritySize() ;
+   }
+
+   INT32 catNodeManager::_checkLocalHost( bool& isValid )
+   {
+      BSONObj matcher;
+      UINT64 count = 0;
+      INT32 rc = SDB_OK;
+
+      rc = _count( CAT_NODE_INFO_COLLECTION, matcher, count) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+
+      if ( 0 == count )
+      {
+         // There is no group, so localhost can be used.
+         isValid = TRUE;
+         goto done;
+      }
+
+      // check whether 'localhost' or '127.0.0.1' is used
+      // {"Group":{"$elemMatch":{"HostName":{"$in":["localhost","127.0.0.1"]}}}}
+      matcher =
+         BSON( CAT_GROUP_NAME <<
+            BSON( "$elemMatch" <<
+               BSON( CAT_HOST_FIELD_NAME <<
+                  BSON ( "$in" <<
+                     BSON_ARRAY( OSS_LOCALHOST << OSS_LOOPBACK_IP ) ) ) ) ) ;
+      rc = _count( CAT_NODE_INFO_COLLECTION, matcher, count) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+
+      // if count == 0, then no node uses 'localhost' or '127.0.0.1',
+      // so localhost cannot be used.
+      // otherwise (count > 0), localhost can be used.
+      isValid = ( 0 == count) ? FALSE : TRUE;
+
+      done:
+         return rc ;
+      error:
+         goto done ;
    }
 }

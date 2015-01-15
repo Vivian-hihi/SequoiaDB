@@ -1283,6 +1283,10 @@ namespace engine
             ip++ ;
          }
 
+         // support 'localhost' and '127.0.0.1' for node's hostname
+         ipArray.append( OSS_LOOPBACK_IP ) ;
+         ipArray.append( OSS_LOCALHOST ) ;
+
          bsonBuilder.appendArray ( CAT_IP_FIELD_NAME, ipArray.arr() ) ;
       }
 
