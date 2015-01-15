@@ -1916,55 +1916,19 @@ namespace engine
                                  UINT64 &count )
    {
       INT32 rc = SDB_OK ;
-      rtnContextDump *context = NULL ;
-      SINT64 contextID = -1 ;
-      rtnContextBuf buffObj ;
-      rc = _pRtnCB->contextNew ( RTN_CONTEXT_DUMP, (rtnContext**)&context,
-                                 contextID, _pEduCB ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to allocate a new context:%d",rc ) ;
-         goto error ;
-      }
-      rc = context->open( BSONObj(), BSONObj(), -1, 0 ) ;
-      PD_RC_CHECK( rc, PDERROR, "Open context failed, rc: %d", rc ) ;
+      INT64 totalCount;
 
       rc = rtnGetCount( collection, matcher, BSONObj(), _pDmsCB, _pEduCB,
-                        _pRtnCB, context ) ;
+                        _pRtnCB, &totalCount ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to rtn count:%d",rc ) ;
          goto error ;
       }
 
-      rc = rtnGetMore( contextID, 1, buffObj, _pEduCB, _pRtnCB ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to rtn getmore:%d",rc ) ;
-         contextID = -1 ;
-         goto error ;
-      }
-
-      {
-         SDB_ASSERT( NULL != buffObj.data(), "impossible" ) ;
-         BSONObj res( buffObj.data() ) ;
-         SDB_ASSERT( !res.isEmpty(), "impossible" ) ;
-         BSONElement ele = res.firstElement() ;
-         if ( ele.eoo() || !ele.isNumber() )
-         {
-            PD_LOG( PDERROR, "sth wrong with count res[%s]",
-                    res.toString().c_str() ) ;
-            rc = SDB_SYS ;
-            goto error ;
-         }
-         count = ele.Number() ;
-      }
+      count = static_cast<UINT64>( totalCount ) ;
 
    done:
-      if ( -1 != contextID )
-      {
-         _pRtnCB->contextDelete ( contextID, _pEduCB ) ;
-      }
       return rc ;
    error:
       goto done ;
