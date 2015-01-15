@@ -37,7 +37,6 @@
 #ifndef CATCATALOGUEMANAGER_HPP_
 #define CATCATALOGUEMANAGER_HPP_
 
-#include "pmdObjBase.hpp"
 #include "pmd.hpp"
 #include "catSplit.hpp"
 
@@ -141,30 +140,19 @@ namespace engine
    /*
       catCatalogueManager define
    */
-   class catCatalogueManager : public _pmdObjBase
+   class catCatalogueManager : public SDBObject
    {
-   DECLARE_OBJ_MSG_MAP()
-
    public:
       catCatalogueManager() ;
       INT32 init() ;
 
-      virtual void   attachCB( _pmdEDUCB *cb ) ;
-      virtual void   detachCB( _pmdEDUCB *cb ) ;
+      void  attachCB( _pmdEDUCB *cb ) ;
+      void  detachCB( _pmdEDUCB *cb ) ;
 
-      ossEvent*      getChangeEvent() { return &_changeEvent ; }
+      INT32 processMsg( const NET_HANDLE &handle, MsgHeader *pMsg ) ;
 
-   protected:
-      virtual INT32 _defaultMsgFunc ( NET_HANDLE handle,
-                                      MsgHeader* msg ) ;
-
-      INT32 _processMsg( const NET_HANDLE &handle,
-                         MsgHeader *pMsg ) ;
-
-   // event function
-   protected:
-      INT32 _onActiveEvent( pmdEDUEvent *event ) ;
-      INT32 _onDeactiveEvent( pmdEDUEvent *event ) ;
+      INT32 active() ;
+      INT32 deactive() ;
 
    // message process functions
    protected:
@@ -291,8 +279,6 @@ namespace engine
       _dpsLogWrapper       *_pDpsCB;
       pmdEDUCB             *_pEduCB;
       clsTaskMgr           _taskMgr ;
-
-      ossEvent             _changeEvent ;
 
    } ;
 }

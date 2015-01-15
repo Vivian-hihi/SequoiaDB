@@ -52,10 +52,6 @@ using namespace bson;
 
 namespace engine
 {
-   BEGIN_OBJ_MSG_MAP( catCatalogueManager, _pmdObjBase )
-      ON_EVENT( PMD_EDU_EVENT_ACTIVE, _onActiveEvent )
-      ON_EVENT( PMD_EDU_EVENT_DEACTIVE, _onDeactiveEvent )
-   END_OBJ_MSG_MAP()
 
    /*
       catCatalogueManager implement
@@ -66,19 +62,16 @@ namespace engine
       _pDpsCB     = NULL ;
       _pCatCB     = NULL ;
       _pDmsCB     = NULL ;
-      _changeEvent.signal() ;
    }
 
-   INT32 catCatalogueManager::_onActiveEvent( pmdEDUEvent *event )
+   INT32 catCatalogueManager::active()
    {
       _taskMgr.setTaskID( catGetMaxTaskID( _pEduCB ) ) ;
-      _changeEvent.signal() ;
       return SDB_OK ;
    }
 
-   INT32 catCatalogueManager::_onDeactiveEvent( pmdEDUEvent *event )
+   INT32 catCatalogueManager::deactive()
    {
-      _changeEvent.signal() ;
       return SDB_OK ;
    }
 
@@ -94,20 +87,11 @@ namespace engine
    void catCatalogueManager::attachCB( pmdEDUCB * cb )
    {
       _pEduCB = cb ;
-      _pCatCB->getMainController()->attachCB( cb ) ;
    }
 
    void catCatalogueManager::detachCB( pmdEDUCB * cb )
    {
-      _pCatCB->getMainController()->detachCB( cb ) ;
       _pEduCB = NULL ;
-      _changeEvent.signal() ;
-   }
-
-   INT32 catCatalogueManager::_defaultMsgFunc( NET_HANDLE handle,
-                                               MsgHeader * msg )
-   {
-      return _processMsg( handle, msg ) ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR_DROPCS, "catCatalogueManager::processCmdDropCollectionSpace" )
@@ -1751,9 +1735,9 @@ namespace engine
       return SDB_OK ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR_PROCESSMSG, "catCatalogueManager::_processMsg" )
-   INT32 catCatalogueManager::_processMsg( const NET_HANDLE &handle,
-                                           MsgHeader *pMsg )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR_PROCESSMSG, "catCatalogueManager::processMsg" )
+   INT32 catCatalogueManager::processMsg( const NET_HANDLE &handle,
+                                          MsgHeader *pMsg )
    {
       INT32 rc = SDB_OK;
       PD_TRACE_ENTRY ( SDB_CATALOGMGR_PROCESSMSG ) ;

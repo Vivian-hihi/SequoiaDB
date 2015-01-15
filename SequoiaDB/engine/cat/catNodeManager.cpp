@@ -50,11 +50,6 @@ using namespace bson;
 namespace engine
 {
 
-   BEGIN_OBJ_MSG_MAP( catNodeManager, _pmdObjBase )
-      ON_EVENT( PMD_EDU_EVENT_ACTIVE, _onActiveEvent )
-      ON_EVENT( PMD_EDU_EVENT_DEACTIVE, _onDeactiveEvent )
-   END_OBJ_MSG_MAP()
-
    /*
       catNodeManager implement
    */
@@ -66,7 +61,6 @@ namespace engine
       _pRtnCB = NULL ;
       _pCatCB = NULL ;
       _pEduCB = NULL ;
-      _changeEvent.signal() ;
    }
 
    catNodeManager::~catNodeManager()
@@ -91,19 +85,16 @@ namespace engine
    void catNodeManager::attachCB( pmdEDUCB * cb )
    {
       _pEduCB = cb ;
-      _pCatCB->getMainController()->attachCB( cb ) ;
    }
 
    void catNodeManager::detachCB( pmdEDUCB * cb )
    {
-      _pCatCB->getMainController()->detachCB( cb ) ;
       _pEduCB = NULL ;
-      _changeEvent.signal() ;
    }
 
    // when the node switch to  primary will call this fun
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATNODEMGR_ACTIVE, "catNodeManager::_onActiveEvent" )
-   INT32 catNodeManager::_onActiveEvent( pmdEDUEvent *event )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATNODEMGR_ACTIVE, "catNodeManager::active" )
+   INT32 catNodeManager::active()
    {
       //get all of the nodes's id
       INT32 rc            = SDB_OK;
@@ -175,7 +166,6 @@ namespace engine
       _status = SDB_CAT_MODULE_ACTIVE ;
 
    done :
-      _changeEvent.signal() ;
       PD_TRACE_EXITRC ( SDB_CATNODEMGR_ACTIVE, rc ) ;
       return rc;
    error :
@@ -186,24 +176,18 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATNODEMGR_DEACTIVE, "catNodeManager::_onDeactiveEvent" )
-   INT32 catNodeManager::_onDeactiveEvent( pmdEDUEvent *event )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATNODEMGR_DEACTIVE, "catNodeManager::deactive" )
+   INT32 catNodeManager::deactive()
    {
       PD_TRACE_ENTRY ( SDB_CATNODEMGR_DEACTIVE ) ;
       _status = SDB_CAT_MODULE_DEACTIVE;
-      _changeEvent.signal() ;
       PD_TRACE_EXIT ( SDB_CATNODEMGR_DEACTIVE ) ;
       return SDB_OK ;
    }
 
-   INT32 catNodeManager::_defaultMsgFunc( NET_HANDLE handle, MsgHeader * msg )
-   {
-      return _processMsg( handle, msg ) ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATNODEMGR_PROCESSMSG, "catNodeManager::_processMsg" )
-   INT32 catNodeManager::_processMsg( const NET_HANDLE &handle,
-                                      MsgHeader *pMsg )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATNODEMGR_PROCESSMSG, "catNodeManager::processMsg" )
+   INT32 catNodeManager::processMsg( const NET_HANDLE &handle,
+                                     MsgHeader *pMsg )
    {
       INT32 rc = SDB_OK;
       PD_TRACE_ENTRY ( SDB_CATNODEMGR_PROCESSMSG ) ;

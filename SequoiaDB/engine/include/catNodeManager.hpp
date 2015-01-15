@@ -36,7 +36,6 @@
 #ifndef CATNODEMANAGER_HPP__
 #define CATNODEMANAGER_HPP__
 
-#include "pmdObjBase.hpp"
 #include "pmd.hpp"
 #include "netDef.hpp"
 
@@ -52,30 +51,20 @@ namespace engine
    /*
       catNodeManager define
    */
-   class catNodeManager : public _pmdObjBase
+   class catNodeManager : public SDBObject
    {
-   DECLARE_OBJ_MSG_MAP()
-
    public:
       catNodeManager() ;
       virtual ~catNodeManager() ;
       INT32 init() ;
 
-      virtual void   attachCB( _pmdEDUCB *cb ) ;
-      virtual void   detachCB( _pmdEDUCB *cb ) ;
+      void  attachCB( _pmdEDUCB *cb ) ;
+      void  detachCB( _pmdEDUCB *cb ) ;
 
-      ossEvent*      getChangeEvent() { return &_changeEvent ; }
+      INT32 processMsg( const NET_HANDLE &handle, MsgHeader *pMsg ) ;
 
-   // event process function
-   protected:
-      INT32 _onActiveEvent( pmdEDUEvent *event ) ;
-      INT32 _onDeactiveEvent( pmdEDUEvent *event ) ;
-
-   protected:
-      virtual INT32 _defaultMsgFunc ( NET_HANDLE handle,
-                                      MsgHeader* msg ) ;
-      INT32 _processMsg( const NET_HANDLE &handle,
-                         MsgHeader *pMsg ) ;
+      INT32 active() ;
+      INT32 deactive() ;
 
    // message process functions
    protected:
@@ -154,9 +143,8 @@ namespace engine
       sdbCatalogueCB             *_pCatCB;
       pmdEDUCB                   *_pEduCB;
 
-      ossEvent                   _changeEvent ;
-
    } ;
 }
 
 #endif // CATNODEMANAGER_HPP__
+
