@@ -575,10 +575,6 @@ namespace engine
       BSONObj cataInfo ;
       clsSplitTask splitTask( CLS_INVALID_TASKID ) ;
 
-      INT32 dstGroupID = CAT_INVALID_GROUPID ;
-      CHAR szSpace [ DMS_COLLECTION_SPACE_NAME_SZ + 1 ]  = {0} ;
-      CHAR szCollection [ DMS_COLLECTION_NAME_SZ + 1 ] = {0} ;
-
       BSONElement ele = splitInfo.getField( CAT_TASKID_NAME ) ;
       PD_CHECK( ele.isNumber(), SDB_INVALIDARG, error, PDERROR,
                 "Failed to get field[%s], type: %d", CAT_TASKID_NAME,
@@ -653,18 +649,6 @@ namespace engine
                    PDERROR, "Split task status error, task: %s",
                    taskObj.toString().c_str() ) ;
       }
-
-      // add group to space
-      rc = catResolveCollectionName( clFullName, ossStrlen( clFullName ),
-                                     szSpace, DMS_COLLECTION_SPACE_NAME_SZ,
-                                     szCollection, DMS_COLLECTION_NAME_SZ ) ;
-      PD_RC_CHECK( rc, PDERROR, "Resolve collection name[%s] failed, rc: %d",
-                   clFullName, rc ) ;
-      dstGroupID = splitTask.dstID() ;
-      rc = catAddCL2CS( szSpace, NULL, &dstGroupID, splitTask.dstName(),
-                        cb, dmsCB, dpsCB, w ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to update collection space info, "
-                   "rc: %d", rc ) ;
 
       // update task status
       rc = catUpdateTaskStatus( taskID, CLS_TASK_STATUS_META, cb, w ) ;

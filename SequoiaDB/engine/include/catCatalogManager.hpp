@@ -50,6 +50,13 @@ namespace engine
    class sdbCatalogueCB ;
    class _SDB_DMSCB ;
 
+   // create collection assign group type
+   enum CAT_ASSIGNGROUP_TYPE
+   {
+      ASSIGN_FOLLOW     = 1,
+      ASSIGN_RANDOM     = 2
+   } ;
+
    #define CAT_MASK_CLNAME          0x00000001
    #define CAT_MASK_SHDKEY          0x00000002
    #define CAT_MASK_REPLSIZE        0x00000004
@@ -77,6 +84,7 @@ namespace engine
       BOOLEAN     _autoRebalance ;
       const CHAR * _gpSpecified ;
       INT32       _version ;
+      INT32       _assignType ;
       
       std::vector<std::string>   _subCLList;
 
@@ -95,6 +103,7 @@ namespace engine
          _autoRebalance       = FALSE ;
          _gpSpecified         = NULL ;
          _version             = 0 ;
+         _assignType          = ASSIGN_RANDOM ;
       }
    };
    typedef _catCollectionInfo catCollectionInfo ;
