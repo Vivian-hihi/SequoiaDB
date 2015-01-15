@@ -1663,6 +1663,8 @@ namespace engine
       if ( clInfo._isMainCL )
       {
          builder.appendBool( CAT_IS_MAINCL, clInfo._isMainCL );
+         BSONObjBuilder sub( builder.subarrayStart( CAT_CATALOGINFO_NAME ) ) ;
+         sub.done() ;
       }
       else
       {

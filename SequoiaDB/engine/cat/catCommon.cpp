@@ -862,6 +862,9 @@ namespace engine
       BSONObj modifier = BSON( "$pull" << BSON( CAT_GROUPS_NAME <<
                                BSON( CAT_GROUPNAME_NAME << groupName <<
                                      CAT_GROUPID_NAME << groupID ) ) ) ;
+      BSONObj modifier2 = BSON( "$pull" << BSON( CAT_GROUPS_NAME <<
+                                BSON( CAT_GROUPID_NAME << groupID <<
+                                      CAT_GROUPNAME_NAME << groupName ) ) ) ;
       BSONObj matcher ;
       BSONObj dummy ;
 
@@ -880,6 +883,16 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Failed to update collection: %s, match: %s, "
                    "updator: %s, rc: %d", CAT_COLLECTION_SPACE_COLLECTION,
                    matcher.toString().c_str(), modifier.toString().c_str(),
+                   rc ) ;
+
+      // because pull operation must need obj full same, include element order
+      // ex a:[{a:1,b:1}], if $pull:{b:1,a:1} will not match, so we need to
+      // modify {a:1,b:1} and {b:1,a:1}
+      rc = rtnUpdate( CAT_DOMAIN_COLLECTION, matcher, modifier2,
+                      dummy, 0, cb, dmsCB, dpsCB, w ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to update collection: %s, match: %s, "
+                   "updator: %s, rc: %d", CAT_COLLECTION_SPACE_COLLECTION,
+                   matcher.toString().c_str(), modifier2.toString().c_str(),
                    rc ) ;
 
    done:
