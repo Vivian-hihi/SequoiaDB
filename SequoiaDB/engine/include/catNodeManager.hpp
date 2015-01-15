@@ -72,9 +72,13 @@ namespace engine
                                BOOLEAN writable ) ;
 
       INT32 processCmdCreateGrp( const CHAR *pQuery ) ;
-      INT32 processCmdCreateNode( const CHAR *pQuery ) ;
-      INT32 processCmdUpdateNode( const CHAR *pQuery, const CHAR *pSelector ) ;
-      INT32 processCmdDelNode( const CHAR *pQuery ) ;
+      INT32 processCmdCreateNode( const NET_HANDLE &handle,
+                                  const CHAR *pQuery ) ;
+      INT32 processCmdUpdateNode( const NET_HANDLE &handle,
+                                  const CHAR *pQuery,
+                                  const CHAR *pSelector ) ;
+      INT32 processCmdDelNode( const NET_HANDLE &handle,
+                               const CHAR *pQuery ) ;
 
       INT32 processGrpReq( const NET_HANDLE &handle, MsgHeader *pMsg ) ;
       INT32 processRegReq( const NET_HANDLE &handle, MsgHeader *pMsg ) ;
@@ -106,14 +110,15 @@ namespace engine
    // tool fuctions
    private:
       INT32 _createGrp( const CHAR *groupName ) ;
-      INT32 _createNode( const CHAR *pQuery ) ;
-      INT32 _delNode( BSONObj &boDelNodeInfo ) ;
+      INT32 _createNode( const CHAR *pQuery, BOOLEAN isLoalConn ) ;
+      INT32 _delNode( BSONObj &boDelNodeInfo, BOOLEAN isLoalConn ) ;
       INT32 _addNodeToGrp ( BSONObj &boGroupInfo, BSONObj &boNodeInfo,
                             UINT16 nodeID ) ;
       INT32 _updateNodeToGrp ( BSONObj &boGroupInfo, BSONObj &boNodeInfoNew,
-                               UINT16 nodeID ) ;
+                               UINT16 nodeID, BOOLEAN isLoalConn ) ;
       INT32 _getRemovedGroupsObj( const BSONObj &srcGroupsObj,
                                   UINT16 removeNode,
+                                  BSONObj &removedObj,
                                   BSONArrayBuilder &newObjBuilder ) ;
       INT32 _getRemovedGroupsObj( const BSONObj &srcGroupsObj,
                                   const CHAR *hostName,
@@ -126,7 +131,7 @@ namespace engine
       INT16 _majoritySize() ;
 
       INT32 _getNodeInfoByConf( BSONObj &boConf, BSONObjBuilder &bobNodeInfo ) ;
-      INT32 _checkLocalHost( bool& isValid ) ;
+      INT32 _checkLocalHost( BOOLEAN &isValid ) ;
 
    private:
       typedef enum _SDB_CAT_MODULE_STATUS
