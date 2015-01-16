@@ -161,7 +161,7 @@
 					<stentry>--maxprefpool</stentry>
 					<stentry>--</stentry>
 					<stentry>num</stentry>
-					<stentry>数据预取代理池最大数量,默认值:200,取值范围:[0,1000]</stentry>
+					<stentry>数据预取代理池最大数量,默认值:0,取值范围:[0,1000]</stentry>
 				</strow>
 				<strow>
 					<stentry>--maxreplsync</stentry>

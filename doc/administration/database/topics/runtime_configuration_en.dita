@@ -164,7 +164,7 @@
 					<stentry>--maxprefpool</stentry>
 					<stentry>--</stentry>
 					<stentry>num</stentry>
-					<stentry>The maximum number of prefetchers, default:200, value range:[0,1000]</stentry>
+					<stentry>The maximum number of prefetchers, default:0, value range:[0,1000]</stentry>
 				</strow>
 				<strow>
 					<stentry>--maxreplsync</stentry>
@@ -219,7 +219,7 @@
 					<stentry>--</stentry>
 					<stentry>num</stentry>
 					<stentry>The number of page cleaner threads to start during database startup.
-             0 means do not start any page cleaners, default 1, value range:[0, 50].</stentry>
+             0 means do not start any page cleaners, default 0, value range:[0, 50].</stentry>
 				</strow>
 				<strow>
 					<stentry>--pagecleaninterval</stentry>
