@@ -59,7 +59,7 @@
 		</exec>
 
 		<ant antfile="${WORKSPACE}/sequoiadb/driver/java/build_driver.xml" >
-		   <property name="JDK.VERIONS.5" value="${choise.jdk5}" />
+		   <property name="JDK.VERSION.5" value="${choise.jdk5}" />
 		   <property name="base.dir" value="${WORKSPACE}/sequoiadb/driver/java" />
 		</ant>
 		<ant antfile="${WORKSPACE}/sequoiadb/driver/hadoop/hive/build.xml">
