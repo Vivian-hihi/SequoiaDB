@@ -354,7 +354,16 @@ class DBLobConcrete implements DBLob {
             int writeLen = leftLen > SDB_LOB_MAX_DATA_LENGTH ? 
                                              SDB_LOB_MAX_DATA_LENGTH : leftLen;
             
-            _write( Arrays.copyOfRange( b, offset, offset + writeLen ) );
+            //_write( Arrays.copyOfRange( b, offset, offset + writeLen ) );
+            // just for compatible jdk 5
+            byte[] tempb = new byte[writeLen];
+            int j=0;
+            for (int i=offset; i<(offset + writeLen); ++i)
+            {
+            	tempb[j] = b[i];
+            	j++;
+            }
+            _write (tempb);
             
             offset += writeLen;
         }
