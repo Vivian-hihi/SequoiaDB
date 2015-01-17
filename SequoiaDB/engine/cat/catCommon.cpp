@@ -1174,7 +1174,10 @@ namespace engine
                }
                BSONObj cataItemObj = e.embeddedObject() ;
                BSONElement eleGrpID = cataItemObj.getField( CAT_GROUPID_NAME ) ;
-               groupSet.insert( eleGrpID.numberInt() ) ;
+               if ( eleGrpID.isNumber() )
+               {
+                  groupSet.insert( eleGrpID.numberInt() ) ;
+               }
             }
          }
          catch( std::exception &e )
