@@ -808,11 +808,11 @@ namespace engine
       goto done ;
    }
 
-#if defined (_DEBUG)
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCOM__PRINTDEBUG, "rtnCoordCommand::_printDebug" )
    void rtnCoordCommand::_printDebug ( CHAR *pReceiveBuffer,
                                        const CHAR *pFuncName )
    {
+   #if defined (_DEBUG)
       INT32 rc         = SDB_OK ;
       INT32 flag       = 0 ;
       CHAR *collection = NULL ;
@@ -847,8 +847,8 @@ namespace engine
       return ;
    error :
       goto done ;
+   #endif // _DEBUG
    }
-#endif
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCODEFCOM_EXE, "rtnCoordDefaultCommand::execute" )
    INT32 rtnCoordDefaultCommand::execute( CHAR *pReceiveBuffer, SINT32 packSize,
@@ -8074,9 +8074,9 @@ namespace engine
       forward->header.TID = cb->getTID();
       forward->header.opCode = MSG_CAT_CRT_PROCEDURES_REQ;
       CoordGroupList groupLst ;
-#if defined (_DEBUG)
+
       _printDebug ( pReceiveBuffer, "rtnCoordCMDCrtProcedure" ) ;
-#endif
+
       rc = executeOnCataGroup ( (CHAR*)forward, pRouteAgent,
                                 cb, NULL, &groupLst ) ;
       if ( rc )
@@ -8744,9 +8744,9 @@ namespace engine
       forward->header.routeID.value = 0;
       forward->header.TID = cb->getTID();
       forward->header.opCode = MSG_CAT_CREATE_DOMAIN_REQ;
-#if defined (_DEBUG)
+
       _printDebug ( pReceiveBuffer, "rtnCoordCMDCreateDomain" ) ;
-#endif
+
       rc = executeOnCataGroup ( (CHAR*)forward, pRouteAgent, cb ) ;
       if ( rc )
       {
@@ -8789,9 +8789,9 @@ namespace engine
       forward->header.routeID.value = 0;
       forward->header.TID = cb->getTID();
       forward->header.opCode = MSG_CAT_DROP_DOMAIN_REQ;
-#if defined (_DEBUG)
+
       _printDebug ( pReceiveBuffer, "rtnCoordCMDDropDomain" ) ;
-#endif
+
       rc = executeOnCataGroup ( (CHAR*)forward, pRouteAgent, cb ) ;
       if ( rc )
       {
@@ -8817,8 +8817,8 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNCOCMDALTERDOMAIN_EXE ) ;
-      netMultiRouteAgent *pRouteAgent = pmdGetKRCB()->
-                                        getCoordCB()->getRouteAgent();
+      netMultiRouteAgent *pRouteAgent = pmdGetKRCB()->getCoordCB(
+         )->getRouteAgent();
 
       MsgHeader *pHeader               = (MsgHeader *)pReceiveBuffer;
       replyHeader.header.messageLength = sizeof( MsgOpReply );
@@ -8835,9 +8835,9 @@ namespace engine
       forward->header.routeID.value = 0;
       forward->header.TID = cb->getTID();
       forward->header.opCode = MSG_CAT_ALTER_DOMAIN_REQ;
-#if defined (_DEBUG)
+
       _printDebug ( pReceiveBuffer, "rtnCoordCMDAlterDomain" ) ;
-#endif
+
       rc = executeOnCataGroup ( (CHAR*)forward, pRouteAgent, cb ) ;
       if ( rc )
       {
