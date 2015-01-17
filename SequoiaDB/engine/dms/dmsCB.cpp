@@ -763,7 +763,7 @@ namespace engine
       SDB_ASSERT( 0 <= _writeCounter, "write counter should not < 0" ) ;
       _stateMtx.release();
 
-      if ( cb )
+      if ( cb && DMS_LOCK_WRITE == cb->getDmsLockLevel() )
       {
          cb->setDmsLockLevel( DMS_LOCK_NONE ) ;
       }
