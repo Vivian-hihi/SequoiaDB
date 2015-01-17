@@ -370,7 +370,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__MIGLOADJSONPS__RUN, "migMaster::run" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__MIGLOADJSONPS__RUN, "migMaster::run" )
    INT32 migMaster::run()
    {
       INT32 rc = SDB_OK ;
@@ -577,7 +577,7 @@ namespace engine
       // count down
       if ( writable )
       {
-         dmsCB->writeDown();
+         dmsCB->writeDown( eduCB );
       }
       PD_TRACE_EXITRC ( SDB__MIGLOADJSONPS__RUN, rc );
       return rc ;

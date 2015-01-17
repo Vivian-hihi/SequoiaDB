@@ -1139,7 +1139,7 @@ namespace engine
       }
       if ( writable )
       {
-         dmsCB->writeDown() ;
+         dmsCB->writeDown( cb ) ;
       }
       PD_TRACE_EXITRC ( SDB_RTNCREATECSCOMMAND, rc ) ;
       return rc ;
@@ -1258,7 +1258,7 @@ namespace engine
       }
       if ( writable )
       {
-         dmsCB->writeDown() ;
+         dmsCB->writeDown( cb ) ;
       }
       PD_TRACE_EXITRC ( SDB_RTNCREATECLCOMMAND, rc ) ;
       return rc ;
@@ -1325,7 +1325,7 @@ namespace engine
       }
       if ( writable )
       {
-         dmsCB->writeDown() ;
+         dmsCB->writeDown( cb ) ;
       }
       PD_TRACE_EXITRC ( SDB_RTNCREATEINDEXCOMMAND, rc ) ;
       return rc ;
@@ -1404,7 +1404,7 @@ namespace engine
       }
       if ( writable )
       {
-         dmsCB->writeDown() ;
+         dmsCB->writeDown( cb ) ;
       }
       PD_TRACE_EXITRC ( SDB_RTNDROPINDEXCOMMAND, rc ) ;
       return rc ;
@@ -1606,7 +1606,7 @@ namespace engine
       }
       if ( writable )
       {
-         dmsCB->writeDown() ;
+         dmsCB->writeDown( cb ) ;
       }
       PD_TRACE_EXITRC ( SDB_RTNDROPCLCOMMAND, rc ) ;
       return rc ;
@@ -1655,7 +1655,7 @@ namespace engine
       }
       if ( writable )
       {
-         dmsCB->writeDown() ;
+         dmsCB->writeDown( cb ) ;
       }
       PD_TRACE_EXITRC ( SDB_RTNTRUNCCLCOMMAND, rc ) ;
       return rc ;

@@ -598,7 +598,7 @@ namespace engine
    done :
       if ( writable )
       {
-         dmsCB->writeDown() ;
+         dmsCB->writeDown( cb ) ;
       }
       PD_TRACE_EXITRC ( SDB_RTNDELCSCOMMAND, rc ) ;
       return rc ;

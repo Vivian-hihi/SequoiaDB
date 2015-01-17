@@ -567,16 +567,10 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__RTNCREATECL_DOIT ) ;
-      rc = dmsCB->writable ( cb ) ;
-      if ( rc )
-      {
-         goto done ;
-      }
 
       rc = rtnCreateCollectionCommand ( _collectionName, _shardingKey,
                                         _attributes, cb, dmsCB, dpsCB ) ;
-      dmsCB->writeDown () ;
-   done :
+
       PD_TRACE_EXITRC ( SDB__RTNCREATECL_DOIT, rc ) ;
       return rc ;
    }
@@ -641,16 +635,10 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__RTNCREATECS_DOIT ) ;
-      rc = dmsCB->writable ( cb ) ;
-      if ( rc )
-      {
-         goto done ;
-      }
 
       rc = rtnCreateCollectionSpaceCommand ( _spaceName, cb, dmsCB, dpsCB,
                                              _pageSize, _lobPageSize ) ;
-      dmsCB->writeDown () ;
-   done :
+
       PD_TRACE_EXITRC ( SDB__RTNCREATECS_DOIT, rc ) ;
       return rc ;
    }
@@ -725,15 +713,9 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__RTNCREATEINDEX_DOIT ) ;
-      rc = dmsCB->writable ( cb ) ;
-      if ( rc )
-      {
-         goto done ;
-      }
+
       rc = rtnCreateIndexCommand ( _collectionName, _index, cb,
                                    dmsCB, dpsCB ) ;
-      dmsCB->writeDown () ;
-   done :
       PD_TRACE_EXITRC ( SDB__RTNCREATEINDEX_DOIT, rc ) ;
       return rc ;
    }
@@ -805,13 +787,7 @@ namespace engine
       }
       else
       {
-         rc = dmsCB->writable ( cb ) ;
-         if ( rc )
-         {
-            goto done ;
-         }
          rc = rtnDropCollectionCommand ( _collectionName, cb, dmsCB, dpsCB ) ;
-         dmsCB->writeDown () ;
       }
    done :
       PD_TRACE_EXITRC ( SDB__RTNDROPCL_DOIT, rc ) ;
@@ -893,13 +869,7 @@ namespace engine
       }
       else
       {
-         rc = dmsCB->writable ( cb ) ;
-         if ( rc )
-         {
-            goto done ;
-         }
          rc = rtnDropCollectionSpaceCommand ( _spaceName, cb, dmsCB, dpsCB ) ;
-         dmsCB->writeDown () ;
       }
    done :
       PD_TRACE_EXITRC ( SDB__RTNDROPCS_DOIT, rc ) ;
@@ -983,14 +953,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__RTNDROPINDEX_DOIT ) ;
       BSONElement ele = _index.firstElement() ;
-      rc = dmsCB->writable ( cb ) ;
-      if ( rc )
-      {
-         goto done ;
-      }
       rc = rtnDropIndexCommand ( _collectionName, ele, cb, dmsCB, dpsCB ) ;
-      dmsCB->writeDown () ;
-   done :
       PD_TRACE_EXITRC ( SDB__RTNDROPINDEX_DOIT, rc ) ;
       return rc ;
    }
@@ -1363,7 +1326,7 @@ namespace engine
       }
 
    done:
-      dmsCB->writeDown () ;
+      dmsCB->writeDown ( cb ) ;
    not_locked:
       if ( suID != DMS_INVALID_CS )
       {
@@ -1442,7 +1405,7 @@ namespace engine
             rc = SDB_INVALIDARG ;
             break ;
       }
-      dmsCB->writeDown () ;
+      dmsCB->writeDown ( cb ) ;
    done :
       PD_TRACE_EXITRC ( SDB__RTNREORG_DOIT, rc ) ;
       return rc ;

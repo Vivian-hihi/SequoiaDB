@@ -384,6 +384,9 @@ namespace engine
       void *getAlignedMemory( UINT32 alignment, UINT32 size ) ;
       void releaseAlignedMemory() ;
 
+      UINT32 getDmsLockLevel() const { return _dmsLockLevel ; }
+      void   setDmsLockLevel( UINT32 lockLevel ) { _dmsLockLevel = lockLevel ; }
+
    #endif // SDB_ENGINE
 
    protected:
@@ -446,6 +449,8 @@ namespace engine
 
       std::set<SINT64>        _contextList ;
       ossQueue<pmdEDUEvent>   _bpEventQueue ;
+
+      UINT32                  _dmsLockLevel ; // for dms lock
 
       // coord related variables
       CoordSession            *_pCoordSession;

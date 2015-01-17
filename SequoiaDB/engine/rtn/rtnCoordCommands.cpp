@@ -455,8 +455,8 @@ namespace engine
       REPLY_QUE replyQueue;
       CHAR *msgBuf = NULL ;
       INT32 msgBufLen = 0 ;
-      netMultiRouteAgent *routeAgent = pmdGetKRCB()->getCoordCB()->
-                                       getRouteAgent() ;
+      netMultiRouteAgent *routeAgent = pmdGetKRCB()->getCoordCB(
+         )->getRouteAgent() ;
       rtnContext *context = NULL ;
 
       rc = msgBuildQueryMsg( &msgBuf, &msgBufLen, options._fullName,

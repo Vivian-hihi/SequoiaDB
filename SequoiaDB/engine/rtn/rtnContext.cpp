@@ -4394,7 +4394,7 @@ namespace engine
       }
       if ( _gotDmsCBWrite )
       {
-         _pDmsCB->writeDown () ;
+         _pDmsCB->writeDown ( cb ) ;
          _gotDmsCBWrite = FALSE;
       }
       if ( _gotLogSize > 0 )
@@ -4572,7 +4572,7 @@ namespace engine
       }
       if ( _gotDmsCBWrite )
       {
-         _pDmsCB->writeDown() ;
+         _pDmsCB->writeDown( cb ) ;
          _gotDmsCBWrite = FALSE ;
       }
       _isOpened = FALSE ;

@@ -179,6 +179,7 @@ namespace engine
       _alignedMemSize   = 0 ;
 
       _curRequestID     = 1 ;
+      _dmsLockLevel     = 0 ;
 
       _monCfgCB = *( (monConfigCB*)(pmdGetKRCB()->getMonCB()) ) ;
 #endif // SDB_ENGINE

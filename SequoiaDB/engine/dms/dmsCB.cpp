@@ -54,6 +54,13 @@ using namespace std;
 namespace engine
 {
 
+   enum DMS_LOCK_LEVEL
+   {
+      DMS_LOCK_NONE     = 0,
+      DMS_LOCK_WRITE    = 1,     // for writable
+      DMS_LOCK_WHOLE    = 2      // for backup or reorg
+   } ;
+
    /*
       _SDB_DMS_CSCB implement
    */
@@ -691,6 +698,12 @@ namespace engine
       INT32 rc = SDB_OK ;
       BOOLEAN locked = FALSE ;
 
+      if ( cb && cb->getDmsLockLevel() >= DMS_LOCK_WRITE )
+      {
+         // already writable
+         goto done ;
+      }
+
    retry:
       _stateMtx.get () ;
       locked = TRUE ;
@@ -709,6 +722,10 @@ namespace engine
       if ( SDB_OK == rc )
       {
          ++_writeCounter ;
+         if ( cb )
+         {
+            cb->setDmsLockLevel( DMS_LOCK_WRITE ) ;
+         }
       }
       else if ( cb )
       {
@@ -730,6 +747,7 @@ namespace engine
          }
       }
 
+   done:
       if ( locked )
       {
          _stateMtx.release() ;
@@ -737,9 +755,28 @@ namespace engine
       return rc;
    }
 
-   INT32 _SDB_DMSCB::registerBackup()
+   void _SDB_DMSCB::writeDown( _pmdEDUCB * cb )
+   {
+      _stateMtx.get();
+      --_writeCounter;
+      SDB_ASSERT( 0 <= _writeCounter, "write counter should not < 0" ) ;
+      _stateMtx.release();
+
+      if ( cb )
+      {
+         cb->setDmsLockLevel( DMS_LOCK_NONE ) ;
+      }
+   }
+
+   INT32 _SDB_DMSCB::registerBackup( _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
+
+      if ( cb && cb->getDmsLockLevel() >= DMS_LOCK_WHOLE )
+      {
+         goto done ;
+      }
+
       _stateMtx.get();
       if ( DMS_STATE_NORMAL != _dmsCBState )
       {
@@ -760,6 +797,10 @@ namespace engine
          {
             _backEvent.reset() ;
             _stateMtx.release();
+            if ( cb )
+            {
+               cb->setDmsLockLevel( DMS_LOCK_WHOLE ) ;
+            }
             goto done;
          }
          else
@@ -768,13 +809,32 @@ namespace engine
             ossSleepmillis( DMS_CHANGESTATE_WAIT_LOOP );
          }
       }
+
    done:
-      return rc;
+      return rc ;
    }
 
-   INT32 _SDB_DMSCB::registerRebuild()
+   void _SDB_DMSCB::backupDown( _pmdEDUCB *cb )
+   {
+      _stateMtx.get() ;
+      _dmsCBState = DMS_STATE_NORMAL ;
+      _backEvent.signalAll() ;
+      _stateMtx.release() ;
+      if ( cb )
+      {
+         cb->setDmsLockLevel( DMS_LOCK_NONE ) ;
+      }
+   }
+
+   INT32 _SDB_DMSCB::registerRebuild( _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
+
+      if ( cb && cb->getDmsLockLevel() >= DMS_LOCK_WRITE )
+      {
+         goto done ;
+      }
+
       _stateMtx.get();
       if ( DMS_STATE_NORMAL != _dmsCBState )
       {
@@ -794,6 +854,10 @@ namespace engine
          if ( 0 == _writeCounter )
          {
             _stateMtx.release();
+            if ( cb )
+            {
+               cb->setDmsLockLevel( DMS_LOCK_WRITE ) ;
+            }
             goto done;
          }
          else
@@ -804,6 +868,18 @@ namespace engine
       }
    done :
       return rc ;
+   }
+
+   void _SDB_DMSCB::rebuildDown( _pmdEDUCB *cb )
+   {
+      _stateMtx.get();
+      _dmsCBState = DMS_STATE_NORMAL;
+      _stateMtx.release();
+
+      if ( cb )
+      {
+         cb->setDmsLockLevel( DMS_LOCK_NONE ) ;
+      }
    }
 
    INT32 _SDB_DMSCB::nameToSUAndLock ( const CHAR *pName,
