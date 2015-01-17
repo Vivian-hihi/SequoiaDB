@@ -116,18 +116,25 @@ namespace engine
       UINT32 tid = 0 ;
 
       ossUnpack32From64( sessionID, nodeID, tid ) ;
-
+      // if nodeID <= PMD_BASE_HANDLE_ID, that means the request come from
+      // the request from other nodes within the shard ( currently only
+      // split request uses this part )
       if ( PMD_BASE_HANDLE_ID >= nodeID )
       {
          if ( PMD_SESSION_ACTIVE == startType )
          {
+            // If it's proactive request, that means it's split destination
+            // During split the destination part "asks" for the data from source
             sessionType = SDB_SESSION_SPLIT_DST ;
          }
          else
          {
+            // otherwise it's the source, which receives the split request
             sessionType = SDB_SESSION_SPLIT_SRC ;
          }
       }
+      // if nodeID > PMD_BASE_HANDLE_ID, that means the request come from
+      // coord
       else
       {
          sessionType = SDB_SESSION_SHARD ;
@@ -160,13 +167,20 @@ namespace engine
       }
    }
 
-   pmdAsyncSession* _clsShardSessionMgr::_createSession( SDB_SESSION_TYPE sessionType,
-                                                         INT32 startType,
-                                                         UINT64 sessionID,
-                                                         void *data )
+   // create session request for the manager
+   // there are 3 types of sessions for shardsessions
+   // 1) split destination
+   // 2) split source
+   // 3) regular shard session
+   pmdAsyncSession* _clsShardSessionMgr::_createSession(
+         SDB_SESSION_TYPE sessionType,
+         INT32 startType,
+         UINT64 sessionID,
+         void *data )
    {
       pmdAsyncSession *pSession = NULL ;
 
+      // Based on session type, let's create Async session
       if ( SDB_SESSION_SPLIT_DST == sessionType )
       {
          pSession = SDB_OSS_NEW _clsSplitDstSession ( sessionID, _pRTAgent,
@@ -216,6 +230,9 @@ namespace engine
       return rc ;
    }
 
+   // check timeout for the irregular shard sessions ( like split sessions )
+   // usually those types of sessions are for communication within between shard
+   // like one shard directly send msg to another shard
    void _clsShardSessionMgr::_checkUnShardSessions( UINT32 interval )
    {
       pmdAsyncSession *pSession = NULL ;
@@ -223,12 +240,13 @@ namespace engine
       while ( it != _mapSession.end() )
       {
          pSession = it->second ;
+         // skip regular shard sessions
          if ( SDB_SESSION_SHARD == pSession->sessionType() )
          {
             ++it ;
             continue ;
          }
-
+         // get rid of timeout sessions
          if ( !pSession->isProcess() && pSession->timeout( interval ) )
          {
             PD_LOG ( PDEVENT, "Session[%s] timeout", pSession->sessionName() ) ;
@@ -323,29 +341,41 @@ namespace engine
       // do nothing
    }
 
-   pmdAsyncSession* _clsReplSessionMgr::_createSession( SDB_SESSION_TYPE sessionType,
-                                                        INT32 startType,
-                                                        UINT64 sessionID,
-                                                        void *data )
+   // create replication sessions manager
+   // include:
+   // 1) replication destination
+   // 2) replication source
+   // 3) full sync destination
+   // 4) full sync source
+   pmdAsyncSession* _clsReplSessionMgr::_createSession(
+         SDB_SESSION_TYPE sessionType,
+         INT32 startType,
+         UINT64 sessionID,
+         void *data )
    {
       pmdAsyncSession *pSession = NULL ;
-
+      // check session type for replication sessions
       if ( SDB_SESSION_REPL_DST == sessionType )
       {
+         // slave node uses dest
          pSession = SDB_OSS_NEW clsReplDstSession( sessionID ) ;
       }
       else if ( SDB_SESSION_REPL_SRC == sessionType )
       {
+         // primary node uses src
          UINT32 nodeID = 0 ;
          UINT32 tid = 0 ;
          ossUnpack32From64( sessionID, nodeID, tid ) ;
 
-         // nodeid the same with self node, can't create session
+         // if we find the requested nodeID is not the nodeID for the current
+         // node, that means we get something from another node and we are
+         // going to create a new replsrc session
          if ( pmdGetNodeID().columns.nodeID != nodeID )
          {
             pSession = SDB_OSS_NEW clsReplSrcSession( sessionID ) ;
          }
       }
+      // FS means full sync
       else if ( SDB_SESSION_FS_DST == sessionType )
       {
          pSession = SDB_OSS_NEW _clsFSDstSession ( sessionID,
@@ -443,7 +473,7 @@ namespace engine
       nodeID.columns.serviceID = _shardServiceID ;
       _shardNetRtAgent.updateRoute( nodeID, hostName, _shdServiceName ) ;
       rc = _shardNetRtAgent.listen( nodeID ) ;
-      if (SDB_OK != rc )
+      if ( SDB_OK != rc )
       {
          PD_LOG ( PDERROR, "Create listen[Hostname:%s, ServiceName:%s] failed",
                   hostName, _shdServiceName ) ;
@@ -508,7 +538,7 @@ namespace engine
          goto error ;
       }
 
-      // 2. start net edus
+      // 2. start network daemons for shard/repl reader
       rc = _startEDU ( EDU_TYPE_SHARDR, PMD_EDU_RUNNING,
                        (netRouteAgent*)getShardRouteAgent(), TRUE ) ;
       if ( rc )
@@ -697,17 +727,20 @@ namespace engine
                   primary ? "Primary" : "Secondary" ) ;
       }
 
-      // if business is not ok
+      // let's ignore the event if the node is still starting up
       if ( !pmdGetStartup().isOK() )
       {
          return ;
       }
 
+      // if we are switching to primary, let's increase log version BEFORE
+      // it actually happen
       if ( primary && SDB_EVT_OCCUR_BEFORE == type )
       {
          // inc dps log version
          sdbGetDPSCB()->incVersion() ;
       }
+      // if we are switching to slave, let's interrupt all EDUs that doing write
       else if ( !primary && SDB_EVT_OCCUR_BEFORE == type )
       {
          // interrupt writing edus
@@ -718,6 +751,7 @@ namespace engine
       getShardCB()->ntyPrimaryChange( primary, type ) ;
       getReplCB()->ntyPrimaryChange( primary, type ) ;
 
+      // for "post trigger" event
       if ( SDB_EVT_OCCUR_AFTER == type )
       {
          // if change to primary, need to start query task
@@ -840,6 +874,12 @@ namespace engine
       goto done ;
    }
 
+   // Register async internal sessions
+   // The function itself doesn't start session. Instead the function place
+   // a request in _vecInnerSessionParam vector so that another daemon will
+   // create a background inernal sessions afterwards
+   // By default the daemon will be triggered every single seconds to detect
+   // if the queue is empty or not
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSMGR_STARTINSN, "_clsMgr::startInnerSession" )
    INT32 _clsMgr::startInnerSession ( INT32 type, INT32 innerTID, void *data )
    {
@@ -859,6 +899,9 @@ namespace engine
       return SDB_OK ;
    }
 
+   // Start a background task check request
+   // Another daemon will be triggered every second, it will send the check
+   // request to CATALOG to check for task collection
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSMGR_STARTTSKCHK, "_clsMgr::startTaskCheck" )
    INT32 _clsMgr::startTaskCheck ( const BSONObj & match )
    {
@@ -888,6 +931,7 @@ namespace engine
       return SDB_OK ;
    }
 
+   // remove the task from local
    INT32 _clsMgr::removeTask( UINT64 taskID )
    {
       ossScopedLock lock ( &_clsLatch, EXCLUSIVE ) ;
@@ -947,6 +991,7 @@ namespace engine
       }
    }
 
+   // call all registered event handler for primary change request
    void _clsMgr::_callPrimaryChangeHandler( BOOLEAN primary,
                                             SDB_EVENT_OCCUR_TYPE type )
    {
@@ -996,6 +1041,7 @@ namespace engine
       {
          _sendRegisterMsg () ;
       }
+      // if we hit one second
       else if ( timerID == _oneSecTimerID )
       {
          //Check _deqShdDeletingSessions
@@ -1005,11 +1051,15 @@ namespace engine
          //prepare task
          _prepareTask () ;
 
+         // if we have one or more pending tasks, and if the unshard timer
+         // not started yet, let's start one
          if ( _taskMgr.taskCount() > 0 &&
               !_shardSessionMgr.isUnShardTimerStarted() )
          {
             _shardSessionMgr.startUnShardTimer( OSS_ONE_SEC ) ;
          }
+         // if unshard time is already started but pending tasks are 0, let's
+         // stop it
          else if ( _shardSessionMgr.isUnShardTimerStarted() &&
                    0 == _taskMgr.taskCount() )
          {
@@ -1018,6 +1068,9 @@ namespace engine
       }
       else
       {
+         // otherwise let's extract the type from timerID, and call onTimer
+         // call back functions based on the request type
+         // For now we only have 2 possible types, shard or repl
          UINT32 type = 0 ;
          UINT32 netTimerID = 0 ;
          ossUnpack32From64 ( timerID, type, netTimerID ) ;
@@ -1042,9 +1095,13 @@ namespace engine
       ossScopedLock lock ( &_clsLatch, EXCLUSIVE ) ;
 
       VECINNERPARAM::iterator it = _vecInnerSessionParam.begin() ;
+      // iterate for all pending internal session requests
       while ( it != _vecInnerSessionParam.end() )
       {
          _innerSessionInfo &info = *it ;
+         // skip for any unmatch types or existing sessions
+         // if the session already started, we simply ignore the request in
+         // the list and wait for start next time
          if ( info.type != type || pSessionMgr->getSession( info.sessionID,
                                                             info.startType,
                                                             NET_INVALID_HANDLE,
@@ -1053,7 +1110,7 @@ namespace engine
             ++it ;
             continue ;
          }
-
+         // let's start the session
          pSession = pSessionMgr->getSession ( info.sessionID, info.startType,
                                               NET_INVALID_HANDLE, TRUE, 0,
                                               info.data ) ;
@@ -1064,7 +1121,8 @@ namespace engine
             it = _vecInnerSessionParam.erase ( it ) ;
             continue ;
          }
-
+         // if we get here, that means something wrong and we can't start
+         // the session
          PD_LOG ( PDERROR, "Create inner session[TID:%d] failed",
                   info.innerTid ) ;
          rc = SDB_SYS ;
@@ -1128,6 +1186,7 @@ namespace engine
       {
          case CLS_TASK_SPLIT :
             taskID = _taskMgr.getTaskID() ;
+            // memory will be freed in clsTaskMgr destructor
             pTask = SDB_OSS_NEW _clsSplitTask ( taskID ) ;
             type = CLS_SHARD ;
             break ;
@@ -1152,7 +1211,7 @@ namespace engine
       rc = pTask->init( objdata ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG ( PDERROR, "Init split task failed[rc:%d]", rc ) ;
+         PD_LOG ( PDERROR, "Init task failed[rc:%d]", rc ) ;
          goto error ;
       }
 
@@ -1160,6 +1219,7 @@ namespace engine
       rc = _taskMgr.addTask( pTask, taskID ) ;
       if ( SDB_OK != rc )
       {
+         PD_LOG ( PDERROR, "Failed to add task, rc = %d", rc ) ;
          pTask = NULL ;
          goto error ;
       }
@@ -1171,7 +1231,13 @@ namespace engine
       //start inner session
       tid = (UINT32)taskID ;
       rc = startInnerSession ( type, tid, (void *)pTask ) ;
-
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to start inner session, rc = %d",
+                  rc ) ;
+         pTask = NULL ;
+         goto error ;
+      }
    done:
       PD_TRACE_EXITRC ( SDB__CLSMGR__ADDTSKINSN, rc );
       return rc ;
