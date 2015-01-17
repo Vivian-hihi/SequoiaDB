@@ -67,8 +67,6 @@ namespace engine
       _role = SDB_ROLE_STANDALONE ;
 
       setGroupName ( "" );
-      // by default replication port is service port + 1
-
       // monitor switch initialization, no latch needed
       // for better performance these monitor swtich should be turned off
       // here, turn it on for testing
@@ -126,11 +124,19 @@ namespace engine
       INT32 rc = SDB_OK ;
 
       SDB_ASSERT( pCB, "CB can't be NULL" ) ;
-      SDB_ASSERT( FALSE == _init, "Registered cb must before init krcb" ) ;
+      SDB_ASSERT( FALSE == _init, "Registered cb must be done before "
+                                  "KRCB initialization" ) ;
 
       if ( (INT32)( pCB->cbType () ) < 0 ||
            (INT32)( pCB->cbType () ) >= SDB_CB_MAX )
       {
+         // We need to panic in debug mode for troubleshooting
+         SDB_ASSERT ( FALSE, "CB registration should not be out of range" ) ;
+         // In release mode at least we need to see something indicating
+         // the CB can't be registered.
+         // We don't panic or fail startup anyway in the caller function
+         PD_LOG ( PDSEVERE, "Control Block type is not valid: %d",
+                  pCB->cbType () ) ;
          rc = SDB_SYS ;
          goto error ;
       }
@@ -177,7 +183,7 @@ namespace engine
          }
       }
 
-      // Active all registered cb
+      // Activate all registered cb after initilization complete
       for ( index = 0 ; index < SDB_CB_MAX ; ++index )
       {
          pCB = _arrayCBs[ index ] ;
@@ -232,7 +238,7 @@ namespace engine
       // stop all io services and edus(thread)
       _eduMgr.reset () ;
 
-      // Fini all registered cbs
+      // Fini all registered cbs ( final resource cleanup )
       for ( index = SDB_CB_MAX ; index > 0 ; --index )
       {
          pCB = _arrayCBs[ index - 1 ] ;
@@ -255,7 +261,7 @@ namespace engine
       INT32 index = 0 ;
       IControlBlock *pCB = NULL ;
 
-      // Deactive all registered cbs
+      // Reconfig all registered cbs
       for ( index = 0 ; index < SDB_CB_MAX ; ++index )
       {
          pCB = _arrayCBs[ index ] ;
@@ -272,12 +278,14 @@ namespace engine
       _role = utilGetRoleEnum( _optioncb.krcbRole() ) ;
       pmdSetDBRole( _role ) ;
 
+      // Call trace start if we want to trace start up procedure
       if ( _optioncb.isTraceOn() && _optioncb.traceBuffSize() != 0 )
       {
          sdbGetPDTraceCB()->start ( (UINT64)_optioncb.traceBuffSize(),
                                     0xFFFFFFFF ) ;
       }
 
+      // enable memory debug option
       ossEnableMemDebug( _optioncb.memDebugEnabled(),
                          _optioncb.memDebugSize() ) ;
 
@@ -298,6 +306,5 @@ namespace engine
     * kernel control block
     */
    pmdKRCB pmd_krcb ;
-
 }
 

@@ -83,6 +83,7 @@ namespace engine
       _fileName += PMD_STARTUP_FILE_NAME ;
 
       // attempt to access the file
+      PD_TRACE1 ( SDB__PMDSTARTUP_INIT, PD_PACK_STRING ( _fileName.c_str() ) ) ;
       rc = ossAccess ( _fileName.c_str() ) ;
       // if the file does not exist, that means we were normally shutdown
       if ( SDB_FNE == rc )
@@ -176,6 +177,8 @@ namespace engine
          {
             _startType = SDB_START_CRASH ;
          }
+         PD_TRACE1 ( SDB__PMDSTARTUP_INIT,
+                     PD_PACK_INT ( _startType ) ) ;
          rc = SDB_OK ;
 
          if ( onlyCheck )
@@ -220,8 +223,10 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDSTARTUP_FINAL, "_pmdStartup::final" )
    INT32 _pmdStartup::final ()
    {
+      PD_TRACE_ENTRY ( SDB__PMDSTARTUP_FINAL ) ;
       if ( _fileOpened && _fileLocked )
       {
          INT64 write = 0 ;
@@ -245,6 +250,7 @@ namespace engine
       {
          ossDelete ( _fileName.c_str() ) ;
       }
+      PD_TRACE_EXIT ( SDB__PMDSTARTUP_FINAL ) ;
       return SDB_OK ;
    }
 

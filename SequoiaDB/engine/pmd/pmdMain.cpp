@@ -225,7 +225,7 @@ namespace engine
          goto error ;
       }
 
-      // wait until business is ok
+      // wait until all daemon threads start
       while ( PMD_IS_DB_UP && startTimerCount < PMD_START_WAIT_TIME &&
               !krcb->isBusinessOK() )
       {
@@ -241,7 +241,7 @@ namespace engine
       }
       else if ( startTimerCount >= PMD_START_WAIT_TIME )
       {
-         PD_LOG( PDWARNING, "Start warning(wait business ative timeout)" ) ;
+         PD_LOG( PDWARNING, "Start warning (timeout)" ) ;
       }
 
 #if defined (_LINUX)
@@ -254,6 +254,7 @@ namespace engine
                        "%s(%s) %s", utilDBTypeStr( pmdGetDBType() ),
                        pmdGetOptionCB()->getServiceAddr(),
                        utilDBRoleShortStr( pmdGetDBRole() ) ) ;
+         // rename the process to append port number and service type
          ossEnableNameChanges ( argc, argv ) ;
          ossRenameProcess ( pmdProcessName ) ;
       }
@@ -261,7 +262,9 @@ namespace engine
       {
          EDUID agentEDU = PMD_INVALID_EDUID ;
          pmdEDUMgr *eduMgr = pmdGetKRCB()->getEDUMgr() ;
-         // Then start windows listener thread for "backdoor" listening
+         // Then start pipe listener for "fast status check" service
+         // Note this listener doesn't need to authenticate
+         // It's only valid for status check, not for any status change
          eduMgr->startEDU ( EDU_TYPE_PIPESLISTENER,
                             (void*)pmdGetOptionCB()->getServiceAddr(),
                             &agentEDU ) ;
