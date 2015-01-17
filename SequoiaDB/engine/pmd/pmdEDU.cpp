@@ -1149,6 +1149,9 @@ namespace engine
                         myEDUID, getEDUName(type), contextID ) ;
             }
          }
+
+         // make sure release dms lock
+         SDB_ASSERT( 0 == cb->getDmsLockLevel(), "Dms lock level must be 0" ) ;
 #endif // SDB_ENGINE
 
          cb->clear() ;
