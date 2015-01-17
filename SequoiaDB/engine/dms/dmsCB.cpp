@@ -700,6 +700,7 @@ namespace engine
 
       if ( cb && cb->getDmsLockLevel() >= DMS_LOCK_WRITE )
       {
+         ++_writeCounter ;
          // already writable
          goto done ;
       }
@@ -772,11 +773,6 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
 
-      if ( cb && cb->getDmsLockLevel() >= DMS_LOCK_WHOLE )
-      {
-         goto done ;
-      }
-
       _stateMtx.get();
       if ( DMS_STATE_NORMAL != _dmsCBState )
       {
@@ -829,11 +825,6 @@ namespace engine
    INT32 _SDB_DMSCB::registerRebuild( _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
-
-      if ( cb && cb->getDmsLockLevel() >= DMS_LOCK_WRITE )
-      {
-         goto done ;
-      }
 
       _stateMtx.get();
       if ( DMS_STATE_NORMAL != _dmsCBState )
