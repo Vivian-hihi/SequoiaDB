@@ -5,11 +5,6 @@
 #include "msgBuffer.hpp"
 #include "../../bson/bson.h"
 
-
-#ifndef SDB_ENGINE
-#define SDB_ENGINE
-#endif
-
 enum CONVERT_ERROR
 {
    CON_OK = 0,                ///< convert successfully
