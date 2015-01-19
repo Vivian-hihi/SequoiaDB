@@ -49,6 +49,7 @@
 #include "catCatalogManager.hpp"
 #include "catNodeManager.hpp"
 #include "sdbInterface.hpp"
+#include "catLevelLock.hpp"
 
 namespace engine
 {
@@ -111,6 +112,10 @@ namespace engine
          {
             return &_catNodeMgr ;
          }
+         catLevelLockMgr* getLevelLockMgr()
+         {
+            return &_levelLockMgr ;
+         }
 
       private:
          _netRouteAgent       *_pNetWork ;
@@ -129,6 +134,7 @@ namespace engine
          catMainController    _catMainCtrl ;
          catCatalogueManager  _catlogueMgr ;
          catNodeManager       _catNodeMgr ;
+         catLevelLockMgr      _levelLockMgr ;
    };
 
    /*
