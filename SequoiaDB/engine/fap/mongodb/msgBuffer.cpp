@@ -71,7 +71,6 @@ INT32 _msgBuffer::write( const CHAR *in, const UINT32 inLen )
       rc = realloc( _data, size ) ;
       if( SDB_OK != rc )
       {
-         PD_LOG( "Failed to write data to buffer" ) ;
          goto error ;
       }
 

@@ -1,8 +1,33 @@
 #include "commands.hpp"
 #include "mongoConverter.hpp"
 #include "msg.h"
-#include "bsonmisc.h"
-#include "bson/bsonobjbuilder.h"
+#include "../../bson/bsonmisc.h"
+#include "../../bson/bsonobjbuilder.h"
+
+DECLARE_COMMAND_VAR( insert )
+DECLARE_COMMAND_VAR( remove )
+DECLARE_COMMAND_VAR( update )
+DECLARE_COMMAND_VAR( query )
+DECLARE_COMMAND_VAR( getMore )
+DECLARE_COMMAND_VAR( killCursors )
+DECLARE_COMMAND_VAR( reply )
+
+// business
+DECLARE_COMMAND_VAR( getnonce )
+DECLARE_COMMAND_VAR( authenticate )
+DECLARE_COMMAND_VAR( create )
+DECLARE_COMMAND_VAR( dropCollection )
+DECLARE_COMMAND_VAR( drop )
+DECLARE_COMMAND_VAR( count )
+DECLARE_COMMAND_VAR( aggregate )
+
+///< index
+DECLARE_COMMAND_VAR( createIndex )
+DECLARE_COMMAND_VAR( dropIndexes )
+DECLARE_COMMAND_VAR( getIndexes )
+
+///< getLastError
+DECLARE_COMMAND_VAR( getLastError )
 
 command::command( const CHAR *cmdName )
 {
@@ -31,12 +56,15 @@ CONVERT_ERROR insertCommand::convertRequest( mongoParser &parser, fixedStream &s
       cmd = commandMgr::instance()->findCommand( "createIndex" ) ;
       if ( NULL != cmd )
       {
-         // re-parse mongo msg
-         parser.reparse() ;
-         sdbMsg.zero() ;
-
-         cmd->convertRequest( parser, sdbMsg ) ;
+         rc = CON_COMMAND_UNSUPPORTED ;
+         goto error ;
       }
+      // re-parse mongo msg
+      parser.reparse() ;
+      sdbMsg.zero() ;
+
+      cmd->convertRequest( parser, sdbMsg ) ;
+
    }
 
    sdbMsg.reverse( sizeof ( MsgOpInsert ) ) ;
@@ -111,19 +139,19 @@ CONVERT_ERROR removeCommand::convertRequest( mongoParser &parser, fixedStream &s
    parser.skip( parser.dbNameLen + 1 ) ;
    if ( !parser.more() )
    {
-      rc = CON_ERROR_INVALIDARG ;
+      rc = CON_INVALIDARG ;
       goto error ;
    }
    parser.nextObj( del ) ;
 
    if ( parser.more() )
    {
-      rc = CON_ERROR_INVALIDARG ;
+      rc = CON_INVALIDARG ;
       goto error ;
    }
 
    hint = del.getObjectField( "$hint" ) ;
-   del.removeField( "$hint" ) ;
+   hint = removeField( hint, "$hint" ) ;
 
    sdbMsg.write( parser.dbName, parser.dbNameLen ) ;
    sdbMsg.write( del.objdata(), del.objsize() ) ;
@@ -179,20 +207,20 @@ CONVERT_ERROR updateCommand::convertRequest( mongoParser &parser, fixedStream &s
 
    if ( !parser.more() )
    {
-      rc = CON_ERROR_INVALIDARG ;
+      rc = CON_INVALIDARG ;
       goto error ;
    }
    parser.nextObj( cond ) ;
 
    if ( !parser.more() )
    {
-      rc = CON_ERROR_INVALIDARG ;
+      rc = CON_INVALIDARG ;
       goto error ;
    }
    parser.nextObj( updater ) ;
 
    hint = cond.getObjectField( "$hint" ) ;
-   cond.removeField( "$hint" ) ;
+   hint = removeField( hint, "$hint" ) ;
 
    sdbMsg.write( parser.dbName, parser.dbNameLen ) ;
    sdbMsg.write( cond.objdata(), cond.objsize() ) ;
@@ -218,7 +246,6 @@ CONVERT_ERROR queryCommand::convertRequest( mongoParser &parser, fixedStream &sd
    const CHAR *ptr    = NULL ;
    const CHAR *cmdStr = NULL ;
    command* cmd       = NULL ;
-   INT32 nsLen        = 0 ;
    bson::BSONObj cond ;
    bson::BSONObj selector ;
    bson::BSONObj orderby ;
@@ -278,9 +305,9 @@ CONVERT_ERROR queryCommand::convertRequest( mongoParser &parser, fixedStream &sd
       query->flags |= FLG_QUERY_PARTIALREAD ;
    }
 
-   parser.readNumber( sizeof( INT32 ), ( CHAR * )nToSkip ) ;
+   parser.readNumber( sizeof( INT32 ), ( CHAR * )&nToSkip ) ;
    query->numToSkip = nToSkip ;
-   parser.readNumber( sizeof( INT32 ), ( CHAR * )nToReturn ) ;
+   parser.readNumber( sizeof( INT32 ), ( CHAR * )&nToReturn ) ;
    query->numToReturn = nToReturn ;
 
    if ( !parser.more() )
@@ -293,24 +320,35 @@ CONVERT_ERROR queryCommand::convertRequest( mongoParser &parser, fixedStream &sd
    {
       // do with the msg with command
       cmdStr = cond.firstElementFieldName() ;
-      cmd = commandMgr::instance()->findCommand( cmdStr ) ;
-      if ( NULL != cmd )
-      {
-         // re-parse mongo msg
-         parser.reparse() ;
-         sdbMsg.zero() ;
 
-         cmd->convertRequest( parser, sdbMsg ) ;
+      ptr = ossStrstr( cmdStr, "getlasterror" ) ;
+      if ( NULL == ptr )
+      {
+         ptr = ossStrstr( cmdStr, "getLastError" ) ;
       }
-      rc = CON_OTHER_ERROR ;
-      // should never hit here
+
+      if ( NULL != ptr )
+      {
+         cmdStr = "getLastError" ;
+      }
+
+      cmd = commandMgr::instance()->findCommand( cmdStr ) ;
+      if ( NULL == cmd )
+      {
+         rc = CON_COMMAND_UNSUPPORTED ;
+         goto error ;
+      }
+      // re-parse mongo msg
+      parser.reparse() ;
+      sdbMsg.zero() ;
+
+      cmd->convertRequest( parser, sdbMsg ) ;
+
       return rc ;
    }
 
    orderby = cond.getObjectField( "orderby" ) ;
-   cond.removeField( "orderby" ) ;
-   hint = cond.getObjectField( "$hint" ) ;
-   cond.removeField( "$hint" ) ;
+   orderby = removeField( orderby, "$hint" ) ;
 
    if ( !parser.more() )
    {
@@ -746,9 +784,8 @@ CONVERT_ERROR countCommand::convertRequest( mongoParser &parser, fixedStream &sd
    parser.skip( parser.nsLen + 1 ) ;
 
    parser.readNumber( sizeof( INT32 ), ( CHAR * )nToSkip ) ;
-   
+
    parser.readNumber( sizeof( INT32 ), ( CHAR * )nToReturn ) ;
-   
 
    if ( !parser.more() )
    {
@@ -769,7 +806,7 @@ CONVERT_ERROR countCommand::convertRequest( mongoParser &parser, fixedStream &sd
 
    queryObj = cond.getObjectField( "query" ) ;
    orderby = queryObj.getObjectField( "sort" ) ;
-   queryObj.removeField( "sort" ) ;
+   queryObj = removeField( queryObj, "sort" ) ;
 
    nToReturn = cond.getIntField( "limit" ) ;
    nToSkip   = cond.getIntField( "skip" ) ;
@@ -835,7 +872,7 @@ CONVERT_ERROR aggregateCommand::convertRequest( mongoParser &parser, fixedStream
       fullname += "." ;
       fullname += e.valuestr() ;
    }
-   cond.removeField( "aggregate" ) ;
+   cond = removeField( cond, "aggregate" ) ;
 
    aggr->nameLength = fullname.length() ;
    sdbMsg.write( fullname.c_str(), fullname.length() ) ;
@@ -882,7 +919,7 @@ CONVERT_ERROR createIndexCommand::convertRequest( mongoParser &parser, fixedStre
    index->w = 0 ;
    index->padding = 0 ;
    index->flags = 0 ;
-   
+
    parser.skip( parser.nsLen + 1 ) ;
    parser.readNumber( sizeof( INT32 ), ( CHAR * )nToSkip ) ;
    index->numToSkip = 0 ;
@@ -1047,16 +1084,6 @@ error:
 
 //////////////////////////////////////////////////////////////////////////
 ///< getLastErrorCommand
-CONVERT_ERROR getlasterrorCommand::convertRequest( mongoParser &parser, fixedStream &sdbMsg )
-{
-   CONVERT_ERROR rc      = CON_OK ;
-
-done:
-   return rc ;
-error:
-   goto done ;
-}
-
 CONVERT_ERROR getLastErrorCommand::convertRequest( mongoParser &parser, fixedStream &sdbMsg )
 {
    CONVERT_ERROR rc      = CON_OK ;

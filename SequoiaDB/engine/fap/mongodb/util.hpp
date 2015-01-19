@@ -3,13 +3,20 @@
 
 #include "iostream"
 #include "msgBuffer.hpp"
+#include "../../bson/bson.h"
+
+
+#ifndef SDB_ENGINE
+#define SDB_ENGINE
+#endif
 
 enum CONVERT_ERROR
 {
-   CON_OK = 0,          ///< convert successfully
-   CON_NONE_ORIGINAL,   ///< original data is empty
-   CON_ERROR_INVALIDARG,///< lack of data
-   CON_OTHER_ERROR,     ///< unknown error
+   CON_OK = 0,                ///< convert successfully
+   CON_NONE_ORIGINAL,         ///< original data is empty
+   CON_INVALIDARG,            ///< lack of data
+   CON_COMMAND_UNSUPPORTED,   ///< command unsupported right now
+   CON_OTHER_ERROR,           ///< unknown error
 } ;
 
 class _IConverter
@@ -27,7 +34,7 @@ typedef _IConverter IConverter ;
 class _baseConverter/*, public IConverter*/
 {
 public:
-   _baseConverter() : _msgdata( NULL ), _msglen( 0 )
+   _baseConverter() : _msglen( 0 ), _msgdata( NULL )
    {}
 
    virtual ~_baseConverter()
@@ -100,4 +107,16 @@ inline BOOLEAN checkBigEndian()
    return bigEndian ;
 }
 
+inline bson::BSONObj removeField( bson::BSONObj &obj, const string& name )
+{
+   bson::BSONObjBuilder b;
+   bson::BSONObjIterator i(obj);
+   while ( i.more() ) {
+   bson::BSONElement e = i.next();
+   const char *fname = e.fieldName();
+   if ( name != fname )
+      b.append(e);
+   }
+   return b.obj();
+}
 #endif

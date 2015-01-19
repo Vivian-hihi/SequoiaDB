@@ -3,13 +3,15 @@
 
 #include "util.hpp"
 #include "oss.hpp"
+#include "mongodef.hpp"
+#include "commands.hpp"
 
 class command ;
 
 class mongoConverter : public baseConverter, public SDBObject
 {
 public:
-   mongoConverter( const CHAR *msg, INT32 len ) : _cmd( NULL )
+   mongoConverter() : _cmd( NULL )
    {
       _bigEndian = checkBigEndian() ;
       parser.setEndian( _bigEndian ) ;

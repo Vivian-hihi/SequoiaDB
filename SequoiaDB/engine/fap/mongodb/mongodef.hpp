@@ -2,7 +2,7 @@
 #define _SDB_MONGO_DEFINITION_HPP_
 
 #include "util.hpp"
-#include "bsonobj.h"
+#include "../../bson/bson.hpp"
 
 enum mongoOption
 {
@@ -120,7 +120,7 @@ public:
       init( _dataStart, len ) ;
    }
 
-   void readNumber( const UINT32 size, CHAR *out, BOOLEAN bigEndian ) ;
+   void readNumber( const UINT32 size, CHAR *out ) ;
    void extractMsg() ;
 
 private:

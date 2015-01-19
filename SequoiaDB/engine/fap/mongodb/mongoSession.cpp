@@ -10,6 +10,7 @@
 #include "rtnCommandDef.hpp"
 #include "rtn.hpp"
 #include "pmd.hpp"
+#include "sdbInterface.hpp"
 
 /////////////////////////////////////////////////////////////////
 // implement for mongo processor
@@ -25,7 +26,6 @@ _pmdMongoSession::~_pmdMongoSession()
       SDB_OSS_DEL( _converter ) ;
       _converter = NULL ;
    }
-   
 }
 
 UINT64 _pmdMongoSession::identifyID()
@@ -40,7 +40,7 @@ INT32 _pmdMongoSession::getServiceType() const
 
 engine::SDB_SESSION_TYPE _pmdMongoSession::sessionType() const
 {
-   return engine::SDB_SESSION_TYPE::SDB_SESSION_MONGO ;
+   return engine::SDB_SESSION_MONGO ;
 }
 
 INT32 _pmdMongoSession::attachProcessor( engine::_IProcessor *processor )
@@ -76,7 +76,7 @@ INT32 _pmdMongoSession::run()
    {
       // clear interrupt flag
       _pEDUCB->resetInterrupt() ;
-      _pEDUCB->resetInfo( engine::EDU_INFO_TYPE::EDU_INFO_ERROR ) ;
+      _pEDUCB->resetInfo( engine::EDU_INFO_ERROR ) ;
 
       // recv msg
       rc = recvData( (CHAR*)&msgSize, sizeof(UINT32) ) ;
@@ -201,24 +201,12 @@ INT32 _pmdMongoSession::_processMsg( const CHAR *pMsg, const INT32 len )
       _replyHeader.startFrom = (INT32)_contextBuff.getStartFrom() ;
       _replyHeader.flags = rc ;
       _replyHeader.header.messageLength = sizeof( _replyHeader ) + bodyLen ;
-      if ( SDB_OK != rc )
-      {
-         if ( _needRollback )
-         {
-            INT32 rcTmp = engine::rtnTransRollback( eduCB(), _pDPSCB ) ;
-            if ( rcTmp )
-            {
-               PD_LOG( PDERROR, "Session[%s] failed to rollback trans "
-                  "info, rc: %d", sessionName(), rcTmp ) ;
-            }
-            _needRollback = FALSE ;
-         }
-      }
    }
 
    if ( rc && bodyLen == 0 )
    {
-      _errorInfo = engine::utilGetErrorBson( rc, _pEDUCB->getInfo( EDU_INFO_ERROR ) ) ;
+      _errorInfo = engine::utilGetErrorBson( rc,
+                   _pEDUCB->getInfo( engine::EDU_INFO_ERROR ) ) ;
       pBody = _errorInfo.objdata() ;
       bodyLen = _errorInfo.objsize() ;
 
@@ -282,20 +270,8 @@ INT32 _pmdMongoSession::_onMsgBegin( MsgHeader *msg )
       _needReply = TRUE ;
    }
 
-   if ( MSG_BS_UPDATE_REQ == msg->opCode ||
-        MSG_BS_INSERT_REQ == msg->opCode ||
-        MSG_BS_DELETE_REQ == msg->opCode ||
-        MSG_BS_TRANS_COMMIT_REQ == msg->opCode )
-   {
-      _needRollback = TRUE ;
-   }
-   else
-   {
-      _needRollback = FALSE ;
-   }
-
    // start operator
-   engine::MON_START_OP( _pEDUCB->getMonAppCB() ) ;
+   MON_START_OP( _pEDUCB->getMonAppCB() ) ;
 
    return SDB_OK ;
 }
@@ -401,9 +377,7 @@ error:
 void _pmdMongoSession::_onAttach()
 {
    engine::pmdKRCB *krcb = engine::pmdGetKRCB() ;
-   _pDMSCB = krcb->getDMSCB() ;
    _pDPSCB = krcb->getDPSCB() ;
-   _pRTNCB = krcb->getRTNCB() ;
 
    if ( _pDPSCB && !_pDPSCB->isLogLocal() )
    {
@@ -413,25 +387,6 @@ void _pmdMongoSession::_onAttach()
 
 void _pmdMongoSession::_onDetach()
 {
-   // rollback transaction
-   if ( DPS_INVALID_TRANS_ID != eduCB()->getTransID() )
-   {
-      INT32 rc = engine::rtnTransRollback( eduCB(), _pDPSCB ) ;
-      if ( rc )
-      {
-         PD_LOG( PDERROR, "Session[%s] rollback trans info failed, rc: %d",
-            sessionName(), rc ) ;
-      }
-   }
-
-   // delete all context
-   INT64 contextID = -1 ;
-   while ( -1 != ( contextID = eduCB()->contextPeek() ) )
-   {
-      _pRTNCB->contextDelete( contextID, NULL ) ;
-   }
-
-   eduCB()->setClientSock( NULL ) ;
 }
 
 void _pmdMongoSession::_zeroStream()

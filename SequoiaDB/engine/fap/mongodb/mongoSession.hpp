@@ -13,7 +13,7 @@ class engine::_SDB_RTNCB ;
 
 class mongoConverter ;
 
-class _pmdMongoSession : public engine::pmdSession
+class SDB_EXPORT _pmdMongoSession : public engine::pmdSession
 {
 public:
    _pmdMongoSession( SOCKET fd ) ;
@@ -40,14 +40,11 @@ private:
    void  _zeroStream() ;
 
 private:
-   engine::_SDB_DMSCB     *_pDMSCB ;
    engine::_dpsLogWrapper *_pDPSCB ;
-   engine::_SDB_RTNCB     *_pRTNCB ;
    engine::_IProcessor    *_processor ;
    mongoConverter         *_converter ;
    MsgOpReply              _replyHeader ;
    BOOLEAN                 _needReply ;
-   BOOLEAN                 _needRollback ;
    engine::rtnContextBuf   _contextBuff ;
    BSONObj                 _errorInfo ;
 

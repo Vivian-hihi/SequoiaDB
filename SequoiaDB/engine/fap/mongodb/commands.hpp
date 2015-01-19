@@ -73,17 +73,24 @@ private:
    std::map< std::string, command *> _cmdMap ;
 } ;
 
-#define __DECLARE_COMMAND( cmd, cmdClass, var )                   \
+#define __DECLARE_COMMAND( cmd, cmdClass )                        \
 class cmdClass : public command                                   \
 {                                                                 \
 public:                                                           \
+   cmdClass() : command( cmd ) {}                                 \
    virtual CONVERT_ERROR convertRequest( mongoParser &parser,     \
                                          fixedStream &sdbMsg ) ;  \
-} var;
+} ;
+
+#define __DECLARE_COMMAND_VAR( commandClass, var )                \
+        commandClass var ;
 
 
 #define DECLARE_COMMAND( command )                                \
-        __DECLARE_COMMAND( #command, command##Command, command##Cmd )
+        __DECLARE_COMMAND( #command, command##Command )
+
+#define DECLARE_COMMAND_VAR( command )                            \
+        __DECLARE_COMMAND_VAR( command##Command, command##Cmd )
 
 
 
@@ -112,7 +119,6 @@ DECLARE_COMMAND( dropIndexes )
 DECLARE_COMMAND( getIndexes )
 
 ///< getLastError
-DECLARE_COMMAND( getlasterror )
 DECLARE_COMMAND( getLastError )
 ///< end of declare commands
 
