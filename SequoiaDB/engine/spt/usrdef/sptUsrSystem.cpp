@@ -37,6 +37,7 @@
 #include "utilStr.hpp"
 #include "ossSocket.hpp"
 #include "ossIO.hpp"
+#include "oss.h"
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
 #if defined (_LINUX)
@@ -71,6 +72,8 @@ namespace engine
    JS_STATIC_FUNC_DEFINE( _sptUsrSystem, snapshotNetcardInfo )
    JS_STATIC_FUNC_DEFINE( _sptUsrSystem, getIpTablesInfo )
    JS_STATIC_FUNC_DEFINE( _sptUsrSystem, getHostName )
+   JS_STATIC_FUNC_DEFINE( _sptUsrSystem, getPID )
+   JS_STATIC_FUNC_DEFINE( _sptUsrSystem, getTID )
    JS_STATIC_FUNC_DEFINE( _sptUsrSystem, sniffPort )
    JS_STATIC_FUNC_DEFINE( _sptUsrSystem, help )
 
@@ -93,6 +96,8 @@ namespace engine
       JS_ADD_STATIC_FUNC( "getIpTablesInfo", getIpTablesInfo )
       JS_ADD_STATIC_FUNC( "getHostName", getHostName )
       JS_ADD_STATIC_FUNC( "sniffPort", sniffPort )
+      JS_ADD_STATIC_FUNC( "getPID", getPID )
+      JS_ADD_STATIC_FUNC( "getTID", getTID )
       JS_ADD_STATIC_FUNC( "help", help )
    JS_MAPPING_END()
 
@@ -2098,6 +2103,57 @@ namespace engine
       goto done ;
    }
 
+   INT32 _sptUsrSystem::getPID ( const _sptArguments &arg,
+                                 _sptReturnVal &rval,
+                                 bson::BSONObj &detail )
+   {
+      INT32 rc = SDB_OK ;
+      UINT32 id = 0 ;
+      stringstream ss ;
+      BSONObjBuilder builder ;
+
+      if ( 0 < arg.argc() )
+      {
+         rc = SDB_INVALIDARG ;
+         ss << "No need arguments" ;
+         goto error ;
+      }
+      id = ossGetCurrentProcessID() ;
+      rval.setNativeVal( "", NumberInt, (const void *)(&id) ) ;
+      
+   done:
+      return rc ;
+   error:
+      detail = BSON( SPT_ERR << ss.str() ) ;
+      goto done ;
+   }
+
+   INT32 _sptUsrSystem::getTID ( const _sptArguments &arg,
+                                 _sptReturnVal &rval,
+                                 bson::BSONObj &detail )
+   {
+      INT32 rc = SDB_OK ;
+      UINT32 id = 0 ;
+      stringstream ss ;
+      BSONObjBuilder builder ;
+
+      if ( 0 < arg.argc() )
+      {
+         rc = SDB_INVALIDARG ;
+         ss << "No need arguments" ;
+         goto error ;
+      }
+
+      id = (UINT32)ossGetCurrentThreadID() ;
+      rval.setNativeVal( "", NumberInt, (const void *)(&id) ) ;
+
+   done:
+      return rc ;
+   error:
+      detail = BSON( SPT_ERR << ss.str() ) ;
+      goto done ;
+   }
+
    INT32 _sptUsrSystem::help( const _sptArguments & arg,
                               _sptReturnVal & rval,
                               BSONObj & detail )
@@ -2121,7 +2177,9 @@ namespace engine
          << " System.snapshotNetcardInfo()" << endl
          << " System.getIpTablesInfo()" << endl
          << " System.getHostName()" << endl
-         << " System.sniffPort( port )" << endl ;
+         << " System.sniffPort( port )" << endl
+         << " System.getPID()" << endl
+         << " System.getTID()" << endl ;
       rval.setStringVal( "", ss.str().c_str() ) ;
       return SDB_OK ;
    }
