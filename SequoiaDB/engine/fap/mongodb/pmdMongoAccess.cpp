@@ -6,7 +6,7 @@
 INT32 pmdMongoAccess::init( engine::IResource *pResource )
 {
    INT32 rc = SDB_OK ;
-   ossMemset( (void *)_svcName, 0, OSS_MAX_SERVICENAME + 1 ) ;
+   ossMemset( (void *)_serviceName, 0, OSS_MAX_SERVICENAME + 1 ) ;
 
    if ( NULL != pResource )
    {
@@ -37,17 +37,19 @@ INT32 pmdMongoAccess::fini()
 const CHAR * pmdMongoAccess::getServiceName() const
 {
    UINT16 basePort = 0 ;
-   if ( '\0' == _svcName[0] )
+   if ( '\0' == _serviceName[0] )
    {
-      ossMemset( (void *)_svcName, 0, OSS_MAX_SERVICENAME ) ;
+      ossMemset( (void *)_serviceName, 0, OSS_MAX_SERVICENAME ) ;
       if ( NULL != _resource )
       {
          basePort = _resource->getLocalPort() ;
-         ossItoa( basePort + PORT_OFFSET, _svcName, OSS_MAX_SERVICENAME ) ;
+         ossItoa( basePort + PORT_OFFSET,
+                  dynamic_cast<CHAR *>(_serviceName),
+                  OSS_MAX_SERVICENAME ) ;
       }
    }
 
-   return _svcName ;
+   return _serviceName ;
 }
 
 engine::pmdSession * pmdMongoAccess::getSession( SOCKET fd,
@@ -76,7 +78,7 @@ void pmdMongoAccess::releaseSession( engine::pmdSession *pSession )
 
 void pmdMongoAccess::_release()
 {
-   ossMemset( _svcName, 0, OSS_MAX_SERVICENAME + 1 ) ;
+   ossMemset( _serviceName, 0, OSS_MAX_SERVICENAME + 1 ) ;
 
    if ( NULL != _resource )
    {

@@ -38,7 +38,7 @@ private:
 
 private:
    engine::IResource *_resource ;
-   CHAR _svcName[ OSS_MAX_SERVICENAME + 1 ] ;
+   CHAR _serviceName[ OSS_MAX_SERVICENAME + 1 ] ;
 
    static const INT32 PORT_OFFSET = 7 ;
 };
