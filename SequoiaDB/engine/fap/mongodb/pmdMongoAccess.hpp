@@ -6,17 +6,15 @@
 
 #define ACCESS_FOR_MONGODB_CLIENT "server for mongodb client"
 
-class pmdMongoAccess : public engine::IPmdAccessProtocol
+class pmdMongoAccess : public engine::IPmdAccessProtocol, public SDBObject
 {
 public:
-   PMD_EXPORT_ACCESSPROTOCOL_DLL( pmdMongoAccess )
-
    pmdMongoAccess() {}
    virtual ~pmdMongoAccess() {}
 
    virtual const CHAR *name() const
    {
-      return "Service4MongoDriver" ;
+      return ACCESS_FOR_MONGODB_CLIENT;
    }
 
    // use bases

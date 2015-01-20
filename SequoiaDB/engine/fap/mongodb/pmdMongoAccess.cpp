@@ -3,6 +3,8 @@
 #include "pmdOptions.h"
 #include "pmdMongoSession.hpp"
 
+PMD_EXPORT_ACCESSPROTOCOL_DLL( pmdMongoAccess )
+
 INT32 pmdMongoAccess::init( engine::IResource *pResource )
 {
    INT32 rc        = SDB_OK ;
@@ -68,6 +70,8 @@ void pmdMongoAccess::releaseSession( engine::pmdSession *pSession )
       SDB_OSS_DEL session ;
       session = NULL ;
    }
+
+   _release() ;
 }
 
 void pmdMongoAccess::_release()
