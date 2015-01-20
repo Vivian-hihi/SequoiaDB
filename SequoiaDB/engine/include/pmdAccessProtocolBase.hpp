@@ -82,7 +82,7 @@ namespace engine
    */
    #define PMD_EXPORT_ACCESSPROTOCOL_DLL( apClass ) \
    SDB_EXTERN_C_START \
-   SDB_EXPORT IPmdAccessProtocol *createAccessProtocol() \
+   SDB_EXPORT engine::IPmdAccessProtocol *createAccessProtocol() \
    { \
       return SDB_OSS_NEW apClass() ; \
    } \
