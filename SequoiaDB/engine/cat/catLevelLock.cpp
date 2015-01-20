@@ -182,7 +182,7 @@ namespace engine
 
    BOOLEAN _catLockTreeNode::_isZeroLevel() const
    {
-      return -1 != _type ? TRUE : FALSE ;
+      return ( CAT_LOCK_MAX != _type ) ? TRUE : FALSE ;
    }
 
    /*
@@ -204,6 +204,8 @@ namespace engine
 
    catLockTreeNode* _catLevelLockMgr::getLockTreeNode( INT32 type )
    {
+      SDB_ASSERT( CAT_LOCK_MAX != type, "Invalid type" ) ;
+
       catLockTreeNode &lockTree = _mapType2Lock[ type ] ;
       if ( NULL == lockTree._getMgr() )
       {
@@ -267,6 +269,8 @@ namespace engine
       _mgr           = sdbGetCatalogueCB()->getLevelLockMgr() ;
       _type          = type ;
       _zeroLevelNode = NULL ;
+
+      SDB_ASSERT( CAT_LOCK_MAX != _type, "Invalid type" ) ;
    }
 
    _catZeroLevelLock::~_catZeroLevelLock()
