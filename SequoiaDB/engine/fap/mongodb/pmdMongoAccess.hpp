@@ -9,7 +9,9 @@
 class pmdMongoAccess : public engine::IPmdAccessProtocol
 {
 public:
-   pmdMongoAccess() {} 
+   PMD_EXPORT_ACCESSPROTOCOL_DLL( pmdMongoAccess )
+
+   pmdMongoAccess() {}
    virtual ~pmdMongoAccess() {}
 
    virtual const CHAR *name() const
