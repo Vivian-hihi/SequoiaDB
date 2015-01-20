@@ -128,7 +128,8 @@ namespace engine
       cmd << "ping -n 2 -w 1000 " << "\"" << host << "\"" ;
 #endif
 
-      rc = runner.exec( cmd.str().c_str(), exitCode ) ;
+      rc = runner.exec( cmd.str().c_str(), exitCode,
+                        FALSE, -1, FALSE, NULL, TRUE ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to exec cmd, rc:%d, exit:%d",
@@ -197,7 +198,8 @@ namespace engine
       }
 
 #if defined (_LINUX)
-      rc = runner.exec( "lsb_release -a |grep -v \"LSB Version\"", exitCode ) ;
+      rc = runner.exec( "lsb_release -a |grep -v \"LSB Version\"", exitCode,
+                        FALSE, -1, FALSE, NULL, TRUE ) ;
 #elif defined (_WINDOWS)
       rc = SDB_SYS ;
 #endif
@@ -240,7 +242,8 @@ namespace engine
 
       outStr = "" ;
 #if defined (_LINUX)
-      rc = runner.exec( "uname -a", exitCode ) ;
+      rc = runner.exec( "uname -a", exitCode,
+                        FALSE, -1, FALSE, NULL, TRUE ) ;
 #elif defined (_WINDOWS)
       rc = SDB_SYS ;
 #endif
@@ -896,7 +899,8 @@ namespace engine
    #define CPU_CMD "wmic CPU GET CurrentClockSpeed,Name,NumberOfCores"
 #endif
 
-      rc = runner.exec( CPU_CMD, exitCode ) ;
+      rc = runner.exec( CPU_CMD, exitCode,
+                        FALSE, -1, FALSE, NULL, TRUE ) ;
       if ( SDB_OK != rc || SDB_OK != exitCode )
       {
          PD_LOG( PDERROR, "failed to exec cmd, rc:%d, exit:%d",
@@ -1166,7 +1170,8 @@ namespace engine
       BSONObjBuilder builder ;
 
 #if defined (_LINUX)
-      rc = runner.exec( "free -m |grep Mem", exitCode ) ;
+      rc = runner.exec( "free -m |grep Mem", exitCode,
+                        FALSE, -1, FALSE, NULL, TRUE ) ;
 #elif defined (_WINDOWS)
       rc = SDB_SYS ;
 #endif
@@ -1303,7 +1308,8 @@ namespace engine
                      "DriveType,FreeSpace,SystemVolume"
 #endif // _LINUX
 
-      rc = runner.exec( DISK_CMD, exitCode ) ;
+      rc = runner.exec( DISK_CMD, exitCode,
+                        FALSE, -1, FALSE, NULL, TRUE ) ;
       if ( SDB_OK != rc || SDB_OK != exitCode )
       {
          PD_LOG( PDERROR, "failed to exec cmd, rc:%d, exit:%d",
@@ -1830,7 +1836,8 @@ namespace engine
                                " grep -v bytes | sed 's/:/ /' |"
                                " awk '{print $1,$2,$3,$4,$5,$10,$11,$12,$13}'" ;
 
-      rc = runner.exec( netFlowCMD, exitCode ) ;
+      rc = runner.exec( netFlowCMD, exitCode,
+                        FALSE, -1, FALSE, NULL, TRUE ) ;
       if ( SDB_OK != rc || SDB_OK != exitCode )
       {
          PD_LOG( PDERROR, "failed to exec cmd, rc:%d, exit:%d",
