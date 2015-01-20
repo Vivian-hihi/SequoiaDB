@@ -86,7 +86,7 @@ namespace engine
    { \
       return SDB_OSS_NEW apClass() ; \
    } \
-   SDB_EXPORT void releaseAccessProtocol( IPmdAccessProtocol *&pAccessProtocol ) \
+   SDB_EXPORT void releaseAccessProtocol( engine::IPmdAccessProtocol *&pAccessProtocol ) \
    { \
       if ( NULL != pAccessProtocol ) \
       { \
