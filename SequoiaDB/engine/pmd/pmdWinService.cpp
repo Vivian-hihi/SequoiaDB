@@ -41,6 +41,7 @@
 #include "pd.hpp"
 #include "ossUtil.h"
 #include "pdTrace.hpp"
+#include "pmdTrace.hpp"
 
 #include <boost/bind.hpp>
 #include <boost/thread/thread.hpp>
