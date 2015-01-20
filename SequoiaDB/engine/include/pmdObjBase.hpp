@@ -115,7 +115,7 @@ namespace engine
          OSS_INLINE INT32   dispatchEvent ( pmdEDUEvent *event,
                                             INT32 *pTime = NULL ) ;
          OSS_INLINE INT32   dispatchMsg( NET_HANDLE handle, MsgHeader* msg,
-                                     INT32 *pTime = NULL ) ;
+                                         INT32 *pTime = NULL ) ;
          virtual void   onTimer ( UINT64 timerID, UINT32 interval ) { }
 
       protected:
