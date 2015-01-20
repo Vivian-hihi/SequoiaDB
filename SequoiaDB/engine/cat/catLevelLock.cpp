@@ -325,6 +325,11 @@ namespace engine
       unLock() ;
    }
 
+   void _catOneLevelLock::setLevel1Name( const string &name )
+   {
+      _level1Name = name ;
+   }
+
    BOOLEAN _catOneLevelLock::tryLock( OSS_LATCH_MODE mode )
    {
       BOOLEAN locked = FALSE ;
@@ -381,6 +386,11 @@ namespace engine
    _catTwoLevelLock::~_catTwoLevelLock()
    {
       unLock() ;
+   }
+
+   void _catTwoLevelLock::setLevel2Name( const string &name )
+   {
+      _level2Name = name ;
    }
 
    BOOLEAN _catTwoLevelLock::tryLock( OSS_LATCH_MODE mode )

@@ -155,6 +155,11 @@ namespace engine
          catLockTreeNode         *_zeroLevelNode ;
          CAT_LOCK_TYPE           _type ;
 
+      private:
+         // forbidden copy construct and equal assignment
+         _catZeroLevelLock( const _catZeroLevelLock &right ) ;
+         _catZeroLevelLock& operator=( const _catZeroLevelLock &right ) ;
+
    } ;
    typedef _catZeroLevelLock catZeroLevelLock ;
 
@@ -170,6 +175,8 @@ namespace engine
 
          virtual BOOLEAN   tryLock( OSS_LATCH_MODE mode ) ;
          virtual void      unLock() ;
+
+         void              setLevel1Name( const string &name ) ;
 
       protected:
          string            _level1Name ;
@@ -191,6 +198,8 @@ namespace engine
 
          virtual BOOLEAN   tryLock( OSS_LATCH_MODE mode ) ;
          virtual void      unLock() ;
+
+         void              setLevel2Name( const string &name ) ;
 
       protected:
          string            _level2Name ;
