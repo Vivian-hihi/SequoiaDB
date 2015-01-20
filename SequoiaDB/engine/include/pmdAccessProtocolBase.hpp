@@ -69,7 +69,7 @@ namespace engine
          virtual INT32           fini() = 0 ;
 
          virtual const CHAR*     getServiceName() const = 0 ;
-         virtual pmdSession*             getSession( SOCKET fd,
+         virtual pmdSession*     getSession( SOCKET fd,
                                              IProcessor *pProcessor ) = 0 ;
          virtual void            releaseSession( pmdSession *pSession ) = 0 ;
 
