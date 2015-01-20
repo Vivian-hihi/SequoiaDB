@@ -41,6 +41,7 @@
 #include "core.hpp"
 #include "oss.hpp"
 #include "msg.h"
+#include "msgDef.h"
 
 namespace engine
 {
@@ -206,6 +207,7 @@ namespace engine
          virtual  INT32   getFieldStr( const CHAR *pFieldName,
                                        CHAR *pValue, UINT32 len,
                                        const CHAR *pDefault = NULL ) = 0 ;
+
    } ;
    typedef _IParam IParam ;
 
@@ -297,6 +299,10 @@ namespace engine
          virtual IControlBlock*     getCBByType( SDB_CB_TYPE type ) = 0 ;
          virtual BOOLEAN            isCBValue( SDB_CB_TYPE type ) const = 0 ;
          virtual void*              getOrgPointByType( SDB_CB_TYPE type ) = 0 ;
+
+         virtual UINT16             getLocalPort() const = 0 ;
+         virtual SDB_ROLE           getDBRole() const = 0 ;
+         virtual const CHAR*        getHostName() const = 0 ;
 
    } ;
    typedef _IResource IResource ;

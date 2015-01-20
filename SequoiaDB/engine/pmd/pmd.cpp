@@ -119,6 +119,16 @@ namespace engine
       return _arrayCBs[ type ] ? TRUE : FALSE ;
    }
 
+   UINT16 _SDB_KRCB::getLocalPort() const
+   {
+      return _optioncb.getServicePort() ;
+   }
+
+   SDB_ROLE _SDB_KRCB::getDBRole() const
+   {
+      return _role ;
+   }
+
    INT32 _SDB_KRCB::registerCB( IControlBlock *pCB, void *pOrg )
    {
       INT32 rc = SDB_OK ;
