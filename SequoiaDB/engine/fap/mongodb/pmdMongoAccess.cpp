@@ -5,12 +5,18 @@
 
 INT32 pmdMongoAccess::init( engine::IResource *pResource )
 {
-   INT32 rc = SDB_OK ;
-   ossMemset( (void *)_serviceName, 0, OSS_MAX_SERVICENAME + 1 ) ;
-
+   INT32 rc        = SDB_OK ;
+   UINT16 basePort = 0 ;
    if ( NULL != pResource )
    {
       _resource = pResource ;
+   }
+
+   ossMemset( (void *)_serviceName, 0, OSS_MAX_SERVICENAME + 1 ) ;
+   if ( NULL != _resource )
+   {
+      basePort = _resource->getLocalPort() ;
+      ossItoa( basePort + PORT_OFFSET, _serviceName, OSS_MAX_SERVICENAME ) ;
    }
 
 done:
@@ -36,19 +42,7 @@ INT32 pmdMongoAccess::fini()
 
 const CHAR * pmdMongoAccess::getServiceName() const
 {
-   UINT16 basePort = 0 ;
-   if ( '\0' == _serviceName[0] )
-   {
-      ossMemset( (void *)_serviceName, 0, OSS_MAX_SERVICENAME ) ;
-      if ( NULL != _resource )
-      {
-         basePort = _resource->getLocalPort() ;
-         ossItoa( basePort + PORT_OFFSET,
-                  dynamic_cast<CHAR *>(_serviceName),
-                  OSS_MAX_SERVICENAME ) ;
-      }
-   }
-
+   SDB_ASSERT( '\0' == _serviceName[0], "service name should not be empty" ) ;
    return _serviceName ;
 }
 
