@@ -99,7 +99,8 @@ namespace engine
    {
       UINT64 sessionID = ossPack32To64( header->routeID.columns.nodeID,
                                         header->TID ) ;
-      if ( MSG_INVALID_ROUTEID == header->routeID.value )
+      if ( header->routeID.columns.nodeID < DATA_NODE_ID_BEGIN ||
+           header->routeID.columns.groupID < DATA_GROUP_ID_BEGIN )
       {
          sessionID = ossPack32To64( PMD_BASE_HANDLE_ID + handle, header->TID ) ;
       }
