@@ -3,7 +3,9 @@
 #include "pmdOptions.h"
 #include "pmdMongoSession.hpp"
 
-PMD_EXPORT_ACCESSPROTOCOL_DLL( pmdMongoAccess )
+namespace engine {
+   PMD_EXPORT_ACCESSPROTOCOL_DLL( pmdMongoAccess )
+}
 
 INT32 pmdMongoAccess::init( engine::IResource *pResource )
 {
