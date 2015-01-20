@@ -96,6 +96,12 @@ namespace engine
 
          INT16    majoritySize() ;
 
+         UINT32   setTimer( UINT32 milliSec ) ;
+         void     killTimer( UINT32 timerID ) ;
+
+         BOOLEAN  delayCurOperation() ;
+         BOOLEAN  isDelayed() const { return _catMainCtrl.isDelayed() ; }
+
          _netRouteAgent* netWork()
          {
             return _pNetWork;

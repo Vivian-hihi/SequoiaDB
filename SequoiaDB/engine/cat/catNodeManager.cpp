@@ -554,16 +554,21 @@ namespace engine
 
    done:
       // send reply
-      if ( 0 == replyDataLen )
+      if ( !_pCatCB->isDelayed() )
       {
-         rc = _pCatCB->netWork()->syncSend( handle, (void*)&replyHeader ) ;
-      }
-      else
-      {
-         replyHeader.header.messageLength += replyDataLen ;
-         replyHeader.numReturned = returnNum ;
-         rc = _pCatCB->netWork()->syncSend( handle, &(replyHeader.header),
-                                            (void*)replyData, replyDataLen ) ;
+         if ( 0 == replyDataLen )
+         {
+            rc = _pCatCB->netWork()->syncSend( handle, (void*)&replyHeader ) ;
+         }
+         else
+         {
+            replyHeader.header.messageLength += replyDataLen ;
+            replyHeader.numReturned = returnNum ;
+            rc = _pCatCB->netWork()->syncSend( handle,
+                                               &(replyHeader.header),
+                                               (void*)replyData,
+                                               replyDataLen ) ;
+         }
       }
       if ( replyData )
       {
@@ -1759,6 +1764,19 @@ namespace engine
       PD_CHECK( FALSE == bExist, SDB_CAT_GRP_EXIST, error, PDERROR,
                 "Create group failed, the group[%s] existed", groupName ) ;
 
+      // lock group
+      {
+         catGroupLock groupLock( groupName ) ;
+         if ( !groupLock.tryLock( EXCLUSIVE ) )
+         {
+            if ( !_pCatCB->delayCurOperation() )
+            {
+               rc = SDB_LOCK_FAILED ;
+            }
+            goto error ;
+         }
+      }
+
       // assign group id
       if ( CAT_INVALID_GROUPID == newGroupID )
       {
@@ -1783,7 +1801,7 @@ namespace engine
          BSONObj boGroupInfo = bobGroupInfo.obj() ;
 
          rc = rtnInsert( CAT_NODE_INFO_COLLECTION, boGroupInfo, 1, 0,
-                        _pEduCB, _pDmsCB, _pDpsCB, _majoritySize() ) ;
+                         _pEduCB, _pDmsCB, _pDpsCB, _majoritySize() ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to insert group info[%s] to "
                       "collection, rc: %d", boGroupInfo.toString().c_str(),
                       rc ) ;
