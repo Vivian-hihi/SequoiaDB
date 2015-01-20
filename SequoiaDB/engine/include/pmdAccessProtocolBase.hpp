@@ -69,9 +69,9 @@ namespace engine
          virtual INT32           fini() = 0 ;
 
          virtual const CHAR*     getServiceName() const = 0 ;
-         pmdSession*             getSession( SOCKET fd,
+         virtual pmdSession*             getSession( SOCKET fd,
                                              IProcessor *pProcessor ) = 0 ;
-         void                    releaseSession( pmdSession *pSession ) = 0 ;
+         virtual void            releaseSession( pmdSession *pSession ) = 0 ;
 
    } ;
    typedef _IPmdAccessProtocol IPmdAccessProtocol ;
