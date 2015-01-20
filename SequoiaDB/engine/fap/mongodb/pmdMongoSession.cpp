@@ -1,7 +1,7 @@
 #include "util.hpp"
 #include "mongodef.hpp"
 #include "mongoConverter.hpp"
-#include "mongoSession.hpp"
+#include "pmdMongoSession.hpp"
 #include "pmdEDUMgr.hpp"
 #include "pmdEDU.hpp"
 #include "pmdEnv.hpp"
@@ -129,7 +129,7 @@ INT32 _pmdMongoSession::run()
          if ( SDB_OK != ( rc = pmdEDUMgr->activateEDU( _pEDUCB ) ) )
          {
             PD_LOG( PDERROR, "Session[%s] activate edu failed, rc: %d",
-               sessionName(), rc ) ;
+                    sessionName(), rc ) ;
             break ;
          }
          // process msg
@@ -374,7 +374,7 @@ error:
    goto done ;
 }
 
-void _pmdMongoSession::_onAttach()
+void _pmdMongoSession::_onAttach( )
 {
    engine::pmdKRCB *krcb = engine::pmdGetKRCB() ;
    _pDPSCB = krcb->getDPSCB() ;

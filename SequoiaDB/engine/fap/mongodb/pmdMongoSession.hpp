@@ -7,10 +7,6 @@
 #include "pmdSession.hpp"
 
 class engine::_IProcessor ;
-class engine::_SDB_DMSCB ;
-class engine::_dpsLogWrapper ;
-class engine::_SDB_RTNCB ;
-
 class mongoConverter ;
 
 class SDB_EXPORT _pmdMongoSession : public engine::pmdSession
@@ -32,11 +28,10 @@ protected:
    INT32 _onMsgBegin( MsgHeader *msg ) ;
    INT32 _onMsgEnd( INT32 result, MsgHeader *msg ) ;
    INT32 _reply( MsgOpReply *replyHeader, const CHAR *pBody, const INT32 len ) ;
-   void  _onAttach() ;
-   void  _onDetach() ;
+   virtual void  _onAttach() ;
+   virtual void  _onDetach() ;
 
 private:
-   void  _restoreMsg() ;
    void  _zeroStream() ;
 
 private:
@@ -51,5 +46,7 @@ private:
    fixedStream             _inStream ;
    fixedStream             _outStream ;
 } ;
+
+typedef _pmdMongoSession pmdMongoSession ;
 
 #endif
