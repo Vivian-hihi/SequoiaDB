@@ -33,6 +33,7 @@
 #include "ossCmdRunner.hpp"
 #include "ossMem.hpp"
 #include "ossUtil.hpp"
+#include "utilStr.hpp"
 
 using namespace bson ;
 
