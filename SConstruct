@@ -173,7 +173,7 @@ add_option( "dd", "debug build no optimization" , 0 , True , "debugBuild" )
 add_option( "noscreenout", "do not send anything to screen", 0, True )
 
 #fap options
-add_option( "fap", "foreign access progress", 0, False )
+add_option( "fap", "foreign access protocol", 0, False )
 
 # don't run configure if user calls --help
 if GetOption('help'):
