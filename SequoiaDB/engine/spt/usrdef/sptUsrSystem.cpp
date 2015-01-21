@@ -72,9 +72,10 @@ namespace engine
    JS_STATIC_FUNC_DEFINE( _sptUsrSystem, snapshotNetcardInfo )
    JS_STATIC_FUNC_DEFINE( _sptUsrSystem, getIpTablesInfo )
    JS_STATIC_FUNC_DEFINE( _sptUsrSystem, getHostName )
+   JS_STATIC_FUNC_DEFINE( _sptUsrSystem, sniffPort )
    JS_STATIC_FUNC_DEFINE( _sptUsrSystem, getPID )
    JS_STATIC_FUNC_DEFINE( _sptUsrSystem, getTID )
-   JS_STATIC_FUNC_DEFINE( _sptUsrSystem, sniffPort )
+   JS_STATIC_FUNC_DEFINE( _sptUsrSystem, getEWD )
    JS_STATIC_FUNC_DEFINE( _sptUsrSystem, help )
 
    JS_BEGIN_MAPPING( _sptUsrSystem, "System" )
@@ -98,6 +99,7 @@ namespace engine
       JS_ADD_STATIC_FUNC( "sniffPort", sniffPort )
       JS_ADD_STATIC_FUNC( "getPID", getPID )
       JS_ADD_STATIC_FUNC( "getTID", getTID )
+      JS_ADD_STATIC_FUNC( "getEWD", getEWD )
       JS_ADD_STATIC_FUNC( "help", help )
    JS_MAPPING_END()
 
@@ -2161,6 +2163,38 @@ namespace engine
       goto done ;
    }
 
+   INT32 _sptUsrSystem::getEWD ( const _sptArguments &arg,
+                                 _sptReturnVal &rval,
+                                 bson::BSONObj &detail )
+   {
+      INT32 rc = SDB_OK ;
+      CHAR buf[ OSS_MAX_PATHSIZE + 1 ] = {0} ;
+      stringstream ss ;
+      BSONObjBuilder builder ;
+
+      if ( 0 < arg.argc() )
+      {
+         rc = SDB_INVALIDARG ;
+         ss << "No need arguments" ;
+         goto error ;
+      }
+
+      rc = ossGetEWD( buf, OSS_MAX_PATHSIZE ) ;
+      if ( rc )
+      {
+         ss << "Get current executable file's working directory failed" ;
+         goto error ;
+      }
+
+      rval.setStringVal( "", buf ) ;
+
+   done:
+      return rc ;
+   error:
+      detail = BSON( SPT_ERR << ss.str() ) ;
+      goto done ;
+   }
+
    INT32 _sptUsrSystem::help( const _sptArguments & arg,
                               _sptReturnVal & rval,
                               BSONObj & detail )
@@ -2186,7 +2220,8 @@ namespace engine
          << " System.getHostName()" << endl
          << " System.sniffPort( port )" << endl
          << " System.getPID()" << endl
-         << " System.getTID()" << endl ;
+         << " System.getTID()" << endl
+         << " System.getEWD()" << endl;
       rval.setStringVal( "", ss.str().c_str() ) ;
       return SDB_OK ;
    }
