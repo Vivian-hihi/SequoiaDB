@@ -121,6 +121,7 @@ namespace engine
          detail = BSON( SPT_ERR << "cmd must be config" ) ;
          goto error ;
       }
+      utilStrTrim( cmd ) ;
 
       rc = arg.getString( 1, ev ) ;
       if ( SDB_OK != rc && SDB_OUT_OF_BOUND != rc )
@@ -209,6 +210,7 @@ namespace engine
          detail = BSON( SPT_ERR << "cmd must be config" ) ;
          goto error ;
       }
+      utilStrTrim( cmd ) ;
 
       rc = arg.getString( 1, ev ) ;
       if ( SDB_OK != rc && SDB_OUT_OF_BOUND != rc )
