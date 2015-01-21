@@ -59,9 +59,9 @@ void _pmdMongoSession::detachProcessor()
 INT32 _pmdMongoSession::run()
 {
    INT32 rc                     = SDB_OK ;
+   INT32 buffSize               = 0 ;
    UINT32 msgSize               = 0 ;
    CHAR *pBuff                  = NULL ;
-   INT32 buffSize               = 0 ;
    engine::pmdEDUMgr *pmdEDUMgr = NULL ;
 
    if ( !_pEDUCB )
@@ -161,7 +161,6 @@ INT32 _pmdMongoSession::_processMsg( const CHAR *pMsg, const INT32 len )
    CONVERT_ERROR con_rc = CON_OK ;
    const CHAR *pBody    = NULL ;
    INT32 bodyLen        = 0 ;
-   BOOLEAN getLastError = FALSE ;
 
    // convert msg first
    _converter->loadFrom( pMsg, len ) ;
@@ -298,7 +297,6 @@ INT32 _pmdMongoSession::_reply( MsgOpReply *replyHeader,
                                 const INT32 len )
 {
    INT32 rc         = SDB_OK ;
-   INT32 offset     = 0 ;
    SINT16 opCode    = 0 ;
    INT32 responseTo = 0 ;
    INT32 nToReturn  = 0 ;
