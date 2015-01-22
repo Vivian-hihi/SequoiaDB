@@ -11,5 +11,5 @@ fapMongoFiles = [
       "fap/mongodb/mongodef.cpp",
       ]
 
-fapEnv.SharedLibrary( 'fapmongo', fapMongoFiles )
-fap.Install( '#/fap', libmongo )
+libmongo = fapEnv.SharedLibrary( 'fapmongo', fapMongoFiles )
+fapEnv.Install( '#/fap', libmongo )
