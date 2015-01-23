@@ -1390,7 +1390,7 @@ INT32 ossExec ( const CHAR * program,
    PROCESS_INFORMATION procInfo  = {0} ;
    STARTUPINFO        startInfo  = {0} ;
    STARTUPINFO        parentStartInfo  = {0} ;
-   DWORD              ntFlag     = NORMAL_PRIORITY_CLASS ;
+   DWORD              ntFlag     = NORMAL_PRIORITY_CLASS | CREATE_NO_WINDOW ;
    BOOLEAN            inheritH   = FALSE ;
    INT32              bufferLen  = 0 ;
    CHAR *             argBuffer  = NULL ;
@@ -1565,6 +1565,8 @@ INT32 ossExec ( const CHAR * program,
    startInfo.wShowWindow          = SW_HIDE ;
    startInfo.lpReserved2          = NULL ;
    startInfo.cbReserved2          = 0 ;
+
+   startInfo.dwFlags |= STARTF_USESHOWWINDOW ;
    rc = ossANSI2WC ( pArgs, &lpszwArgs, NULL ) ;
    if ( rc )
    {
