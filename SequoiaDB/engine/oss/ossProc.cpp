@@ -1389,6 +1389,7 @@ INT32 ossExec ( const CHAR * program,
    PD_TRACE_ENTRY ( SDB_WIN_OSSEXEC );
    PROCESS_INFORMATION procInfo  = {0} ;
    STARTUPINFO        startInfo  = {0} ;
+   STARTUPINFO        parentStartInfo  = {0} ;
    DWORD              ntFlag     = NORMAL_PRIORITY_CLASS ;
    BOOLEAN            inheritH   = FALSE ;
    INT32              bufferLen  = 0 ;
@@ -1403,6 +1404,8 @@ INT32 ossExec ( const CHAR * program,
    HANDLE stdoutReadPipeChild = INVALID_HANDLE_VALUE ;
    HANDLE stdoutWritePipe = INVALID_HANDLE_VALUE ;
    HANDLE pipeTemp = INVALID_HANDLE_VALUE ;
+
+   GetStartupInfo( &parentStartInfo ) ;
 
    if ( !(flag & OSS_EXEC_NODETACHED) )
    {
@@ -1423,6 +1426,13 @@ INT32 ossExec ( const CHAR * program,
    {
       ossMemset ( npHandleStdin, 0, sizeof(OSSNPIPE) ) ;
 
+      // disable parent std handle not inherit
+      if ( INVALID_HANDLE_VALUE != parentStartInfo.hStdInput )
+      {
+         SetHandleInformation( parentStartInfo.hStdInput,
+                               HANDLE_FLAG_INHERIT, 0 ) ;
+      }
+
       startInfo.dwFlags |= STARTF_USESTDHANDLES ;
       rc = ossCreatePipeAndDupHandle ( &stdinReadPipe, &stdinWritePipeChild,
                                        &secAttr, &stdinWritePipeChild,
@@ -1432,6 +1442,7 @@ INT32 ossExec ( const CHAR * program,
          PD_LOG ( PDERROR, "Failed to create and dup pipe, rc = %d", rc ) ;
          goto error ;
       }
+      //SetHandleInformation( pipeTemp, HANDLE_FLAG_INHERIT, 0 ) ;
       startInfo.hStdInput    = stdinReadPipe ;
       npHandleStdin->_handle = pipeTemp ;
       npHandleStdin->_state  = OSS_NPIPE_OUTBOUND |
@@ -1440,6 +1451,18 @@ INT32 ossExec ( const CHAR * program,
    if ( npHandleStdout )
    {
       ossMemset ( npHandleStdout, 0, sizeof(OSSNPIPE) ) ;
+
+      // disable parent std handle not inherit
+      if ( INVALID_HANDLE_VALUE != parentStartInfo.hStdOutput )
+      {
+         SetHandleInformation( parentStartInfo.hStdOutput,
+                               HANDLE_FLAG_INHERIT, 0 ) ;
+      }
+      if ( INVALID_HANDLE_VALUE != parentStartInfo.hStdError )
+      {
+         SetHandleInformation( parentStartInfo.hStdError,
+                               HANDLE_FLAG_INHERIT, 0 ) ;
+      }
 
       startInfo.dwFlags |= STARTF_USESTDHANDLES ;
       rc = ossCreatePipeAndDupHandle ( &stdoutReadPipeChild, &stdoutWritePipe,
@@ -1450,6 +1473,7 @@ INT32 ossExec ( const CHAR * program,
          PD_LOG ( PDERROR, "Failed to create and dup pipe, rc = %d", rc ) ;
          goto error ;
       }
+      SetHandleInformation( pipeTemp, HANDLE_FLAG_INHERIT, 0 ) ;
       startInfo.hStdOutput    = stdoutWritePipe ;
       startInfo.hStdError     = stdoutWritePipe ;
       npHandleStdout->_handle = pipeTemp ;
