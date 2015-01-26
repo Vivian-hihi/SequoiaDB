@@ -184,10 +184,6 @@ namespace engine
             {
                continue ;
             }
-            else if ( 0 == ossStrcmp( e.fieldName(), PMD_OPTION_SVCNAME ) )
-            {
-               _svcName = e.valuestrsafe() ;
-            }
             else if ( 0 == ossStrcmp( e.fieldName(), PMD_OPTION_ROLE ) )
             {
                if ( 0 == ossStrcmp( e.valuestrsafe(),
@@ -227,6 +223,7 @@ namespace engine
       BSONObj dummy ;
       INT32 rc = SDB_OK ;
       BOOLEAN locked = FALSE ;
+      string omsvc ;
 
       // if om node has already exist, can't create another
       if ( 0 == ossStrcmp( _roleStr.c_str(), SDB_ROLE_OM_STR ) )
@@ -244,14 +241,15 @@ namespace engine
       }
 
       rc = sdbGetOMAgentMgr()->getNodeMgr()->addANode( _config.objdata(),
-                                                       dummy.objdata() ) ;
+                                                       dummy.objdata(),
+                                                       &omsvc ) ;
       // if create om, need to add om address to config, and then
       // save config
       if ( SDB_OK == rc &&
            0 == ossStrcmp( _roleStr.c_str(), SDB_ROLE_OM_STR ) )
       {
          sdbGetOMAgentOptions()->addOMAddr( pmdGetKRCB()->getHostName(),
-                                            _svcName.c_str() ) ;
+                                            omsvc.c_str() ) ;
          sdbGetOMAgentOptions()->save() ;
          // notify change
          sdbGetOMAgentMgr()->onConfigChange() ;
@@ -290,6 +288,7 @@ namespace engine
       BSONObj dummy ;
       INT32 rc = SDB_OK ;
       BOOLEAN locked = FALSE ;
+      string omsvc ;
 
       if ( 0 == ossStrcmp( _roleStr.c_str(), SDB_ROLE_OM_STR ) )
       {
@@ -299,13 +298,14 @@ namespace engine
 
       rc = sdbGetOMAgentMgr()->getNodeMgr()->rmANode( _config.objdata(),
                                                       dummy.objdata(),
-                                                      _roleStr.c_str() ) ;
+                                                      _roleStr.c_str(),
+                                                      &omsvc ) ;
       // if remove om node, need to rm the node from config, and the save
       if ( SDB_OK == rc &&
            0 == ossStrcmp( _roleStr.c_str(), SDB_ROLE_OM_STR ) )
       {
          sdbGetOMAgentOptions()->delOMAddr( pmdGetKRCB()->getHostName(),
-                                            _svcName.c_str() ) ;
+                                            omsvc.c_str() ) ;
          sdbGetOMAgentOptions()->save() ;
          // notify change
          sdbGetOMAgentMgr()->onConfigChange() ;
