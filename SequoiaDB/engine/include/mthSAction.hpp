@@ -36,7 +36,6 @@
 
 #include "core.hpp"
 #include "oss.hpp"
-#include "mthSValue.hpp"
 #include "mthDef.hpp"
 #include "mthSActionFunc.hpp"
 #include "ossUtil.hpp"
