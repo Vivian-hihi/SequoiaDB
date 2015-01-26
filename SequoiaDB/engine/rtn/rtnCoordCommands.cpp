@@ -9415,8 +9415,9 @@ namespace engine
          goto error ;
       }
 
-      /// invalidate local catalog cache
+      /// invalidate local catalog cache and group cache
       sdbGetCoordCB()->invalidateCataInfo() ;
+      sdbGetCoordCB()->invalidateGroupInfo() ;
 
       /// send msg to specified nodes
       reqHeader->TID = cb->getTID() ;

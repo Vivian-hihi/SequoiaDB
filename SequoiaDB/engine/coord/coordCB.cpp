@@ -360,8 +360,6 @@ namespace engine
 
    void _CoordCB::addGroupInfo ( CoordGroupInfoPtr &groupInfo )
    {
-      // TODO:delete the outTime groupInfo
-      // TODO:check version
       ossScopedLock _lock( &_nodeGroupMutex, EXCLUSIVE ) ;
 
       _nodeGroupInfo[groupInfo->getGroupID()] = groupInfo ;
@@ -412,10 +410,8 @@ namespace engine
    }
 
    void _CoordCB::updateCataInfo ( const std::string &collectionName,
-                         CoordCataInfoPtr &cataInfo )
+                                   CoordCataInfoPtr &cataInfo )
    {
-      // TODO:update catalogue info
-      // TODO:delete the outTime groupInfo
       ossScopedLock _lock( &_cataInfoMutex, EXCLUSIVE );
       _cataInfoMap[collectionName] = cataInfo ;
    }
@@ -445,6 +441,13 @@ namespace engine
    {
       ossScopedLock _lock( &_cataInfoMutex, EXCLUSIVE );
       _cataInfoMap.clear() ;
+   }
+
+   void _CoordCB::invalidateGroupInfo()
+   {
+      ossScopedLock _lock(&_nodeGroupMutex, EXCLUSIVE) ;
+      _nodeGroupInfo.clear() ;
+      _groupNameMap.clear() ;
    }
 
    /*
