@@ -985,7 +985,6 @@ namespace engine
             {
                rc = dpsCB->completeOpr( cb, w ) ;
             }
-            cb->resetLsn () ;
          }
       }
 

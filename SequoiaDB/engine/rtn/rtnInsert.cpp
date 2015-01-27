@@ -169,7 +169,6 @@ namespace engine
          {
             rc = dpsCB->completeOpr( cb, w ) ;
          }
-         cb->resetLsn () ;
       }
       PD_TRACE_EXITRC ( SDB_RTNINSERT2, rc ) ;
       return rc ;

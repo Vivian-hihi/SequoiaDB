@@ -148,11 +148,16 @@ namespace engine
 
    INT32 _dpsLogWrapper::completeOpr( _pmdEDUCB * cb, INT32 w )
    {
+      INT32 rc = SDB_OK ;
       if ( _pEventHandler && w > 1 && cb && 0 != cb->getLsnCount() )
       {
-         return _pEventHandler->onCompleteOpr( cb, w ) ;
+         rc = _pEventHandler->onCompleteOpr( cb, w ) ;
       }
-      return SDB_OK ;
+      if ( cb )
+      {
+         cb->resetLsn() ;
+      }
+      return rc ;
    }
 
    // record a row

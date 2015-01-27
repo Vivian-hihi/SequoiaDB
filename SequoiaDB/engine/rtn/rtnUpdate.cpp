@@ -264,7 +264,6 @@ namespace engine
          {
             rc = dpsCB->completeOpr( cb, w ) ;
          }
-         cb->resetLsn () ;
       }
       PD_TRACE_EXITRC ( SDB_RTNUPDATE2, rc ) ;
       return rc ;

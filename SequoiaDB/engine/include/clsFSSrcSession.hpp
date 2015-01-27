@@ -267,7 +267,9 @@ namespace engine
 
          UINT64                           _taskID ;
          UINT64                           _updateMetaTime ;
-         UINT64                           _lastEndNtyTime ;
+         DPS_LSN_OFFSET                   _lastEndNtyOffset ;
+         BOOLEAN                          _getLastEndNtyOffset ;
+         UINT32                           _collectionW ;
    };
 }
 

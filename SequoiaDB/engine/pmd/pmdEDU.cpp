@@ -239,6 +239,7 @@ namespace engine
 #if defined ( SDB_ENGINE )
       clearTransInfo() ;
       releaseAlignedMemory() ;
+      resetLsn() ;
 #endif // SDB_ENGINE
 
       // release buff

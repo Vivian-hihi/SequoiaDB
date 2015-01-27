@@ -162,10 +162,11 @@ namespace engine
          }
 
          OSS_INLINE INT32 sync( const DPS_LSN_OFFSET &offset,
-                                _pmdEDUCB *&eduCB,
-                                UINT32 w = 1 )
+                                _pmdEDUCB *eduCB,
+                                UINT32 w = 1,
+                                INT64 timeout = -1 )
          {
-            if ( DPS_INVALID_LSN_OFFSET == offset || 1 == w )
+            if ( DPS_INVALID_LSN_OFFSET == offset || 1 >= w )
             {
                return SDB_OK ;
             }
@@ -175,16 +176,12 @@ namespace engine
             session.eduCB = eduCB ;
             eduCB->getEvent().reset() ;
 
-            if ( w > 1 )
+            if ( w > CLS_REPLSET_MAX_NODE_SIZE )
             {
-               UINT32 nodes = groupSize () ;
-               if ( w > nodes )
-               {
-                  w = nodes ;
-               }
+               w = CLS_REPLSET_MAX_NODE_SIZE ;
             }
 
-            return _sync.sync( session, w ) ;
+            return _sync.sync( session, w, timeout ) ;
          }
 
          OSS_INLINE UINT32 getNtySessionNum ()
@@ -193,6 +190,8 @@ namespace engine
          }
 
          ossQueue< clsLSNNtyInfo >* getNtyQue() { return &_ntyQue ; }
+         DPS_LSN_OFFSET getNtyLastOffset() const { return _ntyLastOffset ; }
+         DPS_LSN_OFFSET getNtyProcessedOffset() const { return _ntyProcessedOffset ; }
 
          void notify2Session( UINT32 suLID, UINT32 clLID, dmsExtentID extLID,
                               const DPS_LSN_OFFSET &offset ) ;
@@ -278,6 +277,8 @@ namespace engine
 
          // notify queue
          ossQueue< clsLSNNtyInfo >  _ntyQue ;
+         DPS_LSN_OFFSET             _ntyLastOffset ;
+         DPS_LSN_OFFSET             _ntyProcessedOffset ;
 
          // sync control param
          UINT64                  _totalLogSize ;

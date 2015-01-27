@@ -186,11 +186,11 @@ namespace engine
          goto error ;
       }
 
-      if ( NULL != dpsCB && 1 < w )
+      if ( NULL != dpsCB )
       {
          dpsCB->completeOpr( cb, w ) ;
-         cb->resetLsn () ;
       }
+
    done:
       PD_TRACE_EXITRC( SDB_RTNOPENLOB, rc ) ;
       return rc ;
@@ -557,10 +557,9 @@ namespace engine
          goto error ;
       }
 
-      if ( NULL != dpsCB && 1 < w )
+      if ( NULL != dpsCB )
       {
          dpsCB->completeOpr( cb, w ) ;
-         cb->resetLsn () ;
       }
 
    done:
@@ -604,10 +603,9 @@ namespace engine
          goto error ;
       }
 
-      if ( NULL != dpsCB && 1 < w )
+      if ( NULL != dpsCB )
       {
          dpsCB->completeOpr( cb, w ) ;
-         cb->resetLsn () ;
       }
 
    done:
@@ -645,10 +643,9 @@ namespace engine
          goto error ;
       }
 
-      if ( NULL != dpsCB && 1 < w )
+      if ( NULL != dpsCB )
       {
          dpsCB->completeOpr( cb, w ) ;
-         cb->resetLsn () ;
       }
 
    done:
@@ -771,10 +768,9 @@ namespace engine
          goto error ;
       }
 
-      if ( NULL != dpsCB && 1 < w )
+      if ( NULL != dpsCB )
       {
          dpsCB->completeOpr( cb, w ) ;
-         cb->resetLsn () ;
       }
 
    done:
@@ -874,10 +870,9 @@ namespace engine
          goto error ;
       }
 
-      if ( NULL != dpsCB && 1 < w )
+      if ( NULL != dpsCB )
       {
          dpsCB->completeOpr( cb, w ) ;
-         cb->resetLsn () ;
       }
 
    done:
