@@ -66,14 +66,22 @@ namespace engine
 
       SDB_SESSION_TYPE sessionType = _pSession->sessionType() ;
       SDB_ASSERT( SDB_SESSION_LOCAL == sessionType 
-                  || SDB_SESSION_REST == sessionType, "" ) ;
+                  || SDB_SESSION_REST == sessionType
+                  || SDB_SESSION_PROTOCOL == sessionType, "" ) ;
 
       if ( SDB_SESSION_LOCAL == sessionType )
       {
-         _pmdLocalSession *pLocalSession = 
+         _pmdLocalSession *pLocalSession =
                                  dynamic_cast<_pmdLocalSession*>( _pSession ) ;
          SDB_ASSERT( NULL != pLocalSession, "" ) ;
          _pEDUCB = pLocalSession->eduCB() ;
+      }
+      else if ( SDB_SESSION_PROTOCOL == sessionType )
+      {
+         _pmdSession *pMongoSession =
+                                 dynamic_cast<_pmdSession*>( _pSession ) ;
+         SDB_ASSERT( NULL != pMongoSession, "" ) ;
+         _pEDUCB = pMongoSession->eduCB() ;
       }
       else
       {
@@ -891,19 +899,27 @@ namespace engine
 
       SDB_SESSION_TYPE sessionType = _pSession->sessionType() ;
       SDB_ASSERT( SDB_SESSION_LOCAL == sessionType 
-                  || SDB_SESSION_REST == sessionType, "" ) ;
+                  || SDB_SESSION_REST == sessionType
+                  || SDB_SESSION_PROTOCOL == sessionType, "" ) ;
 
       if ( SDB_SESSION_LOCAL == sessionType )
       {
-         _pmdLocalSession *pLocalSession = 
+         _pmdLocalSession *pLocalSession =
                                  dynamic_cast<_pmdLocalSession*>( _pSession ) ;
          SDB_ASSERT( NULL != pLocalSession, "" ) ;
          _pEDUCB = pLocalSession->eduCB() ;
       }
+      else if ( SDB_SESSION_PROTOCOL == sessionType )
+      {
+         _pmdSession *pMongoSession =
+                                 dynamic_cast<_pmdSession*>( _pSession ) ;
+         SDB_ASSERT( NULL != pMongoSession, "" ) ;
+         _pEDUCB = pMongoSession->eduCB() ;
+      }
       else
       {
          //SDB_SESSION_REST
-         _pmdRestSession *pRestSession = 
+         _pmdRestSession *pRestSession =
                                  dynamic_cast<_pmdRestSession*>( _pSession ) ;
          SDB_ASSERT( NULL != pRestSession, "" ) ;
          _pEDUCB = pRestSession->eduCB() ;

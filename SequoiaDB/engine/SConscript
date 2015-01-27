@@ -89,7 +89,10 @@ pmdFiles = [
       "pmd/pmdRestSvc.cpp",
       "pmd/pmdController.cpp",
       "pmd/pmdEDUEntryPoint.cpp",
-      "pmd/pmdProcessor.cpp"
+      "pmd/pmdProcessor.cpp",
+      "fap/mongodb/fapMongoModule.cpp",
+      "fap/fapModuleWrapper.cpp",
+      "pmd/pmdProtocolEntryPoint.cpp",
       ]
 migFiles = [
       "mig/migLoad.cpp"
