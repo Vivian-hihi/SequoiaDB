@@ -77,6 +77,7 @@ INT32 _pmdMongoSession::run()
       // clear interrupt flag
       _pEDUCB->resetInterrupt() ;
       _pEDUCB->resetInfo( engine::EDU_INFO_ERROR ) ;
+      _pEDUCB->resetLsn() ;
 
       // recv msg
       rc = recvData( (CHAR*)&msgSize, sizeof(UINT32) ) ;

@@ -84,7 +84,8 @@ namespace engine
       :_pmdAsyncSession ( sessionID )
    {
       PD_TRACE_ENTRY ( SDB__CLSSDSESS__CLSSHDSESS ) ;
-      _pCollectionName = NULL ;
+      _pCollectionName  = NULL ;
+      _collectionW      = 1 ;
       pmdKRCB *pKRCB = pmdGetKRCB () ;
       _pReplSet  = sdbGetReplCB () ;
       _pShdMgr   = sdbGetShardCB () ;
@@ -221,6 +222,7 @@ namespace engine
          rc = SDB_DPS_TRANS_DOING_ROLLBACK ;
       }
 
+      _collectionW = w ;
       PD_TRACE_EXITRC ( SDB__CLSSHDSESS__CK, rc ) ;
       return rc ;
    }
@@ -301,6 +303,7 @@ namespace engine
       }
 
    done:
+      _collectionW = w ;
       PD_TRACE_EXITRC ( SDB__CLSSHDSESS__CKCATA, rc ) ;
       return rc ;
    error:
@@ -364,9 +367,11 @@ namespace engine
       INT32  buffLen = 0 ;
       rtnContextBuf buffObj ;
       _pCollectionName = NULL ;
+      _collectionW = 1 ;
       BOOLEAN isNeedRollback = FALSE;
 
       MON_START_OP( _pEDUCB->getMonAppCB() ) ;
+      _pEDUCB->resetLsn() ;
 
       while ( loop )
       {
@@ -539,6 +544,12 @@ namespace engine
             if ( rcTmp )
             {
                PD_LOG ( PDERROR, "Failed to rollback(rc=%d)", rcTmp ) ;
+            }
+            // need to wait sync complete
+            if ( _collectionW > 1 )
+            {
+               sdbGetReplCB()->sync( eduCB()->getEndLsn(), eduCB(),
+                                     _collectionW ) ;
             }
          }
 

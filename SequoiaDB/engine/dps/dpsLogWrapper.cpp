@@ -152,9 +152,6 @@ namespace engine
       if ( _pEventHandler && w > 1 && cb && 0 != cb->getLsnCount() )
       {
          rc = _pEventHandler->onCompleteOpr( cb, w ) ;
-      }
-      if ( cb )
-      {
          cb->resetLsn() ;
       }
       return rc ;
