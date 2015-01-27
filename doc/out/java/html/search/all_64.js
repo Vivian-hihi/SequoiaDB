@@ -8,6 +8,7 @@ var searchData=
   ['deprecated_20list',['Deprecated List',['../deprecated.html',1,'']]],
   ['detachcollection',['detachCollection',['../classcom_1_1sequoiadb_1_1base_1_1DBCollection.html#abb94fc8694490559e2a0651b3302f74f',1,'com::sequoiadb::base::DBCollection']]],
   ['disconnect',['disconnect',['../classcom_1_1sequoiadb_1_1base_1_1Sequoiadb.html#a3542da39afb6752e0d7118e16cd93ccf',1,'com.sequoiadb.base.Sequoiadb.disconnect()'],['../classcom_1_1sequoiadb_1_1base_1_1Node.html#a451c6c40cbbcf68b034c0bae78d07d69',1,'com.sequoiadb.base.Node.disconnect()'],['../classcom_1_1sequoiadb_1_1base_1_1ReplicaNode.html#aba312c228292c1cf1d50cfd42dc12aef',1,'com.sequoiadb.base.ReplicaNode.disconnect()']]],
+  ['domain',['Domain',['../classcom_1_1sequoiadb_1_1base_1_1Domain.html',1,'com::sequoiadb::base']]],
   ['drop',['drop',['../classcom_1_1sequoiadb_1_1base_1_1CollectionSpace.html#aebd5262adcc77951592d3ac79d13ba60',1,'com::sequoiadb::base::CollectionSpace']]],
   ['dropcollection',['dropCollection',['../classcom_1_1sequoiadb_1_1base_1_1CollectionSpace.html#a21f14d895c3c4588352960c2a766de62',1,'com::sequoiadb::base::CollectionSpace']]],
   ['dropcollectionspace',['dropCollectionSpace',['../classcom_1_1sequoiadb_1_1base_1_1Sequoiadb.html#ab961e51462a695a7be5d3779c6e4980e',1,'com::sequoiadb::base::Sequoiadb']]],

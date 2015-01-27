@@ -244,7 +244,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>setConnection</b> (IC
 <tr class="memdesc:abb94fc8694490559e2a0651b3302f74f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Dettach the specified collection.  <a href="#abb94fc8694490559e2a0651b3302f74f"></a><br/></td></tr>
 <tr class="separator:abb94fc8694490559e2a0651b3302f74f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7003ce6587cbdc6abcb9e0934531a192"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCollection.html#a7003ce6587cbdc6abcb9e0934531a192">alterCollection</a> (BSONObject options)  throws BaseException </td></tr>
-<tr class="memdesc:a7003ce6587cbdc6abcb9e0934531a192"><td class="mdescLeft">&#160;</td><td class="mdescRight">Alter the attribute of current collection.  <a href="#a7003ce6587cbdc6abcb9e0934531a192"></a><br/></td></tr>
+<tr class="memdesc:a7003ce6587cbdc6abcb9e0934531a192"><td class="mdescLeft">&#160;</td><td class="mdescRight">Alter the attributes of current collection.  <a href="#a7003ce6587cbdc6abcb9e0934531a192"></a><br/></td></tr>
 <tr class="separator:a7003ce6587cbdc6abcb9e0934531a192"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:acab79b99ecefaec898b9732527c07de4"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCursor.html">DBCursor</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCollection.html#acab79b99ecefaec898b9732527c07de4">listLobs</a> ()  throws BaseException </td></tr>
 <tr class="memdesc:acab79b99ecefaec898b9732527c07de4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get all of the lobs in current collection.  <a href="#acab79b99ecefaec898b9732527c07de4"></a><br/></td></tr>
@@ -331,13 +331,24 @@ Static Public Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Alter the attribute of current collection. </p>
+<p>Alter the attributes of current collection. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">options</td><td>The options for alter the attribute of current collection, the options are as below: </td></tr>
+    <tr><td class="paramname">options</td><td>The options for altering current collection are as below: <ul>
+<li>
+ReplSize : Assign how many replica nodes need to be synchronized when a write request(insert, update, etc) is executed </li>
+<li>
+ShardingKey : Assign the sharding key </li>
+<li>
+ShardingType : Assign the sharding type </li>
+<li>
+Partition : When the ShardingType is "hash", need to assign Partition, it's the bucket number for hash, the range is [2^3,2^20]. e.g. {RepliSize:0, ShardingKey:{a:1}, ShardingType:"hash", Partition:1024} </li>
+</ul>
+</td></tr>
   </table>
   </dd>
 </dl>
+<dl class="section note"><dt>Note</dt><dd>Can't alter attributes about split in partition collection; After altering a collection to be a partition collection, need to split this collection manually </dd></dl>
 <dl class="exception"><dt>Exceptions</dt><dd>
   <table class="exception">
     <tr><td class="paramname">com.sequoiadb.exception.BaseException</td><td></td></tr>
@@ -969,8 +980,24 @@ Static Public Attributes</h2></td></tr>
     <tr><td class="paramname">hint</td><td>the hint, automatically match the optimal hint if null </td></tr>
     <tr><td class="paramname">skipRows</td><td>skip the first numToSkip documents, never skip if this parameter is 0 </td></tr>
     <tr><td class="paramname">returnRows</td><td>only return returnRows documents, return all if this parameter is -1 </td></tr>
-    <tr><td class="paramname">flag</td><td>the flag is used to choose the way to query, the optional options are as below: </td></tr>
-    <tr><td class="paramname">options</td><td>the options of explian </td></tr>
+    <tr><td class="paramname">flag</td><td>the flag is used to choose the way to query, the optional options are as below: <ul>
+<li>
+<a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBQuery.html#a2b4c991db1d4024d6bde92849c6b300c" title="Normally, query return bson stream, when this flag is added, query return binary data stream...">DBQuery.FLG_QUERY_STRINGOUT</a> </li>
+<li>
+<a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBQuery.html#ac26e2c0cee7cf2b23fa52a288abb698c" title="Force to use specified hint to query, if database have no index assigned by the hint, fail to query.">DBQuery.FLG_QUERY_FORCE_HINT</a> </li>
+<li>
+<a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBQuery.html#ad3dbd2e5fe88a3a683fe78d8d73b8a3d" title="Enable paralled sub query.">DBQuery.FLG_QUERY_PARALLED</a> </li>
+<li>
+<a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBQuery.html#a3dfd00ad8d166cee821c46ca18359859" title="return data in query response">DBQuery.FLG_QUERY_WITH_RETURNDATA</a> </li>
+<li>
+<a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBQuery.html#a334a60ade03231167cab57ae23c84ba1" title="explain query">DBQuery.FLG_QUERY_EXPLAIN</a> </li>
+</ul>
+</td></tr>
+    <tr><td class="paramname">options</td><td>The rules of query explain, the options are as below: <ul>
+<li>
+Run : Whether execute query explain or not, true for excuting query explain then get the data and time information; false for not excuting query explain but get the query explain information only. e.g. {Run:true} </li>
+</ul>
+</td></tr>
   </table>
   </dd>
 </dl>
@@ -2862,7 +2889,7 @@ BDQuery.FLG_QUERY_PARALLED </li>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Oct 29 2014 20:06:36 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Tue Jan 27 2015 10:31:15 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.2
 </small></address>

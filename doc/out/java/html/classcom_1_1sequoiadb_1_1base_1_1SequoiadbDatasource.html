@@ -114,9 +114,12 @@ synchronized int&#160;</td><td class="memItemRight" valign="bottom"><a class="el
 synchronized int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1SequoiadbDatasource.html#aed5ce1ad89566522d2aa961b55008c4b">getAbnormalAddrNum</a> ()</td></tr>
 <tr class="memdesc:aed5ce1ad89566522d2aa961b55008c4b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the current abnormal address amount. <br/></td></tr>
 <tr class="separator:aed5ce1ad89566522d2aa961b55008c4b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac465a6cc2a4e4ae0c9acf215f8313c95"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1SequoiadbDatasource.html#ac465a6cc2a4e4ae0c9acf215f8313c95">SequoiadbDatasource</a> (ArrayList&lt; String &gt; urls, String username, String password, <a class="el" href="classcom_1_1sequoiadb_1_1net_1_1ConfigOptions.html">ConfigOptions</a> nwOpt, <a class="el" href="classcom_1_1sequoiadb_1_1base_1_1SequoiadbOption.html">SequoiadbOption</a> dsOpt)  throws BaseException 	</td></tr>
-<tr class="memdesc:ac465a6cc2a4e4ae0c9acf215f8313c95"><td class="mdescLeft">&#160;</td><td class="mdescRight">constructor.  <a href="#ac465a6cc2a4e4ae0c9acf215f8313c95"></a><br/></td></tr>
-<tr class="separator:ac465a6cc2a4e4ae0c9acf215f8313c95"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aeb8fc3122e484433db92f7707e94848e"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aeb8fc3122e484433db92f7707e94848e"></a>
+synchronized void&#160;</td><td class="memItemRight" valign="bottom"><b>addCoord</b> (String url)</td></tr>
+<tr class="separator:aeb8fc3122e484433db92f7707e94848e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af8317699497519a8b604ef72d57b55b0"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="af8317699497519a8b604ef72d57b55b0"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>SequoiadbDatasource</b> (List&lt; String &gt; urls, String username, String password, <a class="el" href="classcom_1_1sequoiadb_1_1net_1_1ConfigOptions.html">ConfigOptions</a> nwOpt, <a class="el" href="classcom_1_1sequoiadb_1_1base_1_1SequoiadbOption.html">SequoiadbOption</a> dsOpt)  throws BaseException 	</td></tr>
+<tr class="separator:af8317699497519a8b604ef72d57b55b0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a83f73c61f908b008928686be959841c2"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1SequoiadbDatasource.html#a83f73c61f908b008928686be959841c2">SequoiadbDatasource</a> (String url, String username, String password, <a class="el" href="classcom_1_1sequoiadb_1_1base_1_1SequoiadbOption.html">SequoiadbOption</a> dsOpt)  throws BaseException 	</td></tr>
 <tr class="memdesc:a83f73c61f908b008928686be959841c2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructor.  <a href="#a83f73c61f908b008928686be959841c2"></a><br/></td></tr>
 <tr class="separator:a83f73c61f908b008928686be959841c2"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -130,80 +133,6 @@ synchronized int&#160;</td><td class="memItemRight" valign="bottom"><a class="el
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>SequoiaDB DataSource. </p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
-<a class="anchor" id="ac465a6cc2a4e4ae0c9acf215f8313c95"></a>
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">com.sequoiadb.base.SequoiadbDatasource.SequoiadbDatasource </td>
-          <td>(</td>
-          <td class="paramtype">ArrayList&lt; String &gt;&#160;</td>
-          <td class="paramname"><em>urls</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">String&#160;</td>
-          <td class="paramname"><em>username</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">String&#160;</td>
-          <td class="paramname"><em>password</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="classcom_1_1sequoiadb_1_1net_1_1ConfigOptions.html">ConfigOptions</a>&#160;</td>
-          <td class="paramname"><em>nwOpt</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1SequoiadbOption.html">SequoiadbOption</a>&#160;</td>
-          <td class="paramname"><em>dsOpt</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td>  throws BaseException 	</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>constructor. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">urls</td><td>the addresses of coords, can't be null or empty, e.g."ubuntu1:11810","ubuntu2:11810",... </td></tr>
-    <tr><td class="paramname">username</td><td>the username for logging sequoiadb </td></tr>
-    <tr><td class="paramname">password</td><td>the password for logging sequoiadb </td></tr>
-    <tr><td class="paramname">nwOpt</td><td>the options for connection </td></tr>
-    <tr><td class="paramname">dsOpt</td><td>the options for datasource </td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section note"><dt>Note</dt><dd>When offer several addresses for datasource to use, if some of them are not available(invalid address, network error, coord shutdown, catalog replica group is not available), we will put these addresses into a queue, and check them periodically. If some of them is valid again, get them back for use. When datasource get a unavailable address to connect, the default timeout time is 100ms, and default retry time is 0, use nwOpt can change them. </dd></dl>
-<dl class="section see"><dt>See Also</dt><dd>ConfigOptions </dd>
-<dd>
-<a class="el" href="classcom_1_1sequoiadb_1_1base_1_1SequoiadbOption.html" title="the option of SequoiadbDatasource">SequoiadbOption</a> </dd></dl>
-<dl class="exception"><dt>Exceptions</dt><dd>
-  <table class="exception">
-    <tr><td class="paramname">com.sequoiadb.exception.BaseException</td><td></td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
 <a class="anchor" id="a83f73c61f908b008928686be959841c2"></a>
 <div class="memitem">
 <div class="memproto">
@@ -345,7 +274,7 @@ synchronized int&#160;</td><td class="memItemRight" valign="bottom"><a class="el
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Oct 29 2014 20:06:36 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Tue Jan 27 2015 10:31:16 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.2
 </small></address>
