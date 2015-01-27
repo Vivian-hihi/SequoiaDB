@@ -39,6 +39,9 @@
 #include "pmdCB.hpp"
 #include "rtnPageCleanerJob.hpp"
 #include "../bson/lib/md5.hpp"
+#include "ossDynamicLoad.hpp"
+#include "../fap/mongodb/fapMongoModule.hpp"
+#include "../fap/fapModuleWrapper.hpp"
 
 namespace engine
 {
@@ -59,6 +62,7 @@ namespace engine
    {
       _pTcpListener        = NULL ;
       _pHttpListener       = NULL ;
+      _pMongoListener      = NULL ;
       _sequence            = 1 ;
       _timeCounter         = 0 ;
       _fixBufSize          = SDB_PAGE_SIZE ;
@@ -72,6 +76,7 @@ namespace engine
       SDB_ASSERT( _vecFixBuf.size() == 0, "Fix buff catch must be empty" ) ;
       _pTcpListener        = NULL ;
       _pHttpListener       = NULL ;
+      _pMongoListener      = NULL ;
    }
 
    SDB_CB_TYPE _pmdController::cbType () const
@@ -89,6 +94,9 @@ namespace engine
       INT32 rc = SDB_OK ;
       pmdOptionsCB *pOptCB = pmdGetOptionCB() ;
       UINT16 port = 0 ;
+      UINT16 protocolPort = 0 ;
+      const CHAR *moduleName = NULL ;
+      const CHAR *modulePath = NULL ;
 
       // 1. create tcp listerner
       port = pOptCB->getServicePort() ;
@@ -127,6 +135,37 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Failed to bind http listerner socket[%d], "
                    "rc: %d", port, rc ) ;
       PD_LOG( PDEVENT, "Http Listerning on port[%d]", port ) ;
+
+      _fapMongo = SDB_OSS_NEW fapMongoModule() ;
+      if ( NULL == _fapMongo )
+      {
+         PD_LOG( PDERROR, "Failed to alloc foreign access protocol module" ) ;
+         rc = SDB_OOM ;
+         goto error ;
+      }
+      rc = _fapMongo->load( MONGO_MODULE_NAME, MONGO_MODULE_PATH ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to load module: %s, path: %s"
+                   "rc: %d", MONGO_MODULE_NAME, MONGO_MODULE_PATH, rc ) ;
+      rc = _fapMongo->create( _protocol ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to create protocol service" ) ;
+      _protocol->init( pmdGetKRCB() ) ;
+      // memory will be freed in fini
+      protocolPort = ossAtoi( _protocol->getServiceName() ) ;
+      _pMongoListener = SDB_OSS_NEW ossSocket( protocolPort ) ;
+      if ( !_pMongoListener )
+      {
+         PD_LOG( PDERROR, "Failed to alloc socket" ) ;
+         rc = SDB_OOM ;
+         goto error ;
+      }
+      rc = _pMongoListener->initSocket() ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to init protocol listener socket[%d], "
+                   "rc: %d", protocolPort, rc ) ;
+
+      rc = _pMongoListener->bind_listen() ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to bind protocol listener socket[%d], "
+                   "rc: %d", protocolPort, rc ) ;
+      PD_LOG( PDEVENT, "Listerning on port[%d]", protocolPort ) ;
 
    done:
       return rc ;
@@ -170,6 +209,20 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Wait rest Listener active failed, rc: %d",
                    rc ) ;
 
+      //////////////////////////////////////////////////////////////////////////
+      // listener for access protocol
+      rc = pEDUMgr->startEDU( EDU_TYPE_PROTOCOLLISTENER, (void*)_pMongoListener,
+                              &eduID ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to start mongo listerner, rc: %d",
+                   rc ) ;
+      pEDUMgr->regSystemEDU( EDU_TYPE_PROTOCOLLISTENER, eduID ) ;
+
+      // wait until protocol listener starts
+      rc = pEDUMgr->waitUntil ( eduID, PMD_EDU_RUNNING ) ;
+      PD_RC_CHECK( rc, PDERROR, "Wait mongo Listener active failed, rc: %d",
+                   rc ) ;
+      //////////////////////////////////////////////////////////////////////////
+      
       // For non-coord nodes, we need to start page cleaners
       if ( SDB_ROLE_COORD != pmdGetDBRole() )
       {
@@ -207,7 +260,22 @@ namespace engine
          SDB_OSS_DEL _pHttpListener ;
          _pHttpListener = NULL ;
       }
+      if ( _pMongoListener )
+      {
+         SDB_OSS_DEL _pMongoListener ;
+         _pMongoListener = NULL ;
+      }
+      if ( _protocol )
+      {
+         _fapMongo->release( _protocol ) ;
+      }
 
+      if( _fapMongo )
+      {
+         _fapMongo->unload() ;
+         SDB_OSS_DEL _fapMongo ;
+         _fapMongo = NULL;
+      }
       // release fix buff catch
       _ctrlLatch.get() ;
       for ( UINT32 i = 0 ; i < _vecFixBuf.size() ; ++i )
