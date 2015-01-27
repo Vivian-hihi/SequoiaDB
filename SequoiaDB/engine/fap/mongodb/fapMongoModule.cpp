@@ -34,58 +34,27 @@
    Last Changed =
 
 *******************************************************************************/
-#ifndef _SDB_MONGO_CONVERTER_HPP_
-#define _SDB_MONGO_CONVERTER_HPP_
+#include "fapMongoModule.hpp"
 
-#include "util.hpp"
-#include "oss.hpp"
-#include "mongodef.hpp"
-#include "commands.hpp"
-
-class command ;
-
-class mongoConverter : public baseConverter, public SDBObject
+_fapMongoModule::_fapMongoModule()
 {
-public:
-   mongoConverter() : _cmd( NULL )
-   {
-      _bigEndian = checkBigEndian() ;
-      parser.setEndian( _bigEndian ) ;
-   }
+}
 
-   ~mongoConverter()
-   {
+_fapMongoModule::~_fapMongoModule()
+{
+}
 
-   }
+INT32 _fapMongoModule::init()
+{
+   return SDB_OK ;
+}
 
-   BOOLEAN isBigEndian() const
-   {
-      return _bigEndian ;
-   }
+INT32 _fapMongoModule::active()
+{
+   return SDB_OK ;
+}
 
-   BOOLEAN isGetLastError() const
-   {
-      const CHAR *ptr = NULL ;
-      ptr = ossStrstr( _cmd->name(), "getLastError" ) ;
-      if ( NULL == ptr )
-      {
-         ptr = ossStrstr( _cmd->name(), "getlasterror" ) ;
-      }
-      return NULL != ptr ;
-   }
-
-   void resetCommand()
-   {
-      _cmd = NULL ;
-   }
-
-   // virtual function for baseConverter
-   virtual CONVERT_ERROR convert( fixedStream &out ) ;
-   virtual CONVERT_ERROR reConvert( fixedStream *in, fixedStream &out ) ;
-
-private:
-   BOOLEAN _bigEndian ;
-   command *_cmd ;
-   mongoParser parser ;
-};
-#endif
+INT32 _fapMongoModule::fini()
+{
+   return SDB_OK ;
+}

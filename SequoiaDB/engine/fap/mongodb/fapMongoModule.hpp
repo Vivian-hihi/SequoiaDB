@@ -34,58 +34,26 @@
    Last Changed =
 
 *******************************************************************************/
-#ifndef _SDB_MONGO_CONVERTER_HPP_
-#define _SDB_MONGO_CONVERTER_HPP_
+#ifndef _SDB_FAP_MONGO_MODULE_HPP_
+#define _SDB_FAP_MONGO_MODULE_HPP_
 
-#include "util.hpp"
-#include "oss.hpp"
-#include "mongodef.hpp"
-#include "commands.hpp"
+#include "../fapModuleWrapper.hpp"
+#include "pmdAccessProtocolBase.hpp"
 
-class command ;
+#define MONGO_MODULE_NAME "libfapmongo.so"
+#define MONGO_MODULE_PATH "./bin/fap/"
 
-class mongoConverter : public baseConverter, public SDBObject
+class _fapMongoModule : public engine::fapModuleWrapper, public SDBObject
 {
 public:
-   mongoConverter() : _cmd( NULL )
-   {
-      _bigEndian = checkBigEndian() ;
-      parser.setEndian( _bigEndian ) ;
-   }
+   _fapMongoModule() ;
+   virtual ~_fapMongoModule() ;
 
-   ~mongoConverter()
-   {
-
-   }
-
-   BOOLEAN isBigEndian() const
-   {
-      return _bigEndian ;
-   }
-
-   BOOLEAN isGetLastError() const
-   {
-      const CHAR *ptr = NULL ;
-      ptr = ossStrstr( _cmd->name(), "getLastError" ) ;
-      if ( NULL == ptr )
-      {
-         ptr = ossStrstr( _cmd->name(), "getlasterror" ) ;
-      }
-      return NULL != ptr ;
-   }
-
-   void resetCommand()
-   {
-      _cmd = NULL ;
-   }
-
-   // virtual function for baseConverter
-   virtual CONVERT_ERROR convert( fixedStream &out ) ;
-   virtual CONVERT_ERROR reConvert( fixedStream *in, fixedStream &out ) ;
-
-private:
-   BOOLEAN _bigEndian ;
-   command *_cmd ;
-   mongoParser parser ;
+   virtual INT32 init() ;
+   virtual INT32 active() ;
+   virtual INT32 fini() ;
 };
+
+typedef _fapMongoModule fapMongoModule ;
+
 #endif

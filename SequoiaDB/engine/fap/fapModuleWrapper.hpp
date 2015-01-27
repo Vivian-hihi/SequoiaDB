@@ -34,58 +34,42 @@
    Last Changed =
 
 *******************************************************************************/
-#ifndef _SDB_MONGO_CONVERTER_HPP_
-#define _SDB_MONGO_CONVERTER_HPP_
+#ifndef _SDB_FAP_WRAPPER_HPP_
+#define _SDB_FAP_WRAPPER_HPP_
 
-#include "util.hpp"
 #include "oss.hpp"
-#include "mongodef.hpp"
-#include "commands.hpp"
+#include "ossDynamicLoad.hpp"
+#include "ossTypes.h"
+#include "pmdAccessProtocolBase.hpp"
+#include "ossDynamicLoad.hpp"
 
-class command ;
+#define OSS_FAP_CREATE  ( IPmdAccessProtocol*(*)() )
+#define OSS_FAP_RELEASE ( void(*)( IPmdAccessProtocol *) )
 
-class mongoConverter : public baseConverter, public SDBObject
+namespace engine {
+
+class _fapModuleWrapper : public SDBObject
 {
 public:
-   mongoConverter() : _cmd( NULL )
-   {
-      _bigEndian = checkBigEndian() ;
-      parser.setEndian( _bigEndian ) ;
-   }
+   _fapModuleWrapper() ;
+   virtual ~_fapModuleWrapper() ;
 
-   ~mongoConverter()
-   {
+   virtual INT32 init()   { return SDB_OK ; }
+   virtual INT32 active() { return SDB_OK ; }
+   virtual INT32 fini()   { return SDB_OK ; }
 
-   }
+   INT32 getFunction( const CHAR *funcName, OSS_MODULE_PFUNCTION *function ) ;
+   INT32 create ( IPmdAccessProtocol *protocol ) ;
+   INT32 release( IPmdAccessProtocol *protocol ) ;
 
-   BOOLEAN isBigEndian() const
-   {
-      return _bigEndian ;
-   }
+   INT32 load( const CHAR *mudule, const CHAR *path, UINT32 mode = 0 ) ;
+   void  unload() ;
 
-   BOOLEAN isGetLastError() const
-   {
-      const CHAR *ptr = NULL ;
-      ptr = ossStrstr( _cmd->name(), "getLastError" ) ;
-      if ( NULL == ptr )
-      {
-         ptr = ossStrstr( _cmd->name(), "getlasterror" ) ;
-      }
-      return NULL != ptr ;
-   }
-
-   void resetCommand()
-   {
-      _cmd = NULL ;
-   }
-
-   // virtual function for baseConverter
-   virtual CONVERT_ERROR convert( fixedStream &out ) ;
-   virtual CONVERT_ERROR reConvert( fixedStream *in, fixedStream &out ) ;
-
-private:
-   BOOLEAN _bigEndian ;
-   command *_cmd ;
-   mongoParser parser ;
+protected:
+   OSS_MODULE_PFUNCTION *_function ;
+   ossModuleHandle      *_loadModule ;
 };
+
+typedef _fapModuleWrapper fapModuleWrapper ;
+}
 #endif
