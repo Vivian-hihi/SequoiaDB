@@ -216,7 +216,6 @@ namespace engine
          MsgOpReply             _replyHeader ;
          BSONObj                _errorInfo ;
          const CHAR             *_pCollectionName ;
-         UINT32                 _collectionW ;
 
          ossTimestamp           _lastRecvTime ;
    };
