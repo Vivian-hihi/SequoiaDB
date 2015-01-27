@@ -36,6 +36,9 @@
 #include "pdTrace.hpp"
 #include "mthTrace.hpp"
 #include "mthSAction.hpp"
+#include "mthSliceIterator.hpp"
+
+using namespace bson ;
 
 namespace engine
 {
@@ -47,6 +50,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__MTHINCLUDEBUILD ) ;
+      SDB_ASSERT( NULL != action, "can not be null" ) ;
       if ( !e.eoo() )
       {
          builder.append( e ) ;
@@ -63,6 +67,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__MTHINCLUDEGET ) ;
+      SDB_ASSERT( NULL != action, "can not be null" ) ;
       out = in ;
       PD_TRACE_EXITRC( SDB__MTHINCLUDEGET, rc ) ;
       return rc ;
@@ -76,6 +81,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__MTHDEFAULTBUILD ) ;
+      SDB_ASSERT( NULL != action, "can not be null" ) ;
       if ( e.eoo() )
       {
          builder.appendAs( action->getValue(), fieldName ) ;
@@ -96,6 +102,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__MTHDEFAULTGET ) ;
+      SDB_ASSERT( NULL != action, "can not be null" ) ;
       if ( !in.eoo() )
       {
          out = in ;
@@ -114,6 +121,81 @@ namespace engine
       out = action->getValue() ;
    done:
       PD_TRACE_EXITRC( SDB__MTHDEFAULTGET, rc ) ;
+      return rc ;
+   }
+
+   ///PD_TRACE_DECLARE_FUNCTION ( SDB__MTHSLICEBUILD, "mthSliceBuild" )
+   INT32 mthSliceBuild( const CHAR *fieldName,
+                        const bson::BSONElement &e,
+                        _mthSAction *action,
+                        bson::BSONObjBuilder &builder )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__MTHSLICEBUILD ) ;
+      SDB_ASSERT( NULL != action, "can not be null" ) ;
+      INT32 begin = 0 ;
+      INT32 limit = -1 ;
+
+      if ( e.eoo() )
+      {
+         goto done ;
+      }
+      else if ( Array == e.type() )
+      {
+         action->getSlicePair( begin, limit ) ;
+         _mthSliceIterator i( e.embeddedObject(),
+                              begin, limit ) ;
+         BSONArrayBuilder sliceBuilder( builder.subarrayStart( fieldName ) ) ;
+         while ( i.more() )
+         {
+            sliceBuilder.append( i.next() ) ;
+         }
+         sliceBuilder.doneFast() ;
+      }
+      else
+      {
+         builder.append( e ) ;
+      }
+   done:
+      PD_TRACE_EXITRC( SDB__MTHSLICEBUILD, rc ) ;
+      return rc ;
+   }
+
+   ///PD_TRACE_DECLARE_FUNCTION ( SDB__MTHSLICEGET, "mthSliceGet" )
+   INT32 mthSliceGet( const CHAR *fieldName,
+                      const bson::BSONElement &in,
+                      _mthSAction *action,
+                      bson::BSONElement &out )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__MTHSLICEGET ) ;
+      SDB_ASSERT( NULL != action, "can not be null" ) ;
+
+      INT32 begin = 0 ;
+      INT32 limit = -1 ;
+
+      if ( Array != in.type() )
+      {
+         out = in ;
+         goto done ; 
+      }
+      else if ( Array == in.type() )
+      {
+         BSONObjBuilder subBuilder ;
+         action->getSlicePair( begin, limit ) ;
+         _mthSliceIterator i( in.embeddedObject(),
+                              begin, limit ) ;
+         BSONObjBuilder sliceBuilder( subBuilder.subarrayStart( fieldName ) ) ;
+         while ( i.more() )
+         {
+            sliceBuilder.append( i.next() ) ;
+         }
+         sliceBuilder.doneFast() ;
+         action->setObj( subBuilder.obj() ) ;
+         out = action->getObj().getField( fieldName ) ;
+      }
+   done:
+      PD_TRACE_EXITRC( SDB__MTHSLICEGET, rc ) ;
       return rc ;
    }
 }

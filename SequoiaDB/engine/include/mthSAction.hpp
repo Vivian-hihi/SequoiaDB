@@ -101,6 +101,22 @@ namespace engine
          return ;
       }
 
+      OSS_INLINE void setSlicePair( INT32 begin,
+                                    INT32 step )
+      {
+         _begin = begin ;
+         _limit = step ;
+         return ;
+      }
+
+      OSS_INLINE void getSlicePair( INT32 &begin,
+                                    INT32 &step )
+      {
+         begin = _begin ;
+         step = _limit ;
+         return ;
+      }
+
       OSS_INLINE void clear()
       {
          _value = bson::BSONElement() ;
@@ -130,7 +146,13 @@ namespace engine
       bson::BSONElement _value ;
       const CHAR *_name ;
       MTH_S_ATTRIBUTE _attribute ;
+
+      /// think about placement new ?
+      /// that we can use different child classes.
       bson::BSONObj _obj ;
+      INT32 _begin ;
+      INT32 _limit ;
+      
    } ;
    typedef class _mthSAction mthSAction ;
 }

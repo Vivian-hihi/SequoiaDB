@@ -109,14 +109,11 @@ namespace engine
          goto error ;
       }
 
-      if ( MTH_ATTR_IS_INCLUDE( action->getAttribute() ) )
+      rc = _actions.append( action ) ;
+      if ( SDB_OK != rc )
       {
-         rc = _actions.append( action ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDERROR, "failed to add action:%d", rc ) ;
-            goto error ;
-         }
+         PD_LOG( PDERROR, "failed to add action:%d", rc ) ;
+         goto error ;
       }
    done:
       PD_TRACE_EXITRC( SDB__MTHSCOLUMN_ADDACTION, rc ) ;
@@ -223,8 +220,9 @@ namespace engine
    }
 
    ///PD_TRACE_DECLARE_FUNCTION ( SDB__MTHSCOLUMN__BUILDFROMCHILDREN, "_mthSColumn::_buildFromChildren" )
+   template <typename T>
    INT32 _mthSColumn::_buildFromChildren( const bson::BSONElement &e,
-                                          bson::BSONObjBuilder &builder )
+                                          T &builder )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__MTHSCOLUMN__BUILDFROMCHILDREN ) ;
@@ -243,7 +241,7 @@ namespace engine
       }
       else if ( Array == e.type() )
       {
-         BSONObjBuilder sub( builder.subarrayStart( e.fieldName() ) ) ;
+         BSONArrayBuilder sub( builder.subarrayStart( e.fieldName() ) ) ;
          BSONObjIterator i( e.embeddedObject() ) ;
          while ( i.more() )
          {
@@ -443,7 +441,8 @@ namespace engine
       PD_TRACE_ENTRY( SDB__MTHSCOLUMN__SETATTRIBUTE ) ;
       SDB_ASSERT( MTH_S_ATTR_INCLUDE == attribute ||
                   MTH_S_ATTR_EXCLUDE == attribute ||
-                  MTH_S_ATTR_DEFAULT == attribute, "can not be any others" ) ;
+                  MTH_S_ATTR_DEFAULT == attribute ||
+                  MTH_S_ATTR_PROJECTION == attribute, "can not be any others" ) ;
       if ( !MTH_ATTR_IS_VALID( _attribute ) )
       {
          _attribute = attribute ;

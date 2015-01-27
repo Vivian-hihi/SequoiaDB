@@ -101,8 +101,9 @@ namespace engine
       INT32 _build( const bson::BSONElement &e,
                     bson::BSONObjBuilder &builder ) ;
 
+      template< typename T>
       INT32 _buildFromChildren( const bson::BSONElement &e,
-                                bson::BSONObjBuilder &builder ) ;
+                                T &builder ) ;
 
       INT32 _buildFromChildren( const bson::BSONObj &obj,
                                 bson::BSONObjBuilder &builder ) ;

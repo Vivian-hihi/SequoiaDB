@@ -71,6 +71,16 @@ namespace engine
                         _mthSAction *,
                         bson::BSONElement & ) ;
 
+   INT32 mthSliceBuild( const CHAR *,
+                        const bson::BSONElement &,
+                        _mthSAction *,
+                        bson::BSONObjBuilder & ) ;
+
+   INT32 mthSliceGet( const CHAR *,
+                      const bson::BSONElement &,
+                      _mthSAction *,
+                      bson::BSONElement & ) ;
+
 }
 
 #endif
