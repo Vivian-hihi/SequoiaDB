@@ -39,7 +39,7 @@
 
 namespace engine {
 
-_fapModuleWrapper::_fapModuleWrapper()
+_fapModuleWrapper::_fapModuleWrapper():_function( NULL ),_loadModule( NULL )
 {
 
 }
