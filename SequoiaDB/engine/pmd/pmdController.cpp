@@ -138,36 +138,36 @@ namespace engine
                    "rc: %d", port, rc ) ;
       PD_LOG( PDEVENT, "Http Listerning on port[%d]", port ) ;
 
-//       _fapMongo = SDB_OSS_NEW fapMongoModule() ;
-//       if ( NULL == _fapMongo )
-//       {
-//          PD_LOG( PDERROR, "Failed to alloc foreign access protocol module" ) ;
-//          rc = SDB_OOM ;
-//          goto error ;
-//       }
-//       rc = _fapMongo->load( MONGO_MODULE_NAME, MONGO_MODULE_PATH ) ;
-//       PD_RC_CHECK( rc, PDERROR, "Failed to load module: %s, path: %s"
-//                    "rc: %d", MONGO_MODULE_NAME, MONGO_MODULE_PATH, rc ) ;
-//       rc = _fapMongo->create( _protocol ) ;
-//       PD_RC_CHECK( rc, PDERROR, "Failed to create protocol service" ) ;
-//       _protocol->init( pmdGetKRCB() ) ;
-//       // memory will be freed in fini
-//       protocolPort = ossAtoi( _protocol->getServiceName() ) ;
-//       _pMongoListener = SDB_OSS_NEW ossSocket( protocolPort ) ;
-//       if ( !_pMongoListener )
-//       {
-//          PD_LOG( PDERROR, "Failed to alloc socket" ) ;
-//          rc = SDB_OOM ;
-//          goto error ;
-//       }
-//       rc = _pMongoListener->initSocket() ;
-//       PD_RC_CHECK( rc, PDERROR, "Failed to init protocol listener socket[%d], "
-//                    "rc: %d", protocolPort, rc ) ;
-// 
-//       rc = _pMongoListener->bind_listen() ;
-//       PD_RC_CHECK( rc, PDERROR, "Failed to bind protocol listener socket[%d], "
-//                    "rc: %d", protocolPort, rc ) ;
-//       PD_LOG( PDEVENT, "Listerning on port[%d]", protocolPort ) ;
+      _fapMongo = SDB_OSS_NEW fapMongoModule() ;
+      if ( NULL == _fapMongo )
+      {
+         PD_LOG( PDERROR, "Failed to alloc foreign access protocol module" ) ;
+         rc = SDB_OOM ;
+         goto error ;
+      }
+      rc = _fapMongo->load( MONGO_MODULE_NAME, MONGO_MODULE_PATH ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to load module: %s, path: %s"
+                   "rc: %d", MONGO_MODULE_NAME, MONGO_MODULE_PATH, rc ) ;
+      rc = _fapMongo->create( _protocol ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to create protocol service" ) ;
+      _protocol->init( pmdGetKRCB() ) ;
+      // memory will be freed in fini
+      protocolPort = ossAtoi( _protocol->getServiceName() ) ;
+      _pMongoListener = SDB_OSS_NEW ossSocket( protocolPort ) ;
+      if ( !_pMongoListener )
+      {
+         PD_LOG( PDERROR, "Failed to alloc socket" ) ;
+         rc = SDB_OOM ;
+         goto error ;
+      }
+      rc = _pMongoListener->initSocket() ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to init protocol listener socket[%d], "
+                   "rc: %d", protocolPort, rc ) ;
+
+      rc = _pMongoListener->bind_listen() ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to bind protocol listener socket[%d], "
+                   "rc: %d", protocolPort, rc ) ;
+      PD_LOG( PDEVENT, "Listerning on port[%d]", protocolPort ) ;
 
    done:
       return rc ;

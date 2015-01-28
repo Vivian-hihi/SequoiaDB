@@ -120,7 +120,7 @@ INT32 _ossModuleHandle::init ()
       }
    }
    // append module name
-   if ( ossStrlen ( strPath ) + ossStrlen ( _moduleName ) <= sizeof(strPath) )
+   if ( ossStrlen ( strPath ) + ossStrlen ( _moduleName ) >= sizeof(strPath) )
    {
       PD_LOG ( PDERROR, "path + module name is too long: %s:%s",
                strPath, _moduleName ) ;
