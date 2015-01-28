@@ -47,8 +47,7 @@ namespace engine
    _mthSColumn::_mthSColumn()
    :_father( NULL ),
     _name( _staticName ),
-    _dynamicName( NULL ),
-    _attribute( MTH_S_ATTR_NONE )
+    _dynamicName( NULL )
    {
 
    }
@@ -140,7 +139,7 @@ namespace engine
       _actions.clear() ;
       SAFE_OSS_FREE( _dynamicName ) ;
       _name = _staticName ;
-      _attribute = MTH_S_ATTR_NONE ;
+      _attribute.clear() ;
       _father = NULL ;
       _subColumns.clear() ; 
       PD_TRACE_EXIT( SDB__MTHSCOLUMN_CLEAR ) ;
@@ -153,7 +152,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__MTHSCOLUMN_BUILD ) ;
-      SDB_ASSERT( MTH_ATTR_IS_VALID(_attribute),
+      SDB_ASSERT( _attribute.isValid(),
                   "can not be invaild" ) ;
 
       rc = _build( e, builder ) ;
@@ -220,9 +219,8 @@ namespace engine
    }
 
    ///PD_TRACE_DECLARE_FUNCTION ( SDB__MTHSCOLUMN__BUILDFROMCHILDREN, "_mthSColumn::_buildFromChildren" )
-   template <typename T>
    INT32 _mthSColumn::_buildFromChildren( const bson::BSONElement &e,
-                                          T &builder )
+                                          bson::BSONObjBuilder &builder )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__MTHSCOLUMN__BUILDFROMCHILDREN ) ;
@@ -230,7 +228,7 @@ namespace engine
       if ( Object == e.type() )
       {
          BSONObjBuilder sub( builder.subobjStart( e.fieldName() ) ) ;
-         rc = _buildFromChildren( e.embeddedObject(), sub ) ;
+         rc = _buildObjFromChildren( e.embeddedObject(), sub ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "failed to build column from children:%d", rc ) ;
@@ -255,14 +253,14 @@ namespace engine
 
          sub.doneFast() ;
       }
-      else if ( !MTH_ATTR_IS_INCLUDE( _attribute ) && !e.eoo() )
+      else if ( !e.eoo() && !_attribute.isInclude() )
       {
          builder.append( e ) ;
       }
-      else if ( MTH_ATTR_IS_DEFAULT( _attribute ) && e.eoo() )
+      else if ( e.eoo() && _attribute.isDefault() )
       {
          BSONObjBuilder sub( builder.subobjStart( _name ) ) ;
-         rc = _buildFromChildren( BSONObj(), sub ) ;
+         rc = _buildObjFromChildren( BSONObj(), sub ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "failed to build column from children:%d", rc ) ;
@@ -283,11 +281,72 @@ namespace engine
    }
 
    ///PD_TRACE_DECLARE_FUNCTION ( SDB__MTHSCOLUMN__BUILDFROMCHILDREN2, "_mthSColumn::_buildFromChildren" )
-   INT32 _mthSColumn::_buildFromChildren( const bson::BSONObj &obj,
-                                          bson::BSONObjBuilder &builder )
+   INT32 _mthSColumn::_buildFromChildren( const bson::BSONElement &e,
+                                          bson::BSONArrayBuilder &builder )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__MTHSCOLUMN__BUILDFROMCHILDREN2 ) ;
+      if ( Object == e.type() )
+      {
+         BSONObjBuilder sub( builder.subobjStart() ) ;
+         rc = _buildObjFromChildren( e.embeddedObject(), sub ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to build column from children:%d", rc ) ;
+            goto error ;
+         }
+
+         sub.doneFast() ;
+      }
+      else if ( Array == e.type() )
+      {
+         BSONArrayBuilder sub( builder.subarrayStart() ) ;
+         BSONObjIterator i( e.embeddedObject() ) ;
+         while ( i.more() )
+         {
+            rc = _buildFromChildren( i.next(), sub ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "failed to build column from children:%d", rc ) ;
+               goto error ;
+            }
+         }
+
+         sub.doneFast() ;
+      }
+      else if ( !e.eoo() && !_attribute.isInclude() )
+      {
+         builder.append( e ) ;
+      }
+      else if ( e.eoo() && _attribute.isDefault() )
+      {
+         BSONObjBuilder sub( builder.subobjStart() ) ;
+         rc = _buildObjFromChildren( BSONObj(), sub ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to build column from children:%d", rc ) ;
+            goto error ;
+         }
+
+         sub.doneFast() ;
+      }
+      else
+      {
+         /// do nothing.
+      }
+   done:
+      PD_TRACE_EXITRC( SDB__MTHSCOLUMN__BUILDFROMCHILDREN2, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   ///PD_TRACE_DECLARE_FUNCTION ( SDB__MTHSCOLUMN__BUILDOBJFROMCHILDREN, "_mthSColumn::_buildObjFromChildren" )
+   INT32 _mthSColumn::_buildObjFromChildren( const bson::BSONObj &obj,
+                                             bson::BSONObjBuilder &builder )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__MTHSCOLUMN__BUILDOBJFROMCHILDREN ) ;
       UINT32 found = 0 ;
       MTH_S_COLUMNS array ;
       UINT32 number = 0 ;
@@ -319,7 +378,7 @@ namespace engine
             ++found ;
             array[number] = NULL ;
          }
-         else if ( !MTH_ATTR_IS_INCLUDE( _attribute ) )
+         else if ( !_attribute.isInclude() )
          {
             builder.append( e ) ;
          }
@@ -336,7 +395,7 @@ namespace engine
          }
       }
    done:
-      PD_TRACE_EXITRC( SDB__MTHSCOLUMN__BUILDFROMCHILDREN2, rc ) ;
+      PD_TRACE_EXITRC( SDB__MTHSCOLUMN__BUILDOBJFROMCHILDREN, rc ) ;
       return rc ;
    error:
       goto done ;
@@ -443,9 +502,20 @@ namespace engine
                   MTH_S_ATTR_EXCLUDE == attribute ||
                   MTH_S_ATTR_DEFAULT == attribute ||
                   MTH_S_ATTR_PROJECTION == attribute, "can not be any others" ) ;
-      if ( !MTH_ATTR_IS_VALID( _attribute ) )
+      if ( _attribute.contains( attribute ) )
       {
-         _attribute = attribute ;
+         /// do nothing.
+         /// no need to reset father's attribute.
+      }
+      else
+      {
+         rc = _attribute.set( attribute ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to set column's attribute:%d", rc ) ;
+            goto error ;
+         }
+
          if ( NULL != _father )
          {
             rc = _father->_setAttribute( attribute ) ;
@@ -454,19 +524,7 @@ namespace engine
                PD_LOG( PDERROR, "failed to set father's attribute:%d", rc ) ;
                goto error ;
             }
-         }
-      }
-      else if ( attribute != _attribute )
-      {
-         PD_LOG( PDERROR, "can not have a mix of multi attribute"
-                 "(like inclusion and exclusion)" ) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
-      else
-      {
-         /// do nothing.
-         /// no need to reset father's attribute.
+         }         
       }
    done:
       PD_TRACE_EXITRC( SDB__MTHSCOLUMN__SETATTRIBUTE, rc ) ;

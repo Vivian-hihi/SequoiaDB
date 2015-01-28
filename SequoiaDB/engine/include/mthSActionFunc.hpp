@@ -81,6 +81,26 @@ namespace engine
                       _mthSAction *,
                       bson::BSONElement & ) ;
 
+   INT32 mthElemMatchBuild( const CHAR *,
+                            const bson::BSONElement &,
+                            _mthSAction *,
+                            bson::BSONObjBuilder & ) ;
+
+   INT32 mthElemMatchGet( const CHAR *,
+                          const bson::BSONElement &,
+                          _mthSAction *,
+                          bson::BSONElement & ) ;
+
+   INT32 mthElemMatchOneBuild( const CHAR *,
+                               const bson::BSONElement &,
+                               _mthSAction *,
+                               bson::BSONObjBuilder & ) ;
+
+   INT32 mthElemMatchOneGet( const CHAR *,
+                             const bson::BSONElement &,
+                             _mthSAction *,
+                             bson::BSONElement & ) ;
+
 }
 
 #endif

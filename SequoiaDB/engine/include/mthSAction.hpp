@@ -39,6 +39,7 @@
 #include "mthDef.hpp"
 #include "mthSActionFunc.hpp"
 #include "ossUtil.hpp"
+#include "mthMatcher.hpp"
 
 namespace engine
 {
@@ -129,6 +130,11 @@ namespace engine
       {
          return !MTH_ATTR_IS_VALID( _attribute ) ;
       }
+
+      OSS_INLINE _mthMatcher &getMatcher()
+      {
+         return _matcher ;
+      }
    public:
       INT32 build( const CHAR *name,
                    const bson::BSONElement &e,
@@ -150,6 +156,7 @@ namespace engine
       /// think about placement new ?
       /// that we can use different child classes.
       bson::BSONObj _obj ;
+      _mthMatcher _matcher ;
       INT32 _begin ;
       INT32 _limit ;
       

@@ -94,7 +94,7 @@ namespace engine
             ++arraySize ;
             if ( !ele.isNumber() )
             {
-               PD_LOG( PDERROR, "parameter of $slice must be number" ) ;
+               PD_LOG( PDERROR, "argument of $slice must be number" ) ;
                rc = SDB_INVALIDARG ;
                goto error ;
             }

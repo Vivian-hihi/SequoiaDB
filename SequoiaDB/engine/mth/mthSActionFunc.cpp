@@ -37,6 +37,7 @@
 #include "mthTrace.hpp"
 #include "mthSAction.hpp"
 #include "mthSliceIterator.hpp"
+#include "mthElemMatchIterator.hpp"
 
 using namespace bson ;
 
@@ -185,7 +186,7 @@ namespace engine
          action->getSlicePair( begin, limit ) ;
          _mthSliceIterator i( in.embeddedObject(),
                               begin, limit ) ;
-         BSONObjBuilder sliceBuilder( subBuilder.subarrayStart( fieldName ) ) ;
+         BSONArrayBuilder sliceBuilder( subBuilder.subarrayStart( fieldName ) ) ;
          while ( i.more() )
          {
             sliceBuilder.append( i.next() ) ;
@@ -196,6 +197,126 @@ namespace engine
       }
    done:
       PD_TRACE_EXITRC( SDB__MTHSLICEGET, rc ) ;
+      return rc ;
+   }
+
+   ///PD_TRACE_DECLARE_FUNCTION ( SDB__MTHELEMMATCHBUILDN, "mthElemMatchBuildN" )
+   static INT32 mthElemMatchBuildN( const CHAR *fieldName,
+                                    const bson::BSONElement &e,
+                                    _mthSAction *action,
+                                    bson::BSONObjBuilder &builder,
+                                    INT32 n )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__MTHELEMMATCHBUILDN ) ;
+      if ( Array == e.type() )
+      {
+         BSONArrayBuilder arrayBuilder( builder.subarrayStart( fieldName ) ) ;
+         _mthElemMatchIterator i( e.embeddedObject(),
+                                  &( action->getMatcher() ),
+                                  n ) ;
+         do
+         {
+            BSONElement next ;
+            rc = i.next( next ) ;
+            if ( SDB_OK == rc )
+            {
+               arrayBuilder.append( next ) ;    
+            }
+            else if ( SDB_DMS_EOC == rc )
+            {
+               arrayBuilder.doneFast() ;
+               rc = SDB_OK ;
+               break ;
+            }
+            else
+            {
+               PD_LOG( PDERROR, "failed to get next element:%d", rc ) ;
+               goto error ;
+            }
+         } while ( TRUE ) ;
+      }
+   done:
+      PD_TRACE_EXITRC( SDB__MTHELEMMATCHBUILDN, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   ///PD_TRACE_DECLARE_FUNCTION ( SDB__MTHELEMMATCHGETN, "mthElemMatchGetN" )
+   static INT32 mthElemMatchGetN( const CHAR *fieldName,
+                                  const bson::BSONElement &in,
+                                  _mthSAction *action,
+                                  bson::BSONElement &out,
+                                  INT32 n )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__MTHELEMMATCHGETN ) ;
+      if ( Array == in.type() )
+      {
+         BSONObjBuilder objBuilder ;
+         BSONArrayBuilder arrayBuilder( objBuilder.subarrayStart( fieldName ) ) ;
+         _mthElemMatchIterator i( in.embeddedObject(),
+                                  &( action->getMatcher() ),
+                                  n ) ;
+         do
+         {
+            BSONElement next ;
+            rc = i.next( next ) ;
+            if ( SDB_OK == rc )
+            {
+               arrayBuilder.append( next ) ;
+            }
+            else if ( SDB_DMS_EOC == rc )
+            {
+               arrayBuilder.doneFast() ;
+               rc = SDB_OK ;
+               break ;
+            }
+            else
+            {
+               PD_LOG( PDERROR, "failed to get next element:%d", rc ) ;
+               goto error ;
+            }
+         } while ( TRUE ) ;
+
+         action->setObj( objBuilder.obj() ) ;
+         out = action->getObj().getField( fieldName ) ;
+      }
+      else
+      {
+         out = BSONElement() ;
+      }
+   done:
+      PD_TRACE_EXITRC( SDB__MTHELEMMATCHGETN, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   ///PD_TRACE_DECLARE_FUNCTION ( SDB__MTHELEMMATCHBUILD, "mthElemMatchBuild" )
+   INT32 mthElemMatchBuild( const CHAR *fieldName,
+                            const bson::BSONElement &e,
+                            _mthSAction *action,
+                            bson::BSONObjBuilder &builder )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__MTHELEMMATCHBUILD ) ;
+      rc = mthElemMatchBuildN( fieldName, e, action, builder, -1 ) ;
+      PD_TRACE_EXITRC( SDB__MTHELEMMATCHBUILD, rc ) ;
+      return rc ;
+   }
+
+   ///PD_TRACE_DECLARE_FUNCTION ( SDB__MTHELEMMATCHGET, "mthElemMatchGet" )
+   INT32 mthElemMatchGet( const CHAR *fieldName,
+                          const bson::BSONElement &in,
+                          _mthSAction *action,
+                          bson::BSONElement &out )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__MTHELEMMATCHGET ) ;
+      rc = mthElemMatchGetN( fieldName, in, action, out, -1 ) ;
+      PD_TRACE_EXITRC( SDB__MTHELEMMATCHGET, rc ) ;
       return rc ;
    }
 }

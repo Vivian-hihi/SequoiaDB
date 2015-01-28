@@ -255,7 +255,9 @@ mthFiles = [
       "mth/mthSActionFunc.cpp",
       "mth/parsers/mthDefaultParser.cpp",
       "mth/parsers/mthSliceParser.cpp",
-      "mth/mthSliceIterator.cpp"
+      "mth/mthSliceIterator.cpp",
+      "mth/mthElemMatchIterator.cpp",
+      "mth/parsers/mthElemMatchParser.cpp"
       ]
 
 optFiles = [
