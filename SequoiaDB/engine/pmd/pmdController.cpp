@@ -213,16 +213,16 @@ namespace engine
 
       //////////////////////////////////////////////////////////////////////////
       // listener for access protocol
-      rc = pEDUMgr->startEDU( EDU_TYPE_PROTOCOLLISTENER, (void*)_pMongoListener,
-                              &eduID ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to start mongo listerner, rc: %d",
-                   rc ) ;
-      pEDUMgr->regSystemEDU( EDU_TYPE_PROTOCOLLISTENER, eduID ) ;
-
-      // wait until protocol listener starts
-      rc = pEDUMgr->waitUntil ( eduID, PMD_EDU_RUNNING ) ;
-      PD_RC_CHECK( rc, PDERROR, "Wait mongo Listener active failed, rc: %d",
-                   rc ) ;
+//       rc = pEDUMgr->startEDU( EDU_TYPE_PROTOCOLLISTENER, (void*)_pMongoListener,
+//                               &eduID ) ;
+//       PD_RC_CHECK( rc, PDERROR, "Failed to start mongo listerner, rc: %d",
+//                    rc ) ;
+//       pEDUMgr->regSystemEDU( EDU_TYPE_PROTOCOLLISTENER, eduID ) ;
+// 
+//       // wait until protocol listener starts
+//       rc = pEDUMgr->waitUntil ( eduID, PMD_EDU_RUNNING ) ;
+//       PD_RC_CHECK( rc, PDERROR, "Wait mongo Listener active failed, rc: %d",
+//                    rc ) ;
       //////////////////////////////////////////////////////////////////////////
       
       // For non-coord nodes, we need to start page cleaners
