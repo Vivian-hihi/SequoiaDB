@@ -59,14 +59,14 @@ public:
    virtual INT32 fini()   { return SDB_OK ; }
 
    INT32 getFunction( const CHAR *funcName, OSS_MODULE_PFUNCTION *function ) ;
-   INT32 create ( IPmdAccessProtocol *protocol ) ;
+   INT32 create ( IPmdAccessProtocol *&protocol ) ;
    INT32 release( IPmdAccessProtocol *protocol ) ;
 
    INT32 load( const CHAR *mudule, const CHAR *path, UINT32 mode = 0 ) ;
    void  unload() ;
 
 protected:
-   OSS_MODULE_PFUNCTION *_function ;
+   OSS_MODULE_PFUNCTION  _function ;
    ossModuleHandle      *_loadModule ;
 };
 

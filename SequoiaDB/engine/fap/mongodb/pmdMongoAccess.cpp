@@ -82,7 +82,7 @@ INT32 _pmdMongoAccess::fini()
 
 const CHAR * _pmdMongoAccess::getServiceName() const
 {
-   SDB_ASSERT( '\0' == _serviceName[0], "service name should not be empty" ) ;
+   SDB_ASSERT( '\0' != _serviceName[0], "service name should not be empty" ) ;
    return _serviceName ;
 }
 

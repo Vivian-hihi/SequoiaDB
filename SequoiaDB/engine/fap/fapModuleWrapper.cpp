@@ -39,7 +39,7 @@
 
 namespace engine {
 
-_fapModuleWrapper::_fapModuleWrapper():_function( NULL ),_loadModule( NULL )
+_fapModuleWrapper::_fapModuleWrapper() : _loadModule( NULL )
 {
 
 }
@@ -88,8 +88,6 @@ void _fapModuleWrapper::unload()
       SDB_OSS_DEL _loadModule ;
       _loadModule = NULL ;
    }
-
-   _function = NULL ;
 }
 
 INT32 _fapModuleWrapper::getFunction( const CHAR *funcName, OSS_MODULE_PFUNCTION *func )
@@ -112,12 +110,12 @@ error:
    goto done ;
 }
 
-INT32 _fapModuleWrapper::create( IPmdAccessProtocol *protocol )
+INT32 _fapModuleWrapper::create( IPmdAccessProtocol *&protocol )
 {
    INT32 rc = SDB_OK ;
    SDB_ASSERT( NULL != _loadModule, "Module handle cann't be NULL" ) ;
 
-   rc = _loadModule->resolveAddress( "createAccessProtocol", _function ) ;
+   rc = _loadModule->resolveAddress( "createAccessProtocol", &_function ) ;
    if ( SDB_OK != rc )
    {
       PD_LOG( PDERROR, "Failed to get export function: " ) ;
@@ -143,7 +141,7 @@ INT32 _fapModuleWrapper::release( IPmdAccessProtocol *protocol )
    INT32 rc = SDB_OK ;
    SDB_ASSERT( NULL != _loadModule, "Module handle cann't be NULL" ) ;
 
-   rc = _loadModule->resolveAddress( "releaseAccessProtocol", _function ) ;
+   rc = _loadModule->resolveAddress( "releaseAccessProtocol", &_function ) ;
    if ( SDB_OK != rc )
    {
       PD_LOG( PDERROR, "Failed to get export function: " ) ;
