@@ -80,8 +80,8 @@ public:
    }
 
    // virtual function for baseConverter
-   virtual CONVERT_ERROR convert( fixedStream &out ) ;
-   virtual CONVERT_ERROR reConvert( fixedStream *in, fixedStream &out ) ;
+   virtual INT32 convert( fixedStream &out ) ;
+   virtual INT32 reConvert( fixedStream *in, fixedStream &out ) ;
 
 private:
    BOOLEAN _bigEndian ;

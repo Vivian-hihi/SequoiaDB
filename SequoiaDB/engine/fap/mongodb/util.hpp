@@ -41,26 +41,6 @@
 #include "msgBuffer.hpp"
 #include "../../bson/bson.h"
 
-enum CONVERT_ERROR
-{
-   CON_OK = 0,                ///< convert successfully
-   CON_NONE_ORIGINAL,         ///< original data is empty
-   CON_INVALIDARG,            ///< lack of data
-   CON_COMMAND_UNSUPPORTED,   ///< command unsupported right now
-   CON_OTHER_ERROR,           ///< unknown error
-} ;
-
-class _IConverter
-{
-public:
-   virtual ~_IConverter() {}
-
-   virtual CONVERT_ERROR convert( fixedStream &out ) = 0 ;
-
-   virtual CONVERT_ERROR reConvert( fixedStream &in, fixedStream &out ) = 0 ;
-};
-
-typedef _IConverter IConverter ;
 // interface for all kinds of converters
 class _baseConverter/*, public IConverter*/
 {
@@ -87,14 +67,14 @@ public:
       _msglen  = len ;
    }
 
-   virtual CONVERT_ERROR convert( fixedStream &out )
+   virtual INT32 convert( fixedStream &out )
    {
-      return CON_OK ;
+      return SDB_OK ;
    }
 
-   virtual CONVERT_ERROR reConvert( fixedStream *in, fixedStream &out )
+   virtual INT32 reConvert( fixedStream *in, fixedStream &out )
    {
-      return CON_OK ;
+      return SDB_OK ;
    }
 
 protected:

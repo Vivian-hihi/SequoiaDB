@@ -40,10 +40,16 @@
 #include "../fapModuleWrapper.hpp"
 #include "pmdAccessProtocolBase.hpp"
 
+#ifdef WIN32
+#define MONGO_MODULE_NAME "fapmongo.dll"
+#else
 #define MONGO_MODULE_NAME "libfapmongo.so"
+#endif // WIN32
+
+
 #define MONGO_MODULE_PATH "./bin/fap/"
 
-class _fapMongoModule : public engine::fapModuleWrapper, public SDBObject
+class _fapMongoModule : public engine::fapModuleWrapper
 {
 public:
    _fapMongoModule() ;

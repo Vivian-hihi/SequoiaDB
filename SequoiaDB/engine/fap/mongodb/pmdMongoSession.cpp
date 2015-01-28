@@ -194,15 +194,15 @@ error:
 
 INT32 _pmdMongoSession::_processMsg( const CHAR *pMsg, const INT32 len )
 {
-   INT32 rc             = SDB_OK ;
-   CONVERT_ERROR con_rc = CON_OK ;
-   const CHAR *pBody    = NULL ;
-   INT32 bodyLen        = 0 ;
+   INT32 rc          = SDB_OK ;
+   INT32 con_rc      = SDB_OK ;
+   const CHAR *pBody = NULL ;
+   INT32 bodyLen     = 0 ;
 
    // convert msg first
    _converter->loadFrom( pMsg, len ) ;
    con_rc = _converter->convert( _inStream ) ;
-   if ( CON_OK != con_rc )
+   if ( SDB_OK != con_rc )
    {
       rc = SDB_INVALIDARG ;
       goto error ;

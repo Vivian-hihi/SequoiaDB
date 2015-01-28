@@ -46,13 +46,11 @@ DECLARE_COMMAND_VAR( update )
 DECLARE_COMMAND_VAR( query )
 DECLARE_COMMAND_VAR( getMore )
 DECLARE_COMMAND_VAR( killCursors )
-DECLARE_COMMAND_VAR( reply )
 
 // business
-DECLARE_COMMAND_VAR( getnonce )
-DECLARE_COMMAND_VAR( authenticate )
+//DECLARE_COMMAND_VAR( getnonce )
+//DECLARE_COMMAND_VAR( authenticate )
 DECLARE_COMMAND_VAR( create )
-DECLARE_COMMAND_VAR( dropCollection )
 DECLARE_COMMAND_VAR( drop )
 DECLARE_COMMAND_VAR( count )
 DECLARE_COMMAND_VAR( aggregate )
@@ -79,9 +77,9 @@ commandMgr* commandMgr::instance()
 
 ////////////////////////////////////////////////////////////////
 ///< insertCommand
-CONVERT_ERROR insertCommand::convertRequest( mongoParser &parser, fixedStream &sdbMsg )
+INT32 insertCommand::convertRequest( mongoParser &parser, fixedStream &sdbMsg )
 {
-   CONVERT_ERROR rc    = CON_OK ;
+   INT32 rc            = SDB_OK ;
    MsgHeader *header   = NULL ;
    MsgOpInsert *insert = NULL ;
    command *cmd        = NULL ;
@@ -92,7 +90,7 @@ CONVERT_ERROR insertCommand::convertRequest( mongoParser &parser, fixedStream &s
       cmd = commandMgr::instance()->findCommand( "createIndex" ) ;
       if ( NULL != cmd )
       {
-         rc = CON_COMMAND_UNSUPPORTED ;
+         rc = SDB_OPTION_NOT_SUPPORT ;
          goto error ;
       }
       // re-parse mongo msg
@@ -142,11 +140,11 @@ error:
 
 //////////////////////////////////////////////////////////////////////////
 ///< removeCommand
-CONVERT_ERROR removeCommand::convertRequest( mongoParser &parser, fixedStream &sdbMsg )
+INT32 removeCommand::convertRequest( mongoParser &parser, fixedStream &sdbMsg )
 {
-   CONVERT_ERROR rc     = CON_OK ;
-   MsgHeader *header    = NULL ;
-   MsgOpDelete *remove  = NULL ;
+   INT32 rc            = SDB_OK ;
+   MsgHeader *header   = NULL ;
+   MsgOpDelete *remove = NULL ;
    bson::BSONObj del ;
    bson::BSONObj hint ;
 
@@ -175,14 +173,14 @@ CONVERT_ERROR removeCommand::convertRequest( mongoParser &parser, fixedStream &s
    parser.skip( parser.dbNameLen + 1 ) ;
    if ( !parser.more() )
    {
-      rc = CON_INVALIDARG ;
+      rc = SDB_INVALIDARG ;
       goto error ;
    }
    parser.nextObj( del ) ;
 
    if ( parser.more() )
    {
-      rc = CON_INVALIDARG ;
+      rc = SDB_INVALIDARG ;
       goto error ;
    }
 
@@ -202,9 +200,9 @@ error:
 
 //////////////////////////////////////////////////////////////////////////
 ///< updateCommand
-CONVERT_ERROR updateCommand::convertRequest( mongoParser &parser, fixedStream &sdbMsg )
+INT32 updateCommand::convertRequest( mongoParser &parser, fixedStream &sdbMsg )
 {
-   CONVERT_ERROR rc    = CON_OK ;
+   INT32 rc            = SDB_OK ;
    INT32 updateFlags   = 0 ;
    MsgHeader *header   = NULL ;
    MsgOpUpdate *update = NULL ;
@@ -243,14 +241,14 @@ CONVERT_ERROR updateCommand::convertRequest( mongoParser &parser, fixedStream &s
 
    if ( !parser.more() )
    {
-      rc = CON_INVALIDARG ;
+      rc = SDB_INVALIDARG ;
       goto error ;
    }
    parser.nextObj( cond ) ;
 
    if ( !parser.more() )
    {
-      rc = CON_INVALIDARG ;
+      rc = SDB_INVALIDARG ;
       goto error ;
    }
    parser.nextObj( updater ) ;
@@ -272,9 +270,9 @@ error:
 
 //////////////////////////////////////////////////////////////////////////
 ///< queryCommand
-CONVERT_ERROR queryCommand::convertRequest( mongoParser &parser, fixedStream &sdbMsg )
+INT32 queryCommand::convertRequest( mongoParser &parser, fixedStream &sdbMsg )
 {
-   CONVERT_ERROR rc   = CON_OK ;
+   INT32 rc           = SDB_OK ;
    INT32 nToSkip      = 0 ;
    INT32 nToReturn    = 0 ;
    MsgHeader *header  = NULL ;
@@ -371,7 +369,7 @@ CONVERT_ERROR queryCommand::convertRequest( mongoParser &parser, fixedStream &sd
       cmd = commandMgr::instance()->findCommand( cmdStr ) ;
       if ( NULL == cmd )
       {
-         rc = CON_COMMAND_UNSUPPORTED ;
+         rc = SDB_OPTION_NOT_SUPPORT ;
          goto error ;
       }
       // re-parse mongo msg
@@ -408,9 +406,9 @@ error:
 
 //////////////////////////////////////////////////////////////////////////
 ///< getMoreCommand
-CONVERT_ERROR getMoreCommand::convertRequest( mongoParser &parser, fixedStream &sdbMsg )
+INT32 getMoreCommand::convertRequest( mongoParser &parser, fixedStream &sdbMsg )
 {
-   CONVERT_ERROR rc   = CON_OK ;
+   INT32 rc           = SDB_OK ;
    INT32 nToSkip      = 0 ;
    INT32 nToReturn    = 0 ;
    INT64 cursorid     = 0 ;
@@ -445,13 +443,13 @@ error:
 
 //////////////////////////////////////////////////////////////////////////
 ///< killCursorsCommand
-CONVERT_ERROR killCursorsCommand::convertRequest( mongoParser &parser, fixedStream &sdbMsg )
+INT32 killCursorsCommand::convertRequest( mongoParser &parser, fixedStream &sdbMsg )
 {
-   CONVERT_ERROR rc        = CON_OK ;
-   INT32 nContext          = 0 ;
-   INT32 nToReturn         = 0 ;
-   SINT64 cursorid         = 0 ;
-   MsgHeader *header       = NULL ;
+   INT32 rc          = SDB_OK ;
+   INT32 nContext    = 0 ;
+   INT32 nToReturn   = 0 ;
+   SINT64 cursorid   = 0 ;
+   MsgHeader *header = NULL ;
    MsgOpKillContexts *kill = NULL ;
 
    sdbMsg.reverse( sizeof ( MsgOpKillContexts ) ) ;
@@ -483,6 +481,7 @@ done:
 error:
    goto done ;
 }
+
 
 /*
 //////////////////////////////////////////////////////////////////////////
@@ -653,13 +652,13 @@ CONVERT_ERROR authenticateCommand::convertResponse( fixedStream &sdbResult, fixe
 */
 //////////////////////////////////////////////////////////////////////////
 ///< createCommand
-CONVERT_ERROR createCommand::convertRequest( mongoParser &parser, fixedStream &sdbMsg )
+INT32 createCommand::convertRequest( mongoParser &parser, fixedStream &sdbMsg )
 {
-   CONVERT_ERROR rc   = CON_OK ;
-   INT32 nToSkip      = 0 ;
-   INT32 nToReturn    = 0 ;
-   MsgHeader *header  = NULL ;
-   MsgOpQuery *query  = NULL ;
+   INT32 rc          = SDB_OK ;
+   INT32 nToSkip     = 0 ;
+   INT32 nToReturn   = 0 ;
+   MsgHeader *header = NULL ;
+   MsgOpQuery *query = NULL ;
    bson::BSONObj cond ;
    bson::BSONObjBuilder obj ;
    bson::BSONElement e ;
@@ -719,13 +718,13 @@ error:
 
 //////////////////////////////////////////////////////////////////////////
 ///< dropCommand
-CONVERT_ERROR dropCommand::convertRequest( mongoParser &parser, fixedStream &sdbMsg )
+INT32 dropCommand::convertRequest( mongoParser &parser, fixedStream &sdbMsg )
 {
-   CONVERT_ERROR rc   = CON_OK ;
-   INT32 nToSkip      = 0 ;
-   INT32 nToReturn    = 0 ;
-   MsgHeader *header  = NULL ;
-   MsgOpQuery *query  = NULL ;
+   INT32 rc          = SDB_OK ;
+   INT32 nToSkip     = 0 ;
+   INT32 nToReturn   = 0 ;
+   MsgHeader *header = NULL ;
+   MsgOpQuery *query = NULL ;
    bson::BSONObj cond ;
    bson::BSONObjBuilder obj ;
    bson::BSONElement e ;
@@ -782,15 +781,16 @@ error:
    goto done ;
 }
 
+
 //////////////////////////////////////////////////////////////////////////
 ///< countCommand
-CONVERT_ERROR countCommand::convertRequest( mongoParser &parser, fixedStream &sdbMsg )
+INT32 countCommand::convertRequest( mongoParser &parser, fixedStream &sdbMsg )
 {
-   CONVERT_ERROR rc   = CON_OK ;
-   INT32 nToSkip      = 0 ;
-   INT32 nToReturn    = 0 ;
-   MsgHeader *header  = NULL ;
-   MsgOpQuery *query  = NULL ;
+   INT32 rc          = SDB_OK ;
+   INT32 nToSkip     = 0 ;
+   INT32 nToReturn   = 0 ;
+   MsgHeader *header = NULL ;
+   MsgOpQuery *query = NULL ;
    bson::BSONObj cond ;
    bson::BSONObj queryObj ;
    bson::BSONObj orderby ;
@@ -864,12 +864,12 @@ error:
 
 //////////////////////////////////////////////////////////////////////////
 ///< aggregateCommand
-CONVERT_ERROR aggregateCommand::convertRequest( mongoParser &parser, fixedStream &sdbMsg )
+INT32 aggregateCommand::convertRequest( mongoParser &parser, fixedStream &sdbMsg )
 {
-   CONVERT_ERROR rc      = CON_OK ;
-   INT32 nToSkip         = 0 ;
-   INT32 nToReturn       = 0 ;
-   MsgHeader *header     = NULL ;
+   INT32 rc             = SDB_OK ;
+   INT32 nToSkip        = 0 ;
+   INT32 nToReturn      = 0 ;
+   MsgHeader *header    = NULL ;
    MsgOpAggregate *aggr = NULL ;
    bson::BSONObj cond ;
    bson::BSONElement e ;
@@ -929,9 +929,9 @@ error:
 
 //////////////////////////////////////////////////////////////////////////
 ///< createIndexCommand
-CONVERT_ERROR createIndexCommand::convertRequest( mongoParser &parser, fixedStream &sdbMsg )
+INT32 createIndexCommand::convertRequest( mongoParser &parser, fixedStream &sdbMsg )
 {
-   CONVERT_ERROR rc   = CON_OK ;
+   INT32 rc           = SDB_OK ;
    INT32 nToSkip      = 0 ;
    INT32 nToReturn    = 0 ;
    MsgHeader *header  = NULL ;
@@ -988,9 +988,9 @@ error:
 
 //////////////////////////////////////////////////////////////////////////
 ///< dropIndexesCommand
-CONVERT_ERROR dropIndexesCommand::convertRequest( mongoParser &parser, fixedStream &sdbMsg )
+INT32 dropIndexesCommand::convertRequest( mongoParser &parser, fixedStream &sdbMsg )
 {
-   CONVERT_ERROR rc      = CON_OK ;
+   INT32 rc              = SDB_OK ;
    INT32 nToSkip         = 0 ;
    INT32 nToReturn       = 0 ;
    const CHAR *ptr       = NULL ;
@@ -1021,7 +1021,7 @@ CONVERT_ERROR dropIndexesCommand::convertRequest( mongoParser &parser, fixedStre
    ptr = ossStrstr( parser.dbName, "." ) ;
    if ( NULL == ptr )
    {
-      rc = CON_OTHER_ERROR ;
+      rc = SDB_INVALIDARG ;
       return rc ;
    }
 
@@ -1063,9 +1063,9 @@ error:
 
 //////////////////////////////////////////////////////////////////////////
 ///< getIndexesCommand
-CONVERT_ERROR getIndexesCommand::convertRequest( mongoParser &parser, fixedStream &sdbMsg )
+INT32 getIndexesCommand::convertRequest( mongoParser &parser, fixedStream &sdbMsg )
 {
-   CONVERT_ERROR rc      = CON_OK ;
+   INT32 rc              = SDB_OK ;
    INT32 nToSkip         = 0 ;
    INT32 nToReturn       = 0 ;
    MsgHeader *header     = NULL ;
@@ -1120,9 +1120,9 @@ error:
 
 //////////////////////////////////////////////////////////////////////////
 ///< getLastErrorCommand
-CONVERT_ERROR getLastErrorCommand::convertRequest( mongoParser &parser, fixedStream &sdbMsg )
+INT32 getLastErrorCommand::convertRequest( mongoParser &parser, fixedStream &sdbMsg )
 {
-   CONVERT_ERROR rc      = CON_OK ;
+   INT32 rc = SDB_OK ;
 
 done:
    return rc ;

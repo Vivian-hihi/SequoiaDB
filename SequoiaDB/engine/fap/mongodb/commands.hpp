@@ -52,9 +52,9 @@ public:
       return _cmdName ;
    }
 
-   virtual CONVERT_ERROR convertRequest( mongoParser &parser, fixedStream &sdbMsg )
+   virtual INT32 convertRequest( mongoParser &parser, fixedStream &sdbMsg )
    {
-      return CON_OK ;
+      return SDB_OK ;
    }
 
 protected:
@@ -114,7 +114,7 @@ class cmdClass : public command                                   \
 {                                                                 \
 public:                                                           \
    cmdClass() : command( cmd ) {}                                 \
-   virtual CONVERT_ERROR convertRequest( mongoParser &parser,     \
+   virtual INT32 convertRequest( mongoParser &parser,     \
                                          fixedStream &sdbMsg ) ;  \
 } ;
 
@@ -138,14 +138,12 @@ DECLARE_COMMAND( update )
 DECLARE_COMMAND( query )
 DECLARE_COMMAND( getMore )
 DECLARE_COMMAND( killCursors )
-DECLARE_COMMAND( reply )
 
 // business
-DECLARE_COMMAND( getnonce )
-DECLARE_COMMAND( authenticate )
-DECLARE_COMMAND( create )
-DECLARE_COMMAND( dropCollection )
-DECLARE_COMMAND( drop )
+//DECLARE_COMMAND( getnonce )
+//DECLARE_COMMAND( authenticate )
+DECLARE_COMMAND( create )  // create collection
+DECLARE_COMMAND( drop )    // drop   collection
 DECLARE_COMMAND( count )
 DECLARE_COMMAND( aggregate )
 

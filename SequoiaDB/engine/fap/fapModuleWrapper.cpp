@@ -65,7 +65,7 @@ INT32 _fapModuleWrapper::load( const CHAR *module, const CHAR *path, UINT32 mode
       goto error ;
    }
 
-   rc = init() ;
+   rc = _loadModule->init() ;
    if ( SDB_OK != rc )
    {
       PD_LOG( PDERROR, "Init module failed" ) ;

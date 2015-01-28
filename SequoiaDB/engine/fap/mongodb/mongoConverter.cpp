@@ -38,9 +38,9 @@
 #include "mongodef.hpp"
 #include "commands.hpp"
 
-CONVERT_ERROR mongoConverter::convert( fixedStream &out )
+INT32 mongoConverter::convert( fixedStream &out )
 {
-   CONVERT_ERROR rc = CON_OK ;
+   INT32 rc = SDB_OK ;
    parser.init( _msgdata, _msglen ) ;
 
    // convert mongodb msg to sequoiadb msg
@@ -77,7 +77,7 @@ CONVERT_ERROR mongoConverter::convert( fixedStream &out )
    }
 
    rc = _cmd->convertRequest( parser, out ) ;
-   if ( CON_OK != rc )
+   if ( SDB_OK != rc )
    {
       goto error ;
    }
@@ -88,9 +88,9 @@ error:
    goto done ;
 }
 
-CONVERT_ERROR mongoConverter::reConvert( fixedStream *in, fixedStream &out )
+INT32 mongoConverter::reConvert( fixedStream *in, fixedStream &out )
 {
-   CONVERT_ERROR rc = CON_OK ;
+   INT32 rc = SDB_OK ;
 
 done:
    return rc ;
