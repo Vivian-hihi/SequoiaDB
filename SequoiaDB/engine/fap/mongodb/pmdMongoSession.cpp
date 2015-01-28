@@ -201,14 +201,14 @@ INT32 _pmdMongoSession::_processMsg( const CHAR *pMsg, const INT32 len )
 
    // convert msg first
    _converter->loadFrom( pMsg, len ) ;
-   con_rc = _converter->convert( _inStream ) ;
+   con_rc = _converter->convert( _inBuffer ) ;
    if ( SDB_OK != con_rc )
    {
       rc = SDB_INVALIDARG ;
       goto error ;
    }
 
-   rc = _onMsgBegin( (MsgHeader *) _inStream.data() ) ;
+   rc = _onMsgBegin( (MsgHeader *) _inBuffer.data() ) ;
    if ( SDB_OK != rc )
    {
       goto error ;
@@ -228,7 +228,7 @@ INT32 _pmdMongoSession::_processMsg( const CHAR *pMsg, const INT32 len )
    }
    else
    {
-      rc = _processor->processMsg( (MsgHeader *) _inStream.data(),
+      rc = _processor->processMsg( (MsgHeader *) _inBuffer.data(),
                                     _pDPSCB, _contextBuff, 
                                     _replyHeader.contextID, _needReply ) ;
       pBody     = _contextBuff.data() ;
@@ -265,7 +265,7 @@ INT32 _pmdMongoSession::_processMsg( const CHAR *pMsg, const INT32 len )
       }
    }
 
-   rc = _onMsgEnd( rc, (MsgHeader *) _inStream.data() ) ;
+   rc = _onMsgEnd( rc, (MsgHeader *) _inBuffer.data() ) ;
    if ( SDB_OK != rc )
    {
       goto error ;
@@ -380,7 +380,7 @@ INT32 _pmdMongoSession::_reply( MsgOpReply *replyHeader,
       bob.append( "code",  rc ) ;
       bob.append( "errmsg", bsonBody.getStringField( OP_ERRDESP_FIELD) ) ;
 
-      _outStream.write( bob.obj().objdata(), bob.obj().objsize() ) ;
+      _outBuffer.write( bob.obj().objdata(), bob.obj().objsize() ) ;
    }
 
    msgLen = sizeof( mongoMsgReply ) + bob.obj().objsize() ;
@@ -396,7 +396,7 @@ INT32 _pmdMongoSession::_reply( MsgOpReply *replyHeader,
 
    if ( pBody )
    {
-      rc = sendData(  _outStream.data(), _outStream.size() ) ;
+      rc = sendData(  _outBuffer.data(), _outBuffer.size() ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Session[%s] failed to send response body, rc: %d",
@@ -428,13 +428,13 @@ void _pmdMongoSession::_onDetach()
 
 void _pmdMongoSession::_zeroStream()
 {
-   if ( !_inStream.empty() )
+   if ( !_inBuffer.empty() )
    {
-      _inStream.zero() ;
+      _inBuffer.zero() ;
    }
 
-   if ( !_outStream.empty() )
+   if ( !_outBuffer.empty() )
    {
-      _outStream.zero() ;
+      _outBuffer.zero() ;
    }
 }

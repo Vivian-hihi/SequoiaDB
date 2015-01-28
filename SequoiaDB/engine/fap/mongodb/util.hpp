@@ -67,12 +67,12 @@ public:
       _msglen  = len ;
    }
 
-   virtual INT32 convert( fixedStream &out )
+   virtual INT32 convert( msgBuffer &out )
    {
       return SDB_OK ;
    }
 
-   virtual INT32 reConvert( fixedStream *in, fixedStream &out )
+   virtual INT32 reConvert( msgBuffer *in, msgBuffer &out )
    {
       return SDB_OK ;
    }

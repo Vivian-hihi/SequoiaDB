@@ -139,18 +139,18 @@ error:
    goto done ;
 }
 
-int main( int argc, char** argv)
-{
-   std::string str = "abcdef" ;
-   fixedStream buffer ;
-   for ( int i = 0; i < 10; ++i)
-   {
-      str += "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee" ;
-      buffer.write( str.c_str(), str.length() ) ;
-   }
-
-   std::cout << buffer.data() << std::endl ;
-
-   return 0 ;
-}
+// int main( int argc, char** argv)
+// {
+//    std::string str = "abcdef" ;
+//    msgBuffer buffer ;
+//    for ( int i = 0; i < 10; ++i)
+//    {
+//       str += "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee" ;
+//       buffer.write( str.c_str(), str.length() ) ;
+//    }
+// 
+//    std::cout << buffer.data() << std::endl ;
+// 
+//    return 0 ;
+// }
 

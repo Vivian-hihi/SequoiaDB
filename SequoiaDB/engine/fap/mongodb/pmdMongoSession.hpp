@@ -79,8 +79,8 @@ private:
    engine::rtnContextBuf   _contextBuff ;
    BSONObj                 _errorInfo ;
 
-   fixedStream             _inStream ;
-   fixedStream             _outStream ;
+   msgBuffer               _inBuffer ;
+   msgBuffer               _outBuffer ;
 } ;
 
 typedef _pmdMongoSession pmdMongoSession ;

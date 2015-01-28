@@ -77,7 +77,7 @@ commandMgr* commandMgr::instance()
 
 ////////////////////////////////////////////////////////////////
 ///< insertCommand
-INT32 insertCommand::convertRequest( mongoParser &parser, fixedStream &sdbMsg )
+INT32 insertCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
 {
    INT32 rc            = SDB_OK ;
    MsgHeader *header   = NULL ;
@@ -140,7 +140,7 @@ error:
 
 //////////////////////////////////////////////////////////////////////////
 ///< removeCommand
-INT32 removeCommand::convertRequest( mongoParser &parser, fixedStream &sdbMsg )
+INT32 removeCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
 {
    INT32 rc            = SDB_OK ;
    MsgHeader *header   = NULL ;
@@ -200,7 +200,7 @@ error:
 
 //////////////////////////////////////////////////////////////////////////
 ///< updateCommand
-INT32 updateCommand::convertRequest( mongoParser &parser, fixedStream &sdbMsg )
+INT32 updateCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
 {
    INT32 rc            = SDB_OK ;
    INT32 updateFlags   = 0 ;
@@ -270,7 +270,7 @@ error:
 
 //////////////////////////////////////////////////////////////////////////
 ///< queryCommand
-INT32 queryCommand::convertRequest( mongoParser &parser, fixedStream &sdbMsg )
+INT32 queryCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
 {
    INT32 rc           = SDB_OK ;
    INT32 nToSkip      = 0 ;
@@ -406,7 +406,7 @@ error:
 
 //////////////////////////////////////////////////////////////////////////
 ///< getMoreCommand
-INT32 getMoreCommand::convertRequest( mongoParser &parser, fixedStream &sdbMsg )
+INT32 getMoreCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
 {
    INT32 rc           = SDB_OK ;
    INT32 nToSkip      = 0 ;
@@ -443,7 +443,7 @@ error:
 
 //////////////////////////////////////////////////////////////////////////
 ///< killCursorsCommand
-INT32 killCursorsCommand::convertRequest( mongoParser &parser, fixedStream &sdbMsg )
+INT32 killCursorsCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
 {
    INT32 rc          = SDB_OK ;
    INT32 nContext    = 0 ;
@@ -652,7 +652,7 @@ CONVERT_ERROR authenticateCommand::convertResponse( fixedStream &sdbResult, fixe
 */
 //////////////////////////////////////////////////////////////////////////
 ///< createCommand
-INT32 createCommand::convertRequest( mongoParser &parser, fixedStream &sdbMsg )
+INT32 createCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
 {
    INT32 rc          = SDB_OK ;
    INT32 nToSkip     = 0 ;
@@ -718,7 +718,7 @@ error:
 
 //////////////////////////////////////////////////////////////////////////
 ///< dropCommand
-INT32 dropCommand::convertRequest( mongoParser &parser, fixedStream &sdbMsg )
+INT32 dropCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
 {
    INT32 rc          = SDB_OK ;
    INT32 nToSkip     = 0 ;
@@ -784,7 +784,7 @@ error:
 
 //////////////////////////////////////////////////////////////////////////
 ///< countCommand
-INT32 countCommand::convertRequest( mongoParser &parser, fixedStream &sdbMsg )
+INT32 countCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
 {
    INT32 rc          = SDB_OK ;
    INT32 nToSkip     = 0 ;
@@ -864,7 +864,7 @@ error:
 
 //////////////////////////////////////////////////////////////////////////
 ///< aggregateCommand
-INT32 aggregateCommand::convertRequest( mongoParser &parser, fixedStream &sdbMsg )
+INT32 aggregateCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
 {
    INT32 rc             = SDB_OK ;
    INT32 nToSkip        = 0 ;
@@ -929,7 +929,7 @@ error:
 
 //////////////////////////////////////////////////////////////////////////
 ///< createIndexCommand
-INT32 createIndexCommand::convertRequest( mongoParser &parser, fixedStream &sdbMsg )
+INT32 createIndexCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
 {
    INT32 rc           = SDB_OK ;
    INT32 nToSkip      = 0 ;
@@ -988,7 +988,7 @@ error:
 
 //////////////////////////////////////////////////////////////////////////
 ///< dropIndexesCommand
-INT32 dropIndexesCommand::convertRequest( mongoParser &parser, fixedStream &sdbMsg )
+INT32 dropIndexesCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
 {
    INT32 rc              = SDB_OK ;
    INT32 nToSkip         = 0 ;
@@ -1063,7 +1063,7 @@ error:
 
 //////////////////////////////////////////////////////////////////////////
 ///< getIndexesCommand
-INT32 getIndexesCommand::convertRequest( mongoParser &parser, fixedStream &sdbMsg )
+INT32 getIndexesCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
 {
    INT32 rc              = SDB_OK ;
    INT32 nToSkip         = 0 ;
@@ -1120,7 +1120,7 @@ error:
 
 //////////////////////////////////////////////////////////////////////////
 ///< getLastErrorCommand
-INT32 getLastErrorCommand::convertRequest( mongoParser &parser, fixedStream &sdbMsg )
+INT32 getLastErrorCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
 {
    INT32 rc = SDB_OK ;
 

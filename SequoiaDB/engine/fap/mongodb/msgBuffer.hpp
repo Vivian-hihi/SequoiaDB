@@ -114,6 +114,6 @@ private:
    UINT32 _capacity ;
 } ;
 
-typedef _msgBuffer fixedStream ;
+typedef _msgBuffer msgBuffer ;
 
 #endif

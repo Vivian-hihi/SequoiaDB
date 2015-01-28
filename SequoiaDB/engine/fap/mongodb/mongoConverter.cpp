@@ -38,7 +38,7 @@
 #include "mongodef.hpp"
 #include "commands.hpp"
 
-INT32 mongoConverter::convert( fixedStream &out )
+INT32 mongoConverter::convert( msgBuffer &out )
 {
    INT32 rc = SDB_OK ;
    parser.init( _msgdata, _msglen ) ;
@@ -88,7 +88,7 @@ error:
    goto done ;
 }
 
-INT32 mongoConverter::reConvert( fixedStream *in, fixedStream &out )
+INT32 mongoConverter::reConvert( msgBuffer *in, msgBuffer &out )
 {
    INT32 rc = SDB_OK ;
 

@@ -52,7 +52,7 @@ public:
       return _cmdName ;
    }
 
-   virtual INT32 convertRequest( mongoParser &parser, fixedStream &sdbMsg )
+   virtual INT32 convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
    {
       return SDB_OK ;
    }
@@ -114,8 +114,8 @@ class cmdClass : public command                                   \
 {                                                                 \
 public:                                                           \
    cmdClass() : command( cmd ) {}                                 \
-   virtual INT32 convertRequest( mongoParser &parser,     \
-                                         fixedStream &sdbMsg ) ;  \
+   virtual INT32 convertRequest( mongoParser &parser,             \
+                                         msgBuffer &sdbMsg ) ;    \
 } ;
 
 #define __DECLARE_COMMAND_VAR( commandClass, var )                \
