@@ -784,5 +784,9 @@ public class BasicBSONObject implements BSONObject {
     public Set<String> keySet() {
         return _objectMap.keySet();
     }
+    
+    public Set<Entry<String, Object>> entrySet() {
+        return _objectMap.entrySet();
+    }
 
 }
