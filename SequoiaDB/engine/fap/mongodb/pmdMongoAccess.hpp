@@ -44,7 +44,7 @@
 #define ACCESS_FOR_MONGODB_CLIENT "server for mongodb client"
 #define PORT_OFFSET 7
 
-class _pmdMongoAccess : public engine::IPmdAccessProtocol, public SDBObject
+class _pmdMongoAccess : public engine::IPmdAccessProtocol
 {
 public:
    _pmdMongoAccess() {}

@@ -77,7 +77,7 @@ void mongoParser::readNumber( const UINT32 size, CHAR *out )
    const CHAR *start = _dataStart + _offset ;
    if ( _bigEndian )
    {
-      for( int i = 0; i < size; ++i )
+      for( UINT32 i = 0; i < size; ++i )
       {
          *(out + i) = *(start +  limit - i) ;
       }

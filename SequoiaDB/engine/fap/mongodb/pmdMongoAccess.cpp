@@ -45,7 +45,6 @@ namespace engine {
 
 INT32 _pmdMongoAccess::init( engine::IResource *pResource )
 {
-   INT32 rc        = SDB_OK ;
    UINT16 basePort = 0 ;
    if ( NULL != pResource )
    {
@@ -59,10 +58,7 @@ INT32 _pmdMongoAccess::init( engine::IResource *pResource )
       ossItoa( basePort + PORT_OFFSET, _serviceName, OSS_MAX_SERVICENAME ) ;
    }
 
-done:
-   return rc ;
-error:
-   goto done ;
+   return SDB_OK ;
 }
 
 INT32 _pmdMongoAccess::active()

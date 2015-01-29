@@ -95,7 +95,6 @@ void _pmdMongoSession::detachProcessor()
 INT32 _pmdMongoSession::run()
 {
    INT32 rc                     = SDB_OK ;
-   INT32 buffSize               = 0 ;
    UINT32 msgSize               = 0 ;
    CHAR *pBuff                  = NULL ;
    engine::pmdEDUMgr *pmdEDUMgr = NULL ;
@@ -145,7 +144,6 @@ INT32 _pmdMongoSession::run()
             rc = SDB_OOM ;
             break ;
          }
-         buffSize = getBuffLen() ;
          *(UINT32*)pBuff = msgSize ;
          // recv the rest msg
          rc = recvData( pBuff + sizeof(UINT32), msgSize - sizeof(UINT32) ) ;

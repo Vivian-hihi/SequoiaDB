@@ -42,7 +42,6 @@
 #include "rtnContextBuff.hpp"
 #include "pmdSession.hpp"
 
-class engine::_IProcessor ;
 class mongoConverter ;
 
 class _pmdMongoSession : public engine::pmdSession

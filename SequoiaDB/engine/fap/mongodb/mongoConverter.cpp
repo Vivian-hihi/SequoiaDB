@@ -90,10 +90,5 @@ error:
 
 INT32 mongoConverter::reConvert( msgBuffer *in, msgBuffer &out )
 {
-   INT32 rc = SDB_OK ;
-
-done:
-   return rc ;
-error:
-   goto done ;
+   return SDB_OK ;
 }
