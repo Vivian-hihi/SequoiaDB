@@ -55,7 +55,7 @@ _flags(dlOpenMode)
 {
    ossStrncpy ( _moduleName, pModuleName, sizeof(_moduleName) ) ;
    if ( pLibraryPath )
-      ossStrncpy ( _libPath, pLibraryPath, sizeof(_moduleName) ) ;
+      ossStrncpy ( _libPath, pLibraryPath, sizeof(_libPath) ) ;
    else
       ossMemset ( _libPath, 0, sizeof(_libPath) ) ;
 }
@@ -88,6 +88,8 @@ INT32 _ossModuleHandle::init ()
    {
       *p = '\0' ;
    }
+   rc = patchModuleName( _moduleName, strModule, sizeof(_moduleName) );
+   PD_RC_CHECK ( rc, PDERROR, "Failed to patch module name, rc = %d", rc ) ;
    // if the path is provided, let's make sure it exists
    if ( _libPath[0] )
    {
@@ -244,5 +246,88 @@ done :
    PD_TRACE_EXITRC ( SDB_OSSMODULEHANDLE_RESOLVEADDRESS, rc ) ;
    return rc ;
 error :
+   goto done ;
+}
+
+INT32 _ossModuleHandle::patchModuleName( const CHAR* name, CHAR *patchedName, UINT32 size )
+{
+   INT32 rc = SDB_OK ;
+   SDB_ASSERT( name, "Module name can not be NULL" ) ;
+   SDB_ASSERT( patchedName, "Patched buffer can not be NULL" ) ;
+   
+   const CHAR *ptr = NULL ;
+   INT32 patchedNameLen = 0 ;
+#ifdef _WINDOWS
+   INT32 tailLen = ossStrlen(LIB_END_STR) ;
+#else
+   INT32 tailLen = ossStrlen(LIB_END_STR) ;
+#endif
+
+   ossMemset( patchedName, 0, size ) ;
+   // patch begin
+#ifdef _LINUX
+   ptr = ossStrstr( name, LIB_START_STR ) ;
+   if ( ptr != name )
+   {
+      ossMemcpy( patchedName, LIB_START_STR, ossStrlen(LIB_START_STR) ) ;
+   }
+#endif
+
+   patchedNameLen = ossStrlen( patchedName ) ;
+   ptr = ossStrrchr( name, '.' ) ;
+   if ( ptr != NULL )
+   {
+      // make sure module name end with ".so" or ".dll"
+#ifdef _WINDOWS
+      if ( 'd' != *(ptr + 1) || 'l' != *(ptr + 2) && 'l' != *(ptr + 3) )
+      {
+         if ( patchedNameLen + ossStrlen( name ) + tailLen >= size )
+         {
+            rc = SDB_INVALIDSIZE ;
+            goto error ;
+         }
+         ossStrncat( patchedName, name, ossStrlen( name ) ) ;
+         ossStrncat( patchedName, LIB_END_STR, tailLen ) ;
+      }
+#else
+      if ( 's' != *(ptr + 1) && 'o' != *(ptr + 2) )
+      {
+         if ( patchedNameLen + ossStrlen( name ) + tailLen >= size )
+         {
+            rc = SDB_INVALIDSIZE ;
+            goto error ;
+         }
+         ossStrncat( patchedName, name, ossStrlen( name ) ) ;
+         ossStrncat( patchedName, LIB_END_STR, tailLen ) ;
+      }
+#endif
+      else
+      {
+         if ( patchedNameLen + ossStrlen( name ) + tailLen >= size )
+         {
+            rc = SDB_INVALIDSIZE ;
+            goto error ;
+         }
+         ossStrncat( patchedName, name, strlen( name ) ) ;
+      }
+   }
+   else
+   {
+      if ( patchedNameLen + ossStrlen( name ) + tailLen >= size )
+      {
+         rc = SDB_INVALIDSIZE ;
+         goto error ;
+      }
+      ossStrncat( patchedName, name, ptr - name ) ;
+#ifdef _WINDOWS
+      ossStrncat( patchedName, LIB_END_STR, tailLen ) ;
+#else
+      ossStrncat( patchedName, LIB_END_STR, tailLen ) ;
+#endif
+   }
+
+done:
+   return rc ;
+error:
    goto done ;
 }
