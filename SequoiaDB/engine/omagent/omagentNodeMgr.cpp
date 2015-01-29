@@ -424,7 +424,6 @@ namespace engine
          }
 
          pInfo->_pid = OSS_INVALID_PID ;
-         pInfo->_status = OMNODE_NORMAL ;
 
          if ( 0 == restartCount || ( restartCount > 0 &&
               pInfo->_startTime.size() > (UINT32)restartCount ) )
@@ -457,14 +456,21 @@ namespace engine
             }
          }
 
-         // check status by startup file
-         _checkNodeByStartupFile( pSvcName, pInfo ) ;
+         if ( OMNODE_RESTART != pInfo->_status )
+         {
+            pInfo->_status = OMNODE_NORMAL ;
+            // check status by startup file
+            _checkNodeByStartupFile( pSvcName, pInfo ) ;
+         }
 
          // if crashed, start job
-         if ( OMNODE_CRASH == pInfo->_status )
+         if ( OMNODE_CRASH == pInfo->_status ||
+              OMNODE_RESTART != pInfo->_status )
          {
-            PD_LOG( PDEVENT, "Detect Sequoiadb node[svcname = %s] crashed, "
-                    "Begin to start", pSvcName ) ;
+            PD_LOG( PDEVENT, "Detect Sequoiadb node[svcname = %s] %s, "
+                    "Begin to restart", pSvcName,
+                    OMNODE_CRASH == pInfo->_status ?
+                    "crashed" : "start failed" ) ;
             startStartNodeJOb( pSvcName, NODE_START_MONITOR, this,
                                NULL, FALSE ) ;
          }
@@ -646,6 +652,10 @@ namespace engine
       }
       else
       {
+         if ( NODE_START_SYSTEM == type )
+         {
+            pInfo->_status = OMNODE_RESTART ;
+         }
          PD_LOG( PDERROR, "Start node[%s] failed, rc: %d(%s)", svcname,
                  rc, getErrDesp( rc ) ) ;
          goto error ;
