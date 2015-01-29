@@ -295,7 +295,7 @@ namespace engine
          if ( -1 != _out._handle )
          {
             dup2 ( STDERR_FILENO, STDOUT_FILENO ) ;
-            dup2 ( STDOUT_FILENO, pipeDescStdOut[1] ) ;
+            dup2 ( STDOUT_FILENO, _out._handle ) ;
          }
 #endif // _LINUX
          ossCloseNamedPipe( _out ) ;
