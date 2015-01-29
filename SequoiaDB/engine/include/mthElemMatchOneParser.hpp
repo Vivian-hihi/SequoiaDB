@@ -14,7 +14,7 @@
    You should have received a copy of the GNU Affero General Public License
    along with this program. If not, see <http://www.gnu.org/license/>.
 
-   Source File Name = mthElemMatchParser.hpp
+   Source File Name = mthElemMatchOneParser.hpp
 
    Descriptive Name =
 
@@ -31,24 +31,23 @@
 
 *******************************************************************************/
 
-#ifndef MTH_ELEMMATCHPARSER_HPP_
-#define MTH_ELEMMATCHPARSER_HPP_
+#ifndef MTH_ELEMMATCHONEPARSER_HPP_
+#define MTH_ELEMMATCHONEPARSER_HPP_
 
 #include "mthSActionParser.hpp"
 
 namespace engine
 {
-   class _mthElemMatchParser : public _mthSActionParser::parser
+   class _mthElemMatchOneParser : public _mthSActionParser::parser
    {
    public:
-      _mthElemMatchParser() ;
-      virtual ~_mthElemMatchParser() ;
+      _mthElemMatchOneParser() ;
+      virtual ~_mthElemMatchOneParser() ;
    public:
       virtual INT32 parse( const bson::BSONElement &e,
                            _mthSAction &action ) const ;
-
    } ;
-   typedef class _mthElemMatchParser mthElemMatchParser ;
+   typedef class _mthElemMatchOneParser mthElemMatchOneParser ;
 }
 
 #endif

@@ -502,29 +502,21 @@ namespace engine
                   MTH_S_ATTR_EXCLUDE == attribute ||
                   MTH_S_ATTR_DEFAULT == attribute ||
                   MTH_S_ATTR_PROJECTION == attribute, "can not be any others" ) ;
-      if ( _attribute.contains( attribute ) )
+      rc = _attribute.set( attribute ) ;
+      if ( SDB_OK != rc )
       {
-         /// do nothing.
-         /// no need to reset father's attribute.
+         PD_LOG( PDERROR, "failed to set column's attribute:%d", rc ) ;
+         goto error ;
       }
-      else
+
+      if ( NULL != _father )
       {
-         rc = _attribute.set( attribute ) ;
+         rc = _father->_setAttribute( attribute ) ;
          if ( SDB_OK != rc )
          {
-            PD_LOG( PDERROR, "failed to set column's attribute:%d", rc ) ;
+            PD_LOG( PDERROR, "failed to set father's attribute:%d", rc ) ;
             goto error ;
          }
-
-         if ( NULL != _father )
-         {
-            rc = _father->_setAttribute( attribute ) ;
-            if ( SDB_OK != rc )
-            {
-               PD_LOG( PDERROR, "failed to set father's attribute:%d", rc ) ;
-               goto error ;
-            }
-         }         
       }
    done:
       PD_TRACE_EXITRC( SDB__MTHSCOLUMN__SETATTRIBUTE, rc ) ;

@@ -39,6 +39,7 @@
 #include "mthDefaultParser.hpp"
 #include "mthSliceParser.hpp"
 #include "mthElemMatchParser.hpp"
+#include "mthElemMatchOneParser.hpp"
 
 #define MTH_ADD_PARSER( parser )\
         do                                                                                    \
@@ -166,6 +167,9 @@ namespace engine
 
       /// $elemMatch
       MTH_ADD_PARSER( _mthElemMatchParser ) ;
+
+      /// $elemMatchOne
+      MTH_ADD_PARSER( _mthElemMatchOneParser ) ;
    done:
       PD_TRACE_EXITRC( SDB__MTHSACTIONPARSER__REGISTERPARSERS, rc ) ;
       return rc ;

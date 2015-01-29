@@ -14,7 +14,7 @@
    You should have received a copy of the GNU Affero General Public License
    along with this program. If not, see <http://www.gnu.org/license/>.
 
-   Source File Name = mthElemMatchParser.cpp
+   Source File Name = mthElemMatchOneParser.cpp
 
    Descriptive Name =
 
@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-#include "mthElemMatchParser.hpp"
+#include "mthElemMatchOneParser.hpp"
 #include "pdTrace.hpp"
 #include "pd.hpp"
 #include "mthTrace.hpp"
@@ -40,22 +40,22 @@
 
 namespace engine
 {
-   _mthElemMatchParser::_mthElemMatchParser()
+   _mthElemMatchOneParser::_mthElemMatchOneParser()
    {
-      _name = MTH_S_ELEMMATCH ;
+      _name = MTH_S_ELEMMATCHONE ;
    }
 
-   _mthElemMatchParser::~_mthElemMatchParser()
+   _mthElemMatchOneParser::~_mthElemMatchOneParser()
    {
 
    }
 
-   ///PD_TRACE_DECLARE_FUNCTION ( SDB__MTHELEMMATCHPARSER_PARSE, "_mthElemMatchParser::parse" )
-   INT32 _mthElemMatchParser::parse( const bson::BSONElement &e,
+   ///PD_TRACE_DECLARE_FUNCTION ( SDB__MTHELEMMATCHONEPARSER_PARSE, "_mthElemMatchOneParser::parse" )
+   INT32 _mthElemMatchOneParser::parse( const bson::BSONElement &e,
                                      _mthSAction &action ) const
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB__MTHELEMMATCHPARSER_PARSE ) ;
+      PD_TRACE_ENTRY( SDB__MTHELEMMATCHONEPARSER_PARSE ) ;
       if ( Object != e.type() )
       {
          PD_LOG( PDERROR, "$elemMatch(One) requires object value" ) ;
@@ -72,11 +72,11 @@ namespace engine
 
       action.setName( _name.c_str() ) ;
       action.setAttribute( MTH_S_ATTR_PROJECTION ) ;
-      action.setFunc( &mthElemMatchBuild,
-                      &mthElemMatchGet ) ;
+      action.setFunc( &mthElemMatchOneBuild,
+                      &mthElemMatchOneGet ) ;
 
    done:
-      PD_TRACE_EXITRC( SDB__MTHELEMMATCHPARSER_PARSE, rc ) ;
+      PD_TRACE_EXITRC( SDB__MTHELEMMATCHONEPARSER_PARSE, rc ) ;
       return rc ;
    error:
       goto done ;

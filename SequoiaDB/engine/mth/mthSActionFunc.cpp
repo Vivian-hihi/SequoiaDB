@@ -319,5 +319,31 @@ namespace engine
       PD_TRACE_EXITRC( SDB__MTHELEMMATCHGET, rc ) ;
       return rc ;
    }
+
+   ///PD_TRACE_DECLARE_FUNCTION ( SDB__MTHELEMMATCHONEBUILD, "mthElemMatchOneBuild" )
+   INT32 mthElemMatchOneBuild( const CHAR *fieldName,
+                               const bson::BSONElement &e,
+                               _mthSAction *action,
+                               bson::BSONObjBuilder &builder )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__MTHELEMMATCHONEBUILD ) ;
+      rc = mthElemMatchBuildN( fieldName, e, action, builder, 1 ) ;
+      PD_TRACE_EXITRC( SDB__MTHELEMMATCHONEBUILD, rc ) ;
+      return rc ;
+   }
+
+   ///PD_TRACE_DECLARE_FUNCTION ( SDB__MTHELEMMATCHONEGET, "mthElemMatchOneGet" )
+   INT32 mthElemMatchOneGet( const CHAR *fieldName,
+                             const bson::BSONElement &in,
+                             _mthSAction *action,
+                             bson::BSONElement &out )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__MTHELEMMATCHONEGET ) ;
+      rc = mthElemMatchGetN( fieldName, in, action, out, 1 ) ;
+      PD_TRACE_EXITRC( SDB__MTHELEMMATCHONEGET, rc ) ;
+      return rc ;
+   }
 }
 

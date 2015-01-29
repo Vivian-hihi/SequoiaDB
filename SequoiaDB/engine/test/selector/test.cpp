@@ -259,6 +259,16 @@ TEST( selector, simple_exclude_test_6 )
    ASSERT_EQ( SDB_OK, rc ) ;
 }
 
+/// include a, exclude b --> error
+TEST( selector, simple_exclude_test_7 )
+{
+   INT32 rc = SDB_OK ;
+   mthSelector selector ;
+   BSONObj rule = BSON( "a" << BSON( "$include" << 1 ) << "b" << BSON("$include" << 0 ) ) ;
+   rc = selector.loadPattern( rule ) ;
+   ASSERT_EQ( SDB_INVALIDARG , rc ) ;
+}
+
 /// default a:1 from {b:1 } -> {a:1}
 TEST( selector, simple_default_test_1 )
 {
@@ -670,5 +680,21 @@ TEST( selector, simple_elemmatch_test_3 )
    ASSERT_EQ( SDB_OK, rc ) ;
 }
 
-
+/// elemMatchOne a:{b:1} from {a:[{b:1}, {b:2}, {b:1}]} -> {a:[{b:1}]}
+TEST( selector, simple_elemmatchone_test_1 )
+{
+   INT32 rc = SDB_OK ;
+   mthSelector selector ;
+   BSONObj rule = BSON( "a" << BSON( "$elemMatchOne" << BSON( "b" << 1 ) ) ) ;
+   rc = selector.loadPattern( rule ) ;
+   ASSERT_EQ( SDB_OK , rc ) ;
+   BSONObj record = BSON( "a" << BSON_ARRAY( BSON( "b" << 1 ) << BSON( "b" << 2 ) << BSON( "b" << 1 ) ) ) ;
+   BSONObj result ;
+   rc = selector.select( record, result ) ;
+   ASSERT_EQ( SDB_OK , rc ) ;
+   cout << result.toString( FALSE, TRUE ) << endl ;
+   BSONObj expect = BSON( "a" << BSON_ARRAY( BSON("b" << 1 ) ) ) ;
+   rc = expect.woCompare( result ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+}
 
