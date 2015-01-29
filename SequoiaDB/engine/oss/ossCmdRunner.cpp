@@ -291,6 +291,13 @@ namespace engine
    {
       if ( OSS_INVALID_PID != _id )
       {
+#if defined (_LINUX)
+         if ( -1 != handle._handle )
+         {
+            dup2 ( STDERR_FILENO, STDOUT_FILENO ) ;
+            dup2 ( STDOUT_FILENO, pipeDescStdOut[1] ) ;
+         }
+#endif // _LINUX
          ossCloseNamedPipe( _out ) ;
          _id = OSS_INVALID_PID ;
       }
