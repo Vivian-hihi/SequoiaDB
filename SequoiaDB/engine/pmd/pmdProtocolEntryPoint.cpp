@@ -8,6 +8,7 @@
 #include "pmdTrace.hpp"
 #include "pmdProcessor.hpp"
 #include "pmdAccessProtocolBase.hpp"
+#include "pmdModuleLoader.hpp"
 
 namespace engine {
 
@@ -19,7 +20,14 @@ namespace engine {
       monDBCB *mondbcb = krcb->getMonDBCB () ;
       pmdEDUMgr * eduMgr = cb->getEDUMgr() ;
       EDUID agentEDU = PMD_INVALID_EDUID ;
-      ossSocket *pListerner = ( ossSocket* )pData ;
+
+      pmdEDUParam* param = ( pmdEDUParam * )pData ;
+      ossSocket *pListerner = (ossSocket *)(param->pSocket) ;
+      // resolved protocol
+      IPmdAccessProtocol *protocol = param->protocol ;
+      // delete EDUParam object
+      SDB_OSS_DEL param ;
+      param = NULL ;
 
       // let's set the state of EDU to RUNNING
       if ( SDB_OK != ( rc = eduMgr->activateEDU ( cb ) ) )
@@ -50,7 +58,7 @@ namespace engine {
          {
             // if we fail due to error, let's restart socket
             PD_LOG ( PDERROR, "Failed to accept socket in TcpListener(rc=%d)",
-               rc ) ;
+                     rc ) ;
             if ( pListerner->isClosed() )
             {
                break ;
@@ -64,9 +72,10 @@ namespace engine {
          cb->incEventCount() ;
          ++mondbcb->numConnects ;
 
-         // assign the socket to the arg
-         void *pData = NULL ;
-         *((SOCKET *) &pData) = s ;
+         pmdEDUParam *pParam = SDB_OSS_NEW pmdEDUParam() ;
+         // assign the socket to the pProtocolData
+         *(( SOCKET *)&pParam->pSocket) = s ;
+         pParam->protocol = protocol ;
 
          if ( !krcb->isActive() )
          {
@@ -77,11 +86,11 @@ namespace engine {
 
          // now we have a tcp socket for a new connection, let's get an 
          // agent, Note the new new socket sent passing to startEDU
-         rc = eduMgr->startEDU ( EDU_TYPE_FAPAGENT, pData, &agentEDU ) ;
+         rc = eduMgr->startEDU ( EDU_TYPE_FAPAGENT, (void *)pParam, &agentEDU ) ;
          if ( rc )
          {
             PD_LOG( ( rc == SDB_QUIESCED ? PDWARNING : PDERROR ),
-               "Failed to start edu, rc: %d", rc ) ;
+                      "Failed to start edu, rc: %d", rc ) ;
 
             // close remote connection if we can't create new thread
             ossSocket newsock ( &s ) ;
@@ -120,8 +129,12 @@ namespace engine {
       PD_TRACE_ENTRY ( SDB_PMDLOCALAGENTENTPNT );
       //TODO: make sure the destructor execute after 'localSession.detach() ;'
       pmdSession *session = NULL ;
-      SOCKET s = *(( SOCKET *) &arg ) ;
-      IPmdAccessProtocol* protocol = NULL ;
+      pmdEDUParam *pParam = ( pmdEDUParam * )arg ;
+      SOCKET s = *((SOCKET *)&pParam->pSocket) ;
+      IPmdAccessProtocol* protocol = pParam->protocol ;
+      // delete EDUParam object
+      SDB_OSS_DEL pParam ;
+      pParam = NULL ;
 
       if ( pmdGetDBRole() == SDB_ROLE_COORD )
       {
