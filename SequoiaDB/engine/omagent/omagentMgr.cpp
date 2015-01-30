@@ -874,7 +874,7 @@ namespace engine
                _noMsgTimerCounter += interval ;
                if ( _noMsgTimerCounter > _options.getAliveTimeout() )
                {
-                  PMD_SHUTDOWN_DB( SDB_OK ) ;
+                  PMD_SHUTDOWN_DB( SDB_TIMEOUT ) ;
                }
             }
          }
