@@ -266,7 +266,7 @@ namespace engine
       // wait bussiness ok
       rc = utilWaitNodeOK( cmInfo, NULL,
                            asStandalone ? pid : OSS_INVALID_PID,
-                           SDB_TYPE_OMA,
+                           SDB_TYPE_OMA, UTIL_WAIT_NODE_TIMEOUT,
                            asStandalone ? TRUE : FALSE ) ;
       if ( SDB_OK == rc )
       {
