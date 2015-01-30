@@ -160,6 +160,12 @@ namespace engine
 
       _roleStr = SDB_ROLE_COORD_STR ;
 
+      if ( sdbGetOMAgentOptions()->isStandAlone() )
+      {
+         rc = SDB_PERM ;
+         goto error ;
+      }
+
       try
       {
          BSONObj obj( pInfomation ) ;
@@ -340,6 +346,11 @@ namespace engine
 
    INT32 _omaStartNodeCmd::init( const CHAR * pInfomation )
    {
+      if ( sdbGetOMAgentOptions()->isStandAlone() )
+      {
+         return SDB_PERM ;
+      }
+
       _pData = pInfomation ;
       return SDB_OK ;
    }

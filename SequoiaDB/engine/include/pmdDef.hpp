@@ -239,6 +239,8 @@ namespace engine
    #define PMD_OPTION_TYPE             "type"
    #define PMD_OPTION_CURUSER          "I"
    #define PMD_OPTION_PORT             "port"
+   #define PMD_OPTION_STANDALONE       "standalone"      // for om
+   #define PMD_OPTION_ALIVE_TIME       "alivetime"       // for om
 
    #define ENGINE_NPIPE_MSG_PID        "$pid"
    #define ENGINE_NPIPE_MSG_SHUTDOWN   "$shutdown"

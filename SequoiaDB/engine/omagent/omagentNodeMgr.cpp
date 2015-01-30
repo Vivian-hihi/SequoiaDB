@@ -227,6 +227,11 @@ namespace engine
       dbProcessInfo dbProcess ;
       BOOLEAN isRunning = FALSE ;
 
+      if ( option->isStandAlone() )
+      {
+         goto done ;
+      }
+
       rc = cCMService::init() ;
       if ( rc )
       {
@@ -266,6 +271,11 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       omAgentOptions *option = sdbGetOMAgentOptions() ;
+
+      if ( option->isStandAlone() )
+      {
+         goto done ;
+      }
 
       rc = startCMSyncJob( this, NULL, FALSE ) ;
       if ( rc )
