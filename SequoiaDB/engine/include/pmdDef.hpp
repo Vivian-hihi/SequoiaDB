@@ -159,7 +159,7 @@ namespace engine
       EDU_TYPE_OMNET,
       EDU_TYPE_SYNCCLOCK,
       EDU_TYPE_PIPESLISTENER,
-      EDU_TYPE_PROTOCOLLISTENER,
+      EDU_TYPE_FAPLISTENER,
 
       // Agent EDU Type Begin
       EDU_TYPE_AGENT_BEGIN,

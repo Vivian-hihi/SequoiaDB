@@ -213,11 +213,11 @@ namespace engine
 
       //////////////////////////////////////////////////////////////////////////
       // listener for access protocol
-//       rc = pEDUMgr->startEDU( EDU_TYPE_PROTOCOLLISTENER, (void*)_pMongoListener,
+//       rc = pEDUMgr->startEDU( EDU_TYPE_FAPLISTENER, (void*)_pMongoListener,
 //                               &eduID ) ;
 //       PD_RC_CHECK( rc, PDERROR, "Failed to start mongo listerner, rc: %d",
 //                    rc ) ;
-//       pEDUMgr->regSystemEDU( EDU_TYPE_PROTOCOLLISTENER, eduID ) ;
+//       pEDUMgr->regSystemEDU( EDU_TYPE_FAPLISTENER, eduID ) ;
 // 
 //       // wait until protocol listener starts
 //       rc = pEDUMgr->waitUntil ( eduID, PMD_EDU_RUNNING ) ;
