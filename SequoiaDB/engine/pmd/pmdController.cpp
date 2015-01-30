@@ -648,6 +648,8 @@ namespace engine
    INT32 _pmdController::loadForeignModule()
    {
       INT32 rc = SDB_OK ;
+      const CHAR *MONGO_MODULE_NAME = "fapmongo" ;
+      const CHAR *MONGO_MODULE_PATH = "./bin/fap/" ;
       _fapMongo = SDB_OSS_NEW pmdModuleLoader() ;
       if ( NULL == _fapMongo )
       {
@@ -655,7 +657,7 @@ namespace engine
          rc = SDB_OOM ;
          goto error ;
       }
-      rc = _fapMongo->load( "fapmongo", "./bin/fap/" ) ;/*need be replaced*/
+      rc = _fapMongo->load( MONGO_MODULE_NAME, MONGO_MODULE_PATH ) ;/*need be replaced*/
       PD_RC_CHECK( rc, PDERROR, "Failed to load module: %s, path: %s"
                    " rc: %d", MONGO_MODULE_NAME, MONGO_MODULE_PATH, rc ) ;
       rc = _fapMongo->create( _protocol ) ;
