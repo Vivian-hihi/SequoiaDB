@@ -52,9 +52,13 @@ namespace engine
 
       INT32 buildDefaultValueAction( const bson::BSONElement &e,
                                      _mthSAction &action ) ;
+
+      INT32 buildSliceAction( INT32 begin,
+                              INT32 limit,
+                               _mthSAction &action ) ;
    public:
       /// all children will be used as a singleton
-      /// do not hold any member in child class.
+      /// do not hold any dynamic member in child class.
       class parser : public SDBObject
       {
       public:
