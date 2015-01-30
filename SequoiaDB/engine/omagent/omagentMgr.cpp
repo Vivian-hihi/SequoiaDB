@@ -874,6 +874,8 @@ namespace engine
                _noMsgTimerCounter += interval ;
                if ( _noMsgTimerCounter > _options.getAliveTimeout() )
                {
+                  PD_LOG( PDEVENT, "Has %u secs no recv msg, quit",
+                          _noMsgTimerCounter ) ;
                   PMD_SHUTDOWN_DB( SDB_TIMEOUT ) ;
                }
             }
