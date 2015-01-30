@@ -160,7 +160,6 @@ namespace engine
       EDU_TYPE_SYNCCLOCK,
       EDU_TYPE_PIPESLISTENER,
       EDU_TYPE_PROTOCOLLISTENER,
-      EDU_TYPE_PROTOCOL,
 
       // Agent EDU Type Begin
       EDU_TYPE_AGENT_BEGIN,
@@ -169,6 +168,7 @@ namespace engine
       EDU_TYPE_SHARDAGENT,
       EDU_TYPE_REPLAGENT,
       EDU_TYPE_RESTAGENT,
+      EDU_TYPE_FAPAGENT,
 
       // Agent EDU Type END
       EDU_TYPE_AGENT_END,

@@ -11,7 +11,7 @@
 
 namespace engine {
 
-   INT32 pmdProtocolListenerEntryPoint ( pmdEDUCB *cb, void *pData )
+   INT32 pmdFapListenerEntryPoint ( pmdEDUCB *cb, void *pData )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_PMDTCPLSTNENTPNT ) ;
@@ -77,7 +77,7 @@ namespace engine {
 
          // now we have a tcp socket for a new connection, let's get an 
          // agent, Note the new new socket sent passing to startEDU
-         rc = eduMgr->startEDU ( EDU_TYPE_PROTOCOL, pData, &agentEDU ) ;
+         rc = eduMgr->startEDU ( EDU_TYPE_FAPAGENT, pData, &agentEDU ) ;
          if ( rc )
          {
             PD_LOG( ( rc == SDB_QUIESCED ? PDWARNING : PDERROR ),
@@ -114,7 +114,7 @@ namespace engine {
       goto done ;
    }
 
-   INT32 pmdProtocolEntryPoint( pmdEDUCB *cb, void *arg )
+   INT32 pmdFapAgentEntryPoint( pmdEDUCB *cb, void *arg )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_PMDLOCALAGENTENTPNT );

@@ -58,6 +58,9 @@ namespace engine
          ON_EDUTYPE_TO_ENTRY1 ( EDU_TYPE_RESTAGENT, FALSE,
                                 pmdRestAgentEntryPoint,
                                 "RestAgent" ),
+         ON_EDUTYPE_TO_ENTRY1 ( EDU_TYPE_FAPAGENT, TRUE,
+                                pmdFapAgentEntryPoint,
+                                "FAPAgent" ),
          ON_EDUTYPE_TO_ENTRY1 ( EDU_TYPE_TCPLISTENER, TRUE,
                                 pmdTcpListenerEntryPoint,
                                 "TCPListener" ),
@@ -117,11 +120,9 @@ namespace engine
                                 pmdSyncClockEntryPoint,
                                 "SyncClockWorker" ),
          ON_EDUTYPE_TO_ENTRY1 ( EDU_TYPE_PROTOCOLLISTENER, TRUE,
-                                pmdProtocolListenerEntryPoint,
+                                pmdFapListenerEntryPoint,
                                 "FAPListener" ),
-         ON_EDUTYPE_TO_ENTRY1 ( EDU_TYPE_PROTOCOL, TRUE,
-                                pmdProtocolEntryPoint,
-                                "ForeignAccessProtocol" ),
+
          // For the end
          ON_EDUTYPE_TO_ENTRY1 ( EDU_TYPE_MAXIMUM, FALSE,
                                 NULL,
