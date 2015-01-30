@@ -44,7 +44,7 @@
 
 class command ;
 
-class mongoConverter : public baseConverter, public SDBObject
+class mongoConverter : public baseConverter
 {
 public:
    mongoConverter() : _cmd( NULL )
@@ -80,7 +80,7 @@ public:
    }
 
    // virtual function for baseConverter
-   virtual INT32 convert( msgBuffer &out ) ;
+   virtual INT32 convert( std::vector<msgBuffer*> &out ) ;
    virtual INT32 reConvert( msgBuffer *in, msgBuffer &out ) ;
 
 private:

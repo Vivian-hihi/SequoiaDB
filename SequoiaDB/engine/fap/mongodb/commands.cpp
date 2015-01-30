@@ -77,13 +77,20 @@ commandMgr* commandMgr::instance()
 
 ////////////////////////////////////////////////////////////////
 ///< insertCommand
-INT32 insertCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
+INT32 insertCommand::convertRequest( mongoParser &parser,
+                                     std::vector<msgBuffer*> &sdbMsgs )
 {
    INT32 rc            = SDB_OK ;
    MsgHeader *header   = NULL ;
    MsgOpInsert *insert = NULL ;
    command *cmd        = NULL ;
    bson::BSONObj obj ;
+   msgBuffer *sdbMsg = SDB_OSS_NEW msgBuffer() ;
+   if ( NULL == sdbMsg )
+   {
+      rc = SDB_OOM ;
+      goto error ;
+   }
 
    if ( ossStrstr( parser.dbName, ".system.indexes" ) )
    {
@@ -95,22 +102,26 @@ INT32 insertCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
       }
       // re-parse mongo msg
       parser.reparse() ;
-      sdbMsg.zero() ;
+      sdbMsg->zero() ;
 
-      cmd->convertRequest( parser, sdbMsg ) ;
+      SDB_OSS_DEL sdbMsg ;
+      sdbMsg = NULL ;
 
+      rc = cmd->convertRequest( parser, sdbMsgs ) ;
+
+      goto done ;
    }
 
-   sdbMsg.reverse( sizeof ( MsgOpInsert ) ) ;
-   sdbMsg.advance( sizeof ( MsgOpInsert ) - 1 ) ;
+   sdbMsg->reverse( sizeof ( MsgOpInsert ) ) ;
+   sdbMsg->advance( sizeof ( MsgOpInsert ) - 1 ) ;
 
-   header = ( MsgHeader * )&sdbMsg ;
+   header = ( MsgHeader * )sdbMsg ;
    header->opCode = MSG_BS_INSERT_REQ ;
    header->TID = 0 ;
    header->routeID.value = 0 ;
    header->requestID = parser.id ;
 
-   insert = ( MsgOpInsert * )&sdbMsg ;
+   insert = ( MsgOpInsert * )sdbMsg ;
    insert->version = 0 ;
    insert->w = 0 ;
    insert->padding = 0 ;
@@ -122,16 +133,18 @@ INT32 insertCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
    }
 
    insert->nameLength = parser.dbNameLen ;
-   sdbMsg.write( parser.dbName, parser.dbNameLen ) ;
+   sdbMsg->write( parser.dbName, parser.dbNameLen ) ;
 
    parser.skip( parser.dbNameLen + 1 ) ;
    while ( parser.more() )
    {
       parser.nextObj( obj ) ;
-      sdbMsg.write( obj.objdata(), obj.objsize() ) ;
+      sdbMsg->write( obj.objdata(), obj.objsize() ) ;
    }
 
-   header->messageLength = sdbMsg.size() ;
+   header->messageLength = sdbMsg->size() ;
+   sdbMsgs.push_back( sdbMsg ) ;
+
 done:
    return rc ;
 error:
@@ -140,7 +153,8 @@ error:
 
 //////////////////////////////////////////////////////////////////////////
 ///< removeCommand
-INT32 removeCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
+INT32 removeCommand::convertRequest( mongoParser &parser,
+                                     std::vector<msgBuffer*> &sdbMsgs )
 {
    INT32 rc            = SDB_OK ;
    MsgHeader *header   = NULL ;
@@ -148,16 +162,23 @@ INT32 removeCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
    bson::BSONObj del ;
    bson::BSONObj hint ;
 
-   sdbMsg.reverse( sizeof ( MsgOpDelete ) ) ;
-   sdbMsg.advance( sizeof ( MsgOpDelete ) - 1 ) ;
+   msgBuffer *sdbMsg = SDB_OSS_NEW msgBuffer() ;
+   if ( NULL == sdbMsg )
+   {
+      rc = SDB_OOM ;
+      goto error ;
+   }
 
-   header = ( MsgHeader * )&sdbMsg ;
+   sdbMsg->reverse( sizeof ( MsgOpDelete ) ) ;
+   sdbMsg->advance( sizeof ( MsgOpDelete ) - 1 ) ;
+
+   header = ( MsgHeader * )sdbMsg ;
    header->opCode = MSG_BS_DELETE_REQ ;
    header->TID = 0 ;
    header->routeID.value = 0 ;
    header->requestID = parser.id ;
 
-   remove = ( MsgOpDelete* )&sdbMsg ;
+   remove = ( MsgOpDelete* )sdbMsg ;
    remove->version = 0 ;
    remove->w = 0 ;
    remove->padding = 0 ;
@@ -187,11 +208,13 @@ INT32 removeCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
    hint = del.getObjectField( "$hint" ) ;
    hint = removeField( hint, "$hint" ) ;
 
-   sdbMsg.write( parser.dbName, parser.dbNameLen ) ;
-   sdbMsg.write( del.objdata(), del.objsize() ) ;
-   sdbMsg.write( hint.objdata(), hint.objsize() ) ;
+   sdbMsg->write( parser.dbName, parser.dbNameLen ) ;
+   sdbMsg->write( del.objdata(), del.objsize() ) ;
+   sdbMsg->write( hint.objdata(), hint.objsize() ) ;
 
-   header->messageLength = sdbMsg.size() ;
+   header->messageLength = sdbMsg->size() ;
+   sdbMsgs.push_back( sdbMsg ) ;
+
 done:
    return rc ;
 error:
@@ -200,7 +223,8 @@ error:
 
 //////////////////////////////////////////////////////////////////////////
 ///< updateCommand
-INT32 updateCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
+INT32 updateCommand::convertRequest( mongoParser &parser,
+                                     std::vector<msgBuffer*> &sdbMsgs )
 {
    INT32 rc            = SDB_OK ;
    INT32 updateFlags   = 0 ;
@@ -209,17 +233,23 @@ INT32 updateCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
    bson::BSONObj cond ;
    bson::BSONObj updater ;
    bson::BSONObj hint ;
+   msgBuffer *sdbMsg = SDB_OSS_NEW msgBuffer() ;
+   if ( NULL == sdbMsg )
+   {
+      rc = SDB_OOM ;
+      goto error ;
+   }
 
-   sdbMsg.reverse( sizeof ( MsgOpUpdate ) ) ;
-   sdbMsg.advance( sizeof ( MsgOpUpdate ) - 1 ) ;
+   sdbMsg->reverse( sizeof ( MsgOpUpdate ) ) ;
+   sdbMsg->advance( sizeof ( MsgOpUpdate ) - 1 ) ;
 
-   header = ( MsgHeader * )&sdbMsg ;
+   header = ( MsgHeader * )sdbMsg ;
    header->opCode = MSG_BS_UPDATE_REQ ;
    header->TID = 0 ;
    header->routeID.value = 0 ;
    header->requestID = parser.id ;
 
-   update = ( MsgOpUpdate * )&sdbMsg ;
+   update = ( MsgOpUpdate * )sdbMsg ;
    update->version = 0 ;
    update->w = 0 ;
    update->padding = 0 ;
@@ -256,12 +286,14 @@ INT32 updateCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
    hint = cond.getObjectField( "$hint" ) ;
    hint = removeField( hint, "$hint" ) ;
 
-   sdbMsg.write( parser.dbName, parser.dbNameLen ) ;
-   sdbMsg.write( cond.objdata(), cond.objsize() ) ;
-   sdbMsg.write( updater.objdata(), updater.objsize() ) ;
-   sdbMsg.write( hint.objdata(), hint.objsize() ) ;
+   sdbMsg->write( parser.dbName, parser.dbNameLen ) ;
+   sdbMsg->write( cond.objdata(), cond.objsize() ) ;
+   sdbMsg->write( updater.objdata(), updater.objsize() ) ;
+   sdbMsg->write( hint.objdata(), hint.objsize() ) ;
 
-   header->messageLength = sdbMsg.size() ;
+   header->messageLength = sdbMsg->size() ;
+   sdbMsgs.push_back( sdbMsg ) ;
+
 done:
    return rc ;
 error:
@@ -270,7 +302,8 @@ error:
 
 //////////////////////////////////////////////////////////////////////////
 ///< queryCommand
-INT32 queryCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
+INT32 queryCommand::convertRequest( mongoParser &parser,
+                                    std::vector<msgBuffer*> &sdbMsgs )
 {
    INT32 rc           = SDB_OK ;
    INT32 nToSkip      = 0 ;
@@ -285,9 +318,15 @@ INT32 queryCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
    bson::BSONObj orderby ;
    bson::BSONObj hint ;
    bson::BSONObj fieldToReturn ;
+   msgBuffer *sdbMsg = SDB_OSS_NEW msgBuffer() ;
+   if ( NULL == sdbMsg )
+   {
+      rc = SDB_OOM ;
+      goto error ;
+   }
 
-   sdbMsg.reverse( sizeof ( MsgOpQuery ) ) ;
-   sdbMsg.advance( sizeof ( MsgOpQuery ) - 1 ) ;
+   sdbMsg->reverse( sizeof ( MsgOpQuery ) ) ;
+   sdbMsg->advance( sizeof ( MsgOpQuery ) - 1 ) ;
 
    header = ( MsgHeader * )&sdbMsg ;
    header->opCode = MSG_BS_QUERY_REQ ;
@@ -374,11 +413,13 @@ INT32 queryCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
       }
       // re-parse mongo msg
       parser.reparse() ;
-      sdbMsg.zero() ;
+      sdbMsg->zero() ;
 
-      cmd->convertRequest( parser, sdbMsg ) ;
+      SDB_OSS_DEL sdbMsg ;
+      sdbMsg = NULL ;
 
-      return rc ;
+      rc = cmd->convertRequest( parser, sdbMsgs ) ;
+      goto done ;
    }
 
    orderby = cond.getObjectField( "orderby" ) ;
@@ -390,14 +431,15 @@ INT32 queryCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
    }
 
    // do for simple query msg
-   sdbMsg.write( parser.dbName, parser.dbNameLen ) ;
-   sdbMsg.write( cond.objdata(), cond.objsize() ) ;
-   sdbMsg.write( fieldToReturn.objdata(), fieldToReturn.objsize() ) ;
-   sdbMsg.write( orderby.objdata(), orderby.objsize() ) ;
-   sdbMsg.write( hint.objdata(), hint.objsize() ) ;
+   sdbMsg->write( parser.dbName, parser.dbNameLen ) ;
+   sdbMsg->write( cond.objdata(), cond.objsize() ) ;
+   sdbMsg->write( fieldToReturn.objdata(), fieldToReturn.objsize() ) ;
+   sdbMsg->write( orderby.objdata(), orderby.objsize() ) ;
+   sdbMsg->write( hint.objdata(), hint.objsize() ) ;
 
    // fill the msg len of sdb
-   header->messageLength = sdbMsg.size() ;
+   header->messageLength = sdbMsg->size() ;
+   sdbMsgs.push_back( sdbMsg ) ;
 done:
    return rc ;
 error:
@@ -406,24 +448,31 @@ error:
 
 //////////////////////////////////////////////////////////////////////////
 ///< getMoreCommand
-INT32 getMoreCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
+INT32 getMoreCommand::convertRequest( mongoParser &parser,
+                                      std::vector<msgBuffer*> &sdbMsgs )
 {
    INT32 rc           = SDB_OK ;
    INT32 nToReturn    = 0 ;
    INT64 cursorid     = 0 ;
    MsgHeader *header  = NULL ;
    MsgOpGetMore *more = NULL ;
+   msgBuffer *sdbMsg = SDB_OSS_NEW msgBuffer() ;
+   if ( NULL == sdbMsg )
+   {
+      rc = SDB_OOM ;
+      goto error ;
+   }
 
-   sdbMsg.reverse( sizeof ( MsgOpGetMore ) ) ;
-   sdbMsg.advance( sizeof ( MsgOpGetMore ) ) ;
+   sdbMsg->reverse( sizeof ( MsgOpGetMore ) ) ;
+   sdbMsg->advance( sizeof ( MsgOpGetMore ) ) ;
 
-   header = ( MsgHeader * )&sdbMsg ;
+   header = ( MsgHeader * )sdbMsg ;
    header->opCode = MSG_BS_GETMORE_REQ ;
    header->TID = 0 ;
    header->routeID.value = 0 ;
    header->requestID = parser.id ;
 
-   more = ( MsgOpGetMore * )&sdbMsg ;
+   more = ( MsgOpGetMore * )sdbMsg ;
 
    parser.skip( parser.nsLen + 1 ) ;
 
@@ -433,14 +482,19 @@ INT32 getMoreCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
    more->contextID = cursorid ;
 
    // fill the msg len of sdb
-   header->messageLength = sdbMsg.size() ;
+   header->messageLength = sdbMsg->size() ;
+   sdbMsgs.push_back( sdbMsg ) ;
 
+done:
    return rc ;
+error:
+   goto done ;
 }
 
 //////////////////////////////////////////////////////////////////////////
 ///< killCursorsCommand
-INT32 killCursorsCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
+INT32 killCursorsCommand::convertRequest( mongoParser &parser,
+                                          std::vector<msgBuffer*> &sdbMsgs )
 {
    INT32 rc          = SDB_OK ;
    INT32 nContext    = 0 ;
@@ -448,9 +502,15 @@ INT32 killCursorsCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg
    SINT64 cursorid   = 0 ;
    MsgHeader *header = NULL ;
    MsgOpKillContexts *kill = NULL ;
+   msgBuffer *sdbMsg = SDB_OSS_NEW msgBuffer() ;
+   if ( NULL == sdbMsg )
+   {
+      rc = SDB_OOM ;
+      goto error ;
+   }
 
-   sdbMsg.reverse( sizeof ( MsgOpKillContexts ) ) ;
-   sdbMsg.advance( sizeof ( MsgOpKillContexts ) - sizeof( SINT64 ) ) ;
+   sdbMsg->reverse( sizeof ( MsgOpKillContexts ) ) ;
+   sdbMsg->advance( sizeof ( MsgOpKillContexts ) - sizeof( SINT64 ) ) ;
 
    header = ( MsgHeader * )&sdbMsg ;
    header->opCode = MSG_BS_KILL_CONTEXT_REQ ;
@@ -467,80 +527,33 @@ INT32 killCursorsCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg
    while ( nToReturn > 0 )
    {
       parser.readNumber( sizeof( SINT64 ), ( CHAR * )&cursorid ) ;
-      sdbMsg.write( ( CHAR * )&cursorid, sizeof( SINT64 ) ) ;
+      sdbMsg->write( ( CHAR * )&cursorid, sizeof( SINT64 ) ) ;
       --nToReturn ;
    }
 
    // fill the msg len of sdb
-   header->messageLength = sdbMsg.size() ;
+   header->messageLength = sdbMsg->size() ;
+   sdbMsgs.push_back( sdbMsg ) ;
 
-   return rc ;
-}
-
-
-/*
-//////////////////////////////////////////////////////////////////////////
-///< getnonceCommand
-CONVERT_ERROR getnonceCommand::parse( mongoParser &parser, fixedStream &sdbMsg )
-{
-   CONVERT_ERROR rc  = CON_OK ;
-   MsgHeader *header = NULL ;
-
-   sdbMsg.reverse( sizeof ( MsgAuthentication ) ) ;
-   sdbMsg.advance( sizeof ( MsgAuthentication ) ) ;
-
-   header = ( MsgHeader * )&sdbMsg ;
-   header->opCode = MSG_AUTH_VERIFY_REQ ;
-   header->TID = 0 ;
-   header->routeID.value = 0 ;
-   header->requestID = parser.id ;
-
-   // fill the msg len of sdb
-   header->messageLength = sdbMsg.size() ;
 done:
    return rc ;
 error:
    goto done ;
 }
 
-INT32 getnonceCommand::handle( fixedStream &sdbMsg, fixedStream &sdbResult )
+
+//////////////////////////////////////////////////////////////////////////
+///< getnonceCommand
+INT32 getnonceCommand::convertRequest( mongoParser &parser,
+                                       std::vector<msgBuffer*> &sdbMsgs )
 {
-   INT32 reservedFlags = RESULT_AWAIT_CAPABLE ;
-   sdbResult.reverse( sizeof( MsgOpReply ) ) ;
-   sdbResult.advance( sizeof( MsgOpReply ) ) ;
-   MsgOpReply *replyTo = ( MsgOpReply *)&sdbResult ;
-   MsgHeader  *header  = ( MsgHeader *)&sdbMsg ;
-   
-   header->messageLength = sizeof( MsgOpReply ) ;
-   header->opCode = MSG_BS_QUERY_RES ;
-   header->TID = 0 ;
-   header->routeID.value = 0 ;
-   header->requestID = header->requestID ;
-
-   replyTo->contextID = 0 ;
-   replyTo->flags = 0 ;
-   replyTo->startFrom = 0 ;
-   replyTo->numReturned = 1 ;
-
-   return SDB_OK ;
-}
-
-CONVERT_ERROR getnonceCommand::convertResponse( fixedStream &sdbResult, fixedStream &result )
-{
-   result.zero() ;
-   INT32 resultFlag = RESULT_AWAIT_CAPABLE ;
-
-   mongoMsgHeader *mongoHeader = ( mongoMsgHeader * )&result ;
-   MsgHeader *header = ( MsgHeader * )&sdbResult ;
-
-   mongoHeader->opCode = dbReply ;
-   mongoHeader->id = 0 ;
-   mongoHeader->responseTo = header->requestID ;
-   mongoHeader->_flags = 0 ;
-   mongoHeader->_version = 0 ;
-
-   result.advance( sizeof( mongoMsgHeader ) ) ;
-   result.write( ( CHAR * )&resultFlag, sizeof( INT32 ) ) ;
+   INT32 rc = SDB_OK ;
+   msgBuffer *sdbMsg = SDB_OSS_NEW msgBuffer() ;
+   if ( NULL == sdbMsg )
+   {
+      rc = SDB_OOM ;
+      goto error ;
+   }
 
 //    static Nonce::Security security ;
 //    UINT64 nonce = security.getNonce() ;
@@ -551,103 +564,19 @@ CONVERT_ERROR getnonceCommand::convertResponse( fixedStream &sdbResult, fixedStr
 //    std::stringstream ss ;
 //    ss << std::hex << nonce ;
 //    obj.append( "nonce", ss.str() ) ;
-//    sdbResult.write( obj.obj().objdata(), obj.obj().objsize() ) ;
+//    sdbMsg->write( obj.obj().objdata(), obj.obj().objsize() ) ;
+   sdbMsgs.push_back( sdbMsg ) ;
 
-   return CON_OK ;
-}
-
-//////////////////////////////////////////////////////////////////////////
-///< authenticateCommand
-CONVERT_ERROR authenticateCommand::parse( mongoParser &parser, fixedStream &sdbMsg )
-{
-   CONVERT_ERROR rc  = CON_OK ;
-   INT32 nToSkip     = 0 ;
-   INT32 nToReturn   = 0 ;
-   MsgHeader *header = NULL ;
-   MsgOpQuery *auth  = NULL ;
-   CHAR *ptr         = NULL ;
-   bson::BSONObj cond ;
-   bson::BSONObjBuilder obj ;
-
-   sdbMsg.reverse( sizeof ( MsgAuthentication ) ) ;
-   sdbMsg.advance( sizeof ( MsgAuthentication ) ) ;
-
-   header = ( MsgHeader * )&sdbMsg ;
-   header->opCode = MSG_AUTH_VERIFY_REQ ;
-   header->TID = 0 ;
-   header->routeID.value = 0 ;
-   header->requestID = parser.id ;
-
-   // skip ns
-   parser.skip( parser.nsLen + 1 ) ;
-   // skip nToSkip
-   parser.skip( sizeof( INT32 ) ) ;
-   // skip nToReturn
-   parser.skip( sizeof( INT32 ) ) ;
-
-   if ( !parser.more() )
-   {
-      parser.nextObj( cond ) ;
-   }
-
-   // fill the msg len of sdb
-   header->messageLength = sdbMsg.size() ;
 done:
    return rc ;
 error:
    goto done ;
 }
 
-INT32 authenticateCommand::handle( fixedStream &sdbMsg, fixedStream &sdbResult )
-{
-   INT32 reservedFlags = RESULT_AWAIT_CAPABLE ;
-   sdbResult.reverse( sizeof( MsgOpReply ) ) ;
-   sdbResult.advance( sizeof( MsgOpReply ) ) ;
-   MsgOpReply *replyTo = ( MsgOpReply *)&sdbResult ;
-   MsgHeader  *header  = ( MsgHeader *)&sdbMsg ;
-
-   header->messageLength = sizeof( MsgOpReply ) ;
-   header->opCode = MSG_AUTH_VERIFY_RES ;
-   header->TID = 0 ;
-   header->routeID.value = 0 ;
-   header->requestID = header->requestID ;
-
-   replyTo->contextID = 0 ;
-   replyTo->flags = 0 ;
-   replyTo->startFrom = 0 ;
-   replyTo->numReturned = 1 ;
-
-   return SDB_OK ;
-}
-
-CONVERT_ERROR authenticateCommand::convertResponse( fixedStream &sdbResult, fixedStream &result )
-{
-   INT32 resultFlag = RESULT_AWAIT_CAPABLE ;
-   bson::BSONObjBuilder obj ;
-
-   result.zero() ;
-
-   mongoMsgHeader *mongoHeader = ( mongoMsgHeader * )&result ;
-   MsgHeader *header = ( MsgHeader * )&sdbResult ;
-
-   mongoHeader->opCode = dbReply ;
-   mongoHeader->id = 0 ;
-   mongoHeader->responseTo = header->requestID ;
-   mongoHeader->_flags = 0 ;
-   mongoHeader->_version = 0 ;
-
-   result.advance( sizeof( mongoMsgHeader ) ) ;
-   result.write( ( CHAR * )&resultFlag, sizeof( INT32 ) ) ;
-
-   // TODO:
-   // response OK anyway
-
-   return CON_OK ;
-}
-*/
 //////////////////////////////////////////////////////////////////////////
 ///< createCommand
-INT32 createCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
+INT32 createCommand::convertRequest( mongoParser &parser,
+                                     std::vector<msgBuffer*> &sdbMsgs )
 {
    INT32 rc          = SDB_OK ;
    INT32 nToSkip     = 0 ;
@@ -659,17 +588,23 @@ INT32 createCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
    bson::BSONElement e ;
    const std::string cmdStr = "$create collection" ;
    std::string fullname ;
+   msgBuffer *sdbMsg = SDB_OSS_NEW msgBuffer() ;
+   if ( NULL == sdbMsg )
+   {
+      rc = SDB_OOM ;
+      goto error ;
+   }
 
-   sdbMsg.reverse( sizeof ( MsgOpQuery ) ) ;
-   sdbMsg.advance( sizeof ( MsgOpQuery ) - 1 ) ;
+   sdbMsg->reverse( sizeof ( MsgOpQuery ) ) ;
+   sdbMsg->advance( sizeof ( MsgOpQuery ) - 1 ) ;
 
-   header = ( MsgHeader * )&sdbMsg ;
+   header = ( MsgHeader * )sdbMsg ;
    header->opCode = MSG_CAT_CREATE_COLLECTION_REQ ;
    header->TID = 0 ;
    header->routeID.value = 0 ;
    header->requestID = parser.id ;
 
-   query = ( MsgOpQuery * )&sdbMsg ;
+   query = ( MsgOpQuery * )sdbMsg ;
    query->version = 0 ;
    query->w = 0 ;
    query->padding = 0 ;
@@ -696,22 +631,27 @@ INT32 createCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
       fullname += "." ;
       fullname += e.valuestr() ;
    }
-   sdbMsg.write( cmdStr.c_str(), cmdStr.length() ) ;
+   sdbMsg->write( cmdStr.c_str(), cmdStr.length() ) ;
    obj.append( "Name", fullname.c_str() ) ;
 
    // other options
    // ...
-   sdbMsg.write( obj.obj().objdata(), obj.obj().objsize() ) ;
+   sdbMsg->write( obj.obj().objdata(), obj.obj().objsize() ) ;
 
    // fill the msg len of sdb
-   header->messageLength = sdbMsg.size() ;
+   header->messageLength = sdbMsg->size() ;
+   sdbMsgs.push_back( sdbMsg ) ;
 
+done:
    return rc ;
+error:
+   goto done ;
 }
 
 //////////////////////////////////////////////////////////////////////////
 ///< dropCommand
-INT32 dropCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
+INT32 dropCommand::convertRequest( mongoParser &parser,
+                                   std::vector<msgBuffer*> &sdbMsgs )
 {
    INT32 rc          = SDB_OK ;
    INT32 nToSkip     = 0 ;
@@ -723,17 +663,23 @@ INT32 dropCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
    bson::BSONElement e ;
    const std::string cmdStr = "$drop collection" ;
    std::string fullname ;
+   msgBuffer *sdbMsg = SDB_OSS_NEW msgBuffer() ;
+   if ( NULL == sdbMsg )
+   {
+      rc = SDB_OOM ;
+      goto error ;
+   }
 
-   sdbMsg.reverse( sizeof ( MsgOpQuery ) ) ;
-   sdbMsg.advance( sizeof ( MsgOpQuery ) - 1 ) ;
+   sdbMsg->reverse( sizeof ( MsgOpQuery ) ) ;
+   sdbMsg->advance( sizeof ( MsgOpQuery ) - 1 ) ;
 
-   header = ( MsgHeader * )&sdbMsg ;
+   header = ( MsgHeader * )sdbMsg ;
    header->opCode = MSG_CAT_DROP_COLLECTION_REQ ;
    header->TID = 0 ;
    header->routeID.value = 0 ;
    header->requestID = parser.id ;
 
-   query = ( MsgOpQuery * )&sdbMsg ;
+   query = ( MsgOpQuery * )sdbMsg ;
    query->version = 0 ;
    query->w = 0 ;
    query->padding = 0 ;
@@ -761,21 +707,27 @@ INT32 dropCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
       fullname += e.valuestr() ;
    }
 
-   sdbMsg.write( cmdStr.c_str(), cmdStr.length() ) ;
+   sdbMsg->write( cmdStr.c_str(), cmdStr.length() ) ;
    obj.append( "Name", fullname.c_str() ) ;
 
-   sdbMsg.write( obj.obj().objdata(), obj.obj().objsize() ) ;
+   sdbMsg->write( obj.obj().objdata(), obj.obj().objsize() ) ;
 
    // fill the msg len of sdb
-   header->messageLength = sdbMsg.size() ;
+   header->messageLength = sdbMsg->size() ;
 
+   sdbMsgs.push_back( sdbMsg ) ;
+
+done:
    return rc ;
+error:
+   goto done ;
 }
 
 
 //////////////////////////////////////////////////////////////////////////
 ///< countCommand
-INT32 countCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
+INT32 countCommand::convertRequest( mongoParser &parser,
+                                    std::vector<msgBuffer*> &sdbMsgs )
 {
    INT32 rc          = SDB_OK ;
    INT32 nToSkip     = 0 ;
@@ -790,17 +742,23 @@ INT32 countCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
    bson::BSONElement e ;
    const std::string cmdStr = "$get count" ;
    std::string fullname ;
+   msgBuffer *sdbMsg = SDB_OSS_NEW msgBuffer() ;
+   if ( NULL == sdbMsg )
+   {
+      rc = SDB_OOM ;
+      goto error ;
+   }
 
-   sdbMsg.reverse( sizeof ( MsgOpQuery ) ) ;
-   sdbMsg.advance( sizeof ( MsgOpQuery ) - 1 ) ;
+   sdbMsg->reverse( sizeof ( MsgOpQuery ) ) ;
+   sdbMsg->advance( sizeof ( MsgOpQuery ) - 1 ) ;
 
-   header = ( MsgHeader * )&sdbMsg ;
+   header = ( MsgHeader * )sdbMsg ;
    header->opCode = MSG_BS_QUERY_REQ ;
    header->TID = 0 ;
    header->routeID.value = 0 ;
    header->requestID = parser.id ;
 
-   query = ( MsgOpQuery * )&sdbMsg ;
+   query = ( MsgOpQuery * )sdbMsg ;
    query->version = 0 ;
    query->w = 0 ;
    query->padding = 0 ;
@@ -828,7 +786,7 @@ INT32 countCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
    }
 
    query->nameLength = cmdStr.length() ;
-   sdbMsg.write( cmdStr.c_str(), cmdStr.length() ) ;
+   sdbMsg->write( cmdStr.c_str(), cmdStr.length() ) ;
    obj.append( "Name", fullname.c_str() ) ;
 
    queryObj = cond.getObjectField( "query" ) ;
@@ -840,20 +798,25 @@ INT32 countCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
    query->numToSkip = nToSkip ;
    query->numToReturn = nToReturn ;
 
-   sdbMsg.write( queryObj.objdata(), queryObj.objsize() ) ;
-   sdbMsg.write( fields.objdata(), fields.objsize() ) ;
-   sdbMsg.write( orderby.objdata(), orderby.objsize() ) ;
-   sdbMsg.write( obj.obj().objdata(), obj.obj().objsize() ) ;
+   sdbMsg->write( queryObj.objdata(), queryObj.objsize() ) ;
+   sdbMsg->write( fields.objdata(), fields.objsize() ) ;
+   sdbMsg->write( orderby.objdata(), orderby.objsize() ) ;
+   sdbMsg->write( obj.obj().objdata(), obj.obj().objsize() ) ;
 
    // fill the msg len of sdb
-   header->messageLength = sdbMsg.size() ;
+   header->messageLength = sdbMsg->size() ;
+   sdbMsgs.push_back( sdbMsg ) ;
 
+done:
    return rc ;
+error:
+   goto done ;
 }
 
 //////////////////////////////////////////////////////////////////////////
 ///< aggregateCommand
-INT32 aggregateCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
+INT32 aggregateCommand::convertRequest( mongoParser &parser,
+                                        std::vector<msgBuffer*> &sdbMsgs )
 {
    INT32 rc             = SDB_OK ;
    INT32 nToSkip        = 0 ;
@@ -863,17 +826,23 @@ INT32 aggregateCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
    bson::BSONObj cond ;
    bson::BSONElement e ;
    std::string fullname ;
+   msgBuffer *sdbMsg = SDB_OSS_NEW msgBuffer() ;
+   if ( NULL == sdbMsg )
+   {
+      rc = SDB_OOM ;
+      goto error ;
+   }
 
-   sdbMsg.reverse( sizeof ( MsgOpAggregate ) ) ;
-   sdbMsg.advance( sizeof ( MsgOpAggregate ) - 1 ) ;
+   sdbMsg->reverse( sizeof ( MsgOpAggregate ) ) ;
+   sdbMsg->advance( sizeof ( MsgOpAggregate ) - 1 ) ;
 
-   header = ( MsgHeader * )&sdbMsg ;
+   header = ( MsgHeader * )sdbMsg ;
    header->opCode = MSG_BS_AGGREGATE_REQ ;
    header->TID = 0 ;
    header->routeID.value = 0 ;
    header->requestID = parser.id ;
 
-   aggr = ( MsgOpAggregate * )&sdbMsg ;
+   aggr = ( MsgOpAggregate * )sdbMsg ;
    aggr->version = 0 ;
    aggr->w = 0 ;
    aggr->padding = 0 ;
@@ -900,23 +869,28 @@ INT32 aggregateCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
    cond = removeField( cond, "aggregate" ) ;
 
    aggr->nameLength = fullname.length() ;
-   sdbMsg.write( fullname.c_str(), fullname.length() ) ;
+   sdbMsg->write( fullname.c_str(), fullname.length() ) ;
 
    // pipeline
    // explain
    // allowDiskUse
    // cursor
 
-   sdbMsg.write( cond.objdata(), cond.objsize() ) ;
+   sdbMsg->write( cond.objdata(), cond.objsize() ) ;
    // fill the msg len of sdb
-   header->messageLength = sdbMsg.size() ;
+   header->messageLength = sdbMsg->size() ;
+   sdbMsgs.push_back( sdbMsg ) ;
 
+done:
    return rc ;
+error:
+   goto done ;
 }
 
 //////////////////////////////////////////////////////////////////////////
 ///< createIndexCommand
-INT32 createIndexCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
+INT32 createIndexCommand::convertRequest( mongoParser &parser,
+                                          std::vector<msgBuffer*> &sdbMsgs )
 {
    INT32 rc           = SDB_OK ;
    INT32 nToSkip      = 0 ;
@@ -927,17 +901,23 @@ INT32 createIndexCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg
    bson::BSONObjBuilder obj ;
    bson::BSONObjBuilder indexobj ;
    const std::string cmdStr = "$create index" ;
+   msgBuffer *sdbMsg = SDB_OSS_NEW msgBuffer() ;
+   if ( NULL == sdbMsg )
+   {
+      rc = SDB_OOM ;
+      goto error ;
+   }
 
-   sdbMsg.reverse( sizeof ( MsgOpQuery ) ) ;
-   sdbMsg.advance( sizeof ( MsgOpQuery ) - 1 ) ;
+   sdbMsg->reverse( sizeof ( MsgOpQuery ) ) ;
+   sdbMsg->advance( sizeof ( MsgOpQuery ) - 1 ) ;
 
-   header = ( MsgHeader * )&sdbMsg ;
+   header = ( MsgHeader * )sdbMsg ;
    header->opCode = MSG_BS_QUERY_REQ ;
    header->TID = 0 ;
    header->routeID.value = 0 ;
    header->requestID = parser.id ;
 
-   index = ( MsgOpQuery * )&sdbMsg ;
+   index = ( MsgOpQuery * )sdbMsg ;
    index->version = 0 ;
    index->w = 0 ;
    index->padding = 0 ;
@@ -962,18 +942,23 @@ INT32 createIndexCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg
    obj.append( "Index", indexobj.obj() ) ;
 
    index->nameLength = cmdStr.length() ;
-   sdbMsg.write( cmdStr.c_str(), cmdStr.length() ) ;
-   sdbMsg.write( obj.obj().objdata(), obj.obj().objsize() ) ;
+   sdbMsg->write( cmdStr.c_str(), cmdStr.length() ) ;
+   sdbMsg->write( obj.obj().objdata(), obj.obj().objsize() ) ;
 
    // fill the msg len of sdb
-   header->messageLength = sdbMsg.size() ;
+   header->messageLength = sdbMsg->size() ;
+   sdbMsgs.push_back( sdbMsg ) ;
 
+done:
    return rc ;
+error:
+   goto done ;
 }
 
 //////////////////////////////////////////////////////////////////////////
 ///< dropIndexesCommand
-INT32 dropIndexesCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
+INT32 dropIndexesCommand::convertRequest( mongoParser &parser,
+                                          std::vector<msgBuffer*> &sdbMsgs )
 {
    INT32 rc              = SDB_OK ;
    INT32 nToSkip         = 0 ;
@@ -987,17 +972,23 @@ INT32 dropIndexesCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg
    bson::BSONElement e ;
    const std::string cmdStr = "$drop index" ;
    std::string fullname ;
+   msgBuffer *sdbMsg = SDB_OSS_NEW msgBuffer() ;
+   if ( NULL == sdbMsg )
+   {
+      rc = SDB_OOM ;
+      goto error ;
+   }
 
-   sdbMsg.reverse( sizeof ( MsgOpQuery ) ) ;
-   sdbMsg.advance( sizeof ( MsgOpQuery ) - 1 ) ;
+   sdbMsg->reverse( sizeof ( MsgOpQuery ) ) ;
+   sdbMsg->advance( sizeof ( MsgOpQuery ) - 1 ) ;
 
-   header = ( MsgHeader * )&sdbMsg ;
+   header = ( MsgHeader * )sdbMsg ;
    header->opCode = MSG_BS_QUERY_REQ ;
    header->TID = 0 ;
    header->routeID.value = 0 ;
    header->requestID = parser.id ;
 
-   dropIndex = ( MsgOpQuery * )&sdbMsg ;
+   dropIndex = ( MsgOpQuery * )sdbMsg ;
    dropIndex->version = 0 ;
    dropIndex->w = 0 ;
    dropIndex->padding = 0 ;
@@ -1036,17 +1027,22 @@ INT32 dropIndexesCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg
    obj.append( "Collection", fullname.c_str() ) ;
    obj.append( "Index", indexObj.obj() ) ;
 
-   sdbMsg.write( cmdStr.c_str(), cmdStr.length() ) ;
-   sdbMsg.write( obj.obj().objdata(), obj.obj().objsize() ) ;
+   sdbMsg->write( cmdStr.c_str(), cmdStr.length() ) ;
+   sdbMsg->write( obj.obj().objdata(), obj.obj().objsize() ) ;
    // fill the msg len of sdb
-   header->messageLength = sdbMsg.size() ;
+   header->messageLength = sdbMsg->size() ;
+   sdbMsgs.push_back( sdbMsg ) ;
 
+done:
    return rc ;
+error:
+   goto done ;
 }
 
 //////////////////////////////////////////////////////////////////////////
 ///< getIndexesCommand
-INT32 getIndexesCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
+INT32 getIndexesCommand::convertRequest( mongoParser &parser,
+                                         std::vector<msgBuffer*> &sdbMsgs )
 {
    INT32 rc              = SDB_OK ;
    INT32 nToSkip         = 0 ;
@@ -1058,17 +1054,23 @@ INT32 getIndexesCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg 
    bson::BSONObjBuilder indexObj ;
    const std::string cmdStr = "$get indexes" ;
    std::string fullname ;
+   msgBuffer *sdbMsg = SDB_OSS_NEW msgBuffer() ;
+   if ( NULL == sdbMsg )
+   {
+      rc = SDB_OOM ;
+      goto error ;
+   }
 
-   sdbMsg.reverse( sizeof ( MsgOpQuery ) ) ;
-   sdbMsg.advance( sizeof ( MsgOpQuery ) - 1 ) ;
+   sdbMsg->reverse( sizeof ( MsgOpQuery ) ) ;
+   sdbMsg->advance( sizeof ( MsgOpQuery ) - 1 ) ;
 
-   header = ( MsgHeader * )&sdbMsg ;
+   header = ( MsgHeader * )sdbMsg ;
    header->opCode = MSG_BS_QUERY_REQ ;
    header->TID = 0 ;
    header->routeID.value = 0 ;
    header->requestID = parser.id ;
 
-   getIndex = ( MsgOpQuery * )&sdbMsg ;
+   getIndex = ( MsgOpQuery * )sdbMsg ;
    getIndex->version = 0 ;
    getIndex->w = 0 ;
    getIndex->padding = 0 ;
@@ -1091,17 +1093,22 @@ INT32 getIndexesCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg 
    obj.append( "Collection", cond.getStringField( "ns" ) ) ;
    obj.append( "Index", indexObj.obj() ) ;
 
-   sdbMsg.write( cmdStr.c_str(), cmdStr.length() ) ;
-   sdbMsg.write( obj.obj().objdata(), obj.obj().objsize() ) ;
+   sdbMsg->write( cmdStr.c_str(), cmdStr.length() ) ;
+   sdbMsg->write( obj.obj().objdata(), obj.obj().objsize() ) ;
    // fill the msg len of sdb
-   header->messageLength = sdbMsg.size() ;
+   header->messageLength = sdbMsg->size() ;
+   sdbMsgs.push_back( sdbMsg ) ;
 
+done:
    return rc ;
+error:
+   goto done ;
 }
 
 //////////////////////////////////////////////////////////////////////////
 ///< getLastErrorCommand
-INT32 getLastErrorCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
+INT32 getLastErrorCommand::convertRequest( mongoParser &parser,
+                                           std::vector<msgBuffer*> &sdbMsgs )
 {
    return SDB_OK ;
 }
