@@ -475,7 +475,7 @@ namespace engine
 
          // if crashed, start job
          if ( OMNODE_CRASH == pInfo->_status ||
-              OMNODE_RESTART != pInfo->_status )
+              OMNODE_RESTART == pInfo->_status )
          {
             PD_LOG( PDEVENT, "Detect Sequoiadb node[svcname = %s] %s, "
                     "Begin to restart", pSvcName,
