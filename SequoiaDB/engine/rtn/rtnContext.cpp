@@ -4031,6 +4031,9 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
 
+      const INT32 maxNum = 1000000 ;
+      const INT32 breakBufferSize = 2097152 ; /// 2MB
+      const INT32 minRecordNum = 4 ;
       BSONObj obj ;
       monAppCB *pMonAppCB = cb ? cb->getMonAppCB() : NULL ;
 
@@ -4041,7 +4044,7 @@ namespace engine
          goto error ;
       }
 
-      for ( INT32 i = 0; i < RTN_CONTEXT_GETNUM_ONCE; i++ )
+      for ( INT32 i = 0; i < maxNum; i++ )
       {
          rc = _sorting.fetch( obj, cb ) ;
          if ( SDB_DMS_EOC == rc )
@@ -4096,6 +4099,11 @@ namespace engine
          }
 
          DMS_MON_OP_COUNT_INC( pMonAppCB, MON_SELECT, 1 ) ;
+
+         if ( minRecordNum <= i && buffEndOffset() >= breakBufferSize )
+         {
+            break ;
+         }
 
          if ( buffEndOffset() + DMS_RECORD_MAX_SZ > RTN_RESULTBUFFER_SIZE_MAX )
          {
