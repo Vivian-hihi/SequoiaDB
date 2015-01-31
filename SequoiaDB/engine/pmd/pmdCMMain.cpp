@@ -192,7 +192,6 @@ namespace engine
       {
          string svcname = vm[ PMD_OPTION_PORT ].as<string>() ;
          sdbGetOMAgentOptions()->setCMServiceName( svcname.c_str() ) ;
-         sdbGetOMAgentOptions()->save() ;
       }
       setPDLevel( sdbGetOMAgentOptions()->getDiagLevel() ) ;
 
