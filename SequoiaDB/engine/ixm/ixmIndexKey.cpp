@@ -239,7 +239,7 @@ namespace engine
          else if ( !arrEle->eoo() )
          {
             rc = _genKeyWithArrayEle( keyEles, fieldNames.size(),
-                                      arrEle->embeddedObject(),
+                                      arrEle,
                                       arrEleName, arrElePos,
                                       keys ) ;
             if ( SDB_OK != rc )
@@ -272,18 +272,18 @@ namespace engine
       // PD_TRACE_DECLARE_FUNCTION ( SDB__IXMKEYGEN__GENKEYSWITHARRELE, "_ixmKeyGenerator::_genKeyWithArrayEle" )
       INT32 _genKeyWithArrayEle( BSONElement *keyEles,
                                  UINT32 eleNum,
-                                 const BSONObj &arrObj,
+                                 const BSONElement *arrElement,
                                  const CHAR *arrEleName,
                                  UINT32 arrElePos,
                                  BSONObjSet &keys ) const
       {
          PD_TRACE_ENTRY ( SDB__IXMKEYGEN__GENKEYSWITHARRELE );
          INT32 rc = SDB_OK ;
-
-         /// the element must be a undefined key when it is a empty array
+         BSONObj arrObj = arrElement->embeddedObject() ;
+         /// the element must be an empty array key when it is a empty array
          if ( arrObj.firstElement().eoo() )
          {
-            keyEles[arrElePos] = BSONElement() ;
+            keyEles[arrElePos] = *arrElement ;
             rc = _genKeyWithNormalEle( keyEles, eleNum, keys ) ;
             if ( SDB_OK != rc )
             {
@@ -321,7 +321,7 @@ namespace engine
                   if ( Array == e.type() )
                   {
                      rc = _genKeyWithArrayEle(keyEles, eleNum,
-                                              e.embeddedObject(),
+                                              &e,
                                               dottedName, arrElePos,
                                               keys) ;
                      if ( SDB_OK != rc )

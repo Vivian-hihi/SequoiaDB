@@ -905,6 +905,12 @@ namespace engine
          set<BSONElement, element_lt> vals ;
          vector<rtnPredicate> regexes ;
          BSONObjIterator i ( e.embeddedObject() ) ;
+
+         // if e is an empty array. just add it to vals.(this will be add to the _startStopKeys)
+         if ( !i.more() )
+         {
+            vals.insert ( e ) ;
+         }
          // for each element in the array
          while ( i.more() )
          {

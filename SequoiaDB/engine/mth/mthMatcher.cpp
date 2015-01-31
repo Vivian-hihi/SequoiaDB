@@ -1964,7 +1964,19 @@ namespace engine
                   goto done ;
             }
          }
-         BSONObjIterator it( e.embeddedObject() ) ;
+
+         //add by linyb for SEQUOIADBMAINSTREAM-537 at 2015.01.28
+         BSONObj eEmbObj = e.embeddedObject() ;
+         if ( ( BSONObj::opIN == op ) && ( eEmbObj.nFields() == 0 )
+              && ( bm._myset.size() == 0 ) )
+         {
+            //scene like this: record={a:[]}  &&  match={a:{$in:[]}}
+            result = MATCH ;
+            goto done ;
+         }
+         //end of add by linyb for SEQUOIADBMAINSTREAM-537 at 2015.01.28
+
+         BSONObjIterator it( eEmbObj ) ;
          while ( it.moreWithEOO() )
          {
             BSONElement z=it.next() ;
