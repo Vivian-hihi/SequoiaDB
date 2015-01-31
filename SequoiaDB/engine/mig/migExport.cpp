@@ -306,6 +306,7 @@ INT32 migExport::_query()
    bson condition ;
    bson sort ;
    bson_init ( &condition ) ;
+   bson_init ( &sort ) ;
    if( _pMigArg->pFiter )
    {
       if ( !jsonToBson2 ( &condition, _pMigArg->pFiter, 0, 1 ) )
@@ -322,7 +323,6 @@ INT32 migExport::_query()
    }
    if( _pMigArg->pSort )
    {
-      bson_init ( &sort ) ;
       if ( !jsonToBson2 ( &sort, _pMigArg->pSort, 0, 1 ) )
       {
          rc = SDB_INVALIDARG ;
