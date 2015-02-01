@@ -23,9 +23,9 @@ namespace engine {
 
       pmdEDUParam* param = ( pmdEDUParam * )pData ;
       ossSocket *pListerner = (ossSocket *)(param->pSocket) ;
-      // resolved protocol
+      // reserved protocol
       IPmdAccessProtocol *protocol = param->protocol ;
-      // delete EDUParam object
+      // delete pmdEDUParam object
       SDB_OSS_DEL param ;
       param = NULL ;
 
@@ -132,7 +132,7 @@ namespace engine {
       pmdEDUParam *pParam = ( pmdEDUParam * )arg ;
       SOCKET s = *((SOCKET *)&pParam->pSocket) ;
       IPmdAccessProtocol* protocol = pParam->protocol ;
-      // delete EDUParam object
+      // delete pmdEDUParam object
       SDB_OSS_DEL pParam ;
       pParam = NULL ;
 
