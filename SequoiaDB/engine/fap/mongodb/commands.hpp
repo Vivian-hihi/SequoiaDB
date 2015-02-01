@@ -143,8 +143,9 @@ DECLARE_COMMAND( killCursors )
 // business
 DECLARE_COMMAND( getnonce )
 //DECLARE_COMMAND( authenticate )
-DECLARE_COMMAND( create )  // create collection
-DECLARE_COMMAND( drop )    // drop   collection
+DECLARE_COMMAND( createCS )   // create collection space
+DECLARE_COMMAND( create )     // create collection
+DECLARE_COMMAND( drop )       // drop   collection
 DECLARE_COMMAND( count )
 DECLARE_COMMAND( aggregate )
 

@@ -77,7 +77,7 @@ INT32 _msgBuffer::realloc( CHAR *&ptr, const UINT32 size )
       goto done ;
    }
 
-   ptr = ( CHAR * )SDB_OSS_REALLOC( ptr, size + 1 ) ;
+   ptr = ( CHAR * )SDB_OSS_REALLOC( ptr, size ) ;
    if ( NULL == ptr )
    {
       rc = SDB_OOM ;
@@ -97,10 +97,17 @@ INT32 _msgBuffer::write( const CHAR *in, const UINT32 inLen )
 {
    INT32 rc   = SDB_OK ;
    INT32 size = 0 ;        // new size to realloc
-   INT32 num  = 0 ;        // number of memery block
+   INT32 num  = 0 ;        // number of memory block
+
+   if ( NULL == in )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
    if( inLen > _capacity - _size )
    {
-      // digit size of memery needed
+      // digit size of memory needed
       num = ( inLen + _size ) / MEMERY_BLOCK_SIZE + 1 ;
       size = num * MEMERY_BLOCK_SIZE ;
 
@@ -109,11 +116,45 @@ INT32 _msgBuffer::write( const CHAR *in, const UINT32 inLen )
       {
          goto error ;
       }
-
    }
 
    ossMemcpy( _data + _size, in, inLen ) ;
    _size += inLen ;
+
+done:
+   return rc ;
+error:
+   goto done ;
+}
+
+INT32 _msgBuffer::write( const bson::BSONObj &obj, BOOLEAN align, INT32 bytes )
+{
+   INT32 rc   = SDB_OK ;
+   INT32 size = 0 ;        // new size to realloc
+   INT32 num  = 0 ;        // number of memory block
+   UINT32 objsize = obj.objsize() ;
+   if( objsize > _capacity - _size )
+   {
+      // digit size of memory needed
+      num = ( objsize + _size ) / MEMERY_BLOCK_SIZE + 1 ;
+      size = num * MEMERY_BLOCK_SIZE ;
+
+      rc = realloc( _data, size ) ;
+      if( SDB_OK != rc )
+      {
+         goto error ;
+      }
+   }
+
+   ossMemcpy( _data + _size, obj.objdata(), objsize ) ;
+   if ( align )
+   {
+      _size += ossRoundUpToMultipleX( objsize, 4 ) ;
+   }
+   else
+   {
+      _size += objsize ;
+   }
 
 done:
    return rc ;

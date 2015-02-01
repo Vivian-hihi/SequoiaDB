@@ -96,6 +96,7 @@ INT32 _pmdMongoSession::run()
    INT32 rc                     = SDB_OK ;
    UINT32 msgSize               = 0 ;
    CHAR *pBuff                  = NULL ;
+   BOOLEAN bigEndian            = FALSE ;
    engine::pmdEDUMgr *pmdEDUMgr = NULL ;
 
    if ( !_pEDUCB )
@@ -103,9 +104,9 @@ INT32 _pmdMongoSession::run()
       rc = SDB_SYS ;
       goto error ;
    }
-
+   
    pmdEDUMgr = _pEDUCB->getEDUMgr() ;
-
+   bigEndian = checkBigEndian() ;
    while ( !_pEDUCB->isDisconnected() && !_socket.isClosed() )
    {
       // clear interrupt flag
@@ -125,6 +126,13 @@ INT32 _pmdMongoSession::run()
          break ;
       }
 
+      // if big endian, need to convert len to little endian
+      if ( bigEndian )
+      {
+         UINT32 tmp = msgSize ;
+         ossEndianConvert4( tmp, msgSize) ;
+      }
+      
       if ( msgSize < sizeof( mongoMsgHeader ) || msgSize > SDB_MAX_MSG_LENGTH )
       {
          PD_LOG( PDERROR, "Session[%s] recv msg size[%d] is less than "
@@ -221,7 +229,6 @@ error:
 INT32 _pmdMongoSession::_processMsg( const CHAR *pMsg, const INT32 len )
 {
    INT32 rc          = SDB_OK ;
-   INT32 con_rc      = SDB_OK ;
    const CHAR *pBody = NULL ;
    INT32 bodyLen     = 0 ;
 
