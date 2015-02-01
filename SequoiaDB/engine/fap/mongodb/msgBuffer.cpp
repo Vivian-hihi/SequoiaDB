@@ -149,7 +149,7 @@ INT32 _msgBuffer::write( const bson::BSONObj &obj, BOOLEAN align, INT32 bytes )
    ossMemcpy( _data + _size, obj.objdata(), objsize ) ;
    if ( align )
    {
-      _size += ossRoundUpToMultipleX( objsize, 4 ) ;
+      _size += ossRoundUpToMultipleX( objsize, bytes ) ;
    }
    else
    {
