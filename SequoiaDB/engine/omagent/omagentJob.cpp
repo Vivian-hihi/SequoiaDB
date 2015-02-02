@@ -31,15 +31,16 @@
 *******************************************************************************/
 #include "omagentUtil.hpp"
 #include "omagentJob.hpp"
-#include "omagentCommand.hpp"
+#include "omagentAsyncCmd.hpp"
 #include "pmdEDU.hpp"
 
 namespace engine
 {
 
-   /*
-      add host job
-   */
+/*
+
+//      add host job
+
    _omaAddHostJob::_omaAddHostJob ( string jobName, _omaAddHostTask *pTask )
    {
       _jobName = jobName ;
@@ -131,7 +132,6 @@ namespace engine
             goto error ;
          }
          rc = runCmd.doit( retObj ) ;
-         // failed in CPP, not execute js file yet
          if ( rc )
          {
             PD_LOG( PDERROR, "Failed to add host[%s], "
@@ -239,9 +239,9 @@ namespace engine
       goto done ;
    }
 
-   /*
-      rollback host job
-   */
+
+//      rollback host job
+
    _omaRbHostJob::_omaRbHostJob ( string jobName, _omaAddHostTask *pTask )
    {
       _jobName = jobName ;
@@ -425,9 +425,9 @@ namespace engine
       goto done ;
    }
 
-   /*
-      star add host task job
-   */
+
+//      star add host task job
+
    _omaStartAddHostTaskJob::_omaStartAddHostTaskJob ( BSONObj &addHostInfo )
    {
       _addHostInfoObj = addHostInfo.getOwned() ;
@@ -662,9 +662,9 @@ namespace engine
    }
 
 
-   /*
-       omagent create standalone job
-   */
+
+//       omagent create standalone job
+
    _omaCreateStandaloneJob::_omaCreateStandaloneJob (
                                              _omaInsDBBusTask *pTask )
    {
@@ -895,9 +895,9 @@ namespace engine
       goto done ;
    }
    
-   /*
-       omagent create catalog job
-   */
+
+//       omagent create catalog job
+
    _omaCreateCatalogJob::_omaCreateCatalogJob (
                                              _omaInsDBBusTask *pTask )
    {
@@ -1132,9 +1132,9 @@ namespace engine
       goto done ;
    }
 
-   /*
-      omagent create coord job
-   */
+
+//      omagent create coord job
+
    _omaCreateCoordJob::_omaCreateCoordJob ( _omaInsDBBusTask *pTask )
    {
       _name =  OMA_JOB_CREATE_COORD;
@@ -1367,9 +1367,9 @@ namespace engine
       goto done ;
    }
 
-   /*
-      omagent create data job
-   */
+
+//      omagent create data job
+
    _omaCreateDataJob::_omaCreateDataJob ( const CHAR *pGroupName,
                                           _omaInsDBBusTask *pTask )
    {
@@ -1624,9 +1624,9 @@ namespace engine
       goto done ;
    }
 
-   /*
-      install db business task job
-   */
+
+//      install db business task job
+
    _omaStartInsDBBusTaskJob::_omaStartInsDBBusTaskJob ( BSONObj &installInfo )
    {
       _isStandalone = FALSE ;
@@ -1841,9 +1841,9 @@ namespace engine
       goto done ;
    }
 
-   /*
-      remove db business task rollback job
-   */
+
+//      remove db business task rollback job
+
    _omaStartRmDBBusTaskJob::_omaStartRmDBBusTaskJob ( BSONObj &uninstallInfo )
    {
       _isStandalone = FALSE ;
@@ -2084,9 +2084,9 @@ namespace engine
       goto done ;
    }
 
-  /*
-      install db business task rollback job
-   */
+
+//      install db business task rollback job
+
    _omaInsDBBusTaskRbJob::_omaInsDBBusTaskRbJob (
                                               BOOLEAN isStandalone,
                                               string &vCoordSvcName,
@@ -2485,9 +2485,9 @@ namespace engine
       goto done ;
    }
 
-   /*
-      omagent remove virtual coord job
-   */
+
+//      omagent remove virtual coord job
+
    _omaRemoveVirtualCoordJob::_omaRemoveVirtualCoordJob (
                                                     const CHAR *vCoordSvcName,
                                               _omaInsDBBusTask *pTask )
@@ -2555,7 +2555,6 @@ namespace engine
       goto done ;
    }
 
-   // start job
 
    INT32 startAddHostJob( string jobName, _omaAddHostTask *pTask, EDUID *pEDUID )
    {
@@ -2901,6 +2900,7 @@ namespace engine
          PD_LOG ( PDERROR, "Failed to start job, rc = %d", rc ) ;
          goto done ;
       }
+
    done:
       return rc ;
    error:
@@ -2937,5 +2937,152 @@ namespace engine
    error:
       goto done ;
    }
+*/
+
+   /*
+      omagent job
+   */
+   _omagentJob::_omagentJob ( _omaTask *pTask, const BSONObj &info, void *ptr )
+   {
+      _pTask   = pTask ;
+      _info    = info.copy() ;
+      _pointer = ptr ;
+      if ( _pTask )
+         _jobName = _jobName + "Omagent job for task[" +
+                    _pTask->getTaskName() + "]" ;
+   }
+
+   _omagentJob::~_omagentJob()
+   {
+      // free pTask malloc int getTaskByType()
+      SAFE_OSS_FREE( _pTask ) ;
+   }
+
+   RTN_JOB_TYPE _omagentJob::type () const
+   {
+      return RTN_JOB_OMAGENT ;
+   }
+
+   const CHAR* _omagentJob::name () const
+   {
+      return _jobName.c_str() ;
+   }
+
+   BOOLEAN _omagentJob::muteXOn ( const _rtnBaseJob *pOther )
+   {
+      return FALSE ;
+   }
+
+   INT32 _omagentJob::doit()
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( NULL == _pTask )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "Invalid task poiter" ) ;
+         goto error ;
+      }
+      rc = _pTask->init( _info, _pointer ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to init in job[%s] for running task[%s], "
+                 "rc = %d", _jobName.c_str(), _pTask->getTaskName(), rc ) ;
+         goto error ;
+      }
+      rc = _pTask->doit() ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to do it in job[%s] for running task[%s], "
+                 "rc = %d", _jobName.c_str(), _pTask->getTaskName(), rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+
+
+
+   // start job
+
+   INT32 startOmagentJob ( OMA_TASK_TYPE taskType, INT64 taskID,
+                           const BSONObj &info, void *ptr )
+   {
+      INT32 rc               = SDB_OK ;
+      EDUID eduID            = PMD_INVALID_EDUID ;
+      BOOLEAN returnResult   = FALSE ;
+      _omagentJob *pJob      = NULL ;
+      _omaTask *pTask        = NULL ;
+
+      // get task
+      pTask = getTaskByType( taskType, taskID ) ;
+      if ( NULL == pTask )
+      {
+         PD_LOG( PDERROR, "Unkown task type" ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      // new job
+      pJob = SDB_OSS_NEW _omagentJob( pTask, info, ptr ) ;
+      if ( !pJob )
+      {
+         PD_LOG ( PDERROR, "Failed to alloc memory for running task "
+                  "with the type[%d]", taskType ) ;
+         rc = SDB_OOM ;
+         goto error ;
+      }
+      // start job
+      rc = rtnGetJobMgr()->startJob( pJob, RTN_JOB_MUTEX_NONE, &eduID,
+                                     returnResult ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to start task with the type[%d], rc = %d",
+                  taskType, rc ) ;
+         goto done ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   _omaTask* getTaskByType( OMA_TASK_TYPE taskType, INT64 taskID )
+   {
+      _omaTask *pTask = NULL ;
+      
+      switch ( taskType )
+      {
+         // pTask will be free in _omagentJob::~_omagentJob()
+         // when job is destroy
+         case OMA_TASK_ADD_HOST :
+            pTask = SDB_OSS_NEW _omaAddHostTask( taskID ) ;
+            break ;
+         case OMA_TASK_ADD_HOST_SUB :
+            pTask = SDB_OSS_NEW _omaAddHostSubTask( taskID ) ;
+            break ;
+         case OMA_TASK_INSTALL_DB :
+            // TODO:
+            break ;
+         case OMA_TASK_REMOVE_DB :
+            // TODO:
+            break ;
+         default :
+            PD_LOG_MSG( PDERROR, "Unknow task type[%d]", taskType ) ;
+            break ;
+      }
+      if ( NULL == pTask )
+      {
+         PD_LOG_MSG( PDERROR, "Failed to malloc for task with the type[%d]",
+                     taskType ) ;
+      }
+      return pTask ;
+   }
+
+   
 
 }

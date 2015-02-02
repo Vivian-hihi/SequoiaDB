@@ -421,7 +421,7 @@ namespace engine
       // check flags
       if ( rc < -SDB_MAX_ERROR || rc > SDB_MAX_WARNING )
       {
-         PD_LOG ( PDERROR, "Error code error[rc:%d]", rc ) ;
+         PD_LOG ( PDERROR, "Error code is invalid[rc:%d]", rc ) ;
          rc = SDB_SYS ;
       }
       if ( eduCB()->getInfo( EDU_INFO_ERROR ) &&
@@ -432,6 +432,12 @@ namespace engine
       }
       else
       {
+/*
+         // should never come here
+#if defined (_DEBUG)
+         ossPanic() ;
+#endif
+*/
          builder.append( OMA_FIELD_DETAIL, getErrDesp( rc ) ) ;
       }
 
