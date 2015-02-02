@@ -1088,8 +1088,9 @@ namespace engine
          if ( isFinish )
          {
             BSONObj resultInfo ;
-            resultInfo = taskUpdateInfo.getObjectField( 
-                                                OM_TASKINFO_FIELD_RESULTINFO ) ;
+            BSONObj tmpFilter = BSON( OM_TASKINFO_FIELD_RESULTINFO << 1 ) ;
+            resultInfo = taskUpdateInfo.filterFieldsUndotted( tmpFilter, 
+                                                              true ) ;
             rc = pTask->finish( resultInfo ) ;
             if ( SDB_OK != rc )
             {
