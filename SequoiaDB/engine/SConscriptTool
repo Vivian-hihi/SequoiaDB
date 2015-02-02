@@ -138,9 +138,13 @@ omagentFiles = [
       "omagent/omagentUtil.cpp",
       "omagent/omagentSession.cpp",
       "omagent/omagentHelper.cpp",
-      "omagent/omagentCommand.cpp",
+      "omagent/omagentCmdBase.cpp",
+      "omagent/omagentSyncCmd.cpp",
+      "omagent/omagentAsyncCmd.cpp",
       "omagent/omagentNodeCmd.cpp",
+      "omagent/omagentTaskBase.cpp",
       "omagent/omagentTask.cpp",
+      "omagent/omagentSubTask.cpp",
       "omagent/omagentJob.cpp",
       "omagent/omagentRunJob.cpp"
       ]
