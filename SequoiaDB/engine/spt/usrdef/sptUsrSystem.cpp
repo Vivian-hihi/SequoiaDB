@@ -886,6 +886,226 @@ namespace engine
       builder.append( SPT_USR_SYSTEM_HOSTS, arrBuilder.arr() ) ;
    }
 
+   static INT32 getCoreNum( UINT32 &num, std::string &error )
+   {
+      INT32 rc = SDB_OK ;
+      _ossCmdRunner runner ;
+      std::stringstream ss ;
+      std::string outStr ;
+      UINT32 exitCode = 0 ;
+      const CHAR *cmd = "cat /proc/cpuinfo |grep 'processor' | wc -l" ;
+      
+      rc = runner.exec( cmd, exitCode,
+                        FALSE, -1, FALSE, NULL, TRUE ) ;
+      if ( SDB_OK != rc || SDB_OK != exitCode )
+      {
+         PD_LOG( PDERROR, "failed to exec cmd, rc:%d, exit:%d",
+                 rc, exitCode ) ;
+         if ( SDB_OK == rc )
+         {
+            rc = SDB_SYS ;
+         }
+         ss << "failed to exec cmd \" " << cmd << "\",rc:"
+            << rc
+            << ",exit:"
+            << exitCode ;
+         goto error ;
+      }
+
+      rc = runner.read( outStr ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to read msg from cmd runner:%d", rc ) ;
+         ss << "failed to read msg from cmd \"" << cmd << "\", rc:"
+            << rc ;
+         goto error ;
+      }
+
+      boost::algorithm::replace_last( outStr, "\n", "") ;
+      try
+      {
+         num = boost::lexical_cast<UINT32>( outStr ) ;
+      }
+      catch ( std::exception &e )
+      {
+         ss << "unexpected error happened:" << e.what() ;
+         rc = SDB_SYS ;
+         goto error ; 
+      }
+   done:
+      return rc ;
+   error:
+      error = ss.str() ;
+      goto done ;
+   }
+
+   static INT32 getModelName( std::string &name, std::string &error )
+   {
+      INT32 rc = SDB_OK ;
+      _ossCmdRunner runner ;
+      std::stringstream ss ;
+      std::string outStr ;
+      UINT32 exitCode = 0 ;
+      const CHAR *cmd = NULL ;
+#if defined (_PPCLIN64)
+      cmd = "cat /proc/cpuinfo |grep 'cpu' | cut -f2 -d: | uniq" ;
+#else
+      cmd = "cat /proc/cpuinfo |grep 'model name' | cut -f2 -d: | uniq" ;
+#endif
+      rc = runner.exec( cmd, exitCode,
+                        FALSE, -1, FALSE, NULL, TRUE ) ;
+      if ( SDB_OK != rc || SDB_OK != exitCode )
+      {
+         PD_LOG( PDERROR, "failed to exec cmd, rc:%d, exit:%d",
+                 rc, exitCode ) ;
+         if ( SDB_OK == rc )
+         {
+            rc = SDB_SYS ;
+         }
+         ss << "failed to exec cmd \" " << cmd << "\",rc:"
+            << rc
+            << ",exit:"
+            << exitCode ;
+         goto error ;
+      }
+
+      rc = runner.read( outStr ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to read msg from cmd runner:%d", rc ) ;
+         ss << "failed to read msg from cmd \"" << cmd << "\", rc:"
+            << rc ;
+         goto error ;
+      }
+
+     
+      boost::algorithm::trim_left( outStr ) ;
+      boost::algorithm::replace_last( outStr, "\n", "" ) ;
+      name = outStr ;
+   done:
+      return rc ;
+   error:
+      error = ss.str() ;
+      goto done ;
+   }
+
+   static INT32 getFreq( std::string &freq, std::string &error )
+   {
+      INT32 rc = SDB_OK ;
+      _ossCmdRunner runner ;
+      std::stringstream ss ;
+      std::string outStr ;
+      UINT32 exitCode = 0 ;
+      const CHAR *cmd = NULL ;
+#if defined (_PPCLIN64)
+      cmd = "cat /proc/cpuinfo |grep 'clock' | cut -f2 -d: | uniq" ;
+#else
+      cmd = "cat /proc/cpuinfo |grep 'cpu MHz' | cut -f2 -d: | uniq" ;
+#endif
+      rc = runner.exec( cmd, exitCode,
+                        FALSE, -1, FALSE, NULL, TRUE ) ;
+      if ( SDB_OK != rc || SDB_OK != exitCode )
+      {
+         PD_LOG( PDERROR, "failed to exec cmd, rc:%d, exit:%d",
+                 rc, exitCode ) ;
+         if ( SDB_OK == rc )
+         {
+            rc = SDB_SYS ;
+         }
+         ss << "failed to exec cmd \" " << cmd << "\",rc:"
+            << rc
+            << ",exit:"
+            << exitCode ;
+         goto error ;
+      }
+
+      rc = runner.read( outStr ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to read msg from cmd runner:%d", rc ) ;
+         ss << "failed to read msg from cmd \"" << cmd << "\", rc:"
+            << rc ;
+         goto error ;
+      }
+
+      boost::algorithm::trim_left( outStr ) ;
+      boost::algorithm::replace_last( outStr, "\n", "" ) ;
+      freq = outStr + "MHz" ;
+   done:
+      return rc ;
+   error:
+      error = ss.str() ;
+      goto done ;
+   }
+
+#if defined (_LINUX)
+   INT32 _sptUsrSystem::getCpuInfo( const _sptArguments &arg,
+                                    _sptReturnVal &rval,
+                                    bson::BSONObj &detail )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObjBuilder builder ;
+      BSONArrayBuilder arrBuilder ;
+      BSONObjBuilder cpuBuilder ;
+      string error ;
+      std::string model ;
+      std::string freq ;
+      UINT32 coreNum ;
+
+      rc = getCoreNum( coreNum, error ) ;
+      if ( SDB_OK != rc )
+      {
+         detail = BSON( SPT_ERR << error ) ;
+         goto error ;
+      }
+
+      rc = getModelName( model, error ) ;
+      if ( SDB_OK != rc )
+      {
+         detail = BSON( SPT_ERR << error ) ;
+         goto error ;
+      }
+
+      rc = getFreq( freq, error ) ;
+      if ( SDB_OK != rc )
+      {
+         detail = BSON( SPT_ERR << error ) ;
+         goto error ;
+      }
+
+      cpuBuilder.append( SPT_USR_SYSTEM_CORE, coreNum ) ;
+      cpuBuilder.append( SPT_USR_SYSTEM_INFO, model ) ;
+      cpuBuilder.append( SPT_USR_SYSTEM_FREQ, freq ) ;
+
+      arrBuilder << cpuBuilder.obj() ;
+      builder.append( SPT_USR_SYSTEM_CPUS, arrBuilder.arr() ) ;
+
+      {
+      SINT64 user = 0 ;
+      SINT64 sys = 0 ;
+      SINT64 idle = 0 ;
+      SINT64 other = 0 ;
+      rc = ossGetCPUInfo( user, sys, idle, other ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+
+      builder.appendNumber( SPT_USR_SYSTEM_USER, user ) ;
+      builder.appendNumber( SPT_USR_SYSTEM_SYS, sys ) ;
+      builder.appendNumber( SPT_USR_SYSTEM_IDLE, idle ) ;
+      builder.appendNumber( SPT_USR_SYSTEM_OTHER, other ) ;
+      }
+      rval.setBSONObj( "", builder.obj() ) ; 
+       
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+#endif /// _LINUX
+
+#if defined (_WINDOWS)
    INT32 _sptUsrSystem::getCpuInfo( const _sptArguments &arg,
                                     _sptReturnVal &rval,
                                     bson::BSONObj &detail )
@@ -895,14 +1115,9 @@ namespace engine
       _ossCmdRunner runner ;
       string outStr ;
       BSONObjBuilder builder ;
+      const CHAR *cmd = "wmic CPU GET CurrentClockSpeed,Name,NumberOfCores" ;
 
-#if defined (_LINUX)
-   #define CPU_CMD "cat /proc/cpuinfo |grep name | cut -f2 -d: |uniq -c"
-#else
-   #define CPU_CMD "wmic CPU GET CurrentClockSpeed,Name,NumberOfCores"
-#endif
-
-      rc = runner.exec( CPU_CMD, exitCode,
+      rc = runner.exec( cmd, exitCode,
                         FALSE, -1, FALSE, NULL, TRUE ) ;
       if ( SDB_OK != rc || SDB_OK != exitCode )
       {
@@ -913,7 +1128,7 @@ namespace engine
             rc = SDB_SYS ;
          }
          stringstream ss ;
-         ss << "failed to exec cmd \" " << CPU_CMD << "\",rc:"
+         ss << "failed to exec cmd \" " << cmd << "\",rc:"
             << rc
             << ",exit:"
             << exitCode ;
@@ -926,7 +1141,7 @@ namespace engine
       {
          PD_LOG( PDERROR, "failed to read msg from cmd runner:%d", rc ) ;
          stringstream ss ;
-         ss << "failed to read msg from cmd \"" << CPU_CMD << "\", rc:"
+         ss << "failed to read msg from cmd \"" << cmd << "\", rc:"
             << rc ;
          detail = BSON( SPT_ERR << ss.str() ) ;
          goto error ;
@@ -966,6 +1181,8 @@ namespace engine
    error:
       goto done ;
    }
+#endif /// _WINDOWS
+
 
    INT32 _sptUsrSystem::snapshotCpuInfo( const _sptArguments &arg,
                                          _sptReturnVal &rval,
