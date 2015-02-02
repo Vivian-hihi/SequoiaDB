@@ -192,7 +192,25 @@ INT32 _pmdMongoSession::run()
                   rc = _processMsg( (*itr)->data(), (*itr)->size() ) ;
                   if ( rc )
                   {
-                     break ;
+                     // here mean mongo msg was converted to multi sdb msg
+                     // like insert docs msg or create collection command msg
+                     // those msg convert to more than one sdb msg
+                     // that time cs may have been existed, should skip the error
+                     // do nothing
+                     if ( _converter->isOpInsert() &&
+                          ( SDB_DMS_CS_EXIST != rc || SDB_DMS_EXIST != rc ) )
+                     {
+                        // is insert msg, do nothing
+                     }
+                     else if ( _converter->isOpCreateCL() &&
+                               SDB_DMS_CS_EXIST != rc )
+                     {
+                        // is create collection msg, do nothing
+                     }
+                     else
+                     {
+                        break ;
+                     }
                   }
                   // wait edu
                   if ( SDB_OK != ( rc = pmdEDUMgr->waitEDU( _pEDUCB ) ) )
@@ -231,15 +249,6 @@ INT32 _pmdMongoSession::_processMsg( const CHAR *pMsg, const INT32 len )
    INT32 rc          = SDB_OK ;
    const CHAR *pBody = NULL ;
    INT32 bodyLen     = 0 ;
-
-   // convert msg first
-   //_converter->loadFrom( pMsg, len ) ;
-   //con_rc = _converter->convert( _inBuffer ) ;
-   //if ( SDB_OK != con_rc )
-   //{
-   //   rc = SDB_INVALIDARG ;
-   //   goto error ;
-   //}
 
    rc = _onMsgBegin( (MsgHeader *) pMsg ) ;//_inBuffer.data() ) ;
    if ( SDB_OK != rc )

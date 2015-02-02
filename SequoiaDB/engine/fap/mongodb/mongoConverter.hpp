@@ -50,7 +50,7 @@ public:
    mongoConverter() : _cmd( NULL )
    {
       _bigEndian = checkBigEndian() ;
-      parser.setEndian( _bigEndian ) ;
+      _parser.setEndian( _bigEndian ) ;
    }
 
    ~mongoConverter()
@@ -79,6 +79,16 @@ public:
       _cmd = NULL ;
    }
 
+   BOOLEAN isOpInsert() const
+   {
+      return _parser.opInsert ;
+   }
+
+   BOOLEAN isOpCreateCL() const
+   {
+      return _parser.opCreateCL ;
+   }
+
    // virtual function for baseConverter
    virtual INT32 convert( std::vector<msgBuffer*> &out ) ;
    virtual INT32 reConvert( msgBuffer *in, msgBuffer &out ) ;
@@ -86,6 +96,6 @@ public:
 private:
    BOOLEAN _bigEndian ;
    command *_cmd ;
-   mongoParser parser ;
+   mongoParser _parser ;
 };
 #endif
