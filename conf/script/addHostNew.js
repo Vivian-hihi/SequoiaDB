@@ -673,8 +673,7 @@ println("Finish pushing db packet")
    // 7. install db packet
    try
    {
-// TODO:
-//      _installDBPacket( ssh, sdbUser, sdbPasswd, installPacket, installPath ) ;
+      _installDBPacket( ssh, sdbUser, sdbPasswd, installPacket, installPath ) ;
 println("Finish install db packet")
    }
    catch ( e )

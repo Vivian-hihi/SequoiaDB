@@ -315,12 +315,15 @@ println( "start tmp sdbcm execute command: " + cmd ) ;
             sleep( OMA_SLEEP_TIME ) ;
          }
       }
+// TODO: println
+/*
       if ( OMA_TRY_TIMES <= times )
       {
          errMsg = "Time out, temporary sdbcm does not start successfully in host[" + ssh.getPeerIP() + "]" ;
          PD_LOG( arguments, PDERROR, FILE_NAME_PRE_CHECK_HOST, errMsg ) ;
          exception_handle( SDB_TIMEOUT, errMsg ) ;
       }
+*/
    }
    else
    {
