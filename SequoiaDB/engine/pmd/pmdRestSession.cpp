@@ -759,15 +759,11 @@ namespace engine
                                        _wwwRootPath.c_str(), pFilePath, 
                                        localAgentHost, localAgentPort ) ;
          }
-         else if ( ossStrcasecmp( pSubCommand, OM_QUERY_PROGRESS ) == 0 )
-         {
-            commandIf = SDB_OSS_NEW omQueryInstallProgress( pAdptor, this ) ;
-         }
          else if ( ossStrcasecmp( pSubCommand, OM_LIST_NODE_REQ ) == 0 )
          {
             commandIf = SDB_OSS_NEW omListNodeCommand( pAdptor, this ) ;
          }
-         else if ( ossStrcasecmp( pSubCommand, OM_QUERY_NODE_CONF_REQ ) == 0 )
+         else if ( ossStrcasecmp( pSubCommand, OM_GET_NODE_CONF_REQ ) == 0 )
          {
             commandIf = SDB_OSS_NEW omQueryNodeConfCommand( pAdptor, this ) ;
          }
@@ -1304,10 +1300,10 @@ namespace engine
          goto error ;
       }
 
-      pAdaptor->getQuery( _restSession, REST_KEY_NAME_ORDER, &pOrder ) ;
+      pAdaptor->getQuery( _restSession, FIELD_NAME_SORT, &pOrder ) ;
       pAdaptor->getQuery( _restSession, FIELD_NAME_HINT, &pHint ) ;
-      pAdaptor->getQuery( _restSession, REST_KEY_NAME_MATCHER, &pMatch ) ;
-      pAdaptor->getQuery( _restSession, REST_KEY_NAME_SELECTOR, &pSelector ) ;
+      pAdaptor->getQuery( _restSession, FIELD_NAME_FILTER, &pMatch ) ;
+      pAdaptor->getQuery( _restSession, FIELD_NAME_SELECTOR, &pSelector ) ;
       pAdaptor->getQuery( _restSession, REST_KEY_NAME_FLAG, &pFlag ) ;
       pAdaptor->getQuery( _restSession, FIELD_NAME_SKIP, &pSkip ) ;
       pAdaptor->getQuery( _restSession, FIELD_NAME_RETURN_NUM, 
@@ -1326,7 +1322,7 @@ namespace engine
             if ( SDB_OK != rc )
             {
                PD_LOG_MSG( PDERROR, "field's format error:field=%s, value=%s", 
-                           REST_KEY_NAME_ORDER, pOrder ) ;
+                           FIELD_NAME_SORT, pOrder ) ;
                goto error ;
             }
          }
@@ -1348,7 +1344,7 @@ namespace engine
             if ( SDB_OK != rc )
             {
                PD_LOG_MSG( PDERROR, "field's format error:field=%s, value=%s", 
-                           REST_KEY_NAME_MATCHER, pMatch ) ;
+                           FIELD_NAME_FILTER, pMatch ) ;
                goto error ;
             }
          }
@@ -1359,7 +1355,7 @@ namespace engine
             if ( SDB_OK != rc )
             {
                PD_LOG_MSG( PDERROR, "field's format error:field=%s, value=%s", 
-                           REST_KEY_NAME_SELECTOR, pSelector ) ;
+                           FIELD_NAME_SELECTOR, pSelector ) ;
                goto error ;
             }
          }
@@ -1489,14 +1485,14 @@ namespace engine
          flag = ossAtoi( pFlag ) ;
       }
 
-      pAdaptor->getQuery( _restSession, REST_KEY_NAME_MATCHER, &pMatcher ) ;
+      pAdaptor->getQuery( _restSession, FIELD_NAME_FILTER, &pMatcher ) ;
       if ( NULL != pMatcher )
       {
          rc = fromjson( pMatcher, matcher ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG_MSG( PDERROR, "field's format error:field=%s,value=%s", 
-                        REST_KEY_NAME_SELECTOR, pMatcher ) ;
+                        FIELD_NAME_FILTER, pMatcher ) ;
             goto error ;
          }
       }
@@ -1848,14 +1844,14 @@ namespace engine
          goto error ;
       }
 
-      pAdaptor->getQuery( _restSession, REST_KEY_NAME_MATCHER, &pMatcher ) ;
+      pAdaptor->getQuery( _restSession, FIELD_NAME_FILTER, &pMatcher ) ;
       if ( NULL != pMatcher )
       {
          rc = fromjson( pMatcher, matcher ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG_MSG( PDERROR, "field's format error:field=%s,value=%s", 
-                        REST_KEY_NAME_MATCHER, pMatcher ) ;
+                        FIELD_NAME_FILTER, pMatcher ) ;
             goto error ;
          }
       }
