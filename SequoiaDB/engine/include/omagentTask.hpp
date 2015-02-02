@@ -87,19 +87,12 @@ namespace engine
          BOOLEAN _isTaskFinish() ;
          void _setRetErr( INT32 errNum ) ;
 
-/*
-      private:
-         void _buildErrMsg() ;
-         BOOLEAN _hasUninstallHost() ;
-         void _collectProgressInfo() ;
-*/
       private:
          // add host raw info
          BSONObj                           _addHostRawInfo ;
          // add host info
          vector<AddHostInfo>               _addHostInfo ;
          // result
-//         INT32                             _status ;
          map< INT32, AddHostResultInfo >   _addHostResult ;
 
          ossSpinSLatch                     _taskLatch ;
@@ -111,6 +104,36 @@ namespace engine
          CHAR                              _detail[OMA_BUFF_SIZE + 1] ;
    } ;
    typedef _omaAddHostTask omaAddHostTask ;
+
+
+   /*
+      install db business task
+   */
+   class _omaInstDBBusTask: public _omaTask
+   {
+      public:
+         _omaInstDBBusTask( INT64 taskID ) ;
+         virtual ~_omaInstDBBusTask () ;
+
+      public:
+         INT32 init( const BSONObj &info, void *ptr = NULL ) ;
+         INT32 doit() ;
+
+      private:
+
+      private:
+         BSONObj                           _instDBBusRawInfo ;
+         
+         ossSpinSLatch                     _taskLatch ;
+         ossEvent                          _taskEvent ;
+         UINT64                            _eventID ; 
+
+         INT32                             _progress ;
+         INT32                             _errno ;
+         CHAR                              _detail[OMA_BUFF_SIZE + 1] ;
+         
+   } ;
+   typedef _omaInstDBBusTask omaInstDBBusTask ;
    
 /*
    // install database business

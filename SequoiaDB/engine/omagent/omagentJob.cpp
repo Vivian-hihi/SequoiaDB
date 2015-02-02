@@ -3066,7 +3066,7 @@ namespace engine
             pTask = SDB_OSS_NEW _omaAddHostSubTask( taskID ) ;
             break ;
          case OMA_TASK_INSTALL_DB :
-            // TODO:
+            pTask = SDB_OSS_NEW _omaInstDBBusTask( taskID ) ;
             break ;
          case OMA_TASK_REMOVE_DB :
             // TODO:

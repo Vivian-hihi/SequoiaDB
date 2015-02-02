@@ -137,6 +137,9 @@ namespace engine
          PD_LOG( PDERROR, "Failed to update add host progress"
                  "to omsvc, rc = %d", rc ) ;
       }
+      // 7. submit task info to omagent mgr
+      sdbGetOMAgentMgr()->submitTaskInfo( _taskID ) ;
+      
       PD_LOG( PDEVENT, "Omagent finish running add host task" ) ;
       
       return SDB_OK ;
@@ -213,10 +216,6 @@ namespace engine
             finishNum++ ;
       }
       _progress = ( finishNum * 100 ) / totalNum ;
-/*
-      if ( 100 == _progress )
-         _taskStatus = OMA_TASK_STATUS_FINISH ;
-*/
 
       // 3. notify task to update progress to om
       _eventID++ ;
@@ -527,21 +526,6 @@ namespace engine
             // 2. check whether add host task has finished or not
             if ( _isTaskFinish() )
             {
-/*
-               // update the last time
-               rc = _updateProgressToOM() ;
-               if ( SDB_APP_INTERRUPT == rc )
-               {
-                  PD_LOG( PDERROR, "Failed to update add host progress"
-                          "to omsvc, rc = %d", rc ) ;
-                  goto error ;
-               }
-               else if ( SDB_OK != rc )
-               {
-                  PD_LOG( PDERROR, "Failed to update add host progress"
-                          "to omsvc, rc = %d", rc ) ;
-               }
-*/
                PD_LOG( PDEVENT, "All the add host sub tasks had finished" ) ;
                goto done ;
             }
@@ -730,343 +714,62 @@ namespace engine
    }
 
 
-/***********************************************************************/
+   /*
+      install db business task
+   */
+   _omaInstDBBusTask::_omaInstDBBusTask( INT64 taskID )
+   : _omaTask( taskID )
+   {
+      _taskType = OMA_TASK_INSTALL_DB ;
+      _taskName = OMA_TASK_NAME_INSTALL_DB_BUSINESS ;
+      _eventID  = 0 ;
+      _progress = 0 ;
+      _errno    = SDB_OK ;
+      ossMemset( _detail, 0, OMA_BUFF_SIZE + 1 ) ;
+   }
 
+   _omaInstDBBusTask::~_omaInstDBBusTask()
+   {
+   }
+
+   INT32 _omaInstDBBusTask::init( const BSONObj &info, void *ptr )
+   {
+      INT32 rc = SDB_OK ;
+
+      _instDBBusRawInfo = info.copy() ;
+      
+      PD_LOG ( PDDEBUG, "Install db business passes argument: %s",
+               _instDBBusRawInfo.toString( FALSE, TRUE ).c_str() ) ;
 /*
-   AddHostInfo* _omaAddHostTask::getRbHostItem()
-   {
-      ossScopedLock lock ( &_taskLatch, EXCLUSIVE ) ;
-      vector<AddHostInfo>::iterator it = _rollbackInfo.begin() ;
-      for( ; it != _rollbackInfo.end(); it++ )
+      // init add host info
+      rc = _initAddHostInfo( _addHostRawInfo ) ;
+      if ( rc )
       {
-         if ( FALSE == it->_flag )
-         {
-            it->_flag = TRUE ;
-            return &(*it) ;
-         }
-      }
-      return NULL ;
-   }
-
-
-   INT32 _omaAddHostTask::queryProgress ( BSONObj &progress )
-   {
-      INT32 rc = SDB_OK ;
-      BSONObjBuilder bob ;
-      BSONArrayBuilder bab ;
-      const CHAR *pStage = NULL ;
-
-      // collect prgress info
-      _collectProgressInfo() ;
-      
-      // while task has failed
-      if ( getIsTaskFail() )
-      {
-         if ( '\0' == _detail[0] )
-         {
-            PD_LOG_MSG ( PDERROR,"Task[%s] had failed, please check "
-                         "the dialog for more detail", taskName() ) ;
-         }
-         else
-         {
-            PD_LOG_MSG ( PDERROR, _detail ) ;
-         }
-         rc = SDB_OMA_TASK_FAIL ;
-         goto done ;
-      }
-      
-      // test which stage task is in
-      if ( OMA_OPT_INSTALL == _stage )
-      {
-         pStage = STAGE_INSTALL ;
-      }
-      else if ( OMA_OPT_ROLLBACK == _stage )
-      {
-         pStage = STAGE_ROLLBACK ;
-      }
-      else
-      {
-         PD_LOG ( PDERROR, "Invalid task's stage" ) ;
-         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Failed to init to get add host's info" ) ;
          goto error ;
       }
-      try
-      {
-         // taskID
-         bob.append( OMA_FIELD_TASKID, (SINT64)_taskID ) ;
-         // isFinish
-         bob.appendBool( OMA_FIELD_ISFINISH, _isTaskFinish ) ;
-         // status
-         bob.append( OMA_FIELD_STATUS, pStage ) ;
-         
-         // set add host status
-         vector<AddHostInfo>::iterator it ;
-         if ( OMA_OPT_INSTALL== _stage )
-         {
-            it = _addHostInfo.begin() ;
-            while ( it != _addHostInfo.end() )
-            {
-               string ip = it->_item._ip ;
-               string desc = it->_ps._desc ;
-               BSONObjBuilder bob ;
-               BSONObj result ;
-               bob.append( OMA_FIELD_IP, ip.c_str() ) ;
-               bob.appendBool( OMA_FIELD_HASFINISH,
-                               ( (TRUE == it->_isFinish) ? 1 : 0 ) ) ;
-               if ( SDB_OK != it->_ps._errno )
-               {
-                  bob.appendBool( OMA_FIELD_HASERROR, 1 ) ;
-                  bob.append( OMA_FIELD_DESC, it->_ps._errMsg.c_str() ) ;
-               }
-               else
-               {
-                  bob.appendBool( OMA_FIELD_HASERROR, 0 ) ;
-                  bob.append( OMA_FIELD_DESC, desc.c_str() ) ;
-               }
-               result = bob.obj() ;
-               bab.append ( result ) ;
-               it++ ;
-            } 
-         }
-         else
-         {
-            it = _rollbackInfo.begin() ;
-            while ( it != _rollbackInfo.end() )
-            {
-               string ip = it->_item._ip ;
-               string desc = it->_ps._desc ;
-               BSONObjBuilder bob ;
-               BSONObj result ;
-               bob.append( OMA_FIELD_IP, ip.c_str() ) ;
-               bob.appendBool( OMA_FIELD_HASFINISH,
-                               ( (TRUE == it->_isFinish) ? 1 : 0 ) ) ;
-               if ( SDB_OK != it->_ps._errno )
-               {
-                  bob.appendBool( OMA_FIELD_HASERROR, 1 ) ;
-                  bob.append( OMA_FIELD_DESC, it->_ps._errMsg.c_str() ) ;
-               }
-               else
-               {
-                  bob.appendBool( OMA_FIELD_HASERROR, 0 ) ;
-                  bob.append( OMA_FIELD_DESC, desc.c_str() ) ;
-               }
-               result = bob.obj() ;
-               bab.append ( result ) ;
-               it++ ;
-            } 
-         }
-      
-         // try to set ErrMsg
-         // TODO:
-         if ( !(bob.hasField( OMA_FIELD_ERRMSG ) ) )
-         {
-            bob.append( OMA_FIELD_ERRMSG, "" ) ;
-         }
-         // set return result
-         bob.appendArray( OMA_FIELD_PROGRESS, bab.arr() ) ;
-         progress = bob.obj() ;
-      }
-      catch ( std::exception &e )
-      {
-         rc = SDB_SYS ;
-         PD_LOG ( PDERROR, "Failed to get add host progress: %s",
-                  e.what() ) ;
-         goto error ;
-      }
-
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   INT32 _omaAddHostTask::_rollback()
-   {
-      INT32 rc = SDB_OK ;
-      INT32 hostNum = 0 ;
-      INT32 threadNum = 0 ;
-      
-      //get rollback host info
-      _getRollbackInfo() ;
-      // clear _jobStatus for rollback host jobs
-      _jobStatus.clear() ;
-      // set task stage to be rollback
-      _stage = OMA_OPT_ROLLBACK ;
-
-      hostNum = _rollbackInfo.size() ;
-      if ( 0 == hostNum )
-      {
-         PD_LOG ( PDDEBUG, "No host needs to rollback" ) ;
-         goto done ;
-      }
-      threadNum = hostNum < ADD_HOST_MAX_THREAD_NUM ? hostNum :
-                                                      ADD_HOST_MAX_THREAD_NUM ;
-      for( INT32 i = 0; i < threadNum; i++ )
-      { 
-         CHAR jobName[OMA_BUFF_SIZE + 1] = { 0 };
-         EDUID jobID = PMD_INVALID_EDUID ;
-         ossSnprintf(jobName, OMA_BUFF_SIZE, "%s %d", OMA_JOB_ROLLBACKHOST, i ) ;
-         // start add host jobs
-         rc = startRbHostJob( jobName, this, &jobID ) ;
-         if ( rc )
-         {
-            PD_LOG ( PDERROR, "Failed to start add host job[%s], "
-                     "rc = %d", jobName, rc ) ;
-            goto error ;
-         }
-      }
-      
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-   
-   void _omaAddHostTask::_getRollbackInfo()
-   {
-      vector<AddHostInfo>::iterator it = _addHostInfo.begin() ;
-
-      for ( ; it != _addHostInfo.end(); it++ )
-      {
-         if ( (TRUE == it->_flag) && (TRUE == it->_isFinish) &&
-              (TRUE == it->_ps._hasInstall) )
-         {
-            it->_flag = FALSE ;
-            it->_isFinish = FALSE ;
-            _rollbackInfo.push_back( *it ) ;
-         }
-      }
-   }
-
-   BOOLEAN _omaAddHostTask::_hasUninstallHost()
-   {
-      BOOLEAN flag = FALSE ;
-      vector<AddHostInfo>::iterator it = _rollbackInfo.begin() ;
-      for ( ; it != _rollbackInfo.end(); it++ )
-      {
-         if ( TRUE == it->_ps._hasInstall )
-         {
-            flag = TRUE ;
-            break ;
-         }
-      }
-      return flag ;
-      
-   }
-
-   void _omaAddHostTask::_buildErrMsg()
-   {
-      string result ;
-      string str ;
-      string str2 ;
-      BSONArrayBuilder bab ;
-      BSONArray arr ;
-      vector<AddHostInfo>::iterator it = _rollbackInfo.begin() ;
-      for ( ; it != _rollbackInfo.end(); it++ )
-      {
-         if ( TRUE == it->_ps._hasInstall )
-         {
-            bab.append ( it->_item._ip.c_str() ) ;
-         }
-         if ( SDB_OK != it->_ps._errno )
-         {
-            if ( 0 == str.length() )
-               str += "in host[" + it->_item._ip + "], " + it->_ps._errMsg ;
-            else
-               str += "; in host [" + it->_item._ip + "], " + it->_ps._errMsg ;
-         }
-      }
-      arr = bab.arr() ;
-      // build the return result
-      if ( 0 != str.length() )
-      {
-         result = "Rollback is failing for these reasons: " ;
-         result += str ;
-      }
-      if ( !arr.isEmpty() )
-      {
-         str2 = "Need to uninstall db packet in these hosts manually: " ;
-         str2 += arr.toString( TRUE, FALSE ).c_str() ;
-      }
-      if ( 0 != str2.length() )
-      {
-         if ( 0 == result.length() )
-            result = str2 ;
-         else
-            result += ". " + str2 ;
-      }
-      if ( 0 != result.length() )
-      {
-         ossSnprintf( _detail, OMA_BUFF_SIZE, "%s", result.c_str() ) ;
-      }
-   }
-
-   void _omaAddHostTask::_collectProgressInfo()
-   {
-      ossScopedLock lock ( &_taskLatch, EXCLUSIVE ) ;
-      vector<AddHostInfo>::iterator it ;
-      
-      if ( OMA_OPT_INSTALL == _stage )
-      {
-         // check wether add host finish or not
-         _isTaskFinish = TRUE ;
-         it = _addHostInfo.begin() ;
-         for ( ; it != _addHostInfo.end(); it++ )
-         {
-            if ( (FALSE == it->_flag) ||
-                 (FALSE == it->_isFinish) ||
-                 (SDB_OK != it->_ps._errno) )
-            {
-               _isTaskFinish = FALSE ;
-               break ;
-            }
-         }
-      }
-      else
-      {
-         BOOLEAN hasJobFail = FALSE ;
-
-         // check wether remove host finish or not
-         it = _rollbackInfo.begin() ;
-         // to see wether all the hosts had been handled or not
-         for ( ; it != _rollbackInfo.end(); it++ )
-         {
-            if ( FALSE == it->_flag )
-            {
-               // some hosts have not been handled yet
-               return ;
-            }
-         }
-         // if all the hosts had been handled,
-         // check task is suceessful or not
-         map<string, OMA_JOB_STATUS>::iterator it = _jobStatus.begin() ;
-         for ( ; it != _jobStatus.end(); it++ )
-         {
-            if ( OMA_JOB_STATUS_RUNNING == it->second )
-            {
-               // some jobs are still running,
-               // task not finish yet
-               return ;
-            }
-            else if ( OMA_JOB_STATUS_FAIL == it->second )
-            {
-               hasJobFail = TRUE ;
-            }
-         }
-         // if no job is running, but some jobs had failed
-         // or some hosts had not been uninstall, task fail
-         if ( hasJobFail || _hasUninstallHost() )
-         {
-            _isTaskFail = TRUE ;
-            _buildErrMsg() ;
-         }
-         else
-         {
-            _isTaskFinish = TRUE ;
-         }
-      }
-   }
+      // init add host result
+      _initAddHostResult() ;
 */
+      done:
+         return rc ;
+      error:
+         goto done ;
+   }
+
+   INT32 _omaInstDBBusTask::doit()
+   {
+      INT32 rc = SDB_OK ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+
+
+/***********************************************************************/
    
 /*
    // install database business
