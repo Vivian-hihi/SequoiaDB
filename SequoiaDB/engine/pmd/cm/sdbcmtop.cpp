@@ -217,7 +217,7 @@ namespace engine
       }
       else
       {
-         _stopSdbcm( port ) ;
+         return _stopSdbcm( port ) ;
       }
    }
 
