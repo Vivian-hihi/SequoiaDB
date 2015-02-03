@@ -236,6 +236,7 @@ namespace engine
    #define ENGINE_NAME                 "sequoiadb.exe"
    #define PMD_OPTION_AS_PROC          "asproc"
    #endif // _LINUX
+   #define PMD_OPTION_HELPFULL         "helpfull"
    #define PMD_OPTION_TYPE             "type"
    #define PMD_OPTION_MODE             "mode"
    #define PMD_OPTION_DETAIL           "detail"

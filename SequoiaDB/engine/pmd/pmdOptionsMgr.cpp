@@ -1728,6 +1728,7 @@ namespace engine
       PMD_ADD_PARAM_OPTIONS_BEGIN( all )
          PMD_COMMANDS_OPTIONS
          PMD_HIDDEN_COMMANDS_OPTIONS
+         ( PMD_OPTION_HELPFULL, "help all configs" ) \
          ( "*", po::value<string>(), "" )
       PMD_ADD_PARAM_OPTIONS_END
 
@@ -1744,6 +1745,12 @@ namespace engine
       if ( vm.count( PMD_OPTION_HELP ) )
       {
          std::cout << display << std::endl ;
+         rc = SDB_PMD_HELP_ONLY ;
+         goto done ;
+      }
+      if ( vm.count( PMD_OPTION_HELPFULL ) )
+      {
+         std::cout << all << std::endl ;
          rc = SDB_PMD_HELP_ONLY ;
          goto done ;
       }

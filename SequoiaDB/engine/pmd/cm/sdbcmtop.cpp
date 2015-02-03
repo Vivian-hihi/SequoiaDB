@@ -82,6 +82,7 @@ namespace engine
 #endif // _WINDOWS
 
    #define COMMANDS_HIDE_OPTIONS \
+      ( PMD_OPTION_HELPFULL, "help all configs" ) \
       ( PMD_OPTION_CURUSER, "use current user" ) \
       ( PMD_OPTION_PORT, po::value<string>(), "agent port" ) \
 
@@ -296,6 +297,11 @@ namespace engine
       {
          displayArg( desc ) ;
          //rc = SDB_PMD_HELP_ONLY ;
+         goto done ;
+      }
+      if ( vm.count( PMD_OPTION_HELPFULL ) )
+      {
+         displayArg( all ) ;
          goto done ;
       }
       if ( vm.count( PMD_OPTION_VERSION ) )
