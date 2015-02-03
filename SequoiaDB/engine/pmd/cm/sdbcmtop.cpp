@@ -211,7 +211,7 @@ namespace engine
 
    INT32 stopSdbcm ( BOOLEAN asProc, const string &port )
    {
-      if ( 0 == port )
+      if ( port.empty() )
       {
          return _stopSdbcmd() ;
       }
