@@ -1,6 +1,0 @@
-SharedLibrary('sdblob',['sequoiadblob.cpp'],
-	     CPPPATH=['../include/sequoiadb','../include'],
-	     LIBS = ['sdbc.so','boost_thread','dl'],
-	     LIBPATH = '../lib',
-	     CCFLAGS = '-g'
-	    )
