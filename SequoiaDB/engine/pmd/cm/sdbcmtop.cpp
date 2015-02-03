@@ -83,6 +83,7 @@ namespace engine
 
    #define COMMANDS_HIDE_OPTIONS \
       ( PMD_OPTION_CURUSER, "use current user" ) \
+      ( PMD_OPTION_PORT, po::value<string>(), "agent port" ) \
 
    /*
       Function implement
@@ -175,13 +176,14 @@ namespace engine
       return rc ;
    }
 
-   static INT32 _stopSdbcm ()
+   static INT32 _stopSdbcm ( const string &port )
    {
       INT32 rc = SDB_OK ;
       INT32 rctmp = SDB_OK ;
       UTIL_VEC_NODES nodes ;
 
-      utilListNodes( nodes, SDB_TYPE_OMA ) ;
+      utilListNodes( nodes, SDB_TYPE_OMA, port.empty() ? NULL : port.c_str(),
+                     OSS_INVALID_PID, -1, port.empty() ? FALSE : TRUE ) ;
 
       for ( UINT32 i = 0 ; i < nodes.size() ; ++i )
       {
@@ -206,20 +208,32 @@ namespace engine
 
 #if defined (_LINUX)
 
-   INT32 stopSdbcm ( BOOLEAN asProc )
+   INT32 stopSdbcm ( BOOLEAN asProc, const string &port )
    {
-      return _stopSdbcmd() ;
+      if ( 0 == port )
+      {
+         return _stopSdbcmd() ;
+      }
+      else
+      {
+         _stopSdbcm( port ) ;
+      }
    }
 
 #elif defined (_WINDOWS)
 
-   static INT32 _stopSdbcmByProc()
+   static INT32 _stopSdbcmByProc( const string &port )
    {
       INT32 rc = SDB_OK ;
       vector < ossProcInfo > procs ;
       UINT32 timewait = 5 ;
 
-      _stopSdbcm() ;
+      _stopSdbcm( port ) ;
+
+      if ( !port.empty() )
+      {
+         goto done ;
+      }
 
       // wait sdbcmd quit
       while ( timewait > 0 )
@@ -240,11 +254,11 @@ namespace engine
       return rc ;
    }
 
-   INT32 stopSdbcm ( BOOLEAN asProc )
+   INT32 stopSdbcm ( BOOLEAN asProc, const string &port )
    {
       if ( asProc )
       {
-         return _stopSdbcmByProc() ;
+         return _stopSdbcmByProc( port ) ;
       }
       else
       {
@@ -266,6 +280,7 @@ namespace engine
       ossResultCode result ;
       CHAR dialogFile[ OSS_MAX_PATHSIZE + 1 ] = {0} ;
       BOOLEAN asProc = FALSE ;
+      string port = "" ;
 
       init ( desc, all ) ;
       // validate arguments
@@ -301,6 +316,14 @@ namespace engine
       {
          UTIL_CHECK_AND_CHG_USER() ;
       }
+      if ( vm.count( PMD_OPTION_PORT ) )
+      {
+         port = vm[ PMD_OPTION_PORT ].as< string >() ;
+         if ( !port.empty() )
+         {
+            asProc = TRUE ;
+         }
+      }
 
       rc = ossGetEWD ( dialogFile, OSS_MAX_PATHSIZE ) ;
       if ( rc )
@@ -335,7 +358,7 @@ namespace engine
       setPDLevel( PDINFO ) ;
 
       // stop cm
-      rc = stopSdbcm ( asProc ) ;
+      rc = stopSdbcm ( asProc, port ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "Failed to stop sdbcm, rc: %d", rc ) ;
