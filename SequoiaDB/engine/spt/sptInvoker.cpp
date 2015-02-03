@@ -106,7 +106,7 @@ namespace engine
    }
 
    INT32 _sptInvoker::_callbackDone( JSContext *cx, JSObject *obj,
-                                     const _sptReturnVal &rval,
+                                     _sptReturnVal &rval,
                                      const bson::BSONObj &detail,
                                      jsval *rvp )
    {
@@ -125,10 +125,10 @@ namespace engine
                                           0 , 0 ) ;
          if ( NULL == jsObj )
          {
-            /// WARNING: it will cause mem leak, because we can not delete
-            /// rpro.getObj().
             PD_LOG( PDERROR, "faile to new js object" ) ;
             rc = SDB_OOM ;
+            /// need to release object instance
+            rval.releaseObj() ;
             goto error ;
          }
 

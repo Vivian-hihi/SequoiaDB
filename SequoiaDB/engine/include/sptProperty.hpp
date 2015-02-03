@@ -36,9 +36,15 @@
 #include "core.hpp"
 #include "oss.hpp"
 #include "../bson/bson.hpp"
+#include <vector>
 
 namespace engine
 {
+   typedef void (*SPT_RELEASE_OBJ_FUNC)(void *instance) ;
+
+   /*
+      _sptProperty define
+   */
    class _sptProperty : public SDBObject
    {
    public:
@@ -61,6 +67,9 @@ namespace engine
       INT32 assignBsonobj( const CHAR *name,
                            const bson::BSONObj &value ) ;
 
+      INT32 assignBsonArray( const CHAR *name,
+                             const std::vector< bson::BSONObj > &vecObj ) ;
+
       /// WARNING: value will be registered in
       /// engine and released in JS_Destructor.
       INT32 assignUsrObject( const CHAR *name,
@@ -71,9 +80,6 @@ namespace engine
 
       /// copy value if u want to modify or keep it.
       const CHAR *getString() const ;
-
-      /// copy value if u want to modify or keep it.
-      INT32 getBsonobj( bson::BSONObj &value ) const ;
 
       inline bson::BSONType getType() const
       {
@@ -90,14 +96,26 @@ namespace engine
          return _name ;
       }
 
+      inline void releaseObj()
+      {
+         if ( bson::Object == _type && 0 != _value && _pReleaseFunc )
+         {
+            _pReleaseFunc( (void*)_value ) ;
+            _value = 0 ;
+            _pReleaseFunc = NULL ;
+            _type = bson::EOO ;
+         }
+      }
+
    private:
       std::string _name ;
       UINT64 _value ;
       bson::BSONType _type ;
+      SPT_RELEASE_OBJ_FUNC _pReleaseFunc ;
       
    } ;
    typedef class _sptProperty sptProperty ;
 }
 
-#endif
+#endif // SPT_PROPERTY_HPP_
 

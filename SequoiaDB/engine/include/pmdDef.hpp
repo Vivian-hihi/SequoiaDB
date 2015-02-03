@@ -265,8 +265,8 @@ namespace engine
    */
    enum SDB_RUN_MODE_TYPE
    {
-      LOCAL = 1,
-      RUN
+      RUN_MODE_LOCAL = 1,
+      RUN_MODE_RUN
    } ;
 
    #define ENGINE_NPIPE_MSG_PID        "$pid"

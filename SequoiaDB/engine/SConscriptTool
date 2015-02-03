@@ -168,6 +168,7 @@ spt2Files = [
       "spt/sptSPScope.cpp",
       "spt/sptConvertor2.cpp",
       "spt/sptBsonobj.cpp",
+      "spt/sptBsonobjArray.cpp",
       "spt/sptLibssh2Session.cpp",
       "spt/sptSshSession.cpp",
       "spt/usrdef/sptUsrSsh.cpp",

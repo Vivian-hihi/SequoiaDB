@@ -34,6 +34,8 @@
 #define SPT_USR_SDBTOOL_HPP__
 
 #include "sptApi.hpp"
+#include "pmdDef.hpp"
+#include "utilNodeOpr.hpp"
 #include <string>
 #include <vector>
 
@@ -48,6 +50,15 @@ namespace engine
       INT32                _typeFilter ;
       INT32                _modeFilter ;
       INT32                _roleFilter ;
+      BOOLEAN              _showAlone ;
+
+      _sdbToolListParam()
+      {
+         _typeFilter    = SDB_TYPE_DB ;
+         _modeFilter    = RUN_MODE_RUN ;
+         _roleFilter    = -1 ;
+         _showAlone     = FALSE ;
+      }
    } ;
 
    /*
@@ -74,11 +85,18 @@ namespace engine
                               _sptReturnVal &rval,
                               bson::BSONObj &detail ) ;
 
-      static INT32 getNodeConfig( const _sptArguments &arg,
-                                  _sptReturnVal &rval,
-                                  bson::BSONObj &detail ) ;
-
    protected:
+      static INT32 _parseListParam( const bson::BSONObj &option,
+                                    _sdbToolListParam &param,
+                                    bson::BSONObj &detail ) ;
+      static bson::BSONObj _nodeInfo2Bson( const utilNodeInfo &info,
+                                           const bson::BSONObj &conf ) ;
+
+      static bson::BSONObj _getConfObj( const CHAR *localPath,
+                                        const CHAR *svcname ) ;
+
+      static BOOLEAN _match( const bson::BSONObj &obj,
+                             const bson::BSONObj &filter ) ;
 
    private:
 
