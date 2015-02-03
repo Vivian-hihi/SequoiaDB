@@ -2890,7 +2890,12 @@ namespace engine
                              getTaskStatusStr( OM_TASK_STATUS_INIT ) ) ;
          itemBuilder.append( OM_REST_RES_RETCODE, SDB_OK ) ;
          itemBuilder.append( OM_REST_RES_DETAIL, "" ) ;
-         itemBuilder.appendNull( OM_TASKINFO_FIELD_FLOW ) ;
+         {
+            BSONArrayBuilder tmpEmptyBuilder ;
+            itemBuilder.append( OM_TASKINFO_FIELD_FLOW, 
+                                tmpEmptyBuilder.arr() ) ;
+         }
+         
 
          BSONObj resultItem = itemBuilder.obj() ;
          resultArrBuilder.append( resultItem ) ;
@@ -4967,7 +4972,10 @@ namespace engine
                          getTaskStatusStr( OM_TASK_STATUS_INIT ) ) ;
          builder.append( OM_REST_RES_RETCODE, SDB_OK ) ;
          builder.append( OM_REST_RES_DETAIL, "" ) ;
-         builder.appendNull( OM_TASKINFO_FIELD_FLOW ) ;
+         {
+            BSONArrayBuilder tmpEmptyBuilder ;
+            builder.append( OM_TASKINFO_FIELD_FLOW, tmpEmptyBuilder.arr() ) ;
+         }
 
          BSONObj result = builder.obj() ;
          arrayBuilder.append( result ) ;
@@ -6520,7 +6528,10 @@ namespace engine
                             getTaskStatusStr( OM_TASK_STATUS_INIT ) ) ;
             builder.append( OM_REST_RES_RETCODE, SDB_OK ) ;
             builder.append( OM_REST_RES_DETAIL, "" ) ;
-            builder.appendNull( OM_TASKINFO_FIELD_FLOW ) ;
+            {
+               BSONArrayBuilder tmpEmptyBuilder ;
+               builder.append( OM_TASKINFO_FIELD_FLOW, tmpEmptyBuilder.arr() ) ;
+            }
 
             BSONObj result = builder.obj() ;
             arrayBuilder.append( result ) ;
