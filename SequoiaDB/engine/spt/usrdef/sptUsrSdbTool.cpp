@@ -502,11 +502,11 @@ namespace engine
          else if ( 0 == ossStrcmp( e.fieldName(), "$not" ) &&
                    Array == e.type() )
          {
-            subMatch = !_match( obj, e.embeddedObject(), pred ) ;
+            subMatch = !_match( obj, e.embeddedObject(), SPT_MATCH_AND ) ;
          }
          else if ( Object == e.type() )
          {
-            subMatch = _match( obj, e.embeddedObject(), SPT_MATCH_AND ) ;
+            subMatch = _match( obj, e.embeddedObject(), pred ) ;
          }
          else
          {
