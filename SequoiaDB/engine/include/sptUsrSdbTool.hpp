@@ -51,6 +51,7 @@ namespace engine
       INT32                _modeFilter ;
       INT32                _roleFilter ;
       BOOLEAN              _showAlone ;
+      BOOLEAN              _expand ;
 
       _sdbToolListParam()
       {
@@ -58,7 +59,15 @@ namespace engine
          _modeFilter    = RUN_MODE_RUN ;
          _roleFilter    = -1 ;
          _showAlone     = FALSE ;
+         _expand        = FALSE ;
       }
+   } ;
+
+   enum SPT_MATCH_PRED
+   {
+      SPT_MATCH_AND,
+      SPT_MATCH_OR,
+      SPT_MATCH_NOT
    } ;
 
    /*
@@ -92,11 +101,14 @@ namespace engine
       static bson::BSONObj _nodeInfo2Bson( const utilNodeInfo &info,
                                            const bson::BSONObj &conf ) ;
 
-      static bson::BSONObj _getConfObj( const CHAR *localPath,
-                                        const CHAR *svcname ) ;
+      static bson::BSONObj _getConfObj( const CHAR *rootPath,
+                                        const CHAR *localPath,
+                                        const CHAR *svcname,
+                                        INT32 type ) ;
 
       static BOOLEAN _match( const bson::BSONObj &obj,
-                             const bson::BSONObj &filter ) ;
+                             const bson::BSONObj &filter,
+                             SPT_MATCH_PRED pred ) ;
 
    private:
 

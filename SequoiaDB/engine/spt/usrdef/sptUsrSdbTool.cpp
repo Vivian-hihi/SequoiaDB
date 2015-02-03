@@ -37,6 +37,7 @@
 #include "utilCommon.hpp"
 #include "ossProc.hpp"
 #include "omagentDef.hpp"
+#include "pmdDaemon.hpp"
 #include "utilParam.hpp"
 #include "ossSocket.hpp"
 #include "pmdOptionsMgr.hpp"
@@ -224,11 +225,35 @@ namespace engine
       for ( UINT32 k = 0 ; k < nodes.size() ; ++k )
       {
          BSONObj obj = _nodeInfo2Bson( nodes[ k ],
-                                       _getConfObj( localPath,
-                                       nodes[ k ]._svcname.c_str() ) ) ;
-         if ( _match( obj, filterObj ) )
+                                       optionParam._expand ?
+                                       _getConfObj( rootPath, localPath,
+                                       nodes[ k ]._svcname.c_str(),
+                                       nodes[ k ]._type ) :
+                                       BSONObj() ) ;
+         if ( _match( obj, filterObj, SPT_MATCH_AND ) )
          {
             vecObj.push_back( obj ) ;
+         }
+      }
+
+      // if no -p, and list all/list cm, need to show sdbcmd
+      if ( optionParam._svcnames.size() == 0 &&
+           ( SDB_TYPE_OMA == optionParam._typeFilter ||
+             -1 == optionParam._typeFilter ) &&
+           ( optionParam._roleFilter == -1 ||
+             SDB_ROLE_OMA == optionParam._roleFilter ) )
+      {
+         vector < ossProcInfo > procs ;
+         ossEnumProcesses( procs, PMDDMN_EXE_NAME, TRUE, FALSE ) ;
+
+         for ( UINT32 i = 0 ; i < procs.size() ; ++i )
+         {
+            BSONObj obj = BSON( "type" << PMDDMN_SVCNAME_DEFAULT <<
+                                "pid" << (UINT32)procs[ i ]._pid ) ;
+            if ( _match( obj, filterObj, SPT_MATCH_AND ) )
+            {
+               vecObj.push_back( obj ) ;
+            }
          }
       }
 
@@ -346,6 +371,10 @@ namespace engine
          {
             param._showAlone = e.booleanSafe() ? TRUE : FALSE ;
          }
+         else if ( 0 == ossStrcasecmp( e.fieldName(), PMD_OPTION_EXPAND ) )
+         {
+            param._expand = e.booleanSafe() ? TRUE : FALSE ;
+         }
       }
 
       if ( param._roleFilter != -1 )
@@ -397,34 +426,102 @@ namespace engine
       return retObjBuilder.obj() ;
    }
 
-   BSONObj _sptUsrSdbTool::_getConfObj( const CHAR *localPath,
-                                        const CHAR *svcname )
+   BSONObj _sptUsrSdbTool::_getConfObj( const CHAR *rootPath,
+                                        const CHAR *localPath,
+                                        const CHAR *svcname,
+                                        INT32 type )
    {
       BSONObj obj ;
       CHAR confFile[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
-      pmdOptionsCB conf ;
 
-      utilBuildFullPath( localPath, svcname, OSS_MAX_PATHSIZE, confFile ) ;
-      utilCatPath( confFile, OSS_MAX_PATHSIZE, PMD_DFT_CONF ) ;
-      if ( SDB_OK == conf.initFromFile( confFile, FALSE ) )
+      // not cm
+      if ( type != SDB_TYPE_OMA )
       {
-         conf.toBSON( obj ) ;
+         pmdOptionsCB conf ;
+         utilBuildFullPath( localPath, svcname, OSS_MAX_PATHSIZE, confFile ) ;
+         if ( 0 != ossAccess( confFile, 0 ) )
+         {
+            goto done ;
+         }
+         utilCatPath( confFile, OSS_MAX_PATHSIZE, PMD_DFT_CONF ) ;
+         if ( SDB_OK == conf.initFromFile( confFile, FALSE ) )
+         {
+            conf.toBSON( obj ) ;
+         }
+      }
+      else
+      {
+         po::options_description desc ;
+         po::variables_map vm ;
+         BSONObjBuilder builder ;
+         desc.add_options()
+            ( "*", po::value<string>(), "" ) ;
+
+         utilBuildFullPath( rootPath, SDBCM_CONF_PATH_FILE,
+                            OSS_MAX_PATHSIZE, confFile ) ;
+         if ( 0 != ossAccess( confFile, 0 ) )
+         {
+            goto done ;
+         }
+         utilReadConfigureFile( confFile, desc, vm ) ;
+         po::variables_map::iterator it = vm.begin() ;
+         while( it != vm.end() )
+         {
+            builder.append( it->first.data(), it->second.as<string>() ) ;
+            ++it ;
+         }
+         obj = builder.obj() ;
       }
 
+   done:
       return obj ;
    }
 
-   BOOLEAN _sptUsrSdbTool::_match( const BSONObj &obj, const BSONObj &filter )
+   BOOLEAN _sptUsrSdbTool::_match( const BSONObj &obj, const BSONObj &filter,
+                                   SPT_MATCH_PRED pred )
    {
-      BOOLEAN matched = TRUE ;
+      BOOLEAN matched = ( SPT_MATCH_AND == pred ) ? TRUE : FALSE ;
       BSONObjIterator itFilter( filter ) ;
       while( itFilter.more() )
       {
+         BOOLEAN subMatch = FALSE ;
          BSONElement e = itFilter.next() ;
-         BSONElement e1 = obj.getField( e.fieldName() ) ;
-         if ( 0 != e1.woCompare( e, false ) )
+         // $and
+         if ( 0 == ossStrcmp( e.fieldName(), "$and" ) &&
+              Array == e.type() )
+         {
+            subMatch = _match( obj, e.embeddedObject(), SPT_MATCH_AND ) ;
+         }
+         // $or
+         else if ( 0 == ossStrcmp( e.fieldName(), "$or" ) &&
+                   Array == e.type() )
+         {
+            subMatch = _match( obj, e.embeddedObject(), SPT_MATCH_OR ) ;
+         }
+         // $not
+         else if ( 0 == ossStrcmp( e.fieldName(), "$not" ) &&
+                   Array == e.type() )
+         {
+            subMatch = !_match( obj, e.embeddedObject(), pred ) ;
+         }
+         else if ( Object == e.type() )
+         {
+            subMatch = _match( obj, e.embeddedObject(), SPT_MATCH_AND ) ;
+         }
+         else
+         {
+            BSONElement e1 = obj.getField( e.fieldName() ) ;
+            subMatch = ( 0 == e1.woCompare( e, false ) ) ? TRUE : FALSE ;
+         }
+
+         if ( SPT_MATCH_AND == pred && FALSE == subMatch )
          {
             matched = FALSE ;
+            break ;
+         }
+         else if ( SPT_MATCH_OR == pred && TRUE == subMatch )
+         {
+            matched = TRUE ;
             break ;
          }
       }
