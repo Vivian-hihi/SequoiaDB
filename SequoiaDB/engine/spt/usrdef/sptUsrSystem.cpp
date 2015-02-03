@@ -996,6 +996,7 @@ namespace engine
       std::stringstream ss ;
       std::string outStr ;
       UINT32 exitCode = 0 ;
+      FLOAT32 frequency = 0.0 ;
       const CHAR *cmd = NULL ;
 #if defined (_PPCLIN64)
       cmd = "cat /proc/cpuinfo |grep 'clock' | cut -f2 -d: | uniq" ;
@@ -1030,7 +1031,19 @@ namespace engine
 
       boost::algorithm::trim_left( outStr ) ;
       boost::algorithm::replace_last( outStr, "\n", "" ) ;
-      freq = outStr + "MHz" ;
+      try
+      {
+         frequency = boost::lexical_cast<FLOAT32>( outStr ) ;
+         frequency /= 1000.0 ;
+         outStr = boost::lexical_cast<string>( frequency ) ;
+      }
+      catch ( std::exception &e )
+      {
+         ss << "unexpected error happened:" << e.what() ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+      freq = outStr + "GHz" ;
    done:
       return rc ;
    error:
