@@ -1031,6 +1031,7 @@ namespace engine
 
       boost::algorithm::trim_left( outStr ) ;
       boost::algorithm::replace_last( outStr, "\n", "" ) ;
+      boost::algorithm::replace_last( outStr, "MHz", "" ) ;
       try
       {
          frequency = boost::lexical_cast<FLOAT32>( outStr ) ;
@@ -1571,7 +1572,7 @@ namespace engine
          goto error ;
       }
 
-      rc = ossOpen( "/etc/mtab",
+      rc = ossOpen( SPT_DISK_SRC_FILE,
                     OSS_READONLY | OSS_SHAREREAD,
                     OSS_DEFAULTFILE,
                     file ) ;
