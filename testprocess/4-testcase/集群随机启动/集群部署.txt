@@ -1,3 +1,0 @@
-1.三台机器,sdbserver2,sdbserver3,sdbserver5
-2.每台机器上有4个节点，11810(coord),11800(cata),11820(data1),11830(data2)
-3.都建立了信任关系
