@@ -79,18 +79,6 @@ engine::SDB_SESSION_TYPE _pmdMongoSession::sessionType() const
    return engine::SDB_SESSION_PROTOCOL ;
 }
 
-INT32 _pmdMongoSession::attachProcessor( engine::_IProcessor *processor )
-{
-   SDB_ASSERT( NULL != processor, "processor cannot be NULL" ) ;
-   _processor = processor ;
-   return SDB_OK ;
-}
-
-void _pmdMongoSession::detachProcessor()
-{
-   _processor = NULL ;
-}
-
 INT32 _pmdMongoSession::run()
 {
    INT32 rc                     = SDB_OK ;
@@ -270,9 +258,9 @@ INT32 _pmdMongoSession::_processMsg( const CHAR *pMsg, const INT32 len )
    }
    else
    {
-      rc = _processor->processMsg( (MsgHeader *) _inBuffer.data(),
-                                    _pDPSCB, _contextBuff,
-                                    _replyHeader.contextID, _needReply ) ;
+      rc = getProcessor()->processMsg( (MsgHeader *) _inBuffer.data(),
+                                       _contextBuff, _replyHeader.contextID,
+                                       _needReply ) ;
       pBody     = _contextBuff.data() ;
       bodyLen   = _contextBuff.size() ;
       _replyHeader.numReturned = _contextBuff.recordNum() ;
@@ -455,13 +443,6 @@ error:
 
 void _pmdMongoSession::_onAttach( )
 {
-   engine::pmdKRCB *krcb = engine::pmdGetKRCB() ;
-   _pDPSCB = krcb->getDPSCB() ;
-
-   if ( _pDPSCB && !_pDPSCB->isLogLocal() )
-   {
-      _pDPSCB = NULL ;
-   }
 }
 
 void _pmdMongoSession::_onDetach()
