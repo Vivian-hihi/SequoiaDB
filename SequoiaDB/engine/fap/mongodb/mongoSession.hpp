@@ -44,9 +44,6 @@
 
 class mongoConverter ;
 
-/*
-   _pmdMongoSession define
-*/
 class _pmdMongoSession : public engine::pmdSession
 {
 public:
@@ -56,6 +53,8 @@ public:
    virtual UINT64 identifyID() ;
    virtual INT32 getServiceType() const ;
    virtual engine::SDB_SESSION_TYPE sessionType() const ;
+   INT32 attachProcessor( engine::_IProcessor *processor ) ;
+   void detachProcessor() ;
 
    virtual INT32 run() ;
 
@@ -71,6 +70,8 @@ private:
    void  _zeroStream() ;
 
 private:
+   engine::_dpsLogWrapper *_pDPSCB ;
+   engine::_IProcessor    *_processor ;
    mongoConverter         *_converter ;
    MsgOpReply              _replyHeader ;
    BOOLEAN                 _needReply ;
@@ -80,9 +81,8 @@ private:
    std::vector< msgBuffer* > _inBufferVec ;
    msgBuffer               _inBuffer ;
    msgBuffer               _outBuffer ;
-
 } ;
 
 typedef _pmdMongoSession pmdMongoSession ;
 
-#endif // _SDB_MONGO_MSG_CONVERTER_HPP_
+#endif

@@ -34,10 +34,10 @@
    Last Changed =
 
 *******************************************************************************/
-#include "pmdMongoAccess.hpp"
+#include "mongoAccess.hpp"
 #include "ossUtil.hpp"
 #include "pmdOptions.hpp"
-#include "pmdMongoSession.hpp"
+#include "mongoSession.hpp"
 
 namespace engine {
    PMD_EXPORT_ACCESSPROTOCOL_DLL( pmdMongoAccess )
@@ -82,10 +82,18 @@ const CHAR * _pmdMongoAccess::getServiceName() const
    return _serviceName ;
 }
 
-engine::pmdSession * _pmdMongoAccess::getSession( SOCKET fd )
+engine::pmdSession * _pmdMongoAccess::getSession( SOCKET fd,
+                                                 engine::IProcessor *pProcessor )
 {
    pmdMongoSession *session = NULL ;
-   session = SDB_OSS_NEW pmdMongoSession( fd ) ;
+   if ( NULL != pProcessor )
+   {
+      session = SDB_OSS_NEW pmdMongoSession( fd ) ;
+      session->attachProcessor( pProcessor ) ;
+   }
+
+   session->attachProcessor( pProcessor ) ;
+
    return session ;
 }
 
@@ -94,6 +102,7 @@ void _pmdMongoAccess::releaseSession( engine::pmdSession *pSession )
    pmdMongoSession *session = dynamic_cast< pmdMongoSession *>( pSession ) ;
    if ( NULL == session )
    {
+      session->detachProcessor() ;
       SDB_OSS_DEL session ;
       session = NULL ;
    }
@@ -111,4 +120,3 @@ void _pmdMongoAccess::_release()
       _resource = NULL ;
    }
 }
-
