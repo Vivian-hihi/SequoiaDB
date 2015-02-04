@@ -52,78 +52,28 @@ namespace engine
       _pKrcb    = pmdGetKRCB() ;
       _pDMSCB   = _pKrcb->getDMSCB() ;
       _pRTNCB   = _pKrcb->getRTNCB() ;
-      _pSession = NULL ;
-      _pClient  = NULL ;
-      _pEDUCB   = NULL ;
-   }
-
-   INT32 _pmdDataProcessor::attachSession( ISession *session )
-   {
-      _pSession = session ;
-      SDB_ASSERT( _pSession, "Session can't be NULL" ) ;
-      _pClient  = _pSession->getClient() ;
-      SDB_ASSERT( _pClient, "Client can't be NULL" ) ;
-
-      SDB_SESSION_TYPE sessionType = _pSession->sessionType() ;
-      SDB_ASSERT( SDB_SESSION_LOCAL == sessionType 
-                  || SDB_SESSION_REST == sessionType
-                  || SDB_SESSION_PROTOCOL == sessionType, "" ) ;
-
-      if ( SDB_SESSION_LOCAL == sessionType )
-      {
-         _pmdLocalSession *pLocalSession =
-                                 dynamic_cast<_pmdLocalSession*>( _pSession ) ;
-         SDB_ASSERT( NULL != pLocalSession, "" ) ;
-         _pEDUCB = pLocalSession->eduCB() ;
-      }
-      else if ( SDB_SESSION_PROTOCOL == sessionType )
-      {
-         _pmdSession *pMongoSession =
-                                 dynamic_cast<_pmdSession*>( _pSession ) ;
-         SDB_ASSERT( NULL != pMongoSession, "" ) ;
-         _pEDUCB = pMongoSession->eduCB() ;
-      }
-      else
-      {
-         //SDB_SESSION_REST
-         _pmdRestSession *pRestSession = 
-                                 dynamic_cast<_pmdRestSession*>( _pSession ) ;
-         SDB_ASSERT( NULL != pRestSession, "" ) ;
-         _pEDUCB = pRestSession->eduCB() ;
-      }
-
-      return SDB_OK ;
-   }
-
-   void _pmdDataProcessor::detachSession()
-   {
-      _pSession = NULL ;
-      _pClient  = NULL ;
-      _pEDUCB   = NULL ;
    }
 
    _pmdDataProcessor::~_pmdDataProcessor()
    {
-
    }
 
-   INT32 _pmdDataProcessor::processMsg( MsgHeader *msg, 
-                                        SDB_DPSCB *dpsCB,
-                                        rtnContextBuf &contextBuff, 
+   INT32 _pmdDataProcessor::processMsg( MsgHeader *msg,
+                                        rtnContextBuf &contextBuff,
                                         INT64 &contextID,
                                         BOOLEAN &needReply )
    {
       INT32 rc = SDB_OK ;
 
-      SDB_ASSERT( _pSession && _pClient, "Must attach session at first" ) ;
+      SDB_ASSERT( getSession(), "Must attach session at first" ) ;
 
       if ( MSG_AUTH_VERIFY_REQ == msg->opCode )
       {
-         rc = _pClient->authenticate( msg ) ;
+         rc = getClient()->authenticate( msg ) ;
       }
       else if ( MSG_BS_INTERRUPTE == msg->opCode )
       {
-         rc = _onInterruptMsg( msg, dpsCB ) ;
+         rc = _onInterruptMsg( msg, getDPSCB() ) ;
       }
       else if ( MSG_BS_INTERRUPTE_SELF == msg->opCode )
       {
@@ -133,10 +83,10 @@ namespace engine
       {
          rc = _onDisconnectMsg() ;
       }
-//      else if ( !_pClient->isAuthed() )
-//      {
-//         rc = SDB_AUTH_AUTHORITY_FORBIDDEN ;
-//      }
+      else if ( !getClient()->isAuthed() )
+      {
+         rc = SDB_AUTH_AUTHORITY_FORBIDDEN ;
+      }
       else
       {
          switch( msg->opCode )
@@ -145,16 +95,16 @@ namespace engine
                rc = _onMsgReqMsg( msg ) ;
                break ;
             case MSG_BS_UPDATE_REQ :
-               rc = _onUpdateReqMsg( msg, dpsCB ) ;
+               rc = _onUpdateReqMsg( msg, getDPSCB() ) ;
                break ;
             case MSG_BS_INSERT_REQ :
                rc = _onInsertReqMsg( msg ) ;
                break ;
             case MSG_BS_QUERY_REQ :
-               rc = _onQueryReqMsg( msg, dpsCB, contextBuff, contextID ) ;
+               rc = _onQueryReqMsg( msg, getDPSCB(), contextBuff, contextID ) ;
                break ;
             case MSG_BS_DELETE_REQ :
-               rc = _onDelReqMsg( msg, dpsCB ) ;
+               rc = _onDelReqMsg( msg, getDPSCB() ) ;
                break ;
             case MSG_BS_GETMORE_REQ :
                rc = _onGetMoreReqMsg( msg, contextBuff, contextID ) ;
@@ -169,16 +119,16 @@ namespace engine
                rc = _onTransBeginMsg() ;
                break ;
             case MSG_BS_TRANS_COMMIT_REQ :
-               rc = _onTransCommitMsg( dpsCB ) ;
+               rc = _onTransCommitMsg( getDPSCB() ) ;
                break ;
             case MSG_BS_TRANS_ROLLBACK_REQ :
-               rc = _onTransRollbackMsg( dpsCB ) ;
+               rc = _onTransRollbackMsg( getDPSCB() ) ;
                break ;
             case MSG_BS_AGGREGATE_REQ :
                rc = _onAggrReqMsg( msg, contextID ) ;
                break ;
             case MSG_BS_LOB_OPEN_REQ :
-               rc = _onOpenLobMsg( msg, dpsCB, contextID, contextBuff ) ;
+               rc = _onOpenLobMsg( msg, getDPSCB(), contextID, contextBuff ) ;
                break ;
             case MSG_BS_LOB_WRITE_REQ:
                rc = _onWriteLobMsg( msg ) ;
@@ -190,12 +140,12 @@ namespace engine
                rc = _onCloseLobMsg( msg ) ;
                break ;
             case MSG_BS_LOB_REMOVE_REQ:
-               rc = _onRemoveLobMsg( msg, dpsCB ) ;
+               rc = _onRemoveLobMsg( msg, getDPSCB() ) ;
                break ;
             default :
                PD_LOG( PDWARNING, "Session[%s] recv unknow msg[type:[%d]%d, "
                        "len: %d, tid: %d, routeID: %d.%d.%d, reqID: %lld]",
-                       _pSession->sessionName(), IS_REPLY_TYPE(msg->opCode),
+                       getSession()->sessionName(), IS_REPLY_TYPE(msg->opCode),
                        GET_REQUEST_TYPE(msg->opCode), msg->messageLength,
                        msg->TID, msg->routeID.columns.groupID,
                        msg->routeID.columns.nodeID,
@@ -226,7 +176,7 @@ namespace engine
                              &pSelectorBuffer, &pUpdatorBuffer,
                              &pHintBuffer );
       PD_RC_CHECK( rc, PDERROR, "Session[%s] extract update message failed, "
-                   "rc: %d", _pSession->sessionName(), rc ) ;
+                   "rc: %d", getSession()->sessionName(), rc ) ;
 
       try
       {
@@ -234,7 +184,7 @@ namespace engine
          BSONObj updator( pUpdatorBuffer );
          BSONObj hint( pHintBuffer );
          // add last op info
-         MON_SAVE_OP_DETAIL( _pEDUCB->getMonAppCB(), msg->opCode,
+         MON_SAVE_OP_DETAIL( eduCB()->getMonAppCB(), msg->opCode,
                              "CL:%s, Match:%s, Updator:%s, Hint:%s",
                              pCollectionName,
                              selector.toString().c_str(),
@@ -242,17 +192,17 @@ namespace engine
                              hint.toString().c_str() ) ;
 
          PD_LOG ( PDDEBUG, "Session[%s] Update: selctor: %s\nupdator: %s\n"
-                  "hint: %s", _pSession->sessionName(), 
+                  "hint: %s", getSession()->sessionName(), 
                   selector.toString().c_str(),
                   updator.toString().c_str(), hint.toString().c_str() ) ;
 
          rc = rtnUpdate( pCollectionName, selector, updator, hint,
-                         flags, _pEDUCB, _pDMSCB, dpsCB ) ;
+                         flags, eduCB(), _pDMSCB, dpsCB ) ;
       }
       catch ( std::exception &e )
       {
          PD_LOG ( PDERROR, "Session[%s] Failed to create selector and updator "
-                  "for update: %s", _pSession->sessionName(), e.what () ) ;
+                  "for update: %s", getSession()->sessionName(), e.what () ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }
@@ -274,32 +224,32 @@ namespace engine
       rc = msgExtractInsert( (CHAR *)msg, &flag, &pCollectionName,
                              &pInsertor, count ) ;
       PD_RC_CHECK( rc, PDERROR, "Session[%s] extrace insert msg failed, rc: %d",
-                   _pSession->sessionName(), rc ) ;
+                   getSession()->sessionName(), rc ) ;
 
       try
       {
          BSONObj insertor( pInsertor ) ;
          // add list op info
-         MON_SAVE_OP_DETAIL( _pEDUCB->getMonAppCB(), msg->opCode,
+         MON_SAVE_OP_DETAIL( eduCB()->getMonAppCB(), msg->opCode,
                              "CL:%s, Insertors:%s, count: %d",
                              pCollectionName,
                              insertor.toString().c_str(),
                              count ) ;
 
          PD_LOG ( PDDEBUG, "Session[%s] insert objs: %s\ncount: %d\n"
-                  "collection: %s", _pSession->sessionName(), 
+                  "collection: %s", getSession()->sessionName(), 
                   insertor.toString().c_str(), count, pCollectionName ) ;
 
-         rc = rtnInsert( pCollectionName, insertor, count, flag, _pEDUCB ) ;
+         rc = rtnInsert( pCollectionName, insertor, count, flag, eduCB() ) ;
          PD_RC_CHECK( rc, PDERROR, "Session[%s] insert objs[%s, count:%d, "
                       "collection: %s] failed, rc: %d", 
-                      _pSession->sessionName(), insertor.toString().c_str(), 
+                      getSession()->sessionName(), insertor.toString().c_str(), 
                       count, pCollectionName, rc ) ;
       }
       catch( std::exception &e )
       {
          PD_LOG( PDERROR, "Session[%s] insert objs occur exception: %s",
-                 _pSession->sessionName(), e.what() ) ;
+                 getSession()->sessionName(), e.what() ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }
@@ -330,7 +280,7 @@ namespace engine
                              &numToSkip, &numToReturn, &pQueryBuff,
                              &pFieldSelector, &pOrderByBuffer, &pHintBuffer ) ;
       PD_RC_CHECK( rc, PDERROR, "Session[%s] extract query msg failed, rc: %d",
-                   _pSession->sessionName(), rc ) ;
+                   getSession()->sessionName(), rc ) ;
 
       if ( !rtnIsCommand ( pCollectionName ) )
       {
@@ -342,7 +292,7 @@ namespace engine
             BSONObj orderBy ( pOrderByBuffer ) ;
             BSONObj hint ( pHintBuffer ) ;
             // add last op info
-            MON_SAVE_OP_DETAIL( _pEDUCB->getMonAppCB(), msg->opCode,
+            MON_SAVE_OP_DETAIL( eduCB()->getMonAppCB(), msg->opCode,
                                "CL:%s, Match:%s, Selector:%s, OrderBy:%s, "
                                "Hint:%s", pCollectionName,
                                matcher.toString().c_str(),
@@ -351,12 +301,12 @@ namespace engine
                                hint.toString().c_str() ) ;
 
             PD_LOG ( PDDEBUG, "Session[%s] Query: matcher: %s\nselector: "
-                     "%s\norderBy: %s\nhint:%s", _pSession->sessionName(),
+                     "%s\norderBy: %s\nhint:%s", getSession()->sessionName(),
                      matcher.toString().c_str(), selector.toString().c_str(),
                      orderBy.toString().c_str(), hint.toString().c_str() ) ;
 
             rc = rtnQuery( pCollectionName, selector, matcher, orderBy,
-                           hint, flags, _pEDUCB, numToSkip, numToReturn,
+                           hint, flags, eduCB(), numToSkip, numToReturn,
                            _pDMSCB, _pRTNCB, contextID, &pContext, TRUE ) ;
             if ( rc )
             {
@@ -365,10 +315,10 @@ namespace engine
 
             if ( ( flags & FLG_QUERY_WITH_RETURNDATA ) && NULL != pContext )
             {
-               rc = pContext->getMore( -1, buffObj, _pEDUCB ) ;
+               rc = pContext->getMore( -1, buffObj, eduCB() ) ;
                if ( rc || pContext->eof() )
                {
-                  _pRTNCB->contextDelete( contextID, _pEDUCB ) ;
+                  _pRTNCB->contextDelete( contextID, eduCB() ) ;
                   contextID = -1 ;
                }
 
@@ -379,7 +329,7 @@ namespace engine
                else if ( rc )
                {
                   PD_LOG( PDERROR, "Session[%s] failed to query with return "
-                          "data, rc: %d", _pSession->sessionName(), rc ) ;
+                          "data, rc: %d", getSession()->sessionName(), rc ) ;
                   goto error ;
                }
             }
@@ -387,7 +337,7 @@ namespace engine
          catch ( std::exception &e )
          {
             PD_LOG ( PDERROR, "Session[%s] Failed to create matcher and "
-                     "selector for QUERY: %s", _pSession->sessionName(), 
+                     "selector for QUERY: %s", getSession()->sessionName(), 
                      e.what () ) ;
             rc = SDB_INVALIDARG ;
             goto error ;
@@ -415,8 +365,8 @@ namespace engine
          PD_LOG ( PDDEBUG, "Command: %s", pCommand->name () ) ;
 
          //run command
-         rc = rtnRunCommand( pCommand, _pSession->getServiceType(),
-                             _pEDUCB, _pDMSCB, _pRTNCB,
+         rc = rtnRunCommand( pCommand, getSession()->getServiceType(),
+                             eduCB(), _pDMSCB, _pRTNCB,
                              dpsCB, 1, &contextID ) ;
          if ( rc )
          {
@@ -445,30 +395,30 @@ namespace engine
       rc = msgExtractDelete ( (CHAR *)msg , &flags, &pCollectionName, 
                               &pDeletorBuffer, &pHintBuffer ) ;
       PD_RC_CHECK( rc, PDERROR, "Session[%s] extract delete msg failed, rc: %d",
-                   _pSession->sessionName(), rc ) ;
+                   getSession()->sessionName(), rc ) ;
 
       try
       {
          BSONObj deletor ( pDeletorBuffer ) ;
          BSONObj hint ( pHintBuffer ) ;
          // add last op info
-         MON_SAVE_OP_DETAIL( _pEDUCB->getMonAppCB(), msg->opCode,
+         MON_SAVE_OP_DETAIL( eduCB()->getMonAppCB(), msg->opCode,
                             "CL:%s, Deletor:%s, Hint:%s",
                             pCollectionName,
                             deletor.toString().c_str(),
                             hint.toString().c_str() ) ;
 
          PD_LOG ( PDDEBUG, "Session[%s] Delete: deletor: %s\nhint: %s",
-                  _pSession->sessionName(), deletor.toString().c_str(), 
+                  getSession()->sessionName(), deletor.toString().c_str(), 
                   hint.toString().c_str() ) ;
 
-         rc = rtnDelete( pCollectionName, deletor, hint, flags, _pEDUCB, 
+         rc = rtnDelete( pCollectionName, deletor, hint, flags, eduCB(), 
                          _pDMSCB, dpsCB ) ;
       }
       catch ( std::exception &e )
       {
          PD_LOG ( PDERROR, "Session[%s] Failed to create deletor for "
-                  "DELETE: %s", _pSession->sessionName(), e.what () ) ;
+                  "DELETE: %s", getSession()->sessionName(), e.what () ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }
@@ -488,17 +438,17 @@ namespace engine
 
       rc = msgExtractGetMore ( (CHAR*)msg, &numToRead, &contextID ) ;
       PD_RC_CHECK( rc, PDERROR, "Session[%s] extract get more msg failed, "
-                   "rc: %d", _pSession->sessionName(), rc ) ;
+                   "rc: %d", getSession()->sessionName(), rc ) ;
 
       // add last op info
-      MON_SAVE_OP_DETAIL( _pEDUCB->getMonAppCB(), msg->opCode,
+      MON_SAVE_OP_DETAIL( eduCB()->getMonAppCB(), msg->opCode,
                           "ContextID:%lld, NumToRead:%d",
                           contextID, numToRead ) ;
 
       PD_LOG ( PDDEBUG, "GetMore: contextID:%lld\nnumToRead: %d", contextID,
                numToRead ) ;
 
-      rc = rtnGetMore ( contextID, numToRead, buffObj, _pEDUCB, _pRTNCB ) ;
+      rc = rtnGetMore ( contextID, numToRead, buffObj, eduCB(), _pRTNCB ) ;
 
    done:
       return rc ;
@@ -509,7 +459,7 @@ namespace engine
    INT32 _pmdDataProcessor::_onKillContextsReqMsg( MsgHeader *msg )
    {
       PD_LOG ( PDDEBUG, "session[%s] _onKillContextsReqMsg", 
-               _pSession->sessionName() ) ;
+               getSession()->sessionName() ) ;
 
       INT32 rc = SDB_OK ;
       INT32 contextNum = 0 ;
@@ -517,7 +467,7 @@ namespace engine
 
       rc = msgExtractKillContexts ( (CHAR*)msg, &contextNum, &pContextIDs ) ;
       PD_RC_CHECK( rc, PDERROR, "Session[%s] extract kill contexts msg failed, "
-                   "rc: %d", _pSession->sessionName(), rc ) ;
+                   "rc: %d", getSession()->sessionName(), rc ) ;
 
       if ( contextNum > 0 )
       {
@@ -525,7 +475,7 @@ namespace engine
                   contextNum, pContextIDs[0] ) ;
       }
 
-      rc = rtnKillContexts ( contextNum, pContextIDs, _pEDUCB, _pRTNCB ) ;
+      rc = rtnKillContexts ( contextNum, pContextIDs, eduCB(), _pRTNCB ) ;
 
    done:
       return rc ;
@@ -541,9 +491,9 @@ namespace engine
 
       rc = msgExtractSql( (CHAR*)msg, &sql ) ;
       PD_RC_CHECK( rc, PDERROR, "Session[%s] extract sql msg failed, rc: %d",
-                   _pSession->sessionName(), rc ) ;
+                   getSession()->sessionName(), rc ) ;
 
-      rc = sqlcb->exec( sql, _pEDUCB, contextID ) ;
+      rc = sqlcb->exec( sql, eduCB(), contextID ) ;
 
    done:
       return rc ;
@@ -563,7 +513,7 @@ namespace engine
       }
       else
       {
-         rc = rtnTransBegin( _pEDUCB ) ;
+         rc = rtnTransBegin( eduCB() ) ;
       }
 
    done:
@@ -584,7 +534,7 @@ namespace engine
       }
       else
       {
-         rc = rtnTransCommit( _pEDUCB, dpsCB ) ;
+         rc = rtnTransCommit( eduCB(), dpsCB ) ;
       }
 
    done:
@@ -605,7 +555,7 @@ namespace engine
       }
       else
       {
-         rc = rtnTransRollback( _pEDUCB, dpsCB ) ;
+         rc = rtnTransRollback( eduCB(), dpsCB ) ;
       }
 
    done:
@@ -625,18 +575,18 @@ namespace engine
       rc = msgExtractAggrRequest( (CHAR*)msg, &pCollectionName,
                                   &pObjs, count, &flags ) ;
       PD_RC_CHECK( rc, PDERROR, "Session[%s] extrace aggr msg failed, rc: %d",
-                   _pSession->sessionName(), rc ) ;
+                   getSession()->sessionName(), rc ) ;
 
       try
       {
          BSONObj objs( pObjs ) ;
-         rc = rtnAggregate( pCollectionName, objs, count, flags, _pEDUCB,
+         rc = rtnAggregate( pCollectionName, objs, count, flags, eduCB(),
                             _pDMSCB, contextID ) ;
       }
       catch( std::exception &e )
       {
          PD_LOG( PDERROR, "Session[%s] occurred exception in aggr: %s",
-                 _pSession->sessionName(), e.what() ) ;
+                 getSession()->sessionName(), e.what() ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }
@@ -662,7 +612,7 @@ namespace engine
          goto error ;
       }
 
-      rc = rtnOpenLob( lob, header->flags, TRUE, _pEDUCB,
+      rc = rtnOpenLob( lob, header->flags, TRUE, eduCB(),
                        dpsCB, header->w, contextID, meta ) ;
       if ( SDB_OK != rc )
       {
@@ -693,7 +643,7 @@ namespace engine
          goto error ;
       }
 
-      rc = rtnWriteLob( header->contextID, _pEDUCB, len, data ) ;
+      rc = rtnWriteLob( header->contextID, eduCB(), len, data ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to write lob:%d", rc ) ;
@@ -723,7 +673,7 @@ namespace engine
          goto error ;
       }
 
-      rc = rtnReadLob( header->contextID, _pEDUCB,
+      rc = rtnReadLob( header->contextID, eduCB(),
                        readLen, offset, &data, length ) ;
       if ( SDB_OK != rc )
       {
@@ -749,7 +699,7 @@ namespace engine
          goto error ;
       }
 
-      rc = rtnCloseLob( header->contextID, _pEDUCB ) ;
+      rc = rtnCloseLob( header->contextID, eduCB() ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to close lob:%d", rc ) ;
@@ -775,7 +725,7 @@ namespace engine
          goto error ;
       }
 
-      rc = rtnRemoveLob( meta, header->w, _pEDUCB, dpsCB ) ;
+      rc = rtnRemoveLob( meta, header->w, eduCB(), dpsCB ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to remove lob:%d", rc ) ;
@@ -790,21 +740,21 @@ namespace engine
    INT32 _pmdDataProcessor::_onInterruptMsg( MsgHeader *msg, SDB_DPSCB *dpsCB )
    {
       PD_LOG ( PDEVENT, "Session[%s, %lld] recieved interrupt msg",
-               _pSession->sessionName(), _pEDUCB->getID() ) ;
+               getSession()->sessionName(), eduCB()->getID() ) ;
 
       // delete all contextID, rollback transaction
       INT64 contextID = -1 ;
-      while ( -1 != ( contextID = _pEDUCB->contextPeek() ) )
+      while ( -1 != ( contextID = eduCB()->contextPeek() ) )
       {
          _pRTNCB->contextDelete ( contextID, NULL ) ;
       }
 
-      INT32 rcTmp = rtnTransRollback( _pEDUCB, dpsCB );
+      INT32 rcTmp = rtnTransRollback( eduCB(), dpsCB );
       if ( rcTmp )
       {
          PD_LOG ( PDERROR, "Failed to rollback(rc=%d)", rcTmp );
       }
-      _pEDUCB->clearTransInfo() ;
+      eduCB()->clearTransInfo() ;
 
       return SDB_OK ;
    }
@@ -812,15 +762,15 @@ namespace engine
    INT32 _pmdDataProcessor::_onInterruptSelfMsg()
    {
       PD_LOG( PDEVENT, "Session[%s, %lld] recv interrupt self msg",
-              _pSession->sessionName(), _pEDUCB->getID() ) ;
+              getSession()->sessionName(), eduCB()->getID() ) ;
       return SDB_OK ;
    }
 
    INT32 _pmdDataProcessor::_onDisconnectMsg()
    {
       PD_LOG( PDEVENT, "Session[%s, %lld] recv disconnect msg",
-              _pSession->sessionName(), _pEDUCB->getID() ) ;
-      _pClient->disconnect() ;
+              getSession()->sessionName(), eduCB()->getID() ) ;
+      getClient()->disconnect() ;
       return SDB_OK ;
    }
 
@@ -834,11 +784,30 @@ namespace engine
       return SDB_PROCESSOR_DATA ;
    }
 
-   ISession* _pmdDataProcessor::getSession()
+   void _pmdDataProcessor::_onAttach()
    {
-      return _pSession ;
    }
 
+   void _pmdDataProcessor::_onDetach()
+   {
+      // rollback transaction
+      if ( DPS_INVALID_TRANS_ID != eduCB()->getTransID() )
+      {
+         INT32 rc = rtnTransRollback( eduCB(), getDPSCB() ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Session[%s] rollback trans info failed, rc: %d",
+                    getSession()->sessionName(), rc ) ;
+         }
+      }
+
+      // delete all context
+      INT64 contextID = -1 ;
+      while ( -1 != ( contextID = eduCB()->contextPeek() ) )
+      {
+         _pRTNCB->contextDelete( contextID, NULL ) ;
+      }
+   }
 
    //***************_pmdCoordProcessor*********************
    _pmdCoordProcessor::_pmdCoordProcessor()
@@ -849,29 +818,14 @@ namespace engine
 
    _pmdCoordProcessor::~_pmdCoordProcessor()
    {
-      if ( NULL != _pEDUCB )
-      {
-         netMultiRouteAgent *pRouteAgent 
-                                 = pmdGetKRCB()->getCoordCB()->getRouteAgent() ;
-         pRouteAgent->delSession( _pEDUCB->getTID() );
-      }
-
-      _pSession = NULL ;
-      _pClient  = NULL ;
-      _pEDUCB   = NULL ;
-
       if ( NULL != _pErrorObj )
       {
          SDB_OSS_DEL _pErrorObj ;
          _pErrorObj = NULL ;
       }
 
-      if ( NULL != _pResultBuff )
-      {
-         //TODO:
-         //SDB_OSS_DEL _pResultBuff ;
-         _pResultBuff = NULL ;
-      }
+      /// don't need to free
+      _pResultBuff = NULL ;
    }
 
    const CHAR* _pmdCoordProcessor::processorName() const
@@ -884,74 +838,38 @@ namespace engine
       return SDB_PROCESSOR_COORD;
    }
 
-   ISession* _pmdCoordProcessor::getSession()
-   {
-      return _pSession ;
-   }
-
-   INT32 _pmdCoordProcessor::attachSession( ISession *session )
+   void _pmdCoordProcessor::_onAttach()
    {
       INT32 rc = SDB_OK ;
-      _pSession = session ;
-      SDB_ASSERT( _pSession, "Session can't be NULL" ) ;
-      _pClient  = _pSession->getClient() ;
-      SDB_ASSERT( _pClient, "Client can't be NULL" ) ;
 
-      SDB_SESSION_TYPE sessionType = _pSession->sessionType() ;
-      SDB_ASSERT( SDB_SESSION_LOCAL == sessionType 
-                  || SDB_SESSION_REST == sessionType
-                  || SDB_SESSION_PROTOCOL == sessionType, "" ) ;
-
-      if ( SDB_SESSION_LOCAL == sessionType )
-      {
-         _pmdLocalSession *pLocalSession =
-                                 dynamic_cast<_pmdLocalSession*>( _pSession ) ;
-         SDB_ASSERT( NULL != pLocalSession, "" ) ;
-         _pEDUCB = pLocalSession->eduCB() ;
-      }
-      else if ( SDB_SESSION_PROTOCOL == sessionType )
-      {
-         _pmdSession *pMongoSession =
-                                 dynamic_cast<_pmdSession*>( _pSession ) ;
-         SDB_ASSERT( NULL != pMongoSession, "" ) ;
-         _pEDUCB = pMongoSession->eduCB() ;
-      }
-      else
-      {
-         //SDB_SESSION_REST
-         _pmdRestSession *pRestSession =
-                                 dynamic_cast<_pmdRestSession*>( _pSession ) ;
-         SDB_ASSERT( NULL != pRestSession, "" ) ;
-         _pEDUCB = pRestSession->eduCB() ;
-      }
-
+      // must call base _onAttach first
+      pmdDataProcessor::_onAttach() ;
+      // do self
       _CoordCB *pCoordCB = pmdGetKRCB()->getCoordCB() ;
       if ( NULL != pCoordCB )
       {
          netMultiRouteAgent *pRouteAgent = pCoordCB->getRouteAgent() ;
-         rc = pRouteAgent->addSession( _pEDUCB );
+         rc = pRouteAgent->addSession( eduCB() ) ;
          if ( SDB_OK != rc )
          {
-            PD_LOG( PDERROR, "add session failed:rc=%d", rc ) ;
+            PD_LOG( PDERROR, "Add coord session failed in session[%s], rc: %d",
+                    getSession()->sessionName(), rc ) ;
          }
       }
-
-      return rc ;
    }
 
-   void _pmdCoordProcessor::detachSession()
+   void _pmdCoordProcessor::_onDetach()
    {
-      //TODO: 放到析构里去处理
-//      if ( NULL != _pEDUCB )
-//      {
-//         netMultiRouteAgent *pRouteAgent 
-//                                 = pmdGetKRCB()->getCoordCB()->getRouteAgent() ;
-//         pRouteAgent->delSession( _pEDUCB->getTID() );
-//      }
-
-//      _pSession = NULL ;
-//      _pClient  = NULL ;
-//      _pEDUCB   = NULL ;
+      // must call base _onDetach first( will kill context, but kill context
+      // need the coordSession
+      pmdDataProcessor::_onDetach() ;
+      // do self
+      _CoordCB *pCoordCB = pmdGetKRCB()->getCoordCB() ;
+      if ( eduCB() && pCoordCB )
+      {
+         netMultiRouteAgent *pRouteAgent = pCoordCB->getRouteAgent() ;
+         pRouteAgent->delSession( eduID() ) ;
+      }
    }
 
    INT32 _pmdCoordProcessor::_processCoordMsg( MsgHeader *msg, 
@@ -972,6 +890,12 @@ namespace engine
       rtnCoordProcesserFactory *pProcesserFactory
                                         = pCoordcb->getProcesserFactory();
 
+      if ( !getClient()->isAuthed() )
+      {
+         rc = SDB_COORD_UNKNOWN_OP_REQ ;
+         goto done ;
+      }
+
       switch ( msg->opCode )
       {
       case MSG_BS_GETMORE_REQ :
@@ -989,7 +913,7 @@ namespace engine
                if ( NULL != pCmdProcesser )
                {
                   rc = pCmdProcesser->execute( ( CHAR *)msg, msg->messageLength,
-                                               &_pResultBuff, _pEDUCB,
+                                               &_pResultBuff, eduCB(),
                                                replyHeader, &_pErrorObj ) ;
                   break ;
                }
@@ -1002,7 +926,7 @@ namespace engine
             rtnCoordOperator *pOperator = 
                            pProcesserFactory->getOperator( msg->opCode ) ;
             rc = pOperator->execute( ( CHAR* )msg, msg->messageLength,
-                                     &_pResultBuff, _pEDUCB,
+                                     &_pResultBuff, eduCB(),
                                      replyHeader, &_pErrorObj ) ;
             // query with return data
             if ( MSG_BS_QUERY_REQ == msg->opCode 
@@ -1011,14 +935,12 @@ namespace engine
                  && NULL != ( pContext = _pRTNCB->contextFind( 
                                                     replyHeader.contextID ) ) )
             {
-               rc = pContext->getMore( -1, contextBuff, _pEDUCB ) ;
+               rc = pContext->getMore( -1, contextBuff, eduCB() ) ;
                if ( rc || pContext->eof() )
                {
-                  _pRTNCB->contextDelete( replyHeader.contextID, _pEDUCB ) ;
+                  _pRTNCB->contextDelete( replyHeader.contextID, eduCB() ) ;
                   replyHeader.contextID = -1 ;
                }
-               replyHeader.startFrom = ( INT32 )contextBuff.getStartFrom() ;
-               replyHeader.header.messageLength = sizeof( MsgOpReply ) ;
 
                if ( SDB_DMS_EOC == rc )
                {
@@ -1029,18 +951,19 @@ namespace engine
                   PD_LOG( PDERROR, "Failed to query with return data, "
                           "rc: %d", rc ) ;
                }
-               replyHeader.flags = rc ;
             }
          }
          break;
       }
 
-      if ( ( MSG_BS_LOB_OPEN_REQ == msg->opCode 
-             || MSG_BS_LOB_READ_REQ == msg->opCode ) && NULL != _pResultBuff )
+      if ( ( MSG_BS_LOB_OPEN_REQ == msg->opCode ||
+             MSG_BS_LOB_READ_REQ == msg->opCode ) &&
+           NULL != _pResultBuff )
       {
          INT32 dataLen = replyHeader.header.messageLength 
                          - sizeof( MsgOpReply ) ;
          contextBuff   = rtnContextBuf( _pResultBuff, dataLen, 1 ) ;
+         _pResultBuff  = NULL ;
       }
       else
       {
@@ -1061,21 +984,18 @@ namespace engine
          }
          else
          {
-            BSONObj obj = utilGetErrorBson( rc,
-                                          _pEDUCB->getInfo( EDU_INFO_ERROR ) ) ;
+            BSONObj obj = utilGetErrorBson( rc, eduCB()->getInfo(
+                                            EDU_INFO_ERROR ) ) ;
             contextBuff = rtnContextBuf( obj ) ;
          }
       }
 
-      replyHeader.header.messageLength = sizeof( MsgOpReply ) ;
-      replyHeader.flags = rc ;
-
+   done:
       return rc ;
    }
 
-   INT32 _pmdCoordProcessor::processMsg( MsgHeader *msg, 
-                                         SDB_DPSCB *dpsCB,
-                                         rtnContextBuf &contextBuff, 
+   INT32 _pmdCoordProcessor::processMsg( MsgHeader *msg,
+                                         rtnContextBuf &contextBuff,
                                          INT64 &contextID,
                                          BOOLEAN &needReply )
    {
@@ -1092,18 +1012,16 @@ namespace engine
       _replyHeader.startFrom            = 0 ;
 
       rc = _processCoordMsg( msg, _replyHeader, contextBuff ) ;
-      if ( MSG_AUTH_VERIFY_REQ == msg->opCode && SDB_CAT_NO_ADDR_LIST == rc )
-      {
-         rc = SDB_OK ;
-      }
-
-      contextID = _replyHeader.contextID ;
-
-      if ( SDB_COORD_UNKNOWN_OP_REQ == rc )
+      if ( SDB_COORD_UNKNOWN_OP_REQ == rc ||
+           !getClient()->isAuthed() )
       {
          contextBuff.release() ;
-         rc = _pmdDataProcessor::processMsg( msg, dpsCB, contextBuff, contextID, 
-                                             needReply ) ;
+         rc = _pmdDataProcessor::processMsg( msg, contextBuff,
+                                             contextID, needReply ) ;
+      }
+      else if ( SDB_OK == rc )
+      {
+         contextID = _replyHeader.contextID ;
       }
 
       if ( rc )
@@ -1116,12 +1034,6 @@ namespace engine
          {
             PD_LOG ( PDERROR, "Error processing Agent request, rc=%d", rc ) ;
          }
-      }
-
-      if ( contextBuff.recordNum() > 0 )
-      {
-         _replyHeader.numReturned = contextBuff.recordNum() ;
-         _replyHeader.header.messageLength += contextBuff.size() ;
       }
 
       return rc ;

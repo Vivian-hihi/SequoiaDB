@@ -109,7 +109,6 @@ namespace engine
       _pFixBuff         = NULL ;
       _pSessionInfo     = NULL ;
       _pRTNCB           = NULL ;
-      _pDPSCB           = NULL ;
 
       _wwwRootPath      = pmdGetOptionCB()->getWWWPath() ;
       _pRestTransfer    = SDB_OSS_NEW RestToMSGTransfer( this ) ;
@@ -492,8 +491,8 @@ namespace engine
          goto error ;
       }
 
-      rc = _processor->processMsg( msg, _pDPSCB, contextBuff, contextID, 
-                                   needReplay ) ;
+      rc = getProcessor()->processMsg( msg, contextBuff, contextID, 
+                                       needReplay ) ;
       if ( SDB_OK != rc )
       {
          BSONObjBuilder builder ;
@@ -598,17 +597,6 @@ namespace engine
       return rc ;
    error:
       goto done ;
-   }
-
-   INT32 _pmdRestSession::attachProcessor( _IProcessor *processor )
-   {
-      _processor = processor ;
-      return SDB_OK ;
-   }
-
-   void _pmdRestSession::detachProcessor()
-   {
-      _processor = NULL ;
    }
 
    INT32 _pmdRestSession::_processRestMsg( HTTP_PARSE_COMMON command, 
@@ -831,12 +819,6 @@ namespace engine
    {
       pmdKRCB *krcb = pmdGetKRCB() ;
       _pRTNCB = krcb->getRTNCB() ;
-      _pDPSCB = krcb->getDPSCB() ;
-
-      if ( _pDPSCB && !_pDPSCB->isLogLocal() )
-      {
-         _pDPSCB = NULL ;
-      }
 
       if ( NULL != sdbGetPMDController()->getRSManager() )
       {
@@ -846,28 +828,6 @@ namespace engine
 
    void _pmdRestSession::_onDetach()
    {
-      // rollback transaction
-      if ( DPS_INVALID_TRANS_ID != eduCB()->getTransID() )
-      {
-         INT32 rc = rtnTransRollback( eduCB(), _pDPSCB ) ;
-         if ( rc )
-         {
-            PD_LOG( PDERROR, "Session[%s] rollback trans info failed, rc: %d",
-                    sessionName(), rc ) ;
-            // We do not jump to error because we have to delete context
-            // regardless whether rollback success or not
-         }
-      }
-
-      // delete all context
-      INT64 contextID = -1 ;
-      while ( -1 != ( contextID = eduCB()->contextPeek() ) )
-      {
-         _pRTNCB->contextDelete( contextID, NULL ) ;
-      }
-
-      eduCB()->setClientSock( NULL ) ;
-
       // save session info
       if ( _pSessionInfo )
       {

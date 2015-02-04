@@ -38,6 +38,9 @@
    #include "clsMgr.hpp"
    #include "omManager.hpp"
    #include "msgAuth.hpp"
+   #include "coordCB.hpp"
+   #include "rtnCoord.hpp"
+   #include "rtnCoordOperator.hpp"
 #endif // SDB_ENGINE
 
 #include "../bson/bson.h"
@@ -146,7 +149,40 @@ namespace engine
       }
       else if ( SDB_ROLE_COORD == pmdGetDBRole() )
       {
-         // TODO:XUJIANHUI
+         CHAR *pResult = NULL ;
+         MsgOpReply replayHeader ;
+         BSONObj *pErrObj = NULL ;
+
+         CoordCB *pCoordcb = pmdGetKRCB()->getCoordCB();
+         rtnCoordProcesserFactory *pProcesserFactory =
+            pCoordcb->getProcesserFactory();
+         rtnCoordOperator *pOperator = NULL ;
+         BSONObj *err = NULL ;
+         pOperator = pProcesserFactory->getOperator( pMsg->opCode );
+         rc = pOperator->execute( (CHAR*)pMsg, pMsg->messageLength,
+                                  &pResult, _pEDUCB, replayHeader,
+                                  &pErrObj ) ;
+         // special handling for password verification when there is no
+         // addrlist specified. Usually this happen when there is only
+         // one coord node before creating the first catalog
+         SDB_ASSERT( NULL == pErrObj, "ErrObj must be NULL" ) ;
+         SDB_ASSERT( NULL == pResult, "Result must be NULL" ) ;
+         if ( MSG_AUTH_VERIFY_REQ == pMsg->opCode &&
+              SDB_CAT_NO_ADDR_LIST == rc )
+         {
+            rc = SDB_OK ;
+         }
+         else if ( rc )
+         {
+            PD_LOG( PDERROR, "Client[%s] authenticate failed[user: %s, "
+                    "passwd: %s], rc: %d", clientName(),
+                    user.valuestrsafe(), pass.valuestrsafe(), rc ) ;
+            goto error ;
+         }
+         else
+         {
+            _isAuthed = TRUE ;
+         }
       }
       else
       {

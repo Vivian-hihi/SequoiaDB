@@ -10,7 +10,8 @@
 #include "pmdAccessProtocolBase.hpp"
 #include "pmdModuleLoader.hpp"
 
-namespace engine {
+namespace engine
+{
 
    INT32 pmdFapListenerEntryPoint ( pmdEDUCB *cb, void *pData )
    {
@@ -86,7 +87,8 @@ namespace engine {
 
          // now we have a tcp socket for a new connection, let's get an 
          // agent, Note the new new socket sent passing to startEDU
-         rc = eduMgr->startEDU ( EDU_TYPE_FAPAGENT, (void *)pParam, &agentEDU ) ;
+         rc = eduMgr->startEDU ( EDU_TYPE_FAPAGENT, (void *)pParam,
+                                 &agentEDU ) ;
          if ( rc )
          {
             PD_LOG( ( rc == SDB_QUIESCED ? PDWARNING : PDERROR ),
@@ -126,8 +128,7 @@ namespace engine {
    INT32 pmdFapAgentEntryPoint( pmdEDUCB *cb, void *arg )
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB_PMDLOCALAGENTENTPNT );
-      //TODO: make sure the destructor execute after 'localSession.detach() ;'
+      PD_TRACE_ENTRY ( SDB_PMDLOCALAGENTENTPNT ) ;
       pmdSession *session = NULL ;
       pmdEDUParam *pParam = ( pmdEDUParam * )arg ;
       SOCKET s = *((SOCKET *)&pParam->pSocket) ;
@@ -136,44 +137,37 @@ namespace engine {
       SDB_OSS_DEL pParam ;
       pParam = NULL ;
 
+      /// get session
+      session = protocol->getSession( s ) ;
+      if ( NULL == session )
+      {
+         PD_LOG( PDERROR, "Failed to get Session of protocol" ) ;
+         rc = SDB_OOM ;
+         goto error ;
+      }
+      session->attach( cb ) ;
+
       if ( pmdGetDBRole() == SDB_ROLE_COORD )
       {
          pmdCoordProcessor coordProcessor ;
-         session = protocol->getSession( s, &coordProcessor ) ;
-         if ( NULL == session )
-         {
-            PD_LOG( PDERROR, "Failed to get Session of protocol" ) ;
-            rc = SDB_OOM ;
-            goto error ;
-         }
-
-         session->attach( cb ) ;
-         coordProcessor.attachSession( session ) ;
+         session->attachProcessor( &coordProcessor ) ;
          rc = session->run() ;
-         coordProcessor.detachSession() ;
-         session->detach() ;
-         protocol->releaseSession( session ) ;
+         session->detachProcessor() ;
       }
       else
       {
          pmdDataProcessor dataProcessor ;
-         session = protocol->getSession( s, &dataProcessor ) ;
-         if ( NULL == session )
-         {
-            PD_LOG( PDERROR, "Failed to get Session of protocol" ) ;
-            rc = SDB_OOM ;
-            goto error ;
-         }
-
-         session->attach( cb ) ;
-         dataProcessor.attachSession( session ) ;
+         session->attachProcessor( &dataProcessor ) ;
          rc = session->run() ;
-         dataProcessor.detachSession() ;
-         session->detach() ;
-         protocol->releaseSession( session ) ;
+         session->detachProcessor() ;
       }
 
    done:
+      if ( session )
+      {
+         protocol->releaseSession( session ) ;
+         session = NULL ;
+      }
       PD_TRACE_EXITRC ( SDB_PMDLOCALAGENTENTPNT, rc );
       return rc ;
    error:

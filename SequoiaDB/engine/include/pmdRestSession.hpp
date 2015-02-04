@@ -168,8 +168,6 @@ namespace engine
          INT32             run1() ;
 
       public:
-         INT32             attachProcessor( _IProcessor *processor ) ;
-         void              detachProcessor() ;
          httpConnection*   getRestConn() { return &_restConn ; }
          CHAR*             getFixBuff() ;
          INT32             getFixBuffSize () const ;
@@ -215,9 +213,7 @@ namespace engine
          string            _wwwRootPath ;
 
          _SDB_RTNCB        *_pRTNCB ;
-         _dpsLogWrapper    *_pDPSCB ;
 
-         _IProcessor       *_processor ;
          RestToMSGTransfer *_pRestTransfer ;
 
    } ;

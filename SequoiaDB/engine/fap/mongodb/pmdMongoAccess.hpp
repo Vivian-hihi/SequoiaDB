@@ -44,6 +44,9 @@
 #define ACCESS_FOR_MONGODB_CLIENT "server for mongodb client"
 #define PORT_OFFSET 7
 
+/*
+   _pmdMongoAccess define
+*/
 class _pmdMongoAccess : public engine::IPmdAccessProtocol
 {
 public:
@@ -65,8 +68,7 @@ public:
    virtual INT32 fini() ;
 
    virtual const CHAR *getServiceName() const ;
-   virtual engine::pmdSession *getSession( SOCKET fd,
-                                           engine::IProcessor *pProcessor ) ;
+   virtual engine::pmdSession *getSession( SOCKET fd ) ;
    virtual void releaseSession( engine::pmdSession *pSession ) ;
 
 private:
@@ -78,4 +80,5 @@ private:
 };
 
 typedef _pmdMongoAccess pmdMongoAccess ;
-#endif
+
+#endif // _SDB_MONGO_ACCESS_HPP_

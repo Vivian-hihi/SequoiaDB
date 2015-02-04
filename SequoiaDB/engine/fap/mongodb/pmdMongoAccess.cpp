@@ -82,18 +82,10 @@ const CHAR * _pmdMongoAccess::getServiceName() const
    return _serviceName ;
 }
 
-engine::pmdSession * _pmdMongoAccess::getSession( SOCKET fd,
-                                                 engine::IProcessor *pProcessor )
+engine::pmdSession * _pmdMongoAccess::getSession( SOCKET fd )
 {
    pmdMongoSession *session = NULL ;
-   if ( NULL != pProcessor )
-   {
-      session = SDB_OSS_NEW pmdMongoSession( fd ) ;
-      session->attachProcessor( pProcessor ) ;
-   }
-
-   session->attachProcessor( pProcessor ) ;
-
+   session = SDB_OSS_NEW pmdMongoSession( fd ) ;
    return session ;
 }
 
@@ -102,7 +94,6 @@ void _pmdMongoAccess::releaseSession( engine::pmdSession *pSession )
    pmdMongoSession *session = dynamic_cast< pmdMongoSession *>( pSession ) ;
    if ( NULL == session )
    {
-      session->detachProcessor() ;
       SDB_OSS_DEL session ;
       session = NULL ;
    }
@@ -120,3 +111,4 @@ void _pmdMongoAccess::_release()
       _resource = NULL ;
    }
 }
+
