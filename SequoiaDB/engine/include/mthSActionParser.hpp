@@ -43,19 +43,20 @@ namespace engine
    class _mthSActionParser : public SDBObject
    {
    public:
-      _mthSActionParser() ;
       ~_mthSActionParser() ;
 
    public:
+      static const _mthSActionParser *instance() ;
+
       INT32 parse( const bson::BSONElement &e,
-                   _mthSAction &action ) ;
+                   _mthSAction &action ) const ;
 
       INT32 buildDefaultValueAction( const bson::BSONElement &e,
-                                     _mthSAction &action ) ;
+                                     _mthSAction &action ) const ;
 
       INT32 buildSliceAction( INT32 begin,
                               INT32 limit,
-                               _mthSAction &action ) ;
+                               _mthSAction &action ) const ;
    public:
       /// all children will be used as a singleton
       /// do not hold any dynamic member in child class.
@@ -79,13 +80,13 @@ namespace engine
       } ;
 
    private:
-      typedef std::map<std::string, const parser *> PARSERS ;
+      typedef std::map<std::string, parser *> PARSERS ;
 
    private:
-      static INT32 _registerParsers() ;
+      _mthSActionParser() ;
+      INT32 _registerParsers() ;
    private:
-      static PARSERS _parsers ;
-      static INT32 _initParsers ;
+      PARSERS _parsers ;
    } ;
    typedef class _mthSActionParser mthSActionParser ;
 }
