@@ -130,7 +130,8 @@ namespace engine
       builder.append( OM_TASKINFO_FIELD_NAME, taskName ) ;
       builder.appendTimestamp( OM_TASKINFO_FIELD_CREATE_TIME, 
                                (unsigned long long)now * 1000, 0 ) ;
-      builder.appendTimestamp( OM_TASKINFO_FIELD_END_TIME, 0, 0 ) ;
+      builder.appendTimestamp( OM_TASKINFO_FIELD_END_TIME, 
+                               (unsigned long long)now * 1000, 0 ) ;
       builder.append( OM_TASKINFO_FIELD_STATUS, OM_TASK_STATUS_INIT ) ;
       builder.append( OM_TASKINFO_FIELD_STATUS_DESC, 
                       getTaskStatusStr( OM_TASK_STATUS_INIT ) ) ;
@@ -5213,13 +5214,34 @@ namespace engine
 
    void omQueryTaskCommand::_sendTaskInfo2Web( list<BSONObj> &tasks )
    {
+      string clusterName ;
+      string businessName ;
       BSONObj filter = BSON( OM_TASKINFO_FIELD_INFO << "" ) ;
+
       list<BSONObj>::iterator iter = tasks.begin() ;
       while ( iter != tasks.end() )
       {
+         BSONElement clusterEle ;
+         clusterEle = iter->getFieldDotted( 
+                         OM_TASKINFO_FIELD_INFO"."OM_BSON_FIELD_CLUSTER_NAME ) ;
+         clusterName  = clusterEle.String() ;
+
+         BSONElement businessEle ;
+         businessEle = iter->getFieldDotted( 
+                         OM_TASKINFO_FIELD_INFO"."OM_BSON_BUSINESS_NAME ) ;
+         businessName = businessEle.String() ;
+
+         BSONObj info = BSON( OM_BSON_FIELD_CLUSTER_NAME << clusterName 
+                              << OM_BSON_BUSINESS_NAME << businessName ) ;
+
          BSONObj tmp = iter->filterFieldsUndotted( filter, false ) ;
-         _restAdaptor->appendHttpBody( _restSession, tmp.objdata(), 
-                                       tmp.objsize(), 1 ) ;
+         BSONObjBuilder resultBuilder ;
+         resultBuilder.appendElements( tmp ) ;
+         resultBuilder.append( OM_TASKINFO_FIELD_INFO, info ) ;
+
+         BSONObj result = resultBuilder.obj() ;
+         _restAdaptor->appendHttpBody( _restSession, result.objdata(), 
+                                       result.objsize(), 1 ) ;
          iter++ ;
       }
 
