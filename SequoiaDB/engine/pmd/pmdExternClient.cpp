@@ -171,6 +171,7 @@ namespace engine
               SDB_CAT_NO_ADDR_LIST == rc )
          {
             rc = SDB_OK ;
+            _isAuthed = TRUE ;
          }
          else if ( rc )
          {
