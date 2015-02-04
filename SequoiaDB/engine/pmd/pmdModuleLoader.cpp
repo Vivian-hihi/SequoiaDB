@@ -115,7 +115,7 @@ INT32 _pmdModuleLoader::create( IPmdAccessProtocol *&protocol )
    INT32 rc = SDB_OK ;
    SDB_ASSERT( NULL != _loadModule, "Module handle cann't be NULL" ) ;
 
-   rc = _loadModule->resolveAddress( "createAccessProtocol", &_function ) ;
+   rc = _loadModule->resolveAddress( CREATE_FAP_NAME, &_function ) ;
    if ( SDB_OK != rc )
    {
       PD_LOG( PDERROR, "Failed to get export function: " ) ;
@@ -141,7 +141,7 @@ INT32 _pmdModuleLoader::release( IPmdAccessProtocol *protocol )
    INT32 rc = SDB_OK ;
    SDB_ASSERT( NULL != _loadModule, "Module handle cann't be NULL" ) ;
 
-   rc = _loadModule->resolveAddress( "releaseAccessProtocol", &_function ) ;
+   rc = _loadModule->resolveAddress( RELEASE_FAP_NAME, &_function ) ;
    if ( SDB_OK != rc )
    {
       PD_LOG( PDERROR, "Failed to get export function: " ) ;
