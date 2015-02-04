@@ -127,7 +127,7 @@ namespace engine
          _pmdProcessor() ;
          virtual ~_pmdProcessor() ;
 
-         virtual ISession*             getSession() { return &_pSession ; }
+         virtual ISession*             getSession() { return _pSession ; }
 
       protected:
          void     attachSession( pmdSession *pSession ) ;
