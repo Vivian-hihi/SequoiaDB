@@ -63,6 +63,7 @@
 
 namespace engine
 {
+   static _mthSActionParser PARSER ;
    _mthSActionParser::_mthSActionParser()
    {
       _registerParsers() ;
@@ -80,8 +81,7 @@ namespace engine
 
    const _mthSActionParser *_mthSActionParser::instance()
    {
-      static _mthSActionParser parser ;
-      return &parser ;
+      return &PARSER ;
    }
 
    ///PD_TRACE_DECLARE_FUNCTION ( SDB__MTHSACTIONPARSER_GETACTION, "_mthSActionParser::getAction" )

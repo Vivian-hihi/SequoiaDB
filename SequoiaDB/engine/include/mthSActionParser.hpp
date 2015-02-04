@@ -43,6 +43,7 @@ namespace engine
    class _mthSActionParser : public SDBObject
    {
    public:
+      _mthSActionParser() ;
       ~_mthSActionParser() ;
 
    public:
@@ -83,7 +84,6 @@ namespace engine
       typedef std::map<std::string, parser *> PARSERS ;
 
    private:
-      _mthSActionParser() ;
       INT32 _registerParsers() ;
    private:
       PARSERS _parsers ;
