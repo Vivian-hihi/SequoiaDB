@@ -35,6 +35,7 @@
 #include "pd.hpp"
 #include "pdTrace.hpp"
 #include "msgTrace.hpp"
+#include "msgDef.h"
 
 using namespace bson ;
 
