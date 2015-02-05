@@ -12,6 +12,167 @@
               {name:"LiSi", age:19 },
               {name:"WangErmazi", age:18 }
            ]
+           }</codeblock></p>
+    <section><title>$include</title>      
+    </section>
+    <section><title>说明</title>
+      <p>选择(!=0)或移除(=0)某个字段</p>
+    </section>    
+    <section><title>示例</title>
+      <ul>
+        <li>          
+          <p><codeblock>db.foo.bar.find({class:1},{students:{$include:1}})</codeblock></p>
+          <p>返回 student 字段</p>
+          <p><codeblock>{
+   students:[
+              {name:"ZhangSan", age:18 },
+              {name:"LiSi", age:19 },
+              {name:"WangErmazi", age:18 },
+           ]
 }</codeblock></p>
+        </li>
+        <li>
+          <p><codeblock>db.foo.bar.find({class:1},{_id:{$include:0}})</codeblock></p>
+          <p>返回移除 _id 字段</p>
+          <p><codeblock>{
+   class:1,
+   students:[
+              {name:"ZhangSan", age:18 },
+              {name:"LiSi", age:19 },
+              {name:"WangErmazi", age:18 },
+           ]
+}</codeblock></p>
+        </li>
+      </ul>
+    </section>
+    <section><title>$default</title>      
+    </section>
+    <section><title>说明</title>
+      <p>选择某个字段。当字段不存在时返回默认值。可简写为{&lt;fieldName>:&lt;defaultValue>}。</p>
+    </section>    
+    <section><title>示例</title>
+      <ul>
+        <li>          
+          <p><codeblock>db.foo.bar.find({class:1}, {students:[], teacher:{$default:"Mr Liu"}})</codeblock></p>
+          <p>返回</p>
+          <p><codeblock>{
+   students:[
+              {name:"ZhangSan", age:18 },
+              {name:"LiSi", age:19 },
+              {name:"WangErmazi", age:18 },
+           ],
+   teacher:"Mr Liu"
+}</codeblock></p>
+        </li>        
+      </ul>
+    </section>
+    <section><title>$elemMatch</title>      
+    </section>
+    <section><title>说明</title>
+      <p>返回数组内满足条件的元素的集合</p>
+    </section>    
+    <section><title>示例</title>
+      <ul>
+        <li>          
+          <p><codeblock>db.foo.bar.find({class:1}, {students:{$elemMatch:{age:18}}})</codeblock></p>
+          <p>返回</p>
+          <p><codeblock>{
+   _id:1,
+   class:1,
+   students:[
+                 {name:"ZhangSan", age:18 },
+                 {name:"WangErmazi", age:18 },
+           ]
+}</codeblock></p>
+        </li>        
+      </ul>
+    </section>
+    <section><title>$elemMatchOne</title>      
+    </section>
+    <section><title>说明</title>
+      <p>返回数组内满足条件的第一个元素的集合</p>
+    </section>    
+    <section><title>示例</title>
+      <ul>
+        <li>          
+          <p><codeblock>db.foo.bar.find({class:1}, {students:{$elemMatchOne:{age:18}}})</codeblock></p>
+          <p>返回</p>
+          <p><codeblock>{
+   _id:1,
+   class:1,
+   students:[
+                 {name:"ZhangSan", age:18 }
+           ]
+}</codeblock></p>
+        </li>        
+      </ul>
+    </section>
+    <section><title>$slice</title>      
+    </section>
+    <section><title>说明</title>
+      <p>返回数组的切片</p>
+    </section>    
+    <section><title>示例</title>
+      <ul>
+        <li>          
+          <p><codeblock>db.foo.bar.find({class:1}, {students:{$slice:1}})</codeblock></p>
+          <p>返回下标为0，长度为1的切片</p>
+          <p><codeblock>{
+   _id:1,
+   class:1,
+   students:[
+                 {name:"ZhangSan", age:18 }
+           ]
+}</codeblock></p>
+        </li>
+        <li>          
+          <p><codeblock>db.foo.bar.find({class:1}, {students:{$slice:2}})</codeblock></p>
+          <p>返回下标为0，长度为2的切片</p>
+          <p><codeblock>{
+   _id:1,
+   class:1,
+   students:[
+                 {name:"ZhangSan", age:18 }，
+                 {name:"LiSi", age:19 }
+           ]
+}</codeblock></p>
+        </li>
+        <li>          
+          <p><codeblock>db.foo.bar.find({class:1}, {students:{$slice:-2}})</codeblock></p>
+          <p>返回倒数前2个元素的切片</p>
+          <p><codeblock>{
+   _id:1,
+   class:1,
+   students:[
+                 {name:"LiSi", age:19 }，
+                 {name:"WangErmazi", age:18 }
+           ]
+}</codeblock></p>
+        </li>
+        <li>          
+          <p><codeblock>db.foo.bar.find({class:1}, {students:{$slice:[1,2]}})</codeblock></p>
+          <p>返回下标为1，长度为2的切片</p>
+          <p><codeblock>{
+   _id:1,
+   class:1,
+   students:[
+                 {name:"LiSi", age:19 }，
+                 {name:"WangErmazi", age:18 }
+           ]
+}</codeblock></p>
+        </li>
+        <li>          
+          <p><codeblock>db.foo.bar.find({class:1}, {students:{$slice:[-1,2]}})</codeblock></p>
+          <p>返回倒数第1个开始，长度为2的切片（长度不足，只返回1个元素）</p>
+          <p><codeblock>{
+   _id:1,
+   class:1,
+   students:[
+                 {name:"WangErmazi", age:18 }
+           ]
+}</codeblock></p>
+        </li>
+      </ul>
+    </section>
   </body>
 </topic>
