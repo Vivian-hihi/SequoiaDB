@@ -178,6 +178,7 @@ namespace engine
       DMS MB ATTRIBUTE DEFINE
    */
    #define DMS_MB_ATTR_COMPRESSED         0x00000001
+   #define DMS_MB_ATTR_NOIDINDEX          0x00000002
 
 #pragma pack(4)
    /*

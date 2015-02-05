@@ -1463,7 +1463,8 @@ namespace engine
       }
 
       // create $id index[s_idKeyObj]
-      if ( FALSE == noIDIndex )
+      if ( !noIDIndex &&
+           !OSS_BIT_TEST( attributes, DMS_MB_ATTR_NOIDINDEX ) )
       {
          rc = _pIdxSU->createIndex( context, s_idKeyObj, cb, NULL, TRUE ) ;
          PD_RC_CHECK( rc, PDERROR, "Create $id index failed in collection[%s], "
