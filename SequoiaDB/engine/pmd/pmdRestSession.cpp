@@ -233,12 +233,12 @@ namespace engine
                PD_LOG( PDINFO, "Rest session: %s", pSessionID ) ;
                _pSessionInfo = sdbGetPMDController()->attachSessionInfo(
                                   pSessionID ) ;
-               _client.setAuthed( TRUE ) ;
             }
 
             // if session exist, restore
             if ( _pSessionInfo )
             {
+               _client.setAuthed( TRUE ) ;
                restoreSession() ;
             }
          }
