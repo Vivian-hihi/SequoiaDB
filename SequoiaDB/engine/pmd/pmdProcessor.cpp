@@ -87,74 +87,78 @@ namespace engine
       {
          rc = getClient()->authenticate( "", "" ) ;
       }
-      else
+
+      if ( rc )
       {
-         switch( msg->opCode )
-         {
-            case MSG_BS_MSG_REQ :
-               rc = _onMsgReqMsg( msg ) ;
-               break ;
-            case MSG_BS_UPDATE_REQ :
-               rc = _onUpdateReqMsg( msg, getDPSCB() ) ;
-               break ;
-            case MSG_BS_INSERT_REQ :
-               rc = _onInsertReqMsg( msg ) ;
-               break ;
-            case MSG_BS_QUERY_REQ :
-               rc = _onQueryReqMsg( msg, getDPSCB(), contextBuff, contextID ) ;
-               break ;
-            case MSG_BS_DELETE_REQ :
-               rc = _onDelReqMsg( msg, getDPSCB() ) ;
-               break ;
-            case MSG_BS_GETMORE_REQ :
-               rc = _onGetMoreReqMsg( msg, contextBuff, contextID ) ;
-               break ;
-            case MSG_BS_KILL_CONTEXT_REQ :
-               rc = _onKillContextsReqMsg( msg ) ;
-               break ;
-            case MSG_BS_SQL_REQ :
-               rc = _onSQLMsg( msg, contextID ) ;
-               break ;
-            case MSG_BS_TRANS_BEGIN_REQ :
-               rc = _onTransBeginMsg() ;
-               break ;
-            case MSG_BS_TRANS_COMMIT_REQ :
-               rc = _onTransCommitMsg( getDPSCB() ) ;
-               break ;
-            case MSG_BS_TRANS_ROLLBACK_REQ :
-               rc = _onTransRollbackMsg( getDPSCB() ) ;
-               break ;
-            case MSG_BS_AGGREGATE_REQ :
-               rc = _onAggrReqMsg( msg, contextID ) ;
-               break ;
-            case MSG_BS_LOB_OPEN_REQ :
-               rc = _onOpenLobMsg( msg, getDPSCB(), contextID, contextBuff ) ;
-               break ;
-            case MSG_BS_LOB_WRITE_REQ:
-               rc = _onWriteLobMsg( msg ) ;
-               break ;
-            case MSG_BS_LOB_READ_REQ:
-               rc = _onReadLobMsg( msg, contextBuff ) ;
-               break ;
-            case MSG_BS_LOB_CLOSE_REQ:
-               rc = _onCloseLobMsg( msg ) ;
-               break ;
-            case MSG_BS_LOB_REMOVE_REQ:
-               rc = _onRemoveLobMsg( msg, getDPSCB() ) ;
-               break ;
-            default :
-               PD_LOG( PDWARNING, "Session[%s] recv unknow msg[type:[%d]%d, "
-                       "len: %d, tid: %d, routeID: %d.%d.%d, reqID: %lld]",
-                       getSession()->sessionName(), IS_REPLY_TYPE(msg->opCode),
-                       GET_REQUEST_TYPE(msg->opCode), msg->messageLength,
-                       msg->TID, msg->routeID.columns.groupID,
-                       msg->routeID.columns.nodeID,
-                       msg->routeID.columns.serviceID, msg->requestID ) ;
-               rc = SDB_INVALIDARG ;
-               break ;
-         }
+         goto done ;
       }
 
+      switch( msg->opCode )
+      {
+         case MSG_BS_MSG_REQ :
+            rc = _onMsgReqMsg( msg ) ;
+            break ;
+         case MSG_BS_UPDATE_REQ :
+            rc = _onUpdateReqMsg( msg, getDPSCB() ) ;
+            break ;
+         case MSG_BS_INSERT_REQ :
+            rc = _onInsertReqMsg( msg ) ;
+            break ;
+         case MSG_BS_QUERY_REQ :
+            rc = _onQueryReqMsg( msg, getDPSCB(), contextBuff, contextID ) ;
+            break ;
+         case MSG_BS_DELETE_REQ :
+            rc = _onDelReqMsg( msg, getDPSCB() ) ;
+            break ;
+         case MSG_BS_GETMORE_REQ :
+            rc = _onGetMoreReqMsg( msg, contextBuff, contextID ) ;
+            break ;
+         case MSG_BS_KILL_CONTEXT_REQ :
+            rc = _onKillContextsReqMsg( msg ) ;
+            break ;
+         case MSG_BS_SQL_REQ :
+            rc = _onSQLMsg( msg, contextID ) ;
+            break ;
+         case MSG_BS_TRANS_BEGIN_REQ :
+            rc = _onTransBeginMsg() ;
+            break ;
+         case MSG_BS_TRANS_COMMIT_REQ :
+            rc = _onTransCommitMsg( getDPSCB() ) ;
+            break ;
+         case MSG_BS_TRANS_ROLLBACK_REQ :
+            rc = _onTransRollbackMsg( getDPSCB() ) ;
+            break ;
+         case MSG_BS_AGGREGATE_REQ :
+            rc = _onAggrReqMsg( msg, contextID ) ;
+            break ;
+         case MSG_BS_LOB_OPEN_REQ :
+            rc = _onOpenLobMsg( msg, getDPSCB(), contextID, contextBuff ) ;
+            break ;
+         case MSG_BS_LOB_WRITE_REQ:
+            rc = _onWriteLobMsg( msg ) ;
+            break ;
+         case MSG_BS_LOB_READ_REQ:
+            rc = _onReadLobMsg( msg, contextBuff ) ;
+            break ;
+         case MSG_BS_LOB_CLOSE_REQ:
+            rc = _onCloseLobMsg( msg ) ;
+            break ;
+         case MSG_BS_LOB_REMOVE_REQ:
+            rc = _onRemoveLobMsg( msg, getDPSCB() ) ;
+            break ;
+         default :
+            PD_LOG( PDWARNING, "Session[%s] recv unknow msg[type:[%d]%d, "
+                    "len: %d, tid: %d, routeID: %d.%d.%d, reqID: %lld]",
+                    getSession()->sessionName(), IS_REPLY_TYPE(msg->opCode),
+                    GET_REQUEST_TYPE(msg->opCode), msg->messageLength,
+                    msg->TID, msg->routeID.columns.groupID,
+                    msg->routeID.columns.nodeID,
+                    msg->routeID.columns.serviceID, msg->requestID ) ;
+            rc = SDB_INVALIDARG ;
+            break ;
+      }
+
+   done:
       return rc ;
    }
 
@@ -890,10 +894,18 @@ namespace engine
       rtnCoordProcesserFactory *pProcesserFactory
                                         = pCoordcb->getProcesserFactory();
 
-      if ( !getClient()->isAuthed() )
+      if ( MSG_AUTH_VERIFY_REQ == msg->opCode )
       {
          rc = SDB_COORD_UNKNOWN_OP_REQ ;
          goto done ;
+      }
+      else if ( !getClient()->isAuthed() )
+      {
+         rc = getClient()->authenticate( "", "" ) ;
+         if ( rc )
+         {
+            goto done ;
+         }
       }
 
       switch ( msg->opCode )
@@ -1012,8 +1024,7 @@ namespace engine
       _replyHeader.startFrom            = 0 ;
 
       rc = _processCoordMsg( msg, _replyHeader, contextBuff ) ;
-      if ( SDB_COORD_UNKNOWN_OP_REQ == rc ||
-           !getClient()->isAuthed() )
+      if ( SDB_COORD_UNKNOWN_OP_REQ == rc )
       {
          contextBuff.release() ;
          rc = _pmdDataProcessor::processMsg( msg, contextBuff,
