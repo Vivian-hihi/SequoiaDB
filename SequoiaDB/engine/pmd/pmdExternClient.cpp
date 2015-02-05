@@ -249,6 +249,31 @@ namespace engine
 #endif // SDB_ENGINE
    }
 
+   INT32 _pmdExternClient::authenticate( const CHAR *username,
+                                         const CHAR *password )
+   {
+      INT32 rc = SDB_OK ;
+      CHAR *pBuffer = NULL ;
+      INT32 buffSize = 0 ;
+      
+      rc = msgBuildAuthMsg( &pBuffer, buffSize, username, password, 0 ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to build auth msg, rc: %d", rc ) ;
+         goto error ;
+      }
+      rc = authenticate( (MsgHeader*)pBuffer ) ;
+   done:
+      if ( pBuffer )
+      {
+         SDB_OSS_FREE( pBuffer ) ;
+         pBuffer = NULL ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 _pmdExternClient::disconnect()
    {
       if ( _pSocket && !_pSocket->isClosed() )

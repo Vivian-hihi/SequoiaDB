@@ -85,7 +85,7 @@ namespace engine
       }
       else if ( !getClient()->isAuthed() )
       {
-         rc = SDB_AUTH_AUTHORITY_FORBIDDEN ;
+         rc = getClient()->authenticate( "", "" ) ;
       }
       else
       {
