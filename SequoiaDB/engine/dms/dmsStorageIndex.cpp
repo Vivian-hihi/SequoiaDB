@@ -117,11 +117,11 @@ namespace engine
             for ( UINT32 j = 0 ; j < DMS_COLLECTION_MAX_INDEX ; ++j )
             {
                if ( DMS_INVALID_EXTENT ==
-                    _pDataSu->_dmsMME->_mbList[i]->_indexExtent[ j ] )
+                    _pDataSu->_dmsMME->_mbList[i]._indexExtent[ j ] )
                {
                   break ;
                }
-               ixmIndexCB indexCB( _pDataSu->_dmsMME->_mbList[i]->_indexExtent[ j ],
+               ixmIndexCB indexCB( _pDataSu->_dmsMME->_mbList[i]._indexExtent[ j ],
                                    this, NULL ) ;
                if ( !indexCB.isInitialized() && indexCB.unique() )
                {
