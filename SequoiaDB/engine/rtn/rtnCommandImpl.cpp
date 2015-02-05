@@ -1075,6 +1075,16 @@ namespace engine
       dmsCB->aquireCSMutex( pCollectionSpace ) ;
       hasAquired = TRUE ;
 
+      rc = dmsCB->nameToSUAndLock ( pCollectionSpace, suID, &su ) ;
+      if ( rc != SDB_DMS_CS_NOTEXIST )
+      {
+         su = NULL ;
+         PD_LOG ( PDERROR, "Collection space %s is already exist",
+                  pCollectionSpace ) ;
+         rc = SDB_DMS_CS_EXIST ;
+         goto error ;   
+      } 
+
       // only for standalone
       if ( SDB_ROLE_STANDALONE == pmdGetKRCB()->getDBRole() )
       {
