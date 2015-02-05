@@ -256,7 +256,7 @@ namespace engine
       CHAR *pBuffer = NULL ;
       INT32 buffSize = 0 ;
       
-      rc = msgBuildAuthMsg( &pBuffer, buffSize, username, password, 0 ) ;
+      rc = msgBuildAuthMsg( &pBuffer, &buffSize, username, password, 0 ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Failed to build auth msg, rc: %d", rc ) ;
