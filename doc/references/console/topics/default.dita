@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
+<topic id="topic_tgv_nly_yq">
+  <title>$default</title>
+  <body>
+    <section><title>说明</title>
+      <p>选择某个字段。当字段不存在时返回默认值。可简写为{&lt;fieldName>:&lt;defaultValue>}。</p>
+    </section>    
+    <section><title>示例</title>
+      <ul>
+        <li>          
+          <p><codeblock>db.foo.bar.find({class:1}, {students:[], teacher:{$default:"Mr Liu"}})</codeblock></p>
+          <p>返回</p>
+          <p><codeblock>{
+   students:[
+              {name:"ZhangSan", age:18 },
+              {name:"LiSi", age:19 },
+              {name:"WangErmazi", age:18 },
+           ],
+   teacher:"Mr Liu"
+}</codeblock></p>
+        </li>        
+      </ul>
+    </section>
+  </body>
+</topic>

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
+<topic id="topic_zck_scy_yq">
+  <title>选择符</title>
+  <body>
+    <p>为方便理解，给出原始数据样例：
+    <codeblock>{
+   _id:1,
+   class:1,
+   students:[
+              {name:"ZhangSan", age:18 },
+              {name:"LiSi", age:19 },
+              {name:"WangErmazi", age:18 }
+           ]
+}</codeblock></p>
+  </body>
+</topic>

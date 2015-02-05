@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
+<topic id="topic_frc_h2z_yq">
+  <title>$slice</title>
+  <body>
+    <section><title>说明</title>
+      <p>返回数组的切片</p>
+    </section>    
+    <section><title>示例</title>
+      <ul>
+        <li>          
+          <p><codeblock>db.foo.bar.find({class:1}, {students:{$slice:1}})</codeblock></p>
+          <p>返回下标为0，长度为1的切片</p>
+          <p><codeblock>{
+   _id:1,
+   class:1,
+   students:[
+                 {name:"ZhangSan", age:18 }
+           ]
+}</codeblock></p>
+        </li>
+        <li>          
+          <p><codeblock>db.foo.bar.find({class:1}, {students:{$slice:2}})</codeblock></p>
+          <p>返回下标为0，长度为2的切片</p>
+          <p><codeblock>{
+   _id:1,
+   class:1,
+   students:[
+                 {name:"ZhangSan", age:18 }，
+                 {name:"LiSi", age:19 }
+           ]
+}</codeblock></p>
+        </li>
+        <li>          
+          <p><codeblock>db.foo.bar.find({class:1}, {students:{$slice:-2}})</codeblock></p>
+          <p>返回倒数前2个元素的切片</p>
+          <p><codeblock>{
+   _id:1,
+   class:1,
+   students:[
+                 {name:"LiSi", age:19 }，
+                 {name:"WangErmazi", age:18 }
+           ]
+}</codeblock></p>
+        </li>
+        <li>          
+          <p><codeblock>db.foo.bar.find({class:1}, {students:{$slice:[1,2]}})</codeblock></p>
+          <p>返回下标为1，长度为2的切片</p>
+          <p><codeblock>{
+   _id:1,
+   class:1,
+   students:[
+                 {name:"LiSi", age:19 }，
+                 {name:"WangErmazi", age:18 }
+           ]
+}</codeblock></p>
+        </li>
+        <li>          
+          <p><codeblock>db.foo.bar.find({class:1}, {students:{$slice:[-1,2]}})</codeblock></p>
+          <p>返回倒数第1个开始，长度为2的切片（长度不足，只返回1个元素）</p>
+          <p><codeblock>{
+   _id:1,
+   class:1,
+   students:[
+                 {name:"WangErmazi", age:18 }
+           ]
+}</codeblock></p>
+        </li>
+      </ul>
+    </section>
+  </body>
+</topic>

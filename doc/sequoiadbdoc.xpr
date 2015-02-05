@@ -677,8 +677,11 @@
                     <file name="references/console/topics/binary.dita"/>
                     <file name="references/console/topics/console_en.dita"/>
                     <file name="references/console/topics/console.dita"/>
+                    <file name="references/console/topics/default.dita"/>
                     <file name="references/console/topics/elemMatch_en.dita"/>
                     <file name="references/console/topics/elemMatch.dita"/>
+                    <file name="references/console/topics/elemMatch1.dita"/>
+                    <file name="references/console/topics/elemMatchOne.dita"/>
                     <file name="references/console/topics/exists_en.dita"/>
                     <file name="references/console/topics/exists.dita"/>
                     <file name="references/console/topics/gaddtoset_en.dita"/>
@@ -699,6 +702,7 @@
                     <file name="references/console/topics/gte.dita"/>
                     <file name="references/console/topics/inc_en.dita"/>
                     <file name="references/console/topics/inc.dita"/>
+                    <file name="references/console/topics/include.dita"/>
                     <file name="references/console/topics/isnull_en.dita"/>
                     <file name="references/console/topics/isnull.dita"/>
                     <file name="references/console/topics/j$addToSet_en.dita"/>
@@ -762,6 +766,8 @@
                     <file name="references/console/topics/rename.dita"/>
                     <file name="references/console/topics/select_en.dita"/>
                     <file name="references/console/topics/select.dita"/>
+                    <file name="references/console/topics/selector.dita"/>
+                    <file name="references/console/topics/slice.dita"/>
                     <file name="references/console/topics/special_en.dita"/>
                     <file name="references/console/topics/special.dita"/>
                     <file name="references/console/topics/sql_to_aggregate_en.dita"/>

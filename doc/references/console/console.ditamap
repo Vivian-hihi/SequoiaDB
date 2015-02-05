@@ -25,6 +25,13 @@
         <topicref href="topics/pregex.dita"/>
         <!--<topicref href="topics/options.dita"/>-->
      </topicref>
+     <topicref href="topics/selector.dita">
+         <topicref href="topics/include.dita"/>
+         <topicref href="topics/default.dita"/>
+         <topicref href="topics/elemMatch1.dita"/>
+         <topicref href="topics/elemMatchOne.dita"/>
+         <topicref href="topics/slice.dita"/>
+     </topicref>
      <topicref href="topics/update.dita">
         <topicref href="topics/inc.dita"/>
         <topicref href="topics/gset.dita"/>
