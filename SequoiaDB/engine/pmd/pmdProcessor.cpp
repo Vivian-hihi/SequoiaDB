@@ -70,8 +70,10 @@ namespace engine
       if ( MSG_AUTH_VERIFY_REQ == msg->opCode )
       {
          rc = getClient()->authenticate( msg ) ;
+         goto done ;
       }
-      else if ( MSG_BS_INTERRUPTE == msg->opCode )
+
+      if ( MSG_BS_INTERRUPTE == msg->opCode )
       {
          rc = _onInterruptMsg( msg, getDPSCB() ) ;
       }

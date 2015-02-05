@@ -165,7 +165,7 @@ namespace engine
          virtual INT32     run() ;
 
          // run1() will take place of run()
-         INT32             run1() ;
+//         INT32             run1() ;
 
       public:
          httpConnection*   getRestConn() { return &_restConn ; }
@@ -180,6 +180,8 @@ namespace engine
          INT32             doLogin ( const string &username,
                                      UINT32 localIP ) ;
 
+         INT32             _dealWithLoginReq( INT32 result ) ;
+
       protected:
          virtual void      _onAttach () ;
          virtual void      _onDetach () ;
@@ -189,17 +191,20 @@ namespace engine
 
       protected:
 
-         INT32             _processRestMsg( HTTP_PARSE_COMMON command,
-                                            const CHAR *pFilePath ) ;
+         INT32             _processOMRestMsg( HTTP_PARSE_COMMON command,
+                                              const CHAR *pFilePath ) ;
 
          INT32             _fetchOneContext( SINT64 &contextID, 
                                              rtnContextBuf &contextBuff ) ;
-         INT32             _processRestMsg1( restAdaptor *pAdaptor, 
-                                             HTTP_PARSE_COMMON command, 
-                                             const CHAR *pFilePath ) ;
-         MsgHeader*        _translateMSG( restAdaptor *pAdaptor, 
+         INT32             _processMsg( HTTP_PARSE_COMMON command, 
+                                        const CHAR *pFilePath ) ;
+         INT32             _processBusinessMsg( restAdaptor *pAdaptor, 
+                                                HTTP_PARSE_COMMON command, 
+                                                const CHAR *pFilePath ) ;
+         INT32             _translateMSG( restAdaptor *pAdaptor, 
                                           HTTP_PARSE_COMMON command, 
-                                          const CHAR *pFilePath ) ;
+                                          const CHAR *pFilePath, 
+                                          MsgHeader **msg ) ;
 
       private:
          omRestCommandBase *_createCommand( HTTP_PARSE_COMMON command,
@@ -260,6 +265,8 @@ namespace engine
                                               MsgHeader **msg ) ;
          INT32       _convertGetCount( restAdaptor *pAdaptor, 
                                        MsgHeader **msg ) ;
+
+         INT32       _convertLogin( restAdaptor *pAdaptor, MsgHeader **msg ) ;
 
       private:
          pmdRestSession    *_restSession ;
