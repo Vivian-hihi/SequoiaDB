@@ -874,7 +874,7 @@ namespace engine
       if ( eduCB() && pCoordCB )
       {
          netMultiRouteAgent *pRouteAgent = pCoordCB->getRouteAgent() ;
-         pRouteAgent->delSession( eduID() ) ;
+         pRouteAgent->delSession( eduCB()->getTID() ) ;
       }
    }
 
