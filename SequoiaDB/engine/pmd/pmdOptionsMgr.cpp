@@ -1635,12 +1635,13 @@ namespace engine
          _dpslocal = TRUE ;
       }
 
-      // om and catalog, prefetch and preload not enable
+      // om and catalog, prefetch and preload and multi-replsync not enable
       if ( SDB_ROLE_CATALOG == dbRole || SDB_ROLE_OM == dbRole )
       {
          _numPreLoaders    = 0 ;
          _maxPrefPool      = 0 ;
          _maxSubQuery      = 0 ;
+         _maxReplSync      = 0 ;
       }
 
    done:

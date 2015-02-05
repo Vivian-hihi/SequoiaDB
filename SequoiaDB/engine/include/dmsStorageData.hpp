@@ -378,6 +378,7 @@ namespace engine
       UINT64      _totalDataFreeSpace ;
       UINT64      _totalIndexFreeSpace ;
       UINT32      _totalLobPages ;
+      UINT32      _uniqueIdxNum ;
 
       void reset()
       {
@@ -387,6 +388,7 @@ namespace engine
          _totalDataFreeSpace     = 0 ;
          _totalIndexFreeSpace    = 0 ;
          _totalLobPages          = 0 ;
+         _uniqueIdxNum           = 0 ;
       }
       _dmsMBStatInfo ()
       {
