@@ -1551,22 +1551,14 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       INT64 fileSz = 0 ;
-      CHAR *buf = NULL ;
       SINT64 read = 0 ;
       OSSFILE file ;
       stringstream ss ;
-      CHAR realPath[OSS_MAX_PATHSIZE + 1] = {0} ;
+      stringstream filess ;
+      const UINT32 bufSize = 256 ;
+      CHAR buf[bufSize] = { 0 } ; 
 
-      if ( NULL == ossGetRealPath( SPT_DISK_SRC_FILE,
-                                   realPath,
-                                   OSS_MAX_PATHSIZE) )
-      {
-         ss << "failed to get real path of file(/etc/mtab)" ;
-         detail = BSON( SPT_ERR << ss.str() ) ;
-         goto error ;
-      }
-
-      rc = ossOpen( realPath,
+      rc = ossOpen( SPT_DISK_SRC_FILE,
                     OSS_READONLY | OSS_SHAREREAD,
                     OSS_DEFAULTFILE,
                     file ) ;
@@ -1577,32 +1569,26 @@ namespace engine
          goto error ;
       }
 
-      rc = ossGetFileSize( &file, &fileSz ) ;
-      if ( SDB_OK != rc )
+      do
       {
-         ss << "failed to get size of file(/etc/mtab), rc:" << rc ;
-         detail = BSON( SPT_ERR << ss.str() ) ;
-         goto error ;
-      }
+         read = 0 ;
+         ossMemset( buf, bufSize, '\0' ) ;
+         rc = ossReadN( &file, bufSize, buf, read ) ;
+         if ( SDB_OK != rc )
+         {
+            ss << "failed to read file(/etc/mtab), rc:" << rc ;
+            detail = BSON( SPT_ERR << ss.str() ) ;
+            goto error ;
+         }
 
-      buf = ( CHAR * )SDB_OSS_MALLOC( fileSz + 1 ) ;
-      if ( NULL == buf )
-      {
-         ss << "failed to allocate memory" ;
-         detail = BSON( SPT_ERR << ss.str() ) ;
-         goto error ;
-      }
+         filess << buf ;
+         if ( read < bufSize )
+         {
+            break ;
+         }
+      } while ( TRUE ) ;
 
-      rc = ossReadN( &file, fileSz, buf, read ) ;
-      if ( SDB_OK != rc )
-      {
-         ss << "failed to read file(/etc/mtab), rc:" << rc ;
-         detail = BSON( SPT_ERR << ss.str() ) ;
-         goto error ;
-      }
-
-      buf[read] = '\0' ;
-      rc = _extractLinuxDiskInfo( buf, rval, detail ) ;
+      rc = _extractLinuxDiskInfo( filess.str().c_str(), rval, detail ) ;
       if ( SDB_OK != rc )
       {
          goto error ;
@@ -1612,7 +1598,6 @@ namespace engine
       {
          ossClose( file ) ;
       }
-      SAFE_OSS_FREE( buf ) ;
       return rc ;
    error:
       goto done ;
