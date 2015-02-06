@@ -153,6 +153,7 @@ namespace engine
          virtual INT32  _checkVersion( dmsStorageUnitHeader *pHeader ) ;
          virtual INT32  _onCreate( OSSFILE *file, UINT64 curOffSet ) ;
          virtual INT32  _onMapMeta( UINT64 curOffSet ) ;
+         virtual void   _onOpened() ;
          virtual void   _onClosed() ;
          virtual BOOLEAN _keepInRam()const
          {

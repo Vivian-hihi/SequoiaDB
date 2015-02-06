@@ -337,6 +337,8 @@ namespace engine
       }
       ossMemset ( _dirtyList, 0, maxSegmentNum() / 8 ) ;
 
+      _onOpened() ;
+
    done:
       return rc ;
    error:
