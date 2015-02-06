@@ -1555,8 +1555,18 @@ namespace engine
       SINT64 read = 0 ;
       OSSFILE file ;
       stringstream ss ;
+      CHAR realPath[OSS_MAX_PATHSIZE + 1] = {0} ;
 
-      rc = ossOpen( SPT_DISK_SRC_FILE,
+      if ( NULL == ossGetRealPath( SPT_DISK_SRC_FILE,
+                                   realPath,
+                                   OSS_MAX_PATHSIZE) )
+      {
+         ss << "failed to get real path of file(/etc/mtab)" ;
+         detail = BSON( SPT_ERR << ss.str() ) ;
+         goto error ;
+      }
+
+      rc = ossOpen( realPath,
                     OSS_READONLY | OSS_SHAREREAD,
                     OSS_DEFAULTFILE,
                     file ) ;
