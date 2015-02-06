@@ -555,7 +555,7 @@ namespace engine
          string                                         _vCoordSvcName ;
    } ;
 
-   // install db business task run rollback standalone job
+   // rollback standalone
    class _omaRunRollbackStandaloneJob : public _omaCommand
    {
       public:
@@ -565,7 +565,7 @@ namespace engine
          ~_omaRunRollbackStandaloneJob () ;
 
       public:
-         virtual const CHAR* name () { return OMA_JOB_ROLLBACK_STANDALONE ; }
+         virtual const CHAR* name () { return OMA_ROLLBACK_STANDALONE ; }
          virtual INT32 init ( const CHAR *pInstallInfo ) ;
 
       private:
