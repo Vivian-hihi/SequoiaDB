@@ -159,6 +159,15 @@
           <td valign="top" headers="d109952e91" class="stentry">Group:&lt;group name&gt;</td>
 
         </tr>
+<tr class="strow">
+          <td valign="top" headers="d109952e85" class="stentry">AutoIndexId</td>
+
+          <td valign="top" headers="d109952e88" class="stentry">集合是否自动创建 _id 索引。</td>
+
+          <td valign="top" headers="d109952e91" class="stentry">AutoIndexId:&lt;true/false&gt;
+          </td>
+
+        </tr>
 </table>
 </div>
       
@@ -184,6 +193,8 @@
           <li class="li">如果在集合中没有指定 AutoSplit，则使用所属域中的 AutoSplit 参数。</li>
 
           <li class="li">Group 必须存在于集合空间所属的域中（所有复制组均属于 SYSDOMAIN，即如果集合空间没有指定域，则系统内任意复制组均可）。</li>
+
+          <li class="li">AutoIndexId 默认为 true。当其指定为 false 时， 无法在所属集合中进行 update/delete 操作。</li>
 
         </ul>
  
