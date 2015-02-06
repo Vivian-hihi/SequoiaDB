@@ -1630,16 +1630,6 @@ namespace engine
             continue ;
          }
 
-         if ( 0 == columns.at( 0 ).compare( "proc" ) ||
-              0 == columns.at( 0 ).compare( "sysfs" ) ||
-              0 == columns.at( 0 ).compare( "devpts" ) ||
-              0 == columns.at( 0 ).compare( "tmpfs" ) ||
-              0 == columns.at( 0 ).compare( "none" ) ||
-              0 == columns.at( 0 ).compare( "sunrpc" ) )
-         {
-            continue ;
-         }
-
          fs = columns.at( 0 ).c_str() ;
          fsType = columns.at( 2 ).c_str() ;
          mount = columns.at( 1 ).c_str() ;
