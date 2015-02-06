@@ -1556,7 +1556,18 @@ namespace engine
       OSSFILE file ;
       stringstream ss ;
 
-      rc = ossGetFileSizeByName( SPT_DISK_SRC_FILE, &fileSz ) ;
+      rc = ossOpen( SPT_DISK_SRC_FILE,
+                    OSS_READONLY | OSS_SHAREREAD,
+                    OSS_DEFAULTFILE,
+                    file ) ;
+      if ( SDB_OK != rc )
+      {
+         ss << "failed to open file(/etc/mtab), rc:" << rc ;
+         detail = BSON( SPT_ERR << ss.str() ) ;
+         goto error ;
+      }
+
+      rc = ossGetFileSize( &file, &fileSz ) ;
       if ( SDB_OK != rc )
       {
          ss << "failed to get size of file(/etc/mtab), rc:" << rc ;
@@ -1568,17 +1579,6 @@ namespace engine
       if ( NULL == buf )
       {
          ss << "failed to allocate memory" ;
-         detail = BSON( SPT_ERR << ss.str() ) ;
-         goto error ;
-      }
-
-      rc = ossOpen( SPT_DISK_SRC_FILE,
-                    OSS_READONLY | OSS_SHAREREAD,
-                    OSS_DEFAULTFILE,
-                    file ) ;
-      if ( SDB_OK != rc )
-      {
-         ss << "failed to open file(/etc/mtab), rc:" << rc ;
          detail = BSON( SPT_ERR << ss.str() ) ;
          goto error ;
       }
