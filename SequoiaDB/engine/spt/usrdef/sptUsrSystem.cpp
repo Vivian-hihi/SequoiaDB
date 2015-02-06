@@ -1556,7 +1556,7 @@ namespace engine
       stringstream ss ;
       stringstream filess ;
       const UINT32 bufSize = 256 ;
-      CHAR buf[bufSize] = { 0 } ; 
+      CHAR buf[bufSize + 1] = { 0 } ; 
 
       rc = ossOpen( SPT_DISK_SRC_FILE,
                     OSS_READONLY | OSS_SHAREREAD,
