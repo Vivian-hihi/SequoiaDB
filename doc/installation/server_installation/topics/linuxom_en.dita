@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
 <topic id="topic_xfp_5gq_vp">
-  <title>安装 OM 服务</title>
+  <title>Installing OM service</title>
   <body>
     <section>
       <title>Preparation before installation</title>
@@ -69,13 +69,13 @@ License Agreement for Evaluation of Programs
 [1] Agree The License: For More License's Detail, Please Check The License File After Installation
 [2] Read The License
 Please choose an option [1] :</codeblock></p></li>
-              <li><p>是否同意协议：<codeblock>----------------------------------------------------------------------------
+        <li><p>Agree with the license?<codeblock>----------------------------------------------------------------------------
 Agree The License
 
 Press [Enter] to continue :
 
 Do you accept this license? [y/n]:</codeblock></p></li>
-              <li><p>按 y 表示同意：<codeblock>----------------------------------------------------------------------------
+        <li><p>Enter Y for yes.<codeblock>----------------------------------------------------------------------------
 Please specify the directory where SequoiaDB Server will be installed.
 
 Installation Directory [/opt/sequoiadb]:</codeblock></p></li> 
