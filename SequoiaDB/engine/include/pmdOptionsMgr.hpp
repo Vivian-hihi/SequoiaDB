@@ -450,6 +450,7 @@ namespace engine
          OSS_INLINE UINT32 traceBuffSize() const { return _traceBufSz ; }
          OSS_INLINE BOOLEAN useDirectIOInLob() const { return _directIOInLob ; }
          OSS_INLINE BOOLEAN sparseFile() const { return _sparseFile ; }
+         OSS_INLINE SINT16 weight() const { return _weight ; }
 
       protected: // rdx members
          CHAR        _krcbDbPath[ OSS_MAX_PATHSIZE + 1 ] ;
@@ -498,6 +499,7 @@ namespace engine
          INT32       _dialogFileNum ;
          BOOLEAN     _directIOInLob ;
          BOOLEAN     _sparseFile ;
+         UINT16      _weight ;
 
       private: // other configs
          CHAR        _krcbConfPath[ OSS_MAX_PATHSIZE + 1 ] ;
