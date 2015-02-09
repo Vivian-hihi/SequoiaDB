@@ -1420,7 +1420,7 @@ namespace engine
       rdxUInt( pEX, PMD_OPTION_WEIGHT, weight,
               FALSE, TRUE, 10, FALSE ) ; 
       rdvMinMax( pEX, weight, 0, 100, FALSE ) ;
-      _weight = weight ;
+      _weight = ( UINT8 )weight ;
       // end map
 
       return getResult () ;
