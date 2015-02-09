@@ -1419,7 +1419,7 @@ namespace engine
       // --weight
       rdxUInt( pEX, PMD_OPTION_WEIGHT, _weight,
                FALSE, TRUE, 10, FALSE ) ; 
-      rdvMinMax( pEX, _weight, 0, 100, FALSE ) ;
+      rdvMinMax( pEX, _weight, 1, 100, TRUE ) ;
       // end map
 
       return getResult () ;
