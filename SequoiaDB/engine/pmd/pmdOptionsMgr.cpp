@@ -1416,11 +1416,10 @@ namespace engine
       rdxBooleanS( pEX, PMD_OPTION_SPARSE_FILE, _sparseFile,
                    FALSE, TRUE, FALSE, FALSE ) ;
 
-      UINT32 weight = 10 ;
-      rdxUInt( pEX, PMD_OPTION_WEIGHT, weight,
-              FALSE, TRUE, 10, FALSE ) ; 
-      rdvMinMax( pEX, weight, 0, 100, FALSE ) ;
-      _weight = ( UINT8 )weight ;
+      // --weight
+      rdxUInt( pEX, PMD_OPTION_WEIGHT, _weight,
+               FALSE, TRUE, 10, FALSE ) ; 
+      rdvMinMax( pEX, _weight, 0, 100, FALSE ) ;
       // end map
 
       return getResult () ;

@@ -216,11 +216,11 @@ namespace engine
          {
             goto accepterr ;
          }
-         /// the same, judge id.
+         /// the same, judge weight.
          else
          {
-            UINT16 weight = pmdGetOptionCB()->weight() ;
-            const UINT16 remoteWeight = itrInfo->second.beat.weight ;
+            UINT8 weight = pmdGetOptionCB()->weight() ;
+            const UINT8 remoteWeight = itrInfo->second.beat.weight ;
             if ( weight < remoteWeight )
             {
                goto accept ;
@@ -233,6 +233,7 @@ namespace engine
             {
                goto accepterr ;
             }
+            /// judge id
             else if ( id.value < _groupInfo->local.value )
             {
                goto accepterr ;
