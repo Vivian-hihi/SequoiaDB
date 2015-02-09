@@ -1229,6 +1229,7 @@ namespace engine
       _dialogFileNum       = 0 ;
       _directIOInLob       = FALSE ;
       _sparseFile          = FALSE ;
+      _weight              = 0 ; 
 
       // other configs
       ossMemset( _krcbConfPath, 0, sizeof( _krcbConfPath ) ) ;
@@ -1414,6 +1415,12 @@ namespace engine
 
       rdxBooleanS( pEX, PMD_OPTION_SPARSE_FILE, _sparseFile,
                    FALSE, TRUE, FALSE, FALSE ) ;
+
+      UINT32 weight = 10 ;
+      rdxUInt( pEX, PMD_OPTION_WEIGHT, weight,
+              FALSE, TRUE, 10, FALSE ) ; 
+      rdvMinMax( pEX, weight, 0, 100, FALSE ) ;
+      _weight = weight ;
       // end map
 
       return getResult () ;

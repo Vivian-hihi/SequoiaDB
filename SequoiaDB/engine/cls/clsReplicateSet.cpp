@@ -636,6 +636,7 @@ namespace engine
       msg.beat.beatID = ++_info.localBeatID ;
       msg.beat.serviceStatus = pmdGetStartup().isOK() ?
                                SERVICE_NORMAL : SERVICE_ABNORMAL ;
+      msg.beat.weight = pmdGetOptionCB()->weight() ;
       map<UINT64, _clsSharingStatus>::iterator itr =
                                         _info.info.begin() ;
       for ( ; itr != _info.info.end(); itr++ )

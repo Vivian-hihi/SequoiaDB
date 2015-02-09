@@ -219,7 +219,21 @@ namespace engine
          /// the same, judge id.
          else
          {
-            if ( id.value < _groupInfo->local.value )
+            UINT16 weight = pmdGetOptionCB()->weight() ;
+            const UINT16 remoteWeight = itrInfo->second.beat.weight ;
+            if ( weight < remoteWeight )
+            {
+               goto accept ;
+            }
+            else if ( remoteWeight < weight )
+            {
+               goto accepterr ;
+            }
+            else if ( itrInfo->second.beat.weight < pmdGetOptionCB()->weight() )
+            {
+               goto accepterr ;
+            }
+            else if ( id.value < _groupInfo->local.value )
             {
                goto accepterr ;
             }

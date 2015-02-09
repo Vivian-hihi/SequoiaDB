@@ -130,13 +130,17 @@ namespace engine
       CLS_SYNC_STATUS         syncStatus ;
       UINT32                  beatID ;
       CLS_NODE_SERVICE_STATUS serviceStatus ;
+      UINT16                  weight ;
+      SINT16                  pad ;
 
       _clsGroupBeat():timeStamp( 0 ),
                        version( 0 ),
                        role( CLS_GROUP_ROLE_SECONDARY ),
                        syncStatus( CLS_SYNC_STATUS_NONE ),
                        beatID( 0 ),
-                       serviceStatus( SERVICE_UNKNOWN )
+                       serviceStatus( SERVICE_UNKNOWN ),
+                       weight( 0 ),
+                       pad( 0 )
       {
       }
 
