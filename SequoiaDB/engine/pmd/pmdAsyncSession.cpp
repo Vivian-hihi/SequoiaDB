@@ -1209,7 +1209,6 @@ namespace engine
       ossScopedLock lock( &_forceLatch ) ;
 
       // iterate all sessions from force list
-      std::deque< UINT64 >::iterator it = _forceSessions.begin() ;
       while ( !_forceSessions.empty() )
       {
          sessionID = _forceSessions.front() ;

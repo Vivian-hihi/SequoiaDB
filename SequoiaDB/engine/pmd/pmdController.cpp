@@ -98,12 +98,10 @@ namespace engine
       pmdOptionsCB *pOptCB = pmdGetOptionCB() ;
       UINT16 port = 0 ;
       UINT16 protocolPort = 0 ;
-      const CHAR *moduleName = NULL ;
-      const CHAR *modulePath = NULL ;
 
-      //rc = loadForeignModule() ;
+      rc = loadForeignModule() ;
       //PD_RC_CHECK( rc, PDERROR, "Failed to init rest adaptor, rc: %d", rc ) ;
-      //rc = SDB_OK ;
+      rc = SDB_OK ;
 
       // 1. create tcp listerner
       port = pOptCB->getServicePort() ;
@@ -143,23 +141,23 @@ namespace engine
                    "rc: %d", port, rc ) ;
       PD_LOG( PDEVENT, "Http Listerning on port[%d]", port ) ;
 
-//       // memory will be freed in fini
-//       protocolPort = ossAtoi( _protocol->getServiceName() ) ;
-//       _pMongoListener = SDB_OSS_NEW ossSocket( protocolPort ) ;
-//       if ( !_pMongoListener )
-//       {
-//          PD_LOG( PDERROR, "Failed to alloc socket" ) ;
-//          rc = SDB_OOM ;
-//          goto error ;
-//       }
-//       rc = _pMongoListener->initSocket() ;
-//       PD_RC_CHECK( rc, PDERROR, "Failed to init protocol listener socket[%d], "
-//                    "rc: %d", protocolPort, rc ) ;
-// 
-//       rc = _pMongoListener->bind_listen() ;
-//       PD_RC_CHECK( rc, PDERROR, "Failed to bind protocol listener socket[%d], "
-//                    "rc: %d", protocolPort, rc ) ;
-//       PD_LOG( PDEVENT, "Listerning on port[%d]", protocolPort ) ;
+      // memory will be freed in fini
+      protocolPort = ossAtoi( _protocol->getServiceName() ) ;
+      _pMongoListener = SDB_OSS_NEW ossSocket( protocolPort ) ;
+      if ( !_pMongoListener )
+      {
+         PD_LOG( PDERROR, "Failed to alloc socket" ) ;
+         rc = SDB_OOM ;
+         goto error ;
+      }
+      rc = _pMongoListener->initSocket() ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to init FAP listener socket[%d], "
+                   "rc: %d", protocolPort, rc ) ;
+
+      rc = _pMongoListener->bind_listen() ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to bind FAP listener socket[%d], "
+                   "rc: %d", protocolPort, rc ) ;
+      PD_LOG( PDEVENT, "Listerning on port[%d]", protocolPort ) ;
 
    done:
       return rc ;
@@ -170,6 +168,7 @@ namespace engine
    INT32 _pmdController::active ()
    {
       INT32 rc = SDB_OK ;
+      pmdEDUParam *pProtocolData = NULL ;
       pmdEDUMgr *pEDUMgr = pmdGetKRCB()->getEDUMgr() ;
       EDUID eduID = PMD_INVALID_EDUID ;
 
@@ -205,19 +204,21 @@ namespace engine
 
       //////////////////////////////////////////////////////////////////////////
       // listener for access protocol
-//       SDB_ASSERT( _pMongoListener, "Listener should be initialized") ;
-//       rc = pEDUMgr->startEDU( EDU_TYPE_FAPLISTENER, (void*)_pMongoListener,
-//                               &eduID ) ;
-//       PD_RC_CHECK( rc, PDERROR, "Failed to start mongo listerner, rc: %d",
-//                    rc ) ;
-//       pEDUMgr->regSystemEDU( EDU_TYPE_FAPLISTENER, eduID ) ;
-// 
-//       // wait until protocol listener starts
-//       rc = pEDUMgr->waitUntil ( eduID, PMD_EDU_RUNNING ) ;
-//       PD_RC_CHECK( rc, PDERROR, "Wait mongo Listener active failed, rc: %d",
-//                    rc ) ;
+      pProtocolData = new pmdEDUParam() ;
+      pProtocolData->pSocket = ( void *)_pMongoListener ;
+      pProtocolData->protocol = _protocol ;
+      rc = pEDUMgr->startEDU( EDU_TYPE_FAPLISTENER, (void*)pProtocolData,
+                              &eduID ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to start FAP listerner, rc: %d",
+                   rc ) ;
+      pEDUMgr->regSystemEDU( EDU_TYPE_FAPLISTENER, eduID ) ;
+
+      // wait until protocol listener starts
+      rc = pEDUMgr->waitUntil ( eduID, PMD_EDU_RUNNING ) ;
+      PD_RC_CHECK( rc, PDERROR, "Wait FAP Listener active failed, rc: %d",
+                   rc ) ;
       //////////////////////////////////////////////////////////////////////////
-      
+
       // For non-coord nodes, we need to start page cleaners
       if ( SDB_ROLE_COORD != pmdGetDBRole() )
       {
@@ -657,7 +658,7 @@ namespace engine
          rc = SDB_OOM ;
          goto error ;
       }
-      rc = _fapMongo->load( MONGO_MODULE_NAME, MONGO_MODULE_PATH ) ;/*need be replaced*/
+      rc = _fapMongo->load( MONGO_MODULE_NAME, MONGO_MODULE_PATH ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to load module: %s, path: %s"
                    " rc: %d", MONGO_MODULE_NAME, MONGO_MODULE_PATH, rc ) ;
       rc = _fapMongo->create( _protocol ) ;
@@ -670,7 +671,6 @@ namespace engine
    error:
       goto done ;
    }
-
 
    /*
       get global pointer
