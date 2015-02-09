@@ -15,7 +15,7 @@
    You should have received a copy of the GNU Affero General Public License
    along with this program. If not, see <http://www.gnu.org/license/>.
 
-   Source File Name = aggrGroup.hpp
+   Source File Name = mongoSession.cpp
 
    Descriptive Name =
 
@@ -47,42 +47,65 @@
 #include "rtn.hpp"
 #include "pmd.hpp"
 #include "sdbInterface.hpp"
+#include "mongoReplyHelper.hpp"
 
 /////////////////////////////////////////////////////////////////
 // implement for mongo processor
-_pmdMongoSession::_pmdMongoSession( SOCKET fd ) : engine::pmdSession( fd )
+_mongoSession::_mongoSession( SOCKET fd, engine::IResource *resource )
+   : engine::pmdSession( fd ), _resource( resource )
 {
    _converter = SDB_OSS_NEW mongoConverter() ;
 }
 
-_pmdMongoSession::~_pmdMongoSession()
+_mongoSession::~_mongoSession()
 {
    if ( NULL != _converter )
    {
       SDB_OSS_DEL( _converter ) ;
       _converter = NULL ;
    }
+
+   _resource = NULL ;
 }
 
-UINT64 _pmdMongoSession::identifyID()
+void _mongoSession::resetBuffers()
+{
+   if ( !_outBuffer.empty() )
+   {
+      _outBuffer.zero() ;
+   }
+
+   std::vector< msgBuffer * >::iterator it = _inBufferVec.begin() ;
+   for ( ; it != _inBufferVec.end(); ++it )
+   {
+      SDB_OSS_DEL (*it) ;
+      (*it) = NULL ;
+   }
+
+   _inBufferVec.clear() ;
+}
+
+UINT64 _mongoSession::identifyID()
 {
    return ossPack32To64( _socket.getLocalIP(), _socket.getLocalPort() ) ;
 }
 
-INT32 _pmdMongoSession::getServiceType() const
+INT32 _mongoSession::getServiceType() const
 {
    return CMD_SPACE_SERVICE_LOCAL ;
 }
 
-engine::SDB_SESSION_TYPE _pmdMongoSession::sessionType() const
+engine::SDB_SESSION_TYPE _mongoSession::sessionType() const
 {
    return engine::SDB_SESSION_PROTOCOL ;
 }
 
-INT32 _pmdMongoSession::run()
+INT32 _mongoSession::run()
 {
    INT32 rc                     = SDB_OK ;
    UINT32 msgSize               = 0 ;
+   // reservedFlag should not included in msg header len
+   UINT32  headerLen             = sizeof( mongoMsgHeader ) - sizeof( INT32 ) ;
    CHAR *pBuff                  = NULL ;
    BOOLEAN bigEndian            = FALSE ;
    engine::pmdEDUMgr *pmdEDUMgr = NULL ;
@@ -92,7 +115,7 @@ INT32 _pmdMongoSession::run()
       rc = SDB_SYS ;
       goto error ;
    }
-   
+
    pmdEDUMgr = _pEDUCB->getEDUMgr() ;
    bigEndian = checkBigEndian() ;
    while ( !_pEDUCB->isDisconnected() && !_socket.isClosed() )
@@ -117,11 +140,12 @@ INT32 _pmdMongoSession::run()
       // if big endian, need to convert len to little endian
       if ( bigEndian )
       {
-         UINT32 tmp = msgSize ;
-         ossEndianConvert4( tmp, msgSize) ;
+         // build an incompatible msg
+         // UINT32 tmp = msgSize ;
+         // ossEndianConvert4( tmp, msgSize) ;
       }
-      
-      if ( msgSize < sizeof( mongoMsgHeader ) || msgSize > SDB_MAX_MSG_LENGTH )
+
+      if ( msgSize < headerLen || msgSize > SDB_MAX_MSG_LENGTH )
       {
          PD_LOG( PDERROR, "Session[%s] recv msg size[%d] is less than "
                  "mongoMsgHeader size[%d] or more than max msg size[%d]",
@@ -153,17 +177,30 @@ INT32 _pmdMongoSession::run()
          }
          pBuff[ msgSize ] = 0 ;
 
+         // make sure buffers are empty for coming msg
+         resetBuffers() ;
          {
             // convert msg first
             _converter->loadFrom( pBuff, msgSize ) ;
             rc = _converter->convert( _inBufferVec ) ;
             if ( SDB_OK != rc )
             {
-               rc = SDB_INVALIDARG ;
-               goto error ;
+               if ( SDB_OPTION_NOT_SUPPORT == rc )
+               {
+                  //build not supported msg
+                  //reply
+               }
+               else
+               {
+                  goto error ;
+               }
             }
 
-            if ( _inBufferVec.size() > 1 )
+            rc = _preProcessMsg( _converter->getParser(), _resource, _outBuffer ) ;
+            if ( SDB_OK != rc )
+            {
+               
+            }
             {
                std::vector< msgBuffer * >::iterator itr = _inBufferVec.begin() ;
                while ( itr != _inBufferVec.end() )
@@ -185,15 +222,10 @@ INT32 _pmdMongoSession::run()
                      // those msg convert to more than one sdb msg
                      // that time cs may have been existed, should skip the error
                      // do nothing
-                     if ( _converter->isOpInsert() &&
-                          ( SDB_DMS_CS_EXIST != rc || SDB_DMS_EXIST != rc ) )
+                     if ( OP_CMD_CREATE == _converter->getOpType() &&
+                          SDB_DMS_CS_EXIST == rc )
                      {
-                        // is insert msg, do nothing
-                     }
-                     else if ( _converter->isOpCreateCL() &&
-                               SDB_DMS_CS_EXIST != rc )
-                     {
-                        // is create collection msg, do nothing
+                        // is create collection msg with cs is created, pass
                      }
                      else
                      {
@@ -212,14 +244,7 @@ INT32 _pmdMongoSession::run()
                }
 
                // release all
-               itr = _inBufferVec.begin() ;
-               while ( itr != _inBufferVec.end() )
-               {
-                  delete *itr ;
-                  (*itr) = NULL ;
-                  ++itr ;
-               }
-               _inBufferVec.clear() ;
+               resetBuffers() ;
             }
          }
       }
@@ -232,13 +257,15 @@ error:
    goto done ;
 }
 
-INT32 _pmdMongoSession::_processMsg( const CHAR *pMsg, const INT32 len )
+INT32 _mongoSession::_processMsg( const CHAR *pMsg, const INT32 len )
 {
    INT32 rc          = SDB_OK ;
    const CHAR *pBody = NULL ;
    INT32 bodyLen     = 0 ;
+   bson::BSONObjBuilder bob ;
+   bson::BSONObj obj ;
 
-   rc = _onMsgBegin( (MsgHeader *) pMsg ) ;//_inBuffer.data() ) ;
+   rc = _onMsgBegin( (MsgHeader *) pMsg ) ;
    if ( SDB_OK != rc )
    {
       goto error ;
@@ -252,13 +279,17 @@ INT32 _pmdMongoSession::_processMsg( const CHAR *pMsg, const INT32 len )
       _replyHeader.flags = rc ;
       _replyHeader.header.messageLength = sizeof( _replyHeader ) +
                                           _errorInfo.objsize() ;
-
-      pBody = _errorInfo.objdata() ;
-      bodyLen = _errorInfo.objsize() ;
+      rc = _errorInfo.getBoolField( OP_ERRNOFIELD ) ;
+      bob.append( "ok", 1.0 ) ;
+      bob.append( "code",  rc ) ;
+      bob.append( "errmsg", _errorInfo.getStringField( OP_ERRDESP_FIELD) ) ;
+      obj = bob.obj() ;
+      pBody = bob.obj().objdata() ;
+      bodyLen = bob.obj().objsize() ;
    }
    else
    {
-      rc = getProcessor()->processMsg( (MsgHeader *) _inBuffer.data(),
+      rc = getProcessor()->processMsg( (MsgHeader *) pMsg,
                                        _contextBuff, _replyHeader.contextID,
                                        _needReply ) ;
       pBody     = _contextBuff.data() ;
@@ -275,6 +306,14 @@ INT32 _pmdMongoSession::_processMsg( const CHAR *pMsg, const INT32 len )
                    _pEDUCB->getInfo( engine::EDU_INFO_ERROR ) ) ;
       pBody = _errorInfo.objdata() ;
       bodyLen = _errorInfo.objsize() ;
+
+      rc = _errorInfo.getBoolField( OP_ERRNOFIELD ) ;
+      bob.append( "ok", rc ? FALSE : TRUE ) ;
+      bob.append( "code",  rc ) ;
+      bob.append( "errmsg", _errorInfo.getStringField( OP_ERRDESP_FIELD) ) ;
+      obj = bob.obj() ;
+      pBody = bob.obj().objdata() ;
+      bodyLen = bob.obj().objsize() ;
 
       _replyHeader.numReturned = 1 ;
       _replyHeader.contextID = 0 ;
@@ -302,16 +341,15 @@ INT32 _pmdMongoSession::_processMsg( const CHAR *pMsg, const INT32 len )
    }
 
 done:
-   _zeroStream() ;
    return rc ;
 error:
    goto done ;
 }
 
-INT32 _pmdMongoSession::_onMsgBegin( MsgHeader *msg )
+INT32 _mongoSession::_onMsgBegin( MsgHeader *msg )
 {
    // set reply header ( except flags, length )
-   _replyHeader.contextID          = -1 ;
+   _replyHeader.contextID          = 0 ;
    _replyHeader.numReturned        = 0 ;
    _replyHeader.startFrom          = 0 ;
    _replyHeader.header.opCode      = MAKE_REPLY_TYPE(msg->opCode) ;
@@ -342,7 +380,7 @@ INT32 _pmdMongoSession::_onMsgBegin( MsgHeader *msg )
    return SDB_OK ;
 }
 
-INT32 _pmdMongoSession::_onMsgEnd( INT32 result, MsgHeader *msg )
+INT32 _mongoSession::_onMsgEnd( INT32 result, MsgHeader *msg )
 {
    // release buff context
    _contextBuff.release() ;
@@ -361,62 +399,52 @@ INT32 _pmdMongoSession::_onMsgEnd( INT32 result, MsgHeader *msg )
    return SDB_OK ;
 }
 
-INT32 _pmdMongoSession::_reply( MsgOpReply *replyHeader,
-                                const CHAR *pBody,
-                                const INT32 len )
+INT32 _mongoSession::_reply( MsgOpReply *replyHeader,
+                             const CHAR *pBody,
+                             const INT32 len )
 {
    INT32 rc         = SDB_OK ;
-   SINT16 opCode    = 0 ;
-   INT32 responseTo = 0 ;
-   INT32 nToReturn  = 0 ;
-   INT32 startFrom  = 0 ;
-   INT32 msgLen     = 0 ;
-   SINT64 cursorID  = 0 ;
-   mongoMsgReply header ;
+   INT32 offset     = 0 ;
+   mongoMsgReply reply ;
    bson::BSONObjBuilder bob ;
    bson::BSONObj bsonBody ;
-   BOOLEAN bigEndian = _converter->isBigEndian() ;
 
    // id
-   header.id = 0 ;
+   reply.header.id = 0 ;
+   // responseTo, cast UINT64 to INT32
+   reply.header.responseTo = replyHeader->header.requestID ;
    // opCode
-   opCode = dbReply ;
-   ossEndianConvertIf( opCode, header.opCode, bigEndian ) ;
-   // responseTo
-   responseTo = replyHeader->header.requestID ;
-   ossEndianConvertIf( responseTo,  header.responseTo, bigEndian ) ;
+   reply.header.opCode = dbReply ;
    // _flags
-   header._flags = 0 ;
+   reply.header._flags = 0 ;
    // _version
-   header._version = 0 ;
+   reply.header._version = 0 ;
    // reservedFlag
-   header.reservedFlags = 0 ;
+   reply.header.reservedFlags = 0 ;
    //cursorID
-   cursorID = replyHeader->contextID ;
-   ossEndianConvertIf( cursorID, header.cursorId, bigEndian ) ;
+   reply.cursorId = replyHeader->contextID ;
    // startingFrom
-   startFrom = replyHeader->startFrom ;
-   ossEndianConvertIf( startFrom, header.startingFrom, bigEndian ) ;
+   reply.startingFrom = replyHeader->startFrom ;
    // nReturn
-   nToReturn = replyHeader->startFrom ;
-   ossEndianConvertIf( nToReturn, header.nReturned, bigEndian ) ;
+   reply.nReturned = replyHeader->numReturned ;
 
-   // re-convert error info to mongodb error info
-   if ( pBody )
+   if ( reply.nReturned > 1 )
    {
-      bsonBody.init( pBody ) ;
-      rc = bsonBody.getBoolField( OP_ERRNOFIELD ) ? 0.0 : 1.0 ;
-      bob.append( "ok", rc ) ;
-      bob.append( "code",  rc ) ;
-      bob.append( "errmsg", bsonBody.getStringField( OP_ERRDESP_FIELD) ) ;
-
-      _outBuffer.write( bob.obj().objdata(), bob.obj().objsize() ) ;
+      while ( offset < len )
+      {
+         bsonBody.init( pBody + offset ) ;
+         _outBuffer.write( bsonBody.objdata(), bsonBody.objsize() ) ;
+         offset += ossRoundUpToMultipleX( bsonBody.objsize(), 4 ) ;
+      }
+      pBody = _outBuffer.data() ;
+      reply.header.len = sizeof( mongoMsgReply ) + _outBuffer.size() ;
+   }
+   else
+   {
+      reply.header.len = sizeof( mongoMsgReply ) + len ;
    }
 
-   msgLen = sizeof( mongoMsgReply ) + bob.obj().objsize() ;
-   ossEndianConvertIf( msgLen, header.len, bigEndian ) ;
-
-   rc = sendData( (CHAR *)&header, sizeof( mongoMsgHeader ) ) ;
+   rc = sendData( (CHAR *)&reply, sizeof( mongoMsgReply ) ) ;
    if ( rc )
    {
       PD_LOG( PDERROR, "Session[%s] failed to send response header, rc: %d",
@@ -426,7 +454,7 @@ INT32 _pmdMongoSession::_reply( MsgOpReply *replyHeader,
 
    if ( pBody )
    {
-      rc = sendData(  _outBuffer.data(), _outBuffer.size() ) ;
+      rc = sendData( pBody, reply.header.len - sizeof( mongoMsgReply ) ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Session[%s] failed to send response body, rc: %d",
@@ -441,23 +469,56 @@ error:
    goto done ;
 }
 
-void _pmdMongoSession::_onAttach( )
+void _mongoSession::_onAttach()
 {
 }
 
-void _pmdMongoSession::_onDetach()
+void _mongoSession::_onDetach()
 {
 }
 
-void _pmdMongoSession::_zeroStream()
+INT32 _mongoSession::_preProcessMsg( const mongoParser &parser,
+                                     engine::IResource *resource,
+                                     msgBuffer &msg )
 {
-   if ( !_inBuffer.empty() )
+   INT32 rc = SDB_OK ;
+   INT32 len = 0 ;
+   const CHAR *pBody = NULL ;
+
+   if ( OP_CMD_ISMASTER == parser.opType )
    {
-      _inBuffer.zero() ;
+      rc = fap::mongo::buildIsMasterMsg( resource, msg ) ;
+      // build isMaster msg
+   }
+   else if ( OP_CMD_GETNONCE == parser.opType )
+   {
+      // build get nonce msg
+      rc = fap::mongo::buildGetNonceMsg( msg ) ;
+   }
+   if( SDB_OK != rc )
+   {
+      // build msg error
+      goto error ;
    }
 
-   if ( !_outBuffer.empty() )
-   {
-      _outBuffer.zero() ;
-   }
+   // make _relpyHeader
+   _replyHeader.contextID            = -1 ;
+   _replyHeader.numReturned          = 1 ;
+   _replyHeader.startFrom            = 0 ;
+   _replyHeader.header.opCode        = MAKE_REPLY_TYPE(parser.opCode) ;
+   _replyHeader.header.requestID     = parser.id ;
+   _replyHeader.header.TID           = 0 ;
+   _replyHeader.header.routeID.value = 0 ;
+
+   pBody = msg.data() ;
+   len = msg.size() ;
+   SDB_ASSERT( pBody, "reply body cannot be NULL" ) ;
+
+   rc = _reply( &_replyHeader, pBody, len ) ;
+
+done:
+   return rc ;
+error:
+   goto done ;
 }
+

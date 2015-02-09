@@ -15,7 +15,7 @@
    You should have received a copy of the GNU Affero General Public License
    along with this program. If not, see <http://www.gnu.org/license/>.
 
-   Source File Name = mongoConverter.hpp
+   Source File Name = mongReplyHelper.hpp
 
    Descriptive Name =
 
@@ -34,68 +34,20 @@
    Last Changed =
 
 *******************************************************************************/
-#ifndef _SDB_MONGO_CONVERTER_HPP_
-#define _SDB_MONGO_CONVERTER_HPP_
+#ifndef _SDB_MONGO_REPLY_HELPER_HPP_
+#define _SDB_MONGO_REPLY_HELPER_HPP_
 
-#include "util.hpp"
-#include "oss.hpp"
-#include "mongodef.hpp"
-#include "commands.hpp"
-
-class command ;
-
-class mongoConverter : public baseConverter
+#include "msgBuffer.hpp"
+#include "sdbInterface.hpp"
+namespace fap
 {
-public:
-   mongoConverter() : _cmd( NULL )
+   namespace mongo
    {
-      _bigEndian = checkBigEndian() ;
-      _parser.setEndian( _bigEndian ) ;
+      INT32 buildIsMasterMsg( engine::IResource *resource, msgBuffer &msg ) ;
+
+      INT32 buildGetNonceMsg( msgBuffer &msg) ;
+
+      INT32 buildNotSupportMsg( msgBuffer &msg ) ;
    }
-
-   ~mongoConverter()
-   {
-
-   }
-
-   BOOLEAN isBigEndian() const
-   {
-      return _bigEndian ;
-   }
-
-   BOOLEAN isGetLastError() const
-   {
-      const CHAR *ptr = NULL ;
-      ptr = ossStrstr( _cmd->name(), "getLastError" ) ;
-      if ( NULL == ptr )
-      {
-         ptr = ossStrstr( _cmd->name(), "getlasterror" ) ;
-      }
-      return NULL != ptr ;
-   }
-
-   void resetCommand()
-   {
-      _cmd = NULL ;
-   }
-
-   const INT32 getOpType() const
-   {
-      return _parser.opType ;
-   }
-
-   const mongoParser& getParser() const
-   {
-      return _parser ;
-   }
-
-   // virtual function for baseConverter
-   virtual INT32 convert( std::vector<msgBuffer*> &out ) ;
-   virtual INT32 reConvert( msgBuffer *in, msgBuffer &out ) ;
-
-private:
-   BOOLEAN _bigEndian ;
-   command *_cmd ;
-   mongoParser _parser ;
-};
+}
 #endif
