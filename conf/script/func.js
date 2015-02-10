@@ -698,17 +698,16 @@ function isSdbcmRunning( ssh, host )
 /* *****************************************************************************
 @discretion: get a usable port from local host
 @author: Tanzhaobo
-@parameter
-   osInfo[string]: os type
+@parameter void
 @return
    retPort[nunber]: return a usable port or OMA_PORT_INVALID
 ***************************************************************************** */
-function getAUsablePortFromLocal( osInfo )
+function getAUsablePortFromLocal()
 {
    var retPort = OMA_PORT_INVALID ;
    var flag = false ;   
 
-   if ( OMA_LINUX == osInfo )
+   if ( SYS_LINUX == SYS_TYPE )
    {
       for ( var port = OMA_PORT_TEMP_AGENT_PORT ;
             port <= OMA_PORT_MAX; port++ )

@@ -70,7 +70,8 @@ function _init()
    setTaskLogFileName( task_id, host_name ) ;
    
    PD_LOG2( task_id, arguments, PDEVENT, FILE_NAME_INSTALL_STANDALONE,
-            sprintf( "Begin to install standalone[?:?]", host_name, host_svc ) ) ;
+            sprintf( "Begin to install standalone[?:?] in task[?]",
+                     host_name, host_svc, task_id ) ) ;
 }
 
 /* *****************************************************************************
@@ -82,7 +83,24 @@ function _init()
 function _final()
 {
    PD_LOG2( task_id, arguments, PDEVENT, FILE_NAME_INSTALL_STANDALONE,
-            sprintf( "Finish installing standalone[?:?]", host_name, host_svc ) ) ;
+            sprintf( "Finish installing standalone[?:?] in task[?]",
+                     host_name, host_svc, task_id ) ) ;
+}
+
+/* *****************************************************************************
+@discretion: check whether node has been installed or not
+@discretion: create standalone
+@parameter
+   hostName[string]: install host name
+   svcName[string]: install svc name
+   installPath[string]: install path
+   config[json]: config info 
+   agentPort[string]: the port of sdbcm in install host
+@return void
+***************************************************************************** */
+function _checkNodeExistOrNot( hostName, svcName, installPath, config, agentPort )
+{
+   
 }
 
 /* *****************************************************************************
@@ -185,9 +203,12 @@ function main()
       }
       // 3. get OM Agent's service in target host from local sdbcm config file
       agentPort = getOMASvcFromCfgFile( installHostName ) ;
-      // change install path owner
+      // 4. check whether node has been installed
+// println
+// TODO:
+      // 5. change install path owner
       changeDirOwner( ssh, installPath, sdbUser, sdbUserGroup ) ;
-      // create standalone
+      // 6. create standalone
       _createStandalone( installHostName, installSvcName,
                          installPath, installConfig, agentPort ) ;
    }

@@ -73,7 +73,26 @@ function installNodeResult()
    this.detail                    = "" ;
 }
 
+function removeRGResult()
+{
+   this.errno                     = SDB_OK ;
+   this.detail                    = "" ;
+}
+
 function rollbackNodeResult()
+{
+   this.errno                     = SDB_OK ;
+   this.detail                    = "" ;
+}
+
+function installTmpCoordResult()
+{
+   this.errno                     = SDB_OK ;
+   this.detail                    = "" ;
+   this.TmpCoordSvcName           = "" ;
+}
+
+function removeTmpCoordResult()
 {
    this.errno                     = SDB_OK ;
    this.detail                    = "" ;

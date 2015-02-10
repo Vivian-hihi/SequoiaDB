@@ -135,6 +135,9 @@ var Idle                         = "Idle" ;
 var Other                        = "Other" ;
 var CalendarTime                 = "CalendarTime" ;
 var NetCards                     = "NetCards" ;
+var ClusterName                  = "clustername" ;
+var BusinessName                 = "businessname" ;
+var UserTag                      = "usertag" ;
 
 
 var OMA_PATH_TEMP_OMA_DIR_L           = "/tmp/omatmp/" ;

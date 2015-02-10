@@ -16,28 +16,29 @@
 
 *******************************************************************************/
 /*
-@description: remove the newly created coord group
+@description: remove the newly created data group
 @modify list:
    2014-7-26 Zhaobo Tan  Init
 @parameter
-   BUS_JSON:
-   SYS_JSON: the format is: { "TaskID": 1, "TmpCoordSvcName": "10000" }
+   BUS_JSON: the format is:  { "UninstallGroupNames": [ "group1", "group2" ] }
+   SYS_JSON: the format is: { "TaskID": 2, "TmpCoordSvcName": "10000" }
    ENV_JSON:
 @return
-   RET_JSON: the format is: { "errrno": 0, "detail": "" }
+   RET_JSON: the format is: { "errno": 0, "detail": "" }
 */
 
 // println
-// var SYS_JSON = { "TaskID": 2, "TmpCoordSvcName": "10000" } ;
+//var BUS_JSON = { "UninstallGroupNames": [ "group1", "group2" ] } ;
+//var SYS_JSON = { "TaskID": 2, "TmpCoordSvcName": "10000" } ;
 
-var FILE_NAME_ROLLBACK_COORD = "rollbackCoord.js" ;
-var RET_JSON     = new removeRGResult() ;
-var rc           = SDB_OK ;
-var errMsg       = "" ;
+var FILE_NAME_ROLLBACK_DATA_RG = "rollbackDataRG.js" ;
+var RET_JSON = new removeRGResult() ;
+var rc       = SDB_OK ;
+var errMsg   = "" ;
 
-var task_id      = "" ;
-// println:
-var rg_name = OMA_SYS_COORD_RG ;
+var task_id = "" ;
+// println
+var rg_name = "datagroup" ;
 
 /* *****************************************************************************
 @discretion: init
@@ -52,8 +53,8 @@ function _init()
 
    setTaskLogFileName( task_id, rg_name ) ;
    
-   PD_LOG2( task_id, arguments, PDEVENT, FILE_NAME_ROLLBACK_COORD,
-            sprintf( "Begin to rollback coord rg in task[?]", task_id ) ) ;
+   PD_LOG2( task_id, arguments, PDEVENT, FILE_NAME_ROLLBACK_DATA_RG,
+            sprintf( "Begin to remove data group in task[?]", task_id ) ) ;
 }
 
 /* *****************************************************************************
@@ -64,23 +65,24 @@ function _init()
 ***************************************************************************** */
 function _final()
 {
-   PD_LOG2( task_id, arguments, PDEVENT, FILE_NAME_ROLLBACK_COORD,
-            sprintf( "Finish rollback coord group in task[?]", task_id ) ) ;
+   PD_LOG2( task_id, arguments, PDEVENT, FILE_NAME_ROLLBACK_DATA_RG,
+            sprintf( "Finish removing data group in task[?]", task_id ) ) ;
 }
 
 /* *****************************************************************************
-@discretion: remove coord group
+@discretion: remove data group
 @parameter
    db[object]: Sdb object
+   name[string]: data group name
 @return void
 ***************************************************************************** */
-function _removeCoordGroup( db )
+function _removeGroup( db, name )
 {
    var rg = null ;
-
+   // get rg
    try
    {
-      rg = db.getCoordRG() ;
+      rg = db.getRG( name ) ;
    }
    catch ( e )
    {
@@ -91,42 +93,68 @@ function _removeCoordGroup( db )
       else
       {
          SYSEXPHANDLE( e ) ;
-         errMsg = "Failed to get coord group" ;
+         errMsg = sprintf( "Failed to get data group[?]", name ) ;
          rc = GETLASTERROR() ;
-         PD_LOG2( task_id, arguments, PDERROR, FILE_NAME_ROLLBACK_COORD,
+         PD_LOG2( task_id, arguments, PDERROR, FILE_NAME_ROLLBACK_DATA_RG,
                   errMsg + ", rc: " + rc + ", detail: " + GETLASTERRMSG() ) ;
          exception_handle( rc, errMsg ) ;
       }
    }
-   // remove
+   // stop all the data node in this group
    try
    {
-      db.removeCoordRG() ;
+      rg.stop() ;
    }
    catch ( e )
    {
       SYSEXPHANDLE( e ) ;
-      errMsg = "Failed to remove coord group" ;
+      errMsg = sprintf( "Failed to stop data group[?]", name ) ;
       rc = GETLASTERROR() ;
-      PD_LOG2( task_id, arguments, PDERROR, FILE_NAME_ROLLBACK_COORD,
+      PD_LOG2( task_id, arguments, PDERROR, FILE_NAME_ROLLBACK_DATA_RG,
+               errMsg + ", rc: " + rc + ", detail: " + GETLASTERRMSG() ) ;
+      exception_handle( rc, errMsg ) ;
+   } 
+   // remove data group
+   try
+   {
+      db.removeRG( name ) ;
+   }
+   catch ( e )
+   {
+      SYSEXPHANDLE( e ) ;
+      errMsg = sprintf( "Failed to remove data group[?]", name ) ;
+      rc = GETLASTERROR() ;
+      PD_LOG2( task_id, arguments, PDERROR, FILE_NAME_ROLLBACK_DATA_RG,
                errMsg + ", rc: " + rc + ", detail: " + GETLASTERRMSG() ) ;
       exception_handle( rc, errMsg ) ;
    }
 }
 
+function _removeDataGroup( db, groups )
+{
+   for ( var i = 0; i < groups.length; i++ )
+   {
+      _removeGroup( db, groups[i] ) ;
+   }
+}
+
 function main()
 {
-   var tmpCoordHostName   = null ;
-   var tmpCoordSvcName    = null ;
-   var db                 = null ;
+   var tmpCoordHostName = null ;
+   var tmpCoordSvcName  = null ;
+   var groups           = null ;
+   var db               = null ;
+   
+   _init() ;
    
    try
    {
       // 1. get arguments
       try
       {
-         tmpCoordHostName   = System.getHostName() ;
-         tmpCoordSvcName    = SYS_JSON[TmpCoordSvcName] ;
+         tmpCoordHostName = System.getHostName() ;
+         tmpCoordSvcName  = SYS_JSON[TmpCoordSvcName] ;
+         groups           = BUS_JSON[UninstallGroupNames] ;
       }
       catch( e )
       {
@@ -134,7 +162,7 @@ function main()
          errMsg = "Js receive invalid argument" ;
          rc = GETLASTERROR() ;
          // record error message in log
-         PD_LOG2( task_id, arguments, PDERROR, FILE_NAME_ROLLBACK_COORD,
+         PD_LOG2( task_id, arguments, PDERROR, FILE_NAME_ROLLBACK_DATA_RG,
                   errMsg + ", rc: " + rc + ", detail: " + GETLASTERRMSG() ) ;
          // tell to user error happen
          exception_handle( SDB_INVALIDARG, errMsg ) ;
@@ -151,37 +179,37 @@ function main()
          errMsg = sprintf( "Failed to connect to temporary coord[?:?]",
                            tmpCoordHostName, tmpCoordSvcName ) ;
          rc = GETLASTERROR() ;
-         PD_LOG2( task_id, arguments, PDERROR, FILE_NAME_ROLLBACK_COORD,
+         PD_LOG2( task_id, arguments, PDERROR, FILE_NAME_ROLLBACK_DATA_RG,
                   errMsg + ", rc: " + rc + ", detail: " + GETLASTERRMSG() ) ;
          exception_handle( rc, errMsg ) ;
       }
-      
       // 3. test whether catalog is running or not
-      // if catalog is not running, no need to rollback
+      // if catalog is not running, no need to rollback data group
+      var flag = isCatalogRunning( db ) ;
       if ( false == isCatalogRunning( db ) )
       {
          _final() ;
          return RET_JSON ;
       }
-      
-      // 4. remove coord nodes
-      _removeCoordGroup( db ) ;
+      // remove data group
+      _removeDataGroup( db, groups ) ;
    }
    catch( e )
    {
       SYSEXPHANDLE( e ) ;
       errMsg = GETLASTERRMSG() ; 
       rc = GETLASTERROR() ;
-      PD_LOG2( task_id, arguments, PDERROR, FILE_NAME_ROLLBACK_COORD,
-               sprintf( "Failed to remove catalog group, rc:?, detail:?",
+      PD_LOG2( task_id, arguments, PDERROR, FILE_NAME_ROLLBACK_DATA_RG,
+               sprintf( "Failed to remove all the data group, rc:?, detail:?",
                         rc, errMsg ) ) ;             
       RET_JSON[Errno] = rc ;
       RET_JSON[Detail] = errMsg ;
    }
-   
+
    _final() ;
 println("RET_JSON is: " + JSON.stringify(RET_JSON) ) ;
    return RET_JSON ;
+
 }
 
 // execute
