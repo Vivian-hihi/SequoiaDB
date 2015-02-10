@@ -131,7 +131,11 @@
 #define OMA_FIELD_STATUSDESC                       "StatusDesc"
 #define OMA_FIELD_FLOW                             "Flow"
 #define OMA_FIELD_DATAGROUPNAME                    "datagroupname"
-
+#define OMA_FIELD_CLUSTERNAME                      "ClusterName"
+#define OMA_FIELD_CLUSTERNAME2                     "clustername"
+#define OMA_FIELD_BUSINESSNAME                     "BusinessName"
+#define OMA_FIELD_BUSINESSNAME2                    "businessname"
+#define OMA_FIELD_USERTAG                          "usertag"
 
 // host info
 #define OMA_FIELD_HOST                             "Host"
@@ -184,7 +188,7 @@
 #define OMA_FIELD_CONTEXT                          "Context"
 
 // business
-#define OMA_FIELD_CLUSTERNAME                      "ClusterName"
+
 
 // install db business result
 
