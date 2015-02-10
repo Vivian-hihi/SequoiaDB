@@ -11,9 +11,14 @@
       <title>示例</title>
       <ul>
         <li>对记录分组后，返回表所有的记录条数
-          <codeblock>db.foo.bar.count({$group:{$count:"$dep"}})
+          <codeblock>db.foo.bar.aggregate({$group:{_id:"$name",count:{$count:"$name"},name:{$first:"$name"}}})
 {
-  "count": 1001
+   "count": 2,
+   "name": "Jim"
+}
+{
+   "count": 1,
+   "name": "Kate"
 }</codeblock></li>
       </ul>
     </section>
