@@ -81,6 +81,9 @@ namespace bson {
             time_t_to_String(millis/1000, buf);
             return buf;
         }
+        unsigned long long getMillis() {
+            return millis ;
+        }
     };
 
     // Like strlen, but only scans up to n bytes.
