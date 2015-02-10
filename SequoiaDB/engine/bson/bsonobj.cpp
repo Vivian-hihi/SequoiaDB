@@ -503,9 +503,13 @@ namespace bson {
             return *l.value() - *r.value();
         case Timestamp:
         case Date:
-            if ( l.date().getMillis() < r.date().getMillis() )
+            {
+            unsigned long long tmpl = l.date().getMillis() ;
+            unsigned long long tmpr = r.date().getMillis() ;
+            if ( tmpl < tmpr )
                 return -1;
-            return l.date().getMillis() == r.date().getMillis() ? 0 : 1;
+            return tmpl == tmpr ? 0 : 1;
+            }
         case NumberLong:
             if( r.type() == NumberLong ) {
                 long long L = l._numberLong();
