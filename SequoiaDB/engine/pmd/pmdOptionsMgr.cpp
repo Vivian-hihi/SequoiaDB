@@ -2047,6 +2047,12 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Failed to write config[%s], rc: %d",
                    conf, rc ) ;
 
+      // save notify
+      if ( getConfigHandler() )
+      {
+         getConfigHandler()->onConfigSave() ;
+      }
+
    done:
       PD_TRACE_EXIT ( SDB__PMDOPTMGR_REFLUSH2FILE) ;
       return rc ;
