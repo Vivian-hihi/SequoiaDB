@@ -39,12 +39,12 @@ clientCPPLibFiles = [
 
 #Client Library
 clientCPPLib = clientCppEnv.SharedLibrary('sdbcpp', clientCPPLibFiles)
-if linux:
-   clientCPPLibStatic = clientCppEnv.StaticLibrary('staticsdbcpp', clientCPPLibFiles)
+
+clientCPPLibStatic = clientCppEnv.StaticLibrary('staticsdbcpp', clientCPPLibFiles)
 
 clientCppEnv.Install( '#/client/lib/', clientCPPLib )
-if linux:
-   clientCppEnv.Install( '#/client/lib/', clientCPPLibStatic )
+
+clientCppEnv.Install( '#/client/lib/', clientCPPLibStatic )
 clientCppEnv.Install( '#/client/include/', "client/client.hpp" )
 clientCppEnv.Install( '#/client/include/', "include/core.hpp" )
 clientCppEnv.Install( '#/client/include/', "include/ossFeat.hpp" )

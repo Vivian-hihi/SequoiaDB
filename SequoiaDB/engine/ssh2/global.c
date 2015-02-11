@@ -40,7 +40,52 @@
 
 static int _libssh2_initialized = 0;
 static int _libssh2_init_flags = 0;
+/*
+static ossSpinSLatch *locks = NULL ;
 
+void thread_setup( void )
+{
+  if ( NULL == _locks )
+  {
+     /// _locks is delete[] in destructor when nobody use it
+     locks = new(std::nothrow) ossSpinSLatch[CRYPTO_num_locks()] ;
+     if ( NULL == _locks )
+     {
+        PD_LOG ( PDERROR, "Failed to new[] memory, rc = %d", SDB_OOM ) ;
+        ossPanic() ;
+     }
+     // TODO: have not macro for "unsigned long"
+     CRYPTO_set_id_callback( (unsigned long(*)())_thread_id) ;
+     CRYPTO_set_locking_callback((void(*)(INT32, INT32, const CHAR*, INT32))_lock_callback) ;
+  }
+}
+
+void thread_cleanup( void )
+{
+  /// when nobody use _locks, delete[] it
+  if ( NULL != _locks )
+  {
+     delete[] _locks ;
+  }
+}
+
+void lock_callback( INT32 mode, INT32 type, CHAR *file, INT32 line )
+{
+  if ( mode & CRYPTO_LOCK )
+  {
+     _locks[type].get() ;
+  }
+  else
+  {
+     _locks[type].release() ;
+  }
+}
+
+UINT64 thread_id( void )
+{
+  return (UINT64)ossGetCurrentThreadID() ;
+}
+*/
 LIBSSH2_API int
 libssh2_init(int flags)
 {
