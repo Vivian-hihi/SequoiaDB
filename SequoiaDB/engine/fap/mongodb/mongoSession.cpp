@@ -447,7 +447,16 @@ INT32 _mongoSession::_reply( MsgOpReply *replyHeader,
             pBody = bob.done().objdata() ;
             reply.header.len = sizeof( mongoMsgReply ) + bob.done().objsize() ;
          }
-         reply.header.len = sizeof( mongoMsgReply ) + len ;
+         else
+         {
+            reply.header.len = sizeof( mongoMsgReply ) + len ;
+         }
+      }
+      else
+      {
+         bob.append( "ok", 1.0 ) ;
+         pBody = bob.done().objdata() ;
+         reply.header.len = sizeof( mongoMsgReply ) + bob.done().objsize() ;
       }
    }
 
