@@ -53,6 +53,14 @@ function addHostResult()
    //this.HasInstall                = false ;
 }
 
+function removeHostResult()
+{
+   this.errno                     = SDB_OK ;
+   this.detail                    = "" ;
+   this.IP                        = "" ;
+   //this.HasUninstall              = false ;
+}
+
 function checkAddHostInfoResult()
 {
    this.errno                     = SDB_OK ;
@@ -102,12 +110,4 @@ function removeTmpCoordResult()
 {
    this.errno                     = SDB_OK ;
    this.detail                    = "" ;
-}
-
-function removeHostResult()
-{
-   this.errno                     = SDB_OK ;
-   this.detail                    = "" ;
-   this.IP                        = "" ;
-   this.HasUninstall              = false ;
 }

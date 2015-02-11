@@ -66,7 +66,7 @@ function _init()
       errMsg = "Js receive invalid argument" ;
       PD_LOG( arguments, PDERROR, FILE_NAME_INSTALL_STANDALONE,
               sprintf( errMsg + ", rc: ?, detail: ?", GETLASTERROR(), GETLASTERRMSG() ) ) ;
-      exception_handle( SDB_SYS, errMsg ) ;
+      exception_handle( SDB_INVALIDARG, errMsg ) ;
    }
    setTaskLogFileName( task_id, host_name ) ;
    
@@ -220,11 +220,7 @@ function main()
       rc = GETLASTERROR() ;
       PD_LOG2( task_id, arguments, PDERROR, FILE_NAME_INSTALL_STANDALONE,
                sprintf( "Failed to install standalone[?:?], rc:?, detail:?",
-               host_name, host_svc, rc, errMsg ) ) ;             
-/*
-      _final() ;
-      exception_handle( rc, errMsg ) ;
-*/
+               host_name, host_svc, rc, errMsg ) ) ;
       RET_JSON[Errno] = rc ;
       RET_JSON[Detail] = errMsg ;
    }
