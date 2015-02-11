@@ -40,8 +40,37 @@ using namespace std ;
 
 namespace engine
 {
-   class _omaTaskMgr ;
+   /*
+      _omaAddHost
+   */
+   class _omaAddHost : public _omaCommand
+   {
+      public:
+         _omaAddHost ( AddHostInfo &info ) ;
+         ~_omaAddHost () ;
+         virtual const CHAR * name () { return OMA_CMD_ADD_HOST ; }
+         virtual INT32 init ( const CHAR *pInstallInfo ) ;
 
+      private:
+         INT32 _getAddHostInfo( BSONObj &retObj1, BSONObj &retObj2 ) ;
+         
+      private:
+         AddHostInfo   _addHostInfo ;
+   } ;
+
+   /*
+      _omaCheckAddHostInfo
+   */
+   class _omaCheckAddHostInfo : public _omaCommand
+   {
+      public:
+         _omaCheckAddHostInfo() ;
+         ~_omaCheckAddHostInfo () ;
+         
+      public:
+         virtual const CHAR* name () { return OMA_CMD_CHECK_ADD_HOST_INFO ; }
+         virtual INT32 init ( const CHAR *pInstallInfo ) ;
+   } ;
 
    /*
       _omaCreateTmpCoord
@@ -78,53 +107,6 @@ namespace engine
       private:
          INT64  _taskID ;
          string _tmpCoordSvcName ;
-   } ;
-
-   /*
-      _omaRunAddHost
-   */
-   class _omaRunAddHost : public _omaCommand
-   {
-      public:
-         _omaRunAddHost ( AddHostInfo &info ) ;
-         ~_omaRunAddHost () ;
-         virtual const CHAR * name () { return OMA_CMD_ADD_HOST ; }
-         virtual INT32 init ( const CHAR *pInstallInfo ) ;
-
-      private:
-         INT32 _getAddHostInfo( BSONObj &retObj1, BSONObj &retObj2 ) ;
-         
-      private:
-         AddHostInfo   _addHostInfo ;
-   } ;
-/*
-   // _omaRunRmHost
-   class _omaRunRmHost : public _omaCommand
-   {
-      public:
-         _omaRunRmHost( AddHostInfo &info ) ;
-         ~_omaRunRmHost () ;
-         virtual const CHAR* name () { return OMA_CMD_RM_HOST ; }
-         virtual INT32 init ( const CHAR *pInstallInfo ) ;
-      private:
-         INT32 _getRmHostInfo( BSONObj &retObj ) ;
-         
-      private:
-         AddHostInfo   _RmHostInfo ;
-   } ;
-*/
-   /*
-      _omaRunCheckAddHostInfo
-   */
-   class _omaRunCheckAddHostInfo : public _omaCommand
-   {
-      public:
-         _omaRunCheckAddHostInfo() ;
-         ~_omaRunCheckAddHostInfo () ;
-         
-      public:
-         virtual const CHAR* name () { return OMA_CMD_CHECK_ADD_HOST_INFO ; }
-         virtual INT32 init ( const CHAR *pInstallInfo ) ;
    } ;
 
    /*

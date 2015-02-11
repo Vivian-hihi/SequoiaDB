@@ -35,7 +35,7 @@
 #include "pmdDef.hpp"
 #include "pmdEDU.hpp"
 #include "omagentSubTask.hpp"
-#include "omagentAsyncCmd.hpp"
+#include "omagentBackgroundCmd.hpp"
 
 
 namespace engine
@@ -130,7 +130,7 @@ namespace engine
          }
 
          // 3. add host
-         _omaRunAddHost runCmd( *pInfo ) ;
+         _omaAddHost runCmd( *pInfo ) ;
          rc = runCmd.init( NULL ) ;
          if ( rc )
          {
@@ -145,7 +145,6 @@ namespace engine
             resultInfo._errno      = rc ;
             resultInfo._detail     = pDetail ;
             resultInfo._flow.push_back( flow ) ;
-//            _pTask->setSubTaskStatus( _taskName, OMA_TASK_STATUS_FINISH ) ;
             rc = _pTask->updateProgressToTask( pInfo->_serialNum, resultInfo ) ;
             if ( rc )
             {
@@ -179,7 +178,6 @@ namespace engine
             resultInfo._errno      = rc ;
             resultInfo._detail     = pDetail ;
             resultInfo._flow.push_back( flow ) ;
-//            _pTask->setSubTaskStatus( _taskName, OMA_TASK_STATUS_FINISH ) ;
             tmpRc = _pTask->updateProgressToTask( pInfo->_serialNum, resultInfo ) ;
             if ( tmpRc )
             {
@@ -203,7 +201,6 @@ namespace engine
             resultInfo._errno      = rc ;
             resultInfo._detail     = pDetail ;
             resultInfo._flow.push_back( flow ) ;
-//            _pTask->setSubTaskStatus( _taskName, OMA_TASK_STATUS_FINISH ) ;
             tmpRc =_pTask->updateProgressToTask( pInfo->_serialNum, resultInfo ) ;
             if ( tmpRc )
             {
@@ -231,7 +228,6 @@ namespace engine
             resultInfo._errno      = errNum ;
             resultInfo._detail     = pDetail ;
             resultInfo._flow.push_back( flow ) ;
-//            _pTask->setSubTaskStatus( _taskName, OMA_TASK_STATUS_FINISH ) ;
             tmpRc = _pTask->updateProgressToTask( pInfo->_serialNum, resultInfo ) ;
             if ( tmpRc )
             {
@@ -247,7 +243,6 @@ namespace engine
             resultInfo._status     = OMA_TASK_STATUS_FINISH ;
             resultInfo._statusDesc = getTaskStatusDesc( OMA_TASK_STATUS_FINISH ) ;
             resultInfo._flow.push_back( flow ) ;
-//            _pTask->setSubTaskStatus( _taskName, OMA_TASK_STATUS_FINISH ) ;
             tmpRc = _pTask->updateProgressToTask( pInfo->_serialNum, resultInfo ) ;
             if ( tmpRc )
             {

@@ -15,7 +15,7 @@
    You should have received a copy of the GNU Affero General Public License
    along with this program. If not, see <http://www.gnu.org/license/>.
 
-   Source File Name = omagentRunJob.cpp
+   Source File Name = omagentBackgroudCmd.cpp
 
    Dependencies: N/A
 
@@ -31,7 +31,7 @@
 *******************************************************************************/
 
 #include "omagentUtil.hpp"
-#include "omagentAsyncCmd.hpp"
+#include "omagentBackgroudCmd.hpp"
 #include "utilStr.hpp"
 #include "omagentMgr.hpp"
 
@@ -41,18 +41,18 @@ namespace engine
 {
 
    /*
-      _omaRunAddHost
+      _omaAddHost
    */
-   _omaRunAddHost::_omaRunAddHost ( AddHostInfo &info )
+   _omaAddHost::_omaAddHost ( AddHostInfo &info )
    {
       _addHostInfo = info ;
    }
 
-   _omaRunAddHost::~_omaRunAddHost ()
+   _omaAddHost::~_omaAddHost ()
    {
    }
 
-   INT32 _omaRunAddHost::init( const CHAR *pInstallInfo )
+   INT32 _omaAddHost::init( const CHAR *pInstallInfo )
    {
       INT32 rc = SDB_OK ;
       try
@@ -95,7 +95,7 @@ namespace engine
       goto done ;
    }
 
-   INT32 _omaRunAddHost::_getAddHostInfo( BSONObj &retObj1, BSONObj &retObj2 )
+   INT32 _omaAddHost::_getAddHostInfo( BSONObj &retObj1, BSONObj &retObj2 )
    {
       INT32 rc = SDB_OK ;
       BSONObjBuilder builder ;
@@ -149,112 +149,19 @@ namespace engine
    error:
       goto done ;
    }
-/*
-   _omaRunRmHost::_omaRunRmHost( AddHostInfo &info )
-   {
-      _RmHostInfo = info ;
-   }
-
-   _omaRunRmHost::~_omaRunRmHost()
-   {
-   }
-
-   INT32 _omaRunRmHost::init( const CHAR *pInstallInfo )
-   {
-      INT32 rc = SDB_OK ;
-      try
-      {
-         BSONObj bus ;
-         rc = _getRmHostInfo( bus ) ;
-         if ( rc )
-         {
-            PD_LOG ( PDERROR, "Failed to get remove host info for js file, "
-                     "rc = %d", rc ) ;
-            goto error ;
-         }
-         // build js file arguments
-         ossSnprintf( _jsFileArgs, JS_ARG_LEN, "var %s = %s; ",
-                      JS_ARG_BUS, bus.toString(FALSE, TRUE).c_str() ) ;
-         PD_LOG ( PDDEBUG, "Remove host passes argument: %s",
-                  _jsFileArgs ) ;
-         rc = addJsFile( FILE_ADDHOST_ROLLBACK2, _jsFileArgs ) ;
-         if ( rc )
-         {
-            PD_LOG ( PDERROR, "Failed to add js file[%s], rc = %d ",
-                     FILE_ADDHOST_ROLLBACK2, rc ) ;
-            goto error ;
-         }
-      }
-      catch ( std::exception &e )
-      {
-         rc = SDB_INVALIDARG ;
-         PD_LOG ( PDERROR, "Failed to build bson, exception is: %s",
-                  e.what() ) ;
-         goto error ;
-      }
-   done:
-      return rc ;
-   error :
-      goto done ;
-   }
-
-   INT32 _omaRunRmHost::_getRmHostInfo( BSONObj &retObj )
-   {
-      INT32 rc = SDB_OK ;
-      BSONObjBuilder builder ;
-      BSONObjBuilder bob ;
-      BSONObj subObj ;
-
-      // the output bson format
-      // { "HostInfo":
-      //    { "IP": "192.168.20.165", "HostName": "rhel64-test8",
-      //      "User": "root", "Passwd": "sequoiadb", "SshPort": "22",
-      //      "AgentPort": "11790", "InstallPath": "/opt/sequoiadb" }
-      // } 
-      
-      try
-      {
-         //build subObj
-         bob.append( OMA_FIELD_IP, _RmHostInfo._item._ip.c_str() ) ;
-         bob.append( OMA_FIELD_HOSTNAME, _RmHostInfo._item._hostName.c_str() ) ;
-         bob.append( OMA_FIELD_USER, _RmHostInfo._item._user.c_str() ) ;
-         bob.append( OMA_FIELD_PASSWD, _RmHostInfo._item._passwd.c_str() ) ;
-         bob.append( OMA_FIELD_SSHPORT, _RmHostInfo._item._sshPort.c_str() ) ;
-         bob.append( OMA_FIELD_AGENTSERVICE, _RmHostInfo._item._agentService.c_str() ) ;
-         bob.append( OMA_FIELD_INSTALLPATH, _RmHostInfo._item._installPath.c_str() ) ;
-         subObj = bob.obj() ;
-
-         // build retObj
-         builder.append( OMA_FIELD_HOSTINFO, subObj ) ;
-         retObj = builder.obj() ;
-      }
-      catch ( std::exception &e )
-      {
-         rc = SDB_INVALIDARG ;
-         PD_LOG_MSG ( PDERROR, "Failed to build bson for add host, "
-                      "exception is: %s", e.what() ) ;
-         goto error ;
-      }
-      
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-*/
 
    /*
-      _omaRunCheckAddHostInfo
+      _omaCheckAddHostInfo
    */
-   _omaRunCheckAddHostInfo::_omaRunCheckAddHostInfo()
+   _omaCheckAddHostInfo::_omaCheckAddHostInfo()
    {
    }
 
-   _omaRunCheckAddHostInfo::~_omaRunCheckAddHostInfo()
+   _omaCheckAddHostInfo::~_omaCheckAddHostInfo()
    {
    }
 
-   INT32 _omaRunCheckAddHostInfo::init ( const CHAR *pInstallInfo )
+   INT32 _omaCheckAddHostInfo::init ( const CHAR *pInstallInfo )
    {
       INT32 rc = SDB_OK ;
       try
@@ -285,6 +192,146 @@ namespace engine
       return rc ;
    error:
      goto done ;
+   }
+
+   /*
+      _omaCreateTmpCoord
+   */
+   _omaCreateTmpCoord::_omaCreateTmpCoord( INT64 taskID )
+   {
+      _taskID = taskID ;
+   }
+
+   _omaCreateTmpCoord::~_omaCreateTmpCoord()
+   {
+   }
+
+   INT32 _omaCreateTmpCoord::init ( const CHAR *pInstallInfo )
+   {
+      INT32 rc = SDB_OK ;
+      try
+      {
+         BSONObj bus = BSONObj(pInstallInfo).copy() ;
+         BSONObj sys = BSON( OMA_FIELD_TASKID << _taskID ) ;
+         // build js file arguments
+         ossSnprintf( _jsFileArgs, JS_ARG_LEN, "var %s = %s; var %s = %s;",
+                      JS_ARG_BUS, bus.toString(FALSE, TRUE).c_str(),
+                      JS_ARG_SYS, sys.toString(FALSE, TRUE).c_str() ) ;
+         PD_LOG ( PDDEBUG, "Install temporary coord passes argument: %s",
+                  _jsFileArgs ) ;
+         rc = addJsFile( FILE_INSTALL_TMP_COORD, _jsFileArgs ) ;
+         if ( rc )
+         {
+            PD_LOG_MSG ( PDERROR, "Failed to add js file[%s], rc = %d ",
+                         FILE_INSTALL_TMP_COORD, rc ) ;
+            goto error ;
+         }
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG ( PDERROR, "Failed to build bson, exception is: %s",
+                      e.what() ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+     goto done ;
+   }
+
+   INT32 _omaCreateTmpCoord::createTmpCoord( BSONObj &cfgObj, BSONObj &retObj )
+   {
+      INT32 rc = SDB_OK ;
+      rc = init( cfgObj.objdata() ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to init to create "
+                  "temporary coord, rc = %d", rc ) ;
+         goto error ;
+      }
+      rc = doit( retObj ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to create temporary coord, rc = %d", rc ) ;
+         goto error ;
+      }     
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   /*
+      _omaRemoveTmpCoord
+   */
+   _omaRemoveTmpCoord::_omaRemoveTmpCoord( INT64 taskID,
+                                           string &tmpCoordSvcName )
+   {
+      _taskID          = taskID ;
+      _tmpCoordSvcName = tmpCoordSvcName ;
+   }
+
+   _omaRemoveTmpCoord::~_omaRemoveTmpCoord ()
+   {
+   }
+
+   INT32 _omaRemoveTmpCoord::init ( const CHAR *pInstallInfo )
+   {
+      INT32 rc = SDB_OK ;
+      try
+      {
+         BSONObj bus = BSON( OMA_FIELD_TMPCOORDSVCNAME << _tmpCoordSvcName ) ;
+         BSONObj sys = BSON( OMA_FIELD_TASKID << _taskID ) ;
+
+         // build js file arguments
+         ossSnprintf( _jsFileArgs, JS_ARG_LEN, "var %s = %s; var %s = %s;",
+                      JS_ARG_BUS, bus.toString(FALSE, TRUE).c_str(),
+                      JS_ARG_SYS, sys.toString(FALSE, TRUE).c_str() ) ;
+         PD_LOG ( PDDEBUG, "Remove temporary coord passes argument: %s",
+                  _jsFileArgs ) ;
+         rc = addJsFile( FILE_REMOVE_TMP_COORD, _jsFileArgs ) ;
+         if ( rc )
+         {
+            PD_LOG_MSG ( PDERROR, "Failed to add js file[%s], rc = %d ",
+                         FILE_REMOVE_TMP_COORD, rc ) ;
+            goto error ;
+         }
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG ( PDERROR, "Failed to build bson, exception is: %s",
+                      e.what() ) ;
+         goto error ;
+      }
+   done:
+      return rc ;
+   error:
+     goto done ;
+   }
+
+   INT32 _omaRemoveTmpCoord::removeTmpCoord( BSONObj &retObj )
+   {
+      INT32 rc = SDB_OK ;
+      rc = init( NULL ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to init to remove temporary coord, "
+                  "rc = %d", rc ) ;
+         goto error ;
+      }
+      rc = doit( retObj ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to remove temporary coord, rc = %d", rc ) ;
+         goto error ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    /*

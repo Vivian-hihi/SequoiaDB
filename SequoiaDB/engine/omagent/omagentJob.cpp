@@ -31,7 +31,7 @@
 *******************************************************************************/
 #include "omagentUtil.hpp"
 #include "omagentJob.hpp"
-#include "omagentAsyncCmd.hpp"
+#include "omagentBackgroundCmd.hpp"
 #include "pmdEDU.hpp"
 
 namespace engine

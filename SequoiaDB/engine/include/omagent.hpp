@@ -50,7 +50,7 @@ using namespace bson ;
 
 namespace engine
 {
-
+/*
    struct _InstallInfo
    {
       string _hostName ;
@@ -111,7 +111,7 @@ namespace engine
       map< string, vector<InstalledNode> > _dataGroupRollbackInfo ;
    } ;
    typedef struct _RollbackInfo RollbackInfo ;
-
+*/
    /// add host 
 /*
    struct _AddHost
@@ -207,17 +207,6 @@ namespace engine
       AddHostItem       _item ; // add host info
    } ;
    typedef struct _AddHostInfo AddHostInfo ;
-
-/*
-   struct _AddHostResult
-   {
-      INT64             _taskID ;
-      INT32             _status ;
-      INT32             _progress ;
-      map< INT32, AddHostResultInfo > _map_result ;
-   } ;
-   typedef struct _AddHostResult AddHostResult ;
-*/
 
    // install db business host
 

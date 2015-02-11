@@ -48,6 +48,7 @@ namespace engine
    IMPLEMENT_OACMD_AUTO_REGISTER( _omaPreCheckHost )
    IMPLEMENT_OACMD_AUTO_REGISTER( _omaCheckHost )
    IMPLEMENT_OACMD_AUTO_REGISTER( _omaPostCheckHost )
+   IMPLEMENT_OACMD_AUTO_REGISTER( _omaRemoveHost )
    IMPLEMENT_OACMD_AUTO_REGISTER( _omaUpdateHostsInfo )
    IMPLEMENT_OACMD_AUTO_REGISTER( _omaQueryHostStatus )
 //   IMPLEMENT_OACMD_AUTO_REGISTER( _omaQueryTaskProgress )
@@ -309,80 +310,53 @@ namespace engine
       goto done ;
    }
 
-   
-   /******************************* query progress status *********************/
+   /******************************* remove host *******************************/
    /*
-      _omaQueryTaskProgress
+      _omaRemoveHost
    */
-/*
-   _omaQueryTaskProgress::_omaQueryTaskProgress ()
-   {
-      _taskID = OMA_INVALID_TASKID ;
-   }
-
-   _omaQueryTaskProgress::~_omaQueryTaskProgress ()
+   _omaRemoveHost::_omaRemoveHost ()
    {
    }
 
-   INT32 _omaQueryTaskProgress::init ( const CHAR *pInstallInfo )
+   _omaRemoveHost::~_omaRemoveHost ()
+   {
+   }
+
+   INT32 _omaRemoveHost::init( const CHAR *pInfo )
    {
       INT32 rc = SDB_OK ;
-      // parse bson to get task id
-      BSONElement ele ;
-      BSONObj arg( pInstallInfo ) ;
       try
       {
-         ele = arg.getField ( OMA_FIELD_TASKID ) ;
-         if ( NumberInt != ele.type() && NumberLong != ele.type() )
+         BSONObj bus( pInfo ) ;
+
+         // build js file arguments
+         ossSnprintf( _jsFileArgs, JS_ARG_LEN, "var %s = %s; ",
+                      JS_ARG_BUS, bus.toString(FALSE, TRUE).c_str() ) ;
+         PD_LOG ( PDDEBUG, "Remove hosts passes argument: %s",
+                  _jsFileArgs ) ;
+         rc = addJsFile( FILE_REMOVE_HOST, _jsFileArgs ) ;
+         if ( rc )
          {
-            rc = SDB_UNEXPECTED_RESULT ;
-            PD_LOG_MSG ( PDERROR, "Failed to get taskID, rc = %d", rc ) ;
+            PD_LOG ( PDERROR, "Failed to add js file[%s], rc = %d ",
+                     FILE_REMOVE_HOST, rc ) ;
             goto error ;
          }
-         _taskID = ele.numberLong () ;
       }
       catch ( std::exception &e )
       {
-         rc = SDB_SYS ;
-         PD_LOG_MSG ( PDERROR,  "Failed to get taskID, "
-                      "received exception: %s", e.what() ) ;
+         rc = SDB_INVALIDARG ;
+         PD_LOG ( PDERROR, "Failed to build bson, exception is: %s",
+                  e.what() ) ;
          goto error ;
       }
-      // get task manager
-      _taskMgr = getTaskMgr() ;
 
    done:
       return rc ;
-   error:
+   error :
       goto done ;
    }
 
-   INT32 _omaQueryTaskProgress::doit ( BSONObj &retObj )
-   {
-      INT32 rc = SDB_OK ;
-      _omaTask *pTask  = NULL ;
-      pTask = _taskMgr->findTask( _taskID ) ;
-      if ( NULL == pTask )
-      {
-         rc = SDB_CAT_TASK_NOTFOUND ;
-         PD_LOG_MSG ( PDERROR, "No such task with id[%ld], "
-                      "failed to query task's progress", (INT64)_taskID ) ;
-         goto error ;
-      }
-      rc = pTask->queryProgress( retObj ) ;
-      if ( rc )
-      {
-         PD_LOG ( PDERROR, "Failed to query task's progress, "
-                  "rc = %d", rc ) ;
-         goto error ;
-      }
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-*/
-   /*************************** update hosts table info **********************/
+   /*************************** update hosts table info ***********************/
    /*
       _omaUpdateHostsInfo
    */

@@ -458,6 +458,7 @@ namespace engine
          AddHostInfo         _addHostInfo ;
    } ;
 
+/*
    // _omaRunRmHost
    class _omaRunRmHost : public _omaCommand
    {
@@ -472,6 +473,7 @@ namespace engine
       private:
          AddHostInfo         _RmHostInfo ;
    } ;
+*/
 
    // _omaRunCheckAddHostInfo
    class _omaRunCheckAddHostInfo : public _omaCommand

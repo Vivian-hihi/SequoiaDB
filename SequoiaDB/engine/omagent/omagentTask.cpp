@@ -36,7 +36,7 @@
 #include "omagentJob.hpp"
 #include "pmdDef.hpp"
 #include "pmdEDU.hpp"
-#include "omagentAsyncCmd.hpp"
+#include "omagentBackgroudCmd.hpp"
 #include "omagentMgr.hpp"
 #include <set>
 
@@ -397,20 +397,20 @@ namespace engine
 
    INT32 _omaAddHostTask::_checkHostInfo()
    {
-      INT32 rc = SDB_OK ;
-      INT32 errNum = SDB_OK ;
+      INT32 rc            = SDB_OK ;
+      INT32 errNum        = SDB_OK ;
       const CHAR *pErrMsg = NULL ;
       BSONObj retObj ;
-      _omaRunCheckAddHostInfo checkInfo ;
+      _omaCheckAddHostInfo runCmd ;
 
-      rc = checkInfo.init( _addHostRawInfo.objdata() ) ;
+      rc = runCmd.init( _addHostRawInfo.objdata() ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "Failed to init to check add host's raw information "
                   " rc = %d", rc ) ;
          goto error ;
       }
-      rc = checkInfo.doit( retObj ) ;
+      rc = runCmd.doit( retObj ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "Failed to do check add host's raw information "
