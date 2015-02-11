@@ -417,7 +417,8 @@ INT32 _mongoSession::_reply( MsgOpReply *replyHeader,
    // reservedFlag
    reply.header.reservedFlags = 0 ;
    //cursorID
-   reply.cursorId = ( -1 == replyHeader->contextID ? 0 : replyHeader->contextID ) ;
+   reply.cursorId = ( -1 == replyHeader->contextID ?
+                            0 : replyHeader->contextID ) ;
    // startingFrom
    reply.startingFrom = replyHeader->startFrom ;
    // nReturn
