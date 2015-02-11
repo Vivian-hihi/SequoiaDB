@@ -213,7 +213,7 @@ add_option( "noscreenout", "do not send anything to screen", 0, True )
 add_option( "fap", "foreign access protocol", 0, False )
 
 #ssl options
-add_option( "ssl", "build engine with SSL", 0, False )
+add_option( "ssl", "build engine with SSL (enterprise edition only) ", 0, False )
 
 # don't run configure if user calls --help
 if GetOption('help'):
