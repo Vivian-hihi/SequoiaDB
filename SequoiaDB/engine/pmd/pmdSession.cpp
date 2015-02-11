@@ -50,6 +50,7 @@ namespace engine
       ossMemset( (void*)&_replyHeader, 0, sizeof(_replyHeader) ) ;
       _needReply = TRUE ;
       _needRollback = FALSE ;
+      _awaitingHandshake = TRUE ;
    }
 
    _pmdLocalSession::~_pmdLocalSession()
@@ -127,6 +128,36 @@ namespace engine
             {
                break ;
             }
+
+            _setHandshakeReceived() ;
+         }
+         else if ( _isAwaitingHandshake() )
+         {
+#ifdef SDB_SSL
+            if ( pmdGetOptionCB()->useSSL() )
+            {
+               rc = _socket.doSSLHandshake ( (CHAR*)&msgSize, sizeof(UINT32) ) ;
+               if ( rc )
+               {
+                  break ;
+               }
+
+               _setHandshakeReceived() ;
+            }
+            else
+            {
+               PD_LOG( PDERROR, "SSL handshake received but server is started "
+                                "without SSL support" ) ;
+               rc = SDB_NETWORK ;
+               break ;
+            }
+
+            continue;
+#endif /* SDB_SSL */
+
+            PD_LOG( PDERROR, "SSL feature not available in this build" ) ;
+            rc = SDB_NETWORK ;
+            break ;
          }
          // error msg
          else if ( msgSize < sizeof(MsgHeader) || msgSize > SDB_MAX_MSG_LENGTH )

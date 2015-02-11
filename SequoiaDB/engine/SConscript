@@ -34,6 +34,9 @@ bpsFiles = [
       ]
 
 ossFiles = [
+      "oss/ossSSLCertificate.c",
+      "oss/ossSSLWrapper.c",
+      "oss/ossSSLContext.c",
       "oss/ossErr.cpp",
       "oss/oss.cpp",
       "oss/ossIO.cpp",

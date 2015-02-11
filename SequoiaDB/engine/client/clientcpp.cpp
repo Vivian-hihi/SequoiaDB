@@ -46,6 +46,9 @@
 #include "clientTrace.hpp"
 #include "fmpDef.hpp"
 #include "../bson/lib/md5.hpp"
+#ifdef SDB_SSL
+#include "ossSSLWrapper.h"
+#endif
 
 using namespace std ;
 using namespace bson ;
@@ -4865,12 +4868,13 @@ do                                                            \
     * sdbImpl
     * SequoiaDB Connection Implementation
     */
-   _sdbImpl::_sdbImpl () :
+   _sdbImpl::_sdbImpl ( BOOLEAN useSSL ) :
    _sock ( NULL ),
    _pSendBuffer ( NULL ),
    _sendBufferSize ( 0 ),
    _pReceiveBuffer ( NULL ),
-   _receiveBufferSize ( 0 )
+   _receiveBufferSize ( 0 ),
+   _useSSL ( useSSL )
    {
    }
 
@@ -4969,6 +4973,23 @@ do                                                            \
          goto error ;
       }
       _sock->disableNagle () ;
+
+      if ( _useSSL )
+      {
+#ifdef SDB_SSL
+         rc = _sock->secure () ;
+         if ( rc )
+         {
+            goto error ;
+         }
+         goto done;
+#endif
+         // do not support SSL
+         PD_LOG( PDERROR, "SSL feature not available in this build" ) ;
+         rc = SDB_INVALIDARG ;
+         goto error;
+      }
+
    done :
       PD_TRACE_EXITRC ( SDB_CLIENT__CONNECT, rc );
       return rc ;
@@ -7460,8 +7481,8 @@ do                                                            \
       return SDB_OK ;
    }*/
 
-   _sdb *_sdb::getObj ()
+   _sdb *_sdb::getObj ( BOOLEAN useSSL )
    {
-      return (_sdb*)(new(std::nothrow) sdbImpl ()) ;
+      return (_sdb*)(new(std::nothrow) sdbImpl ( useSSL )) ;
    }
 }

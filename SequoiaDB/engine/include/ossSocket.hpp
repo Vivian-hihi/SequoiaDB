@@ -78,6 +78,12 @@
 #define OSS_MAX_HOSTNAME            NI_MAXHOST
 #define OSS_MAX_SERVICENAME         NI_MAXSERV
 
+#ifdef SDB_SSL
+SDB_EXTERN_C_START
+struct SSLHandle ;
+SDB_EXTERN_C_END
+#endif
+
 // todo: support AF_UNIX later
 /*
    _ossSocket define
@@ -96,6 +102,10 @@ class _ossSocket : public SDBObject
       INT32                _timeout ;
       BOOLEAN              _enableBlock ;
 
+#ifdef SDB_SSL
+      SSLHandle*           _sslHandle;
+#endif
+
    protected:
       UINT32   _getPort ( sockaddr_in *addr ) ;
       UINT32   _getIP( sockaddr_in *addr ) ;
@@ -113,13 +123,7 @@ class _ossSocket : public SDBObject
       // Create from a existing socket, timeout in millisecond
       _ossSocket ( SOCKET *sock, INT32 timeoutMilli = 0 ) ;
 
-      ~_ossSocket ()
-      {
-         if ( _closeWhenDestruct )
-         {
-            close () ;
-         }
-      }
+      ~_ossSocket () ;
 
       OSS_INLINE SOCKET native()const{ return _fd ; }
       OSS_INLINE void closeWhenDestruct( BOOLEAN closeWhenDestruct )
@@ -149,7 +153,10 @@ class _ossSocket : public SDBObject
                      INT32 timeout = OSS_SOCKET_DFT_TIMEOUT ) ;
       INT32 disableNagle () ;
       void  quickAck () ;
-
+#ifdef SDB_SSL
+      INT32 secure () ;
+      INT32 doSSLHandshake ( const CHAR* initialBytes, INT32 len ) ;
+#endif
       UINT32 getPeerPort () ;
       INT32  getPeerAddress ( CHAR *pAddress, UINT32 length ) ;
       UINT32 getPeerIP () ;

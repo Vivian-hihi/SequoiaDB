@@ -1231,6 +1231,10 @@ namespace engine
       _sparseFile          = FALSE ;
       _weight              = 0 ; 
 
+#ifdef SDB_SSL
+      _useSSL              = FALSE ;
+#endif
+
       // other configs
       ossMemset( _krcbConfPath, 0, sizeof( _krcbConfPath ) ) ;
       ossMemset( _krcbConfFile, 0, sizeof( _krcbConfFile ) ) ;
@@ -1420,6 +1424,13 @@ namespace engine
       rdxUInt( pEX, PMD_OPTION_WEIGHT, _weight,
                FALSE, TRUE, 10, FALSE ) ; 
       rdvMinMax( pEX, _weight, 1, 100, TRUE ) ;
+
+#ifdef SDB_SSL
+      // --usessl
+      rdxBooleanS( pEX, PMD_OPTION_USESSL, _useSSL,
+                   FALSE, TRUE, FALSE, FALSE ) ;
+#endif
+
       // end map
 
       return getResult () ;
