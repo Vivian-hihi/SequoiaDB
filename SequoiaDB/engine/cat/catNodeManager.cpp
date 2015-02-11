@@ -2806,7 +2806,7 @@ namespace engine
          rc = rtnInsert( CAT_SYSBASE_COLLECTION_NAME, infoObj, 1, 0,
                          _pEduCB, _pDmsCB, _pDpsCB, 1 ) ;
          PD_RC_CHECK( rc, PDERROR, "Insert global info[%s] to collection[%s] "
-                      "failed, rc: %d", infoObj.toString(),
+                      "failed, rc: %d", infoObj.toString().c_str(),
                       CAT_SYSBASE_COLLECTION_NAME, rc ) ;
       }
       else
@@ -2840,11 +2840,11 @@ namespace engine
                             BSONObj(), 0, _pEduCB, _pDmsCB, _pDpsCB, 1,
                             &updateNum ) ;
             PD_RC_CHECK( rc, PDERROR, "Update global info[%s] failed, rc: %d",
-                         updator.toString(), rc ) ;
+                         updator.toString().c_str(), rc ) ;
             if ( updateNum <= 0 )
             {
                PD_LOG( PDERROR, "Not found global info, matcher: %s",
-                       matcher.toString() ) ;
+                       matcher.toString().c_str() ) ;
                rc = SDB_SYS ;
                goto error ;
             }
