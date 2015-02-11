@@ -6998,6 +6998,12 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNCOCMDCTCAGP_GETNDCF ) ;
 
+      pmdOptionsCB *option = pmdGetOptionCB() ;
+      std::string clusterName ;
+      std::string businessName ;
+      option->getFieldStr( PMD_OPTION_CLUSTER_NAME, clusterName, "" ) ;
+      option->getFieldStr( PMD_OPTION_BUSINESS_NAME, businessName, "" ) ;
+
       try
       {
          std::string strCataHostName ;
@@ -7023,7 +7029,9 @@ namespace engine
             }
             else if ( strFieldName == FIELD_NAME_GROUPNAME ||
                       strFieldName == PMD_OPTION_ROLE ||
-                      strFieldName == PMD_OPTION_CATALOG_ADDR )
+                      strFieldName == PMD_OPTION_CATALOG_ADDR ||
+                      strFieldName == PMD_OPTION_CLUSTER_NAME ||
+                      strFieldName == PMD_OPTION_BUSINESS_NAME )
             {
                continue;
             }
@@ -7058,6 +7066,8 @@ namespace engine
 
          // assign role
          bobNodeConf.append ( PMD_OPTION_ROLE, SDB_ROLE_CATALOG_STR ) ;
+         bobNodeConf.append ( PMD_OPTION_CLUSTER_NAME, clusterName ) ;
+         bobNodeConf.append ( PMD_OPTION_BUSINESS_NAME, businessName ) ;
 
          // assign catalog address, make sure to include all catalog nodes
          // that configured in the system ( for HA ), each system should be

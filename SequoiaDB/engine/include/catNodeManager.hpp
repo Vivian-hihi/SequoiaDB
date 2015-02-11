@@ -66,6 +66,8 @@ namespace engine
       INT32 active() ;
       INT32 deactive() ;
 
+      INT32 updateGlobalAddr() ;
+
    // message process functions
    protected:
       INT32 processCommandMsg( const NET_HANDLE &handle, MsgHeader *pMsg,
@@ -133,6 +135,8 @@ namespace engine
 
       INT32 _getNodeInfoByConf( BSONObj &boConf, BSONObjBuilder &bobNodeInfo ) ;
       INT32 _checkLocalHost( BOOLEAN &isValid ) ;
+
+      INT32 _updateGlobalInfo() ;
 
    private:
       typedef enum _SDB_CAT_MODULE_STATUS

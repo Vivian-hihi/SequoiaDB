@@ -245,6 +245,12 @@
 #define FIELD_NAME_ELAPSED_TIME              "ElapsedTime"
 #define FIELD_NAME_RETURN_NUM                "ReturnNum"
 #define FIELD_NAME_RUN                       "Run"
+#define FIELD_NAME_CLUSTERNAME               "ClusterName"
+#define FIELD_NAME_BUSINESSNAME              "BusinessName"
+#define FIELD_NAME_DATACENTER                "DataCenter"
+#define FIELD_NAME_ADDRESS                   "Address"
+#define FIELD_NAME_IMAGE                     "Image"
+#define FIELD_NAME_ACTIVE                    "Active"
 
 #define FIELD_NAME_INSERT                    "Insert"
 #define FIELD_NAME_UPDATE                    "Update"

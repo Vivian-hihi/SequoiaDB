@@ -77,7 +77,10 @@ namespace engine
       _pRtnCB           = krcb->getRTNCB();
       _pCatCB           = krcb->getCATLOGUECB();
       PD_TRACE_ENTRY ( SDB_CATNODEMGR_INIT ) ;
+
+      // 1. insert self to node collection
       rc = readCataConf() ;
+
       PD_TRACE_EXITRC ( SDB_CATNODEMGR_INIT, rc ) ;
       return rc ;
    }
@@ -90,6 +93,17 @@ namespace engine
    void catNodeManager::detachCB( pmdEDUCB * cb )
    {
       _pEduCB = NULL ;
+   }
+
+   INT32 catNodeManager::updateGlobalAddr()
+   {
+      // not primary
+      if ( SDB_CAT_MODULE_ACTIVE != _status )
+      {
+         return SDB_CLS_NOT_PRIMARY ;
+      }
+      return catUpdateBaseInfoAddr( pmdGetOptionCB()->getCatAddr().c_str(),
+                                    TRUE, _pEduCB, 1 ) ;
    }
 
    // when the node switch to  primary will call this fun
@@ -163,6 +177,11 @@ namespace engine
             }
          } // if ( pBuffer != NULL )
       } // while ( TRUE );
+
+      // update global info
+      rc = _updateGlobalInfo () ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to update global info, rc: %d", rc ) ;
+
       _status = SDB_CAT_MODULE_ACTIVE ;
 
    done :
@@ -945,7 +964,7 @@ namespace engine
       INT32 iReadReturn = SDB_OK;
 
       const CHAR *szCatFilePath = pmdGetOptionCB()->getCatFile() ;
-      CHAR szBuffer[READ_BUFFER_SIZE] = {0};
+      CHAR szBuffer[ READ_BUFFER_SIZE + 1 ] = { 0 } ;
       OSSFILE catFile;
       PD_TRACE_ENTRY ( SDB_CATNODEMGR_READCATACONF ) ;
       PD_LOG ( PDINFO, "read catalogue-nodes info from configure file" );
@@ -963,7 +982,7 @@ namespace engine
       {
          SINT64 sReadSize = 0;
          iReadReturn = ossRead ( &catFile, szBuffer + sBufferBegin,
-                                 READ_BUFFER_SIZE-sBufferBegin-1,
+                                 READ_BUFFER_SIZE - sBufferBegin,
                                  &sReadSize ) ;
          if ( iReadReturn != SDB_OK && iReadReturn != SDB_EOF &&
               iReadReturn != SDB_INTERRUPT )
@@ -2756,4 +2775,86 @@ namespace engine
       error:
          goto done ;
    }
+
+   INT32 catNodeManager::_updateGlobalInfo()
+   {
+      INT32 rc = SDB_OK ;
+      BOOLEAN exist = FALSE ;
+      BSONObj infoObj ;
+      pmdOptionsCB *option = pmdGetOptionCB() ;
+
+      string clusterName ;
+      string businessName ;
+      option->getFieldStr( PMD_OPTION_CLUSTER_NAME, clusterName, "" ) ;
+      option->getFieldStr( PMD_OPTION_BUSINESS_NAME, businessName, "" ) ;
+
+      rc = catCheckBaseInfoExist( CAT_BASE_TYPE_GLOBAL_STR, exist,
+                                  infoObj, _pEduCB ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+      if ( !exist )
+      {
+         // if the global info not exist, need to create
+         infoObj = BSON( FIELD_NAME_TYPE << CAT_BASE_TYPE_GLOBAL_STR <<
+                         FIELD_NAME_DATACENTER << BSON(
+                           FIELD_NAME_CLUSTERNAME << clusterName <<
+                           FIELD_NAME_BUSINESSNAME << businessName <<
+                           FIELD_NAME_ADDRESS << option->getCatAddr() ) <<
+                         FIELD_NAME_ACTIVE << true ) ;
+         rc = rtnInsert( CAT_SYSBASE_COLLECTION_NAME, infoObj, 1, 0,
+                         _pEduCB, _pDmsCB, _pDpsCB, 1 ) ;
+         PD_RC_CHECK( rc, PDERROR, "Insert global info[%s] to collection[%s] "
+                      "failed, rc: %d", infoObj.toString(),
+                      CAT_SYSBASE_COLLECTION_NAME, rc ) ;
+      }
+      else
+      {
+         INT64 updateNum = 0 ;
+         string tmpClsName ;
+         string tmpBusName ;
+         // if the global info exist, update
+         BSONElement dcEle = infoObj.getField( FIELD_NAME_DATACENTER ) ;
+         if ( Object ==  dcEle.type() )
+         {
+            BSONObj dcObj = dcEle.embeddedObject() ;
+            BSONElement e1 = dcObj.getField( FIELD_NAME_CLUSTERNAME ) ;
+            BSONElement e2 = dcObj.getField( FIELD_NAME_BUSINESSNAME ) ;
+            tmpClsName = e1.valuestrsafe() ;
+            tmpBusName = e2.valuestrsafe() ;
+         }
+
+         if ( clusterName != tmpClsName || businessName != tmpBusName )
+         {
+            PD_LOG( PDEVENT, "Cluster name[%s] or business name[%s] has "
+                    "changed to %s:%s", tmpClsName.c_str(), tmpBusName.c_str(),
+                    clusterName.c_str(), businessName.c_str() ) ;
+            BSONObj updator = BSON( "$set" << BSON(
+              FIELD_NAME_DATACENTER"."FIELD_NAME_CLUSTERNAME << clusterName <<
+              FIELD_NAME_DATACENTER"."FIELD_NAME_BUSINESSNAME << businessName )
+                                   ) ;
+            BSONObj matcher = BSON( FIELD_NAME_TYPE <<
+                                    CAT_BASE_TYPE_GLOBAL_STR ) ;
+            rc = rtnUpdate( CAT_SYSBASE_COLLECTION_NAME, matcher, updator,
+                            BSONObj(), 0, _pEduCB, _pDmsCB, _pDpsCB, 1,
+                            &updateNum ) ;
+            PD_RC_CHECK( rc, PDERROR, "Update global info[%s] failed, rc: %d",
+                         updator.toString(), rc ) ;
+            if ( updateNum <= 0 )
+            {
+               PD_LOG( PDERROR, "Not found global info, matcher: %s",
+                       matcher.toString() ) ;
+               rc = SDB_SYS ;
+               goto error ;
+            }
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
 }

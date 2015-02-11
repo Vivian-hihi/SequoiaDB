@@ -42,6 +42,7 @@
 #include "oss.hpp"
 #include "msg.h"
 #include "msgDef.h"
+#include <string>
 
 namespace engine
 {
@@ -188,6 +189,7 @@ namespace engine
 
          virtual void   onConfigChange ( UINT32 changeID ) = 0 ;
          virtual INT32  onConfigInit () = 0 ;
+         virtual void   onConfigSave () = 0 ;
    } ;
    typedef _IConfigHandle IConfigHandle ;
 
@@ -207,6 +209,9 @@ namespace engine
                                        INT32 *pDefault = NULL ) = 0 ;
          virtual  INT32   getFieldStr( const CHAR *pFieldName,
                                        CHAR *pValue, UINT32 len,
+                                       const CHAR *pDefault = NULL ) = 0 ;
+         virtual  INT32   getFieldStr( const CHAR *pFieldName,
+                                       std::string &strValue,
                                        const CHAR *pDefault = NULL ) = 0 ;
 
    } ;
@@ -284,6 +289,7 @@ namespace engine
          virtual INT32  deactive () = 0 ;
          virtual INT32  fini () = 0 ;
          virtual void   onConfigChange() {}
+         virtual void   onConfigSave() {}
 
    } ;
    typedef _IControlBlock IControlBlock ;
