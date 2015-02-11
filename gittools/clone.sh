@@ -73,3 +73,14 @@ if [ $? -ne 0 ]; then
    echo "Failed to remove comment from $1"
    exit 1
 fi
+
+# remove macros
+echo "Remove all macros from $1"
+$SCRIPTPATH/removeMacroForSource.sh $SCRIPTPATH/removedMacros.lst $1
+if [ $? -ne 0 ]; then
+   echo "Failed to remove macro from $1"
+   exit 1
+fi
+
+echo "Clone finished!"
+
