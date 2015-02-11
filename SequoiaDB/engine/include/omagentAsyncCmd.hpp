@@ -100,8 +100,8 @@ namespace engine
          _omaRemoveHost () ;
          ~_omaRemoveHost () ;
          virtual const CHAR * name () { return OMA_CMD_REMOVE_HOST ; }
-         virtual INT32 init ( const CHAR *pInstallInfo ) ;
-         //virtual INT32 final( BSONObj &rval, BSONObj &retObj ) ;
+         virtual INT32 init ( const CHAR *pInfo ) ;
+//virtual INT32 final( BSONObj &rval, BSONObj &retObj ) ;
    } ;
 
    /******************************* install db business ***********************/

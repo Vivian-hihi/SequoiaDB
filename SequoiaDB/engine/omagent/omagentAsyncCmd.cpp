@@ -44,13 +44,11 @@ using namespace bson ;
 namespace engine
 {
    // command list:
-   IMPLEMENT_OACMD_AUTO_REGISTER( _omaAddHost )
-/*
+//   IMPLEMENT_OACMD_AUTO_REGISTER( _omaAddHost )
 //   IMPLEMENT_OACMD_AUTO_REGISTER( _omaAddHost2 )
    IMPLEMENT_OACMD_AUTO_REGISTER( _omaRemoveHost )
-   IMPLEMENT_OACMD_AUTO_REGISTER( _omaInsDBBus )
-   IMPLEMENT_OACMD_AUTO_REGISTER( _omaUninsDBBus )
-*/
+//   IMPLEMENT_OACMD_AUTO_REGISTER( _omaInsDBBus )
+//   IMPLEMENT_OACMD_AUTO_REGISTER( _omaUninsDBBus )
 
    /******************************* add host ********************************/
    /*
@@ -450,12 +448,12 @@ namespace engine
    {
    }
 
-   INT32 _omaRemoveHost::init( const CHAR *pInstallInfo )
+   INT32 _omaRemoveHost::init( const CHAR *pInfo )
    {
       INT32 rc = SDB_OK ;
       try
       {
-         BSONObj bus( pInstallInfo ) ;
+         BSONObj bus( pInfo ) ;
 
          // build js file arguments
          ossSnprintf( _jsFileArgs, JS_ARG_LEN, "var %s = %s; ",
