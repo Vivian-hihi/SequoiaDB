@@ -73,6 +73,12 @@ function installNodeResult()
    this.detail                    = "" ;
 }
 
+function removeNodeResult()
+{
+   this.errno                     = SDB_OK ;
+   this.detail                    = "" ;
+}
+
 function removeRGResult()
 {
    this.errno                     = SDB_OK ;

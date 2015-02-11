@@ -27,6 +27,7 @@
    RET_JSON: the format is: { "errno":0, "detail":"" }
 */
 
+// println
 //var BUS_JSON = { "SdbUser": "sdbadmin", "SdbPasswd": "sdbadmin", "SdbUserGroup": "sdbadmin_group", "User": "root", "Passwd": "sequoiadb", "SshPort": "22", "InstallHostName": "susetzb", "InstallSvcName": "20000", "InstallPath": "/opt/sequoiadb/database/standalone/20000", "InstallConfig": { "diaglevel": "5", "role": "standalone", "logfilesz": "64", "logfilenum": "10", "transactionon": "false", "preferedinstance": "2", "numpagecleaners": "10", "pagecleaninterval": "1000", "hjbuf": "128", "logbuffsize": "1024", "maxprefpool": "200", "maxreplsync": "10", "numpreload": "0", "sortbuf": "512", "syncstrategy": "none" } };
 
 //var SYS_JSON = { "TaskID": 3 };
@@ -229,6 +230,7 @@ function main()
    }
    
    _final() ;
+println("RET_JSON is: " + JSON.stringify(RET_JSON)) ;
    return RET_JSON ;
 }
 

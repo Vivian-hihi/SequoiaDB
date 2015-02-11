@@ -20,14 +20,15 @@
 @modify list:
    2014-7-26 Zhaobo Tan  Init
 @parameter
-   BUS_JSON: the format is: { "AuthUser": "", "AuthPasswd": "", "UninstallGroupName": "group1" }
+   BUS_JSON: the format is: { "AuthUser": "", "AuthPasswd": "", "UninstallGroupNames": ["group1", "group2"] }
    SYS_JSON: the format is: { "TaskID": 1, "TmpCoordSvcName": "10000" }
 @return
    RET_JSON: the format is: { "errrno": 0, "detail": "" }
 */
 
-var BUS_JSON = { "AuthUser": "", "AuthPasswd": "", "UninstallGroupName": "group1" } ;
-var SYS_JSON = { "TaskID": 1, "TmpCoordSvcName": "10000" } ;
+// println
+//var BUS_JSON = { "AuthUser": "", "AuthPasswd": "", "UninstallGroupNames": ["group1", "group2"] } ;
+//var SYS_JSON = { "TaskID": 1, "TmpCoordSvcName": "10000" } ;
 
 
 var FILE_NAME_REMOVE_DATA_RG = "removeDataRG.js" ;
@@ -76,6 +77,7 @@ function main()
    var authPasswd       = null ;
    var groupName        = null ;
    var db               = null ;
+   var i                = 0 ;
    
    _init() ;
    
@@ -88,7 +90,7 @@ function main()
          tmpCoordSvcName  = SYS_JSON[TmpCoordSvcName] ;
          authUser         = BUS_JSON[AuthUser] ;
          authPasswd       = BUS_JSON[AuthPasswd] ;
-         groupName        = BUS_JSON[UninstallGroupName] ;
+         groupNames       = BUS_JSON[UninstallGroupNames] ;
       }
       catch( e )
       {
@@ -117,22 +119,30 @@ function main()
          exception_handle( rc, errMsg ) ;
       }
       // 3. remove data group
-      try
+      for ( i = 0; i < groupNames.length; i++ )
       {
-         db.removeRG( groupName ) ;
-      }
-      catch ( e )
-      {
-         if ( SDB_CLS_GRP_NOT_EXIST != e )
+         try
          {
-            SYSEXPHANDLE( e ) ;
-            errMsg = sprintf( "Failed to remove data group[?]", groupName ) ;
-            rc = GETLASTERROR() ;
-            PD_LOG2( task_id, arguments, PDERROR, FILE_NAME_REMOVE_DATA_RG,
-                     errMsg + ", rc: " + rc + ", detail: " + GETLASTERRMSG() ) ;
-            exception_handle( rc, errMsg ) ;
+            db.removeRG( groupNames[i] ) ;
+         }
+         catch( e )
+         {
+            if ( SDB_CLS_GRP_NOT_EXIST == e )
+            {
+               continue ;
+            }
+            else
+            {
+               SYSEXPHANDLE( e ) ;
+               errMsg = sprintf( "Failed to remove data group[?]", groupNames[i] ) ;
+               rc = GETLASTERROR() ;
+               PD_LOG2( task_id, arguments, PDERROR, FILE_NAME_REMOVE_DATA_RG,
+                        errMsg + ", rc: " + rc + ", detail: " + GETLASTERRMSG() ) ;
+               exception_handle( rc, errMsg ) ;
+            }
          }
       }
+
    }
    catch( e )
    {

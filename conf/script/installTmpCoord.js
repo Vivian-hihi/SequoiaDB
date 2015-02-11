@@ -23,7 +23,7 @@
    BUS_JSON: the format is:
       { "InstallConfig":{ "clustername":"c2", "businessname":"b2", "usertag":"tmpCoord" }, "CataAddr":[] }
       or
-      { "InstallConfig":{ "clustername":"c1", "businessname":"b1", "usertag":"tmpCoord" }, "CataAddr":[ { "HostName":"suse", "CataSvcName":"11803" }, { "HostName":"rhel64-test8", "CataSvcName":"11803" }, { "HostName":"rhel64-test9", "CataSvcName":"11803" } ] } ;
+      { "InstallConfig":{ "clustername":"c1", "businessname":"b1", "usertag":"tmpCoord" }, "CataAddr":[ { "HostName":"suse", "SvcName":"11803" }, { "HostName":"rhel64-test8", "SvcName":"11803" }, { "HostName":"rhel64-test9", "SvcName":"11803" } ] } ;
    SYS_JSON: the format is: { "TaskID" : 5 }
 @return
    RET_JSON: the format is: { "Port", "10000" }
@@ -33,6 +33,9 @@
 // var BUS_JSON = { "clustername": "c1", "businessname": "b1", "usertag": "tmpCoord", "CataAddr": [] };
 
 // var SYS_JSON = { "TaskID": 17 };
+
+//var BUS_JSON = { "clustername": "c1", "businessname": "b1", "usertag": "tmpCoord", "CataAddr": [ { "HostName": "rhel64-test8", "SvcName": "60003" }, { "HostName": "rhel64-test9", "SvcName": "61003" } ] };
+//var SYS_JSON = { "TaskID": 2 }
 
 
 var RET_JSON = new installTmpCoordResult() ;
@@ -118,7 +121,7 @@ function _getCatalogCfg( cfgInfo )
    {
       var obj = addrArr[i] ;
       var hostname = obj[HostName] ;
-      var svcname = obj[CataSvcName] ;
+      var svcname = obj[SvcName] ;
       if ( 0 == i )
       {
          addr = hostname + ":" + svcname ;
