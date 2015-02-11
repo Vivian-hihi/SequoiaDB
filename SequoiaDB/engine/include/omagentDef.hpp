@@ -106,7 +106,7 @@ namespace engine
    #define SDB_OMA_USERPASSWD          "OMA_ADMIN_PASSWD"
 
    /*
-      oma command define
+      oma sync command define
    */
    #define OMA_CMD_SCAN_HOST                          OM_SCAN_HOST_REQ
    #define OMA_CMD_PRE_CHECK_HOST                     OM_PRE_CHECK_HOST
@@ -114,32 +114,19 @@ namespace engine
    #define OMA_CMD_POST_CHECK_HOST                    OM_POST_CHECK_HOST
 
    #define OMA_CMD_HANDLE_TASK_NOTIFY                 OM_NOTIFY_TASK
-
-   // TODO: tanzhaobo
-   // to check wether the follow command is ok
-   #define OMA_CMD_ADD_HOST                           OM_ADD_HOST_REQ
    #define OMA_CMD_REMOVE_HOST                        OM_REMOVE_HOST_REQ
-   #define OMA_CMD_INSTALL_DB_BUSINESS                OM_INSTALL_BUSINESS_REQ
-   #define OMA_CMD_UNINSTALL_DB_BUSINESS              OM_REMOVE_BUSINESS_REQ
-   #define OMA_CMD_START_DB_BUSINESS                  ""
-   #define OMA_CMD_STOP_DB_BUSINESS                   ""
-   #define OMA_CMD_QUERY_PROGRESS                     "" //OM_QUERY_PROGRESS
    #define OMA_CMD_UPDATE_HOSTS                       OM_UPDATE_HOSTNAME_REQ
-
    #define OMA_CMD_QUERY_HOST_STATUS                  OM_QUERY_HOST_STATUS_REQ
 
 
-
    /*
-      oma internal command
+      oma background command
    */
+   #define OMA_CMD_ADD_HOST                           OM_ADD_HOST_REQ
    #define OMA_CMD_CHECK_ADD_HOST_INFO                "check add host info"
    
    #define OMA_CMD_INSTALL_TMP_COORD                  "install temporary coord"
    #define OMA_CMD_REMOVE_TMP_COORD                   "remove temporary coord"
-   
-   #define OMA_CMD_ROLLBACK_ADD_HOSTS                 "rollback add hosts"
-   #define OMA_CMD_RM_HOST                            "remove host"
    #define OMA_CMD_INSTALL_STANDALONE                 "install standalone"
    #define OMA_CMD_INSTALL_COORD                      "install coord"
    #define OMA_CMD_INSTALL_CATALOG                    "install catalog"
@@ -148,28 +135,13 @@ namespace engine
    #define OMA_CMD_RM_CATA_RG                         "remove cataloggroup"
    #define OMA_CMD_RM_COORD_RG                        "remove coordgroup"
    #define OMA_CMD_RM_DATA_RG                         "remove datagroup"
-
-   #define OMA_CMD_UPDATE_TASK                        "update task"
-   
-   /*
-      oma job
-   */
-   #define OMA_JOB_ADDHOST                            "add host job"
-   #define OMA_JOB_ROLLBACKHOST                       "rollback host job"
-   #define OMA_JOB_START_ADD_HOST_TASK                "start add host task job"
-   #define OMA_JOB_CREATE_STANDALONE                  "create standalone job"
-   #define OMA_JOB_CREATE_CATALOG                     "create catalog job"
-   #define OMA_JOB_CREATE_COORD                       "create coord job"
-   #define OMA_JOB_START_INSTALL_DB_BUS_TASK          "start install db business task job"
-   #define OMA_JOB_START_REMOVE_DB_BUS_TASK           "start remove db business task job"
-   #define OMA_ROLLBACK_INSTALLED_DB_BUSINESS         "rollback installed db business"
    #define OMA_ROLLBACK_STANDALONE                    "rollback installed standalone"
    #define OMA_ROLLBACK_CATALOG                       "rollback installed catalog"
    #define OMA_ROLLBACK_COORD                         "rollback installed coord"
    #define OMA_ROLLBACK_DATA_RG                       "rollback installed data groups"
-   #define OMA_JOB_REMOVE_VIRTUAL_COORD               "remove virtual coord job"
 
-   #define OMA_JOB                                    "omagent job"
+   #define OMA_CMD_UPDATE_TASK                        "update task"
+  
 
    /*
       oma js file
@@ -181,21 +153,19 @@ namespace engine
    #define FILE_FUNC                        "func.js"
    
    #define FILE_SCAN_HOST                   "scanHost.js"
+   
    #define FILE_PRE_CHECK_HOST              "preCheckHost.js"
    #define FILE_CHECK_HOST                  "checkHost.js"
    #define FILE_CHECK_HOST_ITEM             "checkHostItem.js"
    #define FILE_POST_CHECK_HOST             "postCheckHost.js"
    
-   #define FILE_ADD_HOST                    "addHostNew.js"
-   #define FILE_ADD_HOST2                   "addHost2.js"
+   #define FILE_ADD_HOST                    "addHost.js"
    #define FIEL_CHECK_ADD_HOST_INFO         "checkAddHostInfo.js"
    #define FILE_REMOVE_HOST                 "removeHost.js"
-//   #define FILE_CREATE_TMP_COORD            "createTmpCoord.js"
-//   #define FILE_REMOVE_TMP_COORD            "removeTmpCoord.js"
-   #define FILE_ADDHOST_ROLLBACK            "addHostRollback.js"
-   #define FILE_ADDHOST_ROLLBACK2           "addHostRollback2.js"
    #define FILE_UPDATE_HOSTS_INFO           "updateHostsInfo.js"
-   #define FILE_UPDATE_HOSTS                "updateHosts.js"
+
+   #define FILE_QUERY_HOSTSTATUS            "queryHostStatus.js"
+   #define FILE_QUERY_HOSTSTATUS_ITEM       "queryHostStatusItem.js"
 
    #define FILE_INSTALL_STANDALONE          "installStandalone.js"
    #define FILE_INSTALL_CATALOG             "installCatalog.js"
@@ -212,12 +182,8 @@ namespace engine
    #define FILE_ROLLBACK_STANDALONE         "rollbackStandalone.js"
    #define FILE_ROLLBACK_CATALOG            "rollbackCatalog.js"
    #define FILE_ROLLBACK_COORD              "rollbackCoord.js"
-//   #define FILE_ROLLBACK_DATANODE           "rollbackDataNode.js"
    #define FILE_ROLLBACK_DATA_RG            "rollbackDataRG.js"
 
-
-   #define FILE_QUERY_HOSTSTATUS            "queryHostStatus.js"
-   #define FILE_QUERY_HOSTSTATUS_ITEM       "queryHostStatusItem.js"
 
    /*
       oma js argument type
@@ -248,7 +214,6 @@ namespace engine
    #define JS_FILE_NAME_LEN                 (512)
    #define JS_ARG_LEN                       (4096)
    #define WAITING_TIME                     (3000)
-
 
 }
 

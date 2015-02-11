@@ -36,7 +36,7 @@
 #include "omagentJob.hpp"
 #include "pmdDef.hpp"
 #include "pmdEDU.hpp"
-#include "omagentBackgroudCmd.hpp"
+#include "omagentBackgroundCmd.hpp"
 #include "omagentMgr.hpp"
 #include <set>
 

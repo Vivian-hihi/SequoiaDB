@@ -115,92 +115,21 @@ namespace engine
    {
    }
 
-   INT32 _omaPreCheckHost::init ( const CHAR *pInstallInfo )
+   INT32 _omaPreCheckHost::init ( const CHAR *pInfo )
    {
       INT32 rc = SDB_OK ;
-      CHAR prog_path[ OSS_MAX_PATHSIZE + 1 ] = { 0 };
+      BSONObj bus( pInfo ) ;
 
-      try
-      {
-         BSONObj bus( pInstallInfo ) ;
-         BSONObj sys ;
-         // program path
-         rc = _getProgPath ( prog_path, OSS_MAX_PATHSIZE ) ;
-         if ( rc )
-         {
-            PD_LOG ( PDERROR, "Failed to get sdbcm program path, "
-                     "rc = %d", rc ) ;
-            goto error ;
-         }
-         sys = BSON( OMA_FIELD_PROG_PATH << prog_path ) ;
-
-         // build js file arguments
-         ossSnprintf( _jsFileArgs, JS_ARG_LEN, "var %s = %s; "
-                      "var %s = %s; var %s = %s; var %s = %s; ",
-                      JS_ARG_BUS, bus.toString(FALSE, TRUE).c_str(),
-                      JS_ARG_SYS, sys.toString(FALSE, TRUE).c_str(),
-                      JS_ARG_ENV, "{}",
-                      JS_ARG_OTHER, "{}" ) ;
-         PD_LOG ( PDDEBUG, "Pre-check host passes argument: %s",
-                  _jsFileArgs ) ;
-         rc = addJsFile( FILE_PRE_CHECK_HOST, _jsFileArgs ) ;
-         if ( rc )
-         {
-            PD_LOG ( PDERROR, "Failed to add js file[%s], rc = %d ",
-                     FILE_PRE_CHECK_HOST, rc ) ;
-            goto error ;
-         }
-      }
-      catch ( std::exception &e )
-      {
-         rc = SDB_INVALIDARG ;
-         PD_LOG ( PDERROR, "Failed to build bson, exception is: %s",
-                  e.what() ) ;
-         goto error ;
-      }
-
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   INT32 _omaPreCheckHost::_getProgPath ( CHAR *path, INT32 len )
-   {
-      INT32 rc = SDB_OK ;
-      std::string str ;
-      std::string key ;
-      UINT32 found = 0 ;
-      CHAR tmp[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
-
-      // program path
-      rc = ossGetEWD ( tmp, OSS_MAX_PATHSIZE ) ;
+      // build js file arguments
+      ossSnprintf( _jsFileArgs, JS_ARG_LEN, "var %s = %s; ",
+                   JS_ARG_BUS, bus.toString(FALSE, TRUE).c_str() ) ;
+      PD_LOG ( PDDEBUG, "Pre-check host passes argument: %s",
+               _jsFileArgs ) ;
+      rc = addJsFile( FILE_PRE_CHECK_HOST, _jsFileArgs ) ;
       if ( rc )
       {
-         PD_LOG_MSG ( PDERROR,
-                      "Failed to get program's work directory, rc = %d", rc ) ;
-         goto error ;
-      }
-      rc = utilCatPath ( tmp, OSS_MAX_PATHSIZE, SDBSDBCMPROG ) ;
-      if ( rc )
-      {
-         PD_LOG_MSG ( PDERROR,
-                      "Failed to build program's full directory, rc = %d",
-                      rc ) ;
-         goto error ;
-      }
-      str = tmp ;
-      key = SDBSDBCMPROG ;
-      found = str.rfind( key ) ;
-      if ( found != std::string::npos )
-      {
-         str.replace( found, key.length(), "\0" ) ;
-         ossStrncpy( path, str.c_str(), len ) ;
-      }
-      else
-      {
-         rc = SDB_SYS ;
-         PD_LOG_MSG ( PDERROR, "Failed to set program's path" ) ;
+         PD_LOG ( PDERROR, "Failed to add js file[%s], rc = %d ",
+                  FILE_PRE_CHECK_HOST, rc ) ;
          goto error ;
       }
 

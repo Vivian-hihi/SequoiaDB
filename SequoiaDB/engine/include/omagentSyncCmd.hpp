@@ -66,10 +66,10 @@ namespace engine
       public:
          _omaPreCheckHost () ;
          ~_omaPreCheckHost () ;
+         
+      public:
          virtual const CHAR* name () { return OMA_CMD_PRE_CHECK_HOST ; }
-         virtual INT32 init ( const CHAR *pInstallInfo ) ;
-      private:
-         INT32 _getProgPath( CHAR *path, INT32 len ) ;
+         virtual INT32 init ( const CHAR *pInfo ) ;
    } ;
 
    /******************************* check host ********************************/

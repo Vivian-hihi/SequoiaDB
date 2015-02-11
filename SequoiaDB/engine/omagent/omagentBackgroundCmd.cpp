@@ -15,7 +15,7 @@
    You should have received a copy of the GNU Affero General Public License
    along with this program. If not, see <http://www.gnu.org/license/>.
 
-   Source File Name = omagentBackgroudCmd.cpp
+   Source File Name = omagentBackgroundCmd.cpp
 
    Dependencies: N/A
 
@@ -31,7 +31,7 @@
 *******************************************************************************/
 
 #include "omagentUtil.hpp"
-#include "omagentBackgroudCmd.hpp"
+#include "omagentBackgroundCmd.hpp"
 #include "utilStr.hpp"
 #include "omagentMgr.hpp"
 
