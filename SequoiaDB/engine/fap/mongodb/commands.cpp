@@ -77,6 +77,11 @@ commandMgr* commandMgr::instance()
    return &mgr ;
 }
 
+namespace fap
+{
+   static bson::BSONObj emptyObj ;
+}
+
 ////////////////////////////////////////////////////////////////
 ///< insertCommand
 INT32 insertCommand::convertRequest( mongoParser &parser,
@@ -114,7 +119,7 @@ INT32 insertCommand::convertRequest( mongoParser &parser,
    }
    parser.opType = OP_INSERT ;
    sdbMsg->reverse( sizeof ( MsgOpInsert ) ) ;
-   sdbMsg->advance( sizeof ( MsgOpInsert ) - 1 ) ;
+   sdbMsg->advance( sizeof ( MsgOpInsert ) - 4 ) ;
 
    header = ( MsgHeader * )sdbMsg->data() ;
    header->opCode = MSG_BS_INSERT_REQ ;
@@ -134,7 +139,7 @@ INT32 insertCommand::convertRequest( mongoParser &parser,
    }
 
    insert->nameLength = parser.nsLen ;
-   sdbMsg->write( parser.fullName, insert->nameLength) ;
+   sdbMsg->write( parser.fullName, insert->nameLength + 1, TRUE ) ;
 
    parser.skip( insert->nameLength + 1 ) ;
    while ( parser.more() )
@@ -172,7 +177,7 @@ INT32 removeCommand::convertRequest( mongoParser &parser,
 
    parser.opType = OP_REMOVE ;
    sdbMsg->reverse( sizeof ( MsgOpDelete ) ) ;
-   sdbMsg->advance( sizeof ( MsgOpDelete ) - 1 ) ;
+   sdbMsg->advance( sizeof ( MsgOpDelete ) - 4 ) ;
 
    header = ( MsgHeader * )sdbMsg->data() ;
    header->opCode = MSG_BS_DELETE_REQ ;
@@ -210,7 +215,7 @@ INT32 removeCommand::convertRequest( mongoParser &parser,
    hint = del.getObjectField( "$hint" ) ;
    hint = removeField( hint, "$hint" ) ;
 
-   sdbMsg->write( parser.fullName, remove->nameLength ) ;
+   sdbMsg->write( parser.fullName, remove->nameLength + 1, TRUE ) ;
    sdbMsg->write( del, TRUE ) ;
    sdbMsg->write( hint, TRUE ) ;
 
@@ -244,7 +249,7 @@ INT32 updateCommand::convertRequest( mongoParser &parser,
 
    parser.opType = OP_UPDATE ;
    sdbMsg->reverse( sizeof ( MsgOpUpdate ) ) ;
-   sdbMsg->advance( sizeof ( MsgOpUpdate ) - 1 ) ;
+   sdbMsg->advance( sizeof ( MsgOpUpdate ) - 4 ) ;
 
    header = ( MsgHeader * )sdbMsg->data() ;
    header->opCode = MSG_BS_UPDATE_REQ ;
@@ -289,7 +294,7 @@ INT32 updateCommand::convertRequest( mongoParser &parser,
    hint = cond.getObjectField( "$hint" ) ;
    hint = removeField( hint, "$hint" ) ;
 
-   sdbMsg->write( parser.fullName, update->nameLength ) ;
+   sdbMsg->write( parser.fullName, update->nameLength + 1, TRUE ) ;
    sdbMsg->write( cond, TRUE ) ;
    sdbMsg->write( updater, TRUE ) ;
    sdbMsg->write( hint, TRUE ) ;
@@ -329,7 +334,7 @@ INT32 queryCommand::convertRequest( mongoParser &parser,
 
    parser.opType = OP_QUERY ;
    sdbMsg->reverse( sizeof ( MsgOpQuery ) ) ;
-   sdbMsg->advance( sizeof ( MsgOpQuery ) - 1 ) ;
+   sdbMsg->advance( sizeof ( MsgOpQuery ) - 4 ) ;
 
    header = ( MsgHeader * )sdbMsg->data() ;
    header->opCode = MSG_BS_QUERY_REQ ;
@@ -421,7 +426,7 @@ INT32 queryCommand::convertRequest( mongoParser &parser,
    }
 
    // do for simple query msg
-   sdbMsg->write( parser.fullName, query->nameLength ) ;
+   sdbMsg->write( parser.fullName, query->nameLength + 1, TRUE ) ;
    sdbMsg->write( cond, TRUE ) ;
    sdbMsg->write( fieldToReturn, TRUE ) ;
    sdbMsg->write( orderby, TRUE ) ;
@@ -586,10 +591,10 @@ INT32 createCSCommand::convertRequest( mongoParser &parser,
 
    parser.opType = OP_CMD_CREATE ;
    sdbMsg->reverse( sizeof ( MsgOpQuery ) ) ;
-   sdbMsg->advance( sizeof ( MsgOpQuery ) - 1 ) ;
+   sdbMsg->advance( sizeof ( MsgOpQuery ) - 4 ) ;
 
    header = ( MsgHeader * )sdbMsg->data() ;
-   header->opCode = MSG_CAT_CREATE_COLLECTION_SPACE_REQ ;
+   header->opCode = MSG_BS_QUERY_REQ ;
    header->TID = 0 ;
    header->routeID.value = 0 ;
    header->requestID = parser.id ;
@@ -605,10 +610,15 @@ INT32 createCSCommand::convertRequest( mongoParser &parser,
    query->numToReturn = -1 ;
 
    obj.append( "Name", parser.csName ) ;
-   obj.append( "PageSize", 0 ) ;
+   obj.append( "PageSize", 65536 ) ;
 
-   sdbMsg->write( cmdStr.c_str(), cmdStr.length() + 1 ) ;
-   sdbMsg->write( obj.obj(), TRUE ) ;
+   sdbMsg->write( cmdStr.c_str(), query->nameLength + 1, TRUE ) ;
+   sdbMsg->write( obj.done(), TRUE ) ;
+
+   // fill other bson with empty
+   sdbMsg->write( fap::emptyObj, TRUE ) ;
+   sdbMsg->write( fap::emptyObj, TRUE ) ;
+   sdbMsg->write( fap::emptyObj, TRUE ) ;
 
    // fill the msg len of sdb
    header->messageLength = sdbMsg->size() ;
@@ -661,10 +671,10 @@ INT32 createCommand::convertRequest( mongoParser &parser,
    }
 
    sdbMsg->reverse( sizeof ( MsgOpQuery ) ) ;
-   sdbMsg->advance( sizeof ( MsgOpQuery ) - 1 ) ;
+   sdbMsg->advance( sizeof ( MsgOpQuery ) - 4 ) ;
 
    header = ( MsgHeader * )sdbMsg->data() ;
-   header->opCode = MSG_CAT_CREATE_COLLECTION_REQ ;
+   header->opCode = MSG_BS_QUERY_REQ ;
    header->TID = 0 ;
    header->routeID.value = 0 ;
    header->requestID = parser.id ;
@@ -706,12 +716,18 @@ INT32 createCommand::convertRequest( mongoParser &parser,
       fullname = parser.fullName ;
    }
 
-   sdbMsg->write( cmdStr.c_str(), cmdStr.length() + 1 ) ;
+   sdbMsg->write( cmdStr.c_str(), query->nameLength + 1, TRUE ) ;
    obj.append( "Name", fullname.c_str() ) ;
 
    // other options
    // ...
-   sdbMsg->write( obj.obj(), TRUE ) ;
+   sdbMsg->write( obj.done(), TRUE ) ;
+
+   // fill other bson with empty
+   sdbMsg->write( fap::emptyObj, TRUE ) ;
+   sdbMsg->write( fap::emptyObj, TRUE ) ;
+   sdbMsg->write( fap::emptyObj, TRUE ) ;
+
    // fill the msg len of sdb
    header->messageLength = sdbMsg->size() ;
    sdbMsgs.push_back( sdbMsg ) ;
@@ -746,10 +762,10 @@ INT32 dropCommand::convertRequest( mongoParser &parser,
 
    parser.opType = OP_CMD_DROP ;
    sdbMsg->reverse( sizeof ( MsgOpQuery ) ) ;
-   sdbMsg->advance( sizeof ( MsgOpQuery ) - 1 ) ;
+   sdbMsg->advance( sizeof ( MsgOpQuery ) - 4 ) ;
 
    header = ( MsgHeader * )sdbMsg->data() ;
-   header->opCode = MSG_CAT_DROP_COLLECTION_REQ ;
+   header->opCode = MSG_BS_QUERY_REQ ;
    header->TID = 0 ;
    header->routeID.value = 0 ;
    header->requestID = parser.id ;
@@ -777,10 +793,15 @@ INT32 dropCommand::convertRequest( mongoParser &parser,
    fullname += "." ;
    fullname += cond.getStringField( "drop" ) ;
 
-   sdbMsg->write( cmdStr.c_str(), cmdStr.length() ) ;
+   sdbMsg->write( cmdStr.c_str(), query->nameLength + 1, TRUE ) ;
    obj.append( "Name", fullname.c_str() ) ;
 
-   sdbMsg->write( obj.obj(), TRUE ) ;
+   sdbMsg->write( obj.done(), TRUE ) ;
+
+   // fill other bson with empty
+   sdbMsg->write( fap::emptyObj, TRUE ) ;
+   sdbMsg->write( fap::emptyObj, TRUE ) ;
+   sdbMsg->write( fap::emptyObj, TRUE ) ;
 
    // fill the msg len of sdb
    header->messageLength = sdbMsg->size() ;
@@ -820,7 +841,7 @@ INT32 countCommand::convertRequest( mongoParser &parser,
    }
    parser.opType = OP_CMD_COUNT ;
    sdbMsg->reverse( sizeof ( MsgOpQuery ) ) ;
-   sdbMsg->advance( sizeof ( MsgOpQuery ) - 1 ) ;
+   sdbMsg->advance( sizeof ( MsgOpQuery ) - 4 ) ;
 
    header = ( MsgHeader * )sdbMsg->data() ;
    header->opCode = MSG_BS_QUERY_REQ ;
@@ -852,8 +873,8 @@ INT32 countCommand::convertRequest( mongoParser &parser,
    fullname += cond.getStringField( "count" ) ;
 
    query->nameLength = cmdStr.length() ;
-   sdbMsg->write( cmdStr.c_str(), cmdStr.length() ) ;
-   obj.append( "Name", fullname.c_str() ) ;
+   sdbMsg->write( cmdStr.c_str(), query->nameLength + 1, TRUE ) ;
+   obj.append( "Collection", fullname.c_str() ) ;
 
    queryObj = cond.getObjectField( "query" ) ;
    orderby = queryObj.getObjectField( "sort" ) ;
@@ -867,7 +888,7 @@ INT32 countCommand::convertRequest( mongoParser &parser,
    sdbMsg->write( queryObj, TRUE ) ;
    sdbMsg->write( fields, TRUE ) ;
    sdbMsg->write( orderby, TRUE ) ;
-   sdbMsg->write( obj.obj(), TRUE ) ;
+   sdbMsg->write( obj.done(), TRUE ) ;
 
    // fill the msg len of sdb
    header->messageLength = sdbMsg->size() ;
@@ -901,7 +922,7 @@ INT32 aggregateCommand::convertRequest( mongoParser &parser,
 
    parser.opType = OP_CMD_AGGREGATE ;
    sdbMsg->reverse( sizeof ( MsgOpAggregate ) ) ;
-   sdbMsg->advance( sizeof ( MsgOpAggregate ) - 1 ) ;
+   sdbMsg->advance( sizeof ( MsgOpAggregate ) - 4 ) ;
 
    header = ( MsgHeader * )sdbMsg->data() ;
    header->opCode = MSG_BS_AGGREGATE_REQ ;
@@ -932,7 +953,7 @@ INT32 aggregateCommand::convertRequest( mongoParser &parser,
    cond = removeField( cond, "aggregate" ) ;
 
    aggr->nameLength = fullname.length() ;
-   sdbMsg->write( fullname.c_str(), fullname.length() ) ;
+   sdbMsg->write( fullname.c_str(), aggr->nameLength + 1, TRUE ) ;
 
    // pipeline
    // explain
@@ -973,7 +994,7 @@ INT32 createIndexCommand::convertRequest( mongoParser &parser,
 
    parser.opType = OP_ENSURE_INDEX ;
    sdbMsg->reverse( sizeof ( MsgOpQuery ) ) ;
-   sdbMsg->advance( sizeof ( MsgOpQuery ) - 1 ) ;
+   sdbMsg->advance( sizeof ( MsgOpQuery ) - 4 ) ;
 
    header = ( MsgHeader * )sdbMsg->data() ;
    header->opCode = MSG_BS_QUERY_REQ ;
@@ -1005,11 +1026,16 @@ INT32 createIndexCommand::convertRequest( mongoParser &parser,
    indexobj.append( "name", cond.getStringField( "name" ) ) ;
    indexobj.append("unique", cond.getBoolField( "unique" ) ) ;
    indexobj.append("enforce", false ) ;
-   obj.append( "Index", indexobj.obj() ) ;
+   obj.append( "Index", indexobj.done() ) ;
 
    index->nameLength = cmdStr.length() ;
-   sdbMsg->write( cmdStr.c_str(), cmdStr.length() ) ;
-   sdbMsg->write( obj.obj(), TRUE ) ;
+   sdbMsg->write( cmdStr.c_str(), index->nameLength + 1, TRUE ) ;
+   sdbMsg->write( obj.done(), TRUE ) ;
+
+   // fill other bson with empty
+   sdbMsg->write( fap::emptyObj, TRUE ) ;
+   sdbMsg->write( fap::emptyObj, TRUE ) ;
+   sdbMsg->write( fap::emptyObj, TRUE ) ;
 
    // fill the msg len of sdb
    header->messageLength = sdbMsg->size() ;
@@ -1046,7 +1072,7 @@ INT32 dropIndexesCommand::convertRequest( mongoParser &parser,
 
    parser.opType = OP_CMD_DROP_INDEX ;
    sdbMsg->reverse( sizeof ( MsgOpQuery ) ) ;
-   sdbMsg->advance( sizeof ( MsgOpQuery ) - 1 ) ;
+   sdbMsg->advance( sizeof ( MsgOpQuery ) - 4 ) ;
 
    header = ( MsgHeader * )sdbMsg->data() ;
    header->opCode = MSG_BS_QUERY_REQ ;
@@ -1080,10 +1106,16 @@ INT32 dropIndexesCommand::convertRequest( mongoParser &parser,
 
    indexObj.append( "", cond.getStringField( "index" ) ) ;
    obj.append( "Collection", fullname.c_str() ) ;
-   obj.append( "Index", indexObj.obj() ) ;
+   obj.append( "Index", indexObj.done() ) ;
 
-   sdbMsg->write( cmdStr.c_str(), cmdStr.length() ) ;
-   sdbMsg->write( obj.obj(), TRUE ) ;
+   sdbMsg->write( cmdStr.c_str(), dropIndex->nameLength + 1, TRUE ) ;
+   sdbMsg->write( obj.done(), TRUE ) ;
+
+   // fill other bson with empty
+   sdbMsg->write( fap::emptyObj, TRUE ) ;
+   sdbMsg->write( fap::emptyObj, TRUE ) ;
+   sdbMsg->write( fap::emptyObj, TRUE ) ;
+
    // fill the msg len of sdb
    header->messageLength = sdbMsg->size() ;
    sdbMsgs.push_back( sdbMsg ) ;
@@ -1118,7 +1150,7 @@ INT32 getIndexesCommand::convertRequest( mongoParser &parser,
 
    parser.opType = OP_CMD_GET_INDEX ;
    sdbMsg->reverse( sizeof ( MsgOpQuery ) ) ;
-   sdbMsg->advance( sizeof ( MsgOpQuery ) - 1 ) ;
+   sdbMsg->advance( sizeof ( MsgOpQuery ) - 4 ) ;
 
    header = ( MsgHeader * )sdbMsg->data() ;
    header->opCode = MSG_BS_QUERY_REQ ;
@@ -1147,10 +1179,15 @@ INT32 getIndexesCommand::convertRequest( mongoParser &parser,
 
    indexObj.append( "indexDef.name", cond.getStringField( "index" ) ) ;
    obj.append( "Collection", cond.getStringField( "ns" ) ) ;
-   obj.append( "Index", indexObj.obj() ) ;
 
-   sdbMsg->write( cmdStr.c_str(), cmdStr.length() ) ;
-   sdbMsg->write( obj.obj(), TRUE ) ;
+   sdbMsg->write( cmdStr.c_str(), getIndex->nameLength + 1, TRUE ) ;
+   sdbMsg->write( indexObj.done(), TRUE ) ;
+
+   // fill other bson with empty
+   sdbMsg->write( fap::emptyObj, TRUE ) ;
+   sdbMsg->write( fap::emptyObj, TRUE ) ;
+   sdbMsg->write( obj.done(), TRUE ) ;
+
    // fill the msg len of sdb
    header->messageLength = sdbMsg->size() ;
    sdbMsgs.push_back( sdbMsg ) ;

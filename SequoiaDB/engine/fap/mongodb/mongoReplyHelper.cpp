@@ -43,53 +43,33 @@ namespace fap
 {
    namespace mongo
    {
-      INT32 buildIsMasterMsg( engine::IResource *resource, msgBuffer &msg )
+      void buildIsMasterMsg( engine::IResource *resource,
+                             bson::BSONObjBuilder& bob )
       {
-         INT32 rc = SDB_OK ;
-         bson::BSONObjBuilder bob ;
-
          bob.append( "ismaster", FALSE ) ;
          bob.append("msg", "isdbgrid");
          // build
          // config at last
-         bob.append( "maxBsonObjectSize", resource ) ;
+         bob.append( "maxBsonObjectSize", 1024 ) ;
          bob.append( "maxMessageSizeBytes", SDB_MAX_MSG_LENGTH ) ;
-         bob.append( "maxWriteBatchSize", resource ) ;
+         bob.append( "maxWriteBatchSize", 4096 ) ;
          bob.append( "localTime", 100 ) ;
          bob.append( "maxWireVersion", 2 ) ;
          bob.append( "minWireVersion", 2 ) ;
-
-         msg.write( bob.obj(), TRUE ) ;
-      error:
-         return rc ;
-      done:
-         goto error ;
       }
 
-      INT32 buildGetNonceMsg( msgBuffer &msg )
+      void buildGetNonceMsg( bson::BSONObjBuilder& bob )
       {
-         bson::BSONObjBuilder bob ;
          static Nonce::Security security ;
          UINT64 nonce = security.getNonce() ;
 
          std::stringstream ss ;
          ss << std::hex << nonce ;
          bob.append( "nonce", ss.str() ) ;
-         msg.write( bob.obj(), TRUE ) ;
-
-         return SDB_OK ;
       }
 
-      INT32 buildNotSupportMsg( msgBuffer &msg )
+      void buildNotSupportMsg( bson::BSONObjBuilder& bob )
       {
-         INT32 rc = SDB_OK ;
-
-         //obj.app
-
-      error:
-         return rc ;
-      done:
-         goto error ;
       }
    }
 }
