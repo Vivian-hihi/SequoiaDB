@@ -197,27 +197,24 @@ namespace engine
          INT32 doit() ;
 
       public:
-         INT32 updateProgressToTask( INT32 serialNum, InstDBResult &instResult,
+         INT32 updateProgressToTask( INT32 serialNum, RemoveDBResult &instResult,
                                      BOOLEAN needToNotify = FALSE ) ;
          string getTmpCoordSvcName() ;
-         void notifyUpdateProgress() ;
-/*
-         string getDataRGToInst() ;
-         InstDBBusInfo* getDataNodeInfo( string &groupName ) ;
-*/
 
       private:
-         INT32 _initInstInfo( BSONObj &info ) ;
-         INT32 _initInstAndResultInfo( BSONObj &hostInfo,
-                                       InstDBBusInfo &info ) ;
+         INT32 _initTaskInfo( BSONObj &info ) ;
+         INT32 _initRemoveAndResultInfo( BSONObj &hostInfo,
+                                         RemoveDBBusInfo &info ) ;
          INT32 _restoreResultInfo() ;
-         INT32 _waitAndUpdateProgress() ;
-         void  _buildResultInfo( vector<InstDBBusInfo> &info,
+         void  _getDataRGToRemove( BSONObj &obj ) ;
+         void  _buildResultInfo( vector<RemoveDBBusInfo> &info,
                                  BSONArrayBuilder &bab ) ;
          void  _buildUpdateTaskObj( BSONObj &retObj ) ;
          INT32 _updateProgressToOM() ;
-         BOOLEAN _isTaskFinish() ;
          void  _setRetErr( INT32 errNum ) ;
+
+      private:
+         INT32 _updateFlow( const CHAR *pRole, OMA_TASK_STATUS status ) ;
 
       private:
          INT32 _saveTmpCoordInfo( BSONObj &info ) ;
@@ -229,19 +226,22 @@ namespace engine
          INT32 _removeDataRG() ;
 
       private:
-         BSONObj                                _removeDBBusRawInfo ;
+         BSONObj                           _removeDBBusRawInfo ;
+         BOOLEAN                           _isStandalone ;
          // uninstall and result info
-         vector<InstDBBusInfo>                  _standalone ;
-         vector<InstDBBusInfo>                  _catalog ;
-         vector<InstDBBusInfo>                  _coord ;
-         map< string, vector<InstDBBusInfo> >   _mapGroups ;
+         vector<RemoveDBBusInfo>           _standalone ;
+         vector<RemoveDBBusInfo>           _catalog ;
+         vector<RemoveDBBusInfo>           _coord ;
+         vector<RemoveDBBusInfo>           _data ;
 
       private:
          // temporary coord info
          string                            _tmpCoordSvcName ;
          BSONObj                           _tmpCoordCfgObj ;
-//         BSONObj                           _cataAddrInfo ;
-         BOOLEAN                           _isStandalone ;
+         // auth info
+         BSONObj                           _authInfo ;
+
+      private:
          INT32                             _nodeSerialNum ;
          ossSpinSLatch                     _taskLatch ;
          ossEvent                          _taskEvent ;
@@ -251,9 +251,6 @@ namespace engine
          INT32                             _progress ;
          INT32                             _errno ;
          CHAR                              _detail[OMA_BUFF_SIZE + 1] ;
-
-//         // groups have been created
-//         set<string>                       _existGroups ;
    } ;
    typedef _omaRemoveDBBusTask omaRemoveDBBusTask ;
 

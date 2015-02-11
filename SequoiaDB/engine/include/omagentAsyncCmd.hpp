@@ -310,9 +310,7 @@ namespace engine
    class _omaRollbackStandalone : public _omaCommand
    {
       public:
-         _omaRollbackStandalone( INT64 taskID,
-                                 BSONObj &bus,
-                                 BSONObj &sys ) ;
+         _omaRollbackStandalone( BSONObj &bus, BSONObj &sys ) ;
          ~_omaRollbackStandalone() ;
 
       public:
@@ -320,7 +318,6 @@ namespace engine
          virtual INT32 init( const CHAR *pInstallInfo ) ;
 
       private:
-         INT64     _taskID ;
          BSONObj   _bus ;
          BSONObj   _sys ;
    } ;
@@ -385,70 +382,69 @@ namespace engine
    class _omaRmStandalone : public _omaCommand
    {
       public:
-         _omaRmStandalone () ;
+         _omaRmStandalone ( BSONObj &bus, BSONObj &sys ) ;
          virtual ~_omaRmStandalone () ;
 
       public:
          virtual const CHAR* name () { return OMA_CMD_RM_STANDALONE ; }
          virtual INT32 init ( const CHAR *pUninstallInfo ) ;
-/*
+
       private:
-         BSONObj                                        _uninstallInfo ;
-*/
+         BSONObj   _bus ;
+         BSONObj   _sys ;
    } ;
 
    // remove catalog group 
    class _omaRmCataRG : public _omaCommand
    {
       public:
-         _omaRmCataRG ( string &tmpCoordSvcName ) ;
+         _omaRmCataRG ( INT64 taskID, string &tmpCoordSvcName, BSONObj &info ) ;
          virtual ~_omaRmCataRG () ;
 
       public:
          virtual const CHAR* name () { return OMA_CMD_RM_CATA_RG ; }
-         virtual INT32 init ( const CHAR *pUninstallInfo ) ;
+         virtual INT32 init ( const CHAR *pInfo ) ;
 
       private:
-/*
-         BSONObj                                        _uninstallInfo ;
-*/
-         string                                         _tmpCoordSvcName ;
+         INT64     _taskID ;
+         string    _tmpCoordSvcName ;
+         BSONObj   _info ;
    } ;
 
    // remove coord group 
    class _omaRmCoordRG : public _omaCommand
    {
       public:
-         _omaRmCoordRG ( string &tmpCoordSvcName ) ;
+         _omaRmCoordRG ( INT64 taskID, string &tmpCoordSvcName, BSONObj &info ) ;
          virtual ~_omaRmCoordRG () ;
 
       public:
          virtual const CHAR* name () { return OMA_CMD_RM_COORD_RG ; }
-         virtual INT32 init ( const CHAR *pUninstallInfo ) ;
+         virtual INT32 init ( const CHAR *pInfo ) ;
 
       private:
-/*
-         BSONObj                                        _uninstallInfo ;
-*/
-         string                                         _tmpCoordSvcName ;
+         INT64     _taskID ;
+         string    _tmpCoordSvcName ;
+         BSONObj   _info ;
    } ;
 
    // remove data group 
    class _omaRmDataRG : public _omaCommand
    {
       public:
-         _omaRmDataRG ( string &tmpCoordSvcName ) ;
+         _omaRmDataRG ( INT64 taskID,
+                        string &tmpCoordSvcNamem,
+                        BSONObj &info ) ;
          virtual ~_omaRmDataRG () ;
 
       public:
          virtual const CHAR* name () { return OMA_CMD_RM_DATA_RG ; }
-         virtual INT32 init ( const CHAR *pUninstallInfo ) ;
+         virtual INT32 init ( const CHAR *pInfo ) ;
 
       private:
-/*
-         BSONObj                                        _uninstallInfo ;
-*/
-         string                                         _tmpCoordSvcName ;
+         INT64     _taskID ;
+         string    _tmpCoordSvcName ;
+         BSONObj   _info ;
    } ;
 
 

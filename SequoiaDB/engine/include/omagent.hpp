@@ -219,7 +219,7 @@ namespace engine
    typedef struct _AddHostResult AddHostResult ;
 */
 
-   // install db  business host
+   // install db business host
 
    struct _InstDBInfo
    {
@@ -237,7 +237,6 @@ namespace engine
       BSONObj _conf ;
    } ;
    typedef struct _InstDBInfo InstDBInfo ;
-   typedef InstDBInfo RemoveDBInfo ;
 
    struct _InstDBResult
    {
@@ -261,7 +260,28 @@ namespace engine
       InstDBResult   _instResult ;
    } ;
    typedef struct _InstDBBusInfo InstDBBusInfo ;
-   typedef InstDBBusInfo RemoveDBBusInfo ;
+
+
+   // remove db business host
+   struct _RemoveDBInfo
+   {
+      string _hostName ;
+      string _svcName ;
+      string _role ;
+      string _dataGroupName ;
+      string _authUser ;
+      string _authPasswd ;
+   } ;
+   typedef struct _RemoveDBInfo RemoveDBInfo ;
+
+   struct _RemoveDBBusInfo
+   {
+      INT32            _nodeSerialNum ;
+      RemoveDBInfo     _removeInfo ;
+      RemoveDBResult   _removeResult ;
+   } ;
+   typedef _RemoveDBBusInfo RemoveDBBusInfo ;
+   
    
 }
 
