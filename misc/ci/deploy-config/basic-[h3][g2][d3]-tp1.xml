@@ -54,17 +54,17 @@
 				<node host="${test.machine.no1.data}" baseport="${cata.service.port}" dbpath="${install.path}/sequoiadb/database/cata/${cata.service.port}">
 					<confitem name="diaglevel" value="5" />
 					<confitem name="transactionon" value="true" />
-					<confitem name="sharingbreak" value="20000" />
+					<confitem name="sharingbreak" value="300000" />
 				</node>
 				<node host="${test.machine.no2.data}" baseport="${cata.service.port}" dbpath="${install.path}/sequoiadb/database/cata/${cata.service.port}">
 					<confitem name="diaglevel" value="5" />
 					<confitem name="transactionon" value="true" />
-					<confitem name="sharingbreak" value="20000" />
+					<confitem name="sharingbreak" value="300000" />
 				</node>
 				<node host="${test.machine.no3.data}" baseport="${cata.service.port}" dbpath="${install.path}/sequoiadb/database/cata/${cata.service.port}">
 					<confitem name="diaglevel" value="5" />
 					<confitem name="transactionon" value="true" />
-					<confitem name="sharingbreak" value="20000" />
+					<confitem name="sharingbreak" value="300000" />
 				</node>
 			</catagroup>
 		</sdbdeploy>
@@ -74,19 +74,19 @@
 				<node host="${test.machine.no1.data}" baseport="21100" dbpath="${install.path}/sequoiadb/database/data/21100">
 					<confitem name="diaglevel" value="5" />
 					<confitem name="transactionon" value="true" />
-					<confitem name="sharingbreak" value="20000" />
+					<confitem name="sharingbreak" value="300000" />
 					<confitem name="diagnum" value="80" />
 				</node>
 				<node host="${test.machine.no2.data}" baseport="21100" dbpath="${install.path}/sequoiadb/database/data/21100">
 					<confitem name="diaglevel" value="5" />
 					<confitem name="transactionon" value="true" />
-					<confitem name="sharingbreak" value="20000" />
+					<confitem name="sharingbreak" value="300000" />
 					<confitem name="diagnum" value="80" />
 				</node>
 				<node host="${test.machine.no3.data}" baseport="21100" dbpath="${install.path}/sequoiadb/database/data/21100">
 					<confitem name="diaglevel" value="5" />
 					<confitem name="transactionon" value="true" />
-					<confitem name="sharingbreak" value="20000" />
+					<confitem name="sharingbreak" value="300000" />
 					<confitem name="diagnum" value="80" />
 				</node>
 			</datagroup>
@@ -94,19 +94,19 @@
 				<node host="${test.machine.no3.data}" baseport="22100" dbpath="${install.path}/sequoiadb/database/data/22100">
 					<confitem name="diaglevel" value="5" />
 					<confitem name="transactionon" value="true" />
-					<confitem name="sharingbreak" value="20000" />
+					<confitem name="sharingbreak" value="300000" />
 					<confitem name="diagnum" value="80" />
 				</node>
 				<node host="${test.machine.no1.data}" baseport="22100" dbpath="${install.path}/sequoiadb/database/data/22100">
 					<confitem name="diaglevel" value="5" />
 					<confitem name="transactionon" value="true" />
-					<confitem name="sharingbreak" value="20000" />
+					<confitem name="sharingbreak" value="300000" />
 					<confitem name="diagnum" value="80" />
 				</node>
 				<node host="${test.machine.no2.data}" baseport="22100" dbpath="${install.path}/sequoiadb/database/data/22100">
 					<confitem name="diaglevel" value="5" />
 					<confitem name="transactionon" value="true" />
-					<confitem name="sharingbreak" value="20000" />
+					<confitem name="sharingbreak" value="300000" />
 					<confitem name="diagnum" value="80" />
 				</node>
 			</datagroup>
