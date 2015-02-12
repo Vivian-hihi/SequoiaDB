@@ -138,6 +138,9 @@
 			<format property="current.time.log" pattern="yyyy-MM-dd-hh.mm.ss a" />
 		</tstamp>
 		<property name="test.log.path" value="${test.reports.path}/${test.environment}-${deploy.conffile.wildcard}-${host.NAME}-${current.time.log}-${BUILD_NUMBER}" />
+		<echo message="**************************************************************" />
+		<echo message="test.log.path=${test.log.path}" />
+		<echo message="**************************************************************" />
 
 		<for list="${test-type-list}" param="Test-Type">
 			<sequential>
