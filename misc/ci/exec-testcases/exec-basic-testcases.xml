@@ -136,6 +136,15 @@
 				<sdbProperty name="db.RG.info" value="this env is standalone , host is ${test.machine.no2.basic}"/>
 			</then>
 		</if>
+		<if>
+			<equals arg1="${os.arch}" arg2="ppc64" />
+		<then>
+		  	<property name="URL.download.pre" value="http://192.168.30.150:8080" />
+		</then>
+		<else>
+			<property name="URL.download.pre" value="http://192.168.30.184:8080" />
+		</else>
+		</if>
 		
 		<tstamp>
 			<format property="testcase.begin.time" pattern="yyyy-MM-dd-hh.mm.ss a" />
@@ -220,7 +229,7 @@
 				<echo message="The result code is ${ret.code} and it's fail ..." />
 				<echo message="The testcase ${test.case.name}.js end with ${testcase.failure.end.time} and cost ${testcase.failure.timeOutput} s in total..." />
 
-				<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" append="true" message="&lt;testcase classname=&quot;${test.suite.class.name}&quot; name=&quot;${test.case.name}&quot; begin_time=&quot;${testcase.begin.time}&quot; end_time=&quot;${testcase.failure.end.time}&quot; time=&quot;${testcase.failure.timeOutput}&quot; path=&quot;${testcases.path}&quot; status=&quot;fail&quot;&gt;&#10;&lt;failure&gt;&#10;&lt;![CDATA[&#10;COMMAND= ${command}&#10;RETURNCODE=${ret.code}&#10;Sdb version is &#10; ${SDB.VERSION.INFO}&#10;&#10;ERRORMESSAGE=&#10;${screen.output}&#10;TESTBEGINSTR=${testBeginStr}&#10;TESTENDSTR=${testEndStr}&#10;DB.LISTREPLICAGROUP:&#10;${db.RG.info}]]&gt;&#10;&lt;/failure&gt;&#10;&lt;/testcase&gt;&#10;" />
+				<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" append="true" message="&lt;testcase classname=&quot;${test.suite.class.name}&quot; name=&quot;${test.case.name}&quot; begin_time=&quot;${testcase.begin.time}&quot; end_time=&quot;${testcase.failure.end.time}&quot; time=&quot;${testcase.failure.timeOutput}&quot; path=&quot;${testcases.path}&quot; status=&quot;fail&quot;&gt;&#10;&lt;failure&gt;&#10;&lt;![CDATA[&#10;COMMAND= ${command}&#10;RETURNCODE=${ret.code}&#10;Sdb version is &#10; ${SDB.VERSION.INFO}&#10;&#10;ERRORMESSAGE=&#10;${screen.output}&#10;TESTBEGINSTR=${testBeginStr}&#10;TESTENDSTR=${testEndStr}&#10;DB.LISTREPLICAGROUP:&#10;${db.RG.info}&#10;Download the test log :&#10;${URL.download.pre}/${test.log.path}.tar.gz]]&gt;&#10;&lt;/failure&gt;&#10;&lt;/testcase&gt;&#10;" />
 
 				<echo file="${install.path}/${import.file}" append="true" message="{testcase_name:&quot;${test.suite.name}-${test.case.name}&quot;,deploy:&quot;${deploy.name}&quot;,hostname:&quot;${host.NAME}&quot;,time:&quot;${testcase.timeOutput}&quot;,status:&quot;fail&quot;,begin_time:&quot;${testcase.begin.time}&quot;,end_time:&quot;${testcase.end.time}&quot;}&#10;&#10;&#10;" />
 			</then>

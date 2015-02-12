@@ -115,7 +115,8 @@
 
 	<target name="H3-G2-D3" depends="">
 		<hostinfo prefix="host" />
-		<property name="test-type-list" value="driver-python" />
+		<!-- <property name="test-type-list" value="driver-python" /> -->
+		<property name="test-type-list" value="basic" />
 		<property name="copy.test.log" value="true"/>
 
 		<parallel>
@@ -133,22 +134,24 @@
 			</ant>
 		</parallel>
 
-		<!-- <basename property="antFileName" file="${ant.file}" suffix=".xml" /> -->
+		<tstamp>
+			<format property="current.time.log" pattern="yyyy-MM-dd-hh.mm.ss a" />
+		</tstamp>
+		<property name="test.log.path" value="${test.reports.path}/${test.environment}-${deploy.conffile.wildcard}-${host.NAME}-${current.time.log}-${BUILD_NUMBER}" />
+
 		<for list="${test-type-list}" param="Test-Type">
 			<sequential>
 				<antfetch antfile="${WORKSPACE}/sequoiadb/misc/ci/test-type.xml" dir="." inheritAll="false">
-					<!-- <property name="test.machine.deploy.path" value="${test.machine.deploy.path}" />
-					<property name="install.path" value="${install.path}" /> -->
 					<property name="deploy.case.fullname" value="${deploy.case.fullname}" />
 					<property name="test.reports.path" value="${test.reports.path}" />
 					<property name="Test-Type" value="@{Test-Type}" />
-					<!-- <property name="antFileName" value="${antFileName}" /> -->
-					<!-- <property name="import.file.name" value="${import.file.name}" /> -->
 					<property name="parallel.flag" value="parallel" />
 					<property name="WORKSPACE" value="${WORKSPACE}" />
 					<property name="ci.script.file.path" value="${ci.script.file.path}" />
 					<property name="test.host.NAME" value="${test.machine.no2.basic}" />
 					<property name="parallel.count" value="1" />
+
+					<property name="test.log.path" value="${test.log.path}" />
 				</antfetch>
 			</sequential>
 		</for>
@@ -159,11 +162,7 @@
 					<equals arg1="${copy.test.log}" arg2="true" />
 					<then>
 						<echo message="The copy.test.log is true , then copy all test log to ${save.testLog.hostname}:${save.testLog.dir}"/>
-						<tstamp>
-							<format property="current.time.log" pattern="yyyy-MM-dd-hh.mm.ss a" />
-						</tstamp>
-
-						<property name="test.log.path" value="${test.reports.path}/${test.environment}-${deploy.conffile.wildcard}-${host.NAME}-${current.time.log}-${BUILD_NUMBER}" />
+						
 						<echo message="Mkdir ${test.log.path}" />
 						<mkdir dir="${test.log.path}" />
 
