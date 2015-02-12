@@ -277,15 +277,14 @@
             <group>root</group>
             <owner>root</owner>
         </changeOwnerAndGroup>
-        <runProgram>
-            <program>chmod</program>
-            <programArguments>4755 ${installdir}/bin/sdbomtool</programArguments>
-            <ruleList>
-                <platformTest>
-                    <type>linux</type>
-                </platformTest>
-            </ruleList>
-        </runProgram>
+        <changePermissions>
+            <files>${installdir}/bin/sdbomtool</files>
+            <permissions>6755</permissions>
+        </changePermissions>
+        <md5>
+            <text>00f3e96db72d10cca90b09abee5ddaf0 </text>
+            <variable>/etc/default/sequoiadb</variable>
+        </md5>
     </postInstallationActionList>
     <preUninstallationActionList>
         <stopWindowsService>
