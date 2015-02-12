@@ -1024,6 +1024,11 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__CLSREPSET_REELECT ) ;
+      if ( 1 == groupSize() )
+      {
+         goto done ;
+      }
+
       rc = _reelection.run( lvl, seconds, cb ) ;
       if ( SDB_OK != rc )
       {
