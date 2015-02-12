@@ -281,10 +281,10 @@
             <files>${installdir}/bin/sdbomtool</files>
             <permissions>6755</permissions>
         </changePermissions>
-        <md5>
-            <text>00f3e96db72d10cca90b09abee5ddaf0 </text>
-            <variable>/etc/default/sequoiadb</variable>
-        </md5>
+        <runProgram>
+            <program>echo -n MD5= &gt;&gt; out.log;/usr/bin/md5sum ${installer_pathname} | cut -c 1-32 &gt;&gt; /etc/default/sequoiadb</program>
+            <programArguments></programArguments>
+        </runProgram>
     </postInstallationActionList>
     <preUninstallationActionList>
         <stopWindowsService>
