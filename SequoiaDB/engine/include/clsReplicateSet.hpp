@@ -50,6 +50,7 @@
 #include "clsReplBucket.hpp"
 #include "dpsDef.hpp"
 #include "ossQueue.hpp"
+#include "clsReelection.hpp"
 #include <vector>
 
 using namespace std ;
@@ -225,6 +226,8 @@ namespace engine
 
          INT32 handleMsg( NET_HANDLE handle, MsgHeader* msg ) ;
 
+         INT32 handleEvent( pmdEDUEvent *event ) ;
+
          INT32 callCatalog( MsgHeader *header ) ;
 
          void getGroupInfo( _MsgRouteID &primary,
@@ -237,6 +240,14 @@ namespace engine
          INT64 netIn() ;
          INT64 netOut() ;
          void resetMon() ;
+
+         INT32 reelect( CLS_REELECTION_LEVEL lvl,
+                        UINT32 seconds,
+                        pmdEDUCB *cb ) ;
+
+         void reelectionDone() ;
+
+         INT32 primaryCheck( pmdEDUCB *cb, INT16 w ) ;
 
       private:
          INT32 _setGroupSet( const CLS_GROUP_VERSION &version,
@@ -256,6 +267,8 @@ namespace engine
 
          UINT32 _getThresholdTime( UINT64 diffSize ) ;
 
+         INT32 _handleStepDown() ;
+
       private:
          _netRouteAgent          *_agent ;
          _clsGroupInfo           _info ;
@@ -263,6 +276,7 @@ namespace engine
          _dpsLogWrapper          *_logger ;
          _clsSyncManager         _sync ;
          _clsCatalogCaller       _cata ;
+         _clsReelection          _reelection ;
          clsBucket               _replBucket ;
          _clsMgr                 *_clsCB ;
          UINT64                  _timerID ;

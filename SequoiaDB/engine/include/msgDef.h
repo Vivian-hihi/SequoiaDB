@@ -301,6 +301,8 @@
 #define FIELD_NAME_LOB_AVAILABLE             "Available"
 #define FIELD_NAME_LOB_PAGE_SZ               "LobPageSize"
 #define FIELD_NAME_AUTO_INDEX_ID             "AutoIndexId"
+#define FIELD_NAME_REELECTION_TIMEOUT        "Seconds"
+#define FIELD_NAME_REELECTION_LEVEL          "Level"
 
 #define IXM_FIELD_NAME_KEY                   "key"
 #define IXM_FIELD_NAME_NAME                  "name"
@@ -406,6 +408,7 @@
 #define CMD_NAME_DETACH_IMAGE                "detach image"
 #define CMD_NAME_ACTIVE_IMAGE                "active image"
 #define CMD_NAME_DEACTIVE_IMAGE              "deactive image"
+#define CMD_NAME_REELECT                     "reelect"
 
 #define CMD_NAME_JSON_LOAD                   "json load"
 

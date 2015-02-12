@@ -9630,5 +9630,93 @@ retry:
       }
       goto done ;
    }
+
+   // PD_TRACE_DECLARE_FUNCTION( CMD_RTNCOCMDREELECTION_EXEC, "rtnCoordCMDReelection::execute" )
+   INT32 rtnCoordCMDReelection::execute( CHAR *pReceiveBuffer, SINT32 packSize,
+                                         CHAR **ppResultBuffer,
+                                         pmdEDUCB *cb, MsgOpReply &replyHeader,
+                                         BSONObj **ppErrorObj )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( CMD_RTNCOCMDREELECTION_EXEC ) ;
+      MsgHeader *header = (MsgHeader *)pReceiveBuffer ;
+      CHAR *pCommandName = NULL ;
+      INT32 flag = 0;
+      SINT64 numToSkip = 0 ;
+      SINT64 numToReturn = -1 ;
+      CHAR *pQuery = NULL ;
+      CHAR *pFieldSelector = NULL ;
+      CHAR *pOrderBy = NULL ;
+      CHAR *pHint = NULL ;
+      BSONObj query ;
+      BSONElement e ;
+      const CHAR *gpName = NULL ;
+      CoordGroupInfoPtr gpInfo ;
+      CoordGroupList gpLst ;
+      CoordGroupList sendLst ;
+      pmdKRCB *pKrcb = pmdGetKRCB();
+      CoordCB *pCoordcb = pKrcb->getCoordCB();
+      netMultiRouteAgent *pRouteAgent = pCoordcb->getRouteAgent();
+      
+      replyHeader.header.messageLength = sizeof( MsgOpReply );
+      replyHeader.header.opCode        = MSG_BS_QUERY_RES;
+      replyHeader.header.requestID     = header->requestID;
+      replyHeader.header.routeID.value = 0;
+      replyHeader.header.TID           = header->TID;
+      replyHeader.contextID            = -1;
+      replyHeader.flags                = SDB_OK;
+      replyHeader.numReturned          = 0;
+      replyHeader.startFrom            = 0; 
+
+      rc = msgExtractQuery( pReceiveBuffer, &flag, &pCommandName,
+                            &numToSkip, &numToReturn, &pQuery,
+                            &pFieldSelector, &pOrderBy, &pHint ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to parse the "
+                   "reelection-message(rc=%d)", rc ) ;
+
+      try
+      {
+         query = BSONObj( pQuery ) ;
+         e = query.getField( FIELD_NAME_GROUPNAME ) ;
+         if ( String != e.type() )
+         {
+            PD_LOG( PDERROR, "invalid reelection msg:%s",
+                    query.toString( FALSE, TRUE ).c_str() ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+         gpName = e.valuestr() ;
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "unexpected error happened:%s", e.what() ) ;
+         goto error ;
+      }
+
+      rc = rtnCoordGetGroupInfo( cb, gpName, FALSE, gpInfo ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to get info of group[%s], rc:%d",
+                 gpName, rc ) ;
+         goto error ;
+      }
+
+      gpLst[gpInfo->getGroupID()] = gpInfo->getGroupID() ;
+      rc = executeOnDataGroup( header, gpLst, sendLst,
+                               pRouteAgent, cb, TRUE ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to execute on data group[%s], rc:%d",
+                 gpName, rc ) ;
+         goto error ;
+      }
+   done:
+      replyHeader.flags = rc;
+      PD_TRACE_EXITRC( CMD_RTNCOCMDREELECTION_EXEC, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
 }
 

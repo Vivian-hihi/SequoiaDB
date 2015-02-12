@@ -132,6 +132,8 @@ namespace engine
 
       sdbGetReplCB()->callCatalog( (MsgHeader *)&msg ) ;
 
+      sdbGetReplCB()->reelectionDone() ;
+
       PD_LOG ( PDEVENT, "Change to Primary" ) ;
 
       // after primary
