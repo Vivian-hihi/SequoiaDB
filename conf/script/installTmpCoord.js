@@ -38,13 +38,13 @@
 //var SYS_JSON = { "TaskID": 2 }
 
 
+var FILE_NAME_INSTALL_TEMPORARY_COORD = "installTmpCoord.js" ;
 var RET_JSON = new installTmpCoordResult() ;
 var rc       = SDB_OK ;
 var errMsg   = "" ;
 
 var task_id  = "" ;
-
-var FILE_NAME_INSTALL_TEMPORARY_COORD = "installTmpCoord.js" ;
+var tmp_coord_install_path = "" ;
 
 /* *****************************************************************************
 @discretion: init
@@ -137,12 +137,13 @@ function _getCatalogCfg( cfgInfo )
 
 function main()
 {
-   var oma             = null ;
-   var omaHostName     = null ;
-   var omaSvcName      = null ;
-   var tmpCoordSvcName = null ;   
-   var dataPath        = null ;
-   var cfgObj          = null ;
+   var oma                    = null ;
+   var omaHostName            = null ;
+   var omaSvcName             = null ;
+   var tmpCoordSvcName        = null ;
+   var installInfoObj         = null ;
+   var dbInstallPath          = null ;
+   var cfgObj                 = null ;
 
    _init() ;
    
@@ -154,7 +155,9 @@ function main()
          omaHostName     = System.getHostName() ;
          omaSvcName      = Oma.getAOmaSvcName( "localhost" ) ;
          tmpCoordSvcName = getAUsablePortFromLocal() + "" ;
-         dataPath        = OMA_PATH_TMP_COORD_PATH + tmpCoordSvcName ;
+         installInfoObj  = eval( '(' + Oma.getOmaInstallInfo() + ')' ) ;
+         dbInstallPath   = adaptPath( installInfoObj[INSTALL_DIR] ) ;
+         tmp_coord_install_path = dbInstallPath + "database/tmpCoord/" + tmpCoordSvcName ;
       }
       catch( e )
       {
@@ -195,13 +198,14 @@ function main()
                  sprintf( errMsg + ", rc: ?, detail: ?", rc, GETLASTERRMSG() ) ) ;
          exception_handle( rc, errMsg ) ;
       }
+
       // 4. create temporary coord
       try
       {
          PD_LOG( arguments, PDDEBUG, FILE_NAME_INSTALL_TEMPORARY_COORD,
                  sprintf( "Create temporary coord passes arguments: svc[?], path[?], cfgObj[?]",
-                          tmpCoordSvcName, dataPath, JSON.stringify(cfgObj) ) ) ;
-         oma.createCoord( tmpCoordSvcName, dataPath, cfgObj ) ;
+                          tmpCoordSvcName, tmp_coord_install_path, JSON.stringify(cfgObj) ) ) ;
+         oma.createCoord( tmpCoordSvcName, tmp_coord_install_path, cfgObj ) ;
       }
       catch( e )
       {

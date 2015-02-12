@@ -31,18 +31,17 @@
 // println
 //var BUS_JSON = {"SdbUser":"sdbadmin","SdbPasswd":"sdbadmin","SdbUserGroup":"sdbadmin_group","InstallPacket":"/opt/sequoiadb/packet/sequoiadb-1.10-linux_x86_64-installer.run","HostInfo":{"IP":"192.168.20.42","HostName":"susetzb","User":"root","Passwd":"sequoiadb","SshPort":"22","AgentService":"11790","InstallPath":"/opt/sequoiadb"} } ;
 
-//var BUS_JSON = {"SdbUser":"sdbadmin","SdbPasswd":"sdbadmin","SdbUserGroup":"sdbadmin_group","InstallPacket":"/opt/sequoiadb/packet/sequoiadb-1.10-linux_x86_64-installer.run","HostInfo":{"IP":"192.168.20.165","HostName":"rhel64-test8","User":"root","Passwd":"sequoiadb","SshPort":"22","AgentService":"11790","InstallPath":"/opt/sequoiadb"} } ;
+// var BUS_JSON = {"SdbUser":"sdbadmin","SdbPasswd":"sdbadmin","SdbUserGroup":"sdbadmin_group","InstallPacket":"/opt/sequoiadb/packet/sequoiadb-1.10-linux_x86_64-installer.run","HostInfo":{"IP":"192.168.20.165","HostName":"rhel64-test8","User":"root","Passwd":"sequoiadb","SshPort":"22","AgentService":"11790","InstallPath":"/opt/sequoiadb"} } ;
 
 // var SYS_JSON = { "TaskID":1 } ;
 
 // global
-var FILE_NAME_ADD_HOST = "" ;
-var RET_JSON           = null ;
+var FILE_NAME_ADD_HOST = "addHost.js" ;
+var RET_JSON           = new addHostResult() ;
 var rc                 = SDB_OK ;
 var errMsg             = "" ;
 
 var host_ip            = "" ;
-var task_dir           = "" ;
 var task_id            = 0 ;
 
 
@@ -58,37 +57,13 @@ var result_file                 = "" ;
 ***************************************************************************** */
 function _init()
 {
-   FILE_NAME_ADD_HOST = "addHost.js" ;
-   RET_JSON           = new addHostResult() ;
-
    // 1. get task id
-   try
-   {
-      task_id = SYS_JSON[TaskID] ;
-      if ( "number" != typeof(task_id) )
-         exception_handle( SDB_SYS, "Task id is not a number: " + task_id ) ;
-   }
-   catch ( e )
-   {
-      SYSEXPHANDLE( e ) ;
-      errMsg = "Js receive invalid argument" ;
-      PD_LOG( arguments, PDERROR, FILE_NAME_ADD_HOST,
-              sprintf( errMsg + ", rc: ?, detail: ?", GETLASTERROR(), GETLASTERRMSG() ) ) ;
-      exception_handle( SDB_SYS, errMsg ) ;
-   }
+   task_id = getTaskID( SYS_JSON ) ;
   
    // 2. specify log file's name
    try
    {
-// println
-// TODO: need to use setTaskLogFileName
       host_ip = BUS_JSON[HostInfo][IP] ;
-      task_dir = adaptPath( LOG_FILE_PATH + Task ) + task_id ;      
-      if ( false == File.exist( task_dir ) )
-         File.mkdir( task_dir ) ;
-      LOG_FILE_NAME = adaptPath( adaptPath( Task ) + task_id ) + host_ip + ".log" ;
-      PD_LOG( arguments, PDDEBUG, FILE_NAME_ADD_HOST,
-              sprintf( "Log file name is: ?", LOG_FILE_NAME ) ) ;
    }
    catch ( e )
    {
@@ -97,27 +72,9 @@ function _init()
       PD_LOG( arguments, PDERROR, FILE_NAME_ADD_HOST,
               sprintf( errMsg + ", rc: ?, detail: ?", GETLASTERROR(), GETLASTERRMSG() ) ) ;
       exception_handle( SDB_SYS, errMsg ) ;
-   }   
-/*
-   // 2. create 
-   try
-   {
-      LOG_FILE_NAME = TaskLog + task_id + ".log" ;
-//      var task_log_file = LOG_FILE_PATH + LOG_FILE_NAME ;
-//println("task log file is: " + task_log_file) ;
-//      if ( File.exist( task_log_file ) )
-//         File.remove( task_log_file ) ;
+   }
+   setTaskLogFileName( task_id, host_ip ) ;
 
-   }
-   catch( e )
-   {
-      SYSEXPHANDLE( e ) ;
-      PD_LOG2( task_id, arguments, PDWARNING, FILE_NAME_ADD_HOST,
-               sprintf( "Try to remove task[?]'s log file failed, rc: ?, detail: ?",
-                        task_id, GETLASTERROR(), GETLASTERRMSG() ) ) ;
-   }
-*/
-   
    // 3. set local and remote pre-check result file name
    if( SYS_LINUX == SYS_TYPE )
    {
@@ -289,33 +246,7 @@ function _pushToolPacket( ssh )
             src = local_spt_path + js_files[i] ;
             dest = OMA_PATH_TEMP_SPT_DIR_L + js_files[i] ;
             ssh.push( src, dest ) ;
-         }    
-/*
-         // script define.js
-         src = local_spt_path + OMA_FILE_DEFINE ;
-         dest = OMA_PATH_TEMP_SPT_DIR_L + OMA_FILE_DEFINE ;
-         ssh.push( src, dest ) ;
-         // script error.js
-         src = local_spt_path + OMA_FILE_ERROR ;
-         dest = OMA_PATH_TEMP_SPT_DIR_L + OMA_FILE_ERROR ;
-         ssh.push( src, dest ) ;
-         // script log.js
-         src = local_spt_path + OMA_FILE_LOG ;
-         dest = OMA_PATH_TEMP_SPT_DIR_L + OMA_FILE_LOG ;
-         ssh.push( src, dest ) ;
-         // script common.js
-         src = local_spt_path + OMA_FILE_COMMON ;
-         dest = OMA_PATH_TEMP_SPT_DIR_L + OMA_FILE_COMMON ;
-         ssh.push( src, dest ) ;
-         // script func.js
-         src = local_spt_path + OMA_FILE_FUNC ;
-         dest = OMA_PATH_TEMP_SPT_DIR_L + OMA_FILE_FUNC ;
-         ssh.push( src, dest ) ;
-         // script addHostPreCheck.js
-         src = local_spt_path + OMA_FILE_ADD_HOST_PRE_CHECK ;
-         dest = OMA_PATH_TEMP_SPT_DIR_L + OMA_FILE_ADD_HOST_PRE_CHECK ;
-         ssh.push( src, dest ) ;
-*/
+         }
       }
       else
       {
@@ -376,7 +307,7 @@ function _needToInstall( ssh, install_packet, install_path )
    }
    else
    {
-      // TODO
+      // TODO: windows
    }
 
    // 1. pre-check before add host
@@ -463,7 +394,8 @@ println("local md5: " + local_md5 + ", remote_md5: " + remote_md5) ;
       errMsg = sprintf( "Local db packet's md5: ?, remote db packet's md5: ?, need to install",
                         local_md5, remote_md5 ) ;
       PD_LOG2( task_id, arguments, PDWARNING, FILE_NAME_ADD_HOST, errMsg ) ;
-// TODO: println
+// TODO: wait for help
+// println
 //      return true ;
    }
 println("3333333333333333333333333333333")
@@ -706,7 +638,7 @@ println("Finish install db packet")
       SYSEXPHANDLE( e ) ;
       errMsg = sprintf( "Failed to install db packet in host[?]", ip ) ;
       rc = GETLASTERROR() ;
-      PD_LOG2( task_id, arguments, PDSEVERE, FILE_NAME_ADD_HOST,
+      PD_LOG2( task_id, arguments, PDERROR, FILE_NAME_ADD_HOST,
                sprintf( errMsg + ", rc: ?, detail: ?", rc, GETLASTERRMSG() ) ) ;
       // try to remove the packet
       try

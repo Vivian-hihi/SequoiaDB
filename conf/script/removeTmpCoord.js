@@ -36,6 +36,8 @@ var rc       = SDB_OK ;
 var errMsg   = "" ;
 
 var task_id  = "" ;
+var tmp_coord_install_path = "" ;
+var tmp_coord_backup_path  = "" ;
 
 /* *****************************************************************************
 @discretion: init
@@ -72,12 +74,12 @@ function _final()
 ***************************************************************************** */
 function _backupTmpCoordDiaglog( svcName )
 {
-   var src = OMA_PATH_TMP_COORD_PATH + svcName + "/diaglog/sdbdiag.log" ;
-   var dst = OMA_PATH_TMP_COORD_BACKUP_DIR + "diaglog/sdbdiag.log" + "." + genTimeStamp() ;
+   var src = tmp_coord_install_path + "/diaglog/sdbdiag.log" ;
+   var dst = tmp_coord_backup_path + "/diaglog/sdbdiag.log" + "." + genTimeStamp() ;
    PD_LOG( arguments, PDDEBUG, FILE_NAME_REMOVE_TEMPORARY_COORD,
            sprintf( "Backup temporary coord's diaglog, src[?], dst[?]", src, dst ) ) ;
    // mkdir director
-   File.mkdir( OMA_PATH_TMP_COORD_BACKUP_DIR + "diaglog/" ) ;
+   File.mkdir( tmp_coord_backup_path + "/diaglog/" ) ;
    // backup sdbdiag.log
    File.copy( src, dst ) ;
 }
@@ -88,6 +90,8 @@ function main()
    var omaSvcName       = null ;
    var tmpCoordHostName = null ;
    var tmpCoordSvcName  = null ;
+   var installInfoObj   = null ;
+   var dbInstallPath    = null ;
    var oma              = null ;
    
    _init() ;
@@ -101,6 +105,11 @@ function main()
          omaSvcName     = Oma.getAOmaSvcName( "localhost" ) ;
          tmpCoordHostName = omaHostName ;
          tmpCoordSvcName  = BUS_JSON[TmpCoordSvcName] ;
+         installInfoObj  = eval( '(' + Oma.getOmaInstallInfo() + ')' ) ;
+         dbInstallPath   = adaptPath( installInfoObj[INSTALL_DIR] ) ;
+         tmp_coord_install_path = dbInstallPath + "database/tmpCoord/" + tmpCoordSvcName ;
+         tmp_coord_backup_path  = dbInstallPath + "database/tmpCoordBackup/" + tmpCoordSvcName ;
+         
          if ( "undefined" == typeof(tmpCoordSvcName) ||
               "" == tmpCoordSvcName )
             exception_handle( SDB_INVALIDARG, "Invalid temporary coord service name" ) ;
