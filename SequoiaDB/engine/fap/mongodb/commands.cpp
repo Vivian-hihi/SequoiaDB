@@ -93,6 +93,11 @@ INT32 insertCommand::convertRequest( mongoParser &parser,
    command *cmd        = NULL ;
    msgBuffer *sdbMsg   = NULL ;
    bson::BSONObj obj ;
+   bson::BSONObj subObj ;
+   bson::BSONElement e ;
+   std::vector< bson::BSONElement > objList ;
+   std::vector< bson::BSONElement >::const_iterator cit ;
+   std::string fullname ;
 
    if ( parser.withIndex )
    {
@@ -139,13 +144,46 @@ INT32 insertCommand::convertRequest( mongoParser &parser,
    }
 
    insert->nameLength = parser.nsLen ;
-   sdbMsg->write( parser.fullName, insert->nameLength + 1, TRUE ) ;
-
    parser.skip( insert->nameLength + 1 ) ;
-   while ( parser.more() )
+   if ( parser.withCmd )
    {
+      if ( !parser.more() )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
       parser.nextObj( obj ) ;
-      sdbMsg->write( obj, TRUE ) ;
+      // makeup cs.cl
+      fullname += "." ;
+      fullname += obj.getStringField( "insert" ) ;
+      sdbMsg->write( fullname.c_str() , fullname.length() + 1, TRUE ) ;
+      e = obj.getField( "documents" ) ;
+      if ( bson::Array != e.type() )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      objList = e.Array() ;
+      cit = objList.begin() ;
+      while ( objList.end() != cit )
+      {
+         subObj = (*cit).Obj() ;
+         sdbMsg->write( subObj, TRUE ) ;
+         ++cit ;
+      }
+   }
+   else
+   {
+      insert->nameLength = parser.nsLen ;
+      parser.skip( insert->nameLength + 1 ) ;
+      sdbMsg->write( parser.fullName, insert->nameLength + 1, TRUE ) ;
+
+      while ( parser.more() )
+      {
+         parser.nextObj( obj ) ;
+         sdbMsg->write( obj, TRUE ) ;
+      }
    }
 
    header->messageLength = sdbMsg->size() ;

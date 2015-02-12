@@ -50,9 +50,9 @@ namespace fap
          bob.append("msg", "isdbgrid");
          // build
          // config at last
-         bob.append( "maxBsonObjectSize", 1024 ) ;
+         bob.append( "maxBsonObjectSize", 16777216 ) ;
          bob.append( "maxMessageSizeBytes", SDB_MAX_MSG_LENGTH ) ;
-         bob.append( "maxWriteBatchSize", 4096 ) ;
+         bob.append( "maxWriteBatchSize", 16777216 ) ;
          bob.append( "localTime", 100 ) ;
          bob.append( "maxWireVersion", 2 ) ;
          bob.append( "minWireVersion", 2 ) ;

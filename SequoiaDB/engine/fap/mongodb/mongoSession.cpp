@@ -277,7 +277,8 @@ INT32 _mongoSession::_processMsg( const CHAR *pMsg,
                                   bson::BSONObjBuilder &bob,
                                   const CHAR *&pBody, INT32 &bodyLen )
 {
-   INT32 rc      = SDB_OK ;
+   INT32 rc  = SDB_OK ;
+   INT32 tmp = SDB_OK ;
 
    rc = _onMsgBegin( (MsgHeader *) pMsg ) ;
    if ( SDB_OK != rc )
@@ -292,9 +293,9 @@ INT32 _mongoSession::_processMsg( const CHAR *pMsg,
       _replyHeader.startFrom = 0 ;
       _replyHeader.flags = rc ;
 
-      rc = _errorInfo.getBoolField( OP_ERRNOFIELD ) ;
-      bob.append( "ok", 1.0 ) ;
-      bob.append( "code",  rc ) ;
+      tmp = _errorInfo.getIntField( OP_ERRNOFIELD ) ;
+      bob.append( "ok", rc ) ;
+      bob.append( "code", tmp ) ;
       bob.append( "errmsg", _errorInfo.getStringField( OP_ERRDESP_FIELD) ) ;
       pBody = bob.done().objdata() ;
       bodyLen = bob.done().objsize() ;
@@ -316,9 +317,9 @@ INT32 _mongoSession::_processMsg( const CHAR *pMsg,
       _errorInfo = engine::utilGetErrorBson( rc,
                    _pEDUCB->getInfo( engine::EDU_INFO_ERROR ) ) ;
 
-      rc = _errorInfo.getBoolField( OP_ERRNOFIELD ) ;
+      tmp = _errorInfo.getIntField( OP_ERRNOFIELD ) ;
       bob.append( "ok", rc ? FALSE : TRUE ) ;
-      bob.append( "code",  rc ) ;
+      bob.append( "code",  tmp ) ;
       bob.append( "errmsg", _errorInfo.getStringField( OP_ERRDESP_FIELD) ) ;
       pBody = bob.done().objdata() ;
       bodyLen = bob.done().objsize() ;
@@ -329,11 +330,7 @@ INT32 _mongoSession::_processMsg( const CHAR *pMsg,
       _replyHeader.flags = rc ;
    }
 
-   rc = _onMsgEnd( rc, (MsgHeader *) pMsg ) ;
-   if ( SDB_OK != rc )
-   {
-      goto error ;
-   }
+   _onMsgEnd( rc, (MsgHeader *) pMsg ) ;
 
 done:
    return rc ;
@@ -442,7 +439,8 @@ INT32 _mongoSession::_reply( MsgOpReply *replyHeader,
          bsonBody.init( pBody ) ;
          if ( !bsonBody.hasField( "ok" ))
          {
-            bob.append( "ok", 1.0 ) ;
+            bob.append( "ok",
+                        0 == replyHeader->flags ? TRUE : replyHeader->flags ) ;
             bob.appendElements( bsonBody ) ;
             pBody = bob.done().objdata() ;
             reply.header.len = sizeof( mongoMsgReply ) + bob.done().objsize() ;
