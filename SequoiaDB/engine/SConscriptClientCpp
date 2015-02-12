@@ -53,13 +53,13 @@ def merge(target, source = None, env = clientCppEnv):
     pureLib = dir + '/libstaticpuresdbcpp.a'
     clientCPPLibStatic = dir + '/libstaticsdbcpp.a'
     mergeStaticLibrary(clientCPPLibStatic, ssllib_file, ssllib_file1, pureLib)
+    clientCppEnv.Install( '#/client/lib/', clientCPPLibStatic )
 
 if linux:
    staticPureSdbCPPLib = clientCppEnv.StaticLibrary('staticpuresdbcpp', clientCPPLibFiles)
    dir = os.path.dirname(staticPureSdbCPPLib[0].get_abspath())
    clientCPPLibStatic = dir + '/libstaticsdbcpp.a'
    clientCppEnv.AddPostAction(staticPureSdbCPPLib, Action(merge))
-   clientCppEnv.Install( '#/client/lib/', clientCPPLibStatic )
 
 #Header files
 clientCppEnv.Install( '#/client/include/', "client/client.hpp" )
