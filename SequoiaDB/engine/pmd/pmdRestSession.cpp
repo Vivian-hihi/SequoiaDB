@@ -386,6 +386,7 @@ namespace engine
          if ( pmdGetKRCB()->isCBValue( SDB_CB_OMSVC ) )
          {
             // response will send in this function ;
+            pmdGetThreadEDUCB()->resetInfo( EDU_INFO_ERROR ) ;
             rc = _processOMRestMsg( command, pFilePath ) ;
          }
          else
