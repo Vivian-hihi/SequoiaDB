@@ -402,6 +402,10 @@
 #define CMD_NAME_INVALIDATE_CACHE            "invalidate cache"
 #define CMD_NAME_FORCE_SESSION               "force session"
 #define CMD_NAME_LIST_LOBS                   "list lobs"
+#define CMD_NAME_ATTACH_IMAGE                "attach image"
+#define CMD_NAME_DETACH_IMAGE                "detach image"
+#define CMD_NAME_ACTIVE_IMAGE                "active image"
+#define CMD_NAME_DEACTIVE_IMAGE              "deactive image"
 
 #define CMD_NAME_JSON_LOAD                   "json load"
 

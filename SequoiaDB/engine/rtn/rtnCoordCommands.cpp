@@ -34,7 +34,6 @@
 
 *******************************************************************************/
 
-#include "rtnCoord.hpp"
 #include "ossTypes.h"
 #include "ossErr.h"
 #include "msgMessage.hpp"
@@ -68,83 +67,6 @@
 using namespace bson;
 namespace engine
 {
-   // NOTE: don't define any members that will change while execute
-   //       because coordCommand-obj will be shared for different threads
-   RTN_COORD_CMD_BEGIN
-   RTN_COORD_CMD_ADD( COORD_CMD_BACKUP_OFFLINE, rtnCoordBackupOffline )
-   RTN_COORD_CMD_ADD( COORD_CMD_LIST_BACKUPS, rtnCoordListBackup )
-   RTN_COORD_CMD_ADD( COORD_CMD_REMOVE_BACKUP, rtnCoordRemoveBackup )
-   RTN_COORD_CMD_ADD( COORD_CMD_LISTGROUPS,  rtnCoordCMDListGroups )
-   RTN_COORD_CMD_ADD( COORD_CMD_LISTCOLLECTIONSPACES, rtnCoordCMDListCollectionSpace )
-   RTN_COORD_CMD_ADD( COORD_CMD_LISTCOLLECTIONS, rtnCoordCMDListCollection )
-   RTN_COORD_CMD_ADD( COORD_CMD_CREATECOLLECTIONSPACE, rtnCoordCMDCreateCollectionSpace )
-   RTN_COORD_CMD_ADD( COORD_CMD_CREATECOLLECTION, rtnCoordCMDCreateCollection )
-   RTN_COORD_CMD_ADD( COORD_CMD_ALTERCOLLECTION, rtnCoordCMDAlterCollection )
-   RTN_COORD_CMD_ADD( COORD_CMD_DROPCOLLECTION, rtnCoordCMDDropCollection )
-   RTN_COORD_CMD_ADD( COORD_CMD_DROPCOLLECTIONSPACE, rtnCoordCMDDropCollectionSpace )
-   RTN_COORD_CMD_ADD( COORD_CMD_SNAPSHOTDATABASE, rtnCoordCMDSnapshotDataBase )
-   RTN_COORD_CMD_ADD( COORD_CMD_SNAPSHOTSYSTEM, rtnCoordCMDSnapshotSystem )
-   RTN_COORD_CMD_ADD( COORD_CMD_SNAPSHOTSESSIONS, rtnCoordCMDSnapshotSessions )
-   RTN_COORD_CMD_ADD( COORD_CMD_SNAPSHOTSESSIONSCUR, rtnCoordCMDSnapshotSessionsCur )
-   RTN_COORD_CMD_ADD( COORD_CMD_SNAPSHOTCONTEXTS, rtnCoordCMDSnapshotContexts )
-   RTN_COORD_CMD_ADD( COORD_CMD_SNAPSHOTCONTEXTSCUR, rtnCoordCMDSnapshotContextsCur )
-   RTN_COORD_CMD_ADD( COORD_CMD_SNAPSHOTRESET, rtnCoordCMDSnapshotReset )
-   RTN_COORD_CMD_ADD( COORD_CMD_SNAPSHOTCOLLECTIONS, rtnCoordCMDSnapshotCollections )
-   RTN_COORD_CMD_ADD( COORD_CMD_SNAPSHOTCOLLECTIONSPACES, rtnCoordCMDSnapshotSpaces )
-   RTN_COORD_CMD_ADD( COORD_CMD_SNAPSHOTCATALOG, rtnCoordCMDSnapshotCata )
-   RTN_COORD_CMD_ADD( COORD_CMD_SNAPSHOTDBINTR, rtnCoordCMDSnapshotDBIntr )
-   RTN_COORD_CMD_ADD( COORD_CMD_SNAPSHOTSYSINTR, rtnCoordCMDSnapshotSysIntr )
-   RTN_COORD_CMD_ADD( COORD_CMD_SNAPSHOTCLINTR, rtnCoordCMDSnapshotClIntr )
-   RTN_COORD_CMD_ADD( COORD_CMD_SNAPSHOTCSINTR, rtnCoordCMDSnapshotCsIntr )
-   RTN_COORD_CMD_ADD( COORD_CMD_SNAPSHOTCTXINTR, rtnCoordCMDSnapshotCtxIntr )
-   RTN_COORD_CMD_ADD( COORD_CMD_SNAPSHOTCTXCURINTR, rtnCoordCMDSnapshotCtxCurIntr )
-   RTN_COORD_CMD_ADD( COORD_CMD_SNAPSHOTSESSINTR, rtnCoordCMDSnapshotSessionIntr )
-   RTN_COORD_CMD_ADD( COORD_CMD_SNAPSHOTSESSCURINTR, rtnCoordCMDSnapshotSessionCurIntr )
-   RTN_COORD_CMD_ADD( COORD_CMD_TESTCOLLECTIONSPACE, rtnCoordCMDTestCollectionSpace )
-   RTN_COORD_CMD_ADD( COORD_CMD_TESTCOLLECTION, rtnCoordCMDTestCollection )
-   RTN_COORD_CMD_ADD( COORD_CMD_CREATEGROUP, rtnCoordCMDCreateGroup )
-   RTN_COORD_CMD_ADD( COORD_CMD_REMOVEGROUP, rtnCoordCMDRemoveGroup )
-   RTN_COORD_CMD_ADD( COORD_CMD_ACTIVEGROUP, rtnCoordCMDActiveGroup )
-   RTN_COORD_CMD_ADD( COORD_CMD_CREATENODE, rtnCoordCMDCreateNode )
-   RTN_COORD_CMD_ADD( COORD_CMD_REMOVENODE, rtnCoordCMDRemoveNode )
-   RTN_COORD_CMD_ADD( COORD_CMD_UPDATENODE, rtnCoordCMDUpdateNode )
-   RTN_COORD_CMD_ADD( COORD_CMD_CREATEINDEX, rtnCoordCMDCreateIndex )
-   RTN_COORD_CMD_ADD( COORD_CMD_DROPINDEX, rtnCoordCMDDropIndex )
-   RTN_COORD_CMD_ADD( COORD_CMD_STARTUPNODE, rtnCoordCMDStartupNode )
-   RTN_COORD_CMD_ADD( COORD_CMD_SHUTDOWNNODE, rtnCoordCMDShutdownNode )
-   RTN_COORD_CMD_ADD( COORD_CMD_SHUTDOWNGROUP, rtnCoordCMDShutdownGroup )
-   RTN_COORD_CMD_ADD( COORD_CMD_GETCOUNT, rtnCoordCMDGetCount )
-   RTN_COORD_CMD_ADD( COORD_CMD_GETDATABLOCKS, rtnCoordCMDGetDatablocks )
-   RTN_COORD_CMD_ADD( COORD_CMD_GETQUERYMETA, rtnCoordCMDGetQueryMeta )
-   RTN_COORD_CMD_ADD( COORD_CMD_SPLIT, rtnCoordCMDSplit )
-   RTN_COORD_CMD_ADD( COORD_CMD_WAITTASK, rtnCoordCmdWaitTask )
-   RTN_COORD_CMD_ADD( COORD_CMD_GETINDEXES, rtnCoordCMDGetIndexes )
-   RTN_COORD_CMD_ADD( COORD_CMD_CREATECATAGROUP, rtnCoordCMDCreateCataGroup )
-   RTN_COORD_CMD_ADD( COORD_CMD_TRACESTART, rtnCoordCMDTraceStart )
-   RTN_COORD_CMD_ADD( COORD_CMD_TRACESTOP, rtnCoordCMDTraceStop )
-   RTN_COORD_CMD_ADD( COORD_CMD_TRACERESUME, rtnCoordCMDTraceResume )
-   RTN_COORD_CMD_ADD( COORD_CMD_TRACESTATUS, rtnCoordCMDTraceStatus )
-   RTN_COORD_CMD_ADD( COORD_CMD_EXPCONFIG, rtnCoordCMDExpConfig )
-   RTN_COORD_CMD_ADD( COORD_CMD_CRT_PROCEDURE, rtnCoordCMDCrtProcedure )
-   RTN_COORD_CMD_ADD( COORD_CMD_EVAL, rtnCoordCMDEval )
-   RTN_COORD_CMD_ADD( COORD_CMD_RM_PROCEDURE, rtnCoordCMDRmProcedure )
-   RTN_COORD_CMD_ADD( COORD_CMD_LIST_PROCEDURES, rtnCoordCMDListProcedures )
-   RTN_COORD_CMD_ADD( COORD_CMD_DEFAULT, rtnCoordDefaultCommand )
-   RTN_COORD_CMD_ADD( COORD_CMD_LINK, rtnCoordCMDLinkCollection )
-   RTN_COORD_CMD_ADD( COORD_CMD_UNLINK, rtnCoordCMDUnlinkCollection )
-   RTN_COORD_CMD_ADD( COORD_CMD_LIST_TASKS, rtnCoordCmdListTask )
-   RTN_COORD_CMD_ADD( COORD_CMD_CANCEL_TASK, rtnCoordCmdCancelTask )
-   RTN_COORD_CMD_ADD( COORD_CMD_SET_SESS_ATTR, rtnCoordCMDSetSessionAttr )
-   RTN_COORD_CMD_ADD( COORD_CMD_LIST_DOMAINS, rtnCoordCMDListDomains )
-   RTN_COORD_CMD_ADD( COORD_CMD_CREATE_DOMAIN, rtnCoordCMDCreateDomain )
-   RTN_COORD_CMD_ADD( COORD_CMD_DROP_DOMAIN, rtnCoordCMDDropDomain )
-   RTN_COORD_CMD_ADD( COORD_CMD_ALTER_DOMAIN, rtnCoordCMDAlterDomain )
-   RTN_COORD_CMD_ADD( COORD_CMD_LIST_CS_IN_DOMAIN, rtnCoordCMDListCSInDomain )
-   RTN_COORD_CMD_ADD( COORD_CMD_LIST_CL_IN_DOMAIN, rtnCoordCMDListCLInDomain )
-   RTN_COORD_CMD_ADD( COORD_CMD_INVALIDATE_CACHE, rtnCoordCMDInvalidateCache )
-   RTN_COORD_CMD_ADD( COORD_CMD_LIST_LOBS, rtnCoordCMDListLobs )
-   RTN_COORD_CMD_END
-
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCOM_PROCCATREPLY, "rtnCoordCommand::processCatReply" )
    INT32 rtnCoordCommand::processCatReply( MsgOpReply *pReply,
                                            CoordGroupList &groupLst )
@@ -3678,7 +3600,6 @@ namespace engine
       pCreateReq->header.routeID.value = 0;
       pCreateReq->header.TID = cb->getTID();
       pCreateReq->header.opCode = MSG_CAT_CREATE_GROUP_REQ;
-      REPLY_QUE replyQue;
 
       rc = executeOnCataGroup ( (CHAR*)pCreateReq, pRouteAgent, cb ) ;
       if ( rc )
@@ -3734,7 +3655,6 @@ namespace engine
       forward->header.TID = cb->getTID();
       forward->header.opCode = MSG_CAT_RM_GROUP_REQ;
       CoordGroupInfoPtr group;
-      REPLY_QUE replyQue;
 
       rc = msgExtractQuery( pReceiveBuffer, &flag, &pCommandName,
                             &numToSkip, &numToReturn, &pQuery,
