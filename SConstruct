@@ -20,6 +20,7 @@ import imp
 import types
 import re
 import shutil
+import subprocess
 import urllib
 import urllib2
 import stat
@@ -51,7 +52,6 @@ options_topass = {}
 def mergeStaticLibrary(target, *sources):
     if not sys.platform.startswith('linux'):
         raise Exception('mergeStaticLibrary currently only support linux')
-    cwd = os.getcwd()
     if not os.path.isabs(target):
         raise Exception('target must be a absolute path: ' + target)
     path = os.path.dirname(target)
@@ -64,24 +64,28 @@ def mergeStaticLibrary(target, *sources):
         os.remove(target)
     subdir = path + '/' + file[0:file.index(".a")] + '.objs'
     if os.path.exists(subdir):
-        shutile.rmtree(subdir)
+        shutil.rmtree(subdir)
     os.mkdir(subdir)
-    os.chdir(subdir)
+    #print("current directory is " + os.getcwd())
     print("create objs directory: " + subdir )
     for s in sources:
         if not os.path.isabs(s):
             raise Exception('source must be a absolute path: ' + s)
         if not os.path.exists(s):
             raise Exception('source not exists: ' + s)
-        os.system("ar x " + s)
         print("extract objs from " + s)
-    os.chdir(cwd)
+        cmd = "ar x " + s
+        print(cmd)
+        subprocess.check_call(cmd, shell=True)
+        cmd = "mv `ar t " + s + "` " + subdir
+        print(cmd)
+        subprocess.check_call(cmd, shell=True)
     cmd = "ar cr " + target + " " + subdir + "/*.o"
     print(cmd)
-    os.system(cmd)
+    subprocess.check_call(cmd, shell=True)
     cmd = "ranlib " + target
     print(cmd)
-    os.system(cmd)
+    subprocess.check_call(cmd, shell=True)
     shutil.rmtree(subdir)
     print("remove objs directory: " + subdir)
 

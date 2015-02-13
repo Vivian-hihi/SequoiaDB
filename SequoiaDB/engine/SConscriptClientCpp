@@ -48,7 +48,7 @@ clientCPPLib = clientCppEnv.SharedLibrary('sdbcpp', clientCPPLibFiles)
 clientCppEnv.Install( '#/client/lib/', clientCPPLib )
 
 #Static Library
-dir = os.getcwd()
+dir = ''
 def merge(target, source = None, env = clientCppEnv):
     pureLib = dir + '/libstaticpuresdbcpp.a'
     clientCPPLibStatic = dir + '/libstaticsdbcpp.a'
