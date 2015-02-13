@@ -467,43 +467,6 @@ namespace bson {
         return def;
     }
 
-    int compareBigEndianMillis( unsigned long long l, unsigned long long r )
-    {
-        unsigned l_i    = 0 ;
-        unsigned l_secs = 0 ;
-        l_i    = *(unsigned *)( (char *)&l ) ;
-        l_secs = *(unsigned *)( (char *)&l + sizeof(unsigned) ) ;
-
-        unsigned r_i    = 0 ;
-        unsigned r_secs = 0 ;
-        r_i    = *(unsigned *)( (char *)&r ) ;
-        r_secs = *(unsigned *)( (char *)&r + sizeof(unsigned) ) ;
-
-        if ( l_secs < r_secs )
-        {
-           return -1 ;
-        }
-        else if ( l_secs == r_secs )
-        {
-           if ( l_i < r_i )
-           {
-              return -1 ;
-           }
-           else if ( l_i == r_i )
-           {
-              return 0 ;
-           }
-           else
-           {
-              return 1 ;
-           }
-        }
-        else
-        {
-           return 1 ;
-        }
-    }
-
     /* wo = "well ordered" */
     /* TODO(jbenet): does this belong here or in bson-inl.h?
     int BSONElement::woCompare( const BSONElement &e,
@@ -539,15 +502,21 @@ namespace bson {
         case Bool:
             return *l.value() - *r.value();
         case Timestamp:
+        {
+            OpTime l_optime( l.date() ) ;
+            OpTime r_optime( r.date() ) ;
+            if ( l_optime < r_optime )
+            {
+               return -1 ;
+            }
+
+            return l_optime == r_optime ? 0 : 1 ;
+        }
         case Date:
         {
-#ifdef SDB_BIG_ENDIAN
-            return compareBigEndianMillis( l.date().millis, r.date().millis ) ;
-#else
             if ( l.date() < r.date() )
                 return -1;
             return l.date() == r.date() ? 0 : 1;
-#endif
         }
         case NumberLong:
             if( r.type() == NumberLong ) {
