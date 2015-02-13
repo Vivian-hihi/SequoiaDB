@@ -9657,6 +9657,8 @@ retry:
       pmdKRCB *pKrcb = pmdGetKRCB();
       CoordCB *pCoordcb = pKrcb->getCoordCB();
       netMultiRouteAgent *pRouteAgent = pCoordcb->getRouteAgent();
+      GROUP_VEC gpVec ;
+      BSONObj obj ;
       
       replyHeader.header.messageLength = sizeof( MsgOpReply );
       replyHeader.header.opCode        = MSG_BS_QUERY_RES;
@@ -9691,6 +9693,16 @@ retry:
       {
          rc = SDB_SYS ;
          PD_LOG( PDERROR, "unexpected error happened:%s", e.what() ) ;
+         goto error ;
+      }
+
+      /// if we do not update all groups, we may can't find catalog's address --yunwu.
+      obj = BSON( CAT_GROUPNAME_NAME << gpName ) ;
+      rc = rtnCoordGetAllGroupList( cb, gpVec,
+                                    &obj, FALSE, TRUE ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to update group info:%d", rc ) ;
          goto error ;
       }
 
