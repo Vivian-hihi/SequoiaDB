@@ -3,7 +3,7 @@
 <head>
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
-<title>SequoiaDB: sdbclient::_sdbCursor Class Reference</title>
+<title>SequoiaDB: sdbclient::_sdbLob Class Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -81,29 +81,56 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="namespacesdbclient.html">sdbclient</a></li><li class="navelem"><a class="el" href="classsdbclient_1_1__sdbCursor.html">_sdbCursor</a></li>  </ul>
+<li class="navelem"><a class="el" href="namespacesdbclient.html">sdbclient</a></li><li class="navelem"><a class="el" href="classsdbclient_1_1__sdbLob.html">_sdbLob</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
   <div class="summary">
 <a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="classsdbclient_1_1__sdbCursor-members.html">List of all members</a>  </div>
+<a href="classsdbclient_1_1__sdbLob-members.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">sdbclient::_sdbCursor Class Reference<span class="mlabels"><span class="mlabel">abstract</span></span></div>  </div>
+<div class="title">sdbclient::_sdbLob Class Reference<span class="mlabels"><span class="mlabel">abstract</span></span></div>  </div>
 </div><!--header-->
 <div class="contents">
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a7bd199e784c6776216193fab19a18060"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a7bd199e784c6776216193fab19a18060"></a>
-virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>next</b> (bson::BSONObj &amp;obj)=0</td></tr>
-<tr class="separator:a7bd199e784c6776216193fab19a18060"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae52e9b5d7241c2f34d6b32dfc1d02980"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae52e9b5d7241c2f34d6b32dfc1d02980"></a>
-virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>current</b> (bson::BSONObj &amp;obj)=0</td></tr>
-<tr class="separator:ae52e9b5d7241c2f34d6b32dfc1d02980"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab10965c11ca931b4059df6d639f7cb17"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab10965c11ca931b4059df6d639f7cb17"></a>
+<tr class="memitem:a910dd95492b9a62b26c9deac3b591015"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a910dd95492b9a62b26c9deac3b591015"></a>
 virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>close</b> ()=0</td></tr>
-<tr class="separator:ab10965c11ca931b4059df6d639f7cb17"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="separator:a910dd95492b9a62b26c9deac3b591015"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a32a823a5429c5f1ee504df042c817c27"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a32a823a5429c5f1ee504df042c817c27"></a>
+virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>read</b> (UINT32 len, CHAR *buf, UINT32 *read)=0</td></tr>
+<tr class="separator:a32a823a5429c5f1ee504df042c817c27"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac511e750c4d56540c52d74fea5e38602"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac511e750c4d56540c52d74fea5e38602"></a>
+virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>write</b> (const CHAR *buf, UINT32 len)=0</td></tr>
+<tr class="separator:ac511e750c4d56540c52d74fea5e38602"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5c19e240f077df8190ae5448dc49f92c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a5c19e240f077df8190ae5448dc49f92c"></a>
+virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>seek</b> (SINT64 size, SDB_LOB_SEEK whence)=0</td></tr>
+<tr class="separator:a5c19e240f077df8190ae5448dc49f92c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afb6fe54520ce74432b8e97249921991e"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="afb6fe54520ce74432b8e97249921991e"></a>
+virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>isClosed</b> (BOOLEAN &amp;flag)=0</td></tr>
+<tr class="separator:afb6fe54520ce74432b8e97249921991e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a44b35d217c2a5d4760c4bbdf5155164a"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a44b35d217c2a5d4760c4bbdf5155164a"></a>
+virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>getOid</b> (bson::OID &amp;oid)=0</td></tr>
+<tr class="separator:a44b35d217c2a5d4760c4bbdf5155164a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4d8a69f5ace0cbc562e3e9ce9987a175"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a4d8a69f5ace0cbc562e3e9ce9987a175"></a>
+virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>getSize</b> (SINT64 *size)=0</td></tr>
+<tr class="separator:a4d8a69f5ace0cbc562e3e9ce9987a175"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adddee2e9fa5c16f54c2c6d129ca50c67"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="adddee2e9fa5c16f54c2c6d129ca50c67"></a>
+virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>getCreateTime</b> (UINT64 *millis)=0</td></tr>
+<tr class="separator:adddee2e9fa5c16f54c2c6d129ca50c67"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a772c2e334fe89bbdbf74b9cdf3cd7e1d"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a772c2e334fe89bbdbf74b9cdf3cd7e1d"></a>
+virtual BOOLEAN&#160;</td><td class="memItemRight" valign="bottom"><b>isClosed</b> ()=0</td></tr>
+<tr class="separator:a772c2e334fe89bbdbf74b9cdf3cd7e1d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac1c463d775ea72ca279ffe5d12288e2f"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac1c463d775ea72ca279ffe5d12288e2f"></a>
+virtual bson::OID&#160;</td><td class="memItemRight" valign="bottom"><b>getOid</b> ()=0</td></tr>
+<tr class="separator:ac1c463d775ea72ca279ffe5d12288e2f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a60c1fb09bc7236d86ca220365c77b645"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a60c1fb09bc7236d86ca220365c77b645"></a>
+virtual SINT64&#160;</td><td class="memItemRight" valign="bottom"><b>getSize</b> ()=0</td></tr>
+<tr class="separator:a60c1fb09bc7236d86ca220365c77b645"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa62ad2ca9369ebe8bb82e18919cf92e2"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aa62ad2ca9369ebe8bb82e18919cf92e2"></a>
+virtual UINT64&#160;</td><td class="memItemRight" valign="bottom"><b>getCreateTime</b> ()=0</td></tr>
+<tr class="separator:aa62ad2ca9369ebe8bb82e18919cf92e2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <hr/>The documentation for this class was generated from the following file:<ul>
 <li>E:/sequoiadb/client/include/<a class="el" href="client_8hpp_source.html">client.hpp</a></li>
@@ -111,7 +138,7 @@ virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>close</b> ()
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Feb 13 2015 18:53:56 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Fri Feb 13 2015 18:53:57 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.2
 </small></address>
