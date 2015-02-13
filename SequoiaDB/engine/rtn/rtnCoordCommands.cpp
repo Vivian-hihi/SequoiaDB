@@ -9707,7 +9707,7 @@ retry:
                                pRouteAgent, cb, TRUE ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to execute on data group[%s], rc:%d",
+         PD_LOG( PDERROR, "failed to execute on group[%s], rc:%d",
                  gpName, rc ) ;
          goto error ;
       }
