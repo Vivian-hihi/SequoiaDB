@@ -479,7 +479,7 @@ INT32 _ossSocket::recv ( CHAR *pMsg, INT32 len,
 
          if ( rc <= 0 )
          {
-            if ( SSL_AGAIN == rc )
+            if ( SSL_AGAIN == rc || SSL_TIMEOUT == rc)
             {
                rc = SDB_TIMEOUT ;
                goto error;

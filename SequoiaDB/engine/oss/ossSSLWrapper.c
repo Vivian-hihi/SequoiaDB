@@ -32,8 +32,14 @@
 
 #include "ossSSLWrapper.h"
 #include "oss.h"
+#include "ossUtil.h"
 #include <openssl/err.h>
 #include <openssl/ssl.h>
+#ifdef _WINDOWS
+#pragma comment(lib, "Ws2_32.lib")
+#else
+#include <errno.h>
+#endif
 
 SDB_EXTERN_C_START
 
@@ -393,7 +399,18 @@ static INT32 _ossSSLCheckStatus(SSLHandle* handle, INT32 status)
       }
       break;
    default:
+#ifdef _WINDOWS
+      {
+         /* OPENSSL considers WSAETIMEDOUT as an error */
+         INT32 lastError = WSAGetLastError();
+         if (WSAETIMEDOUT == lastError)
+         {
+            ret = SSL_TIMEOUT;
+         }
+      }
+#else
       ret = SSL_ERROR;
+#endif
    }
 
    return ret;
@@ -445,6 +462,7 @@ INT32 ossSSLAccept(SSLHandle* handle)
  * >0: the number of bytes actually read from SSL connection
  * SSL_AGAIN: need to read again
  * SSL_ERROR: failed, call ossSSLGetError() & ossSSLGetErrorMessage() for reason
+ * SSL_TIMEOUT: only in windows
  */
 INT32 ossSSLRead(SSLHandle* handle, void* buf, INT32 num)
 {
@@ -470,6 +488,7 @@ INT32 ossSSLRead(SSLHandle* handle, void* buf, INT32 num)
  * >0: the number of bytes actually read from SSL connection
  * SSL_AGAIN: need to read again
  * SSL_ERROR: failed, call ossSSLGetError() & ossSSLGetErrorMessage() for reason
+ * SSL_TIMEOUT: only in windows
  *
  * NOTE: in constrast to the ossSSLRead(), the data in the SSL buffer is unmodified
  * after the ossSSLPeek() opertaion
@@ -498,6 +517,7 @@ INT32 ossSSLPeek(SSLHandle* handle, void* buf, INT32 num)
  * >0: the number of bytes actually write to SSL connection
  * SSL_AGAIN: need to write again
  * SSL_ERROR: failed, call ossSSLGetError() & ossSSLGetErrorMessage() for reason
+ * SSL_TIMEOUT: only in windows
  */
 INT32 ossSSLWrite(SSLHandle* handle, const void* buf, INT32 num)
 {
@@ -571,7 +591,15 @@ char* ossSSLGetErrorMessage(INT32 error)
       }
       else
       {
-         errorMsg = "the SSL BIO reported an I/O error";
+         INT32 lastError;
+#ifdef _WINDOWS
+         lastError = WSAGetLastError();
+#else
+         lastError = errno;
+#endif
+         ossSnprintf(buf, _MSG_LEN, "the SSL BIO reported an I/O error, "
+            "system errno: %d", lastError);
+         errorMsg = buf;
       }
       break;
    case SSL_ERROR_SSL:

@@ -38,6 +38,7 @@
 #define SSL_OK       (0)
 #define SSL_ERROR    (-1)
 #define SSL_AGAIN    (-2)
+#define SSL_TIMEOUT  (-3)
 
 #ifdef _DEBUG
 #include <assert.h>
