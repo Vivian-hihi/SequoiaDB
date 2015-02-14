@@ -41,7 +41,7 @@
 #include "../../bson/bsonobjbuilder.h"
 
 DECLARE_COMMAND_VAR( insert )
-DECLARE_COMMAND_VAR( remove )
+DECLARE_COMMAND_VAR( delete )
 DECLARE_COMMAND_VAR( update )
 DECLARE_COMMAND_VAR( query )
 DECLARE_COMMAND_VAR( getMore )
@@ -62,7 +62,7 @@ DECLARE_COMMAND_VAR( dropIndexes )
 DECLARE_COMMAND_VAR( getIndexes )
 
 ///< getLastError
-DECLARE_COMMAND_VAR( getLastError )
+DECLARE_COMMAND_VAR( getlasterror )
 DECLARE_COMMAND_VAR( ismaster )
 
 command::command( const CHAR *cmdName )
@@ -88,6 +88,8 @@ INT32 insertCommand::convertRequest( mongoParser &parser,
                                      std::vector<msgBuffer*> &sdbMsgs )
 {
    INT32 rc            = SDB_OK ;
+   INT32 nToSkip       = 0 ;
+   INT32 nToReturned   = 0 ;
    MsgHeader *header   = NULL ;
    MsgOpInsert *insert = NULL ;
    command *cmd        = NULL ;
@@ -105,6 +107,7 @@ INT32 insertCommand::convertRequest( mongoParser &parser,
       if ( NULL != cmd )
       {
          rc = SDB_OPTION_NOT_SUPPORT ;
+         parser.opType = OP_CMD_NOT_SUPPORTED ;
          goto error ;
       }
       // re-parse mongo msg
@@ -143,10 +146,10 @@ INT32 insertCommand::convertRequest( mongoParser &parser,
       insert->flags |= FLG_INSERT_CONTONDUP ;
    }
 
-   insert->nameLength = parser.nsLen ;
-   parser.skip( insert->nameLength + 1 ) ;
+   parser.skip( parser.nsLen + 1 ) ;
    if ( parser.withCmd )
    {
+      parser.skip( sizeof( nToSkip ) + sizeof( nToReturned ) ) ;
       if ( !parser.more() )
       {
          rc = SDB_INVALIDARG ;
@@ -155,9 +158,11 @@ INT32 insertCommand::convertRequest( mongoParser &parser,
 
       parser.nextObj( obj ) ;
       // makeup cs.cl
+      fullname += parser.csName ;
       fullname += "." ;
       fullname += obj.getStringField( "insert" ) ;
       sdbMsg->write( fullname.c_str() , fullname.length() + 1, TRUE ) ;
+      insert->nameLength = fullname.length() ;
       e = obj.getField( "documents" ) ;
       if ( bson::Array != e.type() )
       {
@@ -196,8 +201,8 @@ error:
 }
 
 //////////////////////////////////////////////////////////////////////////
-///< removeCommand
-INT32 removeCommand::convertRequest( mongoParser &parser,
+///< deleteCommand
+INT32 deleteCommand::convertRequest( mongoParser &parser,
                                      std::vector<msgBuffer*> &sdbMsgs )
 {
    INT32 rc            = SDB_OK ;
@@ -442,6 +447,7 @@ INT32 queryCommand::convertRequest( mongoParser &parser,
       if ( NULL == cmd )
       {
          rc = SDB_OPTION_NOT_SUPPORT ;
+         parser.opType = OP_CMD_NOT_SUPPORTED ;
          goto error ;
       }
       // re-parse mongo msg
@@ -691,6 +697,7 @@ INT32 createCommand::convertRequest( mongoParser &parser,
    if ( NULL == cmd )
    {
       rc = SDB_OPTION_NOT_SUPPORT ;
+      parser.opType = OP_CMD_NOT_SUPPORTED ;
       goto error ;
    }
 
@@ -1237,8 +1244,8 @@ error:
 }
 
 //////////////////////////////////////////////////////////////////////////
-///< getLastErrorCommand
-INT32 getLastErrorCommand::convertRequest( mongoParser &parser,
+///< getlasterrorCommand
+INT32 getlasterrorCommand::convertRequest( mongoParser &parser,
                                            std::vector<msgBuffer*> &sdbMsgs )
 {
    parser.opType = OP_CMD_GETLASTERROR ;

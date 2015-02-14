@@ -134,7 +134,7 @@ public:                                                              \
 ////////////////////////////////////////////////////////////////
 ///< declare all commands supported
 DECLARE_COMMAND( insert )
-DECLARE_COMMAND( remove )
+DECLARE_COMMAND( delete )
 DECLARE_COMMAND( update )
 DECLARE_COMMAND( query )
 DECLARE_COMMAND( getMore )
@@ -154,9 +154,9 @@ DECLARE_COMMAND( createIndex )
 DECLARE_COMMAND( dropIndexes )
 DECLARE_COMMAND( getIndexes )
 
-///< getLastError
-DECLARE_COMMAND( getLastError )
-///< isMaster
+///< getlasterror
+DECLARE_COMMAND( getlasterror )
+///< ismaster
 DECLARE_COMMAND( ismaster )
 ///< end of declare commands
 
