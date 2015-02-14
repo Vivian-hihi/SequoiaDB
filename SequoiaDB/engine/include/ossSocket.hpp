@@ -145,7 +145,8 @@ class _ossSocket : public SDBObject
                    INT32 &receivedLen,
                    INT32 timeout = OSS_SOCKET_DFT_TIMEOUT,
                    INT32 flags = 0,
-                   BOOLEAN block = TRUE ) ;
+                   BOOLEAN block = TRUE,
+                   BOOLEAN recvRawData = FALSE ) ;
 
       INT32 connect ( INT32 timeout = OSS_SOCKET_DFT_TIMEOUT ) ;
       void  close () ;

@@ -365,7 +365,7 @@ namespace engine
             INT32 receivedLen ;
             MsgHeader header ;
             INT32 rc = _pClientSock->recv( (CHAR*)&header , sizeof(header),
-                                           receivedLen, 0, MSG_PEEK ) ;
+                                           receivedLen, 0, MSG_PEEK, TRUE, TRUE ) ;
             if ( ( rc >= (INT32)sizeof(header)
                    && MSG_BS_DISCONNECT == header.opCode )
                  || SDB_NETWORK_CLOSE == rc || SDB_NETWORK == rc )

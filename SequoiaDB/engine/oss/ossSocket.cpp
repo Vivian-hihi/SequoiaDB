@@ -444,7 +444,7 @@ BOOLEAN _ossSocket::isConnected ()
 INT32 _ossSocket::recv ( CHAR *pMsg, INT32 len,
                          INT32 &receivedLen,
                          INT32 timeout, INT32 flags,
-                         BOOLEAN block )
+                         BOOLEAN block, BOOLEAN recvRawData )
 {
    INT32 rc = SDB_OK ;
    SDB_ASSERT ( pMsg, "message is NULL" ) ;
@@ -464,7 +464,7 @@ INT32 _ossSocket::recv ( CHAR *pMsg, INT32 len,
    }
 
 #ifdef SDB_SSL
-   if ( NULL != _sslHandle )
+   if ( NULL != _sslHandle && !recvRawData )
    {
       while ( len > 0 )
       {
