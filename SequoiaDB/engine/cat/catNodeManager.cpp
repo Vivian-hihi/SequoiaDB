@@ -2005,6 +2005,7 @@ namespace engine
       const CHAR *hostName  = NULL ;
       const CHAR *svcName   = NULL ;
       BOOLEAN forced        = FALSE ;
+      BOOLEAN isLocalHost   = FALSE ;
 
       BSONObj groupInfo ;
       BSONObj groupsObj ;
@@ -2042,15 +2043,7 @@ namespace engine
             rc = SDB_CAT_NOT_LOCALCONN ;
             goto error ;
          }
-      }
-
-      // can not del catalog group node
-      if ( !forced &&
-           0 == ossStrcmp( groupName, CATALOG_GROUPNAME ) )
-      {
-         rc = SDB_CATA_RM_CATA_FORBIDDEN ;
-         PD_LOG( PDERROR, "Can not remove %s nodes", CATALOG_GROUPNAME ) ;
-         goto error ;
+         isLocalHost = TRUE ;
       }
 
       // get group info
@@ -2079,6 +2072,17 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Remove node[%s:%s] from group[%s] failed, "
                    "rc: %d", hostName, svcName, groupInfo.toString().c_str(),
                    rc ) ;
+
+      if ( 0 == ossStrcmp( groupName, CATALOG_GROUPNAME ) )
+      {
+         MsgRouteID localID = pmdGetNodeID() ;
+         if ( removeNode == localID.columns.nodeID )
+         {
+            rc = SDB_CATA_RM_CATA_FORBIDDEN ;
+            PD_LOG( PDERROR, "can not remove primary catalog. reelect first" ) ;
+            goto error ;
+         }
+      }
 
       // node num judge
       if ( 1 == groupsObj.nFields() && !forced )

@@ -4219,13 +4219,6 @@ namespace engine
          }
          groupName = ele.String() ;
 
-         if ( 0 == groupName.compare( CATALOG_GROUPNAME ) )
-         {
-            PD_LOG( PDERROR, "can not remove catalog node." ) ;
-            rc = SDB_CATA_RM_CATA_FORBIDDEN ;
-            goto error ;
-         }
-
          ele = rInfo.getField( FIELD_NAME_HOST ) ;
          if ( ele.eoo() || String != ele.type() )
          {
@@ -4318,6 +4311,9 @@ namespace engine
       {
          goto error ;
       }
+
+      /// do not care rc.
+      rtnCataChangeNtyToAllNodes( cb ) ;
    done:
       replyHeader.flags = rc ;
       PD_TRACE_EXITRC ( SDB_RTNCOCMDRMN_EXE, rc ) ;
