@@ -10,9 +10,11 @@
 		<delete dir="${deploy.path}/hlt/drivers_testcases/" failonerror="false" />
 		<delete dir="${build.testcases}/C/build_test"  failonerror="false" />
 		<delete dir="${build.testcases}/CPP/build_test"  failonerror="false" />
+		<delete dir="${build.testcases}/mongoc/build_test" failonerror="false" />
 
 		<mkdir dir="${build.testcases}/C/build_test" />
 		<mkdir dir="${build.testcases}/CPP/build_test" />
+		<mkdir dir="${build.testcases}/mongoc/build_test" />
 		<mkdir dir="${deploy.path}/hlt/drivers_testcases/C/build" />
 		<mkdir dir="${deploy.path}/hlt/drivers_testcases/C/lib" />
 		<mkdir dir="${deploy.path}/hlt/drivers_testcases/CPP/build" />
@@ -20,6 +22,8 @@
 		<mkdir dir="${deploy.path}/hlt/drivers_testcases/python" />
 		<mkdir dir="${deploy.path}/hlt/drivers_testcases/java/build" />
 		<mkdir dir="${deploy.path}/hlt/drivers_testcases/java/lib" />
+		<mkdir dir="${deploy.path}/hlt/drivers_testcases/mongoc/build" />
+		<mkdir dir="${deploy.path}/hlt/drivers_testcases/mongoc/lib" />
 		
 		<copy file="${lib.dir}/java/sequoiadb.jar" tofile="${deploy.path}/hlt/drivers_testcases/java/lib/sequoiadb.jar" />
 		<echo message="Clean driver env completed." />
@@ -108,6 +112,14 @@
 			<fileset dir="${build.testcases}/../lob_testcases/build_test" includes="*" />
 		</copy>
 		<echo message="Complete scons the lob testcases" />
+		
+		<echo message="Begin to scons the mongoc testcases" />
+		<echo message="Exec: scons ${build.testcases}/mongoc " />
+		<exec executable="scons" dir="${build.testcases}/mongoc" failonerror="true" />
+		<copy todir="${deploy.path}/hlt/drivers_testcases/mongoc/build">
+			<fileset dir="${build.testcases}/mongoc/build_test" includes="*" />
+		</copy>
+		<echo message="Complete scons the mongoc testcases" />
 
 		<echo message="Begin to copy the python testcases" />
 		<copy todir="${deploy.path}/hlt/drivers_testcases/python">
