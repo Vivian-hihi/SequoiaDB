@@ -612,7 +612,7 @@ namespace engine
                rc = SDB_INVALIDARG ;
                goto error ;
             }
-            _level = ( CLS_REELECTION_LEVEL )e.Number() ;
+            _level = ( CLS_REELECTION_LEVEL )((INT32)e.Number()) ;
          }
       }
       catch ( std::exception &e )
