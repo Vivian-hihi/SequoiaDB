@@ -131,9 +131,9 @@ namespace engine
 
             _setHandshakeReceived() ;
          }
+#ifdef SDB_SSL
          else if ( _isAwaitingHandshake() )
          {
-#ifdef SDB_SSL
             if ( pmdGetOptionCB()->useSSL() )
             {
                rc = _socket.doSSLHandshake ( (CHAR*)&msgSize, sizeof(UINT32) ) ;
@@ -152,13 +152,13 @@ namespace engine
                break ;
             }
 
-            continue;
-#endif /* SDB_SSL */
+            /*continue;
 
             PD_LOG( PDERROR, "SSL feature not available in this build" ) ;
             rc = SDB_NETWORK ;
-            break ;
+            break ;*/
          }
+#endif /* SDB_SSL */
          // error msg
          else if ( msgSize < sizeof(MsgHeader) || msgSize > SDB_MAX_MSG_LENGTH )
          {
