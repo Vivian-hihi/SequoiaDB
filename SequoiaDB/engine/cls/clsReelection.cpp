@@ -163,6 +163,10 @@ namespace engine
       }
    done:
       _level = CLS_REELECTION_LEVEL_NONE ;
+      if ( 0 < _event.waitNum() )
+      {
+         signal() ;
+      }
       PD_TRACE_EXITRC( SDB__CLSREELECTION_RUN, rc ) ;
       return rc ;
    error:
