@@ -282,8 +282,12 @@
             <permissions>6755</permissions>
         </changePermissions>
         <runProgram>
-            <program>echo -n MD5= &gt;&gt; out.log;/usr/bin/md5sum ${installer_pathname} | cut -c 1-32 &gt;&gt; /etc/default/sequoiadb</program>
-            <programArguments></programArguments>
+            <program>echo</program>
+            <programArguments> -n MD5= &gt;&gt; /etc/default/sequoiadb</programArguments>
+        </runProgram>
+        <runProgram>
+            <program>${installdir}/bin/sdb</program>
+            <programArguments> -s "Hash.fileMD5('${installer_pathname}')" &gt;&gt; /etc/default/sequoiadb</programArguments>
         </runProgram>
     </postInstallationActionList>
     <preUninstallationActionList>
