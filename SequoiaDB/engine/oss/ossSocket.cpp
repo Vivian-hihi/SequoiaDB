@@ -468,7 +468,15 @@ INT32 _ossSocket::recv ( CHAR *pMsg, INT32 len,
    {
       while ( len > 0 )
       {
-         rc = ossSSLRead ( _sslHandle, pMsg, len ) ;
+         if ( flags & MSG_PEEK )
+         {
+            rc = ossSSLPeek ( _sslHandle, pMsg, len ) ;
+         }
+         else
+         {
+            rc = ossSSLRead ( _sslHandle, pMsg, len ) ;
+         }
+
          if ( rc <= 0 )
          {
             if ( SSL_AGAIN == rc )
@@ -488,6 +496,11 @@ INT32 _ossSocket::recv ( CHAR *pMsg, INT32 len,
          receivedLen += rc ;
          len -= rc ;
          pMsg += rc ;
+
+         if ( flags & MSG_PEEK )
+         {
+            goto done;
+         }
 
          // non-block
          if ( !block )
@@ -711,6 +724,7 @@ void _ossSocket::close ()
       if ( NULL != _sslHandle )
       {
          ossSSLShutdown ( _sslHandle ) ;
+         ossSSLFreeHandle ( &_sslHandle ) ;
       }
 #endif
 

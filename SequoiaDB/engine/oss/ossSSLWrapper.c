@@ -467,6 +467,34 @@ INT32 ossSSLRead(SSLHandle* handle, void* buf, INT32 num)
 }
 
 /* Return value:
+ * >0: the number of bytes actually read from SSL connection
+ * SSL_AGAIN: need to read again
+ * SSL_ERROR: failed, call ossSSLGetError() & ossSSLGetErrorMessage() for reason
+ *
+ * NOTE: in constrast to the ossSSLRead(), the data in the SSL buffer is unmodified
+ * after the ossSSLPeek() opertaion
+ */
+INT32 ossSSLPeek(SSLHandle* handle, void* buf, INT32 num)
+{
+   INT32 status;
+   INT32 ret = SSL_OK;
+
+   SSL_ASSERT(NULL != handle);
+   SSL_ASSERT(NULL != handle->ssl);
+   SSL_ASSERT(NULL != buf);
+
+   status = SSL_peek(handle->ssl, buf, num);
+   ret = _ossSSLCheckStatus(handle, status);
+
+   if (SSL_OK != ret)
+   {
+      status = ret;
+   }
+
+   return status;
+}
+
+/* Return value:
  * >0: the number of bytes actually write to SSL connection
  * SSL_AGAIN: need to write again
  * SSL_ERROR: failed, call ossSSLGetError() & ossSSLGetErrorMessage() for reason
