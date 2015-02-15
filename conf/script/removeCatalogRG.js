@@ -20,15 +20,11 @@
 @modify list:
    2014-7-26 Zhaobo Tan  Init
 @parameter
-   BUS_JSON: the format is: { "AuthUser": "", "AuthPasswd": "" }
-   SYS_JSON: the format is: { "TaskID: 2", "TmpCoordSvcName": "10000" }
+   BUS_JSON: the format is: { "AuthUser": "", "AuthPasswd": "" } ;
+   SYS_JSON: the format is: { "TaskID": 2, "TmpCoordSvcName": "10000" } ;
 @return
    RET_JSON: the format is: { "errno": 0, "detail": "" }
 */
-
-// println
-//var BUS_JSON = { "AuthUser": "", "AuthPasswd": "" } ;
-//var SYS_JSON = { "TaskID": 2, "TmpCoordSvcName": "10000" } ;
 
 var FILE_NAME_REMOVE_CATALOG_RG = "removeCatalogRG.js" ;
 var RET_JSON = new removeRGResult() ;
@@ -143,7 +139,6 @@ function main()
    }
    
    _final() ;
-println("RET_JSON is: " + JSON.stringify(RET_JSON) ) ;
    return RET_JSON ;
 }
 

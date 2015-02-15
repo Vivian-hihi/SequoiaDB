@@ -26,10 +26,6 @@
    RET_JSON: the format is: { "errno": 0, "detail": "" }
 */
 
-//var BUS_JSON = { "SdbUser": "sdbadmin", "SdbPasswd": "sdbadmin", "SdbUserGroup": "sdbadmin_group", "User": "root", "Passwd": "sequoiadb", "SshPort": "22", "InstallHostName": "rhel64-test8", "InstallSvcName": "11810", "InstallPath": "/opt/sequoiadb/database/coord", "InstallConfig": { "diaglevel": 3, "role": "coord", "logfilesz": 64, "logfilenum": 20, "transactionon": "false", "preferedinstance": "A", "numpagecleaners": 1, "pagecleaninterval": 10000, "hjbuf": 128, "logbuffsize": 1024, "maxprefpool": 200, "maxreplsync": 10, "numpreload": 0, "sortbuf": 512, "syncstrategy": "none" } } ;
-
-//var SYS_JSON = { "TaskID": 2, "TmpCoordSvcName": "10000" } ;
-
 var FILE_NAME_INSTALL_COORD = "installCoord.js" ;
 var RET_JSON     = new installNodeResult() ;
 var rc           = SDB_OK ;
@@ -262,7 +258,6 @@ function main()
    }
    
    _final() ;
-println("RET_JSON is: " + JSON.stringify(RET_JSON) ) ;
    return RET_JSON ;
 }
 

@@ -21,16 +21,13 @@
 @modify list:
    2014-7-26 Zhaobo Tan  Init
 @parameter
-   BUS_JSON: the format is: { "HostName": "rhel64-test8", "IP": "192.168.20.165", "User": "root", "Passwd": "sequoiadb", "InstallPath": "/opt/sequoiadb", "SshPort": "22" }
+   BUS_JSON: the format is: { "HostName": "rhel64-test8", "IP": "192.168.20.165", "User": "root", "Passwd": "sequoiadb","InstallPath": "/opt/sequoiadb", "SshPort": "22" } ;
    SYS_JSON: {}
    ENV_JSON: {}
    OTHER_JSON: {}
 @return
    RET_JSON: the format is: { "errno": 0, "detail": "" }
 */
-
-//println
-//var BUS_JSON = { "HostName": "rhel64-test8", "IP": "192.168.20.165", "User": "root", "Passwd": "sequoiadb","InstallPath": "/opt/sequoiadb", "SshPort": "22" } ;
 
 var FILE_NAME_REMOVE_HOST = "removeHost.js" ;
 var RET_JSON       = new removeHostResult() ;
@@ -184,7 +181,6 @@ function main()
    }
    
    _final() ;
-println("RET_JSON is: " + JSON.stringify(RET_JSON) ) ;
    // return the result
    return RET_JSON ;
 }

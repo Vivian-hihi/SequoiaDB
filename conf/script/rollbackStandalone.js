@@ -20,15 +20,11 @@
 @modify list:
    2014-7-26 Zhaobo Tan  Init
 @parameter
-   BUS_JSON: the format is: { "UninstallHostName": "rhel64-test8", "UninstallSvcName": "11820" }
-   SYS_JSON: the format is: { "TaskID": 1 }
+   BUS_JSON: the format is: { "UninstallHostName": "susetzb", "UninstallSvcName": "20000" } ;
+   SYS_JSON: the format is: { "TaskID": 3 } ;
 @return
    RET_JSON: the format is: { "errno":0, "detail":"" }
 */
-
-// println
-//var BUS_JSON = { "UninstallHostName": "susetzb", "UninstallSvcName": "20000" } ;
-//var SYS_JSON = { "TaskID": 3 } ;
 
 var RET_JSON = new rollbackNodeResult() ;
 var rc       = SDB_OK ;
@@ -161,7 +157,6 @@ function main()
    }
    
    _final() ;
-println("RET_JSON is: " + JSON.stringify(RET_JSON) ) ;
    return RET_JSON ;
 }
 

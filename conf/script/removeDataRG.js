@@ -20,16 +20,11 @@
 @modify list:
    2014-7-26 Zhaobo Tan  Init
 @parameter
-   BUS_JSON: the format is: { "AuthUser": "", "AuthPasswd": "", "UninstallGroupNames": ["group1", "group2"] }
-   SYS_JSON: the format is: { "TaskID": 1, "TmpCoordSvcName": "10000" }
+   BUS_JSON: the format is: { "AuthUser": "", "AuthPasswd": "", "UninstallGroupNames": ["group1", "group2"] } ;
+   SYS_JSON: the format is: { "TaskID": 1, "TmpCoordSvcName": "10000" } ;
 @return
    RET_JSON: the format is: { "errrno": 0, "detail": "" }
 */
-
-// println
-//var BUS_JSON = { "AuthUser": "", "AuthPasswd": "", "UninstallGroupNames": ["group1", "group2"] } ;
-//var SYS_JSON = { "TaskID": 1, "TmpCoordSvcName": "10000" } ;
-
 
 var FILE_NAME_REMOVE_DATA_RG = "removeDataRG.js" ;
 var RET_JSON = new removeRGResult() ;
@@ -157,7 +152,6 @@ function main()
    }
 
    _final() ;
-println("RET_JSON is: " + JSON.stringify(RET_JSON) ) ;
    return RET_JSON ;
 }
 

@@ -22,17 +22,13 @@
 @modify list:
    2014-7-26 Zhaobo Tan  Init
 @parameter
-   BUS_JSON: the format is: { "HostInfo": [ { "IP": "192.168.20.165", "HostName": "rhel64-test8", "User": "root", "Passwd": "sequoiadb", "InstallPath": "/opt/sequoiadb", "SshPort": "22", "AgentService": "11790" }, { "IP": "192.168.20.166", "HostName": "rhel64-test9", "User": "root", "Passwd": "sequoiadb", "InstallPath": "/opt/sequoiadb", "SshPort": "22", "AgentService": "11790" } ] }
+   BUS_JSON: the format is: { "HostInfo": [ { "IP": "192.168.20.42", "HostName": "susetzb", "User": "root", "Passwd": "sequoiadb", "InstallPath": "/opt/sequoiadb", "SshPort": "22", "AgentService": "11790" }, { "IP": "192.168.20.165", "HostName": "rhel64-test8", "User": "root", "Passwd": "sequoiadb", "InstallPath": "/opt/sequoiadb", "SshPort": "22", "AgentService": "11790" } ] } ;
    SYS_JSON:
    ENV_JSON:
    OTHER_JSON:
 @return
    RET_JSON: the format is:  { "HostInfo": [ { "IP": "192.168.20.165", "errno": 0, "detail": "" }, { "IP": "192.168.20.166", "errno": 0, "detail": "" } ] }
 */
-
-//println
-//var BUS_JSON = { "HostInfo": [ { "IP": "192.168.20.42", "HostName": "susetzb", "User": "root", "Passwd": "sequoiadb", "InstallPath": "/opt/sequoiadb", "SshPort": "22", "AgentService": "11790" }, { "IP": "192.168.20.165", "HostName": "rhel64-test8", "User": "root", "Passwd": "sequoiadb", "InstallPath": "/opt/sequoiadb", "SshPort": "22", "AgentService": "11790" } ] } ;
-
 
 var FILE_NAME_POST_CHECK_HOST = "postCheckHost.js" ;
 var RET_JSON       = new Object() ;
@@ -115,7 +111,7 @@ function main()
    }
 
    PD_LOG( arguments, PDEVENT, FILE_NAME_POST_CHECK_HOST, "Finish post-checking host" ) ;
-println("RET_JSON is: " + JSON.stringify(RET_JSON)) ;
+
    // return the result
    return RET_JSON ;
 }

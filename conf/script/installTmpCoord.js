@@ -29,16 +29,6 @@
    RET_JSON: the format is: { "Port", "10000" }
 */
 
-// println
-//var BUS_JSON = { "clustername": "c1", "businessname": "b1", "usertag": "tmpCoord", "CataAddr": [] };
-//var BUS_JSON = { "clustername": "", "businessname": "", "usertag": "", "CataAddr": [] };
-
-//var SYS_JSON = { "TaskID": 17 };
-
-//var BUS_JSON = { "clustername": "c1", "businessname": "b1", "usertag": "tmpCoord", "CataAddr": [ { "HostName": "rhel64-test8", "SvcName": "60003" }, { "HostName": "rhel64-test9", "SvcName": "61003" } ] };
-//var SYS_JSON = { "TaskID": 2 }
-
-
 var FILE_NAME_INSTALL_TEMPORARY_COORD = "installTmpCoord.js" ;
 var RET_JSON = new installTmpCoordResult() ;
 var rc       = SDB_OK ;
@@ -713,7 +703,6 @@ function main()
    }
 
    _final() ;
-println( "RET_JSON is: " + JSON.stringify(RET_JSON) ) ;
    return RET_JSON ;
 }
 

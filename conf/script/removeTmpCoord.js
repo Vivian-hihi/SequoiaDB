@@ -20,15 +20,12 @@
 @modify list:
    2014-7-26 Zhaobo Tan  Init
 @parameter
-   BUS_JSON: the format is: { "TmpCoordSvcName": "10000" }
-   SYS_JSON: the format is: { "TaskID": 5 }
+   BUS_JSON: the format is: { "TmpCoordSvcName": "10000" } ;
+   SYS_JSON: the format is: { "TaskID": 5 } ;
    ENV_JSON:
 @return
    RET_JSON: the format is: {}
 */
-
-//var BUS_JSON = { "TmpCoordSvcName": "10000" } ;
-//var SYS_JSON = { "TaskID": 5 } ;
 
 var FILE_NAME_REMOVE_TEMPORARY_COORD = "removeTmpCoord.js" ;
 var RET_JSON = new removeTmpCoordResult() ;
@@ -211,7 +208,6 @@ function main()
    }
    
    _final() ;
-println( "RET_JSON is: " + JSON.stringify(RET_JSON) ) ;
    return RET_JSON ;
 }
 

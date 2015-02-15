@@ -21,14 +21,11 @@
    2014-7-26 Zhaobo Tan  Init
 @parameter
    BUS_JSON: the format is: {}
-   SYS_JSON: the format is: { "TaskID": 1, "TmpCoordSvcName": "10000" }
+   SYS_JSON: the format is: { "TaskID": 2, "TmpCoordSvcName": "10000" } ;
    ENV_JSON:
 @return
    RET_JSON: the format is: { "errrno": 0, "detail": "" }
 */
-
-// println
-//var SYS_JSON = { "TaskID": 2, "TmpCoordSvcName": "10000" } ;
 
 var FILE_NAME_ROLLBACK_CATALOG = "rollbackCatalog.js" ;
 var RET_JSON     = new removeRGResult() ;
@@ -181,7 +178,6 @@ function main()
    }
 
    _final() ;
-println("RET_JSON is: " + JSON.stringify(RET_JSON) ) ;
    return RET_JSON ;
 }
 

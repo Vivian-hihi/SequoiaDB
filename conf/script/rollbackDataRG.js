@@ -20,16 +20,12 @@
 @modify list:
    2014-7-26 Zhaobo Tan  Init
 @parameter
-   BUS_JSON: the format is:  { "UninstallGroupNames": [ "group1", "group2" ] }
-   SYS_JSON: the format is: { "TaskID": 2, "TmpCoordSvcName": "10000" }
+   BUS_JSON: the format is: { "UninstallGroupNames": [ "group1", "group2" ] } ;
+   SYS_JSON: the format is: { "TaskID": 2, "TmpCoordSvcName": "10000" } ;
    ENV_JSON:
 @return
    RET_JSON: the format is: { "errno": 0, "detail": "" }
 */
-
-// println
-//var BUS_JSON = { "UninstallGroupNames": [ "group1", "group2" ] } ;
-//var SYS_JSON = { "TaskID": 2, "TmpCoordSvcName": "10000" } ;
 
 var FILE_NAME_ROLLBACK_DATA_RG = "rollbackDataRG.js" ;
 var RET_JSON = new removeRGResult() ;
@@ -209,7 +205,6 @@ function main()
    }
 
    _final() ;
-println("RET_JSON is: " + JSON.stringify(RET_JSON) ) ;
    return RET_JSON ;
 
 }

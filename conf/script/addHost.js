@@ -20,20 +20,13 @@
 @modify list:
    2014-7-26 Zhaobo Tan  Init
 @parameter
-   BUS_JSON: the format is: {"SdbUser":"sdbadmin","SdbPasswd":"sdbadmin","SdbUserGroup":"sdbadmin_group","InstallPacket":"/opt/sequoiadb/packet/sequoiadb-1.10-linux_x86_64-installer.run","HostInfo":{"IP":"192.168.20.166","HostName":"rhel64-test9","User":"root","Passwd":"sequoiadb","SshPort":"22","AgentService":"11790","InstallPath":"/opt/sequoiadb"}}
+   BUS_JSON: the format is: {"SdbUser":"sdbadmin","SdbPasswd":"sdbadmin","SdbUserGroup":"sdbadmin_group","InstallPacket":"/opt/sequoiadb/packet/sequoiadb-1.10-linux_x86_64-installer.run","HostInfo":{"IP":"192.168.20.42","HostName":"susetzb","User":"root","Passwd":"sequoiadb","SshPort":"22","AgentService":"11790","InstallPath":"/opt/sequoiadb"} } ;
    SYS_JSON: task id, the format is: { "TaskID":1 } ;
    ENV_JSON: {}
    OTHER_JSON: {}
 @return
    RET_JSON: the format is: {"errno":0,"detail":"","IP":"192.168.20.166"}
 */
-
-// println
-//var BUS_JSON = {"SdbUser":"sdbadmin","SdbPasswd":"sdbadmin","SdbUserGroup":"sdbadmin_group","InstallPacket":"/opt/sequoiadb/packet/sequoiadb-1.10-linux_x86_64-installer.run","HostInfo":{"IP":"192.168.20.42","HostName":"susetzb","User":"root","Passwd":"sequoiadb","SshPort":"22","AgentService":"11790","InstallPath":"/opt/sequoiadb"} } ;
-
-// var BUS_JSON = {"SdbUser":"sdbadmin","SdbPasswd":"sdbadmin","SdbUserGroup":"sdbadmin_group","InstallPacket":"/opt/sequoiadb/packet/sequoiadb-1.10-linux_x86_64-installer.run","HostInfo":{"IP":"192.168.20.165","HostName":"rhel64-test8","User":"root","Passwd":"sequoiadb","SshPort":"22","AgentService":"11790","InstallPath":"/opt/sequoiadb"} } ;
-
-// var SYS_JSON = { "TaskID":1 } ;
 
 // global
 var FILE_NAME_ADD_HOST = "addHost.js" ;
@@ -331,7 +324,6 @@ function _needToInstall( ssh, install_packet, install_path )
       return true ;
    }
 
-println("1111111111111111111111111111111")
    // 2. get pre-check result
    try
    {
@@ -346,7 +338,6 @@ println("1111111111111111111111111111111")
       return true ;
    }
 
-println("2222222222222222222222222222222222")
    // 3. analysis
    // check whether remote install packet's md5 is the same with local install
    // packet's md5 or not
@@ -388,17 +379,15 @@ println("2222222222222222222222222222222222")
    {
       return true ;
    }
-println("local md5: " + local_md5 + ", remote_md5: " + remote_md5) ;
    if ( local_md5 != remote_md5 )
    {
       errMsg = sprintf( "Local db packet's md5: ?, remote db packet's md5: ?, need to install",
                         local_md5, remote_md5 ) ;
       PD_LOG2( task_id, arguments, PDWARNING, FILE_NAME_ADD_HOST, errMsg ) ;
-// TODO: wait for help
+// TODO: wait for MD5 in /etc/default/sequoiadb
 // println
 //      return true ;
    }
-println("3333333333333333333333333333333")
 
    return false ;
 }
@@ -613,7 +602,6 @@ function main()
       
    // 4. push tool packet
    _pushToolPacket( ssh ) ;
-println("Finish pushing tool packet")   
 
    // 5. check whether need to install db packet or not
    flag = _needToInstall( ssh, installPacket, installPath ) ;
@@ -625,7 +613,6 @@ println("Finish pushing tool packet")
       _final() ;
       return RET_JSON ;
    }
-println("Need to install")
 
    // 6. push db packet to remote host
    _pushDBPacket( ssh, installPacket ) ;
@@ -661,7 +648,6 @@ println("Need to install")
    }
    
    _final() ;
-println("RET_JSON is: " + JSON.stringify(RET_JSON)) ;
    // return the result
    return RET_JSON ;
 }
