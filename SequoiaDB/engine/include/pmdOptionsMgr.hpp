@@ -456,10 +456,10 @@ namespace engine
          OSS_INLINE BOOLEAN useDirectIOInLob() const { return _directIOInLob ; }
          OSS_INLINE BOOLEAN sparseFile() const { return _sparseFile ; }
          OSS_INLINE UINT8 weight() const { return (UINT8)_weight ; }
+         OSS_INLINE BOOLEAN authEnabled() const { return _auth ; }
 #ifdef SDB_SSL
          OSS_INLINE BOOLEAN useSSL() const { return _useSSL ; }
 #endif
-
       protected: // rdx members
          CHAR        _krcbDbPath[ OSS_MAX_PATHSIZE + 1 ] ;
          CHAR        _krcbIndexPath[ OSS_MAX_PATHSIZE + 1 ] ;
@@ -508,6 +508,7 @@ namespace engine
          BOOLEAN     _directIOInLob ;
          BOOLEAN     _sparseFile ;
          UINT32      _weight ;
+         BOOLEAN     _auth ;
 #ifdef SDB_SSL
          BOOLEAN     _useSSL;
 #endif

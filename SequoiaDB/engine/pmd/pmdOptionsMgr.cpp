@@ -1455,6 +1455,10 @@ namespace engine
                    FALSE, TRUE, FALSE, FALSE ) ;
 #endif
 
+      // --auth
+      rdxBooleanS( pEX, PMD_OPTION_AUTH, _auth,
+                   FALSE, FALSE, TRUE, FALSE ) ;
+
       // end map
 
       return getResult () ;

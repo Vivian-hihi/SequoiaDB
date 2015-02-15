@@ -1161,16 +1161,17 @@ namespace engine
       BSONObj obj ;
       MsgAuthReply reply ;
 
+      if ( !_pAuthCB->needAuthenticate() )
+      {
+         goto done ;
+      }
+
       if ( !pmdIsPrimary() && !_isActived )
       {
          rc = SDB_CLS_NOT_PRIMARY ;
          goto error ;
       }
 
-      if ( !_pAuthCB->needAuthenticate() )
-      {
-         goto done ;
-      }
       rc = extractAuthMsg( &(msg->header), obj ) ;
       if ( SDB_OK != rc )
       {
