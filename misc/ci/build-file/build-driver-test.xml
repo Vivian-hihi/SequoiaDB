@@ -113,14 +113,19 @@
 		</copy>
 		<echo message="Complete scons the lob testcases" />
 		
-		<echo message="Begin to scons the mongoc testcases" />
-		<echo message="Exec: scons ${build.testcases}/mongoc " />
-		<exec executable="scons" dir="${build.testcases}/mongoc" failonerror="true" />
-		<copy todir="${deploy.path}/hlt/drivers_testcases/mongoc/build">
-			<fileset dir="${build.testcases}/mongoc/build_test" includes="*" />
-		</copy>
-		<echo message="Complete scons the mongoc testcases" />
-
+		<if>
+			<equals arg1="${os.arch}" arg2="amd64" />
+			<then>
+				<echo message="Begin to scons the mongoc testcases" />
+				<echo message="Exec: scons ${build.testcases}/mongoc " />
+				<exec executable="scons" dir="${build.testcases}/mongoc" failonerror="true" />
+				<copy todir="${deploy.path}/hlt/drivers_testcases/mongoc/build">
+					<fileset dir="${build.testcases}/mongoc/build_test" includes="*" />
+				</copy>
+				<echo message="Complete scons the mongoc testcases" />
+			</then>
+		</if>
+		
 		<echo message="Begin to copy the python testcases" />
 		<copy todir="${deploy.path}/hlt/drivers_testcases/python">
 			<fileset dir="${build.testcases}/python" includes="**/*" />
