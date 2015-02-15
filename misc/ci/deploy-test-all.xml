@@ -60,7 +60,7 @@
 			<else>
 				<foreach target="Deploy-And-Test-Case" param="deploy.case.fullname">
 					<path>
-						<fileset dir="${deploy.config.path}" includes="${test.environment}-${deploy.conffile.wildcard}.xml" excludes="basic-[h3][g2][d3]-tp1.xml"/>
+						<fileset dir="${deploy.config.path}" includes="${test.environment}-${deploy.conffile.wildcard}.xml" />
 					</path>
 					<param name="deploy.file.fullname" value="${WORKSPACE}/${deploy.tar.file.name}" />
 				</foreach>
