@@ -57,8 +57,8 @@ DECLARE_COMMAND_VAR( count )
 DECLARE_COMMAND_VAR( aggregate )
 
 ///< index
-DECLARE_COMMAND_VAR( createIndex )
-DECLARE_COMMAND_VAR( dropIndexes )
+DECLARE_COMMAND_VAR( createIndexes )
+DECLARE_COMMAND_VAR( deleteIndexes )
 DECLARE_COMMAND_VAR( getIndexes )
 
 ///< getLastError
@@ -101,7 +101,7 @@ INT32 insertCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
 
    if ( parser.withIndex )
    {
-      cmd = commandMgr::instance()->findCommand( "createIndex" ) ;
+      cmd = commandMgr::instance()->findCommand( "createIndexes" ) ;
       if ( NULL != cmd )
       {
          rc = SDB_OPTION_NOT_SUPPORT ;
@@ -1005,8 +1005,8 @@ INT32 aggregateCommand::convertRequest( mongoParser &parser,
 }
 
 //////////////////////////////////////////////////////////////////////////
-///< createIndexCommand
-INT32 createIndexCommand::convertRequest( mongoParser &parser,
+///< createIndexesCommand
+INT32 createIndexesCommand::convertRequest( mongoParser &parser,
                                           msgBuffer &sdbMsg )
 {
    INT32 rc           = SDB_OK ;
@@ -1015,9 +1015,14 @@ INT32 createIndexCommand::convertRequest( mongoParser &parser,
    MsgHeader *header  = NULL ;
    MsgOpQuery *index  = NULL ;
    bson::BSONObj cond ;
+   bson::BSONObj subObj ;
+   bson::BSONElement e ;
+   std::vector< bson::BSONElement > objList ;
+   std::vector< bson::BSONElement >::const_iterator cit ;
    bson::BSONObjBuilder obj ;
    bson::BSONObjBuilder indexobj ;
    const std::string cmdStr = "$create index" ;
+   std::string fullname ;
 
    parser.opType = OP_ENSURE_INDEX ;
    sdbMsg.reverse( sizeof ( MsgOpQuery ) ) ;
@@ -1035,35 +1040,88 @@ INT32 createIndexCommand::convertRequest( mongoParser &parser,
    index->padding = 0 ;
    index->flags = 0 ;
 
+   fullname = parser.csName ;
    parser.skip( parser.nsLen + 1 ) ;
-   parser.readNumber( sizeof( INT32 ), ( CHAR * )&nToSkip ) ;
-   index->numToSkip = 0 ;
-   parser.readNumber( sizeof( INT32 ), ( CHAR * )&nToReturn ) ;
-   index->numToReturn = nToReturn <= 0 ? -1 : nToReturn ;
-
-   if ( !parser.more() )
+   if ( parser.withCmd )
    {
-      rc = SDB_INVALIDARG ;
-      goto error ;
+      parser.skip( sizeof( nToSkip ) + sizeof( nToReturn ) ) ;
+      //parser.readNumber( sizeof( INT32 ), ( CHAR * )&nToSkip ) ;
+      index->numToSkip = 0 ;
+      //parser.readNumber( sizeof( INT32 ), ( CHAR * )&nToReturn ) ;
+      index->numToReturn = nToReturn <= 0 ? -1 : nToReturn ;
+      if ( !parser.more() )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }//createIndexes
+
+      parser.nextObj( cond ) ;
+
+      index->nameLength = cmdStr.length() ;
+      sdbMsg.write( cmdStr.c_str(), index->nameLength + 1, TRUE ) ;
+      fullname += "." ;
+      fullname += cond.getStringField( "createIndexes" ) ;
+      obj.append( "Collection", fullname.c_str() ) ;
+      e = cond.getField( "indexes" ) ;
+      if ( bson::Array != e.type() )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      objList = e.Array() ;
+      cit = objList.begin() ;
+      while ( objList.end() != cit )
+      {
+         subObj = (*cit).Obj() ;
+         indexobj.append( "key", subObj.getObjectField( "key" ) ) ;
+         indexobj.append( "name", subObj.getStringField( "name" ) ) ;
+         indexobj.append("unique", subObj.getBoolField( "unique" ) ) ;
+         obj.append( "Index", indexobj.obj() ) ;
+         sdbMsg.write( obj.done(), TRUE ) ;
+         ++cit ;
+      }
    }
+   else
+   {
+      parser.readNumber( sizeof( INT32 ), ( CHAR * )&nToSkip ) ;
+      index->numToSkip = 0 ;
+      parser.readNumber( sizeof( INT32 ), ( CHAR * )&nToReturn ) ;
+      index->numToReturn = nToReturn <= 0 ? -1 : nToReturn ;
 
-   parser.nextObj( cond ) ;
-   obj.append( "Collection", cond.getField( "ns" ) ) ;
-   indexobj.append( "key", cond.getObjectField( "key" ) ) ;
-   indexobj.append( "name", cond.getStringField( "name" ) ) ;
-   indexobj.append("unique", cond.getBoolField( "unique" ) ) ;
-   indexobj.append("enforce", false ) ;
-   obj.append( "Index", indexobj.done() ) ;
+      index->nameLength = cmdStr.length() ;
+      sdbMsg.write( cmdStr.c_str(), index->nameLength + 1, TRUE ) ;
 
-   index->nameLength = cmdStr.length() ;
-   sdbMsg.write( cmdStr.c_str(), index->nameLength + 1, TRUE ) ;
-   sdbMsg.write( obj.done(), TRUE ) ;
+      if ( !parser.more() )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
 
+      parser.nextObj( cond ) ;
+      e = cond.getField( "documents" ) ;
+      if ( bson::Array != e.type() )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      objList = e.Array() ;
+      cit = objList.begin() ;
+      while ( objList.end() != cit )
+      {
+         subObj = (*cit).Obj() ;
+         obj.append( "Collection", subObj.getStringField( "ns" ) ) ;
+         indexobj.append( "key", subObj.getObjectField( "key" ) ) ;
+         indexobj.append( "name", subObj.getStringField( "name" ) ) ;
+         indexobj.append("unique", subObj.getBoolField( "unique" ) ) ;
+         obj.append( "Index", indexobj.obj() ) ;
+         sdbMsg.write( obj.done(), TRUE ) ;
+         ++cit ;
+      }
+   }
    // fill other bson with empty
    sdbMsg.write( fap::emptyObj, TRUE ) ;
    sdbMsg.write( fap::emptyObj, TRUE ) ;
    sdbMsg.write( fap::emptyObj, TRUE ) ;
-
    // fill the msg len of sdb
    header->messageLength = sdbMsg.size() ;
 
@@ -1074,8 +1132,8 @@ error:
 }
 
 //////////////////////////////////////////////////////////////////////////
-///< dropIndexesCommand
-INT32 dropIndexesCommand::convertRequest( mongoParser &parser,
+///< deleteIndexesCommand
+INT32 deleteIndexesCommand::convertRequest( mongoParser &parser,
                                           msgBuffer &sdbMsg )
 {
    INT32 rc              = SDB_OK ;
@@ -1122,7 +1180,7 @@ INT32 dropIndexesCommand::convertRequest( mongoParser &parser,
 
    // makeup cs.collection
    fullname += "." ;
-   fullname += cond.getField( "deleteIndexes" ) ;
+   fullname += cond.getStringField( "deleteIndexes" ) ;
 
    indexObj.append( "", cond.getStringField( "index" ) ) ;
    obj.append( "Collection", fullname.c_str() ) ;

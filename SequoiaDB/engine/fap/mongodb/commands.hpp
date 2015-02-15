@@ -149,8 +149,8 @@ DECLARE_COMMAND( count )
 DECLARE_COMMAND( aggregate )
 
 ///< index
-DECLARE_COMMAND( createIndex )
-DECLARE_COMMAND( dropIndexes )
+DECLARE_COMMAND( createIndexes )
+DECLARE_COMMAND( deleteIndexes )
 DECLARE_COMMAND( getIndexes )
 
 ///< getlasterror

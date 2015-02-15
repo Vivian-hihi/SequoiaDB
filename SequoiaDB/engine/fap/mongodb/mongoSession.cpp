@@ -302,27 +302,37 @@ INT32 _mongoSession::_processMsg( const CHAR *pMsg )
       _replyHeader.flags = rc ;
    }
 
-   // when SDB_OK != rc, or msg is with $cmd, need to reply
+   // when msg is with $cmd, need to reply
    // so value of bodyLen cannot be 0
-   if ( ( rc || _converter->getParser().withCmd ) && ( 0 == bodyLen ) )
+   if ( _converter->getParser().withCmd )
    {
-      _errorInfo = engine::utilGetErrorBson( rc,
-                   _pEDUCB->getInfo( engine::EDU_INFO_ERROR ) ) ;
-
-      tmp = _errorInfo.getIntField( OP_ERRNOFIELD ) ;
-      if ( SDB_OK != rc )
+      if ( 0 == bodyLen )
       {
-         bob.append( "ok", FALSE ) ;
-         bob.append( "code",  tmp ) ;
-         bob.append( "errmsg", _errorInfo.getStringField( OP_ERRDESP_FIELD) ) ;
-      }
-      else
-      {
-         bob.append( "ok", TRUE ) ;
-      }
-      _contextBuff = engine::rtnContextBuf( bob.obj() ) ;
+         _errorInfo = engine::utilGetErrorBson( rc,
+                      _pEDUCB->getInfo( engine::EDU_INFO_ERROR ) ) ;
 
-      _replyHeader.numReturned = 1 ;
+         tmp = _errorInfo.getIntField( OP_ERRNOFIELD ) ;
+         if ( SDB_OK != rc )
+         {
+            bob.append( "ok", FALSE ) ;
+            bob.append( "code",  tmp ) ;
+            bob.append( "errmsg", _errorInfo.getStringField( OP_ERRDESP_FIELD) ) ;
+         }
+         else
+         {
+            bob.append( "ok", TRUE ) ;
+         }
+         _contextBuff = engine::rtnContextBuf( bob.obj() ) ;
+
+         _replyHeader.numReturned = 1 ;
+         _replyHeader.startFrom = 0 ;
+         _replyHeader.flags = rc ;
+      }
+   }
+   else
+   {
+      _replyHeader.contextID = -1 ;
+      _replyHeader.numReturned = 0 ;
       _replyHeader.startFrom = 0 ;
       _replyHeader.flags = rc ;
    }

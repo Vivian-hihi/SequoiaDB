@@ -86,7 +86,7 @@ namespace fap
       void buildNotSupportReplyMsg( engine::rtnContextBuf &buff )
       {
          bson::BSONObjBuilder bob ;
-         bob.append( "ok", 1.0 ) ;
+         bob.append( "ok", 0 ) ;
          bob.append( "msg", "Sorry, the command has not support now" ) ;
          buff = engine::rtnContextBuf( bob.obj() ) ;
       }
