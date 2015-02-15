@@ -297,7 +297,7 @@ namespace engine
       INT32 recvLen  = 0 ;
 
       return _socket.recv( buff, sizeof( buff ), recvLen,
-                           timeout, MSG_PEEK ) ;
+                           timeout, MSG_PEEK, TRUE, TRUE ) ;
    }
 
    /*
