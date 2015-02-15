@@ -122,6 +122,8 @@ namespace engine
       public:
          INT32 updateProgressToTask( INT32 serialNum, InstDBResult &instResult,
                                      BOOLEAN needToNotify = FALSE ) ;
+         INT32 updateProgressToTask( INT32 errNum, const CHAR *pDetail,
+                                     const CHAR *pRole, OMA_TASK_STATUS status ) ;
          string getTmpCoordSvcName() ;
          void notifyUpdateProgress() ;
          string getDataRGToInst() ;
@@ -138,6 +140,7 @@ namespace engine
          void  _buildUpdateTaskObj( BSONObj &retObj ) ;
          INT32 _updateProgressToOM() ;
          BOOLEAN _isTaskFinish() ;
+         BOOLEAN _needToRollback() ;
          void  _setRetErr( INT32 errNum ) ;
 
       private:
@@ -149,7 +152,7 @@ namespace engine
          INT32 _rollbackStandalone() ;
          INT32 _rollbackCatalog() ;
          INT32 _rollbackCoord() ;
-         INT32 _rollbackDataRG () ;
+         INT32 _rollbackDataRG() ;
          INT32 _installCatalog() ;
          INT32 _installCoord() ;
          INT32 _installDataRG() ;
@@ -199,6 +202,8 @@ namespace engine
       public:
          INT32 updateProgressToTask( INT32 serialNum, RemoveDBResult &instResult,
                                      BOOLEAN needToNotify = FALSE ) ;
+         INT32 updateProgressToTask( INT32 errNum, const CHAR *pDetail,
+                                     const CHAR *pRole, OMA_TASK_STATUS status ) ;
          string getTmpCoordSvcName() ;
 
       private:
@@ -212,9 +217,6 @@ namespace engine
          void  _buildUpdateTaskObj( BSONObj &retObj ) ;
          INT32 _updateProgressToOM() ;
          void  _setRetErr( INT32 errNum ) ;
-
-      private:
-         INT32 _updateFlow( const CHAR *pRole, OMA_TASK_STATUS status ) ;
 
       private:
          INT32 _saveTmpCoordInfo( BSONObj &info ) ;
