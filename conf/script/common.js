@@ -111,3 +111,18 @@ function removeTmpCoordResult()
    this.errno                     = SDB_OK ;
    this.detail                    = "" ;
 }
+
+function tmpCoordOption()
+{
+   this.type                      = "db" ;
+   this.role                      = "coord" ;
+   this.mode                      = "run" ;
+   this.expand                    = true ;
+}
+
+function tmpCoordMather()
+{
+   this.clustername               = "" ;
+   this.businessname              = "" ;
+   this.usertag                   = "" ;
+}

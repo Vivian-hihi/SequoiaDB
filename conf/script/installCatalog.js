@@ -169,8 +169,8 @@ function _createCatalogNode( db, hostName, svcName, installPath, config )
       {
          try
          {
-            PD_LOG( arguments, PDDEBUG, FILE_NAME_INSTALL_CATALOG,
-                    sprintf( "Create catalog group passes arguments: hostName[?], svcName[?], config[?]",
+            PD_LOG2( task_id, arguments, PDDEBUG, FILE_NAME_INSTALL_CATALOG,
+                     sprintf( "Create catalog group passes arguments: hostName[?], svcName[?], installPath[?], config[?]",
                              hostName, svcName, installPath, JSON.stringify(config) ) ) ;
             rg = db.createCataRG( hostName, svcName, installPath, config ) ;
             return ;
@@ -198,6 +198,9 @@ function _createCatalogNode( db, hostName, svcName, installPath, config )
    // catalog has been created
    try
    {
+      PD_LOG2( task_id, arguments, PDDEBUG, FILE_NAME_INSTALL_CATALOG,
+               sprintf( "Create catalog node passes arguments: hostName[?], svcName[?], installPath[?], config[?]",
+                        hostName, svcName, installPath, JSON.stringify(config) ) ) ;
       node = rg.createNode( hostName, svcName, installPath, config ) ;
    }
    catch ( e )

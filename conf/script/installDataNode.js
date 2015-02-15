@@ -136,6 +136,9 @@ function _createDataNode( db, hostName, svcName,
    // create data node
    try
    {
+      PD_LOG2( task_id, arguments, PDDEBUG, FILE_NAME_INSTALL_DATA_NODE,
+               sprintf( "Create data node passes arguments: hostName[?], svcName[?], installPath[?], config[?]",
+                       hostName, svcName, installPath, JSON.stringify(config) ) ) ;
       node = rg.createNode( hostName, svcName, installPath, config ) ;
    }
    catch ( e )

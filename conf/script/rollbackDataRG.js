@@ -88,6 +88,8 @@ function _removeGroup( db, name )
    {
       if ( SDB_CLS_GRP_NOT_EXIST == e )
       {
+         PD_LOG2( task_id, arguments, PDEVENT, FILE_NAME_ROLLBACK_DATA_RG,
+                  sprintf( "No data group[?] needs to rollback", name ) ) ;
          return ;
       }
       else

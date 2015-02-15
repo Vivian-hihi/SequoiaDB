@@ -57,6 +57,7 @@ var Distributor                  = "Distributor" ;
 var Free                         = "Free" ;
 var Freq                         = "Freq" ;
 var Filesystem                   = "Filesystem" ;
+var GroupName                    = "GroupName" ;
 var HostName                     = "HostName" ;
 var HasInstall                   = "HasInstall" ;
 var HasInstalled                 = "HasInstalled" ;

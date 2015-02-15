@@ -1103,6 +1103,7 @@ function setTaskLogFileName( task_id, host_ip )
 {
    try
    {
+      var currentWorkPath = System.getEWD() ;
       var task_dir = adaptPath( LOG_FILE_PATH + Task ) + task_id ;
       if ( false == File.exist( task_dir ) )
          File.mkdir( task_dir ) ;

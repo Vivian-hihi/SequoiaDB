@@ -59,15 +59,27 @@ catch( e )
 
 if( "LINUX" == OS_TYPE_IN_JS_LOG )
 {
-   LOG_NEW_LINE  = "\n" ;
-   LOG_FILE_PATH = "../web/log/" ;
+   var currentPath = System.getEWD() ;
+   var pos = currentPath.lastIndexOf( "/" ) ;
+   if ( currentPath.length - 1 != pos )
+      LOG_FILE_PATH = currentPath + "/../web/log/" ;
+   else
+      LOG_FILE_PATH = currentPath + "../web/log/" ;
+   
    JS_LOG_FILE   = LOG_FILE_PATH + LOG_FILE_NAME ;
+   LOG_NEW_LINE  = "\n" ;
 }
 else
 {
+   var currentPath = System.getEWD() ;
+   var pos = currentPath.lastIndexOf( "\\" ) ;
+   if ( currentPath.length - 1 != pos )
+      LOG_FILE_PATH = currentPath + "\\..\\web\\log\\" ;
+   else
+      LOG_FILE_PATH = currentPath + "..\\web\\log\\" ;
+   
+   JS_LOG_FILE  = LOG_FILE_PATH + LOG_FILE_NAME ;
    LOG_NEW_LINE = "\r\n" ;
-   LOG_FILE_PATH = "..\\web\\log\\" ;
-   JS_LOG_FILE   = LOG_FILE_PATH + LOG_FILE_NAME ;
 }
 
 // get function name and line number
@@ -260,47 +272,45 @@ function _getJsLogFile( type )
 @return void
 ***************************************************************************** */
 function _write2File( type, infoStr )
-{
+{  
+   var file            = null ;
+   var logFile         = null ;
+   var logFileFullName = "" ;
+   var currentPath     = "" ;
+   var errMsg          = "" ;
+   var pos             = -1 ;
+      
    if ( LOG_NONE == type )
    {
       print( infoStr ) ;
       return ;
    }
-   
-   var file = null ;
-   var logFile = _getJsLogFile( type ) ;
+      
    try
    {   
+   /*
+      logFile = _getJsLogFile( type ) ;
+      if ( "LINUX" == OS_TYPE_IN_JS_LOG )
+      {
+         currentPath = System.getEWD() ;
+         pos = currentPath.lastIndexOf( "/" ) ;
+         if ( currentPath.length - 1 != pos )
+            logFileFullName = currentPath + "/" + logFile ;
+         else
+            logFileFullName = currentPath + logFile ;
+      }
+      else
+      {
+         // TODO: windows
+         logFileFullName = "" ;
+      }
+      file = new File( logFileFullName ) ;
+   */
+      logFile = _getJsLogFile( type ) ;
       file = new File( logFile ) ;
    }
    catch( e )
    {
-      var cmd = null ;
-      var logFileFullName = "" ;
-      var currentPath = "" ;
-      var errMsg = "" ;
-      var pos = -1 ;
-      try
-      {
-         cmd = new Cmd() ;
-         if ( "LINUX" == OS_TYPE_IN_JS_LOG )
-         {
-            currentPath = cmd.run( "pwd" ) ;
-            // remove "\n" in the end of currentPath
-            pos = currentPath.indexOf( "\n" ) ;
-            if ( -1 != pos )
-               currentPath = currentPath.substring(0, pos) ;
-            logFileFullName = currentPath + "/" + logFile ;
-         }
-         else
-         {
-            // TODO: windows
-            logFileFullName = "" ;
-         }
-      }
-      catch( e )
-      {
-      }
       errMsg = "Failed to open log file[" + logFileFullName + "], rc: "
                + getLastError() + ", detail: " + getLastErrMsg() ;
       setLastErrMsg( errMsg ) ;

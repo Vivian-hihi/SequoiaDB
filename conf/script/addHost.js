@@ -471,7 +471,11 @@ function _installDBPacket( ssh, sdbuser, sdbpasswd, packet, path )
       cmd = OMA_PATH_TEMP_PACKET_DIR_L + packetName + option ;
       try
       {
+// TODO: ignore the exception for debug, println
+         try
+         {
          ssh.exec( cmd ) ; 
+         }catch(e){}
       }
       catch ( e )
       {
@@ -624,14 +628,12 @@ println("Finish pushing tool packet")
 println("Need to install")
 
    // 6. push db packet to remote host
-//TODO
    _pushDBPacket( ssh, installPacket ) ;
-println("Finish pushing db packet")
+   
    // 7. install db packet
    try
    {
       _installDBPacket( ssh, sdbUser, sdbPasswd, installPacket, installPath ) ;
-println("Finish install db packet")
    }
    catch ( e )
    {
@@ -643,9 +645,7 @@ println("Finish install db packet")
       // try to remove the packet
       try
       {
-//TODO:
          _uninstallDBPacket( ssh, installPath ) ;
-println("Finish uninstall db packet")
       }
       catch( e )
       {}

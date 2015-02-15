@@ -85,6 +85,8 @@ function _removeCatalogGroup( db )
    {
       if ( SDB_CLS_GRP_NOT_EXIST == e )
       {
+         PD_LOG2( task_id, arguments, PDEVENT, FILE_NAME_ROLLBACK_CATALOG,
+                  "No catalog group needs to rollback" ) ;
          return ;
       }
       else
@@ -120,6 +122,8 @@ function main()
    var tmpCoordSvcName    = null ;
    var db                 = null ;
 
+   _init() ;
+   
    try
    {
       // 1. get arguments

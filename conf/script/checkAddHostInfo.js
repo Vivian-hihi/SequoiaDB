@@ -64,7 +64,8 @@ println("task dir is: " + task_dir) ;
    {
       SYSEXPHANDLE( e ) ;
       rc = GETLASTERROR() ;
-      errMsg = sprintf( "Failed to initialize add host task[?]'s log directory", task_id ) ;
+      errMsg = sprintf( "Failed to create js log directory[?] for add host task[?]",
+                        task_dir, task_id ) ;
       PD_LOG( arguments, PDWARNING, FILE_NAME_CHECK_ADD_HOST_INFO,
               sprintf( errMsg + ", rc: ?, detail: ?", rc, GETLASTERRMSG() ) ) ;
       exception_handle( rc, errMsg ) ;

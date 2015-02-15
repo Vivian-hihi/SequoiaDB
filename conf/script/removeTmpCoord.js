@@ -112,7 +112,7 @@ function main()
          
          if ( "undefined" == typeof(tmpCoordSvcName) ||
               "" == tmpCoordSvcName )
-            exception_handle( SDB_INVALIDARG, "Invalid temporary coord service name" ) ;
+            exception_handle( SDB_INVALIDARG, sprintf( "Invalid temporary coord service name[?]", tmpCoordSvcName ) ) ;
       }
       catch( e )
       {
