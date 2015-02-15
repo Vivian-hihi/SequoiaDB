@@ -119,6 +119,8 @@
 					<property name="WORKSPACE" value="${WORKSPACE}" />
 					<property name="ci.script.file.path" value="${ci.script.file.path}" />
 					<property name="test.host.NAME" value="${test.machine.no2.basic}" />
+
+					<property name="test.log.path" value="${test.log.path}" />
 				</antfetch>
 			</sequential>
 		</for>

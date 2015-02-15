@@ -169,6 +169,8 @@
 				<param name="WORKSPACE" value="${WORKSPACE}" />
 				<param name="ci.script.file.path" value="${ci.script.file.path}" />
 				<param name="parallel.count" value="2" />
+
+				<property name="test.log.path" value="${test.log.path}" />
 			</sdbtest>
 			<sdbtest host="${test.machine.no2.basic}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${testcase.path}/js_testcases/reports" masterreports="${test.reports.path}" >
 				<param name="basic.testcase.path" value="${testcase.path}/js_testcases" />
@@ -180,6 +182,8 @@
 				<param name="WORKSPACE" value="${WORKSPACE}" />
 				<param name="ci.script.file.path" value="${ci.script.file.path}" />
 				<param name="parallel.count" value="2" />
+
+				<property name="test.log.path" value="${test.log.path}" />
 			</sdbtest>
 		</parallel>
 

@@ -69,6 +69,8 @@
 					<property name="ci.script.file.path" value="${ci.script.file.path}" />
 					<property name="test.host.NAME" value="${test.machine.no2.basic}" />
 					<property name="parallel.count" value="0" />
+
+					<property name="test.log.path" value="${test.log.path}" />
 				</ant>
 			</sequential>
 		</for>
