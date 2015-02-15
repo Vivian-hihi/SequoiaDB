@@ -62,7 +62,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__CLSREELECTION_WAIT ) ;
       UINT32 timePassed = 0 ;
-      UINT32 timeout = 60 ;
+      UINT32 timeout = 600 ;
 
       if ( CLS_REELECTION_LEVEL_NONE != _level )
       {
