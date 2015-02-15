@@ -68,12 +68,17 @@ _mongoSession::~_mongoSession()
    _resource = NULL ;
 }
 
-void _mongoSession::resetBuffers()
+void _mongoSession::_resetBuffers()
 {
    // release buff context
    if ( 0 != _contextBuff.size() )
    {
       _contextBuff.release() ;
+   }
+
+   if ( !_inBuffer.empty() )
+   {
+      _inBuffer.zero() ;
    }
 
    if ( !_outBuffer.empty() )
@@ -113,11 +118,11 @@ INT32 _mongoSession::run()
    UINT32 msgSize               = 0 ;
    // reservedFlag should not included in msg header len
    UINT32  headerLen            = sizeof( mongoMsgHeader ) - sizeof( INT32 ) ;
-   CHAR *pBuff                  = NULL ;
-   const CHAR *pBody            = NULL ;
    INT32 bodyLen                = 0 ;
    engine::pmdEDUMgr *pmdEDUMgr = NULL ;
-   std::vector< msgBuffer * >::iterator itr ;
+   CHAR *pBuff                  = NULL ;
+   const CHAR *pBody            = NULL ;
+   const CHAR *pInMsg           = NULL ;
 
    if ( !_pEDUCB )
    {
@@ -185,72 +190,60 @@ INT32 _mongoSession::run()
             break ;
          }
          pBuff[ msgSize ] = 0 ;
-
          {
             // make sure buffers are empty for coming msg
-            resetBuffers() ;
+            _resetBuffers() ;
             // convert msg first
             _converter->loadFrom( pBuff, msgSize ) ;
-            rc = _converter->convert( _inBufferVec ) ;
-            if ( SDB_OK != rc )
+            rc = _converter->convert( _inBuffer ) ;
+            if ( SDB_OK != rc && SDB_OPTION_NOT_SUPPORT != rc)
             {
-               if ( SDB_OPTION_NOT_SUPPORT == rc )
-               {
-                  // DO NOTHING, dispatch to _preProcessMsg
-               }
-               else
-               {
-                  goto error ;
-               }
+               goto error ;
             }
 
-            // handle commands not supported now
+            // handle commands before dispatched
             if ( _preProcessMsg( _converter->getParser(),
                                  _resource, _contextBuff ) )
             {
+               _pEDUCB->incEventCount() ;
                goto reply ;
             }
-            // msg needs to process
-            itr = _inBufferVec.begin() ;
-            for ( ; itr != _inBufferVec.end() ; ++itr )
+
+            _pEDUCB->incEventCount() ;
+            // activate edu
+            if ( SDB_OK != ( rc = pmdEDUMgr->activateEDU( _pEDUCB ) ) )
             {
-               _pEDUCB->incEventCount() ;
+               PD_LOG( PDERROR, "Session[%s] activate edu failed, rc: %d",
+                       sessionName(), rc ) ;
+               goto error ;
+            }
+
+            pInMsg = _inBuffer.data() ;
+            while ( NULL != pInMsg )
+            {
                // a new loop
                _needReply = FALSE ;
-               // activate edu
-               if ( SDB_OK != ( rc = pmdEDUMgr->activateEDU( _pEDUCB ) ) )
-               {
-                  PD_LOG( PDERROR, "Session[%s] activate edu failed, rc: %d",
-                          sessionName(), rc ) ;
-                  goto error ;
-               }
                // process msg
-               rc = _processMsg( (*itr)->data() ) ;
-               if ( rc )
+               rc = _processMsg( pInMsg ) ;
+               rc = _converter->reConvert( _inBuffer, &_replyHeader ) ;
+               if ( SDB_OK != rc )
                {
-                  // here mean mongo msg was converted to multi sdb msg
-                  // like insert docs msg or create collection command msg
-                  // those msg convert to more than one sdb msg
-                  // that time cs may have been existed, should skip the error
-                  // do nothing
-                  if ( SDB_DMS_CS_EXIST == rc &&
-                       OP_CMD_CREATE == _converter->getOpType())
+                  goto reply ;
+               }
+               else
+               {
+                  // when rc == SDB_OK && _inBuffer is not empty, shoul retry
+                  // to process msg
+                  if ( !_inBuffer.empty() )
                   {
-                     // is create collection msg with cs is created, pass
-                     // free error info in bob
                      _contextBuff.release() ;
+                     pInMsg = _inBuffer.data() ;
                   }
                   else
                   {
-                     goto reply ;
+                     // should exit while loop
+                     pInMsg = NULL ;
                   }
-               }
-               // wait edu
-               if ( SDB_OK != ( rc = pmdEDUMgr->waitEDU( _pEDUCB ) ) )
-               {
-                  PD_LOG( PDERROR, "Session[%s] wait edu failed, rc: %d",
-                          sessionName(), rc ) ;
-                  goto error ;
                }
             }
          reply:
@@ -266,6 +259,15 @@ INT32 _mongoSession::run()
             }
             pBody = NULL ;
             bodyLen = 0 ;
+            _contextBuff.release() ;
+
+            // wait edu
+            if ( SDB_OK != ( rc = pmdEDUMgr->waitEDU( _pEDUCB ) ) )
+            {
+               PD_LOG( PDERROR, "Session[%s] wait edu failed, rc: %d",
+                       sessionName(), rc ) ;
+               goto error ;
+            }
          }
       }
    } // end while
@@ -299,19 +301,28 @@ INT32 _mongoSession::_processMsg( const CHAR *pMsg )
       _replyHeader.flags = rc ;
    }
 
-   if ( rc  && ( 0 == bodyLen ) )
+   // when SDB_OK != rc, or msg is with $cmd, need to reply
+   // so value of bodyLen cannot be 0
+   if ( ( rc || _converter->getParser().withCmd ) && ( 0 == bodyLen ) )
    {
       _errorInfo = engine::utilGetErrorBson( rc,
                    _pEDUCB->getInfo( engine::EDU_INFO_ERROR ) ) ;
 
       tmp = _errorInfo.getIntField( OP_ERRNOFIELD ) ;
-      bob.append( "ok", FALSE ) ;
-      bob.append( "code",  tmp ) ;
-      bob.append( "errmsg", _errorInfo.getStringField( OP_ERRDESP_FIELD) ) ;
+      if ( SDB_OK != rc )
+      {
+         bob.append( "ok", FALSE ) ;
+         bob.append( "code",  tmp ) ;
+         bob.append( "errmsg", _errorInfo.getStringField( OP_ERRDESP_FIELD) ) ;
+      }
+      else
+      {
+         bob.append( "ok", TRUE ) ;
+      }
       _contextBuff = engine::rtnContextBuf( bob.obj() ) ;
 
       _replyHeader.numReturned = 1 ;
-      _replyHeader.contextID = 0 ;
+      _replyHeader.contextID = -1 ;
       _replyHeader.startFrom = 0 ;
       _replyHeader.flags = rc ;
    }
@@ -327,7 +338,7 @@ error:
 INT32 _mongoSession::_onMsgBegin( MsgHeader *msg )
 {
    // set reply header ( except flags, length )
-   _replyHeader.contextID          = 0 ;
+   _replyHeader.contextID          = -1 ;
    _replyHeader.numReturned        = 0 ;
    _replyHeader.startFrom          = 0 ;
    _replyHeader.header.opCode      = MAKE_REPLY_TYPE(msg->opCode) ;
@@ -386,6 +397,7 @@ INT32 _mongoSession::_reply( MsgOpReply *replyHeader,
    mongoMsgReply reply ;
    bson::BSONObjBuilder bob ;
    bson::BSONObj bsonBody ;
+   bson::BSONObj objToSend ;
 
    // id
    reply.header.id = 0 ;
@@ -400,8 +412,7 @@ INT32 _mongoSession::_reply( MsgOpReply *replyHeader,
    // reservedFlag
    reply.header.reservedFlags = 0 ;
    //cursorID
-   reply.cursorId = ( -1 == replyHeader->contextID ?
-                            0 : replyHeader->contextID ) ;
+   reply.cursorId = replyHeader->contextID + 1 ;
    // startingFrom
    reply.startingFrom = replyHeader->startFrom ;
    // nReturn
@@ -430,13 +441,14 @@ INT32 _mongoSession::_reply( MsgOpReply *replyHeader,
       if ( pBody )
       {
          bsonBody.init( pBody ) ;
-         if ( !bsonBody.hasField( "ok" ))
+         if ( !bsonBody.hasField( "ok" ) )
          {
-            bob.append( "ok",
-                        0 == replyHeader->flags ? TRUE : replyHeader->flags ) ;
+            bob.append( "ok", 0 == replyHeader->flags ? TRUE : FALSE ) ;
+            bob.append( "code", replyHeader->flags ) ;
             bob.appendElements( bsonBody ) ;
-            pBody = bob.done().objdata() ;
-            reply.header.len = sizeof( mongoMsgReply ) + bob.done().objsize() ;
+            objToSend = bob.obj() ;
+            pBody = objToSend.objdata() ;
+            reply.header.len = sizeof( mongoMsgReply ) + objToSend.objsize() ;
          }
          else
          {
@@ -446,8 +458,9 @@ INT32 _mongoSession::_reply( MsgOpReply *replyHeader,
       else
       {
          bob.append( "ok", 1.0 ) ;
-         pBody = bob.done().objdata() ;
-         reply.header.len = sizeof( mongoMsgReply ) + bob.done().objsize() ;
+         objToSend = bob.obj() ;
+         pBody = objToSend.objdata() ;
+         reply.header.len = sizeof( mongoMsgReply ) + objToSend.objsize() ;
       }
    }
 
@@ -470,8 +483,6 @@ INT32 _mongoSession::_reply( MsgOpReply *replyHeader,
       }
    }
 
-   bob.decouple() ;
-
 done:
    return rc ;
 error:
@@ -488,29 +499,30 @@ BOOLEAN _mongoSession::_preProcessMsg( const mongoParser &parser,
    {
       handled = TRUE ;
       // build ismaster msg
-      fap::mongo::buildIsMasterMsg( resource, buff ) ;
+      fap::mongo::buildIsMasterReplyMsg( resource, buff ) ;
    }
    else if ( OP_CMD_GETNONCE == parser.opType )
    {
       handled = TRUE ;
       // build getnonce msg
-      fap::mongo::buildGetNonceMsg( buff ) ;
+      fap::mongo::buildGetNonceReplyMsg( buff ) ;
    }
    else if ( OP_CMD_GETLASTERROR == parser.opType )
    {
       handled = TRUE ;
       // build getlasterror msg
-      fap::mongo::buildGetLastErrorMsg( _errorInfo, buff ) ;
+      fap::mongo::buildGetLastErrorReplyMsg( _errorInfo, buff ) ;
    }
-   else if ( OP_CMD_NOT_SUPPORTED )
+   else if ( OP_CMD_NOT_SUPPORTED == parser.opType )
    {
-      fap::mongo::buildNotSupportMsg( _contextBuff ) ;
+      handled = TRUE ;
+      fap::mongo::buildNotSupportReplyMsg( _contextBuff ) ;
    }
 
    if ( handled )
    {
       // make _relpyHeader
-      _replyHeader.contextID            = 0 ;
+      _replyHeader.contextID            = -1 ;
       _replyHeader.numReturned          = 1 ;
       _replyHeader.startFrom            = 0 ;
       _replyHeader.header.opCode        = MAKE_REPLY_TYPE(parser.opCode) ;
@@ -521,4 +533,5 @@ BOOLEAN _mongoSession::_preProcessMsg( const mongoParser &parser,
 
    return handled ;
 }
+
 

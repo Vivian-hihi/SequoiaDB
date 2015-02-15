@@ -37,8 +37,9 @@
 #include "mongoConverter.hpp"
 #include "mongodef.hpp"
 #include "commands.hpp"
+#include "mongoReplyHelper.hpp"
 
-INT32 mongoConverter::convert( std::vector<msgBuffer*> &out )
+INT32 mongoConverter::convert( msgBuffer &out )
 {
    INT32 rc = SDB_OK ;
    _parser.init( _msgdata, _msglen ) ;
@@ -88,7 +89,78 @@ error:
    goto done ;
 }
 
-INT32 mongoConverter::reConvert( msgBuffer *in, msgBuffer &out )
+INT32 mongoConverter::reConvert( msgBuffer &out, MsgOpReply *reply )
 {
-   return SDB_OK ;
+   INT32 rc = SDB_OK ;
+   out.zero() ;
+
+   // create collection failed
+   if ( OP_CMD_CREATE == _parser.opType )
+   {
+      // here mean mongo msg was converted to multi sdb msg
+      // like create collection command msg
+      // those msg convert to more than one sdb msg
+      // that time cs may be not existed, should skip the error
+      // and create collection space first
+      if ( SDB_OK != reply->flags && SDB_DMS_CS_NOTEXIST == reply->flags )
+      {
+         _parser.reparse() ;
+         _cmd = commandMgr::instance()->findCommand( "createCS" ) ;
+         if ( NULL != _cmd )
+         {
+            rc = _cmd->convertRequest( _parser, out ) ;
+            if ( SDB_OK != rc )
+            {
+               goto error ;
+            }
+            goto done ;
+         }
+      }
+      else
+      {
+         rc = reply->flags ;
+         goto error ;
+      }
+   }
+
+   // if is create collection space msg
+   if ( OP_CMD_CREATE_CS == _parser.opType )
+   {
+      if ( SDB_OK != reply->flags )
+      {
+         rc = reply->flags ;
+         goto error ;
+      }
+
+      // then, try to create collection again
+      _parser.reparse() ;
+      _cmd = commandMgr::instance()->findCommand( "create" ) ;
+      if ( NULL != _cmd )
+      {
+         rc = _cmd->convertRequest( _parser, out ) ;
+         if ( SDB_OK != rc )
+         {
+            goto error ;
+         }
+         goto done ;
+      }
+   }
+
+   if ( OP_CMD_COUNT == _parser.opType )
+   {
+      if ( SDB_OK != reply->flags )
+      {
+         rc = reply->flags ;
+      }
+      _parser.opType = OP_INVALID ; // handle over
+      fap::mongo::buildGetMoreMsg( out ) ;
+      goto done ;
+   }
+   // when not handled above, assigned the reply flags to rc for return
+   rc = reply->flags ;
+
+done:
+   return rc ;
+error:
+   goto done ;
 }

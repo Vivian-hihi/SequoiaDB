@@ -52,8 +52,7 @@ public:
       return _cmdName ;
    }
 
-   virtual INT32 convertRequest( mongoParser &parser,
-                                 std::vector<msgBuffer*> &sdbMsgs )
+   virtual INT32 convertRequest( mongoParser &parser, msgBuffer &sdbMsgs )
    {
       return SDB_OK ;
    }
@@ -116,7 +115,7 @@ class cmdClass : public command                                      \
 public:                                                              \
    cmdClass() : command( cmd ) {}                                    \
    virtual INT32 convertRequest( mongoParser &parser,                \
-                                 std::vector<msgBuffer*> &sdbMsgs ) ;\
+                                 msgBuffer &sdbMsgs ) ;              \
 } ;
 
 #define __DECLARE_COMMAND_VAR( commandClass, var )                \

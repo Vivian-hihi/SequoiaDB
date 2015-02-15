@@ -142,6 +142,7 @@ enum
 
    OP_COMMAND_BEGIN,       // command begin
    OP_CMD_CREATE,          // create collection, need special deal
+   OP_CMD_CREATE_CS,
    OP_CMD_DROP,            // drop collection
    OP_CMD_GETLASTERROR,    // will not process msg
    OP_CMD_DROP_INDEX,
@@ -161,7 +162,6 @@ class mongoParser : public mongoMsgHeader
 public:
    BOOLEAN withCmd ;
    BOOLEAN withIndex ;
-   BOOLEAN opCreateCL ;
    INT32 nsLen ;
    INT32 opType ;
    CHAR csName[ CS_NAME_SIZE + 1 ] ;

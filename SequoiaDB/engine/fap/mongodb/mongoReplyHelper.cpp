@@ -42,7 +42,7 @@ namespace fap
 {
    namespace mongo
    {
-      void buildIsMasterMsg( engine::IResource *resource,
+      void buildIsMasterReplyMsg( engine::IResource *resource,
                              engine::rtnContextBuf &buff )
       {
          bson::BSONObjBuilder bob ;
@@ -59,7 +59,7 @@ namespace fap
          buff = engine::rtnContextBuf( bob.obj() ) ;
       }
 
-      void buildGetNonceMsg( engine::rtnContextBuf &buff )
+      void buildGetNonceReplyMsg( engine::rtnContextBuf &buff )
       {
          bson::BSONObjBuilder bob ;
          static Nonce::Security security ;
@@ -71,7 +71,7 @@ namespace fap
          buff = engine::rtnContextBuf( bob.obj() ) ;
       }
 
-      void buildGetLastErrorMsg( const bson::BSONObj &err,
+      void buildGetLastErrorReplyMsg( const bson::BSONObj &err,
                                  engine::rtnContextBuf &buff )
       {
          INT32 rc = SDB_OK ;
@@ -83,12 +83,31 @@ namespace fap
          buff = engine::rtnContextBuf( bob.obj() ) ;
       }
 
-      void buildNotSupportMsg( engine::rtnContextBuf &buff )
+      void buildNotSupportReplyMsg( engine::rtnContextBuf &buff )
       {
          bson::BSONObjBuilder bob ;
          bob.append( "ok", 1.0 ) ;
          bob.append( "msg", "Sorry, the command has not support now" ) ;
          buff = engine::rtnContextBuf( bob.obj() ) ;
+      }
+
+      void buildGetMoreMsg( msgBuffer &out )
+      {
+         if ( !out.empty() )
+         {
+            out.zero() ;
+         }
+         out.reverse( sizeof( MsgOpGetMore ) ) ;
+         out.advance( sizeof( MsgOpGetMore ) ) ;
+
+         MsgOpGetMore *getmore = (MsgOpGetMore *)out.data() ;
+         getmore->header.messageLength = sizeof( MsgOpGetMore ) ;
+         getmore->header.opCode = MSG_BS_GETMORE_REQ ;
+         getmore->header.requestID = 0 ;
+         getmore->header.routeID.value = 0 ;
+         getmore->header.TID = 0 ;
+         getmore->contextID = -1 ;
+         getmore->numToReturn = 1 ;
       }
    }
 }

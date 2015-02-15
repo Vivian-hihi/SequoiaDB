@@ -74,7 +74,7 @@ protected:
    INT32 _reply( MsgOpReply *replyHeader, const CHAR *pBody, const INT32 len ) ;
 
 private:
-   void  resetBuffers() ;
+   void  _resetBuffers() ;
 
 private:
    mongoConverter         *_converter ;
@@ -84,6 +84,7 @@ private:
    BSONObj                 _errorInfo ;
 
    std::vector< msgBuffer* > _inBufferVec ;
+   msgBuffer               _inBuffer ;
    msgBuffer               _outBuffer ;
    engine::IResource      *_resource ;
 } ;
