@@ -153,7 +153,7 @@ INT32 mongoConverter::reConvert( msgBuffer &out, MsgOpReply *reply )
          rc = reply->flags ;
          goto done ;
       }
-      _parser.opType = OP_INVALID ; // handle over
+      _parser.opType = OP_CMD_COUNT_MORE ;
       fap::mongo::buildGetMoreMsg( out ) ;
       MsgOpReply *msg = ( MsgOpReply *)out.data() ;
       msg->header.requestID = reply->header.requestID ;

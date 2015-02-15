@@ -247,6 +247,7 @@ INT32 _mongoSession::run()
                }
             }
          reply:
+            handleResponse( _converter->getOpType(), _contextBuff ) ;
             pBody = _contextBuff.data() ;
             bodyLen = _contextBuff.size() ;
             // send response
@@ -411,11 +412,18 @@ INT32 _mongoSession::_reply( MsgOpReply *replyHeader,
    // reservedFlag
    reply.header.reservedFlags = 0 ;
    //cursorID
-   reply.cursorId = replyHeader->contextID + 1 ;
+   if ( _converter->getParser().withCmd )
+   {
+      reply.cursorId = 0 ;
+   }
+   else
+   {
+      reply.cursorId = replyHeader->contextID + 1 ;
+   }
    // startingFrom
    reply.startingFrom = replyHeader->startFrom ;
    // nReturn
-   if ( _converter->getParser().withCmd || _needReply )
+   if ( _converter->getParser().withCmd )
    {
       reply.nReturned = replyHeader->numReturned > 0 ? replyHeader->numReturned : 1 ;
    }
@@ -424,7 +432,7 @@ INT32 _mongoSession::_reply( MsgOpReply *replyHeader,
       reply.nReturned = replyHeader->numReturned ;
    }
 
-   if ( !_converter->getParser().withCmd && reply.nReturned > 0 )
+   if ( !_converter->getParser().withCmd )// && reply.nReturned > 0 )
    {
       while ( offset < len )
       {
@@ -533,4 +541,14 @@ BOOLEAN _mongoSession::_preProcessMsg( const mongoParser &parser,
    return handled ;
 }
 
-
+void _mongoSession::handleResponse( const INT32 opType,
+                                    engine::rtnContextBuf &buff )
+{
+   if ( OP_CMD_COUNT_MORE == opType )
+   {
+      bson::BSONObjBuilder bob ;
+      bson::BSONObj obj( buff.data() ) ;
+      bob.append( "n", obj.getIntField( "Total" ) ) ;
+      buff = engine::rtnContextBuf( bob.obj() ) ;
+   }
+}

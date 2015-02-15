@@ -74,7 +74,8 @@ protected:
    INT32 _reply( MsgOpReply *replyHeader, const CHAR *pBody, const INT32 len ) ;
 
 private:
-   void  _resetBuffers() ;
+   void _resetBuffers() ;
+   void handleResponse( const INT32 opType, engine::rtnContextBuf &buff ) ;
 
 private:
    mongoConverter         *_converter ;

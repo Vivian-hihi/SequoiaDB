@@ -436,7 +436,7 @@ INT32 queryCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
 {
    INT32 rc           = SDB_OK ;
    INT32 nToSkip      = 0 ;
-   INT32 nToReturn    = 0 ;
+   INT32 nToReturn    = -1 ;
    MsgHeader *header  = NULL ;
    MsgOpQuery *query  = NULL ;
    const CHAR *cmdStr = NULL ;
@@ -504,7 +504,7 @@ INT32 queryCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
    parser.readNumber( sizeof( INT32 ), ( CHAR * )&nToSkip ) ;
    query->numToSkip = nToSkip ;
    parser.readNumber( sizeof( INT32 ), ( CHAR * )&nToReturn ) ;
-   query->numToReturn = nToReturn ;
+   query->numToReturn = nToReturn <= 0 ? -1 : nToReturn ;
 
    if ( parser.more() )
    {
@@ -559,7 +559,7 @@ error:
 INT32 getMoreCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
 {
    INT32 rc           = SDB_OK ;
-   INT32 nToReturn    = 0 ;
+   INT32 nToReturn    = -1 ;
    INT64 cursorid     = 0 ;
    MsgHeader *header  = NULL ;
    MsgOpGetMore *more = NULL ;
@@ -579,7 +579,7 @@ INT32 getMoreCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
    parser.skip( parser.nsLen + 1 ) ;
 
    parser.readNumber( sizeof( INT32 ), ( CHAR * )&nToReturn ) ;
-   more->numToReturn = nToReturn ;
+   more->numToReturn = nToReturn <= 0 ? -1 : nToReturn ;
    parser.readNumber( sizeof( SINT64 ), ( CHAR * )&cursorid ) ;
    more->contextID = cursorid - 1;
 
@@ -763,7 +763,7 @@ INT32 createCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
       parser.readNumber( sizeof( INT32 ), ( CHAR * )&nToSkip ) ;
       query->numToSkip = 0 ;
       parser.readNumber( sizeof( INT32 ), ( CHAR * )&nToReturn ) ;
-      query->numToReturn = -1 ;
+      query->numToReturn = nToReturn <= 0 ? -1 : nToReturn ;
 
       if ( parser.more() )
       {
@@ -841,7 +841,7 @@ INT32 dropCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
    parser.readNumber( sizeof( INT32 ), ( CHAR * )&nToSkip ) ;
    query->numToSkip = 0 ;
    parser.readNumber( sizeof( INT32 ), ( CHAR * )&nToReturn ) ;
-   query->numToReturn = -1 ;
+   query->numToReturn = nToReturn <= 0 ? -1 : nToReturn ;
 
    if ( parser.more() )
    {
@@ -1039,7 +1039,7 @@ INT32 createIndexCommand::convertRequest( mongoParser &parser,
    parser.readNumber( sizeof( INT32 ), ( CHAR * )&nToSkip ) ;
    index->numToSkip = 0 ;
    parser.readNumber( sizeof( INT32 ), ( CHAR * )&nToReturn ) ;
-   index->numToReturn = -1 ;
+   index->numToReturn = nToReturn <= 0 ? -1 : nToReturn ;
 
    if ( !parser.more() )
    {
@@ -1113,7 +1113,7 @@ INT32 dropIndexesCommand::convertRequest( mongoParser &parser,
    parser.readNumber( sizeof( INT32 ), ( CHAR * )&nToSkip ) ;
    dropIndex->numToSkip = 0 ;
    parser.readNumber( sizeof( INT32 ), ( CHAR * )&nToReturn ) ;
-   dropIndex->numToReturn = -1 ;
+   dropIndex->numToReturn = nToReturn <= 0 ? -1 : nToReturn ;
 
    if ( parser.more() )
    {
@@ -1180,7 +1180,7 @@ INT32 getIndexesCommand::convertRequest( mongoParser &parser,
    parser.readNumber( sizeof( INT32 ), ( CHAR * )&nToSkip ) ;
    getIndex->numToSkip = 0 ;
    parser.readNumber( sizeof( INT32 ), ( CHAR * )&nToReturn ) ;
-   getIndex->numToReturn = -1 ;
+   getIndex->numToReturn = nToReturn <= 0 ? -1 : nToReturn ;
 
    if ( parser.more() )
    {

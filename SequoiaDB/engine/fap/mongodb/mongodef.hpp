@@ -148,6 +148,7 @@ enum
    OP_CMD_DROP_INDEX,
    OP_CMD_GET_INDEX,
    OP_CMD_COUNT,
+   OP_CMD_COUNT_MORE,      // need special handle
    OP_CMD_AGGREGATE,
 
    // commands need not process yet
@@ -185,7 +186,7 @@ public:
    BOOLEAN more()
    {
       _nextObj = _dataStart + _offset ;
-      return ( ( NULL != _nextObj ) || ( _nextObj < _dataEnd ) ) ;
+      return ( _nextObj < _dataEnd ) ;
    }
 
    void reparse()
