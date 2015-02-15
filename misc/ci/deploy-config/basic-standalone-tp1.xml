@@ -44,6 +44,14 @@
 			</ant>
 		</parallel>
 
+		<tstamp>
+			<format property="current.time.log" pattern="yyyy-MM-dd-hh.mm.ss_a" />
+		</tstamp>
+		<property name="test.log.path" value="${test.reports.path}/${test.environment}-${deploy.conffile.wildcard}-${host.NAME}-${current.time.log}-${BUILD_NUMBER}" />
+		<echo message="**************************************************************" />
+		<echo message="test.log.path=${test.log.path}" />
+		<echo message="**************************************************************" />
+
 		<!-- <basename property="antFileName" file="${ant.file}" suffix=".xml" /> -->
 		<for list="${test-type-list}" param="Test-Type">
 			<sequential>
