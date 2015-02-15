@@ -140,6 +140,15 @@
             <group>${username}_group</group>
             <owner>${username}</owner>
         </changeOwnerAndGroup>
+        <md5>
+            <text>MD5</text>
+            <variable>${installer_pathname}</variable>
+        </md5>
+        <propertiesFileSet>
+            <file>/etc/default/sequoiadb</file>
+            <key>MD5</key>
+            <value>${MD5}</value>
+        </propertiesFileSet>
         <propertiesFileSet>
             <file>/etc/default/sequoiadb</file>
             <key>NAME</key>
@@ -281,14 +290,6 @@
             <files>${installdir}/bin/sdbomtool</files>
             <permissions>6755</permissions>
         </changePermissions>
-        <runProgram>
-            <program>echo</program>
-            <programArguments> -n MD5= &gt;&gt; /etc/default/sequoiadb</programArguments>
-        </runProgram>
-        <runProgram>
-            <program>${installdir}/bin/sdb</program>
-            <programArguments> -s "Hash.fileMD5('${installer_pathname}')" &gt;&gt; /etc/default/sequoiadb</programArguments>
-        </runProgram>
     </postInstallationActionList>
     <preUninstallationActionList>
         <stopWindowsService>
