@@ -322,7 +322,6 @@ INT32 _mongoSession::_processMsg( const CHAR *pMsg )
       _contextBuff = engine::rtnContextBuf( bob.obj() ) ;
 
       _replyHeader.numReturned = 1 ;
-      _replyHeader.contextID = -1 ;
       _replyHeader.startFrom = 0 ;
       _replyHeader.flags = rc ;
    }

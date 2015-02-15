@@ -151,9 +151,13 @@ INT32 mongoConverter::reConvert( msgBuffer &out, MsgOpReply *reply )
       if ( SDB_OK != reply->flags )
       {
          rc = reply->flags ;
+         goto done ;
       }
       _parser.opType = OP_INVALID ; // handle over
       fap::mongo::buildGetMoreMsg( out ) ;
+      MsgOpReply *msg = ( MsgOpReply *)out.data() ;
+      msg->header.requestID = reply->header.requestID ;
+      msg->contextID = reply->contextID ;
       goto done ;
    }
    // when not handled above, assigned the reply flags to rc for return
