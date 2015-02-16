@@ -153,8 +153,10 @@
 			<format property="current.time.log" pattern="yyyy-MM-dd-hh.mm.ss_a" />
 		</tstamp>
 		<property name="test.log.path" value="${test.reports.path}/${test.environment}-${deploy.conffile.wildcard}-${host.NAME}-${current.time.log}-${BUILD_NUMBER}" />
+		<property name="test.log" value="${test.environment}-${deploy.conffile.wildcard}-${host.NAME}-${current.time.log}-${BUILD_NUMBER}" />
 		<echo message="**************************************************************" />
 		<echo message="test.log.path=${test.log.path}" />
+		<echo message="test.log=${test.log}" />
 		<echo message="**************************************************************" />
 
 		<parallel>
@@ -170,7 +172,7 @@
 				<param name="ci.script.file.path" value="${ci.script.file.path}" />
 				<param name="parallel.count" value="2" />
 
-				<property name="test.log.path" value="${test.log.path}" />
+				<property name="test.log" value="${test.log}" />
 			</sdbtest>
 			<sdbtest host="${test.machine.no2.basic}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${testcase.path}/js_testcases/reports" masterreports="${test.reports.path}" >
 				<param name="basic.testcase.path" value="${testcase.path}/js_testcases" />
@@ -183,7 +185,7 @@
 				<param name="ci.script.file.path" value="${ci.script.file.path}" />
 				<param name="parallel.count" value="2" />
 
-				<property name="test.log.path" value="${test.log.path}" />
+				<property name="test.log" value="${test.log}" />
 			</sdbtest>
 		</parallel>
 

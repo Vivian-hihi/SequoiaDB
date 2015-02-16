@@ -195,8 +195,10 @@
 			<format property="current.time.log" pattern="yyyy-MM-dd-hh.mm.ss_a" />
 		</tstamp>
 		<property name="test.log.path" value="${test.reports.path}/${test.environment}-${deploy.conffile.wildcard}-${host.NAME}-${current.time.log}-${BUILD_NUMBER}" />
+		<property name="test.log" value="${test.environment}-${deploy.conffile.wildcard}-${host.NAME}-${current.time.log}-${BUILD_NUMBER}" />
 		<echo message="**************************************************************" />
 		<echo message="test.log.path=${test.log.path}" />
+		<echo message="test.log=${test.log}" />
 		<echo message="**************************************************************" />
 		
 		<!-- <basename property="antFileName" file="${ant.file}" suffix=".xml" /> -->
@@ -216,7 +218,7 @@
 					<property name="test.host.NAME" value="${test.machine.no2.basic}" />
 					<property name="parallel.count" value="1" />
 
-					<property name="test.log.path" value="${test.log.path}" />
+					<property name="test.log" value="${test.log}" />
 				</ant>
 			</sequential>	
 		</for>

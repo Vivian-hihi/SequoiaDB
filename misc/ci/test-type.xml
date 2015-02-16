@@ -28,7 +28,7 @@
 							<param name="WORKSPACE" value="${WORKSPACE}" />
 							<param name="ci.script.file.path" value="${ci.script.file.path}" />
 							<!-- <param name="parallel.count" value="${parallel.count}" /> -->
-							<param name="test.log.path" value="${test.log.path}" />
+							<param name="test.log" value="${test.log}" />
 						</sdbtest>
 					</then>
 					<else>
@@ -45,7 +45,7 @@
 								<param name="WORKSPACE" value="${WORKSPACE}" />
 								<param name="ci.script.file.path" value="${ci.script.file.path}" />
 								<!-- <param name="parallel.count" value="${parallel.count}" /> -->
-								<param name="test.log.path" value="${test.log.path}" />
+								<param name="test.log" value="${test.log}" />
 							</sdbtest>
 							<sdbtest host="${test.machine.no2.basic}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${testcase.path}/js_testcases/reports" masterreports="${test.reports.path}" >
 								<param name="basic.testcase.path" value="${testcase.path}/js_testcases" />
@@ -58,7 +58,7 @@
 								<param name="WORKSPACE" value="${WORKSPACE}" />
 								<param name="ci.script.file.path" value="${ci.script.file.path}" />
 								<!-- <param name="parallel.count" value="${parallel.count}" /> -->
-								<param name="test.log.path" value="${test.log.path}" />
+								<param name="test.log" value="${test.log}" />
 							</sdbtest>
 							<sdbtest host="${test.machine.no3.basic}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${testcase.path}/js_testcases/reports" masterreports="${test.reports.path}" >
 								<param name="basic.testcase.path" value="${testcase.path}/js_testcases" />
@@ -71,7 +71,7 @@
 								<param name="WORKSPACE" value="${WORKSPACE}" />
 								<param name="ci.script.file.path" value="${ci.script.file.path}" />
 								<!-- <param name="parallel.count" value="${parallel.count}" /> -->
-								<param name="test.log.path" value="${test.log.path}" />
+								<param name="test.log" value="${test.log}" />
 							</sdbtest>
 						</parallel>
 					</else>
