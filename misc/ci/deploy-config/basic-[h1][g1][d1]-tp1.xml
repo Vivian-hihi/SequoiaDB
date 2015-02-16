@@ -12,8 +12,7 @@
 <!-- depends:deploy-test-all.xml -->
 <!-- call:deploy-software-in-host.xml,deploy-test-in-host.xml,test-type.xml -->
 
-<!-- <project name="H1-G1-D1" default="H1-G1-D1"> -->
-<project name="H1-G1-D1" default="Deploy">
+<project name="H1-G1-D1" default="H1-G1-D1">
 	<property name="properties.dir" value="${basedir}/../ci.test.properties" />
 	<property file="${properties.dir}" />
 	<taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
@@ -32,7 +31,7 @@
 			<property name="catalog.addrs" value="${test.machine.no3.data}:30003" />
 		</ant>
 
-		<!-- <sdbdeploy host="${test.machine.no3.basic}" coordport="${coord.service.port}">
+		<sdbdeploy host="${test.machine.no3.basic}" coordport="${coord.service.port}">
 			<catagroup name="cata1">
 				<node host="${test.machine.no3.data}" baseport="${cata.service.port}" dbpath="${install.path}/sequoiadb/database/cata/${cata.service.port}">
 					<confitem name="diaglevel" value="5" />
@@ -50,7 +49,7 @@
 					<confitem name="diagnum" value="80" />
 				</node>
 			</datagroup>
-		</sdbdeploy> -->
+		</sdbdeploy>
 	</target>
 
 	<target name="H1-G1-D1" depends="">
