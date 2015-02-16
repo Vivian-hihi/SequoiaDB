@@ -1253,7 +1253,8 @@ namespace engine
       _dialogFileNum       = 0 ;
       _directIOInLob       = FALSE ;
       _sparseFile          = FALSE ;
-      _weight              = 0 ; 
+      _weight              = 0 ;
+      _auth                = TRUE ; 
 
 #ifdef SDB_SSL
       _useSSL              = FALSE ;
