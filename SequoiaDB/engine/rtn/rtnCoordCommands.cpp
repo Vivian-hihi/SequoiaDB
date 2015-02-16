@@ -6982,8 +6982,14 @@ namespace engine
 
          // assign role
          bobNodeConf.append ( PMD_OPTION_ROLE, SDB_ROLE_CATALOG_STR ) ;
-         bobNodeConf.append ( PMD_OPTION_CLUSTER_NAME, clusterName ) ;
-         bobNodeConf.append ( PMD_OPTION_BUSINESS_NAME, businessName ) ;
+         if ( !clusterName.empty() )
+         {
+            bobNodeConf.append ( PMD_OPTION_CLUSTER_NAME, clusterName ) ;
+         }
+         if ( !businessName.empty() )
+         {
+            bobNodeConf.append ( PMD_OPTION_BUSINESS_NAME, businessName ) ;
+         }
 
          // assign catalog address, make sure to include all catalog nodes
          // that configured in the system ( for HA ), each system should be
