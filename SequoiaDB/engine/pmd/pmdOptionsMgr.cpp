@@ -756,7 +756,7 @@ namespace engine
       {
          if ( pDefault )
          {
-            tmpValue = *pDefault ;
+            tmpValue.assign( pDefault ) ;
          }
          else
          {
@@ -787,7 +787,7 @@ namespace engine
       {
          if ( pDefault )
          {
-            strValue = *pDefault ;
+            strValue.assign( pDefault ) ;
          }
          else
          {
