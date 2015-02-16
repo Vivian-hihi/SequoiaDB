@@ -283,6 +283,10 @@
         </changePermissions>
         <runProgram>
             <program>echo</program>
+            <programArguments>'' &gt;&gt; /etc/default/sequoiadb</programArguments>
+        </runProgram>
+        <runProgram>
+            <program>echo</program>
             <programArguments> -n MD5= &gt;&gt; /etc/default/sequoiadb</programArguments>
         </runProgram>
         <runProgram>
