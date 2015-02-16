@@ -322,19 +322,10 @@ INT32 _mongoSession::_processMsg( const CHAR *pMsg )
          {
             bob.append( "ok", TRUE ) ;
          }
-         _contextBuff = engine::rtnContextBuf( bob.obj() ) ;
 
-         _replyHeader.numReturned = 1 ;
-         _replyHeader.startFrom = 0 ;
+         _contextBuff = engine::rtnContextBuf( bob.obj() ) ;
          _replyHeader.flags = rc ;
       }
-   }
-   else
-   {
-      _replyHeader.contextID = -1 ;
-      _replyHeader.numReturned = 0 ;
-      _replyHeader.startFrom = 0 ;
-      _replyHeader.flags = rc ;
    }
 
    _onMsgEnd( rc, (MsgHeader *) pMsg ) ;
@@ -422,7 +413,7 @@ INT32 _mongoSession::_reply( MsgOpReply *replyHeader,
    // reservedFlag
    reply.header.reservedFlags = 0 ;
    //cursorID
-   if ( _converter->getParser().withCmd )
+   if ( SDB_OK != replyHeader->flags )
    {
       reply.cursorId = 0 ;
    }
@@ -442,7 +433,7 @@ INT32 _mongoSession::_reply( MsgOpReply *replyHeader,
       reply.nReturned = replyHeader->numReturned ;
    }
 
-   if ( !_converter->getParser().withCmd )// && reply.nReturned > 0 )
+   if ( reply.nReturned > 1 )
    {
       while ( offset < len )
       {
@@ -455,7 +446,7 @@ INT32 _mongoSession::_reply( MsgOpReply *replyHeader,
    }
    else
    {
-      if ( pBody )
+      if ( pBody && reply.cursorId == 0 )
       {
          bsonBody.init( pBody ) ;
          if ( !bsonBody.hasField( "ok" ) )
@@ -560,5 +551,6 @@ void _mongoSession::handleResponse( const INT32 opType,
       bson::BSONObj obj( buff.data() ) ;
       bob.append( "n", obj.getIntField( "Total" ) ) ;
       buff = engine::rtnContextBuf( bob.obj() ) ;
+      _replyHeader.contextID = -1 ;
    }
 }

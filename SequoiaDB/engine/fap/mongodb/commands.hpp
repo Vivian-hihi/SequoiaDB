@@ -151,7 +151,7 @@ DECLARE_COMMAND( aggregate )
 ///< index
 DECLARE_COMMAND( createIndexes )
 DECLARE_COMMAND( deleteIndexes )
-DECLARE_COMMAND( getIndexes )
+DECLARE_COMMAND( listIndexes )
 
 ///< getlasterror
 DECLARE_COMMAND( getlasterror )

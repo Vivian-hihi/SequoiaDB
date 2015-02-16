@@ -59,7 +59,7 @@ DECLARE_COMMAND_VAR( aggregate )
 ///< index
 DECLARE_COMMAND_VAR( createIndexes )
 DECLARE_COMMAND_VAR( deleteIndexes )
-DECLARE_COMMAND_VAR( getIndexes )
+DECLARE_COMMAND_VAR( listIndexes )
 
 ///< getLastError
 DECLARE_COMMAND_VAR( getlasterror )
@@ -511,6 +511,25 @@ INT32 queryCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
       parser.nextObj( cond ) ;
    }
 
+   // handle listIndexes
+   if ( parser.withIndex )
+   {
+      // do with the msg with command
+      cmd = commandMgr::instance()->findCommand( "listIndexes" ) ;
+      if ( NULL == cmd )
+      {
+         rc = SDB_OPTION_NOT_SUPPORT ;
+         parser.opType = OP_CMD_NOT_SUPPORTED ;
+         goto error ;
+      }
+      // re-parse mongo msg
+      parser.reparse() ;
+      sdbMsg.zero() ;
+
+      rc = cmd->convertRequest( parser, sdbMsg ) ;
+      goto done ;
+   }
+
    if ( parser.withCmd )
    {
       // do with the msg with command
@@ -667,7 +686,7 @@ INT32 createCSCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
    INT32 rc          = SDB_OK ;
    MsgHeader *header = NULL ;
    MsgOpQuery *query = NULL ;
-   bson::BSONObjBuilder obj ;
+   bson::BSONObj obj ;
    const std::string cmdStr = "$create collectionspace" ;
 
    parser.opType = OP_CMD_CREATE_CS ;
@@ -690,11 +709,10 @@ INT32 createCSCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
    query->numToSkip = 0 ;
    query->numToReturn = -1 ;
 
-   obj.append( "Name", parser.csName ) ;
-   obj.append( "PageSize", 65536 ) ;
+   obj = BSON( "Name" << parser.csName << "PageSize" << 65536 ) ;
 
    sdbMsg.write( cmdStr.c_str(), query->nameLength + 1, TRUE ) ;
-   sdbMsg.write( obj.done(), TRUE ) ;
+   sdbMsg.write( obj, TRUE ) ;
 
    // fill other bson with empty
    sdbMsg.write( fap::emptyObj, TRUE ) ;
@@ -718,7 +736,7 @@ INT32 createCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
    MsgHeader *header = NULL ;
    MsgOpQuery *query = NULL ;
    bson::BSONObj cond ;
-   bson::BSONObjBuilder obj ;
+   bson::BSONObj obj ;
    bson::BSONElement e ;
    const std::string cmdStr = "$create collection" ;
    std::string fullname ;
@@ -786,11 +804,11 @@ INT32 createCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
    }
 
    sdbMsg.write( cmdStr.c_str(), query->nameLength + 1, TRUE ) ;
-   obj.append( "Name", fullname.c_str() ) ;
+   obj = BSON( "Name" << fullname.c_str() ) ;
 
    // other options
    // ...
-   sdbMsg.write( obj.done(), TRUE ) ;
+   sdbMsg.write( obj, TRUE ) ;
 
    // fill other bson with empty
    sdbMsg.write( fap::emptyObj, TRUE ) ;
@@ -813,7 +831,7 @@ INT32 dropCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
    MsgHeader *header = NULL ;
    MsgOpQuery *query = NULL ;
    bson::BSONObj cond ;
-   bson::BSONObjBuilder obj ;
+   bson::BSONObj obj ;
    bson::BSONElement e ;
    const std::string cmdStr = "$drop collection" ;
    std::string fullname ;
@@ -852,9 +870,9 @@ INT32 dropCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
    fullname += cond.getStringField( "drop" ) ;
 
    sdbMsg.write( cmdStr.c_str(), query->nameLength + 1, TRUE ) ;
-   obj.append( "Name", fullname.c_str() ) ;
+   obj = BSON( "Name" << fullname.c_str() ) ;
 
-   sdbMsg.write( obj.done(), TRUE ) ;
+   sdbMsg.write( obj, TRUE ) ;
 
    // fill other bson with empty
    sdbMsg.write( fap::emptyObj, TRUE ) ;
@@ -866,7 +884,6 @@ INT32 dropCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
 
    return rc ;
 }
-
 
 //////////////////////////////////////////////////////////////////////////
 ///< countCommand
@@ -881,7 +898,7 @@ INT32 countCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
    bson::BSONObj queryObj ;
    bson::BSONObj orderby ;
    bson::BSONObj fields ;
-   bson::BSONObjBuilder obj ;
+   bson::BSONObj obj ;
    bson::BSONElement e ;
    const std::string cmdStr = "$get count" ;
    std::string fullname ;
@@ -921,7 +938,7 @@ INT32 countCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
 
    query->nameLength = cmdStr.length() ;
    sdbMsg.write( cmdStr.c_str(), query->nameLength + 1, TRUE ) ;
-   obj.append( "Collection", fullname.c_str() ) ;
+   obj = BSON( "Collection" << fullname.c_str() ) ;
 
    queryObj = cond.getObjectField( "query" ) ;
    orderby = queryObj.getObjectField( "sort" ) ;
@@ -935,7 +952,7 @@ INT32 countCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
    sdbMsg.write( queryObj, TRUE ) ;
    sdbMsg.write( fields, TRUE ) ;
    sdbMsg.write( orderby, TRUE ) ;
-   sdbMsg.write( obj.done(), TRUE ) ;
+   sdbMsg.write( obj, TRUE ) ;
 
    // fill the msg len of sdb
    header->messageLength = sdbMsg.size() ;
@@ -1077,7 +1094,7 @@ INT32 createIndexesCommand::convertRequest( mongoParser &parser,
          indexobj.append( "name", subObj.getStringField( "name" ) ) ;
          indexobj.append("unique", subObj.getBoolField( "unique" ) ) ;
          obj.append( "Index", indexobj.obj() ) ;
-         sdbMsg.write( obj.done(), TRUE ) ;
+         sdbMsg.write( obj.obj(), TRUE ) ;
          ++cit ;
       }
    }
@@ -1114,7 +1131,7 @@ INT32 createIndexesCommand::convertRequest( mongoParser &parser,
          indexobj.append( "name", subObj.getStringField( "name" ) ) ;
          indexobj.append("unique", subObj.getBoolField( "unique" ) ) ;
          obj.append( "Index", indexobj.obj() ) ;
-         sdbMsg.write( obj.done(), TRUE ) ;
+         sdbMsg.write( obj.obj(), TRUE ) ;
          ++cit ;
       }
    }
@@ -1142,7 +1159,7 @@ INT32 deleteIndexesCommand::convertRequest( mongoParser &parser,
    MsgHeader *header     = NULL ;
    MsgOpQuery *dropIndex = NULL ;
    bson::BSONObj cond ;
-   bson::BSONObjBuilder obj ;
+   bson::BSONObj obj ;
    bson::BSONObjBuilder indexObj ;
    bson::BSONElement e ;
    const std::string cmdStr = "$drop index" ;
@@ -1183,11 +1200,10 @@ INT32 deleteIndexesCommand::convertRequest( mongoParser &parser,
    fullname += cond.getStringField( "deleteIndexes" ) ;
 
    indexObj.append( "", cond.getStringField( "index" ) ) ;
-   obj.append( "Collection", fullname.c_str() ) ;
-   obj.append( "Index", indexObj.done() ) ;
+   obj = BSON( "Collection" << fullname.c_str() << "Index" << indexObj.obj() );
 
    sdbMsg.write( cmdStr.c_str(), dropIndex->nameLength + 1, TRUE ) ;
-   sdbMsg.write( obj.done(), TRUE ) ;
+   sdbMsg.write( obj, TRUE ) ;
 
    // fill other bson with empty
    sdbMsg.write( fap::emptyObj, TRUE ) ;
@@ -1201,18 +1217,19 @@ INT32 deleteIndexesCommand::convertRequest( mongoParser &parser,
 }
 
 //////////////////////////////////////////////////////////////////////////
-///< getIndexesCommand
-INT32 getIndexesCommand::convertRequest( mongoParser &parser,
+///< listIndexesCommand
+INT32 listIndexesCommand::convertRequest( mongoParser &parser,
                                          msgBuffer &sdbMsg )
 {
    INT32 rc              = SDB_OK ;
    INT32 nToSkip         = 0 ;
    INT32 nToReturn       = 0 ;
+   const CHAR *indexName = NULL ;
    MsgHeader *header     = NULL ;
    MsgOpQuery *getIndex  = NULL ;
    bson::BSONObj cond ;
+   bson::BSONObj indexObj ;
    bson::BSONObjBuilder obj ;
-   bson::BSONObjBuilder indexObj ;
    const std::string cmdStr = "$get indexes" ;
    std::string fullname ;
 
@@ -1245,16 +1262,30 @@ INT32 getIndexesCommand::convertRequest( mongoParser &parser,
       parser.nextObj( cond ) ;
    }
 
-   indexObj.append( "indexDef.name", cond.getStringField( "index" ) ) ;
-   obj.append( "Collection", cond.getStringField( "ns" ) ) ;
+   if ( parser.withIndex )
+   {
+      indexName = cond.getStringField( "index" ) ;
+      if ( NULL != indexName )
+      {
+         indexObj = BSON( "indexDef.name" << indexName  ) ;
+      }
+      obj.append( "Collection", cond.getStringField( "ns" ) ) ;
+   }
+   else if ( parser.withCmd )
+   {
+      fullname = parser.csName ;
+      fullname += "." ;
+      fullname += cond.getStringField( "listIndexes" ) ;
+      obj.append( "Collection", fullname.c_str() ) ;
+   }
 
    sdbMsg.write( cmdStr.c_str(), getIndex->nameLength + 1, TRUE ) ;
-   sdbMsg.write( indexObj.done(), TRUE ) ;
+   sdbMsg.write( indexObj, TRUE ) ;
 
    // fill other bson with empty
    sdbMsg.write( fap::emptyObj, TRUE ) ;
    sdbMsg.write( fap::emptyObj, TRUE ) ;
-   sdbMsg.write( obj.done(), TRUE ) ;
+   sdbMsg.write( obj.obj(), TRUE ) ;
 
    // fill the msg len of sdb
    header->messageLength = sdbMsg.size() ;
