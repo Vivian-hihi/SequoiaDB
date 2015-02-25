@@ -118,7 +118,7 @@ namespace engine
 
          subEle = subObj.getField( FIELD_NAME_ADDRESS ) ;
          _imageAddress = subEle.valuestrsafe() ;
-         _hasImage = _imageAddress.empty() ? FALSE : TRUE ;
+         _hasImage = ( 0 == *_imageAddress ) ? FALSE : TRUE ;
 
          subEle = subObj.getField( FIELD_NAME_ENABLE ) ;
          if ( Bool == subEle.type() )
@@ -352,7 +352,7 @@ namespace engine
       INT32 rc = SDB_CLS_NO_CATALOG_INFO ;
       BOOLEAN hasLock = TRUE ;
 
-      _peerCatLatch->get() ;
+      _peerCatLatch.get() ;
       hasLock = TRUE ;
 
       // first send to primary node
@@ -381,7 +381,7 @@ namespace engine
    done:
       if ( hasLock )
       {
-         _peerCatLatch->release() ;
+         _peerCatLatch.release() ;
       }
       return rc ;
    error:
@@ -427,14 +427,13 @@ namespace engine
       clsGroupItem *pCatItem = NULL ;
       UINT32 pos = 0 ;
       MsgRouteID id ;
-      pmdAddrPair addrPair ;
       string hostname ;
       string svcname ;
 
       req.id.value = MSG_INVALID_ROUTEID ;
       req.id.columns.groupID = CATALOG_GROUPID ;
 
-      rc = _updateImageGroup( cb, &req->header, CATALOG_GROUPID, millsec ) ;
+      rc = _updateImageGroup( cb, &(req.header), CATALOG_GROUPID, millsec ) ;
       if ( rc )
       {
          goto error ;
@@ -458,19 +457,17 @@ namespace engine
          {
             break ;
          }
-         ossStrncpy( addrPair._host, hostname.c_str(), OSS_MAX_HOSTNAME ) ;
-         ossStrncpy( addrPair._service, svcname.c_str(), OSS_MAX_SERVICENAME ) ;
-         vecCatalog.push_back( addrPair ) ;
+         vecCatalog.push_back( pmdAddrPair( hostname, svcname ) ) ;
       }
       tmpPrimary = (INT32)pCatItem->getPrimaryPos() ;
       // release lock
       _pNodeMgrAgent->release_r() ;
 
-      _peerCatLatch->get() ;
+      _peerCatLatch.get() ;
       _vecCatlog.clear() ;
       _vecCatlog = vecCatalog ;
       _peerCatPrimary = tmpPrimary ;
-      _peerCatLatch->release() ;
+      _peerCatLatch.release() ;
 
    done:
       return rc ;
@@ -487,7 +484,7 @@ namespace engine
 
    retry:
       msg->requestID = ++_requestID ;
-      msg->header.TID = cb->getTID() ;
+      msg->TID = cb->getTID() ;
 
       rc = _syncSend2PeerCatGroup( cb, msg, &pRecvMsg, millsec, TRUE ) ;
       if ( rc )
@@ -512,7 +509,7 @@ namespace engine
             hasRetry = TRUE ;
             if ( SDB_OK == updateImageCataGroup( cb, millsec ) )
             {
-               cb->releaseBuff( pRecvMsg ) ;
+               cb->releaseBuff( (CHAR*)pRecvMsg ) ;
                pRecvMsg = NULL ;
                goto retry ;
             }
@@ -561,7 +558,7 @@ namespace engine
          _pNodeMgrAgent->lock_w() ;
 
          const CHAR* objdata = (const CHAR*)res + sizeof( MsgCatGroupRes ) ;
-         UINT32 length = msg->messageLength - sizeof( MsgCatGroupRes ) ;
+         UINT32 length = pRes->messageLength - sizeof( MsgCatGroupRes ) ;
          UINT32 tmpGroupID = 0 ;
 
          rc = _pNodeMgrAgent->updateGroupInfo( objdata, length, &tmpGroupID ) ;
@@ -686,7 +683,7 @@ namespace engine
       req.id.value = MSG_INVALID_ROUTEID ;
       req.id.columns.groupID = groupID ;
 
-      rc = _updateImageGroup( cb, &req->header, groupID, millsec ) ;
+      rc = _updateImageGroup( cb, &(req.header), groupID, millsec ) ;
       if ( rc )
       {
          goto error ;
@@ -904,17 +901,18 @@ namespace engine
       goto done ;
    }
 
-   catAgent* _dcMgr::getCataAgent ()
+   catAgent* _dcMgr::getImageCataAgent ()
    {
       return _pCatAgent ;
    }
 
-   nodeMgrAgent* _dcMgr::getNodeMgrAgent ()
+   nodeMgrAgent* _dcMgr::getImageNodeMgrAgent ()
    {
       return _pNodeMgrAgent ;
    }
 
    INT32 _dcMgr::getAndLockImageCataSet( const CHAR * name,
+                                         pmdEDUCB *cb,
                                          clsCatalogSet **ppSet,
                                          BOOLEAN noWithUpdate,
                                          INT64 waitMillSec,
@@ -935,7 +933,7 @@ namespace engine
          {
             _pCatAgent->release_r() ;
             // request to update catalog
-            rc = syncUpdateCatalog( name, waitMillSec ) ;
+            rc = updateImageAllCatalog( cb, waitMillSec ) ;
             if ( rc )
             {
                // if we can't find the collection and not able to update
@@ -976,7 +974,9 @@ namespace engine
       return SDB_OK ;
    }
 
-   INT32 _dcMgr::getAndLockImageGroupItem( UINT32 id, clsGroupItem **ppItem,
+   INT32 _dcMgr::getAndLockImageGroupItem( UINT32 id,
+                                           pmdEDUCB *cb,
+                                           clsGroupItem **ppItem,
                                            BOOLEAN noWithUpdate,
                                            INT64 waitMillSec,
                                            BOOLEAN * pUpdated )
@@ -994,7 +994,7 @@ namespace engine
             _pNodeMgrAgent->release_r() ;
             // if we can't find such group and is okay to update cache
             // we'll update cache from catalog
-            rc = syncUpdateGroupInfo( id, waitMillSec ) ;
+            rc = updateImageGroup( id, cb, waitMillSec ) ;
             if ( rc )
             {
                PD_LOG ( PDERROR, "Failed to sync update group info, rc = %d",
@@ -1030,6 +1030,101 @@ namespace engine
          _pNodeMgrAgent->release_r() ;
       }
       return SDB_OK ;
+   }
+
+   INT32 _dcMgr::syncSend2ImageNode( MsgHeader *msg,
+                                     pmdEDUCB *cb,
+                                     UINT32 groupID,
+                                     vector<MsgHeader*> &vecRecv,
+                                     vector<pmdAddrPair> &vecSendNode,
+                                     INT32 selType,
+                                     SEND_STRATEGY sendSty,
+                                     MSG_ROUTE_SERVICE_TYPE type,
+                                     INT64 millisecond,
+                                     BOOLEAN useCBMem,
+                                     vector< pmdAddrPair > *pVecFailedNode )
+   {
+      INT32 rc = SDB_OK ;
+      MsgRouteID nodeID ;
+      BOOLEAN hasLock = FALSE ;
+      clsGroupItem *groupItem = NULL ;
+      vector< pmdAddrPair > nodes ;
+      string hostname ;
+      string svcname ;
+      MsgHeader *pRecvMsg = NULL ;
+
+      // 1. get the nodes
+      _pNodeMgrAgent->lock_r() ;
+      hasLock = TRUE ;
+      groupItem = _pNodeMgrAgent->groupItem( groupID ) ;
+      if ( NULL == groupItem )
+      {
+         rc = SDB_CLS_GRP_NOT_EXIST ;
+         goto error ;
+      }
+      else if ( 0 == groupItem->nodeCount() )
+      {
+         rc = SDB_CLS_EMPTY_GROUP ;
+         goto error ;
+      }
+
+      if ( SDB_OK == groupItem->getNodeInfo( groupItem->getPrimaryPos(),
+                                             nodeID, hostname,
+                                             svcname, type ) )
+      {
+         nodes.push_back( pmdAddrPair( hostname, svcname ) ) ;
+      }
+      if ( selType & SEL_NODE_SLAVE )
+      {
+         UINT32 pos = 0 ;
+         while( SDB_OK == groupItem->getNodeInfo( pos, nodeID, hostname,
+                                                  svcname, type ) )
+         {
+            ++pos ;
+            if ( pos == groupItem->getPrimaryPos() )
+            {
+               continue ;
+            }
+            nodes.push_back( pmdAddrPair( hostname, svcname ) ) ;
+         }
+      }
+      _pNodeMgrAgent->release_r() ;
+      hasLock = FALSE ;
+
+      if ( 0 == nodes.size() )
+      {
+         rc = SDB_CLS_NOT_PRIMARY ;
+         goto error ;
+      }
+
+      // 2. send to nodes
+      for ( UINT32 i = 0 ; i < nodes.size() ; ++i )
+      {
+         rc = _syncSend2PeerNode( cb, msg, &pRecvMsg, nodes[ i ],
+                                  millisecond, useCBMem ) ;
+         if ( SDB_OK == rc )
+         {
+            vecRecv.push_back( pRecvMsg ) ;
+            vecSendNode.push_back( nodes[ i ] ) ;
+            if ( SEND_NODE_ONE == sendSty )
+            {
+               break ;
+            }
+         }
+         else if ( pVecFailedNode )
+         {
+            pVecFailedNode->push_back( nodes[ i ] ) ;
+         }
+      }
+
+   done:
+      if ( hasLock )
+      {
+         _pNodeMgrAgent->release_r() ;
+      }
+      return rc ;
+   error:
+      goto done ;
    }
 
 }
