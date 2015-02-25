@@ -81,7 +81,7 @@ namespace engine
          string         source2dest( const string &sourceGroup ) ;
          string         dest2source( const string &destGroup ) ;
 
-         BSONObj&       getOrgObj() const { return _orgObj ; }
+         BSONObj        getOrgObj() const { return _orgObj ; }
 
       protected:
          void           _reset() ;
@@ -134,8 +134,8 @@ namespace engine
 
          INT32    initialize() ;
 
-         catAgent* getCataAgent () ;
-         nodeMgrAgent* getNodeMgrAgent () ;
+         catAgent* getImageCataAgent () ;
+         nodeMgrAgent* getImageNodeMgrAgent () ;
 
          /*
             Update data center base info from obj
@@ -167,13 +167,17 @@ namespace engine
          INT32 updateImageAllCatalog( pmdEDUCB *cb,
                                       INT64 millsec = DC_UPDATE_TIMEOUT ) ;
 
-         INT32 getAndLockImageCataSet( const CHAR *name, clsCatalogSet **ppSet,
+         INT32 getAndLockImageCataSet( const CHAR *name,
+                                       pmdEDUCB *cb,
+                                       clsCatalogSet **ppSet,
                                        BOOLEAN noWithUpdate = TRUE,
                                        INT64 waitMillSec = DC_UPDATE_TIMEOUT,
                                        BOOLEAN *pUpdated = NULL ) ;
          INT32 unlockImageCataSet( clsCatalogSet *catSet ) ;
 
-         INT32 getAndLockImageGroupItem( UINT32 id, clsGroupItem **ppItem,
+         INT32 getAndLockImageGroupItem( UINT32 id,
+                                         pmdEDUCB *cb,
+                                         clsGroupItem **ppItem,
                                          BOOLEAN noWithUpdate = TRUE,
                                          INT64 waitMillSec = DC_UPDATE_TIMEOUT,
                                          BOOLEAN *pUpdated = NULL ) ;
@@ -181,14 +185,18 @@ namespace engine
 
       public:
 
-         INT32  syncSend2ImageNode( MsgHeader *msg, clsGroupItem *pItem,
+         INT32  syncSend2ImageNode( MsgHeader *msg,
+                                    pmdEDUCB *cb,
+                                    UINT32 groupID,
                                     vector< MsgHeader* > &vecRecv,
+                                    vector< pmdAddrPair > &vecSendNode,
                                     INT32 selType = SEL_NODE_PRIMARY,
                                     SEND_STRATEGY sendSty = SEND_NODE_ONE,
                                     MSG_ROUTE_SERVICE_TYPE type =
                                     MSG_ROUTE_CAT_SERVICE,
                                     INT64 millisecond = DC_UPDATE_TIMEOUT,
-                                    BOOLEAN useCBMem = FALSE ) ;
+                                    BOOLEAN useCBMem = FALSE,
+                                    vector< pmdAddrPair > *pVecFailedNode = NULL ) ;
 
       protected:
 
