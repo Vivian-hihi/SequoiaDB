@@ -553,4 +553,10 @@ void _mongoSession::handleResponse( const INT32 opType,
       buff = engine::rtnContextBuf( bob.obj() ) ;
       _replyHeader.contextID = -1 ;
    }
+
+   if ( SDB_DMS_EOC == _replyHeader.flags )
+   {
+      buff = engine::rtnContextBuf() ;
+      _replyHeader.contextID = -1 ;
+   }
 }
