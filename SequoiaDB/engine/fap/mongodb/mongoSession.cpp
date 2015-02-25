@@ -424,14 +424,18 @@ INT32 _mongoSession::_reply( MsgOpReply *replyHeader,
    // startingFrom
    reply.startingFrom = replyHeader->startFrom ;
    // nReturn
-   if ( _converter->getParser().withCmd )
+   if ( _converter->getParser().withCmd &&
+        OP_GETMORE != _converter->getOpType() )
    {
-      reply.nReturned = replyHeader->numReturned > 0 ? replyHeader->numReturned : 1 ;
+      reply.nReturned = ( replyHeader->numReturned > 0 ?
+                          replyHeader->numReturned : 1 ) ;
    }
    else
    {
       reply.nReturned = replyHeader->numReturned ;
    }
+
+   reply.header.len = sizeof( mongoMsgReply ) + len ;
 
    if ( reply.nReturned > 1 )
    {
@@ -446,29 +450,32 @@ INT32 _mongoSession::_reply( MsgOpReply *replyHeader,
    }
    else
    {
-      if ( pBody && reply.cursorId == 0 )
+      if ( pBody )
       {
-         bsonBody.init( pBody ) ;
-         if ( !bsonBody.hasField( "ok" ) )
+         if ( 0 == reply.cursorId )
          {
-            bob.append( "ok", 0 == replyHeader->flags ? TRUE : FALSE ) ;
-            bob.append( "code", replyHeader->flags ) ;
-            bob.appendElements( bsonBody ) ;
-            objToSend = bob.obj() ;
-            pBody = objToSend.objdata() ;
-            reply.header.len = sizeof( mongoMsgReply ) + objToSend.objsize() ;
-         }
-         else
-         {
-            reply.header.len = sizeof( mongoMsgReply ) + len ;
+            // it is msg with command
+            bsonBody.init( pBody ) ;
+            if ( !bsonBody.hasField( "ok" ) )
+            {
+               bob.append( "ok", 0 == replyHeader->flags ? TRUE : FALSE ) ;
+               bob.append( "code", replyHeader->flags ) ;
+               bob.appendElements( bsonBody ) ;
+               objToSend = bob.obj() ;
+               pBody = objToSend.objdata() ;
+               reply.header.len = sizeof( mongoMsgReply ) + objToSend.objsize() ;
+            }
          }
       }
       else
       {
-         bob.append( "ok", 1.0 ) ;
-         objToSend = bob.obj() ;
-         pBody = objToSend.objdata() ;
-         reply.header.len = sizeof( mongoMsgReply ) + objToSend.objsize() ;
+         if ( OP_GETMORE != _converter->getOpType() )
+         {
+            bob.append( "ok", 1.0 ) ;
+            objToSend = bob.obj() ;
+            pBody = objToSend.objdata() ;
+            reply.header.len = sizeof( mongoMsgReply ) + objToSend.objsize() ;
+         }
       }
    }
 
@@ -557,6 +564,7 @@ void _mongoSession::handleResponse( const INT32 opType,
    if ( SDB_DMS_EOC == _replyHeader.flags )
    {
       buff = engine::rtnContextBuf() ;
+      _replyHeader.numReturned = 0 ;
       _replyHeader.contextID = -1 ;
    }
 }
