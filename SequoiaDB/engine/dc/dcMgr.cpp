@@ -1127,5 +1127,50 @@ namespace engine
       goto done ;
    }
 
+   INT32 _dcMgr::syncSend2ImageNodes( MsgHeader *msg, pmdEDUCB *cb,
+                                      vector< MsgHeader * > &vecRecv,
+                                      vector< pmdAddrPair > &vecSendNode,
+                                      INT32 selType, SEND_STRATEGY sendSty,
+                                      INT64 millisecond, BOOLEAN useCBMem,
+                                      vector< pmdAddrPair > *pVecFailedNode )
+   {
+      INT32 rc = SDB_OK ;
+      vector< UINT32 > groups ;
+
+      rc = updateImageAllGroups( cb, millisecond ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Update image all groups failed, rc: %d", rc ) ;
+         goto error ;
+      }
+
+      // get all groups
+      _pNodeMgrAgent->lock_r() ;
+      _pNodeMgrAgent->getGroupsID( groups ) ;
+      _pNodeMgrAgent->release_r() ;
+
+      for ( UINT32 i = 0 ; i < groups.size() ; ++i )
+      {
+         rc = syncSend2ImageNode( msg, cb, groups[ i ], vecRecv, vecSendNode,
+                                  selType, sendSty, MSG_ROUTE_SHARD_SERVCIE,
+                                  millisecond, useCBMem, pVecFailedNode ) ;
+         if ( SDB_CLS_EMPTY_GROUP == rc )
+         {
+            continue ;
+         }
+         else if ( rc )
+         {
+            PD_LOG( PDERROR, "Send msg to image group[%d] failed, rc: %d",
+                    groups[ i ], rc ) ;
+            goto error ;
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
 }
 
