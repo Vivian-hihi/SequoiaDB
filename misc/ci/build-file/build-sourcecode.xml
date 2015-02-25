@@ -128,6 +128,9 @@
 		<copy todir="${DRIVER.DIR}/include">
 			<fileset dir="${CODE_DIR}/client/include/" includes="**/*" />
 		</copy>
+		<copy todir="${DRIVER.DIR}/samples">
+			<fileset dir="${CODE_DIR}/client/samples/" includes="**/*" />
+		</copy>
 
 		<copy file="${CODE_DIR}/driver/postgresql/sdb_fdw.so" tofile="${DRIVER.DIR}/postgresql/sdb_fdw.so" />
 		<copy file="${CODE_DIR}/driver/postgresql/sdb_fdw.control" tofile="${DRIVER.DIR}/postgresql/sdb_fdw.control" />
