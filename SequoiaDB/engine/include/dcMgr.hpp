@@ -136,6 +136,7 @@ namespace engine
 
          catAgent* getImageCataAgent () ;
          nodeMgrAgent* getImageNodeMgrAgent () ;
+         dcBaseInfo* getDCBaseInfo() { return &_baseInfo ; }
 
          /*
             Update data center base info from obj
@@ -197,6 +198,16 @@ namespace engine
                                     INT64 millisecond = DC_UPDATE_TIMEOUT,
                                     BOOLEAN useCBMem = FALSE,
                                     vector< pmdAddrPair > *pVecFailedNode = NULL ) ;
+
+         INT32  syncSend2ImageNodes( MsgHeader *msg,
+                                     pmdEDUCB *cb,
+                                     vector< MsgHeader* > &vecRecv,
+                                     vector< pmdAddrPair > &vecSendNode,
+                                     INT32 selType = SEL_NODE_PRIMARY,
+                                     SEND_STRATEGY sendSty = SEND_NODE_ONE,
+                                     INT64 millisecond = DC_UPDATE_TIMEOUT,
+                                     BOOLEAN useCBMem = FALSE,
+                                     vector< pmdAddrPair > *pVecFailedNode = NULL ) ;
 
       protected:
 
