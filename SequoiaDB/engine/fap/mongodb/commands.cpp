@@ -55,6 +55,7 @@ DECLARE_COMMAND_VAR( create )
 DECLARE_COMMAND_VAR( drop )
 DECLARE_COMMAND_VAR( count )
 DECLARE_COMMAND_VAR( aggregate )
+DECLARE_COMMAND_VAR( dropDatabase )
 
 ///< index
 DECLARE_COMMAND_VAR( createIndexes )
@@ -1015,6 +1016,65 @@ INT32 aggregateCommand::convertRequest( mongoParser &parser,
    // cursor
 
    sdbMsg.write( cond, TRUE ) ;
+   // fill the msg len of sdb
+   header->messageLength = sdbMsg.size() ;
+
+   return rc ;
+}
+
+//////////////////////////////////////////////////////////////////////////
+///< dropDatabaseCommand
+INT32 dropDatabaseCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
+{
+   INT32 rc          = SDB_OK ;
+   INT32 nToSkip     = 0 ;
+   INT32 nToReturn   = 0 ;
+   MsgHeader *header = NULL ;
+   MsgOpQuery *query = NULL ;
+   bson::BSONObj cond ;
+   bson::BSONObj obj ;
+   bson::BSONElement e ;
+   const std::string cmdStr = "$drop collectionspace" ;
+
+   parser.opType = OP_CMD_COUNT ;
+   sdbMsg.reverse( sizeof ( MsgOpQuery ) ) ;
+   sdbMsg.advance( sizeof ( MsgOpQuery ) - 4 ) ;
+
+   header = ( MsgHeader * )sdbMsg.data() ;
+   header->opCode = MSG_BS_QUERY_REQ ;
+   header->TID = 0 ;
+   header->routeID.value = 0 ;
+   header->requestID = parser.id ;
+
+   query = ( MsgOpQuery * )sdbMsg.data() ;
+   query->version = 0 ;
+   query->w = 0 ;
+   query->padding = 0 ;
+   query->flags = 0 ;
+
+   query->nameLength = cmdStr.length() ;
+   parser.skip( parser.nsLen + 1 ) ;
+
+   parser.readNumber( sizeof( INT32 ), ( CHAR * )&nToSkip ) ;
+   parser.readNumber( sizeof( INT32 ), ( CHAR * )&nToReturn ) ;
+
+   if ( parser.more() )
+   {
+      parser.nextObj( cond ) ;
+   }
+
+   query->nameLength = cmdStr.length() ;
+   sdbMsg.write( cmdStr.c_str(), query->nameLength + 1, TRUE ) ;
+   obj = BSON( "Name" << parser.csName ) ;
+
+   query->numToSkip = nToSkip ;
+   query->numToReturn = nToReturn ;
+
+   sdbMsg.write( obj, TRUE ) ;
+   sdbMsg.write( fap::emptyObj, TRUE ) ;
+   sdbMsg.write( fap::emptyObj, TRUE ) ;
+   sdbMsg.write( fap::emptyObj, TRUE ) ;
+
    // fill the msg len of sdb
    header->messageLength = sdbMsg.size() ;
 

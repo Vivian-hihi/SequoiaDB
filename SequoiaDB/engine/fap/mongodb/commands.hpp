@@ -147,6 +147,7 @@ DECLARE_COMMAND( create )     // create collection
 DECLARE_COMMAND( drop )       // drop   collection
 DECLARE_COMMAND( count )
 DECLARE_COMMAND( aggregate )
+DECLARE_COMMAND( dropDatabase )
 
 ///< index
 DECLARE_COMMAND( createIndexes )
