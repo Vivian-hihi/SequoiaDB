@@ -471,7 +471,10 @@ namespace engine
                 SDB_CLS_DATA_NODE_CAT_VER_OLD == rc ||
                 SDB_CLS_COORD_NODE_CAT_VER_OLD == rc ) && loopTime < 1 )
          {
-            loopTime++ ;
+            if ( SDB_CLS_NO_CATALOG_INFO != rc )
+            {
+               loopTime++ ;
+            }
             PD_LOG ( PDWARNING, "Catalog is empty or older[rc:%d] in "
                      "session[%s]", rc, sessionName() ) ;
             rc = _pShdMgr->syncUpdateCatalog( _pCollectionName ) ;
