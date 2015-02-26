@@ -81,7 +81,7 @@ function _getMD5()
       try
       {
          if ( !File.exist( OMA_FILE_INSTALL_INFO ) )
-            exception_handle( SDB_SYS, "Install db packet's result file not exist" ) ;
+            exception_handle( SDB_SYS, sprintf( "File[?] not exist", OMA_FILE_INSTALL_INFO ) ) ;
          // TODO: need to rename
          obj = eval( "(" + Oma.getOmaConfigs( OMA_FILE_INSTALL_INFO ) + ")" ) ;
          md5code = obj[MD5] ;
@@ -89,17 +89,17 @@ function _getMD5()
       catch( e )
       {
          SYSEXPHANDLE( e ) ;
-         errMsg = sprintf( "Failed to get install packet's md5 in host[?]",
+         errMsg = sprintf( "Failed to get installed packet's md5 in host[?]",
                            System.getHostName() ) ;
          rc = GETLASTERROR() ;
-         PD_LOG2( LOG_NONE, arguments, PDERROR, FILE_NAME_ADD_HOST_PRE_CHECK,
+         PD_LOG2( LOG_NONE, arguments, PDWARNING, FILE_NAME_ADD_HOST_PRE_CHECK,
                   sprintf( errMsg + ", rc: ?, detail: ?", rc, GETLASTERRMSG() ) ) ;
          exception_handle( rc, errMsg ) ;
       }
    }
    else
    {
-      // TODO:
+      // TODO: windows
    }
 
    return md5code ;
@@ -161,7 +161,7 @@ function main()
    var md5  = "" ;
    var flag = false ;
    var file = null ;
-   // get md5
+   // 1. get md5
    try
    {
       md5 = _getMD5() ; 
@@ -170,10 +170,10 @@ function main()
    {
       md5 = "" ;
    }
-   // judge programs exist or not
+   // 2. judge programs exist or not
    flag = _isProgramExist() ;
 
-   // write the result to file
+   // 3. write the result to file
    try
    {
       if ( File.exist( result_file ) )

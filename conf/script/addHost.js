@@ -384,9 +384,7 @@ function _needToInstall( ssh, install_packet, install_path )
       errMsg = sprintf( "Local db packet's md5: ?, remote db packet's md5: ?, need to install",
                         local_md5, remote_md5 ) ;
       PD_LOG2( task_id, arguments, PDWARNING, FILE_NAME_ADD_HOST, errMsg ) ;
-// TODO: wait for MD5 in /etc/default/sequoiadb
-// println
-//      return true ;
+      return true ;
    }
 
    return false ;
@@ -460,11 +458,7 @@ function _installDBPacket( ssh, sdbuser, sdbpasswd, packet, path )
       cmd = OMA_PATH_TEMP_PACKET_DIR_L + packetName + option ;
       try
       {
-// TODO: ignore the exception for debug, println
-         try
-         {
-         ssh.exec( cmd ) ; 
-         }catch(e){}
+         ssh.exec( cmd ) ;
       }
       catch ( e )
       {

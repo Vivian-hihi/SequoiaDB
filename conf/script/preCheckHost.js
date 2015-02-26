@@ -22,11 +22,11 @@
 @modify list:
    2014-7-26 Zhaobo Tan  Init
 @parameter
-   BUS_JSON: the format is: { "HostInfo": [ { "IP": "192.168.20.42", "HostName": "susetzb", "User": "root", "Passwd": "sequoiadb", "SshPort": "22" }, { "IP": "192.168.20.165", "HostName": "rhel64-test8", "User": "root", "Passwd": "sequoiadb", "SshPort": "22" },{ "IP": "192.168.20.166", "HostName": "rhel64-test9", "User": "root", "Passwd": "sequoiadb", "SshPort": "22" } ] } ; ;
+   BUS_JSON: the format is: { "HostInfo": [ { "IP": "192.168.20.42", "HostName": "susetzb", "User": "root", "Passwd": "sequoiadb", "SshPort": "22" }, { "IP": "192.168.20.165", "HostName": "rhel64-test8", "User": "root", "Passwd": "sequoiadb", "SshPort": "22" },{ "IP": "192.168.20.166", "HostName": "rhel64-test9", "User": "root", "Passwd": "sequoiadb", "SshPort": "22" } ] } ;
    SYS_JSON:
    ENV_JSON:
 @return
-   RET_JSON: the format is: { "HostInfo": [ { "errno": 0, "detail": "", "AgentPort": "10000", "IP": "192.168.20.42" }, { "errno": 0, "detail": "", "AgentPort": "10000", "IP": "192.168.20.165" } ] }
+   RET_JSON: the format is: { "HostInfo": [ { "errno": 0, "detail": "", "AgentService": "10000", "IP": "192.168.20.42" }, { "errno": 0, "detail": "", "AgentService": "10000", "IP": "192.168.20.165" } ] }
 */
 
 var FILE_NAME_PRE_CHECK_HOST = "preCheckHost.js" ;
@@ -215,29 +215,6 @@ function _startTmpCM( ssh, port, secs )
                  sprintf( errMsg + ", rc: ?, detail: ?", rc, GETLASTERRMSG() ) ) ;
          exception_handle( rc, errMsg ) ;
       }
-      // wait util sdbcm start in target host
-      var times = 0 ;
-      for ( ; times < OMA_TRY_TIMES; times++ )
-      {
-         var isRunning = isSdbcmRunning ( ssh ) ;
-         if ( isRunning )
-         {
-            break ;
-         }
-         else
-         {
-            sleep( OMA_SLEEP_TIME ) ;
-         }
-      }
-// TODO: println
-/*
-      if ( OMA_TRY_TIMES <= times )
-      {
-         errMsg = "Time out, temporary sdbcm does not start successfully in host[" + ssh.getPeerIP() + "]" ;
-         PD_LOG( arguments, PDERROR, FILE_NAME_PRE_CHECK_HOST, errMsg ) ;
-         exception_handle( SDB_TIMEOUT, errMsg ) ;
-      }
-*/
    }
    else
    {

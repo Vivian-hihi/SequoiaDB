@@ -54,7 +54,7 @@ function SYSEXPHANDLE( exp )
 function GETLASTERROR ()
 {
    var errno = getLastError() ;
-   if ( undefined == errno )
+   if ( undefined == errno || "number" != typeof(errno) || 0 < errno )
       errno = SDB_SYS ;
    return errno ;
 }
@@ -582,82 +582,6 @@ function getSdbcmPort( ssh )
 }
 
 /* *****************************************************************************
-@discretion: check whether sdbcm is running in target host
-@author: Tanzhaobo
-@parameter
-   ssh[object]: ssh object
-@exception
-@return
-   isRunning[bool]: whether sdbcm is running
-***************************************************************************** */
-function isSdbcmRunning( ssh, host )
-{
-   var isRunning = false ;
-   var str = null ;
-   var ret = SDB_OK ;
-   if ( SYS_LINUX == SYS_TYPE )
-   {
-      var installInfoObj = null ;
-      var installPath = null ;
-      var prog = null ;
-      var cmd = null ;
-      var isLocal = isInLocalHost( ssh ) ;
-      if ( isLocal )
-      {
-         installInfoObj = eval( '(' + Oma.getOmaInstallInfo() + ')' ) ;
-         installPath = adaptPath( installInfoObj[INSTALL_DIR] ) ;
-         prog = installPath  + OMA_PROG_BIN_SDBLIST_L ;
-      }
-      else
-      {
-         prog = OMA_PATH_TEMP_BIN_DIR_L + OMA_PROG_SDBLIST_L ;   
-      }
-      cmd = prog + " -t cm " ;
-      try
-      {
-         str = ssh.exec( cmd ) ;
-      }
-      catch ( e )
-      {
-         SYSEXPHANDLE( e ) ;
-         ret = ssh.getLastRet() ;
-         if ( ret > 0 )
-         {
-            isRunning = false ;
-            return isRunning ;
-         }
-         else if ( ret < 0 )
-         {
-            setLastErrMsg( "Unkown sdbcm's status in[" + ssh.getPeerIP() + "]" ) ;
-            setLastError( SDB_SYS ) ;
-            throw SDB_SYS ;
-         }
-      }
-      // when sdbcm is running
-      var num = extractTotalNumber ( str ) ;
-      if ( -1 == num )
-      {
-         setLastErrMsg( "Unkown sdbcm's status in[" + ssh.getPeerIP() + "]" ) ;
-         setLastError( SDB_SYS ) ;
-         throw SDB_SYS ;
-      }
-      else if ( 0 == num )
-      {
-         isRunning = false ;
-      }
-      else
-      {
-         isRunning = true ;
-      }
-   }
-   else
-   {
-      // TODO:
-   }
-   return isRunning ;
-}
-
-/* *****************************************************************************
 @discretion: get a usable port from local host
 @author: Tanzhaobo
 @parameter void
@@ -1009,58 +933,6 @@ function getLocalHostName()
 function getLocalIP()
 {
    return _getLocalHostNameOrIP( "ip" ) ;
-}
-
-/* *****************************************************************************
-@discretion: stop the temporary sdbcm installed in remote host
-@author: Tanzhaobo
-@parameter
-   ssh[object]: ssh object
-@return void
-***************************************************************************** */
-function stopRemoteSdbcmProgram( ssh )
-{
-   var cmd = "" ;
-
-   if ( SYS_LINUX == SYS_TYPE )
-   {
-      cmd += OMA_PATH_TEMP_BIN_DIR_L ;
-      cmd += OMA_PROG_SDBCMTOP_L ;
-      cmd += " " + OMA_OPTION_SDBCMART_I ;
-      try
-      {
-         ssh.exec( cmd ) ;
-      }
-      catch ( e )
-      {
-         setLastErrMsg( "Failed to stop sdbcm in host[" + ssh.getPeerIP() + "]" ) ;
-         setLastError( SDB_SYS ) ;
-         throw SDB_SYS ;
-      }
-      // check wether sdb is stop in target host
-      var times = 0 ;
-      for ( ; times < OMA_TRY_TIMES; times++ )
-      {
-         var isRunning = isSdbcmRunning ( ssh ) ;
-         if ( isRunning )
-         {
-            sleep( OMA_SLEEP_TIME ) ;
-         }
-         else
-         {
-            break ;
-         }
-      }
-      if ( OMA_TRY_TIMES <= times )
-      {
-         setLastErrMsg( "Time out, failed to stop sdbcm in host[" + ssh.getPeerIP() + "]" ) ;
-         throw e ;
-      }
-   }
-   else
-   {
-      // TODO: tanzhaobo
-   }
 }
 
 /* *****************************************************************************
