@@ -540,17 +540,6 @@ namespace engine
       {
          goto error ;
       }
-      rc = _createSysCollection( CAT_SYSIMAGE_COLLECTION_NAME, cb ) ;
-      if ( rc )
-      {
-         goto error ;
-      }
-      rc = _createSysIndex( CAT_SYSIMAGE_COLLECTION_NAME,
-                            CAT_IMAGE_SRC_INDEX, cb ) ;
-      if ( rc )
-      {
-         goto error ;
-      }
 
    done :
       PD_TRACE_EXITRC ( SDB_CATMAINCT__ENSUREMETADATA, rc ) ;
@@ -885,10 +874,11 @@ namespace engine
       CHAR *pOrderByBuffer  = NULL ;
       CHAR *pHintBuffer     = NULL ;
       INT32 iNameLen        = 0 ;
+      rtnContextBuf buffObj ;
 
       PD_TRACE_ENTRY ( SDB_CATMAINCT_QUERYREQUEST ) ;
 
-      PD_CHECK( pmdIsPrimary(), SDB_CLS_NOT_PRIMARY, reply, PDWARNING,
+      PD_CHECK( pmdIsPrimary(), SDB_CLS_NOT_PRIMARY, error, PDWARNING,
                 "it is not primary node but received query request!" );
 
       rc = msgExtractQuery ( (CHAR *)pMsgHeader, &flags, &pCN,
@@ -899,14 +889,14 @@ namespace engine
       {
          PD_LOG ( PDERROR, "Failed to read query packet, rc = %d", rc ) ;
          rc = SDB_INVALIDARG ;
-         goto reply ;
+         goto error ;
       }
       iNameLen = ossStrlen(pCN) ;
       if ( iNameLen <= 0 || pCN[0]!='$')
       {
          PD_LOG ( PDERROR, "Invalid command-begin" ) ;
          rc = SDB_INVALIDARG ;
-         goto reply ;
+         goto error ;
       }
       try
       {
@@ -924,7 +914,38 @@ namespace engine
                PD_LOG ( PDERROR, "Failed to list data-node-groups (rc=%d)",
                         rc  ) ;
             }
-            goto reply ;
+            goto error ;
+         }
+         else if ( flags & FLG_QUERY_WITH_RETURNDATA )
+         {
+            rtnContextDump contextDump( 0, _pEDUCB->getID() ) ;
+            rc = contextDump.open( BSONObj(), BSONObj(), -1, 0 ) ;
+            PD_RC_CHECK( rc, PDERROR, "Open dump context failed, rc: %d",
+                         rc ) ;
+
+            while ( TRUE )
+            {
+               rc = rtnGetMore( contextID, -1, buffObj, _pEDUCB, _pRtnCB ) ;
+               if ( rc )
+               {
+                  contextID = -1 ;
+                  if ( SDB_DMS_EOC != rc )
+                  {
+                     PD_LOG( PDERROR, "Get more failed, rc: %d", rc ) ;
+                     goto error ;
+                  }
+                  break ;
+               }
+               // add to dump context
+               rc = contextDump.appendObjs( buffObj.data(), buffObj.size(),
+                                            buffObj.recordNum(), TRUE ) ;
+               PD_RC_CHECK( rc, PDERROR, "Append objs to dump context failed, "
+                            "rc: %d", rc ) ;
+            }
+
+            rc = contextDump.getMore( -1, buffObj, _pEDUCB ) ;
+            PD_RC_CHECK( rc, PDERROR, "Get more from dump context failed, "
+                         "rc: %d", rc ) ;
          }
       }
       catch ( std::exception &e )
@@ -932,22 +953,23 @@ namespace engine
          PD_LOG ( PDERROR, "Failed to create arg1 and arg2 for command: %s",
                   e.what() ) ;
          rc = SDB_INVALIDARG ;
-         goto reply ;
+         goto error ;
       }
-   reply :
-      msgReply.header.messageLength = sizeof(MsgOpReply);
+
+   done :
+      msgReply.header.messageLength = sizeof( MsgOpReply ) + buffObj.size() ;
       msgReply.header.opCode = MAKE_REPLY_TYPE( pMsgHeader->opCode );
       msgReply.header.TID = pMsgHeader->TID;
       msgReply.header.routeID.value = 0;
       msgReply.header.requestID = pMsgHeader->requestID;
-      msgReply.contextID = contextID;
-      msgReply.startFrom = 0;
-      msgReply.numReturned = 0;
+      msgReply.contextID = contextID ;
+      msgReply.startFrom = (INT32)buffObj.getStartFrom() ;
+      msgReply.numReturned = buffObj.recordNum() ;
 
       if ( rc != SDB_OK )
       {
-         msgReply.flags = rc;
-         if ( SDB_PERM == rc)
+         msgReply.flags = rc ;
+         if ( SDB_PERM == rc )
          {
             msgReply.flags = SDB_CLS_NOT_PRIMARY ;
          }
@@ -955,23 +977,34 @@ namespace engine
       else
       {
          _addContext( handle, pMsgHeader->TID, contextID );
-         msgReply.flags = 0;
+         msgReply.flags = SDB_OK ;
       }
       PD_TRACE1 ( SDB_CATMAINCT_QUERYREQUEST,
                   PD_PACK_INT ( msgReply.flags ) ) ;
-      rc = _pCatCB->netWork()->syncSend ( handle, &msgReply );
+
+      if ( 0 == buffObj.size() )
+      {
+         rc = _pCatCB->netWork()->syncSend ( handle, &msgReply );
+      }
+      else
+      {
+         rc = _pCatCB->netWork()->syncSend( handle, &msgReply.header,
+                                            (void*)buffObj.data(),
+                                            (UINT32)buffObj.size() ) ;
+      }
       if ( rc != SDB_OK )
       {
          PD_LOG ( PDERROR, "failed to send the message(routeID=%lld)",
-                  pMsgHeader->routeID.value);   //print the routeID, don't print handle,
-                                                //because we can't get any
-                                                //useful info from handle
-         goto error ;
+                  pMsgHeader->routeID.value ) ;
       }
-   done :
       PD_TRACE_EXITRC ( SDB_CATMAINCT_QUERYREQUEST, rc ) ;
       return rc ;
    error :
+      if ( -1 != contextID )
+      {
+         _pRtnCB->contextDelete( contextID, _pEDUCB ) ;
+         contextID = -1 ;
+      }
       goto done ;
    }
 

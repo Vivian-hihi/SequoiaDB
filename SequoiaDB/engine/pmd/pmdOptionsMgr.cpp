@@ -626,7 +626,7 @@ namespace engine
    }
 
    INT32 _pmdCfgRecord::parseAddressLine( const CHAR * pAddressLine,
-                                          vector < _pmdCfgRecord::pmdAddrPair > & vecAddr,
+                                          vector < pmdAddrPair > & vecAddr,
                                           const CHAR * pItemSep,
                                           const CHAR * pInnerSep ) const
    {
@@ -685,7 +685,7 @@ namespace engine
       goto done ;
    }
 
-   string _pmdCfgRecord::makeAddressLine( const vector < _pmdCfgRecord::pmdAddrPair > & vecAddr,
+   string _pmdCfgRecord::makeAddressLine( const vector < pmdAddrPair > & vecAddr,
                                           CHAR chItemSep,
                                           CHAR chInnerSep ) const
    {
@@ -1987,7 +1987,7 @@ namespace engine
       rc = ossMkdir( _krcbLogPath, OSS_CREATE|OSS_READWRITE ) ;
       if ( rc && SDB_FE != rc )
       {
-         std::cerr << "Failed to create log dir: " << _krcbLogPath <<
+         std::cerr << "Failed to create repl-log dir: " << _krcbLogPath <<
                       ", rc = " << rc << std::endl ;
          goto error ;
       }
@@ -1995,24 +1995,24 @@ namespace engine
       rc = ossMkdir( _krcbBkupPath, OSS_CREATE|OSS_READWRITE ) ;
       if ( rc && SDB_FE != rc )
       {
-         PD_LOG ( PDERROR, "Failed to create backup dir: %s, rc = %d",
-                  _krcbBkupPath, rc ) ;
+         std::cerr << "Failed to create backup dir: " << _krcbBkupPath <<
+                      ", rc = " << rc << std::endl ;
          goto error ;
       }
 
       rc = ossMkdir( _dmsTmpBlkPath, OSS_CREATE|OSS_READWRITE ) ;
       if ( rc && SDB_FE != rc )
       {
-         PD_LOG ( PDERROR, "Failed to create tmp dir: %s, rc = %d",
-                  _krcbBkupPath, rc ) ;
+         std::cerr << "Failed to create tmp dir: " << _dmsTmpBlkPath <<
+                      ", rc = " << rc << std::endl ;
          goto error ;
       }
 
       rc = ossMkdir( _krcbLobPath, OSS_CREATE|OSS_READWRITE ) ;
       if ( rc && SDB_FE != rc )
       {
-         PD_LOG ( PDERROR, "Failed to create lob dir: %s, rc = %d",
-                  _krcbLobPath, rc ) ;
+         std::cerr << "Failed to create lob dir: " << _krcbLobPath <<
+                      ", rc = " << rc << std::endl ;
          goto error ;
       }
 

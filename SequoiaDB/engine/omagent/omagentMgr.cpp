@@ -586,7 +586,7 @@ namespace engine
       _netRoute *pRoute = _netAgent.getRoute() ;
       INT32 rc = SDB_OK ;
 
-      vector< _pmdOptionsMgr::_pmdAddrPair > omAddrs = _options.omAddrs() ;
+      vector< _pmdAddrPair > omAddrs = _options.omAddrs() ;
       // init om addr
       for ( UINT32 i = 0 ; i < omAddrs.size() ; ++i )
       {

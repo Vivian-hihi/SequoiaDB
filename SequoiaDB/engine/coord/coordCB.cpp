@@ -130,7 +130,7 @@ namespace engine
       UINT16 catNID = CATA_NODE_ID_BEGIN + CLS_REPLSET_MAX_NODE_SIZE ;
       MsgRouteID id ;
       pmdOptionsCB *optCB = pmdGetOptionCB() ;
-      vector< _pmdOptionsMgr::_pmdAddrPair > catAddrs = optCB->catAddrs() ;
+      vector< _pmdAddrPair > catAddrs = optCB->catAddrs() ;
 
       // 1. create objs
       _pNetWork = SDB_OSS_NEW _netRouteAgent( &_multiRouteAgent ) ;

@@ -35,24 +35,94 @@
 *******************************************************************************/
 
 #include "rtnCoordImageCommands.hpp"
+#include "pmdCB.hpp"
 
 namespace engine
 {
 
    /*
-      rtnCoordAttachImage implement
+      rtnCoordImageBase implement
    */
-   INT32 rtnCoordAttachImage::execute( CHAR *pReceiveBuffer, SINT32 packSize,
+   INT32 rtnCoordImageBase::execute( CHAR *pReceiveBuffer, SINT32 packSize,
                                        CHAR **ppResultBuffer, pmdEDUCB *cb,
                                        MsgOpReply &replyHeader,
                                        BSONObj **ppErrorObj )
    {
       INT32 rc = SDB_OK ;
+      CoordCB *pCoord = pmdGetKRCB()->getCoordCB() ;
+      netMultiRouteAgent *pRouteAgent = pCoord->getRouteAgent() ;
+      CoordGroupList datagroups ;
+      CoordGroupList sendgroups ;
+
+      // fill default-reply
+      MsgHeader *pHeader               = (MsgHeader *)pReceiveBuffer;
+      replyHeader.header.messageLength = sizeof( MsgOpReply );
+      replyHeader.header.opCode        = MSG_BS_QUERY_RES;
+      replyHeader.header.requestID     = pHeader->requestID;
+      replyHeader.header.routeID.value = 0;
+      replyHeader.header.TID           = pHeader->TID;
+      replyHeader.contextID            = -1;
+      replyHeader.flags                = SDB_OK;
+      replyHeader.numReturned          = 0;
+      replyHeader.startFrom            = 0;
+
+      MsgOpQuery *pAttachMsg           = (MsgOpQuery *)pReceiveBuffer ;
+      pAttachMsg->header.routeID.value = 0 ;
+      pAttachMsg->header.TID           = cb->getTID() ;
+      pAttachMsg->header.opCode        = _getInnerOpCode() ;
+
+      // 1. execute on catalog
+      rc = executeOnCataGroup( pReceiveBuffer, pRouteAgent, cb,
+                               NULL, &datagroups ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to execute %s on catalog node, rc: %d",
+                 _getName(), rc ) ;
+         goto error ;
+      }
+
+      // 2. execute on the special groups, ignore error
+      pAttachMsg->header.opCode        = MSG_BS_QUERY_REQ ;
+      rc = executeOnDataGroup( &pAttachMsg->header, datagroups, sendgroups,
+                               pRouteAgent, cb, TRUE ) ;
+      if ( rc )
+      {
+         PD_LOG( PDWARNING, "Failed to execute %s on data nodes, "
+                 "rc: %d", _getName(), rc ) ;
+         rc = SDB_OK ;
+      }
 
    done:
+      replyHeader.flags = rc ;
       return rc ;
    error:
       goto done ;
+   }
+
+   /*
+      rtnCoordAttachImage implement
+   */
+   INT32 rtnCoordAttachImage::_getInnerOpCode() const
+   {
+      return MSG_CAT_ATTACH_IMAGE_REQ ;
+   }
+
+   const CHAR* rtnCoordAttachImage::_getName() const
+   {
+      return COORD_CMD_ATTACH_IMAGE ;
+   }
+
+   /*
+      rtnCoordEnableImage implement
+   */
+   INT32 rtnCoordEnableImage::_getInnerOpCode() const
+   {
+      return MSG_CAT_ENABLE_IMAGE_REQ ;
+   }
+
+   const CHAR* rtnCoordEnableImage::_getName() const
+   {
+      return COORD_CMD_ENABLE_IMAGE ;
    }
 
 }

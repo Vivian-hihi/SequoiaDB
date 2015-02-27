@@ -99,12 +99,9 @@
 */
 #define CAT_SYSINFO_SPACE_NAME            "SYSINFO"
 #define CAT_SYSBASE_COLLECTION_NAME       CAT_SYSINFO_SPACE_NAME".SYSBASE"
-#define CAT_SYSIMAGE_COLLECTION_NAME      CAT_SYSINFO_SPACE_NAME".SYSIMAGE"
 
 #define CAT_BASEINFO_TYPE_INDEX           "{name:\"SYSTYPE\",key: {"\
                                           FIELD_NAME_TYPE":1}, unique: true, enforced: true } "
-#define CAT_IMAGE_SRC_INDEX               "{name:\"SYSSRC\",key: {"\
-                                          FIELD_NAME_SOURCE":1}, unique: true, enforced: true } "
 
 #define CAT_BASE_TYPE_GLOBAL_STR          "GLOBAL"
 

@@ -345,11 +345,12 @@ namespace engine
       UINT32 id = 0 ;
       PD_TRACE_ENTRY ( SDB_CATALOGCB_ALLOCGROUPID ) ;
       ossScopedLock _lock(&_GrpIDMutex, EXCLUSIVE) ;
-      while ( i++ < CAT_DATA_NODE_MAX_NUM )
+      while ( i++ <= DATA_GROUP_ID_END - DATA_GROUP_ID_BEGIN )
       {
-         if ( _iCurGrpId < CAT_DATA_GROUP_ID_BEGIN )
+         if ( _iCurGrpId > DATA_GROUP_ID_END ||
+              _iCurGrpId < CAT_DATA_GROUP_ID_BEGIN )
          {
-            _iCurGrpId = CAT_DATA_GROUP_ID_BEGIN;
+            _iCurGrpId = CAT_DATA_GROUP_ID_BEGIN ;
          }
          GRP_ID_MAP::const_iterator it = _grpIdMap.find( _iCurGrpId );
          if ( it != _grpIdMap.end() )
@@ -413,9 +414,10 @@ namespace engine
       INT32 i = 0;
       UINT16 id = 0 ;
       PD_TRACE_ENTRY ( SDB_CATALOGCB_ALLOCNODEID ) ;
-      while ( i++ < CAT_DATA_NODE_MAX_NUM )
+      while ( i++ <= DATA_NODE_ID_END - DATA_NODE_ID_BEGIN )
       {
-         if ( _iCurNodeId < CAT_DATA_NODE_ID_BEGIN )
+         if ( _iCurNodeId > DATA_NODE_ID_END ||
+              _iCurNodeId < CAT_DATA_NODE_ID_BEGIN )
          {
             _iCurNodeId = CAT_DATA_NODE_ID_BEGIN;
          }

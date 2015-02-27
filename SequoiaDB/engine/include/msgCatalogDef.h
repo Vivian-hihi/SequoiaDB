@@ -90,7 +90,6 @@
 #define CAT_INVALID_NODEID                INVALID_NODEID
 #define CAT_DATA_NODE_ID_BEGIN            DATA_NODE_ID_BEGIN
 #define CAT_DATA_GROUP_ID_BEGIN           DATA_GROUP_ID_BEGIN
-#define CAT_DATA_NODE_MAX_NUM             DATA_NODE_MAX_NUM
 
 #define CAT_SOURCE_NAME                   FIELD_NAME_SOURCE
 #define CAT_TARGET_NAME                   FIELD_NAME_TARGET

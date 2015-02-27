@@ -122,7 +122,7 @@ namespace engine
       MsgRouteID id ;
       pmdOptionsCB *optCB = pmdGetOptionCB() ;
       // catAddrs is pointing to option control block
-      vector< _pmdOptionsMgr::_pmdAddrPair > catAddrs = optCB->catAddrs() ;
+      vector< _pmdAddrPair > catAddrs = optCB->catAddrs() ;
 
       if ( !_pNetRtAgent )
       {

@@ -407,6 +407,7 @@ namespace engine
          ~_clsNodeMgrAgent () ;
       public:
          INT32       groupCount () ;
+         INT32       getGroupsID( vector< UINT32 > &groups ) ;
 
          INT32       groupVersion ( UINT32 id ) ;
          INT32       groupID2Name ( UINT32 id, std::string &name ) ;

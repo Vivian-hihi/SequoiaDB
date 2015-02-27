@@ -41,17 +41,40 @@
 
 namespace engine
 {
-
    /*
-      rtnCoordAttachImage define
+      rtnCoordImageBase define
    */
-   class rtnCoordAttachImage : public rtnCoordCommand
+   class rtnCoordImageBase : public rtnCoordCommand
    {
       public:
          virtual INT32 execute( CHAR *pReceiveBuffer, SINT32 packSize,
                                 CHAR **ppResultBuffer,
                                 pmdEDUCB *cb, MsgOpReply &replyHeader,
                                 BSONObj **ppErrorObj ) ;
+
+      protected:
+         virtual INT32 _getInnerOpCode() const = 0 ;
+         virtual const CHAR* _getName() const = 0 ;
+   } ;
+
+   /*
+      rtnCoordAttachImage define
+   */
+   class rtnCoordAttachImage : public rtnCoordImageBase
+   {
+      protected:
+         virtual INT32 _getInnerOpCode() const ;
+         virtual const CHAR* _getName() const ;
+   } ;
+
+   /*
+      rtnCoordEnableImage define
+   */
+   class rtnCoordEnableImage : public rtnCoordImageBase
+   {
+      protected:
+         virtual INT32 _getInnerOpCode() const ;
+         virtual const CHAR* _getName() const ;
    } ;
 
 }

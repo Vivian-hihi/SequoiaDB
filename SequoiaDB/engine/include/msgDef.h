@@ -251,6 +251,7 @@
 #define FIELD_NAME_ADDRESS                   "Address"
 #define FIELD_NAME_IMAGE                     "Image"
 #define FIELD_NAME_ACTIVE                    "Active"
+#define FIELD_NAME_ENABLE                    "Enable"
 
 #define FIELD_NAME_INSERT                    "Insert"
 #define FIELD_NAME_UPDATE                    "Update"
@@ -406,6 +407,7 @@
 #define CMD_NAME_LIST_LOBS                   "list lobs"
 #define CMD_NAME_ATTACH_IMAGE                "attach image"
 #define CMD_NAME_DETACH_IMAGE                "detach image"
+#define CMD_NAME_ENABLE_IMAGE                "enable image"
 #define CMD_NAME_ACTIVE_IMAGE                "active image"
 #define CMD_NAME_DEACTIVE_IMAGE              "deactive image"
 #define CMD_NAME_REELECT                     "reelect"
@@ -428,8 +430,9 @@
 #define CURRENT_NODEID                       -1
 #define CATA_NODE_ID_BEGIN                   1
 #define DATA_NODE_ID_BEGIN                   1000
+#define DATA_NODE_ID_END                     ( 60000 + DATA_NODE_ID_BEGIN )
 #define DATA_GROUP_ID_BEGIN                  1000
-#define DATA_NODE_MAX_NUM                    60000
+#define DATA_GROUP_ID_END                    ( 60000 + DATA_GROUP_ID_BEGIN )
 #define CATA_NODE_MAX_NUM                    CLS_REPLSET_MAX_NODE_SIZE
 
 #define SDB_ROLE_DATA_STR                    "data"

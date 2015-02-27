@@ -180,8 +180,6 @@ namespace engine
                                 pmdEDUCB *cb,
                                 INT16 w ) ;
 
-   /* Collection[CAT_SYSIMAGE_COLLECTION_NAME] functions */
-
    /* Other Tools */
    INT32 catRemoveCLEx( const CHAR *clFullName,  pmdEDUCB *cb,
                         _SDB_DMSCB * dmsCB, _dpsLogWrapper * dpsCB, INT16 w,
