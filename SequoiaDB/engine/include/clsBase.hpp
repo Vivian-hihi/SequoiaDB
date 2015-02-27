@@ -37,6 +37,7 @@
 #include "msg.hpp"
 #include "oss.hpp"
 #include <vector>
+#include <string>
 
 namespace engine
 {
