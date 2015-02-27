@@ -39,6 +39,7 @@
 #include "pmdCB.hpp"
 #include "rtn.hpp"
 #include "catDCManager.hpp"
+#include "clsDCMgr.hpp"
 #include "msgMessage.hpp"
 #include "pdTrace.hpp"
 #include "catTrace.hpp"
@@ -131,6 +132,111 @@ namespace engine
             break;
       }
       return rc ;
+   }
+
+   INT32 _catDCManager::processCommandMsg( const NET_HANDLE &handle,
+                                           MsgHeader *pMsg,
+                                           BOOLEAN writable )
+   {
+      INT32 rc = SDB_OK ;
+      MsgOpQuery *pQueryReq = (MsgOpQuery *)pMsg ;
+
+      MsgOpReply replyHeader ;
+      rtnContextBuf ctxBuff ;
+
+      INT32 flag = 0 ;
+      CHAR *pCMDName = NULL ;
+      INT64 numToSkip = 0 ;
+      INT64 numToReturn = 0 ;
+      CHAR *pQuery = NULL ;
+      CHAR *pFieldSelector = NULL ;
+      CHAR *pOrderBy = NULL ;
+      CHAR *pHint = NULL ;
+
+      // init reply msg
+      replyHeader.header.messageLength = sizeof( MsgOpReply ) ;
+      replyHeader.contextID = -1 ;
+      replyHeader.flags = SDB_OK ;
+      replyHeader.numReturned = 0 ;
+      replyHeader.startFrom = 0 ;
+      _fillRspHeader( &(replyHeader.header), &(pQueryReq->header) ) ;
+
+      // extract msg
+      rc = msgExtractQuery( (CHAR*)pMsg, &flag, &pCMDName, &numToSkip,
+                            &numToReturn, &pQuery, &pFieldSelector,
+                            &pOrderBy, &pHint ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to extract query msg, rc: %d", rc ) ;
+
+      if ( writable && !pmdIsPrimary() )
+      {
+         rc = SDB_CLS_NOT_PRIMARY ;
+         PD_LOG ( PDWARNING, "Service deactive but received command: %s"
+                  "opCode: %d", pCMDName, pQueryReq->header.opCode ) ;
+         goto error ;
+      }
+
+      // the second dispatch msg
+      switch ( pQueryReq->header.opCode )
+      {
+         case MSG_CAT_ATTACH_IMAGE_REQ :
+            rc = processCmdAttachImage( handle, pQuery, ctxBuff ) ;
+            break ;
+         default :
+            rc = SDB_INVALIDARG ;
+            PD_LOG( PDERROR, "Recieved unknow command: %s, opCode: %d",
+                    pCMDName, pQueryReq->header.opCode ) ;
+            break ;
+      }
+
+      PD_RC_CHECK( rc, PDERROR, "Process command[%s] failed, opCode: %d, "
+                   "rc: %d", pCMDName, pQueryReq->header.opCode, rc ) ;
+
+   done:
+      // send reply
+      if ( !_pCatCB->isDelayed() )
+      {
+         if ( 0 == ctxBuff.size() )
+         {
+            rc = _pCatCB->netWork()->syncSend( handle, (void*)&replyHeader ) ;
+         }
+         else
+         {
+            replyHeader.header.messageLength += ctxBuff.size() ;
+            replyHeader.numReturned = ctxBuff.recordNum() ;
+            rc = _pCatCB->netWork()->syncSend( handle,
+                                               &(replyHeader.header),
+                                               (void*)ctxBuff.data(),
+                                               ctxBuff.size() ) ;
+         }
+      }
+      return rc ;
+   error:
+      replyHeader.flags = rc ;
+      goto done ;
+   }
+
+   INT32 _catDCManager::processCmdAttachImage( const NET_HANDLE &handle,
+                                               const CHAR *pQuery,
+                                               rtnContextBuf &ctxBuff )
+   {
+      INT32 rc = SDB_OK ;
+
+      try
+      {
+         BSONObj objQuery( pQuery ) ;
+
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Attach image occurs exception: %s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    void _catDCManager::_fillRspHeader( MsgHeader * rspMsg,

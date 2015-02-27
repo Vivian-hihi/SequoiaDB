@@ -38,6 +38,7 @@
 
 #include "pmd.hpp"
 #include "netDef.hpp"
+#include "rtnContextBuff.hpp"
 
 using namespace bson ;
 
@@ -73,6 +74,9 @@ namespace engine
    protected:
       INT32 processCommandMsg( const NET_HANDLE &handle, MsgHeader *pMsg,
                                BOOLEAN writable ) ;
+      INT32 processCmdAttachImage( const NET_HANDLE &handle,
+                                   const CHAR *pQuery,
+                                   rtnContextBuf &ctxBuff ) ;
 
    protected:
       void  _fillRspHeader( MsgHeader *rspMsg, const MsgHeader *reqMsg ) ;

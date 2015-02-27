@@ -1916,11 +1916,11 @@ namespace engine
             break ;
          case MSG_CAT_LINK_CL_REQ :
             rc = processCmdLinkCollection( pQuery, &replyData,
-                                          replyDataLen, returnNum );
+                                           replyDataLen, returnNum );
             break;
          case MSG_CAT_UNLINK_CL_REQ :
             rc = processCmdUnlinkCollection( pQuery, &replyData,
-                                          replyDataLen, returnNum );
+                                             replyDataLen, returnNum );
             break;
          case MSG_CAT_CREATE_DOMAIN_REQ :
             rc = processCmdCreateDomain ( pQuery ) ;

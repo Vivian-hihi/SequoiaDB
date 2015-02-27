@@ -38,6 +38,7 @@
 
 #include "pmd.hpp"
 #include "netDef.hpp"
+#include "rtnContextBuff.hpp"
 
 using namespace bson ;
 
@@ -79,27 +80,30 @@ namespace engine
                                   const CHAR *pSelector ) ;
       INT32 processCmdDelNode( const NET_HANDLE &handle,
                                const CHAR *pQuery ) ;
+      INT32 processCmdRemoveGrp( const NET_HANDLE &handle,
+                                 const CHAR *pQuery ) ;
+      INT32 processCmdActiveGrp( const NET_HANDLE &handle,
+                                 const CHAR *pQuery,
+                                 rtnContextBuf &ctxBuff );
 
       INT32 processGrpReq( const NET_HANDLE &handle, MsgHeader *pMsg ) ;
       INT32 processRegReq( const NET_HANDLE &handle, MsgHeader *pMsg ) ;
       INT32 processPrimaryChange( const NET_HANDLE &handle, MsgHeader *pMsg ) ;
-      INT32 processRemoveGrp( const NET_HANDLE &handle, MsgHeader *pMsg ) ;
-      INT32 processActiveGrp( const NET_HANDLE &handle, MsgHeader *pMsg );
 
       INT32 readCataConf();
       INT32 parseCatalogConf( CHAR *pData, const SINT64 sDataSize,
                               SINT64 &sParseBytes );
       INT32 parseLine( const CHAR *pLine, BSONObj &obj );
-      INT32 generateGroupInfo( bson::BSONObj &boConf,
-                               bson::BSONObj &boGroupInfo );
-      INT32 saveGroupInfo ( bson::BSONObj &boGroupInfo, INT16 w );
-      INT32 parseIDInfo( bson::BSONObj &obj );
-      INT32 getNodeInfo( const bson::BSONObj &boReq,
-                         bson::BSONObj &boNodeInfo );
+      INT32 generateGroupInfo( BSONObj &boConf,
+                               BSONObj &boGroupInfo );
+      INT32 saveGroupInfo ( BSONObj &boGroupInfo, INT16 w );
+      INT32 parseIDInfo( BSONObj &obj );
+      INT32 getNodeInfo( const BSONObj &boReq,
+                         BSONObj &boNodeInfo );
       INT32 removeGrp( const CHAR *groupName ) ;
       INT32 activeGrp( const std::string &strGroupName,
                        UINT32 groupID,
-                       bson::BSONObj &boGroupInfo );
+                       BSONObj &boGroupInfo );
 
       INT32 _count( const CHAR *collection, const BSONObj &matcher,
                     UINT64 &count ) ;

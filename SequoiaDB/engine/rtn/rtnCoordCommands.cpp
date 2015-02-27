@@ -2710,7 +2710,7 @@ namespace engine
 
    retry:
       rc = doP1OnDataGroup( pReceiveBuffer, cb, contextID, ignoreRCList,
-                           hasRetry );
+                            hasRetry );
       PD_RC_CHECK( rc, PDERROR,
                   "failed to execute phase1 on data group(rc=%d)",
                   rc );
@@ -2758,7 +2758,7 @@ namespace engine
    }
 
    INT32 rtnCoordCMD2PhaseCommit::complete( CHAR *pReceiveBuffer,
-                                          pmdEDUCB * cb )
+                                            pmdEDUCB * cb )
    {
       return SDB_OK;
    }
@@ -2880,7 +2880,7 @@ namespace engine
 
    //PD_TRACE_DECLARE_FUNCTION (SDB_RTNCODROPCL_GETCLNAME, "rtnCoordCMDDropCollection::getCLName" )
    INT32 rtnCoordCMDDropCollection::getCLName( CHAR *pReceiveBuffer,
-                                             std::string &strCLName )
+                                               std::string &strCLName )
    {
       INT32 rc = SDB_OK;
       PD_TRACE_ENTRY ( SDB_RTNCODROPCL_GETCLNAME ) ;
@@ -2896,23 +2896,20 @@ namespace engine
       rc = msgExtractQuery( pReceiveBuffer, &flag, &pCommandName,
                             &numToSkip, &numToReturn, &pQuery, &pFieldSelector,
                             &pOrderBy, &pHint );
-      PD_RC_CHECK( rc, PDERROR,
-                  "failed to parse the request(rc=%d)",
-                  rc );
+      PD_RC_CHECK( rc, PDERROR, "Failed to parse the request(rc=%d)", rc ) ;
       try
       {
          boQuery = BSONObj( pQuery );
          BSONElement beCLName = boQuery.getField( CAT_COLLECTION_NAME );
          PD_CHECK( beCLName.type() == String, SDB_INVALIDARG, error, PDERROR,
-                  "failed to get collection name" );
+                   "Failed to get collection name" );
          strCLName = beCLName.str();
       }
       catch( std::exception &e )
       {
          rc = SDB_INVALIDARG;
-         PD_LOG ( PDERROR,
-                  "failed to drop collection, occured unexpected error:%s",
-                  e.what() );
+         PD_LOG ( PDERROR, "Failed to drop collection, occured unexpected "
+                  "error:%s", e.what() ) ;
          goto error;
       }
    done:
@@ -2924,10 +2921,10 @@ namespace engine
 
    //PD_TRACE_DECLARE_FUNCTION (SDB_RTNCODROPCL_GETGPLST, "rtnCoordCMDDropCollection::getGroupList" )
    INT32 rtnCoordCMDDropCollection::getGroupList( CHAR *pReceiveBuffer,
-                                                CoordGroupList &groupLst,
-                                                CoordGroupList &sendGroupLst,
-                                                pmdEDUCB * cb,
-                                                BOOLEAN isNeedRefresh )
+                                                  CoordGroupList &groupLst,
+                                                  CoordGroupList &sendGroupLst,
+                                                  pmdEDUCB * cb,
+                                                  BOOLEAN isNeedRefresh )
    {
       INT32 rc = SDB_OK;
       PD_TRACE_ENTRY ( SDB_RTNCODROPCL_GETGPLST ) ;
@@ -2937,14 +2934,14 @@ namespace engine
       MsgOpQuery *pDropReq = (MsgOpQuery *)pReceiveBuffer ;
 
       rc = getCLName( pReceiveBuffer, strCLName );
-      PD_RC_CHECK( rc, PDERROR,
-                  "failed to get collection name(rc=%d)", rc );
+      PD_RC_CHECK( rc, PDERROR, "Failed to get collection name(rc=%d)", rc ) ;
+
    retry:
       hasRetry = isNeedRefresh;
-      rc = rtnCoordGetCataInfo( cb, strCLName.c_str(), isNeedRefresh, cataInfo );
-      PD_RC_CHECK( rc, PDERROR,
-                  "failed to get catalog(name:%s, rc=%d)",
-                  strCLName.c_str(), rc );
+      rc = rtnCoordGetCataInfo( cb, strCLName.c_str(), isNeedRefresh,
+                                cataInfo );
+      PD_RC_CHECK( rc, PDERROR, "Failed to get catalog(name:%s, rc=%d)",
+                   strCLName.c_str(), rc );
 
       rc = rtnCoordGetGroupsByCataInfo( cataInfo, sendGroupLst, groupLst );
       if ( rc != SDB_OK )
@@ -2956,10 +2953,9 @@ namespace engine
             goto retry;
          }
       }
-      PD_RC_CHECK( rc, PDERROR,
-                  "failed to get group list(rc=%d)",
-                  rc );
+      PD_RC_CHECK( rc, PDERROR, "Failed to get group list(rc=%d)", rc ) ;
       pDropReq->version = cataInfo->getVersion();
+
    done:
       PD_TRACE_EXITRC ( SDB_RTNCODROPCL_GETGPLST, rc ) ;
       return rc;
@@ -2969,7 +2965,7 @@ namespace engine
 
    //PD_TRACE_DECLARE_FUNCTION (SDB_RTNCODROPCL_CMPL, "rtnCoordCMDDropCollection::complete" )
    INT32 rtnCoordCMDDropCollection::complete( CHAR *pReceiveBuffer,
-                                             pmdEDUCB * cb )
+                                              pmdEDUCB * cb )
    {
       INT32 rc = SDB_OK;
       PD_TRACE_ENTRY ( SDB_RTNCODROPCL_CMPL ) ;
@@ -3144,9 +3140,9 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDQUBASE_QUTOCANOGR, "rtnCoordCMDQueryBase::queryToCataNodeGroup" )
    INT32 rtnCoordCMDQueryBase::queryToCataNodeGroup( CHAR *pBuffer,
-                                               netMultiRouteAgent *pRouteAgent,
-                                               pmdEDUCB *cb,
-                                               rtnContextCoord *pContext )
+                                                     netMultiRouteAgent *pRouteAgent,
+                                                     pmdEDUCB *cb,
+                                                     rtnContextCoord *pContext )
    {
       INT32 rc = SDB_OK;
       BOOLEAN isNeedRefresh = FALSE;

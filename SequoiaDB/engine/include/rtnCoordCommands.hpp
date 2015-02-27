@@ -674,9 +674,9 @@ namespace engine
    {
    public:
       virtual INT32 queryToCataNodeGroup( CHAR *pBuffer,
-                                 netMultiRouteAgent *pRouteAgent,
-                                 pmdEDUCB *cb,
-                                 rtnContextCoord *pContext );
+                                          netMultiRouteAgent *pRouteAgent,
+                                          pmdEDUCB *cb,
+                                          rtnContextCoord *pContext );
       INT32 execute( CHAR *pReceiveBuffer, SINT32 packSize,
                      CHAR **ppResultBuffer,
                      pmdEDUCB *cb, MsgOpReply &replyHeader,
