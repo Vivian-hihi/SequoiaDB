@@ -53,6 +53,7 @@ namespace engine
       _eduID   = PMD_INVALID_EDUID ;
       _pBuff   = NULL ;
       _buffLen = 0 ;
+      _awaitingHandshake = TRUE ;
 
       _socket.disableNagle() ;
 

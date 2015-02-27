@@ -50,7 +50,6 @@ namespace engine
       ossMemset( (void*)&_replyHeader, 0, sizeof(_replyHeader) ) ;
       _needReply = TRUE ;
       _needRollback = FALSE ;
-      _awaitingHandshake = TRUE ;
    }
 
    _pmdLocalSession::~_pmdLocalSession()
