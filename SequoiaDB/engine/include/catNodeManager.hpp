@@ -55,7 +55,7 @@ namespace engine
    {
    public:
       catNodeManager() ;
-      virtual ~catNodeManager() ;
+      ~catNodeManager() ;
       INT32 init() ;
 
       void  attachCB( _pmdEDUCB *cb ) ;
@@ -65,8 +65,6 @@ namespace engine
 
       INT32 active() ;
       INT32 deactive() ;
-
-      INT32 updateGlobalAddr() ;
 
    // message process functions
    protected:
@@ -136,17 +134,7 @@ namespace engine
       INT32 _getNodeInfoByConf( BSONObj &boConf, BSONObjBuilder &bobNodeInfo ) ;
       INT32 _checkLocalHost( BOOLEAN &isValid ) ;
 
-      INT32 _updateGlobalInfo() ;
-
    private:
-      typedef enum _SDB_CAT_MODULE_STATUS
-      {
-         SDB_CAT_MODULE_ACTIVE    =  0,
-         SDB_CAT_MODULE_DEACTIVE
-      }SDB_CAT_MODULE_STATUS;
-
-   private:
-      SDB_CAT_MODULE_STATUS      _status;
       _SDB_DMSCB                 *_pDmsCB;
       _dpsLogWrapper             *_pDpsCB;
       _SDB_RTNCB                 *_pRtnCB;

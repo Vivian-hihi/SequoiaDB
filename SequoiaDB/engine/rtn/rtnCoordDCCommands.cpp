@@ -14,7 +14,7 @@
    You should have received a copy of the GNU Affero General Public License
    along with this program. If not, see <http://www.gnu.org/license/>.
 
-   Source File Name = rtnCoordImageCommands.cpp
+   Source File Name = rtnCoordDCCommands.cpp
 
    Descriptive Name = Runtime Coord Common
 
@@ -34,7 +34,7 @@
 
 *******************************************************************************/
 
-#include "rtnCoordImageCommands.hpp"
+#include "rtnCoordDCCommands.hpp"
 #include "pmdCB.hpp"
 
 namespace engine

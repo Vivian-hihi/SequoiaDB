@@ -14,7 +14,7 @@
    You should have received a copy of the GNU Affero General Public License
    along with this program. If not, see <http://www.gnu.org/license/>.
 
-   Source File Name = rtnCoordImageCommands.hpp
+   Source File Name = rtnCoordDCCommands.hpp
 
    Descriptive Name = Runtime Coord Common
 
@@ -34,8 +34,8 @@
 
 *******************************************************************************/
 
-#ifndef RTNCOORD_IMAGE_COMMANDS_HPP__
-#define RTNCOORD_IMAGE_COMMANDS_HPP__
+#ifndef RTNCOORD_DC_COMMANDS_HPP__
+#define RTNCOORD_DC_COMMANDS_HPP__
 
 #include "rtnCoordCommands.hpp"
 
@@ -79,4 +79,4 @@ namespace engine
 
 }
 
-#endif // RTNCOORD_IMAGE_COMMANDS_HPP__
+#endif // RTNCOORD_DC_COMMANDS_HPP__

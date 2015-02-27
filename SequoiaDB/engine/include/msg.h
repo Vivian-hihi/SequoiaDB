@@ -254,7 +254,7 @@ enum MSG_TYPE
    MSG_CAT_GRP_CHANGE_NTY              = 3213,
    MSG_CAT_NODE_END                    = 3299,
 
-   MSG_CAT_IMAGE_BEGIN                 = 3300,
+   MSG_CAT_DC_BEGIN                    = 3300,
    MSG_CAT_ATTACH_IMAGE_REQ            = 3301,
    MSG_CAT_ATTACH_IMAGE_RSP            = MAKE_REPLY_TYPE(MSG_CAT_ATTACH_IMAGE_REQ),
    MSG_CAT_ENABLE_IMAGE_REQ            = 3302,
@@ -263,7 +263,7 @@ enum MSG_TYPE
    MSG_CAT_ACTIVE_IMAGE_RSP            = MAKE_REPLY_TYPE(MSG_CAT_ACTIVE_IMAGE_REQ),
    MSG_CAT_DETACH_IMAGE_REQ            = 3304,
    MSG_CAT_DETACH_IMAGE_RSP            = MAKE_REPLY_TYPE(MSG_CAT_DETACH_IMAGE_REQ),
-   MSG_CAT_IMAGE_END                   = 3399,
+   MSG_CAT_DC_END                      = 3399,
 
    MSG_CAT_END                         = 3999,
 

@@ -1867,7 +1867,7 @@ namespace engine
       PD_LOG( PDEVENT, "Complete restore[%s]", backupName() ) ;
 
    done:
-      PMD_SHUTDOWN_DB( rc )
+      PMD_SHUTDOWN_DB( rc ) ;
       return rc ;
    error:
       {

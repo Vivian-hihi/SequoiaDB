@@ -92,6 +92,7 @@ namespace engine
       {
          _pCatCB->getCatlogueMgr()->attachCB( cb ) ;
          _pCatCB->getCatNodeMgr()->attachCB( cb ) ;
+         _pCatCB->getCatDCMgr()->attachCB( cb ) ;
       }
 
       _attachEvent.signalAll() ;
@@ -104,6 +105,7 @@ namespace engine
 
       if ( _pCatCB )
       {
+         _pCatCB->getCatDCMgr()->detachCB( cb ) ;
          _pCatCB->getCatlogueMgr()->detachCB( cb ) ;
          _pCatCB->getCatNodeMgr()->detachCB( cb ) ;
       }
@@ -572,6 +574,10 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Active catalog manager failed, rc: %d",
                    rc ) ;
 
+      rc = _pCatCB->getCatDCMgr()->active() ;
+      PD_RC_CHECK( rc, PDERROR, "Active cata dc manager failed, rc: %d",
+                   rc ) ;
+
    done:
       _changeEvent.signal() ;
       PD_TRACE_EXITRC ( SDB_CATMAINCT_ACTIVE, rc ) ;
@@ -586,6 +592,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_CATMAINCT_DEACTIVE ) ;
 
+      _pCatCB->getCatDCMgr()->deactive() ;
       _pCatCB->getCatNodeMgr()->deactive() ;
       _pCatCB->getCatlogueMgr()->deactive() ;
 
@@ -1024,6 +1031,11 @@ namespace engine
                  (UINT32)msg->opCode < MSG_CAT_NODE_END )
       {
          rc = _pCatCB->getCatNodeMgr()->processMsg( handle, msg ) ;
+      }
+      else if ( MSG_CAT_DC_BEGIN < (UINT32)msg->opCode &&
+                (UINT32)msg->opCode < MSG_CAT_DC_END )
+      {
+         rc = _pCatCB->getCatDCMgr()->processMsg( handle, msg ) ;
       }
       else
       {

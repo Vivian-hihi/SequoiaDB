@@ -131,6 +131,9 @@ namespace engine
       rc = _catNodeMgr.init() ;
       PD_RC_CHECK( rc, PDERROR, "Init cat node manager failed, rc: %d", rc ) ;
 
+      rc = _catDCMgr.init() ;
+      PD_RC_CHECK( rc, PDERROR, "Init cat dc manager failed, rc: %d", rc ) ;
+
       // 4. create listen
       PD_TRACE1 ( SDB_CATALOGCB_INIT,
                   PD_PACK_ULONG ( _routeID.value ) ) ;
@@ -234,7 +237,7 @@ namespace engine
 
    void sdbCatalogueCB::onConfigSave()
    {
-      _catNodeMgr.updateGlobalAddr() ;
+      _catDCMgr.updateGlobalAddr() ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGCB_INSERTGROUPID, "sdbCatalogueCB::insertGroupID" )

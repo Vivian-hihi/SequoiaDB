@@ -55,7 +55,6 @@ namespace engine
    */
    catNodeManager::catNodeManager()
    {
-      _status = SDB_CAT_MODULE_DEACTIVE ;
       _pDmsCB = NULL ;
       _pDpsCB = NULL ;
       _pRtnCB = NULL ;
@@ -95,27 +94,15 @@ namespace engine
       _pEduCB = NULL ;
    }
 
-   INT32 catNodeManager::updateGlobalAddr()
-   {
-      // not primary
-      if ( SDB_CAT_MODULE_ACTIVE != _status )
-      {
-         return SDB_CLS_NOT_PRIMARY ;
-      }
-      return catUpdateBaseInfoAddr( pmdGetOptionCB()->getCatAddr().c_str(),
-                                    TRUE, _pEduCB, 1 ) ;
-   }
-
    // when the node switch to  primary will call this fun
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATNODEMGR_ACTIVE, "catNodeManager::active" )
    INT32 catNodeManager::active()
    {
       //get all of the nodes's id
       INT32 rc            = SDB_OK;
-
       rtnContextBuf buffObj ;
-
       PD_TRACE_ENTRY ( SDB_CATNODEMGR_ACTIVE ) ;
+
       BSONObj boEmpty;
       SINT64 sContextID   = -1;
       CHAR szBuf[ OP_MAXNAMELENGTH+1 ] = {0} ;
@@ -178,12 +165,6 @@ namespace engine
          } // if ( pBuffer != NULL )
       } // while ( TRUE );
 
-      // update global info
-      rc = _updateGlobalInfo () ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to update global info, rc: %d", rc ) ;
-
-      _status = SDB_CAT_MODULE_ACTIVE ;
-
    done :
       PD_TRACE_EXITRC ( SDB_CATNODEMGR_ACTIVE, rc ) ;
       return rc;
@@ -192,15 +173,13 @@ namespace engine
       {
          _pRtnCB->contextDelete( sContextID, _pEduCB );
       }
+      // need to stop engine
+      PMD_SHUTDOWN_DB( rc ) ;
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATNODEMGR_DEACTIVE, "catNodeManager::deactive" )
    INT32 catNodeManager::deactive()
    {
-      PD_TRACE_ENTRY ( SDB_CATNODEMGR_DEACTIVE ) ;
-      _status = SDB_CAT_MODULE_DEACTIVE;
-      PD_TRACE_EXIT ( SDB_CATNODEMGR_DEACTIVE ) ;
       return SDB_OK ;
    }
 
@@ -273,7 +252,7 @@ namespace engine
       msgReply.header.header.routeID.value= 0;
       msgReply.header.header.TID = pRequest->header.TID;
 
-      if ( !pmdIsPrimary() || SDB_CAT_MODULE_ACTIVE != _status )
+      if ( !pmdIsPrimary() )
       {
          rc = SDB_CLS_NOT_PRIMARY ;
          PD_LOG ( PDWARNING, "service deactive but received primary-change "
@@ -353,10 +332,10 @@ namespace engine
       PD_TRACE1 ( SDB_CATNODEMGR_GRPREQ, PD_PACK_UINT ( groupID ) ) ;
 
       BSONObj boGroupInfo ;
-      PD_CHECK( ( ( pmdIsPrimary() && SDB_CAT_MODULE_ACTIVE == _status ) ||
-                  CATALOG_GROUPID == groupID ), SDB_CLS_NOT_PRIMARY, error,
-                  PDWARNING, "Service deactive but received group-info-request"
-                  "(groupID=%u)", groupID ) ;
+      PD_CHECK( ( pmdIsPrimary() || CATALOG_GROUPID == groupID ),
+                SDB_CLS_NOT_PRIMARY, error, PDWARNING,
+                "Service deactive but received group-info-request"
+                "(groupID=%u)", groupID ) ;
 
       // get group by groupID
       if ( 0 != groupID )
@@ -455,10 +434,10 @@ namespace engine
                    "Failed to process register-request, received "
                    "unexpected error:%s", e.what() );
       }
-      PD_CHECK( ( ( pmdIsPrimary() && SDB_CAT_MODULE_ACTIVE == _status )
-                || SDB_ROLE_CATALOG == nodeRole ), SDB_CLS_NOT_PRIMARY,
-                error, PDWARNING, "service deactive but received "
-                "register-request:%s", boReq.toString().c_str() );
+      PD_CHECK( ( pmdIsPrimary() || SDB_ROLE_CATALOG == nodeRole ),
+                SDB_CLS_NOT_PRIMARY, error, PDWARNING,
+                "service deactive but received register-request:%s",
+                boReq.toString().c_str() );
       PD_TRACE1 ( SDB_CATNODEMGR_REGREQ,
                   PD_PACK_STRING ( boReq.toString().c_str() ) ) ;
       rc = getNodeInfo( boReq, boNodeInfo );
@@ -538,7 +517,7 @@ namespace engine
                             &pOrderBy, &pHint ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to extract query msg, rc: %d", rc ) ;
 
-      if ( writable && SDB_CAT_MODULE_DEACTIVE == _status )
+      if ( writable && !pmdIsPrimary() )
       {
          rc = SDB_CLS_NOT_PRIMARY ;
          PD_LOG ( PDWARNING, "Service deactive but received command: %s"
@@ -788,7 +767,7 @@ namespace engine
       replyHeader.numReturned = 0;
       replyHeader.startFrom = 0;
 
-      if ( SDB_CAT_MODULE_DEACTIVE == _status )
+      if ( !pmdIsPrimary() )
       {
          rc = SDB_CLS_NOT_PRIMARY;
          PD_LOG ( PDWARNING, "Service deactive but received remove-group "
@@ -857,7 +836,7 @@ namespace engine
 
       do
       {
-         if ( SDB_CAT_MODULE_DEACTIVE == _status )
+         if ( !pmdIsPrimary() )
          {
             rc = SDB_CLS_NOT_PRIMARY ;
             PD_LOG ( PDWARNING, "Service deactive but received active-node "
@@ -2778,87 +2757,6 @@ namespace engine
          return rc ;
       error:
          goto done ;
-   }
-
-   INT32 catNodeManager::_updateGlobalInfo()
-   {
-      INT32 rc = SDB_OK ;
-      BOOLEAN exist = FALSE ;
-      BSONObj infoObj ;
-      pmdOptionsCB *option = pmdGetOptionCB() ;
-
-      string clusterName ;
-      string businessName ;
-      option->getFieldStr( PMD_OPTION_CLUSTER_NAME, clusterName, "" ) ;
-      option->getFieldStr( PMD_OPTION_BUSINESS_NAME, businessName, "" ) ;
-
-      rc = catCheckBaseInfoExist( CAT_BASE_TYPE_GLOBAL_STR, exist,
-                                  infoObj, _pEduCB ) ;
-      if ( rc )
-      {
-         goto error ;
-      }
-      if ( !exist )
-      {
-         // if the global info not exist, need to create
-         infoObj = BSON( FIELD_NAME_TYPE << CAT_BASE_TYPE_GLOBAL_STR <<
-                         FIELD_NAME_DATACENTER << BSON(
-                           FIELD_NAME_CLUSTERNAME << clusterName <<
-                           FIELD_NAME_BUSINESSNAME << businessName <<
-                           FIELD_NAME_ADDRESS << option->getCatAddr() ) <<
-                         FIELD_NAME_ACTIVE << true ) ;
-         rc = rtnInsert( CAT_SYSBASE_COLLECTION_NAME, infoObj, 1, 0,
-                         _pEduCB, _pDmsCB, _pDpsCB, 1 ) ;
-         PD_RC_CHECK( rc, PDERROR, "Insert global info[%s] to collection[%s] "
-                      "failed, rc: %d", infoObj.toString().c_str(),
-                      CAT_SYSBASE_COLLECTION_NAME, rc ) ;
-      }
-      else
-      {
-         INT64 updateNum = 0 ;
-         string tmpClsName ;
-         string tmpBusName ;
-         // if the global info exist, update
-         BSONElement dcEle = infoObj.getField( FIELD_NAME_DATACENTER ) ;
-         if ( Object ==  dcEle.type() )
-         {
-            BSONObj dcObj = dcEle.embeddedObject() ;
-            BSONElement e1 = dcObj.getField( FIELD_NAME_CLUSTERNAME ) ;
-            BSONElement e2 = dcObj.getField( FIELD_NAME_BUSINESSNAME ) ;
-            tmpClsName = e1.valuestrsafe() ;
-            tmpBusName = e2.valuestrsafe() ;
-         }
-
-         if ( clusterName != tmpClsName || businessName != tmpBusName )
-         {
-            PD_LOG( PDEVENT, "Cluster name[%s] or business name[%s] has "
-                    "changed to %s:%s", tmpClsName.c_str(), tmpBusName.c_str(),
-                    clusterName.c_str(), businessName.c_str() ) ;
-            BSONObj updator = BSON( "$set" << BSON(
-              FIELD_NAME_DATACENTER"."FIELD_NAME_CLUSTERNAME << clusterName <<
-              FIELD_NAME_DATACENTER"."FIELD_NAME_BUSINESSNAME << businessName )
-                                   ) ;
-            BSONObj matcher = BSON( FIELD_NAME_TYPE <<
-                                    CAT_BASE_TYPE_GLOBAL_STR ) ;
-            rc = rtnUpdate( CAT_SYSBASE_COLLECTION_NAME, matcher, updator,
-                            BSONObj(), 0, _pEduCB, _pDmsCB, _pDpsCB, 1,
-                            &updateNum ) ;
-            PD_RC_CHECK( rc, PDERROR, "Update global info[%s] failed, rc: %d",
-                         updator.toString().c_str(), rc ) ;
-            if ( updateNum <= 0 )
-            {
-               PD_LOG( PDERROR, "Not found global info, matcher: %s",
-                       matcher.toString().c_str() ) ;
-               rc = SDB_SYS ;
-               goto error ;
-            }
-         }
-      }
-
-   done:
-      return rc ;
-   error:
-      goto done ;
    }
 
 }

@@ -1,0 +1,98 @@
+/*******************************************************************************
+
+   Copyright (C) 2011-2014 SequoiaDB Ltd.
+
+   This program is free software: you can redistribute it and/or modify
+   it under the term of the GNU Affero General Public License, version 3,
+   as published by the Free Software Foundation.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warrenty of
+   MARCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program. If not, see <http://www.gnu.org/license/>.
+
+   Source File Name = catDCManager.hpp
+
+   Descriptive Name =
+
+   When/how to use: this program may be used on binary and text-formatted
+   versions of runtime component. This file contains code logic for
+   common functions for coordinator node.
+
+   Dependencies: N/A
+
+   Restrictions: N/A
+
+   Change Activity:
+   defect Date        Who Description
+   ====== =========== === ==============================================
+
+   Last Changed =     XJH Opt
+
+*******************************************************************************/
+#ifndef CAT_DCMANAGER_HPP__
+#define CAT_DCMANAGER_HPP__
+
+#include "pmd.hpp"
+#include "netDef.hpp"
+
+using namespace bson ;
+
+namespace engine
+{
+   class sdbCatalogueCB ;
+   class _SDB_RTNCB ;
+   class _dpsLogWrapper ;
+   class _SDB_DMSCB ;
+
+   /*
+      _catDCManager define
+   */
+   class _catDCManager : public SDBObject
+   {
+   public:
+      _catDCManager() ;
+      ~_catDCManager() ;
+
+      INT32 init() ;
+
+      void  attachCB( _pmdEDUCB *cb ) ;
+      void  detachCB( _pmdEDUCB *cb ) ;
+
+      INT32 processMsg( const NET_HANDLE &handle, MsgHeader *pMsg ) ;
+
+      INT32 active() ;
+      INT32 deactive() ;
+
+      INT32 updateGlobalAddr() ;
+
+   // message process functions
+   protected:
+      INT32 processCommandMsg( const NET_HANDLE &handle, MsgHeader *pMsg,
+                               BOOLEAN writable ) ;
+
+   protected:
+      void  _fillRspHeader( MsgHeader *rspMsg, const MsgHeader *reqMsg ) ;
+
+   // tool fuctions
+   private:
+      INT16 _majoritySize() ;
+      INT32 _updateGlobalInfo() ;
+
+   private:
+      _SDB_DMSCB                 *_pDmsCB;
+      _dpsLogWrapper             *_pDpsCB;
+      _SDB_RTNCB                 *_pRtnCB;
+      sdbCatalogueCB             *_pCatCB;
+      pmdEDUCB                   *_pEduCB;
+
+   } ;
+   typedef _catDCManager catDCManager ;
+
+}
+
+#endif // CAT_DCMANAGER_HPP__
+

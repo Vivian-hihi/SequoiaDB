@@ -36,7 +36,7 @@
 
 #include "rtnCoord.hpp"
 #include "rtnCoordCommands.hpp"
-#include "rtnCoordImageCommands.hpp"
+#include "rtnCoordDCCommands.hpp"
 #include "rtnCoordOperator.hpp"
 #include "rtnCoordAuth.hpp"
 #include "rtnCoordAuthCrt.hpp"

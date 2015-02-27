@@ -149,7 +149,7 @@ rtnFiles = [
       "rtn/rtnBackup.cpp",
       "rtn/rtnReorg.cpp",
       "rtn/rtnCoordCommands.cpp",
-      "rtn/rtnCoordImageCommands.cpp",
+      "rtn/rtnCoordDCCommands.cpp",
       "rtn/rtnCoordQuery.cpp",
       "rtn/rtnCoordCommon.cpp",
       "rtn/rtnCoordOperator.cpp",
@@ -392,6 +392,7 @@ catFiles = [
       "cat/catalogueCB.cpp",
       "cat/catNodeManager.cpp",
       "cat/catCatalogManager.cpp",
+      "cat/catDCManager.cpp",
       "cat/catLevelLock.cpp",
       "cat/catSplit.cpp"
       ]

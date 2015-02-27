@@ -74,7 +74,7 @@ namespace engine
       do { \
          pmdGetKRCB()->setDBStatus( PMD_DB_SHUTDOWN ) ; \
          pmdGetKRCB()->setExitCode( code ) ; \
-      } while ( 0 );
+      } while ( 0 )
 
    /*
       Register db to krcb
