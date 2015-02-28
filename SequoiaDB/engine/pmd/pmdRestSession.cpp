@@ -951,19 +951,19 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       const CHAR *pSubCommand = NULL ;
-      if ( COM_GETFILE == command )
-      {
-         rc = SDB_UNKNOWN_MESSAGE ;
-         PD_LOG_MSG( PDERROR, "unsupported command:command=%d", command ) ;
-         goto error ;
-      }
 
       pAdaptor->getQuery( _restSession, OM_REST_FIELD_COMMAND, &pSubCommand ) ;
       if ( NULL == pSubCommand )
       {
          rc = SDB_UNKNOWN_MESSAGE ;
-         PD_LOG_MSG( PDERROR, "can't resolve field:field=%s", 
-                     OM_REST_FIELD_COMMAND ) ;
+         if ( !pmdGetKRCB()->isCBValue( SDB_CB_OMSVC ) )
+         {
+            // we will have another flow if it's OMSVC. we can't say it's  
+            // a error now
+            PD_LOG_MSG( PDERROR, "can't resolve field:field=%s", 
+                        OM_REST_FIELD_COMMAND ) ;
+         }
+         
          goto error ;
       }
 
@@ -1021,7 +1021,13 @@ namespace engine
       }
       else
       {
-         PD_LOG_MSG( PDERROR, "unsupported command:command=%s", pSubCommand ) ;
+         if ( !pmdGetKRCB()->isCBValue( SDB_CB_OMSVC ) )
+         {
+            // we will have another flow if it's OMSVC. we can't say it's  
+            // a error now
+            PD_LOG_MSG( PDERROR, "unsupported command:command=%s", 
+                        pSubCommand ) ;
+         }
          rc = SDB_UNKNOWN_MESSAGE ;
       }
 
