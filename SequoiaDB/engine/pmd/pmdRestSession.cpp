@@ -206,35 +206,38 @@ namespace engine
          _pEDUCB->resetLsn() ;
 
 #ifdef SDB_SSL
-         if ( _isAwaitingHandshake() && pmdGetOptionCB()->useSSL() )
+         if ( _isAwaitingHandshake() )
          {
-            CHAR buff[ 4 ] = { 0 } ;
-            INT32 recvLen  = 0 ;
+            if ( pmdGetOptionCB()->useSSL() )
+            {
+               CHAR buff[ 4 ] = { 0 } ;
+               INT32 recvLen  = 0 ;
 
-            rc = _socket.recv( buff, sizeof( buff ), recvLen,
+               rc = _socket.recv( buff, sizeof( buff ), recvLen,
                            PMD_REST_SESSION_SNIFF_TIMEOUT, MSG_PEEK, TRUE, TRUE ) ;
-            if ( rc < 0 )
-            {
-               break;
-            }
-
-            // https handshake
-            // 22 is the SSL handshake message type
-            if ( 22 == buff[0] )
-            {
-               rc = _socket.doSSLHandshake ( NULL, 0 ) ;
-               if ( rc )
+               if ( rc < 0 )
                {
-                  break ;
+                  break;
                }
 
-               _setHandshakeReceived() ;
+               // https handshake
+               // 22 is the SSL handshake message type
+               if ( 22 == buff[0] )
+               {
+                  rc = _socket.doSSLHandshake ( NULL, 0 ) ;
+                  if ( rc )
+                  {
+                     break ;
+                  }
 
-               continue;
+                  _setHandshakeReceived() ;
+
+                  continue;
+               }
             }
-         }
 
-         _setHandshakeReceived() ;
+             _setHandshakeReceived() ;
+         }
 #endif
          // recv rest header
          rc = pAdptor->recvRequestHeader( this ) ;
