@@ -501,6 +501,7 @@ namespace engine
          builder.append( SDB_INSTALL_RUN_FILED, info._run ) ;
          builder.append( SDB_INSTALL_USER_FIELD, info._user ) ;
          builder.append( SDB_INSTALL_PATH_FIELD, info._path ) ;
+         builder.append( SDB_INSTALL_MD5_FIELD, info._md5 ) ;
          rval.setBSONObj( "", builder.obj() ) ;
       }
 
