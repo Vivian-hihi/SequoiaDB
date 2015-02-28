@@ -123,7 +123,8 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
 
-      if ( SDB_ROLE_STANDALONE == pmdGetDBRole() )
+      if ( SDB_ROLE_STANDALONE == pmdGetDBRole() ||
+           SDB_ROLE_OM == pmdGetDBRole() )
       {
          pmdSetPrimary( TRUE ) ;
 

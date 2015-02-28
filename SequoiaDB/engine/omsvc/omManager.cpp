@@ -388,9 +388,6 @@ namespace engine
       pmdEDUMgr *pEDUMgr = pmdGetKRCB()->getEDUMgr() ;
       EDUID eduID = PMD_INVALID_EDUID ;
 
-      // set to primary
-      pmdSetPrimary( TRUE ) ;
-
       // start om manager edu
       rc = pEDUMgr->startEDU( EDU_TYPE_OMMGR, (_pmdObjBase*)this, &eduID ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to start OM Manager edu, rc: %d", rc ) ;
