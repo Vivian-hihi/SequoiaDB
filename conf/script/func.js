@@ -412,7 +412,7 @@ function removeTmpDir2( ssh )
    {
       SYSEXPHANDLE( e ) ;
       rc = GETLASTERROR() ;
-      errMsg = "Failed to remove temporary directory but leave log file in host[" + ssh.getPeerIP() + "]" ;
+      errMsg = "Failed to remove temporary directory in host[" + ssh.getPeerIP() + "]" ;
       PD_LOG( arguments, PDWARNING, FILE_NAME_FUNC,
               errMsg + ", rc: " + rc + ", detail: " + GETLASTERRMSG() ) ;
    }
@@ -992,4 +992,90 @@ function setTaskLogFileName( task_id, host_ip )
       exception_handle( SDB_SYS, errMsg ) ;
    }   
 }
+
+/* *****************************************************************************
+@discretion: push some tool programs and js scripts to target host for checking
+@author: Tanzhaobo
+@parameter
+   ssh[object]: Ssh object
+@return void
+***************************************************************************** */
+function pushProgAndSpt( ssh, progs, spts )
+{
+   var src = "" ;
+   var dest = "" ;
+   var local_prog_path = "" ;
+   var local_spt_path  = ""  ;
+
+   try
+   {
+      // 1. get tool program's path
+      try
+      {
+         local_prog_path = adaptPath( System.getEWD() ) ;
+      }
+      catch( e )
+      {
+         SYSEXPHANDLE( e ) ;
+         rc = GETLASTERROR() ;
+         errMsg = "Failed to get local tool program's path" ;
+         PD_LOG2( task_id, arguments, PDERROR, FILE_NAME_FUNC,
+                  sprintf( errMsg + ", rc: ?, detail: ?", rc, GETLASTERRMSG() ) ) ;
+         exception_handle( rc, errMsg ) ;
+      }
+      PD_LOG2( task_id, arguments, PDDEBUG, FILE_NAME_FUNC,
+               "Local tool program's path is: " + local_prog_path ) ;
+      // 2. get js script file's path
+      try
+      {
+         local_spt_path = getSptPath( local_prog_path ) ;
+      }
+      catch( e )
+      {
+         SYSEXPHANDLE( e ) ;
+         rc = GETLASTERROR() ;
+         errMsg = "Failed to get local js script files' path" ;
+         PD_LOG2( task_id, arguments, PDERROR, FILE_NAME_FUNC,
+                  sprintf( errMsg + ", rc: ?, detail: ?", rc, GETLASTERRMSG() ) ) ;
+         exception_handle( rc, errMsg ) ;
+      }
+      PD_LOG2( task_id, arguments, PDDEBUG, FILE_NAME_FUNC,
+               "Local js script file's path is: " + local_spt_path ) ;
+      
+      // 3. push program and script
+      if ( SYS_LINUX == SYS_TYPE )
+      {
+         // push programs
+         for ( var i = 0; i < progs.length; i++ )
+         {
+            src = local_prog_path + progs[i] ;
+            dest = OMA_PATH_TEMP_BIN_DIR_L + progs[i] ;
+            ssh.push( src, dest ) ;
+         }
+         
+         // push js files
+         for ( var i = 0; i < spts.length; i++ )
+         {
+            src = local_spt_path + spts[i] ;
+            dest = OMA_PATH_TEMP_SPT_DIR_L + spts[i] ;
+            ssh.push( src, dest ) ;
+         }
+      }
+      else
+      {
+         // TODO:
+      }
+   }
+   catch( e )
+   {
+      SYSEXPHANDLE( e ) ;
+      rc = GETLASTERROR() ;
+      errMsg = "Failed to push programs to host[" + ssh.getPeerIP() + "]" ;
+      PD_LOG2( task_id, arguments, PDERROR, FILE_NAME_FUNC,
+               sprintf( errMsg + " src[?], dest[?], rc: ?, detail: ?",
+               src, dest, rc, GETLASTERRMSG() ) ) ;
+      exception_handle( rc, errMsg ) ;
+   }
+}
+
 

@@ -107,7 +107,6 @@ function _removeStandalone( hostName, svcName, agentPort )
    try
    {
       oma.removeData( svcName ) ;
-      oma.close() ;
    }
    catch ( e ) 
    {
@@ -121,11 +120,20 @@ function _removeStandalone( hostName, svcName, agentPort )
          {
          }
       }
+      SYSEXPHANDLE( e ) ;
       rc = GETLASTERROR() ;
       errMsg = sprintf( "Failed to remove standalone[?:?]", hostName, svcName ) ;
       PD_LOG2( task_id, arguments, PDERROR, FILE_NAME_ROLLBACKSTANDALONE,
                sprintf( errMsg + ", rc: ?, detail: ?", rc, GETLASTERRMSG() ) ) ;
       exception_handle( rc, errMsg ) ;
+   }
+   // close oma
+   try
+   {
+      oma.close() ;
+   }
+   catch( e )
+   {
    }
 }
 

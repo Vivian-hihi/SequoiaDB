@@ -172,7 +172,7 @@ function _getTmpCoordNum( tmpCoordInfoArr )
    {
       retNum = tmpCoordInfoArr.size() ;
       if ( "number" != typeof( retNum ) )
-         exception_handle( SDB_SYS, sprintf( "[?] is not a number", retNum ) ) ;
+         exception_handle( SDB_SYS, sprintf( "retNum is not a number" ) ) ;
    }
    catch( e )
    {
@@ -424,7 +424,8 @@ function _rollback( tmpCoordHostName, tmpCoordSvcName )
                  sprintf( errMsg + ", rc: ?, detail: ?", rc, GETLASTERRMSG() ) ) ;
          exception_handle( rc, errMsg ) ;
       }
-/*      
+/*
+// println
       // 6. remove temporary coord left last time
       PD_LOG( arguments, PDEVENT, FILE_NAME_INSTALL_TEMPORARY_COORD,
               "Finish rollback nodes, going to remove the remaining temporary coord" ) ;
@@ -615,9 +616,8 @@ function main()
          exception_handle( rc, errMsg ) ;
       }
       
-      
       // begin to install a new temporary coord
-      // 4. connet to OM Agent in local host
+      // 4. connect to OM Agent in local host
       try
       {
          PD_LOG( arguments, PDDEBUG, FILE_NAME_INSTALL_TEMPORARY_COORD,

@@ -36,11 +36,19 @@ var errMsg             = "" ;
 
 var host_ip            = "" ;
 var task_id            = 0 ;
-
-
 var remote_precheck_result_file = "" ;
 var result_file                 = "" ;
-
+var progs = null ;
+var spts  = [ "error.js", "common.js", "define.js", "log.js",
+              "func.js", "addHostPreCheck.js" ] ;
+if ( SYS_LINUX == SYS_TYPE )
+{
+   progs = [ "sdb" ] ; 
+}
+else
+{
+   // TODO: windows
+}
 
 /* *****************************************************************************
 @discretion: init
@@ -81,7 +89,7 @@ function _init()
       catch( e )
       {
          SYSEXPHANDLE( e ) ;
-         errMsg = sprintf( "Failed to initialize add host pre-check file in local host" ) ;
+         errMsg = sprintf( "Failed to initialize add host pre-check result file in local host" ) ;
          rc = GETLASTERROR() ;
          PD_LOG2( task_id, arguments, PDEVENT, FILE_NAME_ADD_HOST,
                   sprintf( errMsg + ", rc: ?, detail: ?", rc, GETLASTERRMSG() ) ) ;
@@ -90,7 +98,7 @@ function _init()
    }
    else
    {
-      // TODO
+      // TODO: windows
    }
    
    PD_LOG2( task_id, arguments, PDEVENT, FILE_NAME_ADD_HOST, "Begin to add host" ) ;
@@ -117,6 +125,7 @@ function _final()
                sprintf( "Failed to remove add host pre-check result file in localhost, rc: ?, detail: ?",
                         GETLASTERROR(), GETLASTERRMSG() ) ) ;
    }
+   
    PD_LOG2( task_id, arguments, PDEVENT, FILE_NAME_ADD_HOST, "Finish adding host" ) ;
 }
 
@@ -176,90 +185,7 @@ function _getLocalDBPacketMD5( install_packet )
 }
 
 /* *****************************************************************************
-@discretion: push some tool packets and scripts to remote for checking
-@author: Tanzhaobo
-@parameter
-   ssh[object]: Ssh object
-@return void
-***************************************************************************** */
-function _pushToolPacket( ssh )
-{
-   var src = "" ;
-   var dest = "" ;
-   var local_prog_path = "" ;
-   var local_spt_path  = ""  ;
-   var js_files = [ "error.js", "common.js", "define.js", "log.js",
-                    "func.js", "addHostPreCheck.js" ] ;
-   try
-   {
-      // 1. get tool program's path
-      try
-      {
-         local_prog_path = adaptPath( System.getEWD() ) ;
-      }
-      catch( e )
-      {
-         SYSEXPHANDLE( e ) ;
-         rc = GETLASTERROR() ;
-         errMsg = "Failed to get local tool program's path" ;
-         PD_LOG2( task_id, arguments, PDERROR, FILE_NAME_ADD_HOST,
-                  sprintf( errMsg + ", rc: ?, detail: ?", rc, GETLASTERRMSG() ) ) ;
-         exception_handle( rc, errMsg ) ;
-      }
-      PD_LOG2( task_id, arguments, PDDEBUG, FILE_NAME_ADD_HOST,
-               "Local tool program's path is: " + local_prog_path ) ;
-      // 2. get js script file's path
-      try
-      {
-         local_spt_path = getSptPath( local_prog_path ) ;
-      }
-      catch( e )
-      {
-         SYSEXPHANDLE( e ) ;
-         rc = GETLASTERROR() ;
-         errMsg = "Failed to get local js script files' path" ;
-         PD_LOG2( task_id, arguments, PDERROR, FILE_NAME_ADD_HOST,
-                  sprintf( errMsg + ", rc: ?, detail: ?", rc, GETLASTERRMSG() ) ) ;
-         exception_handle( rc, errMsg ) ;
-      }
-      PD_LOG2( task_id, arguments, PDDEBUG, FILE_NAME_ADD_HOST,
-               "Local js script file's path is: " + local_spt_path ) ;
-      
-      // 3. push program and script
-      if ( SYS_LINUX == SYS_TYPE )
-      {
-         // push program
-         src = local_prog_path + OMA_PROG_SDB ;
-         dest = OMA_PATH_TEMP_BIN_DIR_L + OMA_PROG_SDB ;
-         ssh.push( src, dest ) ;
-         
-         // push js files
-         for ( var i = 0; i < js_files.length; i++ )
-         {
-            src = local_spt_path + js_files[i] ;
-            dest = OMA_PATH_TEMP_SPT_DIR_L + js_files[i] ;
-            ssh.push( src, dest ) ;
-         }
-      }
-      else
-      {
-         // TODO:
-      }
-   }
-   catch( e )
-   {
-      SYSEXPHANDLE( e ) ;
-      rc = GETLASTERROR() ;
-      errMsg = "Failed to push programs to host[" + ssh.getPeerIP() + "]" ;
-      PD_LOG2( task_id, arguments, PDERROR, FILE_NAME_ADD_HOST,
-               sprintf( errMsg + " src[?], dest[?], rc: ?, detail: ?",
-               src, dest, rc, GETLASTERRMSG() ) ) ;
-      exception_handle( rc, errMsg ) ;
-   }
-}
-
-/* *****************************************************************************
-@discretion: judge whether need to install db packet in remote host
+@discretion: judge whether need to add current host
 @author: Tanzhaobo
 @parameter
    ssh[object]: Ssh object
@@ -268,7 +194,7 @@ function _pushToolPacket( ssh )
 @return
    [bool]: true for need to install while false for not
 ***************************************************************************** */
-function _needToInstall( ssh, install_packet, install_path )
+function _needToAdd( ssh, install_packet, install_path )
 {
    /*
    1. pre-check
@@ -303,14 +229,14 @@ function _needToInstall( ssh, install_packet, install_path )
       // TODO: windows
    }
 
-   // 1. pre-check before add host
+   // 1. pre-check before add current host
    try
    {
       ssh.exec( str ) ;
       // record the return msg to log file
       retMsg = ssh.getLastOut() ;
       PD_LOG2( task_id, arguments, PDEVENT, FILE_NAME_ADD_HOST,
-               sprintf( "Log received message from remote host[?]:?=>???<=",
+               sprintf( "Received message from remote host[?]:?=>???<=",
                ssh.getPeerIP(), OMA_NEW_LINE, OMA_NEW_LINE, retMsg, OMA_NEW_LINE ) ) ;
    }
    catch( e )
@@ -318,8 +244,8 @@ function _needToInstall( ssh, install_packet, install_path )
       SYSEXPHANDLE( e ) ;
       retMsg = ssh.getLastOut() ;
       errMsg = sprintf( "Failed to pre-check before add host[?]", ssh.getPeerIP() ) ;
-      PD_LOG2( task_id, arguments, PDEVENT, FILE_NAME_ADD_HOST,
-               sprintf( errMsg + ", log received message from remote host[?]:?=>???<=",
+      PD_LOG2( task_id, arguments, PDERROR, FILE_NAME_ADD_HOST,
+               sprintf( errMsg + ", received message from remote host[?]:?=>???<=",
                ssh.getPeerIP(), OMA_NEW_LINE, OMA_NEW_LINE, retMsg, OMA_NEW_LINE ) ) ;
       return true ;
    }
@@ -332,15 +258,14 @@ function _needToInstall( ssh, install_packet, install_path )
    catch( e )
    {
       SYSEXPHANDLE( e ) ;
-      errMsg = sprintf( "Add host pre-check result file does not exist in host[?], rc: ?, detail: ?",
+      errMsg = sprintf( "Add host pre-check's result does not exist in host[?], rc: ?, detail: ?",
                         ssh.getPeerIP(), GETLASTERROR(), GETLASTERRMSG() ) ;
       PD_LOG2( task_id, arguments, PDWARNING, FILE_NAME_ADD_HOST, errMsg ) ;
       return true ;
    }
 
    // 3. analysis
-   // check whether remote install packet's md5 is the same with local install
-   // packet's md5 or not
+   // check whether remote install packet's md5 is the same with local one or not
    try
    {
       // TODO: need to rename
@@ -353,8 +278,8 @@ function _needToInstall( ssh, install_packet, install_path )
                   sprintf("Remote install packet's md5[?] is invalid", remote_md5) ) ;
          return true ;
       }
-      if ( ( "string" == typeof(isProgramExist ) && "true" != isProgramExist  ) ||
-           ( "boolean" == typeof(isProgramExist ) && true != isProgramExist  ) )
+      if ( ( "string" == typeof(isProgramExist ) && "true" != isProgramExist ) ||
+           ( "boolean" == typeof(isProgramExist ) && true != isProgramExist ) )
       {
          PD_LOG2( task_id, arguments, PDWARNING, FILE_NAME_ADD_HOST,
                   "Remote installed db programs are incomplete" ) ;
@@ -594,11 +519,11 @@ function main()
    // 3. create temporary directory in remote host
    createTmpDir( ssh ) ;
       
-   // 4. push tool packet
-   _pushToolPacket( ssh ) ;
+   // 4. push tool programs and js script files to target host for checking
+   pushProgAndSpt( ssh, progs, spts ) ;
 
-   // 5. check whether need to install db packet or not
-   flag = _needToInstall( ssh, installPacket, installPath ) ;
+   // 5. check whether need to add current host or not
+   flag = _needToAdd( ssh, installPacket, installPath ) ;
    if ( !flag ) 
    {
       PD_LOG2( task_id, arguments, PDEVENT, FILE_NAME_ADD_HOST,

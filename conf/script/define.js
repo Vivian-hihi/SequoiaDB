@@ -61,6 +61,7 @@ var GroupName                    = "GroupName" ;
 var HostName                     = "HostName" ;
 var HasInstall                   = "HasInstall" ;
 var HasInstalled                 = "HasInstalled" ;
+var HASINSTALLED                 = "HASINSTALLED" ;
 var HasUninstall                 = "HasUninstall" ;
 var HostInfo                     = "HostInfo" ;
 var Hosts                        = "Hosts" ;
@@ -139,6 +140,12 @@ var NetCards                     = "NetCards" ;
 var ClusterName                  = "clustername" ;
 var BusinessName                 = "businessname" ;
 var UserTag                      = "usertag" ;
+var ClusterName2                 = "ClusterName" ;
+var BusinessName2                = "BusinessName" ;
+var UserTag2                     = "UserTag" ;
+var CLUSTERNAME                  = "CLUSTERNAME" ;
+var BUSINESSNAME                 = "BUSINESSNAME" ;
+var USERTAG                      = "USERTAG" ;
 
 
 var OMA_PATH_TEMP_OMA_DIR_L           = "/tmp/omatmp/" ;

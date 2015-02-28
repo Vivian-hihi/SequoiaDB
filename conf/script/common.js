@@ -126,3 +126,12 @@ function tmpCoordMather()
    this.businessname              = "" ;
    this.usertag                   = "" ;
 }
+
+function checkSAInfo()
+{
+   this.clustername               = "" ;
+   this.businessname              = "" ;
+   this.usertag                   = "" ;
+   this.svcname                   = "" ;
+}
+
