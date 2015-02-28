@@ -496,6 +496,7 @@ INT32 _ossSocket::recv ( CHAR *pMsg, INT32 len,
          receivedLen += rc ;
          len -= rc ;
          pMsg += rc ;
+         rc = SDB_OK;
 
          if ( flags & MSG_PEEK )
          {
