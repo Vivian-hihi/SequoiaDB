@@ -1972,7 +1972,7 @@ namespace engine
                        pReply->contextID != -1 )
                   {
                      rc = pContext->addSubContext( routeID,
-                                       pReply->contextID );
+                                                   pReply->contextID );
                   }
                   else
                   {
@@ -3268,7 +3268,8 @@ namespace engine
             PD_LOG ( PDERROR, "failed to allocate context(rc=%d)", rc );
             break;
          }
-         rc = pContext->open( BSONObj(), BSONObj(), pSrc->numToReturn, pSrc->numToSkip ) ;
+         rc = pContext->open( BSONObj(), BSONObj(), pSrc->numToReturn,
+                              pSrc->numToSkip ) ;
          if ( rc != SDB_OK )
          {
             PD_LOG( PDERROR, "Open context failed, rc: %d", rc ) ;

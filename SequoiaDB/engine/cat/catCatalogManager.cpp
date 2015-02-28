@@ -2059,8 +2059,8 @@ namespace engine
          }
 
          rc = catLinkCL( strMainCLName.c_str(), strSubCLName.c_str(),
-                        boLowBound, boUpBound, _pEduCB, _pDmsCB,
-                        _pDpsCB, _majoritySize(), groupList );
+                         boLowBound, boUpBound, _pEduCB, _pDmsCB,
+                         _pDpsCB, _majoritySize(), groupList );
          PD_RC_CHECK( rc, PDERROR,
                       "failed to link the sub-collection(%s) "
                       "to main-collection(%s)(rc=%d)",
