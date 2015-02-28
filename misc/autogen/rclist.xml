@@ -2250,5 +2250,13 @@
          </description>
       </code>
 
+      <code>
+         <name>SDB_CLS_CAN_NOT_STEP_UP</name>
+         <description>
+            <en>can not step up when primary node exists or LSN is not the biggest</en>
+            <cn>当存在主节点或者本地LSN不为最大值时无法强行升主</cn>
+         </description>
+      </code>
+
    </codelist>
 </rclist>
