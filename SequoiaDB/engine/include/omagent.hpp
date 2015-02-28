@@ -48,7 +48,6 @@ namespace engine
    /*
       add host
    */
-
    struct _AddHostCommon
    {
       string _sdbUser ;
@@ -81,6 +80,7 @@ namespace engine
       vector<string> _flow ;
    } ;
    typedef struct _AddHostResultInfo AddHostResultInfo ;
+   typedef AddHostResultInfo RemoveHostResultInfo ;
 
    struct _AddHostInfo
    {
@@ -93,9 +93,13 @@ namespace engine
    typedef struct _AddHostInfo AddHostInfo ;
 
    /*
-      install db business host
+      remove host
    */
    
+
+   /*
+      install db business host
+   */
    struct _InstDBInfo
    {
       string _hostName ;
@@ -137,7 +141,9 @@ namespace engine
    typedef struct _InstDBBusInfo InstDBBusInfo ;
 
 
-   // remove db business host
+   /*
+      remove db business
+   */
    struct _RemoveDBInfo
    {
       string _hostName ;

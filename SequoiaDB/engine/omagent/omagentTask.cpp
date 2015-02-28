@@ -152,18 +152,7 @@ namespace engine
       _setRetErr( rc ) ;
       goto done ;
    }
-/*
-   BOOLEAN _omaAddHostTask::regSubTask( string subTaskName )
-   {
-      ossScopedLock lock( &_taskLatch, EXCLUSIVE ) ;
-      if ( OMA_TASK_STATUS_FAIL == _taskStatus )
-      {
-         return FALSE ;
-      }
-      setSubTaskStatus( subTaskName, OMA_TASK_STATUS_RUNNING ) ;
-      return TRUE ;
-   }
-*/
+
    AddHostInfo* _omaAddHostTask::getAddHostItem()
    {
       ossScopedLock lock ( &_taskLatch, EXCLUSIVE ) ;
@@ -594,7 +583,7 @@ namespace engine
       INT32 retRc         = SDB_OK ;
       UINT64 reqID        = 0 ;
       omAgentMgr *pOmaMgr = sdbGetOMAgentMgr() ;
-      _pmdEDUCB *cb       = pmdGetThreadEDUCB () ;
+      _pmdEDUCB *cb       = pmdGetThreadEDUCB() ;
       ossAutoEvent updateEvent ;
       BSONObj obj ;
       
@@ -607,7 +596,6 @@ namespace engine
       
       // 3. send message to omsvc
       while( !cb->isInterrupted() )
-//      while( TRUE )
       {
          pOmaMgr->sendUpdateTaskReq( reqID, &obj ) ;
          while ( !cb->isInterrupted() )
@@ -759,6 +747,13 @@ namespace engine
                  "rc = %d", rc ) ;
          goto error ;
       }
+      // init update result order
+      rc = _initResultOrder( _instDBBusRawInfo ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to init result order rc = %d", rc ) ;
+         goto error ;
+      }
 /*
       // restore result info
       rc = _restoreResultInfo() ;
@@ -886,10 +881,13 @@ namespace engine
       PD_LOG( PDEVENT, "Omagent finish running install db business "
               "task[%lld]", _taskID ) ;
       return SDB_OK ;
-      
+
    error:
-      setTaskStatus( OMA_TASK_STATUS_ROLLBACK ) ;
       _setRetErr( rc );
+      if ( TRUE == _isStandalone && SDBCM_NODE_EXISTED == rc )
+         goto done ;
+      // rollback
+      setTaskStatus( OMA_TASK_STATUS_ROLLBACK ) ;
       rc = _rollback() ;
       if ( rc )
       {
@@ -1043,7 +1041,7 @@ namespace engine
             }
          }
          // calculate progress
-         _progress = ( finishNum * 100 ) / totalNum ;         
+         _progress = ( finishNum * 100 ) / totalNum ;     
       }
 
       // 3. notify task to update progress to om
@@ -1259,7 +1257,9 @@ namespace engine
       BSONObjBuilder builder2 ;
       BSONArrayBuilder bab ;
       string deplayMod ;
-      const CHAR *pStr = NULL ;
+      const CHAR *pStr          = NULL ;
+      const CHAR *pClusterName  = NULL ;
+      const CHAR *pBusinessName = NULL ;
       
 
       // 1. get taskID from omsvc
@@ -1310,34 +1310,39 @@ namespace engine
          rc = SDB_INVALIDARG ;
          goto error ;
       }
-
-      // 5. get cfg info for temporay coord
-      rc = omaGetStringElement ( hostInfoObj, OMA_FIELD_CLUSTERNAME, &pStr ) ;
+      
+      // 5. get common fields
+      builder.append( OMA_FIELD_USERTAG, "" ) ;
+      rc = omaGetStringElement ( hostInfoObj, OMA_FIELD_CLUSTERNAME,
+                                 &pClusterName) ;
       PD_CHECK( SDB_OK == rc, rc, error, PDERROR, "Get field[%s] failed, "
                 "rc: %d", OMA_FIELD_CLUSTERNAME, rc ) ;
-      builder.append( OMA_FIELD_CLUSTERNAME2, pStr ) ;
-      rc = omaGetStringElement ( hostInfoObj, OMA_FIELD_BUSINESSNAME, &pStr ) ;
+      builder.append( OMA_FIELD_CLUSTERNAME, pClusterName ) ;
+      rc = omaGetStringElement ( hostInfoObj, OMA_FIELD_BUSINESSNAME,
+                                 &pBusinessName) ;
       PD_CHECK( SDB_OK == rc, rc, error, PDERROR, "Get field[%s] failed, "
                 "rc: %d", OMA_FIELD_BUSINESSNAME, rc ) ;
-      builder.append( OMA_FIELD_BUSINESSNAME2, pStr ) ;
-      builder.append( OMA_FIELD_USERTAG, OMA_TMP_COORD_NAME ) ;
-      builder.appendArray( OMA_FIELD_CATAADDR, bab.arr() ) ;
-      _tmpCoordCfgObj = builder.obj() ;
-      
-      // 6. get common fields
+      builder.append( OMA_FIELD_BUSINESSNAME, pBusinessName ) ;
       rc = omaGetStringElement ( hostInfoObj, OMA_FIELD_SDBUSER, &pStr ) ;
       PD_CHECK( SDB_OK == rc, rc, error, PDERROR, "Get field[%s] failed, "
                 "rc: %d", OMA_FIELD_SDBUSER, rc ) ;
-      builder2.append( OMA_FIELD_SDBUSER, pStr ) ;
+      builder.append( OMA_FIELD_SDBUSER, pStr ) ;
       rc = omaGetStringElement ( hostInfoObj, OMA_FIELD_SDBPASSWD, &pStr ) ;
       PD_CHECK( SDB_OK == rc, rc, error, PDERROR, "Get field[%s] failed, "
                 "rc: %d", OMA_FIELD_SDBPASSWD, rc ) ;
-      builder2.append( OMA_FIELD_SDBPASSWD, pStr ) ;
+      builder.append( OMA_FIELD_SDBPASSWD, pStr ) ;
       rc = omaGetStringElement ( hostInfoObj, OMA_FIELD_SDBUSERGROUP, &pStr ) ;
       PD_CHECK( SDB_OK == rc, rc, error, PDERROR, "Get field[%s] failed, "
                 "rc: %d", OMA_FIELD_SDBUSERGROUP, rc ) ;
-      builder2.append( OMA_FIELD_SDBUSERGROUP, pStr ) ;
-      commonFileds = builder2.obj() ;
+      builder.append( OMA_FIELD_SDBUSERGROUP, pStr ) ;
+      commonFileds = builder.obj() ;
+
+      // 6. get cfg info for temporay coord
+      builder2.append( OMA_FIELD_CLUSTERNAME2, pClusterName ) ;
+      builder2.append( OMA_FIELD_BUSINESSNAME2, pBusinessName ) ;
+      builder2.append( OMA_FIELD_USERTAG2, OMA_TMP_COORD_NAME ) ;
+      builder2.appendArray( OMA_FIELD_CATAADDR, bab.arr() ) ;
+      _tmpCoordCfgObj = builder2.obj() ;
       
       // 7. parse bson and get host's info for js file
       ele = hostInfoObj.getField ( OMA_FIELD_CONFIG ) ;
@@ -1536,6 +1541,58 @@ namespace engine
    error:
       goto done ;
 
+   }
+
+   INT32 _omaInstDBBusTask::_initResultOrder( BSONObj &info )
+   {
+      INT32 rc = SDB_OK ;
+      BSONElement ele ;
+      const CHAR *pHostName = NULL ;
+      const CHAR *pSvcName  = NULL ;
+
+      ele = info.getField ( OMA_FIELD_RESULTINFO ) ;
+      if ( Array != ele.type() )
+      {
+         PD_LOG_MSG ( PDERROR, "Receive wrong format install "
+                      "db business info from omsvc" ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      else
+      {
+         BSONObjIterator itr( ele.embeddedObject() ) ;
+         
+         while ( itr.more() )
+         {
+            BSONObj resultInfo ;
+            pair<string, string> p ;
+            ele = itr.next() ;
+            if ( Object != ele.type() )
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG_MSG ( PDERROR, "Receive wrong format bson from omsvc" ) ;
+               goto error ;
+            }
+            // get hostName and svcName in result info
+            resultInfo = ele.embeddedObject() ;
+            // _hostName
+            rc = omaGetStringElement( resultInfo, OMA_FIELD_HOSTNAME, &pHostName ) ;
+            PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                      "Get field[%s] failed, rc: %d", OMA_FIELD_HOSTNAME, rc ) ;
+            // _svcName
+            rc = omaGetStringElement( resultInfo, OMA_FIELD_SVCNAME, &pSvcName ) ;
+            PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                      "Get field[%s] failed, rc: %d", OMA_FIELD_SVCNAME, rc ) ;
+            p.first = pHostName ;
+            p.second = pSvcName ;
+            _resultOrder.push_back( p ) ;
+         }
+      }
+      
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    INT32 _omaInstDBBusTask::_restoreResultInfo()
@@ -2774,18 +2831,79 @@ namespace engine
       goto done ;
    }
 
-   void _omaInstDBBusTask::_buildResultInfo( vector<InstDBBusInfo> &info,
+   void _omaInstDBBusTask::_buildResultInfo( BOOLEAN isStandalone,
+                                             pair<string, string> &p,
                                              BSONArrayBuilder &bab )
    {
-      vector<InstDBBusInfo>::iterator it = info.begin() ;
+      BSONObjBuilder builder ;
+      BSONArrayBuilder arrBuilder ;
+      BSONObj obj ;
+      BOOLEAN canBuild = FALSE ;
+      vector<InstDBBusInfo>::iterator it ;
+      map< string, vector<InstDBBusInfo> >::iterator it2 ;
+      vector<string>::iterator itr ;
 
-      for ( ; it != info.end(); it++ )
+      // get the node specified by p.first and p.second
+      if ( TRUE == isStandalone )
       {
-         BSONObjBuilder builder ;
-         BSONArrayBuilder arrBuilder ;
-         BSONObj obj ;
+         // standalone
+         it = _standalone.begin() ;
+         for ( ; it != _standalone.end(); it++ )
+         {
+            if ( p.first == it->_instResult._hostName &&
+                 p.second == it->_instResult._svcName )
+            {
+               canBuild = TRUE ;
+               goto build ;
+            }
+         }
+      }
+      else
+      {
+         // catalog
+         it = _catalog.begin() ;
+         for ( ; it != _catalog.end(); it++ )
+         {
+            if ( p.first == it->_instResult._hostName &&
+                 p.second == it->_instResult._svcName )
+            {
+               canBuild = TRUE ;
+               goto build ;
+            }
+         }
+         // coord
+         it = _coord.begin() ;
+         for ( ; it != _coord.end(); it++ )
+         {
+            if ( p.first == it->_instResult._hostName &&
+                 p.second == it->_instResult._svcName )
+            {
+               canBuild = TRUE ;
+               goto build ;
+            }
+         }
+         // data
+         it2 = _mapGroups.begin() ;
+         for ( ; it2 != _mapGroups.end(); it2++ )
+         {
+            it = it2->second.begin() ;
+            for ( ; it != it2->second.end(); it++ )
+            {
+               if ( p.first == it->_instResult._hostName &&
+                    p.second == it->_instResult._svcName )
+               {
+                  canBuild = TRUE ;
+                  goto build ;
+               }
+            }
+         }
+      }
 
-         vector<string>::iterator itr = it->_instResult._flow.begin() ;
+   build:
+      // build result
+      if ( TRUE == canBuild )
+      {
+         itr = it->_instResult._flow.begin() ;
          for ( ; itr != it->_instResult._flow.end(); itr++ )
             arrBuilder.append( *itr ) ;
          
@@ -2803,25 +2921,17 @@ namespace engine
          bab.append( obj ) ;
       }
    }
-   
+
    void _omaInstDBBusTask::_buildUpdateTaskObj( BSONObj &retObj )
    {
       
       BSONObjBuilder bob ;
       BSONArrayBuilder bab ;
-      map< string, vector<InstDBBusInfo> >::iterator it ;
 
-      if ( TRUE == _isStandalone )
+      vector< pair<string, string> >::iterator it = _resultOrder.begin() ;
+      for ( ; it != _resultOrder.end(); it++ )
       {
-         _buildResultInfo( _standalone, bab ) ;
-      }
-      else
-      {
-         _buildResultInfo( _catalog, bab ) ;
-         _buildResultInfo( _coord, bab ) ;
-         it = _mapGroups.begin() ;
-         for ( ; it != _mapGroups.end(); it++ )
-            _buildResultInfo( it->second, bab ) ;
+         _buildResultInfo( _isStandalone, *it, bab ) ;
       }
 
       bob.appendNumber( OMA_FIELD_TASKID, _taskID ) ;
@@ -3102,6 +3212,13 @@ namespace engine
       {
          PD_LOG( PDERROR, "Failed to init to get remove db business info "
                  "rc = %d", rc ) ;
+         goto error ;
+      }
+      // init update result order
+      rc = _initResultOrder( _removeDBBusRawInfo ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to init result order rc = %d", rc ) ;
          goto error ;
       }
 /*      // restore result info
@@ -3550,7 +3667,7 @@ namespace engine
       PD_CHECK( SDB_OK == rc, rc, error, PDERROR, "Get field[%s] failed, "
                 "rc: %d", OMA_FIELD_BUSINESSNAME, rc ) ;
       builder.append( OMA_FIELD_BUSINESSNAME2, pStr ) ;      
-      builder.append( OMA_FIELD_USERTAG, OMA_TMP_COORD_NAME ) ;
+      builder.append( OMA_FIELD_USERTAG2, OMA_TMP_COORD_NAME ) ;
 
       // 6. get auth info fields
       rc = omaGetStringElement ( hostInfoObj, OMA_FIELD_AUTHUSER, &pStr ) ;
@@ -3729,6 +3846,58 @@ namespace engine
    error:
       goto done ;
 
+   }
+
+   INT32 _omaRemoveDBBusTask::_initResultOrder( BSONObj &info )
+   {
+      INT32 rc = SDB_OK ;
+      BSONElement ele ;
+      const CHAR *pHostName = NULL ;
+      const CHAR *pSvcName  = NULL ;
+
+      ele = info.getField ( OMA_FIELD_RESULTINFO ) ;
+      if ( Array != ele.type() )
+      {
+         PD_LOG_MSG ( PDERROR, "Receive wrong format remove "
+                      "db business info from omsvc" ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      else
+      {
+         BSONObjIterator itr( ele.embeddedObject() ) ;
+         
+         while ( itr.more() )
+         {
+            BSONObj resultInfo ;
+            pair<string, string> p ;
+            ele = itr.next() ;
+            if ( Object != ele.type() )
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG_MSG ( PDERROR, "Receive wrong format bson from omsvc" ) ;
+               goto error ;
+            }
+            // get hostName and svcName in result info
+            resultInfo = ele.embeddedObject() ;
+            // _hostName
+            rc = omaGetStringElement( resultInfo, OMA_FIELD_HOSTNAME, &pHostName ) ;
+            PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                      "Get field[%s] failed, rc: %d", OMA_FIELD_HOSTNAME, rc ) ;
+            // _svcName
+            rc = omaGetStringElement( resultInfo, OMA_FIELD_SVCNAME, &pSvcName ) ;
+            PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                      "Get field[%s] failed, rc: %d", OMA_FIELD_SVCNAME, rc ) ;
+            p.first = pHostName ;
+            p.second = pSvcName ;
+            _resultOrder.push_back( p ) ;
+         }
+      }
+      
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    INT32 _omaRemoveDBBusTask::_restoreResultInfo()
@@ -4442,18 +4611,74 @@ namespace engine
       goto done ;
    }
 
-   void _omaRemoveDBBusTask::_buildResultInfo( vector<RemoveDBBusInfo> &info,
+   void _omaRemoveDBBusTask::_buildResultInfo( BOOLEAN isStandalone,
+                                               pair<string, string> &p,
                                                BSONArrayBuilder &bab )
    {
-      vector<RemoveDBBusInfo>::iterator it = info.begin() ;
+      BSONObjBuilder builder ;
+      BSONArrayBuilder arrBuilder ;
+      BSONObj obj ;
+      BOOLEAN canBuild = FALSE ;
+      vector<RemoveDBBusInfo>::iterator it ;
+      vector<string>::iterator itr ;
 
-      for ( ; it != info.end(); it++ )
+      // get the node specified by p.first and p.second
+      if ( TRUE == isStandalone )
       {
-         BSONObjBuilder builder ;
-         BSONArrayBuilder arrBuilder ;
-         BSONObj obj ;
+         // standalone
+         it = _standalone.begin() ;
+         for ( ; it != _standalone.end(); it++ )
+         {
+            if ( p.first == it->_removeResult._hostName &&
+                 p.second == it->_removeResult._svcName )
+            {
+               canBuild = TRUE ;
+               goto build ;
+            }
+         }
+      }
+      else
+      {
+         // catalog
+         it = _catalog.begin() ;
+         for ( ; it != _catalog.end(); it++ )
+         {
+            if ( p.first == it->_removeResult._hostName &&
+                 p.second == it->_removeResult._svcName )
+            {
+               canBuild = TRUE ;
+               goto build ;
+            }
+         }
+         // coord
+         it = _coord.begin() ;
+         for ( ; it != _coord.end(); it++ )
+         {
+            if ( p.first == it->_removeResult._hostName &&
+                 p.second == it->_removeResult._svcName )
+            {
+               canBuild = TRUE ;
+               goto build ;
+            }
+         }
+         // data
+         it = _data.begin() ;
+         for ( ; it != _data.end(); it++ )
+         {
+            if ( p.first == it->_removeResult._hostName &&
+                 p.second == it->_removeResult._svcName )
+            {
+               canBuild = TRUE ;
+               goto build ;
+            }
+         }
+      }
 
-         vector<string>::iterator itr = it->_removeResult._flow.begin() ;
+   build:
+      // build result
+      if ( TRUE == canBuild )
+      {
+         itr = it->_removeResult._flow.begin() ;
          for ( ; itr != it->_removeResult._flow.end(); itr++ )
             arrBuilder.append( *itr ) ;
          
@@ -4471,21 +4696,17 @@ namespace engine
          bab.append( obj ) ;
       }
    }
-   
+
    void _omaRemoveDBBusTask::_buildUpdateTaskObj( BSONObj &retObj )
    {
+      
       BSONObjBuilder bob ;
       BSONArrayBuilder bab ;
 
-      if ( TRUE == _isStandalone )
+      vector< pair<string, string> >::iterator it = _resultOrder.begin() ;
+      for ( ; it != _resultOrder.end(); it++ )
       {
-         _buildResultInfo( _standalone, bab ) ;
-      }
-      else
-      {
-         _buildResultInfo( _catalog, bab ) ;
-         _buildResultInfo( _coord, bab ) ;
-         _buildResultInfo( _data, bab ) ;
+         _buildResultInfo( _isStandalone, *it, bab ) ;
       }
 
       bob.appendNumber( OMA_FIELD_TASKID, _taskID ) ;

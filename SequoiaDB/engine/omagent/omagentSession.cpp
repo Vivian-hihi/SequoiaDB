@@ -432,12 +432,6 @@ namespace engine
       }
       else
       {
-/*
-         // should never come here
-#if defined (_DEBUG)
-         ossPanic() ;
-#endif
-*/
          builder.append( OMA_FIELD_DETAIL, getErrDesp( rc ) ) ;
       }
 
