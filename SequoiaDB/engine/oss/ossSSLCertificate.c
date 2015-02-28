@@ -284,7 +284,7 @@ INT32 ossSSLNewCertificate(SSLCertificate** c, SSLKey* key)
    }
 
    ret = _ossSSLNewSubjectName(&name,
-      "China", "Guangdong", "SequoiaDB", "Engine", "Server");
+      "China", "Guangdong", "SequoiaDB", "SequoiaDB", "SequoiaDB Server");
    if (SSL_OK != ret)
    {
       goto error;
