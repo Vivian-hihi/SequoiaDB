@@ -53,10 +53,10 @@ namespace engine
 {
    enum OMA_TASK_TYPE
    {
-      OMA_TASK_ADD_HOST           = 0, // add host
-      OMA_TASK_REMOVE_HOST        = 1, // remove host
-      OMA_TASK_INSTALL_DB         = 2, // install db business
-      OMA_TASK_REMOVE_DB          = 3, // remove db business
+      OMA_TASK_ADD_HOST           = OM_TASK_TYPE_ADD_HOST, // add host
+      OMA_TASK_REMOVE_HOST        = OM_TASK_TYPE_REMOVE_HOST, // remove host
+      OMA_TASK_INSTALL_DB         = OM_TASK_TYPE_ADD_BUSINESS, // install db business
+      OMA_TASK_REMOVE_DB          = OM_TASK_TYPE_REMOVE_BUSINESS, // remove db business
 
 
       OMA_TASK_ADD_HOST_SUB       = 10, // add host sub task
@@ -67,11 +67,11 @@ namespace engine
 
    enum OMA_TASK_STATUS
    {
-      OMA_TASK_STATUS_INIT        = 0 ,
-      OMA_TASK_STATUS_RUNNING     = 1 ,
-      OMA_TASK_STATUS_ROLLBACK    = 2 ,
-      OMA_TASK_STATUS_CANCEL      = 3 ,
-      OMA_TASK_STATUS_FINISH      = 4 ,
+      OMA_TASK_STATUS_INIT        = OM_TASK_STATUS_INIT ,
+      OMA_TASK_STATUS_RUNNING     = OM_TASK_STATUS_RUNNING ,
+      OMA_TASK_STATUS_ROLLBACK    = OM_TASK_STATUS_ROLLBACK ,
+      OMA_TASK_STATUS_CANCEL      = OM_TASK_STATUS_CANCEL ,
+      OMA_TASK_STATUS_FINISH      = OM_TASK_STATUS_FINISH ,
       
       OMA_TASK_STATUS_FAIL        = 10 , // this status only use in omagent task
                                          // nerver send to omsvc.
