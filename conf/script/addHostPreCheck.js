@@ -89,7 +89,7 @@ function _getMD5()
       catch( e )
       {
          SYSEXPHANDLE( e ) ;
-         errMsg = sprintf( "Failed to get installed packet's md5 in host[?]",
+         errMsg = sprintf( "Failed to get installed SequoiaDB's md5 in host[?]",
                            System.getHostName() ) ;
          rc = GETLASTERROR() ;
          PD_LOG2( LOG_NONE, arguments, PDWARNING, FILE_NAME_ADD_HOST_PRE_CHECK,
@@ -130,7 +130,7 @@ function _isProgramExist()
             if( !File.exist( program_name ) )
             {
                PD_LOG2( LOG_NONE, arguments, PDWARNING, FILE_NAME_ADD_HOST_PRE_CHECK,
-                        sprintf( "Program [?] does not exist in target host, need to install db packet", program_name ) ) ;
+                        sprintf( "Program [?] does not exist in target host", program_name ) ) ;
                return false ;
             }
          }

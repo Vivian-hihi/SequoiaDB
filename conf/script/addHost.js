@@ -35,9 +35,12 @@ var rc                 = SDB_OK ;
 var errMsg             = "" ;
 
 var host_ip            = "" ;
+var host_name          = "" ;
 var task_id            = 0 ;
+
 var remote_precheck_result_file = "" ;
 var result_file                 = "" ;
+
 var progs = null ;
 var spts  = [ "error.js", "common.js", "define.js", "log.js",
               "func.js", "addHostPreCheck.js" ] ;
@@ -58,13 +61,15 @@ else
 ***************************************************************************** */
 function _init()
 {
+   var log_file_name = "" ;
    // 1. get task id
    task_id = getTaskID( SYS_JSON ) ;
   
    // 2. specify log file's name
    try
    {
-      host_ip = BUS_JSON[HostInfo][IP] ;
+      host_ip   = BUS_JSON[HostInfo][IP] ;
+      host_name = BUS_JSON[HostInfo][HostName] ;
    }
    catch ( e )
    {
@@ -72,9 +77,10 @@ function _init()
       errMsg = sprintf( "Failed to create js log file for adding host[?]", host_ip ) ;
       PD_LOG( arguments, PDERROR, FILE_NAME_ADD_HOST,
               sprintf( errMsg + ", rc: ?, detail: ?", GETLASTERROR(), GETLASTERRMSG() ) ) ;
-      exception_handle( SDB_SYS, errMsg ) ;
+      exception_handle( SDB_INVALIDARG, errMsg ) ;
    }
-   setTaskLogFileName( task_id, host_ip ) ;
+   log_file_name = host_name + "_00000" ;
+   setTaskLogFileName( task_id, log_file_name ) ;
 
    // 3. set local and remote pre-check result file name
    if( SYS_LINUX == SYS_TYPE )
@@ -101,7 +107,8 @@ function _init()
       // TODO: windows
    }
    
-   PD_LOG2( task_id, arguments, PDEVENT, FILE_NAME_ADD_HOST, "Begin to add host" ) ;
+   PD_LOG2( task_id, arguments, PDEVENT, FILE_NAME_ADD_HOST,
+            sprintf("Begin to add host[?]", host_ip) ) ;
 }
 
 /* *****************************************************************************
@@ -126,7 +133,8 @@ function _final()
                         GETLASTERROR(), GETLASTERRMSG() ) ) ;
    }
    
-   PD_LOG2( task_id, arguments, PDEVENT, FILE_NAME_ADD_HOST, "Finish adding host" ) ;
+   PD_LOG2( task_id, arguments, PDEVENT, FILE_NAME_ADD_HOST,
+            sprintf("Finish adding host[?]", host_ip) ) ;
 }
 
 /* *****************************************************************************
@@ -236,8 +244,8 @@ function _needToAdd( ssh, install_packet, install_path )
       // record the return msg to log file
       retMsg = ssh.getLastOut() ;
       PD_LOG2( task_id, arguments, PDEVENT, FILE_NAME_ADD_HOST,
-               sprintf( "Received message from remote host[?]:?=>???<=",
-               ssh.getPeerIP(), OMA_NEW_LINE, OMA_NEW_LINE, retMsg, OMA_NEW_LINE ) ) ;
+               sprintf( "Received message from remote host[?]:?===>???<===",
+               ssh.getPeerIP(), OMA_NEW_LINE, OMA_NEW_LINE, OMA_NEW_LINE, retMsg ) ) ;
    }
    catch( e )
    {
@@ -245,8 +253,8 @@ function _needToAdd( ssh, install_packet, install_path )
       retMsg = ssh.getLastOut() ;
       errMsg = sprintf( "Failed to pre-check before add host[?]", ssh.getPeerIP() ) ;
       PD_LOG2( task_id, arguments, PDERROR, FILE_NAME_ADD_HOST,
-               sprintf( errMsg + ", received message from remote host[?]:?=>???<=",
-               ssh.getPeerIP(), OMA_NEW_LINE, OMA_NEW_LINE, retMsg, OMA_NEW_LINE ) ) ;
+               sprintf( errMsg + ", received message from remote host[?]:?===>???<===",
+               ssh.getPeerIP(), OMA_NEW_LINE, OMA_NEW_LINE, OMA_NEW_LINE, retMsg ) ) ;
       return true ;
    }
 
@@ -511,7 +519,7 @@ function main()
    if ( flag )
    {
       PD_LOG2( task_id, arguments, PDEVENT, FILE_NAME_ADD_HOST,
-               sprintf("It's in localhost[?], no need to install db packet", ip) ) ;
+               sprintf("It's in localhost[?], no need to install SequoiaDB in local", ip) ) ;
       _final() ;
       return RET_JSON ;
    }
@@ -524,14 +532,17 @@ function main()
 
    // 5. check whether need to add current host or not
    flag = _needToAdd( ssh, installPacket, installPath ) ;
-   if ( !flag ) 
+   if ( false == flag ) 
    {
       PD_LOG2( task_id, arguments, PDEVENT, FILE_NAME_ADD_HOST,
-               sprintf( "The same kind of db packet has been installed" +
-                        " in remote host[?], no need to install", ip) ) ;
+               sprintf( "The same kind of SequoiaDB has been installed" +
+                        " in target host[?], no need to install", ip) ) ;
       _final() ;
       return RET_JSON ;
    }
+
+   PD_LOG2( task_id, arguments, PDEVENT, FILE_NAME_ADD_HOST,
+            sprintf( "Need to install SequoiaDB in target host[?]", ip ) ) ;
 
    // 6. push db packet to remote host
    _pushDBPacket( ssh, installPacket ) ;
@@ -557,6 +568,10 @@ function main()
       {}
       exception_handle( rc, errMsg ) ;
    }
+   
+   PD_LOG2( task_id, arguments, PDEVENT, FILE_NAME_ADD_HOST,
+            sprintf( "Success to install SequoiaDB in target host[?]", ip ) ) ;
+   
    // 8. remove temporary directory in remote host
    try
    {

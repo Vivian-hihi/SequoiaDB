@@ -968,10 +968,10 @@ function getTaskID( obj )
 @author: Tanzhaobo
 @parameter
    task_id[number]:
-   host_ip[string]: ip used to name a log file, e.g. 192.168.20.42.log
+   name[string]: ip used to name a log file, e.g. "suse_12345.log"(host_port.log)
 @return void
 ***************************************************************************** */
-function setTaskLogFileName( task_id, host_ip )
+function setTaskLogFileName( task_id, name )
 {
    try
    {
@@ -979,7 +979,7 @@ function setTaskLogFileName( task_id, host_ip )
       var task_dir = adaptPath( LOG_FILE_PATH + Task ) + task_id ;
       if ( false == File.exist( task_dir ) )
          File.mkdir( task_dir ) ;
-      LOG_FILE_NAME = adaptPath( adaptPath( Task ) + task_id ) + host_ip + ".log" ;
+      LOG_FILE_NAME = adaptPath( adaptPath( Task ) + task_id ) + name + ".log" ;
       PD_LOG( arguments, PDDEBUG, FILE_NAME_FUNC,
               sprintf( "Js log file's name of task[?] is: ?", task_id, LOG_FILE_NAME ) ) ;
    }

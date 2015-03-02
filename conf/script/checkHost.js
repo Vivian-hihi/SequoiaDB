@@ -187,7 +187,7 @@ function _getOMAInfo()
    catch( e )
    {
       SYSEXPHANDLE( e ) ;
-      errMsg = sprintf( "Failed to get install info in host[?], take it has not install OM agent yet",
+      errMsg = sprintf( "Failed to get install info in host[?], take it has not install OM Agent",
                         System.getHostName() ) ;
       PD_LOG( arguments, PDWARNING, FILE_NAME_CHECK_HOST,
               sprintf( errMsg + ", rc: ?, detail: ?", GETLASTERROR(), GETLASTERRMSG() ) ) ;
