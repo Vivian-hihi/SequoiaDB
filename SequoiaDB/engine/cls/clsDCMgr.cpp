@@ -35,6 +35,7 @@
 #include "msgMessage.hpp"
 #include "msgCatalog.hpp"
 #include "clsMgr.hpp"
+#include "catDef.hpp"
 #include "../bson/bson.h"
 
 using namespace bson ;
@@ -56,12 +57,12 @@ namespace engine
 
    void _clsDCBaseInfo::_reset()
    {
-      _clusterName = NULL ;
-      _businessName = NULL ;
-      _address = NULL ;
-      _imageClusterName = NULL ;
-      _imageBusinessName = NULL ;
-      _imageAddress = NULL ;
+      _clusterName = "" ;
+      _businessName = "" ;
+      _address = "" ;
+      _imageClusterName = "" ;
+      _imageBusinessName = "" ;
+      _imageAddress = "" ;
       _hasImage = FALSE ;
       _imageIsEnable = FALSE ;
       _active = FALSE ;
@@ -71,9 +72,34 @@ namespace engine
       _imageRGroups.clear() ;
    }
 
+   INT32 _clsDCBaseInfo::lock_r( INT32 millisec )
+   {
+      return _rwMutex.lock_r( millisec ) ;
+   }
+
+   INT32 _clsDCBaseInfo::release_r()
+   {
+      return _rwMutex.release_r() ;
+   }
+
+   INT32 _clsDCBaseInfo::lock_w( INT32 millisec )
+   {
+      return _rwMutex.lock_w( millisec ) ;
+   }
+
+   INT32 _clsDCBaseInfo::release_w()
+   {
+      return _rwMutex.release_w() ;
+   }
+
    INT32 _clsDCBaseInfo::updateFromBSON( BSONObj &obj, BOOLEAN checkGroups )
    {
       INT32 rc = SDB_OK ;
+
+      //reset
+      _reset() ;
+
+      // begin to update
       _orgObj = obj ;
 
       BSONObj subObj ;
@@ -118,7 +144,7 @@ namespace engine
 
          subEle = subObj.getField( FIELD_NAME_ADDRESS ) ;
          _imageAddress = subEle.valuestrsafe() ;
-         _hasImage = ( 0 == *_imageAddress ) ? FALSE : TRUE ;
+         _hasImage = _imageAddress.empty() ? FALSE : TRUE ;
 
          subEle = subObj.getField( FIELD_NAME_ENABLE ) ;
          if ( Bool == subEle.type() )
@@ -161,9 +187,9 @@ namespace engine
             goto error ;
          }
       }
-      if ( e.eoo() )
+      else if ( !e.eoo() )
       {
-         goto done ;
+         goto error ;
       }
 
    done:
@@ -178,7 +204,158 @@ namespace engine
       goto done ;
    }
 
-   INT32 _clsDCBaseInfo::_addGroups( BSONObj &obj, BOOLEAN check )
+   void _clsDCBaseInfo::setImageAddress( const string &addr )
+   {
+      _imageAddress = addr ;
+      if ( _imageAddress.empty() )
+      {
+         _hasImage = FALSE ;
+         _imageIsEnable = FALSE ;
+      }
+      else
+      {
+         _hasImage = TRUE ;
+      }
+   }
+
+   void _clsDCBaseInfo::setImageClusterName( const string &name )
+   {
+      _imageClusterName = name ;
+   }
+
+   void _clsDCBaseInfo::setImageBusinessName( const string &name )
+   {
+      _imageBusinessName = name ;
+   }
+
+   void _clsDCBaseInfo::enableImage( BOOLEAN enable )
+   {
+      _imageIsEnable = enable ;
+   }
+
+   INT32 _clsDCBaseInfo::addGroups( const BSONObj &groups,
+                                    map< string, string > *pAddMapGrps )
+   {
+      INT32 rc = SDB_OK ;
+      BOOLEAN added = FALSE ;
+      const CHAR *pSource = NULL ;
+      const CHAR *pImage = NULL ;
+      BSONObjIterator it( groups ) ;
+      while ( it.more() )
+      {
+         BSONObj itemObj ;
+         BSONElement itemEle = it.next() ;
+         if ( Array != itemEle.type() )
+         {
+            goto error ;
+         }
+         itemObj = itemEle.embeddedObject() ;
+         if ( 2 != itemObj.nFields() )
+         {
+            goto error ;
+         }
+         rc = _addGroups( itemObj, TRUE, &added, &pSource, &pImage ) ;
+         if ( rc )
+         {
+            goto error ;
+         }
+         if ( pAddMapGrps )
+         {
+            (*pAddMapGrps)[ string( pSource ) ] = string( pImage ) ;
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      PD_LOG( PDERROR, "Add groups failed, obj[%s] is invalid",
+              groups.toString().c_str() ) ;
+      if ( SDB_OK == rc )
+      {
+         rc = SDB_INVALIDARG ;
+      }
+      goto done ;
+   }
+
+   INT32 _clsDCBaseInfo::addGroup( const string &source,
+                                   const string &image,
+                                   BOOLEAN *pAdded )
+   {
+      INT32 rc = SDB_OK ;
+      map< string, string >::iterator it ;
+
+      if ( source.empty() || image.empty() )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      if ( pAdded )
+      {
+         *pAdded = FALSE ;
+      }
+
+      it = _imageGroups.find( source ) ;
+      if ( it != _imageGroups.end() )
+      {
+         // already exist
+         if ( it->second == image )
+         {
+            goto done ;
+         }
+         PD_LOG( PDERROR, "Source group[%s] conflict", source.c_str() ) ;
+         rc = SDB_CAT_GRP_EXIST ;
+         goto error ;
+      }
+      it = _imageRGroups.find( image ) ;
+      if ( it != _imageRGroups.end() )
+      {
+         // already exist
+         if ( it->second == source )
+         {
+            goto done ;
+         }
+         PD_LOG( PDERROR, "Image group[%s] conflict", image.c_str() ) ;
+         rc = SDB_CAT_GRP_EXIST ;
+         goto error ;
+      }
+
+      _imageGroups[ source ] = image ;
+      _imageRGroups[ image ] = source ;
+      if ( pAdded )
+      {
+         *pAdded = TRUE ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   void _clsDCBaseInfo::setClusterName( const string &name )
+   {
+      _clusterName = name ;
+   }
+
+   void _clsDCBaseInfo::setBusinessName( const string &name )
+   {
+      _businessName = name ;
+   }
+
+   void _clsDCBaseInfo::setAddress( const string &addr )
+   {
+      _address = addr ;
+   }
+
+   void _clsDCBaseInfo::setAcitve( BOOLEAN active )
+   {
+      _active = active ;
+   }
+
+   INT32 _clsDCBaseInfo::_addGroups( BSONObj &obj, BOOLEAN check,
+                                     BOOLEAN *pAdded,
+                                     const CHAR **ppSource,
+                                     const CHAR **ppImage )
    {
       INT32 rc = SDB_OK ;
       string sourceGroup ;
@@ -190,9 +367,21 @@ namespace engine
          rc = SDB_INVALIDARG ;
          goto error ;
       }
+      if ( pAdded )
+      {
+         *pAdded = FALSE ;
+      }
       sourceGroup = s.valuestr() ;
-      destGroup = s.valuestr() ;
-      
+      destGroup = d.valuestr() ;
+      if ( ppSource )
+      {
+         *ppSource = s.valuestr() ;
+      }
+      if ( *ppImage )
+      {
+         *ppImage = d.valuestr() ;
+      }
+
       if ( sourceGroup.empty() || destGroup.empty() )
       {
          rc = SDB_INVALIDARG ;
@@ -204,18 +393,34 @@ namespace engine
          map< string, string >::iterator it = _imageGroups.find( sourceGroup ) ;
          if ( it != _imageGroups.end() )
          {
+            if ( it->second == destGroup )
+            {
+               goto done ;
+            }
+            PD_LOG( PDERROR, "Source group[%s] conflict",
+                    sourceGroup.c_str() ) ;
             rc = SDB_CAT_GRP_EXIST ;
             goto error ;
          }
          it = _imageRGroups.find( destGroup ) ;
          if ( it != _imageRGroups.end() )
          {
+            if ( it->second == sourceGroup )
+            {
+               goto done ;
+            }
+            PD_LOG( PDERROR, "Image group[%s] conflict",
+                    destGroup.c_str() ) ;
             rc = SDB_CAT_GRP_EXIST ;
             goto error ;
          }
       }
       _imageGroups[ sourceGroup ] = destGroup ;
       _imageRGroups[ destGroup ] = sourceGroup ;
+      if ( pAdded )
+      {
+         *pAdded = TRUE ;
+      }
 
    done:
       return rc ;
@@ -225,32 +430,32 @@ namespace engine
 
    const CHAR* _clsDCBaseInfo::getClusterName() const
    {
-      return _clusterName ? _clusterName : "" ;
+      return _clusterName.c_str() ;
    }
 
    const CHAR* _clsDCBaseInfo::getBusinessName() const
    {
-      return _businessName ? _businessName : "" ;
+      return _businessName.c_str() ;
    }
 
    const CHAR* _clsDCBaseInfo::getAddress() const
    {
-      return _address ? _address : "" ;
+      return _address.c_str() ;
    }
 
    const CHAR* _clsDCBaseInfo::getImageClusterName() const
    {
-      return _imageClusterName ? _imageClusterName : "" ;
+      return _imageClusterName.c_str() ;
    }
 
    const CHAR* _clsDCBaseInfo::getImageBusinessName() const
    {
-      return _imageBusinessName ? _imageBusinessName : "" ;
+      return _imageBusinessName.c_str() ;
    }
 
    const CHAR* _clsDCBaseInfo::getImageAddress() const
    {
-      return _imageAddress ? _imageAddress : "" ;
+      return _imageAddress.c_str() ;
    }
 
    string _clsDCBaseInfo::source2dest( const string &sourceGroup )
@@ -281,6 +486,7 @@ namespace engine
       _requestID = 0 ;
       _pCatAgent = NULL ;
       _pNodeMgrAgent = NULL ;
+      _init = FALSE ;
 
       _peerCatPrimary = -1 ;
    }
@@ -295,8 +501,16 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
 
-      SAFE_NEW_GOTO_ERROR  ( _pCatAgent, _clsCatalogAgent ) ;
-      SAFE_NEW_GOTO_ERROR  ( _pNodeMgrAgent, _clsNodeMgrAgent ) ;
+      if ( _init )
+      {
+         // already init
+         goto done ;
+      }
+
+      SAFE_NEW_GOTO_ERROR( _pCatAgent, _clsCatalogAgent ) ;
+      SAFE_NEW_GOTO_ERROR( _pNodeMgrAgent, _clsNodeMgrAgent ) ;
+
+      _init = TRUE ;
 
    done:
       return rc ;
@@ -388,11 +602,26 @@ namespace engine
       goto done ;
    }
 
-   INT32 _clsDCMgr::updateBaseInfo( BSONObj &obj )
+   clsDCBaseInfo* _clsDCMgr::getImageDCBaseInfo( pmdEDUCB *cb, BOOLEAN update )
    {
-      ossScopedLock lock( &_peerCatLatch ) ;
+      if ( update || _imageBaseInfo.getOrgObj().isEmpty() )
+      {
+         updateImageDCBaseInfo( cb, DC_UPDATE_TIMEOUT ) ;
+      }
+      return &_imageBaseInfo ;
+   }
 
-      INT32 rc = _baseInfo.updateFromBSON( obj, FALSE ) ;
+   INT32 _clsDCMgr::updateDCBaseInfo( BSONObj &obj )
+   {
+      BOOLEAN hasLock = FALSE ;
+      INT32 rc = SDB_OK ;
+
+      rc = _baseInfo.lock_w() ;
+      PD_RC_CHECK( rc, PDERROR, "Lock dc base info write failed, rc: %d",
+                   rc ) ;
+      hasLock = TRUE ;
+
+      rc = _baseInfo.updateFromBSON( obj, FALSE ) ;
       if ( rc )
       {
          goto error ;
@@ -400,6 +629,7 @@ namespace engine
       // if has image, parse image address
       if ( _baseInfo.hasImage() )
       {
+         ossScopedLock lock( &_peerCatLatch ) ;
          pmdOptionsCB option ;
          rc = option.parseAddressLine( _baseInfo.getImageAddress(),
                                        _vecCatlog ) ;
@@ -412,9 +642,92 @@ namespace engine
       }
 
    done:
+      if ( hasLock )
+      {
+         _baseInfo.release_w() ;
+      }
       return rc ;
    error:
       goto done ;
+   }
+
+   INT32 _clsDCMgr::updateDCBaseInfo( MsgOpReply* pRes )
+   {
+      INT32 rc = SDB_OK ;
+      INT32 flag = 0 ;
+      INT64 contextID = 0 ;
+      INT32 startFrom = 0 ;
+      INT32 numReturned = 0 ;
+      vector< BSONObj > objList ;
+      BSONObj objInfo ;
+
+      rc = msgExtractReply( (CHAR *)pRes, &flag, &contextID, &startFrom,
+                            &numReturned, objList ) ;
+      PD_RC_CHECK( rc, PDERROR, "Extract query reply msg failed, rc: %d",
+                   rc ) ;
+
+      rc = flag ;
+      if ( SDB_DMS_EOC == rc )
+      {
+         rc = SDB_OK ;
+      }
+      else if ( rc )
+      {
+         PD_LOG( PDWARNING, "Recieve failed dc base info query reply, "
+                 "flag: %d", rc ) ;
+         goto error ;
+      }
+
+      for ( UINT32 i = 0 ; i < objList.size() ; ++i )
+      {
+         objInfo = objList[ i ] ;
+         break ;
+      }
+      rc = updateDCBaseInfo( objInfo ) ;
+      PD_RC_CHECK( rc, PDERROR, "Update dc base info failed, rc: %d", rc ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _clsDCMgr::setImageCatAddr( const string &catAddr )
+   {
+      INT32 rc = SDB_OK ;
+      pmdOptionsCB option ;
+      vector< pmdAddrPair > tmpVecCat ;
+
+      rc = option.parseAddressLine( catAddr.c_str(), tmpVecCat ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Parse image address[%s] failed, rc: %d",
+                 catAddr.c_str(), rc ) ;
+         goto error ;
+      }
+      if ( 0 == tmpVecCat.size() )
+      {
+         PD_LOG( PDERROR, "Image catalog address[%s] is invalid",
+                 catAddr.c_str() ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      _peerCatLatch.get() ;
+      _vecCatlog = tmpVecCat ;
+      _peerCatLatch.release() ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   string _clsDCMgr::getImageCatAddr()
+   {
+      pmdOptionsCB option ;
+      ossScopedLock lock( &_peerCatLatch ) ;
+      return option.makeAddressLine( _vecCatlog ) ;
    }
 
    INT32 _clsDCMgr::updateImageCataGroup( pmdEDUCB *cb, INT64 millsec )
@@ -596,7 +909,8 @@ namespace engine
       }
       else if ( rc )
       {
-         PD_LOG( PDWARNING, "Recieve Group query reply, flag: %d", rc ) ;
+         PD_LOG( PDWARNING, "Recieve failed group query reply, flag: %d",
+                 rc ) ;
          goto error ;
       }
 
@@ -643,7 +957,8 @@ namespace engine
       }
       else if ( rc )
       {
-         PD_LOG( PDWARNING, "Recieve Catalog query reply, flag: %d", rc ) ;
+         PD_LOG( PDWARNING, "Recieve failed catalog query reply, flag: %d",
+                 rc ) ;
          goto error ;
       }
 
@@ -660,6 +975,55 @@ namespace engine
                     objList[i].toString().c_str(), rc ) ;
             goto error ;
          }
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _clsDCMgr::_processDCBaseInfoQueryRes( pmdEDUCB *cb, MsgHeader *pRes,
+                                                clsDCBaseInfo *pBaseInfo )
+   {
+      INT32 rc = SDB_OK ;
+      INT32 flag = 0 ;
+      INT64 contextID = 0 ;
+      INT32 startFrom = 0 ;
+      INT32 numReturned = 0 ;
+      vector< BSONObj > objList ;
+      BSONObj objInfo ;
+
+      rc = msgExtractReply( (CHAR *)pRes, &flag, &contextID, &startFrom,
+                            &numReturned, objList ) ;
+      PD_RC_CHECK( rc, PDERROR, "Extract query reply msg failed, rc: %d",
+                   rc ) ;
+
+      rc = flag ;
+      if ( SDB_DMS_EOC == rc )
+      {
+         rc = SDB_OK ;
+      }
+      else if ( rc )
+      {
+         PD_LOG( PDWARNING, "Recieve failed DC base info query reply from "
+                 "image, flag: %d", rc ) ;
+         goto error ;
+      }
+
+      for ( UINT32 i = 0 ; i < objList.size() ; ++i )
+      {
+         objInfo = objList[ i ] ;
+         break ;
+      }
+
+      // update dc base info
+      if ( SDB_OK == pBaseInfo->lock_w() )
+      {
+         rc = pBaseInfo->updateFromBSON( objInfo, FALSE ) ;
+         pBaseInfo->release_w() ;
+         PD_RC_CHECK( rc, PDERROR, "Update dc base info failed, rc: %d",
+                      rc ) ;
       }
 
    done:
@@ -763,7 +1127,7 @@ namespace engine
 
    retry:
       rc = _queryOnImageCatalog( cb, &pRecvMsg, MSG_CAT_QUERY_DATA_GRP_REQ,
-                                 cond, hint, hint, hint, -1, 0,
+                                 "CAT", cond, hint, hint, hint, -1, 0,
                                  DC_UPDATE_TIMEOUT, TRUE ) ;
       if ( rc )
       {
@@ -811,7 +1175,7 @@ namespace engine
 
    retry:
       rc = _queryOnImageCatalog( cb, &pRecvMsg, MSG_CAT_QUERY_COLLECTIONS_REQ,
-                                 hint, hint, hint, hint, -1, 0,
+                                 "CAT", hint, hint, hint, hint, -1, 0,
                                  DC_UPDATE_TIMEOUT, TRUE ) ;
       if ( rc )
       {
@@ -850,8 +1214,55 @@ namespace engine
       goto done ;
    }
 
+   INT32 _clsDCMgr::updateImageDCBaseInfo( pmdEDUCB *cb, INT64 millsec )
+   {
+      INT32 rc = SDB_OK ;
+      MsgHeader *pRecvMsg = NULL ;
+      BOOLEAN hasRetry = FALSE ;
+      BSONObj hint ;
+      BSONObj cond = BSON( FIELD_NAME_TYPE << CAT_BASE_TYPE_GLOBAL_STR ) ;
+
+   retry:
+      rc = _queryOnImageCatalog( cb, &pRecvMsg, MSG_BS_QUERY_REQ,
+                                 CAT_SYSDCBASE_COLLECTION_NAME,
+                                 cond, hint, hint, hint, -1, 0,
+                                 DC_UPDATE_TIMEOUT, TRUE ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
+      // process query result
+      rc = _processDCBaseInfoQueryRes( cb, pRecvMsg, &_imageBaseInfo ) ;
+      if ( rc )
+      {
+         if ( SDB_CLS_NOT_PRIMARY == rc && !hasRetry )
+         {
+            hasRetry = TRUE ;
+            if ( SDB_OK == updateImageCataGroup( cb, millsec ) )
+            {
+               cb->releaseBuff( (CHAR*)pRecvMsg ) ;
+               pRecvMsg = NULL ;
+               goto retry ;
+            }
+         }
+         goto error ;
+      }
+
+   done:
+      if ( pRecvMsg )
+      {
+         cb->releaseBuff( (CHAR*)pRecvMsg ) ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 _clsDCMgr::_queryOnImageCatalog( pmdEDUCB *cb, MsgHeader **ppRecvMsg,
-                                          UINT32 opCode, const BSONObj &cond,
+                                          UINT32 opCode,
+                                          const CHAR *pCollectionName,
+                                          const BSONObj &cond,
                                           const BSONObj &sel,
                                           const BSONObj &orderby,
                                           const BSONObj &hint, INT64 returnNum,
@@ -865,13 +1276,14 @@ namespace engine
 
       BOOLEAN hasRetry = FALSE ;
 
-      rc = msgBuildQueryMsg( &pBuff, &buffSize, "CAT",
+      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCollectionName,
                              FLG_QUERY_WITH_RETURNDATA, ++_requestID,
                              skipNum, returnNum, &cond, &sel, &orderby,
                              &hint ) ;
       PD_RC_CHECK( rc, PDERROR, "Build query msg failed, rc: %d", rc ) ;
 
       pMsg = ( MsgHeader* )pBuff ;
+      pMsg->opCode = opCode ;
 
    retry:
       // send msg

@@ -651,6 +651,7 @@ namespace engine
       if ( CLS_REPLSET_MAX_NODE_SIZE < addrs.size() )
       {
          std::cerr << "addr more than max member size" << endl ;
+         rc = SDB_INVALIDARG ;
          goto error ;
       }
 

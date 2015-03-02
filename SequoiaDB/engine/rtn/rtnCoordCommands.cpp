@@ -93,6 +93,13 @@ namespace engine
                while ( i.more() )
                {
                   BSONElement beTmp = i.next();
+                  if ( Object != beTmp.type() )
+                  {
+                     rc = SDB_INVALIDARG ;
+                     PD_LOG( PDERROR, "Group info in obj[%s] must be object",
+                             boReplyInfo.toString().c_str() ) ;
+                     break ;
+                  }
                   BSONObj boGroupInfo = beTmp.embeddedObject();
                   BSONElement beGrpId = boGroupInfo.getField( CAT_GROUPID_NAME );
                   if ( beGrpId.eoo() || !beGrpId.isNumber() )

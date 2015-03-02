@@ -170,8 +170,8 @@ namespace engine
    INT32 catSaveBucketVersion( const CHAR *pCLName, INT32 version,
                                pmdEDUCB *cb, INT16 w ) ;
 
-   /* Collection[CAT_SYSBASE_COLLECTION_NAME] functions */
-   INT32 catCheckBaseInfoExist( const char *pTypeStr,
+   /* Collection[CAT_SYSDCBASE_COLLECTION_NAME] functions */
+   INT32 catCheckBaseInfoExist( const CHAR *pTypeStr,
                                 BOOLEAN &isExist,
                                 BSONObj &obj,
                                 pmdEDUCB *cb ) ;

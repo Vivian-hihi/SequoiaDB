@@ -820,7 +820,7 @@ namespace engine
          PD_LOG( PDERROR, "Failed to active group(rc=%d)", rc ) ;
          goto error ;
       }
-      ctxBuff = rtnContextBuf( boGroupInfo ) ;
+      ctxBuff = rtnContextBuf( boGroupInfo.getOwned() ) ;
 
    done:
       PD_TRACE_EXITRC ( SDB_CATNODEMGR_ACTIVEGRP, rc ) ;
@@ -1246,13 +1246,22 @@ namespace engine
          BOOLEAN isGrpActive = FALSE;
          //get group id
          BSONElement beGrpID = obj.getField ( CAT_GROUPID_NAME );
-         if ( beGrpID.eoo() || ! beGrpID.isNumber() )
+         BSONElement beGrpName = obj.getField( CAT_GROUPNAME_NAME ) ;
+         if ( beGrpID.eoo() || !beGrpID.isNumber() )
          {
             PD_LOG( PDWARNING, "Failed to get the field(%s)",
                     CAT_GROUPID_NAME );
             rc = SDB_INVALIDARG ;
             goto error ;
          }
+         if ( beGrpName.eoo() || String != beGrpName.type() )
+         {
+            PD_LOG( PDWARNING, "Failed to get the field(%s)",
+                    CAT_GROUPNAME_NAME );
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+
          {
             // get group status
             BSONElement beGrpStatus = obj.getField ( CAT_GROUP_STATUS );
@@ -1263,7 +1272,9 @@ namespace engine
             {
                isGrpActive = TRUE ;
             }
-            _pCatCB->insertGroupID( beGrpID.numberInt(), isGrpActive );
+            _pCatCB->insertGroupID( beGrpID.numberInt(),
+                                    beGrpName.valuestr(),
+                                    isGrpActive );
             routeID.columns.groupID = beGrpID.numberInt();
 
             //get node id
@@ -1698,7 +1709,7 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR, "Failed to insert group info[%s] to "
                       "collection, rc: %d", boGroupInfo.toString().c_str(),
                       rc ) ;
-         _pCatCB->insertGroupID( newGroupID, FALSE ) ;
+         _pCatCB->insertGroupID( newGroupID, groupName, FALSE ) ;
       }
       catch( std::exception &e )
       {
@@ -1842,7 +1853,9 @@ namespace engine
    error:
       if ( isDeleted )
       {
-         pmdGetKRCB()->getCATLOGUECB()->insertGroupID ( groupID ) ;
+         pmdGetKRCB()->getCATLOGUECB()->insertGroupID ( groupID,
+                                                        groupName,
+                                                        TRUE ) ;
       }
       goto done ;
    }

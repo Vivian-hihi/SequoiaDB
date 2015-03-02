@@ -60,9 +60,10 @@ namespace engine
    */
    class sdbCatalogueCB : public _IControlBlock, public _IEventHander
    {
+   public:
       friend class catMainController ;
 
-      typedef std::map<UINT32, UINT32>    GRP_ID_MAP;
+      typedef std::map<UINT32, string>    GRP_ID_MAP;
       typedef std::map<UINT16, UINT16>    NODE_ID_MAP;
 
       public:
@@ -84,7 +85,8 @@ namespace engine
                                          SDB_EVENT_OCCUR_TYPE occurType ) ;
          virtual UINT32 getMask() const ;
 
-         void     insertGroupID( UINT32 grpID, BOOLEAN isActive = TRUE ) ;
+         void     insertGroupID( UINT32 grpID, const string &name,
+                                 BOOLEAN isActive = TRUE ) ;
          void     removeGroupID( UINT32 grpID ) ;
          void     insertNodeID( UINT16 nodeID ) ;
          void     activeGroup( UINT32 groupID ) ;
@@ -95,6 +97,10 @@ namespace engine
          UINT16   AllocCataNodeID();
          void     insertCataNodeID( UINT16 nodeID );
          void     releaseCataNodeID( UINT16 nodeID );
+
+         GRP_ID_MAP* getGroupMap( BOOLEAN isActive = TRUE ) ;
+         const CHAR* groupID2Name( UINT32 groupID ) ;
+         UINT32      groupName2ID( const string &groupName ) ;
 
          INT16    majoritySize() ;
 
@@ -140,7 +146,6 @@ namespace engine
          GRP_ID_MAP           _deactiveGrpIdMap ;
          UINT16               _iCurNodeId ;
          UINT16               _curCataNodeId ;
-         ossSpinSLatch        _GrpIDMutex ;
          UINT32               _iCurGrpId ;
 
          catMainController    _catMainCtrl ;

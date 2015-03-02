@@ -48,6 +48,8 @@ namespace engine
    class _SDB_RTNCB ;
    class _dpsLogWrapper ;
    class _SDB_DMSCB ;
+   class _clsDCMgr ;
+   class _clsDCBaseInfo ;
 
    /*
       _catDCManager define
@@ -81,10 +83,20 @@ namespace engine
    protected:
       void  _fillRspHeader( MsgHeader *rspMsg, const MsgHeader *reqMsg ) ;
 
+      INT32 _mapData2DCMgr( _clsDCMgr *pDCMgr ) ;
+
+      INT32 _makeGroupsObj( BSONObjBuilder &builder,
+                            vector< string > &vecGroups ) ;
+
+      void  _dcBaseInfoGroups2Obj( _clsDCBaseInfo *pInfo,
+                                   BSONObjBuilder &builder,
+                                   const CHAR *pFieldName ) ;
+
    // tool fuctions
    private:
       INT16 _majoritySize() ;
       INT32 _updateGlobalInfo() ;
+      INT32 _updateImageInfo() ;
 
    private:
       _SDB_DMSCB                 *_pDmsCB;

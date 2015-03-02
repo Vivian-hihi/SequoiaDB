@@ -2773,6 +2773,17 @@ namespace engine
       return (INT32)groups.size() ;
    }
 
+   INT32 _clsNodeMgrAgent::getGroupsName( vector< string > &groups )
+   {
+      GROUP_NAME_MAP_IT it = _groupNameMap.begin() ;
+      while ( it != _groupNameMap.end() )
+      {
+         groups.push_back( it->first ) ;
+         ++it ;
+      }
+      return (INT32)_groupNameMap.size() ;
+   }
+
    PD_TRACE_DECLARE_FUNCTION ( SDB__CLSNDMGRAG_GPVS, "_clsNodeMgrAgent::groupVersion" )
    INT32 _clsNodeMgrAgent::groupVersion ( UINT32 id )
    {

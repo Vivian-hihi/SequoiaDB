@@ -531,13 +531,13 @@ namespace engine
       }
 
       /// SYSINFO
-      rc = _createSysCollection( CAT_SYSBASE_COLLECTION_NAME, cb ) ;
+      rc = _createSysCollection( CAT_SYSDCBASE_COLLECTION_NAME, cb ) ;
       if ( rc )
       {
          goto error ;
       }
-      rc = _createSysIndex( CAT_SYSBASE_COLLECTION_NAME,
-                            CAT_BASEINFO_TYPE_INDEX, cb ) ;
+      rc = _createSysIndex( CAT_SYSDCBASE_COLLECTION_NAME,
+                            CAT_DCBASEINFO_TYPE_INDEX, cb ) ;
       if ( rc )
       {
          goto error ;
@@ -757,88 +757,9 @@ namespace engine
    INT32 catMainController::_processQueryMsg( const NET_HANDLE &handle,
                                               MsgHeader *pMsg )
    {
-      INT32 rc = SDB_OK;
-      MsgOpReply msgReply;
-      MsgOpQuery *pReq = (MsgOpQuery *)pMsg;
-      msgReply.contextID = -1;
-      msgReply.flags = SDB_OK;
-      msgReply.numReturned = 0;
-      msgReply.startFrom = 0;
-      msgReply.header.messageLength = sizeof(MsgOpReply);
-      msgReply.header.opCode = MSG_BS_QUERY_RES;
-      msgReply.header.requestID = pReq->header.requestID;
-      msgReply.header.routeID.value = 0;
-      msgReply.header.TID = pReq->header.TID;
-
+      INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_CATMAINCT_QUERYMSG ) ;
-      do
-      {
-         SINT64 contextID      = 0 ;
-         INT32 flags           = 0 ;
-         SINT64 numToSkip      = -1 ;
-         SINT64 numToReturn    = -1 ;
-         CHAR *pCollectionName = NULL ;
-         CHAR *pQuery          = NULL ;
-         CHAR *pFieldSelector  = NULL ;
-         CHAR *pOrderBy        = NULL ;
-         CHAR *pHint           = NULL ;
-         rc = msgExtractQuery( (CHAR *)pMsg, &flags, &pCollectionName,
-                               &numToSkip, &numToReturn, &pQuery,
-                               &pFieldSelector, &pOrderBy, &pHint );
-         if ( rc != SDB_OK )
-         {
-            PD_LOG ( PDERROR,
-                     "failed to parse query request(rc=%d)",
-                     rc );
-            break;
-         }
-         BSONObj selector;
-         BSONObj matcher;
-         BSONObj orderBy;
-         BSONObj hint;
-         try
-         {
-            selector = BSONObj ( pFieldSelector );
-            matcher = BSONObj ( pQuery );
-            orderBy = BSONObj ( pOrderBy );
-            hint = BSONObj ( pHint );
-         }
-         catch ( std::exception &e )
-         {
-            rc = SDB_INVALIDARG;
-            PD_LOG ( PDERROR,
-                     "occured unexpected error:%s",
-                     e.what() );
-            break;
-         }
-         rc = rtnQuery( pCollectionName, selector, matcher, orderBy,
-                        hint, flags, _pEDUCB, numToSkip, numToReturn,
-                        _pDmsCB, _pRtnCB, contextID ) ;
-         if ( rc != SDB_OK )
-         {
-            if ( rc != SDB_DMS_EOC )
-            {
-               PD_LOG ( PDERROR, "Failed to query the collection:%s(rc=%d)",
-                        pCollectionName, rc );
-            }
-            break;
-         }
-         _addContext( handle, pReq->header.TID, contextID ) ;
-         msgReply.contextID = contextID ;
-      }while ( FALSE ) ;
-
-      msgReply.flags = rc;
-      PD_TRACE1 ( SDB_CATMAINCT_QUERYMSG,
-                  PD_PACK_INT ( rc ) ) ;
-      rc = _pCatCB->netWork()->syncSend ( handle, &msgReply );
-      if ( rc != SDB_OK )
-      {
-         PD_LOG ( PDERROR, "Failed to send the message "
-                  "( groupID=%d, nodeID=%d, serviceID=%d )",
-                  pReq->header.routeID.columns.groupID,
-                  pReq->header.routeID.columns.nodeID,
-                  pReq->header.routeID.columns.serviceID );
-      }
+      rc = _processQueryRequest( handle, pMsg, NULL ) ;
       PD_TRACE_EXITRC ( SDB_CATMAINCT_QUERYMSG, rc ) ;
       return rc ;
    }
@@ -898,13 +819,12 @@ namespace engine
          rc = SDB_INVALIDARG ;
          goto error ;
       }
-      iNameLen = ossStrlen(pCN) ;
-      if ( iNameLen <= 0 || pCN[0]!='$')
+
+      if ( NULL == pCollectionName )
       {
-         PD_LOG ( PDERROR, "Invalid command-begin" ) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
+         pCollectionName = pCN ;
       }
+
       try
       {
          BSONObj matcher ( pQuery ) ;
@@ -918,8 +838,8 @@ namespace engine
          {
             if ( rc != SDB_DMS_EOC )
             {
-               PD_LOG ( PDERROR, "Failed to list data-node-groups (rc=%d)",
-                        rc  ) ;
+               PD_LOG ( PDERROR, "Failed to query on collection[%s], rc: %d",
+                        pCollectionName, rc ) ;
             }
             goto error ;
          }

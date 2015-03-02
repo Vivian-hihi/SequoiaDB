@@ -62,9 +62,32 @@ namespace engine
          _clsDCBaseInfo() ;
          ~_clsDCBaseInfo() ;
 
+         INT32          lock_r( INT32 millisec = -1 ) ;
+         INT32          release_r() ;
+         INT32          lock_w( INT32 millisec = -1 ) ;
+         INT32          release_w() ;
+
          INT32          updateFromBSON( BSONObj &obj,
                                         BOOLEAN checkGroups = FALSE ) ;
 
+         void           setImageAddress( const string &addr ) ;
+         void           setImageClusterName( const string &name ) ;
+         void           setImageBusinessName( const string &name ) ;
+         void           enableImage( BOOLEAN enable = TRUE ) ;
+
+         INT32          addGroup( const string &source,
+                                  const string &image,
+                                  BOOLEAN *pAdded = NULL ) ;
+         INT32          addGroups( const BSONObj &groups,
+                                   map< string, string > *pAddMapGrps = NULL ) ;
+
+         void           setClusterName( const string &name ) ;
+         void           setBusinessName( const string &name ) ;
+         void           setAddress( const string &addr ) ;
+
+         void           setAcitve( BOOLEAN active ) ;
+
+      public:
          BOOLEAN        isActive() const { return _active ; }
 
          const CHAR*    getClusterName() const ;
@@ -85,24 +108,29 @@ namespace engine
 
       protected:
          void           _reset() ;
-         INT32          _addGroups( BSONObj &obj, BOOLEAN check ) ;
+         INT32          _addGroups( BSONObj &obj, BOOLEAN check,
+                                    BOOLEAN *pAdded = NULL,
+                                    const CHAR **ppSource = NULL,
+                                    const CHAR **ppImage = NULL ) ;
 
       private:
          BSONObj        _orgObj ;
 
-         const CHAR     *_clusterName ;
-         const CHAR     *_businessName ;
-         const CHAR     *_address ;
+         string         _clusterName ;
+         string         _businessName ;
+         string         _address ;
          BOOLEAN        _active ;
 
-         const CHAR     *_imageClusterName ;
-         const CHAR     *_imageBusinessName ;
-         const CHAR     *_imageAddress ;
+         string         _imageClusterName ;
+         string         _imageBusinessName ;
+         string         _imageAddress ;
          BOOLEAN        _hasImage ;
          BOOLEAN        _imageIsEnable ;
 
          map< string, string >  _imageGroups ;  // source 2 dest
          map< string, string >  _imageRGroups ; // dest 2 source
+
+         ossRWMutex     _rwMutex ;
 
    } ;
    typedef _clsDCBaseInfo clsDCBaseInfo ;
@@ -132,16 +160,22 @@ namespace engine
          _clsDCMgr() ;
          ~_clsDCMgr() ;
 
-         INT32    initialize() ;
+         INT32          initialize() ;
 
-         catAgent* getImageCataAgent () ;
-         nodeMgrAgent* getImageNodeMgrAgent () ;
+         INT32          setImageCatAddr( const string &catAddr ) ;
+         string         getImageCatAddr() ;
+
+         catAgent*      getImageCataAgent () ;
+         nodeMgrAgent*  getImageNodeMgrAgent () ;
          clsDCBaseInfo* getDCBaseInfo() { return &_baseInfo ; }
+         clsDCBaseInfo* getImageDCBaseInfo( pmdEDUCB *cb,
+                                            BOOLEAN update = FALSE ) ;
 
          /*
             Update data center base info from obj
          */
-         INT32 updateBaseInfo( BSONObj &obj ) ;
+         INT32 updateDCBaseInfo( BSONObj &obj ) ;
+         INT32 updateDCBaseInfo( MsgOpReply* pRes ) ;
          /*
             Update data center image's catalog group info
          */
@@ -166,6 +200,12 @@ namespace engine
             Update iamge all catalog
          */
          INT32 updateImageAllCatalog( pmdEDUCB *cb,
+                                      INT64 millsec = DC_UPDATE_TIMEOUT ) ;
+
+         /*
+            Update image dc base info
+         */
+         INT32 updateImageDCBaseInfo( pmdEDUCB *cb,
                                       INT64 millsec = DC_UPDATE_TIMEOUT ) ;
 
          INT32 getAndLockImageCataSet( const CHAR *name,
@@ -245,6 +285,12 @@ namespace engine
             _pCatAgent
          */
          INT32 _processCatQueryRes( pmdEDUCB *cb, MsgHeader *pRes ) ;
+         /*
+            Process dc base info query response, this result will update
+            to pBaseInfo
+         */
+         INT32 _processDCBaseInfoQueryRes( pmdEDUCB *cb, MsgHeader *pRes,
+                                           clsDCBaseInfo *pBaseInfo ) ;
 
          /*
             Send CAT_GRP_REQ to image catalog, and process the reply.
@@ -259,6 +305,7 @@ namespace engine
          INT32 _queryOnImageCatalog( pmdEDUCB *cb,
                                      MsgHeader **ppRecvMsg,
                                      UINT32 opCode,
+                                     const CHAR *pCollectionName = NULL,
                                      const BSONObj &cond = BSONObj(),
                                      const BSONObj &sel = BSONObj(),
                                      const BSONObj &orderby = BSONObj(),
@@ -271,9 +318,11 @@ namespace engine
       private:
          _clsCatalogAgent              *_pCatAgent ;
          _clsNodeMgrAgent              *_pNodeMgrAgent ;
+         BOOLEAN                       _init ;
 
-         clsDCBaseInfo                 _baseInfo ;    // this dc base info
-         vector< pmdAddrPair >         _vecCatlog ;   // the image address
+         clsDCBaseInfo                 _baseInfo ;       // this dc base info
+         clsDCBaseInfo                 _imageBaseInfo ;  // image dc base info
+         vector< pmdAddrPair >         _vecCatlog ;      // the image address
          ossSpinXLatch                 _peerCatLatch ;
          INT32                         _peerCatPrimary ;
          UINT64                        _requestID ;

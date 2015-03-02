@@ -1624,7 +1624,7 @@ namespace engine
       BSONObj matcher = BSON( FIELD_NAME_TYPE << pTypeStr ) ;
       BSONObj dummyObj ;
 
-      rc = catGetOneObj( CAT_SYSBASE_COLLECTION_NAME, dummyObj, matcher,
+      rc = catGetOneObj( CAT_SYSDCBASE_COLLECTION_NAME, dummyObj, matcher,
                          dummyObj, cb, obj ) ;
       if ( SDB_DMS_EOC == rc )
       {
@@ -1638,7 +1638,7 @@ namespace engine
       else
       {
          PD_LOG( PDERROR, "Failed to get obj(%s) from %s, rc: %d",
-                 matcher.toString().c_str(), CAT_SYSBASE_COLLECTION_NAME,
+                 matcher.toString().c_str(), CAT_SYSDCBASE_COLLECTION_NAME,
                  rc ) ;
          goto error ;
       }
@@ -1672,10 +1672,10 @@ namespace engine
                         ) ;
       }
 
-      rc = rtnUpdate( CAT_SYSBASE_COLLECTION_NAME, matcher, updator,
+      rc = rtnUpdate( CAT_SYSDCBASE_COLLECTION_NAME, matcher, updator,
                       BSONObj(), 0, cb, dmsCB, dpsCB, w, NULL ) ;
       PD_RC_CHECK( rc, PDERROR, "Update collection[%s] obj[%s] failed, rc: %d",
-                   CAT_SYSBASE_COLLECTION_NAME, updator.toString().c_str(),
+                   CAT_SYSDCBASE_COLLECTION_NAME, updator.toString().c_str(),
                    rc ) ;
 
    done:
