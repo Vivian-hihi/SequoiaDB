@@ -123,6 +123,7 @@ namespace engine
       oma background command
    */
    #define OMA_CMD_ADD_HOST                           OM_ADD_HOST_REQ
+   #define OMA_CMD_REMOVE_HOST                        OM_REMOVE_HOST_REQ
    #define OMA_CMD_CHECK_ADD_HOST_INFO                "check add host info"
    
    #define OMA_CMD_INSTALL_TMP_COORD                  "install temporary coord"

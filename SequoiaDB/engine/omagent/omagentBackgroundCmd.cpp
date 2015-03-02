@@ -71,7 +71,7 @@ namespace engine
          ossSnprintf( _jsFileArgs, JS_ARG_LEN, "var %s = %s; var %s = %s;",
                       JS_ARG_BUS, bus.toString(FALSE, TRUE).c_str(),
                       JS_ARG_SYS, sys.toString(FALSE, TRUE).c_str() ) ;
-         PD_LOG ( PDDEBUG, "Add hosts passes argument: %s",
+         PD_LOG ( PDDEBUG, "Add host passes argument: %s",
                   _jsFileArgs ) ;
          rc = addJsFile( FILE_ADD_HOST, _jsFileArgs ) ;
          if ( rc )
@@ -192,6 +192,93 @@ namespace engine
       return rc ;
    error:
      goto done ;
+   }
+
+   /*
+      _omaRemoveHost
+   */
+   _omaRemoveHost::_omaRemoveHost ( RemoveHostInfo &info )
+   {
+      _removeHostInfo = info ;
+   }
+
+   _omaRemoveHost::~_omaRemoveHost ()
+   {
+   }
+
+   INT32 _omaRemoveHost::init( const CHAR *pInstallInfo )
+   {
+      INT32 rc = SDB_OK ;
+      try
+      {
+         BSONObj bus ;
+         BSONObj sys ;
+         rc = _getRemoveHostInfo( bus, sys ) ;
+         if ( rc )
+         {
+            PD_LOG ( PDERROR, "Failed to get remove host info for js file, "
+                     "rc = %d", rc ) ;
+            goto error ;
+         }
+
+         // build js file arguments
+         ossSnprintf( _jsFileArgs, JS_ARG_LEN, "var %s = %s; var %s = %s;",
+                      JS_ARG_BUS, bus.toString(FALSE, TRUE).c_str(),
+                      JS_ARG_SYS, sys.toString(FALSE, TRUE).c_str() ) ;
+         PD_LOG ( PDDEBUG, "Remove host passes argument: %s", _jsFileArgs ) ;
+         rc = addJsFile( FILE_REMOVE_HOST, _jsFileArgs ) ;
+         if ( rc )
+         {
+            PD_LOG ( PDERROR, "Failed to add js file[%s], rc = %d ",
+                     FILE_REMOVE_HOST, rc ) ;
+            goto error ;
+         }
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG ( PDERROR, "Failed to build bson, exception is: %s",
+                  e.what() ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   INT32 _omaRemoveHost::_getRemoveHostInfo( BSONObj &retObj1,
+                                             BSONObj &retObj2 )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObjBuilder bob ;
+
+      try
+      {
+         //build subObj
+         bob.append( OMA_FIELD_IP, _removeHostInfo._item._ip.c_str() ) ;
+         bob.append( OMA_FIELD_HOSTNAME, _removeHostInfo._item._hostName.c_str() ) ;
+         bob.append( OMA_FIELD_USER, _removeHostInfo._item._user.c_str() ) ;
+         bob.append( OMA_FIELD_PASSWD, _removeHostInfo._item._passwd.c_str() ) ;
+         bob.append( OMA_FIELD_SSHPORT, _removeHostInfo._item._sshPort.c_str() ) ;
+         bob.append( OMA_FIELD_CLUSTERNAME, _removeHostInfo._item._clusterName.c_str() ) ;
+         bob.append( OMA_FIELD_INSTALLPATH, _removeHostInfo._item._installPath.c_str() ) ;
+         retObj1 = bob.obj() ;
+         retObj2 = BSON( OMA_FIELD_TASKID << _removeHostInfo._taskID ) ;
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG ( PDERROR, "Failed to build bson for add host, "
+                      "exception is: %s", e.what() ) ;
+         goto error ;
+      }
+      
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    /*

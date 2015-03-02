@@ -114,10 +114,10 @@ namespace engine
          goto error ;
       }
       // 3. begin to add hosts
-      rc = _addHost() ;
+      rc = _addHosts() ;
       if ( rc )
       {
-         PD_LOG ( PDERROR, "Failed to add host, rc = %d", rc ) ;
+         PD_LOG ( PDERROR, "Failed to add hosts, rc = %d", rc ) ;
          goto error ;
       }
       
@@ -376,7 +376,7 @@ namespace engine
          result._ip         = itr->_item._ip ;
          result._hostName   = itr->_item._hostName ;
          result._status     = OMA_TASK_STATUS_INIT ;
-         result._statusDesc = "" ;
+         result._statusDesc = getTaskStatusDesc( OMA_TASK_STATUS_INIT ) ; ;
          result._errno      = SDB_OK ;
          result._detail     = "" ;
          
@@ -438,11 +438,11 @@ namespace engine
       goto done ;
    }
 
-   INT32 _omaAddHostTask::_addHost()
+   INT32 _omaAddHostTask::_addHosts()
    {
-      INT32 rc = SDB_OK ;
+      INT32 rc        = SDB_OK ;
       INT32 threadNum = 0 ;
-      INT32 hostNum = _addHostInfo.size() ;
+      INT32 hostNum   = _addHostInfo.size() ;
       
       if ( 0 == hostNum )
       {
@@ -455,9 +455,16 @@ namespace engine
       for( INT32 i = 0; i < threadNum; i++ )
       { 
          ossScopedLock lock( &_taskLatch, EXCLUSIVE ) ;
+         // judge whether program had been interrupted
+         if ( TRUE == pmdGetThreadEDUCB()->isInterrupted() )
+         {
+            PD_LOG( PDEVENT, "Program has been interrupted, stop task[%s]",
+                    _taskName.c_str() ) ;
+            goto done ;
+         }
+         // run add host sub tasks
          if ( OMA_TASK_STATUS_RUNNING == _taskStatus )
          {
-            // run add host sub tasks
             rc = startOmagentJob( OMA_TASK_ADD_HOST_SUB, _taskID,
                                   BSONObj(), (void *)this ) ;
             if ( rc )
@@ -541,7 +548,6 @@ namespace engine
 
    void _omaAddHostTask::_buildUpdateTaskObj( BSONObj &retObj )
    {
-      
       BSONObjBuilder bob ;
       BSONArrayBuilder bab ;
       map<INT32, AddHostResultInfo>::iterator it = _addHostResult.begin() ;
@@ -696,13 +702,543 @@ namespace engine
          pDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
          if ( NULL != pDetail && 0 != *pDetail )
          {
-            ossMemcpy( _detail, pDetail, OMA_BUFF_SIZE ) ;
+            ossStrncpy( _detail, pDetail, OMA_BUFF_SIZE ) ;
          }
          else
          {
             pDetail = getErrDesp( errNum ) ;
             if ( NULL != pDetail )
-               ossMemcpy( _detail, pDetail, OMA_BUFF_SIZE ) ;
+               ossStrncpy( _detail, pDetail, OMA_BUFF_SIZE ) ;
+            else
+               PD_LOG( PDERROR, "Failed to get error message" ) ;
+         }
+      }
+   }
+
+   /*
+      remove host task
+   */
+   _omaRemoveHostTask::_omaRemoveHostTask( INT64 taskID )
+   : _omaTask( taskID )
+   {
+      _taskType = OMA_TASK_REMOVE_HOST ;
+      _taskName = OMA_TASK_NAME_REMOVE_HOST ;
+      _progress = 0 ;
+      _errno    = SDB_OK ;
+      ossMemset( _detail, 0, OMA_BUFF_SIZE + 1 ) ;
+   }
+
+   _omaRemoveHostTask::~_omaRemoveHostTask()
+   {
+   }
+
+   INT32 _omaRemoveHostTask::init( const BSONObj &info, void *ptr )
+   {
+      INT32 rc = SDB_OK ;
+
+      _removeHostRawInfo = info.copy() ;
+      
+      PD_LOG ( PDDEBUG, "Remove host passes argument: %s",
+               _removeHostRawInfo.toString( FALSE, TRUE ).c_str() ) ;
+
+      // init remove host info
+      rc = _initRemoveHostInfo( _removeHostRawInfo ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to init to get remove host's info" ) ;
+         goto error ;
+      }
+      // init remove host result
+      _initRemoveHostResult() ;
+
+      done:
+         return rc ;
+      error:
+         goto done ;
+   }
+
+   INT32 _omaRemoveHostTask::doit()
+   {
+      INT32 rc = SDB_OK ;
+
+      // 1. set task's status to be running
+      setTaskStatus( OMA_TASK_STATUS_RUNNING ) ;
+
+      // 2. begin to remove hosts
+      rc = _removeHosts() ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to remove hosts, rc = %d", rc ) ;
+         goto error ;
+      }
+      
+   done:
+      // 5. set task's status to be finished
+      setTaskStatus( OMA_TASK_STATUS_FINISH ) ;
+      
+      // 6. update to om the last time
+      rc = _updateProgressToOM() ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to update remove host progress"
+                 "to omsvc, rc = %d", rc ) ;
+      }
+      // 7. submit task info to omagent mgr
+      sdbGetOMAgentMgr()->submitTaskInfo( _taskID ) ;
+      
+      PD_LOG( PDEVENT, "Omagent finish running remove host task" ) ;
+      
+      return SDB_OK ;
+   error:
+      _setRetErr( rc ) ;
+      goto done ;
+   }
+
+   INT32 _omaRemoveHostTask::updateProgressToTask( INT32 serialNum,
+                                               RemoveHostResultInfo &resultInfo,
+                                               BOOLEAN needToNotify )
+   {
+      INT32 rc            = SDB_OK ;
+      INT32 totalNum      = 0 ;
+      INT32 finishNum     = 0 ;
+      
+      ossScopedLock lock ( &_taskLatch, EXCLUSIVE ) ;
+ 
+      // 1. update the remove host result to task
+      map<INT32, RemoveHostResultInfo>::iterator it ;
+      it = _removeHostResult.find( serialNum ) ;
+      if ( it != _removeHostResult.end() )
+      {
+         PD_LOG( PDDEBUG, "Remove host update progress to local "
+                 "task: ip[%s], hostName[%s], status[%d], "
+                 "statusDesc[%s], errno[%d], detail[%s], flow num[%d]",
+                 resultInfo._ip.c_str(),
+                 resultInfo._hostName.c_str(),
+                 resultInfo._status,
+                 resultInfo._statusDesc.c_str(),
+                 resultInfo._errno,
+                 resultInfo._detail.c_str(),
+                 resultInfo._flow.size() ) ;
+         it->second = resultInfo ;
+      }
+      
+      // 2. update the progress to local
+      totalNum = _removeHostResult.size() ;
+      if ( 0 == totalNum )
+      {
+         rc = SDB_SYS ;
+         PD_LOG_MSG( PDERROR, "Remove host result is empty" ) ;
+         goto error ;
+      }
+      it = _removeHostResult.begin() ;
+      for( ; it != _removeHostResult.end(); it++ )
+      {
+         if ( OMA_TASK_STATUS_FINISH == it->second._status )
+            finishNum++ ;
+      }
+      _progress = ( finishNum * 100 ) / totalNum ;
+
+      // 3. update to om directly
+      rc = _updateProgressToOM() ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDWARNING, "Failed to update remove host progress"
+                 "to omsvc, rc = %d", rc ) ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _omaRemoveHostTask::_initRemoveHostInfo( BSONObj &info )
+   {
+      INT32 rc                   = SDB_OK ;
+      const CHAR *pStr           = NULL ;
+      BSONObj hostInfoObj ;
+      BSONElement ele ;
+
+      // 1. get task id
+      ele = info.getField( OMA_FIELD_TASKID ) ;
+      if ( NumberInt != ele.type() && NumberLong != ele.type() )
+      {
+         PD_LOG_MSG ( PDERROR, "Receive invalid task id from omsvc" ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+       }
+      _taskID = ele.numberLong() ;
+
+      // 2. get remove host info
+      rc = omaGetObjElement( info, OMA_FIELD_INFO, hostInfoObj ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                "Get field[%s] failed, rc: %d",
+                OMA_FIELD_INFO, rc ) ;
+      // 3. get every item and save them
+      ele = hostInfoObj.getField( OMA_FIELD_HOSTINFO ) ;
+      if ( Array != ele.type() )
+      {
+         PD_LOG_MSG ( PDERROR, "Receive wrong format remove hosts"
+                      "info from omsvc" ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      else
+      {
+         BSONObjIterator itr( ele.embeddedObject() ) ;
+         INT32 serialNum = 0 ;
+         while( itr.more() )
+         {
+            RemoveHostInfo hostInfo ;
+            BSONObj item ;
+            
+            hostInfo._serialNum = serialNum++ ;
+            hostInfo._taskID    = getTaskID() ;
+
+            ele = itr.next() ;
+            if ( Object != ele.type() )
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG_MSG ( PDERROR, "Receive wrong format bson from omsvc" ) ;
+               goto error ;
+            }
+            item = ele.embeddedObject() ;
+            // IP
+            rc = omaGetStringElement( item, OMA_FIELD_IP, &pStr ) ;
+            PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                      "Get field[%s] failed, rc: %d",
+                      OMA_FIELD_IP, rc ) ;
+            hostInfo._item._ip = pStr ;
+            // HostName
+            rc = omaGetStringElement( item, OMA_FIELD_HOSTNAME, &pStr ) ;
+            PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                      "Get field[%s] failed, rc: %d",
+                      OMA_FIELD_HOSTNAME, rc ) ;
+            hostInfo._item._hostName = pStr ;
+            // User
+            rc = omaGetStringElement( item, OMA_FIELD_USER, &pStr ) ;
+            PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                      "Get field[%s] failed, rc: %d",
+                      OMA_FIELD_USER, rc ) ;
+            hostInfo._item._user = pStr ;
+            // Passwd
+            rc = omaGetStringElement( item, OMA_FIELD_PASSWD, &pStr ) ;
+            PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                      "Get field[%s] failed, rc: %d",
+                      OMA_FIELD_PASSWD, rc ) ;
+            hostInfo._item._passwd = pStr ;
+            // SshPort
+            rc = omaGetStringElement( item, OMA_FIELD_SSHPORT, &pStr ) ;
+            PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                      "Get field[%s] failed, rc: %d",
+                      OMA_FIELD_SSHPORT, rc ) ;
+            hostInfo._item._sshPort = pStr ;
+            // ClusterName
+            rc = omaGetStringElement( item, OMA_FIELD_CLUSTERNAME, &pStr ) ;
+            PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                      "Get field[%s] failed, rc: %d",
+                      OMA_FIELD_CLUSTERNAME, rc ) ;
+            hostInfo._item._clusterName = pStr ;
+            // InstallPath
+            rc = omaGetStringElement( item, OMA_FIELD_INSTALLPATH, &pStr ) ;
+            PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                      "Get field[%s] failed, rc: %d",
+                      OMA_FIELD_INSTALLPATH, rc ) ;
+            hostInfo._item._installPath = pStr ;
+
+            _removeHostInfo.push_back( hostInfo ) ;
+         }
+      }
+      
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   void _omaRemoveHostTask::_initRemoveHostResult()
+   {
+      vector<RemoveHostInfo>::iterator itr = _removeHostInfo.begin() ;
+
+      for( ; itr != _removeHostInfo.end(); itr++ )
+      {
+         RemoveHostResultInfo result ;
+         result._ip         = itr->_item._ip ;
+         result._hostName   = itr->_item._hostName ;
+         result._status     = OMA_TASK_STATUS_INIT ;
+         result._statusDesc = getTaskStatusDesc( OMA_TASK_STATUS_INIT ) ;
+         result._errno      = SDB_OK ;
+         result._detail     = "" ;
+         
+         _removeHostResult.insert( std::pair< INT32, RemoveHostResultInfo >( 
+            itr->_serialNum, result ) ) ;
+      }
+   }
+
+   INT32 _omaRemoveHostTask::_removeHosts()
+   {
+      INT32 rc      = SDB_OK ;
+      INT32 tmpRc   = SDB_OK ;
+      vector<RemoveHostInfo>::iterator it = _removeHostInfo.begin() ;
+      
+      for ( ; it != _removeHostInfo.end(); it++ )
+      {
+         RemoveHostResultInfo resultInfo = { "", "", OMA_TASK_STATUS_RUNNING,
+                                             OMA_TASK_STATUS_DESC_RUNNING,
+                                             SDB_OK, "" } ;
+         CHAR flow[OMA_BUFF_SIZE + 1] = { 0 } ;
+         const CHAR *pDetail          = NULL ;
+         const CHAR *pIP              = NULL ;
+         const CHAR *pHostName        = NULL ;
+         INT32 errNum                 = 0 ;
+         BSONObj retObj ;
+
+         // 1. judge whether program had been interrupted
+         if ( TRUE == pmdGetThreadEDUCB()->isInterrupted() )
+         {
+            PD_LOG( PDEVENT, "Program has been interrupted, stop task[%s]",
+                    _taskName.c_str() ) ;
+            goto done ;
+         }
+
+         pIP                  = it->_item._ip.c_str() ;
+         pHostName            = it->_item._hostName.c_str() ;
+         resultInfo._ip       = pIP ;
+         resultInfo._hostName = pHostName ;
+
+         // 2. before remove current host, update the progress
+         ossSnprintf( flow, OMA_BUFF_SIZE, "Removing host[%s]", pIP ) ;
+         resultInfo._flow.push_back( flow ) ;
+         tmpRc = updateProgressToTask( it->_serialNum, resultInfo, FALSE ) ;
+         if ( tmpRc )
+         {
+            PD_LOG( PDWARNING, "Failed to update remove host[%s]'s progress, "
+                    "rc = %d", pIP, tmpRc ) ;
+         }
+
+         // 3. remove host
+         _omaRemoveHost runCmd( *it ) ;
+         rc = runCmd.init( NULL ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Failed to init for removing "
+                    "host[%s], rc = %d", pIP, rc ) ;
+            pDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+            if ( NULL == pDetail || 0 == *pDetail )
+               pDetail = "Failed to init for removing host" ;
+            goto build_error_result ;
+         }
+         // doit may return error before execute js file
+         // so, when rc != SDB_OK, we need to ensure where
+         // error happen
+         // a. rc != SDB_OK && retObj == {}, error happen before executing js
+         // b. rc == SDB_OK && retObj == { errno:xxx, detail:"xxx" }, error
+         // happen in js
+         rc = runCmd.doit( retObj ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Failed to remove host[%s], rc = %d", pIP, rc ) ;
+            // if we can't get field "detail", it means we failed in CPP,
+            // we had not executed js file yet
+            tmpRc = omaGetStringElement ( retObj, OMA_FIELD_DETAIL, &pDetail ) ;
+            if ( SDB_OK != tmpRc )
+            {
+               pDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+               if ( NULL == pDetail || 0 == *pDetail )
+                  pDetail = "Not exeute js file yet" ;
+            }
+            goto build_error_result ;
+         }
+         // extract "errno"
+         rc = omaGetIntElement ( retObj, OMA_FIELD_ERRNO, errNum ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Failed to get errno from js after "
+                    "removing host[%s], rc = %d", pIP, rc ) ;
+            pDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+            if ( NULL == pDetail || 0 == *pDetail )
+               pDetail = "Failed to get errno from js after removing host" ;
+            goto build_error_result ;
+         }
+         // to see whether execute js successfully or not
+         if ( SDB_OK != errNum )
+         {
+            rc = errNum ;
+            // get error detail
+            tmpRc = omaGetStringElement ( retObj, OMA_FIELD_DETAIL, &pDetail ) ;
+            if ( SDB_OK != tmpRc )
+            {
+               PD_LOG( PDERROR, "Failed to get error detail from js after "
+                       "removing host[%s], rc = %d", pIP, tmpRc ) ;
+               pDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+               if ( NULL == pDetail || 0 == *pDetail )
+                  pDetail = "Failed to get error detail from js after removing host" ;
+            }
+            goto build_error_result ;
+         }
+         else
+         {
+            ossSnprintf( flow, OMA_BUFF_SIZE, "Finish removing host[%s]", pIP ) ;
+            PD_LOG ( PDEVENT, "Success to remove host[%s]", pIP ) ;
+            resultInfo._status     = OMA_TASK_STATUS_FINISH ;
+            resultInfo._statusDesc = getTaskStatusDesc( OMA_TASK_STATUS_FINISH ) ;
+            resultInfo._flow.push_back( flow ) ;
+            tmpRc = updateProgressToTask( it->_serialNum, resultInfo, FALSE ) ;
+            if ( tmpRc )
+            {
+               PD_LOG( PDWARNING, "Failed to update remove host[%s]'s progress, "
+                       "rc = %d", pIP, tmpRc ) ;
+            }
+         }
+         continue ; // if we success, nerver go to "build_error_result"
+         
+      build_error_result:
+         ossSnprintf( flow, OMA_BUFF_SIZE, "Failed to remove host[%s]", pIP ) ;
+         resultInfo._status     = OMA_TASK_STATUS_FINISH ;
+         resultInfo._statusDesc = getTaskStatusDesc( OMA_TASK_STATUS_FINISH ) ;
+         resultInfo._errno      = rc ;
+         resultInfo._detail     = pDetail ;
+         resultInfo._flow.push_back( flow ) ;
+         tmpRc = updateProgressToTask( it->_serialNum, resultInfo, FALSE ) ;
+         if ( tmpRc )
+         {
+            PD_LOG( PDWARNING, "Failed to update remove host[%s]'s progress, "
+                    "rc = %d", pIP, tmpRc ) ;
+         }
+         continue ;
+         
+      }
+
+   done:
+      return SDB_OK ;
+   }
+
+   void _omaRemoveHostTask::_buildUpdateTaskObj( BSONObj &retObj )
+   {
+      BSONObjBuilder bob ;
+      BSONArrayBuilder bab ;
+      map<INT32, RemoveHostResultInfo>::iterator it = _removeHostResult.begin() ;
+      for ( ; it != _removeHostResult.end(); it++ )
+      {
+         BSONObjBuilder builder ;
+         BSONArrayBuilder arrBuilder ;
+         BSONObj obj ;
+
+         vector<string>::iterator itr = it->second._flow.begin() ;
+         for ( ; itr != it->second._flow.end(); itr++ )
+            arrBuilder.append( *itr ) ;
+         
+         builder.append( OMA_FIELD_IP, it->second._ip ) ;
+         builder.append( OMA_FIELD_HOSTNAME, it->second._hostName ) ;
+         builder.append( OMA_FIELD_STATUS, it->second._status ) ;
+         builder.append( OMA_FIELD_STATUSDESC, it->second._statusDesc ) ;
+         builder.append( OMA_FIELD_ERRNO, it->second._errno ) ;
+         builder.append( OMA_FIELD_DETAIL, it->second._detail ) ;
+         builder.append( OMA_FIELD_FLOW, arrBuilder.arr() ) ;
+         obj = builder.obj() ;
+         bab.append( obj ) ;
+      }
+
+      bob.appendNumber( OMA_FIELD_TASKID, _taskID ) ;
+      bob.appendNumber( OMA_FIELD_ERRNO, _errno ) ;
+      bob.append( OMA_FIELD_DETAIL, _detail ) ;
+      bob.appendNumber( OMA_FIELD_STATUS, _taskStatus ) ;
+      bob.append( OMA_FIELD_STATUSDESC, getTaskStatusDesc( _taskStatus ) ) ;
+      bob.appendNumber( OMA_FIELD_PROGRESS, _progress ) ;
+      bob.appendArray( OMA_FIELD_RESULTINFO, bab.arr() ) ;
+
+      retObj = bob.obj() ;
+   }
+   
+   INT32 _omaRemoveHostTask::_updateProgressToOM()
+   {
+      INT32 rc            = SDB_OK ;
+      INT32 retRc         = SDB_OK ;
+      UINT64 reqID        = 0 ;
+      omAgentMgr *pOmaMgr = sdbGetOMAgentMgr() ;
+      _pmdEDUCB *cb       = pmdGetThreadEDUCB() ;
+      ossAutoEvent updateEvent ;
+      BSONObj obj ;
+      
+      // 1. build update task object
+      _buildUpdateTaskObj( obj ) ;
+
+      // 2. get request id from omagentMgr
+      reqID = pOmaMgr->getRequestID() ;
+      pOmaMgr->registerTaskEvent( reqID, &updateEvent ) ;
+      
+      // 3. send message to omsvc
+      while( !cb->isInterrupted() )
+      {
+         pOmaMgr->sendUpdateTaskReq( reqID, &obj ) ;
+         while ( !cb->isInterrupted() )
+         {
+            if ( SDB_OK != updateEvent.wait( OMA_WAIT_OMSVC_RES_TIMEOUT, &retRc ) )
+            {
+               continue ;
+            }
+            else
+            {
+               if ( SDB_OM_TASK_NOT_EXIST == retRc )
+               {
+                  PD_LOG( PDERROR, "Failed to update task[%s]'s progress "
+                          "with requestID[%lld], rc = %d",
+                          _taskName.c_str(), reqID, retRc ) ;
+                  pOmaMgr->unregisterTaskEvent( reqID ) ;
+                  rc = retRc ;
+                  goto error ;
+               }
+               else if ( SDB_OK != retRc )
+               {
+                  PD_LOG( PDWARNING, "Retry to update task[%s]'s progress "
+                          "with requestID[%lld], rc = %d",
+                          _taskName.c_str(), reqID, retRc ) ;
+                  break ;
+               }
+               else
+               {
+                  PD_LOG( PDDEBUG, "Success to update task[%s]'s progress "
+                          "with requestID[%lld]", _taskName.c_str(), reqID ) ;
+                  pOmaMgr->unregisterTaskEvent( reqID ) ;
+                  goto done ;
+               }
+            }
+         }
+      }
+
+      PD_LOG( PDERROR, "Receive interrupt when update task[%s]'s "
+              "progress to omsvc", _taskName.c_str() ) ;
+      rc = SDB_APP_INTERRUPT ;
+      
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   void _omaRemoveHostTask::_setRetErr( INT32 errNum )
+   {
+      const CHAR *pDetail = NULL ;
+
+      if ( SDB_OK != _errno && '\0' != _detail[0] )
+      {
+         return ;
+      }
+      else
+      {
+         // set errno
+         _errno = errNum ;
+         // set error detail
+         pDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         if ( NULL != pDetail && 0 != *pDetail )
+         {
+            ossStrncpy( _detail, pDetail, OMA_BUFF_SIZE ) ;
+         }
+         else
+         {
+            pDetail = getErrDesp( errNum ) ;
+            if ( NULL != pDetail )
+               ossStrncpy( _detail, pDetail, OMA_BUFF_SIZE ) ;
             else
                PD_LOG( PDERROR, "Failed to get error message" ) ;
          }
@@ -754,16 +1290,7 @@ namespace engine
          PD_LOG( PDERROR, "Failed to init result order rc = %d", rc ) ;
          goto error ;
       }
-/*
-      // restore result info
-      rc = _restoreResultInfo() ;
-      if ( rc )
-      {
-         PD_LOG( PDERROR, "Failed to restore install db business result info "
-                 "rc = %d", rc ) ;
-         goto error ;
-      }
-*/
+
       done:
          return rc ;
       error:
@@ -909,8 +1436,6 @@ namespace engine
                                                   BOOLEAN needToNotify )
    {
       INT32 rc            = SDB_OK ;
-      INT32 totalNum      = 0 ;
-      INT32 finishNum     = 0 ;
       vector<InstDBBusInfo>::iterator it ;
       map< string, vector<InstDBBusInfo> >::iterator it2 ;
       
@@ -993,55 +1518,11 @@ namespace engine
       }
       
       // 2. update the progress to local
-      if ( TRUE == _isStandalone )
+      rc = _calculateProgress() ;
+      if ( SDB_OK != rc )
       {
-         totalNum = _standalone.size() ;
-         if ( 0 == totalNum )
-         {
-            rc = SDB_SYS ;
-            PD_LOG_MSG( PDERROR, "Install standalone's info is empty" ) ;
-            goto error ;
-         }
-         it = _standalone.begin() ;
-         for( ; it != _standalone.end(); it++ )
-         {
-            if ( OMA_TASK_STATUS_FINISH == it->_instResult._status )
-               finishNum++ ;
-         }
-         _progress = ( finishNum * 100 ) / totalNum ;
-      }
-      else
-      {
-         // get total nodes amount
-         totalNum = _catalog.size() + _coord.size() ;
-         it2 = _mapGroups.begin() ;
-         for ( ; it2 != _mapGroups.end(); it2++ )
-            totalNum += it2->second.size() ;
-         // get finish nodes amount
-         it = _catalog.begin() ;
-         for( ; it != _catalog.end(); it++ )
-         {
-            if ( OMA_TASK_STATUS_FINISH == it->_instResult._status )
-               finishNum++ ;
-         }
-         it = _coord.begin() ;
-         for( ; it != _coord.end(); it++ )
-         {
-            if ( OMA_TASK_STATUS_FINISH == it->_instResult._status )
-               finishNum++ ;
-         }
-         it2 = _mapGroups.begin() ;
-         for ( ; it2 != _mapGroups.end(); it2++ )
-         {
-            it = it2->second.begin() ;
-            for( ; it != it2->second.end(); it++ )
-            {
-               if ( OMA_TASK_STATUS_FINISH == it->_instResult._status )
-                  finishNum++ ;
-            }
-         }
-         // calculate progress
-         _progress = ( finishNum * 100 ) / totalNum ;     
+         PD_LOG( PDWARNING, "Failed to calculate task's progress, "
+                 "rc = %d", rc ) ;
       }
 
       // 3. notify task to update progress to om
@@ -1098,7 +1579,8 @@ namespace engine
          status = OMA_TASK_STATUS_FINISH ;
          break ;
       }
-      
+
+      // 1. update result
       if ( 0 == ossStrncmp( pRole, ROLE_DATA, sizeof(ROLE_DATA) ) )
       {
          itr = _mapGroups.begin() ;
@@ -1172,7 +1654,16 @@ namespace engine
             it->_instResult._flow.push_back( flow ) ;
          }
       }
-      // update to om
+
+      // 2. update the progress to local
+      rc = _calculateProgress() ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDWARNING, "Failed to calculate task's progress, "
+                 "rc = %d", rc ) ;
+      }
+      
+      // 3. update to om
       rc = _updateProgressToOM() ;
       if ( SDB_OK != rc )
       {
@@ -1586,171 +2077,6 @@ namespace engine
             p.first = pHostName ;
             p.second = pSvcName ;
             _resultOrder.push_back( p ) ;
-         }
-      }
-      
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   INT32 _omaInstDBBusTask::_restoreResultInfo()
-   {
-      INT32 rc = SDB_OK ;
-      vector<InstDBBusInfo>::iterator it ;
-      map< string, vector<InstDBBusInfo> >::iterator it2 ;
-      BSONElement ele ;
-      BSONElement ele2 ;
-
-      ele = _instDBBusRawInfo.getField ( OMA_FIELD_RESULTINFO ) ;
-      if ( Array != ele.type() )
-      {
-         PD_LOG_MSG ( PDERROR, "Receive wrong format install "
-                      "db business info from omsvc" ) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
-      else
-      {
-         BSONObjIterator itr( ele.embeddedObject() ) ;
-         const CHAR *pStr       = NULL ;
-         const CHAR *pRole      = NULL ;
-         InstDBResult tempResult ;
-         
-         while ( itr.more() )
-         {
-            BSONObj resultInfo ;
-            INT32 num = 0 ;
-            ele = itr.next() ;
-            if ( Object != ele.type() )
-            {
-               rc = SDB_INVALIDARG ;
-               PD_LOG_MSG ( PDERROR, "Receive wrong format bson from omsvc" ) ;
-               goto error ;
-            }
-            // 1. get result info recorded in omsvc
-            resultInfo = ele.embeddedObject() ;
-            // _errno
-            rc = omaGetIntElement( resultInfo, OMA_FIELD_ERRNO, num ) ;
-            PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
-                      "Get field[%s] failed, rc: %d", OMA_FIELD_ERRNO, rc ) ;
-            tempResult._errno = num ;
-            // _detail
-            rc = omaGetStringElement( resultInfo, OMA_FIELD_DETAIL, &pStr ) ;
-            PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
-                      "Get field[%s] failed, rc: %d", OMA_FIELD_DETAIL, rc ) ;
-            tempResult._detail = pStr ;
-            // _hostName
-            rc = omaGetStringElement( resultInfo, OMA_FIELD_HOSTNAME, &pStr ) ;
-            PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
-                      "Get field[%s] failed, rc: %d", OMA_FIELD_HOSTNAME, rc ) ;
-            tempResult._hostName = pStr ;
-            // _svcName
-            rc = omaGetStringElement( resultInfo, OMA_FIELD_SVCNAME, &pStr ) ;
-            PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
-                      "Get field[%s] failed, rc: %d", OMA_FIELD_SVCNAME, rc ) ;
-            tempResult._svcName = pStr ;
-            // _role
-            rc = omaGetStringElement( resultInfo, OMA_FIELD_ROLE, &pRole ) ;
-            PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
-                      "Get field[%s] failed, rc: %d", OMA_FIELD_ROLE, rc ) ;
-            tempResult._role = pRole ;
-            // groupName
-            rc = omaGetStringElement( resultInfo, OMA_FIELD_DATAGROUPNAME, &pStr ) ;
-            PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
-                      "Get field[%s] failed, rc: %d", OMA_FIELD_DATAGROUPNAME, rc ) ;
-            tempResult._groupName = pStr ;
-            // _status
-            rc = omaGetIntElement( resultInfo, OMA_FIELD_STATUS, num ) ;
-            PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
-                      "Get field[%s] failed, rc: %d", OMA_FIELD_STATUS, rc ) ;
-            tempResult._status = num ;
-            // _statusDesc
-            rc = omaGetStringElement( resultInfo, OMA_FIELD_STATUSDESC, &pStr ) ;
-            PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
-                      "Get field[%s] failed, rc: %d", OMA_FIELD_STATUSDESC, rc ) ;
-            tempResult._statusDesc = pStr ;
-            // _flow
-            ele2 = resultInfo.getField ( OMA_FIELD_FLOW ) ;
-            if ( Array == ele2.type() )
-            {
-               BSONObjIterator itr( ele2.embeddedObject() ) ;
-               while ( itr.more() )
-               {
-                  ele2 = itr.next() ;
-                  string str = ele2.str() ;
-                  tempResult._flow.push_back( str ) ;
-               }
-            }
-
-            // 2. restore the result info to local vector
-            if ( 0 == ossStrncmp( pRole, ROLE_DATA, ossStrlen( ROLE_DATA ) ) )
-            {
-               it2 = _mapGroups.find( tempResult._groupName ) ;
-               if ( it2 != _mapGroups.end() )
-               {
-                  it = it2->second.begin() ;
-                  for ( ; it != it2->second.end(); it++ )
-                  {
-                     if ( ( it->_instInfo._hostName == tempResult._hostName ) &&
-                          ( it->_instInfo._svcName == tempResult._svcName ) )
-                     {
-                        it->_instResult = tempResult ;
-                        break ;
-                     }
-                  }
-               }
-            }
-            else if ( 0 == ossStrncmp( pRole, ROLE_COORD,
-                                       ossStrlen( ROLE_COORD ) ) )
-            {
-               it = _coord.begin() ;
-               for ( ; it != _coord.end(); it++ )
-               {
-                  if ( ( it->_instInfo._hostName == tempResult._hostName ) &&
-                       ( it->_instInfo._svcName == tempResult._svcName ) )
-                  {
-                     it->_instResult = tempResult ;
-                     break ;
-                  }
-               }
-            }
-            else if ( 0 == ossStrncmp( pRole, ROLE_CATA,
-                                       ossStrlen( ROLE_CATA ) ) )
-            {
-               it = _catalog.begin() ;
-               for ( ; it != _catalog.end(); it++ )
-               {
-                  if ( ( it->_instInfo._hostName == tempResult._hostName ) &&
-                       ( it->_instInfo._svcName == tempResult._svcName ) )
-                  {
-                     it->_instResult = tempResult ;
-                     break ;
-                  }
-               }
-            }
-            else if ( 0 == ossStrncmp( pRole, ROLE_STANDALONE,
-                                       ossStrlen( ROLE_STANDALONE ) ) )
-            {
-               it = _standalone.begin() ;
-               for ( ; it != _standalone.end(); it++ )
-               {
-                  if ( ( it->_instInfo._hostName == tempResult._hostName ) &&
-                       ( it->_instInfo._svcName == tempResult._svcName ) )
-                  {
-                     it->_instResult = tempResult ;
-                     break ;
-                  }
-               }
-            }
-            else
-            {
-               rc = SDB_INVALIDARG ;
-               PD_LOG_MSG( PDERROR, "Unknown role for install db business" ) ;
-               goto error ;
-            }
-            
          }
       }
       
@@ -2364,9 +2690,16 @@ namespace engine
       for( INT32 i = 0; i < threadNum; i++ )
       { 
          ossScopedLock lock( &_taskLatch, EXCLUSIVE ) ;
+         // judge whether program had been interrupted
+         if ( TRUE == pmdGetThreadEDUCB()->isInterrupted() )
+         {
+            PD_LOG( PDEVENT, "Program has been interrupted, stop task[%s]",
+                    _taskName.c_str() ) ;
+            goto done ;
+         }
+         // run add host sub tasks
          if ( OMA_TASK_STATUS_RUNNING == _taskStatus )
          {
-            // run add host sub tasks
             rc = startOmagentJob( OMA_TASK_INSTALL_DB_SUB, _taskID,
                                   BSONObj(), (void *)this ) ;
             if ( rc )
@@ -2945,6 +3278,71 @@ namespace engine
       retObj = bob.obj() ;
    }
 
+   INT32 _omaInstDBBusTask::_calculateProgress()
+   {
+      INT32 rc            = SDB_OK ;
+      INT32 totalNum      = 0 ;
+      INT32 finishNum     = 0 ;
+      vector<InstDBBusInfo>::iterator it ;
+      map< string, vector<InstDBBusInfo> >::iterator it2 ;
+
+      if ( TRUE == _isStandalone )
+      {
+         totalNum = _standalone.size() ;
+         if ( 0 == totalNum )
+         {
+            rc = SDB_SYS ;
+            PD_LOG_MSG( PDERROR, "Install standalone's info is empty" ) ;
+            goto error ;
+         }
+         it = _standalone.begin() ;
+         for( ; it != _standalone.end(); it++ )
+         {
+            if ( OMA_TASK_STATUS_FINISH == it->_instResult._status )
+               finishNum++ ;
+         }
+         _progress = ( finishNum * 100 ) / totalNum ;
+      }
+      else
+      {
+         // get total nodes amount
+         totalNum = _catalog.size() + _coord.size() ;
+         it2 = _mapGroups.begin() ;
+         for ( ; it2 != _mapGroups.end(); it2++ )
+            totalNum += it2->second.size() ;
+         // get finish nodes amount
+         it = _catalog.begin() ;
+         for( ; it != _catalog.end(); it++ )
+         {
+            if ( OMA_TASK_STATUS_FINISH == it->_instResult._status )
+               finishNum++ ;
+         }
+         it = _coord.begin() ;
+         for( ; it != _coord.end(); it++ )
+         {
+            if ( OMA_TASK_STATUS_FINISH == it->_instResult._status )
+               finishNum++ ;
+         }
+         it2 = _mapGroups.begin() ;
+         for ( ; it2 != _mapGroups.end(); it2++ )
+         {
+            it = it2->second.begin() ;
+            for( ; it != it2->second.end(); it++ )
+            {
+               if ( OMA_TASK_STATUS_FINISH == it->_instResult._status )
+                  finishNum++ ;
+            }
+         }
+         // calculate progress
+         _progress = ( finishNum * 100 ) / totalNum ;     
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 _omaInstDBBusTask::_updateProgressToOM()
    {
       INT32 rc            = SDB_OK ;
@@ -3164,13 +3562,13 @@ namespace engine
          pDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
          if ( NULL != pDetail && 0 != *pDetail )
          {
-            ossMemcpy( _detail, pDetail, OMA_BUFF_SIZE ) ;
+            ossStrncpy( _detail, pDetail, OMA_BUFF_SIZE ) ;
          }
          else
          {
             pDetail = getErrDesp( errNum ) ;
             if ( NULL != pDetail )
-               ossMemcpy( _detail, pDetail, OMA_BUFF_SIZE ) ;
+               ossStrncpy( _detail, pDetail, OMA_BUFF_SIZE ) ;
             else
                PD_LOG( PDERROR, "Failed to get error message" ) ;
          }
@@ -3187,7 +3585,6 @@ namespace engine
       _taskName      = OMA_TASK_NAME_REMOVE_DB_BUSINESS ;
       _isStandalone  = FALSE ;
       _nodeSerialNum = 0 ;
-      _eventID       = 0 ;
       _progress      = 0 ;
       _errno         = SDB_OK ;
       ossMemset( _detail, 0, OMA_BUFF_SIZE + 1 ) ;
@@ -3221,15 +3618,7 @@ namespace engine
          PD_LOG( PDERROR, "Failed to init result order rc = %d", rc ) ;
          goto error ;
       }
-/*      // restore result info
-      rc = _restoreResultInfo() ;
-      if ( rc )
-      {
-         PD_LOG( PDERROR, "Failed to restore remove db business result info "
-                 "rc = %d", rc ) ;
-         goto error ;
-      }
-*/
+
       done:
          return rc ;
       error:
@@ -3345,8 +3734,6 @@ namespace engine
                                                     BOOLEAN needToNotify )
    {
       INT32 rc            = SDB_OK ;
-      INT32 totalNum      = 0 ;
-      INT32 finishNum     = 0 ;
       vector<RemoveDBBusInfo>::iterator it ;
       
       ossScopedLock lock ( &_taskLatch, EXCLUSIVE ) ;
@@ -3422,66 +3809,19 @@ namespace engine
       }
       
       // 2. update the progress to local
-      if ( TRUE == _isStandalone )
+      rc = _calculateProgress() ;
+      if ( SDB_OK != rc )
       {
-         totalNum = _standalone.size() ;
-         if ( 0 == totalNum )
-         {
-            rc = SDB_SYS ;
-            PD_LOG_MSG( PDERROR, "Install standalone's info is empty" ) ;
-            goto error ;
-         }
-         it = _standalone.begin() ;
-         for( ; it != _standalone.end(); it++ )
-         {
-            if ( OMA_TASK_STATUS_FINISH == it->_removeResult._status )
-               finishNum++ ;
-         }
-         _progress = ( finishNum * 100 ) / totalNum ;
-      }
-      else
-      {
-         // get total nodes amount
-         totalNum = _catalog.size() + _coord.size() + _data.size() ;
-         
-         // get finish nodes amount
-         it = _catalog.begin() ;
-         for( ; it != _catalog.end(); it++ )
-         {
-            if ( OMA_TASK_STATUS_FINISH == it->_removeResult._status )
-               finishNum++ ;
-         }
-         it = _coord.begin() ;
-         for( ; it != _coord.end(); it++ )
-         {
-            if ( OMA_TASK_STATUS_FINISH == it->_removeResult._status )
-               finishNum++ ;
-         }
-         it = _data.begin() ;
-         for( ; it != _data.end(); it++ )
-         {
-            if ( OMA_TASK_STATUS_FINISH == it->_removeResult._status )
-               finishNum++ ;
-         }
-         // calculate progress
-         _progress = ( finishNum * 100 ) / totalNum ;         
+         PD_LOG( PDWARNING, "Failed to calculate task's progress, "
+                 "rc = %d", rc ) ;
       }
 
-      // 3. notify task to update progress to om
-      // or update to om directly
-      if ( TRUE == needToNotify )
+      // 3. update to om directly
+      rc = _updateProgressToOM() ;
+      if ( SDB_OK != rc )
       {
-         _eventID++ ;
-         _taskEvent.signal() ;
-      }
-      else
-      {
-         rc = _updateProgressToOM() ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDWARNING, "Failed to update install db business progress"
-                    "to omsvc, rc = %d", rc ) ;
-         }
+         PD_LOG( PDWARNING, "Failed to update remove db business progress"
+                 "to omsvc, rc = %d", rc ) ;
       }
 
    done:
@@ -3520,7 +3860,7 @@ namespace engine
          status = OMA_TASK_STATUS_FINISH ;
          break ;
       }
-      
+      // 1. update result
       if ( 0 == ossStrncmp( pRole, ROLE_DATA, sizeof(ROLE_DATA) ) )
       {
          it = _data.begin() ;
@@ -3586,7 +3926,15 @@ namespace engine
             it->_removeResult._flow.push_back( flow ) ;
          }
       }
-      // update to om
+      // 2. update progress
+      rc = _calculateProgress() ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDWARNING, "Failed to calculate task's progress, "
+                 "rc = %d", rc ) ;
+      }
+      
+      // 3. update to om
       rc = _updateProgressToOM() ;
       if ( SDB_OK != rc )
       {
@@ -3891,166 +4239,6 @@ namespace engine
             p.first = pHostName ;
             p.second = pSvcName ;
             _resultOrder.push_back( p ) ;
-         }
-      }
-      
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   INT32 _omaRemoveDBBusTask::_restoreResultInfo()
-   {
-      INT32 rc = SDB_OK ;
-      vector<RemoveDBBusInfo>::iterator it ;
-      BSONElement ele ;
-      BSONElement ele2 ;
-
-      ele = _removeDBBusRawInfo.getField ( OMA_FIELD_RESULTINFO ) ;
-      if ( Array != ele.type() )
-      {
-         PD_LOG_MSG ( PDERROR, "Receive wrong format remove "
-                      "db business info from omsvc" ) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
-      else
-      {
-         BSONObjIterator itr( ele.embeddedObject() ) ;
-         const CHAR *pStr       = NULL ;
-         const CHAR *pRole      = NULL ;
-         RemoveDBResult tempResult ;
-         
-         while ( itr.more() )
-         {
-            BSONObj resultInfo ;
-            INT32 num = 0 ;
-            ele = itr.next() ;
-            if ( Object != ele.type() )
-            {
-               rc = SDB_INVALIDARG ;
-               PD_LOG_MSG ( PDERROR, "Receive wrong format bson from omsvc" ) ;
-               goto error ;
-            }
-            // 1. get result info recorded in omsvc
-            resultInfo = ele.embeddedObject() ;
-            // _errno
-            rc = omaGetIntElement( resultInfo, OMA_FIELD_ERRNO, num ) ;
-            PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
-                      "Get field[%s] failed, rc: %d", OMA_FIELD_ERRNO, rc ) ;
-            tempResult._errno = num ;
-            // _detail
-            rc = omaGetStringElement( resultInfo, OMA_FIELD_DETAIL, &pStr ) ;
-            PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
-                      "Get field[%s] failed, rc: %d", OMA_FIELD_DETAIL, rc ) ;
-            tempResult._detail = pStr ;
-            // _hostName
-            rc = omaGetStringElement( resultInfo, OMA_FIELD_HOSTNAME, &pStr ) ;
-            PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
-                      "Get field[%s] failed, rc: %d", OMA_FIELD_HOSTNAME, rc ) ;
-            tempResult._hostName = pStr ;
-            // _svcName
-            rc = omaGetStringElement( resultInfo, OMA_FIELD_SVCNAME, &pStr ) ;
-            PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
-                      "Get field[%s] failed, rc: %d", OMA_FIELD_SVCNAME, rc ) ;
-            tempResult._svcName = pStr ;
-            // _role
-            rc = omaGetStringElement( resultInfo, OMA_FIELD_ROLE, &pRole ) ;
-            PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
-                      "Get field[%s] failed, rc: %d", OMA_FIELD_ROLE, rc ) ;
-            tempResult._role = pRole ;
-            // groupName
-            rc = omaGetStringElement( resultInfo, OMA_FIELD_DATAGROUPNAME, &pStr ) ;
-            PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
-                      "Get field[%s] failed, rc: %d", OMA_FIELD_DATAGROUPNAME, rc ) ;
-            tempResult._groupName = pStr ;
-            // _status
-            rc = omaGetIntElement( resultInfo, OMA_FIELD_STATUS, num ) ;
-            PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
-                      "Get field[%s] failed, rc: %d", OMA_FIELD_STATUS, rc ) ;
-            tempResult._status = num ;
-            // _statusDesc
-            rc = omaGetStringElement( resultInfo, OMA_FIELD_STATUSDESC, &pStr ) ;
-            PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
-                      "Get field[%s] failed, rc: %d", OMA_FIELD_STATUSDESC, rc ) ;
-            tempResult._statusDesc = pStr ;
-            // _flow
-            ele2 = resultInfo.getField ( OMA_FIELD_FLOW ) ;
-            if ( Array == ele2.type() )
-            {
-               BSONObjIterator itr( ele2.embeddedObject() ) ;
-               while ( itr.more() )
-               {
-                  ele2 = itr.next() ;
-                  string str = ele2.str() ;
-                  tempResult._flow.push_back( str ) ;
-               }
-            }
-
-            // 2. restore the result info to local vector
-            if ( 0 == ossStrncmp( pRole, ROLE_DATA, ossStrlen( ROLE_DATA ) ) )
-            {
-               it = _data.begin() ;
-               for ( ; it != _data.end(); it++ )
-               {
-                  if ( ( it->_removeInfo._hostName == tempResult._hostName ) &&
-                       ( it->_removeInfo._svcName == tempResult._svcName ) )
-                  {
-                     it->_removeResult = tempResult ;
-                     break ;
-                  }
-               }
-            }
-            else if ( 0 == ossStrncmp( pRole, ROLE_COORD,
-                                       ossStrlen( ROLE_COORD ) ) )
-            {
-               it = _coord.begin() ;
-               for ( ; it != _coord.end(); it++ )
-               {
-                  if ( ( it->_removeInfo._hostName == tempResult._hostName ) &&
-                       ( it->_removeInfo._svcName == tempResult._svcName ) )
-                  {
-                     it->_removeResult = tempResult ;
-                     break ;
-                  }
-               }
-            }
-            else if ( 0 == ossStrncmp( pRole, ROLE_CATA,
-                                       ossStrlen( ROLE_CATA ) ) )
-            {
-               it = _catalog.begin() ;
-               for ( ; it != _catalog.end(); it++ )
-               {
-                  if ( ( it->_removeInfo._hostName == tempResult._hostName ) &&
-                       ( it->_removeInfo._svcName == tempResult._svcName ) )
-                  {
-                     it->_removeResult = tempResult ;
-                     break ;
-                  }
-               }
-            }
-            else if ( 0 == ossStrncmp( pRole, ROLE_STANDALONE,
-                                       ossStrlen( ROLE_STANDALONE ) ) )
-            {
-               it = _standalone.begin() ;
-               for ( ; it != _standalone.end(); it++ )
-               {
-                  if ( ( it->_removeInfo._hostName == tempResult._hostName ) &&
-                       ( it->_removeInfo._svcName == tempResult._svcName ) )
-                  {
-                     it->_removeResult = tempResult ;
-                     break ;
-                  }
-               }
-            }
-            else
-            {
-               rc = SDB_INVALIDARG ;
-               PD_LOG_MSG( PDERROR, "Unknown role for remove db business" ) ;
-               goto error ;
-            }
-            
          }
       }
       
@@ -4719,6 +4907,64 @@ namespace engine
 
       retObj = bob.obj() ;
    }
+   
+   INT32 _omaRemoveDBBusTask::_calculateProgress()
+   {
+      INT32 rc        = SDB_OK ;
+      INT32 totalNum  = 0 ;
+      INT32 finishNum = 0 ;
+      vector<RemoveDBBusInfo>::iterator it ;
+
+      if ( TRUE == _isStandalone )
+      {
+         totalNum = _standalone.size() ;
+         if ( 0 == totalNum )
+         {
+            rc = SDB_SYS ;
+            PD_LOG_MSG( PDERROR, "Remove standalone's info is empty" ) ;
+            goto error ;
+         }
+         it = _standalone.begin() ;
+         for( ; it != _standalone.end(); it++ )
+         {
+            if ( OMA_TASK_STATUS_FINISH == it->_removeResult._status )
+               finishNum++ ;
+         }
+         _progress = ( finishNum * 100 ) / totalNum ;
+      }
+      else
+      {
+         // get total nodes amount
+         totalNum = _catalog.size() + _coord.size() + _data.size() ;
+         
+         // get finish nodes amount
+         it = _catalog.begin() ;
+         for( ; it != _catalog.end(); it++ )
+         {
+            if ( OMA_TASK_STATUS_FINISH == it->_removeResult._status )
+               finishNum++ ;
+         }
+         it = _coord.begin() ;
+         for( ; it != _coord.end(); it++ )
+         {
+            if ( OMA_TASK_STATUS_FINISH == it->_removeResult._status )
+               finishNum++ ;
+         }
+         it = _data.begin() ;
+         for( ; it != _data.end(); it++ )
+         {
+            if ( OMA_TASK_STATUS_FINISH == it->_removeResult._status )
+               finishNum++ ;
+         }
+         // calculate progress
+         _progress = ( finishNum * 100 ) / totalNum ;         
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
 
    INT32 _omaRemoveDBBusTask::_updateProgressToOM()
    {
@@ -4802,13 +5048,13 @@ namespace engine
          pDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
          if ( NULL != pDetail && 0 != *pDetail )
          {
-            ossMemcpy( _detail, pDetail, OMA_BUFF_SIZE ) ;
+            ossStrncpy( _detail, pDetail, OMA_BUFF_SIZE ) ;
          }
          else
          {
             pDetail = getErrDesp( errNum ) ;
             if ( NULL != pDetail )
-               ossMemcpy( _detail, pDetail, OMA_BUFF_SIZE ) ;
+               ossStrncpy( _detail, pDetail, OMA_BUFF_SIZE ) ;
             else
                PD_LOG( PDERROR, "Failed to get error message" ) ;
          }

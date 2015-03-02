@@ -95,7 +95,25 @@ namespace engine
    /*
       remove host
    */
-   
+   struct _RemoveHostItem
+   {
+      string _ip ;
+      string _hostName ;
+      string _user ;
+      string _passwd ;
+      string _sshPort ;
+      string _clusterName ;
+      string _installPath ;
+   } ;
+   typedef struct _RemoveHostItem RemoveHostItem ;
+
+   struct _RemoveHostInfo
+   {
+      INT32             _serialNum ;
+      INT64             _taskID ;
+      RemoveHostItem    _item ;
+   } ;
+   typedef struct _RemoveHostInfo RemoveHostInfo ;
 
    /*
       install db business host

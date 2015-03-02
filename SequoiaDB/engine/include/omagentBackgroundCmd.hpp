@@ -73,6 +73,24 @@ namespace engine
    } ;
 
    /*
+      _omaRemoveHost
+   */
+   class _omaRemoveHost : public _omaCommand
+   {
+      public:
+         _omaRemoveHost ( RemoveHostInfo &info ) ;
+         ~_omaRemoveHost () ;
+         virtual const CHAR * name () { return OMA_CMD_REMOVE_HOST ; }
+         virtual INT32 init ( const CHAR *pInstallInfo ) ;
+
+      private:
+         INT32 _getRemoveHostInfo( BSONObj &retObj1, BSONObj &retObj2 ) ;
+         
+      private:
+         RemoveHostInfo   _removeHostInfo ;
+   } ;
+
+   /*
       _omaCreateTmpCoord
    */
    class _omaCreateTmpCoord : public _omaCommand

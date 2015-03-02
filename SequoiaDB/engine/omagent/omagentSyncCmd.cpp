@@ -48,7 +48,7 @@ namespace engine
    IMPLEMENT_OACMD_AUTO_REGISTER( _omaPreCheckHost )
    IMPLEMENT_OACMD_AUTO_REGISTER( _omaCheckHost )
    IMPLEMENT_OACMD_AUTO_REGISTER( _omaPostCheckHost )
-   IMPLEMENT_OACMD_AUTO_REGISTER( _omaRemoveHost )
+//   IMPLEMENT_OACMD_AUTO_REGISTER( _omaRemoveHost )
    IMPLEMENT_OACMD_AUTO_REGISTER( _omaUpdateHostsInfo )
    IMPLEMENT_OACMD_AUTO_REGISTER( _omaQueryHostStatus )
 //   IMPLEMENT_OACMD_AUTO_REGISTER( _omaQueryTaskProgress )
@@ -243,6 +243,7 @@ namespace engine
    /*
       _omaRemoveHost
    */
+/*
    _omaRemoveHost::_omaRemoveHost ()
    {
    }
@@ -284,7 +285,7 @@ namespace engine
    error :
       goto done ;
    }
-
+*/
    /*************************** update hosts table info ***********************/
    /*
       _omaUpdateHostsInfo

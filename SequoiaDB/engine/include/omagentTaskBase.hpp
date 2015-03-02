@@ -54,8 +54,9 @@ namespace engine
    enum OMA_TASK_TYPE
    {
       OMA_TASK_ADD_HOST           = 0, // add host
-      OMA_TASK_INSTALL_DB         = 1, // install db business
-      OMA_TASK_REMOVE_DB          = 2, // remove db business
+      OMA_TASK_REMOVE_HOST        = 1, // remove host
+      OMA_TASK_INSTALL_DB         = 2, // install db business
+      OMA_TASK_REMOVE_DB          = 3, // remove db business
 
 
       OMA_TASK_ADD_HOST_SUB       = 10, // add host sub task
