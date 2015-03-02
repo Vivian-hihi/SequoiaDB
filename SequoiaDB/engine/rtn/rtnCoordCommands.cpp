@@ -691,7 +691,9 @@ namespace engine
       rtnCoordClearRequest( cb, sendNodes );
       // if we can't find primary and we havne't retry, that means our data
       // could be out of date, so let's refresh and retry
-      if ( ( SDB_RTN_NO_PRIMARY_FOUND == rc || SDB_CLS_NOT_PRIMARY == rc ) &&
+      if ( ( SDB_RTN_NO_PRIMARY_FOUND == rc ||
+             SDB_CLS_NOT_PRIMARY == rc ||
+             SDB_NET_CANNOT_CONNECT == rc ) &&
            !isNeedRefresh )
       {
          isNeedRefresh = TRUE ;
