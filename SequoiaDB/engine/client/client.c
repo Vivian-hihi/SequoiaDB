@@ -8018,3 +8018,48 @@ error:
    goto done ;
 }
 
+SDB_EXPORT INT32 sdbForceStepUp( sdbConnectionHandle cHandle,
+                                 const bson *options )
+{
+   INT32 rc = SDB_OK ;
+   sdbConnectionStruct *conn = ( sdbConnectionStruct *)cHandle ;
+   BOOLEAN result = FALSE ;
+   SINT64 contextID = -1 ;
+   HANDLE_CHECK( cHandle, conn, SDB_HANDLE_TYPE_CONNECTION ) ;
+
+   rc = clientBuildQueryMsg( &(conn->_pSendBuffer),
+                             &(conn->_sendBufferSize),
+                             (CMD_ADMIN_PREFIX CMD_NAME_FORCE_STEP_UP ),
+                             0, 0, 0, -1, options, NULL, NULL, NULL,
+                             conn->_endianConvert ) ;
+   if ( SDB_OK != rc )
+   {
+      ossPrintf ( "Failed to build flush msg, rc = %d"OSS_NEWLINE, rc ) ;
+      goto error ;
+   }
+
+   rc = _send ( cHandle, conn->_sock,
+                (MsgHeader*)(conn->_pSendBuffer),
+                conn->_endianConvert ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+
+   rc = _recvExtract ( cHandle, conn->_sock,
+                       (MsgHeader**)&conn->_pReceiveBuffer,
+                       &conn->_receiveBufferSize, &contextID,
+                       &result, conn->_endianConvert ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+
+   CHECK_RET_MSGHEADER( conn->_pSendBuffer, conn->_pReceiveBuffer,
+                        cHandle ) ;
+done:
+   return rc ;
+error:
+   goto done ;
+}
+

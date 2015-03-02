@@ -247,6 +247,10 @@ namespace engine
 
          void reelectionDone() ;
 
+         /// this func is used to support command "forceStepUp".
+         INT32 stepUp( UINT32 seconds,
+                       pmdEDUCB *cb ) ;
+
          INT32 primaryCheck( pmdEDUCB *cb, INT16 w ) ;
 
       private:
@@ -268,6 +272,8 @@ namespace engine
          UINT32 _getThresholdTime( UINT64 diffSize ) ;
 
          INT32 _handleStepDown() ;
+
+         INT32 _handleStepUp( UINT32 seconds ) ;
 
       private:
          _netRouteAgent          *_agent ;

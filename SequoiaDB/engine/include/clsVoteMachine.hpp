@@ -85,7 +85,8 @@ namespace engine
 
       INT32 active() ;
 
-      void force( const INT32 &id ) ;
+      void force( const INT32 &id,
+                  UINT32 mills = 0 ) ;
 
 
    private:
@@ -94,6 +95,7 @@ namespace engine
       _clsVoteStatus *_current ;
       _clsGroupInfo *_groupInfo ;
       UINT8 _shadowWeight ;
+      UINT32 _forceMillis ;
    } ;
 
    typedef class _clsVoteMachine clsVoteMachine ;

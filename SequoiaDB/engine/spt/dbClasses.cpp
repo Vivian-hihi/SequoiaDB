@@ -4027,7 +4027,8 @@ static JSBool isSpecialCSName ( const CHAR *name )
                                    "removeCatalogRG",
                                    "createCoordRG",
                                    "removeCoordRG",
-                                   "getCoordRG"
+                                   "getCoordRG",
+                                   "forceStepUp",
    };
    JSBool   in = JS_FALSE ;
    INT32    i  = 0 ;
@@ -6917,6 +6918,42 @@ error:
    goto done ;
 }
 
+// PD_TRACE_DECLARE_FUNCTION( SDB_SDB_FORCE_STEP_UP, "sdb_force_step_up" )
+static JSBool sdb_force_step_up( JSContext *cx, uintN argc, jsval *vp )
+{
+   PD_TRACE_ENTRY( SDB_SDB_FORCE_STEP_UP) ;
+   sdbConnectionHandle *connection = NULL ;
+   BOOLEAN ret = TRUE ;
+   INT32 rc = SDB_OK ;
+   JSObject *opsObj = NULL ;
+   bson *ops = NULL ;
+
+   connection = (sdbConnectionHandle *)
+                 JS_GetPrivate ( cx , JS_THIS_OBJECT ( cx , vp ) ) ;
+   REPORT ( connection , "Sdb.forceSetpUp(): no connection handle" ) ;
+
+   ret = JS_ConvertArguments ( cx , argc , JS_ARGV ( cx , vp ) ,
+                               "/o" , opsObj ) ;
+   REPORT ( ret , "Sdb.forceStepUp(): wrong arguments" ) ;
+
+   if ( NULL != opsObj )
+   {
+      ret = objToBson( cx, opsObj, &ops ) ;
+      REPORT ( ret , "Sdb.forceStepUp(): failed to convert object" ) ;
+   }
+
+   rc = sdbForceStepUp( *connection, ops ) ;
+   REPORT_RC ( SDB_OK == rc , "Sdb.forceStepUp()" , rc ) ;
+
+   JS_SET_RVAL ( cx , vp , JSVAL_VOID ) ;
+done:
+   SAFE_BSON_DISPOSE( ops ) ;
+   PD_TRACE_EXIT( SDB_SDB_FORCE_STEP_UP) ;
+   return ret ;
+error:
+   goto done ;
+}
+
 static JSFunctionSpec sdb_functions[] = {
    JS_FS ( "getCS" , sdb_get_cs , 1 , 0 ) ,
    JS_FS ( "getRG" , sdb_get_rg , 1 , 0 ) ,
@@ -6960,6 +6997,7 @@ static JSFunctionSpec sdb_functions[] = {
    JS_FS ( "listDomains", sdb_list_domains, 0, 0 ),
    JS_FS ( "invalidateCache", sdb_invalidate_cache, 0, 0 ),
    JS_FS ( "forceSession", sdb_force_session, 0, 0 ),
+   JS_FS ( "forceStepUp", sdb_force_step_up, 0, 0 ),
    JS_FS_END
 } ;
 

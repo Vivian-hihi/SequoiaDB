@@ -304,6 +304,7 @@
 #define FIELD_NAME_AUTO_INDEX_ID             "AutoIndexId"
 #define FIELD_NAME_REELECTION_TIMEOUT        "Seconds"
 #define FIELD_NAME_REELECTION_LEVEL          "Level"
+#define FIELD_NAME_FORCE_STEP_UP_TIME        FIELD_NAME_REELECTION_TIMEOUT
 
 #define IXM_FIELD_NAME_KEY                   "key"
 #define IXM_FIELD_NAME_NAME                  "name"
@@ -411,6 +412,7 @@
 #define CMD_NAME_ACTIVE_IMAGE                "active image"
 #define CMD_NAME_DEACTIVE_IMAGE              "deactive image"
 #define CMD_NAME_REELECT                     "reelect"
+#define CMD_NAME_FORCE_STEP_UP               "force step up"
 
 #define CMD_NAME_JSON_LOAD                   "json load"
 
