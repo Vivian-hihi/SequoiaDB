@@ -720,12 +720,12 @@ namespace engine
          virtual INT32  doCommand() ;
 
       private:
+         INT32          _generateTaskInfo( list<string> &hostNameList, 
+                                           BSONObj &taskInfo, 
+                                           BSONArray &resultInfo ) ;
          INT32          _getHostExistBusinessFlag( const string &hostName, 
                                                    BOOLEAN &flag ) ;
-         INT32          _removeHost( const simpleHostInfo &hostInfo, 
-                                     BOOLEAN isForced ) ;
-         INT32          _removeHostByAgent( const simpleHostInfo &hostInfo ) ;
-         INT32          _getHostName( string &hostName, BOOLEAN &isForced ) ;
+         INT32          _getHostName( list<string> &hostNameList ) ;
    } ;
 
    class omRemoveBusinessCommand : public omStartBusinessCommand

@@ -194,13 +194,15 @@ namespace engine
    enum omTaskType
    {
       OM_TASK_TYPE_ADD_HOST        = 0,
-      OM_TASK_TYPE_ADD_BUSINESS    = 1,
-      OM_TASK_TYPE_REMOVE_BUSINESS = 2,
+      OM_TASK_TYPE_REMOVE_HOST     = 1,
+      OM_TASK_TYPE_ADD_BUSINESS    = 2,
+      OM_TASK_TYPE_REMOVE_BUSINESS = 3,
 
       OM_TASK_TYPE_END
    } ;
 
    #define OM_TASK_TYPE_ADD_HOST_STR          "ADD_HOST"
+   #define OM_TASK_TYPE_REMOVE_HOST_STR       "REMOVE_HOST"
    #define OM_TASK_TYPE_ADD_BUSINESS_STR      "ADD_BUSINESS"
    #define OM_TASK_TYPE_REMOVE_BUSINESS_STR   "REMOVE_BUSINESS"
 
@@ -390,7 +392,7 @@ namespace engine
 
    // *****************************************************************
    // om rest list_host_req
-   #define  OM_LIST_HOST_REQ                 "list host"
+   #define  OM_LIST_HOST_REQ                 "list hosts"
    // *****************************************************************
 
    // *****************************************************************
@@ -487,7 +489,7 @@ namespace engine
 
 
    // om list node req
-   #define  OM_LIST_NODE_REQ                 "list node"
+   #define  OM_LIST_NODE_REQ                 "list nodes"
 
 
    #define  OM_BSON_FIELD_SVCNAME            FIELD_NAME_SERVICE_NAME
@@ -503,7 +505,7 @@ namespace engine
    //******************************************************************
 
    // om list business req
-   #define  OM_LIST_BUSINESS_REQ             "list business"
+   #define  OM_LIST_BUSINESS_REQ             "list businesses"
    //******************************************************************
 
    // om query business req
@@ -553,7 +555,7 @@ namespace engine
    //******************************************************************
 
    // om list task req
-   #define  OM_LIST_TASK_REQ                 "list task"
+   #define  OM_LIST_TASK_REQ                 "list tasks"
    //******************************************************************
 
    // om query task req
