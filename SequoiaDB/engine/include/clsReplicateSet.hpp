@@ -190,6 +190,11 @@ namespace engine
             return _srcSessionNum ;
          }
 
+         OSS_INLINE BOOLEAN isInStepUp() const
+         {
+            return _vote.isInStepUp() ;
+         }
+
          ossQueue< clsLSNNtyInfo >* getNtyQue() { return &_ntyQue ; }
          DPS_LSN_OFFSET getNtyLastOffset() const { return _ntyLastOffset ; }
          DPS_LSN_OFFSET getNtyProcessedOffset() const { return _ntyProcessedOffset ; }

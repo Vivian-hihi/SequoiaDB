@@ -1972,6 +1972,12 @@ namespace engine
          BSONObjBuilder updateBuilder ;
          BSONObj matcher, updator ;
          BSONObj dummyObj ;
+         INT16 w = 1 ;
+         replCB *repl = pmdGetKRCB()->getClsCB()->getReplCB() ;
+
+         /// when we do forceStepUp, rtnUpdate may return SDB_CLS_WAIT_SYNC_FAILED
+         /// if do not set it with 1.
+         w = repl->isInStepUp() ? 1 : _majoritySize() ;
 
          updateBuilder.append("$inc", BSON( FIELD_NAME_VERSION << 1 ) ) ;
          updateBuilder.append("$set", BSON( FIELD_NAME_GROUP <<
@@ -1981,7 +1987,7 @@ namespace engine
          matcher = BSON( FIELD_NAME_GROUPNAME << groupName ) ;
 
          rc = rtnUpdate( CAT_NODE_INFO_COLLECTION, matcher, updator, dummyObj,
-                         0, _pEduCB, _pDmsCB, _pDpsCB, _majoritySize() ) ;
+                         0, _pEduCB, _pDmsCB, _pDpsCB, w ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to update group info[%s], matcher: "
                       "%s, updator: %s, rc: %d", groupInfo.toString().c_str(),
                       matcher.toString().c_str(), updator.toString().c_str(),
