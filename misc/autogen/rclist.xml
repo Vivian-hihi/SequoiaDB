@@ -2258,5 +2258,13 @@
          </description>
       </code>
 
+      <code>
+         <name>SDB_CAT_IMAGE_ADDR_CONFLICT</name>
+         <description>
+            <en>Image address is conflict with the self cluster</en>
+            <cn>镜像地址和本集群地址冲突</cn>
+         </description>
+      </code>
+
    </codelist>
 </rclist>
