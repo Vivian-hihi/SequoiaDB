@@ -37,6 +37,8 @@
 #include "rtnCoordDCCommands.hpp"
 #include "pmdCB.hpp"
 
+using namespace bson ;
+
 namespace engine
 {
 
@@ -53,6 +55,7 @@ namespace engine
       netMultiRouteAgent *pRouteAgent = pCoord->getRouteAgent() ;
       CoordGroupList datagroups ;
       CoordGroupList sendgroups ;
+      CoordGroupList allgroups ;
 
       // fill default-reply
       MsgHeader *pHeader               = (MsgHeader *)pReceiveBuffer;
@@ -79,6 +82,14 @@ namespace engine
          PD_LOG( PDERROR, "Failed to execute %s on catalog node, rc: %d",
                  _getName(), rc ) ;
          goto error ;
+      }
+
+      // update all groups
+      rc = rtnCoordGetAllGroupList( cb, allgroups, NULL, FALSE, TRUE ) ;
+      if ( rc )
+      {
+         PD_LOG( PDWARNING, "Failed to update all group list, rc: %d", rc ) ;
+         rc = SDB_OK ;
       }
 
       // 2. execute on the special groups, ignore error
