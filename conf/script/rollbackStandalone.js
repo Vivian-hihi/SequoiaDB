@@ -61,7 +61,8 @@ function _init()
               sprintf( errMsg + ", rc: ?, detail: ?", GETLASTERROR(), GETLASTERRMSG() ) ) ;
       exception_handle( SDB_SYS, errMsg ) ;
    }
-   setTaskLogFileName( task_id, host_name ) ;
+   
+   setTaskLogFileName( task_id ) ;
    
    PD_LOG2( task_id, arguments, PDEVENT, FILE_NAME_ROLLBACKSTANDALONE,
             sprintf( "Begin to rollback standalone[?:?]", host_name, host_svc ) ) ;

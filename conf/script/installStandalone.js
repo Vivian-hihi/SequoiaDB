@@ -29,8 +29,7 @@
 
 // println
 //var BUS_JSON = {"ClusterName": "c2", "BusinessName": "b1", "UserTag": "", "SdbUser": "sdbadmin", "SdbPasswd": "sdbadmin", "SdbUserGroup": "sdbadmin_group", "User": "root", "Passwd": "sequoiadb", "SshPort": "22", "InstallHostName": "susetzb", "InstallSvcName": "20000", "InstallPath": "/opt/sequoiadb/database/standalone/20000", "InstallConfig": { "diaglevel": "5", "role": "standalone", "logfilesz": "64", "logfilenum": "10", "transactionon": "false", "preferedinstance": "2", "numpagecleaners": "10", "pagecleaninterval": "1000", "hjbuf": "128", "logbuffsize": "1024", "maxprefpool": "200", "maxreplsync": "10", "numpreload": "0", "sortbuf": "512", "syncstrategy": "none" } } ;
-
-// var SYS_JSON = { "TaskID": 13 };
+//var SYS_JSON = { "TaskID": 13 };
 
 var RET_JSON = new installNodeResult() ;
 var rc       = SDB_OK ;
@@ -68,7 +67,7 @@ function _init()
               sprintf( errMsg + ", rc: ?, detail: ?", GETLASTERROR(), GETLASTERRMSG() ) ) ;
       exception_handle( SDB_INVALIDARG, errMsg ) ;
    }
-   setTaskLogFileName( task_id, host_name ) ;
+   setTaskLogFileName( task_id ) ;
    
    PD_LOG2( task_id, arguments, PDEVENT, FILE_NAME_INSTALL_STANDALONE,
             sprintf( "Begin to install standalone[?:?] in task[?]",
@@ -334,7 +333,7 @@ function main()
    
    _final() ;
 // println
-//println("RET_JSON is: " + JSON.stringify(RET_JSON)) ;
+println("RET_JSON is: " + JSON.stringify(RET_JSON)) ;
    return RET_JSON ;
 }
 

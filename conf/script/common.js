@@ -21,6 +21,12 @@
    2014-7-26 Zhaobo Tan  Init
 */
 
+function commonResult()
+{
+   this.errno                     = SDB_OK ;
+   this.detail                    = "" ;
+}
+
 function scanHostResult()
 {
    this.errno                     = SDB_OK ;

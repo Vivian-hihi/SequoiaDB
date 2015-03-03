@@ -46,7 +46,6 @@ var task_id        = 0 ;
 ***************************************************************************** */
 function _init()
 {
-   var log_file_name = "" ;
    // 1. get task id
    task_id = getTaskID( SYS_JSON ) ;
   
@@ -64,9 +63,7 @@ function _init()
               sprintf( errMsg + ", rc: ?, detail: ?", GETLASTERROR(), GETLASTERRMSG() ) ) ;
       exception_handle( SDB_INVALIDARG, errMsg ) ;
    }
-   log_file_name = host_name + "_00000" ;
-   setTaskLogFileName( task_id, log_file_name ) ;
-   
+   setTaskLogFileName( task_id ) ;
    
    PD_LOG2( task_id, arguments, PDEVENT, FILE_NAME_REMOVE_HOST,
             sprintf( "Begin to remove host[?]", host_name ) ) ;

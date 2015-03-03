@@ -43,7 +43,7 @@ var host_svc  = "" ;
 @return void
 ***************************************************************************** */
 function _init()
-{           
+{
    // 1. get task id
    task_id = getTaskID( SYS_JSON ) ;
 
@@ -61,7 +61,8 @@ function _init()
               sprintf( errMsg + ", rc: ?, detail: ?", GETLASTERROR(), GETLASTERRMSG() ) ) ;
       exception_handle( SDB_SYS, errMsg ) ;
    }
-   setTaskLogFileName( task_id, host_name ) ;
+   
+   setTaskLogFileName( task_id ) ;
    
    PD_LOG2( task_id, arguments, PDEVENT, FILE_NAME_REMOVE_STANDALONE,
             sprintf( "Begin to remove standalone[?:?] in task[?]",

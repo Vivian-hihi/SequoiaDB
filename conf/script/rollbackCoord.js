@@ -33,8 +33,6 @@ var rc           = SDB_OK ;
 var errMsg       = "" ;
 
 var task_id      = "" ;
-// println:
-var rg_name = OMA_SYS_COORD_RG ;
 
 /* *****************************************************************************
 @discretion: init
@@ -46,9 +44,7 @@ function _init()
 {           
    // 1. get task id
    task_id = getTaskID( SYS_JSON ) ;
-
-   setTaskLogFileName( task_id, rg_name ) ;
-   
+   setTaskLogFileName( task_id ) ;
    PD_LOG2( task_id, arguments, PDEVENT, FILE_NAME_ROLLBACK_COORD,
             sprintf( "Begin to rollback coord rg in task[?]", task_id ) ) ;
 }

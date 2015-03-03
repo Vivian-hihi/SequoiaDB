@@ -61,7 +61,6 @@ else
 ***************************************************************************** */
 function _init()
 {
-   var log_file_name = "" ;
    // 1. get task id
    task_id = getTaskID( SYS_JSON ) ;
   
@@ -79,8 +78,7 @@ function _init()
               sprintf( errMsg + ", rc: ?, detail: ?", GETLASTERROR(), GETLASTERRMSG() ) ) ;
       exception_handle( SDB_INVALIDARG, errMsg ) ;
    }
-   log_file_name = host_name + "_00000" ;
-   setTaskLogFileName( task_id, log_file_name ) ;
+   setTaskLogFileName( task_id ) ;
 
    // 3. set local and remote pre-check result file name
    if( SYS_LINUX == SYS_TYPE )

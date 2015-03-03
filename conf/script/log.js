@@ -23,7 +23,7 @@
 var LOG_NEW_LINE      = "" ;
 
 var LOG_FILE_PATH     = "" ;
-var LOG_FILE_NAME     = "sdbcm_js.log" ;
+var LOG_FILE_NAME     = "sdbcm_script.log" ;
 var JS_LOG_FILE       = "" ;
 
 var LOG_NONE          = -1 ;
@@ -62,9 +62,9 @@ if( "LINUX" == OS_TYPE_IN_JS_LOG )
    var currentPath = System.getEWD() ;
    var pos = currentPath.lastIndexOf( "/" ) ;
    if ( currentPath.length - 1 != pos )
-      LOG_FILE_PATH = currentPath + "/../web/log/" ;
+      LOG_FILE_PATH = currentPath + "/../conf/log/" ;
    else
-      LOG_FILE_PATH = currentPath + "../web/log/" ;
+      LOG_FILE_PATH = currentPath + "../conf/log/" ;
    
    JS_LOG_FILE   = LOG_FILE_PATH + LOG_FILE_NAME ;
    LOG_NEW_LINE  = "\n" ;
@@ -74,9 +74,9 @@ else
    var currentPath = System.getEWD() ;
    var pos = currentPath.lastIndexOf( "\\" ) ;
    if ( currentPath.length - 1 != pos )
-      LOG_FILE_PATH = currentPath + "\\..\\web\\log\\" ;
+      LOG_FILE_PATH = currentPath + "\\..\\conf\\log\\" ;
    else
-      LOG_FILE_PATH = currentPath + "..\\web\\log\\" ;
+      LOG_FILE_PATH = currentPath + "..\\conf\\log\\" ;
    
    JS_LOG_FILE  = LOG_FILE_PATH + LOG_FILE_NAME ;
    LOG_NEW_LINE = "\r\n" ;
@@ -274,11 +274,8 @@ function _getJsLogFile( type )
 function _write2File( type, infoStr )
 {  
    var file            = null ;
-   var logFile         = null ;
    var logFileFullName = "" ;
-   var currentPath     = "" ;
    var errMsg          = "" ;
-   var pos             = -1 ;
       
    if ( LOG_NONE == type )
    {
@@ -287,27 +284,9 @@ function _write2File( type, infoStr )
    }
       
    try
-   {   
-   /*
-      logFile = _getJsLogFile( type ) ;
-      if ( "LINUX" == OS_TYPE_IN_JS_LOG )
-      {
-         currentPath = System.getEWD() ;
-         pos = currentPath.lastIndexOf( "/" ) ;
-         if ( currentPath.length - 1 != pos )
-            logFileFullName = currentPath + "/" + logFile ;
-         else
-            logFileFullName = currentPath + logFile ;
-      }
-      else
-      {
-         // TODO: windows
-         logFileFullName = "" ;
-      }
+   {
+      logFileFullName = _getJsLogFile( type ) ;
       file = new File( logFileFullName ) ;
-   */
-      logFile = _getJsLogFile( type ) ;
-      file = new File( logFile ) ;
    }
    catch( e )
    {
@@ -395,17 +374,23 @@ function PD_LOG3( type, argsObj, level, func, line, file, message )
    if ( "number" == typeof( level ) && level > JS_LOG_LEVEL )
       return ;
    var strArr = [ "Level", "TID", "Line" ] ;
+   var funcName = (argsObj.callee.toString().replace(/function\s?/mi, "").split("("))[0] ;
+/*
    var formatStr = "?Level:?" + LOG_NEW_LINE +
                    "PID:?TID:?" + LOG_NEW_LINE +
                    "Function:?Line:?" + LOG_NEW_LINE +
                    "File:?" + LOG_NEW_LINE +
                    "Message:" + LOG_NEW_LINE + "?" + LOG_NEW_LINE ;
-   var funcName = (argsObj.callee.toString().replace(/function\s?/mi, "").split("("))[0] ;
    var logInfo = sprintf( formatStr, genTimeStamp(), _getPDLevelDesp(level),
                           System.getPID(), System.getTID(),
                           funcName, "NULL", file, message ) ;
-   var infoStr = _formatLogInfo( logInfo, strArr, 42 ) ;
-   _write2File( type, infoStr ) ;
+   logInfo = _formatLogInfo( logInfo, strArr, 42 ) ;
+*/
+   var formatStr = "? Level:? PID:? TID:? Function:? File:? Message: ?" + LOG_NEW_LINE ;
+   var logInfo = sprintf( formatStr, genTimeStamp(), _getPDLevelDesp(level),
+                          System.getPID(), System.getTID(),
+                          funcName, file, message ) ;
+   _write2File( type, logInfo ) ;
 }
 
 /* *****************************************************************************

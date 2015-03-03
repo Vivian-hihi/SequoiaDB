@@ -964,13 +964,33 @@ function getTaskID( obj )
 }
 
 /* *****************************************************************************
-@discretion: name the name of the task log after ip
+@discretion: set the name of task log file
 @author: Tanzhaobo
 @parameter
    task_id[number]:
-   name[string]: ip used to name a log file, e.g. "suse_12345.log"(host_port.log)
 @return void
 ***************************************************************************** */
+function setTaskLogFileName( task_id )
+{
+   try
+   {
+      var task_log_dir = LOG_FILE_PATH + Task ;
+      if ( false == File.exist( task_log_dir ) )
+         File.mkdir( task_log_dir ) ;
+      LOG_FILE_NAME = adaptPath( Task ) + task_id + ".log" ;
+      PD_LOG( arguments, PDDEBUG, FILE_NAME_FUNC,
+              sprintf( "Js log file's name of task[?] is: ?", task_id, LOG_FILE_NAME ) ) ;
+   }
+   catch ( e )
+   {
+      SYSEXPHANDLE( e ) ;
+      errMsg = sprintf( "Failed to create js log file for task[?]", task_id ) ;
+      PD_LOG( arguments, PDERROR, FILE_NAME_FUNC,
+              sprintf( errMsg + ", rc: ?, detail: ?", GETLASTERROR(), GETLASTERRMSG() ) ) ;
+      exception_handle( SDB_SYS, errMsg ) ;
+   }
+}
+/*
 function setTaskLogFileName( task_id, name )
 {
    try
@@ -992,6 +1012,7 @@ function setTaskLogFileName( task_id, name )
       exception_handle( SDB_SYS, errMsg ) ;
    }   
 }
+*/
 
 /* *****************************************************************************
 @discretion: push some tool programs and js scripts to target host for checking

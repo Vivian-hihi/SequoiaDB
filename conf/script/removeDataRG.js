@@ -31,9 +31,7 @@ var RET_JSON = new removeRGResult() ;
 var rc       = SDB_OK ;
 var errMsg   = "" ;
 
-var task_id = "" ;
-// println
-var rg_name = "datagroup" ;
+var task_id  = "" ;
 
 /* *****************************************************************************
 @discretion: init
@@ -45,9 +43,7 @@ function _init()
 {           
    // 1. get task id
    task_id = getTaskID( SYS_JSON ) ;
-
-   setTaskLogFileName( task_id, rg_name ) ;
-   
+   setTaskLogFileName( task_id ) ;
    PD_LOG2( task_id, arguments, PDEVENT, FILE_NAME_REMOVE_DATA_RG,
             sprintf( "Begin to remove data group in task[?]", task_id ) ) ;
 }
