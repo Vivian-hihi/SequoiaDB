@@ -1017,7 +1017,7 @@ namespace engine
                                 << OM_BSON_FIELD_SCAN_STATUS 
                                 << OM_SCAN_HOST_STATUS_FINISH
                                 << OM_BSON_FIELD_HOST_NAME << iter->hostName ) ;
-                               
+
             hostResult.push_back( tmp ) ;
             hostInfoList.erase( iter++ ) ;
             continue ;
@@ -2765,7 +2765,7 @@ namespace engine
    done:
       return isExist;
    }
-   
+
    INT32 omAddHostCommand::_checkTaskExistence( list<BSONObj> &hostInfoList )
    {
       INT32 rc = SDB_OK ;
@@ -2897,7 +2897,7 @@ namespace engine
             itemBuilder.append( OM_TASKINFO_FIELD_FLOW, 
                                 tmpEmptyBuilder.arr() ) ;
          }
-         
+
 
          BSONObj resultItem = itemBuilder.obj() ;
          resultArrBuilder.append( resultItem ) ;
@@ -6197,7 +6197,6 @@ namespace engine
    {
       INT32 rc              = SDB_OK ;
       const CHAR *pHostInfo = NULL ;
-      const CHAR *pForce    = NULL ;
       BSONObj bsonHostInfo ;
       BSONElement element ;
       _restAdaptor->getQuery( _restSession, OM_REST_FIELD_HOST_INFO, 
@@ -7668,74 +7667,22 @@ namespace engine
       goto done ;
    }
 
-   // *****************omGetFileCommand *****************************
-   omGetFileCommand::omGetFileCommand( restAdaptor *pRestAdaptor, 
-                                       pmdRestSession *pRestSession, 
-                                       const CHAR *pRootPath,
-                                       const CHAR *pSubPath )
+   // *****************omGetLogCommand *****************************
+   omGetLogCommand::omGetLogCommand( restAdaptor *pRestAdaptor, 
+                                     pmdRestSession *pRestSession )
+                   :omAuthCommand( pRestAdaptor, pRestSession )
    {
       _restAdaptor = pRestAdaptor ;
       _restSession = pRestSession ;
-      _rootPath    = pRootPath ;
-      _subPath     = pSubPath ;
    }
 
-   omGetFileCommand::~omGetFileCommand()
+   omGetLogCommand::~omGetLogCommand()
    {
    }
 
-   INT32 omGetFileCommand::doCommand() 
-   {
-      INT32 rc                      = SDB_OK ;
-      CHAR *pContent                = NULL ;
-      INT32 contentLength           = 0 ;
-      restFileController* transfer = NULL ;
-      string realSubPath            = _subPath ;
-
-      transfer = restFileController::getTransferInstance() ;
-      transfer->getTransferedPath( _subPath.c_str(), realSubPath ) ;
-
-      rc = _getFileContent( _rootPath + realSubPath, &pContent, 
-                            contentLength ) ;
-      if ( SDB_OK != rc )
-      {
-         if ( SDB_FNE == rc )
-         {
-            PD_LOG( PDEVENT, "OM: file no found:%s, rc=%d", 
-                    realSubPath.c_str(), rc ) ;
-            _restAdaptor->sendResponse( _restSession, HTTP_NOTFOUND ) ;
-         }
-         else
-         {
-            PD_LOG( PDEVENT, "OM: open file failed:%s, rc=%d", 
-                    realSubPath.c_str(), rc ) ;
-            _restAdaptor->sendResponse( _restSession, HTTP_SERVICUNAVA ) ;
-         }
-
-         goto error ;
-      }
-
-      _restAdaptor->appendHttpBody( _restSession, pContent, contentLength ) ;
-      _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
-
-   done:
-      if ( NULL != pContent )
-      {
-         _restSession->releaseBuff( pContent, contentLength ) ;
-      }
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   INT32 omGetFileCommand::undoCommand()
-   {
-      return SDB_OK ;
-   }
-
-   INT32 omGetFileCommand::_getFileContent( string filePath, 
-                                            CHAR **pFileContent, 
-                                            INT32 &fileContentLen )
+   INT32 omGetLogCommand::_getFileContent( string filePath, 
+                                           CHAR **pFileContent, 
+                                           INT32 &fileContentLen )
    {
       OSSFILE file ;
       INT32 rc               = SDB_OK ;
@@ -7784,6 +7731,125 @@ namespace engine
       goto done ;
    }
 
+   INT32 omGetLogCommand::doCommand()
+   {
+      INT32 rc             = SDB_OK ;
+      CHAR *pContent       = NULL ;
+      INT32 contentLength  = 0 ;
+      const CHAR *pSubPath = NULL ;
+      CHAR currentPath[ OSS_MAX_PATHSIZE + 1 ] ;
+      CHAR logPath[ OSS_MAX_PATHSIZE + 1 ] ;
+
+      _restAdaptor->getQuery( _restSession, OM_REST_LOG_NAME, 
+                              &pSubPath ) ;
+      if ( NULL == pSubPath )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "get rest field failed:field=%s", 
+                     OM_REST_LOG_NAME ) ;
+         goto error ;
+      }
+
+      rc = ossGetEWD( currentPath, OSS_MAX_PATHSIZE ) ;
+      if ( rc )
+      {
+         PD_LOG_MSG( PDERROR, "get current path failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      ossSnprintf( logPath, OSS_MAX_PATHSIZE, "%s%s..%s%s%s%s%s%s", currentPath, 
+                   OSS_FILE_SEP, OSS_FILE_SEP, OM_CONF_PATH_STR, OSS_FILE_SEP, 
+                   OM_LOG_PATH_STR, OSS_FILE_SEP, pSubPath ) ;
+      rc = _getFileContent( logPath, &pContent, contentLength ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG_MSG( PDERROR, "OM: get file content failed:file=%s,rc=%d", 
+                     logPath, rc ) ;
+         goto error ;
+      }
+
+      _restAdaptor->appendHttpBody( _restSession, pContent, contentLength, 1, 
+                                    FALSE ) ;
+      _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
+
+   done:
+      if ( NULL != pContent )
+      {
+         _restSession->releaseBuff( pContent, contentLength ) ;
+      }
+      return rc ;
+   error:
+      _restAdaptor->appendHttpBody( _restSession, "1", 0, 1, FALSE ) ;
+      _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
+      goto done ;
+   }
+
+   // *****************omGetFileCommand *****************************
+   omGetFileCommand::omGetFileCommand( restAdaptor *pRestAdaptor, 
+                                       pmdRestSession *pRestSession, 
+                                       const CHAR *pRootPath,
+                                       const CHAR *pSubPath )
+                    :omGetLogCommand( pRestAdaptor, pRestSession )
+   {
+      _restAdaptor = pRestAdaptor ;
+      _restSession = pRestSession ;
+      _rootPath    = pRootPath ;
+      _subPath     = pSubPath ;
+   }
+
+   omGetFileCommand::~omGetFileCommand()
+   {
+   }
+
+   INT32 omGetFileCommand::doCommand() 
+   {
+      INT32 rc                      = SDB_OK ;
+      CHAR *pContent                = NULL ;
+      INT32 contentLength           = 0 ;
+      restFileController* transfer = NULL ;
+      string realSubPath            = _subPath ;
+
+      transfer = restFileController::getTransferInstance() ;
+      transfer->getTransferedPath( _subPath.c_str(), realSubPath ) ;
+
+      rc = _getFileContent( _rootPath + realSubPath, &pContent, 
+                            contentLength ) ;
+      if ( SDB_OK != rc )
+      {
+         if ( SDB_FNE == rc )
+         {
+            PD_LOG( PDEVENT, "OM: file no found:%s, rc=%d", 
+                    realSubPath.c_str(), rc ) ;
+            _restAdaptor->sendResponse( _restSession, HTTP_NOTFOUND ) ;
+         }
+         else
+         {
+            PD_LOG( PDEVENT, "OM: open file failed:%s, rc=%d", 
+                    realSubPath.c_str(), rc ) ;
+            _restAdaptor->sendResponse( _restSession, HTTP_SERVICUNAVA ) ;
+         }
+
+         goto error ;
+      }
+
+      _restAdaptor->appendHttpBody( _restSession, pContent, contentLength, 1,
+                                    FALSE ) ;
+      _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
+
+   done:
+      if ( NULL != pContent )
+      {
+         _restSession->releaseBuff( pContent, contentLength ) ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omGetFileCommand::undoCommand()
+   {
+      return SDB_OK ;
+   }
 
    restFileController::restFileController()
    {

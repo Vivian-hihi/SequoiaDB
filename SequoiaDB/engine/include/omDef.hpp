@@ -554,6 +554,14 @@ namespace engine
    #define  OM_BSON_FIELD_REDUNDANCY_RATE    "RedundancyRate"
    //******************************************************************
 
+   // om get log req
+   #define  OM_GET_LOG_REQ                   "get log"
+   #define  OM_REST_LOG_NAME                 "Name"
+
+   #define  OM_CONF_PATH_STR                 "conf"
+   #define  OM_LOG_PATH_STR                  "log"
+   //******************************************************************
+
    // om list task req
    #define  OM_LIST_TASK_REQ                 "list tasks"
    //******************************************************************

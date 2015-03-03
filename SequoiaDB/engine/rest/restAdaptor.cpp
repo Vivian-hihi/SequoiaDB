@@ -1286,7 +1286,7 @@ namespace engine
    INT32 restAdaptor::appendHttpBody( pmdRestSession *pSession,
                                       const CHAR *pBuffer,
                                       INT32 length,
-                                      INT32 number )
+                                      INT32 number, BOOLEAN isObjBuffer )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RESTADP_APPENDBODY ) ;
@@ -1317,15 +1317,26 @@ namespace engine
             }
          }
 
-         if( COM_GETFILE != pHttpCon->_common )
+         if( isObjBuffer )
          {
             INT32 jsonSize = 0 ;
             BSONObj record ;
             std::string str ;
             _rtnObjBuff rtnObj( pBuffer, length, number ) ;
 
-            while( SDB_DMS_EOC != rtnObj.nextObj( record ) )
+            while( TRUE )
             {
+               rc = rtnObj.nextObj( record ) ;
+               if ( SDB_DMS_EOC == rc )
+               {
+                  break ;
+               }
+               else if ( SDB_SYS == rc )
+               {
+                  PD_LOG ( PDERROR, "Failed to get nextObj:rc=%d", rc ) ;
+                  goto error ;
+               }
+               
                str = record.toString( FALSE, TRUE ) ;
                jsonSize = ossStrlen( str.c_str() ) ;
                rc = _sendHttpChunk( pSession, str.c_str(), jsonSize ) ;
@@ -1348,7 +1359,7 @@ namespace engine
       }
       else
       {
-         if( COM_GETFILE != pHttpCon->_common )
+         if( isObjBuffer )
          {
             CHAR *pJson = NULL ;
             INT32 jsonSize = 0 ;
@@ -1356,8 +1367,19 @@ namespace engine
             std::string str ;
             _rtnObjBuff rtnObj( pBuffer, length, number ) ;
 
-            while( SDB_DMS_EOC != rtnObj.nextObj( record ) )
+            while( TRUE )
             {
+               rc = rtnObj.nextObj( record ) ;
+               if ( SDB_DMS_EOC == rc )
+               {
+                  break ;
+               }
+               else if ( SDB_SYS == rc )
+               {
+                  PD_LOG ( PDERROR, "Failed to get nextObj:rc=%d", rc ) ;
+                  goto error ;
+               }
+
                str = record.toString( FALSE, TRUE ) ;
                jsonSize = ossStrlen( str.c_str() ) ;
                rc = pSession->allocBuff( jsonSize + 1, &pJson, tempSize ) ;

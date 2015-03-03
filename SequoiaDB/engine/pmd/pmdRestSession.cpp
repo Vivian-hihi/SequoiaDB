@@ -678,15 +678,7 @@ namespace engine
             goto error ;
          }
 
-//         if ( ossStrcasecmp( pSubCommand, OM_LOGIN_REQ ) == 0 )
-//         {
-//            commandIf = SDB_OSS_NEW omAuthCommand( pAdptor, this ) ;
-//         }
-//         else if( ossStrcasecmp( pSubCommand, OM_LOGOUT_REQ ) == 0 )
-//         {
-//            commandIf = SDB_OSS_NEW omLogoutCommand( pAdptor, this ) ;
-//         }
-         else if ( ossStrcasecmp( pSubCommand, OM_CHANGE_PASSWD_REQ ) == 0 )
+         if ( ossStrcasecmp( pSubCommand, OM_CHANGE_PASSWD_REQ ) == 0 )
          {
             commandIf = SDB_OSS_NEW omChangePasswdCommand( pAdptor, this ) ;
          }
@@ -794,6 +786,10 @@ namespace engine
          else if ( ossStrcasecmp( pSubCommand, OM_QUERY_TASK_REQ ) == 0 )
          {
             commandIf = SDB_OSS_NEW omQueryTaskCommand( pAdptor, this ) ;
+         }
+         else if ( ossStrcasecmp( pSubCommand, OM_GET_LOG_REQ ) == 0 )
+         {
+            commandIf = SDB_OSS_NEW omGetLogCommand( pAdptor, this ) ;
          }
          else
          {

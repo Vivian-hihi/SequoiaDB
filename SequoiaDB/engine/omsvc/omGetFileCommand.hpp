@@ -818,7 +818,24 @@ namespace engine
                                            UINT32 &redundancyRate ) ;
    } ;
 
-   class omGetFileCommand : public omRestCommandBase
+   class omGetLogCommand : public omAuthCommand
+   {
+      public:
+         omGetLogCommand( restAdaptor *pRestAdaptor, 
+                          pmdRestSession *pRestSession ) ;
+         virtual ~omGetLogCommand() ;
+
+      public:
+         virtual INT32   doCommand() ;
+
+      protected:
+         INT32           _getFileContent( string filePath, CHAR **pFileContent, 
+                                          INT32 &fileContentLen ) ;
+
+      protected:
+   };
+
+   class omGetFileCommand : public omGetLogCommand
    {
       public:
          omGetFileCommand( restAdaptor *pRestAdaptor, 
@@ -830,13 +847,7 @@ namespace engine
          virtual INT32   doCommand() ;
          virtual INT32   undoCommand() ;
 
-      private:
-         INT32           _getFileContent( string filePath, CHAR **pFileContent, 
-                                          INT32 &fileContentLen ) ;
-
-      private:
-         restAdaptor*    _restAdaptor ;
-         pmdRestSession* _restSession ;
+      protected:
          string          _rootPath ;
          string          _subPath ;
    };
