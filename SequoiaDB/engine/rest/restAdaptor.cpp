@@ -1329,6 +1329,7 @@ namespace engine
                rc = rtnObj.nextObj( record ) ;
                if ( SDB_DMS_EOC == rc )
                {
+                  rc = SDB_OK ;
                   break ;
                }
                else if ( SDB_SYS == rc )
@@ -1372,6 +1373,7 @@ namespace engine
                rc = rtnObj.nextObj( record ) ;
                if ( SDB_DMS_EOC == rc )
                {
+                  rc = SDB_OK ;
                   break ;
                }
                else if ( SDB_SYS == rc )
