@@ -4,6 +4,8 @@
 <!--@param ${ci.script.path} : The path where place ci script files-->
 
 <project name="copy_tar_deploy" default="check">
+	<property environment="env" />
+	<hostinfo prefix="local" />
 	<property name="release.path" value="${WORKSPACE}/release" />
 	
  	<taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
