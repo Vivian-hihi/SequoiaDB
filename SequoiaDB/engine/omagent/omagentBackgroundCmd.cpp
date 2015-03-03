@@ -1079,5 +1079,43 @@ namespace engine
      goto done ;
    }
 
+   /*
+      init for executing js
+   */
+   _omaInitEnv::_omaInitEnv ( INT64 taskID, BSONObj &info )
+   {
+      _taskID = taskID ;
+      _info = info.copy() ;
+   }
+
+   _omaInitEnv::~_omaInitEnv ()
+   {
+   }
+   
+   INT32 _omaInitEnv::init ( const CHAR *pInfo )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj bus = _info.copy() ;
+      BSONObj sys = BSON( OMA_FIELD_TASKID << _taskID ) ;
+      // build js file arguments
+      ossSnprintf( _jsFileArgs, JS_ARG_LEN, "var %s = %s; var %s = %s",
+                   JS_ARG_BUS, bus.toString(FALSE, TRUE).c_str(),
+                   JS_ARG_SYS, sys.toString(FALSE, TRUE).c_str() ) ;
+      PD_LOG ( PDDEBUG, "Init for executing js passes "
+               "argument: %s", _jsFileArgs ) ;
+      rc = addJsFile( FILE_INIT_ENV, _jsFileArgs ) ;
+      if ( rc )
+      {
+         PD_LOG_MSG ( PDERROR, "Failed to add js file[%s], rc = %d ",
+                      FILE_INIT_ENV, rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+     goto done ;
+   }
+
 }
 

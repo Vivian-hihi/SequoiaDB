@@ -363,6 +363,24 @@ namespace engine
          BSONObj   _info ;
    } ;
 
+   /*
+      init for execute js script
+   */
+   class _omaInitEnv : public _omaCommand
+   {
+      public:
+         _omaInitEnv ( INT64 taskID, BSONObj &info ) ;
+         virtual ~_omaInitEnv () ;
+
+      public:
+         virtual const CHAR* name () { return OMA_INIT_ENV ; }
+         virtual INT32 init ( const CHAR *pInfo ) ;
+
+      private:
+         INT64     _taskID ;
+         BSONObj   _info ;
+   } ;
+
 
 } // namespace engine
 

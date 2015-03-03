@@ -92,6 +92,14 @@ namespace engine
       // init add host result
       _initAddHostResult() ;
 
+      // init environment for execute js
+      rc = initJsEnv() ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDWARNING, "Failed to init environment for executing js script, "
+                 "rc = %d", rc ) ;
+      }
+
       done:
          return rc ;
       error:
@@ -751,6 +759,14 @@ namespace engine
       // init remove host result
       _initRemoveHostResult() ;
 
+      // init environment for execute js
+      rc = initJsEnv() ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDWARNING, "Failed to init environment for executing js script, "
+                 "rc = %d", rc ) ;
+      }
+
       done:
          return rc ;
       error:
@@ -1289,6 +1305,14 @@ namespace engine
       {
          PD_LOG( PDERROR, "Failed to init result order rc = %d", rc ) ;
          goto error ;
+      }
+
+      // init environment for execute js
+      rc = initJsEnv() ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDWARNING, "Failed to init environment for executing js script, "
+                 "rc = %d", rc ) ;
       }
 
       done:
@@ -2764,8 +2788,11 @@ namespace engine
             goto error ;
          }
       }
-      
+
    done:
+      // 3. set task to be failing
+      _setResultToFail() ;
+      
       return rc ;
    error:
       goto done ;
@@ -3575,6 +3602,63 @@ namespace engine
       }
    }
 
+   void _omaInstDBBusTask::_setResultToFail()
+   {
+      vector<InstDBBusInfo>::iterator it ;
+      map< string, vector<InstDBBusInfo> >::iterator it2 ;
+      
+      if ( TRUE == _isStandalone )
+      {
+         // standalone
+         it = _standalone.begin() ;
+         for ( ; it != _standalone.end(); it++ )
+         {
+            if ( SDB_OK == it->_instResult._errno )
+            {
+               it->_instResult._errno = SDB_OMA_TASK_FAIL ;
+               it->_instResult._detail = getErrDesp( SDB_OMA_TASK_FAIL ) ;
+            }
+         }
+      }
+      else
+      {
+         // catalog
+         it = _catalog.begin() ;
+         for ( ; it != _catalog.end(); it++ )
+         {
+            if ( SDB_OK == it->_instResult._errno )
+            {
+               it->_instResult._errno = SDB_OMA_TASK_FAIL ;
+               it->_instResult._detail = getErrDesp( SDB_OMA_TASK_FAIL ) ;
+            }
+         }
+         // coord
+         it = _coord.begin() ;
+         for ( ; it != _coord.end(); it++ )
+         {
+            if ( SDB_OK == it->_instResult._errno )
+            {
+               it->_instResult._errno = SDB_OMA_TASK_FAIL ;
+               it->_instResult._detail = getErrDesp( SDB_OMA_TASK_FAIL ) ;
+            }
+         }
+         // data
+         it2 = _mapGroups.begin() ;
+         for ( ; it2 != _mapGroups.end(); it2++ )
+         {
+            it = it2->second.begin() ;
+            for ( ; it != it2->second.end(); it++ )
+            {
+               if ( SDB_OK == it->_instResult._errno )
+               {
+                  it->_instResult._errno = SDB_OMA_TASK_FAIL ;
+                  it->_instResult._detail = getErrDesp( SDB_OMA_TASK_FAIL ) ;
+               }
+            }
+         }
+      }
+   }
+
    /*
       remove db business task
    */
@@ -3617,6 +3701,14 @@ namespace engine
       {
          PD_LOG( PDERROR, "Failed to init result order rc = %d", rc ) ;
          goto error ;
+      }
+
+      // init environment for execute js
+      rc = initJsEnv() ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDWARNING, "Failed to init environment for executing js script, "
+                 "rc = %d", rc ) ;
       }
 
       done:

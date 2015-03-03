@@ -113,6 +113,9 @@ namespace engine
          INT32 getSubTaskSerialNum() ;
 
       public:
+         virtual INT32 initJsEnv() ;
+
+      public:
          virtual INT32 init( const BSONObj &info, void *ptr = NULL ) = 0 ;
          virtual INT32 doit() = 0 ;
 

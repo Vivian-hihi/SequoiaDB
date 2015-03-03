@@ -141,6 +141,8 @@ namespace engine
    #define OMA_ROLLBACK_COORD                         "rollback installed coord"
    #define OMA_ROLLBACK_DATA_RG                       "rollback installed data groups"
 
+   #define OMA_INIT_ENV                               "init for exeuting js"
+
    #define OMA_CMD_UPDATE_TASK                        "update task"
   
 
@@ -184,6 +186,8 @@ namespace engine
    #define FILE_ROLLBACK_CATALOG            "rollbackCatalog.js"
    #define FILE_ROLLBACK_COORD              "rollbackCoord.js"
    #define FILE_ROLLBACK_DATA_RG            "rollbackDataRG.js"
+
+   #define FILE_INIT_ENV                    "initEnv.js"
 
 
    /*

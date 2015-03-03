@@ -186,6 +186,7 @@ namespace engine
          BOOLEAN _isTaskFinish() ;
          BOOLEAN _needToRollback() ;
          void _setRetErr( INT32 errNum ) ;
+         void _setResultToFail() ;
 
       private:
          INT32 _saveTmpCoordInfo( BSONObj &info ) ;
