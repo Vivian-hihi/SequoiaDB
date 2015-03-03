@@ -227,7 +227,7 @@ namespace engine
 
    public:
       _rtnForceStepUp()
-      :_seconds( 60 )
+      :_seconds( 120 )
       {}
 
       virtual ~_rtnForceStepUp() {}
