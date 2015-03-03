@@ -239,6 +239,65 @@ function _formatLogInfo( contentStr, keyArr, indent )
 }
 
 /* *****************************************************************************
+@discretion: help function for gen log message
+@author: Tanzhaobo
+@parameter
+@return
+***************************************************************************** */
+function _str_repeat(i, m) {
+    for (var o = []; m > 0; o[--m] = i);
+    return o.join('');
+}
+
+/* *****************************************************************************
+@discretion: help function for gen log message
+@author: Tanzhaobo
+@parameter
+@return
+***************************************************************************** */
+function _sprintf() {
+    var i = 0, a, f = arguments[i++], o = [], m, p, c, x, s = '';
+    while (f) {
+        if (m = /^[^\x25]+/.exec(f)) {
+            o.push(m[0]);
+        }
+        else if (m = /^\x25{2}/.exec(f)) {
+            o.push('%');
+        }
+        else if (m = /^\x25(?:(\d+)\$)?(\+)?(0|'[^$])?(-)?(\d+)?(?:\.(\d+))?([b-fosuxX])/.exec(f)) {
+            if (((a = arguments[m[1] || i++]) == null) || (a == undefined)) {
+                throw('Too few arguments.');
+            }
+            if (/[^s]/.test(m[7]) && (typeof(a) != 'number')) {
+                throw('Expecting number but found ' + typeof(a));
+            }
+            switch (m[7]) {
+                case 'b': a = a.toString(2); break;
+                case 'c': a = String.fromCharCode(a); break;
+                case 'd': a = parseInt(a); break;
+                case 'e': a = m[6] ? a.toExponential(m[6]) : a.toExponential(); break;
+                case 'f': a = m[6] ? parseFloat(a).toFixed(m[6]) : parseFloat(a); break;
+                case 'o': a = a.toString(8); break;
+                case 's': a = ((a = String(a)) && m[6] ? a.substring(0, m[6]) : a); break;
+                case 'u': a = Math.abs(a); break;
+                case 'x': a = a.toString(16); break;
+                case 'X': a = a.toString(16).toUpperCase(); break;
+            }
+            a = (/[def]/.test(m[7]) && m[2] && a >= 0 ? '+'+ a : a);
+            c = m[3] ? m[3] == '0' ? '0' : m[3].charAt(1) : ' ';
+            x = m[5] - String(a).length - s.length;
+            p = m[5] ? _str_repeat(c, x) : '';
+            o.push(s + (m[4] ? a + p : p + a));
+        }
+        else {
+            throw('Huh ?!');
+        }
+        f = f.substring(m[0].length);
+    }
+    return o.join('');
+}
+
+/* *****************************************************************************
 @discretion: get the log file
 @author: Tanzhaobo
 @parameter
@@ -371,25 +430,28 @@ function getLogLevel()
 ***************************************************************************** */
 function PD_LOG3( type, argsObj, level, func, line, file, message )
 {
+   var funcName  = "" ;
+   var formatStr = "" ;
+   var logInfo   = "" ;
+   
    if ( "number" == typeof( level ) && level > JS_LOG_LEVEL )
       return ;
-   var strArr = [ "Level", "TID", "Line" ] ;
-   var funcName = (argsObj.callee.toString().replace(/function\s?/mi, "").split("("))[0] ;
-/*
-   var formatStr = "?Level:?" + LOG_NEW_LINE +
-                   "PID:?TID:?" + LOG_NEW_LINE +
-                   "Function:?Line:?" + LOG_NEW_LINE +
-                   "File:?" + LOG_NEW_LINE +
-                   "Message:" + LOG_NEW_LINE + "?" + LOG_NEW_LINE ;
-   var logInfo = sprintf( formatStr, genTimeStamp(), _getPDLevelDesp(level),
+   funcName = (argsObj.callee.toString().replace(/function\s?/mi, "").split("("))[0] ;
+
+   try
+   {
+      formatStr = "%s [%7s][%5d][%5d][%-30s]: %s%s" ;
+      logInfo = _sprintf( formatStr, genTimeStamp(), _getPDLevelDesp(level),
                           System.getPID(), System.getTID(),
-                          funcName, "NULL", file, message ) ;
-   logInfo = _formatLogInfo( logInfo, strArr, 42 ) ;
-*/
-   var formatStr = "? Level:? PID:? TID:? Function:? File:? Message: ?" + LOG_NEW_LINE ;
-   var logInfo = sprintf( formatStr, genTimeStamp(), _getPDLevelDesp(level),
-                          System.getPID(), System.getTID(),
-                          funcName, file, message ) ;
+                          file + ":" + funcName, message, LOG_NEW_LINE ) ;
+   }
+   catch( e )
+   {
+      formatStr = "? [?][?][?][?]: ??" ;
+      logInfo = sprintf( formatStr, genTimeStamp(), _getPDLevelDesp(level),
+                         System.getPID(), System.getTID(),
+                         file + ":" + funcName, message, LOG_NEW_LINE ) ;
+   }
    _write2File( type, logInfo ) ;
 }
 

@@ -242,8 +242,8 @@ function _needToAdd( ssh, install_packet, install_path )
       // record the return msg to log file
       retMsg = ssh.getLastOut() ;
       PD_LOG2( task_id, arguments, PDEVENT, FILE_NAME_ADD_HOST,
-               sprintf( "Received message from remote host[?]:?===>???<===",
-               ssh.getPeerIP(), OMA_NEW_LINE, OMA_NEW_LINE, OMA_NEW_LINE, retMsg ) ) ;
+               sprintf( "Received message from remote host[?] as below:?===>??<===",
+               ssh.getPeerIP(), OMA_NEW_LINE, OMA_NEW_LINE, retMsg ) ) ;
    }
    catch( e )
    {
@@ -251,8 +251,8 @@ function _needToAdd( ssh, install_packet, install_path )
       retMsg = ssh.getLastOut() ;
       errMsg = sprintf( "Failed to pre-check before add host[?]", ssh.getPeerIP() ) ;
       PD_LOG2( task_id, arguments, PDERROR, FILE_NAME_ADD_HOST,
-               sprintf( errMsg + ", received message from remote host[?]:?===>???<===",
-               ssh.getPeerIP(), OMA_NEW_LINE, OMA_NEW_LINE, OMA_NEW_LINE, retMsg ) ) ;
+               sprintf( errMsg + ", received message from remote host[?] as below:?===>??<===",
+               ssh.getPeerIP(), OMA_NEW_LINE, OMA_NEW_LINE, retMsg ) ) ;
       return true ;
    }
 

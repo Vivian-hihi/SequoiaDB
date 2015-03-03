@@ -990,29 +990,6 @@ function setTaskLogFileName( task_id )
       exception_handle( SDB_SYS, errMsg ) ;
    }
 }
-/*
-function setTaskLogFileName( task_id, name )
-{
-   try
-   {
-      var currentWorkPath = System.getEWD() ;
-      var task_dir = adaptPath( LOG_FILE_PATH + Task ) + task_id ;
-      if ( false == File.exist( task_dir ) )
-         File.mkdir( task_dir ) ;
-      LOG_FILE_NAME = adaptPath( adaptPath( Task ) + task_id ) + name + ".log" ;
-      PD_LOG( arguments, PDDEBUG, FILE_NAME_FUNC,
-              sprintf( "Js log file's name of task[?] is: ?", task_id, LOG_FILE_NAME ) ) ;
-   }
-   catch ( e )
-   {
-      SYSEXPHANDLE( e ) ;
-      errMsg = sprintf( "Failed to create js log file for task[?]", task_id ) ;
-      PD_LOG( arguments, PDERROR, FILE_NAME_FUNC,
-              sprintf( errMsg + ", rc: ?, detail: ?", GETLASTERROR(), GETLASTERRMSG() ) ) ;
-      exception_handle( SDB_SYS, errMsg ) ;
-   }   
-}
-*/
 
 /* *****************************************************************************
 @discretion: push some tool programs and js scripts to target host for checking

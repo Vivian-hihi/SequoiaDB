@@ -49,7 +49,7 @@ function _init()
    task_id = getTaskID( SYS_JSON ) ;
    setTaskLogFileName( task_id ) ;
    PD_LOG2( task_id, arguments, PDEVENT, FILE_NAME_INSTALL_TEMPORARY_COORD,
-            sprintf( "Begin to install temporary coord for task[?]", task_id ) ) ;
+            sprintf( "Begin to install temporary coord in task[?]", task_id ) ) ;
 }
 
 /* *****************************************************************************
@@ -61,7 +61,7 @@ function _init()
 function _final()
 {
    PD_LOG2( task_id, arguments, PDEVENT, FILE_NAME_INSTALL_TEMPORARY_COORD,
-            sprintf( "Finish installing temporary coord for task[?]", task_id ) ) ;
+            sprintf( "Finish installing temporary coord in task[?]", task_id ) ) ;
 }
 
 /* *****************************************************************************
