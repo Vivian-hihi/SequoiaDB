@@ -1226,7 +1226,8 @@ namespace engine
    // client may not send us anything due to idle of user activities
    // PD_TRACE_DECLARE_FUNCTION ( SDB_PMDRECV, "pmdRecv" )
    INT32 pmdRecv ( CHAR *pBuffer, INT32 recvSize,
-                   ossSocket *sock, pmdEDUCB *cb )
+                   ossSocket *sock, pmdEDUCB *cb,
+                   INT32 timeout )
    {
       INT32 rc = SDB_OK ;
       SDB_ASSERT ( sock, "Socket is NULL" ) ;
@@ -1243,7 +1244,7 @@ namespace engine
          }
          rc = sock->recv ( &pBuffer[totalReceivedSize],
                            recvSize-totalReceivedSize,
-                           receivedSize ) ;
+                           receivedSize, timeout ) ;
          totalReceivedSize += receivedSize ;
          if ( SDB_TIMEOUT == rc )
          {
@@ -1264,7 +1265,8 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_PMDSEND, "pmdSend" )
    INT32 pmdSend ( const CHAR *pBuffer, INT32 sendSize,
-                   ossSocket *sock, pmdEDUCB *cb )
+                   ossSocket *sock, pmdEDUCB *cb,
+                   INT32 timeout )
    {
       INT32 rc = SDB_OK ;
       SDB_ASSERT ( sock, "Socket is NULL" ) ;
@@ -1281,7 +1283,7 @@ namespace engine
          }
          rc = sock->send ( &pBuffer[totalSentSize],
                            sendSize-totalSentSize,
-                           sentSize ) ;
+                           sentSize, timeout ) ;
          totalSentSize += sentSize ;
          if ( SDB_TIMEOUT == rc )
             continue ;
@@ -1299,19 +1301,21 @@ namespace engine
    }
 
    INT32 pmdSyncSendMsg( const MsgHeader *pMsg, MsgHeader **ppRecvMsg,
-                         ossSocket *sock, pmdEDUCB *cb, BOOLEAN useCBMem )
+                         ossSocket *sock, pmdEDUCB *cb, BOOLEAN useCBMem,
+                         INT32 timeout )
    {
       INT32 rc = SDB_OK ;
       INT32 msgLen = 0 ;
       CHAR *pRecvBuf = NULL ;
       INT32 buffLen = 0 ;
-      rc = pmdSend( (const CHAR *)pMsg, pMsg->messageLength, sock, cb ) ;
+      rc = pmdSend( (const CHAR *)pMsg, pMsg->messageLength, sock,
+                    cb, timeout ) ;
       if ( rc )
       {
          goto error ;
       }
       // recieve msg length
-      rc = pmdRecv( (CHAR*)&msgLen, sizeof(INT32), sock, cb ) ;
+      rc = pmdRecv( (CHAR*)&msgLen, sizeof(INT32), sock, cb, timeout ) ;
       if ( rc )
       {
          goto error ;
@@ -1346,7 +1350,7 @@ namespace engine
       ossMemcpy( pRecvBuf, ( CHAR* )&msgLen, sizeof( INT32 ) ) ;
       // recieve last msg
       rc = pmdRecv( pRecvBuf + sizeof( INT32 ), msgLen - sizeof( INT32 ),
-                    sock, cb ) ;
+                    sock, cb, timeout ) ;
       if ( rc )
       {
          goto error ;
@@ -1372,12 +1376,12 @@ namespace engine
    }
 
    INT32 pmdSendAndRecv2Que( const MsgHeader *pMsg, ossSocket *sock,
-                             pmdEDUCB *cb )
+                             pmdEDUCB *cb, INT32 timeout )
    {
       INT32 rc = SDB_OK ;
       MsgHeader *pRecvMsg = NULL ;
       pmdEDUEvent event ;
-      rc = pmdSyncSendMsg( pMsg, &pRecvMsg, sock, cb, FALSE ) ;
+      rc = pmdSyncSendMsg( pMsg, &pRecvMsg, sock, cb, FALSE, timeout ) ;
       if ( rc )
       {
          goto error ;

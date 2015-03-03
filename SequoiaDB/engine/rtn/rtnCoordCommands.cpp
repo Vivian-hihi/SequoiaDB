@@ -7016,7 +7016,7 @@ namespace engine
             std::string strCataNodeLst = strCataHostName + ":" + strCataSvc ;
             MsgRouteID routeID ;
             routeID.columns.groupID = CATALOG_GROUPID ;
-            routeID.columns.nodeID = CATA_NODE_ID_BEGIN ;
+            routeID.columns.nodeID = SYS_NODE_ID_BEGIN ;
             routeID.columns.serviceID = MSG_ROUTE_CAT_SERVICE ;
             sdbGetCoordCB()->addCatNodeAddr( routeID, strCataHostName.c_str(),
                                              strCataSvc.c_str() ) ;

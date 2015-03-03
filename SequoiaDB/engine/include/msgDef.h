@@ -430,7 +430,8 @@
 #define NODE_NAME_SERVICE_SEPCHAR            (((CHAR*)NODE_NAME_SERVICE_SEP)[0])
 #define INVALID_NODEID                       0
 #define CURRENT_NODEID                       -1
-#define CATA_NODE_ID_BEGIN                   1
+#define SYS_NODE_ID_BEGIN                    1
+#define SYS_NODE_ID_END                      ( DATA_NODE_ID_BEGIN - 1 )
 #define DATA_NODE_ID_BEGIN                   1000
 #define DATA_NODE_ID_END                     ( 60000 + DATA_NODE_ID_BEGIN )
 #define DATA_GROUP_ID_BEGIN                  1000

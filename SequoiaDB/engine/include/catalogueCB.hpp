@@ -90,17 +90,18 @@ namespace engine
          void     removeGroupID( UINT32 grpID ) ;
          void     insertNodeID( UINT16 nodeID ) ;
          void     activeGroup( UINT32 groupID ) ;
-         UINT32   AllocGroupID() ;
+         UINT32   allocGroupID() ;
          INT32    getAGroupRand( INT32 &groupID) ;
-         UINT16   AllocNodeID();
-         void     releaseNodeID( UINT16 nodeID );
-         UINT16   AllocCataNodeID();
-         void     insertCataNodeID( UINT16 nodeID );
-         void     releaseCataNodeID( UINT16 nodeID );
+         UINT16   allocNodeID() ;
+         void     releaseNodeID( UINT16 nodeID ) ;
+         UINT16   allocSystemNodeID() ;
 
+         void        clearInfo() ;
          GRP_ID_MAP* getGroupMap( BOOLEAN isActive = TRUE ) ;
          const CHAR* groupID2Name( UINT32 groupID ) ;
          UINT32      groupName2ID( const string &groupName ) ;
+         INT32       getGroupsName( vector< string > &vecNames ) ;
+         INT32       getGroupsID( vector< UINT32 > &vecIDs ) ;
 
          INT16    majoritySize() ;
 
@@ -141,11 +142,11 @@ namespace engine
          std::string          _strHostName ;
          std::string          _strCatServiceName ;
          NODE_ID_MAP          _nodeIdMap ;
-         NODE_ID_MAP          _cataNodeIdMap ;
+         NODE_ID_MAP          _sysNodeIdMap ;
          GRP_ID_MAP           _grpIdMap ;
          GRP_ID_MAP           _deactiveGrpIdMap ;
          UINT16               _iCurNodeId ;
-         UINT16               _curCataNodeId ;
+         UINT16               _curSysNodeId ;
          UINT32               _iCurGrpId ;
 
          catMainController    _catMainCtrl ;
@@ -153,7 +154,7 @@ namespace engine
          catNodeManager       _catNodeMgr ;
          catDCManager         _catDCMgr ;
          catLevelLockMgr      _levelLockMgr ;
-   };
+   } ;
 
    /*
       get global catalogue cb

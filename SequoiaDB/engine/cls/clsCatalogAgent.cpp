@@ -2764,6 +2764,7 @@ namespace engine
 
    INT32 _clsNodeMgrAgent::getGroupsID( vector< UINT32 > &groups )
    {
+      groups.clear() ;
       GROUP_MAP_IT it = _groupMap.begin() ;
       while ( it != _groupMap.end() )
       {
@@ -2775,6 +2776,7 @@ namespace engine
 
    INT32 _clsNodeMgrAgent::getGroupsName( vector< string > &groups )
    {
+      groups.clear() ;
       GROUP_NAME_MAP_IT it = _groupNameMap.begin() ;
       while ( it != _groupNameMap.end() )
       {

@@ -57,7 +57,7 @@ namespace engine
       _pNetWork            = NULL;
       _iCurNodeId          = CAT_DATA_NODE_ID_BEGIN;
       _iCurGrpId           = CAT_DATA_GROUP_ID_BEGIN;
-      _curCataNodeId       = CATA_NODE_ID_BEGIN;
+      _curSysNodeId        = SYS_NODE_ID_BEGIN;
    }
 
    sdbCatalogueCB::~sdbCatalogueCB()
@@ -263,6 +263,14 @@ namespace engine
       PD_TRACE_EXIT ( SDB_CATALOGCB_INSERTGROUPID ) ;
    }
 
+   void sdbCatalogueCB::clearInfo()
+   {
+      _nodeIdMap.clear() ;
+      _sysNodeIdMap.clear() ;
+      _grpIdMap.clear() ;
+      _deactiveGrpIdMap.clear() ;
+   }
+
    sdbCatalogueCB::GRP_ID_MAP * sdbCatalogueCB::getGroupMap( BOOLEAN isActive )
    {
       if ( isActive )
@@ -277,6 +285,15 @@ namespace engine
 
    const CHAR* sdbCatalogueCB::groupID2Name( UINT32 groupID )
    {
+      if ( CATALOG_GROUPID == groupID )
+      {
+         return CATALOG_GROUPNAME ;
+      }
+      else if ( COORD_GROUPID == groupID )
+      {
+         return COORD_GROUPNAME ;
+      }
+
       GRP_ID_MAP::iterator it = _grpIdMap.find( groupID ) ;
       if ( it != _grpIdMap.end() )
       {
@@ -292,6 +309,15 @@ namespace engine
 
    UINT32 sdbCatalogueCB::groupName2ID( const string &groupName )
    {
+      if ( 0 == ossStrcmp( groupName.c_str(), CATALOG_GROUPNAME ) )
+      {
+         return CATALOG_GROUPID ;
+      }
+      else if ( 0 == ossStrcmp( groupName.c_str(), COORD_GROUPNAME ) )
+      {
+         return COORD_GROUPID ;
+      }
+
       GRP_ID_MAP::iterator it = _grpIdMap.begin() ;
       while ( it != _grpIdMap.end() )
       {
@@ -311,6 +337,42 @@ namespace engine
          ++it ;
       }
       return CAT_INVALID_GROUPID ;
+   }
+
+   INT32 sdbCatalogueCB::getGroupsName( vector< string > &vecNames )
+   {
+      vecNames.clear() ;
+      GRP_ID_MAP::iterator it = _grpIdMap.begin() ;
+      while ( it != _grpIdMap.end() )
+      {
+         vecNames.push_back( it->second ) ;
+         ++it ;
+      }
+      it = _deactiveGrpIdMap.begin() ;
+      while ( it != _deactiveGrpIdMap.end() )
+      {
+         vecNames.push_back( it->second ) ;
+         ++it ;
+      }
+      return (INT32)vecNames.size() ;
+   }
+
+   INT32 sdbCatalogueCB::getGroupsID( vector< UINT32 > &vecIDs )
+   {
+      vecIDs.clear() ;
+      GRP_ID_MAP::iterator it = _grpIdMap.begin() ;
+      while ( it != _grpIdMap.end() )
+      {
+         vecIDs.push_back( it->first ) ;
+         ++it ;
+      }
+      it = _deactiveGrpIdMap.begin() ;
+      while ( it != _deactiveGrpIdMap.end() )
+      {
+         vecIDs.push_back( it->first ) ;
+         ++it ;
+      }
+      return (INT32)vecIDs.size() ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGCB_REMOVEGROUPID, "sdbCatalogueCB::removeGroupID" )
@@ -353,16 +415,22 @@ namespace engine
       }
       else
       {
-         _cataNodeIdMap.insert( NODE_ID_MAP::value_type(nodeID, nodeID) );
-         _curCataNodeId = _curCataNodeId > nodeID ? _curCataNodeId : ++nodeID ;
+         _sysNodeIdMap.insert( NODE_ID_MAP::value_type(nodeID, nodeID) );
+         _curSysNodeId = _curSysNodeId > nodeID ? _curSysNodeId : ++nodeID ;
       }
       PD_TRACE_EXIT ( SDB_CATALOGCB_INSERTNODEID ) ;
    }
 
-   void sdbCatalogueCB::insertCataNodeID( UINT16 nodeID )
+   void sdbCatalogueCB::releaseNodeID( UINT16 nodeID )
    {
-      _cataNodeIdMap.insert( NODE_ID_MAP::value_type(nodeID, nodeID) );
-      _curCataNodeId = _curCataNodeId > nodeID ? _curCataNodeId : ++nodeID ;
+      if ( nodeID >= CAT_DATA_NODE_ID_BEGIN )
+      {
+         _nodeIdMap.erase( nodeID ) ;
+      }
+      else
+      {
+         _sysNodeIdMap.erase( nodeID ) ;
+      }
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGCB_GETAGROUPRAND, "sdbCatalogueCB::getAGroupRand" )
@@ -392,8 +460,8 @@ namespace engine
       return rc;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGCB_ALLOCGROUPID, "sdbCatalogueCB::AllocGroupID" )
-   UINT32 sdbCatalogueCB::AllocGroupID ()
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGCB_ALLOCGROUPID, "sdbCatalogueCB::allocGroupID" )
+   UINT32 sdbCatalogueCB::allocGroupID ()
    {
       INT32 i = 0;
       UINT32 id = 0 ;
@@ -427,32 +495,26 @@ namespace engine
       return id ;
    }
 
-   void sdbCatalogueCB::releaseNodeID( UINT16 nodeID )
-   {
-      _nodeIdMap.erase( nodeID );
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGCB_ALLOCCATANODEID, "sdbCatalogueCB::AllocCataNodeID" )
-   UINT16 sdbCatalogueCB::AllocCataNodeID()
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGCB_ALLOCCATANODEID, "sdbCatalogueCB::allocSystemNodeID" )
+   UINT16 sdbCatalogueCB::allocSystemNodeID()
    {
       INT32 i = 0 ;
       UINT16 id = 0 ;
       PD_TRACE_ENTRY ( SDB_CATALOGCB_ALLOCCATANODEID ) ;
-      while ( i++ < CATA_NODE_MAX_NUM )
+      while ( i++ <= SYS_NODE_ID_END - SYS_NODE_ID_BEGIN )
       {
-         if ( _curCataNodeId >= CAT_DATA_NODE_ID_BEGIN )
+         if ( _curSysNodeId > SYS_NODE_ID_END )
          {
-            _curCataNodeId = CATA_NODE_ID_BEGIN;
+            _curSysNodeId = SYS_NODE_ID_BEGIN;
          }
-         NODE_ID_MAP::const_iterator it
-                           = _cataNodeIdMap.find( _curCataNodeId );
-         if ( _cataNodeIdMap.end() == it )
+         NODE_ID_MAP::const_iterator it = _sysNodeIdMap.find( _curSysNodeId );
+         if ( _sysNodeIdMap.end() == it )
          {
-            id = _curCataNodeId ;
-            insertCataNodeID( _curCataNodeId );
+            id = _curSysNodeId ;
+            insertNodeID( _curSysNodeId ) ;
             goto done ;
          }
-         _curCataNodeId++;
+         _curSysNodeId++ ;
       }
       id = CAT_INVALID_NODEID ;
    done :
@@ -461,8 +523,8 @@ namespace engine
       return id ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGCB_ALLOCNODEID, "sdbCatalogueCB::AllocNodeID" )
-   UINT16 sdbCatalogueCB::AllocNodeID()
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGCB_ALLOCNODEID, "sdbCatalogueCB::allocNodeID" )
+   UINT16 sdbCatalogueCB::allocNodeID()
    {
       INT32 i = 0;
       UINT16 id = 0 ;
@@ -478,7 +540,7 @@ namespace engine
          if ( _nodeIdMap.end() == it )
          {
             id = _iCurNodeId ;
-            insertNodeID( _iCurNodeId );
+            insertNodeID( _iCurNodeId ) ;
             goto done ;
          }
          _iCurNodeId++;

@@ -1684,6 +1684,45 @@ namespace engine
       goto done ;
    }
 
+   INT32 catEnableImage( BOOLEAN enable, pmdEDUCB *cb, INT16 w,
+                         _SDB_DMSCB *dmsCB, _dpsLogWrapper *dpsCB )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj updator ;
+      BSONObj matcher = BSON( FIELD_NAME_TYPE <<
+                              CAT_BASE_TYPE_GLOBAL_STR ) ;
+      INT64 updateNum = 0 ;
+      BSONObj hint ;
+
+      if ( enable )
+      {
+         updator = BSON( "$set" << BSON( FIELD_NAME_IMAGE"."FIELD_NAME_ENABLE
+                                         << true ) ) ;
+      }
+      else
+      {
+         updator = BSON( "$set" << BSON( FIELD_NAME_IMAGE"."FIELD_NAME_ENABLE
+                                         << false ) ) ;
+      }
+      rc = rtnUpdate( CAT_SYSDCBASE_COLLECTION_NAME, matcher, updator,
+                      hint, 0, cb, dmsCB, dpsCB, w, &updateNum ) ;
+      PD_RC_CHECK( rc, PDERROR, "Update obj[%s] to collection[%s] failed, "
+                   "rc: %d", updator.toString().c_str(),
+                   CAT_SYSDCBASE_COLLECTION_NAME, rc ) ;
+      if ( 0 == updateNum )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "No found obj[%s] in collection[%s]",
+                 matcher.toString().c_str(), CAT_SYSDCBASE_COLLECTION_NAME ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATREMOVECLEX, "catRemoveCLEx" )
    INT32 catRemoveCLEx( const CHAR * clFullName, pmdEDUCB * cb,
                         SDB_DMSCB * dmsCB, SDB_DPSCB * dpsCB, INT16 w,

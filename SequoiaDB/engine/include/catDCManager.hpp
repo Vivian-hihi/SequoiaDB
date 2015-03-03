@@ -79,6 +79,9 @@ namespace engine
       INT32 processCmdAttachImage( const NET_HANDLE &handle,
                                    const CHAR *pQuery,
                                    rtnContextBuf &ctxBuff ) ;
+      INT32 processCmdEnableImage( const NET_HANDLE &handle,
+                                   const CHAR *pQuery,
+                                   rtnContextBuf &ctxBuff ) ;
 
    protected:
       void  _fillRspHeader( MsgHeader *rspMsg, const MsgHeader *reqMsg ) ;
@@ -91,6 +94,10 @@ namespace engine
       void  _dcBaseInfoGroups2Obj( _clsDCBaseInfo *pInfo,
                                    BSONObjBuilder &builder,
                                    const CHAR *pFieldName ) ;
+
+      BOOLEAN _isAddrConflictWithSelf( const string &addr ) ;
+
+      INT32   _checkGroupsValid( map< string, string > &mapGroups ) ;
 
    // tool fuctions
    private:

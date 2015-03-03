@@ -179,6 +179,8 @@ namespace engine
                                 BOOLEAN self,
                                 pmdEDUCB *cb,
                                 INT16 w ) ;
+   INT32 catEnableImage( BOOLEAN enable, pmdEDUCB *cb, INT16 w,
+                         _SDB_DMSCB *dmsCB, _dpsLogWrapper * dpsCB ) ;
 
    /* Other Tools */
    INT32 catRemoveCLEx( const CHAR *clFullName,  pmdEDUCB *cb,

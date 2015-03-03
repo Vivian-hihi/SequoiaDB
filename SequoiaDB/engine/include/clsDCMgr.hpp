@@ -51,7 +51,7 @@ using namespace std ;
 namespace engine
 {
    // the dc mgr update some info from catalog timeout
-   #define DC_UPDATE_TIMEOUT     (5*OSS_ONE_SEC)
+   #define DC_UPDATE_TIMEOUT     (10*OSS_ONE_SEC)
 
    /*
       _clsDCBaseInfo define
@@ -101,6 +101,7 @@ namespace engine
          BOOLEAN        imageIsEnable() const { return _imageIsEnable ; }
 
          map<string, string>* getImageGroups() { return &_imageGroups ; }
+         map<string, string>* getRImageGroups() { return &_imageRGroups ; }
          string         source2dest( const string &sourceGroup ) ;
          string         dest2source( const string &destGroup ) ;
 

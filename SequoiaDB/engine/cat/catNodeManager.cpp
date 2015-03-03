@@ -180,6 +180,7 @@ namespace engine
 
    INT32 catNodeManager::deactive()
    {
+      _pCatCB->clearInfo() ;
       return SDB_OK ;
    }
 
@@ -1031,7 +1032,7 @@ namespace engine
          rc = _getNodeInfoByConf( boConf, bobNodeInfo );
          PD_RC_CHECK(rc, PDERROR,
                      "failed to get catalog-node info(rc=%d)", rc );
-         UINT16 nodeID = _pCatCB->AllocCataNodeID();
+         UINT16 nodeID = _pCatCB->allocSystemNodeID() ;
          PD_TRACE1 ( SDB_CATNODEMGR_GENGROUPINFO,
                      PD_PACK_USHORT ( nodeID ) ) ;
          PD_CHECK( nodeID!=CAT_INVALID_NODEID, SDB_SYS, error,
@@ -1040,20 +1041,21 @@ namespace engine
          BSONObj boNodeInfo = bobNodeInfo.obj();
          BSONArrayBuilder babGroup;
          babGroup.append( boNodeInfo );
-         bobGroupInfo.appendArray( FIELD_NAME_GROUP, babGroup.arr() );
-         boGroupInfo = bobGroupInfo.obj();
+         bobGroupInfo.appendArray( FIELD_NAME_GROUP, babGroup.arr() ) ;
+         boGroupInfo = bobGroupInfo.obj() ;
       }
       catch ( std::exception &e )
       {
          PD_LOG ( PDERROR, "Unexpected exception: %s", e.what() ) ;
          rc = SDB_INVALIDARG ;
       }
+
    done:
       PD_TRACE_EXITRC ( SDB_CATNODEMGR_GENGROUPINFO, rc ) ;
       return rc;
    error:
       goto done;
-   }//end of parseBsonObj()
+   }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATNODEMGR_GETNODEINFOBYCONF, "catNodeManager::_getNodeInfoByConf" )
    INT32 catNodeManager::_getNodeInfoByConf( BSONObj &boConf,
@@ -1245,7 +1247,7 @@ namespace engine
          MsgRouteID routeID;
          BOOLEAN isGrpActive = FALSE;
          //get group id
-         BSONElement beGrpID = obj.getField ( CAT_GROUPID_NAME );
+         BSONElement beGrpID = obj.getField ( CAT_GROUPID_NAME ) ;
          BSONElement beGrpName = obj.getField( CAT_GROUPNAME_NAME ) ;
          if ( beGrpID.eoo() || !beGrpID.isNumber() )
          {
@@ -1264,7 +1266,7 @@ namespace engine
 
          {
             // get group status
-            BSONElement beGrpStatus = obj.getField ( CAT_GROUP_STATUS );
+            BSONElement beGrpStatus = obj.getField ( CAT_GROUP_STATUS ) ;
             // if it's doesn't exist, or it's not number, or it's
             // deactivated, let's set isGrpActive = FALSE
             if ( !beGrpStatus.isNumber() ||
@@ -1279,7 +1281,7 @@ namespace engine
 
             //get node id
             BSONElement beNodes = obj.getField ( CAT_GROUP_NAME );
-            if ( beNodes.eoo() || beNodes.type()!= Array )
+            if ( beNodes.eoo() || beNodes.type() != Array )
             {
                PD_LOG( PDINFO, "Failed to get the field(%s), usually it "
                        "means one or more replica groups are empty",
@@ -1306,11 +1308,11 @@ namespace engine
                   rc = SDB_INVALIDARG;
                   goto error ;
                }
-               _pCatCB->insertNodeID( beNodeID.numberInt() );
-               routeID.columns.nodeID = beNodeID.numberInt();
+               _pCatCB->insertNodeID( beNodeID.numberInt() ) ;
+               routeID.columns.nodeID = beNodeID.numberInt() ;
 
                // get host name
-               if ( beHost.eoo() || beHost.type()!=String )
+               if ( beHost.eoo() || beHost.type() != String )
                {
                   PD_LOG( PDWARNING, "Failed to get the field(%s)",
                           CAT_HOST_FIELD_NAME );
@@ -1319,7 +1321,7 @@ namespace engine
                }
 
                // get service name
-               if ( beService.eoo() || beService.type()!=Array )
+               if ( beService.eoo() || beService.type() != Array )
                {
                   PD_LOG( PDWARNING, "Failed to get the field(%s)",
                           CAT_SERVICE_FIELD_NAME );
@@ -1348,7 +1350,8 @@ namespace engine
                      routeID.columns.serviceID = beServiceType.numberInt();
 
                      // make sure the service name exists
-                     if ( beServiceName.eoo() || beServiceName.type()!=String )
+                     if ( beServiceName.eoo() ||
+                          String != beServiceName.type() )
                      {
                         PD_LOG( PDWARNING, "Failed to get the field(%s)",
                                 CAT_NODEID_NAME );
@@ -1684,7 +1687,7 @@ namespace engine
       // assign group id
       if ( CAT_INVALID_GROUPID == newGroupID )
       {
-         newGroupID = _pCatCB->AllocGroupID() ;
+         newGroupID = _pCatCB->allocGroupID() ;
          PD_CHECK( CAT_INVALID_GROUPID != newGroupID, SDB_SYS, error, PDERROR,
                    "Failed to assign group id, maybe group if full" ) ;
       }
@@ -2088,11 +2091,11 @@ namespace engine
          if ( 0 == ossStrcmp( groupName, CATALOG_GROUPNAME ) ||
               0 == ossStrcmp( groupName, COORD_GROUPNAME ) )
          {
-            nodeID = _pCatCB->AllocCataNodeID() ;
+            nodeID = _pCatCB->allocSystemNodeID() ;
          }
          else
          {
-            nodeID = _pCatCB->AllocNodeID();
+            nodeID = _pCatCB->allocNodeID();
          }
 
          PD_CHECK( CAT_INVALID_NODEID != nodeID, SDB_SYS, error, PDERROR,

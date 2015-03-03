@@ -541,11 +541,13 @@ namespace engine
 
       if ( ppRecvMsg )
       {
-         rc = pmdSyncSendMsg( msg, ppRecvMsg, &sock, cb, useCBMem ) ;
+         rc = pmdSyncSendMsg( msg, ppRecvMsg, &sock, cb, useCBMem,
+                              (INT32)millsec ) ;
       }
       else
       {
-         rc = pmdSend( (const CHAR*)msg, msg->messageLength, &sock, cb ) ;
+         rc = pmdSend( (const CHAR*)msg, msg->messageLength, &sock, cb,
+                       (INT32)millsec ) ;
       }
       if ( rc )
       {

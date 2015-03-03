@@ -134,6 +134,7 @@ namespace engine
       {
       // command message entry, should dispatch in the entry function
       case MSG_CAT_ATTACH_IMAGE_REQ :
+      case MSG_CAT_ENABLE_IMAGE_REQ :
          rc = processCommandMsg( handle, pMsg, TRUE ) ;
          break ;
 
@@ -194,6 +195,9 @@ namespace engine
          case MSG_CAT_ATTACH_IMAGE_REQ :
             rc = processCmdAttachImage( handle, pQuery, ctxBuff ) ;
             break ;
+         case MSG_CAT_ENABLE_IMAGE_REQ :
+            rc = processCmdEnableImage( handle, pQuery, ctxBuff ) ;
+            break ;
          default :
             rc = SDB_INVALIDARG ;
             PD_LOG( PDERROR, "Recieved unknow command: %s, opCode: %d",
@@ -249,6 +253,7 @@ namespace engine
       try
       {
          vector< string > vecSourceGrp ;
+         BOOLEAN added = FALSE ;
          BSONElement eleGroups ;
          BSONObj objGroups ;
          BSONObj objQuery( pQuery ) ;
@@ -273,6 +278,13 @@ namespace engine
             PD_RC_CHECK( rc, PDERROR, "Update image catalog group failed, "
                          "rc: %d", rc ) ;
             address = dcMgr.getImageCatAddr() ;
+
+            // check the address is self cluster
+            if ( _isAddrConflictWithSelf( address ) )
+            {
+               rc = SDB_CAT_IMAGE_ADDR_CONFLICT ;
+               goto error ;
+            }
 
             // update image dc base info
             rc = dcMgr.updateImageDCBaseInfo( _pEduCB ) ;
@@ -300,27 +312,18 @@ namespace engine
          // if objGroups is empty, will map all groups by the same name
          if ( objGroups.isEmpty() || 0 == objGroups.nFields() )
          {
-            sdbCatalogueCB::GRP_ID_MAP *grp = _pCatCB->getGroupMap( TRUE ) ;
-            sdbCatalogueCB::GRP_ID_MAP::iterator it = grp->begin() ;
-            while ( it != grp->end() )
+            vector< string > allGroups ;
+            _pCatCB->getGroupsName( allGroups ) ;
+            for ( UINT32 i = 0 ; i < allGroups.size() ; ++i )
             {
-               pBaseInfo->addGroup( it->second, it->second ) ;
+               pBaseInfo->addGroup( allGroups[ i ], allGroups[ i ], &added ) ;
                PD_RC_CHECK( rc, PDERROR, "Add group[%s:%s] failed when attach "
-                            "image, rc: %d", it->second.c_str(),
-                            it->second.c_str(), rc ) ;
-               vecSourceGrp.push_back( it->second ) ;
-               ++it ;
-            }
-            grp = _pCatCB->getGroupMap( FALSE ) ;
-            it = grp->begin() ;
-            while ( it != grp->end() )
-            {
-               rc = pBaseInfo->addGroup(  it->second, it->second ) ;
-               PD_RC_CHECK( rc, PDERROR, "Add group[%s:%s] failed when attach "
-                            "image, rc: %d", it->second.c_str(),
-                            it->second.c_str(), rc ) ;
-               vecSourceGrp.push_back( it->second ) ;
-               ++it ;
+                            "image, rc: %d", allGroups[ i ].c_str(),
+                            allGroups[ i ].c_str(), rc ) ;
+               if ( added )
+               {
+                  vecSourceGrp.push_back( allGroups[ i ] ) ;
+               }
             }
          }
          else
@@ -330,6 +333,9 @@ namespace engine
             rc = pBaseInfo->addGroups( objGroups, &mapAddGrps ) ;
             PD_RC_CHECK( rc, PDERROR, "Add groups[%s] failed when attach "
                          "image, rc: %d", objGroups.toString().c_str(), rc ) ;
+            rc = _checkGroupsValid( mapAddGrps ) ;
+            PD_RC_CHECK( rc, PDERROR, "Groups[%s] is not all valid, rc: %d",
+                         objGroups.toString().c_str(), rc ) ;
             it = mapAddGrps.begin() ;
             while ( it != mapAddGrps.end() )
             {
@@ -338,6 +344,14 @@ namespace engine
             }
          }
 
+         // add catalog group
+         pBaseInfo->addGroup( CATALOG_GROUPNAME, CATALOG_GROUPNAME, &added ) ;
+         if ( added )
+         {
+            vecSourceGrp.push_back( CATALOG_GROUPNAME ) ;
+         }
+
+         // construct return object
          rc = _makeGroupsObj( retObjBuild, vecSourceGrp ) ;
          PD_RC_CHECK( rc, PDERROR, "Make groups obj failed, rc: %d", rc ) ;
       }
@@ -382,6 +396,81 @@ namespace engine
 
       // get return groups
       ctxBuff = rtnContextBuf( retObjBuild.obj() ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _catDCManager::processCmdEnableImage( const NET_HANDLE &handle,
+                                               const CHAR *pQuery,
+                                               rtnContextBuf &ctxBuff )
+   {
+      INT32 rc = SDB_OK ;
+      clsDCMgr dcMgr ;
+      clsDCBaseInfo *pBaseInfo = NULL ;
+      vector< string > allGroups ;
+      BSONObjBuilder retObjBuilder ;
+
+      rc = _mapData2DCMgr( &dcMgr ) ;
+      PD_RC_CHECK( rc, PDERROR, "Map dc base data to dc manager failed, "
+                   "rc: %d", rc ) ;
+      pBaseInfo = dcMgr.getDCBaseInfo() ;
+
+      // is already enable
+      if ( pBaseInfo->imageIsEnable() )
+      {
+         goto done ;
+      }
+
+      // check image' all groups has image
+      rc = dcMgr.updateImageAllGroups( _pEduCB ) ;
+      PD_RC_CHECK( rc, PDERROR, "Update image all groups failed, rc: %d",
+                   rc ) ;
+      dcMgr.getImageNodeMgrAgent()->getGroupsName( allGroups ) ;
+      for ( UINT32 i = 0 ; i < allGroups.size() ; ++i )
+      {
+         if ( pBaseInfo->getRImageGroups()->find( allGroups[i] ) ==
+              pBaseInfo->getRImageGroups()->end() )
+         {
+            PD_LOG( PDERROR, "Image group[%s] does not have source group",
+                    allGroups[i].c_str() ) ;
+            rc = SDB_CAT_GROUP_HASNOT_IMAGE ;
+            goto error ;
+         }
+      }
+
+      // check dc all groups has image
+      _pCatCB->getGroupsName( allGroups ) ;
+      allGroups.push_back( CATALOG_GROUPNAME ) ;
+      for( UINT32 i = 0 ; i < allGroups.size() ; ++i )
+      {
+         if ( pBaseInfo->getImageGroups()->find( allGroups[i] ) ==
+              pBaseInfo->getImageGroups()->end() )
+         {
+            PD_LOG( PDERROR, "Group[%s] does not have image group",
+                    allGroups[i].c_str() ) ;
+            rc = SDB_CAT_GROUP_HASNOT_IMAGE ;
+            goto error ;
+         }
+      }
+
+      // make return obj
+      rc = _makeGroupsObj( retObjBuilder, allGroups ) ;
+      PD_RC_CHECK( rc, PDERROR, "Make return groups object failed, rc: %d",
+                   rc ) ;
+
+      // update "enable" to collection
+      rc = catEnableImage( TRUE, _pEduCB, _majoritySize(), _pDmsCB, _pDpsCB ) ;
+      if ( rc )
+      {
+         // rollback
+         catEnableImage( FALSE, _pEduCB, 1, _pDmsCB, _pDpsCB ) ;
+         goto error ;
+      }
+
+      ctxBuff = rtnContextBuf( retObjBuilder.obj() ) ;
 
    done:
       return rc ;
@@ -461,6 +550,60 @@ namespace engine
          arrayBuild.append( BSON_ARRAY( it->first << it->second ) ) ;
          ++it ;
       }
+   }
+
+   BOOLEAN _catDCManager::_isAddrConflictWithSelf( const string &addr )
+   {
+      BOOLEAN conflict = FALSE ;
+      vector< pmdAddrPair > vecAddr ;
+      vector< pmdAddrPair > vecSelfAddr = pmdGetOptionCB()->catAddrs() ;
+      pmdOptionsCB option ;
+      option.parseAddressLine( addr.c_str(), vecAddr ) ;
+
+      for ( UINT32 i = 0 ; i < vecAddr.size() ; ++i )
+      {
+         pmdAddrPair &item = vecAddr[ i ] ;
+         for ( UINT32 j = 0 ; j < vecSelfAddr.size() ; ++j )
+         {
+            pmdAddrPair &self = vecSelfAddr[ j ] ;
+
+            if ( 0 == ossStrcmp( item._host, self._host ) &&
+                 0 == ossStrcmp( item._service, self._service ) )
+            {
+               conflict = TRUE ;
+               goto done ;
+            }
+         }
+      }
+
+   done:
+      return conflict ;
+   }
+
+   INT32 _catDCManager::_checkGroupsValid( map< string, string > &mapGroups )
+   {
+      INT32 rc = SDB_OK ;
+      UINT32 groupID = CAT_INVALID_GROUPID ;
+      map< string, string >::iterator it = mapGroups.begin() ;
+      while( it != mapGroups.end() )
+      {
+         groupID = _pCatCB->groupName2ID( it->first ) ;
+         if ( CAT_INVALID_GROUPID == groupID )
+         {
+            PD_LOG( PDERROR, "Group[%s] is not exist", it->first.c_str() ) ;
+            rc = SDB_CAT_GRP_NOT_EXIST ;
+            break ;
+         }
+         else if ( COORD_GROUPID == groupID )
+         {
+            PD_LOG( PDERROR, "Coord group[%s] can not image",
+                    it->first.c_str() ) ;
+            rc = SDB_CAT_IS_NOT_DATAGROUP ;
+            break ;
+         }
+         ++it ;
+      }
+      return rc ;
    }
 
    INT16 _catDCManager::_majoritySize()
