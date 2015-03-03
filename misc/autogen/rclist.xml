@@ -2266,5 +2266,13 @@
          </description>
       </code>
 
+      <code>
+         <name>SDB_CAT_GROUP_HASNOT_IMAGE</name>
+         <description>
+            <en>The data group does not have image group</en>
+            <cn>数据组不存在镜像</cn>
+         </description>
+      </code>
+
    </codelist>
 </rclist>
