@@ -277,9 +277,13 @@ namespace engine
          }
          else if ( 0 == ossStrcasecmp( pAction, CMD_VALUE_NAME_ACTIVE ) )
          {
+            rc = processCmdActiveImage( handle, &dcMgr, objQuery,
+                                        retObjBuilder ) ;
          }
          else if ( 0 == ossStrcasecmp( pAction, CMD_VALUE_NAME_DEACTIVE ) )
          {
+            rc = processCmdDeactiveImage( handle, &dcMgr, objQuery,
+                                          retObjBuilder ) ;
          }
          else
          {
@@ -461,86 +465,6 @@ namespace engine
       goto done ;
    }
 
-   INT32 _catDCManager::processCmdEnableImage( const NET_HANDLE &handle,
-                                               _clsDCMgr *pDCMgr,
-                                               const BSONObj &objQuery,
-                                               BSONObjBuilder &retObjBuilder )
-   {
-      INT32 rc = SDB_OK ;
-      clsDCBaseInfo *pBaseInfo = pDCMgr->getDCBaseInfo() ;
-      vector< string > allGroups ;
-
-      // is already enable
-      if ( pBaseInfo->imageIsEnable() )
-      {
-         goto done ;
-      }
-
-      // check image' all groups has image
-      rc = pDCMgr->updateImageAllGroups( _pEduCB ) ;
-      PD_RC_CHECK( rc, PDERROR, "Update image all groups failed, rc: %d",
-                   rc ) ;
-      pDCMgr->getImageNodeMgrAgent()->getGroupsName( allGroups ) ;
-      for ( UINT32 i = 0 ; i < allGroups.size() ; ++i )
-      {
-         if ( pBaseInfo->getRImageGroups()->find( allGroups[i] ) ==
-              pBaseInfo->getRImageGroups()->end() )
-         {
-            PD_LOG( PDERROR, "Image group[%s] does not have source group",
-                    allGroups[i].c_str() ) ;
-            rc = SDB_CAT_GROUP_HASNOT_IMAGE ;
-            goto error ;
-         }
-      }
-
-      // check dc all groups has image
-      _pCatCB->getGroupsName( allGroups ) ;
-      allGroups.push_back( CATALOG_GROUPNAME ) ;
-      for( UINT32 i = 0 ; i < allGroups.size() ; ++i )
-      {
-         if ( pBaseInfo->getImageGroups()->find( allGroups[i] ) ==
-              pBaseInfo->getImageGroups()->end() )
-         {
-            PD_LOG( PDERROR, "Group[%s] does not have image group",
-                    allGroups[i].c_str() ) ;
-            rc = SDB_CAT_GROUP_HASNOT_IMAGE ;
-            goto error ;
-         }
-      }
-
-      // make return obj
-      rc = _makeGroupsObj( retObjBuilder, allGroups ) ;
-      PD_RC_CHECK( rc, PDERROR, "Make return groups object failed, rc: %d",
-                   rc ) ;
-
-      // update "enable" to collection
-      rc = catEnableImage( TRUE, _pEduCB, _majoritySize(), _pDmsCB, _pDpsCB ) ;
-      if ( rc )
-      {
-         // rollback
-         catEnableImage( FALSE, _pEduCB, 1, _pDmsCB, _pDpsCB ) ;
-         goto error ;
-      }
-
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   INT32 _catDCManager::processCmdDisableImage( const NET_HANDLE &handle,
-                                                _clsDCMgr *pDCMgr,
-                                                const BSONObj &objQuery,
-                                                BSONObjBuilder &retObjBuilder )
-   {
-      INT32 rc = SDB_OK ;
-
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
    INT32 _catDCManager::processCmdDetachImage( const NET_HANDLE &handle,
                                                _clsDCMgr *pDCMgr,
                                                const BSONObj &objQuery,
@@ -558,9 +482,8 @@ namespace engine
          rc = SDB_CAT_IMAGE_IS_ENABLED ;
          goto error ;
       }
-
       // not image
-      if ( !pBaseInfo->hasImage() )
+      else if ( !pBaseInfo->hasImage() )
       {
          rc = SDB_CAT_IMAGE_NOT_CONFIG ;
          goto error ;
@@ -627,6 +550,242 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR, "Update obj[%s] to collection[%s] failed, "
                       "rc: %d", updator.toString().c_str(),
                       CAT_SYSDCBASE_COLLECTION_NAME, rc ) ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _catDCManager::processCmdEnableImage( const NET_HANDLE &handle,
+                                               _clsDCMgr *pDCMgr,
+                                               const BSONObj &objQuery,
+                                               BSONObjBuilder &retObjBuilder )
+   {
+      INT32 rc = SDB_OK ;
+      clsDCBaseInfo *pBaseInfo = pDCMgr->getDCBaseInfo() ;
+      vector< string > allGroups ;
+
+      // is already enable
+      if ( pBaseInfo->imageIsEnable() )
+      {
+         goto done ;
+      }
+      else if ( pBaseInfo->hasImage() )
+      {
+         rc = SDB_CAT_IMAGE_NOT_CONFIG ;
+         goto error ;
+      }
+
+      // check is dual active
+      if ( pBaseInfo->isActive() )
+      {
+         // check image wether is active
+         rc = pDCMgr->updateImageDCBaseInfo( _pEduCB ) ;
+         PD_RC_CHECK( rc, PDERROR, "Update image dc base info failed, rc: %d",
+                      rc ) ;
+         if ( pDCMgr->getImageDCBaseInfo( _pEduCB, FALSE )->isActive() )
+         {
+            rc = SDB_CAT_DUAL_ACTIVE ;
+            goto error ;
+         }
+      }
+
+      // check image' all groups has image
+      rc = pDCMgr->updateImageAllGroups( _pEduCB ) ;
+      PD_RC_CHECK( rc, PDERROR, "Update image all groups failed, rc: %d",
+                   rc ) ;
+      pDCMgr->getImageNodeMgrAgent()->getGroupsName( allGroups ) ;
+      for ( UINT32 i = 0 ; i < allGroups.size() ; ++i )
+      {
+         if ( pBaseInfo->getRImageGroups()->find( allGroups[i] ) ==
+              pBaseInfo->getRImageGroups()->end() )
+         {
+            PD_LOG( PDERROR, "Image group[%s] does not have source group",
+                    allGroups[i].c_str() ) ;
+            rc = SDB_CAT_GROUP_HASNOT_IMAGE ;
+            goto error ;
+         }
+      }
+
+      // check dc all groups has image
+      _pCatCB->getGroupsName( allGroups ) ;
+      allGroups.push_back( CATALOG_GROUPNAME ) ;
+      for( UINT32 i = 0 ; i < allGroups.size() ; ++i )
+      {
+         if ( pBaseInfo->getImageGroups()->find( allGroups[i] ) ==
+              pBaseInfo->getImageGroups()->end() )
+         {
+            PD_LOG( PDERROR, "Group[%s] does not have image group",
+                    allGroups[i].c_str() ) ;
+            rc = SDB_CAT_GROUP_HASNOT_IMAGE ;
+            goto error ;
+         }
+      }
+
+      // make return obj
+      rc = _makeGroupsObj( retObjBuilder, allGroups ) ;
+      PD_RC_CHECK( rc, PDERROR, "Make return groups object failed, rc: %d",
+                   rc ) ;
+
+      // update "enable" to collection
+      rc = catEnableImage( TRUE, _pEduCB, _majoritySize(), _pDmsCB, _pDpsCB ) ;
+      if ( rc )
+      {
+         // rollback
+         catEnableImage( FALSE, _pEduCB, 1, _pDmsCB, _pDpsCB ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _catDCManager::processCmdDisableImage( const NET_HANDLE &handle,
+                                                _clsDCMgr *pDCMgr,
+                                                const BSONObj &objQuery,
+                                                BSONObjBuilder &retObjBuilder )
+   {
+      INT32 rc = SDB_OK ;
+      clsDCBaseInfo *pBaseInfo = pDCMgr->getDCBaseInfo() ;
+
+      if ( !pBaseInfo->hasImage() )
+      {
+         rc = SDB_CAT_IMAGE_NOT_CONFIG ;
+         goto error ;
+      }
+      else if ( !pBaseInfo->imageIsEnable() )
+      {
+         goto done ;
+      }
+      else
+      {
+         vector< string > vecGroups ;
+         map<string, string> *pMapGrps = pBaseInfo->getImageGroups() ;
+         map<string, string>::iterator it = pMapGrps->begin() ;
+         while( it != pMapGrps->end() )
+         {
+            vecGroups.push_back( it->first ) ;
+            ++it ;
+         }
+         // make return obj
+         rc = _makeGroupsObj( retObjBuilder, vecGroups ) ;
+         PD_RC_CHECK( rc, PDERROR, "Make return groups object failed, rc: %d",
+                      rc ) ;
+
+         // update to collection
+         rc = catEnableImage( FALSE, _pEduCB, _majoritySize(), _pDmsCB,
+                              _pDpsCB ) ;
+         if ( rc )
+         {
+            // rollback
+            catEnableImage( TRUE, _pEduCB, 1, _pDmsCB, _pDpsCB ) ;
+            goto error ;
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _catDCManager::processCmdActiveImage( const NET_HANDLE &handle,
+                                               _clsDCMgr *pDCMgr,
+                                               const BSONObj &objQuery,
+                                               BSONObjBuilder &retObjBuilder )
+   {
+      INT32 rc = SDB_OK ;
+      clsDCBaseInfo *pBaseInfo = pDCMgr->getDCBaseInfo() ;
+
+      if ( pBaseInfo->isActive() )
+      {
+         goto done ;
+      }
+      else if ( pBaseInfo->hasImage() && pBaseInfo->imageIsEnable() )
+      {
+         vector< string > vecGroups ;
+         map< string, string> *pMapGrps = NULL ;
+         map< string, string>::iterator it ;
+         rc = pDCMgr->updateImageDCBaseInfo( _pEduCB ) ;
+         if ( SDB_OK == rc )
+         {
+            // if can update image's dc base info, need to check wether it
+            // is active
+            if ( pDCMgr->getImageDCBaseInfo( _pEduCB, FALSE )->isActive() )
+            {
+               rc = SDB_CAT_DUAL_ACTIVE ;
+               goto error ;
+            }
+         }
+         pMapGrps = pBaseInfo->getImageGroups() ;
+         it = pMapGrps->begin() ;
+         while ( it != pMapGrps->end() )
+         {
+            vecGroups.push_back( it->first ) ;
+            ++it ;
+         }
+         // make return obj
+         rc = _makeGroupsObj( retObjBuilder, vecGroups ) ;
+         PD_RC_CHECK( rc, PDERROR, "Make return groups object failed, rc: %d",
+                      rc ) ;
+      }
+
+      // update to collection
+      rc = catActiveDC( TRUE, _pEduCB, _majoritySize(), _pDmsCB, _pDpsCB ) ;
+      if ( rc )
+      {
+         // rollback
+         catActiveDC( FALSE, _pEduCB, 1, _pDmsCB, _pDpsCB ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _catDCManager::processCmdDeactiveImage( const NET_HANDLE &handle,
+                                                 _clsDCMgr *pDCMgr,
+                                                 const BSONObj &objQuery,
+                                                 BSONObjBuilder &retObjBuilder )
+   {
+      INT32 rc = SDB_OK ;
+      clsDCBaseInfo *pBaseInfo = pDCMgr->getDCBaseInfo() ;
+
+      if ( !pBaseInfo->isActive() )
+      {
+         goto done ;
+      }
+      else if ( pBaseInfo->hasImage() && pBaseInfo->imageIsEnable() )
+      {
+         vector< string > vecGroups ;
+         map< string, string> *pMapGrps = NULL ;
+         map< string, string>::iterator it ;
+         pMapGrps = pBaseInfo->getImageGroups() ;
+         it = pMapGrps->begin() ;
+         while ( it != pMapGrps->end() )
+         {
+            vecGroups.push_back( it->first ) ;
+            ++it ;
+         }
+         // make return obj
+         rc = _makeGroupsObj( retObjBuilder, vecGroups ) ;
+         PD_RC_CHECK( rc, PDERROR, "Make return groups object failed, rc: %d",
+                      rc ) ;
+      }
+
+      // update to collection
+      rc = catActiveDC( FALSE, _pEduCB, _majoritySize(), _pDmsCB, _pDpsCB ) ;
+      if ( rc )
+      {
+         // rollback
+         catActiveDC( TRUE, _pEduCB, 1, _pDmsCB, _pDpsCB ) ;
+         goto error ;
       }
 
    done:

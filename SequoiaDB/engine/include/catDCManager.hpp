@@ -98,6 +98,14 @@ namespace engine
                                     _clsDCMgr *pDCMgr,
                                     const BSONObj &objQuery,
                                     BSONObjBuilder &retObjBuilder) ;
+      INT32 processCmdActiveImage( const NET_HANDLE &handle,
+                                   _clsDCMgr *pDCMgr,
+                                   const BSONObj &objQuery,
+                                   BSONObjBuilder &retObjBuilder ) ;
+      INT32 processCmdDeactiveImage( const NET_HANDLE &handle,
+                                     _clsDCMgr *pDCMgr,
+                                     const BSONObj &objQuery,
+                                     BSONObjBuilder &retObjBuilder ) ;
 
    protected:
       void  _fillRspHeader( MsgHeader *rspMsg, const MsgHeader *reqMsg ) ;
