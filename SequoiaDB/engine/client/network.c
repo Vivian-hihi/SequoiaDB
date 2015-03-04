@@ -16,6 +16,7 @@
 
 #include "network.h"
 #include "ossUtil.h"
+#include "ossMem.h"
 #if defined (_LINUX)
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -33,24 +34,36 @@
 #define SOCKET_GETLASTERROR errno
 #endif
 
+struct Socket
+{
+   SOCKET      rawSocket ;
+} ;
+
 #if defined (_WINDOWS)
 static BOOLEAN sockInitialized = FALSE ;
 #endif
+
+static INT32 _disableNagle( SOCKET sock ) ;
+static void _clientDisconnect ( SOCKET sock ) ;
+
 INT32 clientConnect ( const CHAR *pHostName,
                       const CHAR *pServiceName,
-                      SOCKET *sock )
+                      Socket** sock )
 {
    INT32 rc = SDB_OK ;
    struct hostent *hp = NULL ;
    struct servent *servinfo ;
    struct sockaddr_in sockAddress ;
+   Socket* s = NULL ;
+   SOCKET rawSocket = -1 ;
    UINT16 port ;
+
    if ( !sock )
    {
       rc = SDB_INVALIDARG ;
       goto error ;
    }
-   ossMemset ( &sockAddress, 0, sizeof(sockAddress) ) ;
+
 #if defined (_WINDOWS)
    if ( !sockInitialized )
    {
@@ -64,6 +77,8 @@ INT32 clientConnect ( const CHAR *pHostName,
       sockInitialized = TRUE ;
    }
 #endif
+
+   ossMemset ( &sockAddress, 0, sizeof(sockAddress) ) ;
    sockAddress.sin_family = AF_INET ;
    if ( (hp = gethostbyname ( pHostName ) ) )
       sockAddress.sin_addr.s_addr = *((UINT32*)hp->h_addr_list[0] ) ;
@@ -79,31 +94,63 @@ INT32 clientConnect ( const CHAR *pHostName,
       port = (UINT16)ntohs(servinfo->s_port) ;
    }
    sockAddress.sin_port = htons ( port ) ;
-   *sock = socket ( AF_INET, SOCK_STREAM, IPPROTO_TCP ) ;
-   if ( -1 == *sock )
+
+   rawSocket = socket ( AF_INET, SOCK_STREAM, IPPROTO_TCP ) ;
+   if ( -1 == rawSocket )
    {
-      rc = SDB_NETWORK ;
-      goto error ;
-   }
-   rc = connect ( *sock, (struct sockaddr *) &sockAddress,
-                    sizeof( sockAddress ) ) ;
-   if ( rc )
-   {
-      clientDisconnect ( *sock ) ;
-      *sock = -1 ;
       rc = SDB_NETWORK ;
       goto error ;
    }
 
-   disableNagle( *sock ) ;
+   rc = connect ( rawSocket, (struct sockaddr *) &sockAddress,
+                    sizeof( sockAddress ) ) ;
+   if ( rc )
+   {
+      rc = SDB_NETWORK ;
+      goto error ;
+   }
+
+   _disableNagle( rawSocket ) ;
+
+   s = (Socket*) SDB_OSS_MALLOC ( sizeof( Socket ) ) ;
+   if ( NULL == s )
+   {
+      rc = SDB_OOM ;
+      goto error ;
+   }
+   s->rawSocket = rawSocket ;
+   *sock = s ;
+   rc = SDB_OK ;
 
 done :
    return rc ;
 error :
+   if ( -1 != rawSocket )
+   {
+      _clientDisconnect ( rawSocket ) ;
+      rawSocket = -1 ;
+   }
    goto done ;
 }
 
-INT32 disableNagle( SOCKET sock )
+SOCKET clientGetRawSocket( Socket* sock )
+{
+   SOCKET s = -1;
+
+   if ( NULL == sock )
+   {
+      goto error ;
+   }
+
+   s = sock->rawSocket ;
+
+done:
+   return s ;
+error:
+   goto done ;
+}
+
+static INT32 _disableNagle( SOCKET sock )
 {
    INT32 rc = SDB_OK ;
    INT32 temp = 1 ;
@@ -126,7 +173,23 @@ error:
    goto done ;
 }
 
-void clientDisconnect ( SOCKET sock )
+INT32 disableNagle( Socket* sock )
+{
+   INT32 rc = SDB_OK ;
+
+   if ( !sock )
+   {
+      rc = SDB_INVALIDARG ;
+   }
+   else
+   {
+      rc = _disableNagle ( sock->rawSocket ) ;
+   }
+
+   return rc ;
+}
+
+static void _clientDisconnect ( SOCKET sock )
 {
 #if defined (_WINDOWS)
       closesocket ( sock ) ;
@@ -135,21 +198,50 @@ void clientDisconnect ( SOCKET sock )
 #endif
 }
 
-INT32 clientSend ( SOCKET sock, const CHAR *pMsg, INT32 len, INT32 timeout )
+void clientDisconnect ( Socket** sock )
+{
+   if ( !sock )
+   {
+      goto done ;
+   }
+
+   if ( NULL != *sock )
+   {
+      _clientDisconnect ( (*sock)->rawSocket ) ;
+      SDB_OSS_FREE ( *sock ) ;
+      *sock = NULL ;
+   }
+
+done:
+   return ;
+}
+
+INT32 clientSend ( Socket* sock, const CHAR *pMsg, INT32 len, INT32 timeout )
 {
    INT32 rc = SDB_OK ;
-   SOCKET maxFD = sock ;
+   SOCKET rawSocket ;
    struct timeval maxSelectTime ;
    fd_set fds ;
+
+   if ( !sock )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
    if ( !pMsg || !len )
+   {
       goto done ;
+   }
+
+   rawSocket = sock->rawSocket ;
    maxSelectTime.tv_sec = timeout / 1000000 ;
    maxSelectTime.tv_usec = timeout % 1000000 ;
    while ( TRUE )
    {
       FD_ZERO ( &fds ) ;
-      FD_SET ( sock, &fds ) ;
-      rc = select ( maxFD + 1, NULL, &fds, NULL,
+      FD_SET ( rawSocket, &fds ) ;
+      rc = select ( rawSocket + 1, NULL, &fds, NULL,
                     timeout>=0?&maxSelectTime:NULL ) ;
       // 0 means timeout
       if ( 0 == rc )
@@ -177,7 +269,7 @@ INT32 clientSend ( SOCKET sock, const CHAR *pMsg, INT32 len, INT32 timeout )
       }
 
       // if the socket we interested is not receiving anything, let's continue
-      if ( FD_ISSET ( sock, &fds ) )
+      if ( FD_ISSET ( rawSocket, &fds ) )
       {
          break ;
       }
@@ -185,10 +277,10 @@ INT32 clientSend ( SOCKET sock, const CHAR *pMsg, INT32 len, INT32 timeout )
    while ( len > 0 )
    {
 #if defined (_WINDOWS)
-      rc = send ( sock, pMsg, len, 0 ) ;
+      rc = send ( rawSocket, pMsg, len, 0 ) ;
       if ( SOCKET_ERROR == rc )
 #else
-      rc = send ( sock, pMsg, len, MSG_NOSIGNAL ) ;
+      rc = send ( rawSocket, pMsg, len, MSG_NOSIGNAL ) ;
       if ( -1 == rc )
 #endif
       {
@@ -205,23 +297,34 @@ error :
    goto done ;
 }
 #define MAX_RECV_RETRIES 5
-INT32 clientRecv ( SOCKET sock, CHAR *pMsg, INT32 len, INT32 timeout )
+INT32 clientRecv ( Socket* sock, CHAR *pMsg, INT32 len, INT32 timeout )
 {
    INT32 rc = SDB_OK ;
    UINT32 retries = 0 ;
-   SOCKET maxFD = sock ;
+   SOCKET rawSocket ;
    struct timeval maxSelectTime ;
    fd_set fds ;
+
+   if ( !sock )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
    if ( !pMsg || !len )
+   {
       goto done ;
+   }
+
+   rawSocket = sock->rawSocket ;
    maxSelectTime.tv_sec = timeout / 1000000 ;
    maxSelectTime.tv_usec = timeout % 1000000 ;
    // wait loop until either we timeout or get a message
    while ( TRUE )
    {
       FD_ZERO ( &fds ) ;
-      FD_SET ( sock, &fds ) ;
-      rc = select ( maxFD + 1, &fds, NULL, NULL,
+      FD_SET ( rawSocket, &fds ) ;
+      rc = select ( rawSocket + 1, &fds, NULL, NULL,
                     timeout>=0?&maxSelectTime:NULL ) ;
       // 0 means timeout
       if ( 0 == rc )
@@ -247,7 +350,7 @@ INT32 clientRecv ( SOCKET sock, CHAR *pMsg, INT32 len, INT32 timeout )
          goto error ;
       }
       // if the socket is not receiving anything, let's continue
-      if ( FD_ISSET ( sock, &fds ) )
+      if ( FD_ISSET ( rawSocket, &fds ) )
       {
          break ;
       }
@@ -255,9 +358,9 @@ INT32 clientRecv ( SOCKET sock, CHAR *pMsg, INT32 len, INT32 timeout )
    while ( len > 0 )
    {
 #if defined (_WINDOWS)
-      rc = recv ( sock, pMsg, len, 0 ) ;
+      rc = recv ( rawSocket, pMsg, len, 0 ) ;
 #else
-      rc = recv ( sock, pMsg, len, MSG_NOSIGNAL ) ;
+      rc = recv ( rawSocket, pMsg, len, MSG_NOSIGNAL ) ;
 #endif
       if ( rc > 0 )
       {

@@ -327,12 +327,12 @@ error :
    goto done ;
 }
 
-static INT32 _send1 ( sdbConnectionHandle cHandle, SOCKET sock,
+static INT32 _send1 ( sdbConnectionHandle cHandle, Socket* sock,
                       const CHAR *pMsg, INT32 len )
 {
    INT32 rc = SDB_OK ;
 
-   if ( -1 == sock )
+   if ( NULL == sock )
    {
       rc = SDB_INVALIDARG ;
       goto error ;
@@ -353,7 +353,7 @@ error :
    goto done ;
 }
 
-static INT32 _send ( sdbConnectionHandle cHandle, SOCKET sock,
+static INT32 _send ( sdbConnectionHandle cHandle, Socket* sock,
                      const MsgHeader *msg, BOOLEAN endianConvert )
 {
    INT32 rc  = SDB_OK ;
@@ -371,7 +371,7 @@ error :
    goto done ;
 }
 
-static INT32 _recv ( sdbConnectionHandle cHandle, SOCKET sock,
+static INT32 _recv ( sdbConnectionHandle cHandle, Socket* sock,
                      MsgHeader **msg, INT32 *size,
                      BOOLEAN endianConvert )
 {
@@ -380,7 +380,7 @@ static INT32 _recv ( sdbConnectionHandle cHandle, SOCKET sock,
    INT32 realLen   = 0 ;
    CHAR **ppBuffer = (CHAR**)msg ;
 
-   if ( -1 == sock )
+   if ( NULL == sock )
    {
       rc = SDB_INVALIDARG ;
       goto error ;
@@ -402,7 +402,7 @@ static INT32 _recv ( sdbConnectionHandle cHandle, SOCKET sock,
       // quick ack
       {
          INT32 i = 0 ;
-         setsockopt( sock, IPPROTO_TCP, TCP_QUICKACK, (void*)&i, sizeof(i) ) ;
+         setsockopt( clientGetRawSocket ( sock ), IPPROTO_TCP, TCP_QUICKACK, (void*)&i, sizeof(i) ) ;
       }
 #endif // _LINUX
       break ;
@@ -438,7 +438,7 @@ error :
    goto done ;
 }
 
-static INT32 _recvExtract ( sdbConnectionHandle cHandle, SOCKET sock,
+static INT32 _recvExtract ( sdbConnectionHandle cHandle, Socket* sock,
                             MsgHeader **msg, INT32 *size,
                             SINT64 *contextID, BOOLEAN *result,
                             BOOLEAN endianConvert )
@@ -478,7 +478,7 @@ error :
    goto done ;
 }
 
-static INT32 _recvExtractEval ( sdbConnectionHandle cHandle, SOCKET sock,
+static INT32 _recvExtractEval ( sdbConnectionHandle cHandle, Socket* sock,
                                 MsgHeader **msg, INT32 *size,
                                 SINT64 *contextID, SDB_SPD_RES_TYPE *type,
                                 BOOLEAN *result, bson *errmsg,
@@ -577,7 +577,7 @@ error :
 }
 
 
-static INT32 _runCommand ( sdbConnectionHandle cHandle, SOCKET sock,
+static INT32 _runCommand ( sdbConnectionHandle cHandle, Socket* sock,
                            CHAR **ppSendBuffer, INT32 *sendBufferSize,
                            CHAR **ppReceiveBuffer, INT32 *receiveBufferSize,
                            BOOLEAN endianConvert, const CHAR *pString,
@@ -741,12 +741,12 @@ done :
    return SDB_OK ;
 }
 
-static INT32 _regSocket( ossValuePtr cHandle, SOCKET *pSock )
+static INT32 _regSocket( ossValuePtr cHandle, Socket** pSock )
 {
    INT32 rc                        = SDB_OK ;
    sdbConnectionStruct *connection = (sdbConnectionStruct *)cHandle ;
 
-   if ( -1 == *pSock )
+   if ( NULL == *pSock )
    {
       goto done ;
    }
@@ -763,13 +763,13 @@ error :
    goto done ;
 }
 
-static INT32 _unregSocket( ossValuePtr cHandle, SOCKET *pSock )
+static INT32 _unregSocket( ossValuePtr cHandle, Socket** pSock )
 {
    INT32 rc                        = SDB_OK ;
    Node *ptrRemoved                = NULL ;
    sdbConnectionStruct *connection = (sdbConnectionStruct *)cHandle ;
 
-   if ( -1 == *pSock )
+   if ( NULL == *pSock )
    {
       goto done ;
    }
@@ -783,7 +783,7 @@ static INT32 _unregSocket( ossValuePtr cHandle, SOCKET *pSock )
 
    if ( ptrRemoved )
    {
-      *(SOCKET*)ptrRemoved->data = -1 ;
+      *(Socket**)ptrRemoved->data = NULL ;
       SDB_OSS_FREE( ptrRemoved ) ;
    }
 
@@ -1054,7 +1054,7 @@ static INT32 _sdbGetList ( sdbConnectionHandle cHandle,
    }
 
    CHECK_RET_MSGHEADER( connection->_pSendBuffer, connection->_pReceiveBuffer,
-		        cHandle ) ;
+           cHandle ) ;
    ALLOC_HANDLE( cursor, sdbCursorStruct ) ;
    INIT_CURSOR ( cursor, connection, connection, contextID ) ;
 
@@ -1393,19 +1393,18 @@ void _sdbDisconnect_inner ( sdbConnectionHandle handle )
 
    HANDLE_CHECK( handle, connection, SDB_HANDLE_TYPE_CONNECTION ) ;
    // if we had disconnected
-   if ( -1 == connection->_sock )
+   if ( NULL == connection->_sock )
    {
       return ;
    }
 
-   clientDisconnect ( connection->_sock ) ;
-   connection->_sock = -1 ;
+   clientDisconnect ( &connection->_sock ) ;
 
    // notify all sockets to invalid
    sockets = connection->_sockets ;
    while ( sockets )
    {
-      *((SOCKET*)sockets->data) = -1 ;
+      *((Socket**)sockets->data) = NULL ;
       connection->_sockets = sockets->next ;
       SDB_OSS_FREE( sockets ) ;
       sockets = connection->_sockets ;
@@ -1437,7 +1436,7 @@ SDB_EXPORT void sdbDisconnect ( sdbConnectionHandle handle )
 
    HANDLE_CHECK( handle, connection, SDB_HANDLE_TYPE_CONNECTION ) ;
    // if we had disconnected
-   if ( -1 == connection->_sock )
+   if ( NULL == connection->_sock )
    {
       return ;
    }
@@ -5219,7 +5218,7 @@ SDB_EXPORT INT32 sdbCloseCursor ( sdbCursorHandle cHandle )
    {
       goto done ;
    }
-   if ( -1 == cs->_sock || -1 == cs->_contextID )
+   if ( NULL == cs->_sock || -1 == cs->_contextID )
    {
       cs->_isClosed = TRUE ;
       goto done ;
@@ -5305,7 +5304,7 @@ SDB_EXPORT INT32 sdbIsValid( sdbConnectionHandle cHandle, BOOLEAN *result )
       goto error ;
    }
 
-   sock = connection->_sock ;
+   sock = clientGetRawSocket ( connection->_sock ) ;
    // invalid sock
    if ( sock < 0 )
    {
@@ -7588,7 +7587,7 @@ SDB_EXPORT INT32 sdbCloseLob( sdbLobHandle *lobHandle )
 
    HANDLE_CHECK( *lobHandle, lob, SDB_HANDLE_TYPE_LOB ) ;
 
-   if ( -1 == lob->_sock )
+   if ( NULL == lob->_sock )
    {
       goto done ;
    }
