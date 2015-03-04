@@ -1569,14 +1569,14 @@ namespace engine
             break;
          }
          isNeedRefresh = TRUE ;
-         }while( TRUE );
+      }while( TRUE );
 
-         if ( SDB_OK != rc )
-         {
-            PD_LOG ( PDERROR,
-                     "Failed to send the request to the group(%u), rc=%d",
-                     groupID, rc );
-         }
+      if ( SDB_OK != rc )
+      {
+         PD_LOG ( PDERROR,
+                  "Failed to send the request to the group(%u), rc=%d",
+                  groupID, rc );
+      }
       PD_TRACE_EXITRC( SDB_RTNCOSENDREQUESTTONODEGROUP, rc ) ;
       return rc ;
    }
