@@ -252,6 +252,7 @@
 #define FIELD_NAME_IMAGE                     "Image"
 #define FIELD_NAME_ACTIVE                    "Active"
 #define FIELD_NAME_ENABLE                    "Enable"
+#define FIELD_NAME_ACTION                    "Action"
 
 #define FIELD_NAME_INSERT                    "Insert"
 #define FIELD_NAME_UPDATE                    "Update"
@@ -406,15 +407,18 @@
 #define CMD_NAME_INVALIDATE_CACHE            "invalidate cache"
 #define CMD_NAME_FORCE_SESSION               "force session"
 #define CMD_NAME_LIST_LOBS                   "list lobs"
-#define CMD_NAME_ATTACH_IMAGE                "attach image"
-#define CMD_NAME_DETACH_IMAGE                "detach image"
-#define CMD_NAME_ENABLE_IMAGE                "enable image"
-#define CMD_NAME_ACTIVE_IMAGE                "active image"
-#define CMD_NAME_DEACTIVE_IMAGE              "deactive image"
+#define CMD_NAME_ALTER_IMAGE                 "alter image"
 #define CMD_NAME_REELECT                     "reelect"
 #define CMD_NAME_FORCE_STEP_UP               "force step up"
 
 #define CMD_NAME_JSON_LOAD                   "json load"
+
+#define CMD_VALUE_NAME_ATTACH                "attach"
+#define CMD_VALUE_NAME_DETACH                "detach"
+#define CMD_VALUE_NAME_ENABLE                "enable"
+#define CMD_VALUE_NAME_DISABLE               "disable"
+#define CMD_VALUE_NAME_ACTIVE                "active"
+#define CMD_VALUE_NAME_DEACTIVE              "deactive"
 
 #define CLS_REPLSET_MAX_NODE_SIZE            7
 #define SDB_MAX_MSG_LENGTH                   ( 512 * 1024 * 1024 )
