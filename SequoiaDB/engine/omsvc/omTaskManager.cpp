@@ -258,11 +258,11 @@ namespace engine
                   goto error ;
                }
             }
+            clusterName = oneHost.getStringField( OM_BSON_FIELD_CLUSTER_NAME ) ;
+            sdbGetOMManager()->updateClusterVersion( clusterName ) ;
          }
       }
 
-      clusterName = taskInfo.getStringField( OM_BSON_FIELD_CLUSTER_NAME ) ;
-      sdbGetOMManager()->updateClusterVersion( clusterName ) ;
    done:
       return rc ;
    error:
