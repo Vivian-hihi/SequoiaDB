@@ -312,8 +312,7 @@ function createTmpDir( ssh )
                 OMA_PATH_TEMP_LOG_DIR_L,
                 OMA_PATH_TEMP_LOCAL_DIR_L,
                 OMA_PATH_TEMP_SPT_DIR_L,
-                OMA_PATH_TEMP_TEMP_DIR_L,
-                OMA_PATH_TMP_WEB_LOG_DIR ] ;
+                OMA_PATH_TEMP_TEMP_DIR_L ] ;
    try
    {
       if ( SYS_LINUX == SYS_TYPE )
@@ -978,8 +977,6 @@ function setTaskLogFileName( task_id )
       if ( false == File.exist( task_log_dir ) )
          File.mkdir( task_log_dir ) ;
       LOG_FILE_NAME = adaptPath( Task ) + task_id + ".log" ;
-      PD_LOG( arguments, PDDEBUG, FILE_NAME_FUNC,
-              sprintf( "Js log file's name of task[?] is: ?", task_id, LOG_FILE_NAME ) ) ;
    }
    catch ( e )
    {
