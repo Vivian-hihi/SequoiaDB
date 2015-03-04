@@ -1367,7 +1367,7 @@ namespace engine
       // create remote session
       om            = sdbGetOMManager() ;
       remoteSession = om->getRSManager()->addSession( _cb, 
-                                                      OM_WAIT_SCAN_RES_INTERVAL,
+                                                      OM_NOTIFY_TASK_TIMEOUT,
                                                       NULL ) ;
       if ( NULL == remoteSession )
       {
@@ -6966,8 +6966,8 @@ namespace engine
       // create remote session
       om            = sdbGetOMManager() ;
       remoteSession = om->getRSManager()->addSession( _cb, 
-                                                      OM_CHECK_HOST_INTERVAL,
-                                                      NULL ) ;
+                                                  OM_QUERY_HOST_STATUS_TIMEOUT,
+                                                  NULL ) ;
       if ( NULL == remoteSession )
       {
          rc = SDB_OOM ;
