@@ -72,6 +72,11 @@ namespace engine
 
       INT32 updateGlobalAddr() ;
 
+      BOOLEAN isDCActive() const ;
+      BOOLEAN isImageEnable() const ;
+      BOOLEAN groupInImage( UINT32 groupID ) ;
+      BOOLEAN groupInImage( const string &groupName ) ;
+
    // message process functions
    protected:
       INT32 processCommandMsg( const NET_HANDLE &handle, MsgHeader *pMsg,
@@ -135,6 +140,13 @@ namespace engine
       _SDB_RTNCB                 *_pRtnCB;
       sdbCatalogueCB             *_pCatCB;
       pmdEDUCB                   *_pEduCB;
+
+      _clsDCMgr                  *_pDCMgr ;
+      _clsDCBaseInfo             *_pDCBaseInfo ;
+
+      // for dc and image
+      BOOLEAN                    _isDCActive ;
+      BOOLEAN                    _isImageEnable ;
 
    } ;
    typedef _catDCManager catDCManager ;

@@ -59,10 +59,18 @@ namespace engine
       _pRtnCB = NULL ;
       _pCatCB = NULL ;
       _pEduCB = NULL ;
+      _pDCMgr = NULL ;
+      _pDCBaseInfo = NULL ;
    }
 
    _catDCManager::~_catDCManager()
    {
+      _pDCBaseInfo = NULL ;
+      if ( _pDCMgr )
+      {
+         SDB_OSS_DEL _pDCMgr ;
+         _pDCMgr = NULL ;
+      }
    }
 
    INT32 _catDCManager::init()
@@ -72,6 +80,15 @@ namespace engine
       _pDpsCB           = krcb->getDPSCB();
       _pRtnCB           = krcb->getRTNCB();
       _pCatCB           = krcb->getCATLOGUECB();
+
+      _pDCMgr           = SDB_OSS_NEW clsDCMgr() ;
+      if ( !_pDCMgr )
+      {
+         PD_LOG( PDERROR, "Alloc dc manager failed" ) ;
+         return SDB_OOM ;
+      }
+      _pDCBaseInfo = _pDCMgr->getDCBaseInfo() ;
+
       return SDB_OK ;
    }
 
@@ -96,6 +113,42 @@ namespace engine
                                     TRUE, _pEduCB, 1 ) ;
    }
 
+   BOOLEAN _catDCManager::isDCActive() const
+   {
+      if ( _pDCBaseInfo )
+      {
+         return _pDCBaseInfo->isActive() ;
+      }
+      return FALSE ;
+   }
+
+   BOOLEAN _catDCManager::isImageEnable() const
+   {
+      if ( _pDCBaseInfo )
+      {
+         return _pDCBaseInfo->imageIsEnable() ;
+      }
+      return FALSE ;
+   }
+
+   BOOLEAN _catDCManager::groupInImage( const string &groupName )
+   {
+      if ( _pDCBaseInfo )
+      {
+         if ( _pDCBaseInfo->getImageGroups()->find( groupName ) !=
+              _pDCBaseInfo->getImageGroups()->end() )
+         {
+            return TRUE ;
+         }
+      }
+      return FALSE ;
+   }
+
+   BOOLEAN _catDCManager::groupInImage( UINT32 groupID )
+   {
+      return groupInImage( _pCatCB->groupID2Name( groupID ) ) ;
+   }
+
    INT32 _catDCManager::active()
    {
       INT32 rc = SDB_OK;
@@ -112,6 +165,10 @@ namespace engine
          // when update image info failed, ignore
          rc = SDB_OK ;
       }
+
+      // update dc base info
+      rc = _mapData2DCMgr( _pDCMgr ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to map dc base info, rc: %d", rc ) ;
 
    done :
       return rc ;
@@ -293,6 +350,9 @@ namespace engine
             rc = SDB_INVALIDARG ;
             goto error ;
          }
+
+         // need to update dc base info
+         _mapData2DCMgr( _pDCMgr ) ;
       }
       catch( std::exception &e )
       {
@@ -568,7 +628,7 @@ namespace engine
       vector< string > allGroups ;
 
       // is already enable
-      if ( pBaseInfo->imageIsEnable() )
+      if ( pBaseInfo->imageIsEnable() && _isImageEnable )
       {
          goto done ;
       }
@@ -638,6 +698,8 @@ namespace engine
          goto error ;
       }
 
+      _isImageEnable = TRUE ;
+
    done:
       return rc ;
    error:
@@ -657,7 +719,7 @@ namespace engine
          rc = SDB_CAT_IMAGE_NOT_CONFIG ;
          goto error ;
       }
-      else if ( !pBaseInfo->imageIsEnable() )
+      else if ( !pBaseInfo->imageIsEnable() && !_isImageEnable )
       {
          goto done ;
       }
@@ -686,6 +748,8 @@ namespace engine
             goto error ;
          }
       }
+
+      _isImageEnable = FALSE ;
 
    done:
       return rc ;
@@ -964,16 +1028,15 @@ namespace engine
          INT64 updateNum = 0 ;
          string tmpClsName ;
          string tmpBusName ;
-         // if the global info exist, update
-         BSONElement dcEle = infoObj.getField( FIELD_NAME_DATACENTER ) ;
-         if ( Object ==  dcEle.type() )
-         {
-            BSONObj dcObj = dcEle.embeddedObject() ;
-            BSONElement e1 = dcObj.getField( FIELD_NAME_CLUSTERNAME ) ;
-            BSONElement e2 = dcObj.getField( FIELD_NAME_BUSINESSNAME ) ;
-            tmpClsName = e1.valuestrsafe() ;
-            tmpBusName = e2.valuestrsafe() ;
-         }
+         clsDCBaseInfo dcBaseInfo ;
+
+         // update dc base info
+         rc = dcBaseInfo.updateFromBSON( infoObj, FALSE ) ;
+         PD_RC_CHECK( rc, PDERROR, "Parse dc base info[%s] failed, rc: %d",
+                      infoObj.toString().c_str() ) ;
+
+         tmpClsName = dcBaseInfo.getClusterName() ;
+         tmpBusName = dcBaseInfo.getBusinessName() ;
 
          if ( clusterName != tmpClsName || businessName != tmpBusName )
          {

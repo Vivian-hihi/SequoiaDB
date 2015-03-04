@@ -104,6 +104,8 @@ namespace engine
          INT32       getGroupsID( vector< UINT32 > &vecIDs ) ;
 
          INT16    majoritySize() ;
+         BOOLEAN  isDCActive() const { return _catDCMgr.isDCActive() ; }
+         BOOLEAN  isImageEnable() const { return _catDCMgr.isImageEnable() ; }
 
          UINT32   setTimer( UINT32 milliSec ) ;
          void     killTimer( UINT32 timerID ) ;
