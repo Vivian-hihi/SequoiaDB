@@ -485,7 +485,7 @@
                     <name>platform</name>
                     <description></description>
                     <explanation></explanation>
-                    <value>${platform_name}</value>
+                    <value>${platform_name}${dbpath}</value>
                     <default>${platform_name}</default>
                     <allowEmptyValue>0</allowEmptyValue>
                     <ask>0</ask>
@@ -619,6 +619,15 @@
                         </isFalse>
                     </ruleList>
                 </booleanParameter>
+                <stringParameter>
+                    <name>version</name>
+                    <description></description>
+                    <explanation></explanation>
+                    <value>${version}</value>
+                    <default>${version}</default>
+                    <allowEmptyValue>0</allowEmptyValue>
+                    <width>40</width>
+                </stringParameter>
             </parameterList>
         </parameterGroup>
     </parameterList>

@@ -42,7 +42,7 @@
 		<property file="${ci.script.path}/ci.test.properties" />
 		
 		<stafTools workType="copy" workHost="${target.deploy_tar_gz.ip}" fileName="${copy_tar}/build.version" saveDir="${release.path}" toHost="${local.ADDR4}" />
-    <property file="${release.path}/build.version" />
+    	<property file="${release.path}/build.version" />
     
 		<echo message="Old software is ${BUILD.NUMBER.LOCAL}" />
 		<echo message="New software is ${BUILD.NUMBER}" />

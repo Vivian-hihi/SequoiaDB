@@ -11,7 +11,20 @@
 	</taskdef> 
 
 	<target name="copy_tar_build" depends="">
-		<property name="software.package.name" value="${project.name}-${project.version}-${os.and.platform}-installer.run" />
+		<if>
+			<equals arg1="${enterprise}" arg2="true" />
+			<then>
+				<echo message="the verion is enterprise" />
+				<property name="version.name" value="-${enterprise.name}" />
+				<echo message="${version.name}" />
+			</then>
+			<else>
+				<echo message="the version is not enterprise" />
+				<property name="version.name" value="" />
+				<echo message="${version.name}" />
+			</else>
+		</if>
+		<property name="software.package.name" value="${project.name}-${project.version}-${os.and.platform}${version.name}-installer.run" />
 		<property name="driver.package.name" value="${project.name}-driver-${project.version}-${os.and.platform}.tar.gz" />
 
 		<echo message="Begin to copy the ${software.package.name} ${driver.package.name} ..." />
