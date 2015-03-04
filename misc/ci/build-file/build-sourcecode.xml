@@ -49,19 +49,19 @@
 			<equals arg1="${enterprise}" arg2="true" />
 			<then>
 				<echo message="enterprise is ture" />
-				<property name="enterprise" value="--ssl" />
-				<echo message="${enterprise}" />
+				<property name="enterprise.line" value=" --ssl" />
+				<echo message="${enterprise.line}" />
 			</then>
 			<else>
 				<echo message="enterprise is false" />
-				<property name="enterprise" value="" />
-				<echo message="${enterprise}" />
+				<property name="enterprise.line" value="" />
+				<echo message="${enterprise.line}" />
 			</else>
 		</if>
 
 		<echo message="exec scons ${compile.arg.line} --all -j 4" />
 		<exec executable="scons" dir="${WORKSPACE}/sequoiadb" failonerror="true">
-			<arg line="${compile.arg.line} {enterprise} --all -j 4" />
+			<arg line="${compile.arg.line}{enterprise.line} --all -j 4" />
 		</exec>
 
 		<echo message="Compile the connector of postgresql..." />
