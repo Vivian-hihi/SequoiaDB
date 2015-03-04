@@ -1228,8 +1228,10 @@ error :
 }
 
 #define ENCRYTED_STR_LEN   ( SDB_MD5_DIGEST_LENGTH * 2 + 1 )
-SDB_EXPORT INT32 sdbConnect ( const CHAR *pHostName, const CHAR *pServiceName,
-                              const CHAR *pUsrName, const CHAR *pPasswd ,
+
+static INT32 _sdbConnect ( const CHAR *pHostName, const CHAR *pServiceName,
+                              const CHAR *pUsrName, const CHAR *pPasswd,
+                              BOOLEAN useSSL,
                               sdbConnectionHandle *handle )
 {
    INT32 rc                            = SDB_OK ;
@@ -1247,7 +1249,7 @@ SDB_EXPORT INT32 sdbConnect ( const CHAR *pHostName, const CHAR *pServiceName,
 
    ALLOC_HANDLE( connection, sdbConnectionStruct ) ;
    connection->_handleType = SDB_HANDLE_TYPE_CONNECTION ;
-   rc = clientConnect ( pHostName, pServiceName, FALSE, &connection->_sock ) ;
+   rc = clientConnect ( pHostName, pServiceName, useSSL, &connection->_sock ) ;
    if ( SDB_OK != rc )
    {
       goto error ;
@@ -1317,9 +1319,24 @@ error:
    goto done ;
 }
 
+SDB_EXPORT INT32 sdbConnect ( const CHAR *pHostName, const CHAR *pServiceName,
+                              const CHAR *pUsrName, const CHAR *pPasswd ,
+                              sdbConnectionHandle *handle )
+{
+   return _sdbConnect ( pHostName, pServiceName, pUsrName, pPasswd, FALSE, handle ) ;
+}
+
+SDB_EXPORT INT32 sdbSecureConnect ( const CHAR *pHostName, const CHAR *pServiceName,
+                              const CHAR *pUsrName, const CHAR *pPasswd ,
+                              sdbConnectionHandle *handle )
+{
+   return _sdbConnect ( pHostName, pServiceName, pUsrName, pPasswd, TRUE, handle ) ;
+}
+
 //address[i] == "192.168.20.40:12345"
-SDB_EXPORT INT32 sdbConnect1 ( const CHAR **pConnAddrs, INT32 arrSize,
-                               const CHAR *pUsrName, const CHAR *pPasswd ,
+static INT32 _sdbConnect1 ( const CHAR **pConnAddrs, INT32 arrSize,
+                               const CHAR *pUsrName, const CHAR *pPasswd,
+                               BOOLEAN useSSL,
                                sdbConnectionHandle *handle )
 {
    INT32 rc                 = SDB_OK ;
@@ -1363,7 +1380,7 @@ SDB_EXPORT INT32 sdbConnect1 ( const CHAR **pConnAddrs, INT32 arrSize,
       pStr[pTmp - addr] = 0 ;
       pHostName = pStr ;
       pServiceName = &(pStr[pTmp - addr]) + 1;
-      rc = sdbConnect ( pHostName, pServiceName, pUsrName, pPasswd, handle ) ;
+      rc = _sdbConnect ( pHostName, pServiceName, pUsrName, pPasswd, useSSL, handle ) ;
       SDB_OSS_FREE ( pStr ) ;
       pStr = NULL ;
       pTmp = NULL ;
@@ -1380,6 +1397,20 @@ error:
       *handle = SDB_INVALID_HANDLE ;
    }
    goto done;
+}
+
+SDB_EXPORT INT32 sdbConnect1 ( const CHAR **pConnAddrs, INT32 arrSize,
+                               const CHAR *pUsrName, const CHAR *pPasswd ,
+                               sdbConnectionHandle *handle )
+{
+   return _sdbConnect1 ( pConnAddrs, arrSize, pUsrName, pPasswd, FALSE, handle) ;
+}
+
+SDB_EXPORT INT32 sdbSecureConnect1 ( const CHAR **pConnAddrs, INT32 arrSize,
+                               const CHAR *pUsrName, const CHAR *pPasswd ,
+                               sdbConnectionHandle *handle )
+{
+   return _sdbConnect1 ( pConnAddrs, arrSize, pUsrName, pPasswd, TRUE, handle) ;
 }
 
 void _sdbDisconnect_inner ( sdbConnectionHandle handle )
