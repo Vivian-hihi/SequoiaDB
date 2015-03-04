@@ -61,7 +61,7 @@
 
 		<echo message="exec scons ${compile.arg.line} --all -j 4" />
 		<exec executable="scons" dir="${WORKSPACE}/sequoiadb" failonerror="true">
-			<arg line="${compile.arg.line}{enterprise.line} --all -j 4" />
+			<arg line="${compile.arg.line}${enterprise.line} --all -j 4" />
 		</exec>
 
 		<echo message="Compile the connector of postgresql..." />
@@ -337,7 +337,7 @@
 			<then>
 				<echo message="the verion is enterprise" />
 				<property name="version.name" value="-${enterprise.name}" />
-				<echo message="${eversion.name}" />
+				<echo message="${version.name}" />
 			</then>
 			<else>
 				<echo message="the version is not enterprise" />
