@@ -45,9 +45,23 @@
 			</else>
 		</if>
 
-		<echo message="exec scons ${compile.arg.line}  --all -j 4" />
+		<if>
+			<equals arg1="${enterprise}" arg2="true" />
+			<then>
+				<echo message="enterprise is ture" />
+				<property name="enterprise" value="--ssl" />
+				<echo message="${enterprise}" />
+			</then>
+			<else>
+				<echo message="enterprise is false" />
+				<property name="enterprise" value="" />
+				<echo message="${enterprise}" />
+			</else>
+		</if>
+
+		<echo message="exec scons ${compile.arg.line} --all -j 4" />
 		<exec executable="scons" dir="${WORKSPACE}/sequoiadb" failonerror="true">
-			<arg line="${compile.arg.line} --all -j 4" />
+			<arg line="${compile.arg.line} {enterprise} --all -j 4" />
 		</exec>
 
 		<echo message="Compile the connector of postgresql..." />
@@ -207,7 +221,7 @@
 
 		<mkdir dir="${RELEASE_DIR}/sequoiadb/web" />
 
-		<if>
+		<!-- <if>
 			<equals arg1="${compile.debug}" arg2="true" />
 			<then>
 				<property name="build.result.dir" value="dd" />
@@ -215,7 +229,7 @@
 			<else>
 				<property name="build.result.dir" value="normal" />
 			</else>
-		</if>
+		</if> -->
 
 	    <copy todir="${RELEASE_DIR}/sequoiadb/bin" >
 	       <fileset dir="${CODE_DIR}/bin">
@@ -317,8 +331,23 @@
 		<copy file="${CODE_DIR}/misc/ci/mkrelease/sequoiadb_zh.lng" todir="${RELEASE_DIR}/" />
 
 		<touch file="${RELEASE_DIR}/license_empty.txt" />
+
+		<if>
+			<equals arg1="${enterprise}" arg2="true" />
+			<then>
+				<echo message="the verion is enterprise" />
+				<property name="version.name" value="-${enterprise.name}" />
+				<echo message="${eversion.name}" />
+			</then>
+			<else>
+				<echo message="the version is not enterprise" />
+				<property name="version.name" value="" />
+				<echo message="${version.name}" />
+			</else>
+		</if>
+		
 		<exec dir="${RELEASE_DIR}" executable="builder" failonerror="true">
-			<arg line="build sequoiadb_server.xml --setvars project.version=${project.version}  --setvars platform=${os.and.platform} --setvars project.outputDirectory=${RELEASE_DIR}" />
+			<arg line="build sequoiadb_server.xml --setvars project.version=${project.version}  --setvars platform=${os.and.platform} --setvars version=${version.name} --setvars project.outputDirectory=${RELEASE_DIR}" />
 		</exec>
 		<echo message="Make relase package completed." />
 <!-- 		<echo message="os.name=${os.name}, os.arch=${os.arch}" />

@@ -2,7 +2,7 @@
     <shortName>sequoiadb</shortName>
     <fullName>SequoiaDB Server</fullName>
     <version>1.0</version>
-    <installerFilename>${product_shortname}-${product_version}-${platform}-installer.${platform_exec_suffix}</installerFilename>
+    <installerFilename>${product_shortname}-${product_version}-${platform}{version}-installer.${platform_exec_suffix}</installerFilename>
     <allowLanguageSelection>1</allowLanguageSelection>
     <componentList>
         <component>

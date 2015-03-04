@@ -12,11 +12,11 @@
 	<property file="${test.basedir}/ci.test.properties" />
 	<property name="db.path" value="${install.path}/sequoiadb" />
 
-	<taskdef resource="net/sf/antcontrib/antlib.xml">
+	<!-- <taskdef resource="net/sf/antcontrib/antlib.xml">
 		<classpath>
 			<pathelement location="/usr/share/java/ant-contrib.jar" />
 		</classpath>
-	</taskdef>
+	</taskdef> -->
 	<taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
 		<classpath>
 			<pathelement location="${test.machine.deploy.path}/deploy/ant-sdbtasks/ant-sdbtasks.jar" />
@@ -29,7 +29,7 @@
 		
 		<exec executable="service" dir="" failonerror="false">
 			<arg value="sdbcm" />
-			<arg value="stop" />			
+			<arg value="stop" />		
 		</exec>
 		<exec executable="${db.path}/bin/sdbstop" dir="" failonerror="true" />
 		<!-- <stafTools workHost="${host.NAME}" workType="shell" workDir="${db.path}" common="ps -ef|grep sdb | grep -v grep | awk '{print $2}' | xargs kill -9" failonerror="true" /> -->
