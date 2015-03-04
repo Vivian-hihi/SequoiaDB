@@ -76,12 +76,28 @@ namespace engine
    protected:
       INT32 processCommandMsg( const NET_HANDLE &handle, MsgHeader *pMsg,
                                BOOLEAN writable ) ;
+      INT32 processCmdAlterImage( const NET_HANDLE &handle,
+                                  const CHAR *pQuery,
+                                  rtnContextBuf &ctxBuff ) ;
+
+   // inner process
+   protected:
       INT32 processCmdAttachImage( const NET_HANDLE &handle,
-                                   const CHAR *pQuery,
-                                   rtnContextBuf &ctxBuff ) ;
+                                   _clsDCMgr *pDCMgr,
+                                   const BSONObj &objQuery,
+                                   BSONObjBuilder &retObjBuilder ) ;
       INT32 processCmdEnableImage( const NET_HANDLE &handle,
-                                   const CHAR *pQuery,
-                                   rtnContextBuf &ctxBuff ) ;
+                                   _clsDCMgr *pDCMgr,
+                                   const BSONObj &objQuery,
+                                   BSONObjBuilder &retObjBuilder ) ;
+      INT32 processCmdDetachImage( const NET_HANDLE &handle,
+                                   _clsDCMgr *pDCMgr,
+                                   const BSONObj &objQuery,
+                                   BSONObjBuilder &retObjBuilder ) ;
+      INT32 processCmdDisableImage( const NET_HANDLE &handle,
+                                    _clsDCMgr *pDCMgr,
+                                    const BSONObj &objQuery,
+                                    BSONObjBuilder &retObjBuilder) ;
 
    protected:
       void  _fillRspHeader( MsgHeader *rspMsg, const MsgHeader *reqMsg ) ;

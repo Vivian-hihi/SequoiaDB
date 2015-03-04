@@ -175,7 +175,7 @@ namespace engine
                {
                   goto error ;
                }
-               rc = _addGroups( itemObj, checkGroups ) ;
+               rc = _addGroup( itemObj, checkGroups ) ;
                if ( rc )
                {
                   goto error ;
@@ -254,7 +254,7 @@ namespace engine
          {
             goto error ;
          }
-         rc = _addGroups( itemObj, TRUE, &added, &pSource, &pImage ) ;
+         rc = _addGroup( itemObj, TRUE, &added, &pSource, &pImage ) ;
          if ( rc )
          {
             goto error ;
@@ -332,6 +332,79 @@ namespace engine
       goto done ;
    }
 
+   INT32 _clsDCBaseInfo::delGroup( const string &source, string &image )
+   {
+      INT32 rc = SDB_OK ;
+      map< string, string >::iterator it ;
+
+      if ( source.empty() )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      it = _imageGroups.find( source ) ;
+      if ( it == _imageGroups.end() )
+      {
+         PD_LOG( PDERROR, "Source group[%s] does not exist", source.c_str() ) ;
+         rc = SDB_CAT_GRP_NOT_EXIST ;
+         goto error ;
+      }
+      image = it->second ;
+
+      _imageRGroups.erase( it->second ) ;
+      _imageGroups.erase( it ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _clsDCBaseInfo::delGroups( const BSONObj &groups,
+                                    map< string, string > *pDelMapGrps )
+   {
+      INT32 rc = SDB_OK ;
+      string source ;
+      string image ;
+
+      BSONObjIterator it( groups ) ;
+      while ( it.more() )
+      {
+         BSONObj itemObj ;
+         BSONElement itemEle = it.next() ;
+         if ( Array != itemEle.type() )
+         {
+            goto error ;
+         }
+         itemObj = itemEle.embeddedObject() ;
+         if ( 2 != itemObj.nFields() )
+         {
+            goto error ;
+         }
+         rc = _delGroup( itemObj, &source, &image ) ;
+         if ( rc )
+         {
+            goto error ;
+         }
+         if ( pDelMapGrps )
+         {
+            (*pDelMapGrps)[ source ] = image ;
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      PD_LOG( PDERROR, "Del groups failed, obj[%s] is invalid",
+              groups.toString().c_str() ) ;
+      if ( SDB_OK == rc )
+      {
+         rc = SDB_INVALIDARG ;
+      }
+      goto done ;
+   }
+
    void _clsDCBaseInfo::setClusterName( const string &name )
    {
       _clusterName = name ;
@@ -352,10 +425,10 @@ namespace engine
       _active = active ;
    }
 
-   INT32 _clsDCBaseInfo::_addGroups( BSONObj &obj, BOOLEAN check,
-                                     BOOLEAN *pAdded,
-                                     const CHAR **ppSource,
-                                     const CHAR **ppImage )
+   INT32 _clsDCBaseInfo::_addGroup( const BSONObj &obj, BOOLEAN check,
+                                    BOOLEAN *pAdded,
+                                    const CHAR **ppSource,
+                                    const CHAR **ppImage )
    {
       INT32 rc = SDB_OK ;
       string sourceGroup ;
@@ -421,6 +494,55 @@ namespace engine
       {
          *pAdded = TRUE ;
       }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _clsDCBaseInfo::_delGroup( const BSONObj &obj,
+                                    string *pSourceName,
+                                    string *pImageName )
+   {
+      INT32 rc = SDB_OK ;
+      map< string, string >::iterator it ;
+      string sourceGroup ;
+      BSONElement s = obj.getField( "0" ) ;
+      BSONElement d = obj.getField( "1" ) ;
+      if ( String != s.type() || String != d.type() )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      sourceGroup = s.valuestr() ;
+      if ( sourceGroup.empty() )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      it = _imageGroups.find( sourceGroup ) ;
+      if ( it == _imageGroups.end() )
+      {
+         PD_LOG( PDERROR, "Source group[%s] does not exist",
+                 sourceGroup.c_str() ) ;
+         rc = SDB_CAT_GRP_NOT_EXIST ;
+         goto error ;
+      }
+
+      if ( pSourceName )
+      {
+         *pSourceName = sourceGroup ;
+      }
+      if ( pImageName )
+      {
+         *pImageName = it->second ;
+      }
+
+      _imageRGroups.erase( it->second ) ;
+      _imageGroups.erase( it ) ;
 
    done:
       return rc ;
@@ -600,8 +722,6 @@ namespace engine
          _peerCatLatch.release() ;
       }
       return rc ;
-   error:
-      goto done ;
    }
 
    clsDCBaseInfo* _clsDCMgr::getImageDCBaseInfo( pmdEDUCB *cb, BOOLEAN update )

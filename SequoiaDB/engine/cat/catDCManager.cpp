@@ -133,8 +133,7 @@ namespace engine
       switch ( pMsg->opCode )
       {
       // command message entry, should dispatch in the entry function
-      case MSG_CAT_ATTACH_IMAGE_REQ :
-      case MSG_CAT_ENABLE_IMAGE_REQ :
+      case MSG_CAT_ALTER_IMAGE_REQ :
          rc = processCommandMsg( handle, pMsg, TRUE ) ;
          break ;
 
@@ -192,11 +191,8 @@ namespace engine
       // the second dispatch msg
       switch ( pQueryReq->header.opCode )
       {
-         case MSG_CAT_ATTACH_IMAGE_REQ :
-            rc = processCmdAttachImage( handle, pQuery, ctxBuff ) ;
-            break ;
-         case MSG_CAT_ENABLE_IMAGE_REQ :
-            rc = processCmdEnableImage( handle, pQuery, ctxBuff ) ;
+         case MSG_CAT_ALTER_IMAGE_REQ :
+            rc = processCmdAlterImage( handle, pQuery, ctxBuff ) ;
             break ;
          default :
             rc = SDB_INVALIDARG ;
@@ -232,135 +228,200 @@ namespace engine
       goto done ;
    }
 
-   INT32 _catDCManager::processCmdAttachImage( const NET_HANDLE &handle,
-                                               const CHAR *pQuery,
-                                               rtnContextBuf &ctxBuff )
+   INT32 _catDCManager::processCmdAlterImage( const NET_HANDLE &handle,
+                                              const CHAR *pQuery,
+                                              rtnContextBuf &ctxBuff )
    {
       INT32 rc = SDB_OK ;
       clsDCMgr dcMgr ;
-      clsDCBaseInfo *pBaseInfo = NULL ;
-      const CHAR *clusterName = NULL ;
-      const CHAR *businessName = NULL ;
-      string address ;
-      BSONObjBuilder retObjBuild ;
-
-      rc = _mapData2DCMgr( &dcMgr ) ;
-      PD_RC_CHECK( rc, PDERROR, "Map dc base data to dc manager failed, "
-                   "rc: %d", rc ) ;
-
-      pBaseInfo = dcMgr.getDCBaseInfo() ;
+      BSONObjBuilder retObjBuilder ;
 
       try
       {
-         vector< string > vecSourceGrp ;
-         BOOLEAN added = FALSE ;
-         BSONElement eleGroups ;
-         BSONObj objGroups ;
+         const CHAR *pAction = NULL ;
          BSONObj objQuery( pQuery ) ;
-
-         if ( !pBaseInfo->hasImage() )
+         BSONElement e = objQuery.getField( FIELD_NAME_ACTION ) ;
+         if ( String != e.type() )
          {
-            BSONElement eleAddr = objQuery.getField( FIELD_NAME_ADDRESS ) ;
-            if ( String != eleAddr.type() ||
-                 0 == ossStrlen( eleAddr.valuestr() ) )
-            {
-               PD_LOG( PDERROR, "Param[%s] is invalid in obj[%s]",
-                       FIELD_NAME_ADDRESS, objQuery.toString().c_str() ) ;
-               rc = SDB_INVALIDARG ;
-               goto error ;
-            }
-            rc = dcMgr.setImageCatAddr( eleAddr.valuestr() ) ;
-            PD_RC_CHECK( rc, PDERROR, "Parse image catalog address failed, "
-                         "rc: %d", rc ) ;
-
-            // update image catalog
-            rc = dcMgr.updateImageCataGroup( _pEduCB ) ;
-            PD_RC_CHECK( rc, PDERROR, "Update image catalog group failed, "
-                         "rc: %d", rc ) ;
-            address = dcMgr.getImageCatAddr() ;
-
-            // check the address is self cluster
-            if ( _isAddrConflictWithSelf( address ) )
-            {
-               rc = SDB_CAT_IMAGE_ADDR_CONFLICT ;
-               goto error ;
-            }
-
-            // update image dc base info
-            rc = dcMgr.updateImageDCBaseInfo( _pEduCB ) ;
-            PD_RC_CHECK( rc, PDERROR, "Update image dc base info failed, "
-                         "rc: %d", rc ) ;
-            clusterName = dcMgr.getImageDCBaseInfo( _pEduCB,
-                                    FALSE )->getClusterName() ;
-            businessName = dcMgr.getImageDCBaseInfo( _pEduCB,
-                                    FALSE )->getBusinessName() ;
-         }
-
-         // analysis groups
-         eleGroups = objQuery.getField( FIELD_NAME_GROUPS ) ;
-         if ( Array == eleGroups.type() )
-         {
-            objGroups = eleGroups.embeddedObject() ;
-         }
-         else if ( !eleGroups.eoo() )
-         {
-            PD_LOG( PDERROR, "Field[%s] is invalid in obj[%s]",
-                    FIELD_NAME_GROUPS, objQuery.toString().c_str() ) ;
+            PD_LOG( PDERROR, "The field[%s] is not valid in command[%d]'s "
+                    "param[%s]", FIELD_NAME_ACTION, MSG_CAT_ALTER_IMAGE_REQ,
+                    objQuery.toString().c_str() ) ;
             rc = SDB_INVALIDARG ;
             goto error ;
          }
-         // if objGroups is empty, will map all groups by the same name
-         if ( objGroups.isEmpty() || 0 == objGroups.nFields() )
+         pAction = e.valuestr() ;
+
+         rc = _mapData2DCMgr( &dcMgr ) ;
+         PD_RC_CHECK( rc, PDERROR, "Map dc base data to dc manager failed, "
+                      "rc: %d", rc ) ;
+
+         if ( 0 == ossStrcasecmp( pAction, CMD_VALUE_NAME_ATTACH ) )
          {
-            vector< string > allGroups ;
-            _pCatCB->getGroupsName( allGroups ) ;
-            for ( UINT32 i = 0 ; i < allGroups.size() ; ++i )
-            {
-               pBaseInfo->addGroup( allGroups[ i ], allGroups[ i ], &added ) ;
-               PD_RC_CHECK( rc, PDERROR, "Add group[%s:%s] failed when attach "
-                            "image, rc: %d", allGroups[ i ].c_str(),
-                            allGroups[ i ].c_str(), rc ) ;
-               if ( added )
-               {
-                  vecSourceGrp.push_back( allGroups[ i ] ) ;
-               }
-            }
+            rc = processCmdAttachImage( handle, &dcMgr, objQuery,
+                                        retObjBuilder ) ;
+         }
+         else if ( 0 == ossStrcasecmp( pAction, CMD_VALUE_NAME_DETACH ) )
+         {
+            rc = processCmdDetachImage( handle, &dcMgr, objQuery,
+                                        retObjBuilder ) ;
+         }
+         else if ( 0 == ossStrcasecmp( pAction, CMD_VALUE_NAME_ENABLE ) )
+         {
+            rc = processCmdEnableImage( handle, &dcMgr, objQuery,
+                                        retObjBuilder ) ;
+         }
+         else if ( 0 == ossStrcasecmp( pAction, CMD_VALUE_NAME_DISABLE ) )
+         {
+            rc = processCmdDisableImage( handle, &dcMgr, objQuery,
+                                         retObjBuilder ) ;
+         }
+         else if ( 0 == ossStrcasecmp( pAction, CMD_VALUE_NAME_ACTIVE ) )
+         {
+         }
+         else if ( 0 == ossStrcasecmp( pAction, CMD_VALUE_NAME_DEACTIVE ) )
+         {
          }
          else
          {
-            map< string, string > mapAddGrps ;
-            map< string, string >::iterator it ;
-            rc = pBaseInfo->addGroups( objGroups, &mapAddGrps ) ;
-            PD_RC_CHECK( rc, PDERROR, "Add groups[%s] failed when attach "
-                         "image, rc: %d", objGroups.toString().c_str(), rc ) ;
-            rc = _checkGroupsValid( mapAddGrps ) ;
-            PD_RC_CHECK( rc, PDERROR, "Groups[%s] is not all valid, rc: %d",
-                         objGroups.toString().c_str(), rc ) ;
-            it = mapAddGrps.begin() ;
-            while ( it != mapAddGrps.end() )
-            {
-               vecSourceGrp.push_back( it->first ) ;
-               ++it ;
-            }
+            PD_LOG( PDERROR, "The value[%s] of field[%s] is not valid "
+                    "in command[%d]'s param[%s]", pAction, FIELD_NAME_ACTION,
+                    MSG_CAT_ALTER_IMAGE_REQ, objQuery.toString().c_str() ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
          }
-
-         // add catalog group
-         pBaseInfo->addGroup( CATALOG_GROUPNAME, CATALOG_GROUPNAME, &added ) ;
-         if ( added )
-         {
-            vecSourceGrp.push_back( CATALOG_GROUPNAME ) ;
-         }
-
-         // construct return object
-         rc = _makeGroupsObj( retObjBuild, vecSourceGrp ) ;
-         PD_RC_CHECK( rc, PDERROR, "Make groups obj failed, rc: %d", rc ) ;
       }
       catch( std::exception &e )
       {
-         PD_LOG( PDERROR, "Attach image occurs exception: %s", e.what() ) ;
-         rc = SDB_SYS ;
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "Parse command[%d]'s param occur exception: %s",
+                 MSG_CAT_ALTER_IMAGE_REQ, e.what() ) ;
          goto error ;
       }
+
+      if ( SDB_OK == rc )
+      {
+         // get return groups
+         ctxBuff = rtnContextBuf( retObjBuilder.obj() ) ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _catDCManager::processCmdAttachImage( const NET_HANDLE &handle,
+                                               _clsDCMgr *pDCMgr,
+                                               const BSONObj &objQuery,
+                                               BSONObjBuilder &retObjBuilder )
+   {
+      INT32 rc = SDB_OK ;
+      clsDCBaseInfo *pBaseInfo = pDCMgr->getDCBaseInfo() ;
+      const CHAR *clusterName = NULL ;
+      const CHAR *businessName = NULL ;
+      string address ;
+
+      vector< string > vecSourceGrp ;
+      BOOLEAN added = FALSE ;
+      BSONElement eleGroups ;
+      BSONObj objGroups ;
+
+      if ( !pBaseInfo->hasImage() )
+      {
+         BSONElement eleAddr = objQuery.getField( FIELD_NAME_ADDRESS ) ;
+         if ( String != eleAddr.type() ||
+              0 == ossStrlen( eleAddr.valuestr() ) )
+         {
+            PD_LOG( PDERROR, "Param[%s] is invalid in obj[%s]",
+                    FIELD_NAME_ADDRESS, objQuery.toString().c_str() ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+         rc = pDCMgr->setImageCatAddr( eleAddr.valuestr() ) ;
+         PD_RC_CHECK( rc, PDERROR, "Parse image catalog address failed, "
+                      "rc: %d", rc ) ;
+
+         // update image catalog
+         rc = pDCMgr->updateImageCataGroup( _pEduCB ) ;
+         PD_RC_CHECK( rc, PDERROR, "Update image catalog group failed, "
+                      "rc: %d", rc ) ;
+         address = pDCMgr->getImageCatAddr() ;
+
+         // check the address is self cluster
+         if ( _isAddrConflictWithSelf( address ) )
+         {
+            rc = SDB_CAT_IMAGE_ADDR_CONFLICT ;
+            goto error ;
+         }
+
+         // update image dc base info
+         rc = pDCMgr->updateImageDCBaseInfo( _pEduCB ) ;
+         PD_RC_CHECK( rc, PDERROR, "Update image dc base info failed, "
+                      "rc: %d", rc ) ;
+         clusterName = pDCMgr->getImageDCBaseInfo( _pEduCB,
+                                 FALSE )->getClusterName() ;
+         businessName = pDCMgr->getImageDCBaseInfo( _pEduCB,
+                                 FALSE )->getBusinessName() ;
+      }
+
+      // analysis groups
+      eleGroups = objQuery.getField( FIELD_NAME_GROUPS ) ;
+      if ( Array == eleGroups.type() )
+      {
+         objGroups = eleGroups.embeddedObject() ;
+      }
+      else if ( !eleGroups.eoo() )
+      {
+         PD_LOG( PDERROR, "Field[%s] is invalid in obj[%s]",
+                 FIELD_NAME_GROUPS, objQuery.toString().c_str() ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      // if objGroups is empty, will map all groups by the same name
+      if ( objGroups.isEmpty() || 0 == objGroups.nFields() )
+      {
+         vector< string > allGroups ;
+         _pCatCB->getGroupsName( allGroups ) ;
+         for ( UINT32 i = 0 ; i < allGroups.size() ; ++i )
+         {
+            pBaseInfo->addGroup( allGroups[ i ], allGroups[ i ], &added ) ;
+            PD_RC_CHECK( rc, PDERROR, "Add group[%s:%s] failed when attach "
+                         "image, rc: %d", allGroups[ i ].c_str(),
+                         allGroups[ i ].c_str(), rc ) ;
+            if ( added )
+            {
+               vecSourceGrp.push_back( allGroups[ i ] ) ;
+            }
+         }
+      }
+      else
+      {
+         map< string, string > mapAddGrps ;
+         map< string, string >::iterator it ;
+         rc = pBaseInfo->addGroups( objGroups, &mapAddGrps ) ;
+         PD_RC_CHECK( rc, PDERROR, "Add groups[%s] failed when attach "
+                      "image, rc: %d", objGroups.toString().c_str(), rc ) ;
+         rc = _checkGroupsValid( mapAddGrps ) ;
+         PD_RC_CHECK( rc, PDERROR, "Groups[%s] is not all valid, rc: %d",
+                      objGroups.toString().c_str(), rc ) ;
+         it = mapAddGrps.begin() ;
+         while ( it != mapAddGrps.end() )
+         {
+            vecSourceGrp.push_back( it->first ) ;
+            ++it ;
+         }
+      }
+
+      // add catalog group
+      pBaseInfo->addGroup( CATALOG_GROUPNAME, CATALOG_GROUPNAME, &added ) ;
+      if ( added )
+      {
+         vecSourceGrp.push_back( CATALOG_GROUPNAME ) ;
+      }
+
+      // construct return object
+      rc = _makeGroupsObj( retObjBuilder, vecSourceGrp ) ;
+      PD_RC_CHECK( rc, PDERROR, "Make groups obj failed, rc: %d", rc ) ;
 
       // update info to collection
       {
@@ -394,9 +455,6 @@ namespace engine
                       CAT_SYSDCBASE_COLLECTION_NAME, rc ) ;
       }
 
-      // get return groups
-      ctxBuff = rtnContextBuf( retObjBuild.obj() ) ;
-
    done:
       return rc ;
    error:
@@ -404,19 +462,13 @@ namespace engine
    }
 
    INT32 _catDCManager::processCmdEnableImage( const NET_HANDLE &handle,
-                                               const CHAR *pQuery,
-                                               rtnContextBuf &ctxBuff )
+                                               _clsDCMgr *pDCMgr,
+                                               const BSONObj &objQuery,
+                                               BSONObjBuilder &retObjBuilder )
    {
       INT32 rc = SDB_OK ;
-      clsDCMgr dcMgr ;
-      clsDCBaseInfo *pBaseInfo = NULL ;
+      clsDCBaseInfo *pBaseInfo = pDCMgr->getDCBaseInfo() ;
       vector< string > allGroups ;
-      BSONObjBuilder retObjBuilder ;
-
-      rc = _mapData2DCMgr( &dcMgr ) ;
-      PD_RC_CHECK( rc, PDERROR, "Map dc base data to dc manager failed, "
-                   "rc: %d", rc ) ;
-      pBaseInfo = dcMgr.getDCBaseInfo() ;
 
       // is already enable
       if ( pBaseInfo->imageIsEnable() )
@@ -425,10 +477,10 @@ namespace engine
       }
 
       // check image' all groups has image
-      rc = dcMgr.updateImageAllGroups( _pEduCB ) ;
+      rc = pDCMgr->updateImageAllGroups( _pEduCB ) ;
       PD_RC_CHECK( rc, PDERROR, "Update image all groups failed, rc: %d",
                    rc ) ;
-      dcMgr.getImageNodeMgrAgent()->getGroupsName( allGroups ) ;
+      pDCMgr->getImageNodeMgrAgent()->getGroupsName( allGroups ) ;
       for ( UINT32 i = 0 ; i < allGroups.size() ; ++i )
       {
          if ( pBaseInfo->getRImageGroups()->find( allGroups[i] ) ==
@@ -470,7 +522,112 @@ namespace engine
          goto error ;
       }
 
-      ctxBuff = rtnContextBuf( retObjBuilder.obj() ) ;
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _catDCManager::processCmdDisableImage( const NET_HANDLE &handle,
+                                                _clsDCMgr *pDCMgr,
+                                                const BSONObj &objQuery,
+                                                BSONObjBuilder &retObjBuilder )
+   {
+      INT32 rc = SDB_OK ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _catDCManager::processCmdDetachImage( const NET_HANDLE &handle,
+                                               _clsDCMgr *pDCMgr,
+                                               const BSONObj &objQuery,
+                                               BSONObjBuilder &retObjBuilder )
+   {
+      INT32 rc = SDB_OK ;
+      clsDCBaseInfo *pBaseInfo = pDCMgr->getDCBaseInfo() ;
+      BSONElement eleGroups ;
+      BSONObj objGroups ;
+      vector< string > vecGroups ;
+
+      // detach only when disable
+      if ( pBaseInfo->imageIsEnable() )
+      {
+         rc = SDB_CAT_IMAGE_IS_ENABLED ;
+         goto error ;
+      }
+
+      // not image
+      if ( !pBaseInfo->hasImage() )
+      {
+         rc = SDB_CAT_IMAGE_NOT_CONFIG ;
+         goto error ;
+      }
+
+      // analysis groups
+      eleGroups = objQuery.getField( FIELD_NAME_GROUPS ) ;
+      if ( Array == eleGroups.type() )
+      {
+         objGroups = eleGroups.embeddedObject() ;
+      }
+      else if ( !eleGroups.eoo() )
+      {
+         PD_LOG( PDERROR, "Field[%s] is invalid in obj[%s]",
+                 FIELD_NAME_GROUPS, objQuery.toString().c_str() ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      // if objGroups is empty, will detach all groups
+      if ( objGroups.isEmpty() || 0 == objGroups.nFields() )
+      {
+         map<string, string> *pImgGrps = pBaseInfo->getImageGroups() ;
+         map<string, string>::iterator it = pImgGrps->begin() ;
+         while ( it != pImgGrps->end() )
+         {
+            vecGroups.push_back( it->first ) ;
+            ++it ;
+         }
+         pImgGrps->clear() ;
+      }
+      else
+      {
+         map< string, string > mapDelGrps ;
+         map< string, string >::iterator it ;
+         rc = pBaseInfo->delGroups( objGroups, &mapDelGrps ) ;
+         PD_RC_CHECK( rc, PDERROR, "Del groups[%s] failed when detach "
+                      "image, rc: %d", objGroups.toString().c_str(), rc ) ;
+         it = mapDelGrps.begin() ;
+         while ( it != mapDelGrps.end() )
+         {
+            vecGroups.push_back( it->first ) ;
+            ++it ;
+         }
+      }
+
+      // make return obj
+      rc = _makeGroupsObj( retObjBuilder, vecGroups ) ;
+      PD_RC_CHECK( rc, PDERROR, "Make return groups object failed, rc: %d",
+                   rc ) ;
+
+      // update info to collection
+      {
+         BSONObjBuilder builder ;
+         _dcBaseInfoGroups2Obj( pBaseInfo, builder,
+                                FIELD_NAME_IMAGE"."FIELD_NAME_GROUPS ) ;
+         BSONObj updator = BSON( "$set" << builder.obj() ) ;
+         BSONObj matcher = BSON( FIELD_NAME_TYPE <<
+                                 CAT_BASE_TYPE_GLOBAL_STR ) ;
+         BSONObj hint ;
+         rc = rtnUpdate( CAT_SYSDCBASE_COLLECTION_NAME, matcher, updator,
+                         hint, 0, _pEduCB, _pDmsCB, _pDpsCB, _majoritySize(),
+                         NULL ) ;
+         PD_RC_CHECK( rc, PDERROR, "Update obj[%s] to collection[%s] failed, "
+                      "rc: %d", updator.toString().c_str(),
+                      CAT_SYSDCBASE_COLLECTION_NAME, rc ) ;
+      }
 
    done:
       return rc ;

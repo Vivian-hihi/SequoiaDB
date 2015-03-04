@@ -81,6 +81,10 @@ namespace engine
          INT32          addGroups( const BSONObj &groups,
                                    map< string, string > *pAddMapGrps = NULL ) ;
 
+         INT32          delGroup( const string &source, string &image ) ;
+         INT32          delGroups( const BSONObj &groups,
+                                   map< string, string > *pDelMapGrps = NULL ) ;
+
          void           setClusterName( const string &name ) ;
          void           setBusinessName( const string &name ) ;
          void           setAddress( const string &addr ) ;
@@ -109,10 +113,13 @@ namespace engine
 
       protected:
          void           _reset() ;
-         INT32          _addGroups( BSONObj &obj, BOOLEAN check,
-                                    BOOLEAN *pAdded = NULL,
-                                    const CHAR **ppSource = NULL,
-                                    const CHAR **ppImage = NULL ) ;
+         INT32          _addGroup( const BSONObj &obj, BOOLEAN check,
+                                   BOOLEAN *pAdded = NULL,
+                                   const CHAR **ppSource = NULL,
+                                   const CHAR **ppImage = NULL ) ;
+         INT32          _delGroup( const BSONObj &obj,
+                                   string *pSourceName = NULL,
+                                   string *pImageName = NULL ) ;
 
       private:
          BSONObj        _orgObj ;

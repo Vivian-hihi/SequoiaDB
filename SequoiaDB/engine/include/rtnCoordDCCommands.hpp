@@ -42,9 +42,9 @@
 namespace engine
 {
    /*
-      rtnCoordImageBase define
+      rtnCoordAlterImage define
    */
-   class rtnCoordImageBase : public rtnCoordCommand
+   class rtnCoordAlterImage : public rtnCoordCommand
    {
       public:
          virtual INT32 execute( CHAR *pReceiveBuffer, SINT32 packSize,
@@ -52,31 +52,9 @@ namespace engine
                                 pmdEDUCB *cb, MsgOpReply &replyHeader,
                                 BSONObj **ppErrorObj ) ;
 
-      protected:
-         virtual INT32 _getInnerOpCode() const = 0 ;
-         virtual const CHAR* _getName() const = 0 ;
-   } ;
-
-   /*
-      rtnCoordAttachImage define
-   */
-   class rtnCoordAttachImage : public rtnCoordImageBase
-   {
-      protected:
-         virtual INT32 _getInnerOpCode() const ;
-         virtual const CHAR* _getName() const ;
-   } ;
-
-   /*
-      rtnCoordEnableImage define
-   */
-   class rtnCoordEnableImage : public rtnCoordImageBase
-   {
-      protected:
-         virtual INT32 _getInnerOpCode() const ;
-         virtual const CHAR* _getName() const ;
    } ;
 
 }
 
 #endif // RTNCOORD_DC_COMMANDS_HPP__
+
