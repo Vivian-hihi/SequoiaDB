@@ -28,6 +28,9 @@
 #else
 #pragma comment(lib, "Ws2_32.lib")
 #endif
+#ifdef SDB_SSL
+#include "ossSSLWrapper.h"
+#endif
 #if defined (_WINDOWS)
 #define SOCKET_GETLASTERROR WSAGetLastError()
 #else
@@ -37,6 +40,9 @@
 struct Socket
 {
    SOCKET      rawSocket ;
+#ifdef SDB_SSL
+   SSLHandle*  sslHandle ;
+#endif
 } ;
 
 #if defined (_WINDOWS)
@@ -45,9 +51,13 @@ static BOOLEAN sockInitialized = FALSE ;
 
 static INT32 _disableNagle( SOCKET sock ) ;
 static void _clientDisconnect ( SOCKET sock ) ;
+#ifdef SDB_SSL
+static INT32 _clientSecure( Socket* sock ) ;
+#endif
 
 INT32 clientConnect ( const CHAR *pHostName,
                       const CHAR *pServiceName,
+                      BOOLEAN useSSL,
                       Socket** sock )
 {
    INT32 rc = SDB_OK ;
@@ -119,6 +129,26 @@ INT32 clientConnect ( const CHAR *pHostName,
       goto error ;
    }
    s->rawSocket = rawSocket ;
+#ifdef SDB_SSL
+   s->sslHandle = NULL ;
+#endif
+
+   if ( useSSL )
+   {
+#ifdef SDB_SSL
+      rc = _clientSecure ( s ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error;
+      }
+      *sock = s ;
+      goto done ;
+#endif
+      /* SSL feature not available in this build */
+      rc = SDB_INVALIDARG ;
+      goto error;
+   }
+
    *sock = s ;
    rc = SDB_OK ;
 
@@ -132,6 +162,67 @@ error :
    }
    goto done ;
 }
+
+#ifdef SDB_SSL
+
+static INT32 _clientSecure( Socket* sock )
+{
+   SSLContext* ctx = NULL ;
+   SSLHandle* sslHandle = NULL ;
+   INT32 ret = SDB_OK ;
+
+   if ( NULL == sock || -1 == sock->rawSocket )
+   {
+      ret = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   if ( NULL != sock->sslHandle )
+   {
+      /* sslHandle already exists */
+      ret = SDB_NETWORK ;
+      goto error ;
+   }
+
+   ctx = ossSSLGetContext () ;
+   if ( NULL == ctx )
+   {
+      /* failed to get SSL context */
+      ret = SDB_NETWORK ;
+      goto error;
+   }
+
+   ret = ossSSLNewHandle ( &sslHandle, ctx, sock->rawSocket, NULL, 0 ) ;
+   if ( SSL_OK != ret )
+   {
+      /* failed to create SSL handle */
+      ret = SDB_NETWORK ;
+      goto error ;
+   }
+
+   ret = ossSSLConnect ( sslHandle ) ;
+   if ( SSL_OK != ret )
+   {
+      /* SSL failed to connect */
+      ret = SDB_NETWORK ;
+      goto error ;
+   }
+
+   /* create a SSL connection */
+   sock->sslHandle = sslHandle ;
+   ret = SDB_OK ;
+
+done:
+   return ret;
+error:
+   if ( NULL != sslHandle )
+   {
+      ossSSLFreeHandle ( &sslHandle ) ;
+   }
+   goto done;
+}
+
+#endif /* SDB_SSL */
 
 SOCKET clientGetRawSocket( Socket* sock )
 {
@@ -208,6 +299,13 @@ void clientDisconnect ( Socket** sock )
    if ( NULL != *sock )
    {
       _clientDisconnect ( (*sock)->rawSocket ) ;
+#ifdef SDB_SSL
+      if ( NULL != (*sock)->sslHandle )
+      {
+         ossSSLShutdown ( (*sock)->sslHandle ) ;
+         ossSSLFreeHandle ( &( (*sock)->sslHandle ) ) ;
+      }
+#endif
       SDB_OSS_FREE ( *sock ) ;
       *sock = NULL ;
    }
@@ -276,16 +374,38 @@ INT32 clientSend ( Socket* sock, const CHAR *pMsg, INT32 len, INT32 timeout )
    }
    while ( len > 0 )
    {
-#if defined (_WINDOWS)
-      rc = send ( rawSocket, pMsg, len, 0 ) ;
-      if ( SOCKET_ERROR == rc )
-#else
-      rc = send ( rawSocket, pMsg, len, MSG_NOSIGNAL ) ;
-      if ( -1 == rc )
-#endif
+#ifdef SDB_SSL
+      if ( NULL != sock->sslHandle )
       {
-         rc = SDB_NETWORK ;
-         goto error ;
+         rc = ossSSLWrite ( sock->sslHandle, pMsg, len ) ;
+         if ( rc <= 0 )
+         {
+            if ( SSL_AGAIN == rc )
+            {
+               rc = SDB_TIMEOUT ;
+            }
+            else
+            {
+               /* SSL failed to send */
+               rc = SDB_NETWORK ;
+            }
+            goto error;
+         }
+      }
+      else
+#endif /* SDB_SSL */
+      {
+#if defined (_WINDOWS)
+         rc = send ( rawSocket, pMsg, len, 0 ) ;
+         if ( SOCKET_ERROR == rc )
+#else
+         rc = send ( rawSocket, pMsg, len, MSG_NOSIGNAL ) ;
+         if ( -1 == rc )
+#endif
+         {
+            rc = SDB_NETWORK ;
+            goto error ;
+         }
       }
       len -= rc ;
       pMsg += rc ;
@@ -316,6 +436,35 @@ INT32 clientRecv ( Socket* sock, CHAR *pMsg, INT32 len, INT32 timeout )
       goto done ;
    }
 
+#ifdef SDB_SSL
+   if ( NULL != sock->sslHandle )
+   {
+      while ( len > 0 )
+      {
+         rc = ossSSLRead ( sock->sslHandle, pMsg, len ) ;
+         if ( rc <= 0 )
+         {
+            if ( SSL_AGAIN == rc || SSL_TIMEOUT == rc)
+            {
+               rc = SDB_TIMEOUT ;
+            }
+            else
+            {
+               /* SSL failed to recv */
+               rc = SDB_NETWORK ;
+            }
+            goto error;
+         }
+
+         len -= rc ;
+         pMsg += rc ;
+         rc = SDB_OK;
+      }
+
+      rc = SDB_OK;
+      goto done;
+   }
+#endif /* SDB_SSL */
    rawSocket = sock->rawSocket ;
    maxSelectTime.tv_sec = timeout / 1000000 ;
    maxSelectTime.tv_usec = timeout % 1000000 ;

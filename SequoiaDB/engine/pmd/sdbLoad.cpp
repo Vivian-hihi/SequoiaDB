@@ -429,7 +429,7 @@ INT32 _connectSdb ()
       PD_LOG ( PDERROR, "get port error" ) ;
       goto error ;
    }
-   rc = clientConnect ( lHostName, lServiceName, &s ) ;
+   rc = clientConnect ( lHostName, lServiceName, FALSE, &s ) ;
    if ( rc )
    {
       PD_LOG ( PDERROR, "connect database error" ) ;

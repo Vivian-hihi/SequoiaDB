@@ -688,6 +688,7 @@ fapEnv.Append( CPPDEFINES=["SDB_ENGINE", "SDB_DLL_BUILD"])
 
 # drivers always set SSL definition
 clientCppEnv.Append( CPPDEFINES=[ "SDB_SSL" ] )
+clientCEnv.Append( CPPDEFINES=[ "SDB_SSL" ] )
 if hasSSL:
     env.Append( CPPDEFINES=[ "SDB_SSL" ] )
 

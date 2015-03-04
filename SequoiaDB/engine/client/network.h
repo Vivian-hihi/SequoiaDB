@@ -24,6 +24,7 @@ typedef struct Socket Socket ;
 
 INT32 clientConnect ( const CHAR *pHostName,
                       const CHAR *pServiceName,
+                      BOOLEAN useSSL,
                       Socket** sock ) ;
 
 void clientDisconnect ( Socket** sock ) ;

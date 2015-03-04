@@ -1247,7 +1247,7 @@ SDB_EXPORT INT32 sdbConnect ( const CHAR *pHostName, const CHAR *pServiceName,
 
    ALLOC_HANDLE( connection, sdbConnectionStruct ) ;
    connection->_handleType = SDB_HANDLE_TYPE_CONNECTION ;
-   rc = clientConnect ( pHostName, pServiceName, &connection->_sock ) ;
+   rc = clientConnect ( pHostName, pServiceName, FALSE, &connection->_sock ) ;
    if ( SDB_OK != rc )
    {
       goto error ;
