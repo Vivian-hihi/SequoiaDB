@@ -186,7 +186,6 @@ var OMA_PROG_SDBCM_L                  = "sdbcm" ;
 var OMA_PROG_BIN_SDB_L                = "bin/sdb" ;  
 var OMA_PROG_BIN_SDBCM_L              = "bin/sdbcm" ;
 var OMA_PROG_BIN_SDBLIST_L            = "bin/sdblist" ;
-var OMA_PROG_BIN_SDBOMTOOL_L          = "bin/sdbomtool" ;
 var OMA_PROG_SDB                      = "sdb" ;
 var OMA_PROG_SDBCMD_L                 = "sdbcmd" ;
 var OMA_PROG_SDBCMART_L               = "sdbcmart" ;

@@ -390,7 +390,8 @@ function removeTmpDir2( ssh )
    var dirs = [ OMA_PATH_TEMP_BIN_DIR_L,
                 OMA_PATH_TEMP_PACKET_DIR_L,
                 OMA_PATH_TEMP_SPT_DIR_L,
-                OMA_PATH_TEMP_LOCAL_DIR_L ] ;
+                OMA_PATH_TEMP_LOCAL_DIR_L,
+                OMA_PATH_TMP_WEB_DIR ] ;
    try
    {
       if ( SYS_LINUX == SYS_TYPE )
