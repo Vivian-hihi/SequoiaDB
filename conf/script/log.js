@@ -433,24 +433,29 @@ function PD_LOG3( type, argsObj, level, func, line, file, message )
    var funcName  = "" ;
    var formatStr = "" ;
    var logInfo   = "" ;
+   var levelStr  = "" ;
    
    if ( "number" == typeof( level ) && level > JS_LOG_LEVEL )
       return ;
    funcName = (argsObj.callee.toString().replace(/function\s?/mi, "").split("("))[0] ;
 
+   levelStr = _getPDLevelDesp(level) ;
+   if ( PDERROR >= level )
+      levelStr = "*" + levelStr ;
+   
    try
    {
-      formatStr = "%s [%7s][%5d][%5d][%-30s]: %s%s" ;
-      logInfo = _sprintf( formatStr, genTimeStamp(), _getPDLevelDesp(level),
-                          System.getPID(), System.getTID(),
-                          file + ":" + funcName, message, LOG_NEW_LINE ) ;
+      formatStr = "%s [%5d][%5d][%7s]: %s(%s)%s" ;
+      logInfo = _sprintf( formatStr, genTimeStamp(),
+                          System.getPID(), System.getTID(), levelStr,
+                          message, file + ":" + funcName, LOG_NEW_LINE ) ;
    }
    catch( e )
    {
-      formatStr = "? [?][?][?][?]: ??" ;
-      logInfo = sprintf( formatStr, genTimeStamp(), _getPDLevelDesp(level),
-                         System.getPID(), System.getTID(),
-                         file + ":" + funcName, message, LOG_NEW_LINE ) ;
+      formatStr = "? [?][?][?]: ?(?)?" ;
+      logInfo = sprintf( formatStr, genTimeStamp(),
+                         System.getPID(), System.getTID(), levelStr,
+                         message, file + ":" + funcName, LOG_NEW_LINE ) ;
    }
    _write2File( type, logInfo ) ;
 }
