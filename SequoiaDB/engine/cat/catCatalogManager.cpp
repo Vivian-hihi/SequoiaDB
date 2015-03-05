@@ -1720,7 +1720,12 @@ namespace engine
       {
       // command dispatch, need the second dispath in the function
       case MSG_CAT_CREATE_COLLECTION_REQ :
+      case MSG_CAT_DROP_COLLECTION_REQ :
       case MSG_CAT_CREATE_COLLECTION_SPACE_REQ :
+      case MSG_CAT_DROP_SPACE_REQ :
+      case MSG_CAT_ALTER_COLLECTION_REQ :
+      case MSG_CAT_LINK_CL_REQ :
+      case MSG_CAT_UNLINK_CL_REQ :
       case MSG_CAT_SPLIT_PREPARE_REQ :
       case MSG_CAT_SPLIT_READY_REQ :
       case MSG_CAT_SPLIT_CANCEL_REQ :
@@ -1728,17 +1733,18 @@ namespace engine
       case MSG_CAT_SPLIT_CHGMETA_REQ :
       case MSG_CAT_SPLIT_CLEANUP_REQ :
       case MSG_CAT_SPLIT_FINISH_REQ :
-      case MSG_CAT_QUERY_SPACEINFO_REQ :
-      case MSG_CAT_DROP_COLLECTION_REQ :
       case MSG_CAT_CRT_PROCEDURES_REQ :
       case MSG_CAT_RM_PROCEDURES_REQ :
-      case MSG_CAT_DROP_SPACE_REQ :
-      case MSG_CAT_LINK_CL_REQ :
-      case MSG_CAT_UNLINK_CL_REQ :
       case MSG_CAT_CREATE_DOMAIN_REQ :
       case MSG_CAT_DROP_DOMAIN_REQ :
       case MSG_CAT_ALTER_DOMAIN_REQ :
-      case MSG_CAT_ALTER_COLLECTION_REQ:
+         {
+            // up commands is run in cluster acitve status
+            _pCatCB->getCatDCMgr()->setImageCommand( TRUE ) ;
+            rc = processCommandMsg( handle, pMsg, TRUE ) ;
+            break;
+         }
+      case MSG_CAT_QUERY_SPACEINFO_REQ :
          {
             rc = processCommandMsg( handle, pMsg, TRUE ) ;
             break;
@@ -1817,6 +1823,12 @@ namespace engine
          rc = SDB_CLS_NOT_PRIMARY ;
          PD_LOG ( PDWARNING, "Service deactive but received command: %s,"
                   "opCode: %d", pCMDName, pQueryReq->header.opCode ) ;
+         goto error ;
+      }
+      else if ( _pCatCB->getCatDCMgr()->isImageCommand() &&
+                !_pCatCB->isDCActive() )
+      {
+         rc = SDB_CAT_CLUSTER_NOT_ACTIVE ;
          goto error ;
       }
 

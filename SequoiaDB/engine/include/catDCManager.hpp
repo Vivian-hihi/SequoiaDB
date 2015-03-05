@@ -77,6 +77,9 @@ namespace engine
       BOOLEAN groupInImage( UINT32 groupID ) ;
       BOOLEAN groupInImage( const string &groupName ) ;
 
+      void    setImageCommand( BOOLEAN imageCmd ) { _isImageCmd = imageCmd ; }
+      BOOLEAN isImageCommand() const { return _isImageCmd ; }
+
    // message process functions
    protected:
       INT32 processCommandMsg( const NET_HANDLE &handle, MsgHeader *pMsg,
@@ -144,6 +147,9 @@ namespace engine
       // for dc and image
       BOOLEAN                    _isDCActive ;
       BOOLEAN                    _isImageEnable ;
+
+      // for commands
+      BOOLEAN                    _isImageCmd ;
 
    } ;
    typedef _catDCManager catDCManager ;

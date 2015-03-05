@@ -200,7 +200,7 @@ namespace engine
       SDB_ASSERT( NULL != _logger, "logger should not be NULL" ) ;
 
       // register dps log event handler
-      _logger->setEventHandler( this ) ;
+      _logger->regEventHandler( this ) ;
 
       rc = _replBucket.init() ;
       PD_RC_CHECK( rc, PDERROR, "Init repl bucket failed, rc: %d", rc ) ;
@@ -252,7 +252,7 @@ namespace engine
       _replBucket.fini() ;
       if ( _logger )
       {
-         _logger->unsetEventHandler() ;
+         _logger->unregEventHandler() ;
       }
       return SDB_OK ;
    }

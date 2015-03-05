@@ -808,7 +808,7 @@ if hasTool:
           _LIBDEPS='$_LIBDEPS_OBJS' )
 
    sdbdmsdump = env.Program("sdbdmsdump", sdbdmsdumpMain,
-         LIBDEPS=["qgm","bar","rest","cat","coord","snappy","cls","pcre","oss","pd","pmd","mig","rtn","msg","ixm","dms","bps","bson","mth","opt","util","mon","dps","net", "sql","auth", "aggr","spd", "omsvc"],
+         LIBDEPS=["qgm","bar","rest","cat","coord","snappy","util","cls","pcre","oss","pd","pmd","mig","rtn","msg","ixm","dms","bps","bson","mth","opt","mon","dps","net", "sql","auth", "aggr","spd", "omsvc"],
          _LIBDEPS='$_LIBDEPS_OBJS' )
 # Install testcases
 if hasTestcase:

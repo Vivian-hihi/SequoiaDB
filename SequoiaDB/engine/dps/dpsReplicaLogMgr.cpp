@@ -77,7 +77,6 @@ namespace engine
       _restoreFlag = FALSE ;
 
       _transCB = NULL ;
-      _pEventHander = NULL ;
    }
 
    _dpsReplicaLogMgr::~_dpsReplicaLogMgr()
@@ -86,6 +85,26 @@ namespace engine
       {
          SDB_OSS_DEL []_pages;
          _pages = NULL;
+      }
+   }
+
+   void _dpsReplicaLogMgr::regEventHandler( dpsEventHandler *pEventHandler )
+   {
+      _vecEventHandler.push_back( pEventHandler ) ;
+   }
+
+   void _dpsReplicaLogMgr::unregEventHandler( dpsEventHandler *pEventHandler )
+   {
+      vector< dpsEventHandler* >::iterator it = _vecEventHandler.begin() ;
+      while ( it != _vecEventHandler.end() )
+      {
+         if ( *it == pEventHandler )
+         {
+            _vecEventHandler.erase( it ) ;
+            break ;
+         }
+         ++it ;
+         continue ;
       }
    }
 
@@ -308,11 +327,15 @@ namespace engine
          _currentLsn = _lsn ;
          _lsn.offset += dummyhead._length ;
 
-         if ( info.isNeedNotify() && _pEventHander )
+         if ( info.isNeedNotify() && _vecEventHandler.size() > 0 )
          {
-            _pEventHander->onPrepareLog( info.getCSLID(), info.getCLLID(),
-                                         info.getExtentLID(),
-                                         dummyhead._lsn ) ;
+            for( UINT32 i = 0 ; i < _vecEventHandler.size() ; ++i )
+            {
+               _vecEventHandler[i]->onPrepareLog( info.getCSLID(),
+                                                  info.getCLLID(),
+                                                  info.getExtentLID(),
+                                                  head._lsn ) ;
+            }
          }
       }
 
@@ -351,11 +374,15 @@ namespace engine
       _currentLsn = _lsn ;
       _lsn.offset += head._length ;
 
-      if ( info.isNeedNotify() && _pEventHander )
+      if ( info.isNeedNotify() && _vecEventHandler.size() > 0 )
       {
-         _pEventHander->onPrepareLog( info.getCSLID(), info.getCLLID(),
-                                      info.getExtentLID(),
-                                      head._lsn ) ;
+         for( UINT32 i = 0 ; i < _vecEventHandler.size() ; ++i )
+         {
+            _vecEventHandler[i]->onPrepareLog( info.getCSLID(),
+                                               info.getCLLID(),
+                                               info.getExtentLID(),
+                                               head._lsn ) ;
+         }
       }
 
    done:
@@ -1247,9 +1274,16 @@ namespace engine
    INT32 _dpsReplicaLogMgr::checkSyncControl( UINT32 reqLen, _pmdEDUCB * cb )
    {
       INT32 rc = SDB_OK ;
-      if ( _pEventHander )
+      if ( _vecEventHandler.size() > 0 )
       {
-         rc = _pEventHander->canAssignLogPage( reqLen, cb ) ;
+         for( UINT32 i = 0 ; i < _vecEventHandler.size() ; ++i )
+         {
+            _vecEventHandler[i]->canAssignLogPage( reqLen, cb ) ;
+            if ( rc )
+            {
+               break ;
+            }
+         }
       }
       return rc ;
    }

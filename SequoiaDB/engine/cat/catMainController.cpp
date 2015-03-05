@@ -941,6 +941,7 @@ namespace engine
       INT32 rc = SDB_OK ;
 
       _isDelayed = FALSE ;
+      _pCatCB->getCatDCMgr()->setImageCommand( FALSE ) ;
 
       if ( MSG_CAT_CATALOGUE_BEGIN < (UINT32)msg->opCode &&
            (UINT32)msg->opCode < MSG_CAT_CATALOGUE_END )
@@ -1019,11 +1020,13 @@ namespace engine
          }
       case MSG_AUTH_CRTUSR_REQ :
          {
+            _pCatCB->getCatDCMgr()->setImageCommand( TRUE ) ;
             rc = _processAuthCrt( handle, pMsg ) ;
             break ;
          }
       case MSG_AUTH_DELUSR_REQ :
          {
+            _pCatCB->getCatDCMgr()->setImageCommand( TRUE ) ;
             rc = _processAuthDel( handle, pMsg ) ;
             break ;
          }
@@ -1088,6 +1091,12 @@ namespace engine
       if ( !pmdIsPrimary() || !_isActived )
       {
          rc = SDB_CLS_NOT_PRIMARY ;
+         goto error ;
+      }
+      else if ( _pCatCB->getCatDCMgr()->isImageCommand() &&
+                !_pCatCB->isDCActive() )
+      {
+         rc = SDB_CAT_CLUSTER_NOT_ACTIVE ;
          goto error ;
       }
 
@@ -1174,6 +1183,12 @@ namespace engine
       if ( !pmdIsPrimary() || !_isActived )
       {
          rc = SDB_CLS_NOT_PRIMARY ;
+         goto error ;
+      }
+      else if ( _pCatCB->getCatDCMgr()->isImageCommand() &&
+                !_pCatCB->isDCActive() )
+      {
+         rc = SDB_CAT_CLUSTER_NOT_ACTIVE ;
          goto error ;
       }
 

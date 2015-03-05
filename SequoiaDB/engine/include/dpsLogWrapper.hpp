@@ -46,6 +46,7 @@
 #include "../bson/bsonobj.h"
 #include <vector>
 using namespace bson;
+using namespace std ;
 
 namespace engine
 {
@@ -66,7 +67,7 @@ namespace engine
       _dpsReplicaLogMgr          _buf ;
       BOOLEAN                    _initialized ;
       BOOLEAN                    _dpslocal ;
-      dpsEventHandler            *_pEventHandler ;
+      vector< dpsEventHandler* > _vecEventHandler ;
 
    public:
       _dpsLogWrapper() ;
@@ -81,16 +82,9 @@ namespace engine
       virtual INT32  fini () ;
 
    public:
-      OSS_INLINE void setEventHandler( dpsEventHandler *pHandler )
-      {
-         _pEventHandler = pHandler ;
-         _buf.setEventHandler( pHandler ) ;
-      }
-      OSS_INLINE void unsetEventHandler()
-      {
-         _pEventHandler = NULL ;
-         _buf.unsetEventHandler() ;
-      }
+      void regEventHandler( dpsEventHandler *pHandler ) ;
+      void unregEventHandler( dpsEventHandler *pHandler ) ;
+
       OSS_INLINE _dpsReplicaLogMgr *getLogMgr ()
       {
          return &_buf ;

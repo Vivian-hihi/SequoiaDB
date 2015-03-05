@@ -55,10 +55,11 @@ namespace engine
    {
       _initialized   = FALSE ;
       _dpslocal      = FALSE ;
-      _pEventHandler = NULL ;
    }
    _dpsLogWrapper::~_dpsLogWrapper()
    {
+      SDB_ASSERT( _vecEventHandler.size() == 0,
+                  "Event handler size is not 0" ) ;
    }
 
    INT32 _dpsLogWrapper::init ()
@@ -77,6 +78,40 @@ namespace engine
       }
 
       return rc ;
+   }
+
+   void _dpsLogWrapper::regEventHandler( dpsEventHandler *pHandler )
+   {
+      SDB_ASSERT( pHandler, "Handle can't be NULL" ) ;
+      SDB_ASSERT( FALSE == pmdGetKRCB()->isActive(),
+                  "Can't register handle when pmd actived" ) ;
+      for ( UINT32 i = 0 ; i < _vecEventHandler.size() ; ++i )
+      {
+         SDB_ASSERT( pHandler != _vecEventHandler[ i ],
+                     "Handle can't be same" ) ;
+      }
+      _vecEventHandler.push_back( pHandler ) ;
+      _buf.regEventHandler( pHandler ) ;
+   }
+
+   void _dpsLogWrapper::unregEventHandler( dpsEventHandler *pHandler )
+   {
+      SDB_ASSERT( pHandler, "Handle can't be NULL" ) ;
+      SDB_ASSERT( FALSE == pmdGetKRCB()->isActive(),
+                  "Can't unregister when pmd actived" ) ;
+
+      vector< dpsEventHandler* >::iterator it = _vecEventHandler.begin() ;
+      while ( it != _vecEventHandler.end() )
+      {
+         if ( *it == pHandler )
+         {
+            _vecEventHandler.erase( it ) ;
+            break ;
+         }
+         ++it ;
+         continue ;
+      }
+      _buf.unregEventHandler( pHandler ) ;
    }
 
    INT32 _dpsLogWrapper::active ()
@@ -122,7 +157,7 @@ namespace engine
    {
       _buf.writeData( info ) ;
 
-      if ( _pEventHandler && info.isNeedNotify() )
+      if ( _vecEventHandler.size() > 0 && info.isNeedNotify() )
       {
          DPS_LSN_OFFSET offset = DPS_INVALID_LSN_OFFSET ;
          pmdEDUCB *cb = info.getEDUCB() ;
@@ -133,14 +168,21 @@ namespace engine
             {
                cb->insertLsn( offset ) ;
             }
-            _pEventHandler->onWriteLog( offset ) ;
+
+            for( UINT32 i = 0 ; i < _vecEventHandler.size() ; ++i )
+            {
+               _vecEventHandler[i]->onWriteLog( offset ) ;
+            }
          }
          offset = info.getMergeBlock().record().head()._lsn ;
          if ( cb )
          {
             cb->insertLsn( offset ) ;
          }
-         _pEventHandler->onWriteLog( offset ) ;
+         for( UINT32 i = 0 ; i < _vecEventHandler.size() ; ++i )
+         {
+            _vecEventHandler[i]->onWriteLog( offset ) ;
+         }
       }
       // reset
       info.resetInfoEx() ;
@@ -149,9 +191,17 @@ namespace engine
    INT32 _dpsLogWrapper::completeOpr( _pmdEDUCB * cb, INT32 w )
    {
       INT32 rc = SDB_OK ;
-      if ( _pEventHandler && w > 1 && cb && 0 != cb->getLsnCount() )
+      if ( w > 1 && cb && 0 != cb->getLsnCount() &&
+           _vecEventHandler.size() > 0 )
       {
-         rc = _pEventHandler->onCompleteOpr( cb, w ) ;
+         for( UINT32 i = 0 ; i < _vecEventHandler.size() ; ++i )
+         {
+            rc = _vecEventHandler[i]->onCompleteOpr( cb, w ) ;
+            if ( rc )
+            {
+               break ;
+            }
+         }
          cb->resetLsn() ;
       }
       return rc ;

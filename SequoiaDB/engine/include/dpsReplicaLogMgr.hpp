@@ -49,6 +49,9 @@
 #include "ossEvent.hpp"
 #include "ossQueue.hpp"
 
+#include <vector>
+using namespace std ;
+
 namespace engine
 {
 
@@ -85,7 +88,7 @@ namespace engine
       _ossAtomic32               _queSize ;
 
       dpsTransCB                 *_transCB ;
-      dpsEventHandler            *_pEventHander ;
+      vector< dpsEventHandler* > _vecEventHandler ;
 
    public:
       _dpsReplicaLogMgr();
@@ -125,15 +128,8 @@ namespace engine
          return version ;
       }
 
-      OSS_INLINE void setEventHandler( dpsEventHandler *pEventHandler )
-      {
-         _pEventHander = pEventHandler ;
-      }
-
-      OSS_INLINE void unsetEventHandler()
-      {
-         _pEventHander = NULL ;
-      }
+      void regEventHandler( dpsEventHandler *pEventHandler ) ;
+      void unregEventHandler( dpsEventHandler *pEventHandler ) ;
 
    public:
       DPS_LSN getStartLsn ( BOOLEAN logBufOnly ) ;

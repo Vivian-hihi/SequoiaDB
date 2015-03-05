@@ -61,6 +61,7 @@ namespace engine
       _pEduCB = NULL ;
       _pDCMgr = NULL ;
       _pDCBaseInfo = NULL ;
+      _isImageCmd = FALSE ;
    }
 
    _catDCManager::~_catDCManager()
