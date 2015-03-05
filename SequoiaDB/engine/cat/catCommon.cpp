@@ -100,7 +100,8 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATDOMAINOPTIONSEXTRACT, "catDomainOptionsExtract" )
    INT32 catDomainOptionsExtract( const BSONObj &options,
                                   pmdEDUCB *cb,
-                                  BSONObjBuilder *builder )
+                                  BSONObjBuilder *builder,
+                                  vector< string > *pVecGroups )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_CATDOMAINOPTIONSEXTRACT ) ;
@@ -140,10 +141,13 @@ namespace engine
                goto error ;
             }
 
+            if ( pVecGroups )
+            {
+               pVecGroups->push_back( string( beGroupElement.valuestr() ) ) ;
+            }
+
             rc = catGetGroupObj( beGroupElement.valuestr(),
-                                 TRUE,
-                                 groupInfo,
-                                 cb ) ;
+                                 TRUE, groupInfo, cb ) ;
             if ( SDB_OK != rc )
             {
                PD_LOG( PDERROR, "failed to get group info of [%s]",

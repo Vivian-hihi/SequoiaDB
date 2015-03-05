@@ -58,7 +58,8 @@ namespace engine
    /* extract options of domain. when builder is NULL only check validation */
    INT32 catDomainOptionsExtract( const BSONObj &options,
                                   pmdEDUCB *cb,
-                                  BSONObjBuilder *builder = NULL ) ;
+                                  BSONObjBuilder *builder = NULL,
+                                  vector< string > *pVecGroups = NULL ) ;
 
    /* Split collection full name to cs name and cl name */
    INT32 catResolveCollectionName( const CHAR *pInput, UINT32 inputLen,

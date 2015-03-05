@@ -2213,9 +2213,9 @@ namespace engine
          // if we provide options, let's extract each option
          if ( beDomainOptions.type() == Object )
          {
+            vector< string > vecGroups ;
             rc = catDomainOptionsExtract ( beDomainOptions.embeddedObject(),
-                                            _pEduCB,
-                                           &ob ) ;
+                                            _pEduCB, &ob, &vecGroups ) ;
             if ( rc )
             {
                PD_LOG ( PDERROR, "Failed to validate domain options, rc = %d",
@@ -2223,7 +2223,25 @@ namespace engine
                goto error ;
             }
             expectedObjSize ++ ;
+
+            if ( _pCatCB->isImageEnable() )
+            {
+               // the group that has no image can't be added to domain when
+               // image is enabled
+               for ( UINT32 i = 0 ; i < vecGroups.size() ; ++i )
+               {
+                  if ( !_pCatCB->getCatDCMgr()->groupInImage( vecGroups[i] ) )
+                  {
+                     PD_LOG( PDERROR, "The group[%s] that has no image can't "
+                             "be added to domain when image is enabled",
+                             vecGroups[i].c_str() ) ;
+                     rc = SDB_CAT_GROUP_HASNOT_IMAGE ;
+                     goto error ;
+                  }
+               }
+            }
          }
+
          // sanity check for garbage fields
          if ( boQuery.nFields() != expectedObjSize )
          {
@@ -2364,6 +2382,7 @@ namespace engine
       BSONObjBuilder alterBuilder ;
       BSONObjBuilder reqBuilder ;
       BSONObj objReq ;
+      vector< string > vecGroups ;
 
       /// 1. be sure that the request is legal.
       /// 2. update the record of this domain.
@@ -2397,64 +2416,80 @@ namespace engine
       }
 
       rc = catDomainOptionsExtract( eleOptions.embeddedObject(),
-                                    _pEduCB,
-                                    &reqBuilder ) ;
+                                    _pEduCB, &reqBuilder, &vecGroups ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to validate options object:%d", rc ) ;
          goto error ;
       }
 
+      if ( _pCatCB->isImageEnable() )
+      {
+         // the group that has no image can't be added to domain when
+         // image is enabled
+         for ( UINT32 i = 0 ; i < vecGroups.size() ; ++i )
+         {
+            if ( !_pCatCB->getCatDCMgr()->groupInImage( vecGroups[i] ) )
+            {
+               PD_LOG( PDERROR, "The group[%s] that has no image can't "
+                       "be added to domain when image is enabled",
+                       vecGroups[i].c_str() ) ;
+               rc = SDB_CAT_GROUP_HASNOT_IMAGE ;
+               goto error ;
+            }
+         }
+      }
+
       objReq = reqBuilder.obj() ;
 
       {
-      BSONElement groups = objReq.getField( CAT_GROUPS_NAME ) ;
-      if ( !groups.eoo() )
-      {
-         rc = _buildAlterGroups( domainObj, groups, alterBuilder ) ;
-         if ( SDB_OK != rc )
+         BSONElement groups = objReq.getField( CAT_GROUPS_NAME ) ;
+         if ( !groups.eoo() )
          {
-            PD_LOG( PDERROR, "failed to add groups to builder:%d", rc ) ;
-            goto error ;
+            rc = _buildAlterGroups( domainObj, groups, alterBuilder ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "failed to add groups to builder:%d", rc ) ;
+               goto error ;
+            }
          }
       }
+
+      {
+         BSONElement autoSplit = objReq.getField( CAT_DOMAIN_AUTO_SPLIT ) ;
+         if ( !autoSplit.eoo() )
+         {
+            alterBuilder.append( autoSplit ) ;
+         }
       }
 
       {
-      BSONElement autoSplit = objReq.getField( CAT_DOMAIN_AUTO_SPLIT ) ;
-      if ( !autoSplit.eoo() )
-      {
-         alterBuilder.append( autoSplit ) ;
-      }
-      }
-
-      {
-      BSONElement autoRebalance = objReq.getField( CAT_DOMAIN_AUTO_REBALANCE ) ;
-      if ( !autoRebalance.eoo() )
-      {
-         alterBuilder.append( autoRebalance ) ;
-      }
+         BSONElement autoRebalance = objReq.getField( CAT_DOMAIN_AUTO_REBALANCE ) ;
+         if ( !autoRebalance.eoo() )
+         {
+            alterBuilder.append( autoRebalance ) ;
+         }
       }
 
       {
-      BSONObjBuilder matchBuilder ;
-      matchBuilder.append( eleDomainName ) ;
-      BSONObj alterObj = alterBuilder.obj() ;
-      BSONObj dummy ;
-      rc = rtnUpdate( CAT_DOMAIN_COLLECTION,
-                      matchBuilder.obj(),
-                      BSON( "$set" << alterObj ),
-                      dummy,
-                      0, _pEduCB, NULL ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to update cata info:%d", rc ) ;
-         goto error ;
-      }
+         BSONObjBuilder matchBuilder ;
+         matchBuilder.append( eleDomainName ) ;
+         BSONObj alterObj = alterBuilder.obj() ;
+         BSONObj dummy ;
+         rc = rtnUpdate( CAT_DOMAIN_COLLECTION,
+                         matchBuilder.obj(),
+                         BSON( "$set" << alterObj ),
+                         dummy,
+                         0, _pEduCB, NULL ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to update cata info:%d", rc ) ;
+            goto error ;
+         }
 
-      PD_LOG( PDEVENT, "alter domain[%s] to[%s]",
-              eleDomainName.valuestr(),
-              alterObj.toString( FALSE, TRUE ).c_str() ) ;
+         PD_LOG( PDEVENT, "alter domain[%s] to[%s]",
+                 eleDomainName.valuestr(),
+                 alterObj.toString( FALSE, TRUE ).c_str() ) ;
       }
    done :
       PD_TRACE_EXITRC ( SDB_CATALOGMGR_ALTERDOMAIN, rc ) ;
