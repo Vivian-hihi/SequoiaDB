@@ -1275,7 +1275,7 @@ namespace engine
          UINT32 groupID = 0 ;
 
          rc = _pNodeMgrAgent->updateGroupInfo( objdata, length, &groupID ) ;
-         PD_LOG ( (SDB_OK == rc)?PDEVENT:PDERROR,
+         PD_LOG ( ( SDB_OK == rc ? PDEVENT : PDERROR ),
                   "Update group[groupID:%u, rc: %d]", groupID, rc ) ;
 
          //udpate node info to netAgent
