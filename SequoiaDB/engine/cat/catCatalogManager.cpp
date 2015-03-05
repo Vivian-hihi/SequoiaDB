@@ -886,7 +886,12 @@ namespace engine
       if ( CLS_INVALID_TASKID != taskID )
       {
          // rollback
-         catRemoveTask( taskID, _pEduCB, 1 ) ;
+         INT32 tmpRC = catRemoveTask( taskID, _pEduCB, 1 ) ;
+         if ( tmpRC )
+         {
+            PD_LOG( PDERROR, "Remove task[%lld] failed, rc: %d",
+                    taskID, tmpRC ) ;
+         }
       }
       goto done ;
    }
