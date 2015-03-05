@@ -237,18 +237,15 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR_QUERYSPACEINFO, "catCatalogueManager::processCmdQuerySpaceInfo" )
    INT32 catCatalogueManager::processCmdQuerySpaceInfo( const CHAR * pQuery,
-                                                        CHAR * * ppReplyBody,
-                                                        UINT32 & replyBodyLen,
-                                                        INT32 & returnNum )
+                                                        rtnContextBuf &ctxBuf )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_CATALOGMGR_QUERYSPACEINFO ) ;
       const CHAR *csName = NULL ;
       BSONObj boSpace ;
       BOOLEAN isExist = FALSE ;
-      vector< INT32 > groups ;
+      vector< UINT32 > groups ;
       BSONObjBuilder builder ;
-      BSONObj retObj ;
 
       try
       {
@@ -284,26 +281,9 @@ namespace engine
 
       builder.appendElements( boSpace ) ;
       // add group info
-      {
-         string groupName ;
-         BSONArrayBuilder sub( builder.subarrayStart( CAT_GROUP_NAME ) ) ;
-         for ( UINT32 i = 0 ; i < groups.size() ; ++i )
-         {
-            catGroupID2Name( groups[ i ], groupName, _pEduCB ) ;
-            sub.append( BSON( CAT_GROUPID_NAME << groups[ i ] <<
-                              CAT_GROUPNAME_NAME << groupName ) ) ;
-         }
-         sub.done() ;
-      }
-      retObj = builder.obj() ;
+      _pCatCB->makeGroupsObj( builder, groups, TRUE ) ;
 
-      returnNum = 1 ;
-      replyBodyLen = retObj.objsize() ;
-      *ppReplyBody = ( CHAR* )SDB_OSS_MALLOC( replyBodyLen ) ;
-      PD_CHECK( *ppReplyBody, SDB_OOM, error, PDERROR,
-                "Failed to alloc memry, size: %d", replyBodyLen ) ;
-
-      ossMemcpy( *ppReplyBody, retObj.objdata(), replyBodyLen ) ;
+      ctxBuf = rtnContextBuf( builder.obj() ) ;
 
    done:
       PD_TRACE_EXITRC ( SDB_CATALOGMGR_QUERYSPACEINFO, rc ) ;
@@ -545,10 +525,8 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR_ALTERCOLLECTION, "catCatalogueManager::processAlterCollection" )
-   INT32 catCatalogueManager::processAlterCollection ( void *pMsg,
-                                                       CHAR **ppReplyBody,
-                                                       UINT32 &replyBodyLen,
-                                                       INT32 &returnNum )
+   INT32 catCatalogueManager::processAlterCollection ( const CHAR *pMsg,
+                                                       rtnContextBuf &ctxBuf )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_CATALOGMGR_ALTERCOLLECTION ) ;
@@ -563,12 +541,11 @@ namespace engine
       BSONObj optionsObj ;
       UINT32 mask = 0 ;
       catCollectionInfo clInfo ;
-      returnNum = 0 ;
       _clsCatalogSet catSet( "" ) ; 
 
       try
       {
-         BSONObj boAlterObj ( ( CHAR * )pMsg ) ;
+         BSONObj boAlterObj ( pMsg ) ;
          // make sure collection name exists
          BSONElement beName = boAlterObj.getField ( CAT_COLLECTION_NAME ) ;
          BSONElement beOptions = boAlterObj.getField ( CAT_OPTIONS_NAME ) ;
@@ -619,14 +596,11 @@ namespace engine
                     boCollectionRecord.toString(FALSE, TRUE).c_str(), rc ) ;
             goto error ;
          }
-         rc = _buildAlterObjWithMetaAndObj( catSet,
-                                            mask,
-                                            clInfo,
-                                            updater ) ;
+         rc = _buildAlterObjWithMetaAndObj( catSet, mask, clInfo, updater ) ;
          if ( SDB_OK != rc )
          {
-            PD_LOG( PDERROR, "failed to build alter object, alter req[%s], rc:%d",
-                    boAlterObj.toString(FALSE, TRUE).c_str(), rc ) ;
+            PD_LOG( PDERROR, "failed to build alter object, alter req[%s], "
+                    "rc:%d", boAlterObj.toString(FALSE, TRUE).c_str(), rc ) ;
             goto error ;
          }
 
@@ -654,17 +628,7 @@ namespace engine
                   arrBuilder << itr.next() ;
                }
                BSONObj replyObj = BSON( CAT_GROUP_NAME << arrBuilder.arr() ) ;
-               replyBodyLen = replyObj.objsize() ;
-               *ppReplyBody = ( CHAR * )SDB_OSS_MALLOC( replyBodyLen ) ;
-               if ( NULL == *ppReplyBody )
-               {
-                  PD_LOG( PDERROR, "failed to allocate mem." ) ;
-                  rc = SDB_OOM ;
-                  goto error ;
-               }
-
-               ossMemcpy( *ppReplyBody, replyObj.objdata(), replyBodyLen ) ;
-               returnNum = 1 ;
+               ctxBuf = rtnContextBuf( replyObj ) ;
             }
          }
          /// get all sub collections' groups
@@ -687,21 +651,9 @@ namespace engine
                   PD_LOG( PDERROR, "failed to get groups of sub cl:%d", rc ) ;
                   goto error ;
                }
-
-               *ppReplyBody = ( CHAR * )SDB_OSS_MALLOC( replyObj.objsize() ) ;
-               if ( NULL == *ppReplyBody )
-               {
-                  PD_LOG( PDERROR, "failed to allocate mem." ) ;
-                  rc = SDB_OOM ;
-                  goto error ;
-               }
-
-               replyBodyLen = replyObj.objsize() ;
-               ossMemcpy( *ppReplyBody, replyObj.objdata(), replyBodyLen ) ;
-               returnNum = 1 ;
+               ctxBuf = rtnContextBuf( replyObj.getOwned() ) ;
             }
          }
-         
       }
       catch ( std::exception &e )
       {
@@ -719,13 +671,11 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR_CREATECS, "catCatalogueManager::processCmdCreateCS" )
    INT32 catCatalogueManager::processCmdCreateCS( const CHAR * pQuery,
-                                                  CHAR * * ppReplyBody,
-                                                  UINT32 & replyBodyLen,
-                                                  INT32 & returnNum )
+                                                  rtnContextBuf &ctxBuf )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_CATALOGMGR_CREATECS ) ;
-      INT32 groupID = CAT_INVALID_GROUPID ;
+      UINT32 groupID = CAT_INVALID_GROUPID ;
 
       try
       {
@@ -751,55 +701,38 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR_CREATECL, "catCatalogueManager::processCmdCreateCL" )
    INT32 catCatalogueManager::processCmdCreateCL( const CHAR *pQuery,
-                                                  CHAR **ppReplyBody,
-                                                  UINT32 &replyBodyLen,
-                                                  INT32 &returnNum )
+                                                  rtnContextBuf &ctxBuf )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_CATALOGMGR_CREATECL ) ;
-      INT32 groupID = CAT_INVALID_GROUPID ; 
-      std::vector<UINT64> taskIDs ;
+
       try
       {
+         UINT32 groupID = CAT_INVALID_GROUPID ;
+         vector< UINT32 > groups ;
+         std::vector<UINT64> taskIDs ;
+         BSONObjBuilder replyBuild ;
+
          BSONObj query( pQuery ) ;
          rc = _createCL( query, groupID, taskIDs ) ;
          PD_RC_CHECK( rc, PDERROR, "Create collection failed, rc: %d", rc ) ;
 
-         // reply construct
+         groups.push_back( groupID ) ;
+
+         // make reply
+         replyBuild.append( CAT_CATALOGVERSION_NAME, CAT_VERSION_BEGIN ) ;
+         _pCatCB->makeGroupsObj( replyBuild, groups, TRUE ) ;
+
+         if ( !taskIDs.empty() )
          {
-            returnNum = 1 ;
-
-            BSONObjBuilder replyBuild ;
-            replyBuild.append( CAT_CATALOGVERSION_NAME, CAT_VERSION_BEGIN ) ;
-            BSONObjBuilder sub( replyBuild.subarrayStart( CAT_GROUP_NAME ) ) ;
-            sub.append( "0",
-                        BSON( CAT_GROUPID_NAME << groupID ) ) ;
-            sub.done() ;
-
-            if ( !taskIDs.empty() )
+            BSONArrayBuilder task( replyBuild.subarrayStart( CAT_TASKID_NAME ) ) ;
+            for ( UINT32 i = 0; i < taskIDs.size(); i++ )
             {
-               BSONObjBuilder task( replyBuild.subarrayStart( CAT_TASKID_NAME ) ) ;
-               for ( UINT32 i = 0; i < taskIDs.size(); i++ )
-               {
-                  std::stringstream ss ;
-                  ss << i ;
-                  UINT64 taskID = taskIDs.at( i ) ;
-                  task.append( ss.str(), (long long int)(taskID) ) ;
-               }
-
-               task.done() ;
+               task.append( (INT64)taskIDs.at( i ) ) ;
             }
-
-            BSONObj replyObj = replyBuild.obj() ;
-
-            replyBodyLen = replyObj.objsize() ;
-            *ppReplyBody = (CHAR*)SDB_OSS_MALLOC( replyBodyLen ) ;
-
-            PD_CHECK( *ppReplyBody, SDB_OOM, error, PDERROR,
-                      "Failed to alloc memry, size: %d", replyBodyLen ) ;
-
-            ossMemcpy( *ppReplyBody, replyObj.objdata(), replyBodyLen ) ;
+            task.done() ;
          }
+         ctxBuf = rtnContextBuf( replyBuild.obj() ) ;
       }
       catch( std::exception &e )
       {
@@ -818,14 +751,12 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR_CMDSPLIT, "catCatalogueManager::processCmdSplit" )
    INT32 catCatalogueManager::processCmdSplit( const CHAR * pQuery,
                                                INT32 opCode,
-                                               CHAR * * ppReplyBody,
-                                               UINT32 & replyBodyLen,
-                                               INT32 & returnNum )
+                                               rtnContextBuf &ctxBuf )
    {
       INT32 rc = SDB_OK ;
       const CHAR *clFullName = NULL ;
       clsCatalogSet *pCataSet = NULL ;
-      INT32 groupID = CAT_INVALID_GROUPID ;
+      UINT32 groupID = CAT_INVALID_GROUPID ;
       UINT64 taskID = CLS_INVALID_TASKID ;
 
       PD_TRACE_ENTRY ( SDB_CATALOGMGR_CMDSPLIT ) ;
@@ -909,9 +840,21 @@ namespace engine
          // reply construct
          if ( CAT_INVALID_GROUPID != groupID )
          {
-            returnNum = 1 ;
-
+            vector< UINT32 > vecGroups ;
+            vecGroups.push_back( groupID ) ;
             BSONObjBuilder replyBuild ;
+
+            if ( _pCatCB->isImageEnable() &&
+                 !_pCatCB->getCatDCMgr()->groupInImage( groupID ) )
+            {
+               // the group that has no image can't be as collection' location
+               PD_LOG( PDERROR, "The group[%d] that has no image can't "
+                       "be as the collection's location when image is enabled",
+                       groupID ) ;
+               rc = SDB_CAT_GROUP_HASNOT_IMAGE ;
+               goto error ;
+            }
+
             if ( pCataSet )
             {
                replyBuild.append( CAT_CATALOGVERSION_NAME,
@@ -921,18 +864,8 @@ namespace engine
             {
                replyBuild.append( CAT_TASKID_NAME, (long long)taskID ) ;
             }
-            BSONObjBuilder sub( replyBuild.subarrayStart( CAT_GROUP_NAME ) ) ;
-            sub.append( "0", BSON( CAT_GROUPID_NAME << groupID ) ) ;
-            sub.done() ;
-            BSONObj replyObj = replyBuild.obj() ;
-
-            replyBodyLen = replyObj.objsize() ;
-            *ppReplyBody = (CHAR*)SDB_OSS_MALLOC( replyBodyLen ) ;
-
-            PD_CHECK( *ppReplyBody, SDB_OOM, error, PDERROR,
-                      "Failed to alloc memry, size: %d", replyBodyLen ) ;
-
-            ossMemcpy( *ppReplyBody, replyObj.objdata(), replyBodyLen ) ;
+            _pCatCB->makeGroupsObj( replyBuild, vecGroups, TRUE ) ;
+            ctxBuf = rtnContextBuf( replyBuild.obj() ) ;
          }
       }
       catch( std::exception &e )
@@ -950,6 +883,11 @@ namespace engine
       PD_TRACE_EXITRC ( SDB_CATALOGMGR_CMDSPLIT, rc ) ;
       return rc ;
    error:
+      if ( CLS_INVALID_TASKID != taskID )
+      {
+         // rollback
+         catRemoveTask( taskID, _pEduCB, 1 ) ;
+      }
       goto done ;
    }
 
@@ -1305,8 +1243,8 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR__ASSIGNGROUP, "catCatalogueManager::_assignGroup" )
-   INT32 catCatalogueManager::_assignGroup( vector < INT32 > * pGoups,
-                                            INT32 & groupID )
+   INT32 catCatalogueManager::_assignGroup( vector < UINT32 > * pGoups,
+                                            UINT32 &groupID )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_CATALOGMGR__ASSIGNGROUP ) ;
@@ -1327,7 +1265,7 @@ namespace engine
    INT32 catCatalogueManager::_checkGroupInDomain( const CHAR * groupName,
                                                    const CHAR * domainName,
                                                    BOOLEAN & existed,
-                                                   INT32 *pGroupID )
+                                                   UINT32 *pGroupID )
    {
       INT32 rc = SDB_OK ;
       existed = FALSE ;
@@ -1343,7 +1281,9 @@ namespace engine
       // Get group ID
       if ( pGroupID )
       {
-         rtnGetIntElement( groupInfo, CAT_GROUPID_NAME, *pGroupID ) ;
+         INT32 tmpGrpID = CAT_INVALID_GROUPID ;
+         rtnGetIntElement( groupInfo, CAT_GROUPID_NAME, tmpGrpID ) ;
+         *pGroupID = (UINT32)tmpGrpID ;
       }
 
       // SYSTEM DOMAIN
@@ -1356,12 +1296,12 @@ namespace engine
       {
          // Check domain exist
          BSONObj domainObj ;
-         map<string, INT32> groups ;
+         map<string, UINT32> groups ;
          rc = catGetDomainObj( domainName, domainObj, _pEduCB ) ;
          PD_RC_CHECK( rc, PDERROR, "Get domain[%s] failed, rc: %d",
                       domainName, rc ) ;
 
-         rc = catGetDomainGroups( domainObj,  groups ) ;
+         rc = catGetDomainGroups( domainObj, groups ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to get groups from domain info[%s], "
                       "rc: %d", domainObj.toString().c_str(), rc ) ;
 
@@ -1379,8 +1319,8 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR__CREATECS, "catCatalogueManager::_createCS" )
-   INT32 catCatalogueManager::_createCS( BSONObj & createObj,
-                                         INT32 & groupID )
+   INT32 catCatalogueManager::_createCS( BSONObj &createObj,
+                                         UINT32 &groupID )
    {
       INT32 rc               = SDB_OK ;
       string strGroupName ;
@@ -1393,7 +1333,7 @@ namespace engine
       catCSInfo csInfo ;
       BSONObj spaceObj ;
       BSONObj domainObj ;
-      vector< INT32 >  domainGroups ;
+      vector< UINT32 >  domainGroups ;
 
       // check cs obj
       rc = _checkCSObj( createObj, csInfo ) ;
@@ -1457,7 +1397,7 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR_CREATECOLLECTION, "catCatalogueManager::_createCL" )
    INT32 catCatalogueManager::_createCL( BSONObj & createObj,
-                                         INT32 &groupID,
+                                         UINT32 &groupID,
                                          std::vector<UINT64> &taskIDs )
    {
       INT32 rc = SDB_OK ;
@@ -1478,7 +1418,7 @@ namespace engine
       BSONObj domainObj ;
       std::string strGroupName ;
       groupID = CAT_INVALID_GROUPID ; 
-      std::map<string, INT32> range ;
+      std::map<string, UINT32> range ;
 
       // check createObj
       rc = _checkAndBuildCataRecord( createObj, fieldMask, clInfo ) ;
@@ -1617,7 +1557,7 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR_BUILDCATALOGRECORD, "catCatalogueManager::_buildCatalogRecord" )
    INT32 catCatalogueManager::_buildCatalogRecord( const catCollectionInfo & clInfo,
                                                    UINT32 mask,
-                                                   INT32 groupID,
+                                                   UINT32 groupID,
                                                    const CHAR *groupName,
                                                    BSONObj & catRecord )
    {
@@ -1677,7 +1617,7 @@ namespace engine
          // cata info build
          BSONObjBuilder sub( builder.subarrayStart( CAT_CATALOGINFO_NAME ) ) ;
          BSONObjBuilder cataItemBd ( sub.subobjStart ( sub.numStr(0) ) ) ;
-         cataItemBd.append ( CAT_CATALOGGROUPID_NAME, groupID ) ;
+         cataItemBd.append ( CAT_CATALOGGROUPID_NAME, (INT32)groupID ) ;
          if ( groupName )
          {
             cataItemBd.append ( CAT_GROUPNAME_NAME, groupName ) ;
@@ -1831,10 +1771,9 @@ namespace engine
 
       PD_TRACE_ENTRY ( SDB_CATALOGMGR_PROCESSCOMMANDMSG ) ;
       MsgOpReply replyHeader ;
+      rtnContextBuf ctxBuff ;
+
       INT32      opCode = pQueryReq->header.opCode ;
-      CHAR       *replyData = NULL ;
-      UINT32     replyDataLen = 0 ;
-      INT32      returnNum    = 0 ;
       BOOLEAN    fillPeerRouteID = FALSE ;
 
       INT32 flag = 0 ;
@@ -1880,12 +1819,10 @@ namespace engine
       switch ( pQueryReq->header.opCode )
       {
          case MSG_CAT_CREATE_COLLECTION_REQ :
-            rc = processCmdCreateCL( pQuery, &replyData,
-                                     replyDataLen, returnNum ) ;
+            rc = processCmdCreateCL( pQuery, ctxBuff ) ;
             break ;
          case MSG_CAT_CREATE_COLLECTION_SPACE_REQ :
-            rc = processCmdCreateCS( pQuery, &replyData,
-                                     replyDataLen, returnNum ) ;
+            rc = processCmdCreateCS( pQuery, ctxBuff ) ;
             break ;
          case MSG_CAT_SPLIT_PREPARE_REQ :
          case MSG_CAT_SPLIT_READY_REQ :
@@ -1895,11 +1832,10 @@ namespace engine
          case MSG_CAT_SPLIT_CLEANUP_REQ :
          case MSG_CAT_SPLIT_FINISH_REQ :
             rc = processCmdSplit( pQuery, pQueryReq->header.opCode,
-                                  &replyData, replyDataLen, returnNum ) ;
+                                  ctxBuff ) ;
             break ;
          case MSG_CAT_QUERY_SPACEINFO_REQ :
-            rc = processCmdQuerySpaceInfo( pQuery, &replyData, replyDataLen,
-                                           returnNum ) ;
+            rc = processCmdQuerySpaceInfo( pQuery, ctxBuff ) ;
             break ;
          case MSG_CAT_DROP_COLLECTION_REQ :
             rc = processCmdDropCollection( pQuery, pQueryReq->version ) ;
@@ -1908,8 +1844,7 @@ namespace engine
             rc = processCmdDropCollectionSpace( pQuery ) ;
             break ;
          case MSG_CAT_ALTER_COLLECTION_REQ :
-            rc = processAlterCollection( pQuery, &replyData,
-                                         replyDataLen, returnNum ) ;
+            rc = processAlterCollection( pQuery, ctxBuff ) ;
             break ;
          case MSG_CAT_CRT_PROCEDURES_REQ :
             rc = processCmdCrtProcedures( pQuery ) ;
@@ -1918,12 +1853,10 @@ namespace engine
             rc = processCmdRmProcedures( pQuery ) ;
             break ;
          case MSG_CAT_LINK_CL_REQ :
-            rc = processCmdLinkCollection( pQuery, &replyData,
-                                           replyDataLen, returnNum );
+            rc = processCmdLinkCollection( pQuery, ctxBuff ) ;
             break;
          case MSG_CAT_UNLINK_CL_REQ :
-            rc = processCmdUnlinkCollection( pQuery, &replyData,
-                                             replyDataLen, returnNum );
+            rc = processCmdUnlinkCollection( pQuery, ctxBuff );
             break;
          case MSG_CAT_CREATE_DOMAIN_REQ :
             rc = processCmdCreateDomain ( pQuery ) ;
@@ -1951,20 +1884,17 @@ namespace engine
       }
 
       // send reply
-      if ( 0 == replyDataLen )
+      if ( 0 == ctxBuff.size() )
       {
          rc = _pCatCB->netWork()->syncSend( handle, (void*)&replyHeader ) ;
       }
       else
       {
-         replyHeader.header.messageLength += replyDataLen ;
-         replyHeader.numReturned = returnNum ;
+         replyHeader.header.messageLength += ctxBuff.size() ;
+         replyHeader.numReturned = ctxBuff.recordNum() ;
          rc = _pCatCB->netWork()->syncSend( handle, &(replyHeader.header),
-                                            (void*)replyData, replyDataLen ) ;
-      }
-      if ( replyData )
-      {
-         SDB_OSS_FREE( replyData ) ;
+                                            (void*)ctxBuff.data(),
+                                            ctxBuff.size() ) ;
       }
       PD_TRACE_EXITRC ( SDB_CATALOGMGR_PROCESSCOMMANDMSG, rc ) ;
       return rc ;
@@ -2015,9 +1945,7 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR_CMDLINKCOLLECTION, "catCatalogueManager::processCmdLinkCollection" )
    INT32 catCatalogueManager::processCmdLinkCollection( const CHAR *pQuery,
-                                                        CHAR **ppReplyBody,
-                                                        UINT32 &replyBodyLen,
-                                                        INT32 &returnNum )
+                                                        rtnContextBuf &ctxBuf )
    {
       INT32 rc = SDB_OK;
       std::string strMainCLName;
@@ -2025,6 +1953,7 @@ namespace engine
       PD_TRACE_ENTRY ( SDB_CATALOGMGR_CMDLINKCOLLECTION ) ;
       BSONObj boLowBound;
       BSONObj boUpBound;
+      BSONObjBuilder retObjBuilder ;
       std::vector<UINT32>  groupList;
       try
       {
@@ -2069,25 +1998,9 @@ namespace engine
                       "to main-collection(%s)(rc=%d)",
                       strMainCLName.c_str(), strSubCLName.c_str(), rc );
 
-         {
-         returnNum = 1;
-         BSONArrayBuilder babGroup;
-         UINT32 i = 0;
-         for( ; i < groupList.size(); i++ )
-         {
-            //TODO:add group info, unlinkcl
-            BSONObj boTmp = BSON( CAT_GROUPID_NAME << groupList[i] );
-            babGroup.append( boTmp );
-         }
-         BSONObjBuilder bobGroup;
-         bobGroup.appendArray( CAT_GROUP_NAME, babGroup.arr() );
-         BSONObj boGroup = bobGroup.obj();
-         replyBodyLen = boGroup.objsize();
-         *ppReplyBody = ( CHAR *)SDB_OSS_MALLOC( replyBodyLen );
-         PD_CHECK( *ppReplyBody, SDB_OOM, error, PDERROR,
-                   "malloc failed(size=%d)", replyBodyLen );
-         ossMemcpy( *ppReplyBody, boGroup.objdata(), replyBodyLen );
-         }
+         // make reply obj
+         _pCatCB->makeGroupsObj( retObjBuilder, groupList, TRUE ) ;
+         ctxBuf = rtnContextBuf( retObjBuilder.obj() ) ;
       }
       catch( std::exception &e )
       {
@@ -2104,15 +2017,15 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR_CMDUNLINKCOLLECTION, "catCatalogueManager::processCmdUnlinkCollection" )
    INT32 catCatalogueManager::processCmdUnlinkCollection( const CHAR *pQuery,
-                                                          CHAR **ppReplyBody,
-                                                          UINT32 &replyBodyLen,
-                                                          INT32 &returnNum )
+                                                          rtnContextBuf &ctxBuf )
    {
       INT32 rc = SDB_OK;
       std::string strMainCLName;
       std::string strSubCLName;
-      std::vector<UINT32>  groupList;
+      std::vector<UINT32>  groupList ;
+      BSONObjBuilder retObjBuilder ;
       PD_TRACE_ENTRY ( SDB_CATALOGMGR_CMDUNLINKCOLLECTION ) ;
+
       try
       {
          BSONObj boQuery( pQuery );
@@ -2142,26 +2055,9 @@ namespace engine
                       "from main-collection(%s)(rc=%d)",
                       strMainCLName.c_str(), strSubCLName.c_str(), rc );
 
-         {
-         returnNum = 1;
-         BSONArrayBuilder babGroup;
-         UINT32 i = 0;
-         for( ; i < groupList.size(); i++ )
-         {
-            //TODO:add group info, unlinkcl
-            BSONObj boTmp = BSON( CAT_GROUPID_NAME << groupList[i] );
-            babGroup.append( boTmp );
-         }
-         BSONObjBuilder bobGroup;
-         bobGroup.appendArray( CAT_GROUP_NAME, babGroup.arr() );
-         BSONObj boGroup = bobGroup.obj();
-         replyBodyLen = boGroup.objsize();
-         *ppReplyBody = ( CHAR *)SDB_OSS_MALLOC( replyBodyLen );
-         PD_CHECK( *ppReplyBody, SDB_OOM, error, PDERROR,
-                   "malloc failed(size=%d)", replyBodyLen );
-         ossMemcpy( *ppReplyBody, boGroup.objdata(), replyBodyLen );
-         }
-
+         // make ret obj
+         _pCatCB->makeGroupsObj( retObjBuilder, groupList, TRUE ) ;
+         ctxBuf = rtnContextBuf( retObjBuilder.obj() ) ;
       }
       catch( std::exception &e )
       {
@@ -2501,12 +2397,12 @@ namespace engine
       goto done ;
    }
 
-   static INT32 _findGroupWillBeRemoved( const map<string, INT32> &groupsInDomain,
+   static INT32 _findGroupWillBeRemoved( const map<string, UINT32> &groupsInDomain,
                                          const BSONElement &groupsInReq,
-                                         map<string, INT32> &removed )
+                                         map<string, UINT32> &removed )
    {
       INT32 rc = SDB_OK ;
-      map<string, INT32>::const_iterator itr = groupsInDomain.begin() ;
+      map<string, UINT32>::const_iterator itr = groupsInDomain.begin() ;
       for ( ; itr != groupsInDomain.end(); itr++ )
       {
          BOOLEAN found = FALSE ;
@@ -2536,7 +2432,7 @@ namespace engine
                goto error ;
             }
 
-            if ( groupID.Int() ==  itr->second )
+            if ( (UINT32)groupID.Int() == itr->second )
             {
                found = TRUE ;
                break ;
@@ -2562,8 +2458,8 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_CATALOGMGR__BUILDALTERGROUPS ) ;
-      map<string, INT32> groupsInDomain ;
-      map<string, INT32> toBeRemoved ;
+      map<string, UINT32> groupsInDomain ;
+      map<string, UINT32> toBeRemoved ;
       BSONObj objToBeRemoved ;
       BSONArrayBuilder arrBuilder ;
       BSONObjBuilder inBuilder ;
@@ -2594,11 +2490,11 @@ namespace engine
          goto error ;
       }
 
-      for ( map<string, INT32>::const_iterator itr = toBeRemoved.begin();
+      for ( map<string, UINT32>::const_iterator itr = toBeRemoved.begin();
             itr != toBeRemoved.end();
             itr++ )
       {
-         arrBuilder << itr->second ;
+         arrBuilder << (INT32)itr->second ;
       }
 
       if ( !toBeRemoved.empty() )
@@ -2644,15 +2540,15 @@ namespace engine
                                                 const BSONObj &csObj,
                                                 const catCollectionInfo &clInfo,
                                                 std::string &groupName,
-                                                INT32 &groupID,
-                                                std::map<string, INT32> &splitRange )
+                                                UINT32 &groupID,
+                                                std::map<string, UINT32> &splitRange )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_CATALOGMGR__CHOOSEFGROUPOFCL ) ;
       BSONObj gpObj ;
       const CHAR *domain = NULL ;
       BOOLEAN isSysDomain = domainObj.isEmpty() ;
-      std::map<string, INT32> groupsOfDomain ;
+      std::map<string, UINT32> groupsOfDomain ;
 
       /// if the group is specified.
       /// 1) whether the group exsits.
@@ -2666,7 +2562,7 @@ namespace engine
                          "info[%s], rc: %d", domainObj.toString().c_str(),
                          rc ) ;
             {
-               map<string, INT32>::const_iterator itr =
+               map<string, UINT32>::const_iterator itr =
                   groupsOfDomain.find( clInfo._gpSpecified ) ;
                if ( groupsOfDomain.end() == itr )
                {
@@ -2682,20 +2578,33 @@ namespace engine
          }
          else
          {
+            INT32 tmpGrpID = CAT_INVALID_GROUPID ;
             rc = catGetGroupObj( clInfo._gpSpecified, TRUE, gpObj, _pEduCB ) ;
             PD_RC_CHECK( rc, PDERROR, "Get group[%s] info failed, rc: %d",
                          clInfo._gpSpecified, rc ) ;
-            rc = rtnGetIntElement( gpObj, CAT_GROUPID_NAME, groupID ) ;
+            rc = rtnGetIntElement( gpObj, CAT_GROUPID_NAME, tmpGrpID ) ;
             PD_RC_CHECK( rc, PDERROR, "Get groupid of group[%s] info failed, "
                          "rc: %d", clInfo._gpSpecified, rc ) ;
+            groupID = tmpGrpID ;
          }
 
          groupName.assign( clInfo._gpSpecified ) ;
+
+         if ( _pCatCB->isImageEnable() &&
+              !_pCatCB->getCatDCMgr()->groupInImage( groupName ) )
+         {
+            // the group that has no image can't be as the collection location
+            PD_LOG( PDERROR, "The group[%s] that has no image can't "
+                    "be as the collection's location when image is enabled",
+                    groupName.c_str() ) ;
+            rc = SDB_CAT_GROUP_HASNOT_IMAGE ;
+            goto error ;
+         }
       }
       /// get a group from groups of cs.
       else
       {
-         vector< INT32 > vecGroupID ;
+         vector< UINT32 > vecGroupID ;
 
          if ( ASSIGN_FOLLOW == clInfo._assignType )
          {
@@ -2781,12 +2690,12 @@ namespace engine
    INT32 catCatalogueManager::_autoHashSplit( const BSONObj &clObj,
                                               std::vector<UINT64> &taskIDs,
                                               const CHAR *srcGroupName,
-                                              const map<string, INT32> *range )
+                                              const map<string, UINT32> *range )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_CATALOGMGR_AUTOHASHSPLIT ) ;
       const CHAR *srcGroup = NULL ;
-      const map<string, INT32> *dstGroups = NULL ;
+      const map<string, UINT32> *dstGroups = NULL ;
       BSONObj splitInfo ;
       const CHAR *fullName = NULL ;
       UINT32 totalBound = 0 ;
@@ -2828,7 +2737,7 @@ namespace engine
 
       if ( 1 < dstGroups->size() )
       {
-         INT32 tmpID ;
+         UINT32 tmpID = CAT_INVALID_GROUPID ;
          UINT64 taskID = CLS_INVALID_TASKID ;
          clsCatalogSet catSet( fullName ) ;
          UINT32 avgBound = totalBound / dstGroups->size() ;
@@ -2843,7 +2752,7 @@ namespace engine
          }
 
          {
-         map<string, INT32>::const_iterator itr = dstGroups->begin() ;
+         map<string, UINT32>::const_iterator itr = dstGroups->begin() ;
          for ( ; itr != dstGroups->end(); itr++ )
          {
             if ( 0 == ossStrcmp( srcGroup, itr->first.c_str() ) )

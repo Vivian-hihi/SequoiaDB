@@ -52,6 +52,8 @@
 #include "sdbInterface.hpp"
 #include "catLevelLock.hpp"
 
+using namespace bson ;
+
 namespace engine
 {
 
@@ -91,7 +93,7 @@ namespace engine
          void     insertNodeID( UINT16 nodeID ) ;
          void     activeGroup( UINT32 groupID ) ;
          UINT32   allocGroupID() ;
-         INT32    getAGroupRand( INT32 &groupID) ;
+         INT32    getAGroupRand( UINT32 &groupID) ;
          UINT16   allocNodeID() ;
          void     releaseNodeID( UINT16 nodeID ) ;
          UINT16   allocSystemNodeID() ;
@@ -102,6 +104,13 @@ namespace engine
          UINT32      groupName2ID( const string &groupName ) ;
          INT32       getGroupsName( vector< string > &vecNames ) ;
          INT32       getGroupsID( vector< UINT32 > &vecIDs ) ;
+
+         INT32       makeGroupsObj( BSONObjBuilder &builder,
+                                    vector< string > &groups,
+                                    BOOLEAN ignoreErr = FALSE ) ;
+         INT32       makeGroupsObj( BSONObjBuilder &builder,
+                                    vector< UINT32 > &groups,
+                                    BOOLEAN ignoreErr = FALSE ) ;
 
          INT16    majoritySize() ;
          BOOLEAN  isDCActive() const { return _catDCMgr.isDCActive() ; }

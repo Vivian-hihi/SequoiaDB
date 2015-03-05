@@ -570,14 +570,14 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATGROUPID2NAME, "catGroupID2Name" )
-   INT32 catGroupID2Name( INT32 groupID, string & groupName, pmdEDUCB *cb )
+   INT32 catGroupID2Name( UINT32 groupID, string & groupName, pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
       BSONObj groupObj ;
       const CHAR *name = NULL ;
 
       PD_TRACE_ENTRY ( SDB_CATGROUPID2NAME ) ;
-      rc = catGetGroupObj( (UINT32)groupID, groupObj, cb ) ;
+      rc = catGetGroupObj( groupID, groupObj, cb ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to get group obj by id[%d], rc: %d",
                    groupID, rc ) ;
 
@@ -595,20 +595,22 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATGROUPNAME2ID, "catGroupName2ID" )
-   INT32 catGroupName2ID( const CHAR * groupName, INT32 & groupID,
+   INT32 catGroupName2ID( const CHAR * groupName, UINT32 &groupID,
                           pmdEDUCB * cb )
    {
       INT32 rc = SDB_OK ;
       BSONObj groupObj ;
+      INT32 tmpGrpID = CAT_INVALID_GROUPID ;
 
       PD_TRACE_ENTRY ( SDB_CATGROUPNAME2ID ) ;
       rc = catGetGroupObj( groupName, FALSE, groupObj, cb ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to get group obj by name[%s], rc: %d",
                    groupName, rc ) ;
 
-      rc = rtnGetIntElement( groupObj, CAT_GROUPID_NAME, groupID ) ;
+      rc = rtnGetIntElement( groupObj, CAT_GROUPID_NAME, tmpGrpID ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to get field[%s], rc: %d",
                    CAT_GROUPID_NAME, rc ) ;
+      groupID = (UINT32)tmpGrpID ;
 
    done:
       PD_TRACE_EXITRC ( SDB_CATGROUPNAME2ID, rc ) ;
@@ -706,7 +708,7 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATGETDOMAINGROUPS, "catGetDomainGroups" )
    INT32 catGetDomainGroups( const BSONObj & domain,
-                             map < string, INT32 > & groups )
+                             map < string, UINT32 > & groups )
    {
       INT32 rc = SDB_OK ;
       const CHAR *groupName = NULL ;
@@ -765,7 +767,7 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATGETDOMAINGROUPS1, "catGetDomainGroups" )
    INT32 catGetDomainGroups( const BSONObj &domain,
-                             vector< INT32 > &groupIDs )
+                             vector< UINT32 > &groupIDs )
    {
       INT32 rc = SDB_OK ;
       INT32 groupID = CAT_INVALID_GROUPID ;
@@ -858,7 +860,7 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATDELGRPFROMDOMAIN, "catDelGroupFromDomain" )
    INT32 catDelGroupFromDomain( const CHAR *domainName, const CHAR *groupName,
-                                INT32 groupID, pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
+                                UINT32 groupID, pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
                                 _dpsLogWrapper *dpsCB, INT16 w )
    {
       INT32 rc = SDB_OK ;
@@ -866,9 +868,9 @@ namespace engine
       PD_TRACE_ENTRY ( SDB_CATDELGRPFROMDOMAIN ) ;
       BSONObj modifier = BSON( "$pull" << BSON( CAT_GROUPS_NAME <<
                                BSON( CAT_GROUPNAME_NAME << groupName <<
-                                     CAT_GROUPID_NAME << groupID ) ) ) ;
+                                     CAT_GROUPID_NAME << (INT32)groupID ) ) ) ;
       BSONObj modifier2 = BSON( "$pull" << BSON( CAT_GROUPS_NAME <<
-                                BSON( CAT_GROUPID_NAME << groupID <<
+                                BSON( CAT_GROUPID_NAME << (INT32)groupID <<
                                       CAT_GROUPNAME_NAME << groupName ) ) ) ;
       BSONObj matcher ;
       BSONObj dummy ;
@@ -880,7 +882,8 @@ namespace engine
       // remove from all domain
       else
       {
-         matcher = BSON( CAT_GROUPS_NAME"."CAT_GROUPID_NAME << groupID ) ;
+         matcher = BSON( CAT_GROUPS_NAME"."CAT_GROUPID_NAME <<
+                         (INT32)groupID ) ;
       }
 
       rc = rtnUpdate( CAT_DOMAIN_COLLECTION, matcher, modifier,
@@ -1123,7 +1126,7 @@ namespace engine
    }
 
    INT32 catGetCSGroupsFromCLs( const CHAR *csName, pmdEDUCB *cb,
-                                vector< INT32 > &groups )
+                                vector< UINT32 > &groups )
    {
       INT32 rc = SDB_OK ;
       BSONObj matcher ;
@@ -1131,8 +1134,8 @@ namespace engine
       SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
       SDB_RTNCB *rtnCB = pmdGetKRCB()->getRTNCB() ;
       INT64 contextID = -1 ;
-      std::set< INT32 > groupSet ;
-      std::set< INT32 >::iterator itSet ;
+      std::set< UINT32 > groupSet ;
+      std::set< UINT32 >::iterator itSet ;
       BSONObjBuilder builder ;
       std::stringstream ss ;
 

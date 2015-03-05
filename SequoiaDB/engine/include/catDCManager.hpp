@@ -117,9 +117,6 @@ namespace engine
 
       INT32 _mapData2DCMgr( _clsDCMgr *pDCMgr ) ;
 
-      INT32 _makeGroupsObj( BSONObjBuilder &builder,
-                            vector< string > &vecGroups ) ;
-
       void  _dcBaseInfoGroups2Obj( _clsDCBaseInfo *pInfo,
                                    BSONObjBuilder &builder,
                                    const CHAR *pFieldName ) ;

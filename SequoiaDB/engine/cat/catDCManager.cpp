@@ -484,7 +484,7 @@ namespace engine
       }
 
       // construct return object
-      rc = _makeGroupsObj( retObjBuilder, vecSourceGrp ) ;
+      rc = _pCatCB->makeGroupsObj( retObjBuilder, vecSourceGrp ) ;
       PD_RC_CHECK( rc, PDERROR, "Make groups obj failed, rc: %d", rc ) ;
 
       // update info to collection
@@ -591,7 +591,7 @@ namespace engine
       }
 
       // make return obj
-      rc = _makeGroupsObj( retObjBuilder, vecGroups ) ;
+      rc = _pCatCB->makeGroupsObj( retObjBuilder, vecGroups ) ;
       PD_RC_CHECK( rc, PDERROR, "Make return groups object failed, rc: %d",
                    rc ) ;
 
@@ -685,7 +685,7 @@ namespace engine
       }
 
       // make return obj
-      rc = _makeGroupsObj( retObjBuilder, allGroups ) ;
+      rc = _pCatCB->makeGroupsObj( retObjBuilder, allGroups ) ;
       PD_RC_CHECK( rc, PDERROR, "Make return groups object failed, rc: %d",
                    rc ) ;
 
@@ -734,7 +734,7 @@ namespace engine
             ++it ;
          }
          // make return obj
-         rc = _makeGroupsObj( retObjBuilder, vecGroups ) ;
+         rc = _pCatCB->makeGroupsObj( retObjBuilder, vecGroups ) ;
          PD_RC_CHECK( rc, PDERROR, "Make return groups object failed, rc: %d",
                       rc ) ;
 
@@ -793,7 +793,7 @@ namespace engine
             ++it ;
          }
          // make return obj
-         rc = _makeGroupsObj( retObjBuilder, vecGroups ) ;
+         rc = _pCatCB->makeGroupsObj( retObjBuilder, vecGroups ) ;
          PD_RC_CHECK( rc, PDERROR, "Make return groups object failed, rc: %d",
                       rc ) ;
       }
@@ -838,7 +838,7 @@ namespace engine
             ++it ;
          }
          // make return obj
-         rc = _makeGroupsObj( retObjBuilder, vecGroups ) ;
+         rc = _pCatCB->makeGroupsObj( retObjBuilder, vecGroups ) ;
          PD_RC_CHECK( rc, PDERROR, "Make return groups object failed, rc: %d",
                       rc ) ;
       }
@@ -888,30 +888,6 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR, "Update dc base info failed, rc: %d", rc ) ;
       }
 
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   INT32 _catDCManager::_makeGroupsObj( BSONObjBuilder &builder,
-                                        vector< string > &vecGroups )
-   {
-      INT32 rc = SDB_OK ;
-      UINT32 groupID = 0 ;
-      BSONArrayBuilder sub( builder.subarrayStart( CAT_GROUP_NAME ) ) ;
-      for ( UINT32 i = 0 ; i < vecGroups.size() ; ++i )
-      {
-         groupID = _pCatCB->groupName2ID( vecGroups[ i ] ) ;
-         if ( CAT_INVALID_GROUPID == groupID )
-         {
-            rc = SDB_CAT_GRP_NOT_EXIST ;
-            goto error ;
-         }
-         sub.append( BSON( CAT_GROUPID_NAME << groupID <<
-                           CAT_GROUPNAME_NAME << vecGroups[ i ] ) ) ;
-      }
-      sub.done() ;
    done:
       return rc ;
    error:

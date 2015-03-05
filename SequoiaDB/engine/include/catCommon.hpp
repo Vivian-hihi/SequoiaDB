@@ -98,8 +98,9 @@ namespace engine
    INT32 catServiceCheck( const CHAR *hostName, const CHAR *serviceName,
                           BOOLEAN &exist, pmdEDUCB *cb ) ;
 
-   INT32 catGroupID2Name( INT32 groupID, string &groupName, pmdEDUCB *cb ) ;
-   INT32 catGroupName2ID( const CHAR *groupName, INT32 &groupID, pmdEDUCB *cb ) ;
+   INT32 catGroupID2Name( UINT32 groupID, string &groupName, pmdEDUCB *cb ) ;
+   INT32 catGroupName2ID( const CHAR *groupName, UINT32 &groupID,
+                          pmdEDUCB *cb ) ;
 
    INT32 catGroupCount( INT64 & count, pmdEDUCB * cb ) ;
 
@@ -108,9 +109,9 @@ namespace engine
    INT32 catDomainCheck( const CHAR *domainName, BOOLEAN &exist, pmdEDUCB *cb ) ;
 
    INT32 catGetDomainGroups( const BSONObj &domain,
-                             map<string, INT32> &groups ) ;
+                             map<string, UINT32> &groups ) ;
    INT32 catGetDomainGroups( const BSONObj &domain,
-                             vector< INT32 > &groupIDs ) ;
+                             vector< UINT32 > &groupIDs ) ;
    INT32 catAddGroup2Domain( const CHAR *domainName, const CHAR *groupName,
                              INT32 groupID, pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
                              _dpsLogWrapper *dpsCB, INT16 w ) ;
@@ -118,7 +119,7 @@ namespace engine
       Note: domainName == NULL, while del group from all domain
    */
    INT32 catDelGroupFromDomain( const CHAR *domainName, const CHAR *groupName,
-                                INT32 groupID, pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
+                                UINT32 groupID, pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
                                 _dpsLogWrapper *dpsCB, INT16 w ) ;
 
    /* Collection[CAT_COLLECTION_SPACE_COLLECTION] functions: */
@@ -152,7 +153,7 @@ namespace engine
                            pmdEDUCB *cb, INT16 w ) ;
 
    INT32 catGetCSGroupsFromCLs( const CHAR *csName, pmdEDUCB *cb,
-                                vector< INT32 > &groups ) ;
+                                vector< UINT32 > &groups ) ;
 
    /* Collection[CAT_TASK_INFO_COLLECTION] functions: */
    INT32 catAddTask( BSONObj & taskObj, pmdEDUCB *cb, INT16 w ) ;

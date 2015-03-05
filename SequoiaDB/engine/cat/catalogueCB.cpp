@@ -44,6 +44,8 @@
 #include "pmd.hpp"
 #include <stdlib.h>
 
+using namespace bson ;
+
 namespace engine
 {
 
@@ -375,6 +377,59 @@ namespace engine
       return (INT32)vecIDs.size() ;
    }
 
+   INT32 sdbCatalogueCB::makeGroupsObj( BSONObjBuilder &builder,
+                                        vector < UINT32 > &groups,
+                                        BOOLEAN ignoreErr )
+   {
+      INT32 rc = SDB_OK ;
+      string groupName ;
+      BSONArrayBuilder sub( builder.subarrayStart( CAT_GROUP_NAME ) ) ;
+      for ( UINT32 i = 0 ; i < groups.size() ; ++i )
+      {
+         groupName = groupID2Name( groups[ i ] ) ;
+         SDB_ASSERT( !groupName.empty(), "Group name can't be empty" ) ;
+         if ( !ignoreErr && groupName.empty() )
+         {
+            rc = SDB_CAT_GRP_NOT_EXIST ;
+            goto error ;
+         }
+         sub.append( BSON( CAT_GROUPID_NAME << groups[ i ] <<
+                           CAT_GROUPNAME_NAME << groupName ) ) ;
+      }
+      sub.done() ;
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 sdbCatalogueCB::makeGroupsObj( BSONObjBuilder &builder,
+                                        vector < string > &groups,
+                                        BOOLEAN ignoreErr )
+   {
+      INT32 rc = SDB_OK ;
+      UINT32 groupID = 0 ;
+      BSONArrayBuilder sub( builder.subarrayStart( CAT_GROUP_NAME ) ) ;
+      for ( UINT32 i = 0 ; i < groups.size() ; ++i )
+      {
+         groupID = groupName2ID( groups[ i ] ) ;
+         SDB_ASSERT( CAT_INVALID_GROUPID != groupID,
+                     "Group ID can't be invalid" ) ;
+         if ( !ignoreErr && CAT_INVALID_GROUPID == groupID )
+         {
+            rc = SDB_CAT_GRP_NOT_EXIST ;
+            goto error ;
+         }
+         sub.append( BSON( CAT_GROUPID_NAME << groupID <<
+                           CAT_GROUPNAME_NAME << groups[ i ] ) ) ;
+      }
+      sub.done() ;
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGCB_REMOVEGROUPID, "sdbCatalogueCB::removeGroupID" )
    void sdbCatalogueCB::removeGroupID( UINT32 grpID )
    {
@@ -434,7 +489,7 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGCB_GETAGROUPRAND, "sdbCatalogueCB::getAGroupRand" )
-   INT32 sdbCatalogueCB::getAGroupRand( INT32 &groupID )
+   INT32 sdbCatalogueCB::getAGroupRand( UINT32 &groupID )
    {
       INT32 rc = SDB_CAT_NO_NODEGROUP_INFO ;
       PD_TRACE_ENTRY ( SDB_CATALOGCB_GETAGROUPRAND ) ;
@@ -450,12 +505,32 @@ namespace engine
          {
             ++iterMap;
          }
-         if ( iterMap != _grpIdMap.end() )
+
+         i = 0 ;
+         while ( i++ < mapSize )
          {
-            groupID = iterMap->first;
-            rc = SDB_OK ;
+            if ( iterMap == _grpIdMap.end() )
+            {
+               iterMap = _grpIdMap.begin() ;
+            }
+
+            if ( _catDCMgr.isImageEnable() &&
+                 !_catDCMgr.groupInImage( iterMap->second ) )
+            {
+               ++iterMap ;
+               continue ;
+            }
+            else
+            {
+               groupID = iterMap->first ;
+               rc = SDB_OK ;
+               goto done ;
+            }
          }
+         rc = SDB_CAT_GROUP_HASNOT_IMAGE ;
       }
+
+   done:
       PD_TRACE_EXITRC ( SDB_CATALOGCB_GETAGROUPRAND, rc ) ;
       return rc;
    }
