@@ -1660,6 +1660,9 @@ namespace engine
          if( clInfo._isHash )
          {
             builder.append( CAT_SHARDING_PARTITION, clInfo._shardPartition ) ;
+
+            /// optimize query on hash-sharding only sdb's version >= 1.12
+            builder.append( CAT_INTERNAL_VERSION, CAT_INTERNAL_VERSION_2 ) ;
          }
       }
       /// add catainfo to record even not specified by user.

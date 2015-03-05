@@ -129,7 +129,8 @@ utilFiles = [
       "client/jstobs.c",
       "util/csv2rawbson.cpp",
       "util/utilCommon.cpp",
-      "util/url.c"
+      "util/url.c",
+      "util/utilBsonHash.cpp"
       ]
 
 rtnFiles = [

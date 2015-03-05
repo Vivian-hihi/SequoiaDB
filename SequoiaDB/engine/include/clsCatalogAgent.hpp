@@ -44,6 +44,7 @@
 #include "ixmIndexKey.hpp"
 #include "../bson/bson.h"
 #include "../bson/ordering.h"
+#include "msgCatalogDef.h"
 
 using namespace bson ;
 
@@ -219,6 +220,11 @@ namespace engine
 
          INT32 delSubCL ( const CHAR *subCLName );
 
+         BOOLEAN internalVIsOld() const
+         {
+            return _internalV < CAT_INTERNAL_VERSION_2 ;
+         }
+
       protected:
          _clsCatalogSet    *next () ;
          INT32             next ( _clsCatalogSet * next ) ;
@@ -273,6 +279,7 @@ namespace engine
          std::vector<std::string> _subCLList ;
          BOOLEAN           _isMainCL ;
          std::string       _mainCLName;
+         UINT32            _internalV ;
 
    };
    typedef class _clsCatalogSet clsCatalogSet ;

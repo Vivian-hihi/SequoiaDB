@@ -39,9 +39,11 @@
 #include "clsCatalogMatcher.hpp"
 #include "catDef.hpp"
 #include "clsCataHashMatcher.hpp"
+#include "utilBsonHash.hpp"
 
 #include "../bson/lib/md5.hpp"
 #include "../bson/lib/md5.h"
+
 
 using namespace bson ;
 
@@ -409,6 +411,7 @@ namespace engine
       ossIsPowerOf2( _partition, &_square ) ;
       _attribute = 0 ;
       _isMainCL = FALSE ;
+      _internalV = 0 ;
    }
 
    _clsCatalogSet::~_clsCatalogSet ()
@@ -864,23 +867,35 @@ namespace engine
 
       if ( isHashSharding() )
       {
-         clsCataHashMatcher hashMatcher( _shardingKey );
-         rc = hashMatcher.loadPattern( matcher, _square );
-         PD_RC_CHECK( rc, PDERROR,
-                     "failed to load match-info(rc=%d)",
-                     rc );
-         iter = _mapItems.begin();
-         while( iter != _mapItems.end() )
+         if ( !internalVIsOld() )
          {
-            rc = hashMatcher.matches( iter->second, result );
+            clsCataHashMatcher hashMatcher( _shardingKey );
+            rc = hashMatcher.loadPattern( matcher, _square );
             PD_RC_CHECK( rc, PDERROR,
-                        "failed to match sharding-key(rc=%d)",
+                        "failed to load match-info(rc=%d)",
                         rc );
-            if ( result )
+            iter = _mapItems.begin();
+            while( iter != _mapItems.end() )
+            {
+               rc = hashMatcher.matches( iter->second, result );
+               PD_RC_CHECK( rc, PDERROR,
+                           "failed to match sharding-key(rc=%d)",
+                           rc );
+               if ( result )
+               {
+                  vecGroup.push_back( iter->second->getGroupID() );
+               }
+               ++iter;
+            }
+         }
+         else
+         {
+            iter = _mapItems.begin();
+            while( iter != _mapItems.end() )
             {
                vecGroup.push_back( iter->second->getGroupID() );
+               ++iter ;
             }
-            ++iter;
          }
          goto done ;
       }
@@ -1610,6 +1625,15 @@ namespace engine
          PD_CHECK( ossIsPowerOf2( (UINT32)_partition, &_square ), SDB_SYS,
                    error, PDERROR, "Parition[%d] is not power of 2",
                    _partition ) ;
+
+         /// InternalV
+         /// when internal version is old, we broadcast the query request to every group.
+         /// since of SEQUOIADBMAINSTREAM-610, we changed the partition function. 
+         ele = catSet.getField( CAT_INTERNAL_VERSION ) ;
+         if ( NumberInt == ele.type() )
+         {
+            _internalV = ele.Int() ;
+         }
       }
 
       // ordering, which is depends on _shardingKey, in non-sharded collection,
@@ -3092,7 +3116,7 @@ namespace engine
 
    INT32 clsPartition( const BSONObj & keyObj, UINT32 partitionBit )
    {
-      //return (INT32)((UINT32)keyObj.hash() >> ( 32 - partitionBit )) ;
+/*
       md5::md5digest digest ;
       md5::md5( keyObj.objdata(), keyObj.objsize(), digest ) ;
       UINT32 hashValue = 0 ;
@@ -3102,6 +3126,8 @@ namespace engine
          hashValue |= ( (UINT32)digest[i] << ( 32 - 8 * i ) ) ;
       }
       return (INT32)( hashValue >> ( 32 - partitionBit ) ) ;
+*/
+      return BSON_HASHER::hash( keyObj, partitionBit ) ;
    }
 
    INT32 clsPartition( const bson::OID &oid, UINT32 sequence, UINT32 partitionBit )
