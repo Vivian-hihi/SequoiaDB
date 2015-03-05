@@ -735,7 +735,7 @@ namespace engine
 
    INT32 _clsCatalogSet::_hash( const BSONObj &key )
    {
-      return clsPartition( key, _square ) ;
+      return clsPartition( key, _square, getInternalV() ) ;
    }
 
    // given a clsCataItemKey, find the node range that satisfy the key of the
@@ -867,7 +867,7 @@ namespace engine
 
       if ( isHashSharding() )
       {
-         if ( !internalVIsOld() )
+         if ( !CAT_INTERNAL_VERSION_IS_OLD( getInternalV() ) )
          {
             clsCataHashMatcher hashMatcher( _shardingKey );
             rc = hashMatcher.loadPattern( matcher, _square );
@@ -3114,20 +3114,27 @@ namespace engine
 
    /// cls catalog agent tool functions :
 
-   INT32 clsPartition( const BSONObj & keyObj, UINT32 partitionBit )
+   INT32 clsPartition( const BSONObj & keyObj,
+                       UINT32 partitionBit,
+                       UINT32 internalVersion )
    {
-/*
-      md5::md5digest digest ;
-      md5::md5( keyObj.objdata(), keyObj.objsize(), digest ) ;
-      UINT32 hashValue = 0 ;
-      UINT32 i = 0 ;
-      while ( i++ < 4 )
+      if ( !CAT_INTERNAL_VERSION_IS_OLD( internalVersion ) )
       {
-         hashValue |= ( (UINT32)digest[i] << ( 32 - 8 * i ) ) ;
+         return BSON_HASHER::hash( keyObj, partitionBit ) ;
       }
-      return (INT32)( hashValue >> ( 32 - partitionBit ) ) ;
-*/
-      return BSON_HASHER::hash( keyObj, partitionBit ) ;
+      /// if it is a old version collection, use old hash algorithm.
+      else
+      {
+         md5::md5digest digest ;
+         md5::md5( keyObj.objdata(), keyObj.objsize(), digest ) ;
+         UINT32 hashValue = 0 ;
+         UINT32 i = 0 ;
+         while ( i++ < 4 )
+         {
+            hashValue |= ( (UINT32)digest[i] << ( 32 - 8 * i ) ) ;
+         }
+         return (INT32)( hashValue >> ( 32 - partitionBit ) ) ;
+      }
    }
 
    INT32 clsPartition( const bson::OID &oid, UINT32 sequence, UINT32 partitionBit )

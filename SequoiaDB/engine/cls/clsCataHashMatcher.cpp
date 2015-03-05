@@ -212,7 +212,10 @@ namespace engine
          if ( includeAllKey )
          {
             objKey = bobKey.obj() ;
-            _hashVal = clsPartition( objKey, partitionBit ) ;
+            /// should not hit here when version is old
+            _hashVal = clsPartition( objKey,
+                                     partitionBit,
+                                     CAT_INTERNAL_VERSION_2 ) ;
             _hasPred = TRUE ;
          }
 

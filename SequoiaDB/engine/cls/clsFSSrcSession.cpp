@@ -1738,6 +1738,7 @@ namespace engine
       _lastEndNtyOffset = DPS_INVALID_LSN_OFFSET ;
       _getLastEndNtyOffset = FALSE ;
       _collectionW      = 1 ;
+      _internalV        = 0 ;
    }
 
    _clsSplitSrcSession::~_clsSplitSrcSession()
@@ -2012,6 +2013,7 @@ namespace engine
                _shardingKey = catSet->OwnedShardingKey() ;
                _hashShard   = catSet->isHashSharding() ;
                _partitionBit = catSet->getPartitionBit() ;
+               _internalV = catSet->getInternalV() ;         
                catSet->getGroupUpBound( groupID , upBound ) ;
             }
             else
@@ -2358,7 +2360,7 @@ namespace engine
 
       if ( _hashShard )
       {
-         INT32 partition = clsPartition( keyObj, _partitionBit ) ;
+         INT32 partition = clsPartition( keyObj, _partitionBit, _internalV ) ;
          INT32 beginRange = _rangeKeyObj.firstElement().numberInt() ;
          rc = partition - beginRange ;
       }
@@ -2379,7 +2381,7 @@ namespace engine
       {
          if ( _hashShard )
          {
-            INT32 partition = clsPartition( keyObj, _partitionBit ) ;
+            INT32 partition = clsPartition( keyObj, _partitionBit, _internalV ) ;
             INT32 endRange = _rangeEndKeyObj.firstElement().numberInt() ;
             rc = partition - endRange ;
          }

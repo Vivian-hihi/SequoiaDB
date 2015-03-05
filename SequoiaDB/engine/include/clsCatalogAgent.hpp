@@ -220,9 +220,9 @@ namespace engine
 
          INT32 delSubCL ( const CHAR *subCLName );
 
-         BOOLEAN internalVIsOld() const
+         UINT32 getInternalV() const
          {
-            return _internalV < CAT_INTERNAL_VERSION_2 ;
+            return _internalV ;
          }
 
       protected:
@@ -455,7 +455,7 @@ namespace engine
 
 
    /// cls catalog agent tool fucntions :
-   INT32    clsPartition( const BSONObj &keyObj, UINT32 partitionBit ) ;
+   INT32    clsPartition( const BSONObj &keyObj, UINT32 partitionBit, UINT32 internalV ) ;
    INT32    clsPartition( const bson::OID &oid, UINT32 sequence, UINT32 partitionBit ) ;
 
 }
