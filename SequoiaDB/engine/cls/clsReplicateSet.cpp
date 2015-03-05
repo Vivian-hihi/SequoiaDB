@@ -252,7 +252,7 @@ namespace engine
       _replBucket.fini() ;
       if ( _logger )
       {
-         _logger->unregEventHandler() ;
+         _logger->unregEventHandler( this ) ;
       }
       return SDB_OK ;
    }
