@@ -21,6 +21,7 @@
 package com.sequoiadb.base;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
@@ -58,6 +59,8 @@ public class SequoiadbDatasource
 	private final double MULTIPLE = 1.2;
 	private final double MULTIPLE2 = 0.8;
 	private Random rand = new Random(47);
+	
+	private boolean isClosed = false;
 	
 	/**
 	 * @fn int getIdleConnNum()
@@ -418,6 +421,9 @@ public class SequoiadbDatasource
 	 */
 	synchronized void increaseConnetions() throws BaseException
 	{
+	    if (isClosed) {
+            return;
+        }
 		// when datasource is not used, return directly
 		if (dsOpt.getMaxConnectionNum() == 0)
 			return;
@@ -444,6 +450,9 @@ public class SequoiadbDatasource
 	 */
 	synchronized void cleanAbandonConnection() throws BaseException
 	{
+	    if (isClosed) {
+	        return;
+	    }
 		// when no need to clean
 		if ((0 == idle_sequoiadbs.size()) && (0 == used_sequoiadbs.size()))
 			return ;
@@ -512,6 +521,42 @@ public class SequoiadbDatasource
 			}
 			idle_sequoiadbs.add(sdb);
 		}
+	}
+	
+	/**
+     * @fn void close()
+     * @brief  clean all resources of this object
+     */
+	public synchronized void close() throws BaseException {    
+	    timer.cancel();
+        timer2.cancel();
+        
+        Iterator<Sequoiadb> iterUsed  = used_sequoiadbs.iterator();
+        while(iterUsed.hasNext()) {
+            Sequoiadb db = iterUsed.next();
+            db.disconnect();
+            iterUsed.remove();
+        }
+        
+	    Iterator<Sequoiadb> iterIdle  = idle_sequoiadbs.iterator();
+	    while(iterIdle.hasNext()) {
+	        Sequoiadb db = iterIdle.next();
+	        db.disconnect();
+	        iterIdle.remove();
+	    }
+	    
+	    isClosed=true;
+	}
+	
+	protected void finalize() throws Throwable {
+	    try {
+	        close();
+	    }
+	    catch(Exception e) {
+	        
+	    }
+	    
+	    super.finalize();
 	}
 }
 
