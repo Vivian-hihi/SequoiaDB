@@ -8,7 +8,7 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="node.connect()"/>
-<meta name="description" content="node.connect() 将数据库连接到指定节点。连接之后能进行一系列的操作，可以使用 node.connect().help() 查看相关的操作。 示例 将数据库连接到节点名为 node 上 &gt; node.connect() 返回： vmsvr2-suse-x64:11800"/>
+<meta name="description" content="node.connect([secure]) 将数据库连接到指定节点。连接之后能进行一系列的操作，可以使用 node.connect().help() 查看相关的操作。 参数描述 参数名 参数类型 描述 是否必填 secure Boolean 是否使用安全的 SSL 连接，可选参数，在 secure 为 true 时生效，默认为 false。 否 示例 将数据库连接到节点名为 node 上 &gt; ..."/>
 <meta name="DC.Relation" scheme="URI" content="../../../references/methods/jsnode.html"/>
 <meta name="DC.Relation" scheme="URI" content="nodestop.html"/>
 <meta name="DC.Relation" scheme="URI" content="getHostName.html"/>
@@ -38,9 +38,34 @@
   <h1 class="title topictitle1">node.connect()</h1>
 
   <div class="body">
-    <div class="section"><h2 class="title sectiontitle">node.connect()</h2>
+    <div class="section"><h2 class="title sectiontitle">node.connect([secure])</h2>
       <p class="p">将数据库连接到指定节点。连接之后能进行一系列的操作，可以使用 node.connect().help() 查看相关的操作。</p>
 
+    </div>
+
+    <div class="section"><h2 class="title sectiontitle">参数描述</h2>
+      <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
+          <th valign="bottom" align="left" id="d135810e26" class="stentry">参数名</th>
+
+          <th valign="bottom" align="left" id="d135810e29" class="stentry">参数类型</th>
+
+          <th valign="bottom" align="left" id="d135810e32" class="stentry">描述</th>
+
+          <th valign="bottom" align="left" id="d135810e35" class="stentry">是否必填</th>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d135810e26" class="stentry">secure</td>
+
+          <td valign="top" headers="d135810e29" class="stentry">Boolean</td>
+
+          <td valign="top" headers="d135810e32" class="stentry">是否使用安全的 SSL 连接，可选参数，在 secure 为 true 时生效，默认为 false。</td>
+
+          <td valign="top" headers="d135810e35" class="stentry">否</td>
+
+        </tr>
+</table>
+      
     </div>
 
     <div class="section"><h2 class="title sectiontitle">示例</h2>

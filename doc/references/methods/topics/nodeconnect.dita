@@ -4,7 +4,23 @@
   <title>node.connect()</title>
   <body>
     <section><title>node.connect([secure])</title>
-      <p>将数据库连接到指定节点。Use SSL connection if secure is true, default false.连接之后能进行一系列的操作，可以使用 node.connect().help() 查看相关的操作。</p>
+      <p>将数据库连接到指定节点。连接之后能进行一系列的操作，可以使用 node.connect().help() 查看相关的操作。</p>
+    </section>
+    <section><title>参数描述</title>
+      <simpletable>
+        <sthead>
+          <stentry>参数名</stentry>
+          <stentry>参数类型</stentry>
+          <stentry>描述</stentry>
+          <stentry>是否必填</stentry>
+        </sthead>
+        <strow>
+          <stentry>secure</stentry>
+          <stentry>Boolean</stentry>
+          <stentry>是否使用安全的 SSL 连接，可选参数，在 secure 为 true 时生效，默认为 false。</stentry>
+          <stentry>否</stentry>
+        </strow>        
+      </simpletable>      
     </section>
     <section><title>示例</title>
       <ul>
