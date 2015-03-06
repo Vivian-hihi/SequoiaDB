@@ -62,6 +62,7 @@ namespace engine
       _pDCMgr = NULL ;
       _pDCBaseInfo = NULL ;
       _isImageCmd = FALSE ;
+      _pLogMgr = FALSE ;
    }
 
    _catDCManager::~_catDCManager()
@@ -71,6 +72,11 @@ namespace engine
       {
          SDB_OSS_DEL _pDCMgr ;
          _pDCMgr = NULL ;
+      }
+      if ( _pLogMgr )
+      {
+         SDB_OSS_DEL _pLogMgr ;
+         _pLogMgr = NULL ;
       }
    }
 
@@ -89,6 +95,13 @@ namespace engine
          return SDB_OOM ;
       }
       _pDCBaseInfo = _pDCMgr->getDCBaseInfo() ;
+
+      _pLogMgr          = SDB_OSS_NEW catDCLogMgr() ;
+      if ( !_pLogMgr )
+      {
+         PD_LOG( PDERROR, "Alloc cat dc log manager failed" ) ;
+         return SDB_OOM ;
+      }
 
       return SDB_OK ;
    }
@@ -148,6 +161,15 @@ namespace engine
    BOOLEAN _catDCManager::groupInImage( UINT32 groupID )
    {
       return groupInImage( _pCatCB->groupID2Name( groupID ) ) ;
+   }
+
+   void _catDCManager::onCommandBegin( MsgHeader *pMsg )
+   {
+      setImageCommand( FALSE ) ;
+   }
+
+   void _catDCManager::onCommandEnd( MsgHeader *pMsg, INT32 rc )
+   {
    }
 
    INT32 _catDCManager::active()
@@ -641,7 +663,7 @@ namespace engine
       {
          goto done ;
       }
-      else if ( pBaseInfo->hasImage() )
+      else if ( !pBaseInfo->hasImage() )
       {
          rc = SDB_CAT_IMAGE_NOT_CONFIG ;
          goto error ;

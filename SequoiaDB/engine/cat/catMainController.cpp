@@ -941,7 +941,7 @@ namespace engine
       INT32 rc = SDB_OK ;
 
       _isDelayed = FALSE ;
-      _pCatCB->getCatDCMgr()->setImageCommand( FALSE ) ;
+      _pCatCB->getCatDCMgr()->onCommandBegin( msg ) ;
 
       if ( MSG_CAT_CATALOGUE_BEGIN < (UINT32)msg->opCode &&
            (UINT32)msg->opCode < MSG_CAT_CATALOGUE_END )
@@ -963,6 +963,7 @@ namespace engine
          rc = _processMsg( handle, msg ) ;
       }
 
+      _pCatCB->getCatDCMgr()->onCommandEnd( msg, rc ) ;
       return rc ;
    }
 

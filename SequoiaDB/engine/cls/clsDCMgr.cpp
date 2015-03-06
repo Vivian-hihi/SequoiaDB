@@ -657,7 +657,7 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Init socket[%s:%d] failed, rc: %d",
                    node._host, port, rc ) ;
 
-      rc = sock.connect() ;
+      rc = sock.connect( (INT32)millsec ) ;
       PD_RC_CHECK( rc, PDWARNING, "Connect to %s:%d failed, rc: %d",
                    node._host, port, rc ) ;
 

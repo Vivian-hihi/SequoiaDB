@@ -38,6 +38,7 @@
 
 #include "pmd.hpp"
 #include "netDef.hpp"
+#include "catDCLogMgr.hpp"
 #include "rtnContextBuff.hpp"
 
 using namespace bson ;
@@ -79,6 +80,9 @@ namespace engine
 
       void    setImageCommand( BOOLEAN imageCmd ) { _isImageCmd = imageCmd ; }
       BOOLEAN isImageCommand() const { return _isImageCmd ; }
+
+      void    onCommandBegin( MsgHeader *pMsg ) ;
+      void    onCommandEnd( MsgHeader *pMsg, INT32 rc ) ;
 
    // message process functions
    protected:
@@ -143,6 +147,7 @@ namespace engine
 
       _clsDCMgr                  *_pDCMgr ;
       _clsDCBaseInfo             *_pDCBaseInfo ;
+      _catDCLogMgr               *_pLogMgr ;
 
       // for commands
       BOOLEAN                    _isImageCmd ;
