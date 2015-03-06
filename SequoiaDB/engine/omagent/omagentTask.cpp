@@ -236,6 +236,27 @@ namespace engine
       _taskEvent.signal() ;
    }
 
+   void _omaAddHostTask::setErrInfo( INT32 errNum, const CHAR *pDetail )
+   {
+      ossScopedLock lock ( &_taskLatch, EXCLUSIVE ) ;
+
+      if ( NULL == pDetail )
+      {
+         PD_LOG( PDWARNING, "Error detail is NULL" ) ;
+         return ;
+      }
+      if ( ( SDB_OK == errNum) ||
+           ( SDB_OK != _errno && '\0' != _detail[0] ) )
+         return ;
+      else
+      {
+         // set errno
+         _errno = errNum ;
+         // set error detail
+         ossStrncpy( _detail, pDetail, OMA_BUFF_SIZE ) ;
+      }
+   }
+
    INT32 _omaAddHostTask::_initAddHostInfo( BSONObj &info )
    {
       INT32 rc                   = SDB_OK ;
@@ -396,53 +417,65 @@ namespace engine
    INT32 _omaAddHostTask::_checkHostInfo()
    {
       INT32 rc            = SDB_OK ;
+      INT32 tmpRc         = SDB_OK ;
       INT32 errNum        = SDB_OK ;
-      const CHAR *pErrMsg = NULL ;
+      const CHAR *pDetail = NULL ;
       BSONObj retObj ;
       _omaCheckAddHostInfo runCmd ;
 
       rc = runCmd.init( _addHostRawInfo.objdata() ) ;
       if ( rc )
       {
-         PD_LOG ( PDERROR, "Failed to init to check add host's raw info "
+         PD_LOG ( PDERROR, "Failed to init to check add host's info,"
                   " rc = %d", rc ) ;
+         pDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         if ( NULL == pDetail || 0 == *pDetail )
+            pDetail = "Failed to init to check add host's info" ;
          goto error ;
       }
       rc = runCmd.doit( retObj ) ;
       if ( rc )
       {
-         PD_LOG ( PDERROR, "Failed to do check add host's raw info "
+         PD_LOG ( PDERROR, "Failed to check add host's info,"
                   " rc = %d", rc ) ;
+         tmpRc = omaGetStringElement ( retObj, OMA_FIELD_DETAIL, &pDetail ) ;
+         if ( SDB_OK != tmpRc )
+         {
+            pDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+            if ( NULL == pDetail || 0 == *pDetail )
+               pDetail = "Not exeute js file yet" ;
+         }
          goto error ;
       }
-      
       // extract "errno"
       rc = omaGetIntElement ( retObj, OMA_FIELD_ERRNO, errNum ) ;
       if ( rc )
       {
-         PD_LOG ( PDERROR, "Failed to get bson field[%s], "
-                  "rc = %d", OMA_FIELD_ERRNO, rc ) ;
+         PD_LOG( PDERROR, "Failed to get errno from js after "
+                 "checking add host's info, rc = %d", rc ) ;
+         pDetail = "Failed to get errno from js after checking "
+                   "add host's info" ;
          goto error ;
       }
       if ( SDB_OK  != errNum )
       {
          // extract "detail"
-         rc = omaGetStringElement ( retObj, OMA_FIELD_DETAIL, &pErrMsg ) ;
+         rc = omaGetStringElement ( retObj, OMA_FIELD_DETAIL, &pDetail ) ;
          if ( rc )
          {
-            PD_LOG ( PDERROR, "Failed to get bson field[%s], "
-                     "rc = %d", OMA_FIELD_ERRNO, rc ) ;
+            PD_LOG( PDERROR, "Failed to get error detail from js after "
+                    "checking add host's info, rc = %d", rc ) ;
+            pDetail = "Failed to get errno detail from js after checking "
+                      "add host's info" ;
             goto error ;
          }
-         // set task to be failing
-         ossSnprintf( _detail, OMA_BUFF_SIZE, "%s", pErrMsg ) ;
-         _errno = errNum ;
          rc = errNum ;
          goto error ;
       }
    done:
       return rc ;
    error:
+      setErrInfo( rc, pDetail ) ;
       goto done ;
    }
 
@@ -477,8 +510,8 @@ namespace engine
                                   BSONObj(), (void *)this ) ;
             if ( rc )
             {
-               PD_LOG ( PDERROR, "Failed to run add host sub task with the "
-                        "type[%d], rc = %d", OMA_TASK_ADD_HOST_SUB, rc ) ;
+               PD_LOG_MSG ( PDERROR, "Failed to run add host sub task with the "
+                            "type[%d], rc = %d", OMA_TASK_ADD_HOST_SUB, rc ) ;
                goto error ;
             }
          }
@@ -1007,6 +1040,7 @@ namespace engine
          const CHAR *pIP              = NULL ;
          const CHAR *pHostName        = NULL ;
          INT32 errNum                 = 0 ;
+         stringstream ss ;
          BSONObj retObj ;
 
          // 1. judge whether program had been interrupted
@@ -1069,27 +1103,28 @@ namespace engine
          rc = omaGetIntElement ( retObj, OMA_FIELD_ERRNO, errNum ) ;
          if ( rc )
          {
-            PD_LOG( PDERROR, "Failed to get errno from js after "
-                    "removing host[%s], rc = %d", pIP, rc ) ;
-            pDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
-            if ( NULL == pDetail || 0 == *pDetail )
-               pDetail = "Failed to get errno from js after removing host" ;
+            PD_LOG( PDERROR, "Failed to get errno from js after"
+                    " removing host[%s], rc = %d", pIP, rc ) ;
+            ss << "Failed to get errno from js after"
+                  " removing host[" << pIP << "]" ;
+            pDetail = ss.str().c_str() ;
             goto build_error_result ;
          }
          // to see whether execute js successfully or not
          if ( SDB_OK != errNum )
          {
-            rc = errNum ;
             // get error detail
-            tmpRc = omaGetStringElement ( retObj, OMA_FIELD_DETAIL, &pDetail ) ;
+            rc = omaGetStringElement ( retObj, OMA_FIELD_DETAIL, &pDetail ) ;
             if ( SDB_OK != tmpRc )
             {
                PD_LOG( PDERROR, "Failed to get error detail from js after "
                        "removing host[%s], rc = %d", pIP, tmpRc ) ;
-               pDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
-               if ( NULL == pDetail || 0 == *pDetail )
-                  pDetail = "Failed to get error detail from js after removing host" ;
+               ss << "Failed to get error detail from js after"
+                     " removing host[" << pIP << "]" ;
+               pDetail = ss.str().c_str() ;
+               goto build_error_result ;
             }
+            rc = errNum ;
             goto build_error_result ;
          }
          else
@@ -1323,8 +1358,9 @@ namespace engine
 
    INT32 _omaInstDBBusTask::doit()
    {
-      INT32 rc     = SDB_OK ;
-      BOOLEAN flag = TRUE ; // need to remove temporary coord
+      INT32 rc                = SDB_OK ;
+      BOOLEAN isTmpCoordOK    = FALSE ;
+      BOOLEAN hasRollbackFail = FALSE ;
 
       // 1. set install db business task's status to be running
       if ( OMA_TASK_STATUS_ROLLBACK != _taskStatus )
@@ -1348,6 +1384,7 @@ namespace engine
          rc = _installTmpCoord() ;
          if ( SDB_OK == rc )
          {
+            isTmpCoordOK = TRUE ;
             if ( OMA_TASK_STATUS_ROLLBACK == _taskStatus )
             {
                // update progress
@@ -1418,7 +1455,7 @@ namespace engine
                  "to omsvc, rc = %d", rc ) ;
       }
       // 7. try to remove temporary coord
-      if ( FALSE == _isStandalone && TRUE == flag )
+      if ( FALSE == _isStandalone && FALSE == hasRollbackFail )
       {
          rc = _removeTmpCoord() ;
          if ( SDB_OK != rc )
@@ -1435,14 +1472,19 @@ namespace engine
 
    error:
       _setRetErr( rc );
+      // when the target standalone had been installed,
+      // not going to remove it
       if ( TRUE == _isStandalone && SDBCM_NODE_EXISTED == rc )
+         goto done ;
+      // when tmp coord is not ok, no need to rollback
+      if ( FALSE == _isStandalone && FALSE == isTmpCoordOK )
          goto done ;
       // rollback
       setTaskStatus( OMA_TASK_STATUS_ROLLBACK ) ;
       rc = _rollback() ;
       if ( rc )
       {
-         flag = FALSE ;
+         hasRollbackFail = TRUE ;
          PD_LOG( PDERROR, "Failed to rollback install db business "
                  "task[%lld]", _taskID ) ;
       }
@@ -1704,6 +1746,27 @@ namespace engine
       _taskEvent.signal() ;
    }
 
+   void _omaInstDBBusTask::setErrInfo( INT32 errNum, const CHAR *pDetail )
+   {
+      ossScopedLock lock ( &_taskLatch, EXCLUSIVE ) ;
+
+      if ( NULL == pDetail )
+      {
+         PD_LOG( PDWARNING, "Error detail is NULL" ) ;
+         return ;
+      }
+      if ( ( SDB_OK == errNum ) ||
+           ( SDB_OK != _errno && '\0' != _detail[0] ) )
+         return ;
+      else
+      {
+         // set errno
+         _errno = errNum ;
+         // set error detail
+         ossStrncpy( _detail, pDetail, OMA_BUFF_SIZE ) ;
+      }
+   }
+
    string _omaInstDBBusTask::getDataRGToInst()
    {
       string groupName ;
@@ -1827,17 +1890,17 @@ namespace engine
       }
       
       // 5. get common fields
-      builder.append( OMA_FIELD_USERTAG, "" ) ;
+      builder.append( OMA_FIELD_USERTAG2, "" ) ;
       rc = omaGetStringElement ( hostInfoObj, OMA_FIELD_CLUSTERNAME,
-                                 &pClusterName) ;
+                                 &pClusterName ) ;
       PD_CHECK( SDB_OK == rc, rc, error, PDERROR, "Get field[%s] failed, "
                 "rc: %d", OMA_FIELD_CLUSTERNAME, rc ) ;
-      builder.append( OMA_FIELD_CLUSTERNAME, pClusterName ) ;
+      builder.append( OMA_FIELD_CLUSTERNAME2, pClusterName ) ;
       rc = omaGetStringElement ( hostInfoObj, OMA_FIELD_BUSINESSNAME,
-                                 &pBusinessName) ;
+                                 &pBusinessName ) ;
       PD_CHECK( SDB_OK == rc, rc, error, PDERROR, "Get field[%s] failed, "
                 "rc: %d", OMA_FIELD_BUSINESSNAME, rc ) ;
-      builder.append( OMA_FIELD_BUSINESSNAME, pBusinessName ) ;
+      builder.append( OMA_FIELD_BUSINESSNAME2, pBusinessName ) ;
       rc = omaGetStringElement ( hostInfoObj, OMA_FIELD_SDBUSER, &pStr ) ;
       PD_CHECK( SDB_OK == rc, rc, error, PDERROR, "Get field[%s] failed, "
                 "rc: %d", OMA_FIELD_SDBUSER, rc ) ;
@@ -2148,50 +2211,50 @@ namespace engine
          {
             pDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
             if ( NULL == pDetail || 0 == *pDetail )
-            {
                pDetail = "Install temporary coord does not execute js file yet" ;
-            }
          }
-         PD_LOG_MSG( PDERROR, "%s", pDetail ) ;
          goto error ;
       }
       // 2. extract return "errno"
       rc = omaGetIntElement ( retObj, OMA_FIELD_ERRNO, errNum ) ;
       if ( rc )
       {
-         PD_LOG_MSG( PDERROR, "Failed to get errno from js after "
-                     "installing temporay coord, rc = %d", rc ) ;
+         PD_LOG( PDERROR, "Failed to get errno from js after"
+                 " installing temporay coord, rc = %d", rc ) ;
+         pDetail = "Failed to get errno from js after installing"
+                   " temporary coord" ;
          goto error ;
       }
       // 3. to see whether execute js successfully or not
       if ( SDB_OK != errNum )
       {
-         rc = errNum ;
          // get error detail
          tmpRc = omaGetStringElement ( retObj, OMA_FIELD_DETAIL, &pDetail ) ;
          if ( SDB_OK != tmpRc )
          {
-            PD_LOG_MSG( PDERROR, "Failed to get error detail from js after "
-                        "installing temporay coord, rc = %d", tmpRc ) ;
+            PD_LOG( PDERROR, "Failed to get error detail from js after"
+                    " installing temporay coord, rc = %d", tmpRc ) ;
+            pDetail = "Failed to get error detail from js after"
+                       " installing temporay coord" ;
+            goto done ;
          }
-         else
-         {
-            PD_LOG_MSG( PDERROR, "%s, rc = %d", pDetail, rc ) ;
-         }
+         rc = errNum ;
          goto error ;
       }
-      // 3. save temporary coord's info
+      // 4. save temporary coord's info
       rc = _saveTmpCoordInfo( retObj ) ;
       if ( rc )
       {
-         PD_LOG_MSG ( PDERROR, "Failed to save installed temporary coord's "
-                      "info, rc = %d", rc ) ;
+         PD_LOG ( PDERROR, "Failed to save installed temporary coord's "
+                  "info, rc = %d", rc ) ;
+         pDetail = "Failed to save installed temporary coord's info" ;
          goto error ;
       }
       
    done:
       return rc ;
    error:
+      setErrInfo( rc, pDetail ) ;
       goto done ;
    }
 
@@ -2214,36 +2277,33 @@ namespace engine
          {
             pDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
             if ( NULL == pDetail || 0 == *pDetail )
-            {
                pDetail = "Remove temporary coord does not execute js file yet" ;
-            }
          }
-         PD_LOG_MSG( PDERROR, "%s", pDetail ) ;
          goto error ;
       }
       // 2. extract return "errno"
       rc = omaGetIntElement( retObj, OMA_FIELD_ERRNO, errNum ) ;
       if ( rc )
       {
-         PD_LOG_MSG( PDERROR, "Failed to get errno from js after "
-                     "removing temporay coord, rc = %d", rc ) ;
+         PD_LOG( PDERROR, "Failed to get errno from js after "
+                 "removing temporay coord, rc = %d", rc ) ;
+         pDetail = "Failed to get errno from js after removing temporay coord" ;
          goto error ;
       }
       // 3. to see whether execute js successfully or not
       if ( SDB_OK != errNum )
       {
-         rc = errNum ;
          // get error detail
          tmpRc = omaGetStringElement( retObj, OMA_FIELD_DETAIL, &pDetail ) ;
          if ( SDB_OK != tmpRc )
          {
-            PD_LOG_MSG( PDERROR, "Failed to get error detail from js after "
-                        "removing temporay coord, rc = %d", tmpRc ) ;
+            PD_LOG( PDERROR, "Failed to get error detail from js after "
+                    "removing temporay coord, rc = %d", tmpRc ) ;
+            pDetail = "Failed to get error detail from js after "
+                      "removing temporay coord" ;
+            goto error ;
          }
-         else
-         {
-            PD_LOG_MSG( PDERROR, "%s, rc = %d", pDetail, rc ) ;
-         }
+         rc = errNum ;
          goto error ;
       }
 
@@ -2346,9 +2406,7 @@ namespace engine
             PD_LOG( PDERROR, "Failed to get errno from js after "
                     "installing standalone[%s:%s], rc = %d",
                     pHostName, pSvcName, rc ) ;
-            pDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
-            if ( NULL == pDetail || 0 == *pDetail )
-               pDetail = "Failed to get errno from js after installing standalone" ;
+            pDetail = "Failed to get errno from js after installing standalone" ;
             ossSnprintf( flow, OMA_BUFF_SIZE, "Failed to install "
                          "standalone[%s:%s], going to rollback",
                          pHostName, pSvcName ) ;
@@ -2376,10 +2434,8 @@ namespace engine
                PD_LOG( PDERROR, "Failed to get error detail from js after "
                        "installing standalone[%s:%s], rc = %d",
                        pHostName, pSvcName, tmpRc ) ;
-               pDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
-               if ( NULL == pDetail || 0 == *pDetail )
-                  pDetail = "Failed to get error detail from js after "
-                            "installing standalone" ;
+               pDetail = "Failed to get error detail from js after "
+                         "installing standalone" ;
             }
             ossSnprintf( flow, OMA_BUFF_SIZE, "Failed to install "
                          "standalone[%s:%s], going to rollback",
@@ -2420,6 +2476,7 @@ namespace engine
    done:
       return rc ;
    error:
+      setErrInfo( rc, pDetail ) ;
       goto done ;
    }
 
@@ -2435,6 +2492,7 @@ namespace engine
       for ( ; itr != _catalog.end(); itr++ )
       {
          BSONObj retObj ;
+         stringstream ss ;
          InstDBResult instResult = itr->_instResult ;
          _omaInstallCatalog runCmd( _taskID, _tmpCoordSvcName, itr->_instInfo ) ;
          const CHAR *pHostName = itr->_instInfo._hostName.c_str() ;
@@ -2494,7 +2552,9 @@ namespace engine
             PD_LOG( PDERROR, "Failed to get errno from js after "
                     "installing catalog[%s:%s], rc = %d",
                     pHostName, pSvcName, rc ) ;
-            pDetail = "Failed to get errno from js after installing catalog" ;
+            ss << "Failed to get errno from js after installing catalog[" <<
+               pHostName << ":" << pSvcName << "]" ;
+            pDetail = ss.str().c_str() ;
             ossSnprintf( flow, OMA_BUFF_SIZE, "Failed to install "
                          "catalog[%s:%s], going to rollback",
                          pHostName, pSvcName ) ;
@@ -2511,8 +2571,9 @@ namespace engine
                PD_LOG( PDERROR, "Failed to get error detail from js after "
                        "installing catalog[%s:%s], rc = %d",
                        pHostName, pSvcName, tmpRc ) ;
-               pDetail = "Failed to get error detail from js after "
-                         "installing catalog" ;
+               ss << "Failed to get error detail from js after "
+                     "installing catalog[" << pHostName << ":" << pSvcName << "]" ; 
+               pDetail = ss.str().c_str() ;
             }
             ossSnprintf( flow, OMA_BUFF_SIZE, "Failed to install "
                          "catalog[%s:%s], going to rollback",
@@ -2557,6 +2618,7 @@ namespace engine
    done:
       return rc ;
    error:
+      setErrInfo( rc, pDetail ) ;
       goto done ;
    }
 
@@ -2572,6 +2634,7 @@ namespace engine
       for ( ; itr != _coord.end(); itr++ )
       {
          BSONObj retObj ;
+         stringstream ss ;
          InstDBResult instResult = itr->_instResult ;
          _omaInstallCoord runCmd( _taskID, _tmpCoordSvcName, itr->_instInfo ) ;
          const CHAR *pHostName = itr->_instInfo._hostName.c_str() ;
@@ -2631,7 +2694,9 @@ namespace engine
             PD_LOG( PDERROR, "Failed to get errno from js after "
                     "installing coord[%s:%s], rc = %d",
                     pHostName, pSvcName, rc ) ;
-            pDetail = "Failed to get errno from js after installing coord" ;
+            ss << "Failed to get errno from js after installing coord[" <<
+               pHostName << ":" << pSvcName << "]" ;
+            pDetail = ss.str().c_str() ;
             ossSnprintf( flow, OMA_BUFF_SIZE, "Failed to install "
                          "coord[%s:%s], going to rollback",
                          pHostName, pSvcName ) ;
@@ -2648,8 +2713,9 @@ namespace engine
                PD_LOG( PDERROR, "Failed to get error detail from js after "
                        "installing coord[%s:%s], rc = %d",
                        pHostName, pSvcName, tmpRc ) ;
-               pDetail = "Failed to get error detail from js after "
-                         "installing coord" ;
+               ss << "Failed to get error detail from js after "
+                     "installing coord[" << pHostName << ":" << pSvcName << "]" ;
+               pDetail = ss.str().c_str() ;
             }
             ossSnprintf( flow, OMA_BUFF_SIZE, "Failed to install "
                          "coord[%s:%s], going to rollback",
@@ -2694,6 +2760,7 @@ namespace engine
    done:
       return rc ;
    error:
+      setErrInfo( rc, pDetail ) ;
       goto done ;
    }
 
@@ -4035,6 +4102,27 @@ namespace engine
 
       return SDB_OK ;
    }
+
+   void _omaRemoveDBBusTask::setErrInfo( INT32 errNum, const CHAR *pDetail )
+   {
+      ossScopedLock lock ( &_taskLatch, EXCLUSIVE ) ;
+
+      if ( NULL == pDetail )
+      {
+         PD_LOG( PDWARNING, "Error detail is NULL" ) ;
+         return ;
+      }
+      if ( ( SDB_OK == errNum ) ||
+           ( SDB_OK != _errno && '\0' != _detail[0] ) )
+         return ;
+      else
+      {
+         // set errno
+         _errno = errNum ;
+         // set error detail
+         ossStrncpy( _detail, pDetail, OMA_BUFF_SIZE ) ;
+      }
+   }
    
    INT32 _omaRemoveDBBusTask::_initTaskInfo( BSONObj &info )
    {
@@ -4400,50 +4488,50 @@ namespace engine
          {
             pDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
             if ( NULL == pDetail || 0 == *pDetail )
-            {
                pDetail = "Install temporary coord does not execute js file yet" ;
-            }
          }
-         PD_LOG_MSG( PDERROR, "%s", pDetail ) ;
          goto error ;
       }
       // 2. extract return "errno"
       rc = omaGetIntElement ( retObj, OMA_FIELD_ERRNO, errNum ) ;
       if ( rc )
       {
-         PD_LOG_MSG( PDERROR, "Failed to get errno from js after "
-                     "installing temporay coord, rc = %d", rc ) ;
+         PD_LOG( PDERROR, "Failed to get errno from js after "
+                 "installing temporay coord, rc = %d", rc ) ;
+         pDetail = "Failed to get errno from js after "
+                   "installing temporay coord" ;
          goto error ;
       }
       // 3. to see whether execute js successfully or not
       if ( SDB_OK != errNum )
       {
-         rc = errNum ;
          // get error detail
          tmpRc = omaGetStringElement ( retObj, OMA_FIELD_DETAIL, &pDetail ) ;
          if ( SDB_OK != tmpRc )
          {
-            PD_LOG_MSG( PDERROR, "Failed to get error detail from js after "
-                        "installing temporay coord, rc = %d", tmpRc ) ;
+            PD_LOG( PDERROR, "Failed to get error detail from js after "
+                    "installing temporay coord, rc = %d", tmpRc ) ;
+            pDetail = "Failed to get error detail from js after "
+                      "installing temporay coord" ;
+            goto error ;
          }
-         else
-         {
-            PD_LOG_MSG( PDERROR, "%s, rc = %d", pDetail, rc ) ;
-         }
+         rc = errNum ;
          goto error ;
       }
-      // 3. save temporary coord's info
+      // 4. save temporary coord's info
       rc = _saveTmpCoordInfo( retObj ) ;
       if ( rc )
       {
          PD_LOG_MSG ( PDERROR, "Failed to save installed temporary coord's "
                       "info, rc = %d", rc ) ;
+         pDetail = "Failed to save installed temporary coord's info" ;
          goto error ;
       }
       
    done:
       return rc ;
    error:
+      setErrInfo( rc, pDetail ) ;
       goto done ;
    }
 
@@ -4466,11 +4554,8 @@ namespace engine
          {
             pDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
             if ( NULL == pDetail || 0 == *pDetail )
-            {
                pDetail = "Remove temporary coord does not execute js file yet" ;
-            }
          }
-         PD_LOG_MSG( PDERROR, "%s", pDetail ) ;
          goto error ;
       }
       // 2. extract return "errno"
@@ -4489,19 +4574,20 @@ namespace engine
          tmpRc = omaGetStringElement( retObj, OMA_FIELD_DETAIL, &pDetail ) ;
          if ( SDB_OK != tmpRc )
          {
-            PD_LOG_MSG( PDERROR, "Failed to get error detail from js after "
-                        "removing temporay coord, rc = %d", tmpRc ) ;
+            PD_LOG( PDERROR, "Failed to get error detail from js after "
+                    "removing temporay coord, rc = %d", tmpRc ) ;
+            pDetail = "Failed to get error detail from js after "
+                      "removing temporay coord" ;
+            goto error ;
          }
-         else
-         {
-            PD_LOG_MSG( PDERROR, "%s, rc = %d", pDetail, rc ) ;
-         }
+         rc = errNum ;
          goto error ;
       }
 
    done:
       return rc ;
    error:
+      setErrInfo( rc, pDetail ) ;
       goto done ;
    }
 
@@ -4635,7 +4721,7 @@ namespace engine
          PD_LOG( PDWARNING, "Failed to update remove standalone[%s:%s]'s "
                  "progress, rc = %d", pHostName, pSvcName, tmpRc ) ;
       }
-      
+      setErrInfo( rc, pDetail ) ;
       goto done ;
    }
 
@@ -4703,7 +4789,6 @@ namespace engine
       }
       else
       {
-
          PD_LOG ( PDEVENT, "Success to remove catalog group" ) ;
       }
 
@@ -4713,11 +4798,10 @@ namespace engine
    done:
       return rc ;
    error:
-      PD_LOG_MSG( PDERROR, "Failed to remove catalog: %s, rc = %d",
-                  pDetail, rc ) ;
+      PD_LOG_MSG( PDERROR, "Failed to remove catalog: rc = %d", rc ) ;
       // update progress
       updateProgressToTask( rc, pDetail, ROLE_CATA, OMA_TASK_STATUS_END ) ;
-
+      setErrInfo( rc, pDetail ) ;
       goto done ;
    }
 
@@ -4794,11 +4878,10 @@ namespace engine
    done:
       return rc ;
    error:
-      PD_LOG_MSG( PDERROR, "Failed to remove coord: %s, rc = %d",
-                  pDetail, rc ) ;
+      PD_LOG( PDERROR, "Failed to remove coord: rc = %d", rc ) ;
       // update progress
       updateProgressToTask( rc, pDetail, ROLE_COORD, OMA_TASK_STATUS_END ) ;
-
+      setErrInfo( rc, pDetail ) ;
       goto done ;
    }
 
@@ -4883,11 +4966,10 @@ namespace engine
    done:
       return rc ;
    error:
-      PD_LOG_MSG( PDERROR, "Failed to remove data gropus: %s, rc = %d",
-                  pDetail, rc ) ;
+      PD_LOG( PDERROR, "Failed to remove data gropus, rc = %d", rc ) ;
       // update progress
       updateProgressToTask( rc, pDetail, ROLE_DATA, OMA_TASK_STATUS_END ) ;
-
+      setErrInfo( rc, pDetail ) ;
       goto done ;
    }
 

@@ -97,6 +97,7 @@ namespace engine
          const CHAR *pIP              = NULL ;
          const CHAR *pHostName        = NULL ;
          INT32 errNum                 = 0 ;
+         stringstream ss ;
          BSONObj retObj ;
 
          // 1. judge whether program had been interrupted
@@ -172,25 +173,26 @@ namespace engine
          {
             PD_LOG( PDERROR, "Failed to get errno from js after "
                     "adding host[%s], rc = %d", pIP, rc ) ;
-            pDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
-            if ( NULL == pDetail || 0 == *pDetail )
-               pDetail = "Failed to get errno from js after adding host" ;
+            ss << "Failed to get errno from js after adding host[" <<
+               pIP << "]" ;
+            pDetail = ss.str().c_str() ;
             goto build_error_result ;
          }
          // to see whether execute js successfully or not
          if ( SDB_OK != errNum )
          {
-            rc = errNum ;
             // get error detail
-            tmpRc = omaGetStringElement ( retObj, OMA_FIELD_DETAIL, &pDetail ) ;
-            if ( SDB_OK != tmpRc )
+            rc = omaGetStringElement ( retObj, OMA_FIELD_DETAIL, &pDetail ) ;
+            if ( SDB_OK != rc )
             {
                PD_LOG( PDERROR, "Failed to get error detail from js after "
-                       "adding host[%s], rc = %d", pIP, tmpRc ) ;
-               pDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
-               if ( NULL == pDetail || 0 == *pDetail )
-                  pDetail = "Failed to get error detail from js after adding host" ;
+                       "adding host[%s], rc = %d", pIP, rc ) ;
+               ss << "Failed to get error detail from js after adding host[" <<
+                  pIP << "]" ;
+               pDetail = ss.str().c_str() ;
+               goto build_error_result ;
             }
+            rc = errNum ;
             goto build_error_result ;
          }
          else
@@ -271,8 +273,13 @@ namespace engine
 
    INT32 _omaInstDBBusSubTask::doit()
    {
-      INT32 rc = SDB_OK ;
-      INT32 tmpRc = SDB_OK ;
+      INT32 rc                     = SDB_OK ;
+      INT32 tmpRc                  = SDB_OK ;
+      CHAR flow[OMA_BUFF_SIZE + 1] = { 0 } ;
+      const CHAR *pDetail          = NULL ;
+      const CHAR *pHostName        = NULL ;
+      const CHAR *pSvcName         = NULL ;
+      INT32 errNum                 = 0 ;
       OMA_TASK_STATUS taskStatus ;
 
       // set current sub task to be running
@@ -302,14 +309,9 @@ namespace engine
 
          while( TRUE )
          {
-            InstDBBusInfo *pInfo         = NULL ;
+            InstDBBusInfo *pInfo = NULL ;
             InstDBResult instResult ;
-                                        
-            CHAR flow[OMA_BUFF_SIZE + 1] = { 0 } ;
-            const CHAR *pDetail          = NULL ;
-            const CHAR *pHostName        = NULL ;
-            const CHAR *pSvcName         = NULL ;
-            INT32 errNum                 = 0 ;
+            stringstream ss ;
             BSONObj retObj ;
 
             // 3. get a data node to install
@@ -398,28 +400,27 @@ namespace engine
                PD_LOG( PDERROR, "Failed to get errno from js after "
                        "installing data node[%s:%s], rc = %d",
                        pHostName, pSvcName, rc ) ;
-               pDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
-               if ( NULL == pDetail || 0 == *pDetail )
-                  pDetail = "Failed to get errno from js after "
-                            "installing data node" ;
+               ss << "Failed to get errno from js after installing data node[" <<
+                  pHostName << ":" << pSvcName << "]" ;
+               pDetail = ss.str().c_str() ;
                goto build_error_result ;
             }
             // to see whether execute js successfully or not
             if ( SDB_OK != errNum )
             {
-               rc = errNum ;
                // get error detail
-               tmpRc = omaGetStringElement ( retObj, OMA_FIELD_DETAIL, &pDetail ) ;
-               if ( SDB_OK != tmpRc )
+               rc = omaGetStringElement ( retObj, OMA_FIELD_DETAIL, &pDetail ) ;
+               if ( SDB_OK != rc )
                {
                   PD_LOG( PDERROR, "Failed to get error detail from js after "
                           "installing data node[%s:%s], rc = %d",
-                          pHostName, pSvcName, tmpRc ) ;
-                  pDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
-                  if ( NULL == pDetail || 0 == *pDetail )
-                     pDetail = "Failed to get error detail from js "
-                               "after installing data node" ;
+                          pHostName, pSvcName, rc ) ;
+                  ss << "Failed to get error detail from js after installing "
+                        "data node[" << pHostName << ":" << pSvcName << "]" ;
+                  pDetail = ss.str().c_str() ;
+                  goto build_error_result ;
                }
+               rc = errNum ;
                goto build_error_result ;
             }
             else
@@ -469,6 +470,7 @@ namespace engine
       _pTask->notifyUpdateProgress() ;
       return rc ;
    error:
+      _pTask->setErrInfo( rc, pDetail ) ;
       goto done ;
    }
 

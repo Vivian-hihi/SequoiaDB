@@ -75,6 +75,7 @@ namespace engine
          INT32 updateProgressToTask( INT32 serialNum,
                                      AddHostResultInfo &resultInfo ) ;
          void notifyUpdateProgress() ;
+         void setErrInfo( INT32 errNum, const CHAR *pDetail ) ;
          
       private:
          INT32 _initAddHostInfo( BSONObj &info ) ;
@@ -168,6 +169,7 @@ namespace engine
                                      const CHAR *pRole, OMA_TASK_STATUS status ) ;
          string getTmpCoordSvcName() ;
          void notifyUpdateProgress() ;
+         void setErrInfo( INT32 errNum, const CHAR *pDetail ) ;
          string getDataRGToInst() ;
          InstDBBusInfo* getDataNodeInfo( string &groupName ) ;
 
@@ -250,6 +252,7 @@ namespace engine
                                      BOOLEAN needToNotify = FALSE ) ;
          INT32 updateProgressToTask( INT32 errNum, const CHAR *pDetail,
                                      const CHAR *pRole, OMA_TASK_STATUS status ) ;
+         void setErrInfo( INT32 errNum, const CHAR *pDetail ) ;
          string getTmpCoordSvcName() ;
 
       private:
