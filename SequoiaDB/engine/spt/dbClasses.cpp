@@ -75,7 +75,6 @@
       engine::sdbSetErrno( SDB_OK ) ;                           \
       if ( ! (cond) ) {                                     \
          ret = JS_FALSE ;                                   \
-         engine::sdbSetErrMsg( rc ? getErrDesp( rc ) : NULL ) ;\
          engine::sdbSetErrno( rc ) ;                         \
          JS_SetPendingException ( cx , INT_TO_JSVAL( rc ) ) ;   \
          goto error ;                                       \
@@ -88,7 +87,7 @@
       engine::sdbSetErrno( SDB_OK ) ;                           \
       if ( ! (cond) ) {                                     \
          ret = JS_FALSE ;                                   \
-         engine::sdbSetErrMsg( rc ? getErrDesp( rc ) : NULL ) ;\
+         engine::sdbSetErrMsg( msg ) ;\
          engine::sdbSetErrno( rc ) ;                         \
          JS_SetPendingException ( cx , INT_TO_JSVAL( rc ) ) ;   \
          goto error ;                                       \
