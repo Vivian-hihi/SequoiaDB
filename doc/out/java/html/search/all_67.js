@@ -63,5 +63,6 @@ var searchData=
   ['getstorageunits',['getStorageUnits',['../classcom_1_1sequoiadb_1_1base_1_1Sequoiadb.html#a734eadb09d977625b8cf4b37a9d38a88',1,'com::sequoiadb::base::Sequoiadb']]],
   ['gettimeout',['getTimeout',['../classcom_1_1sequoiadb_1_1base_1_1SequoiadbOption.html#aaa17c39c693f4f1fd2c056a2a219781e',1,'com::sequoiadb::base::SequoiadbOption']]],
   ['getusedconnnum',['getUsedConnNum',['../classcom_1_1sequoiadb_1_1base_1_1SequoiadbDatasource.html#a38289c0be5bcb00c7f6f0de7c1c78931',1,'com::sequoiadb::base::SequoiadbDatasource']]],
-  ['getusenagle',['getUseNagle',['../classcom_1_1sequoiadb_1_1net_1_1ConfigOptions.html#a52a229b72e690bc2474caa6ddd6d5190',1,'com::sequoiadb::net::ConfigOptions']]]
+  ['getusenagle',['getUseNagle',['../classcom_1_1sequoiadb_1_1net_1_1ConfigOptions.html#a52a229b72e690bc2474caa6ddd6d5190',1,'com::sequoiadb::net::ConfigOptions']]],
+  ['getusessl',['getUseSSL',['../classcom_1_1sequoiadb_1_1net_1_1ConfigOptions.html#a0057635a4708ec4c0c05de9a86bd0119',1,'com::sequoiadb::net::ConfigOptions']]]
 ];

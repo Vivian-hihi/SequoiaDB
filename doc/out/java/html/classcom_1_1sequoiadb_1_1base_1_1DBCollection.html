@@ -1461,7 +1461,7 @@ Run : Whether execute query explain or not, true for excuting query explain then
           <td class="memname">Object com.sequoiadb.base.DBCollection.insert </td>
           <td>(</td>
           <td class="paramtype">BSONObject&#160;</td>
-          <td class="paramname"><em>obj</em></td><td>)</td>
+          <td class="paramname"><em>insertor</em></td><td>)</td>
           <td>  throws BaseException </td>
         </tr>
       </table>
@@ -1865,8 +1865,6 @@ BDQuery.FLG_QUERY_PARALLED </li>
     <tr><td class="paramname">selector</td><td>the selective rule, return the whole document if null </td></tr>
     <tr><td class="paramname">orderBy</td><td>the ordered rule, never sort if null </td></tr>
     <tr><td class="paramname">hint</td><td>the hint, automatically match the optimal hint if null </td></tr>
-    <tr><td class="paramname">skipRows</td><td>skip the first numToSkip documents, never skip if this parameter is 0 </td></tr>
-    <tr><td class="paramname">returnRows</td><td>only return returnRows documents, return all if this parameter is -1 </td></tr>
   </table>
   </dd>
 </dl>
@@ -2452,7 +2450,7 @@ BDQuery.FLG_QUERY_PARALLED </li>
 </pre> <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">splitCondition</td><td>the split condition </td></tr>
-    <tr><td class="paramname">splitEndCondition</td><td>the split end condition or null eg:If we create a collection with the option {ShardingKey:{"age":1},ShardingType:"Hash",Partition:2^10}, we can fill {age:30} as the splitCondition, and fill {age:60} as the splitEndCondition. when split, the targe group will get the records whose age's hash value are in [30,60). If splitEndCondition is null, they are in [30,max). </td></tr>
+    <tr><td class="paramname">splitEndCondition</td><td>the split end condition or null eg:If we create a collection with the option {ShardingKey:{"age":1},ShardingType:"Hash",Partition:2^10}, we can fill {age:30} as the splitCondition, and fill {age:60} as the splitEndCondition. when split, the target group will get the records whose age's hash value are in [30,60). If splitEndCondition is null, they are in [30,max). </td></tr>
   </table>
   </dd>
 </dl>
@@ -2889,7 +2887,7 @@ BDQuery.FLG_QUERY_PARALLED </li>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Jan 27 2015 10:31:15 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Fri Mar 6 2015 09:29:13 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.2
 </small></address>
