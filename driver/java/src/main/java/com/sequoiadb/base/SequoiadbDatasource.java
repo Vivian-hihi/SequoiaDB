@@ -153,6 +153,8 @@ public class SequoiadbDatasource
 		// after the timer start 10 minutes, it goes to get back the useful coord address periodically 
 		timer2.schedule(new RecaptureCoordAddrTask(this), this.dsOpt.getRecaptureConnPeriod(),
 				        this.dsOpt.getRecaptureConnPeriod());
+		
+		Runtime.getRuntime().addShutdownHook(new SDExitThread(this));
 	}
 
 	/**
@@ -601,4 +603,18 @@ class RecaptureCoordAddrTask extends TimerTask
 	{
 		datasource.getBackCoordAddr();
 	}
+}
+
+class SDExitThread extends Thread {
+    private SequoiadbDatasource _sd = null ;
+    
+    public SDExitThread( SequoiadbDatasource sd ) {
+        _sd = sd;
+    }
+    
+    public void run() {
+        if (null != _sd) {
+            _sd.close();
+        }
+    }
 }
