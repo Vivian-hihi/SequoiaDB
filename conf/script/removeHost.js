@@ -94,7 +94,7 @@ function _hasUninstalled( ssh, path )
 {
    var str     = "" ;
    var command = "" ;
-   var prog    = adaptPath( path ) + OMA_PROG_UNINSTALL_L ;
+   var prog    = adaptPath( path ) + OMA_PROG_UNINSTALL ;
 
    try
    {
@@ -151,7 +151,7 @@ function _uninstallDBInRemote( ssh, path )
    var str         = null ;
    if ( SYS_LINUX == SYS_TYPE )
    {
-      str = installpath + OMA_PROG_UNINSTALL_L + " --mode " + " unattended " ;
+      str = installpath + OMA_PROG_UNINSTALL + " --mode " + " unattended " ;
    }
    else
    {

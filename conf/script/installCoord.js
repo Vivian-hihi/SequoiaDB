@@ -20,7 +20,7 @@
 @modify list:
    2014-7-26 Zhaobo Tan  Init
 @parameter
-   BUS_JSON: the format is: { "SdbUser": "sdbadmin", "SdbPasswd": "sdbadmin", "SdbUserGroup": "sdbadmin_group", "User": "root", "Passwd": "sequoiadb", "SshPort": "22", "InstallHostName": "rhel64-test8", "InstallSvcName": "11810", "InstallPath": "/opt/sequoiadb/database/coord", "InstallConfig": { "diaglevel": 3, "role": "coord", "logfilesz": 64, "logfilenum": 20, "transactionon": "false", "preferedinstance": "A", "numpagecleaners": 1, "pagecleaninterval": 10000, "hjbuf": 128, "logbuffsize": 1024, "maxprefpool": 200, "maxreplsync": 10, "numpreload": 0, "sortbuf": 512, "syncstrategy": "none" } } ;
+   BUS_JSON: the format is: { "SdbUser": "sdbadmin", "SdbPasswd": "sdbadmin", "SdbUserGroup": "sdbadmin_group", "User": "root", "Passwd": "sequoiadb", "SshPort": "22", "InstallHostName": "rhel64-test8", "InstallSvcName": "11810", "InstallPath": "/opt/sequoiadb/database/coord", "InstallConfig": { "diaglevel": 3, "role": "coord", "logfilesz": 64, "logfilenum": 20, "transactionon": "false", "preferedinstance": "A", "numpagecleaners": 1, "pagecleaninterval": 10000, "hjbuf": 128, "logbuffsize": 1024, "maxprefpool": 200, "maxreplsync": 10, "numpreload": 0, "sortbuf": 512, "syncstrategy": "none", "userTag":"", "clusterName":"c1", "businessName":"b1" } } ;
    SYS_JSON: the format is: { "TaskID": 2, "TmpCoordSvcName": "10000" } ;
 @return
    RET_JSON: the format is: { "errno": 0, "detail": "" }
@@ -114,7 +114,7 @@ function _createCoordNode( db, hostName, svcName, installPath, config )
             errMsg = "Failed to create coord group" ;
             rc = GETLASTERROR() ;
             PD_LOG2( task_id, arguments, PDERROR, FILE_NAME_INSTALL_COORD,
-                     sprintf( errMsg + ", rc:?, detail:?", rc, errMsg ) ) ;  
+                     sprintf( errMsg + ", rc:?, detail:?", rc, GETLASTERRMSG() ) ) ;  
             exception_handle( rc, errMsg ) ;
          }
       }
@@ -124,7 +124,7 @@ function _createCoordNode( db, hostName, svcName, installPath, config )
          errMsg = "Failed to get coord group" ;
          rc = GETLASTERROR() ;
          PD_LOG2( task_id, arguments, PDERROR, FILE_NAME_INSTALL_COORD,
-                  sprintf( errMsg + ", rc:?, detail:?", rc, errMsg ) ) ;  
+                  sprintf( errMsg + ", rc:?, detail:?", rc, GETLASTERRMSG() ) ) ;  
          exception_handle( rc, errMsg ) ;
       }
    }
@@ -142,7 +142,7 @@ function _createCoordNode( db, hostName, svcName, installPath, config )
       errMsg = "Failed to create coord node [" + hostName + ":" + svcName + "]" ;
       rc = GETLASTERROR() ;
       PD_LOG2( task_id, arguments, PDERROR, FILE_NAME_INSTALL_COORD,
-               sprintf( errMsg + ", rc:?, detail:?", rc, errMsg ) ) ;  
+               sprintf( errMsg + ", rc:?, detail:?", rc, GETLASTERRMSG() ) ) ;  
       exception_handle( rc, errMsg ) ;
    }
    // start coord node
@@ -156,7 +156,7 @@ function _createCoordNode( db, hostName, svcName, installPath, config )
       errMsg = "Failed to start coord node [" + hostName + ":" + svcName + "]" ;
       rc = GETLASTERROR() ;
       PD_LOG2( task_id, arguments, PDERROR, FILE_NAME_INSTALL_COORD,
-               sprintf( errMsg + ", rc:?, detail:?", rc, errMsg ) ) ;  
+               sprintf( errMsg + ", rc:?, detail:?", rc, GETLASTERRMSG() ) ) ;  
       exception_handle( rc, errMsg ) ;
    }
 }

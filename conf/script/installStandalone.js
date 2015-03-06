@@ -20,16 +20,12 @@
 @modify list:
    2014-7-26 Zhaobo Tan  Init
 @parameter
-   BUS_JSON: the format is: {"ClusterName": "c1", "BusinessName": "b1", "UserTag": "", "SdbUser": "sdbadmin", "SdbPasswd": "sdbadmin", "SdbUserGroup": "sdbadmin_group", "User": "root", "Passwd": "sequoiadb", "SshPort": "22", "InstallHostName": "susetzb", "InstallSvcName": "20000", "InstallPath": "/opt/sequoiadb/database/standalone/20000", "InstallConfig": { "diaglevel": "5", "role": "standalone", "logfilesz": "64", "logfilenum": "10", "transactionon": "false", "preferedinstance": "2", "numpagecleaners": "10", "pagecleaninterval": "1000", "hjbuf": "128", "logbuffsize": "1024", "maxprefpool": "200", "maxreplsync": "10", "numpreload": "0", "sortbuf": "512", "syncstrategy": "none" } } ;
-   SYS_JSON: the format is: { "TaskID": 3 };
+   BUS_JSON: the format is: { "SdbUser": "sdbadmin", "SdbPasswd": "sdbadmin", "SdbUserGroup": "sdbadmin_group", "User": "root", "Passwd": "sequoiadb", "SshPort": "22", "InstallHostName": "susetzb", "InstallSvcName": "50000", "InstallPath": "/opt/sequoiadb/database/standalone/50000", "InstallConfig": { "diaglevel": "5", "role": "standalone", "logfilesz": "64", "logfilenum": "10", "transactionon": "false", "preferedinstance": "2", "numpagecleaners": "10", "pagecleaninterval": "1000", "hjbuf": "128", "logbuffsize": "1024", "maxprefpool": "200", "maxreplsync": "10", "numpreload": "0", "sortbuf": "512", "syncstrategy": "none", "usertag": "", "clustername": "c1", "businessname": "b1" } } ;
+   SYS_JSON: the format is: { "TaskID": 1 } ;
    ENV_JSON:
 @return
    RET_JSON: the format is: { "errno":0, "detail":"" }
 */
-
-// println
-//var BUS_JSON = {"ClusterName": "c2", "BusinessName": "b1", "UserTag": "", "SdbUser": "sdbadmin", "SdbPasswd": "sdbadmin", "SdbUserGroup": "sdbadmin_group", "User": "root", "Passwd": "sequoiadb", "SshPort": "22", "InstallHostName": "susetzb", "InstallSvcName": "20000", "InstallPath": "/opt/sequoiadb/database/standalone/20000", "InstallConfig": { "diaglevel": "5", "role": "standalone", "logfilesz": "64", "logfilenum": "10", "transactionon": "false", "preferedinstance": "2", "numpagecleaners": "10", "pagecleaninterval": "1000", "hjbuf": "128", "logbuffsize": "1024", "maxprefpool": "200", "maxreplsync": "10", "numpreload": "0", "sortbuf": "512", "syncstrategy": "none" } } ;
-//var SYS_JSON = { "TaskID": 13 };
 
 var RET_JSON = new installNodeResult() ;
 var rc       = SDB_OK ;
@@ -108,10 +104,10 @@ function _removeStandalone( clusterName, businessName, userTag, hostName,
    // 1. build option for remove specified standalone
    try
    {
-      option               = new checkSAInfo() ;
-      option[ClusterName]  = clusterName ;
-      option[BusinessName] = businessName ;
-      option[UserTag]      = userTag ;
+      option                = new checkSAInfo() ;
+      option[ClusterName2]  = clusterName ;
+      option[BusinessName2] = businessName ;
+      option[UserTag2]      = userTag ;
    }
    catch( e )
    {
@@ -206,6 +202,9 @@ function _createStandalone( hostName, svcName, installPath, config, agentPort )
    try
    {
       oma = new Oma( hostName, agentPort ) ;
+      PD_LOG2( task_id, arguments, PDDEBUG, FILE_NAME_INSTALL_STANDALONE,
+               sprintf( "Create standalone passes arguments: svcName[?], installPath[?], config[?]",
+                         svcName, installPath, JSON.stringify(config) ) ) ;
       oma.createData( svcName, installPath, config ) ;
       oma.startNode( svcName ) ;
       oma.close() ;
@@ -257,9 +256,6 @@ function main()
       // 1. get arguments
       try
       {
-         clusterName     = BUS_JSON[ClusterName2] ;
-         businessName    = BUS_JSON[BusinessName2] ;
-         userTag         = BUS_JSON[UserTag2] ;
          sdbUser         = BUS_JSON[SdbUser] ;
          sdbUserGroup    = BUS_JSON[SdbUserGroup] ;
          user            = BUS_JSON[User] ;
@@ -269,10 +265,9 @@ function main()
          installSvcName  = BUS_JSON[InstallSvcName] ;
          installPath     = BUS_JSON[InstallPath] ;
          installConfig   = BUS_JSON[InstallConfig] ;
-         installConfig[ClusterName]  = clusterName ;
-         installConfig[BusinessName] = businessName ;
-         installConfig[UserTag]      = userTag ;
-         
+         clusterName     = installConfig[ClusterName2] ;
+         businessName    = installConfig[BusinessName2] ;
+         userTag         = installConfig[UserTag2] ;
       }
       catch( e )
       {

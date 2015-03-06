@@ -147,7 +147,7 @@ function _checkAddHostInfo()
          // 1st, check sdb user and password
          if ( adminUser != sdbUser )
          {
-            errMsg = "When installing db packet in localhost[" + localIP + "], sdb admin user[" + sdbUser  + "] needs to match current one[" + adminUser + "]" ;
+            errMsg = "When installing db SequoiaDB in localhost[" + localIP + "], sdb admin user[" + sdbUser  + "] needs to match current one[" + adminUser + "]" ;
             rc = SDB_INVALIDARG ;
             PD_LOG2( task_id, arguments, PDERROR, FILE_NAME_CHECK_ADD_HOST_INFO,
                      sprintf( errMsg + ", rc: ?", rc ) ) ;
@@ -164,18 +164,18 @@ function _checkAddHostInfo()
             catch ( e )
             {
                SYSEXPHANDLE( e ) ;
-               errMsg = "When installing db packet in localhost[" + localIP + "], sdb admin password needs to match current one" ;
+               errMsg = "When installing SequoiaDB in localhost[" + localIP + "], sdb admin password needs to match current one" ;
                rc = GETLASTERROR() ;
                PD_LOG2( task_id, arguments, PDERROR, FILE_NAME_CHECK_ADD_HOST_INFO,
                         sprintf( errMsg + ", rc: ?, detail: ?", rc, GETLASTERRMSG() ) ) ;
                exception_handle( SDB_INVALIDARG, errMsg ) ; 
             }
          }
-         // 2nd, check agent service
-         localAgentPort = getSdbcmPort( ssh ) ;
+         // 2nd, check local OM Agent service
+         localAgentPort = getLocalCMSvc() ;
          if ( localAgentPort != port )
          {
-            errMsg = "When installing db packet in localhost[" + localIP + "], agent service[" + port  + "] needs to match current one[" + localAgentPort  + "]" ;
+            errMsg = "When installing SequoiaDB in localhost[" + localIP + "], sdbcm's service[" + port  + "] needs to match current one[" + localAgentPort  + "]" ;
             rc = SDB_INVALIDARG ;
             PD_LOG2( task_id, arguments, PDERROR, FILE_NAME_CHECK_ADD_HOST_INFO,
                      sprintf( errMsg + ", rc: ?", rc ) ) ;
@@ -186,7 +186,7 @@ function _checkAddHostInfo()
          var path2 = adaptPath( path ) ;
          if ( path1 != path2 )
          {
-            errMsg = "When installing db packet in localhost[" + localIP + "], install path[" + path  + "] needs to match current one[" + installPath  + "]" ;
+            errMsg = "When installing SequoiaDB in localhost[" + localIP + "], install path[" + path  + "] needs to match current one[" + installPath  + "]" ;
             rc = SDB_INVALIDARG ;
             PD_LOG2( task_id, arguments, PDERROR, FILE_NAME_CHECK_ADD_HOST_INFO,
                      sprintf( errMsg + ", rc: ?", rc ) ) ;

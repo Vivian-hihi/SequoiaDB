@@ -117,14 +117,14 @@ function _pushPacket( ssh )
          for ( var i = 0; i < programs.length; i++ )
          {
             src = local_prog_path + programs[i] ;
-            dest = OMA_PATH_TEMP_BIN_DIR_L + programs[i] ;
+            dest = OMA_PATH_TEMP_BIN_DIR + programs[i] ;
             ssh.push( src, dest ) ;
          }
          // push js files
          for ( var i = 0; i < js_files.length; i++ )
          {
             src = local_spt_path + js_files[i] ;
-            dest = OMA_PATH_TEMP_SPT_DIR_L + js_files[i] ;
+            dest = OMA_PATH_TEMP_SPT_DIR + js_files[i] ;
             ssh.push( src, dest ) ;
          }
       }
@@ -159,7 +159,7 @@ function _changeModeInTmpDir( ssh )
       if ( SYS_LINUX == SYS_TYPE )
       {
         // change mode
-        cmd = "chmod -R 755 " + OMA_PATH_TEMP_BIN_DIR_L ;
+        cmd = "chmod -R 755 " + OMA_PATH_TEMP_BIN_DIR ;
         ssh.exec( cmd ) ;
       }
       else
@@ -195,8 +195,8 @@ function _startTmpCM( ssh, port, secs )
    {
       try
       {
-         cmd1 = "cd " + OMA_PATH_TEMP_BIN_DIR_L ;
-         cmd2 = "./" + OMA_PROG_SDBCMART_L ;
+         cmd1 = "cd " + OMA_PATH_TEMP_BIN_DIR ;
+         cmd2 = "./" + OMA_PROG_SDBCMART ;
          cmd2 += " " + OMA_OPTION_SDBCMART_I ;
          cmd2 += " " + OMA_OPTION_SDBCMART_STANDALONE ;
          cmd2 += " " + OMA_OPTION_SDBCMART_PORT ;

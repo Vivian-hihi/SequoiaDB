@@ -64,7 +64,7 @@ function _extractOMAInfo ( obj )
       try
       {
          installpath = obj[INSTALL_DIR] ;
-         retObj[Path] = adaptPath( installpath ) + OMA_PATH_BIN_L ;
+         retObj[Path] = adaptPath( installpath ) + OMA_PATH_BIN ;
       }
       catch( e )
       {
@@ -81,7 +81,7 @@ function _extractOMAInfo ( obj )
       var configfile = "" ;
       try
       {
-         configfile = adaptPath( installpath ) + OMA_FILE_SDBCM_CONF2_L ;
+         configfile = adaptPath( installpath ) + OMA_FILE_SDBCM_CONF2 ;
          retObj[Port] = "" + Oma.getAOmaSvcName("localhost", configfile ) ;
       }
       catch ( e )
@@ -104,7 +104,7 @@ function _extractOMAInfo ( obj )
       try
       {
          cmd = new Cmd() ;
-         sdbcmprog = adaptPath( installpath ) + OMA_PROG_BIN_SDBCM_L ;
+         sdbcmprog = adaptPath( installpath ) + OMA_PROG_BIN_SDBCM ;
          str = cmd.run( sdbcmprog + " --version ", "", OMA_GTE_VERSION_TIME ) ;
          beg = str.indexOf( OMA_MISC_OM_VERSION ) ;
          end = str.indexOf( '\n' ) ;
@@ -179,7 +179,7 @@ function _getOMAInfo()
    var obj = null ;
    var info = null ;
 
-   // 1. when db had not been install
+   // 1. get SequoiaDB installed info
    try
    {
       obj = Oma.getOmaInstallInfo() ;
@@ -187,7 +187,7 @@ function _getOMAInfo()
    catch( e )
    {
       SYSEXPHANDLE( e ) ;
-      errMsg = sprintf( "Failed to get install info in host[?], take it has not install OM Agent",
+      errMsg = sprintf( "Failed to get install info in host[?], take it has not installed OM Agent",
                         System.getHostName() ) ;
       PD_LOG( arguments, PDWARNING, FILE_NAME_CHECK_HOST,
               sprintf( errMsg + ", rc: ?, detail: ?", GETLASTERROR(), GETLASTERRMSG() ) ) ;

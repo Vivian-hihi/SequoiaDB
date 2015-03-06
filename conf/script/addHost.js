@@ -343,9 +343,9 @@ function _pushDBPacket( ssh, packet )
       {
          // installer.run
          src = packet;
-         dest = OMA_PATH_TEMP_PACKET_DIR_L + packetName ;
+         dest = OMA_PATH_TEMP_PACKET_DIR + packetName ;
          ssh.push( src, dest ) ;
-         cmd = "chmod a+x " + OMA_PATH_TEMP_PACKET_DIR_L + packetName ;
+         cmd = "chmod a+x " + OMA_PATH_TEMP_PACKET_DIR + packetName ;
          ssh.exec( cmd ) ;
       }
       catch ( e )
@@ -386,7 +386,7 @@ function _installDBPacket( ssh, sdbuser, sdbpasswd, packet, path )
    var packetName = _getInstallPacketName( packet ) ; 
    if ( SYS_LINUX == SYS_TYPE )
    {
-      cmd = OMA_PATH_TEMP_PACKET_DIR_L + packetName + option ;
+      cmd = OMA_PATH_TEMP_PACKET_DIR + packetName + option ;
       try
       {
          ssh.exec( cmd ) ;
@@ -433,7 +433,7 @@ function _uninstallDBPacket( ssh, path )
       // remove db packet
       try
       {
-         cmd = str + OMA_PROG_UNINSTALL_L ;
+         cmd = str + OMA_PROG_UNINSTALL ;
          ssh.exec( "chmod a+x " + cmd ) ;
          ssh.exec( cmd + " --mode unattended " ) ;
       }

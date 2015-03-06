@@ -97,11 +97,6 @@ function exception_handle( exp, msg )
    }
 }
 
-function exception_msg( exp )
-{
-   return ((null != exp.message) && undefined != exp.message) ? exp.message : exp ;
-}
-
 /* *****************************************************************************
 @discretion: remove the "\n" or "\n\r" in the end of string
 @author: Tanzhaobo
@@ -167,13 +162,9 @@ function isInLocalHost( ssh )
    var ip1 = ssh.getLocalIP() ;
    var ip2 = ssh.getPeerIP() ;
    if( ip1 == ip2 )
-   {
       return true ;
-   }
    else
-   {
       return false ;
-   }
 }
 
 /* *****************************************************************************
@@ -303,22 +294,22 @@ function createTmpDir( ssh )
 {
    var str = "" ;
    // directories make in target host /tmp   
-   var dirs = [ OMA_PATH_TEMP_OMA_DIR_L,
-                OMA_PATH_TEMP_BIN_DIR_L,
-                OMA_PATH_TEMP_PACKET_DIR_L,
-                OMA_PATH_TEMP_CONF_DIR_L,
+   var dirs = [ OMA_PATH_TEMP_OMA_DIR,
+                OMA_PATH_TEMP_BIN_DIR,
+                OMA_PATH_TEMP_PACKET_DIR,
+                OMA_PATH_TEMP_CONF_DIR,
                 OMA_PATH_TEMP_DATA_DIR,
                 OMA_PATH_TMP_WEB_DIR,
-                OMA_PATH_TEMP_LOG_DIR_L,
-                OMA_PATH_TEMP_LOCAL_DIR_L,
-                OMA_PATH_TEMP_SPT_DIR_L,
-                OMA_PATH_TEMP_TEMP_DIR_L ] ;
+                OMA_PATH_TEMP_LOG_DIR,
+                OMA_PATH_TEMP_LOCAL_DIR,
+                OMA_PATH_TEMP_SPT_DIR,
+                OMA_PATH_TEMP_TEMP_DIR ] ;
    try
    {
       if ( SYS_LINUX == SYS_TYPE )
       {
         // rm /tmp/omatmp
-        str = "rm " + OMA_PATH_TEMP_OMA_DIR_L + " -rf " ;
+        str = "rm " + OMA_PATH_TEMP_OMA_DIR + " -rf " ;
         ssh.exec( str ) ;
         // mkdir dirs
         for ( var i = 0; i < dirs.length; i++ )
@@ -358,7 +349,7 @@ function removeTmpDir( ssh )
    {   
       if ( SYS_LINUX == SYS_TYPE )
       {
-         str = "rm -rf " + OMA_PATH_TEMP_OMA_DIR_L2 ;
+         str = "rm -rf " + OMA_PATH_TEMP_OMA_DIR2 ;
          ssh.exec( str ) ;
       }
       else
@@ -387,10 +378,10 @@ function removeTmpDir2( ssh )
 {
    var str = "" ;
    // directories need to be removed in target host
-   var dirs = [ OMA_PATH_TEMP_BIN_DIR_L,
-                OMA_PATH_TEMP_PACKET_DIR_L,
-                OMA_PATH_TEMP_SPT_DIR_L,
-                OMA_PATH_TEMP_LOCAL_DIR_L,
+   var dirs = [ OMA_PATH_TEMP_BIN_DIR,
+                OMA_PATH_TEMP_PACKET_DIR,
+                OMA_PATH_TEMP_SPT_DIR,
+                OMA_PATH_TEMP_LOCAL_DIR,
                 OMA_PATH_TMP_WEB_DIR ] ;
    try
    {
@@ -454,131 +445,42 @@ function getSptPath( path )
 }
 
 /* *****************************************************************************
-@discretion: get the total number of program about sdbcm in remote host
-             according the result of sdblist
+@discretion: get the service of local formal sdbcm
 @author: Tanzhaobo
-@parameter
-   str[string]: the result of sdblist
-@return
-   retNum[number]: the total nunber or -1
-***************************************************************************** */
-function extractTotalNumber( str )
-{
-   var retNum = -1 ;
-   var symbol = "Total:" ;
-
-   var pos = str.lastIndexOf( symbol ) ;
-   if ( -1 != pos )
-   {
-      var subStr = str.substring( pos + symbol.length, str.length ) ;
-      retNum = parseInt( subStr ) ;
-   }
-   return retNum ;
-}
-
-/* *****************************************************************************
-@discretion: get remote sdbcm port according the result of sdblist
-@author: Tanzhaobo
-@parameter
-   str[string]: the result of sdblist
-@return
-   retPort[number]: the port or -1
-***************************************************************************** */
-function extractPort( str )
-{
-   var retPort = -1 ;
-   var symbol = "(" ;
-
-   var pos = str.indexOf( symbol ) ;
-   if ( -1 != pos )
-   {
-      var subStr = str.substring( pos + symbol.length, str.length ) ;
-      retNum = parseInt( subStr ) ;
-   }
-   return retNum ;
-}
-
-/* *****************************************************************************
-@discretion: get sdbcm port in target host
-@author: Tanzhaobo
-@parameter
-   ssh[object]: ssh object
+@parameter void
 @exception
 @return
-   retPort[number]: the port of target sdbcm
+   retStr[string]: the service of local formal sdbcm
 ***************************************************************************** */
-function getSdbcmPort( ssh )
+function getLocalCMSvc()
 {
-   var retPort = -1 ;
-   var str = "" ;
-   var errMsg = "" ;
-
-   if ( SYS_LINUX == SYS_TYPE )
+   var retStr      = "" ;
+   var option      = null ;
+   var filter      = null ;
+   var arr         = null ;
+   var obj         = null ;
+   
+   try
    {
-      var installInfoObj = null ;
-      var installPath = null ;
-      var prog = null ;
-      var cmd = null ;
-      var ret = SDB_OK ;
-      var isLocal = isInLocalHost( ssh ) ;
-      if ( isLocal )
+      option = eval( '(' + '{role:"cm",mode:"run",showalone:false}' + ')' ) ;
+      filter = eval( '(' + '{type:"sdbcm"}' + ')' ) ;
+      arr = Sdbtool.listNodes( option, filter ) ;
+      if ( arr.size() > 0 )
       {
-         try
-         {
-            installInfoObj = eval( '(' + Oma.getOmaInstallInfo() + ')' ) ;
-            installPath = adaptPath( installInfoObj[INSTALL_DIR] ) ;
-            prog = installPath  + OMA_PROG_BIN_SDBLIST_L ;
-         }
-         catch( e )
-         {
-            errMsg = "Failed to get sdbcm's port in host[" + ssh.getPeerIP() + "]" ;
-            PD_LOG( arguments, PDERROR, FILE_NAME_FUNC,
-                    errMsg + ", rc: " + getLastError() + ", detail: " + getLastErrMsg() ) ;
-            exception_handle( SDB_SYS, errMsg ) ;
-         }
-      }
-      else
-      {
-         prog = OMA_PATH_TEMP_BIN_DIR_L + OMA_PROG_SDBLIST_L ;
-      }
-      cmd = prog + " -t cm " ;
-      try
-      {
-         str = ssh.exec( cmd ) ;
-      }
-      catch ( e )
-      {
-         SYSEXPHANDLE( e ) ;
-         ret = ssh.getLastRet() ;
-         if ( ret < 0 )
-         {
-            errMsg = "Failed to get sdbcm's port in host[" + ssh.getPeerIP() + "]" ;
-            PD_LOG( arguments, PDERROR, FILE_NAME_FUNC,
-                    errMsg + ", rc: " + getLastError() + ", detail: " + getLastErrMsg() ) ;
-            exception_handle( SDB_SYS, errMsg ) ;
-         }
-         else if ( ret > 0 )
-         {
-            errMsg = "sdbcm is not running in host[" + ssh.getPeerIP() + "]" ;
-            PD_LOG( arguments, PDERROR, FILE_NAME_FUNC,
-                    errMsg + ", rc: " + getLastError() + "detail: " + getLastErrMsg() ) ;
-            exception_handle( SDB_SYS, errMsg ) ;
-         }
-      }
-      retPort = extractPort ( str ) ;
-      if ( -1 == retPort )
-      {
-         errMsg = ( "Failed to get sdbcm's port in host[" + ssh.getPeerIP() + "]" ) ;
-         PD_LOG( arguments, PDERROR, FILE_NAME_FUNC,
-                 errMsg + ", rc: " + getLastError() + "detail: " + getLastErrMsg() ) ;
-         exception_handle( SDB_SYS, errMsg ) ;
+         obj = eval( '(' + arr.pos() + ')' ) ;
+         retStr = obj[SvcName2] ;
       }
    }
-   else
+   catch( e )
    {
-      //TODO:
+      SYSEXPHANDLE( e ) ;
+      errMsg = "Failed to get the service of local sdbcm" ;
+      rc = GETLASTERROR() ;
+      PD_LOG2( task_id, arguments, PDERROR, FILE_NAME_FUNC,
+               sprintf( errMsg + ", rc: ?, detail: ?", rc, GETLASTERRMSG() ) ) ;
+      exception_handle( SDB_SYS, errMsg ) ; 
    }
-   return retPort ;
+   return retStr ;
 }
 
 /* *****************************************************************************
@@ -1045,7 +947,7 @@ function pushProgAndSpt( ssh, progs, spts )
          for ( var i = 0; i < progs.length; i++ )
          {
             src = local_prog_path + progs[i] ;
-            dest = OMA_PATH_TEMP_BIN_DIR_L + progs[i] ;
+            dest = OMA_PATH_TEMP_BIN_DIR + progs[i] ;
             ssh.push( src, dest ) ;
          }
          
@@ -1053,7 +955,7 @@ function pushProgAndSpt( ssh, progs, spts )
          for ( var i = 0; i < spts.length; i++ )
          {
             src = local_spt_path + spts[i] ;
-            dest = OMA_PATH_TEMP_SPT_DIR_L + spts[i] ;
+            dest = OMA_PATH_TEMP_SPT_DIR + spts[i] ;
             ssh.push( src, dest ) ;
          }
       }

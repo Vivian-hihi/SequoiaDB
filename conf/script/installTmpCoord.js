@@ -81,26 +81,26 @@ function _getCfgInfo( cfgInfo )
    var str              = "" ;
    
    // get configure information
-   retObj[ClusterName]  = cfgInfo[ClusterName] ;
-   retObj[BusinessName] = cfgInfo[BusinessName] ;
-   retObj[UserTag]      = cfgInfo[UserTag] ;
-   retObj[CatalogAddr]  = "" ;
+   retObj[ClusterName2]  = cfgInfo[ClusterName2] ;
+   retObj[BusinessName2] = cfgInfo[BusinessName2] ;
+   retObj[UserTag2]      = cfgInfo[UserTag2] ;
+   retObj[CatalogAddr2] = "" ;
    addrArr              = cfgInfo[CataAddr] ;
    len                  = addrArr.length ;
    
    // check info
    PD_LOG2( task_id, arguments, PDDEBUG, FILE_NAME_INSTALL_TEMPORARY_COORD,
             sprintf( "clustername[?], businessname[?], usertag[?]",
-                    retObj[ClusterName], retObj[BusinessName], retObj[UserTag] ) ) ;
+                    retObj[ClusterName2], retObj[BusinessName2], retObj[UserTag2] ) ) ;
                     
-   if ( "undefined" == typeof(retObj[ClusterName]) ||
-        "undefined" == typeof(retObj[BusinessName]) ||
-        "undefined" == typeof(retObj[UserTag]) )
+   if ( "undefined" == typeof(retObj[ClusterName2]) ||
+        "undefined" == typeof(retObj[BusinessName2]) ||
+        "undefined" == typeof(retObj[UserTag2]) )
    {
       errMsg = "Invalid configure information for installing temporary coord" ;
       PD_LOG2( task_id, arguments, PDERROR, FILE_NAME_INSTALL_TEMPORARY_COORD,
                sprintf( errMsg + " : clustername[?], businessname[?], usertag[?]",
-                       retObj[ClusterName], retObj[BusinessName], retObj[UserTag] ) ) ;
+                       retObj[ClusterName2], retObj[BusinessName2], retObj[UserTag2] ) ) ;
       exception_handle( SDB_INVALIDARG, errMsg ) ;
    }
    if ( 0 == len )
@@ -122,7 +122,7 @@ function _getCfgInfo( cfgInfo )
          addr += "," + hostname + ":" + svcname ;
       }
    }
-   retObj[CatalogAddr] = addr ;
+   retObj[CatalogAddr2] = addr ;
    return retObj ;
 }
 
@@ -362,7 +362,7 @@ function _rollback( tmpCoordHostName, tmpCoordSvcName )
             for ( var i = 0; i < arr.length; i++ )
             {
                PD_LOG2( task_id, arguments, PDEVENT, FILE_NAME_INSTALL_TEMPORARY_COORD,
-                        sprintf( "Removing data group[?] left last accident", arr[i] ) ) ;
+                        sprintf( "Removing data group[?] left last error", arr[i] ) ) ;
                db.removeRG( arr[i] ) ;
             }
          }
@@ -371,7 +371,7 @@ function _rollback( tmpCoordHostName, tmpCoordSvcName )
       {
          SYSEXPHANDLE( e ) ;
          rc = GETLASTERROR() ;
-         errMsg = "Failed to remove data group[?] left last accident" ;
+         errMsg = "Failed to remove data group[?] left last error" ;
          PD_LOG2( task_id, arguments, PDERROR, FILE_NAME_INSTALL_TEMPORARY_COORD,
                   sprintf( errMsg + ", rc: ?, detail: ?", rc, GETLASTERRMSG() ) ) ;
          exception_handle( rc, errMsg ) ;
@@ -387,7 +387,7 @@ function _rollback( tmpCoordHostName, tmpCoordSvcName )
          {
             // remove coord group
             PD_LOG2( task_id, arguments, PDEVENT, FILE_NAME_INSTALL_TEMPORARY_COORD,
-                     sprintf( "Removing coord group left last accident" ) ) ;
+                     sprintf( "Removing coord group left last error" ) ) ;
             db.removeCoordRG() ;
          }
       }
@@ -395,7 +395,7 @@ function _rollback( tmpCoordHostName, tmpCoordSvcName )
       {
          SYSEXPHANDLE( e ) ;
          rc = GETLASTERROR() ;
-         errMsg = "Failed to remove coord group left last accident" ;
+         errMsg = "Failed to remove coord group left last error" ;
          PD_LOG2( task_id, arguments, PDERROR, FILE_NAME_INSTALL_TEMPORARY_COORD,
                   sprintf( errMsg + ", rc: ?, detail: ?", rc, GETLASTERRMSG() ) ) ;
          exception_handle( rc, errMsg ) ;
@@ -411,7 +411,7 @@ function _rollback( tmpCoordHostName, tmpCoordSvcName )
          {
             // remove catalog group
             PD_LOG2( task_id, arguments, PDEVENT, FILE_NAME_INSTALL_TEMPORARY_COORD,
-                     "Removing catalog group left last accident" ) ;
+                     "Removing catalog group left last error" ) ;
             db.removeCatalogRG() ;
          }
       }
@@ -419,7 +419,7 @@ function _rollback( tmpCoordHostName, tmpCoordSvcName )
       {
          SYSEXPHANDLE( e ) ;
          rc = GETLASTERROR() ;
-         errMsg = "Failed to remove catalog group left last accident" ;
+         errMsg = "Failed to remove catalog group left last error" ;
          PD_LOG2( task_id, arguments, PDERROR, FILE_NAME_INSTALL_TEMPORARY_COORD,
                   sprintf( errMsg + ", rc: ?, detail: ?", rc, GETLASTERRMSG() ) ) ;
          exception_handle( rc, errMsg ) ;
@@ -444,15 +444,15 @@ function _rollback( tmpCoordHostName, tmpCoordSvcName )
 }
 
 /* *****************************************************************************
-@discretion: check whether accident had happen(when temporary coord is running),
+@discretion: check whether error had happen(when temporary coord is running),
              if so, going to rollback and stop the temporary coord left last
-             accident
+             error
 @parameter
    tmpCoordHostName[string]: the host name of temporary coord
    cfgInfoObj[object]: temporary coord configure info
 @return void
 ***************************************************************************** */
-function _handleAccident( tmpCoordHostName, cfgInfoObj )
+function _handleerror( tmpCoordHostName, cfgInfoObj )
 {
    var option  = new tmpCoordOption() ;
    var matcher = new tmpCoordMather() ;
@@ -460,18 +460,18 @@ function _handleAccident( tmpCoordHostName, cfgInfoObj )
    var oldTmpCoordSvc     = null ;
    var oldTmpCoordNum     = null ;
    
-   // 1. get configure info for checking accident
+   // 1. get configure info for checking error
    try
    {
-      matcher[ClusterName]  = cfgInfoObj[ClusterName] ;
-      matcher[BusinessName] = cfgInfoObj[BusinessName] ;
-      matcher[UserTag]      = cfgInfoObj[UserTag] ;
+      matcher[ClusterName2]  = cfgInfoObj[ClusterName2] ;
+      matcher[BusinessName2] = cfgInfoObj[BusinessName2] ;
+      matcher[UserTag2]      = cfgInfoObj[UserTag2] ;
    }
    catch( e )
    {
       SYSEXPHANDLE( e ) ;
       rc = GETLASTERROR() ;
-      errMsg = "Failed get info for checking whether accident had happened" ;
+      errMsg = "Failed get info for checking whether error had happened" ;
       PD_LOG2( task_id, arguments, PDERROR, FILE_NAME_INSTALL_TEMPORARY_COORD,
                sprintf( errMsg + ", rc: ?, detail: ?", rc, GETLASTERRMSG() ) ) ;
       exception_handle( rc, errMsg ) ;
@@ -485,19 +485,19 @@ function _handleAccident( tmpCoordHostName, cfgInfoObj )
    if ( 0 == oldTmpCoordNum )
    {
       PD_LOG2( task_id, arguments, PDEVENT, FILE_NAME_INSTALL_TEMPORARY_COORD,
-               "No accident happened last time" ) ;
+               "No error happened last time" ) ;
       return ;
    }
    else
    {
       PD_LOG2( task_id, arguments, PDEVENT, FILE_NAME_INSTALL_TEMPORARY_COORD,
-               "Accident had happened last time" ) ;
+               "Error had happened last time" ) ;
    }
 
    // 4. get service of the remaining temporary coord
    oldTmpCoordSvc = _getTmpCoordSvc( oldTmpCoordInfoArr ) ;
 
-   // 5. handle accident
+   // 5. handle error
    try
    {
       _rollback( tmpCoordHostName, oldTmpCoordSvc ) ;
@@ -598,19 +598,19 @@ function main()
          exception_handle( rc, errMsg ) ;
       }
       
-      // 3. try to handle accident happen last time
+      // 3. try to handle error happen last time
       try
       {
          PD_LOG2( task_id, arguments, PDDEBUG, FILE_NAME_INSTALL_TEMPORARY_COORD,
-                  sprintf( "Handle accident passes arguments: tmpCoordHostName[?], cfgObj[?]",
+                  sprintf( "Handle error passes arguments: tmpCoordHostName[?], cfgObj[?]",
                           tmpCoordHostName, JSON.stringify(cfgObj) ) ) ;
-         _handleAccident( tmpCoordHostName, cfgObj ) ;
+         _handleerror( tmpCoordHostName, cfgObj ) ;
       }
       catch( e )
       {
          SYSEXPHANDLE( e ) ;
          rc = GETLASTERROR() ;
-         errMsg = "Failed to check and handle accident may be happened last time" ;
+         errMsg = "Failed to check and handle error may be happened last time" ;
          PD_LOG2( task_id, arguments, PDERROR, FILE_NAME_INSTALL_TEMPORARY_COORD,
                   sprintf( errMsg + ", rc: ?, detail: ?", rc, GETLASTERRMSG() ) ) ;
          exception_handle( rc, errMsg ) ;
