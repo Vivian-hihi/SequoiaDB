@@ -589,7 +589,7 @@ namespace engine
             goto error ;
          }
 
-         if ( count % 10 == 0 )
+         if ( count % 5 == 0 )
          {
             map< string, UINT32 > mapClusterVersion ;
             // get all cluster's hostname version
