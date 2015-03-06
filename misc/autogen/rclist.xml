@@ -2275,6 +2275,14 @@
       </code>
 
       <code>
+         <name>SDB_CAT_GROUP_HAS_IMAGE</name>
+         <description>
+            <en>The data group has image group</en>
+            <cn>数据组存在镜像</cn>
+         </description>
+      </code>
+
+      <code>
          <name>SDB_CAT_IMAGE_IS_ENABLED</name>
          <description>
             <en>The image is in enabled status</en>
