@@ -5,7 +5,7 @@
   <body>
     <section>
       <title>NAME</title>
-      <p>connect - Connect the database to the current node. Use SSL connection if secure is true, default false.</p>
+      <p>connect - Connect the database to the current node.</p>
     </section>
     <section>
       <title>SYNOPSIS</title>
@@ -17,7 +17,7 @@
     </section>
     <section>
       <title>DESCRIPTION</title> 
-      <p>Connect the database to the current node. After connecting them, users can execute a set of
+      <p>Connect the database to the current node. Use SSL connection if secure is true, default false. After connecting them, users can execute a set of
         operations. Users can check relative manipulations with the method
         "node.connect().help()".</p>            
     </section>    
