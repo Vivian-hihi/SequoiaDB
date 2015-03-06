@@ -522,12 +522,12 @@ public class SequoiadbDatasource
 			idle_sequoiadbs.add(sdb);
 		}
 	}
-	
+
 	/**
      * @fn void close()
-     * @brief  clean all resources of this object
+     * @brief clean all resources of this object
      */
-	public synchronized void close() throws BaseException {    
+	public synchronized void close() {    
 	    timer.cancel();
         timer2.cancel();
         
