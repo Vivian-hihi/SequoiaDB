@@ -4111,8 +4111,41 @@ static JSClass sdb_class = {
    JSCLASS_NO_OPTIONAL_MEMBERS           // optional members
 };
 
-// PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_CONSTRUCTOR, "sdb_constructor" )
-static JSBool sdb_constructor ( JSContext *cx , uintN argc , jsval *vp )
+static JSClass secure_sdb_class = {
+   "SecureSdb",                          // class name
+   JSCLASS_HAS_PRIVATE | JSCLASS_NEW_RESOLVE,   // flags
+   JS_PropertyStub,                      // addProperty
+   JS_PropertyStub,                      // delProperty
+   JS_PropertyStub,                      // getProperty
+   JS_StrictPropertyStub,                // setProperty
+   JS_EnumerateStub,                     // enumerate
+   (JSResolveOp) sdb_resolve ,           // resolve
+   JS_ConvertStub,                       // convert
+   sdb_destructor,                       // finalize
+   JSCLASS_NO_OPTIONAL_MEMBERS           // optional members
+};
+
+static INT32 _sdb_connect ( const CHAR *hostName, const CHAR *serviceName,
+                              const CHAR *userName, const CHAR *passwd,
+                              BOOLEAN secure, 
+                              sdbConnectionHandle *handle )
+{
+   INT32 ret ;
+
+   if ( secure )
+   {
+      ret = sdbSecureConnect ( hostName, serviceName, userName, passwd, handle ) ;
+   }
+   else
+   {
+      ret = sdbConnect ( hostName, serviceName, userName, passwd, handle ) ;
+   }
+
+   return ret ;
+}
+
+// PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_CONSTRUCTOR, "_sdb_constructor" )
+static JSBool _sdb_constructor ( JSContext *cx , uintN argc , jsval *vp , BOOLEAN secure)
 {
    PD_TRACE_ENTRY ( SDB_SDB_CONSTRUCTOR );
    JSString *           strHost     = NULL ;
@@ -4137,7 +4170,14 @@ static JSBool sdb_constructor ( JSContext *cx , uintN argc , jsval *vp )
                                "/SSSS" , &strHost , &strPort ,
                                &strName , &strPwd ) ;
 #endif
-   REPORT ( ret , "new Sdb(): wrong arguments" ) ;
+   if ( secure )
+   {
+      REPORT ( ret , "new SecureSdb(): wrong arguments" ) ;
+   }
+   else
+   {
+      REPORT ( ret , "new Sdb(): wrong arguments" ) ;
+   }
 
 #if !defined (SDB_FMP)
    // if not offer host and port, use "localhost" and coord port
@@ -4248,8 +4288,7 @@ static JSBool sdb_constructor ( JSContext *cx , uintN argc , jsval *vp )
 #endif // SDB_FMP
       // handle contained by connection will be released in error: or
       // in the destructor
-      rc = sdbConnect ( host , port , name , pwd , connection ) ;
-      REPORT_RC ( SDB_OK == rc , "new Sdb()" , rc ) ;
+      rc = _sdb_connect ( host , port , name , pwd , secure , connection ) ;
    }
    // in this case, only one of them input by user, it is wrong
    else if ( strName && ! strPwd )
@@ -4263,15 +4302,38 @@ static JSBool sdb_constructor ( JSContext *cx , uintN argc , jsval *vp )
       // in the destructor
 #if defined( SDB_FMP )
       g_disablePassEncode = TRUE ;
-      rc = sdbConnect ( host , port , g_UserName, g_Password, connection ) ;
+      rc = _sdb_connect ( host , port , g_UserName, g_Password, secure, connection ) ;
 #else
-      rc = sdbConnect ( host , port , "", "", connection ) ;
+      rc = _sdb_connect ( host , port , "", "", secure, connection ) ;
 #endif // SDB_FMP
-      REPORT_RC ( SDB_OK == rc , "new Sdb()" , rc ) ;
    }
-   // new a js sdb object
-   obj = JS_NewObject ( cx , &sdb_class, NULL, NULL ) ;
-   VERIFY ( obj ) ;
+
+   // new a js Sdb/SecureSdb object
+   if ( secure )
+   {
+      JSObject* proto = NULL ;
+      JSObject* sdbObj = NULL;
+
+      REPORT_RC ( SDB_OK == rc , "new SecureSdb()" , rc ) ;
+
+      obj = JS_NewObject ( cx , &secure_sdb_class, NULL, NULL ) ;
+      VERIFY ( obj ) ;
+
+      // construct a prototype chain, so that SecureSdb inherits Sdb
+      proto = JS_GetPrototype(cx, obj);
+      VERIFY ( proto ) ;
+      sdbObj = JS_NewObject ( cx , &sdb_class, NULL, NULL ) ;
+      VERIFY ( sdbObj ) ;
+      ret = JS_SetPrototype(cx, proto, sdbObj);
+      VERIFY ( ret ) ;
+   }
+   else
+   {
+      REPORT_RC ( SDB_OK == rc , "new Sdb()" , rc ) ;
+      obj = JS_NewObject ( cx , &sdb_class, NULL, NULL ) ;
+      VERIFY ( obj ) ;
+   }
+
    /*
    // set the newly build js sdb object as a return value,
    // so we can hold this object in the sdb client like this:
@@ -4319,8 +4381,25 @@ done :
 error :
    SAFE_RELEASE_CONNECTION ( connection ) ;
    SAFE_JS_FREE ( cx , connection ) ;
-   TRY_REPORT ( cx , "new Sdb(): false" ) ;
+   if ( secure )
+   {
+      TRY_REPORT ( cx , "new SecureSdb(): false" ) ;
+   }
+   else
+   {
+      TRY_REPORT ( cx , "new Sdb(): false" ) ;
+   }
    goto done ;
+}
+
+static JSBool sdb_constructor ( JSContext *cx , uintN argc , jsval *vp )
+{
+   return _sdb_constructor ( cx , argc , vp , FALSE ) ;
+}
+
+static JSBool secure_sdb_constructor ( JSContext *cx , uintN argc , jsval *vp )
+{
+   return _sdb_constructor ( cx , argc , vp , TRUE ) ;
 }
 
 // SdbNode
@@ -4354,9 +4433,13 @@ static JSBool rn_connect ( JSContext *cx, uintN argc, jsval *vp )
    jsval                    valServiceName = JSVAL_VOID ;
    JSString                *strHostName    = NULL ;
    JSString                *strServiceName = NULL ;
+   JSBool                  secure          = JS_FALSE ;
 
-   rn = (sdbNodeHandle *)JS_GetPrivate ( cx,
-                                                JS_THIS_OBJECT ( cx, vp ) ) ;
+   ret = JS_ConvertArguments ( cx , argc , JS_ARGV ( cx , vp ) ,
+                               "/b" , &secure ) ;
+   REPORT ( ret , "SdbNode.connect(): wrong argument" ) ;
+
+   rn = (sdbNodeHandle *)JS_GetPrivate ( cx, JS_THIS_OBJECT ( cx, vp ) ) ;
    REPORT ( rn, "SdbNode.connect(): no node handle" ) ;
 
    rc = sdbGetNodeAddr ( *rn, &host, &port, NULL, NULL ) ;
@@ -4368,11 +4451,30 @@ static JSBool rn_connect ( JSContext *cx, uintN argc, jsval *vp )
    VERIFY ( connection ) ;
    *connection = SDB_INVALID_HANDLE ;
 
-   rc = sdbConnect ( host, port, "", "", connection ) ;
+   rc = _sdb_connect ( host, port, "", "", secure, connection ) ;
    REPORT_RC ( SDB_OK == rc, "SdbNode.connect()", rc ) ;
 
-   obj = JS_NewObject ( cx, &sdb_class , 0 , 0 ) ;
-   VERIFY ( obj ) ;
+   if ( secure )
+   {
+      JSObject* proto = NULL ;
+      JSObject* sdbObj = NULL;
+
+      obj = JS_NewObject ( cx , &secure_sdb_class, NULL, NULL ) ;
+      VERIFY ( obj ) ;
+
+      // construct a prototype chain, so that SecureSdb inherits Sdb
+      proto = JS_GetPrototype(cx, obj);
+      VERIFY ( proto ) ;
+      sdbObj = JS_NewObject ( cx , &sdb_class, NULL, NULL ) ;
+      VERIFY ( sdbObj ) ;
+      ret = JS_SetPrototype(cx, proto, sdbObj);
+      VERIFY ( ret ) ;
+   }
+   else
+   {
+      obj = JS_NewObject ( cx, &sdb_class , NULL , NULL ) ;
+      VERIFY ( obj ) ;
+   }
 
    JS_SET_RVAL ( cx, vp, OBJECT_TO_JSVAL ( obj ) ) ;
 
@@ -7061,6 +7163,10 @@ JSBool jsobj_is_sdbobj( JSContext *cx, JSObject *obj )
    {
       return TRUE ;
    }
+   else if ( JS_InstanceOf( cx, obj, &secure_sdb_class, NULL ) )
+   {
+      return TRUE ;
+   }
    else if ( JS_InstanceOf( cx, obj, &domain_class, NULL ) )
    {
       return TRUE ;
@@ -7131,6 +7237,10 @@ JSBool InitDbClasses( JSContext *cx, JSObject *obj )
 
    VERIFY ( JS_InitClass ( cx , obj , NULL , &sdb_class ,
                            sdb_constructor , 2 ,
+                           0 , sdb_functions , 0 , 0 ) ) ;
+
+   VERIFY ( JS_InitClass ( cx , obj , NULL , &secure_sdb_class ,
+                           secure_sdb_constructor , 2 ,
                            0 , sdb_functions , 0 , 0 ) ) ;
 
    VERIFY ( JS_InitClass ( cx , obj , NULL , &count_class ,
