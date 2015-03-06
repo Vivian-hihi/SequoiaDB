@@ -8,7 +8,7 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="$count"/>
-<meta name="description" content="描述 记录分组后，用 $count 取出分组所包含的总记录条数。 示例 对记录分组后，返回表所有的记录条数 db.foo.bar.count({$group:{$count:&#34;$dep&#34;}}) { &#34;count&#34;: 1001 }"/>
+<meta name="description" content="描述 记录分组后，用 $count 取出分组所包含的总记录条数。 示例 对记录分组后，返回表所有的记录条数 db.foo.bar.aggregate({$group:{_id:&#34;$name&#34;,count:{$count:&#34;$name&#34;},name:{$first:&#34;$name&#34;}}}) { &#34;count&#34;: 2, &#34;name&#34;: &#34;Jim&#34; } { &#34;count&#34;: 1, &#34;name&#34;: ..."/>
 <meta name="DC.Format" content="XHTML"/>
 <meta name="DC.Identifier" content="topic_xx5_cvq_4p"/>
 <link rel="stylesheet" type="text/css" href="../../../commonltr.css"/>
@@ -45,9 +45,14 @@
       
       <ul class="ul">
         <li class="li">对记录分组后，返回表所有的记录条数
-          <pre class="pre codeblock">db.foo.bar.count({$group:{$count:"$dep"}})
+          <pre class="pre codeblock">db.foo.bar.aggregate({$group:{_id:"$name",count:{$count:"$name"},name:{$first:"$name"}}})
 {
-  "count": 1001
+   "count": 2,
+   "name": "Jim"
+}
+{
+   "count": 1,
+   "name": "Kate"
 }</pre>
 </li>
 

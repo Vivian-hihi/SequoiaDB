@@ -11,9 +11,14 @@
       <title>Example</title>
       <ul>
         <li>Return the number of all the records.
-          <codeblock>db.foo.bar.count({$group:{$count:"$dep"}})
+          <codeblock>db.foo.bar.aggregate({$group:{_id:"$name",count:{$count:"$name"},name:{$first:"$name"}}})
 {
-  "count": 1001
+   "count": 2,
+   "name": "Jim"
+}
+{
+   "count": 1,
+   "name": "Kate"
 }</codeblock></li>
       </ul>
     </section>

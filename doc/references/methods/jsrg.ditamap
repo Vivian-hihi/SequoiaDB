@@ -8,6 +8,7 @@
   <topicref href="topics/getMaster.dita"/>
   <topicref href="topics/getNode.dita"/>
   <topicref href="topics/getSlave.dita"/>
+  <topicref href="topics/reelect.dita"/>
   <topicref href="topics/removeNode.dita"/>
   <topicref href="topics/rgstart.dita"/>
   <topicref href="topics/rgstop.dita"/> 

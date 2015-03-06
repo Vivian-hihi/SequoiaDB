@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
+<topic id="topic_xq1_pz1_hr">
+  <title>db.forceStepUp()</title>
+  <body>
+    <section><title>db.forceStepUp([options])</title>
+      <p>在一个不具备选举条件的复制组中，强制将一个备节点升级为主节点。<b>请谨慎使用该命令！</b></p>
+    </section>
+    <section><title>参数描述</title>
+      <simpletable>
+        <sthead>
+          <stentry>参数名</stentry>
+          <stentry>参数类型</stentry>
+          <stentry>描述</stentry>
+          <stentry>是否必填</stentry>
+        </sthead>
+        <strow>
+          <stentry>options</stentry>
+          <stentry>Json 对象</stentry>
+          <stentry>参数集合。 </stentry>
+          <stentry>否</stentry>
+        </strow>        
+      </simpletable>      
+    </section>
+    <section><title>options 选项</title>
+      <simpletable>
+        <sthead>
+          <stentry>参数名</stentry>
+          <stentry>参数类型</stentry>
+          <stentry>描述</stentry>
+          <stentry>默认值</stentry>
+        </sthead>
+        <strow>
+          <stentry>Seconds</stentry>
+          <stentry>int</stentry>
+          <stentry>强制升级为主节点的持续时间。</stentry>
+          <stentry>120</stentry>
+        </strow>        
+      </simpletable>      
+    </section>
+    <note><ul>
+      <li>目前仅在 catalog 组中开放此功能。</li>
+      <li>目标复制组中不能存在主节点，且其他节点的 LSN 不能比目标节点的 LSN 大。</li>
+      <li>当持续时间到期，所有节点会重新按照选举规则进行选举。</li>
+      <li>如果创建了用户，在主 catalog 节点的情况下无法直接连接。可以先关闭 catalog 的鉴权功能（auth 参数）再进行操作。</li>
+    </ul></note>
+    <section><title>示例</title>
+      <ul>
+        <li>
+          <p>连接 catalog 节点（host1:30000），并使其强制升主， 持续300s。</p>
+          <codeblock>var db = new Sdb("host1", 30000) ;
+db.forceStepUp({Seconds:300});</codeblock>
+        </li>        
+      </ul>   
+    </section>
+  </body>
+</topic>

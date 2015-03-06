@@ -886,6 +886,7 @@
                     <file name="references/methods/topics/findOne.dita"/>
                     <file name="references/methods/flushConfigure_en.dita"/>
                     <file name="references/methods/flushConfigure.dita"/>
+                    <file name="references/methods/topics/forceStepUp.dita"/>
                     <file name="references/methods/topics/getCatalogRG.dita"/>
                     <file name="references/methods/topics/getCL_en.dita"/>
                     <file name="references/methods/topics/getCL.dita"/>
@@ -956,6 +957,7 @@
                     <file name="references/methods/topics/putlob.dita"/>
                     <file name="references/methods/topics/query_gen.count.dita"/>
                     <file name="references/methods/topics/query_gen.index.dita"/>
+                    <file name="references/methods/topics/reelect.dita"/>
                     <file name="references/methods/topics/remove_en.dita"/>
                     <file name="references/methods/topics/remove.dita"/>
                     <file name="references/methods/removeBackup_en.dita"/>
