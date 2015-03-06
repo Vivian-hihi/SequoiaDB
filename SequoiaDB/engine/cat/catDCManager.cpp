@@ -365,8 +365,16 @@ namespace engine
 
       if ( SDB_OK == rc )
       {
+         BSONObj retObj = retObjBuilder.obj() ;
+         if ( retObj.isEmpty() )
+         {
+            BSONObjBuilder tmpBuild ;
+            vector< string > tmpGroup ;
+            _pCatCB->makeGroupsObj( tmpBuild, tmpGroup ) ;
+            retObj = tmpBuild.obj() ;
+         }
          // get return groups
-         ctxBuff = rtnContextBuf( retObjBuilder.obj() ) ;
+         ctxBuff = rtnContextBuf( retObj ) ;
       }
 
    done:
@@ -629,7 +637,7 @@ namespace engine
       vector< string > allGroups ;
 
       // is already enable
-      if ( pBaseInfo->imageIsEnable() && _isImageEnable )
+      if ( pBaseInfo->imageIsEnable() )
       {
          goto done ;
       }
@@ -699,8 +707,6 @@ namespace engine
          goto error ;
       }
 
-      _isImageEnable = TRUE ;
-
    done:
       return rc ;
    error:
@@ -720,7 +726,7 @@ namespace engine
          rc = SDB_CAT_IMAGE_NOT_CONFIG ;
          goto error ;
       }
-      else if ( !pBaseInfo->imageIsEnable() && !_isImageEnable )
+      else if ( !pBaseInfo->imageIsEnable() )
       {
          goto done ;
       }
@@ -750,8 +756,6 @@ namespace engine
          }
       }
 
-      _isImageEnable = FALSE ;
-
    done:
       return rc ;
    error:
@@ -765,47 +769,40 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       clsDCBaseInfo *pBaseInfo = pDCMgr->getDCBaseInfo() ;
+      vector< string > vecGroups ;
 
-      if ( pBaseInfo->isActive() )
+      _pCatCB->getGroupsName( vecGroups ) ;
+      vecGroups.push_back( CATALOG_GROUPNAME ) ;
+
+      // make return obj
+      rc = _pCatCB->makeGroupsObj( retObjBuilder, vecGroups ) ;
+      PD_RC_CHECK( rc, PDERROR, "Make return groups object failed, rc: %d",
+                   rc ) ;
+
+      if ( !pBaseInfo->isActive() )
       {
-         goto done ;
-      }
-      else if ( pBaseInfo->hasImage() && pBaseInfo->imageIsEnable() )
-      {
-         vector< string > vecGroups ;
-         map< string, string> *pMapGrps = NULL ;
-         map< string, string>::iterator it ;
-         rc = pDCMgr->updateImageDCBaseInfo( _pEduCB ) ;
-         if ( SDB_OK == rc )
+         if ( pBaseInfo->hasImage() && pBaseInfo->imageIsEnable() )
          {
-            // if can update image's dc base info, need to check wether it
-            // is active
-            if ( pDCMgr->getImageDCBaseInfo( _pEduCB, FALSE )->isActive() )
+            if ( SDB_OK == pDCMgr->updateImageDCBaseInfo( _pEduCB ) )
             {
-               rc = SDB_CAT_DUAL_ACTIVE ;
-               goto error ;
+               // if can update image's dc base info, need to check wether it
+               // is active
+               if ( pDCMgr->getImageDCBaseInfo( _pEduCB, FALSE )->isActive() )
+               {
+                  rc = SDB_CAT_DUAL_ACTIVE ;
+                  goto error ;
+               }
             }
          }
-         pMapGrps = pBaseInfo->getImageGroups() ;
-         it = pMapGrps->begin() ;
-         while ( it != pMapGrps->end() )
-         {
-            vecGroups.push_back( it->first ) ;
-            ++it ;
-         }
-         // make return obj
-         rc = _pCatCB->makeGroupsObj( retObjBuilder, vecGroups ) ;
-         PD_RC_CHECK( rc, PDERROR, "Make return groups object failed, rc: %d",
-                      rc ) ;
-      }
 
-      // update to collection
-      rc = catActiveDC( TRUE, _pEduCB, _majoritySize(), _pDmsCB, _pDpsCB ) ;
-      if ( rc )
-      {
-         // rollback
-         catActiveDC( FALSE, _pEduCB, 1, _pDmsCB, _pDpsCB ) ;
-         goto error ;
+         // update to collection
+         rc = catActiveDC( TRUE, _pEduCB, _majoritySize(), _pDmsCB, _pDpsCB ) ;
+         if ( rc )
+         {
+            // rollback
+            catActiveDC( FALSE, _pEduCB, 1, _pDmsCB, _pDpsCB ) ;
+            goto error ;
+         }
       }
 
    done:
@@ -821,36 +818,26 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       clsDCBaseInfo *pBaseInfo = pDCMgr->getDCBaseInfo() ;
+      vector< string > vecGroups ;
 
-      if ( !pBaseInfo->isActive() )
+      _pCatCB->getGroupsName( vecGroups ) ;
+      vecGroups.push_back( CATALOG_GROUPNAME ) ;
+
+      // make return obj
+      rc = _pCatCB->makeGroupsObj( retObjBuilder, vecGroups ) ;
+      PD_RC_CHECK( rc, PDERROR, "Make return groups object failed, rc: %d",
+                   rc ) ;
+
+      if ( pBaseInfo->isActive() )
       {
-         goto done ;
-      }
-      else if ( pBaseInfo->hasImage() && pBaseInfo->imageIsEnable() )
-      {
-         vector< string > vecGroups ;
-         map< string, string> *pMapGrps = NULL ;
-         map< string, string>::iterator it ;
-         pMapGrps = pBaseInfo->getImageGroups() ;
-         it = pMapGrps->begin() ;
-         while ( it != pMapGrps->end() )
+         // update to collection
+         rc = catActiveDC( FALSE, _pEduCB, _majoritySize(), _pDmsCB, _pDpsCB ) ;
+         if ( rc )
          {
-            vecGroups.push_back( it->first ) ;
-            ++it ;
+            // rollback
+            catActiveDC( TRUE, _pEduCB, 1, _pDmsCB, _pDpsCB ) ;
+            goto error ;
          }
-         // make return obj
-         rc = _pCatCB->makeGroupsObj( retObjBuilder, vecGroups ) ;
-         PD_RC_CHECK( rc, PDERROR, "Make return groups object failed, rc: %d",
-                      rc ) ;
-      }
-
-      // update to collection
-      rc = catActiveDC( FALSE, _pEduCB, _majoritySize(), _pDmsCB, _pDpsCB ) ;
-      if ( rc )
-      {
-         // rollback
-         catActiveDC( TRUE, _pEduCB, 1, _pDmsCB, _pDpsCB ) ;
-         goto error ;
       }
 
    done:

@@ -144,10 +144,6 @@ namespace engine
       _clsDCMgr                  *_pDCMgr ;
       _clsDCBaseInfo             *_pDCBaseInfo ;
 
-      // for dc and image
-      BOOLEAN                    _isDCActive ;
-      BOOLEAN                    _isImageEnable ;
-
       // for commands
       BOOLEAN                    _isImageCmd ;
 
