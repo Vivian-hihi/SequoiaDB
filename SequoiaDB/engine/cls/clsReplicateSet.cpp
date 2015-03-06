@@ -824,7 +824,6 @@ namespace engine
                DPS_LSN lsn  = _logger->getCurrentLsn() ;
                if ( 0 >= lsn.compare( beat.endLsn ) )
                {
-                //  notifyLosePrimary() ;
                   _info.mtx.lock_w() ;
                   _info.primary = beat.identity ;
                   _info.mtx.release_w() ;
@@ -839,14 +838,16 @@ namespace engine
             else if ( _info.primary.value != beat.identity.value )
             {
                PD_LOG( PDEVENT, "vote: the discovery of new primary[%d]",
-                                 beat.identity.columns.nodeID ) ;
+                       beat.identity.columns.nodeID ) ;
                _cata.remove( MSG_CAT_PAIMARY_CHANGE_RES ) ;
                _vote.force( CLS_ELECTION_STATUS_SILENCE ) ;
                _info.mtx.lock_w() ;
                _info.primary = beat.identity ;
                _info.mtx.release_w() ;
             }
-            else if ( CLS_ELECTION_WEIGHT_USR_MIN != _vote.getShadowWeight() )
+
+            // if find new primary node, should to wake up reelection
+            if ( CLS_ELECTION_WEIGHT_USR_MIN != _vote.getShadowWeight() )
             {
                reelectionDone() ;
             }

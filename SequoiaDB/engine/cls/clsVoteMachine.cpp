@@ -182,8 +182,7 @@ namespace engine
       }
       else if ( 0 < _forceMillis )
       {
-         if ( _forceMillis < millisec ||
-              _forceMillis == millisec )
+         if ( _forceMillis <= millisec )
          {
             _forceMillis = 0 ;
          }
