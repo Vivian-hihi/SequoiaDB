@@ -1,0 +1,77 @@
+# SSL
+
+# create cs
+curl -k https://192.168.20.177:11814 -d "cmd=create collectionspace&name=cs"
+
+# drop cs
+curl -k https://192.168.20.177:11814 -d "cmd=drop collectionspace&name=cs"
+
+# create collection
+curl -k https://192.168.20.177:11814 -d "cmd=create collection&name=cs.cl&option={ShardingKey:{"age":1}}"
+
+# drop collection
+curl -k https://192.168.20.177:11814 -d "cmd=drop collection&name=cs.cl"
+
+# insert
+curl -k https://192.168.20.177:11814 -d "cmd=insert&name=cs.cl&insertor={"age":12,"name":\"hello\"}"
+
+# query
+curl -k https://192.168.20.177:11814 -d "cmd=query&name=cs.cl&sort={"name":1}&skip=0&returnnum=2&filter={"name":\"hello\"}"
+
+# delete
+curl -k https://192.168.20.177:11814 -d "cmd=delete&name=cs.cl&deletor={"age":100}"
+
+# update
+curl -k https://192.168.20.177:11814 -d "cmd=update&name=cs.cl&updator={\$set:{\"age\":100}}&filter={"name":\"hello\"}"
+
+# get count
+curl -k https://192.168.20.177:11814 -d "cmd=get count&name=cs.cl"
+
+# alter collection
+curl -k https://192.168.20.177:11814 -d "cmd=alter collection&name=cs.cl&options={ShardingKey:{age:1},ShardingType:\"hash\"}"
+
+# split
+curl -k https://192.168.20.177:11814 -d "cmd=split&name=cs.cl&source=datagroup1&target=datagroup2&splitpercent=50"
+
+# list group
+curl -k https://192.168.20.177:11814 -d "cmd=list groups"
+
+
+#########################################################################################################################################################
+# NOSSL
+
+# create cs
+curl http://192.168.20.177:11814 -d "cmd=create collectionspace&name=cs"
+
+# drop cs
+curl http://192.168.20.177:11814 -d "cmd=drop collectionspace&name=cs"
+
+# create collection
+curl http://192.168.20.177:11814 -d "cmd=create collection&name=cs.cl&option={ShardingKey:{"age":1}}"
+
+# drop collection
+curl http://192.168.20.177:11814 -d "cmd=drop collection&name=cs.cl"
+
+# insert
+curl http://192.168.20.177:11814 -d "cmd=insert&name=cs.cl&insertor={"age":12,"name":\"hello\"}"
+
+# query
+curl http://192.168.20.177:11814 -d "cmd=query&name=cs.cl&sort={"name":1}&skip=0&returnnum=2&filter={"name":\"hello\"}"
+
+# delete
+curl http://192.168.20.177:11814 -d "cmd=delete&name=cs.cl&deletor={"age":100}"
+
+# update
+curl http://192.168.20.177:11814 -d "cmd=update&name=cs.cl&updator={\$set:{\"age\":100}}&filter={"name":\"hello\"}"
+
+# get count
+curl http://192.168.20.177:11814 -d "cmd=get count&name=cs.cl"
+
+# alter collection
+curl http://192.168.20.177:11814 -d "cmd=alter collection&name=cs.cl&options={ShardingKey:{age:1},ShardingType:\"hash\"}"
+
+# split
+curl http://192.168.20.177:11814 -d "cmd=split&name=cs.cl&source=datagroup1&target=datagroup2&splitpercent=50"
+
+# list group
+curl http://192.168.20.177:11814 -d "cmd=list groups"
