@@ -7,7 +7,8 @@
 .SH "NAME"
 
 .sp 2
-connect - Connect the database to the current node.
+connect - Connect the database to the current node. Use SSL
+connection if secure is true, default false.
 .SH "SYNOPSIS"
 
 .sp 2
@@ -15,7 +16,7 @@ connect - Connect the database to the current node.
 .sp 2
 
 .sp 2
-node.connect()
+node.connect([secure])
 .SH "CATEGORY"
 
 .sp 2

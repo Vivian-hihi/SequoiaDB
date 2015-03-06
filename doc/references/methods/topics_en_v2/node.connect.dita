@@ -5,11 +5,11 @@
   <body>
     <section>
       <title>NAME</title>
-      <p>connect - Connect the database to the current node.</p>
+      <p>connect - Connect the database to the current node. Use SSL connection if secure is true, default false.</p>
     </section>
     <section>
       <title>SYNOPSIS</title>
-      <p></p><apiname>node.connect</apiname>()
+      <p></p><apiname>node.connect</apiname>([secure])
     </section>
     <section>
       <title>CATEGORY</title>

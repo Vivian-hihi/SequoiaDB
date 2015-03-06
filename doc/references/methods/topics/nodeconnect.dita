@@ -3,8 +3,8 @@
 <topic id="references_method_nodeconnect">
   <title>node.connect()</title>
   <body>
-    <section><title>node.connect()</title>
-      <p>将数据库连接到指定节点。连接之后能进行一系列的操作，可以使用 node.connect().help() 查看相关的操作。</p>
+    <section><title>node.connect([secure])</title>
+      <p>将数据库连接到指定节点。Use SSL connection if secure is true, default false.连接之后能进行一系列的操作，可以使用 node.connect().help() 查看相关的操作。</p>
     </section>
     <section><title>示例</title>
       <ul>
