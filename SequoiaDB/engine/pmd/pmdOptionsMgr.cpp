@@ -1583,21 +1583,32 @@ namespace engine
       }
       if ( 0 == _krcbWWWPath[0] )
       {
+         CHAR wwwPath[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
          if ( !_exePath.empty() )
          {
             rc = utilBuildFullPath( _exePath.c_str(),
                                     ".."OSS_FILE_SEP PMD_OPTION_WWW_PATH_DIR,
-                                    OSS_MAX_PATHSIZE, _krcbWWWPath ) ;
+                                    OSS_MAX_PATHSIZE, wwwPath ) ;
          }
          else
          {
             rc = utilBuildFullPath( PMD_CURRENT_PATH,
                                     PMD_OPTION_WWW_PATH_DIR,
-                                    OSS_MAX_PATHSIZE, _krcbWWWPath ) ;
+                                    OSS_MAX_PATHSIZE, wwwPath ) ;
          }
          if ( SDB_OK != rc )
          {
             std::cerr << "www path is too long!" << endl ;
+            rc = SDB_INVALIDPATH ;
+            goto error ;
+         }
+
+         // get real path
+         if ( NULL == ossGetRealPath( wwwPath, _krcbWWWPath,
+                                      OSS_MAX_PATHSIZE ) )
+         {
+            ossPrintf( "Error: Failed to get real path for %s\n",
+                       wwwPath ) ;
             rc = SDB_INVALIDPATH ;
             goto error ;
          }
@@ -1622,43 +1633,50 @@ namespace engine
       {
          if ( 0 == ossStrcmp( _krcbDbPath, _dmsTmpBlkPath))
          {
-            std::cerr << "tmp path and data path should not be the same" << endl ;
+            std::cerr << "tmp path and data path should not be the same"
+                      << endl ;
             rc = SDB_INVALIDPATH ;
             goto error ;
          }
          if ( 0 == ossStrcmp( _krcbIndexPath, _dmsTmpBlkPath))
          {
-            std::cerr << "tmp path and index path should not be the same" << endl ;
+            std::cerr << "tmp path and index path should not be the same"
+                      << endl ;
             rc = SDB_INVALIDPATH ;
             goto error ;
          }
          if ( 0 == ossStrcmp( _krcbLogPath, _dmsTmpBlkPath))
          {
-            std::cerr << "tmp path and log path should not be the same" << endl ;
+            std::cerr << "tmp path and log path should not be the same"
+                      << endl ;
             rc = SDB_INVALIDPATH ;
             goto error ;
          }
          if ( 0 == ossStrcmp( _krcbBkupPath, _dmsTmpBlkPath))
          {
-            std::cerr << "tmp path and bkup path should not be the same" << endl ;
+            std::cerr << "tmp path and bkup path should not be the same"
+                      << endl ;
             rc = SDB_INVALIDPATH ;
             goto error ;
          }
          if ( 0 == ossStrcmp( _krcbDiagLogPath, _dmsTmpBlkPath))
          {
-            std::cerr << "tmp path and diaglog path should not be the same" << endl ;
+            std::cerr << "tmp path and diaglog path should not be the same"
+                      << endl ;
             rc = SDB_INVALIDPATH ;
             goto error ;
          }
          if ( 0 == ossStrcmp( _krcbWWWPath, _dmsTmpBlkPath ) )
          {
-            std::cerr << "tmp path and www path should not be the same" << endl ;
+            std::cerr << "tmp path and www path should not be the same"
+                      << endl ;
             rc = SDB_INVALIDPATH ;
             goto error ;
          }
          if ( 0 == ossStrcmp( _krcbLobPath, _dmsTmpBlkPath ) )
          {
-            std::cerr << "tmp path and lob path should not be the same" << endl ;
+            std::cerr << "tmp path and lob path should not be the same"
+                      << endl ;
             rc = SDB_INVALIDPATH ;
             goto error ;
          }
@@ -1689,6 +1707,8 @@ namespace engine
          _maxPrefPool      = 0 ;
          _maxSubQuery      = 0 ;
          _maxReplSync      = 0 ;
+         _pagecleanNum     = 1 ;
+         _pagecleanInterval= PMD_DFT_PAGECLEANINTERVAL ;
       }
 
    done:
