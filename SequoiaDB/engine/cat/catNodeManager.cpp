@@ -173,6 +173,8 @@ namespace engine
       {
          _pRtnCB->contextDelete( sContextID, _pEduCB );
       }
+      PD_LOG( PDSEVERE, "Stop program because of active node manager failed, "
+              "rc: %d", rc ) ;
       // need to stop engine
       PMD_SHUTDOWN_DB( rc ) ;
       goto done ;
@@ -1777,6 +1779,14 @@ namespace engine
       {
          PD_LOG( PDERROR, "unexpected err happened:%s", e.what() ) ;
          rc = SDB_SYS ;
+         goto error ;
+      }
+
+      // can't remove group when group has image and image is enable
+      if ( _pCatCB->isImageEnable() &&
+           _pCatCB->getCatDCMgr()->groupInImage(  groupName ) )
+      {
+         rc = SDB_CAT_GROUP_HAS_IMAGE ;
          goto error ;
       }
 

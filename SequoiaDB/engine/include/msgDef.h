@@ -418,8 +418,8 @@
 #define CMD_VALUE_NAME_DETACH                "detach"
 #define CMD_VALUE_NAME_ENABLE                "enable"
 #define CMD_VALUE_NAME_DISABLE               "disable"
-#define CMD_VALUE_NAME_ACTIVE                "active"
-#define CMD_VALUE_NAME_DEACTIVE              "deactive"
+#define CMD_VALUE_NAME_ACTIVE                "activate"
+#define CMD_VALUE_NAME_DEACTIVE              "deactivate"
 
 #define CLS_REPLSET_MAX_NODE_SIZE            7
 #define SDB_MAX_MSG_LENGTH                   ( 512 * 1024 * 1024 )

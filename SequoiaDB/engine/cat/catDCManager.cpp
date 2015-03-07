@@ -49,10 +49,13 @@ using namespace bson ;
 namespace engine
 {
 
+   #define CAT_DC_BLOCK_DFT_SIZE          ( 4096 )
+
    /*
       _catDCManager implement
    */
    _catDCManager::_catDCManager()
+   :_mb( CAT_DC_BLOCK_DFT_SIZE )
    {
       _pDmsCB = NULL ;
       _pDpsCB = NULL ;
@@ -82,6 +85,7 @@ namespace engine
 
    INT32 _catDCManager::init()
    {
+      INT32 rc = SDB_OK ;
       pmdKRCB *krcb     = pmdGetKRCB() ;
       _pDmsCB           = krcb->getDMSCB();
       _pDpsCB           = krcb->getDPSCB();
@@ -92,7 +96,8 @@ namespace engine
       if ( !_pDCMgr )
       {
          PD_LOG( PDERROR, "Alloc dc manager failed" ) ;
-         return SDB_OOM ;
+         rc = SDB_OOM ;
+         goto error ;
       }
       _pDCBaseInfo = _pDCMgr->getDCBaseInfo() ;
 
@@ -100,19 +105,28 @@ namespace engine
       if ( !_pLogMgr )
       {
          PD_LOG( PDERROR, "Alloc cat dc log manager failed" ) ;
-         return SDB_OOM ;
+         rc = SDB_OOM ;
+         goto error ;
       }
+      rc = _pLogMgr->init() ;
+      PD_RC_CHECK( rc, PDERROR, "Init system log manager failed, rc: %d",
+                   rc ) ;
 
-      return SDB_OK ;
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    void _catDCManager::attachCB( pmdEDUCB * cb )
    {
       _pEduCB = cb ;
+      _pLogMgr->attachCB( cb ) ;
    }
 
    void _catDCManager::detachCB( pmdEDUCB * cb )
    {
+      _pLogMgr->detachCB( cb ) ;
       _pEduCB = NULL ;
    }
 
@@ -166,10 +180,49 @@ namespace engine
    void _catDCManager::onCommandBegin( MsgHeader *pMsg )
    {
       setImageCommand( FALSE ) ;
+      _lsn = _pDpsCB->expectLsn() ;
    }
 
-   void _catDCManager::onCommandEnd( MsgHeader *pMsg, INT32 rc )
+   void _catDCManager::onCommandEnd( MsgHeader *pMsg, INT32 result )
    {
+      INT32 rc = SDB_OK ;
+      DPS_LSN expectLSN = _pDpsCB->expectLsn() ;
+
+      // read lsn to expect lsn
+      while( !expectLSN.invalid() &&
+             _lsn.compareOffset( expectLSN.offset ) < 0 )
+      {
+         _mb.clear() ;
+         rc = _pDpsCB->search( _lsn, &_mb, DPS_SERCAH_ALL ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Search dps log[%d.%lld] failed, expect "
+                    "lsn[%d.%lld], rc: %d",
+                    _lsn.version, _lsn.offset, expectLSN.version,
+                    expectLSN.offset, rc ) ;
+            goto shutdown ;
+         }
+         else
+         {
+            dpsLogRecordHeader *header = ( dpsLogRecordHeader* )_mb.readPtr() ;
+            _lsn.offset += header->_length ;
+            _lsn.version = header->_version ;
+
+            // save to log
+            rc = _pLogMgr->saveSysLog( header, _mb.offset( 0 ),
+                                       _mb.length() ) ;
+            if ( rc )
+            {
+               PD_LOG( PDERROR, "Save system log[%d.%lld] failed, rc: %d",
+                       header->_version, header->_lsn, rc ) ;
+               goto shutdown ;
+            }
+         }
+      }
+
+   shutdown:
+      PD_LOG( PDSEVERE, "Stop program because save system log, rc: %d", rc ) ;
+      PMD_SHUTDOWN_DB( rc ) ;
    }
 
    INT32 _catDCManager::active()
@@ -193,9 +246,15 @@ namespace engine
       rc = _mapData2DCMgr( _pDCMgr ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to map dc base info, rc: %d", rc ) ;
 
+      // restore log manager
+      rc = _pLogMgr->restore() ;
+      PD_RC_CHECK( rc, PDERROR, "Restore system log failed, rc: %d", rc ) ;
+
    done :
       return rc ;
    error :
+      PD_LOG( PDSEVERE, "Stop program because of active dc manager failed, "
+              "rc: %d", rc ) ;
       PMD_SHUTDOWN_DB( rc ) ;
       goto done ;
    }

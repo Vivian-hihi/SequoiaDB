@@ -110,13 +110,14 @@ namespace engine
 
    // initialize log manager
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DPSRPCMGR_INIT, "_dpsReplicaLogMgr::init" )
-   INT32 _dpsReplicaLogMgr::init ( const CHAR *path, UINT32 pageNum )
+   INT32 _dpsReplicaLogMgr::init ( const CHAR *path, UINT32 pageNum,
+                                   dpsTransCB *pTransCB )
    {
       INT32 rc = SDB_OK;
       PD_TRACE_ENTRY ( SDB__DPSRPCMGR_INIT );
       SDB_ASSERT ( path, "path can't be NULL" ) ;
 
-      _transCB = sdbGetTransCB() ;
+      _transCB = pTransCB ;
 
       // free in destructor
       _pages = SDB_OSS_NEW _dpsLogPage[pageNum];
@@ -403,7 +404,6 @@ namespace engine
    {
       SDB_ASSERT ( info.getMergeBlock().pageMeta().valid(),
                    "block not prepared" ) ;
-      SDB_ASSERT ( _transCB != NULL, "transCB can't be null!" ) ;
       PD_TRACE_ENTRY ( SDB__DPSRPCMGR_WRITEDATA );
 
       // if has dummy block
@@ -416,7 +416,10 @@ namespace engine
       _mergeLogs( info.getMergeBlock(), info.getMergeBlock().pageMeta() );
       SHARED_UNLOCK_NODES( info.getMergeBlock().pageMeta() );
 
-      _transCB->saveTransInfoFromLog( info.getMergeBlock().record() ) ;
+      if ( _transCB )
+      {
+         _transCB->saveTransInfoFromLog( info.getMergeBlock().record() ) ;
+      }
 
       PD_TRACE_EXIT ( SDB__DPSRPCMGR_WRITEDATA );
    }

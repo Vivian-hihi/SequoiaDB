@@ -142,7 +142,7 @@ namespace engine
                          DPS_LSN &endLsn,
                          DPS_LSN &expected ) ;
 
-      INT32 init( const CHAR *path, UINT32 pageNum );
+      INT32 init( const CHAR *path, UINT32 pageNum, dpsTransCB *pTransCB );
 
       INT32 merge( _dpsMergeBlock &block ) ;
       //INT32 merge( _dpsMergeBlock &block, DPS_LSN &lsn );

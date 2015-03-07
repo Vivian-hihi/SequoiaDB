@@ -40,6 +40,8 @@
 #include "netDef.hpp"
 #include "catDCLogMgr.hpp"
 #include "rtnContextBuff.hpp"
+#include "dpsLogDef.hpp"
+#include "dpsMessageBlock.hpp"
 
 using namespace bson ;
 
@@ -60,6 +62,8 @@ namespace engine
    public:
       _catDCManager() ;
       ~_catDCManager() ;
+
+      catDCLogMgr* getLogMgr() { return _pLogMgr ; }
 
       INT32 init() ;
 
@@ -82,7 +86,7 @@ namespace engine
       BOOLEAN isImageCommand() const { return _isImageCmd ; }
 
       void    onCommandBegin( MsgHeader *pMsg ) ;
-      void    onCommandEnd( MsgHeader *pMsg, INT32 rc ) ;
+      void    onCommandEnd( MsgHeader *pMsg, INT32 result ) ;
 
    // message process functions
    protected:
@@ -151,6 +155,8 @@ namespace engine
 
       // for commands
       BOOLEAN                    _isImageCmd ;
+      DPS_LSN                    _lsn ;
+      _dpsMessageBlock           _mb ;
 
    } ;
    typedef _catDCManager catDCManager ;

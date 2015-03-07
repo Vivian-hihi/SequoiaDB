@@ -71,7 +71,8 @@ namespace engine
       _buf.setLogFileNum( optCB->getReplLogFileNum() ) ;
 
       INT32 rc = _buf.init( optCB->getReplLogPath(),
-                            optCB->getReplLogBuffSize() ) ;
+                            optCB->getReplLogBuffSize(),
+                            sdbGetTransCB() ) ;
       if ( SDB_OK == rc )
       {
          _initialized = TRUE ;
