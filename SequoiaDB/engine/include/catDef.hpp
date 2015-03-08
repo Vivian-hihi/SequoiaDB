@@ -110,9 +110,9 @@
 #define CAT_SYSLOG_CL__MAX_COUNT          ( 100000 )
 
 #define CAT_SYSLOG_TYPE_LSNVER            "{name:\"LSNVER\",key: {"\
-                                          FIELD_NAME_LSN_VERSION":1, unique: false } "
+                                          FIELD_NAME_LSN_VERSION":1}, unique: false } "
 #define CAT_SYSLOG_TYPE_LSNOFF            "{name:\"LSNOFF\",key: {"\
-                                          FIELD_NAME_LSN_OFFSET":1, unique: true, enforced: true } "
+                                          FIELD_NAME_LSN_OFFSET":1}, unique: true, enforced: true } "
 
 #endif // CATDEF_HPP__
 
