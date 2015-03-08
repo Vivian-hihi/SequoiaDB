@@ -220,9 +220,12 @@ namespace engine
          }
       }
 
+   done:
+      return rc ;
    shutdown:
       PD_LOG( PDSEVERE, "Stop program because save system log, rc: %d", rc ) ;
       PMD_SHUTDOWN_DB( rc ) ;
+      goto done ;
    }
 
    INT32 _catDCManager::active()
