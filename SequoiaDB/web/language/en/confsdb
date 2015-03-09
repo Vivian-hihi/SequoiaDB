@@ -1,0 +1,30 @@
+{
+    "confsdb": {
+        "leftPanel": {
+            "title": "Business Parameters",
+				"button": [ "Choose Host", "Preview Data", "Preview Business" ],
+				"grid": [ "Property", "Value", "Note" ]
+        },
+        "rightPanel": [
+		  		{
+					"title": "Business Preview",
+					"table": [ "Host number", "Total Node Number",  "Total Disk Number", "Node Distribution Ratio", "Total Space", "Avaulable Space", "Redundant Space", "Redundancy Rate" ],
+					"pie": {
+							"title": "Space Information",
+							"data": [ "Available Space", "Redundant Space", "Total Space" ]
+					}
+				},
+				{
+					"title": "Select host to do installation business",
+					"dropDown": {
+							"button": "Selection",
+							"menu": [ "Select All", "Select Invert" ]
+					},
+					"grid": [ "Hostname", "IP" ]
+				}
+		  ],
+		  "hostModal": {
+		  		"title": "Host Information"
+		  }
+    }
+}

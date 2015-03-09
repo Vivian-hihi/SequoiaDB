@@ -1,0 +1,51 @@
+{
+    "modsdbd": {
+        "leftPanel": {
+            "title": "业务: ",
+				"titleDrop": [ "创建分区组" ],
+				"tip": [ "提示：批量配置节点信息说明。详情请点击", "帮助" ],
+				"groupList": {
+						"nodeNum": "节点数: ",
+						"drop": [ "添加节点", "删除节点", "删除分区组" ]
+				}
+        },
+        "rightPanel": {
+				"title": "节点列表",
+				"button": {
+						"button": [ "编辑", "完成" ],
+						"dropDown": [
+								{
+									"button": "选择操作",
+									"menu": [ "全选", "反选" ]
+								},
+								{
+									"button": "已选定操作",
+									"menu": [ "批量修改节点" ]
+								}
+						]
+				},
+				"grid": [ "主机名", "端口", "数据路径", "角色", "分区组" ],
+				"select": [ "全部", "全部" ]
+		  },
+		  "createGroupModal": {
+		  		"title": "创建分区组",
+				"table": [ "分区组名: ", "创建的分区组名" ]
+		  },
+		  "createNodeModal": {
+		  		"title": "添加节点",
+				"title2": "修改新节点配置",
+				"table": [ "创建节点模式: ", "节点的主机名: ", "复制的节点: " ],
+				"select": [ "默认配置创建", "无配置创建", "复制节点配置创建" ]
+		  },
+		  "removeNodeModal": {
+		  		"title": "删除节点",
+				"table": [ "删除的节点" ]
+		  },
+		  "modNodeConfModal": {
+		  		"title": "修改节点",
+				"title2": "批量修改节点配置",
+				"nav": [ "普通", "高级" ],
+				"grid": [ "属性", "值", "说明" ]
+		  }
+    }
+}

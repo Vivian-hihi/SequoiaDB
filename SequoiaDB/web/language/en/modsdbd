@@ -1,0 +1,51 @@
+{
+    "modsdbd": {
+        "leftPanel": {
+            "title": "Business: ",
+				"titleDrop": [ "Create Replica Group" ],
+				"tip": [ "Notice:Batch setting nodes' instruction please click ","Help"],
+				"groupList": {
+						"nodeNum": "Nodes Number: ",
+						"drop": [ "Add Node", "Delete Node", "Delete Replica Group" ]
+				}
+        },
+        "rightPanel": {
+				"title": "Node List",
+				"button": {
+						"button": [ "Edit", "Complete" ],
+						"dropDown": [
+								{
+									"button": "Select Operation",
+									"menu": [ "Select All", "Select Invert" ]
+								},
+								{
+									"button": "Selected Operation",
+									"menu": [ "Batch Edit Node" ]
+								}
+						]
+				},
+				"grid": [ "Hostname", "Port", "Data Path", "Role", "Replica Group" ],
+				"select": [ "All", "All" ]
+		  },
+		  "createGroupModal": {
+		  		"title": "Create Replica Group",
+				"table": [ "Replica Group Name:", "Created Replica Group Name" ]
+		  },
+		  "createNodeModal": {
+		  		"title": "Add Node",
+				"title2": "Edit New Node Setting",
+				"table": [ "Create Node Mode: ", "Node's Hostname: ", "Replicated Nodes: " ],
+				"select": [ "Default Setting Creation", "Non-setting Creation", "Replica Node Setting Creation" ]
+		  },
+		  "removeNodeModal": {
+		  		"title": "Delete Node",
+				"table": [ "Deleted Node" ]
+		  },
+		  "modNodeConfModal": {
+		  		"title": "Edit Node",
+				"title2": "Batch Edit Nodes Setting",
+				"nav": [ "Normal", "Advanced" ],
+				"grid": [ "Property", "Value", "Note" ]
+		  }
+    }
+}

@@ -1,0 +1,49 @@
+{
+    "scanhost": {
+        "leftPanel": {
+            "title": "Scan Host",
+            "tip": [
+                "Notice:You can use IP or Host field to batch add hosts, click for detail ",
+					 "Help"
+            ],
+				"input": [
+					 "Address:",
+					 "Username:",
+					 "Password:",
+					 "SSH Port:",
+					 "Proxy Port:"
+				],
+				"button": [
+					 "Clear",
+					 "Scan"
+				]
+        },
+        "rightPanel": {
+            "title": "Host list",
+				"grid": [
+					 "Hostname",
+					 "Address",
+					 "Username",
+					 "Password",
+					 "SSH Port",
+					 "Proxy Port",
+					 "Status"
+				]
+        },
+		  "help": {
+		  		"title": "Help",
+				"body": {
+					 "context_1": [ "Please enter cluster host name or IP address, then click ", "Scan", ". You can also set the range of hostname or IP" ],
+					 "table": {
+					 		"title": [ "Use this to extend the range","Specify these hosts" ]
+					 },
+					 "context_2": [
+					 		"You can add multiple address and address range, but the hostname and IP must be unique for each one.",
+							"Result will include all address scanned, but only hosts operating SSH service will be put into cluster.If username,password or SSH is wrong, you can click the line in the list to edit.s",
+							"Notice",
+							"If you don't know all the hosts' address, you can extend the range. The larger the range, the more scanning time cost."
+					 ]
+				}
+		  }
+    }
+}

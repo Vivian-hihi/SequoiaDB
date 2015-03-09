@@ -1,0 +1,33 @@
+{
+    "installhost": {
+        "leftPanel": {
+            "title": "Task Information",
+				"taskInfo": [
+						"Task ID",
+						"Cluster",
+						"Task Type",
+						"Project Number",
+						"Task Status",
+						"Installation Progress",
+						"Time Remaining"
+				],
+				"time": "Minutes"
+        },
+        "rightPanel": {
+            "title": "Installation Progress",
+				"hostGrid": [
+						"Hostname",
+						"IP",
+						"Installation Status",
+						"Installation Progress",
+						"Log"
+				],
+				"taskStatus": [ "Initializing Task", "Operating Task", "Rollbacking Task正在回滚任务", "Cancelling Task", "Task Complete", "Unknown Status", "Task Failed" ],
+				"hostStatus": [ "Initializing Installation", "Installing", "Rollbacking installation", "Cancelling Installation", "Installation Complete", "Unknown Status", "Installation Failed" ],
+				"button": "View Log"
+        },
+		  "logModal": {
+		  		"title": "Log"
+		  }
+    }
+}
