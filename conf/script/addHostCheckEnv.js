@@ -25,7 +25,7 @@
 @return void
 */
 
-var FILE_NAME_ADD_HOST_PRE_CHECK = "addHostPreCheck.js" ;
+var FILE_NAME_ADD_HOST_CHECK_ENV = "addHostCheckEnv.js" ;
 var rc                 = SDB_OK ;
 var errMsg             = "" ;
 
@@ -48,7 +48,7 @@ function _init()
    {
       // TODO: windows
    }
-   PD_LOG2( LOG_NONE, arguments, PDEVENT, FILE_NAME_ADD_HOST_PRE_CHECK,
+   PD_LOG2( LOG_NONE, arguments, PDEVENT, FILE_NAME_ADD_HOST_CHECK_ENV,
             "Begin to pre-check add host" ) ;
 }
 
@@ -60,7 +60,7 @@ function _init()
 ***************************************************************************** */
 function _final()
 {
-   PD_LOG2( LOG_NONE, arguments, PDEVENT, FILE_NAME_ADD_HOST_PRE_CHECK,
+   PD_LOG2( LOG_NONE, arguments, PDEVENT, FILE_NAME_ADD_HOST_CHECK_ENV,
             "Finish pre-checking add host" ) ;
 }
 
@@ -92,7 +92,7 @@ function _getMD5()
          errMsg = sprintf( "Failed to get installed SequoiaDB's md5 in host[?]",
                            System.getHostName() ) ;
          rc = GETLASTERROR() ;
-         PD_LOG2( LOG_NONE, arguments, PDWARNING, FILE_NAME_ADD_HOST_PRE_CHECK,
+         PD_LOG2( LOG_NONE, arguments, PDWARNING, FILE_NAME_ADD_HOST_CHECK_ENV,
                   sprintf( errMsg + ", rc: ?, detail: ?", rc, GETLASTERRMSG() ) ) ;
          exception_handle( rc, errMsg ) ;
       }
@@ -129,7 +129,7 @@ function _isProgramExist()
             program_name = path + expect_programs[i] ;
             if( !File.exist( program_name ) )
             {
-               PD_LOG2( LOG_NONE, arguments, PDWARNING, FILE_NAME_ADD_HOST_PRE_CHECK,
+               PD_LOG2( LOG_NONE, arguments, PDWARNING, FILE_NAME_ADD_HOST_CHECK_ENV,
                         sprintf( "Program [?] does not exist in target host", program_name ) ) ;
                return false ;
             }
@@ -147,7 +147,7 @@ function _isProgramExist()
       SYSEXPHANDLE( e ) ;
       errMsg = "Failed to judge whether program exist or not" ;
       rc = GETLASTERROR() ;
-      PD_LOG2( LOG_NONE, arguments, PDERROR, FILE_NAME_ADD_HOST_PRE_CHECK,
+      PD_LOG2( LOG_NONE, arguments, PDERROR, FILE_NAME_ADD_HOST_CHECK_ENV,
                sprintf( errMsg + ", rc: ?, detail: ?", rc, GETLASTERRMSG() ) ) ;
 
       return false ;
@@ -191,7 +191,7 @@ function main()
       rc = GETLASTERROR() ;
       errMsg = sprintf( "Failed to write pre-check result to file[?] in host[?]",
                         result_file, System.getHostName() ) ;
-      PD_LOG2( LOG_NONE, arguments, PDERROR, FILE_NAME_ADD_HOST_PRE_CHECK,
+      PD_LOG2( LOG_NONE, arguments, PDERROR, FILE_NAME_ADD_HOST_CHECK_ENV,
                sprintf( errMsg + ", rc: ?, detail: ?", rc, GETLASTERRMSG() ) ) ;
       exception_handle( rc, errMsg ) ;
    }

@@ -67,7 +67,7 @@ function removeHostResult()
    //this.HasUninstall              = false ;
 }
 
-function checkAddHostInfoResult()
+function addHostCheckInfoResult()
 {
    this.errno                     = SDB_OK ;
    this.detail                    = "" ;

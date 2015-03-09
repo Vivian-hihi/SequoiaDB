@@ -43,7 +43,7 @@ var result_file                 = "" ;
 
 var progs = null ;
 var spts  = [ "error.js", "common.js", "define.js", "log.js",
-              "func.js", "addHostPreCheck.js" ] ;
+              "func.js", "addHostCheckEnv.js" ] ;
 if ( SYS_LINUX == SYS_TYPE )
 {
    progs = [ "sdb" ] ; 
@@ -86,7 +86,7 @@ function _init()
       remote_precheck_result_file = OMA_FILE_TEMP_ADD_HOST_CHECK ;
       try
       {
-         result_file = adaptPath( System.getEWD() ) + "../conf/log/addHostPreCheckResult" ;
+         result_file = adaptPath( System.getEWD() ) + "../conf/log/addHostCheckEnvResult" ;
          if ( File.exist( result_file ) )
             File.remove( result_file ) ;
       }

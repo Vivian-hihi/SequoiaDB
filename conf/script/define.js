@@ -161,7 +161,7 @@ var OMA_PATH_TEMP_SPT_DIR                  = "/tmp/omatmp/conf/script/" ;
 var OMA_PATH_BIN                           = "bin/";
 
 
-var OMA_FILE_TEMP_ADD_HOST_CHECK           = OMA_PATH_TEMP_TEMP_DIR + "addHostPreCheckResult" ;
+var OMA_FILE_TEMP_ADD_HOST_CHECK           = OMA_PATH_TEMP_TEMP_DIR + "addHostCheckEnvResult" ;
 var OMA_FILE_SDBCM_CONF                    = "sdbcm.conf" ;
 var OMA_FILE_SDBCM_CONF2                   = "conf/sdbcm.conf" ;
 var OMA_FILE_ERROR                         = "error.js" ;
@@ -171,7 +171,7 @@ var OMA_FILE_DEFINE                        = "define.js" ;
 var OMA_FILE_FUNC                          = "func.js" ;
 var OMA_FILE_CHECK_HOST_ITEM               = "checkHostItem.js" ;
 var OMA_FILE_CHECK_HOST                    = "checkHost.js" ;
-var OMA_FILE_ADD_HOST_PRE_CHECK            = "addHostPreCheck.js" ;
+var OMA_FILE_ADD_HOST_CHECK_ENV            = "addHostCheckEnv.js" ;
 var OMA_FILE_INSTALL_INFO                  = "/etc/default/sequoiadb" ;
 
 

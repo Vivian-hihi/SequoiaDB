@@ -28,8 +28,8 @@
    RET_JSON: the format is: {"errno":0,"detail":""}
 */
 
-var FILE_NAME_CHECK_ADD_HOST_INFO = "checkAddHostInfo.js" ;
-var RET_JSON       = new checkAddHostInfoResult() ;
+var FILE_NAME_ADD_HOST_CHECK_INFO = "addHostCheckInfo.js" ;
+var RET_JSON       = new addHostCheckInfoResult() ;
 var rc             = SDB_OK ;
 var errMsg         = "" ;
 
@@ -46,7 +46,7 @@ function _init()
 {
    task_id = getTaskID( BUS_JSON ) ;
    setTaskLogFileName( task_id ) ;  
-   PD_LOG2( task_id, arguments, PDEVENT, FILE_NAME_CHECK_ADD_HOST_INFO,
+   PD_LOG2( task_id, arguments, PDEVENT, FILE_NAME_ADD_HOST_CHECK_INFO,
             sprintf( "Begin to check add host info in task[?]", task_id ) ) ;
 }
 
@@ -58,7 +58,7 @@ function _init()
 ***************************************************************************** */
 function _final()
 {
-   PD_LOG2( task_id, arguments, PDEVENT, FILE_NAME_CHECK_ADD_HOST_INFO,
+   PD_LOG2( task_id, arguments, PDEVENT, FILE_NAME_ADD_HOST_CHECK_INFO,
             sprintf( "Finish checking add host info in task[?]", task_id ) ) ;
 }
 
@@ -71,7 +71,7 @@ function _final()
 @return
    [bool]: true or false
 ***************************************************************************** */
-function _checkAddHostInfo()
+function _addHostCheckInfo()
 {
    var info             = null ;
    var hostInfo         = null ;
@@ -97,7 +97,7 @@ function _checkAddHostInfo()
       SYSEXPHANDLE( e ) ;
       errMsg = sprintf( "Failed to get db install info in localhost[?]", localIP ) ;
       rc = GETLASTERROR() ;
-      PD_LOG2( task_id, arguments, PDERROR, FILE_NAME_CHECK_ADD_HOST_INFO,
+      PD_LOG2( task_id, arguments, PDERROR, FILE_NAME_ADD_HOST_CHECK_INFO,
                sprintf( errMsg + ", rc: ?, detail: ?", rc, GETLASTERRMSG() ) ) ;
       exception_handle( rc, errMsg ) ;
    }
@@ -116,7 +116,7 @@ function _checkAddHostInfo()
       SYSEXPHANDLE( e ) ;
       errMsg = "Js receive invalid argument" ;
       rc = GETLASTERROR() ;
-      PD_LOG2( task_id, arguments, PDERROR, FILE_NAME_CHECK_ADD_HOST_INFO,
+      PD_LOG2( task_id, arguments, PDERROR, FILE_NAME_ADD_HOST_CHECK_INFO,
                sprintf( errMsg + ", rc: ?, detail: ?", rc, GETLASTERRMSG() ) ) ;
       exception_handle( SDB_INVALIDARG, errMsg ) ; 
    }
@@ -124,7 +124,7 @@ function _checkAddHostInfo()
    {
       errMsg = "Not specified any host's info to check" ;
       rc = SDB_INVALIDARG ;
-      PD_LOG2( task_id, arguments, PDERROR, FILE_NAME_CHECK_ADD_HOST_INFO,
+      PD_LOG2( task_id, arguments, PDERROR, FILE_NAME_ADD_HOST_CHECK_INFO,
                sprintf( errMsg + ", rc: ?", rc ) ) ;
       exception_handle( rc, errMsg ) ;
    }
@@ -149,7 +149,7 @@ function _checkAddHostInfo()
          {
             errMsg = "When installing db SequoiaDB in localhost[" + localIP + "], sdb admin user[" + sdbUser  + "] needs to match current one[" + adminUser + "]" ;
             rc = SDB_INVALIDARG ;
-            PD_LOG2( task_id, arguments, PDERROR, FILE_NAME_CHECK_ADD_HOST_INFO,
+            PD_LOG2( task_id, arguments, PDERROR, FILE_NAME_ADD_HOST_CHECK_INFO,
                      sprintf( errMsg + ", rc: ?", rc ) ) ;
             exception_handle( rc, errMsg ) ; 
          }
@@ -166,7 +166,7 @@ function _checkAddHostInfo()
                SYSEXPHANDLE( e ) ;
                errMsg = "When installing SequoiaDB in localhost[" + localIP + "], sdb admin password needs to match current one" ;
                rc = GETLASTERROR() ;
-               PD_LOG2( task_id, arguments, PDERROR, FILE_NAME_CHECK_ADD_HOST_INFO,
+               PD_LOG2( task_id, arguments, PDERROR, FILE_NAME_ADD_HOST_CHECK_INFO,
                         sprintf( errMsg + ", rc: ?, detail: ?", rc, GETLASTERRMSG() ) ) ;
                exception_handle( SDB_INVALIDARG, errMsg ) ; 
             }
@@ -177,7 +177,7 @@ function _checkAddHostInfo()
          {
             errMsg = "When installing SequoiaDB in localhost[" + localIP + "], sdbcm's service[" + port  + "] needs to match current one[" + localAgentPort  + "]" ;
             rc = SDB_INVALIDARG ;
-            PD_LOG2( task_id, arguments, PDERROR, FILE_NAME_CHECK_ADD_HOST_INFO,
+            PD_LOG2( task_id, arguments, PDERROR, FILE_NAME_ADD_HOST_CHECK_INFO,
                      sprintf( errMsg + ", rc: ?", rc ) ) ;
             exception_handle( rc, errMsg ) ; 
          }
@@ -188,7 +188,7 @@ function _checkAddHostInfo()
          {
             errMsg = "When installing SequoiaDB in localhost[" + localIP + "], install path[" + path  + "] needs to match current one[" + installPath  + "]" ;
             rc = SDB_INVALIDARG ;
-            PD_LOG2( task_id, arguments, PDERROR, FILE_NAME_CHECK_ADD_HOST_INFO,
+            PD_LOG2( task_id, arguments, PDERROR, FILE_NAME_ADD_HOST_CHECK_INFO,
                      sprintf( errMsg + ", rc: ?", rc ) ) ;
             exception_handle( rc, errMsg ) ; 
          }
@@ -204,14 +204,14 @@ function main()
    // check install info
    try
    {
-      _checkAddHostInfo() ;
+      _addHostCheckInfo() ;
    }
    catch ( e )
    {
       SYSEXPHANDLE( e ) ;
       errMsg = "Failed to check add host's information" ;
       rc = GETLASTERROR() ;
-      PD_LOG2( task_id, arguments, PDERROR, FILE_NAME_CHECK_ADD_HOST_INFO,
+      PD_LOG2( task_id, arguments, PDERROR, FILE_NAME_ADD_HOST_CHECK_INFO,
                sprintf( errMsg + ", rc: ?, detail: ?", rc, GETLASTERRMSG() ) ) ;
       RET_JSON[Errno] = rc ;
       RET_JSON[Detail] = errMsg ;
