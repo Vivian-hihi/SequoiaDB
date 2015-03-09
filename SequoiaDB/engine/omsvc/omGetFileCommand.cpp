@@ -5115,16 +5115,30 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       BSONObj selector ;
-      BSONObj matcher ;
       BSONObj order ;
       BSONObj hint ;
       SINT64 contextID = -1 ;
+
+      const CHAR *pFilter = NULL ;
+      BSONObj filter ;
+
+      _restAdaptor->getQuery( _restSession, FIELD_NAME_FILTER, &pFilter ) ;
+      if ( NULL != pFilter )
+      {
+         rc = fromjson( pFilter, filter ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG_MSG( PDERROR, "change rest field to BSONObj failed:src=%s,"
+                        "rc=%d", pFilter, rc ) ;
+            goto error ;
+         }
+      }
 
       selector = BSON( OM_TASKINFO_FIELD_TASKID << 1 
                        << OM_TASKINFO_FIELD_TYPE << 1
                        << OM_TASKINFO_FIELD_TYPE_DESC << 1
                        << OM_TASKINFO_FIELD_NAME << 1 ) ;
-      rc = rtnQuery( OM_CS_DEPLOY_CL_TASKINFO, selector, matcher, order, hint, 
+      rc = rtnQuery( OM_CS_DEPLOY_CL_TASKINFO, selector, filter, order, hint, 
                      0, _cb, 0, -1, _pDMSCB, _pRTNCB, contextID );
       if ( rc )
       {
