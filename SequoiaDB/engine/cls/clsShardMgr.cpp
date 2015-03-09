@@ -862,7 +862,7 @@ namespace engine
       }
       // if we get here, that means we cannot find the id in _vecCatlog
       rc = SDB_SYS ;
-      PD_LOG ( PDERROR, "Catlog primary node to [%s] id error[%u:%u:%u]",
+      PD_LOG ( PDERROR, "Catalog primary node to [%s] id error[%u:%u:%u]",
                primary ? "primary" : "slave",
                id.columns.groupID,
                id.columns.nodeID,

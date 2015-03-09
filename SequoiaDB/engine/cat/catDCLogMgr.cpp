@@ -299,6 +299,7 @@ namespace engine
    INT32 _catDCLogItem::readData( const BSONObj &match,
                                   _dpsMessageBlock *mb,
                                   _pmdEDUCB *cb,
+                                  const BSONObj &orderby,
                                   INT64 limit )
    {
       INT32 rc = SDB_OK ;
@@ -306,7 +307,7 @@ namespace engine
       INT64 contextID = -1 ;
       rtnContextBuf buffObj ;
 
-      rc = rtnQuery( _clName.c_str(), hint, match, hint, hint, 0, cb,
+      rc = rtnQuery( _clName.c_str(), hint, match, orderby, hint, 0, cb,
                      0, limit, _pDmsCB, _pRtnCB, contextID ) ;
       PD_RC_CHECK( rc, PDERROR, "Query system log[%s] by matcher[%s] failed, "
                    "rc: %d", toString().c_str(), match.toString().c_str(),
@@ -359,12 +360,14 @@ namespace engine
       goto done ;
    }
 
-   INT32 _catDCLogItem::removeData( const BSONObj &matcher,
-                                    _pmdEDUCB *cb )
+   INT32 _catDCLogItem::removeDataToLow( DPS_LSN_OFFSET lowOffset,
+                                         _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
       BSONObj hint ;
       INT64 delNum = 0 ;
+      BSONObj matcher = BSON( FIELD_NAME_LSN_OFFSET << BSON(
+                              "$gte" << (INT64)lowOffset ) ) ;
       BSONObj orderByFirst = BSON( FIELD_NAME_LSN_OFFSET << 1 ) ;
       BSONObj orderByLast = BSON( FIELD_NAME_LSN_OFFSET << -1 ) ;
 
@@ -392,6 +395,10 @@ namespace engine
       {
          _coming.version = _last.version ;
          _coming.offset  = _last.offset + 1 ;
+
+         SDB_ASSERT( _coming.offset == lowOffset, "Coming offset invalid" ) ;
+         SDB_ASSERT( _count == _last.offset - _first.offset + 1,
+                     "last - first + 1 is not same with count" ) ;
       }
 
    done:
@@ -634,7 +641,7 @@ namespace engine
          goto error ;
       }
 
-      rc = _readData( matcher, _vecLogCL[ pos ], mb, 1 ) ;
+      rc = _readData( matcher, _vecLogCL[ pos ], mb, BSONObj(), 1 ) ;
       PD_RC_CHECK( rc, PDERROR, "Read data by matcher[%s] failed, rc: %d",
                    matcher.toString().c_str(), rc ) ;
 
@@ -738,8 +745,6 @@ namespace engine
       }
       else if ( offset < _expectLsn.offset )
       {
-         BSONObj matcher = BSON( FIELD_NAME_LSN_OFFSET << BSON(
-                                 "$gte" << (INT64)offset ) ) ;
          while ( _work != pos )
          {
             rc = _vecLogCL[ _work ]->truncate( _pEduCB ) ;
@@ -749,10 +754,11 @@ namespace engine
             _work = _decFileID( _work ) ;
          }
          // remove current collection
-         rc = _vecLogCL[ _work ]->removeData( matcher, _pEduCB ) ;
-         PD_RC_CHECK( rc, PDERROR, "Remove system log[%s] by matcher[%s] "
-                      "failed, rc: %d", _vecLogCL[ _work ]->toString().c_str(),
-                      matcher.toString().c_str(), rc ) ;
+         rc = _vecLogCL[ _work ]->removeDataToLow( offset, _pEduCB ) ;
+         PD_RC_CHECK( rc, PDERROR, "Remove system log[%s] by to low "
+                      "offset[%lld] failed, rc: %d",
+                      _vecLogCL[ _work ]->toString().c_str(),
+                      offset, rc ) ;
 
          if ( _vecLogCL[ _work ]->isEmpty() && _begin != _work )
          {
@@ -888,9 +894,10 @@ namespace engine
    INT32 _catDCLogMgr::_readData( const BSONObj &match,
                                   catDCLogItem *pLog,
                                   _dpsMessageBlock *mb,
+                                  const BSONObj &orderby,
                                   INT64 limit )
    {
-      return pLog->readData( match, mb, _pEduCB, limit ) ;
+      return pLog->readData( match, mb, _pEduCB, orderby, limit ) ;
    }
 
    DPS_LSN _catDCLogMgr::_getStartLsn()
@@ -905,6 +912,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       BSONObjBuilder builder ;
       BSONObj obj ;
+      DPS_LSN_OFFSET orgOffset = pHeader->_lsn ;
 
       ossScopedLock lock( &_latch, EXCLUSIVE ) ;
 
@@ -921,6 +929,7 @@ namespace engine
 
       builder.append( FIELD_NAME_LSN_VERSION, (INT32)_expectLsn.version ) ;
       builder.append( FIELD_NAME_LSN_OFFSET, (INT64)_expectLsn.offset ) ;
+      builder.append( FIELD_NAME_ORG_LSNOFFSET, (INT64)orgOffset ) ;
       builder.appendBinData( FIELD_NAME_DATA, (INT32)pHeader->_length,
                              BinDataGeneral, ( const unsigned char *)pHeader ) ;
 

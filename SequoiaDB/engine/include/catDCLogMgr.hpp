@@ -81,9 +81,10 @@ namespace engine
          INT32          readData( const BSONObj &match,
                                   _dpsMessageBlock *mb,
                                   _pmdEDUCB *cb,
+                                  const BSONObj &orderby = BSONObj(),
                                   INT64 limit = 1 ) ;
-         INT32          removeData( const BSONObj &matcher,
-                                    _pmdEDUCB *cb ) ;
+         INT32          removeDataToLow( DPS_LSN_OFFSET lowOffset,
+                                         _pmdEDUCB *cb ) ;
 
       protected:
          void           _reset() ;
@@ -167,6 +168,7 @@ namespace engine
          INT32  _readData( const BSONObj &match,
                            catDCLogItem *pLog,
                            _dpsMessageBlock *mb,
+                           const BSONObj &orderby = BSONObj(),
                            INT64 limit = 1 ) ;
 
          DPS_LSN   _getStartLsn() ;
