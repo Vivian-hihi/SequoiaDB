@@ -271,16 +271,12 @@ namespace engine
          }
       }
 
-      rc = rtnInsert( _clName.c_str(), obj, 1, FLG_INSERT_CONTONDUP,
-                      cb, _pDmsCB, _pDpsCB, 1 ) ;
+      rc = rtnInsert( _clName.c_str(), obj, 1, 0, cb, _pDmsCB, _pDpsCB, 1 ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed insert obj[%s] to system log[%s], "
                    "rc: %d", obj.toString().c_str(), toString().c_str(),
                    rc ) ;
 
-      // re-parse meta
-      rc = _parseMeta( cb ) ;
-      PD_RC_CHECK( rc, PDERROR, "Parse system log[%s] meta failed, rc: %d",
-                   toString().c_str(), rc ) ;
+      ++_count ;
 
       if ( _first.invalid() )
       {
@@ -757,8 +753,12 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR, "Remove system log[%s] by matcher[%s] "
                       "failed, rc: %d", _vecLogCL[ _work ]->toString().c_str(),
                       matcher.toString().c_str(), rc ) ;
-         _curLsn.version = version ;
-         _curLsn.offset = offset ;
+
+         if ( _vecLogCL[ _work ]->isEmpty() && _begin != _work )
+         {
+            _work = _decFileID( _work ) ;
+         }
+         _curLsn = _vecLogCL[ _work ]->getLastLSN() ;
       }
 
       _expectLsn.offset = offset ;
