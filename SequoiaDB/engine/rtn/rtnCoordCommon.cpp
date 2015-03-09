@@ -2313,7 +2313,6 @@ namespace engine
       SDB_RTNCB *pRtncb = pKrcb->getRTNCB();
       CoordCB *pCoordcb = pKrcb->getCoordCB();
       INT32 bufferSize = 0;
-      CHAR *pResultBuffer;
       MsgOpReply replyHeader;
       rtnCoordCommand *pCmdProcesser = NULL;
       CHAR *pListReq = NULL;
@@ -2330,8 +2329,8 @@ namespace engine
                              0, 0, 0, -1, query ) ;
       PD_RC_CHECK( rc, PDERROR, "failed to build list groups request(rc=%d)",
                    rc );
-      rc = pCmdProcesser->execute( pListReq, 0, &pResultBuffer, cb,
-                                   replyHeader, &err ) ;
+      rc = pCmdProcesser->execute( pListReq, 0, cb,
+                                   replyHeader, NULL ) ;
       SDB_ASSERT( NULL == err, "impossible" ) ;
       PD_RC_CHECK( rc, PDERROR, "failed to list groups(rc=%d)", rc ) ;
 

@@ -46,10 +46,11 @@ namespace engine
    /*
       rtnCoordAlterImage implement
    */
-   INT32 rtnCoordAlterImage::execute( CHAR *pReceiveBuffer, SINT32 packSize,
-                                      CHAR **ppResultBuffer, pmdEDUCB *cb,
+   INT32 rtnCoordAlterImage::execute( CHAR *pReceiveBuffer,
+                                      SINT32 packSize,
+                                      pmdEDUCB *cb,
                                       MsgOpReply &replyHeader,
-                                      BSONObj **ppErrorObj )
+                                      rtnContextBuf *buf )
    {
       INT32 rc = SDB_OK ;
       CoordCB *pCoord = pmdGetKRCB()->getCoordCB() ;

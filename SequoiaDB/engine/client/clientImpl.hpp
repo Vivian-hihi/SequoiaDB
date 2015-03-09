@@ -1103,16 +1103,17 @@ namespace sdbclient
       {
          return listProcedures ( &cursor.pCursor, condition ) ;
       }
-      INT32 evalJS( _sdbCursor **cursor,
-                    const CHAR *code,
-                    SDB_SPD_RES_TYPE *type,
-                    const bson::BSONObj &errmsg ) ;
-      INT32 evalJS( sdbCursor &cursor,
-                    const CHAR *code,
-                    SDB_SPD_RES_TYPE *type,
-                    const bson::BSONObj &errmsg )
+
+      INT32 evalJS( const CHAR *code,
+                    SDB_SPD_RES_TYPE &type,
+                    _sdbCursor **cursor,
+                    bson::BSONObj &errmsg ) ; 
+      INT32 evalJS( const CHAR *code,
+                    SDB_SPD_RES_TYPE &type,
+                    sdbCursor &cursor,
+                    bson::BSONObj &errmsg )
       {
-         return evalJS( &cursor.pCursor, code, type, errmsg ) ;
+         return evalJS( code, type, &cursor.pCursor, errmsg ) ;
       }
 
       // bakeup

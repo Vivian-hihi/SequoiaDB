@@ -152,15 +152,18 @@ namespace engine
          CHAR *pResult = NULL ;
          MsgOpReply replayHeader ;
          BSONObj *pErrObj = NULL ;
+         rtnContextBuf buf ;
 
          CoordCB *pCoordcb = pmdGetKRCB()->getCoordCB();
          rtnCoordProcesserFactory *pProcesserFactory =
             pCoordcb->getProcesserFactory();
          rtnCoordOperator *pOperator = NULL ;
          pOperator = pProcesserFactory->getOperator( pMsg->opCode );
-         rc = pOperator->execute( (CHAR*)pMsg, pMsg->messageLength,
-                                  &pResult, _pEDUCB, replayHeader,
-                                  &pErrObj ) ;
+         rc = pOperator->execute( (CHAR*)pMsg,
+                                  pMsg->messageLength,
+                                  _pEDUCB,
+                                  replayHeader,
+                                  NULL ) ;
          // special handling for password verification when there is no
          // addrlist specified. Usually this happen when there is only
          // one coord node before creating the first catalog

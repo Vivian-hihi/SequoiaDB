@@ -487,8 +487,12 @@ static INT32 _recvExtractEval ( sdbConnectionHandle cHandle, Socket* sock,
    INT32 rc          = SDB_OK ;
    INT32 replyFlag   = -1 ;
    INT32 startFrom   = -1 ;
+   INT32 returnNum   = -1 ;
    CHAR **ppBuffer   = (CHAR**)msg ;
    MsgOpReply *replyHeader = NULL ;
+   bson_iterator rType ;
+   bson runInfo ;
+   bson_init( &runInfo ) ;
 
    rc = _recv ( cHandle, sock, msg, size, endianConvert ) ;
    if ( SDB_OK != rc )
@@ -496,8 +500,10 @@ static INT32 _recvExtractEval ( sdbConnectionHandle cHandle, Socket* sock,
       goto error ;
    }
 
+   replyHeader = (MsgOpReply *)(*ppBuffer) ;
+
    rc = clientExtractReply ( *ppBuffer, &replyFlag, contextID,
-                             &startFrom, (SINT32 *)type, endianConvert ) ;
+                             &startFrom, &returnNum, endianConvert ) ;
    if ( SDB_OK != rc )
    {
       goto error ;
@@ -507,17 +513,32 @@ static INT32 _recvExtractEval ( sdbConnectionHandle cHandle, Socket* sock,
    {
       *result = FALSE ;
       rc = replyFlag ;
-      replyHeader = (MsgOpReply *)(*ppBuffer) ;
       if ( errmsg && sizeof( MsgOpReply ) != replyHeader->header.messageLength )
       {
          bson_init_finished_data( errmsg, *ppBuffer + sizeof(MsgOpReply) ) ;
       }
+      goto error ;
+   }
+   else if ( 1 == returnNum &&
+             sizeof( MsgOpReply ) < replyHeader->header.messageLength )
+   {
+      bson_init_finished_data( &runInfo, *ppBuffer + sizeof(MsgOpReply) ) ;
+      if ( BSON_INT != bson_find( &rType, &runInfo, FIELD_NAME_RTYPE ) )
+      {
+         rc = SDB_SYS ;
+         goto error ;
+      }
+      *type = ( SDB_SPD_RES_TYPE )( bson_iterator_int( &rType ) ) ;   
+      *result = TRUE ;
    }
    else
    {
-      *result = TRUE ;
+      *result = FALSE ;
+      rc = SDB_SYS ;
+      goto error ;
    }
 done :
+   bson_destroy( &runInfo ) ;
    return rc ;
 error :
    goto done ;

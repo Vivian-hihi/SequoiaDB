@@ -191,7 +191,6 @@ namespace engine
       CHAR *msg = NULL ;
       INT32 bufSize = 0 ;
       MsgOpReply dummyReply ;
-      BSONObj *err = NULL ;
 
       if ( SQL_GRAMMAR::CRTCS == _commandType )
       {
@@ -207,9 +206,8 @@ namespace engine
             goto error ;
          }
 
-         rc = coord.execute( msg, *(SINT32*)msg, NULL, eduCB,
-                             dummyReply, &err ) ;
-         SDB_ASSERT( NULL == err, "impossible" ) ;
+         rc = coord.execute( msg, *(SINT32*)msg, eduCB,
+                             dummyReply, NULL ) ;
          if ( SDB_OK != rc )
          {
             goto error ;
@@ -229,9 +227,8 @@ namespace engine
             goto error ;
          }
 
-         rc = coord.execute( msg, *(SINT32*)msg, NULL, eduCB,
-                              dummyReply, &err ) ;
-         SDB_ASSERT( NULL == err, "impossible" ) ;
+         rc = coord.execute( msg, *(SINT32*)msg, eduCB,
+                              dummyReply, NULL ) ;
          if ( SDB_OK != rc )
          {
             goto error ;
@@ -262,9 +259,8 @@ namespace engine
             goto error ;
          }
 
-         rc = coord.execute( msg, *(SINT32*)msg, NULL, eduCB,
-                              dummyReply, &err ) ;
-         SDB_ASSERT( NULL == err, "impossible" ) ;
+         rc = coord.execute( msg, *(SINT32*)msg, eduCB,
+                              dummyReply, NULL ) ;
          if ( SDB_OK != rc )
          {
             goto error ;
@@ -285,9 +281,8 @@ namespace engine
             goto error ;
          }
 
-         rc = coord.execute( msg, *(SINT32*)msg, NULL, eduCB,
-                              dummyReply, &err ) ;
-         SDB_ASSERT( NULL == err, "impossible" ) ;
+         rc = coord.execute( msg, *(SINT32*)msg, eduCB,
+                              dummyReply, NULL ) ;
          if ( SDB_OK != rc )
          {
             goto error ;
@@ -330,9 +325,8 @@ namespace engine
          {
             goto error ;
          }
-         rc = coord.execute( msg, *(SINT32*)msg, NULL, eduCB,
-                              dummyReply, &err ) ;
-         SDB_ASSERT( NULL == err, "impossible" ) ;
+         rc = coord.execute( msg, *(SINT32*)msg, eduCB,
+                              dummyReply, NULL ) ;
          if ( SDB_OK != rc )
          {
             goto error ;
@@ -354,9 +348,8 @@ namespace engine
             goto error ;
          }
 
-         rc = coord.execute( msg, *(SINT32*)msg, NULL, eduCB,
-                              dummyReply, &err ) ;
-         SDB_ASSERT( NULL == err, "impossible" ) ;
+         rc = coord.execute( msg, *(SINT32*)msg, eduCB,
+                              dummyReply, NULL ) ;
          if ( SDB_OK != rc )
          {
             goto error ;
@@ -375,9 +368,8 @@ namespace engine
             goto error ;
          }
 
-         rc = coord.execute( msg, *(SINT32*)msg, NULL, eduCB,
-                              dummyReply, &err ) ;
-         SDB_ASSERT( NULL == err, "impossible" ) ;
+         rc = coord.execute( msg, *(SINT32*)msg, eduCB,
+                              dummyReply, NULL ) ;
          if ( SDB_OK != rc )
          {
             goto error ;
@@ -397,9 +389,8 @@ namespace engine
             goto error ;
          }
 
-         rc = coord.execute( msg, *(SINT32*)msg, NULL, eduCB,
-                              dummyReply, &err ) ;
-         SDB_ASSERT( NULL == err, "impossible" ) ;
+         rc = coord.execute( msg, *(SINT32*)msg, eduCB,
+                              dummyReply, NULL ) ;
          if ( SDB_OK != rc )
          {
             goto error ;
@@ -418,9 +409,9 @@ namespace engine
 
          rc = coord.execute( ( CHAR *)(&transMsg),
                               transMsg.messageLength,
-                              NULL, eduCB,
-                              dummyReply, &err ) ;
-         SDB_ASSERT( NULL == err, "impossible" ) ;
+                              eduCB,
+                              dummyReply,
+                              NULL ) ;
          if ( SDB_OK != rc )
          {
             goto error ;
@@ -435,9 +426,8 @@ namespace engine
             goto error ;
          }
 
-         rc = coord.execute( msg, *(SINT32*)msg, NULL, eduCB,
-                              dummyReply, &err ) ;
-         SDB_ASSERT( NULL == err, "impossible" ) ;
+         rc = coord.execute( msg, *(SINT32*)msg, eduCB,
+                              dummyReply, NULL ) ;
          if ( SDB_OK != rc )
          {
             goto error ;
@@ -452,9 +442,8 @@ namespace engine
             goto error ;
          }
 
-         rc = coord.execute( msg, *(SINT32*)msg, NULL, eduCB,
-                              dummyReply, &err ) ;
-         SDB_ASSERT( NULL == err, "impossible" ) ;
+         rc = coord.execute( msg, *(SINT32*)msg, eduCB,
+                              dummyReply, NULL ) ;
          if ( SDB_OK != rc )
          {
             goto error ;
