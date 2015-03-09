@@ -253,6 +253,7 @@
 #define FIELD_NAME_ACTIVE                    "Active"
 #define FIELD_NAME_ENABLE                    "Enable"
 #define FIELD_NAME_ACTION                    "Action"
+#define FIELD_NAME_DATA                      "Data"
 
 #define FIELD_NAME_INSERT                    "Insert"
 #define FIELD_NAME_UPDATE                    "Update"

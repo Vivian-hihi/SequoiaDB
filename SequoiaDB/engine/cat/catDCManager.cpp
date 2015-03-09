@@ -204,13 +204,12 @@ namespace engine
          }
          else
          {
-            dpsLogRecordHeader *header = ( dpsLogRecordHeader* )_mb.readPtr() ;
+            dpsLogRecordHeader *header = ( dpsLogRecordHeader* )_mb.offset(0) ;
             _lsn.offset += header->_length ;
             _lsn.version = header->_version ;
 
             // save to log
-            rc = _pLogMgr->saveSysLog( header, _mb.offset( 0 ),
-                                       _mb.length() ) ;
+            rc = _pLogMgr->saveSysLog( header ) ;
             if ( rc )
             {
                PD_LOG( PDERROR, "Save system log[%d.%lld] failed, rc: %d",

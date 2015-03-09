@@ -38,8 +38,7 @@
 
 #include "pmd.hpp"
 #include "netDef.hpp"
-#include "dpsLogRecord.hpp"
-#include "dpsLogDef.hpp"
+#include "dpsLogWrapper.hpp"
 #include "pmdEDU.hpp"
 #include <vector>
 #include <string>
@@ -51,7 +50,6 @@ namespace engine
 {
    class sdbCatalogueCB ;
    class _SDB_RTNCB ;
-   class _dpsLogWrapper ;
    class _SDB_DMSCB ;
 
    /*
@@ -73,11 +71,26 @@ namespace engine
          DPS_LSN        getComingLSN() const ;
          UINT32         getLID() const ;
 
+         BOOLEAN        isFull() const ;
+         BOOLEAN        isEmpty() const ;
+
          INT32          truncate( _pmdEDUCB *cb ) ;
          INT32          restore( _pmdEDUCB *cb ) ;
+         INT32          writeData( BSONObj &obj, const DPS_LSN &lsn,
+                                   _pmdEDUCB *cb ) ;
+         INT32          readData( const BSONObj &match,
+                                  _dpsMessageBlock *mb,
+                                  _pmdEDUCB *cb,
+                                  INT64 limit = 1 ) ;
+         INT32          removeData( const BSONObj &matcher,
+                                    _pmdEDUCB *cb ) ;
 
       protected:
          void           _reset() ;
+         INT32          _parseLsn( const BSONObj &orderby,
+                                   _pmdEDUCB *cb,
+                                   DPS_LSN &lsn ) ;
+         INT32          _parseMeta( _pmdEDUCB *cb ) ;
 
       private:
          _SDB_DMSCB                 *_pDmsCB;
@@ -87,6 +100,12 @@ namespace engine
 
          string                     _clName ;
          UINT32                     _pos ;
+         UINT32                     _clLID ;
+
+         UINT64                     _count ;
+         DPS_LSN                    _first ;
+         DPS_LSN                    _last ;
+         DPS_LSN                    _coming ;
 
    } ;
    typedef _catDCLogItem catDCLogItem ;
@@ -94,7 +113,7 @@ namespace engine
    /*
       _catDCLogMgr define
    */
-   class _catDCLogMgr : public SDBObject
+   class _catDCLogMgr : public SDBObject, public ILogAccessor
    {
       public:
          _catDCLogMgr() ;
@@ -107,13 +126,50 @@ namespace engine
          INT32 restore() ;
 
          INT32 saveSysLog( dpsLogRecordHeader *pHeader,
-                           const CHAR *pData,
-                           UINT32 length,
                            DPS_LSN *pRetLSN = NULL ) ;
 
+      public:
+         virtual INT32     search( const DPS_LSN &minLsn,
+                                   _dpsMessageBlock *mb,
+                                   UINT8 type = DPS_SERCAH_ALL ) ;
+
+         virtual INT32     searchHeader( const DPS_LSN &lsn,
+                                         _dpsMessageBlock *mb,
+                                         UINT8 type = DPS_SERCAH_ALL ) ;
+
+         virtual DPS_LSN   getStartLsn ( BOOLEAN logBufOnly = FALSE ) ;
+
+         virtual DPS_LSN   getCurrentLsn() ;
+         virtual DPS_LSN   expectLsn() ;
+
+         virtual void      getLsnWindow( DPS_LSN &fileBeginLsn,
+                                         DPS_LSN &memBeginLsn,
+                                         DPS_LSN &endLsn,
+                                         DPS_LSN *pExpectLsn = NULL ) ;
+
+         virtual void      getLsnWindow( DPS_LSN &fileBeginLsn,
+                                         DPS_LSN &memBeginLsn,
+                                         DPS_LSN &endLsn,
+                                         DPS_LSN &expected ) ;
+
+         virtual INT32     move( const DPS_LSN_OFFSET &offset,
+                                 const DPS_LSN_VER &version ) ;
+
+         virtual INT32     recordRow( const CHAR *row, UINT32 len ) ;
+
       protected:
-         UINT32 _incFileID ( UINT32 fileID ) ;
-         UINT32 _decFileID ( UINT32 fileID ) ;
+         UINT32 _incFileID( UINT32 fileID ) ;
+         UINT32 _decFileID( UINT32 fileID ) ;
+         void   _setVersion( DPS_LSN_VER version ) ;
+
+         // caller must hold the _latch
+         INT32  _writeData( BSONObj &obj, const DPS_LSN &lsn ) ;
+         INT32  _readData( const BSONObj &match,
+                           catDCLogItem *pLog,
+                           _dpsMessageBlock *mb,
+                           INT64 limit = 1 ) ;
+
+         DPS_LSN   _getStartLsn() ;
 
       private:
          _pmdEDUCB                  *_pEduCB;
@@ -121,6 +177,10 @@ namespace engine
 
          UINT32                     _begin ;
          UINT32                     _work ;
+
+         DPS_LSN                    _curLsn ;
+         DPS_LSN                    _expectLsn ;
+         ossSpinSLatch              _latch ;
 
    } ;
    typedef _catDCLogMgr catDCLogMgr ;

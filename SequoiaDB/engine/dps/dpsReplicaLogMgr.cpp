@@ -291,66 +291,67 @@ namespace engine
 
       if ( !block.isRow() )
       {
-      // is the full record able to sit in the same log file?
-      if ( ( _lsn.offset / logFileSz ) !=
-            ( _lsn.offset + head._length - 1 ) / logFileSz )
-      {
-         // if the log is replicated and hit this logic, something really
-         // goes wrong, because the dummy record should already be inserted
-         // in primary node
-         SDB_ASSERT ( !block.isRow(), "replicated log record should never"
-                      " hit this part" ) ;
-         // we are going to insert a dummy log record
-         UINT32 dummyLogSize = logFileSz - ( _lsn.offset % logFileSz ) ;
-         SDB_ASSERT ( dummyLogSize >= sizeof ( dpsLogRecordHeader ),
-                      "dummy log size is smaller than log head" ) ;
-         SDB_ASSERT ( dummyLogSize % sizeof(SINT32) == 0,
-                      "dummy log size is not 4 bytes aligned" ) ;
-
-         // set dummyhead as a reference to log head
-         dpsLogRecordHeader &dummyhead =
-                           info.getDummyBlock().record().head() ;
-         // initialize dummyhead
-         dummyhead._length = dummyLogSize ;
-         dummyhead._type   = LOG_TYPE_DUMMY ;
-         // allocate the space in metadata and page, receive dummynodes for the
-         // nodes contains dummy record, and offset for where to start
-         _allocate ( dummyhead._length, info.getDummyBlock().pageMeta() ) ;
-
-         // share lock the pages we are going to write
-         SHARED_LOCK_NODES ( info.getDummyBlock().pageMeta()) ;
-         // send the pages into queue
-         _push2SendQueue ( info.getDummyBlock().pageMeta() ) ;
-         // change global metadata
-         dummyhead._lsn = _lsn.offset ;
-         dummyhead._version = _lsn.version ;
-         dummyhead._preLsn = _currentLsn.offset ;
-         _currentLsn = _lsn ;
-         _lsn.offset += dummyhead._length ;
-
-         if ( info.isNeedNotify() && _vecEventHandler.size() > 0 )
+         // is the full record able to sit in the same log file?
+         if ( ( _lsn.offset / logFileSz ) !=
+               ( _lsn.offset + head._length - 1 ) / logFileSz )
          {
-            for( UINT32 i = 0 ; i < _vecEventHandler.size() ; ++i )
+            // if the log is replicated and hit this logic, something really
+            // goes wrong, because the dummy record should already be inserted
+            // in primary node
+            SDB_ASSERT ( !block.isRow(), "replicated log record should never"
+                         " hit this part" ) ;
+            // we are going to insert a dummy log record
+            UINT32 dummyLogSize = logFileSz - ( _lsn.offset % logFileSz ) ;
+            SDB_ASSERT ( dummyLogSize >= sizeof ( dpsLogRecordHeader ),
+                         "dummy log size is smaller than log head" ) ;
+            SDB_ASSERT ( dummyLogSize % sizeof(SINT32) == 0,
+                         "dummy log size is not 4 bytes aligned" ) ;
+
+            // set dummyhead as a reference to log head
+            dpsLogRecordHeader &dummyhead =
+                              info.getDummyBlock().record().head() ;
+            // initialize dummyhead
+            dummyhead._length = dummyLogSize ;
+            dummyhead._type   = LOG_TYPE_DUMMY ;
+            // allocate the space in metadata and page, receive dummynodes
+            // for the nodes contains dummy record, and offset for where
+            // to start
+            _allocate ( dummyhead._length, info.getDummyBlock().pageMeta() ) ;
+
+            // share lock the pages we are going to write
+            SHARED_LOCK_NODES ( info.getDummyBlock().pageMeta()) ;
+            // send the pages into queue
+            _push2SendQueue ( info.getDummyBlock().pageMeta() ) ;
+            // change global metadata
+            dummyhead._lsn = _lsn.offset ;
+            dummyhead._version = _lsn.version ;
+            dummyhead._preLsn = _currentLsn.offset ;
+            _currentLsn = _lsn ;
+            _lsn.offset += dummyhead._length ;
+
+            if ( info.isNeedNotify() && _vecEventHandler.size() > 0 )
             {
-               _vecEventHandler[i]->onPrepareLog( info.getCSLID(),
-                                                  info.getCLLID(),
-                                                  info.getExtentLID(),
-                                                  head._lsn ) ;
+               for( UINT32 i = 0 ; i < _vecEventHandler.size() ; ++i )
+               {
+                  _vecEventHandler[i]->onPrepareLog( info.getCSLID(),
+                                                     info.getCLLID(),
+                                                     info.getExtentLID(),
+                                                     head._lsn ) ;
+               }
             }
          }
-      }
 
-      // after we push dummy record, we have to check if the rest of space able
-      // to put a log head in log file
-      if ( ( (_lsn.offset+head._length) / logFileSz ) !=
-           ( (_lsn.offset+head._length+
-              sizeof(dpsLogRecordHeader)) / logFileSz ) )
-      {
-         SDB_ASSERT ( !block.isRow(), "replicated log record should never"
-                      " hit this part" ) ;
-         head._length = logFileSz - _lsn.offset % logFileSz ;
-         //head._length += logFileSz - ((_lsn.offset+head._length)%logFileSz) ;
-      }
+         // after we push dummy record, we have to check if the rest of space
+         // able to put a log head in log file
+         if ( ( (_lsn.offset+head._length) / logFileSz ) !=
+              ( (_lsn.offset+head._length+
+                 sizeof(dpsLogRecordHeader)) / logFileSz ) )
+         {
+            SDB_ASSERT ( !block.isRow(), "replicated log record should never"
+                         " hit this part" ) ;
+            head._length = logFileSz - _lsn.offset % logFileSz ;
+            //head._length += logFileSz - ((_lsn.offset+head._length)%logFileSz) ;
+         }
       }
       // now let's continue allocate the real data
       _allocate( head._length, block.pageMeta() );
@@ -1054,7 +1055,7 @@ namespace engine
       {
       // and then copy body
       dpsLogRecord::iterator itr( &(block.record()) ) ;
-      if ( block.isRow())
+      if ( block.isRow() )
       {
          /// row data's size should always be one.
          /// and dataheader should not be merged.

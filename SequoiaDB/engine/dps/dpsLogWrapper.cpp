@@ -154,6 +154,88 @@ namespace engine
       return SDB_OK ;
    }
 
+   INT32 _dpsLogWrapper::search( const DPS_LSN &minLsn,
+                                 _dpsMessageBlock *mb,
+                                 UINT8 type )
+   {
+      SDB_ASSERT ( _initialized, "shouldn't call search without init" ) ;
+      return _buf.search( minLsn, mb, type, FALSE ) ;
+   }
+
+   INT32 _dpsLogWrapper::searchHeader( const DPS_LSN &lsn,
+                                       _dpsMessageBlock *mb,
+                                       UINT8 type )
+   {
+      SDB_ASSERT ( _initialized, "shouldn't call search without init" ) ;
+      return _buf.search( lsn, mb, type, TRUE ) ;
+   }
+
+   DPS_LSN _dpsLogWrapper::getStartLsn ( BOOLEAN logBufOnly )
+   {
+      if ( !_initialized )
+      {
+         DPS_LSN lsn ;
+         return lsn ;
+      }
+      return _buf.getStartLsn ( logBufOnly ) ;
+   }
+
+   DPS_LSN _dpsLogWrapper::getCurrentLsn()
+   {
+      return _buf.currentLsn() ;
+   }
+
+   void _dpsLogWrapper::getLsnWindow( DPS_LSN &fileBeginLsn,
+                                      DPS_LSN &memBeginLsn,
+                                      DPS_LSN &endLsn,
+                                      DPS_LSN *pExpectLsn )
+   {
+      if ( !_initialized )
+      {
+         return ;
+      }
+
+      if ( pExpectLsn )
+      {
+         _buf.getLsnWindow( fileBeginLsn, memBeginLsn, endLsn, *pExpectLsn ) ;
+      }
+      else
+      {
+         _buf.getLsnWindow( fileBeginLsn, memBeginLsn, endLsn ) ;
+      }
+   }
+
+   void _dpsLogWrapper::getLsnWindow( DPS_LSN &fileBeginLsn,
+                                      DPS_LSN &memBeginLsn,
+                                      DPS_LSN &endLsn,
+                                      DPS_LSN &expected )
+   {
+      if ( !_initialized )
+      {
+         return ;
+      }
+      _buf.getLsnWindow( fileBeginLsn,
+                         memBeginLsn,
+                         endLsn,
+                         expected ) ;
+   }
+
+   DPS_LSN _dpsLogWrapper::expectLsn()
+   {
+      if ( !_initialized )
+      {
+         DPS_LSN lsn ;
+         return lsn ;
+      }
+      return _buf.expectLsn() ;
+   }
+
+   INT32 _dpsLogWrapper::move( const DPS_LSN_OFFSET &offset,
+                               const DPS_LSN_VER &version )
+   {
+      return _buf.move( offset, version ) ;
+   }
+
    void _dpsLogWrapper::writeData ( dpsMergeInfo & info )
    {
       _buf.writeData( info ) ;

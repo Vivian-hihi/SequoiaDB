@@ -64,6 +64,7 @@ namespace engine
 
       _pos              = pos ;
       _clName           = clname ;
+      _clLID            = DMS_INVALID_CLID ;
 
       _reset() ;
    }
@@ -75,21 +76,155 @@ namespace engine
    string _catDCLogItem::toString() const
    {
       // name + count + first lsn + last lsn
-      return "" ;
+      stringstream ss ;
+      ss << "Name:" << _clName << ", Count:" << getCount()
+         << ", First lsn:" << _first.version << "." << _first.offset
+         << ", Last lsn:" << _last.version << "." << _last.offset
+         << ", Coming lsn:" << _coming.version << "." << _coming.offset ;
+      return ss.str() ;
    }
 
    void _catDCLogItem::_reset()
    {
+      _first = DPS_LSN() ;
+      _last  = DPS_LSN() ;
+      _coming= DPS_LSN() ;
+      _count = 0 ;
+   }
+
+   INT32 _catDCLogItem::_parseMeta( _pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+      dmsStorageUnit *su = NULL ;
+      dmsStorageUnitID suID = DMS_INVALID_SUID ;
+      const CHAR *pCLShortName = NULL ;
+      dmsMBContext *mbContext = NULL ;
+
+      // get logical id and count
+      rc = rtnResolveCollectionNameAndLock( _clName.c_str(),
+                                            _pDmsCB,
+                                            &su,
+                                            &pCLShortName,
+                                            suID ) ;
+      PD_RC_CHECK( rc, PDERROR, "Reslove collection name[%s] failed, rc: %d",
+                   toString().c_str(), rc ) ;
+
+      rc = su->data()->getMBContext( &mbContext, pCLShortName, SHARED ) ;
+      PD_RC_CHECK( rc, PDERROR, "Get mb context failed, rc: %d", rc ) ;
+
+      _clLID = mbContext->clLID() ;
+      _count = mbContext->mbStat()->_totalRecords ;
+
+   done:
+      if ( mbContext )
+      {
+         su->data()->releaseMBContext( mbContext ) ;
+      }
+      if ( suID != DMS_INVALID_SUID )
+      {
+         _pDmsCB->suUnlock( suID ) ;
+      }
+      return rc ;
+   error:
+      goto done ;
    }
 
    INT32 _catDCLogItem::restore( _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
+      BSONObj orderByFirst = BSON( FIELD_NAME_LSN_OFFSET << 1 ) ;
+      BSONObj orderByLast = BSON( FIELD_NAME_LSN_OFFSET << -1 ) ;
 
       // first reset
       _reset() ;
 
+      rc = _parseMeta( cb ) ;
+      PD_RC_CHECK( rc, PDERROR, "Parse system log[%s] meta failed, rc: %d",
+                   toString().c_str(), rc ) ;
+
+      // get the first lsn
+      rc = _parseLsn( orderByFirst, cb, _first ) ;
+      PD_RC_CHECK( rc, PDERROR, "Parse first lsn failed, rc: %d", rc ) ;
+
+      // get the last lsn
+      rc = _parseLsn( orderByLast, cb, _last ) ;
+      PD_RC_CHECK( rc, PDERROR, "Parse last lsn failed, rc: %d", rc ) ;
+
       // if the lsn is not continuous, need to drop the collection
+      if ( ( _first.invalid() && ( !_last.invalid() || 0 != _count ) ) ||
+           ( _last.invalid() && ( !_first.invalid() || 0 != _count ) ) ||
+           ( !_first.invalid() && !_last.invalid() &&
+             _count != _last.offset - _first.offset + 1 ) )
+      {
+         PD_LOG( PDWARNING, "System log[%s] data corrupted, trucanted",
+                 toString().c_str() ) ;
+         rc = truncate( cb ) ;
+         PD_RC_CHECK( rc, PDERROR, "Truncate system log[%s] failed, rc: %d",
+                      toString().c_str(), rc ) ;
+      }
+
+      if ( !_last.invalid() )
+      {
+         _coming.version = _last.version ;
+         _coming.offset  = _last.offset + 1 ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _catDCLogItem::_parseLsn( const BSONObj &orderby,
+                                   _pmdEDUCB *cb,
+                                   DPS_LSN &lsn )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj hint ;
+      INT64 contextID = -1 ;
+      rtnContextBuf buffObj ;
+
+      rc = rtnQuery( _clName.c_str(), hint, hint, orderby, hint, 0, cb,
+                     0, 1, _pDmsCB, _pRtnCB, contextID ) ;
+      PD_RC_CHECK( rc, PDERROR, "Query collection[%s] failed, rc: %d",
+                   toString().c_str(), rc ) ;
+      rc = rtnGetMore( contextID, -1, buffObj, cb, _pRtnCB ) ;
+      if( SDB_DMS_EOC == rc )
+      {
+         rc = SDB_OK ;
+         goto done ;
+      }
+      else if ( rc )
+      {
+         PD_LOG( PDERROR, "Get more collection[%s] failed, rc: %d",
+                 toString().c_str(), rc ) ;
+         goto error ;
+      }
+
+      try
+      {
+         BSONObj obj( buffObj.data() ) ;
+         BSONElement eVer = obj.getField( FIELD_NAME_LSN_VERSION ) ;
+         BSONElement eOff = obj.getField( FIELD_NAME_LSN_OFFSET ) ;
+         if ( NumberInt != eVer.type() || NumberLong != eOff.type() )
+         {
+            PD_LOG( PDERROR, "Version or Offset is invalid in obj[%s]",
+                    obj.toString().c_str() ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
+         lsn.version = ( DPS_LSN_VER )eVer.numberInt() ;
+         lsn.offset = ( DPS_LSN_OFFSET )eOff.numberLong() ;         
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Parse lsn occur expection: %s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      // kill context
+      _pRtnCB->contextDelete( contextID, cb ) ;
 
    done:
       return rc ;
@@ -99,32 +234,222 @@ namespace engine
 
    INT32 _catDCLogItem::truncate( _pmdEDUCB *cb )
    {
-      return SDB_OK ;
+      INT32 rc = SDB_OK ;
+
+      rc = rtnTruncCollectionCommand( _clName.c_str(), cb, _pDmsCB, _pDpsCB ) ;
+      PD_RC_CHECK( rc, PDERROR, "Truncate system log[%s] failed, rc: %d",
+                   toString().c_str(), rc ) ;
+
+      _reset() ;
+
+      // re-parse meta
+      rc = _parseMeta( cb ) ;
+      PD_RC_CHECK( rc, PDERROR, "Parse system log[%s] meta info failed, "
+                   "rc: %d", toString().c_str(), rc ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _catDCLogItem::writeData( BSONObj &obj, const DPS_LSN &lsn,
+                                   _pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( !_coming.invalid() )
+      {
+         SDB_ASSERT( _coming.offset == lsn.offset, "Write lsn is not the "
+                     "same with coming lsn" ) ;
+         if ( _coming.offset != lsn.offset )
+         {
+            PD_LOG( PDERROR, "Write lsn[%d.%lld] is invalid in system log[%s]",
+                    lsn.version, lsn.offset, toString().c_str() ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
+      }
+
+      rc = rtnInsert( _clName.c_str(), obj, 1, FLG_INSERT_CONTONDUP,
+                      cb, _pDmsCB, _pDpsCB, 1 ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed insert obj[%s] to system log[%s], "
+                   "rc: %d", obj.toString().c_str(), toString().c_str(),
+                   rc ) ;
+
+      // re-parse meta
+      rc = _parseMeta( cb ) ;
+      PD_RC_CHECK( rc, PDERROR, "Parse system log[%s] meta failed, rc: %d",
+                   toString().c_str(), rc ) ;
+
+      if ( _first.invalid() )
+      {
+         _first = lsn ;
+         _last = lsn ;
+      }
+      else
+      {
+         _last = lsn ;
+      }
+      _coming.version = lsn.version ;
+      _coming.offset = _last.offset + 1 ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _catDCLogItem::readData( const BSONObj &match,
+                                  _dpsMessageBlock *mb,
+                                  _pmdEDUCB *cb,
+                                  INT64 limit )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj hint ;
+      INT64 contextID = -1 ;
+      rtnContextBuf buffObj ;
+
+      rc = rtnQuery( _clName.c_str(), hint, match, hint, hint, 0, cb,
+                     0, limit, _pDmsCB, _pRtnCB, contextID ) ;
+      PD_RC_CHECK( rc, PDERROR, "Query system log[%s] by matcher[%s] failed, "
+                   "rc: %d", toString().c_str(), match.toString().c_str(),
+                   rc ) ;
+
+      while( TRUE )
+      {
+         rc = rtnGetMore( contextID, -1, buffObj, cb, _pRtnCB ) ;
+         if( SDB_DMS_EOC == rc )
+         {
+            contextID = -1 ;
+            rc = SDB_OK ;
+            break ;
+         }
+         else if ( rc )
+         {
+            contextID = -1 ;
+            PD_LOG( PDERROR, "Get more from system log[%s] failed, rc: %d",
+                    toString().c_str(), rc ) ;
+            goto error ;
+         }
+
+         // add objs to mb block
+         if( mb->idleSize() < buffObj.size() )
+         {
+            rc = mb->extend( buffObj.size() - mb->idleSize() ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to extend mb, rc: %d", rc ) ;
+         }
+
+         // copy
+         ossMemcpy( mb->writePtr(), buffObj.data(), buffObj.size() ) ;
+         mb->writePtr( mb->length() + buffObj.size() ) ;
+      }
+
+      if( 0 == mb->length() )
+      {
+         PD_LOG( PDERROR, "Can't find obj[%s] in system log[%s]",
+                 match.toString().c_str(), toString().c_str() ) ;
+         rc = SDB_DPS_LOG_NOT_IN_FILE ;
+         goto error ;
+      }
+
+   done:
+      if ( -1 != contextID )
+      {
+         _pRtnCB->contextDelete( contextID, cb ) ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _catDCLogItem::removeData( const BSONObj &matcher,
+                                    _pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj hint ;
+      INT64 delNum = 0 ;
+      BSONObj orderByFirst = BSON( FIELD_NAME_LSN_OFFSET << 1 ) ;
+      BSONObj orderByLast = BSON( FIELD_NAME_LSN_OFFSET << -1 ) ;
+
+      rc = rtnDelete( _clName.c_str(), matcher, hint, 0, cb, _pDmsCB,
+                      _pDpsCB, 1, &delNum ) ;
+      PD_RC_CHECK( rc, PDERROR, "Delete objs[%s] from system log[%s] failed, "
+                   "del num: %lld, rc: %d", delNum, rc ) ;
+
+      _reset() ;
+
+      // parse meta
+      rc = _parseMeta( cb ) ;
+      PD_RC_CHECK( rc, PDERROR, "Parse system log[%s] meta failed, rc: %d",
+                   toString().c_str(), rc ) ;
+
+      // get the first lsn
+      rc = _parseLsn( orderByFirst, cb, _first ) ;
+      PD_RC_CHECK( rc, PDERROR, "Parse first lsn failed, rc: %d", rc ) ;
+
+      // get the last lsn
+      rc = _parseLsn( orderByLast, cb, _last ) ;
+      PD_RC_CHECK( rc, PDERROR, "Parse last lsn failed, rc: %d", rc ) ;
+
+      if ( !_last.invalid() )
+      {
+         _coming.version = _last.version ;
+         _coming.offset  = _last.offset + 1 ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    UINT64 _catDCLogItem::getCount() const
    {
-      return 0 ;
+      return _count ;
    }
 
    UINT32 _catDCLogItem::getLID() const
    {
-      return 0 ;
+      return _clLID ;
+   }
+
+   BOOLEAN _catDCLogItem::isFull() const
+   {
+      if ( 0 == _coming.offset % CAT_SYSLOG_CL_MAX_COUNT &&
+           ( _coming.offset / CAT_SYSLOG_CL_MAX_COUNT ) %
+           CAT_SYSLOG_CL_NUM != _pos )
+      {
+         return TRUE ;
+      }
+      return FALSE ;
+   }
+
+   BOOLEAN _catDCLogItem::isEmpty() const
+   {
+      if ( _coming.invalid() ||
+           ( 0 == _coming.offset % CAT_SYSLOG_CL_MAX_COUNT &&
+            ( _coming.offset / CAT_SYSLOG_CL_MAX_COUNT ) %
+              CAT_SYSLOG_CL_NUM == _pos ) )
+      {
+         return TRUE ;
+      }
+      return FALSE ;
    }
 
    DPS_LSN _catDCLogItem::getFirstLSN() const
    {
-      return DPS_LSN() ;
+      return _first ;
    }
 
    DPS_LSN _catDCLogItem::getLastLSN() const
    {
-      return DPS_LSN() ;
+      return _last ;
    }
 
    DPS_LSN _catDCLogItem::getComingLSN() const
    {
-      return DPS_LSN() ;
+      return _coming ;
    }
 
    /*
@@ -135,6 +460,8 @@ namespace engine
       _pEduCB     = NULL ;
       _begin      = 0 ;
       _work       = 0 ;
+      _expectLsn.version = 0 ;
+      _expectLsn.offset = 0 ;
    }
 
    _catDCLogMgr::~_catDCLogMgr()
@@ -224,7 +551,8 @@ namespace engine
       {
          pLog = _vecLogCL[ tmpWork ] ;
          firstLsn = pLog->getFirstLSN() ;
-         if ( 0 != firstLsn.compareOffset( comingLsn.offset ) )
+         if ( 0 != firstLsn.compareOffset( comingLsn.offset ) ||
+              !pLog->isFull() )
          {
             break ;
          }
@@ -232,6 +560,13 @@ namespace engine
          tmpWork = _incFileID( tmpWork ) ;
       }
       _work = tmpWork ;
+      pLog = _vecLogCL[ _work ] ;
+      if ( !pLog->getLastLSN().invalid() )
+      {
+         _curLsn = pLog->getLastLSN() ;
+         _expectLsn = pLog->getComingLSN() ;
+      }
+
       // 3. reset others
       for ( ; i < _vecLogCL.size() ; ++i )
       {
@@ -248,9 +583,12 @@ namespace engine
          }
       }
 
-      PD_LOG( PDEVENT, "Analysis system log[ begin: %s, work: %s ]",
+      PD_LOG( PDEVENT, "Analysis system log[ begin: %s, work: %s, "
+              "curLsn: %d.%lld, expectLsn: %d.%lld ]",
               _vecLogCL[ _begin ]->toString().c_str(),
-              _vecLogCL[ _work ]->toString().c_str() ) ;
+              _vecLogCL[ _work ]->toString().c_str(),
+              _curLsn.version, _curLsn.offset,
+              _expectLsn.version, _expectLsn.offset ) ;
 
    done:
       return rc ;
@@ -258,12 +596,341 @@ namespace engine
       goto done ;
    }
 
+   INT32 _catDCLogMgr::search( const DPS_LSN &minLsn,
+                               _dpsMessageBlock *mb,
+                               UINT8 type )
+   {
+      INT32 rc = SDB_OK ;
+      UINT32 pos = 0 ;
+      BOOLEAN hasLock = FALSE ;
+      DPS_LSN begin ;
+      BSONObj matcher = BSON( FIELD_NAME_LSN_OFFSET << (INT64)minLsn.offset ) ;
+
+      if ( DPS_INVALID_LSN_OFFSET == minLsn.offset )
+      {
+         rc = SDB_DPS_LOG_NOT_IN_FILE ;
+         goto error ;
+      }
+
+      pos = minLsn.offset % CAT_SYSLOG_CL_MAX_COUNT ;
+
+      _latch.get_shared() ;
+      hasLock = TRUE ;
+
+      begin = _getStartLsn() ;
+      if ( begin.invalid() )
+      {
+         PD_LOG( PDERROR, "begin lsn invalid [offset:%lld] [version:%d]",
+                 begin.offset, begin.version ) ;
+         rc = SDB_DPS_LOG_NOT_IN_FILE ;
+         goto error ;
+      }
+      if ( minLsn.compareOffset( begin.offset ) < 0 )
+      {
+         PD_LOG( PDDEBUG, "lsn %lld is smaller than membegin %lld",
+                 minLsn.offset, begin.offset ) ;
+         rc = SDB_DPS_LOG_NOT_IN_FILE ;
+         goto error ;
+      }
+      if ( minLsn.compareOffset( _expectLsn.offset ) >= 0 )
+      {
+         rc = SDB_DPS_LSN_OUTOFRANGE ;
+         goto error ;
+      }
+
+      rc = _readData( matcher, _vecLogCL[ pos ], mb, 1 ) ;
+      PD_RC_CHECK( rc, PDERROR, "Read data by matcher[%s] failed, rc: %d",
+                   matcher.toString().c_str(), rc ) ;
+
+   done:
+      if ( hasLock )
+      {
+         _latch.release_shared() ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _catDCLogMgr::searchHeader( const DPS_LSN &lsn,
+                                     _dpsMessageBlock *mb,
+                                     UINT8 type )
+   {
+      return search( lsn, mb, type ) ;
+   }
+
+   DPS_LSN _catDCLogMgr::getStartLsn( BOOLEAN logBufOnly )
+   {
+      ossScopedLock lock( &_latch, SHARED ) ;
+      return _getStartLsn() ;
+   }
+
+   DPS_LSN _catDCLogMgr::getCurrentLsn()
+   {
+      ossScopedLock lock( &_latch, SHARED ) ;
+      return _curLsn ;
+   }
+
+   DPS_LSN _catDCLogMgr::expectLsn()
+   {
+      ossScopedLock lock( &_latch, SHARED ) ;
+      return _expectLsn ;
+   }
+
+   void _catDCLogMgr::getLsnWindow( DPS_LSN &fileBeginLsn,
+                                    DPS_LSN &memBeginLsn,
+                                    DPS_LSN &endLsn,
+                                    DPS_LSN &expected )
+   {
+      ossScopedLock lock( &_latch, SHARED ) ;
+      fileBeginLsn = _getStartLsn() ;
+      memBeginLsn = fileBeginLsn ;
+      endLsn = _curLsn ;
+      expected = _expectLsn ;
+   }
+
+   void _catDCLogMgr::getLsnWindow( DPS_LSN &fileBeginLsn,
+                                    DPS_LSN &memBeginLsn,
+                                    DPS_LSN &endLsn,
+                                    DPS_LSN *pExpectLsn )
+   {
+      ossScopedLock lock( &_latch, SHARED ) ;
+      fileBeginLsn = _getStartLsn() ;
+      memBeginLsn = fileBeginLsn ;
+      endLsn = _curLsn ;
+      if ( pExpectLsn )
+      {
+         *pExpectLsn = _expectLsn ;
+      }
+   }
+
+   INT32 _catDCLogMgr::move( const DPS_LSN_OFFSET &offset,
+                             const DPS_LSN_VER &version )
+   {
+      INT32 rc = SDB_OK ;
+      DPS_LSN begin ;
+      BOOLEAN hasLock = FALSE ;
+      UINT32 pos = ( offset / CAT_SYSLOG_CL_MAX_COUNT ) % CAT_SYSLOG_CL_NUM ;
+
+      if ( DPS_INVALID_LSN_OFFSET == offset )
+      {
+         rc = SDB_DPS_MOVE_FAILED ;
+         PD_LOG( PDERROR, "can not move to a invalid lsn" ) ;
+         goto error ;
+      }
+
+      _latch.get() ;
+      hasLock = TRUE ;
+
+      begin = _getStartLsn() ;
+
+      // out of all range
+      if ( _curLsn.invalid() || offset < begin.offset ||
+           offset > _expectLsn.offset )
+      {
+         for ( UINT32 i = 0 ; i < _vecLogCL.size() ; ++i )
+         {
+            rc = _vecLogCL[ i ]->truncate( _pEduCB ) ;
+            PD_RC_CHECK( rc, PDERROR, "Truncate system log[%s] failed, "
+                         "rc: %d", _vecLogCL[ i ]->toString().c_str(),
+                         rc ) ;
+         }
+         _work = pos ;
+         _begin = _work ;
+         _curLsn.offset = DPS_INVALID_LSN_OFFSET ;
+         _curLsn.version = DPS_INVALID_LSN_VERSION ;
+      }
+      else if ( offset < _expectLsn.offset )
+      {
+         BSONObj matcher = BSON( FIELD_NAME_LSN_OFFSET << BSON(
+                                 "$gte" << (INT64)offset ) ) ;
+         while ( _work != pos )
+         {
+            rc = _vecLogCL[ _work ]->truncate( _pEduCB ) ;
+            PD_RC_CHECK( rc, PDERROR, "Truncate system log[%s] failed, "
+                         "rc: %d", _vecLogCL[ _work ]->toString().c_str(),
+                         rc ) ;
+            _work = _decFileID( _work ) ;
+         }
+         // remove current collection
+         rc = _vecLogCL[ _work ]->removeData( matcher, _pEduCB ) ;
+         PD_RC_CHECK( rc, PDERROR, "Remove system log[%s] by matcher[%s] "
+                      "failed, rc: %d", _vecLogCL[ _work ]->toString().c_str(),
+                      matcher.toString().c_str(), rc ) ;
+         _curLsn.version = version ;
+         _curLsn.offset = offset ;
+      }
+
+      _expectLsn.offset = offset ;
+      _expectLsn.version = version ;
+
+   done:
+      if ( hasLock )
+      {
+         _latch.release() ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _catDCLogMgr::recordRow( const CHAR *row, UINT32 len )
+   {
+      INT32 rc = SDB_OK ;
+      DPS_LSN lsn ;
+
+      ossScopedLock lock( &_latch, EXCLUSIVE ) ;
+
+      try
+      {
+         dpsLogRecordHeader *pHeader = NULL ;
+         BSONObj obj( row ) ;
+         BSONElement eVer = obj.getField( FIELD_NAME_LSN_VERSION ) ;
+         BSONElement eOff = obj.getField( FIELD_NAME_LSN_OFFSET ) ;
+         BSONElement eData= obj.getField( FIELD_NAME_DATA ) ;
+
+         if ( NumberInt != eVer.type() )
+         {
+            PD_LOG( PDERROR, "Field[%s] is invalid in record row[%s]",
+                    FIELD_NAME_LSN_VERSION, obj.toString().c_str() ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
+         lsn.version = ( DPS_LSN_VER )eVer.numberInt() ;
+
+         if ( NumberLong != eOff.type() )
+         {
+            PD_LOG( PDERROR, "Field[%s] is invalid in record row[%s]",
+                    FIELD_NAME_LSN_OFFSET, obj.toString().c_str() ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
+         lsn.offset = ( DPS_LSN_OFFSET )eOff.numberLong() ;
+
+         if ( BinData != eData.type() )
+         {
+            PD_LOG( PDERROR, "Field[%s] is invalid in record row[%s]",
+                    FIELD_NAME_DATA, obj.toString().c_str() ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
+         pHeader = ( dpsLogRecordHeader* )eData.value() ;
+         SDB_ASSERT( lsn.version == pHeader->_version, "Version invalid" ) ;
+         SDB_ASSERT( lsn.offset == pHeader->_lsn, "Offset invalid" ) ;
+
+         if ( lsn.offset != _expectLsn.offset )
+         {
+            PD_LOG( PDERROR, "lsn[%lld] of row is not equal to lsn[%lld] of "
+                    "local", eOff.numberInt(), _expectLsn.offset) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
+
+         rc = _writeData( obj, lsn ) ;
+         PD_RC_CHECK( rc, PDERROR, "Write obj[%s] to system log failed, "
+                      "rc: %d", obj.toString().c_str(), rc ) ;
+
+         _expectLsn.version = lsn.version ;
+         _curLsn = _expectLsn ;
+         _expectLsn.offset += 1 ;
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Parse row data occur expection: %s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _catDCLogMgr::_writeData( BSONObj &obj, const DPS_LSN &lsn )
+   {
+      INT32 rc             = SDB_OK ;
+      catDCLogItem *pLog   = NULL ;
+      UINT32 pos           = _work ;
+
+      // write to collection
+      pLog = _vecLogCL[ pos ] ;
+      if ( pLog->isFull() )
+      {
+         pos = _incFileID( pos ) ;
+         pLog = _vecLogCL[ pos ] ;
+
+         if ( !pLog->isEmpty() )
+         {
+            rc = pLog->truncate( _pEduCB ) ;
+            PD_RC_CHECK( rc, PDERROR, "Truncate system log[%s] failed, "
+                         "rc: %d", pLog->toString().c_str(), rc ) ;
+         }
+      }
+
+      rc = pLog->writeData( obj, lsn, _pEduCB ) ;
+      PD_RC_CHECK( rc, PDERROR, "Write obj[%s] to system log[%s] "
+                   "failed, rc: %d", obj.toString().c_str(),
+                   pLog->toString().c_str(), rc ) ;
+
+      _work = pos ;
+      if ( _begin == _work )
+      {
+         _begin = _incFileID( _begin ) ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _catDCLogMgr::_readData( const BSONObj &match,
+                                  catDCLogItem *pLog,
+                                  _dpsMessageBlock *mb,
+                                  INT64 limit )
+   {
+      return pLog->readData( match, mb, _pEduCB, limit ) ;
+   }
+
+   DPS_LSN _catDCLogMgr::_getStartLsn()
+   {
+      catDCLogItem *pLog = _vecLogCL[ _begin ]  ;
+      return pLog->getFirstLSN() ;
+   }
+
    INT32 _catDCLogMgr::saveSysLog( dpsLogRecordHeader *pHeader,
-                                   const CHAR *pData,
-                                   UINT32 length,
                                    DPS_LSN *pRetLSN )
    {
       INT32 rc = SDB_OK ;
+      BSONObjBuilder builder ;
+      BSONObj obj ;
+
+      ossScopedLock lock( &_latch, EXCLUSIVE ) ;
+
+      _setVersion( pHeader->_version ) ;
+
+      if ( DPS_INVALID_LSN_VERSION == _expectLsn.version )
+      {
+         ++_expectLsn.version ;
+      }
+
+      pHeader->_preLsn = _curLsn.offset ;
+      pHeader->_lsn = _expectLsn.offset ;
+      pHeader->_version = _expectLsn.version ;
+
+      builder.append( FIELD_NAME_LSN_VERSION, (INT32)_expectLsn.version ) ;
+      builder.append( FIELD_NAME_LSN_OFFSET, (INT64)_expectLsn.offset ) ;
+      builder.appendBinData( FIELD_NAME_DATA, (INT32)pHeader->_length,
+                             BinDataGeneral, ( const unsigned char *)pHeader ) ;
+
+      obj = builder.obj() ;
+      rc = _writeData( obj, _expectLsn ) ;
+      PD_RC_CHECK( rc, PDERROR, "Write obj[%s] to system log failed, rc: %d",
+                   obj.toString().c_str(), rc ) ;
+
+      _curLsn = _expectLsn ;
+      _expectLsn.offset += 1 ;
 
    done:
       return rc ;
@@ -282,7 +949,7 @@ namespace engine
       return fileID ;
    }
 
-   UINT32 _decFileID ( UINT32 fileID )
+   UINT32 _catDCLogMgr::_decFileID ( UINT32 fileID )
    {
       if ( 0 == fileID )
       {
@@ -294,6 +961,11 @@ namespace engine
       }
 
       return fileID ;
+   }
+
+   void _catDCLogMgr::_setVersion( DPS_LSN_VER version )
+   {
+      _expectLsn.version = version ;
    }
 
 }
