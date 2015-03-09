@@ -8197,7 +8197,6 @@ namespace engine
          }
       }
 
-      replyHeader.numReturned = session->resType() ;
       replyHeader.contextID = contextID ;
       runInfo = BSON( FIELD_NAME_RTYPE << session->resType() ) ;
       *buf = rtnContextBuf( runInfo ) ;
