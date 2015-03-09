@@ -520,7 +520,7 @@ static INT32 _recvExtractEval ( sdbConnectionHandle cHandle, Socket* sock,
       goto error ;
    }
    else if ( 1 == returnNum &&
-             sizeof( MsgOpReply ) < replyHeader->header.messageLength )
+             ( INT32 )(sizeof( MsgOpReply )) < replyHeader->header.messageLength )
    {
       bson_init_finished_data( &runInfo, *ppBuffer + sizeof(MsgOpReply) ) ;
       if ( BSON_INT != bson_find( &rType, &runInfo, FIELD_NAME_RTYPE ) )
