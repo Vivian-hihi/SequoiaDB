@@ -1367,9 +1367,14 @@ public class Sequoiadb {
 	 */
 	public void setSessionAttr( BSONObject options ) throws BaseException {
 		// check argument
-		if ( null == options || 
-		     !options.containsField(SequoiadbConstants.FIELD_NAME_PREFERED_INSTANCE) )
+	    if ( null == options ) {
+	        return;
+	    }
+	    
+		if ( !options.containsField(
+		        SequoiadbConstants.FIELD_NAME_PREFERED_INSTANCE) ) {
 			throw new BaseException( "SDB_INVALIDARG", options );
+		}
 		// build obj
 		BSONObject newObj = new BasicBSONObject();
 		Object value = options.get( SequoiadbConstants.FIELD_NAME_PREFERED_INSTANCE );
