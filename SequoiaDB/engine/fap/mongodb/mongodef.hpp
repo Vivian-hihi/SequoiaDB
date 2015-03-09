@@ -144,6 +144,7 @@ enum
    OP_CMD_CREATE,          // create collection, need special deal
    OP_CMD_CREATE_CS,
    OP_CMD_DROP,            // drop collection
+   OP_CMD_DROP_DATABASE,   
    OP_CMD_GETLASTERROR,    // will not process msg
    OP_CMD_DROP_INDEX,
    OP_CMD_GET_INDEX,

@@ -1036,7 +1036,7 @@ INT32 dropDatabaseCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMs
    bson::BSONElement e ;
    const std::string cmdStr = "$drop collectionspace" ;
 
-   parser.opType = OP_CMD_COUNT ;
+   parser.opType = OP_CMD_DROP_DATABASE ;
    sdbMsg.reverse( sizeof ( MsgOpQuery ) ) ;
    sdbMsg.advance( sizeof ( MsgOpQuery ) - 4 ) ;
 

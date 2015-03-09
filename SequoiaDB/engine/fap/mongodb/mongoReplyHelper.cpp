@@ -43,16 +43,16 @@ namespace fap
    namespace mongo
    {
       void buildIsMasterReplyMsg( engine::IResource *resource,
-                             engine::rtnContextBuf &buff )
+                                  engine::rtnContextBuf &buff )
       {
          bson::BSONObjBuilder bob ;
          bob.append( "ismaster", FALSE ) ;
          bob.append("msg", "isdbgrid");
          // build
          // config at last
-         bob.append( "maxBsonObjectSize", 16777216 ) ;
+         bob.append( "maxBsonObjectSize", 16*1024*1024 ) ;
          bob.append( "maxMessageSizeBytes", SDB_MAX_MSG_LENGTH ) ;
-         bob.append( "maxWriteBatchSize", 16777216 ) ;
+         bob.append( "maxWriteBatchSize", 1000 ) ;
          bob.append( "localTime", 100 ) ;
          bob.append( "maxWireVersion", 2 ) ;
          bob.append( "minWireVersion", 2 ) ;
