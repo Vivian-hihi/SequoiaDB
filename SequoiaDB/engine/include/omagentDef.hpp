@@ -157,13 +157,13 @@ namespace engine
    
    #define FILE_SCAN_HOST                   "scanHost.js"
    
-   #define FILE_PRE_CHECK_HOST              "preCheckHost.js"
+   #define FILE_CHECK_HOST_INIT             "checkHostInit.js"
    #define FILE_CHECK_HOST                  "checkHost.js"
    #define FILE_CHECK_HOST_ITEM             "checkHostItem.js"
-   #define FILE_POST_CHECK_HOST             "postCheckHost.js"
+   #define FILE_CHECK_HOST_FINAL            "checkHostFinal.js"
    
    #define FILE_ADD_HOST                    "addHost.js"
-   #define FIEL_CHECK_ADD_HOST_INFO         "checkAddHostInfo.js"
+   #define FIEL_ADD_HOST_CHECK_INFO         "addHostCheckInfo.js"
    #define FILE_REMOVE_HOST                 "removeHost.js"
    #define FILE_UPDATE_HOSTS_INFO           "updateHostsInfo.js"
 

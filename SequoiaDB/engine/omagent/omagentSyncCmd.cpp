@@ -125,11 +125,11 @@ namespace engine
                    JS_ARG_BUS, bus.toString(FALSE, TRUE).c_str() ) ;
       PD_LOG ( PDDEBUG, "Pre-check host passes argument: %s",
                _jsFileArgs ) ;
-      rc = addJsFile( FILE_PRE_CHECK_HOST, _jsFileArgs ) ;
+      rc = addJsFile( FILE_CHECK_HOST_INIT, _jsFileArgs ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "Failed to add js file[%s], rc = %d ",
-                  FILE_PRE_CHECK_HOST, rc ) ;
+                  FILE_CHECK_HOST_INIT, rc ) ;
          goto error ;
       }
 
@@ -217,11 +217,11 @@ namespace engine
                       JS_ARG_BUS, bus.toString(FALSE, TRUE).c_str() ) ;
          PD_LOG ( PDDEBUG, "Post-check host passes argument: %s",
                   _jsFileArgs ) ;
-         rc = addJsFile( FILE_POST_CHECK_HOST, _jsFileArgs ) ;
+         rc = addJsFile( FILE_CHECK_HOST_FINAL, _jsFileArgs ) ;
          if ( rc )
          {
             PD_LOG ( PDERROR, "Failed to add js file[%s], rc = %d ",
-                     FILE_POST_CHECK_HOST, rc ) ;
+                     FILE_CHECK_HOST_FINAL, rc ) ;
             goto error ;
          }
       }

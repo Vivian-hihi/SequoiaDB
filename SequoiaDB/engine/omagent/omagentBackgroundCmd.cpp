@@ -173,11 +173,11 @@ namespace engine
                       JS_ARG_BUS, obj.toString(FALSE, TRUE).c_str() ) ;
          PD_LOG ( PDDEBUG, "Check add host information passes argument: %s",
                   _jsFileArgs ) ;
-         rc = addJsFile( FIEL_CHECK_ADD_HOST_INFO, _jsFileArgs ) ;
+         rc = addJsFile( FIEL_ADD_HOST_CHECK_INFO, _jsFileArgs ) ;
          if ( rc )
          {
             PD_LOG ( PDERROR, "Failed to add js file[%s], rc = %d ",
-                     FIEL_CHECK_ADD_HOST_INFO, rc ) ;
+                     FIEL_ADD_HOST_CHECK_INFO, rc ) ;
             goto error ;
          }
       }
