@@ -192,6 +192,7 @@ public class SequoiadbDatasource
 		}
 		// after the timer start 500ms, it goes to clean periodically 
 		timer.schedule(new CleanConnectionTask(this), dsOpt.getRecheckCyclePeriod(), dsOpt.getRecheckCyclePeriod());
+		Runtime.getRuntime().addShutdownHook(new SDExitThread(this));
 	}	
 	
 	/**
