@@ -219,14 +219,14 @@ function _needToAdd( ssh, install_packet, install_path )
    {
       // set execute command run by ./sdb
       /*
-      /tmp/omatmp/bin/sdb -e 'var install_path = "/opt/sequoiadb"' -f '/tmp/omatmp/conf/script/define.js, /tmp/omatmp/conf/script/error.js, /tmp/omatmp/conf/script/log.js, /tmp/omatmp/conf/script/common.js, /tmp/omatmp/conf/script/func.js, /tmp/omatmp/conf/script/addHostPreCheck.js'
+      /tmp/omatmp/bin/sdb -e 'var install_path = "/opt/sequoiadb"' -f '/tmp/omatmp/conf/script/define.js, /tmp/omatmp/conf/script/error.js, /tmp/omatmp/conf/script/log.js, /tmp/omatmp/conf/script/common.js, /tmp/omatmp/conf/script/func.js, /tmp/omatmp/conf/script/addHostCheckEnv.js'
       */
       js_files = "/tmp/omatmp/conf/script/define.js" + ", " ;
       js_files += "/tmp/omatmp/conf/script/error.js" + ", " ;
       js_files += "/tmp/omatmp/conf/script/log.js" + ", " ;
       js_files += "/tmp/omatmp/conf/script/common.js" + ", " ;
       js_files += "/tmp/omatmp/conf/script/func.js" + ", " ;
-      js_files += "/tmp/omatmp/conf/script/addHostPreCheck.js" ;
+      js_files += "/tmp/omatmp/conf/script/addHostCheckEnv.js" ;
       str = '/tmp/omatmp/bin/sdb ' + ' -e ' + ' " var install_path = ' + '\'' + install_path + '\'' + ' " ' + ' -f ' + ' " ' + js_files + ' " ' ;
 
    }
