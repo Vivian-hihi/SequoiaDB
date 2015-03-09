@@ -2465,7 +2465,8 @@ namespace engine
    INT32 rtnCoordGetSubCLsByGroups( const CoordSubCLlist &subCLList,
                                     const CoordGroupList &sendGroupList,
                                     pmdEDUCB *cb,
-                                    CoordGroupSubCLMap &groupSubCLMap )
+                                    CoordGroupSubCLMap &groupSubCLMap,
+                                    const BSONObj *query )
    {
       INT32 rc = SDB_OK;
       CoordGroupList::const_iterator iterSend;
@@ -2481,7 +2482,14 @@ namespace engine
          PD_RC_CHECK( rc, PDWARNING,
                      "failed to get catalog info of sub-collection(%s)",
                      (*iterCL).c_str() );
-         cataInfo->getGroupLst( groupList );
+         if ( NULL == query || query->isEmpty() )
+         {
+            cataInfo->getGroupLst( groupList );
+         }
+         else
+         {
+            cataInfo->getGroupByMatcher( *query, groupList ) ;
+         }
          SDB_ASSERT( groupList.size() > 0, "group list can't be empty!" );
          iterGroup = groupList.begin();
          while( iterGroup != groupList.end() )

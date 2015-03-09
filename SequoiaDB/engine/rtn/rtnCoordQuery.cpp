@@ -584,7 +584,7 @@ namespace engine
                    "Failed to get match sub collection(rc=%d)",
                    rc ) ;
          rc = rtnCoordGetSubCLsByGroups( subCLList, sendGroupList,
-                                         cb, groupSubCLMap ) ;
+                                         cb, groupSubCLMap, &boQuery ) ;
          PD_CHECK( SDB_OK == rc, rc, retry_check, PDWARNING,
                    "Failed to get sub-collection info(rc=%d)",
                    rc );
