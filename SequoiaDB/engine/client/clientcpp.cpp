@@ -6733,7 +6733,7 @@ do                                                            \
 
       replyHeader = ( const MsgOpReply * )_pReceiveBuffer ;
       if ( 1 == replyHeader->numReturned &&
-           sizeof( MsgOpReply ) < replyHeader->header.messageLength )
+           (INT32)(sizeof( MsgOpReply )) < replyHeader->header.messageLength )
       {
          try
          {
