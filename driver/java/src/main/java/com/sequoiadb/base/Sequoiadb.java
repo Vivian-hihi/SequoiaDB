@@ -1104,9 +1104,10 @@ public class Sequoiadb {
 			}
 			return evalResult;
 		}else{
-			// get the return type of eval result
-			long typeValue = rtn.getNumReturned();
-			evalResult.returnType = Sequoiadb.SptReturnType.getTypeByValue((int)typeValue);
+		    // get the return type of eval result
+		    List<BSONObject> objList = rtn.getObjectList();
+		    int typeValue = (Integer) objList.get(0).get(SequoiadbConstants.FIELD_NAME_RETYE);
+			evalResult.returnType = Sequoiadb.SptReturnType.getTypeByValue(typeValue);
 			// set the return cursor
 			evalResult.cursor = new DBCursor(rtn, this);
 			return evalResult;
@@ -1920,7 +1921,8 @@ public class Sequoiadb {
 		connection.sendMessage(request);
 
 		ByteBuffer byteBuffer = connection.receiveMessage(endianConvert);
-		SDBMessage rtnSDBMessage = SDBMessageHelper.msgExtractEvalReply(byteBuffer);
+		SDBMessage rtnSDBMessage = SDBMessageHelper.msgExtractReply(byteBuffer);
+		//SDBMessage rtnSDBMessage = SDBMessageHelper.msgExtractEvalReply(byteBuffer);
 		SDBMessageHelper.checkMessage(sdbMessage, rtnSDBMessage);
 
 		return rtnSDBMessage;
