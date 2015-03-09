@@ -4982,6 +4982,7 @@ namespace engine
       hostName = pmdGetKRCB()->getHostName() ;
       ss << hostName << ":" << pmdGetOptionCB()->getServiceAddr() ;
       _builder.append( FIELD_NAME_NODE_NAME, ss.str() ) ;
+      _builder.append( FIELD_NAME_GROUPNAME, pmdGetKRCB()->getGroupName() ) ;
 
       /// get some info before explain
       rc = _getMonInfo( cb, _beginMon ) ;

@@ -2234,6 +2234,13 @@ namespace engine
                goto error ;
             }
             builder.append( ele ) ;
+
+            ele = obj.getField( FIELD_NAME_GROUPNAME ) ;
+            if ( String == ele.type() )
+            {
+               builder.append( ele ) ;
+            }
+            extractNode = TRUE ;
          }
 
          ele = obj.getField( FIELD_NAME_NAME ) ;
