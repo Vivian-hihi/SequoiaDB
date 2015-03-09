@@ -1550,7 +1550,6 @@ namespace engine
                                            bson::BSONObj &detail )
    {
       INT32 rc = SDB_OK ;
-      INT64 fileSz = 0 ;
       SINT64 read = 0 ;
       OSSFILE file ;
       stringstream ss ;
