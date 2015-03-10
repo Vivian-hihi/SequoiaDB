@@ -175,8 +175,8 @@ namespace engine
       }
       PD_LOG( PDSEVERE, "Stop program because of active node manager failed, "
               "rc: %d", rc ) ;
-      // need to stop engine
-      PMD_SHUTDOWN_DB( rc ) ;
+      // need to restart engine
+      PMD_RESTART_DB( rc ) ;
       goto done ;
    }
 

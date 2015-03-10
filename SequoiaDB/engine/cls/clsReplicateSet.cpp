@@ -358,7 +358,7 @@ namespace engine
       if ( !hasLocal )
       {
          PD_LOG( PDERROR, "local node is not in the cluster!" ) ;
-         PMD_SHUTDOWN_DB( SDB_SYS ) ;
+         PMD_RESTART_DB( SDB_SYS ) ;
          goto done ;
       }
       }

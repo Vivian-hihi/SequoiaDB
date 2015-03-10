@@ -76,6 +76,13 @@ namespace engine
          pmdGetKRCB()->setExitCode( code ) ; \
       } while ( 0 )
 
+   #define PMD_RESTART_DB(code)   \
+      do { \
+         pmdGetKRCB()->setDBStatus( PMD_DB_SHUTDOWN ) ; \
+         pmdGetKRCB()->setExitCode( code ) ; \
+         pmdGetKRCB()->setRestart( TRUE ) ; \
+      } while ( 0 )
+
    /*
       Register db to krcb
    */
@@ -141,6 +148,7 @@ namespace engine
 
       BOOLEAN        _businessOK ;
       INT32          _exitCode ;
+      BOOLEAN        _restart ;
 
       _pmdEDUMgr     _eduMgr ;
 
@@ -259,6 +267,10 @@ namespace engine
       {
          return _exitCode ;
       }
+      BOOLEAN needRestart() const
+      {
+         return _restart ;
+      }
       void setExitCode( INT32 exitCode )
       {
          if ( exitCode && _exitCode )
@@ -266,6 +278,10 @@ namespace engine
             return ;
          }
          _exitCode = exitCode ;
+      }
+      void setRestart( BOOLEAN restart )
+      {
+         _restart = restart ;
       }
       void setBusinessOK( BOOLEAN businessOK )
       {

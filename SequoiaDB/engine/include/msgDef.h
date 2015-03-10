@@ -254,6 +254,7 @@
 #define FIELD_NAME_ENABLE                    "Enable"
 #define FIELD_NAME_ACTION                    "Action"
 #define FIELD_NAME_DATA                      "Data"
+#define FIELD_NAME_DATALEN                   "DataLen"
 #define FIELD_NAME_ORG_LSNOFFSET             "OrgOffset"
 
 #define FIELD_NAME_INSERT                    "Insert"

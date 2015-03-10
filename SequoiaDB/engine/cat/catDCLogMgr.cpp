@@ -78,9 +78,9 @@ namespace engine
       // name + count + first lsn + last lsn
       stringstream ss ;
       ss << "Name:" << _clName << ", Count:" << getCount()
-         << ", First lsn:" << _first.version << "." << _first.offset
-         << ", Last lsn:" << _last.version << "." << _last.offset
-         << ", Coming lsn:" << _coming.version << "." << _coming.offset ;
+         << ", First lsn:" << _first.version << "." << (INT64)_first.offset
+         << ", Last lsn:" << _last.version << "." << (INT64)_last.offset
+         << ", Coming lsn:" << _coming.version << "." << (INT64)_coming.offset ;
       return ss.str() ;
    }
 
@@ -930,6 +930,7 @@ namespace engine
       builder.append( FIELD_NAME_LSN_VERSION, (INT32)_expectLsn.version ) ;
       builder.append( FIELD_NAME_LSN_OFFSET, (INT64)_expectLsn.offset ) ;
       builder.append( FIELD_NAME_ORG_LSNOFFSET, (INT64)orgOffset ) ;
+      builder.append( FIELD_NAME_DATALEN, (INT32)pHeader->_length ) ;
       builder.appendBinData( FIELD_NAME_DATA, (INT32)pHeader->_length,
                              BinDataGeneral, ( const unsigned char *)pHeader ) ;
 

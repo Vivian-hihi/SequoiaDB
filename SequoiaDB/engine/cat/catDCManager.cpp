@@ -223,7 +223,7 @@ namespace engine
       return ;
    shutdown:
       PD_LOG( PDSEVERE, "Stop program because save system log, rc: %d", rc ) ;
-      PMD_SHUTDOWN_DB( rc ) ;
+      PMD_RESTART_DB( rc ) ;
       goto done ;
    }
 
@@ -257,7 +257,7 @@ namespace engine
    error :
       PD_LOG( PDSEVERE, "Stop program because of active dc manager failed, "
               "rc: %d", rc ) ;
-      PMD_SHUTDOWN_DB( rc ) ;
+      PMD_RESTART_DB( rc ) ;
       goto done ;
    }
 

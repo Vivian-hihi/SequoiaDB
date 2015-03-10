@@ -584,7 +584,7 @@ namespace engine
 
          pInfo->_errNum = 0 ;
 
-         if ( SDB_START_CRASH == startUpFile.getStartType() )
+         if ( startUpFile.needRestart() )
          {
             pInfo->_status = OMNODE_CRASH ;
          }
