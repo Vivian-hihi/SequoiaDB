@@ -64,7 +64,9 @@ DECLARE_COMMAND_VAR( listIndexes )
 
 ///< getLastError
 DECLARE_COMMAND_VAR( getlasterror )
+///< ismaster
 DECLARE_COMMAND_VAR( ismaster )
+DECLARE_COMMAND_VAR( isMaster )
 
 command::command( const CHAR *cmdName )
 {
@@ -1371,7 +1373,7 @@ INT32 ismasterCommand::convertRequest( mongoParser &parser,
 }
 
 INT32 isMasterCommand::convertRequest( mongoParser &parser,
-                                      msgBuffer &sdbMsg )
+                                       msgBuffer &sdbMsg )
 {
    parser.opType = OP_CMD_ISMASTER ;
    return SDB_OK ;
