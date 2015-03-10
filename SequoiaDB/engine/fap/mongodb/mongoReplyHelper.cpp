@@ -83,11 +83,14 @@ namespace fap
          buff = engine::rtnContextBuf( bob.obj() ) ;
       }
 
-      void buildNotSupportReplyMsg( engine::rtnContextBuf &buff )
+      void buildNotSupportReplyMsg( engine::rtnContextBuf &buff,
+                                    const CHAR *cmdName )
       {
          bson::BSONObjBuilder bob ;
+         std::string err = "no such cmd:";
+         err += cmdName ;
          bob.append( "ok", 0 ) ;
-         bob.append( "msg", "Sorry, the command has not support now" ) ;
+         bob.append( "errmsg", err.c_str() ) ;
          buff = engine::rtnContextBuf( bob.obj() ) ;
       }
 

@@ -543,6 +543,7 @@ INT32 queryCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
       {
          rc = SDB_OPTION_NOT_SUPPORT ;
          parser.opType = OP_CMD_NOT_SUPPORTED ;
+         parser.cmdName = cmdStr ;
          goto error ;
       }
       // re-parse mongo msg

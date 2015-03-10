@@ -167,6 +167,7 @@ public:
    BOOLEAN withIndex ;
    INT32 nsLen ;
    INT32 opType ;
+   const CHAR *cmdName ;
    CHAR csName[ CS_NAME_SIZE + 1 ] ;
    CHAR fullName[ CL_FULL_NAME_SIZE + 1 ] ;
 

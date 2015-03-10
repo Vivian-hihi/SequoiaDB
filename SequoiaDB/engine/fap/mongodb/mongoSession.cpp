@@ -291,6 +291,13 @@ INT32 _mongoSession::_processMsg( const CHAR *pMsg )
       _replyHeader.numReturned = _contextBuff.recordNum() ;
       _replyHeader.startFrom = (INT32)_contextBuff.getStartFrom() ;
       _replyHeader.flags = rc ;
+      if ( SDB_OK != rc )
+      {
+         // need rebuild error
+         // set bodyLen = 0 to rebuild error bson
+         bodyLen = 0 ;
+      }
+      
    }
 
    // when msg is with $cmd, need to reply
@@ -305,6 +312,7 @@ INT32 _mongoSession::_processMsg( const CHAR *pMsg )
          tmp = _errorInfo.getIntField( OP_ERRNOFIELD ) ;
          if ( SDB_OK != rc )
          {
+            // build error msg
             bob.append( "ok", FALSE ) ;
             bob.append( "code",  tmp ) ;
             bob.append( "errmsg", _errorInfo.getStringField( OP_ERRDESP_FIELD) ) ;
@@ -522,7 +530,7 @@ BOOLEAN _mongoSession::_preProcessMsg( const mongoParser &parser,
    else if ( OP_CMD_NOT_SUPPORTED == parser.opType )
    {
       handled = TRUE ;
-      fap::mongo::buildNotSupportReplyMsg( _contextBuff ) ;
+      fap::mongo::buildNotSupportReplyMsg( _contextBuff, parser.cmdName ) ;
    }
    else if ( OP_CMD_PING == parser.opType )
    {

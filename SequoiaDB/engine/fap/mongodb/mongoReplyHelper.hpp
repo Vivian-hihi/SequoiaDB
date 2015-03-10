@@ -53,7 +53,8 @@ namespace fap
       void buildGetLastErrorReplyMsg( const bson::BSONObj &err,
                                  engine::rtnContextBuf &buff ) ;
 
-      void buildNotSupportReplyMsg( engine::rtnContextBuf &buff ) ;
+      void buildNotSupportReplyMsg( engine::rtnContextBuf &buff,
+                                    const char *cmdName ) ;
 
       void buildPingReplyMsg( engine::rtnContextBuf &buff ) ;
 
