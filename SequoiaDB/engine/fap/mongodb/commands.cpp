@@ -103,7 +103,7 @@ INT32 insertCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
    if ( parser.withIndex )
    {
       cmd = commandMgr::instance()->findCommand( "createIndexes" ) ;
-      if ( NULL != cmd )
+      if ( NULL == cmd )
       {
          rc = SDB_OPTION_NOT_SUPPORT ;
          parser.opType = OP_CMD_NOT_SUPPORTED ;
