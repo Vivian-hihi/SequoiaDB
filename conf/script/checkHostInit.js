@@ -29,7 +29,7 @@
    RET_JSON: the format is: { "HostInfo": [ { "errno": 0, "detail": "", "AgentService": "10000", "IP": "192.168.20.42" }, { "errno": 0, "detail": "", "AgentService": "10000", "IP": "192.168.20.165" } ] }
 */
 
-var FILE_NAME_PRE_CHECK_HOST = "preCheckHost.js" ;
+var FILE_NAME_CHECK_HOST_INIT = "checkHostInit.js" ;
 var RET_JSON        = new Object() ;
 RET_JSON[HostInfo]  = [] ;
 var rc              = SDB_OK ;
@@ -43,7 +43,7 @@ var errMsg          = "" ;
 ***************************************************************************** */
 function _init()
 {              
-   PD_LOG( arguments, PDEVENT, FILE_NAME_PRE_CHECK_HOST, "Begin to pre-check host" ) ;
+   PD_LOG( arguments, PDEVENT, FILE_NAME_CHECK_HOST_INIT, "Begin to pre-check host" ) ;
 }
 
 /* *****************************************************************************
@@ -54,7 +54,7 @@ function _init()
 ***************************************************************************** */
 function _final()
 {
-   PD_LOG( arguments, PDEVENT, FILE_NAME_PRE_CHECK_HOST, "Finish pre-checking host" ) ;
+   PD_LOG( arguments, PDEVENT, FILE_NAME_CHECK_HOST_INIT, "Finish pre-checking host" ) ;
 }
 
 /* *****************************************************************************
@@ -89,7 +89,7 @@ function _pushPacket( ssh )
          SYSEXPHANDLE( e ) ;
          rc = GETLASTERROR() ;
          errMsg = "Failed to get current program's working director in localhost" ;
-         PD_LOG( arguments, PDERROR, FILE_NAME_PRE_CHECK_HOST,
+         PD_LOG( arguments, PDERROR, FILE_NAME_CHECK_HOST_INIT,
                  sprintf( errMsg + ", rc: ?, detail: ?", rc, GETLASTERRMSG() ) ) ;
          exception_handle( rc, errMsg ) ;
       }
@@ -103,11 +103,11 @@ function _pushPacket( ssh )
          SYSEXPHANDLE( e ) ;
          rc = GETLASTERROR() ;
          errMsg = "Failed to get js script file's path in localhost" ;
-         PD_LOG( arguments, PDERROR, FILE_NAME_PRE_CHECK_HOST,
+         PD_LOG( arguments, PDERROR, FILE_NAME_CHECK_HOST_INIT,
                  errMsg + ", rc: " + rc + ", detail: " + GETLASTERRMSG() ) ;
          exception_handle( rc, errMsg ) ;
       }
-      PD_LOG( arguments, PDDEBUG, FILE_NAME_PRE_CHECK_HOST,
+      PD_LOG( arguments, PDDEBUG, FILE_NAME_CHECK_HOST_INIT,
               sprintf( "local_prog_path is: ?, local_spt_path is: ?",
                        local_prog_path, local_spt_path ) ) ;
       // 3. push programs and js script files to target host  
@@ -138,7 +138,7 @@ function _pushPacket( ssh )
       SYSEXPHANDLE( e ) ;
       rc = GETLASTERROR() ;
       errMsg = "Failed to push programs and js files to host[" + ssh.getPeerIP() + "]" ;
-      PD_LOG( arguments, PDERROR, FILE_NAME_PRE_CHECK_HOST,
+      PD_LOG( arguments, PDERROR, FILE_NAME_CHECK_HOST_INIT,
               errMsg + ", rc: " + rc + ", detail: " + GETLASTERRMSG() ) ;
       exception_handle( rc, errMsg ) ;
    }
@@ -172,7 +172,7 @@ function _changeModeInTmpDir( ssh )
       SYSEXPHANDLE( e ) ;
       rc = GETLASTERROR() ;
       errMsg = "Failed to change the newly created temporary directory's mode in host[" + ssh.getPeerIP() + "]" ;
-      PD_LOG( arguments, PDERROR, FILE_NAME_PRE_CHECK_HOST,
+      PD_LOG( arguments, PDERROR, FILE_NAME_CHECK_HOST_INIT,
               errMsg + ", rc: " + rc + ", detail: " + GETLASTERRMSG() ) ;
       exception_handle( rc, errMsg ) ;
    }
@@ -211,7 +211,7 @@ function _startTmpCM( ssh, port, secs )
          SYSEXPHANDLE( e ) ;
          rc = GETLASTERROR() ;
          errMsg = "Failed to start temporary sdbcm in host[" + ssh.getPeerIP() + "]" ;
-         PD_LOG( arguments, PDERROR, FILE_NAME_PRE_CHECK_HOST,
+         PD_LOG( arguments, PDERROR, FILE_NAME_CHECK_HOST_INIT,
                  sprintf( errMsg + ", rc: ?, detail: ?", rc, GETLASTERRMSG() ) ) ;
          exception_handle( rc, errMsg ) ;
       }
@@ -237,37 +237,37 @@ function _installTmpCM( ssh, ip )
    retObj[IP] = ip ;
 
    // 1. build directory in target host
-   PD_LOG( arguments, PDDEBUG, FILE_NAME_PRE_CHECK_HOST,
+   PD_LOG( arguments, PDDEBUG, FILE_NAME_CHECK_HOST_INIT,
            "create temporary director in host: " + ssh.getPeerIP() ) ;
    createTmpDir( ssh ) ;
 
    // 2. push tool programs and js files to target host
-   PD_LOG( arguments, PDDEBUG, FILE_NAME_PRE_CHECK_HOST,
+   PD_LOG( arguments, PDDEBUG, FILE_NAME_CHECK_HOST_INIT,
            "push packet to host: " + ssh.getPeerIP() ) ;
    _pushPacket( ssh ) ;
 
    // 3. change temporary director's mode
-   PD_LOG( arguments, PDDEBUG, FILE_NAME_PRE_CHECK_HOST,
+   PD_LOG( arguments, PDDEBUG, FILE_NAME_CHECK_HOST_INIT,
            "change the mode of temporary director in host: " + ssh.getPeerIP() ) ;
    _changeModeInTmpDir( ssh ) ;
 
    // 4. get a usable port in target host for installing temporary sdbcm
-   PD_LOG( arguments, PDDEBUG, FILE_NAME_PRE_CHECK_HOST,
+   PD_LOG( arguments, PDDEBUG, FILE_NAME_CHECK_HOST_INIT,
            "get a usable port from remote for sdbcm running in host: " + ssh.getPeerIP() ) ;
    var port = getAUsablePortFromRemote( ssh ) ;
    if ( OMA_PORT_INVALID == port )
    {
       errMsg = "Failed to get a usable port in host[" + ssh.getPeerIP() + "]" ;
-      PD_LOG( arguments, PDERROR, FILE_NAME_PRE_CHECK_HOST, errMsg ) ;
+      PD_LOG( arguments, PDERROR, FILE_NAME_CHECK_HOST_INIT, errMsg ) ;
       exception_handle( SDB_SYS, errMsg ) ;
    }
 
    // 5. start temporary sdbcm program in target host
-   PD_LOG( arguments, PDDEBUG, FILE_NAME_PRE_CHECK_HOST,
+   PD_LOG( arguments, PDDEBUG, FILE_NAME_CHECK_HOST_INIT,
            "start temporary sdbcm in host: " + ssh.getPeerIP() ) ;
    _startTmpCM( ssh, port, OMA_TMP_SDBCM_ALIVE_TIME ) ;
 
-   PD_LOG( arguments, PDDEBUG, FILE_NAME_PRE_CHECK_HOST,
+   PD_LOG( arguments, PDDEBUG, FILE_NAME_CHECK_HOST_INIT,
            sprintf( "start temporary sdbcm successfully in host ?, the port is: ?",
                      ssh.getPeerIP(), port ) ) ;
    // 6. return the temporary sdbcm to omsvc
@@ -293,7 +293,7 @@ function main()
       errMsg = "Js receive invalid argument" ;
       rc = GETLASTERROR() ;
       // record error message in log
-      PD_LOG( arguments, PDEVENT, FILE_NAME_PRE_CHECK_HOST,
+      PD_LOG( arguments, PDEVENT, FILE_NAME_CHECK_HOST_INIT,
               sprintf( errMsg + ", rc: ?, detail: ?", rc, GETLASTERRMSG() ) ) ;
       // tell to user error happen
       exception_handle( SDB_INVALIDARG, errMsg ) ;
@@ -301,7 +301,7 @@ function main()
    if ( arrLen == 0 )
    {
       errMsg = "Not specified any host to pre-check" ;
-      PD_LOG( arguments, PDEVENT, FILE_NAME_PRE_CHECK_HOST, errMsg ) ;
+      PD_LOG( arguments, PDEVENT, FILE_NAME_CHECK_HOST_INIT, errMsg ) ;
       exception_handle( SDB_INVALIDARG, errMsg ) ;
    }
    
@@ -332,7 +332,7 @@ function main()
          ret[IP] = ip ;
          ret[Errno] = GETLASTERROR() ;
          ret[Detail] = GETLASTERRMSG() ;
-         PD_LOG( arguments, PDERROR, FILE_NAME_PRE_CHECK_HOST,
+         PD_LOG( arguments, PDERROR, FILE_NAME_CHECK_HOST_INIT,
                  sprintf("Failed to pre-check host[?], rc: ?, detail: ?", ip, ret[Errno], ret[Detail] ) ) ;
       }
       // set return result

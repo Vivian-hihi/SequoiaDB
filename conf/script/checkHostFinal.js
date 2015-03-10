@@ -30,7 +30,7 @@
    RET_JSON: the format is:  { "HostInfo": [ { "IP": "192.168.20.165", "errno": 0, "detail": "" }, { "IP": "192.168.20.166", "errno": 0, "detail": "" } ] }
 */
 
-var FILE_NAME_POST_CHECK_HOST = "postCheckHost.js" ;
+var FILE_NAME_CHECK_HOST_FINAL = "checkHostFinal.js" ;
 var RET_JSON       = new Object() ;
 RET_JSON[HostInfo] = [] ;
 var rc             = SDB_OK ;
@@ -39,7 +39,7 @@ var errMsg         = "" ;
 
 function main()
 {
-   PD_LOG( arguments, PDEVENT, FILE_NAME_POST_CHECK_HOST, "Begin to post-check host" ) ;
+   PD_LOG( arguments, PDEVENT, FILE_NAME_CHECK_HOST_FINAL, "Begin to post-check host" ) ;
    
    var infoArr = null ;
    var arrLen = null ;
@@ -55,7 +55,7 @@ function main()
       rc = GETLASTERROR() ;
       errMsg = "Js receive invalid argument" ;
       // record error message in log
-      PD_LOG( arguments, PDERROR, FILE_NAME_POST_CHECK_HOST,
+      PD_LOG( arguments, PDERROR, FILE_NAME_CHECK_HOST_FINAL,
               sprintf( errMsg + ", rc: ?, error: ?", rc, GETLASTERRMSG() )  ) ;
       // tell to user error happen
       exception_handle( SDB_INVALIDARG, errMsg ) ;
@@ -63,7 +63,7 @@ function main()
    if ( arrLen == 0 )
    {
       errMsg = "Not specified any host to post-check" ;
-      PD_LOG( arguments, PDERROR, FILE_NAME_POST_CHECK_HOST, errMsg ) ;
+      PD_LOG( arguments, PDERROR, FILE_NAME_CHECK_HOST_FINAL, errMsg ) ;
       exception_handle( SDB_INVALIDARG, errMsg ) ;
    }
 
@@ -98,7 +98,7 @@ function main()
          retObj[IP] = ip ;
          retObj[Errno] = GETLASTERROR() ;
          retObj[Detail] = GETLASTERRMSG() ;
-         PD_LOG( arguments, PDERROR, FILE_NAME_POST_CHECK_HOST,
+         PD_LOG( arguments, PDERROR, FILE_NAME_CHECK_HOST_FINAL,
                  "Failed to post-check host[" + ip + "], rc: " + retObj[Errno] + ", detail: " + retObj[Detail] ) ;
          try
          {
@@ -110,7 +110,7 @@ function main()
       RET_JSON[HostInfo].push( retObj ) ;
    }
 
-   PD_LOG( arguments, PDEVENT, FILE_NAME_POST_CHECK_HOST, "Finish post-checking host" ) ;
+   PD_LOG( arguments, PDEVENT, FILE_NAME_CHECK_HOST_FINAL, "Finish post-checking host" ) ;
 
    // return the result
    return RET_JSON ;
