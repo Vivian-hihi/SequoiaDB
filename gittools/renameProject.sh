@@ -61,6 +61,6 @@ done
 
 # replace string
 find $ROOTPATH -type f -not -path "$ROOTPATH/gittools/*" -not -path "$ROOTPATH/.git/*" -exec sed -i 's/sequoiadb/'$projname'/g' {} \;
-find $ROOTPATH -type f -not -path "$ROOTPATH/gittools/*" -not -path "$ROOTPATH/.git/*" -exec sed -i "s/SequoiaDB/'$projname'/g" {} \;
-find $ROOTPATH -type f -not -path "$ROOTPATH/gittools/*" -not -path "$ROOTPATH/.git/*" -exec sed -i "s/Sequoiadb/'$projname'/g" {} \;
-find $ROOTPATH -type f -not -path "$ROOTPATH/gittools/*" -not -path "$ROOTPATH/.git/*" -exec sed -i "s/SEQUOIADB/'$upperprojname'/g" {} \;
+find $ROOTPATH -type f -not -path "$ROOTPATH/gittools/*" -not -path "$ROOTPATH/.git/*" -exec sed -i 's/SequoiaDB/'$projname'/g' {} \;
+find $ROOTPATH -type f -not -path "$ROOTPATH/gittools/*" -not -path "$ROOTPATH/.git/*" -exec sed -i 's/Sequoiadb/'$projname'/g' {} \;
+find $ROOTPATH -type f -not -path "$ROOTPATH/gittools/*" -not -path "$ROOTPATH/.git/*" -exec sed -i 's/SEQUOIADB/'$upperprojname'/g' {} \;
