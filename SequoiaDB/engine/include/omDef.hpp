@@ -39,28 +39,17 @@
 
 namespace engine
 {
-   #define OM_TEMPLATE_REPLICA_NUM     "replicanum"
-   #define OM_TEMPLATE_DATAGROUP_NUM   "datagroupnum"
-   #define OM_TEMPLATE_CATALOG_NUM     "catalognum"
-   #define OM_TEMPLATE_COORD_NUM       "coordnum"
-   #define OM_TEMPLATE_TRANSACTION     PMD_OPTION_TRANSACTIONON
+   #define OM_TEMPLATE_REPLICA_NUM           "replicanum"
+   #define OM_TEMPLATE_DATAGROUP_NUM         "datagroupnum"
+   #define OM_TEMPLATE_CATALOG_NUM           "catalognum"
+   #define OM_TEMPLATE_COORD_NUM             "coordnum"
+   #define OM_TEMPLATE_TRANSACTION           PMD_OPTION_TRANSACTIONON
 
    // database
-   #define OM_DBPATH_PREFIX_DATABASE   "database"
+   #define OM_DBPATH_PREFIX_DATABASE         "database"
 
    // extend configure
-   #define OM_CONF_DETAIL_EX_DG_NAME   "datagroupname"
-
-   #define OM_SIZE_MEGABIT                   ( 1024 * 1024 )
-
-   #define OM_INT32_LENGTH                   (20)
-   #define OM_INT64_LENGTH                   (20)
-
-   // OM user's table
-   #define  OM_DEFAULT_LOGIN_USER            "admin"
-   #define  OM_DEFAULT_LOGIN_PASSWD          "admin"
-
-
+   #define OM_CONF_DETAIL_EX_DG_NAME         "datagroupname"
    #define OM_CONF_DETAIL_DBPATH             PMD_OPTION_DBPATH
    #define OM_CONF_DETAIL_SVCNAME            PMD_OPTION_SVCNAME
    #define OM_CONF_DETAIL_CATANAME           PMD_OPTION_CATANAME
@@ -72,7 +61,6 @@ namespace engine
    #define OM_CONF_DETAIL_PREINSTANCE        PMD_OPTION_PREFINST
    #define OM_CONF_DETAIL_PCNUM              PMD_OPTION_NUMPAGECLEANERS
    #define OM_CONF_DETAIL_PCINTERVAL         PMD_OPTION_PAGECLEANINTERVAL
-
    #define OM_CONF_DETAIL_DATAGROUPNAME      "datagroupname"
 
    /*
@@ -95,7 +83,6 @@ namespace engine
 
    // deploy.host                            
    #define OM_CS_DEPLOY_CL_HOST              OM_CS_DEPLOY".SYSHOST"
-
    #define OM_HOST_FIELD_NAME                "HostName"
    #define OM_HOST_FIELD_CLUSTERNAME         OM_CLUSTER_FIELD_NAME
    #define OM_HOST_FIELD_IP                  "IP"
@@ -103,29 +90,23 @@ namespace engine
    #define OM_HOST_FIELD_PASSWORD            "Passwd"
    #define OM_HOST_FIELD_TIME                "Time"
    #define OM_HOST_FIELD_OS                  "OS"
-
    #define OM_HOST_FIELD_OMA                 "OMA"
    #define OM_HOST_FIELD_OM_HASINSTALL       "HasInstalled"
    #define OM_HOST_FIELD_OM_VERSION          "Version"
    #define OM_HOST_FIELD_OM_PATH             "Path"
    #define OM_HOST_FIELD_OM_PORT             "Port"
    #define OM_HOST_FIELD_OM_RELEASE          "Release"
-   
    #define OM_HOST_FIELD_MEMORY              "Memory"
-
    #define OM_HOST_FIELD_DISK                "Disk"
    #define OM_HOST_FIELD_DISK_NAME           "Name"
    #define OM_HOST_FIELD_DISK_SIZE           "Size"
    #define OM_HOST_FIELD_DISK_MOUNT          "Mount"
    #define OM_HOST_FIELD_DISK_FREE_SIZE      "Free"
    #define OM_HOST_FIELD_DISK_USED           "Used"
-
    #define OM_HOST_FIELD_CPU                 "CPU"
-
    #define OM_HOST_FIELD_NET                 "Net"
    #define OM_HOST_FIELD_NET_NAME            "Name"
    #define OM_HOST_FIELD_NET_IP              OM_HOST_FIELD_IP
-
    #define OM_HOST_FIELD_PORT                "Port"
    #define OM_HOST_FIELD_SERVICE             "Service"
    #define OM_HOST_FIELD_SAFETY              "Safety"
@@ -139,10 +120,8 @@ namespace engine
    #define OM_CS_DEPLOY_CL_HOSTIDX2          "{name:\"SYSDEPLOY_HOST_IDX2\",key: {"\
                                              OM_HOST_FIELD_IP":1}, unique: true, enforced: true } "
 
-
    // deploy.business
    #define OM_CS_DEPLOY_CL_BUSINESS          OM_CS_DEPLOY".SYSBUSINESS"
-
    #define OM_BUSINESS_FIELD_NAME            "BusinessName"
    #define OM_BUSINESS_FIELD_TYPE            "BusinessType"
    #define OM_BUSINESS_FIELD_DEPLOYMOD       "DeployMod"
@@ -155,14 +134,11 @@ namespace engine
 
    // deploy.configure
    #define OM_CS_DEPLOY_CL_CONFIGURE         OM_CS_DEPLOY".SYSCONFIGURE"
-
    #define OM_CONFIGURE_FIELD_HOSTNAME       OM_HOST_FIELD_NAME
    #define OM_CONFIGURE_FIELD_BUSINESSNAME   OM_BUSINESS_FIELD_NAME
    #define OM_CONFIGURE_FIELD_CONFIG         "Config"
-
    // deploy.taskinfo
    #define OM_CS_DEPLOY_CL_TASKINFO          OM_CS_DEPLOY".SYSTASKINFO"
-
    #define OM_TASKINFO_FIELD_TASKID          FIELD_NAME_TASKID
    #define OM_TASKINFO_FIELD_TYPE            "Type"
    #define OM_TASKINFO_FIELD_TYPE_DESC       "TypeDesc"
@@ -246,85 +222,24 @@ namespace engine
    #define  OM_REST_RES_DETAIL               OP_ERR_DETAIL
    #define  OM_REST_RES_LOCAL                "local"
 
-   // *********************om command list****************************
-   #define  OM_REST_FIELD_COMMAND            "cmd"
-
-   // ***************om rest create_cluster_req***********************
-   #define  OM_CREATE_CLUSTER_REQ            "create cluster"
-
-   #define  OM_REST_CLUSTER_INFO             "ClusterInfo"
-
-   #define  OM_BSON_FIELD_CLUSTER_NAME       OM_HOST_FIELD_CLUSTERNAME
-   #define  OM_BSON_FIELD_CLUSTER_DESC       OM_CLUSTER_FIELD_DESC
-   #define  OM_BSON_FIELD_SDB_USER           OM_CLUSTER_FIELD_SDBUSER
-   #define  OM_BSON_FIELD_SDB_PASSWD         OM_CLUSTER_FIELD_SDBPASSWD
-   #define  OM_BSON_FIELD_SDB_USERGROUP      OM_CLUSTER_FIELD_SDBUSERGROUP
-
-   #define  OM_DEFAULT_SDB_USER              "sdbadmin"
-   #define  OM_DEFAULT_SDB_PASSWD            "sdbadmin"
-   #define  OM_DEFAULT_SDB_USERGROUP         "sdbadmin_group"
-
 #if defined _WINDOWS
    #define  OM_DEFAULT_INSTALL_PATH          "C:\\Program Files\\sequoiadb\\"
 #else 
    #define  OM_DEFAULT_INSTALL_PATH          "/opt/sequoiadb/"
 #endif
 
-   // *****************************************************************
-
-   // *********************om rest query_cluster_req*******************
-   #define  OM_QUERY_CLUSTER_REQ             "query cluster"
-
-   #define  OM_BSON_FIELD_INSTALLPATH        OM_CLUSTER_FIELD_INSTALLPATH
-   // *****************************************************************
-
-   // *********************om rest login_req***************************
-   #define  OM_LOGIN_REQ                     "login"
-
-   #define  OM_REST_HEAD_SESSIONID           "SdbSessionID"
-   #define  OM_REST_HEAD_LANGUAGE            "SdbLanguage"
-
+   //*************************default values***********************************
+   #define  OM_DEFAULT_SDB_USER              "sdbadmin"
+   #define  OM_DEFAULT_SDB_PASSWD            "sdbadmin"
+   #define  OM_DEFAULT_SDB_USERGROUP         "sdbadmin_group"
    #define  OM_REST_LANGUAGE_EN              "en"
    #define  OM_REST_LANGUAGE_ZH_CN           "zh-CN"
-
-   #define  OM_REST_FIELD_LOGIN_NAME         "User"
-   #define  OM_REST_FIELD_LOGIN_PASSWD       "Passwd"
-   #define  OM_REST_FIELD_TIMESTAMP          "Timestamp"
-   // *****************************************************************
-
-   // *********************om rest logout_req***************************
-   #define  OM_LOGOUT_REQ                    "logout"
-
-   // *****************************************************************
-
-
-   // *********************om rest change passwd***********************
-   #define  OM_CHANGE_PASSWD_REQ             "change passwd"
-
-   #define  OM_REST_FIELD_NEW_PASSWD         "NewPasswd"
-   // *****************************************************************
-
-   // *******************om rest check_session_req*********************
-   #define  OM_CHECK_SESSION_REQ             "check session"
-   // *****************************************************************
-
-   // *********************om rest scan_host_req***********************
-   #define  OM_SCAN_HOST_REQ                 "scan host"
-
-   #define  OM_REST_FIELD_HOST_INFO          "HostInfo"
-
-   #define  OM_BSON_FIELD_HOST_INFO          OM_REST_FIELD_HOST_INFO
-   #define  OM_BSON_FIELD_HOST_IP            OM_HOST_FIELD_IP
-   #define  OM_BSON_FIELD_HOST_NAME          OM_HOST_FIELD_NAME
-   #define  OM_BSON_FIELD_HOST_USER          OM_HOST_FIELD_USER
-   #define  OM_BSON_FIELD_HOST_PASSWD        OM_HOST_FIELD_PASSWORD
-   #define  OM_BSON_FIELD_HOST_SSHPORT       OM_HOST_FIELD_SSHPORT
-
-   #define  OM_BSON_FIELD_AGENT_PORT         OM_HOST_FIELD_AGENT_PORT
-
-   #define  OM_BSON_FIELD_SCAN_STATUS        "Status"
-
-   #define  OM_SCAN_HOST_STATUS_FINISH       "finish"
+   // MB
+   #define  OM_MIN_DISK_FREE_SIZE            (600)
+   // agent default localhost
+   #define  OM_DEFAULT_LOCAL_HOST            "localhost"
+   // agent default port
+   #define  OM_AGENT_DEFAULT_PORT            SDBCM_DFT_PORT
 
    // milliseconds
    //two hours
@@ -344,83 +259,100 @@ namespace engine
    #define  OM_WAIT_PROGRESS_RES_INTERVAL    (3000)
    #define  OM_WAIT_AGENT_EXIT_RES_INTERVAL  (1000)
    #define  OM_WAIT_UPDATE_HOST_INTERVAL     (OM_MSG_TIMEOUT_TWO_HOUR)
-   // *****************************************************************
 
-   // *********************om rest check_host_req**********************
+   #define OM_SIZE_MEGABIT                   ( 1024 * 1024 )
+
+   #define OM_INT32_LENGTH                   (20)
+   #define OM_INT64_LENGTH                   (20)
+
+   // OM user's table
+   #define  OM_DEFAULT_LOGIN_USER            "admin"
+   #define  OM_DEFAULT_LOGIN_PASSWD          "admin"
+   //**************************************************************************
+
+   //*********************command between rest and om**************************
+   #define  OM_REST_FIELD_COMMAND            "cmd"
+   #define  OM_CREATE_CLUSTER_REQ            "create cluster"
+   #define  OM_QUERY_CLUSTER_REQ             "query cluster"
+   #define  OM_LOGIN_REQ                     "login"
+   #define  OM_LOGOUT_REQ                    "logout"
+   #define  OM_CHANGE_PASSWD_REQ             "change passwd"
+   #define  OM_CHECK_SESSION_REQ             "check session"
+   #define  OM_SCAN_HOST_REQ                 "scan host"
    #define  OM_CHECK_HOST_REQ                "check host"
+   #define  OM_ADD_HOST_REQ                  "add host"
+   #define  OM_LIST_HOST_REQ                 "list hosts"
+   #define  OM_QUERY_HOST_REQ                "query host"
+   #define  OM_QUERY_HOST_STATUS_REQ         "query host status"
+   #define  OM_LIST_BUSINESS_TYPE_REQ        "list business type"
+   #define  OM_GET_BUSINESS_TEMPLATE_REQ     "get business template"
+   #define  OM_CONFIG_BUSINESS_REQ           "get business config"
+   #define  OM_INSTALL_BUSINESS_REQ          "add business"
+   #define  OM_LIST_NODE_REQ                 "list nodes"
+   #define  OM_GET_NODE_CONF_REQ             "get node configure"
+   #define  OM_LIST_BUSINESS_REQ             "list businesses"
+   #define  OM_QUERY_BUSINESS_REQ            "query business"
+   #define  OM_REMOVE_CLUSTER_REQ            "remove cluster"
+   #define  OM_REMOVE_HOST_REQ               "remove host"
+   #define  OM_REMOVE_BUSINESS_REQ           "remove business"
+   #define  OM_PREDICT_CAPACITY_REQ          "predict capacity"
+   #define  OM_GET_LOG_REQ                   "get log"
+   #define  OM_LIST_TASK_REQ                 "list tasks"
+   //**************************************************************************
 
-   // sub command with agent
-   #define  OM_PRE_CHECK_HOST                "pre-check host"
-   #define  OM_POST_CHECK_HOST               "post-check host"
-
+   //*********************param between rest and om****************************
+   //field names
+   #define  OM_REST_CLUSTER_INFO             "ClusterInfo"
+   #define  OM_BSON_FIELD_CLUSTER_NAME       OM_HOST_FIELD_CLUSTERNAME
+   #define  OM_BSON_FIELD_CLUSTER_DESC       OM_CLUSTER_FIELD_DESC
+   #define  OM_BSON_FIELD_SDB_USER           OM_CLUSTER_FIELD_SDBUSER
+   #define  OM_BSON_FIELD_SDB_PASSWD         OM_CLUSTER_FIELD_SDBPASSWD
+   #define  OM_BSON_FIELD_SDB_USERGROUP      OM_CLUSTER_FIELD_SDBUSERGROUP
+   #define  OM_BSON_FIELD_INSTALLPATH        OM_CLUSTER_FIELD_INSTALLPATH
+   #define  OM_REST_HEAD_SESSIONID           "SdbSessionID"
+   #define  OM_REST_HEAD_LANGUAGE            "SdbLanguage"
+   #define  OM_REST_FIELD_LOGIN_NAME         "User"
+   #define  OM_REST_FIELD_LOGIN_PASSWD       "Passwd"
+   #define  OM_REST_FIELD_TIMESTAMP          "Timestamp"
+   #define  OM_REST_FIELD_NEW_PASSWD         "NewPasswd"
+   #define  OM_REST_FIELD_HOST_INFO          "HostInfo"
+   #define  OM_BSON_FIELD_HOST_INFO          OM_REST_FIELD_HOST_INFO
+   #define  OM_BSON_FIELD_HOST_IP            OM_HOST_FIELD_IP
+   #define  OM_BSON_FIELD_HOST_NAME          OM_HOST_FIELD_NAME
+   #define  OM_BSON_FIELD_HOST_USER          OM_HOST_FIELD_USER
+   #define  OM_BSON_FIELD_HOST_PASSWD        OM_HOST_FIELD_PASSWORD
+   #define  OM_BSON_FIELD_HOST_SSHPORT       OM_HOST_FIELD_SSHPORT
+   #define  OM_BSON_FIELD_AGENT_PORT         OM_HOST_FIELD_AGENT_PORT
+   #define  OM_BSON_FIELD_SCAN_STATUS        "Status"
+   #define  OM_SCAN_HOST_STATUS_FINISH       "finish"
    #define  OM_BSON_FIELD_OS                 OM_HOST_FIELD_OS
    #define  OM_BSON_FIELD_OMA                OM_HOST_FIELD_OMA
-   // array
    #define  OM_BSON_FIELD_MEMORY             "Memory"
-   // array
    #define  OM_BSON_FIELD_DISK               OM_HOST_FIELD_DISK
    #define  OM_BSON_FIELD_DISK_NAME          OM_HOST_FIELD_DISK_NAME
    #define  OM_BSON_FIELD_DISK_SIZE          OM_HOST_FIELD_DISK_SIZE
    #define  OM_BSON_FIELD_DISK_MOUNT         OM_HOST_FIELD_DISK_MOUNT
    #define  OM_BSON_FIELD_DISK_FREE_SIZE     OM_HOST_FIELD_DISK_FREE_SIZE
    #define  OM_BSON_FIELD_DISK_USED          OM_HOST_FIELD_DISK_USED
-
    #define  OM_BSON_FIELD_DISK_CANUSE        "CanUse"
-
-   // MB
-   #define  OM_MIN_DISK_FREE_SIZE            (600)
-
-   // array
    #define  OM_BSON_FIELD_CPU                OM_HOST_FIELD_CPU
-   // array
    #define  OM_BSON_FIELD_NET                OM_HOST_FIELD_NET
    #define  OM_BSON_FIELD_PORT               OM_HOST_FIELD_PORT
    #define  OM_BSON_FIELD_SERVICE            OM_HOST_FIELD_SERVICE
    #define  OM_BSON_FIELD_SAFETY             OM_HOST_FIELD_SAFETY
-   //
    #define  OM_BSON_FIELD_CONFIG             OM_CONFIGURE_FIELD_CONFIG
-
    #define  OM_BSON_FIELD_NEEDUNINSTALL      "IsNeedUninstall"
-
-   // *****************************************************************
-
-   // ***************om rest add_host_req******************************
-   #define  OM_ADD_HOST_REQ                  "add host"
-
    #define  OM_BSON_FIELD_INSTALL_PATH       OM_HOST_FIELD_INSTALLPATH
-
-   // with filename
    #define  OM_BSON_FIELD_PATCKET_PATH       "InstallPacket"
-
    #define  OM_PACKET_SUBPATH                "packet"
-
-   #define  OM_NOTIFY_TASK                   "notify task"
-
-   // *****************************************************************
-   // om rest list_host_req
-   #define  OM_LIST_HOST_REQ                 "list hosts"
-   // *****************************************************************
-
-   // *****************************************************************
-   // om rest query_host_req
-   #define  OM_QUERY_HOST_REQ                "query host"
-   // *****************************************************************
-
-   // *****************************************************************
-   // query host status
-   #define  OM_QUERY_HOST_STATUS_REQ         "query host status"
-
    #define  OM_BSON_FIELD_CPU_SYS            "Sys"
    #define  OM_BSON_FIELD_CPU_IDLE           "Idle"
    #define  OM_BSON_FIELD_CPU_OTHER          "Other"
    #define  OM_BSON_FIELD_CPU_USER           "User"
-
    #define  OM_BSON_FIELD_CPU_MEGABIT        "Megabit"
    #define  OM_BSON_FIELD_CPU_UNIT           "Unit"
-
    #define  OM_BSON_FIELD_NET_MEGABIT        OM_BSON_FIELD_CPU_MEGABIT
    #define  OM_BSON_FIELD_NET_UNIT           OM_BSON_FIELD_CPU_UNIT
-
    #define  OM_BSON_FIELD_NET_NAME           "Name"
    #define  OM_BSON_FIELD_NET_RXBYTES        "RXBytes"
    #define  OM_BSON_FIELD_NET_RXPACKETS      "RXPackets"
@@ -430,34 +362,40 @@ namespace engine
    #define  OM_BSON_FIELD_NET_TXPACKETS      "TXPackets"
    #define  OM_BSON_FIELD_NET_TXERRORS       "TXErrors"
    #define  OM_BSON_FIELD_NET_TXDROPS        "TXDrops"
-
-   // *****************************************************************
-
-   // om rest list_business_type_req
-   #define  OM_LIST_BUSINESS_TYPE_REQ        "list business type"
-
    #define  OM_BUSINESS_CONFIG_SUBDIR        "config"
    #define  OM_BUSINESS_FILE_NAME            "business"
-   #define  OM_CONFIG_FILE_TYPE              ".xml"
-
-   #define  OM_XMLATTR_KEY                   "<xmlattr>"
-   #define  OM_XMLATTR_TYPE                  "<xmlattr>.type"
-   #define  OM_XMLATTR_TYPE_ARRAY            "array"
-
    #define  OM_BSON_BUSINESS_LIST            "BusinessList"
    #define  OM_BSON_BUSINESS_TYPE            OM_BUSINESS_FIELD_TYPE
    #define  OM_BSON_BUSINESS_NAME            OM_BUSINESS_FIELD_NAME
-   // *****************************************************************
+   #define  OM_REST_CONFIG_INFO              "ConfigInfo"
+   #define  OM_BSON_TASKID                   "TaskID"
+   #define  OM_BSON_TASKTYPE                 "TaskType"
+   #define  OM_BSON_FIELD_SVCNAME            FIELD_NAME_SERVICE_NAME
+   #define  OM_BSON_FIELD_ROLE               FIELD_NAME_ROLE
+   #define  OM_REST_BUSINESS_NAME            OM_BSON_BUSINESS_NAME
+   #define  OM_REST_SVCNAME                  FIELD_NAME_SERVICE_NAME
+   #define  OM_REST_CLUSTER_NAME             OM_BSON_FIELD_CLUSTER_NAME
+   #define  OM_BSON_BUSINESS_INFO            "BusinessInfo"
+   #define  OM_REST_HOST_NAME                OM_BSON_FIELD_HOST_NAME
+   #define  OM_REST_ISFORCE                  "IsForce"
+   #define  OM_SDB_AUTH_USER                 "AuthUser"
+   #define  OM_SDB_AUTH_PASSWD               "AuthPasswd"
+   #define  OM_BSON_FIELD_VALID_SIZE         "ValidSize"
+   #define  OM_BSON_FIELD_TOTAL_SIZE         "TotalSize"
+   #define  OM_BSON_FIELD_REDUNDANCY_RATE    "RedundancyRate"
+   #define  OM_REST_LOG_NAME                 "Name"
 
-   // om rest get_business_template_req
-   #define  OM_GET_BUSINESS_TEMPLATE_REQ     "get business template"
+   #define  OM_CONF_PATH_STR                 "conf"
+   #define  OM_LOG_PATH_STR                  "log"
 
+   //xml file
+   #define  OM_CONFIG_FILE_TYPE              ".xml"
+   #define  OM_XMLATTR_KEY                   "<xmlattr>"
+   #define  OM_XMLATTR_TYPE                  "<xmlattr>.type"
+   #define  OM_XMLATTR_TYPE_ARRAY            "array"
    #define  OM_TEMPLATE_FILE_NAME            "_template"
-
    #define  OM_REST_BUSINESS_TYPE            OM_BSON_BUSINESS_TYPE
-
    #define  OM_BSON_DEPLOY_MOD_LIST          "DeployModList"
-
    #define  OM_BSON_DEPLOY_MOD               "DeployMod"
    #define  OM_BSON_PROPERTY_ARRAY           "Property"
    #define  OM_BSON_PROPERTY_NAME            "Name"
@@ -469,123 +407,20 @@ namespace engine
    #define  OM_BSON_PROPERTY_DESC            "Desc"
    #define  OM_BSON_PROPERTY_LEVEL           "Level"
    #define  OM_BSON_PROPERTY_WEBNAME         "WebName"
-
-   // *****************************************************************
-
-   // om rest config_business_req
-   #define  OM_CONFIG_BUSINESS_REQ           "get business config"
-
    #define  OM_CONFIG_ITEM_FILE_NAME         "_config"
    #define  OM_XML_CONFIG                    "config"
-
    #define  OM_REST_TEMPLATE_INFO            "TemplateInfo"
-
    #define  OM_BSON_PROPERTY_VALUE           "Value"
+   //**************************************************************************
 
-   // *****************************************************************
-
-   // om rest install_business_req
-   #define  OM_INSTALL_BUSINESS_REQ          "add business"
-
-   #define  OM_REST_CONFIG_INFO              "ConfigInfo"
-
-   #define  OM_BSON_TASKID                   "TaskID"
-   #define  OM_BSON_TASKTYPE                 "TaskType"
-   // *****************************************************************
-
-
-   // om list node req
-   #define  OM_LIST_NODE_REQ                 "list nodes"
-
-
-   #define  OM_BSON_FIELD_SVCNAME            FIELD_NAME_SERVICE_NAME
-   #define  OM_BSON_FIELD_ROLE               FIELD_NAME_ROLE
-   //******************************************************************
-
-   // om query node req
-   #define  OM_GET_NODE_CONF_REQ             "get node configure"
-
-   #define  OM_REST_BUSINESS_NAME            OM_BSON_BUSINESS_NAME
-   #define  OM_REST_SVCNAME                  FIELD_NAME_SERVICE_NAME
-
-   //******************************************************************
-
-   // om list business req
-   #define  OM_LIST_BUSINESS_REQ             "list businesses"
-   //******************************************************************
-
-   // om query business req
-   #define  OM_QUERY_BUSINESS_REQ            "query business"
-
-   #define  OM_REST_CLUSTER_NAME             OM_BSON_FIELD_CLUSTER_NAME
-   #define  OM_BSON_BUSINESS_INFO            "BusinessInfo"
-   //******************************************************************
-
-   // om start business req
-   //******************************************************************
-
-   // om stop business req
-   //******************************************************************
-
-   // om remove cluster req
-   #define  OM_REMOVE_CLUSTER_REQ            "remove cluster"
-
-   //******************************************************************
-
-   // om remove host req
-   #define  OM_REMOVE_HOST_REQ               "remove host"
-
-   #define  OM_REST_HOST_NAME                OM_BSON_FIELD_HOST_NAME
-   #define  OM_REST_ISFORCE                  "IsForce"
-
-   //******************************************************************
-
-   // om remove business req
-   #define  OM_REMOVE_BUSINESS_REQ           "remove business"
-
-   #define  OM_SDB_AUTH_USER                 "AuthUser"
-   #define  OM_SDB_AUTH_PASSWD               "AuthPasswd"
-
-   //******************************************************************
-
-   // om update hostname req
+   //*********************command between om and agent*************************
+   #define  OM_PRE_CHECK_HOST                "pre-check host"
+   #define  OM_POST_CHECK_HOST               "post-check host"
    #define  OM_UPDATE_HOSTNAME_REQ           "update hostname"
-   //******************************************************************
-
-   // om predict capacity req
-   #define  OM_PREDICT_CAPACITY_REQ          "predict capacity"
-
-   #define  OM_BSON_FIELD_VALID_SIZE         "ValidSize"
-   #define  OM_BSON_FIELD_TOTAL_SIZE         "TotalSize"
-   #define  OM_BSON_FIELD_REDUNDANCY_RATE    "RedundancyRate"
-   //******************************************************************
-
-   // om get log req
-   #define  OM_GET_LOG_REQ                   "get log"
-   #define  OM_REST_LOG_NAME                 "Name"
-
-   #define  OM_CONF_PATH_STR                 "conf"
-   #define  OM_LOG_PATH_STR                  "log"
-   //******************************************************************
-
-   // om list task req
-   #define  OM_LIST_TASK_REQ                 "list tasks"
-   //******************************************************************
-
-   // om query task req
-   #define  OM_QUERY_TASK_REQ                "query task"
-   //******************************************************************
-
-
-   // omagent update task
    #define  OM_AGENT_UPDATE_TASK             "update task"
-
-
-   // agent default localhost
-   #define  OM_DEFAULT_LOCAL_HOST            "localhost"
-   // agent default port
-   #define  OM_AGENT_DEFAULT_PORT            SDBCM_DFT_PORT
-
+   #define  OM_QUERY_TASK_REQ                "query task"
+   #define  OM_NOTIFY_TASK                   "notify task"
+   //**************************************************************************
 
 }
 
