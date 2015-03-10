@@ -244,6 +244,10 @@ namespace engine
       }
       return rc ;
    error:
+      if ( SDB_AUTH_AUTHORITY_FORBIDDEN == rc )
+      {
+         _pEDUCB->printInfo( EDU_INFO_ERROR, "username or passwd is wrong" ) ;
+      }
       goto done ;
 #else
    _isAuthed = TRUE ;
