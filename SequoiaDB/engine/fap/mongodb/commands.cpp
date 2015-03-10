@@ -1369,3 +1369,10 @@ INT32 ismasterCommand::convertRequest( mongoParser &parser,
    parser.opType = OP_CMD_ISMASTER ;
    return SDB_OK ;
 }
+
+INT32 isMasterCommand::convertRequest( mongoParser &parser,
+                                      msgBuffer &sdbMsg )
+{
+   parser.opType = OP_CMD_ISMASTER ;
+   return SDB_OK ;
+}

@@ -158,6 +158,7 @@ DECLARE_COMMAND( listIndexes )
 DECLARE_COMMAND( getlasterror )
 ///< ismaster
 DECLARE_COMMAND( ismaster )
+DECLARE_COMMAND( isMaster )
 ///< end of declare commands
 
 #endif
