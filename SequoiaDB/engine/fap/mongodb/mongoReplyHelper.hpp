@@ -55,6 +55,8 @@ namespace fap
 
       void buildNotSupportReplyMsg( engine::rtnContextBuf &buff ) ;
 
+      void buildPingReplyMsg( engine::rtnContextBuf &buff ) ;
+
       void buildGetMoreMsg( msgBuffer &out ) ;
    }
 }

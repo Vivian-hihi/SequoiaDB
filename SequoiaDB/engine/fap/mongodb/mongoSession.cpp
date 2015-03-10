@@ -524,6 +524,11 @@ BOOLEAN _mongoSession::_preProcessMsg( const mongoParser &parser,
       handled = TRUE ;
       fap::mongo::buildNotSupportReplyMsg( _contextBuff ) ;
    }
+   else if ( OP_CMD_PING == parser.opType )
+   {
+       handled = TRUE ;
+       fap::mongo::buildPingReplyMsg( _contextBuff ) ;
+   }
 
    if ( handled )
    {

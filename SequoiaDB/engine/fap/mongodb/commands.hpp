@@ -159,6 +159,8 @@ DECLARE_COMMAND( getlasterror )
 ///< ismaster
 DECLARE_COMMAND( ismaster )
 DECLARE_COMMAND( isMaster )
+
+DECLARE_COMMAND( ping )
 ///< end of declare commands
 
 #endif

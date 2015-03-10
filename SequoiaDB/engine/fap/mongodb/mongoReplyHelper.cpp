@@ -91,6 +91,13 @@ namespace fap
          buff = engine::rtnContextBuf( bob.obj() ) ;
       }
 
+      void buildPingReplyMsg( engine::rtnContextBuf &buff )
+      {
+         bson::BSONObjBuilder bob;
+         bob.append( "ok", 1 );
+         buff = engine::rtnContextBuf( bob.obj() ) ;
+      }
+
       void buildGetMoreMsg( msgBuffer &out )
       {
          if ( !out.empty() )

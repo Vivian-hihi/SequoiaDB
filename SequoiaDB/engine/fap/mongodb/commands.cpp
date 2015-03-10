@@ -68,6 +68,8 @@ DECLARE_COMMAND_VAR( getlasterror )
 DECLARE_COMMAND_VAR( ismaster )
 DECLARE_COMMAND_VAR( isMaster )
 
+DECLARE_COMMAND_VAR( ping )
+
 command::command( const CHAR *cmdName )
 {
    commandMgr::instance()->addCommand( cmdName, this ) ;
@@ -1376,5 +1378,13 @@ INT32 isMasterCommand::convertRequest( mongoParser &parser,
                                        msgBuffer &sdbMsg )
 {
    parser.opType = OP_CMD_ISMASTER ;
+   return SDB_OK ;
+}
+
+//////////////////////////////////////////////////////////////////////////
+///< pingCommand
+INT32 pingCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
+{
+   parser.opType = OP_CMD_PING ;
    return SDB_OK ;
 }

@@ -155,6 +155,7 @@ enum
    // commands need not process yet
    OP_CMD_GETNONCE,
    OP_CMD_ISMASTER,
+   OP_CMD_PING,
    OP_CMD_NOT_SUPPORTED,
    OP_COMMAND_END,
 };
