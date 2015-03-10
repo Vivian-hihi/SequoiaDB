@@ -1447,14 +1447,7 @@ namespace engine
       // 5. set install db business task's status to be finished
       setTaskStatus( OMA_TASK_STATUS_FINISH ) ;
       
-      // 6. update to om the last time
-      rc = _updateProgressToOM() ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "Failed to update install db business progress "
-                 "to omsvc, rc = %d", rc ) ;
-      }
-      // 7. try to remove temporary coord
+      // 6. try to remove temporary coord
       if ( FALSE == _isStandalone && FALSE == hasRollbackFail )
       {
          rc = _removeTmpCoord() ;
@@ -1463,6 +1456,15 @@ namespace engine
             PD_LOG( PDERROR, "Failed to remove temporary coord, rc = %d", rc ) ;
          }
       }
+
+      // 7. update to om the last time
+      rc = _updateProgressToOM() ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to update install db business progress "
+                 "to omsvc, rc = %d", rc ) ;
+      }
+      
       // 8.submit task info to omagent mgr
       sdbGetOMAgentMgr()->submitTaskInfo( _taskID ) ;
       
@@ -3855,14 +3857,7 @@ namespace engine
       // 5. set install db business task's status to be finished
       setTaskStatus( OMA_TASK_STATUS_FINISH ) ;
       
-      // 6. update to om the last time
-      rc = _updateProgressToOM() ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "Failed to update install db business progress"
-                 "to omsvc, rc = %d", rc ) ;
-      }
-      // 7. try to remove temporary coord
+      // 6. try to remove temporary coord
       if ( FALSE == _isStandalone )
       {
          rc = _removeTmpCoord() ;
@@ -3871,6 +3866,15 @@ namespace engine
             PD_LOG( PDERROR, "Failed to remove temporary coord, rc = %d", rc ) ;
          }
       }
+
+      // 7. update to om the last time
+      rc = _updateProgressToOM() ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to update install db business progress"
+                 "to omsvc, rc = %d", rc ) ;
+      }
+      
       // 8.submit task info to omagent mgr
       sdbGetOMAgentMgr()->submitTaskInfo( _taskID ) ;
       
