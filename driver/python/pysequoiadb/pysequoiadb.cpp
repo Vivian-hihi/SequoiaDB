@@ -796,7 +796,7 @@ __METHOD_IMP(sdb_eval_JS)
    sdb *client                       = NULL ;
    sdbCursor *cursor                 = NULL ;
    const CHAR *code                  = NULL ;
-   const bson::BSONObj errmsg;
+   bson::BSONObj errmsg;
 
    if ( !PARSE_PYTHON_ARGS( args, "OOs", &obj, &cursor_object, &code ) )
    {
