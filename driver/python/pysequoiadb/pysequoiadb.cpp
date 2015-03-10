@@ -807,7 +807,7 @@ __METHOD_IMP(sdb_eval_JS)
    CAST_PYOBJECT_TO_COBJECT( obj, sdb, client ) ;
    CAST_PYOBJECT_TO_COBJECT( cursor_object, sdbCursor, cursor ) ;
 
-   rc = client->evalJS( *cursor, code, &sdb_spd_res_type, errmsg ) ;
+   rc = client->evalJS( code, sdb_spd_res_type, *cursor, errmsg ) ;
    if ( rc )
    {
       goto done ;
