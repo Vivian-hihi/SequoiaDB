@@ -552,8 +552,8 @@ elif "win32" == guess_os:
     # SSL
     env.Append( LIBS=['ssleay32'] )
     env.Append( LIBS=['libeay32'] )
-    ssllib_file = join(ssllib_dir, 'libeay32.dll')
-    ssllib_file1 = join(ssllib_dir, 'ssleay32.dll')
+    ssllib_file = join(ssllib_dir, 'libeay32.lib')
+    ssllib_file1 = join(ssllib_dir, 'ssleay32.lib')
     # UNICODE
     env.Append( CPPDEFINES=[ "_UNICODE" ] )
     env.Append( CPPDEFINES=[ "UNICODE" ] )

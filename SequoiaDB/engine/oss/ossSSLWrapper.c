@@ -63,7 +63,7 @@ do { \
 
 static ossMutex* _ossSSLThreadLocks = NULL;
 
-static unsigned long _ossSSLThreadIdCallback()
+static unsigned long _ossSSLThreadIdCallback(void)
 {
    unsigned long ret;
 

@@ -2,6 +2,7 @@ import os
 
 Import("clientCEnv")
 Import("linux")
+Import("windows")
 Import("ssllib_file")
 Import("ssllib_file1")
 Import("mergeStaticLibrary")
@@ -45,6 +46,9 @@ if linux:
    staticPureSdbCLib = clientCEnv.StaticLibrary('staticpuresdbc', clientCLibFiles)
    dir = os.path.dirname(staticPureSdbCLib[0].get_abspath())
    clientCEnv.AddPostAction(staticPureSdbCLib, Action(merge))
+elif windows:
+   clientCLibStatic = clientCEnv.StaticLibrary('staticsdbc', [clientCLibFiles, ssllib_file, ssllib_file1])
+   clientCEnv.Install( '#/client/lib/', clientCLibStatic )
 
 #Header files
 clientCEnv.Install( '#/client/include', "client/client.h" )
