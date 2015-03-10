@@ -174,7 +174,6 @@ INT32 insertCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
    else
    {
       insert->nameLength = parser.nsLen ;
-      parser.skip( insert->nameLength + 1 ) ;
       sdbMsg.write( parser.fullName, insert->nameLength + 1, TRUE ) ;
 
       while ( parser.more() )
