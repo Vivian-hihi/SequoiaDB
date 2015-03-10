@@ -1368,7 +1368,7 @@ public class Sequoiadb {
 	 */
 	public void setSessionAttr( BSONObject options ) throws BaseException {
 		// check argument
-	    if ( null == options ) {
+	    if ( null == options || options.isEmpty() ) {
 	        return;
 	    }
 	    
