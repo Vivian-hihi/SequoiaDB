@@ -5260,7 +5260,10 @@ namespace engine
          BSONObj tmp = iter->filterFieldsUndotted( filter, false ) ;
          BSONObjBuilder resultBuilder ;
          resultBuilder.appendElements( tmp ) ;
-         resultBuilder.append( OM_TASKINFO_FIELD_INFO, info ) ;
+         if ( iter->hasField( OM_TASKINFO_FIELD_INFO ) )
+         {
+            resultBuilder.append( OM_TASKINFO_FIELD_INFO, info ) ;
+         }
 
          BSONObj result = resultBuilder.obj() ;
          _restAdaptor->appendHttpBody( _restSession, result.objdata(), 
