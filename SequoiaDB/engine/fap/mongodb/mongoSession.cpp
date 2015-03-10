@@ -85,15 +85,6 @@ void _mongoSession::_resetBuffers()
    {
       _outBuffer.zero() ;
    }
-
-   std::vector< msgBuffer * >::iterator it = _inBufferVec.begin() ;
-   for ( ; it != _inBufferVec.end(); ++it )
-   {
-      SDB_OSS_DEL (*it) ;
-      (*it) = NULL ;
-   }
-
-   _inBufferVec.clear() ;
 }
 
 UINT64 _mongoSession::identifyID()
