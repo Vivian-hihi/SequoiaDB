@@ -137,6 +137,13 @@ namespace engine
    #define OM_CONFIGURE_FIELD_HOSTNAME       OM_HOST_FIELD_NAME
    #define OM_CONFIGURE_FIELD_BUSINESSNAME   OM_BUSINESS_FIELD_NAME
    #define OM_CONFIGURE_FIELD_CONFIG         "Config"
+
+   // deploy.business_auth
+   #define OM_CS_DEPLOY_CL_BUSINESS_AUTH     OM_CS_DEPLOY".SYSBUSINESSAUTH"
+   #define OM_BUSINESSAUTH_BUSINESSNAME      OM_BUSINESS_FIELD_NAME
+   #define OM_BUSINESSAUTH_USER              OM_HOST_FIELD_USER
+   #define OM_BUSINESSAUTH_PASSWD            OM_HOST_FIELD_PASSWORD
+   
    // deploy.taskinfo
    #define OM_CS_DEPLOY_CL_TASKINFO          OM_CS_DEPLOY".SYSTASKINFO"
    #define OM_TASKINFO_FIELD_TASKID          FIELD_NAME_TASKID
@@ -298,6 +305,9 @@ namespace engine
    #define  OM_PREDICT_CAPACITY_REQ          "predict capacity"
    #define  OM_GET_LOG_REQ                   "get log"
    #define  OM_LIST_TASK_REQ                 "list tasks"
+   #define  OM_SET_BUSINESS_AUTH_REQ         "set business authority"
+   #define  OM_REMOVE_BUSINESS_AUTH_REQ      "remove business authority"
+   #define  OM_QUERY_BUSINESS_AUTH_REQ       "query business authority"
    //**************************************************************************
 
    //*********************param between rest and om****************************

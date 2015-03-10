@@ -791,6 +791,22 @@ namespace engine
          {
             commandIf = SDB_OSS_NEW omGetLogCommand( pAdptor, this ) ;
          }
+         else if ( ossStrcasecmp( pSubCommand, OM_SET_BUSINESS_AUTH_REQ ) == 0 )
+         {
+            commandIf = SDB_OSS_NEW omSetBusinessAuthCommand( pAdptor, this ) ;
+         }
+         else if ( ossStrcasecmp( pSubCommand, 
+                                  OM_REMOVE_BUSINESS_AUTH_REQ ) == 0 )
+         {
+            commandIf = SDB_OSS_NEW omRemoveBusinessAuthCommand( pAdptor, 
+                                                                 this ) ;
+         }
+         else if ( ossStrcasecmp( pSubCommand, 
+                                  OM_QUERY_BUSINESS_AUTH_REQ ) == 0 )
+         {
+            commandIf = SDB_OSS_NEW omQueryBusinessAuthCommand( pAdptor, 
+                                                                this ) ;
+         }
          else
          {
             BSONObjBuilder builder ;

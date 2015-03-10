@@ -833,7 +833,48 @@ namespace engine
                                           INT32 &fileContentLen ) ;
 
       protected:
-   };
+   } ;
+
+   class omSetBusinessAuthCommand : public omAuthCommand
+   {
+      public:
+         omSetBusinessAuthCommand( restAdaptor *pRestAdaptor, 
+                                   pmdRestSession *pRestSession ) ;
+         virtual ~omSetBusinessAuthCommand() ;
+
+      public:
+         virtual INT32   doCommand() ;
+
+      protected:
+         INT32           _getBusinessAuthInfo( string &businessName, 
+                                               string &userName,
+                                               string &passwd ) ;
+   } ;
+
+   class omRemoveBusinessAuthCommand : public omAuthCommand
+   {
+      public:
+         omRemoveBusinessAuthCommand( restAdaptor *pRestAdaptor, 
+                                      pmdRestSession *pRestSession ) ;
+         virtual ~omRemoveBusinessAuthCommand() ;
+
+      public:
+         virtual INT32   doCommand() ;
+   } ;
+
+   class omQueryBusinessAuthCommand : public omAuthCommand
+   {
+      public:
+         omQueryBusinessAuthCommand( restAdaptor *pRestAdaptor, 
+                                     pmdRestSession *pRestSession ) ;
+         virtual ~omQueryBusinessAuthCommand() ;
+
+      public:
+         virtual INT32   doCommand() ;
+
+      protected:
+         void            _sendAuthInfo2Web( list<BSONObj> &authInfo ) ;
+   } ;
 
    class omGetFileCommand : public omGetLogCommand
    {

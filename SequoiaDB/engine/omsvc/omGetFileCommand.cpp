@@ -7798,6 +7798,223 @@ namespace engine
       goto done ;
    }
 
+   // *****************omSetBusinessAuthCommand *****************************
+
+   omSetBusinessAuthCommand::omSetBusinessAuthCommand( 
+                                                  restAdaptor *pRestAdaptor, 
+                                                  pmdRestSession *pRestSession )
+                            :omAuthCommand( pRestAdaptor, pRestSession )
+   {
+   }
+
+   omSetBusinessAuthCommand::~omSetBusinessAuthCommand()
+   {
+   }
+
+   INT32 omSetBusinessAuthCommand::_getBusinessAuthInfo( string &businessName,
+                                                         string &userName,
+                                                         string &passwd )
+   {
+      INT32 rc = SDB_OK ;
+      const CHAR *pBusinessName = NULL ;
+      const CHAR *pUserName     = NULL ;
+      const CHAR *pPasswd       = NULL ;
+
+      _restAdaptor->getQuery( _restSession, OM_REST_BUSINESS_NAME, 
+                              &pBusinessName ) ;
+      if ( NULL == pBusinessName )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "get rest field failed:field=%s", 
+                     OM_REST_BUSINESS_NAME ) ;
+         goto error ;
+      }
+
+      _restAdaptor->getQuery( _restSession, OM_REST_FIELD_LOGIN_NAME, 
+                              &pUserName ) ;
+      if ( NULL == pUserName )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "get rest field failed:field=%s", 
+                     OM_REST_FIELD_LOGIN_NAME ) ;
+         goto error ;
+      }
+
+      _restAdaptor->getQuery( _restSession, OM_REST_FIELD_LOGIN_PASSWD, 
+                              &pPasswd ) ;
+      if ( NULL == pPasswd )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "get rest field failed:field=%s", 
+                     OM_REST_FIELD_LOGIN_PASSWD ) ;
+         goto error ;
+      }
+
+      businessName = pBusinessName ;
+      userName     = pUserName ;
+      passwd       = pPasswd ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omSetBusinessAuthCommand::doCommand()
+   {
+      INT32 rc        = SDB_OK ;
+      INT64 updateNum = 0 ;
+      BSONObj selector ;
+      BSONObj updator ;
+      BSONObj hint ;
+      string businessName ;
+      string userName ;
+      string passwd ;
+
+      rc = _getBusinessAuthInfo( businessName, userName, passwd ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "get rest field failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      selector = BSON( OM_BUSINESSAUTH_BUSINESSNAME << businessName
+                       << OM_BUSINESSAUTH_USER << userName ) ;
+      {
+         BSONObj tmp = BSON( OM_BUSINESSAUTH_BUSINESSNAME << businessName
+                             << OM_BUSINESSAUTH_USER << userName
+                             << OM_BUSINESSAUTH_PASSWD << passwd ) ;
+         updator = BSON( "$set" << tmp ) ;
+      }
+
+      rc = rtnUpdate( OM_CS_DEPLOY_CL_BUSINESS_AUTH, selector, updator, hint, 
+                      FLG_UPDATE_UPSERT, _cb, &updateNum ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "set business authority failed:info=%s,rc=%d", 
+                 selector.toString().c_str(), rc ) ;
+         goto error ;
+      }
+
+      _sendOKRes2Web() ;
+   done:
+      return rc ;
+   error:
+      _sendErrorRes2Web( rc, pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ) ;
+      goto done ;
+   }
+   // *****************omRemoveBusinessAuthCommand*****************************
+   omRemoveBusinessAuthCommand::omRemoveBusinessAuthCommand( 
+                                                  restAdaptor *pRestAdaptor, 
+                                                  pmdRestSession *pRestSession )
+                               :omAuthCommand( pRestAdaptor, pRestSession )
+   {
+      
+   }
+
+   omRemoveBusinessAuthCommand::~omRemoveBusinessAuthCommand()
+   {
+   }
+
+   INT32 omRemoveBusinessAuthCommand::doCommand()
+   {
+      INT32 rc = SDB_OK ;
+      const CHAR *pBusinessName = NULL ;
+      BSONObj deletor ;
+      BSONObj hint ;
+
+      _restAdaptor->getQuery( _restSession, OM_REST_BUSINESS_NAME, 
+                              &pBusinessName ) ;
+      if ( NULL == pBusinessName )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "get rest field failed:field=%s", 
+                     OM_REST_BUSINESS_NAME ) ;
+         goto error ;
+      }
+
+      deletor = BSON( OM_BUSINESSAUTH_BUSINESSNAME << pBusinessName ) ;
+      rc = rtnDelete( OM_CS_DEPLOY_CL_BUSINESS_AUTH, deletor, hint, 0, _cb ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "rtnDelete failed:deletor=%s,rc=%d", 
+                 deletor.toString().c_str(), rc ) ;
+         goto error ;
+      }
+
+      _sendOKRes2Web() ;
+ 
+   done:
+      return rc ;
+   error:
+      _sendErrorRes2Web( rc, pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ) ;
+      goto done ;
+   }
+
+   // *****************omQueryBusinessAuthCommand *****************************
+   omQueryBusinessAuthCommand::omQueryBusinessAuthCommand( 
+                                                  restAdaptor *pRestAdaptor, 
+                                                  pmdRestSession *pRestSession )
+                              :omAuthCommand( pRestAdaptor, pRestSession )
+   {
+   }
+
+   omQueryBusinessAuthCommand::~omQueryBusinessAuthCommand()
+   {
+   }
+
+   void omQueryBusinessAuthCommand::_sendAuthInfo2Web( list<BSONObj> &authInfo )
+   {
+      BSONObj filter = BSON( OM_BUSINESSAUTH_PASSWD << 1 ) ;
+      list<BSONObj>::iterator iter = authInfo.begin() ;
+      while ( iter != authInfo.end() )
+      {
+         BSONObj tmp = iter->filterFieldsUndotted( filter, false ) ;
+         _restAdaptor->appendHttpBody( _restSession, tmp.objdata(), 
+                                       tmp.objsize(), 1 ) ;
+         iter++ ;
+      }
+
+      _sendOKRes2Web() ;
+
+      return ;
+   }
+
+   INT32 omQueryBusinessAuthCommand::doCommand()
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj selector ;
+      BSONObj matcher ;
+      BSONObj order ;
+      BSONObj hint ;
+      list<BSONObj> authInfo ;
+
+      rc = _getQueryPara( selector, matcher, order, hint ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "get query parameter failed:rc=%d", rc ) ;
+         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         _sendErrorRes2Web( rc, _errorDetail ) ;
+         goto error ;
+      }
+
+      rc = _queryTable( OM_CS_DEPLOY_CL_BUSINESS_AUTH, selector, matcher, order, 
+                        hint, 0, 0, -1, authInfo ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "query table failed:table=%s,rc=%d", 
+                 OM_CS_DEPLOY_CL_BUSINESS_AUTH, rc ) ;
+         goto error ;
+      }
+
+      _sendAuthInfo2Web( authInfo ) ;
+   done:
+      return rc ;
+   error:
+      _sendErrorRes2Web( rc, pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ) ;
+      goto done ;
+   }
+
    // *****************omGetFileCommand *****************************
    omGetFileCommand::omGetFileCommand( restAdaptor *pRestAdaptor, 
                                        pmdRestSession *pRestSession, 

@@ -300,7 +300,7 @@ namespace engine
          goto error ;
       }
       rc = _createCollectionIndex ( OM_CS_DEPLOY_CL_BUSINESS,
-                             OM_CS_DEPLOY_CL_BUSINESSIDX1, cb ) ;
+                                    OM_CS_DEPLOY_CL_BUSINESSIDX1, cb ) ;
       if ( rc )
       {
          goto error ;
@@ -320,7 +320,14 @@ namespace engine
          goto error ;
       }
       rc = _createCollectionIndex ( OM_CS_DEPLOY_CL_TASKINFO,
-                             OM_CS_DEPLOY_CL_TASKINFOIDX1, cb ) ;
+                                    OM_CS_DEPLOY_CL_TASKINFOIDX1, cb ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
+      // SYSDEPLOY.SYSBUSINESSAUTH
+      rc = _createCollection ( OM_CS_DEPLOY_CL_BUSINESS_AUTH, cb ) ;
       if ( rc )
       {
          goto error ;
