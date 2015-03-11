@@ -106,7 +106,7 @@ INT32 mongoConverter::reConvert( msgBuffer &out, MsgOpReply *reply )
       {
          _parser.reparse() ;
          _cmd = commandMgr::instance()->findCommand( "createCS" ) ;
-         if ( NULL == _cmd )
+         if ( NULL != _cmd )
          {
             rc = _cmd->convertRequest( _parser, out ) ;
             if ( SDB_OK != rc )
