@@ -3901,7 +3901,7 @@ namespace engine
       
       ossScopedLock lock ( &_taskLatch, EXCLUSIVE ) ;
 
-      PD_LOG( PDDEBUG, "Install db business update progress to local "
+      PD_LOG( PDDEBUG, "Remove db business update progress to local "
               "task: serialNum[%d], hostName[%s], svcName[%s], role[%s], "
               "groupName[%s], status[%d], statusDesc[%s], errno[%d], "
               "detail[%s], flow num[%d]",
@@ -4604,7 +4604,9 @@ namespace engine
       const CHAR *pDetail          = NULL ;
       const CHAR *pHostName        = NULL ;
       const CHAR *pSvcName         = NULL ;
-      RemoveDBResult removeResult ;
+      RemoveDBResult removeResult  = { SDB_OK, "", "", "", "", "",
+                                       OMA_TASK_STATUS_RUNNING,
+                                       OMA_TASK_STATUS_DESC_RUNNING } ;
       BSONObj bus ;
       BSONObj sys ;
       BSONObj retObj ;
@@ -4624,6 +4626,10 @@ namespace engine
 
       pHostName = it->_removeInfo._hostName.c_str() ;
       pSvcName  = it->_removeInfo._svcName.c_str() ;
+      removeResult._hostName  = pHostName ;
+      removeResult._svcName   = pSvcName ;
+      removeResult._role      = it->_removeInfo._role ;
+      removeResult._groupName = it->_removeInfo._dataGroupName ;
 
       // update progress before remove standalone
       ossSnprintf( flow, OMA_BUFF_SIZE, "Removing standalone[%s:%s]",
