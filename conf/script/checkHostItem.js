@@ -33,7 +33,7 @@ function OMAInfo()
    //this.HasInstalled       = false ;
    this.Version            = "" ;
    this.Path               = "" ;
-   this.Port               = "" ;
+   this.Service            = "" ;
    this.Release            = "" ;
 }
 
