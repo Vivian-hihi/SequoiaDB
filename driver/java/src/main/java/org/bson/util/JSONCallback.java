@@ -18,6 +18,7 @@
 
 package org.bson.util;
 
+import java.io.IOException;
 import java.text.ParseException;
 import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
@@ -31,9 +32,12 @@ import org.bson.BSON;
 import org.bson.BSONObject;
 import org.bson.BasicBSONCallback;
 import org.bson.types.BSONTimestamp;
+import org.bson.types.Binary;
 import org.bson.types.MaxKey;
 import org.bson.types.MinKey;
 import org.bson.types.ObjectId;
+
+import sun.misc.BASE64Decoder;
 
 public class JSONCallback extends BasicBSONCallback {
 
@@ -159,6 +163,27 @@ public class JSONCallback extends BasicBSONCallback {
 				} else {
 					setRoot(o);
 				}
+			}
+			else if (b.containsField("$binary")) {
+			    byte type = BSON.B_GENERAL;
+			    if (b.containsField("$type")) {
+			        Integer iType = (Integer) b.get("$type");
+			        type = iType.byteValue();
+			    }
+                try {
+                    BASE64Decoder decode = new BASE64Decoder();
+                    byte[] data = null;
+                    data = decode.decodeBuffer((String)b.get("$binary"));
+                    o = new Binary(type, data);
+                    if (!isStackEmpty()) {
+                        cur().put(name, o);
+                    } 
+                    else {
+                        setRoot(o);
+                    }
+                }
+                catch (IOException e) {
+                }
 			}
 		}
 		return o;

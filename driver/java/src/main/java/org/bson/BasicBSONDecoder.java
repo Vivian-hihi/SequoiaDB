@@ -251,13 +251,13 @@ public class BasicBSONDecoder implements BSONDecoder {
             _callback.gotBinary( name , bType , data );
             return;
         case B_UUID:
-            if ( totalLen != 16 )
-                throw new IllegalArgumentException( "bad data size subtype 3 len: " + totalLen + " != 16");
-
-            final long part1 = _in.readLong();
-            final long part2 = _in.readLong();
-            _callback.gotUUID(name, part1, part2);
-            return;
+//            if ( totalLen != 16 )
+//                throw new IllegalArgumentException( "bad data size subtype 3 len: " + totalLen + " != 16");
+//
+//            final long part1 = _in.readLong();
+//            final long part2 = _in.readLong();
+//            _callback.gotUUID(name, part1, part2);
+//            return;
         }
 
         final byte [] data = new byte[totalLen];

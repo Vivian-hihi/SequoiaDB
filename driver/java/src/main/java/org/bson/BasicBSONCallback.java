@@ -192,10 +192,11 @@ public class BasicBSONCallback implements BSONCallback {
 
 	//@Override
 	public void gotBinary(String name, byte type, byte[] data) {
-		if (type == BSON.B_GENERAL || type == BSON.B_BINARY)
-			_put(name, data);
-		else
-			_put(name, new Binary(type, data));
+	    _put(name, new Binary(type, data));
+//		if (type == BSON.B_GENERAL || type == BSON.B_BINARY)
+//			_put(name, data);
+//		else
+//			_put(name, new Binary(type, data));
 	}
 
 	//@Override
