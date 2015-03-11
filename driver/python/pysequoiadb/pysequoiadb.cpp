@@ -9,13 +9,32 @@ using namespace sdbclient;
 __METHOD_IMP(sdb_create_client)
 {
    sdb *client = NULL;
-   NEW_CPPOBJECT( client, sdb ) ;
-   if ( NULL == client )
+   PyObject* obj = NULL;
+   INT32 ssl = 0 ;
+   BOOLEAN useSSL = FALSE ;
+
+   if ( !PARSE_PYTHON_ARGS( args, "i", &ssl ) )
    {
-      return NULL ;
+      goto error ;
    }
 
-   return MAKE_PYOBJECT( client ) ;
+   if ( 0 != ssl )
+   {
+      useSSL = TRUE ;
+   }
+
+   NEW_CPPOBJECT_INIT( client, sdb, useSSL ) ;
+   if ( NULL == client )
+   {
+      goto error ;
+   }
+
+   obj = MAKE_PYOBJECT( client ) ;
+
+done:
+   return obj ;
+error:
+    goto done ;
 }
 
 __METHOD_IMP(sdb_release_client)
