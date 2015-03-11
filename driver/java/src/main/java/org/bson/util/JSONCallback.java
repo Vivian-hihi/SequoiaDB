@@ -167,8 +167,15 @@ public class JSONCallback extends BasicBSONCallback {
 			else if (b.containsField("$binary")) {
 			    byte type = BSON.B_GENERAL;
 			    if (b.containsField("$type")) {
-			        Integer iType = (Integer) b.get("$type");
-			        type = iType.byteValue();
+			        Object oType = b.get("$type");
+			        if(oType instanceof Integer) {
+			            Integer iType = (Integer) b.get("$type");
+			            type = iType.byteValue();
+			        }
+			        else {
+			            String strType = (String) b.get("$type");
+                        type = (byte) strType.charAt(0);
+			        }
 			    }
                 try {
                     BASE64Decoder decode = new BASE64Decoder();
