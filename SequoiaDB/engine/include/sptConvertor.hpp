@@ -77,6 +77,10 @@ private:
                            const CHAR *key,
                            bson *bs ) ;
 
+   INT32 _addJsonTypes( JSObject *obj,
+                        const CHAR *key,
+                        bson *bs ) ;
+
    BOOLEAN _getProperty( JSObject *obj,
                          const CHAR *fieldName,
                          JSType type,

@@ -455,5 +455,12 @@ function assert( condition )
    }
 }
 
-// end Sdb
+// ObjectId
+if ( !ObjectId.prototype )
+   ObjectId.prototype = {}
+
+ObjectId.prototype.toString = function() {
+   return "ObjectId(\"" + this._str + "\")" ;
+}
+// end ObjectId
 

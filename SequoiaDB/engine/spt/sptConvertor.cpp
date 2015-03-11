@@ -54,6 +54,9 @@
 #define SPT_SPEOBJ_TYPE "$type"
 #define SPT_SPEOBJ_OID "$oid"
 
+extern JSBool is_objectid( JSContext *, JSObject * ) ;
+extern JSBool is_jsontypes( JSContext *, JSObject * ) ;
+
 INT32 sptConvertor::toBson( JSObject *obj , bson **bs )
 {
    INT32 rc = SDB_OK ;
@@ -159,6 +162,42 @@ done:
    return rc ;
 error:
    goto done ;
+}
+
+INT32 sptConvertor::_addJsonTypes( JSObject *obj,
+                                   const CHAR *key,
+                                   bson *bs )
+{
+   INT32 rc = SDB_OK ;
+   if ( is_objectid( _cx, obj ) )
+   {
+      std::string strValue ;
+      jsval value ;
+      if ( !_getProperty( obj, "_str", JSTYPE_STRING, value ))
+      {
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      rc = _toString( value, strValue ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+
+      if ( 24 != strValue.length() )
+      {
+         goto error ;
+      }
+
+      bson_oid_t oid ;
+      bson_oid_from_string( &oid, strValue.c_str() ) ;
+      bson_append_oid( bs, key, &oid ) ; 
+   }
+done:
+   return rc ;
+error:
+   goto done ; 
 }
 
 BOOLEAN sptConvertor::_addSpecialObj( JSObject *obj,
@@ -536,6 +575,14 @@ INT32 sptConvertor::_appendToBson( const std::string &name,
             if ( NULL == obj )
             {
                bson_append_null( bs, name.c_str() ) ;
+            }
+            else if( is_jsontypes( _cx, obj ) )
+            {
+               rc = _addJsonTypes( obj, name.c_str(), bs ) ;
+               if ( SDB_OK != rc )
+               {
+                  goto error ;
+               }
             }
             else if ( !_addSpecialObj( obj, name.c_str(), bs ) )
             {

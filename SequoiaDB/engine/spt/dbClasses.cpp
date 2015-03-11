@@ -56,6 +56,7 @@
 #include "ossIO.hpp"
 #include "sptSPDef.hpp"
 #include "sptConvertorHelper.hpp"
+#include "sptJsonTypes.hpp"
 
 #define SAFE_BSON_DISPOSE( p ) \
    do { if ( p ) { bson_dispose( p ) ; ( p ) = NULL ; } } while ( 0 )
@@ -7103,6 +7104,104 @@ static JSFunctionSpec sdb_functions[] = {
    JS_FS_END
 } ;
 
+/// objectid
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OBJECTID_DESTRUCTOR, "objectid_destructor" )
+static void objectid_destructor( JSContext *cx, JSObject *obj )
+{
+   PD_TRACE_ENTRY ( SDB_OBJECTID_DESTRUCTOR );
+   PD_TRACE_EXIT( SDB_OBJECTID_DESTRUCTOR ) ;
+   return ;
+}
+
+static JSClass objectid_class = {
+   "ObjectId", // class name
+   JSCLASS_HAS_PRIVATE | JSCLASS_NEW_RESOLVE ,   // flags
+   JS_PropertyStub,              // addProperty
+   JS_PropertyStub,              // delProperty
+   JS_PropertyStub,              // getProperty
+   JS_StrictPropertyStub,        // setProperty
+   JS_EnumerateStub,             // enumerate
+   JS_ResolveStub,               // resolve
+   JS_ConvertStub,               // convert
+   objectid_destructor,          // finalize
+   JSCLASS_NO_OPTIONAL_MEMBERS   // optional members
+} ;
+
+BOOLEAN isValidOIDHex( const CHAR *hex )
+{
+   if ( 24 != ossStrlen( hex ) )
+   {
+      return FALSE ;
+   }
+
+   for ( UINT32 i = 0; i < 24; ++i )
+   {
+      if ( !std::isxdigit(hex[i]) )
+      {
+         return FALSE ;
+      }
+   }
+
+   return TRUE ;
+}
+
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OBJECTID_CONSTRUCTOR, "objectid_constructor" )
+static JSBool objectid_constructor( JSContext *cx, uintN argc, jsval *vp )
+{
+   JSBool ret = JS_TRUE ;
+   PD_TRACE_ENTRY( SDB_OBJECTID_CONSTRUCTOR ) ;
+   JSString *jsHexStr = NULL ;
+   JSString *jsOidStr = NULL ;
+   CHAR *hexStr = NULL ;
+   bson_oid_t oid ;
+   jsval valOIDStr = JSVAL_VOID ;
+   JSObject *jsOID = NULL ;
+
+   ret = JS_ConvertArguments ( cx , argc , JS_ARGV ( cx , vp ) ,
+                               "/S" , &jsHexStr ) ;
+   REPORT_RC( ret, "ObjectId(): wrong arguments", SDB_INVALIDARG ) ;
+
+   if ( NULL == jsHexStr )
+   {
+      CHAR hexDump[25] = { 0 } ;
+      bson_oid_gen( &oid ) ;
+      bson_oid_to_string( &oid, hexDump ) ;
+      jsOidStr = JS_NewStringCopyN( cx, hexDump, 24 ) ;
+      VERIFY( jsOidStr ) ;
+   }
+   else
+   {
+      hexStr = ( CHAR * )JS_EncodeString( cx, jsHexStr ) ;
+      VERIFY( hexStr ) ;
+      if ( !isValidOIDHex( hexStr ) )
+      {
+         REPORT_RC( ret, "ObjectId(): wrong arguments", SDB_INVALIDARG ) ;
+      }
+      jsOidStr = JS_NewStringCopyN( cx, hexStr, 24 ) ;
+      VERIFY( jsOidStr ) ;
+   }
+
+   valOIDStr = STRING_TO_JSVAL( jsOidStr ) ;
+
+   jsOID = JS_NewObject ( cx , &objectid_class, NULL, NULL ) ;
+   VERIFY ( jsOID ) ;
+   VERIFY ( JS_SetProperty ( cx , jsOID , "_str" , &valOIDStr ) ) ;
+   JS_SET_RVAL( cx, vp, OBJECT_TO_JSVAL( jsOID ) ) ;
+done:
+   SAFE_JS_FREE( cx, hexStr ) ;
+   PD_TRACE_EXIT( SDB_OBJECTID_CONSTRUCTOR ) ;
+   return ret ;
+error:
+   ret = JS_FALSE ;
+   goto done ;
+}
+
+static JSFunctionSpec objectid_functions [] = {
+   JS_FS_END
+} ;
+
+/// objectid end
+
 JSBool jsobj_is_query( JSContext *cx, JSObject *obj )
 {
    return JS_InstanceOf( cx, obj, &query_class, NULL ) ;
@@ -7131,6 +7230,16 @@ JSBool jsobj_is_rn( JSContext *cx, JSObject *obj )
 JSBool jsobj_is_rg( JSContext *cx, JSObject *obj )
 {
    return JS_InstanceOf( cx, obj, &rg_class, NULL ) ;
+}
+
+JSBool is_objectid( JSContext *cx, JSObject *obj )
+{
+   return JS_InstanceOf( cx, obj, &objectid_class, NULL ) ;
+}
+
+JSBool is_jsontypes( JSContext *cx, JSObject *obj )
+{
+   return is_objectid( cx, obj ) ;
 }
 
 JSBool jsobj_is_sdbobj( JSContext *cx, JSObject *obj )
@@ -7250,6 +7359,10 @@ JSBool InitDbClasses( JSContext *cx, JSObject *obj )
    VERIFY ( JS_InitClass ( cx, obj, NULL, &domain_class,
                            domain_constructor, 0,
                            0, domain_functions, 0, 0 ) ) ;
+
+   VERIFY ( JS_InitClass ( cx, obj, NULL, &objectid_class,
+                           objectid_constructor, 0,
+                           0, objectid_functions, 0, 0 ) ) ;
 #elif defined (SDB_ENGINE)
 #endif
 
