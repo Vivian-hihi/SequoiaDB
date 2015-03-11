@@ -1,0 +1,35 @@
+{
+    "uninstsdb": {
+        "leftPanel": {
+            "title": "Task information",
+				"taskInfo": [
+						"Task ID",
+						"Cluster",
+						"Task type",
+						"Subjects number",
+						"Status",
+						"Progress",
+						"Estimated remaining time",
+						"Log"
+				],
+				"logButton": "View",
+				"time": "minutes"
+        },
+        "rightPanel": {
+            "title": "卸载进度",
+				"nodeGrid": [
+						"HostName",
+						"Port",
+						"Role",
+						"Group",
+						"卸载状态",
+						"卸载进度"
+				],
+				"taskStatus": [ "正在初始化任务", "正在执行任务", "正在回滚任务", "正在取消任务", "任务完成", "未知状态", "任务失败" ],
+				"nodeStatus": [ "正在初始化卸载", "正在卸载", "正在回滚卸载", "正在取消卸载", "卸载完成", "未知状态", "卸载失败" ]
+        },
+		  "logModal": {
+		  		"title": "Log"
+		  }
+    }
+}
