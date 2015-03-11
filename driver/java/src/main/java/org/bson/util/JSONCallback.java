@@ -174,7 +174,7 @@ public class JSONCallback extends BasicBSONCallback {
 			        }
 			        else {
 			            String strType = (String) b.get("$type");
-                        type = (byte) strType.charAt(0);
+                        type = (byte) Integer.parseInt(strType);
 			        }
 			    }
                 try {
