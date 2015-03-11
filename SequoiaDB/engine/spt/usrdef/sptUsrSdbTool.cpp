@@ -195,15 +195,20 @@ namespace engine
                 SDB_ROLE_OMA == optionParam._roleFilter ) )
          {
             CHAR hostName[ OSS_MAX_HOSTNAME + 1 ] = { 0 } ;
+            CHAR confFile[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
             utilNodeInfo node ;
             node._orgname = "" ;
             node._pid = OSS_INVALID_PID ;
             node._role = SDB_ROLE_OMA ;
             node._type = SDB_TYPE_OMA ;
             ossGetHostName( hostName, OSS_MAX_HOSTNAME ) ;
-            if ( SDB_OK == utilGetCMService( rootPath, hostName,
-                                             node._svcname, FALSE ) )
+
+            utilBuildFullPath( rootPath, SDBCM_CONF_PATH_FILE,
+                               OSS_MAX_PATHSIZE, confFile ) ;
+            // file exist
+            if ( 0 == ossAccess( confFile ) )
             {
+               utilGetCMService( rootPath, hostName, node._svcname, TRUE ) ;
                nodes.push_back( node ) ;
             }
          }
