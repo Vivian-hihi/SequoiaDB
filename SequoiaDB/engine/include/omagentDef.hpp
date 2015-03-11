@@ -217,7 +217,6 @@ namespace engine
    */
    #define OMA_BUFF_SIZE                    (1024)
    #define JS_FILE_NAME_LEN                 (512)
-   #define JS_ARG_LEN                       (4096)
    #define WAITING_TIME                     (3000)
 
 }

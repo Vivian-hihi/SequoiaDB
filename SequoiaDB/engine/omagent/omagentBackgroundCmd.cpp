@@ -59,6 +59,7 @@ namespace engine
       {
          BSONObj bus ;
          BSONObj sys ;
+         stringstream ss ;
          rc = _getAddHostInfo( bus, sys ) ;
          if ( rc )
          {
@@ -68,12 +69,14 @@ namespace engine
          }
 
          // build js file arguments
-         ossSnprintf( _jsFileArgs, JS_ARG_LEN, "var %s = %s; var %s = %s;",
-                      JS_ARG_BUS, bus.toString(FALSE, TRUE).c_str(),
-                      JS_ARG_SYS, sys.toString(FALSE, TRUE).c_str() ) ;
-         PD_LOG ( PDDEBUG, "Add host passes argument: %s",
-                  _jsFileArgs ) ;
-         rc = addJsFile( FILE_ADD_HOST, _jsFileArgs ) ;
+         ss << "var " << JS_ARG_BUS << " = " 
+            << bus.toString(FALSE, TRUE).c_str() << " ; "
+            << "var " << JS_ARG_SYS << " = "
+            << sys.toString(FALSE, TRUE).c_str() << " ; " ;
+         _jsFileArgs = ss.str() ;
+         PD_LOG ( PDDEBUG, "Add host passes argument: %s", _jsFileArgs.c_str() ) ;
+         // add js file
+         rc = addJsFile( FILE_ADD_HOST, _jsFileArgs.c_str() ) ;
          if ( rc )
          {
             PD_LOG ( PDERROR, "Failed to add js file[%s], rc = %d ",
@@ -166,14 +169,17 @@ namespace engine
       INT32 rc = SDB_OK ;
       try
       {
-         BSONObj obj( pInstallInfo ) ;
+         BSONObj bus( pInstallInfo ) ;
+         stringstream ss ;
 
          // build js file arguments
-         ossSnprintf( _jsFileArgs, JS_ARG_LEN, "var %s = %s; ",
-                      JS_ARG_BUS, obj.toString(FALSE, TRUE).c_str() ) ;
+         ss << "var " << JS_ARG_BUS << " = " 
+            << bus.toString(FALSE, TRUE).c_str() << " ; " ;
+         _jsFileArgs = ss.str() ;
          PD_LOG ( PDDEBUG, "Check add host information passes argument: %s",
-                  _jsFileArgs ) ;
-         rc = addJsFile( FIEL_ADD_HOST_CHECK_INFO, _jsFileArgs ) ;
+                  _jsFileArgs.c_str() ) ;
+         // add js file
+         rc = addJsFile( FIEL_ADD_HOST_CHECK_INFO, _jsFileArgs.c_str() ) ;
          if ( rc )
          {
             PD_LOG ( PDERROR, "Failed to add js file[%s], rc = %d ",
@@ -213,6 +219,7 @@ namespace engine
       {
          BSONObj bus ;
          BSONObj sys ;
+         stringstream ss ;
          rc = _getRemoveHostInfo( bus, sys ) ;
          if ( rc )
          {
@@ -222,11 +229,15 @@ namespace engine
          }
 
          // build js file arguments
-         ossSnprintf( _jsFileArgs, JS_ARG_LEN, "var %s = %s; var %s = %s;",
-                      JS_ARG_BUS, bus.toString(FALSE, TRUE).c_str(),
-                      JS_ARG_SYS, sys.toString(FALSE, TRUE).c_str() ) ;
-         PD_LOG ( PDDEBUG, "Remove host passes argument: %s", _jsFileArgs ) ;
-         rc = addJsFile( FILE_REMOVE_HOST, _jsFileArgs ) ;
+         ss << "var " << JS_ARG_BUS << " = " 
+            << bus.toString(FALSE, TRUE).c_str() << " ; "
+            << "var " << JS_ARG_SYS << " = "
+            << sys.toString(FALSE, TRUE).c_str() << " ; " ;
+         _jsFileArgs = ss.str() ;
+         PD_LOG ( PDDEBUG, "Remove host passes argument: %s",
+                  _jsFileArgs.c_str() ) ;
+         // add js file
+         rc = addJsFile( FILE_REMOVE_HOST, _jsFileArgs.c_str() ) ;
          if ( rc )
          {
             PD_LOG ( PDERROR, "Failed to add js file[%s], rc = %d ",
@@ -298,15 +309,19 @@ namespace engine
       INT32 rc = SDB_OK ;
       try
       {
+         stringstream ss ;
          BSONObj bus = BSONObj(pInstallInfo).copy() ;
          BSONObj sys = BSON( OMA_FIELD_TASKID << _taskID ) ;
          // build js file arguments
-         ossSnprintf( _jsFileArgs, JS_ARG_LEN, "var %s = %s; var %s = %s;",
-                      JS_ARG_BUS, bus.toString(FALSE, TRUE).c_str(),
-                      JS_ARG_SYS, sys.toString(FALSE, TRUE).c_str() ) ;
+         ss << "var " << JS_ARG_BUS << " = " 
+            << bus.toString(FALSE, TRUE).c_str() << " ; "
+            << "var " << JS_ARG_SYS << " = "
+            << sys.toString(FALSE, TRUE).c_str() << " ; " ;
+         _jsFileArgs = ss.str() ;
          PD_LOG ( PDDEBUG, "Install temporary coord passes argument: %s",
-                  _jsFileArgs ) ;
-         rc = addJsFile( FILE_INSTALL_TMP_COORD, _jsFileArgs ) ;
+                  _jsFileArgs.c_str() ) ;
+         // add js file
+         rc = addJsFile( FILE_INSTALL_TMP_COORD, _jsFileArgs.c_str() ) ;
          if ( rc )
          {
             PD_LOG_MSG ( PDERROR, "Failed to add js file[%s], rc = %d ",
@@ -369,16 +384,20 @@ namespace engine
       INT32 rc = SDB_OK ;
       try
       {
+         stringstream ss ;
          BSONObj bus = BSON( OMA_FIELD_TMPCOORDSVCNAME << _tmpCoordSvcName ) ;
          BSONObj sys = BSON( OMA_FIELD_TASKID << _taskID ) ;
 
          // build js file arguments
-         ossSnprintf( _jsFileArgs, JS_ARG_LEN, "var %s = %s; var %s = %s;",
-                      JS_ARG_BUS, bus.toString(FALSE, TRUE).c_str(),
-                      JS_ARG_SYS, sys.toString(FALSE, TRUE).c_str() ) ;
+         ss << "var " << JS_ARG_BUS << " = " 
+            << bus.toString(FALSE, TRUE).c_str() << " ; "
+            << "var " << JS_ARG_SYS << " = "
+            << sys.toString(FALSE, TRUE).c_str() << " ; " ;
+         _jsFileArgs = ss.str() ;
          PD_LOG ( PDDEBUG, "Remove temporary coord passes argument: %s",
-                  _jsFileArgs ) ;
-         rc = addJsFile( FILE_REMOVE_TMP_COORD, _jsFileArgs ) ;
+                  _jsFileArgs.c_str() ) ;
+         // add js file
+         rc = addJsFile( FILE_REMOVE_TMP_COORD, _jsFileArgs.c_str() ) ;
          if ( rc )
          {
             PD_LOG_MSG ( PDERROR, "Failed to add js file[%s], rc = %d ",
@@ -451,6 +470,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       try
       {
+         stringstream ss ;
          BSONObj bus = BSON (
                  OMA_FIELD_SDBUSER         << _info._sdbUser.c_str() <<
                  OMA_FIELD_SDBPASSWD       << _info._sdbPasswd.c_str() <<
@@ -464,12 +484,15 @@ namespace engine
                  OMA_FIELD_INSTALLCONFIG   << _info._conf ) ;
          BSONObj sys = BSON ( OMA_FIELD_TASKID << _taskID ) ;
          // build js file arguments
-         ossSnprintf( _jsFileArgs, JS_ARG_LEN, "var %s = %s; var %s = %s; ",
-                      JS_ARG_BUS, bus.toString(FALSE, TRUE).c_str(),
-                      JS_ARG_SYS, sys.toString(FALSE, TRUE).c_str() ) ;
+         ss << "var " << JS_ARG_BUS << " = " 
+            << bus.toString(FALSE, TRUE).c_str() << " ; "
+            << "var " << JS_ARG_SYS << " = "
+            << sys.toString(FALSE, TRUE).c_str() << " ; " ;
+         _jsFileArgs = ss.str() ;
          PD_LOG ( PDDEBUG, "Install standalone passes argument: %s",
-                  _jsFileArgs ) ;
-         rc = addJsFile( FILE_INSTALL_STANDALONE, _jsFileArgs ) ;
+                  _jsFileArgs.c_str() ) ;
+         // add js file
+         rc = addJsFile( FILE_INSTALL_STANDALONE, _jsFileArgs.c_str() ) ;
          if ( rc )
          {
             PD_LOG ( PDERROR, "Failed to add js file[%s], rc = %d ",
@@ -522,6 +545,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       try
       {
+         stringstream ss ;
          BSONObj bus = BSON (
                  OMA_FIELD_SDBUSER         << _info._sdbUser.c_str() <<
                  OMA_FIELD_SDBPASSWD       << _info._sdbPasswd.c_str() <<
@@ -537,11 +561,15 @@ namespace engine
                  OMA_FIELD_TASKID << _taskID <<
                  OMA_FIELD_TMPCOORDSVCNAME << _tmpCoordSvcName.c_str() ) ;
          // build js file arguments
-         ossSnprintf( _jsFileArgs, JS_ARG_LEN, "var %s = %s; var %s = %s; ",
-                      JS_ARG_BUS, bus.toString(FALSE, TRUE).c_str(),
-                      JS_ARG_SYS, sys.toString(FALSE, TRUE).c_str() ) ;
-         PD_LOG ( PDDEBUG, "Install catalog passes argument: %s", _jsFileArgs ) ;
-         rc = addJsFile( FILE_INSTALL_CATALOG, _jsFileArgs ) ;
+         ss << "var " << JS_ARG_BUS << " = " 
+            << bus.toString(FALSE, TRUE).c_str() << " ; "
+            << "var " << JS_ARG_SYS << " = "
+            << sys.toString(FALSE, TRUE).c_str() << " ; " ;
+         _jsFileArgs = ss.str() ;
+         PD_LOG ( PDDEBUG, "Install catalog passes argument: %s",
+                  _jsFileArgs.c_str() ) ;
+         // add js file
+         rc = addJsFile( FILE_INSTALL_CATALOG, _jsFileArgs.c_str() ) ;
          if ( rc )
          {
             PD_LOG_MSG ( PDERROR, "Failed to add js file[%s], rc = %d ",
@@ -594,6 +622,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       try
       {
+         stringstream ss ;
          BSONObj bus = BSON (
                  OMA_FIELD_SDBUSER         << _info._sdbUser.c_str() <<
                  OMA_FIELD_SDBPASSWD       << _info._sdbPasswd.c_str() <<
@@ -609,11 +638,15 @@ namespace engine
                  OMA_FIELD_TASKID << _taskID <<
                  OMA_FIELD_TMPCOORDSVCNAME << _tmpCoordSvcName.c_str() ) ;
          // build js file arguments
-         ossSnprintf( _jsFileArgs, JS_ARG_LEN, "var %s = %s; var %s = %s; ",
-                      JS_ARG_BUS, bus.toString(FALSE, TRUE).c_str(),
-                      JS_ARG_SYS, sys.toString(FALSE, TRUE).c_str() ) ;
-         PD_LOG ( PDDEBUG, "Install coord passes argument: %s", _jsFileArgs ) ;
-         rc = addJsFile( FILE_INSTALL_COORD, _jsFileArgs ) ;
+         ss << "var " << JS_ARG_BUS << " = " 
+            << bus.toString(FALSE, TRUE).c_str() << " ; "
+            << "var " << JS_ARG_SYS << " = "
+            << sys.toString(FALSE, TRUE).c_str() << " ; " ;
+         _jsFileArgs = ss.str() ;
+         PD_LOG ( PDDEBUG, "Install coord passes argument: %s",
+                  _jsFileArgs.c_str() ) ;
+         // add js file
+         rc = addJsFile( FILE_INSTALL_COORD, _jsFileArgs.c_str() ) ;
          if ( rc )
          {
             PD_LOG_MSG ( PDERROR, "Failed to add js file[%s], rc = %d ",
@@ -666,6 +699,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       try
       {
+         stringstream ss ;
          BSONObj bus = BSON (
                  OMA_FIELD_SDBUSER          << _info._sdbUser.c_str() <<
                  OMA_FIELD_SDBPASSWD        << _info._sdbPasswd.c_str() << 
@@ -682,12 +716,14 @@ namespace engine
                  OMA_FIELD_TASKID << _taskID <<
                  OMA_FIELD_TMPCOORDSVCNAME << _tmpCoordSvcName.c_str() ) ;
          // build js file arguments
-         ossSnprintf( _jsFileArgs, JS_ARG_LEN, "var %s = %s; var %s = %s; ",
-                      JS_ARG_BUS, bus.toString(FALSE, TRUE).c_str(),
-                      JS_ARG_SYS, sys.toString(FALSE, TRUE).c_str() ) ;
+         ss << "var " << JS_ARG_BUS << " = " 
+            << bus.toString(FALSE, TRUE).c_str() << " ; "
+            << "var " << JS_ARG_SYS << " = "
+            << sys.toString(FALSE, TRUE).c_str() << " ; " ;
+         _jsFileArgs = ss.str() ;
          PD_LOG ( PDDEBUG, "Install data node passes "
-                  "argument: %s", _jsFileArgs ) ;
-         rc = addJsFile( FILE_INSTALL_DATANODE, _jsFileArgs ) ;
+                  "argument: %s", _jsFileArgs.c_str() ) ;
+         rc = addJsFile( FILE_INSTALL_DATANODE, _jsFileArgs.c_str() ) ;
          if ( rc )
          {
             PD_LOG_MSG ( PDERROR, "Failed to add js file[%s], rc = %d ",
@@ -724,14 +760,18 @@ namespace engine
    INT32 _omaRollbackStandalone::init ( const CHAR *pInstallInfo )
    {
       INT32 rc = SDB_OK ;
+      stringstream ss ;
       
       // build js file arguments
-      ossSnprintf( _jsFileArgs, JS_ARG_LEN, "var %s = %s; var %s = %s; ",
-                   JS_ARG_BUS, _bus.toString(FALSE, TRUE).c_str(),
-                   JS_ARG_SYS, _sys.toString(FALSE, TRUE).c_str() ) ;
+      ss << "var " << JS_ARG_BUS << " = " 
+         << _bus.toString(FALSE, TRUE).c_str() << " ; "
+         << "var " << JS_ARG_SYS << " = "
+         << _sys.toString(FALSE, TRUE).c_str() << " ; " ;
+      _jsFileArgs = ss.str() ;
       PD_LOG ( PDDEBUG, "Rollback standalone passes "
-               "argument: %s", _jsFileArgs ) ;
-      rc = addJsFile( FILE_ROLLBACK_STANDALONE, _jsFileArgs ) ;
+               "argument: %s", _jsFileArgs.c_str() ) ;
+      // add js file
+      rc = addJsFile( FILE_ROLLBACK_STANDALONE, _jsFileArgs.c_str() ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "Failed to add js file[%s], rc = %d ",
@@ -765,16 +805,18 @@ namespace engine
       INT32 rc = SDB_OK ;
       try
       {
+         stringstream ss ;
          BSONObj sys = BSON (
                  OMA_FIELD_TASKID << _taskID <<
                  OMA_FIELD_TMPCOORDSVCNAME << _tmpCoordSvcName.c_str() ) ;
 
          // build js file arguments
-         ossSnprintf( _jsFileArgs, JS_ARG_LEN, "var %s = %s; ",
-                      JS_ARG_SYS, sys.toString(FALSE, TRUE).c_str() ) ;
+         ss << "var " << JS_ARG_SYS << " = "
+            << sys.toString(FALSE, TRUE).c_str() << " ; " ;
+         _jsFileArgs = ss.str() ;
          PD_LOG ( PDDEBUG, "Rollback catalog passes "
-                  "argument: %s", _jsFileArgs ) ;
-         rc = addJsFile( FILE_ROLLBACK_CATALOG, _jsFileArgs ) ;
+                  "argument: %s", _jsFileArgs.c_str() ) ;
+         rc = addJsFile( FILE_ROLLBACK_CATALOG, _jsFileArgs.c_str() ) ;
          if ( rc )
          {
             PD_LOG_MSG ( PDERROR, "Failed to add js file[%s], rc = %d ",
@@ -815,15 +857,18 @@ namespace engine
       INT32 rc = SDB_OK ;
       try
       {
+         stringstream ss ;
          BSONObj sys = BSON (
                  OMA_FIELD_TASKID << _taskID <<
                  OMA_FIELD_TMPCOORDSVCNAME << _tmpCoordSvcName.c_str() ) ;
          // build js file arguments
-         ossSnprintf( _jsFileArgs, JS_ARG_LEN, "var %s = %s; ",
-                      JS_ARG_SYS, sys.toString(FALSE, TRUE).c_str() ) ;
+         ss << "var " << JS_ARG_SYS << " = "
+            << sys.toString(FALSE, TRUE).c_str() << " ; " ;
+         _jsFileArgs = ss.str() ;
          PD_LOG ( PDDEBUG, "Rollback coord passes "
-                  "argument: %s", _jsFileArgs ) ;
-         rc = addJsFile( FILE_ROLLBACK_COORD, _jsFileArgs ) ;
+                  "argument: %s", _jsFileArgs.c_str() ) ;
+         // add js file
+         rc = addJsFile( FILE_ROLLBACK_COORD, _jsFileArgs.c_str() ) ;
          if ( rc )
          {
             PD_LOG_MSG ( PDERROR, "Failed to add js file[%s], rc = %d ",
@@ -867,6 +912,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       try
       {
+         stringstream ss ;
          BSONObj bus ;
          BSONObj sys ;
          // get installed data nodes info
@@ -874,12 +920,14 @@ namespace engine
          sys = BSON( OMA_FIELD_TASKID << _taskID <<
                      OMA_FIELD_TMPCOORDSVCNAME << _tmpCoordSvcName.c_str() ) ;
          // build js file arguments
-         ossSnprintf( _jsFileArgs, JS_ARG_LEN, "var %s = %s; var %s = %s;",
-                      JS_ARG_BUS, bus.toString(FALSE, TRUE).c_str(),
-                      JS_ARG_SYS, sys.toString(FALSE, TRUE).c_str()) ;
+         ss << "var " << JS_ARG_BUS << " = " 
+            << bus.toString(FALSE, TRUE).c_str() << " ; "
+            << "var " << JS_ARG_SYS << " = "
+            << sys.toString(FALSE, TRUE).c_str() << " ; " ;
+         _jsFileArgs = ss.str() ;
          PD_LOG ( PDDEBUG, "Rollback data groups passes "
-                  "argument: %s", _jsFileArgs ) ;
-         rc = addJsFile( FILE_ROLLBACK_DATA_RG, _jsFileArgs ) ;
+                  "argument: %s", _jsFileArgs.c_str() ) ;
+         rc = addJsFile( FILE_ROLLBACK_DATA_RG, _jsFileArgs.c_str() ) ;
          if ( rc )
          {
             PD_LOG_MSG ( PDERROR, "Failed to add js file[%s], rc = %d ",
@@ -931,14 +979,18 @@ namespace engine
    INT32 _omaRmStandalone::init ( const CHAR *pInfo )
    {
       INT32 rc = SDB_OK ;
+      stringstream ss ;
       
       // build js file arguments
-      ossSnprintf( _jsFileArgs, JS_ARG_LEN, "var %s = %s; var %s = %s;",
-                   JS_ARG_BUS, _bus.toString(FALSE, TRUE).c_str(),
-                   JS_ARG_SYS, _sys.toString(FALSE, TRUE).c_str() ) ;
+         ss << "var " << JS_ARG_BUS << " = " 
+            << _bus.toString(FALSE, TRUE).c_str() << " ; "
+            << "var " << JS_ARG_SYS << " = "
+            << _sys.toString(FALSE, TRUE).c_str() << " ; " ;
+         _jsFileArgs = ss.str() ;
       PD_LOG ( PDDEBUG, "Remove standalone passes argument: %s",
-               _jsFileArgs ) ;
-      rc = addJsFile( FILE_REMOVE_STANDALONE, _jsFileArgs ) ;
+               _jsFileArgs.c_str() ) ;
+      // add js file
+      rc = addJsFile( FILE_REMOVE_STANDALONE, _jsFileArgs.c_str() ) ;
       if ( rc )
       {
          PD_LOG_MSG ( PDERROR, "Failed to add js file[%s], rc = %d ",
@@ -970,17 +1022,21 @@ namespace engine
    INT32 _omaRmCataRG::init ( const CHAR *pInfo )
    {
       INT32 rc = SDB_OK ;
+      stringstream ss ;
 
       BSONObj bus = _info.copy() ;
       BSONObj sys = BSON( OMA_FIELD_TASKID << _taskID <<
                           OMA_FIELD_TMPCOORDSVCNAME << _tmpCoordSvcName.c_str() ) ;
       // build js file arguments
-      ossSnprintf( _jsFileArgs, JS_ARG_LEN, "var %s = %s; var %s = %s; ",
-                   JS_ARG_BUS, bus.toString(FALSE, TRUE).c_str(),
-                   JS_ARG_SYS, sys.toString(FALSE, TRUE).c_str() ) ;
+      ss << "var " << JS_ARG_BUS << " = " 
+         << bus.toString(FALSE, TRUE).c_str() << " ; "
+         << "var " << JS_ARG_SYS << " = "
+         << sys.toString(FALSE, TRUE).c_str() << " ; " ;
+      _jsFileArgs = ss.str() ;
       PD_LOG ( PDDEBUG, "Remove catalog group passes "
-               "argument: %s", _jsFileArgs ) ;
-      rc = addJsFile( FILE_REMOVE_CATALOG_RG, _jsFileArgs ) ;
+               "argument: %s", _jsFileArgs.c_str() ) ;
+      // add js file
+      rc = addJsFile( FILE_REMOVE_CATALOG_RG, _jsFileArgs.c_str() ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "Failed to add js file[%s], rc = %d ",
@@ -1013,18 +1069,21 @@ namespace engine
    INT32 _omaRmCoordRG::init ( const CHAR *pInfo )
    {
       INT32 rc = SDB_OK ;
-
+      stringstream ss ;
       BSONObj bus = _info.copy() ;
       BSONObj sys = BSON( OMA_FIELD_TASKID << _taskID <<
                           OMA_FIELD_TMPCOORDSVCNAME << _tmpCoordSvcName.c_str() ) ;
 
       // build js file arguments
-      ossSnprintf( _jsFileArgs, JS_ARG_LEN, "var %s = %s; var %s = %s; ",
-                   JS_ARG_BUS, bus.toString(FALSE, TRUE).c_str(),
-                   JS_ARG_SYS, sys.toString(FALSE, TRUE).c_str() ) ;
+      ss << "var " << JS_ARG_BUS << " = " 
+         << bus.toString(FALSE, TRUE).c_str() << " ; "
+         << "var " << JS_ARG_SYS << " = "
+         << sys.toString(FALSE, TRUE).c_str() << " ; " ;
+      _jsFileArgs = ss.str() ;
       PD_LOG ( PDDEBUG, "Remove coord group passes "
-               "argument: %s", _jsFileArgs ) ;
-      rc = addJsFile( FILE_REMOVE_COORD_RG, _jsFileArgs ) ;
+               "argument: %s", _jsFileArgs.c_str() ) ;
+      // add js file
+      rc = addJsFile( FILE_REMOVE_COORD_RG, _jsFileArgs.c_str() ) ;
       if ( rc )
       {
          PD_LOG_MSG ( PDERROR, "Failed to add js file[%s], rc = %d ",
@@ -1056,16 +1115,20 @@ namespace engine
    INT32 _omaRmDataRG::init ( const CHAR *pInfo )
    {
       INT32 rc = SDB_OK ;
+      stringstream ss ;
       BSONObj bus = _info.copy() ;
       BSONObj sys = BSON( OMA_FIELD_TASKID << _taskID <<
                           OMA_FIELD_TMPCOORDSVCNAME << _tmpCoordSvcName.c_str() ) ;
       // build js file arguments
-      ossSnprintf( _jsFileArgs, JS_ARG_LEN, "var %s = %s; var %s = %s; ",
-                   JS_ARG_BUS, bus.toString(FALSE, TRUE).c_str(),
-                   JS_ARG_SYS, sys.toString(FALSE, TRUE).c_str() ) ;
+      ss << "var " << JS_ARG_BUS << " = " 
+         << bus.toString(FALSE, TRUE).c_str() << " ; "
+         << "var " << JS_ARG_SYS << " = "
+         << sys.toString(FALSE, TRUE).c_str() << " ; " ;
+      _jsFileArgs = ss.str() ;
       PD_LOG ( PDDEBUG, "Remove data group passes "
-               "argument: %s", _jsFileArgs ) ;
-      rc = addJsFile( FILE_REMOVE_DATA_RG, _jsFileArgs ) ;
+               "argument: %s", _jsFileArgs.c_str() ) ;
+      // add js file
+      rc = addJsFile( FILE_REMOVE_DATA_RG, _jsFileArgs.c_str() ) ;
       if ( rc )
       {
          PD_LOG_MSG ( PDERROR, "Failed to add js file[%s], rc = %d ",
@@ -1095,15 +1158,19 @@ namespace engine
    INT32 _omaInitEnv::init ( const CHAR *pInfo )
    {
       INT32 rc = SDB_OK ;
+      stringstream ss ;
       BSONObj bus = _info.copy() ;
       BSONObj sys = BSON( OMA_FIELD_TASKID << _taskID ) ;
       // build js file arguments
-      ossSnprintf( _jsFileArgs, JS_ARG_LEN, "var %s = %s; var %s = %s",
-                   JS_ARG_BUS, bus.toString(FALSE, TRUE).c_str(),
-                   JS_ARG_SYS, sys.toString(FALSE, TRUE).c_str() ) ;
+      ss << "var " << JS_ARG_BUS << " = " 
+         << bus.toString(FALSE, TRUE).c_str() << " ; "
+         << "var " << JS_ARG_SYS << " = "
+         << sys.toString(FALSE, TRUE).c_str() << " ; " ;
+      _jsFileArgs = ss.str() ;
       PD_LOG ( PDDEBUG, "Init for executing js passes "
-               "argument: %s", _jsFileArgs ) ;
-      rc = addJsFile( FILE_INIT_ENV, _jsFileArgs ) ;
+               "argument: %s", _jsFileArgs.c_str() ) ;
+      // add js file
+      rc = addJsFile( FILE_INIT_ENV, _jsFileArgs.c_str() ) ;
       if ( rc )
       {
          PD_LOG_MSG ( PDERROR, "Failed to add js file[%s], rc = %d ",
