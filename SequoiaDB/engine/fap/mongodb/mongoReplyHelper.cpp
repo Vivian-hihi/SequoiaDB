@@ -117,7 +117,7 @@ namespace fap
          getmore->header.routeID.value = 0 ;
          getmore->header.TID = 0 ;
          getmore->contextID = -1 ;
-         getmore->numToReturn = 1 ;
+         getmore->numToReturn = -1 ;
       }
    }
 }

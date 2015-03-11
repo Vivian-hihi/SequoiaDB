@@ -92,7 +92,7 @@ error:
 INT32 mongoConverter::reConvert( msgBuffer &out, MsgOpReply *reply )
 {
    INT32 rc = SDB_OK ;
-   out.zero() ;
+   INT32 numToReturn = -1 ;
 
    // create collection failed
    if ( OP_CMD_CREATE == _parser.opType )
@@ -108,6 +108,7 @@ INT32 mongoConverter::reConvert( msgBuffer &out, MsgOpReply *reply )
          _cmd = commandMgr::instance()->findCommand( "createCS" ) ;
          if ( NULL != _cmd )
          {
+            out.zero() ;
             rc = _cmd->convertRequest( _parser, out ) ;
             if ( SDB_OK != rc )
             {
@@ -137,6 +138,7 @@ INT32 mongoConverter::reConvert( msgBuffer &out, MsgOpReply *reply )
       _cmd = commandMgr::instance()->findCommand( "create" ) ;
       if ( NULL != _cmd )
       {
+         out.zero() ;
          rc = _cmd->convertRequest( _parser, out ) ;
          if ( SDB_OK != rc )
          {
@@ -146,22 +148,41 @@ INT32 mongoConverter::reConvert( msgBuffer &out, MsgOpReply *reply )
       }
    }
 
-   if ( OP_CMD_COUNT == _parser.opType )
+   if ( OP_CMD_COUNT == _parser.opType || OP_QUERY == _parser.opType )
    {
       if ( SDB_OK != reply->flags )
       {
          rc = reply->flags ;
          goto done ;
       }
+
+      if ( OP_QUERY == _parser.opType )
+      {
+         MsgOpQuery *query = (MsgOpQuery*)out.data() ;
+         numToReturn = query->numToReturn ;
+         if ( numToReturn <= 0 )
+         {
+            out.zero() ;
+            goto done;
+         }
+      }
+      else
+      {
+         numToReturn = 1 ;
+      }
+
       _parser.opType = OP_CMD_COUNT_MORE ;
+      out.zero() ;
       fap::mongo::buildGetMoreMsg( out ) ;
       MsgOpReply *msg = ( MsgOpReply *)out.data() ;
       msg->header.requestID = reply->header.requestID ;
       msg->contextID = reply->contextID ;
+      msg->numReturned = numToReturn ;
       goto done ;
    }
    // when not handled above, assigned the reply flags to rc for return
    rc = reply->flags ;
+   out.zero() ;
 
 done:
    return rc ;

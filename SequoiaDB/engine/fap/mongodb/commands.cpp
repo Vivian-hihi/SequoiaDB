@@ -445,6 +445,7 @@ INT32 queryCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
    MsgOpQuery *query  = NULL ;
    const CHAR *cmdStr = NULL ;
    command* cmd       = NULL ;
+   bson::BSONObj all ;
    bson::BSONObj cond ;
    bson::BSONObj selector ;
    bson::BSONObj orderby ;
@@ -512,7 +513,7 @@ INT32 queryCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
 
    if ( parser.more() )
    {
-      parser.nextObj( cond ) ;
+      parser.nextObj( all ) ;
    }
 
    // handle listIndexes
@@ -537,7 +538,7 @@ INT32 queryCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
    if ( parser.withCmd )
    {
       // do with the msg with command
-      cmdStr = cond.firstElementFieldName() ;
+      cmdStr = all.firstElementFieldName() ;
       cmd = commandMgr::instance()->findCommand( cmdStr ) ;
       if ( NULL == cmd )
       {
@@ -554,8 +555,26 @@ INT32 queryCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
       goto done ;
    }
 
+   {
+      cmdStr = all.firstElementFieldName() ;
+      if ( NULL != ossStrstr( cmdStr, "$query" ) )
+      {
+         cond = all.getObjectField( "$query" ) ;
+      }
+      else if ( NULL != ossStrstr( cmdStr, "query" ) )
+      {
+         cond = all.getObjectField( "query" ) ;
+      }
+      else
+      {
+         cond = all ;
+      }
+   }
+
    orderby = cond.getObjectField( "orderby" ) ;
-   orderby = removeField( orderby, "$hint" ) ;
+   orderby = removeField( orderby, "orderby" ) ;
+   hint    = cond.getObjectField( "$hint" ) ;
+   hint    = removeField( hint, "$hint" ) ;
 
    if ( parser.more() )
    {

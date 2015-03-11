@@ -468,7 +468,8 @@ INT32 _mongoSession::_reply( MsgOpReply *replyHeader,
       }
       else
       {
-         if ( OP_GETMORE != _converter->getOpType() )
+         if ( OP_GETMORE != _converter->getOpType() &&
+              OP_QUERY != _converter->getOpType() )
          {
             bob.append( "ok", 1.0 ) ;
             objToSend = bob.obj() ;
