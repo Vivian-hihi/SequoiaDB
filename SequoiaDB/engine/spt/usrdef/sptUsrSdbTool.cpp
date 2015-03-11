@@ -201,8 +201,11 @@ namespace engine
             node._role = SDB_ROLE_OMA ;
             node._type = SDB_TYPE_OMA ;
             ossGetHostName( hostName, OSS_MAX_HOSTNAME ) ;
-            utilGetCMService( rootPath, hostName, node._svcname, TRUE ) ;
-            nodes.push_back( node ) ;
+            if ( SDB_OK == utilGetCMService( rootPath, hostName,
+                                             node._svcname, FALSE ) )
+            {
+               nodes.push_back( node ) ;
+            }
          }
 
          UTIL_VEC_NODES::iterator it = nodes.begin() ;
