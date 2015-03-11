@@ -8,9 +8,6 @@
             "删除集群",
             "创建集群"
         ],
-        "tabPage": [
-            "总览"
-        ],
         "leftPanel": {
             "title": "状态",
 				"body": {
@@ -120,7 +117,13 @@
 								"desc": ""
 						  }
                 ]
-            }
+            },
+				"isRemoveCluster": {
+					 "title": "提示"
+				},
+				"isGoOnDeploy": {
+					 "title": "提示"
+				}
         }
     }
 }

@@ -1,3 +1,24 @@
 {
-
+    "businesslist": {
+	 	  "title": "集群: ",
+		  "tab": {
+		  		"button": [ "添加业务" ]
+		  },
+	 	  "businessGrid": {
+		  		   "title": [ "业务名", "业务类型", "业务模式", "操作" ],
+		  			"button": {
+						  "remove": "删除业务"
+					}
+		  },
+		  "isRemoveBusiness": {
+		  			"title": "提示"
+		  },
+		  "addBusiness": {
+		  			"title": "添加业务",
+					"table: [
+						[ "业务名", "安装的业务名" ],
+						[ "业务类型", "" ]
+					]
+		  }
+    }
 }

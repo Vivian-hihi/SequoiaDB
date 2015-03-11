@@ -8,9 +8,10 @@ function login()
 		var id = jqXHR.getResponseHeader( 'SdbSessionID' ) ;
 		sdbjs.fun.saveData( 'SdbSessionID', id ) ;
 		sdbjs.fun.saveData( 'SdbUser', user ) ;
+		sdbjs.fun.saveData( 'SdbIsLogin', 'true' ) ;
 		gotoPage( 'index.html' ) ;
 	}, function( json ){
-		showFootStatus( 'danger', json['description'] ) ;
+		showFootStatus( 'danger', json['detail'] ) ;
 	}, null, user, pwd ) ;
 }
 

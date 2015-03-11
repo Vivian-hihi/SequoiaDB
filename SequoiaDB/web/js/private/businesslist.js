@@ -17,6 +17,7 @@ function removeBusiness( index )
 	restRemoveBusiness( true, function( jsonArr, textStatus, jqXHR ){
 		var taskID = jsonArr[0]['TaskID'] ;
 		sdbjs.fun.saveData( 'SdbTaskID', taskID ) ;
+		sdbjs.fun.saveData( 'SdbDeployModel', 'taskRemoveSdb' ) ;
 		gotoPage( 'uninstsdb.html' ) ;
 	}, function( json ){
 		sdbjs.parts.loadingBox.hide( 'loading' ) ;
@@ -40,7 +41,7 @@ function openAddBusinessModal()
 //打开删除业务模态框
 function openDelBusinessModal( index )
 {
-	sdbjs.parts.buttonBox.update( 'isRemoveBusinessOK', htmlEncode( '确定' ), 'primary', null, 'removeBusiness(' + index + ')' ) ;
+	sdbjs.parts.buttonBox.update( 'isRemoveBusinessOK', htmlEncode( _languagePack['public']['button']['ok'] ), 'primary', null, 'removeBusiness(' + index + ')' ) ;
 	sdbjs.parts.modalBox.show( 'isRemoveBusiness' ) ;
 }
 
@@ -54,7 +55,8 @@ function addBusiness()
 
 	if( !checkStrName( businessName ) )
 	{
-		showModalError( 'addBusinessFootAlert', '业务名格式错误，业务名只能由数字字母下划线组成，并且长度在 1 - 255 个字符内.' ) ;
+		//'业务名格式错误，业务名只能由数字字母下划线组成，并且长度在 1 - 255 个字符内.'
+		showModalError( 'addBusinessFootAlert', _languagePack['error']['web']['create'][5] ) ;
 		return;
 	}
 	
@@ -68,7 +70,8 @@ function addBusiness()
 	
 	if( rc === false )
 	{
-		showModalError( 'addBusinessFootAlert', '业务名已经存在.' ) ;
+		//'业务名已经存在.'
+		showModalError( 'addBusinessFootAlert', _languagePack['error']['web']['create'][6] ) ;
 		return ;
 	}
 
@@ -80,7 +83,8 @@ function addBusiness()
 
 	if( hostsNum <= 0 )
 	{
-		showModalError( 'addBusinessFootAlert', '该集群还没有主机，无法添加业务.' ) ;
+		//'该集群还没有主机，无法添加业务.'
+		showModalError( 'addBusinessFootAlert', _languagePack['error']['web']['create'][7] ) ;
 		return ;
 	}
 	
@@ -116,7 +120,8 @@ function loadBusinessList()
 		sdbjs.parts.gridBox.addBody( 'businessInfoGrid', [{ 'text': htmlEncode( businessInfo['BusinessName'] ), 'width': '25%' },
 																		  { 'text': htmlEncode( businessInfo['BusinessType'] ), 'width': '25%' },
 																		  { 'text': htmlEncode( businessInfo['DeployMod'] ), 'width': '25%' },
-																		  { 'text': '<button class="btn btn-default btn-lg" onclick="openDelBusinessModal(' + index + ')">' + htmlEncode( '删除业务' ) + '</button>', 'width': '25%' } ] ) ;
+																		  //'删除业务'
+																		  { 'text': '<button class="btn btn-default btn-lg" onclick="openDelBusinessModal(' + index + ')">' + htmlEncode( _languagePack['businesslist']['businessGrid']['button']['remove'] ) + '</button>', 'width': '25%' } ] ) ;
 	} ) ;
 }
 
@@ -160,8 +165,10 @@ function createHtml()
 	/* 分页 */
 	sdbjs.parts.tabPageBox.create( 'top2', 'tab' ) ;
 	sdbjs.fun.setCSS( 'tab', { 'padding-top': 5 } ) ;
-	sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/home.png"> ' + htmlEncode( '总览' ), false, 'gotoIndex()' ) ;
-	sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/layers_1.png"> ' + htmlEncode( '业务列表' ), true, null ) ;
+	//'总览'
+	sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/home.png"> ' + htmlEncode( _languagePack['public']['tabPage'][1] ), false, 'gotoIndex()' ) ;
+	//'业务列表'
+	sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/layers_1.png"> ' + htmlEncode( _languagePack['public']['tabPage'][10] ), true, null ) ;
 	
 	/* 外框 */
 	sdbjs.parts.divBox.create( 'middle', 'middleDiv', 'auto', 'variable' ) ;
@@ -173,19 +180,22 @@ function createHtml()
 		sdbjs.parts.divBox.create( panelTitle['name'], 'clusterNameDiv' ) ;
 		sdbjs.fun.setCSS( 'clusterNameDiv', { 'text-overflow': 'ellipsis', 'overflow': 'hidden', 'white-space': 'nowrap' } ) ;
 		sdbjs.parts.divBox.update( 'clusterNameDiv', function( divObj ){
-			$( divObj ).text( '集群：' + _clusterName ) ;
+			//'集群：'
+			$( divObj ).text( _languagePack['businesslist']['title'] + _clusterName ) ;
 		} ) ;
 	}, function( panelBody ){
 		sdbjs.parts.divBox.create( panelBody['name'], 'businessTopDiv', 'auto', 43 ) ;
 		sdbjs.parts.divBox.update( 'businessTopDiv', function( divObj ){
-			$( divObj ).append( '<button class="btn btn-default" onclick="openAddBusinessModal()">添加业务</button>' ) ;
+			//添加业务
+			$( divObj ).append( '<button class="btn btn-default" onclick="openAddBusinessModal()">' + htmlEncode( _languagePack['businesslist']['tab']['button'][0] ) + '</button>' ) ;
 		} ) ;
 		sdbjs.parts.divBox.create( panelBody['name'], 'businessBottomDiv', 'auto', 'variable' ) ;
 		sdbjs.parts.gridBox.create( 'businessBottomDiv', 'businessInfoGrid', 'auto', 'variable' ) ;
-		sdbjs.parts.gridBox.addTitle( 'businessInfoGrid', [{ 'text': htmlEncode( '业务名' ), 'width': '25%' },
-																			{ 'text': htmlEncode( '业务类型' ), 'width': '25%' },
-																			{ 'text': htmlEncode( '业务模式' ), 'width': '25%' },
-																			{ 'text': htmlEncode( '操作' ), 'width': '25%' } ] ) ;
+		//业务名 业务类型 业务模式 操作
+		sdbjs.parts.gridBox.addTitle( 'businessInfoGrid', [{ 'text': htmlEncode( _languagePack['businesslist']['businessGrid']['title'][0] ), 'width': '25%' },
+																			{ 'text': htmlEncode( _languagePack['businesslist']['businessGrid']['title'][1] ), 'width': '25%' },
+																			{ 'text': htmlEncode( _languagePack['businesslist']['businessGrid']['title'][2] ), 'width': '25%' },
+																			{ 'text': htmlEncode( _languagePack['businesslist']['businessGrid']['title'][3] ), 'width': '25%' } ] ) ;
 	} ) ;
 	
 	/* ** */
@@ -194,31 +204,36 @@ function createHtml()
 	
 	/* 确认是否要卸载业务 */
 	sdbjs.parts.modalBox.create( $( document.body ), 'isRemoveBusiness' ) ;
-	sdbjs.parts.modalBox.update( 'isRemoveBusiness', htmlEncode( '提示' ), function( bodyObj ){
+	//'提示'
+	sdbjs.parts.modalBox.update( 'isRemoveBusiness', htmlEncode( _languagePack['businesslist']['isRemoveBusiness']['title'] ), function( bodyObj ){
 		sdbjs.parts.alertBox.create( bodyObj, 'isRemoveBusinessAlert' ) ;
-		sdbjs.parts.alertBox.update( 'isRemoveBusinessAlert', htmlEncode( 'Warning：该操作是不可恢复操作，并且不会保留该业务数据.' ), 'warning' )
+		//'Warning：该操作是不可恢复操作，并且不会保留该业务数据.'
+		sdbjs.parts.alertBox.update( 'isRemoveBusinessAlert', htmlEncode( _languagePack['tip']['web']['businesslist'][0] ), 'warning' )
 	}, function( footObj ){
 		$( footObj ).css( 'text-align', 'right' ) ;
 		sdbjs.parts.buttonBox.create( footObj, 'isRemoveBusinessOK' ) ;
 		$( footObj ).append( '&nbsp;' ) ;
 		sdbjs.parts.buttonBox.create( footObj, 'isRemoveBusinessClose' ) ;
-		sdbjs.parts.buttonBox.update( 'isRemoveBusinessOK', htmlEncode( '确定' ), 'primary', null, '' ) ;
+		sdbjs.parts.buttonBox.update( 'isRemoveBusinessOK', htmlEncode( _languagePack['public']['button']['ok'] ), 'primary', null, '' ) ;
 		sdbjs.parts.buttonBox.update( 'isRemoveBusinessClose', function( buttonObj ){
-			$( buttonObj ).text( '关闭' ).attr( 'data-toggle', 'modalBox' ).attr( 'data-target', 'isRemoveBusiness' ) ;
+			$( buttonObj ).text( _languagePack['public']['button']['close'] ).attr( 'data-toggle', 'modalBox' ).attr( 'data-target', 'isRemoveBusiness' ) ;
 		}, 'primary' ) ;
 	} ) ;
 	
 	/* 添加业务的弹窗 */
 	sdbjs.parts.modalBox.create( $( document.body ), 'addBusiness' ) ;
-	sdbjs.parts.modalBox.update( 'addBusiness', htmlEncode( '添加业务' ), function( bodyObj ){
+	//'添加业务'
+	sdbjs.parts.modalBox.update( 'addBusiness', htmlEncode( _languagePack['businesslist']['addBusiness']['title'] ), function( bodyObj ){
 		sdbjs.parts.tableBox.create( bodyObj, 'addBusinessTable' ) ;
 		sdbjs.parts.tableBox.update( 'addBusinessTable', 'loosen' ) ;
-		
-		sdbjs.parts.tableBox.addBody( 'addBusinessTable', [{ 'text': htmlEncode( '业务名：' ), 'width': 100 },
+		//'业务名：'
+		sdbjs.parts.tableBox.addBody( 'addBusinessTable', [{ 'text': htmlEncode( _languagePack['businesslist']['addBusiness']['table'][0][0] ), 'width': 100 },
 																			{ 'text': '<input class="form-control" type="text" id="businessName_a" value="myBusiness">' },
-																			{ 'text': htmlEncode( '安装的业务名' ) } ] ) ;
+																			//'安装的业务名'
+																			{ 'text': htmlEncode( _languagePack['businesslist']['addBusiness']['table'][0][1] ) } ] ) ;
 
-		sdbjs.parts.tableBox.addBody( 'addBusinessTable', [{ 'text': htmlEncode( '业务类型：' ), 'width': 100 },
+		//'业务类型：' 
+		sdbjs.parts.tableBox.addBody( 'addBusinessTable', [{ 'text': htmlEncode( _languagePack['businesslist']['addBusiness']['table'][1][0] ), 'width': 100 },
 																			{ 'text': '<select class="form-control" id="businessType_a"></select>' },
 																			{ 'text': '' } ] ) ;
 	}, function( footObj ){
@@ -231,9 +246,9 @@ function createHtml()
 																				sdbjs.parts.buttonBox.create( tdObj, 'addBusinessOK' ) ;
 																				$( tdObj ).append( '&nbsp;' ) ;
 																				sdbjs.parts.buttonBox.create( tdObj, 'addBusinessClose' ) ;
-																				sdbjs.parts.buttonBox.update( 'addBusinessOK', htmlEncode( '确定' ), 'primary', null, 'addBusiness()' ) ;
+																				sdbjs.parts.buttonBox.update( 'addBusinessOK', htmlEncode( _languagePack['public']['button']['ok'] ), 'primary', null, 'addBusiness()' ) ;
 																				sdbjs.parts.buttonBox.update( 'addBusinessClose', function( buttonObj ){
-																					$( buttonObj ).text( '关闭' ).attr( 'data-toggle', 'modalBox' ).attr( 'data-target', 'addBusiness' ) ;
+																					$( buttonObj ).text( _languagePack['public']['button']['close'] ).attr( 'data-toggle', 'modalBox' ).attr( 'data-target', 'addBusiness' ) ;
 																				}, 'primary' ) ;
 																			}, 'width': 120  } ] ) ;
 	} ) ;

@@ -256,10 +256,10 @@ function createHtml()
 
 	if( _deployModel === 'taskRemoveHost' )
 	{
-		sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/home.png"> ' + htmlEncode( '总览' ), false, 'gotoPage("index.html")' ) ;
+		sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/home.png"> ' + htmlEncode( _languagePack['public']['tabPage'][1] ), false, 'gotoPage("index.html")' ) ;
 	}
 	//'卸载主机'
-	sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/trash.png"> ' + htmlEncode( '卸载主机' ), true, null ) ;
+	sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/trash.png"> ' + htmlEncode( _languagePack['public']['tabPage'][9] ), true, null ) ;
 	
 	/* 左边框架 */
 	sdbjs.parts.divBox.create( 'middle', 'middle-left', 460, 'variable' ) ;
@@ -367,6 +367,7 @@ function checkReady()
 $(document).ready(function(){
 	if( checkReady() === true )
 	{
+		sdbjs.fun.saveData( 'SdbStep', 'uninsthost' ) ;
 		createHtml() ;
 		queryTaskInfo( true ) ;
 	}

@@ -304,6 +304,7 @@ function scanHostList( key, hostListArr, user, pwd, ssh, proxy )
 	}
 }
 
+//重新扫描
 function reScanHost( line )
 {
 	var user = $( '#hostSearchUser' ).val() ;
@@ -312,13 +313,13 @@ function reScanHost( line )
 	var proxy = '' ;
 
 	sdbjs.parts.gridBox.updateBody( 'hostSearchGrid', line, 4, function( tdObj ){
-		pwd = $( tdObj ).children( 'input' ).css( 'z-index', '1' ).val() ;
+		pwd = $( tdObj ).children( 'input' ).val() ;
 	} ) ;
 	sdbjs.parts.gridBox.updateBody( 'hostSearchGrid', line, 5, function( tdObj ){
-		ssh = $( tdObj ).children( 'input' ).css( 'z-index', '1' ).val() ;
+		ssh = $( tdObj ).children( 'input' ).val() ;
 	} ) ;
 	sdbjs.parts.gridBox.updateBody( 'hostSearchGrid', line, 6, function( tdObj ){
-		proxy = $( tdObj ).children( 'input' ).css( 'z-index', '1' ).val() ;
+		proxy = $( tdObj ).children( 'input' ).val() ;
 	} ) ;
 	
 	if( !checkString( user, 1, 255 ) )
@@ -341,6 +342,16 @@ function reScanHost( line )
 		showFootStatus( 'danger', _languagePack['error']['web']['scanhost'][4] ) ;//'代理端口格式错误。'
 		return;
 	}
+	
+	sdbjs.parts.gridBox.updateBody( 'hostSearchGrid', line, 4, function( tdObj ){
+		$( tdObj ).children( 'input' ).css( 'z-index', '1' ) ;
+	} ) ;
+	sdbjs.parts.gridBox.updateBody( 'hostSearchGrid', line, 5, function( tdObj ){
+		$( tdObj ).children( 'input' ).css( 'z-index', '1' ) ;
+	} ) ;
+	sdbjs.parts.gridBox.updateBody( 'hostSearchGrid', line, 6, function( tdObj ){
+		$( tdObj ).children( 'input' ).css( 'z-index', '1' ) ;
+	} ) ;
 	
 	//隐藏透明遮罩
 	sdbjs.parts.screenBox.hide( 'modifyScreen' ) ;
@@ -539,26 +550,26 @@ function createHtml()
 	sdbjs.parts.tabPageBox.create( 'top2', 'tab' ) ;
 	sdbjs.fun.setCSS( 'tab', { 'padding-top': 5 } ) ;
 	//'扫描主机'
-	sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/zoom.png"> ' + htmlEncode( _languagePack['public']['tabPage'][0] ), true, null ) ;
+	sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/zoom.png"> ' + htmlEncode( _languagePack['public']['tabPage'][2] ), true, null ) ;
 	if( _deployModel === 'AddHost' )
 	{
 		//'添加主机'
-		sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/layers_1.png"> ' + htmlEncode( _languagePack['public']['tabPage'][1] ), false, null );
+		sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/layers_1.png"> ' + htmlEncode( _languagePack['public']['tabPage'][3] ), false, null );
 		//'安装主机'
-		sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/cog.png"> ' + htmlEncode( _languagePack['public']['tabPage'][2] ), false, null );
+		sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/cog.png"> ' + htmlEncode( _languagePack['public']['tabPage'][4] ), false, null );
 	}
 	if( _deployModel === 'Deploy' )
 	{
 		//'添加主机'
-		sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/layers_1.png"> ' + htmlEncode( _languagePack['public']['tabPage'][1] ), false, null );
+		sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/layers_1.png"> ' + htmlEncode( _languagePack['public']['tabPage'][3] ), false, null );
 		//'安装主机'
-		sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/cog.png"> ' + htmlEncode( _languagePack['public']['tabPage'][2] ), false, null );
+		sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/cog.png"> ' + htmlEncode( _languagePack['public']['tabPage'][4] ), false, null );
 		//'配置业务'
-		sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/cube.png"> ' + htmlEncode( _languagePack['public']['tabPage'][3] ), false, null ) ;
+		sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/cube.png"> ' + htmlEncode( _languagePack['public']['tabPage'][5] ), false, null ) ;
 		//'修改业务'
-		sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/doc_lines_stright.png"> ' + htmlEncode( _languagePack['public']['tabPage'][4] ), false, null );
+		sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/doc_lines_stright.png"> ' + htmlEncode( _languagePack['public']['tabPage'][6] ), false, null );
 		//'安装业务'
-		sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/cog.png"> ' + htmlEncode( _languagePack['public']['tabPage'][5] ), false, null );
+		sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/cog.png"> ' + htmlEncode( _languagePack['public']['tabPage'][7] ), false, null );
 	}
 	
 	/* 左边框架 */
@@ -675,21 +686,27 @@ function createHtml()
 
 function checkReady()
 {
+	var rc = true ;
 	_clusterName = sdbjs.fun.getData( 'SdbClusterName' ) ;
 	if( _clusterName === null )
 	{
+		rc = false ;
 		gotoPage( 'index.html' ) ;
 	}
 	_deployModel = sdbjs.fun.getData( 'SdbDeployModel' ) ;
 	if( _deployModel === null || ( _deployModel !== 'AddHost' && _deployModel !== 'Deploy' ) )
 	{
+		rc = false ;
 		gotoPage( 'index.html' ) ;
 	}
+	return rc ;
 }
 
 $(document).ready(function(){
-	sdbjs.fun.saveData( 'SdbStep', 'scanhost' ) ;
-	checkReady() ;
-	createHtml() ;
-	createDynamicHtml() ;
+	if( checkReady() )
+	{
+		sdbjs.fun.saveData( 'SdbStep', 'scanhost' ) ;
+		createHtml() ;
+		createDynamicHtml() ;
+	}
 } ) ;

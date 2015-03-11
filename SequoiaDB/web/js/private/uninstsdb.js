@@ -4,6 +4,9 @@ var _taskID = null ;
 //主机状态
 var _nodeStatus = [] ;
 
+//部署模式
+var _deployModel = null ;
+
 //判断日志弹出是否放大
 var _isLogModalZooomin = false ;
 
@@ -138,7 +141,7 @@ function updateTaskInfo( taskInfo, isFirst )
 	var errNode = 0 ;
 	var color = 'green' ;
 	var sumPro = taskInfo['ResultInfo'].length ;
-	var remainTime = parseInt( 3 * ( 1 - taskInfo['Progress'] / 100 ) * sumPro ) ;
+	var remainTime = parseInt( ( 1 - taskInfo['Progress'] / 100 ) * sumPro ) ;
 	var taskStatus = typeToStr( taskInfo['Status'], taskInfo['errno'] ) ;
 	if( isFirst === true )
 	{
@@ -250,8 +253,12 @@ function createHtml()
 	sdbjs.parts.tabPageBox.create( 'top2', 'tab' ) ;
 	sdbjs.fun.setCSS( 'tab', { 'padding-top': 5 } ) ;
 
+	if( _deployModel === 'taskRemoveSdb' )
+	{
+		sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/home.png"> ' + htmlEncode( _languagePack['public']['tabPage'][1] ), false, 'gotoPage("index.html")' ) ;
+	}
 	//'卸载业务'
-	sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/trash.png"> ' + htmlEncode( '卸载业务' ), true, null );
+	sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/trash.png"> ' + htmlEncode( _languagePack['public']['tabPage'][8] ), true, null );
 	
 	
 	/* 左边框架 */
@@ -280,7 +287,7 @@ function createHtml()
 		//'预计剩余时间'
 		sdbjs.parts.tableBox.addBody( 'nodeInfoTable', [ { 'text': htmlEncode( _languagePack['uninstsdb']['leftPanel']['taskInfo'][6] ) }, { 'text': '' } ] ) ;
 		
-		//'预计剩余时间'
+		//'日志'
 		sdbjs.parts.tableBox.addBody( 'nodeInfoTable', [ { 'text': htmlEncode( _languagePack['uninstsdb']['leftPanel']['taskInfo'][7] ) }, { 'text': '<button class="btn btn-default btn-lg" onclick="openLogModal()">' + htmlEncode( _languagePack['uninstsdb']['leftPanel']['logButton'] ) + '</button>' } ] ) ;
 	} ) ;
 
@@ -345,15 +352,22 @@ function createHtml()
 
 function checkReady()
 {
+	var rc = true ;
 	_taskID = sdbjs.fun.getData( 'SdbTaskID' ) ;
 	if( _taskID === null )
 	{
+		rc = false ;
 		gotoPage( 'index.html' ) ;
 	}
+	_deployModel = sdbjs.fun.getData( 'SdbDeployModel' ) ;
+	return rc ;
 }
 
 $(document).ready(function(){
-	checkReady() ;
-	createHtml() ;
-	queryTaskInfo( true ) ;
+	if( checkReady() === true )
+	{
+		sdbjs.fun.saveData( 'SdbStep', 'uninstsdb' ) ;
+		createHtml() ;
+		queryTaskInfo( true ) ;
+	}
 } ) ;

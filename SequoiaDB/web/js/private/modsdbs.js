@@ -1,7 +1,3 @@
-
-//集群名
-var _clusterName = null ;
-
 //部署模式
 var _deployModel = null ;
 
@@ -142,7 +138,8 @@ function loadBusinessConf()
 //加载配置参数列表
 function loadNodePara()
 {
-	sdbjs.parts.gridBox.addBody( 'modNodeConfGrid', [{ 'text': htmlEncode( '主机名' ), 'width': '20%' },
+	//主机名
+	sdbjs.parts.gridBox.addBody( 'modNodeConfGrid', [{ 'text': htmlEncode( _languagePack['modsdbs']['panel']['nodeConf']['hostName'] ), 'width': '20%' },
 																	 { 'text': htmlEncode( _businessPara['Config'][0]['HostName'] ), 'width': '40%' },
 																	 { 'text': htmlEncode( '' ), 'width': '40%' } ]  ) ;
 	
@@ -189,13 +186,13 @@ function createHtml()
 	sdbjs.fun.setCSS( 'tab', { 'padding-top': 5 } ) ;
 	if( _deployModel === 'Deploy' )
 	{
-		sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/zoom.png"> ' + htmlEncode( '扫描主机' ), false, null ) ;
-		sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/layers_1.png"> ' + htmlEncode( '添加主机' ), false, null );
-		sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/layers_1.png"> ' + htmlEncode( '安装主机' ), false, null );
+		sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/zoom.png"> ' + htmlEncode( _languagePack['public']['tabPage'][2] ), false, null ) ;
+		sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/layers_1.png"> ' + htmlEncode( _languagePack['public']['tabPage'][3] ), false, null );
+		sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/layers_1.png"> ' + htmlEncode( _languagePack['public']['tabPage'][4] ), false, null );
 	}
-	sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/home.png"> ' + htmlEncode( '配置业务' ), false, null ) ;
-	sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/layers_1.png"> ' + htmlEncode( '修改业务' ), true, null );
-	sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/layers_1.png"> ' + htmlEncode( '安装业务' ), false, null );
+	sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/home.png"> ' + htmlEncode( _languagePack['public']['tabPage'][5] ), false, null ) ;
+	sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/layers_1.png"> ' + htmlEncode( _languagePack['public']['tabPage'][6] ), true, null );
+	sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/layers_1.png"> ' + htmlEncode( _languagePack['public']['tabPage'][7] ), false, null );
 	
 	/* 外框 */
 	sdbjs.parts.divBox.create( 'middle', 'middleDiv', 'auto', 'variable' ) ;
@@ -207,22 +204,27 @@ function createHtml()
 		sdbjs.parts.divBox.create( panelTitle['name'], 'businessNameDiv' ) ;
 		sdbjs.fun.setCSS( 'businessNameDiv', { 'text-overflow': 'ellipsis', 'overflow': 'hidden', 'white-space': 'nowrap' } ) ;
 		sdbjs.parts.divBox.update( 'businessNameDiv', function( divObj ){
-			$( divObj ).text( '业务：' + _businessConfig['BusinessName'] ) ;
+			//业务
+			$( divObj ).text( _languagePack['modsdbs']['title'] + _businessConfig['BusinessName'] ) ;
 		} ) ;
 		
 	}, function( panelBody ){
 		sdbjs.parts.navTabBox.create( panelBody['name'], 'modNodeConfTab', 'auto', 'variable' ) ;
-		sdbjs.parts.navTabBox.add( 'modNodeConfTab', '普通', function( divObj ){
+		//普通
+		sdbjs.parts.navTabBox.add( 'modNodeConfTab', _languagePack['modsdbs']['tab'][0], function( divObj ){
 			sdbjs.parts.gridBox.create( divObj, 'modNodeConfGrid', 'auto', 'variable' ) ;
-			sdbjs.parts.gridBox.addTitle( 'modNodeConfGrid', [{ 'text': htmlEncode( '属性' ), 'width': '20%' },
-																			  { 'text': htmlEncode( '值' ), 'width': '40%' },
-																			  { 'text': htmlEncode( '说明' ), 'width': '40%' } ]  ) ;
+			// 属性 值 说明
+			sdbjs.parts.gridBox.addTitle( 'modNodeConfGrid', [{ 'text': htmlEncode( _languagePack['modsdbs']['panel']['nodeConf']['title'][0] ), 'width': '20%' },
+																			  { 'text': htmlEncode( _languagePack['modsdbs']['panel']['nodeConf']['title'][1] ), 'width': '40%' },
+																			  { 'text': htmlEncode( _languagePack['modsdbs']['panel']['nodeConf']['title'][2] ), 'width': '40%' } ]  ) ;
 		}, 'redrawNodePataModal()' ) ;
-		sdbjs.parts.navTabBox.add( 'modNodeConfTab', '高级', function( divObj ){
+		//高级
+		sdbjs.parts.navTabBox.add( 'modNodeConfTab', _languagePack['modsdbs']['tab'][1], function( divObj ){
 			sdbjs.parts.gridBox.create( divObj, 'modNodeConfGrid2' ) ;
-			sdbjs.parts.gridBox.addTitle( 'modNodeConfGrid2', [{ 'text': htmlEncode( '属性' ), 'width': '20%' },
-																				{ 'text': htmlEncode( '值' ), 'width': '40%' },
-																				{ 'text': htmlEncode( '说明' ), 'width': '40%' } ]  ) ;
+			// 属性 值 说明
+			sdbjs.parts.gridBox.addTitle( 'modNodeConfGrid2', [{ 'text': htmlEncode( _languagePack['modsdbs']['panel']['nodeConf']['title'][0] ), 'width': '20%' },
+																				{ 'text': htmlEncode( _languagePack['modsdbs']['panel']['nodeConf']['title'][1] ), 'width': '40%' },
+																				{ 'text': htmlEncode( _languagePack['modsdbs']['panel']['nodeConf']['title'][2] ), 'width': '40%' } ]  ) ;
 		}, 'redrawNodePataModal()' ) ;
 	} ) ;
 	
@@ -233,14 +235,14 @@ function createHtml()
 	//返回 下一步
 	sdbjs.parts.buttonBox.create( 'operate', 'deployReturn' ) ;
 	sdbjs.parts.buttonBox.update( 'deployReturn', function( buttonObj ){
-		$( buttonObj ).text( '返回' ) ;
+		$( buttonObj ).text( _languagePack['public']['button']['return']) ;
 		sdbjs.fun.addClick( buttonObj, 'returnPage()' ) ;
 	}, 'primary' ) ;
 	var operateNode = sdbjs.fun.getNode( 'operate', 'divBox' ) ;
 	$( operateNode['obj'] ).append( '&nbsp;' ) ;
 	sdbjs.parts.buttonBox.create( 'operate', 'deployNext' ) ;
 	sdbjs.parts.buttonBox.update( 'deployNext', function( buttonObj ){
-		$( buttonObj ).text( '下一步' ) ;
+		$( buttonObj ).text( _languagePack['public']['button']['next'] ) ;
 		sdbjs.fun.addClick( buttonObj, 'nextPage()' ) ;
 	}, 'primary' ) ;
 }
@@ -248,12 +250,6 @@ function createHtml()
 function checkReady()
 {
 	var rc = true ;
-	_clusterName = sdbjs.fun.getData( 'SdbClusterName' ) ;
-	if( _clusterName === null )
-	{
-		rc = false ;
-		gotoPage( 'index.html' ) ;
-	}
 	_businessConfig = sdbjs.fun.getData( 'SdbBusinessConfig' ) ;
 	if( _businessConfig === null )
 	{
@@ -281,6 +277,7 @@ function checkReady()
 $(document).ready(function(){
 	if( checkReady() === true )
 	{
+		sdbjs.fun.saveData( 'SdbStep', 'modsdbs' ) ;
 		createHtml() ;
 		createDynamicHtml() ;
 	}

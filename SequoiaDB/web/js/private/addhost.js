@@ -627,14 +627,17 @@ function createHtml()
 
 function checkReady()
 {
+	var rc = true ;
 	_clusterName = sdbjs.fun.getData( 'SdbClusterName' ) ;
 	if( _clusterName === null )
 	{
+		rc = false ;
 		gotoPage( 'index.html' ) ;
 	}
 	_deployModel = sdbjs.fun.getData( 'SdbDeployModel' ) ;
 	if( _deployModel === null || ( _deployModel !== 'AddHost' && _deployModel !== 'Deploy' ) )
 	{
+		rc = false ;
 		gotoPage( 'index.html' ) ;
 	}
 	_hostConf = sdbjs.fun.getData( 'SdbHostConf' ) ;
@@ -644,6 +647,7 @@ function checkReady()
 		_hostList = sdbjs.fun.getData( 'SdbHostList' ) ;
 		if( _hostList === null )
 		{
+			rc = false ;
 			gotoPage( 'index.html' ) ;
 		}
 	}
@@ -651,11 +655,14 @@ function checkReady()
 	{
 		_hostConf = JSON.parse( _hostConf ) ;
 	}
+	return rc ;
 }
 
 $(document).ready(function(){
-	sdbjs.fun.saveData( 'SdbStep', 'addhost' ) ;
-	checkReady() ;
-	createHtml() ;
-	createDynamicHtml() ;
+	if( checkReady() )
+	{
+		sdbjs.fun.saveData( 'SdbStep', 'addhost' ) ;
+		createHtml() ;
+		createDynamicHtml() ;
+	}
 } ) ;

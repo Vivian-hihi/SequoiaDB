@@ -1,7 +1,3 @@
-
-//集群名
-var _clusterName = null ;
-
 //部署模式
 var _deployModel = null ;
 
@@ -1359,18 +1355,18 @@ function createHtml()
 	if( _deployModel === 'Deploy' )
 	{
 		//'扫描主机'
-		sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/zoom.png"> ' + htmlEncode( _languagePack['public']['tabPage'][0] ), false, null ) ;
+		sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/zoom.png"> ' + htmlEncode( _languagePack['public']['tabPage'][2] ), false, null ) ;
 		//'添加主机'
-		sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/layers_1.png"> ' + htmlEncode( _languagePack['public']['tabPage'][1] ), false, null );
+		sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/layers_1.png"> ' + htmlEncode( _languagePack['public']['tabPage'][3] ), false, null );
 		//'安装主机'
-		sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/cog.png"> ' + htmlEncode( _languagePack['public']['tabPage'][2] ), false, null );
+		sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/cog.png"> ' + htmlEncode( _languagePack['public']['tabPage'][4] ), false, null );
 	}
 	//'配置业务'
-	sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/cube.png"> ' + htmlEncode( _languagePack['public']['tabPage'][3] ), false, null ) ;
+	sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/cube.png"> ' + htmlEncode( _languagePack['public']['tabPage'][5] ), false, null ) ;
 	//'修改业务'
-	sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/doc_lines_stright.png"> ' + htmlEncode( _languagePack['public']['tabPage'][4] ), true, null );
+	sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/doc_lines_stright.png"> ' + htmlEncode( _languagePack['public']['tabPage'][6] ), true, null );
 	//'安装业务'
-	sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/cog.png"> ' + htmlEncode( _languagePack['public']['tabPage'][5] ), false, null );
+	sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/cog.png"> ' + htmlEncode( _languagePack['public']['tabPage'][7] ), false, null );
 	
 	/* 左边框架 */
 	sdbjs.parts.divBox.create( 'middle', 'middle-left', 460, 'variable' ) ;
@@ -1658,25 +1654,25 @@ function createHtml()
 	/* 创建帮助的弹窗 */
 	sdbjs.parts.modalBox.create( $( document.body ), 'nodeConfHelp' ) ;
 	//'帮助'
-	sdbjs.parts.modalBox.update( 'nodeConfHelp', htmlEncode( '帮助' ), function( bodyObj ){
+	sdbjs.parts.modalBox.update( 'nodeConfHelp', htmlEncode( _languagePack['modsdbd']['nodeConfHelpModal']['title'] ), function( bodyObj ){
 		//'关于?[已选定操作]-[修改节点配置]?。您可以使用特殊规则来?批量修改?节点的?服务名?和?数据路径?:'
-		$( bodyObj ).append( sdbjs.fun.sprintf( htmlEncode( '关于?[已选定操作]-[修改节点配置]?。您可以使用特殊规则来?批量修改?节点的?服务名?和?数据路径?:' ), '<b>', '</b>', '<b>', '</b>', '<b>', '</b>', '<b>', '</b>' ) ) ;
+		$( bodyObj ).append( sdbjs.fun.sprintf( htmlEncode( _languagePack['modsdbd']['nodeConfHelpModal']['body'][0] ), '<b>', '</b>', '<b>', '</b>', '<b>', '</b>', '<b>', '</b>' ) ) ;
 		sdbjs.parts.tableBox.create( bodyObj, 'nodeConfHelpTable_1' ) ;
 		sdbjs.fun.setCSS( 'nodeConfHelpTable_1', { 'margin-top': 10, 'line-height': '160%' } ) ;
 		sdbjs.parts.tableBox.update( 'nodeConfHelpTable_1', 'loosen border' ) ;
 		//'服务名规则' '规则：服务名[+步进] 或 服务名[-步进]。'
-		sdbjs.parts.tableBox.addBody( 'nodeConfHelpTable_1', [ { 'text': htmlEncode( '服务名规则' ), 'colspan': 2 }, { 'text': htmlEncode( '规则：服务名[+步进] 或 服务名[-步进]。' ) } ] ) ;
-		sdbjs.parts.tableBox.addBody( 'nodeConfHelpTable_1', [ { 'text': htmlEncode( '规则' ) }, { 'text': htmlEncode( '例子' ) }, { 'text': htmlEncode( '描述' ) } ] ) ;
-		sdbjs.parts.tableBox.addBody( 'nodeConfHelpTable_1', [ { 'text': htmlEncode( '普通方式' ) }, { 'text': htmlEncode( '11810' ) }, { 'text': htmlEncode( '设置服务名为：11810，但要注意同一主机下的节点是不能有相同服务名。假设有3个节点：PcHost-1:11810，PcHost-2:11810，PcHost-3:11810' ) } ] ) ;
-		sdbjs.parts.tableBox.addBody( 'nodeConfHelpTable_1', [ { 'text': htmlEncode( '递增方式' ) }, { 'text': htmlEncode( '11810[+10]' ) }, { 'text': htmlEncode( '设置已选定节点的服务名从11810起始(含11810)，每一个节点递增10。假设有3个节点：PcHost-1:11810，PcHost-2:11820，PcHost-3:11830' ) } ] ) ;
-		sdbjs.parts.tableBox.addBody( 'nodeConfHelpTable_1', [ { 'text': htmlEncode( '递减方式' ) }, { 'text': htmlEncode( '11810[-10]' ) }, { 'text': htmlEncode( '设置已选定节点的服务名从11810起始(含11810)，每一个节点递减10。假设有3个节点：PcHost-1:11810，PcHost-2:11800，PcHost-3:11790' ) } ] ) ;
+		sdbjs.parts.tableBox.addBody( 'nodeConfHelpTable_1', [ { 'text': htmlEncode( _languagePack['modsdbd']['nodeConfHelpModal']['body'][1][0][0] ), 'colspan': 2 }, { 'text': htmlEncode( _languagePack['modsdbd']['nodeConfHelpModal']['body'][1][0][1] ) } ] ) ;
+		sdbjs.parts.tableBox.addBody( 'nodeConfHelpTable_1', [ { 'text': htmlEncode( _languagePack['modsdbd']['nodeConfHelpModal']['body'][1][1][0] ) }, { 'text': htmlEncode( _languagePack['modsdbd']['nodeConfHelpModal']['body'][1][1][1] ) }, { 'text': htmlEncode( _languagePack['modsdbd']['nodeConfHelpModal']['body'][1][1][2] ) } ] ) ;
+		sdbjs.parts.tableBox.addBody( 'nodeConfHelpTable_1', [ { 'text': htmlEncode( _languagePack['modsdbd']['nodeConfHelpModal']['body'][1][2][0] ) }, { 'text': htmlEncode( _languagePack['modsdbd']['nodeConfHelpModal']['body'][1][2][1] ) }, { 'text': htmlEncode( _languagePack['modsdbd']['nodeConfHelpModal']['body'][1][2][2] ) } ] ) ;
+		sdbjs.parts.tableBox.addBody( 'nodeConfHelpTable_1', [ { 'text': htmlEncode( _languagePack['modsdbd']['nodeConfHelpModal']['body'][1][3][0] ) }, { 'text': htmlEncode( _languagePack['modsdbd']['nodeConfHelpModal']['body'][1][3][1] ) }, { 'text': htmlEncode( _languagePack['modsdbd']['nodeConfHelpModal']['body'][1][3][2] ) } ] ) ;
+		sdbjs.parts.tableBox.addBody( 'nodeConfHelpTable_1', [ { 'text': htmlEncode( _languagePack['modsdbd']['nodeConfHelpModal']['body'][1][4][0] ) }, { 'text': htmlEncode( _languagePack['modsdbd']['nodeConfHelpModal']['body'][1][4][1] ) }, { 'text': htmlEncode( _languagePack['modsdbd']['nodeConfHelpModal']['body'][1][4][2] ) } ] ) ;
 		
 		sdbjs.parts.tableBox.create( bodyObj, 'nodeConfHelpTable_2' ) ;
 		sdbjs.fun.setCSS( 'nodeConfHelpTable_2', { 'margin-top': 10, 'line-height': '160%' } ) ;
 		sdbjs.parts.tableBox.update( 'nodeConfHelpTable_2', 'loosen border' ) ;
-		sdbjs.parts.tableBox.addBody( 'nodeConfHelpTable_2', [ { 'text': htmlEncode( '数据路径规则' ) }, { 'text': htmlEncode( '规则：可以在路径中任意添加这几个特殊命令，[role] -- 角色，[svcname] -- 服务名，[groupname] -- 分区组名，[hostname] --  主机名。' ) } ] ) ;
-		sdbjs.parts.tableBox.addBody( 'nodeConfHelpTable_2', [ { 'text': htmlEncode( '例子' ) }, { 'text': htmlEncode( '描述' ) } ] ) ;
-		sdbjs.parts.tableBox.addBody( 'nodeConfHelpTable_2', [ { 'text': htmlEncode( '/opt/sequoiadb/database/[role]/[svcname]' ) }, { 'text': htmlEncode( '假设已选定节点配置为：角色：data，服务名：11810，数据路径将会是：/opt/sequoiadb/database/data/11810，注意：协调节点和编目节点是没有分区组名的，因此当节点是协调节点或编目节点时，[groupname]是空字符。' ) } ] ) ;
+		sdbjs.parts.tableBox.addBody( 'nodeConfHelpTable_2', [ { 'text': htmlEncode( _languagePack['modsdbd']['nodeConfHelpModal']['body'][2][0][0] ) }, { 'text': htmlEncode( _languagePack['modsdbd']['nodeConfHelpModal']['body'][2][0][1] ) } ] ) ;
+		sdbjs.parts.tableBox.addBody( 'nodeConfHelpTable_2', [ { 'text': htmlEncode( _languagePack['modsdbd']['nodeConfHelpModal']['body'][2][1][0] ) }, { 'text': htmlEncode( _languagePack['modsdbd']['nodeConfHelpModal']['body'][2][1][1] ) } ] ) ;
+		sdbjs.parts.tableBox.addBody( 'nodeConfHelpTable_2', [ { 'text': htmlEncode( _languagePack['modsdbd']['nodeConfHelpModal']['body'][2][2][0] ) }, { 'text': htmlEncode( _languagePack['modsdbd']['nodeConfHelpModal']['body'][2][2][1] ) } ] ) ;
 
 	}, function( footObj ){
 		$( footObj ).css( 'text-align', 'right' ) ;
@@ -1692,12 +1688,6 @@ function createHtml()
 function checkReady()
 {
 	var rc = true ;
-	_clusterName = sdbjs.fun.getData( 'SdbClusterName' ) ;
-	if( _clusterName === null )
-	{
-		rc = false ;
-		gotoPage( 'index.html' ) ;
-	}
 	_businessConfig = sdbjs.fun.getData( 'SdbBusinessConfig' ) ;
 	if( _businessConfig === null )
 	{
@@ -1730,6 +1720,7 @@ function checkReady()
 $(document).ready(function(){
 	if( checkReady() === true )
 	{
+		sdbjs.fun.saveData( 'SdbStep', 'modsdbd' ) ;
 		createHtml() ;
 		createDynamicHtml() ;
 	}

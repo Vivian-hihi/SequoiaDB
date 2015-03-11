@@ -216,7 +216,7 @@ function restChangePasswd( async, success, error, complete, user, passwd, newPas
 //获取正在进行的任务列表
 function restListTasks( async, success, error, complete )
 {
-	var data = { 'cmd': 'list tasks'};//, 'filter': JSON.stringify( { 'Progress': { '$lt': 100 } } ) } ;
+	var data = { 'cmd': 'list tasks', 'filter': JSON.stringify( { 'Progress': { '$lt': 100 } } ) } ;
 	ajaxSendMsg( data, async, restBeforeSend, success, error, complete ) ;
 }
 

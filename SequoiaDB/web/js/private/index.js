@@ -294,11 +294,11 @@ function gotoTaskPage( taskID, taskType )
 	else if( taskType === 2 )
 	{
 		sdbjs.fun.saveData( 'SdbDeployModel', 'taskAddSdb' ) ;
-		sdbjs.fun.saveData( 'SdbBusinessConfig', JSON.stringify( {  } ) ) ;
 		gotoPage( 'installsdb.html' ) ;
 	}
 	else if( taskType === 3 )
 	{
+		sdbjs.fun.saveData( 'SdbDeployModel', 'taskRemoveSdb' ) ;
 		gotoPage( 'uninstsdb.html' ) ;
 	}
 }
@@ -866,6 +866,98 @@ function loadBusinessType()
 	} ) ;
 }
 
+//检测部署状态
+function checkDeploy()
+{
+	function setTips( target, pageName )
+	{
+		//'Info: 系统检测到您在?时中断，是否要回到该操作中继续？'
+		sdbjs.parts.alertBox.update( 'isGoOnDeployAlert', htmlEncode( sdbjs.fun.sprintf( _languagePack['tip']['web']['index'][0], pageName ) ), 'info' ) ;
+		sdbjs.parts.buttonBox.update( 'isGoOnDeployOK', htmlEncode( _languagePack['public']['button']['ok'] ), 'primary', null, 'gotoPage("' + target + '")' ) ;
+		sdbjs.parts.modalBox.show( 'isGoOnDeploy' ) ;
+	}
+	var rc = false ;
+	//刚刚登录 检查是否在部署中途
+	if( sdbjs.fun.getData( 'SdbIsLogin' ) === 'true' )
+	{
+		sdbjs.fun.delData( 'SdbIsLogin' ) ;
+		var deployModel = sdbjs.fun.getData( 'SdbDeployModel' ) ;
+		var step = sdbjs.fun.getData( 'SdbStep' ) ;
+		if ( deployModel === 'AddHost' || deployModel === 'Deploy' )
+		{
+			if( step === 'scanhost' && sdbjs.fun.hasData( 'SdbClusterName' ) )
+			{
+				rc = true ;
+				setTips( step + '.html', _languagePack['public']['tabPage'][2] ) ;
+			}
+			else if( step === 'addhost' && sdbjs.fun.hasData( 'SdbHostList' ) && sdbjs.fun.hasData( 'SdbClusterName' ) )
+			{
+				rc = true ;
+				setTips( step + '.html', _languagePack['public']['tabPage'][3] ) ;
+			}
+			else if( step === 'installhost' && sdbjs.fun.hasData( 'SdbTaskID' ) )
+			{
+				rc = true ;
+				setTips( step + '.html', _languagePack['public']['tabPage'][4] ) ;
+			}
+		}
+		else if ( deployModel === 'AddBusiness' || deployModel === 'Deploy' )
+		{
+			if ( sdbjs.fun.getData( 'SdbBusinessType' ) === 'sequoiadb' )
+			{
+				if( step === 'confsdb' && sdbjs.fun.hasData( 'SdbClusterName' ) && sdbjs.fun.hasData( 'SdbBusinessName' ) )
+				{
+					rc = true ;
+					setTips( step + '.html', _languagePack['public']['tabPage'][5] ) ;
+				}
+				else if( step === 'modsdbd' && sdbjs.fun.hasData( 'SdbBusinessConfig' ) )
+				{
+					rc = true ;
+					setTips( step + '.html', _languagePack['public']['tabPage'][6] ) ;
+				}
+				else if( step === 'modsdbs' && sdbjs.fun.hasData( 'SdbBusinessConfig' ) )
+				{
+					rc = true ;
+					setTips( step + '.html', _languagePack['public']['tabPage'][6] ) ;
+				}
+				else if( step === 'installsdb' && sdbjs.fun.hasData( 'SdbTaskID' ) && sdbjs.fun.hasData( 'SdbBusinessConfig' ) )
+				{
+					rc = true ;
+					setTips( step + '.html', _languagePack['public']['tabPage'][7] ) ;
+				}
+			}
+		}
+		else if ( deployModel === 'taskRemoveHost' )
+		{
+			if( step === 'uninsthost' )
+			{
+				rc = true ;
+				setTips( step + '.html', _languagePack['public']['tabPage'][9] ) ;
+			}
+		}
+		else if ( deployModel === 'taskRemoveSdb' )
+		{
+			if( step === 'uninstsdb' )
+			{
+				rc = true ;
+				setTips( step + '.html', _languagePack['public']['tabPage'][8] ) ;
+			}
+		}
+	}
+	return rc ;
+}
+
+//检测是否第一次使用
+function checkFirstUse()
+{
+	/*var isFirst = sdbjs.fun.getData( 'SdbIsFirst' ) ;
+	if( _clusterList.length === 0 && isFirst === null )
+	{
+		sdbjs.fun.saveData( 'SdbIsFirst', 'true' ) ;
+		
+	}*/
+}
+
 function createDynamicHtml()
 {
 	sdbjs.parts.loadingBox.show( 'loading' ) ;
@@ -874,6 +966,14 @@ function createDynamicHtml()
 	sdbjs.parts.loadingBox.hide( 'loading' ) ;
 	createRightPic() ;
 	getRunTask() ;
+	if( checkDeploy() === false )
+	{
+		checkFirstUse() ;
+	}
+	else
+	{
+		sdbjs.fun.saveData( 'SdbIsFirst', 'true' ) ;
+	}
 }
 
 function createHtml()
@@ -883,7 +983,7 @@ function createHtml()
 	/* 分页 */
 	sdbjs.parts.tabPageBox.create( 'top2', 'tab' ) ;
 	sdbjs.fun.setCSS( 'tab', { 'padding-top': 5 } ) ;
-	sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/home.png"> ' + htmlEncode( _languagePack['index']['tabPage'][0] ), true, null ) ;
+	sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/home.png"> ' + htmlEncode( _languagePack['public']['tabPage'][1] ), true, null ) ;
 	
 	/* 左边框架 */
 	sdbjs.parts.divBox.create( 'middle', 'middle-left', 460, 'variable' ) ;
@@ -1069,20 +1169,35 @@ function createHtml()
 	
 	/* 确认是否要删除集群 */
 	sdbjs.parts.modalBox.create( $( document.body ), 'isRemoveCluster' ) ;
-	sdbjs.parts.modalBox.update( 'isRemoveCluster', htmlEncode( '提示' ), function( bodyObj ){
+	sdbjs.parts.modalBox.update( 'isRemoveCluster', htmlEncode( _languagePack['index']['modal']['isRemoveCluster']['title'] ), function( bodyObj ){
 		sdbjs.parts.alertBox.create( bodyObj, 'isRemoveClusterAlert' ) ;
-		sdbjs.parts.alertBox.update( 'isRemoveClusterAlert', htmlEncode( 'Warning：该操作是不可恢复操作，并且无法删除拥有主机的集群。' ), 'warning' )
+		sdbjs.parts.alertBox.update( 'isRemoveClusterAlert', htmlEncode( _languagePack['tip']['web']['index'][1] ), 'warning' )
 	}, function( footObj ){
 		$( footObj ).css( 'text-align', 'right' ) ;
 		sdbjs.parts.buttonBox.create( footObj, 'isRemoveClusterOK' ) ;
 		$( footObj ).append( '&nbsp;' ) ;
 		sdbjs.parts.buttonBox.create( footObj, 'isRemoveClusterClose' ) ;
-		sdbjs.parts.buttonBox.update( 'isRemoveClusterOK', htmlEncode( '确定' ), 'primary', null, 'removeCluster()' ) ;
+		sdbjs.parts.buttonBox.update( 'isRemoveClusterOK', htmlEncode( _languagePack['public']['button']['ok']), 'primary', null, 'removeCluster()' ) ;
 		sdbjs.parts.buttonBox.update( 'isRemoveClusterClose', function( buttonObj ){
-			$( buttonObj ).text( '关闭' ).attr( 'data-toggle', 'modalBox' ).attr( 'data-target', 'isRemoveCluster' ) ;
+			$( buttonObj ).text( _languagePack['public']['button']['close'] ).attr( 'data-toggle', 'modalBox' ).attr( 'data-target', 'isRemoveCluster' ) ;
 		}, 'primary' ) ;
 	} ) ;
 	
+	/* 确认是否要继续部署 */
+	sdbjs.parts.modalBox.create( $( document.body ), 'isGoOnDeploy' ) ;
+	sdbjs.parts.modalBox.update( 'isGoOnDeploy', htmlEncode( _languagePack['index']['modal']['isGoOnDeploy']['title'] ), function( bodyObj ){
+		sdbjs.parts.alertBox.create( bodyObj, 'isGoOnDeployAlert' ) ;
+		sdbjs.parts.alertBox.update( 'isGoOnDeployAlert', '', 'Info' ) ;
+	}, function( footObj ){
+		$( footObj ).css( 'text-align', 'right' ) ;
+		sdbjs.parts.buttonBox.create( footObj, 'isGoOnDeployOK' ) ;
+		$( footObj ).append( '&nbsp;' ) ;
+		sdbjs.parts.buttonBox.create( footObj, 'isGoOnDeployClose' ) ;
+		sdbjs.parts.buttonBox.update( 'isGoOnDeployOK', htmlEncode( _languagePack['public']['button']['ok'] ), 'primary', null, '' ) ;
+		sdbjs.parts.buttonBox.update( 'isGoOnDeployClose', function( buttonObj ){
+			$( buttonObj ).text( _languagePack['public']['button']['close'] ).attr( 'data-toggle', 'modalBox' ).attr( 'data-target', 'isGoOnDeploy' ) ;
+		}, 'primary' ) ;
+	} ) ;
 }
 
 $(document).ready(function(){

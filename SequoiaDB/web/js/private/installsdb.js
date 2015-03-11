@@ -291,24 +291,24 @@ function createHtml()
 		if( _deployModel === 'Deploy' )
 		{
 			//'扫描主机'
-			sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/zoom.png"> ' + htmlEncode( _languagePack['public']['tabPage'][0] ), false, null ) ;
+			sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/zoom.png"> ' + htmlEncode( _languagePack['public']['tabPage'][2] ), false, null ) ;
 			//'添加主机'
-			sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/layers_1.png"> ' + htmlEncode( _languagePack['public']['tabPage'][1] ), false, null ) ;
+			sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/layers_1.png"> ' + htmlEncode( _languagePack['public']['tabPage'][3] ), false, null ) ;
 			//'安装主机'
-			sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/cog.png"> ' + htmlEncode( _languagePack['public']['tabPage'][2] ), false, null );
+			sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/cog.png"> ' + htmlEncode( _languagePack['public']['tabPage'][4] ), false, null );
 		}
 
 		//'配置业务'
-		sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/cube.png"> ' + htmlEncode( _languagePack['public']['tabPage'][3] ), false, null ) ;
+		sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/cube.png"> ' + htmlEncode( _languagePack['public']['tabPage'][5] ), false, null ) ;
 		//'修改业务'
-		sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/doc_lines_stright.png"> ' + htmlEncode( _languagePack['public']['tabPage'][4] ), false, null );
+		sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/doc_lines_stright.png"> ' + htmlEncode( _languagePack['public']['tabPage'][6] ), false, null );
 	}
 	else
 	{
-		sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/home.png"> ' + htmlEncode( '总览' ), false, 'gotoPage("index.html")' ) ;
+		sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/home.png"> ' + htmlEncode( _languagePack['public']['tabPage'][1] ), false, 'gotoPage("index.html")' ) ;
 	}
 	//'安装业务'
-	sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/cog.png"> ' + htmlEncode( _languagePack['public']['tabPage'][5] ), true, null );
+	sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/cog.png"> ' + htmlEncode( _languagePack['public']['tabPage'][7] ), true, null );
 	
 	
 	/* 左边框架 */
@@ -413,14 +413,17 @@ function createHtml()
 
 function checkReady()
 {
+	var rc = true ;
 	_taskID = sdbjs.fun.getData( 'SdbTaskID' ) ;
 	if( _taskID === null )
 	{
+		rc = false ;
 		gotoPage( 'index.html' ) ;
 	}
 	_deployModel = sdbjs.fun.getData( 'SdbDeployModel' ) ;
 	if( _deployModel === null || ( _deployModel !== 'AddBusiness' && _deployModel !== 'Deploy' && _deployModel !== 'taskAddSdb' ) )
 	{
+		rc = false ;
 		gotoPage( 'index.html' ) ;
 	}
 	if ( _deployModel !== 'taskAddSdb' )
@@ -437,10 +440,14 @@ function checkReady()
 			_deployType = businessConfig['DeployMod'] ;
 		}
 	}
+	return rc ;
 }
 
 $(document).ready(function(){
-	checkReady() ;
-	createHtml() ;
-	queryTaskInfo( true ) ;
+	if( checkReady() === true )
+	{
+		sdbjs.fun.saveData( 'SdbStep', 'installsdb' ) ;
+		createHtml() ;
+		queryTaskInfo( true ) ;
+	}
 } ) ;

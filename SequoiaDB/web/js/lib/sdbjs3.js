@@ -51,6 +51,9 @@ sdbjs.fun.saveData = null ;
 //获取本地数据
 sdbjs.fun.getData = null ;
 
+//判断存在本地数据
+sdbjs.fun.hasData = null ;
+
 //删除本地数据
 sdbjs.fun.delData = null ;
 
@@ -576,6 +579,28 @@ sdbjs.fun.getData = function( key )
 		value = $.cookie( key ) ;
 	}
 	return value ;
+}
+
+/*
+ * 判断本地数据是否存在
+ */
+sdbjs.fun.hasData = function( key )
+{
+	var value = null ;
+	if( sdbjs.private.storageType === 'userData' )
+	{
+		sdbjs.private.userdata.load( 'sdbjs' );
+		value = sdbjs.private.userdata.getAttribute( key ) ;
+	}
+	else if ( sdbjs.private.storageType === 'localStorage' )
+	{
+		value = window.localStorage.getItem( key ) ;
+	}
+	else if ( sdbjs.private.storageType === 'cookie' )
+	{
+		value = $.cookie( key ) ;
+	}
+	return ( value !== null ) ;
 }
 
 /*

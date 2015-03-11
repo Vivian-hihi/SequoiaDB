@@ -124,6 +124,7 @@ function removeHost()
 	restRemoveHost( true, function( jsonArr, textStatus, jqXHR ){
 		var taskID = jsonArr[0]['TaskID'] ;
 		sdbjs.fun.saveData( 'SdbTaskID', taskID ) ;
+		sdbjs.fun.saveData( 'SdbDeployModel', 'taskRemoveHost' ) ;
 		gotoPage( 'uninsthost.html' ) ;
 	}, function( json ){
 		sdbjs.parts.loadingBox.hide( 'loading' ) ;
