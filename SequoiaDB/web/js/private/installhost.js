@@ -211,9 +211,12 @@ function updateTaskInfo( taskInfo, isFirst )
 	sdbjs.parts.progressBox2.update( 'Progress', color, taskInfo['Progress'] ) ;
 	if( taskInfo['Status'] === 4 )
 	{
-		sdbjs.parts.buttonBox.update( 'deployReturn', function( buttonObj ){
-			$( buttonObj ).show() ;
-		}, 'primary' ) ;
+		if( _deployModel !== 'taskAddHost' )
+		{
+			sdbjs.parts.buttonBox.update( 'deployReturn', function( buttonObj ){
+				$( buttonObj ).show() ;
+			}, 'primary' ) ;
+		}
 		if( taskInfo['errno'] === 0 )
 		{
 			sdbjs.fun.delData( 'SdbHostList' ) ;
@@ -274,10 +277,17 @@ function createHtml()
 	sdbjs.parts.tabPageBox.create( 'top2', 'tab' ) ;
 	sdbjs.fun.setCSS( 'tab', { 'padding-top': 5 } ) ;
 
-	//'扫描主机'
-	sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/zoom.png"> ' + htmlEncode( _languagePack['public']['tabPage'][0] ), false, null ) ;
-	//'添加主机'
-	sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/layers_1.png"> ' + htmlEncode( _languagePack['public']['tabPage'][1] ), false, null ) ;
+	if( _deployModel === 'taskAddHost' )
+	{
+		sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/home.png"> ' + htmlEncode( '总览' ), false, 'gotoPage("index.html")' ) ;
+	}
+	else
+	{
+		//'扫描主机'
+		sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/zoom.png"> ' + htmlEncode( _languagePack['public']['tabPage'][0] ), false, null ) ;
+		//'添加主机'
+		sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/layers_1.png"> ' + htmlEncode( _languagePack['public']['tabPage'][1] ), false, null ) ;
+	}
 	//'安装主机'
 	sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/cog.png"> ' + htmlEncode( _languagePack['public']['tabPage'][2] ), true, null );
 	if( _deployModel === 'Deploy' )
@@ -344,18 +354,21 @@ function createHtml()
 	sdbjs.parts.divBox.create( 'middle', 'middle-clear', 0, 0 ) ;
 	sdbjs.fun.setClass( 'middle-clear', 'clear-float' ) ;
 
-	//返回 下一步
-	sdbjs.parts.buttonBox.create( 'operate', 'deployReturn' ) ;
-	sdbjs.parts.buttonBox.update( 'deployReturn', function( buttonObj ){
-		//'返回'
-		$( buttonObj ).text( _languagePack['public']['button']['return'] ).hide() ;
-		sdbjs.fun.addClick( buttonObj, 'returnPage()' ) ;
-	}, 'primary' ) ;
-	var operateNode = sdbjs.fun.getNode( 'operate', 'divBox' ) ;
-	$( operateNode['obj'] ).append( '&nbsp;' ) ;
+	if( _deployModel !== 'taskAddHost' )
+	{
+		//返回 下一步
+		sdbjs.parts.buttonBox.create( 'operate', 'deployReturn' ) ;
+		sdbjs.parts.buttonBox.update( 'deployReturn', function( buttonObj ){
+			//'返回'
+			$( buttonObj ).text( _languagePack['public']['button']['return'] ).hide() ;
+			sdbjs.fun.addClick( buttonObj, 'returnPage()' ) ;
+		}, 'primary' ) ;
+		var operateNode = sdbjs.fun.getNode( 'operate', 'divBox' ) ;
+		$( operateNode['obj'] ).append( '&nbsp;' ) ;
+	}
 	sdbjs.parts.buttonBox.create( 'operate', 'deployNext' ) ;
 	sdbjs.parts.buttonBox.update( 'deployNext', function( buttonObj ){
-		if( _deployModel === 'AddHost' )
+		if( _deployModel === 'AddHost' || _deployModel === 'taskAddHost' )
 		{
 			//'完成'
 			$( buttonObj ).text( _languagePack['public']['button']['complete'] ) ;
@@ -400,7 +413,7 @@ function checkReady()
 		gotoPage( 'index.html' ) ;
 	}
 	_deployModel = sdbjs.fun.getData( 'SdbDeployModel' ) ;
-	if( _deployModel === null || ( _deployModel !== 'AddHost' && _deployModel !== 'Deploy' ) )
+	if( _deployModel === null || ( _deployModel !== 'AddHost' && _deployModel !== 'Deploy' && _deployModel !== 'taskAddHost' ) )
 	{
 		gotoPage( 'index.html' ) ;
 	}
@@ -412,6 +425,7 @@ function checkReady()
 }
 
 $(document).ready(function(){
+	sdbjs.fun.saveData( 'SdbStep', 'installhost' ) ;
 	checkReady() ;
 	createHtml() ;
 	queryTaskInfo( true ) ;

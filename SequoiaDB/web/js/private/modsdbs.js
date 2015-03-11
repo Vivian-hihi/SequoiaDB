@@ -107,7 +107,22 @@ function nextPage()
 {
 	if( saveNodePara() )
 	{
-		
+		var tempBusinessPara = {} ;
+		tempBusinessPara['ClusterName'] = _businessPara['ClusterName'] ;
+		tempBusinessPara['BusinessType'] = _businessPara['BusinessType'] ;
+		tempBusinessPara['BusinessName'] = _businessPara['BusinessName'] ;
+		tempBusinessPara['DeployMod'] = _businessPara['DeployMod'] ;
+		tempBusinessPara['Config'] = _businessPara['Config'] ;
+
+		sdbjs.parts.loadingBox.show( 'loading' ) ;
+		restAddBusiness( true, function( jsonArr, textStatus, jqXHR ){
+			var taskID = jsonArr[0]['TaskID'] ;
+			sdbjs.fun.saveData( 'SdbTaskID', taskID ) ;
+			gotoPage( 'installsdb.html' ) ;
+		}, function( json ){
+			sdbjs.parts.loadingBox.hide( 'loading' ) ;
+			showProcessError( json['detail'] ) ;
+		}, null, tempBusinessPara ) ;
 	}
 }
 

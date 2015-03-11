@@ -1,40 +1,40 @@
 {
     "addhost": {
         "leftPanel": {
-            "title": "Host list",
+            "title": "Hosts List",
 				"button": [
 						"Edit",
-						"Complete"
+						"Done"
 				],
 				"label": [
-						"Already selected ? disks",
-						"? disks have not enough space."
+						"Already choose ? disks",
+						"? disks don't have enough capacity"
 				]
         },
         "rightPanel": {
-            "title": "Host information",
+            "title": "Host Information",
 				"disk": {
-						"title": "Disks",
-						"grid": [ "Disk", "Path", "Network Mapping", "Space" ],
+						"title": "Disk",
+						"grid": [ "Disk", "Path", "Network Mapping", "Capacity" ],
 						"other": [ "Yes", "No" ]
 				},
 				"cpu": {
 						"title": "CPU",
-						"grid": [ "ID", "Type", "Core Number", "Main Frequency" ]
+						"grid": [ "ID", "Type", "Core Number", "Frequency" ]
 				},
 				"net": {
 						"title": "Network Card",
-						"grid": [ "Port", "Type", "Rate", "Address" ]
+						"grid": [ "Interface", "Type", "Speed", "IP" ]
 				},
 				"port": {
 						"title": "Port",
 						"grid": [ "Port", "Status" ],
-						"other": [ "Available", "Occupied" ]
+						"other": [ "Occupied", "Available" ]
 				},
 				"service": {
 						"title": "Service",
-						"grid": [ "Service name", "Status", "Version" ],
-						"other": [ "Operating", "Available" ]
+						"grid": [ "Service Name", "Status", "Version" ],
+						"other": [ "Running", "Idle" ]
 				}
         }
     }

@@ -116,7 +116,7 @@ function removeHost()
 		sdbjs.parts.gridBox.updateBody( 'hostInfoGrid', index, 0, function( tdObj ){
 			if( $( tdObj ).children( 'input' ).get(0).checked === true )
 			{
-				hostList.push( { 'HostName': _hostList['HostName'] } ) ;
+				hostList.push( { 'HostName': _hostList[index]['HostName'] } ) ;
 			}
 		} ) ;
 	} ) ;

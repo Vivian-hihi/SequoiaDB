@@ -1,33 +1,33 @@
 {
-    "installhost": {
+    "uninsthost": {
         "leftPanel": {
-            "title": "任务信息",
+            "title": "Task information",
 				"taskInfo": [
-						"任务ID",
-						"所属集群",
-						"任务类型",
-						"项目数",
-						"任务状态",
-						"安装进度",
-						"预计剩余时间"
+						"Task ID",
+						"Cluster",
+						"Task type",
+						"Subjects number",
+						"Status",
+						"Progress",
+						"Estimated remaining time",
+						"Log"
 				],
-				"time": "分钟"
+				"logButton": "View",
+				"time": "minutes"
         },
         "rightPanel": {
-            "title": "安装进度",
+            "title": "卸载进度",
 				"hostGrid": [
-						"主机名",
+						"HostName",
 						"IP",
-						"安装状态",
-						"安装进度",
-						"日志"
+						"Status",
+						"Progress"
 				],
 				"taskStatus": [ "正在初始化任务", "正在执行任务", "正在回滚任务", "正在取消任务", "任务完成", "未知状态", "任务失败" ],
-				"hostStatus": [ "正在初始化安装", "正在安装", "正在回滚安装", "正在取消安装", "安装完成", "未知状态", "安装失败" ],
-				"button": "查看日志"
+				"hostStatus": [ "正在初始化安装", "正在安装", "正在回滚安装", "正在取消安装", "安装完成", "未知状态", "安装失败" ]
         },
 		  "logModal": {
-		  		"title": "日志"
+		  		"title": "Log"
 		  }
     }
 }

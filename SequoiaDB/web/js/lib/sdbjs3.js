@@ -232,6 +232,8 @@ sdbjs.parts.tabPageBox.add = null ;
 sdbjs.parts.selectBox = new Object() ;
 sdbjs.parts.selectBox.create = null ;
 sdbjs.parts.selectBox.add = null ;
+sdbjs.parts.selectBox.get = null ;
+sdbjs.parts.selectBox.set = null ;
 sdbjs.parts.selectBox.remove = null ;
 sdbjs.parts.selectBox.empty = null ;
 
@@ -264,6 +266,13 @@ sdbjs.parts.navTabBox = new Object() ;
 sdbjs.parts.navTabBox.create = null ;
 sdbjs.parts.navTabBox.add = null ;
 sdbjs.parts.navTabBox.show = null ;
+
+//通知框
+sdbjs.parts.noticeBox = new Object() ;
+sdbjs.parts.noticeBox.create = null ;
+sdbjs.parts.noticeBox.update = null ;
+sdbjs.parts.noticeBox.show = null ;
+sdbjs.parts.noticeBox.hide = null ;
 
 /************************************** 私有变量 ****************************************/
 
@@ -2430,6 +2439,24 @@ sdbjs.parts.selectBox.add = function( nodeName, htmlText, value, selected )
 }
 
 /*
+ * 取值
+ */
+sdbjs.parts.selectBox.get = function( nodeName )
+{
+	var node = sdbjs.fun.getNode( nodeName, 'selectBox' ) ;
+	return $( node['obj'] ).val() ;
+}
+
+/*
+ * 设值
+ */
+sdbjs.parts.selectBox.set = function( nodeName, value )
+{
+	var node = sdbjs.fun.getNode( nodeName, 'selectBox' ) ;
+	$( node['obj'] ).val( value ) ;
+}
+
+/*
  * 删除一个
  */
 sdbjs.parts.selectBox.remove = function( nodeName, htmlText, fun )
@@ -2766,6 +2793,83 @@ sdbjs.parts.navTabBox.show = function( nodeName, num, fun )
 				eval( fun ) ;
 			}catch(e){}
 		}
+	}
+}
+
+/********************* 通知框 **************************/
+
+/*
+ * 创建
+ */
+sdbjs.parts.noticeBox.create = function( parentName, nodeName, width, height )
+{
+	var newObj = $( '<div></div>' ).addClass( 'notice' ) ;
+	var header = $( '<div></div>' ).addClass( 'header' ).appendTo( newObj ) ;
+	var close  = $( '<button></button>' ).html( '&times;' ).attr( 'data-toggle', 'noticeBox' ).attr( 'data-target', nodeName ).addClass( 'close' ).appendTo( header ) ;
+	var title  = $( '<div></div>' ).appendTo( header ) ;
+	var body = $( '<div></div>' ).addClass( 'body' ).appendTo( newObj ) ;
+	var node = sdbjs.fun.addNode( parentName, nodeName, 'noticeBox', newObj, width, height ) ;
+	node['parts'].push( { 'header': header, 'title': title, 'body': body } ) ;
+}
+
+/*
+ * 更新
+ */
+sdbjs.parts.noticeBox.update = function( nodeName, title, body )
+{
+	var node = sdbjs.fun.getNode( nodeName, 'noticeBox' ) ;
+	if( typeof( title ) === 'string' )
+	{
+		$( node['parts'][0]['title'] ).html( title ) ;
+	}
+	else if( typeof( title ) === 'function' )
+	{
+		title( node['parts'][0]['title'] ) ;
+	}
+	
+	if( typeof( body ) === 'string' )
+	{
+		$( node['parts'][0]['body'] ).html( body ) ;
+	}
+	else if( typeof( body ) === 'function' )
+	{
+		body( node['parts'][0]['body'] ) ;
+	}
+}
+
+/*
+ * 显示
+ */
+sdbjs.parts.noticeBox.show = function( nodeName, times, fun )
+{
+	var node = sdbjs.fun.getNode( nodeName, 'noticeBox' ) ;
+	if( typeof( times ) === 'number' && times > 0 )
+	{
+		setTimeout( function(){
+			$( node['obj'] ).show( 0, fun ) ;
+		}, times ) ;
+	}
+	else
+	{
+		$( node['obj'] ).show( 0, fun ) ;
+	}
+}
+
+/*
+ * 隐藏
+ */
+sdbjs.parts.noticeBox.hide = function( nodeName, times, fun )
+{
+	var node = sdbjs.fun.getNode( nodeName, 'noticeBox' ) ;
+	if( typeof( times ) === 'number' && times > 0 )
+	{
+		setTimeout( function(){
+			$( node['obj'] ).hide( 0, fun ) ;
+		}, times ) ;
+	}
+	else
+	{
+		$( node['obj'] ).hide( 0, fun ) ;
 	}
 }
 

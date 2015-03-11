@@ -10,7 +10,7 @@ function login()
 		sdbjs.fun.saveData( 'SdbUser', user ) ;
 		gotoPage( 'index.html' ) ;
 	}, function( json ){
-		showFootStatus( 'danger', json['detail'] ) ;
+		showFootStatus( 'danger', json['description'] ) ;
 	}, null, user, pwd ) ;
 }
 

@@ -2,50 +2,50 @@
     "modsdbd": {
         "leftPanel": {
             "title": "Business: ",
-				"titleDrop": [ "Create Replica Group" ],
-				"tip": [ "Notice:Batch setting nodes' instruction please click ","Help"],
+				"titleDrop": [ "Create replica group" ],
+				"tip": [ "Notice: Set nodes parameters in batch. Click for", "help." ],
 				"groupList": {
-						"nodeNum": "Nodes Number: ",
-						"drop": [ "Add Node", "Delete Node", "Delete Replica Group" ]
+						"nodeNum": "Node number: ",
+						"drop": [ "Add Node", "Remove Node", "Remove Replica Group" ]
 				}
         },
         "rightPanel": {
 				"title": "Node List",
 				"button": {
-						"button": [ "Edit", "Complete" ],
+						"button": [ "Edit", "Done" ],
 						"dropDown": [
 								{
-									"button": "Select Operation",
+									"button": "Selection Type",
 									"menu": [ "Select All", "Select Invert" ]
 								},
 								{
-									"button": "Selected Operation",
-									"menu": [ "Batch Edit Node" ]
+									"button": "Operation for Selected",
+									"menu": [ "Edit Node in Batch" ]
 								}
 						]
 				},
-				"grid": [ "Hostname", "Port", "Data Path", "Role", "Replica Group" ],
+				"grid": [ "HostName", "Port", "Data Path", "Role", "Group" ],
 				"select": [ "All", "All" ]
 		  },
 		  "createGroupModal": {
 		  		"title": "Create Replica Group",
-				"table": [ "Replica Group Name:", "Created Replica Group Name" ]
+				"table": [ "Group Name: ", "Name of Replica Group" ]
 		  },
 		  "createNodeModal": {
 		  		"title": "Add Node",
-				"title2": "Edit New Node Setting",
-				"table": [ "Create Node Mode: ", "Node's Hostname: ", "Replicated Nodes: " ],
-				"select": [ "Default Setting Creation", "Non-setting Creation", "Replica Node Setting Creation" ]
+				"title2": "Node Parameters",
+				"table": [ "Creating Mode: ", "HostName: ", "Replicating Source: " ],
+				"select": [ "Default", "Customize", "Copy" ]
 		  },
 		  "removeNodeModal": {
-		  		"title": "Delete Node",
-				"table": [ "Deleted Node" ]
+		  		"title": "Remove Node",
+				"table": [ "Node to Remove" ]
 		  },
 		  "modNodeConfModal": {
 		  		"title": "Edit Node",
-				"title2": "Batch Edit Nodes Setting",
-				"nav": [ "Normal", "Advanced" ],
-				"grid": [ "Property", "Value", "Note" ]
+				"title2": "Edit Node Parameters in Batch",
+				"nav": [ "General", "Advance" ],
+				"grid": [ "Property", "Value", "Description" ]
 		  }
     }
 }

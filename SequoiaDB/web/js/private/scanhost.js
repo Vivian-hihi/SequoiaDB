@@ -225,6 +225,10 @@ function scanHostList( key, hostListArr, user, pwd, ssh, proxy )
 					{
 						status = _languagePack['error']['system']['scanErr'][3] ;//'获取主机信息失败' ;
 					}
+					else
+					{
+						status = hostInfo['detail'] ;
+					}
 					input = '<input type="checkbox" disabled="disabled">' ;
 				}
 				var rc = checkHostIsExist( hostInfo['HostName'], hostInfo['IP'], user, pwd, ssh, proxy ) ;
@@ -240,6 +244,18 @@ function scanHostList( key, hostListArr, user, pwd, ssh, proxy )
 																					 { 'text': htmlEncode( proxy ), 'width': '8%' },
 																					 { 'text': htmlEncode( status ), 'width': '15%' } ]  ) ;
 					 var line = _hostList.length - 1 ;
+					 sdbjs.parts.gridBox.updateBody( 'hostSearchGrid', line, 1, function( tdObj ){
+						  $( tdObj ).css( 'cursor', 'pointer' ) ;
+						  sdbjs.fun.addClick( tdObj, 'modifyHostPara(' + line + ')' ) ;
+					 } ) ;
+					 sdbjs.parts.gridBox.updateBody( 'hostSearchGrid', line, 2, function( tdObj ){
+						  $( tdObj ).css( 'cursor', 'pointer' ) ;
+						  sdbjs.fun.addClick( tdObj, 'modifyHostPara(' + line + ')' ) ;
+					 } ) ;
+					 sdbjs.parts.gridBox.updateBody( 'hostSearchGrid', line, 3, function( tdObj ){
+						  $( tdObj ).css( 'cursor', 'pointer' ) ;
+						  sdbjs.fun.addClick( tdObj, 'modifyHostPara(' + line + ')' ) ;
+					 } ) ;
 					 sdbjs.parts.gridBox.updateBody( 'hostSearchGrid', line, 4, function( tdObj ){
 						  $( tdObj ).css( 'cursor', 'pointer' ) ;
 						  sdbjs.fun.addClick( tdObj, 'modifyHostPara(' + line + ')' ) ;
@@ -473,6 +489,7 @@ function nextPage()
 	var checkedHostLis = checkHostSearch() ;
 	if( checkedHostLis.length > 0 )
 	{
+		sdbjs.fun.delData( 'SdbHostConf' ) ;
 		sdbjs.fun.saveData( 'SdbHostList', JSON.stringify( checkedHostLis ) ) ;
 		if( _deployModel === 'AddHost' || _deployModel === 'Deploy' )
 		{
@@ -671,6 +688,7 @@ function checkReady()
 }
 
 $(document).ready(function(){
+	sdbjs.fun.saveData( 'SdbStep', 'scanhost' ) ;
 	checkReady() ;
 	createHtml() ;
 	createDynamicHtml() ;

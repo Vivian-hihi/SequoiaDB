@@ -1,13 +1,13 @@
 {
     "login": {
         "tabPage": [
-            "登录"
+            "Login"
         ],
         "table": {
-            "title": "登录",
+            "title": "Login",
             "body": [
-                "用户名:",
-					 "密码:"
+                "User:",
+					 "Password:"
             ]
         }
     }

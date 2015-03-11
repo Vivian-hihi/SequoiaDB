@@ -72,6 +72,7 @@ function editHostList( buttonObj )
 function activeHost( index )
 {
 	_hostConf[index]['isUse'] = true ;
+	sdbjs.fun.saveData( 'SdbHostConf', JSON.stringify( _hostConf ) ) ;
 	sdbjs.parts.tabList.unDisable( 'hostTabList', index ) ;
 	sdbjs.parts.tableBox.updateBody( 'tabListTable_' + index, 0, 0, function( tdObj ){
 		sdbjs.fun.addClick( $( tdObj ).children( 'div' ).get(0), 'disableHost(' + index + ')' ) ;
@@ -83,6 +84,7 @@ function activeHost( index )
 function disableHost( index )
 {
 	_hostConf[index]['isUse'] = false ;
+	sdbjs.fun.saveData( 'SdbHostConf', JSON.stringify( _hostConf ) ) ;
 	sdbjs.parts.tabList.disable( 'hostTabList', index ) ;
 	sdbjs.parts.tableBox.updateBody( 'tabListTable_' + index, 0, 0, function( tdObj ){
 		sdbjs.fun.addClick( $( tdObj ).children( 'div' ).get(0), 'activeHost(' + index + ')' ) ;
@@ -136,6 +138,7 @@ function saveInstallPath()
 		var obj = $( tdObj ).children( 'input' ) ;
 		var index = $( obj ).data( 'index' ) ;
 		_hostConf[index]['InstallPath'] = $( obj ).val() ;
+		sdbjs.fun.saveData( 'SdbHostConf', JSON.stringify( _hostConf ) ) ;
 	} ) ;
 }
 
@@ -197,8 +200,7 @@ function accessHostConf( index )
 			color = 'red' ;
 		}
 		progress = '<div class="progress"><span class="reading">' + useDisk + 'MB / ' + hostDisk['Size'] + 'MB</span><span class="bar ' + color + '" style="width:' + percentDisk + '%;"></span></div>' ;
-		if( ( typeof( _hostConf[index]['Disk'][index2]['isUse'] ) === 'undefined' && hostDisk['IsLocal'] === false ) ||
-			 _hostConf[index]['Disk'][index2]['isUse'] === false )
+		if( ( typeof( _hostConf[index]['Disk'][index2]['isUse'] ) === 'undefined' && hostDisk['IsLocal'] === false ) || _hostConf[index]['Disk'][index2]['isUse'] === false )
 		{
 			inputBox = '<input type="checkbox" onclick="changeDisk(this,' + index + ',' + index2 + ')">' ;
 		}
@@ -333,105 +335,120 @@ function filterHosts( inputObj )
 	} ) ;
 }
 
+//创建主机列表
+function createHostList()
+{
+	var isActive = false ;
+	$.each( _hostConf, function(index,hostInfo){
+		//把hostname和ip匹配到返回的数据中
+		$.each( _hostList, function(index2,hostInfoTemp){
+			if( hostInfoTemp['HostName'] === hostInfo['HostName'] || hostInfoTemp['IP'] === hostInfo['IP'] )
+			{
+				hostInfo['HostName'] = hostInfoTemp['HostName'] ;
+				hostInfo['IP'] = hostInfoTemp['IP'] ;
+				hostInfo['User'] = hostInfoTemp['User'] ;
+				hostInfo['Passwd'] = hostInfoTemp['Passwd'] ;
+				hostInfo['SshPort'] = hostInfoTemp['SshPort'] ;
+				hostInfo['AgentService'] = hostInfoTemp['AgentService'] ;
+				return false ;
+			}
+		} ) ;
+		var isError = false ;
+		var canUseDisk = 0 ;
+		var unUseDisk = 0 ;
+		var hostStatusTemp = null ;
+		var hostStatusOperate = null ;
+		//判断是不是错误的主机
+		if( typeof( hostInfo['errno'] ) === 'undefined' || hostInfo['errno'] === 0 )
+		{
+			$.each( hostInfo['Disk'], function(index2,hostDisk){
+				if( hostDisk['CanUse'] === true && hostDisk['IsLocal'] === true && ( typeof( hostDisk['isUse'] ) === 'undefined' || hostDisk['isUse'] === true ) )
+				{
+					hostDisk['isUse'] = true ;
+					++canUseDisk ;
+				}
+				else
+				{
+					hostDisk['isUse'] = false ;
+					if ( hostDisk['CanUse'] === false )
+					{
+						++unUseDisk ;
+					}
+				}
+			} ) ;
+			hostStatusTemp = '<span class="badge badge-info">' + canUseDisk + '</span>' ;
+			if( unUseDisk > 0 )
+			{
+				hostStatusTemp += '&nbsp;<span class="badge badge-warning">' + unUseDisk + '</span>' ;
+			}
+			hostStatusOperate = '<div style="display:none;margin-right:5px;cursor:pointer;" onClick="disableHost(' + index + ')"><img src="./images/disabled.png"></div>' ;
+		}
+		else if( typeof( hostInfo['errno'] ) !== 'undefined' && hostInfo['errno'] !== 0 )
+		{
+			isError = true ;
+			hostStatusTemp = '<span class="badge badge-danger">Error</span>' ;
+			hostStatusOperate = '' ;
+		}
+		sdbjs.parts.tabList.add( 'hostTabList', function( liObj ){
+			$( liObj ).css( 'zoom', 1 ) ;
+			sdbjs.parts.tableBox.create( liObj, 'tabListTable_' + index ) ;
+			sdbjs.parts.tableBox.update( 'tabListTable_' + index, 'compact' ) ;
+			sdbjs.parts.tableBox.addBody( 'tabListTable_' + index, [{ 'text': hostStatusOperate },
+																					  { 'text': '<div style="padding:2px 2px 2px 0;">' + htmlEncode( hostInfo['HostName'] ) + '</div><div style="color:#666">' + htmlEncode( hostInfo['IP'] ) + '</div>' },
+																					  { 'text': hostStatusTemp } ] ) ;
+			sdbjs.parts.tableBox.updateBody( 'tabListTable_' + index, 0, 2, function( tdObj ){
+				$( tdObj ).css( 'text-align', 'right' ) ;
+				if( isError === false )
+				{
+					//'已选择 ? 个磁盘'
+					sdbjs.fun.setLabel( $( tdObj ).children( '.badge-info' ), htmlEncode( sdbjs.fun.sprintf( _languagePack['addhost']['leftPanel']['label'][0], canUseDisk ) ) ) ;
+					//'有 ? 个磁盘剩余容量不足'
+					sdbjs.fun.setLabel( $( tdObj ).children( '.badge-warning' ), htmlEncode( sdbjs.fun.sprintf( _languagePack['addhost']['leftPanel']['label'][1], unUseDisk ) ) );
+				}
+				else
+				{
+					sdbjs.fun.setLabel( $( tdObj ).children( '.badge-danger' ), htmlEncode( hostInfo['detail'] ) );
+				}
+			} ) ;
+			if( isError === false )
+			{
+				$( liObj ).css( 'cursor', 'pointer' ) ;
+				sdbjs.fun.addClick( liObj, 'accessHostConf(' + index + ')' ) ;
+			}
+		} ) ;
+		if( typeof( hostInfo['isUse'] ) !== 'undefined'  && hostInfo['isUse'] === false )
+		{
+			hostInfo['isUse'] = false ;
+			disableHost( index ) ;
+		}
+		else
+		{
+			hostInfo['isUse'] = !isError ;
+		}
+		if( isError === false && isActive === false )
+		{
+			isActive = true ;
+			accessHostConf( index ) ;
+		}
+		if( canUseDisk <= 0 )
+		{
+			hostInfo['isUse'] = false ;
+			sdbjs.parts.tabList.disable( 'hostTabList', index ) ;
+		}
+		
+	} ) ;
+}
+
 //加载主机列表
 function loadHostList()
 {
 	if( _hostList !== null )
 	{
-		var isActive = false ;
 		sdbjs.parts.loadingBox.show( 'loading' ) ;
 		_hostList = JSON.parse( _hostList ) ;
 		restCheckHost( true, function( jsonArr, textStatus, jqXHR ){
 			_hostConf = jsonArr ;
-			$.each( _hostConf, function(index,hostInfo){
-				//把hostname和ip匹配到返回的数据中
-				$.each( _hostList, function(index2,hostInfoTemp){
-					if( hostInfoTemp['HostName'] === hostInfo['HostName'] || hostInfoTemp['IP'] === hostInfo['IP'] )
-					{
-						hostInfo['HostName'] = hostInfoTemp['HostName'] ;
-						hostInfo['IP'] = hostInfoTemp['IP'] ;
-						hostInfo['User'] = hostInfoTemp['User'] ;
-						hostInfo['Passwd'] = hostInfoTemp['Passwd'] ;
-						hostInfo['SshPort'] = hostInfoTemp['SshPort'] ;
-						hostInfo['AgentService'] = hostInfoTemp['AgentService'] ;
-						return false ;
-					}
-				} ) ;
-				var isError = false ;
-				var canUseDisk = 0 ;
-				var unUseDisk = 0 ;
-				var hostStatusTemp = null ;
-				var hostStatusOperate = null ;
-				//判断是不是错误的主机
-				if( typeof( hostInfo['errno'] ) === 'undefined' || hostInfo['errno'] === 0 )
-				{
-					$.each( hostInfo['Disk'], function(index2,hostDisk){
-						if( hostDisk['CanUse'] === true && hostDisk['IsLocal'] === true )
-						{
-							hostDisk['isUse'] = true ;
-							++canUseDisk ;
-						}
-						else
-						{
-							hostDisk['isUse'] = false ;
-							if ( hostDisk['CanUse'] === false )
-							{
-								++unUseDisk ;
-							}
-						}
-					} ) ;
-					hostStatusTemp = '<span class="badge badge-info">' + canUseDisk + '</span>' ;
-					if( unUseDisk > 0 )
-					{
-						hostStatusTemp += '&nbsp;<span class="badge badge-warning">' + unUseDisk + '</span>' ;
-					}
-					hostStatusOperate = '<div style="display:none;margin-right:5px;cursor:pointer;" onClick="disableHost(' + index + ')"><img src="./images/disabled.png"></div>' ;
-				}
-				else if( typeof( hostInfo['errno'] ) !== 'undefined' && hostInfo['errno'] !== 0 )
-				{
-					isError = true ;
-					hostStatusTemp = '<span class="badge badge-danger">Error</span>' ;
-					hostStatusOperate = '' ;
-				}
-				sdbjs.parts.tabList.add( 'hostTabList', function( liObj ){
-					$( liObj ).css( 'zoom', 1 ) ;
-					sdbjs.parts.tableBox.create( liObj, 'tabListTable_' + index ) ;
-					sdbjs.parts.tableBox.update( 'tabListTable_' + index, 'compact' ) ;
-					sdbjs.parts.tableBox.addBody( 'tabListTable_' + index, [{ 'text': hostStatusOperate },
-																							  { 'text': '<div style="padding:2px 2px 2px 0;">' + htmlEncode( hostInfo['HostName'] ) + '</div><div style="color:#666">' + htmlEncode( hostInfo['IP'] ) + '</div>' },
-																							  { 'text': hostStatusTemp } ] ) ;
-					sdbjs.parts.tableBox.updateBody( 'tabListTable_' + index, 0, 2, function( tdObj ){
-						$( tdObj ).css( 'text-align', 'right' ) ;
-						if( isError === false )
-						{
-							//'已选择 ? 个磁盘'
-							sdbjs.fun.setLabel( $( tdObj ).children( '.badge-info' ), htmlEncode( sdbjs.fun.sprintf( _languagePack['addhost']['leftPanel']['label'][0], canUseDisk ) ) ) ;
-							//'有 ? 个磁盘剩余容量不足'
-							sdbjs.fun.setLabel( $( tdObj ).children( '.badge-warning' ), htmlEncode( sdbjs.fun.sprintf( _languagePack['addhost']['leftPanel']['label'][1], unUseDisk ) ) );
-						}
-						else
-						{
-							sdbjs.fun.setLabel( $( tdObj ).children( '.badge-danger' ), htmlEncode( hostInfo['detail'] ) );
-						}
-					} ) ;
-					if( isError === false )
-					{
-						$( liObj ).css( 'cursor', 'pointer' ) ;
-						sdbjs.fun.addClick( liObj, 'accessHostConf(' + index + ')' ) ;
-					}
-				} ) ;
-				hostInfo['isUse'] = !isError ;
-				if( isError === false && isActive === false )
-				{
-					isActive = true ;
-					accessHostConf( index ) ;
-				}
-				if( canUseDisk <= 0 )
-				{
-					hostInfo['isUse'] = false ;
-					sdbjs.parts.tabList.disable( 'hostTabList', index ) ;
-				}
-			} ) ;
+			createHostList() ;
 		}, function( json ){
 			showProcessError( json['detail'] ) ;
 		}, function(){
@@ -456,8 +473,15 @@ function loadInstallPath()
 function createDynamicHtml()
 {
 	sdbjs.parts.loadingBox.show( 'loading' ) ;
-	loadInstallPath() ;
-	loadHostList() ;
+	if( _hostConf.length <= 0 )
+	{
+		loadInstallPath() ;
+		loadHostList() ;
+	}
+	else
+	{
+		createHostList() ;
+	}
 	sdbjs.parts.loadingBox.hide( 'loading' ) ;
 }
 
@@ -608,19 +632,29 @@ function checkReady()
 	{
 		gotoPage( 'index.html' ) ;
 	}
-	_hostList = sdbjs.fun.getData( 'SdbHostList' ) ;
-	if( _hostList === null )
-	{
-		gotoPage( 'index.html' ) ;
-	}
 	_deployModel = sdbjs.fun.getData( 'SdbDeployModel' ) ;
 	if( _deployModel === null || ( _deployModel !== 'AddHost' && _deployModel !== 'Deploy' ) )
 	{
 		gotoPage( 'index.html' ) ;
 	}
+	_hostConf = sdbjs.fun.getData( 'SdbHostConf' ) ;
+	if( _hostConf === null )
+	{
+		_hostConf = [] ;
+		_hostList = sdbjs.fun.getData( 'SdbHostList' ) ;
+		if( _hostList === null )
+		{
+			gotoPage( 'index.html' ) ;
+		}
+	}
+	else
+	{
+		_hostConf = JSON.parse( _hostConf ) ;
+	}
 }
 
 $(document).ready(function(){
+	sdbjs.fun.saveData( 'SdbStep', 'addhost' ) ;
 	checkReady() ;
 	createHtml() ;
 	createDynamicHtml() ;

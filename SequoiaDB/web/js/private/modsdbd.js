@@ -462,10 +462,10 @@ function createGroup()
 
 //---------------------------------- node ----------------------------------
 
+//删除节点
 function removeOneNode( role, groupname, line )
 {
-	var selectObj = sdbjs.fun.getNode( 'nodeRemoveSelect', 'selectBox' ) ;
-	var nodeID = parseInt( $( selectObj['obj'] ).val() ) ;
+	var nodeID = sdbjs.parts.selectBox.get( 'nodeRemoveSelect' ) ;
 	//删除节点表
 	sdbjs.parts.gridBox.removeBody( 'nodeListGrid', nodeID ) ;
 	sdbjs.parts.gridBox.repigment( 'nodeListGrid', false ) ;
@@ -475,6 +475,32 @@ function removeOneNode( role, groupname, line )
 	//更新数据
 	reSumGroupNodeNum( role, groupname, line ) ;
 	sdbjs.parts.modalBox.hide( 'removeNode' ) ;
+	
+	//把该节点后面的节点修改索引
+	var len = _businessPara['Config'].length ;
+	for( var i = nodeID; i < len; ++i )
+	{
+		sdbjs.parts.gridBox.updateBody( 'nodeListGrid', i, 1, function( tdObj ){
+			$( tdObj ).css( 'cursor', 'pointer' ) ;
+			sdbjs.fun.addClick( tdObj, 'openNodeParaModal("0",' + i + ')' ) ;
+		} ) ;
+		sdbjs.parts.gridBox.updateBody( 'nodeListGrid', i, 2, function( tdObj ){
+			$( tdObj ).css( 'cursor', 'pointer' ) ;
+			sdbjs.fun.addClick( tdObj, 'openNodeParaModal("0",' + i + ')' ) ;
+		} ) ;
+		sdbjs.parts.gridBox.updateBody( 'nodeListGrid', i, 3, function( tdObj ){
+			$( tdObj ).css( 'cursor', 'pointer' ) ;
+			sdbjs.fun.addClick( tdObj, 'openNodeParaModal("0",' + i + ')' ) ;
+		} ) ;
+		sdbjs.parts.gridBox.updateBody( 'nodeListGrid', i, 4, function( tdObj ){
+			$( tdObj ).css( 'cursor', 'pointer' ) ;
+			sdbjs.fun.addClick( tdObj, 'openNodeParaModal("0",' + i + ')' ) ;
+		} ) ;
+		sdbjs.parts.gridBox.updateBody( 'nodeListGrid', i, 5, function( tdObj ){
+			$( tdObj ).css( 'cursor', 'pointer' ) ;
+			sdbjs.fun.addClick( tdObj, 'openNodeParaModal("0",' + i + ')' ) ;
+		} ) ;
+	}
 }
 
 //打开删除节点模态框
@@ -482,7 +508,7 @@ function openRemoveNodeModal( role, groupname, line )
 {
 	var selectObj = sdbjs.fun.getNode( 'nodeRemoveSelect', 'selectBox' ) ;
 	//初始化
-	$( selectObj['obj'] ).val( '0' ) ;
+	sdbjs.parts.selectBox.set( 'nodeRemoveSelect', '0' ) ;
 	//清空
 	sdbjs.parts.selectBox.empty( 'nodeRemoveSelect' ) ;
 	//读取所有节点
@@ -1373,7 +1399,7 @@ function createHtml()
 		sdbjs.parts.alertBox.create( 'groupTopDiv', 'nodeConfTips' ) ;
 		sdbjs.fun.setCSS( 'nodeConfTips', { 'padding': 10, 'margin-bottom': 5 } ) ;
 		//'提示：批量配置节点信息说明。详情请点击' '帮助'
-		sdbjs.parts.alertBox.update( 'nodeConfTips', sdbjs.fun.sprintf( '?<a href="#" data-toggle="modalBox" data-target="hostSearchHelp">?</a>', htmlEncode( _languagePack['modsdbd']['leftPanel']['tip'][0] ), htmlEncode( _languagePack['modsdbd']['leftPanel']['tip'][1] ) ), 'info' ) ;
+		sdbjs.parts.alertBox.update( 'nodeConfTips', sdbjs.fun.sprintf( '?<a href="#" data-toggle="modalBox" data-target="nodeConfHelp">?</a>', htmlEncode( _languagePack['modsdbd']['leftPanel']['tip'][0] ), htmlEncode( _languagePack['modsdbd']['leftPanel']['tip'][1] ) ), 'info' ) ;
 		
 		sdbjs.parts.divBox.create( panelBody['name'], 'groupBottomDiv', 'auto', 'variable' ) ;
 		sdbjs.parts.tabList.create( 'groupBottomDiv', 'groupTabList', 'auto', 'variable' ) ;
@@ -1627,6 +1653,38 @@ function createHtml()
 																					$( buttonObj ).text( _languagePack['public']['button']['close'] ).attr( 'data-toggle', 'modalBox' ).attr( 'data-target', 'modNodeConf' ) ;
 																				}, 'primary' ) ;
 																			}, 'width': 120  } ] ) ;
+	} ) ;
+	
+	/* 创建帮助的弹窗 */
+	sdbjs.parts.modalBox.create( $( document.body ), 'nodeConfHelp' ) ;
+	//'帮助'
+	sdbjs.parts.modalBox.update( 'nodeConfHelp', htmlEncode( '帮助' ), function( bodyObj ){
+		//'关于?[已选定操作]-[修改节点配置]?。您可以使用特殊规则来?批量修改?节点的?服务名?和?数据路径?:'
+		$( bodyObj ).append( sdbjs.fun.sprintf( htmlEncode( '关于?[已选定操作]-[修改节点配置]?。您可以使用特殊规则来?批量修改?节点的?服务名?和?数据路径?:' ), '<b>', '</b>', '<b>', '</b>', '<b>', '</b>', '<b>', '</b>' ) ) ;
+		sdbjs.parts.tableBox.create( bodyObj, 'nodeConfHelpTable_1' ) ;
+		sdbjs.fun.setCSS( 'nodeConfHelpTable_1', { 'margin-top': 10, 'line-height': '160%' } ) ;
+		sdbjs.parts.tableBox.update( 'nodeConfHelpTable_1', 'loosen border' ) ;
+		//'服务名规则' '规则：服务名[+步进] 或 服务名[-步进]。'
+		sdbjs.parts.tableBox.addBody( 'nodeConfHelpTable_1', [ { 'text': htmlEncode( '服务名规则' ), 'colspan': 2 }, { 'text': htmlEncode( '规则：服务名[+步进] 或 服务名[-步进]。' ) } ] ) ;
+		sdbjs.parts.tableBox.addBody( 'nodeConfHelpTable_1', [ { 'text': htmlEncode( '规则' ) }, { 'text': htmlEncode( '例子' ) }, { 'text': htmlEncode( '描述' ) } ] ) ;
+		sdbjs.parts.tableBox.addBody( 'nodeConfHelpTable_1', [ { 'text': htmlEncode( '普通方式' ) }, { 'text': htmlEncode( '11810' ) }, { 'text': htmlEncode( '设置服务名为：11810，但要注意同一主机下的节点是不能有相同服务名。假设有3个节点：PcHost-1:11810，PcHost-2:11810，PcHost-3:11810' ) } ] ) ;
+		sdbjs.parts.tableBox.addBody( 'nodeConfHelpTable_1', [ { 'text': htmlEncode( '递增方式' ) }, { 'text': htmlEncode( '11810[+10]' ) }, { 'text': htmlEncode( '设置已选定节点的服务名从11810起始(含11810)，每一个节点递增10。假设有3个节点：PcHost-1:11810，PcHost-2:11820，PcHost-3:11830' ) } ] ) ;
+		sdbjs.parts.tableBox.addBody( 'nodeConfHelpTable_1', [ { 'text': htmlEncode( '递减方式' ) }, { 'text': htmlEncode( '11810[-10]' ) }, { 'text': htmlEncode( '设置已选定节点的服务名从11810起始(含11810)，每一个节点递减10。假设有3个节点：PcHost-1:11810，PcHost-2:11800，PcHost-3:11790' ) } ] ) ;
+		
+		sdbjs.parts.tableBox.create( bodyObj, 'nodeConfHelpTable_2' ) ;
+		sdbjs.fun.setCSS( 'nodeConfHelpTable_2', { 'margin-top': 10, 'line-height': '160%' } ) ;
+		sdbjs.parts.tableBox.update( 'nodeConfHelpTable_2', 'loosen border' ) ;
+		sdbjs.parts.tableBox.addBody( 'nodeConfHelpTable_2', [ { 'text': htmlEncode( '数据路径规则' ) }, { 'text': htmlEncode( '规则：可以在路径中任意添加这几个特殊命令，[role] -- 角色，[svcname] -- 服务名，[groupname] -- 分区组名，[hostname] --  主机名。' ) } ] ) ;
+		sdbjs.parts.tableBox.addBody( 'nodeConfHelpTable_2', [ { 'text': htmlEncode( '例子' ) }, { 'text': htmlEncode( '描述' ) } ] ) ;
+		sdbjs.parts.tableBox.addBody( 'nodeConfHelpTable_2', [ { 'text': htmlEncode( '/opt/sequoiadb/database/[role]/[svcname]' ) }, { 'text': htmlEncode( '假设已选定节点配置为：角色：data，服务名：11810，数据路径将会是：/opt/sequoiadb/database/data/11810，注意：协调节点和编目节点是没有分区组名的，因此当节点是协调节点或编目节点时，[groupname]是空字符。' ) } ] ) ;
+
+	}, function( footObj ){
+		$( footObj ).css( 'text-align', 'right' ) ;
+		sdbjs.parts.buttonBox.create( footObj, 'hostSearchClose' ) ;
+		sdbjs.parts.buttonBox.update( 'hostSearchClose', function( buttonObj ){
+			//'关闭'
+			$( buttonObj ).text( _languagePack['public']['button']['close'] ).attr( 'data-toggle', 'modalBox' ).attr( 'data-target', 'nodeConfHelp' ) ;
+		}, 'primary' ) ;
 	} ) ;
 	
 }

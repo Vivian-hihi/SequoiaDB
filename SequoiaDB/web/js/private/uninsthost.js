@@ -10,6 +10,9 @@ var _isLogModalZooomin = false ;
 //集群名
 var _clusterName = null ;
 
+//部署模式
+var _deployModel = null ;
+
 //打开日志弹窗
 function openLogModal()
 {
@@ -251,6 +254,10 @@ function createHtml()
 	sdbjs.parts.tabPageBox.create( 'top2', 'tab' ) ;
 	sdbjs.fun.setCSS( 'tab', { 'padding-top': 5 } ) ;
 
+	if( _deployModel === 'taskRemoveHost' )
+	{
+		sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/home.png"> ' + htmlEncode( '总览' ), false, 'gotoPage("index.html")' ) ;
+	}
 	//'卸载主机'
 	sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/trash.png"> ' + htmlEncode( '卸载主机' ), true, null ) ;
 	
@@ -353,6 +360,7 @@ function checkReady()
 		rc = false ;
 		gotoPage( 'index.html' ) ;
 	}
+	_deployModel = sdbjs.fun.getData( 'SdbDeployModel' ) ;
 	return rc ;
 }
 

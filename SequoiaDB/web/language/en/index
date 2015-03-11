@@ -1,110 +1,122 @@
 {
     "index": {
         "clusterOperation": [
-            "添加主机",
-            "主机列表",
-            "添加业务",
-            "业务列表",
-            "删除集群",
-            "创建集群"
+            "Add host",
+            "Hosts list",
+            "Add business",
+            "Business list",
+            "Remove cluster",
+            "Create cluster"
         ],
-        "clusterInfo": {
-            "business": [
-                "业务"
-            ],
-            "host": [
-                "主机",
-                "一共 ? 台主机"
-            ]
-        },
         "tabPage": [
             "总览"
         ],
         "leftPanel": {
-            "title": "状态",
+            "title": "Status",
+				"body": {
+					 "table": [ "Businesses", "Hosts" ],
+					 "badgeTips": [
+					 		"? hosts",
+							"? businesses",
+							"? hosts have memory usage rate more than 90%",
+							"? hosts have disks usage rate more than 90%",
+							"? hosts have CPU usage rate more than 90%",
+							"? hosts broke down"
+					 ]
+				},
             "SMS": [
-                "节点"
+                "Nodes"
             ]
         },
         "rightPanel": {
-            "title": "监控信息"
+            "title": "? monitoring information",
+				"body": "No monitoring information currently, please create a new cluster!",
+				"pic": [
+					 { "title": "CPU Usage Rate", "subTitle": "percent" },
+					 { "title": "Memory Usage Rate", "subTitle": "percent" },
+					 { "title": "Disk Usage Rate", "subTitle": "percent" },
+					 { "title": "Network In", "subTitle": "Kb/s" },
+					 { "title": "Network Out", "subTitle": "Kb/s" },
+					 { "title": "Network PIn", "subTitle": "Data Package" },
+					 { "title": "Network POut", "subTitle": "Data Package" }
+				]
         },
         "modal": {
             "deploy": {
-                "title": "部署引导",
+                "title": "Deployment guide",
                 "body": [
                     {
-                        "name": "集群名:",
-                        "desc": "部署的集群名"
+                        "name": "Cluster name:",
+                        "desc": "Name of the cluster"
                     },
 						  {
-						  		"name": "描述:",
-								"desc": "集群的描述"
+						  		"name": "Description:",
+								"desc": "Description of the cluster"
 						  },
 						  {
-						  		"name": "业务名:",
-								"desc": "安装的业务名"
+						  		"name": "Business name:",
+								"desc": "Name of the business"
 						  },
 						  {
-						  		"name": "业务类型:",
+						  		"name": "Business type:",
 								"desc": ""
 						  },
 						  {
-						  		"name": "用户名:",
-								"desc": "运行业务的用户名"
+						  		"name": "User:",
+								"desc": "User to operate this business"
 						  },
 						  {
-						  		"name": "密码:",
-								"desc": "用户密码"
+						  		"name": "Password:",
+								"desc": "User's password"
 						  },
 						  {
-						  		"name": "用户组:",
-								"desc": "用户所属的组"
+						  		"name": "User group:",
+								"desc": "Users' group"
 						  },
 						  {
-						  		"name": "安装路径:",
-								"desc": "业务默认的安装路径"
+						  		"name": "Installing path:",
+								"desc": "Default installing path"
 						  }
                 ]
             },
 				"createCluster": {
-                "title": "创建集群",
+                "title": "Create cluster",
                 "body": [
                     {
-                        "name": "集群名:",
-                        "desc": "部署的集群名"
+                        "name": "Cluster name:",
+                        "desc": "Name of the cluster"
                     },
 						  {
-						  		"name": "描述:",
-								"desc": "集群的描述"
+						  		"name": "Description:",
+								"desc": "Description of the cluster"
 						  },
 						  {
-						  		"name": "用户名:",
-								"desc": "运行业务的用户名"
+						  		"name": "User:",
+								"desc": "User to operate the business"
 						  },
 						  {
-						  		"name": "密码:",
-								"desc": "用户密码"
+						  		"name": "Password:",
+								"desc": "User's password"
 						  },
 						  {
-						  		"name": "用户组:",
-								"desc": "用户所属的组"
+						  		"name": "User group:",
+								"desc": "User's group"
 						  },
 						  {
-						  		"name": "安装路径:",
-								"desc": "业务默认的安装路径"
+						  		"name": "Installing path:",
+								"desc": "Default installing path"
 						  }
                 ]
             },
 				"addBusiness": {
-                "title": "添加业务",
+                "title": "Add Business",
                 "body": [
 						  {
-						  		"name": "业务名:",
-								"desc": "安装的业务名"
+						  		"name": "Business name:",
+								"desc": "Name of the business"
 						  },
 						  {
-						  		"name": "业务类型:",
+						  		"name": "Business type:",
 								"desc": ""
 						  }
                 ]

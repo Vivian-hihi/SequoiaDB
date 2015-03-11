@@ -180,7 +180,7 @@ function restRemoveBusiness( async, success, error, complete, businessName )
 //获取主机状态信息
 function restQueryHostStatus( async, success, error, complete, hostList )
 {
-	var data = { 'cmd': 'query host status', 'HostInfo': JSON.stringify( { 'HostInfo': _hostList } ) } ;
+	var data = { 'cmd': 'query host status', 'HostInfo': JSON.stringify( { 'HostInfo': hostList } ) } ;
 	ajaxSendMsg( data, async, restBeforeSend, success, error, complete ) ;
 }
 
@@ -194,7 +194,35 @@ function restGetLog( async, success, error, complete, taskID )
 //删除主机
 function restRemoveHost( async, success, error, complete, hostList )
 {
-	var data = { 'cmd': 'remove host', 'HostInfo': JSON.stringify( { 'HostInfo': _hostList } ) } ;
+	var data = { 'cmd': 'remove host', 'HostInfo': JSON.stringify( { 'HostInfo': hostList } ) } ;
 	ajaxSendMsg( data, async, restBeforeSend, success, error, complete ) ;
 }
 
+//删除集群
+function restRemoveCluster( async, success, error, complete, clusterName )
+{
+	var data = { 'cmd': 'remove cluster', 'ClusterName': clusterName } ;
+	ajaxSendMsg( data, async, restBeforeSend, success, error, complete ) ;
+}
+
+//修改密码
+function restChangePasswd( async, success, error, complete, user, passwd, newPasswd )
+{
+	var timestamp = parseInt( ( new Date().getTime() ) / 1000 ) ;
+	var data = { 'cmd': 'change passwd', 'User': user, 'Passwd': $.md5( passwd ), 'Newpasswd': $.md5( newPasswd ), 'Timestamp': timestamp } ;
+	ajaxSendMsg( data, async, restBeforeSend, success, error, complete ) ;
+}
+
+//获取正在进行的任务列表
+function restListTasks( async, success, error, complete )
+{
+	var data = { 'cmd': 'list tasks'};//, 'filter': JSON.stringify( { 'Progress': { '$lt': 100 } } ) } ;
+	ajaxSendMsg( data, async, restBeforeSend, success, error, complete ) ;
+}
+
+//查询多个任务简略进度
+function restGetTaskStatus( async, success, error, complete, taskArrID )
+{
+	var data = { 'cmd': 'query task', 'filter': JSON.stringify( { '$or': taskArrID } ), 'selector': JSON.stringify( { 'Progress': 1, 'StatusDesc': 1 } ) } ;
+	ajaxSendMsg( data, async, restBeforeSend, success, error, complete ) ;
+}

@@ -352,6 +352,7 @@ function nextPage()
 			
 			if ( _businessConfig['DeployMod'] === 'distribution' )
 			{
+				sdbjs.fun.delData( 'SdbConfigInfo' ) ;
 				gotoPage( 'modsdbd.html' ) ;
 			}
 			else if ( _businessConfig['DeployMod'] === 'standalone' )
@@ -370,6 +371,7 @@ function loadHostInfo()
 		if( _hostsInfo.length === 0 )
 		{
 			//报错
+			showProcessError( '请先安装主机，再安装业务。' ) ;
 			return;
 		}
 		$.each( _hostsInfo, function( index, hostInfo ){
@@ -422,8 +424,11 @@ function createDynamicHtml()
 {
 	sdbjs.parts.loadingBox.show( 'loading' ) ;
 	loadHostInfo() ;
-	initBusinessConfig() ;
-	loadBusinessTemplate() ;
+	if( _hostsInfo.length > 0 )
+	{
+		initBusinessConfig() ;
+		loadBusinessTemplate() ;
+	}
 	sdbjs.parts.loadingBox.hide( 'loading' ) ;
 }
 

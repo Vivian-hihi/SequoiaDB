@@ -24,6 +24,9 @@ var _isCreatePicDiv = false ;
 //画图的对象
 var _rightPic = [] ;
 
+//要删除的集群ID
+var _removeClusterID = null ;
+
 //画图的模板
 var _picOption = {
 	title: {
@@ -274,6 +277,97 @@ function gotoBusinessList( clusterID )
 	gotoPage( 'businesslist.html' ) ;
 }
 
+function gotoTaskPage( taskID, taskType )
+{
+	sdbjs.fun.saveData( 'SdbTaskID', taskID ) ;
+	if( taskType === 0 )
+	{
+		sdbjs.fun.saveData( 'SdbDeployModel', 'taskAddHost' ) ;
+		gotoPage( 'installhost.html' ) ;
+	}
+	else if( taskType === 1 )
+	{
+		sdbjs.fun.saveData( 'SdbDeployModel', 'taskRemoveHost' ) ;
+		sdbjs.fun.saveData( 'SdbClusterName', '' ) ;
+		gotoPage( 'uninsthost.html' ) ;
+	}
+	else if( taskType === 2 )
+	{
+		sdbjs.fun.saveData( 'SdbDeployModel', 'taskAddSdb' ) ;
+		sdbjs.fun.saveData( 'SdbBusinessConfig', JSON.stringify( {  } ) ) ;
+		gotoPage( 'installsdb.html' ) ;
+	}
+	else if( taskType === 3 )
+	{
+		gotoPage( 'uninstsdb.html' ) ;
+	}
+}
+
+//获取正在进行的任务
+function getRunTask()
+{
+	var taskList = [] ;
+	function getRunTaskStatus( isFirst )
+	{
+		var taskArr = [] ;
+		var stopNum = 0 ;
+		$.each( taskList, function( index, value ){
+			taskArr.push( { 'TaskID': value['TaskID'] } ) ;
+			if( value['stop'] === true )
+			{
+				++stopNum ;
+			}
+		} ) ;
+		if ( stopNum < taskList.length || isFirst === true )
+		{
+			restGetTaskStatus( true, function( jsonArr, textStatus, jqXHR ){
+				$.each( jsonArr, function( index, value ){
+					sdbjs.parts.progressBox.update( 'pr_task_' + index, value['Progress'], 'green', value['Progress'] + '%' ) ;
+					sdbjs.parts.tableBox.updateBody( 'taskListTable', index + 1, 3, function( obj ){
+						$( obj ).text( value['StatusDesc'] ) ;
+					} ) ;
+					if( value['StatusDesc'] === 'FINISH' )
+					{
+						taskList[index]['stop'] = true ;
+					}
+				} ) ;
+			}, null, null, taskArr ) ;
+			setTimeout( getRunTaskStatus, 1000 ) ;
+		}
+	}
+	
+	restListTasks( true, function( jsonArr, textStatus, jqXHR ){
+		var runTaskList = jsonArr ;
+		if( runTaskList.length > 0 )
+		{
+			$.each( runTaskList, function( index, value ){
+				sdbjs.parts.tableBox.addBody( 'taskListTable', [{ 'text': function( obj ){
+																					$( obj ).css( 'cursor', 'pointer' ) ;
+																					sdbjs.fun.addClick( obj, 'gotoTaskPage(' + value['TaskID'] + ',' + value['Type'] + ')' ) ;
+																					$( obj ).text( value['TaskID'] ) ;
+																				} },
+																				{ 'text': function( obj ){
+																					$( obj ).css( 'cursor', 'pointer' ) ;
+																					sdbjs.fun.addClick( obj, 'gotoTaskPage(' + value['TaskID'] + ',' + value['Type'] + ')' ) ;
+																					$( obj ).text( value['TypeDesc'] ) ;
+																				} },
+																				{ 'text': function( obj ){
+																					$( obj ).css( 'cursor', 'pointer' ) ;
+																					sdbjs.fun.addClick( obj, 'gotoTaskPage(' + value['TaskID'] + ',' + value['Type'] + ')' ) ;
+																					sdbjs.parts.progressBox.create( obj, 'pr_task_' + index ) ;
+																					sdbjs.parts.progressBox.update( 'pr_task_' + index, 0, 'green', '0%' ) ;
+																				} },
+																				{ 'text': function( obj ){
+																					$( obj ).css( 'cursor', 'pointer' ) ;
+																					sdbjs.fun.addClick( obj, 'gotoTaskPage(' + value['TaskID'] + ',' + value['Type'] + ')' ) ;
+																				} } ] ) ;
+				taskList.push( { 'TaskID': value['TaskID'], 'stop': false } ) ;
+			} ) ;
+			getRunTaskStatus( true ) ;
+		}
+	} ) ;
+}
+
 //画图
 function createRightPic()
 {
@@ -317,12 +411,13 @@ function createRightPic()
 	//更新右边的图表
 	function updateRightPic()
 	{
+		var tmpCurClusterID = _cursorClusterID ;
 		//更换了集群
-		if( _cursorClusterID !== _oldClusterID || _hostList.length === 0 )
+		if( tmpCurClusterID !== _oldClusterID || _hostList.length === 0 )
 		{
 			//设置右边的标题
-			sdbjs.parts.panelBox.update( 'chartBar', htmlEncode( sdbjs.fun.sprintf( _languagePack['index']['rightPanel']['title'], _clusterList[_cursorClusterID]['ClusterName'] ) ), null ) ;
-			_oldClusterID = _cursorClusterID ;
+			sdbjs.parts.panelBox.update( 'chartBar', htmlEncode( sdbjs.fun.sprintf( _languagePack['index']['rightPanel']['title'], _clusterList[tmpCurClusterID]['ClusterName'] ) ), null ) ;
+			_oldClusterID = tmpCurClusterID ;
 			var picLen = _rightPic.length ;
 			for( var i = 0; i < picLen; ++i )
 			{
@@ -333,24 +428,24 @@ function createRightPic()
 			//获取集群主机列表
 			restListHost( false, function( jsonArr, textStatus, jqXHR ){
 				var len = jsonArr.length ;
-				sdbjs.parts.badgeBox.update( 'host_badge_' + _cursorClusterID, htmlEncode( len ), 'info' ) ;
-				sdbjs.fun.setLabel( 'host_badge_' + _cursorClusterID, htmlEncode( sdbjs.fun.sprintf( _languagePack['index']['leftPanel']['body']['badgeTips'][0], len ) ) ) ;//'一共 ? 台主机'
+				sdbjs.parts.badgeBox.update( 'host_badge_' + tmpCurClusterID, htmlEncode( len ), 'info' ) ;
+				sdbjs.fun.setLabel( 'host_badge_' + tmpCurClusterID, htmlEncode( sdbjs.fun.sprintf( _languagePack['index']['leftPanel']['body']['badgeTips'][0], len ) ) ) ;//'一共 ? 台主机'
 				$.each( jsonArr, function( index, hostInfo ){
 					_hostList.push( { 'HostName': hostInfo['HostName'] } ) ;
 					_oldHostConf.push( { 'CPU': { 'Idle': [ 0, 0 ], 'Sum': [ 0, 0 ] }, 'Net': { 'RXBytes': [ 0, 0 ], 'TXBytes': [ 0, 0 ], 'RXPackets': [ 0, 0 ], 'TXPackets': [ 0, 0 ], 'CalendarTime': 0 } } ) ;
 				} ) ;
 			}, function( json ){
 				showProcessError( json['detail'] ) ;
-			}, null, _clusterList[_cursorClusterID]['ClusterName'] ) ;
+			}, null, _clusterList[tmpCurClusterID]['ClusterName'] ) ;
 			
 			restListClusterBusiness( false, function( jsonArr, textStatus, jqXHR ){
 				var len = jsonArr.length ;
-				sdbjs.parts.badgeBox.update( 'business_badge_' + _cursorClusterID, htmlEncode( len ), 'info' ) ;
+				sdbjs.parts.badgeBox.update( 'business_badge_' + tmpCurClusterID, htmlEncode( len ), 'info' ) ;
 				//'一共 ? 个业务'
-				sdbjs.fun.setLabel( 'business_badge_' + _cursorClusterID, htmlEncode( sdbjs.fun.sprintf( _languagePack['index']['leftPanel']['body']['badgeTips'][1], len ) ) ) ;
+				sdbjs.fun.setLabel( 'business_badge_' + tmpCurClusterID, htmlEncode( sdbjs.fun.sprintf( _languagePack['index']['leftPanel']['body']['badgeTips'][1], len ) ) ) ;
 			}, function( json ){
 				showProcessError( json['detail'] ) ;
-			}, null, _clusterList[_cursorClusterID]['ClusterName'] ) ;
+			}, null, _clusterList[tmpCurClusterID]['ClusterName'] ) ;
 		}
 		
 		if( _hostList.length > 0 )
@@ -466,14 +561,14 @@ function createRightPic()
 
 				if( errNum > 0 )
 				{
-					sdbjs.fun.setCSS( 'danger_badge_' + _cursorClusterID, { 'display': '' } ) ;
-					sdbjs.parts.badgeBox.update( 'danger_badge_' + _cursorClusterID, htmlEncode( errNum ), 'danger' ) ;
+					sdbjs.fun.setCSS( 'danger_badge_' + tmpCurClusterID, { 'display': '' } ) ;
+					sdbjs.parts.badgeBox.update( 'danger_badge_' + tmpCurClusterID, htmlEncode( errNum ), 'danger' ) ;
 					//有 ? 台主机故障
-					sdbjs.fun.setLabel( 'danger_badge_' + _cursorClusterID, htmlEncode( sdbjs.fun.sprintf( _languagePack['index']['leftPanel']['body']['badgeTips'][5], errNum ) ) ) ;
+					sdbjs.fun.setLabel( 'danger_badge_' + tmpCurClusterID, htmlEncode( sdbjs.fun.sprintf( _languagePack['index']['leftPanel']['body']['badgeTips'][5], errNum ) ) ) ;
 				}
 				else
 				{
-					sdbjs.fun.setCSS( 'danger_badge_' + _cursorClusterID, { 'display': 'none' } ) ;
+					sdbjs.fun.setCSS( 'danger_badge_' + tmpCurClusterID, { 'display': 'none' } ) ;
 				}
 				
 				var memoryWarning = 0 ;
@@ -521,13 +616,13 @@ function createRightPic()
 				}
 				if( warningNum > 0 )
 				{
-					sdbjs.parts.badgeBox.update( 'warning_badge_' + _cursorClusterID, htmlEncode( warningNum ), 'warning' ) ;
-					sdbjs.fun.setLabel( 'warning_badge_' + _cursorClusterID, warningStr ) ;
-					sdbjs.fun.setCSS( 'warning_badge_' + _cursorClusterID, { 'display': '' } ) ;
+					sdbjs.parts.badgeBox.update( 'warning_badge_' + tmpCurClusterID, htmlEncode( warningNum ), 'warning' ) ;
+					sdbjs.fun.setLabel( 'warning_badge_' + tmpCurClusterID, warningStr ) ;
+					sdbjs.fun.setCSS( 'warning_badge_' + tmpCurClusterID, { 'display': '' } ) ;
 				}
 				else
 				{
-					sdbjs.fun.setCSS( 'warning_badge_' + _cursorClusterID, { 'display': 'none' } ) ;
+					sdbjs.fun.setCSS( 'warning_badge_' + tmpCurClusterID, { 'display': 'none' } ) ;
 				}
 				memoryPercent = ( memoryPercent / memoryList.length ) ;
 				diskPercent = ( diskPercent / memoryList.length ) ;
@@ -560,7 +655,7 @@ function createRightPic()
 				_oldHostConf['CPU'] = { 'Idle': cpuIdle, 'Sum': cpuSum } ;
 				_oldHostConf['Net'] = { 'RXBytes': RXBytes, 'TXBytes': TXBytes, 'RXPackets': RXPackets, 'TXPackets': TXPackets, 'CalendarTime': CalendarTime } ;
 
-				if( _cursorClusterID === _oldClusterID )
+				if( tmpCurClusterID === _oldClusterID )
 				{
 					setTimeout( updateRightPic, 1000 ) ;
 				}
@@ -600,6 +695,27 @@ function createRightPic()
 function setCursorCluster( clusterID )
 {
 	_cursorClusterID = clusterID ;
+}
+
+//打开删除集群的模态框
+function openRemoveCluster( clusterID )
+{
+	_removeClusterID = clusterID ;
+	sdbjs.parts.modalBox.show( 'isRemoveCluster' ) ;
+}
+
+//删除集群
+function removeCluster()
+{
+	var clusterName = _clusterList[ _removeClusterID ]['ClusterName'] ;
+	sdbjs.parts.modalBox.hide( 'isRemoveCluster' ) ;
+	sdbjs.parts.loadingBox.show( 'loading' ) ;
+	restRemoveCluster( true, function( jsonArr, textStatus, jqXHR ){
+		gotoPage( 'index.html' ) ;
+	}, function( json ){
+		sdbjs.parts.loadingBox.hide( 'loading' ) ;
+		showProcessError( json['detail'] ) ;
+	}, null, clusterName ) ;
 }
 
 //---------------------------- 初始化 ------------------------------
@@ -675,7 +791,7 @@ function loadClusterList()
 				sdbjs.parts.dropDownBox.add( dropNodeName, htmlEncode( _languagePack['index']['clusterOperation'][2] ), true, 'openAddBusinessModal(' + index + ')' ) ;//'添加业务'
 				sdbjs.parts.dropDownBox.add( dropNodeName, htmlEncode( _languagePack['index']['clusterOperation'][3] ), true, 'gotoBusinessList(' + index + ')' ) ;//业务列表
 				sdbjs.parts.dropDownBox.add( dropNodeName, '', true ) ;
-				sdbjs.parts.dropDownBox.add( dropNodeName, htmlEncode( _languagePack['index']['clusterOperation'][4] ), true, '' ) ;//'删除集群'
+				sdbjs.parts.dropDownBox.add( dropNodeName, htmlEncode( _languagePack['index']['clusterOperation'][4] ), true, 'openRemoveCluster(' + index + ')' ) ;//'删除集群'
 				sdbjs.fun.setClass( dropNodeName, 'pull-right' ) ;
 				sdbjs.fun.setCSS( dropNodeName, { 'z-index': 10 } ) ;
 				$( headObj ).append( '<span class="caret caret-right"></span> ' ) ;
@@ -757,6 +873,7 @@ function createDynamicHtml()
 	loadBusinessType() ;
 	sdbjs.parts.loadingBox.hide( 'loading' ) ;
 	createRightPic() ;
+	getRunTask() ;
 }
 
 function createHtml()
@@ -949,6 +1066,23 @@ function createHtml()
 																			}, 'width': 120  } ] ) ;
 		
 	} ) ;
+	
+	/* 确认是否要删除集群 */
+	sdbjs.parts.modalBox.create( $( document.body ), 'isRemoveCluster' ) ;
+	sdbjs.parts.modalBox.update( 'isRemoveCluster', htmlEncode( '提示' ), function( bodyObj ){
+		sdbjs.parts.alertBox.create( bodyObj, 'isRemoveClusterAlert' ) ;
+		sdbjs.parts.alertBox.update( 'isRemoveClusterAlert', htmlEncode( 'Warning：该操作是不可恢复操作，并且无法删除拥有主机的集群。' ), 'warning' )
+	}, function( footObj ){
+		$( footObj ).css( 'text-align', 'right' ) ;
+		sdbjs.parts.buttonBox.create( footObj, 'isRemoveClusterOK' ) ;
+		$( footObj ).append( '&nbsp;' ) ;
+		sdbjs.parts.buttonBox.create( footObj, 'isRemoveClusterClose' ) ;
+		sdbjs.parts.buttonBox.update( 'isRemoveClusterOK', htmlEncode( '确定' ), 'primary', null, 'removeCluster()' ) ;
+		sdbjs.parts.buttonBox.update( 'isRemoveClusterClose', function( buttonObj ){
+			$( buttonObj ).text( '关闭' ).attr( 'data-toggle', 'modalBox' ).attr( 'data-target', 'isRemoveCluster' ) ;
+		}, 'primary' ) ;
+	} ) ;
+	
 }
 
 $(document).ready(function(){

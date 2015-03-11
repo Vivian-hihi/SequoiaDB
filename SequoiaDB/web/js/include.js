@@ -12,6 +12,9 @@ var _language = 'zh-CN' ;
 //语言包
 var _languagePack = {} ;
 
+//任务列表
+var _taskList = [] ;
+
 //--------------------------------- 通用函数 ---------------------------------//
 
 /*
@@ -25,7 +28,10 @@ function htmlEncode( str )
 	s = str.replace( /&/g, "&amp;" ) ;
 	s = s.replace( /</g, "&lt;" ) ;
 	s = s.replace( />/g, "&gt;" ) ;
-	s = s.replace( / /g, "&nbsp;" ) ;
+	s = s.replace( / {2,}/g, function( str ){
+		str = str.replace( / /g, "&nbsp;" ) ;
+		return str ;
+	} ) ;
 	s = s.replace( /\'/g, "&#39;" ) ;
 	s = s.replace( /\"/g, "&quot;" ) ;
 	s = s.replace( /\n/g, "<br>" ) ;
@@ -147,123 +153,6 @@ function ajaxSendMsg( data, async, before, success, error, complete, isJson )
 			before( XMLHttpRequest ) ;
 		}
 	} } ) ;
-}
-
-//打开添加业务模态框
-function openDeployGuidModal()
-{
-	sdbjs.fun.setCSS( 'deployGuidAlert', { 'display': 'none' } ) ;
-	sdbjs.parts.modalBox.show( 'deployGuid' ) ;
-}
-
-//登出
-function logout()
-{
-	sdbjs.fun.delData( 'SdbUser' ) ;
-	sdbjs.fun.delData( 'SdbSessionID' ) ;
-	gotoPage( 'login.html' ) ;
-}
-
-//创建基础网页
-function createPublicHtml()
-{
-	$( document.body ).css( 'overflow', 'hidden' ) ;
-	sdbjs.fun.setRootNode( $( '#root' ), 'variable', 'variable' ) ;
-	$( document.body ).css( 'overflow', 'visible' ) ;
-	
-	sdbjs.parts.loadingBox.create( $( document.body ), 'loading' ) ;
-	sdbjs.parts.loadingBox.update( 'loading', 'loading' ) ;
-	
-	/* 构建页面框架 */
-	//顶部1
-	sdbjs.parts.divBox.create( 'root', 'top1', 'auto', 40 ) ;
-	//顶部2
-	sdbjs.parts.divBox.create( 'root', 'top2', 'auto', 34 ) ;
-	//中间内容
-	sdbjs.parts.divBox.create( 'root', 'middle', 'auto', 'variable' ) ;
-	//底部
-	sdbjs.parts.divBox.create( 'root', 'foot', 'auto', 65 ) ;
-	sdbjs.fun.setCSS( 'foot', { 'border-top': '1px solid #DDD' } ) ;
-
-	/* 导航 */
-	sdbjs.parts.navBox.create( 'top1', 'nav' ) ;
-	sdbjs.parts.navBox.addColum( 'nav', htmlEncode( _languagePack['public']['nav'][0] ), 'gotoPage("index.html")' ) ;//首页
-	
-	if( _cursorFileName === 'index' )
-	{
-		//部署引导
-		sdbjs.parts.navBox.addColum( 'nav', htmlEncode( _languagePack['public']['nav'][1] ), function( obj ){
-			sdbjs.fun.addClick( obj, 'openDeployGuidModal()' ) ;
-		} ) ;
-		sdbjs.parts.navBox.addColum( 'nav', htmlEncode( _languagePack['public']['nav'][2] ) ) ;//帮助
-		sdbjs.parts.navBox.addMenu( 'nav', 2, [ { 'text': htmlEncode( _languagePack['public']['nav'][3] ), 'fun': function( obj ){
-			$( obj ).attr( 'data-toggle', 'modalBox' ).attr( 'data-target', 'aboutSMSModal' ) ;
-		} } ] ) ;//关于SMS系统
-		if( _cursorFileName !== 'login' )
-		{
-			//用户
-			sdbjs.parts.navBox.addColum2( 'nav', '<img width="14" src="./images/smallicon/white/16x16/user.png"> ' + htmlEncode( sdbjs.fun.getData( 'SdbUser' ) ) ) ;
-			sdbjs.parts.navBox.addMenu( 'nav', 3, [ { 'text': htmlEncode( _languagePack['public']['nav'][4] ), 'fun': '' } ] ) ;//修改密码
-			sdbjs.parts.navBox.addMenu( 'nav', 3, [ { 'text': htmlEncode( _languagePack['public']['nav'][5] ), 'fun': 'logout()' } ] ) ;//注销
-		}
-	}
-	else
-	{
-		sdbjs.parts.navBox.addColum( 'nav', htmlEncode( _languagePack['public']['nav'][2] ) ) ;//帮助
-		sdbjs.parts.navBox.addMenu( 'nav', 1, [ { 'text': htmlEncode( _languagePack['public']['nav'][3] ), 'fun': function( obj ){
-			$( obj ).attr( 'data-toggle', 'modalBox' ).attr( 'data-target', 'aboutSMSModal' ) ;
-		} } ] ) ;//关于SMS系统
-		if( _cursorFileName !== 'login' )
-		{
-			//用户
-			sdbjs.parts.navBox.addColum2( 'nav', '<img width="14" src="./images/smallicon/white/16x16/user.png"> ' + htmlEncode( sdbjs.fun.getData( 'SdbUser' ) ) ) ;
-			sdbjs.parts.navBox.addMenu( 'nav', 2, [ { 'text': htmlEncode( _languagePack['public']['nav'][4] ), 'fun': '' } ] ) ;//修改密码
-			sdbjs.parts.navBox.addMenu( 'nav', 2, [ { 'text': htmlEncode( _languagePack['public']['nav'][5] ), 'fun': 'logout()' } ] ) ;//注销
-		}
-	}
-
-	/* logo */
-	sdbjs.parts.divBox.create( 'foot', 'logo', 228, 'auto' ) ;
-	sdbjs.fun.setCSS( 'logo', { 'float': 'left' } ) ;
-	sdbjs.fun.setHtml( 'logo', '<img src="images/logo.png">' ) ;
-	
-	/* 状态栏 */
-	sdbjs.parts.divBox.create( 'foot', 'status', 'variable', 64 ) ;
-	sdbjs.fun.setCSS( 'status', { 'float': 'left' } ) ;
-	sdbjs.parts.alertBox.create( 'status', 'ststusAlert' ) ;
-	sdbjs.fun.setCSS( 'ststusAlert', { 'display': 'none', 'margin-left': 10, 'margin-top': 5 } ) ;
-	
-	/* 操作区 */
-	sdbjs.parts.divBox.create( 'foot', 'operate', 200, 'auto' ) ;
-	sdbjs.fun.setCSS( 'operate', { 'float': 'left', 'padding': '10px 0 0 10px' } ) ;
-	
-	/* ** */
-	sdbjs.parts.divBox.create( 'foot', 'foot-clear', 0, 'auto' ) ;
-	sdbjs.fun.setClass( 'foot-clear', 'clear-float' ) ;
-	
-	/* 创建通用错误的弹窗 */
-	sdbjs.parts.modalBox.create( $( document.body ), 'processError' ) ;
-	sdbjs.parts.modalBox.update( 'processError', htmlEncode( _languagePack['error']['system']['errModalTitle'] ), function( bodyObj ){
-		sdbjs.parts.alertBox.create( bodyObj, 'processErrorAlert' ) ;
-	}, function( footObj ){
-		$( footObj ).css( 'text-align', 'right' ) ;
-		sdbjs.parts.buttonBox.create( footObj, 'processErrorClose' ) ;
-		sdbjs.parts.buttonBox.update( 'processErrorClose', function( buttonObj ){
-			$( buttonObj ).text( _languagePack['public']['button']['close'] ).attr( 'data-toggle', 'modalBox' ).attr( 'data-target', 'processError' ) ;
-		}, 'primary' ) ;
-	} ) ;
-
-	/* 关于SMS的弹窗 */
-	sdbjs.parts.modalBox.create( $( document.body ), 'aboutSMSModal' ) ;
-	sdbjs.parts.modalBox.update( 'aboutSMSModal', htmlEncode( '关于SMS' ), function( bodyObj ){
-		$( bodyObj ).append( '<img src="images/logo.png">' ) ;
-	}, function( footObj ){
-		sdbjs.parts.buttonBox.create( footObj, 'aboutSMSModalClose' ) ;
-		sdbjs.parts.buttonBox.update( 'aboutSMSModalClose', function( buttonObj ){
-			//'关闭'
-			$( buttonObj ).text( _languagePack['public']['button']['close'] ).attr( 'data-toggle', 'modalBox' ).attr( 'data-target', 'aboutSMSModal' ) ;
-		}, 'primary' ) ;
-	} ) ;
 }
 
 /*
@@ -534,6 +423,7 @@ function sizeConvert( num )
 	return rn ;
 }
 
+//获取语言包
 function getPageLanguage( fileName )
 {
 	var url = './language/' + _language + '/' + fileName ;
@@ -565,25 +455,28 @@ $(document).ready(function(){
 		if( sdbjs.fun.getData( 'SdbUser' ) === null )
 		{
 			gotoPage( 'login.html' ) ;
+			return;
 		}
 		if( sdbjs.fun.getData( 'SdbSessionID' ) === null )
 		{
 			gotoPage( 'login.html' ) ;
+			return;
 		}
 	}
+	//判断浏览器语言
 	_language = sdbjs.fun.getData( 'SdbLanguage' ) ;
 	if( _language === null )
 	{
 		_language = sdbjs.fun.getLanguage() ;
 		sdbjs.fun.saveData( 'SdbLanguage', _language ) ;
 	}
-	_language = 'zh-CN' ;
-	sdbjs.fun.saveData( 'SdbLanguage', _language ) ;
+	//获取语言包
 	getPageLanguage( _cursorFileName ) ;
 	getPageLanguage( 'error' ) ;
 	getPageLanguage( 'html' ) ;
 } ) ;
 
+//获取网页名
 var path = window.location.pathname ;
 if( path == '/' )
 {
