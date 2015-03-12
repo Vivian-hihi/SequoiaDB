@@ -1,22 +1,22 @@
 {
     "installhost": {
         "leftPanel": {
-            "title": "Task information",
+            "title": "Task Information",
 				"taskInfo": [
 						"Task ID",
 						"Cluster",
-						"Task type",
-						"Subjects number",
+						"Task Type",
+						"Subjects Number",
 						"Status",
 						"Progress",
-						"Estimated remaining time",
+						"Estimated Remaining Time",
 						"Log"
 				],
 				"logButton": "View",
 				"time": "minutes"
         },
         "rightPanel": {
-            "title": "Installing progress",
+            "title": "Installing Progress",
 				"hostGrid": [
 						"HostName",
 						"IP",

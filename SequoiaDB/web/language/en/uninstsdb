@@ -16,17 +16,17 @@
 				"time": "minutes"
         },
         "rightPanel": {
-            "title": "卸载进度",
+            "title": "Uninstalling Progress",
 				"nodeGrid": [
 						"HostName",
 						"Port",
 						"Role",
 						"Group",
-						"卸载状态",
-						"卸载进度"
+						"Status",
+						"Progress"
 				],
-				"taskStatus": [ "正在初始化任务", "正在执行任务", "正在回滚任务", "正在取消任务", "任务完成", "未知状态", "任务失败" ],
-				"nodeStatus": [ "正在初始化卸载", "正在卸载", "正在回滚卸载", "正在取消卸载", "卸载完成", "未知状态", "卸载失败" ]
+				"taskStatus": [ "Initializing", "Uninstalling", "Rolling Back", "Cancelling", "Completed", "Unknown", "Failed" ],
+				"hostStatus": [ "Initializing", "Uninstalling", "Rolling Back", "Cancelling", "Completed", "Unknown", "Failed" ]
         },
 		  "logModal": {
 		  		"title": "Log"

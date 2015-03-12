@@ -1,7 +1,7 @@
 {
     "modsdbd": {
         "leftPanel": {
-            "title": "Business: ",
+            "title": "Module: ",
 				"titleDrop": [ "Create replica group" ],
 				"tip": [ "Notice: Set nodes parameters in batch. Click for", "help." ],
 				"groupList": {
@@ -15,11 +15,11 @@
 						"button": [ "Edit", "Done" ],
 						"dropDown": [
 								{
-									"button": "Selection Type",
-									"menu": [ "Select All", "Select Invert" ]
+									"button": "Selection",
+									"menu": [ "All", "Inverse" ]
 								},
 								{
-									"button": "Operation for Selected",
+									"button": "Operations",
 									"menu": [ "Edit Node in Batch" ]
 								}
 						]
@@ -39,13 +39,31 @@
 		  },
 		  "removeNodeModal": {
 		  		"title": "Remove Node",
-				"table": [ "Node to Remove" ]
+				"table": [ "Node Name" ]
 		  },
 		  "modNodeConfModal": {
 		  		"title": "Edit Node",
 				"title2": "Edit Node Parameters in Batch",
 				"nav": [ "General", "Advance" ],
 				"grid": [ "Property", "Value", "Description" ]
+		  },
+		  "nodeConfHelpModal": {
+		  		"title": "Help",
+				"body": [
+					"?[Operations]-[Change Node]?: ?Batch syntax? can be used to change multiple ?service name? and ?database path?.",
+					[
+						[ "Service", "Syntax: <port number>[<+|->step size]" ],
+						[ "Syntax", "Sample", "Description" ],
+						[ "Normal", "11810", "Port is set to 11810. Nodes on the same host cannot be set with same port number. ( PcHost-1:11810, PcHost-2:11810, PcHost-3:11810 )" ],
+						[ "Incremental", "11810[+10]", "The port used by nodes on the same host will be increased by 10. ( PcHost-1:11810, PcHost-1:11820, PcHost-1:11830 )" ],
+						[ "Decremental", "11810[-10]", "The port used by nodes on the same host will be decreased by 10. ( PcHost-1:11810, PcHost-1:11800, PcHost-1:11790 )" ]
+					],
+					[
+						[ "Path", "Keywords: [role], [svcname], [groupname], [hostname]" ],
+						[ "Sample", "Description" ],
+						[ "/opt/sequoiadb/database/[role]/[svcname]", "Role and Service name for each node will be appeneded on the fields where keyword appears. [groupname] for coord and catalog will be empty string. ( For Data node on port 11820, the real path will be looks like '/opt/sequoiadb/database/data/11820' )" ]
+					]
+				]
 		  }
     }
 }

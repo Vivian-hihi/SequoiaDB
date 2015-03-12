@@ -1,24 +1,24 @@
 {
     "confsdb": {
         "leftPanel": {
-            "title": "Business Parameters",
-				"button": [ "Select Host", "Data Preview", "Business Preview" ],
+            "title": "Module Parameters",
+				"button": [ "Select Host", "Data Preview", "Module Preview" ],
 				"grid": [ "Property", "Value", "Description" ]
         },
         "rightPanel": [
 		  		{
-					"title": "Business Preview",
-					"table": [ "Host Number", "Node Number",  "Disk Number", "Node Distribution Rate", "Total Space", "Available Capacity, "Redundant Capacity", "Redundant Rate" ],
+					"title": "Module Preview",
+					"table": [ "Host Number", "Node Number", "Disk Number", "Node Distribution Rate", "Total Space", "Available Capacity", "Redundant Capacity", "Redundant Rate" ],
 					"pie": {
 							"title": "Capacity Information",
 							"data": [ "Available Capacity", "Redundant Capacity", "Total Capacity" ]
 					}
 				},
 				{
-					"title": "Select Hosts to Install Business",
+					"title": "Select Hosts to Install Module",
 					"dropDown": {
-							"button": "Selection Type",
-							"menu": [ "Select All", "Select Invert" ]
+							"button": "Selection",
+							"menu": [ "All", "Inverse" ]
 					},
 					"grid": [ "HostName", "IP" ]
 				}

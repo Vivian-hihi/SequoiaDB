@@ -1,3 +1,24 @@
 {
-
+    "businesslist": {
+	 	  "title": "Cluster: ",
+		  "tab": {
+		  		"button": [ "Add Module" ]
+		  },
+	 	  "businessGrid": {
+		  		   "title": [ "Module Name", "Type", "Mode", "Operation" ],
+		  			"button": {
+						  "remove": "uninstall"
+					}
+		  },
+		  "isRemoveBusiness": {
+		  			"title": "Tips"
+		  },
+		  "addBusiness": {
+		  			"title": "Add Module",
+					"table": [
+						[ "Module Name", "Name of the Module" ],
+						[ "Module Type", "" ]
+					]
+		  }
+    }
 }

@@ -16,15 +16,15 @@
 				"time": "minutes"
         },
         "rightPanel": {
-            "title": "卸载进度",
+            "title": "Uninstalling Progress",
 				"hostGrid": [
 						"HostName",
 						"IP",
 						"Status",
 						"Progress"
 				],
-				"taskStatus": [ "正在初始化任务", "正在执行任务", "正在回滚任务", "正在取消任务", "任务完成", "未知状态", "任务失败" ],
-				"hostStatus": [ "正在初始化安装", "正在安装", "正在回滚安装", "正在取消安装", "安装完成", "未知状态", "安装失败" ]
+				"taskStatus": [ "Initializing", "Uninstalling", "Rolling Back", "Cancelling", "Completed", "Unknown", "Failed" ],
+				"hostStatus": [ "Initializing", "Uninstalling", "Rolling Back", "Cancelling", "Completed", "Unknown", "Failed" ]
         },
 		  "logModal": {
 		  		"title": "Log"

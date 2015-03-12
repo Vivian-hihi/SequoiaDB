@@ -3,7 +3,7 @@
         "nav": [
 		  		{ "text": "首页" },
 				{ "text": "部署引导" },
-				{ "text": "帮助", "child": [ "Language", "关于SMS系统" ] },
+				{ "text": "帮助", "child": [ "语言", "关于SMS系统" ] },
 				{ "text": "用户", "child": [ "修改密码", "注销" ] },
 				{ "text": "任务" }
         ],
@@ -28,6 +28,33 @@
 				"卸载主机",
 				"业务列表",
 				"主机列表"
-        ]
+        ],
+		  "modal": {
+		  		"changePwd": {
+						"title": "修改密码",
+						"table": {
+							"title": [ "用户名:", "密码:", "新密码:" ]
+						}
+				},
+				"aboutSMS": {
+						"title": "关于SMS",
+						"context": [
+							  "Version: 1.12",
+							  "SMS（SequoiaDB Monitoring Service）提供针对SequoiaDB数据库的图形化监控服务。"
+						]
+				},
+				"language": {
+						"title": "语言",
+						"table": {
+							  "title": [ "语言:" ]
+						}
+				},
+				"task": {
+						"title": "任务列表",
+						"table": {
+							  "title": [ "ID", "类型", "进度", "状态" ]
+						}
+				}
+		  }
     }
 }

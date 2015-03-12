@@ -74,7 +74,7 @@ function gotoPage( address )
 function showModalError( nodeName, errMsg )
 {
 	sdbjs.fun.setCSS( nodeName, { 'display': 'block' } ) ;
-	sdbjs.parts.alertBox.update( nodeName, htmlEncode( 'Error: ' + errMsg ), 'danger' ) ;
+	sdbjs.parts.alertBox.update( nodeName, htmlEncode( errMsg ), 'danger' ) ;
 }
 
 //显示状态栏

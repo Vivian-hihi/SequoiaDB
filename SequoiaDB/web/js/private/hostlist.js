@@ -9,9 +9,11 @@ var _hostList = null ;
 //编辑节点列表
 function editHostList( btnObj )
 {
-	if( $( btnObj ).text() === '编辑' )
+	//'编辑'
+	if( $( btnObj ).text() === _languagePack['hostlist']['tab']['button'][0][0] )
 	{
-		$( btnObj ).text( '完成' ) ;
+		//'完成'
+		$( btnObj ).text( _languagePack['hostlist']['tab']['button'][0][1] ) ;
 		sdbjs.parts.gridBox.updateTitle( 'hostInfoGrid', 0, 0, function( tdObj ){
 			$( tdObj ).children( 'input' ).show( 200 ) ;
 		} ) ;
@@ -24,7 +26,8 @@ function editHostList( btnObj )
 	}
 	else
 	{
-		$( btnObj ).text( '编辑' ) ;
+		//编辑
+		$( btnObj ).text( _languagePack['hostlist']['tab']['button'][0][0] ) ;
 		sdbjs.parts.gridBox.updateTitle( 'hostInfoGrid', 0, 0, function( tdObj ){
 			$( tdObj ).children( 'input' ).hide( 200 ) ;
 		} ) ;
@@ -39,7 +42,8 @@ function editHostList( btnObj )
 //全选
 function selectAll()
 {
-	if( $( '#editButton' ).text() === '编辑' )
+	//编辑
+	if( $( '#editButton' ).text() === _languagePack['hostlist']['tab']['button'][0][0] )
 	{
 		editHostList( $( '#editButton' ) ) ;
 	}
@@ -56,7 +60,8 @@ function selectAll()
 //反选
 function unSelectAll()
 {
-	if( $( '#editButton' ).text() === '编辑' )
+	//编辑
+	if( $( '#editButton' ).text() === _languagePack['hostlist']['tab']['button'][0][0] )
 	{
 		editHostList( $( '#editButton' ) ) ;
 	}
@@ -76,10 +81,12 @@ function unSelectAll()
 //打开删除主机的提示模态框
 function openRemoveHostModal()
 {
-	if( $( '#editButton' ).text() === '编辑' )
+	//编辑
+	if( $( '#editButton' ).text() === _languagePack['hostlist']['tab']['button'][0][0] )
 	{
 		editHostList( $( '#editButton' ) ) ;
-		showFootStatus( 'info', 'Tip：删除主机至少选择一台主机.' ) ;
+		//'Tip：删除主机至少选择一台主机.'
+		showFootStatus( 'warning', _languagePack['tip']['web']['hostlist'][1] ) ;
 	}
 	else
 	{
@@ -99,7 +106,8 @@ function openRemoveHostModal()
 		}
 		else
 		{
-			showFootStatus( 'info', 'Tip：删除主机至少选择一台主机.' ) ;
+			//'Tip：删除主机至少选择一台主机.'
+			showFootStatus( 'warning', _languagePack['tip']['web']['hostlist'][1] ) ;
 		}
 	}
 }
@@ -219,8 +227,8 @@ function createHtml()
 	/* 分页 */
 	sdbjs.parts.tabPageBox.create( 'top2', 'tab' ) ;
 	sdbjs.fun.setCSS( 'tab', { 'padding-top': 5 } ) ;
-	sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/home.png"> ' + htmlEncode( '总览' ), false, 'gotoIndex()' ) ;
-	sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/comp.png"> ' + htmlEncode( '主机列表' ), true, null ) ;
+	sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/home.png"> ' + htmlEncode( _languagePack['public']['tabPage'][1] ), false, 'gotoIndex()' ) ;
+	sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/comp.png"> ' + htmlEncode( _languagePack['public']['tabPage'][11] ), true, null ) ;
 	
 	/* 外框 */
 	sdbjs.parts.divBox.create( 'middle', 'middleDiv', 'auto', 'variable' ) ;
@@ -232,38 +240,53 @@ function createHtml()
 		sdbjs.parts.divBox.create( panelTitle['name'], 'clusterNameDiv' ) ;
 		sdbjs.fun.setCSS( 'clusterNameDiv', { 'text-overflow': 'ellipsis', 'overflow': 'hidden', 'white-space': 'nowrap' } ) ;
 		sdbjs.parts.divBox.update( 'clusterNameDiv', function( divObj ){
-			$( divObj ).text( '集群：' + _clusterName ) ;
+			//'集群：'
+			$( divObj ).text( _languagePack['hostlist']['title'] + _clusterName ) ;
 		} ) ;
 	}, function( panelBody ){
 		sdbjs.parts.divBox.create( panelBody['name'], 'hostTopDiv', 'auto', 43 ) ;
 		sdbjs.parts.divBox.update( 'hostTopDiv', function( divObj ){
-			$( divObj ).append( '<button class="btn btn-default" onclick="editHostList(this)" id="editButton">编辑</button>' ) ;
+			//编辑
+			$( divObj ).append( '<button class="btn btn-default" onclick="editHostList(this)" id="editButton">' + htmlEncode( _languagePack['hostlist']['tab']['button'][0][0] ) + '</button>' ) ;
 			$( divObj ).append( '&nbsp;&nbsp;' ) ;
 			sdbjs.parts.dropDownBox.create( divObj, 'hostSelect' ) ;
-			sdbjs.parts.dropDownBox.update( 'hostSelect', '选择操作' ) ;
-			sdbjs.parts.dropDownBox.add( 'hostSelect', htmlEncode( '全选' ), true, 'selectAll()' ) ;
-			sdbjs.parts.dropDownBox.add( 'hostSelect', htmlEncode( '反选' ), true, 'unSelectAll()' ) ;
+			//选择操作
+			sdbjs.parts.dropDownBox.update( 'hostSelect', _languagePack['hostlist']['tab']['button'][1][0] ) ;
+			//全选
+			sdbjs.parts.dropDownBox.add( 'hostSelect', htmlEncode( _languagePack['hostlist']['tab']['button'][1][1] ), true, 'selectAll()' ) ;
+			//反选
+			sdbjs.parts.dropDownBox.add( 'hostSelect', htmlEncode( _languagePack['hostlist']['tab']['button'][1][2] ), true, 'unSelectAll()' ) ;
 			$( divObj ).append( '&nbsp;&nbsp;' ) ;
 			sdbjs.parts.dropDownBox.create( divObj, 'hostOperation' ) ;
-			sdbjs.parts.dropDownBox.update( 'hostOperation', '已选定操作' ) ;
-			sdbjs.parts.dropDownBox.add( 'hostOperation', htmlEncode( '删除主机' ), true, function( liObj ){
+			//已选定操作
+			sdbjs.parts.dropDownBox.update( 'hostOperation', _languagePack['hostlist']['tab']['button'][2][0] ) ;
+			//删除主机
+			sdbjs.parts.dropDownBox.add( 'hostOperation', htmlEncode( _languagePack['hostlist']['tab']['button'][2][1] ), true, function( liObj ){
 				sdbjs.fun.addClick( liObj, 'openRemoveHostModal()' ) ;
 			} ) ;
 			$( divObj ).append( '&nbsp;&nbsp;' ) ;
-			$( divObj ).append( '<button class="btn btn-default" onclick="gotoAddHost()">添加主机</button>' ) ;
+			//添加主机
+			$( divObj ).append( '<button class="btn btn-default" onclick="gotoAddHost()">' + htmlEncode( _languagePack['hostlist']['tab']['button'][3] ) + '</button>' ) ;
 		} ) ;
 		sdbjs.parts.divBox.create( panelBody['name'], 'hostBottomDiv', 'auto', 'variable' ) ;
 		sdbjs.parts.gridBox.create( 'hostBottomDiv', 'hostInfoGrid', 'auto', 'variable' ) ;
 		sdbjs.parts.gridBox.addTitle( 'hostInfoGrid', [{ 'text': function( tdObj ){
 			$( tdObj ).css( 'height', 19 ).html( '<input style="display:none;visibility:hidden;" type="checkbox">' ) ;
 		}, 'width': '0%' },
-																	  { 'text': htmlEncode( '主机名' ), 'width': '20%' },
-																	  { 'text': htmlEncode( 'IP' ), 'width': '15%' },
-																	  { 'text': htmlEncode( '系统' ), 'width': '20%' },
-																	  { 'text': htmlEncode( 'CPU核心数' ), 'width': '10%' },
-																	  { 'text': htmlEncode( '内存容量' ), 'width': '10%' },
-																	  { 'text': htmlEncode( '业务名' ), 'width': '15%' },
-																	  { 'text': htmlEncode( '业务类型' ), 'width': '10%' } ] ) ;
+																	  //主机名
+																	  { 'text': htmlEncode( _languagePack['hostlist']['hostGrid']['title'][0] ), 'width': '20%' },
+																	  //IP
+																	  { 'text': htmlEncode( _languagePack['hostlist']['hostGrid']['title'][1] ), 'width': '15%' },
+																	  //系统
+																	  { 'text': htmlEncode( _languagePack['hostlist']['hostGrid']['title'][2] ), 'width': '20%' },
+																	  //CPU核心数
+																	  { 'text': htmlEncode( _languagePack['hostlist']['hostGrid']['title'][3] ), 'width': '10%' },
+																	  //内存容量
+																	  { 'text': htmlEncode( _languagePack['hostlist']['hostGrid']['title'][4] ), 'width': '10%' },
+																	  //业务名
+																	  { 'text': htmlEncode( _languagePack['hostlist']['hostGrid']['title'][5] ), 'width': '15%' },
+																	  //业务类型
+																	  { 'text': htmlEncode( _languagePack['hostlist']['hostGrid']['title'][6] ), 'width': '10%' } ] ) ;
 	} ) ;
 	
 	/* ** */
@@ -272,17 +295,21 @@ function createHtml()
 	
 	/* 确认是否要删除主机 */
 	sdbjs.parts.modalBox.create( $( document.body ), 'isRemoveHost' ) ;
-	sdbjs.parts.modalBox.update( 'isRemoveHost', htmlEncode( '提示' ), function( bodyObj ){
+	//'提示'
+	sdbjs.parts.modalBox.update( 'isRemoveHost', htmlEncode( _languagePack['hostlist']['isRemoveHost']['title'] ), function( bodyObj ){
 		sdbjs.parts.alertBox.create( bodyObj, 'isRemoveHostAlert' ) ;
-		sdbjs.parts.alertBox.update( 'isRemoveHostAlert', htmlEncode( 'Warning：该操作是不可恢复操作，并且无法删除已经安装业务的主机.' ), 'warning' )
+		//'Warning：该操作是不可恢复操作，并且无法删除已经安装业务的主机.'
+		sdbjs.parts.alertBox.update( 'isRemoveHostAlert', htmlEncode( _languagePack['tip']['web']['hostlist'][0] ), 'warning' )
 	}, function( footObj ){
 		$( footObj ).css( 'text-align', 'right' ) ;
 		sdbjs.parts.buttonBox.create( footObj, 'isRemoveHostOK' ) ;
 		$( footObj ).append( '&nbsp;' ) ;
 		sdbjs.parts.buttonBox.create( footObj, 'isRemoveHostClose' ) ;
-		sdbjs.parts.buttonBox.update( 'isRemoveHostOK', htmlEncode( '确定' ), 'primary', null, 'removeHost()' ) ;
+		//确定
+		sdbjs.parts.buttonBox.update( 'isRemoveHostOK', htmlEncode( _languagePack['public']['button']['ok'] ), 'primary', null, 'removeHost()' ) ;
+		//关闭
 		sdbjs.parts.buttonBox.update( 'isRemoveHostClose', function( buttonObj ){
-			$( buttonObj ).text( '关闭' ).attr( 'data-toggle', 'modalBox' ).attr( 'data-target', 'isRemoveHost' ) ;
+			$( buttonObj ).text( _languagePack['public']['button']['close'] ).attr( 'data-toggle', 'modalBox' ).attr( 'data-target', 'isRemoveHost' ) ;
 		}, 'primary' ) ;
 	} ) ;
 	

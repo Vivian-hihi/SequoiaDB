@@ -32,7 +32,7 @@ function createHtml()
 	sdbjs.parts.tabPageBox.create( 'top2', 'tab' ) ;
 	sdbjs.fun.setCSS( 'tab', { 'padding-top': 5 } ) ;
 	//'登录'
-	sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/user.png"> ' + htmlEncode( _languagePack['login']['tabPage'] ), true, null ) ;
+	sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/user.png"> ' + htmlEncode( _languagePack['public']['tabPage'][0] ), true, null ) ;
 
 	/* well面板 */
 	sdbjs.parts.wellBox.create( 'middle', 'center', 600, 'auto' ) ;

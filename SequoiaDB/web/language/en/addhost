@@ -20,7 +20,7 @@
 				},
 				"cpu": {
 						"title": "CPU",
-						"grid": [ "ID", "Type", "Core Number", "Frequency" ]
+						"grid": [ "ID", "Type", "Cores", "Frequency" ]
 				},
 				"net": {
 						"title": "Network Card",

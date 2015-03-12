@@ -3,8 +3,4 @@
         	<BusinessType>sequoiadb</BusinessType>
         	<BusinessDesc>数据库</BusinessDesc> 
         </FILLER>
-		  <FILLER>
-        	<BusinessType>sequoiadb2</BusinessType>
-        	<BusinessDesc>数据库2</BusinessDesc> 
-        </FILLER>
 </BusinessList>

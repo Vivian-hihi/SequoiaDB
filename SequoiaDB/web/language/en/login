@@ -1,8 +1,5 @@
 {
     "login": {
-        "tabPage": [
-            "Login"
-        ],
         "table": {
             "title": "Login",
             "body": [

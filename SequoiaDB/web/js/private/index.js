@@ -665,7 +665,7 @@ function createRightPic()
 				}
 	
 			}, function( jsonArr ){
-				return errorProcess( jsonArr[0]['errno'], jsonArr[0]['detail'] ) ;
+				return errorProcess( jsonArr['errno'], jsonArr['detail'] ) ;
 			}, null, _hostList ) ;
 		}
 		else
@@ -944,6 +944,10 @@ function checkDeploy()
 			}
 		}
 	}
+	else
+	{
+		sdbjs.fun.delData( 'SdbDeployModel' ) ;
+	}
 	return rc ;
 }
 
@@ -968,7 +972,7 @@ function createDynamicHtml()
 	getRunTask() ;
 	if( checkDeploy() === false )
 	{
-		checkFirstUse() ;
+		//checkFirstUse() ;
 	}
 	else
 	{
@@ -1043,7 +1047,7 @@ function createHtml()
 																			{ 'text': htmlEncode( _languagePack['index']['modal']['deploy']['body'][1]['desc'] ) } ] ) ;
 		//'业务名：' '安装的业务名'
 		sdbjs.parts.tableBox.addBody( 'deployGuidTable', [ { 'text': htmlEncode( _languagePack['index']['modal']['deploy']['body'][2]['name'] ), 'width': 100 },
-																			{ 'text': '<input class="form-control" type="text" id="businessName_d" value="myBusiness">' },
+																			{ 'text': '<input class="form-control" type="text" id="businessName_d" value="myModule">' },
 																			{ 'text': htmlEncode( _languagePack['index']['modal']['deploy']['body'][2]['desc'] ) } ] ) ;
 		//'业务类型：'
 		sdbjs.parts.tableBox.addBody( 'deployGuidTable', [ { 'text': htmlEncode( _languagePack['index']['modal']['deploy']['body'][3]['name'] ), 'width': 100 },
@@ -1141,7 +1145,7 @@ function createHtml()
 		sdbjs.parts.tableBox.update( 'addBusinessTable', 'loosen' ) ;
 		//'业务名：' '安装的业务名'
 		sdbjs.parts.tableBox.addBody( 'addBusinessTable', [{ 'text': htmlEncode( _languagePack['index']['modal']['addBusiness']['body'][0]['name'] ), 'width': 100 },
-																			{ 'text': '<input class="form-control" type="text" id="businessName_a" value="myBusiness">' },
+																			{ 'text': '<input class="form-control" type="text" id="businessName_a" value="myModule">' },
 																			{ 'text': htmlEncode( _languagePack['index']['modal']['addBusiness']['body'][0]['desc'] ) } ] ) ;
 		//'业务类型：'
 		sdbjs.parts.tableBox.addBody( 'addBusinessTable', [{ 'text': htmlEncode( _languagePack['index']['modal']['addBusiness']['body'][1]['name'] ), 'width': 100 },

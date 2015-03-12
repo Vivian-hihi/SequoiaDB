@@ -1,8 +1,5 @@
 {
     "login": {
-        "tabPage": [
-            "登录"
-        ],
         "table": {
             "title": "登录",
             "body": [

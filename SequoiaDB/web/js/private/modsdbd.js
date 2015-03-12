@@ -1506,21 +1506,24 @@ function createHtml()
 		sdbjs.parts.tableBox.addBody( 'createGroupTable', [{ 'text': htmlEncode( _languagePack['modsdbd']['createGroupModal']['table'][0] ), 'width': 150 },
 																			{ 'text': '<input class="form-control" type="text" id="createGroupName">' },
 																			{ 'text': htmlEncode( _languagePack['modsdbd']['createGroupModal']['table'][1] ) } ] ) ;
-		sdbjs.parts.tableBox.addBody( 'createGroupTable', [ { 'text': function( tdObj ){
-			sdbjs.parts.alertBox.create( tdObj, 'createGroupAlert' ) ;
-			sdbjs.fun.setCSS( 'createGroupAlert', { 'display': 'none' } ) ;
-		}, 'colspan': 3 } ] ) ;
 	}, function( footObj ){
-		$( footObj ).css( 'text-align', 'right' ) ;
-		sdbjs.parts.buttonBox.create( footObj, 'createGroupOK' ) ;
-		$( footObj ).append( '&nbsp;' ) ;
-		sdbjs.parts.buttonBox.create( footObj, 'createGroupClose' ) ;
-		//'确定'
-		sdbjs.parts.buttonBox.update( 'createGroupOK', htmlEncode( _languagePack['public']['button']['ok'] ), 'primary', null, 'createGroup()' ) ;
-		//'关闭'
-		sdbjs.parts.buttonBox.update( 'createGroupClose', function( buttonObj ){
-			$( buttonObj ).text( _languagePack['public']['button']['close'] ).attr( 'data-toggle', 'modalBox' ).attr( 'data-target', 'createGroup' ) ;
-		}, 'primary' ) ;
+		sdbjs.parts.tableBox.create( footObj, 'createGroupFootTable' ) ;
+		sdbjs.parts.tableBox.addBody( 'createGroupFootTable', [{ 'text': function( tdObj ){
+																					sdbjs.parts.alertBox.create( tdObj, 'createGroupAlert' ) ;
+																					sdbjs.fun.setCSS( 'createGroupAlert', { 'display': 'none', 'padding': '8px', 'text-align': 'left' } ) ;
+																				} },
+																				{ 'text': function( tdObj ){
+																					$( tdObj ).css( 'text-align', 'right' ) ;
+																					sdbjs.parts.buttonBox.create( tdObj, 'createGroupOK' ) ;
+																					$( tdObj ).append( '&nbsp;' ) ;
+																					sdbjs.parts.buttonBox.create( tdObj, 'createGroupClose' ) ;
+																					//'确定'
+																					sdbjs.parts.buttonBox.update( 'createGroupOK', htmlEncode( _languagePack['public']['button']['ok'] ), 'primary', null, 'createGroup()' ) ;
+																					//'关闭'
+																					sdbjs.parts.buttonBox.update( 'createGroupClose', function( buttonObj ){
+																						$( buttonObj ).text( _languagePack['public']['button']['close'] ).attr( 'data-toggle', 'modalBox' ).attr( 'data-target', 'createGroup' ) ;
+																					}, 'primary' ) ;
+																				}, 'width': 120  } ] ) ;
 	} ) ;
 	
 	//创建节点的弹窗

@@ -16,6 +16,7 @@ function logout()
 {
 	sdbjs.fun.delData( 'SdbUser' ) ;
 	sdbjs.fun.delData( 'SdbSessionID' ) ;
+	sdbjs.fun.delData( 'SdbDeployModel' ) ;
 	gotoPage( 'login.html' ) ;
 }
 
@@ -28,19 +29,22 @@ function changeUserPassword()
 	
 	if ( !checkString( pwd, 1, 1024 ) )
 	{
-		showModalError( 'changePwdAlert', '密码格式错误，密码长度在 1 - 1024 个字符内。' ) ;
+		//'密码格式错误，密码长度在 1 - 1024 个字符内。'
+		showModalError( 'changePwdAlert', _languagePack['error']['web']['create'][8] ) ;
 		return;
 	}
 	if ( !checkString( newPwd, 1, 1024 ) )
 	{
-		showModalError( 'changePwdAlert', '新密码格式错误，密码长度在 1 - 1024 个字符内。' ) ;
+		//'新密码格式错误，密码长度在 1 - 1024 个字符内。'
+		showModalError( 'changePwdAlert', _languagePack['error']['web']['create'][9] ) ;
 		return;
 	}
 	
 	sdbjs.parts.modalBox.hide( 'changePwd' ) ;
 	sdbjs.parts.loadingBox.show( 'loading' ) ;
 	restChangePasswd( true, function( jsonArr, textStatus, jqXHR ){
-		showFootStatus( 'info', '密码修改成功。' ) ;
+		//'密码修改成功。'
+		showFootStatus( 'info', _languagePack['info']['web']['create'][0] ) ;
 	}, function( json ){
 		showModalError( 'changePwdAlert', json['detail'] ) ;
 		sdbjs.parts.modalBox.show( 'changePwd' ) ;
@@ -110,19 +114,20 @@ function createPublicHtml()
 	
 	//帮助
 	sdbjs.parts.navBox.addColum( 'nav', htmlEncode( _languagePack['public']['nav'][2]['text'] ) ) ;
-	//语言
-	sdbjs.parts.navBox.addMenu( 'nav', navNum, [ { 'text': htmlEncode( _languagePack['public']['nav'][2]['child'][0] ), 'fun': 'openLanguageModal()' } ] ) ;
 	//关于SMS系统
 	sdbjs.parts.navBox.addMenu( 'nav', navNum, [ { 'text': htmlEncode( _languagePack['public']['nav'][2]['child'][1] ), 'fun': function( obj ){
 		$( obj ).attr( 'data-toggle', 'modalBox' ).attr( 'data-target', 'aboutSMSModal' ) ;
 	} } ] ) ;
 	++navNum ;
 
-	//用户
-	sdbjs.parts.navBox.addColum2( 'nav', '<img width="14" style="vertical-align:middle;" src="./images/smallicon/white/16x16/user.png"> ' + htmlEncode( sdbjs.fun.getData( 'SdbUser' ) ) ) ;
-	sdbjs.parts.navBox.addMenu( 'nav', navNum, [ { 'text': htmlEncode( _languagePack['public']['nav'][3]['child'][0] ), 'fun': 'openChangePasswdModal()' } ] ) ;//修改密码
-	sdbjs.parts.navBox.addMenu( 'nav', navNum, [ { 'text': htmlEncode( _languagePack['public']['nav'][3]['child'][1] ), 'fun': 'logout()' } ] ) ;//注销
-	++navNum ;
+	if( _cursorFileName !== 'login' )
+	{
+		//用户
+		sdbjs.parts.navBox.addColum2( 'nav', '<img width="14" style="vertical-align:middle;" src="./images/smallicon/white/16x16/user.png"> ' + htmlEncode( sdbjs.fun.getData( 'SdbUser' ) ) ) ;
+		sdbjs.parts.navBox.addMenu( 'nav', navNum, [ { 'text': htmlEncode( _languagePack['public']['nav'][3]['child'][0] ), 'fun': 'openChangePasswdModal()' } ] ) ;//修改密码
+		sdbjs.parts.navBox.addMenu( 'nav', navNum, [ { 'text': htmlEncode( _languagePack['public']['nav'][3]['child'][1] ), 'fun': 'logout()' } ] ) ;//注销
+		++navNum ;
+	}
 	
 	if( _cursorFileName === 'index' )
 	{
@@ -132,22 +137,26 @@ function createPublicHtml()
 		} ) ;
 		++navNum ;
 	}
+	
+	//语言
+	sdbjs.parts.navBox.addColum2( 'nav', '<img width="14" style="vertical-align:middle;" src="./images/smallicon/white/16x16/globe_2.png"> ' + htmlEncode( _languagePack['public']['nav'][2]['child'][0] ), 'openLanguageModal()' ) ;
 
 	if( _cursorFileName !== 'login' )
 	{
 		/* 修改密码的弹窗 */
 		sdbjs.parts.modalBox.create( $( document.body ), 'changePwd' ) ;
-		sdbjs.parts.modalBox.update( 'changePwd', htmlEncode( '修改密码' ), function( bodyObj ){
+		//'修改密码'
+		sdbjs.parts.modalBox.update( 'changePwd', htmlEncode( _languagePack['public']['modal']['changePwd']['title'] ), function( bodyObj ){
 			sdbjs.parts.tableBox.create( bodyObj, 'changePwdTable' ) ;
 			sdbjs.parts.tableBox.update( 'changePwdTable', 'loosen' ) ;
 			//'用户名：'
-			sdbjs.parts.tableBox.addBody( 'changePwdTable', [{ 'text': htmlEncode( '用户名:' ), 'width': 100 },
+			sdbjs.parts.tableBox.addBody( 'changePwdTable', [{ 'text': htmlEncode( _languagePack['public']['modal']['changePwd']['table']['title'][0] ), 'width': 100 },
 																			 { 'text': htmlEncode( sdbjs.fun.getData( 'SdbUser' ) ) } ] ) ;
 			//'密码：'
-			sdbjs.parts.tableBox.addBody( 'changePwdTable', [{ 'text': htmlEncode( '密码:' ), 'width': 100 },
+			sdbjs.parts.tableBox.addBody( 'changePwdTable', [{ 'text': htmlEncode( _languagePack['public']['modal']['changePwd']['table']['title'][1] ), 'width': 100 },
 																			 { 'text': '<input class="form-control" type="password" id="passwd_change">' } ] ) ;
 			//'新密码：'
-			sdbjs.parts.tableBox.addBody( 'changePwdTable', [{ 'text': htmlEncode( '新密码:' ), 'width': 100 },
+			sdbjs.parts.tableBox.addBody( 'changePwdTable', [{ 'text': htmlEncode( _languagePack['public']['modal']['changePwd']['table']['title'][2] ), 'width': 100 },
 																			 { 'text': '<input class="form-control" type="password" id="passwd_change_new">' } ] ) ;
 
 		}, function( footObj ){
@@ -172,7 +181,14 @@ function createPublicHtml()
 	/* logo */
 	sdbjs.parts.divBox.create( 'foot', 'logo', 228, 'auto' ) ;
 	sdbjs.fun.setCSS( 'logo', { 'float': 'left' } ) ;
-	sdbjs.fun.setHtml( 'logo', '<img src="images/logo.png">' ) ;
+	if( _language === 'en' )
+	{
+		sdbjs.fun.setHtml( 'logo', '<img src="images/logo2.png">' ) ;
+	}
+	else
+	{
+		sdbjs.fun.setHtml( 'logo', '<img src="images/logo.png">' ) ;
+	}
 	
 	/* 状态栏 */
 	sdbjs.parts.divBox.create( 'foot', 'status', 'variable', 64 ) ;
@@ -202,10 +218,13 @@ function createPublicHtml()
 
 	/* 关于SMS的弹窗 */
 	sdbjs.parts.modalBox.create( $( document.body ), 'aboutSMSModal' ) ;
-	sdbjs.parts.modalBox.update( 'aboutSMSModal', htmlEncode( '关于SMS' ), function( bodyObj ){
+	//关于SMS
+	sdbjs.parts.modalBox.update( 'aboutSMSModal', htmlEncode( _languagePack['public']['modal']['aboutSMS']['title'] ), function( bodyObj ){
 		$( bodyObj ).append( '<img src="images/logo2.png">' ) ;
-		$( bodyObj ).append( '<div style="margin-top:15px;">' + htmlEncode( 'Version: 1.12' ) + '</div>' ) ;
-		$( bodyObj ).append( '<div style="margin-top:15px;">' + htmlEncode( 'SMS（SequoiaDB Monitoring Service）提供针对SequoiaDB数据库的图形化监控服务。' ) + '</div>' ) ;
+		//Version: 1.12
+		$( bodyObj ).append( '<div style="margin-top:15px;">' + htmlEncode( _languagePack['public']['modal']['aboutSMS']['context'][0] ) + '</div>' ) ;
+		//SMS（SequoiaDB Monitoring Service）提供针对SequoiaDB数据库的图形化监控服务。
+		$( bodyObj ).append( '<div style="margin-top:15px;">' + htmlEncode( _languagePack['public']['modal']['aboutSMS']['context'][1] ) + '</div>' ) ;
 	}, function( footObj ){
 		sdbjs.parts.buttonBox.create( footObj, 'aboutSMSModalClose' ) ;
 		sdbjs.parts.buttonBox.update( 'aboutSMSModalClose', function( buttonObj ){
@@ -218,12 +237,16 @@ function createPublicHtml()
 	{
 		/* 任务的弹窗 */
 		sdbjs.parts.modalBox.create( $( document.body ), 'taskList' ) ;
-		//'创建集群'
-		sdbjs.parts.modalBox.update( 'taskList', htmlEncode( '任务列表' ), function( bodyObj ){
+		//'任务列表'
+		sdbjs.parts.modalBox.update( 'taskList', htmlEncode( _languagePack['public']['modal']['task']['title'] ), function( bodyObj ){
 			$( bodyObj ).css( { 'max-height': 600, 'overflow': 'auto' } ) ;
 			sdbjs.parts.tableBox.create( bodyObj, 'taskListTable' ) ;
 			sdbjs.parts.tableBox.update( 'taskListTable', 'loosen simple' ) ;
-			sdbjs.parts.tableBox.addBody( 'taskListTable', [ { 'text': htmlEncode( 'ID' ), 'width': 50 }, { 'text': htmlEncode( '类型' ), 'width': 150 }, { 'text': htmlEncode( '进度' ) }, { 'text': htmlEncode( '状态' ), 'width': 160 } ] ) ;
+			//ID 类型 进度 状态
+			sdbjs.parts.tableBox.addBody( 'taskListTable', [{ 'text': htmlEncode( _languagePack['public']['modal']['task']['table']['title'][0] ), 'width': 50 },
+																			{ 'text': htmlEncode( _languagePack['public']['modal']['task']['table']['title'][1] ), 'width': 150 },
+																			{ 'text': htmlEncode( _languagePack['public']['modal']['task']['table']['title'][2] ) },
+																			{ 'text': htmlEncode( _languagePack['public']['modal']['task']['table']['title'][3] ), 'width': 160 } ] ) ;
 		}, function( footObj ){
 			$( footObj ).css( 'text-align', 'right' ) ;
 			sdbjs.parts.buttonBox.create( footObj, 'taskListClose' ) ;
@@ -236,11 +259,12 @@ function createPublicHtml()
 	
 	/* 选择语言的弹窗 */
 	sdbjs.parts.modalBox.create( $( document.body ), 'languageModal' ) ;
-	sdbjs.parts.modalBox.update( 'languageModal', htmlEncode( '语言' ), function( bodyObj ){
+	//语言
+	sdbjs.parts.modalBox.update( 'languageModal', htmlEncode( _languagePack['public']['modal']['language']['title'] ), function( bodyObj ){
 		sdbjs.parts.tableBox.create( bodyObj, 'languageTable' ) ;
 		sdbjs.parts.tableBox.update( 'languageTable', 'loosen' ) ;
 		//'语言：'
-		sdbjs.parts.tableBox.addBody( 'languageTable', [{ 'text': htmlEncode( '语言:' ), 'width': 100 },
+		sdbjs.parts.tableBox.addBody( 'languageTable', [{ 'text': htmlEncode( _languagePack['public']['modal']['language']['table']['title'][0] ), 'width': 100 },
 																		{ 'text': function( obj ){
 																			sdbjs.parts.selectBox.create( obj, 'languageSelect' ) ;
 																			$.each( _languageList, function( key, value ){

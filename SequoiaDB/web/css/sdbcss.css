@@ -48,7 +48,7 @@ body{ margin:0; padding:0; font-size:87.50%; font-family:Verdana,Georgia,宋体;
 .modal > .header > .close { float:right; cursor:pointer; font-size:131.30%; font-weight:bold; color:#000; opacity:.2; filter:alpha(opacity=20); line-height:0.7; border:0; padding:0; background-color:#FFF; }
 .modal > .header > .close:hover{ opacity:.5; filter:alpha(opacity=50); }
 .modal > .body { margin:10px 15px 10px 15px; word-wrap:break-word; height:auto; }
-.modal > .foot { border-top:#E5E5E5 solid 1px; height: 40px; text-align:right; padding:10px 15px 10px 15px; }
+.modal > .foot { border-top:#E5E5E5 solid 1px; min-height: 40px; max-height: 75px; text-align:right; padding:10px 15px 10px 15px; }
 
 /* 徽章 */
 .badge{ display:inline-block; min-width:10px; padding:3px 7px; font-size:75%; font-weight:bold; line-height:1; color:#ffffff; text-align:center; white-space:nowrap; vertical-align:baseline; background-color:#999999; border-radius:10px; cursor:default; }
@@ -171,7 +171,7 @@ body{ margin:0; padding:0; font-size:87.50%; font-family:Verdana,Georgia,宋体;
 /* 导航 */
 .nav > .colum { height:40px; width:100%; background-color:#2E76CA; }
 .nav > .colum > ul { margin:0; padding:0; list-style:none; z-index:1; line-height:150%; }
-.nav > .colum > ul > li { float:left; width:120px; position:relative; }
+.nav > .colum > ul > li { float:left; min-width:120px; position:relative; }
 .nav > .colum > ul > li > a { background:#2E76CA; color:#fff; display:block; padding:8px 7px 8px 7px; text-decoration:none; text-align:center; z-index:1; height:24px; text-overflow:ellipsis; overflow:hidden; }
 .nav > .colum > ul > li > a:hover { background:#005AA4; color:#FFF; }
 .nav > .menu { position:relative; left:0px; top:1px; }

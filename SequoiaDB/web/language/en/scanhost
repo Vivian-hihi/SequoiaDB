@@ -3,7 +3,7 @@
         "leftPanel": {
             "title": "Scan Host",
             "tip": [
-                "Notice:Use IP or HostName to add hosts in batch, click for ",
+                "Notice: Use IP or HostName to add hosts in batch, click for ",
 					 "help"
             ],
 				"input": [
@@ -11,7 +11,7 @@
 					 "User:",
 					 "Password:",
 					 "SSH Port:",
-					 "Proxy Port:"
+					 "Agent Port:"
 				],
 				"button": [
 					 "Clean",

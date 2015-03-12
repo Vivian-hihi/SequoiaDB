@@ -1,27 +1,24 @@
 {
     "index": {
         "clusterOperation": [
-            "Add host",
-            "Hosts list",
-            "Add business",
-            "Business list",
-            "Remove cluster",
-            "Create cluster"
-        ],
-        "tabPage": [
-            "总览"
+            "Add Hosts",
+            "Hosts List",
+            "Add Module",
+            "Module List",
+            "Remove Cluster",
+            "Create Cluster"
         ],
         "leftPanel": {
             "title": "Status",
 				"body": {
-					 "table": [ "Businesses", "Hosts" ],
+					 "table": [ "Modules", "Hosts" ],
 					 "badgeTips": [
-					 		"? hosts",
-							"? businesses",
-							"? hosts have memory usage rate more than 90%",
-							"? hosts have disks usage rate more than 90%",
-							"? hosts have CPU usage rate more than 90%",
-							"? hosts broke down"
+					 		"? Hosts",
+							"? Modules",
+							"? Hosts have memory usage rate more than 90%",
+							"? Hosts have disks usage rate more than 90%",
+							"? Hosts have CPU usage rate more than 90%",
+							"? Hosts broke down"
 					 ]
 				},
             "SMS": [
@@ -32,95 +29,101 @@
             "title": "? monitoring information",
 				"body": "No monitoring information currently, please create a new cluster!",
 				"pic": [
-					 { "title": "CPU Usage Rate", "subTitle": "percent" },
-					 { "title": "Memory Usage Rate", "subTitle": "percent" },
-					 { "title": "Disk Usage Rate", "subTitle": "percent" },
-					 { "title": "Network In", "subTitle": "Kb/s" },
-					 { "title": "Network Out", "subTitle": "Kb/s" },
-					 { "title": "Network PIn", "subTitle": "Data Package" },
-					 { "title": "Network POut", "subTitle": "Data Package" }
+					 { "title": "CPU", "subTitle": "percent" },
+					 { "title": "Memory", "subTitle": "percent" },
+					 { "title": "Disk", "subTitle": "percent" },
+					 { "title": "Inbond", "subTitle": "Kb/s" },
+					 { "title": "Outbond", "subTitle": "Kb/s" },
+					 { "title": "Inbond Packets", "subTitle": "Data Package" },
+					 { "title": "Outbond Packets", "subTitle": "Data Package" }
 				]
         },
         "modal": {
             "deploy": {
-                "title": "Deployment guide",
+                "title": "Deployment Wizard",
                 "body": [
                     {
-                        "name": "Cluster name:",
-                        "desc": "Name of the cluster"
+                        "name": "Cluster Name:",
+                        "desc": "Name of the Cluster"
                     },
 						  {
 						  		"name": "Description:",
-								"desc": "Description of the cluster"
+								"desc": "Description of the Cluster"
 						  },
 						  {
-						  		"name": "Business name:",
-								"desc": "Name of the business"
+						  		"name": "Module Name:",
+								"desc": "Name of the Module"
 						  },
 						  {
-						  		"name": "Business type:",
+						  		"name": "Module type:",
 								"desc": ""
 						  },
 						  {
 						  		"name": "User:",
-								"desc": "User to operate this business"
+								"desc": "User to operate this Module"
 						  },
 						  {
 						  		"name": "Password:",
 								"desc": "User's password"
 						  },
 						  {
-						  		"name": "User group:",
+						  		"name": "User Group:",
 								"desc": "Users' group"
 						  },
 						  {
-						  		"name": "Installing path:",
+						  		"name": "Installing Path:",
 								"desc": "Default installing path"
 						  }
                 ]
             },
 				"createCluster": {
-                "title": "Create cluster",
+                "title": "Create Cluster",
                 "body": [
                     {
-                        "name": "Cluster name:",
-                        "desc": "Name of the cluster"
+                        "name": "Cluster Name:",
+                        "desc": "Name of the Cluster"
                     },
 						  {
 						  		"name": "Description:",
-								"desc": "Description of the cluster"
+								"desc": "Description of the Cluster"
 						  },
 						  {
 						  		"name": "User:",
-								"desc": "User to operate the business"
+								"desc": "User to operate the Module"
 						  },
 						  {
 						  		"name": "Password:",
 								"desc": "User's password"
 						  },
 						  {
-						  		"name": "User group:",
-								"desc": "User's group"
+						  		"name": "User Group:",
+								"desc": "User's Group"
 						  },
 						  {
-						  		"name": "Installing path:",
+						  		"name": "Installing Path:",
 								"desc": "Default installing path"
 						  }
                 ]
             },
 				"addBusiness": {
-                "title": "Add Business",
+                "title": "Add Module",
                 "body": [
 						  {
-						  		"name": "Business name:",
-								"desc": "Name of the business"
+						  		"name": "Module Name:",
+								"desc": "Name of the Module"
 						  },
 						  {
-						  		"name": "Business type:",
+						  		"name": "Module type:",
 								"desc": ""
 						  }
                 ]
-            }
+            },
+				"isRemoveCluster": {
+					 "title": "Tips"
+				},
+				"isGoOnDeploy": {
+					 "title": "Tips"
+				}
         }
     }
 }
