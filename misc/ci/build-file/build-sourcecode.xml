@@ -360,7 +360,7 @@
 				<tar destfile="/usr/src/packages/SOURCES/sequoiadb-${project.version}.tar.gz" basedir="${RELEASE_DIR}" includes="sequoiadb-${project.version}/**" compression="gzip" />
 				<copy file="${CODE_DIR}/misc/ci/mkrelease/sequoiadb-${project.version}.spec" todir="/usr/src/packages/SPECS" />
 				<stafTools workType="shell" workHost="LOCAL" common="rpmbuild -bb -bb sequoiadb-${project.version}.spec" workDir="/usr/src/packages/SPECS" waitTime="30m" />
-				<copy file="/usr/src/packages/RPMS/x86_64/sequoiadb-${project.version}-1.x86_64.rpm" todir="${RELEASE_DIR}" />
+				<copy file="/usr/src/packages/RPMS/x86_64/sequoiadb-${project.version}-1.x86_64.rpm" todir="${RELEASE_DIR}" failonerror="false" />
 		        <delete file="/usr/src/packages/SOURCES/sequoiadb-${project.version}.tar.gz" />
 		        <delete file="/usr/src/packages/SPECS/sequoiadb-${project.version}.spec" />
 				<echo message="Make rpm package completed.." />
