@@ -376,12 +376,12 @@ INT32 updateCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
          tmp = subObj.getBoolField( "multi" ) ;
          if ( tmp )
          {
-            update->flags |= UPDATE_MULTI ;
+            update->flags |= FLG_UPDATE_MULTIUPDATE ;
          }
          tmp = subObj.getBoolField( "upsert" ) ;
          if ( tmp )
          {
-            update->flags |= UPDATE_UPSERT ;
+            update->flags |= FLG_UPDATE_UPSERT ;
          }
          sdbMsg.write( cond, TRUE ) ;
          sdbMsg.write( updater, TRUE ) ;

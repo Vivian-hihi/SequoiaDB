@@ -160,18 +160,19 @@ INT32 mongoConverter::reConvert( msgBuffer &out, MsgOpReply *reply )
       {
          MsgOpQuery *query = (MsgOpQuery*)out.data() ;
          numToReturn = query->numToReturn ;
-         if ( numToReturn <= 0 )
+         _parser.opType = OP_GETMORE ;
+         if ( numToReturn <= 0 && 0 == reply->numReturned && SDB_OK == reply->flags )
          {
             out.zero() ;
             goto done;
          }
       }
-      else
+      else if ( OP_CMD_COUNT == _parser.opType )
       {
          numToReturn = 1 ;
+         _parser.opType = OP_CMD_COUNT_MORE ;
       }
 
-      _parser.opType = OP_CMD_COUNT_MORE ;
       out.zero() ;
       fap::mongo::buildGetMoreMsg( out ) ;
       MsgOpReply *msg = ( MsgOpReply *)out.data() ;
