@@ -6522,8 +6522,6 @@ namespace engine
       INT32 rc = SDB_OK ;
       BSONObjBuilder taskInfoBuilder ;
       taskInfoBuilder.appendElements( nodeInfos ) ;
-      taskInfoBuilder.append( OM_SDB_AUTH_USER, "" ) ;
-      taskInfoBuilder.append( OM_SDB_AUTH_PASSWD, "" ) ;
 
       string authUser ;
       string authPasswd ;
@@ -6550,8 +6548,8 @@ namespace engine
       taskInfoBuilder.append( OM_BSON_BUSINESS_TYPE, type ) ;
       taskInfoBuilder.append( OM_BSON_BUSINESS_NAME, businessName ) ;
       taskInfoBuilder.append( OM_BSON_DEPLOY_MOD, deployMod ) ;
-      taskInfoBuilder.append( OM_BUSINESSAUTH_USER, authUser ) ;
-      taskInfoBuilder.append( OM_BUSINESSAUTH_PASSWD, authPasswd ) ;
+      taskInfoBuilder.append( OM_SDB_AUTH_USER, authUser ) ;
+      taskInfoBuilder.append( OM_SDB_AUTH_PASSWD, authPasswd ) ;
       taskInfo = taskInfoBuilder.obj() ;
 
       {
@@ -6982,7 +6980,9 @@ namespace engine
                                              BSONObj &bsonStatus )
    {
       INT32 rc      = SDB_OK ;
+      INT32 tmpRC   = SDB_OK ;
       omManager *om = NULL ;
+      string tmpError ;
       BSONArrayBuilder arrayBuilder ;
       pmdRemoteSession *remoteSession = NULL ;
       VEC_SUB_SESSIONPTR subSessionVec ;
@@ -6998,14 +6998,12 @@ namespace engine
       {
          rc = SDB_OOM ;
          PD_LOG_MSG( PDERROR, "addSession failed:rc=%d", rc ) ;
-         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
          goto error ;
       }
       rc = _addQueryHostStatusReq( om, remoteSession, hostInfoList ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG_MSG( PDERROR, "_addQueryHostStatusReq failed:rc=%d", rc ) ;
-         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
          goto error ;
       }
 
@@ -7013,7 +7011,7 @@ namespace engine
       rc = _getAllReplay( remoteSession, &subSessionVec ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "wait replay failed:rc=%d", rc ) ;
+         PD_LOG_MSG( PDERROR, "wait replay failed:rc=%d", rc ) ;
          goto error ;
       }
 
@@ -7029,56 +7027,57 @@ namespace engine
 
          string tmpHost = "" ;
          string tmpService ;
+         pmdGetThreadEDUCB()->resetInfo( EDU_INFO_ERROR ) ;
          om->getHostInfoByID( subSession->getNodeID(), tmpHost, tmpService ) ;
          if ( subSession->isDisconnect() )
          {
-            rc = SDB_NETWORK ;
+            tmpRC = SDB_NETWORK ;
             PD_LOG_MSG( PDERROR, "session disconnected:id=%s,rc=%d", 
-                        routeID2String(subSession->getNodeID()).c_str(), rc ) ;
-            _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
-            _appendErrorResult( arrayBuilder, tmpHost, rc, _errorDetail ) ;
+                        routeID2String(subSession->getNodeID()).c_str(), 
+                        tmpRC ) ;
+            tmpError = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+            _appendErrorResult( arrayBuilder, tmpHost, tmpRC, tmpError ) ;
             continue ;
          }
 
          pRspMsg = subSession->getRspMsg() ;
          if ( NULL == pRspMsg )
          {
-            rc = SDB_UNEXPECTED_RESULT ;
-            PD_LOG_MSG( PDERROR, "unexpected result:rc=%d", rc ) ;
-            _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
-            _appendErrorResult( arrayBuilder, tmpHost, rc, _errorDetail ) ;
+            tmpRC = SDB_UNEXPECTED_RESULT ;
+            PD_LOG_MSG( PDERROR, "unexpected result:rc=%d", tmpRC ) ;
+            tmpError = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+            _appendErrorResult( arrayBuilder, tmpHost, tmpRC, tmpError ) ;
             continue ;
          }
 
-         rc = msgExtractReply( (CHAR *)pRspMsg, &flag, &contextID, &startFrom, 
-                               &numReturned, objVec ) ;
-         if ( SDB_OK != rc )
+         tmpRC = msgExtractReply( (CHAR *)pRspMsg, &flag, &contextID, 
+                                  &startFrom, &numReturned, objVec ) ;
+         if ( SDB_OK != tmpRC )
          {
-            PD_LOG_MSG( PDERROR, "extract reply failed:rc=%d", rc ) ;
-            _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
-            _appendErrorResult( arrayBuilder, tmpHost, rc, _errorDetail ) ;
+            PD_LOG_MSG( PDERROR, "extract reply failed:rc=%d", tmpRC ) ;
+            tmpError = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+            _appendErrorResult( arrayBuilder, tmpHost, tmpRC, tmpError ) ;
             continue ;
          }
 
          if ( SDB_OK != flag )
          {
-            rc = flag ;
             if ( objVec.size() > 0 )
             {
-               _errorDetail = objVec[0].getStringField( OM_REST_RES_DETAIL ) ;
+               tmpError = objVec[0].getStringField( OM_REST_RES_DETAIL ) ;
             }
-            _appendErrorResult( arrayBuilder, tmpHost, rc, _errorDetail ) ;
+            _appendErrorResult( arrayBuilder, tmpHost, flag, tmpError ) ;
             PD_LOG( PDERROR, "agent process failed:detail=%s,rc=%d", 
-                    _errorDetail.c_str(), rc ) ;
+                    tmpError.c_str(), flag ) ;
             continue ;
          }
 
          if ( 1 != objVec.size() )
          {
-            rc = SDB_UNEXPECTED_RESULT ;
-            PD_LOG_MSG( PDERROR, "unexpected response size:rc=%d", rc ) ;
-            _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
-            _appendErrorResult( arrayBuilder, tmpHost, rc, _errorDetail ) ;
+            tmpRC = SDB_UNEXPECTED_RESULT ;
+            PD_LOG_MSG( PDERROR, "unexpected response size:rc=%d", tmpRC ) ;
+            tmpError = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+            _appendErrorResult( arrayBuilder, tmpHost, tmpRC, tmpError ) ;
             continue ;
          }
 
@@ -7332,6 +7331,7 @@ namespace engine
       rc = _getHostStatus( hostInfoList, bsonStatus ) ;
       if ( SDB_OK != rc )
       {
+         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
          PD_LOG( PDERROR, "_getHostStatus failed:rc=%d", rc ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
