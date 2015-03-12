@@ -3366,6 +3366,10 @@ SDB_EXPORT INT32 sdbEvalJS(sdbConnectionHandle cHandle,
    *handle = (sdbCursorHandle)cursor ;
 done:
    BSON_DESTROY( bs ) ;
+   if ( NULL != errmsg )
+   {
+      bson_finish( errmsg ) ;
+   }
    return rc ;
 error:
    if ( cursor )
