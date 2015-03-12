@@ -111,7 +111,7 @@ ZEND_STRL(name), temp TSRMLS_CC ) ; \
      CHAR temp[22] = {0} ; \
      ossSnprintf ( temp,22, "%lld", (UINT64)fsdb ) ;\
      zend_update_property_string ( Z_OBJCE_P(obj), (obj), \
-ZEND_STRL(name), temp TSRMLS_CC ) ; \
+     ZEND_STRL(name), temp TSRMLS_CC ) ; \
      out = fsdb ; \
   } \
 }
@@ -1550,7 +1550,7 @@ PHP_METHOD ( SecureSdb, __construct )
    INT32 userName_len = 0    ;
    CHAR *password     = NULL ;
    INT32 password_len = 0    ;
-   
+
    zend_update_property_long( Z_OBJCE_P( getThis() ), getThis(),
                               ZEND_STRL ("_return_model"),
                               1 TSRMLS_CC ) ;
@@ -1588,15 +1588,6 @@ PHP_METHOD ( SecureSdb, __destruct )
 {
    zval *pThis = getThis() ;
    zend_call_method_with_0_params( &pThis, pSequoiadbSdb, NULL, "__destruct", NULL ) ;
-
-   /*sdb *connection = NULL ;
-   zval *num_val = NULL ;
-   GETCLASSFROMZVAL ( getThis(), "_connection", sdb, connection ) ;
-   if ( connection )
-   {
-      close ( connection ) ;
-      delete connection ;
-   }*/
 }
 
 /* **************  SequoiaCS class  ****************/
