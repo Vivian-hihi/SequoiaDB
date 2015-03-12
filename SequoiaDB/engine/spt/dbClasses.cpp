@@ -57,6 +57,7 @@
 #include "sptSPDef.hpp"
 #include "sptConvertorHelper.hpp"
 #include <boost/lexical_cast.hpp>
+#include "utilStr.hpp"
 
 #define SAFE_BSON_DISPOSE( p ) \
    do { if ( p ) { bson_dispose( p ) ; ( p ) = NULL ; } } while ( 0 )
@@ -7322,6 +7323,131 @@ static JSFunctionSpec bindata_functions [] = {
 
 /// bindata end
 
+/// timestamp
+// PD_TRACE_DECLARE_FUNCTION ( SDB_TIMESTAMP_DESTRUCTOR, "timestamp_destructor" )
+static void timestamp_destructor( JSContext *cx, JSObject *obj )
+{
+   PD_TRACE_ENTRY( SDB_TIMESTAMP_DESTRUCTOR ) ;
+   PD_TRACE_EXIT( SDB_TIMESTAMP_DESTRUCTOR ) ;
+   return ;
+}
+
+static JSClass timestamp_class = {
+   "Timestamp", // class name
+   JSCLASS_HAS_PRIVATE | JSCLASS_NEW_RESOLVE ,   // flags
+   JS_PropertyStub,              // addProperty
+   JS_PropertyStub,              // delProperty
+   JS_PropertyStub,              // getProperty
+   JS_StrictPropertyStub,        // setProperty
+   JS_EnumerateStub,             // enumerate
+   JS_ResolveStub,               // resolve
+   JS_ConvertStub,               // convert
+   timestamp_destructor,          // finalize
+   JSCLASS_NO_OPTIONAL_MEMBERS   // optional members
+} ;
+
+// PD_TRACE_DECLARE_FUNCTION ( SDB_TIMESTAMP_CONSTRUCTOR, "timestamp_constructor" )
+static JSBool timestamp_constructor( JSContext *cx, uintN argc, jsval *vp )
+{
+   PD_TRACE_ENTRY( SDB_TIMESTAMP_CONSTRUCTOR ) ;
+   INT32 rc = SDB_OK ;
+   JSBool ret = JS_TRUE ;
+   CHAR *timeStr = NULL ;
+   JSString *jsTimeProperty = NULL ;
+   JSObject *jsObj = NULL ;
+   jsval valTime = JSVAL_VOID ;
+
+   jsval *argv = JS_ARGV ( cx , vp ) ;
+   if ( 0 == argc )
+   {
+      ossTimestamp currentTime ;
+      struct tm localTm ;
+      time_t t ;
+      CHAR buf[128] ;
+
+      ossGetCurrentTime( currentTime ) ;
+      t = currentTime.time ;
+      ossLocalTime( t, localTm ) ;
+      ossSnprintf( buf, 127,
+                   "%04d-%02d-%02d-%02d.%02d.%02d.%06d",
+                   localTm.tm_year+1900,            // 1) Year (UINT32)
+                   localTm.tm_mon+1,                // 2) Month (UINT32)
+                   localTm.tm_mday,                 // 3) Day (UINT32)
+                   localTm.tm_hour,                 // 4) Hour (UINT32)
+                   localTm.tm_min,                  // 5) Minute (UINT32)
+                   localTm.tm_sec,                  // 6) Second (UINT32)
+                   currentTime.microtm ) ;
+      jsTimeProperty = JS_NewStringCopyN( cx, buf, ossStrlen( buf ) ) ;
+      VERIFY( jsTimeProperty ) ;
+   }
+   else if ( 1 == argc )
+   {
+      time_t tm ;
+      UINT64 usec = 0 ;
+      timeStr = JS_EncodeString( cx, JSVAL_TO_STRING( argv[0]) ) ;
+      VERIFY( timeStr ) ;
+      rc = engine::utilStr2TimeT( timeStr, tm, &usec ) ;
+      REPORT_RC ( SDB_OK == rc , "Sdb.forceSession(): wrong arguments", SDB_INVALIDARG ) ;
+      jsTimeProperty = JS_NewStringCopyN( cx, timeStr, ossStrlen( timeStr ) ) ;
+      VERIFY( jsTimeProperty ) ;
+   }
+   else if ( 2 == argc )
+   {
+      struct tm localTm ;
+      time_t t ;
+      UINT32 inc = 0 ;
+      CHAR buf[128] ;
+ 
+      if ( !JSVAL_IS_INT( argv[0]) ||
+           !JSVAL_IS_INT( argv[1] ))
+      {
+         REPORT_RC ( FALSE, "Sdb.forceSession(): wrong arguments", SDB_INVALIDARG ) ;
+      }
+
+      t = JSVAL_TO_INT( argv[0] ) ;
+      inc = JSVAL_TO_INT( argv[1] ) ;
+      ossLocalTime( t, localTm ) ;
+      ossSnprintf( buf, 127,
+                   "%04d-%02d-%02d-%02d.%02d.%02d.%06d",
+                   localTm.tm_year+1900,            // 1) Year (UINT32)
+                   localTm.tm_mon+1,                // 2) Month (UINT32)
+                   localTm.tm_mday,                 // 3) Day (UINT32)
+                   localTm.tm_hour,                 // 4) Hour (UINT32)
+                   localTm.tm_min,                  // 5) Minute (UINT32)
+                   localTm.tm_sec,                  // 6) Second (UINT32)
+                   inc ) ;
+      jsTimeProperty = JS_NewStringCopyN( cx, buf, ossStrlen( buf ) ) ;
+      VERIFY( jsTimeProperty ) ;
+   }
+   else
+   {
+      REPORT_RC ( FALSE, "Sdb.forceSession(): wrong arguments", SDB_INVALIDARG ) ;
+   }
+
+   valTime = STRING_TO_JSVAL( jsTimeProperty ) ;
+
+   jsObj = JS_NewObject( cx, &timestamp_class, NULL, NULL ) ;
+   VERIFY( jsObj ) ;
+
+   VERIFY ( JS_SetProperty ( cx, jsObj, "_t", &valTime ) ) ;
+
+   JS_SET_RVAL( cx, vp, OBJECT_TO_JSVAL( jsObj ) ) ;
+done:
+   SAFE_JS_FREE( cx, timeStr ) ;
+   PD_TRACE_EXIT( SDB_TIMESTAMP_CONSTRUCTOR ) ;
+   return ret ;
+error:
+   ret = JS_FALSE ;
+   goto done ;
+}
+
+static JSFunctionSpec timestamp_functions [] = {
+   JS_FS_END
+} ;
+
+/// timestamp end
+
+
 JSBool jsobj_is_query( JSContext *cx, JSObject *obj )
 {
    return JS_InstanceOf( cx, obj, &query_class, NULL ) ;
@@ -7364,10 +7490,16 @@ JSBool is_bindata( JSContext *cx, JSObject *obj )
    return JS_InstanceOf( cx, obj, &bindata_class, NULL ) ;
 }
 
+JSBool is_timestamp( JSContext *cx, JSObject *obj )
+{
+   return JS_InstanceOf( cx, obj, &timestamp_class, NULL ) ;
+}
+
 JSBool is_jsontypes( JSContext *cx, JSObject *obj )
 {
    return is_objectid( cx, obj ) ||
-          is_bindata( cx, obj ) ;
+          is_bindata( cx, obj ) ||
+          is_timestamp( cx, obj ) ;
 }
 
 JSBool jsobj_is_sdbobj( JSContext *cx, JSObject *obj )
@@ -7495,6 +7627,10 @@ JSBool InitDbClasses( JSContext *cx, JSObject *obj )
    VERIFY ( JS_InitClass ( cx, obj, NULL, &bindata_class,
                            bindata_constructor, 0,
                            0, bindata_functions, 0, 0 ) ) ;
+
+   VERIFY ( JS_InitClass ( cx, obj, NULL, &timestamp_class,
+                           timestamp_constructor, 0,
+                           0, timestamp_functions, 0, 0 ) ) ;
 #elif defined (SDB_ENGINE)
 #endif
 

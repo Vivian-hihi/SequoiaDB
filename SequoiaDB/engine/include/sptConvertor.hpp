@@ -102,6 +102,10 @@ private:
                       const CHAR *key,
                       bson *bs ) ;
 
+   INT32 _addTimestamp( JSObject *obj,
+                        const CHAR *key,
+                        bson *bs ) ;
+
 private:
    JSContext *_cx ;
 } ;

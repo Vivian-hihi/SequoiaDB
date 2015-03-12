@@ -57,6 +57,7 @@
 extern JSBool is_objectid( JSContext *, JSObject * ) ;
 extern JSBool is_bindata( JSContext *, JSObject * ) ;
 extern JSBool is_jsontypes( JSContext *, JSObject * ) ;
+extern JSBool is_timestamp( JSContext *, JSObject * ) ;
 
 INT32 sptConvertor::toBson( JSObject *obj , bson **bs )
 {
@@ -286,6 +287,45 @@ error:
    goto done ;
 }
 
+INT32 sptConvertor::_addTimestamp( JSObject *obj,
+                                   const CHAR *key,
+                                   bson *bs )
+{
+   INT32 rc = SDB_OK ;
+   std::string strValue ;
+   jsval value ;
+   time_t tm ;
+   UINT64 usec = 0 ;
+   bson_timestamp_t btm ;
+   if ( !_getProperty( obj, "_t", JSTYPE_STRING, value ))
+   {
+      rc = SDB_SYS ;
+      goto error ;
+   }
+
+   rc = _toString( value, strValue ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+
+   rc = engine::utilStr2TimeT( strValue.c_str(),
+                               tm,
+                               &usec ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+
+   btm.t = tm;
+   btm.i = usec ;
+   bson_append_timestamp( bs, key, &btm ) ;
+done:
+   return rc ;
+error:
+   goto done ;
+}
+
 INT32 sptConvertor::_addJsonTypes( JSObject *obj,
                                    const CHAR *key,
                                    bson *bs )
@@ -298,6 +338,10 @@ INT32 sptConvertor::_addJsonTypes( JSObject *obj,
    else if ( is_bindata( _cx, obj ) )
    {
       rc = _addBinData( obj, key, bs ) ;
+   }
+   else if ( is_timestamp( _cx, obj ) )
+   {
+      rc = _addTimestamp( obj, key, bs ) ;
    }
 
    if ( SDB_OK != rc )
