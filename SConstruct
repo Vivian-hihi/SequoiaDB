@@ -216,9 +216,6 @@ add_option( "noscreenout", "do not send anything to screen", 0, True )
 #fap options
 add_option( "fap", "foreign access protocol", 0, False )
 
-#ssl options
-add_option( "ssl", "build engine with SSL (enterprise edition only) ", 0, False )
-
 #enterprise options
 add_option( "enterprise", "build enterprise sequoiadb ( with SSL )", 0, False )
 
@@ -302,8 +299,8 @@ hasShell = has_option( "shell" )
 hasFmp = has_option("fmp")
 hasAll = has_option( "all" )
 hasFap = has_option("fap")
-hasSSL = has_option("ssl")
 hasEnterprise = has_option("enterprise")
+hasSSL = False
 
 # build enterprise edition
 if hasEnterprise:
