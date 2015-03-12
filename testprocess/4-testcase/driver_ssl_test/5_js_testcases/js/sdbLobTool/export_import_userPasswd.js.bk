@@ -1,0 +1,74 @@
+/******************************************************************************
+*@Description : test export and import's parameters: --username/--passwd
+*@Modify list :
+*               2014-11-19   xiaojun Hu  Init
+******************************************************************************/
+function main( db )
+{
+   // init global variable
+   initGlobalVar() ;
+   // put lob data
+   var lobNum = 100 ;
+   var filename = CSPREFIX + "_export_usrpasswd.file" ;
+   var exportFile = LocalPath + "/" + filename ;
+   var expFullCL = COMMCSNAME + "." + COMMCLNAME ;
+   var newCLNAME = COMMCLNAME + "_new" ;
+   var impFullCL = COMMCSNAME + "." + newCLNAME ;
+   // user name and user password
+   var user = "lobtooltest" ;
+   var passwd = "lobtooltest" ;
+   db = new Sdb( COORDHOSTNAME, COORDSVCNAME, user, passwd ) ;   //user name
+/******************************************************************************
+*@Test Description:  export and import use : --usrname/--passwd
+*                    default hostname and svcname
+*  export: ./sdblobtool --hostname XXX --svcname XXX --usrname XXX --passwd XXX
+*          --operation export --collection XXX --file XXX/XXX
+*  import: ./sdblobtool --hostname XXX --svcname XXX --usrname XXX --passwd XXX
+*          --operation import --collection XXX --file XXX/XXX
+*******************************************************************************/
+   if( 11810 == COORDSVCNAME )
+   {
+      var exportCmd = InstallPath + "/bin/sdblobtool --usrname " + user +
+                      " --passwd " + passwd + " --operation export --collection "
+                      + expFullCL + " --file " + exportFile ;
+      var importCmd = InstallPath + "/bin/sdblobtool --usrname " + user +
+                      " --passwd " + passwd + " --operation import --collection "
+                      + impFullCL + " --file " + exportFile ;
+      println( "==>>[TP1]test export command : " + exportCmd ) ;
+      println( "==>>[TP1]test import command : " + importCmd ) ;
+      testExportImportPara( db, lobNum, exportCmd, exportFile, importCmd,
+                            newCLNAME ) ;
+   }
+/******************************************************************************
+*@Test Description:  export and import use : --usrname/--passwd
+*  export: ./sdblobtool --hostname XXX --svcname XXX --usrname XXX --passwd XXX
+*          --operation export --collection XXX --file XXX/XXX
+*  import: ./sdblobtool --hostname XXX --svcname XXX --usrname XXX --passwd XXX
+*          --operation import --collection XXX --file XXX/XXX
+*******************************************************************************/
+   var exportCmd = InstallPath + "/bin/sdblobtool --hostname " + COORDHOSTNAME +
+                   " --svcname " + COORDSVCNAME + " --usrname " + user +
+                   " --passwd " + passwd + " --operation export --collection " +
+                   expFullCL + " --file " + exportFile ;
+   var importCmd = InstallPath + "/bin/sdblobtool --hostname " + COORDHOSTNAME +
+                   " --svcname " + COORDSVCNAME + " --usrname " + user +
+                   " --passwd " + passwd + " --operation import --collection " +
+                   impFullCL + " --file " + exportFile ;
+   println( "==>>[TP2]test export command : " + exportCmd ) ;
+   println( "==>>[TP2]test import command : " + importCmd ) ;
+   testExportImportPara( db, lobNum, exportCmd, exportFile, importCmd, newCLNAME ) ;
+}
+
+// Running
+try
+{
+   commDropCL( db, COMMCSNAME, COMMCLNAME, true, true,
+               "clean collection in the beginning" ) ;
+   main( db ) ;
+   db.close() ;
+}
+catch( e )
+{
+   db.close() ;
+   throw e ;
+}

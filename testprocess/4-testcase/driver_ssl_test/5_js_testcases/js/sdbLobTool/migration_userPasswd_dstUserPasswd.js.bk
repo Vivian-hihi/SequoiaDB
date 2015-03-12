@@ -1,0 +1,103 @@
+/******************************************************************************
+*@Description : test migration's parameters: --usrname/--passwd/--dstusrname/
+*                                            --dstpasswd
+*@Modify list :
+*               2014-11-19   xiaojun Hu  Init
+******************************************************************************/
+function main( db )
+{
+   // init global variable
+   initGlobalVar() ;
+   // put lob data
+   var lobNum = 100 ;
+   var filename = CSPREFIX + "_mig_userpasswd.file" ;
+   var migFile = LocalPath + "/" + filename ;
+   var srcMigFullCL = COMMCSNAME + "." + COMMCLNAME ;
+   var newCLNAME = COMMCLNAME + "_dst" ;
+   var dstMigFullCL = COMMCSNAME + "." + newCLNAME ;
+   // user name and user password
+   var user = "lobtool_mig_user" ;
+   var passwd = "lobtool_mig_passwd" ;
+   var dstuser = "lobtool_mig_dstuser" ;
+   var dstpasswd = "lobtool_mig_dstpasswd" ;
+   var db = new Sdb( COORDHOSTNAME, COORDSVCNAME, user, passwd ) ;
+   var migdb = new Sdb( COORDHOSTNAME, COORDSVCNAME, dstuser, dstpasswd ) ;
+/******************************************************************************
+*@Test Description:  migrate data by using parameter:--usrname/--passwd default
+*  migration: ./sdblobtool --hostname XXX --svcname XXX --operation migration
+*                          --collection XXX --file XXX/XXX --dsthost XXX
+*                          --dstservice XXX --dstcollection XXX
+*******************************************************************************/
+   var migCmd = InstallPath + "/bin/sdblobtool --hostname " + COORDHOSTNAME +
+                " --svcname " + COORDSVCNAME + " --operation migration " +
+                "--collection " + srcMigFullCL + " --file " + migFile +
+                " --dsthost " + COORDHOSTNAME + " --dstservice " + COORDSVCNAME
+                + " --dstcollection " + dstMigFullCL ;
+   println( "==>>[TP1] test migration command : " + migCmd ) ;
+   testMigrationPara( db, lobNum, migCmd, migFile, newCLNAME ) ;
+/******************************************************************************
+*@Test Description:  migrate data by using parameter:--usrname/--passwd
+*  migration: ./sdblobtool --hostname XXX --svcname XXX --operation migration
+*                          --usrname XXX --passwd XXX
+*                          --collection XXX --file XXX/XXX --dsthost XXX
+*                          --dstservice XXX --dstcollection XXX
+*******************************************************************************/
+   var migCmd = InstallPath + "/bin/sdblobtool --hostname " + COORDHOSTNAME +
+                " --svcname " + COORDSVCNAME + " --operation migration " +
+                " --usrname " + user + " --passwd " + passwd +
+                " --collection " + srcMigFullCL + " --file " + migFile +
+                " --dsthost " + COORDHOSTNAME + " --dstservice " + COORDSVCNAME
+                + " --dstcollection " + dstMigFullCL ;
+   println( "==>>[TP2] test migration command : " + migCmd ) ;
+   testMigrationPara( db, lobNum, migCmd, migFile, newCLNAME ) ;
+/******************************************************************************
+*@Test Description:  migrate data by using parameter:--dstusrname/--dstpasswd
+*  migration: ./sdblobtool --hostname XXX --svcname XXX --operation migration
+*                          --collection XXX --file XXX/XXX --dsthost XXX
+*                          --dstservice XXX --dstcollection XXX
+*                          --dstusrname XXX --dstpasswd XXX
+*******************************************************************************/
+   var migCmd = InstallPath + "/bin/sdblobtool --hostname " + COORDHOSTNAME +
+                " --svcname " + COORDSVCNAME + " --operation migration " +
+                " --collection " + srcMigFullCL + " --file " + migFile +
+                " --dsthost " + COORDHOSTNAME + " --dstservice " + COORDSVCNAME
+                + " --dstcollection " + dstMigFullCL + " --dstusrname " +
+                dstuser + " --dstpasswd " + dstpasswd ;
+   println( "==>>[TP3] test migration command : " + migCmd ) ;
+   testMigrationPara( db, lobNum, migCmd, migFile, newCLNAME,
+                      null, null, migdb ) ;
+/******************************************************************************
+*@Test Description:  migrate data by using parameter:--dstusrname/--dstpasswd/
+*                    --usrname/--passwd
+*  migration: ./sdblobtool --hostname XXX --svcname XXX --operation migration
+*                          --usrname XXX --passwd XXX
+*                          --collection XXX --file XXX/XXX --dsthost XXX
+*                          --dstservice XXX --dstcollection XXX
+*                          --dstusrname XXX --dstpasswd XXX
+*******************************************************************************/
+   var migCmd = InstallPath + "/bin/sdblobtool --hostname " + COORDHOSTNAME +
+                " --svcname " + COORDSVCNAME + " --operation migration " +
+                " --usrname " + user + " --passwd " + passwd +
+                " --collection " + srcMigFullCL + " --file " + migFile +
+                " --dsthost " + COORDHOSTNAME + " --dstservice " + COORDSVCNAME
+                + " --dstcollection " + dstMigFullCL + " --dstusrname " +
+                dstuser + " --dstpasswd " + dstpasswd ;
+   println( "==>>[TP3] test migration command : " + migCmd ) ;
+   testMigrationPara( db, lobNum, migCmd, migFile, newCLNAME,
+                      null, null, migdb ) ;
+
+}
+
+// Running
+try
+{
+   commDropCL( db, COMMCSNAME, COMMCLNAME, true, true,
+               "clean collection in the beginning" ) ;
+   main( db ) ;
+   db.close() ;
+}
+catch( e )
+{
+   db.close() ;
+   throw e ;
+}

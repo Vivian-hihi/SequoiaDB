@@ -1,0 +1,190 @@
+/* *****************************************************************************
+@discretion: array: match without index
+@modify list:
+   						2014-02-03 Pusheng Ding  Init
+***************************************************************************** */
+
+CSPREFIX_CS = CSPREFIX+"foo" ;
+CSPREFIX_CL = CSPREFIX+"bar" ;
+
+try{
+	var db = new SecureSdb(COORDHOSTNAME, COORDSVCNAME) ;
+}catch(e)
+{
+	println("can't connect to db");
+	throw e;
+}
+
+//create CS
+try{
+	var varCS = db.createCS(CSPREFIX_CS);
+	println("createCS " + CSPREFIX_CS + " finished");
+}catch(e)
+{
+	//collection space already exist,use it
+	if(e != -33)
+	{
+		println("can't create CS:" + CSPREFIX_CS + " rc="+e);
+		throw e;
+	}
+	else
+	{
+		varCS = db.getCS(CSPREFIX_CS);
+		println("use CS:" + CSPREFIX_CS);
+	}	
+}
+
+//create CL
+try{
+	var varCL = varCS.createCL(CSPREFIX_CL,{ReplSize:0});
+	println("create CL finished");
+}catch(e)
+{
+	//collection already exist,use it
+	if(e != -22)
+	{
+		println("can't create CL:" + CSPREFIX_CL + " rc="+e);
+		throw e;
+	}
+	else
+	{
+		varCL = varCS.getCL(CSPREFIX_CL);
+		varCL.remove();
+		println("use CL:" + CSPREFIX_CL);
+	}
+}
+
+//insert data
+try{
+	varCL.insert({a:[1,2,3],b:1,c:"array"});
+	varCL.insert({a:[],b:2,c:"empty array"});
+	varCL.insert({a:[1,3,2],b:3,c:"array"});
+	varCL.insert({a:[1,4,2],b:4,c:"array"});
+}catch(e)
+{
+	println("insert data failed! rc="+e);
+	throw e;
+}
+println("insert data finished!");
+
+//find({a:[1,2,3]})
+//result:
+//		{a:[1,2,3],b:1,c:"array"}
+println("********************************************");
+try{
+	var sel1 = varCL.find({a:[1,2,3]});
+}catch(e){
+	println("find({a:[1,2,3]}) failed! rc=" + e);
+	throw e;
+}
+//verify data
+try{
+	sel1.next();
+	var rec1 = sel1.current();
+	if(rec1.toObj()['b']!=1){
+		println("the 1st record is not expected!");
+		println("expect:" + "{a:[1,2,3],b:1,c:'array'}");
+		println("return:" + rec1);
+		throw 'result1-error';
+	}
+	println("verify the 1st record correct!");
+	sel1.next();
+	if(sel1.size()!=0){
+		println("records are more than expected!");
+		throw "result1-number-error";
+	}
+	sel1.close();
+}catch(e){
+	if(e=="result1-error"){
+		println("return result:" + sel1);
+	}
+	throw e;
+}
+println("find({a:[1,2,3]}) succ!");
+
+//find({a:[1]})
+//result:
+//		empty result set
+println("********************************************");
+try{
+	var sel2 = varCL.find({a:[1]});
+}catch(e){
+	println("find({a:[1]}) failed! rc=" + e);
+	throw e;
+}
+//verify data
+try{
+	sel2.next();
+	if(sel2.size()!=0){
+		println("records are more than expected!");
+		throw "result2-error";
+	}
+	sel2.close();
+}catch(e){
+	if(e=="result2-error"){
+		println("return result:" + sel2);
+	}
+	throw e;
+}
+println("find({a:[1]}) succ!");
+
+//find({a:[1,2,3,4]})
+//result:
+//		empty result set
+println("********************************************");
+try{
+	var sel3 = varCL.find({a:[1,2,3,4]});
+}catch(e){
+	println("find({a:[1,2,3,4]}) failed! rc=" + e);
+	throw e;
+}
+//verify data
+try{
+	sel3.next();
+	if(sel3.size()!=0){
+		println("records are more than expected!");
+		throw "result3-error";
+	}
+	sel3.close();
+}catch(e){
+	if(e=="result3-error"){
+		println("return result:" + sel3);
+	}
+	throw e;
+}
+println("find({a:[1,2,3,4]}) succ!");
+
+//find({a:[]})
+//result:
+//		{a:[],b:2,c:"empty array"}
+println("********************************************");
+try{
+	var sel4 = varCL.find({a:[]});
+}catch(e){
+	println("find({a:[]}) failed! rc=" + e);
+	throw e;
+}
+//verify data
+try{
+	sel4.next();
+	var rec1 = sel4.current();
+	if(rec1.toObj()['b']!=2){
+		println("the 1st record is not expected!");
+		println("expect:" + "{a:[],b:2,c:'empty array'}");
+		println("return:" + rec1);
+		throw 'result4-error';
+	}
+	println("verify the 1st record correct!");
+	sel4.next();
+	if(sel4.size()!=0){
+		println("records are more than expected!");
+		throw "result4-number-error";
+	}
+	sel4.close();
+}catch(e){
+	if(e=="result4-error"){
+		println("return result:" + sel4);
+	}
+	throw e;
+}
+println("find({a:[]}) succ!");

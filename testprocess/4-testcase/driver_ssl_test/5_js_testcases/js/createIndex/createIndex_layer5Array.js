@@ -1,0 +1,68 @@
+/***************************************************************************
+@Description : The array have 5 layer nest, and the create index .
+               such:[db.CS.CL.createIndex("arrLay5Index",
+                    {"array1.array2.array3.array4.1":1???}, true, true )]
+@Modify list :
+               2014-5-21  xiaojun Hu  Init
+****************************************************************************/
+function main( db )
+{
+   // drop collection in the beginning
+   commDropCL( db, csName, clName, true, true, "drop collection in the beginning" ) ;
+
+   // create collection
+   var idxCL = commCreateCL( db, csName, clName, -1, true, true, false, "create collection" ) ;
+
+   // insert data to SDB
+   try
+   {
+      idxCL.insert({no:001,name:"A",age:2,array1:[{"array2":[{"array3":[{"array4":["array5",
+                    "temp4"]},"temp3"]},"temp2"]},"temp1"]}) ;
+      var i = 0 ;
+      do
+      {
+         var count = idxCL.count({no:001,name:"A",age:2,array1:[{"array2":[{"array3":[{"array4":["array5",
+                                  "temp4"]},"temp3"]},"temp2"]},"temp1"]}) ;
+         ++i ;
+      }while( i < 10 )
+      if ( 1 != count)
+      {
+         println( "Wrong number of record :"+count ) ;
+         throw "ErrNumRecord" ;
+      }
+   }
+   catch ( e )
+   {
+      println( "Failed to insert date after create index : "+e ) ;
+      throw e ;
+   }
+
+   // create index
+   createIndex( idxCL, "arrLay5Index", {"array1.array2.array3.array4":1}, true, true ) ;
+
+   // inspect index
+   try
+   {
+      inspecIndex( idxCL, "arrLay5Index", "array1.array2.array3.array4", 1, true, true ) ;
+   }
+   catch ( e )
+   {
+      if ( "ErrIdxName" != e )
+      {
+         throw e ;
+      }
+   }
+
+   // drop collectionspace in clean
+   commDropCS( db, csName, true, "drop CS in clean " )
+}
+
+try
+{
+   main( db ) ;
+   db.close() ;
+}
+catch ( e )
+{
+   throw e ;
+}
