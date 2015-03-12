@@ -5549,8 +5549,11 @@ namespace engine
 
    void omQueryNodeConfCommand::_sendNodeInfo2Web( BSONObj &nodeInfo )
    {
-      _restAdaptor->appendHttpBody( _restSession, nodeInfo.objdata(), 
-                                    nodeInfo.objsize(), 1 ) ;
+      if ( !nodeInfo.isEmpty() ) 
+      {
+          _restAdaptor->appendHttpBody( _restSession, nodeInfo.objdata(), 
+                                        nodeInfo.objsize(), 1 ) ;
+      }
       _sendOKRes2Web() ;
       return ;
    }
@@ -6522,6 +6525,8 @@ namespace engine
       taskInfoBuilder.append( OM_SDB_AUTH_USER, "" ) ;
       taskInfoBuilder.append( OM_SDB_AUTH_PASSWD, "" ) ;
 
+      string authUser ;
+      string authPasswd ;
       BSONObj businessInfo ;
       string clusterName ;
       string type ;
@@ -6534,6 +6539,8 @@ namespace engine
          goto error ;
       }
 
+      _getBusinessAuth( businessName, authUser, authPasswd ) ;
+
       clusterName = businessInfo.getStringField( 
                                                OM_BUSINESS_FIELD_CLUSTERNAME ) ;
       type        = businessInfo.getStringField( OM_BUSINESS_FIELD_TYPE ) ;
@@ -6543,6 +6550,8 @@ namespace engine
       taskInfoBuilder.append( OM_BSON_BUSINESS_TYPE, type ) ;
       taskInfoBuilder.append( OM_BSON_BUSINESS_NAME, businessName ) ;
       taskInfoBuilder.append( OM_BSON_DEPLOY_MOD, deployMod ) ;
+      taskInfoBuilder.append( OM_BUSINESSAUTH_USER, authUser ) ;
+      taskInfoBuilder.append( OM_BUSINESSAUTH_PASSWD, authPasswd ) ;
       taskInfo = taskInfoBuilder.obj() ;
 
       {
@@ -7881,8 +7890,7 @@ namespace engine
          goto error ;
       }
 
-      selector = BSON( OM_BUSINESSAUTH_BUSINESSNAME << businessName
-                       << OM_BUSINESSAUTH_USER << userName ) ;
+      selector = BSON( OM_BUSINESSAUTH_BUSINESSNAME << businessName ) ;
       {
          BSONObj tmp = BSON( OM_BUSINESSAUTH_BUSINESSNAME << businessName
                              << OM_BUSINESSAUTH_USER << userName

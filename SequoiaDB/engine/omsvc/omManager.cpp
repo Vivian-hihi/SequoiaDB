@@ -332,6 +332,12 @@ namespace engine
       {
          goto error ;
       }
+      rc = _createCollectionIndex ( OM_CS_DEPLOY_CL_BUSINESS_AUTH,
+                                    OM_CS_DEPLOY_CL_BUSINESSAUTHIDX1, cb ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
 
       pAuthCB = pmdGetKRCB()->getAuthCB() ;
       pAuthCB->checkNeedAuth( cb, TRUE ) ;

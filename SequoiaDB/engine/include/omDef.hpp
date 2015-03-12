@@ -143,6 +143,8 @@ namespace engine
    #define OM_BUSINESSAUTH_BUSINESSNAME      OM_BUSINESS_FIELD_NAME
    #define OM_BUSINESSAUTH_USER              OM_HOST_FIELD_USER
    #define OM_BUSINESSAUTH_PASSWD            OM_HOST_FIELD_PASSWORD
+   #define OM_CS_DEPLOY_CL_BUSINESSAUTHIDX1  "{name:\"SYSDEPLOY_BUSINESSAUTH_IDX1\",key: {"\
+                                             OM_BUSINESS_FIELD_NAME":1}, unique: true, enforced: true } "
    
    // deploy.taskinfo
    #define OM_CS_DEPLOY_CL_TASKINFO          OM_CS_DEPLOY".SYSTASKINFO"
