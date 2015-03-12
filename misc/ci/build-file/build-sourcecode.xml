@@ -49,7 +49,7 @@
 			<equals arg1="${enterprise}" arg2="true" />
 			<then>
 				<echo message="enterprise is ture" />
-				<property name="enterprise.line" value=" --ssl" />
+				<property name="enterprise.line" value=" --enterprise" />
 				<echo message="${enterprise.line}" />
 			</then>
 			<else>
