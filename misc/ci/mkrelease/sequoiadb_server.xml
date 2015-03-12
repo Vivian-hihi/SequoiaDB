@@ -59,7 +59,7 @@
             <abortOnError>0</abortOnError>
             <customErrorMessage>${msg(Install.ErrorMsg.CreateGroup.error)}</customErrorMessage>
             <program>useradd</program>
-            <programArguments> ${username} -d ${installdir} -g ${username}_group  -s /bin/bash </programArguments>
+            <programArguments> ${username} -d /home/sequoiadb -g ${username}_group  -s /bin/bash </programArguments>
             <ruleList>
                 <platformTest>
                     <type>linux</type>
