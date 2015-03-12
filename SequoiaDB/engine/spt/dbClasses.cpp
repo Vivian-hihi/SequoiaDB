@@ -7245,18 +7245,18 @@ static JSBool bindata_constructor( JSContext *cx, uintN argc, jsval *vp )
 
    if ( 2 != argc )
    {
-      REPORT_RC ( FALSE , "Sdb.forceSession(): wrong arguments", SDB_INVALIDARG ) ;
+      REPORT_RC ( FALSE , "BinData(): wrong arguments", SDB_INVALIDARG ) ;
    }
 
    if ( !JSVAL_IS_STRING(argv[0]) )
    {
-      REPORT_RC ( FALSE , "Sdb.forceSession(): wrong arguments", SDB_INVALIDARG ) ;
+      REPORT_RC ( FALSE , "BinData(): wrong arguments", SDB_INVALIDARG ) ;
    }
 
    if ( !JSVAL_IS_STRING(argv[1]) && 
         !JSVAL_IS_INT(argv[1]) )
    {
-      REPORT_RC ( FALSE , "Sdb.forceSession(): wrong arguments", SDB_INVALIDARG ) ;
+      REPORT_RC ( FALSE , "BinData(): wrong arguments", SDB_INVALIDARG ) ;
    }
 
    binData = JS_EncodeString( cx, JSVAL_TO_STRING( argv[0]) ) ;
@@ -7272,13 +7272,13 @@ static JSBool bindata_constructor( JSContext *cx, uintN argc, jsval *vp )
          INT32 typeNumber = boost::lexical_cast<UINT32>( binType ) ;
          if ( typeNumber < 0 || 255 < typeNumber )
          {
-            REPORT_RC ( FALSE , "Sdb.forceSession(): wrong arguments", SDB_INVALIDARG ) ;
+            REPORT_RC ( FALSE , "BinData(): wrong arguments", SDB_INVALIDARG ) ;
          }
          strType = std::string( binType ) ;
       }
       catch ( std::exception &e )
       {
-         REPORT_RC ( FALSE , "Sdb.forceSession(): wrong arguments", SDB_INVALIDARG ) ;
+         REPORT_RC ( FALSE , "BinData(): wrong arguments", SDB_INVALIDARG ) ;
       }
    }
    else
@@ -7286,7 +7286,7 @@ static JSBool bindata_constructor( JSContext *cx, uintN argc, jsval *vp )
       INT32 typeNumber = JSVAL_TO_INT( argv[1] ) ;
       if ( typeNumber < 0 || 255 < typeNumber )
       {
-         REPORT_RC ( FALSE , "Sdb.forceSession(): wrong arguments", SDB_INVALIDARG ) ;
+         REPORT_RC ( FALSE , "BinData(): wrong arguments", SDB_INVALIDARG ) ;
       }
       strType = boost::lexical_cast<string>( typeNumber ) ;
    }
@@ -7387,7 +7387,7 @@ static JSBool timestamp_constructor( JSContext *cx, uintN argc, jsval *vp )
       timeStr = JS_EncodeString( cx, JSVAL_TO_STRING( argv[0]) ) ;
       VERIFY( timeStr ) ;
       rc = engine::utilStr2TimeT( timeStr, tm, &usec ) ;
-      REPORT_RC ( SDB_OK == rc , "Sdb.forceSession(): wrong arguments", SDB_INVALIDARG ) ;
+      REPORT_RC ( SDB_OK == rc , "Timestamp(): wrong arguments", SDB_INVALIDARG ) ;
       jsTimeProperty = JS_NewStringCopyN( cx, timeStr, ossStrlen( timeStr ) ) ;
       VERIFY( jsTimeProperty ) ;
    }
@@ -7401,7 +7401,7 @@ static JSBool timestamp_constructor( JSContext *cx, uintN argc, jsval *vp )
       if ( !JSVAL_IS_INT( argv[0]) ||
            !JSVAL_IS_INT( argv[1] ))
       {
-         REPORT_RC ( FALSE, "Sdb.forceSession(): wrong arguments", SDB_INVALIDARG ) ;
+         REPORT_RC ( FALSE, "Timestamp(): wrong arguments", SDB_INVALIDARG ) ;
       }
 
       t = JSVAL_TO_INT( argv[0] ) ;
@@ -7421,7 +7421,7 @@ static JSBool timestamp_constructor( JSContext *cx, uintN argc, jsval *vp )
    }
    else
    {
-      REPORT_RC ( FALSE, "Sdb.forceSession(): wrong arguments", SDB_INVALIDARG ) ;
+      REPORT_RC ( FALSE, "Timestamp(): wrong arguments", SDB_INVALIDARG ) ;
    }
 
    valTime = STRING_TO_JSVAL( jsTimeProperty ) ;
@@ -7447,6 +7447,86 @@ static JSFunctionSpec timestamp_functions [] = {
 
 /// timestamp end
 
+/// regex
+
+// PD_TRACE_DECLARE_FUNCTION ( SDB_REGEX_DESTRUCTOR, "regex_destructor" )
+static void regex_destructor( JSContext *cx, JSObject *obj )
+{
+   PD_TRACE_ENTRY( SDB_REGEX_DESTRUCTOR ) ;
+   PD_TRACE_EXIT( SDB_REGEX_DESTRUCTOR ) ;
+   return ;
+}
+
+static JSClass regex_class = {
+   "Regex", // class name
+   JSCLASS_HAS_PRIVATE | JSCLASS_NEW_RESOLVE ,   // flags
+   JS_PropertyStub,              // addProperty
+   JS_PropertyStub,              // delProperty
+   JS_PropertyStub,              // getProperty
+   JS_StrictPropertyStub,        // setProperty
+   JS_EnumerateStub,             // enumerate
+   JS_ResolveStub,               // resolve
+   JS_ConvertStub,               // convert
+   regex_destructor,             // finalize
+   JSCLASS_NO_OPTIONAL_MEMBERS   // optional members
+} ;
+
+// PD_TRACE_DECLARE_FUNCTION ( SDB_REGEX_CONSTRUCTOR, "regex_constructor" )
+static JSBool regex_constructor( JSContext *cx, uintN argc, jsval *vp )
+{
+   PD_TRACE_ENTRY( SDB_REGEX_CONSTRUCTOR ) ;
+   JSBool ret = JS_TRUE ;
+   JSString *jsRegex = NULL ;
+   JSString *jsOption = NULL ;
+   JSString *regexProperty = NULL ;
+   JSString *optionProperty = NULL ;
+   jsval regexVal = JSVAL_VOID ;
+   jsval optionVal = JSVAL_VOID ;
+   JSObject *jsObj = NULL ;
+   CHAR *regex = NULL ;
+   CHAR *option = NULL ;
+
+   ret = JS_ConvertArguments ( cx , argc , JS_ARGV ( cx , vp ) ,
+                               "SS" , &jsRegex, &jsOption ) ;
+   REPORT_RC( ret, "Regex(): wrong arguments", SDB_INVALIDARG ) ;
+
+   regex = ( CHAR * )JS_EncodeString( cx, jsRegex ) ;
+   VERIFY( regex ) ;
+
+   option = ( CHAR * )JS_EncodeString( cx, jsOption ) ;
+   VERIFY( option ) ;
+
+   regexProperty = JS_NewStringCopyN( cx, regex, ossStrlen( regex ) ) ;
+   VERIFY( regexProperty ) ;
+
+   optionProperty = JS_NewStringCopyN( cx, option, ossStrlen( option ) ) ;
+   VERIFY( optionProperty ) ;
+
+   jsObj = JS_NewObject( cx, &regex_class, NULL, NULL ) ;
+   VERIFY( jsObj ) ;
+
+   regexVal = STRING_TO_JSVAL( regexProperty ) ;
+   optionVal = STRING_TO_JSVAL( optionProperty ) ;
+
+   VERIFY ( JS_SetProperty ( cx , jsObj , "_regex" , &regexVal ) ) ;
+   VERIFY ( JS_SetProperty ( cx , jsObj , "_option", &optionVal ) ) ;
+
+   JS_SET_RVAL( cx, vp, OBJECT_TO_JSVAL( jsObj ) ) ;
+done:
+   SAFE_JS_FREE( cx, regex ) ;
+   SAFE_JS_FREE( cx, option ) ;
+   PD_TRACE_EXIT( SDB_REGEX_CONSTRUCTOR ) ;
+   return ret ;
+error:
+   ret = JS_FALSE ;
+   goto done ;
+}
+
+static JSFunctionSpec regex_functions [] = {
+   JS_FS_END
+} ;
+
+/// regex end
 
 JSBool jsobj_is_query( JSContext *cx, JSObject *obj )
 {
@@ -7495,11 +7575,17 @@ JSBool is_timestamp( JSContext *cx, JSObject *obj )
    return JS_InstanceOf( cx, obj, &timestamp_class, NULL ) ;
 }
 
+JSBool is_regex( JSContext *cx, JSObject *obj )
+{
+   return JS_InstanceOf( cx, obj, &regex_class, NULL ) ;
+}
+
 JSBool is_jsontypes( JSContext *cx, JSObject *obj )
 {
    return is_objectid( cx, obj ) ||
           is_bindata( cx, obj ) ||
-          is_timestamp( cx, obj ) ;
+          is_timestamp( cx, obj ) ||
+          is_regex( cx, obj ) ;
 }
 
 JSBool jsobj_is_sdbobj( JSContext *cx, JSObject *obj )
@@ -7631,6 +7717,10 @@ JSBool InitDbClasses( JSContext *cx, JSObject *obj )
    VERIFY ( JS_InitClass ( cx, obj, NULL, &timestamp_class,
                            timestamp_constructor, 0,
                            0, timestamp_functions, 0, 0 ) ) ;
+
+   VERIFY ( JS_InitClass ( cx, obj, NULL, &regex_class,
+                           regex_constructor, 0,
+                           0, regex_functions, 0, 0 ) ) ;
 #elif defined (SDB_ENGINE)
 #endif
 

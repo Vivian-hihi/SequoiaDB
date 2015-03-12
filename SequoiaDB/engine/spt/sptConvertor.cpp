@@ -58,6 +58,7 @@ extern JSBool is_objectid( JSContext *, JSObject * ) ;
 extern JSBool is_bindata( JSContext *, JSObject * ) ;
 extern JSBool is_jsontypes( JSContext *, JSObject * ) ;
 extern JSBool is_timestamp( JSContext *, JSObject * ) ;
+extern JSBool is_regex( JSContext *, JSObject * ) ;
 
 INT32 sptConvertor::toBson( JSObject *obj , bson **bs )
 {
@@ -326,6 +327,48 @@ error:
    goto done ;
 }
 
+INT32 sptConvertor::_addRegex( JSObject *obj,
+                               const CHAR *key,
+                               bson *bs )
+{
+   INT32 rc = SDB_OK ;
+   std::string optionName ;
+   std::string strRegex, strOption ;
+   jsval jsRegex, jsOption ;
+
+   if ( !_getProperty( obj, "_regex",
+                       JSTYPE_STRING, jsRegex ))
+   {
+      rc = SDB_SYS ;
+      goto error ;
+   }
+
+   if ( !_getProperty( obj, "_option",
+                       JSTYPE_STRING, jsOption ))
+   {
+      rc = SDB_SYS ;
+      goto error ;
+   }
+
+   rc = _toString( jsRegex, strRegex ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+
+   rc = _toString( jsOption, strOption ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+
+   bson_append_regex( bs, key, strRegex.c_str(), strOption.c_str() ) ;
+done:
+   return rc ;
+error:
+   goto done ;
+}
+
 INT32 sptConvertor::_addJsonTypes( JSObject *obj,
                                    const CHAR *key,
                                    bson *bs )
@@ -342,6 +385,14 @@ INT32 sptConvertor::_addJsonTypes( JSObject *obj,
    else if ( is_timestamp( _cx, obj ) )
    {
       rc = _addTimestamp( obj, key, bs ) ;
+   }
+   else if ( is_regex( _cx, obj ) )
+   {
+      rc = _addRegex( obj, key, bs ) ;
+   }
+   else
+   {
+      rc = SDB_INVALIDARG ;
    }
 
    if ( SDB_OK != rc )

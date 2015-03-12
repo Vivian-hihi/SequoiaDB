@@ -464,7 +464,7 @@ ObjectId.prototype.toString = function() {
 }
 // end ObjectId
 
-// bindata
+// BinData
 if ( !BinData.prototype )
    BinData.prototype = {}
 
@@ -473,7 +473,24 @@ BinData.prototype.toString = function() {
 }
 
 
-// end bindata
+// end BinData
 
+// Timestamp
+if ( !Timestamp.prototype )
+   Timestamp.prototype = {}
+
+Timestamp.prototype.toString = function() {
+   return "Timestamp(\"" + this._t + "\")" ; 
+}
+// end Timestamp
+
+// Regex
+if ( !Regex.prototype )
+   Regex.prototype = {}
+
+Regex.prototype.toString = function () {
+   return "Regex(\"" + this._regex + "\", \"" + this._option + "\")" ;
+}
+// end Regex
 
 
