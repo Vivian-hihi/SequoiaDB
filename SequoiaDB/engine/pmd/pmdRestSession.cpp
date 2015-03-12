@@ -205,6 +205,8 @@ namespace engine
          _pEDUCB->resetInfo( EDU_INFO_ERROR ) ;
          _pEDUCB->resetLsn() ;
 
+#ifdef SDB_ENTERPRISE
+
 #ifdef SDB_SSL
          if ( _isAwaitingHandshake() )
          {
@@ -239,6 +241,8 @@ namespace engine
              _setHandshakeReceived() ;
          }
 #endif
+
+#endif /* SDB_ENTERPRISE */
          // recv rest header
          rc = pAdptor->recvRequestHeader( this ) ;
          if ( rc )

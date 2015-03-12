@@ -130,6 +130,9 @@ namespace engine
 
             _setHandshakeReceived() ;
          }
+
+#ifdef SDB_ENTERPRISE
+
 #ifdef SDB_SSL
          else if ( _isAwaitingHandshake() )
          {
@@ -158,6 +161,8 @@ namespace engine
             break ;*/
          }
 #endif /* SDB_SSL */
+
+#endif /* SDB_ENTERPRISE */
          // error msg
          else if ( msgSize < sizeof(MsgHeader) || msgSize > SDB_MAX_MSG_LENGTH )
          {

@@ -1257,9 +1257,13 @@ namespace engine
       _weight              = 0 ;
       _auth                = TRUE ; 
 
+#ifdef SDB_ENTERPRISE
+
 #ifdef SDB_SSL
       _useSSL              = FALSE ;
 #endif
+
+#endif /* SDB_ENTERPRISE */
 
       // other configs
       ossMemset( _krcbConfPath, 0, sizeof( _krcbConfPath ) ) ;
@@ -1451,11 +1455,15 @@ namespace engine
                FALSE, TRUE, 10, FALSE ) ; 
       rdvMinMax( pEX, _weight, 1, 100, TRUE ) ;
 
+#ifdef SDB_ENTERPRISE
+
 #ifdef SDB_SSL
       // --usessl
       rdxBooleanS( pEX, PMD_OPTION_USESSL, _useSSL,
                    FALSE, TRUE, FALSE, FALSE ) ;
 #endif
+
+#endif /* SDB_ENTERPRISE */
 
       // --auth
       rdxBooleanS( pEX, PMD_OPTION_AUTH, _auth,

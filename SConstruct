@@ -219,6 +219,9 @@ add_option( "fap", "foreign access protocol", 0, False )
 #ssl options
 add_option( "ssl", "build engine with SSL (enterprise edition only) ", 0, False )
 
+#enterprise options
+add_option( "enterprise", "build enterprise sequoiadb ( with SSL )", 0, False )
+
 # don't run configure if user calls --help
 if GetOption('help'):
     Return()
@@ -300,6 +303,12 @@ hasFmp = has_option("fmp")
 hasAll = has_option( "all" )
 hasFap = has_option("fap")
 hasSSL = has_option("ssl")
+hasEnterprise = has_option("enterprise")
+
+# build enterprise edition
+if hasEnterprise:
+   hasSSL = True
+   env.Append( CPPDEFINES=[ "SDB_ENTERPRISE" ] )
 
 # if everything are set, let's set everything to true
 if hasAll:

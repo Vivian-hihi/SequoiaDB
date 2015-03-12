@@ -472,9 +472,15 @@ namespace engine
          OSS_INLINE BOOLEAN sparseFile() const { return _sparseFile ; }
          OSS_INLINE UINT8 weight() const { return (UINT8)_weight ; }
          OSS_INLINE BOOLEAN authEnabled() const { return _auth ; }
+
+#ifdef SDB_ENTERPRISE
+
 #ifdef SDB_SSL
          OSS_INLINE BOOLEAN useSSL() const { return _useSSL ; }
 #endif
+
+#endif /* SDB_ENTERPRISE */
+
       protected: // rdx members
          CHAR        _krcbDbPath[ OSS_MAX_PATHSIZE + 1 ] ;
          CHAR        _krcbIndexPath[ OSS_MAX_PATHSIZE + 1 ] ;
@@ -524,9 +530,14 @@ namespace engine
          BOOLEAN     _sparseFile ;
          UINT32      _weight ;
          BOOLEAN     _auth ;
+
+#ifdef SDB_ENTERPRISE
+
 #ifdef SDB_SSL
          BOOLEAN     _useSSL;
 #endif
+
+#endif /* SDB_ENTERPRISE */
 
       private: // other configs
          CHAR        _krcbConfPath[ OSS_MAX_PATHSIZE + 1 ] ;
