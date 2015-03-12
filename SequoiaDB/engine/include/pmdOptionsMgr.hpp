@@ -480,7 +480,6 @@ namespace engine
 #endif
 
 #endif /* SDB_ENTERPRISE */
-
       protected: // rdx members
          CHAR        _krcbDbPath[ OSS_MAX_PATHSIZE + 1 ] ;
          CHAR        _krcbIndexPath[ OSS_MAX_PATHSIZE + 1 ] ;
@@ -538,7 +537,6 @@ namespace engine
 #endif
 
 #endif /* SDB_ENTERPRISE */
-
       private: // other configs
          CHAR        _krcbConfPath[ OSS_MAX_PATHSIZE + 1 ] ;
          CHAR        _krcbConfFile[ OSS_MAX_PATHSIZE + 1 ] ;

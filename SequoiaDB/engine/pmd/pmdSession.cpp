@@ -130,7 +130,6 @@ namespace engine
 
             _setHandshakeReceived() ;
          }
-
 #ifdef SDB_ENTERPRISE
 
 #ifdef SDB_SSL

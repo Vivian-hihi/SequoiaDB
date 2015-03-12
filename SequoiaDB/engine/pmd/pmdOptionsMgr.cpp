@@ -1255,7 +1255,7 @@ namespace engine
       _directIOInLob       = FALSE ;
       _sparseFile          = FALSE ;
       _weight              = 0 ;
-      _auth                = TRUE ; 
+      _auth                = TRUE ;
 
 #ifdef SDB_ENTERPRISE
 
@@ -1264,7 +1264,6 @@ namespace engine
 #endif
 
 #endif /* SDB_ENTERPRISE */
-
       // other configs
       ossMemset( _krcbConfPath, 0, sizeof( _krcbConfPath ) ) ;
       ossMemset( _krcbConfFile, 0, sizeof( _krcbConfFile ) ) ;
@@ -1464,7 +1463,6 @@ namespace engine
 #endif
 
 #endif /* SDB_ENTERPRISE */
-
       // --auth
       rdxBooleanS( pEX, PMD_OPTION_AUTH, _auth,
                    FALSE, FALSE, TRUE, FALSE ) ;
