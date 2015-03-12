@@ -52,4 +52,10 @@ if __name__ == '__main__':
     if len(sys.argv) != 3:
         print('<cmd> <file> <macro>')
         sys.exit(1)
-    removeMacro(sys.argv[1].strip(), sys.argv[2].strip())
+    fileName = sys.argv[1].strip()
+    macro = sys.argv[2].strip()
+    if fileName == '':
+        raise Exception("the fileName is empty")
+    if macro == '':
+        raise Exception("the macro is empty")
+    removeMacro(fileName, macro)
