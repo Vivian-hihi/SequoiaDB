@@ -21,7 +21,7 @@
     </section>
     <section><title>Sample</title>
       <p>For example, string "hello world" is encoded with Base64 into "aGVsbG8gd29ybGQ=". JSON data containing  "hello world" bindata, with type of "1" is:</p>
-      <codeblock>{ "key" : { "$binary" : "aGVsbG8gd29ybGQ=", "$type" : 1 } }</codeblock>
+      <codeblock>{ "key" : { "$binary" : "aGVsbG8gd29ybGQ=", "$type" : "1" } }</codeblock>
     </section>
   </body>
 </topic>

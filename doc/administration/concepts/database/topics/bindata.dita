@@ -18,7 +18,7 @@
     <section>
       <title>示例</title>
       <p>例如：字符串“hello world”被 Base64 编码后的数据为“aGVsbG8gd29ybGQ=”。包含“hello world”二进制数据，且类型为1的 JSON 数据为：</p>
-      <codeblock>{ "key" : { "$binary" : "aGVsbG8gd29ybGQ=", "$type" : 1 } }</codeblock>
+      <codeblock>{ "key" : { "$binary" : "aGVsbG8gd29ybGQ=", "$type" : "1" } }</codeblock>
     </section>
   </body>
 </topic>
