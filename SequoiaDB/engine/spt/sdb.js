@@ -464,3 +464,16 @@ ObjectId.prototype.toString = function() {
 }
 // end ObjectId
 
+// bindata
+if ( !BinData.prototype )
+   BinData.prototype = {}
+
+BinData.prototype.toString = function() {
+   return "BinData(\"" + this._data + "\", \"" + this._type + "\")"  ;
+}
+
+
+// end bindata
+
+
+

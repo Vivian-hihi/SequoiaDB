@@ -94,6 +94,14 @@ private:
 
    INT32 _toBoolean( const jsval &val, BOOLEAN &bL ) ;
 
+   INT32 _addObjectId( JSObject *obj,
+                       const CHAR *key,
+                       bson *bs ) ;
+
+   INT32 _addBinData( JSObject *obj,
+                      const CHAR *key,
+                      bson *bs ) ;
+
 private:
    JSContext *_cx ;
 } ;

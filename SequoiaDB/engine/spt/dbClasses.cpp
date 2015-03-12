@@ -56,7 +56,7 @@
 #include "ossIO.hpp"
 #include "sptSPDef.hpp"
 #include "sptConvertorHelper.hpp"
-#include "sptJsonTypes.hpp"
+#include <boost/lexical_cast.hpp>
 
 #define SAFE_BSON_DISPOSE( p ) \
    do { if ( p ) { bson_dispose( p ) ; ( p ) = NULL ; } } while ( 0 )
@@ -7202,6 +7202,126 @@ static JSFunctionSpec objectid_functions [] = {
 
 /// objectid end
 
+/// bindata
+// PD_TRACE_DECLARE_FUNCTION ( SDB_BINDATA_DESTRUCTOR, "bindata_destructor" )
+static void bindata_destructor( JSContext *cx, JSObject *obj )
+{
+   PD_TRACE_ENTRY ( SDB_BINDATA_DESTRUCTOR );
+   PD_TRACE_EXIT( SDB_BINDATA_DESTRUCTOR ) ;
+   return ;
+}
+
+static JSClass bindata_class = {
+   "BinData", // class name
+   JSCLASS_HAS_PRIVATE | JSCLASS_NEW_RESOLVE ,   // flags
+   JS_PropertyStub,              // addProperty
+   JS_PropertyStub,              // delProperty
+   JS_PropertyStub,              // getProperty
+   JS_StrictPropertyStub,        // setProperty
+   JS_EnumerateStub,             // enumerate
+   JS_ResolveStub,               // resolve
+   JS_ConvertStub,               // convert
+   bindata_destructor,           // finalize
+   JSCLASS_NO_OPTIONAL_MEMBERS   // optional members
+} ;
+
+// PD_TRACE_DECLARE_FUNCTION ( SDB_BINDATA_CONSTRUCTOR, "bindata_constructor" )
+static JSBool bindata_constructor( JSContext *cx, uintN argc, jsval *vp )
+{
+   PD_TRACE_ENTRY( SDB_BINDATA_CONSTRUCTOR ) ;
+   JSBool ret = JS_TRUE ;
+   JSObject *jsBinObj = NULL ;
+   JSString *jsBinData = NULL ;
+   JSString *jsBinType = NULL ;
+   jsval dataVal = JSVAL_VOID ;
+   jsval typeVal = JSVAL_VOID ;
+   CHAR *binData = NULL ;
+   CHAR *binType = NULL ;
+   std::string strType ;
+   
+   jsval *argv = JS_ARGV ( cx , vp ) ;
+   VERIFY( argv ) ;
+
+   if ( 2 != argc )
+   {
+      REPORT_RC ( FALSE , "Sdb.forceSession(): wrong arguments", SDB_INVALIDARG ) ;
+   }
+
+   if ( !JSVAL_IS_STRING(argv[0]) )
+   {
+      REPORT_RC ( FALSE , "Sdb.forceSession(): wrong arguments", SDB_INVALIDARG ) ;
+   }
+
+   if ( !JSVAL_IS_STRING(argv[1]) && 
+        !JSVAL_IS_INT(argv[1]) )
+   {
+      REPORT_RC ( FALSE , "Sdb.forceSession(): wrong arguments", SDB_INVALIDARG ) ;
+   }
+
+   binData = JS_EncodeString( cx, JSVAL_TO_STRING( argv[0]) ) ;
+   VERIFY( binData ) ;
+
+   if ( JSVAL_IS_STRING(argv[1]) )
+   {
+      binType = JS_EncodeString( cx, JSVAL_TO_STRING( argv[1] ) ) ;
+      VERIFY( binType ) ;
+
+      try
+      {
+         INT32 typeNumber = boost::lexical_cast<UINT32>( binType ) ;
+         if ( typeNumber < 0 || 255 < typeNumber )
+         {
+            REPORT_RC ( FALSE , "Sdb.forceSession(): wrong arguments", SDB_INVALIDARG ) ;
+         }
+         strType = std::string( binType ) ;
+      }
+      catch ( std::exception &e )
+      {
+         REPORT_RC ( FALSE , "Sdb.forceSession(): wrong arguments", SDB_INVALIDARG ) ;
+      }
+   }
+   else
+   {
+      INT32 typeNumber = JSVAL_TO_INT( argv[1] ) ;
+      if ( typeNumber < 0 || 255 < typeNumber )
+      {
+         REPORT_RC ( FALSE , "Sdb.forceSession(): wrong arguments", SDB_INVALIDARG ) ;
+      }
+      strType = boost::lexical_cast<string>( typeNumber ) ;
+   }
+
+   jsBinObj = JS_NewObject ( cx , &bindata_class, NULL, NULL ) ;
+   VERIFY( jsBinObj ) ;
+
+   jsBinData = JS_NewStringCopyN( cx, binData, ossStrlen( binData) ) ;
+   VERIFY( jsBinData ) ;
+   dataVal = STRING_TO_JSVAL( jsBinData ) ;
+
+   jsBinType = JS_NewStringCopyN( cx, strType.c_str(), strType.size() ) ;
+   VERIFY( jsBinType ) ;
+   typeVal = STRING_TO_JSVAL( jsBinType ) ;
+
+   VERIFY ( JS_SetProperty ( cx, jsBinObj, "_data", &dataVal ) ) ;
+   VERIFY ( JS_SetProperty ( cx, jsBinObj, "_type", &typeVal ) ) ;
+
+   JS_SET_RVAL( cx, vp, OBJECT_TO_JSVAL( jsBinObj ) ) ;
+
+done:
+   SAFE_JS_FREE( cx, binData ) ;
+   SAFE_JS_FREE( cx, binType ) ;
+   PD_TRACE_EXIT( SDB_BINDATA_CONSTRUCTOR ) ;
+   return ret ;
+error:
+   ret = FALSE ;
+   goto done ;
+}
+
+static JSFunctionSpec bindata_functions [] = {
+   JS_FS_END
+} ;
+
+/// bindata end
+
 JSBool jsobj_is_query( JSContext *cx, JSObject *obj )
 {
    return JS_InstanceOf( cx, obj, &query_class, NULL ) ;
@@ -7232,14 +7352,22 @@ JSBool jsobj_is_rg( JSContext *cx, JSObject *obj )
    return JS_InstanceOf( cx, obj, &rg_class, NULL ) ;
 }
 
+
+
 JSBool is_objectid( JSContext *cx, JSObject *obj )
 {
    return JS_InstanceOf( cx, obj, &objectid_class, NULL ) ;
 }
 
+JSBool is_bindata( JSContext *cx, JSObject *obj )
+{
+   return JS_InstanceOf( cx, obj, &bindata_class, NULL ) ;
+}
+
 JSBool is_jsontypes( JSContext *cx, JSObject *obj )
 {
-   return is_objectid( cx, obj ) ;
+   return is_objectid( cx, obj ) ||
+          is_bindata( cx, obj ) ;
 }
 
 JSBool jsobj_is_sdbobj( JSContext *cx, JSObject *obj )
@@ -7363,6 +7491,10 @@ JSBool InitDbClasses( JSContext *cx, JSObject *obj )
    VERIFY ( JS_InitClass ( cx, obj, NULL, &objectid_class,
                            objectid_constructor, 0,
                            0, objectid_functions, 0, 0 ) ) ;
+
+   VERIFY ( JS_InitClass ( cx, obj, NULL, &bindata_class,
+                           bindata_constructor, 0,
+                           0, bindata_functions, 0, 0 ) ) ;
 #elif defined (SDB_ENGINE)
 #endif
 

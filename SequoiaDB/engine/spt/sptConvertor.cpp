@@ -55,6 +55,7 @@
 #define SPT_SPEOBJ_OID "$oid"
 
 extern JSBool is_objectid( JSContext *, JSObject * ) ;
+extern JSBool is_bindata( JSContext *, JSObject * ) ;
 extern JSBool is_jsontypes( JSContext *, JSObject * ) ;
 
 INT32 sptConvertor::toBson( JSObject *obj , bson **bs )
@@ -156,9 +157,130 @@ INT32 sptConvertor::_traverse( JSObject *obj , bson *bs )
          goto error ;
       }
 
-      _appendToBson( name, fieldValue, bs ) ;
+      rc = _appendToBson( name, fieldValue, bs ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
    }
 done:
+   return rc ;
+error:
+   goto done ;
+}
+
+INT32 sptConvertor::_addObjectId( JSObject *obj,
+                                  const CHAR *key,
+                                  bson *bs )
+{
+   INT32 rc = SDB_OK ;
+   std::string strValue ;
+   jsval value ;
+   if ( !_getProperty( obj, "_str", JSTYPE_STRING, value ))
+   {
+      rc = SDB_SYS ;
+      goto error ;
+   }
+
+   rc = _toString( value, strValue ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+
+   if ( 24 != strValue.length() )
+   {
+      rc = SDB_SYS ;
+      goto error ;
+   }
+
+   bson_oid_t oid ;
+   bson_oid_from_string( &oid, strValue.c_str() ) ;
+   bson_append_oid( bs, key, &oid ) ;
+done:
+   return rc ;
+error:
+   goto done ;
+}
+
+INT32 sptConvertor::_addBinData( JSObject *obj,
+                                 const CHAR *key,
+                                 bson *bs )
+{
+   INT32 rc = SDB_OK ;
+   std::string typeName ;
+   std::string strBin, strType ;
+   jsval jsBin, jsType ;
+   CHAR *decode = NULL ;
+   UINT32 decodeSize = 0 ;
+   INT32 binType = 0 ;
+
+   if ( !_getProperty( obj, "_data",
+                       JSTYPE_STRING, jsBin ))
+   {
+      rc = SDB_SYS ;
+      goto error ;
+   }
+
+   if ( !_getProperty( obj, "_type",
+                       JSTYPE_STRING, jsType ))
+   {
+      rc = SDB_SYS ;
+      goto error ;
+   }
+
+   rc = _toString( jsBin, strBin ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+
+   rc = _toString( jsType, strType ) ;
+   if ( SDB_OK != rc || strType.empty())
+   {
+      goto error ;
+   }
+
+   try
+   {
+      binType = boost::lexical_cast<INT32>( strType.c_str() ) ;
+   }
+   catch ( std::bad_cast &e )
+   {
+      PD_LOG( PDERROR, "bad type for binary:%s", strType.c_str() ) ;
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   decodeSize = getDeBase64Size( strBin.c_str() ) ;
+   if ( decodeSize <= 1 )
+   {
+      PD_LOG( PDERROR, "invalid decode size:%d", decodeSize ) ;
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   decode = ( CHAR * )SDB_OSS_MALLOC( decodeSize ) ;
+   if ( NULL == decode )
+   {
+      PD_LOG( PDERROR, "failed to allocate mem." ) ;
+      rc = SDB_OOM ;
+      goto error ;
+   }
+
+   if ( !base64Decode( strBin.c_str(), decode, decodeSize ) )
+   {
+      PD_LOG( PDERROR, "failed to decode base64 code" ) ;
+      rc = SDB_INVALIDARG ;
+      SDB_OSS_FREE( decode ) ;
+      goto error ;
+   }
+
+   /// we can not push '\0' to bson
+   bson_append_binary( bs, key, binType,
+                       decode, decodeSize - 1 ) ;
+done:
+   SDB_OSS_FREE( decode ) ;
    return rc ;
 error:
    goto done ;
@@ -171,28 +293,16 @@ INT32 sptConvertor::_addJsonTypes( JSObject *obj,
    INT32 rc = SDB_OK ;
    if ( is_objectid( _cx, obj ) )
    {
-      std::string strValue ;
-      jsval value ;
-      if ( !_getProperty( obj, "_str", JSTYPE_STRING, value ))
-      {
-         rc = SDB_SYS ;
-         goto error ;
-      }
+      rc = _addObjectId( obj, key, bs ) ;
+   }
+   else if ( is_bindata( _cx, obj ) )
+   {
+      rc = _addBinData( obj, key, bs ) ;
+   }
 
-      rc = _toString( value, strValue ) ;
-      if ( SDB_OK != rc )
-      {
-         goto error ;
-      }
-
-      if ( 24 != strValue.length() )
-      {
-         goto error ;
-      }
-
-      bson_oid_t oid ;
-      bson_oid_from_string( &oid, strValue.c_str() ) ;
-      bson_append_oid( bs, key, &oid ) ; 
+   if ( SDB_OK != rc )
+   {
+      goto error ;
    }
 done:
    return rc ;
