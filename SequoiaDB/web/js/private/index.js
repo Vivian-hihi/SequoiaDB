@@ -665,7 +665,7 @@ function createRightPic()
 				}
 	
 			}, function( jsonArr ){
-				return errorProcess( jsonArr['errno'], jsonArr['detail'] ) ;
+				showProcessError( json['detail'] ) ;
 			}, null, _hostList ) ;
 		}
 		else
@@ -1030,7 +1030,7 @@ function createHtml()
 	/* ** */
 	sdbjs.parts.divBox.create( 'middle', 'middle-clear', 0, 0 ) ;
 	sdbjs.fun.setClass( 'middle-clear', 'clear-float' ) ;
-	
+
 	/* 部署引导的弹窗 */
 	sdbjs.parts.modalBox.create( $( document.body ), 'deployGuid' ) ;
 	//'部署引导'

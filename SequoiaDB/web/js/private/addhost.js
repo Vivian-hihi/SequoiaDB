@@ -181,7 +181,7 @@ function accessHostConf( index )
 	//OM
 	sdbjs.parts.tableBox.updateBody( 'omAgentTable', 0, 1, htmlEncode( hostConf['OMA']['Version'] ) ) ;
 	sdbjs.parts.tableBox.updateBody( 'omAgentTable', 1, 1, htmlEncode( hostConf['OMA']['Path'] ) ) ;
-	sdbjs.parts.tableBox.updateBody( 'omAgentTable', 2, 1, htmlEncode( hostConf['OMA']['Port'] ) ) ;
+	sdbjs.parts.tableBox.updateBody( 'omAgentTable', 2, 1, htmlEncode( hostConf['OMA']['Service'] ) ) ;
 	sdbjs.parts.tableBox.updateBody( 'omAgentTable', 3, 1, htmlEncode( hostConf['OMA']['Release'] ) ) ;
 	//磁盘
 	sdbjs.parts.gridBox.emptyBody( 'hostDiskGrid' ) ;
@@ -564,7 +564,7 @@ function createHtml()
 		sdbjs.parts.tableBox.update ( 'omAgentTable', 'loosen simple' ) ;
 		sdbjs.parts.tableBox.addBody( 'omAgentTable', [ { 'text': '<b>' + htmlEncode( 'Version' ) + '</b>', 'width': 100 }, { 'text': '' } ] ) ;
 		sdbjs.parts.tableBox.addBody( 'omAgentTable', [ { 'text': '<b>' + htmlEncode( 'Path' ) + '</b>', 'width': 100 }, { 'text': '' } ] ) ;
-		sdbjs.parts.tableBox.addBody( 'omAgentTable', [ { 'text': '<b>' + htmlEncode( 'Port' ) + '</b>', 'width': 100 }, { 'text': '' } ] ) ;
+		sdbjs.parts.tableBox.addBody( 'omAgentTable', [ { 'text': '<b>' + htmlEncode( 'Service' ) + '</b>', 'width': 100 }, { 'text': '' } ] ) ;
 		sdbjs.parts.tableBox.addBody( 'omAgentTable', [ { 'text': '<b>' + htmlEncode( 'Release' ) + '</b>', 'width': 100 }, { 'text': '' } ] ) ;
 		//'磁盘'
 		$( panelBody['obj'] ).append( '<div style="padding:15px 0 5px 0;font-weight:bold;font-size:16px;">' + htmlEncode( _languagePack['addhost']['rightPanel']['disk']['title'] ) + '</div>' ) ;

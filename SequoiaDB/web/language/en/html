@@ -37,22 +37,22 @@
 						}
 				},
 				"aboutSMS": {
-						"title": "关于SMS",
+						"title": "About SMS",
 						"context": [
 							  "Version: 1.12",
-							  "SMS（SequoiaDB Monitoring Service）提供针对SequoiaDB数据库的图形化监控服务。"
+							  "SMS ( SequoiaDB Monitoring Service ) is a web-based service utility providing real-time performance analytic and operational management to SequoiaDB database."
 						]
 				},
 				"language": {
-						"title": "语言",
+						"title": "Language",
 						"table": {
-							  "title": [ "语言:" ]
+							  "title": [ "Language:" ]
 						}
 				},
 				"task": {
-						"title": "任务列表",
+						"title": "Task List",
 						"table": {
-							  "title": [ "ID", "类型", "进度", "状态" ]
+							  "title": [ "ID", "Type", "Progress", "Status" ]
 						}
 				}
 		  }
