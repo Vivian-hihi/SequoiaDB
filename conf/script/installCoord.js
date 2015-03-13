@@ -139,7 +139,7 @@ function _createCoordNode( db, hostName, svcName, installPath, config )
    catch ( e )
    {
       SYSEXPHANDLE( e ) ;
-      errMsg = "Failed to create coord node [" + hostName + ":" + svcName + "]" ;
+      errMsg = "Failed to create coord node[" + hostName + ":" + svcName + "]" ;
       rc = GETLASTERROR() ;
       PD_LOG2( task_id, arguments, PDERROR, FILE_NAME_INSTALL_COORD,
                sprintf( errMsg + ", rc:?, detail:?", rc, GETLASTERRMSG() ) ) ;  
@@ -153,7 +153,7 @@ function _createCoordNode( db, hostName, svcName, installPath, config )
    catch ( e )
    {
       SYSEXPHANDLE( e ) ;
-      errMsg = "Failed to start coord node [" + hostName + ":" + svcName + "]" ;
+      errMsg = "Failed to start coord node[" + hostName + ":" + svcName + "]" ;
       rc = GETLASTERROR() ;
       PD_LOG2( task_id, arguments, PDERROR, FILE_NAME_INSTALL_COORD,
                sprintf( errMsg + ", rc:?, detail:?", rc, GETLASTERRMSG() ) ) ;  

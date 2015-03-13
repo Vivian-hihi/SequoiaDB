@@ -976,4 +976,31 @@ function pushProgAndSpt( ssh, progs, spts )
    }
 }
 
+/* *****************************************************************************
+@discretion: get install info from /etc/default/sequoiadb
+@author: Tanzhaobo
+@parameter void
+@return
+   installInfoObj[object]: info object of installed SequoiaDB
+***************************************************************************** */
+function getInstallInfoObj()
+{
+   var installInfoObj = null ;
+   try
+   {
+      installInfoObj = eval( '(' + Oma.getOmaInstallInfo() + ')' ) ;
+   }
+   catch( e )
+   {
+      SYSEXPHANDLE( e ) ;
+      rc = GETLASTERROR() ;
+      errMsg = sprintf( "Failed to get SequoiaDB install info in host[?]",
+                        System.getHostName() ) ;
+      PD_LOG( arguments, PDERROR, FILE_NAME_FUNC,
+              sprintf( errMsg + ", rc: ?, detail: ?", rc, GETLASTERRMSG() ) ) ;
+      exception_handle( rc, errMsg ) ;
+   }
+   return installInfoObj ;
+}
+
 
