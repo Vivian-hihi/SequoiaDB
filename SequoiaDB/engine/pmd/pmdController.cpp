@@ -99,9 +99,12 @@ namespace engine
       UINT16 port = 0 ;
       UINT16 protocolPort = 0 ;
 
-      //rc = loadForeignModule() ;
-      //PD_RC_CHECK( rc, PDERROR, "Failed to init fap module, rc: %d", rc ) ;
-      //rc = SDB_OK ;
+      if ( FALSE )
+      {
+         rc = loadForeignModule() ;
+         //PD_RC_CHECK( rc, PDERROR, "Failed to init rest adaptor, rc: %d", rc ) ;
+         rc = SDB_OK ;
+      }
 
       // 1. create tcp listerner
       port = pOptCB->getServicePort() ;
@@ -206,20 +209,23 @@ namespace engine
                    rc ) ;
 
       //////////////////////////////////////////////////////////////////////////
-      // listener for access protocol
-//       pProtocolData = new pmdEDUParam() ;
-//       pProtocolData->pSocket = ( void *)_pMongoListener ;
-//       pProtocolData->protocol = _protocol ;
-//       rc = pEDUMgr->startEDU( EDU_TYPE_FAPLISTENER, (void*)pProtocolData,
-//                               &eduID ) ;
-//       PD_RC_CHECK( rc, PDERROR, "Failed to start FAP listerner, rc: %d",
-//                    rc ) ;
-//       pEDUMgr->regSystemEDU( EDU_TYPE_FAPLISTENER, eduID ) ;
-// 
-//       // wait until protocol listener starts
-//       rc = pEDUMgr->waitUntil ( eduID, PMD_EDU_RUNNING ) ;
-//       PD_RC_CHECK( rc, PDERROR, "Wait FAP Listener active failed, rc: %d",
-//                    rc ) ;
+      if ( FALSE )
+      {
+         // listener for access protocol
+         pProtocolData = new pmdEDUParam() ;
+         pProtocolData->pSocket = ( void *)_pMongoListener ;
+         pProtocolData->protocol = _protocol ;
+         rc = pEDUMgr->startEDU( EDU_TYPE_FAPLISTENER, (void*)pProtocolData,
+                                 &eduID ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to start FAP listerner, rc: %d",
+                      rc ) ;
+         pEDUMgr->regSystemEDU( EDU_TYPE_FAPLISTENER, eduID ) ;
+
+         // wait until protocol listener starts
+         rc = pEDUMgr->waitUntil ( eduID, PMD_EDU_RUNNING ) ;
+         PD_RC_CHECK( rc, PDERROR, "Wait FAP Listener active failed, rc: %d",
+                      rc ) ;
+      }
       //////////////////////////////////////////////////////////////////////////
 
       // For non-coord nodes, we need to start page cleaners
@@ -271,7 +277,7 @@ namespace engine
 
       if( _fapMongo )
       {
-         _fapMongo->unload() ;
+         //_fapMongo->unload() ;
          SDB_OSS_DEL _fapMongo ;
          _fapMongo = NULL;
       }

@@ -36,7 +36,7 @@
 *******************************************************************************/
 #include "mongoReplyHelper.hpp"
 #include "sdbInterface.hpp"
-#include "../../bson/bsonobjbuilder.h"
+#include "../../bson/bson.hpp"
 #include "../../bson/lib/nonce.h"
 namespace fap
 {

@@ -40,7 +40,8 @@
 #include "oss.hpp"
 #include "ossUtil.hpp"
 #include "ossMem.hpp"
-#include "../../bson/bsonobj.h"
+#include "../../bson/bson.hpp"
+
 #define MEMERY_BLOCK_SIZE 4096
 
 class _msgBuffer : public SDBObject

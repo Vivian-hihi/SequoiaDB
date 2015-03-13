@@ -36,9 +36,8 @@
 *******************************************************************************/
 #include "commands.hpp"
 #include "mongoConverter.hpp"
-#include "msg.h"
-#include "../../bson/bsonmisc.h"
-#include "../../bson/bsonobjbuilder.h"
+#include "msg.hpp"
+#include "../../bson/bson.hpp"
 
 DECLARE_COMMAND_VAR( insert )
 DECLARE_COMMAND_VAR( delete )

@@ -50,7 +50,7 @@ INT32 mongoConverter::convert( msgBuffer &out )
    if ( dbInsert == _parser.opCode )
    {
       _cmd = commandMgr::instance()->findCommand( "insert" ) ;
-   }   
+   }
    else if ( dbDelete == _parser.opCode )
    {
       _cmd = commandMgr::instance()->findCommand( "delete" ) ;

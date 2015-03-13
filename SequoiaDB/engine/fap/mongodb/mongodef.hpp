@@ -39,7 +39,7 @@
 
 #include "util.hpp"
 #include "../../bson/bson.hpp"
-#include "../../include/dms.hpp"
+#include "dms.hpp"
 
 enum mongoOption
 {
