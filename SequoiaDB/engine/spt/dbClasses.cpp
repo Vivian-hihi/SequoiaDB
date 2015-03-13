@@ -7384,6 +7384,12 @@ static JSBool timestamp_constructor( JSContext *cx, uintN argc, jsval *vp )
    {
       time_t tm ;
       UINT64 usec = 0 ;
+
+      if ( !JSVAL_IS_STRING( argv[0]) )
+      {
+         REPORT_RC ( SDB_OK == rc , "Timestamp(): wrong arguments", SDB_INVALIDARG ) ;
+      }
+
       timeStr = JS_EncodeString( cx, JSVAL_TO_STRING( argv[0]) ) ;
       VERIFY( timeStr ) ;
       rc = engine::utilStr2TimeT( timeStr, tm, &usec ) ;
@@ -7664,6 +7670,91 @@ error:
 
 /// numberlong end
 
+/// sdbdate
+static JSClass sdbdate_class = {
+   "SdbDate", // class name
+   JSCLASS_HAS_PRIVATE | JSCLASS_NEW_RESOLVE ,   // flags
+   JS_PropertyStub,              // addProperty
+   JS_PropertyStub,              // delProperty
+   JS_PropertyStub,              // getProperty
+   JS_StrictPropertyStub,        // setProperty
+   JS_EnumerateStub,             // enumerate
+   JS_ResolveStub,               // resolve
+   JS_ConvertStub,               // convert
+   JS_FinalizeStub,              // finalize
+   JSCLASS_NO_OPTIONAL_MEMBERS   // optional members
+} ;
+
+// PD_TRACE_DECLARE_FUNCTION ( SDB_SDBDATE_CONSTRUCTOR, "sdbdate_constructor" )
+static JSBool sdbdate_constructor( JSContext *cx, uintN argc, jsval *vp )
+{
+   PD_TRACE_ENTRY( SDB_SDBDATE_CONSTRUCTOR ) ;
+   JSBool ret = JS_TRUE ;
+   INT32 rc = SDB_OK ;
+   CHAR *timeStr = NULL ;
+   JSString *jsTimeProperty = NULL ;
+   JSObject *jsObj = NULL ;
+   jsval valTime = JSVAL_VOID ;
+
+   jsval *argv = JS_ARGV ( cx , vp ) ;
+   if ( 0 == argc )
+   {
+      ossTimestamp currentTime ;
+      struct tm localTm ;
+      time_t t ;
+      CHAR buf[128] ;
+
+      ossGetCurrentTime( currentTime ) ;
+      t = currentTime.time ;
+      ossLocalTime( t, localTm ) ;
+      ossSnprintf( buf, 127,
+                   "%04d-%02d-%02d",
+                   localTm.tm_year+1900,            // 1) Year (UINT32)
+                   localTm.tm_mon+1,                // 2) Month (UINT32)
+                   localTm.tm_mday ) ;                 // 3) Day (UINT32)
+      jsTimeProperty = JS_NewStringCopyN( cx, buf, ossStrlen( buf ) ) ;
+      VERIFY( jsTimeProperty ) ;
+   }
+   else if ( 1 == argc )
+   {
+      UINT64 mills = 0 ;
+
+      if ( !JSVAL_IS_STRING( argv[0]) )
+      {
+         REPORT_RC ( SDB_OK == rc , "SdbDate(): wrong arguments", SDB_INVALIDARG ) ;
+      }
+
+      timeStr = JS_EncodeString( cx, JSVAL_TO_STRING( argv[0]) ) ;
+      VERIFY( timeStr ) ;
+      rc = engine::utilStr2Date( timeStr, mills ) ;
+      REPORT_RC ( SDB_OK == rc , "SdbDate(): wrong arguments", SDB_INVALIDARG ) ;
+      jsTimeProperty = JS_NewStringCopyN( cx, timeStr, ossStrlen( timeStr ) ) ;
+      VERIFY( jsTimeProperty ) ;
+   }
+   else
+   {
+      REPORT_RC ( FALSE, "SdbDate(): wrong arguments", SDB_INVALIDARG ) ;
+   }
+
+   valTime = STRING_TO_JSVAL( jsTimeProperty ) ;
+
+   jsObj = JS_NewObject( cx, &sdbdate_class, NULL, NULL ) ;
+   VERIFY( jsObj ) ;
+
+   VERIFY ( JS_SetProperty ( cx, jsObj, "_d", &valTime ) ) ;
+
+   JS_SET_RVAL( cx, vp, OBJECT_TO_JSVAL( jsObj ) ) ;
+done:
+   SAFE_JS_FREE( cx, timeStr ) ;
+   PD_TRACE_EXIT( SDB_SDBDATE_CONSTRUCTOR ) ;
+   return ret ;
+error:
+   ret = JS_FALSE ;
+   goto done ; 
+}
+
+/// sdbdate end
+
 JSBool jsobj_is_query( JSContext *cx, JSObject *obj )
 {
    return JS_InstanceOf( cx, obj, &query_class, NULL ) ;
@@ -7731,6 +7822,11 @@ JSBool is_numberlong( JSContext *cx, JSObject *obj )
    return JS_InstanceOf( cx, obj, &numberlong_class, NULL ) ;
 }
 
+JSBool is_sdbdate( JSContext *cx, JSObject *obj )
+{
+   return JS_InstanceOf( cx, obj, &sdbdate_class, NULL ) ;
+}
+
 JSBool is_jsontypes( JSContext *cx, JSObject *obj )
 {
    return is_objectid( cx, obj ) ||
@@ -7739,7 +7835,8 @@ JSBool is_jsontypes( JSContext *cx, JSObject *obj )
           is_regex( cx, obj ) ||
           is_minkey( cx, obj ) ||
           is_maxkey( cx, obj ) ||
-          is_numberlong( cx, obj ) ;
+          is_numberlong( cx, obj ) ||
+          is_sdbdate( cx, obj ) ;
 }
 
 JSBool jsobj_is_sdbobj( JSContext *cx, JSObject *obj )
@@ -7886,6 +7983,10 @@ JSBool InitDbClasses( JSContext *cx, JSObject *obj )
 
    VERIFY ( JS_InitClass ( cx, obj, NULL, &numberlong_class,
                            numberlong_constructor, 0,
+                           0, NULL, 0, 0 ) ) ;
+
+   VERIFY ( JS_InitClass ( cx, obj, NULL, &sdbdate_class,
+                           sdbdate_constructor, 0,
                            0, NULL, 0, 0 ) ) ;
 #elif defined (SDB_ENGINE)
 #endif

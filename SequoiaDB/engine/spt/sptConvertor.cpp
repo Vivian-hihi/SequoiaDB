@@ -62,6 +62,7 @@ extern JSBool is_regex( JSContext *, JSObject * ) ;
 extern JSBool is_minkey( JSContext *, JSObject * ) ;
 extern JSBool is_maxkey( JSContext *, JSObject * ) ;
 extern JSBool is_numberlong( JSContext *, JSObject * ) ;
+extern JSBool is_sdbdate( JSContext *, JSObject * ) ;
 
 INT32 sptConvertor::toBson( JSObject *obj , bson **bs )
 {
@@ -418,6 +419,40 @@ error:
    goto done ;
 }
 
+INT32 sptConvertor::_addSdbDate( JSObject *obj,
+                                 const CHAR *key,
+                                 bson *bs )
+{
+   INT32 rc = SDB_OK ;
+   std::string strValue ;
+   jsval value ;
+   UINT64 tm ;
+   bson_date_t datet ;
+   if ( !_getProperty( obj, "_d", JSTYPE_STRING, value ))
+   {
+      goto error ;
+   }
+
+   rc = _toString( value, strValue ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+
+   if ( SDB_OK != engine::utilStr2Date( strValue.c_str(),
+                                        tm ) )
+   {
+      goto error ;
+   }
+
+   datet = tm ;
+   bson_append_date( bs, key, datet ) ;
+done:
+   return rc ;
+error:
+   goto done ;
+}
+
 INT32 sptConvertor::_addJsonTypes( JSObject *obj,
                                    const CHAR *key,
                                    bson *bs )
@@ -450,6 +485,10 @@ INT32 sptConvertor::_addJsonTypes( JSObject *obj,
    else if ( is_numberlong( _cx, obj ) )
    {
       rc = _addNumberLong( obj, key, bs ) ; 
+   }
+   else if ( is_sdbdate( _cx, obj ) )
+   {
+      rc = _addSdbDate( obj, key, bs ) ;
    }
    else
    {

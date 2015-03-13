@@ -521,4 +521,13 @@ NumberLong.prototype.toString = function() {
 
 // end NumberLong
 
+// SdbDate
+if ( !SdbDate.prototype )
+   SdbDate.prototype = {}
+
+SdbDate.prototype.toString = function() {
+   return "SdbDate(\"" + this._d + "\")" ;
+}
+// end SdbDate
+
 
