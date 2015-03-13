@@ -98,7 +98,7 @@ namespace engine
       pmdOptionsCB *pOptCB = pmdGetOptionCB() ;
       UINT16 port = 0 ;
 
-      if ( TRUE/*pOptCB->fapEnabled()*/ )
+      if ( FALSE/*pOptCB->fapEnabled()*/ )
       {
          rc = initForeignModule() ;
          PD_RC_CHECK( rc, PDERROR, "Failed to init fap module, rc: %d", rc ) ;
