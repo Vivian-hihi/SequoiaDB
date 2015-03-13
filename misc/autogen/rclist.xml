@@ -2314,5 +2314,13 @@
          </description>
       </code>
 
+      <code>
+         <name>SDB_CLS_PRIMARY_IS_OTHER</name>
+         <description>
+            <en>Primary is other node</en>
+            <cn>其它节点为主</cn>
+         </description>
+      </code>
+
    </codelist>
 </rclist>
