@@ -43,6 +43,7 @@
 #include "pmdEnv.hpp"
 #include "monCB.hpp"
 #include "msg.h"
+#include "../../bson/bsonobjbuilder.h"
 #include "rtnCommandDef.hpp"
 #include "rtn.hpp"
 #include "pmd.hpp"

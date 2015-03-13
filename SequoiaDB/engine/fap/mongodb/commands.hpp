@@ -97,13 +97,13 @@ private:
 
    ~commandMgr()
    {
-      std::map< std::string, command* >::iterator it = _cmdMap.begin() ;
-      for ( ; it != _cmdMap.end(); ++it )
-      {
-         command *cmd = it->second ;
-         delete cmd ;
-         cmd = NULL ;
-      }
+//      std::map< std::string, command* >::iterator it = _cmdMap.begin() ;
+//      for ( ; it != _cmdMap.end(); ++it )
+//      {
+//         command *&cmd = it->second ;
+//         delete cmd ;
+//         cmd = NULL ;
+//      }
    }
 
    std::map< std::string, command *> _cmdMap ;
