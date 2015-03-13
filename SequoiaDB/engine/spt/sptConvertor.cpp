@@ -397,21 +397,44 @@ INT32 sptConvertor::_addNumberLong( JSObject *obj,
    jsval jsV = JSVAL_VOID ;
    FLOAT64 fv = 0 ;
    INT64 n = 0 ;
+   string strv ;
 
    if ( !_getProperty( obj, "_v",
                        JSTYPE_NUMBER, jsV ))
    {
-      rc = SDB_SYS ;
-      goto error ;
-   }
+      if ( !_getProperty( obj, "_v",
+                          JSTYPE_STRING, jsV ) )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
 
-   rc = _toDouble( jsV, fv ) ;
-   if ( SDB_OK != rc )
+      rc = _toString( jsV, strv ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+
+      try
+      {
+         n = boost::lexical_cast<INT64>( strv ) ;
+      }
+      catch ( std::bad_cast &e )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+   }
+   else
    {
-      goto error ;
+      rc = _toDouble( jsV, fv ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+      n = fv ;
    }
 
-   n = fv ;
    bson_append_long( bs, key, n ) ;
 done:
    return rc ;

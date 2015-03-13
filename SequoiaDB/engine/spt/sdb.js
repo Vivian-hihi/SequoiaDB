@@ -516,6 +516,10 @@ if ( !NumberLong.prototype )
    NumberLong.prototype = {}
 
 NumberLong.prototype.toString = function() {
+   if ( typeof(this._v ) == "string" )
+   {
+      return "NumberLong(\"" + this._v + "\")" ;
+   }
    return "NumberLong(" + this._v + ")" ;
 }
 

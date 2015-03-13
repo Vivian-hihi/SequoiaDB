@@ -7637,30 +7637,59 @@ static JSBool numberlong_constructor( JSContext *cx, uintN argc, jsval *vp )
    PD_TRACE_ENTRY( SDB_NUMBERLONG_CONSTRUCTOR ) ;
    JSObject *jsObj = NULL ;
    jsdouble v = 0 ;
+   JSString *ln = NULL ;
    jsval vval = JSVAL_VOID ;
    INT64 n = 0 ;
+   CHAR *lnStr = NULL ;
+   JSString *lnProperty = NULL ;
+   string parsedStr ;
    jsval *argv = JS_ARGV ( cx , vp ) ;
    VERIFY( argv ) ;
    
    if ( 1 != argc ||
-        !JSVAL_IS_NUMBER( argv[0]) )
+        ( !JSVAL_IS_NUMBER( argv[0]) &&
+          !JSVAL_IS_STRING( argv[0]) ) )
    {
       REPORT_RC ( FALSE , "NumberLong(): wrong arguments", SDB_INVALIDARG ) ;
    }
 
-   ret = JS_ConvertArguments ( cx , argc , JS_ARGV ( cx , vp ) ,
-                               "d" , &v ) ;
-   REPORT_RC( ret, "NumberLong(): wrong arguments", SDB_INVALIDARG ) ;
+   if ( JSVAL_IS_NUMBER( argv[0] ) )
+   {
+      ret = JS_ConvertArguments ( cx , argc , JS_ARGV ( cx , vp ) ,
+                                  "d" , &v ) ;
+      REPORT_RC( ret, "NumberLong(): wrong arguments", SDB_INVALIDARG ) ;
+      n = v ;
+      v = n ;
+      vval = DOUBLE_TO_JSVAL( v ) ;
+   }
+   else
+   {
+      ret = JS_ConvertArguments ( cx , argc , JS_ARGV ( cx , vp ) ,
+                                  "S" , &ln ) ;
+      REPORT_RC( ret, "NumberLong(): wrong arguments", SDB_INVALIDARG ) ;
+      lnStr = ( CHAR * )JS_EncodeString( cx, ln ) ;
+      VERIFY( lnStr ) ;
+      try
+      {
+         n = boost::lexical_cast<INT64>( lnStr ) ;
+      }
+      catch ( std::bad_cast &e )
+      {
+         REPORT_RC( FALSE, "NumberLong(): wrong arguments", SDB_INVALIDARG ) ;
+      }
 
-   n = v ;
-   v = n ;
-   vval = DOUBLE_TO_JSVAL( v ) ;
+      parsedStr = boost::lexical_cast<string>( n ) ;
+      lnProperty = JS_NewStringCopyN( cx, parsedStr.c_str(), parsedStr.size() ) ;
+      VERIFY( lnProperty ) ;
+      vval = STRING_TO_JSVAL( lnProperty ) ;
+   }
+
    jsObj = JS_NewObject ( cx , &numberlong_class, NULL, NULL ) ;
    VERIFY( jsObj ) ;
-
    VERIFY ( JS_SetProperty ( cx, jsObj, "_v", &vval ) ) ;
    JS_SET_RVAL( cx, vp, OBJECT_TO_JSVAL( jsObj ) ) ;
 done:
+   SAFE_JS_FREE( cx, lnStr ) ;
    PD_TRACE_EXIT( SDB_NUMBERLONG_CONSTRUCTOR ) ;
    return ret ;
 error:
