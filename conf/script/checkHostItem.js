@@ -32,6 +32,7 @@ function OMAInfo()
 {
    //this.HasInstalled       = false ;
    this.Version            = "" ;
+   this.SdbUser            = "" ;
    this.Path               = "" ;
    this.Service            = "" ;
    this.Release            = "" ;

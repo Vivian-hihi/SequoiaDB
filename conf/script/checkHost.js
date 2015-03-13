@@ -73,7 +73,22 @@ function _extractOMAInfo( installInfoObj, omaInfoObj )
    
    if ( SYS_LINUX == SYS_TYPE )
    {  
-      // 1. get OM Agent installed path
+      // 1. get OM Agent SdbUser
+      try
+      {
+         retObj[SdbUser] = installInfoObj[SDBADMIN_USER] ;
+      }
+      catch( e )
+      {
+         SYSEXPHANDLE( e ) ;
+         errMsg = "Failed to get OM Agent's SdbUser" ;
+         rc = GETLASTERROR() ;
+         PD_LOG( arguments, PDERROR, FILE_NAME_CHECK_HOST,
+                 sprintf( errMsg + ", rc: ?, detail: ?", rc, GETLASTERRMSG() ) ) ;
+         exception_handle( rc, errMsg ) ;
+      }
+      
+      // 2. get OM Agent installed path
       try
       {
          installpath = installInfoObj[INSTALL_DIR] ;
@@ -84,13 +99,12 @@ function _extractOMAInfo( installInfoObj, omaInfoObj )
          SYSEXPHANDLE( e ) ;
          errMsg = "Failed to get OM Agent's install path" ;
          rc = GETLASTERROR() ;
-         // record error message in log
          PD_LOG( arguments, PDERROR, FILE_NAME_CHECK_HOST,
                  sprintf( errMsg + ", rc: ?, detail: ?", rc, GETLASTERRMSG() ) ) ;
          exception_handle( rc, errMsg ) ;
       }
       
-      // 2. get OM Agent's service
+      // 3. get OM Agent's service
       try
       {
          if ( "undefined" == typeof(omaInfoObj) || null == omaInfoObj )
@@ -107,7 +121,7 @@ function _extractOMAInfo( installInfoObj, omaInfoObj )
          exception_handle( rc, errMsg ) ;
       }
       
-      // 3. get version
+      // 4. get version
       var cmd = null ;
       var sdbcmprog = null ;
       var str = null ;
@@ -138,7 +152,7 @@ function _extractOMAInfo( installInfoObj, omaInfoObj )
          exception_handle( rc, errMsg ) ;
       }
 
-      // 4. get release
+      // 5. get release
       var subStr = "" ;
       try
       {
