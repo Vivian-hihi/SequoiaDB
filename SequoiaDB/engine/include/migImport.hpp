@@ -74,6 +74,10 @@ struct migImprtArg : public SDBObject
    CHAR     *pCLName ;
    CHAR     *pFile ;
    CHAR     *pFields ;
+#ifdef SDB_SSL
+   BOOLEAN   useSSL ;
+#endif
+
    migImprtArg() : delChar(0),
                    delField(0),
                    delRecord(0),
@@ -94,6 +98,9 @@ struct migImprtArg : public SDBObject
                    pFile(NULL),
                    pFields(NULL)
    {
+#ifdef SDB_SSL
+      useSSL = FALSE ;
+#endif
    }
 } ;
 
