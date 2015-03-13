@@ -99,12 +99,9 @@ namespace engine
       UINT16 port = 0 ;
       UINT16 protocolPort = 0 ;
 
-      if ( FALSE )
-      {
-         rc = loadForeignModule() ;
-         //PD_RC_CHECK( rc, PDERROR, "Failed to init rest adaptor, rc: %d", rc ) ;
-         rc = SDB_OK ;
-      }
+      rc = loadForeignModule() ;
+      //PD_RC_CHECK( rc, PDERROR, "Failed to init rest adaptor, rc: %d", rc ) ;
+      rc = SDB_OK ;
 
       // 1. create tcp listerner
       port = pOptCB->getServicePort() ;
@@ -144,26 +141,23 @@ namespace engine
                    "rc: %d", port, rc ) ;
       PD_LOG( PDEVENT, "Http Listerning on port[%d]", port ) ;
 
-      if ( FALSE )
+      // memory will be freed in fini
+      protocolPort = ossAtoi( _protocol->getServiceName() ) ;
+      _pMongoListener = SDB_OSS_NEW ossSocket( protocolPort ) ;
+      if ( !_pMongoListener )
       {
-         // memory will be freed in fini
-         protocolPort = ossAtoi( _protocol->getServiceName() ) ;
-         _pMongoListener = SDB_OSS_NEW ossSocket( protocolPort ) ;
-         if ( !_pMongoListener )
-         {
-            PD_LOG( PDERROR, "Failed to alloc socket" ) ;
-            rc = SDB_OOM ;
-            goto error ;
-         }
-         rc = _pMongoListener->initSocket() ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to init FAP listener socket[%d], "
-                      "rc: %d", protocolPort, rc ) ;
-
-         rc = _pMongoListener->bind_listen() ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to bind FAP listener socket[%d], "
-                      "rc: %d", protocolPort, rc ) ;
-         PD_LOG( PDEVENT, "Listerning on port[%d]", protocolPort ) ;
+         PD_LOG( PDERROR, "Failed to alloc socket" ) ;
+         rc = SDB_OOM ;
+         goto error ;
       }
+      rc = _pMongoListener->initSocket() ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to init FAP listener socket[%d], "
+                   "rc: %d", protocolPort, rc ) ;
+
+      rc = _pMongoListener->bind_listen() ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to bind FAP listener socket[%d], "
+                   "rc: %d", protocolPort, rc ) ;
+      PD_LOG( PDEVENT, "Listerning on port[%d]", protocolPort ) ;
 
    done:
       return rc ;
@@ -277,7 +271,6 @@ namespace engine
 
       if( _fapMongo )
       {
-         //_fapMongo->unload() ;
          SDB_OSS_DEL _fapMongo ;
          _fapMongo = NULL;
       }

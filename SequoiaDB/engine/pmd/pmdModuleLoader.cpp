@@ -88,7 +88,6 @@ namespace engine
 
       if ( NULL != _loadModule )
       {
-         //_loadModule->unload() ;
          SDB_OSS_DEL _loadModule ;
          _loadModule = NULL ;
       }
