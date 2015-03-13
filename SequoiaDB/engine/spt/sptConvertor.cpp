@@ -59,6 +59,8 @@ extern JSBool is_bindata( JSContext *, JSObject * ) ;
 extern JSBool is_jsontypes( JSContext *, JSObject * ) ;
 extern JSBool is_timestamp( JSContext *, JSObject * ) ;
 extern JSBool is_regex( JSContext *, JSObject * ) ;
+extern JSBool is_minkey( JSContext *, JSObject * ) ;
+extern JSBool is_maxkey( JSContext *, JSObject * ) ;
 
 INT32 sptConvertor::toBson( JSObject *obj , bson **bs )
 {
@@ -369,6 +371,23 @@ error:
    goto done ;
 }
 
+INT32 sptConvertor::_addMinKey( JSObject *obj,
+                                const CHAR *key,
+                                bson *bs )
+{
+   bson_append_minkey( bs, key ) ;
+   return SDB_OK ;
+}
+
+INT32 sptConvertor::_addMaxKey( JSObject *obj,
+                                const CHAR *key,
+                                bson *bs )
+{
+   bson_append_maxkey( bs, key ) ;
+   return SDB_OK ;
+}
+
+
 INT32 sptConvertor::_addJsonTypes( JSObject *obj,
                                    const CHAR *key,
                                    bson *bs )
@@ -389,6 +408,14 @@ INT32 sptConvertor::_addJsonTypes( JSObject *obj,
    else if ( is_regex( _cx, obj ) )
    {
       rc = _addRegex( obj, key, bs ) ;
+   }
+   else if ( is_minkey( _cx, obj ) )
+   {
+      rc = _addMinKey( obj, key, bs ) ;
+   }
+   else if ( is_maxkey( _cx, obj ) )
+   {
+      rc = _addMaxKey( obj, key, bs ) ;
    }
    else
    {

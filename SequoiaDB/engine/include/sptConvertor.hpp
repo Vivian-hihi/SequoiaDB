@@ -110,6 +110,14 @@ private:
                     const CHAR *key,
                     bson *bs ) ;
 
+   INT32 _addMinKey( JSObject *obj,
+                     const CHAR *key,
+                     bson *bs ) ;
+
+   INT32 _addMaxKey( JSObject *obj,
+                     const CHAR *key,
+                     bson *bs ) ;
+
 private:
    JSContext *_cx ;
 } ;

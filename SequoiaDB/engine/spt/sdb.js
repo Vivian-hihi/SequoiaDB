@@ -493,4 +493,20 @@ Regex.prototype.toString = function () {
 }
 // end Regex
 
+// MinKey
+if ( !MinKey.prototype )
+   MinKey.prototype = {}
 
+MinKey.prototype.toString = function() {
+   return "MinKey()" ;
+}
+// end MinKey
+
+// MaxKey
+if ( !MaxKey.prototype )
+   MaxKey.prototype = {}
+
+MaxKey.prototype.toString = function() {
+   return "MaxKey()" ;
+}
+// end MaxKey

@@ -7528,6 +7528,87 @@ static JSFunctionSpec regex_functions [] = {
 
 /// regex end
 
+
+/// minkey
+static JSClass minkey_class = {
+   "MinKey", // class name
+   JSCLASS_HAS_PRIVATE | JSCLASS_NEW_RESOLVE ,   // flags
+   JS_PropertyStub,              // addProperty
+   JS_PropertyStub,              // delProperty
+   JS_PropertyStub,              // getProperty
+   JS_StrictPropertyStub,        // setProperty
+   JS_EnumerateStub,             // enumerate
+   JS_ResolveStub,               // resolve
+   JS_ConvertStub,               // convert
+   JS_FinalizeStub,             // finalize
+   JSCLASS_NO_OPTIONAL_MEMBERS   // optional members
+} ;
+
+// PD_TRACE_DECLARE_FUNCTION ( SDB_MINKEY_CONSTRUCTOR, "minkey_constructor" )
+static JSBool minkey_constructor( JSContext *cx, uintN argc, jsval *vp )
+{
+   JSBool ret = JS_TRUE ;
+   PD_TRACE_ENTRY( SDB_MINKEY_CONSTRUCTOR ) ;
+   JSObject *jsObj = NULL ;
+
+   if ( 0 != argc )
+   {
+      REPORT_RC( ret, "MinKey(): wrong arguments", SDB_INVALIDARG ) ;
+   }
+
+   jsObj = JS_NewObject ( cx , &minkey_class, NULL, NULL ) ;
+   VERIFY( jsObj ) ;
+   JS_SET_RVAL( cx, vp, OBJECT_TO_JSVAL( jsObj ) ) ;
+done:
+   PD_TRACE_EXIT( SDB_MINKEY_CONSTRUCTOR ) ;
+   return ret ;
+error:
+   ret = JS_FALSE ;
+   goto done ;
+}
+/// minkey end
+
+
+/// maxkey
+static JSClass maxkey_class = {
+   "MaxKey", // class name
+   JSCLASS_HAS_PRIVATE | JSCLASS_NEW_RESOLVE ,   // flags
+   JS_PropertyStub,              // addProperty
+   JS_PropertyStub,              // delProperty
+   JS_PropertyStub,              // getProperty
+   JS_StrictPropertyStub,        // setProperty
+   JS_EnumerateStub,             // enumerate
+   JS_ResolveStub,               // resolve
+   JS_ConvertStub,               // convert
+   JS_FinalizeStub,             // finalize
+   JSCLASS_NO_OPTIONAL_MEMBERS   // optional members
+} ;
+
+// PD_TRACE_DECLARE_FUNCTION ( SDB_MAXKEY_CONSTRUCTOR, "maxkey_constructor" )
+static JSBool maxkey_constructor( JSContext *cx, uintN argc, jsval *vp )
+{
+   JSBool ret = JS_TRUE ;
+   PD_TRACE_ENTRY( SDB_MAXKEY_CONSTRUCTOR ) ;
+   JSObject *jsObj = NULL ;
+
+   if ( 0 != argc )
+   {
+      REPORT_RC( ret, "MaxKey(): wrong arguments", SDB_INVALIDARG ) ;
+   }
+
+   jsObj = JS_NewObject ( cx , &maxkey_class, NULL, NULL ) ;
+   VERIFY( jsObj ) ;
+   JS_SET_RVAL( cx, vp, OBJECT_TO_JSVAL( jsObj ) ) ;
+done:
+   PD_TRACE_EXIT( SDB_MAXKEY_CONSTRUCTOR ) ;
+   return ret ;
+error:
+   ret = JS_FALSE ;
+   goto done ;
+}
+
+/// maxkey end
+
 JSBool jsobj_is_query( JSContext *cx, JSObject *obj )
 {
    return JS_InstanceOf( cx, obj, &query_class, NULL ) ;
@@ -7580,12 +7661,24 @@ JSBool is_regex( JSContext *cx, JSObject *obj )
    return JS_InstanceOf( cx, obj, &regex_class, NULL ) ;
 }
 
+JSBool is_minkey( JSContext *cx, JSObject *obj )
+{
+   return JS_InstanceOf( cx, obj, &minkey_class, NULL ) ;
+}
+
+JSBool is_maxkey( JSContext *cx, JSObject *obj )
+{
+   return JS_InstanceOf( cx, obj, &maxkey_class, NULL ) ;
+}
+
 JSBool is_jsontypes( JSContext *cx, JSObject *obj )
 {
    return is_objectid( cx, obj ) ||
           is_bindata( cx, obj ) ||
           is_timestamp( cx, obj ) ||
-          is_regex( cx, obj ) ;
+          is_regex( cx, obj ) ||
+          is_minkey( cx, obj ) ||
+          is_maxkey( cx, obj ) ;
 }
 
 JSBool jsobj_is_sdbobj( JSContext *cx, JSObject *obj )
@@ -7721,6 +7814,14 @@ JSBool InitDbClasses( JSContext *cx, JSObject *obj )
    VERIFY ( JS_InitClass ( cx, obj, NULL, &regex_class,
                            regex_constructor, 0,
                            0, regex_functions, 0, 0 ) ) ;
+
+   VERIFY ( JS_InitClass ( cx, obj, NULL, &minkey_class,
+                           minkey_constructor, 0,
+                           0, NULL, 0, 0 ) ) ;
+
+   VERIFY ( JS_InitClass ( cx, obj, NULL, &maxkey_class,
+                           maxkey_constructor, 0,
+                           0, NULL, 0, 0 ) ) ;
 #elif defined (SDB_ENGINE)
 #endif
 
