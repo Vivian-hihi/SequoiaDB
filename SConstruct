@@ -693,6 +693,7 @@ fapEnv.Append( CPPDEFINES=["SDB_ENGINE", "SDB_DLL_BUILD"])
 #fapEnv.Append( CPPPATH=[join(engine_dir, "bson")])
 
 # drivers always set SSL definition
+toolEnv.Append( CPPDEFINES=[ "SDB_SSL" ] )
 clientCppEnv.Append( CPPDEFINES=[ "SDB_SSL" ] )
 clientCEnv.Append( CPPDEFINES=[ "SDB_SSL" ] )
 shellEnv.Append( CPPDEFINES=[ "SDB_SSL" ] )
