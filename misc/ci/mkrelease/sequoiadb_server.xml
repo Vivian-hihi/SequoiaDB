@@ -40,6 +40,15 @@
         </component>
     </componentList>
     <readyToInstallActionList>
+        <createDirectory>
+            <path>/home/sequoiadb</path>
+            <ruleList>
+                <fileExists>
+                    <negate>1</negate>
+                    <path>/home/sequoiadb</path>
+                </fileExists>
+            </ruleList>
+        </createDirectory>
         <runProgram>
             <abortOnError>0</abortOnError>
             <customErrorMessage>${msg(Install.ErrorMsg.CreateGroup.error)}</customErrorMessage>
@@ -103,6 +112,45 @@
             <program>echo</program>
             <programArguments>3 &gt; /proc/sys/net/ipv4/tcp_retries2</programArguments>
             <ruleList>
+                <platformTest>
+                    <type>linux</type>
+                </platformTest>
+            </ruleList>
+        </runProgram>
+        <changePermissions>
+            <files>/home</files>
+            <permissions>0755</permissions>
+            <ruleList>
+                <fileExists>
+                    <path>/home/sequoiadb</path>
+                </fileExists>
+                <userTest>
+                    <logic>exists</logic>
+                    <username>${username}</username>
+                </userTest>
+            </ruleList>
+        </changePermissions>
+        <runProgram>
+            <program>echo</program>
+            <programArguments> 'export PATH=$PATH:/opt/sequoiadb' &gt;&gt; /home/sequoiadb/.profile</programArguments>
+        </runProgram>
+        <changeOwnerAndGroup>
+            <files>/home/sequoiadb</files>
+            <group>${username}_group</group>
+            <owner>${username}</owner>
+        </changeOwnerAndGroup>
+        <changeOwnerAndGroup>
+            <files>/home/sequoiadb/.profile</files>
+            <group>${username}_group</group>
+            <owner>${username}</owner>
+        </changeOwnerAndGroup>
+        <runProgram>
+            <program>source</program>
+            <programArguments> /home/sequoiadb/.profile</programArguments>
+            <ruleList>
+                <fileExists>
+                    <path>/home/sequoiadb/.profile</path>
+                </fileExists>
                 <platformTest>
                     <type>linux</type>
                 </platformTest>
@@ -353,6 +401,18 @@
                 </fileExists>
             </ruleList>
         </deleteFile>
+        <runProgram>
+            <program>sed</program>
+            <programArguments> -i 's/export PATH=$PATH:\/opt\/sequoiadb/ /g' /home/sequoiadb/.profile</programArguments>
+            <ruleList>
+                <platformTest>
+                    <type>linux</type>
+                </platformTest>
+                <fileExists>
+                    <path>/home/sequoiadb/.profile</path>
+                </fileExists>
+            </ruleList>
+        </runProgram>
     </postUninstallationActionList>
     <allowedLanguages>en zh_CN</allowedLanguages>
     <debuggerPassword>sequoiadb</debuggerPassword>
