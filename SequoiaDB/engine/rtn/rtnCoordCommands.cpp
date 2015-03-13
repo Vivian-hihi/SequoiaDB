@@ -1873,7 +1873,10 @@ namespace engine
          }
 
          /// ignore SEQUOIADBMAINSTREAM-506 --yunwu
-         rc = pContext->open( boOrderBy, BSONObj(), pSrc->numToReturn, pSrc->numToSkip ) ;
+         rc = pContext->open( boOrderBy,
+                              boFieldSelector,
+                              pSrc->numToReturn,
+                              pSrc->numToSkip ) ;
          if ( rc != SDB_OK )
          {
             PD_LOG( PDERROR, "Open context failed, rc: %d", rc ) ;
@@ -1884,7 +1887,7 @@ namespace engine
          INT32 msgSize = 0;
          rc = BuildRequestMsg( ((CHAR **)&pSnapshotReq), &msgSize, flag,
                                numToSkip, numToReturn, &boDummy,
-                               &boFieldSelector, &boOrderBy, &boHint );
+                               &boDummy, &boOrderBy, &boHint );
          if ( rc != SDB_OK )
          {
             PD_LOG ( PDERROR, "snapshot failed, failed to build the "
