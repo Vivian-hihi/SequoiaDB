@@ -98,7 +98,7 @@ namespace engine
       pmdOptionsCB *pOptCB = pmdGetOptionCB() ;
       UINT16 port = 0 ;
 
-      if ( FALSE/*pOptCB->fapEnabled()*/ )
+      if ( TRUE/*pOptCB->fapEnabled()*/ )
       {
          rc = initForeignModule() ;
          PD_RC_CHECK( rc, PDERROR, "Failed to init fap module, rc: %d", rc ) ;
@@ -656,7 +656,7 @@ namespace engine
       pmdEDUMgr *pEDUMgr = pmdGetKRCB()->getEDUMgr() ;
       EDUID eduID = PMD_INVALID_EDUID ;
 
-      if ( FALSE/*!pOptCB->fapEnabled()*/ )
+      if ( TRUE/*!pOptCB->fapEnabled()*/ )
       {
          goto done ;
       }
