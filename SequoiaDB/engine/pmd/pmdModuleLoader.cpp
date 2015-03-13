@@ -88,7 +88,7 @@ namespace engine
 
       if ( NULL != _loadModule )
       {
-         _loadModule->unload() ;
+         //_loadModule->unload() ;
          SDB_OSS_DEL _loadModule ;
          _loadModule = NULL ;
       }
@@ -141,7 +141,7 @@ namespace engine
       goto done ;
    }
 
-   INT32 _pmdModuleLoader::release( IPmdAccessProtocol *protocol )
+   INT32 _pmdModuleLoader::release( IPmdAccessProtocol *&protocol )
    {
       INT32 rc = SDB_OK ;
       SDB_ASSERT( NULL != _loadModule, "Module handle cann't be NULL" ) ;

@@ -43,9 +43,11 @@
 #include "pmdAccessProtocolBase.hpp"
 
 #define OSS_FAP_CREATE  ( IPmdAccessProtocol*(*)() )
-#define OSS_FAP_RELEASE ( void(*)( IPmdAccessProtocol *) )
+#define OSS_FAP_RELEASE ( void(*)( IPmdAccessProtocol *&) )
 #define CREATE_FAP_NAME "createAccessProtocol"
 #define RELEASE_FAP_NAME "releaseAccessProtocol"
+
+//#define MONGO_MODULE_NAME "fapmongo"
 
 namespace engine
 {
@@ -85,7 +87,7 @@ namespace engine
       INT32 getFunction( const CHAR *funcName,
                          OSS_MODULE_PFUNCTION *function ) ;
       INT32 create ( IPmdAccessProtocol *&protocol ) ;
-      INT32 release( IPmdAccessProtocol *protocol ) ;
+      INT32 release( IPmdAccessProtocol *&protocol ) ;
 
       INT32 load( const CHAR *mudule, const CHAR *path,
                   UINT32 mode = 0 ) ;
