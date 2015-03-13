@@ -7609,6 +7609,61 @@ error:
 
 /// maxkey end
 
+/// numberlong
+static JSClass numberlong_class = {
+   "NumberLong", // class name
+   JSCLASS_HAS_PRIVATE | JSCLASS_NEW_RESOLVE ,   // flags
+   JS_PropertyStub,              // addProperty
+   JS_PropertyStub,              // delProperty
+   JS_PropertyStub,              // getProperty
+   JS_StrictPropertyStub,        // setProperty
+   JS_EnumerateStub,             // enumerate
+   JS_ResolveStub,               // resolve
+   JS_ConvertStub,               // convert
+   JS_FinalizeStub,              // finalize
+   JSCLASS_NO_OPTIONAL_MEMBERS   // optional members
+} ;
+
+// PD_TRACE_DECLARE_FUNCTION ( SDB_NUMBERLONG_CONSTRUCTOR, "numberlong_constructor" )
+static JSBool numberlong_constructor( JSContext *cx, uintN argc, jsval *vp )
+{
+   JSBool ret = JS_TRUE ;
+   PD_TRACE_ENTRY( SDB_NUMBERLONG_CONSTRUCTOR ) ;
+   JSObject *jsObj = NULL ;
+   jsdouble v = 0 ;
+   jsval vval = JSVAL_VOID ;
+   INT64 n = 0 ;
+   jsval *argv = JS_ARGV ( cx , vp ) ;
+   VERIFY( argv ) ;
+   
+   if ( 1 != argc ||
+        !JSVAL_IS_NUMBER( argv[0]) )
+   {
+      REPORT_RC ( FALSE , "NumberLong(): wrong arguments", SDB_INVALIDARG ) ;
+   }
+
+   ret = JS_ConvertArguments ( cx , argc , JS_ARGV ( cx , vp ) ,
+                               "d" , &v ) ;
+   REPORT_RC( ret, "NumberLong(): wrong arguments", SDB_INVALIDARG ) ;
+
+   n = v ;
+   v = n ;
+   vval = DOUBLE_TO_JSVAL( v ) ;
+   jsObj = JS_NewObject ( cx , &numberlong_class, NULL, NULL ) ;
+   VERIFY( jsObj ) ;
+
+   VERIFY ( JS_SetProperty ( cx, jsObj, "_v", &vval ) ) ;
+   JS_SET_RVAL( cx, vp, OBJECT_TO_JSVAL( jsObj ) ) ;
+done:
+   PD_TRACE_EXIT( SDB_NUMBERLONG_CONSTRUCTOR ) ;
+   return ret ;
+error:
+   ret = JS_FALSE ;
+   goto done ;
+}
+
+/// numberlong end
+
 JSBool jsobj_is_query( JSContext *cx, JSObject *obj )
 {
    return JS_InstanceOf( cx, obj, &query_class, NULL ) ;
@@ -7671,6 +7726,11 @@ JSBool is_maxkey( JSContext *cx, JSObject *obj )
    return JS_InstanceOf( cx, obj, &maxkey_class, NULL ) ;
 }
 
+JSBool is_numberlong( JSContext *cx, JSObject *obj )
+{
+   return JS_InstanceOf( cx, obj, &numberlong_class, NULL ) ;
+}
+
 JSBool is_jsontypes( JSContext *cx, JSObject *obj )
 {
    return is_objectid( cx, obj ) ||
@@ -7678,7 +7738,8 @@ JSBool is_jsontypes( JSContext *cx, JSObject *obj )
           is_timestamp( cx, obj ) ||
           is_regex( cx, obj ) ||
           is_minkey( cx, obj ) ||
-          is_maxkey( cx, obj ) ;
+          is_maxkey( cx, obj ) ||
+          is_numberlong( cx, obj ) ;
 }
 
 JSBool jsobj_is_sdbobj( JSContext *cx, JSObject *obj )
@@ -7821,6 +7882,10 @@ JSBool InitDbClasses( JSContext *cx, JSObject *obj )
 
    VERIFY ( JS_InitClass ( cx, obj, NULL, &maxkey_class,
                            maxkey_constructor, 0,
+                           0, NULL, 0, 0 ) ) ;
+
+   VERIFY ( JS_InitClass ( cx, obj, NULL, &numberlong_class,
+                           numberlong_constructor, 0,
                            0, NULL, 0, 0 ) ) ;
 #elif defined (SDB_ENGINE)
 #endif

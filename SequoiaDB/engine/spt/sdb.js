@@ -510,3 +510,15 @@ MaxKey.prototype.toString = function() {
    return "MaxKey()" ;
 }
 // end MaxKey
+
+// NumberLong
+if ( !NumberLong.prototype )
+   NumberLong.prototype = {}
+
+NumberLong.prototype.toString = function() {
+   return "NumberLong(" + this._v + ")" ;
+}
+
+// end NumberLong
+
+

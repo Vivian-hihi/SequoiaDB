@@ -61,6 +61,7 @@ extern JSBool is_timestamp( JSContext *, JSObject * ) ;
 extern JSBool is_regex( JSContext *, JSObject * ) ;
 extern JSBool is_minkey( JSContext *, JSObject * ) ;
 extern JSBool is_maxkey( JSContext *, JSObject * ) ;
+extern JSBool is_numberlong( JSContext *, JSObject * ) ;
 
 INT32 sptConvertor::toBson( JSObject *obj , bson **bs )
 {
@@ -387,6 +388,35 @@ INT32 sptConvertor::_addMaxKey( JSObject *obj,
    return SDB_OK ;
 }
 
+INT32 sptConvertor::_addNumberLong( JSObject *obj,
+                                    const CHAR *key,
+                                    bson *bs )
+{
+   INT32 rc = SDB_OK ;
+   jsval jsV = JSVAL_VOID ;
+   FLOAT64 fv = 0 ;
+   INT64 n = 0 ;
+
+   if ( !_getProperty( obj, "_v",
+                       JSTYPE_NUMBER, jsV ))
+   {
+      rc = SDB_SYS ;
+      goto error ;
+   }
+
+   rc = _toDouble( jsV, fv ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+
+   n = fv ;
+   bson_append_long( bs, key, n ) ;
+done:
+   return rc ;
+error:
+   goto done ;
+}
 
 INT32 sptConvertor::_addJsonTypes( JSObject *obj,
                                    const CHAR *key,
@@ -416,6 +446,10 @@ INT32 sptConvertor::_addJsonTypes( JSObject *obj,
    else if ( is_maxkey( _cx, obj ) )
    {
       rc = _addMaxKey( obj, key, bs ) ;
+   }
+   else if ( is_numberlong( _cx, obj ) )
+   {
+      rc = _addNumberLong( obj, key, bs ) ; 
    }
    else
    {
