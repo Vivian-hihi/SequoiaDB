@@ -144,18 +144,6 @@
             <group>${username}_group</group>
             <owner>${username}</owner>
         </changeOwnerAndGroup>
-        <runProgram>
-            <program>source</program>
-            <programArguments> /home/sequoiadb/.profile</programArguments>
-            <ruleList>
-                <fileExists>
-                    <path>/home/sequoiadb/.profile</path>
-                </fileExists>
-                <platformTest>
-                    <type>linux</type>
-                </platformTest>
-            </ruleList>
-        </runProgram>
         <exit>
             <exitCode>1</exitCode>
             <ruleList>
