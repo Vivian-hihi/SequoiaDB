@@ -110,6 +110,11 @@ public:
       realloc( size ) ;
    }
 
+   void doneLen()
+   {
+      *(SINT32 *)_data = _size ;
+   }
+
 private:
    INT32 alloc( const UINT32 size ) ;
    INT32 realloc( const UINT32 size ) ;

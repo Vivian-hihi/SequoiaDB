@@ -241,7 +241,7 @@ INT32 insertCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
       }
    }
 
-   header->messageLength = sdbMsg.size() ;
+   sdbMsg.doneLen() ;
 
 done:
    return rc ;
@@ -349,7 +349,7 @@ INT32 deleteCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
       sdbMsg.write( hint, TRUE ) ;
    }
 
-   header->messageLength = sdbMsg.size() ;
+   sdbMsg.doneLen() ;
 
 done:
    return rc ;
@@ -480,7 +480,7 @@ INT32 updateCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
       sdbMsg.write( hint, TRUE ) ;
    }
 
-   header->messageLength = sdbMsg.size() ;
+   sdbMsg.doneLen() ;
 
 done:
    return rc ;
@@ -609,7 +609,7 @@ INT32 queryCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
    sdbMsg.write( hint, TRUE ) ;
 
    // fill the msg len of sdb
-   header->messageLength = sdbMsg.size() ;
+   sdbMsg.doneLen() ;
 
 done:
    return rc ;
@@ -647,7 +647,7 @@ INT32 getMoreCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
    more->contextID = cursorid - 1;
 
    // fill the msg len of sdb
-   header->messageLength = sdbMsg.size() ;
+   sdbMsg.doneLen() ;
 
    return rc ;
 }
@@ -692,7 +692,7 @@ INT32 killCursorsCommand::convertRequest( mongoParser &parser,
    }
 
    // fill the msg len of sdb
-   header->messageLength = sdbMsg.size() ;
+   sdbMsg.doneLen() ;
 
    return rc ;
 }
@@ -765,7 +765,7 @@ INT32 createCSCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
    sdbMsg.write( fap::emptyObj, TRUE ) ;
 
    // fill the msg len of sdb
-   header->messageLength = sdbMsg.size() ;
+   sdbMsg.doneLen() ;
 
    return rc ;
 }
@@ -862,7 +862,7 @@ INT32 createCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
    sdbMsg.write( fap::emptyObj, TRUE ) ;
 
    // fill the msg len of sdb
-   header->messageLength = sdbMsg.size() ;
+   sdbMsg.doneLen() ;
 
    return rc ;
 }
@@ -927,7 +927,7 @@ INT32 dropCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
    sdbMsg.write( fap::emptyObj, TRUE ) ;
 
    // fill the msg len of sdb
-   header->messageLength = sdbMsg.size() ;
+   sdbMsg.doneLen() ;
 
    return rc ;
 }
@@ -1003,7 +1003,7 @@ INT32 countCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
    sdbMsg.write( obj, TRUE ) ;
 
    // fill the msg len of sdb
-   header->messageLength = sdbMsg.size() ;
+   sdbMsg.doneLen() ;
 
    return rc ;
 }
@@ -1064,7 +1064,7 @@ INT32 aggregateCommand::convertRequest( mongoParser &parser,
 
    sdbMsg.write( cond, TRUE ) ;
    // fill the msg len of sdb
-   header->messageLength = sdbMsg.size() ;
+   sdbMsg.doneLen() ;
 
    return rc ;
 }
@@ -1124,7 +1124,7 @@ INT32 dropDatabaseCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMs
    sdbMsg.write( fap::emptyObj, TRUE ) ;
 
    // fill the msg len of sdb
-   header->messageLength = sdbMsg.size() ;
+   sdbMsg.doneLen() ;
 
    return rc ;
 }
@@ -1250,7 +1250,7 @@ INT32 createIndexesCommand::convertRequest( mongoParser &parser,
    sdbMsg.write( fap::emptyObj, TRUE ) ;
    sdbMsg.write( fap::emptyObj, TRUE ) ;
    // fill the msg len of sdb
-   header->messageLength = sdbMsg.size() ;
+   sdbMsg.doneLen() ;
 
 done:
    return rc ;
@@ -1334,7 +1334,7 @@ INT32 deleteIndexesCommand::convertRequest( mongoParser &parser,
    sdbMsg.write( fap::emptyObj, TRUE ) ;
 
    // fill the msg len of sdb
-   header->messageLength = sdbMsg.size() ;
+   sdbMsg.doneLen() ;
 
 done:
    return rc ;
@@ -1415,7 +1415,7 @@ INT32 listIndexesCommand::convertRequest( mongoParser &parser,
    sdbMsg.write( obj.obj(), TRUE ) ;
 
    // fill the msg len of sdb
-   header->messageLength = sdbMsg.size() ;
+   sdbMsg.doneLen() ;
 
    return rc ;
 }
