@@ -4,6 +4,7 @@
  <topicref href="topics/methodlist.dita">
      <anchorref href="global.ditamap"/>
      <anchorref href="jssequoiadb.ditamap"/>
+     <anchorref href="SecureSdb.ditamap"/>
      <anchorref href="jscollectionspace.ditamap"/>
      <anchorref href="jscollection.ditamap"/>
      <anchorref href="jscursor.ditamap"/>

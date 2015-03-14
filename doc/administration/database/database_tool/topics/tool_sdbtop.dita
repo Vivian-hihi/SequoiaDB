@@ -42,6 +42,11 @@
           <stentry>-p</stentry>
           <stentry>数据库密码</stentry>
         </strow>
+        <strow>
+          <stentry>--ssl</stentry>
+          <stentry></stentry>
+          <stentry>使用 SSL 连接。</stentry>
+        </strow>
       </simpletable>
       <p><note>对于 Ubuntu 等系统，需要安装 Ncurses 库，否则将会提示“Error opening terminal: TERM”
         <p>方式一： 联网安装<codeblock>sudo apt-get install libncurses5-dev</codeblock></p>

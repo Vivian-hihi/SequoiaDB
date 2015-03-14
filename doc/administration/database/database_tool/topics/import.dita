@@ -145,6 +145,11 @@
           <stentry></stentry>
           <stentry>如果遇到错误就停止。默认 false。</stentry>
         </strow>
+        <strow>
+          <stentry>--ssl</stentry>
+          <stentry></stentry>
+          <stentry>使用 SSL 连接。默认false。</stentry>
+        </strow>
       </simpletable>
     </section>
     <note>linepriority 参数需要被特别关注，如果设置不当，可能会导入数据失败。当记录中包含“记录分隔符”并且 linepriority 为 true 时，工具会优先按照“记录分隔符”解析，而导致导入失败。比如：如果记录为 {"name": "Mike\n"}，应当选择 linepriority 为 false 模式。</note>

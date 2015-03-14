@@ -96,6 +96,11 @@
           <stentry></stentry>
           <stentry>如果遇到错误就停止，默认 false。</stentry>
         </strow>
+        <strow>
+          <stentry>--ssl</stentry>
+          <stentry></stentry>
+          <stentry>使用 SSL 连接，默认 false。</stentry>
+        </strow>
       </simpletable>
     </section>
     <section>

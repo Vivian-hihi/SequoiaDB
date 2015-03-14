@@ -1151,6 +1151,8 @@
                 <file name="references/methods/methodlist.ditamap"/>
                 <file name="references/methods/SdbQuery.dita"/>
                 <file name="references/methods/SdbQuery.ditamap"/>
+                <file name="references/methods/SecureSdb.dita"/>
+                <file name="references/methods/SecureSdb.ditamap"/>
             </folder>
             <folder name="questions">
                 <folder name="topics">

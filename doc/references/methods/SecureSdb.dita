@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
+<topic id="topic_k45_pz3_jr">
+  <title>SecureSdb</title>
+  <body>
+    <p>SecureSdb 是 Sdb 的子类，SecureSdb 的对象使用 SSL 连接。</p>
+  </body>
+</topic>
