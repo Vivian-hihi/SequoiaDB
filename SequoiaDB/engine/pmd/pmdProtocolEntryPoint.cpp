@@ -118,6 +118,9 @@ namespace engine
          {
             ossSocket newsock ( &s ) ;
             newsock.close () ;
+
+            SDB_OSS_DEL pParam ;
+            pParam = NULL ;
             continue ;
          }
 
@@ -133,6 +136,9 @@ namespace engine
             // close remote connection if we can't create new thread
             ossSocket newsock ( &s ) ;
             newsock.close () ;
+
+            SDB_OSS_DEL pParam ;
+            pParam = NULL ;
             continue ;
          }
          // Now EDU is started and posted with the new socket, let's

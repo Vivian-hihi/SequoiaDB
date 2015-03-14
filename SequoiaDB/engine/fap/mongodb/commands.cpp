@@ -90,6 +90,47 @@ commandMgr* commandMgr::instance()
 
 namespace fap {
    static bson::BSONObj emptyObj ;
+
+   void setQueryFlags( const INT32 reservedFlags, SINT32 &flags )
+   {
+      // set return data when first query
+      flags |= FLG_QUERY_WITH_RETURNDATA ;
+
+      if ( reservedFlags & QUERY_CURSOR_TAILABLE )
+      {
+         // NOT SUPPORTED
+      }
+
+      if ( reservedFlags & QUERY_SLAVE_OK )
+      {
+         flags |= FLG_QUERY_SLAVEOK ;
+      }
+
+      if ( reservedFlags & QUERY_OPLOG_REPLAY )
+      {
+         flags |= FLG_QUERY_OPLOGREPLAY ;
+      }
+
+      if ( reservedFlags & QUERY_NO_CURSOR_TIMEOUT )
+      {
+         flags |= FLG_QUERY_NOCONTEXTTIMEOUT ;
+      }
+
+      if ( reservedFlags & QUERY_AWAIT_DATA )
+      {
+         flags |= FLG_QUERY_AWAITDATA ;
+      }
+
+      if ( reservedFlags & QUERY_EXHAUST )
+      {
+         // NOT SUPPORTED
+      }
+
+      if ( reservedFlags & QUERY_PARTIAL_RESULTS )
+      {
+         flags |= FLG_QUERY_PARTIALREAD ;
+      }
+   }
 }
 
 ////////////////////////////////////////////////////////////////
@@ -480,52 +521,10 @@ INT32 queryCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
    query->w = 0 ;
    query->padding = 0 ;
    query->flags = 0 ;
+   fap::setQueryFlags( parser.reservedFlags, query->flags ) ;
 
    query->nameLength = parser.nsLen ;
    parser.skip( query->nameLength + 1 ) ;
-
-   // set return data when first query
-   parser.reservedFlags |= FLG_QUERY_WITH_RETURNDATA ;
-
-   if ( parser.reservedFlags & FLG_QUERY_WITH_RETURNDATA )
-   {
-      query->flags |= FLG_QUERY_WITH_RETURNDATA ;
-   }
-
-   if ( parser.reservedFlags & QUERY_CURSOR_TAILABLE )
-   {
-      // NOT SUPPORTED
-   }
-
-   if ( parser.reservedFlags & QUERY_SLAVE_OK )
-   {
-      query->flags |= FLG_QUERY_SLAVEOK ;
-   }
-
-   if ( parser.reservedFlags & QUERY_OPLOG_REPLAY )
-   {
-      query->flags |= FLG_QUERY_OPLOGREPLAY ;
-   }
-
-   if ( parser.reservedFlags & QUERY_NO_CURSOR_TIMEOUT )
-   {
-      query->flags |= FLG_QUERY_NOCONTEXTTIMEOUT ;
-   }
-
-   if ( parser.reservedFlags & QUERY_AWAIT_DATA )
-   {
-      query->flags |= FLG_QUERY_AWAITDATA ;
-   }
-
-   if ( parser.reservedFlags & QUERY_EXHAUST )
-   {
-      // NOT SUPPORTED
-   }
-
-   if ( parser.reservedFlags & QUERY_PARTIAL_RESULTS )
-   {
-      query->flags |= FLG_QUERY_PARTIALREAD ;
-   }
 
    parser.readNumber( sizeof( INT32 ), ( CHAR * )&nToSkip ) ;
    query->numToSkip = nToSkip ;
@@ -749,6 +748,7 @@ INT32 createCSCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
    query->w = 0 ;
    query->padding = 0 ;
    query->flags = 0 ;
+   fap::setQueryFlags( parser.reservedFlags, query->flags ) ;
 
    query->nameLength = cmdStr.length() ;
    query->numToSkip = 0 ;
@@ -816,6 +816,7 @@ INT32 createCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
    query->w = 0 ;
    query->padding = 0 ;
    query->flags = 0 ;
+   fap::setQueryFlags( parser.reservedFlags, query->flags ) ;
 
    query->nameLength = cmdStr.length() ;
    parser.skip( parser.nsLen + 1 ) ;
@@ -896,6 +897,7 @@ INT32 dropCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
    query->w = 0 ;
    query->padding = 0 ;
    query->flags = 0 ;
+   fap::setQueryFlags( parser.reservedFlags, query->flags ) ;
 
    fullname = parser.csName ;
    query->nameLength = cmdStr.length() ;
@@ -963,6 +965,7 @@ INT32 countCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
    query->w = 0 ;
    query->padding = 0 ;
    query->flags = 0 ;
+   fap::setQueryFlags( parser.reservedFlags, query->flags ) ;
 
    fullname = parser.csName ;
 
@@ -1095,6 +1098,7 @@ INT32 dropDatabaseCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMs
    query->w = 0 ;
    query->padding = 0 ;
    query->flags = 0 ;
+   fap::setQueryFlags( parser.reservedFlags, query->flags ) ;
 
    query->nameLength = cmdStr.length() ;
    parser.skip( parser.nsLen + 1 ) ;
@@ -1160,9 +1164,11 @@ INT32 createIndexesCommand::convertRequest( mongoParser &parser,
    index->w = 0 ;
    index->padding = 0 ;
    index->flags = 0 ;
+   fap::setQueryFlags( parser.reservedFlags, index->flags ) ;
 
    fullname = parser.csName ;
    parser.skip( parser.nsLen + 1 ) ;
+
    if ( parser.withCmd )
    {
       parser.skip( sizeof( nToSkip ) + sizeof( nToReturn ) ) ;
@@ -1284,6 +1290,7 @@ INT32 deleteIndexesCommand::convertRequest( mongoParser &parser,
    dropIndex->w = 0 ;
    dropIndex->padding = 0 ;
    dropIndex->flags = 0 ;
+   fap::setQueryFlags( parser.reservedFlags, dropIndex->flags ) ;
 
    fullname = parser.csName ;
    dropIndex->nameLength = cmdStr.length() ;
@@ -1367,6 +1374,7 @@ INT32 listIndexesCommand::convertRequest( mongoParser &parser,
    getIndex->w = 0 ;
    getIndex->padding = 0 ;
    getIndex->flags = 0 ;
+   fap::setQueryFlags( parser.reservedFlags, getIndex->flags ) ;
 
    getIndex->nameLength = cmdStr.length() ;
    parser.skip( parser.nsLen + 1 ) ;
