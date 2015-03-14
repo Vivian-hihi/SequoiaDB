@@ -27,10 +27,6 @@
    RET_JSON: the format is: { "errno":0, "detail":"" }
 */
 
-// println
-// var BUS_JSON = {} ;
-// var SYS_JSON = { "TaskID": 13 };
-
 var FILE_NAME_INIT_ENV = "initEnv.js" ;
 var RET_JSON = new commonResult() ;
 var rc       = SDB_OK ;

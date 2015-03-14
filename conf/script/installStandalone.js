@@ -327,8 +327,6 @@ function main()
    }
    
    _final() ;
-// println
-println("RET_JSON is: " + JSON.stringify(RET_JSON)) ;
    return RET_JSON ;
 }
 

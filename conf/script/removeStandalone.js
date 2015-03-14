@@ -32,7 +32,7 @@ var rc       = SDB_OK ;
 var errMsg   = "" ;
 
 var task_id = "" ;
-// println
+
 var host_name = "" ;
 var host_svc  = "" ;
 

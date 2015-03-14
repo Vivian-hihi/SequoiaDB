@@ -424,13 +424,6 @@ function _rollback( tmpCoordHostName, tmpCoordSvcName )
                   sprintf( errMsg + ", rc: ?, detail: ?", rc, GETLASTERRMSG() ) ) ;
          exception_handle( rc, errMsg ) ;
       }
-/*
-// println
-      // 6. remove temporary coord left last time
-      PD_LOG2( task_id, arguments, PDEVENT, FILE_NAME_INSTALL_TEMPORARY_COORD,
-               "Finish rollback nodes, going to remove the remaining temporary coord" ) ;
-      _removeTmpCoord( tmpCoordSvcName ) ;
-*/
    }
    catch( e )
    {
