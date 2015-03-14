@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
+<topic id="topic_twc_vdh_jr">
+  <title>网络安全</title>
+  <body>
+    <p>SequoiaDB 通过配置可以支持 SSL。SequoiaDB 客户端和 SequoiaDB 实例直接可以使用 SSL 加密连接。</p>
+    <section>
+      <title>SequoiaDB 支持</title>
+      <p>若要使用 SSL 加密连接，需要 SequoiaDB 1.12 或之后的版本。</p>
+      <p>目前该特性仅限于 SequoiaDB 企业版，社区版暂不支持。</p>     
+    </section>
+    <section>
+      <title>客户端支持</title>
+      <p>所有官方支持的客户端驱动都支持 SSL，包括 C、C++、Java、Python、C#、PHP、REST API 及 SDB Shell。</p>     
+    </section>
+    <section>
+      <title>配置 SequoiaDB 使用 SSL</title>
+      <p>在安装部署时，通过配置参数开启 SequoiaDB 对 SSL 连接的支持：</p>
+      <p>--usessl，默认值为 false，设为 true 时开启 SSL，允许客户端通过 SSL 加密连接，同时仍然接受非 SSL 加密连接。</p>
+      <p>参考如下：<codeblock>sequoiadb --usessl=true</codeblock></p>
+      <p>也支持使用配置文件配置，参见<xref href="../../../administration/database/topics/runtime_configuration.dita">数据库配置</xref>。</p>
+      <p>SequoiaDB 在开启 SSL 后会自动创建证书，不需要用户指定。</p>      
+    </section>
+    <section>
+      <title>客户端使用 SSL</title>
+      <p>客户端必须与开启 SSL 的 SequoiaDB 配合才能使用 SSL 加密连接。所有官方支持的客户端驱动都支持 SSL。</p>
+      <ul>
+        <li>
+          <p>C</p>
+          <p>C 驱动接口使用 sdbSecureConnect() 和 sdbSecureConnect() 建立 SSL 连接，使用方式与 sdbConnect() 和 sdbConnect1() 相同。</p>
+          <p>参见 <xref href="../../../developement/application/C/topics/c.dita">C 驱动</xref>。</p>
+        </li>
+        <li>
+          <p>C++</p>
+          <p>C++ 驱动中类 sdb 的构造函数有参数 useSSL，设为 true 时使用 SSL 连接。</p>
+          <p>参见 <xref href="../../../developement/application/CPP/topics/cpp.dita">C++ 驱动</xref>。</p>
+        </li>
+        <li>
+          <p>Java</p>
+          <p>Java 驱动中类 com.sequoiadb.net.ConfigOptions 有接口 setUseSSL (boolean useSSL)，设为 true 时使用 SSL 连接。</p>
+          <p>参见 <xref href="../../../developement/application/java/topics/java.dita">Java 驱动</xref>。</p>
+        </li>
+        <li>
+          <p>Python</p>
+          <p>Python 驱动中类 client 构造函数有可选参数 ssl，设为 true 时使用 SSL 连接。</p>
+          <p>参见 <xref href="../../../developement/application/python/topics/python.dita">Python 驱动</xref>。</p>
+        </li>
+        <li>
+          <p>C#</p>
+          <p>C# 驱动中类 SequoiaDB.ConfigOptions 有属性 UseSSL，设为 true 时使用 SSL 连接。</p>
+          <p>参见 <xref href="../../../developement/application/CS/topics/cs.dita">C# 驱动</xref>。</p>
+        </li>
+        <li>
+          <p>PHP</p>
+          <p>PHP 驱动中有类 SecureSdb，该类是 SequoiaDB 的子类，类 SecureSdb 的对象使用 SSL 连接。</p>
+          <p>参见 <xref href="../../../developement/application/PHP/topics/php.dita">PHP 驱动</xref>。</p>
+        </li>
+        <li>
+          <p>REST API</p>
+          <p>REST API 支持 https。</p>
+          <p>参见 <xref href="../../../developement/application/REST/topics/rest.dita">REST 接口</xref>。</p>
+        </li>
+        <li>
+          <p>sdb shell</p>
+          <p>sdb shell 中共有类 SecureSdb，该类是 Sdb 的子类，类 SecureSdb 的对象使用 SSL 连接。</p>
+          <p>参见 <xref href="../../../developement/console/topics/console.dita">SequoiaDB shell</xref>。</p>
+        </li>
+      </ul>          
+    </section>
+  </body>
+</topic>
