@@ -484,6 +484,14 @@ INT32 queryCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
    query->nameLength = parser.nsLen ;
    parser.skip( query->nameLength + 1 ) ;
 
+   // set return data when first query
+   parser.reservedFlags |= FLG_QUERY_WITH_RETURNDATA ;
+
+   if ( parser.reservedFlags & FLG_QUERY_WITH_RETURNDATA )
+   {
+      query->flags |= FLG_QUERY_WITH_RETURNDATA ;
+   }
+
    if ( parser.reservedFlags & QUERY_CURSOR_TAILABLE )
    {
       // NOT SUPPORTED
