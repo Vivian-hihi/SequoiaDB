@@ -75,269 +75,269 @@
     <div class="section"><h2 class="title sectiontitle">SQL语法表</h2>
       <div class="p">
         <a name="references_sql_methodlist__references_sqlmethod_databasemethod_table"><!-- --></a><table cellpadding="4" cellspacing="0" summary="" id="references_sql_methodlist__references_sqlmethod_databasemethod_table" border="1" class="simpletable"><tr class="sthead">
-            <th valign="bottom" align="left" id="d157479e26" class="stentry">语句</th>
+            <th valign="bottom" align="left" id="d157747e26" class="stentry">语句</th>
 
-            <th valign="bottom" align="left" id="d157479e29" class="stentry">描述</th>
+            <th valign="bottom" align="left" id="d157747e29" class="stentry">描述</th>
 
-            <th valign="bottom" align="left" id="d157479e32" class="stentry">示例</th>
+            <th valign="bottom" align="left" id="d157747e32" class="stentry">示例</th>
 
           </tr>
 <tr class="strow">
-            <td valign="top" headers="d157479e26" class="stentry"><a class="xref" href="create_cs.html">create collectionspace </a>
+            <td valign="top" headers="d157747e26" class="stentry"><a class="xref" href="create_cs.html">create collectionspace </a>
             </td>
 
-            <td valign="top" headers="d157479e29" class="stentry">创建集合空间  </td>
+            <td valign="top" headers="d157747e29" class="stentry">创建集合空间  </td>
 
-            <td valign="top" headers="d157479e32" class="stentry">db.execUpdate("create collectionspace foo")</td>
-
-          </tr>
-<tr class="strow">
-            <td valign="top" headers="d157479e26" class="stentry"><a class="xref" href="drop_cs.html">drop collectionspace </a></td>
-
-            <td valign="top" headers="d157479e29" class="stentry">删除集合空间</td>
-
-            <td valign="top" headers="d157479e32" class="stentry">db.execUpdate("drop collectionspace foo")</td>
+            <td valign="top" headers="d157747e32" class="stentry">db.execUpdate("create collectionspace foo")</td>
 
           </tr>
 <tr class="strow">
-            <td valign="top" headers="d157479e26" class="stentry"><a class="xref" href="create_cl.html">create collection </a></td>
+            <td valign="top" headers="d157747e26" class="stentry"><a class="xref" href="drop_cs.html">drop collectionspace </a></td>
 
-            <td valign="top" headers="d157479e29" class="stentry">创建集合</td>
+            <td valign="top" headers="d157747e29" class="stentry">删除集合空间</td>
 
-            <td valign="top" headers="d157479e32" class="stentry">db.execUpdate("create collection foo.bar")</td>
-
-          </tr>
-<tr class="strow">
-            <td valign="top" headers="d157479e26" class="stentry"><a class="xref" href="drop_cl.html">drop collection </a></td>
-
-            <td valign="top" headers="d157479e29" class="stentry">删除集合</td>
-
-            <td valign="top" headers="d157479e32" class="stentry">db.execUpdate("drop collection foo.bar")</td>
+            <td valign="top" headers="d157747e32" class="stentry">db.execUpdate("drop collectionspace foo")</td>
 
           </tr>
 <tr class="strow">
-            <td valign="top" headers="d157479e26" class="stentry"><a class="xref" href="create_index.html">create index</a></td>
+            <td valign="top" headers="d157747e26" class="stentry"><a class="xref" href="create_cl.html">create collection </a></td>
 
-            <td valign="top" headers="d157479e29" class="stentry">创建索引</td>
+            <td valign="top" headers="d157747e29" class="stentry">创建集合</td>
 
-            <td valign="top" headers="d157479e32" class="stentry">db.execUpdate("create index test_index on foo.bar (age)")</td>
-
-          </tr>
-<tr class="strow">
-            <td valign="top" headers="d157479e26" class="stentry"><a class="xref" href="drop_index.html">drop index</a></td>
-
-            <td valign="top" headers="d157479e29" class="stentry">删除索引</td>
-
-            <td valign="top" headers="d157479e32" class="stentry">db.execUpdate("drop index test_index on foo.bar")</td>
+            <td valign="top" headers="d157747e32" class="stentry">db.execUpdate("create collection foo.bar")</td>
 
           </tr>
 <tr class="strow">
-            <td valign="top" headers="d157479e26" class="stentry"><a class="xref" href="list_cs.html">list collectionspaces</a></td>
+            <td valign="top" headers="d157747e26" class="stentry"><a class="xref" href="drop_cl.html">drop collection </a></td>
 
-            <td valign="top" headers="d157479e29" class="stentry">枚举集合空间</td>
+            <td valign="top" headers="d157747e29" class="stentry">删除集合</td>
 
-            <td valign="top" headers="d157479e32" class="stentry">db.exec("list collectionspaces")</td>
-
-          </tr>
-<tr class="strow">
-            <td valign="top" headers="d157479e26" class="stentry"><a class="xref" href="list_cl.html">list collections</a></td>
-
-            <td valign="top" headers="d157479e29" class="stentry">枚举集合</td>
-
-            <td valign="top" headers="d157479e32" class="stentry">db.exec("list collections")</td>
+            <td valign="top" headers="d157747e32" class="stentry">db.execUpdate("drop collection foo.bar")</td>
 
           </tr>
 <tr class="strow">
-            <td valign="top" headers="d157479e26" class="stentry"><a class="xref" href="sqinsert.html">insert into</a></td>
+            <td valign="top" headers="d157747e26" class="stentry"><a class="xref" href="create_index.html">create index</a></td>
 
-            <td valign="top" headers="d157479e29" class="stentry">插入</td>
+            <td valign="top" headers="d157747e29" class="stentry">创建索引</td>
 
-            <td valign="top" headers="d157479e32" class="stentry">db.execUpdate("insert into foo.bar(age,name) values(20,\"Tom\")")</td>
-
-          </tr>
-<tr class="strow">
-            <td valign="top" headers="d157479e26" class="stentry"><a class="xref" href="sqselect.html">select from</a></td>
-
-            <td valign="top" headers="d157479e29" class="stentry">查询</td>
-
-            <td valign="top" headers="d157479e32" class="stentry">db.exec("select * from foo.bar")</td>
+            <td valign="top" headers="d157747e32" class="stentry">db.execUpdate("create index test_index on foo.bar (age)")</td>
 
           </tr>
 <tr class="strow">
-            <td valign="top" headers="d157479e26" class="stentry"><a class="xref" href="squpdate.html">update set</a></td>
+            <td valign="top" headers="d157747e26" class="stentry"><a class="xref" href="drop_index.html">drop index</a></td>
 
-            <td valign="top" headers="d157479e29" class="stentry">更新</td>
+            <td valign="top" headers="d157747e29" class="stentry">删除索引</td>
 
-            <td valign="top" headers="d157479e32" class="stentry">db.execUpdate("update foo.bar set age=25")</td>
-
-          </tr>
-<tr class="strow">
-            <td valign="top" headers="d157479e26" class="stentry"><a class="xref" href="sqdelete.html">delete from</a></td>
-
-            <td valign="top" headers="d157479e29" class="stentry">删除</td>
-
-            <td valign="top" headers="d157479e32" class="stentry">db.execUpdate("delete from foo.bar")</td>
+            <td valign="top" headers="d157747e32" class="stentry">db.execUpdate("drop index test_index on foo.bar")</td>
 
           </tr>
 <tr class="strow">
-            <td valign="top" headers="d157479e26" class="stentry"><a class="xref" href="group_by.html">group by</a></td>
+            <td valign="top" headers="d157747e26" class="stentry"><a class="xref" href="list_cs.html">list collectionspaces</a></td>
 
-            <td valign="top" headers="d157479e29" class="stentry">分组</td>
+            <td valign="top" headers="d157747e29" class="stentry">枚举集合空间</td>
 
-            <td valign="top" headers="d157479e32" class="stentry">db.exec("select dept_no,<a class="xref" href="sqcount.html"><em class="ph i">count</em></a>(emp_no) as
+            <td valign="top" headers="d157747e32" class="stentry">db.exec("list collectionspaces")</td>
+
+          </tr>
+<tr class="strow">
+            <td valign="top" headers="d157747e26" class="stentry"><a class="xref" href="list_cl.html">list collections</a></td>
+
+            <td valign="top" headers="d157747e29" class="stentry">枚举集合</td>
+
+            <td valign="top" headers="d157747e32" class="stentry">db.exec("list collections")</td>
+
+          </tr>
+<tr class="strow">
+            <td valign="top" headers="d157747e26" class="stentry"><a class="xref" href="sqinsert.html">insert into</a></td>
+
+            <td valign="top" headers="d157747e29" class="stentry">插入</td>
+
+            <td valign="top" headers="d157747e32" class="stentry">db.execUpdate("insert into foo.bar(age,name) values(20,\"Tom\")")</td>
+
+          </tr>
+<tr class="strow">
+            <td valign="top" headers="d157747e26" class="stentry"><a class="xref" href="sqselect.html">select from</a></td>
+
+            <td valign="top" headers="d157747e29" class="stentry">查询</td>
+
+            <td valign="top" headers="d157747e32" class="stentry">db.exec("select * from foo.bar")</td>
+
+          </tr>
+<tr class="strow">
+            <td valign="top" headers="d157747e26" class="stentry"><a class="xref" href="squpdate.html">update set</a></td>
+
+            <td valign="top" headers="d157747e29" class="stentry">更新</td>
+
+            <td valign="top" headers="d157747e32" class="stentry">db.execUpdate("update foo.bar set age=25")</td>
+
+          </tr>
+<tr class="strow">
+            <td valign="top" headers="d157747e26" class="stentry"><a class="xref" href="sqdelete.html">delete from</a></td>
+
+            <td valign="top" headers="d157747e29" class="stentry">删除</td>
+
+            <td valign="top" headers="d157747e32" class="stentry">db.execUpdate("delete from foo.bar")</td>
+
+          </tr>
+<tr class="strow">
+            <td valign="top" headers="d157747e26" class="stentry"><a class="xref" href="group_by.html">group by</a></td>
+
+            <td valign="top" headers="d157747e29" class="stentry">分组</td>
+
+            <td valign="top" headers="d157747e32" class="stentry">db.exec("select dept_no,<a class="xref" href="sqcount.html"><em class="ph i">count</em></a>(emp_no) as
               员工总数 from foo.bar group by dept_no ")</td>
 
           </tr>
 <tr class="strow">
-            <td valign="top" headers="d157479e26" class="stentry"><a class="xref" href="order_by.html">order by</a></td>
+            <td valign="top" headers="d157747e26" class="stentry"><a class="xref" href="order_by.html">order by</a></td>
 
-            <td valign="top" headers="d157479e29" class="stentry">排序</td>
+            <td valign="top" headers="d157747e29" class="stentry">排序</td>
 
-            <td valign="top" headers="d157479e32" class="stentry">db.exec("select * from foo.bar order by age desc")</td>
-
-          </tr>
-<tr class="strow">
-            <td valign="top" headers="d157479e26" class="stentry"><a class="xref" href="split_by.html">split by</a></td>
-
-            <td valign="top" headers="d157479e29" class="stentry">记录拆分</td>
-
-            <td valign="top" headers="d157479e32" class="stentry"> </td>
+            <td valign="top" headers="d157747e32" class="stentry">db.exec("select * from foo.bar order by age desc")</td>
 
           </tr>
 <tr class="strow">
-            <td valign="top" headers="d157479e26" class="stentry"><a class="xref" href="sqlimit.html">limit</a></td>
+            <td valign="top" headers="d157747e26" class="stentry"><a class="xref" href="split_by.html">split by</a></td>
 
-            <td valign="top" headers="d157479e29" class="stentry">限制返回记录数</td>
+            <td valign="top" headers="d157747e29" class="stentry">记录拆分</td>
 
-            <td valign="top" headers="d157479e32" class="stentry">db.exec("select * from foo.bar limit 5")</td>
-
-          </tr>
-<tr class="strow">
-            <td valign="top" headers="d157479e26" class="stentry"><a class="xref" href="offset.html">offset</a></td>
-
-            <td valign="top" headers="d157479e29" class="stentry">跳过记录数</td>
-
-            <td valign="top" headers="d157479e32" class="stentry">db.exec("select * from foo.bar offset 5")</td>
+            <td valign="top" headers="d157747e32" class="stentry"> </td>
 
           </tr>
 <tr class="strow">
-            <td valign="top" headers="d157479e26" class="stentry"><a class="xref" href="as.html">as</a></td>
+            <td valign="top" headers="d157747e26" class="stentry"><a class="xref" href="sqlimit.html">limit</a></td>
 
-            <td valign="top" headers="d157479e29" class="stentry">别名</td>
+            <td valign="top" headers="d157747e29" class="stentry">限制返回记录数</td>
 
-            <td valign="top" headers="d157479e32" class="stentry">db.exec("select age as 年龄 from foo.bar where age&gt;10")</td>
-
-          </tr>
-<tr class="strow">
-            <td valign="top" headers="d157479e26" class="stentry"><a class="xref" href="sqjoin.html">inner join</a></td>
-
-            <td valign="top" headers="d157479e29" class="stentry">连接</td>
-
-            <td valign="top" headers="d157479e32" class="stentry">db.exec("select E.emp_no,D.dept_name from foo.emp as E inner join foo.dept as D on E.dept_no=D.dept_no")</td>
+            <td valign="top" headers="d157747e32" class="stentry">db.exec("select * from foo.bar limit 5")</td>
 
           </tr>
 <tr class="strow">
-            <td valign="top" headers="d157479e26" class="stentry"><a class="xref" href="left_join.html">left outer join on</a></td>
+            <td valign="top" headers="d157747e26" class="stentry"><a class="xref" href="offset.html">offset</a></td>
 
-            <td valign="top" headers="d157479e29" class="stentry">左连</td>
+            <td valign="top" headers="d157747e29" class="stentry">跳过记录数</td>
 
-            <td valign="top" headers="d157479e32" class="stentry">db.exec("select E.emp_no,D.dept_name from foo.emp as E left outer join foo.dept as D on E.dept_no=D.dept_no where D.dept_no&lt;4")</td>
-
-          </tr>
-<tr class="strow">
-            <td valign="top" headers="d157479e26" class="stentry"><a class="xref" href="right_join.html">right outer join on</a></td>
-
-            <td valign="top" headers="d157479e29" class="stentry">右连</td>
-
-            <td valign="top" headers="d157479e32" class="stentry">db.exec("select E.emp_no,D.dept_name from foo.emp as E right outer join foo.dept as D on E.dept_no=D.dept_no where E.emp_no&lt;10")</td>
+            <td valign="top" headers="d157747e32" class="stentry">db.exec("select * from foo.bar offset 5")</td>
 
           </tr>
 <tr class="strow">
-            <td valign="top" headers="d157479e26" class="stentry"><a class="xref" href="sqcount.html">count()</a></td>
+            <td valign="top" headers="d157747e26" class="stentry"><a class="xref" href="as.html">as</a></td>
 
-            <td valign="top" headers="d157479e29" class="stentry">计数</td>
+            <td valign="top" headers="d157747e29" class="stentry">别名</td>
 
-            <td valign="top" headers="d157479e32" class="stentry">db.exec("select count(age) as 数量 from foo.bar")</td>
-
-          </tr>
-<tr class="strow">
-            <td valign="top" headers="d157479e26" class="stentry"><a class="xref" href="sqsum.html">sum()</a></td>
-
-            <td valign="top" headers="d157479e29" class="stentry">求和</td>
-
-            <td valign="top" headers="d157479e32" class="stentry">db.exec("select sum(age) as 年龄总和 from foo.bar")</td>
+            <td valign="top" headers="d157747e32" class="stentry">db.exec("select age as 年龄 from foo.bar where age&gt;10")</td>
 
           </tr>
 <tr class="strow">
-            <td valign="top" headers="d157479e26" class="stentry"><a class="xref" href="sqavg.html">avg()</a></td>
+            <td valign="top" headers="d157747e26" class="stentry"><a class="xref" href="sqjoin.html">inner join</a></td>
 
-            <td valign="top" headers="d157479e29" class="stentry">求平均数</td>
+            <td valign="top" headers="d157747e29" class="stentry">连接</td>
 
-            <td valign="top" headers="d157479e32" class="stentry">db.exec("select avg(age) as 平均年龄 from foo.bar")</td>
-
-          </tr>
-<tr class="strow">
-            <td valign="top" headers="d157479e26" class="stentry"><a class="xref" href="sqmax.html">max()</a></td>
-
-            <td valign="top" headers="d157479e29" class="stentry">最大数</td>
-
-            <td valign="top" headers="d157479e32" class="stentry">db.exec("select max(age) as 最大年龄 from foo.bar")</td>
+            <td valign="top" headers="d157747e32" class="stentry">db.exec("select E.emp_no,D.dept_name from foo.emp as E inner join foo.dept as D on E.dept_no=D.dept_no")</td>
 
           </tr>
 <tr class="strow">
-            <td valign="top" headers="d157479e26" class="stentry"><a class="xref" href="sqmin.html">min()</a></td>
+            <td valign="top" headers="d157747e26" class="stentry"><a class="xref" href="left_join.html">left outer join on</a></td>
 
-            <td valign="top" headers="d157479e29" class="stentry">最小数</td>
+            <td valign="top" headers="d157747e29" class="stentry">左连</td>
 
-            <td valign="top" headers="d157479e32" class="stentry">db.exec("select min(age) as 最小年龄 from foo.bar")</td>
-
-          </tr>
-<tr class="strow">
-            <td valign="top" headers="d157479e26" class="stentry"><a class="xref" href="sqfirst.html">first</a></td>
-
-            <td valign="top" headers="d157479e29" class="stentry">选择第一条数据</td>
-
-            <td valign="top" headers="d157479e32" class="stentry"> </td>
+            <td valign="top" headers="d157747e32" class="stentry">db.exec("select E.emp_no,D.dept_name from foo.emp as E left outer join foo.dept as D on E.dept_no=D.dept_no where D.dept_no&lt;4")</td>
 
           </tr>
 <tr class="strow">
-            <td valign="top" headers="d157479e26" class="stentry"><a class="xref" href="sqlast.html">last</a></td>
+            <td valign="top" headers="d157747e26" class="stentry"><a class="xref" href="right_join.html">right outer join on</a></td>
 
-            <td valign="top" headers="d157479e29" class="stentry">选择最后一条数据</td>
+            <td valign="top" headers="d157747e29" class="stentry">右连</td>
 
-            <td valign="top" headers="d157479e32" class="stentry"> </td>
-
-          </tr>
-<tr class="strow">
-            <td valign="top" headers="d157479e26" class="stentry"><a class="xref" href="sqpush.html">push</a></td>
-
-            <td valign="top" headers="d157479e29" class="stentry">合并数组</td>
-
-            <td valign="top" headers="d157479e32" class="stentry"> </td>
+            <td valign="top" headers="d157747e32" class="stentry">db.exec("select E.emp_no,D.dept_name from foo.emp as E right outer join foo.dept as D on E.dept_no=D.dept_no where E.emp_no&lt;10")</td>
 
           </tr>
 <tr class="strow">
-            <td valign="top" headers="d157479e26" class="stentry"><a class="xref" href="sqaddtoset.html">addtoset</a></td>
+            <td valign="top" headers="d157747e26" class="stentry"><a class="xref" href="sqcount.html">count()</a></td>
 
-            <td valign="top" headers="d157479e29" class="stentry">合并没有重复值数组</td>
+            <td valign="top" headers="d157747e29" class="stentry">计数</td>
 
-            <td valign="top" headers="d157479e32" class="stentry"> </td>
-
-          </tr>
-<tr class="strow">
-            <td valign="top" headers="d157479e26" class="stentry"><a class="xref" href="buildobj.html">buildobj</a></td>
-
-            <td valign="top" headers="d157479e29" class="stentry">合并对象</td>
-
-            <td valign="top" headers="d157479e32" class="stentry"> </td>
+            <td valign="top" headers="d157747e32" class="stentry">db.exec("select count(age) as 数量 from foo.bar")</td>
 
           </tr>
 <tr class="strow">
-            <td valign="top" headers="d157479e26" class="stentry"><a class="xref" href="mergearrayset.html">mergearrayset</a></td>
+            <td valign="top" headers="d157747e26" class="stentry"><a class="xref" href="sqsum.html">sum()</a></td>
 
-            <td valign="top" headers="d157479e29" class="stentry">合并不包含重复字段数组</td>
+            <td valign="top" headers="d157747e29" class="stentry">求和</td>
 
-            <td valign="top" headers="d157479e32" class="stentry"> </td>
+            <td valign="top" headers="d157747e32" class="stentry">db.exec("select sum(age) as 年龄总和 from foo.bar")</td>
+
+          </tr>
+<tr class="strow">
+            <td valign="top" headers="d157747e26" class="stentry"><a class="xref" href="sqavg.html">avg()</a></td>
+
+            <td valign="top" headers="d157747e29" class="stentry">求平均数</td>
+
+            <td valign="top" headers="d157747e32" class="stentry">db.exec("select avg(age) as 平均年龄 from foo.bar")</td>
+
+          </tr>
+<tr class="strow">
+            <td valign="top" headers="d157747e26" class="stentry"><a class="xref" href="sqmax.html">max()</a></td>
+
+            <td valign="top" headers="d157747e29" class="stentry">最大数</td>
+
+            <td valign="top" headers="d157747e32" class="stentry">db.exec("select max(age) as 最大年龄 from foo.bar")</td>
+
+          </tr>
+<tr class="strow">
+            <td valign="top" headers="d157747e26" class="stentry"><a class="xref" href="sqmin.html">min()</a></td>
+
+            <td valign="top" headers="d157747e29" class="stentry">最小数</td>
+
+            <td valign="top" headers="d157747e32" class="stentry">db.exec("select min(age) as 最小年龄 from foo.bar")</td>
+
+          </tr>
+<tr class="strow">
+            <td valign="top" headers="d157747e26" class="stentry"><a class="xref" href="sqfirst.html">first</a></td>
+
+            <td valign="top" headers="d157747e29" class="stentry">选择第一条数据</td>
+
+            <td valign="top" headers="d157747e32" class="stentry"> </td>
+
+          </tr>
+<tr class="strow">
+            <td valign="top" headers="d157747e26" class="stentry"><a class="xref" href="sqlast.html">last</a></td>
+
+            <td valign="top" headers="d157747e29" class="stentry">选择最后一条数据</td>
+
+            <td valign="top" headers="d157747e32" class="stentry"> </td>
+
+          </tr>
+<tr class="strow">
+            <td valign="top" headers="d157747e26" class="stentry"><a class="xref" href="sqpush.html">push</a></td>
+
+            <td valign="top" headers="d157747e29" class="stentry">合并数组</td>
+
+            <td valign="top" headers="d157747e32" class="stentry"> </td>
+
+          </tr>
+<tr class="strow">
+            <td valign="top" headers="d157747e26" class="stentry"><a class="xref" href="sqaddtoset.html">addtoset</a></td>
+
+            <td valign="top" headers="d157747e29" class="stentry">合并没有重复值数组</td>
+
+            <td valign="top" headers="d157747e32" class="stentry"> </td>
+
+          </tr>
+<tr class="strow">
+            <td valign="top" headers="d157747e26" class="stentry"><a class="xref" href="buildobj.html">buildobj</a></td>
+
+            <td valign="top" headers="d157747e29" class="stentry">合并对象</td>
+
+            <td valign="top" headers="d157747e32" class="stentry"> </td>
+
+          </tr>
+<tr class="strow">
+            <td valign="top" headers="d157747e26" class="stentry"><a class="xref" href="mergearrayset.html">mergearrayset</a></td>
+
+            <td valign="top" headers="d157747e29" class="stentry">合并不包含重复字段数组</td>
+
+            <td valign="top" headers="d157747e32" class="stentry"> </td>
 
           </tr>
 </table>

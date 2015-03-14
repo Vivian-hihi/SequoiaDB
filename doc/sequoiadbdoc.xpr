@@ -281,6 +281,8 @@
                 <folder name="tasks"/>
                 <folder name="topics">
                     <file name="administration/security/topics/security_en.dita"/>
+                    <file name="administration/security/topics/security_main.dita"/>
+                    <file name="administration/security/topics/security_net.dita"/>
                     <file name="administration/security/topics/security.dita"/>
                 </folder>
                 <file name="administration/security/security_en.ditamap"/>
@@ -398,6 +400,14 @@
                     </folder>
                     <file name="developement/application/Python/python_en.ditamap"/>
                     <file name="developement/application/Python/python.ditamap"/>
+                </folder>
+                <folder name="REST">
+                    <folder name="topics">
+                        <file name="developement/application/REST/topics/rest.dita"/>
+                        <file name="developement/application/REST/topics/restDes.dita"/>
+                        <file name="developement/application/REST/topics/restIn.dita"/>
+                    </folder>
+                    <file name="developement/application/REST/rest.ditamap"/>
                 </folder>
                 <folder name="topics">
                     <file name="developement/application/topics/application_en.dita"/>

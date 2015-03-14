@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
+<topic id="topic_lg2_3ys_3r">
+  <title>REST 接口描述</title>
+  <body>
+    <p>协调节点（coord）和数据节点（data）对外提供 REST 接口访问，同时支持 HTTP 和 HTTPS 协议。</p>
+    <section><title>通用请求头</title>
+      <simpletable>
+        <sthead>
+          <stentry></stentry>
+          <stentry>说明</stentry>
+          <stentry>例子</stentry>          
+        </sthead>
+        <strow>
+          <stentry>Content-Type</stentry>
+          <stentry>请求内容的类型</stentry>
+          <stentry>application/x-www-form-urlencoded;charset=UTF-8</stentry>          
+        </strow>
+        <strow>
+          <stentry>Content-Length</stentry>
+          <stentry>请求内容的长度</stentry>
+          <stentry>54</stentry>          
+        </strow>
+        <strow>
+          <stentry>Host</stentry>
+          <stentry>主机名（协调节点或数据节点的服务地址）</stentry>
+          <stentry>192.168.1.214:11814</stentry>          
+        </strow>
+      </simpletable>      
+    </section>
+    <p><codeblock>POST / HTTP/1.0
+Content-Type: application/x-www-form-urlencoded;charset=UTF-8
+Content-Length: 54
+Host: 192.168.1.214:11814</codeblock></p>
+    <section><title>通用响应头</title>
+      <simpletable>
+        <sthead>
+          <stentry></stentry>
+          <stentry>说明</stentry>
+          <stentry>例子</stentry>          
+        </sthead>
+        <strow>
+          <stentry>Content-Type</stentry>
+          <stentry>响应内容的类型</stentry>
+          <stentry>text/html</stentry>          
+        </strow>
+        <strow>
+          <stentry>Content-Length</stentry>
+          <stentry>响应内容的长度</stentry>
+          <stentry>54</stentry>          
+        </strow>        
+      </simpletable>      
+    </section>
+    <p><codeblock>HTTP/1.1 200 Ok
+Content-Length: 35
+Content-Type: text/html</codeblock></p>
+  </body>
+</topic>

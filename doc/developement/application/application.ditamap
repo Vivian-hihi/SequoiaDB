@@ -9,6 +9,7 @@
   <anchorref href="PHP/php.ditamap"/>
   <anchorref href="CS/cs.ditamap"/>
   <anchorref href="Python/python.ditamap"/>
+  <anchorref href="REST/rest.ditamap"/>
   <topicref href="C/topics/bson.dita"/>
   <topicref href="CPP/topics/cpp_bson.dita"/>
   <topicref href="topics/bson_api.dita"/>

@@ -1,0 +1,492 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
+<topic id="topic_wx2_pys_3r">
+  <title>REST接口</title>
+  <body>
+    <section><title>创建集合空间</title>
+      <simpletable>
+        <sthead>
+          <stentry></stentry>
+          <stentry>说明</stentry>
+          <stentry>例子</stentry>          
+        </sthead>
+        <strow>
+          <stentry>请求头</stentry>
+          <stentry>同通用请求头</stentry>
+          <stentry></stentry>          
+        </strow>
+        <strow>
+          <stentry>请求内容</stentry>
+          <stentry>cmd: create collectionspace<fig></fig>name: 集合空间名字</stentry>
+          <stentry>cmd=create collectionspace&amp;name=cs</stentry>          
+        </strow>
+        <strow>
+          <stentry>说明</stentry>
+          <stentry></stentry>
+          <stentry></stentry>          
+        </strow>
+        <strow>
+          <stentry>响应头</stentry>
+          <stentry>同通用响应头</stentry>
+          <stentry></stentry>          
+        </strow>
+        <strow>
+          <stentry>响应内容</stentry>
+          <stentry>{<fig></fig>errno: 返回值，0表示成功，其他为失败<fig></fig>description: 失败时的错误描述<fig></fig>}            
+          </stentry>
+          <stentry>{ "errno": -33, "description": "Collection space already exists" }</stentry>          
+        </strow>
+        <strow>
+          <stentry>说明</stentry>
+          <stentry></stentry>
+          <stentry></stentry>          
+        </strow>
+      </simpletable>      
+    </section>
+    <section><title>删除集合空间</title>
+      <simpletable>
+        <sthead>
+          <stentry></stentry>
+          <stentry>说明</stentry>
+          <stentry>例子</stentry>          
+        </sthead>
+        <strow>
+          <stentry>请求头</stentry>
+          <stentry>同通用请求头</stentry>
+          <stentry></stentry>          
+        </strow>
+        <strow>
+          <stentry>请求内容</stentry>
+          <stentry>cmd: drop collectionspace<fig></fig>name: 集合的全称(集合空间.集合)</stentry>
+          <stentry>cmd=drop collectionspace&amp;name=cs</stentry>          
+        </strow>
+        <strow>
+          <stentry>说明</stentry>
+          <stentry></stentry>
+          <stentry></stentry>          
+        </strow>
+        <strow>
+          <stentry>响应头</stentry>
+          <stentry>同通用响应头</stentry>
+          <stentry></stentry>          
+        </strow>
+        <strow>
+          <stentry>响应内容</stentry>
+          <stentry>{<fig></fig>errno: 返回值，0表示成功，其他为失败<fig></fig>description: 失败时的错误描述<fig></fig>}            
+          </stentry>
+          <stentry>{ "errno": 0 }</stentry>          
+        </strow>
+        <strow>
+          <stentry>说明</stentry>
+          <stentry></stentry>
+          <stentry></stentry>          
+        </strow>
+      </simpletable>      
+    </section>
+    <section><title>创建集合</title>
+      <simpletable>
+        <sthead>
+          <stentry></stentry>
+          <stentry>说明</stentry>
+          <stentry>例子</stentry>          
+        </sthead>
+        <strow>
+          <stentry>请求头</stentry>
+          <stentry>同通用请求头</stentry>
+          <stentry></stentry>          
+        </strow>
+        <strow>
+          <stentry>请求内容</stentry>
+          <stentry>cmd: create collection<fig></fig>name: 集合的全称(集合空间.集合)<fig></fig>options: 选项(可选参数，可不填)</stentry>
+          <stentry>cmd=create collection&amp;name=cs.cl</stentry>          
+        </strow>
+        <strow>
+          <stentry>说明</stentry>
+          <stentry></stentry>
+          <stentry></stentry>          
+        </strow>
+        <strow>
+          <stentry>响应头</stentry>
+          <stentry>同通用响应头</stentry>
+          <stentry></stentry>          
+        </strow>
+        <strow>
+          <stentry>响应内容</stentry>
+          <stentry>{<fig></fig>errno: 返回值，0表示成功，其他为失败<fig></fig>description: 失败时的错误描述<fig></fig>}            
+          </stentry>
+          <stentry>{ "errno": 0 }</stentry>          
+        </strow>
+        <strow>
+          <stentry>说明</stentry>
+          <stentry></stentry>
+          <stentry></stentry>          
+        </strow>
+      </simpletable>      
+    </section>
+    <section><title>删除集合</title>
+      <simpletable>
+        <sthead>
+          <stentry></stentry>
+          <stentry>说明</stentry>
+          <stentry>例子</stentry>          
+        </sthead>
+        <strow>
+          <stentry>请求头</stentry>
+          <stentry>同通用请求头</stentry>
+          <stentry></stentry>          
+        </strow>
+        <strow>
+          <stentry>请求内容</stentry>
+          <stentry>cmd: drop collection<fig></fig>name: 集合的全称(集合空间.集合)</stentry>
+          <stentry>cmd=drop collection&amp;name=cs.cl</stentry>          
+        </strow>
+        <strow>
+          <stentry>说明</stentry>
+          <stentry></stentry>
+          <stentry></stentry>          
+        </strow>
+        <strow>
+          <stentry>响应头</stentry>
+          <stentry>同通用响应头</stentry>
+          <stentry></stentry>          
+        </strow>
+        <strow>
+          <stentry>响应内容</stentry>
+          <stentry>{<fig></fig>errno: 返回值，0表示成功，其他为失败<fig></fig>description: 失败时的错误描述<fig></fig>}            
+          </stentry>
+          <stentry>{ "errno": 0 }</stentry>          
+        </strow>
+        <strow>
+          <stentry>说明</stentry>
+          <stentry></stentry>
+          <stentry></stentry>          
+        </strow>
+      </simpletable>      
+    </section>
+    <section><title>插入数据</title>
+      <simpletable>
+        <sthead>
+          <stentry></stentry>
+          <stentry>说明</stentry>
+          <stentry>例子</stentry>          
+        </sthead>
+        <strow>
+          <stentry>请求头</stentry>
+          <stentry>同通用请求头</stentry>
+          <stentry></stentry>          
+        </strow>
+        <strow>
+          <stentry>请求内容</stentry>
+          <stentry>cmd: insert<fig></fig>name: 集合的全称(集合空间.集合)<fig></fig>insertor: 待插入数据</stentry>
+          <stentry>cmd=insert&amp;name=cs.cl&amp;insertor={"age":12, "name":"hello"}</stentry>          
+        </strow>
+        <strow>
+          <stentry>说明</stentry>
+          <stentry></stentry>
+          <stentry></stentry>          
+        </strow>
+        <strow>
+          <stentry>响应头</stentry>
+          <stentry>同通用响应头</stentry>
+          <stentry></stentry>          
+        </strow>
+        <strow>
+          <stentry>响应内容</stentry>
+          <stentry>{<fig></fig>errno: 返回值，0表示成功，其他为失败<fig></fig>description: 失败时的错误描述<fig></fig>}            
+          </stentry>
+          <stentry>{ "errno": 0 }</stentry>          
+        </strow>
+        <strow>
+          <stentry>说明</stentry>
+          <stentry></stentry>
+          <stentry></stentry>          
+        </strow>
+      </simpletable>      
+    </section>
+    <section><title>查询数据</title>
+      <simpletable>
+        <sthead>
+          <stentry></stentry>
+          <stentry>说明</stentry>
+          <stentry>例子</stentry>          
+        </sthead>
+        <strow>
+          <stentry>请求头</stentry>
+          <stentry>同通用请求头</stentry>
+          <stentry></stentry>          
+        </strow>
+        <strow>
+          <stentry>请求内容</stentry>
+          <stentry>cmd: query<fig></fig>name: 集合的全称(集合空间.集合)<fig></fig>sort: 排序字段名(可选参数，可不填)<fig></fig>selector: 查询结果列(可选参数，可不填)<fig></fig>skip: 跳过多少行(可选参数，可不填)<fig></fig>returnnum: 最大返回条数(可选参数，可不填)<fig></fig>filter: 查询条件(可选参数，可不填)</stentry>
+          <stentry>cmd=query&amp;name=cs.cl&amp;filter={"name":"hello"}</stentry>          
+        </strow>
+        <strow>
+          <stentry>说明</stentry>
+          <stentry></stentry>
+          <stentry></stentry>          
+        </strow>
+        <strow>
+          <stentry>响应头</stentry>
+          <stentry>同通用响应头</stentry>
+          <stentry></stentry>          
+        </strow>
+        <strow>
+          <stentry>响应内容</stentry>
+          <stentry>{<fig></fig>errno: 返回值，0表示成功，其他为失败<fig></fig>description: 失败时的错误描述<fig></fig>}<fig></fig>{<fig></fig>返回表里的记录<fig></fig>}<fig></fig>…
+            
+          </stentry>
+          <stentry>{ "errno": 0 }{ "_id": { "$oid": "54def72f0d8737161d9d6934" }, "age": 12, "name": "hello" }</stentry>          
+        </strow>
+        <strow>
+          <stentry>说明</stentry>
+          <stentry></stentry>
+          <stentry></stentry>          
+        </strow>
+      </simpletable>      
+    </section>
+    <section><title>删除记录</title>
+      <simpletable>
+        <sthead>
+          <stentry></stentry>
+          <stentry>说明</stentry>
+          <stentry>例子</stentry>          
+        </sthead>
+        <strow>
+          <stentry>请求头</stentry>
+          <stentry>同通用请求头</stentry>
+          <stentry></stentry>          
+        </strow>
+        <strow>
+          <stentry>请求内容</stentry>
+          <stentry>cmd: delete<fig></fig>name: 集合的全称(集合空间.集合)<fig></fig>deletor: 删除条件</stentry>
+          <stentry>cmd=delete&amp;name=cs.cl&amp;deletor={"name":"hello"}</stentry>          
+        </strow>
+        <strow>
+          <stentry>说明</stentry>
+          <stentry></stentry>
+          <stentry></stentry>          
+        </strow>
+        <strow>
+          <stentry>响应头</stentry>
+          <stentry>同通用响应头</stentry>
+          <stentry></stentry>          
+        </strow>
+        <strow>
+          <stentry>响应内容</stentry>
+          <stentry>{<fig></fig>errno: 返回值，0表示成功，其他为失败<fig></fig>description: 失败时的错误描述<fig></fig>}            
+          </stentry>
+          <stentry>{ "errno": 0 }</stentry>          
+        </strow>
+        <strow>
+          <stentry>说明</stentry>
+          <stentry></stentry>
+          <stentry></stentry>          
+        </strow>
+      </simpletable>      
+    </section>
+    <section><title>更新记录</title>
+      <simpletable>
+        <sthead>
+          <stentry></stentry>
+          <stentry>说明</stentry>
+          <stentry>例子</stentry>          
+        </sthead>
+        <strow>
+          <stentry>请求头</stentry>
+          <stentry>同通用请求头</stentry>
+          <stentry></stentry>          
+        </strow>
+        <strow>
+          <stentry>请求内容</stentry>
+          <stentry>cmd: update<fig></fig>name: 集合的全称(集合空间.集合)<fig></fig>updator: 更新操作<fig></fig>filter: 更新条件</stentry>
+          <stentry>cmd=update&amp;name=cs.cl&amp;updator={$set:{"age":100}}&amp;filter={"name": "hello"}</stentry>          
+        </strow>
+        <strow>
+          <stentry>说明</stentry>
+          <stentry></stentry>
+          <stentry></stentry>          
+        </strow>
+        <strow>
+          <stentry>响应头</stentry>
+          <stentry>同通用响应头</stentry>
+          <stentry></stentry>          
+        </strow>
+        <strow>
+          <stentry>响应内容</stentry>
+          <stentry>{<fig></fig>errno: 返回值，0表示成功，其他为失败<fig></fig>description: 失败时的错误描述<fig></fig>}            
+          </stentry>
+          <stentry>{ "errno": 0 }</stentry>          
+        </strow>
+        <strow>
+          <stentry>说明</stentry>
+          <stentry></stentry>
+          <stentry></stentry>          
+        </strow>
+      </simpletable>      
+    </section>
+    <section><title>获取记录数</title>
+      <simpletable>
+        <sthead>
+          <stentry></stentry>
+          <stentry>说明</stentry>
+          <stentry>例子</stentry>          
+        </sthead>
+        <strow>
+          <stentry>请求头</stentry>
+          <stentry>同通用请求头</stentry>
+          <stentry></stentry>          
+        </strow>
+        <strow>
+          <stentry>请求内容</stentry>
+          <stentry>cmd: get count<fig></fig>name: 集合的全称(集合空间.集合)</stentry>
+          <stentry>cmd=get count&amp;name=cs.cl</stentry>          
+        </strow>
+        <strow>
+          <stentry>说明</stentry>
+          <stentry></stentry>
+          <stentry></stentry>          
+        </strow>
+        <strow>
+          <stentry>响应头</stentry>
+          <stentry>同通用响应头</stentry>
+          <stentry></stentry>          
+        </strow>
+        <strow>
+          <stentry>响应内容</stentry>
+          <stentry>{<fig></fig>errno: 返回值，0表示成功，其他为失败<fig></fig>description: 失败时的错误描述<fig></fig>}<fig></fig>{<fig></fig>Total: 总计数<fig></fig>}
+            
+          </stentry>
+          <stentry>{ "errno": 0 }{ "Total": 1 }</stentry>          
+        </strow>
+        <strow>
+          <stentry>说明</stentry>
+          <stentry></stentry>
+          <stentry></stentry>          
+        </strow>
+      </simpletable>      
+    </section>
+    <section><title>修改表属性</title>
+      <simpletable>
+        <sthead>
+          <stentry></stentry>
+          <stentry>说明</stentry>
+          <stentry>例子</stentry>          
+        </sthead>
+        <strow>
+          <stentry>请求头</stentry>
+          <stentry>同通用请求头</stentry>
+          <stentry></stentry>          
+        </strow>
+        <strow>
+          <stentry>请求内容</stentry>
+          <stentry>cmd: alter collection<fig></fig>name: 集合的全称(集合空间.集合)<fig></fig>options: 属性</stentry>
+          <stentry>cmd=alter collection&amp;name=cs.cl&amp;options={ShardingKey:{age:1},ShardingType:"hash"}</stentry>          
+        </strow>
+        <strow>
+          <stentry>说明</stentry>
+          <stentry></stentry>
+          <stentry></stentry>          
+        </strow>
+        <strow>
+          <stentry>响应头</stentry>
+          <stentry>同通用响应头</stentry>
+          <stentry></stentry>          
+        </strow>
+        <strow>
+          <stentry>响应内容</stentry>
+          <stentry>{<fig></fig>errno: 返回值，0表示成功，其他为失败<fig></fig>description: 失败时的错误描述<fig></fig>}
+            
+          </stentry>
+          <stentry>{ "errno": 0 }</stentry>          
+        </strow>
+        <strow>
+          <stentry>说明</stentry>
+          <stentry></stentry>
+          <stentry></stentry>          
+        </strow>
+      </simpletable>      
+    </section>
+    <section><title>表分区</title>
+      <simpletable>
+        <sthead>
+          <stentry></stentry>
+          <stentry>说明</stentry>
+          <stentry>例子</stentry>          
+        </sthead>
+        <strow>
+          <stentry>请求头</stentry>
+          <stentry>同通用请求头</stentry>
+          <stentry></stentry>          
+        </strow>
+        <strow>
+          <stentry>请求内容</stentry>
+          <stentry>cmd: split<fig></fig>name: 集合的全称(集合空间.集合)<fig></fig>source: 源数据组;<fig></fig>target: 目标数据组;<fig></fig>splitpercent: 百分比<fig></fig>splitquery: 开始条件<fig></fig>splitEndQuery: 结束条件</stentry>
+          <stentry>cmd=split&amp;name=cs.cl&amp;source=db1&amp;target=db2&amp;splitpercent=50</stentry>          
+        </strow>
+        <strow>
+          <stentry>说明</stentry>
+          <stentry></stentry>
+          <stentry></stentry>          
+        </strow>
+        <strow>
+          <stentry>响应头</stentry>
+          <stentry>同通用响应头</stentry>
+          <stentry></stentry>          
+        </strow>
+        <strow>
+          <stentry>响应内容</stentry>
+          <stentry>{<fig></fig>errno: 返回值，0表示成功，其他为失败<fig></fig>description: 失败时的错误描述<fig></fig>}
+            
+          </stentry>
+          <stentry>{ "errno": 0 }</stentry>          
+        </strow>
+        <strow>
+          <stentry>说明</stentry>
+          <stentry></stentry>
+          <stentry></stentry>          
+        </strow>
+      </simpletable>      
+    </section>
+    <section><title>列出数据组</title>
+      <simpletable>
+        <sthead>
+          <stentry></stentry>
+          <stentry>说明</stentry>
+          <stentry>例子</stentry>          
+        </sthead>
+        <strow>
+          <stentry>请求头</stentry>
+          <stentry>同通用请求头</stentry>
+          <stentry></stentry>          
+        </strow>
+        <strow>
+          <stentry>请求内容</stentry>
+          <stentry>cmd: list groups</stentry>
+          <stentry>cmd=list groups</stentry>          
+        </strow>
+        <strow>
+          <stentry>说明</stentry>
+          <stentry></stentry>
+          <stentry></stentry>          
+        </strow>
+        <strow>
+          <stentry>响应头</stentry>
+          <stentry>同通用响应头</stentry>
+          <stentry></stentry>          
+        </strow>
+        <strow>
+          <stentry>响应内容</stentry>
+          <stentry>{<fig></fig>errno: 返回值，0表示成功，其他为失败<fig></fig>description: 失败时的错误描述<fig></fig>}<fig></fig>{<fig></fig>返回数据组的内容<fig></fig>}
+                      
+          </stentry>
+          <stentry>{ "errno": 0 }</stentry>          
+        </strow>
+        <strow>
+          <stentry>说明</stentry>
+          <stentry></stentry>
+          <stentry></stentry>          
+        </strow>
+      </simpletable>      
+    </section>
+  </body>
+</topic>
