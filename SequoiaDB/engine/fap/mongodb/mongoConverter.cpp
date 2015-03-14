@@ -106,7 +106,34 @@ INT32 mongoConverter::reConvert( msgBuffer &out, MsgOpReply *reply )
       goto error ;
    }
 
-   if ( OP_CMD_COUNT == _parser.opType || OP_QUERY == _parser.opType )
+   if ( OP_CMD_GET_INDEX == _parser.opType )
+   {
+      if ( SDB_OK != reply->flags )
+      {
+         rc = reply->flags ;
+         goto done ;
+      }
+      else
+      {
+         if ( 0 == reply->numReturned )
+         {
+            MsgOpQuery* query = (MsgOpQuery *)out.data() ;
+            numToReturn = query->numToReturn ;
+            _parser.opType = OP_GETMORE ;
+
+            fap::mongo::buildGetMoreMsg( out ) ;
+            MsgOpReply *msg = ( MsgOpReply *)out.data() ;
+            msg->header.requestID = reply->header.requestID ;
+            msg->contextID = reply->contextID ;
+            msg->numReturned = numToReturn ;
+            goto done ;
+         }
+      }
+   }
+
+   out.zero() ;
+
+   if ( OP_CMD_COUNT == _parser.opType )
    {
       if ( SDB_OK != reply->flags )
       {
@@ -114,24 +141,9 @@ INT32 mongoConverter::reConvert( msgBuffer &out, MsgOpReply *reply )
          goto done ;
       }
 
-      if ( OP_QUERY == _parser.opType )
-      {
-         MsgOpQuery *query = (MsgOpQuery*)out.data() ;
-         numToReturn = query->numToReturn ;
-         _parser.opType = OP_GETMORE ;
-         if ( numToReturn <= 0 && 0 == reply->numReturned && SDB_OK == reply->flags )
-         {
-            out.zero() ;
-            goto done;
-         }
-      }
-      else if ( OP_CMD_COUNT == _parser.opType )
-      {
-         numToReturn = 1 ;
-         _parser.opType = OP_CMD_COUNT_MORE ;
-      }
+      numToReturn = 1 ;
+      _parser.opType = OP_CMD_COUNT_MORE ;
 
-      out.zero() ;
       fap::mongo::buildGetMoreMsg( out ) ;
       MsgOpReply *msg = ( MsgOpReply *)out.data() ;
       msg->header.requestID = reply->header.requestID ;
@@ -140,7 +152,6 @@ INT32 mongoConverter::reConvert( msgBuffer &out, MsgOpReply *reply )
       goto done ;
    }
 
-   out.zero() ;
    // create collection failed
    if ( OP_CMD_CREATE == _parser.opType )
    {

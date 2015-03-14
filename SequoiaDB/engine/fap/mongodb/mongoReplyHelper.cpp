@@ -72,7 +72,7 @@ namespace fap
       }
 
       void buildGetLastErrorReplyMsg( const bson::BSONObj &err,
-                                 engine::rtnContextBuf &buff )
+                                      engine::rtnContextBuf &buff )
       {
          INT32 rc = SDB_OK ;
          bson::BSONObjBuilder bob ;
