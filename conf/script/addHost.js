@@ -412,6 +412,7 @@ function _stopOMAgent( ssh )
    var remoteInstallPath = "" ;
    var progPath          = "" ;
    var str               = "" ;
+   var str2              = "" ;
    
    try
    {
@@ -421,7 +422,35 @@ function _stopOMAgent( ssh )
       {
          progPath = adaptPath( remoteInstallPath ) + OMA_PATH_BIN ;
          str = progPath + OMA_PROG_SDBCMTOP
-         ssh.exec( str ) ;
+         // check whether ~/bin/sdbcmtop exist or not
+         try
+         {
+            str2 = "ls " + str ;
+            ssh.exec( str2 ) ;
+         }
+         catch( e )
+         {
+            // "2" means file does not exist
+            if ( 2 == ssh.getLastRet() )
+            {
+               PD_LOG2( task_id, arguments, PDEVENT, FILE_NAME_ADD_HOST,
+                        sprintf( "Program[?] does not exist in host[?]", str, ssh.getPeerIP() ) ) ;
+               return ;
+            }
+            else
+            {
+               exception_handle( SDB_SYS, ssh.getLastOut() ) ;
+            }
+         }
+         // stop remote sdbcm
+         try
+         {
+            ssh.exec( str ) ;
+         }
+         catch( e )
+         {
+            exception_handle( SDB_SYS, ssh.getLastOut() ) ;
+         }
       }
       else
       {
