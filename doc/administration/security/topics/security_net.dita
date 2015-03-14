@@ -67,5 +67,9 @@
         </li>
       </ul>          
     </section>
+    <section>
+      <title>工具支持</title>      
+      <p>sdbexprt、sdbimprt、sdblobtool、sdbtop 支持 SSL 连接，参见<xref href="../../../administration/database/database_tool/topics/database_tool.dita">数据库工具</xref>。</p>        
+    </section>
   </body>
 </topic>

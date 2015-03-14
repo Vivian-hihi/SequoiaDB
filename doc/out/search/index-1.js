@@ -5919,4 +5919,5 @@ w["collection.getcount"]="656*1";
 w["collection.getlob"]="750*1";
 w["collection.insert"]="655*1,656*1";
 w["collection.listlobs"]="750*1";
+w["collection.putlob"]="750*1";
 
