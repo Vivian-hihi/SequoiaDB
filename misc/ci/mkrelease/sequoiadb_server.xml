@@ -188,6 +188,14 @@
             <group>${username}_group</group>
             <owner>${username}</owner>
         </changeOwnerAndGroup>
+        <deleteFile>
+            <path>/etc/default/sequoiadb</path>
+            <ruleList>
+                <fileExists>
+                    <path>/etc/default/sequoiadb</path>
+                </fileExists>
+            </ruleList>
+        </deleteFile>
         <propertiesFileSet>
             <file>/etc/default/sequoiadb</file>
             <key>NAME</key>
