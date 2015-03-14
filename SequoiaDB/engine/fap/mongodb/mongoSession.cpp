@@ -288,17 +288,22 @@ INT32 _mongoSession::_processMsg( const CHAR *pMsg )
       rc = getProcessor()->processMsg( (MsgHeader *) pMsg,
                                        _contextBuff, _replyHeader.contextID,
                                        _needReply ) ;
+      if ( SDB_OK != rc )
+      {
+         _errorInfo = engine::utilGetErrorBson( rc,
+                      _pEDUCB->getInfo( engine::EDU_INFO_ERROR ) ) ;
+
+         tmp = _errorInfo.getIntField( OP_ERRNOFIELD ) ;
+         // build error msg
+         bob.append( "ok", FALSE ) ;
+         bob.append( "code",  tmp ) ;
+         bob.append( "errmsg", _errorInfo.getStringField( OP_ERRDESP_FIELD) ) ;
+         _contextBuff = engine::rtnContextBuf( bob.obj() ) ;
+      }
       bodyLen = _contextBuff.size() ;
       _replyHeader.numReturned = _contextBuff.recordNum() ;
       _replyHeader.startFrom = (INT32)_contextBuff.getStartFrom() ;
       _replyHeader.flags = rc ;
-      if ( SDB_OK != rc )
-      {
-         // need rebuild error
-         // set bodyLen = 0 to rebuild error bson
-         bodyLen = 0 ;
-      }
-      
    }
 
    // when msg is with $cmd, need to reply

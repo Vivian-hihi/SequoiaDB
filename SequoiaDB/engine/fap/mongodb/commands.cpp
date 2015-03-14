@@ -65,14 +65,21 @@ DECLARE_COMMAND_VAR( listIndexes )
 DECLARE_COMMAND_VAR( getlasterror )
 ///< ismaster
 DECLARE_COMMAND_VAR( ismaster )
-DECLARE_COMMAND_VAR( isMaster )
 
 DECLARE_COMMAND_VAR( ping )
 
-command::command( const CHAR *cmdName )
+command::command( const CHAR *cmdName, const CHAR* secondName )
 {
-   commandMgr::instance()->addCommand( cmdName, this ) ;
-   _cmdName = cmdName ;
+   commandMgr* mgr = commandMgr::instance() ;
+   if ( NULL != mgr )
+   {
+      mgr->addCommand( cmdName, this ) ;
+      _cmdName = cmdName ;
+      if ( NULL != secondName )
+      {
+         mgr->addCommand( secondName, this ) ;
+      }
+   }
 }
 
 commandMgr* commandMgr::instance()
@@ -164,14 +171,22 @@ INT32 insertCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
          rc = SDB_INVALIDARG ;
          goto error ;
       }
-      objList = e.Array() ;
-      cit = objList.begin() ;
-      while ( objList.end() != cit )
       {
-         subObj = (*cit).Obj() ;
-         sdbMsg.write( subObj, TRUE ) ;
-         ++cit ;
+         bson::BSONObjIterator i(e.Obj());
+         while( i.more() )
+         {
+            bson::BSONElement eb = i.next();
+            sdbMsg.write( eb.Obj(), TRUE ) ;
+         }
       }
+      //objList = e.Array() ;
+      //cit = objList.begin() ;
+      //while ( objList.end() != cit )
+      //{
+      //   subObj = (*cit).Obj() ;
+      //   sdbMsg.write( subObj, TRUE ) ;
+      //   ++cit ;
+      //}
    }
    else
    {
@@ -1277,8 +1292,20 @@ INT32 deleteIndexesCommand::convertRequest( mongoParser &parser,
    }
 
    // makeup cs.collection
-   fullname += "." ;
-   fullname += cond.getStringField( "deleteIndexes" ) ;
+   {
+      std::string clname = cond.getStringField( "deleteIndexes" ) ;
+      if ( clname.empty() )
+      {
+         clname = cond.getStringField( "dropIndexes" ) ;
+         if ( clname.empty() )
+         {
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+      }
+      fullname += "." ;
+      fullname += clname ;
+   }
 
    indexObj.append( "", cond.getStringField( "index" ) ) ;
    obj = BSON( "Collection" << fullname.c_str() << "Index" << indexObj.obj() );
@@ -1294,7 +1321,10 @@ INT32 deleteIndexesCommand::convertRequest( mongoParser &parser,
    // fill the msg len of sdb
    header->messageLength = sdbMsg.size() ;
 
+done:
    return rc ;
+error:
+   goto done ;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -1386,13 +1416,6 @@ INT32 getlasterrorCommand::convertRequest( mongoParser &parser,
 //////////////////////////////////////////////////////////////////////////
 ///< ismasterCommand
 INT32 ismasterCommand::convertRequest( mongoParser &parser,
-                                       msgBuffer &sdbMsg )
-{
-   parser.opType = OP_CMD_ISMASTER ;
-   return SDB_OK ;
-}
-
-INT32 isMasterCommand::convertRequest( mongoParser &parser,
                                        msgBuffer &sdbMsg )
 {
    parser.opType = OP_CMD_ISMASTER ;

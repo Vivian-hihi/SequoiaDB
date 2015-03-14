@@ -44,7 +44,7 @@
 class command
 {
 public:
-   command( const CHAR *cmdName ) ;
+   command( const CHAR *cmdName, const char* secondName = NULL ) ;
    virtual ~command() {} ;
 
    const CHAR *name() const
@@ -104,23 +104,26 @@ private:
    std::map< std::string, command *> _cmdMap ;
 } ;
 
-#define __DECLARE_COMMAND( cmd, cmdClass )                           \
+#define __DECLARE_COMMAND( cmd, secondName, cmdClass )               \
 class cmdClass : public command                                      \
 {                                                                    \
 public:                                                              \
-   cmdClass() : command( cmd ) {}                                    \
+   cmdClass() : command( cmd, secondName ) {}                        \
    virtual INT32 convertRequest( mongoParser &parser,                \
                                  msgBuffer &sdbMsgs ) ;              \
 } ;
 
-#define __DECLARE_COMMAND_VAR( commandClass, var )                \
+#define __DECLARE_COMMAND_VAR( commandClass, var )                   \
         commandClass var ;
 
 
-#define DECLARE_COMMAND( command )                                \
-        __DECLARE_COMMAND( #command, command##Command )
+#define DECLARE_COMMAND( command )                                   \
+        __DECLARE_COMMAND( #command, NULL, command##Command )
 
-#define DECLARE_COMMAND_VAR( command )                            \
+#define DECLARE_COMMAND_WITH_SECONDNAME( command, secondName )       \
+        __DECLARE_COMMAND( #command, secondName, command##Command )
+
+#define DECLARE_COMMAND_VAR( command )                               \
         __DECLARE_COMMAND_VAR( command##Command, command##Cmd )
 
 ////////////////////////////////////////////////////////////////
@@ -144,14 +147,13 @@ DECLARE_COMMAND( dropDatabase )
 
 ///< index
 DECLARE_COMMAND( createIndexes )
-DECLARE_COMMAND( deleteIndexes )
+DECLARE_COMMAND_WITH_SECONDNAME( deleteIndexes, "dropIndexes" )
 DECLARE_COMMAND( listIndexes )
 
 ///< getlasterror
 DECLARE_COMMAND( getlasterror )
 ///< ismaster
-DECLARE_COMMAND( ismaster )
-DECLARE_COMMAND( isMaster )
+DECLARE_COMMAND_WITH_SECONDNAME( ismaster, "isMaster" )
 
 DECLARE_COMMAND( ping )
 ///< end of declare commands
