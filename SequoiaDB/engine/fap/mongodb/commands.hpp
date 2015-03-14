@@ -89,14 +89,18 @@ public:
       return cmd ;
    }
 
-private:
+public:
    commandMgr()
    {
       _cmdMap.clear() ;
    }
 
-   ~commandMgr() {}
+   ~commandMgr()
+   {
+      _cmdMap.clear() ;
+   }
 
+private:
    std::map< std::string, command *> _cmdMap ;
 } ;
 
@@ -118,8 +122,6 @@ public:                                                              \
 
 #define DECLARE_COMMAND_VAR( command )                            \
         __DECLARE_COMMAND_VAR( command##Command, command##Cmd )
-
-
 
 ////////////////////////////////////////////////////////////////
 ///< declare all commands supported

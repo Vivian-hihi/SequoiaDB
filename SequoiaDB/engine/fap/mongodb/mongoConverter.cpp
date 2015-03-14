@@ -46,30 +46,36 @@ INT32 mongoConverter::convert( msgBuffer &out )
 
    // convert mongodb msg to sequoiadb msg
    // for all kinds of requests available
-   // 
+   commandMgr *cmdMgr = commandMgr::instance() ;
+   if ( NULL == cmdMgr )
+   {
+      rc = SDB_SYS ;
+      goto error ;
+   }
+
    if ( dbInsert == _parser.opCode )
    {
-      _cmd = commandMgr::instance()->findCommand( "insert" ) ;
+      _cmd = cmdMgr->findCommand( "insert" ) ;
    }
    else if ( dbDelete == _parser.opCode )
    {
-      _cmd = commandMgr::instance()->findCommand( "delete" ) ;
+      _cmd = cmdMgr->findCommand( "delete" ) ;
    }
    else if ( dbUpdate == _parser.opCode )
    {
-      _cmd = commandMgr::instance()->findCommand( "update" ) ;
+      _cmd = cmdMgr->findCommand( "update" ) ;
    }
    else if ( dbQuery == _parser.opCode )
    {
-      _cmd = commandMgr::instance()->findCommand( "query" ) ;
+      _cmd = cmdMgr->findCommand( "query" ) ;
    }
    else if ( dbGetMore == _parser.opCode )
    {
-      _cmd = commandMgr::instance()->findCommand( "getMore" ) ;
+      _cmd = cmdMgr->findCommand( "getMore" ) ;
    }
    else if ( dbKillCursors == _parser.opCode )
    {
-      _cmd = commandMgr::instance()->findCommand( "killCursors" ) ;
+      _cmd = cmdMgr->findCommand( "killCursors" ) ;
    }
 
    if ( NULL == _cmd )
@@ -93,6 +99,12 @@ INT32 mongoConverter::reConvert( msgBuffer &out, MsgOpReply *reply )
 {
    INT32 rc = SDB_OK ;
    INT32 numToReturn = -1 ;
+   commandMgr *cmdMgr = commandMgr::instance() ;
+   if ( NULL == cmdMgr )
+   {
+      rc = SDB_SYS ;
+      goto error ;
+   }
 
    if ( OP_CMD_COUNT == _parser.opType || OP_QUERY == _parser.opType )
    {
@@ -140,7 +152,7 @@ INT32 mongoConverter::reConvert( msgBuffer &out, MsgOpReply *reply )
       if ( SDB_OK != reply->flags && SDB_DMS_CS_NOTEXIST == reply->flags )
       {
          _parser.reparse() ;
-         _cmd = commandMgr::instance()->findCommand( "createCS" ) ;
+         _cmd = cmdMgr->findCommand( "createCS" ) ;
          if ( NULL != _cmd )
          {
             rc = _cmd->convertRequest( _parser, out ) ;
@@ -169,7 +181,7 @@ INT32 mongoConverter::reConvert( msgBuffer &out, MsgOpReply *reply )
 
       // then, try to create collection again
       _parser.reparse() ;
-      _cmd = commandMgr::instance()->findCommand( "create" ) ;
+      _cmd = cmdMgr->findCommand( "create" ) ;
       if ( NULL != _cmd )
       {
          rc = _cmd->convertRequest( _parser, out ) ;

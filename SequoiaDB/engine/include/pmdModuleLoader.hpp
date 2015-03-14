@@ -81,10 +81,6 @@ namespace engine
       _pmdModuleLoader() ;
       virtual ~_pmdModuleLoader() ;
 
-      virtual INT32 init()   { return SDB_OK ; }
-      virtual INT32 active() { return SDB_OK ; }
-      virtual INT32 fini()   { return SDB_OK ; }
-
       INT32 getFunction( const CHAR *funcName,
                          OSS_MODULE_PFUNCTION *function ) ;
       INT32 create ( IPmdAccessProtocol *&protocol ) ;

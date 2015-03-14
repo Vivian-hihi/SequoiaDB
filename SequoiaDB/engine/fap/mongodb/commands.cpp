@@ -81,8 +81,7 @@ commandMgr* commandMgr::instance()
    return &mgr ;
 }
 
-namespace fap
-{
+namespace fap {
    static bson::BSONObj emptyObj ;
 }
 

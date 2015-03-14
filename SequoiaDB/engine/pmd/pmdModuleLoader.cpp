@@ -84,8 +84,6 @@ namespace engine
 
    void _pmdModuleLoader::unload()
    {
-      fini() ;
-
       if ( NULL != _loadModule )
       {
          SDB_OSS_DEL _loadModule ;
