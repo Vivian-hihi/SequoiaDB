@@ -20,7 +20,7 @@
 @modify list:
    2014-7-26 Zhaobo Tan  Init
 @parameter
-   BUS_JSON: the format is: {"SdbUser":"sdbadmin","SdbPasswd":"sdbadmin","SdbUserGroup":"sdbadmin_group","InstallPacket":"/opt/sequoiadb/packet/sequoiadb-1.10-linux_x86_64-installer.run","HostInfo":{"IP":"192.168.20.42","HostName":"susetzb","User":"root","Passwd":"sequoiadb","SshPort":"22","AgentService":"11790","InstallPath":"/opt/sequoiadb"} } ;
+   BUS_JSON: the format is: {"SdbUser":"sdbadmin","SdbPasswd":"sdbadmin","SdbUserGroup":"sdbadmin_group","InstallPacket":"/opt/sequoiadb/packet/sequoiadb-1.12-linux_x86_64-installer.run","HostInfo":{"IP":"192.168.20.42","HostName":"susetzb","User":"root","Passwd":"sequoiadb","SshPort":"22","AgentService":"11790","InstallPath":"/opt/sequoiadb"} } ;
    SYS_JSON: task id, the format is: { "TaskID":1 } ;
    ENV_JSON: {}
    OTHER_JSON: {}
@@ -38,8 +38,8 @@ var host_ip            = "" ;
 var host_name          = "" ;
 var task_id            = 0 ;
 
-var remote_precheck_result_file = "" ;
-var result_file                 = "" ;
+var remote_check_result_file = "" ;
+var result_file              = "" ;
 
 var progs = null ;
 var spts  = [ "error.js", "common.js", "define.js", "log.js",
@@ -83,7 +83,7 @@ function _init()
    // 3. set local and remote pre-check result file name
    if( SYS_LINUX == SYS_TYPE )
    {
-      remote_precheck_result_file = OMA_FILE_TEMP_ADD_HOST_CHECK ;
+      remote_check_result_file = OMA_FILE_TEMP_ADD_HOST_CHECK ;
       try
       {
          result_file = adaptPath( System.getEWD() ) + "../conf/log/addHostCheckEnvResult" ;
@@ -196,24 +196,28 @@ function _getLocalDBPacketMD5( install_packet )
 @parameter
    ssh[object]: Ssh object
    install_packet[string]: local db install packet
+   install_sdb_user[string]: remote db install sdb user
    install_path[string]: remote db install path
+   agentService[string]: the service of remote sdbcm
 @return
    [bool]: true for need to install while false for not
 ***************************************************************************** */
-function _needToAdd( ssh, install_packet, install_path )
+function _needToAdd( ssh, install_packet, install_sdb_user, install_path, agentService )
 {
    /*
    1. pre-check
    2. get pre-check result
    3. analysis
    */
-   var obj            = null ;
-   var remote_md5     = "" ;
-   var local_md5      = "" ;
-   var isProgramExist = false ;
-   var str            = "" ;
-   var retMsg         = "" ;
-   var js_files       = "" ;
+   var obj                 = null ;
+   var remote_md5          = "" ;
+   var remote_sdb_user     = "" ;
+   var remote_install_path = "" ;
+   var local_md5           = "" ;
+   var isProgramExist      = false ;
+   var str                 = "" ;
+   var retMsg              = "" ;
+   var js_files            = "" ;
    
    if ( SYS_LINUX == SYS_TYPE )
    {
@@ -259,12 +263,12 @@ function _needToAdd( ssh, install_packet, install_path )
    // 2. get pre-check result
    try
    {
-      ssh.pull( remote_precheck_result_file, result_file ) ;
+      ssh.pull( remote_check_result_file, result_file ) ;
    }
    catch( e )
    {
       SYSEXPHANDLE( e ) ;
-      errMsg = sprintf( "Add host pre-check's result does not exist in host[?], rc: ?, detail: ?",
+      errMsg = sprintf( "Add host check environment's result does not exist in host[?], rc: ?, detail: ?",
                         ssh.getPeerIP(), GETLASTERROR(), GETLASTERRMSG() ) ;
       PD_LOG2( task_id, arguments, PDWARNING, FILE_NAME_ADD_HOST, errMsg ) ;
       return true ;
@@ -274,21 +278,50 @@ function _needToAdd( ssh, install_packet, install_path )
    // check whether remote install packet's md5 is the same with local one or not
    try
    {
-      // TODO: need to rename
       obj = eval( "(" + Oma.getOmaConfigs( result_file )  + ")" ) ;
-      remote_md5 = obj[MD5] ;
-      isProgramExist = obj[ISPROGRAMEXIST] ;
-      if ( "string" != typeof(remote_md5) && 32 != remote_md5.length )
+      remote_md5          = obj[MD5] ;
+      remote_sdb_user     = obj[SDBADMIN_USER] ;
+      remote_install_path = obj[INSTALL_DIR] ;
+      remote_oma_service  = obj[OMA_SERVICE] ;
+      isProgramExist      = obj[ISPROGRAMEXIST] ;
+      
+      // MD5
+      if ( "string" != typeof(remote_md5) || 32 != remote_md5.length )
       {
-         PD_LOG2( task_id, arguments, PDWARNING,
-                  sprintf("Remote install packet's md5[?] is invalid", remote_md5) ) ;
+         PD_LOG2( task_id, arguments, PDWARNING, FILE_NAME_ADD_HOST,
+                  sprintf( "Remote install info's md5 is [?], it's invalid", remote_md5 ) ) ;
          return true ;
       }
-      if ( ( "string" == typeof(isProgramExist ) && "true" != isProgramExist ) ||
+      // SdbUser
+      if ( "string" != typeof(remote_sdb_user) || install_sdb_user != remote_sdb_user )
+      {
+         PD_LOG2( task_id, arguments, PDWARNING, FILE_NAME_ADD_HOST,
+                  sprintf( "Remote SdbUser is[?], not the same with the one[?] we" +
+                           " are going to install", remote_sdb_user, install_sdb_user ) ) ;
+         return true ;
+      }
+      // install path
+      if ( "string" != typeof(remote_install_path) || install_path != remote_install_path )
+      {
+         PD_LOG2( task_id, arguments, PDWARNING, FILE_NAME_ADD_HOST,
+                  sprintf( "Remote install path is[?], not the same with the one[?] we" +
+                           " are going to install", remote_install_path, install_path ) ) ;
+         return true ;
+      }
+      // agentService
+      if ( "string" != typeof(remote_oma_service) || agentService != remote_oma_service )
+      {
+         PD_LOG2( task_id, arguments, PDWARNING, FILE_NAME_ADD_HOST,
+                  sprintf( "Remote OM Agent's service is[?], not the same with the one[?] we" +
+                           " are going to install", remote_oma_service, agentService ) ) ;
+         return true ;
+      }
+      // whether programs exist or not
+      if ( ( "string" == typeof(isProgramExist ) && "true" != isProgramExist ) && "TRUE" != isProgramExist ||
            ( "boolean" == typeof(isProgramExist ) && true != isProgramExist ) )
       {
          PD_LOG2( task_id, arguments, PDWARNING, FILE_NAME_ADD_HOST,
-                  "Remote installed db programs are incomplete" ) ;
+                  "Remote installed SequoiaDB programs are incomplete" ) ;
          return true ;
       }
    }
@@ -312,8 +345,8 @@ function _needToAdd( ssh, install_packet, install_path )
    }
    if ( local_md5 != remote_md5 )
    {
-      errMsg = sprintf( "Local db packet's md5: ?, remote db packet's md5: ?, need to install",
-                        local_md5, remote_md5 ) ;
+      errMsg = sprintf( "Remote install info's md5[?] is not the same with the one[?] we " +
+                        "are going to install", remote_md5, local_md5 ) ;
       PD_LOG2( task_id, arguments, PDWARNING, FILE_NAME_ADD_HOST, errMsg ) ;
       return true ;
    }
@@ -342,8 +375,10 @@ function _pushDBPacket( ssh, packet )
       try
       {
          // installer.run
-         src = packet;
+         src = packet ;
          dest = OMA_PATH_TEMP_PACKET_DIR + packetName ;
+         PD_LOG2( task_id, arguments, PDDEBUG, FILE_NAME_ADD_HOST,
+                  sprintf( "src is: [?], dest is: [?]", src, dest ) ) ;
          ssh.push( src, dest ) ;
          cmd = "chmod a+x " + OMA_PATH_TEMP_PACKET_DIR + packetName ;
          ssh.exec( cmd ) ;
@@ -361,6 +396,46 @@ function _pushDBPacket( ssh, packet )
    else
    {
       // TODO: tanzhaobo
+   }
+}
+
+/* *****************************************************************************
+@discretion: push install packet to remote host
+@author: Tanzhaobo
+@parameter
+   ssh[object]: Ssh object
+@return void
+***************************************************************************** */
+function _stopOMAgent( ssh )
+{
+   var remoteOMAInfoObj  = null ;
+   var remoteInstallPath = "" ;
+   var progPath          = "" ;
+   var str               = "" ;
+   
+   try
+   {
+      remoteOMAInfoObj  = eval( '(' + Oma.getOmaConfigs( result_file ) + ')' ) ;
+      remoteInstallPath = remoteOMAInfoObj[INSTALL_DIR] ;
+      if ( OMA_LINUX == SYS_TYPE )
+      {
+         progPath = adaptPath( remoteInstallPath ) + OMA_PATH_BIN ;
+         str = progPath + OMA_PROG_SDBCMTOP
+         ssh.exec( str ) ;
+      }
+      else
+      {
+         // TODO: windows
+      }
+   }
+   catch( e )
+   {
+      SYSEXPHANDLE( e ) ;
+      rc = GETLASTERROR() ;
+      errMsg = sprintf( "Failed to stop OM Agent in host[?]", ssh.getPeerIP() ) ;
+      PD_LOG2( task_id, arguments, PDERROR, FILE_NAME_ADD_HOST,
+               sprintf( errMsg + ", rc: ?, detail: ?", rc, GETLASTERRMSG() ) ) ;
+      exception_handle( rc, errMsg ) ;
    }
 }
 
@@ -529,18 +604,30 @@ function main()
    pushProgAndSpt( ssh, progs, spts ) ;
 
    // 5. check whether need to add current host or not
-   flag = _needToAdd( ssh, installPacket, installPath ) ;
+   flag = _needToAdd( ssh, installPacket, sdbUser, installPath, agentService ) ;
    if ( false == flag ) 
    {
       PD_LOG2( task_id, arguments, PDEVENT, FILE_NAME_ADD_HOST,
                sprintf( "The same kind of SequoiaDB has been installed" +
                         " in target host[?], no need to install", ip) ) ;
+      try
+      {
+         removeTmpDir2( ssh ) ;
+      }
+      catch( e )
+      {
+      }
       _final() ;
       return RET_JSON ;
    }
-
-   PD_LOG2( task_id, arguments, PDEVENT, FILE_NAME_ADD_HOST,
-            sprintf( "Need to install SequoiaDB in target host[?]", ip ) ) ;
+   else
+   {
+      PD_LOG2( task_id, arguments, PDEVENT, FILE_NAME_ADD_HOST,
+               sprintf( "Need to install SequoiaDB in target host[?]", ip ) ) ;
+      PD_LOG2( task_id, arguments, PDEVENT, FILE_NAME_ADD_HOST,
+               sprintf( "Try to stop OM Agent in target host[?]", ip ) ) ;
+      _stopOMAgent( ssh ) ;
+   }
 
    // 6. push db packet to remote host
    _pushDBPacket( ssh, installPacket ) ;
@@ -573,7 +660,7 @@ function main()
    // 8. remove temporary directory in remote host
    try
    {
-      removeTmpDir2( ssh )
+      removeTmpDir2( ssh ) ;
    }
    catch( e )
    {

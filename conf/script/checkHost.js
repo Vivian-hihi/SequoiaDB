@@ -233,9 +233,10 @@ function _getOMAInfo()
                {
                   SYSEXPHANDLE( e ) ;
                   rc = GETLASTERROR() ;
-                  errMsg = GETLASTERRMSG() ;
-                  setLastError( rc ) ;
-                  setLastErrmsg( errMsg ) ;
+                  errMsg = sprintf( "Failed to get SequoiaDB install info in host[?]",
+                                    System.getHostName() ) ;
+                  PD_LOG( arguments, PDERROR, FILE_NAME_CHECK_HOST,
+                          sprintf( errMsg + ", rc: ?, detail: ?", rc, GETLASTERRMSG() ) ) ;
                   exception_handle( rc, errMsg ) ;
                }
             }

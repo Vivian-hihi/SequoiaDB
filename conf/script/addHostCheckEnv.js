@@ -32,6 +32,18 @@ var errMsg             = "" ;
 var result_file        = OMA_FILE_TEMP_ADD_HOST_CHECK ;
 var expect_programs    = null ;
 
+function OMAOption()
+{
+   this.role   = "cm" ;
+   this.mode   = "run" ;
+   this.expand = true ;
+}
+
+function OMAFilter()
+{
+   this.type   = "sdbcm" ;
+}
+
 /* *****************************************************************************
 @discretion: init
 @author: Tanzhaobo
@@ -49,7 +61,7 @@ function _init()
       // TODO: windows
    }
    PD_LOG2( LOG_NONE, arguments, PDEVENT, FILE_NAME_ADD_HOST_CHECK_ENV,
-            "Begin to pre-check add host" ) ;
+            sprintf( "Begin to check add host[?]'s environment", System.getHostName() ) ) ;
 }
 
 /* *****************************************************************************
@@ -61,48 +73,7 @@ function _init()
 function _final()
 {
    PD_LOG2( LOG_NONE, arguments, PDEVENT, FILE_NAME_ADD_HOST_CHECK_ENV,
-            "Finish pre-checking add host" ) ;
-}
-
-/* *****************************************************************************
-@discretion: get installed db packet's md5 code
-@author: Tanzhaobo
-@parameter void
-@return
-   md5code[string]:
-***************************************************************************** */
-function _getMD5()
-{
-   var md5code = "" ;
-   var obj = null ;
-
-   if ( SYS_LINUX == SYS_TYPE )
-   {
-      try
-      {
-         if ( !File.exist( OMA_FILE_INSTALL_INFO ) )
-            exception_handle( SDB_SYS, sprintf( "File[?] not exist", OMA_FILE_INSTALL_INFO ) ) ;
-         // TODO: need to rename
-         obj = eval( "(" + Oma.getOmaConfigs( OMA_FILE_INSTALL_INFO ) + ")" ) ;
-         md5code = obj[MD5] ;
-      }
-      catch( e )
-      {
-         SYSEXPHANDLE( e ) ;
-         errMsg = sprintf( "Failed to get installed SequoiaDB's md5 in host[?]",
-                           System.getHostName() ) ;
-         rc = GETLASTERROR() ;
-         PD_LOG2( LOG_NONE, arguments, PDWARNING, FILE_NAME_ADD_HOST_CHECK_ENV,
-                  sprintf( errMsg + ", rc: ?, detail: ?", rc, GETLASTERRMSG() ) ) ;
-         exception_handle( rc, errMsg ) ;
-      }
-   }
-   else
-   {
-      // TODO: windows
-   }
-
-   return md5code ;
+            sprintf( "Finish checking add host[?]'s environment", System.getHostName() ) ) ;
 }
 
 /* *****************************************************************************
@@ -145,7 +116,7 @@ function _isProgramExist()
    catch( e )
    {
       SYSEXPHANDLE( e ) ;
-      errMsg = "Failed to judge whether program exist or not" ;
+      errMsg = "Failed to judge whether programs exist or not" ;
       rc = GETLASTERROR() ;
       PD_LOG2( LOG_NONE, arguments, PDERROR, FILE_NAME_ADD_HOST_CHECK_ENV,
                sprintf( errMsg + ", rc: ?, detail: ?", rc, GETLASTERRMSG() ) ) ;
@@ -157,40 +128,110 @@ function _isProgramExist()
 function main()
 {
    _init() ;
-   var str  = "" ;
-   var md5  = "" ;
-   var flag = false ;
-   var file = null ;
-   // 1. get md5
-   try
-   {
-      md5 = _getMD5() ; 
-   }
-   catch( e )
-   {
-      md5 = "" ;
-   }
-   // 2. judge programs exist or not
-   flag = _isProgramExist() ;
 
-   // 3. write the result to file
+   var resultInfo     = new addHostCheckEnvResult() ;
+   var installInfoObj = null ;
+   var option         = null ;
+   var filter         = null ;
+   
    try
    {
-      if ( File.exist( result_file ) )
-         File.remove( result_file ) ;
-      file = new File( result_file ) ;
-      str = MD5 + "=" + md5 + OMA_NEW_LINE ;
-      file.write( str ) ;
-      str = ISPROGRAMEXIST + "=" + flag ;
-      file.write( str ) ;
-      file.close() ;
+      // get SequoiaDB install info
+      try
+      {
+         installInfoObj = getInstallInfoObj() ;
+         resultInfo[MD5]           = installInfoObj[MD5] ;
+         resultInfo[SDBADMIN_USER] = installInfoObj[SDBADMIN_USER] ;
+         resultInfo[INSTALL_DIR]   = installInfoObj[INSTALL_DIR] ;
+      }
+      catch( e )
+      {
+         SYSEXPHANDLE( e ) ;
+         rc = GETLASTERROR() ;
+         errMsg = sprintf( "Failed to get install info in host[?]", System.getHostName() ) ;
+         PD_LOG2( LOG_NONE, arguments, PDWARNING, FILE_NAME_ADD_HOST_CHECK_ENV,
+                  sprintf( errMsg + ", rc: ?, detail: ?", rc, GETLASTERRMSG() ) ) ;
+         resultInfo[MD5]           = "" ;
+         resultInfo[SDBADMIN_USER] = "" ;
+         resultInfo[INSTALL_DIR]   = "" ;
+      }
+
+      // get installed sdbcm's service
+      try
+      {
+         var num = 0 ;
+         option = new OMAOption() ;
+         filter = new OMAFilter() ;
+         if ( "undefined" != typeof(installInfoObj) && null != installInfoObj )
+         {
+            installPath =  adaptPath( installInfoObj[INSTALL_DIR] ) + OMA_PATH_BIN ;
+            omaArr = Sdbtool.listNodes( option, filter, installPath ) ;
+            num = omaArr.size() ;
+            PD_LOG2( LOG_NONE, arguments, PDEVENT, FILE_NAME_ADD_HOST_CHECK_ENV,
+                     sprintf( "The amount of running OM Agent in host[?] is [?]", System.getHostName(), num ) ) ;
+            if ( 0 != num )
+            {
+               omaObj = eval( '(' + omaArr.pos() + ')' ) ;
+               resultInfo[OMA_SERVICE] = omaObj[SvcName2] ;
+            }
+            else
+            {
+               option["mode"] = "local" ;
+               // when no running sdbcm, get the amount of local sdbcm
+               omaArr = Sdbtool.listNodes( option, filter, installPath ) ;
+               num = omaArr.size() ;
+               PD_LOG2( LOG_NONE, arguments, PDEVENT, FILE_NAME_ADD_HOST_CHECK_ENV,
+                        sprintf( "The amount of local OM Agent in host[?] is [?]",
+                                 System.getHostName(), num ) ) ;
+               if ( 0 != num )
+               {
+                  omaObj = eval( '(' + omaArr.pos() + ')' ) ;
+                  resultInfo[OMA_SERVICE] = omaObj[SvcName2] ;
+               }
+            }
+         }
+      }
+      catch( e )
+      {
+         SYSEXPHANDLE( e ) ;
+         rc = GETLASTERROR() ;
+         errMsg = sprintf( "Failed to get installed OM Agent's service in host[?]", System.getHostName() ) ;
+         PD_LOG2( LOG_NONE, arguments, PDWARNING, FILE_NAME_ADD_HOST_CHECK_ENV,
+                 sprintf( errMsg + ", rc: ?, detail: ?", rc, GETLASTERRMSG() ) ) ;
+         resultInfo[OMA_SERVICE] = "" ;
+      }
+
+      // 2. judge programs exist or not
+      resultInfo[ISPROGRAMEXIST] = _isProgramExist() ;
+      
+      PD_LOG2( LOG_NONE, arguments, PDEVENT, FILE_NAME_ADD_HOST_CHECK_ENV,
+               sprintf( "Result is: ?", JSON.stringify(resultInfo) ) ) ;
+
+      // 3. write the result to file
+      try
+      {
+         if ( File.exist( result_file ) )
+            File.remove( result_file ) ;
+         file = new File( result_file ) ;
+         file.close() ;
+         Oma.setOmaConfigs( resultInfo, result_file )
+      }
+      catch( e )
+      {
+         SYSEXPHANDLE( e ) ;
+         rc = GETLASTERROR() ;
+         errMsg = sprintf( "Failed to write result to file[?] in host[?]",
+                           result_file, System.getHostName() ) ;
+         PD_LOG2( LOG_NONE, arguments, PDERROR, FILE_NAME_ADD_HOST_CHECK_ENV,
+                  sprintf( errMsg + ", rc: ?, detail: ?", rc, GETLASTERRMSG() ) ) ;
+         exception_handle( rc, errMsg ) ;
+      }
    }
    catch( e )
    {
       SYSEXPHANDLE( e ) ;
       rc = GETLASTERROR() ;
-      errMsg = sprintf( "Failed to write pre-check result to file[?] in host[?]",
-                        result_file, System.getHostName() ) ;
+      errMsg = sprintf( "Failed to check add host[?]'s environment", System.getHostName() ) ;
       PD_LOG2( LOG_NONE, arguments, PDERROR, FILE_NAME_ADD_HOST_CHECK_ENV,
                sprintf( errMsg + ", rc: ?, detail: ?", rc, GETLASTERRMSG() ) ) ;
       exception_handle( rc, errMsg ) ;

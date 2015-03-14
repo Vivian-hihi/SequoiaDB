@@ -51,6 +51,15 @@ function postCheckResult()
    this.IP                        = "" ;
 }
 
+function addHostCheckEnvResult()
+{
+   this.MD5                       = "" ;
+   this.SDBADMIN_USER             = "" ;
+   this.INSTALL_DIR               = "" ;
+   this.OMA_SERVICE               = "" ;
+   this.ISPROGRAMEXIST            = false ;
+}
+
 function addHostResult()
 {
    this.errno                     = SDB_OK ;
@@ -140,4 +149,5 @@ function checkSAInfo()
    this.usertag                   = "" ;
    this.svcname                   = "" ;
 }
+
 

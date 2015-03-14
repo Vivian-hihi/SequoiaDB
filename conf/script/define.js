@@ -133,11 +133,12 @@ var INSTALL_DIR                            = "INSTALL_DIR" ;
 var CLUSTERNAME                            = "CLUSTERNAME" ;
 var BUSINESSNAME                           = "BUSINESSNAME" ;
 var USERTAG                                = "USERTAG" ;
+var SDBADMIN_USER                          = "SDBADMIN_USER" ;
+var OMA_SERVICE                            = "OMA_SERVICE" ;
 
 var Errno                                  = "errno" ;
 var Detail                                 = "detail" ;
 var Task                                   = "task" ;
-var SDBADMIN_USER                          = "SDBADMIN_USER" ;
 
 var CatalogAddr2                           = "catalogaddr" ;
 var SvcName2                               = "svcname" ;
@@ -179,6 +180,7 @@ var OMA_FILE_INSTALL_INFO                  = "/etc/default/sequoiadb" ;
 var OMA_PROG_BIN_SDBCM                     = "bin/sdbcm" ;
 var OMA_PROG_SDBCMD                        = "sdbcmd" ;
 var OMA_PROG_SDBCMART                      = "sdbcmart" ;
+var OMA_PROG_SDBCMTOP                      = "sdbcmtop" ;
 var OMA_PROG_UNINSTALL                     = "uninstall" ;
 
 // misc
