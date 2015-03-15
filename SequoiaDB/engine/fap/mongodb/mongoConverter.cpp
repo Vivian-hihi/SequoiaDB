@@ -106,30 +106,30 @@ INT32 mongoConverter::reConvert( msgBuffer &out, MsgOpReply *reply )
       goto error ;
    }
 
-   if ( OP_CMD_GET_INDEX == _parser.opType )
-   {
-      if ( SDB_OK != reply->flags )
-      {
-         rc = reply->flags ;
-         goto done ;
-      }
-      else
-      {
-         if ( 0 == reply->numReturned )
-         {
-            MsgOpQuery* query = (MsgOpQuery *)out.data() ;
-            numToReturn = query->numToReturn ;
-            _parser.opType = OP_GETMORE ;
+//   if ( OP_CMD_GET_INDEX == _parser.opType )
+//   {
+//      if ( SDB_OK != reply->flags )
+//      {
+//         rc = reply->flags ;
+//         goto done ;
+//      }
+//      else
+//      {
+//         MsgOpQuery* query = (MsgOpQuery *)out.data() ;
+//         numToReturn = query->numToReturn ;
 
-            fap::mongo::buildGetMoreMsg( out ) ;
-            MsgOpReply *msg = ( MsgOpReply *)out.data() ;
-            msg->header.requestID = reply->header.requestID ;
-            msg->contextID = reply->contextID ;
-            msg->numReturned = numToReturn ;
-            goto done ;
-         }
-      }
-   }
+//         if ( 0 == reply->numReturned && numToReturn > 0 )
+//         {
+//            out.zero() ;
+//            fap::mongo::buildGetMoreMsg( out ) ;
+//            MsgOpReply *msg = ( MsgOpReply *)out.data() ;
+//            msg->header.requestID = reply->header.requestID ;
+//            msg->contextID = reply->contextID ;
+//            msg->numReturned = numToReturn ;
+//            goto done ;
+//         }
+//      }
+//   }
 
    out.zero() ;
 

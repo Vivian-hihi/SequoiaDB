@@ -444,12 +444,28 @@ INT32 _mongoSession::_reply( MsgOpReply *replyHeader,
 
    if ( reply.nReturned > 1 )
    {
-      while ( offset < len )
-      {
-         bsonBody.init( pBody + offset ) ;
-         _outBuffer.write( bsonBody.objdata(), bsonBody.objsize() ) ;
-         offset += ossRoundUpToMultipleX( bsonBody.objsize(), 4 ) ;
-      }
+//      if ( OP_CMD_GET_INDEX == _converter->getOpType() )
+//      {
+//         reply.nReturned = 1 ;
+//         bob.append( "ok", reply.header._flags ? 0 : 1 ) ;
+//         bson::BSONArrayBuilder bab;
+//         while ( offset < len )
+//         {
+//            bsonBody.init( pBody + offset ) ;
+//            bab.append( bsonBody );
+//         }
+//         bob.append( "indexes", bab.arr() ) ;
+//      }
+//      else
+//      {
+         while ( offset < len )
+         {
+            bsonBody.init( pBody + offset ) ;
+            _outBuffer.write( bsonBody.objdata(), bsonBody.objsize() ) ;
+            offset += ossRoundUpToMultipleX( bsonBody.objsize(), 4 ) ;
+         }
+//      }
+
       pBody = _outBuffer.data() ;
       reply.header.len = sizeof( mongoMsgReply ) + _outBuffer.size() ;
    }
@@ -474,8 +490,7 @@ INT32 _mongoSession::_reply( MsgOpReply *replyHeader,
       }
       else
       {
-         if ( OP_GETMORE != _converter->getOpType() &&
-              OP_QUERY != _converter->getOpType() )
+         if ( OP_GETMORE != _converter->getOpType() )
          {
             bob.append( "ok", 1.0 ) ;
             objToSend = bob.obj() ;
@@ -555,6 +570,7 @@ BOOLEAN _mongoSession::_preProcessMsg( const mongoParser &parser,
       _replyHeader.header.requestID     = parser.id ;
       _replyHeader.header.TID           = 0 ;
       _replyHeader.header.routeID.value = 0 ;
+      _replyHeader.flags         = SDB_OK ;
    }
 
    return handled ;
