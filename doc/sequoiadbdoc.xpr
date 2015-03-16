@@ -634,13 +634,17 @@
             </folder>
             <folder name="postgresql_integration">
                 <folder name="topics">
+                    <file name="integration/postgresql_integration/topics/connection_en.dita"/>
                     <file name="integration/postgresql_integration/topics/connection.dita"/>
+                    <file name="integration/postgresql_integration/topics/deployment_en.dita"/>
                     <file name="integration/postgresql_integration/topics/deployment.dita"/>
+                    <file name="integration/postgresql_integration/topics/development_en.dita"/>
                     <file name="integration/postgresql_integration/topics/development.dita"/>
                     <file name="integration/postgresql_integration/topics/SequoiadbPostgresql_en.dita"/>
                     <file name="integration/postgresql_integration/topics/SequoiadbPostgresql.dita"/>
                 </folder>
                 <folder name="use"/>
+                <file name="integration/postgresql_integration/pginter_en.dita"/>
                 <file name="integration/postgresql_integration/pginter_en.ditamap"/>
                 <file name="integration/postgresql_integration/pginter.dita"/>
                 <file name="integration/postgresql_integration/pginter.ditamap"/>

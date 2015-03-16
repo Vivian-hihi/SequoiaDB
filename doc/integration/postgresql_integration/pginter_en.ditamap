@@ -1,5 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE map PUBLIC "-//OASIS//DTD DITA Map//EN" "map.dtd">
 <map>
- <title>DITA Topic Map</title>
+ <title>与 PostgreSQL 集成</title>
+ <topicref href="../postgresql_integration/pginter_en.dita">
+  <topicref href="../postgresql_integration/topics/SequoiadbPostgresql_en.dita"/>
+  <topicref href="../postgresql_integration/topics/deployment_en.dita"/>
+  <topicref href="../postgresql_integration/topics/connection_en.dita"/>
+  <topicref href="../postgresql_integration/topics/development_en.dita"/>
+ </topicref> 
 </map>
+
