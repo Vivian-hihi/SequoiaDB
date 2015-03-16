@@ -8,7 +8,7 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="node.connect()"/>
-<meta name="description" content="NAME connect - Connect the database to the current node. SYNOPSIS node.connect () CATEGORY Node DESCRIPTION Connect the database to the current node. After connecting them, users can execute a set of ..."/>
+<meta name="description" content="NAME connect - Connect the database to the current node. SYNOPSIS node.connect ([secure]) CATEGORY Node DESCRIPTION Connect the database to the current node. Use SSL connection if secure is true, ..."/>
 <meta name="DC.Relation" scheme="URI" content="../../../references/methods/topics_en_v2/methodlist_en_v2.html"/>
 <meta name="DC.Relation" scheme="URI" content="node.stop.html"/>
 <meta name="DC.Relation" scheme="URI" content="node.getHostName.html"/>
@@ -47,7 +47,7 @@
     <div class="section"><h2 class="title sectiontitle">SYNOPSIS</h2>
       
       <p class="p"/>
-<span class="keyword apiname">node.connect</span>()
+<span class="keyword apiname">node.connect</span>([secure])
     </div>
 
     <div class="section"><h2 class="title sectiontitle">CATEGORY</h2>
@@ -58,9 +58,7 @@ Node
 
     <div class="section"><h2 class="title sectiontitle">DESCRIPTION</h2>
        
-      <p class="p">Connect the database to the current node. After connecting them, users can execute a set of
-        operations. Users can check relative manipulations with the method
-        "node.connect().help()".</p>
+      <p class="p">Connect the database to the current node. Use SSL connection if secure is true, default false. After connecting them, users can execute a set of operations. Users can check relative manipulations with the method "node.connect().help()".</p>
             
     </div>
     

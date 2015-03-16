@@ -1,0 +1,118 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html lang="en-us" xml:lang="en-us">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<meta name="copyright" content="(C) Copyright 2005"/>
+<meta name="DC.rights.owner" content="(C) Copyright 2005"/>
+<meta name="DC.Type" content="topic"/>
+<meta name="DC.Title" content="开发"/>
+<meta name="description" content="使用java客户端连接PostgreSQL 修改PostgreSQL的连接配置 1) 修改PostgreSQL的监听地址 $&gt;sed -i &#34;s/#listen_addresses = 'localhost'/listen_addresses = '0.0.0.0'/g&#34; pg_data/postgresql.conf 2) 修改信任的机器列表 $&gt;linenum=$(cat -n ..."/>
+<meta name="DC.Format" content="XHTML"/>
+<meta name="DC.Identifier" content="topic_tnk_hsv_xl"/>
+<link rel="stylesheet" type="text/css" href="../../../commonltr.css"/>
+<link rel="stylesheet" type="text/css" href="../../../assets/webhelp_topic.css"/>
+<title>开发</title>
+<script type="text/javascript" src="../../../assets/jquery-1.3.2.js"> </script><script type="text/javascript" src="../../../assets/jquery-ui-1.8.2.custom.min.js"> </script><script type="text/javascript" src="../../../assets/frames_redirect.js"> </script><script type="text/javascript"><!--
+    var prefix = "../../../../index.html";
+    var ratingFile = "";
+    redirectToToc(window.location.search);
+    function highlightSearchTerm(){
+        if(parent.termsToHighlight != null){
+        // highlight each term in the content view  
+          for(i = 0 ; i < parent.termsToHighlight.length ; i++){        
+              $('*', window.parent.frames[1].document).highlight(parent.termsToHighlight[i]);
+          }
+        }
+    }
+//--></script></head>
+<body onload="highlightSearchTerm()" id="topic_tnk_hsv_xl"><a name="topic_tnk_hsv_xl"><!-- --></a>
+<table class="nav"><tbody><tr><td><div class="navheader"><span class="frames" onclick="redirectFrames(location.pathname)"><script type="text/javascript"><!--
+  if (parent.window.location.pathname == window.location.pathname ) document.write('With Frames');                    
+                    --></script></span></div></td><td width="50%"/></tr></tbody></table>
+
+  <h1 class="title topictitle1">开发</h1>
+
+  <div class="body">
+    <p class="p">使用java客户端连接PostgreSQL</p>
+
+    <div class="section" id="topic_tnk_hsv_xl__modifiy_configuration"><a name="topic_tnk_hsv_xl__modifiy_configuration"><!-- --></a><h2 class="title sectiontitle">修改PostgreSQL的连接配置</h2>
+      
+      <p class="p">1) 修改PostgreSQL的监听地址</p>
+
+      <pre class="pre codeblock">$&gt;sed -i "s/#listen_addresses = 'localhost'/listen_addresses = '0.0.0.0'/g" pg_data/postgresql.conf</pre>
+
+      <p class="p">2) 修改信任的机器列表</p>
+
+      <pre class="pre codeblock">$&gt;linenum=$(cat -n pg_data/pg_hba.conf | grep "# IPv4 local connections:" | awk '{print $1}'); \
+let "linenum=linenum+1";varStr="host   all            all            0.0.0.0/0              trust"; \
+sed -i "${linenum} a${varStr}" pg_data/pg_hba.conf;</pre>
+
+      <p class="p">3) 重启PostgreSQL</p>
+
+      <pre class="pre codeblock">$&gt;bin/pg_ctl stop -s -D pg_data/ -m fast; bin/postgres -D pg_data/ &gt;&gt; logfile 2&gt;&amp;1 &amp;</pre>
+
+    </div>
+
+    <div class="section" id="topic_tnk_hsv_xl__sample_code"><a name="topic_tnk_hsv_xl__sample_code"><!-- --></a><h2 class="title sectiontitle">JDBC连接程序</h2>
+      
+      <pre class="pre codeblock">package com.sequoiadb.sample;
+import java.sql.*;
+public class postgresql_sample {
+   static{
+       try {
+           Class.forName"org.postgresql.Driver");
+       } catch (ClassNotFoundException e) {
+           e.printStackTrace();
+       }
+   }
+   public static void main( String[] args ) throws SQLException{
+      String pghost = "192.168.30.182";
+      String port = "5432";
+      String databaseName = "foo";
+      // postgresql process is running in which user
+      String pgUser = "sdbadmin";
+      String url = "jdbc:postgresql://"+pghost+":"+port+"/" + databaseName;
+      Connection conn = DriverManager.getConnection(url, pgUser, null);
+      Statement stmt = conn.createStatement();
+      String sql = "select * from sdb_upcase_field ";
+      ResultSet rs = stmt.executeQuery(sql);
+      boolean isHeaderPrint = false;
+      while (rs.next()) {
+           ResultSetMetaData md = rs.getMetaData();
+           int col_num = md.getColumnCount();
+           if (isHeaderPrint){
+               for (int i = 1; i  &lt;= col_num; i++) {
+                   System.out.print(md.getColumnName(i) + "|");
+                   isHeaderPrint = true;
+               }
+           }
+           for (i = 1; i &lt;= col_num; i++) {
+               System.out.print(rs.getString(i) + "|");
+           }
+           System.out.println();
+       }
+       stmt.close();
+       conn.close();
+   }
+}</pre>
+
+    </div>
+
+  </div>
+
+<div class="navfooter"><script type="text/javascript"><!--         
+    function expand(){
+        parent.tocwin.expandToTopic(window.location.href, this.getAttribute('href'));
+    }
+    var aArray = document.getElementsByTagName('a');
+    var i;
+    for (i = 0; i< aArray.length; i++){
+      aArray[i].onclick = expand;
+    }
+//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.11
+          
+    </div>
+</body>
+</html>
