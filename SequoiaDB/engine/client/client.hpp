@@ -2565,7 +2565,7 @@ namespace sdbclient
 */
       _sdb *pSDB ;
 
-/** \fn sdb()
+/** \fn sdb ( BOOLEAN useSSL = FALSE )
     \brief Default constructor.
     \param [in] useSSL Set whether use the SSL or not, default is FALSE.
 */
