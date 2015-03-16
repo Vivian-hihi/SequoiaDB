@@ -1,7 +1,7 @@
 var searchData=
 [
   ['sdb',['sdb',['../classsdbclient_1_1sdb.html',1,'sdbclient']]],
-  ['sdb',['sdb',['../classsdbclient_1_1sdb.html#a16b2e22380557fac09a3d332fe765935',1,'sdbclient::sdb::sdb()'],['../namespacesdbclient.html#a99cf535a285417143fe203b80bab27e7',1,'sdbclient::sdb()']]],
+  ['sdb',['sdb',['../namespacesdbclient.html#a99cf535a285417143fe203b80bab27e7',1,'sdbclient']]],
   ['sdb_5flob_5fcreateonly',['SDB_LOB_CREATEONLY',['../client_8hpp.html#ab325438708db06790ad8bc61f3ab9990a3d615de5227b528e3d0f1ec2f30a654d',1,'client.hpp']]],
   ['sdb_5flob_5fread',['SDB_LOB_READ',['../client_8hpp.html#ab325438708db06790ad8bc61f3ab9990a933574507f86ae84dc2e8c8eee2e3c5b',1,'client.hpp']]],
   ['sdb_5flob_5fseek_5fcur',['SDB_LOB_SEEK_CUR',['../client_8hpp.html#af77505dd6aeb8e9158f66f01f60ba37aabc01f3f0d8f8ae95d519854301181e9b',1,'client.hpp']]],
@@ -11,8 +11,8 @@ var searchData=
   ['sdbclient',['sdbclient',['../namespacesdbclient.html',1,'']]],
   ['sdbcollection',['sdbCollection',['../classsdbclient_1_1sdbCollection.html',1,'sdbclient']]],
   ['sdbcollection',['sdbCollection',['../classsdbclient_1_1sdbCollection.html#a736a05798f38ea0ed987fd0171684add',1,'sdbclient::sdbCollection']]],
-  ['sdbcollectionspace',['sdbCollectionSpace',['../classsdbclient_1_1sdbCollectionSpace.html',1,'sdbclient']]],
   ['sdbcollectionspace',['sdbCollectionSpace',['../classsdbclient_1_1sdbCollectionSpace.html#a096f7f5ea3e9f7f385fd6e9f7f56ca27',1,'sdbclient::sdbCollectionSpace']]],
+  ['sdbcollectionspace',['sdbCollectionSpace',['../classsdbclient_1_1sdbCollectionSpace.html',1,'sdbclient']]],
   ['sdbcursor',['sdbCursor',['../classsdbclient_1_1sdbCursor.html',1,'sdbclient']]],
   ['sdbcursor',['sdbCursor',['../classsdbclient_1_1sdbCursor.html#a82bee251ec1076c461be6c0b13230c67',1,'sdbclient::sdbCursor']]],
   ['sdbdomain',['sdbDomain',['../classsdbclient_1_1sdbDomain.html',1,'sdbclient']]],

@@ -101,10 +101,9 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a16b2e22380557fac09a3d332fe765935"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a16b2e22380557fac09a3d332fe765935"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdb.html#a16b2e22380557fac09a3d332fe765935">sdb</a> ()</td></tr>
-<tr class="memdesc:a16b2e22380557fac09a3d332fe765935"><td class="mdescLeft">&#160;</td><td class="mdescRight">Default constructor. <br/></td></tr>
-<tr class="separator:a16b2e22380557fac09a3d332fe765935"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7c26ae782954127646013a4cce8bc9e0"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a7c26ae782954127646013a4cce8bc9e0"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>sdb</b> (BOOLEAN useSSL=FALSE)</td></tr>
+<tr class="separator:a7c26ae782954127646013a4cce8bc9e0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a29075dbfd22146fc8090fb1a1609b5f9"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a29075dbfd22146fc8090fb1a1609b5f9"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdb.html#a29075dbfd22146fc8090fb1a1609b5f9">~sdb</a> ()</td></tr>
 <tr class="memdesc:a29075dbfd22146fc8090fb1a1609b5f9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destructor. <br/></td></tr>
@@ -253,12 +252,11 @@ INT32&#160;</td><td class="memItemRight" valign="bottom"><b>listProcedures</b> (
 <tr class="memitem:a5a2fa83aaae147419194df4cd9df9a86"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdb.html#a5a2fa83aaae147419194df4cd9df9a86">listProcedures</a> (<a class="el" href="classsdbclient_1_1sdbCursor.html">sdbCursor</a> &amp;cursor, const bson::BSONObj &amp;condition)</td></tr>
 <tr class="memdesc:a5a2fa83aaae147419194df4cd9df9a86"><td class="mdescLeft">&#160;</td><td class="mdescRight">list store procedures.  <a href="#a5a2fa83aaae147419194df4cd9df9a86"></a><br/></td></tr>
 <tr class="separator:a5a2fa83aaae147419194df4cd9df9a86"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:addedc70eadc484dd680bce3a4f2902e0"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="addedc70eadc484dd680bce3a4f2902e0"></a>
-INT32&#160;</td><td class="memItemRight" valign="bottom"><b>evalJS</b> (<a class="el" href="classsdbclient_1_1__sdbCursor.html">_sdbCursor</a> **cursor, const CHAR *code, SDB_SPD_RES_TYPE *type, const bson::BSONObj &amp;errmsg)</td></tr>
-<tr class="separator:addedc70eadc484dd680bce3a4f2902e0"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:afe6d396da0d2bfd5e7ce595e69b38f70"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdb.html#afe6d396da0d2bfd5e7ce595e69b38f70">evalJS</a> (<a class="el" href="classsdbclient_1_1sdbCursor.html">sdbCursor</a> &amp;cursor, const CHAR *code, SDB_SPD_RES_TYPE *type, const bson::BSONObj &amp;errmsg)</td></tr>
-<tr class="memdesc:afe6d396da0d2bfd5e7ce595e69b38f70"><td class="mdescLeft">&#160;</td><td class="mdescRight">eval a func. \ type is declared in spd.h. see SDB_FMP_RES_TYPE.  <a href="#afe6d396da0d2bfd5e7ce595e69b38f70"></a><br/></td></tr>
-<tr class="separator:afe6d396da0d2bfd5e7ce595e69b38f70"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afa33050899faf27050bbb0d5b0e6018c"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdb.html#afa33050899faf27050bbb0d5b0e6018c">evalJS</a> (const CHAR *code, SDB_SPD_RES_TYPE &amp;type, <a class="el" href="classsdbclient_1_1__sdbCursor.html">_sdbCursor</a> **cursor, bson::BSONObj &amp;errmsg)</td></tr>
+<tr class="separator:afa33050899faf27050bbb0d5b0e6018c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abc9c9d7c1f822a10d5cee978d0ff4be4"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="abc9c9d7c1f822a10d5cee978d0ff4be4"></a>
+INT32&#160;</td><td class="memItemRight" valign="bottom"><b>evalJS</b> (const CHAR *code, SDB_SPD_RES_TYPE &amp;type, <a class="el" href="classsdbclient_1_1sdbCursor.html">sdbCursor</a> &amp;cursor, bson::BSONObj &amp;errmsg)</td></tr>
+<tr class="separator:abc9c9d7c1f822a10d5cee978d0ff4be4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1ab7c326d10a759bf2922f708baa7d16"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdb.html#a1ab7c326d10a759bf2922f708baa7d16">backupOffline</a> (const bson::BSONObj &amp;options)</td></tr>
 <tr class="memdesc:a1ab7c326d10a759bf2922f708baa7d16"><td class="mdescLeft">&#160;</td><td class="mdescRight">Backup the whole database or specifed replica group.  <a href="#a1ab7c326d10a759bf2922f708baa7d16"></a><br/></td></tr>
 <tr class="separator:a1ab7c326d10a759bf2922f708baa7d16"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -1257,7 +1255,7 @@ AutoSplit: If this option is set to be true, while creating collection(ShardingT
 
 </div>
 </div>
-<a class="anchor" id="afe6d396da0d2bfd5e7ce595e69b38f70"></a>
+<a class="anchor" id="afa33050899faf27050bbb0d5b0e6018c"></a>
 <div class="memitem">
 <div class="memproto">
 <table class="mlabels">
@@ -1267,25 +1265,25 @@ AutoSplit: If this option is set to be true, while creating collection(ShardingT
         <tr>
           <td class="memname">INT32 sdbclient::sdb::evalJS </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classsdbclient_1_1sdbCursor.html">sdbCursor</a> &amp;&#160;</td>
-          <td class="paramname"><em>cursor</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
           <td class="paramtype">const CHAR *&#160;</td>
           <td class="paramname"><em>code</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">SDB_SPD_RES_TYPE *&#160;</td>
+          <td class="paramtype">SDB_SPD_RES_TYPE &amp;&#160;</td>
           <td class="paramname"><em>type</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const bson::BSONObj &amp;&#160;</td>
+          <td class="paramtype"><a class="el" href="classsdbclient_1_1__sdbCursor.html">_sdbCursor</a> **&#160;</td>
+          <td class="paramname"><em>cursor</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bson::BSONObj &amp;&#160;</td>
           <td class="paramname"><em>errmsg</em>&#160;</td>
         </tr>
         <tr>
@@ -1300,8 +1298,7 @@ AutoSplit: If this option is set to be true, while creating collection(ShardingT
   </tr>
 </table>
 </div><div class="memdoc">
-
-<p>eval a func. \ type is declared in spd.h. see SDB_FMP_RES_TYPE. </p>
+<p>INT32 evalJS( const CHAR *code, SDB_SPD_RES_TYPE &amp;type, <a class="el" href="classsdbclient_1_1__sdbCursor.html">_sdbCursor</a> **cursor, bson::BSONObj &amp;errmsg ) brief eval a func. \ type is declared in spd.h. see SDB_FMP_RES_TYPE. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">code</td><td>The code to eval </td></tr>
@@ -2730,7 +2727,7 @@ Name        : Assign the backups with specifed name to be remove
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Feb 13 2015 18:53:57 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Mon Mar 16 2015 10:33:18 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.2
 </small></address>

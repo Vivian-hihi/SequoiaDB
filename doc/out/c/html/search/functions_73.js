@@ -37,6 +37,7 @@ var searchData=
   ['sdbexplain',['sdbExplain',['../client_8h.html#a38c2547605239b6f0c5ba892b8f4ff6b',1,'client.h']]],
   ['sdbflushconfigure',['sdbFlushConfigure',['../client_8h.html#a6f3ffe9a71e0cc872a4025b1a0b80d84',1,'client.h']]],
   ['sdbforcesession',['sdbForceSession',['../client_8h.html#afab1c20c215205d0233e5173a9c52a6b',1,'client.h']]],
+  ['sdbforcestepup',['sdbForceStepUp',['../client_8h.html#a59d49e845a277e677faffd5278dbb230',1,'client.h']]],
   ['sdbgetcollection',['sdbGetCollection',['../client_8h.html#ab971237aa48c3d373d8a553848bd8060',1,'client.h']]],
   ['sdbgetcollection1',['sdbGetCollection1',['../client_8h.html#a3f4e5edd958ca1e1accceaaebbe0fab9',1,'client.h']]],
   ['sdbgetcollectionspace',['sdbGetCollectionSpace',['../client_8h.html#adfd02cc33e7dcc38d53c8c06f0b43e99',1,'client.h']]],

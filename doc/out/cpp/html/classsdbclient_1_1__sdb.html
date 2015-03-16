@@ -243,12 +243,12 @@ virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>listProcedur
 <tr class="memitem:abae9f6fc67c0ef3fc3082b30147d38f5"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="abae9f6fc67c0ef3fc3082b30147d38f5"></a>
 virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>listProcedures</b> (<a class="el" href="classsdbclient_1_1sdbCursor.html">sdbCursor</a> &amp;cursor, const bson::BSONObj &amp;condition)=0</td></tr>
 <tr class="separator:abae9f6fc67c0ef3fc3082b30147d38f5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad4292ebed959d906a1f1639061f67f05"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ad4292ebed959d906a1f1639061f67f05"></a>
-virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>evalJS</b> (<a class="el" href="classsdbclient_1_1__sdbCursor.html">_sdbCursor</a> **cursor, const CHAR *code, SDB_SPD_RES_TYPE *type, const bson::BSONObj &amp;errmsg)=0</td></tr>
-<tr class="separator:ad4292ebed959d906a1f1639061f67f05"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a300280d780b9563b082d323735067826"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a300280d780b9563b082d323735067826"></a>
-virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>evalJS</b> (<a class="el" href="classsdbclient_1_1sdbCursor.html">sdbCursor</a> &amp;cursor, const CHAR *code, SDB_SPD_RES_TYPE *type, const bson::BSONObj &amp;errmsg)=0</td></tr>
-<tr class="separator:a300280d780b9563b082d323735067826"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a40df598619313a93ecbac89c5c3b63e6"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a40df598619313a93ecbac89c5c3b63e6"></a>
+virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>evalJS</b> (const CHAR *code, SDB_SPD_RES_TYPE &amp;type, <a class="el" href="classsdbclient_1_1__sdbCursor.html">_sdbCursor</a> **cursor, bson::BSONObj &amp;errmsg)=0</td></tr>
+<tr class="separator:a40df598619313a93ecbac89c5c3b63e6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac3eb379ead6aaa7f9a4a1c078359ce61"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac3eb379ead6aaa7f9a4a1c078359ce61"></a>
+virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>evalJS</b> (const CHAR *code, SDB_SPD_RES_TYPE &amp;type, <a class="el" href="classsdbclient_1_1sdbCursor.html">sdbCursor</a> &amp;cursor, bson::BSONObj &amp;errmsg)=0</td></tr>
+<tr class="separator:ac3eb379ead6aaa7f9a4a1c078359ce61"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aae2373e4a2d86a89dc142df5950033dd"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aae2373e4a2d86a89dc142df5950033dd"></a>
 virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>backupOffline</b> (const bson::BSONObj &amp;options)=0</td></tr>
 <tr class="separator:aae2373e4a2d86a89dc142df5950033dd"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -309,9 +309,9 @@ virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>listDomains<
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
-<tr class="memitem:ad7181ea46a96424b126b69b7530491a3"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ad7181ea46a96424b126b69b7530491a3"></a>
-static <a class="el" href="classsdbclient_1_1__sdb.html">_sdb</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>getObj</b> ()</td></tr>
-<tr class="separator:ad7181ea46a96424b126b69b7530491a3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae618df924586bb328da316c6ea5d6e9c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae618df924586bb328da316c6ea5d6e9c"></a>
+static <a class="el" href="classsdbclient_1_1__sdb.html">_sdb</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>getObj</b> (BOOLEAN useSSL=FALSE)</td></tr>
+<tr class="separator:ae618df924586bb328da316c6ea5d6e9c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <hr/>The documentation for this class was generated from the following file:<ul>
 <li>E:/sequoiadb/client/include/<a class="el" href="client_8hpp_source.html">client.hpp</a></li>
@@ -319,7 +319,7 @@ static <a class="el" href="classsdbclient_1_1__sdb.html">_sdb</a> *&#160;</td><t
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Feb 13 2015 18:53:57 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Mon Mar 16 2015 10:33:18 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.2
 </small></address>
