@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
+<topic id="topic_4vr_2sp_fm">
+  <title>Integration with 3rd party components</title>
+  <body>
+    <p>This section describe the concept and method to integrate SequoiaDB with 3rd party
+      components, including Hadoop, Spark and PostgreSQL.</p>
+  </body>
+</topic>

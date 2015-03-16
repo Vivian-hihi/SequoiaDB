@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
+<topic id="topic_phl_b4v_xl">
+  <title>与 PostgreSQL 集成</title>
+  <body>
+    <p>PostgreSQL是一款开源的关系型数据库，支持标准SQL，用户可以通过JDBC驱动连接PostgreSQL进行应用程序开发。用户通过扩展PostgreSQL功能，让开发者可以使用SQL语句访问SequoiaDB数据库，完成SequoiaDB数据库的增、删、查、改操作。</p>
+    <ul>
+      <li><xref href="./topics/SequoiadbPostgresql.dita">SequoiaDB 支持的 PostgreSQL 版本列表</xref></li>
+      <li><xref href="./topics/deployment.dita">部署</xref></li>
+      <li><xref href="./topics/connection.dita">连接</xref></li>
+      <li><xref href="./topics/development.dita">开发</xref></li>
+    </ul>
+  </body>
+</topic>

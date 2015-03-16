@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
+<topic id="topic_tnk_hsv_xl">
+  <title>连接</title>
+  <body>
+    <p>以下操作均在PostgreSQL shell 环境下执行。</p>
+    <section id="establish_connection">
+      <title>PostgreSQL与SequoiaDB建立关联</title>
+      <p>1) 加载SequoiaDB连接驱动</p>
+      <codeblock>foo=# create extension sdb_fdw;</codeblock>
+      <p>2) 配置与SequoiaDB连接参数</p>
+      <codeblock>foo=# create server sdb_server foreign data wrapper sdb_fdw options(address '127.0.0.1', service '11810', user 'sdbadmin', password 'mypassword');</codeblock>
+      <note>如果没有配置数据库密码验证，可以忽略user与password字段。</note>
+      <p>3) 关联SequoiaDB的集合空间与集合</p>
+      <codeblock>foo=# create foreign table test (name text, id numeric) server sdb_server options ( collectionspace 'chen', collection 'test' ) ;</codeblock>
+      <note>
+        <p>集合空间与集合必须已经存在于SequoiaDB，否则查询出错。</p>
+        <p>默认情况下，表的字段映射到SequoiaDB中为小写字符，如果强制指定字段为大写字符，创建方式参考注意事项1。</p>
+        <p>映射SequoiaDB 的数组类型，创建方式参考注意事项2。</p></note>
+      <p>4) 查询</p>
+      <codeblock>foo=# select * from test;</codeblock>
+      <p>5) 写入数据</p>
+      <codeblock>foo=# insert into test values('one',3);</codeblock>
+      <p>6) 更改数据</p>
+      <codeblock>foo=# update test set id=9 where name='one';</codeblock>
+      <p>7) 查看所有的表(show tables;)</p>
+      <codeblock>foo=# \d</codeblock>
+      <p>8) 查看表的描述信息</p>
+      <codeblock>foo=# \d test</codeblock>
+      <p>9) 删除表</p>
+      <codeblock>foo=# drop foreign table test;</codeblock>
+      <p>10) 退出PostgreSQL shell环境</p>
+      <codeblock>foo=# \q</codeblock>
+    </section>
+    <section id="usage_notice">
+      <title>使用须知</title>
+      <p>1) 数据类型的对应关系</p>
+      <simpletable>
+        <sthead>
+          <stentry>SequoiaDB</stentry>
+          <stentry>PostgreSQL</stentry>
+        </sthead>
+        <strow>
+          <stentry>string</stentry>
+          <stentry>text</stentry>
+        </strow>
+        <strow>
+          <stentry>int/double/long</stentry>
+          <stentry>numeric</stentry>
+        </strow>
+        <strow>
+          <stentry>date</stentry>
+          <stentry>date</stentry>
+        </strow>
+        <strow>
+          <stentry>timestamp</stentry>
+          <stentry>timestamp</stentry>
+        </strow>
+        <strow>
+          <stentry>array</stentry>
+          <stentry>TYPE[]</stentry>
+        </strow>
+        <strow>
+          <stentry>boolean</stentry>
+          <stentry>boolean</stentry>
+        </strow>
+        <strow>
+          <stentry>null</stentry>
+          <stentry>text</stentry>
+        </strow>
+      </simpletable>
+      <p>2) 注意事项</p>
+      <p>2.1) 注意字符的大小写</p>
+      <p>SequoiaDB 中的集合空间、集合和字段名均对字母的大小写敏感。</p>
+      <p>2.1.1) 集合空间、集合名大写</p>
+      <p>假设SequoiaDB 中存在名为TEST的集合空间，CHEN的集合，在PostgreSQL中建立相应的映射表：</p>
+      <codeblock>foo=# create foreign table sdb_upcase_cs_cl (name text) server sdb_server options ( collectionspace 'TEST', collection 'CHEN' ) ;</codeblock>
+      <p>2.1.2) 字段名大写</p>
+      <p>假设SequoiaDB 中存在名为foo的集合空间，bar的集合，而且保存的数据为：</p>
+      <codeblock>{
+ "_id": {
+   "$oid":"53a2a0e100e75e2c53000006"
+ },
+ "NAME": "test"
+ }</codeblock>
+      <p>在PostgreSQL中建立相应的映射表：</p>
+      <codeblock>foo=# create foreign table sdb_upcase_field (“NAME” text) server sdb_server options ( collectionspace 'foo', collection 'bar' ) ;</codeblock>
+      <p>执行查询命令：</p>
+      <codeblock>foo=# select * from sdb_upcase_field;</codeblock>
+      <p>查询结果为：</p>
+      <codeblock>NAME
+------
+ test
+ (1 rows)</codeblock>
+      <p>2.2) 映射SequoiaDB中的数据类型</p>
+      <p>假设SequoiaDB中存在foo集合空间，bar集合，保存记录为：</p>
+      <codeblock>{
+ "_id": {
+    "$oid":"53a2de926b4715450a000001"
+ },
+ "name": [
+   1,
+   2,
+   3
+ ],
+ "id": 123
+ }</codeblock>
+      <p>在PostgreSQL 中建立相应的映射表：</p>
+      <codeblock>foo=# create foreign table bartest (name numeric[], id numeric) server sdb_server options ( collectionspace 'foo', collection 'bar' ) ;</codeblock>
+      <p>执行查询命令：</p>
+      <codeblock>foo=# select * from bartest;</codeblock>
+      <p>查询结果：</p>
+      <codeblock> name  | id
+---------+-----
+{1,2,3} | 123</codeblock>
+      <p>2.3) 连接SequoiaDB 协调节点错误</p>
+      <p>如果PostgreSQL连接的SequoiaDB 协调节点重启，在查询时报错：</p>
+      <codeblock>ERROR: Unable to get collection "chen.test", rc = -15
+HINT: Make sure the collectionspace and collection exist on the remote database</codeblock>
+      <p>解决方法：</p>
+      <p>退出PostgreSQL shell</p>
+      <codeblock>foo=# \q</codeblock>
+      <p>重新进入PostgreSQL shell</p>
+      <codeblock>$> bin/psql -p 5432 foo</codeblock>
+    </section>
+    <section id = "usage">
+      <title>调整PostgreSQL配置文件</title>
+      <p>1) 查看pg_shell中默认的配置：</p>
+      <codeblock>foo=#\set
+AUTOCOMMIT = 'on'
+PROMPT1 = '%/%R%# '
+PROMPT2 = '%/%R%# '
+PROMPT3 = '>> '
+VERBOSITY = 'default'
+VERSION = 'PostgreSQL 9.3.4 on x86_64-unknown-linux-gnu, compiled by gcc (SUSE Linux) 4.3.4 [gcc-4_3-branch revision 152973], 64-bit'
+DBNAME = 'foo'
+USER = 'sdbadmin'
+PORT = '5432'
+ENCODING = 'UTF8'</codeblock>
+      <p>2) 调整pg_shell查询时，每次获取记录数</p>
+      <codeblock>foo=#\set FETCH_COUNT 100</codeblock>
+      <note>
+        <p>调整为每次ps_shell每次获取100 条记录立即返回记录，然后再继续获取。</p>
+        <p>直接在pg_shell中修改配置文件，只能在当前pg_shell中生效，重新登录pg_shell需要重新设置。</p>
+      </note>
+      <p>3) 修改配置文件，调整pg_shell查询时，每次获取记录数</p>
+      <codeblock>$> ${PG_HOME}/bin/pg_config -sysconfdir</codeblock>
+      <p>结果为：</p>
+      <codeblock>/opt/sequoiadb/pgsql/etc</codeblock>
+      <note>
+        <p>如果显示目录不存在，自己手动创建即可。</p>
+        <codeblock>$> mkdir -p /opt/sequoiadb/pgsql/etc</codeblock>
+      </note>
+      <p>将需要修改的参数写入配置文件中：</p>
+      <codeblock>$>echo "\\set FETCH_COUNT 100" >> /opt/sequoiadb/pgsql/etc/psqlrc</codeblock>
+      <p>4) 调整pg_shell的日志级别</p>
+      <codeblock>$>sed -i 's/#client_min_messages = notice/client_min_messages = debug1/g' pg_data/postgresql.conf</codeblock>
+      <p>5) 调整pg引擎的日志级别</p>
+      <codeblock>$>sed -i 's/#log_min_messages = warning/log_min_messages = debug1/g' pg_data/postgresql.conf</codeblock>
+    </section>
+  </body>
+</topic>

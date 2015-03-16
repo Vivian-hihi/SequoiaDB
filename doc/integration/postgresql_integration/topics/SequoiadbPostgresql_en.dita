@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
+<topic id="topic_p1r_lpv_xl">
+  <title>Supported Releases for PostgreSQL</title>
+  <body>   
+    <ul id="sequoiadb_postgresqls">
+      <li>PostgreSQL 9.3.4</li>
+      <li>PostgreSQL 9.3.5</li>
+      <li>PostgreSQL 9.3.6</li>
+      <li>PostgreSQL 9.4.0</li>
+      <li>PostgreSQL 9.4.1</li>
+    </ul>
+  </body>
+</topic>

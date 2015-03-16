@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
+<topic id="topic_v3z_m5v_xl">
+  <title>第三方模块组件集成</title>
+  <body>
+    <p>与 Hadoop 、Spark、PostgreSQL等模块的集成相关内容。</p>
+  </body>
+</topic>
