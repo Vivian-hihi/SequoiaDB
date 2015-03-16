@@ -5,7 +5,7 @@
     <anchorref href="administration/concepts/concepts.ditamap"/>
     <anchorref href="installation/installation.ditamap"/>
     <anchorref href="administration/administration.ditamap"/>
-    <anchorref href="hadoop_integration/hadoop.ditamap"/>
+    <anchorref href="integration/integration.ditamap"/>
     <anchorref href="developement/developement.ditamap"/>
     <anchorref href="references/references.ditamap"/>
 </map>

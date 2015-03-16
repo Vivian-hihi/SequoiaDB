@@ -473,53 +473,6 @@
             <file name="developement/developement.ditamap"/>
         </folder>
         <folder name="downloads"/>
-        <folder name="hadoop_integration">
-            <folder name="hive_integration">
-                <folder name="topics">
-                    <file name="hadoop_integration/hive_integration/topics/configmethod_en.dita"/>
-                    <file name="hadoop_integration/hive_integration/topics/configmethod.dita"/>
-                    <file name="hadoop_integration/hive_integration/topics/Sequoiadbhive_en.dita"/>
-                    <file name="hadoop_integration/hive_integration/topics/Sequoiadbhive.dita"/>
-                </folder>
-                <folder name="use">
-                    <folder name="topics">
-                        <file name="hadoop_integration/hive_integration/use/create_en.dita"/>
-                        <file name="hadoop_integration/hive_integration/use/create.dita"/>
-                        <file name="hadoop_integration/hive_integration/use/inquiry_en.dita"/>
-                        <file name="hadoop_integration/hive_integration/use/inquiry.dita"/>
-                        <file name="hadoop_integration/hive_integration/use/insert_en.dita"/>
-                        <file name="hadoop_integration/hive_integration/use/insert.dita"/>
-                    </folder>
-                    <file name="hadoop_integration/hive_integration/use/use_en.dita"/>
-                    <file name="hadoop_integration/hive_integration/use_en.ditamap"/>
-                    <file name="hadoop_integration/hive_integration/use/use.dita"/>
-                    <file name="hadoop_integration/hive_integration/use.ditamap"/>
-                </folder>
-                <file name="hadoop_integration/hive_integration/hive_en.ditamap"/>
-                <file name="hadoop_integration/hive_integration/hive.ditamap"/>
-                <file name="hadoop_integration/hive_integration/hiveinter_en.dita"/>
-                <file name="hadoop_integration/hive_integration/hiveinter.dita"/>
-            </folder>
-            <folder name="images">
-                <file name="hadoop_integration/images/hadoop_en.jpg"/>
-                <file name="hadoop_integration/images/hadoop.jpg"/>
-            </folder>
-            <folder name="pig">
-                <file name="hadoop_integration/pig/pig_en.dita"/>
-                <file name="hadoop_integration/pig/pig.dita"/>
-            </folder>
-            <folder name="tasks"/>
-            <folder name="topics">
-                <file name="hadoop_integration/topics/hadoop_en.dita"/>
-                <file name="hadoop_integration/topics/hadoop.dita"/>
-                <file name="hadoop_integration/topics/map_reduce_en.dita"/>
-                <file name="hadoop_integration/topics/map_reduce.dita"/>
-            </folder>
-            <file name="hadoop_integration/hadoop_en.ditamap"/>
-            <file name="hadoop_integration/hadoop.ditamap"/>
-            <file name="hadoop_integration/hadooproot_en.dita"/>
-            <file name="hadoop_integration/hadooproot.dita"/>
-        </folder>
         <folder name="installation">
             <folder name="configuration_start">
                 <folder name="images"/>
@@ -647,6 +600,63 @@
             </folder>
             <file name="installation/installation_en.ditamap"/>
             <file name="installation/installation.ditamap"/>
+        </folder>
+        <folder name="integration">
+            <folder name="hive_integration">
+                <folder name="topics">
+                    <file name="integration/hive_integration/topics/configmethod_en.dita"/>
+                    <file name="integration/hive_integration/topics/configmethod.dita"/>
+                    <file name="integration/hive_integration/topics/Sequoiadbhive_en.dita"/>
+                    <file name="integration/hive_integration/topics/Sequoiadbhive.dita"/>
+                </folder>
+                <folder name="use">
+                    <folder name="topics">
+                        <file name="integration/hive_integration/use/create_en.dita"/>
+                        <file name="integration/hive_integration/use/create.dita"/>
+                        <file name="integration/hive_integration/use/inquiry_en.dita"/>
+                        <file name="integration/hive_integration/use/inquiry.dita"/>
+                        <file name="integration/hive_integration/use/insert_en.dita"/>
+                        <file name="integration/hive_integration/use/insert.dita"/>
+                    </folder>
+                    <file name="integration/hive_integration/use/use_en.dita"/>
+                    <file name="integration/hive_integration/use_en.ditamap"/>
+                    <file name="integration/hive_integration/use/use.dita"/>
+                    <file name="integration/hive_integration/use.ditamap"/>
+                </folder>
+                <file name="integration/hive_integration/hive_en.ditamap"/>
+                <file name="integration/hive_integration/hive.ditamap"/>
+                <file name="integration/hive_integration/hiveinter_en.dita"/>
+                <file name="integration/hive_integration/hiveinter.dita"/>
+            </folder>
+            <folder name="images">
+                <file name="integration/images/hadoop_en.jpg"/>
+                <file name="integration/images/hadoop.jpg"/>
+            </folder>
+            <folder name="postgresql_integration">
+                <folder name="topics">
+                    <file name="integration/postgresql_integration/topics/connection.dita"/>
+                    <file name="integration/postgresql_integration/topics/deployment.dita"/>
+                    <file name="integration/postgresql_integration/topics/development.dita"/>
+                    <file name="integration/postgresql_integration/topics/SequoiadbPostgresql_en.dita"/>
+                    <file name="integration/postgresql_integration/topics/SequoiadbPostgresql.dita"/>
+                </folder>
+                <folder name="use"/>
+                <file name="integration/postgresql_integration/pginter_en.ditamap"/>
+                <file name="integration/postgresql_integration/pginter.dita"/>
+                <file name="integration/postgresql_integration/pginter.ditamap"/>
+            </folder>
+            <folder name="spark_integration"/>
+            <folder name="tasks"/>
+            <folder name="topics">
+                <file name="integration/topics/hadoop_en.dita"/>
+                <file name="integration/topics/hadoop.dita"/>
+                <file name="integration/topics/map_reduce_en.dita"/>
+                <file name="integration/topics/map_reduce.dita"/>
+            </folder>
+            <file name="integration/hadooproot_en.dita"/>
+            <file name="integration/hadooproot.dita"/>
+            <file name="integration/integration_en.ditamap"/>
+            <file name="integration/integration.ditamap"/>
         </folder>
         <folder name="introduction">
             <folder name="images">
