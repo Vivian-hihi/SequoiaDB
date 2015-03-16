@@ -2040,8 +2040,8 @@ SDB_EXPORT INT32 sdbListLobPieces( sdbCollectionHandle cHandle,
 SDB_EXPORT INT32 sdbReelect( sdbReplicaGroupHandle cHandle,
                              const bson *options ) ;
 
-/** \fn INT32 sdbStepUp( sdbConnectionHandle cHandle,
- *                       const bson *options )
+/** \fn INT32 sdbForceStepUp( sdbConnectionHandle cHandle,
+ *                            const bson *options )
  *  \param [in] cHandle The connection handle
  *  \param [in] options The options of step up
  *  \retval SDB_OK Operation Success
