@@ -301,11 +301,11 @@ function _needToAdd( ssh, install_packet, install_sdb_user, install_path, agentS
          return true ;
       }
       // install path
-      if ( "string" != typeof(remote_install_path) || install_path != remote_install_path )
+      if ( "string" != typeof(remote_install_path) || adaptPath(install_path) != adaptPath(remote_install_path) )
       {
          PD_LOG2( task_id, arguments, PDWARNING, FILE_NAME_ADD_HOST,
                   sprintf( "Remote install path is[?], not the same with the one[?] we" +
-                           " are going to install", remote_install_path, install_path ) ) ;
+                           " are going to install", adaptPath(install_path), adaptPath(remote_install_path) ) ) ;
          return true ;
       }
       // agentService
@@ -396,6 +396,75 @@ function _pushDBPacket( ssh, packet )
    else
    {
       // TODO: tanzhaobo
+   }
+}
+
+/* *****************************************************************************
+@discretion: push install packet to remote host
+@author: Tanzhaobo
+@parameter
+   ssh[object]: Ssh object
+@return void
+***************************************************************************** */
+function _startOMAgent( ssh )
+{
+   var remoteOMAInfoObj  = null ;
+   var remoteInstallPath = "" ;
+   var progPath          = "" ;
+   var str               = "" ;
+   var str2              = "" ;
+   
+   try
+   {
+      remoteOMAInfoObj  = eval( '(' + Oma.getOmaConfigs( result_file ) + ')' ) ;
+      remoteInstallPath = remoteOMAInfoObj[INSTALL_DIR] ;
+      if ( OMA_LINUX == SYS_TYPE )
+      {
+         progPath = adaptPath( remoteInstallPath ) + OMA_PATH_BIN ;
+         str = progPath + OMA_PROG_SDBCMART
+         // check whether sdbcmart exist or not
+         try
+         {
+            str2 = "ls " + str ;
+            ssh.exec( str2 ) ;
+         }
+         catch( e )
+         {
+            // "2" means file does not exist
+            if ( 2 == ssh.getLastRet() )
+            {
+               errMsg = sprintf( "Program[?] does not exist in host[?]", str, ssh.getPeerIP() ) ;
+               PD_LOG2( task_id, arguments, PDEVENT, FILE_NAME_ADD_HOST, errMsg ) ;
+               exception_handle( SDB_SYS, errMsg ) ;
+            }
+            else
+            {
+               exception_handle( SDB_SYS, ssh.getLastOut() ) ;
+            }
+         }
+         // start remote sdbcm
+         try
+         {
+            ssh.exec( str ) ;
+         }
+         catch( e )
+         {
+            exception_handle( SDB_SYS, ssh.getLastOut() ) ;
+         }
+      }
+      else
+      {
+         // TODO: windows
+      }
+   }
+   catch( e )
+   {
+      SYSEXPHANDLE( e ) ;
+      rc = GETLASTERROR() ;
+      errMsg = sprintf( "Failed to start OM Agent in host[?]", ssh.getPeerIP() ) ;
+      PD_LOG2( task_id, arguments, PDERROR, FILE_NAME_ADD_HOST,
+               sprintf( errMsg + ", rc: ?, detail: ?", rc, GETLASTERRMSG() ) ) ;
+      exception_handle( rc, errMsg ) ;
    }
 }
 
@@ -641,6 +710,7 @@ function main()
                         " in target host[?], no need to install", ip) ) ;
       try
       {
+         _startOMAgent( ssh ) ;
          removeTmpDir2( ssh ) ;
       }
       catch( e )
