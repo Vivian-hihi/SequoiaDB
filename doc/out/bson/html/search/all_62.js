@@ -1,5 +1,8 @@
 var searchData=
 [
+  ['base64c_2eh',['base64c.h',['../base64c_8h.html',1,'']]],
+  ['base64decode',['base64Decode',['../base64c_8h.html#a61638094b65c812f0304494aa8295c02',1,'base64c.h']]],
+  ['base64encode',['base64Encode',['../base64c_8h.html#ac678706be2d76edc0585424eca706e5e',1,'base64c.h']]],
   ['bson',['bson',['../structbson.html',1,'']]],
   ['bson_2eh',['bson.h',['../bson_8h.html',1,'']]],
   ['bson_5falready_5ffinished',['BSON_ALREADY_FINISHED',['../bson_8h.html#a4b9bcba51128a5736912d46966d35e3aa562e555cfa18a7ade9747981c69eac27',1,'bson.h']]],
@@ -137,5 +140,6 @@ var searchData=
   ['bson_5ftype',['bson_type',['../bson_8h.html#adac27a93ef69dbe56a6409c68395e5cb',1,'bson.h']]],
   ['bson_5fundefined',['BSON_UNDEFINED',['../bson_8h.html#adac27a93ef69dbe56a6409c68395e5cbaae5d398856c35f8949ade196edde961e',1,'bson.h']]],
   ['bson_5fvalid',['BSON_VALID',['../bson_8h.html#a4b9bcba51128a5736912d46966d35e3aad2a627420132bdc19105d04dd2bfc179',1,'bson.h']]],
-  ['bson_5fvalidity_5ft',['bson_validity_t',['../bson_8h.html#a4b9bcba51128a5736912d46966d35e3a',1,'bson.h']]]
+  ['bson_5fvalidity_5ft',['bson_validity_t',['../bson_8h.html#a4b9bcba51128a5736912d46966d35e3a',1,'bson.h']]],
+  ['bsontojson',['bsonToJson',['../Jstobs_8h.html#ae90427b482228a05f070d563e01218ff',1,'Jstobs.h']]]
 ];
