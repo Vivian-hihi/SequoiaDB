@@ -1,39 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE dita PUBLIC "-//OASIS//DTD DITA Composite//EN" "ditabase.dtd">
-<dita>
-  <topic id="topic_5cp_vmv_jr">
-    <title>Topic title</title>
-    <body>
-      <p/>
-    </body>
-  </topic>
-  <task id="task_5cp_vmv_jr">
-    <title>Task title</title>
-    <taskbody>
-      <steps>
-        <step>
-          <cmd/>
-        </step>
-      </steps>
-    </taskbody>
-  </task>
-  <concept id="concept_5cp_vmv_jr">
-    <title>Concept title</title>
-    <conbody>
-      <p/>
-    </conbody>
-  </concept>
-  <reference id="reference_5cp_vmv_jr">
-    <title>Reference title</title>
-    <refbody>
-      <properties>
-        <prophead>
-          <proptypehd>Type</proptypehd>
-          <propvaluehd>Value</propvaluehd>
-          <propdeschd>Description</propdeschd>
-        </prophead>
-        <property/>
-      </properties>
-    </refbody>
-  </reference>
-</dita>
+<!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
+<topic id="topic_p1r_lpv_xl">
+  <title>SequoiaDB所支持的 PostgreSQL 版本</title>
+  <body>   
+    <ul id="sequoiadb_postgresqls">
+      <li>PostgreSQL 9.3.4</li>
+      <li>PostgreSQL 9.3.5</li>
+      <li>PostgreSQL 9.3.6</li>
+      <li>PostgreSQL 9.4.0</li>
+      <li>PostgreSQL 9.4.1</li>
+    </ul>
+  </body>
+</topic>
