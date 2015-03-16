@@ -1,5 +1,6 @@
 var searchData=
 [
+  ['sdb',['sdb',['../classsdbclient_1_1sdb.html#a7c26ae782954127646013a4cce8bc9e0',1,'sdbclient::sdb']]],
   ['sdbcollection',['sdbCollection',['../classsdbclient_1_1sdbCollection.html#a736a05798f38ea0ed987fd0171684add',1,'sdbclient::sdbCollection']]],
   ['sdbcollectionspace',['sdbCollectionSpace',['../classsdbclient_1_1sdbCollectionSpace.html#a096f7f5ea3e9f7f385fd6e9f7f56ca27',1,'sdbclient::sdbCollectionSpace']]],
   ['sdbcursor',['sdbCursor',['../classsdbclient_1_1sdbCursor.html#a82bee251ec1076c461be6c0b13230c67',1,'sdbclient::sdbCursor']]],

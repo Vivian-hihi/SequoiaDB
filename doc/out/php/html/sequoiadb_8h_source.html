@@ -151,156 +151,160 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="line"><a name="l00189"></a><span class="lineno">  189</span>&#160;</div>
 <div class="line"><a name="l00190"></a><span class="lineno">  190</span>&#160;} ;</div>
 <div class="line"><a name="l00191"></a><span class="lineno">  191</span>&#160;</div>
-<div class="line"><a name="l00194"></a><span class="lineno"><a class="code" href="classSequoiaCS.html">  194</a></span>&#160;<span class="keyword">class </span><a class="code" href="classSequoiaCS.html">SequoiaCS</a></div>
-<div class="line"><a name="l00195"></a><span class="lineno">  195</span>&#160;{</div>
-<div class="line"><a name="l00196"></a><span class="lineno">  196</span>&#160;<span class="keyword">public</span>:</div>
-<div class="line"><a name="l00197"></a><span class="lineno">  197</span>&#160;</div>
-<div class="line"><a name="l00204"></a><span class="lineno">  204</span>&#160;   <a class="code" href="classSequoiaCL.html">SequoiaCL</a> <a class="code" href="classSequoiaCS.html#a33cda5aad4308a4d4ea0181b195a5cae" title="Gets a collection, if is not exist, will auto create.">selectCollection</a> ( <span class="keywordtype">string</span> $name, array|<span class="keywordtype">string</span> $options ) ;</div>
-<div class="line"><a name="l00205"></a><span class="lineno">  205</span>&#160;   </div>
-<div class="line"><a name="l00210"></a><span class="lineno">  210</span>&#160;   array|<span class="keywordtype">string</span> <a class="code" href="classSequoiaCS.html#a2250914b228993b007303040f6286f19" title="Drops this collection space.">drop</a> ( <span class="keywordtype">void</span> ) ;</div>
-<div class="line"><a name="l00211"></a><span class="lineno">  211</span>&#160;</div>
-<div class="line"><a name="l00216"></a><span class="lineno">  216</span>&#160;   array|<span class="keywordtype">string</span> <a class="code" href="classSequoiaCS.html#a5ca77666e862d60a413a67088a83972a" title="drop this collection">dropCollection</a> ( <span class="keywordtype">string</span> $name ) ;</div>
-<div class="line"><a name="l00217"></a><span class="lineno">  217</span>&#160;</div>
-<div class="line"><a name="l00222"></a><span class="lineno">  222</span>&#160;   <span class="keywordtype">string</span> <a class="code" href="classSequoiaCS.html#a544e0305d30c1d3bb69c21021ee11276" title="Returns this collection space&#39;s name.">getName</a> ( <span class="keywordtype">void</span> ) ;</div>
-<div class="line"><a name="l00223"></a><span class="lineno">  223</span>&#160;} ;</div>
+<div class="line"><a name="l00195"></a><span class="lineno"><a class="code" href="classSecureSdb.html">  195</a></span>&#160;<span class="keyword">class </span><a class="code" href="classSecureSdb.html" title="secure SequoiaDB, use SSL connection">SecureSdb</a>: <span class="keyword">public</span> <a class="code" href="classSequoiaDB.html">SequoiaDB</a></div>
+<div class="line"><a name="l00196"></a><span class="lineno">  196</span>&#160;{</div>
+<div class="line"><a name="l00197"></a><span class="lineno">  197</span>&#160;} ;</div>
+<div class="line"><a name="l00198"></a><span class="lineno">  198</span>&#160;</div>
+<div class="line"><a name="l00201"></a><span class="lineno"><a class="code" href="classSequoiaCS.html">  201</a></span>&#160;<span class="keyword">class </span><a class="code" href="classSequoiaCS.html">SequoiaCS</a></div>
+<div class="line"><a name="l00202"></a><span class="lineno">  202</span>&#160;{</div>
+<div class="line"><a name="l00203"></a><span class="lineno">  203</span>&#160;<span class="keyword">public</span>:</div>
+<div class="line"><a name="l00204"></a><span class="lineno">  204</span>&#160;</div>
+<div class="line"><a name="l00211"></a><span class="lineno">  211</span>&#160;   <a class="code" href="classSequoiaCL.html">SequoiaCL</a> <a class="code" href="classSequoiaCS.html#a33cda5aad4308a4d4ea0181b195a5cae" title="Gets a collection, if is not exist, will auto create.">selectCollection</a> ( <span class="keywordtype">string</span> $name, array|<span class="keywordtype">string</span> $options ) ;</div>
+<div class="line"><a name="l00212"></a><span class="lineno">  212</span>&#160;   </div>
+<div class="line"><a name="l00217"></a><span class="lineno">  217</span>&#160;   array|<span class="keywordtype">string</span> <a class="code" href="classSequoiaCS.html#a2250914b228993b007303040f6286f19" title="Drops this collection space.">drop</a> ( <span class="keywordtype">void</span> ) ;</div>
+<div class="line"><a name="l00218"></a><span class="lineno">  218</span>&#160;</div>
+<div class="line"><a name="l00223"></a><span class="lineno">  223</span>&#160;   array|<span class="keywordtype">string</span> <a class="code" href="classSequoiaCS.html#a5ca77666e862d60a413a67088a83972a" title="drop this collection">dropCollection</a> ( <span class="keywordtype">string</span> $name ) ;</div>
 <div class="line"><a name="l00224"></a><span class="lineno">  224</span>&#160;</div>
-<div class="line"><a name="l00227"></a><span class="lineno"><a class="code" href="classSequoiaCL.html">  227</a></span>&#160;<span class="keyword">class </span><a class="code" href="classSequoiaCL.html">SequoiaCL</a></div>
-<div class="line"><a name="l00228"></a><span class="lineno">  228</span>&#160;{</div>
-<div class="line"><a name="l00229"></a><span class="lineno">  229</span>&#160;<span class="keyword">public</span>:</div>
-<div class="line"><a name="l00230"></a><span class="lineno">  230</span>&#160;   </div>
-<div class="line"><a name="l00236"></a><span class="lineno">  236</span>&#160;   array|<span class="keywordtype">string</span> <a class="code" href="classSequoiaCL.html#aef2c2fce247c521500eaf5f0e34dad8a" title="Inserts an array into the collection.">insert</a> ( array|<span class="keywordtype">string</span> $record ) ;</div>
+<div class="line"><a name="l00229"></a><span class="lineno">  229</span>&#160;   <span class="keywordtype">string</span> <a class="code" href="classSequoiaCS.html#a544e0305d30c1d3bb69c21021ee11276" title="Returns this collection space&#39;s name.">getName</a> ( <span class="keywordtype">void</span> ) ;</div>
+<div class="line"><a name="l00230"></a><span class="lineno">  230</span>&#160;} ;</div>
+<div class="line"><a name="l00231"></a><span class="lineno">  231</span>&#160;</div>
+<div class="line"><a name="l00234"></a><span class="lineno"><a class="code" href="classSequoiaCL.html">  234</a></span>&#160;<span class="keyword">class </span><a class="code" href="classSequoiaCL.html">SequoiaCL</a></div>
+<div class="line"><a name="l00235"></a><span class="lineno">  235</span>&#160;{</div>
+<div class="line"><a name="l00236"></a><span class="lineno">  236</span>&#160;<span class="keyword">public</span>:</div>
 <div class="line"><a name="l00237"></a><span class="lineno">  237</span>&#160;   </div>
-<div class="line"><a name="l00248"></a><span class="lineno">  248</span>&#160;   array|<span class="keywordtype">string</span> <a class="code" href="classSequoiaCL.html#a9fda470494d214378b80ce30d45141c8" title="Update the matching documents in current collection.">update</a> ( array|<span class="keywordtype">string</span> $rule,</div>
-<div class="line"><a name="l00249"></a><span class="lineno">  249</span>&#160;                         array|<span class="keywordtype">string</span> $condition = NULL,</div>
-<div class="line"><a name="l00250"></a><span class="lineno">  250</span>&#160;                         array|<span class="keywordtype">string</span> $hint = NULL ) ;</div>
-<div class="line"><a name="l00251"></a><span class="lineno">  251</span>&#160;   </div>
-<div class="line"><a name="l00259"></a><span class="lineno">  259</span>&#160;   array|<span class="keywordtype">string</span> <span class="keyword">remove</span> ( array|<span class="keywordtype">string</span> $condition = NULL,</div>
-<div class="line"><a name="l00260"></a><span class="lineno">  260</span>&#160;                         array|<span class="keywordtype">string</span> $hint = NULL ) ;</div>
-<div class="line"><a name="l00261"></a><span class="lineno">  261</span>&#160;</div>
-<div class="line"><a name="l00277"></a><span class="lineno">  277</span>&#160;   <a class="code" href="classSequoiaCursor.html">SequoiaCursor</a> <a class="code" href="classSequoiaCL.html#a2a1c45c62ae4bf9ad626c86dfd5eb8ef" title="Querys this collection, returning a SequoiaCursor for the result set.">find</a> ( array|<span class="keywordtype">string</span> $condition = NULL,</div>
-<div class="line"><a name="l00278"></a><span class="lineno">  278</span>&#160;                        array|<span class="keywordtype">string</span> $select = NULL,</div>
-<div class="line"><a name="l00279"></a><span class="lineno">  279</span>&#160;                        array|<span class="keywordtype">string</span> $orderBy = NULL,</div>
-<div class="line"><a name="l00280"></a><span class="lineno">  280</span>&#160;                        array|<span class="keywordtype">string</span> $hint = NULL,</div>
-<div class="line"><a name="l00281"></a><span class="lineno">  281</span>&#160;                        <span class="keywordtype">int</span> $numToSkip = 0,</div>
-<div class="line"><a name="l00282"></a><span class="lineno">  282</span>&#160;                        <span class="keywordtype">int</span> $numToReturn = -1 ) ;</div>
-<div class="line"><a name="l00283"></a><span class="lineno">  283</span>&#160;</div>
-<div class="line"><a name="l00292"></a><span class="lineno">  292</span>&#160;   array|<span class="keywordtype">string</span> <a class="code" href="classSequoiaCL.html#ae44abe1394d7a1e0c6c34c442a173e9c" title="data split,source collection split to dest collection">split</a> ( <span class="keywordtype">string</span> $sourceName, <span class="keywordtype">string</span> $destName, array|<span class="keywordtype">string</span> $condition, array|<span class="keywordtype">string</span> $endCondition = NULL ) ;</div>
-<div class="line"><a name="l00293"></a><span class="lineno">  293</span>&#160;</div>
-<div class="line"><a name="l00301"></a><span class="lineno">  301</span>&#160;   array|<span class="keywordtype">string</span> <a class="code" href="classSequoiaCL.html#ae44abe1394d7a1e0c6c34c442a173e9c" title="data split,source collection split to dest collection">split</a> ( <span class="keywordtype">string</span> $sourceName, <span class="keywordtype">string</span> $destName, <span class="keywordtype">double</span> $percent ) ;</div>
-<div class="line"><a name="l00302"></a><span class="lineno">  302</span>&#160;</div>
-<div class="line"><a name="l00307"></a><span class="lineno">  307</span>&#160;   array|<span class="keywordtype">string</span> <a class="code" href="classSequoiaCL.html#a76086d6f6a0600a81788506e18855eca" title="Drops this collection.">drop</a> ( <span class="keywordtype">void</span> ) ;</div>
-<div class="line"><a name="l00308"></a><span class="lineno">  308</span>&#160;</div>
-<div class="line"><a name="l00314"></a><span class="lineno">  314</span>&#160;   <a class="code" href="classSequoiaCursor.html">SequoiaCursor</a> <a class="code" href="classSequoiaCL.html#aec620b8ba6217b2b3d0df60db76095a5" title="aggregate this collection, returning a SequoiaCursor for the result set">aggregate</a> ( array|<span class="keywordtype">string</span> $aggrObj ) ;</div>
+<div class="line"><a name="l00243"></a><span class="lineno">  243</span>&#160;   array|<span class="keywordtype">string</span> <a class="code" href="classSequoiaCL.html#aef2c2fce247c521500eaf5f0e34dad8a" title="Inserts an array into the collection.">insert</a> ( array|<span class="keywordtype">string</span> $record ) ;</div>
+<div class="line"><a name="l00244"></a><span class="lineno">  244</span>&#160;   </div>
+<div class="line"><a name="l00255"></a><span class="lineno">  255</span>&#160;   array|<span class="keywordtype">string</span> <a class="code" href="classSequoiaCL.html#a9fda470494d214378b80ce30d45141c8" title="Update the matching documents in current collection.">update</a> ( array|<span class="keywordtype">string</span> $rule,</div>
+<div class="line"><a name="l00256"></a><span class="lineno">  256</span>&#160;                         array|<span class="keywordtype">string</span> $condition = NULL,</div>
+<div class="line"><a name="l00257"></a><span class="lineno">  257</span>&#160;                         array|<span class="keywordtype">string</span> $hint = NULL ) ;</div>
+<div class="line"><a name="l00258"></a><span class="lineno">  258</span>&#160;   </div>
+<div class="line"><a name="l00266"></a><span class="lineno">  266</span>&#160;   array|<span class="keywordtype">string</span> <span class="keyword">remove</span> ( array|<span class="keywordtype">string</span> $condition = NULL,</div>
+<div class="line"><a name="l00267"></a><span class="lineno">  267</span>&#160;                         array|<span class="keywordtype">string</span> $hint = NULL ) ;</div>
+<div class="line"><a name="l00268"></a><span class="lineno">  268</span>&#160;</div>
+<div class="line"><a name="l00284"></a><span class="lineno">  284</span>&#160;   <a class="code" href="classSequoiaCursor.html">SequoiaCursor</a> <a class="code" href="classSequoiaCL.html#a2a1c45c62ae4bf9ad626c86dfd5eb8ef" title="Querys this collection, returning a SequoiaCursor for the result set.">find</a> ( array|<span class="keywordtype">string</span> $condition = NULL,</div>
+<div class="line"><a name="l00285"></a><span class="lineno">  285</span>&#160;                        array|<span class="keywordtype">string</span> $select = NULL,</div>
+<div class="line"><a name="l00286"></a><span class="lineno">  286</span>&#160;                        array|<span class="keywordtype">string</span> $orderBy = NULL,</div>
+<div class="line"><a name="l00287"></a><span class="lineno">  287</span>&#160;                        array|<span class="keywordtype">string</span> $hint = NULL,</div>
+<div class="line"><a name="l00288"></a><span class="lineno">  288</span>&#160;                        <span class="keywordtype">int</span> $numToSkip = 0,</div>
+<div class="line"><a name="l00289"></a><span class="lineno">  289</span>&#160;                        <span class="keywordtype">int</span> $numToReturn = -1 ) ;</div>
+<div class="line"><a name="l00290"></a><span class="lineno">  290</span>&#160;</div>
+<div class="line"><a name="l00299"></a><span class="lineno">  299</span>&#160;   array|<span class="keywordtype">string</span> <a class="code" href="classSequoiaCL.html#ae44abe1394d7a1e0c6c34c442a173e9c" title="data split,source collection split to dest collection">split</a> ( <span class="keywordtype">string</span> $sourceName, <span class="keywordtype">string</span> $destName, array|<span class="keywordtype">string</span> $condition, array|<span class="keywordtype">string</span> $endCondition = NULL ) ;</div>
+<div class="line"><a name="l00300"></a><span class="lineno">  300</span>&#160;</div>
+<div class="line"><a name="l00308"></a><span class="lineno">  308</span>&#160;   array|<span class="keywordtype">string</span> <a class="code" href="classSequoiaCL.html#ae44abe1394d7a1e0c6c34c442a173e9c" title="data split,source collection split to dest collection">split</a> ( <span class="keywordtype">string</span> $sourceName, <span class="keywordtype">string</span> $destName, <span class="keywordtype">double</span> $percent ) ;</div>
+<div class="line"><a name="l00309"></a><span class="lineno">  309</span>&#160;</div>
+<div class="line"><a name="l00314"></a><span class="lineno">  314</span>&#160;   array|<span class="keywordtype">string</span> <a class="code" href="classSequoiaCL.html#a76086d6f6a0600a81788506e18855eca" title="Drops this collection.">drop</a> ( <span class="keywordtype">void</span> ) ;</div>
 <div class="line"><a name="l00315"></a><span class="lineno">  315</span>&#160;</div>
-<div class="line"><a name="l00325"></a><span class="lineno">  325</span>&#160;   array|<span class="keywordtype">string</span> <a class="code" href="classSequoiaCL.html#a31e2929f49d02dd7e96c75745cda38e4" title="Create the index in current collection.">createIndex</a> ( array|<span class="keywordtype">string</span> $indexDef,</div>
-<div class="line"><a name="l00326"></a><span class="lineno">  326</span>&#160;                              <span class="keywordtype">string</span> $pIndexName,</div>
-<div class="line"><a name="l00327"></a><span class="lineno">  327</span>&#160;                              <span class="keywordtype">bool</span>   $isUnique = FALSE) ;</div>
-<div class="line"><a name="l00328"></a><span class="lineno">  328</span>&#160;</div>
-<div class="line"><a name="l00334"></a><span class="lineno">  334</span>&#160;   array|<span class="keywordtype">string</span> <a class="code" href="classSequoiaCL.html#a78fc172b8a5af7396e2330266f700579" title="delete the index in current collection">deleteIndex</a> ( <span class="keywordtype">string</span> $pIndexName ) ;</div>
+<div class="line"><a name="l00321"></a><span class="lineno">  321</span>&#160;   <a class="code" href="classSequoiaCursor.html">SequoiaCursor</a> <a class="code" href="classSequoiaCL.html#aec620b8ba6217b2b3d0df60db76095a5" title="aggregate this collection, returning a SequoiaCursor for the result set">aggregate</a> ( array|<span class="keywordtype">string</span> $aggrObj ) ;</div>
+<div class="line"><a name="l00322"></a><span class="lineno">  322</span>&#160;</div>
+<div class="line"><a name="l00332"></a><span class="lineno">  332</span>&#160;   array|<span class="keywordtype">string</span> <a class="code" href="classSequoiaCL.html#a31e2929f49d02dd7e96c75745cda38e4" title="Create the index in current collection.">createIndex</a> ( array|<span class="keywordtype">string</span> $indexDef,</div>
+<div class="line"><a name="l00333"></a><span class="lineno">  333</span>&#160;                              <span class="keywordtype">string</span> $pIndexName,</div>
+<div class="line"><a name="l00334"></a><span class="lineno">  334</span>&#160;                              <span class="keywordtype">bool</span>   $isUnique = FALSE) ;</div>
 <div class="line"><a name="l00335"></a><span class="lineno">  335</span>&#160;</div>
-<div class="line"><a name="l00341"></a><span class="lineno">  341</span>&#160;   <a class="code" href="classSequoiaCursor.html">SequoiaCursor</a> <a class="code" href="classSequoiaCL.html#a7a861e9153d8128b49c384e065173e7e" title="Get all of or one of the indexes in current collection.">getIndex</a> ( <span class="keywordtype">string</span> $pIndexName = <span class="stringliteral">&quot;&quot;</span> ) ;</div>
-<div class="line"><a name="l00342"></a><span class="lineno">  342</span>&#160;   </div>
-<div class="line"><a name="l00347"></a><span class="lineno">  347</span>&#160;   <span class="keywordtype">string</span> <a class="code" href="classSequoiaCL.html#ab851a52e21d809f230c4aa9f989234dd" title="Returns this collection space&#39;s name.">getCSName</a> ( <span class="keywordtype">void</span> ) ;</div>
-<div class="line"><a name="l00348"></a><span class="lineno">  348</span>&#160;   </div>
-<div class="line"><a name="l00353"></a><span class="lineno">  353</span>&#160;   <span class="keywordtype">string</span> <a class="code" href="classSequoiaCL.html#a281600f5f94f1f5a4a7428526ed589e9" title="Returns this collection&#39;s name.">getCollectionName</a> ( <span class="keywordtype">void</span> ) ;</div>
-<div class="line"><a name="l00354"></a><span class="lineno">  354</span>&#160;   </div>
-<div class="line"><a name="l00359"></a><span class="lineno">  359</span>&#160;   <span class="keywordtype">string</span> <a class="code" href="classSequoiaCL.html#aee73050e74311185841d330f8e16d90f" title="Returns this collection full name.">getFullName</a> ( <span class="keywordtype">void</span> ) ;</div>
-<div class="line"><a name="l00360"></a><span class="lineno">  360</span>&#160;   </div>
-<div class="line"><a name="l00366"></a><span class="lineno">  366</span>&#160;   <span class="keywordtype">int</span> <a class="code" href="classSequoiaCL.html#aed703c2e2dabfe8361829bd366036689" title="Counts the number of documents in this collection.">count</a> ( array|<span class="keywordtype">string</span> $condition = NULL ) ;</div>
-<div class="line"><a name="l00367"></a><span class="lineno">  367</span>&#160;} ;</div>
-<div class="line"><a name="l00368"></a><span class="lineno">  368</span>&#160;</div>
-<div class="line"><a name="l00371"></a><span class="lineno"><a class="code" href="classSequoiaCursor.html">  371</a></span>&#160;<span class="keyword">class </span><a class="code" href="classSequoiaCursor.html">SequoiaCursor</a></div>
-<div class="line"><a name="l00372"></a><span class="lineno">  372</span>&#160;{</div>
-<div class="line"><a name="l00373"></a><span class="lineno">  373</span>&#160;<span class="keyword">public</span>:</div>
-<div class="line"><a name="l00374"></a><span class="lineno">  374</span>&#160;   </div>
-<div class="line"><a name="l00379"></a><span class="lineno">  379</span>&#160;   array|<span class="keywordtype">string</span> <a class="code" href="classSequoiaCursor.html#afddde719df9d60758f8d0d2e9ef8947f" title="Return the next object to which this cursor points, and advance the cursor.">getNext</a> ( <span class="keywordtype">void</span> ) ;</div>
-<div class="line"><a name="l00380"></a><span class="lineno">  380</span>&#160;   </div>
-<div class="line"><a name="l00385"></a><span class="lineno">  385</span>&#160;   array|<span class="keywordtype">string</span> <a class="code" href="classSequoiaCursor.html#a384b05fd98b8a15f89cf26522d13fe03" title="Return the current element.">current</a> ( <span class="keywordtype">void</span> ) ;</div>
-<div class="line"><a name="l00386"></a><span class="lineno">  386</span>&#160;   </div>
-<div class="line"><a name="l00392"></a><span class="lineno">  392</span>&#160;   <span class="comment">/*array|string updateCurrent ( array|string $rule ) ;*/</span></div>
+<div class="line"><a name="l00341"></a><span class="lineno">  341</span>&#160;   array|<span class="keywordtype">string</span> <a class="code" href="classSequoiaCL.html#a78fc172b8a5af7396e2330266f700579" title="delete the index in current collection">deleteIndex</a> ( <span class="keywordtype">string</span> $pIndexName ) ;</div>
+<div class="line"><a name="l00342"></a><span class="lineno">  342</span>&#160;</div>
+<div class="line"><a name="l00348"></a><span class="lineno">  348</span>&#160;   <a class="code" href="classSequoiaCursor.html">SequoiaCursor</a> <a class="code" href="classSequoiaCL.html#a7a861e9153d8128b49c384e065173e7e" title="Get all of or one of the indexes in current collection.">getIndex</a> ( <span class="keywordtype">string</span> $pIndexName = <span class="stringliteral">&quot;&quot;</span> ) ;</div>
+<div class="line"><a name="l00349"></a><span class="lineno">  349</span>&#160;   </div>
+<div class="line"><a name="l00354"></a><span class="lineno">  354</span>&#160;   <span class="keywordtype">string</span> <a class="code" href="classSequoiaCL.html#ab851a52e21d809f230c4aa9f989234dd" title="Returns this collection space&#39;s name.">getCSName</a> ( <span class="keywordtype">void</span> ) ;</div>
+<div class="line"><a name="l00355"></a><span class="lineno">  355</span>&#160;   </div>
+<div class="line"><a name="l00360"></a><span class="lineno">  360</span>&#160;   <span class="keywordtype">string</span> <a class="code" href="classSequoiaCL.html#a281600f5f94f1f5a4a7428526ed589e9" title="Returns this collection&#39;s name.">getCollectionName</a> ( <span class="keywordtype">void</span> ) ;</div>
+<div class="line"><a name="l00361"></a><span class="lineno">  361</span>&#160;   </div>
+<div class="line"><a name="l00366"></a><span class="lineno">  366</span>&#160;   <span class="keywordtype">string</span> <a class="code" href="classSequoiaCL.html#aee73050e74311185841d330f8e16d90f" title="Returns this collection full name.">getFullName</a> ( <span class="keywordtype">void</span> ) ;</div>
+<div class="line"><a name="l00367"></a><span class="lineno">  367</span>&#160;   </div>
+<div class="line"><a name="l00373"></a><span class="lineno">  373</span>&#160;   <span class="keywordtype">int</span> <a class="code" href="classSequoiaCL.html#aed703c2e2dabfe8361829bd366036689" title="Counts the number of documents in this collection.">count</a> ( array|<span class="keywordtype">string</span> $condition = NULL ) ;</div>
+<div class="line"><a name="l00374"></a><span class="lineno">  374</span>&#160;} ;</div>
+<div class="line"><a name="l00375"></a><span class="lineno">  375</span>&#160;</div>
+<div class="line"><a name="l00378"></a><span class="lineno"><a class="code" href="classSequoiaCursor.html">  378</a></span>&#160;<span class="keyword">class </span><a class="code" href="classSequoiaCursor.html">SequoiaCursor</a></div>
+<div class="line"><a name="l00379"></a><span class="lineno">  379</span>&#160;{</div>
+<div class="line"><a name="l00380"></a><span class="lineno">  380</span>&#160;<span class="keyword">public</span>:</div>
+<div class="line"><a name="l00381"></a><span class="lineno">  381</span>&#160;   </div>
+<div class="line"><a name="l00386"></a><span class="lineno">  386</span>&#160;   array|<span class="keywordtype">string</span> <a class="code" href="classSequoiaCursor.html#afddde719df9d60758f8d0d2e9ef8947f" title="Return the next object to which this cursor points, and advance the cursor.">getNext</a> ( <span class="keywordtype">void</span> ) ;</div>
+<div class="line"><a name="l00387"></a><span class="lineno">  387</span>&#160;   </div>
+<div class="line"><a name="l00392"></a><span class="lineno">  392</span>&#160;   array|<span class="keywordtype">string</span> <a class="code" href="classSequoiaCursor.html#a384b05fd98b8a15f89cf26522d13fe03" title="Return the current element.">current</a> ( <span class="keywordtype">void</span> ) ;</div>
 <div class="line"><a name="l00393"></a><span class="lineno">  393</span>&#160;   </div>
-<div class="line"><a name="l00398"></a><span class="lineno">  398</span>&#160;   <span class="comment">/*array|string deleteCurrent ( void ) ;*/</span></div>
-<div class="line"><a name="l00399"></a><span class="lineno">  399</span>&#160;} ;</div>
-<div class="line"><a name="l00400"></a><span class="lineno">  400</span>&#160;</div>
-<div class="line"><a name="l00403"></a><span class="lineno"><a class="code" href="classSequoiaGroup.html">  403</a></span>&#160;<span class="keyword">class </span><a class="code" href="classSequoiaGroup.html">SequoiaGroup</a></div>
-<div class="line"><a name="l00404"></a><span class="lineno">  404</span>&#160;{</div>
-<div class="line"><a name="l00405"></a><span class="lineno">  405</span>&#160;<span class="keyword">public</span>:</div>
-<div class="line"><a name="l00406"></a><span class="lineno">  406</span>&#160;</div>
-<div class="line"><a name="l00412"></a><span class="lineno">  412</span>&#160;   <span class="keywordtype">int</span> <a class="code" href="classSequoiaGroup.html#ad967638d74118c08b652a27eba495e0b" title="get the status node number">getNodeNum</a> ( <span class="keywordtype">int</span> $status ) ;</div>
+<div class="line"><a name="l00399"></a><span class="lineno">  399</span>&#160;   <span class="comment">/*array|string updateCurrent ( array|string $rule ) ;*/</span></div>
+<div class="line"><a name="l00400"></a><span class="lineno">  400</span>&#160;   </div>
+<div class="line"><a name="l00405"></a><span class="lineno">  405</span>&#160;   <span class="comment">/*array|string deleteCurrent ( void ) ;*/</span></div>
+<div class="line"><a name="l00406"></a><span class="lineno">  406</span>&#160;} ;</div>
+<div class="line"><a name="l00407"></a><span class="lineno">  407</span>&#160;</div>
+<div class="line"><a name="l00410"></a><span class="lineno"><a class="code" href="classSequoiaGroup.html">  410</a></span>&#160;<span class="keyword">class </span><a class="code" href="classSequoiaGroup.html">SequoiaGroup</a></div>
+<div class="line"><a name="l00411"></a><span class="lineno">  411</span>&#160;{</div>
+<div class="line"><a name="l00412"></a><span class="lineno">  412</span>&#160;<span class="keyword">public</span>:</div>
 <div class="line"><a name="l00413"></a><span class="lineno">  413</span>&#160;</div>
-<div class="line"><a name="l00418"></a><span class="lineno">  418</span>&#160;   array|<span class="keywordtype">string</span> <a class="code" href="classSequoiaGroup.html#a163a62fd0d7c5043e8f2a0ea935dd26f" title="get the group detail">getDetail</a> ( <span class="keywordtype">void</span> ) ;</div>
-<div class="line"><a name="l00419"></a><span class="lineno">  419</span>&#160;</div>
-<div class="line"><a name="l00424"></a><span class="lineno">  424</span>&#160;   <a class="code" href="classSequoiaNode.html">SequoiaNode</a> <a class="code" href="classSequoiaGroup.html#ac1b75afa3ea7569b59a111bb5910fe9d" title="get the master node">getMaster</a> ( <span class="keywordtype">void</span> ) ;</div>
-<div class="line"><a name="l00425"></a><span class="lineno">  425</span>&#160;</div>
-<div class="line"><a name="l00430"></a><span class="lineno">  430</span>&#160;   <a class="code" href="classSequoiaNode.html">SequoiaNode</a> <a class="code" href="classSequoiaGroup.html#a4473838fd645a57dda3cf24039e612b6" title="get the slave node">getSlave</a> ( <span class="keywordtype">void</span> ) ;</div>
-<div class="line"><a name="l00431"></a><span class="lineno">  431</span>&#160;</div>
-<div class="line"><a name="l00437"></a><span class="lineno">  437</span>&#160;   <a class="code" href="classSequoiaNode.html">SequoiaNode</a> <a class="code" href="classSequoiaGroup.html#a963603bdb998a22ff170cc4bc28e3bd0" title="get the node">getNode</a> ( <span class="keywordtype">string</span> $nodeName ) ;</div>
+<div class="line"><a name="l00419"></a><span class="lineno">  419</span>&#160;   <span class="keywordtype">int</span> <a class="code" href="classSequoiaGroup.html#ad967638d74118c08b652a27eba495e0b" title="get the status node number">getNodeNum</a> ( <span class="keywordtype">int</span> $status ) ;</div>
+<div class="line"><a name="l00420"></a><span class="lineno">  420</span>&#160;</div>
+<div class="line"><a name="l00425"></a><span class="lineno">  425</span>&#160;   array|<span class="keywordtype">string</span> <a class="code" href="classSequoiaGroup.html#a163a62fd0d7c5043e8f2a0ea935dd26f" title="get the group detail">getDetail</a> ( <span class="keywordtype">void</span> ) ;</div>
+<div class="line"><a name="l00426"></a><span class="lineno">  426</span>&#160;</div>
+<div class="line"><a name="l00431"></a><span class="lineno">  431</span>&#160;   <a class="code" href="classSequoiaNode.html">SequoiaNode</a> <a class="code" href="classSequoiaGroup.html#ac1b75afa3ea7569b59a111bb5910fe9d" title="get the master node">getMaster</a> ( <span class="keywordtype">void</span> ) ;</div>
+<div class="line"><a name="l00432"></a><span class="lineno">  432</span>&#160;</div>
+<div class="line"><a name="l00437"></a><span class="lineno">  437</span>&#160;   <a class="code" href="classSequoiaNode.html">SequoiaNode</a> <a class="code" href="classSequoiaGroup.html#a4473838fd645a57dda3cf24039e612b6" title="get the slave node">getSlave</a> ( <span class="keywordtype">void</span> ) ;</div>
 <div class="line"><a name="l00438"></a><span class="lineno">  438</span>&#160;</div>
-<div class="line"><a name="l00447"></a><span class="lineno">  447</span>&#160;   array|<span class="keywordtype">string</span> <a class="code" href="classSequoiaGroup.html#a1d2278e3bedcd500009e79a13a56dcc2" title="create node">createNode</a> ( <span class="keywordtype">string</span> $hostName, <span class="keywordtype">string</span> $serviceName, <span class="keywordtype">string</span> $databasePath, array|<span class="keywordtype">string</span> $config ) ;</div>
-<div class="line"><a name="l00448"></a><span class="lineno">  448</span>&#160;</div>
-<div class="line"><a name="l00453"></a><span class="lineno">  453</span>&#160;   array|<span class="keywordtype">string</span> <a class="code" href="classSequoiaGroup.html#ad58ffae49e5d7e47a7159f1460a9a2bb" title="start group">start</a> ( <span class="keywordtype">void</span> ) ;</div>
-<div class="line"><a name="l00454"></a><span class="lineno">  454</span>&#160;</div>
-<div class="line"><a name="l00459"></a><span class="lineno">  459</span>&#160;   array|<span class="keywordtype">string</span> <a class="code" href="classSequoiaGroup.html#a47dfba55e15f50e99feba8d9114b0a9f" title="stop group">stop</a> ( <span class="keywordtype">void</span> ) ;</div>
-<div class="line"><a name="l00460"></a><span class="lineno">  460</span>&#160;</div>
-<div class="line"><a name="l00465"></a><span class="lineno">  465</span>&#160;   <span class="keywordtype">bool</span> <a class="code" href="classSequoiaGroup.html#ac2ace8efca3861cf274c1db7258bc0f4" title="judge group is catalog">isCatalog</a> ( <span class="keywordtype">void</span> ) ;</div>
-<div class="line"><a name="l00466"></a><span class="lineno">  466</span>&#160;};</div>
+<div class="line"><a name="l00444"></a><span class="lineno">  444</span>&#160;   <a class="code" href="classSequoiaNode.html">SequoiaNode</a> <a class="code" href="classSequoiaGroup.html#a963603bdb998a22ff170cc4bc28e3bd0" title="get the node">getNode</a> ( <span class="keywordtype">string</span> $nodeName ) ;</div>
+<div class="line"><a name="l00445"></a><span class="lineno">  445</span>&#160;</div>
+<div class="line"><a name="l00454"></a><span class="lineno">  454</span>&#160;   array|<span class="keywordtype">string</span> <a class="code" href="classSequoiaGroup.html#a1d2278e3bedcd500009e79a13a56dcc2" title="create node">createNode</a> ( <span class="keywordtype">string</span> $hostName, <span class="keywordtype">string</span> $serviceName, <span class="keywordtype">string</span> $databasePath, array|<span class="keywordtype">string</span> $config ) ;</div>
+<div class="line"><a name="l00455"></a><span class="lineno">  455</span>&#160;</div>
+<div class="line"><a name="l00460"></a><span class="lineno">  460</span>&#160;   array|<span class="keywordtype">string</span> <a class="code" href="classSequoiaGroup.html#ad58ffae49e5d7e47a7159f1460a9a2bb" title="start group">start</a> ( <span class="keywordtype">void</span> ) ;</div>
+<div class="line"><a name="l00461"></a><span class="lineno">  461</span>&#160;</div>
+<div class="line"><a name="l00466"></a><span class="lineno">  466</span>&#160;   array|<span class="keywordtype">string</span> <a class="code" href="classSequoiaGroup.html#a47dfba55e15f50e99feba8d9114b0a9f" title="stop group">stop</a> ( <span class="keywordtype">void</span> ) ;</div>
 <div class="line"><a name="l00467"></a><span class="lineno">  467</span>&#160;</div>
-<div class="line"><a name="l00470"></a><span class="lineno"><a class="code" href="classSequoiaNode.html">  470</a></span>&#160;<span class="keyword">class </span><a class="code" href="classSequoiaNode.html">SequoiaNode</a></div>
-<div class="line"><a name="l00471"></a><span class="lineno">  471</span>&#160;{</div>
-<div class="line"><a name="l00472"></a><span class="lineno">  472</span>&#160;<span class="keyword">public</span>:</div>
-<div class="line"><a name="l00473"></a><span class="lineno">  473</span>&#160;</div>
-<div class="line"><a name="l00478"></a><span class="lineno">  478</span>&#160;   array|<span class="keywordtype">string</span> <a class="code" href="classSequoiaNode.html#a2c4b3e7d9c3a0a6aa9254c7d175271ba" title="stop node">stop</a> ( <span class="keywordtype">void</span> ) ;</div>
-<div class="line"><a name="l00479"></a><span class="lineno">  479</span>&#160;</div>
-<div class="line"><a name="l00484"></a><span class="lineno">  484</span>&#160;   array|<span class="keywordtype">string</span> <a class="code" href="classSequoiaNode.html#a30daa559ad5b9b0fd706dfdf58884f59" title="start node">start</a> ( <span class="keywordtype">void</span> ) ;</div>
-<div class="line"><a name="l00485"></a><span class="lineno">  485</span>&#160;</div>
-<div class="line"><a name="l00490"></a><span class="lineno">  490</span>&#160;   <span class="keywordtype">string</span> <a class="code" href="classSequoiaNode.html#a69e821ebb436bf145478e3656c5ba777" title="get node name">getNodeName</a> ( <span class="keywordtype">void</span> ) ;</div>
-<div class="line"><a name="l00491"></a><span class="lineno">  491</span>&#160;</div>
-<div class="line"><a name="l00496"></a><span class="lineno">  496</span>&#160;   <span class="keywordtype">string</span> <a class="code" href="classSequoiaNode.html#ae0b8ce930f0fb64d336c945974c34511" title="get node service name">getServiceName</a> ( <span class="keywordtype">void</span> ) ;</div>
-<div class="line"><a name="l00497"></a><span class="lineno">  497</span>&#160;</div>
-<div class="line"><a name="l00502"></a><span class="lineno">  502</span>&#160;   <span class="keywordtype">string</span> <a class="code" href="classSequoiaNode.html#a281124653d2897c9fe357f25ef99b098" title="get node host name">getHostName</a> ( <span class="keywordtype">void</span> ) ;</div>
-<div class="line"><a name="l00503"></a><span class="lineno">  503</span>&#160;</div>
-<div class="line"><a name="l00508"></a><span class="lineno">  508</span>&#160;   <span class="keywordtype">int</span> <a class="code" href="classSequoiaNode.html#a63b0295586cccd5d02a33de0c62a0e49" title="get node status">getStatus</a> ( <span class="keywordtype">void</span> ) ;</div>
-<div class="line"><a name="l00509"></a><span class="lineno">  509</span>&#160;</div>
-<div class="line"><a name="l00514"></a><span class="lineno">  514</span>&#160;   <a class="code" href="classSequoiaDB.html">SequoiaDB</a> <a class="code" href="classSequoiaNode.html#a585df8009f7a27a0a7e9cfee3d63e32f" title="connect the node">connect</a> ( <span class="keywordtype">void</span> ) ;</div>
-<div class="line"><a name="l00515"></a><span class="lineno">  515</span>&#160;};</div>
+<div class="line"><a name="l00472"></a><span class="lineno">  472</span>&#160;   <span class="keywordtype">bool</span> <a class="code" href="classSequoiaGroup.html#ac2ace8efca3861cf274c1db7258bc0f4" title="judge group is catalog">isCatalog</a> ( <span class="keywordtype">void</span> ) ;</div>
+<div class="line"><a name="l00473"></a><span class="lineno">  473</span>&#160;};</div>
+<div class="line"><a name="l00474"></a><span class="lineno">  474</span>&#160;</div>
+<div class="line"><a name="l00477"></a><span class="lineno"><a class="code" href="classSequoiaNode.html">  477</a></span>&#160;<span class="keyword">class </span><a class="code" href="classSequoiaNode.html">SequoiaNode</a></div>
+<div class="line"><a name="l00478"></a><span class="lineno">  478</span>&#160;{</div>
+<div class="line"><a name="l00479"></a><span class="lineno">  479</span>&#160;<span class="keyword">public</span>:</div>
+<div class="line"><a name="l00480"></a><span class="lineno">  480</span>&#160;</div>
+<div class="line"><a name="l00485"></a><span class="lineno">  485</span>&#160;   array|<span class="keywordtype">string</span> <a class="code" href="classSequoiaNode.html#a2c4b3e7d9c3a0a6aa9254c7d175271ba" title="stop node">stop</a> ( <span class="keywordtype">void</span> ) ;</div>
+<div class="line"><a name="l00486"></a><span class="lineno">  486</span>&#160;</div>
+<div class="line"><a name="l00491"></a><span class="lineno">  491</span>&#160;   array|<span class="keywordtype">string</span> <a class="code" href="classSequoiaNode.html#a30daa559ad5b9b0fd706dfdf58884f59" title="start node">start</a> ( <span class="keywordtype">void</span> ) ;</div>
+<div class="line"><a name="l00492"></a><span class="lineno">  492</span>&#160;</div>
+<div class="line"><a name="l00497"></a><span class="lineno">  497</span>&#160;   <span class="keywordtype">string</span> <a class="code" href="classSequoiaNode.html#a69e821ebb436bf145478e3656c5ba777" title="get node name">getNodeName</a> ( <span class="keywordtype">void</span> ) ;</div>
+<div class="line"><a name="l00498"></a><span class="lineno">  498</span>&#160;</div>
+<div class="line"><a name="l00503"></a><span class="lineno">  503</span>&#160;   <span class="keywordtype">string</span> <a class="code" href="classSequoiaNode.html#ae0b8ce930f0fb64d336c945974c34511" title="get node service name">getServiceName</a> ( <span class="keywordtype">void</span> ) ;</div>
+<div class="line"><a name="l00504"></a><span class="lineno">  504</span>&#160;</div>
+<div class="line"><a name="l00509"></a><span class="lineno">  509</span>&#160;   <span class="keywordtype">string</span> <a class="code" href="classSequoiaNode.html#a281124653d2897c9fe357f25ef99b098" title="get node host name">getHostName</a> ( <span class="keywordtype">void</span> ) ;</div>
+<div class="line"><a name="l00510"></a><span class="lineno">  510</span>&#160;</div>
+<div class="line"><a name="l00515"></a><span class="lineno">  515</span>&#160;   <span class="keywordtype">int</span> <a class="code" href="classSequoiaNode.html#a63b0295586cccd5d02a33de0c62a0e49" title="get node status">getStatus</a> ( <span class="keywordtype">void</span> ) ;</div>
 <div class="line"><a name="l00516"></a><span class="lineno">  516</span>&#160;</div>
-<div class="line"><a name="l00517"></a><span class="lineno">  517</span>&#160;</div>
-<div class="line"><a name="l00520"></a><span class="lineno"><a class="code" href="classSequoiaID.html">  520</a></span>&#160;<span class="keyword">class </span><a class="code" href="classSequoiaID.html">SequoiaID</a></div>
-<div class="line"><a name="l00521"></a><span class="lineno">  521</span>&#160;{</div>
-<div class="line"><a name="l00522"></a><span class="lineno">  522</span>&#160;<span class="keyword">public</span>:</div>
-<div class="line"><a name="l00528"></a><span class="lineno">  528</span>&#160;   <a class="code" href="classSequoiaID.html#a44690b53ddaf27d8b812b971469a88d1" title="Creates a new id.">__construct</a> ( <span class="keywordtype">string</span> $oid ) ;</div>
-<div class="line"><a name="l00529"></a><span class="lineno">  529</span>&#160;</div>
-<div class="line"><a name="l00534"></a><span class="lineno">  534</span>&#160;   <span class="keywordtype">string</span> <a class="code" href="classSequoiaID.html#a09f9b0bc051de645f7b75d76b1fc36fd" title="Returns this objectID.">__toString</a> ( <span class="keywordtype">void</span> ) ;</div>
-<div class="line"><a name="l00535"></a><span class="lineno">  535</span>&#160;} ;</div>
+<div class="line"><a name="l00521"></a><span class="lineno">  521</span>&#160;   <a class="code" href="classSequoiaDB.html">SequoiaDB</a> <a class="code" href="classSequoiaNode.html#a585df8009f7a27a0a7e9cfee3d63e32f" title="connect the node">connect</a> ( <span class="keywordtype">void</span> ) ;</div>
+<div class="line"><a name="l00522"></a><span class="lineno">  522</span>&#160;};</div>
+<div class="line"><a name="l00523"></a><span class="lineno">  523</span>&#160;</div>
+<div class="line"><a name="l00524"></a><span class="lineno">  524</span>&#160;</div>
+<div class="line"><a name="l00527"></a><span class="lineno"><a class="code" href="classSequoiaID.html">  527</a></span>&#160;<span class="keyword">class </span><a class="code" href="classSequoiaID.html">SequoiaID</a></div>
+<div class="line"><a name="l00528"></a><span class="lineno">  528</span>&#160;{</div>
+<div class="line"><a name="l00529"></a><span class="lineno">  529</span>&#160;<span class="keyword">public</span>:</div>
+<div class="line"><a name="l00535"></a><span class="lineno">  535</span>&#160;   <a class="code" href="classSequoiaID.html#a44690b53ddaf27d8b812b971469a88d1" title="Creates a new id.">__construct</a> ( <span class="keywordtype">string</span> $oid ) ;</div>
 <div class="line"><a name="l00536"></a><span class="lineno">  536</span>&#160;</div>
-<div class="line"><a name="l00537"></a><span class="lineno">  537</span>&#160;</div>
-<div class="line"><a name="l00540"></a><span class="lineno"><a class="code" href="classSequoiaDate.html">  540</a></span>&#160;<span class="keyword">class </span><a class="code" href="classSequoiaDate.html">SequoiaDate</a></div>
-<div class="line"><a name="l00541"></a><span class="lineno">  541</span>&#160;{</div>
-<div class="line"><a name="l00542"></a><span class="lineno">  542</span>&#160;<span class="keyword">public</span>:</div>
-<div class="line"><a name="l00548"></a><span class="lineno">  548</span>&#160;   <a class="code" href="classSequoiaDate.html#a7cab3cef52d83e6ca495b8a97c8e0964" title="Creates a new date.">__construct</a> ( <span class="keywordtype">string</span> $date ) ;</div>
-<div class="line"><a name="l00549"></a><span class="lineno">  549</span>&#160;   </div>
-<div class="line"><a name="l00554"></a><span class="lineno">  554</span>&#160;   <span class="keywordtype">string</span> <a class="code" href="classSequoiaDate.html#a90580297de9cbcaffb9b022ff53f2711" title="Returns this date.">__toString</a> ( <span class="keywordtype">void</span> ) ;</div>
-<div class="line"><a name="l00555"></a><span class="lineno">  555</span>&#160;} ;</div>
-<div class="line"><a name="l00556"></a><span class="lineno">  556</span>&#160;</div>
-<div class="line"><a name="l00559"></a><span class="lineno"><a class="code" href="classSequoiaTimestamp.html">  559</a></span>&#160;<span class="keyword">class </span><a class="code" href="classSequoiaTimestamp.html">SequoiaTimestamp</a></div>
-<div class="line"><a name="l00560"></a><span class="lineno">  560</span>&#160;{</div>
-<div class="line"><a name="l00561"></a><span class="lineno">  561</span>&#160;<span class="keyword">public</span>:</div>
-<div class="line"><a name="l00567"></a><span class="lineno">  567</span>&#160;   <a class="code" href="classSequoiaTimestamp.html#ae44137b3a01349fa3071d743748d774a" title="Creates a new timestamp.">__construct</a> ( <span class="keywordtype">string</span> $timestamp ) ;</div>
-<div class="line"><a name="l00568"></a><span class="lineno">  568</span>&#160;   </div>
-<div class="line"><a name="l00573"></a><span class="lineno">  573</span>&#160;   <span class="keywordtype">string</span> <a class="code" href="classSequoiaTimestamp.html#aa79176e06dd2e170b3481433640f2108" title="Returns this timestamp.">__toString</a> ( <span class="keywordtype">void</span> ) ;</div>
-<div class="line"><a name="l00574"></a><span class="lineno">  574</span>&#160;} ;</div>
-<div class="line"><a name="l00575"></a><span class="lineno">  575</span>&#160;</div>
-<div class="line"><a name="l00578"></a><span class="lineno"><a class="code" href="classSequoiaRegex.html">  578</a></span>&#160;<span class="keyword">class </span><a class="code" href="classSequoiaRegex.html">SequoiaRegex</a></div>
-<div class="line"><a name="l00579"></a><span class="lineno">  579</span>&#160;{</div>
-<div class="line"><a name="l00580"></a><span class="lineno">  580</span>&#160;<span class="keyword">public</span>:</div>
-<div class="line"><a name="l00586"></a><span class="lineno">  586</span>&#160;   <a class="code" href="classSequoiaRegex.html#ae111bc828947bcafb9eda645efc13fcf" title="Creates a new regex.">__construct</a> ( <span class="keywordtype">string</span> $regex ) ;</div>
-<div class="line"><a name="l00587"></a><span class="lineno">  587</span>&#160;   </div>
-<div class="line"><a name="l00592"></a><span class="lineno">  592</span>&#160;   <span class="keywordtype">string</span> <a class="code" href="classSequoiaRegex.html#a9df3c45dbc13b65d2adec17a0508cd31" title="Returns this regex.">__toString</a> ( <span class="keywordtype">void</span> ) ;</div>
-<div class="line"><a name="l00593"></a><span class="lineno">  593</span>&#160;} ;</div>
+<div class="line"><a name="l00541"></a><span class="lineno">  541</span>&#160;   <span class="keywordtype">string</span> <a class="code" href="classSequoiaID.html#a09f9b0bc051de645f7b75d76b1fc36fd" title="Returns this objectID.">__toString</a> ( <span class="keywordtype">void</span> ) ;</div>
+<div class="line"><a name="l00542"></a><span class="lineno">  542</span>&#160;} ;</div>
+<div class="line"><a name="l00543"></a><span class="lineno">  543</span>&#160;</div>
+<div class="line"><a name="l00544"></a><span class="lineno">  544</span>&#160;</div>
+<div class="line"><a name="l00547"></a><span class="lineno"><a class="code" href="classSequoiaDate.html">  547</a></span>&#160;<span class="keyword">class </span><a class="code" href="classSequoiaDate.html">SequoiaDate</a></div>
+<div class="line"><a name="l00548"></a><span class="lineno">  548</span>&#160;{</div>
+<div class="line"><a name="l00549"></a><span class="lineno">  549</span>&#160;<span class="keyword">public</span>:</div>
+<div class="line"><a name="l00555"></a><span class="lineno">  555</span>&#160;   <a class="code" href="classSequoiaDate.html#a7cab3cef52d83e6ca495b8a97c8e0964" title="Creates a new date.">__construct</a> ( <span class="keywordtype">string</span> $date ) ;</div>
+<div class="line"><a name="l00556"></a><span class="lineno">  556</span>&#160;   </div>
+<div class="line"><a name="l00561"></a><span class="lineno">  561</span>&#160;   <span class="keywordtype">string</span> <a class="code" href="classSequoiaDate.html#a90580297de9cbcaffb9b022ff53f2711" title="Returns this date.">__toString</a> ( <span class="keywordtype">void</span> ) ;</div>
+<div class="line"><a name="l00562"></a><span class="lineno">  562</span>&#160;} ;</div>
+<div class="line"><a name="l00563"></a><span class="lineno">  563</span>&#160;</div>
+<div class="line"><a name="l00566"></a><span class="lineno"><a class="code" href="classSequoiaTimestamp.html">  566</a></span>&#160;<span class="keyword">class </span><a class="code" href="classSequoiaTimestamp.html">SequoiaTimestamp</a></div>
+<div class="line"><a name="l00567"></a><span class="lineno">  567</span>&#160;{</div>
+<div class="line"><a name="l00568"></a><span class="lineno">  568</span>&#160;<span class="keyword">public</span>:</div>
+<div class="line"><a name="l00574"></a><span class="lineno">  574</span>&#160;   <a class="code" href="classSequoiaTimestamp.html#ae44137b3a01349fa3071d743748d774a" title="Creates a new timestamp.">__construct</a> ( <span class="keywordtype">string</span> $timestamp ) ;</div>
+<div class="line"><a name="l00575"></a><span class="lineno">  575</span>&#160;   </div>
+<div class="line"><a name="l00580"></a><span class="lineno">  580</span>&#160;   <span class="keywordtype">string</span> <a class="code" href="classSequoiaTimestamp.html#aa79176e06dd2e170b3481433640f2108" title="Returns this timestamp.">__toString</a> ( <span class="keywordtype">void</span> ) ;</div>
+<div class="line"><a name="l00581"></a><span class="lineno">  581</span>&#160;} ;</div>
+<div class="line"><a name="l00582"></a><span class="lineno">  582</span>&#160;</div>
+<div class="line"><a name="l00585"></a><span class="lineno"><a class="code" href="classSequoiaRegex.html">  585</a></span>&#160;<span class="keyword">class </span><a class="code" href="classSequoiaRegex.html">SequoiaRegex</a></div>
+<div class="line"><a name="l00586"></a><span class="lineno">  586</span>&#160;{</div>
+<div class="line"><a name="l00587"></a><span class="lineno">  587</span>&#160;<span class="keyword">public</span>:</div>
+<div class="line"><a name="l00593"></a><span class="lineno">  593</span>&#160;   <a class="code" href="classSequoiaRegex.html#ae111bc828947bcafb9eda645efc13fcf" title="Creates a new regex.">__construct</a> ( <span class="keywordtype">string</span> $regex ) ;</div>
+<div class="line"><a name="l00594"></a><span class="lineno">  594</span>&#160;   </div>
+<div class="line"><a name="l00599"></a><span class="lineno">  599</span>&#160;   <span class="keywordtype">string</span> <a class="code" href="classSequoiaRegex.html#a9df3c45dbc13b65d2adec17a0508cd31" title="Returns this regex.">__toString</a> ( <span class="keywordtype">void</span> ) ;</div>
+<div class="line"><a name="l00600"></a><span class="lineno">  600</span>&#160;} ;</div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Sun Jul 6 2014 16:05:51 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Mon Mar 16 2015 11:16:05 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.2
 </small></address>
