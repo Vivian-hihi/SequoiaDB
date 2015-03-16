@@ -191,7 +191,6 @@ public:
 
 /** \class SecureSdb
     \brief secure SequoiaDB, use SSL connection
-    \extends SequoiaDB
  */
 class SecureSdb: public SequoiaDB
 {
