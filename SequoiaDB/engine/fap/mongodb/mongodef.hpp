@@ -207,7 +207,7 @@ private:
    const CHAR *_dataStart ;
    const CHAR *_dataEnd ;
    const CHAR *_nextObj ;
-   INT32 _offset ;
+   UINT32 _offset ;
    BOOLEAN _bigEndian ;
 } ;
 

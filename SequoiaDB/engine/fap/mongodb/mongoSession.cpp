@@ -440,8 +440,6 @@ INT32 _mongoSession::_reply( MsgOpReply *replyHeader,
       reply.nReturned = replyHeader->numReturned ;
    }
 
-   reply.header.len = sizeof( mongoMsgReply ) + len ;
-
    if ( reply.nReturned > 1 )
    {
 //      if ( OP_CMD_GET_INDEX == _converter->getOpType() )
@@ -466,8 +464,8 @@ INT32 _mongoSession::_reply( MsgOpReply *replyHeader,
          }
 //      }
 
-      pBody = _outBuffer.data() ;
-      reply.header.len = sizeof( mongoMsgReply ) + _outBuffer.size() ;
+//      pBody = _outBuffer.data() ;
+//      reply.header.len = sizeof( mongoMsgReply ) + _outBuffer.size() ;
    }
    else
    {
@@ -475,7 +473,7 @@ INT32 _mongoSession::_reply( MsgOpReply *replyHeader,
       {
          if ( 0 == reply.cursorId )
          {
-            // it is msg with command
+            // error or command
             bsonBody.init( pBody ) ;
             if ( !bsonBody.hasField( "ok" ) )
             {
@@ -483,22 +481,32 @@ INT32 _mongoSession::_reply( MsgOpReply *replyHeader,
                bob.append( "code", replyHeader->flags ) ;
                bob.appendElements( bsonBody ) ;
                objToSend = bob.obj() ;
-               pBody = objToSend.objdata() ;
-               reply.header.len = sizeof( mongoMsgReply ) + objToSend.objsize() ;
+               _outBuffer.write( objToSend ) ;
+               //pBody = objToSend.objdata() ;
+               //reply.header.len = sizeof( mongoMsgReply ) + objToSend.objsize() ;
             }
+            _outBuffer.write( bsonBody ) ;
+         }
+         else
+         {
+            bsonBody.init( pBody ) ;
+            _outBuffer.write( bsonBody ) ;
          }
       }
       else
       {
-         if ( OP_GETMORE != _converter->getOpType() )
+         if ( OP_GETMORE != _converter->getOpType() &&
+              OP_CMD_GET_INDEX == _converter->getOpType()  )
          {
             bob.append( "ok", 1.0 ) ;
             objToSend = bob.obj() ;
-            pBody = objToSend.objdata() ;
-            reply.header.len = sizeof( mongoMsgReply ) + objToSend.objsize() ;
+            _outBuffer.write( objToSend ) ;
          }
       }
    }
+
+   pBody = _outBuffer.data() ;
+   reply.header.len = sizeof( mongoMsgReply ) + _outBuffer.size() ;
 
    rc = sendData( (CHAR *)&reply, sizeof( mongoMsgReply ) ) ;
    if ( rc )

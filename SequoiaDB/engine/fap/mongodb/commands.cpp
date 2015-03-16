@@ -131,6 +131,26 @@ namespace fap {
          flags |= FLG_QUERY_PARTIALREAD ;
       }
    }
+
+   bson::BSONObj getCondObj( const bson::BSONObj& all )
+   {
+      bson::BSONObj cond ;
+      const char* cmdStr = all.firstElementFieldName() ;
+      if ( NULL != ossStrstr( cmdStr, "$query" ) )
+      {
+         cond = all.getObjectField( "$query" ) ;
+      }
+      else if ( NULL != ossStrstr( cmdStr, "query" ) )
+      {
+         cond = all.getObjectField( "query" ) ;
+      }
+      else
+      {
+         cond = all ;
+      }
+
+      return cond ;
+   }
 }
 
 ////////////////////////////////////////////////////////////////
@@ -259,6 +279,7 @@ INT32 deleteCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
    MsgHeader *header   = NULL ;
    MsgOpDelete *remove = NULL ;
    bson::BSONObj del ;
+   bson::BSONObj cond ;
    bson::BSONObj hint ;
    std::string fullname ;
    bson::BSONObj obj ;
@@ -317,10 +338,10 @@ INT32 deleteCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
       {
          subObj = (*cit).Obj() ;
          del = subObj.getObjectField( "q" ) ;
+         cond = fap::getCondObj( del ) ;
          hint = del.getObjectField( "$hint" ) ;
-         hint = removeField( hint, "$hint" ) ;
-         remove->flags = subObj.getIntField( "limit" ) ;
-         sdbMsg.write( del, TRUE ) ;
+         //remove->flags |= subObj.getIntField( "limit" ) ;
+         sdbMsg.write( cond, TRUE ) ;
          sdbMsg.write( hint, TRUE ) ;
          ++cit ;
       }
@@ -333,7 +354,7 @@ INT32 deleteCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
          rc = SDB_INVALIDARG ;
          goto error ;
       }
-      parser.nextObj( del ) ;
+      parser.nextObj( cond ) ;
 
       if ( parser.more() )
       {
@@ -341,8 +362,8 @@ INT32 deleteCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
          goto error ;
       }
 
+      cond = del.getObjectField( "$query" ) ;
       hint = del.getObjectField( "$hint" ) ;
-      hint = removeField( hint, "$hint" ) ;
 
       sdbMsg.write( parser.fullName, remove->nameLength + 1, TRUE ) ;
       sdbMsg.write( del, TRUE ) ;
@@ -367,8 +388,9 @@ INT32 updateCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
    INT32 updateFlags   = 0 ;
    MsgHeader *header   = NULL ;
    MsgOpUpdate *update = NULL ;
+   bson::BSONObj all ;
    bson::BSONObj cond ;
-   bson::BSONObj updater ;
+   bson::BSONObj updator ;
    bson::BSONObj hint ;
 
    std::string fullname ;
@@ -422,10 +444,14 @@ INT32 updateCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
       while ( objList.end() != cit )
       {
          subObj = (*cit).Obj() ;
-         cond = subObj.getObjectField( "q" ) ;// u , multi upsert
-         updater = subObj.getObjectField( "u" ) ;
+         all= subObj.getObjectField( "q" ) ;// u , multi upsert
+
+         cond = fap::getCondObj( all ) ;
+
+         updator = subObj.getObjectField( "u" ) ;
+
          hint = cond.getObjectField( "$hint" ) ;
-         hint = removeField( hint, "$hint" ) ;
+         cond = removeField( cond, "$hint" ) ;
          BOOLEAN tmp = 0 ;
          tmp = subObj.getBoolField( "multi" ) ;
          if ( tmp )
@@ -438,7 +464,7 @@ INT32 updateCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
             update->flags |= FLG_UPDATE_UPSERT ;
          }
          sdbMsg.write( cond, TRUE ) ;
-         sdbMsg.write( updater, TRUE ) ;
+         sdbMsg.write( updator, TRUE ) ;
          sdbMsg.write( hint, TRUE ) ;
          ++cit ;
       }
@@ -462,21 +488,21 @@ INT32 updateCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
          rc = SDB_INVALIDARG ;
          goto error ;
       }
-      parser.nextObj( cond ) ;
+      parser.nextObj( all ) ;
 
       if ( !parser.more() )
       {
          rc = SDB_INVALIDARG ;
          goto error ;
       }
-      parser.nextObj( updater ) ;
+      parser.nextObj( updator ) ;
 
-      hint = cond.getObjectField( "$hint" ) ;
-      hint = removeField( hint, "$hint" ) ;
+      cond = fap::getCondObj( all ) ;
+      hint = all.getObjectField( "$hint" ) ;
 
       sdbMsg.write( parser.fullName, update->nameLength + 1, TRUE ) ;
       sdbMsg.write( cond, TRUE ) ;
-      sdbMsg.write( updater, TRUE ) ;
+      sdbMsg.write( updator, TRUE ) ;
       sdbMsg.write( hint, TRUE ) ;
    }
 
@@ -529,7 +555,11 @@ INT32 queryCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
    parser.readNumber( sizeof( INT32 ), ( CHAR * )&nToSkip ) ;
    query->numToSkip = nToSkip ;
    parser.readNumber( sizeof( INT32 ), ( CHAR * )&nToReturn ) ;
-   query->numToReturn = nToReturn <= 0 ? -1 : nToReturn ;
+   query->numToReturn = (0 == nToReturn ? -1 : nToReturn) ;
+   if ( -1 == nToReturn )
+   {
+      query->numToReturn = 1 ;
+   }
 
    if ( parser.more() )
    {
@@ -575,26 +605,24 @@ INT32 queryCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
       goto done ;
    }
 
+   cond = fap::getCondObj( all ) ;
+   orderby = all.getObjectField( "orderby" ) ;
+   hint    = cond.getObjectField( "$hint" ) ;
+
+   if ( all.hasField( "limit" ) )
    {
-      cmdStr = all.firstElementFieldName() ;
-      if ( NULL != ossStrstr( cmdStr, "$query" ) )
-      {
-         cond = all.getObjectField( "$query" ) ;
-      }
-      else if ( NULL != ossStrstr( cmdStr, "query" ) )
-      {
-         cond = all.getObjectField( "query" ) ;
-      }
-      else
-      {
-         cond = all ;
-      }
+      query->numToReturn = cond.getIntField( "limit" ) ;
    }
 
-   orderby = cond.getObjectField( "orderby" ) ;
-   orderby = removeField( orderby, "orderby" ) ;
-   hint    = cond.getObjectField( "$hint" ) ;
-   hint    = removeField( hint, "$hint" ) ;
+   if ( all.hasField( "skip" ) )
+   {
+      query->numToSkip   = cond.getIntField( "skip" ) ;
+   }
+
+   if ( cond.getBoolField("$explain") )
+   {
+      query->flags |= FLG_QUERY_EXPLAIN ;
+   }
 
    if ( parser.more() )
    {
@@ -642,7 +670,11 @@ INT32 getMoreCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
    parser.skip( parser.nsLen + 1 ) ;
 
    parser.readNumber( sizeof( INT32 ), ( CHAR * )&nToReturn ) ;
-   more->numToReturn = nToReturn <= 0 ? -1 : nToReturn ;
+   more->numToReturn = (0 == nToReturn ? -1 : nToReturn) ;
+   if ( -1 == nToReturn )
+   {
+      more->numToReturn = 1 ;
+   }
    parser.readNumber( sizeof( SINT64 ), ( CHAR * )&cursorid ) ;
    more->contextID = cursorid - 1;
 
@@ -827,7 +859,11 @@ INT32 createCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
       parser.readNumber( sizeof( INT32 ), ( CHAR * )&nToSkip ) ;
       query->numToSkip = 0 ;
       parser.readNumber( sizeof( INT32 ), ( CHAR * )&nToReturn ) ;
-      query->numToReturn = nToReturn <= 0 ? -1 : nToReturn ;
+      query->numToReturn = (0 == nToReturn ? -1 : nToReturn) ;
+      if ( -1 == nToReturn )
+      {
+         query->numToReturn = 1 ;
+      }
 
       if ( parser.more() )
       {
@@ -906,7 +942,11 @@ INT32 dropCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
    parser.readNumber( sizeof( INT32 ), ( CHAR * )&nToSkip ) ;
    query->numToSkip = 0 ;
    parser.readNumber( sizeof( INT32 ), ( CHAR * )&nToReturn ) ;
-   query->numToReturn = nToReturn <= 0 ? -1 : nToReturn ;
+   query->numToReturn = (0 == nToReturn ? -1 : nToReturn) ;
+   if ( -1 == nToReturn )
+   {
+      query->numToReturn = 1 ;
+   }
 
    if ( parser.more() )
    {
@@ -941,7 +981,7 @@ INT32 countCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
    INT32 nToReturn   = 0 ;
    MsgHeader *header = NULL ;
    MsgOpQuery *query = NULL ;
-   bson::BSONObj cond ;
+   bson::BSONObj all ;
    bson::BSONObj queryObj ;
    bson::BSONObj orderby ;
    bson::BSONObj fields ;
@@ -973,29 +1013,34 @@ INT32 countCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
    parser.skip( parser.nsLen + 1 ) ;
 
    parser.readNumber( sizeof( INT32 ), ( CHAR * )&nToSkip ) ;
+   query->numToSkip = nToSkip ;
    parser.readNumber( sizeof( INT32 ), ( CHAR * )&nToReturn ) ;
+   query->numToReturn = nToReturn ;
 
    if ( parser.more() )
    {
-      parser.nextObj( cond ) ;
+      parser.nextObj( all ) ;
    }
 
    // makeup cs.collection
    fullname += "." ;
-   fullname += cond.getStringField( "count" ) ;
+   fullname += all.getStringField( "count" ) ;
 
    query->nameLength = cmdStr.length() ;
    sdbMsg.write( cmdStr.c_str(), query->nameLength + 1, TRUE ) ;
    obj = BSON( "Collection" << fullname.c_str() ) ;
 
-   queryObj = cond.getObjectField( "query" ) ;
-   orderby = queryObj.getObjectField( "sort" ) ;
-   queryObj = removeField( queryObj, "sort" ) ;
+   queryObj = fap::getCondObj( all ) ;
+   orderby = all.getObjectField( "sort" ) ;
+   if ( all.hasField( "limit" ) )
+   {
+      query->numToReturn = all.getIntField( "limit" ) ;
+   }
 
-   nToReturn = cond.getIntField( "limit" ) ;
-   nToSkip   = cond.getIntField( "skip" ) ;
-   query->numToSkip = nToSkip ;
-   query->numToReturn = nToReturn ;
+   if ( all.hasField( "skip" ) )
+   {
+      query->numToSkip = all.getIntField( "skip" ) ;
+   }
 
    sdbMsg.write( queryObj, TRUE ) ;
    sdbMsg.write( fields, TRUE ) ;
@@ -1052,7 +1097,6 @@ INT32 aggregateCommand::convertRequest( mongoParser &parser,
    // makeup cs.collection
    fullname += "." ;
    fullname += cond.getStringField( "aggregate" ) ;
-   cond = removeField( cond, "aggregate" ) ;
 
    aggr->nameLength = fullname.length() ;
    sdbMsg.write( fullname.c_str(), aggr->nameLength + 1, TRUE ) ;
@@ -1213,8 +1257,11 @@ INT32 createIndexesCommand::convertRequest( mongoParser &parser,
       parser.readNumber( sizeof( INT32 ), ( CHAR * )&nToSkip ) ;
       index->numToSkip = 0 ;
       parser.readNumber( sizeof( INT32 ), ( CHAR * )&nToReturn ) ;
-      index->numToReturn = nToReturn <= 0 ? -1 : nToReturn ;
-
+      index->numToReturn = (0 == nToReturn ? -1 : nToReturn) ;
+      if ( -1 == nToReturn )
+      {
+         index->numToReturn = 1 ;
+      }
       index->nameLength = cmdStr.length() ;
       sdbMsg.write( cmdStr.c_str(), index->nameLength + 1, TRUE ) ;
 
@@ -1299,7 +1346,11 @@ INT32 deleteIndexesCommand::convertRequest( mongoParser &parser,
    parser.readNumber( sizeof( INT32 ), ( CHAR * )&nToSkip ) ;
    dropIndex->numToSkip = 0 ;
    parser.readNumber( sizeof( INT32 ), ( CHAR * )&nToReturn ) ;
-   dropIndex->numToReturn = nToReturn <= 0 ? -1 : nToReturn ;
+   dropIndex->numToReturn = (0 == nToReturn ? -1 : nToReturn) ;
+   if ( -1 == nToReturn )
+   {
+      dropIndex->numToReturn = 1 ;
+   }
 
    if ( parser.more() )
    {
@@ -1350,7 +1401,6 @@ INT32 listIndexesCommand::convertRequest( mongoParser &parser,
    INT32 rc              = SDB_OK ;
    INT32 nToSkip         = 0 ;
    INT32 nToReturn       = 0 ;
-   const CHAR *indexName = NULL ;
    MsgHeader *header     = NULL ;
    MsgOpQuery *getIndex  = NULL ;
    bson::BSONObj cond ;
@@ -1382,7 +1432,11 @@ INT32 listIndexesCommand::convertRequest( mongoParser &parser,
    parser.readNumber( sizeof( INT32 ), ( CHAR * )&nToSkip ) ;
    getIndex->numToSkip = 0 ;
    parser.readNumber( sizeof( INT32 ), ( CHAR * )&nToReturn ) ;
-   getIndex->numToReturn = nToReturn <= 0 ? -1 : nToReturn ;
+   getIndex->numToReturn = (0 == nToReturn ? -1 : nToReturn) ;
+   if ( -1 == nToReturn )
+   {
+      getIndex->numToReturn = 1 ;
+   }
 
    if ( parser.more() )
    {
@@ -1391,15 +1445,17 @@ INT32 listIndexesCommand::convertRequest( mongoParser &parser,
 
    if ( parser.withIndex )
    {
-      indexName = cond.getStringField( "index" ) ;
-      if ( NULL != indexName )
+      if ( cond.hasField( "index" ) )
       {
-         indexObj = BSON( "indexDef.name" << indexName  ) ;
+         indexObj = BSON( "indexDef.name" << cond.getStringField( "index" )  ) ;
       }
       obj.append( "Collection", cond.getStringField( "ns" ) ) ;
    }
    else if ( parser.withCmd )
    {
+      parser.opType = OP_CMD_NOT_SUPPORTED ;
+      parser.cmdName = cond.firstElementFieldName() ;
+
       fullname = parser.csName ;
       fullname += "." ;
       fullname += cond.getStringField( "listIndexes" ) ;
