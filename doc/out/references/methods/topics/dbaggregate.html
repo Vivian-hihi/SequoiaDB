@@ -49,23 +49,23 @@
 
     <div class="section"><h2 class="title sectiontitle">参数描述</h2>
       <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d121167e30" class="stentry">参数名</th>
+          <th valign="bottom" align="left" id="d122976e30" class="stentry">参数名</th>
 
-          <th valign="bottom" align="left" id="d121167e33" class="stentry">参数类型</th>
+          <th valign="bottom" align="left" id="d122976e33" class="stentry">参数类型</th>
 
-          <th valign="bottom" align="left" id="d121167e36" class="stentry">描述</th>
+          <th valign="bottom" align="left" id="d122976e36" class="stentry">描述</th>
 
-          <th valign="bottom" align="left" id="d121167e39" class="stentry">是否必填</th>
+          <th valign="bottom" align="left" id="d122976e39" class="stentry">是否必填</th>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d121167e30" class="stentry">subOp</td>
+          <td valign="top" headers="d122976e30" class="stentry">subOp</td>
 
-          <td valign="top" headers="d121167e33" class="stentry">json对象</td>
+          <td valign="top" headers="d122976e33" class="stentry">json对象</td>
 
-          <td valign="top" headers="d121167e36" class="stentry">subOp表示子操作，在 aggregate() 方法中可以填写 1~N 个子操作。</td>
+          <td valign="top" headers="d122976e36" class="stentry">subOp表示子操作，在 aggregate() 方法中可以填写 1~N 个子操作。</td>
 
-          <td valign="top" headers="d121167e39" class="stentry">是</td>
+          <td valign="top" headers="d122976e39" class="stentry">是</td>
 
         </tr>
 <tr class="strow"/>
@@ -78,59 +78,59 @@
       
       <p class="p">aggregate() 方法只有一个参数 subOp，它表示 1~N 个子操作，每个子操作是一个 JSON 对象，子操作之间用逗号隔开。聚集框架支持以下子操作参数：</p>
 <div class="p"> <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d121167e75" class="stentry">参数名 </th>
+          <th valign="bottom" align="left" id="d122976e75" class="stentry">参数名 </th>
 
-          <th valign="bottom" align="left" id="d121167e78" class="stentry">描述 </th>
+          <th valign="bottom" align="left" id="d122976e78" class="stentry">描述 </th>
 
-          <th valign="bottom" align="left" id="d121167e81" class="stentry">示例 </th>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d121167e75" class="stentry"><a class="xref" href="../../console/topics/project.html">$project</a></td>
-
-          <td valign="top" headers="d121167e78" class="stentry">选择需要输出的字段名，“1”表示输出，“0”表示不输出，还可以实现字段的重命名。 </td>
-
-          <td valign="top" headers="d121167e81" class="stentry">{$project:{field1:1,field:0,aliase:"$field3"}} </td>
+          <th valign="bottom" align="left" id="d122976e81" class="stentry">示例 </th>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d121167e75" class="stentry"><a class="xref" href="../../console/topics/match.html">$match</a></td>
+          <td valign="top" headers="d122976e75" class="stentry"><a class="xref" href="../../console/topics/project.html">$project</a></td>
 
-          <td valign="top" headers="d121167e78" class="stentry">实现从集合中选择匹配条件的记录，相当与 SQL 语句的 where。</td>
+          <td valign="top" headers="d122976e78" class="stentry">选择需要输出的字段名，“1”表示输出，“0”表示不输出，还可以实现字段的重命名。 </td>
 
-          <td valign="top" headers="d121167e81" class="stentry">{$match:{field:{$lte:value}}}</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d121167e75" class="stentry"><a class="xref" href="../../console/topics/jlimit.html">$limit</a></td>
-
-          <td valign="top" headers="d121167e78" class="stentry">限制返回的记录条数。</td>
-
-          <td valign="top" headers="d121167e81" class="stentry">{$limit:10} </td>
+          <td valign="top" headers="d122976e81" class="stentry">{$project:{field1:1,field:0,aliase:"$field3"}} </td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d121167e75" class="stentry"><a class="xref" href="../../console/topics/jskip.html">$skip</a></td>
+          <td valign="top" headers="d122976e75" class="stentry"><a class="xref" href="../../console/topics/match.html">$match</a></td>
 
-          <td valign="top" headers="d121167e78" class="stentry">控制结果集的开始点，即跳过结果集中指定条数的记录。</td>
+          <td valign="top" headers="d122976e78" class="stentry">实现从集合中选择匹配条件的记录，相当与 SQL 语句的 where。</td>
 
-          <td valign="top" headers="d121167e81" class="stentry">{$skip:5}</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d121167e75" class="stentry"><a class="xref" href="../../console/topics/jgroup.html">$group</a></td>
-
-          <td valign="top" headers="d121167e78" class="stentry">实现对记录的分组，类似与 SQ L的 group by 语句，“_id”指定分组字段。</td>
-
-          <td valign="top" headers="d121167e81" class="stentry">{$group:{_id:"$field"}}</td>
+          <td valign="top" headers="d122976e81" class="stentry">{$match:{field:{$lte:value}}}</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d121167e75" class="stentry"><a class="xref" href="../../console/topics/jsort.html">$sort</a></td>
+          <td valign="top" headers="d122976e75" class="stentry"><a class="xref" href="../../console/topics/jlimit.html">$limit</a></td>
 
-          <td valign="top" headers="d121167e78" class="stentry">实现对结果集的排序，“1”代表升序，“-1”代表降序。</td>
+          <td valign="top" headers="d122976e78" class="stentry">限制返回的记录条数。</td>
 
-          <td valign="top" headers="d121167e81" class="stentry">{$sort:{field1:1,field2:-1,...}}</td>
+          <td valign="top" headers="d122976e81" class="stentry">{$limit:10} </td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d122976e75" class="stentry"><a class="xref" href="../../console/topics/jskip.html">$skip</a></td>
+
+          <td valign="top" headers="d122976e78" class="stentry">控制结果集的开始点，即跳过结果集中指定条数的记录。</td>
+
+          <td valign="top" headers="d122976e81" class="stentry">{$skip:5}</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d122976e75" class="stentry"><a class="xref" href="../../console/topics/jgroup.html">$group</a></td>
+
+          <td valign="top" headers="d122976e78" class="stentry">实现对记录的分组，类似与 SQ L的 group by 语句，“_id”指定分组字段。</td>
+
+          <td valign="top" headers="d122976e81" class="stentry">{$group:{_id:"$field"}}</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d122976e75" class="stentry"><a class="xref" href="../../console/topics/jsort.html">$sort</a></td>
+
+          <td valign="top" headers="d122976e78" class="stentry">实现对结果集的排序，“1”代表升序，“-1”代表降序。</td>
+
+          <td valign="top" headers="d122976e81" class="stentry">{$sort:{field1:1,field2:-1,...}}</td>
 
         </tr>
 </table>

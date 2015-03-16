@@ -6,6 +6,6 @@
   <topicref href="../postgresql_integration/topics/SequoiadbPostgresql.dita"/>
   <topicref href="../postgresql_integration/topics/deployment.dita"/>
   <topicref href="../postgresql_integration/topics/connection.dita"/>
-  <topicref href="../postgresql_integration/topics/deployment.dita"/>
+  <topicref href="../postgresql_integration/topics/development.dita"/>
  </topicref> 
 </map>
