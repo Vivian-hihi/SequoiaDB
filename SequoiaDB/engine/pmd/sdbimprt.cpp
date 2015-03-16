@@ -185,7 +185,7 @@ namespace engine
    #define EXPLAIN_LINEPRIORITY     "reverse the priority for record and character delimiter, default: true"
    #define EXPLAIN_ERRORSTOP        "whether stop by hitting error, default false"
    #define EXPLAIN_FORCE            "force to insert the records that are not in utf-8 format, default: false"
-   #define EXPLAIN_SSL              "use SSL connection"
+   #define EXPLAIN_SSL              "use SSL connection (arg: [true|false], e.g. \"--ssl true\")"
    
    INT32 mainEntry ( INT32 argc, CHAR **argv )
    {
