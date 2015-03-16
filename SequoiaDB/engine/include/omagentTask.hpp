@@ -260,7 +260,7 @@ namespace engine
          INT32 _initRemoveAndResultInfo( BSONObj &hostInfo,
                                          RemoveDBBusInfo &info ) ;
          INT32 _initResultOrder( BSONObj &info ) ;
-         void  _getDataRGToRemove( BSONObj &obj ) ;
+         void  _getInfoToRemove( BSONObj &obj ) ;
          void  _buildResultInfo( BOOLEAN isStandalone,
                                  pair<string, string> &p,
                                  BSONArrayBuilder &bab ) ;

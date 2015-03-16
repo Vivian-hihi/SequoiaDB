@@ -4432,13 +4432,15 @@ namespace engine
       goto done ;
    }
 
-   void _omaRemoveDBBusTask::_getDataRGToRemove( BSONObj &obj )
+   void _omaRemoveDBBusTask::_getInfoToRemove( BSONObj &obj )
    {
       BSONObjBuilder builder ;
       BSONArrayBuilder bab ;
       set<string> groupNames ;
       vector<RemoveDBBusInfo>::iterator it ;
       set<string>::iterator it2 ;
+
+      builder.appendElements( _authInfo ) ;
       
       it = _data.begin() ;
       for ( ; it != _data.end(); it++ )
@@ -4904,7 +4906,7 @@ namespace engine
       BSONObj removeGroupObj ;
       BSONObj retObj ;
 
-      _getDataRGToRemove( removeGroupObj ) ;
+      _getInfoToRemove( removeGroupObj ) ;
       _omaRmDataRG runCmd ( _taskID, _tmpCoordSvcName, removeGroupObj ) ;
 
       // update progress
@@ -4976,7 +4978,7 @@ namespace engine
    done:
       return rc ;
    error:
-      PD_LOG( PDERROR, "Failed to remove data gropus, rc = %d", rc ) ;
+      PD_LOG( PDERROR, "Failed to remove data groups, rc = %d", rc ) ;
       // update progress
       updateProgressToTask( rc, pDetail, ROLE_DATA, OMA_TASK_STATUS_END ) ;
       setErrInfo( rc, pDetail ) ;

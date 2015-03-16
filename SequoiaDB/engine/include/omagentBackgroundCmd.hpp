@@ -349,7 +349,7 @@ namespace engine
    {
       public:
          _omaRmDataRG ( INT64 taskID,
-                        string &tmpCoordSvcNamem,
+                        string &tmpCoordSvcName,
                         BSONObj &info ) ;
          virtual ~_omaRmDataRG () ;
 
