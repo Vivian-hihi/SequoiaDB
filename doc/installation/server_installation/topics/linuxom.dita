@@ -19,7 +19,7 @@
       <p><b>说明：</b></p>
       <p>&nbsp;&nbsp;（1）产品包名字以 sequoiadb-1.0.0-linux-x86_64-installer.run 为例；</p>
       <p>&nbsp;&nbsp;（2）步骤以命令行方式进行介绍，图形界面按照图像向导提示完成。</p>
-      <note>如果有多台服务器，每台机器都需要重复如下步骤安装服务器程序。</note>
+      <note>如果有多台服务器，只需要选择其中一台作为控制机，执行以下操作，安装 OM 服务。</note>
       <ul>
         <li><p>参照<xref href="../../system_require/topics/software.dita">系统配置需求</xref>配置好主机名以及修改系统内核参数</p></li>
         <li><p>运行安装程序<codeblock>./sequoiadb-1.0.0-linux-x86_64-installer.run --mode text --SMS true</codeblock></p>
