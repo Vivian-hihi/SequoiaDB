@@ -8,7 +8,7 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="Java API"/>
-<meta name="description" content="此部分是相关 Java 的 API 文档。 Java API 历史更新情况： Version 1.12 1. 添加了使用 SSL 连接数据库的接口，详情请查看 网络安全 。 Version 1.10 1. DBCollection 类新添加的接口： createLob，创建一个大对象 openLob，打开一个已存在的大对象 removeLob，删除一个大对象 listLobs，列出所有大对象 ..."/>
+<meta name="description" content="此部分是相关 Java 的 API 文档。 Java API 历史更新情况： Version 1.12 1. 添加了使用 SSL 连接数据库的接口，详情请查看 网络安全 。 2. SequoiadbDatasource 类新添加的接口： close()，用于释放连接池资源 Version 1.10 1. DBCollection 类新添加的接口： createLob，创建一个大对象 ..."/>
 <meta name="DC.Relation" scheme="URI" content="../../../../developement/application/java/topics/java.html"/>
 <meta name="DC.Format" content="XHTML"/>
 <meta name="DC.Identifier" content="topic_gvk_byy_3k"/>
@@ -45,6 +45,9 @@
       <p class="p"><strong class="ph b">Version 1.12</strong></p>
 
       <p class="p">1. 添加了使用 SSL 连接数据库的接口，详情请查看<a class="xref" href="../../../../administration/security/topics/security_net.html">网络安全</a>。</p>
+
+      <div class="p">2. SequoiadbDatasource 类新添加的接口：<pre class="pre codeblock">close()，用于释放连接池资源</pre>
+</div>
 
       <p class="p"><strong class="ph b">Version 1.10</strong></p>
 
