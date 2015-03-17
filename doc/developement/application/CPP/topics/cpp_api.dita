@@ -7,6 +7,8 @@
     <p><xref href="..\..\..\..\cpp\html\index.html" format="html">C++ API</xref></p>
     <section>
       <title>历史更新情况：</title>
+      <p><b>Version 1.12</b></p>
+      <p>1. 添加了使用 SSL 连接数据库的接口，详情请查看<xref href="..\..\..\..\administration\security\topics\security_net.dita">网络安全</xref>。</p>
       <p><b>Version 1.10</b></p>
       <p>1. SdbCollection 类添加的接口：</p><codeblock>explain，获取查询的访问计划
 createLob，创建一个新的lob 

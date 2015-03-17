@@ -7,6 +7,8 @@
     <p><xref href="..\..\..\..\python\html\index.html" format="html">Python API</xref></p>
     <section>
       <title>历史更新情况：</title>
+      <p><b>Version 1.12</b></p>
+      <p>1. 添加了使用 SSL 连接数据库的接口，详情请查看<xref href="..\..\..\..\administration\security\topics\security_net.dita">网络安全</xref>。</p>
       <p><b>Version 1.10</b></p>
       <p>1. 新增接口类 lob：</p><codeblock>close，关闭创建的lob对象，用以刷新数据
 read，可从lob对象中读取数据

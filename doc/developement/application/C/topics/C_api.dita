@@ -7,6 +7,8 @@
     <p><xref href="..\..\..\..\c\html\index.html" format="html">C API</xref></p>
     <section>
       <title>历史更新情况：</title>
+      <p><b>Version 1.12</b></p>
+      <p>1. 添加了使用 SSL 连接数据库的接口，详情请查看<xref href="..\..\..\..\administration\security\topics\security_net.dita">网络安全</xref>。</p>
       <p><b>Version 1.10</b></p>
       <p>1. 添加获取查询访问计划的接口：</p><codeblock>sdbExplain，获取查询的访问计划</codeblock>
       <p>2. 添加用于大对象（lob）操作的接口：</p><codeblock>sdbListLobs，列出集合中的所有lob

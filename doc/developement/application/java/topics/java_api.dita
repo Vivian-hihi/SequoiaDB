@@ -7,6 +7,8 @@
     <p><xref href="..\..\..\..\java\html\index.html" format="html">Java API</xref></p>
     <section>
       <title>历史更新情况：</title>
+      <p><b>Version 1.12</b></p>
+      <p>1. 添加了使用 SSL 连接数据库的接口，详情请查看<xref href="..\..\..\..\administration\security\topics\security_net.dita">网络安全</xref>。</p>
       <p><b>Version 1.10</b></p>
       <p>1. DBCollection 类新添加的接口：</p><codeblock>createLob，创建一个大对象
 openLob，打开一个已存在的大对象

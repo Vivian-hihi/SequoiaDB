@@ -27,7 +27,7 @@
       <ul>
         <li>
           <p>C</p>
-          <p>C 驱动接口使用 sdbSecureConnect() 和 sdbSecureConnect() 建立 SSL 连接，使用方式与 sdbConnect() 和 sdbConnect1() 相同。</p>
+          <p>C 驱动接口使用 sdbSecureConnect() 和 sdbSecureConnect1() 建立 SSL 连接，使用方式与 sdbConnect() 和 sdbConnect1() 相同。</p>
           <p>参见 <xref href="../../../developement/application/C/topics/c.dita">C 驱动</xref>。</p>
         </li>
         <li>
