@@ -17,11 +17,11 @@
 #ifndef authTRACE_H__
 #define authTRACE_H__
 // Component: auth
-#define SDB_AUTHCB_AUTHENTICATE                            0x1000003caL
-#define SDB_AUTHCB_CREATEUSR                               0x1000003cbL
-#define SDB_AUTHCB_REMOVEUSR                               0x1000003ccL
-#define SDB_AUTHCB_INITAUTH                                0x1000003cdL
-#define SDB_AUTHCB_CHECKNEEDAUTH                           0x1000003ceL
-#define SDB_AUTHCB__CREATEUSR                              0x1000003cfL
-#define SDB_AUTHCB__VALID                                  0x1000003d0L
+#define SDB_AUTHCB_AUTHENTICATE                            0x100000001L
+#define SDB_AUTHCB_CREATEUSR                               0x100000002L
+#define SDB_AUTHCB_REMOVEUSR                               0x100000003L
+#define SDB_AUTHCB_INITAUTH                                0x100000004L
+#define SDB_AUTHCB_CHECKNEEDAUTH                           0x100000005L
+#define SDB_AUTHCB__CREATEUSR                              0x100000006L
+#define SDB_AUTHCB__VALID                                  0x100000007L
 #endif

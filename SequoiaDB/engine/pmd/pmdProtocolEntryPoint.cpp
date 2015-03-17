@@ -58,7 +58,7 @@ namespace engine
       pmdEDUMgr * eduMgr = cb->getEDUMgr() ;
       EDUID agentEDU = PMD_INVALID_EDUID ;
 
-      pmdEDUParam* param = ( pmdEDUParam * )pData ;
+      pmdEDUParam *param = ( pmdEDUParam * )pData ;
       ossSocket *pListerner = (ossSocket *)(param->pSocket) ;
       // reserved protocol
       IPmdAccessProtocol *protocol = param->protocol ;
