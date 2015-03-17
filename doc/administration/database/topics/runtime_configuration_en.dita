@@ -247,6 +247,12 @@
 					<stentry>boolean</stentry>
 					<stentry>If it is not spcified, the default value is &quot;false&quot;</stentry>
 				</strow>
+				<strow>
+					<stentry>--usessl</stentry>
+					<stentry>--</stentry>
+					<stentry>boolean</stentry>
+					<stentry>If it is not spcified, the default value is &quot;false&quot;</stentry>
+				</strow>
 			</simpletable>
 			<note>
 				<p>SequoiaDB supports setting configuration with command line,configuration file, or both of them. When both of them are used, parameters in command line will overwrite those in configuration file.</p>
