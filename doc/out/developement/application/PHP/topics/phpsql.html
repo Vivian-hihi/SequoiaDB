@@ -122,9 +122,9 @@
 <tr class="strow">
         <td valign="top" headers="d57926e17" class="stentry">update students set a=a+2 where b=-1</td>
 
-        <td valign="top" headers="d57926e20" class="stentry">db.foo.bar.update({$set:{a:2}},{b:-1})</td>
+        <td valign="top" headers="d57926e20" class="stentry">db.foo.bar.update({$inc:{a:2}},{b:-1})</td>
 
-        <td valign="top" headers="d57926e23" class="stentry">$bar-&gt;update("{$set:{a:2}}","{b:-1}")</td>
+        <td valign="top" headers="d57926e23" class="stentry">$bar-&gt;update("{$inc:{a:2}}","{b:-1}")</td>
 
       </tr>
 <tr class="strow">
