@@ -136,11 +136,11 @@ namespace fap {
    {
       bson::BSONObj cond ;
       const char* cmdStr = all.firstElementFieldName() ;
-      if ( NULL != ossStrstr( cmdStr, "$query" ) )
+      if ( all.hasField( "$query" ) )
       {
          cond = all.getObjectField( "$query" ) ;
       }
-      else if ( NULL != ossStrstr( cmdStr, "query" ) )
+      else if ( all.hasField( "query" ) )
       {
          cond = all.getObjectField( "query" ) ;
       }

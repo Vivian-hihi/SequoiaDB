@@ -53,7 +53,7 @@
 /////////////////////////////////////////////////////////////////
 // implement for mongo processor
 _mongoSession::_mongoSession( SOCKET fd, engine::IResource *resource )
-   : engine::pmdSession( fd ), _resource( resource )
+   : engine::pmdSession( fd ), _masterRead( FALSE ), _resource( resource )
 {
    _converter = SDB_OSS_NEW mongoConverter() ;
 }
@@ -130,6 +130,13 @@ INT32 _mongoSession::run()
       _pEDUCB->resetInterrupt() ;
       _pEDUCB->resetInfo( engine::EDU_INFO_ERROR ) ;
       _pEDUCB->resetLsn() ;
+
+      // set session attribute
+      rc = _setSeesionAttr() ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
 
       // recv msg
       rc = recvData( (CHAR*)&msgSize, sizeof(UINT32) ) ;
@@ -213,8 +220,6 @@ INT32 _mongoSession::run()
             pInMsg = _inBuffer.data() ;
             while ( NULL != pInMsg )
             {
-               // a new loop
-               _needReply = FALSE ;
                // process msg
                rc = _processMsg( pInMsg ) ;
                rc = _converter->reConvert( _inBuffer, &_replyHeader ) ;
@@ -239,7 +244,7 @@ INT32 _mongoSession::run()
                }
             }
          reply:
-            handleResponse( _converter->getOpType(), _contextBuff ) ;
+            _handleResponse( _converter->getOpType(), _contextBuff ) ;
             pBody = _contextBuff.data() ;
             bodyLen = _contextBuff.size() ;
             // send response
@@ -276,6 +281,7 @@ INT32 _mongoSession::_processMsg( const CHAR *pMsg )
    INT32 rc  = SDB_OK ;
    INT32 tmp = SDB_OK ;
    INT32 bodyLen = 0 ;
+   BOOLEAN needReply = FALSE ;
    bson::BSONObjBuilder bob ;
 
    rc = _onMsgBegin( (MsgHeader *) pMsg ) ;
@@ -287,7 +293,7 @@ INT32 _mongoSession::_processMsg( const CHAR *pMsg )
    {
       rc = getProcessor()->processMsg( (MsgHeader *) pMsg,
                                        _contextBuff, _replyHeader.contextID,
-                                       _needReply ) ;
+                                       needReply ) ;
       if ( SDB_OK != rc )
       {
          _errorInfo = engine::utilGetErrorBson( rc,
@@ -351,23 +357,6 @@ INT32 _mongoSession::_onMsgBegin( MsgHeader *msg )
    _replyHeader.header.requestID   = msg->requestID ;
    _replyHeader.header.TID         = msg->TID ;
    _replyHeader.header.routeID     = engine::pmdGetNodeID() ;
-
-   if ( MSG_BS_INTERRUPTE == msg->opCode ||
-        MSG_BS_INTERRUPTE_SELF == msg->opCode ||
-        MSG_BS_DISCONNECT == msg->opCode  )
-   {
-      _needReply = FALSE ;
-   }
-   else if ( MSG_BS_INSERT_REQ == msg->opCode ||
-             MSG_BS_DELETE_REQ == msg->opCode ||
-             MSG_BS_UPDATE_REQ == msg->opCode )
-   {
-      _needReply = FALSE ;
-   }
-   else
-   {
-      _needReply = TRUE ;
-   }
 
    // start operator
    MON_START_OP( _pEDUCB->getMonAppCB() ) ;
@@ -586,7 +575,7 @@ BOOLEAN _mongoSession::_preProcessMsg( const mongoParser &parser,
    return handled ;
 }
 
-void _mongoSession::handleResponse( const INT32 opType,
+void _mongoSession::_handleResponse( const INT32 opType,
                                     engine::rtnContextBuf &buff )
 {
    if ( OP_CMD_COUNT_MORE == opType )
@@ -604,4 +593,54 @@ void _mongoSession::handleResponse( const INT32 opType,
       _replyHeader.numReturned = 0 ;
       _replyHeader.contextID = -1 ;
    }
+}
+
+INT32 _mongoSession::_setSeesionAttr()
+{
+   INT32 rc = SDB_OK ;
+   const CHAR *cmd = CMD_ADMIN_PREFIX CMD_NAME_SETSESS_ATTR ;
+   MsgOpQuery *set = NULL ;
+   bson::BSONObj obj ;
+   bson::BSONObj emptyObj ;
+
+   msgBuffer msgSetAttr ;
+   if ( _masterRead )
+   {
+      goto done ;
+   }
+
+   msgSetAttr.reverse( sizeof( MsgOpQuery ) ) ;
+   msgSetAttr.advance( sizeof( MsgOpQuery ) - 4 ) ;
+   obj = BSON( FIELD_NAME_PREFERED_INSTANCE << PREFER_REPL_MASTER ) ;
+   set = (MsgOpQuery *)msgSetAttr.data() ;
+
+   set->header.opCode = MSG_BS_QUERY_REQ ;
+   set->header.TID = 0 ;
+   set->header.routeID.value = 0 ;
+   set->header.requestID = 0 ;
+   set->version = 0 ;
+   set->w = 0 ;
+   set->padding = 0 ;
+   set->flags = 0 ;
+   set->nameLength = ossStrlen(cmd) ;
+   set->numToSkip = 0 ;
+   set->numToReturn = -1 ;
+
+   msgSetAttr.write( cmd, set->nameLength + 1, TRUE ) ;
+   msgSetAttr.write( obj, TRUE ) ;
+   msgSetAttr.write( emptyObj, TRUE ) ;
+   msgSetAttr.write( emptyObj, TRUE ) ;
+   msgSetAttr.write( emptyObj, TRUE ) ;
+   msgSetAttr.doneLen() ;
+   rc = _processMsg( msgSetAttr.data() ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+   _masterRead = TRUE ;
+
+done:
+   return rc ;
+error:
+   goto done ;
 }
