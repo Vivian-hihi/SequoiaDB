@@ -151,6 +151,7 @@ namespace fap {
 
       return cond ;
    }
+
 }
 
 ////////////////////////////////////////////////////////////////
@@ -450,8 +451,7 @@ INT32 updateCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
 
          updator = subObj.getObjectField( "u" ) ;
 
-         hint = cond.getObjectField( "$hint" ) ;
-         cond = removeField( cond, "$hint" ) ;
+         hint = all.getObjectField( "$hint" ) ;
          BOOLEAN tmp = 0 ;
          tmp = subObj.getBoolField( "multi" ) ;
          if ( tmp )
@@ -556,9 +556,9 @@ INT32 queryCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
    query->numToSkip = nToSkip ;
    parser.readNumber( sizeof( INT32 ), ( CHAR * )&nToReturn ) ;
    query->numToReturn = (0 == nToReturn ? -1 : nToReturn) ;
-   if ( -1 == nToReturn )
+   if ( 0 > nToReturn )
    {
-      query->numToReturn = 1 ;
+      query->numToReturn = -nToReturn ;
    }
 
    if ( parser.more() )
@@ -671,9 +671,9 @@ INT32 getMoreCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
 
    parser.readNumber( sizeof( INT32 ), ( CHAR * )&nToReturn ) ;
    more->numToReturn = (0 == nToReturn ? -1 : nToReturn) ;
-   if ( -1 == nToReturn )
+   if ( 0 > nToReturn )
    {
-      more->numToReturn = 1 ;
+      more->numToReturn = -nToReturn ;
    }
    parser.readNumber( sizeof( SINT64 ), ( CHAR * )&cursorid ) ;
    more->contextID = cursorid - 1;
@@ -860,9 +860,9 @@ INT32 createCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
       query->numToSkip = 0 ;
       parser.readNumber( sizeof( INT32 ), ( CHAR * )&nToReturn ) ;
       query->numToReturn = (0 == nToReturn ? -1 : nToReturn) ;
-      if ( -1 == nToReturn )
+      if ( 0 > nToReturn )
       {
-         query->numToReturn = 1 ;
+         query->numToReturn = -nToReturn ;
       }
 
       if ( parser.more() )
@@ -943,9 +943,9 @@ INT32 dropCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
    query->numToSkip = 0 ;
    parser.readNumber( sizeof( INT32 ), ( CHAR * )&nToReturn ) ;
    query->numToReturn = (0 == nToReturn ? -1 : nToReturn) ;
-   if ( -1 == nToReturn )
+   if ( 0 > nToReturn )
    {
-      query->numToReturn = 1 ;
+      query->numToReturn = -nToReturn ;
    }
 
    if ( parser.more() )
@@ -1258,9 +1258,9 @@ INT32 createIndexesCommand::convertRequest( mongoParser &parser,
       index->numToSkip = 0 ;
       parser.readNumber( sizeof( INT32 ), ( CHAR * )&nToReturn ) ;
       index->numToReturn = (0 == nToReturn ? -1 : nToReturn) ;
-      if ( -1 == nToReturn )
+      if ( 0 > nToReturn )
       {
-         index->numToReturn = 1 ;
+         index->numToReturn = -nToReturn ;
       }
       index->nameLength = cmdStr.length() ;
       sdbMsg.write( cmdStr.c_str(), index->nameLength + 1, TRUE ) ;
@@ -1347,9 +1347,9 @@ INT32 deleteIndexesCommand::convertRequest( mongoParser &parser,
    dropIndex->numToSkip = 0 ;
    parser.readNumber( sizeof( INT32 ), ( CHAR * )&nToReturn ) ;
    dropIndex->numToReturn = (0 == nToReturn ? -1 : nToReturn) ;
-   if ( -1 == nToReturn )
+   if ( 0 > nToReturn )
    {
-      dropIndex->numToReturn = 1 ;
+      dropIndex->numToReturn = -nToReturn ;
    }
 
    if ( parser.more() )
@@ -1433,9 +1433,9 @@ INT32 listIndexesCommand::convertRequest( mongoParser &parser,
    getIndex->numToSkip = 0 ;
    parser.readNumber( sizeof( INT32 ), ( CHAR * )&nToReturn ) ;
    getIndex->numToReturn = (0 == nToReturn ? -1 : nToReturn) ;
-   if ( -1 == nToReturn )
+   if ( 0 > nToReturn )
    {
-      getIndex->numToReturn = 1 ;
+      getIndex->numToReturn = -nToReturn ;
    }
 
    if ( parser.more() )

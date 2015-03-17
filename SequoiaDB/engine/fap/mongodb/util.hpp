@@ -103,16 +103,4 @@ inline BOOLEAN checkBigEndian()
    return bigEndian ;
 }
 
-inline bson::BSONObj removeField( bson::BSONObj &obj, const string& name )
-{
-   bson::BSONObjBuilder b;
-   bson::BSONObjIterator i(obj);
-   while ( i.more() ) {
-   bson::BSONElement e = i.next();
-   const char *fname = e.fieldName();
-   if ( name != fname )
-      b.append(e);
-   }
-   return b.obj();
-}
 #endif

@@ -56,7 +56,7 @@ public:
 
    ~mongoConverter()
    {
-
+      resetCommand() ;
    }
 
    BOOLEAN isBigEndian() const
