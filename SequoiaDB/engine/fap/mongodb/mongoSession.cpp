@@ -471,7 +471,9 @@ INT32 _mongoSession::_reply( MsgOpReply *replyHeader,
    {
       if ( pBody )
       {
-         if ( 0 == reply.cursorId )
+         if ( 0 == reply.cursorId &&
+             ( SDB_OK == _replyHeader.flags &&
+               OP_QUERY != _converter->getOpType() ) )
          {
             // error or command
             bsonBody.init( pBody ) ;
