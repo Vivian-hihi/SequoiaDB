@@ -174,7 +174,7 @@ INT32 _ossModuleHandle::unload ()
 {
    INT32 rc = SDB_OK ;
    PD_TRACE_ENTRY ( SDB_OSSMODULEHANDLE_UNLOAD ) ;
-   if ( _moduleHandle )
+   if ( !_moduleHandle )
    {
       goto error ;
    }
