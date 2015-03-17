@@ -236,19 +236,31 @@
 					<stentry>--directioinlob</stentry>
 					<stentry>--</stentry>
 					<stentry>boolean</stentry>
-					<stentry>如果不指定，默认值为&quot;false&quot;</stentry>
+					<stentry>在大对象功能中关闭文件系统缓存，如果不指定，默认值为&quot;false&quot;</stentry>
 				</strow>
 				<strow>
 					<stentry>--sparsefile</stentry>
 					<stentry>--</stentry>
 					<stentry>boolean</stentry>
-					<stentry>如果不指定，默认值为&quot;false&quot;</stentry>
+					<stentry>当扩展文件时，使用稀疏文件功能，如果不指定，默认值为&quot;false&quot;</stentry>
+				</strow>
+				<strow>
+					<stentry>--weight</stentry>
+					<stentry>--</stentry>
+					<stentry>num</stentry>
+					<stentry>节点选举权重, 默认值为10, 取值范围[1, 100]</stentry>
 				</strow>
 				<strow>
 					<stentry>--usessl</stentry>
 					<stentry>--</stentry>
 					<stentry>boolean</stentry>
-					<stentry>如果不指定，默认值为&quot;false&quot;</stentry>
+					<stentry>允许客户端使用SSL连接（仅限企业版），默认为false</stentry>
+				</strow>
+				<strow>
+					<stentry>--auth</stentry>
+					<stentry>--</stentry>
+					<stentry>boolean</stentry>
+					<stentry>开启鉴权功能.默认为true</stentry>
 				</strow>
 			</simpletable>
 			<note>

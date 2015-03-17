@@ -239,19 +239,31 @@
 					<stentry>--directioinlob</stentry>
 					<stentry>--</stentry>
 					<stentry>boolean</stentry>
-					<stentry>If it is not spcified, the default value is &quot;false&quot;</stentry>
+					<stentry>Open direct io in large object, if it is not specified, the default value is &quot;false&quot;</stentry>
 				</strow>
 				<strow>
 					<stentry>--sparsefile</stentry>
 					<stentry>--</stentry>
 					<stentry>boolean</stentry>
-					<stentry>If it is not spcified, the default value is &quot;false&quot;</stentry>
+					<stentry>Extend the file as a sparse file, if it is not specified, the default value is &quot;false&quot;</stentry>
+				</strow>
+				<strow>
+					<stentry>--weight</stentry>
+					<stentry>--</stentry>
+					<stentry>num</stentry>
+					<stentry>The weight of election, default is 10, range [1, 100]</stentry>
 				</strow>
 				<strow>
 					<stentry>--usessl</stentry>
 					<stentry>--</stentry>
 					<stentry>boolean</stentry>
-					<stentry>If it is not spcified, the default value is &quot;false&quot;</stentry>
+					<stentry>Allow client to connect with SSL (enterprise edition only), default false</stentry>
+				</strow>
+				<strow>
+					<stentry>--auth</stentry>
+					<stentry>--</stentry>
+					<stentry>boolean</stentry>
+					<stentry>Enable authentication. default is true</stentry>
 				</strow>
 			</simpletable>
 			<note>
