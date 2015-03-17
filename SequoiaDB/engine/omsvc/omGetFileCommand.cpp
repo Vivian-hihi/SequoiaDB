@@ -7890,6 +7890,19 @@ namespace engine
          goto error ;
       }
 
+      {
+         BSONObj businessInfo ;
+         _getBusinessInfo( businessName, businessInfo ) ;
+         if ( businessInfo.isEmpty() )
+         {
+            rc = SDB_INVALIDARG ;
+            pmdGetThreadEDUCB()->resetInfo( EDU_INFO_ERROR ) ;
+            PD_LOG_MSG( PDERROR, "business is not exist:business=%s", 
+                        businessName.c_str() ) ;
+            goto error ;
+         }
+      }
+
       selector = BSON( OM_BUSINESSAUTH_BUSINESSNAME << businessName ) ;
       {
          BSONObj tmp = BSON( OM_BUSINESSAUTH_BUSINESSNAME << businessName
