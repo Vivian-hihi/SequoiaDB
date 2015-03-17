@@ -496,7 +496,10 @@ INT32 _mongoSession::_reply( MsgOpReply *replyHeader,
       }
    }
 
-   pBody = _outBuffer.data() ;
+   if ( !_outBuffer.empty() )
+   {
+      pBody = _outBuffer.data() ;
+   }
    reply.header.len = sizeof( mongoMsgReply ) + _outBuffer.size() ;
 
    rc = sendData( (CHAR *)&reply, sizeof( mongoMsgReply ) ) ;
