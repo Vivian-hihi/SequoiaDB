@@ -50,6 +50,7 @@ var CanUse                                 = "CanUse" ;
 var Disk                                   = "Disk" ;
 var Disks                                  = "Disks" ;
 var Distributor                            = "Distributor" ;
+var Description                            = "Description" ;
 var Free                                   = "Free" ;
 var Freq                                   = "Freq" ;
 var Filesystem                             = "Filesystem" ;

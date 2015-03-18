@@ -313,6 +313,7 @@ function _getOSInfo()
       var obj             = eval( '(' + System.getReleaseInfo() + ')' ) ;
       osInfo[Distributor] = obj[Distributor] ;
       osInfo[Release]     = obj[Release] ;
+      osInfo[Description] = obj[Description] ;
       osInfo[Bit]         = obj[Bit] ;
    }
    catch( e )
@@ -322,6 +323,8 @@ function _getOSInfo()
       PD_LOG( arguments, PDERROR, FILE_NAME_CHECK_HOST,
               sprintf( errMsg + "rc: ?, detail: ?",
               GETLASTERROR(), GETLASTERRMSG() ) ) ;
+      RET_JSON[OS] = new OSInfo() ;
+      return ;
    }
    RET_JSON[OS] = osInfo ;
 }
@@ -346,6 +349,8 @@ function _getMemInfo()
       PD_LOG( arguments, PDERROR, FILE_NAME_CHECK_HOST,
               sprintf( errMsg + "rc: ?, detail: ?",
               GETLASTERROR(), GETLASTERRMSG() ) ) ;
+      RET_JSON[Memory] = new MemoryInfo() ;
+      return ;
    }
    RET_JSON[Memory] = memInfo ;
 }
@@ -380,6 +385,8 @@ function _getDiskInfo()
               sprintf( errMsg + "rc: ?, detail: ?",
               GETLASTERROR(), GETLASTERRMSG() ) ) ;
       exception_handle( rc, errMsg ) ;
+      RET_JSON[Disk] = [] ;
+      return ;
    }
    
    RET_JSON[Disk] = diskInfos ;
@@ -415,6 +422,8 @@ function _getCPUInfo()
       PD_LOG( arguments, PDERROR, FILE_NAME_CHECK_HOST,
               sprintf( errMsg + "rc: ?, detail: ?",
               GETLASTERROR(), GETLASTERRMSG() ) ) ;
+      RET_JSON[CPU] = [] ;
+      return ;
    }
    
    RET_JSON[CPU] = cpuInfos ;
@@ -449,6 +458,8 @@ function _getNetCardInfo()
       PD_LOG( arguments, PDERROR, FILE_NAME_CHECK_HOST,
               sprintf( errMsg + "rc: ?, detail: ?",
               GETLASTERROR(), GETLASTERRMSG() ) ) ;
+      RET_JSON[Net] = [] ;
+      return ;
    }
    RET_JSON[Net] = netcardInfos ;
 }
@@ -488,6 +499,8 @@ function _getSafetyInfo()
       PD_LOG( arguments, PDERROR, FILE_NAME_CHECK_HOST,
               sprintf( errMsg + "rc: ?, detail: ?",
               GETLASTERROR(), GETLASTERRMSG() ) ) ;
+      RET_JSON[Safety] = new SafetyInfo() ;
+      return ;
    }
 
    RET_JSON[Safety] = safetyInfo ;

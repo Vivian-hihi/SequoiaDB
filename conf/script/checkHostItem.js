@@ -25,6 +25,7 @@ function OSInfo()
 {
    this.Distributor        = "" ;
    this.Release            = "" ;
+   this.Description        = "" ;
    this.Bit                = 0 ;
 }
 
