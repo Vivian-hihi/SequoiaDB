@@ -768,7 +768,7 @@ function getOMASvcFromCfgFile( hostname )
    catch( e )
    {
       SYSEXPHANDLE( e ) ;
-      errMsg = sprintf( "Failed to get OM Agent's service in host[?] from local OM Agent's config file", hostname ) ;
+      errMsg = sprintf( "Failed to get OM Agent's service of host[?] from local OM Agent's config file", hostname ) ;
       rc = GETLASTERROR() ;
       PD_LOG( arguments, PDERROR, FILE_NAME_FUNC,
               errMsg + "rc: " + rc + ", detail: " + GETLASTERRMSG() ) ;
