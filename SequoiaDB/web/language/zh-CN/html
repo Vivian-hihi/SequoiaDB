@@ -3,7 +3,7 @@
         "nav": [
 		  		{ "text": "首页" },
 				{ "text": "部署引导" },
-				{ "text": "帮助", "child": [ "语言", "关于SMS系统" ] },
+				{ "text": "帮助", "child": [ "语言", "关于SAC系统" ] },
 				{ "text": "用户", "child": [ "修改密码", "注销" ] },
 				{ "text": "任务" }
         ],
@@ -36,11 +36,11 @@
 							"title": [ "用户名:", "密码:", "新密码:" ]
 						}
 				},
-				"aboutSMS": {
-						"title": "关于SMS",
+				"aboutSAC": {
+						"title": "关于SAC",
 						"context": [
 							  "Version: 1.12",
-							  "SMS（SequoiaDB Monitoring Service）提供针对SequoiaDB数据库的图形化监控服务。"
+							  "SAC（SequoiaDB Administration Center）提供针对SequoiaDB数据库的图形化监控服务。"
 						]
 				},
 				"language": {

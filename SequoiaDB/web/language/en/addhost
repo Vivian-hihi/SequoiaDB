@@ -8,7 +8,8 @@
 				],
 				"label": [
 						"Already choose ? disks",
-						"? disks don't have enough capacity"
+						"? disks don't have enough capacity",
+						"The host has been installed Agent"
 				]
         },
         "rightPanel": {

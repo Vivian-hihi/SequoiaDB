@@ -215,7 +215,7 @@ function updateTaskInfo( taskInfo, isFirst )
 	sdbjs.parts.progressBox2.update( 'Progress', color, taskInfo['Progress'] ) ;
 	if( taskInfo['Status'] === 4 )
 	{
-		if( _deployModel !== 'taskAddHost' )
+		if( _deployModel !== 'taskAddHost' && taskInfo['errno'] !== 0 )
 		{
 			sdbjs.parts.buttonBox.update( 'deployReturn', function( buttonObj ){
 				$( buttonObj ).show() ;

@@ -43,10 +43,10 @@ function editHostList( btnObj )
 function selectAll()
 {
 	//编辑
-	if( $( '#editButton' ).text() === _languagePack['hostlist']['tab']['button'][0][0] )
+	/*if( $( '#editButton' ).text() === _languagePack['hostlist']['tab']['button'][0][0] )
 	{
 		editHostList( $( '#editButton' ) ) ;
-	}
+	}*/
 	$.each( _hostList, function( index ){
 		sdbjs.parts.gridBox.updateBody( 'hostInfoGrid', index, 0, function( tdObj ){
 			if( !$( tdObj ).children( 'input' ).is( ':disabled' ) )
@@ -61,7 +61,7 @@ function selectAll()
 function unSelectAll()
 {
 	//编辑
-	if( $( '#editButton' ).text() === _languagePack['hostlist']['tab']['button'][0][0] )
+	/*if( $( '#editButton' ).text() === _languagePack['hostlist']['tab']['button'][0][0] )
 	{
 		editHostList( $( '#editButton' ) ) ;
 	}
@@ -75,14 +75,22 @@ function unSelectAll()
 				}
 			} ) ;
 		} ) ;
-	}
+	}*/
+	$.each( _hostList, function( index ){
+		sdbjs.parts.gridBox.updateBody( 'hostInfoGrid', index, 0, function( tdObj ){
+			if( !$( tdObj ).children( 'input' ).is( ':disabled' ) )
+			{
+				$( tdObj ).children( 'input' ).get(0).checked = !$( tdObj ).children( 'input' ).get(0).checked ;
+			}
+		} ) ;
+	} ) ;
 }
 
 //打开删除主机的提示模态框
 function openRemoveHostModal()
 {
 	//编辑
-	if( $( '#editButton' ).text() === _languagePack['hostlist']['tab']['button'][0][0] )
+	/*if( $( '#editButton' ).text() === _languagePack['hostlist']['tab']['button'][0][0] )
 	{
 		editHostList( $( '#editButton' ) ) ;
 		//'Tip：删除主机至少选择一台主机.'
@@ -109,6 +117,25 @@ function openRemoveHostModal()
 			//'Tip：删除主机至少选择一台主机.'
 			showFootStatus( 'warning', _languagePack['tip']['web']['hostlist'][1] ) ;
 		}
+	}*/
+	var checkHostNum = 0 ;
+	$.each( _hostList, function( index ){
+		sdbjs.parts.gridBox.updateBody( 'hostInfoGrid', index, 0, function( tdObj ){
+			if( $( tdObj ).children( 'input' ).get(0).checked === true )
+			{
+				++checkHostNum ;
+			}
+		} ) ;
+	} ) ;
+
+	if( checkHostNum > 0 )
+	{
+		sdbjs.parts.modalBox.show( 'isRemoveHost' ) ;
+	}
+	else
+	{
+		//'Tip：删除主机至少选择一台主机.'
+		showFootStatus( 'warning', _languagePack['tip']['web']['hostlist'][1] ) ;
 	}
 }
 
@@ -195,16 +222,16 @@ function loadHostList()
 		var inputStr = null ;
 		if( hostInfo['BusinessName'] === '' && hostInfo['BusinessType'] === '' )
 		{
-			inputStr = '<input style="display:none;" type="checkbox">' ;
+			inputStr = '<input type="checkbox">' ;
 		}
 		else
 		{
-			inputStr = '<input style="display:none;" type="checkbox" disabled="disabled">' ;
+			inputStr = '<input type="checkbox" disabled="disabled">' ;
 		}
-		sdbjs.parts.gridBox.addBody( 'hostInfoGrid', [{ 'text': inputStr, 'width': '0%' },
+		sdbjs.parts.gridBox.addBody( 'hostInfoGrid', [{ 'text': inputStr, 'width': '5%' },
 																	 { 'text': htmlEncode( hostInfo['HostName'] ), 'width': '20%' },
 																	 { 'text': htmlEncode( hostInfo['IP'] ), 'width': '15%' },
-																	 { 'text': htmlEncode( hostInfo['OS']['Distributor'] + ' ' + hostInfo['OS']['Release'] + ' x' +  hostInfo['OS']['Bit'] ), 'width': '20%' },
+																	 { 'text': htmlEncode( hostInfo['OS']['Distributor'] + ' ' + hostInfo['OS']['Release'] + ' x' +  hostInfo['OS']['Bit'] ), 'width': '15%' },
 																	 { 'text': htmlEncode( hostInfo['CPU'].length ), 'width': '10%' },
 																	 { 'text': htmlEncode( hostInfo['Memory']['Size'] + ' MB' ), 'width': '10%' },
 																	 { 'text': htmlEncode( hostInfo['BusinessName'] ), 'width': '15%' },
@@ -247,8 +274,8 @@ function createHtml()
 		sdbjs.parts.divBox.create( panelBody['name'], 'hostTopDiv', 'auto', 43 ) ;
 		sdbjs.parts.divBox.update( 'hostTopDiv', function( divObj ){
 			//编辑
-			$( divObj ).append( '<button class="btn btn-default" onclick="editHostList(this)" id="editButton">' + htmlEncode( _languagePack['hostlist']['tab']['button'][0][0] ) + '</button>' ) ;
-			$( divObj ).append( '&nbsp;&nbsp;' ) ;
+			//$( divObj ).append( '<button class="btn btn-default" onclick="editHostList(this)" id="editButton">' + htmlEncode( _languagePack['hostlist']['tab']['button'][0][0] ) + '</button>' ) ;
+			//$( divObj ).append( '&nbsp;&nbsp;' ) ;
 			sdbjs.parts.dropDownBox.create( divObj, 'hostSelect' ) ;
 			//选择操作
 			sdbjs.parts.dropDownBox.update( 'hostSelect', _languagePack['hostlist']['tab']['button'][1][0] ) ;
@@ -272,13 +299,13 @@ function createHtml()
 		sdbjs.parts.gridBox.create( 'hostBottomDiv', 'hostInfoGrid', 'auto', 'variable' ) ;
 		sdbjs.parts.gridBox.addTitle( 'hostInfoGrid', [{ 'text': function( tdObj ){
 			$( tdObj ).css( 'height', 19 ).html( '<input style="display:none;visibility:hidden;" type="checkbox">' ) ;
-		}, 'width': '0%' },
+		}, 'width': '5%' },
 																	  //主机名
 																	  { 'text': htmlEncode( _languagePack['hostlist']['hostGrid']['title'][0] ), 'width': '20%' },
 																	  //IP
 																	  { 'text': htmlEncode( _languagePack['hostlist']['hostGrid']['title'][1] ), 'width': '15%' },
 																	  //系统
-																	  { 'text': htmlEncode( _languagePack['hostlist']['hostGrid']['title'][2] ), 'width': '20%' },
+																	  { 'text': htmlEncode( _languagePack['hostlist']['hostGrid']['title'][2] ), 'width': '15%' },
 																	  //CPU核心数
 																	  { 'text': htmlEncode( _languagePack['hostlist']['hostGrid']['title'][3] ), 'width': '10%' },
 																	  //内存容量

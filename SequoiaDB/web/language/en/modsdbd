@@ -3,7 +3,7 @@
         "leftPanel": {
             "title": "Module: ",
 				"titleDrop": [ "Create replica group" ],
-				"tip": [ "Notice: Set nodes parameters in batch. Click for", "help." ],
+				"tip": [ "Notice: Set nodes parameters in batch. Click for ", "help." ],
 				"groupList": {
 						"nodeNum": "Node number: ",
 						"drop": [ "Add Node", "Remove Node", "Remove Replica Group" ]

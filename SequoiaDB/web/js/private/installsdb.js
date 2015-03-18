@@ -214,23 +214,31 @@ function updateTaskInfo( taskInfo, isFirst )
 	{
 		color = 'red' ;
 	}
+	if( taskInfo['errno'] !== 0 )
+	{
+		color = 'red' ;
+		$.each( taskInfo['ResultInfo'], function( index, resultInfo ){
+				_hostStatus[index] = true ;
+				sdbjs.parts.gridBox.updateBody( 'hostListGrid', index, 0, '<img src="./images/delete.png">' ) ;
+		} ) ;
+	}
 	sdbjs.parts.progressBox2.update( 'Progress', color, taskInfo['Progress'] ) ;
 	if( taskInfo['Status'] === 4 )
 	{
-		if( _deployModel !== 'taskAddSdb' )
+		if( _deployModel !== 'taskAddSdb' && taskInfo['errno'] !== 0 )
 		{
 			sdbjs.parts.buttonBox.update( 'deployReturn', function( buttonObj ){
 				$( buttonObj ).show() ;
 			}, 'primary' ) ;
 		}
+		sdbjs.parts.buttonBox.update( 'deployNext', function( buttonObj ){
+			$( buttonObj ).show() ;
+		}, 'primary' ) ;
 		if( taskInfo['errno'] === 0 )
 		{
 			sdbjs.fun.delData( 'SdbHostList' ) ;
 			sdbjs.fun.delData( 'SdbClusterName' ) ;
 			sdbjs.fun.delData( 'SdbConfigInfo' ) ;
-			sdbjs.parts.buttonBox.update( 'deployNext', function( buttonObj ){
-				$( buttonObj ).show() ;
-			}, 'primary' ) ;
 		}
 		else
 		{

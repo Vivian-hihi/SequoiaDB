@@ -1,5 +1,11 @@
 body{ margin:0; padding:0; font-size:87.50%; font-family:Verdana,Georgia,宋体; }
 
+/* 选择框 */
+.unchecked{ cursor:pointer; background-image:url(../images/checkbox/3.png); width:16px; height:16px; }
+.disunchecked{ cursor:not-allowed; background-image:url(../images/checkbox/4.png); width:16px; height:16px; }
+.checked{ cursor:pointer; background-image:url(../images/checkbox/1.png); width:16px; height:16px; }
+.dischecked{ cursor:not-allowed; background-image:url(../images/checkbox/2.png); width:16px; height:16px; }
+
 /* 置右 */
 .pull-right{ float: right !important; }
 
@@ -9,7 +15,7 @@ body{ margin:0; padding:0; font-size:87.50%; font-family:Verdana,Georgia,宋体;
 /* 标签列表 */
 .tab-list{ border:1px solid #CCC;overflow-y:scroll; border-radius:5px; list-style-type:none; padding:0; margin:0; }
 .tab-list > .plain{ background:#FFF; border-bottom:1px solid #CCC; border-right:1px solid #CCC; }
-.tab-list > .plain > div{ margin:1px; padding:5px 10px 5px 10px; }
+.tab-list > .plain > div{ margin:1px; padding:5px 10px 5px 10px; border: 2px solid #FFF; }
 /* 激活 */
 .tab-list .active > div{ border: 2px solid #80c0ff; }
 /* 禁用 */

@@ -570,78 +570,81 @@ function createRightPic()
 				{
 					sdbjs.fun.setCSS( 'danger_badge_' + tmpCurClusterID, { 'display': 'none' } ) ;
 				}
-				
+
 				var memoryWarning = 0 ;
 				var diskWarning = 0 ;
 				var cpuWarning = 0 ;
 				var warningNum = 0 ;
-				var warningStr = '' ;
-				for( var i = 0; i < memoryList.length; ++i )
+				if( errNum < hostNumLen )
 				{
-					if( memoryList[i] >= 90 )
+					var warningStr = '' ;
+					for( var i = 0; i < memoryList.length; ++i )
 					{
-						++memoryWarning ;
+						if( memoryList[i] >= 90 )
+						{
+							++memoryWarning ;
+						}
+						if( diskList[i] >= 90 )
+						{
+							++diskWarning ;
+						}
+						if( cpuList[i] >= 90 )
+						{
+							++cpuWarning ;
+						}
+						memoryPercent += memoryList[i] ;
+						diskPercent += diskList[i] ;
+						cpuPercent += cpuList[i] ;
+						netRXBytes += RXBytesList[i] ;
+						netTXBytes += TXBytesList[i] ;
+						netRXPackets += RXPacketsList[i] ;
+						netTXPackets += TXPacketsList[i] ;
 					}
-					if( diskList[i] >= 90 )
+					warningNum = memoryWarning + diskWarning + cpuWarning ;
+					if( memoryWarning > 0 )
 					{
-						++diskWarning ;
+						//有 ? 台主机的内存达到90%以上
+						warningStr += '<p>' + htmlEncode( sdbjs.fun.sprintf( _languagePack['index']['leftPanel']['body']['badgeTips'][2], memoryWarning ) ) + '</p>' ;
 					}
-					if( cpuList[i] >= 90 )
+					if( diskWarning > 0 )
 					{
-						++cpuWarning ;
+						//有 ? 台主机的硬盘达到90%以上
+						warningStr += '<p>' + htmlEncode( sdbjs.fun.sprintf( _languagePack['index']['leftPanel']['body']['badgeTips'][3], diskWarning ) ) + '</p>' ;
 					}
-					memoryPercent += memoryList[i] ;
-					diskPercent += diskList[i] ;
-					cpuPercent += cpuList[i] ;
-					netRXBytes += RXBytesList[i] ;
-					netTXBytes += TXBytesList[i] ;
-					netRXPackets += RXPacketsList[i] ;
-					netTXPackets += TXPacketsList[i] ;
-				}
-				warningNum = memoryWarning + diskWarning + cpuWarning ;
-				if( memoryWarning > 0 )
-				{
-					//有 ? 台主机的内存达到90%以上
-					warningStr += '<p>' + htmlEncode( sdbjs.fun.sprintf( _languagePack['index']['leftPanel']['body']['badgeTips'][2], memoryWarning ) ) + '</p>' ;
-				}
-				if( diskWarning > 0 )
-				{
-					//有 ? 台主机的硬盘达到90%以上
-					warningStr += '<p>' + htmlEncode( sdbjs.fun.sprintf( _languagePack['index']['leftPanel']['body']['badgeTips'][3], diskWarning ) ) + '</p>' ;
-				}
-				if( cpuWarning > 0 )
-				{
-					//有 ? 台主机的cpu达到90%以上
-					warningStr += '<p>' + htmlEncode( sdbjs.fun.sprintf( _languagePack['index']['leftPanel']['body']['badgeTips'][4], cpuWarning ) ) + '</p>' ;
-				}
-				if( warningNum > 0 )
-				{
-					sdbjs.parts.badgeBox.update( 'warning_badge_' + tmpCurClusterID, htmlEncode( warningNum ), 'warning' ) ;
-					sdbjs.fun.setLabel( 'warning_badge_' + tmpCurClusterID, warningStr ) ;
-					sdbjs.fun.setCSS( 'warning_badge_' + tmpCurClusterID, { 'display': '' } ) ;
-				}
-				else
-				{
-					sdbjs.fun.setCSS( 'warning_badge_' + tmpCurClusterID, { 'display': 'none' } ) ;
-				}
-				memoryPercent = ( memoryPercent / memoryList.length ) ;
-				diskPercent = ( diskPercent / memoryList.length ) ;
-				cpuPercent = ( cpuPercent / memoryList.length ) ;
-				if( isNaN( cpuPercent ) || cpuPercent < 0 ||
-					 isNaN( netRXBytes ) || netRXBytes < 0 ||
-					 isNaN( netTXBytes ) || netTXBytes < 0 ||
-					 isNaN( netRXPackets ) || netRXPackets < 0 ||
-					 isNaN( netTXPackets ) || netTXPackets < 0 )
-				{
-					cpuPercent = 0 ;
-					netRXBytes = 0 ;
-					netTXBytes = 0 ;
-					netRXPackets = 0 ;
-					netTXPackets = 0 ;
-					var picLen = _rightPic.length ;
-					for( var i = 0; i < picLen; ++i )
+					if( cpuWarning > 0 )
 					{
-						_rightPic[i].setOption( conf[i] ) ;
+						//有 ? 台主机的cpu达到90%以上
+						warningStr += '<p>' + htmlEncode( sdbjs.fun.sprintf( _languagePack['index']['leftPanel']['body']['badgeTips'][4], cpuWarning ) ) + '</p>' ;
+					}
+					if( warningNum > 0 )
+					{
+						sdbjs.parts.badgeBox.update( 'warning_badge_' + tmpCurClusterID, htmlEncode( warningNum ), 'warning' ) ;
+						sdbjs.fun.setLabel( 'warning_badge_' + tmpCurClusterID, warningStr ) ;
+						sdbjs.fun.setCSS( 'warning_badge_' + tmpCurClusterID, { 'display': '' } ) ;
+					}
+					else
+					{
+						sdbjs.fun.setCSS( 'warning_badge_' + tmpCurClusterID, { 'display': 'none' } ) ;
+					}
+					memoryPercent = ( memoryPercent / memoryList.length ) ;
+					diskPercent = ( diskPercent / memoryList.length ) ;
+					cpuPercent = ( cpuPercent / memoryList.length ) ;
+					if( isNaN( cpuPercent ) || cpuPercent < 0 ||
+						 isNaN( netRXBytes ) || netRXBytes < 0 ||
+						 isNaN( netTXBytes ) || netTXBytes < 0 ||
+						 isNaN( netRXPackets ) || netRXPackets < 0 ||
+						 isNaN( netTXPackets ) || netTXPackets < 0 )
+					{
+						cpuPercent = 0 ;
+						netRXBytes = 0 ;
+						netTXBytes = 0 ;
+						netRXPackets = 0 ;
+						netTXPackets = 0 ;
+						var picLen = _rightPic.length ;
+						for( var i = 0; i < picLen; ++i )
+						{
+							_rightPic[i].setOption( conf[i] ) ;
+						}
 					}
 				}
 				_rightPic[0].addData( [ [ 0, cpuPercent, true, false ] ] ) ;
@@ -665,7 +668,7 @@ function createRightPic()
 				}
 	
 			}, function( jsonArr ){
-				showProcessError( json['detail'] ) ;
+				showProcessError( jsonArr['detail'] ) ;
 			}, null, _hostList ) ;
 		}
 		else
@@ -1008,14 +1011,14 @@ function createHtml()
 	}, function( panelBody ){
 		sdbjs.parts.divBox.create( panelBody['obj'], 'foldBox_top' ) ;
 		sdbjs.parts.divBox.create( panelBody['obj'], 'foldBox_bottom' ) ;
-		sdbjs.parts.foldBox.create( 'foldBox_bottom', 'SMS' ) ;
-		sdbjs.parts.foldBox.update( 'SMS', 'SMS', function( bodyObj ){
-			sdbjs.parts.tableBox.create( bodyObj, 'SMSTable' ) ;
-			sdbjs.parts.tableBox.update( 'SMSTable', 'loosen border' ) ;
+		sdbjs.parts.foldBox.create( 'foldBox_bottom', 'SAC' ) ;
+		sdbjs.parts.foldBox.update( 'SAC', 'SAC', function( bodyObj ){
+			sdbjs.parts.tableBox.create( bodyObj, 'SACTable' ) ;
+			sdbjs.parts.tableBox.update( 'SACTable', 'loosen border' ) ;
 			//'节点'
-			sdbjs.parts.tableBox.addBody( 'SMSTable', [ { 'text': '<b>' + htmlEncode( _languagePack['index']['leftPanel']['SMS'][0] ) + '</b>', 'width': '60%' }, { 'text': '', 'width': '40%' } ] ) ;
+			sdbjs.parts.tableBox.addBody( 'SACTable', [ { 'text': '<b>' + htmlEncode( _languagePack['index']['leftPanel']['SAC'][0] ) + '</b>', 'width': '60%' }, { 'text': '', 'width': '40%' } ] ) ;
 		} ) ;
-		sdbjs.parts.foldBox.show( 'SMS' ) ;
+		sdbjs.parts.foldBox.show( 'SAC' ) ;
 	} ) ;
 	
 	/* 右边框架 */
@@ -1025,7 +1028,11 @@ function createHtml()
 	/* 右边 图表 */
 	sdbjs.parts.panelBox.create( 'middle-right', 'chartBar', 'auto', 'variable' ) ;
 	//'监控信息'
-	sdbjs.parts.panelBox.update( 'chartBar', htmlEncode( sdbjs.fun.sprintf( _languagePack['index']['rightPanel']['title'], '' ) ), htmlEncode( _languagePack['index']['rightPanel']['body'] ) ) ;
+	sdbjs.parts.panelBox.update( 'chartBar', htmlEncode( sdbjs.fun.sprintf( _languagePack['index']['rightPanel']['title'], '' ) ), function( panelBody ){
+		
+		sdbjs.fun.setCSS( panelBody['name'], { 'overflow-Y': 'auto', 'position': 'relative' } ) ;
+		panelBody['obj'].text( _languagePack['index']['rightPanel']['body'] ) ;
+	} ) ;
 	
 	/* ** */
 	sdbjs.parts.divBox.create( 'middle', 'middle-clear', 0, 0 ) ;

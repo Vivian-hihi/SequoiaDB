@@ -125,14 +125,17 @@ function nextPage()
 //加载业务配置
 function loadBusinessConf()
 {
+	var rc = false ;
 	sdbjs.parts.loadingBox.show( 'loading' ) ;
 	restGetBusinessConfig( false, function( jsonArr, textStatus, jqXHR ){
 		_businessPara = jsonArr[0] ;
+		rc = true ;
 	}, function( json ){
 		showProcessError( json['detail'] ) ;
 	}, function(){
 		sdbjs.parts.loadingBox.hide( 'loading' ) ;
 	}, _businessConfig ) ;
+	return rc ;
 }
 
 //加载配置参数列表
@@ -172,8 +175,10 @@ function loadNodePara()
 function createDynamicHtml()
 {
 	sdbjs.parts.loadingBox.show( 'loading' ) ;
-	loadBusinessConf() ;
-	loadNodePara() ;
+	if( loadBusinessConf() === true )
+	{
+		loadNodePara() ;
+	}
 	sdbjs.parts.loadingBox.hide( 'loading' ) ;
 }
 

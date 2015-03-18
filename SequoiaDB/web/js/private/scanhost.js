@@ -176,6 +176,22 @@ function checkHostIsExist( hostName, IP, user, pwd, ssh, proxy )
 			 ( hostInfo['HostInfo'][0]['IP'] !== '' && IP !== '' &&
 				hostInfo['HostInfo'][0]['IP'] === IP ) )
 		{
+			if( ( hostInfo['HostInfo'][0]['HostName'] !== '' && hostName !== '' &&
+				   hostInfo['HostInfo'][0]['HostName'] === hostName ) &&
+				 ( hostInfo['HostInfo'][0]['IP'] !== '' && IP !== '' &&
+				   hostInfo['HostInfo'][0]['IP'] !== IP ) )
+			{
+				rc = -2 ;
+				return true ;
+			}
+			if( ( hostInfo['HostInfo'][0]['HostName'] !== '' && hostName !== '' &&
+				   hostInfo['HostInfo'][0]['HostName'] !== hostName ) &&
+				 ( hostInfo['HostInfo'][0]['IP'] !== '' && IP !== '' &&
+				   hostInfo['HostInfo'][0]['IP'] === IP ) )
+			{
+				rc = -2 ;
+				return true ;
+			}
 			rc = index ;
 			_hostList[index]['HostInfo'][0]['HostName'] = hostName ;
 			_hostList[index]['HostInfo'][0]['IP'] = IP ;
@@ -183,10 +199,10 @@ function checkHostIsExist( hostName, IP, user, pwd, ssh, proxy )
 			_hostList[index]['Passwd'] = pwd ;
 			_hostList[index]['SshPort'] = ssh ;
 			_hostList[index]['AgentService'] = proxy ;
-			return;
+			return false ;
 		}
 	} ) ;
-	if( rc === -1 )
+	if( rc === -1 || rc == -2 )
 	{
 		_hostList.push( { 'HostInfo': [ { 'HostName': hostName, 'IP': IP } ], 'User': user, 'Passwd': pwd, 'SshPort': ssh, 'AgentService': proxy } ) ;
 	}
@@ -210,7 +226,7 @@ function scanHostList( key, hostListArr, user, pwd, ssh, proxy )
 			$.each( jsonArr, function( index, hostInfo ){
 				var status = _languagePack['error']['system']['scanErr'][0] ;//'连接成功'
 				var input = '<input type="checkbox" checked="checked">' ;
-				
+				//var input = '<div class="checked" data-toggle="checkBox"></div>' ;
 				if( hostInfo['errno'] !== 0 )
 				{
 					if( hostInfo['Status'] === 'ping' )
@@ -230,6 +246,7 @@ function scanHostList( key, hostListArr, user, pwd, ssh, proxy )
 						status = hostInfo['detail'] ;
 					}
 					input = '<input type="checkbox" disabled="disabled">' ;
+					//input = '<div class="disunchecked" data-toggle="checkBox"></div>' ;
 				}
 				var rc = checkHostIsExist( hostInfo['HostName'], hostInfo['IP'], user, pwd, ssh, proxy ) ;
 				if( rc === -1 )
@@ -268,6 +285,21 @@ function scanHostList( key, hostListArr, user, pwd, ssh, proxy )
 						  $( tdObj ).css( 'cursor', 'pointer' ) ;
 						  sdbjs.fun.addClick( tdObj, 'modifyHostPara(' + line + ')' ) ;
 					 } ) ;
+				}
+				else if( rc === -2 )
+				{
+					//该主机已经在列表中
+					status = _languagePack['error']['system']['scanErr'][4] ;
+					input = '<input type="checkbox" disabled="disabled">' ;
+					//不存在，但是HostName 或者 IP 有重复
+					sdbjs.parts.gridBox.addBody( 'hostSearchGrid', [ { 'text': input, 'width': '5%' },
+																					 { 'text': htmlEncode( hostInfo['HostName'] ), 'width': '15%' },
+																					 { 'text': htmlEncode( hostInfo['IP'] ), 'width': '15%' },
+																					 { 'text': htmlEncode( user ), 'width': '10%' },
+																					 { 'text': htmlEncode( '***' ), 'width': '10%' },
+																					 { 'text': htmlEncode( ssh ), 'width': '8%' },
+																					 { 'text': htmlEncode( proxy ), 'width': '8%' },
+																					 { 'text': htmlEncode( status ), 'width': '15%' } ]  ) ;
 				}
 				else
 				{
@@ -483,6 +515,8 @@ function nextPage()
 		for( var i = 0; i < len; ++i )
 		{
 			sdbjs.parts.gridBox.updateBody( 'hostSearchGrid', i, 0, function( tdObj ){
+				//var className = $( tdObj ).children( 'div[data-toggle="checkBox"]' ).attr( 'class' ) ;
+				//if( className === 'checked' || className === 'dischecked' )
 				if( $( tdObj ).children( 'input' ).get(0).checked === true )
 				{
 					var hostname = _hostList[i]['HostInfo'][0]['HostName'] ;
@@ -513,6 +547,7 @@ function nextPage()
 	}
 }
 
+//加载主机列表
 function loadHostList()
 {
 	var checkedHostLis = sdbjs.fun.getData( 'SdbHostList' ) ;
@@ -589,7 +624,7 @@ function createHtml()
 		sdbjs.parts.tableBox.update( 'hostSearchTable', 'loosen' ) ;
 		//'地址：'
 		sdbjs.parts.tableBox.addBody( 'hostSearchTable', [ { 'text': htmlEncode( _languagePack['scanhost']['leftPanel']['input'][0] ), 'width': 80 },
-																			{ 'text': '<textarea class="form-control" id="hostSearchAddress" rows="3"></textarea>' } ] ) ;
+																			{ 'text': '<textarea class="form-control" id="hostSearchAddress" rows="3"></textarea>', 'width': 314 } ] ) ;
 		//'用户名：'
 		sdbjs.parts.tableBox.addBody( 'hostSearchTable', [ { 'text': htmlEncode( _languagePack['scanhost']['leftPanel']['input'][1] ), 'width': 80 },
 																			{ 'text': '<input class="form-control" type="text" id="hostSearchUser" value="root" disabled>' } ] ) ;

@@ -2190,7 +2190,7 @@ sdbjs.parts.tableBox.addBody = function( nodeName, tbody )
 		}
 		if( typeof( tbody[i]['width'] ) !== 'undefined' )
 		{
-			$( cell ).attr( 'width', parseInt( tbody[i]['width'] ) ) ;
+			$( cell ).css( 'width', tbody[i]['width'] ) ;
 		}
 		if( typeof( tbody[i]['text'] ) === 'string' )
 		{
@@ -2980,6 +2980,18 @@ sdbjs.fun.clickEvent = function( domObj, isFirst )
 			var index = $( domObj ).attr( 'data-index' ) ;
 			var fun = $( domObj ).attr( 'data-event' ) ;
 			sdbjs.parts.navTabBox.show( target, index, fun ) ;
+		}
+		else if ( toggle === 'checkBox' )
+		{
+			var className = $( domObj ).attr( 'class' ) ;
+			if( className === 'unchecked' )
+			{
+				$( domObj ).removeClass().addClass( 'checked' ) ;
+			}
+			else if( className === 'checked' )
+			{
+				$( domObj ).removeClass().addClass( 'unchecked' ) ;
+			}
 		}
 	}
 	if( domObj.parentNode !== document.body && isEvent === false )

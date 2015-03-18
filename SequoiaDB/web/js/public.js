@@ -114,9 +114,9 @@ function createPublicHtml()
 	
 	//帮助
 	sdbjs.parts.navBox.addColum( 'nav', htmlEncode( _languagePack['public']['nav'][2]['text'] ) ) ;
-	//关于SMS系统
+	//关于SAC系统
 	sdbjs.parts.navBox.addMenu( 'nav', navNum, [ { 'text': htmlEncode( _languagePack['public']['nav'][2]['child'][1] ), 'fun': function( obj ){
-		$( obj ).attr( 'data-toggle', 'modalBox' ).attr( 'data-target', 'aboutSMSModal' ) ;
+		$( obj ).attr( 'data-toggle', 'modalBox' ).attr( 'data-target', 'aboutSACModal' ) ;
 	} } ] ) ;
 	++navNum ;
 
@@ -216,20 +216,20 @@ function createPublicHtml()
 		}, 'primary' ) ;
 	} ) ;
 
-	/* 关于SMS的弹窗 */
-	sdbjs.parts.modalBox.create( $( document.body ), 'aboutSMSModal' ) ;
-	//关于SMS
-	sdbjs.parts.modalBox.update( 'aboutSMSModal', htmlEncode( _languagePack['public']['modal']['aboutSMS']['title'] ), function( bodyObj ){
+	/* 关于SAC的弹窗 */
+	sdbjs.parts.modalBox.create( $( document.body ), 'aboutSACModal' ) ;
+	//关于SAC
+	sdbjs.parts.modalBox.update( 'aboutSACModal', htmlEncode( _languagePack['public']['modal']['aboutSAC']['title'] ), function( bodyObj ){
 		$( bodyObj ).append( '<img src="images/logo2.png">' ) ;
 		//Version: 1.12
-		$( bodyObj ).append( '<div style="margin-top:15px;">' + htmlEncode( _languagePack['public']['modal']['aboutSMS']['context'][0] ) + '</div>' ) ;
-		//SMS（SequoiaDB Monitoring Service）提供针对SequoiaDB数据库的图形化监控服务。
-		$( bodyObj ).append( '<div style="margin-top:15px;">' + htmlEncode( _languagePack['public']['modal']['aboutSMS']['context'][1] ) + '</div>' ) ;
+		$( bodyObj ).append( '<div style="margin-top:15px;">' + htmlEncode( _languagePack['public']['modal']['aboutSAC']['context'][0] ) + '</div>' ) ;
+		//SAC（SequoiaDB Administration Center）提供针对SequoiaDB数据库的图形化监控服务。
+		$( bodyObj ).append( '<div style="margin-top:15px;">' + htmlEncode( _languagePack['public']['modal']['aboutSAC']['context'][1] ) + '</div>' ) ;
 	}, function( footObj ){
-		sdbjs.parts.buttonBox.create( footObj, 'aboutSMSModalClose' ) ;
-		sdbjs.parts.buttonBox.update( 'aboutSMSModalClose', function( buttonObj ){
+		sdbjs.parts.buttonBox.create( footObj, 'aboutSACModalClose' ) ;
+		sdbjs.parts.buttonBox.update( 'aboutSACModalClose', function( buttonObj ){
 			//'关闭'
-			$( buttonObj ).text( _languagePack['public']['button']['close'] ).attr( 'data-toggle', 'modalBox' ).attr( 'data-target', 'aboutSMSModal' ) ;
+			$( buttonObj ).text( _languagePack['public']['button']['close'] ).attr( 'data-toggle', 'modalBox' ).attr( 'data-target', 'aboutSACModal' ) ;
 		}, 'primary' ) ;
 	} ) ;
 	

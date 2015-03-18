@@ -228,7 +228,7 @@ function createHtml()
 		sdbjs.parts.tableBox.update( 'addBusinessTable', 'loosen' ) ;
 		//'业务名：'
 		sdbjs.parts.tableBox.addBody( 'addBusinessTable', [{ 'text': htmlEncode( _languagePack['businesslist']['addBusiness']['table'][0][0] ), 'width': 100 },
-																			{ 'text': '<input class="form-control" type="text" id="businessName_a" value="myBusiness">' },
+																			{ 'text': '<input class="form-control" type="text" id="businessName_a" value="myModule">' },
 																			//'安装的业务名'
 																			{ 'text': htmlEncode( _languagePack['businesslist']['addBusiness']['table'][0][1] ) } ] ) ;
 

@@ -3,7 +3,7 @@
         "nav": [
 		  		{ "text": "Home" },
 				{ "text": "Deployment Wizard" },
-				{ "text": "Help", "child": [ "Language", "About SMS" ] },
+				{ "text": "Help", "child": [ "Language", "About SAC" ] },
 				{ "text": "User", "child": [ "Change Password", "Logout" ] },
 				{ "text": "Task" }
         ],
@@ -36,11 +36,11 @@
 							"title": [ "User:", "Password:", "New Password:" ]
 						}
 				},
-				"aboutSMS": {
-						"title": "About SMS",
+				"aboutSAC": {
+						"title": "About SAC",
 						"context": [
 							  "Version: 1.12",
-							  "SMS ( SequoiaDB Monitoring Service ) is a web-based service utility providing real-time performance analytic and operational management to SequoiaDB database."
+							  "SAC ( SequoiaDB Administration Center ) is a web-based service utility providing real-time performance analytic and operational management to SequoiaDB database."
 						]
 				},
 				"language": {

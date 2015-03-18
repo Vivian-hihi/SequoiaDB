@@ -7,7 +7,8 @@
 					 "Connection successful",
 					 "Network error",
 					 "SSH Authentication Failed",
-					 "Unable to retreive host information"
+					 "Unable to retreive host information",
+					 "The host already exists in the list"
 				]
         },
         "web": {

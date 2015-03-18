@@ -69,26 +69,55 @@ function editHostList( buttonObj )
 }
 
 //激活主机
-function activeHost( index )
+function activeHost( index, isCaller )
 {
 	_hostConf[index]['isUse'] = true ;
 	sdbjs.fun.saveData( 'SdbHostConf', JSON.stringify( _hostConf ) ) ;
 	sdbjs.parts.tabList.unDisable( 'hostTabList', index ) ;
 	sdbjs.parts.tableBox.updateBody( 'tabListTable_' + index, 0, 0, function( tdObj ){
-		sdbjs.fun.addClick( $( tdObj ).children( 'div' ).get(0), 'disableHost(' + index + ')' ) ;
-		$( tdObj ).children( 'div' ).children( 'img' ).attr( 'src', './images/disabled.png' ) ;
+		sdbjs.fun.addClick( $( tdObj ).children( 'div[data-toggle="checkBox"]' ).get(0), 'disableHost(' + index + ')' ) ;
+		if( isCaller === true )
+		{
+			$( tdObj ).children( 'div[data-toggle="checkBox"]' ).removeClass().addClass( 'checked' ) ;
+		}
 	} ) ;
 }
 
 //禁用主机
-function disableHost( index )
+function disableHost( index, isCaller )
 {
 	_hostConf[index]['isUse'] = false ;
 	sdbjs.fun.saveData( 'SdbHostConf', JSON.stringify( _hostConf ) ) ;
 	sdbjs.parts.tabList.disable( 'hostTabList', index ) ;
 	sdbjs.parts.tableBox.updateBody( 'tabListTable_' + index, 0, 0, function( tdObj ){
-		sdbjs.fun.addClick( $( tdObj ).children( 'div' ).get(0), 'activeHost(' + index + ')' ) ;
-		$( tdObj ).children( 'div' ).children( 'img' ).attr( 'src', './images/active.png' ) ;
+		sdbjs.fun.addClick( $( tdObj ).children( 'div[data-toggle="checkBox"]' ).get(0), 'activeHost(' + index + ')' ) ;
+		if( isCaller === true )
+		{
+			$( tdObj ).children( 'div[data-toggle="checkBox"]' ).removeClass().addClass( 'unchecked' ) ;
+		}
+	} ) ;
+}
+
+//启动主机
+function approval( index )
+{
+	_hostConf[index]['isUse'] = false ;
+	sdbjs.fun.saveData( 'SdbHostConf', JSON.stringify( _hostConf ) ) ;
+	sdbjs.parts.tableBox.updateBody( 'tabListTable_' + index, 0, 0, function( tdObj ){
+		sdbjs.fun.addClick( $( tdObj ).children( 'div[data-toggle="checkBox"]' ).get(0), 'activeHost(' + index + ')' ) ;
+		$( tdObj ).children( 'div[data-toggle="checkBox"]' ).removeClass().addClass( 'unchecked' ) ;
+	} ) ;
+}
+
+//停用主机
+function banHost( index )
+{
+	_hostConf[index]['isUse'] = false ;
+	sdbjs.fun.saveData( 'SdbHostConf', JSON.stringify( _hostConf ) ) ;
+	sdbjs.parts.tabList.disable( 'hostTabList', index ) ;
+	sdbjs.parts.tableBox.updateBody( 'tabListTable_' + index, 0, 0, function( tdObj ){
+		sdbjs.fun.addClick( $( tdObj ).children( 'div[data-toggle="checkBox"]' ).get(0), '' ) ;
+		$( tdObj ).children( 'div[data-toggle="checkBox"]' ).removeClass().addClass( 'disunchecked' ) ;
 	} ) ;
 }
 
@@ -113,21 +142,12 @@ function changeDisk( obj, hostNum, diskNum )
 	//判断磁盘数量
 	if( checkDiskNum > 0 )
 	{
-		//'完成'
-		if( $( '#editButton' ).text() === _languagePack['addhost']['leftPanel']['button'][1] )
-		{
-			sdbjs.parts.tableBox.updateBody( 'tabListTable_' + hostNum, 0, 0, function( tdObj ){
-				$( tdObj ).children( 'div' ).show() ;
-			} ) ;
-		}
-		activeHost( hostNum ) ;
+		approval( hostNum ) ;
+		activeHost( hostNum, true ) ;
 	}
 	else
 	{
-		sdbjs.parts.tableBox.updateBody( 'tabListTable_' + hostNum, 0, 0, function( tdObj ){
-			$( tdObj ).children( 'div' ).hide() ;
-		} ) ;
-		disableHost( hostNum ) ;
+		banHost( hostNum ) ;
 	}
 }
 
@@ -180,12 +200,17 @@ function accessHostConf( index )
 	} ) ;
 	//OM
 	sdbjs.parts.tableBox.updateBody( 'omAgentTable', 0, 1, htmlEncode( hostConf['OMA']['Version'] ) ) ;
-	sdbjs.parts.tableBox.updateBody( 'omAgentTable', 1, 1, htmlEncode( hostConf['OMA']['Path'] ) ) ;
-	sdbjs.parts.tableBox.updateBody( 'omAgentTable', 2, 1, htmlEncode( hostConf['OMA']['Service'] ) ) ;
-	sdbjs.parts.tableBox.updateBody( 'omAgentTable', 3, 1, htmlEncode( hostConf['OMA']['Release'] ) ) ;
+	sdbjs.parts.tableBox.updateBody( 'omAgentTable', 1, 1, htmlEncode( hostConf['OMA']['SdbUser'] ) ) ;
+	sdbjs.parts.tableBox.updateBody( 'omAgentTable', 2, 1, htmlEncode( hostConf['OMA']['Path'] ) ) ;
+	sdbjs.parts.tableBox.updateBody( 'omAgentTable', 3, 1, htmlEncode( hostConf['OMA']['Service'] ) ) ;
+	sdbjs.parts.tableBox.updateBody( 'omAgentTable', 4, 1, htmlEncode( hostConf['OMA']['Release'] ) ) ;
 	//磁盘
 	sdbjs.parts.gridBox.emptyBody( 'hostDiskGrid' ) ;
 	$.each( hostConf['Disk'], function(index2,hostDisk){
+		if( hostDisk['Size'] === 0 || hostDisk['Name'] === 'none' )
+		{
+			return true ;
+		}
 		var useDisk = hostDisk['Size'] - hostDisk['Free'] ;
 		var percentDisk = parseInt( useDisk * 100 / hostDisk['Size'] ) ;
 		var inputBox = '<input type="checkbox" checked="checked" onclick="changeDisk(this,' + index + ',' + index2 + ')">' ;
@@ -340,6 +365,20 @@ function createHostList()
 {
 	var isActive = false ;
 	$.each( _hostConf, function(index,hostInfo){
+		if( typeof( hostInfo['errno'] ) === 'undefined' || hostInfo['errno'] === 0 )
+		{
+			if( typeof( hostInfo['InstallPath'] ) === 'undefined' )
+			{
+				if( hostInfo['OMA']['Path'] !== ''  )
+				{
+					hostInfo['InstallPath'] = hostInfo['OMA']['Path'] ;
+				}
+				else
+				{
+					hostInfo['InstallPath'] = _installPath ;
+				}
+			}
+		}
 		//把hostname和ip匹配到返回的数据中
 		$.each( _hostList, function(index2,hostInfoTemp){
 			if( hostInfoTemp['HostName'] === hostInfo['HostName'] || hostInfoTemp['IP'] === hostInfo['IP'] )
@@ -362,6 +401,10 @@ function createHostList()
 		if( typeof( hostInfo['errno'] ) === 'undefined' || hostInfo['errno'] === 0 )
 		{
 			$.each( hostInfo['Disk'], function(index2,hostDisk){
+				if( hostDisk['Size'] === 0 || hostDisk['Name'] === 'none' )
+				{
+					return true ;
+				}
 				if( hostDisk['CanUse'] === true && hostDisk['IsLocal'] === true && ( typeof( hostDisk['isUse'] ) === 'undefined' || hostDisk['isUse'] === true ) )
 				{
 					hostDisk['isUse'] = true ;
@@ -379,15 +422,33 @@ function createHostList()
 			hostStatusTemp = '<span class="badge badge-info">' + canUseDisk + '</span>' ;
 			if( unUseDisk > 0 )
 			{
-				hostStatusTemp += '&nbsp;<span class="badge badge-warning">' + unUseDisk + '</span>' ;
+				if( hostInfo['OMA']['Version'] !== '' ||
+					 hostInfo['OMA']['SdbUser'] !== '' ||
+					 hostInfo['OMA']['Path']    !== '' ||
+					 hostInfo['OMA']['Service'] !== '' ||
+					 hostInfo['OMA']['Release'] !== '' )
+				{
+					hostStatusTemp += '&nbsp;<span class="badge badge-warning">' + ( unUseDisk + 1 ) + '</span>' ;
+				}
+				else
+				{
+					hostStatusTemp += '&nbsp;<span class="badge badge-warning">' + unUseDisk + '</span>' ;
+				}
 			}
-			hostStatusOperate = '<div style="display:none;margin-right:5px;cursor:pointer;" onClick="disableHost(' + index + ')"><img src="./images/disabled.png"></div>' ;
+			if( canUseDisk > 0 )
+			{
+				hostStatusOperate = '<div class="checked" data-toggle="checkBox" onClick="disableHost(' + index + ',false)"></div>' ;
+			}
+			else
+			{
+				hostStatusOperate = '<div class="disunchecked" data-toggle="checkBox"></div>' ;
+			}
 		}
 		else if( typeof( hostInfo['errno'] ) !== 'undefined' && hostInfo['errno'] !== 0 )
 		{
 			isError = true ;
 			hostStatusTemp = '<span class="badge badge-danger">Error</span>' ;
-			hostStatusOperate = '' ;
+			hostStatusOperate = '<div class="disunchecked" data-toggle="checkBox"></div>' ;
 		}
 		sdbjs.parts.tabList.add( 'hostTabList', function( liObj ){
 			$( liObj ).css( 'zoom', 1 ) ;
@@ -400,10 +461,31 @@ function createHostList()
 				$( tdObj ).css( 'text-align', 'right' ) ;
 				if( isError === false )
 				{
+					var warningStr = '' ;
 					//'已选择 ? 个磁盘'
 					sdbjs.fun.setLabel( $( tdObj ).children( '.badge-info' ), htmlEncode( sdbjs.fun.sprintf( _languagePack['addhost']['leftPanel']['label'][0], canUseDisk ) ) ) ;
-					//'有 ? 个磁盘剩余容量不足'
-					sdbjs.fun.setLabel( $( tdObj ).children( '.badge-warning' ), htmlEncode( sdbjs.fun.sprintf( _languagePack['addhost']['leftPanel']['label'][1], unUseDisk ) ) );
+					if( unUseDisk > 0 )
+					{
+						//'有 ? 个磁盘剩余容量不足'
+						warningStr += '<p>' + htmlEncode( sdbjs.fun.sprintf( _languagePack['addhost']['leftPanel']['label'][1], unUseDisk ) ) + '</p>' ;
+					}
+					if( hostInfo['OMA']['Version'] !== '' ||
+						 hostInfo['OMA']['SdbUser'] !== '' ||
+						 hostInfo['OMA']['Path']    !== '' ||
+						 hostInfo['OMA']['Service'] !== '' ||
+						 hostInfo['OMA']['Release'] !== '' )
+					{
+						//有OM agent信息
+						warningStr += '<p>' + htmlEncode( _languagePack['addhost']['leftPanel']['label'][2] ) + '</p>' ;
+						if( hostInfo['isUse'] !== true )
+						{
+							disableHost( index, true ) ;
+						}
+					}
+					if( warningStr !== '' )
+					{
+						sdbjs.fun.setLabel( $( tdObj ).children( '.badge-warning' ), warningStr ) ;
+					}
 				}
 				else
 				{
@@ -419,7 +501,15 @@ function createHostList()
 		if( typeof( hostInfo['isUse'] ) !== 'undefined'  && hostInfo['isUse'] === false )
 		{
 			hostInfo['isUse'] = false ;
-			disableHost( index ) ;
+			if( canUseDisk > 0 )
+			{
+				disableHost( index, true ) ;
+			}
+			else
+			{
+				disableHost( index, false ) ;
+				banHost( index ) ;
+			}
 		}
 		else
 		{
@@ -473,9 +563,9 @@ function loadInstallPath()
 function createDynamicHtml()
 {
 	sdbjs.parts.loadingBox.show( 'loading' ) ;
+	loadInstallPath() ;
 	if( _hostConf.length <= 0 )
 	{
-		loadInstallPath() ;
 		loadHostList() ;
 	}
 	else
@@ -494,19 +584,19 @@ function createHtml()
 	sdbjs.fun.setCSS( 'tab', { 'padding-top': 5 } ) ;
 
 	//扫描主机
-	sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/zoom.png"> ' + htmlEncode( _languagePack['public']['tabPage'][0] ), false, null ) ;
+	sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/zoom.png"> ' + htmlEncode( _languagePack['public']['tabPage'][2] ), false, null ) ;
 	//添加主机
-	sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/layers_1.png"> ' + htmlEncode( _languagePack['public']['tabPage'][1] ), true, null ) ;
+	sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/layers_1.png"> ' + htmlEncode( _languagePack['public']['tabPage'][3] ), true, null ) ;
 	//安装主机
-	sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/cog.png"> ' + htmlEncode( _languagePack['public']['tabPage'][2] ), false, null );
+	sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/cog.png"> ' + htmlEncode( _languagePack['public']['tabPage'][4] ), false, null );
 	if( _deployModel === 'Deploy' )
 	{
 		//配置业务
-		sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/cube.png"> ' + htmlEncode( _languagePack['public']['tabPage'][3] ), false, null ) ;
+		sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/cube.png"> ' + htmlEncode( _languagePack['public']['tabPage'][5] ), false, null ) ;
 		//修改业务
-		sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/doc_lines_stright.png"> ' + htmlEncode( _languagePack['public']['tabPage'][4] ), false, null );
+		sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/doc_lines_stright.png"> ' + htmlEncode( _languagePack['public']['tabPage'][6] ), false, null );
 		//安装业务
-		sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/cog.png"> ' + htmlEncode( _languagePack['public']['tabPage'][5] ), false, null );
+		sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/cog.png"> ' + htmlEncode( _languagePack['public']['tabPage'][7] ), false, null );
 	}
 	
 	/* 左边框架 */
@@ -523,8 +613,8 @@ function createHtml()
 		sdbjs.parts.divBox.update( 'editDiv', function( obj ){
 			var browser = sdbjs.fun.getBrowserInfo() ;
 			//'编辑'
-			$( obj ).append( '<button style="float:left;" class="btn btn-lg btn-default" id="editButton" onClick="editHostList(this)">' + htmlEncode( _languagePack['addhost']['leftPanel']['button'][0] ) + '</button>' ) ;
-			$( obj ).append( '<input style="float:left;width:300px;margin-left:15px;border-radius:5px 0 0 5px;border-right:0;" class="form-control" type="search">' ) ;
+			//$( obj ).append( '<button style="float:left;" class="btn btn-lg btn-default" id="editButton" onClick="editHostList(this)">' + htmlEncode( _languagePack['addhost']['leftPanel']['button'][0] ) + '</button>' ) ;
+			$( obj ).append( '<input style="float:left;width:375px;border-radius:5px 0 0 5px;border-right:0;" class="form-control" type="search">' ) ;
 			$( obj ).children( 'input' ).on( 'input propertychange', function(){
 				filterHosts( this ) ;
 			} ) ;
@@ -563,6 +653,7 @@ function createHtml()
 		sdbjs.fun.setCSS( 'omAgentTable', { 'color': '#666' } ) ;
 		sdbjs.parts.tableBox.update ( 'omAgentTable', 'loosen simple' ) ;
 		sdbjs.parts.tableBox.addBody( 'omAgentTable', [ { 'text': '<b>' + htmlEncode( 'Version' ) + '</b>', 'width': 100 }, { 'text': '' } ] ) ;
+		sdbjs.parts.tableBox.addBody( 'omAgentTable', [ { 'text': '<b>' + htmlEncode( 'User' ) + '</b>', 'width': 100 }, { 'text': '' } ] ) ;
 		sdbjs.parts.tableBox.addBody( 'omAgentTable', [ { 'text': '<b>' + htmlEncode( 'Path' ) + '</b>', 'width': 100 }, { 'text': '' } ] ) ;
 		sdbjs.parts.tableBox.addBody( 'omAgentTable', [ { 'text': '<b>' + htmlEncode( 'Service' ) + '</b>', 'width': 100 }, { 'text': '' } ] ) ;
 		sdbjs.parts.tableBox.addBody( 'omAgentTable', [ { 'text': '<b>' + htmlEncode( 'Release' ) + '</b>', 'width': 100 }, { 'text': '' } ] ) ;

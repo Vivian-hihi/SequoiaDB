@@ -220,4 +220,17 @@
 		<DynamicEdit>false</DynamicEdit>
 		<BatchEdit>true</BatchEdit>
 	</FILLER>
+	<FILLER>
+		<Name>weight</Name>
+		<WebName>选举权重</WebName>
+		<Type>int</Type>
+		<Default>10</Default>
+		<Valid>1-100</Valid>
+		<Display>edit box</Display>
+		<Edit>true</Edit>
+		<Desc>节点选举的权重，默认值10，取值范围：[1-100]</Desc>
+		<Level>1</Level>
+		<DynamicEdit>false</DynamicEdit>
+		<BatchEdit>true</BatchEdit>
+	</FILLER>
 </Property>

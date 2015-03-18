@@ -207,16 +207,21 @@ function updateTaskInfo( taskInfo, isFirst )
 	{
 		color = 'red' ;
 	}
+	if( taskInfo['errno'] !== 0 )
+	{
+		color = 'red' ;
+		$.each( taskInfo['ResultInfo'], function( index, resultInfo ){
+				_nodeStatus[index] = true ;
+				sdbjs.parts.gridBox.updateBody( 'nodeListGrid', index, 0, '<img src="./images/delete.png">' ) ;
+		} ) ;
+	}
 	sdbjs.parts.progressBox2.update( 'Progress', color, taskInfo['Progress'] ) ;
 	if( taskInfo['Status'] === 4 )
 	{
-		if( taskInfo['errno'] === 0 )
-		{
-			sdbjs.parts.buttonBox.update( 'deployNext', function( buttonObj ){
-				$( buttonObj ).show() ;
-			}, 'primary' ) ;
-		}
-		else
+		sdbjs.parts.buttonBox.update( 'deployNext', function( buttonObj ){
+			$( buttonObj ).show() ;
+		}, 'primary' ) ;
+		if( taskInfo['errno'] !== 0 )
 		{
 			showProcessError( taskInfo['detail'] ) ;
 		}
