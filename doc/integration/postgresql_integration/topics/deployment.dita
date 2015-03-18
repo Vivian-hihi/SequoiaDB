@@ -6,7 +6,7 @@
     <section id="installation">
       <title>安装PostgreSQL</title>
       <p>1) 源码编译PostgreSQL</p>
-      <p>下载链接：<xref href="http://www.postgresql.org/ftp/source/">http://www.postgresql.org/ftp/source/</xref></p>
+      <p>下载链接：<xref href="http://www.postgresql.org/ftp/source">http://www.postgresql.org/ftp/source/</xref></p>
       <p>解压后编译安装（需要root权限）</p>
       <codeblock>$> tar -zxvf postgresql-9.3.4.tar.gz
 $> cd postgresql-9.3.4/

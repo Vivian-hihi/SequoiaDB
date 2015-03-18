@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
+<topic id="topic_5tr_2hq_fm">
+  <title>Using JDBC with SparkSQL</title>
+  <body>   
+    <p>The Thrift JDBC/ODBC server implemented here corresponds to the HiveServer2 in Hive 0.12. You can test the JDBC server with the beeline script that comes with either Spark or Hive 0.12.</p>
+    <p>The Spark image must be compiled with option –Phive,-Phivethriftserver. Otherwise the following error will be thrown by sbin/start-thriftserver.sh:</p>
+    <codeblock>failed to launch org.apache.spark.sql.hive.thriftserver.HiveThriftServer2:
+You need to build Spark with -Phive and -Phive-thriftserver.</codeblock>
+    <p>To start the JDBC/ODBC server, run the following in the Spark directory:</p>
+    <codeblock>./sbin/start-thriftserver.sh</codeblock>
+    <p>This script accepts all bin/spark-submit command line options, plus a --hiveconf option to specify Hive properties. You may run ./sbin/start-thriftserver.sh --help for a complete list of all available options. By default, the server listens on localhost:10000. You may override this bahaviour via either environment variables, i.e.:</p>
+    <codeblock>export HIVE_SERVER2_THRIFT_PORT=&lt;listening-port&gt;
+export HIVE_SERVER2_THRIFT_BIND_HOST=&lt;listening-host&gt;
+./sbin/start-thriftserver.sh   --master &lt;master-uri&gt;   ...</codeblock>
+    <p>or system properties:</p>
+    <codeblock>./sbin/start-thriftserver.sh  --hiveconf hive.server2.thrift.port=&lt;listening-port&gt;   --hiveconf hive.server2.thrift.bind.host=&lt;listening-host&gt;   --master &lt;master-uri&gt;   ...</codeblock>
+    <p>Now you can use beeline to test the Thrift JDBC/ODBC server:</p>
+    <codeblock>./bin/beeline </codeblock>
+    <p>Connect to the JDBC/ODBC server in beeline with:</p>
+    <codeblock>beeline> !connect jdbc:hive2://localhost:10000 </codeblock>
+    <p>Beeline will ask you for a username and password. In non-secure mode, simply enter the username on your machine and a blank password. For secure mode, please follow the instructions given in the <xref href = "https://cwiki.apache.org/confluence/display/Hive/HiveServer2+Clients">beeline documentation</xref>.</p>
+    <p>Configuration of Hive is done by placing your hive-site.xml file in conf/.</p>
+    <p>You may also use the beeline script that comes with Hive.</p>
+  </body>
+</topic>
