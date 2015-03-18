@@ -649,7 +649,22 @@
                 <file name="integration/postgresql_integration/pginter.dita"/>
                 <file name="integration/postgresql_integration/pginter.ditamap"/>
             </folder>
-            <folder name="spark_integration"/>
+            <folder name="spark_integration">
+                <folder name="installation">
+                    <folder name="topics">
+                        <file name="integration/spark_integration/installation/topics/install_by_admin_center_en.dita"/>
+                        <file name="integration/spark_integration/installation/topics/install_by_manual_en.dita"/>
+                        <file name="integration/spark_integration/installation/topics/install_introduction_en.dita"/>
+                    </folder>
+                    <file name="integration/spark_integration/installation/install_en.ditamap"/>
+                </folder>
+                <folder name="topics">
+                    <file name="integration/spark_integration/topics/sparksql_en.dita"/>
+                    <file name="integration/spark_integration/topics/sparksql_jdbc_en.dita"/>
+                </folder>
+                <file name="integration/spark_integration/spark_en.ditamap"/>
+                <file name="integration/spark_integration/sparkinter_en.dita"/>
+            </folder>
             <folder name="tasks"/>
             <folder name="topics">
                 <file name="integration/topics/hadoop_en.dita"/>
