@@ -758,20 +758,23 @@ function getOMASvcFromCfgFile( hostname )
       {
          var key = hostname + OMA_MISC_CONFIG_PORT ;
          var obj =  eval ( '(' + Oma.getOmaConfigs() + ')' ) ;
-         var retPort = obj[key]
+         PD_LOG( arguments, PDEVENT, FILE_NAME_FUNC,
+                 sprintf( "obj info is[?]", JSON.stringify(obj) ) ) ;
+         retPort = obj[key]
          if ( "undefined" == typeof(retPort) )
-            retPort = OMA_PORT_DEFAULT_SDBCM_PORT + "" ;
+            exception_handle( SDB_SYS, "OM Agent's service is undefined" ) ;
       }
    }
    catch( e )
    {
       SYSEXPHANDLE( e ) ;
-      errMsg = sprintf( "Failed to get OM Agent's port of host [?] from local sdbcm's config file", hostname ) ;
+      errMsg = sprintf( "Failed to get OM Agent's service in host[?] from local OM Agent's config file", hostname ) ;
       rc = GETLASTERROR() ;
       PD_LOG( arguments, PDERROR, FILE_NAME_FUNC,
               errMsg + "rc: " + rc + ", detail: " + GETLASTERRMSG() ) ;
       exception_handle( rc, errMsg ) ;
    }
+
    return retPort + "" ;
 }
 
