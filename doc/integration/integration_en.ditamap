@@ -7,5 +7,6 @@
   <anchorref href="./hive_integration/hive_en.ditamap"/>
   <anchorref href="./spark_integration/spark_en.ditamap"/>
   <anchorref href="./postgresql_integration/pginter_en.ditamap"/>
+  <anchorref href="./spark_integration/spark_en.ditamap"/>
  </topicref>
 </map>

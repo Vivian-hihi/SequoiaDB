@@ -76,51 +76,51 @@
             file gives the conf information of starting sdbcm, as follows:</p>
 
           <a name="developement_sdbcm_en__developement_sdbcm_table"><!-- --></a><table cellpadding="4" cellspacing="0" summary="" id="developement_sdbcm_en__developement_sdbcm_table" border="1" class="simpletable"><tr class="sthead">
-              <th valign="bottom" align="left" id="d86314e56" class="stentry">Param </th>
+              <th valign="bottom" align="left" id="d86455e56" class="stentry">Param </th>
 
-              <th valign="bottom" align="left" id="d86314e59" class="stentry">Desciption</th>
+              <th valign="bottom" align="left" id="d86455e59" class="stentry">Desciption</th>
 
-              <th valign="bottom" align="left" id="d86314e62" class="stentry">Example</th>
-
-            </tr>
-<tr class="strow">
-              <td valign="top" headers="d86314e56" class="stentry">defaultPort  </td>
-
-              <td valign="top" headers="d86314e59" class="stentry">the default monitoring port of sdbcm </td>
-
-              <td valign="top" headers="d86314e62" class="stentry">defaultPort=11790</td>
+              <th valign="bottom" align="left" id="d86455e62" class="stentry">Example</th>
 
             </tr>
 <tr class="strow">
-              <td valign="top" headers="d86314e56" class="stentry">&lt;hostname&gt;_Port   </td>
+              <td valign="top" headers="d86455e56" class="stentry">defaultPort  </td>
 
-              <td valign="top" headers="d86314e59" class="stentry">monitoring port of sdbcm in physical host.if it can't find the corresponding
+              <td valign="top" headers="d86455e59" class="stentry">the default monitoring port of sdbcm </td>
+
+              <td valign="top" headers="d86455e62" class="stentry">defaultPort=11790</td>
+
+            </tr>
+<tr class="strow">
+              <td valign="top" headers="d86455e56" class="stentry">&lt;hostname&gt;_Port   </td>
+
+              <td valign="top" headers="d86455e59" class="stentry">monitoring port of sdbcm in physical host.if it can't find the corresponding
                 param of host in the conf file,sdbcm will start with  defaultPort; if defaultPort is
                 also not exist ,then sdbcm will start the default port 11790</td>
 
-              <td valign="top" headers="d86314e62" class="stentry">&lt;hostname&gt;_Port=11790  </td>
+              <td valign="top" headers="d86455e62" class="stentry">&lt;hostname&gt;_Port=11790  </td>
 
             </tr>
 <tr class="strow">
-              <td valign="top" headers="d86314e56" class="stentry">RestartCount</td>
+              <td valign="top" headers="d86455e56" class="stentry">RestartCount</td>
 
-              <td valign="top" headers="d86314e59" class="stentry">number of restarts. That is define the max number of restarting  nodes for
+              <td valign="top" headers="d86455e59" class="stentry">number of restarts. That is define the max number of restarting  nodes for
                 sdbcm. If the param doesn't exist,then default set to -1,that is constantly
                 restart.</td>
 
-              <td valign="top" headers="d86314e62" class="stentry">RestartCount=5</td>
+              <td valign="top" headers="d86455e62" class="stentry">RestartCount=5</td>
 
             </tr>
 <tr class="strow">
-              <td valign="top" headers="d86314e56" class="stentry">RestartInterval</td>
+              <td valign="top" headers="d86455e56" class="stentry">RestartInterval</td>
 
-              <td valign="top" headers="d86314e59" class="stentry">restart interval, that is difine the max restart interval of sdbcm,the unit
+              <td valign="top" headers="d86455e59" class="stentry">restart interval, that is difine the max restart interval of sdbcm,the unit
                 is minutes. This param combine with RestartCount define the max number of restarting
                 nodes for sdbcm in the restart interval, when beyond,no longer restart.  If the
                 param doesn't exist,then default set to 0, that is doesn'tconsider the restart
                 interval .</td>
 
-              <td valign="top" headers="d86314e62" class="stentry">RestartInterval=0</td>
+              <td valign="top" headers="d86455e62" class="stentry">RestartInterval=0</td>
 
             </tr>
 </table>
@@ -157,7 +157,7 @@
     for (i = 0; i< aArray.length; i++){
       aArray[i].onclick = expand;
     }
-//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.11
+//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.12
           
     </div>
 </body>

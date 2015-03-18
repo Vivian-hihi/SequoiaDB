@@ -1,0 +1,189 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html lang="en-us" xml:lang="en-us">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<meta name="copyright" content="(C) Copyright 2005"/>
+<meta name="DC.rights.owner" content="(C) Copyright 2005"/>
+<meta name="DC.Type" content="topic"/>
+<meta name="DC.Title" content="Install as standalone package"/>
+<meta name="description" content="Spark Installation Installing Apache Spark without SequoiaDB Administration Console is also straightforward. First of all, you need to get the latest copy of the Spark framework. To do so, you can get ..."/>
+<meta name="DC.Relation" scheme="URI" content="../../../../integration/spark_integration/installation/topics/install_introduction_en.html"/>
+<meta name="DC.Format" content="XHTML"/>
+<meta name="DC.Identifier" content="topic_5tr_2hq_fm"/>
+<link rel="stylesheet" type="text/css" href="../../../../commonltr.css"/>
+<link rel="stylesheet" type="text/css" href="../../../../assets/webhelp_topic.css"/>
+<title>Install as standalone package</title>
+<script type="text/javascript" src="../../../../assets/jquery-1.3.2.js"> </script><script type="text/javascript" src="../../../../assets/jquery-ui-1.8.2.custom.min.js"> </script><script type="text/javascript" src="../../../../assets/frames_redirect.js"> </script><script type="text/javascript"><!--
+    var prefix = "../../../../../index.html";
+    var ratingFile = "";
+    redirectToToc(window.location.search);
+    function highlightSearchTerm(){
+        if(parent.termsToHighlight != null){
+        // highlight each term in the content view  
+          for(i = 0 ; i < parent.termsToHighlight.length ; i++){        
+              $('*', window.parent.frames[1].document).highlight(parent.termsToHighlight[i]);
+          }
+        }
+    }
+//--></script></head>
+<body onload="highlightSearchTerm()" id="topic_5tr_2hq_fm"><a name="topic_5tr_2hq_fm"><!-- --></a>
+<table class="nav"><tbody><tr><td><div class="navheader"><span class="frames" onclick="redirectFrames(location.pathname)"><script type="text/javascript"><!--
+  if (parent.window.location.pathname == window.location.pathname ) document.write('With Frames');                    
+                    --></script></span><a class="link" href="../../../../integration/spark_integration/installation/topics/install_introduction_en.html" title="Install Spark"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">Install Spark</span></a>  </div></td><td width="50%"><a class="navheader_parent_path" href="../../sparkinter_en.html" title="Integration with Spark">Integration with Spark</a> / <a class="navheader_parent_path" href="../../../../integration/spark_integration/installation/topics/install_introduction_en.html" title="Install Spark">Install Spark</a></td></tr></tbody></table>
+
+    <h1 class="title topictitle1">Install as standalone package</h1>
+
+    <div class="body">   
+        <div class="section" id="topic_5tr_2hq_fm__spark_install"><a name="topic_5tr_2hq_fm__spark_install"><!-- --></a><h2 class="title sectiontitle">Spark Installation </h2>
+            
+            <p class="p">Installing Apache Spark without SequoiaDB Administration Console is also straightforward.</p>
+
+            <p class="p">First of all, you need to get the latest copy of the Spark framework. To do so, you can get the latest release <a class="xref" href="http://spark.apache.org/downloads.html">here</a>.</p>
+
+            <p class="p">Taking example of Spark 1.3 with Hadoop 2.4, the download package will be called as "spark-1.3.0-bin-hadoop2.4.tgz".</p>
+
+            <img class="image" src="../../images/spark_install_manual_step1_en.jpg"/>
+            <p class="p">The package can be extracted by the following command:</p>
+
+            <pre class="pre codeblock">$ tar –zxvf spark-1.3.0-bin-hadoop2.4.tgz –directory /opt/</pre>
+
+            <p class="p">Once the package is extracted, you can cd to the directory and run a simple test using spark-shell by:</p>
+
+            <pre class="pre codeblock">$ cd /opt/spark-1.3.0-bin-hadoop2.4
+$ bin/spark-shell 2&gt;/dev/null
+Welcome to
+      ____              __
+     / __/__  ___ _____/ /__
+    _\ \/ _ \/ _ `/ __/  '_/
+   /___/ .__/\_,_/_/ /_/\_\   version 1.3.0
+      /_/
+
+Using Scala version 2.10.4 (Java HotSpot(TM) 64-Bit Server VM, Java 1.6.0_35)
+Type in expressions to have them evaluated.
+Type :help for more information.
+Spark context available as sc.
+SQL context available as sqlContext.
+scala&gt; val textFile = sc.textFile("README.md")
+textFile: org.apache.spark.rdd.RDD[String] = README.md MapPartitionsRDD[1] at textFile at &lt;console&gt;:21
+scala&gt; textFile.count() 
+res0: Long = 98
+scala&gt; textFile.first()
+res1: String = # Apache Spark
+scala&gt; textFile.filter(line =&gt; line.contains("Spark")).count()
+res2: Long = 19</pre>
+
+            <p class="p">In order to build a high available cluster, there are at least 3 physical hosts required in the cluster. In this example we use name "server1", "server2" and "server3".</p>
+
+            <p class="p">Download and extraction need to be performed on each of the box in the cluster.</p>
+
+        </div>
+
+        <div class="section" id="topic_5tr_2hq_fm__configure"><a name="topic_5tr_2hq_fm__configure"><!-- --></a><h2 class="title sectiontitle">Configure Spark cluster in Standalone mode</h2>
+            
+            <p class="p">Once Spark binary image is installed, say /opt/spark-1.3.0-bin-hadoop2.4, several simple steps need to be performed in order to build a high available cluster.</p>
+
+            <p class="p">1)	Download and configure Apache ZooKeeper</p>
+
+            <p class="p">Apache ZooKeeper is a centralized service for maintaining configuration information, naming, providing distributed synchronization, and providing group services. All of these kinds of services are used in some form or another by distributed applications.</p>
+
+            <p class="p">The download page for ZooKeeper can be found <a class="xref" href="http://www.apache.org/dyn/closer.cgi/zookeeper">here</a></p>
+
+            <p class="p">You need to select at least 3 nodes to make a high-available ZooKeeper cluster. </p>
+
+            <p class="p">Once a package is downloaded on each box, it can be extracted by the following command:</p>
+
+            <pre class="pre codeblock">$ tar –zxvf zookeeper-3.4.6.tar.gz –directory /opt/</pre>
+
+            <p class="p">2)	Modify ZooKeeper configuration</p>
+
+            <pre class="pre codeblock">$ cd /opt/zookeeper-3.4.6/conf
+$ cp zoo_sample.cfg zoo.cfg
+$ vi zoo.cfg</pre>
+
+            <p class="p">Add the following 3 lines and replace hostname to your real host names:</p>
+
+            <pre class="pre codeblock">server.1=server1:2888:3888
+server.2=server2:2888:3888
+server.3=server3:2888:3888</pre>
+
+            <p class="p">And make sure change "dataDir" to somewhere other than /tmp directory, for example "/data/zookeeper".</p>
+
+            <p class="p">Next, create myid file on each server. In this example, you can run the following commands against each server:</p>
+
+            <pre class="pre codeblock">Server1: echo "1" &gt; /data/zookeeper/myid
+Server2: echo "2" &gt; /data/zookeeper/myid
+Server3: echo "3" &gt; /data/zookeeper/myid</pre>
+
+            <p class="p">Note that the id number must be corresponding to the server.x configuration in zoo.cfg.</p>
+
+            <p class="p">3)	Start ZooKeeper service</p>
+
+            <p class="p">The following command can be run on each host with ZooKeeper service configured:</p>
+
+            <pre class="pre codeblock">$ bin/zkServer.sh start</pre>
+
+            <p class="p">You should start ZK service on all 3 nodes and you can also use the following command to check the status of ZooKeeper service:</p>
+
+            <pre class="pre codeblock">$ bin/zkServer.sh status</pre>
+
+            <p class="p">One of the nodes should show "Mode: leader", and rest of the nodes should show "Mode: follower".</p>
+
+            <p class="p">4)	Configure Apache Spark in Standalone mode</p>
+
+            <p class="p">Apache Spark can run in different modes. Standalone mode is recommended when working with SequoiaDB cluster.</p>
+
+            <p class="p">Since local data access is always preferable than remote data lookup, it is recommended to install Apache Spark on all nodes in SequoiaDB database cluster.</p>
+
+            <p class="p">Apache Spark standalone deployment looks like following:</p>
+
+            <img class="image" src="../../images/spark_install_manual_step2_en.jpg"/>
+            <p class="p">There could be more than one Master nodes created in Spark cluster. Only one of them is in "Primary" node and rest of them are in "Standby" mode. ZooKeeper is used to keep track of each Master node to make sure there's always one Primary node at any given time.</p>
+
+            <p class="p">It's recommended to run one Worker node on each of the box in SequoiaDB cluster.</p>
+
+            <p class="p">Apache Spark configuration file is located at conf/spark-env.sh by default. Assume SequoiaDB is installed at /opt/sequoiadb, you can make a copy from spark-env.sh.template and make the following changes:</p>
+
+            <pre class="pre codeblock">SPARK_DAEMON_JAVA_OPTS="-Dspark.deploy.recoveryMode=ZOOKEEPER -Dspark.deploy.zookeeper.url=server1:2181,server2:2181,server3:2181 -Dspark.deploy.zookeeper.dir=/data/zookeeper"
+SPARK_WORKER_DIR=/data/spark_works
+SPARK_LOCAL_DIRS=/data/spark_data1,/data/spark_data2
+SPARK_CLASSPATH="/opt/sequoiadb/driver/java/sequoiadb-driver-1.12.jar:/opt/sequoiadb/driver/spark/spark-sequoiadb_2.10-1.12.0.jar"</pre>
+
+            <p class="p">The following configuration parameters are optional; it should be set based on hardware and workload. SequoiaDB automatically tunes those parameters if it’s installed by SequoiaDB Administration Center.</p>
+
+            <pre class="pre codeblock">SPARK_WORKER_MEMORY</pre>
+
+            <p class="p">5)	Start Spark master nodes</p>
+
+            <p class="p">If you plan to host Master nodes on serverA and serverB, the following command can be used on those hosts:</p>
+
+            <pre class="pre codeblock">$ cd /opt/spark-1.3.0-bin-hadoop2.4
+$ sbin/start-master.sh</pre>
+
+            <p class="p">6)	Start Spark worker nodes</p>
+
+            <p class="p">Since it’s recommended to run Worker node on all hosts in SequoiaDB cluster, you can run the following command in each box to start Worker node:</p>
+
+            <pre class="pre codeblock">$ cd /opt/spark-1.3.0-bin-hadoop2.4
+$ nohup bin/spark-class org.apache.spark.deploy.worker.Worker spark://serverA:7077,serverB:7077&gt;logs/worker.out &amp;</pre>
+
+        </div>
+
+    </div>
+
+<div class="related-links"/>
+<div class="navfooter"><a class="link" href="../../../../integration/spark_integration/installation/topics/install_introduction_en.html" title="Install Spark"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">Install Spark</span></a>  <script type="text/javascript"><!--         
+    function expand(){
+        parent.tocwin.expandToTopic(window.location.href, this.getAttribute('href'));
+    }
+    var aArray = document.getElementsByTagName('a');
+    var i;
+    for (i = 0; i< aArray.length; i++){
+      aArray[i].onclick = expand;
+    }
+//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.12
+          
+    </div>
+</body>
+</html>

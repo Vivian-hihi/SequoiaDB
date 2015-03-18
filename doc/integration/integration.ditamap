@@ -6,5 +6,6 @@
   <topicref href="topics/map_reduce.dita"/>
   <anchorref href="./hive_integration/hive.ditamap"/>
   <anchorref href="./postgresql_integration/pginter.ditamap"/>
+  <anchorref href="./spark_integration/spark.ditamap"/>
  </topicref>
 </map>
