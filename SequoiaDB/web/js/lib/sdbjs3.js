@@ -442,11 +442,11 @@ sdbjs.fun.compatible = function()
 	{
 		rc = false ;
 	}
-	else if( browser[0] === 'firefox' && browser[1] < 10 )
+	else if( browser[0] === 'firefox' && browser[1] < 22 )
 	{
 		rc = false ;
 	}
-	else if( browser[0] === 'chrome' && browser[1] < 14 )
+	else if( browser[0] === 'chrome' && browser[1] < 17 )
 	{
 		rc = false ;
 	}

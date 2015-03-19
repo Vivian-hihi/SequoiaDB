@@ -468,7 +468,7 @@ function createHtml()
 		sdbjs.parts.divBox.create( panelBody['name'], 'businessTopDiv', 'auto', 40 ) ;
 		sdbjs.parts.divBox.update( 'businessTopDiv', function( divObj ){
 			sdbjs.parts.selectBox.create( divObj, 'businessSelect' ) ;
-			sdbjs.fun.setCSS( 'businessSelect', { 'width': 260 } ) ;
+			sdbjs.fun.setCSS( 'businessSelect', { 'width': 240 } ) ;
 			sdbjs.fun.getNode( 'businessSelect', 'selectBox' )['obj'].change( function(){
 				accessBusinessConf( this.selectedIndex ) ;
 			} ) ;

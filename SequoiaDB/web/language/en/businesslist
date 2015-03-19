@@ -5,10 +5,8 @@
 		  		"button": [ "Add Module" ]
 		  },
 	 	  "businessGrid": {
-		  		   "title": [ "Module Name", "Type", "Mode", "Operation" ],
-		  			"button": {
-						  "remove": "uninstall"
-					}
+		  		   "title": [ "Module Name", "Type", "Mode", "Auth", "Auth user", "Operation" ],
+		  			"button": [ "Operation", "Set Auth", "Remove Auth", "Uninstall" ]
 		  },
 		  "isRemoveBusiness": {
 		  			"title": "Tips"

@@ -111,7 +111,7 @@ body{ margin:0; padding:0; font-size:87.50%; font-family:Verdana,Georgia,宋体;
 .grid > .header{ padding-right:17px; background-color:#d9edf7; border-left:#99CEEB solid 1px; border-right:#99CEEB solid 1px; border-bottom:#99CEEB solid 1px; }
 .grid > .header > table{ border-right:#99CEEB solid 1px; }
 .grid > .header > table td{ background-color:#d9edf7; font-weight:bold; border-bottom:#99CEEB solid 1px; }
-.grid > .body{ overflow-x:hidden; overflow-y:scroll; border-right:#99CEEB solid 1px; border-left:#99CEEB solid 1px; border-bottom:#99CEEB solid 1px; }
+.grid > .body{ overflow-x:hidden; overflow-y:scroll; border-right:#99CEEB solid 1px; border-left:#99CEEB solid 1px; border-bottom:#99CEEB solid 1px; position:relative; }
 .grid > .body > div{ +zoom:1; }
 .grid > .body > div > table{ border-right:#99CEEB solid 1px; width:100%; }
 .grid > .body > div > table td{ border-bottom:#99CEEB solid 1px; }
@@ -180,7 +180,7 @@ body{ margin:0; padding:0; font-size:87.50%; font-family:Verdana,Georgia,宋体;
 .nav > .colum > ul > li { float:left; min-width:120px; position:relative; }
 .nav > .colum > ul > li > a { background:#2E76CA; color:#fff; display:block; padding:8px 7px 8px 7px; text-decoration:none; text-align:center; z-index:1; height:24px; text-overflow:ellipsis; overflow:hidden; }
 .nav > .colum > ul > li > a:hover { background:#005AA4; color:#FFF; }
-.nav > .menu { position:relative; left:0px; top:1px; }
+.nav > .menu { position:relative; left:0px; top:1px; z-index:800; }
 .nav > .menu > ul{ display:none; margin:0; padding:0; list-style:none; border:1px solid #ccc; width:148px; z-index:9999; padding:5px 0 5px 0; background-color:#FFF; *border-right-width:2px; *border-bottom-width:2px; -webkit-border-radius:6px; -moz-border-radius:6px; border-radius:6px; -webkit-box-shadow:0 5px 10px rgba(0, 0, 0, 0.2); -moz-box-shadow:0 5px 10px rgba(0, 0, 0, 0.2); box-shadow:0 5px 10px rgba(0, 0, 0, 0.2); -webkit-background-clip:padding-box; -moz-background-clip:padding; background-clip:padding-box; }
 .nav > .menu > ul > li { width:148px; position:relative; }
 .nav > .menu > ul > li > a { color:#000; display:block; padding:5px 7px 5px 7px; text-decoration:none; text-align:center; height:30px; line-height:200%; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }

@@ -216,7 +216,7 @@ function restChangePasswd( async, success, error, complete, user, passwd, newPas
 //获取正在进行的任务列表
 function restListTasks( async, success, error, complete )
 {
-	var data = { 'cmd': 'list tasks', 'filter': JSON.stringify( { 'Progress': { '$lt': 100 } } ) } ;
+	var data = { 'cmd': 'list tasks', 'filter': JSON.stringify( { 'Status': { '$ne': 4 } } ) } ;
 	ajaxSendMsg( data, async, restBeforeSend, success, error, complete ) ;
 }
 
@@ -224,5 +224,26 @@ function restListTasks( async, success, error, complete )
 function restGetTaskStatus( async, success, error, complete, taskArrID )
 {
 	var data = { 'cmd': 'query task', 'filter': JSON.stringify( { '$or': taskArrID } ), 'selector': JSON.stringify( { 'Progress': 1, 'StatusDesc': 1 } ) } ;
+	ajaxSendMsg( data, async, restBeforeSend, success, error, complete ) ;
+}
+
+//设置业务鉴权
+function restSetBusinessAuth( async, success, error, complete, businessName, user, pwd )
+{
+	var data = { 'cmd': 'set business authority', 'BusinessName': businessName, 'User': user, 'Passwd': pwd } ;
+	ajaxSendMsg( data, async, restBeforeSend, success, error, complete ) ;
+}
+
+//删除业务鉴权
+function restRemoveBusinessAuth( async, success, error, complete, businessName )
+{
+	var data = { 'cmd': 'remove business authority', 'BusinessName': businessName } ;
+	ajaxSendMsg( data, async, restBeforeSend, success, error, complete ) ;
+}
+
+//查询业务鉴权
+function restQueryBusinessAuth( async, success, error, complete, businessName )
+{
+	var data = { 'cmd': 'query business authority', 'filter': JSON.stringify( { 'BusinessName': businessName } ) } ;
 	ajaxSendMsg( data, async, restBeforeSend, success, error, complete ) ;
 }

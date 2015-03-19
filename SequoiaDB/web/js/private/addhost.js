@@ -209,7 +209,7 @@ function accessHostConf( index )
 	$.each( hostConf['Disk'], function(index2,hostDisk){
 		if( hostDisk['Size'] === 0 || hostDisk['Name'] === 'none' )
 		{
-			return true ;
+			//return true ;
 		}
 		var useDisk = hostDisk['Size'] - hostDisk['Free'] ;
 		var percentDisk = parseInt( useDisk * 100 / hostDisk['Size'] ) ;
@@ -403,7 +403,7 @@ function createHostList()
 			$.each( hostInfo['Disk'], function(index2,hostDisk){
 				if( hostDisk['Size'] === 0 || hostDisk['Name'] === 'none' )
 				{
-					return true ;
+					//return true ;
 				}
 				if( hostDisk['CanUse'] === true && hostDisk['IsLocal'] === true && ( typeof( hostDisk['isUse'] ) === 'undefined' || hostDisk['isUse'] === true ) )
 				{
@@ -648,7 +648,7 @@ function createHtml()
 			$( tdObj ).children( 'input' ).change( saveInstallPath ) ;
 		} ) ;
 	
-		$( panelBody['obj'] ).append( '<div style="padding:10px 0 5px 0;font-weight:bold;font-size:16px;">' + htmlEncode( 'OM Agent' ) + '</div>' ) ;
+		$( panelBody['obj'] ).append( '<div style="padding:10px 0 5px 0;font-weight:bold;font-size:16px;">' + htmlEncode( 'SAC Agent' ) + '</div>' ) ;
 		sdbjs.parts.tableBox.create( panelBody['name'], 'omAgentTable' ) ;
 		sdbjs.fun.setCSS( 'omAgentTable', { 'color': '#666' } ) ;
 		sdbjs.parts.tableBox.update ( 'omAgentTable', 'loosen simple' ) ;
