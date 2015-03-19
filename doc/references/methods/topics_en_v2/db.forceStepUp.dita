@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
+<topic id="topic_zsn_mwr_kr">
+  <title>db.forceStepUp()</title>
+  <body>
+    <section>
+      <title>NAME</title>
+      <p>forceStepUp - 在一个不具备选举条件的复制组中，强制将一个备节点升级为主节点。请谨慎使用该命令!</p>
+    </section>
+    <section>
+      <title>SYNOPSIS</title>
+      <p></p><apiname>db.forceStepUp</apiname>(<parmname>[options]</parmname>)
+    </section>
+    <section>
+      <title>CATEGORY</title>
+      <p></p>Sequoiadb
+    </section>
+    <section>
+      <title>DESCRIPTION</title> 
+      <p>在一个不具备选举条件的复制组中，强制将一个备节点升级为主节点。请谨慎使用该命令!</p>
+      <parml>        
+        <plentry>
+          <pt>options (json object)</pt>
+          <pd>参数集合
+            <parml>
+              <plentry>
+                <pt>Seconds</pt>
+                <pd>强制升级为主节点的持续时间</pd>                
+              </plentry>              
+            </parml>
+          </pd>
+        </plentry>
+      </parml>
+      <note>
+        <ul><li>目前仅在catalog组中开放此功能。</li>
+          <li>目标复制组中不能存在主节点，且其他节点的LSN不能比目标节点的LSN大。</li>
+          <li>当持续时间到期，所有节点会重新按照选举规则进行选举。</li>
+          <li>如果创建了用户，在主catalog节点的情况下无法直接连接。可以先关闭catalog的鉴权功能(auth参数)再进行操作。</li>          
+        </ul></note>      
+    </section>    
+    <section>
+      <title>Examples</title>
+      <p>连接catalog节点(host1:30000)，并使其强制升主， 持续300s。</p>
+      <codeblock>var db = new Sdb("host1", 30000) ;
+db.forceStepUp({Seconds:300});</codeblock>
+    </section>
+  </body>  
+</topic>

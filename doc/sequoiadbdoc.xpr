@@ -1096,6 +1096,7 @@
                     <file name="references/methods/topics_en_v2/db.execUpdate.dita"/>
                     <file name="references/methods/topics_en_v2/db.flushConfigure.dita"/>
                     <file name="references/methods/topics_en_v2/db.forceSession.dita"/>
+                    <file name="references/methods/topics_en_v2/db.forceStepUp.dita"/>
                     <file name="references/methods/topics_en_v2/db.getCS.dita"/>
                     <file name="references/methods/topics_en_v2/db.getDomain.dita"/>
                     <file name="references/methods/topics_en_v2/db.getRG.dita"/>

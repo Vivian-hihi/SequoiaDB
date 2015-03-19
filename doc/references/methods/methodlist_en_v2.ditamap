@@ -19,7 +19,7 @@
   <topicref href="topics_en_v2/db.execUpdate.dita"/>
   <topicref href="topics_en_v2/db.flushConfigure.dita"/>
   <topicref href="topics_en_v2/db.forceSession.dita"/>
-  <!--<topicref href="topics_en_v2/db.interrupt.dita"/>-->
+  <topicref href="topics_en_v2/db.forceStepUp.dita"/>
   <topicref href="topics_en_v2/db.getCS.dita"/>
   <topicref href="topics_en_v2/db.getDomain.dita"/>
   <topicref href="topics_en_v2/db.getRG.dita"/>

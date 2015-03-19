@@ -1,0 +1,56 @@
+.TH COMMAND * 2014-04-08 "SequoiaDB" "Sequoiadb Method's Manual"
+.ad l.ll 72.ce 1000
+\fBdb.forceStepUp()\fR
+.ce 0
+.sp 2
+
+.SH "NAME"
+
+.sp 2
+forceStepUp - 在一个不具备选举条件的复制组中，强制将一个备节点升级为主节点。请谨慎使用该命令!
+.SH "SYNOPSIS"
+
+.sp 2
+
+.sp 2
+
+.sp 2
+db.forceStepUp(\fB[options]\fR)
+.SH "CATEGORY"
+
+.sp 2
+
+.sp 2
+Sequoiadb
+.SH "DESCRIPTION"
+
+.sp 2
+在一个不具备选举条件的复制组中，强制将一个备节点升级为主节点。请谨慎使用该命令!
+.sp 2
+\fBoptions (json object)\fR
+.br
+       参数集合
+.sp 2
+       \fBSeconds\fR
+.br
+              强制升级为主节点的持续时间
+.sp 2
+
+.sp 2
+\fBNote: \fR
+.sp 2
+   *  目前仅在catalog组中开放此功能。
+.sp 2
+   *  目标复制组中不能存在主节点，且其他节点的LSN不能比目标节点的LSN大。
+.sp 2
+   *  当持续时间到期，所有节点会重新按照选举规则进行选举。
+.sp 2
+   *  如果创建了用户，在主catalog节点的情况下无法直接连接。可以先关闭catalog的鉴权功能(auth参数)再进行操作。
+.SH "Examples"
+
+.sp 2
+连接catalog节点(host1:30000)，并使其强制升主， 持续300s。
+.sp 2
+var db = new Sdb("host1", 30000) ;
+.br
+db.forceStepUp({Seconds:300});
