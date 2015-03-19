@@ -649,7 +649,8 @@ namespace engine
          {
             if ( SDB_OK != updateEvent.wait( OMA_WAIT_OMSVC_RES_TIMEOUT, &retRc ) )
             {
-               continue ;
+               // try to send update task request again
+               break ;
             }
             else
             {
@@ -1226,7 +1227,8 @@ namespace engine
          {
             if ( SDB_OK != updateEvent.wait( OMA_WAIT_OMSVC_RES_TIMEOUT, &retRc ) )
             {
-               continue ;
+               // try to send update task request again
+               break ;
             }
             else
             {
@@ -3464,7 +3466,8 @@ namespace engine
          {
             if ( SDB_OK != updateEvent.wait( OMA_WAIT_OMSVC_RES_TIMEOUT, &retRc ) )
             {
-               continue ;
+               // try to send update task request again
+               break ;
             }
             else
             {
@@ -5177,7 +5180,8 @@ namespace engine
          {
             if ( SDB_OK != updateEvent.wait( OMA_WAIT_OMSVC_RES_TIMEOUT, &retRc ) )
             {
-               continue ;
+               // try to send update task request again
+               break ;
             }
             else
             {
