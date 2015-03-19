@@ -81,7 +81,7 @@ namespace engine
       _lock.get() ;
 
       _MAP_CV_ITER iter = _mapClusterVersion.begin() ;
-      if ( iter != _mapClusterVersion.end() )
+      while ( iter != _mapClusterVersion.end() )
       {
          mapClusterVersion.insert( _MAP_CV_VALUETYPE ( iter->first, 
                                                        iter->second ) ) ;
@@ -121,6 +121,8 @@ namespace engine
    INT32 omClusterNotifier::notify( UINT32 newVersion )
    {
       INT32 rc = SDB_OK ;
+      PD_LOG( PDDEBUG, "checking version:old=%u,new=%u,cluster=%s", _version, 
+              newVersion, _clusterName.c_str() ) ;
       if ( _version != newVersion )
       {
          // if version changed, generate the hosttable in _vHostTable
@@ -272,6 +274,7 @@ namespace engine
 
          _vHostTable.push_back( tmp ) ;
          _mapTargetAgents.insert( _MAPAGENT_VALUE( tmp.hostName, tmp ) ) ;
+         PD_LOG( PDDEBUG, "add target:hostnamer=%s", tmp.hostName.c_str() ) ;
       }
 
       if ( _mapTargetAgents.size() > 0 )
@@ -292,6 +295,8 @@ namespace engine
 
             _mapTargetAgents.insert( 
                                 _MAPAGENT_VALUE( content.hostName, content ) ) ;
+            PD_LOG( PDDEBUG, "add target:hostnamer=%s", 
+                    content.hostName.c_str() ) ;
          }
       }
    done:
@@ -401,6 +406,7 @@ namespace engine
             string host ;
             string service ;
             _om->getHostInfoByID( subSession->getNodeID(), host, service ) ;
+            PD_LOG( PDDEBUG, "remove target:host=%s", host.c_str() ) ;
             _mapTargetAgents.erase( host ) ;
          }
       }

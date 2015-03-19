@@ -6190,6 +6190,8 @@ namespace engine
          goto error ;
       }
 
+      sdbGetOMManager()->removeClusterVersion( clusterName ) ;
+
       _sendOKRes2Web() ;
 
    done:
@@ -6416,7 +6418,6 @@ namespace engine
 
    INT32 omRemoveHostCommand::doCommand()
    {
-      //TODO _errorDetail
       INT32 rc = SDB_OK ;
       list<string> hostNameList ;
       BSONObj taskInfo ;
