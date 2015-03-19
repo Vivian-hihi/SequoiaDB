@@ -758,11 +758,11 @@ function getOMASvcFromCfgFile( hostname )
       {
          var key = hostname + OMA_MISC_CONFIG_PORT ;
          var obj =  eval ( '(' + Oma.getOmaConfigs() + ')' ) ;
-         PD_LOG( arguments, PDEVENT, FILE_NAME_FUNC,
+         PD_LOG( arguments, PDDEBUG, FILE_NAME_FUNC,
                  sprintf( "obj info is[?]", JSON.stringify(obj) ) ) ;
          retPort = obj[key]
          if ( "undefined" == typeof(retPort) )
-            exception_handle( SDB_SYS, "OM Agent's service is undefined" ) ;
+            retPort = OMA_PORT_DEFAULT_SDBCM_PORT + "" ;
       }
    }
    catch( e )
