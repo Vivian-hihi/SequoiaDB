@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
+<topic id="topic_csl_n5c_kr">
+  <title>rg.reelect()</title>
+  <body>
+    <section>
+      <title>NAME</title>
+      <p>reelect - 在复制组中进行重新选举。</p>
+    </section>
+    <section>
+      <title>SYNOPSIS</title>
+      <p></p><apiname>rg.reelect</apiname>(<parmname>[options]</parmname>)
+    </section>
+    <section>
+      <title>CATEGORY</title>
+      <p></p>ReplicaGroup
+    </section>
+    <section>
+      <title>DESCRIPTION</title> 
+      <p>在复制组中进行重新选举。</p>
+      <parml>        
+        <plentry>
+          <pt>options (json object)</pt>
+          <pd>参数集合
+            <parml>
+              <plentry>
+                <pt>Seconds</pt>
+                <pd>重新选举需要在多少秒内完成</pd>                
+              </plentry>              
+            </parml>
+          </pd>
+        </plentry>
+      </parml>
+      <note>
+        <ul><li>返回超时错误代表在规定时间内重选没有完成。通过db.listReplicaGroups()观察最终结果。</li>
+          <li>只有复制组中存在主节点时才可以进行重新选举。</li>          
+        </ul></note>      
+    </section>    
+    <section>
+      <title>Examples</title>
+      <p>在"datagroup1"中进行重新选举，超时时间为60s。</p>
+      <codeblock>var rg = db.getRG("datagroup1") ;
+rg.reelect({Seconds:60});</codeblock>
+    </section>
+  </body>  
+</topic>

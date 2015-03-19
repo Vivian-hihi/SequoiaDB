@@ -1,0 +1,52 @@
+.TH COMMAND * 2014-04-08 "SequoiaDB" "Sequoiadb Method's Manual"
+.ad l.ll 72.ce 1000
+\fBrg.reelect()\fR
+.ce 0
+.sp 2
+
+.SH "NAME"
+
+.sp 2
+reelect - 在复制组中进行重新选举。
+.SH "SYNOPSIS"
+
+.sp 2
+
+.sp 2
+
+.sp 2
+rg.reelect(\fB[options]\fR)
+.SH "CATEGORY"
+
+.sp 2
+
+.sp 2
+ReplicaGroup
+.SH "DESCRIPTION"
+
+.sp 2
+在复制组中进行重新选举。
+.sp 2
+\fBoptions (json object)\fR
+.br
+       参数集合
+.sp 2
+       \fBSeconds\fR
+.br
+              重新选举需要在多少秒内完成
+.sp 2
+
+.sp 2
+\fBNote: \fR
+.sp 2
+   *  返回超时错误代表在规定时间内重选没有完成。通过db.listReplicaGroups()观察最终结果。
+.sp 2
+   *  只有复制组中存在主节点时才可以进行重新选举。
+.SH "Examples"
+
+.sp 2
+在"datagroup1"中进行重新选举，超时时间为60s。
+.sp 2
+var rg = db.getRG("datagroup1") ;
+.br
+rg.reelect({Seconds:60});
