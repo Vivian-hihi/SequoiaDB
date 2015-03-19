@@ -112,28 +112,19 @@ function _removeStandalone( hostName, svcName, agentPort )
    try
    {
       oma.removeData( svcName ) ;
+   }
+   catch( e )
+   {
+      if ( SDBCM_NODE_NOTEXISTED != e )
+         exception_handle( GETLASTERROR(), GETLASTERRMSG() ) ;
+   }
+   try
+   {
       oma.close() ;
       oma = null ;
    }
    catch ( e ) 
    {
-      if ( null != oma && "undefined" != typeof(oma) )
-      {
-         try
-         {
-            oma.close() ;
-         }
-         catch ( e2 )
-         {
-         }
-      }
-      SYSEXPHANDLE( e ) ;
-      errMsg = sprintf( "Failed to connect to OM Agent[?:?]",
-                        hostName, agentPort ) ;
-      rc = GETLASTERROR() ;
-      PD_LOG2( task_id, arguments, PDERROR, FILE_NAME_REMOVE_STANDALONE,
-               sprintf( errMsg + ", rc:?, detail:?", rc, errMsg ) ) ;  
-      exception_handle( rc, errMsg ) ;
    }
 }
 
