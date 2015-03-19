@@ -84,7 +84,7 @@
  "NAME": "test"
  }</codeblock>
       <p>在PostgreSQL中建立相应的映射表：</p>
-      <codeblock>foo=# create foreign table sdb_upcase_field (“NAME” text) server sdb_server options ( collectionspace 'foo', collection 'bar' ) ;</codeblock>
+      <codeblock>foo=# create foreign table sdb_upcase_field ("NAME" text) server sdb_server options ( collectionspace 'foo', collection 'bar' ) ;</codeblock>
       <p>执行查询命令：</p>
       <codeblock>foo=# select * from sdb_upcase_field;</codeblock>
       <p>查询结果为：</p>

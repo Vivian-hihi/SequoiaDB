@@ -7,14 +7,14 @@
 <meta name="copyright" content="(C) Copyright 2005"/>
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
-<meta name="DC.Title" content="连接"/>
-<meta name="description" content="以下操作均在PostgreSQL shell 环境下执行。 PostgreSQL与SequoiaDB建立关联 1) 加载SequoiaDB连接驱动 foo=# create extension sdb_fdw; 2) 配置与SequoiaDB连接参数 foo=# create server sdb_server foreign data wrapper sdb_fdw ..."/>
+<meta name="DC.Title" content="Connection"/>
+<meta name="description" content="The following operations are all under PostgreSQL's shell panel. Mapping SequoiaDB to PostgreSQL 1) Load SequoiaDB's connecting driver foo=# create extension sdb_fdw; 2) Set the parameters to connect ..."/>
 <meta name="DC.Relation" scheme="URI" content="../../../integration/postgresql_integration/pginter_en.html"/>
 <meta name="DC.Format" content="XHTML"/>
 <meta name="DC.Identifier" content="topic_gjg_yjx_jr"/>
 <link rel="stylesheet" type="text/css" href="../../../commonltr.css"/>
 <link rel="stylesheet" type="text/css" href="../../../assets/webhelp_topic.css"/>
-<title>连接</title>
+<title>Connection</title>
 <script type="text/javascript" src="../../../assets/jquery-1.3.2.js"> </script><script type="text/javascript" src="../../../assets/jquery-ui-1.8.2.custom.min.js"> </script><script type="text/javascript" src="../../../assets/frames_redirect.js"> </script><script type="text/javascript"><!--
     var prefix = "../../../../index.html";
     var ratingFile = "";
@@ -31,136 +31,136 @@
 <body onload="highlightSearchTerm()" id="topic_gjg_yjx_jr"><a name="topic_gjg_yjx_jr"><!-- --></a>
 <table class="nav"><tbody><tr><td><div class="navheader"><span class="frames" onclick="redirectFrames(location.pathname)"><script type="text/javascript"><!--
   if (parent.window.location.pathname == window.location.pathname ) document.write('With Frames');                    
-                    --></script></span><a class="link" href="../../../integration/postgresql_integration/pginter_en.html" title="与 PostgreSQL 集成"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">与 PostgreSQL 集成</span></a>  </div></td><td width="50%"><a class="navheader_parent_path" href="../../hadooproot_en.html" title="Integration with 3rd party components">Integration with 3rd party components</a> / <a class="navheader_parent_path" href="../../../integration/postgresql_integration/pginter_en.html" title="与 PostgreSQL 集成">与 PostgreSQL 集成</a></td></tr></tbody></table>
+                    --></script></span><a class="link" href="../../../integration/postgresql_integration/pginter_en.html" title="Integration with PostgreSQL"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">Integration with PostgreSQL</span></a>  </div></td><td width="50%"><a class="navheader_parent_path" href="../../hadooproot_en.html" title="Integration with 3rd party components">Integration with 3rd party components</a> / <a class="navheader_parent_path" href="../../../integration/postgresql_integration/pginter_en.html" title="Integration with PostgreSQL">Integration with PostgreSQL</a></td></tr></tbody></table>
 
-  <h1 class="title topictitle1">连接</h1>
+  <h1 class="title topictitle1">Connection</h1>
 
   <div class="body">
-    <p class="p">以下操作均在PostgreSQL shell 环境下执行。</p>
+    <p class="p">The following operations are all under PostgreSQL's shell panel.</p>
 
-    <div class="section" id="topic_gjg_yjx_jr__establish_connection"><a name="topic_gjg_yjx_jr__establish_connection"><!-- --></a><h2 class="title sectiontitle">PostgreSQL与SequoiaDB建立关联</h2>
+    <div class="section" id="topic_gjg_yjx_jr__establish_connection"><a name="topic_gjg_yjx_jr__establish_connection"><!-- --></a><h2 class="title sectiontitle">Mapping SequoiaDB to PostgreSQL</h2>
       
-      <p class="p">1) 加载SequoiaDB连接驱动</p>
+      <p class="p">1) Load SequoiaDB's connecting driver</p>
 
       <pre class="pre codeblock">foo=# create extension sdb_fdw;</pre>
 
-      <p class="p">2) 配置与SequoiaDB连接参数</p>
+      <p class="p">2) Set the parameters to connect SequoiaDB</p>
 
       <pre class="pre codeblock">foo=# create server sdb_server foreign data wrapper sdb_fdw options(address '127.0.0.1', service '11810', user 'sdbadmin', password 'mypassword');</pre>
 
-      <div class="note note"><span class="notetitle">Note:</span> 如果没有配置数据库密码验证，可以忽略user与password字段。</div>
+      <div class="note note"><span class="notetitle">Note:</span> If there is no password verification, you can ignore field user and password.</div>
 
-      <p class="p">3) 关联SequoiaDB的集合空间与集合</p>
+      <p class="p">3) Mapping SequoiaDB' scollection space and collection</p>
 
       <pre class="pre codeblock">foo=# create foreign table test (name text, id numeric) server sdb_server options ( collectionspace 'chen', collection 'test' ) ;</pre>
 
       <div class="note note"><span class="notetitle">Note:</span> 
-        <p class="p">集合空间与集合必须已经存在于SequoiaDB，否则查询出错。</p>
+        <p class="p">The collection space and collection must exist in SequoiaDB database created.</p>
 
-        <p class="p">默认情况下，表的字段映射到SequoiaDB中为小写字符，如果强制指定字段为大写字符，创建方式参考注意事项1。</p>
+        <p class="p">By default, tables of PG are mapped to SequoiaDB as lower case letters, if you want to set it as capital, please see the Notice later in this page.</p>
 
-        <p class="p">映射SequoiaDB 的数组类型，创建方式参考注意事项2。</p>
+        <p class="p">The mapping of array type in SequoiaDB will also be shown in Notice later.</p>
 </div>
 
-      <p class="p">4) 查询</p>
+      <p class="p">4) Query</p>
 
       <pre class="pre codeblock">foo=# select * from test;</pre>
 
-      <p class="p">5) 写入数据</p>
+      <p class="p">5) Write Data</p>
 
       <pre class="pre codeblock">foo=# insert into test values('one',3);</pre>
 
-      <p class="p">6) 更改数据</p>
+      <p class="p">6) Change Data</p>
 
       <pre class="pre codeblock">foo=# update test set id=9 where name='one';</pre>
 
-      <p class="p">7) 查看所有的表(show tables;)</p>
+      <p class="p">7) Show all Tables</p>
 
       <pre class="pre codeblock">foo=# \d</pre>
 
-      <p class="p">8) 查看表的描述信息</p>
+      <p class="p">8) View Description of the Table</p>
 
       <pre class="pre codeblock">foo=# \d test</pre>
 
-      <p class="p">9) 删除表</p>
+      <p class="p">9) Delete Table</p>
 
       <pre class="pre codeblock">foo=# drop foreign table test;</pre>
 
-      <p class="p">10) 退出PostgreSQL shell环境</p>
+      <p class="p">10) Exit PostgreSQL Shell</p>
 
       <pre class="pre codeblock">foo=# \q</pre>
 
     </div>
 
-    <div class="section" id="topic_gjg_yjx_jr__usage_notice"><a name="topic_gjg_yjx_jr__usage_notice"><!-- --></a><h2 class="title sectiontitle">使用须知</h2>
+    <div class="section" id="topic_gjg_yjx_jr__usage_notice"><a name="topic_gjg_yjx_jr__usage_notice"><!-- --></a><h2 class="title sectiontitle">Things to Pay Attention When Using</h2>
       
-      <p class="p">1) 数据类型的对应关系</p>
+      <p class="p">1) Mapping of Data Type</p>
 
       <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d139058e108" class="stentry">SequoiaDB</th>
+          <th valign="bottom" align="left" id="d138072e108" class="stentry">SequoiaDB</th>
 
-          <th valign="bottom" align="left" id="d139058e111" class="stentry">PostgreSQL</th>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d139058e108" class="stentry">string</td>
-
-          <td valign="top" headers="d139058e111" class="stentry">text</td>
+          <th valign="bottom" align="left" id="d138072e111" class="stentry">PostgreSQL</th>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d139058e108" class="stentry">int/double/long</td>
+          <td valign="top" headers="d138072e108" class="stentry">string</td>
 
-          <td valign="top" headers="d139058e111" class="stentry">numeric</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d139058e108" class="stentry">date</td>
-
-          <td valign="top" headers="d139058e111" class="stentry">date</td>
+          <td valign="top" headers="d138072e111" class="stentry">text</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d139058e108" class="stentry">timestamp</td>
+          <td valign="top" headers="d138072e108" class="stentry">int/double/long</td>
 
-          <td valign="top" headers="d139058e111" class="stentry">timestamp</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d139058e108" class="stentry">array</td>
-
-          <td valign="top" headers="d139058e111" class="stentry">TYPE[]</td>
+          <td valign="top" headers="d138072e111" class="stentry">numeric</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d139058e108" class="stentry">boolean</td>
+          <td valign="top" headers="d138072e108" class="stentry">date</td>
 
-          <td valign="top" headers="d139058e111" class="stentry">boolean</td>
+          <td valign="top" headers="d138072e111" class="stentry">date</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d139058e108" class="stentry">null</td>
+          <td valign="top" headers="d138072e108" class="stentry">timestamp</td>
 
-          <td valign="top" headers="d139058e111" class="stentry">text</td>
+          <td valign="top" headers="d138072e111" class="stentry">timestamp</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d138072e108" class="stentry">array</td>
+
+          <td valign="top" headers="d138072e111" class="stentry">TYPE[]</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d138072e108" class="stentry">boolean</td>
+
+          <td valign="top" headers="d138072e111" class="stentry">boolean</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d138072e108" class="stentry">null</td>
+
+          <td valign="top" headers="d138072e111" class="stentry">text</td>
 
         </tr>
 </table>
 
-      <p class="p">2) 注意事项</p>
+      <p class="p">2) Notice</p>
 
-      <p class="p">2.1) 注意字符的大小写</p>
+      <p class="p">2.1) Case Sensitivity of letters</p>
 
-      <p class="p">SequoiaDB 中的集合空间、集合和字段名均对字母的大小写敏感。</p>
+      <p class="p">Collection Space, Collection and Field name in SequoiaDB are case sensitive.</p>
 
-      <p class="p">2.1.1) 集合空间、集合名大写</p>
+      <p class="p">2.1.1) Collection and Collection space</p>
 
-      <p class="p">假设SequoiaDB 中存在名为TEST的集合空间，CHEN的集合，在PostgreSQL中建立相应的映射表：</p>
+      <p class="p">For example, in SequoiaDB, there is a collection space named TEST, and a collection named CHEN, the mapping type in PostgreSQL will be:</p>
 
       <pre class="pre codeblock">foo=# create foreign table sdb_upcase_cs_cl (name text) server sdb_server options ( collectionspace 'TEST', collection 'CHEN' ) ;</pre>
 
-      <p class="p">2.1.2) 字段名大写</p>
+      <p class="p">2.1.2) Field Name</p>
 
-      <p class="p">假设SequoiaDB 中存在名为foo的集合空间，bar的集合，而且保存的数据为：</p>
+      <p class="p">For example, in SequoiaDB, there is a collection space named foo, and a collection named bar, and they contain data of:</p>
 
       <pre class="pre codeblock">{
  "_id": {
@@ -169,24 +169,24 @@
  "NAME": "test"
  }</pre>
 
-      <p class="p">在PostgreSQL中建立相应的映射表：</p>
+      <p class="p">Mapping type in PostgreSQL will be :</p>
 
-      <pre class="pre codeblock">foo=# create foreign table sdb_upcase_field (“NAME” text) server sdb_server options ( collectionspace 'foo', collection 'bar' ) ;</pre>
+      <pre class="pre codeblock">foo=# create foreign table sdb_upcase_field ("NAME" text) server sdb_server options ( collectionspace 'foo', collection 'bar' ) ;</pre>
 
-      <p class="p">执行查询命令：</p>
+      <p class="p">Execute the query command:</p>
 
       <pre class="pre codeblock">foo=# select * from sdb_upcase_field;</pre>
 
-      <p class="p">查询结果为：</p>
+      <p class="p">Result is:</p>
 
       <pre class="pre codeblock">NAME
 ------
  test
  (1 rows)</pre>
 
-      <p class="p">2.2) 映射SequoiaDB中的数据类型</p>
+      <p class="p">2.2) Mapping the Data Type in SequoiaDB</p>
 
-      <p class="p">假设SequoiaDB中存在foo集合空间，bar集合，保存记录为：</p>
+      <p class="p">For example, in SequoiaDB, there is a collection space named foo, and a collection named bar, and they contain data of:</p>
 
       <pre class="pre codeblock">{
  "_id": {
@@ -200,42 +200,42 @@
  "id": 123
  }</pre>
 
-      <p class="p">在PostgreSQL 中建立相应的映射表：</p>
+      <p class="p">The mapping table in PostgreSQL will be:</p>
 
       <pre class="pre codeblock">foo=# create foreign table bartest (name numeric[], id numeric) server sdb_server options ( collectionspace 'foo', collection 'bar' ) ;</pre>
 
-      <p class="p">执行查询命令：</p>
+      <p class="p">Execute the query command</p>
 
       <pre class="pre codeblock">foo=# select * from bartest;</pre>
 
-      <p class="p">查询结果：</p>
+      <p class="p">Result is</p>
 
       <pre class="pre codeblock"> name  | id
 ---------+-----
 {1,2,3} | 123</pre>
 
-      <p class="p">2.3) 连接SequoiaDB 协调节点错误</p>
+      <p class="p">2.3) Connecting SequoiaDB's Coord Node error</p>
 
-      <p class="p">如果PostgreSQL连接的SequoiaDB 协调节点重启，在查询时报错：</p>
+      <p class="p">When SequoiaDB's coord node that PostgreSQL connecting re-starts, and the error is </p>
 
       <pre class="pre codeblock">ERROR: Unable to get collection "chen.test", rc = -15
 HINT: Make sure the collectionspace and collection exist on the remote database</pre>
 
-      <p class="p">解决方法：</p>
+      <p class="p">Solution:</p>
 
-      <p class="p">退出PostgreSQL shell</p>
+      <p class="p">Exit PostgreSQL shell</p>
 
       <pre class="pre codeblock">foo=# \q</pre>
 
-      <p class="p">重新进入PostgreSQL shell</p>
+      <p class="p">Re-enter PostgreSQL shell</p>
 
       <pre class="pre codeblock">$&gt; bin/psql -p 5432 foo</pre>
 
     </div>
 
-    <div class="section" id="topic_gjg_yjx_jr__usage"><a name="topic_gjg_yjx_jr__usage"><!-- --></a><h2 class="title sectiontitle">调整PostgreSQL配置文件</h2>
+    <div class="section" id="topic_gjg_yjx_jr__usage"><a name="topic_gjg_yjx_jr__usage"><!-- --></a><h2 class="title sectiontitle">Edit the Configuration File of PostgreSQL</h2>
       
-      <p class="p">1) 查看pg_shell中默认的配置：</p>
+      <p class="p">1) View the default configuration in pg_shell:</p>
 
       <pre class="pre codeblock">foo=#\set
 AUTOCOMMIT = 'on'
@@ -249,22 +249,22 @@ USER = 'sdbadmin'
 PORT = '5432'
 ENCODING = 'UTF8'</pre>
 
-      <p class="p">2) 调整pg_shell查询时，每次获取记录数</p>
+      <p class="p">2) Change the number of record to get each time doing pg_shell:</p>
 
       <pre class="pre codeblock">foo=#\set FETCH_COUNT 100</pre>
 
       <div class="note note"><span class="notetitle">Note:</span> 
-        <p class="p">调整为每次ps_shell每次获取100 条记录立即返回记录，然后再继续获取。</p>
+        <p class="p">Change to getting 100 records each time doing the pg_shell.</p>
 
-        <p class="p">直接在pg_shell中修改配置文件，只能在当前pg_shell中生效，重新登录pg_shell需要重新设置。</p>
+        <p class="p">Edit the configuration file in pg_shell directly, and the configuration will only activate in current pg_shell. You need to do the configuration again if you re-start the pg_shell.</p>
 
       </div>
 
-      <p class="p">3) 修改配置文件，调整pg_shell查询时，每次获取记录数</p>
+      <p class="p">3) Change the configuration file, get the number of records getting each time.</p>
 
       <pre class="pre codeblock">$&gt; ${PG_HOME}/bin/pg_config -sysconfdir</pre>
 
-      <p class="p">结果为：</p>
+      <p class="p">Result is:</p>
 
       <pre class="pre codeblock">/opt/sequoiadb/pgsql/etc</pre>
 
@@ -279,11 +279,11 @@ ENCODING = 'UTF8'</pre>
 
       <pre class="pre codeblock">$&gt;echo "\\set FETCH_COUNT 100" &gt;&gt; /opt/sequoiadb/pgsql/etc/psqlrc</pre>
 
-      <p class="p">4) 调整pg_shell的日志级别</p>
+      <p class="p">4) Change the logs' level of pg_shell:</p>
 
       <pre class="pre codeblock">$&gt;sed -i 's/#client_min_messages = notice/client_min_messages = debug1/g' pg_data/postgresql.conf</pre>
 
-      <p class="p">5) 调整pg引擎的日志级别</p>
+      <p class="p">5) Change the logs' level of pg engine:</p>
 
       <pre class="pre codeblock">$&gt;sed -i 's/#log_min_messages = warning/log_min_messages = debug1/g' pg_data/postgresql.conf</pre>
 
@@ -292,7 +292,7 @@ ENCODING = 'UTF8'</pre>
   </div>
 
 <div class="related-links"/>
-<div class="navfooter"><a class="link" href="../../../integration/postgresql_integration/pginter_en.html" title="与 PostgreSQL 集成"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">与 PostgreSQL 集成</span></a>  <script type="text/javascript"><!--         
+<div class="navfooter"><a class="link" href="../../../integration/postgresql_integration/pginter_en.html" title="Integration with PostgreSQL"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">Integration with PostgreSQL</span></a>  <script type="text/javascript"><!--         
     function expand(){
         parent.tocwin.expandToTopic(window.location.href, this.getAttribute('href'));
     }

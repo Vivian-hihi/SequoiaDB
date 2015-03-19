@@ -1,40 +1,40 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
 <topic id="topic_gjg_yjx_jr">
-  <title>连接</title>
+  <title>Connection</title>
   <body>
-    <p>以下操作均在PostgreSQL shell 环境下执行。</p>
+    <p>The following operations are all under PostgreSQL's shell panel.</p>
     <section id="establish_connection">
-      <title>PostgreSQL与SequoiaDB建立关联</title>
-      <p>1) 加载SequoiaDB连接驱动</p>
+      <title>Mapping SequoiaDB to PostgreSQL</title>
+      <p>1) Load SequoiaDB's connecting driver</p>
       <codeblock>foo=# create extension sdb_fdw;</codeblock>
-      <p>2) 配置与SequoiaDB连接参数</p>
+      <p>2) Set the parameters to connect SequoiaDB</p>
       <codeblock>foo=# create server sdb_server foreign data wrapper sdb_fdw options(address '127.0.0.1', service '11810', user 'sdbadmin', password 'mypassword');</codeblock>
-      <note>如果没有配置数据库密码验证，可以忽略user与password字段。</note>
-      <p>3) 关联SequoiaDB的集合空间与集合</p>
+      <note>If there is no password verification, you can ignore field user and password.</note>
+      <p>3) Mapping SequoiaDB' scollection space and collection</p>
       <codeblock>foo=# create foreign table test (name text, id numeric) server sdb_server options ( collectionspace 'chen', collection 'test' ) ;</codeblock>
       <note>
-        <p>集合空间与集合必须已经存在于SequoiaDB，否则查询出错。</p>
-        <p>默认情况下，表的字段映射到SequoiaDB中为小写字符，如果强制指定字段为大写字符，创建方式参考注意事项1。</p>
-        <p>映射SequoiaDB 的数组类型，创建方式参考注意事项2。</p></note>
-      <p>4) 查询</p>
+        <p>The collection space and collection must exist in SequoiaDB database created.</p>
+        <p>By default, tables of PG are mapped to SequoiaDB as lower case letters, if you want to set it as capital, please see the Notice later in this page.</p>
+        <p>The mapping of array type in SequoiaDB will also be shown in Notice later.</p></note>
+      <p>4) Query</p>
       <codeblock>foo=# select * from test;</codeblock>
-      <p>5) 写入数据</p>
+      <p>5) Write Data</p>
       <codeblock>foo=# insert into test values('one',3);</codeblock>
-      <p>6) 更改数据</p>
+      <p>6) Change Data</p>
       <codeblock>foo=# update test set id=9 where name='one';</codeblock>
-      <p>7) 查看所有的表(show tables;)</p>
+      <p>7) Show all Tables</p>
       <codeblock>foo=# \d</codeblock>
-      <p>8) 查看表的描述信息</p>
+      <p>8) View Description of the Table</p>
       <codeblock>foo=# \d test</codeblock>
-      <p>9) 删除表</p>
+      <p>9) Delete Table</p>
       <codeblock>foo=# drop foreign table test;</codeblock>
-      <p>10) 退出PostgreSQL shell环境</p>
+      <p>10) Exit PostgreSQL Shell</p>
       <codeblock>foo=# \q</codeblock>
     </section>
     <section id="usage_notice">
-      <title>使用须知</title>
-      <p>1) 数据类型的对应关系</p>
+      <title>Things to Pay Attention When Using</title>
+      <p>1) Mapping of Data Type</p>
       <simpletable>
         <sthead>
           <stentry>SequoiaDB</stentry>
@@ -69,31 +69,31 @@
           <stentry>text</stentry>
         </strow>
       </simpletable>
-      <p>2) 注意事项</p>
-      <p>2.1) 注意字符的大小写</p>
-      <p>SequoiaDB 中的集合空间、集合和字段名均对字母的大小写敏感。</p>
-      <p>2.1.1) 集合空间、集合名大写</p>
-      <p>假设SequoiaDB 中存在名为TEST的集合空间，CHEN的集合，在PostgreSQL中建立相应的映射表：</p>
+      <p>2) Notice</p>
+      <p>2.1) Case Sensitivity of letters</p>
+      <p>Collection Space, Collection and Field name in SequoiaDB are case sensitive.</p>
+      <p>2.1.1) Collection and Collection space</p>
+      <p>For example, in SequoiaDB, there is a collection space named TEST, and a collection named CHEN, the mapping type in PostgreSQL will be:</p>
       <codeblock>foo=# create foreign table sdb_upcase_cs_cl (name text) server sdb_server options ( collectionspace 'TEST', collection 'CHEN' ) ;</codeblock>
-      <p>2.1.2) 字段名大写</p>
-      <p>假设SequoiaDB 中存在名为foo的集合空间，bar的集合，而且保存的数据为：</p>
+      <p>2.1.2) Field Name</p>
+      <p>For example, in SequoiaDB, there is a collection space named foo, and a collection named bar, and they contain data of:</p>
       <codeblock>{
  "_id": {
    "$oid":"53a2a0e100e75e2c53000006"
  },
  "NAME": "test"
  }</codeblock>
-      <p>在PostgreSQL中建立相应的映射表：</p>
-      <codeblock>foo=# create foreign table sdb_upcase_field (“NAME” text) server sdb_server options ( collectionspace 'foo', collection 'bar' ) ;</codeblock>
-      <p>执行查询命令：</p>
+      <p>Mapping type in PostgreSQL will be :</p>
+      <codeblock>foo=# create foreign table sdb_upcase_field ("NAME" text) server sdb_server options ( collectionspace 'foo', collection 'bar' ) ;</codeblock>
+      <p>Execute the query command:</p>
       <codeblock>foo=# select * from sdb_upcase_field;</codeblock>
-      <p>查询结果为：</p>
+      <p>Result is:</p>
       <codeblock>NAME
 ------
  test
  (1 rows)</codeblock>
-      <p>2.2) 映射SequoiaDB中的数据类型</p>
-      <p>假设SequoiaDB中存在foo集合空间，bar集合，保存记录为：</p>
+      <p>2.2) Mapping the Data Type in SequoiaDB</p>
+      <p>For example, in SequoiaDB, there is a collection space named foo, and a collection named bar, and they contain data of:</p>
       <codeblock>{
  "_id": {
     "$oid":"53a2de926b4715450a000001"
@@ -105,27 +105,27 @@
  ],
  "id": 123
  }</codeblock>
-      <p>在PostgreSQL 中建立相应的映射表：</p>
+      <p>The mapping table in PostgreSQL will be:</p>
       <codeblock>foo=# create foreign table bartest (name numeric[], id numeric) server sdb_server options ( collectionspace 'foo', collection 'bar' ) ;</codeblock>
-      <p>执行查询命令：</p>
+      <p>Execute the query command</p>
       <codeblock>foo=# select * from bartest;</codeblock>
-      <p>查询结果：</p>
+      <p>Result is</p>
       <codeblock> name  | id
 ---------+-----
 {1,2,3} | 123</codeblock>
-      <p>2.3) 连接SequoiaDB 协调节点错误</p>
-      <p>如果PostgreSQL连接的SequoiaDB 协调节点重启，在查询时报错：</p>
+      <p>2.3) Connecting SequoiaDB's Coord Node error</p>
+      <p>When SequoiaDB's coord node that PostgreSQL connecting re-starts, and the error is </p>
       <codeblock>ERROR: Unable to get collection "chen.test", rc = -15
 HINT: Make sure the collectionspace and collection exist on the remote database</codeblock>
-      <p>解决方法：</p>
-      <p>退出PostgreSQL shell</p>
+      <p>Solution:</p>
+      <p>Exit PostgreSQL shell</p>
       <codeblock>foo=# \q</codeblock>
-      <p>重新进入PostgreSQL shell</p>
+      <p>Re-enter PostgreSQL shell</p>
       <codeblock>$> bin/psql -p 5432 foo</codeblock>
     </section>
     <section id = "usage">
-      <title>调整PostgreSQL配置文件</title>
-      <p>1) 查看pg_shell中默认的配置：</p>
+      <title>Edit the Configuration File of PostgreSQL</title>
+      <p>1) View the default configuration in pg_shell:</p>
       <codeblock>foo=#\set
 AUTOCOMMIT = 'on'
 PROMPT1 = '%/%R%# '
@@ -137,15 +137,15 @@ DBNAME = 'foo'
 USER = 'sdbadmin'
 PORT = '5432'
 ENCODING = 'UTF8'</codeblock>
-      <p>2) 调整pg_shell查询时，每次获取记录数</p>
+      <p>2) Change the number of record to get each time doing pg_shell:</p>
       <codeblock>foo=#\set FETCH_COUNT 100</codeblock>
       <note>
-        <p>调整为每次ps_shell每次获取100 条记录立即返回记录，然后再继续获取。</p>
-        <p>直接在pg_shell中修改配置文件，只能在当前pg_shell中生效，重新登录pg_shell需要重新设置。</p>
+        <p>Change to getting 100 records each time doing the pg_shell.</p>
+        <p>Edit the configuration file in pg_shell directly, and the configuration will only activate in current pg_shell. You need to do the configuration again if you re-start the pg_shell.</p>
       </note>
-      <p>3) 修改配置文件，调整pg_shell查询时，每次获取记录数</p>
+      <p>3) Change the configuration file, get the number of records getting each time.</p>
       <codeblock>$> ${PG_HOME}/bin/pg_config -sysconfdir</codeblock>
-      <p>结果为：</p>
+      <p>Result is:</p>
       <codeblock>/opt/sequoiadb/pgsql/etc</codeblock>
       <note>
         <p>如果显示目录不存在，自己手动创建即可。</p>
@@ -153,9 +153,9 @@ ENCODING = 'UTF8'</codeblock>
       </note>
       <p>将需要修改的参数写入配置文件中：</p>
       <codeblock>$>echo "\\set FETCH_COUNT 100" >> /opt/sequoiadb/pgsql/etc/psqlrc</codeblock>
-      <p>4) 调整pg_shell的日志级别</p>
+      <p>4) Change the logs' level of pg_shell:</p>
       <codeblock>$>sed -i 's/#client_min_messages = notice/client_min_messages = debug1/g' pg_data/postgresql.conf</codeblock>
-      <p>5) 调整pg引擎的日志级别</p>
+      <p>5) Change the logs' level of pg engine:</p>
       <codeblock>$>sed -i 's/#log_min_messages = warning/log_min_messages = debug1/g' pg_data/postgresql.conf</codeblock>
     </section>
   </body>

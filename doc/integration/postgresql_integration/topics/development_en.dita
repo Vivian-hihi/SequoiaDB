@@ -1,22 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
 <topic id="topic_23l_ckx_jr">
-  <title>开发</title>
+    <title>Development</title>
   <body>
-    <p>使用java客户端连接PostgreSQL</p>
+      <p>Using java client to connect PostgreSQL</p>
     <section id="modifiy_configuration">
-      <title>修改PostgreSQL的连接配置</title>
-      <p>1) 修改PostgreSQL的监听地址</p>
+        <title>Change PostgreSQL's connection configuration:</title>
+        <p>1) Change PostgreSQL's listening address</p>
       <codeblock>$>sed -i "s/#listen_addresses = 'localhost'/listen_addresses = '0.0.0.0'/g" pg_data/postgresql.conf</codeblock>
-      <p>2) 修改信任的机器列表</p>
+        <p>2) Edit trusted-machine list</p>
       <codeblock>$>linenum=$(cat -n pg_data/pg_hba.conf | grep "# IPv4 local connections:" | awk '{print $1}'); \
 let "linenum=linenum+1";varStr="host   all            all            0.0.0.0/0              trust"; \
 sed -i "${linenum} a${varStr}" pg_data/pg_hba.conf;</codeblock>
-      <p>3) 重启PostgreSQL</p>
+        <p>3) Re-start PostgreSQL</p>
       <codeblock>$>bin/pg_ctl stop -s -D pg_data/ -m fast; bin/postgres -D pg_data/ >> logfile 2>&amp;1 &amp;</codeblock>
     </section>
     <section id="sample_code">
-      <title>JDBC连接程序</title>
+        <title>JDBC Connecting Code</title>
       <codeblock>package com.sequoiadb.sample;
 import java.sql.*;
 public class postgresql_sample {
