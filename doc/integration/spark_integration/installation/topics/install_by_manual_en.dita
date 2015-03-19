@@ -7,12 +7,12 @@
             <title>Spark Installation </title>
             <p>Installing Apache Spark without SequoiaDB Administration Console is also straightforward.</p>
             <p>First of all, you need to get the latest copy of the Spark framework. To do so, you can get the latest release <xref href="http://spark.apache.org/downloads.html">here</xref>.</p>
-            <p>Taking example of Spark 1.3 with Hadoop 2.4, the download package will be called as "spark-1.3.0-bin-hadoop2.4.tgz".</p>
+            <p>Taking example of Spark 1.3 with Hadoop 2.4, the download package will be called as "spark-1.3.tgz".</p>
             <image href="../../images/spark_install_manual_step1_en.jpg"></image>
             <p>The package can be extracted by the following command:</p>
-            <codeblock>$ tar –zxvf spark-1.3.0-bin-hadoop2.4.tgz –directory /opt/</codeblock>
+            <codeblock>$ tar –zxvf spark-1.3.tgz –directory /opt/</codeblock>
             <p>Once the package is extracted, you can cd to the directory and run a simple test using spark-shell by:</p>
-            <codeblock>$ cd /opt/spark-1.3.0-bin-hadoop2.4
+            <codeblock>$ cd /opt/spark-1.3
 $ bin/spark-shell 2>/dev/null
 Welcome to
       ____              __
@@ -39,7 +39,7 @@ res2: Long = 19</codeblock>
         </section>
         <section id = "configure">
             <title>Configure Spark cluster in Standalone mode</title>
-            <p>Once Spark binary image is installed, say /opt/spark-1.3.0-bin-hadoop2.4, several simple steps need to be performed in order to build a high available cluster.</p>
+            <p>Once Spark binary image is installed, say /opt/spark-1.3, several simple steps need to be performed in order to build a high available cluster.</p>
             <p>1)	Download and configure Apache ZooKeeper</p>
             <p>Apache ZooKeeper is a centralized service for maintaining configuration information, naming, providing distributed synchronization, and providing group services. All of these kinds of services are used in some form or another by distributed applications.</p>
             <p>The download page for ZooKeeper can be found <xref href = "http://www.apache.org/dyn/closer.cgi/zookeeper">here</xref></p>
@@ -82,11 +82,11 @@ SPARK_CLASSPATH="/opt/sequoiadb/driver/java/sequoiadb-driver-1.12.jar:/opt/sequo
             <codeblock>SPARK_WORKER_MEMORY</codeblock>
             <p>5)	Start Spark master nodes</p>
             <p>If you plan to host Master nodes on serverA and serverB, the following command can be used on those hosts:</p>
-            <codeblock>$ cd /opt/spark-1.3.0-bin-hadoop2.4
+            <codeblock>$ cd /opt/spark-1.3
 $ sbin/start-master.sh</codeblock>
             <p>6)	Start Spark worker nodes</p>
             <p>Since it’s recommended to run Worker node on all hosts in SequoiaDB cluster, you can run the following command in each box to start Worker node:</p>
-            <codeblock>$ cd /opt/spark-1.3.0-bin-hadoop2.4
+            <codeblock>$ cd /opt/spark-1.3
 $ nohup bin/spark-class org.apache.spark.deploy.worker.Worker spark://serverA:7077,serverB:7077>logs/worker.out &amp;</codeblock>
         </section>
     </body>
