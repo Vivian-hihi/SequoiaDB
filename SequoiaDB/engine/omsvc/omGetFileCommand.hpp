@@ -378,8 +378,6 @@ namespace engine
          INT32           _removeTask( INT64 taskID ) ;
 
          INT32           _checkTaskExistence( list<BSONObj> &hostInfoList ) ;
-
-         BOOLEAN         _isHostExistInTask( const string &hostName ) ;
    };
 
    class omListHostCommand : public omCreateClusterCommand

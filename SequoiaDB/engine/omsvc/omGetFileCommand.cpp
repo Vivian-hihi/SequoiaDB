@@ -2706,66 +2706,6 @@ namespace engine
       }
    }
 
-   // if error happened when quering table, TRUE will be returned
-   BOOLEAN omAddHostCommand::_isHostExistInTask( const string &hostName )
-   {
-      BSONObjBuilder bsonBuilder ;
-      BOOLEAN isExist = TRUE ;
-      BSONObj selector ;
-      BSONObj matcher ;
-      BSONObj order ;
-      BSONObj hint ;
-      SINT64 contextID = -1 ;
-      INT32 rc         = SDB_OK ;
-      rtnContextBuf buffObj ;
-
-      // ResultInfo.$elemMatch.HostName == hostName 
-      // && Status not in( OM_TASK_STATUS_FINISH, OM_TASK_STATUS_CANCEL )
-      BSONObj hostNameObj = BSON( OM_HOST_FIELD_NAME << hostName ) ;
-      BSONObj elemMatch   = BSON( "$elemMatch" << hostNameObj ) ;
-
-      BSONArrayBuilder arrBuilder ;
-      arrBuilder.append( OM_TASK_STATUS_FINISH ) ;
-      arrBuilder.append( OM_TASK_STATUS_CANCEL ) ;
-      BSONObj status = BSON( "$nin" << arrBuilder.arr() ) ;
-
-      matcher = BSON( OM_TASKINFO_FIELD_RESULTINFO << elemMatch
-                      << OM_TASKINFO_FIELD_STATUS << status ) ;
-      rc = rtnQuery( OM_CS_DEPLOY_CL_TASKINFO, selector, matcher, order, hint, 
-                     0, _cb, 0, -1, _pDMSCB, _pRTNCB, contextID );
-      if ( rc )
-      {
-         PD_LOG( PDERROR, "Failed to query host:rc=%d,host=%s", rc, 
-                 matcher.toString().c_str() ) ;
-         goto done ;
-      }
-
-      rc = rtnGetMore ( contextID, 1, buffObj, _cb, _pRTNCB ) ;
-      if ( rc )
-      {
-         if ( SDB_DMS_EOC != rc )
-         {
-            PD_LOG( PDERROR, "Failed to retreive record, rc = %d", rc ) ;
-            goto done ;
-         }
-
-         // notice: if rc != SDB_OK, contextID is deleted in rtnGetMore
-         isExist = FALSE ;
-         goto done ;
-      }
-      {
-         BSONObj result( buffObj.data() ) ;
-         BSONElement eleID = result.getField( OM_TASKINFO_FIELD_TASKID ) ;
-         PD_LOG( PDERROR, "host[%s] is exist in task["OSS_LL_PRINT_FORMAT"]",
-                 hostName.c_str(), eleID.numberLong() ) ;
-      }
-
-      _pRTNCB->contextDelete( contextID, _cb ) ;
-
-   done:
-      return isExist;
-   }
-
    INT32 omAddHostCommand::_checkTaskExistence( list<BSONObj> &hostInfoList )
    {
       INT32 rc = SDB_OK ;
@@ -5019,6 +4959,14 @@ namespace engine
          goto error ;
       }
 
+      if ( _isBusinessExistInTask( _businessName ) )
+      {
+         rc = SDB_INVALIDARG ;
+         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         _sendErrorRes2Web( rc, _errorDetail ) ;
+         goto error ;
+      }
+
       rc = _combineConfDetail( _businessType, _deployMod, bsonAllConf ) ;
       if ( SDB_OK != rc )
       {
@@ -6371,8 +6319,16 @@ namespace engine
          if ( isHostExistBusiness )
          {
             rc = SDB_INVALIDARG ;
-            PD_LOG_MSG( PDERROR, "business can't exist when removeing host,"
+            PD_LOG_MSG( PDERROR, "business exist when removeing host,"
                         "business should be removed first:host=%s", 
+                        hostName.c_str() ) ;
+            goto error ;
+         }
+
+         if ( _isHostExistInTask( hostName ) )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG_MSG( PDERROR, "host is exist in task:host=%s", 
                         hostName.c_str() ) ;
             goto error ;
          }
@@ -6603,10 +6559,9 @@ namespace engine
                               &pBusinessName ) ;
       if ( NULL == pBusinessName )
       {
-         _errorDetail = "rest field:" + string( OM_REST_BUSINESS_NAME )
-                        + " is null" ;
          rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
+         PD_LOG_MSG( PDERROR, "rest field:%s is null", OM_REST_BUSINESS_NAME ) ;
+         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
       }
@@ -6614,7 +6569,9 @@ namespace engine
       rc = _getBusinessExistFlag( pBusinessName, isBusinessExist ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
+         PD_LOG_MSG( PDERROR, "get business failed:business=%s", 
+                     pBusinessName ) ;
+         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
       }
@@ -6624,6 +6581,17 @@ namespace engine
          string detail = string( pBusinessName ) + " is not exist" ;
          _sendErrorRes2Web( SDB_DMS_RECORD_NOTEXIST, detail ) ;
          goto done ;
+      }
+
+      {
+         string tmp = pBusinessName ;
+         if ( _isBusinessExistInTask( tmp ) )
+         {
+            rc = SDB_INVALIDARG ;
+            _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+            _sendErrorRes2Web( rc, _errorDetail ) ;
+            goto done ;
+         }
       }
 
       rc = _getNodeInfo( pBusinessName, nodeInfos, isBusinessExistNode ) ;
