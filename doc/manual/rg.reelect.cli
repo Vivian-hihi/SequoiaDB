@@ -39,7 +39,7 @@ ReplicaGroup
 .sp 2
 \fBNote: \fR
 .sp 2
-   *  返回超时错误代表在规定时间内重选没有完成。通过db.listReplicaGroups()观察最终结果。
+   *  返回超时错误代表在规定时间内重选没有完成。通过 db.listReplicaGroups() 观察最终结果。
 .sp 2
    *  只有复制组中存在主节点时才可以进行重新选举。
 .SH "Examples"
