@@ -429,18 +429,9 @@ namespace engine
       {
          omHostContent &agentInfo = _vHostTable[i] ;
          BSONObj tmp ;
-         if ( agentInfo.serviceName 
-                              == boost::lexical_cast<string>( SDBCM_DFT_PORT ) )
-         {
-            tmp = BSON ( OM_BSON_FIELD_HOST_NAME << agentInfo.hostName
-                         << OM_BSON_FIELD_HOST_IP << agentInfo.ip ) ;
-         }
-         else
-         {
-            tmp = BSON ( OM_BSON_FIELD_HOST_NAME << agentInfo.hostName
-                        << OM_BSON_FIELD_HOST_IP << agentInfo.ip
-                        << OM_BSON_FIELD_AGENT_PORT << agentInfo.serviceName ) ;
-         }
+         tmp = BSON ( OM_BSON_FIELD_HOST_NAME << agentInfo.hostName
+                      << OM_BSON_FIELD_HOST_IP << agentInfo.ip
+                      << OM_BSON_FIELD_AGENT_PORT << agentInfo.serviceName ) ;
 
          arrayBuilder.append( tmp ) ;
       }
