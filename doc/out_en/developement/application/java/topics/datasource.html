@@ -53,7 +53,7 @@ ArrayList&lt;String&gt; urls = new ArrayList&lt;String&gt;();
 ConfigOptions nwOpt = new ConfigOptions();          // 定义连接选项
 SequoiadbOption dsOpt = new SequoiadbOption();	    // 定义连接池选项
 		
-urls.add("ubuntu-dev1:11810");
+urls.add("ubuntu-dev1:11810");                      // 添加连接地址（只需添加协调节点地址）
 urls.add("ubuntu-dev2:11810");
 urls.add("ubuntu-dev3:11810");
 		
@@ -89,7 +89,7 @@ ds.close(db);</pre>
     for (i = 0; i< aArray.length; i++){
       aArray[i].onclick = expand;
     }
-//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.10
+//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.12
           
     </div>
 </body>

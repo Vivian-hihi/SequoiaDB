@@ -42,6 +42,11 @@
           <stentry>-p</stentry>
           <stentry>database password</stentry>
         </strow>
+        <strow>
+          <stentry>--ssl</stentry>
+          <stentry></stentry>
+          <stentry>使用 SSL 连接。</stentry>
+        </strow>
       </simpletable>
       <p><note>For Ubuntu and other systems, you need to install Ncurses library, Or it will shows 'Error opening terminal: TERM'
         <p>Solution1: online installing<codeblock>sudo apt-get install libncurses5-dev</codeblock></p>

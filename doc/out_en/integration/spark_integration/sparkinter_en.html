@@ -1,0 +1,91 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html lang="en-us" xml:lang="en-us">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<meta name="copyright" content="(C) Copyright 2005"/>
+<meta name="DC.rights.owner" content="(C) Copyright 2005"/>
+<meta name="DC.Type" content="topic"/>
+<meta name="DC.Title" content="Integration with Spark"/>
+<meta name="description" content="Although Hadoop captures the most attention for distributed data analytics, there are alternatives that provide some interesting advantages to the typical Hadoop platform. Apache Spark is a fast and ..."/>
+<meta name="DC.Relation" scheme="URI" content="../../integration/hadooproot_en.html"/>
+<meta name="DC.Relation" scheme="URI" content="../../integration/spark_integration/installation/topics/install_introduction_en.html"/>
+<meta name="DC.Relation" scheme="URI" content="../../integration/spark_integration/topics/sparksql_en.html"/>
+<meta name="DC.Relation" scheme="URI" content="../../integration/spark_integration/topics/sparksql_jdbc_en.html"/>
+<meta name="DC.Relation" scheme="URI" content="../../integration/hadooproot_en.html"/>
+<meta name="DC.Relation" scheme="URI" content="../../integration/spark_integration/installation/topics/install_introduction_en.html"/>
+<meta name="DC.Relation" scheme="URI" content="../../integration/spark_integration/topics/sparksql_en.html"/>
+<meta name="DC.Relation" scheme="URI" content="../../integration/spark_integration/topics/sparksql_jdbc_en.html"/>
+<meta name="DC.Format" content="XHTML"/>
+<meta name="DC.Identifier" content="topic_phl_b4v_xl"/>
+<link rel="stylesheet" type="text/css" href="../../commonltr.css"/>
+<link rel="stylesheet" type="text/css" href="../../assets/webhelp_topic.css"/>
+<title>Integration with Spark</title>
+<script type="text/javascript" src="../../assets/jquery-1.3.2.js"> </script><script type="text/javascript" src="../../assets/jquery-ui-1.8.2.custom.min.js"> </script><script type="text/javascript" src="../../assets/frames_redirect.js"> </script><script type="text/javascript"><!--
+    var prefix = "../../../index.html";
+    var ratingFile = "";
+    redirectToToc(window.location.search);
+    function highlightSearchTerm(){
+        if(parent.termsToHighlight != null){
+        // highlight each term in the content view  
+          for(i = 0 ; i < parent.termsToHighlight.length ; i++){        
+              $('*', window.parent.frames[1].document).highlight(parent.termsToHighlight[i]);
+          }
+        }
+    }
+//--></script></head>
+<body onload="highlightSearchTerm()" id="topic_phl_b4v_xl"><a name="topic_phl_b4v_xl"><!-- --></a>
+<table class="nav"><tbody><tr><td><div class="navheader"><span class="frames" onclick="redirectFrames(location.pathname)"><script type="text/javascript"><!--
+  if (parent.window.location.pathname == window.location.pathname ) document.write('With Frames');                    
+                    --></script></span><a class="link" href="../../integration/hadooproot_en.html" title="Integration with 3rd party components"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">Integration with 3rd party components</span></a>  <a class="link" href="../../integration/hadooproot_en.html" title="Integration with 3rd party components"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">Integration with 3rd party components</span></a>  </div></td><td width="50%"/></tr></tbody></table>
+
+    <h1 class="title topictitle1">Integration with Spark</h1>
+
+    <div class="body">
+        <p class="p">Although Hadoop captures the most attention for distributed data analytics, there are alternatives that provide some interesting advantages to the typical Hadoop platform.</p>
+
+        <p class="p">Apache Spark is a fast and general-purpose cluster computing system. It is a scalable data analytics platform that incorporates primitives for in-memory computing and therefore exercises some performance advantages over Hadoop's cluster storage approach. </p>
+
+        <p class="p">Apache Spark provides high-level APIs in Java, Scala and Python, and an optimized engine that supports general execution graphs. It also supports a rich set of higher-level tools including Spark SQL for SQL and structured data processing, MLlib for machine learning, GraphX for graph processing, and Spark Streaming.</p>
+
+        <p class="p">Although Spark was created to support iterative jobs on distributed datasets, it's actually complementary to Hadoop and can run side by side over the Hadoop file system. There are several methods to run Spark in cluster mode, which include YARN, Mesos and Standalone.</p>
+
+        <div class="section" id="topic_phl_b4v_xl__components"><a name="topic_phl_b4v_xl__components"><!-- --></a><h2 class="title sectiontitle">Spark Components</h2>
+            
+            <p class="p">Spark applications run as independent sets of processes on a cluster, coordinated by the SparkContext object in your main program (called thedriver program). Specifically, to run on a cluster, the SparkContext can connect to several types of cluster managers (either Spark’s own standalone cluster manager or Mesos/YARN), which allocate resources across applications. Once connected, Spark acquires executors on nodes in the cluster, which are processes that run computations and store data for your application. Next, it sends your application code (defined by JAR or Python files passed to SparkContext) to the executors. Finally, SparkContext sends tasks for the executors to run.</p>
+
+            <img class="image" src="images/spark_components_en.jpg"/>
+            <p class="p">There are several useful things to note about this architecture:</p>
+
+            <ol class="ol">
+                <li class="li">    Each application gets its own executor processes, which stay up for the duration of the whole application and run tasks in multiple threads. This has the benefit of isolating applications from each other, on both the scheduling side (each driver schedules its own tasks) and executor side (tasks from different applications run in different JVMs). However, it also means that data cannot be shared across different Spark applications (instances of SparkContext) without writing it to an external storage system.</li>
+
+                <li class="li">    Spark is agnostic to the underlying cluster manager. As long as it can acquire executor processes, and these communicate with each other, it is relatively easy to run it even on a cluster manager that also supports other applications (e.g. Mesos/YARN).</li>
+
+                <li class="li">    Because the driver schedules tasks on the cluster, it should be run close to the worker nodes, preferably on the same local area network. If you’d like to send requests to the cluster remotely, it’s better to open an RPC to the driver and have it submit operations from nearby than to run a driver far away from the worker nodes.</li>
+
+            </ol>
+
+        </div>
+
+    </div>
+
+<div class="related-links">
+<ul class="ullinks">
+</ul>
+</div>
+<div class="navfooter"><a class="link" href="../../integration/hadooproot_en.html" title="Integration with 3rd party components"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">Integration with 3rd party components</span></a>  <a class="link" href="../../integration/hadooproot_en.html" title="Integration with 3rd party components"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">Integration with 3rd party components</span></a>  <script type="text/javascript"><!--         
+    function expand(){
+        parent.tocwin.expandToTopic(window.location.href, this.getAttribute('href'));
+    }
+    var aArray = document.getElementsByTagName('a');
+    var i;
+    for (i = 0; i< aArray.length; i++){
+      aArray[i].onclick = expand;
+    }
+//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.12
+          
+    </div>
+</body>
+</html>

@@ -3,6 +3,6 @@
 <topic id="application_topics">
   <title>SequoiaDB Application Development</title>
   <body>
-    <p>SequoiaDB allows users to connect it in many ways such as C, C++, Java, PHP, C#, Python. This chapter introduces drivers for different programming language.</p>
+    <p>SequoiaDB allows users to connect it in many ways such as C, C++, Java, PHP, C#, Python, Rest. This chapter introduces drivers for different programming language.</p>
   </body>
 </topic>

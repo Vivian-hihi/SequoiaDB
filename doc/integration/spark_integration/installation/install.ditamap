@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE map PUBLIC "-//OASIS//DTD DITA Map//EN" "map.dtd">
+<map>
+ <title>Integration with Apache Spark</title>
+ <topicref href = "./topics/install_introduction.dita" type="topic">
+  <topicref href="./topics/install_by_admin_center.dita" type="topic"/>
+  <topicref href="./topics/install_by_manual.dita" type="topic"/>
+ </topicref>
+</map>

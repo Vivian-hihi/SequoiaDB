@@ -2,5 +2,8 @@
 <!DOCTYPE map PUBLIC "-//OASIS//DTD DITA Map//EN" "map.dtd">
 <map>
  <title>Security</title>
- <topicref href="topics/security_en.dita"></topicref>
+ <topicref href="topics/security_main_en.dita">
+  <topicref href="topics/security_en.dita"/>
+  <topicref href="topics/security_net_en.dita"/>  
+ </topicref>
 </map>

@@ -158,7 +158,12 @@
           <stentry>--errorstop
           </stentry>
           <stentry>If you encounter an error stop, default false.</stentry>
-        </strow>        
+        </strow>
+        <strow>
+          <stentry>--ssl</stentry>
+          <stentry></stentry>
+          <stentry>使用 SSL 连接。默认false。</stentry>
+        </strow>
       </simpletable>      
     </section>
     <note>Linepriority parameters need to be particularly concerned, if set properly, it may fail to import the data. When the record contains "record separator" 

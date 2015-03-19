@@ -23,7 +23,7 @@
         installation package.</p>
       <p>&nbsp;&nbsp;(2) The steps are introduced through command lines. In GUI installation, users
         can install server program accoding to image wizard prompts.</p>
-      <note>If there are more than one server, users should repeatedly install server program on them one by one according to the following steps.</note>
+      <note>If there are more than one server, 只需要选择其中一台作为控制机，执行以下操作，安装 OM 服务。</note>
       <ul>
         <li><p>Refer <xref href="../../system_require/topics/software_en.dita">System configuration
           requirement </xref> to configure Host Name and change the system kernel params.</p></li>

@@ -17,7 +17,13 @@
     </section>
     <section>
       <title>DESCRIPTION</title> 
-      <p>Connect the database to the current node. Use SSL connection if secure is true, default false. After connecting them, users can execute a set of operations. Users can check relative manipulations with the method "node.connect().help()".</p>            
+      <p>Connect the database to the current node. Use SSL connection if secure is true, default false. After connecting them, users can execute a set of operations. Users can check relative manipulations with the method "node.connect().help()".</p>
+      <parml>
+        <plentry>
+          <pt>secure (boolean)</pt>
+          <pd>是否使用安全的 SSL 连接，可选参数，在 secure 为 true 时生效，默认为 false。</pd>
+        </plentry>        
+      </parml>
     </section>    
     <section>
       <title>Examples</title>

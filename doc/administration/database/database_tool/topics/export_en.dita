@@ -82,6 +82,11 @@
           <stentry>--errorstop</stentry>
           <stentry>if you encounter an error stop, default false.</stentry>
         </strow>
+        <strow>
+          <stentry>--ssl</stentry>
+          <stentry></stentry>
+          <stentry>使用 SSL 连接，默认 false。</stentry>
+        </strow>
       </simpletable>
     </section>
     <section>

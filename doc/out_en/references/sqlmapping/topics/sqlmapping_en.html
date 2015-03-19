@@ -38,51 +38,51 @@
   <div class="body">
     <div class="section"><h2 class="title sectiontitle">Concepts and terms</h2>
       <a name="references_sqlmapping__references_method_count_table"><!-- --></a><table cellpadding="4" cellspacing="0" summary="" id="references_sqlmapping__references_method_count_table" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d222088e18" class="stentry">SQL</th>
+          <th valign="bottom" align="left" id="d257310e18" class="stentry">SQL</th>
 
-          <th valign="bottom" align="left" id="d222088e21" class="stentry">SequoiaDB</th>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d222088e18" class="stentry">database</td>
-
-          <td valign="top" headers="d222088e21" class="stentry">database</td>
+          <th valign="bottom" align="left" id="d257310e21" class="stentry">SequoiaDB</th>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d222088e18" class="stentry">table</td>
+          <td valign="top" headers="d257310e18" class="stentry">database</td>
 
-          <td valign="top" headers="d222088e21" class="stentry">collection</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d222088e18" class="stentry">row</td>
-
-          <td valign="top" headers="d222088e21" class="stentry">document / BSON document</td>
+          <td valign="top" headers="d257310e21" class="stentry">database</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d222088e18" class="stentry">column</td>
+          <td valign="top" headers="d257310e18" class="stentry">table</td>
 
-          <td valign="top" headers="d222088e21" class="stentry">field</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d222088e18" class="stentry">index</td>
-
-          <td valign="top" headers="d222088e21" class="stentry">index</td>
+          <td valign="top" headers="d257310e21" class="stentry">collection</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d222088e18" class="stentry">table joins</td>
+          <td valign="top" headers="d257310e18" class="stentry">row</td>
 
-          <td valign="top" headers="d222088e21" class="stentry">embedded documents</td>
+          <td valign="top" headers="d257310e21" class="stentry">document / BSON document</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d222088e18" class="stentry">primary key (Users can take any unique column as primary key.)</td>
+          <td valign="top" headers="d257310e18" class="stentry">column</td>
 
-          <td valign="top" headers="d222088e21" class="stentry">primary key (In SequoiaDB, primary key is automatically as the field called "_id".)</td>
+          <td valign="top" headers="d257310e21" class="stentry">field</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d257310e18" class="stentry">index</td>
+
+          <td valign="top" headers="d257310e21" class="stentry">index</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d257310e18" class="stentry">table joins</td>
+
+          <td valign="top" headers="d257310e21" class="stentry">embedded documents</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d257310e18" class="stentry">primary key (Users can take any unique column as primary key.)</td>
+
+          <td valign="top" headers="d257310e21" class="stentry">primary key (In SequoiaDB, primary key is automatically as the field called "_id".)</td>
 
         </tr>
 </table>
@@ -95,58 +95,58 @@
       <p class="p">The following table shows create and alter statements on table level in SQL and the corresponding ones in SequoiaDB.</p>
 
       <a name="references_sqlmapping__sqlpping_ceate_table"><!-- --></a><table cellpadding="4" cellspacing="0" summary="" id="references_sqlmapping__sqlpping_ceate_table" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d222088e103" class="stentry">SQL Statements</th>
+          <th valign="bottom" align="left" id="d257310e103" class="stentry">SQL Statements</th>
 
-          <th valign="bottom" align="left" id="d222088e106" class="stentry">Sequoiadb Statements</th>
+          <th valign="bottom" align="left" id="d257310e106" class="stentry">Sequoiadb Statements</th>
 
-          <th valign="bottom" align="left" id="d222088e109" class="stentry">Relative Link</th>
+          <th valign="bottom" align="left" id="d257310e109" class="stentry">Relative Link</th>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d222088e103" class="stentry">create table student (id not null,stu_id varchar(50), age number primary key(id))</td>
+          <td valign="top" headers="d257310e103" class="stentry">create table student (id not null,stu_id varchar(50), age number primary key(id))</td>
 
-          <td valign="top" headers="d222088e106" class="stentry">The system will automatically generate a collection when data is firstly
+          <td valign="top" headers="d257310e106" class="stentry">The system will automatically generate a collection when data is firstly
             inserted. If the value on "_id" is not specified, the system will automatically generate
             a "_id" value. "db.collectionspace.student({stu_id:"01",age:20})" Of course, you
               can also create a collection manually "db.collectionspace.createCL("student")"</td>
 
-          <td valign="top" headers="d222088e109" class="stentry"><a class="xref" href="../../methods/topics/dbinsert_en.html">insert()</a>,<a class="xref" href="../../methods/topics/createCL_en.html">createCL()</a></td>
+          <td valign="top" headers="d257310e109" class="stentry"><a class="xref" href="../../methods/topics/dbinsert_en.html">insert()</a>,<a class="xref" href="../../methods/topics/createCL_en.html">createCL()</a></td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d222088e103" class="stentry">alter table student add name varchar(50)</td>
+          <td valign="top" headers="d257310e103" class="stentry">alter table student add name varchar(50)</td>
 
-          <td valign="top" headers="d222088e106" class="stentry">In a collection, the structure is not changable, because there is no relative
+          <td valign="top" headers="d257310e106" class="stentry">In a collection, the structure is not changable, because there is no relative
             manipulation to describe or change the structure. But the method update() can add new
             field to document record with "$set". "db.collectionspace.student.update({},{$set:{name:"Tom"}})"</td>
 
-          <td valign="top" headers="d222088e109" class="stentry"><a class="xref" href="../../methods/topics/dbupdate_en.html">update()</a>,<a class="xref" href="../../console/topics/gset_en.html">$set</a></td>
+          <td valign="top" headers="d257310e109" class="stentry"><a class="xref" href="../../methods/topics/dbupdate_en.html">update()</a>,<a class="xref" href="../../console/topics/gset_en.html">$set</a></td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d222088e103" class="stentry">alter table student drop column name</td>
+          <td valign="top" headers="d257310e103" class="stentry">alter table student drop column name</td>
 
-          <td valign="top" headers="d222088e106" class="stentry">In a collection, the structure is not changable, because there is no relative
+          <td valign="top" headers="d257310e106" class="stentry">In a collection, the structure is not changable, because there is no relative
             manipulation to describe or change the structure. But the method update() can delete
             existing field from document record with "$unset". "db.collectionspace.student.update({},{$unset:{name:"Tom"}})"</td>
 
-          <td valign="top" headers="d222088e109" class="stentry"><a class="xref" href="../../methods/topics/dbupdate_en.html">update()</a>,<a class="xref" href="../../console/topics/unset_en.html">$unset</a></td>
+          <td valign="top" headers="d257310e109" class="stentry"><a class="xref" href="../../methods/topics/dbupdate_en.html">update()</a>,<a class="xref" href="../../console/topics/unset_en.html">$unset</a></td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d222088e103" class="stentry">create index index_stu_id on student (stu_id)</td>
+          <td valign="top" headers="d257310e103" class="stentry">create index index_stu_id on student (stu_id)</td>
 
-          <td valign="top" headers="d222088e106" class="stentry">db.collectionspace.student.createIndex("index_stu_id",{stu_id:-1})</td>
+          <td valign="top" headers="d257310e106" class="stentry">db.collectionspace.student.createIndex("index_stu_id",{stu_id:-1})</td>
 
-          <td valign="top" headers="d222088e109" class="stentry"><a class="xref" href="../../methods/topics/createIndex_en.html">createIndex()</a>,<a class="xref" href="../../../administration/concepts/database/topics/index_en.html">index</a></td>
+          <td valign="top" headers="d257310e109" class="stentry"><a class="xref" href="../../methods/topics/createIndex_en.html">createIndex()</a>,<a class="xref" href="../../../administration/concepts/database/topics/index_en.html">index</a></td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d222088e103" class="stentry">drop table student</td>
+          <td valign="top" headers="d257310e103" class="stentry">drop table student</td>
 
-          <td valign="top" headers="d222088e106" class="stentry">db.collectionspace.dropCL("student")</td>
+          <td valign="top" headers="d257310e106" class="stentry">db.collectionspace.dropCL("student")</td>
 
-          <td valign="top" headers="d222088e109" class="stentry"><a class="xref" href="../../methods/topics/dropCL_en.html">dropCL()</a></td>
+          <td valign="top" headers="d257310e109" class="stentry"><a class="xref" href="../../methods/topics/dropCL_en.html">dropCL()</a></td>
 
         </tr>
 </table>
@@ -159,19 +159,19 @@
       <p class="p">The following table shows insert statement on table level in SQL and the corresponding one in SequoiaDB.</p>
 
       <a name="references_sqlmapping__sqlmapping_insert_table"><!-- --></a><table cellpadding="4" cellspacing="0" summary="" id="references_sqlmapping__sqlmapping_insert_table" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d222088e214" class="stentry">SQL Statements</th>
+          <th valign="bottom" align="left" id="d257310e214" class="stentry">SQL Statements</th>
 
-          <th valign="bottom" align="left" id="d222088e217" class="stentry">SequoiaDB Statements</th>
+          <th valign="bottom" align="left" id="d257310e217" class="stentry">SequoiaDB Statements</th>
 
-          <th valign="bottom" align="left" id="d222088e220" class="stentry">Relative Link</th>
+          <th valign="bottom" align="left" id="d257310e220" class="stentry">Relative Link</th>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d222088e214" class="stentry">insert into student(stu_id,age) values("01",20)</td>
+          <td valign="top" headers="d257310e214" class="stentry">insert into student(stu_id,age) values("01",20)</td>
 
-          <td valign="top" headers="d222088e217" class="stentry">db.collectionspace.student.insert({stu_id:"01",age:20})</td>
+          <td valign="top" headers="d257310e217" class="stentry">db.collectionspace.student.insert({stu_id:"01",age:20})</td>
 
-          <td valign="top" headers="d222088e220" class="stentry"><a class="xref" href="../../methods/topics/dbinsert_en.html">insert()</a></td>
+          <td valign="top" headers="d257310e220" class="stentry"><a class="xref" href="../../methods/topics/dbinsert_en.html">insert()</a></td>
 
         </tr>
 </table>
@@ -184,59 +184,59 @@
       <p class="p">The following table shows read statement on table level in SQL and the corresponding one in SequoiaDB.</p>
 
       <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d222088e252" class="stentry">SQL Statements</th>
+          <th valign="bottom" align="left" id="d257310e252" class="stentry">SQL Statements</th>
 
-          <th valign="bottom" align="left" id="d222088e255" class="stentry">SequoiaDB Statements</th>
+          <th valign="bottom" align="left" id="d257310e255" class="stentry">SequoiaDB Statements</th>
 
-          <th valign="bottom" align="left" id="d222088e258" class="stentry">Relative Link</th>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d222088e252" class="stentry">select * from student</td>
-
-          <td valign="top" headers="d222088e255" class="stentry">db.collectionspace.student.find()</td>
-
-          <td valign="top" headers="d222088e258" class="stentry"><a class="xref" href="../../methods/topics/find_en.html">find()</a></td>
+          <th valign="bottom" align="left" id="d257310e258" class="stentry">Relative Link</th>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d222088e252" class="stentry">select stu_id,age from student</td>
+          <td valign="top" headers="d257310e252" class="stentry">select * from student</td>
 
-          <td valign="top" headers="d222088e255" class="stentry">db.collectionspace.student.find({},{stu_id:"01",age:20})</td>
+          <td valign="top" headers="d257310e255" class="stentry">db.collectionspace.student.find()</td>
 
-          <td valign="top" headers="d222088e258" class="stentry"><a class="xref" href="../../methods/topics/find_en.html">find()</a></td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d222088e252" class="stentry">select * from student where age &gt; 25</td>
-
-          <td valign="top" headers="d222088e255" class="stentry">db.collectionspace.student.find({age:{$gt:25}})</td>
-
-          <td valign="top" headers="d222088e258" class="stentry"><a class="xref" href="../../methods/topics/find_en.html">find()</a>,<a class="xref" href="../../console/topics/gt_en.html">$gt</a></td>
+          <td valign="top" headers="d257310e258" class="stentry"><a class="xref" href="../../methods/topics/find_en.html">find()</a></td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d222088e252" class="stentry">select age from student where age = 25 and stu_id = "01"</td>
+          <td valign="top" headers="d257310e252" class="stentry">select stu_id,age from student</td>
 
-          <td valign="top" headers="d222088e255" class="stentry">db.collectionspace.student.find({age:25,stu_id="01"},{age:25})</td>
+          <td valign="top" headers="d257310e255" class="stentry">db.collectionspace.student.find({},{stu_id:"01",age:20})</td>
 
-          <td valign="top" headers="d222088e258" class="stentry"><a class="xref" href="../../methods/topics/find_en.html">find()</a></td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d222088e252" class="stentry">select count(*) from student</td>
-
-          <td valign="top" headers="d222088e255" class="stentry">db.collectionspace.student.count()</td>
-
-          <td valign="top" headers="d222088e258" class="stentry"><a class="xref" href="../../methods/topics/dbcount_en.html">count()</a></td>
+          <td valign="top" headers="d257310e258" class="stentry"><a class="xref" href="../../methods/topics/find_en.html">find()</a></td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d222088e252" class="stentry">select count(stu_id) from student</td>
+          <td valign="top" headers="d257310e252" class="stentry">select * from student where age &gt; 25</td>
 
-          <td valign="top" headers="d222088e255" class="stentry">db.collectionspace.student.count({stu_id:{$exists:1}})</td>
+          <td valign="top" headers="d257310e255" class="stentry">db.collectionspace.student.find({age:{$gt:25}})</td>
 
-          <td valign="top" headers="d222088e258" class="stentry"><a class="xref" href="../../methods/topics/dbcount_en.html">count()</a>,<a class="xref" href="../../console/topics/exists_en.html">$exists</a></td>
+          <td valign="top" headers="d257310e258" class="stentry"><a class="xref" href="../../methods/topics/find_en.html">find()</a>,<a class="xref" href="../../console/topics/gt_en.html">$gt</a></td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d257310e252" class="stentry">select age from student where age = 25 and stu_id = "01"</td>
+
+          <td valign="top" headers="d257310e255" class="stentry">db.collectionspace.student.find({age:25,stu_id="01"},{age:25})</td>
+
+          <td valign="top" headers="d257310e258" class="stentry"><a class="xref" href="../../methods/topics/find_en.html">find()</a></td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d257310e252" class="stentry">select count(*) from student</td>
+
+          <td valign="top" headers="d257310e255" class="stentry">db.collectionspace.student.count()</td>
+
+          <td valign="top" headers="d257310e258" class="stentry"><a class="xref" href="../../methods/topics/dbcount_en.html">count()</a></td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d257310e252" class="stentry">select count(stu_id) from student</td>
+
+          <td valign="top" headers="d257310e255" class="stentry">db.collectionspace.student.count({stu_id:{$exists:1}})</td>
+
+          <td valign="top" headers="d257310e258" class="stentry"><a class="xref" href="../../methods/topics/dbcount_en.html">count()</a>,<a class="xref" href="../../console/topics/exists_en.html">$exists</a></td>
 
         </tr>
 </table>
@@ -249,27 +249,27 @@
       <p class="p">The following table shows update statement on table level in SQL and the corresponding one in SequoiaDB.</p>
 
       <a name="references_sqlmapping__sqlmapping_update_table"><!-- --></a><table cellpadding="4" cellspacing="0" summary="" id="references_sqlmapping__sqlmapping_update_table" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d222088e369" class="stentry">SQL Statements</th>
+          <th valign="bottom" align="left" id="d257310e369" class="stentry">SQL Statements</th>
 
-          <th valign="bottom" align="left" id="d222088e372" class="stentry">Sequoiadb Statements</th>
+          <th valign="bottom" align="left" id="d257310e372" class="stentry">Sequoiadb Statements</th>
 
-          <th valign="bottom" align="left" id="d222088e375" class="stentry">Relative Link</th>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d222088e369" class="stentry">update student set age = 25 where stu_id = "01"</td>
-
-          <td valign="top" headers="d222088e372" class="stentry">db.collectionspace.student.update({stu_id:"01"},{$set:{age:25}})</td>
-
-          <td valign="top" headers="d222088e375" class="stentry"><a class="xref" href="../../methods/topics/dbupdate_en.html">update()</a>,<a class="xref" href="../../console/topics/gset_en.html">$set</a></td>
+          <th valign="bottom" align="left" id="d257310e375" class="stentry">Relative Link</th>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d222088e369" class="stentry">update student set age = age + 2 where stu_id = "01"</td>
+          <td valign="top" headers="d257310e369" class="stentry">update student set age = 25 where stu_id = "01"</td>
 
-          <td valign="top" headers="d222088e372" class="stentry">db.collectionspace.student.update({stu_id:"01"},{$inc:{age:2}})</td>
+          <td valign="top" headers="d257310e372" class="stentry">db.collectionspace.student.update({stu_id:"01"},{$set:{age:25}})</td>
 
-          <td valign="top" headers="d222088e375" class="stentry"><a class="xref" href="../../methods/topics/dbupdate_en.html">update()</a>,<a class="xref" href="../../console/topics/inc_en.html">$inc</a></td>
+          <td valign="top" headers="d257310e375" class="stentry"><a class="xref" href="../../methods/topics/dbupdate_en.html">update()</a>,<a class="xref" href="../../console/topics/gset_en.html">$set</a></td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d257310e369" class="stentry">update student set age = age + 2 where stu_id = "01"</td>
+
+          <td valign="top" headers="d257310e372" class="stentry">db.collectionspace.student.update({stu_id:"01"},{$inc:{age:2}})</td>
+
+          <td valign="top" headers="d257310e375" class="stentry"><a class="xref" href="../../methods/topics/dbupdate_en.html">update()</a>,<a class="xref" href="../../console/topics/inc_en.html">$inc</a></td>
 
         </tr>
 </table>
@@ -282,28 +282,28 @@
       <p class="p">The following table shows delete statement on table level in SQL and the corresponding one in SequoiaDB.</p>
 
       <a name="references_sqlmapping__sqlmapping_delete_table"><!-- --></a><table cellpadding="4" cellspacing="0" summary="" id="references_sqlmapping__sqlmapping_delete_table" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d222088e430" class="stentry">SQL Statements</th>
+          <th valign="bottom" align="left" id="d257310e430" class="stentry">SQL Statements</th>
 
-          <th valign="bottom" align="left" id="d222088e433" class="stentry">Sequoiadb Statements</th>
+          <th valign="bottom" align="left" id="d257310e433" class="stentry">Sequoiadb Statements</th>
 
-          <th valign="bottom" align="left" id="d222088e436" class="stentry">Relative Link</th>
+          <th valign="bottom" align="left" id="d257310e436" class="stentry">Relative Link</th>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d222088e430" class="stentry">delete from student where age = 20</td>
+          <td valign="top" headers="d257310e430" class="stentry">delete from student where age = 20</td>
 
-          <td valign="top" headers="d222088e433" class="stentry">db.collectionspace.student.remove({age:20})</td>
+          <td valign="top" headers="d257310e433" class="stentry">db.collectionspace.student.remove({age:20})</td>
 
-          <td valign="top" headers="d222088e436" class="stentry"><a class="xref" href="../../methods/topics/remove_en.html">remove()</a>
+          <td valign="top" headers="d257310e436" class="stentry"><a class="xref" href="../../methods/topics/remove_en.html">remove()</a>
           </td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d222088e430" class="stentry">delete from student</td>
+          <td valign="top" headers="d257310e430" class="stentry">delete from student</td>
 
-          <td valign="top" headers="d222088e433" class="stentry">db.collectionspace.student.remove()</td>
+          <td valign="top" headers="d257310e433" class="stentry">db.collectionspace.student.remove()</td>
 
-          <td valign="top" headers="d222088e436" class="stentry"><a class="xref" href="../../methods/topics/remove_en.html">remove()</a>
+          <td valign="top" headers="d257310e436" class="stentry"><a class="xref" href="../../methods/topics/remove_en.html">remove()</a>
           </td>
 
         </tr>

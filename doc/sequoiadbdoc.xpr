@@ -169,6 +169,7 @@
                             <file name="administration/database/database_tool/topics/export.dita"/>
                             <file name="administration/database/database_tool/topics/import_en.dita"/>
                             <file name="administration/database/database_tool/topics/import.dita"/>
+                            <file name="administration/database/database_tool/topics/lbo_tool_en.dita"/>
                             <file name="administration/database/database_tool/topics/lob_tool.dita"/>
                             <file name="administration/database/database_tool/topics/sdbinspect_en.dita"/>
                             <file name="administration/database/database_tool/topics/sdbinspect.dita"/>
@@ -281,7 +282,9 @@
                 <folder name="tasks"/>
                 <folder name="topics">
                     <file name="administration/security/topics/security_en.dita"/>
+                    <file name="administration/security/topics/security_main_en.dita"/>
                     <file name="administration/security/topics/security_main.dita"/>
+                    <file name="administration/security/topics/security_net_en.dita"/>
                     <file name="administration/security/topics/security_net.dita"/>
                     <file name="administration/security/topics/security.dita"/>
                 </folder>
@@ -403,10 +406,14 @@
                 </folder>
                 <folder name="REST">
                     <folder name="topics">
+                        <file name="developement/application/REST/topics/rest_en.dita"/>
                         <file name="developement/application/REST/topics/rest.dita"/>
+                        <file name="developement/application/REST/topics/restDes_en.dita"/>
                         <file name="developement/application/REST/topics/restDes.dita"/>
+                        <file name="developement/application/REST/topics/restIn_en.dita"/>
                         <file name="developement/application/REST/topics/restIn.dita"/>
                     </folder>
+                    <file name="developement/application/REST/rest_en.ditamap"/>
                     <file name="developement/application/REST/rest.ditamap"/>
                 </folder>
                 <folder name="topics">
