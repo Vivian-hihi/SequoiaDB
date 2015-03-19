@@ -46,59 +46,59 @@
     <div class="section">      
       <div class="p">
         <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-            <th valign="bottom" align="left" id="d144700e18" class="stentry">Parameter name </th>
+            <th valign="bottom" align="left" id="d144680e18" class="stentry">Parameter name </th>
 
-            <th valign="bottom" align="left" id="d144700e21" class="stentry">Description </th>
+            <th valign="bottom" align="left" id="d144680e21" class="stentry">Description </th>
 
-            <th valign="bottom" align="left" id="d144700e24" class="stentry">Example </th>
-
-          </tr>
-<tr class="strow">
-            <td valign="top" headers="d144700e18" class="stentry"><a class="xref" href="project_en.html">$project</a></td>
-
-            <td valign="top" headers="d144700e21" class="stentry">Select the field name to be output, "1" indicates that the output "0" means no output, you can also implement fields. </td>
-
-            <td valign="top" headers="d144700e24" class="stentry">{$project:{field1:1,field:0,aliase:"$field3"}} </td>
+            <th valign="bottom" align="left" id="d144680e24" class="stentry">Example </th>
 
           </tr>
 <tr class="strow">
-            <td valign="top" headers="d144700e18" class="stentry"><a class="xref" href="match_en.html">$match</a></td>
+            <td valign="top" headers="d144680e18" class="stentry"><a class="xref" href="project_en.html">$project</a></td>
 
-            <td valign="top" headers="d144700e21" class="stentry">Select the matching criteria to achieve from a collection of records, quite where the SQL statement.</td>
+            <td valign="top" headers="d144680e21" class="stentry">Select the field name to be output, "1" indicates that the output "0" means no output, you can also implement fields. </td>
 
-            <td valign="top" headers="d144700e24" class="stentry">{$match:{field:{$lte:value}}}</td>
-
-          </tr>
-<tr class="strow">
-            <td valign="top" headers="d144700e18" class="stentry"><a class="xref" href="jlimit_en.html">$limit</a></td>
-
-            <td valign="top" headers="d144700e21" class="stentry">Limit the number of records returned.</td>
-
-            <td valign="top" headers="d144700e24" class="stentry">{$limit:10} </td>
+            <td valign="top" headers="d144680e24" class="stentry">{$project:{field1:1,field:0,aliase:"$field3"}} </td>
 
           </tr>
 <tr class="strow">
-            <td valign="top" headers="d144700e18" class="stentry"><a class="xref" href="jskip_en.html">$skip</a></td>
+            <td valign="top" headers="d144680e18" class="stentry"><a class="xref" href="match_en.html">$match</a></td>
 
-            <td valign="top" headers="d144700e21" class="stentry">Start point control of the result set, the result set that skips the number of records specified.</td>
+            <td valign="top" headers="d144680e21" class="stentry">Select the matching criteria to achieve from a collection of records, quite where the SQL statement.</td>
 
-            <td valign="top" headers="d144700e24" class="stentry">{$skip:5}</td>
-
-          </tr>
-<tr class="strow">
-            <td valign="top" headers="d144700e18" class="stentry"><a class="xref" href="jgroup_en.html">$group</a></td>
-
-            <td valign="top" headers="d144700e21" class="stentry">Achieve grouping of records, similar to SQL's group by statement, "_id" designated group field.</td>
-
-            <td valign="top" headers="d144700e24" class="stentry">{$group:{_id:"$field"}}</td>
+            <td valign="top" headers="d144680e24" class="stentry">{$match:{field:{$lte:value}}}</td>
 
           </tr>
 <tr class="strow">
-            <td valign="top" headers="d144700e18" class="stentry"><a class="xref" href="jsort_en.html">$sort</a></td>
+            <td valign="top" headers="d144680e18" class="stentry"><a class="xref" href="jlimit_en.html">$limit</a></td>
 
-            <td valign="top" headers="d144700e21" class="stentry">Achieve the sort of result set "1" represents Ascending, "-1" for descending.</td>
+            <td valign="top" headers="d144680e21" class="stentry">Limit the number of records returned.</td>
 
-            <td valign="top" headers="d144700e24" class="stentry">{$sort:{field1:1,field2:-1,...}}</td>
+            <td valign="top" headers="d144680e24" class="stentry">{$limit:10} </td>
+
+          </tr>
+<tr class="strow">
+            <td valign="top" headers="d144680e18" class="stentry"><a class="xref" href="jskip_en.html">$skip</a></td>
+
+            <td valign="top" headers="d144680e21" class="stentry">Start point control of the result set, the result set that skips the number of records specified.</td>
+
+            <td valign="top" headers="d144680e24" class="stentry">{$skip:5}</td>
+
+          </tr>
+<tr class="strow">
+            <td valign="top" headers="d144680e18" class="stentry"><a class="xref" href="jgroup_en.html">$group</a></td>
+
+            <td valign="top" headers="d144680e21" class="stentry">Achieve grouping of records, similar to SQL's group by statement, "_id" designated group field.</td>
+
+            <td valign="top" headers="d144680e24" class="stentry">{$group:{_id:"$field"}}</td>
+
+          </tr>
+<tr class="strow">
+            <td valign="top" headers="d144680e18" class="stentry"><a class="xref" href="jsort_en.html">$sort</a></td>
+
+            <td valign="top" headers="d144680e21" class="stentry">Achieve the sort of result set "1" represents Ascending, "-1" for descending.</td>
+
+            <td valign="top" headers="d144680e24" class="stentry">{$sort:{field1:1,field2:-1,...}}</td>
 
           </tr>
 </table>
@@ -106,73 +106,73 @@
       </div>
 
       <div class="p">$group Aggregation operator supports the following aggregate functions: <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d144700e121" class="stentry"> Function name </th>
+          <th valign="bottom" align="left" id="d144680e121" class="stentry"> Function name </th>
 
-          <th valign="bottom" align="left" id="d144700e124" class="stentry"> Description </th>
+          <th valign="bottom" align="left" id="d144680e124" class="stentry"> Description </th>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d144700e121" class="stentry">
+          <td valign="top" headers="d144680e121" class="stentry">
             <a class="xref" href="j$addToSet_en.html">$addtoset</a>
           </td>
 
-          <td valign="top" headers="d144700e124" class="stentry"> Adds the specified field values in the array, the same field value will be added once. </td>
+          <td valign="top" headers="d144680e124" class="stentry"> Adds the specified field values in the array, the same field value will be added once. </td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d144700e121" class="stentry">
+          <td valign="top" headers="d144680e121" class="stentry">
             <a class="xref" href="jfirst_en.html">$first</a>
           </td>
 
-          <td valign="top" headers="d144700e124" class="stentry"> Take packet field values in the first record. </td>
+          <td valign="top" headers="d144680e124" class="stentry"> Take packet field values in the first record. </td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d144700e121" class="stentry">
+          <td valign="top" headers="d144680e121" class="stentry">
             <a class="xref" href="jlast_en.html">$last</a>
           </td>
 
-          <td valign="top" headers="d144700e124" class="stentry"> Take packet field value in the record. </td>
+          <td valign="top" headers="d144680e124" class="stentry"> Take packet field value in the record. </td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d144700e121" class="stentry">
+          <td valign="top" headers="d144680e121" class="stentry">
             <a class="xref" href="jmax_en.html">$max</a>
           </td>
 
-          <td valign="top" headers="d144700e124" class="stentry"> Take the maximum value of the packet field.</td>
+          <td valign="top" headers="d144680e124" class="stentry"> Take the maximum value of the packet field.</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d144700e121" class="stentry">
+          <td valign="top" headers="d144680e121" class="stentry">
             <a class="xref" href="jmin_en.html">$min</a>
           </td>
 
-          <td valign="top" headers="d144700e124" class="stentry"> Take the smallest packet field values. </td>
+          <td valign="top" headers="d144680e124" class="stentry"> Take the smallest packet field values. </td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d144700e121" class="stentry">
+          <td valign="top" headers="d144680e121" class="stentry">
             <a class="xref" href="javg_en.html">$avg</a>
           </td>
 
-          <td valign="top" headers="d144700e124" class="stentry"> Take the average packet field values. </td>
+          <td valign="top" headers="d144680e124" class="stentry"> Take the average packet field values. </td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d144700e121" class="stentry">
+          <td valign="top" headers="d144680e121" class="stentry">
             <a class="xref" href="j$push_en.html">$push</a>
           </td>
 
-          <td valign="top" headers="d144700e124" class="stentry"> Add all the fields to the array, even if the same array of field values that already exist, and continue to add. </td>
+          <td valign="top" headers="d144680e124" class="stentry"> Add all the fields to the array, even if the same array of field values that already exist, and continue to add. </td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d144700e121" class="stentry">
+          <td valign="top" headers="d144680e121" class="stentry">
             <a class="xref" href="jsum_en.html">$sum</a>
           </td>
 
-          <td valign="top" headers="d144700e124" class="stentry"> Take the sum of packet field values. </td>
+          <td valign="top" headers="d144680e124" class="stentry"> Take the sum of packet field values. </td>
 
         </tr>
 </table>

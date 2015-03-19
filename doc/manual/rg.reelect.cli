@@ -7,7 +7,7 @@
 .SH "NAME"
 
 .sp 2
-reelect - 在复制组中进行重新选举。
+reelect - Re-elect the master node in the replica group.
 .SH "SYNOPSIS"
 
 .sp 2
@@ -25,27 +25,30 @@ ReplicaGroup
 .SH "DESCRIPTION"
 
 .sp 2
-在复制组中进行重新选举。
+Re-elect the master node in the replica group.
 .sp 2
 \fBoptions (json object)\fR
 .br
-       参数集合
+       Parameter collection
 .sp 2
        \fBSeconds\fR
 .br
-              重新选举需要在多少秒内完成
+              Re-election start in how many seconds.
 .sp 2
 
 .sp 2
 \fBNote: \fR
 .sp 2
-   *  返回超时错误代表在规定时间内重选没有完成。通过 db.listReplicaGroups() 观察最终结果。
+   *  Returning timeout error means that the re-election hasn't
+   completed during the time we set. Using db.listReplicaGroups()
+   to view the result.
 .sp 2
-   *  只有复制组中存在主节点时才可以进行重新选举。
+   *  The re-election can only be started when there is a master
+   node in the replica group.
 .SH "Examples"
 
 .sp 2
-在"datagroup1"中进行重新选举，超时时间为60s。
+Conduct the re-election in 60s with the group of 'datagroup1'
 .sp 2
 var rg = db.getRG("datagroup1") ;
 .br

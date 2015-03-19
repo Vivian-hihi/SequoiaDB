@@ -50,234 +50,234 @@
     
     <div class="section"><h2 class="title sectiontitle">Other Node Field Information</h2>
       <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d74295e34" class="stentry">Field Name</th>
+          <th valign="bottom" align="left" id="d74275e34" class="stentry">Field Name</th>
 
-          <th valign="bottom" align="left" id="d74295e37" class="stentry">Type</th>
+          <th valign="bottom" align="left" id="d74275e37" class="stentry">Type</th>
 
-          <th valign="bottom" align="left" id="d74295e40" class="stentry">Description</th>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d74295e34" class="stentry">HostName</td>
-
-          <td valign="top" headers="d74295e37" class="stentry">String</td>
-
-          <td valign="top" headers="d74295e40" class="stentry">The host name of physical node of database node.</td>
+          <th valign="bottom" align="left" id="d74275e40" class="stentry">Description</th>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d74295e34" class="stentry">ServiceName</td>
+          <td valign="top" headers="d74275e34" class="stentry">HostName</td>
 
-          <td valign="top" headers="d74295e37" class="stentry">String</td>
+          <td valign="top" headers="d74275e37" class="stentry">String</td>
 
-          <td valign="top" headers="d74295e40" class="stentry">Service name specified by svcname. HostName and service name are the sign of a
+          <td valign="top" headers="d74275e40" class="stentry">The host name of physical node of database node.</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d74275e34" class="stentry">ServiceName</td>
+
+          <td valign="top" headers="d74275e37" class="stentry">String</td>
+
+          <td valign="top" headers="d74275e40" class="stentry">Service name specified by svcname. HostName and service name are the sign of a
             logical node.</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d74295e34" class="stentry">NodeName</td>
+          <td valign="top" headers="d74275e34" class="stentry">NodeName</td>
 
-          <td valign="top" headers="d74295e37" class="stentry">String</td>
+          <td valign="top" headers="d74275e37" class="stentry">String</td>
 
-          <td valign="top" headers="d74295e40" class="stentry">Node name, in the format of &lt;HostName&gt;:&lt;ServiceName&gt;</td>
+          <td valign="top" headers="d74275e40" class="stentry">Node name, in the format of &lt;HostName&gt;:&lt;ServiceName&gt;</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d74295e34" class="stentry">GroupName</td>
+          <td valign="top" headers="d74275e34" class="stentry">GroupName</td>
 
-          <td valign="top" headers="d74295e37" class="stentry">String</td>
+          <td valign="top" headers="d74275e37" class="stentry">String</td>
 
-          <td valign="top" headers="d74295e40" class="stentry">The name of replset of the logical node. There is no this field under independent
+          <td valign="top" headers="d74275e40" class="stentry">The name of replset of the logical node. There is no this field under independent
             mode.</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d74295e34" class="stentry">IsPrimary</td>
+          <td valign="top" headers="d74275e34" class="stentry">IsPrimary</td>
 
-          <td valign="top" headers="d74295e37" class="stentry">Bool</td>
+          <td valign="top" headers="d74275e37" class="stentry">Bool</td>
 
-          <td valign="top" headers="d74295e40" class="stentry">IsPrimary shows whether the node is a main node.There is no this field under
+          <td valign="top" headers="d74275e40" class="stentry">IsPrimary shows whether the node is a main node.There is no this field under
             independent mode.</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d74295e34" class="stentry">ServiceStatus</td>
+          <td valign="top" headers="d74275e34" class="stentry">ServiceStatus</td>
 
-          <td valign="top" headers="d74295e37" class="stentry">Bool</td>
+          <td valign="top" headers="d74275e37" class="stentry">Bool</td>
 
-          <td valign="top" headers="d74295e40" class="stentry">ServiceStatus represents the status of whether it is availible to serve. For
+          <td valign="top" headers="d74275e40" class="stentry">ServiceStatus represents the status of whether it is availible to serve. For
               example, <a class="xref" href="../../../concepts/cluster/topics/sync_en.html">Full Sync</a> will
             make it <em class="ph i">false</em>.</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d74295e34" class="stentry">BeginLSN.Offset</td>
+          <td valign="top" headers="d74275e34" class="stentry">BeginLSN.Offset</td>
 
-          <td valign="top" headers="d74295e37" class="stentry">Long integer</td>
+          <td valign="top" headers="d74275e37" class="stentry">Long integer</td>
 
-          <td valign="top" headers="d74295e40" class="stentry">Offset of the starting of LSN</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d74295e34" class="stentry">BeginLSN.Version</td>
-
-          <td valign="top" headers="d74295e37" class="stentry">Integer</td>
-
-          <td valign="top" headers="d74295e40" class="stentry">Version number of a starting LSN</td>
+          <td valign="top" headers="d74275e40" class="stentry">Offset of the starting of LSN</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d74295e34" class="stentry">CurrentLSN.Offset</td>
+          <td valign="top" headers="d74275e34" class="stentry">BeginLSN.Version</td>
 
-          <td valign="top" headers="d74295e37" class="stentry">Long Integer</td>
+          <td valign="top" headers="d74275e37" class="stentry">Integer</td>
 
-          <td valign="top" headers="d74295e40" class="stentry">Excursion of current LSN</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d74295e34" class="stentry">TransInfo.BeginLSN</td>
-
-          <td valign="top" headers="d74295e37" class="stentry">Long integer</td>
-
-          <td valign="top" headers="d74295e40" class="stentry">Transaction's offset of the starting LSN</td>
+          <td valign="top" headers="d74275e40" class="stentry">Version number of a starting LSN</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d74295e34" class="stentry">NodeID</td>
+          <td valign="top" headers="d74275e34" class="stentry">CurrentLSN.Offset</td>
 
-          <td valign="top" headers="d74295e37" class="stentry">Array</td>
+          <td valign="top" headers="d74275e37" class="stentry">Long Integer</td>
 
-          <td valign="top" headers="d74295e40" class="stentry">[ ReplicaGroup ID, Node ID ], while in standalone mode this field is [ 0, 0 ]</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d74295e34" class="stentry">CurrentLSN.Version</td>
-
-          <td valign="top" headers="d74295e37" class="stentry">Integer</td>
-
-          <td valign="top" headers="d74295e40" class="stentry">Verssion number of the current LSN.</td>
+          <td valign="top" headers="d74275e40" class="stentry">Excursion of current LSN</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d74295e34" class="stentry">CPU.User</td>
+          <td valign="top" headers="d74275e34" class="stentry">TransInfo.BeginLSN</td>
 
-          <td valign="top" headers="d74295e37" class="stentry">Float Integer</td>
+          <td valign="top" headers="d74275e37" class="stentry">Long integer</td>
 
-          <td valign="top" headers="d74295e40" class="stentry">Total user CPU time (seconds) cost after OS is started.</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d74295e34" class="stentry">CPU.Sys</td>
-
-          <td valign="top" headers="d74295e37" class="stentry">Float Integer</td>
-
-          <td valign="top" headers="d74295e40" class="stentry">Total system CPU time (seconds) cost after OS is started.</td>
+          <td valign="top" headers="d74275e40" class="stentry">Transaction's offset of the starting LSN</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d74295e34" class="stentry">CPU.Idle</td>
+          <td valign="top" headers="d74275e34" class="stentry">NodeID</td>
 
-          <td valign="top" headers="d74295e37" class="stentry">Float Integer</td>
+          <td valign="top" headers="d74275e37" class="stentry">Array</td>
 
-          <td valign="top" headers="d74295e40" class="stentry">Total free CPU time (seconds) cost after OS is started.</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d74295e34" class="stentry">CPU.Other</td>
-
-          <td valign="top" headers="d74295e37" class="stentry">Float Integer</td>
-
-          <td valign="top" headers="d74295e40" class="stentry">Total other CPU time (seconds) cost after OS is started.</td>
+          <td valign="top" headers="d74275e40" class="stentry">[ ReplicaGroup ID, Node ID ], while in standalone mode this field is [ 0, 0 ]</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d74295e34" class="stentry">Memory.LoadPercent</td>
+          <td valign="top" headers="d74275e34" class="stentry">CurrentLSN.Version</td>
 
-          <td valign="top" headers="d74295e37" class="stentry">Integer</td>
+          <td valign="top" headers="d74275e37" class="stentry">Integer</td>
 
-          <td valign="top" headers="d74295e40" class="stentry">Percentage of used memory of the current operating system (including file system
+          <td valign="top" headers="d74275e40" class="stentry">Verssion number of the current LSN.</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d74275e34" class="stentry">CPU.User</td>
+
+          <td valign="top" headers="d74275e37" class="stentry">Float Integer</td>
+
+          <td valign="top" headers="d74275e40" class="stentry">Total user CPU time (seconds) cost after OS is started.</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d74275e34" class="stentry">CPU.Sys</td>
+
+          <td valign="top" headers="d74275e37" class="stentry">Float Integer</td>
+
+          <td valign="top" headers="d74275e40" class="stentry">Total system CPU time (seconds) cost after OS is started.</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d74275e34" class="stentry">CPU.Idle</td>
+
+          <td valign="top" headers="d74275e37" class="stentry">Float Integer</td>
+
+          <td valign="top" headers="d74275e40" class="stentry">Total free CPU time (seconds) cost after OS is started.</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d74275e34" class="stentry">CPU.Other</td>
+
+          <td valign="top" headers="d74275e37" class="stentry">Float Integer</td>
+
+          <td valign="top" headers="d74275e40" class="stentry">Total other CPU time (seconds) cost after OS is started.</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d74275e34" class="stentry">Memory.LoadPercent</td>
+
+          <td valign="top" headers="d74275e37" class="stentry">Integer</td>
+
+          <td valign="top" headers="d74275e40" class="stentry">Percentage of used memory of the current operating system (including file system
             cache) <strong class="ph b">Ipmortant: This field only display in data node </strong></td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d74295e34" class="stentry">Memory.TotalRAM</td>
+          <td valign="top" headers="d74275e34" class="stentry">Memory.TotalRAM</td>
 
-          <td valign="top" headers="d74295e37" class="stentry">Long In teger</td>
+          <td valign="top" headers="d74275e37" class="stentry">Long In teger</td>
 
-          <td valign="top" headers="d74295e40" class="stentry">Total memory space of the current operating system (byte)</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d74295e34" class="stentry">Memory.FreeRAM</td>
-
-          <td valign="top" headers="d74295e37" class="stentry">Long Integer</td>
-
-          <td valign="top" headers="d74295e40" class="stentry">Free memory space of the current operating system (byte)</td>
+          <td valign="top" headers="d74275e40" class="stentry">Total memory space of the current operating system (byte)</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d74295e34" class="stentry">Memory.TotalSwap</td>
+          <td valign="top" headers="d74275e34" class="stentry">Memory.FreeRAM</td>
 
-          <td valign="top" headers="d74295e37" class="stentry">Long Integer</td>
+          <td valign="top" headers="d74275e37" class="stentry">Long Integer</td>
 
-          <td valign="top" headers="d74295e40" class="stentry">Total swap space of the current operating system (byte)</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d74295e34" class="stentry">Memory.FreeSwap</td>
-
-          <td valign="top" headers="d74295e37" class="stentry">Long Integer</td>
-
-          <td valign="top" headers="d74295e40" class="stentry">Free swap space of the current operating system (byte)</td>
+          <td valign="top" headers="d74275e40" class="stentry">Free memory space of the current operating system (byte)</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d74295e34" class="stentry">Memory.TotalVirtual</td>
+          <td valign="top" headers="d74275e34" class="stentry">Memory.TotalSwap</td>
 
-          <td valign="top" headers="d74295e37" class="stentry">Long Integer</td>
+          <td valign="top" headers="d74275e37" class="stentry">Long Integer</td>
 
-          <td valign="top" headers="d74295e40" class="stentry">Total virtual space of the current operating system (byte)</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d74295e34" class="stentry">Memory.FreeVirtual</td>
-
-          <td valign="top" headers="d74295e37" class="stentry">Long Integer</td>
-
-          <td valign="top" headers="d74295e40" class="stentry">Free virtual space of the current operating system (byte)</td>
+          <td valign="top" headers="d74275e40" class="stentry">Total swap space of the current operating system (byte)</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d74295e34" class="stentry">Disk.DatabasePath</td>
+          <td valign="top" headers="d74275e34" class="stentry">Memory.FreeSwap</td>
 
-          <td valign="top" headers="d74295e37" class="stentry">String</td>
+          <td valign="top" headers="d74275e37" class="stentry">Long Integer</td>
 
-          <td valign="top" headers="d74295e40" class="stentry">Database Path <strong class="ph b">Ipmortant: This field  only display in data node </strong></td>
+          <td valign="top" headers="d74275e40" class="stentry">Free swap space of the current operating system (byte)</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d74295e34" class="stentry">Disk.LoadPercent</td>
+          <td valign="top" headers="d74275e34" class="stentry">Memory.TotalVirtual</td>
 
-          <td valign="top" headers="d74295e37" class="stentry">Integer</td>
+          <td valign="top" headers="d74275e37" class="stentry">Long Integer</td>
 
-          <td valign="top" headers="d74295e40" class="stentry">The percentage of space of file system of data path . <strong class="ph b">Ipmortant: This field
+          <td valign="top" headers="d74275e40" class="stentry">Total virtual space of the current operating system (byte)</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d74275e34" class="stentry">Memory.FreeVirtual</td>
+
+          <td valign="top" headers="d74275e37" class="stentry">Long Integer</td>
+
+          <td valign="top" headers="d74275e40" class="stentry">Free virtual space of the current operating system (byte)</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d74275e34" class="stentry">Disk.DatabasePath</td>
+
+          <td valign="top" headers="d74275e37" class="stentry">String</td>
+
+          <td valign="top" headers="d74275e40" class="stentry">Database Path <strong class="ph b">Ipmortant: This field  only display in data node </strong></td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d74275e34" class="stentry">Disk.LoadPercent</td>
+
+          <td valign="top" headers="d74275e37" class="stentry">Integer</td>
+
+          <td valign="top" headers="d74275e40" class="stentry">The percentage of space of file system of data path . <strong class="ph b">Ipmortant: This field
               only display in data node </strong></td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d74295e34" class="stentry">Disk.TotalSpace</td>
+          <td valign="top" headers="d74275e34" class="stentry">Disk.TotalSpace</td>
 
-          <td valign="top" headers="d74295e37" class="stentry">Long Integer</td>
+          <td valign="top" headers="d74275e37" class="stentry">Long Integer</td>
 
-          <td valign="top" headers="d74295e40" class="stentry">Total space in database path (byte)</td>
+          <td valign="top" headers="d74275e40" class="stentry">Total space in database path (byte)</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d74295e34" class="stentry">Disk.FreeSpace</td>
+          <td valign="top" headers="d74275e34" class="stentry">Disk.FreeSpace</td>
 
-          <td valign="top" headers="d74295e37" class="stentry">Long Integer</td>
+          <td valign="top" headers="d74275e37" class="stentry">Long Integer</td>
 
-          <td valign="top" headers="d74295e40" class="stentry">Free space in database path (byte)</td>
+          <td valign="top" headers="d74275e40" class="stentry">Free space in database path (byte)</td>
 
         </tr>
 </table>
@@ -287,150 +287,150 @@
     <div class="section"><h2 class="title sectiontitle">Coord Node Field Information</h2>
       
       <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d74295e396" class="stentry">Field Name</th>
+          <th valign="bottom" align="left" id="d74275e396" class="stentry">Field Name</th>
 
-          <th valign="bottom" align="left" id="d74295e399" class="stentry">Type</th>
+          <th valign="bottom" align="left" id="d74275e399" class="stentry">Type</th>
 
-          <th valign="bottom" align="left" id="d74295e402" class="stentry">Description</th>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d74295e396" class="stentry">CPU.User</td>
-
-          <td valign="top" headers="d74295e399" class="stentry">Float Integer</td>
-
-          <td valign="top" headers="d74295e402" class="stentry">Total user CPU time (seconds) cost after OS is started.</td>
+          <th valign="bottom" align="left" id="d74275e402" class="stentry">Description</th>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d74295e396" class="stentry">CPU.Sys</td>
+          <td valign="top" headers="d74275e396" class="stentry">CPU.User</td>
 
-          <td valign="top" headers="d74295e399" class="stentry">Float Integer</td>
+          <td valign="top" headers="d74275e399" class="stentry">Float Integer</td>
 
-          <td valign="top" headers="d74295e402" class="stentry">Total system CPU time (seconds) cost after OS is started.</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d74295e396" class="stentry">CPU.Idle</td>
-
-          <td valign="top" headers="d74295e399" class="stentry">Float Integer</td>
-
-          <td valign="top" headers="d74295e402" class="stentry">Total free CPU time (seconds) cost after OS is started.</td>
+          <td valign="top" headers="d74275e402" class="stentry">Total user CPU time (seconds) cost after OS is started.</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d74295e396" class="stentry">CPU.Other</td>
+          <td valign="top" headers="d74275e396" class="stentry">CPU.Sys</td>
 
-          <td valign="top" headers="d74295e399" class="stentry">Float Integer</td>
+          <td valign="top" headers="d74275e399" class="stentry">Float Integer</td>
 
-          <td valign="top" headers="d74295e402" class="stentry">Total other CPU time (seconds) cost after OS is started.</td>
+          <td valign="top" headers="d74275e402" class="stentry">Total system CPU time (seconds) cost after OS is started.</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d74295e396" class="stentry">Memory.LoadPercent</td>
+          <td valign="top" headers="d74275e396" class="stentry">CPU.Idle</td>
 
-          <td valign="top" headers="d74295e399" class="stentry">Integer</td>
+          <td valign="top" headers="d74275e399" class="stentry">Float Integer</td>
 
-          <td valign="top" headers="d74295e402" class="stentry">Percentage of used memory of the current operating system (including file system
+          <td valign="top" headers="d74275e402" class="stentry">Total free CPU time (seconds) cost after OS is started.</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d74275e396" class="stentry">CPU.Other</td>
+
+          <td valign="top" headers="d74275e399" class="stentry">Float Integer</td>
+
+          <td valign="top" headers="d74275e402" class="stentry">Total other CPU time (seconds) cost after OS is started.</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d74275e396" class="stentry">Memory.LoadPercent</td>
+
+          <td valign="top" headers="d74275e399" class="stentry">Integer</td>
+
+          <td valign="top" headers="d74275e402" class="stentry">Percentage of used memory of the current operating system (including file system
             cache) <strong class="ph b">Ipmortant: This field only display in data node </strong></td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d74295e396" class="stentry">Memory.TotalRAM</td>
+          <td valign="top" headers="d74275e396" class="stentry">Memory.TotalRAM</td>
 
-          <td valign="top" headers="d74295e399" class="stentry">Long In teger</td>
+          <td valign="top" headers="d74275e399" class="stentry">Long In teger</td>
 
-          <td valign="top" headers="d74295e402" class="stentry">Total memory space of the current operating system (byte)</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d74295e396" class="stentry">Memory.FreeRAM</td>
-
-          <td valign="top" headers="d74295e399" class="stentry">Long Integer</td>
-
-          <td valign="top" headers="d74295e402" class="stentry">Free memory space of the current operating system (byte)</td>
+          <td valign="top" headers="d74275e402" class="stentry">Total memory space of the current operating system (byte)</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d74295e396" class="stentry">Memory.TotalSwap</td>
+          <td valign="top" headers="d74275e396" class="stentry">Memory.FreeRAM</td>
 
-          <td valign="top" headers="d74295e399" class="stentry">Long Integer</td>
+          <td valign="top" headers="d74275e399" class="stentry">Long Integer</td>
 
-          <td valign="top" headers="d74295e402" class="stentry">Total swap space of the current operating system (byte)</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d74295e396" class="stentry">Memory.FreeSwap</td>
-
-          <td valign="top" headers="d74295e399" class="stentry">Long Integer</td>
-
-          <td valign="top" headers="d74295e402" class="stentry">Free swap space of the current operating system (byte)</td>
+          <td valign="top" headers="d74275e402" class="stentry">Free memory space of the current operating system (byte)</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d74295e396" class="stentry">Memory.TotalVirtual</td>
+          <td valign="top" headers="d74275e396" class="stentry">Memory.TotalSwap</td>
 
-          <td valign="top" headers="d74295e399" class="stentry">Long Integer</td>
+          <td valign="top" headers="d74275e399" class="stentry">Long Integer</td>
 
-          <td valign="top" headers="d74295e402" class="stentry">Total virtual space of the current operating system (byte)</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d74295e396" class="stentry">Memory.FreeVirtual</td>
-
-          <td valign="top" headers="d74295e399" class="stentry">Long Integer</td>
-
-          <td valign="top" headers="d74295e402" class="stentry">Free virtual space of the current operating system (byte)</td>
+          <td valign="top" headers="d74275e402" class="stentry">Total swap space of the current operating system (byte)</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d74295e396" class="stentry">Disk.DatabasePath</td>
+          <td valign="top" headers="d74275e396" class="stentry">Memory.FreeSwap</td>
 
-          <td valign="top" headers="d74295e399" class="stentry">String</td>
+          <td valign="top" headers="d74275e399" class="stentry">Long Integer</td>
 
-          <td valign="top" headers="d74295e402" class="stentry">Database Path <strong class="ph b">Ipmortant: This field  only display in data node </strong></td>
+          <td valign="top" headers="d74275e402" class="stentry">Free swap space of the current operating system (byte)</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d74295e396" class="stentry">Disk.LoadPercent</td>
+          <td valign="top" headers="d74275e396" class="stentry">Memory.TotalVirtual</td>
 
-          <td valign="top" headers="d74295e399" class="stentry">Integer</td>
+          <td valign="top" headers="d74275e399" class="stentry">Long Integer</td>
 
-          <td valign="top" headers="d74295e402" class="stentry">The percentage of space of file system of data path . <strong class="ph b">Ipmortant: This field
+          <td valign="top" headers="d74275e402" class="stentry">Total virtual space of the current operating system (byte)</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d74275e396" class="stentry">Memory.FreeVirtual</td>
+
+          <td valign="top" headers="d74275e399" class="stentry">Long Integer</td>
+
+          <td valign="top" headers="d74275e402" class="stentry">Free virtual space of the current operating system (byte)</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d74275e396" class="stentry">Disk.DatabasePath</td>
+
+          <td valign="top" headers="d74275e399" class="stentry">String</td>
+
+          <td valign="top" headers="d74275e402" class="stentry">Database Path <strong class="ph b">Ipmortant: This field  only display in data node </strong></td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d74275e396" class="stentry">Disk.LoadPercent</td>
+
+          <td valign="top" headers="d74275e399" class="stentry">Integer</td>
+
+          <td valign="top" headers="d74275e402" class="stentry">The percentage of space of file system of data path . <strong class="ph b">Ipmortant: This field
             only display in data node </strong></td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d74295e396" class="stentry">Disk.TotalSpace</td>
+          <td valign="top" headers="d74275e396" class="stentry">Disk.TotalSpace</td>
 
-          <td valign="top" headers="d74295e399" class="stentry">Long Integer</td>
+          <td valign="top" headers="d74275e399" class="stentry">Long Integer</td>
 
-          <td valign="top" headers="d74295e402" class="stentry">Total space in database path (byte)</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d74295e396" class="stentry">Disk.FreeSpace</td>
-
-          <td valign="top" headers="d74295e399" class="stentry">Long Integer</td>
-
-          <td valign="top" headers="d74295e402" class="stentry">Free space in database path (byte)</td>
+          <td valign="top" headers="d74275e402" class="stentry">Total space in database path (byte)</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d74295e396" class="stentry">ErrNodes.NodeName</td>
+          <td valign="top" headers="d74275e396" class="stentry">Disk.FreeSpace</td>
 
-          <td valign="top" headers="d74295e399" class="stentry">String</td>
+          <td valign="top" headers="d74275e399" class="stentry">Long Integer</td>
 
-          <td valign="top" headers="d74295e402" class="stentry">Exception node name (hostname+port)<strong class="ph b">Ipmortant: This field only display in coord
+          <td valign="top" headers="d74275e402" class="stentry">Free space in database path (byte)</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d74275e396" class="stentry">ErrNodes.NodeName</td>
+
+          <td valign="top" headers="d74275e399" class="stentry">String</td>
+
+          <td valign="top" headers="d74275e402" class="stentry">Exception node name (hostname+port)<strong class="ph b">Ipmortant: This field only display in coord
             node node and existing exception node </strong></td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d74295e396" class="stentry">ErrNodes.Flag</td>
+          <td valign="top" headers="d74275e396" class="stentry">ErrNodes.Flag</td>
 
-          <td valign="top" headers="d74295e399" class="stentry">Int</td>
+          <td valign="top" headers="d74275e399" class="stentry">Int</td>
 
-          <td valign="top" headers="d74295e402" class="stentry">Rrror code <strong class="ph b">Ipmortant: This field only display in coord node and existing
+          <td valign="top" headers="d74275e402" class="stentry">Rrror code <strong class="ph b">Ipmortant: This field only display in coord node and existing
             exception node </strong></td>
 
         </tr>
