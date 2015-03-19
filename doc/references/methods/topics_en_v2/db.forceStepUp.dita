@@ -5,7 +5,7 @@
   <body>
     <section>
       <title>NAME</title>
-      <p>forceStepUp - 在一个不具备选举条件的复制组中，强制将一个备节点升级为主节点。请谨慎使用该命令!</p>
+      <p>forceStepUp - In a replica group that doesn't satisfy the requirement of re-election, upgrade a slave node to a master node by force.</p>
     </section>
     <section>
       <title>SYNOPSIS</title>
@@ -17,30 +17,30 @@
     </section>
     <section>
       <title>DESCRIPTION</title> 
-      <p>在一个不具备选举条件的复制组中，强制将一个备节点升级为主节点。请谨慎使用该命令!</p>
+      <p>In a replica group that doesn't satisfy the requirement of re-election, upgrade a slave node to a master node by force.</p>
       <parml>        
         <plentry>
           <pt>options (json object)</pt>
-          <pd>参数集合
+          <pd>Parameter collection
             <parml>
               <plentry>
                 <pt>Seconds</pt>
-                <pd>强制升级为主节点的持续时间</pd>                
+                <pd>Time limit of upgrading the slave node to master.</pd>                
               </plentry>              
             </parml>
           </pd>
         </plentry>
       </parml>
       <note>
-        <ul><li>目前仅在catalog组中开放此功能。</li>
-          <li>目标复制组中不能存在主节点，且其他节点的LSN不能比目标节点的LSN大。</li>
-          <li>当持续时间到期，所有节点会重新按照选举规则进行选举。</li>
-          <li>如果创建了用户，在主catalog节点的情况下无法直接连接。可以先关闭catalog的鉴权功能(auth参数)再进行操作。</li>          
+        <ul><li>This function is only available in Catalog group.</li>
+          <li>The target replica group must not having a master node, and LSN of the node to upgrade must larger than all other nodes.</li>
+          <li>If there is no operation until the time limit, all nodes will follow the normal rule to re-elect a master node automatically.</li>
+          <li>If you created a user but can't connect the master Catalog node directly, you can set off the authorization (parameter "auth") of Catalog, then do the operation again.</li>          
         </ul></note>      
     </section>    
     <section>
       <title>Examples</title>
-      <p>连接catalog节点(host1:30000)，并使其强制升主， 持续300s。</p>
+      <p>Connect Catalog node (host1:30000), and upgrade it to master node by force, time limit is 300s.</p>
       <codeblock>var db = new Sdb("host1", 30000) ;
 db.forceStepUp({Seconds:300});</codeblock>
     </section>

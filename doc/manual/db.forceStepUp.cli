@@ -7,7 +7,9 @@
 .SH "NAME"
 
 .sp 2
-forceStepUp - 在一个不具备选举条件的复制组中，强制将一个备节点升级为主节点。请谨慎使用该命令!
+forceStepUp - In a replica group that doesn't satisfy the
+requirement of re-election, upgrade a slave node to a master node
+by force.
 .SH "SYNOPSIS"
 
 .sp 2
@@ -25,31 +27,38 @@ Sequoiadb
 .SH "DESCRIPTION"
 
 .sp 2
-在一个不具备选举条件的复制组中，强制将一个备节点升级为主节点。请谨慎使用该命令!
+In a replica group that doesn't satisfy the requirement of
+re-election, upgrade a slave node to a master node by force.
 .sp 2
 \fBoptions (json object)\fR
 .br
-       参数集合
+       Parameter collection
 .sp 2
        \fBSeconds\fR
 .br
-              强制升级为主节点的持续时间
+              Time limit of upgrading the slave node to master.
 .sp 2
 
 .sp 2
 \fBNote: \fR
 .sp 2
-   *  目前仅在catalog组中开放此功能。
+   *  This function is only available in Catalog group.
 .sp 2
-   *  目标复制组中不能存在主节点，且其他节点的LSN不能比目标节点的LSN大。
+   *  The target replica group must not having a master node, and
+   LSN of the node to upgrade must larger than all other nodes.
 .sp 2
-   *  当持续时间到期，所有节点会重新按照选举规则进行选举。
+   *  If there is no operation until the time limit, all nodes
+   will follow the normal rule to re-elect a master node
+   automatically.
 .sp 2
-   *  如果创建了用户，在主catalog节点的情况下无法直接连接。可以先关闭catalog的鉴权功能(auth参数)再进行操作。
+   *  If you created a user but can't connect the master Catalog
+   node directly, you can set off the authorization (parameter
+   "auth") of Catalog, then do the operation again.
 .SH "Examples"
 
 .sp 2
-连接catalog节点(host1:30000)，并使其强制升主， 持续300s。
+Connect Catalog node (host1:30000), and upgrade it to master node
+by force, time limit is 300s.
 .sp 2
 var db = new Sdb("host1", 30000) ;
 .br

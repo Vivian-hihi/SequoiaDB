@@ -160,8 +160,7 @@
           <stentry>If you encounter an error stop, default false.</stentry>
         </strow>
         <strow>
-          <stentry>--ssl</stentry>
-          <stentry></stentry>
+          <stentry>--ssl</stentry>          
           <stentry>使用 SSL 连接。默认false。</stentry>
         </strow>
       </simpletable>      
