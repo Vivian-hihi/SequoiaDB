@@ -975,14 +975,12 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( PMD_SESSMGR_RLSSS ) ;
       // clear session map
-      if ( !_quit )
+      MAPSESSION_IT it = _mapSession.find( pSession->sessionID() ) ;
+      if ( it != _mapSession.end() )
       {
-         MAPSESSION_IT it = _mapSession.find( pSession->sessionID() ) ;
-         if ( it != _mapSession.end() )
-         {
-            _mapSession.erase( it ) ;
-         }
+         _mapSession.erase( it ) ;
       }
+
       // release session
       rc = _releaseSession_i( pSession, TRUE, delay ) ;
       if ( rc )
