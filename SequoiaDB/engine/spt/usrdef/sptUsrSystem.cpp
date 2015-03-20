@@ -1579,7 +1579,7 @@ namespace engine
       do
       {
          read = 0 ;
-         ossMemset( buf, bufSize, '\0' ) ;
+         ossMemset( buf, '\0', bufSize ) ;
          rc = ossReadN( &file, bufSize, buf, read ) ;
          if ( SDB_OK != rc )
          {
