@@ -20,7 +20,7 @@
 @modify list:
    2014-7-26 Zhaobo Tan  Init
 @parameter
-   BUS_JSON: the format is: { "HostName": "susetzb", "IP": "192.168.20.42", "User": "root", "Passwd": "sequoiadb", "HostInfo": [ { "HostName": "rhel64-test8", "IP": "192.168.20.165" }, { "HostName": "rhel64-test9", "IP": "192.168.20.166" }, { "HostName": "susetzb", "IP": "192.168.20.42" } ] } ;
+   BUS_JSON: the format is: { "HostName": "susetzb", "IP": "192.168.20.42", "User": "root", "Passwd": "sequoiadb", "HostInfo": [ { "HostName": "rhel64-test8", "IP": "192.168.20.165", "AgentService": "11790" }, { "HostName": "rhel64-test9", "IP": "192.168.20.166", "AgentService": "20000" }, { "HostName": "susetzb", "IP": "192.168.20.42", "AgentService": "11790" } ] } ;
    SYS_JSON: the format is:
    ENV_JSON:
 @return
@@ -150,8 +150,16 @@ function _updateSdbcmCfgFile( lcoalhostip, arr )
       {
          continue ;
       }
-      var str = hostname + OMA_MISC_CONFIG_PORT ;
-      configobj[str] = agentport ; 
+      if ( OMA_PORT_DEFAULT_SDBCM_PORT != ( "" + agentport ) )
+      {
+         var str = hostname + OMA_MISC_CONFIG_PORT ;
+         configobj[str] = agentport ; 
+      }
+      else
+      {
+         // TODO: it seems don't work
+         Oma.delAOmaSvcName( hostname ) ;
+      }
    }
    try
    {

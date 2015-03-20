@@ -147,6 +147,7 @@ var ClusterName2                           = "clustername" ;
 var BusinessName2                          = "businessname" ;
 var UserTag2                               = "usertag" ;
 
+var DefaultPort2                           = "defaultPort" ;
 
 // file in linux
 var OMA_PATH_TEMP_OMA_DIR                  = "/tmp/omatmp/" ;
@@ -190,7 +191,18 @@ var OMA_MISC_OM_VERSION                    = "version: " ;
 var OMA_MISC_OM_RELEASE                    = "Release: " ;
 
 // port
-var OMA_PORT_DEFAULT_SDBCM_PORT            = 11790 ;
+var OMA_PORT_DEFAULT_SDBCM_PORT            = "" ;
+try
+{
+   var omaCfgObj = eval( '(' + Oma.getOmaConfigs() + ')' ) ;
+   OMA_PORT_DEFAULT_SDBCM_PORT = omaCfgObj[DefaultPort2] ;
+   if ( "undefined" == typeof(OMA_PORT_DEFAULT_SDBCM_PORT) || "" == OMA_PORT_DEFAULT_SDBCM_PORT )
+      throw -6 ;
+}
+catch( e )
+{
+   OMA_PORT_DEFAULT_SDBCM_PORT            = "11790" ;
+}
 var OMA_PORT_MAX                           = 65535 ;
 var OMA_PORT_INVALID                       = -1 ;
 var OMA_PORT_TEMP_AGENT_PORT               = 10000 ;

@@ -782,37 +782,69 @@ function getOMASvcFromCfgFile( hostname )
 @discretion: get local host name or ip address from hosts table
 @parameter void
 @return
-   retStr[string]: local host name or ip address
+   retArr[Array]: local host name or ip address
 ***************************************************************************** */
 function _getLocalHostNameOrIP( type )
 {
-   var retStr = null ;
+   var retArr = [] ;
    var cmd = new Cmd() ;
-   var osInfo = System.type() ;
    try
    {
-      if ( SYS_LINUX == SYS_TYPE )
+      if ( "hostname" == type )
       {
-         var str = null ;
-         if ( "hostname" == type )
-            str = cmd.run( "hostname" ) ;
-         else if ( "ip" == type )
-            str = cmd.run("hostname -i") ;
+         retArr.push( System.getHostName() ) ;
+      }
+      else if ( "ip" == type )
+      {
+         var cmd = new Cmd() ;
+         var str = "" ;
+         var arr = [] ;
+         if ( SYS_LINUX == SYS_TYPE )
+         {
+            str = removeLineBreak( cmd.run( "hostname -i" ) ) ;
+         }
          else
-           throw SDB_INVALIDARG ;
-         str = removeLineBreak( str ) ;
-         var arr = str.split(" ") ;
-         retStr = arr[0] ;
+         {
+            // TODO:
+         }
+         arr = str.split(" ") ;
+         if ( 0 == arr.length )
+         {
+            exception_handle( SDB_SYS, "No ip address to get" ) ;
+         }
+         for ( var i = 0; i < arr.length; i++ )
+         {
+            if ( "127.0.0.1" != arr[i] )
+            {
+               retArr.push( arr[i] ) ;
+               break ;
+            }
+         }
+         if ( 0 == retArr.length )
+         {
+            retArr.push( arr[0] ) ;
+         }
+      }
+      else if ( "ips" == type )
+      {
+         var netCardInfo = eval( '(' + System.getNetcardInfo() + ')' ) ;
+         var tmpArr = netCardInfo[Netcards] ;
+         for( var i = 0; i < tmpArr.length; i++ )
+         {
+            retArr.push( tmpArr[i][Ip] ) ;
+         }
       }
       else
       {
-         // TODO:
+        throw SDB_INVALIDARG ;
       }
+
+      return retArr ;
    }
    catch ( e )
    {
       SYSEXPHANDLE( e ) ;
-      errMsg = "Failed to get localhost host name or ip address" ;
+      errMsg = "Failed to get localhost host name or ip addresses" ;
       exception_handle( e, errMsg ) ;
    }
    return retStr ;
@@ -826,18 +858,31 @@ function _getLocalHostNameOrIP( type )
 ***************************************************************************** */
 function getLocalHostName()
 {
-   return _getLocalHostNameOrIP( "hostname" ) ;
+   var arr = _getLocalHostNameOrIP( "hostname" ) ;
+   return arr[0] ;
 }
 
 /* *****************************************************************************
-@discretion: get local ip from hosts table
+@discretion: get local ips from net card
+@parameter void
+@return
+   [Array]: local ip addresses
+***************************************************************************** */
+function getLocalIPs()
+{
+   return _getLocalHostNameOrIP( "ips" ) ;
+}
+
+/* *****************************************************************************
+@discretion: get local ips from net card
 @parameter void
 @return
    [string]: local ip address
 ***************************************************************************** */
 function getLocalIP()
 {
-   return _getLocalHostNameOrIP( "ip" ) ;
+   var arr = _getLocalHostNameOrIP( "ip" ) ;
+   return arr[0] ;
 }
 
 /* *****************************************************************************

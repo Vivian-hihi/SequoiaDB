@@ -81,6 +81,7 @@ function _addHostCheckInfo()
    var installPath      = null ;
    var localAgentPort   = null ;
    var localIP          = getLocalIP() ;
+   var localIPs         = getLocalIPs() ;
 
    // 1. get local install info for compare
    try
@@ -133,7 +134,16 @@ function _addHostCheckInfo()
    {
       var obj = hostInfo[i] ;
       var ip = obj[IP] ;
-      if ( localIP == ip )
+      var flag = false ;
+      for ( var i = 0; i < localIPs.size(); i++ )
+      {
+         if ( localIPs[i] == ip )
+         {
+            flag = true ;
+            break ;
+         }
+      }
+      if ( true == flag )
       {
          var ssh       = null ;
          var sdbUser   = info[SdbUser] ;

@@ -92,7 +92,7 @@ function _extractOMAInfo( installInfoObj, omaInfoObj )
       try
       {
          installpath = installInfoObj[INSTALL_DIR] ;
-         retObj[Path] = adaptPath( installpath ) + OMA_PATH_BIN ;
+         retObj[Path] = installpath ;
       }
       catch( e )
       {
@@ -181,7 +181,6 @@ function _extractOMAInfo( installInfoObj, omaInfoObj )
 // om agent's status and version
 function _getOMAInfo()
 {
-   var omaInfo        = new OMAInfo() ;
    var installInfoObj = null ;
    var installPath    = null ;
    var omaArr         = null ;
