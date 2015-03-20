@@ -5,5 +5,6 @@
         <topicref href="topics/features_en.dita"/>
         <topicref href="topics/datamodel_en.dita"/>
         <topicref href="topics/infrastructure_en.dita"/>
+        <anchorref href="enterprise/enterprise_en.ditamap"/>
     </topicref>
 </map>
