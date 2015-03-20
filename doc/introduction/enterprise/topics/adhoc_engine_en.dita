@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "http://docs.oasis-open.org/dita/v1.1/OS/dtd/topic.dtd">
+<topic id="sequoiadb_adhoc_engine_en">
+  <title>SEE Ad-hoc Query Engine</title>
+  <body>
+    <p>SequoiaDB Enterprise Edition Ad-hoc Query Engine allows users to use standard JDBC/ODBC driver to query data located in SequoiaDB database.</p>
+    <p>Ad-hoc Query Engine is designed to better handle queries under milliseconds for ad-hoc query workload. SEE analytics engine will be a better choice for complex long queries.</p>
+    <p>SEE Ad-hoc Query Engine is coming with SequoiaDB Enterprise Edition installation package.</p>
+  </body>
+</topic>

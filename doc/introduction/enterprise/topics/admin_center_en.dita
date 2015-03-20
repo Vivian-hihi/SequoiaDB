@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "http://docs.oasis-open.org/dita/v1.1/OS/dtd/topic.dtd">
+<topic id="sequoiadb_admin_center_en">
+  <title>SEE Visualization</title>
+  <body>
+    <p>SequoiaDB Administration Center is available for both Enterprise Edition and Community Edition. Basic database cluster management and monitoring features are provided in Administration Center for both editions. However, some additional features are only available for Enterprise Edition.</p>
+    <p>Please refer the following list for feature comparison:</p>
+    <simpletable>
+      <sthead>
+        <stentry ></stentry>
+        <stentry>Community Edition</stentry>
+        <stentry>Enterprise Edition</stentry>
+      </sthead>
+      <strow>
+        <stentry>Installation/Deployment</stentry>
+        <stentry>O</stentry>
+        <stentry>O</stentry>
+      </strow>
+      <strow>
+        <stentry>Create and manage database connections</stentry>
+        <stentry>O</stentry>
+        <stentry>O</stentry>
+      </strow>
+      <strow>
+        <stentry>Create new query using JSON editor</stentry>
+        <stentry>O</stentry>
+        <stentry>O</stentry>
+      </strow>
+      <strow>
+        <stentry>Real-time performance visualization</stentry>
+        <stentry>O</stentry>
+        <stentry>O</stentry>
+      </strow>
+      <strow>
+        <stentry>Analytics Engine installation</stentry>
+        <stentry></stentry>
+        <stentry>O</stentry>
+      </strow>
+      <strow>
+        <stentry>Ad-hoc Query Engine installation</stentry>
+        <stentry></stentry>
+        <stentry>O</stentry>
+      </strow>
+      <strow>
+        <stentry>Scheduling</stentry>
+        <stentry></stentry>
+        <stentry>O</stentry>
+      </strow>
+      <strow>
+        <stentry>Backup-and-Recovery</stentry>
+        <stentry></stentry>
+        <stentry>O</stentry>
+      </strow>
+      <strow>
+        <stentry>Performance trend monitoring</stentry>
+        <stentry></stentry>
+        <stentry>O</stentry>
+      </strow>
+      <strow>
+        <stentry>Log analysis</stentry>
+        <stentry></stentry>
+        <stentry>O</stentry>
+      </strow>
+      <strow>
+        <stentry>Analytics Engine monitoring</stentry>
+        <stentry></stentry>
+        <stentry>O</stentry>
+      </strow>
+      <strow>
+        <stentry>Ad-hoc Query Engine monitoring</stentry>
+        <stentry></stentry>
+        <stentry>O</stentry>
+      </strow>
+    </simpletable>
+  </body>
+</topic>
