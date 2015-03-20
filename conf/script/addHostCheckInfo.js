@@ -135,7 +135,7 @@ function _addHostCheckInfo()
       var obj = hostInfo[i] ;
       var ip = obj[IP] ;
       var flag = false ;
-      for ( var i = 0; i < localIPs.size(); i++ )
+      for ( var i = 0; i < localIPs.length; i++ )
       {
          if ( localIPs[i] == ip )
          {
