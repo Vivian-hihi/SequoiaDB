@@ -614,8 +614,16 @@ namespace engine
       }
 
       bob.appendNumber( OMA_FIELD_TASKID, _taskID ) ;
-      bob.appendNumber( OMA_FIELD_ERRNO, _errno ) ;
-      bob.append( OMA_FIELD_DETAIL, _detail ) ;
+      if ( OMA_TASK_STATUS_FINISH == _taskStatus )
+      {
+         bob.appendNumber( OMA_FIELD_ERRNO, _errno ) ;
+         bob.append( OMA_FIELD_DETAIL, _detail ) ;
+      }
+      else
+      {
+         bob.appendNumber( OMA_FIELD_ERRNO, SDB_OK ) ;
+         bob.append( OMA_FIELD_DETAIL, "" ) ;
+      }
       bob.appendNumber( OMA_FIELD_STATUS, _taskStatus ) ;
       bob.append( OMA_FIELD_STATUSDESC, getTaskStatusDesc( _taskStatus ) ) ;
       bob.appendNumber( OMA_FIELD_PROGRESS, _progress ) ;
@@ -1192,8 +1200,16 @@ namespace engine
       }
 
       bob.appendNumber( OMA_FIELD_TASKID, _taskID ) ;
-      bob.appendNumber( OMA_FIELD_ERRNO, _errno ) ;
-      bob.append( OMA_FIELD_DETAIL, _detail ) ;
+      if ( OMA_TASK_STATUS_FINISH == _taskStatus )
+      {
+         bob.appendNumber( OMA_FIELD_ERRNO, _errno ) ;
+         bob.append( OMA_FIELD_DETAIL, _detail ) ;
+      }
+      else
+      {
+         bob.appendNumber( OMA_FIELD_ERRNO, SDB_OK ) ;
+         bob.append( OMA_FIELD_DETAIL, "" ) ;
+      }
       bob.appendNumber( OMA_FIELD_STATUS, _taskStatus ) ;
       bob.append( OMA_FIELD_STATUSDESC, getTaskStatusDesc( _taskStatus ) ) ;
       bob.appendNumber( OMA_FIELD_PROGRESS, _progress ) ;
@@ -3366,8 +3382,16 @@ namespace engine
       }
 
       bob.appendNumber( OMA_FIELD_TASKID, _taskID ) ;
-      bob.appendNumber( OMA_FIELD_ERRNO, _errno ) ;
-      bob.append( OMA_FIELD_DETAIL, _detail ) ;
+      if ( OMA_TASK_STATUS_FINISH == _taskStatus )
+      {
+         bob.appendNumber( OMA_FIELD_ERRNO, _errno ) ;
+         bob.append( OMA_FIELD_DETAIL, _detail ) ;
+      }
+      else
+      {
+         bob.appendNumber( OMA_FIELD_ERRNO, SDB_OK ) ;
+         bob.append( OMA_FIELD_DETAIL, "" ) ;
+      }
       bob.appendNumber( OMA_FIELD_STATUS, _taskStatus ) ;
       bob.append( OMA_FIELD_STATUSDESC, getTaskStatusDesc( _taskStatus ) ) ;
       bob.appendNumber( OMA_FIELD_PROGRESS, _progress ) ;
@@ -5087,8 +5111,16 @@ namespace engine
       }
 
       bob.appendNumber( OMA_FIELD_TASKID, _taskID ) ;
-      bob.appendNumber( OMA_FIELD_ERRNO, _errno ) ;
-      bob.append( OMA_FIELD_DETAIL, _detail ) ;
+      if ( OMA_TASK_STATUS_FINISH == _taskStatus )
+      {
+         bob.appendNumber( OMA_FIELD_ERRNO, _errno ) ;
+         bob.append( OMA_FIELD_DETAIL, _detail ) ;
+      }
+      else
+      {
+         bob.appendNumber( OMA_FIELD_ERRNO, SDB_OK ) ;
+         bob.append( OMA_FIELD_DETAIL, "" ) ;
+      }
       bob.appendNumber( OMA_FIELD_STATUS, _taskStatus ) ;
       bob.append( OMA_FIELD_STATUSDESC, getTaskStatusDesc( _taskStatus ) ) ;
       bob.appendNumber( OMA_FIELD_PROGRESS, _progress ) ;
