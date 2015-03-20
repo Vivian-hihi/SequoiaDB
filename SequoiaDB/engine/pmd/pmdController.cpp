@@ -102,7 +102,7 @@ namespace engine
       if ( pOptCB->hasField( FAP_OPTION_NAME ) )
       {
          pOptCB->getFieldStr( FAP_OPTION_NAME, fapModuleName,
-                              FAP_MODULE_NAME_SIZE, MONGO_MODULE_NAME ) ;
+                              FAP_MODULE_NAME_SIZE, "" ) ;
          rc = initForeignModule( fapModuleName ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to init fap module, rc: %d", rc ) ;
       }
@@ -609,7 +609,11 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       UINT16 protocolPort = 0 ;
-      CHAR fapModuleName[ FAP_MODULE_NAME_SIZE + 1 ] = { 0 } ;
+
+      if (  NULL == strName || '\0' == strName[ 0 ] )
+      {
+         goto done ;
+      }
 
       _fapMongo = SDB_OSS_NEW pmdModuleLoader() ;
       if ( NULL == _fapMongo )
@@ -618,18 +622,10 @@ namespace engine
          rc = SDB_OOM ;
          goto error ;
       }
-      ossMemcpy( fapModuleName, FAP_MODULE_NAME_PREFIX,
-                                ossStrlen(FAP_MODULE_NAME_PREFIX) ) ;
-      if (  NULL == strName
-         || 0 == ossStrncmp( "", strName, ossStrlen( strName ) ) )
-      {
-         strName = MONGO_MODULE_NAME ;
-      }
 
-      ossStrncat( fapModuleName, strName, ossStrlen( strName ) ) ;
-      rc = _fapMongo->load( fapModuleName, FAP_MODULE_PATH ) ;
+      rc = _fapMongo->load( strName, FAP_MODULE_PATH ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to load module: %s, path: %s"
-                   " rc: %d", fapModuleName, FAP_MODULE_PATH, rc ) ;
+                   " rc: %d", strName, FAP_MODULE_PATH, rc ) ;
       rc = _fapMongo->create( _protocol ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to create protocol service" ) ;
 
