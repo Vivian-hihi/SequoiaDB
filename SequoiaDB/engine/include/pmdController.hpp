@@ -105,7 +105,7 @@ namespace engine
          virtual void  registerCB( SDB_ROLE dbrole ) ;
 
       private:
-         INT32 initForeignModule() ;
+         INT32 initForeignModule( const CHAR *strName ) ;
          INT32 activeForeignModule() ;
          void  finishForeignModule() ;
 

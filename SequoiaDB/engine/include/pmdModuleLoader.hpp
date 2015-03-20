@@ -47,8 +47,11 @@
 #define CREATE_FAP_NAME "createAccessProtocol"
 #define RELEASE_FAP_NAME "releaseAccessProtocol"
 
-#define MONGO_MODULE_NAME "fapmongo"
-#define MONGO_MODULE_PATH "./bin/fap/"
+#define FAP_MODULE_NAME_PREFIX "fap"
+#define FAP_MODULE_PATH "./bin/fap/"
+#define FAP_MODULE_NAME_SIZE 255
+#define MONGO_MODULE_NAME "mongo"
+
 
 namespace engine
 {

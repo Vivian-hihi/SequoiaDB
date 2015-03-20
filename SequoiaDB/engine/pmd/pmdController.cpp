@@ -97,12 +97,14 @@ namespace engine
       INT32 rc = SDB_OK ;
       pmdOptionsCB *pOptCB = pmdGetOptionCB() ;
       UINT16 port = 0 ;
+      CHAR fapModuleName[ FAP_MODULE_NAME_SIZE + 1 ] = { 0 } ;
 
-      if ( FALSE/*pOptCB->fapEnabled()*/ )
+      if ( pOptCB->hasField( FAP_OPTION_NAME ) )
       {
-         rc = initForeignModule() ;
+         pOptCB->getFieldStr( FAP_OPTION_NAME, fapModuleName,
+                              FAP_MODULE_NAME_SIZE, MONGO_MODULE_NAME ) ;
+         rc = initForeignModule( fapModuleName ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to init fap module, rc: %d", rc ) ;
-         rc = SDB_OK ;
       }
 
       // 1. create tcp listerner
@@ -603,10 +605,11 @@ namespace engine
       _pRSManager = pRSManager ;
    }
 
-   INT32 _pmdController::initForeignModule()
+   INT32 _pmdController::initForeignModule( const CHAR *strName )
    {
       INT32 rc = SDB_OK ;
       UINT16 protocolPort = 0 ;
+      CHAR fapModuleName[ FAP_MODULE_NAME_SIZE + 1 ] = { 0 } ;
 
       _fapMongo = SDB_OSS_NEW pmdModuleLoader() ;
       if ( NULL == _fapMongo )
@@ -615,9 +618,18 @@ namespace engine
          rc = SDB_OOM ;
          goto error ;
       }
-      rc = _fapMongo->load( MONGO_MODULE_NAME, MONGO_MODULE_PATH ) ;
+      ossMemcpy( fapModuleName, FAP_MODULE_NAME_PREFIX,
+                                ossStrlen(FAP_MODULE_NAME_PREFIX) ) ;
+      if (  NULL == strName
+         || 0 == ossStrncmp( "", strName, ossStrlen( strName ) ) )
+      {
+         strName = MONGO_MODULE_NAME ;
+      }
+
+      ossStrncat( fapModuleName, strName, ossStrlen( strName ) ) ;
+      rc = _fapMongo->load( fapModuleName, FAP_MODULE_PATH ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to load module: %s, path: %s"
-                   " rc: %d", MONGO_MODULE_NAME, MONGO_MODULE_PATH, rc ) ;
+                   " rc: %d", fapModuleName, FAP_MODULE_PATH, rc ) ;
       rc = _fapMongo->create( _protocol ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to create protocol service" ) ;
 
@@ -656,7 +668,7 @@ namespace engine
       pmdEDUMgr *pEDUMgr = pmdGetKRCB()->getEDUMgr() ;
       EDUID eduID = PMD_INVALID_EDUID ;
 
-      if ( TRUE/*!pOptCB->fapEnabled()*/ )
+      if ( NULL == _fapMongo )
       {
          goto done ;
       }
