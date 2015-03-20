@@ -39,6 +39,10 @@
 
 namespace engine
 {
+   #define OM_PATH_WEB                       "web"
+   #define OM_PATH_CONFIG                    "config"
+   #define OM_PATH_VERSION                   "version"
+
    #define OM_TEMPLATE_REPLICA_NUM           "replicanum"
    #define OM_TEMPLATE_DATAGROUP_NUM         "datagroupnum"
    #define OM_TEMPLATE_CATALOG_NUM           "catalognum"
