@@ -648,8 +648,8 @@
       <name>PMD_OPTION_SHARINGBRK</name>
       <long>sharingbreak</long>
       <description>
-         <en>The timeout period for heartbeat in each replica group ( in ms ), default:5000, value range:[5000,300000] </en>
-         <cn>判定心跳中断的时间(ms),默认值:5000,取值范围:[5000,300000]</cn>
+         <en>The timeout period for heartbeat in each replica group ( in ms ), default:7000, value range:[5000,300000] </en>
+         <cn>判定心跳中断的时间(ms),默认值:7000,取值范围:[5000,300000]</cn>
       </description>
       <type>int</type>
       <hidden>true</hidden>
