@@ -269,13 +269,13 @@ ENCODING = 'UTF8'</pre>
       <pre class="pre codeblock">/opt/sequoiadb/pgsql/etc</pre>
 
       <div class="note note"><span class="notetitle">Note:</span> 
-        <p class="p">如果显示目录不存在，自己手动创建即可。</p>
+        <p class="p">if the directory to show is not exist, you may create it manually.</p>
 
         <pre class="pre codeblock">$&gt; mkdir -p /opt/sequoiadb/pgsql/etc</pre>
 
       </div>
 
-      <p class="p">将需要修改的参数写入配置文件中：</p>
+      <p class="p">Write the parameters you want to modify into the configuration file:</p>
 
       <pre class="pre codeblock">$&gt;echo "\\set FETCH_COUNT 100" &gt;&gt; /opt/sequoiadb/pgsql/etc/psqlrc</pre>
 

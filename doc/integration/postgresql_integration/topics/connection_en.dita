@@ -148,10 +148,10 @@ ENCODING = 'UTF8'</codeblock>
       <p>Result is:</p>
       <codeblock>/opt/sequoiadb/pgsql/etc</codeblock>
       <note>
-        <p>如果显示目录不存在，自己手动创建即可。</p>
+        <p>if the directory to show is not exist, you may create it manually.</p>
         <codeblock>$> mkdir -p /opt/sequoiadb/pgsql/etc</codeblock>
       </note>
-      <p>将需要修改的参数写入配置文件中：</p>
+      <p>Write the parameters you want to modify into the configuration file:</p>
       <codeblock>$>echo "\\set FETCH_COUNT 100" >> /opt/sequoiadb/pgsql/etc/psqlrc</codeblock>
       <p>4) Change the logs' level of pg_shell:</p>
       <codeblock>$>sed -i 's/#client_min_messages = notice/client_min_messages = debug1/g' pg_data/postgresql.conf</codeblock>

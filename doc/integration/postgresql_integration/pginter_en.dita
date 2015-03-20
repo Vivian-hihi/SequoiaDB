@@ -3,7 +3,7 @@
 <topic id="topic_flj_kjx_jr">
   <title>Integration with PostgreSQL</title>
   <body>
-    <p>PostgreSQL是一款开源的关系型数据库，支持标准SQL，用户可以通过JDBC驱动连接PostgreSQL进行应用程序开发。用户通过扩展PostgreSQL功能，让开发者可以使用SQL语句访问SequoiaDB数据库，完成SequoiaDB数据库的增、删、查、改操作。</p>
+    <p>PostgreSQL is a open-source relational database, it supports standard SQL and can be used to develop applications with JDBC driver connecting. By extending PostgreSQL's functions, developer can use SQL to access SequoiaDB database, can do CRUD in SequoiaDB database.</p>
     <ul>
       <li><xref href="./topics/SequoiadbPostgresql_en.dita">Supported Releases for PostgreSQL</xref></li>
       <li><xref href="./topics/deployment_en.dita">Deployment</xref></li>
