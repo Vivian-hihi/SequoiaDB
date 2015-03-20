@@ -60,7 +60,7 @@ namespace engine
 
    #define JUDGE_RC( rc ) if ( SDB_OK != rc ) { goto error ; }
 
-   #define PMD_OPTION_BRK_TIME_DEFAULT (5000)
+   #define PMD_OPTION_BRK_TIME_DEFAULT (7000)
    #define PMD_MAX_PREF_POOL           (0) // modify 200 to 0
    #define PMD_MAX_SUB_QUERY           (10)
    #define PMD_MIN_SORTBUF_SZ          (RTN_SORT_MIN_BUFSIZE)
@@ -1406,8 +1406,7 @@ namespace engine
       // --sharingBreak
       rdxUInt( pEX, PMD_OPTION_SHARINGBRK, _sharingBreakTime, FALSE, TRUE,
                PMD_OPTION_BRK_TIME_DEFAULT, TRUE ) ;
-      rdvMinMax( pEX, _sharingBreakTime, PMD_OPTION_BRK_TIME_DEFAULT,
-                 300000, TRUE ) ;
+      rdvMinMax( pEX, _sharingBreakTime, 5000, 300000, TRUE ) ;
       // --startshifttime
       rdxUInt( pEX, PMD_OPTION_START_SHIFT_TIME, _startShiftTime, FALSE, TRUE,
                PMD_DFT_START_SHIFT_TIME, TRUE ) ;
