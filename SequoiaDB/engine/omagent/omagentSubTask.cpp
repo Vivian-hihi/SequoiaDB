@@ -296,6 +296,13 @@ namespace engine
                     _taskName.c_str() ) ;
             goto done ;
          }
+         // judge whether task had fail
+         if ( TRUE == _pTask->getIsTaskFail() )
+         {
+            PD_LOG( PDEVENT, "Install db business task had failed, "
+                    "sub task[%s] exits", _taskName.c_str() ) ;
+            goto done ;
+         }
          // 2. get a data group to install
          // if no group needs to install, let this backgroud
          // thread finish
@@ -469,7 +476,9 @@ namespace engine
       _pTask->setSubTaskStatus( _taskName, OMA_TASK_STATUS_FINISH ) ;
       _pTask->notifyUpdateProgress() ;
       return rc ;
+      
    error:
+      _pTask->setIsTaskFail() ;
       _pTask->setErrInfo( rc, pDetail ) ;
       goto done ;
    }

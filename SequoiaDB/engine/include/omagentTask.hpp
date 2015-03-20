@@ -163,6 +163,10 @@ namespace engine
          INT32 doit() ;
 
       public:
+         void setIsTaskFail() ;
+         BOOLEAN getIsTaskFail() ;
+
+      public:
          INT32 updateProgressToTask( INT32 serialNum, InstDBResult &instResult,
                                      BOOLEAN needToNotify = FALSE ) ;
          INT32 updateProgressToTask( INT32 errNum, const CHAR *pDetail,
@@ -220,6 +224,7 @@ namespace engine
          BOOLEAN                                _isStandalone ;
          
          INT32                                  _nodeSerialNum ;
+         BOOLEAN                                _isTaskFail ;
          ossSpinSLatch                          _taskLatch ;
          ossEvent                               _taskEvent ;
          UINT64                                 _eventID ;

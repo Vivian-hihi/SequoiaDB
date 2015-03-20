@@ -1325,6 +1325,7 @@ namespace engine
       _taskName      = OMA_TASK_NAME_INSTALL_DB_BUSINESS ;
       _isStandalone  = FALSE ;
       _nodeSerialNum = 0 ;
+      _isTaskFail    = FALSE ;
       _eventID       = 0 ;
       _progress      = 0 ;
       _errno         = SDB_OK ;
@@ -1510,6 +1511,18 @@ namespace engine
       }
       goto done ;
       
+   }
+
+   void _omaInstDBBusTask::setIsTaskFail()
+   {
+      ossScopedLock lock ( &_taskLatch, EXCLUSIVE ) ;
+      _isTaskFail = TRUE ;
+   }
+
+   BOOLEAN _omaInstDBBusTask::getIsTaskFail()
+   {
+      ossScopedLock lock ( &_taskLatch, EXCLUSIVE ) ;
+      return _isTaskFail ;
    }
 
    string _omaInstDBBusTask::getTmpCoordSvcName()
@@ -3817,11 +3830,8 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
 
-      // 1. set install db business task's status to be running
-      if ( OMA_TASK_STATUS_ROLLBACK != _taskStatus )
-      {
-         setTaskStatus( OMA_TASK_STATUS_RUNNING ) ;
-      }
+      // 1. set remove db business task's status to be running
+      setTaskStatus( OMA_TASK_STATUS_RUNNING ) ;
 
       // in case of standalone
       if ( _isStandalone )
@@ -3837,18 +3847,7 @@ namespace engine
       {
          // install temporary coord
          rc = _installTmpCoord() ;
-         if ( SDB_OK == rc )
-         {
-            if ( OMA_TASK_STATUS_ROLLBACK == _taskStatus )
-            {
-               // update progress
-               updateProgressToTask( SDB_OK, "", ROLE_DATA, OMA_TASK_STATUS_FINISH ) ;
-               updateProgressToTask( SDB_OK, "", ROLE_COORD, OMA_TASK_STATUS_FINISH ) ;
-               updateProgressToTask( SDB_OK, "", ROLE_CATA, OMA_TASK_STATUS_FINISH ) ;
-               goto done ;
-            }
-         }
-         else
+         if ( SDB_OK != rc )
          {
             PD_LOG ( PDERROR, "Failed to install temporary coord, "
                      "rc = %d", rc ) ;
