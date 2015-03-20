@@ -8,8 +8,8 @@
     <section>
       <title>History Updates:</title>
       <p><b>Version 1.12</b></p>
-      <p>1. 添加了使用 SSL 连接数据库的接口，详情请查看<xref href="..\..\..\..\administration\security\topics\security_net.dita">网络安全</xref>。</p>
-      <p>2. SequoiadbDatasource 类新添加的接口：<codeblock>close()，用于释放连接池资源</codeblock></p>
+      <p>1. Add interface for using SSL to connect database. See in <xref href="..\..\..\..\administration\security\topics\security_net_en.dita">Network Security</xref>。</p>
+      <p>2. SequoiadbDatasource class added new interface:<codeblock>close(), release resource of connection pool</codeblock></p>
       <p><b>Version 1.10</b></p>
       <p>1. 1.	DBCollection class' new interfaces:</p><codeblock>createLob, create a large object(LOB)
 openLob, open an existed LOB

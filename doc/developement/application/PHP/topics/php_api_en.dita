@@ -6,9 +6,9 @@
     <p>This part is related to the PHP API document.</p>
     <p><xref href="..\..\..\..\php\html\index.html" format="html">PHP API</xref></p>
     <section>
-      <title>历史更新情况：</title>
+      <title>History Updates:</title>
       <p><b>Version 1.12</b></p>
-      <p>1. 添加了使用 SSL 连接数据库的接口，详情请查看<xref href="..\..\..\..\administration\security\topics\security_net.dita">网络安全</xref>。</p>      
+      <p>1. Add interface for using SSL to connect database. See in <xref href="..\..\..\..\administration\security\topics\security_net_en.dita">Network Security</xref>。</p>      
     </section>
   </body>
 </topic>

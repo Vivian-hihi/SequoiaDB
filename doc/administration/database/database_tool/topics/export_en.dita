@@ -84,7 +84,7 @@
         </strow>
         <strow>
           <stentry>--ssl</stentry>          
-          <stentry>使用 SSL 连接，默认 false。</stentry>
+          <stentry>Use SSL to connect. Default with false.</stentry>
         </strow>
       </simpletable>
     </section>

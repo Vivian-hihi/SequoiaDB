@@ -45,7 +45,7 @@
         <strow>
           <stentry>--ssl</stentry>
           <stentry></stentry>
-          <stentry>使用 SSL 连接。</stentry>
+          <stentry>Use SSL to connect. Default with false.</stentry>
         </strow>
       </simpletable>
       <p><note>For Ubuntu and other systems, you need to install Ncurses library, Or it will shows 'Error opening terminal: TERM'
