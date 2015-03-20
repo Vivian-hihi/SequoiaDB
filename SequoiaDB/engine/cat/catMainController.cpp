@@ -529,7 +529,7 @@ namespace engine
       {
          goto error ;
       }
-
+/*
       /// SYSINFO
       rc = _createSysCollection( CAT_SYSDCBASE_COLLECTION_NAME, cb ) ;
       if ( rc )
@@ -565,7 +565,7 @@ namespace engine
             goto error ;
          }
       }
-
+*/
    done :
       PD_TRACE_EXITRC ( SDB_CATMAINCT__ENSUREMETADATA, rc ) ;
       return rc ;

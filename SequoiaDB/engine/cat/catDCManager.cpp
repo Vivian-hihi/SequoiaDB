@@ -137,17 +137,19 @@ namespace engine
       {
          return SDB_CLS_NOT_PRIMARY ;
       }
-      return catUpdateBaseInfoAddr( pmdGetOptionCB()->getCatAddr().c_str(),
-                                    TRUE, _pEduCB, 1 ) ;
+//      return catUpdateBaseInfoAddr( pmdGetOptionCB()->getCatAddr().c_str(),
+//                                    TRUE, _pEduCB, 1 ) ;
+      return SDB_OK ;
    }
 
    BOOLEAN _catDCManager::isDCActive() const
    {
-      if ( _pDCBaseInfo )
+      /*if ( _pDCBaseInfo )
       {
          return _pDCBaseInfo->isActive() ;
       }
-      return FALSE ;
+      return FALSE ;*/
+      return TRUE ;
    }
 
    BOOLEAN _catDCManager::isImageEnable() const
@@ -185,6 +187,7 @@ namespace engine
 
    void _catDCManager::onCommandEnd( MsgHeader *pMsg, INT32 result )
    {
+/*
       INT32 rc = SDB_OK ;
       DPS_LSN expectLSN = _pDpsCB->expectLsn() ;
 
@@ -225,12 +228,13 @@ namespace engine
       PD_LOG( PDSEVERE, "Stop program because save system log, rc: %d", rc ) ;
       PMD_RESTART_DB( rc ) ;
       goto done ;
+*/
    }
 
    INT32 _catDCManager::active()
    {
       INT32 rc = SDB_OK;
-
+/*
       // update global info
       rc = _updateGlobalInfo() ;
       PD_RC_CHECK( rc, PDERROR, "Failed to update global info, rc: %d", rc ) ;
@@ -251,7 +255,7 @@ namespace engine
       // restore log manager
       rc = _pLogMgr->restore() ;
       PD_RC_CHECK( rc, PDERROR, "Restore system log failed, rc: %d", rc ) ;
-
+*/
    done :
       return rc ;
    error :
@@ -274,10 +278,10 @@ namespace engine
       switch ( pMsg->opCode )
       {
       // command message entry, should dispatch in the entry function
-      case MSG_CAT_ALTER_IMAGE_REQ :
+/*      case MSG_CAT_ALTER_IMAGE_REQ :
          rc = processCommandMsg( handle, pMsg, TRUE ) ;
          break ;
-
+*/
       default :
             rc = SDB_UNKNOWN_MESSAGE;
             PD_LOG( PDWARNING, "Received unknown message (opCode: [%d]%u )",
