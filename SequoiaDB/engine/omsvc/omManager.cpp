@@ -44,6 +44,7 @@
 #include "pmdController.hpp"
 #include "omManagerJob.hpp"
 #include "../omsvc/omGetFileCommand.hpp"
+#include "ossVer.h"
 
 using namespace bson ;
 
@@ -128,6 +129,7 @@ namespace engine
                     rc ) ;
 
       _readAgentPort() ;
+      _createVersionFile() ;
 
       _myNodeID.value             = MSG_INVALID_ROUTEID ;
       _myNodeID.columns.serviceID = MSG_ROUTE_LOCAL_SERVICE ;
@@ -688,6 +690,62 @@ namespace engine
       {
          _localAgentPort = boost::lexical_cast<string>( SDBCM_DFT_PORT ) ;
       }
+
+   done:
+      return ;
+   error:
+      goto done ;
+   }
+
+   void _omManager::_createVersionFile()
+   {
+      INT32 rc = SDB_OK ;
+      stringstream ss ;
+      string versionInfo ;
+      OSSFILE pFile ;
+      CHAR versionFile[ OSS_MAX_PATHSIZE + 1 ] ;
+      string wwwPath = pmdGetOptionCB()->getWWWPath() ;
+      rc = ossGetEWD( versionFile, OSS_MAX_PATHSIZE ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "get current path failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      ossSnprintf( versionFile, OSS_MAX_PATHSIZE, wwwPath.c_str() ) ;
+      utilCatPath( versionFile, OSS_MAX_PATHSIZE, OM_PATH_CONFIG ) ;
+      utilCatPath( versionFile, OSS_MAX_PATHSIZE, OM_PATH_VERSION ) ;
+
+      rc = ossOpen( versionFile, OSS_REPLACE|OSS_READWRITE,
+                    OSS_RU|OSS_WU|OSS_RG|OSS_RO, pFile ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "open file failed:file=%s,rc=%d", versionFile,
+                 rc ) ;
+         goto error ;
+      }
+
+      {
+         INT32 ver ;
+         INT32 subVer ;
+         INT32 release ;
+         const CHAR *pBuild = NULL ;
+         ossGetVersion( &ver, &subVer, &release, &pBuild ) ;
+         ss << "{\n  version:\"" << ver << "." << subVer 
+            << "\",\n  buildTime:\"" << pBuild << "\",\n  release:\""
+            << release << "\"\n}";
+      }
+
+      versionInfo = ss.str() ;
+      rc = ossWriteN( &pFile, versionInfo.c_str(), versionInfo.length() ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "write file failed:file=%s,content=%s,rc=%d", 
+                 versionFile, versionInfo.c_str(), rc ) ;
+         goto error ;
+      }
+
+      ossClose( pFile ) ;
 
    done:
       return ;
