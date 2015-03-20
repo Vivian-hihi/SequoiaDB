@@ -221,6 +221,10 @@ INT32 insertCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
       }
 
       parser.nextObj( obj ) ;
+      if ( !obj.getBoolField( "ordered" ) )
+      {
+         insert->flags |= FLG_INSERT_CONTONDUP ;
+      }
       // makeup cs.cl
       fullname += parser.csName ;
       fullname += "." ;
