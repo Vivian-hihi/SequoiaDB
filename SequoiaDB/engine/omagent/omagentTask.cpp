@@ -1410,6 +1410,7 @@ namespace engine
                updateProgressToTask( SDB_OK, "", ROLE_DATA, OMA_TASK_STATUS_FINISH ) ;
                updateProgressToTask( SDB_OK, "", ROLE_COORD, OMA_TASK_STATUS_FINISH ) ;
                updateProgressToTask( SDB_OK, "", ROLE_CATA, OMA_TASK_STATUS_FINISH ) ;
+               setErrInfo( SDB_OMA_TASK_FAIL, "Task Failed" ) ;
                goto done ;
             }
          }
