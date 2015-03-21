@@ -101,12 +101,13 @@ function addBusiness()
 //删除鉴权
 function removeAuth( index )
 {
+	sdbjs.parts.loadingBox.show( 'loading' ) ;
 	var businessName = _businessList[index]['BusinessName'] ;
 	restRemoveBusinessAuth( true, function( jsonArr, textStatus, jqXHR ){
-		sdbjs.parts.gridBox.updateBody( 'businessInfoGrid', index, 3, htmlEncode( 'No' ) ) ;
+		sdbjs.parts.gridBox.updateBody( 'businessInfoGrid', index, 3, htmlEncode( _languagePack['businesslist']['businessGrid']['auth'][1] ) ) ;
 		sdbjs.parts.gridBox.updateBody( 'businessInfoGrid', index, 4, htmlEncode( '' ) ) ;
-		sdbjs.parts.dropDownBox.updateMenu( businessName + '_dropDown', 0, htmlEncode( '设置鉴权' ), true, 'openSetAuthModal(' + index + ')' ) ;
-		sdbjs.parts.dropDownBox.updateMenu( businessName + '_dropDown', 1, htmlEncode( '删除鉴权' ), false, '' ) ;
+		sdbjs.parts.dropDownBox.updateMenu( businessName + '_dropDown', 0, htmlEncode( _languagePack['businesslist']['businessGrid']['button'][1] ), true, 'openSetAuthModal(' + index + ')' ) ;
+		sdbjs.parts.dropDownBox.updateMenu( businessName + '_dropDown', 1, htmlEncode( _languagePack['businesslist']['businessGrid']['button'][2] ), false, '' ) ;
 	}, function( json ){
 		showFootStatus( 'danger', json['detail'] ) ;
 	}, function(){
@@ -123,10 +124,10 @@ function setAuth( index )
 	var businessName = _businessList[index]['BusinessName'] ;
 	sdbjs.parts.loadingBox.show( 'loading' ) ;
 	restSetBusinessAuth( true, function( jsonArr, textStatus, jqXHR ){
-		sdbjs.parts.gridBox.updateBody( 'businessInfoGrid', index, 3, htmlEncode( 'Yes' ) ) ;
+		sdbjs.parts.gridBox.updateBody( 'businessInfoGrid', index, 3, htmlEncode( _languagePack['businesslist']['businessGrid']['auth'][0] ) ) ;
 		sdbjs.parts.gridBox.updateBody( 'businessInfoGrid', index, 4, htmlEncode( user ) ) ;
-		sdbjs.parts.dropDownBox.updateMenu( businessName + '_dropDown', 0, htmlEncode( '设置鉴权' ), false, '' ) ;
-		sdbjs.parts.dropDownBox.updateMenu( businessName + '_dropDown', 1, htmlEncode( '删除鉴权' ), true, 'removeAuth(' + index + ')' ) ;
+		sdbjs.parts.dropDownBox.updateMenu( businessName + '_dropDown', 0, htmlEncode( _languagePack['businesslist']['businessGrid']['button'][1] ), false, '' ) ;
+		sdbjs.parts.dropDownBox.updateMenu( businessName + '_dropDown', 1, htmlEncode( _languagePack['businesslist']['businessGrid']['button'][2] ), true, 'removeAuth(' + index + ')' ) ;
 	}, function( json ){
 		showFootStatus( 'danger', json['detail'] ) ;
 	}, function(){
@@ -165,7 +166,7 @@ function loadBusinessData()
 			sdbjs.parts.gridBox.addBody( 'businessInfoGrid', [{ 'text': htmlEncode( businessInfo['BusinessName'] ), 'width': '25%' },
 																			  { 'text': htmlEncode( businessInfo['BusinessType'] ), 'width': '15%' },
 																			  { 'text': htmlEncode( businessInfo['DeployMod'] ), 'width': '15%' },
-																			  { 'text': htmlEncode( user === null ? 'No' : 'Yes' ), 'width': '10%' },
+																			  { 'text': htmlEncode( user === null ? _languagePack['businesslist']['businessGrid']['auth'][1] : _languagePack['businesslist']['businessGrid']['auth'][0] ), 'width': '10%' },
 																			  { 'text': htmlEncode( user === null ? '' : user ), 'width': '25%' },
 																			  { 'text': function( obj ){
 																				  sdbjs.parts.dropDownBox.create( obj, businessInfo['BusinessName'] + '_dropDown' ) ;
@@ -329,14 +330,14 @@ function createHtml()
 	/* 设置鉴权的弹窗 */
 	sdbjs.parts.modalBox.create( $( document.body ), 'setAuth' ) ;
 	//'修改密码'
-	sdbjs.parts.modalBox.update( 'setAuth', htmlEncode( '设置鉴权' ), function( bodyObj ){
+	sdbjs.parts.modalBox.update( 'setAuth', htmlEncode( _languagePack['businesslist']['setAuthModal']['title'] ), function( bodyObj ){
 		sdbjs.parts.tableBox.create( bodyObj, 'setAuthTable' ) ;
 		sdbjs.parts.tableBox.update( 'setAuthTable', 'loosen' ) ;
 		//'用户名：'
-		sdbjs.parts.tableBox.addBody( 'setAuthTable', [{ 'text': htmlEncode( '鉴权用户名' ), 'width': 100 },
+		sdbjs.parts.tableBox.addBody( 'setAuthTable', [{ 'text': htmlEncode( _languagePack['businesslist']['setAuthModal']['table'][0] ), 'width': 100 },
 																		 { 'text': '<input class="form-control" type="text" id="setAuth_user">' } ] ) ;
 		//'密码：'
-		sdbjs.parts.tableBox.addBody( 'setAuthTable', [{ 'text': htmlEncode( '鉴权密码' ), 'width': 100 },
+		sdbjs.parts.tableBox.addBody( 'setAuthTable', [{ 'text': htmlEncode( _languagePack['businesslist']['setAuthModal']['table'][1] ), 'width': 100 },
 																		 { 'text': '<input class="form-control" type="password" id="setAuth_pwd">' } ] ) ;
 
 	}, function( footObj ){

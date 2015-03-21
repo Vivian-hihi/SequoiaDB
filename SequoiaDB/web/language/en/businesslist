@@ -6,7 +6,8 @@
 		  },
 	 	  "businessGrid": {
 		  		   "title": [ "Module Name", "Type", "Mode", "Auth", "Auth user", "Operation" ],
-		  			"button": [ "Operation", "Set Auth", "Remove Auth", "Uninstall" ]
+		  			"button": [ "Operation", "Set Auth", "Remove Auth", "Uninstall" ],
+					"auth": [ "Yes", "No" ]
 		  },
 		  "isRemoveBusiness": {
 		  			"title": "Tips"
@@ -17,6 +18,10 @@
 						[ "Module Name", "Name of the Module" ],
 						[ "Module Type", "" ]
 					]
+		  },
+		  "setAuthModal": {
+		  			"title": "Set Auth",
+					"table": [ "User:", "Password:" ]
 		  }
     }
 }
