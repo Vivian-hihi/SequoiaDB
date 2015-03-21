@@ -181,7 +181,7 @@ function updateTaskInfo( taskInfo, isFirst )
 		{
 			_hostStatus[index] = false ;
 		}
-		if( _hostStatus[index] === false )
+		//if( _hostStatus[index] === false )
 		{
 			var statusStr = '' ;
 			if( resultInfo['Flow'] !== null && resultInfo['Flow'].length > 0 )
