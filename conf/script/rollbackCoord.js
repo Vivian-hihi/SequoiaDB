@@ -157,6 +157,8 @@ function main()
       // if catalog is not running, no need to rollback
       if ( false == isCatalogRunning( db ) )
       {
+         PD_LOG2( task_id, arguments, PDEVENT, FILE_NAME_ROLLBACK_COORD,
+                  sprintf( "Catalog is not running, stop removing coord group" ) ) ;
          _final() ;
          return RET_JSON ;
       }

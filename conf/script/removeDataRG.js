@@ -114,6 +114,8 @@ function main()
       {
          try
          {
+            PD_LOG2( task_id, arguments, PDEVENT, FILE_NAME_REMOVE_DATA_RG,
+                     sprintf( "Removing data group[?]", groupNames[i] ) ) ;
             db.removeRG( groupNames[i] ) ;
          }
          catch( e )

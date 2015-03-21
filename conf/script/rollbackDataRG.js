@@ -128,6 +128,8 @@ function _removeDataGroup( db, groups )
 {
    for ( var i = 0; i < groups.length; i++ )
    {
+      PD_LOG2( task_id, arguments, PDEVENT, FILE_NAME_ROLLBACK_DATA_RG,
+               sprintf( "Removing data group[?]", groups[i] ) ) ;
       _removeGroup( db, groups[i] ) ;
    }
 }
@@ -182,6 +184,8 @@ function main()
       var flag = isCatalogRunning( db ) ;
       if ( false == isCatalogRunning( db ) )
       {
+         PD_LOG2( task_id, arguments, PDEVENT, FILE_NAME_ROLLBACK_DATA_RG,
+                  sprintf( "Catalog is not running, stop removing data groups" ) ) ;
          _final() ;
          return RET_JSON ;
       }
