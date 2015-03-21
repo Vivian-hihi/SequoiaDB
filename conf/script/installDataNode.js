@@ -284,7 +284,7 @@ function main()
       errMsg = GETLASTERRMSG() ; 
       rc = GETLASTERROR() ;
       PD_LOG2( task_id, arguments, PDERROR, FILE_NAME_INSTALL_DATA_NODE,
-               sprintf( "Failed to install catalog[?:?], rc:?, detail:?",
+               sprintf( "Failed to install data node[?:?], rc:?, detail:?",
                host_name, host_svc, rc, errMsg ) ) ;             
       RET_JSON[Errno] = rc ;
       RET_JSON[Detail] = errMsg ;
