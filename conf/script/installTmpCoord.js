@@ -449,6 +449,7 @@ function _handleerror( tmpCoordHostName, cfgInfoObj )
 {
    var option  = new tmpCoordOption() ;
    var matcher = new tmpCoordMather() ;
+   var needToRollback = false ;
    var oldTmpCoordInfoArr = null ;
    var oldTmpCoordSvc     = null ;
    var oldTmpCoordNum     = null ;
@@ -459,6 +460,12 @@ function _handleerror( tmpCoordHostName, cfgInfoObj )
       matcher[ClusterName2]  = cfgInfoObj[ClusterName2] ;
       matcher[BusinessName2] = cfgInfoObj[BusinessName2] ;
       matcher[UserTag2]      = cfgInfoObj[UserTag2] ;
+      // when no catalog address, we are installing business, and we need to rollback
+      if ( ( "undefined" == typeof( cfgInfoObj[CatalogAddr2] ) ) ||
+           ( "" == cfgInfoObj[CatalogAddr2] ) )
+      {
+         needToRollback = true ;
+      }
    }
    catch( e )
    {
@@ -490,18 +497,23 @@ function _handleerror( tmpCoordHostName, cfgInfoObj )
    // 4. get service of the remaining temporary coord
    oldTmpCoordSvc = _getTmpCoordSvc( oldTmpCoordInfoArr ) ;
 
-   // 5. handle error
-   try
+   // 5. rollback
+   PD_LOG2( task_id, arguments, PDEVENT, FILE_NAME_INSTALL_TEMPORARY_COORD,
+            sprintf( "Need to rollback: ?", needToRollback? "TRUE" : "FALSE" ) ) ;
+   if ( true == needToRollback )
    {
-      _rollback( tmpCoordHostName, oldTmpCoordSvc ) ;
-   }
-   catch( e )
-   {
-      SYSEXPHANDLE( e ) ;
-      rc = GETLASTERROR() ;
-      errMsg = "Failed to rollback the remaining nodes left last time, going to remove remaining temporary coord anyway" ;
-      PD_LOG2( task_id, arguments, PDERROR, FILE_NAME_INSTALL_TEMPORARY_COORD,
-               sprintf( errMsg + ", rc: ?, detail: ?", rc, GETLASTERRMSG() ) ) ;
+      try
+      {
+         _rollback( tmpCoordHostName, oldTmpCoordSvc ) ;
+      }
+      catch( e )
+      {
+         SYSEXPHANDLE( e ) ;
+         rc = GETLASTERROR() ;
+         errMsg = "Failed to rollback the remaining nodes left last time, going to remove remaining temporary coord anyway" ;
+         PD_LOG2( task_id, arguments, PDERROR, FILE_NAME_INSTALL_TEMPORARY_COORD,
+                  sprintf( errMsg + ", rc: ?, detail: ?", rc, GETLASTERRMSG() ) ) ;
+      }
    }
    
    // 6. remove the remaining temporary coord anyway
