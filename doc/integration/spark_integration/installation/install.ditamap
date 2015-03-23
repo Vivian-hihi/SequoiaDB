@@ -3,7 +3,7 @@
 <map>
  <title>Integration with Apache Spark</title>
  <topicref href = "./topics/install_introduction.dita" type="topic">
-  <topicref href="./topics/install_by_admin_center.dita" type="topic"/>
+  <!--<topicref href="./topics/install_by_admin_center.dita" type="topic"/>-->
   <topicref href="./topics/install_by_manual.dita" type="topic"/>
  </topicref>
 </map>
