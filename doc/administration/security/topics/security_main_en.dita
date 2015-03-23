@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
 <topic id="topic_wkl_tls_kr">
-  <title>安全</title>
-  <body>
-    <p>目录：</p>
-    <p><xref href="security.dita">系统安全</xref></p>
-    <p><xref href="security_net.dita">网络安全</xref></p>    
+  <title>Security</title>
+  <body>    
+    <p><xref href="security_en.dita">System Security</xref></p>
+    <p><xref href="security_net_en.dita">Network Security</xref></p>    
   </body>
 </topic>

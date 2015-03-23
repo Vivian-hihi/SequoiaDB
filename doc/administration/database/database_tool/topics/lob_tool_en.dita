@@ -1,302 +1,296 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
 <topic id="topic_zrb_pss_kr">
-  <title>大对象（LOB）工具 — sdblobtool</title>
+  <title>Large Object(LOB) Tool — sdblobtool</title>
   <body>
-    <p>sdblobtool 是一款用于管理集合大对象的工具。</p>
+    <p>Sdblobtool is a tool for managing LOBs.</p>
     <section>
-      <title>功能列表</title>      
+      <title>Functions List</title>      
       <simpletable>
         <sthead>
-          <stentry>功能</stentry>
-          <stentry>描述</stentry>
+          <stentry>Function</stentry>
+          <stentry>Description</stentry>
         </sthead>
         <strow>
-          <stentry>导出</stentry>
-          <stentry>将集合中的大对象导出至本地文件</stentry>          
+          <stentry>Export</stentry>
+          <stentry>Export LOB of the collectioninto local file</stentry>          
         </strow>
         <strow>
-          <stentry>导入</stentry>
-          <stentry>将本地文件中的大对象导入至集合</stentry>
+          <stentry>Import</stentry>
+          <stentry>Import LOB in local file into collection</stentry>
         </strow>
         <strow>
-          <stentry>迁移</stentry>
-          <stentry>将一个集合中的大对象复制到另一个集合中</stentry>
+          <stentry>Move</stentry>
+          <stentry>Move a LOB from one collection to another</stentry>
         </strow>        
       </simpletable>
     </section>    
     <section>
-      <title>选项</title>
-      <p><b>导出选项</b></p>
+      <title>Options</title>
+      <p><b>Export options</b></p>
       <simpletable>
         <sthead>
-          <stentry>名称</stentry>
-          <stentry>描述</stentry>
-          <stentry>默认值</stentry>
-          <stentry>是否必填</stentry>
+          <stentry>Name</stentry>
+          <stentry>Description</stentry>
+          <stentry>Default Value</stentry>
+          <stentry>Required</stentry>
         </sthead>
         <strow>
           <stentry>hostname</stentry>
-          <stentry>Coord 地址</stentry>
+          <stentry>Coord address</stentry>
           <stentry>localhost</stentry>
-          <stentry>否</stentry>
+          <stentry>No</stentry>
         </strow>
         <strow>
           <stentry>svcname</stentry>
-          <stentry>Coord 服务名</stentry>
+          <stentry>Coord service name</stentry>
           <stentry>11810</stentry>
-          <stentry>否</stentry>
+          <stentry>No</stentry>
         </strow>
         <strow>
           <stentry>usrname</stentry>
-          <stentry>用户名</stentry>
+          <stentry>user name</stentry>
           <stentry>-</stentry>
-          <stentry>否</stentry>
+          <stentry>No</stentry>
         </strow>
         <strow>
           <stentry>passwd</stentry>
-          <stentry>密码</stentry>
+          <stentry>password</stentry>
           <stentry>-</stentry>
-          <stentry>否</stentry>
+          <stentry>No</stentry>
         </strow>
         <strow>
           <stentry>operation</stentry>
-          <stentry>操作类型</stentry>
+          <stentry>operation's type</stentry>
           <stentry>-</stentry>
-          <stentry>是（export）</stentry>
+          <stentry>yes(export)</stentry>
         </strow>
         <strow>
           <stentry>file</stentry>
-          <stentry>本地文件全路径</stentry>
+          <stentry>local file's path</stentry>
           <stentry>-</stentry>
-          <stentry>是</stentry>
+          <stentry>yes</stentry>
         </strow>
         <strow>
           <stentry>collection</stentry>
-          <stentry>需要导出的集合全名</stentry>
+          <stentry>full name of the collection to export</stentry>
           <stentry>-</stentry>
-          <stentry>是</stentry>
-        </strow>
-        <strow>
-          <stentry>collection</stentry>
-          <stentry>需要导出的集合全名</stentry>
-          <stentry>-</stentry>
-          <stentry>是</stentry>
-        </strow>
+          <stentry>yes</stentry>
+        </strow>        
         <strow>
           <stentry>ssl</stentry>
-          <stentry>使用 SSL 连接。</stentry>
+          <stentry>use SSL connect</stentry>
           <stentry>false</stentry>
-          <stentry>否</stentry>
+          <stentry>No</stentry>
         </strow>
       </simpletable>
-      <p><b>导入选项</b></p>
+      <p><b>Import options</b></p>
       <simpletable>
         <sthead>
-          <stentry>名称</stentry>
-          <stentry>描述</stentry>
-          <stentry>默认值</stentry>
-          <stentry>是否必填</stentry>
+          <stentry>Name</stentry>
+          <stentry>Description</stentry>
+          <stentry>Default Value</stentry>
+          <stentry>Required</stentry>
         </sthead>
         <strow>
           <stentry>hostname</stentry>
-          <stentry>Coord 地址</stentry>
+          <stentry>Coord address</stentry>
           <stentry>localhost</stentry>
-          <stentry>否</stentry>
+          <stentry>No</stentry>
         </strow>
         <strow>
           <stentry>svcname</stentry>
-          <stentry>Coord 服务名</stentry>
+          <stentry>Coord service name</stentry>
           <stentry>11810</stentry>
-          <stentry>否</stentry>
+          <stentry>No</stentry>
         </strow>
         <strow>
           <stentry>usrname</stentry>
-          <stentry>用户名</stentry>
+          <stentry>user name</stentry>
           <stentry>-</stentry>
-          <stentry>否</stentry>
+          <stentry>No</stentry>
         </strow>
         <strow>
           <stentry>passwd</stentry>
-          <stentry>密码</stentry>
+          <stentry>password</stentry>
           <stentry>-</stentry>
-          <stentry>否</stentry>
+          <stentry>No</stentry>
         </strow>
         <strow>
           <stentry>operation</stentry>
-          <stentry>操作类型</stentry>
+          <stentry>operation's type</stentry>
           <stentry>-</stentry>
-          <stentry>是（import）</stentry>
+          <stentry>yes(export)</stentry>
         </strow>
         <strow>
           <stentry>file</stentry>
-          <stentry>本地文件全路径</stentry>
+          <stentry>local file's path</stentry>
           <stentry>-</stentry>
-          <stentry>是</stentry>
+          <stentry>yes</stentry>
         </strow>
         <strow>
           <stentry>collection</stentry>
-          <stentry>需要导出的集合全名</stentry>
+          <stentry>full name of the collection to import</stentry>
           <stentry>-</stentry>
-          <stentry>是</stentry>
+          <stentry>yes</stentry>
         </strow>
         <strow>
           <stentry>ignorefe</stentry>
-          <stentry>当前大对象如果已经存在于集合中，忽略这个错误并开始导入下一条记录</stentry>
+          <stentry>if this LOB has already existed, ignore this error and start import the next record.</stentry>
           <stentry>false</stentry>
-          <stentry>否</stentry>
+          <stentry>No</stentry>
         </strow>
         <strow>
           <stentry>ssl</stentry>
-          <stentry>使用 SSL 连接。</stentry>
+          <stentry>use SSL connect</stentry>
           <stentry>false</stentry>
-          <stentry>否</stentry>
+          <stentry>No</stentry>
         </strow>
       </simpletable>
       <note>
         <ul>
-          <li>当需要开启 ignorefe 时只需要添加 --ignorefe 即可，不需要为其制定具体值。下同。</li>
-          <li>本地文件必须为导出生成的文件。</li>
+          <li>When you need to activate ignorefe, you only need to add –ignorefe, not need to give a value. The rest are the same.</li>
+          <li>Local file must be created by other exporting.(can't manually create).</li>
         </ul>
       </note>
-      <p><b>迁移选项</b></p>
+      <p><b>Migration options:</b></p>
       <simpletable>
         <sthead>
-          <stentry>名称</stentry>
-          <stentry>描述</stentry>
-          <stentry>默认值</stentry>
-          <stentry>是否必填</stentry>
+          <stentry>Name</stentry>
+          <stentry>Description</stentry>
+          <stentry>Default Value</stentry>
+          <stentry>Required</stentry>
         </sthead>
         <strow>
           <stentry>hostname</stentry>
-          <stentry>Coord 地址</stentry>
+          <stentry>Coord address</stentry>
           <stentry>localhost</stentry>
-          <stentry>否</stentry>
+          <stentry>No</stentry>
         </strow>
         <strow>
           <stentry>svcname</stentry>
-          <stentry>Coord 服务名</stentry>
+          <stentry>Coord service name</stentry>
           <stentry>11810</stentry>
-          <stentry>否</stentry>
+          <stentry>No</stentry>
         </strow>
         <strow>
           <stentry>usrname</stentry>
-          <stentry>用户名</stentry>
+          <stentry>user name</stentry>
           <stentry>-</stentry>
-          <stentry>否</stentry>
+          <stentry>No</stentry>
         </strow>
         <strow>
           <stentry>passwd</stentry>
-          <stentry>密码</stentry>
+          <stentry>password</stentry>
           <stentry>-</stentry>
-          <stentry>否</stentry>
+          <stentry>No</stentry>
         </strow>
         <strow>
           <stentry>operation</stentry>
-          <stentry>操作类型</stentry>
+          <stentry>operation's type</stentry>
           <stentry>-</stentry>
-          <stentry>是（migration）</stentry>
+          <stentry>yes(migration)</stentry>
         </strow>
         <strow>
           <stentry>file</stentry>
-          <stentry>本地文件全路径</stentry>
+          <stentry>local file's path</stentry>
           <stentry>-</stentry>
-          <stentry>是</stentry>
+          <stentry>yes</stentry>
         </strow>
         <strow>
           <stentry>collection</stentry>
-          <stentry>需要导出的集合全名</stentry>
+          <stentry>full name of the collection to import</stentry>
           <stentry>-</stentry>
-          <stentry>是</stentry>
+          <stentry>yes</stentry>
         </strow>
         <strow>
           <stentry>ignorefe</stentry>
-          <stentry>当前大对象如果已经存在于集合中，忽略这个错误并开始导入下一条记录</stentry>
+          <stentry>if this LOB has already existed, ignore this error and start import the next record.</stentry>
           <stentry>false</stentry>
-          <stentry>否</stentry>
+          <stentry>No</stentry>
         </strow>
         <strow>
           <stentry>dsthost</stentry>
-          <stentry>目标 Coord 地址</stentry>
+          <stentry>destination Coord address</stentry>
           <stentry>localhost</stentry>
-          <stentry>否</stentry>
+          <stentry>No</stentry>
         </strow>
         <strow>
           <stentry>dstservice</stentry>
-          <stentry>目标服务名</stentry>
+          <stentry>destination service name</stentry>
           <stentry>11810</stentry>
-          <stentry>否</stentry>
+          <stentry>No</stentry>
         </strow>
         <strow>
           <stentry>dstusrname</stentry>
-          <stentry>目标用户名</stentry>
+          <stentry>destination user name</stentry>
           <stentry>-</stentry>
-          <stentry>否</stentry>
+          <stentry>No</stentry>
         </strow>
         <strow>
           <stentry>dstpasswd</stentry>
-          <stentry>目标密码</stentry>
+          <stentry>destination password</stentry>
           <stentry>-</stentry>
-          <stentry>否</stentry>
+          <stentry>No</stentry>
         </strow>
         <strow>
           <stentry>dstcollection</stentry>
-          <stentry>目标集合全名</stentry>
+          <stentry>destination collection's full name</stentry>
           <stentry>-</stentry>
-          <stentry>是</stentry>
+          <stentry>Yes</stentry>
         </strow>
         <strow>
           <stentry>ssl</stentry>
-          <stentry>使用 SSL 连接。</stentry>
+          <stentry>use SSL connect</stentry>
           <stentry>false</stentry>
-          <stentry>否</stentry>
+          <stentry>No</stentry>
         </strow>
       </simpletable>
     </section>
     <section>
-      <title>日志</title>      
-      <p>使用 sdblobtool 时会在用户的当前运行目录产生日志文件“sdblobtool.log”，当发生错误时可以在日志中查看详细信息。</p>      
+      <title>Log</title>      
+      <p>When using sdblobtool, the log will be created under current running directory in the log file of "sdblobtool.log". When there is error, the running record can be view in the log.</p>      
     </section>
     <section>
-      <title>常见错误</title>      
+      <title>Common Errors</title>      
       <simpletable>
         <sthead>
-          <stentry>错误码（rc）</stentry>
-          <stentry>描述</stentry>
-          <stentry>应对措施</stentry>          
+          <stentry>Error Code(rc)</stentry>
+          <stentry>Description</stentry>
+          <stentry>Solutions</stentry>          
         </sthead>
         <strow>
           <stentry>-5</stentry>
-          <stentry>本地文件已存在或者集合中存在相同 OID 的大对象</stentry>
-          <stentry>1. 如果是导出操作，检查本地文件是否已经存在。<fig></fig>2. 如果是导入或者迁移操作，检查目标集合中是否已存在相同 OID 的大对象。</stentry>          
+          <stentry>local file already exists or there is LOBs of same OID in collection</stentry>
+          <stentry>1. If doing exporting, check whether the local file existing already.<fig></fig>2. If dong importing or moving operations, check if destination collection contains LOB with same OID.</stentry>          
         </strow>
         <strow>
           <stentry>-6</stentry>
-          <stentry>参数不合法</stentry>
-          <stentry>检查参数是否输入错误</stentry>          
+          <stentry>Illegal Parameter</stentry>
+          <stentry>Check the parameters, see if there is any input error.</stentry>          
         </strow>
         <strow>
           <stentry>-10</stentry>
-          <stentry>系统错误</stentry>
-          <stentry>需要根据日志进行错误排查</stentry>          
+          <stentry>System Error</stentry>
+          <stentry>Check the error according to log created.</stentry>          
         </strow>
         <strow>
           <stentry>-15</stentry>
-          <stentry>无法连接到指定地址</stentry>
-          <stentry>1. 检查地址相关参数是否填写正确。<fig></fig>2. 检查数据库是否正常启动。<fig></fig>3. 如果使用主机名作为参数，检查本地主机名列表是否配置正确。<fig></fig>4. 检查防火墙是否开启。</stentry>          
+          <stentry>Can not connect to the destination</stentry>
+          <stentry>1. Check the address parameters' correctness.<fig></fig>2. Check if the database start correctly.<fig></fig>3. If use hostname as a parameter, check whether the local hostname list is configured correctly.<fig></fig>4. Check if the firewall is on.</stentry>          
         </strow>
         <strow>
           <stentry>-23</stentry>
-          <stentry>集合不存在</stentry>
-          <stentry>1. 检查集合相关参数是否填写正确。<fig></fig>2. 检查相关集合是否存在。</stentry>          
+          <stentry>The collection is not exist</stentry>
+          <stentry>1. Check whether parameters related to collection are correct.<fig></fig>2. Check whether the collection exist.</stentry>          
         </strow>                      
       </simpletable>      
     </section>
     <section>
-      <title>示例</title>      
-      <p>将集合 foo.bar 中的大对象导出至本地文件 mylob 中。<codeblock>./sdblobtool --operation export --hostname 192.168.1.1 --svcname 11810 --collection foo.bar --file /opt/mylob</codeblock></p>
-      <p>将本地文件 mylob 中的大对象导入至集合 foo.bar 中，当遇到已存在的大对象时直接跳过。<codeblock>./sdblobtool --operation import --hostname 192.168.1.1 --svcname 11810 --collection foo.bar --file /opt/mylob --ignorefe</codeblock></p>
-      <p>将集合中的大对象复制到另一个集合中。<codeblock>./sdblobtool --operation migration --hostname 192.168.1.1 --svcname 11810 --collection foo.bar --dsthost 192.168.1.2 --dstservice 11810 --dstcollection foo.bar1</codeblock></p>      
+      <title>Example</title>      
+      <p>Export LOB of collection foo.bar into local file mylob:<codeblock>./sdblobtool --operation export --hostname 192.168.1.1 --svcname 11810 --collection foo.bar --file /opt/mylob</codeblock></p>
+      <p>Import LOB in local file mylob to collection foo.bar, when occur the existing LOB, it will automatically skip.<codeblock>./sdblobtool --operation import --hostname 192.168.1.1 --svcname 11810 --collection foo.bar --file /opt/mylob --ignorefe</codeblock></p>
+      <p>Migrate the LOB in one collection to another:<codeblock>./sdblobtool --operation migration --hostname 192.168.1.1 --svcname 11810 --collection foo.bar --dsthost 192.168.1.2 --dstservice 11810 --dstcollection foo.bar1</codeblock></p>      
     </section>    
   </body>
 </topic>

@@ -76,13 +76,7 @@
           <stentry>需要导出的集合全名</stentry>
           <stentry>-</stentry>
           <stentry>是</stentry>
-        </strow>
-        <strow>
-          <stentry>collection</stentry>
-          <stentry>需要导出的集合全名</stentry>
-          <stentry>-</stentry>
-          <stentry>是</stentry>
-        </strow>
+        </strow>        
         <strow>
           <stentry>ssl</stentry>
           <stentry>使用 SSL 连接。</stentry>
