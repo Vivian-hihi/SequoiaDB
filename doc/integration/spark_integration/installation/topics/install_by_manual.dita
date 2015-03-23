@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
 <topic id="topic_lvn_z5l_kr">
-  <title>Install as standalone package</title>
+  <title>安装 Standalone 包</title>
   <body>   
     <section id = "spark_install">
-      <title>Spark Installation </title>
-      <p>Installing Apache Spark without SequoiaDB Administration Console is also straightforward.</p>
-      <p>First of all, you need to get the latest copy of the Spark framework. To do so, you can get the latest release <xref href="http://spark.apache.org/downloads.html">here</xref>.</p>
-      <p>Taking example of Spark 1.3 with Hadoop 2.4, the download package will be called as "spark-1.3.0-bin-hadoop2.4.tgz".</p>
+      <title>Spark 安装</title>
+      <p>不用 SequoiaDB Administration Console 来安装 Apache Spark 是非常简单的。</p>
+      <p>首先，你需要获取最新版本的 Spark framework。打开以下链接获取最新版本：<xref href="http://spark.apache.org/downloads.html">http://spark.apache.org/downloads.html</xref>.</p>
+      <p>以 Spark1.3+Hadoop 2.4为例，下载文件名为“spark-1.3.0-bin-hadoop2.4.tgz”。</p>
       <image href="../../images/spark_install_manual_step1_en.jpg"></image>
-      <p>The package can be extracted by the following command:</p>
+      <p>安装包可以通过以下指令获取：</p>
       <codeblock>$ tar –zxvf spark-1.3.0-bin-hadoop2.4.tgz –directory /opt/</codeblock>
-      <p>Once the package is extracted, you can cd to the directory and run a simple test using spark-shell by:</p>
+      <p>当安装包文件获取后，你可以 cd 至他的目录下，使用 spark-shell 进行一个简单的试用：</p>
       <codeblock>$ cd /opt/spark-1.3.0-bin-hadoop2.4
 $ bin/spark-shell 2>/dev/null
 Welcome to
@@ -34,58 +34,58 @@ scala> textFile.first()
 res1: String = # Apache Spark
 scala> textFile.filter(line => line.contains("Spark")).count()
 res2: Long = 19</codeblock>
-      <p>In order to build a high available cluster, there are at least 3 physical hosts required in the cluster. In this example we use name "server1", "server2" and "server3".</p>
-      <p>Download and extraction need to be performed on each of the box in the cluster.</p>
+      <p>为了建立一个高可用的集群，集群至少需要3个物理主机。在这个例子中，我们将其命名为“server1”，“server2” 和 “server3”。</p>
+      <p>下载和安装需要在集群中的这三个主机下各执行一次。</p>
     </section>
     <section id = "configure">
-      <title>Configure Spark cluster in Standalone mode</title>
-      <p>Once Spark binary image is installed, say /opt/spark-1.3.0-bin-hadoop2.4, several simple steps need to be performed in order to build a high available cluster.</p>
-      <p>1)	Download and configure Apache ZooKeeper</p>
-      <p>Apache ZooKeeper is a centralized service for maintaining configuration information, naming, providing distributed synchronization, and providing group services. All of these kinds of services are used in some form or another by distributed applications.</p>
-      <p>The download page for ZooKeeper can be found <xref href = "http://www.apache.org/dyn/closer.cgi/zookeeper">here</xref></p>
-      <p>You need to select at least 3 nodes to make a high-available ZooKeeper cluster. </p>
-      <p>Once a package is downloaded on each box, it can be extracted by the following command:</p>
+      <title>Standalone 模式下配置 Spark</title>
+      <p>当 Spark 安装后（安装路径假设为/opt/spark-1.3.0-bin-hadoop2.4），在部署为高可用的集群之前，还需要进行几部简单的操作。</p>
+      <p>1)	下载和配置 Apache ZooKeeper.</p>
+      <p>Apache ZooKeeper 是一个管理配置信息和命名的中央集中的服务。它提供分布式的同步和群组的服务，而所有这些服务都将会被分布式的应用所使用。</p>
+      <p>ZooKeeper下载地址：<xref href = "http://www.apache.org/dyn/closer.cgi/zookeeper">http://www.apache.org/dyn/closer.cgi/zookeeper</xref></p>
+      <p>至少需要3个节点才能构成一个高可用的 ZooKeeper 集群。</p>
+      <p>当安装包被下载到每个主机时，以下指令会自动获取安装文件：</p>
       <codeblock>$ tar –zxvf zookeeper-3.4.6.tar.gz –directory /opt/</codeblock>
-      <p>2)	Modify ZooKeeper configuration</p>
+      <p>2)	调整 ZooKeeper 配置</p>
       <codeblock>$ cd /opt/zookeeper-3.4.6/conf
 $ cp zoo_sample.cfg zoo.cfg
 $ vi zoo.cfg</codeblock>
-      <p>Add the following 3 lines and replace hostname to your real host names:</p>
+      <p>加入以下3行代码，并将 hostname 主机名替换为真实的主机地址：</p>
       <codeblock>server.1=server1:2888:3888
 server.2=server2:2888:3888
 server.3=server3:2888:3888</codeblock>
-      <p>And make sure change "dataDir" to somewhere other than /tmp directory, for example "/data/zookeeper".</p>
-      <p>Next, create myid file on each server. In this example, you can run the following commands against each server:</p>
+      <note><p>请记得修改“dataDir”（不可使用/tmp），如“/data/zookeeper”。</p></note>
+      <p>接着，在每个 server 创建 myid 文件。在这个例子中，可以针对每个 server 执行以下指令：</p>
       <codeblock>Server1: echo "1" > /data/zookeeper/myid
 Server2: echo "2" > /data/zookeeper/myid
 Server3: echo "3" > /data/zookeeper/myid</codeblock>
-      <p>Note that the id number must be corresponding to the server.x configuration in zoo.cfg.</p>
-      <p>3)	Start ZooKeeper service</p>
-      <p>The following command can be run on each host with ZooKeeper service configured:</p>
+      <note><p>请注意，id 数需要与 zoo.cfg 中的 server.x 配置参数一致。</p></note>
+      <p>3)	启动ZooKeeper服务</p>
+      <p>以下指令可以在每个由 ZooKeeper 配置的主机执行：</p>
       <codeblock>$ bin/zkServer.sh start</codeblock>
-      <p>You should start ZK service on all 3 nodes and you can also use the following command to check the status of ZooKeeper service:</p>
+      <p>你需要在3个节点都启动 ZooKeeper 服务。使用以下指令查看 ZooKeeper 服务的状态：</p>
       <codeblock>$ bin/zkServer.sh status</codeblock>
-      <p>One of the nodes should show "Mode: leader", and rest of the nodes should show "Mode: follower".</p>
-      <p>4)	Configure Apache Spark in Standalone mode</p>
-      <p>Apache Spark can run in different modes. Standalone mode is recommended when working with SequoiaDB cluster.</p>
-      <p>Since local data access is always preferable than remote data lookup, it is recommended to install Apache Spark on all nodes in SequoiaDB database cluster.</p>
-      <p>Apache Spark standalone deployment looks like following:</p>
+      <p>其中的一个节点应该会显示“Mode: leader”，其余的节点显示“Mode: follower”。</p>
+      <p>4)	在 Standalone 模式下配置 Apache Spark</p>
+      <p>Apache Spark 可以以不同模式运行。当结合 Spark 和 SequoiaDB 集群时，我们推荐使用 Spark 的 Standalone 模式。</p>
+      <p>因为本地数据访问优先于远程数据查找的，推荐将 Apache Spark 安装在所有的 SequoiaDB 数据库集群。</p>
+      <p>Apache Spark Standalone 模式的部署架构如下图：</p>
       <image href="../../images/spark_install_manual_step2_en.jpg"></image>
-      <p>There could be more than one Master nodes created in Spark cluster. Only one of them is in "Primary" node and rest of them are in "Standby" mode. ZooKeeper is used to keep track of each Master node to make sure there's always one Primary node at any given time.</p>
-      <p>It's recommended to run one Worker node on each of the box in SequoiaDB cluster.</p>
-      <p>Apache Spark configuration file is located at conf/spark-env.sh by default. Assume SequoiaDB is installed at /opt/sequoiadb, you can make a copy from spark-env.sh.template and make the following changes:</p>
+      <p>Spark 集群中，可能存在多于一个的 Master 节点，而其中只有一个会是“Primary”（主要）的，其余的都是“Standby”（预备）模式。ZooKeeper 就被用于跟踪每个 Master 节点，确保时刻都有一个“Primary”节点存在。</p>
+      <note><p>推荐在每个 SequoiaDB 集群的主机中，运行一个 Worker 节点。</p></note>
+      <p>Apache Spark 配置文件默认位于conf/spark-env.sh，假设 SequoiaDB 安装在/opt/sequoiadb，你可以复制一个 spark-env.sh.template 后作出以下的配置修改：</p>
       <codeblock>SPARK_DAEMON_JAVA_OPTS="-Dspark.deploy.recoveryMode=ZOOKEEPER -Dspark.deploy.zookeeper.url=server1:2181,server2:2181,server3:2181 -Dspark.deploy.zookeeper.dir=/data/zookeeper"
 SPARK_WORKER_DIR=/data/spark_works
 SPARK_LOCAL_DIRS=/data/spark_data1,/data/spark_data2
 SPARK_CLASSPATH="/opt/sequoiadb/driver/java/sequoiadb-driver-1.12.jar:/opt/sequoiadb/driver/spark/spark-sequoiadb_2.10-1.12.0.jar"</codeblock>
-      <p>The following configuration parameters are optional; it should be set based on hardware and workload. SequoiaDB automatically tunes those parameters if it’s installed by SequoiaDB Administration Center.</p>
+      <p>下列的配置参数是非必须的，其基于硬件和负载设置。若通过 SequoiaDB Administration Center 安装，那么 SequoiaDB 将会自动设置这些参数：</p>
       <codeblock>SPARK_WORKER_MEMORY</codeblock>
-      <p>5)	Start Spark master nodes</p>
-      <p>If you plan to host Master nodes on serverA and serverB, the following command can be used on those hosts:</p>
+      <p>5)	启动 Spark 的 master 节点</p>
+      <p>如果你想启动 Master 节点，以下指令可在你需要启动 Master 的主机执行：</p>
       <codeblock>$ cd /opt/spark-1.3.0-bin-hadoop2.4
 $ sbin/start-master.sh</codeblock>
-      <p>6)	Start Spark worker nodes</p>
-      <p>Since it’s recommended to run Worker node on all hosts in SequoiaDB cluster, you can run the following command in each box to start Worker node:</p>
+      <p>6)	启动 Spark 的 worker 节点</p>
+      <p>因为我们推荐在每个 SequoiaDB 集群的主机下都运行 Worker 节点，你可以运行以下指令来启动每个主机的 Worker 节点：</p>
       <codeblock>$ cd /opt/spark-1.3.0-bin-hadoop2.4
 $ nohup bin/spark-class org.apache.spark.deploy.worker.Worker spark://serverA:7077,serverB:7077>logs/worker.out &amp;</codeblock>
     </section>

@@ -4,7 +4,7 @@
   <title>Using JDBC with SparkSQL</title>
   <body>   
     <p>The Thrift JDBC/ODBC server implemented here corresponds to the HiveServer2 in Hive 0.12. You can test the JDBC server with the beeline script that comes with either Spark or Hive 0.12.</p>
-    <p>The Spark image must be compiled with option –Phive,-Phivethriftserver. Otherwise the following error will be thrown by sbin/start-thriftserver.sh:</p>
+    <p>The Spark image must be compiled with option -Phive,-Phivethriftserver. Otherwise the following error will be thrown by sbin/start-thriftserver.sh:</p>
     <codeblock>failed to launch org.apache.spark.sql.hive.thriftserver.HiveThriftServer2:
 You need to build Spark with -Phive and -Phive-thriftserver.</codeblock>
     <p>To start the JDBC/ODBC server, run the following in the Spark directory:</p>

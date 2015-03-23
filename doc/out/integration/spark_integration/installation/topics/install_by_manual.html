@@ -1,0 +1,192 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html lang="en-us" xml:lang="en-us">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<meta name="copyright" content="(C) Copyright 2005"/>
+<meta name="DC.rights.owner" content="(C) Copyright 2005"/>
+<meta name="DC.Type" content="topic"/>
+<meta name="DC.Title" content="安装 Standalone 包"/>
+<meta name="description" content="Spark 安装 不用 SequoiaDB Administration Console 来安装 Apache Spark 是非常简单的。 首先，你需要获取最新版本的 Spark framework。打开以下链接获取最新版本： http://spark.apache.org/downloads.html . 以 Spark1.3+Hadoop 2.4为例，下载文件名为“spark-1.3 ..."/>
+<meta name="DC.Relation" scheme="URI" content="../../../../integration/spark_integration/installation/topics/install_introduction.html"/>
+<meta name="DC.Format" content="XHTML"/>
+<meta name="DC.Identifier" content="topic_lvn_z5l_kr"/>
+<link rel="stylesheet" type="text/css" href="../../../../commonltr.css"/>
+<link rel="stylesheet" type="text/css" href="../../../../assets/webhelp_topic.css"/>
+<title>安装 Standalone 包</title>
+<script type="text/javascript" src="../../../../assets/jquery-1.3.2.js"> </script><script type="text/javascript" src="../../../../assets/jquery-ui-1.8.2.custom.min.js"> </script><script type="text/javascript" src="../../../../assets/frames_redirect.js"> </script><script type="text/javascript"><!--
+    var prefix = "../../../../../index.html";
+    var ratingFile = "";
+    redirectToToc(window.location.search);
+    function highlightSearchTerm(){
+        if(parent.termsToHighlight != null){
+        // highlight each term in the content view  
+          for(i = 0 ; i < parent.termsToHighlight.length ; i++){        
+              $('*', window.parent.frames[1].document).highlight(parent.termsToHighlight[i]);
+          }
+        }
+    }
+//--></script></head>
+<body onload="highlightSearchTerm()" id="topic_lvn_z5l_kr"><a name="topic_lvn_z5l_kr"><!-- --></a>
+<table class="nav"><tbody><tr><td><div class="navheader"><span class="frames" onclick="redirectFrames(location.pathname)"><script type="text/javascript"><!--
+  if (parent.window.location.pathname == window.location.pathname ) document.write('With Frames');                    
+                    --></script></span><a class="link" href="../../../../integration/spark_integration/installation/topics/install_introduction.html" title="Spark 安装"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">Spark 安装</span></a>  </div></td><td width="50%"><a class="navheader_parent_path" href="../../sparkinter.html" title="Spark 集成">Spark 集成</a> / <a class="navheader_parent_path" href="../../../../integration/spark_integration/installation/topics/install_introduction.html" title="Spark 安装">Spark 安装</a></td></tr></tbody></table>
+
+  <h1 class="title topictitle1">安装 Standalone 包</h1>
+
+  <div class="body">   
+    <div class="section" id="topic_lvn_z5l_kr__spark_install"><a name="topic_lvn_z5l_kr__spark_install"><!-- --></a><h2 class="title sectiontitle">Spark 安装</h2>
+      
+      <p class="p">不用 SequoiaDB Administration Console 来安装 Apache Spark 是非常简单的。</p>
+
+      <p class="p">首先，你需要获取最新版本的 Spark framework。打开以下链接获取最新版本：<a class="xref" href="http://spark.apache.org/downloads.html">http://spark.apache.org/downloads.html</a>.</p>
+
+      <p class="p">以 Spark1.3+Hadoop 2.4为例，下载文件名为“spark-1.3.0-bin-hadoop2.4.tgz”。</p>
+
+      <img class="image" src="../../images/spark_install_manual_step1_en.jpg"/>
+      <p class="p">安装包可以通过以下指令获取：</p>
+
+      <pre class="pre codeblock">$ tar –zxvf spark-1.3.0-bin-hadoop2.4.tgz –directory /opt/</pre>
+
+      <p class="p">当安装包文件获取后，你可以 cd 至他的目录下，使用 spark-shell 进行一个简单的试用：</p>
+
+      <pre class="pre codeblock">$ cd /opt/spark-1.3.0-bin-hadoop2.4
+$ bin/spark-shell 2&gt;/dev/null
+Welcome to
+      ____              __
+     / __/__  ___ _____/ /__
+    _\ \/ _ \/ _ `/ __/  '_/
+   /___/ .__/\_,_/_/ /_/\_\   version 1.3.0
+      /_/
+
+Using Scala version 2.10.4 (Java HotSpot(TM) 64-Bit Server VM, Java 1.6.0_35)
+Type in expressions to have them evaluated.
+Type :help for more information.
+Spark context available as sc.
+SQL context available as sqlContext.
+scala&gt; val textFile = sc.textFile("README.md")
+textFile: org.apache.spark.rdd.RDD[String] = README.md MapPartitionsRDD[1] at textFile at &lt;console&gt;:21
+scala&gt; textFile.count() 
+res0: Long = 98
+scala&gt; textFile.first()
+res1: String = # Apache Spark
+scala&gt; textFile.filter(line =&gt; line.contains("Spark")).count()
+res2: Long = 19</pre>
+
+      <p class="p">为了建立一个高可用的集群，集群至少需要3个物理主机。在这个例子中，我们将其命名为“server1”，“server2” 和 “server3”。</p>
+
+      <p class="p">下载和安装需要在集群中的这三个主机下各执行一次。</p>
+
+    </div>
+
+    <div class="section" id="topic_lvn_z5l_kr__configure"><a name="topic_lvn_z5l_kr__configure"><!-- --></a><h2 class="title sectiontitle">Standalone 模式下配置 Spark</h2>
+      
+      <p class="p">当 Spark 安装后（安装路径假设为/opt/spark-1.3.0-bin-hadoop2.4），在部署为高可用的集群之前，还需要进行几部简单的操作。</p>
+
+      <p class="p">1)	下载和配置 Apache ZooKeeper.</p>
+
+      <p class="p">Apache ZooKeeper 是一个管理配置信息和命名的中央集中的服务。它提供分布式的同步和群组的服务，而所有这些服务都将会被分布式的应用所使用。</p>
+
+      <p class="p">ZooKeeper下载地址：<a class="xref" href="http://www.apache.org/dyn/closer.cgi/zookeeper">http://www.apache.org/dyn/closer.cgi/zookeeper</a></p>
+
+      <p class="p">至少需要3个节点才能构成一个高可用的 ZooKeeper 集群。</p>
+
+      <p class="p">当安装包被下载到每个主机时，以下指令会自动获取安装文件：</p>
+
+      <pre class="pre codeblock">$ tar –zxvf zookeeper-3.4.6.tar.gz –directory /opt/</pre>
+
+      <p class="p">2)	调整 ZooKeeper 配置</p>
+
+      <pre class="pre codeblock">$ cd /opt/zookeeper-3.4.6/conf
+$ cp zoo_sample.cfg zoo.cfg
+$ vi zoo.cfg</pre>
+
+      <p class="p">加入以下3行代码，并将 hostname 主机名替换为真实的主机地址：</p>
+
+      <pre class="pre codeblock">server.1=server1:2888:3888
+server.2=server2:2888:3888
+server.3=server3:2888:3888</pre>
+
+      <div class="note note"><span class="notetitle">Note:</span> <p class="p">请记得修改“dataDir”（不可使用/tmp），如“/data/zookeeper”。</p>
+</div>
+
+      <p class="p">接着，在每个 server 创建 myid 文件。在这个例子中，可以针对每个 server 执行以下指令：</p>
+
+      <pre class="pre codeblock">Server1: echo "1" &gt; /data/zookeeper/myid
+Server2: echo "2" &gt; /data/zookeeper/myid
+Server3: echo "3" &gt; /data/zookeeper/myid</pre>
+
+      <div class="note note"><span class="notetitle">Note:</span> <p class="p">请注意，id 数需要与 zoo.cfg 中的 server.x 配置参数一致。</p>
+</div>
+
+      <p class="p">3)	启动ZooKeeper服务</p>
+
+      <p class="p">以下指令可以在每个由 ZooKeeper 配置的主机执行：</p>
+
+      <pre class="pre codeblock">$ bin/zkServer.sh start</pre>
+
+      <p class="p">你需要在3个节点都启动 ZooKeeper 服务。使用以下指令查看 ZooKeeper 服务的状态：</p>
+
+      <pre class="pre codeblock">$ bin/zkServer.sh status</pre>
+
+      <p class="p">其中的一个节点应该会显示“Mode: leader”，其余的节点显示“Mode: follower”。</p>
+
+      <p class="p">4)	在 Standalone 模式下配置 Apache Spark</p>
+
+      <p class="p">Apache Spark 可以以不同模式运行。当结合 Spark 和 SequoiaDB 集群时，我们推荐使用 Spark 的 Standalone 模式。</p>
+
+      <p class="p">因为本地数据访问优先于远程数据查找的，推荐将 Apache Spark 安装在所有的 SequoiaDB 数据库集群。</p>
+
+      <p class="p">Apache Spark Standalone 模式的部署架构如下图：</p>
+
+      <img class="image" src="../../images/spark_install_manual_step2_en.jpg"/>
+      <p class="p">Spark 集群中，可能存在多于一个的 Master 节点，而其中只有一个会是“Primary”（主要）的，其余的都是“Standby”（预备）模式。ZooKeeper 就被用于跟踪每个 Master 节点，确保时刻都有一个“Primary”节点存在。</p>
+
+      <div class="note note"><span class="notetitle">Note:</span> <p class="p">推荐在每个 SequoiaDB 集群的主机中，运行一个 Worker 节点。</p>
+</div>
+
+      <p class="p">Apache Spark 配置文件默认位于conf/spark-env.sh，假设 SequoiaDB 安装在/opt/sequoiadb，你可以复制一个 spark-env.sh.template 后作出以下的配置修改：</p>
+
+      <pre class="pre codeblock">SPARK_DAEMON_JAVA_OPTS="-Dspark.deploy.recoveryMode=ZOOKEEPER -Dspark.deploy.zookeeper.url=server1:2181,server2:2181,server3:2181 -Dspark.deploy.zookeeper.dir=/data/zookeeper"
+SPARK_WORKER_DIR=/data/spark_works
+SPARK_LOCAL_DIRS=/data/spark_data1,/data/spark_data2
+SPARK_CLASSPATH="/opt/sequoiadb/driver/java/sequoiadb-driver-1.12.jar:/opt/sequoiadb/driver/spark/spark-sequoiadb_2.10-1.12.0.jar"</pre>
+
+      <p class="p">下列的配置参数是非必须的，其基于硬件和负载设置。若通过 SequoiaDB Administration Center 安装，那么 SequoiaDB 将会自动设置这些参数：</p>
+
+      <pre class="pre codeblock">SPARK_WORKER_MEMORY</pre>
+
+      <p class="p">5)	启动 Spark 的 master 节点</p>
+
+      <p class="p">如果你想启动 Master 节点，以下指令可在你需要启动 Master 的主机执行：</p>
+
+      <pre class="pre codeblock">$ cd /opt/spark-1.3.0-bin-hadoop2.4
+$ sbin/start-master.sh</pre>
+
+      <p class="p">6)	启动 Spark 的 worker 节点</p>
+
+      <p class="p">因为我们推荐在每个 SequoiaDB 集群的主机下都运行 Worker 节点，你可以运行以下指令来启动每个主机的 Worker 节点：</p>
+
+      <pre class="pre codeblock">$ cd /opt/spark-1.3.0-bin-hadoop2.4
+$ nohup bin/spark-class org.apache.spark.deploy.worker.Worker spark://serverA:7077,serverB:7077&gt;logs/worker.out &amp;</pre>
+
+    </div>
+
+  </div>
+
+<div class="related-links"/>
+<div class="navfooter"><a class="link" href="../../../../integration/spark_integration/installation/topics/install_introduction.html" title="Spark 安装"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">Spark 安装</span></a>  <script type="text/javascript"><!--         
+    function expand(){
+        parent.tocwin.expandToTopic(window.location.href, this.getAttribute('href'));
+    }
+    var aArray = document.getElementsByTagName('a');
+    var i;
+    for (i = 0; i< aArray.length; i++){
+      aArray[i].onclick = expand;
+    }
+//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.12
+          
+    </div>
+</body>
+</html>

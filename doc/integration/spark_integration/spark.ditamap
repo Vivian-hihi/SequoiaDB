@@ -2,10 +2,10 @@
 <!DOCTYPE map PUBLIC "-//OASIS//DTD DITA Map//EN" "map.dtd">
 <map>
  <title>Spark Integration</title>
- <topicref href="./sparkinter_en.dita" type="topic">
-  <anchorref href="./installation/install_en.ditamap"/>
-  <topicref href="./topics/sparksql_en.dita" type="topic"/>
-  <topicref href="./topics/sparksql_jdbc_en.dita" type="topic"/>
+ <topicref href="./sparkinter.dita" type="topic">
+  <anchorref href="./installation/install.ditamap"/>
+  <topicref href="./topics/sparksql.dita" type="topic"/>
+  <topicref href="./topics/sparksql_jdbc.dita" type="topic"/>
  </topicref> 
 </map>
 

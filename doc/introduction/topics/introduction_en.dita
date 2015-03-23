@@ -25,7 +25,56 @@
           application in the same system are invisible to each other because of read/write
           splitting.</li>
       </ul>
-    </section>-->
+      </section>-->
+    <section>
+      <title>SequoiaDB version 1.12 版本说明</title>       
+      <parml>                
+        <plentry>
+          <pt>接口变更：</pt>
+          <pd></pd>
+          <!--<pd>1) 新增 Python 驱动</pd>
+            <pd>2) 添加 lob 的 c++、java、c#、python 驱动</pd>
+            <pd>3) sdbcm/sdbstart 启动的节点会自动切换到 SequoiaDB 安装账号运行</pd>
+            <pd>4) Sdb 增加 db.createCoordRG()、db.getCoordRG()、db.removeCoordRG()、db.getCatalogRG()、collection.findOne()、collection.putLob()、collection.getLob()、collection.deleteLob()、collection.listLobs() 接口</pd>-->          
+        </plentry>        
+      </parml>      
+      <ul><li><p></p>c/c++/c#/php/java/python 驱动增加 SSL 安全通信接口</li>
+        <li><p></p>sdb/sdbexprt/sdbimprt/sdbtop/sdbinspect/sdblobtool 工具增加 SSL 安全通信机制</li>
+        <li><p></p>增加 --auth 参数来开启和关闭数据库鉴权</li>
+        <li><p></p>默认关闭数据库预取功能</li>
+        <li><p></p>默认关闭数据库后台定时刷脏页功能</li>
+        <li><p></p>提供兼容 MongoDB 的驱动接入</li>
+        <li><p></p>数据库提供 REST 操作访问接口</li>
+      </ul>
+      <parml>                
+        <plentry>
+          <pt>主要特性：</pt>
+          <pd></pd>                    
+        </plentry>        
+      </parml>
+      <ul><li>提供基于 SSL 的数据加密传输</li>
+        <li>提供数据组手动降备操作</li>
+        <li>提供数据组节点带权值的选举功能</li>
+        <li>创建 Collection 时可以通过 AutoIndexId:true/false 来选择开启和关闭 OID 索引</li>
+        <li>PostgreSQL 连接多个coord 节点</li>
+        <li>Java 驱动连接池支持动态添加 coord 地址</li>
+        <li>sdbexprt 导出工具能增加过滤条件和排序字段</li>
+        <li>sdbexprt 支持导出 binary 和 regex 的格式</li>
+        <li>SequoiaDB 支持 hostname 和 ip 两种部署方式</li>
+        <li>数据库 selector 支持 $include，$default，$slice，$elemMatch，$elemMatchOne，$alias 操作</li>
+        <li>sdbexprt 和 sdbimprt 导出和导入的 CSV 格式支持“对象ID”，“二进制数据”，“正则表达式”</li>
+        <li>提供优化版的自动化安装部署工具</li>       
+      </ul>
+      <parml>                
+        <plentry>
+          <pt>工具优化：</pt>
+          <pd></pd>                    
+        </plentry>        
+      </parml>
+      <ul>
+        <li>提供 lob 导入导出工具</li>
+      </ul>
+    </section> 
     <section>
       <title>SequoiaDB V 1.10 Release note</title>       
       <parml>                

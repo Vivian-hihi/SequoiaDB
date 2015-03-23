@@ -11,6 +11,6 @@
     <p>Another approach to build the table is to specify the table schema in CREATE TABLE command:</p>
     <codeblock>scala>sqlContext.sql("CREATE temporary table datatable ( c1 string, c2 int, c3 int ) using com.sequoiadb.spark OPTIONS ( host 'serverX:11810,serverY:11810', collectionspace 'test', collection 'data')")</codeblock>
     <p>Note that the temporary table is only valid for the session where it is created. The following query can be used to retrieve data from the table:</p>
-    <codeblock>scala> sqlContext.sql(“select * from datatable”).foreach(println)</codeblock>
+    <codeblock>scala> sqlContext.sql("select * from datatable").foreach(println)</codeblock>
   </body>
 </topic>
