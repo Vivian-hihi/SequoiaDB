@@ -116,7 +116,7 @@ vm.min_free_kbytes = &lt;物理内存大小的8%，单位KB></codeblock>
         <codeblock>/sbin/sysctl -p</codeblock>
         <note>每台作为数据库服务器的机器都需要配置。</note></li>
         <li>数据库目录结构
-          <p>用户应尽可能使数据目录，索引目录与日志目录存放在不同物理磁盘中，以减少顺序 I/O 与随机 I/O 之间的竞争。</p></li></ul>
+          <p>用户应尽可能使数据目录，索引目录与日志目录存放在不同物理磁盘中，以减少顺序 I/O 与随机 I/O 之间的竞争。并且保证安装路径上的文件夹具有可读和可执行权限。</p></li></ul>
     </section>   
   </body>
 </topic>

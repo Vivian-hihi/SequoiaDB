@@ -57,51 +57,51 @@
       <p class="p">在 SequoiaDB 中，主要存在下列代理线程类型：</p>
 
       <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d37099e47" class="stentry">名称</th>
+          <th valign="bottom" align="left" id="d27305e47" class="stentry">名称</th>
 
-          <th valign="bottom" align="left" id="d37099e50" class="stentry">类型</th>
+          <th valign="bottom" align="left" id="d27305e50" class="stentry">类型</th>
 
-          <th valign="bottom" align="left" id="d37099e53" class="stentry">描述</th>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d37099e47" class="stentry">Agent</td>
-
-          <td valign="top" headers="d37099e50" class="stentry">代理</td>
-
-          <td valign="top" headers="d37099e53" class="stentry">代理线程负责由 svcname 服务传入的请求，一般来说该请求由用户直接传入</td>
+          <th valign="bottom" align="left" id="d27305e53" class="stentry">描述</th>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d37099e47" class="stentry">ShardAgent</td>
+          <td valign="top" headers="d27305e47" class="stentry">Agent</td>
 
-          <td valign="top" headers="d37099e50" class="stentry">分区代理</td>
+          <td valign="top" headers="d27305e50" class="stentry">代理</td>
 
-          <td valign="top" headers="d37099e53" class="stentry">分区代理线程负责由 shardname 服务传入的请求，一般来说该请求由协调节点传入数据节点</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d37099e47" class="stentry">CoordAgent</td>
-
-          <td valign="top" headers="d37099e50" class="stentry">协调代理</td>
-
-          <td valign="top" headers="d37099e53" class="stentry">协调代理线程负责由svcname服务传入的请求，一般来说该请求由用户直接传入，仅作用于协调节点</td>
+          <td valign="top" headers="d27305e53" class="stentry">代理线程负责由 svcname 服务传入的请求，一般来说该请求由用户直接传入</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d37099e47" class="stentry">ReplAgent</td>
+          <td valign="top" headers="d27305e47" class="stentry">ShardAgent</td>
 
-          <td valign="top" headers="d37099e50" class="stentry">复制代理</td>
+          <td valign="top" headers="d27305e50" class="stentry">分区代理</td>
 
-          <td valign="top" headers="d37099e53" class="stentry">复制代理线程负责由 replname 服务传入的请求，一般来说该请求由数据主节点传向从节点，多作用于非协调节点</td>
+          <td valign="top" headers="d27305e53" class="stentry">分区代理线程负责由 shardname 服务传入的请求，一般来说该请求由协调节点传入数据节点</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d37099e47" class="stentry">HTTPAgent</td>
+          <td valign="top" headers="d27305e47" class="stentry">CoordAgent</td>
 
-          <td valign="top" headers="d37099e50" class="stentry">HTTP 代理</td>
+          <td valign="top" headers="d27305e50" class="stentry">协调代理</td>
 
-          <td valign="top" headers="d37099e53" class="stentry">HTTP 代理线程负责由 httpname 服务传入的 REST 请求，一般来说该请求由用户直接传入</td>
+          <td valign="top" headers="d27305e53" class="stentry">协调代理线程负责由svcname服务传入的请求，一般来说该请求由用户直接传入，仅作用于协调节点</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d27305e47" class="stentry">ReplAgent</td>
+
+          <td valign="top" headers="d27305e50" class="stentry">复制代理</td>
+
+          <td valign="top" headers="d27305e53" class="stentry">复制代理线程负责由 replname 服务传入的请求，一般来说该请求由数据主节点传向从节点，多作用于非协调节点</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d27305e47" class="stentry">HTTPAgent</td>
+
+          <td valign="top" headers="d27305e50" class="stentry">HTTP 代理</td>
+
+          <td valign="top" headers="d27305e53" class="stentry">HTTP 代理线程负责由 httpname 服务传入的 REST 请求，一般来说该请求由用户直接传入</td>
 
         </tr>
 </table>
@@ -114,115 +114,115 @@
       <p class="p">在 SequoiaDB 中，存在但不局限于下列系统 EDU：</p>
 
       <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d37099e134" class="stentry">名称</th>
+          <th valign="bottom" align="left" id="d27305e134" class="stentry">名称</th>
 
-          <th valign="bottom" align="left" id="d37099e137" class="stentry">类型</th>
+          <th valign="bottom" align="left" id="d27305e137" class="stentry">类型</th>
 
-          <th valign="bottom" align="left" id="d37099e140" class="stentry">描述</th>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d37099e134" class="stentry">TCPListener</td>
-
-          <td valign="top" headers="d37099e137" class="stentry">服务监听</td>
-
-          <td valign="top" headers="d37099e140" class="stentry">该线程负责监听 svcname 服务，并启动 Agent 代理线程</td>
+          <th valign="bottom" align="left" id="d27305e140" class="stentry">描述</th>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d37099e134" class="stentry">HTTPListener</td>
+          <td valign="top" headers="d27305e134" class="stentry">TCPListener</td>
 
-          <td valign="top" headers="d37099e137" class="stentry">HTTP 监听</td>
+          <td valign="top" headers="d27305e137" class="stentry">服务监听</td>
 
-          <td valign="top" headers="d37099e140" class="stentry">该线程负责监听 httpname 服务，并启动 Agent 代理线程</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d37099e134" class="stentry">Cluster</td>
-
-          <td valign="top" headers="d37099e137" class="stentry">集群管理</td>
-
-          <td valign="top" headers="d37099e140" class="stentry">集群管理线程用于维护集群的基本框架，启动 ReplReader 与 ShardReader 线程</td>
+          <td valign="top" headers="d27305e140" class="stentry">该线程负责监听 svcname 服务，并启动 Agent 代理线程</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d37099e134" class="stentry">ReplReader</td>
+          <td valign="top" headers="d27305e134" class="stentry">HTTPListener</td>
 
-          <td valign="top" headers="d37099e137" class="stentry">复制监听</td>
+          <td valign="top" headers="d27305e137" class="stentry">HTTP 监听</td>
 
-          <td valign="top" headers="d37099e140" class="stentry">复制监听线程负责由 replname 服务传入的请求，并启动 ReplAgent 代理线程</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d37099e134" class="stentry">ShardReader</td>
-
-          <td valign="top" headers="d37099e137" class="stentry">分区监听</td>
-
-          <td valign="top" headers="d37099e140" class="stentry">分区监听线程负责由 shardname 服务传入的请求，并启动 ShardAgent 代理线程</td>
+          <td valign="top" headers="d27305e140" class="stentry">该线程负责监听 httpname 服务，并启动 Agent 代理线程</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d37099e134" class="stentry">LogWriter</td>
+          <td valign="top" headers="d27305e134" class="stentry">Cluster</td>
 
-          <td valign="top" headers="d37099e137" class="stentry">日志写</td>
+          <td valign="top" headers="d27305e137" class="stentry">集群管理</td>
 
-          <td valign="top" headers="d37099e140" class="stentry">日志写线程用于将日志缓冲区中的数据写入日志文件</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d37099e134" class="stentry">WindowsListener</td>
-
-          <td valign="top" headers="d37099e137" class="stentry">Windows 事件监听</td>
-
-          <td valign="top" headers="d37099e140" class="stentry">Windows 环境特有，用于监听 Windows 中 SequoiaDB 定义事件</td>
+          <td valign="top" headers="d27305e140" class="stentry">集群管理线程用于维护集群的基本框架，启动 ReplReader 与 ShardReader 线程</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d37099e134" class="stentry">Task</td>
+          <td valign="top" headers="d27305e134" class="stentry">ReplReader</td>
 
-          <td valign="top" headers="d37099e137" class="stentry">后台任务处理</td>
+          <td valign="top" headers="d27305e137" class="stentry">复制监听</td>
 
-          <td valign="top" headers="d37099e140" class="stentry">后台任务处理线程，一般来说用于处理后台任务请求，例如<a class="xref" href="../../concepts/cluster/topics/split.html">数据切分</a></td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d37099e134" class="stentry">CatalogMC</td>
-
-          <td valign="top" headers="d37099e137" class="stentry">编目主控</td>
-
-          <td valign="top" headers="d37099e140" class="stentry">编目主控线程用于接收和分发编目节点接收到的请求</td>
+          <td valign="top" headers="d27305e140" class="stentry">复制监听线程负责由 replname 服务传入的请求，并启动 ReplAgent 代理线程</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d37099e134" class="stentry">CatalogNM</td>
+          <td valign="top" headers="d27305e134" class="stentry">ShardReader</td>
 
-          <td valign="top" headers="d37099e137" class="stentry">编目节点控制</td>
+          <td valign="top" headers="d27305e137" class="stentry">分区监听</td>
 
-          <td valign="top" headers="d37099e140" class="stentry">编目节点控制线程用于处理编目节点内部集群信息相关的请求</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d37099e134" class="stentry">CatalogManager</td>
-
-          <td valign="top" headers="d37099e137" class="stentry">编目控制</td>
-
-          <td valign="top" headers="d37099e140" class="stentry">编目控制线程用于处理编目节点内部元数据相关的请求</td>
+          <td valign="top" headers="d27305e140" class="stentry">分区监听线程负责由 shardname 服务传入的请求，并启动 ShardAgent 代理线程</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d37099e134" class="stentry">CatalogNetwork</td>
+          <td valign="top" headers="d27305e134" class="stentry">LogWriter</td>
 
-          <td valign="top" headers="d37099e137" class="stentry">编目网络监听</td>
+          <td valign="top" headers="d27305e137" class="stentry">日志写</td>
 
-          <td valign="top" headers="d37099e140" class="stentry">编目网络监听线程用于监听编目服务 catalogname 下的请求</td>
+          <td valign="top" headers="d27305e140" class="stentry">日志写线程用于将日志缓冲区中的数据写入日志文件</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d37099e134" class="stentry">CoordNetwork</td>
+          <td valign="top" headers="d27305e134" class="stentry">WindowsListener</td>
 
-          <td valign="top" headers="d37099e137" class="stentry">协调网络监听</td>
+          <td valign="top" headers="d27305e137" class="stentry">Windows 事件监听</td>
 
-          <td valign="top" headers="d37099e140" class="stentry">协调网络监听线程用于监听分区的请求</td>
+          <td valign="top" headers="d27305e140" class="stentry">Windows 环境特有，用于监听 Windows 中 SequoiaDB 定义事件</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d27305e134" class="stentry">Task</td>
+
+          <td valign="top" headers="d27305e137" class="stentry">后台任务处理</td>
+
+          <td valign="top" headers="d27305e140" class="stentry">后台任务处理线程，一般来说用于处理后台任务请求，例如<a class="xref" href="../../concepts/cluster/topics/split.html">数据切分</a></td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d27305e134" class="stentry">CatalogMC</td>
+
+          <td valign="top" headers="d27305e137" class="stentry">编目主控</td>
+
+          <td valign="top" headers="d27305e140" class="stentry">编目主控线程用于接收和分发编目节点接收到的请求</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d27305e134" class="stentry">CatalogNM</td>
+
+          <td valign="top" headers="d27305e137" class="stentry">编目节点控制</td>
+
+          <td valign="top" headers="d27305e140" class="stentry">编目节点控制线程用于处理编目节点内部集群信息相关的请求</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d27305e134" class="stentry">CatalogManager</td>
+
+          <td valign="top" headers="d27305e137" class="stentry">编目控制</td>
+
+          <td valign="top" headers="d27305e140" class="stentry">编目控制线程用于处理编目节点内部元数据相关的请求</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d27305e134" class="stentry">CatalogNetwork</td>
+
+          <td valign="top" headers="d27305e137" class="stentry">编目网络监听</td>
+
+          <td valign="top" headers="d27305e140" class="stentry">编目网络监听线程用于监听编目服务 catalogname 下的请求</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d27305e134" class="stentry">CoordNetwork</td>
+
+          <td valign="top" headers="d27305e137" class="stentry">协调网络监听</td>
+
+          <td valign="top" headers="d27305e140" class="stentry">协调网络监听线程用于监听分区的请求</td>
 
         </tr>
 </table>

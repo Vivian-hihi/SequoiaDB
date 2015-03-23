@@ -12,6 +12,7 @@
 <meta name="DC.Relation" scheme="URI" content="../../introduction/topics/features_en.html"/>
 <meta name="DC.Relation" scheme="URI" content="../../introduction/topics/datamodel_en.html"/>
 <meta name="DC.Relation" scheme="URI" content="../../introduction/topics/infrastructure_en.html"/>
+<meta name="DC.Relation" scheme="URI" content="../../introduction/enterprise/enterprise_intro_en.html"/>
 <meta name="DC.Format" content="XHTML"/>
 <meta name="DC.Identifier" content="sequoiadb_introduction"/>
 <link rel="stylesheet" type="text/css" href="../../commonltr.css"/>
@@ -43,6 +44,92 @@
       underlying platform.</p>
 
     
+    <div class="section"><h2 class="title sectiontitle">SequoiaDB version 1.12 版本说明</h2>
+             
+      <dl class="dl parml">                
+        
+          <dt class="dt pt dlterm">接口变更：</dt>
+
+          <dd class="dd pd"/>
+
+                    
+                
+      </dl>
+      
+      <ul class="ul"><li class="li"><p class="p"/>
+c/c++/c#/php/java/python 驱动增加 SSL 安全通信接口</li>
+
+        <li class="li"><p class="p"/>
+sdb/sdbexprt/sdbimprt/sdbtop/sdbinspect/sdblobtool 工具增加 SSL 安全通信机制</li>
+
+        <li class="li"><p class="p"/>
+增加 --auth 参数来开启和关闭数据库鉴权</li>
+
+        <li class="li"><p class="p"/>
+默认关闭数据库预取功能</li>
+
+        <li class="li"><p class="p"/>
+默认关闭数据库后台定时刷脏页功能</li>
+
+        <li class="li"><p class="p"/>
+提供兼容 MongoDB 的驱动接入</li>
+
+        <li class="li"><p class="p"/>
+数据库提供 REST 操作访问接口</li>
+
+      </ul>
+
+      <dl class="dl parml">                
+        
+          <dt class="dt pt dlterm">主要特性：</dt>
+
+          <dd class="dd pd"/>
+                    
+                
+      </dl>
+
+      <ul class="ul"><li class="li">提供基于 SSL 的数据加密传输</li>
+
+        <li class="li">提供数据组手动降备操作</li>
+
+        <li class="li">提供数据组节点带权值的选举功能</li>
+
+        <li class="li">创建 Collection 时可以通过 AutoIndexId:true/false 来选择开启和关闭 OID 索引</li>
+
+        <li class="li">PostgreSQL 连接多个coord 节点</li>
+
+        <li class="li">Java 驱动连接池支持动态添加 coord 地址</li>
+
+        <li class="li">sdbexprt 导出工具能增加过滤条件和排序字段</li>
+
+        <li class="li">sdbexprt 支持导出 binary 和 regex 的格式</li>
+
+        <li class="li">SequoiaDB 支持 hostname 和 ip 两种部署方式</li>
+
+        <li class="li">数据库 selector 支持 $include，$default，$slice，$elemMatch，$elemMatchOne，$alias 操作</li>
+
+        <li class="li">sdbexprt 和 sdbimprt 导出和导入的 CSV 格式支持“对象ID”，“二进制数据”，“正则表达式”</li>
+
+        <li class="li">提供优化版的自动化安装部署工具</li>
+       
+      </ul>
+
+      <dl class="dl parml">                
+        
+          <dt class="dt pt dlterm">工具优化：</dt>
+
+          <dd class="dd pd"/>
+                    
+                
+      </dl>
+
+      <ul class="ul">
+        <li class="li">提供 lob 导入导出工具</li>
+
+      </ul>
+
+    </div>
+ 
     <div class="section"><h2 class="title sectiontitle">SequoiaDB V 1.10 Release note</h2>
              
       <dl class="dl parml">                
