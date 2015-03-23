@@ -12,11 +12,11 @@
 
 <project name="Install-Software" default="Install-Software">
 	<property file="ci.test.properties" />
-	<taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
+	<!-- <taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
 		<classpath>
 			<pathelement location="${test.machine.deploy.path}/deploy/ant-sdbtasks/ant-sdbtasks.jar" />
 		</classpath>
-	</taskdef> 
+	</taskdef>  -->
 	
 	<target name="Uninstall-Software" depends="">
 	    <stafTools workHost="${deploy.host.name}" workType="shell" workDir="${test.machine.software.path}" common="ant -l ${test.machine.software.path}/clean-install-basic-in-host.log -f ${test.machine.software.path}/install-basic-in-host.xml clean-install -Dtest.basedir=${test.machine.software.path}" />

@@ -51,7 +51,6 @@
         </createDirectory>
         <runProgram>
             <abortOnError>0</abortOnError>
-            <customErrorMessage>${msg(Install.ErrorMsg.CreateGroup.error)}</customErrorMessage>
             <program>groupadd</program>
             <programArguments>${username}_group</programArguments>
             <ruleList>
