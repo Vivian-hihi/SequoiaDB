@@ -133,6 +133,14 @@
         <runProgram>
             <program>echo</program>
             <programArguments> 'export PATH=$PATH:/opt/sequoiadb' &gt;&gt; /home/sequoiadb/.profile</programArguments>
+            <ruleList>
+                <fileContentTest>
+                    <encoding>utf-8</encoding>
+                    <logic>does_not_contain</logic>
+                    <path>/home/sequoiadb/.profile</path>
+                    <text>export PATH=$PATH:${installdir}</text>
+                </fileContentTest>
+            </ruleList>
         </runProgram>
         <changeOwnerAndGroup>
             <files>/home/sequoiadb</files>
