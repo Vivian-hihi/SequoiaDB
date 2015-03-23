@@ -90,6 +90,7 @@ namespace fap
          std::string err = "no such cmd:";
          err += cmdName ;
          bob.append( "ok", 0 ) ;
+         bob.append( "code", 59 ) ;
          bob.append( "errmsg", err.c_str() ) ;
          buff = engine::rtnContextBuf( bob.obj() ) ;
       }

@@ -118,7 +118,7 @@ INT32 mongoConverter::reConvert( msgBuffer &out, MsgOpReply *reply )
          MsgOpQuery* query = (MsgOpQuery *)out.data() ;
          numToReturn = query->numToReturn ;
 
-         if ( 0 == reply->numReturned && numToReturn > 0 )
+         if ( 0 == reply->numReturned )// && numToReturn > 0 )
          {
             out.zero() ;
             fap::mongo::buildGetMoreMsg( out ) ;

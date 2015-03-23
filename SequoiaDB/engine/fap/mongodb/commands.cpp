@@ -1408,6 +1408,7 @@ INT32 listIndexesCommand::convertRequest( mongoParser &parser,
    MsgHeader *header     = NULL ;
    MsgOpQuery *getIndex  = NULL ;
    bson::BSONObj cond ;
+   bson::BSONObj queryObj ;
    bson::BSONObj indexObj ;
    bson::BSONObjBuilder obj ;
    const std::string cmdStr = "$get indexes" ;
@@ -1449,11 +1450,23 @@ INT32 listIndexesCommand::convertRequest( mongoParser &parser,
 
    if ( parser.withIndex )
    {
-      if ( cond.hasField( "index" ) )
+      queryObj = fap::getCondObj( cond ) ;
+      if ( !queryObj.isEmpty() )
       {
-         indexObj = BSON( "indexDef.name" << cond.getStringField( "index" )  ) ;
+         if ( cond.hasField( "index" ) )
+         {
+            indexObj = BSON( "indexDef.name" << queryObj.getStringField( "index" )  ) ;
+         }
+         obj.append( "Collection", queryObj.getStringField( "ns" ) ) ;
       }
-      obj.append( "Collection", cond.getStringField( "ns" ) ) ;
+      else
+      {
+         if ( cond.hasField( "index" ) )
+         {
+            indexObj = BSON( "indexDef.name" << cond.getStringField( "index" )  ) ;
+         }
+         obj.append( "Collection", cond.getStringField( "ns" ) ) ;
+      }
    }
    else if ( parser.withCmd )
    {
