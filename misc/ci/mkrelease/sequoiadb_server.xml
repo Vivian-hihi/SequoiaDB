@@ -53,16 +53,15 @@
             <abortOnError>0</abortOnError>
             <program>groupadd</program>
             <programArguments>${username}_group</programArguments>
+            <showMessageOnError>0</showMessageOnError>
             <ruleList>
                 <platformTest>
                     <type>linux</type>
                 </platformTest>
-                <fileContentTest>
-                    <encoding>utf-8</encoding>
-                    <logic>does_not_contain</logic>
-                    <path>/etc/group</path>
-                    <text>${username}_group</text>
-                </fileContentTest>
+                <userTest>
+                    <logic>not_exists</logic>
+                    <username>${username}</username>
+                </userTest>
             </ruleList>
         </runProgram>
         <runProgram>
