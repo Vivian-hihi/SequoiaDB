@@ -695,7 +695,6 @@ INT32 killCursorsCommand::convertRequest( mongoParser &parser,
 {
    INT32 rc          = SDB_OK ;
    INT32 nContext    = 0 ;
-   INT32 nToReturn   = 0 ;
    SINT64 cursorid   = 0 ;
    MsgHeader *header = NULL ;
    MsgOpKillContexts *kill = NULL ;
@@ -714,9 +713,9 @@ INT32 killCursorsCommand::convertRequest( mongoParser &parser,
    kill->ZERO = 0 ;
 
    parser.readNumber( sizeof( INT32 ), ( CHAR * )&nContext ) ;
-   kill->numContexts = nToReturn ;
+   kill->numContexts = nContext ;
 
-   while ( nToReturn > 0 )
+   while ( nContext > 0 )
    {
       parser.readNumber( sizeof( SINT64 ), ( CHAR * )&cursorid ) ;
       if ( cursorid != 0 )
@@ -724,7 +723,7 @@ INT32 killCursorsCommand::convertRequest( mongoParser &parser,
          cursorid -= 1 ;
          sdbMsg.write( ( CHAR * )&cursorid, sizeof( SINT64 ) ) ;
       }
-      --nToReturn ;
+      --nContext ;
    }
 
    // fill the msg len of sdb

@@ -399,6 +399,11 @@ INT32 _mongoSession::_reply( MsgOpReply *replyHeader,
    bson::BSONObj bsonBody ;
    bson::BSONObj objToSend ;
 
+   if ( OP_KILLCURSORS == _converter->getOpType() )
+   {
+      // should not send any msg
+      goto done;
+   }
    // id
    reply.header.id = 0 ;
    // responseTo, cast UINT64 to INT32
