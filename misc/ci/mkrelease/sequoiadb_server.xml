@@ -57,10 +57,12 @@
                 <platformTest>
                     <type>linux</type>
                 </platformTest>
-                <userTest>
-                    <logic>not_exists</logic>
-                    <username>${username}</username>
-                </userTest>
+                <fileContentTest>
+                    <encoding>utf-8</encoding>
+                    <logic>does_not_contain</logic>
+                    <path>/etc/group</path>
+                    <text>${username}_group</text>
+                </fileContentTest>
             </ruleList>
         </runProgram>
         <runProgram>
