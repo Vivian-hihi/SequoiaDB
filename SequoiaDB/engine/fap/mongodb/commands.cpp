@@ -611,6 +611,10 @@ INT32 queryCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
 
    cond = fap::getCondObj( all ) ;
    orderby = all.getObjectField( "orderby" ) ;
+   if ( orderby.isEmpty() )
+   {
+      orderby = all.getObjectField( "$orderby" ) ;
+   }
    hint    = cond.getObjectField( "$hint" ) ;
 
    if ( all.hasField( "limit" ) )
