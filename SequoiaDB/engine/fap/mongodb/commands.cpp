@@ -615,19 +615,19 @@ INT32 queryCommand::convertRequest( mongoParser &parser, msgBuffer &sdbMsg )
    {
       orderby = all.getObjectField( "$orderby" ) ;
    }
-   hint    = cond.getObjectField( "$hint" ) ;
+   hint    = all.getObjectField( "$hint" ) ;
 
    if ( all.hasField( "limit" ) )
    {
-      query->numToReturn = cond.getIntField( "limit" ) ;
+      query->numToReturn = all.getIntField( "limit" ) ;
    }
 
    if ( all.hasField( "skip" ) )
    {
-      query->numToSkip   = cond.getIntField( "skip" ) ;
+      query->numToSkip   = all.getIntField( "skip" ) ;
    }
 
-   if ( cond.getBoolField("$explain") )
+   if ( all.getBoolField("$explain") )
    {
       query->flags |= FLG_QUERY_EXPLAIN ;
    }
