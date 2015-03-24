@@ -1610,7 +1610,7 @@ INT32 msgExtractSql( CHAR *pBuffer, CHAR **sql )
 
 INT32 msgBuildTransCommitPreMsg ( CHAR **ppBuffer, INT32 *bufferSize )
 {
-   SDB_ASSERT( ppBuffer, "invlaid input" ) ;
+   SDB_ASSERT( ppBuffer, "invalid input" ) ;
    INT32 rc = SDB_OK;
    MsgOpTransCommitPre *pMsg = NULL;
    INT32 packetLength
@@ -1632,7 +1632,7 @@ error:
 
 INT32 msgBuildTransCommitMsg ( CHAR **ppBuffer, INT32 *bufferSize )
 {
-   SDB_ASSERT( ppBuffer, "invlaid input" ) ;
+   SDB_ASSERT( ppBuffer, "invalid input" ) ;
    INT32 rc = SDB_OK;
    MsgOpTransCommit *pMsg = NULL;
    INT32 packetLength
@@ -1654,7 +1654,7 @@ error:
 
 INT32 msgBuildTransRollbackMsg ( CHAR **ppBuffer, INT32 *bufferSize )
 {
-   SDB_ASSERT( ppBuffer, "invlaid input" ) ;
+   SDB_ASSERT( ppBuffer, "invalid input" ) ;
    INT32 rc = SDB_OK;
    MsgOpTransRollback *pMsg = NULL;
    INT32 packetLength
