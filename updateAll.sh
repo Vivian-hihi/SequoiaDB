@@ -127,7 +127,7 @@ function installSdb()
 
    # install coord db1 and db2
    if [ $needInstall -ne 0 ] ; then
-      NODECONFIG="{diaglevel:3}"
+      NODECONFIG="{diaglevel:3, clustername:'xxx', businessname:'yyy'}"
       #NODECONFIG="{logfilesz:1,transactionon:'TRUE'}"
       # create coord and start coord
       bin/sdb -s " var oma = new Oma() ; oma.createCoord('17643', '${homePath}/17643', $NODECONFIG) ; oma.startNode('17643') ; "
@@ -152,6 +152,12 @@ function installSdb()
       fi
       echo "Start adding catalog nodes"
       bin/sdb -s " var cataRG = db.getRG('SYSCatalogGroup') ;"
+      if [ $? -eq 0 ] ; then
+         echo "Get catalog RG succeed"
+      else
+         echo "Get catalog RG failed*********"
+         exit 1
+      fi
       bin/sdb -s " node1 = cataRG.createNode('${hostName}', '30010', '${homePath}/30010', $NODECONFIG) ; sleep(5000) ;"
       bin/sdb -s " node2 = cataRG.createNode('${hostName}', '30020', '${homePath}/30020', $NODECONFIG) ; sleep(5000) ;"
       bin/sdb -s " cataRG.start() ; sleep(5000) ;"
