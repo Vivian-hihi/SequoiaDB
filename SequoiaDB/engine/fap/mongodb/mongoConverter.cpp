@@ -184,7 +184,7 @@ INT32 mongoConverter::reConvert( msgBuffer &out, MsgOpReply *reply )
    // if is create collection space msg
    if ( OP_CMD_CREATE_CS == _parser.opType )
    {
-      if ( SDB_OK != reply->flags )
+      if ( SDB_OK != reply->flags && SDB_DMS_CS_EXIST != reply->flags )
       {
          rc = reply->flags ;
          goto error ;
