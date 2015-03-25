@@ -324,10 +324,10 @@ namespace engine
    };
    typedef _clsCatalogAgent catAgent ;
 
-   typedef _netRouteNode clsNoteItem ;
+   typedef _netRouteNode clsNodeItem ;
 
    class _clsNodeMgrAgent ;
-   typedef std::vector<clsNoteItem>            VEC_NODE_INFO ;
+   typedef std::vector<clsNodeItem>            VEC_NODE_INFO ;
    typedef VEC_NODE_INFO::iterator             VEC_NODE_INFO_IT ;
    typedef VEC_NODE_INFO::const_iterator       VEC_NODE_INFO_CIT ;
 
@@ -353,7 +353,7 @@ namespace engine
          std::string groupName() const { return _groupName ; }
 
          const VEC_NODE_INFO* getNodes () ;
-         clsNoteItem*         nodeItem ( UINT32 nodeID ) ;
+         clsNodeItem*         nodeItem ( UINT32 nodeID ) ;
          INT32                nodePos  ( UINT32 nodeID ) ;
 
          INT32 getNodeID ( UINT32 pos, MsgRouteID& id,
@@ -384,7 +384,8 @@ namespace engine
 
          void   cancelPrimary () ;
 
-         void updateNodeStat( UINT16 nodeID, NET_NODE_STATUS status );
+         void   updateNodeStat( UINT16 nodeID, NET_NODE_STATUS status ) ;
+         void   clearNodesStat() ;
 
       protected:
          void   _clear () ;
@@ -396,7 +397,6 @@ namespace engine
          VEC_NODE_INFO                 _vecNodes ;
          MsgRouteID                    _primaryNode ;
          UINT32                        _primaryPos;
-         ossAtomic32                   _errTime;
 
    };
    typedef _clsGroupItem clsGroupItem ;

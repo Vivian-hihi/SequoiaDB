@@ -40,47 +40,122 @@
 #include "rtnContext.hpp"
 #include "../bson/bson.h"
 
+using namespace bson ;
+
 namespace engine
 {
+
+   struct rtnQueryConf
+   {
+      string      _realCLName ;        // for command as 'drop cl' and so on
+      BOOLEAN     _updateAndGetCata ;  // update catalog before first get version
+
+      BOOLEAN     _openEmptyContext ;  // open context without sel & orderby ...
+      BOOLEAN     _allCataGroups ;     // send to all catalog info groups,
+                                       // don't use query to filter
+
+      rtnQueryConf()
+      {
+         // don't change the default value
+         _updateAndGetCata = FALSE ;
+         _openEmptyContext = FALSE ;
+         _allCataGroups    = FALSE ;
+      }
+   } ;
+
    class rtnCoordQuery : virtual public rtnCoordOperator
    {
+   public:
+      struct rtnQueryPvtData
+      {
+         INT32                   _ret ;
+         rtnContextCoord         *_pContext ;
+
+         rtnQueryPvtData()
+         {
+            _ret        = SDB_OK ;
+            _pContext   = NULL ;
+         }
+      } ;
    public:
       virtual INT32 execute( CHAR *pReceiveBuffer,
                              SINT32 packSize,
                              pmdEDUCB *cb,
                              MsgOpReply &replyHeader,
                              rtnContextBuf *buf ) ;
-      INT32 queryToDataNodeGroup( CHAR *pBuffer,
-                                 CoordGroupList &groupLst,
-                                 CoordGroupList &sendGroupLst,
-                                 netMultiRouteAgent *pRouteAgent,
-                                 pmdEDUCB *cb,
-                                 rtnContextCoord *pContext,
-                                 BOOLEAN sendToPrimary = FALSE,
-                                 std::set<INT32> *ignoreRCList = NULL );
-      virtual INT32 executeQuery( CHAR *pSrc ,
-                                 const bson::BSONObj &boQuery ,
-                                 const bson::BSONObj &boSelector,
-                                 const bson::BSONObj &boOrderBy ,
-                                 const CHAR * pCollectionName ,
-                                 netMultiRouteAgent *pRouteAgent ,
-                                 pmdEDUCB *cb ,
-                                 rtnContextCoord *&pContext );
+
+      INT32                queryOrDoOnCL( MsgHeader *pMsg,
+                                          netMultiRouteAgent *pRouteAgent,
+                                          pmdEDUCB *cb,
+                                          rtnContextCoord **pContext,
+                                          rtnSendOptions &sendOpt,
+                                          rtnQueryConf *pQueryConf = NULL ) ;
+
+      INT32                queryOrDoOnCL( MsgHeader *pMsg,
+                                          netMultiRouteAgent *pRouteAgent,
+                                          pmdEDUCB *cb,
+                                          rtnContextCoord **pContext,
+                                          rtnSendOptions &sendOpt,
+                                          CoordGroupList &sucGrpLst,
+                                          rtnQueryConf *pQueryConf = NULL ) ;
+
+   protected:
+      INT32                _queryOrDoOnCL( MsgHeader *pMsg,
+                                           netMultiRouteAgent *pRouteAgent,
+                                           pmdEDUCB *cb,
+                                           rtnContextCoord **pContext,
+                                           rtnSendOptions &sendOpt,
+                                           CoordGroupList *pSucGrpLst = NULL,
+                                           rtnQueryConf *pQueryConf = NULL ) ;
+
    private:
-      INT32 getNodeGroups( const CoordCataInfoPtr &cataInfo,
-                           const bson::BSONObj &queryObj,
-                           const CoordGroupList &sendGroupLst,
-                           CoordGroupList &groupLst );
-      INT32 queryOnMainCL( CoordGroupSubCLMap &groupSubCLMap,
-                           MsgOpQuery *pSrc,
-                           pmdEDUCB *cb,
-                           netMultiRouteAgent *pRouteAgent,
-                           CoordGroupList &sendGroupList,
-                           rtnContextCoord *pContext );
 
       INT32 _buildNewMsg( const CHAR *msg,
-                          const bson::BSONObj &newSelector,
+                          const BSONObj &newSelector,
                           CHAR *&newMsg ) ;
+
+      BSONObj _buildNewQuery( const BSONObj &query,
+                              const CoordSubCLlist &subCLList ) ;
+
+      void  _optimize( rtnSendMsgIn &inMsg,
+                       rtnSendOptions &options,
+                       rtnProcessResult &result ) ;
+
+   protected:
+      virtual INT32              _prepareCLOp( CoordCataInfoPtr &cataInfo,
+                                               rtnSendMsgIn &inMsg,
+                                               rtnSendOptions &options,
+                                               netMultiRouteAgent *pRouteAgent,
+                                               pmdEDUCB *cb,
+                                               rtnProcessResult &result,
+                                               ossValuePtr &outPtr ) ;
+
+      virtual void               _doneCLOp( ossValuePtr itPtr,
+                                            CoordCataInfoPtr &cataInfo,
+                                            rtnSendMsgIn &inMsg,
+                                            rtnSendOptions &options,
+                                            netMultiRouteAgent *pRouteAgent,
+                                            pmdEDUCB *cb,
+                                            rtnProcessResult &result ) ;
+
+      virtual INT32              _prepareMainCLOp( CoordCataInfoPtr &cataInfo,
+                                                   CoordGroupSubCLMap &grpSubCl,
+                                                   rtnSendMsgIn &inMsg,
+                                                   rtnSendOptions &options,
+                                                   netMultiRouteAgent *pRouteAgent,
+                                                   pmdEDUCB *cb,
+                                                   rtnProcessResult &result,
+                                                   ossValuePtr &outPtr ) ;
+
+      virtual void               _doneMainCLOp( ossValuePtr itPtr,
+                                                CoordCataInfoPtr &cataInfo,
+                                                CoordGroupSubCLMap &grpSubCl,
+                                                rtnSendMsgIn &inMsg,
+                                                rtnSendOptions &options,
+                                                netMultiRouteAgent *pRouteAgent,
+                                                pmdEDUCB *cb,
+                                                rtnProcessResult &result ) ;
+
    };
 
 }

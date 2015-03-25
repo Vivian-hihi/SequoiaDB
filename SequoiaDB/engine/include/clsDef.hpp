@@ -174,6 +174,8 @@ namespace engine
       }
    } ;
 
+   #define CLS_NODE_KEEPALIVE_TIMEOUT              ( 6000 ) // ms
+
    /*
       _clsGroupInfo define
    */
@@ -242,6 +244,25 @@ namespace engine
             ++it ;
          }
          return TRUE ;
+      }
+
+      UINT32 getAlivesByTimeout( UINT32 timeout = CLS_NODE_KEEPALIVE_TIMEOUT )
+      {
+         UINT32 count = 1 ;
+         map<UINT64, _clsSharingStatus>::iterator it = info.begin() ;
+         while ( it != info.end() )
+         {
+            _clsSharingStatus &status = it->second ;
+            if ( SERVICE_UNKNOWN == status.beat.serviceStatus &&
+                 ( 0 == timeout || status.breakTime > timeout ) )
+            {
+               ++it ;
+               continue ;
+            }
+            ++count ;
+            ++it ;
+         }
+         return count ;
       }
 
    } ;

@@ -156,7 +156,6 @@ namespace engine
       CONTEXT_LIST      _contextLst;
 
       ossEvent          _attachEvent ;
-      BOOLEAN           _isActived ;
 
       ossEvent          _changeEvent ;
 

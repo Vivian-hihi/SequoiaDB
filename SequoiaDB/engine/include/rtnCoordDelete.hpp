@@ -39,6 +39,8 @@
 #include "rtnCoordOperator.hpp"
 #include "../bson/bson.h"
 
+using namespace bson ;
+
 namespace engine
 {
    class rtnCoordDelete : public rtnCoordTransOperator
@@ -51,28 +53,31 @@ namespace engine
                              rtnContextBuf *buf ) ;
 
    protected:
-      
-      INT32 deleteNormalCL( CoordCataInfoPtr cataInfo,
-                           bson::BSONObj &boDelete,
-                           MsgOpDelete *pDelMsg,
-                           netMultiRouteAgent *pRouteAgent,
-                           pmdEDUCB *cb,
-                           CoordGroupList &sendGroupLst);
+      virtual void               _prepareForTrans( pmdEDUCB *cb,
+                                                   MsgHeader *pMsg ) ;
+
+      virtual INT32              _prepareMainCLOp( CoordCataInfoPtr &cataInfo,
+                                                   CoordGroupSubCLMap &grpSubCl,
+                                                   rtnSendMsgIn &inMsg,
+                                                   rtnSendOptions &options,
+                                                   netMultiRouteAgent *pRouteAgent,
+                                                   pmdEDUCB *cb,
+                                                   rtnProcessResult &result,
+                                                   ossValuePtr &outPtr ) ;
+
+      virtual void               _doneMainCLOp( ossValuePtr itPtr,
+                                                CoordCataInfoPtr &cataInfo,
+                                                CoordGroupSubCLMap &grpSubCl,
+                                                rtnSendMsgIn &inMsg,
+                                                rtnSendOptions &options,
+                                                netMultiRouteAgent *pRouteAgent,
+                                                pmdEDUCB *cb,
+                                                rtnProcessResult &result ) ;
 
    private:
-      INT32 getNodeGroups( const CoordCataInfoPtr &cataInfo,
-                           bson::BSONObj &deleteObj,
-                           CoordGroupList &sendGroupLst,
-                           CoordGroupList &groupLst );
-      INT32 deleteToDataNodeGroup( CHAR *pBuffer,
-                                 CoordGroupList &groupLst,
-                                 CoordGroupList &sendGroupLst,
-                                 netMultiRouteAgent *pRouteAgent,
-                                 pmdEDUCB *cb );
-      INT32 buildOpMsg( const CoordCataInfoPtr &cataInfo,
-                              const CoordSubCLlist &subCLList,
-                              CHAR *pSrcMsg, CHAR *&pDstMsg,
-                              INT32 &bufferSize );
+      BSONObj                    _buildNewDeletor( const BSONObj &deletor,
+                                                   const CoordSubCLlist &subCLList );
+
    };
 }
 

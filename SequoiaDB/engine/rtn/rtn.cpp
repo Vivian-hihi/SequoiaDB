@@ -1145,5 +1145,45 @@ namespace engine
       goto done ;
    }
 
+   void rtnNeedResetSelector( const BSONObj &original,
+                              const BSONObj &orderBy,
+                              BOOLEAN &needReset )
+   {
+      needReset = FALSE ;
+      if ( !original.isEmpty() &&
+           !orderBy.isEmpty() )
+      {
+         BSONObjIterator itr( orderBy ) ;
+         while ( itr.more() )
+         {
+            /// find({}, {a:null}).sort({a.b:1})
+            /// we do not want to clear it's selector when 
+            /// query is like above. --yunwu
+            BSONElement ele = itr.next() ;
+            const CHAR *fieldName = ele.fieldName() ;
+            if ( !original.hasElement( fieldName ) )
+            {
+               CHAR *c = ( CHAR * )ossStrchr( fieldName, '.' ) ;
+               if ( NULL == c )
+               {
+                  needReset = TRUE ;
+                  break ;
+               }
+
+               *c = '\0' ;
+               BOOLEAN has = original.hasElement( fieldName ) ;
+               *c = '.' ;
+               if ( !has )
+               {
+                  needReset = TRUE ;
+                  break ;
+               }
+            }
+         }
+      }
+
+      return ;
+   }
+
 }
 

@@ -2437,7 +2437,6 @@ namespace engine
    note: _clsGroupItem implement
    */
    _clsGroupItem::_clsGroupItem ( UINT32 groupID )
-   :_errTime(0)
    {
       _groupID = groupID ;
       _groupVersion = 0 ;
@@ -2509,7 +2508,7 @@ namespace engine
          goto done;
       }
       {
-      clsNoteItem& item = _vecNodes[pos] ;
+      clsNodeItem& item = _vecNodes[pos] ;
       id = item._id ;
       id.columns.serviceID = (UINT16)type ;
       }
@@ -2531,7 +2530,7 @@ namespace engine
       VEC_NODE_INFO_IT it = _vecNodes.begin() ;
       while ( it != _vecNodes.end() )
       {
-         clsNoteItem& node = *it ;
+         clsNodeItem& node = *it ;
          if ( ossStrcmp ( node._host, hostName.c_str() ) == 0 &&
               node._service[type] == serviceName )
          {
@@ -2561,7 +2560,7 @@ namespace engine
          goto done;
       }
       {
-      clsNoteItem& item = _vecNodes[pos] ;
+      clsNodeItem& item = _vecNodes[pos] ;
       id = item._id ;
       id.columns.serviceID = (UINT16)type ;
       hostName = item._host ;
@@ -2585,7 +2584,7 @@ namespace engine
          goto done ;
       }
       {
-      clsNoteItem& item = _vecNodes[pos] ;
+      clsNodeItem& item = _vecNodes[pos] ;
       hostName = item._host ;
       serviceName = item._service[id.columns.serviceID] ;
       }
@@ -2604,15 +2603,12 @@ namespace engine
          rc = SDB_INVALIDARG ;
          goto done;
       }
+
       {
-      clsNoteItem& item = _vecNodes[pos] ;
-      status = item._status;
-      if ( status != NET_NODE_STAT_NORMAL
-         && _errTime.inc() % SDB_CLS_NODE_INFO_EXPIRED_TIME == 0 )
-      {
-         rc = SDB_CLS_NODE_INFO_EXPIRED;
+         clsNodeItem& item = _vecNodes[pos] ;
+         status = item.getStatus( (UINT64)time(NULL) ) ;
       }
-      }
+
    done:
       PD_TRACE_EXIT ( SDB__CLSGPIM_GETNDINFO3 ) ;
       return rc;
@@ -2632,7 +2628,7 @@ namespace engine
       return SDB_CLS_NODE_NOT_EXIST ;
    }
 
-   clsNoteItem* _clsGroupItem::nodeItem ( UINT32 nodeID )
+   clsNodeItem* _clsGroupItem::nodeItem ( UINT32 nodeID )
    {
       INT32 pos = nodePos ( nodeID ) ;
       return pos < 0 ? NULL : &_vecNodes[pos] ;
@@ -2671,8 +2667,7 @@ namespace engine
       std::map <UINT64, _netRouteNode>::iterator it = nodes.begin () ;
       while ( it != nodes.end() )
       {
-         if ( _primaryNode.columns.nodeID
-            == it->second._id.columns.nodeID )
+         if ( _primaryNode.columns.nodeID == it->second._id.columns.nodeID )
          {
             _primaryPos = _vecNodes.size();
          }
@@ -2703,6 +2698,7 @@ namespace engine
    INT32 _clsGroupItem::updatePrimary ( const MsgRouteID & nodeID,
                                         BOOLEAN primary )
    {
+      INT32 rc = SDB_OK ;
       UINT32 index = 0 ;
       PD_TRACE_ENTRY ( SDB__CLSGPIM_UPPRRIMARY ) ;
       SDB_ASSERT ( nodeID.columns.groupID == _groupID, "group id not same" ) ;
@@ -2739,6 +2735,7 @@ namespace engine
          }
          ++index ;
       }
+      rc = SDB_CLS_NODE_NOT_EXIST ;
 
       PD_LOG ( PDERROR, "Update group primary node[%u,%u,%u] to %s error",
                nodeID.columns.groupID, nodeID.columns.nodeID,
@@ -2747,7 +2744,7 @@ namespace engine
 
    done :
       PD_TRACE_EXIT ( SDB__CLSGPIM_UPPRRIMARY ) ;
-      return SDB_SYS ;
+      return rc ;
    }
 
    PD_TRACE_DECLARE_FUNCTION ( SDB__CLSGPIM_UPNODESTAT, "_clsGroupItem::updateNodeStat" )
@@ -2760,13 +2757,28 @@ namespace engine
       {
          if ( it->_id.columns.nodeID == nodeID )
          {
-            it->_status = status;
+            (*it).updateStatus( status, (UINT64)time(NULL) ) ;
+            if ( NET_NODE_STAT_NORMAL != status )
+            {
+               updatePrimary( it->_id, FALSE ) ;
+            }
             break;
          }
          ++it ;
       }
       PD_TRACE_EXIT ( SDB__CLSGPIM_UPNODESTAT ) ;
       return ;
+   }
+
+   void _clsGroupItem::clearNodesStat()
+   {
+      VEC_NODE_INFO_IT it = _vecNodes.begin() ;
+      while ( it != _vecNodes.end() )
+      {
+         clsNodeItem &item = *it ;
+         item.updateStatus( NET_NODE_STAT_NORMAL, 0 ) ;
+         ++it ;
+      }
    }
 
    /*

@@ -41,6 +41,9 @@
 #include "rtnCoordQuery.hpp"
 #include "msgDef.hpp"
 #include "rtnQueryOptions.hpp"
+
+using namespace bson ;
+
 namespace engine
 {
    //default command-processer
@@ -127,53 +130,86 @@ namespace engine
       rtnCoordCommand(){};
       virtual ~rtnCoordCommand(){};
 
-   public:
-      virtual INT32 execute( CHAR *pReceiveBuffer,
-                             SINT32 packSize,
-                             pmdEDUCB *cb,
-                             MsgOpReply &replyHeader,
-                             rtnContextBuf *buf ) = 0 ;
-        
-      virtual INT32 queryOnCatalog( CHAR *pReceiveBuffer,
+      virtual INT32        execute( CHAR *pReceiveBuffer,
                                     SINT32 packSize,
+                                    pmdEDUCB *cb,
+                                    MsgOpReply &replyHeader,
+                                    rtnContextBuf *buf ) { return SDB_SYS ; }
+
+   public:
+      INT32         executeOnCL( MsgHeader *pMsg,
+                                 pmdEDUCB *cb,
+                                 const CHAR *pCLName,
+                                 BOOLEAN firstUpdateCata = FALSE,
+                                 const CoordGroupList *pSpecGrpLst = NULL,
+                                 SET_RC *pIgnoreRC = NULL,
+                                 CoordGroupList *pSucGrpLst = NULL,
+                                 rtnContextCoord **ppContext = NULL ) ;
+
+      INT32         executeOnDataGroup ( MsgHeader *pMsg,
+                                         pmdEDUCB *cb,
+                                         const CoordGroupList &groupLst,
+                                         BOOLEAN onPrimary = TRUE,
+                                         SET_RC *pIgnoreRC = NULL,
+                                         CoordGroupList *pSucGrpLst = NULL,
+                                         rtnContextCoord **ppContext = NULL ) ;
+
+      INT32         executeOnCataGroup ( MsgHeader *pMsg,
+                                         pmdEDUCB *cb,
+                                         BOOLEAN onPrimary = TRUE,
+                                         SET_RC *pIgnoreRC = NULL,
+                                         rtnContextCoord **ppContext = NULL ) ;
+
+      INT32         executeOnCataGroup ( MsgHeader *pMsg,
+                                         pmdEDUCB *cb,
+                                         CoordGroupList *pGroupList,
+                                         vector<BSONObj> *pReplyObjs = NULL,
+                                         BOOLEAN onPrimary = TRUE,
+                                         SET_RC *pIgnoreRC = NULL ) ;
+
+      INT32         executeOnCataCL( MsgOpQuery *pMsg,
+                                     pmdEDUCB *cb,
+                                     const CHAR *pCLName,
+                                     BOOLEAN onPrimary = TRUE,
+                                     SET_RC *pIgnoreRC = NULL,
+                                     rtnContextCoord **ppContext = NULL ) ;
+
+      INT32         queryOnCatalog( MsgHeader *pMsg,
                                     INT32 requestType,
                                     pmdEDUCB *cb,
                                     MsgOpReply &replyHeader,
                                     rtnContextBuf *buf ) ;
 
-      virtual INT32 executeOnDataGroup ( MsgHeader *pMsg,
-                                         CoordGroupList &groupLst,
-                                         CoordGroupList &sendGroupLst,
-                                         netMultiRouteAgent *pRouteAgent,
-                                         pmdEDUCB *cb,
-                                         BOOLEAN onPrimary,
-                                         std::set<INT32> *ignoreRCList = NULL,
-                                         std::map<UINT64, SINT64> *contexts = NULL );
-      virtual INT32 executeOnCataGroup ( CHAR *pBuffer,
-                                       netMultiRouteAgent *pRouteAgent,
-                                       pmdEDUCB *cb,
-                                       rtnContextCoord *pContext = NULL,
-                                       CoordGroupList *pGroupList = NULL,
-                                       std::vector<BSONObj> *pReplyObjs = NULL );
-      virtual INT32 processCatReply( MsgOpReply *pReply,
-                                     CoordGroupList &groupLst );
+      INT32         queryOnCatalog( const rtnQueryOptions &options,
+                                    pmdEDUCB *cb,
+                                    SINT64 &contextID ) ;
 
-      INT32 queryOnCatalog( const rtnQueryOptions &options,
-                            pmdEDUCB *cb,
-                            SINT64 &contextID ) ;
+      INT32         queryOnCataAndPushToVec( const rtnQueryOptions &options,
+                                             pmdEDUCB *cb,
+                                             vector<BSONObj> &objs ) ;
 
-      INT32 queryOnCataAndPushToVec( const rtnQueryOptions &options,
-                                     pmdEDUCB *cb,
-                                     std::vector<BSONObj> &objs ) ;
    protected:
       virtual void _printDebug ( CHAR *pReceiveBuffer, const CHAR *pFuncName ) ;
 
    private:
-      INT32 _getReplyObjsFromQueue( REPLY_QUE &replyQueue,
-                                    pmdEDUCB *cb,
-                                    rtnContextCoord *context ) ;
       // don't define any members that will change while execute
       // because this obj will be shared for different threads
+
+      INT32 _processCatReply( const BSONObj &obj,
+                              CoordGroupList &groupLst ) ;
+
+      INT32 _processSucReply( ROUTE_REPLY_MAP &okReply,
+                              rtnContextCoord *pContext ) ;
+
+      INT32 _executeOnGroups ( MsgHeader *pMsg,
+                               pmdEDUCB *cb,
+                               const CoordGroupList &groupLst,
+                               MSG_ROUTE_SERVICE_TYPE type,
+                               BOOLEAN onPrimary = TRUE,
+                               SET_RC *pIgnoreRC = NULL,
+                               CoordGroupList *pSucGrpLst = NULL,
+                               rtnContextCoord **ppContext = NULL ) ;
+
    };
 
    class rtnCoordDefaultCommand : public rtnCoordCommand
@@ -594,8 +630,8 @@ namespace engine
                              rtnContextBuf *buf ) ;
 
    private:
-      INT32 _notifyDataGroupsToStartTask( const BSONElement &task,
-                                          netMultiRouteAgent *agent,
+      INT32 _notifyDataGroupsToStartTask( const CHAR *pCLName,
+                                          const BSONElement &task,
                                           pmdEDUCB *cb ) ;
    };
 
@@ -618,12 +654,12 @@ namespace engine
                              MsgOpReply &replyHeader,
                              rtnContextBuf *buf ) ;
    protected:
-      virtual void getIgnoreRCList( std::set<INT32> &ignoreRCList );
+      virtual void  getIgnoreRCList( SET_RC &ignoreRCList );
 
-      virtual INT32 getGroupList( CHAR *pReceiveBuffer, CoordGroupList &groupLst,
-                                 CoordGroupList &sendGroupLst,
-                                 pmdEDUCB * cb,
-                                 BOOLEAN isNeedRefresh ) = 0;
+      virtual INT32 getGroupList( CHAR *pReceiveBuffer,
+                                  pmdEDUCB *cb,
+                                  CoordGroupList &groupLst,
+                                  string &clName ) = 0 ;
 
    private:
       virtual void fillReply( MsgHeader *pSrcMsg,
@@ -631,17 +667,16 @@ namespace engine
                               MsgOpReply &replyHeader );
 
       virtual INT32 doP1OnDataGroup( CHAR *pReceiveBuffer,
-                                    pmdEDUCB * cb,
-                                    SINT64 &contextID,
-                                    std::set<INT32> &ignoreRCList,
-                                    BOOLEAN isNeedRefresh );
+                                     pmdEDUCB *cb,
+                                     SINT64 &contextID,
+                                     SET_RC &ignoreRCList ) ;
 
       virtual INT32 doP2OnDataGroup( CHAR *pReceiveBuffer,
-                                    pmdEDUCB * cb,
-                                    SINT64 &contextID );
+                                     pmdEDUCB * cb,
+                                     SINT64 &contextID ) ;
 
       virtual INT32 doOnCataGroup( CHAR *pReceiveBuffer,
-                                    pmdEDUCB * cb ) = 0;
+                                   pmdEDUCB * cb ) = 0;
 
       virtual INT32 complete( CHAR *pReceiveBuffer,
                               pmdEDUCB * cb );
@@ -651,38 +686,36 @@ namespace engine
    {
    protected:
       virtual INT32 getGroupList( CHAR *pReceiveBuffer,
-                                 CoordGroupList &groupLst,
-                                 CoordGroupList &sendGroupLst,
-                                 pmdEDUCB * cb,
-                                 BOOLEAN isNeedRefresh );
+                                  pmdEDUCB *cb,
+                                  CoordGroupList &groupLst,
+                                  string &clName ) ;
 
-      virtual void getIgnoreRCList( std::set<INT32> &ignoreRCList );
+      virtual void  getIgnoreRCList( SET_RC &ignoreRCList ) ;
 
    private:
       virtual INT32 doOnCataGroup( CHAR *pReceiveBuffer,
-                                    pmdEDUCB * cb );
+                                   pmdEDUCB * cb );
 
       virtual INT32 complete( CHAR *pReceiveBuffer,
                               pmdEDUCB * cb );
 
       INT32 getCLName( CHAR *pReceiveBuffer,
-                     std::string &strCLName );
+                       string &strCLName );
    };
 
    class rtnCoordCMDDropCollectionSpace : public rtnCoordCMD2PhaseCommit
    {
    protected:
       virtual INT32 getGroupList( CHAR *pReceiveBuffer,
-                                 CoordGroupList &groupLst,
-                                 CoordGroupList &sendGroupLst,
-                                 pmdEDUCB * cb,
-                                 BOOLEAN isNeedRefresh );
+                                  pmdEDUCB *cb,
+                                  CoordGroupList &groupLst,
+                                  string &clName ) ;
 
-      virtual void getIgnoreRCList( std::set<INT32> &ignoreRCList );
+      virtual void  getIgnoreRCList( SET_RC &ignoreRCList );
 
    private:
       virtual INT32 doOnCataGroup( CHAR *pReceiveBuffer,
-                                    pmdEDUCB * cb );
+                                   pmdEDUCB * cb ) ;
    };
 
    class rtnCoordCMDQueryBase : public rtnCoordCommand
@@ -794,13 +827,7 @@ namespace engine
                              pmdEDUCB *cb,
                              MsgOpReply &replyHeader,
                              rtnContextBuf *buf ) ;
-      virtual INT32 processCatReply( MsgOpReply *pReply,
-                                     CoordGroupList &groupLst )
-      {
-         return MSG_CAT_DEL_NODE_RSP == (UINT32)(pReply->header.opCode) ?
-                pReply->flags :
-                this->rtnCoordCommand::processCatReply(pReply, groupLst );
-      }
+
    private:
       INT32 _validateOnDataNode( const BSONElement &groupName,
                                  const BSONElement &host,
@@ -829,15 +856,11 @@ namespace engine
                              MsgOpReply &replyHeader,
                              rtnContextBuf *buf ) ;
    private:
-      INT32 executeOnCataGroup ( CHAR *pBuffer,
-                                 netMultiRouteAgent *pRouteAgent,
-                                 pmdEDUCB *cb,
-                                 bson::BSONObj &boGroupInfo ) ;
-      INT32 startNodes( bson::BSONObj &boGroupInfo,
-                        vector<bson::BSONObj> &objList ) ;
+      INT32 startNodes( BSONObj &boGroupInfo,
+                        vector<BSONObj> &objList ) ;
 
       INT32 startNodes( clsGroupItem *pItem,
-                        vector<bson::BSONObj> &objList ) ;
+                        vector<BSONObj> &objList ) ;
 
    };
 
@@ -849,6 +872,12 @@ namespace engine
                              pmdEDUCB *cb,
                              MsgOpReply &replyHeader,
                              rtnContextBuf *buf ) ;
+
+   protected:
+      INT32         checkIndexKey( const CoordCataInfoPtr &cataInfo,
+                                   const BSONObj &indexObj,
+                                   pmdEDUCB *cb ) ;
+
    };
 
    class rtnCoordCMDDropIndex : public rtnCoordCommand
@@ -976,8 +1005,7 @@ namespace engine
                              rtnContextBuf *buf ) ;
    } ;
 
-   class rtnCoordCMDStatisticsBase : virtual public rtnCoordCommand,
-                                    virtual public rtnCoordQuery
+   class rtnCoordCMDStatisticsBase : virtual public rtnCoordCommand
    {
    public :
       virtual INT32 execute( CHAR *pReceiveBuffer,
@@ -989,6 +1017,8 @@ namespace engine
       virtual INT32 generateResult( rtnContext *pContext,
                                     netMultiRouteAgent *pRouteAgent,
                                     pmdEDUCB *cb ) = 0 ;
+
+      virtual BOOLEAN openEmptyContext() const { return FALSE ; }
    } ;
 
    class rtnCoordCMDGetIndexes : public rtnCoordCMDStatisticsBase
@@ -996,15 +1026,16 @@ namespace engine
       typedef std::map< std::string, bson::BSONObj > CoordIndexMap;
    private :
       virtual INT32 generateResult( rtnContext *pContext,
-                                 netMultiRouteAgent *pRouteAgent,
-                                 pmdEDUCB *cb );
+                                    netMultiRouteAgent *pRouteAgent,
+                                    pmdEDUCB *cb ) ;
    } ;
    class rtnCoordCMDGetCount : public rtnCoordCMDStatisticsBase
    {
    private :
       virtual INT32 generateResult( rtnContext *pContext,
-                                 netMultiRouteAgent *pRouteAgent,
-                                 pmdEDUCB *cb );
+                                    netMultiRouteAgent *pRouteAgent,
+                                    pmdEDUCB *cb );
+      virtual BOOLEAN openEmptyContext() const { return TRUE ; }
    };
    class rtnCoordCMDGetDatablocks : public rtnCoordCMDStatisticsBase
    {
@@ -1092,9 +1123,6 @@ namespace engine
                              pmdEDUCB *cb,
                              MsgOpReply &replyHeader,
                              rtnContextBuf *buf ) ;
-
-      INT32 processCatReply( MsgOpReply *pReply,
-                             CoordGroupList &groupLst ) ;
    } ;
 
    class rtnCoordCMDEval : public rtnCoordCommand
@@ -1119,9 +1147,6 @@ namespace engine
                              pmdEDUCB *cb,
                              MsgOpReply &replyHeader,
                              rtnContextBuf *buf ) ;
-
-      INT32 processCatReply( MsgOpReply *pReply,
-                             CoordGroupList &groupLst ) ;
    } ;
 
    class rtnCoordCMDListProcedures : public rtnCoordCMDQueryBase

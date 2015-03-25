@@ -481,6 +481,11 @@ namespace engine
                      pmdEDUCB *cb, SDB_DMSCB *dmsCB,
                      SDB_RTNCB *rtnCB, INT64 &contextID,
                      rtnContextBase **ppContext = NULL ) ;
+
+   void rtnNeedResetSelector( const BSONObj &original,
+                              const BSONObj &orderBy,
+                              BOOLEAN &needReset ) ;
+
 }
 
 #endif

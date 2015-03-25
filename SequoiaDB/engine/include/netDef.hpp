@@ -71,19 +71,27 @@ namespace engine
       NET_NODE_STAT_UNKNOWN
    }NET_NODE_STATUS;
 
+
+   #define NET_NODE_FAULT_TIMEOUT            ( 600 )
    /*
       _netRouteNode define
    */
    class _netRouteNode : public SDBObject
    {
    public :
-      SINT32 _status;   // make sure the addr of _status is aligned 4 bytes,
-                        // so the assignment of _status is atomic
       CHAR _host[OSS_MAX_HOSTNAME+1] ;
       std::string _service[MSG_ROUTE_SERVICE_TYPE_MAX] ;
       MsgRouteID _id ;
+
+   private:
+      SINT32 _status;     // make sure the addr of _status is aligned 4 bytes,
+                          // so the assignment of _status is atomic
+      UINT64 _faultTime ; // fault time
+
+   public:
       _netRouteNode()
-      :_status( NET_NODE_STAT_NORMAL )
+      :_status( NET_NODE_STAT_NORMAL ),
+       _faultTime( 0 )
       {
          SDB_ASSERT( (UINT64)&_status % 4 == 0,
                      "the addr of _status must be aligned 4 bytes!" );
@@ -115,10 +123,31 @@ namespace engine
          return *this ;
       }
 
-      void updateStatus( NET_NODE_STATUS status )
+      void updateStatus( NET_NODE_STATUS status, UINT64 curTime )
       {
-         _status = status;
+         if ( _status != (INT32)status )
+         {
+            _status = status ;
+            if ( NET_NODE_STAT_NORMAL != _status )
+            {
+               _faultTime = curTime ;
+            }
+         }
       }
+
+      NET_NODE_STATUS getStatus( UINT64 curTime,
+                                 INT32 faultTimeout = NET_NODE_FAULT_TIMEOUT )
+      {
+         if ( NET_NODE_STAT_NORMAL != _status && faultTimeout > 0 )
+         {
+            if ( curTime - _faultTime > (UINT64)faultTimeout  )
+            {
+               _status = NET_NODE_STAT_NORMAL ;
+            }
+         }
+         return (NET_NODE_STATUS)_status ;
+      }
+
    } ;
 
    /*
@@ -153,6 +182,10 @@ namespace engine
    typedef class _netIOV netIOV ;
 
    typedef std::vector<netIOV> netIOVec ;
+
+   /// calc the netio vec len
+   UINT32 netCalcIOVecSize( const netIOVec &ioVec ) ;
+
 }
 
 #endif // NETDEF_HPP_

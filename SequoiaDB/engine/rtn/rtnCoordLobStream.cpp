@@ -39,6 +39,8 @@
 #include "msgMessage.hpp"
 #include "coordSession.hpp"
 
+using namespace bson ;
+
 #define RTN_COORD_LOB_GET_SUBSTREAM( groupID, s ) \
         do\
         {\
@@ -54,6 +56,19 @@
 
 namespace engine
 {
+
+   #define LOB_MAX_RETRYTIMES                ( 5 )
+
+   static BOOLEAN _isRetry( UINT32 times )
+   {
+      return times == 0 ? TRUE : FALSE ;
+   }
+
+   static BOOLEAN _canRetry( UINT32 times )
+   {
+      return times < LOB_MAX_RETRYTIMES ? TRUE : FALSE ;
+   }
+
    _rtnCoordLobStream::_rtnCoordLobStream()
    :_metaGroup( 0 ),
     _alignBuf( 0 )
@@ -130,7 +145,17 @@ namespace engine
          {
             PD_LOG( PDERROR, "failed to get meta group:%d", rc ) ;
             goto error ;
-         }    
+         }
+         // get group info
+         rc = rtnCoordGetGroupInfo( cb, _metaGroup, FALSE,
+                                    _metaGroupInfo, NULL ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "Get meta group info[%u] failed, rc: %d",
+                    _metaGroup, rc ) ;
+            goto error ;
+         }
+         _mapGroupInfo[ _metaGroup ] = _metaGroupInfo ;
       }
    done:
       PD_TRACE_EXITRC( SDB_RTNCOORDLOBSTREAM__UPDATECATAINFO, rc ) ;
@@ -178,11 +203,13 @@ namespace engine
 
       MsgOpLob header ;
       CoordGroupList gpLst ;
-      netMultiRouteAgent *routeAgent = pmdGetKRCB()->getCoordCB()->
-                                       getRouteAgent() ;
+      netMultiRouteAgent *routeAgent = pmdGetKRCB()->getCoordCB(
+                                       )->getRouteAgent() ;
       BSONObjBuilder builder ;
       BSONObj obj ;
       netIOVec iov ;
+      UINT32 retryTime = 0 ;
+      CoordGroupMap::iterator itMap ;
 
       builder.append( FIELD_NAME_COLLECTION, fullName )
              .append( FIELD_NAME_LOB_OID, oid )
@@ -208,6 +235,14 @@ namespace engine
          _clearMsgData() ;
          _cataInfo->getGroupLst( gpLst ) ;
          SDB_ASSERT( 1 == gpLst.count( _metaGroup ), "impossible" ) ;
+
+         rc = rtnGroupList2GroupPtr( cb, gpLst, _mapGroupInfo, FALSE ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Get groups info failed, rc: %d", rc ) ;
+            goto error ;
+         }
+
          header.version = _cataInfo->getVersion() ;
 
          for ( CoordGroupList::const_iterator itr = gpLst.begin();
@@ -219,12 +254,21 @@ namespace engine
                continue ;
             }
 
+            itMap = _mapGroupInfo.find( itr->first ) ;
+            if ( _mapGroupInfo.end() == itMap )
+            {
+               SDB_ASSERT( FALSE, "Group info is not exist" ) ;
+               rc = SDB_COOR_NO_NODEGROUP_INFO ;
+               goto error ;
+            }
+
             rc = rtnCoordSendRequestToNodeGroup( &( header.header ),
-                                                 itr->first,
+                                                 itMap->second,
                                                  SDB_LOB_MODE_R != mode,
                                                  routeAgent,
                                                  cb, iov,
-                                                 _sendMap ) ;
+                                                 _sendMap,
+                                                 _isRetry( retryTime ) ) ;
             if ( SDB_OK != rc )
             {
                PD_LOG( PDERROR, "failed to send open msg to group:%d, rc:%d",
@@ -233,14 +277,15 @@ namespace engine
             }
          }
 
-         rc = _getReply( header, cb, FALSE, tag ) ;
+         rc = _getReply( header, cb, _canRetry( retryTime++ ), FALSE, tag ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "failed to get reply msg:%d", rc ) ;
             goto error ;
          }
 
-         /// when retry is true, we need to close contexts on nodes those returned ok.
+         /// when retry is true, we need to close contexts on nodes 
+         /// those returned ok.
          rc = _addSubStreamsFromReply() ;
          if ( SDB_OK != rc )
          {
@@ -253,10 +298,10 @@ namespace engine
          }
          else if ( RETRY_TAG_REOPEN & tag )
          {
-            rc = _closeSubStreams( cb ) ;
+            rc = _closeSubStreams( cb, TRUE ) ;
             if ( SDB_OK != rc )
             {
-               PD_LOG( PDERROR, "failed to close sub streams:%d", rc ) ;
+               PD_LOG( PDERROR, "failed to close sub streams: %d", rc ) ;
                goto error ;
             }
          }
@@ -265,6 +310,7 @@ namespace engine
             continue ;
          }
       } while ( TRUE ) ;
+
    done:
       _clearMsgData() ; 
       PD_TRACE_EXITRC( SDB_RTNCOORDLOBSTREAM__OPENOTHERSTREAMS, rc ) ;
@@ -282,13 +328,14 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNCOORDLOBSTREAM__OPENMAINSTREAM ) ;
 
-      netMultiRouteAgent *routeAgent = pmdGetKRCB()->getCoordCB()->
-                                       getRouteAgent() ;
+      netMultiRouteAgent *routeAgent = pmdGetKRCB()->getCoordCB(
+                                       )->getRouteAgent() ;
       MsgOpLob header ;
       const MsgOpReply *reply = NULL ;
       BSONObj obj ;
       BSONObjBuilder builder ;
       netIOVec iov ;
+      UINT32 retryTime = 0 ;
 
       builder.append( FIELD_NAME_COLLECTION, fullName )
              .append( FIELD_NAME_LOB_OID, oid )
@@ -307,11 +354,12 @@ namespace engine
          INT32 tag = RETRY_TAG_NULL ;
          header.version = _cataInfo->getVersion() ;
          rc = rtnCoordSendRequestToNodeGroup( &( header.header ),
-                                              _metaGroup,
+                                              _metaGroupInfo,
                                               SDB_LOB_MODE_R != mode,
                                               routeAgent,
                                               cb, iov,
-                                              _sendMap ) ;
+                                              _sendMap,
+                                              _isRetry( retryTime ) ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "failed to send open msg to group:%d, rc:%d",
@@ -319,7 +367,7 @@ namespace engine
             goto error ;
          }
 
-         rc = _getReply( header, cb, FALSE, tag ) ;
+         rc = _getReply( header, cb, _canRetry( retryTime++ ), FALSE, tag ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "failed to get reply msg:%d", rc ) ;
@@ -334,19 +382,20 @@ namespace engine
          else
          {
             continue ;
-            /// sth wrong happened, do again.
          }
       } while ( TRUE ) ;
+
+      _add2Subs( reply->header.routeID.columns.groupID,
+                 reply->contextID, reply->header.routeID ) ;
 
       rc = _extractMeta( reply, _metaObj ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to extract meta data from reply msg:%d", rc ) ;
+         PD_LOG( PDERROR, "failed to extract meta data from reply msg:%d",
+                 rc ) ;
          goto error ;
       }
 
-      _add2Subs( reply->header.routeID.columns.groupID,
-                 reply->contextID, reply->header.routeID ) ;
    done:
       _clearMsgData() ;
       PD_TRACE_EXITRC( SDB_RTNCOORDLOBSTREAM__OPENMAINSTREAM, rc ) ;
@@ -447,12 +496,13 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNCOORDLOBSTREAM__WRITE ) ;
-      netMultiRouteAgent *routeAgent = pmdGetKRCB()->getCoordCB()->
-                                       getRouteAgent() ;
+      netMultiRouteAgent *routeAgent = pmdGetKRCB()->getCoordCB(
+                                       )->getRouteAgent() ;
       MsgOpLob header ;
       UINT32 groupID = 0 ;
       const subStream *sub = NULL ;
       netIOVec iov ;
+      UINT32 retryTime = 0 ;
 
       _initHeader( header, MSG_BS_LOB_WRITE_REQ,
                    0, -1,
@@ -492,7 +542,7 @@ namespace engine
             goto error ;
          }
 
-         rc = _getReply( header, cb, TRUE, tag ) ;
+         rc = _getReply( header, cb, _canRetry( retryTime++ ), TRUE, tag ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "failed to get reply msg:%d", rc ) ;
@@ -528,11 +578,12 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNCOORDLOBSTREAM__WRITEV ) ;
 
-      netMultiRouteAgent *routeAgent = pmdGetKRCB()->getCoordCB()->
-                                       getRouteAgent() ;
+      netMultiRouteAgent *routeAgent = pmdGetKRCB()->getCoordCB(
+                                       )->getRouteAgent() ;
       DONE_LST doneLst ;
       BOOLEAN reshard = TRUE ;
       MsgOpLob header ;
+      UINT32 retryTime = 0 ;
 
       /// will reassign length
       _initHeader( header, MSG_BS_LOB_WRITE_REQ,
@@ -586,7 +637,7 @@ namespace engine
             }
          }
 
-         rc = _getReply( header, cb, TRUE, tag ) ;
+         rc = _getReply( header, cb, _canRetry( retryTime++ ), TRUE, tag ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "failed to get reply msg:%d", rc ) ;
@@ -629,11 +680,12 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNCOORDLOBSTREAM__READV ) ;
-      netMultiRouteAgent *routeAgent = pmdGetKRCB()->getCoordCB()->
-                                       getRouteAgent() ;
+      netMultiRouteAgent *routeAgent = pmdGetKRCB()->getCoordCB(
+                                       )->getRouteAgent() ;
       DONE_LST doneLst ; 
       BOOLEAN needReshard = TRUE ;
       MsgOpLob header ;
+      UINT32 retryTime = 0 ;
       _initHeader( header, MSG_BS_LOB_READ_REQ,
                    0, -1 ) ;
       
@@ -682,7 +734,7 @@ namespace engine
             }
          }
 
-         rc = _getReply( header, cb, TRUE, tag ) ;
+         rc = _getReply( header, cb, _canRetry( retryTime++ ), FALSE, tag ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "failed to get reply msg:%d", rc ) ;
@@ -799,8 +851,9 @@ namespace engine
       tuple.columns.offset = 0 ; /// offset in piece
       const subStream *sub = NULL ;
       netIOVec iov ;
-      netMultiRouteAgent *routeAgent = pmdGetKRCB()->getCoordCB()->
-                                       getRouteAgent() ;
+      netMultiRouteAgent *routeAgent = pmdGetKRCB()->getCoordCB(
+                                       )->getRouteAgent() ;
+      UINT32 retryTime = 0 ;
       MsgOpLob header ;
       _initHeader( header,
                    MSG_BS_LOB_UPDATE_REQ,
@@ -834,7 +887,7 @@ namespace engine
             goto error ;
          }
 
-         rc = _getReply( header, cb, TRUE, tag ) ;
+         rc = _getReply( header, cb, _canRetry( retryTime++ ), TRUE, tag ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "failed to get reply msg:%d", rc ) ;
@@ -864,7 +917,7 @@ namespace engine
 
    INT32 _rtnCoordLobStream::_close( _pmdEDUCB *cb )
    {
-      return _closeSubStreams( cb ) ;
+      return _closeSubStreams( cb, FALSE ) ;
    }
 
    //PD_TRACE_DECLARE_FUNCTION( SDB_RTNCOORDLOBSTREAM__ROLLBACK, "_rtnCoordLobStream::_rollback" )
@@ -886,13 +939,15 @@ namespace engine
    }
 
    //PD_TRACE_DECLARE_FUNCTION( SDB_RTNCOORDLOBSTREAM__CLOSESUBSTREAMS, "_rtnCoordLobStream::_closeSubStreams" )
-   INT32 _rtnCoordLobStream::_closeSubStreams( _pmdEDUCB *cb )
+   INT32 _rtnCoordLobStream::_closeSubStreams( _pmdEDUCB *cb,
+                                               BOOLEAN exceptMeta )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNCOORDLOBSTREAM__CLOSESUBSTREAMS ) ;
 
-      netMultiRouteAgent *routeAgent = pmdGetKRCB()->getCoordCB()->
-                                       getRouteAgent() ;
+      netMultiRouteAgent *routeAgent = pmdGetKRCB()->getCoordCB(
+                                       )->getRouteAgent() ;
+      UINT32 retryTime = 0 ;
       MsgOpLob header ;
       _initHeader( header, MSG_BS_LOB_CLOSE_REQ,
                    0, -1, sizeof( header ) ) ;
@@ -907,6 +962,10 @@ namespace engine
                itr != _subs.end();
                ++itr )
          {
+            if ( exceptMeta && _metaGroup == itr->second.id.columns.groupID )
+            {
+               continue ;
+            }
             header.contextID = itr->second.contextID ;
             rc = rtnCoordSendRequestToNode( &( header.header ),
                                             itr->second.id,
@@ -922,7 +981,7 @@ namespace engine
             }
          }
 
-         rc = _getReply( header, cb, TRUE, tag ) ;
+         rc = _getReply( header, cb, _canRetry( retryTime++ ), TRUE, tag ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "failed to get reply msg:%d", rc ) ;
@@ -962,8 +1021,8 @@ namespace engine
       PD_TRACE_ENTRY( SDB_RTNCOORDLOBSTREAM__CLOSESSWITHEXCEP ) ;
       REQUESTID_MAP sendMap ;
       REPLY_QUE q ;
-      netMultiRouteAgent *route = pmdGetKRCB()->getCoordCB()->
-                                  getRouteAgent() ;
+      netMultiRouteAgent *route = pmdGetKRCB()->getCoordCB(
+                                  )->getRouteAgent() ;
       MsgOpKillContexts killMsg ;
       killMsg.header.messageLength = sizeof ( MsgOpKillContexts ) ;
       killMsg.header.opCode = MSG_BS_KILL_CONTEXT_REQ ;
@@ -1065,11 +1124,12 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNCOORDLOBSTREAM__REMOVEV ) ;
 
-      netMultiRouteAgent *routeAgent = pmdGetKRCB()->getCoordCB()->
-                                       getRouteAgent() ;
+      netMultiRouteAgent *routeAgent = pmdGetKRCB()->getCoordCB(
+                                       )->getRouteAgent() ;
       BOOLEAN reshard = TRUE ;
       DONE_LST doneLst ;
       MsgOpLob header ;
+      UINT32 retryTime = 0 ;
 
       _initHeader( header,
                    MSG_BS_LOB_REMOVE_REQ,
@@ -1119,7 +1179,7 @@ namespace engine
             }      
          }
 
-         rc = _getReply( header, cb, TRUE, tag ) ;
+         rc = _getReply( header, cb, _canRetry( retryTime++ ), TRUE, tag ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "failed to get reply msg:%d", rc ) ;
@@ -1167,14 +1227,14 @@ namespace engine
             PD_LOG( PDERROR, "failed to write lob on node[%d:%hd], rc:%d",
                     ( *itr )->header.routeID.columns.groupID,
                     ( *itr )->header.routeID.columns.nodeID, rc ) ;
-            goto error ;
+            continue ;
          }
 
          if ( -1 == ( *itr )->contextID )
          {
             rc = SDB_SYS ;
             PD_LOG( PDERROR, "invalid context id" ) ;
-            goto error ;
+            continue ;
          }
 
          _add2Subs( ( *itr )->header.routeID.columns.groupID,
@@ -1190,10 +1250,12 @@ namespace engine
    //PD_TRACE_DECLARE_FUNCTION( SDB_RTNCOORDLOBSTREAM__GETREPLY, "_rtnCoordLobStream::_getReply" )
    INT32 _rtnCoordLobStream::_getReply( const MsgOpLob &header,
                                         _pmdEDUCB *cb,
+                                        BOOLEAN canRetry,
                                         BOOLEAN nodeSpecified,
                                         INT32 &tag )
    {
       INT32 rc = SDB_OK ;
+      INT32 flags = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNCOORDLOBSTREAM__GETREPLY ) ;
       INT32 replyType = MAKE_REPLY_TYPE( header.header.opCode ) ;
       REPLY_QUE replyQueue ;
@@ -1207,81 +1269,56 @@ namespace engine
          goto error ;
       }
 
-       /// TODO: rewrite this part when new coord session is done.
       while ( !replyQueue.empty() )
       {
          MsgOpReply *replyHeader = ( MsgOpReply * )( replyQueue.front() ) ;
          replyQueue.pop() ;
-         INT32 flag = replyHeader->flags ;
+         flags = replyHeader->flags ;
          MsgRouteID id = replyHeader->header.routeID ;
 
-         if ( SDB_OK == flag )
+         if ( SDB_OK == flags )
          {
             /// replyHeader will be released by _clearMsgData()    
             _results.push_back( replyHeader ) ;
             continue ;
          }
-         else if ( SDB_CLS_FULL_SYNC == flag )
-         {
-            PD_LOG( PDWARNING, "node[%d:%hd] is in full sync",
-                    id.columns.groupID, id.columns.nodeID ) ;
-            cb->getCoordSession()->removeLastNode( id.columns.groupID ) ;
-            rtnCoordUpdateNodeStatByRC( replyHeader->header.routeID,
-                                        flag );
-            if ( !nodeSpecified )
-            {
-               tag |= ( INT32 )RETRY_TAG_RETRY ;
-               flag = SDB_OK ;
-            }
-         }
-         else if ( SDB_CLS_NOT_PRIMARY == flag )
-         {
-            if ( !nodeSpecified )
-            {
-               tag |= ( INT32 )RETRY_TAG_RETRY ;
-               flag = SDB_OK ;
-            }
 
-            PD_LOG( PDWARNING, "node[%d:%hd] is not primary",
-                    id.columns.groupID, id.columns.nodeID ) ;
-            cb->getCoordSession()->removeLastNode( id.columns.groupID ) ;
-            CoordGroupInfoPtr groupInfoTmp ;
-            rc = rtnCoordGetGroupInfo( cb, id.columns.groupID, TRUE,
-                                       groupInfoTmp );
-            if ( SDB_OK != rc )
-            {
-               PD_LOG( PDERROR, "failed to refresh group info:%d", rc ) ;
-               /// do not goto error, we need to free replyHeader
-            }
-         }
-         else if ( SDB_CLS_COORD_NODE_CAT_VER_OLD == flag )
+         PD_LOG( PDWARNING, "Node[%d.%d] return failed, flags: %d",
+                 id.columns.groupID, id.columns.nodeID, flags ) ;
+
+         // get group info
+         CoordGroupMap::iterator it = _mapGroupInfo.find( id.columns.groupID ) ;
+         if ( it == _mapGroupInfo.end() )
          {
-            PD_LOG( PDWARNING, "catalog version is updated[%d:%hd]",
-                    id.columns.groupID, id.columns.nodeID ) ;
-            flag = SDB_OK ;
-            tag |= ( ( INT32 )RETRY_TAG_RETRY | ( INT32 )RETRY_TAG_REOPEN ) ;
-            rc = _updateCataInfo( TRUE, cb ) ;
-            if ( SDB_OK != rc )
-            {
-               PD_LOG( PDERROR, "failed to update catalog info:%d", rc ) ;
-               /// do not goto error, we need to free replyHeader
-            }
+            SDB_ASSERT( FALSE, "Group info is not exist" ) ;
+            flags = SDB_COOR_NO_NODEGROUP_INFO ;
          }
-         else
+         else if ( !nodeSpecified &&
+                   rtnCoordGroupReplyCheck( cb, flags, canRetry, id,
+                                            it->second, NULL, TRUE,
+                                            replyHeader->startFrom ) )
          {
-            PD_LOG( PDERROR, "node[%d:%hd] returned error code:%d",
-                    id.columns.groupID,
-                    id.columns.nodeID, flag ) ;
-            rc = flag ;
+            tag |= RETRY_TAG_RETRY ;
+            flags = SDB_OK ;
+         }
+         // then catalog
+         else if ( rtnCoordCataReplyCheck( cb, flags, canRetry, _cataInfo,
+                                           NULL, FALSE ) &&
+                   SDB_OK == ( flags = _updateCataInfo( TRUE, cb ) ) )
+         {
+            tag |= ( RETRY_TAG_RETRY | RETRY_TAG_REOPEN ) ;
+            flags = SDB_OK ;
          }
 
          SDB_OSS_FREE( replyHeader ) ;
-         rc = SDB_OK == rc ? flag : rc ;
-         if ( SDB_OK != rc )
-         {
-            goto error ;
-         }
+         rc = flags ? flags : rc ;
       }
+
+      if ( rc )
+      {
+         goto error ;
+      }
+
    done:
       while ( !replyQueue.empty() )
       {
@@ -1297,8 +1334,7 @@ namespace engine
 
    void _rtnCoordLobStream::_clearMsgData()
    {
-      std::vector<MsgOpReply *>::iterator itr =
-                                          _results.begin() ;
+      std::vector<MsgOpReply *>::iterator itr = _results.begin() ;
       for ( ; itr != _results.end(); ++itr )
       {
          SAFE_OSS_FREE( *itr ) ;
@@ -1313,7 +1349,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNCOORDLOBSTREAM__REOPENSS ) ;
-      rc = _closeSubStreams( cb ) ;
+      rc = _closeSubStreams( cb, TRUE ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to close sub streams:%d", rc ) ;
@@ -1355,7 +1391,7 @@ namespace engine
          UINT32 groupID = 0 ;
          dataGroup *dg = NULL ;
          const MsgLobTuple *tuple = ( const MsgLobTuple * )(&( *itr )) ;
-         
+
          if ( 0 < doneLst.count( (ossValuePtr)tuple ) )
          {
             continue ;
@@ -1530,7 +1566,7 @@ namespace engine
       if ( !obj.isEmpty() )
       {
          iov.push_back( netIOV( obj.objdata(), obj.objsize() ) ) ;
-	 UINT32 alignedLen = ossRoundUpToMultipleX( obj.objsize(), 4 ) ;
+	      UINT32 alignedLen = ossRoundUpToMultipleX( obj.objsize(), 4 ) ;
          if ( ( UINT32 )obj.objsize() < alignedLen )
          {
             iov.push_back( netIOV( &_alignBuf, alignedLen - obj.objsize() ) ) ;

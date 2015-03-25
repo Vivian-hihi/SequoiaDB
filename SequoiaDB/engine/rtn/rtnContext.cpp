@@ -56,9 +56,7 @@
 using namespace bson;
 namespace engine
 {
-   extern void needResetSelector( const BSONObj &,
-                                  const BSONObj &,
-                                  BOOLEAN & ) ;
+
    /*
       Functions
    */
@@ -4009,7 +4007,7 @@ namespace engine
       else
       {
          BOOLEAN needRebuild = FALSE ;
-         needResetSelector( selector, orderBy, needRebuild ) ;
+         rtnNeedResetSelector( selector, orderBy, needRebuild ) ;
          if ( needRebuild )
          {
             rc = srcContext->getSelector().move( _selector ) ;

@@ -38,6 +38,7 @@
 #include "core.hpp"
 #include "netFrame.hpp"
 #include "netMsgHandler.hpp"
+#include "msgDef.h"
 #include "pd.hpp"
 #include "pdTrace.hpp"
 #include "netTrace.hpp"
@@ -414,7 +415,7 @@ namespace engine
    }
 
    INT32 _netFrame::syncSendv( const NET_HANDLE & handle,
-                               MsgHeader * header,
+                               MsgHeader *header,
                                const netIOVec & iov )
    {
       SDB_ASSERT( NULL != header, "should not be NULL" ) ;
@@ -424,26 +425,17 @@ namespace engine
       NET_EH eh ;
       map<NET_HANDLE, NET_EH>::iterator itHandle ;
 
-#ifdef _DEBUG
-      UINT32 totalLen = 0 ;
-      for ( netIOVec::const_iterator itr = iov.begin();
-            itr != iov.end();
-            itr++ )
+      header->messageLength = sizeof( MsgHeader ) + netCalcIOVecSize( iov ) ;
+      if ( header->messageLength > SDB_MAX_MSG_LENGTH )
       {
-         SDB_ASSERT( NULL != itr->iovBase, "should not be NULL" ) ;
-         totalLen += itr->iovLen ;
-      }
-
-      if ( (SINT32)(totalLen + sizeof(MsgHeader)) != header->messageLength )
-      {
-         PD_LOG( PDERROR, "the length in header[%d] not equal to"
-                 " the whole msg's len[%d]",
-                  header->messageLength,
-                  totalLen + sizeof(MsgHeader)) ;
-         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "Invalid msg size: %d", header->messageLength ) ;
+         rc = SDB_INVALIDSIZE ;
          goto error ;
       }
-#endif
+      if ( MSG_INVALID_ROUTEID == header->routeID.value )
+      {
+         header->routeID = _local ;
+      }
 
       _mtx.get_shared() ;
       itHandle = _opposite.find( handle ) ;
@@ -470,14 +462,19 @@ namespace engine
             itr != iov.end();
             itr++ )
       {
-         rc = eh->syncSend( itr->iovBase, itr->iovLen ) ;
-         if ( SDB_OK != rc )
+         SDB_ASSERT( NULL != itr->iovBase, "should not be NULL" ) ;
+
+         if ( itr->iovBase )
          {
-            eh->mtx().release() ;
-            eh->close() ;
-            goto error ;
+            rc = eh->syncSend( itr->iovBase, itr->iovLen ) ;
+            if ( SDB_OK != rc )
+            {
+               eh->mtx().release() ;
+               eh->close() ;
+               goto error ;
+            }
+            _netOut.add( itr->iovLen ) ;
          }
-         _netOut.add( itr->iovLen ) ;
       }
       eh->mtx().release() ;
 
@@ -554,26 +551,19 @@ namespace engine
                   "id.value should not be zero" ) ;
       PD_TRACE_ENTRY( SDB__NETFRAME_SYNCSENDV ) ;
       INT32 rc = SDB_OK ;
-#ifdef _DEBUG
-      UINT32 totalLen = 0 ;
-      for ( netIOVec::const_iterator itr = iov.begin();
-            itr != iov.end();
-            itr++ )
-      {
-         SDB_ASSERT( NULL != itr->iovBase, "should not be NULL" ) ;
-         totalLen += itr->iovLen ;
-      }
 
-      if ( (SINT32)(totalLen + sizeof(MsgHeader)) != header->messageLength )
+      header->messageLength = sizeof( MsgHeader ) + netCalcIOVecSize( iov ) ;
+      if ( header->messageLength > SDB_MAX_MSG_LENGTH )
       {
-         PD_LOG( PDERROR, "the length in header[%d] not equal to"
-                 " the whole msg's len[%d]",
-                  header->messageLength,
-                  totalLen + sizeof(MsgHeader)) ;
-         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "Invalid msg size: %d", header->messageLength ) ;
+         rc = SDB_INVALIDSIZE ;
          goto error ;
       }
-#endif
+      if ( MSG_INVALID_ROUTEID == header->routeID.value )
+      {
+         header->routeID = _local ;
+      }
+
       {
       NET_EH eh;
       _mtx.get_shared() ;
@@ -586,10 +576,6 @@ namespace engine
       }
       eh = itr->second ;
       _mtx.release_shared() ;
-      if ( MSG_INVALID_ROUTEID == header->routeID.value )
-      {
-         header->routeID = _local ;
-      }
 
       eh->mtx().get() ;
       if ( pHandle )
@@ -609,14 +595,19 @@ namespace engine
             itr != iov.end();
             itr++ )
       {
-         rc = eh->syncSend( itr->iovBase, itr->iovLen ) ;
-         if ( SDB_OK != rc )
+         SDB_ASSERT( NULL != itr->iovBase, "should not be NULL" ) ;
+
+         if ( itr->iovBase && itr->iovLen > 0 )
          {
-            eh->mtx().release() ;
-            eh->close() ;
-            goto error ;
+            rc = eh->syncSend( itr->iovBase, itr->iovLen ) ;
+            if ( SDB_OK != rc )
+            {
+               eh->mtx().release() ;
+               eh->close() ;
+               goto error ;
+            }
+            _netOut.add( itr->iovLen ) ;
          }
-         _netOut.add( itr->iovLen ) ;
       }
 
       eh->mtx().release() ;
@@ -873,4 +864,21 @@ namespace engine
       _netOut.poke( 0 ) ;
    }
 
+   /*
+      Common function
+   */
+   UINT32 netCalcIOVecSize( const netIOVec &ioVec )
+   {
+      UINT32 size = 0 ;
+      for ( UINT32 i = 0 ; i < ioVec.size() ; ++i )
+      {
+         if ( ioVec[ i ].iovBase )
+         {
+            size += ioVec[ i ].iovLen ;
+         }
+      }
+      return size ;
+   }
+
 }
+

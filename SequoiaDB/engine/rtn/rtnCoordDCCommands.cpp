@@ -53,10 +53,7 @@ namespace engine
                                       rtnContextBuf *buf )
    {
       INT32 rc = SDB_OK ;
-      CoordCB *pCoord = pmdGetKRCB()->getCoordCB() ;
-      netMultiRouteAgent *pRouteAgent = pCoord->getRouteAgent() ;
       CoordGroupList datagroups ;
-      CoordGroupList sendgroups ;
       CoordGroupList allgroups ;
       const CHAR *pAction = NULL ;
 
@@ -73,8 +70,6 @@ namespace engine
       replyHeader.startFrom            = 0;
 
       MsgOpQuery *pAttachMsg           = (MsgOpQuery *)pReceiveBuffer ;
-      pAttachMsg->header.routeID.value = 0 ;
-      pAttachMsg->header.TID           = cb->getTID() ;
       pAttachMsg->header.opCode        = MSG_CAT_ALTER_IMAGE_REQ ;
 
       // extrace query msg
@@ -108,8 +103,7 @@ namespace engine
       }
 
       // 1. execute on catalog
-      rc = executeOnCataGroup( pReceiveBuffer, pRouteAgent, cb,
-                               NULL, &datagroups ) ;
+      rc = executeOnCataGroup( pHeader, cb, &datagroups ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Failed to execute %s:%s on catalog node, rc: %d",
@@ -127,8 +121,8 @@ namespace engine
 
       // 2. execute on the special groups, ignore error
       pAttachMsg->header.opCode        = MSG_BS_QUERY_REQ ;
-      rc = executeOnDataGroup( &pAttachMsg->header, datagroups, sendgroups,
-                               pRouteAgent, cb, TRUE ) ;
+      rc = executeOnDataGroup( &pAttachMsg->header, cb, datagroups,
+                               TRUE, NULL, NULL, NULL ) ;
       if ( rc )
       {
          PD_LOG( PDWARNING, "Failed to execute %s:%s on data nodes, "

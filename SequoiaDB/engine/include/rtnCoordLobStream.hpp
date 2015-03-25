@@ -183,7 +183,7 @@ namespace engine
       INT32 _extractMeta( const MsgOpReply *header,
                           bson::BSONObj &obj ) ;
 
-      INT32 _closeSubStreams( _pmdEDUCB *cb ) ;
+      INT32 _closeSubStreams( _pmdEDUCB *cb, BOOLEAN exceptMeta ) ;
 
       INT32 _closeSubStreamsWithException( _pmdEDUCB *cb ) ;
 
@@ -191,6 +191,7 @@ namespace engine
 
       INT32 _getReply( const MsgOpLob &header,
                        _pmdEDUCB *cb,
+                       BOOLEAN canRetry,
                        BOOLEAN nodeSpecified,
                        INT32 &tag ) ;
 
@@ -236,16 +237,18 @@ namespace engine
                         INT32 msgLen = -1 ) ;
    private:
       CoordCataInfoPtr _cataInfo ;
+      CoordGroupMap    _mapGroupInfo ;
 
       std::vector<MsgOpReply *> _results ;
-      REQUESTID_MAP _sendMap ;
-      DATA_GROUPS _dataGroups ;
+      REQUESTID_MAP     _sendMap ;
+      DATA_GROUPS       _dataGroups ;
 
-      SUB_STREAMS _subs;
-      bson::BSONObj _metaObj ;
-      UINT32 _metaGroup ;
+      SUB_STREAMS       _subs;
+      bson::BSONObj     _metaObj ;
+      CoordGroupInfoPtr _metaGroupInfo ;
+      UINT32            _metaGroup ;
 
-      UINT32 _alignBuf ;
+      UINT32            _alignBuf ;
    } ;
    typedef class _rtnCoordLobStream rtnCoordLobStream ;
 }

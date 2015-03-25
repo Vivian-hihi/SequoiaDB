@@ -214,6 +214,7 @@ namespace engine
          _dpsLogWrapper         *_pDpsCB ;
 
          MsgOpReply             _replyHeader ;
+         MsgRouteID             _primaryID ;
          BSONObj                _errorInfo ;
          const CHAR             *_pCollectionName ;
 

@@ -54,7 +54,7 @@
 
 namespace engine
 {
-   const UINT32 EDU_MEM_ALIGMENT_SIZE  = 1024 ;
+   const UINT32 EDU_MEM_ALIGMENT_SIZE  = 1024 ; // must for times for 4
    const UINT32 EDU_MAX_CATCH_SIZE     = 16*1024*1024 ;
 
    static std::map<EDU_TYPES, std::string> mapEDUName ;
@@ -621,11 +621,18 @@ namespace engine
       *ppBuff = ( CHAR* )SDB_OSS_REALLOC( *ppBuff, len ) ;
       if ( !*ppBuff )
       {
+         rc = SDB_OOM ;
          PD_LOG( PDERROR, "Failed to realloc memory, size: %d", len ) ;
          goto error ;
       }
 
       buffLen = len ;
+
+      if ( pOld != *ppBuff )
+      {
+         /// the old pointer has release, so need del from map
+         _allocMap.erase( pOld ) ;
+      }
 
       // update meta info
       _totalMemSize += ( len - oldLen ) ;
@@ -892,6 +899,20 @@ namespace engine
          (*_pTransNodeMap)[routeID.columns.groupID] = routeID;
       }
       PD_TRACE_EXIT ( SDB__PMDEDUCB_ADDTRANSNODE );
+   }
+
+   void _pmdEDUCB::delTransNode( MsgRouteID &routeID )
+   {
+      if ( _pTransNodeMap )
+      {
+         UINT32 groupID = routeID.columns.groupID ;
+         DpsTransNodeMap::iterator it = _pTransNodeMap->find( groupID ) ;
+         if ( it != _pTransNodeMap->end() &&
+              it->second.value == routeID.value )
+         {
+            _pTransNodeMap->erase( it ) ;
+         }
+      }
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUCB_GETTRANSNODEROUTEID, "_pmdEDUCB::getTransNodeRouteID" )
@@ -1320,7 +1341,7 @@ namespace engine
       {
          goto error ;
       }
-      if ( msgLen < sizeof( MsgHeader ) || msgLen > SDB_MAX_MSG_LENGTH )
+      if ( msgLen < (INT32)sizeof( MsgHeader ) || msgLen > SDB_MAX_MSG_LENGTH )
       {
          PD_LOG( PDERROR, "Recieve msg size[%d] less than msg header or more "
                  "than max size", msgLen ) ;

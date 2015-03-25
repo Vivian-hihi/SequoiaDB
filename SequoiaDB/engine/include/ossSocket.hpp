@@ -100,7 +100,6 @@ class _ossSocket : public SDBObject
       BOOLEAN              _init ;
       BOOLEAN              _closeWhenDestruct ;
       INT32                _timeout ;
-      BOOLEAN              _enableBlock ;
 
 #ifdef SDB_SSL
       SSLHandle*           _sslHandle;

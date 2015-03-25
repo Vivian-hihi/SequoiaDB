@@ -39,90 +39,100 @@
 #include "rtnCoordOperator.hpp"
 #include "../bson/bson.h"
 
+using namespace bson ;
+
 namespace engine
 {
    class rtnCoordInsert : public rtnCoordTransOperator
    {
-   typedef std::vector< CHAR * > ObjQueue;
-   typedef std::map< UINT32, ObjQueue > GroupObjsMap;
-   typedef std::map< std::string, ObjQueue > SubCLObjsMap;
-   typedef std::map< UINT32, SubCLObjsMap >  GroupSubCLMap;
-   typedef struct _CoordInsertMsg
-   {
-      SINT32      dataLen;
-      netIOVec    dataList;
-      _CoordInsertMsg()
-      {
-         dataLen = 0;
-      }
-   }CoordInsertMsg;
-   typedef std::map< UINT32, CoordInsertMsg > GroupInsertMsgMap;
+   typedef map< string, netIOVec >        SubCLObjsMap ;
+   typedef map< UINT32, SubCLObjsMap >    GroupSubCLMap ;
+
    public:
       virtual INT32 execute( CHAR *pReceiveBuffer,
                              SINT32 packSize,
                              pmdEDUCB *cb,
                              MsgOpReply &replyHeader,
                              rtnContextBuf *buf ) ;
+
    private:
-      INT32 shardDataByGroup( const CoordCataInfoPtr &cataInfo,
+      INT32 shardDataByGroup( CoordCataInfoPtr &cataInfo,
                               INT32 count,
                               CHAR *pInsertor,
-                              GroupObjsMap &groupObjsMap );
-      INT32 shardDataByGroup( const CoordCataInfoPtr &cataInfo,
+                              const netIOV &fixed,
+                              GROUP_2_IOVEC &datas ) ;
+
+      INT32 shardAnObj( CHAR *pInsertor,
+                        CoordCataInfoPtr &cataInfo,
+                        const netIOV &fixed,
+                        GROUP_2_IOVEC &datas ) ;
+
+      INT32 reshardData( CoordCataInfoPtr &cataInfo,
+                         const netIOV &fixed,
+                         GROUP_2_IOVEC &datas ) ;
+
+      /// main collection relation
+      INT32 shardAnObj( CHAR *pInsertor,
+                        CoordCataInfoPtr &cataInfo,
+                        pmdEDUCB * cb,
+                        GroupSubCLMap &groupSubCLMap ) ;
+
+      INT32 shardDataByGroup( CoordCataInfoPtr &cataInfo,
                               INT32 count,
                               CHAR *pInsertor,
                               pmdEDUCB *cb,
-                              GroupSubCLMap &groupSubCLMap );
-      INT32 reshardData( const CoordCataInfoPtr &cataInfo,
-                        GroupObjsMap &groupObjsMap );
-      INT32 reshardData( const CoordCataInfoPtr &cataInfo,
-                        pmdEDUCB *cb,
-                        GroupSubCLMap &groupSubCLMap );
-      INT32 shardAnObj( CHAR *pInsertor,
-                        const CoordCataInfoPtr &cataInfo,
-                        GroupObjsMap &groupObjsMap );
-      INT32 shardAnObj( CHAR *pInsertor,
-                        const CoordCataInfoPtr &cataInfo,
-                        pmdEDUCB * cb,
-                        GroupSubCLMap &groupSubCLMap );
-      INT32 insertToAGroup( CHAR *pBuffer,
-                           UINT32 grpID,
-                           netMultiRouteAgent *pRouteAgent,
-                           pmdEDUCB *cb );
-      INT32 processReply( REPLY_QUE &replyQue,
-                        CoordGroupList &successGroupList,
-                        pmdEDUCB *cb );
-      INT32 insertToGroups( const GroupInsertMsgMap &groupMsgMap,
-                           MsgOpInsert *pSrcMsg,
-                           netMultiRouteAgent *pRouteAgent,
-                           pmdEDUCB *cb,
-                           CoordGroupList &successGroupList );
-      INT32 sendToGroups( const GroupInsertMsgMap &groupObjsMap,
-                           MsgOpInsert *pSrcMsg,
-                           netMultiRouteAgent *pRouteAgent,
-                           pmdEDUCB *cb,
-                           REQUESTID_MAP &sendNodes );
-      INT32 insertToNormalCL( const CoordCataInfoPtr &cataInfo,
-                              CHAR *pReceiveBuffer, CHAR *pInsertor,
-                              INT32 count, netMultiRouteAgent *pRouteAgent,
-                              pmdEDUCB *cb, GroupObjsMap &groupObjsMap,
-                              BOOLEAN &hasSendSomeData);
-      INT32 insertToMainCL( const CoordCataInfoPtr &cataInfo,
-                           CHAR *pReceiveBuffer,
-                           CHAR *pInsertor, INT32 count,
-                           netMultiRouteAgent *pRouteAgent,
-                           pmdEDUCB *cb,
-                           GroupSubCLMap &groupSubCLMap );
-      INT32 buildInsertMsg( CHAR *pHeadRemain, INT32 remainLen,
-                           const GroupSubCLMap &groupSubCLMap,
-                           std::vector< bson::BSONObj > &subClInfoLst,
-                           void *pFiller,
-                           GroupInsertMsgMap &groupMsgMap );
-      INT32 buildInsertMsg( CHAR *pHeadRemain, INT32 remainLen,
-                           const GroupObjsMap &groupObjsMap,
-                           void *pFiller,
-                           GroupInsertMsgMap &groupMsgMap );
-   };
+                              GroupSubCLMap &groupSubCLMap ) ;
+
+      INT32 reshardData( CoordCataInfoPtr &cataInfo,
+                         pmdEDUCB *cb,
+                         GroupSubCLMap &groupSubCLMap ) ;
+
+      INT32 buildInsertMsg( const netIOV &fixed,
+                            GroupSubCLMap &groupSubCLMap,
+                            vector< BSONObj > &subClInfoLst,
+                            GROUP_2_IOVEC &datas ) ;
+
+   protected:
+
+      virtual INT32              _prepareCLOp( CoordCataInfoPtr &cataInfo,
+                                               rtnSendMsgIn &inMsg,
+                                               rtnSendOptions &options,
+                                               netMultiRouteAgent *pRouteAgent,
+                                               pmdEDUCB *cb,
+                                               rtnProcessResult &result,
+                                               ossValuePtr &outPtr ) ;
+
+      virtual void               _doneCLOp( ossValuePtr itPtr,
+                                            CoordCataInfoPtr &cataInfo,
+                                            rtnSendMsgIn &inMsg,
+                                            rtnSendOptions &options,
+                                            netMultiRouteAgent *pRouteAgent,
+                                            pmdEDUCB *cb,
+                                            rtnProcessResult &result ) ;
+
+      virtual INT32              _prepareMainCLOp( CoordCataInfoPtr &cataInfo,
+                                                   CoordGroupSubCLMap &grpSubCl,
+                                                   rtnSendMsgIn &inMsg,
+                                                   rtnSendOptions &options,
+                                                   netMultiRouteAgent *pRouteAgent,
+                                                   pmdEDUCB *cb,
+                                                   rtnProcessResult &result,
+                                                   ossValuePtr &outPtr ) ;
+
+      virtual void               _doneMainCLOp( ossValuePtr itPtr,
+                                                CoordCataInfoPtr &cataInfo,
+                                                CoordGroupSubCLMap &grpSubCl,
+                                                rtnSendMsgIn &inMsg,
+                                                rtnSendOptions &options,
+                                                netMultiRouteAgent *pRouteAgent,
+                                                pmdEDUCB *cb,
+                                                rtnProcessResult &result ) ;
+
+      virtual void               _prepareForTrans( pmdEDUCB *cb,
+                                                   MsgHeader *pMsg ) ;
+
+   } ;
 }
 
 #endif
+

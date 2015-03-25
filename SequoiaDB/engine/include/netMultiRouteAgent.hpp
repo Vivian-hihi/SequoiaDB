@@ -79,9 +79,10 @@ namespace engine
 
       UINT64 reqIDNew() ;
 
-   protected:
+   public:
       INT32 syncSend( const MsgRouteID &id, void *header, UINT64 &reqID,
-                      pmdEDUCB *pEduCB, void *body = NULL, UINT32 bodyLen = 0 ) ;
+                      pmdEDUCB *pEduCB, void *body = NULL,
+                      UINT32 bodyLen = 0 ) ;
 
       INT32 syncSend( const MsgRouteID &id, MsgHeader *header,
                       const netIOVec &iov, UINT64 &reqID,
@@ -92,90 +93,6 @@ namespace engine
                                  void *body = NULL, UINT32 bodyLen = 0 );
 
       void  multiSyncSend( const ROUTE_SET &routeSet, void *header ) ;
-
-   public:
-      friend INT32 rtnCoordGetRemoteCataGroupInfoByAddr ( pmdEDUCB *cb,
-                                                CoordGroupInfoPtr &groupInfo );
-
-      friend void rtnCoordSendRequestToNodesWithOutReply( void *pBuffer,
-                                                ROUTE_SET &nodes,
-                                                netMultiRouteAgent *pRouteAgent );
-
-      friend INT32 rtnCoordSendRequestToNodeWithoutCheck( void *pBuffer,
-                                                const MsgRouteID &routeID,
-                                                netMultiRouteAgent *pRouteAgent,
-                                                pmdEDUCB *cb,
-                                                REQUESTID_MAP &sendNodes );
-
-      friend INT32 rtnCoordSendRequestToNodeWithoutReply( void *pBuffer,
-                                                MsgRouteID &routeID,
-                                                netMultiRouteAgent *pRouteAgent );
-
-      friend INT32 rtnCoordSendRequestToNode( void *pBuffer,
-                                    MsgRouteID routeID,
-                                    netMultiRouteAgent *pRouteAgent,
-                                    pmdEDUCB *cb,
-                                    REQUESTID_MAP &sendNodes );
-
-      friend INT32 rtnCoordSendRequestToNodeGroup( CHAR *pBuffer,
-                                          UINT32 groupID,
-                                          BOOLEAN isSendPrimary,
-                                          netMultiRouteAgent *pRouteAgent,
-                                          pmdEDUCB *cb,
-                                          REQUESTID_MAP &sendNodes,
-                                          MSG_ROUTE_SERVICE_TYPE type );
-
-      friend INT32 rtnCoordSendRequestToNodeGroup( MsgHeader *pBuffer,
-                                          UINT32 groupID,
-                                          BOOLEAN isSendPrimary,
-                                          netMultiRouteAgent *pRouteAgent,
-                                          pmdEDUCB *cb,
-                                          const netIOVec &iov,
-                                          REQUESTID_MAP &sendNodes,
-                                          MSG_ROUTE_SERVICE_TYPE type );
-
-      friend INT32 rtnCoordSendRequestToPrimary( CHAR *pBuffer,
-                                       const CoordGroupInfoPtr &groupInfo,
-                                       REQUESTID_MAP &sendNodes,
-                                       netMultiRouteAgent *pRouteAgent,
-                                       MSG_ROUTE_SERVICE_TYPE type,
-                                       pmdEDUCB *cb );
-
-      friend INT32 rtnCoordSendRequestToPrimary( MsgHeader *pBuffer,
-                                       const CoordGroupInfoPtr &groupInfo,
-                                       REQUESTID_MAP &sendNodes,
-                                       netMultiRouteAgent *pRouteAgent,
-                                       const netIOVec &iov,
-                                       MSG_ROUTE_SERVICE_TYPE type,
-                                       pmdEDUCB *cb );
-
-      friend INT32 rtnCoordSendRequestToOne( CHAR *pBuffer,
-                                 CoordGroupInfoPtr &groupInfo,
-                                 REQUESTID_MAP &sendNodes,
-                                 netMultiRouteAgent *pRouteAgent,
-                                 MSG_ROUTE_SERVICE_TYPE type,
-                                 pmdEDUCB *cb );
-
-      friend INT32 rtnCoordSendRequestToOne( MsgHeader *pBuffer,
-                                 CoordGroupInfoPtr &groupInfo,
-                                 REQUESTID_MAP &sendNodes,
-                                 netMultiRouteAgent *pRouteAgent,
-                                 const netIOVec &iov,
-                                 MSG_ROUTE_SERVICE_TYPE type,
-                                 pmdEDUCB *cb );
-
-      friend INT32 rtnCoordSendRequestToLast( CHAR * pBuffer,
-                                    const CoordGroupInfoPtr & groupInfo,
-                                    REQUESTID_MAP & sendNodes,
-                                    netMultiRouteAgent * pRouteAgent,
-                                    pmdEDUCB *cb );
-
-      friend INT32 rtnCoordSendRequestToNode( void *pBuffer,
-                                    MsgRouteID routeID,
-                                    netMultiRouteAgent *pRouteAgent,
-                                    pmdEDUCB *cb,
-                                    const netIOVec &iov,
-                                    REQUESTID_MAP &sendNodes ) ;
 
    private:
       _netRouteAgent       *_pNetWork;

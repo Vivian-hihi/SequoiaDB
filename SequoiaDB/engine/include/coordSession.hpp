@@ -73,6 +73,7 @@ namespace engine
       void     addLastNode( const MsgRouteID &routeID );
       MsgRouteID getLastNode( UINT32 groupID );
       void     removeLastNode( UINT32 groupID ) ;
+      void     removeLastNode( UINT32 groupID, const MsgRouteID &nodeID ) ;
       void     getAllSessionRoute( ROUTE_SET &routeMap );
       void     postEvent ( pmdEDUEvent const &data );
       BOOLEAN  isSubsessionConnected( const MsgRouteID &routeID );

@@ -73,10 +73,10 @@ namespace engine
       goto done ;
    }
 
-   void _CoordGroupInfo::setPrimary( const MsgRouteID &ID )
+   INT32 _CoordGroupInfo::setPrimary( const MsgRouteID &ID )
    {
       ossScopedRWLock lock( &_primaryMutex, EXCLUSIVE ) ;
-      _groupItem.updatePrimary( ID, TRUE ) ;
+      return _groupItem.updatePrimary( ID, TRUE ) ;
    }
 
    void _CoordGroupInfo::setSlave( const MsgRouteID & ID )
@@ -85,29 +85,28 @@ namespace engine
       _groupItem.updatePrimary( ID, FALSE ) ;
    }
 
-   INT32 CoordCataInfo::getMatchGroups( const bson::BSONObj &matcher,
-                                       CoordGroupList &groupLst )
+   MsgRouteID _CoordGroupInfo::getPrimary( MSG_ROUTE_SERVICE_TYPE type )
    {
-      INT32 rc = SDB_OK ;
-      UINT32 i = 0 ;
-      UINT32 groupID = 0 ;
-      VEC_GROUP_ID vecGroup;
-      rc = _catlogSet.findGroupIDS( matcher, vecGroup );
-      PD_RC_CHECK( rc, PDERROR,
-                  "failed to get match groups(rc=%d)",
-                  rc );
-      SDB_ASSERT( vecGroup.size() != 0, "no match groups!" ) ;
-      PD_CHECK( vecGroup.size() != 0, SDB_CAT_NO_MATCH_CATALOG, error,
-               PDERROR, "couldn't find match group" );
-      for ( i = 0; i < vecGroup.size(); i++ )
-      {
-         groupID = vecGroup[i] ;
-         groupLst[ groupID ] = groupID ;
-      }
-   done:
-      return rc;
-   error:
-      goto done;
+      ossScopedRWLock lock( &_primaryMutex, SHARED ) ;
+      return _groupItem.primary( type ) ;
+   }
+
+   void _CoordGroupInfo::updateNodeStat( UINT16 nodeID, NET_NODE_STATUS status )
+   {
+      ossScopedRWLock lock( &_primaryMutex, EXCLUSIVE ) ;
+      _groupItem.updateNodeStat( nodeID, status ) ;
+   }
+
+   void _CoordGroupInfo::clearNodesStat()
+   {
+      ossScopedRWLock lock( &_primaryMutex, EXCLUSIVE ) ;
+      _groupItem.clearNodesStat() ;
+   }
+
+   INT32 _CoordGroupInfo::getNodeInfo ( UINT32 pos, SINT32 &status )
+   {
+      ossScopedRWLock lock( &_primaryMutex, SHARED ) ;
+      return _groupItem.getNodeInfo( pos, status ) ;
    }
 
    /*

@@ -46,6 +46,9 @@ namespace engine
 
 #define SHD_SESSION_TIMEOUT         (60)
 #define SHD_INTERRUPT_CHECKPOINT    (10)
+#define SHD_NOTPRIMARY_WAITTIME     (15000)     //ms
+#define SHD_TRANSROLLBACK_WAITTIME  (600000)    //ms
+#define SHD_WAITTIME_INTERVAL       (200)       //ms
 
    BEGIN_OBJ_MSG_MAP( _clsShdSession, _pmdAsyncSession )
       ON_MSG ( MSG_BS_UPDATE_REQ, _onOPMsg )
@@ -92,6 +95,7 @@ namespace engine
       _pDmsCB    = pKRCB->getDMSCB () ;
       _pDpsCB    = pKRCB->getDPSCB () ;
       _pRtnCB    = pKRCB->getRTNCB () ;
+      _primaryID.value = MSG_INVALID_ROUTEID ;
       PD_TRACE_EXIT ( SDB__CLSSDSESS__CLSSHDSESS ) ;
    }
 
@@ -184,6 +188,7 @@ namespace engine
    INT32 _clsShdSession::_check ( INT16 &w )
    {
       INT32 rc = SDB_OK ;
+      UINT32 waitTime = 0 ;
       PD_TRACE_ENTRY ( SDB__CLSSHDSESS__CK ) ;
 
       if ( w < 0 )
@@ -206,14 +211,63 @@ namespace engine
          /// do nothing.
       }
 
-      rc = _pReplSet->primaryCheck( _pEDUCB, w ) ;
-      if ( SDB_OK != rc )
+      waitTime = 0 ;
+      while( TRUE )
       {
+         rc = _pReplSet->primaryCheck( _pEDUCB, w ) ;
+         if ( SDB_OK == rc )
+         {
+            _pEDUCB->writingDB( TRUE ) ;
+            break ;
+         }
+         else if ( SDB_CLS_NOT_PRIMARY != rc )
+         {
+            goto error ;
+         }
+
+         // if know primary exist or no majority size, return at now,
+         // otherwise, need to wait some time
+         if ( MSG_INVALID_ROUTEID !=
+              ( _primaryID.value = _pReplSet->getPrimary().value ) )
+         {
+            rc = SDB_CLS_NOT_PRIMARY ;
+            goto error ;
+         }
+         else if ( !CLS_IS_MAJORITY( _pReplSet->getAlivesByTimeout(),
+                                     _pReplSet->groupSize() ) )
+         {
+            goto error ;
+         }
+         else if ( waitTime < SHD_NOTPRIMARY_WAITTIME &&
+                   !_pEDUCB->isInterrupted() )
+         {
+            ossSleep( SHD_WAITTIME_INTERVAL ) ;
+            waitTime += SHD_WAITTIME_INTERVAL ;
+            continue ;
+         }
          goto error ;
       }
 
-      if ( pmdGetKRCB()->getTransCB()->isDoRollback() )
+      waitTime = 0 ;
+      while( TRUE )
       {
+         if ( !pmdGetKRCB()->getTransCB()->isDoRollback() )
+         {
+            if ( waitTime > 0 && _pEDUCB->isInterrupted() )
+            {
+               rc = SDB_APP_INTERRUPT ;
+               goto error ;
+            }
+            break ;
+         }
+         else if ( waitTime < SHD_TRANSROLLBACK_WAITTIME &&
+                   !_pEDUCB->isInterrupted() )
+         {
+            ossSleep( SHD_WAITTIME_INTERVAL ) ;
+            waitTime += SHD_WAITTIME_INTERVAL ;
+            continue ;
+         }
+
          rc = SDB_DPS_TRANS_DOING_ROLLBACK ;
          goto error ;
       }
@@ -368,6 +422,7 @@ namespace engine
 
       MON_START_OP( _pEDUCB->getMonAppCB() ) ;
       _pEDUCB->resetLsn() ;
+      _primaryID.value = MSG_INVALID_ROUTEID ;
 
       while ( loop )
       {
@@ -386,7 +441,8 @@ namespace engine
                rc = _onDeleteReqMsg ( handle, msg, contextID ) ;
                break ;
             case MSG_BS_QUERY_REQ :
-               rc = _onQueryReqMsg ( handle, msg, buffObj, startFrom, contextID ) ;
+               rc = _onQueryReqMsg ( handle, msg, buffObj, startFrom,
+                                     contextID ) ;
                break ;
             case MSG_BS_GETMORE_REQ :
                rc = _onGetMoreReqMsg ( msg, buffObj, startFrom, contextID ) ;
@@ -471,6 +527,8 @@ namespace engine
                 SDB_CLS_DATA_NODE_CAT_VER_OLD == rc ||
                 SDB_CLS_COORD_NODE_CAT_VER_OLD == rc ) && loopTime < 1 )
          {
+            // between update and check, this cata will be removed by others,
+            // so need to retry all the way
             if ( SDB_CLS_NO_CATALOG_INFO != rc )
             {
                loopTime++ ;
@@ -537,7 +595,9 @@ namespace engine
          numReturn = 1 ;
          flags = rc ;
 
-         if ( isNeedRollback && _pReplSet->primaryIsMe () )
+         /// when coord catalog info is old, can't rollback, coord will retry
+         if ( SDB_CLS_COORD_NODE_CAT_VER_OLD != rc &&
+              isNeedRollback && _pReplSet->primaryIsMe () )
          {
             INT32 rcTmp = rtnTransRollback( _pEDUCB, _pDpsCB ) ;
             if ( rcTmp )
@@ -555,6 +615,12 @@ namespace engine
          {
             PD_LOG ( PDERROR, "Session[%s] process OP[type:%u] failed[rc:%d]",
                      sessionName(), msg->opCode, rc ) ;
+         }
+
+         if ( SDB_CLS_NOT_PRIMARY == rc && 0 != _primaryID.columns.nodeID )
+         {
+            // retrun the node id by startFrom
+            startFrom = _primaryID.columns.nodeID ;
          }
       }
       else
@@ -747,7 +813,6 @@ namespace engine
          goto error ;
       }
       _pCollectionName = pCollectionName ;
-      _pEDUCB->writingDB( TRUE ) ; // it call must before _checkCata
 
       //check version
       rc = _checkCata ( pUpdate->version, pCollectionName, w, isMainCL ) ;
@@ -830,7 +895,6 @@ namespace engine
          goto error ;
       }
       _pCollectionName = pCollectionName ;
-      _pEDUCB->writingDB( TRUE ) ;  // it call must before _checkCata
 
       //check catalog
       rc = _checkCata ( pInsert->version, pCollectionName, w, isMainCL ) ;
@@ -908,7 +972,6 @@ namespace engine
          goto error ;
       }
       _pCollectionName = pCollectionName ;
-      _pEDUCB->writingDB( TRUE ) ;  // it call must before _checkCata
 
       //check cata
       rc = _checkCata ( pDelete->version, pCollectionName, w, isMainCL ) ;
@@ -1102,7 +1165,6 @@ namespace engine
             {
                goto error ;
             }
-            _pEDUCB->writingDB( TRUE ) ;  // it call must before _checkCata
          }
          else
          {
@@ -1731,7 +1793,7 @@ namespace engine
       std::vector< std::string > strSubCLList;
       INT64 updateNum = 0;
       rc = _getSubCLList( selector, pCollectionName,
-                        boNewSelector, strSubCLList );
+                          boNewSelector, strSubCLList );
       if ( rc != SDB_OK )
       {
          goto error;
@@ -1941,7 +2003,7 @@ namespace engine
          goto error ;
       }
       rc = _getSubCLList( boMatcher, pCollection, boNewMatcher,
-                        strSubCLList );
+                          strSubCLList );
       PD_RC_CHECK( rc, PDERROR, "failed to get sub-collection list(rc=%d)",
                    rc );
       rc = _pRtnCB->contextNew( RTN_CONTEXT_MAINCL,
@@ -2044,7 +2106,7 @@ namespace engine
       {
          INT32 rcTmp = SDB_OK;
          rcTmp = rtnCreateIndexCommand( iter->c_str(), boIndex, _pEDUCB,
-                                     _pDmsCB, _pDpsCB );
+                                        _pDmsCB, _pDpsCB );
          if ( SDB_DMS_NOTEXIST == rc )
          {
             rc = _pShdMgr->syncUpdateCatalog( (*iter).c_str() ) ;
@@ -2093,7 +2155,7 @@ namespace engine
       {
          boMatcher = BSONObj( pQuery );
          rc = rtnGetObjElement( boMatcher, FIELD_NAME_INDEX,
-                              boIndex );
+                                boIndex );
          PD_RC_CHECK( rc, PDERROR,
                       "failed to get object index(rc=%d)", rc );
          ele = boIndex.firstElement();
@@ -2105,7 +2167,7 @@ namespace engine
                       e.what() );
       }
       rc = _getSubCLList( boMatcher, pCollection, boNewMatcher,
-                        strSubCLList );
+                          strSubCLList );
       PD_RC_CHECK( rc, PDERROR,
                    "failed to get sub-collection list(rc=%d)", rc );
       iter = strSubCLList.begin();
@@ -2137,8 +2199,8 @@ namespace engine
                rc = rcTmp;
             }
             PD_LOG( PDERROR,
-                   "drop index for sub-collection(%s) failed(rc=%d)",
-                   iter->c_str(), rcTmp );
+                    "drop index for sub-collection(%s) failed(rc=%d)",
+                    iter->c_str(), rcTmp );
          }
          ++iter;
       }
@@ -2518,8 +2580,6 @@ namespace engine
          goto error ;
       }
 
-      _pEDUCB->writingDB( TRUE ) ;  // it call must before _checkCata
-
       rc = _checkCata( header->version, lobContext->getFullName(),
                        w, isMainCl, FALSE ) ;
       if ( SDB_OK != rc )
@@ -2748,7 +2808,6 @@ namespace engine
          goto error ;
       }
 
-      _pEDUCB->writingDB( TRUE ) ;  // it call must before _checkCata
       rc = _checkCata( header->version, lobContext->getFullName(),
                        w, isMainCl, FALSE ) ;
       if ( SDB_OK != rc )
@@ -2844,11 +2903,15 @@ namespace engine
          goto error ;
       }
 
-      _pEDUCB->writingDB( TRUE ) ;  // it call must before _checkCata
-
       lobContext = ( rtnContextShdOfLob * )context ;
       _pCollectionName = lobContext->getFullName() ;
       w = lobContext->getW() ;
+      rc = _check( w ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+
       rc = _checkCata( header->version, lobContext->getFullName(),
                        w, isMainCl, FALSE ) ;
       if ( SDB_OK != rc )

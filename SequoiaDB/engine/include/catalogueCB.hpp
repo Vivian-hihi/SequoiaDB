@@ -113,6 +113,10 @@ namespace engine
                                     BOOLEAN ignoreErr = FALSE ) ;
 
          INT16    majoritySize() ;
+         INT32    primaryCheck( _pmdEDUCB *cb, BOOLEAN canDelay,
+                                BOOLEAN &isDelay ) ;
+         UINT16   getPrimaryNode() const { return _primaryID.columns.nodeID ; }
+
          BOOLEAN  isDCActive() const { return _catDCMgr.isDCActive() ; }
          BOOLEAN  isImageEnable() const { return _catDCMgr.isImageEnable() ; }
 
@@ -165,6 +169,8 @@ namespace engine
          catNodeManager       _catNodeMgr ;
          catDCManager         _catDCMgr ;
          catLevelLockMgr      _levelLockMgr ;
+
+         MsgRouteID           _primaryID ;
    } ;
 
    /*

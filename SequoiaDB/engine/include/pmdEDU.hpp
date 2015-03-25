@@ -368,6 +368,7 @@ namespace engine
       INT32 createTransaction() ;
       void  delTransaction() ;
       void  addTransNode( MsgRouteID &routeID ) ;
+      void  delTransNode( MsgRouteID &routeID ) ;
       void  getTransNodeRouteID( UINT32 groupID, MsgRouteID &routeID ) ;
       DpsTransNodeMap *getTransNodeLst() ;
       BOOLEAN isTransaction() ;

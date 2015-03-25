@@ -93,7 +93,7 @@ namespace engine
          goto error ;
       }
 
-      rc = _command->queryOnCatalog( msg, bufSize, MSG_BS_QUERY_REQ,
+      rc = _command->queryOnCatalog( (MsgHeader*)msg, MSG_BS_QUERY_REQ,
                                      _cb, reply, NULL ) ;
       if ( SDB_OK != rc )
       {

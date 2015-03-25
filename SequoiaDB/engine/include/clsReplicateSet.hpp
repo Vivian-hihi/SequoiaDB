@@ -137,6 +137,17 @@ namespace engine
             return num ;
          }
 
+         // timeout: ms
+         OSS_INLINE UINT32 getAlivesByTimeout( UINT32 timeout =
+                                               CLS_NODE_KEEPALIVE_TIMEOUT )
+         {
+            UINT32 num = 0 ;
+            _info.mtx.lock_r () ;
+            num = _info.getAlivesByTimeout( timeout ) ;
+            _info.mtx.release_r  () ;
+            return num ;
+         }
+
          OSS_INLINE BOOLEAN isAlive ( NodeID node )
          {
             BOOLEAN bAlive = FALSE ;

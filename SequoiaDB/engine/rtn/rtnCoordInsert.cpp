@@ -53,153 +53,285 @@ namespace engine
                                   MsgOpReply &replyHeader,
                                   rtnContextBuf *buf )
    {
-      INT32 rc = SDB_OK;
+      INT32 rc = SDB_OK ;
+      INT32 rcTmp = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNCOINS_EXECUTE ) ;
       pmdKRCB *pKrcb                   = pmdGetKRCB();
       CoordCB *pCoordcb                = pKrcb->getCoordCB();
       netMultiRouteAgent *pRouteAgent  = pCoordcb->getRouteAgent();
-      rtnCoordOperator *pRollbackOperator = NULL;
+
+      // process define
+      rtnSendOptions sendOpt( TRUE ) ;
+      sendOpt._useSpecialGrp = TRUE ;
+
+      rtnSendMsgIn inMsg( (MsgHeader*)pReceiveBuffer ) ;
+      rtnProcessResult result ;
+      ROUTE_RC_MAP nokRC ;
+      result._pNokRC = &nokRC ;
+
+      CoordCataInfoPtr cataInfo ;
+      MsgRouteID errNodeID ;
+      GroupSubCLMap grpSubCLDatas ;
+      inMsg._pvtData = ( CHAR* )&grpSubCLDatas ;
+      inMsg._pvtType = PRIVATE_DATA_USER ;
 
       // fill default-reply(insert success)
-      MsgHeader *pHeader               = (MsgHeader *)pReceiveBuffer;
+      MsgOpInsert *pInsertMsg          = (MsgOpInsert *)pReceiveBuffer;
       replyHeader.header.messageLength = sizeof( MsgOpReply );
       replyHeader.header.opCode        = MSG_BS_INSERT_RES;
-      replyHeader.header.requestID     = pHeader->requestID;
+      replyHeader.header.requestID     = pInsertMsg->header.requestID;
       replyHeader.header.routeID.value = 0;
-      replyHeader.header.TID           = pHeader->TID;
+      replyHeader.header.TID           = pInsertMsg->header.TID ;
       replyHeader.contextID            = -1;
       replyHeader.flags                = SDB_OK;
       replyHeader.numReturned          = 0;
       replyHeader.startFrom            = 0;
-      MsgOpInsert *pSrcMsg = (MsgOpInsert *)pReceiveBuffer;
-      BOOLEAN isNeedRefreshCata = FALSE;
-      GroupObjsMap groupObjsMap;
-      BOOLEAN hasSendSomeData = FALSE;
-      GroupSubCLMap groupSubCLMap;
 
-      INT32 flag = 0;
-      CHAR *pCollectionName = NULL;
+      INT32 flag = 0 ;
+      CHAR *pCollectionName = NULL ;
       CHAR *pInsertor = NULL;
-      INT32 count = 0;
+      INT32 count = 0 ;
       rc = msgExtractInsert( pReceiveBuffer, &flag,
                              &pCollectionName, &pInsertor, count ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to parse insert request" );
-      pSrcMsg->header.TID = cb->getTID();
-      if ( cb->isTransaction() )
+      PD_RC_CHECK( rc, PDERROR, "Failed to parse insert request, rc: %d",
+                   rc ) ;
+
+      rc = rtnCoordGetCataInfo( cb, pCollectionName, FALSE, cataInfo ) ;
+      PD_RC_CHECK( rc, PDERROR, "Insert failed, failed to get the "
+                   "catalogue info(collection name: %s), rc: %d",
+                   pCollectionName, rc ) ;
+
+   retry:
+      do
       {
-         pSrcMsg->header.opCode = MSG_BS_TRANS_INSERT_REQ;
+         pInsertMsg->version = cataInfo->getVersion() ;
+         pInsertMsg->w = 0 ;
+
+         if ( !cataInfo->isMainCL() )
+         {
+            rcTmp = doOpOnCL( cataInfo, BSONObj(), inMsg, sendOpt,
+                              pRouteAgent, cb, result ) ;
+            
+         }
+         else
+         {
+            rcTmp = doOpOnMainCL( cataInfo, BSONObj(), inMsg, sendOpt,
+                                  pRouteAgent, cb, result ) ;
+         }
+      }while( FALSE ) ;
+
+      if ( SDB_OK == rcTmp && nokRC.empty() )
+      {
+         goto done ;
+      }
+      else if ( checkRetryForCLOpr( rcTmp, &nokRC, inMsg.msg(),
+                                    sendOpt._retryTimes,
+                                    cataInfo, cb, rc, &errNodeID, TRUE ) )
+      {
+         nokRC.clear() ;
+         ++sendOpt._retryTimes ;
+         goto retry ;
       }
       else
       {
-         pSrcMsg->header.opCode = MSG_BS_INSERT_REQ;
+         PD_LOG( PDERROR, "Insert failed on node[%s], rc: %d",
+                 routeID2String( errNodeID ).c_str(), rc ) ;
+         goto error ;
       }
 
-      while ( TRUE )
-      {
-         CoordCataInfoPtr cataInfo;
-         rc = rtnCoordGetCataInfo( cb, pCollectionName, isNeedRefreshCata,
-                                   cataInfo );
-         PD_RC_CHECK( rc, PDERROR,
-                      "Failed to get the catalog info(collection name:%s)",
-                      pCollectionName );
-
-         pSrcMsg->header.routeID.value = 0;
-         pSrcMsg->version = cataInfo->getVersion();
-
-         if ( !cataInfo->isSharded() )
-         {
-            CoordGroupList groupLst;
-            cataInfo->getGroupLst( groupLst );
-            PD_CHECK( groupLst.size() > 0, SDB_SYS, error,
-                      PDERROR, "invalid catalog-info, no group-info" );
-            rc = buildTransSession( groupLst, pRouteAgent, cb );
-            PD_RC_CHECK( rc, PDERROR,
-                         "Failed to build transaction session(rc=%d)",
-                         rc );
-
-            CoordGroupList::iterator iterLst = groupLst.begin();
-            rc = insertToAGroup( pReceiveBuffer, iterLst->first, pRouteAgent, cb );
-            if ( rc )
-            {
-               CoordGroupList emptyGroupLst;
-               adjustTransSession( emptyGroupLst, pRouteAgent, cb );
-            }
-         }//end of if ( !cataInfo->isSharded() )
-         else if( !cataInfo->isMainCL() )
-         {
-            rc = insertToNormalCL( cataInfo, pReceiveBuffer, pInsertor,
-                                   count, pRouteAgent, cb, groupObjsMap,
-                                   hasSendSomeData ) ;
-         }//end of else if( !cataInfo->isMainCL() )
-         else
-         {
-            rc = insertToMainCL( cataInfo, pReceiveBuffer, pInsertor,
-                                 count, pRouteAgent, cb, groupSubCLMap ) ;
-         }
-         if ( SDB_OK != rc )
-         {
-            if ( !isNeedRefreshCata && rtnCoordWriteRetryRC( rc ) )
-            {
-               isNeedRefreshCata = TRUE;
-               continue;
-            }
-            if ( SDB_CLS_COORD_NODE_CAT_VER_OLD == rc )
-            {
-               rc = SDB_CAT_NO_MATCH_CATALOG;
-            }
-            PD_RC_CHECK ( rc, PDERROR, "Failed to insert the record to "
-                          "data-node, rc = %d", rc ) ;
-         }
-         break;
-      }
-      if ( cb->isTransaction() )
-      {
-         rc = rc ? rc : cb->getTransRC();
-      }
-      if ( rc )
-      {
-         goto error;
-      }
    done:
       PD_TRACE_EXITRC ( SDB_RTNCOINS_EXECUTE, rc ) ;
       return rc;
    error:
-      if ( cb->isTransaction() )
+      replyHeader.flags = rc ;
+      goto done;
+   }
+
+   INT32 rtnCoordInsert::_prepareCLOp( CoordCataInfoPtr &cataInfo,
+                                       rtnSendMsgIn &inMsg,
+                                       rtnSendOptions &options,
+                                       netMultiRouteAgent *pRouteAgent,
+                                       pmdEDUCB *cb,
+                                       rtnProcessResult &result,
+                                       ossValuePtr &outPtr )
+   {
+      INT32 rc = SDB_OK ;
+      MsgOpInsert *pInsertMsg = ( MsgOpInsert* )inMsg.msg() ;
+      netIOV fixed( ( CHAR*)inMsg.msg() + sizeof( MsgHeader ),
+                    ossRoundUpToMultipleX ( offsetof(MsgOpInsert, name) +
+                                            pInsertMsg->nameLength + 1, 4 ) -
+                    sizeof( MsgHeader ) ) ;
+
+      // clear send groups
+      options._groupLst.clear() ;
+
+      if ( !cataInfo->isSharded() )
       {
-         pRollbackOperator
-               = pCoordcb->getProcesserFactory()->getOperator( MSG_BS_TRANS_ROLLBACK_REQ );
-         if ( pRollbackOperator )
+         // get group
+         cataInfo->getGroupLst( options._groupLst ) ;
+         // don't change the msg
+         goto done ;
+      }
+      else if ( inMsg.data()->size() == 0 )
+      {
+         INT32 flag = 0 ;
+         CHAR *pCollectionName = NULL ;
+         CHAR *pInsertor = NULL ;
+         INT32 count = 0 ;
+
+         rc = msgExtractInsert( (CHAR *)inMsg.msg(), &flag, &pCollectionName,
+                                &pInsertor, count ) ;
+         PD_RC_CHECK( rc, PDERROR, "Extrace insert msg failed, rc: %d",
+                      rc ) ;
+
+         rc = shardDataByGroup( cataInfo, count, pInsertor, fixed,
+                                inMsg._datas ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to shard data by group, rc: %d",
+                      rc ) ;
+
+         // only one group, send by normal
+         if ( 1 == inMsg._datas.size() )
          {
-            pRollbackOperator->execute( pReceiveBuffer, packSize,
-                                       cb, replyHeader, NULL );
+            UINT32 groupID = inMsg._datas.begin()->first ;
+            options._groupLst[ groupID ] = groupID ;
+            inMsg._datas.clear() ;
+         }
+         else
+         {
+            GROUP_2_IOVEC::iterator it = inMsg._datas.begin() ;
+            while( it != inMsg._datas.end() )
+            {
+               options._groupLst[ it->first ] = it->first ;
+               ++it ;
+            }
          }
       }
-      replyHeader.flags = rc;
+      // reshard
+      else
+      {
+         rc = reshardData( cataInfo, fixed, inMsg._datas ) ;
+         PD_RC_CHECK( rc, PDERROR, "Re-shard data failed, rc: %d", rc ) ;
+
+         // build groups
+         {
+            GROUP_2_IOVEC::iterator it = inMsg._datas.begin() ;
+            while( it != inMsg._datas.end() )
+            {
+               options._groupLst[ it->first ] = it->first ;
+               ++it ;
+            }
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   void rtnCoordInsert::_doneCLOp( ossValuePtr itPtr,
+                                   CoordCataInfoPtr &cataInfo,
+                                   rtnSendMsgIn &inMsg,
+                                   rtnSendOptions &options,
+                                   netMultiRouteAgent *pRouteAgent,
+                                   pmdEDUCB *cb,
+                                   rtnProcessResult &result )
+   {
+      // remove the datas by succeed group
+      if ( inMsg._datas.size() > 0 )
+      {
+         CoordGroupList::iterator it = result._sucGroupLst.begin() ;
+         while( it != result._sucGroupLst.end() )
+         {
+            inMsg._datas.erase( it->second ) ;
+            ++it ;
+         }
+      }
+
+      // clear all succeed group
+      result._sucGroupLst.clear() ;
+   }
+
+   void rtnCoordInsert::_prepareForTrans( pmdEDUCB *cb, MsgHeader *pMsg )
+   {
+      pMsg->opCode = MSG_BS_TRANS_INSERT_REQ ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOINS_SHARDANOBJ, "rtnCoordInsert::shardAnObj" )
+   INT32 rtnCoordInsert::shardAnObj( CHAR *pInsertor,
+                                     CoordCataInfoPtr &cataInfo,
+                                     const netIOV &fixed,
+                                     GROUP_2_IOVEC &datas )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB_RTNCOINS_SHARDANOBJ ) ;
+      try
+      {
+         BSONObj insertObj( pInsertor ) ;
+         UINT32 roundLen = ossRoundUpToMultipleX( insertObj.objsize(), 4 ) ;
+         UINT32 groupID = 0 ;
+
+         rc = cataInfo->getGroupByRecord( insertObj, groupID ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to get the groupid for obj[%s] "
+                      "from catalog info[%s], rc: %d",
+                      insertObj.toString().c_str(),
+                      cataInfo->getCatalogSet()->toCataInfoBson(
+                      ).toString().c_str(),
+                      rc ) ;
+         // add 2 group
+         {
+            netIOVec &iovec = datas[ groupID ] ;
+            UINT32 size = iovec.size() ;
+            if( size > 0 && (const CHAR*)( iovec[size-1].iovBase ) +
+                iovec[size-1].iovLen == pInsertor )
+            {
+               // change the length
+               iovec[size-1].iovLen += roundLen ;
+            }
+            else
+            {
+               iovec.push_back( fixed ) ;
+               iovec.push_back( netIOV( pInsertor, roundLen ) ) ;
+            }
+         }
+      }
+      catch ( std::exception &e )
+      {
+         PD_CHECK( FALSE, SDB_INVALIDARG, error, PDERROR,
+                   "Failed to shard the data, received unexpected error: %s",
+                   e.what() );
+      }
+
+   done:
+      PD_TRACE_EXITRC ( SDB_RTNCOINS_SHARDANOBJ, rc ) ;
+      return rc ;
+   error:
       goto done;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOINS_SHARDDBGROUP, "rtnCoordInsert::shardDataByGroup" )
-   INT32 rtnCoordInsert::shardDataByGroup( const CoordCataInfoPtr &cataInfo,
+   INT32 rtnCoordInsert::shardDataByGroup( CoordCataInfoPtr &cataInfo,
                                            INT32 count,
                                            CHAR *pInsertor,
-                                           GroupObjsMap &groupObjsMap )
+                                           const netIOV &fixed,
+                                           GROUP_2_IOVEC &datas )
    {
       INT32 rc = SDB_OK;
       PD_TRACE_ENTRY ( SDB_RTNCOINS_SHARDDBGROUP ) ;
       while ( count > 0 )
       {
-         rc = shardAnObj( pInsertor, cataInfo, groupObjsMap );
-         PD_RC_CHECK( rc, PDERROR, "Failed to shard the obj(rc=%d)", rc );
+         rc = shardAnObj( pInsertor, cataInfo, fixed, datas );
+         PD_RC_CHECK( rc, PDERROR, "Failed to shard the obj, rc: %d", rc ) ;
 
          BSONObj boInsertor ;
          try
          {
-            boInsertor = BSONObj( pInsertor );
+            boInsertor = BSONObj( pInsertor ) ;
          }
          catch ( std::exception &e )
          {
             PD_CHECK( FALSE, SDB_INVALIDARG, error, PDERROR,
-                      "Failed to parse the insert-obj:%s", e.what() ) ;
+                      "Failed to parse the insert-obj: %s", e.what() ) ;
          }
          --count ;
          pInsertor += ossRoundUpToMultipleX( boInsertor.objsize(), 4 ) ;
@@ -209,32 +341,59 @@ namespace engine
       PD_TRACE_EXITRC ( SDB_RTNCOINS_SHARDDBGROUP, rc ) ;
       return rc;
    error:
-      groupObjsMap.clear() ;
+      datas.clear() ;
       goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOINS_RESHARDDATA, "rtnCoordInsert::reshardData" )
-   INT32 rtnCoordInsert::reshardData( const CoordCataInfoPtr &cataInfo,
-                                      GroupObjsMap &groupObjsMap )
+   INT32 rtnCoordInsert::reshardData( CoordCataInfoPtr &cataInfo,
+                                      const netIOV &fixed,
+                                      GROUP_2_IOVEC &datas )
    {
       INT32 rc = SDB_OK;
       PD_TRACE_ENTRY ( SDB_RTNCOINS_RESHARDDATA ) ;
-      GroupObjsMap groupObjsMapNew ;
-      GroupObjsMap::iterator iterMap = groupObjsMap.begin() ;
-      while ( iterMap != groupObjsMap.end() )
-      {
-         ObjQueue objQueueOld = iterMap->second ;
-         while ( !objQueueOld.empty() )
-         {
-            CHAR *pInsertor = objQueueOld.back();
-            rc = shardAnObj( pInsertor, cataInfo, groupObjsMapNew ) ;
-            PD_RC_CHECK( rc, PDERROR, "Failed to shard the obj(rc=%d)", rc ) ;
+      CHAR *pData = NULL ;
+      UINT32 offset = 0 ;
+      UINT32 roundSize = 0 ;
+      BSONObj obInsert ;
 
-            objQueueOld.pop_back();
+      GROUP_2_IOVEC newDatas ;
+      GROUP_2_IOVEC::iterator it = datas.begin() ;
+      while ( it != datas.end() )
+      {
+         netIOVec &iovec = it->second ;
+         UINT32 size = iovec.size() ;
+         // skip the first
+         for ( UINT32 i = 1 ; i < size ; ++i )
+         {
+            netIOV &ioItem = iovec[ i ] ;
+            pData = ( CHAR* )ioItem.iovBase ;
+            offset = 0 ;
+
+            while( offset < ioItem.iovLen )
+            {
+               try
+               {
+                  obInsert = BSONObj( pData ) ;
+               }
+               catch( std::exception &e )
+               {
+                  PD_CHECK( FALSE, SDB_SYS, error, PDERROR,
+                            "Failed to parse the insert-obj: %s", e.what() ) ;
+               }
+
+               rc = shardAnObj( pData, cataInfo, fixed, newDatas ) ;
+               PD_RC_CHECK( rc, PDERROR, "Failed to re-shard the obj, rc: %d",
+                            rc ) ;
+
+               roundSize = ossRoundUpToMultipleX( obInsert.objsize(), 4 ) ;
+               pData += roundSize ;
+               offset += roundSize ;
+            }
          }
-         ++iterMap ;
+         ++it ;
       }
-      groupObjsMap = groupObjsMapNew ;
+      datas = newDatas ;
 
    done:
       PD_TRACE_EXITRC ( SDB_RTNCOINS_RESHARDDATA, rc ) ;
@@ -243,63 +402,170 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOINS_SHARDANOBJ, "rtnCoordInsert::shardAnObj" )
-   INT32 rtnCoordInsert::shardAnObj( CHAR *pInsertor,
-                                     const CoordCataInfoPtr &cataInfo,
-                                     GroupObjsMap &groupObjsMap )
+   INT32 rtnCoordInsert::_prepareMainCLOp( CoordCataInfoPtr &cataInfo,
+                                           CoordGroupSubCLMap &grpSubCl,
+                                           rtnSendMsgIn &inMsg,
+                                           rtnSendOptions &options,
+                                           netMultiRouteAgent *pRouteAgent,
+                                           pmdEDUCB *cb,
+                                           rtnProcessResult &result,
+                                           ossValuePtr &outPtr )
    {
-      INT32 rc = SDB_OK;
-      PD_TRACE_ENTRY ( SDB_RTNCOINS_SHARDANOBJ ) ;
-      try
-      {
-         BSONObj insertObj( pInsertor );
-         UINT32 groupID = 0;
-         rc = cataInfo->getGroupByRecord( insertObj, groupID );
-         PD_RC_CHECK( rc, PDERROR, "Failed to get the group(rc=%d)", rc );
+      INT32 rc = SDB_OK ;
 
-         groupObjsMap[ groupID ].push_back( pInsertor ) ;
-      }
-      catch ( std::exception &e )
+      vector< BSONObj > *pVecObj = NULL ;
+      outPtr = ( ossValuePtr )NULL ;
+
+      SDB_ASSERT( inMsg._pvtType == PRIVATE_DATA_USER &&
+                  inMsg._pvtData, "Private data is error" ) ;
+      GroupSubCLMap *pGrpSubCLDatas = ( GroupSubCLMap* )inMsg._pvtData ;
+
+      MsgOpInsert *pInsertMsg = ( MsgOpInsert* )inMsg.msg() ;
+      netIOV fixed( ( CHAR*)inMsg.msg() + sizeof( MsgHeader ),
+                    ossRoundUpToMultipleX ( offsetof(MsgOpInsert, name) +
+                                            pInsertMsg->nameLength + 1, 4 ) -
+                    sizeof( MsgHeader ) ) ;
+
+      GROUP_2_IOVEC::iterator it ;
+
+      pVecObj = new vector< BSONObj >() ;
+      if ( !pVecObj )
       {
-         PD_CHECK( FALSE, SDB_INVALIDARG, error, PDERROR,
-                   "Failed to shard the data, received unexpected error:%s",
-                   e.what() );
+         PD_LOG( PDERROR, "Alloc vector failed" ) ;
+         rc = SDB_OOM ;
+         goto error ;
       }
+
+      if ( !pGrpSubCLDatas )
+      {
+         PD_LOG( PDSEVERE, "System error, group sub collection map is NULL" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+      else if ( pGrpSubCLDatas->size() == 0 )
+      {
+         INT32 flag = 0 ;
+         CHAR *pCollectionName = NULL ;
+         CHAR *pInsertor = NULL ;
+         INT32 count = 0 ;
+
+         rc = msgExtractInsert( (CHAR *)inMsg.msg(), &flag, &pCollectionName,
+                                &pInsertor, count ) ;
+         PD_RC_CHECK( rc, PDERROR, "Extrace insert msg failed, rc: %d",
+                      rc ) ;
+
+         rc = shardDataByGroup( cataInfo, count, pInsertor, cb,
+                                *pGrpSubCLDatas ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to shard data by group, rc: %d",
+                      rc ) ;
+      }
+      else
+      {
+         rc = reshardData( cataInfo, cb, *pGrpSubCLDatas ) ;
+         PD_RC_CHECK( rc, PDERROR, "Re-shard data failed, rc: %d", rc ) ;
+      }
+
+      // build msg
+      inMsg._datas.clear() ;
+
+      rc = buildInsertMsg( fixed, *pGrpSubCLDatas, *pVecObj, inMsg._datas ) ;
+      PD_RC_CHECK( rc, PDERROR, "Build insert msg failed, rc: %d" ) ;
+
+      // clear send groups
+      options._groupLst.clear() ;
+      // build group list
+      it = inMsg._datas.begin() ;
+      while( it != inMsg._datas.end() )
+      {
+         options._groupLst[ it->first ] = it->first ;
+         ++it ;
+      }
+
+      outPtr = ( ossValuePtr )pVecObj ;
 
    done:
-      PD_TRACE_EXITRC ( SDB_RTNCOINS_SHARDANOBJ, rc ) ;
-      return rc;
+      return rc ;
    error:
-      goto done;
+      if ( pVecObj )
+      {
+         delete pVecObj ;
+      }
+      goto done ;
+   }
+
+   void rtnCoordInsert::_doneMainCLOp( ossValuePtr itPtr,
+                                       CoordCataInfoPtr &cataInfo,
+                                       CoordGroupSubCLMap &grpSubCl,
+                                       rtnSendMsgIn &inMsg,
+                                       rtnSendOptions &options,
+                                       netMultiRouteAgent *pRouteAgent,
+                                       pmdEDUCB *cb,
+                                       rtnProcessResult &result )
+   {
+      SDB_ASSERT( inMsg._pvtType == PRIVATE_DATA_USER &&
+                  inMsg._pvtData, "Private data is error" ) ;
+      GroupSubCLMap *pGrpSubCLDatas = ( GroupSubCLMap* )inMsg._pvtData ;
+      vector< BSONObj > *pVecObj = ( vector< BSONObj > * )itPtr ;
+
+      // remove the datas by succeed group
+      if ( pGrpSubCLDatas && pGrpSubCLDatas->size() > 0 )
+      {
+         CoordGroupList::iterator it = result._sucGroupLst.begin() ;
+         while( it != result._sucGroupLst.end() )
+         {
+            pGrpSubCLDatas->erase( it->second ) ;
+            ++it ;
+         }
+      }
+
+      // clear all succeed group
+      result._sucGroupLst.clear() ;
+
+      // release obj vector
+      if ( pVecObj )
+      {
+         delete pVecObj ;
+      }
    }
 
    INT32 rtnCoordInsert::shardAnObj( CHAR *pInsertor,
-                                     const CoordCataInfoPtr &cataInfo,
+                                     CoordCataInfoPtr &cataInfo,
                                      pmdEDUCB * cb,
                                      GroupSubCLMap &groupSubCLMap )
    {
-      INT32 rc = SDB_OK;
-      std::string subCLName ;
-      UINT32 groupID = CAT_INVALID_GROUPID;
+      INT32 rc = SDB_OK ;
+      string subCLName ;
+      UINT32 groupID = CAT_INVALID_GROUPID ;
 
       try
       {
          BSONObj insertObj( pInsertor ) ;
-         CoordCataInfoPtr subClCataInfo;
+         CoordCataInfoPtr subClCataInfo ;
+         UINT32 roundLen = ossRoundUpToMultipleX( insertObj.objsize(), 4 ) ;
+
          rc = cataInfo->getSubCLNameByRecord( insertObj, subCLName ) ;
-         PD_CHECK( SDB_OK == rc, SDB_CLS_COORD_NODE_CAT_VER_OLD, error,
-                  PDWARNING, "couldn't find the match sub-collection(rc=%d)",
-                  rc ) ;
+         PD_RC_CHECK( rc, PDWARNING,
+                      "Couldn't find the match[%s] sub-collection "
+                      "in catalog info[%s], rc: %d",
+                      insertObj.toString().c_str(),
+                      cataInfo->getCatalogSet()->toCataInfoBson(
+                      ).toString().c_str(), rc ) ;
+
          rc = rtnCoordGetCataInfo( cb, subCLName.c_str(), FALSE,
-                                   subClCataInfo );
-         PD_CHECK( SDB_OK == rc, SDB_CLS_COORD_NODE_CAT_VER_OLD, error,
-                  PDWARNING, "failed to get catalog of sub-collection(%s)",
-                  subCLName.c_str() );
+                                   subClCataInfo ) ;
+         PD_RC_CHECK( rc, PDWARNING, "Failed to get catalog of "
+                      "sub-collection(%s), rc: %d",
+                      subCLName.c_str(), rc ) ;
+
          rc = subClCataInfo->getGroupByRecord( insertObj, groupID );
-         PD_CHECK( SDB_OK == rc, SDB_CLS_COORD_NODE_CAT_VER_OLD, error,
-                  PDWARNING, "couldn't find the match catalog of "
-                  "sub-collection(%s)", subCLName.c_str() );
-         (groupSubCLMap[ groupID ])[ subCLName ].push_back( pInsertor );
+         PD_RC_CHECK( rc, PDWARNING, "Couldn't find the match[%s] catalog of "
+                      "sub-collection(%s), rc: %d",
+                      insertObj.toString().c_str(),
+                      subClCataInfo->getCatalogSet()->toCataInfoBson(
+                      ).toString().c_str(), rc ) ;
+
+         (groupSubCLMap[ groupID ])[ subCLName ].push_back(
+            netIOV( (const void*)pInsertor, roundLen ) ) ;
       }
       catch ( std::exception &e )
       {
@@ -314,422 +580,22 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOINS_INSTOGROUP, "rtnCoordInsert::insertToAGroup" )
-   INT32 rtnCoordInsert::insertToAGroup( CHAR *pBuffer,
-                                         UINT32 grpID,
-                                         netMultiRouteAgent *pRouteAgent,
-                                         pmdEDUCB *cb )
-   {
-      INT32 rc = SDB_OK;
-      PD_TRACE_ENTRY ( SDB_RTNCOINS_INSTOGROUP ) ;
-      BOOLEAN isNeedRetry = FALSE;
-      BOOLEAN hasRetry = FALSE;
-      CoordGroupList groupLst;
-      CoordGroupList successGroupLst;
-      groupLst[grpID] = grpID;
-      MsgHeader *pHead = (MsgHeader *)pBuffer ;
-
-      if ( cb->isTransaction() )
-      {
-         pHead->opCode = MSG_BS_TRANS_INSERT_REQ;
-      }
-      do
-      {
-         hasRetry = isNeedRetry;
-         isNeedRetry = FALSE;
-         REQUESTID_MAP sendNodes;
-         rc = rtnCoordSendRequestToNodeGroups( pBuffer, groupLst, TRUE,
-                                               pRouteAgent, cb, sendNodes );
-         if ( rc )
-         {
-            rtnCoordClearRequest( cb, sendNodes );
-         }
-         PD_RC_CHECK( rc, PDERROR, "Failed to insert on data-node, "
-                      "send request failed(rc=%d)", rc ) ;
-
-         REPLY_QUE replyQue;
-         rc = rtnCoordGetReply( cb, sendNodes, replyQue,
-                                MAKE_REPLY_TYPE( pHead->opCode ) );
-         PD_RC_CHECK( rc, PDWARNING, "Failed to insert on data-node, "
-                      "get reply failed(rc=%d)", rc );
-
-         rc = processReply( replyQue, successGroupLst, cb );
-         if ( SDB_CLS_NOT_PRIMARY == rc && !hasRetry )
-         {
-            isNeedRetry = TRUE;
-            rc = SDB_OK;
-         }
-         PD_RC_CHECK( rc, PDWARNING, "Failed to process the reply(rc=%d)",
-                      rc );
-      } while ( isNeedRetry );
-
-   done:
-      PD_TRACE_EXITRC ( SDB_RTNCOINS_INSTOGROUP, rc ) ;
-      return rc;
-   error:
-      goto done;
-   }
-
-/*   PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOINS_INSTOGROUPS, "rtnCoordInsert::insertToGroups" )
-   INT32 rtnCoordInsert::insertToGroups( GroupObjsMap &groupObjsMap,
-                           CHAR *pInputBuf,
-                           netMultiRouteAgent *pRouteAgent,
-                           pmdEDUCB *cb,
-                           BOOLEAN &hasSendSomeData )
-   {
-      INT32 rc = SDB_OK;
-      PD_TRACE_ENTRY ( SDB_RTNCOINS_INSTOGROUPS ) ;
-      BOOLEAN isNeedRetry = FALSE;
-      BOOLEAN hasRetry = FALSE;
-      MsgOpInsert *pSrcMsg = (MsgOpInsert *)pInputBuf;
-      UINT32 totalGroups = groupObjsMap.size();
-      do
-      {
-         hasRetry = isNeedRetry;
-         isNeedRetry = FALSE;
-         REQUESTID_MAP sendNodes;
-         REPLY_QUE replyQue;
-         rc = sendToGroups( groupObjsMap, pSrcMsg,
-                        pRouteAgent, cb, sendNodes );
-         if ( rc )
-         {
-            rtnCoordClearRequest( cb, sendNodes );
-         }
-         PD_RC_CHECK( rc, PDERROR,
-                     "failed to send the request(rc=%d)",
-                     rc );
-         rc = rtnCoordGetReply( cb, sendNodes, replyQue,
-                     MAKE_REPLY_TYPE( pSrcMsg->header.opCode ) );
-         PD_RC_CHECK( rc, PDWARNING,
-                     "failed to insert on data-node, "
-                     "get reply failed(rc=%d)", rc );
-         rc = processReply( replyQue, groupObjsMap, cb );
-         if ( SDB_CLS_NOT_PRIMARY == rc && !hasRetry )
-         {
-            isNeedRetry = TRUE;
-            rc = SDB_OK;
-         }
-         PD_RC_CHECK( rc, PDWARNING,
-                     "failed to process the reply(rc=%d)", rc );
-      }while ( isNeedRetry );
-   done:
-      if ( totalGroups != groupObjsMap.size() )
-      {
-         hasSendSomeData = TRUE;
-      }
-      PD_TRACE_EXITRC ( SDB_RTNCOINS_INSTOGROUPS, rc ) ;
-      return rc;
-   error:
-      goto done;
-   }*/
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOINS_SENDTOGROUPS, "sendToGroups" )
-   INT32 rtnCoordInsert::sendToGroups( const GroupInsertMsgMap &groupMsgMap,
-                                       MsgOpInsert *pSrcMsg,
-                                       netMultiRouteAgent *pRouteAgent,
-                                       pmdEDUCB *cb,
-                                       REQUESTID_MAP &sendNodes )
-   {
-      INT32 rc = SDB_OK;
-      PD_TRACE_ENTRY ( SDB_RTNCOINS_SENDTOGROUPS ) ;
-      SDB_ASSERT( pSrcMsg != NULL, "pSrcMsg can't be null!" );
-
-      GroupInsertMsgMap::const_iterator iterMap = groupMsgMap.begin();
-      INT32 headLen = ossRoundUpToMultipleX( offsetof(MsgOpInsert, name) +
-                                             ossStrlen ( pSrcMsg->name ) + 1,
-                                             4 ) ;
-      while( iterMap != groupMsgMap.end() )
-      {
-         BSONObj boInsertor;
-         CoordGroupList groupLst;
-         groupLst[iterMap->first] = iterMap->first;
-         if ( iterMap->second.dataList.size() == 0 )
-         {
-            ++iterMap ;
-            continue ;
-         }
-
-         pSrcMsg->header.messageLength = headLen + iterMap->second.dataLen ;
-         pSrcMsg->header.routeID.value = 0;
-         rc = rtnCoordSendRequestToNodeGroups( (MsgHeader *)pSrcMsg,
-                                               groupLst, TRUE, pRouteAgent,
-                                               cb, iterMap->second.dataList,
-                                               sendNodes ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to send the insert request to "
-                      "group(goupID=%u)", iterMap->first ) ;
-         ++iterMap ;
-      }
-
-   done:
-      PD_TRACE_EXITRC ( SDB_RTNCOINS_SENDTOGROUPS, rc ) ;
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOINS_PROREPLY, "rtnCoordInsert::processReply" )
-   INT32 rtnCoordInsert::processReply( REPLY_QUE &replyQue,
-                                       CoordGroupList &successGroupList,
-                                       pmdEDUCB *cb )
-   {
-      INT32 rc = SDB_OK;
-      PD_TRACE_ENTRY ( SDB_RTNCOINS_PROREPLY ) ;
-      while ( !replyQue.empty() )
-      {
-         MsgOpReply *pReply = NULL;
-         pReply = (MsgOpReply *)(replyQue.front());
-         replyQue.pop();
-         if ( NULL == pReply )
-         {
-            PD_LOG ( PDWARNING, "reply is null");
-            continue;
-         }
-         INT32 rcTmp = pReply->flags;
-         if ( SDB_OK == rcTmp )
-         {
-            successGroupList[pReply->header.routeID.columns.groupID]
-                           = pReply->header.routeID.columns.groupID;
-         }
-         else
-         {
-            PD_LOG ( PDERROR, "Failed to execute on data node"
-                     "(groupID=%u, nodeID=%u, serviceID=%u, rc=%d)",
-                     pReply->header.routeID.columns.groupID,
-                     pReply->header.routeID.columns.nodeID,
-                     pReply->header.routeID.columns.serviceID,
-                     rcTmp ) ;
-
-            if ( SDB_CLS_NOT_PRIMARY == rcTmp )
-            {
-               // the priority of return code:
-               // SDB_CLS_NOT_PRIMARY < SDB_CLS_COORD_NODE_CAT_VER_OLD < others
-               rc = rc ? rc : rcTmp ;
-
-               CoordGroupInfoPtr groupInfoTmp ;
-               rcTmp = rtnCoordGetGroupInfo( cb, pReply->header.routeID.columns.groupID,
-                                             TRUE, groupInfoTmp ) ;
-               // get the return code if update groupInfo failed
-               if ( rcTmp )
-               {
-                  rc = rcTmp ;
-                  PD_LOG ( PDERROR, "Failed to update group "
-                           "info(groupID=%u, rc=%d)",
-                           pReply->header.routeID.columns.groupID,
-                           rc ) ;
-               }
-            }
-            else if ( SDB_CLS_COORD_NODE_CAT_VER_OLD == rcTmp )
-            {
-               if ( SDB_OK == rc || SDB_CLS_NOT_PRIMARY == rc )
-               {
-                  rc = SDB_CLS_COORD_NODE_CAT_VER_OLD ;
-               }
-            }
-            else
-            {
-               rc = rcTmp ;
-            }
-         }
-         SDB_OSS_FREE( pReply ) ;
-      }
-      PD_TRACE_EXITRC ( SDB_RTNCOINS_PROREPLY, rc ) ;
-      return rc ;
-   }
-
-   INT32 rtnCoordInsert::insertToNormalCL( const CoordCataInfoPtr &cataInfo,
-                                           CHAR *pReceiveBuffer,
-                                           CHAR *pInsertor, INT32 count,
-                                           netMultiRouteAgent *pRouteAgent,
-                                           pmdEDUCB *cb,
-                                           GroupObjsMap &groupObjsMap,
-                                           BOOLEAN &hasSendSomeData )
-   {
-      INT32 rc = SDB_OK;
-      INT32 filler = 0;
-      GroupInsertMsgMap groupMsgMap;
-      CoordGroupList successGroupList;
-
-      if ( groupObjsMap.size() == 0 )
-      {
-         // it is the first time,
-         // parse the data from input-message(pReceiveBuffer)
-         rc = shardDataByGroup( cataInfo, count, pInsertor, groupObjsMap ) ;
-      }
-      else
-      {
-         // it is not the first time,
-         // now the catalog info has been update,
-         // re-shard the remain data by new catalog info
-         rc = reshardData( cataInfo, groupObjsMap ) ;
-      }
-      PD_RC_CHECK( rc, PDERROR, "Failed to shard the data by group(rc=%d)",
-                   rc ) ;
-
-      if ( cb->isTransaction() )
-      {
-         CoordGroupList groupLst ;
-         GroupObjsMap::iterator iterGroup ;
-         iterGroup = groupObjsMap.begin();
-         while( iterGroup != groupObjsMap.end() )
-         {
-            groupLst[ iterGroup->first ] = iterGroup->first ;
-            ++iterGroup ;
-         }
-         rc = buildTransSession( groupLst, pRouteAgent, cb ) ;
-         PD_RC_CHECK( rc, PDERROR,
-                      "Failed to build transaction session(rc=%d)",
-                      rc ) ;
-      }
-
-      if ( groupObjsMap.size() == 1 && !hasSendSomeData )
-      {
-         // only one group should be send to,
-         // no data is sent successfully,
-         // then send the source-message to the group directly,
-         // this save memory copy
-         GroupObjsMap::iterator iterMap = groupObjsMap.begin();
-         rc = insertToAGroup( pReceiveBuffer, iterMap->first,
-                              pRouteAgent, cb );
-         PD_RC_CHECK( rc, PDERROR,
-                      "Failed to insert on group(groupID:%u, rc=%d)",
-                      iterMap->first, rc );
-         successGroupList[iterMap->first] = iterMap->first ;
-      }
-      else
-      {
-         CHAR *pHeadRemain = pReceiveBuffer + sizeof( MsgHeader );
-         INT32 remainLen = pInsertor - pHeadRemain;
-         rc = buildInsertMsg( pHeadRemain, remainLen, groupObjsMap,
-                              &filler, groupMsgMap ) ;
-         PD_RC_CHECK( rc, PDERROR,"Failed to build the message(rc=%d)", rc );
-
-         rc = insertToGroups( groupMsgMap, (MsgOpInsert *)pReceiveBuffer,
-                              pRouteAgent, cb, successGroupList ) ;
-         if ( successGroupList.size() != 0 )
-         {
-            hasSendSomeData = TRUE ;
-         }
-         if ( rc != SDB_OK )
-         {
-            CoordGroupList::iterator iterSuc = successGroupList.begin();
-            while( iterSuc != successGroupList.end() )
-            {
-               groupObjsMap.erase( iterSuc->first ) ;
-               ++iterSuc ;
-            }
-            PD_LOG( PDWARNING, "Failed to insert the data(rc=%d)", rc ) ;
-            goto error ;
-         }
-         else
-         {
-            groupObjsMap.clear() ;
-         }
-      }
-
-   done:
-      return rc ;
-   error:
-      adjustTransSession( successGroupList, pRouteAgent, cb ) ;
-      goto done ;
-   }
-
-   INT32 rtnCoordInsert::insertToMainCL( const CoordCataInfoPtr &cataInfo,
-                                         CHAR *pReceiveBuffer,
-                                         CHAR *pInsertor, INT32 count,
-                                         netMultiRouteAgent *pRouteAgent,
-                                         pmdEDUCB *cb,
-                                         GroupSubCLMap &groupSubCLMap )
-   {
-      INT32 rc = SDB_OK ;
-      INT32 filler = 0 ;
-      GroupInsertMsgMap groupMsgMap ;
-      CoordGroupList successGroupList ;
-      std::vector< BSONObj > subCLInfoCache ;
-
-      if ( groupSubCLMap.size() == 0 )
-      {
-         // it is the first time,
-         // parse the data from input-message(pReceiveBuffer)
-         rc = shardDataByGroup( cataInfo, count, pInsertor, cb,
-                                groupSubCLMap ) ;
-      }
-      else
-      {
-         // it is not the first time,
-         // now the catalog info has been update,
-         // some data maybe sent to the node,
-         // re-shard the remain data by new catalog info
-         rc = reshardData( cataInfo, cb, groupSubCLMap );
-      }
-      PD_RC_CHECK( rc, PDERROR, "Failed to shard the data(rc=%d)", rc ) ;
-
-      // build transaction session
-      if ( cb->isTransaction() )
-      {
-         CoordGroupList groupLst;
-         GroupSubCLMap::iterator iterMap = groupSubCLMap.begin();
-         while( iterMap != groupSubCLMap.end() )
-         {
-            groupLst[ iterMap->first ] = iterMap->first;
-            ++iterMap ;
-         }
-         rc = buildTransSession( groupLst, pRouteAgent, cb ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to build transaction "
-                      "session(rc=%d)", rc ) ;
-      }
-
-      {
-         CHAR *pHeadRemain = pReceiveBuffer + sizeof( MsgHeader );
-         INT32 remainLen = pInsertor - pHeadRemain ;
-         rc = buildInsertMsg( pHeadRemain, remainLen, groupSubCLMap,
-                              subCLInfoCache, &filler, groupMsgMap );
-         PD_RC_CHECK( rc, PDERROR, "Failed to build the message(rc=%d)",
-                      rc ) ;
-      }
-
-      // send the data to node
-      rc = insertToGroups( groupMsgMap, (MsgOpInsert *)pReceiveBuffer,
-                           pRouteAgent, cb, successGroupList ) ;
-      if ( rc != SDB_OK )
-      {
-         CoordGroupList::iterator iterSuc = successGroupList.begin() ;
-         while( iterSuc != successGroupList.end() )
-         {
-            groupSubCLMap.erase( iterSuc->first );
-            ++iterSuc ;
-         }
-         PD_LOG( PDWARNING, "failed to insert the data(rc=%d)", rc );
-         goto error ;
-      }
-      else
-      {
-         groupSubCLMap.clear();
-      }
-
-   done:
-      return rc;
-   error:
-      adjustTransSession( successGroupList, pRouteAgent, cb );
-      goto done;
-   }
-
-   INT32 rtnCoordInsert::shardDataByGroup( const CoordCataInfoPtr &cataInfo,
+   INT32 rtnCoordInsert::shardDataByGroup( CoordCataInfoPtr &cataInfo,
                                            INT32 count,
                                            CHAR *pInsertor,
                                            pmdEDUCB *cb,
                                            GroupSubCLMap &groupSubCLMap )
    {
-      INT32 rc = SDB_OK;
-      std::string subCLName ;
+      INT32 rc = SDB_OK ;
 
       while ( count > 0 )
       {
-         rc = shardAnObj( pInsertor, cataInfo, cb, groupSubCLMap );
-         PD_RC_CHECK( rc, PDERROR, "Failed to shard the obj(rc=%d)", rc );
+         rc = shardAnObj( pInsertor, cataInfo, cb, groupSubCLMap ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to shard the obj, rc: %d", rc ) ;
 
          try
          {
-            BSONObj boInsertor( pInsertor );
+            BSONObj boInsertor( pInsertor ) ;
             pInsertor += ossRoundUpToMultipleX( boInsertor.objsize(), 4 ) ;
             --count ;
          }
@@ -748,25 +614,29 @@ namespace engine
       goto done ;
    }
 
-   INT32 rtnCoordInsert::reshardData( const CoordCataInfoPtr &cataInfo,
+   INT32 rtnCoordInsert::reshardData( CoordCataInfoPtr &cataInfo,
                                       pmdEDUCB *cb,
                                       GroupSubCLMap &groupSubCLMap )
    {
       INT32 rc = SDB_OK;
-      GroupSubCLMap groupSubCLMapNew;
-      GroupSubCLMap::iterator iterGroup = groupSubCLMap.begin(); 
+      GroupSubCLMap groupSubCLMapNew ;
+
+      GroupSubCLMap::iterator iterGroup = groupSubCLMap.begin() ; 
       while ( iterGroup != groupSubCLMap.end() )
       {
          SubCLObjsMap::iterator iterCL = iterGroup->second.begin() ;
          while( iterCL != iterGroup->second.end() )
          {
-            while( !iterCL->second.empty() )
+            netIOVec &iovec = iterCL->second ;
+            UINT32 size = iovec.size() ;
+
+            for ( UINT32 i = 0 ; i < size ; ++i )
             {
-               CHAR *pInsertor = iterCL->second.back();
-               rc = shardAnObj( pInsertor, cataInfo, cb, groupSubCLMapNew );
-               PD_RC_CHECK( rc, PDWARNING, "Failed to shard the obj(rc=%d)",
+               netIOV &ioItem = iovec[ i ] ;
+               rc = shardAnObj( (CHAR*)ioItem.iovBase, cataInfo,
+                                cb, groupSubCLMapNew ) ;
+               PD_RC_CHECK( rc, PDWARNING, "Failed to shard the obj, rc: %d",
                             rc ) ;
-               iterCL->second.pop_back() ;
             }
             ++iterCL ;
          }
@@ -780,193 +650,53 @@ namespace engine
       goto done ;
    }
 
-   //PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOINS_INSTOGROUPS, "rtnCoordInsert::insertToGroups" )
-   INT32 rtnCoordInsert::insertToGroups( const GroupInsertMsgMap &groupMsgMap,
-                                         MsgOpInsert *pSrcMsg,
-                                         netMultiRouteAgent *pRouteAgent,
-                                         pmdEDUCB *cb,
-                                         CoordGroupList &successGroupList )
+   INT32 rtnCoordInsert::buildInsertMsg( const netIOV &fixed,
+                                         GroupSubCLMap &groupSubCLMap,
+                                         vector< BSONObj > &subClInfoLst,
+                                         GROUP_2_IOVEC &datas )
    {
-      INT32 rc = SDB_OK;
-      PD_TRACE_ENTRY ( SDB_RTNCOINS_INSTOGROUPS ) ;
-      SINT32 opCode;
-      if ( cb->isTransaction() )
-      {
-         opCode = MSG_BS_TRANS_INSERT_REQ;
-      }
-      else
-      {
-         opCode = MSG_BS_INSERT_REQ;
-      }
-      REQUESTID_MAP sendNodes;
-      REPLY_QUE replyQue;
-      rc = sendToGroups( groupMsgMap, pSrcMsg, pRouteAgent,
-                         cb, sendNodes ) ;
-      if ( rc )
-      {
-         rtnCoordClearRequest( cb, sendNodes ) ;
-      }
-      PD_RC_CHECK( rc, PDERROR, "Failed to send the request(rc=%d)", rc );
+      INT32 rc = SDB_OK ;
+      static CHAR _fillData[ 8 ] = { 0 } ;
 
-      rc = rtnCoordGetReply( cb, sendNodes, replyQue,
-                             MAKE_REPLY_TYPE( opCode ) ) ;
-      PD_RC_CHECK( rc, PDWARNING, "Failed to insert on data-node, "
-                   "get reply failed(rc=%d)", rc ) ;
-
-      rc = processReply( replyQue, successGroupList, cb ) ;
-      PD_RC_CHECK( rc, PDWARNING, "Failed to process the reply(rc=%d)", rc ) ;
-
-   done:
-      PD_TRACE_EXITRC ( SDB_RTNCOINS_INSTOGROUPS, rc ) ;
-      return rc;
-   error:
-      goto done;
-   }
-
-   INT32 rtnCoordInsert::buildInsertMsg( CHAR *pHeadRemain,
-                                         INT32 remainLen,
-                                         const GroupObjsMap &groupObjsMap,
-                                         void *pFiller,
-                                         GroupInsertMsgMap &groupMsgMap )
-   {
-      INT32 rc = SDB_OK;
-      GroupObjsMap::const_iterator iterGroup = groupObjsMap.begin();
-      while( iterGroup != groupObjsMap.end() )
-      {
-         UINT32 i = 0;
-         UINT32 groupID = iterGroup->first;
-         groupMsgMap[groupID].dataList.clear();
-         groupMsgMap[groupID].dataLen = 0;
-         netIOV ioHead;
-         ioHead.iovBase = (void *)pHeadRemain;
-         ioHead.iovLen = remainLen;
-         groupMsgMap[groupID].dataList.push_back( ioHead );
-         for( ; i < iterGroup->second.size(); i++ )
-         {
-            try
-            {
-               BSONObj boInsertor( (iterGroup->second)[i] );
-               netIOV ioObj;
-               ioObj.iovBase = (iterGroup->second)[i] ;
-               ioObj.iovLen = boInsertor.objsize();
-               groupMsgMap[groupID].dataList.push_back( ioObj );
-
-               SINT32 usedLen = ossRoundUpToMultipleX( boInsertor.objsize(),
-                                                       4 );
-               SINT32 fillLen = usedLen - boInsertor.objsize();
-               if ( fillLen > 0 )
-               {
-                  netIOV ioFiller;
-                  ioFiller.iovBase = pFiller;
-                  ioFiller.iovLen = fillLen;
-                  groupMsgMap[groupID].dataList.push_back( ioFiller );
-               }
-               groupMsgMap[groupID].dataLen += usedLen;
-            }
-            catch( std::exception &e )
-            {
-               PD_CHECK( FALSE, SDB_INVALIDARG, error, PDERROR,
-                         "Failed to build insert-message, "
-                         "occur unexpected error:%s", e.what() );
-            }
-         }
-         ++iterGroup ;
-      }
-
-   done:
-      return rc;
-   error:
-      groupMsgMap.clear() ;
-      goto done;
-   }
-
-   INT32 rtnCoordInsert::buildInsertMsg( CHAR *pHeadRemain,
-                                         INT32 remainLen,
-                                         const GroupSubCLMap &groupSubCLMap,
-                                         std::vector< bson::BSONObj > &subClInfoLst,
-                                         void *pFiller,
-                                         GroupInsertMsgMap &groupMsgMap )
-   {
-      INT32 rc = SDB_OK;
-      GroupSubCLMap::const_iterator iterGroup = groupSubCLMap.begin();
+      GroupSubCLMap::iterator iterGroup = groupSubCLMap.begin() ;
       while ( iterGroup != groupSubCLMap.end() )
       {
-         UINT32 groupID = iterGroup->first;
-         groupMsgMap[groupID].dataList.clear();
-         groupMsgMap[groupID].dataLen = 0;
-         netIOV ioHead;
-         ioHead.iovBase = (void *)pHeadRemain;
-         ioHead.iovLen = remainLen;
-         groupMsgMap[groupID].dataList.push_back( ioHead );
-         SubCLObjsMap::const_iterator iterCL = iterGroup->second.begin();
+         UINT32 groupID = iterGroup->first ;
+         netIOVec &iovec = datas[ groupID ] ;
+         iovec.push_back( fixed ) ;
+
+         SubCLObjsMap &subCLDataMap = iterGroup->second ;
+         SubCLObjsMap::iterator iterCL = subCLDataMap.begin();
          while ( iterCL != iterGroup->second.end() )
          {
-            UINT32 i = 0;
-            SINT32 dataLen = 0;
-            SINT32 objNum = 0;
-            UINT32 curPos = groupMsgMap[groupID].dataList.size();
-            netIOV ioCLInfo;
-            ioCLInfo.iovBase = NULL;
-            ioCLInfo.iovLen = 0;
-            groupMsgMap[groupID].dataList.push_back( ioCLInfo );
-            netIOV ioCLInfoFiller;
-            ioCLInfoFiller.iovBase = NULL;
-            ioCLInfoFiller.iovLen = 0;
-            groupMsgMap[groupID].dataList.push_back( ioCLInfoFiller );
-            try
-            {
-               for( ; i < iterCL->second.size(); i++ )
-               {
-                  BSONObj boInsertor( (iterCL->second)[i] );
-                  netIOV ioObj;
-                  ioObj.iovBase = (iterCL->second)[i] ;
-                  ioObj.iovLen = boInsertor.objsize();
-                  groupMsgMap[groupID].dataList.push_back( ioObj );
+            netIOVec &subCLIOVec = iterCL->second ;
+            UINT32 dataLen = netCalcIOVecSize( subCLIOVec ) ;
+            UINT32 objNum = subCLIOVec.size() ;
 
-                  SINT32 usedLen = ossRoundUpToMultipleX( boInsertor.objsize(),
-                                                          4 );
-                  SINT32 fillLen = usedLen - boInsertor.objsize();
-                  if ( fillLen > 0 )
-                  {
-                     netIOV ioFiller;
-                     ioFiller.iovBase = pFiller;
-                     ioFiller.iovLen = fillLen;
-                     groupMsgMap[groupID].dataList.push_back( ioFiller );
-                  }
-                  dataLen += usedLen ;
-                  ++objNum ;
-               }
-               BSONObjBuilder subCLInfoBuild;
-               subCLInfoBuild.append( FIELD_NAME_SUBOBJSNUM, objNum );
-               subCLInfoBuild.append( FIELD_NAME_SUBOBJSSIZE, dataLen );
-               subCLInfoBuild.append( FIELD_NAME_SUBCLNAME, iterCL->first );
-               UINT32 objPos = subClInfoLst.size();
-               subClInfoLst.push_back( subCLInfoBuild.obj() );
-               groupMsgMap[groupID].dataList[curPos].iovBase
-                                    = subClInfoLst[objPos].objdata();
-               groupMsgMap[groupID].dataList[curPos].iovLen
-                                    = subClInfoLst[objPos].objsize();
-               SINT32 clInfoUsedLen = ossRoundUpToMultipleX(
-                  subClInfoLst[objPos].objsize(), 4 ) ;
-               SINT32 clInfoFillLen = clInfoUsedLen -
-                                      subClInfoLst[objPos].objsize();
-               if( clInfoFillLen > 0 )
-               {
-                  groupMsgMap[groupID].dataList[curPos + 1].iovBase = pFiller;
-                  groupMsgMap[groupID].dataList[curPos + 1].iovLen = clInfoFillLen;
-               }
-               else
-               {
-                  groupMsgMap[groupID].dataList.erase(
-                           groupMsgMap[groupID].dataList.begin() + curPos + 1 ) ;
-               }
-               groupMsgMap[groupID].dataLen += ( dataLen + clInfoUsedLen ) ;
-            }
-            catch( std::exception &e )
+            // first for sub cl info
+            BSONObjBuilder subCLInfoBuild ;
+            subCLInfoBuild.append( FIELD_NAME_SUBOBJSNUM, (INT32)objNum ) ;
+            subCLInfoBuild.append( FIELD_NAME_SUBOBJSSIZE, (INT32)dataLen ) ;
+            subCLInfoBuild.append( FIELD_NAME_SUBCLNAME, iterCL->first ) ;
+            BSONObj subCLInfoObj = subCLInfoBuild.obj() ;
+            subClInfoLst.push_back( subCLInfoObj ) ;
+            netIOV ioCLInfo ;
+            ioCLInfo.iovBase = (const void*)subCLInfoObj.objdata() ;
+            ioCLInfo.iovLen = subCLInfoObj.objsize() ;
+            iovec.push_back( ioCLInfo ) ;
+
+            // need fill
+            UINT32 infoRoundSize = ossRoundUpToMultipleX( ioCLInfo.iovLen,
+                                                          4 ) ;
+            if ( infoRoundSize > ioCLInfo.iovLen )
             {
-               PD_CHECK( FALSE, SDB_INVALIDARG, error, PDERROR,
-                         "Failed to build insert-message, "
-                         "occur unexpected error:%s", e.what() );
+               iovec.push_back( netIOV( (const void*)_fillData,
+                                infoRoundSize - ioCLInfo.iovLen ) ) ;
+            }
+
+            for ( UINT32 i = 0 ; i < objNum ; ++i )
+            {
+               iovec.push_back( subCLIOVec[ i ] ) ;
             }
             ++iterCL ;
          }

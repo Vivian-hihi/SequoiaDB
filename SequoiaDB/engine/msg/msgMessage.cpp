@@ -1258,12 +1258,12 @@ void msgBuildDisconnectMsg ( MsgOpDisconnect &disconnectHeader,
 
 // PD_TRACE_DECLARE_FUNCTION ( SDB_MSGBLDQRYCATREQMSG, "msgBuildQueryCatalogReqMsg" )
 INT32 msgBuildQueryCatalogReqMsg ( CHAR **ppBuffer, INT32 *pBufferSize,
-                              SINT32 flag, UINT64 reqID, SINT64 numToSkip,
-                              SINT64 numToReturn, UINT32 TID,
-                              const BSONObj *query,
-                              const BSONObj *fieldSelector,
-                              const BSONObj *orderBy,
-                              const BSONObj *hint )
+                                   SINT32 flag, UINT64 reqID, SINT64 numToSkip,
+                                   SINT64 numToReturn, UINT32 TID,
+                                   const BSONObj *query,
+                                   const BSONObj *fieldSelector,
+                                   const BSONObj *orderBy,
+                                   const BSONObj *hint )
 {
 #define QUERY_CAT_CMD_NAME ""
    INT32 rc = SDB_OK;
@@ -1488,8 +1488,9 @@ error :
 
 // PD_TRACE_DECLARE_FUNCTION ( SDB_MSGBLDDROPINXMSG, "msgBuildDropIndexMsg" )
 INT32 msgBuildDropIndexMsg  ( CHAR **ppBuffer, INT32 *bufferSize,
-                          const CHAR *CollectionName, const CHAR *IndexName,
-                          UINT64 reqID )
+                              const CHAR *CollectionName,
+                              const CHAR *IndexName,
+                              UINT64 reqID )
 {
    PD_TRACE_ENTRY ( SDB_MSGBLDDROPINXMSG );
    const bson::BSONObj emptyObj ;
@@ -1511,7 +1512,7 @@ INT32 msgBuildDropIndexMsg  ( CHAR **ppBuffer, INT32 *bufferSize,
       bson::BSONObjBuilder bobQuery;
       bobQuery.append( FIELD_NAME_COLLECTION, CollectionName );
       bobQuery.append( FIELD_NAME_INDEX, boIndex );
-      boQuery = bobQuery.obj();
+      boQuery = bobQuery.obj() ;
    }
    catch ( std::exception &e )
    {
@@ -1582,8 +1583,7 @@ INT32 msgBuildDropIndexMsg  ( CHAR **ppBuffer, INT32 *bufferSize,
    // sanity test
    if ( offset != packetLength )
    {
-      PD_LOG ( PDERROR,
-              "Invalid packet length" ) ;
+      PD_LOG ( PDERROR, "Invalid packet length" ) ;
       rc = SDB_SYS ;
       goto error ;
    }

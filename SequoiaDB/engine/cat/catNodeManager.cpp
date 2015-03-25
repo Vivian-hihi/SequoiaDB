@@ -252,6 +252,7 @@ namespace engine
       msgReply.header.header.routeID.value= 0;
       msgReply.header.header.TID = pRequest->header.TID;
 
+      // the msg is send by timer, don't use _pCatCB->primaryCheck()
       if ( !pmdIsPrimary() )
       {
          rc = SDB_CLS_NOT_PRIMARY ;
@@ -326,16 +327,57 @@ namespace engine
       PD_TRACE_ENTRY ( SDB_CATNODEMGR_GRPREQ ) ;
       MsgCatGroupRes *pMsgRsp = NULL ;
       SINT32 msgLen = 0 ;
+      BSONObj boGroupInfo ;
 
       MsgCatGroupReq *pGrpReq = (MsgCatGroupReq *)pMsg ;
       UINT32 groupID = pGrpReq->id.columns.groupID ;
+      const CHAR *name = NULL ;
+
+      if ( 0 == groupID )
+      {
+         if ( pGrpReq->header.messageLength >
+              (SINT32)sizeof(MsgCatGroupReq) )
+         {
+            name = (CHAR *)(&(pGrpReq->header)) + sizeof(MsgCatGroupReq) ;
+         }
+         else
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG( PDERROR, "Groupid and groupName are all not assigned" ) ;
+            goto error ;
+         }
+      }
+
       PD_TRACE1 ( SDB_CATNODEMGR_GRPREQ, PD_PACK_UINT ( groupID ) ) ;
 
-      BSONObj boGroupInfo ;
-      PD_CHECK( ( pmdIsPrimary() || CATALOG_GROUPID == groupID ),
-                SDB_CLS_NOT_PRIMARY, error, PDWARNING,
-                "Service deactive but received group-info-request"
-                "(groupID=%u)", groupID ) ;
+      // primary check, except catalog
+      if ( ( 0 != groupID && CATALOG_GROUPID != groupID ) ||
+           ( name && 0 != ossStrcmp( name, CATALOG_GROUPNAME ) ) )
+      {
+         BOOLEAN isDelay = FALSE ;
+         rc = _pCatCB->primaryCheck( _pEduCB, TRUE, isDelay ) ;
+         if ( isDelay )
+         {
+            // not reply
+            goto done ;
+         }
+         else if ( rc )
+         {
+            if ( 0 != groupID )
+            {
+               PD_LOG( PDWARNING, "Service deactive but received "
+                       "group-info-request(groupID=%u), rc: %d",
+                       groupID, rc ) ;
+            }
+            else
+            {
+               PD_LOG( PDWARNING, "Service deactive but received "
+                       "group-info-request(groupID=%s), rc: %d",
+                       name, rc ) ;
+            }
+            goto error ;
+         }
+      }
 
       // get group by groupID
       if ( 0 != groupID )
@@ -343,20 +385,42 @@ namespace engine
          rc = catGetGroupObj( groupID, boGroupInfo, _pEduCB ) ;
       }
       // get group by groupName
-      else if ( pGrpReq->header.messageLength > (SINT32)sizeof(MsgCatGroupReq) )
-      {
-         const CHAR *name = (CHAR *)(&(pGrpReq->header)) +
-                            sizeof(MsgCatGroupReq) ;
-         rc = catGetGroupObj( name, FALSE, boGroupInfo, _pEduCB ) ;
-      }
-      // param is error
       else
       {
-         rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR, "Groupid and groupName are all not assigned" ) ;
+         rc = catGetGroupObj( name, FALSE, boGroupInfo, _pEduCB ) ;
       }
-
       PD_RC_CHECK( rc, PDERROR, "Failed to get group info, rc: %d", rc ) ;
+
+      // if catalog group, get primary node from replset
+      if ( CATALOG_GROUPID == boGroupInfo.getIntField( CAT_GROUPID_NAME ) )
+      {
+         UINT16 nodeID = sdbGetReplCB()->getPrimary().columns.nodeID ;
+         if ( 0 != nodeID )
+         {
+            BSONObjBuilder builder ;
+            BSONObjIterator it( boGroupInfo ) ;
+            while ( it.more() )
+            {
+               BSONElement e = it.next() ;
+               if ( 0 == ossStrcmp( e.fieldName(), CAT_PRIMARY_NAME ) &&
+                    0 != nodeID )
+               {
+                  builder.append( CAT_PRIMARY_NAME, (INT32)nodeID ) ;
+                  nodeID = 0 ;
+               }
+               else
+               {
+                  builder.append( e ) ;
+               }
+            }
+            // if in collection the primary is not exist and memory primay exist
+            if ( 0 != nodeID )
+            {
+               builder.append( CAT_PRIMARY_NAME, (INT32)nodeID ) ;
+            }
+            boGroupInfo = builder.obj() ;
+         }
+      }
 
       // build the response message
       msgLen = sizeof( MsgCatGroupRes ) + boGroupInfo.objsize() ;
@@ -434,6 +498,9 @@ namespace engine
                    "Failed to process register-request, received "
                    "unexpected error:%s", e.what() );
       }
+
+      // don't use _pCatCB->primaryCheck(), because reg msg will send by
+      // on timer
       PD_CHECK( ( pmdIsPrimary() || SDB_ROLE_CATALOG == nodeRole ),
                 SDB_CLS_NOT_PRIMARY, error, PDWARNING,
                 "service deactive but received register-request:%s",
@@ -515,12 +582,21 @@ namespace engine
                             &pOrderBy, &pHint ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to extract query msg, rc: %d", rc ) ;
 
-      if ( writable && !pmdIsPrimary() )
+      if ( writable )
       {
-         rc = SDB_CLS_NOT_PRIMARY ;
-         PD_LOG ( PDWARNING, "Service deactive but received command: %s"
-                  "opCode: %d", pCMDName, pQueryReq->header.opCode ) ;
-         goto error ;
+         BOOLEAN isDelay = FALSE ;
+         rc = _pCatCB->primaryCheck( _pEduCB, TRUE, isDelay ) ;
+         if ( isDelay )
+         {
+            goto done ;
+         }
+         else if ( rc )
+         {
+            PD_LOG ( PDWARNING, "Service deactive but received command: %s"
+                     "opCode: %d, rc: %d", pCMDName,
+                     pQueryReq->header.opCode, rc ) ;
+            goto error ;
+         }
       }
 
       // the second dispatch msg
@@ -575,6 +651,11 @@ namespace engine
       return rc ;
    error:
       replyHeader.flags = rc ;
+      if ( SDB_CLS_NOT_PRIMARY == rc )
+      {
+         // primary node id store in startFrom
+         replyHeader.startFrom = _pCatCB->getPrimaryNode() ;
+      }
       goto done ;
    }
 

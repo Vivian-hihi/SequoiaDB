@@ -5056,9 +5056,6 @@ static JSBool sdb_eval( JSContext *cx, uintN argc, jsval *vp )
    VERIFY ( cursor ) ;
    *cursor = SDB_INVALID_HANDLE ;
 
-   objCursor = JS_NewObject ( cx , &cursor_class , NULL , NULL ) ;
-   VERIFY ( objCursor ) ;
-
    rc = sdbEvalJS( *connection, code, &valueType, cursor , &errmsg ) ;
    if ( SDB_OK != rc )
    {
@@ -5146,6 +5143,9 @@ static JSBool sdb_eval( JSContext *cx, uintN argc, jsval *vp )
    }
    else if ( FMP_RES_TYPE_RECORDSET == valueType )
    {
+      objCursor = JS_NewObject ( cx , &cursor_class , NULL , NULL ) ;
+      VERIFY ( objCursor ) ;
+
       JS_SET_RVAL ( cx , vp , OBJECT_TO_JSVAL ( objCursor ) ) ;
       VERIFY ( JS_SetPrivate ( cx , objCursor , cursor ) ) ;
    }

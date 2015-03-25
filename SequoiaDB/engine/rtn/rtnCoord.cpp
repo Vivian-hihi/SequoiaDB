@@ -149,7 +149,6 @@ namespace engine
    RTN_COORD_OP_ADD( MSG_BS_UPDATE_REQ, rtnCoordUpdate )
    RTN_COORD_OP_ADD( MSG_BS_AGGREGATE_REQ, rtnCoordAggregate )
    RTN_COORD_OP_ADD( MSG_BS_INTERRUPTE, rtnCoordInterrupt )
-   RTN_COORD_OP_ADD( MSG_BS_KILL_CONTEXT_REQ, rtnCoordKillContext )
    RTN_COORD_OP_ADD( MSG_AUTH_VERIFY_REQ, rtnCoordAuth )
    RTN_COORD_OP_ADD( MSG_AUTH_CRTUSR_REQ, rtnCoordAuthCrt )
    RTN_COORD_OP_ADD( MSG_AUTH_DELUSR_REQ, rtnCoordAuthDel )

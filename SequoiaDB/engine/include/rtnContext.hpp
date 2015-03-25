@@ -573,6 +573,11 @@ namespace engine
 
          void     killSubContexts( _pmdEDUCB *cb ) ;
 
+         INT64    getSkipNum() const { return _numToSkip ; }
+         void     setSkipNum( INT64 numToSkip ) { _numToSkip = numToSkip ; }
+         INT64    getLimitNum() const { return _numToReturn ; }
+         void     setLimitNum( INT64 limitNum ) { _numToReturn = limitNum ; }
+
       public:
 
          virtual RTN_CONTEXT_TYPE getType () const ;

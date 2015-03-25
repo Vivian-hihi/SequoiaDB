@@ -609,7 +609,8 @@ namespace engine
             _clsCB->updateCatGroup ( TRUE ) ;
          }
 
-         PD_LOG( PDERROR, "download group info request was refused" ) ;
+         PD_LOG( PDWARNING, "download group info request was refused, rc: %d",
+                 msg->header.res ) ;
          goto error ;
       }
       {

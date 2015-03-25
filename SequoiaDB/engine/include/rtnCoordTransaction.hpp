@@ -93,6 +93,8 @@ namespace engine
                              MsgOpReply & replyHeader,
                              rtnContextBuf *buf ) ;
 
+      virtual BOOLEAN      needRollback() const ;
+
    private:
       virtual INT32 buildPhase1Msg( CHAR * pReceiveBuffer, CHAR **pMsg );
 
@@ -103,7 +105,7 @@ namespace engine
                                          pmdEDUCB *cb );
    };
 
-   class rtnCoordTransRollback : public rtnCoordOperator
+   class rtnCoordTransRollback : public rtnCoordTransOperator
    {
    public:
       virtual INT32 execute( CHAR * pReceiveBuffer,
@@ -112,10 +114,12 @@ namespace engine
                              MsgOpReply & replyHeader,
                              rtnContextBuf *buf ) ;
 
-   private:
-      virtual INT32 executeOnDataGroup ( CHAR *pMsg,
-                                         netMultiRouteAgent *pRouteAgent,
-                                         pmdEDUCB *cb );
+   protected:
+      virtual BOOLEAN      needRollback() const ;
+
+      virtual void         _prepareForTrans( pmdEDUCB *cb,
+                                             MsgHeader *pMsg ) ;
+
    };
 }
 

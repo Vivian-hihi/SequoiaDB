@@ -41,7 +41,7 @@
 namespace engine
 {
    typedef std::map< UINT32, UINT32 >     CoordGroupList ;
-   typedef clsNoteItem                    CoordNodeInfo ;
+   typedef clsNodeItem                    CoordNodeInfo ;
    typedef VEC_NODE_INFO                  CoordVecNodeInfo ;
 
    class _CoordGroupInfo : public SDBObject
@@ -52,15 +52,14 @@ namespace engine
 
       INT32 fromBSONObj( const bson::BSONObj &boGroupInfo );
 
-      void  setPrimary( const MsgRouteID &ID ) ;
+      INT32 setPrimary( const MsgRouteID &ID ) ;
       void  setSlave( const MsgRouteID &ID ) ;
 
       MsgRouteID getPrimary( MSG_ROUTE_SERVICE_TYPE type =
-                             MSG_ROUTE_SHARD_SERVCIE )
-      {
-         ossScopedRWLock lock( &_primaryMutex, SHARED ) ;
-         return _groupItem.primary( type ) ;
-      }
+                             MSG_ROUTE_SHARD_SERVCIE ) ;
+      void updateNodeStat( UINT16 nodeID, NET_NODE_STATUS status ) ;
+      void clearNodesStat() ;
+      INT32 getNodeInfo ( UINT32 pos, SINT32 &status ) ;
 
       UINT32 getGroupID() const
       {
@@ -127,18 +126,26 @@ namespace engine
       }
 
       INT32 getGroupByMatcher( const bson::BSONObj & matcher,
-                              CoordGroupList &groupLst )
+                               CoordGroupList &groupLst )
       {
          INT32 rc = SDB_OK;
-         UINT32 i = 0;
-         VEC_GROUP_ID vecGroup;
-         rc = _catlogSet.findGroupIDS( matcher, vecGroup );
-         PD_RC_CHECK( rc, PDERROR,
-                     "failed to find the match groups(rc=%d)",
-                     rc );
-         for ( ; i < vecGroup.size(); i++ )
+
+         if ( matcher.isEmpty() )
          {
-            groupLst[vecGroup[i]] = vecGroup[i];
+            getGroupLst( groupLst ) ;
+         }
+         else
+         {
+            UINT32 i = 0;
+            VEC_GROUP_ID vecGroup;
+            rc = _catlogSet.findGroupIDS( matcher, vecGroup );
+            PD_RC_CHECK( rc, PDERROR,
+                        "failed to find the match groups(rc=%d)",
+                        rc );
+            for ( ; i < vecGroup.size(); i++ )
+            {
+               groupLst[vecGroup[i]] = vecGroup[i];
+            }
          }
       done:
          return rc;
@@ -146,23 +153,29 @@ namespace engine
          goto done;
       }
 
-      INT32 getGroupByRecord( const bson::BSONObj &recordObj, UINT32 &groupID )
+      INT32 getGroupByRecord( const bson::BSONObj &recordObj,
+                              UINT32 &groupID )
       {
          return _catlogSet.findGroupID ( recordObj, groupID ) ;
       }
 
-      INT32 getSubCLNameByRecord( const bson::BSONObj &recordObj, std::string &subCLName )
+      INT32 getSubCLNameByRecord( const bson::BSONObj &recordObj,
+                                  std::string &subCLName )
       {
          return _catlogSet.findSubCLName( recordObj, subCLName );
       }
 
-      INT32 getMatchGroups( const bson::BSONObj &matcher,
-                           CoordGroupList &groupLst );
-
       INT32 getMatchSubCLs( const bson::BSONObj &matcher,
-                           CoordSubCLlist &subCLList )
+                            CoordSubCLlist &subCLList )
       {
-         return _catlogSet.findSubCLNames( matcher, subCLList );
+         if ( matcher.isEmpty() )
+         {
+            return _catlogSet.getSubCLList( subCLList );
+         }
+         else
+         {
+            return _catlogSet.findSubCLNames( matcher, subCLList );
+         }
       }
 
       INT32 getVersion()
@@ -213,6 +226,11 @@ namespace engine
       clsCatalogSet* getCatalogSet()
       {
          return &_catlogSet ;
+      }
+
+      const CHAR* getName()
+      {
+         return _catlogSet.name() ;
       }
 
       INT32 getLobGroupID( const bson::OID &oid,

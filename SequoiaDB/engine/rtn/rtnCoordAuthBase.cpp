@@ -43,21 +43,6 @@ using namespace bson ;
 
 namespace engine
 {
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_CLEARQ, "clearQ" )
-   static void clearQ( REPLY_QUE &queue )
-   {
-      PD_TRACE_ENTRY ( SDB_CLEARQ ) ;
-      while ( !queue.empty() )
-      {
-         MsgInternalReplyHeader *tmp = ( MsgInternalReplyHeader * )
-                                       (queue.front()) ;
-         queue.pop();
-         SDB_OSS_FREE ( tmp );
-      }
-      PD_TRACE_EXIT ( SDB_CLEARQ ) ;
-      return ;
-   }
-
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOAUTHBASE_FORWARD, "rtnCoordAuthBase::forward" )
    INT32 rtnCoordAuthBase::forward( CHAR *pReceiveBuffer,
                                     SINT32 packSize,
@@ -78,7 +63,7 @@ namespace engine
       REQUESTID_MAP nodes ;
       REPLY_QUE replyQue ;
       NodeID curNodeID = pmdGetNodeID() ;
-      BOOLEAN hasRetry = FALSE ;
+      UINT32 times = 0 ;
 
       BSONObj authObj ;
       BSONElement user, pass ;
@@ -88,11 +73,11 @@ namespace engine
       user = authObj.getField( SDB_AUTH_USER ) ;
       pass = authObj.getField( SDB_AUTH_PASSWD ) ;
 
-   retry:
-      rc = rtnCoordGetCatGroupInfo( cb, hasRetry ? TRUE : FALSE, cata ) ;
+      rc = rtnCoordGetCatGroupInfo( cb, FALSE, cata ) ;
       PD_RC_CHECK ( rc, PDWARNING, "Failed to get catalog group info, "
                     "rc = %d", rc  ) ;
 
+   retry:
       nodes.clear() ;
       // send message
       rc = rtnCoordSendRequestToPrimary( pReceiveBuffer,
@@ -102,18 +87,12 @@ namespace engine
                                          cb ) ;
       if ( SDB_OK != rc )
       {
-         if ( !hasRetry )
-         {
-            hasRetry = TRUE ;
-            goto retry ;
-         }
-
          if ( sWhenNoPrimary )
          {
             rc = rtnCoordSendRequestToOne( pReceiveBuffer, cata,
                                            nodes, pRouteAgent,
                                            MSG_ROUTE_CAT_SERVICE,
-                                           cb ) ;
+                                           cb, TRUE ) ;
             PD_RC_CHECK ( rc, PDERROR, "Can not find a available cata node, "
                           "rc = %d", rc ) ;
          }
@@ -132,10 +111,12 @@ namespace engine
       {
          MsgInternalReplyHeader *res = ( MsgInternalReplyHeader * )
                                        ( replyQue.front() ) ;
-         if ( SDB_CLS_NOT_PRIMARY == res->res && !hasRetry )
+         if ( rtnCoordGroupReplyCheck( cb, res->res, _canRetry( times ),
+                                       res->header.routeID, cata, NULL,
+                                       TRUE, 0 ) )
          {
-            clearQ( replyQue ) ;
-            hasRetry = TRUE ;
+            rtnClearReplyQue( &replyQue ) ;
+            ++times ;
             goto retry ;
          }
          else
@@ -166,7 +147,7 @@ namespace engine
                               -1, 0, 0,
                               curNodeID,
                               header->requestID ) ;
-      clearQ( replyQue ) ;
+      rtnClearReplyQue( &replyQue ) ;
       PD_TRACE_EXITRC ( SDB_RTNCOAUTHBASE_FORWARD, rc ) ;
       return rc ;
    error:

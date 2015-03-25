@@ -45,123 +45,6 @@ using namespace bson;
 
 namespace engine
 {
-   PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCODEL_GETNODEGROUPS, "rtnCoordDelete::getNodeGroups" )
-   INT32 rtnCoordDelete::getNodeGroups( const CoordCataInfoPtr &cataInfo,
-                           bson::BSONObj &deleteObj,
-                           CoordGroupList &sendGroupLst,
-                           CoordGroupList &groupLst )
-   {
-      //TODO: parse deleteObj and select data-node
-      INT32 rc = SDB_OK;
-      PD_TRACE_ENTRY ( SDB_RTNCODEL_GETNODEGROUPS ) ;
-      cataInfo->getGroupByMatcher( deleteObj, groupLst );
-      if ( groupLst.size() <= 0 )
-      {
-         rc = SDB_CAT_NO_MATCH_CATALOG;
-      }
-      else
-      {
-         //don't resend to the node which reply ok
-         CoordGroupList::iterator iter = sendGroupLst.begin();
-         while( iter != sendGroupLst.end() )
-         {
-            groupLst.erase( iter->first );
-            ++iter;
-         }
-      }
-      PD_TRACE_EXITRC ( SDB_RTNCODEL_GETNODEGROUPS, rc ) ;
-      return rc;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCODEL_DELTODNGROUP, "rtnCoordDelete::deleteToDataNodeGroup" )
-   INT32 rtnCoordDelete::deleteToDataNodeGroup( CHAR *pBuffer,
-                                                CoordGroupList &groupLst,
-                                                CoordGroupList &sendGroupLst,
-                                                netMultiRouteAgent *pRouteAgent,
-                                                pmdEDUCB *cb )
-   {
-      INT32 rc = SDB_OK;
-      PD_TRACE_ENTRY ( SDB_RTNCODEL_DELTODNGROUP ) ;
-      BOOLEAN isNeedRetry = FALSE;
-      BOOLEAN hasRetry = FALSE;
-      MsgOpDelete *pDelMsg = (MsgOpDelete *)pBuffer;
-      do
-      {
-         hasRetry = isNeedRetry;
-         isNeedRetry = FALSE;
-         REQUESTID_MAP sendNodes;
-         if ( cb->isTransaction() )
-         {
-            pDelMsg->header.opCode = MSG_BS_TRANS_DELETE_REQ;
-         }
-         rc = rtnCoordSendRequestToNodeGroups( pBuffer, groupLst, TRUE,
-                                               pRouteAgent, cb, sendNodes );
-         if ( rc != SDB_OK )
-         {
-            rtnCoordClearRequest( cb, sendNodes );
-            PD_LOG ( PDERROR, "failed to delete on data-node,"
-                     "send request failed(rc=%d)");
-            break;
-         }
-         REPLY_QUE replyQue;
-         rc = rtnCoordGetReply( cb, sendNodes, replyQue,
-                        MAKE_REPLY_TYPE(pDelMsg->header.opCode) );
-         if ( rc != SDB_OK )
-         {
-            PD_LOG ( PDWARNING, "failed to delete on data-node,"
-                     "get reply failed(rc=%d)", rc );
-            break;
-         }
-         while ( !replyQue.empty() )
-         {
-            MsgOpReply *pReply = NULL;
-            pReply = (MsgOpReply *)(replyQue.front());
-            replyQue.pop();
-            INT32 rcTmp = pReply->flags;
-            if ( SDB_OK == rc || SDB_CLS_COORD_NODE_CAT_VER_OLD == rc )
-            {
-               if ( SDB_OK != rcTmp )
-               {
-                  if ( SDB_CLS_NOT_PRIMARY == rcTmp
-                     && !hasRetry )
-                  {
-                     CoordGroupInfoPtr groupInfoTmp;
-                     rcTmp = rtnCoordGetGroupInfo( cb,
-                        pReply->header.routeID.columns.groupID,
-                        TRUE, groupInfoTmp );
-                     if ( SDB_OK == rcTmp )
-                     {
-                        isNeedRetry = TRUE;
-                     }
-                  }
-                  if ( rcTmp )
-                  {
-                     rc = rcTmp ;
-                     PD_LOG ( PDERROR, "failed to delete on data node"
-                              "(groupID=%u, nodeID=%u, serviceID=%u, rc=%d)",
-                              pReply->header.routeID.columns.groupID,
-                              pReply->header.routeID.columns.nodeID,
-                              pReply->header.routeID.columns.serviceID,
-                              rc );
-                  }
-               }
-               else
-               {
-                  UINT32 groupID = pReply->header.routeID.columns.groupID ;
-                  sendGroupLst[groupID] = groupID;
-                  groupLst.erase( groupID );
-               }
-            }
-            if ( NULL != pReply )
-            {
-               SDB_OSS_FREE( pReply );
-            }
-         }
-      }while ( isNeedRetry );
-      PD_TRACE_EXITRC ( SDB_RTNCODEL_DELTODNGROUP, rc ) ;
-      return rc;
-   }
-   
    //PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCODEL_EXECUTE, "rtnCoordDelete::execute" )
    INT32 rtnCoordDelete::execute( CHAR *pReceiveBuffer,
                                   SINT32 packSize,
@@ -169,192 +52,239 @@ namespace engine
                                   MsgOpReply &replyHeader,
                                   rtnContextBuf *buf )
    {
-      INT32 rc = SDB_OK;
-      //PD_TRACE_ENTRY ( SDB_RTNCODEL_EXECUTE ) ;
-      pmdKRCB *pKrcb                   = pmdGetKRCB();
-      CoordCB *pCoordcb                = pKrcb->getCoordCB();
-      netMultiRouteAgent *pRouteAgent  = pCoordcb->getRouteAgent();
-      rtnCoordOperator *pRollbackOperator = NULL;
-      BOOLEAN isNeedRefresh = FALSE;
-      BOOLEAN hasRefresh = FALSE;
-      CoordGroupList sendGroupLst;
-      BSONObj boDeletor;
+      INT32 rc = SDB_OK ;
+      INT32 rcTmp = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB_RTNCODEL_EXECUTE ) ;
+      pmdKRCB *pKrcb                   = pmdGetKRCB() ;
+      CoordCB *pCoordcb                = pKrcb->getCoordCB() ;
+      netMultiRouteAgent *pRouteAgent  = pCoordcb->getRouteAgent() ;
+
+      // process define
+      rtnSendOptions sendOpt( TRUE ) ;
+      rtnSendMsgIn inMsg( (MsgHeader*)pReceiveBuffer ) ;
+      rtnProcessResult result ;
+      ROUTE_RC_MAP nokRC ;
+      result._pNokRC = &nokRC ;
+
+      CoordCataInfoPtr cataInfo ;
+      MsgRouteID errNodeID ;
+      UINT64 deleteNum = 0 ;
+      inMsg._pvtData = ( CHAR* )&deleteNum ;
+      inMsg._pvtType = PRIVATE_DATA_NUMBERLONG ;
+
+      BSONObj boDeletor ;
 
       // fill default-reply(delete success)
-      MsgHeader *pHeader               = (MsgHeader *)pReceiveBuffer;
+      MsgOpDelete *pDelMsg             = (MsgOpDelete *)pReceiveBuffer;
       replyHeader.header.messageLength = sizeof( MsgOpReply );
       replyHeader.header.opCode        = MSG_BS_DELETE_RES;
-      replyHeader.header.requestID     = pHeader->requestID;
+      replyHeader.header.requestID     = pDelMsg->header.requestID ;
       replyHeader.header.routeID.value = 0;
-      replyHeader.header.TID           = pHeader->TID;
-      replyHeader.contextID            = -1;
-      replyHeader.flags                = SDB_OK;
-      replyHeader.numReturned          = 0;
-      replyHeader.startFrom            = 0;
+      replyHeader.header.TID           = pDelMsg->header.TID ;
+      replyHeader.contextID            = -1 ;
+      replyHeader.flags                = SDB_OK ;
+      replyHeader.numReturned          = 0 ;
+      replyHeader.startFrom            = 0 ;
 
       INT32 flag = 0;
-      CHAR *pCollectionName = NULL;
-      CHAR *pDeletor = NULL;
-      CHAR *pHint = NULL;
+      CHAR *pCollectionName = NULL ;
+      CHAR *pDeletor = NULL ;
+      CHAR *pHint = NULL ;
       rc = msgExtractDelete( pReceiveBuffer, &flag, &pCollectionName,
-                           &pDeletor, &pHint );
+                             &pDeletor, &pHint ) ;
       PD_RC_CHECK( rc, PDERROR,
-                  "failed to parse delete request(rc=%d)", rc );
+                   "Failed to parse delete request, rc: %d", rc ) ;
 
       try
       {
-         boDeletor = BSONObj( pDeletor );
+         boDeletor = BSONObj( pDeletor ) ;
       }
       catch ( std::exception &e )
       {
          PD_RC_CHECK( SDB_INVALIDARG, PDERROR,
-                     "delete failed, received unexpected error:%s",
-                     e.what() );
+                      "Delete failed, received unexpected error:%s",
+                      e.what() ) ;
       }
 
+      rc = rtnCoordGetCataInfo( cb, pCollectionName, FALSE, cataInfo ) ;
+      PD_RC_CHECK( rc, PDERROR, "Delete failed, failed to get the "
+                   "catalogue info(collection name: %s), rc: %d",
+                   pCollectionName, rc ) ;
+
+   retry:
       do
       {
-         hasRefresh = isNeedRefresh;
-         CoordCataInfoPtr cataInfo;
-         rc = rtnCoordGetCataInfo(cb, pCollectionName, isNeedRefresh, cataInfo );
-         PD_RC_CHECK( rc, PDERROR,
-                     "delete failed, "
-                     "failed to get the catalogue info(collection name:%s)",
-                     pCollectionName );
+         pDelMsg->version = cataInfo->getVersion() ;
+         pDelMsg->w = 0 ;
+
          if ( cataInfo->isMainCL() )
          {
-            std::set< INT32 > emptyRCList;
-            CoordSubCLlist subCLList;
-            rc = cataInfo->getMatchSubCLs( boDeletor, subCLList );
-            PD_RC_CHECK( rc, PDERROR,
-                        "failed to get match sub-collection(rc=%d)",
-                        rc );
-            rc = modifyOpOnMainCL( cataInfo, subCLList, (MsgHeader *)pReceiveBuffer,
-                                 pRouteAgent, cb, isNeedRefresh, emptyRCList, sendGroupLst );
+            rcTmp = doOpOnMainCL( cataInfo, boDeletor, inMsg, sendOpt,
+                                  pRouteAgent, cb, result ) ;
          }
          else
          {
-            rc = deleteNormalCL( cataInfo, boDeletor, (MsgOpDelete *)pReceiveBuffer,
-                                 pRouteAgent, cb, sendGroupLst );
+            rcTmp = doOpOnCL( cataInfo, boDeletor, inMsg, sendOpt,
+                              pRouteAgent, cb, result ) ;
          }
-         if ( !hasRefresh && rtnCoordWriteRetryRC( rc ) )
-         {
-            isNeedRefresh = TRUE;
-         }
-         else
-         {
-            isNeedRefresh = FALSE;
-         }
-      }while( isNeedRefresh );
-      if ( cb->isTransaction() )
+      }while( FALSE ) ;
+
+      if ( SDB_OK == rcTmp && nokRC.empty() )
       {
-         rc = rc ? rc : cb->getTransRC();
+         goto done ;
       }
-      PD_RC_CHECK( rc, PDERROR, "delete failed(rc=%d)", rc ) ;
+      else if ( checkRetryForCLOpr( rcTmp, &nokRC, inMsg.msg(),
+                                    sendOpt._retryTimes,
+                                    cataInfo, cb, rc, &errNodeID, TRUE ) )
+      {
+         nokRC.clear() ;
+         ++sendOpt._retryTimes ;
+         goto retry ;
+      }
+      else
+      {
+         PD_LOG( PDERROR, "Delete failed on node[%s], rc: %d",
+                 routeID2String( errNodeID ).c_str(), rc ) ;
+         goto error ;
+      }
+
    done:
-      //PD_TRACE_EXITRC ( SDB_RTNCODEL_EXECUTE, rc ) ;
-      return rc;
+      PD_TRACE_EXITRC ( SDB_RTNCODEL_EXECUTE, rc ) ;
+      return rc ;
    error:
-      if ( cb->isTransaction() )
-      {
-         pRollbackOperator
-               = pCoordcb->getProcesserFactory()->getOperator( MSG_BS_TRANS_ROLLBACK_REQ );
-         if ( pRollbackOperator )
-         {
-            pRollbackOperator->execute( pReceiveBuffer, packSize,
-                                       cb, replyHeader, NULL );
-         }
-      }
-      replyHeader.flags = rc;
-      goto done;
+      replyHeader.flags = rc ;
+      goto done ;
    }
 
-   INT32 rtnCoordDelete::deleteNormalCL( CoordCataInfoPtr cataInfo,
-                                         bson::BSONObj &boDelete,
-                                         MsgOpDelete *pDelMsg,
-                                         netMultiRouteAgent *pRouteAgent,
-                                         pmdEDUCB *cb,
-                                         CoordGroupList &sendGroupLst )
+   void rtnCoordDelete::_prepareForTrans( pmdEDUCB *cb, MsgHeader *pMsg )
    {
-      INT32 rc = SDB_OK;
-      CoordGroupList groupLst;
-      rc = getNodeGroups( cataInfo, boDelete, sendGroupLst, groupLst );
-      PD_RC_CHECK( rc, PDERROR,
-                  "delete failed, couldn't get the match sharding(rc=%d)",
-                  rc );
-
-      rc = buildTransSession( groupLst, pRouteAgent, cb );
-      PD_RC_CHECK( rc, PDERROR,
-                  "failed to build transaction session(rc=%d)",
-                  rc );
-
-      pDelMsg->version = cataInfo->getVersion();
-      pDelMsg->header.routeID.value = 0;
-      pDelMsg->header.TID = cb->getTID();
-      rc = deleteToDataNodeGroup( (CHAR *)pDelMsg, groupLst,
-                                 sendGroupLst, pRouteAgent, cb );
-      PD_RC_CHECK( rc, PDERROR,
-                  "failed to delete on data node(rc=%d)", rc );
-   done:
-      return rc;
-   error:
-      adjustTransSession( sendGroupLst, pRouteAgent, cb );
-      goto done;
+      pMsg->opCode = MSG_BS_TRANS_DELETE_REQ ;
    }
 
-   INT32 rtnCoordDelete::buildOpMsg( const CoordCataInfoPtr &cataInfo,
-                                    const CoordSubCLlist &subCLList,
-                                    CHAR *pSrcMsg, CHAR *&pDstMsg,
-                                    INT32 &bufferSize )
+   INT32 rtnCoordDelete::_prepareMainCLOp( CoordCataInfoPtr &cataInfo,
+                                           CoordGroupSubCLMap &grpSubCl,
+                                           rtnSendMsgIn &inMsg,
+                                           rtnSendOptions &options,
+                                           netMultiRouteAgent *pRouteAgent,
+                                           pmdEDUCB *cb,
+                                           rtnProcessResult &result,
+                                           ossValuePtr &outPtr )
    {
-      INT32 rc = SDB_OK;
-      INT32 flag;
-      CHAR *pCollectionName = NULL;
-      CHAR *pDeletor = NULL;
-      CHAR *pHint = NULL;
-      BSONObj boDeletor;
-      BSONObj boHint;
-      rc = msgExtractDelete( pSrcMsg, &flag, &pCollectionName,
-                           &pDeletor, &pHint );
-      PD_RC_CHECK( rc, PDERROR,
-                  "failed to parse delete request(rc=%d)",
-                  rc );
-      try
+      INT32 rc                = SDB_OK ;
+      MsgOpDelete *pDelMsg    = ( MsgOpDelete* )inMsg.msg() ;
+
+      INT32 flag              = 0 ;
+      CHAR *pCollectionName   = NULL;
+      CHAR *pDeletor          = NULL;
+      CHAR *pHint             = NULL;
+      BSONObj boDeletor ;
+      BSONObj boHint ;
+      BSONObj boNew ;
+
+      CHAR *pBuff             = NULL ;
+      INT32 buffLen           = 0 ;
+      INT32 buffPos           = 0 ;
+
+      CoordGroupSubCLMap::iterator it ;
+
+      outPtr                  = (ossValuePtr)0 ;
+      inMsg.data()->clear() ;
+
+      rc = msgExtractDelete( (CHAR*)inMsg.msg(), &flag, &pCollectionName,
+                             &pDeletor, &pHint ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to parse delete request, rc: %d",
+                   rc ) ;
+
+      boDeletor = BSONObj( pDeletor ) ;
+      boHint = BSONObj( pHint ) ;
+
+      rc = cb->allocBuff( DMS_PAGE_SIZE4K, &pBuff, buffLen ) ;
+      PD_RC_CHECK( rc, PDERROR, "Alloc buff[%d] failed, rc: %d",
+                   DMS_PAGE_SIZE4K, rc ) ;
+
+      it = grpSubCl.begin() ;
+      while( it != grpSubCl.end() )
       {
-         boDeletor = BSONObj( pDeletor );
-         boHint = BSONObj( pHint );
-         BSONArrayBuilder babSubCL;
-         CoordSubCLlist::const_iterator iterCL = subCLList.begin();
-         while( iterCL != subCLList.end() )
+         CoordSubCLlist &subCLLst = it->second ;
+
+         netIOVec &iovec = inMsg._datas[ it->first ] ;
+         netIOV ioItem ;
+
+         // 1. first vec
+         ioItem.iovBase = (CHAR*)inMsg.msg() + sizeof( MsgHeader ) ;
+         ioItem.iovLen = ossRoundUpToMultipleX ( offsetof(MsgOpDelete, name) +
+                                                 pDelMsg->nameLength + 1, 4 ) -
+                         sizeof( MsgHeader ) ;
+         iovec.push_back( ioItem ) ;
+
+         // 2. new deletor vec
+         boNew = _buildNewDeletor( boDeletor, subCLLst ) ;
+         // 2.1 add to buff
+         INT32 roundLen = ossRoundUpToMultipleX( boNew.objsize(), 4 ) ;
+         if ( buffPos + roundLen > buffLen )
          {
-            babSubCL.append( *iterCL );
-            ++iterCL;
+            rc = cb->reallocBuff( roundLen + buffLen, &pBuff, buffLen ) ;
+            PD_RC_CHECK( rc, PDERROR, "Realloc buff[%d] failed, rc: %d",
+                         roundLen + buffLen, rc ) ;
          }
-         BSONObjBuilder bobNewDeletor;
-         bobNewDeletor.appendElements( boDeletor );
-         bobNewDeletor.appendArray( CAT_SUBCL_NAME, babSubCL.arr() );
-         BSONObj boNewDeletor = bobNewDeletor.obj();
-         rc = msgBuildDeleteMsg( &pDstMsg, &bufferSize, pCollectionName,
-                                 flag, 0, &boNewDeletor, &boHint );
-         PD_RC_CHECK( rc, PDERROR,
-                     "failed to build delete request(rc=%d)",
-                     rc );
-         {
-         MsgOpDelete *pReqMsg = (MsgOpDelete *)pDstMsg;
-         MsgOpDelete *pSrcReq = (MsgOpDelete *)pSrcMsg;
-         pReqMsg->version = cataInfo->getVersion();
-         pReqMsg->w = pSrcReq->w;
-         }
+         ossMemcpy( &pBuff[ buffPos ], boNew.objdata(), boNew.objsize() ) ;
+         ioItem.iovBase = &pBuff[ buffPos ] ;
+         ioItem.iovLen = roundLen ;
+         buffPos += roundLen ;
+         iovec.push_back( ioItem ) ;
+
+         // 3. hinter vec
+         ioItem.iovBase = boHint.objdata() ;
+         ioItem.iovLen = boHint.objsize() ;
+         iovec.push_back( ioItem ) ;         
+
+         ++it ;
       }
-      catch ( std::exception &e )
-      {
-         PD_RC_CHECK( SDB_INVALIDARG, PDERROR,
-                     "occur unexpected error:%s",
-                     e.what() );
-      }
+
+      outPtr = ( ossValuePtr )pBuff ;
+
    done:
-      return rc;
+      return rc ;
    error:
-      goto done;
+      if ( pBuff )
+      {
+         cb->releaseBuff( pBuff ) ;
+      }
+      goto done ;
    }
+
+   void rtnCoordDelete::_doneMainCLOp( ossValuePtr itPtr,
+                                       CoordCataInfoPtr &cataInfo,
+                                       CoordGroupSubCLMap &grpSubCl,
+                                       rtnSendMsgIn &inMsg,
+                                       rtnSendOptions &options,
+                                       netMultiRouteAgent *pRouteAgent,
+                                       pmdEDUCB *cb,
+                                       rtnProcessResult &result )
+   {
+      CHAR *pBuff = ( CHAR* )itPtr ;
+      if ( NULL != pBuff )
+      {
+         cb->releaseBuff( pBuff ) ;
+      }
+      inMsg._datas.clear() ;
+   }
+
+   BSONObj rtnCoordDelete::_buildNewDeletor( const BSONObj &deletor,
+                                             const CoordSubCLlist &subCLList )
+   {
+      BSONObjBuilder builder ;
+      BSONArrayBuilder babSubCL ;
+      CoordSubCLlist::const_iterator iterCL = subCLList.begin();
+      while( iterCL != subCLList.end() )
+      {
+         babSubCL.append( *iterCL ) ;
+         ++iterCL ;
+      }
+      builder.appendElements( deletor ) ;
+      builder.appendArray( CAT_SUBCL_NAME, babSubCL.arr() ) ;
+      return builder.obj() ;
+   }
+
 }
+

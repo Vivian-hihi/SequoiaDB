@@ -1034,9 +1034,22 @@ namespace engine
       SDB_ASSERT ( cb, "educb can't be NULL" ) ;
       SDB_ASSERT ( pContextID, "context id can't be NULL" ) ;
 
-      BSONObj matcher ( _matcherBuff ) ;
-      BSONObj selector ( _selectBuff ) ;
-      BSONObj orderBy ( _orderByBuff ) ;
+      BSONObj matcher ;
+      BSONObj selector ;
+      BSONObj orderBy ;
+
+      if ( _matcherBuff )
+      {
+         matcher = BSONObj( _matcherBuff ) ;
+      }
+      if ( _selectBuff )
+      {
+         selector = BSONObj( _selectBuff ) ;
+      }
+      if ( _orderByBuff )
+      {
+         orderBy = BSONObj( _orderByBuff ) ;
+      }
 
       rc = rtnGetCommandEntry ( type(), _collectionName, selector, matcher,
                                 orderBy, _hintObj, _flags, cb , _numToSkip,
@@ -1052,6 +1065,38 @@ namespace engine
 
    _rtnGetCount::~_rtnGetCount ()
    {
+   }
+
+   INT32 _rtnGetCount::init( INT32 flags, INT64 numToSkip,
+                             INT64 numToReturn, const CHAR *pMatcherBuff,
+                             const CHAR *pSelectBuff,
+                             const CHAR *pOrderByBuff,
+                             const CHAR *pHintBuff )
+   {
+      INT32 rc = SDB_OK ;
+      _flags = flags ;
+      _numToReturn = numToReturn ;
+      _numToSkip = numToSkip ;
+      _matcherBuff = pMatcherBuff ;
+
+      BSONObj object ( pHintBuff ) ;
+      rc = rtnGetStringElement ( object, FIELD_NAME_COLLECTION,
+                                 &_collectionName ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to get field[%s], rc: %d",
+                   FIELD_NAME_COLLECTION, rc ) ;
+
+      rc = rtnGetObjElement( object, FIELD_NAME_HINT, _hintObj ) ;
+      if ( SDB_FIELD_NOT_EXIST == rc )
+      {
+         rc = SDB_OK ;
+      }
+      PD_RC_CHECK( rc, PDERROR, "Failed to get field[%s], rc: %d",
+                   FIELD_NAME_HINT, rc ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    const CHAR *_rtnGetCount::name ()

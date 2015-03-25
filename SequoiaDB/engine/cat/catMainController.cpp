@@ -76,7 +76,6 @@ namespace engine
       _checkEventTimerID   = NET_INVALID_TIMER_ID ;
       _isDelayed           = FALSE ;
 
-      _isActived           = FALSE ;
       _changeEvent.signal() ;
    }
 
@@ -529,7 +528,7 @@ namespace engine
       {
          goto error ;
       }
-/*
+
       /// SYSINFO
       rc = _createSysCollection( CAT_SYSDCBASE_COLLECTION_NAME, cb ) ;
       if ( rc )
@@ -565,7 +564,7 @@ namespace engine
             goto error ;
          }
       }
-*/
+
    done :
       PD_TRACE_EXITRC ( SDB_CATMAINCT__ENSUREMETADATA, rc ) ;
       return rc ;
@@ -584,10 +583,11 @@ namespace engine
       rc = _pAuthCB->checkNeedAuth( _pEDUCB, TRUE ) ;
       if ( rc )
       {
-         PD_LOG( PDERROR, "Failed to check need auth, rc: %d", rc ) ;
+         PD_LOG( PDSEVERE, "Failed to check need auth, rc: %d, restart db",
+                 rc ) ;
+         PMD_RESTART_DB( rc ) ;
          goto error ;
       }
-      _isActived = TRUE ;
 
       rc = _pCatCB->getCatNodeMgr()->active() ;
       PD_RC_CHECK( rc, PDERROR, "Active catalog node manager failed, rc: %d",
@@ -619,7 +619,6 @@ namespace engine
       _pCatCB->getCatNodeMgr()->deactive() ;
       _pCatCB->getCatlogueMgr()->deactive() ;
 
-      _isActived = FALSE ;
       _changeEvent.signal() ;
 
       PD_TRACE_EXITRC ( SDB_CATMAINCT_DEACTIVE, rc ) ;
@@ -826,11 +825,9 @@ namespace engine
       CHAR *pHintBuffer     = NULL ;
       INT32 iNameLen        = 0 ;
       rtnContextBuf buffObj ;
+      BOOLEAN bIsDelay      = FALSE ;
 
       PD_TRACE_ENTRY ( SDB_CATMAINCT_QUERYREQUEST ) ;
-
-      PD_CHECK( pmdIsPrimary(), SDB_CLS_NOT_PRIMARY, error, PDWARNING,
-                "it is not primary node but received query request!" );
 
       rc = msgExtractQuery ( (CHAR *)pMsgHeader, &flags, &pCN,
                              &numToSkip, &numToReturn, &pQuery,
@@ -846,6 +843,19 @@ namespace engine
       if ( NULL == pCollectionName )
       {
          pCollectionName = pCN ;
+      }
+
+      // check primary
+      rc = _pCatCB->primaryCheck( _pEDUCB, TRUE, bIsDelay ) ;
+      if ( bIsDelay )
+      {
+         goto done ;
+      }
+      else if ( rc )
+      {
+         PD_LOG( PDWARNING, "it is not primary node but received query "
+                 "request, rc: %d", rc );
+         goto error ;
       }
 
       try
@@ -907,45 +917,53 @@ namespace engine
       }
 
    done :
-      msgReply.header.messageLength = sizeof( MsgOpReply ) + buffObj.size() ;
-      msgReply.header.opCode = MAKE_REPLY_TYPE( pMsgHeader->opCode );
-      msgReply.header.TID = pMsgHeader->TID;
-      msgReply.header.routeID.value = 0;
-      msgReply.header.requestID = pMsgHeader->requestID;
-      msgReply.contextID = contextID ;
-      msgReply.startFrom = (INT32)buffObj.getStartFrom() ;
-      msgReply.numReturned = buffObj.recordNum() ;
-
-      if ( rc != SDB_OK )
+      if ( !isDelayed() )
       {
-         msgReply.flags = rc ;
-         if ( SDB_PERM == rc )
+         msgReply.header.messageLength = sizeof( MsgOpReply ) +
+                                         buffObj.size() ;
+         msgReply.header.opCode = MAKE_REPLY_TYPE( pMsgHeader->opCode );
+         msgReply.header.TID = pMsgHeader->TID;
+         msgReply.header.routeID.value = 0;
+         msgReply.header.requestID = pMsgHeader->requestID;
+         msgReply.contextID = contextID ;
+         msgReply.startFrom = (INT32)buffObj.getStartFrom() ;
+         msgReply.numReturned = buffObj.recordNum() ;
+
+         if ( rc != SDB_OK )
          {
-            msgReply.flags = SDB_CLS_NOT_PRIMARY ;
+            msgReply.flags = rc ;
+            if ( SDB_PERM == rc )
+            {
+               msgReply.flags = SDB_CLS_NOT_PRIMARY ;
+            }
+            else if ( SDB_CLS_NOT_PRIMARY == rc )
+            {
+               msgReply.startFrom = _pCatCB->getPrimaryNode() ;
+            }
          }
-      }
-      else
-      {
-         _addContext( handle, pMsgHeader->TID, contextID );
-         msgReply.flags = SDB_OK ;
-      }
-      PD_TRACE1 ( SDB_CATMAINCT_QUERYREQUEST,
-                  PD_PACK_INT ( msgReply.flags ) ) ;
+         else
+         {
+            _addContext( handle, pMsgHeader->TID, contextID );
+            msgReply.flags = SDB_OK ;
+         }
+         PD_TRACE1 ( SDB_CATMAINCT_QUERYREQUEST,
+                     PD_PACK_INT ( msgReply.flags ) ) ;
 
-      if ( 0 == buffObj.size() )
-      {
-         rc = _pCatCB->netWork()->syncSend ( handle, &msgReply );
-      }
-      else
-      {
-         rc = _pCatCB->netWork()->syncSend( handle, &msgReply.header,
-                                            (void*)buffObj.data(),
-                                            (UINT32)buffObj.size() ) ;
-      }
-      if ( rc != SDB_OK )
-      {
-         PD_LOG ( PDERROR, "failed to send the message(routeID=%lld)",
-                  pMsgHeader->routeID.value ) ;
+         if ( 0 == buffObj.size() )
+         {
+            rc = _pCatCB->netWork()->syncSend ( handle, &msgReply );
+         }
+         else
+         {
+            rc = _pCatCB->netWork()->syncSend( handle, &msgReply.header,
+                                               (void*)buffObj.data(),
+                                               (UINT32)buffObj.size() ) ;
+         }
+         if ( rc != SDB_OK )
+         {
+            PD_LOG ( PDERROR, "failed to send the message(routeID=%lld)",
+                     pMsgHeader->routeID.value ) ;
+         }
       }
       PD_TRACE_EXITRC ( SDB_CATMAINCT_QUERYREQUEST, rc ) ;
       return rc ;
@@ -1111,14 +1129,20 @@ namespace engine
       MsgAuthCrtUsr *msg = ( MsgAuthCrtUsr * )pMsg ;
       BSONObj obj ;
       MsgAuthCrtReply reply ;
+      BOOLEAN bIsDelay = FALSE ;
 
-      if ( !pmdIsPrimary() || !_isActived )
+      rc = _pCatCB->primaryCheck( _pEDUCB, TRUE, bIsDelay ) ;
+      if ( bIsDelay )
       {
-         rc = SDB_CLS_NOT_PRIMARY ;
+         goto done ;
+      }
+      else if ( rc )
+      {
          goto error ;
       }
-      else if ( _pCatCB->getCatDCMgr()->isImageCommand() &&
-                !_pCatCB->isDCActive() )
+
+      if ( _pCatCB->getCatDCMgr()->isImageCommand() &&
+           !_pCatCB->isDCActive() )
       {
          rc = SDB_CAT_CLUSTER_NOT_ACTIVE ;
          goto error ;
@@ -1137,12 +1161,15 @@ namespace engine
       }
 
    done:
-      reply.header.res = rc ;
-      PD_TRACE1 ( SDB_CATMAINCT_AUTHCRT,
-                  PD_PACK_INT ( rc ) ) ;
-      reply.header.header.TID = msg->header.TID ;
-      reply.header.header.requestID = msg->header.requestID ;
-      _pCatCB->netWork()->syncSend( handle, &reply );
+      if ( !isDelayed() )
+      {
+         reply.header.res = rc ;
+         PD_TRACE1 ( SDB_CATMAINCT_AUTHCRT,
+                     PD_PACK_INT ( rc ) ) ;
+         reply.header.header.TID = msg->header.TID ;
+         reply.header.header.requestID = msg->header.requestID ;
+         _pCatCB->netWork()->syncSend( handle, &reply ) ;
+      }
       PD_TRACE_EXITRC ( SDB_CATMAINCT_AUTHCRT, rc ) ;
       return rc ;
    error:
@@ -1158,15 +1185,21 @@ namespace engine
       MsgAuthentication *msg = ( MsgAuthentication * )pMsg ;
       BSONObj obj ;
       MsgAuthReply reply ;
+      BOOLEAN bIsDelay = FALSE ;
 
       if ( !_pAuthCB->needAuthenticate() )
       {
          goto done ;
       }
 
-      if ( !pmdIsPrimary() && !_isActived )
+      // primary check
+      rc = _pCatCB->primaryCheck( _pEDUCB, TRUE, bIsDelay ) ;
+      if ( bIsDelay )
       {
-         rc = SDB_CLS_NOT_PRIMARY ;
+         goto done ;
+      }
+      else if ( rc )
+      {
          goto error ;
       }
 
@@ -1182,12 +1215,15 @@ namespace engine
          goto error ;
       }
    done:
-      reply.header.res = rc ;
-      PD_TRACE1 ( SDB_CATMAINCT_AUTHENTICATE,
-                  PD_PACK_INT ( rc ) ) ;
-      reply.header.header.TID = msg->header.TID ;
-      reply.header.header.requestID = msg->header.requestID ;
-      _pCatCB->netWork()->syncSend( handle, &reply );
+      if ( !isDelayed() )
+      {
+         reply.header.res = rc ;
+         PD_TRACE1 ( SDB_CATMAINCT_AUTHENTICATE,
+                     PD_PACK_INT ( rc ) ) ;
+         reply.header.header.TID = msg->header.TID ;
+         reply.header.header.requestID = msg->header.requestID ;
+         _pCatCB->netWork()->syncSend( handle, &reply ) ;
+      }
       PD_TRACE_EXITRC ( SDB_CATMAINCT_AUTHENTICATE, rc ) ;
       return rc ;
    error:
@@ -1203,14 +1239,21 @@ namespace engine
       MsgAuthDelUsr *msg = ( MsgAuthDelUsr * )pMsg ;
       BSONObj obj ;
       MsgAuthDelReply reply ;
+      BOOLEAN bIsDelay = FALSE ;
 
-      if ( !pmdIsPrimary() || !_isActived )
+      // primary check
+      rc = _pCatCB->primaryCheck( _pEDUCB, TRUE, bIsDelay ) ;
+      if ( bIsDelay )
       {
-         rc = SDB_CLS_NOT_PRIMARY ;
+         goto done ;
+      }
+      else if ( rc )
+      {
          goto error ;
       }
-      else if ( _pCatCB->getCatDCMgr()->isImageCommand() &&
-                !_pCatCB->isDCActive() )
+
+      if ( _pCatCB->getCatDCMgr()->isImageCommand() &&
+           !_pCatCB->isDCActive() )
       {
          rc = SDB_CAT_CLUSTER_NOT_ACTIVE ;
          goto error ;
@@ -1229,12 +1272,15 @@ namespace engine
       }
 
    done:
-      reply.header.res = rc ;
-      PD_TRACE1 ( SDB_CATMAINCT_AUTHDEL,
-                  PD_PACK_INT ( rc ) ) ;
-      reply.header.header.TID = msg->header.TID ;
-      reply.header.header.requestID = msg->header.requestID ;
-      _pCatCB->netWork()->syncSend( handle, &reply );
+      if ( !isDelayed() )
+      {
+         reply.header.res = rc ;
+         PD_TRACE1 ( SDB_CATMAINCT_AUTHDEL,
+                     PD_PACK_INT ( rc ) ) ;
+         reply.header.header.TID = msg->header.TID ;
+         reply.header.header.requestID = msg->header.requestID ;
+         _pCatCB->netWork()->syncSend( handle, &reply ) ;
+      }
       PD_TRACE_EXITRC ( SDB_CATMAINCT_AUTHDEL, rc ) ;
       return rc ;
    error:

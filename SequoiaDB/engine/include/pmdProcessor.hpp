@@ -130,8 +130,6 @@ namespace engine
 
       protected:
          MsgOpReply              _replyHeader ;
-         BSONObj *               _pErrorObj ;
-         CHAR *                  _pResultBuff ;
 
       private:
          INT32                   _processCoordMsg( MsgHeader *msg, 

@@ -60,6 +60,7 @@ namespace engine
       _iCurNodeId          = CAT_DATA_NODE_ID_BEGIN;
       _iCurGrpId           = CAT_DATA_GROUP_ID_BEGIN;
       _curSysNodeId        = SYS_NODE_ID_BEGIN;
+      _primaryID.value     = MSG_INVALID_ROUTEID ;
    }
 
    sdbCatalogueCB::~sdbCatalogueCB()
@@ -69,6 +70,44 @@ namespace engine
    INT16 sdbCatalogueCB::majoritySize()
    {
       return (INT16)( sdbGetReplCB()->groupSize() / 2 + 1 ) ;
+   }
+
+   INT32 sdbCatalogueCB::primaryCheck( _pmdEDUCB *cb, BOOLEAN canDelay,
+                                       BOOLEAN &isDelay )
+   {
+      replCB *pRepl = sdbGetReplCB() ;
+      INT32 rc = SDB_OK ;
+      isDelay = FALSE ;
+
+      if ( pmdIsPrimary() )
+      {
+         goto done ;
+      }
+      rc = SDB_CLS_NOT_PRIMARY ;
+
+      // if know primary exist or no majority size, return at now,
+      // otherwise, need to wait some time
+      if ( MSG_INVALID_ROUTEID !=
+           ( _primaryID.value = pRepl->getPrimary().value ) )
+      {
+         goto error ;
+      }
+      else if ( !CLS_IS_MAJORITY( pRepl->getAlivesByTimeout(),
+                                  pRepl->groupSize() ) )
+      {
+         goto error ;
+      }
+      else if ( canDelay && delayCurOperation() )
+      {
+         isDelay = TRUE ;
+         rc = SDB_OK ;
+         goto done ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    UINT32 sdbCatalogueCB::setTimer( UINT32 milliSec )

@@ -51,48 +51,51 @@ namespace engine
                              rtnContextBuf *buf ) ;
 
    protected:
-      INT32 buildOpMsg( const CoordCataInfoPtr &cataInfo,
-                              const CoordSubCLlist &subCLList,
-                              CHAR *pSrcMsg, CHAR *&pDstMsg,
-                              INT32 &bufferSize );
-      virtual INT32 checkModifierForSubCL ( const CoordSubCLlist &subCLList,
-                                       const CHAR *pUpdator,
-                                       pmdEDUCB *cb );
+      virtual void               _prepareForTrans( pmdEDUCB *cb,
+                                                   MsgHeader *pMsg ) ;
+
+      virtual INT32              _prepareMainCLOp( CoordCataInfoPtr &cataInfo,
+                                                   CoordGroupSubCLMap &grpSubCl,
+                                                   rtnSendMsgIn &inMsg,
+                                                   rtnSendOptions &options,
+                                                   netMultiRouteAgent *pRouteAgent,
+                                                   pmdEDUCB *cb,
+                                                   rtnProcessResult &result,
+                                                   ossValuePtr &outPtr ) ;
+
+      virtual void               _doneMainCLOp( ossValuePtr itPtr,
+                                                CoordCataInfoPtr &cataInfo,
+                                                CoordGroupSubCLMap &grpSubCl,
+                                                rtnSendMsgIn &inMsg,
+                                                rtnSendOptions &options,
+                                                netMultiRouteAgent *pRouteAgent,
+                                                pmdEDUCB *cb,
+                                                rtnProcessResult &result ) ;
+
    private:
-      INT32 getNodeGroups( const CoordCataInfoPtr &cataInfo,
-                           bson::BSONObj &selectObj,
-                           CoordGroupList &sendGroupLst,
-                           CoordGroupList &groupLst );
-      INT32 updateToDataNodeGroup( CHAR *pBuffer,
-                                 CoordGroupList &groupLst,
-                                 CoordGroupList &sendGroupLst,
-                                 netMultiRouteAgent *pRouteAgent,
-                                 pmdEDUCB *cb,
-                                 INT64 *updateNum = NULL );
+
       INT32 checkIfIncludeShardingKey ( const CoordCataInfoPtr &cataInfo,
-                                       const CHAR *pUpdator,
-                                       BOOLEAN &isInclude,
-                                       pmdEDUCB *cb );
-      INT32 updateNormalCL( CoordCataInfoPtr cataInfo,
-                           bson::BSONObj &boSelector,
-                           MsgOpUpdate *pUpdateMsg,
-                           netMultiRouteAgent *pRouteAgent,
-                           pmdEDUCB *cb,
-                           CoordGroupList &sendGroupLst,
-                           INT64 *updateNum = NULL );
-      INT32 buildOpMsg( const CoordCataInfoPtr &cataInfo,
-                              const CoordSubCLlist &subCLList,
-                              const CHAR *pSrcMsg, CHAR *&pDstMsg,
-                              INT32 &bufferSize );
+                                        const CHAR *pUpdator,
+                                        BOOLEAN &isInclude,
+                                        pmdEDUCB *cb ) ;
+
+      INT32 checkModifierForSubCL ( const CoordSubCLlist &subCLList,
+                                    const CHAR *pUpdator,
+                                    pmdEDUCB *cb ) ;
+
       INT32 kickShardingKey( const CoordCataInfoPtr &cataInfo,
                              const bson::BSONObj &boUpdator,
                              bson::BSONObj &boNewUpdator,
-                             BOOLEAN &hasShardingKey );
+                             BOOLEAN &hasShardingKey ) ;
+
       INT32 kickShardingKeyForSubCL( const CoordSubCLlist &subCLList,
-                             const bson::BSONObj &boUpdator,
-                             bson::BSONObj &boNewUpdator,
-                             BOOLEAN &hasShardingKey,
-                             pmdEDUCB *cb );
+                                     const bson::BSONObj &boUpdator,
+                                     bson::BSONObj &boNewUpdator,
+                                     BOOLEAN &hasShardingKey,
+                                     pmdEDUCB *cb ) ;
+
+      BSONObj _buildNewSelector( const BSONObj &selector,
+                                 const CoordSubCLlist &subCLList ) ;
    };
 }
 

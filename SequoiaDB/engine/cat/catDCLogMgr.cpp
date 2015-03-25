@@ -586,8 +586,8 @@ namespace engine
          }
       }
 
-      PD_LOG( PDEVENT, "Analysis system log[ begin: %s, work: %s, "
-              "curLsn: %d.%lld, expectLsn: %d.%lld ]",
+      PD_LOG( PDEVENT, "Analysis system log, begin:[%s], work:[%s],"
+              "curLsn: %d.%lld, expectLsn: %d.%lld",
               _vecLogCL[ _begin ]->toString().c_str(),
               _vecLogCL[ _work ]->toString().c_str(),
               _curLsn.version, _curLsn.offset,

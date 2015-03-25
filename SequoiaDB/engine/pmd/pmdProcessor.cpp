@@ -42,6 +42,7 @@
 #include "coordCB.hpp"
 #include "rtnCoord.hpp"
 #include "rtnCoordCommands.hpp"
+#include "rtnCoordTransaction.hpp"
 
 using namespace bson ;
 
@@ -818,20 +819,10 @@ namespace engine
    //***************_pmdCoordProcessor*********************
    _pmdCoordProcessor::_pmdCoordProcessor()
    {
-      _pErrorObj   = NULL ;
-      _pResultBuff = NULL ;
    }
 
    _pmdCoordProcessor::~_pmdCoordProcessor()
    {
-      if ( NULL != _pErrorObj )
-      {
-         SDB_OSS_DEL _pErrorObj ;
-         _pErrorObj = NULL ;
-      }
-
-      /// don't need to free
-      _pResultBuff = NULL ;
    }
 
    const CHAR* _pmdCoordProcessor::processorName() const
@@ -883,15 +874,8 @@ namespace engine
                                                rtnContextBuf &contextBuff )
    {
       INT32 rc = SDB_OK ;
-      if ( NULL != _pErrorObj )
-      {
-         SDB_OSS_DEL _pErrorObj ;
-         _pErrorObj = NULL ;
-      }
-      if ( NULL != _pResultBuff )
-      {
-         _pResultBuff = NULL ;
-      }
+
+      BOOLEAN needRollback = FALSE ;
       CoordCB *pCoordcb  = _pKrcb->getCoordCB();
       rtnCoordProcesserFactory *pProcesserFactory
                                         = pCoordcb->getProcesserFactory();
@@ -919,6 +903,7 @@ namespace engine
       switch ( msg->opCode )
       {
       case MSG_BS_GETMORE_REQ :
+      case MSG_BS_KILL_CONTEXT_REQ :
          rc = SDB_COORD_UNKNOWN_OP_REQ ;
          break ;
       case MSG_BS_QUERY_REQ:
@@ -947,6 +932,7 @@ namespace engine
             rtnContextBase *pContext = NULL ;
             rtnCoordOperator *pOperator = 
                            pProcesserFactory->getOperator( msg->opCode ) ;
+            needRollback = pOperator->needRollback() ;
             rc = pOperator->execute( ( CHAR* )msg,
                                      msg->messageLength,
                                      eduCB(),
@@ -982,16 +968,15 @@ namespace engine
 
       if ( rc && contextBuff.size() == 0 )
       {
-         if ( NULL != _pErrorObj )
-         {
-            contextBuff = rtnContextBuf( *_pErrorObj ) ;
-         }
-         else
-         {
-            BSONObj obj = utilGetErrorBson( rc, eduCB()->getInfo(
-                                            EDU_INFO_ERROR ) ) ;
-            contextBuff = rtnContextBuf( obj ) ;
-         }
+         BSONObj obj = utilGetErrorBson( rc, eduCB()->getInfo(
+                                         EDU_INFO_ERROR ) ) ;
+         contextBuff = rtnContextBuf( obj ) ;
+      }
+
+      if ( needRollback && rc )
+      {
+         rtnCoordTransRollback rollbackOpr ;
+         rollbackOpr.rollBack( eduCB(), pCoordcb->getRouteAgent() ) ;
       }
 
    done:

@@ -301,10 +301,20 @@ namespace engine
       PD_TRACE_ENTRY ( SDB_CATALOGMGR_QUERYCATALOG ) ;
       MsgCatQueryCatReq *pCatReq       = (MsgCatQueryCatReq*)pMsg ;
       MsgOpReply *pReply               = NULL;
+      BOOLEAN isDelay                  = FALSE ;
 
-      // make sure we are on catalog primary
-      PD_CHECK ( pmdIsPrimary(), SDB_CLS_NOT_PRIMARY, error, PDWARNING,
-                 "service deactive but received query catalogue request" ) ;
+      // primary check
+      rc = _pCatCB->primaryCheck( _pEduCB, TRUE, isDelay ) ;
+      if ( isDelay )
+      {
+         goto done ;
+      }
+      else if ( rc )
+      {
+         PD_LOG ( PDWARNING, "service deactive but received query "
+                  "catalogue request, rc: %d", rc ) ;
+         goto error ;
+      }
 
       // sanity check, header can't be too small
       PD_CHECK ( pCatReq->header.messageLength >=
@@ -363,25 +373,35 @@ namespace engine
       pReply->header.requestID     = pCatReq->header.requestID ;
       pReply->header.routeID.value = 0 ;
    done :
-      if ( SDB_OK == rc && NULL != pReply )
+      if ( !_pCatCB->isDelayed() )
       {
-         rc = _pCatCB->netWork()->syncSend ( handle, pReply );
-         SDB_OSS_FREE ( pReply );
+         if ( SDB_OK == rc && NULL != pReply )
+         {
+            rc = _pCatCB->netWork()->syncSend ( handle, pReply );
+         }
+         else
+         {
+            MsgOpReply replyMsg;
+            replyMsg.header.messageLength = sizeof( MsgOpReply );
+            replyMsg.header.opCode        = MSG_CAT_QUERY_CATALOG_RSP;
+            replyMsg.header.TID           = pCatReq->header.TID;
+            replyMsg.header.routeID.value = 0;
+            replyMsg.header.requestID     = pCatReq->header.requestID;
+            replyMsg.numReturned          = 0;
+            replyMsg.flags                = rc;
+            replyMsg.contextID            = -1 ;
+            PD_TRACE1 ( SDB_CATALOGMGR_QUERYCATALOG,
+                        PD_PACK_INT ( rc ) ) ;
+            if ( SDB_CLS_NOT_PRIMARY == rc )
+            {
+               replyMsg.startFrom = _pCatCB->getPrimaryNode() ;
+            }
+            rc = _pCatCB->netWork()->syncSend ( handle, &replyMsg );
+         }
       }
-      else
+      if( pReply )
       {
-         MsgOpReply replyMsg;
-         replyMsg.header.messageLength = sizeof( MsgOpReply );
-         replyMsg.header.opCode        = MSG_CAT_QUERY_CATALOG_RSP;
-         replyMsg.header.TID           = pCatReq->header.TID;
-         replyMsg.header.routeID.value = 0;
-         replyMsg.header.requestID     = pCatReq->header.requestID;
-         replyMsg.numReturned          = 0;
-         replyMsg.flags                = rc;
-         replyMsg.contextID            = -1 ;
-         PD_TRACE1 ( SDB_CATALOGMGR_QUERYCATALOG,
-                     PD_PACK_INT ( rc ) ) ;
-         rc = _pCatCB->netWork()->syncSend ( handle, &replyMsg );
+         SDB_OSS_FREE ( pReply );
       }
       PD_TRACE_EXITRC ( SDB_CATALOGMGR_QUERYCATALOG, rc ) ;
       return rc ;
@@ -444,10 +464,20 @@ namespace engine
       CHAR *pOrderBy                   = NULL ;
       CHAR *pHint                      = NULL ;
       CHAR *pCollectionName            = NULL ;
+      BOOLEAN isDelay                  = FALSE ;
 
-      // make sure we are primary in order to query tasks
-      PD_CHECK ( pmdIsPrimary(), SDB_CLS_NOT_PRIMARY, error, PDWARNING,
-                 "service deactive but received query catalogue request" ) ;
+      // primary check
+      rc = _pCatCB->primaryCheck( _pEduCB, TRUE, isDelay ) ;
+      if ( isDelay )
+      {
+         goto done ;
+      }
+      else if ( rc )
+      {
+         PD_LOG ( PDWARNING, "service deactive but received query "
+                  "catalogue request, rc: %d", rc ) ;
+         goto error ;
+      }
 
       // sanity check, the query length should be at least header size
       PD_CHECK ( pTaskRequest->header.messageLength >=
@@ -495,24 +525,32 @@ namespace engine
       pReply->header.routeID.value = 0 ;
 
    done :
-      if ( SDB_OK == rc && pReply )
+      if ( !_pCatCB->isDelayed() )
       {
-         rc = _pCatCB->netWork()->syncSend ( handle, pReply );
-      }
-      else
-      {
-         // if something wrong happened, return a reply with rc
-         MsgOpReply replyMsg;
-         replyMsg.header.messageLength = sizeof( MsgOpReply );
-         replyMsg.header.opCode        = MSG_CAT_QUERY_TASK_RSP ;
-         replyMsg.header.TID           = pTaskRequest->header.TID;
-         replyMsg.header.routeID.value = 0;
-         replyMsg.header.requestID     = pTaskRequest->header.requestID;
-         replyMsg.numReturned          = 0;
-         replyMsg.flags                = rc;
-         replyMsg.contextID            = -1 ;
-         PD_TRACE1 ( SDB_CATALOGMGR_QUERYTASK, PD_PACK_INT ( rc ) ) ;
-         rc = _pCatCB->netWork()->syncSend ( handle, &replyMsg );
+         if ( SDB_OK == rc && pReply )
+         {
+            rc = _pCatCB->netWork()->syncSend ( handle, pReply );
+         }
+         else
+         {
+            // if something wrong happened, return a reply with rc
+            MsgOpReply replyMsg;
+            replyMsg.header.messageLength = sizeof( MsgOpReply );
+            replyMsg.header.opCode        = MSG_CAT_QUERY_TASK_RSP ;
+            replyMsg.header.TID           = pTaskRequest->header.TID;
+            replyMsg.header.routeID.value = 0;
+            replyMsg.header.requestID     = pTaskRequest->header.requestID;
+            replyMsg.numReturned          = 0;
+            replyMsg.flags                = rc;
+            replyMsg.contextID            = -1 ;
+            PD_TRACE1 ( SDB_CATALOGMGR_QUERYTASK, PD_PACK_INT ( rc ) ) ;
+
+            if ( SDB_CLS_NOT_PRIMARY == rc )
+            {
+               replyMsg.startFrom = _pCatCB->getPrimaryNode() ;
+            }
+            rc = _pCatCB->netWork()->syncSend ( handle, &replyMsg );
+         }
       }
       if ( pReply )
       {
@@ -1818,15 +1856,26 @@ namespace engine
                             &pOrderBy, &pHint ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to extract query msg, rc: %d", rc ) ;
 
-      if ( writable && !pmdIsPrimary() )
+      if ( writable )
       {
-         rc = SDB_CLS_NOT_PRIMARY ;
-         PD_LOG ( PDWARNING, "Service deactive but received command: %s,"
-                  "opCode: %d", pCMDName, pQueryReq->header.opCode ) ;
-         goto error ;
+         // primary check
+         BOOLEAN isDelay = FALSE ;
+         rc = _pCatCB->primaryCheck( _pEduCB, TRUE, isDelay ) ;
+         if ( isDelay )
+         {
+            goto done ;
+         }
+         else if ( rc )
+         {
+            PD_LOG ( PDWARNING, "Service deactive but received command: %s,"
+                     "opCode: %d, rc: %d", pCMDName,
+                     pQueryReq->header.opCode, rc ) ;
+            goto error ;
+         }
       }
-      else if ( _pCatCB->getCatDCMgr()->isImageCommand() &&
-                !_pCatCB->isDCActive() )
+
+      if ( _pCatCB->getCatDCMgr()->isImageCommand() &&
+           !_pCatCB->isDCActive() )
       {
          rc = SDB_CAT_CLUSTER_NOT_ACTIVE ;
          goto error ;
@@ -1900,23 +1949,30 @@ namespace engine
          replyHeader.header.routeID.value = pQueryReq->header.routeID.value ;
       }
 
-      // send reply
-      if ( 0 == ctxBuff.size() )
+      if ( !_pCatCB->isDelayed() )
       {
-         rc = _pCatCB->netWork()->syncSend( handle, (void*)&replyHeader ) ;
-      }
-      else
-      {
-         replyHeader.header.messageLength += ctxBuff.size() ;
-         replyHeader.numReturned = ctxBuff.recordNum() ;
-         rc = _pCatCB->netWork()->syncSend( handle, &(replyHeader.header),
-                                            (void*)ctxBuff.data(),
-                                            ctxBuff.size() ) ;
+         // send reply
+         if ( 0 == ctxBuff.size() )
+         {
+            rc = _pCatCB->netWork()->syncSend( handle, (void*)&replyHeader ) ;
+         }
+         else
+         {
+            replyHeader.header.messageLength += ctxBuff.size() ;
+            replyHeader.numReturned = ctxBuff.recordNum() ;
+            rc = _pCatCB->netWork()->syncSend( handle, &(replyHeader.header),
+                                               (void*)ctxBuff.data(),
+                                               ctxBuff.size() ) ;
+         }
       }
       PD_TRACE_EXITRC ( SDB_CATALOGMGR_PROCESSCOMMANDMSG, rc ) ;
       return rc ;
    error:
       replyHeader.flags = rc ;
+      if( SDB_CLS_NOT_PRIMARY == rc )
+      {
+         replyHeader.startFrom = _pCatCB->getPrimaryNode() ;
+      }
       goto done ;
    }
 

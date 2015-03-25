@@ -270,7 +270,18 @@ namespace engine
 
    void CoordSession::removeLastNode( UINT32 groupID )
    {
-      _lastNodeMap.erase(groupID);
+      _lastNodeMap.erase( groupID ) ;
+   }
+
+   void CoordSession::removeLastNode( UINT32 groupID,
+                                      const MsgRouteID &nodeID )
+   {
+      COORD_LASTNODE_MAP::iterator it = _lastNodeMap.find( groupID ) ;
+      if ( it != _lastNodeMap.end() &&
+           it->second.columns.nodeID == nodeID.columns.nodeID )
+      {
+         _lastNodeMap.erase( it ) ;
+      }
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_COORDSN_GETLASTND, "CoordSession::getLastNode" )
