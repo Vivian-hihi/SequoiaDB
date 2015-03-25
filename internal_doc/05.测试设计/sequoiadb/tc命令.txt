@@ -1,0 +1,12 @@
+1. 显示现有tc的规则
+tc qdisc list
+
+2. 设置网络100ms延时(删除时,add改为del,下同)
+tc qdisc add dev eth2 root netem delay 100ms
+
+3. 设置网络50ms + (-25ms~25ms)延时
+tc qdisc add dev eth2 root netem delay 50ms 25ms
+
+4. 设置网络5%的丢包
+tc qdisc add dev eth2 root netem loss 5%
+
