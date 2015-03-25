@@ -1098,7 +1098,11 @@ class client(object):
 
       try:
          result = cursor()
-         rc = sdb.sdb_eval_JS(self._client, result._cursor, name)
+         rc, type, bson_errmsg = sdb.sdb_eval_JS(self._client, result._cursor, name)
+         if const.SDB_OK != rc:
+            record, size = bson._bson_to_dict(bson_errmsg, dict, False,
+                                              bson.OLD_UUID_SUBTYPE, True)
+            pysequoiadb._print(record)
          pysequoiadb._raise_if_error("Failed to eval procedure", rc)
       except SDBBaseError:
          del result

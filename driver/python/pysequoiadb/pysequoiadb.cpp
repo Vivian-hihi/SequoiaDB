@@ -833,7 +833,8 @@ __METHOD_IMP(sdb_eval_JS)
    }
 
 done:
-   return MAKE_RETURN_INT( rc ) ;
+   return MAKE_RETURN_INT_INT_PYSTRING_SIZE(rc, sdb_spd_res_type,
+      errmsg.objdata(), errmsg.objsize()) ;
 }
 
 __METHOD_IMP(sdb_backup_offline)
