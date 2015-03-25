@@ -122,6 +122,9 @@
 				<copy todir="${deploy.path}/hlt/drivers_testcases/mongoc/build">
 					<fileset dir="${build.testcases}/mongoc/build_test" includes="*" />
 				</copy>
+				<copy todir="${deploy.path}/hlt/drivers_testcases/mongoc/lib">
+					<fileset dir="${build.testcases}/mongoc/lib" includes="*" />
+				</copy>
 				<echo message="Complete scons the mongoc testcases" />
 			</then>
 		</if>
