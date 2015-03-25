@@ -107,6 +107,8 @@ function installSdb()
       rm -r ${homePath}/40000 2>/dev/null
       rm -r ${homePath}/41000 2>/dev/null
       rm -r ${homePath}/42000 2>/dev/null
+      rm -r ${homePath}/23000 2>/dev/null
+      rm -r ${homePath}/24000 2>/dev/null
       rm -rf conf/local 2>/dev/null
       rm -rf conf/log 2>/dev/null
       mkdir conf/local
@@ -161,7 +163,12 @@ function installSdb()
       bin/sdb -s " node1 = cataRG.createNode('${hostName}', '30010', '${homePath}/30010', $NODECONFIG) ; sleep(5000) ;"
       bin/sdb -s " node2 = cataRG.createNode('${hostName}', '30020', '${homePath}/30020', $NODECONFIG) ; sleep(5000) ;"
       bin/sdb -s " cataRG.start() ; sleep(5000) ;"
-      echo "Adding catalog nodes succeed"
+      if [ $? -eq 0 ] ; then
+         echo "Adding catalog nodes succeed"
+      else
+         echo "Adding catalog nodes failed********"
+         exit 1
+      fi
       bin/sdb -s " var db ; try { db = new Sdb('localhost', '17643') ; var rg1=db.createRG('db1') ; rg1.createNode('${hostName}', '20000', '${homePath}/20000', $NODECONFIG); } catch( e) { println('Create db1 failed: ' + e ) ; throw e; } "
       if [ $? -eq 0 ] ; then
          echo "Create group db1 Succeed"
@@ -173,11 +180,21 @@ function installSdb()
       bin/sdb -s " rg2.createNode('${hostName}', '40000', '${homePath}/40000', $NODECONFIG);"
       bin/sdb -s " rg2.createNode('${hostName}', '41000', '${homePath}/41000', $NODECONFIG);"
       bin/sdb -s " rg2.createNode('${hostName}', '42000', '${homePath}/42000', $NODECONFIG);"
-      bin/sdb -s " db.startRG('db1', 'db2') ; "
+      bin/sdb -s " db.startRG('db1', 'db2' ) ; "
       if [ $? -eq 0 ] ; then
          echo "Create group db2 Succeed"
       else
          echo "Create group db2 Failed*******"
+         exit 1
+      fi
+
+      #create and remove db3
+      bin/sdb -s " db.createRG('db3' ) ; rg3 = db.getRG('db3') ; "
+      bin/sdb -s " rg3.createNode('${hostName}', '23000', '${homePath}/23000', $NODECONFIG); rg3.createNode('${hostName}', '24000', '${homePath}/24000', $NODECONFIG); db.startRG('db3' ) ; rg3.removeNode( '${hostName}', '23000' ) ; db.removeRG('db3') ; "
+      if [ $? -eq 0 ] ; then
+         echo "Create and remove db3 Succeed"
+      else
+         echo "Create and remove db3 Failed*******"
          exit 1
       fi
 
