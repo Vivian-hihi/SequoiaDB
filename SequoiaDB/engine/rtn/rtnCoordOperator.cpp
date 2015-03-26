@@ -724,6 +724,7 @@ namespace engine
       {
          nodeID.value = ( *itNode ) ;
          cb->delTransNode( nodeID ) ;
+         ++itNode ;
       }
 
       return rc ;
