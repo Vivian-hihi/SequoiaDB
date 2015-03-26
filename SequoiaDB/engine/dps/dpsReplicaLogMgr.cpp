@@ -197,7 +197,9 @@ namespace engine
       _movePages( beginLsn.offset, beginLsn.version ) ;
 
       //load from file to fill
-      while ( beginLsn.offset % file->size() < length )
+      while ( ( beginLsn.offset % file->size() < length ) &&
+              ( beginLsn.offset / file->size() % _logger.getLogFileNum() ==
+                _logger->getWorkPos() ) )
       {
          rc = _logger.load ( beginLsn, &block ) ;
          if ( SDB_OK != rc )
