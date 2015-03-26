@@ -4990,15 +4990,8 @@ namespace engine
          _builder.appendNull( FIELD_NAME_IX_BOUND ) ;
       }
 
-      if ( plan->getMatcher().isMatchesAll() )
-      {
-         _builder.appendNull( FIELD_NAME_MATCH ) ;
-      }
-      else
-      {
-         _builder.append( FIELD_NAME_MATCH,
-                          plan->getMatcher().getParsedQuery() ) ;
-      }
+      _builder.appendBool( FIELD_NAME_NEED_MATCH,
+                           !plan->getMatcher().isMatchesAll() ) ;
 
       hostName = pmdGetKRCB()->getHostName() ;
       ss << hostName << ":" << pmdGetOptionCB()->getServiceAddr() ;

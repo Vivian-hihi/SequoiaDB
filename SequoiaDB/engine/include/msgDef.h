@@ -313,7 +313,7 @@
 #define FIELD_NAME_RTYPE                     "ReturnType"
 #define FIELD_NAME_IX_BOUND                  "IXBound"
 #define FIELD_NAME_QUERY                     "Query"
-#define FIELD_NAME_MATCH                     "Match"
+#define FIELD_NAME_NEED_MATCH                "NeedMatch"
 
 #define IXM_FIELD_NAME_KEY                   "key"
 #define IXM_FIELD_NAME_NAME                  "name"
