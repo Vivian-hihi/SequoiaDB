@@ -27,6 +27,10 @@ spark-sequoiadb is built with Scala-2.10 by default. You can use the following c
 ```
 mvn -Pscala-2.11 package
 ```
+or use the following command to build with all scala versions:
+```
+sbt/sbt "+ package"
+```
 You can load the library into spark-shell by using --jars command line option.  
 $ bin/spark-shell --jars /Users/sequoiadb/spark-sequoiadb/lib/sequoiadb-driver-1.12.0.jar,/Users/sequoiadb/spark-sequoiadb/target/spark-sequoiadb_2.10-1.12.jar
 …  
@@ -50,7 +54,7 @@ Spark context available as sc.
 15/03/09 14:35:52 INFO SparkILoop: Created sql context..  
 SQL context available as sqlContext.  
   
-scala> sqlContext.sql("CREATE temporary table foo ( hello string, rangekey int, key1 int ) using com.sequoiadb.spark OPTIONS ( host '10.0.2.20:11810', collectionspace ‘macs’, collection ‘mycl’)”)  
+scala> sqlContext.sql("CREATE temporary table foo ( hello string, rangekey int, key1 int ) using com.sequoiadb.spark OPTIONS ( host 'localhost:11810', collectionspace ‘mycs’, collection ‘mycl’)”)  
 res0: org.apache.spark.sql.DataFrame = []  
   
 scala> sqlContext.sql("select * from foo").foreach(println)  
