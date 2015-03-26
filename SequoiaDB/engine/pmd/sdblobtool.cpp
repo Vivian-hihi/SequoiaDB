@@ -232,6 +232,7 @@ error:
 INT32 main( INT32 argc, CHAR *argv[] )
 {
    INT32 rc = SDB_OK ;
+   INT32 errcode = SDB_OK ;
    po::options_description desc ( "Command options" ) ;
    po::variables_map vm ;
    bson::BSONObj options ;
@@ -239,6 +240,13 @@ INT32 main( INT32 argc, CHAR *argv[] )
    lobtool::migLobTool tool ;
    
    sdbEnablePD( LOG_FILE ) ;
+
+   PD_LOG ( PDEVENT ,
+            "Start sdblobtool [Ver: %d.%d, Release: %d, Build: %s]...",
+            SDB_ENGINE_VERISON_CURRENT,
+            SDB_ENGINE_SUBVERSION_CURRENT,
+            SDB_ENGINE_RELEASE_CURRENT,
+            SDB_ENGINE_BUILD_TIME ) ;
 
    ossPrintVersion("sdblobtool version") ;
 
@@ -260,6 +268,9 @@ INT32 main( INT32 argc, CHAR *argv[] )
       goto error ;
    }
 
+   PD_LOG( PDEVENT, "options:%s",
+           options.toString( FALSE, TRUE ).c_str() ) ;
+
    if ( doNothing )
    {
       goto done ;
@@ -274,8 +285,12 @@ INT32 main( INT32 argc, CHAR *argv[] )
 done:
    if ( SDB_OK != rc )
    {
+      errcode = rc ;
       rc = engine::utilRC2ShellRC( rc ) ;
    }
+
+   PD_LOG( PDEVENT, "sdblobtool quit. rc: %d, shell rc: %d.",
+           errcode, rc ) ;
    return rc ;
 error:
    cerr << "Error: failed to complete operation, rc:" << rc
