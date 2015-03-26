@@ -76,6 +76,10 @@ namespace engine
                         _sptReturnVal &rval,
                         bson::BSONObj &detail ) ;
 
+      INT32 getCommand( const _sptArguments &arg,
+                        _sptReturnVal &rval,
+                        bson::BSONObj &detail ) ;
+
       INT32 exec( const _sptArguments &arg,
                   _sptReturnVal &rval,
                   bson::BSONObj &detail ) ;
@@ -93,6 +97,7 @@ namespace engine
    private:
       UINT32         _retCode ;
       string         _strOut ;
+      string         _command ;
 
    } ;
    typedef class _sptUsrCmd sptUsrCmd ;

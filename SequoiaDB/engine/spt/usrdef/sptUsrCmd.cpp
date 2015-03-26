@@ -47,6 +47,7 @@ namespace engine
    JS_MEMBER_FUNC_DEFINE( _sptUsrCmd, getLastRet )
    JS_MEMBER_FUNC_DEFINE( _sptUsrCmd, getLastOut )
    JS_MEMBER_FUNC_DEFINE( _sptUsrCmd, start )
+   JS_MEMBER_FUNC_DEFINE( _sptUsrCmd, getCommand )
 
    JS_BEGIN_MAPPING( _sptUsrCmd, "Cmd" )
       JS_ADD_STATIC_FUNC( "help", help )
@@ -57,6 +58,7 @@ namespace engine
       JS_ADD_MEMBER_FUNC( "getLastOut", getLastOut )
       JS_ADD_MEMBER_FUNC( "run", exec )
       JS_ADD_MEMBER_FUNC( "start", start )
+      JS_ADD_MEMBER_FUNC( "getCommand", getCommand )
    JS_MAPPING_END()
 
    _sptUsrCmd::_sptUsrCmd()
@@ -104,25 +106,34 @@ namespace engine
       return SDB_OK ;
    }
 
+   INT32 _sptUsrCmd::getCommand( const _sptArguments & arg,
+                                 _sptReturnVal & rval,
+                                 BSONObj & detail )
+   {
+      rval.setStringVal( "", _command.c_str() ) ;
+      return SDB_OK ;
+   }
+
    INT32 _sptUsrCmd::exec( const _sptArguments &arg,
                            _sptReturnVal &rval,
                            bson::BSONObj &detail )
    {
       INT32 rc = SDB_OK ;
-      string cmd ;
       string ev ;
       UINT32 timeout = 0 ;
       UINT32 useShell = TRUE ;
       ossCmdRunner runner ;
 
-      rc = arg.getString( 0, cmd ) ;
+      _command.clear() ;
+
+      rc = arg.getString( 0, _command ) ;
       if ( SDB_OK != rc )
       {
          rc = SDB_INVALIDARG ;
          detail = BSON( SPT_ERR << "cmd must be config" ) ;
          goto error ;
       }
-      utilStrTrim( cmd ) ;
+      utilStrTrim( _command ) ;
 
       rc = arg.getString( 1, ev ) ;
       if ( SDB_OK != rc && SDB_OUT_OF_BOUND != rc )
@@ -133,8 +144,8 @@ namespace engine
       }
       else if ( SDB_OK == rc && !ev.empty() )
       {
-         cmd += " " ;
-         cmd += ev ;
+         _command += " " ;
+         _command += ev ;
       }
 
       rc = arg.getNative( 2, (void*)&timeout, SPT_NATIVE_INT32 ) ;
@@ -158,13 +169,13 @@ namespace engine
 
       _strOut = "" ;
       _retCode = 0 ;
-      rc = runner.exec( cmd.c_str(), _retCode, FALSE,
+      rc = runner.exec( _command.c_str(), _retCode, FALSE,
                         0 == timeout ? -1 : (INT64)timeout,
                         FALSE, NULL, useShell ? TRUE : FALSE ) ;
       if ( SDB_OK != rc )
       {
          stringstream ss ;
-         ss << "run[" << cmd << "] failed" ;
+         ss << "run[" << _command << "] failed" ;
          detail = BSON( SPT_ERR << ss.str() ) ;
          goto error ;
       }
@@ -174,7 +185,7 @@ namespace engine
          if ( rc )
          {
             stringstream ss ;
-            ss << "read run command[" << cmd << "] result failed" ;
+            ss << "read run command[" << _command << "] result failed" ;
             detail = BSON( SPT_ERR << ss.str() ) ;
             goto error ;
          }
@@ -199,19 +210,20 @@ namespace engine
                             BSONObj & detail )
    {
       INT32 rc = SDB_OK ;
-      string cmd ;
       string ev ;
       ossCmdRunner runner ;
       UINT32 useShell = TRUE ;
 
-      rc = arg.getString( 0, cmd ) ;
+      _command.clear() ;
+
+      rc = arg.getString( 0, _command ) ;
       if ( SDB_OK != rc )
       {
          rc = SDB_INVALIDARG ;
          detail = BSON( SPT_ERR << "cmd must be config" ) ;
          goto error ;
       }
-      utilStrTrim( cmd ) ;
+      utilStrTrim( _command ) ;
 
       rc = arg.getString( 1, ev ) ;
       if ( SDB_OK != rc && SDB_OUT_OF_BOUND != rc )
@@ -222,8 +234,8 @@ namespace engine
       }
       else if ( SDB_OK == rc )
       {
-         cmd += " " ;
-         cmd += ev ;
+         _command += " " ;
+         _command += ev ;
       }
 
       // useShell, default : 1
@@ -238,12 +250,12 @@ namespace engine
 
       _strOut = "" ;
       _retCode = 0 ;
-      rc = runner.exec( cmd.c_str(), _retCode, TRUE, -1, FALSE, NULL,
+      rc = runner.exec( _command.c_str(), _retCode, TRUE, -1, FALSE, NULL,
                         useShell ? TRUE : FALSE ) ;
       if ( SDB_OK != rc )
       {
          stringstream ss ;
-         ss << "run[" << cmd << "] failed" ;
+         ss << "run[" << _command << "] failed" ;
          detail = BSON( SPT_ERR << ss.str() ) ;
          goto error ;
       }
@@ -259,7 +271,7 @@ namespace engine
             if ( rc )
             {
                stringstream ss ;
-               ss << "read run command[" << cmd << "] result failed" ;
+               ss << "read run command[" << _command << "] result failed" ;
                detail = BSON( SPT_ERR << ss.str() ) ;
                goto error ;
             }
@@ -279,9 +291,10 @@ namespace engine
       stringstream ss ;
       ss << "Cmd functions:" << endl
          << " var cmd = new Cmd()" << endl
-         << "   run( cmd, [args], [timeout], [useShell] )  timeout(ms), default 0: never timeout" << endl
+         << "   run( cmd, [args], [timeout], [useShell] )  timeout(ms), default 0: never timeout," << endl
          << "        useShell 0/1, default 1" << endl
          << "   start( cmd, [args], [useShell] )  useShell 0/1, default 1" << endl
+         << "   getCommand()" << endl
          << "   getLastRet()" << endl
          << "   getLastOut()" << endl ;
       rval.setStringVal( "", ss.str().c_str() ) ;
