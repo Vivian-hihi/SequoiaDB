@@ -2417,7 +2417,7 @@ namespace engine
             tmp.append( ele ) ;
          }
 
-         ele = obj.getField( FIELD_NAME_MATCH ) ;
+         ele = obj.getField( FIELD_NAME_NEED_MATCH ) ;
          if ( !ele.eoo() )
          {
             tmp.append( ele ) ;
