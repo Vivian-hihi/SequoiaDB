@@ -199,7 +199,7 @@ namespace engine
       //load from file to fill
       while ( ( beginLsn.offset % file->size() < length ) &&
               ( beginLsn.offset / file->size() % _logger.getLogFileNum() ==
-                _logger->getWorkPos() ) )
+                _logger.getWorkPos() ) )
       {
          rc = _logger.load ( beginLsn, &block ) ;
          if ( SDB_OK != rc )
