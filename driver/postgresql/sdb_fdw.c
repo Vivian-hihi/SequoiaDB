@@ -3481,8 +3481,8 @@ TupleTableSlot *SdbExecForeignUpdate( EState *estate, ResultRelInfo *rinfo,
    sdbbson_destroy( &sdbbsonTempValue ) ;
    sdbbson_destroy( &sdbbsonValues ) ;
 
-   ExecClearTuple( slot ) ;
-   ExecStoreVirtualTuple( slot ) ;
+//   ExecClearTuple( slot ) ;
+//   ExecStoreVirtualTuple( slot ) ;
 
    return slot ;
 }
