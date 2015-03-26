@@ -2393,5 +2393,58 @@ namespace engine
    error:
       goto done ;
    }*/
+
+   BSONObj _mthMatcher::_LogicMatchElement::toBson() const
+   {
+      BSONObjBuilder builder ;
+      _toBson( this, builder ) ;
+      return builder.obj() ;
+   }
+
+   void _mthMatcher::_LogicMatchElement::
+             _toBson( const _LogicMatchElement *lme,
+                      BSONObjBuilder &builder ) const
+   {
+      if ( MTH_LOGIC_AND == _logicType )
+      {
+         BSONArrayBuilder sub( builder.subarrayStart( "$and" ) ) ;
+         vector<_LogicMatchElement *>::const_iterator itr = _vlme.begin() ;
+         for ( ; itr != _vlme.end(); ++itr )
+         {
+            sub << ( *itr )->toBson() ;
+         }
+         sub.doneFast() ;
+      }
+      else if ( MTH_LOGIC_OR == _logicType )
+      {
+         BSONArrayBuilder sub( builder.subarrayStart( "$or" ) ) ;
+         vector<_LogicMatchElement *>::const_iterator itr = _vlme.begin() ;
+         for ( ; itr != _vlme.end(); ++itr )
+         {
+            sub << ( *itr )->toBson() ;   
+         }
+         sub.doneFast() ;
+      }
+      else if ( MTH_LOGIC_NOT == _logicType )
+      {
+         BSONArrayBuilder sub( builder.subarrayStart( "$not" ) ) ;
+         vector<_LogicMatchElement *>::const_iterator itr = _vlme.begin() ;
+         for ( ; itr != _vlme.end(); ++itr )
+         {
+            sub << ( *itr )->toBson() ;
+         }
+         sub.doneFast() ;
+      }
+      else if ( NULL != _me )
+      {
+         builder.append( _me->_toMatch ) ;
+      }
+      else
+      {
+         /// do nothing.
+      }
+
+      return ;
+   }
 }
 

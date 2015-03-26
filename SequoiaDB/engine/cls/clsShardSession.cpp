@@ -2405,6 +2405,24 @@ namespace engine
          }
          tmp.append( ele ) ;
 
+         ele = obj.getField( FIELD_NAME_QUERY ) ;
+         if ( !ele.eoo() )
+         {
+            tmp.append( ele ) ;
+         }
+
+         ele = obj.getField( FIELD_NAME_IX_BOUND ) ;
+         if ( !ele.eoo() )
+         {
+            tmp.append( ele ) ;
+         }
+
+         ele = obj.getField( FIELD_NAME_MATCH ) ;
+         if ( !ele.eoo() )
+         {
+            tmp.append( ele ) ;
+         }
+
          arrBuilder << tmp.obj() ;
       }
 

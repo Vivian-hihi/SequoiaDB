@@ -4977,6 +4977,29 @@ namespace engine
       _builder.append( FIELD_NAME_INDEXNAME,
                        plan->getIndexName() ) ; 
       _builder.appendBool( FIELD_NAME_USE_EXT_SORT, plan->sortRequired() ) ;
+      _builder.append( FIELD_NAME_QUERY,
+                       plan->getMatcher().getParsedQuery() ) ;
+      if ( IXSCAN == plan->getScanType() &&
+           NULL != plan->getPredList() )
+      {
+         _builder.append( FIELD_NAME_IX_BOUND,
+                          plan->getPredList()->getBound() ) ;
+      }
+      else
+      {
+         _builder.appendNull( FIELD_NAME_IX_BOUND ) ;
+      }
+
+      if ( plan->getMatcher().isMatchesAll() )
+      {
+         _builder.appendNull( FIELD_NAME_MATCH ) ;
+      }
+      else
+      {
+         _builder.append( FIELD_NAME_MATCH,
+                          plan->getMatcher().getParsedQuery() ) ;
+      }
+
       hostName = pmdGetKRCB()->getHostName() ;
       ss << hostName << ":" << pmdGetOptionCB()->getServiceAddr() ;
       _builder.append( FIELD_NAME_NODE_NAME, ss.str() ) ;

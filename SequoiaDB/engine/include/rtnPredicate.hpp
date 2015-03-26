@@ -281,6 +281,8 @@ namespace engine
       }
       string toString() const ;
 
+      BSONObj toBson() const ;
+
    private:
       map<string, rtnPredicate> _predicates ;
    } ;
@@ -307,6 +309,7 @@ namespace engine
       BSONObj obj() const ;
       BOOLEAN matchesKey ( const BSONObj &key ) const ;
       string toString() const ;
+      BSONObj getBound() const ;
       INT32 getDirection() const
       {
          return _direction;

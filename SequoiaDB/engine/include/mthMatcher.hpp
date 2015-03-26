@@ -260,6 +260,11 @@ namespace engine
             _me = NULL ;
             _rme = NULL ;
          }
+
+         BSONObj toBson() const ;
+      private:
+         void _toBson( const _LogicMatchElement *lme,
+                       BSONObjBuilder &builder ) const ;
       } ;
       typedef class _LogicMatchElement LogicMatchElement ;
       // the query pattern, e.g. {name:"tao wang"} for searching name="tao wang"
@@ -408,8 +413,15 @@ namespace engine
       {
          _matchesAll = matchesAll ;
       }
+
+      BSONObj getParsedQuery() const
+      {
+         return NULL != _rlme ?
+                _rlme->toBson() : BSONObj() ;
+      }
    } ;
    typedef class _mthMatcher mthMatcher ;
 }
 
 #endif
+

@@ -1251,6 +1251,24 @@ namespace engine
       return buf.str() ;
    }
 
+   BSONObj _rtnPredicateSet::toBson() const
+   {
+      BSONObjBuilder builder ;
+      map<string, rtnPredicate>::const_iterator it = _predicates.begin() ;
+      for ( ; it != _predicates.end(); ++it )
+      {
+         BSONArrayBuilder sub( builder.subarrayStart( it->first ) ) ;
+         const vector<rtnStartStopKey> &range = it->second._startStopKeys ;
+         vector<rtnStartStopKey>::const_iterator ssItr = range.begin() ;
+         for ( ; ssItr != range.end(); ++ssItr )
+         {
+            sub << ssItr->toBson() ;
+         }
+         sub.doneFast() ;
+      }
+      return builder.obj() ;
+   }
+
    static rtnPredicate *genericPredicate = NULL ;
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNPRED_PRED, "_rtnPredicateSet::predicate" )
    const rtnPredicate &_rtnPredicateSet::predicate (const CHAR *fieldName) const
@@ -1426,6 +1444,21 @@ namespace engine
    string _rtnPredicateList::toString() const
    {
       return obj().toString(false, false) ;
+   }
+
+   BSONObj _rtnPredicateList::getBound() const
+   {
+      BSONObjBuilder builder ;
+      BSONObj predicate = obj() ;
+      BSONObjIterator i( predicate ) ;
+      BSONObjIterator j( _keyPattern ) ;
+      while ( i.more() && j.more() )
+      {
+         BSONElement field = j.next() ;
+         BSONElement bound = i.next() ;
+         builder.appendAs( bound, field.fieldName() ) ;
+      }
+      return builder.obj() ;
    }
 
    // whether an element matches the i'th column
