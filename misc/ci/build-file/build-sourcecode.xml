@@ -354,7 +354,7 @@
 		<if>
 			<equals arg1="${os.arch}" arg2="amd64" />
 			<then>
-				<echo message="begin to make rpm package.." />
+				<!-- <echo message="begin to make rpm package.." />
 				<echo message="tar the sequoiadb-${project.version}.tar.gz to /usr/src/packages/SOURCES..." />
 				<move file="${RELEASE_DIR}/sequoiadb" tofile="${RELEASE_DIR}/sequoiadb-${project.version}" />
 				<tar destfile="/usr/src/packages/SOURCES/sequoiadb-${project.version}.tar.gz" basedir="${RELEASE_DIR}" includes="sequoiadb-${project.version}/**" compression="gzip" />
@@ -363,7 +363,15 @@
 				<copy file="/usr/src/packages/RPMS/x86_64/sequoiadb-${project.version}-1.x86_64.rpm" todir="${RELEASE_DIR}" failonerror="false" />
 		        <delete file="/usr/src/packages/SOURCES/sequoiadb-${project.version}.tar.gz" />
 		        <delete file="/usr/src/packages/SPECS/sequoiadb-${project.version}.spec" />
-				<echo message="Make rpm package completed.." />
+				<echo message="Make rpm package completed.." /> -->
+
+				
+				<!-- <echo message="begin to make rpm package.." />
+				<exec executable="python" timeout="100000" dir="${WORKSPACE}/sequoiadb/script" outputproperty="RPM.INFO" resultproperty="ret.rpm">
+					<arg line=" package.py" />
+				</exec>
+				<copy file="${WORKSPACE}/sequoiadb/script/sequoiadb-${project.version}-1.x86_64.rpm" todir="${RELEASE_DIR}" />
+				<delete file="${WORKSPACE}/sequoiadb/script/sequoiadb-${project.version}-1.x86_64.rpm" /> -->
 			</then>
 		</if>
 	</target>
