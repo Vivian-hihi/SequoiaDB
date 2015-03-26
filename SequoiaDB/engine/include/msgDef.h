@@ -310,7 +310,10 @@
 #define FIELD_NAME_REELECTION_LEVEL          "Level"
 #define FIELD_NAME_FORCE_STEP_UP_TIME        FIELD_NAME_REELECTION_TIMEOUT
 #define FIELD_NAME_INTERNAL_VERSION          "InternalV"
-#define FIELD_NAME_RTYPE                      "ReturnType"
+#define FIELD_NAME_RTYPE                     "ReturnType"
+#define FIELD_NAME_IX_BOUND                  "IXBound"
+#define FIELD_NAME_QUERY                     "Query"
+#define FIELD_NAME_MATCH                     "Match"
 
 #define IXM_FIELD_NAME_KEY                   "key"
 #define IXM_FIELD_NAME_NAME                  "name"
