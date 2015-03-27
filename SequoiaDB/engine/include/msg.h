@@ -505,6 +505,8 @@ typedef struct _MsgOpInsert MsgOpInsert ;
 #define FLG_QUERY_EXPLAIN             0x00000400
 // First to query the primary node
 #define FLG_QUERY_PRIMARY_FIRST       0x00000800
+// query and modify
+#define FLG_QUERY_MODIFY              0x00001000
 
 // For query takes 4 document
 // Query + returnFieldSelector + orderBy + hint

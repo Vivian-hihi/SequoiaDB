@@ -44,6 +44,7 @@
 #include "pdTrace.hpp"
 #include "rtnTrace.hpp"
 #include "rtnContextSort.hpp"
+#include "rtnQueryModifier.hpp"
 
 using namespace bson ;
 
@@ -101,6 +102,120 @@ namespace engine
       return rc ;
    error :
       rtnCB->contextDelete ( contextID, cb ) ;
+      goto done ;
+   }
+
+   static INT32 _rtnParseQueryModify( BSONObj &hint,
+                                           rtnQueryModifier** modifier )
+   {
+      BSONObjBuilder builder ;
+      BSONObjIterator iter( hint );
+      BOOLEAN isUpdate = FALSE ;
+      BOOLEAN isRemove = FALSE ;
+      BSONObj updator ;
+      BOOLEAN returnNew = FALSE ;
+      rtnQueryModifier* queryModifier = NULL ;
+      INT32 rc = SDB_OK ;
+
+      SDB_ASSERT( NULL != modifier, "modifier can't be null" ) ;
+
+      while ( iter.more() )
+      {
+         BSONElement elem = iter.next() ;
+
+         if ( 0 == ossStrcmp( elem.fieldName(), FIELD_NAME_MODIFY ) )
+         {
+            // $Modify
+            BSONObj modify = elem.Obj() ;
+            const CHAR* op = NULL ;
+
+            rc = rtnGetStringElement( modify, FIELD_NAME_OP, &op ) ;
+            PD_RC_CHECK( rc, PDERROR,
+               "Query and modify has invalid field[%s] in hint: %s",
+               FIELD_NAME_OP, hint.toString().c_str() ) ;
+
+            if ( 0 == ossStrcmp( op, FIELD_OP_VALUE_UPDATE ) )
+            {
+               isUpdate = TRUE ;
+
+               rc = rtnGetBooleanElement( modify, FIELD_NAME_RETURNNEW, returnNew ) ;
+               if ( SDB_INVALIDARG == rc )
+               {
+                  PD_LOG( PDERROR,
+                     "Query and modify has invalid field[%s] in hint: %s",
+                     FIELD_NAME_RETURNNEW, hint.toString().c_str() ) ;
+                  goto error ;
+               }
+
+               rc = rtnGetObjElement( modify, FIELD_NAME_LUPDATE, updator ) ;
+               PD_RC_CHECK( rc, PDERROR,
+                  "Query and modify has invalid field[%s] in hint: %s",
+                  FIELD_NAME_LUPDATE, hint.toString().c_str() ) ;
+            }
+            else if ( 0 == ossStrcmp( op, FIELD_OP_VALUE_REMOVE ) )
+            {
+               isRemove = TRUE ;
+
+               BOOLEAN remove = FALSE ;
+               rc = rtnGetBooleanElement( modify, FIELD_NAME_REMOVE, remove ) ;
+               PD_RC_CHECK( rc, PDERROR,
+                  "Query and modify has invalid field[%s] in hint: %s",
+                  FIELD_NAME_REMOVE, hint.toString().c_str() ) ;
+
+               if ( TRUE != remove )
+               {
+                  PD_LOG( PDERROR,
+                     "Query and modify has invalid field[%s] in hint: %s",
+                     FIELD_NAME_REMOVE, hint.toString().c_str() ) ;
+                  goto error ;
+               }
+            }
+            else
+            {
+               PD_LOG( PDERROR, "Query and modify has invalid hint: %s",
+                 hint.toString().c_str() ) ;
+               rc = SDB_INVALIDARG ;
+               goto error ;
+            }
+         }
+         else
+         {
+            builder.append( elem ) ;
+         }
+      }
+
+      if ( !isUpdate && !isRemove )
+      {
+         PD_LOG( PDERROR, "Query and modify has no modify hint: %s",
+                 hint.toString().c_str() ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      queryModifier = SDB_OSS_NEW rtnQueryModifier( isUpdate, isRemove, returnNew ) ;
+      if ( NULL == queryModifier )
+      {
+         rc = SDB_OOM ;
+         goto error ;
+      }
+      if ( isUpdate )
+      {
+         rc = queryModifier->loadUpdator( updator ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                  "Query and modify has invalid updator: %s",
+                  updator.toString().c_str() ) ;
+      }
+
+      hint = builder.obj() ;
+      *modifier = queryModifier ;
+
+   done:
+      return rc ;
+   error:
+      if ( NULL != queryModifier )
+      {
+         SDB_OSS_DEL queryModifier ;
+      }
       goto done ;
    }
 
@@ -235,7 +350,8 @@ namespace engine
                     SDB_RTNCB *rtnCB,
                     SINT64 &contextID,
                     rtnContextBase **ppContext,
-                    BOOLEAN enablePrefetch )
+                    BOOLEAN enablePrefetch,
+                    SDB_DPSCB* dpsCB )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNQUERY ) ;
@@ -253,6 +369,8 @@ namespace engine
       const CHAR *pCollectionShortName = NULL ;
       rtnAccessPlanManager *apm = NULL ;
       optAccessPlan *plan = NULL ;
+      rtnQueryModifier *queryModifier = NULL ;
+      BOOLEAN writable = FALSE ;
 
       BSONObj hintTmp = hint ;
       BSONObj blockObj ;
@@ -283,6 +401,28 @@ namespace engine
          {
             goto done ;
          }
+      }
+
+      if ( FLG_QUERY_MODIFY & flags )
+      {
+         rc = _rtnParseQueryModify( hintTmp, &queryModifier ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to parse query and modify:%d", rc ) ;
+            goto error ;
+         }
+
+         // disallow parallel query
+         OSS_BIT_CLEAR( flags, FLG_QUERY_PARALLED ) ;
+
+         // writeable judge
+         rc = dmsCB->writable( cb ) ;
+         if ( rc )
+         {
+            PD_LOG ( PDERROR, "Database is not writable, rc = %d", rc ) ;
+            goto error;
+         }
+         writable = TRUE ;
       }
 
       // This prevents other sessions drop the collectionspace during accessing
@@ -376,11 +516,27 @@ namespace engine
                                  selector,
                                  numToReturn,
                                  numToSkip,
-                                 pBlockObj, direction ) ;
+                                 pBlockObj, direction, dpsCB ) ;
          PD_RC_CHECK( rc, PDERROR, "Open data context failed, rc: %d", rc ) ;
+
+         if ( FLG_QUERY_MODIFY & flags )
+         {
+            dataContext->setQueryModifier( queryModifier ) ;
+            // queryModifier will be released by dataContext
+            queryModifier = NULL ;
+            // dmsCB will be writedown by dataContext
+            writable = FALSE ;
+         }
       }
       else
       {
+         if ( FLG_QUERY_MODIFY & flags )
+         {
+            PD_LOG( PDERROR, "when query and modify, sorting must use index");
+            rc = SDB_RTN_QUERYMODIFY_SORT_NO_IDX ;
+            goto error ;
+         }
+
          rc = dataContext->open( su, mbContext, plan, cb,
                                  selector,
                                  -1,
@@ -440,6 +596,10 @@ namespace engine
       {
          rtnCB->contextDelete ( contextID, cb ) ;
          contextID = -1 ;
+      }
+      if ( writable )
+      {
+         dmsCB->writeDown( cb ) ;
       }
       goto done ;
    }

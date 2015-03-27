@@ -2314,5 +2314,13 @@
          </description>
       </code>
 
+      <code>
+         <name>SDB_RTN_QUERYMODIFY_SORT_NO_IDX</name>
+         <description>
+            <en>Sorting of 'query and modify' must use index</en>
+            <cn>在’查询并修改‘操作使用排序时必须使用索引</cn>
+         </description>
+      </code>
+
    </codelist>
 </rclist>

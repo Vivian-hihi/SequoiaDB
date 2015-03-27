@@ -634,7 +634,8 @@ namespace engine
                               ossValuePtr updatedDataPtr,
                               _pmdEDUCB *cb,
                               SDB_DPSCB *dpscb,
-                              _mthModifier &modifier ) ;
+                              _mthModifier &modifier,
+                              BSONObj* newRecord = NULL ) ;
 
          // the dataRecord is not owned
          // Caller must hold mb exclusive/shared lock

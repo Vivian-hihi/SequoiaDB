@@ -57,6 +57,7 @@
 #include "dmsLobDef.hpp"
 #include "rtnLocalLobStream.hpp"
 #include "rtnContextBuff.hpp"
+#include "rtnQueryModifier.hpp"
 
 #include <map>
 
@@ -292,12 +293,15 @@ namespace engine
                              const BSONObj &selector, INT64 numToReturn = -1,
                              INT64 numToSkip = 0,
                              const BSONObj *blockObj = NULL,
-                             INT32 direction = 1 ) ;
+                             INT32 direction = 1,
+                             SDB_DPSCB* dpsCB = NULL ) ;
 
          INT32 openTraversal( _dmsStorageUnit *su, _dmsMBContext *mbContext,
                               _optAccessPlan *plan, _rtnIXScanner *scanner,
                               _pmdEDUCB *cb, const BSONObj &selector,
                               INT64 numToReturn = -1, INT64 numToSkip = 0 ) ;
+
+         void setQueryModifier ( rtnQueryModifier* modifier ) ;
 
       public:
          virtual RTN_CONTEXT_TYPE getType () const ;
@@ -305,14 +309,22 @@ namespace engine
          virtual _optAccessPlan*  getPlan () { return _plan ; }
 
       protected:
+         INT32 _queryModify( _pmdEDUCB* eduCB,
+                                 const dmsRecordID& recordID,
+                                 ossValuePtr recordDataPtr,
+                                 BSONObj& obj ) ;
          virtual INT32     _prepareData( _pmdEDUCB *cb ) ;
          virtual BOOLEAN   _canPrefetch () const { return TRUE ; }
          virtual void      _toString( stringstream &ss ) ;
 
       protected:
 
-         INT32    _prepareByTBScan( _pmdEDUCB *cb ) ;
-         INT32    _prepareByIXScan( _pmdEDUCB *cb ) ;
+         INT32    _prepareByTBScan( _pmdEDUCB *cb,
+                                    DMS_ACCESS_TYPE accessType,
+                                    vector<INT64>* dollarList ) ;
+         INT32    _prepareByIXScan( _pmdEDUCB *cb,
+                                    DMS_ACCESS_TYPE accessType,
+                                    vector<INT64>* dollarList ) ;
 
          INT32    _parseSegments( const BSONObj &obj,
                                   std::vector< dmsExtentID > &segments ) ;
@@ -353,6 +365,9 @@ namespace engine
          BOOLEAN                    _indexBlockScan ;
          INT32                      _direction ;
 
+         // query modify
+         rtnQueryModifier*          _queryModifier ;
+         SDB_DPSCB*                 _dpsCB ;
    } ;
    typedef _rtnContextData rtnContextData ;
 

@@ -1014,6 +1014,7 @@ static JSBool collection_raw_find ( JSContext *cx , uintN argc , jsval *vp )
    JSObject *objCursor              = NULL ;
    INT32 rc                         = SDB_OK ;
    JSBool ret                       = JS_TRUE ;
+   JSBool hasModify                 = JS_FALSE ;
 //   jsval val                        = JSVAL_VOID ;
    jsval *argv                      = JS_ARGV ( cx, vp ) ;
 
@@ -1082,6 +1083,14 @@ static JSBool collection_raw_find ( JSContext *cx , uintN argc , jsval *vp )
       VERIFY ( objHint ) ;
       // bsonHint is freed in done
       VERIFY ( objToBson( cx, objHint, &bsonHint ) ) ;
+
+      // find '$Modify'
+      bson_iterator it ;
+      bson_type type = bson_find( &it, bsonHint, FIELD_NAME_MODIFY ) ;
+      if ( BSON_OBJECT == type )
+      {
+         hasModify = JS_TRUE ;
+      }
    }
    else
    {
@@ -1126,6 +1135,11 @@ static JSBool collection_raw_find ( JSContext *cx , uintN argc , jsval *vp )
    {
       REPORT ( FALSE , "SdbCollection.rawFind(): wrong argument in flags(<num>)" ) ;
    }
+   if ( hasModify )
+   {
+      flags |= FLG_QUERY_MODIFY ;
+   }
+
 /*
    // get arguments
    ret = JS_ConvertArguments ( cx , argc , JS_ARGV ( cx , vp ) , "/ooooii" ,
@@ -1793,6 +1807,8 @@ static JSBool collection_explain( JSContext *cx , uintN argc , jsval *vp )
 
    sdbCursorHandle *cursor = NULL ;
    JSObject *objCursor = NULL ;
+   JSBool hasModify = JS_FALSE ;
+   INT32 flags = 0 ;
 
    collection = (sdbCollectionHandle *)
       JS_GetPrivate ( cx , JS_THIS_OBJECT ( cx , vp ) ) ;
@@ -1832,6 +1848,19 @@ static JSBool collection_explain( JSContext *cx , uintN argc , jsval *vp )
    {
       ret = objToBson ( cx , objHint, &hint ) ;
       VERIFY ( ret ) ;
+
+      // find '$Modify'
+      bson_iterator it ;
+      bson_type type = bson_find( &it, hint, FIELD_NAME_MODIFY ) ;
+      if ( BSON_OBJECT == type )
+      {
+         hasModify = JS_TRUE ;
+      }
+   }
+
+   if ( hasModify )
+   {
+      flags |= FLG_QUERY_MODIFY ;
    }
 
    cursor = (sdbCursorHandle *) JS_malloc ( cx , sizeof ( sdbCursorHandle ) ) ;
@@ -1843,7 +1872,7 @@ static JSBool collection_explain( JSContext *cx , uintN argc , jsval *vp )
    JS_SET_RVAL ( cx , vp , OBJECT_TO_JSVAL ( objCursor ) ) ;
 
    rc = sdbExplain( *collection, condition , selector , sort , hint ,
-                   0, skip , limit , explain, cursor ) ;
+                   flags, skip , limit , explain, cursor ) ;
    REPORT_RC ( SDB_OK == rc || SDB_DMS_EOC == rc ,
                "SdbCollection.explain()" , rc ) ;
    if ( SDB_DMS_EOC == rc )

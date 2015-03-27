@@ -656,6 +656,8 @@ namespace engine
       _indexBlockScan   = FALSE ;
       _scanner          = NULL ;
       _direction        = 0 ;
+      _queryModifier    = NULL ;
+      _dpsCB            = NULL ;
    }
 
    _rtnContextData::~_rtnContextData ()
@@ -679,6 +681,13 @@ namespace engine
       if ( _dmsCB && _su && -1 != contextID() )
       {
          _dmsCB->suUnlock ( _su->CSID() ) ;
+      }
+      // query modifier
+      if ( _queryModifier )
+      {
+         SDB_OSS_DEL _queryModifier ;
+         _queryModifier = NULL ;
+         _dmsCB->writeDown( pmdGetThreadEDUCB() ) ;
       }
    }
 
@@ -812,7 +821,7 @@ namespace engine
                                 const BSONObj &selector, INT64 numToReturn,
                                 INT64 numToSkip,
                                 const BSONObj *blockObj,
-                                INT32 direction )
+                                INT32 direction, SDB_DPSCB* dpsCB )
    {
       INT32 rc = SDB_OK ;
 
@@ -882,6 +891,7 @@ namespace engine
       _scanType = plan->getScanType() ;
       _numToReturn = numToReturn ;
       _numToSkip = numToSkip > 0 ? numToSkip : 0 ;
+      _dpsCB = dpsCB ;
 
       if ( 0 == _numToReturn )
       {
@@ -982,27 +992,106 @@ namespace engine
       goto done ;
    }
 
-   INT32 _rtnContextData::_prepareData( pmdEDUCB *cb )
+   void _rtnContextData::setQueryModifier ( rtnQueryModifier* modifier )
+   {
+      SDB_ASSERT( NULL == _queryModifier, "_queryModifier already exists" ) ;
+
+      _queryModifier = modifier ;
+   }
+
+   INT32 _rtnContextData::_queryModify( pmdEDUCB* eduCB,
+                                        const dmsRecordID& recordID,
+                                        ossValuePtr recordDataPtr,
+                                        BSONObj& obj )
    {
       INT32 rc = SDB_OK ;
 
+      SDB_ASSERT( NULL != _queryModifier, "_queryModifier can't be null" ) ;
+
+      if ( _queryModifier->isUpdate() )
+      {
+         BSONObj* newObjPtr = NULL ;
+
+         if ( _queryModifier->returnNew() )
+         {
+            newObjPtr = &obj ;
+         }
+         else
+         {
+            obj = obj.getOwned() ;
+         }
+
+         SDB_ASSERT( NULL != _queryModifier->getDollarList(), "dollarList can't be null" ) ;
+
+         rc = _su->data()->updateRecord( _mbContext, recordID,
+                              recordDataPtr, eduCB, _dpsCB,
+                              _queryModifier->getModifier(),
+                              newObjPtr ) ;
+         PD_RC_CHECK( rc, PDERROR, "Update record failed, rc: %d", rc ) ;
+         _queryModifier->getDollarList()->clear() ;
+      }
+      else if ( _queryModifier->isRemove() )
+      {
+         rc = _su->data()->deleteRecord( _mbContext, recordID,
+                              recordDataPtr, eduCB, _dpsCB ) ;
+         PD_RC_CHECK( rc, PDERROR, "Delete record failed, rc: %d", rc ) ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _rtnContextData::_prepareData( pmdEDUCB *cb )
+   {
+      vector<INT64>* dollarList = NULL ;
+      DMS_ACCESS_TYPE accessType = DMS_ACCESS_TYPE_FETCH ;
+      BOOLEAN writable = FALSE ;
+      INT32 rc = SDB_OK ;
+
+      if ( _queryModifier )
+      {
+         if ( _queryModifier->isUpdate() )
+         {
+            accessType = DMS_ACCESS_TYPE_UPDATE ;
+            dollarList = _queryModifier->getDollarList() ;
+         }
+         else if ( _queryModifier->isRemove() )
+         {
+            accessType = DMS_ACCESS_TYPE_DELETE ;
+         }
+         else
+         {
+            SDB_ASSERT( FALSE, "_queryModifier is invalid" ) ;
+            PD_LOG( PDERROR, "_queryModifier is invalid" ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
+      }
+
       if ( TBSCAN == _scanType )
       {
-         rc = _prepareByTBScan( cb ) ;
+         rc = _prepareByTBScan( cb, accessType, dollarList ) ;
       }
       else if ( IXSCAN == _scanType )
       {
-         rc = _prepareByIXScan( cb ) ;
+         rc = _prepareByIXScan( cb, accessType, dollarList ) ;
       }
       else
       {
          rc = SDB_INVALIDARG ;
       }
 
+   done:
       return rc ;
+   error:
+      goto error ;
    }
 
-   INT32 _rtnContextData::_prepareByTBScan( pmdEDUCB * cb )
+   INT32 _rtnContextData::_prepareByTBScan( pmdEDUCB * cb,
+                                            DMS_ACCESS_TYPE accessType,
+                                            vector<INT64>* dollarList )
    {
       INT32 rc                = SDB_OK ;
       mthMatcher *matcher     = NULL ;
@@ -1040,17 +1129,23 @@ namespace engine
          }
 
          dmsExtScanner extScanner( _su->data(), _mbContext, matcher, _extentID,
-                                   DMS_ACCESS_TYPE_FETCH, _numToReturn,
+                                   accessType, _numToReturn,
                                    _numToSkip ) ;
 
-         while ( SDB_OK == ( rc = extScanner.advance( recordID,
-                                                      recordDataPtr,
-                                                      cb ) ) )
+         while ( SDB_OK == ( rc = extScanner.advance( recordID, recordDataPtr,
+                                                      cb, dollarList ) ) )
          {
             try
             {
                BSONObj selObj ;
                BSONObj obj( (const CHAR*)recordDataPtr ) ;
+
+               if ( _queryModifier )
+               {
+                  rc = _queryModify( cb, recordID, recordDataPtr, obj ) ;
+                  PD_RC_CHECK( rc, PDERROR, "Failed to query modify" ) ;
+               }
+
                if ( selector )
                {
                   rc = selector->select( obj, selObj ) ;
@@ -1154,7 +1249,9 @@ namespace engine
       goto done ;
    }
 
-   INT32 _rtnContextData::_prepareByIXScan( pmdEDUCB *cb )
+   INT32 _rtnContextData::_prepareByIXScan( pmdEDUCB *cb,
+                                                 DMS_ACCESS_TYPE accessType,
+                                                 vector<INT64>* dollarList )
    {
       INT32 rc                   = SDB_OK ;
       rtnIXScanner *scanner      = _scanner ;
@@ -1189,7 +1286,7 @@ namespace engine
          }
 
          dmsIXSecScanner secScanner( _su->data(), _mbContext, matcher, scanner,
-                                     DMS_ACCESS_TYPE_FETCH, _numToReturn,
+                                     accessType, _numToReturn,
                                      _numToSkip ) ;
          if ( _indexBlockScan )
          {
@@ -1201,12 +1298,19 @@ namespace engine
          }
 
          while ( SDB_OK == ( rc = secScanner.advance( recordID, recordDataPtr,
-                                                      cb ) ) )
+                                                      cb, dollarList ) ) )
          {
             try
             {
                BSONObj selObj ;
                BSONObj obj( (const CHAR*)recordDataPtr ) ;
+
+               if ( _queryModifier )
+               {
+                  rc = _queryModify( cb, recordID, recordDataPtr, obj ) ;
+                  PD_RC_CHECK( rc, PDERROR, "Failed to query modify" ) ;
+               }
+
                if ( selector )
                {
                   rc = selector->select( obj, selObj ) ;

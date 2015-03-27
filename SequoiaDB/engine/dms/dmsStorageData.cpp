@@ -2601,7 +2601,8 @@ namespace engine
                                         const dmsRecordID &recordID,
                                         ossValuePtr updatedDataPtr,
                                         pmdEDUCB *cb, SDB_DPSCB *dpscb,
-                                        mthModifier &modifier )
+                                        mthModifier &modifier,
+                                        BSONObj* newRecord )
    {
       INT32 rc                      = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__DMSSTORAGEDATA_UPDATERECORD ) ;
@@ -2744,6 +2745,11 @@ namespace engine
          {
             PD_LOG ( PDERROR, "Failed to update record, rc: %d", rc ) ;
             goto error ;
+         }
+
+         if ( NULL != newRecord )
+         {
+            *newRecord = newobj.getOwned() ;
          }
       }
       catch ( std::exception &e )

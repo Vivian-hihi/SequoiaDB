@@ -231,6 +231,11 @@
 #define FIELD_NAME_STARTRID                  "StartRID"
 #define FIELD_NAME_ENDRID                    "EndRID"
 #define FIELD_NAME_META                      "$Meta"
+#define FIELD_NAME_MODIFY                    "$Modify"
+#define FIELD_NAME_OP                        "op"
+#define FIELD_NAME_LUPDATE                   "update"
+#define FIELD_NAME_RETURNNEW                 "returnnew"
+#define FIELD_NAME_REMOVE                    "remove"
 #define FIELD_NAME_PATH                      "Path"
 #define FIELD_NAME_DESP                      "Description"
 #define FIELD_NAME_ENSURE_INC                "EnsureInc"
@@ -314,6 +319,10 @@
 #define FIELD_NAME_IX_BOUND                  "IXBound"
 #define FIELD_NAME_QUERY                     "Query"
 #define FIELD_NAME_NEED_MATCH                "NeedMatch"
+#define FIELD_NAME_RTYPE                     "ReturnType"
+
+#define FIELD_OP_VALUE_UPDATE                "update"
+#define FIELD_OP_VALUE_REMOVE                "remove"
 
 #define IXM_FIELD_NAME_KEY                   "key"
 #define IXM_FIELD_NAME_NAME                  "name"

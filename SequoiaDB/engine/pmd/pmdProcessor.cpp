@@ -314,7 +314,7 @@ namespace engine
 
             rc = rtnQuery( pCollectionName, selector, matcher, orderBy,
                            hint, flags, eduCB(), numToSkip, numToReturn,
-                           _pDMSCB, _pRTNCB, contextID, &pContext, TRUE ) ;
+                           _pDMSCB, _pRTNCB, contextID, &pContext, TRUE, dpsCB ) ;
             if ( rc )
             {
                goto error ;

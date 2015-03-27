@@ -140,6 +140,7 @@ rtnFiles = [
       "rtn/rtnInsert.cpp",
       "rtn/rtnDelete.cpp",
       "rtn/rtnQuery.cpp",
+      "rtn/rtnQueryModifier.cpp",
       "rtn/rtnMsg.cpp",
       "rtn/rtn.cpp",
       "rtn/rtnCommandImpl.cpp",
