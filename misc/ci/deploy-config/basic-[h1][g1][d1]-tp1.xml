@@ -19,7 +19,7 @@
 		<classpath>
 			<pathelement location="${WORKSPACE}/deploy/ant-sdbtasks/ant-sdbtasks.jar" />
 		</classpath>
-	</taskdef> 
+	</taskdef>
 
 	<target name="Deploy" depends="">
 		<ant antfile="deploy-software-in-host.xml" dir="." inheritAll="false">
@@ -39,7 +39,7 @@
 				</node>
 			</catagroup>
 		</sdbdeploy>
-		
+
 		<sdbdeploy host="${test.machine.no3.basic}" coordport="${coord.service.port}">
 			<datagroup name="group1">
 				<node host="${test.machine.no3.data}" baseport="${data.service.port}" dbpath="${install.path}/sequoiadb/database/data/${data.service.port}">
@@ -54,7 +54,7 @@
 
 	<target name="H1-G1-D1" depends="">
 		<hostinfo prefix="host" />
-		<property name="test-type-list" value="basic,driver-php" />
+		<property name="test-type-list" value="basic" />
 		<property name="copy.test.log" value="true"/>
 		<!-- <property name="import.file.name" value="basic-testcases-time.json" /> -->
 
@@ -136,6 +136,6 @@
 			</catch>
 			<finally>
 			</finally>
-		</trycatch>	
+		</trycatch>
 	</target>
 </project>
