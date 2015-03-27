@@ -46,21 +46,11 @@ using namespace engine;
 namespace
 {
    /**
-    ** get the oid bson object
-    ***/
-   void getOID( const bson::BSONElement &e, bson::OID &id )
-   {
-      bson::BSONObj o;
-      id = e.OID() ;
-   }
-
-   /**
     ** get the index of min bson object
     ***/
    INT32 getMinObjectIndex( ciBson &doc, const INT32 nodeCount )
    {
-      bson::OID oid ;
-      bson::BSONElement e ;
+      bson::BSONElement eMin, ee ;
 
       INT32 idx = 0 ;
       INT32 minIndex = 0 ;
@@ -71,9 +61,8 @@ namespace
          minIndex = idx ;
       }
       // get the id of object
-      if ( doc.objs[0].getObjectID( e ) )
+      if ( doc.objs[0].getObjectID( eMin ) )
       {
-         getOID( e, oid ) ;
       }
       // compare to other object
       for ( ; idx < nodeCount ; ++idx )
@@ -81,12 +70,11 @@ namespace
          if ( !doc.objs[idx].isEmpty() )
          {
             bson::OID id ;
-            if ( doc.objs[idx].getObjectID( e ) )
+            if ( doc.objs[idx].getObjectID( ee ) )
             {
-               getOID( e, id );
-               if ( id < oid )
+               if ( ee < eMin )
                {
-                  oid = id ;
+                  eMin = ee ;
                   minIndex = idx ;
                }
             }
