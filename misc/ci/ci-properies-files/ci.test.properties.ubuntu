@@ -28,8 +28,12 @@ test.machine.no2.data=ubun-test3
 test.machine.no3.data=ubun-test4
 
 basic_list1=collectionAlter,domain,createIndex
-basic_list2=dropCL,dropCS,dropIndex,insert,listCL,listCS,operators,procedures,aggregate,bakupRestore,countHint,createCL,createCS,cursor,delete,sql,subCL,syndate,update,upsert
+basic_list2=insert,listCL,listCS,operators,procedures,aggregate,bakupRestore,countHint,cursor,delete,sql,subCL,update,upsert
 basic_list3=query,split,transaction
+
+basic_list4=collectionAlter,domain,createIndex
+basic_list5=dropCL,dropCS,dropIndex,insert,listCL,listCS,operators,procedures,aggregate,bakupRestore,countHint,createCL,createCS,cursor,delete,sql,subCL,syndate,update,upsert
+basic_list6=query,split,transaction
 
 testcase.path=/tmp/sequoiadb_test/deploy/hlt
 
