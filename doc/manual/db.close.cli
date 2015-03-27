@@ -1,0 +1,40 @@
+.TH COMMAND * 2014-04-08 "SequoiaDB" "Sequoiadb Method's Manual"
+.ad l.ll 72.ce 1000
+\fBdb.close()\fR
+.ce 0
+.sp 2
+
+.SH "NAME"
+
+.sp 2
+close - Disconnect from database.
+.SH "SYNOPSIS"
+
+.sp 2
+
+.sp 2
+
+.sp 2
+db.close()
+.SH "CATEGORY"
+
+.sp 2
+
+.sp 2
+Sequoiadb
+.SH "DESCRIPTION"
+
+.sp 2
+Disconnect from database.
+.SH "Examples"
+
+.sp 2
+Disconnect from database.
+.sp 2
+> var db = new Sdb("192.168.20.178", 11810)
+.sp 2
+Takes 0.10684s.
+.sp 2
+> db.close()
+.sp 2
+Takes 0.493s.

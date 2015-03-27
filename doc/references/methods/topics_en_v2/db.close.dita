@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
+<topic id="topic_tkm_rxs_5p">
+  <title>db.close()</title>
+  <body>
+    <section>
+      <title>NAME</title>
+      <p>close - Disconnect from database.</p>
+    </section>
+    <section>
+      <title>SYNOPSIS</title>
+      <p></p><apiname>db.close</apiname>()
+    </section>
+    <section>
+      <title>CATEGORY</title>
+      <p></p>Sequoiadb
+    </section>
+    <section>
+      <title>DESCRIPTION</title> 
+      <p>Disconnect from database.</p>
+    </section>    
+    <section>
+      <title>Examples</title>
+      <p>Disconnect from database.</p>
+      <codeblock>> var db = new Sdb("192.168.20.178", 11810)</codeblock>  
+      <codeblock>Takes 0.10684s.</codeblock>
+      <codeblock>> db.close()</codeblock>
+      <codeblock>Takes 0.493s.</codeblock>
+    </section>
+  </body>
+</topic>
