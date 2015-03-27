@@ -10,3 +10,14 @@ tc qdisc add dev eth2 root netem delay 50ms 25ms
 4. 设置网络5%的丢包
 tc qdisc add dev eth2 root netem loss 5%
 
+
+先对表做split
+
+db.ycsb.usertable.split("group2", "group1", {Partition:1024},{Partition:2048})
+
+db.ycsb.usertable.split("group2", "group3", {Partition:2048})
+
+
+
+执行ycsb:
+date ;./ycsb run sequoiadb -P ../workloads/my_workloada -p port=11810 -p sequoiadb.host=192.168.20.169  -threads 3 ; date
