@@ -47,10 +47,9 @@ using namespace bson;
 namespace engine
 {
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOINS_EXECUTE, "rtnCoordInsert::execute" )
-   INT32 rtnCoordInsert::execute( CHAR *pReceiveBuffer,
-                                  SINT32 packSize,
+   INT32 rtnCoordInsert::execute( MsgHeader *pMsg,
                                   pmdEDUCB *cb,
-                                  MsgOpReply &replyHeader,
+                                  INT64 &contextID,
                                   rtnContextBuf *buf )
    {
       INT32 rc = SDB_OK ;
@@ -64,7 +63,7 @@ namespace engine
       rtnSendOptions sendOpt( TRUE ) ;
       sendOpt._useSpecialGrp = TRUE ;
 
-      rtnSendMsgIn inMsg( (MsgHeader*)pReceiveBuffer ) ;
+      rtnSendMsgIn inMsg( pMsg ) ;
       rtnProcessResult result ;
       ROUTE_RC_MAP nokRC ;
       result._pNokRC = &nokRC ;
@@ -76,22 +75,14 @@ namespace engine
       inMsg._pvtType = PRIVATE_DATA_USER ;
 
       // fill default-reply(insert success)
-      MsgOpInsert *pInsertMsg          = (MsgOpInsert *)pReceiveBuffer;
-      replyHeader.header.messageLength = sizeof( MsgOpReply );
-      replyHeader.header.opCode        = MSG_BS_INSERT_RES;
-      replyHeader.header.requestID     = pInsertMsg->header.requestID;
-      replyHeader.header.routeID.value = 0;
-      replyHeader.header.TID           = pInsertMsg->header.TID ;
-      replyHeader.contextID            = -1;
-      replyHeader.flags                = SDB_OK;
-      replyHeader.numReturned          = 0;
-      replyHeader.startFrom            = 0;
+      MsgOpInsert *pInsertMsg          = (MsgOpInsert *)pMsg;
+      contextID                        = -1 ;
 
       INT32 flag = 0 ;
       CHAR *pCollectionName = NULL ;
       CHAR *pInsertor = NULL;
       INT32 count = 0 ;
-      rc = msgExtractInsert( pReceiveBuffer, &flag,
+      rc = msgExtractInsert( (CHAR*)pMsg, &flag,
                              &pCollectionName, &pInsertor, count ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to parse insert request, rc: %d",
                    rc ) ;
@@ -143,7 +134,6 @@ namespace engine
       PD_TRACE_EXITRC ( SDB_RTNCOINS_EXECUTE, rc ) ;
       return rc;
    error:
-      replyHeader.flags = rc ;
       goto done;
    }
 

@@ -40,10 +40,9 @@ namespace engine
    class rtnCoordAuth : public rtnCoordAuthBase
    {
    public:
-      virtual INT32 execute( CHAR * pReceiveBuffer,
-                             SINT32 packSize,
-                             pmdEDUCB * cb,
-                             MsgOpReply & replyHeader,
+      virtual INT32 execute( MsgHeader *pMsg,
+                             pmdEDUCB *cb,
+                             INT64 &contextID,
                              rtnContextBuf *buf ) ;
    } ;
 }

@@ -40,12 +40,11 @@ namespace engine
    class rtnCoordAuthBase : public rtnCoordOperator
    {
    protected:
-      INT32 forward( CHAR *pReceiveBuffer,
-                     SINT32 packSize,
+      INT32 forward( MsgHeader *pMsg,
                      pmdEDUCB *cb,
                      INT32 msgType,
                      BOOLEAN sWhenNoPrimary,
-                     MsgOpReply &replyHeader ) ;
+                     INT64 &contextID ) ;
 
    } ;
 }

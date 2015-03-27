@@ -331,7 +331,7 @@ namespace engine
          }
 
          // add objs to mb block
-         if( mb->idleSize() < buffObj.size() )
+         if( mb->idleSize() < (UINT32)buffObj.size() )
          {
             rc = mb->extend( buffObj.size() - mb->idleSize() ) ;
             PD_RC_CHECK( rc, PDERROR, "Failed to extend mb, rc: %d", rc ) ;

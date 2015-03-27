@@ -328,10 +328,9 @@ namespace engine
       return builder.obj() ;
    }
 
-   INT32 rtnCoordQuery::execute( CHAR *pReceiveBuffer,
-                                 SINT32 packSize,
+   INT32 rtnCoordQuery::execute( MsgHeader *pMsg,
                                  pmdEDUCB *cb,
-                                 MsgOpReply &replyHeader,
+                                 INT64 &contextID,
                                  rtnContextBuf *buf )
    {
       INT32 rc = SDB_OK ;
@@ -341,20 +340,11 @@ namespace engine
       rtnContextCoord *pContext        = NULL ;
 
       // fill default-reply(query success)
-      MsgHeader *pHeader               = (MsgHeader *)pReceiveBuffer;
-      replyHeader.header.messageLength = sizeof( MsgOpReply );
-      replyHeader.header.opCode        = MSG_BS_QUERY_RES;
-      replyHeader.header.requestID     = pHeader->requestID;
-      replyHeader.header.routeID.value = 0;
-      replyHeader.header.TID           = pHeader->TID;
-      replyHeader.contextID            = -1;
-      replyHeader.flags                = SDB_OK;
-      replyHeader.numReturned          = 0;
-      replyHeader.startFrom            = 0;
+      contextID                        = -1 ;
 
       CHAR *pCollectionName            = NULL ;
 
-      rc = msgExtractQuery( pReceiveBuffer, NULL, &pCollectionName,
+      rc = msgExtractQuery( (CHAR*)pMsg, NULL, &pCollectionName,
                             NULL, NULL, NULL, NULL, NULL, NULL ) ;
       PD_RC_CHECK( rc, PDERROR,
                   "Failed to parse query request, rc: %d", rc ) ;
@@ -370,8 +360,7 @@ namespace engine
          PD_CHECK( pCmdProcesser != NULL, SDB_INVALIDARG, error, PDERROR,
                   "unknown command:%s", pCollectionName ) ;
 
-         rc = pCmdProcesser->execute( pReceiveBuffer, packSize,
-                                      cb, replyHeader, buf ) ;
+         rc = pCmdProcesser->execute( pMsg, cb, contextID, buf ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to execute the "
                       "command(command:%s, rc=%d)",
                       pCollectionName, rc ) ;
@@ -379,17 +368,16 @@ namespace engine
       else
       {
          rtnSendOptions sendOpt ;
-         rc = queryOrDoOnCL( pHeader, pRouteAgent, cb, &pContext,
+         rc = queryOrDoOnCL( pMsg, pRouteAgent, cb, &pContext,
                              sendOpt ) ;
          PD_RC_CHECK( rc, PDERROR, "query failed, rc: %d", rc ) ;
 
-         replyHeader.contextID = pContext->contextID() ;
+         contextID = pContext->contextID() ;
       }
 
    done:
       return rc ;
    error:
-      replyHeader.flags = rc ;
       goto done ;
    }
 

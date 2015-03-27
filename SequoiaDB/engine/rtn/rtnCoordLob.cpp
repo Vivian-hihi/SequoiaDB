@@ -36,34 +36,25 @@
 #include "msgMessage.hpp"
 #include "rtnCoordLobStream.hpp"
 
+using namespace bson ;
+
 namespace engine
 {
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOORDOPENLOB_EXECUTE, "rtnCoordOpenLob::execute" )
-   INT32 rtnCoordOpenLob::execute( CHAR * pReceiveBuffer,
-                                   SINT32 packSize,
-                                   pmdEDUCB * cb,
-                                   MsgOpReply & replyHeader,
+   INT32 rtnCoordOpenLob::execute( MsgHeader *pMsg,
+                                   pmdEDUCB *cb,
+                                   INT64 &contextID,
                                    rtnContextBuf *buf )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNCOORDOPENLOB_EXECUTE ) ;
       SDB_ASSERT( NULL != buf, "can not be null" ) ;
       const MsgOpLob *header = NULL ;
-      const MsgHeader *baseHeader = ( const MsgHeader * )pReceiveBuffer ;
       BSONObj obj ;
       BSONObj meta ;
-      SINT64 contextID = -1 ;
-      replyHeader.header.messageLength = sizeof( MsgOpReply );
-      replyHeader.header.opCode = MSG_BS_LOB_OPEN_RES ;
-      replyHeader.header.requestID = baseHeader->requestID ;
-      replyHeader.header.routeID.value = 0 ;
-      replyHeader.header.TID = baseHeader->TID ;
-      replyHeader.contextID = -1 ;
-      replyHeader.flags = SDB_OK ;
-      replyHeader.numReturned = 0 ;
-      replyHeader.startFrom = 0 ;
+      contextID = -1 ;
 
-      rc = msgExtractOpenLobRequest( pReceiveBuffer, &header, obj ) ;
+      rc = msgExtractOpenLobRequest( (const CHAR*)pMsg, &header, obj ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to extract open msg:%d", rc ) ;
@@ -80,43 +71,30 @@ namespace engine
          goto error ;
       }
 
-      replyHeader.contextID = contextID ;
       *buf = rtnContextBuf( meta ) ;
    done:
       PD_TRACE_EXITRC( SDB_RTNCOORDOPENLOB_EXECUTE, rc ) ;
       return rc ;
    error:
-      replyHeader.flags = rc ;
       goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOORDWRITELOB_EXECUTE, "rtnCoordWriteLob::execute" )
-   INT32 rtnCoordWriteLob::execute( CHAR * pReceiveBuffer,
-                                    SINT32 packSize,
-                                    pmdEDUCB * cb,
-                                    MsgOpReply & replyHeader,
+   INT32 rtnCoordWriteLob::execute( MsgHeader *pMsg,
+                                    pmdEDUCB *cb,
+                                    INT64 &contextID,
                                     rtnContextBuf *buf )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNCOORDWRITELOB_EXECUTE ) ;
       const MsgOpLob *header = NULL ;
-      const MsgHeader *baseHeader = ( const MsgHeader * )pReceiveBuffer ;
       BSONObj obj ;
       UINT32 len = 0 ;
       SINT64 offset = -1 ;
       const CHAR *data = NULL ;
+      contextID = -1 ;
 
-      replyHeader.header.messageLength = sizeof( MsgOpReply );
-      replyHeader.header.opCode = MSG_BS_LOB_WRITE_RES ;
-      replyHeader.header.requestID = baseHeader->requestID ;
-      replyHeader.header.routeID.value = 0 ;
-      replyHeader.header.TID = baseHeader->TID ;
-      replyHeader.contextID = -1 ;
-      replyHeader.flags = SDB_OK ;
-      replyHeader.numReturned = 0 ;
-      replyHeader.startFrom = 0 ;
-
-      rc = msgExtractWriteLobRequest( pReceiveBuffer, &header, &len,
+      rc = msgExtractWriteLobRequest( (const CHAR*)pMsg, &header, &len,
                                       &offset, &data ) ;
       if ( SDB_OK != rc )
       {
@@ -134,39 +112,27 @@ namespace engine
       PD_TRACE_EXITRC( SDB_RTNCOORDWRITELOB_EXECUTE, rc ) ;
       return rc ;
    error:
-      replyHeader.flags = rc ;
       goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOORDREADLOB_EXECUTE, "rtnCoordReadLob::execute" )
-   INT32 rtnCoordReadLob::execute( CHAR * pReceiveBuffer,
-                                   SINT32 packSize,
-                                   pmdEDUCB * cb,
-                                   MsgOpReply & replyHeader,
+   INT32 rtnCoordReadLob::execute( MsgHeader *pMsg,
+                                   pmdEDUCB *cb,
+                                   INT64 &contextID,
                                    rtnContextBuf *buf )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNCOORDREADLOB_EXECUTE ) ;
       SDB_ASSERT( NULL != buf, "can not be null" ) ;
       const MsgOpLob *header = NULL ;
-      const MsgHeader *baseHeader = ( const MsgHeader * )pReceiveBuffer ;
       BSONObj obj ;
       UINT32 len = 0 ;
       SINT64 offset = -1 ;
       const CHAR *data = NULL ;
       UINT32 readLen = 0 ;
+      contextID = -1 ;
 
-      replyHeader.header.messageLength = sizeof( MsgOpReply ) ;
-      replyHeader.header.opCode = MSG_BS_LOB_READ_RES ;
-      replyHeader.header.requestID = baseHeader->requestID ;
-      replyHeader.header.routeID.value = 0 ;
-      replyHeader.header.TID = baseHeader->TID ;
-      replyHeader.contextID = -1 ;
-      replyHeader.flags = SDB_OK ;
-      replyHeader.numReturned = 0 ;
-      replyHeader.startFrom = 0 ;
-
-      rc = msgExtractReadLobRequest( pReceiveBuffer, &header, &len,
+      rc = msgExtractReadLobRequest( (const CHAR*)pMsg, &header, &len,
                                      &offset ) ;
       if ( SDB_OK != rc )
       {
@@ -187,33 +153,21 @@ namespace engine
       PD_TRACE_EXITRC( SDB_RTNCOORDREADLOB_EXECUTE, rc ) ;
       return rc ;
    error:
-      replyHeader.flags = rc ;
       goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOORDCLOSELOB_EXECUTE, "rtnCoordCloseLob::execute" )
-   INT32 rtnCoordCloseLob::execute( CHAR * pReceiveBuffer,
-                                    SINT32 packSize,
-                                    pmdEDUCB * cb,
-                                    MsgOpReply & replyHeader,
+   INT32 rtnCoordCloseLob::execute( MsgHeader *pMsg,
+                                    pmdEDUCB *cb,
+                                    INT64 &contextID,
                                     rtnContextBuf *buf )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNCOORDCLOSELOB_EXECUTE ) ;
       const MsgOpLob *header = NULL ;
-      const MsgHeader *baseHeader = ( const MsgHeader * )pReceiveBuffer ;
+      contextID = -1 ;
 
-      replyHeader.header.messageLength = sizeof( MsgOpReply ) ;
-      replyHeader.header.opCode = MSG_BS_LOB_CLOSE_RES ;
-      replyHeader.header.requestID = baseHeader->requestID ;
-      replyHeader.header.routeID.value = 0 ;
-      replyHeader.header.TID = baseHeader->TID ;
-      replyHeader.contextID = -1 ;
-      replyHeader.flags = SDB_OK ;
-      replyHeader.numReturned = 0 ;
-      replyHeader.startFrom = 0 ;
-
-      rc = msgExtractCloseLobRequest( pReceiveBuffer, &header ) ;
+      rc = msgExtractCloseLobRequest( (const CHAR*)pMsg, &header ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to extract msg:%d", rc ) ;
@@ -230,37 +184,25 @@ namespace engine
       PD_TRACE_EXITRC( SDB_RTNCOORDCLOSELOB_EXECUTE, rc ) ;
       return rc ;
    error:
-      replyHeader.flags = rc ;
       goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOORDREMOVELOB_EXECUTE, "rtnCoordRemoveLob::execute" )
-   INT32 rtnCoordRemoveLob::execute( CHAR * pReceiveBuffer,
-                                     SINT32 packSize,
-                                     pmdEDUCB * cb,
-                                     MsgOpReply & replyHeader,
+   INT32 rtnCoordRemoveLob::execute( MsgHeader *pMsg,
+                                     pmdEDUCB *cb,
+                                     INT64 &contextID,
                                      rtnContextBuf *buf )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNCOORDREMOVELOB_EXECUTE ) ;
       const MsgOpLob *header = NULL ;
-      const MsgHeader *baseHeader = ( const MsgHeader * )pReceiveBuffer ;
       BSONObj obj ;
       BSONElement ele ;
       const CHAR *fullName = NULL ;
       _rtnCoordLobStream stream ;
+      contextID = -1 ;
 
-      replyHeader.header.messageLength = sizeof( MsgOpReply ) ;
-      replyHeader.header.opCode = MSG_BS_LOB_REMOVE_RES ;
-      replyHeader.header.requestID = baseHeader->requestID ;
-      replyHeader.header.routeID.value = 0 ;
-      replyHeader.header.TID = baseHeader->TID ;
-      replyHeader.contextID = -1 ;
-      replyHeader.flags = SDB_OK ;
-      replyHeader.numReturned = 0 ;
-      replyHeader.startFrom = 0 ;
-
-      rc = msgExtractRemoveLobRequest( pReceiveBuffer, &header,
+      rc = msgExtractRemoveLobRequest( (const CHAR*)pMsg, &header,
                                        obj ) ;
       if ( SDB_OK != rc )
       {
@@ -310,19 +252,17 @@ namespace engine
 
    done:
       {
-      INT32 rcTmp = SDB_OK ;
-      rcTmp = stream.close( cb ) ;
-      if ( SDB_OK != rcTmp )
-      {
-         PD_LOG( PDERROR, "failed to remove lob:%d", rcTmp ) ;
-         rc = rc == SDB_OK ? rcTmp : rc ;
-         replyHeader.flags = rc ; 
-      }
+         INT32 rcTmp = SDB_OK ;
+         rcTmp = stream.close( cb ) ;
+         if ( SDB_OK != rcTmp )
+         {
+            PD_LOG( PDERROR, "failed to remove lob:%d", rcTmp ) ;
+            rc = rc == SDB_OK ? rcTmp : rc ;
+         }
       }
       PD_TRACE_EXITRC( SDB_RTNCOORDREMOVELOB_EXECUTE, rc ) ;
       return rc ;
    error:
-      replyHeader.flags = rc ; 
       goto done ;
    }
 }

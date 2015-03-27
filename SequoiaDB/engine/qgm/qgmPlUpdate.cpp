@@ -145,7 +145,7 @@ namespace engine
          rtnCoordUpdate update ;
          CHAR *msg = NULL ;
          INT32 size = 0 ;
-         MsgOpReply dummy ;
+         INT64 contextID = -1 ;
          rc = msgBuildUpdateMsg( &msg, &size,
                                  _collection.toString().c_str(),
                                  0, 0,
@@ -160,8 +160,7 @@ namespace engine
             goto error ;
          }
 
-         rc = update.execute( msg, *((SINT32 *)msg),
-                              eduCB, dummy, NULL ) ;
+         rc = update.execute( (MsgHeader*)msg, eduCB, contextID, NULL ) ;
          SDB_OSS_FREE( msg ) ;
          msg = NULL ;
          if ( SDB_OK != rc )

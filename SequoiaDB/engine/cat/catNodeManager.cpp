@@ -1986,7 +1986,6 @@ namespace engine
       const CHAR *hostName  = NULL ;
       const CHAR *svcName   = NULL ;
       BOOLEAN forced        = FALSE ;
-      BOOLEAN isLocalHost   = FALSE ;
 
       BSONObj groupInfo ;
       BSONObj groupsObj ;
@@ -2024,7 +2023,6 @@ namespace engine
             rc = SDB_CAT_NOT_LOCALCONN ;
             goto error ;
          }
-         isLocalHost = TRUE ;
       }
 
       // get group info

@@ -150,7 +150,7 @@ namespace engine
       else if ( SDB_ROLE_COORD == pmdGetDBRole() )
       {
          CHAR *pResult = NULL ;
-         MsgOpReply replayHeader ;
+         INT64 contextID = -1 ;
          BSONObj *pErrObj = NULL ;
          rtnContextBuf buf ;
 
@@ -159,16 +159,11 @@ namespace engine
             pCoordcb->getProcesserFactory();
          rtnCoordOperator *pOperator = NULL ;
          pOperator = pProcesserFactory->getOperator( pMsg->opCode );
-         rc = pOperator->execute( (CHAR*)pMsg,
-                                  pMsg->messageLength,
-                                  _pEDUCB,
-                                  replayHeader,
-                                  NULL ) ;
+         rc = pOperator->execute( pMsg, _pEDUCB, contextID, &buf ) ;
+
          // special handling for password verification when there is no
          // addrlist specified. Usually this happen when there is only
          // one coord node before creating the first catalog
-         SDB_ASSERT( NULL == pErrObj, "ErrObj must be NULL" ) ;
-         SDB_ASSERT( NULL == pResult, "Result must be NULL" ) ;
          if ( MSG_AUTH_VERIFY_REQ == pMsg->opCode &&
               SDB_CAT_NO_ADDR_LIST == rc )
          {

@@ -233,7 +233,7 @@ namespace engine
    }
 
    INT32 aggrBuilder::createContext( _qgmPlanContainer *container,
-                                    _pmdEDUCB *cb, SINT64 &contextID )
+                                     _pmdEDUCB *cb, SINT64 &contextID )
    {
       INT32 rc = SDB_OK ;
       contextID = -1 ;

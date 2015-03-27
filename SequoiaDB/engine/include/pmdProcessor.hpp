@@ -128,12 +128,9 @@ namespace engine
          virtual void                  _onAttach () ;
          virtual void                  _onDetach () ;
 
-      protected:
-         MsgOpReply              _replyHeader ;
-
       private:
          INT32                   _processCoordMsg( MsgHeader *msg, 
-                                                   MsgOpReply &replyHeader,
+                                                   INT64 &contextID,
                                                    rtnContextBuf &contextBuff ) ;
    } ;
 

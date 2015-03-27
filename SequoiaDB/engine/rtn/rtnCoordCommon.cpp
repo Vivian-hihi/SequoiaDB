@@ -2503,12 +2503,10 @@ namespace engine
       SDB_RTNCB *pRtncb = pKrcb->getRTNCB();
       CoordCB *pCoordcb = pKrcb->getCoordCB();
       INT32 bufferSize = 0;
-      MsgOpReply replyHeader;
       rtnCoordCommand *pCmdProcesser = NULL;
       CHAR *pListReq = NULL;
       SINT64 contextID = -1;
-
-      BSONObj *err = NULL ;
+      rtnContextBuf buffObj ;
 
       rtnCoordProcesserFactory *pProcesserFactory
                = pCoordcb->getProcesserFactory();
@@ -2519,17 +2517,12 @@ namespace engine
                              0, 0, 0, -1, query ) ;
       PD_RC_CHECK( rc, PDERROR, "failed to build list groups request(rc=%d)",
                    rc );
-      rc = pCmdProcesser->execute( pListReq, 0, cb,
-                                   replyHeader, NULL ) ;
-      SDB_ASSERT( NULL == err, "impossible" ) ;
+      rc = pCmdProcesser->execute( (MsgHeader*)pListReq, cb,
+                                   contextID, &buffObj ) ;
       PD_RC_CHECK( rc, PDERROR, "failed to list groups(rc=%d)", rc ) ;
-
-      contextID = replyHeader.contextID ;
 
       while ( TRUE )
       {
-         rtnContextBuf buffObj ;
-
          rc = rtnGetMore( contextID, 1, buffObj, cb, pRtncb ) ;
          if ( rc )
          {

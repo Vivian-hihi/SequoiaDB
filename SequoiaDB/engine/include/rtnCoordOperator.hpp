@@ -264,10 +264,9 @@ namespace engine
       virtual ~rtnCoordOperator(){}
 
    public:
-      virtual INT32        execute( CHAR *pReceiveBuffer,
-                                    SINT32 packSize,
+      virtual INT32        execute( MsgHeader *pMsg,
                                     pmdEDUCB *cb,
-                                    MsgOpReply &replyHeader,
+                                    INT64 &contextID,
                                     rtnContextBuf *buf ) = 0 ;
 
    public:
@@ -361,10 +360,9 @@ namespace engine
    class rtnCoordOperatorDefault : public rtnCoordOperator
    {
    public:
-      virtual INT32        execute( CHAR *pReceiveBuffer,
-                                    SINT32 packSize,
+      virtual INT32        execute( MsgHeader *pMsg,
                                     pmdEDUCB *cb,
-                                    MsgOpReply &replyHeader,
+                                    INT64 &contextID,
                                     rtnContextBuf *buf ) ;
    };
 
@@ -411,10 +409,9 @@ namespace engine
    class rtnCoordMsg : public rtnCoordOperator
    {
    public:
-      virtual INT32 execute( CHAR *pReceiveBuffer,
-                             SINT32 packSize,
+      virtual INT32 execute( MsgHeader *pMsg,
                              pmdEDUCB *cb,
-                             MsgOpReply &replyHeader,
+                             INT64 &contextID,
                              rtnContextBuf *buf ) ;
    } ;
 

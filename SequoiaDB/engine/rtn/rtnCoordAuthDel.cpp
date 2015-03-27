@@ -36,18 +36,16 @@
 
 namespace engine
 {
-   PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOAUTHDEL_EXECUTE, "rtnCoordAuthDel::execute" )
-   INT32 rtnCoordAuthDel::execute( CHAR * pReceiveBuffer,
-                                   SINT32 packSize,
-                                   pmdEDUCB * cb,
-                                   MsgOpReply & replyHeader,
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOAUTHDEL_EXECUTE, "rtnCoordAuthDel::execute" )
+   INT32 rtnCoordAuthDel::execute( MsgHeader *pMsg,
+                                   pmdEDUCB *cb,
+                                   INT64 &contextID,
                                    rtnContextBuf *buf )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNCOAUTHDEL_EXECUTE ) ;
-      rc = forward( pReceiveBuffer, packSize,
-                    cb, MSG_AUTH_DELUSR_RES,
-                    FALSE, replyHeader ) ;
+      rc = forward( pMsg, cb, MSG_AUTH_DELUSR_RES,
+                    FALSE, contextID ) ;
       PD_TRACE_EXITRC ( SDB_RTNCOAUTHDEL_EXECUTE, rc ) ;
       return rc ;
    }

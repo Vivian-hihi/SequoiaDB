@@ -130,10 +130,9 @@ namespace engine
       rtnCoordCommand(){};
       virtual ~rtnCoordCommand(){};
 
-      virtual INT32        execute( CHAR *pReceiveBuffer,
-                                    SINT32 packSize,
+      virtual INT32        execute( MsgHeader *pMsg,
                                     pmdEDUCB *cb,
-                                    MsgOpReply &replyHeader,
+                                    INT64 &contextID,
                                     rtnContextBuf *buf ) { return SDB_SYS ; }
 
    public:
@@ -177,7 +176,7 @@ namespace engine
       INT32         queryOnCatalog( MsgHeader *pMsg,
                                     INT32 requestType,
                                     pmdEDUCB *cb,
-                                    MsgOpReply &replyHeader,
+                                    INT64 &contextID,
                                     rtnContextBuf *buf ) ;
 
       INT32         queryOnCatalog( const rtnQueryOptions &options,
@@ -215,24 +214,22 @@ namespace engine
    class rtnCoordDefaultCommand : public rtnCoordCommand
    {
    public:
-      virtual INT32 execute( CHAR *pReceiveBuffer,
-                             SINT32 packSize,
+      virtual INT32 execute( MsgHeader *pMsg,
                              pmdEDUCB *cb,
-                             MsgOpReply &replyHeader,
+                             INT64 &contextID,
                              rtnContextBuf *buf ) ;
    };
 
    class rtnCoordBackupBase : public rtnCoordCommand
    {
    public:
-      virtual INT32 execute( CHAR *pReceiveBuffer,
-                             SINT32 packSize,
+      virtual INT32 execute( MsgHeader *pMsg,
                              pmdEDUCB *cb,
-                             MsgOpReply &replyHeader,
+                             INT64 &contextID,
                              rtnContextBuf *buf ) ;
 
    protected:
-      INT32          _getFilterFromMsg( CHAR *pReceiveBuffer, SINT32 packSize,
+      INT32          _getFilterFromMsg( MsgHeader *pMsg,
                                         BSONObj &filterObj,
                                         BSONObj *pOrderByObj = NULL,
                                         INT64 *pNumToReturn = NULL,
@@ -271,11 +268,6 @@ namespace engine
 
    class rtnCoordBackupOffline : public rtnCoordBackupBase
    {
-   /*public:
-      INT32 execute( CHAR *pReceiveBuffer, SINT32 packSize,
-                     CHAR **ppResultBuffer, pmdEDUCB *cb,
-                     MsgOpReply &replyHeader,
-                     BSONObj **ppErrorObj ) ;*/
    protected:
       virtual FILTER_BSON_ID  _getGroupMatherIndex () ;
       virtual NODE_SEL_STY    _nodeSelWhenNoFilter () ;
@@ -286,170 +278,184 @@ namespace engine
    class rtnCoordCMDListGroups : public rtnCoordCommand
    {
    public:
-      virtual INT32 execute( CHAR *pReceiveBuffer,
-                             SINT32 packSize,
+      virtual INT32 execute( MsgHeader *pMsg,
                              pmdEDUCB *cb,
-                             MsgOpReply &replyHeader,
+                             INT64 &contextID,
                              rtnContextBuf *buf ) ;
    };
    class rtnCoordCMDSnapshotOnNode : public rtnCoordCommand
    {
    public:
-      virtual INT32 execute( CHAR *pReceiveBuffer,
-                             SINT32 packSize,
+      virtual INT32 execute( MsgHeader *pMsg,
                              pmdEDUCB *cb,
-                             MsgOpReply &replyHeader,
+                             INT64 &contextID,
                              rtnContextBuf *buf ) ;
    private:
       virtual INT32 BuildRequestMsg  ( CHAR **ppBuffer, INT32 *bufferSize,
-                              SINT32 flag, SINT64 numToSkip,
-                              SINT64 numToReturn, bson::BSONObj *query,
-                              bson::BSONObj *fieldSelector,
-                              bson::BSONObj *orderBy,
-                              bson::BSONObj *hint ) = 0;
+                                       SINT32 flag, SINT64 numToSkip,
+                                       SINT64 numToReturn, BSONObj *query,
+                                       BSONObj *fieldSelector,
+                                       BSONObj *orderBy,
+                                       BSONObj *hint ) = 0;
    };
+
    class rtnCoordCMDSnapshotIntrBase : public rtnCoordCommand
    {
    public:
-      virtual INT32 execute( CHAR *pReceiveBuffer,
-                             SINT32 packSize,
+      virtual INT32 execute( MsgHeader *pMsg,
                              pmdEDUCB *cb,
-                             MsgOpReply &replyHeader,
+                             INT64 &contextID,
                              rtnContextBuf *buf ) ;
    private:
-      INT32 getNodes( pmdEDUCB *cb, bson::BSONObj &query, ROUTE_SET &nodes,
-                     bson::BSONObj &newQuery );
+      INT32 getNodes( pmdEDUCB *cb, BSONObj &query,
+                      ROUTE_SET &nodes, BSONObj &newQuery ) ;
+
       virtual INT32 BuildRequestMsg  ( CHAR **ppBuffer, INT32 *bufferSize,
-                              SINT32 flag, SINT64 numToSkip,
-                              SINT64 numToReturn, bson::BSONObj *query,
-                              bson::BSONObj *fieldSelector,
-                              bson::BSONObj *orderBy,
-                              bson::BSONObj *hint ) = 0;
-      INT32 processReply( _pmdEDUCB * pEDUCB, REPLY_QUE &replyQue,
-                        ROUTE_RC_MAP &failedNodes, rtnContextCoord *pContext );
-      INT32 buildFailedNodeReply( ROUTE_RC_MAP &failedNodes, rtnContext *pContext );
+                                       SINT32 flag, SINT64 numToSkip,
+                                       SINT64 numToReturn, BSONObj *query,
+                                       BSONObj *fieldSelector,
+                                       BSONObj *orderBy,
+                                       BSONObj *hint ) = 0 ;
+
+      INT32 processReply( _pmdEDUCB * pEDUCB,
+                          REPLY_QUE &replyQue,
+                          ROUTE_RC_MAP &failedNodes,
+                          rtnContextCoord *pContext );
+
+      INT32 buildFailedNodeReply( ROUTE_RC_MAP &failedNodes,
+                                  rtnContext *pContext ) ;
    };
+
    class rtnCoordCMDSnapshotDBIntr : public rtnCoordCMDSnapshotIntrBase
    {
    private:
       virtual INT32 BuildRequestMsg  ( CHAR **ppBuffer, INT32 *bufferSize,
-                              SINT32 flag, SINT64 numToSkip,
-                              SINT64 numToReturn, bson::BSONObj *query,
-                              bson::BSONObj *fieldSelector,
-                              bson::BSONObj *orderBy,
-                              bson::BSONObj *hint );
+                                       SINT32 flag, SINT64 numToSkip,
+                                       SINT64 numToReturn, BSONObj *query,
+                                       BSONObj *fieldSelector,
+                                       BSONObj *orderBy,
+                                       BSONObj *hint );
    };
+
    class rtnCoordCMDSnapshotSysIntr : public rtnCoordCMDSnapshotIntrBase
    {
    private:
       virtual INT32 BuildRequestMsg  ( CHAR **ppBuffer, INT32 *bufferSize,
-                              SINT32 flag, SINT64 numToSkip,
-                              SINT64 numToReturn, bson::BSONObj *query,
-                              bson::BSONObj *fieldSelector,
-                              bson::BSONObj *orderBy,
-                              bson::BSONObj *hint );
+                                       SINT32 flag, SINT64 numToSkip,
+                                       SINT64 numToReturn, BSONObj *query,
+                                       BSONObj *fieldSelector,
+                                       BSONObj *orderBy,
+                                       BSONObj *hint );
    };
+
    class rtnCoordCMDSnapshotClIntr : public rtnCoordCMDSnapshotIntrBase
    {
    private:
       virtual INT32 BuildRequestMsg  ( CHAR **ppBuffer, INT32 *bufferSize,
-                              SINT32 flag, SINT64 numToSkip,
-                              SINT64 numToReturn, bson::BSONObj *query,
-                              bson::BSONObj *fieldSelector,
-                              bson::BSONObj *orderBy,
-                              bson::BSONObj *hint );
+                                       SINT32 flag, SINT64 numToSkip,
+                                       SINT64 numToReturn, BSONObj *query,
+                                       BSONObj *fieldSelector,
+                                       BSONObj *orderBy,
+                                       BSONObj *hint );
    };
+
    class rtnCoordCMDSnapshotCsIntr : public rtnCoordCMDSnapshotIntrBase
    {
    private:
       virtual INT32 BuildRequestMsg  ( CHAR **ppBuffer, INT32 *bufferSize,
-                              SINT32 flag, SINT64 numToSkip,
-                              SINT64 numToReturn, bson::BSONObj *query,
-                              bson::BSONObj *fieldSelector,
-                              bson::BSONObj *orderBy,
-                              bson::BSONObj *hint );
+                                       SINT32 flag, SINT64 numToSkip,
+                                       SINT64 numToReturn, BSONObj *query,
+                                       BSONObj *fieldSelector,
+                                       BSONObj *orderBy,
+                                       BSONObj *hint );
    };
+
    class rtnCoordCMDSnapshotCtxIntr : public rtnCoordCMDSnapshotIntrBase
    {
    private:
       virtual INT32 BuildRequestMsg  ( CHAR **ppBuffer, INT32 *bufferSize,
-                              SINT32 flag, SINT64 numToSkip,
-                              SINT64 numToReturn, bson::BSONObj *query,
-                              bson::BSONObj *fieldSelector,
-                              bson::BSONObj *orderBy,
-                              bson::BSONObj *hint );
+                                       SINT32 flag, SINT64 numToSkip,
+                                       SINT64 numToReturn, BSONObj *query,
+                                       BSONObj *fieldSelector,
+                                       BSONObj *orderBy,
+                                       BSONObj *hint );
    };
+
    class rtnCoordCMDSnapshotCtxCurIntr : public rtnCoordCMDSnapshotIntrBase
    {
    private:
       virtual INT32 BuildRequestMsg  ( CHAR **ppBuffer, INT32 *bufferSize,
-                              SINT32 flag, SINT64 numToSkip,
-                              SINT64 numToReturn, bson::BSONObj *query,
-                              bson::BSONObj *fieldSelector,
-                              bson::BSONObj *orderBy,
-                              bson::BSONObj *hint );
+                                       SINT32 flag, SINT64 numToSkip,
+                                       SINT64 numToReturn, BSONObj *query,
+                                       BSONObj *fieldSelector,
+                                       BSONObj *orderBy,
+                                       BSONObj *hint );
    };
+
    class rtnCoordCMDSnapshotSessionIntr : public rtnCoordCMDSnapshotIntrBase
    {
    private:
       virtual INT32 BuildRequestMsg  ( CHAR **ppBuffer, INT32 *bufferSize,
-                              SINT32 flag, SINT64 numToSkip,
-                              SINT64 numToReturn, bson::BSONObj *query,
-                              bson::BSONObj *fieldSelector,
-                              bson::BSONObj *orderBy,
-                              bson::BSONObj *hint );
+                                       SINT32 flag, SINT64 numToSkip,
+                                       SINT64 numToReturn, BSONObj *query,
+                                       BSONObj *fieldSelector,
+                                       BSONObj *orderBy,
+                                       BSONObj *hint );
    };
+
    class rtnCoordCMDSnapshotSessionCurIntr : public rtnCoordCMDSnapshotIntrBase
    {
    private:
       virtual INT32 BuildRequestMsg  ( CHAR **ppBuffer, INT32 *bufferSize,
-                              SINT32 flag, SINT64 numToSkip,
-                              SINT64 numToReturn, bson::BSONObj *query,
-                              bson::BSONObj *fieldSelector,
-                              bson::BSONObj *orderBy,
-                              bson::BSONObj *hint );
+                                       SINT32 flag, SINT64 numToSkip,
+                                       SINT64 numToReturn, BSONObj *query,
+                                       BSONObj *fieldSelector,
+                                       BSONObj *orderBy,
+                                       BSONObj *hint );
    };
+
    class rtnCoordCMDSnapshotReset : public rtnCoordCMDSnapshotIntrBase
    {
    private:
       virtual INT32 BuildRequestMsg  ( CHAR **ppBuffer, INT32 *bufferSize,
-                              SINT32 flag, SINT64 numToSkip,
-                              SINT64 numToReturn, bson::BSONObj *query,
-                              bson::BSONObj *fieldSelector,
-                              bson::BSONObj *orderBy,
-                              bson::BSONObj *hint );
+                                       SINT32 flag, SINT64 numToSkip,
+                                       SINT64 numToReturn, BSONObj *query,
+                                       BSONObj *fieldSelector,
+                                       BSONObj *orderBy,
+                                       BSONObj *hint );
    };
+
    class rtnCoordCMDSnapShotBase : public rtnCoordCommand
    {
    public:
-      virtual INT32 execute( CHAR *pReceiveBuffer,
-                             SINT32 packSize,
+      virtual INT32 execute( MsgHeader *pMsg,
                              pmdEDUCB *cb,
-                             MsgOpReply &replyHeader,
+                             INT64 &contextID,
                              rtnContextBuf *buf ) ;
 
    protected:
       virtual INT32 appendObjs( const CHAR *pInputBuffer,
-                              CHAR *&pOutputBuffer,
-                              INT32 &bufferSize,
-                              INT32 &addObjNum,
-                              INT32 &bufUsed );
+                                CHAR *&pOutputBuffer,
+                                INT32 &bufferSize,
+                                INT32 &addObjNum,
+                                INT32 &bufUsed );
 
-      INT32 appendObj( bson::BSONObj &obj,
-                        CHAR *&pOutputBuffer,
-                        INT32 &bufferSize,
-                        INT32 &bufUsed );
+      INT32 appendObj( BSONObj &obj,
+                       CHAR *&pOutputBuffer,
+                       INT32 &bufferSize,
+                       INT32 &bufUsed );
 
    private:
-      INT32 parseMatcher( bson::BSONObj &query,
-                        bson::BSONObj &nodesMatcher,
-                        bson::BSONObj &newMatcher );
+      INT32 parseMatcher( BSONObj &query,
+                          BSONObj &nodesMatcher,
+                          BSONObj &newMatcher );
 
       virtual INT32 generateAggrObjs( CHAR *pInputBuffer,
-                                    CHAR *&pOutputBuffer,
-                                    INT32 &objNum,
-                                    CHAR *&pCLName,
-                                    BSONObj &selector );
+                                      CHAR *&pOutputBuffer,
+                                      INT32 &objNum,
+                                      CHAR *&pCLName,
+                                      BSONObj &selector );
+
       virtual INT32 appendAggrObjs( CHAR *&pOutputBuffer,
                                     INT32 &bufferSize,
                                     INT32 &addObjNum,
@@ -463,6 +469,7 @@ namespace engine
                          pmdEDUCB *cb,
                          SINT64 &contextID ) ;
    };
+
    class rtnCoordCMDSnapshotDataBase: public rtnCoordCMDSnapShotBase
    {
    private:
@@ -472,6 +479,7 @@ namespace engine
                                     INT32 &bufUsed );
       virtual const CHAR *getIntrCMDName();
    };
+
    class rtnCoordCMDSnapshotSystem: public rtnCoordCMDSnapShotBase
    {
    private:
@@ -546,87 +554,90 @@ namespace engine
    {
    private:
       virtual INT32 BuildRequestMsg  ( CHAR **ppBuffer, INT32 *bufferSize,
-                              SINT32 flag, SINT64 numToSkip,
-                              SINT64 numToReturn, bson::BSONObj *query,
-                              bson::BSONObj *fieldSelector,
-                              bson::BSONObj *orderBy,
-                              bson::BSONObj *hint );
+                                       SINT32 flag, SINT64 numToSkip,
+                                       SINT64 numToReturn, BSONObj *query,
+                                       BSONObj *fieldSelector,
+                                       BSONObj *orderBy,
+                                       BSONObj *hint );
    };
+
    class rtnCoordCMDSnapshotSystemTmp : public rtnCoordCMDSnapshotOnNode
    {
    private:
       virtual INT32 BuildRequestMsg  ( CHAR **ppBuffer, INT32 *bufferSize,
-                              SINT32 flag, SINT64 numToSkip,
-                              SINT64 numToReturn, bson::BSONObj *query,
-                              bson::BSONObj *fieldSelector,
-                              bson::BSONObj *orderBy,
-                              bson::BSONObj *hint );
+                                       SINT32 flag, SINT64 numToSkip,
+                                       SINT64 numToReturn, BSONObj *query,
+                                       BSONObj *fieldSelector,
+                                       BSONObj *orderBy,
+                                       BSONObj *hint );
    };
+
    class rtnCoordCMDSnapshotSessionsTmp : public rtnCoordCMDSnapshotOnNode
    {
    private:
       virtual INT32 BuildRequestMsg  ( CHAR **ppBuffer, INT32 *bufferSize,
-                              SINT32 flag, SINT64 numToSkip,
-                              SINT64 numToReturn, bson::BSONObj *query,
-                              bson::BSONObj *fieldSelector,
-                              bson::BSONObj *orderBy,
-                              bson::BSONObj *hint );
+                                       SINT32 flag, SINT64 numToSkip,
+                                       SINT64 numToReturn, BSONObj *query,
+                                       BSONObj *fieldSelector,
+                                       BSONObj *orderBy,
+                                       BSONObj *hint );
    };
+
    class rtnCoordCMDSnapshotContextsTmp : public rtnCoordCMDSnapshotOnNode
    {
    private:
       virtual INT32 BuildRequestMsg  ( CHAR **ppBuffer, INT32 *bufferSize,
-                              SINT32 flag, SINT64 numToSkip,
-                              SINT64 numToReturn, bson::BSONObj *query,
-                              bson::BSONObj *fieldSelector,
-                              bson::BSONObj *orderBy,
-                              bson::BSONObj *hint );
+                                       SINT32 flag, SINT64 numToSkip,
+                                       SINT64 numToReturn, BSONObj *query,
+                                       BSONObj *fieldSelector,
+                                       BSONObj *orderBy,
+                                       BSONObj *hint );
    };
+
    class rtnCoordCMDSnapshotCollectionsTmp : public rtnCoordCommand
    {
    public :
-      virtual INT32 execute( CHAR *pReceiveBuffer,
-                             SINT32 packSize,
+      virtual INT32 execute( MsgHeader *pMsg,
                              pmdEDUCB *cb,
-                             MsgOpReply &replyHeader,
+                             INT64 &contextID,
                              rtnContextBuf *buf ) ;
    };
+
    class rtnCoordCMDSnapshotCollectionSpacesTmp : public rtnCoordCommand
    {
    public:
-      virtual INT32 execute( CHAR *pReceiveBuffer,
-                             SINT32 packSize,
+      virtual INT32 execute( MsgHeader *pMsg,
                              pmdEDUCB *cb,
-                             MsgOpReply &replyHeader,
+                             INT64 &contextID,
                              rtnContextBuf *buf ) ;
    };
+
    class rtnCoordCMDSnapshotResetTmp : public rtnCoordCMDSnapshotOnNode
    {
    private:
       virtual INT32 BuildRequestMsg  ( CHAR **ppBuffer, INT32 *bufferSize,
-                              SINT32 flag, SINT64 numToSkip,
-                              SINT64 numToReturn, bson::BSONObj *query,
-                              bson::BSONObj *fieldSelector,
-                              bson::BSONObj *orderBy,
-                              bson::BSONObj *hint );
-   };
+                                       SINT32 flag, SINT64 numToSkip,
+                                       SINT64 numToReturn, BSONObj *query,
+                                       BSONObj *fieldSelector,
+                                       BSONObj *orderBy,
+                                       BSONObj *hint );
+   } ;
+
    class rtnCoordCMDCreateCollectionSpace : public rtnCoordCommand
    {
    public:
-      virtual INT32 execute( CHAR *pReceiveBuffer,
-                             SINT32 packSize,
+      virtual INT32 execute( MsgHeader *pMsg,
                              pmdEDUCB *cb,
-                             MsgOpReply &replyHeader,
+                             INT64 &contextID,
                              rtnContextBuf *buf ) ;
-   };
+   } ;
 
    class rtnCoordCMDCreateCollection : public rtnCoordCommand
    {
    public:
-      virtual INT32 execute( CHAR *pReceiveBuffer,
-                             SINT32 packSize,
+      virtual INT32 execute( MsgHeader *pMsg,
                              pmdEDUCB *cb,
-                             MsgOpReply &replyHeader,
+                             INT64 &contextID,
                              rtnContextBuf *buf ) ;
 
    private:
@@ -638,20 +649,18 @@ namespace engine
    class rtnCoordCMDAlterCollection : public rtnCoordCommand
    {
    public :
-      virtual INT32 execute( CHAR *pReceiveBuffer,
-                             SINT32 packSize,
+      virtual INT32 execute( MsgHeader *pMsg,
                              pmdEDUCB *cb,
-                             MsgOpReply &replyHeader,
+                             INT64 &contextID,
                              rtnContextBuf *buf ) ;
    } ;
 
    class rtnCoordCMD2PhaseCommit : public rtnCoordCommand
    {
    public:
-      virtual INT32 execute( CHAR *pReceiveBuffer,
-                             SINT32 packSize,
+      virtual INT32 execute( MsgHeader *pMsg,
                              pmdEDUCB *cb,
-                             MsgOpReply &replyHeader,
+                             INT64 &contextID,
                              rtnContextBuf *buf ) ;
    protected:
       virtual void  getIgnoreRCList( SET_RC &ignoreRCList );
@@ -662,10 +671,6 @@ namespace engine
                                   string &clName ) = 0 ;
 
    private:
-      virtual void fillReply( MsgHeader *pSrcMsg,
-                              INT32 rc, 
-                              MsgOpReply &replyHeader );
-
       virtual INT32 doP1OnDataGroup( CHAR *pReceiveBuffer,
                                      pmdEDUCB *cb,
                                      SINT64 &contextID,
@@ -725,11 +730,12 @@ namespace engine
                                           netMultiRouteAgent *pRouteAgent,
                                           pmdEDUCB *cb,
                                           rtnContextCoord *pContext );
-      virtual INT32 execute( CHAR *pReceiveBuffer,
-                             SINT32 packSize,
+
+      virtual INT32 execute( MsgHeader *pMsg,
                              pmdEDUCB *cb,
-                             MsgOpReply &replyHeader,
+                             INT64 &contextID,
                              rtnContextBuf *buf ) ;
+
       virtual INT32 buildQueryRequest( CHAR *pIntput,
                                        pmdEDUCB *cb,
                                        CHAR **pOutput ) = 0;
@@ -762,40 +768,36 @@ namespace engine
    class rtnCoordCMDTestCollectionSpace : public rtnCoordCommand
    {
    public:
-      virtual INT32 execute( CHAR *pReceiveBuffer,
-                             SINT32 packSize,
+      virtual INT32 execute( MsgHeader *pMsg,
                              pmdEDUCB *cb,
-                             MsgOpReply &replyHeader,
+                             INT64 &contextID,
                              rtnContextBuf *buf ) ;
    };
 
    class rtnCoordCMDTestCollection : public rtnCoordCommand
    {
    public:
-      virtual INT32 execute( CHAR *pReceiveBuffer,
-                             SINT32 packSize,
+      virtual INT32 execute( MsgHeader *pMsg,
                              pmdEDUCB *cb,
-                             MsgOpReply &replyHeader,
+                             INT64 &contextID,
                              rtnContextBuf *buf ) ;
    };
 
    class rtnCoordCMDCreateGroup : public rtnCoordCommand
    {
    public:
-      virtual INT32 execute( CHAR *pReceiveBuffer,
-                             SINT32 packSize,
+      virtual INT32 execute( MsgHeader *pMsg,
                              pmdEDUCB *cb,
-                             MsgOpReply &replyHeader,
+                             INT64 &contextID,
                              rtnContextBuf *buf ) ;
    };
 
    class rtnCoordCMDRemoveGroup : public rtnCoordCommand
    {
    public:
-      virtual INT32 execute( CHAR *pReceiveBuffer,
-                             SINT32 packSize,
+      virtual INT32 execute( MsgHeader *pMsg,
                              pmdEDUCB *cb,
-                             MsgOpReply &replyHeader,
+                             INT64 &contextID,
                              rtnContextBuf *buf ) ;
    };
 
@@ -811,10 +813,9 @@ namespace engine
                                  public rtnCoordCMDConfigNode
    {
    public:
-      virtual INT32 execute( CHAR *pReceiveBuffer,
-                             SINT32 packSize,
+      virtual INT32 execute( MsgHeader *pMsg,
                              pmdEDUCB *cb,
-                             MsgOpReply &replyHeader,
+                             INT64 &contextID,
                              rtnContextBuf *buf ) ;
    };
 
@@ -822,10 +823,9 @@ namespace engine
                                  public rtnCoordCMDConfigNode
    {
    public:
-      virtual INT32 execute( CHAR *pReceiveBuffer,
-                             SINT32 packSize,
+      virtual INT32 execute( MsgHeader *pMsg,
                              pmdEDUCB *cb,
-                             MsgOpReply &replyHeader,
+                             INT64 &contextID,
                              rtnContextBuf *buf ) ;
 
    private:
@@ -839,10 +839,9 @@ namespace engine
                                  public rtnCoordCMDConfigNode
    {
    public:
-      virtual INT32 execute( CHAR *pReceiveBuffer,
-                             SINT32 packSize,
+      virtual INT32 execute( MsgHeader *pMsg,
                              pmdEDUCB *cb,
-                             MsgOpReply &replyHeader,
+                             INT64 &contextID,
                              rtnContextBuf *buf ) ;
    };
 
@@ -850,10 +849,9 @@ namespace engine
    class rtnCoordCMDActiveGroup : public rtnCoordCommand
    {
    public:
-      virtual INT32 execute( CHAR *pReceiveBuffer,
-                             SINT32 packSize,
+      virtual INT32 execute( MsgHeader *pMsg,
                              pmdEDUCB *cb,
-                             MsgOpReply &replyHeader,
+                             INT64 &contextID,
                              rtnContextBuf *buf ) ;
    private:
       INT32 startNodes( BSONObj &boGroupInfo,
@@ -867,10 +865,9 @@ namespace engine
    class rtnCoordCMDCreateIndex : public rtnCoordCommand
    {
    public:
-      virtual INT32 execute( CHAR *pReceiveBuffer,
-                             SINT32 packSize,
+      virtual INT32 execute( MsgHeader *pMsg,
                              pmdEDUCB *cb,
-                             MsgOpReply &replyHeader,
+                             INT64 &contextID,
                              rtnContextBuf *buf ) ;
 
    protected:
@@ -883,20 +880,18 @@ namespace engine
    class rtnCoordCMDDropIndex : public rtnCoordCommand
    {
    public:
-      virtual INT32 execute( CHAR *pReceiveBuffer,
-                             SINT32 packSize,
+      virtual INT32 execute( MsgHeader *pMsg,
                              pmdEDUCB *cb,
-                             MsgOpReply &replyHeader,
+                             INT64 &contextID,
                              rtnContextBuf *buf ) ;
    };
 
    class rtnCoordCMDOperateOnNode : public rtnCoordCommand
    {
    public:
-      virtual INT32 execute( CHAR *pReceiveBuffer,
-                             SINT32 packSize,
+      virtual INT32 execute( MsgHeader *pMsg,
                              pmdEDUCB *cb,
-                             MsgOpReply &replyHeader,
+                             INT64 &contextID,
                              rtnContextBuf *buf ) ;
       virtual SINT32 getOpType()=0;
    };
@@ -916,13 +911,14 @@ namespace engine
    class rtnCoordCMDOperateOnGroup : public rtnCoordCommand
    {
    public:
-      virtual INT32 execute( CHAR *pReceiveBuffer,
-                             SINT32 packSize,
+      virtual INT32 execute( MsgHeader *pMsg,
                              pmdEDUCB *cb,
-                             MsgOpReply &replyHeader,
+                             INT64 &contextID,
                              rtnContextBuf *buf ) ;
-      INT32 opOnGroup( bson::BSONObj &boGroupInfo );
-      virtual SINT32 getOpType()=0;
+
+      INT32 opOnGroup( BSONObj &boGroupInfo ) ;
+
+      virtual SINT32 getOpType() = 0 ;
    };
 
    class rtnCoordCMDShutdownGroup : public rtnCoordCMDOperateOnGroup
@@ -934,10 +930,9 @@ namespace engine
    class rtnCoordCMDSplit : public rtnCoordCommand
    {
    public :
-      virtual INT32 execute( CHAR *pReceiveBuffer,
-                             SINT32 packSize,
+      virtual INT32 execute( MsgHeader *pMsg,
                              pmdEDUCB *cb,
-                             MsgOpReply &replyHeader,
+                             INT64 &contextID,
                              rtnContextBuf *buf ) ;
 
       INT32         getCLCount( const CHAR *clFullName,
@@ -978,40 +973,36 @@ namespace engine
    class rtnCoordCmdWaitTask : public rtnCoordCommand
    {
    public:
-      virtual INT32 execute( CHAR *pReceiveBuffer,
-                             SINT32 packSize,
+      virtual INT32 execute( MsgHeader *pMsg,
                              pmdEDUCB *cb,
-                             MsgOpReply &replyHeader,
+                             INT64 &contextID,
                              rtnContextBuf *buf ) ;
    } ;
 
    class rtnCoordCmdListTask : public rtnCoordCommand
    {
    public:
-      virtual INT32 execute( CHAR *pReceiveBuffer,
-                             SINT32 packSize,
+      virtual INT32 execute( MsgHeader *pMsg,
                              pmdEDUCB *cb,
-                             MsgOpReply &replyHeader,
+                             INT64 &contextID,
                              rtnContextBuf *buf ) ;
    } ;
 
    class rtnCoordCmdCancelTask : public rtnCoordCommand
    {
    public:
-      virtual INT32 execute( CHAR *pReceiveBuffer,
-                             SINT32 packSize,
+      virtual INT32 execute( MsgHeader *pMsg,
                              pmdEDUCB *cb,
-                             MsgOpReply &replyHeader,
+                             INT64 &contextID,
                              rtnContextBuf *buf ) ;
    } ;
 
    class rtnCoordCMDStatisticsBase : virtual public rtnCoordCommand
    {
    public :
-      virtual INT32 execute( CHAR *pReceiveBuffer,
-                             SINT32 packSize,
+      virtual INT32 execute( MsgHeader *pMsg,
                              pmdEDUCB *cb,
-                             MsgOpReply &replyHeader,
+                             INT64 &contextID,
                              rtnContextBuf *buf ) ;
    private:
       virtual INT32 generateResult( rtnContext *pContext,
@@ -1052,10 +1043,9 @@ namespace engine
    class rtnCoordCMDCreateCataGroup : public rtnCoordCommand
    {
    public:
-      virtual INT32 execute( CHAR *pReceiveBuffer,
-                             SINT32 packSize,
+      virtual INT32 execute( MsgHeader *pMsg,
                              pmdEDUCB *cb,
-                             MsgOpReply &replyHeader,
+                             INT64 &contextID,
                              rtnContextBuf *buf ) ;
    private:
       INT32 getNodeConf( CHAR *pQuery, bson::BSONObj &boNodeConfig );
@@ -1065,50 +1055,45 @@ namespace engine
    class rtnCoordCMDTraceStart : public rtnCoordCommand
    {
    public :
-      virtual INT32 execute( CHAR *pReceiveBuffer,
-                             SINT32 packSize,
+      virtual INT32 execute( MsgHeader *pMsg,
                              pmdEDUCB *cb,
-                             MsgOpReply &replyHeader,
+                             INT64 &contextID,
                              rtnContextBuf *buf ) ;
    } ;
 
    class rtnCoordCMDTraceResume : public rtnCoordCommand
    {
    public :
-      virtual INT32 execute( CHAR *pReceiveBuffer,
-                             SINT32 packSize,
+      virtual INT32 execute( MsgHeader *pMsg,
                              pmdEDUCB *cb,
-                             MsgOpReply &replyHeader,
+                             INT64 &contextID,
                              rtnContextBuf *buf ) ;
    } ;
 
    class rtnCoordCMDTraceStop : public rtnCoordCommand
    {
    public :
-      virtual INT32 execute( CHAR *pReceiveBuffer,
-                             SINT32 packSize,
+      virtual INT32 execute( MsgHeader *pMsg,
                              pmdEDUCB *cb,
-                             MsgOpReply &replyHeader,
+                             INT64 &contextID,
                              rtnContextBuf *buf ) ;
    } ;
 
    class rtnCoordCMDTraceStatus : public rtnCoordCommand
    {
    public :
-      virtual INT32 execute( CHAR *pReceiveBuffer,
-                             SINT32 packSize,
+      virtual INT32 execute( MsgHeader *pMsg,
                              pmdEDUCB *cb,
-                             MsgOpReply &replyHeader,
+                             INT64 &contextID,
                              rtnContextBuf *buf ) ;
    } ;
 
    class rtnCoordCMDExpConfig : public rtnCoordCommand
    {
    public :
-      virtual INT32 execute( CHAR *pReceiveBuffer,
-                             SINT32 packSize,
+      virtual INT32 execute( MsgHeader *pMsg,
                              pmdEDUCB *cb,
-                             MsgOpReply &replyHeader,
+                             INT64 &contextID,
                              rtnContextBuf *buf ) ;
 
    private:
@@ -1118,20 +1103,18 @@ namespace engine
    class rtnCoordCMDCrtProcedure : public rtnCoordCommand
    {
    public:
-      virtual INT32 execute( CHAR *pReceiveBuffer,
-                             SINT32 packSize,
+      virtual INT32 execute( MsgHeader *pMsg,
                              pmdEDUCB *cb,
-                             MsgOpReply &replyHeader,
+                             INT64 &contextID,
                              rtnContextBuf *buf ) ;
    } ;
 
    class rtnCoordCMDEval : public rtnCoordCommand
    {
    public:
-      virtual INT32 execute( CHAR *pReceiveBuffer,
-                             SINT32 packSize,
+      virtual INT32 execute( MsgHeader *pMsg,
                              pmdEDUCB *cb,
-                             MsgOpReply &replyHeader,
+                             INT64 &contextID,
                              rtnContextBuf *buf ) ;
    private:
       INT32 _buildContext( _spdSession *session,
@@ -1142,10 +1125,9 @@ namespace engine
    class rtnCoordCMDRmProcedure : public rtnCoordCommand
    {
    public:
-      virtual INT32 execute( CHAR *pReceiveBuffer,
-                             SINT32 packSize,
+      virtual INT32 execute( MsgHeader *pMsg,
                              pmdEDUCB *cb,
-                             MsgOpReply &replyHeader,
+                             INT64 &contextID,
                              rtnContextBuf *buf ) ;
    } ;
 
@@ -1160,80 +1142,72 @@ namespace engine
    class rtnCoordCMDLinkCollection : public rtnCoordCommand
    {
    public:
-      virtual INT32 execute( CHAR *pReceiveBuffer,
-                             SINT32 packSize,
+      virtual INT32 execute( MsgHeader *pMsg,
                              pmdEDUCB *cb,
-                             MsgOpReply &replyHeader,
+                             INT64 &contextID,
                              rtnContextBuf *buf ) ;
    };
 
    class rtnCoordCMDUnlinkCollection : public rtnCoordCommand
    {
    public:
-      virtual INT32 execute( CHAR *pReceiveBuffer,
-                             SINT32 packSize,
+      virtual INT32 execute( MsgHeader *pMsg,
                              pmdEDUCB *cb,
-                             MsgOpReply &replyHeader,
+                             INT64 &contextID,
                              rtnContextBuf *buf ) ;
    };
 
    class rtnCoordCMDSetSessionAttr : public rtnCoordCommand
    {
    public:
-      virtual INT32 execute( CHAR *pReceiveBuffer,
-                             SINT32 packSize,
+      virtual INT32 execute( MsgHeader *pMsg,
                              pmdEDUCB *cb,
-                             MsgOpReply &replyHeader,
+                             INT64 &contextID,
                              rtnContextBuf *buf ) ;
    };
 
    class rtnCoordCMDCreateDomain : public rtnCoordCommand
    {
    public:
-      virtual INT32 execute( CHAR *pReceiveBuffer,
-                             SINT32 packSize,
+      virtual INT32 execute( MsgHeader *pMsg,
                              pmdEDUCB *cb,
-                             MsgOpReply &replyHeader,
+                             INT64 &contextID,
                              rtnContextBuf *buf ) ;
    } ;
 
    class rtnCoordCMDDropDomain : public rtnCoordCommand
    {
    public:
-      virtual INT32 execute( CHAR *pReceiveBuffer,
-                             SINT32 packSize,
+      virtual INT32 execute( MsgHeader *pMsg,
                              pmdEDUCB *cb,
-                             MsgOpReply &replyHeader,
+                             INT64 &contextID,
                              rtnContextBuf *buf ) ;
    } ;
 
    class rtnCoordCMDAlterDomain : public rtnCoordCommand
    {
    public:
-      virtual INT32 execute( CHAR *pReceiveBuffer,
-                             SINT32 packSize,
+      virtual INT32 execute( MsgHeader *pMsg,
                              pmdEDUCB *cb,
-                             MsgOpReply &replyHeader,
+                             INT64 &contextID,
                              rtnContextBuf *buf ) ;
    } ;
 
    class rtnCoordCMDAddDomainGroup : public rtnCoordCommand
    {
    public:
-      virtual INT32 execute( CHAR *pReceiveBuffer,
-                             SINT32 packSize,
+      virtual INT32 execute( MsgHeader *pMsg,
                              pmdEDUCB *cb,
-                             MsgOpReply &replyHeader,
+                             INT64 &contextID,
                              rtnContextBuf *buf ) ;
    } ;
 
    class rtnCoordCMDRemoveDomainGroup : public rtnCoordCommand
    {
    public:
-      virtual INT32 execute( CHAR *pReceiveBuffer,
-                             SINT32 packSize,
+      virtual INT32 execute( MsgHeader *pMsg,
                              pmdEDUCB *cb,
-                             MsgOpReply &replyHeader,
+                             INT64 &contextID,
                              rtnContextBuf *buf ) ;
    } ;
 
@@ -1257,10 +1231,9 @@ namespace engine
    class rtnCoordCMDListCLInDomain : public rtnCoordCommand
    {
    public:
-      virtual INT32 execute( CHAR *pReceiveBuffer,
-                             SINT32 packSize,
+      virtual INT32 execute( MsgHeader *pMsg,
                              pmdEDUCB *cb,
-                             MsgOpReply &replyHeader,
+                             INT64 &contextID,
                              rtnContextBuf *buf ) ;
 
    private:
@@ -1286,30 +1259,27 @@ namespace engine
    class rtnCoordCMDInvalidateCache : public rtnCoordCMDOnMultiNodes
    {
    public:
-      virtual INT32 execute( CHAR *pReceiveBuffer,
-                             SINT32 packSize,
+      virtual INT32 execute( MsgHeader *pMsg,
                              pmdEDUCB *cb,
-                             MsgOpReply &replyHeader,
+                             INT64 &contextID,
                              rtnContextBuf *buf ) ;
    } ;
 
    class rtnCoordCMDListLobs : public rtnCoordCommand
    {
    public:
-      virtual INT32 execute( CHAR *pReceiveBuffer,
-                             SINT32 packSize,
+      virtual INT32 execute( MsgHeader *pMsg,
                              pmdEDUCB *cb,
-                             MsgOpReply &replyHeader,
+                             INT64 &contextID,
                              rtnContextBuf *buf ) ;
    } ;
 
    class rtnCoordCMDReelection : public rtnCoordCommand
    {
    public:
-      virtual INT32 execute( CHAR *pReceiveBuffer,
-                             SINT32 packSize,
+      virtual INT32 execute( MsgHeader *pMsg,
                              pmdEDUCB *cb,
-                             MsgOpReply &replyHeader,
+                             INT64 &contextID,
                              rtnContextBuf *buf ) ;
    } ;
 

@@ -75,7 +75,6 @@ namespace engine
 
       CHAR *msg = NULL ;
       INT32 bufSize = 0 ;
-      MsgOpReply reply ;
 
       if ( -1 != _contextID )
       {
@@ -94,15 +93,15 @@ namespace engine
       }
 
       rc = _command->queryOnCatalog( (MsgHeader*)msg, MSG_BS_QUERY_REQ,
-                                     _cb, reply, NULL ) ;
+                                     _cb, _contextID, NULL ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to query on catalog:%d", rc ) ;
          goto error ;
       }
 
-      SDB_ASSERT( -1 != reply.contextID, "impossible" ) ;
-      _contextID = reply.contextID ;
+      SDB_ASSERT( -1 != _contextID, "impossible" ) ;
+
    done:
       if ( NULL != msg )
       {

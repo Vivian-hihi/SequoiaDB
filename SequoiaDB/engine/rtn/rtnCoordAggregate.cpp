@@ -42,31 +42,21 @@
 using namespace bson;
 namespace engine
 {
-   INT32 rtnCoordAggregate::execute( CHAR *pReceiveBuffer,
-                                     SINT32 packSize,
+   INT32 rtnCoordAggregate::execute( MsgHeader *pMsg,
                                      pmdEDUCB *cb,
-                                     MsgOpReply &replyHeader,
+                                     INT64 &contextID,
                                      rtnContextBuf *buf )
    {
       INT32 rc = SDB_OK;
-      MsgHeader *pHeader = (MsgHeader *)pReceiveBuffer;
       CHAR *pCollectionName = NULL;
       CHAR *pObjs = NULL;
       INT32 count = 0;
       BSONObj objs;
-      SINT64 contextID = -1;
 
-      replyHeader.contextID = -1;
-      replyHeader.flags = SDB_OK;
-      replyHeader.numReturned = 0;
-      replyHeader.startFrom = 0;
-      replyHeader.header.messageLength = sizeof( MsgOpReply );
-      replyHeader.header.opCode = MSG_BS_AGGREGATE_RSP;
-      replyHeader.header.requestID = pHeader->requestID;
-      replyHeader.header.routeID.value = 0;
-      replyHeader.header.TID = pHeader->TID;
+      contextID = -1 ;
 
-      rc = msgExtractAggrRequest( pReceiveBuffer, &pCollectionName, &pObjs, count );
+      rc = msgExtractAggrRequest( (CHAR*)pMsg, &pCollectionName,
+                                  &pObjs, count ) ;
       PD_RC_CHECK( rc, PDERROR, "failed to parse aggregate request(rc=%d)", rc );
 
       try
@@ -84,11 +74,15 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR,
                   "failed to execute aggregation operation(rc=%d)",
                   rc );
-      replyHeader.contextID = contextID;
+
    done:
       return rc;
    error:
-      replyHeader.flags = rc;
+      if ( contextID >= 0 )
+      {
+         pmdGetKRCB()->getRTNCB()->contextDelete( contextID, cb ) ;
+         contextID = -1 ;
+      }
       goto done;
    }
 }

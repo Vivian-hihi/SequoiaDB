@@ -205,7 +205,6 @@ namespace engine
       INT32 rc = SDB_OK ;
       INT32 bufSize = 0 ;
       CHAR *qMsg = NULL ;
-      MsgOpReply dummyReply ;
       BSONObj *err = NULL ;
       BSONObj selector = _selector.selector() ;
 
@@ -220,13 +219,11 @@ namespace engine
          goto error ;
       }
 
-      rc = _coordQuery.execute ( qMsg, *(SINT32*)qMsg, eduCB,
-                                 dummyReply, NULL ) ;
+      rc = _coordQuery.execute ( (MsgHeader*)qMsg, eduCB,
+                                 _contextID, NULL ) ;
       SDB_ASSERT( NULL == err, "impossible" ) ;
       PD_RC_CHECK ( rc, PDERROR,
                     "Failed to execute coordQuery, rc = %d", rc ) ;
-
-      _contextID = dummyReply.contextID ;
 
    done:
       if ( NULL != qMsg )

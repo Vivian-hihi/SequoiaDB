@@ -427,7 +427,7 @@ namespace engine
    INT32 rtnCoordCommand::queryOnCatalog( MsgHeader *pMsg,
                                           INT32 requestType,
                                           pmdEDUCB *cb,
-                                          MsgOpReply &replyHeader,
+                                          INT64 &contextID,
                                           rtnContextBuf *buf )
    {
       INT32 rc                         = SDB_OK ;
@@ -435,15 +435,7 @@ namespace engine
       rtnContextCoord *pContext        = NULL ;
 
       // fill default-reply(list success)
-      replyHeader.header.messageLength = sizeof(MsgOpReply);
-      replyHeader.header.opCode        = MSG_BS_QUERY_RES;
-      replyHeader.header.requestID     = pMsg->requestID;
-      replyHeader.header.routeID.value = 0;
-      replyHeader.header.TID           = pMsg->TID;
-      replyHeader.contextID            = -1;
-      replyHeader.flags                = SDB_OK;
-      replyHeader.numReturned          = 0;
-      replyHeader.startFrom            = 0;
+      contextID = -1 ;
 
       // forward source request to dest
       pMsg->opCode                     = requestType ;
@@ -458,10 +450,9 @@ namespace engine
       }
 
    done :
-      replyHeader.flags = rc ;
       if ( pContext )
       {
-         replyHeader.contextID = pContext->contextID() ;
+         contextID = pContext->contextID() ;
       }
       return rc ;
    error :
@@ -486,7 +477,7 @@ namespace engine
 
       CHAR *msgBuf = NULL ;
       INT32 msgBufLen = 0 ;
-      MsgOpReply replyHeader ;
+      contextID = -1 ;
 
       rc = msgBuildQueryMsg( &msgBuf, &msgBufLen, options._fullName,
                              options._flag, 0, options._skip,
@@ -501,13 +492,12 @@ namespace engine
       }
 
       rc = queryOnCatalog( (MsgHeader*)msgBuf, MSG_BS_QUERY_REQ, cb,
-                           replyHeader, NULL ) ;
+                           contextID, NULL ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Query on catalog group failed, rc: %d", rc ) ;
          goto error ;
       }
-      contextID = replyHeader.contextID ;
 
    done:
       if ( NULL != msgBuf )
@@ -626,29 +616,18 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCODEFCOM_EXE, "rtnCoordDefaultCommand::execute" )
-   INT32 rtnCoordDefaultCommand::execute( CHAR *pReceiveBuffer,
-                                          SINT32 packSize,
+   INT32 rtnCoordDefaultCommand::execute( MsgHeader *pMsg,
                                           pmdEDUCB *cb,
-                                          MsgOpReply &replyHeader,
+                                          INT64 &contextID,
                                           rtnContextBuf *buf )
    {
       PD_TRACE_ENTRY ( SDB_RTNCODEFCOM_EXE ) ;
-      MsgOpQuery *pQueryReq            = (MsgOpQuery *)pReceiveBuffer;
-      replyHeader.header.messageLength = sizeof(MsgOpReply);
-      replyHeader.header.opCode        = MSG_BS_QUERY_RES;
-      replyHeader.header.requestID     = pQueryReq->header.requestID;
-      replyHeader.header.routeID.value = 0;
-      replyHeader.header.TID           = pQueryReq->header.TID;
-      replyHeader.contextID            = -1;
-      replyHeader.flags                = SDB_COORD_UNKNOWN_OP_REQ ;
-      replyHeader.numReturned          = 0;
-      replyHeader.startFrom            = 0;
+      contextID = -1 ;
       PD_TRACE_EXIT ( SDB_RTNCODEFCOM_EXE ) ;
       return SDB_COORD_UNKNOWN_OP_REQ ;
    }
 
-   INT32 rtnCoordBackupBase::_getFilterFromMsg( CHAR *pReceiveBuffer,
-                                                SINT32 packSize,
+   INT32 rtnCoordBackupBase::_getFilterFromMsg( MsgHeader *pMsg,
                                                 BSONObj &filterObj,
                                                 BSONObj *pOrderByObj,
                                                 INT64 *pNumToReturn,
@@ -664,9 +643,9 @@ namespace engine
       CHAR *pOrderBy = NULL ;
       CHAR *pHint = NULL ;
       CHAR *pParseData = NULL ;
-      MsgOpQuery *pQueryMsg = (MsgOpQuery*)pReceiveBuffer ;
+      MsgOpQuery *pQueryMsg = (MsgOpQuery*)pMsg ;
 
-      rc = msgExtractQuery( pReceiveBuffer, &flag, &pCollectionName, &numToSkip,
+      rc = msgExtractQuery( (CHAR*)pMsg, &flag, &pCollectionName, &numToSkip,
                             &numToReturn, &pQuery, &pSelector, &pOrderBy,
                             &pHint ) ;
       PD_RC_CHECK( rc, PDERROR, "Extract query msg failed, rc: %d", rc ) ;
@@ -852,10 +831,9 @@ namespace engine
       goto done ;
    }
 
-   INT32 rtnCoordBackupBase::execute( CHAR *pReceiveBuffer,
-                                      SINT32 packSize,
+   INT32 rtnCoordBackupBase::execute( MsgHeader *pMsg,
                                       pmdEDUCB *cb,
-                                      MsgOpReply &replyHeader,
+                                      INT64 &contextID,
                                       rtnContextBuf *buf )
    {
       INT32 rc = SDB_OK ;
@@ -866,22 +844,11 @@ namespace engine
 
       INT32 rcTmp = SDB_OK ;
       REPLY_QUE replyQue ;
-      SINT64 contextID = -1 ;
+      contextID = -1 ;
       rtnContextCoord *pContext = NULL ;
 
-      // fill default-reply
-      MsgHeader *pHeader               = (MsgHeader *)pReceiveBuffer ;
-      replyHeader.header.messageLength = sizeof( MsgOpReply ) ;
-      replyHeader.header.opCode        = MSG_BS_QUERY_RES ;
-      replyHeader.header.requestID     = pHeader->requestID ;
-      replyHeader.header.routeID.value = 0 ;
-      replyHeader.header.TID           = pHeader->TID ;
-      replyHeader.contextID            = -1 ;
-      replyHeader.flags                = SDB_OK ;
-      replyHeader.numReturned          = 0 ;
-      replyHeader.startFrom            = 0 ;
       // set tid
-      pHeader->TID = cb->getTID() ;
+      pMsg->TID = cb->getTID() ;
 
       BSONObj filterObj ;
       BSONObj orderBy ;
@@ -896,7 +863,7 @@ namespace engine
       ROUTE_RC_MAP failedNodes ;
 
       // get filter obj
-      rc = _getFilterFromMsg( pReceiveBuffer, packSize, filterObj, &orderBy,
+      rc = _getFilterFromMsg( pMsg, filterObj, &orderBy,
                               &numToReturn, &numToSkip ) ;
       PD_RC_CHECK( rc, PDWARNING, "Failed to get filter obj, rc: %d", rc ) ;
 
@@ -937,7 +904,7 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR, "Failed to open context, rc: %d", rc ) ;
       }
       // send backup msg
-      rtnCoordSendRequestToNodes( pReceiveBuffer, sendNodes, 
+      rtnCoordSendRequestToNodes( (void*)pMsg, sendNodes, 
                                   pRouteAgent, cb, successNodes,
                                   failedNodes ) ;
       rcTmp = rtnCoordGetReply( cb, successNodes, replyQue, MSG_BS_QUERY_RES,
@@ -963,8 +930,6 @@ namespace engine
          }
       }
 
-      replyHeader.contextID = contextID ;
-
    done:
       while ( !replyQue.empty() )
       {
@@ -976,10 +941,10 @@ namespace engine
       return rc ;
    error:
       rtnCoordClearRequest( cb, successNodes ) ;
-      replyHeader.flags = rc ;
       if ( contextID >= 0 )
       {
          pRtncb->contextDelete( contextID, cb ) ;
+         contextID = -1 ;
       }
       goto done ;
    }
@@ -1044,106 +1009,40 @@ namespace engine
       return FALSE ;
    }
 
-  /* INT32 rtnCoordBackupOffline::execute( CHAR *pReceiveBuffer, SINT32 packSize,
-                                         CHAR **ppResultBuffer, pmdEDUCB *cb,
-                                         MsgOpReply &replyHeader,
-                                         BSONObj **ppErrorObj )
-   {
-      INT32 rc          = SDB_OK ;
-      pmdKRCB *pKrcb                   = pmdGetKRCB() ;
-      CoordCB *pCoordcb                = pKrcb->getCoordCB() ;
-      netMultiRouteAgent *pRouteAgent  = pCoordcb->getRouteAgent() ;
-
-      // fill default-reply
-      MsgHeader *pHeader               = (MsgHeader *)pReceiveBuffer;
-      replyHeader.header.messageLength = sizeof( MsgOpReply );
-      replyHeader.header.opCode        = MSG_BS_QUERY_RES;
-      replyHeader.header.requestID     = pHeader->requestID;
-      replyHeader.header.routeID.value = 0;
-      replyHeader.header.TID           = pHeader->TID;
-      replyHeader.contextID            = -1;
-      replyHeader.flags                = SDB_OK;
-      replyHeader.numReturned          = 0;
-      replyHeader.startFrom            = 0;
-
-      CoordGroupList allGroupLst ;
-      CoordGroupList groupLst ;
-      CoordGroupList sendGroupLst ;
-
-      pHeader->TID = cb->getTID() ;
-
-      // 1. list all groups
-      rc = rtnCoordGetAllGroupList( cb, allGroupLst ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to get all group list, rc: %d", rc ) ;
-
-      // 2. parse groups from msg
-      rc = rtnCoordParseGroupList( cb, (MsgOpQuery*)pReceiveBuffer,
-                                   FILTER_ID_MATCHER, groupLst ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to parse groups, rc: %d", rc ) ;
-
-      // 3. if no group, will send to all groups
-      if ( groupLst.size() == 0 )
-      {
-         groupLst = allGroupLst ;
-      }
-
-      // 4. execute on gorups
-      rc = executeOnDataGroup( pHeader, groupLst, sendGroupLst, pRouteAgent,
-                               cb, NULL ) ;
-      PD_RC_CHECK( rc, PDWARNING, "Backup in some group failed, rc: %d", rc ) ;
-
-   done:
-      replyHeader.flags = rc ;
-      return rc ;
-   error:
-      goto done ;
-   }*/
-
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDLISTGRS_EXE, "rtnCoordCMDListGroups::execute" )
-   INT32 rtnCoordCMDListGroups::execute( CHAR *pReceiveBuffer,
-                                         SINT32 packSize,
+   INT32 rtnCoordCMDListGroups::execute( MsgHeader *pMsg,
                                          pmdEDUCB *cb,
-                                         MsgOpReply &replyHeader,
+                                         INT64 &contextID,
                                          rtnContextBuf *buf )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNCOCMDLISTGRS_EXE ) ;
-      rc = queryOnCatalog ( (MsgHeader*)pReceiveBuffer,
+      rc = queryOnCatalog ( pMsg,
                             MSG_CAT_QUERY_DATA_GRP_REQ,
                             cb,
-                            replyHeader,
+                            contextID,
                             buf ) ;
       PD_TRACE_EXITRC ( SDB_RTNCOCMDLISTGRS_EXE, rc ) ;
       return rc ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDCRCS_EXE, "rtnCoordCMDCreateCollectionSpace::execute" )
-   INT32 rtnCoordCMDCreateCollectionSpace::execute( CHAR *pReceiveBuffer,
-                                                    SINT32 packSize,
+   INT32 rtnCoordCMDCreateCollectionSpace::execute( MsgHeader *pMsg,
                                                     pmdEDUCB *cb,
-                                                    MsgOpReply &replyHeader,
+                                                    INT64 &contextID,
                                                     rtnContextBuf *buf )
    {
       INT32 rc                         = SDB_OK;
       PD_TRACE_ENTRY ( SDB_RTNCOCMDCRCS_EXE ) ;
 
       // fill default-reply
-      MsgHeader *pHeader               = (MsgHeader *)pReceiveBuffer;
-      replyHeader.header.messageLength = sizeof( MsgOpReply );
-      replyHeader.header.opCode        = MSG_BS_QUERY_RES;
-      replyHeader.header.requestID     = pHeader->requestID;
-      replyHeader.header.routeID.value = 0;
-      replyHeader.header.TID           = pHeader->TID;
-      replyHeader.contextID            = -1;
-      replyHeader.flags                = SDB_OK;
-      replyHeader.numReturned          = 0;
-      replyHeader.startFrom            = 0;
+      contextID                        = -1 ;
 
-      MsgOpQuery *pCreateReq           = (MsgOpQuery *)pReceiveBuffer;
+      MsgOpQuery *pCreateReq           = (MsgOpQuery *)pMsg;
       pCreateReq->header.opCode        = MSG_CAT_CREATE_COLLECTION_SPACE_REQ;
 
       // execute create collection on catalog
-      rc = executeOnCataGroup ( pHeader, cb, TRUE ) ;
+      rc = executeOnCataGroup ( pMsg, cb, TRUE ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "create collectionspace failed, rc = %d", rc ) ;
@@ -1151,7 +1050,6 @@ namespace engine
       }
 
    done :
-      replyHeader.flags = rc ;
       PD_TRACE_EXITRC ( SDB_RTNCOCMDCRCS_EXE, rc ) ;
       return rc;
    error :
@@ -1159,27 +1057,17 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDALCL_EXE, "rtnCoordCMDAlterCollection::execute" )
-   INT32 rtnCoordCMDAlterCollection::execute( CHAR *pReceiveBuffer,
-                                              SINT32 packSize,
+   INT32 rtnCoordCMDAlterCollection::execute( MsgHeader *pMsg,
                                               pmdEDUCB *cb,
-                                              MsgOpReply &replyHeader,
+                                              INT64 &contextID,
                                               rtnContextBuf *buf )
    {
       INT32 rc                         = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNCOCMDALCL_EXE ) ;
       // fill default-reply
-      MsgHeader *pHeader               = (MsgHeader *)pReceiveBuffer;
-      replyHeader.header.messageLength = sizeof( MsgOpReply );
-      replyHeader.header.opCode        = MSG_BS_QUERY_RES;
-      replyHeader.header.requestID     = pHeader->requestID;
-      replyHeader.header.routeID.value = 0;
-      replyHeader.header.TID           = pHeader->TID;
-      replyHeader.contextID            = -1;
-      replyHeader.flags                = SDB_OK;
-      replyHeader.numReturned          = 0;
-      replyHeader.startFrom            = 0;
+      contextID                        = -1 ;
 
-      MsgOpQuery *pAlterReq            = (MsgOpQuery *)pReceiveBuffer ;
+      MsgOpQuery *pAlterReq            = (MsgOpQuery *)pMsg ;
       pAlterReq->header.opCode         = MSG_CAT_ALTER_COLLECTION_REQ ;
 
       CoordGroupList groupList ;
@@ -1187,7 +1075,7 @@ namespace engine
       CHAR *queryBuf                   = NULL ;
       SET_RC ignoreRC ;
 
-      rc = msgExtractQuery( pReceiveBuffer, NULL, NULL,
+      rc = msgExtractQuery( (CHAR*)pMsg, NULL, NULL,
                             NULL, NULL, &queryBuf,
                             NULL, NULL, NULL ) ;
       if ( SDB_OK != rc )
@@ -1218,7 +1106,7 @@ namespace engine
       }
 
       // send request to catalog
-      rc = executeOnCataGroup( pHeader, cb, &groupList ) ;
+      rc = executeOnCataGroup( pMsg, cb, &groupList ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "alter collection failed on catalog, rc = %d",
@@ -1231,7 +1119,7 @@ namespace engine
       ignoreRC.insert( SDB_MAIN_CL_OP_ERR ) ;
       ignoreRC.insert( SDB_CLS_COORD_NODE_CAT_VER_OLD ) ;
 
-      rc = executeOnCL( pHeader, cb, fullName, TRUE, &groupList,
+      rc = executeOnCL( pMsg, cb, fullName, TRUE, &groupList,
                         &ignoreRC, NULL ) ;
       if ( rc )
       {
@@ -1242,7 +1130,6 @@ namespace engine
       }
 
    done :
-      replyHeader.flags = rc;
       PD_TRACE_EXITRC ( SDB_RTNCOCMDALCL_EXE, rc ) ;
       return rc;
    error :
@@ -1250,28 +1137,18 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDCRCL_EXE, "rtnCoordCMDCreateCollection::execute" )
-   INT32 rtnCoordCMDCreateCollection::execute( CHAR *pReceiveBuffer,
-                                               SINT32 packSize,
+   INT32 rtnCoordCMDCreateCollection::execute( MsgHeader *pMsg,
                                                pmdEDUCB *cb,
-                                               MsgOpReply &replyHeader,
+                                               INT64 &contextID,
                                                rtnContextBuf *buf )
    {
       INT32 rc                         = SDB_OK;
       PD_TRACE_ENTRY ( SDB_RTNCOCMDCRCL_EXE ) ;
 
       // fill default-reply(delete success)
-      MsgHeader *pHeader               = (MsgHeader *)pReceiveBuffer;
-      replyHeader.header.messageLength = sizeof( MsgOpReply );
-      replyHeader.header.opCode        = MSG_BS_QUERY_RES;
-      replyHeader.header.requestID     = pHeader->requestID;
-      replyHeader.header.routeID.value = 0;
-      replyHeader.header.TID           = pHeader->TID;
-      replyHeader.contextID            = -1;
-      replyHeader.flags                = SDB_OK;
-      replyHeader.numReturned          = 0;
-      replyHeader.startFrom            = 0;
+      contextID                        = -1 ;
 
-      MsgOpQuery *pCreateReq           = (MsgOpQuery *)pReceiveBuffer;
+      MsgOpQuery *pCreateReq           = (MsgOpQuery *)pMsg;
       pCreateReq->header.opCode        = MSG_CAT_CREATE_COLLECTION_REQ ;
 
       CoordGroupList groupLst ;
@@ -1288,7 +1165,7 @@ namespace engine
          BSONElement beShardingKey ;
          BSONElement eleName ;
 
-         rc = msgExtractQuery( pReceiveBuffer, NULL, NULL,
+         rc = msgExtractQuery( (CHAR*)pMsg, NULL, NULL,
                                NULL, NULL, &pQuery,
                                NULL, NULL, NULL ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to parse the "
@@ -1329,7 +1206,7 @@ namespace engine
       // send request to catalog
       if ( !isMainCL )
       {
-         rc = executeOnCataGroup ( pHeader, cb, &groupLst, &replyFromCata ) ;
+         rc = executeOnCataGroup ( pMsg, cb, &groupLst, &replyFromCata ) ;
          if ( rc )
          {
             PD_LOG ( PDERROR, "create collection failed on catalog, rc = %d",
@@ -1338,7 +1215,7 @@ namespace engine
          }
 
          pCreateReq->header.opCode = MSG_BS_QUERY_REQ ;
-         rc = executeOnCL( pHeader, cb, pCollectionName, TRUE, &groupLst,
+         rc = executeOnCL( pMsg, cb, pCollectionName, TRUE, &groupLst,
                            NULL, NULL ) ;
          if ( rc )
          {
@@ -1349,7 +1226,7 @@ namespace engine
       }
       else
       {
-         rc = executeOnCataGroup ( pHeader, cb, TRUE ) ;
+         rc = executeOnCataGroup ( pMsg, cb, TRUE ) ;
          if ( rc )
          {
             PD_LOG ( PDERROR, "create collection failed on catalog, rc = %d",
@@ -1378,7 +1255,6 @@ namespace engine
       }
 
    done :
-      replyHeader.flags = rc ;
       PD_TRACE_EXITRC ( SDB_RTNCOCMDCRCL_EXE, rc ) ;
       return rc;
    error :
@@ -1404,7 +1280,7 @@ namespace engine
       CoordGroupList groupList ;
       MsgOpQuery *msgHeader = NULL ;
       INT32 everRc = SDB_OK ;
-      MsgOpReply replyHeader ;
+      INT64 contextID = -1  ;
       vector<BSONObj>::const_iterator itr ;
 
       CoordCB *coordCb = pmdGetKRCB()->getCoordCB () ;
@@ -1486,8 +1362,7 @@ namespace engine
          goto error ;
       }
 
-      rc = cmd->execute( buffer, bufferLen,
-                         cb, replyHeader, NULL ) ;
+      rc = cmd->execute( (MsgHeader*)buffer, cb, contextID, NULL ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to wait task done:%d", rc ) ;
@@ -1508,10 +1383,9 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDSSONNODE_EXE, "rtnCoordCMDSnapshotOnNode::execute" )
-   INT32 rtnCoordCMDSnapshotOnNode::execute( CHAR *pReceiveBuffer,
-                                             SINT32 packSize,
+   INT32 rtnCoordCMDSnapshotOnNode::execute( MsgHeader *pMsg,
                                              pmdEDUCB *cb,
-                                             MsgOpReply &replyHeader,
+                                             INT64 &contextID,
                                              rtnContextBuf *buf )
    {
       INT32 rc = SDB_OK;
@@ -1520,19 +1394,8 @@ namespace engine
       SDB_RTNCB *pRtncb                = pKrcb->getRTNCB();
       CoordCB *pCoordcb                = pKrcb->getCoordCB();
       netMultiRouteAgent *pRouteAgent  = pCoordcb->getRouteAgent();
-      SINT64 contextID                 = -1;
+      contextID                        = -1;
 
-      // fill default-reply(snapshot success)
-      MsgHeader*pHeader                = (MsgHeader *)pReceiveBuffer;
-      replyHeader.header.messageLength = sizeof( MsgOpReply );
-      replyHeader.header.opCode        = MSG_BS_QUERY_RES;
-      replyHeader.header.requestID     = pHeader->requestID;
-      replyHeader.header.routeID.value = 0;
-      replyHeader.header.TID           = pHeader->TID;
-      replyHeader.contextID            = -1;
-      replyHeader.flags                = SDB_OK;
-      replyHeader.numReturned          = 0;
-      replyHeader.startFrom            = 0;
       do
       {
          INT32 flag = 0;
@@ -1543,9 +1406,9 @@ namespace engine
          CHAR *pFieldSelector = NULL;
          CHAR *pOrderBy = NULL;
          CHAR *pHint = NULL;
-         MsgOpQuery *pSrc = (MsgOpQuery *)pReceiveBuffer;
+         MsgOpQuery *pSrc = (MsgOpQuery *)pMsg;
 
-         rc = msgExtractQuery( pReceiveBuffer, &flag, &pCollectionName,
+         rc = msgExtractQuery( (CHAR*)pMsg, &flag, &pCollectionName,
                                &numToSkip, &numToReturn, &pQuery,
                                &pFieldSelector, &pOrderBy, &pHint );
          if ( rc != SDB_OK )
@@ -1741,23 +1604,19 @@ namespace engine
             SDB_OSS_FREE( pSnapshotReq );
          }
       }while ( FALSE ) ;
-      replyHeader.flags = rc;
-      if ( SDB_OK == rc  )
+
+      if ( rc && contextID >= 0 )
       {
-         replyHeader.contextID = contextID;
-      }
-      else if ( contextID >= 0 )
-      {
-         pRtncb->contextDelete( contextID, cb );
+         pRtncb->contextDelete( contextID, cb ) ;
+         contextID = -1 ;
       }
       PD_TRACE_EXITRC ( SDB_RTNCOCMDSSONNODE_EXE, rc ) ;
       return rc ;
    }
 
-   INT32 rtnCoordCMDSnapshotIntrBase::execute( CHAR *pReceiveBuffer,
-                                               SINT32 packSize,
+   INT32 rtnCoordCMDSnapshotIntrBase::execute( MsgHeader *pMsg,
                                                pmdEDUCB *cb,
-                                               MsgOpReply &replyHeader,
+                                               INT64 &contextID,
                                                rtnContextBuf *buf )
    {
       INT32 rc = SDB_OK ;
@@ -1772,7 +1631,7 @@ namespace engine
       CHAR *pSnapshotReq = NULL;
       INT32 bufferSize = 0;
       REPLY_QUE replyQue;
-      SINT64 contextID = -1;
+      contextID = -1;
 
       INT32 flag = 0;
       CHAR *pCollectionName = NULL;
@@ -1790,18 +1649,7 @@ namespace engine
       BSONObj newQuery;
       rtnContextCoord *pContext = NULL ;
 
-      MsgHeader *pHeader = (MsgHeader *)pReceiveBuffer;
-      replyHeader.header.messageLength = sizeof( MsgOpReply );
-      replyHeader.header.opCode = MSG_BS_QUERY_RES;
-      replyHeader.header.requestID = pHeader->requestID;
-      replyHeader.header.routeID.value = 0;
-      replyHeader.header.TID = pHeader->TID;
-      replyHeader.contextID = -1;
-      replyHeader.flags = SDB_OK;
-      replyHeader.numReturned = 0;
-      replyHeader.startFrom = 0;
-
-      rc = msgExtractQuery( pReceiveBuffer, &flag, &pCollectionName,
+      rc = msgExtractQuery( (CHAR*)pMsg, &flag, &pCollectionName,
                             &numToSkip, &numToReturn, &pQuery,
                             &pFieldSelector, &pOrderBy, &pHint );
       PD_RC_CHECK( rc, PDERROR, "Snapshot failed, failed to parse query "
@@ -1875,7 +1723,6 @@ namespace engine
          PD_LOG( PDERROR, "failed to build error reply(rc=%d)", rcTmp );
          goto error ;
       }
-      replyHeader.contextID = contextID ;
 
    done:
       SAFE_OSS_FREE( pSnapshotReq );
@@ -1889,10 +1736,10 @@ namespace engine
       return rc;
    error:
       rtnCoordClearRequest( cb, successNodes );
-      replyHeader.flags = rc;
       if ( contextID >= 0 )
       {
          pRtncb->contextDelete( contextID, cb );
+         contextID = -1 ;
       }
       goto done ;
    }
@@ -2384,33 +2231,31 @@ namespace engine
    // not broadcast to data node. Instead it works like ListGroups, which sends
    // request to catalog
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDSSCLS_EXE, "rtnCoordCMDSnapshotCollections::execute" )
-   INT32 rtnCoordCMDSnapshotCollectionsTmp::execute( CHAR *pReceiveBuffer,
-                                                     SINT32 packSize,
+   INT32 rtnCoordCMDSnapshotCollectionsTmp::execute( MsgHeader *pMsg,
                                                      pmdEDUCB *cb,
-                                                     MsgOpReply &replyHeader,
+                                                     INT64 &contextID,
                                                      rtnContextBuf *buf )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNCOCMDSSCLS_EXE ) ;
-      rc = queryOnCatalog ( (MsgHeader*)pReceiveBuffer,
+      rc = queryOnCatalog ( pMsg,
                             MSG_CAT_QUERY_COLLECTIONS_REQ,
-                            cb, replyHeader, buf ) ;
+                            cb, contextID, buf ) ;
       PD_TRACE_EXITRC ( SDB_RTNCOCMDSSCLS_EXE, rc ) ;
       return rc ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDSSCSS_EXE, "rtnCoordCMDSnapshotCollectionSpaces::execute" )
-   INT32 rtnCoordCMDSnapshotCollectionSpacesTmp::execute( CHAR *pReceiveBuffer,
-                                                          SINT32 packSize,
+   INT32 rtnCoordCMDSnapshotCollectionSpacesTmp::execute( MsgHeader *pMsg,
                                                           pmdEDUCB *cb,
-                                                          MsgOpReply &replyHeader,
+                                                          INT64 &contextID,
                                                           rtnContextBuf *buf )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNCOCMDSSCSS_EXE ) ;
-      rc = queryOnCatalog ( (MsgHeader*)pReceiveBuffer,
+      rc = queryOnCatalog ( pMsg,
                             MSG_CAT_QUERY_COLLECTIONSPACES_REQ,
-                            cb, replyHeader, buf ) ;
+                            cb, contextID, buf ) ;
       PD_TRACE_EXITRC ( SDB_RTNCOCMDSSCSS_EXE, rc ) ;
       return rc ;
    }
@@ -2437,39 +2282,38 @@ namespace engine
    }
 
    //PD_TRACE_DECLARE_FUNCTION (SDB_RTNCOCMD2PC_EXE, "rtnCoordCMD2PhaseCommit::execute" )
-   INT32 rtnCoordCMD2PhaseCommit::execute( CHAR *pReceiveBuffer,
-                                           SINT32 packSize,
+   INT32 rtnCoordCMD2PhaseCommit::execute( MsgHeader *pMsg,
                                            pmdEDUCB *cb,
-                                           MsgOpReply &replyHeader,
+                                           INT64 &contextID,
                                            rtnContextBuf *buf )
    {
       INT32 rc = SDB_OK;
       PD_TRACE_ENTRY ( SDB_RTNCOCMD2PC_EXE ) ;
-      SINT64 contextID = -1 ;
       pmdKRCB *pKrcb = pmdGetKRCB();
       _SDB_RTNCB *pRtncb = pKrcb->getRTNCB();
       SET_RC ignoreRCList ;
 
+      contextID = -1 ;
       getIgnoreRCList( ignoreRCList ) ;
 
       // phase 1
-      rc = doP1OnDataGroup( pReceiveBuffer, cb, contextID, ignoreRCList ) ;
+      rc = doP1OnDataGroup( (CHAR*)pMsg, cb, contextID, ignoreRCList ) ;
       PD_RC_CHECK( rc, PDERROR,
                    "Failed to execute phase1 on data group(rc=%d)",
                    rc );
 
-      rc = doOnCataGroup( pReceiveBuffer, cb );
+      rc = doOnCataGroup( (CHAR*)pMsg, cb );
       PD_RC_CHECK( rc, PDERROR,
                    "Failed to execute on cata group(rc=%d)",
                    rc );
 
       // phase 2
-      rc = doP2OnDataGroup( pReceiveBuffer, cb, contextID );
+      rc = doP2OnDataGroup( (CHAR*)pMsg, cb, contextID );
       PD_RC_CHECK( rc, PDERROR,
                    "Failed to execute phase2 on data group(rc=%d)",
                    rc ) ;
 
-      rc = complete( pReceiveBuffer, cb ) ;
+      rc = complete( (CHAR*)pMsg, cb ) ;
       PD_RC_CHECK( rc, PDERROR,
                    "Failed to complete the operation(rc=%d)",
                    rc ) ;
@@ -2480,8 +2324,6 @@ namespace engine
          pRtncb->contextDelete ( contextID, cb ) ;
          contextID = -1 ;
       }
-      fillReply( (MsgHeader *)pReceiveBuffer, rc,
-                  replyHeader ) ;
       PD_TRACE_EXITRC ( SDB_RTNCOCMD2PC_EXE, rc ) ;
       return rc;
    error:
@@ -2496,22 +2338,6 @@ namespace engine
                                             pmdEDUCB * cb )
    {
       return SDB_OK;
-   }
-
-   void rtnCoordCMD2PhaseCommit::fillReply( MsgHeader *pSrcMsg,
-                                            INT32 rc,
-                                            MsgOpReply &replyHeader )
-   {
-      replyHeader.header.messageLength = sizeof( MsgOpReply );
-      replyHeader.header.opCode        = MSG_BS_QUERY_RES;
-      replyHeader.header.requestID     = pSrcMsg->requestID;
-      replyHeader.header.routeID.value = 0;
-      replyHeader.header.TID           = pSrcMsg->TID;
-      replyHeader.contextID            = -1;
-      replyHeader.flags                = rc;
-      replyHeader.numReturned          = 0;
-      replyHeader.startFrom            = 0;
-
    }
 
    //PD_TRACE_DECLARE_FUNCTION (SDB_RTNCOCMD2PC_DOP1, "rtnCoordCMD2PhaseCommit::doP1OnDataGroup" )
@@ -2900,10 +2726,9 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDQUBASE_EXE, "rtnCoordCMDQueryBase::execute" )
-   INT32 rtnCoordCMDQueryBase::execute( CHAR *pReceiveBuffer,
-                                        SINT32 packSize,
+   INT32 rtnCoordCMDQueryBase::execute( MsgHeader *pMsg,
                                         pmdEDUCB *cb,
-                                        MsgOpReply &replyHeader,
+                                        INT64 &contextID,
                                         rtnContextBuf *buf )
    {
       INT32 rc                         = SDB_OK;
@@ -2912,23 +2737,12 @@ namespace engine
       SDB_RTNCB *pRtncb                = pKrcb->getRTNCB();
       CoordCB *pCoordcb                = pKrcb->getCoordCB();
       netMultiRouteAgent *pRouteAgent  = pCoordcb->getRouteAgent();
-      SINT64 contextID                 = -1;
 
-      // fill default-reply(List success)
-      MsgHeader *pHeader               = (MsgHeader *)pReceiveBuffer;
-      replyHeader.header.messageLength = sizeof( MsgOpReply );
-      replyHeader.header.opCode        = MSG_BS_QUERY_RES;
-      replyHeader.header.requestID     = pHeader->requestID;
-      replyHeader.header.routeID.value = 0;
-      replyHeader.header.TID           = pHeader->TID;
-      replyHeader.contextID            = -1;
-      replyHeader.flags                = SDB_OK;
-      replyHeader.numReturned          = 0;
-      replyHeader.startFrom            = 0;
+      contextID                 = -1;
 
       do
       {
-         MsgOpQuery *pSrc = (MsgOpQuery *)pReceiveBuffer;
+         MsgOpQuery *pSrc = (MsgOpQuery *)pMsg;
          rtnContextCoord *pContext = NULL ;
          rc = pRtncb->contextNew( RTN_CONTEXT_COORD, (rtnContext**)&pContext,
                                   contextID, cb );
@@ -2946,7 +2760,7 @@ namespace engine
          }
 
          CHAR *pListReq = NULL;
-         rc = buildQueryRequest( pReceiveBuffer, cb, &pListReq );
+         rc = buildQueryRequest( (CHAR*)pMsg, cb, &pListReq );
          if ( rc != SDB_OK )
          {
             PD_LOG ( PDERROR,
@@ -2966,20 +2780,14 @@ namespace engine
                      rc );
             break;
          }
-      }while ( FALSE );
+      }while ( FALSE ) ;
 
-      replyHeader.flags = rc;
-      if ( rc != SDB_OK )
+      if ( rc != SDB_OK && contextID >= 0 )
       {
-         if ( contextID >= 0 )
-         {
-            pRtncb->contextDelete( contextID, cb );
-         }
+         pRtncb->contextDelete( contextID, cb );
+         contextID = -1 ;
       }
-      else
-      {
-         replyHeader.contextID = contextID;
-      }
+
       PD_TRACE_EXITRC ( SDB_RTNCOCMDQUBASE_EXE, rc ) ;
       return rc;
    }
@@ -3119,10 +2927,9 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDTESTCS_EXE, "rtnCoordCMDTestCollectionSpace::execute" )
-   INT32 rtnCoordCMDTestCollectionSpace::execute( CHAR *pReceiveBuffer,
-                                                  SINT32 packSize,
+   INT32 rtnCoordCMDTestCollectionSpace::execute( MsgHeader *pMsg,
                                                   pmdEDUCB *cb,
-                                                  MsgOpReply &replyHeader,
+                                                  INT64 &contextID,
                                                   rtnContextBuf *buf )
    {
       INT32 rc = SDB_OK;
@@ -3130,7 +2937,7 @@ namespace engine
       pmdKRCB *pKrcb                   = pmdGetKRCB();
       SDB_RTNCB *pRtncb                = pKrcb->getRTNCB();
       CoordCB *pCoordcb                = pKrcb->getCoordCB();
-      replyHeader.contextID = -1 ;
+      contextID = -1 ;
 
       do
       {
@@ -3140,8 +2947,7 @@ namespace engine
          pCmdProcesser = pProcesserFactory->getCommandProcesser(
             COORD_CMD_LISTCOLLECTIONSPACES ) ;
          SDB_ASSERT( pCmdProcesser , "pCmdProcesser can't be NULL" ) ;
-         rc = pCmdProcesser->execute( pReceiveBuffer, packSize,
-                                      cb, replyHeader, NULL ) ;
+         rc = pCmdProcesser->execute( pMsg, cb, contextID, buf ) ;
          if ( rc != SDB_OK )
          {
             PD_LOG ( PDERROR, "Failed to list collectionspaces(rc=%d)", rc ) ;
@@ -3150,11 +2956,11 @@ namespace engine
 
          // get more
          rtnContextBuf buffObj ;
-         rc = rtnGetMore( replyHeader.contextID, -1, buffObj, cb, pRtncb ) ;
+         rc = rtnGetMore( contextID, -1, buffObj, cb, pRtncb ) ;
 
          if ( rc )
          {
-            replyHeader.contextID = -1 ;
+            contextID = -1 ;
             if ( SDB_DMS_EOC == rc )
             {
                rc = SDB_DMS_CS_NOTEXIST ;
@@ -3166,23 +2972,19 @@ namespace engine
          }
       }while ( FALSE ) ;
 
-      if ( replyHeader.contextID >= 0 )
+      if ( contextID >= 0 )
       {
-         pRtncb->contextDelete( replyHeader.contextID, cb ) ;
-         replyHeader.contextID = -1 ;
+         pRtncb->contextDelete( contextID, cb ) ;
+         contextID = -1 ;
       }
-      replyHeader.flags = rc ;
-      replyHeader.numReturned = 0 ;
-      replyHeader.header.messageLength = sizeof( MsgOpReply ) ;
       PD_TRACE_EXITRC ( SDB_RTNCOCMDTESTCS_EXE, rc ) ;
       return rc;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDTESTCL_EXE, "rtnCoordCMDTestCollection::execute" )
-   INT32 rtnCoordCMDTestCollection::execute( CHAR *pReceiveBuffer,
-                                             SINT32 packSize,
+   INT32 rtnCoordCMDTestCollection::execute( MsgHeader *pMsg,
                                              pmdEDUCB *cb,
-                                             MsgOpReply &replyHeader,
+                                             INT64 &contextID,
                                              rtnContextBuf *buf )
    {
       INT32 rc = SDB_OK;
@@ -3190,6 +2992,7 @@ namespace engine
       pmdKRCB *pKrcb                   = pmdGetKRCB() ;
       SDB_RTNCB *pRtncb                = pKrcb->getRTNCB() ;
       CoordCB *pCoordcb                = pKrcb->getCoordCB() ;
+      contextID                        = -1 ;
 
       do
       {
@@ -3199,8 +3002,7 @@ namespace engine
          pCmdProcesser = pProcesserFactory->getCommandProcesser(
             COORD_CMD_LISTCOLLECTIONS ) ;
          SDB_ASSERT( pCmdProcesser , "pCmdProcesser can't be NULL" ) ;
-         rc = pCmdProcesser->execute( pReceiveBuffer, packSize,
-                                      cb, replyHeader, NULL ) ;
+         rc = pCmdProcesser->execute( pMsg, cb, contextID, buf ) ;
          if ( rc != SDB_OK )
          {
             PD_LOG ( PDERROR, "Failed to list collections(rc=%d)", rc ) ;
@@ -3208,10 +3010,10 @@ namespace engine
          }
 
          rtnContextBuf buffObj ;
-         rc = rtnGetMore( replyHeader.contextID, -1, buffObj, cb, pRtncb ) ;
+         rc = rtnGetMore( contextID, -1, buffObj, cb, pRtncb ) ;
          if ( rc )
          {
-            replyHeader.contextID = -1 ;
+            contextID = -1 ;
             if ( SDB_DMS_EOC == rc )
             {
                rc = SDB_DMS_NOTEXIST;
@@ -3223,50 +3025,38 @@ namespace engine
          }
       }while ( FALSE );
 
-      if ( replyHeader.contextID >= 0 )
+      if ( contextID >= 0 )
       {
-         pRtncb->contextDelete( replyHeader.contextID, cb ) ;
-         replyHeader.contextID = -1 ;
+         pRtncb->contextDelete( contextID, cb ) ;
+         contextID = -1 ;
       }
-      replyHeader.flags = rc ;
-      replyHeader.numReturned = 0 ;
-      replyHeader.header.messageLength = sizeof( MsgOpReply ) ;
+
       PD_TRACE_EXITRC ( SDB_RTNCOCMDTESTCL_EXE, rc ) ;
       return rc;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDCTGR, "rtnCoordCMDCreateGroup::execute" )
-   INT32 rtnCoordCMDCreateGroup::execute( CHAR *pReceiveBuffer,
-                                          SINT32 packSize,
+   INT32 rtnCoordCMDCreateGroup::execute( MsgHeader *pMsg,
                                           pmdEDUCB *cb,
-                                          MsgOpReply &replyHeader,
+                                          INT64 &contextID,
                                           rtnContextBuf *buf )
    {
       INT32 rc                         = SDB_OK;
       PD_TRACE_ENTRY ( SDB_RTNCOCMDCTGR ) ;
       // fill default-reply(create group success)
-      MsgHeader *pHeader               = (MsgHeader *)pReceiveBuffer;
-      replyHeader.header.messageLength = sizeof( MsgOpReply );
-      replyHeader.header.opCode        = MSG_BS_QUERY_RES;
-      replyHeader.header.requestID     = pHeader->requestID;
-      replyHeader.header.routeID.value = 0;
-      replyHeader.header.TID           = pHeader->TID;
-      replyHeader.contextID            = -1;
-      replyHeader.flags                = SDB_OK;
-      replyHeader.numReturned          = 0;
-      replyHeader.startFrom            = 0;
+      contextID                        = -1 ;
 
-      MsgOpQuery *pCreateReq = (MsgOpQuery *)pReceiveBuffer ;
+      MsgOpQuery *pCreateReq = (MsgOpQuery *)pMsg ;
       pCreateReq->header.opCode = MSG_CAT_CREATE_GROUP_REQ ;
 
-      rc = executeOnCataGroup ( pHeader, cb, TRUE ) ;
+      rc = executeOnCataGroup ( pMsg, cb, TRUE ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "Failed to execute on catalog, rc = %d", rc ) ;
          goto error ;
       }
+
    done :
-      replyHeader.flags = rc;
       PD_TRACE_EXITRC ( SDB_RTNCOCMDCTGR, rc ) ;
       return rc;
    error :
@@ -3274,10 +3064,9 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDRMR, "rtnCoordCMDRemoveGroup::execute" )
-   INT32 rtnCoordCMDRemoveGroup::execute( CHAR *pReceiveBuffer,
-                                          SINT32 packSize,
+   INT32 rtnCoordCMDRemoveGroup::execute( MsgHeader *pMsg,
                                           pmdEDUCB *cb,
-                                          MsgOpReply &replyHeader,
+                                          INT64 &contextID,
                                           rtnContextBuf *buf )
    {
       INT32 rc                         = SDB_OK;
@@ -3286,22 +3075,13 @@ namespace engine
       CHAR *pQuery = NULL;
 
       // fill default-reply(remove group success)
-      MsgHeader *pHeader               = (MsgHeader *)pReceiveBuffer;
-      replyHeader.header.messageLength = sizeof( MsgOpReply );
-      replyHeader.header.opCode        = MSG_BS_QUERY_RES;
-      replyHeader.header.requestID     = pHeader->requestID;
-      replyHeader.header.routeID.value = 0;
-      replyHeader.header.TID           = pHeader->TID;
-      replyHeader.contextID            = -1;
-      replyHeader.flags                = SDB_OK;
-      replyHeader.numReturned          = 0;
-      replyHeader.startFrom            = 0;
+      contextID            = -1 ;
 
-      MsgOpQuery *forward = (MsgOpQuery *)pReceiveBuffer;
+      MsgOpQuery *forward  = (MsgOpQuery *)pMsg;
       forward->header.opCode = MSG_CAT_RM_GROUP_REQ;
       CoordGroupInfoPtr group;
 
-      rc = msgExtractQuery( pReceiveBuffer, NULL, NULL,
+      rc = msgExtractQuery( (CHAR*)pMsg, NULL, NULL,
                             NULL, NULL, &pQuery,
                             NULL, NULL, NULL );
       try
@@ -3335,7 +3115,7 @@ namespace engine
       }
 
       /// exec on catalog
-      rc = executeOnCataGroup ( pHeader, cb, TRUE ) ;
+      rc = executeOnCataGroup ( pMsg, cb, TRUE ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "Failed to execute on catalog, rc = %d", rc ) ;
@@ -3414,8 +3194,8 @@ namespace engine
          goto error ;
       }
       }
+
    done:
-      replyHeader.flags = rc;
       PD_TRACE_EXITRC ( SDB_RTNCOCMDRMR, rc ) ;
       return rc ;
    error:
@@ -3612,26 +3392,16 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDCTN_EXE, "rtnCoordCMDCreateNode::execute" )
-   INT32 rtnCoordCMDCreateNode::execute( CHAR *pReceiveBuffer,
-                                         SINT32 packSize,
+   INT32 rtnCoordCMDCreateNode::execute( MsgHeader *pMsg,
                                          pmdEDUCB *cb,
-                                         MsgOpReply &replyHeader,
+                                         INT64 &contextID,
                                          rtnContextBuf *buf )
    {
       INT32 rc                         = SDB_OK;
       PD_TRACE_ENTRY ( SDB_RTNCOCMDCTN_EXE ) ;
 
       // fill default-reply(create group success)
-      MsgHeader *pHeader               = (MsgHeader *)pReceiveBuffer;
-      replyHeader.header.messageLength = sizeof( MsgOpReply );
-      replyHeader.header.opCode        = MSG_BS_QUERY_RES;
-      replyHeader.header.requestID     = pHeader->requestID;
-      replyHeader.header.routeID.value = 0;
-      replyHeader.header.TID           = pHeader->TID;
-      replyHeader.contextID            = -1;
-      replyHeader.flags                = SDB_OK;
-      replyHeader.numReturned          = 0;
-      replyHeader.startFrom            = 0;
+      contextID                        = -1 ;
 
       do
       {
@@ -3643,7 +3413,7 @@ namespace engine
          CHAR *pFieldSelector = NULL ;
          CHAR *pOrderBy = NULL ;
          CHAR *pHint = NULL ;
-         rc = msgExtractQuery( pReceiveBuffer, &flag, &pCMDName, &numToSkip,
+         rc = msgExtractQuery( (CHAR*)pMsg, &flag, &pCMDName, &numToSkip,
                                &numToReturn, &pQuery, &pFieldSelector,
                                &pOrderBy, &pHint );
          if ( rc != SDB_OK )
@@ -3701,16 +3471,16 @@ namespace engine
             break ;
          }
 
-         MsgOpQuery *pCatReq = (MsgOpQuery *)pReceiveBuffer;
+         MsgOpQuery *pCatReq = (MsgOpQuery *)pMsg;
          pCatReq->header.opCode = MSG_CAT_CREATE_NODE_REQ;
-         rc = executeOnCataGroup( pHeader, cb, TRUE ) ;
+         rc = executeOnCataGroup( pMsg, cb, TRUE ) ;
          if ( rc != SDB_OK )
          {
             PD_LOG ( PDERROR, "Failed to create node, execute on catalog-node "
                      "failed(rc=%d)", rc ) ;
             break;
          }
-         std::string strHostName ;
+         string strHostName ;
          BSONObj boNodeConfig ;
          try
          {
@@ -3781,47 +3551,34 @@ namespace engine
          break ;
       }while ( FALSE ) ;
 
-      replyHeader.flags = rc ;
       PD_TRACE_EXITRC ( SDB_RTNCOCMDCTN_EXE, rc ) ;
       return rc ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDRMN_EXE, "rtnCoordCMDRemoveNode::execute" )
-   INT32 rtnCoordCMDRemoveNode::execute( CHAR *pReceiveBuffer,
-                                         SINT32 packSize,
+   INT32 rtnCoordCMDRemoveNode::execute( MsgHeader *pMsg,
                                          pmdEDUCB *cb,
-                                         MsgOpReply &replyHeader,
+                                         INT64 &contextID,
                                          rtnContextBuf *buf )
    {
       PD_TRACE_ENTRY ( SDB_RTNCOCMDRMN_EXE ) ;
       INT32 rc = SDB_OK ;
       netMultiRouteAgent *pAgent = pmdGetKRCB()->getCoordCB()->getRouteAgent() ;
+      contextID                  = -1 ;
 
-      MsgHeader *rHeader = (MsgHeader *)pReceiveBuffer ;
       MsgOpQuery *forward = NULL ;
-      std::string groupName ;
-      std::string host ;
-      std::string srv ;
+      string groupName ;
+      string host ;
+      string srv ;
       CoordGroupInfoPtr groupInfo ;
 
       CHAR *pQuery = NULL ;
       BSONObj rInfo ;
 
-      /// fill default-reply
-      replyHeader.header.messageLength = sizeof( MsgOpReply ) ;
-      replyHeader.header.opCode = MSG_BS_QUERY_RES ;
-      replyHeader.header.requestID = rHeader->requestID ;
-      replyHeader.header.routeID.value = 0 ;
-      replyHeader.header.TID = rHeader->TID ;
-      replyHeader.contextID = -1 ;
-      replyHeader.flags = SDB_OK ;
-      replyHeader.numReturned = 0 ;
-      replyHeader.startFrom = 0 ;
-
-      forward = (MsgOpQuery *)pReceiveBuffer ;
+      forward = (MsgOpQuery *)pMsg ;
       forward->header.opCode = MSG_CAT_DEL_NODE_REQ ;
 
-      rc = msgExtractQuery( pReceiveBuffer, NULL, NULL,
+      rc = msgExtractQuery( (CHAR*)pMsg, NULL, NULL,
                             NULL, NULL, &pQuery,
                             NULL, NULL, NULL );
       if ( SDB_OK != rc )
@@ -3872,7 +3629,7 @@ namespace engine
       }
 
       /// remove data node on catalog
-      rc = executeOnCataGroup ( rHeader, cb, TRUE ) ;
+      rc = executeOnCataGroup ( pMsg, cb, TRUE ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "failed to remove node, rc = %d", rc ) ;
@@ -3941,7 +3698,6 @@ namespace engine
       }
 
    done:
-      replyHeader.flags = rc ;
       PD_TRACE_EXITRC ( SDB_RTNCOCMDRMN_EXE, rc ) ;
       return rc ;
    error:
@@ -3949,26 +3705,16 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDUPN_EXE, "rtnCoordCMDUpdateNode::execute" )
-   INT32 rtnCoordCMDUpdateNode::execute( CHAR *pReceiveBuffer,
-                                         SINT32 packSize,
+   INT32 rtnCoordCMDUpdateNode::execute( MsgHeader *pMsg,
                                          pmdEDUCB *cb,
-                                         MsgOpReply &replyHeader,
+                                         INT64 &contextID,
                                          rtnContextBuf *buf )
    {
       INT32 rc                         = SDB_OK;
       PD_TRACE_ENTRY ( SDB_RTNCOCMDUPN_EXE ) ;
 
       // fill default-reply(create group success)
-      MsgHeader *pHeader               = (MsgHeader *)pReceiveBuffer;
-      replyHeader.header.messageLength = sizeof( MsgOpReply );
-      replyHeader.header.opCode        = MSG_BS_QUERY_RES;
-      replyHeader.header.requestID     = pHeader->requestID;
-      replyHeader.header.routeID.value = 0;
-      replyHeader.header.TID           = pHeader->TID;
-      replyHeader.contextID            = -1;
-      replyHeader.flags                = SDB_OK;
-      replyHeader.numReturned          = 0;
-      replyHeader.startFrom            = 0;
+      contextID = -1 ;
 
       // TODO:
       // 1. first modify by the host's cm
@@ -3976,7 +3722,6 @@ namespace engine
 
       rc = SDB_COORD_UNKNOWN_OP_REQ ;
 
-      replyHeader.flags = rc;
       PD_TRACE_EXITRC ( SDB_RTNCOCMDUPN_EXE, rc ) ;
       return rc;
    }
@@ -4136,28 +3881,18 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDATGR_EXE, "rtnCoordCMDActiveGroup::execute" )
-   INT32 rtnCoordCMDActiveGroup::execute( CHAR *pReceiveBuffer,
-                                          SINT32 packSize,
+   INT32 rtnCoordCMDActiveGroup::execute( MsgHeader *pMsg,
                                           pmdEDUCB *cb,
-                                          MsgOpReply &replyHeader,
+                                          INT64 &contextID,
                                           rtnContextBuf *buf )
    {
       INT32 rc                         = SDB_OK;
       PD_TRACE_ENTRY ( SDB_RTNCOCMDATGR_EXE ) ;
 
       // fill default-reply(active group success)
-      MsgHeader *pHeader               = (MsgHeader *)pReceiveBuffer;
-      replyHeader.header.messageLength = sizeof( MsgOpReply );
-      replyHeader.header.opCode        = MSG_BS_QUERY_RES;
-      replyHeader.header.requestID     = pHeader->requestID;
-      replyHeader.header.routeID.value = 0;
-      replyHeader.header.TID           = pHeader->TID;
-      replyHeader.contextID            = -1;
-      replyHeader.flags                = SDB_OK;
-      replyHeader.numReturned          = 0;
-      replyHeader.startFrom            = 0;
+      contextID                        = -1 ;
 
-      MsgOpQuery *pReq = (MsgOpQuery *)pReceiveBuffer ;
+      MsgOpQuery *pReq = (MsgOpQuery *)pMsg ;
       pReq->header.opCode = MSG_CAT_ACTIVE_GROUP_REQ ;
 
       const CHAR *pGroupName = NULL ;
@@ -4168,7 +3903,7 @@ namespace engine
       do
       {
          CHAR *pQuery = NULL ;
-         rc = msgExtractQuery( pReceiveBuffer, NULL, NULL, NULL, NULL,
+         rc = msgExtractQuery( (CHAR*)pMsg, NULL, NULL, NULL, NULL,
                                &pQuery, NULL, NULL, NULL ) ;
          if ( rc )
          {
@@ -4195,7 +3930,7 @@ namespace engine
             break ;
          }
 
-         rc = executeOnCataGroup( pHeader, cb, NULL, &objGrpLst ) ;
+         rc = executeOnCataGroup( pMsg, cb, NULL, &objGrpLst ) ;
          if ( rc != SDB_OK )
          {
             PD_LOG ( PDERROR, "Failed to active group[%s], execute on "
@@ -4239,7 +3974,6 @@ namespace engine
          }
       }while ( FALSE ) ;
 
-      replyHeader.flags = rc ;
       PD_TRACE_EXITRC ( SDB_RTNCOCMDATGR_EXE, rc ) ;
       return rc;
    }
@@ -4297,10 +4031,9 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDCTIND_EXE, "rtnCoordCMDCreateIndex::execute" )
-   INT32 rtnCoordCMDCreateIndex::execute( CHAR *pReceiveBuffer,
-                                          SINT32 packSize,
+   INT32 rtnCoordCMDCreateIndex::execute( MsgHeader *pMsg,
                                           pmdEDUCB *cb,
-                                          MsgOpReply &replyHeader,
+                                          INT64 &contextID,
                                           rtnContextBuf *buf )
    {
       INT32 rc                         = SDB_OK;
@@ -4308,16 +4041,7 @@ namespace engine
       INT32 tempRC                     = SDB_OK ;
 
       // fill default-reply(active group success)
-      MsgHeader *pHeader               = (MsgHeader *)pReceiveBuffer;
-      replyHeader.header.messageLength = sizeof( MsgOpReply );
-      replyHeader.header.opCode        = MSG_BS_QUERY_RES;
-      replyHeader.header.requestID     = pHeader->requestID;
-      replyHeader.header.routeID.value = 0;
-      replyHeader.header.TID           = pHeader->TID;
-      replyHeader.contextID            = -1;
-      replyHeader.flags                = SDB_OK;
-      replyHeader.numReturned          = 0;
-      replyHeader.startFrom            = 0;
+      contextID                        = -1 ;
 
       CHAR *pQuery                     = NULL ;
       BOOLEAN emptyUpdateCata          = FALSE ;
@@ -4334,7 +4058,7 @@ namespace engine
       SET_RC ignoreRC ;
 
       // extract message
-      rc = msgExtractQuery( pReceiveBuffer, NULL, NULL,
+      rc = msgExtractQuery( (CHAR*)pMsg, NULL, NULL,
                             NULL, NULL, &pQuery,
                             NULL, NULL, NULL );
       PD_RC_CHECK ( rc, PDERROR,
@@ -4440,7 +4164,7 @@ namespace engine
          }
       } // if ( beCollectionName.type()!=String )
 
-      rc = executeOnCL( pHeader, cb, strCollectionName, FALSE, NULL,
+      rc = executeOnCL( pMsg, cb, strCollectionName, FALSE, NULL,
                         NULL, &sucGrpLst ) ;
       if ( rc )
       {
@@ -4450,7 +4174,6 @@ namespace engine
       }
 
    done :
-      replyHeader.flags = rc;
       if ( pDropMsg )
       {
          SDB_OSS_FREE ( pDropMsg ) ;
@@ -4498,31 +4221,19 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDDPIN_EXE, "rtnCoordCMDDropIndex::execute" )
-   INT32 rtnCoordCMDDropIndex::execute( CHAR *pReceiveBuffer,
-                                        SINT32 packSize,
+   INT32 rtnCoordCMDDropIndex::execute( MsgHeader *pMsg,
                                         pmdEDUCB *cb,
-                                        MsgOpReply &replyHeader,
+                                        INT64 &contextID,
                                         rtnContextBuf *buf )
    {
       INT32 rc                         = SDB_OK;
       PD_TRACE_ENTRY ( SDB_RTNCOCMDDPIN_EXE ) ;
 
       // fill default-reply(active group success)
-      MsgHeader *pHeader               = (MsgHeader *)pReceiveBuffer;
-      replyHeader.header.messageLength = sizeof( MsgOpReply );
-      replyHeader.header.opCode        = MSG_BS_QUERY_RES;
-      replyHeader.header.requestID     = pHeader->requestID;
-      replyHeader.header.routeID.value = 0;
-      replyHeader.header.TID           = pHeader->TID;
-      replyHeader.contextID            = -1;
-      replyHeader.flags                = SDB_OK;
-      replyHeader.numReturned          = 0;
-      replyHeader.startFrom            = 0;
-
+      contextID                        = -1 ;
       string realCLName ;
-
       CHAR *pQuery = NULL ;
-      rc = msgExtractQuery( pReceiveBuffer, NULL, NULL,
+      rc = msgExtractQuery( (CHAR*)pMsg, NULL, NULL,
                             NULL, NULL, &pQuery,
                             NULL, NULL, NULL );
       if ( rc != SDB_OK )
@@ -4554,7 +4265,7 @@ namespace engine
          goto error ;
       }
 
-      rc = executeOnCL( pHeader, cb, realCLName.c_str(), FALSE, NULL,
+      rc = executeOnCL( pMsg, cb, realCLName.c_str(), FALSE, NULL,
                         NULL, NULL ) ;
       if ( rc )
       {
@@ -4568,30 +4279,20 @@ namespace engine
       PD_TRACE_EXITRC ( SDB_RTNCOCMDDPIN_EXE, rc ) ;
       return rc ;
    error:
-      replyHeader.flags = rc ;
       goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDOPONNODE_EXE, "rtnCoordCMDOperateOnNode::execute" )
-   INT32 rtnCoordCMDOperateOnNode::execute( CHAR *pReceiveBuffer,
-                                            SINT32 packSize,
+   INT32 rtnCoordCMDOperateOnNode::execute( MsgHeader *pMsg,
                                             pmdEDUCB *cb,
-                                            MsgOpReply &replyHeader,
+                                            INT64 &contextID,
                                             rtnContextBuf *buf )
    {
       INT32 rc                         = SDB_OK;
       PD_TRACE_ENTRY ( SDB_RTNCOCMDOPONNODE_EXE ) ;
       // fill default-reply(active group success)
-      MsgHeader *pHeader               = (MsgHeader *)pReceiveBuffer;
-      replyHeader.header.messageLength = sizeof( MsgOpReply );
-      replyHeader.header.opCode        = MSG_BS_QUERY_RES;
-      replyHeader.header.requestID     = pHeader->requestID;
-      replyHeader.header.routeID.value = 0;
-      replyHeader.header.TID           = pHeader->TID;
-      replyHeader.contextID            = -1;
-      replyHeader.flags                = SDB_OK;
-      replyHeader.numReturned          = 0;
-      replyHeader.startFrom            = 0;
+      contextID                        = -1 ;
+
       do
       {
          INT32 flag;
@@ -4602,7 +4303,7 @@ namespace engine
          CHAR *pFieldSelector;
          CHAR *pOrderBy;
          CHAR *pHint;
-         rc = msgExtractQuery( pReceiveBuffer, &flag, &pCMDName, &numToSkip,
+         rc = msgExtractQuery( (CHAR*)pMsg, &flag, &pCMDName, &numToSkip,
                                &numToReturn, &pQuery, &pFieldSelector,
                                &pOrderBy, &pHint );
          if ( rc != SDB_OK )
@@ -4659,7 +4360,7 @@ namespace engine
          }
          break ;
       }while ( FALSE );
-      replyHeader.flags = rc ;
+
       PD_TRACE_EXITRC ( SDB_RTNCOCMDOPONNODE_EXE, rc ) ;
       return rc;
    }
@@ -4675,10 +4376,9 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION (SDB_RTNCOCMDOPONGR_EXE, "rtnCoordCMDOperateOnGroup::execute" )
-   INT32 rtnCoordCMDOperateOnGroup::execute( CHAR *pReceiveBuffer,
-                                             SINT32 packSize,
+   INT32 rtnCoordCMDOperateOnGroup::execute( MsgHeader *pMsg,
                                              pmdEDUCB *cb,
-                                             MsgOpReply &replyHeader,
+                                             INT64 &contextID,
                                              rtnContextBuf *buf )
    {
       INT32 rc = SDB_OK;
@@ -4686,7 +4386,7 @@ namespace engine
       pmdKRCB *pKrcb                   = pmdGetKRCB();
       SDB_RTNCB *pRtncb                = pKrcb->getRTNCB();
       CoordCB *pCoordcb                = pKrcb->getCoordCB();
-      SINT64 contextID = -1 ;
+      contextID                        = -1 ;
 
       do
       {
@@ -4698,7 +4398,7 @@ namespace engine
          CHAR *pFieldSelector;
          CHAR *pOrderBy;
          CHAR *pHint;
-         rc = msgExtractQuery( pReceiveBuffer, &flag, &pCMDName,
+         rc = msgExtractQuery( (CHAR*)pMsg, &flag, &pCMDName,
                                &numToSkip, &numToReturn, &pQuery,
                                &pFieldSelector, &pOrderBy, &pHint ) ;
          if ( rc != SDB_OK )
@@ -4748,8 +4448,8 @@ namespace engine
             PD_LOG ( PDERROR, "Failed to build list request(rc=%d)", rc ) ;
             break;
          }
-         rc = pCmdProcesser->execute( pReceiveBuffer, listReqSize,
-                                      cb, replyHeader, NULL ) ;
+         rc = pCmdProcesser->execute( (MsgHeader*)pListReq, cb,
+                                      contextID, buf ) ;
          if ( pListReq )
          {
             SDB_OSS_FREE( pListReq ) ;
@@ -4762,10 +4462,10 @@ namespace engine
          }
 
          rtnContextBuf buffObj ;
-         rc = rtnGetMore( replyHeader.contextID, -1, buffObj, cb, pRtncb ) ;
+         rc = rtnGetMore( contextID, -1, buffObj, cb, pRtncb ) ;
          if ( rc != SDB_OK )
          {
-            replyHeader.contextID = -1 ;
+            contextID = -1 ;
             if ( rc == SDB_DMS_EOC || NULL == buffObj.data() )
             {
                rc = SDB_CLS_GRP_NOT_EXIST;
@@ -4773,7 +4473,7 @@ namespace engine
             PD_LOG ( PDERROR, "Failed to get group info(rc=%d)", rc ) ;
             break;
          }
-         contextID = replyHeader.contextID ;
+
          BSONObj boGroupInfo ;
          try
          {
@@ -4793,12 +4493,12 @@ namespace engine
          }
       }while ( FALSE ) ;
 
-      replyHeader.flags = rc ;
-      replyHeader.contextID = -1 ;
       if ( contextID >= 0 )
       {
          pRtncb->contextDelete( contextID, cb ) ;
+         contextID = -1 ;
       }
+
       PD_TRACE_EXITRC ( SDB_RTNCOCMDOPONGR_EXE, rc ) ;
       return rc;
    }
@@ -4959,10 +4659,9 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDSP_EXE, "rtnCoordCMDSplit::execute" )
-   INT32 rtnCoordCMDSplit::execute( CHAR *pReceiveBuffer,
-                                    SINT32 packSize,
+   INT32 rtnCoordCMDSplit::execute( MsgHeader *pMsg,
                                     pmdEDUCB *cb,
-                                    MsgOpReply &replyHeader,
+                                    INT64 &contextID,
                                     rtnContextBuf *buf )
    {
       INT32 rc                         = SDB_OK ;
@@ -4970,7 +4669,7 @@ namespace engine
       pmdKRCB *pKRCB                   = pmdGetKRCB () ;
       SDB_RTNCB *pRtncb                = pKRCB->getRTNCB() ;
       CoordCB *pCoordcb                = pKRCB->getCoordCB () ;
-      INT64 contextID                  = -1 ;
+      contextID                        = -1 ;
 
       CHAR *pCollectionName            = NULL ;
       CHAR *pQuery                     = NULL ;
@@ -4992,21 +4691,9 @@ namespace engine
       BSONObj boKeyEnd ;
       FLOAT64 percent = 0.0 ;
 
-      // fill default-reply
-      MsgHeader *pHeader               = (MsgHeader *)pReceiveBuffer ;
-      replyHeader.header.messageLength = sizeof( MsgOpReply );
-      replyHeader.header.opCode        = MSG_BS_QUERY_RES;
-      replyHeader.header.requestID     = pHeader->requestID;
-      replyHeader.header.routeID.value = 0;
-      replyHeader.header.TID           = pHeader->TID;
-      replyHeader.contextID            = -1;
-      replyHeader.flags                = SDB_OK;
-      replyHeader.numReturned          = 0;
-      replyHeader.startFrom            = 0;
-
       // first round we perform prepare, so catalog node is able to do sanity
       // check for collection name and nodes
-      MsgOpQuery *pSplitReq            = (MsgOpQuery *)pReceiveBuffer ;
+      MsgOpQuery *pSplitReq            = (MsgOpQuery *)pMsg ;
       pSplitReq->header.opCode         = MSG_CAT_SPLIT_PREPARE_REQ ;
 
       CoordGroupList groupLst ;
@@ -5016,7 +4703,7 @@ namespace engine
        *              PREPARE PHASE                                     *
        ******************************************************************/
       // send request to catalog
-      rc = executeOnCataGroup ( pHeader, cb, &groupLst ) ;
+      rc = executeOnCataGroup ( pMsg, cb, &groupLst ) ;
       PD_RC_CHECK ( rc, PDERROR, "Split failed on catalog, rc = %d", rc ) ;
 
       // here, in groupLst there should be one and only one group, for SOURCE
@@ -5237,8 +4924,8 @@ namespace engine
          rtnCoordCommand *pCmd = pFactory->getCommandProcesser(
                                  COORD_CMD_WAITTASK ) ;
          SDB_ASSERT( pCmd, "wait task command not found" ) ;
-         rc = pCmd->execute( splitQueryBuffer, splitQueryBufferSz,
-                             cb, replyHeader, NULL ) ;
+         rc = pCmd->execute( (MsgHeader*)splitQueryBuffer, cb,
+                             contextID, buf ) ;
          if ( rc )
          {
             goto error ;
@@ -5253,7 +4940,6 @@ namespace engine
          rc = pContext->open( BSONObj(), BSONObj(), 1, 0 ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to open context, rc: %d", rc ) ;
          pContext->append( BSON( CAT_TASKID_NAME << (long long)taskID ) ) ;
-         replyHeader.contextID = contextID ;
       }
 
    done :
@@ -5265,7 +4951,6 @@ namespace engine
       {
          SDB_OSS_FREE ( splitQueryBuffer ) ;
       }
-      replyHeader.flags = rc;
       PD_TRACE_EXITRC ( SDB_RTNCOCMDSP_EXE, rc ) ;
       return rc ;
    cancel :
@@ -5519,10 +5204,9 @@ namespace engine
       goto done ;
    }
 
-   INT32 rtnCoordCmdWaitTask::execute( CHAR *pReceiveBuffer,
-                                       SINT32 packSize,
+   INT32 rtnCoordCmdWaitTask::execute( MsgHeader *pMsg,
                                        pmdEDUCB *cb,
-                                       MsgOpReply &replyHeader,
+                                       INT64 &contextID,
                                        rtnContextBuf *buf )
    {
       INT32 rc = SDB_OK ;
@@ -5530,20 +5214,9 @@ namespace engine
       CoordCB *pCoordcb                = pKRCB->getCoordCB () ;
       netMultiRouteAgent *pRouteAgent  = pCoordcb->getRouteAgent () ;
 
-      MsgHeader *pSrc   = ( MsgHeader* )pReceiveBuffer ;
-      // fill default-reply
-      replyHeader.header.messageLength = sizeof( MsgOpReply ) ;
-      replyHeader.header.opCode        = MSG_BS_QUERY_RES ;
-      replyHeader.header.requestID     = pSrc->requestID ;
-      replyHeader.header.routeID.value = 0 ;
-      replyHeader.header.TID           = pSrc->TID ;
-      replyHeader.contextID            = -1 ;
-      replyHeader.flags                = SDB_OK ;
-      replyHeader.numReturned          = 0 ;
-      replyHeader.startFrom            = 0 ;
-
-      pSrc->opCode                     = MSG_CAT_QUERY_TASK_REQ ;
-      pSrc->TID                        = cb->getTID() ;
+      contextID                        = -1 ;
+      pMsg->opCode                     = MSG_CAT_QUERY_TASK_REQ ;
+      pMsg->TID                        = cb->getTID() ;
 
       while ( TRUE )
       {
@@ -5562,7 +5235,7 @@ namespace engine
          rc = rtnCoordGetCatGroupInfo( cb, isNeedRefresh, catGroupInfo ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to get cat group info, rc: %d",
                       rc ) ;
-         rc = rtnCoordSendRequestToPrimary( pReceiveBuffer, catGroupInfo,
+         rc = rtnCoordSendRequestToPrimary( (CHAR*)pMsg, catGroupInfo,
                                             sendNodes, pRouteAgent,
                                             MSG_ROUTE_CAT_SERVICE, cb ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to send msg to primary node, rc: %d",
@@ -5599,29 +5272,17 @@ namespace engine
    done:
       return rc ;
    error:
-      replyHeader.flags = rc ;
       goto done ;
    }
 
-   INT32 rtnCoordCmdListTask::execute( CHAR *pReceiveBuffer,
-                                       SINT32 packSize,
+   INT32 rtnCoordCmdListTask::execute( MsgHeader *pMsg,
                                        pmdEDUCB *cb,
-                                       MsgOpReply &replyHeader,
+                                       INT64 &contextID,
                                        rtnContextBuf *buf )
    {
       INT32 rc = SDB_OK ;
 
-      MsgHeader *pSrc   = ( MsgHeader* )pReceiveBuffer ;
-      // fill default-reply
-      replyHeader.header.messageLength = sizeof( MsgOpReply ) ;
-      replyHeader.header.opCode        = MSG_BS_QUERY_RES ;
-      replyHeader.header.requestID     = pSrc->requestID ;
-      replyHeader.header.routeID.value = 0 ;
-      replyHeader.header.TID           = pSrc->TID ;
-      replyHeader.contextID            = -1 ;
-      replyHeader.flags                = SDB_OK ;
-      replyHeader.numReturned          = 0 ;
-      replyHeader.startFrom            = 0 ;
+      contextID = -1 ;
 
       INT32 flag = 0 ;
       CHAR *pCollectionName = NULL ;
@@ -5631,9 +5292,8 @@ namespace engine
       CHAR *pSelectorBuf = NULL ;
       CHAR *pOrderbyBuf = NULL ;
       CHAR *pHintBuf = NULL ;
-      INT64 contextID = -1 ;
 
-      rc = msgExtractQuery( pReceiveBuffer, &flag, &pCollectionName, &numToSkip,
+      rc = msgExtractQuery( (CHAR*)pMsg, &flag, &pCollectionName, &numToSkip,
                             &numToReturn, &pQueryBuf, &pSelectorBuf,
                             &pOrderbyBuf, &pHintBuf ) ;
       PD_RC_CHECK( rc, PDERROR, "Extract query msg failed, rc: %d", rc ) ;
@@ -5657,19 +5317,15 @@ namespace engine
          goto error ;
       }
 
-      replyHeader.contextID = contextID ;
-
    done:
       return rc ;
    error:
-      replyHeader.flags = rc ;
       goto done ;
    }
 
-   INT32 rtnCoordCmdCancelTask::execute( CHAR *pReceiveBuffer,
-                                         SINT32 packSize,
+   INT32 rtnCoordCmdCancelTask::execute( MsgHeader *pMsg,
                                          pmdEDUCB *cb,
-                                         MsgOpReply &replyHeader,
+                                         INT64 &contextID,
                                          rtnContextBuf *buf )
    {
       INT32 rc = SDB_OK ;
@@ -5678,24 +5334,14 @@ namespace engine
       rtnCoordProcesserFactory *pFactory = pCoordcb->getProcesserFactory() ;
       BOOLEAN async                    = FALSE ;
 
-      MsgHeader *pSrc   = ( MsgHeader* )pReceiveBuffer ;
-      // fill default-reply
-      replyHeader.header.messageLength = sizeof( MsgOpReply ) ;
-      replyHeader.header.opCode        = MSG_BS_QUERY_RES ;
-      replyHeader.header.requestID     = pSrc->requestID ;
-      replyHeader.header.routeID.value = 0 ;
-      replyHeader.header.TID           = pSrc->TID ;
-      replyHeader.contextID            = -1 ;
-      replyHeader.flags                = SDB_OK ;
-      replyHeader.numReturned          = 0 ;
-      replyHeader.startFrom            = 0 ;
+      contextID                        = -1 ;
 
       CoordGroupList groupLst ;
       INT32 rcTmp = SDB_OK ;
 
       // extract msg
       CHAR *pQueryBuf = NULL ;
-      rc = msgExtractQuery( pReceiveBuffer, NULL, NULL, NULL, NULL, &pQueryBuf,
+      rc = msgExtractQuery( (CHAR*)pMsg, NULL, NULL, NULL, NULL, &pQueryBuf,
                             NULL, NULL, NULL ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to extract query msg, rc: %d", rc ) ;
 
@@ -5717,15 +5363,14 @@ namespace engine
          goto error ;
       }
 
-      pSrc->opCode                     = MSG_CAT_SPLIT_CANCEL_REQ ;
-      pSrc->TID                        = cb->getTID() ;
+      pMsg->opCode                     = MSG_CAT_SPLIT_CANCEL_REQ ;
 
-      rc = executeOnCataGroup( pSrc, cb, &groupLst ) ;
+      rc = executeOnCataGroup( pMsg, cb, &groupLst ) ;
       PD_RC_CHECK( rc, PDERROR, "Excute on catalog failed, rc: %d", rc ) ;
 
-      pSrc->opCode                     = MSG_BS_QUERY_REQ ;
+      pMsg->opCode                     = MSG_BS_QUERY_REQ ;
       // notify to data node
-      rcTmp = executeOnDataGroup( (MsgHeader*)pReceiveBuffer, cb, groupLst,
+      rcTmp = executeOnDataGroup( pMsg, cb, groupLst,
                                   TRUE, NULL, NULL, NULL ) ;
       if ( rcTmp )
       {
@@ -5743,8 +5388,7 @@ namespace engine
             PD_LOG( PDERROR, "Command[%s] is null", COORD_CMD_WAITTASK ) ;
             goto error ;
          }
-         rc = pCmd->execute( pReceiveBuffer, packSize,
-                             cb, replyHeader, NULL ) ;
+         rc = pCmd->execute( pMsg, cb, contextID, buf ) ;
          if ( rc )
          {
             goto error ;
@@ -5754,15 +5398,13 @@ namespace engine
    done:
       return rc ;
    error:
-      replyHeader.flags = rc ;
       goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDSTB_EXE, "rtnCoordCMDStatisticsBase::execute" )
-   INT32 rtnCoordCMDStatisticsBase::execute( CHAR *pReceiveBuffer,
-                                             SINT32 packSize,
+   INT32 rtnCoordCMDStatisticsBase::execute( MsgHeader *pMsg,
                                              pmdEDUCB *cb,
-                                             MsgOpReply &replyHeader,
+                                             INT64 &contextID,
                                              rtnContextBuf *buf )
    {
       INT32 rc = SDB_OK;
@@ -5773,16 +5415,7 @@ namespace engine
       netMultiRouteAgent *pRouteAgent  = pCoordcb->getRouteAgent();
 
       // fill default-reply(execute success)
-      MsgHeader *pHeader               = (MsgHeader *)pReceiveBuffer;
-      replyHeader.header.messageLength = sizeof( MsgOpReply );
-      replyHeader.header.opCode        = MSG_BS_QUERY_RES;
-      replyHeader.header.requestID     = pHeader->requestID;
-      replyHeader.header.routeID.value = 0;
-      replyHeader.header.TID           = pHeader->TID;
-      replyHeader.contextID            = -1;
-      replyHeader.flags                = SDB_OK;
-      replyHeader.numReturned          = 0;
-      replyHeader.startFrom            = 0;
+      contextID                        = -1 ;
 
       rtnCoordQuery queryOpr ;
       rtnContextCoord *pContext = NULL ;
@@ -5793,7 +5426,7 @@ namespace engine
       CHAR *pHint = NULL ;
 
       // extract request-message
-      rc = msgExtractQuery( pReceiveBuffer, NULL, NULL,
+      rc = msgExtractQuery( (CHAR*)pMsg, NULL, NULL,
                             NULL, NULL, NULL, NULL,
                             NULL, &pHint );
       PD_RC_CHECK ( rc, PDERROR, "Execute failed, failed to parse query "
@@ -5816,7 +5449,7 @@ namespace engine
                        "error:%s", e.what() ) ;
       }
 
-      rc = queryOpr.queryOrDoOnCL( pHeader, pRouteAgent, cb, &pContext,
+      rc = queryOpr.queryOrDoOnCL( pMsg, pRouteAgent, cb, &pContext,
                                    sendOpt, &queryConf ) ;
       PD_RC_CHECK( rc, PDERROR, "Query failed(rc=%d)", rc ) ;
 
@@ -5824,11 +5457,10 @@ namespace engine
       rc = generateResult( pContext, pRouteAgent, cb ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to execute statistics(rc=%d)", rc ) ;
 
-      replyHeader.contextID = pContext->contextID() ;
+      contextID = pContext->contextID() ;
       pContext->reopen() ;
 
    done:
-      replyHeader.flags = rc;
       PD_TRACE_EXITRC ( SDB_RTNCOCMDSTB_EXE, rc ) ;
       return rc;
    error:
@@ -6027,24 +5659,14 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDCTCAGP_EXE, "rtnCoordCMDCreateCataGroup::execute" )
-   INT32 rtnCoordCMDCreateCataGroup::execute( CHAR *pReceiveBuffer,
-                                              SINT32 packSize,
+   INT32 rtnCoordCMDCreateCataGroup::execute( MsgHeader *pMsg,
                                               pmdEDUCB *cb,
-                                              MsgOpReply &replyHeader,
+                                              INT64 &contextID,
                                               rtnContextBuf *buf )
    {
       INT32 rc = SDB_OK;
       PD_TRACE_ENTRY ( SDB_RTNCOCMDCTCAGP_EXE ) ;
-      MsgHeader *pHeader               = (MsgHeader *)pReceiveBuffer ;
-      replyHeader.header.messageLength = sizeof( MsgOpReply ) ;
-      replyHeader.header.opCode        = MSG_BS_QUERY_RES ;
-      replyHeader.header.requestID     = pHeader->requestID ;
-      replyHeader.header.routeID.value = 0 ;
-      replyHeader.header.TID           = pHeader->TID ;
-      replyHeader.contextID            = -1 ;
-      replyHeader.flags                = SDB_OK;
-      replyHeader.numReturned          = 0 ;
-      replyHeader.startFrom            = 0 ;
+      contextID = -1 ;
 
       INT32 flag = 0 ;
       CHAR *pCMDName = NULL ;
@@ -6061,7 +5683,7 @@ namespace engine
       BSONObj boLocalSvc ;
       BSONObj boBackup = BSON( "Backup" << true ) ;
 
-      rc = msgExtractQuery( pReceiveBuffer, &flag, &pCMDName, &numToSkip,
+      rc = msgExtractQuery( (CHAR*)pMsg, &flag, &pCMDName, &numToSkip,
                             &numToReturn, &pQuery, &pFieldSelector,
                             &pOrderBy, &pHint ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to parse create catalog-group "
@@ -6150,7 +5772,6 @@ namespace engine
             sdbGetCoordCB()->updateCatGroupInfo( groupInfo ) ;
          }
       }
-      replyHeader.flags = rc ;
       goto done ;
    }
 
@@ -6339,23 +5960,13 @@ namespace engine
       goto done;
    }
 
-   INT32 rtnCoordCMDTraceStart::execute( CHAR *pReceiveBuffer,
-                                         SINT32 packSize,
+   INT32 rtnCoordCMDTraceStart::execute( MsgHeader *pMsg,
                                          pmdEDUCB *cb,
-                                         MsgOpReply &replyHeader,
+                                         INT64 &contextID,
                                          rtnContextBuf *buf )
    {
       INT32 rc = SDB_OK;
-      MsgHeader *pHeader               = (MsgHeader *)pReceiveBuffer;
-      replyHeader.header.messageLength = sizeof( MsgOpReply );
-      replyHeader.header.opCode        = MSG_BS_QUERY_RES;
-      replyHeader.header.requestID     = pHeader->requestID;
-      replyHeader.header.routeID.value = 0;
-      replyHeader.header.TID           = pHeader->TID;
-      replyHeader.contextID            = -1;
-      replyHeader.flags                = SDB_OK;
-      replyHeader.numReturned          = 0;
-      replyHeader.startFrom            = 0;
+      contextID = -1 ;
 
       INT32 flag;
       CHAR *pCMDName;
@@ -6367,7 +5978,7 @@ namespace engine
       CHAR *pHint;
       _rtnTraceStart tracestart ;
 
-      rc = msgExtractQuery( pReceiveBuffer, &flag, &pCMDName, &numToSkip,
+      rc = msgExtractQuery( (CHAR*)pMsg, &flag, &pCMDName, &numToSkip,
                             &numToReturn, &pQuery, &pFieldSelector,
                             &pOrderBy, &pHint );
       PD_RC_CHECK ( rc, PDERROR,
@@ -6382,27 +5993,16 @@ namespace engine
    done:
       return rc;
    error:
-      replyHeader.flags = rc;
       goto done;
    }
 
-   INT32 rtnCoordCMDTraceResume::execute( CHAR *pReceiveBuffer,
-                                          SINT32 packSize,
+   INT32 rtnCoordCMDTraceResume::execute( MsgHeader *pMsg,
                                           pmdEDUCB *cb,
-                                          MsgOpReply &replyHeader,
+                                          INT64 &contextID,
                                           rtnContextBuf *buf )
    {
       INT32 rc = SDB_OK;
-      MsgHeader *pHeader               = (MsgHeader *)pReceiveBuffer;
-      replyHeader.header.messageLength = sizeof( MsgOpReply );
-      replyHeader.header.opCode        = MSG_BS_QUERY_RES;
-      replyHeader.header.requestID     = pHeader->requestID;
-      replyHeader.header.routeID.value = 0;
-      replyHeader.header.TID           = pHeader->TID;
-      replyHeader.contextID            = -1;
-      replyHeader.flags                = SDB_OK;
-      replyHeader.numReturned          = 0;
-      replyHeader.startFrom            = 0;
+      contextID = -1 ;
 
       INT32 flag;
       CHAR *pCMDName;
@@ -6414,7 +6014,7 @@ namespace engine
       CHAR *pHint;
       _rtnTraceResume traceResume ;
 
-      rc = msgExtractQuery( pReceiveBuffer, &flag, &pCMDName, &numToSkip,
+      rc = msgExtractQuery( (CHAR*)pMsg, &flag, &pCMDName, &numToSkip,
                             &numToReturn, &pQuery, &pFieldSelector,
                             &pOrderBy, &pHint );
       PD_RC_CHECK ( rc, PDERROR,
@@ -6429,27 +6029,16 @@ namespace engine
    done:
       return rc;
    error:
-      replyHeader.flags = rc;
       goto done;
    }
 
-   INT32 rtnCoordCMDTraceStop::execute( CHAR *pReceiveBuffer,
-                                        SINT32 packSize,
+   INT32 rtnCoordCMDTraceStop::execute( MsgHeader *pMsg,
                                         pmdEDUCB *cb,
-                                        MsgOpReply &replyHeader,
+                                        INT64 &contextID,
                                         rtnContextBuf *buf )
    {
       INT32 rc = SDB_OK;
-      MsgHeader *pHeader               = (MsgHeader *)pReceiveBuffer;
-      replyHeader.header.messageLength = sizeof( MsgOpReply );
-      replyHeader.header.opCode        = MSG_BS_QUERY_RES;
-      replyHeader.header.requestID     = pHeader->requestID;
-      replyHeader.header.routeID.value = 0;
-      replyHeader.header.TID           = pHeader->TID;
-      replyHeader.contextID            = -1;
-      replyHeader.flags                = SDB_OK;
-      replyHeader.numReturned          = 0;
-      replyHeader.startFrom            = 0;
+      contextID = -1 ;
 
       INT32 flag;
       CHAR *pCMDName;
@@ -6461,7 +6050,7 @@ namespace engine
       CHAR *pHint;
       _rtnTraceStop tracestop ;
 
-      rc = msgExtractQuery( pReceiveBuffer, &flag, &pCMDName, &numToSkip,
+      rc = msgExtractQuery( (CHAR*)pMsg, &flag, &pCMDName, &numToSkip,
                             &numToReturn, &pQuery, &pFieldSelector,
                             &pOrderBy, &pHint );
       PD_RC_CHECK ( rc, PDERROR,
@@ -6476,30 +6065,18 @@ namespace engine
    done:
       return rc;
    error:
-      replyHeader.flags = rc;
       goto done;
    }
 
-   INT32 rtnCoordCMDTraceStatus::execute( CHAR *pReceiveBuffer,
-                                          SINT32 packSize,
+   INT32 rtnCoordCMDTraceStatus::execute( MsgHeader *pMsg,
                                           pmdEDUCB *cb,
-                                          MsgOpReply &replyHeader,
+                                          INT64 &contextID,
                                           rtnContextBuf *buf )
    {
       INT32 rc                         = SDB_OK;
       pmdKRCB *pKrcb                   = pmdGetKRCB();
       SDB_RTNCB *pRtncb                = pKrcb->getRTNCB();
-
-      MsgHeader *pHeader               = (MsgHeader *)pReceiveBuffer;
-      replyHeader.header.messageLength = sizeof( MsgOpReply );
-      replyHeader.header.opCode        = MSG_BS_QUERY_RES;
-      replyHeader.header.requestID     = pHeader->requestID;
-      replyHeader.header.routeID.value = 0;
-      replyHeader.header.TID           = pHeader->TID;
-      replyHeader.contextID            = -1;
-      replyHeader.flags                = SDB_OK;
-      replyHeader.numReturned          = 0;
-      replyHeader.startFrom            = 0;
+      contextID = -1 ;
 
       INT32 flag;
       CHAR *pCMDName;
@@ -6510,9 +6087,8 @@ namespace engine
       CHAR *pOrderBy;
       CHAR *pHint;
       _rtnTraceStatus tracestatus ;
-      INT64 contextID ;
 
-      rc = msgExtractQuery( pReceiveBuffer, &flag, &pCMDName, &numToSkip,
+      rc = msgExtractQuery( (CHAR*)pMsg, &flag, &pCMDName, &numToSkip,
                             &numToReturn, &pQuery, &pFieldSelector,
                             &pOrderBy, &pHint );
       PD_RC_CHECK ( rc, PDERROR,
@@ -6524,35 +6100,29 @@ namespace engine
       rc = tracestatus.doit ( cb, NULL, pRtncb, NULL, 0, &contextID ) ;
       PD_RC_CHECK ( rc, PDERROR,
                     "Failed to run tracestop, rc = %d", rc ) ;
+
    done:
-      replyHeader.flags = rc;
-      replyHeader.contextID = contextID ;
       return rc;
    error:
+      if ( contextID >= 0 )
+      {
+         pRtncb->contextDelete( contextID, cb ) ;
+         contextID = -1 ;
+      }
       goto done;
    }
 
-   INT32 rtnCoordCMDExpConfig::execute( CHAR *pReceiveBuffer,
-                                        SINT32 packSize,
+   INT32 rtnCoordCMDExpConfig::execute( MsgHeader *pMsg,
                                         pmdEDUCB *cb,
-                                        MsgOpReply &replyHeader,
+                                        INT64 &contextID,
                                         rtnContextBuf *buf )
    {
       INT32 rc = SDB_OK ;
       pmdKRCB *pKrcb =  pmdGetKRCB();
-      MsgHeader *pHeader               = (MsgHeader *)pReceiveBuffer;
-      replyHeader.header.messageLength = sizeof( MsgOpReply );
-      replyHeader.header.opCode        = MSG_BS_QUERY_RES;
-      replyHeader.header.requestID     = pHeader->requestID;
-      replyHeader.header.routeID.value = 0;
-      replyHeader.header.TID           = pHeader->TID;
-      replyHeader.contextID            = -1;
-      replyHeader.flags                = SDB_OK;
-      replyHeader.numReturned          = 0;
-      replyHeader.startFrom            = 0;
+      contextID      = -1 ;
 
       CHAR *query = NULL ;
-      rc = msgExtractQuery( pReceiveBuffer, NULL, NULL,
+      rc = msgExtractQuery( (CHAR*)pMsg, NULL, NULL,
                             NULL, NULL, &query,
                             NULL, NULL, NULL ) ;
       PD_RC_CHECK ( rc, PDERROR,
@@ -6589,8 +6159,8 @@ namespace engine
                CoordCB *coordcb = pmdGetKRCB()->getCoordCB();
                netMultiRouteAgent *routeAgent = coordcb->getRouteAgent();
                REPLY_QUE replyQueue ;
-               pHeader->TID = cb->getTID() ;
-               rtnCoordSendRequestToNodes( pReceiveBuffer,
+               pMsg->TID = cb->getTID() ;
+               rtnCoordSendRequestToNodes( (void*)pMsg,
                                            nodeSet,
                                            routeAgent,
                                            cb,
@@ -6653,7 +6223,6 @@ namespace engine
       }
 
    done:
-      replyHeader.flags = rc ;
       return rc ;
    error:
       goto done ;
@@ -6696,10 +6265,9 @@ namespace engine
       goto done ;
    }
 
-   INT32 rtnCoordCMDSnapShotBase::execute( CHAR *pReceiveBuffer,
-                                           SINT32 packSize,
+   INT32 rtnCoordCMDSnapShotBase::execute( MsgHeader *pMsg,
                                            pmdEDUCB *cb,
-                                           MsgOpReply &replyHeader,
+                                           INT64 &contextID,
                                            rtnContextBuf *buf )
    {
       INT32 rc = SDB_OK;
@@ -6707,22 +6275,12 @@ namespace engine
       BSONObj objs;
       CHAR *pCMDName = NULL;
       CHAR *pObjsBuffer = NULL;
-      INT64 contextID = -1;
-      MsgHeader *pHeader = (MsgHeader *)pReceiveBuffer;
       SDB_RTNCB *rtnCB = pmdGetKRCB()->getRTNCB() ;
       BSONObj selector ;
 
-      replyHeader.contextID = -1;
-      replyHeader.flags = SDB_OK;
-      replyHeader.numReturned = 0;
-      replyHeader.startFrom = 0;
-      replyHeader.header.messageLength = sizeof( MsgOpReply );
-      replyHeader.header.opCode = MSG_BS_QUERY_RES;
-      replyHeader.header.requestID = pHeader->requestID;
-      replyHeader.header.routeID.value = 0;
-      replyHeader.header.TID = pHeader->TID;
+      contextID = -1;
 
-      rc = generateAggrObjs( pReceiveBuffer, pObjsBuffer,
+      rc = generateAggrObjs( (CHAR*)pMsg, pObjsBuffer,
                              objNum, pCMDName, selector );
       PD_RC_CHECK( rc, PDERROR,
                    "failed to generate aggregation object(rc=%d)",
@@ -6744,12 +6302,11 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR,
                    "failed to build snapshot context(rc=%d)",
                    rc );
-      replyHeader.contextID = contextID;
+
    done:
       SAFE_OSS_FREE( pObjsBuffer );
       return rc;
    error:
-      replyHeader.flags = rc;
       if ( -1 != contextID )
       {
          rtnCB->contextDelete ( contextID, cb ) ;
@@ -7299,32 +6856,22 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOORDCMDCRTPROCEDURE_EXE, "rtnCoordCMDCrtProcedure::execute" )
-   INT32 rtnCoordCMDCrtProcedure::execute( CHAR *pReceiveBuffer,
-                                           SINT32 packSize,
+   INT32 rtnCoordCMDCrtProcedure::execute( MsgHeader *pMsg,
                                            pmdEDUCB *cb,
-                                           MsgOpReply &replyHeader,
+                                           INT64 &contextID,
                                            rtnContextBuf *buf )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY(SDB_RTNCOORDCMDCRTPROCEDURE_EXE) ;
 
-      MsgHeader *pHeader               = (MsgHeader *)pReceiveBuffer;
-      replyHeader.header.messageLength = sizeof( MsgOpReply );
-      replyHeader.header.opCode        = MSG_BS_QUERY_RES;
-      replyHeader.header.requestID     = pHeader->requestID;
-      replyHeader.header.routeID.value = 0;
-      replyHeader.header.TID           = pHeader->TID;
-      replyHeader.contextID            = -1;
-      replyHeader.flags                = SDB_OK;
-      replyHeader.numReturned          = 0;
-      replyHeader.startFrom            = 0;
+      contextID = -1 ;
 
-      MsgOpQuery *forward  = (MsgOpQuery *)pReceiveBuffer ;
+      MsgOpQuery *forward  = (MsgOpQuery *)pMsg ;
       forward->header.opCode = MSG_CAT_CRT_PROCEDURES_REQ ;
 
-      _printDebug ( pReceiveBuffer, "rtnCoordCMDCrtProcedure" ) ;
+      _printDebug ( (CHAR*)pMsg, "rtnCoordCMDCrtProcedure" ) ;
 
-      rc = executeOnCataGroup ( pHeader, cb, TRUE ) ;
+      rc = executeOnCataGroup ( pMsg, cb, TRUE ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "failed to crt procedures, rc = %d", rc ) ;
@@ -7335,39 +6882,26 @@ namespace engine
       PD_TRACE_EXITRC(SDB_RTNCOORDCMDCRTPROCEDURE_EXE, rc ) ;
       return rc ;
    error:
-      replyHeader.flags = rc ;
       goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDEVAL_EXE, "rtnCoordCMDEval::execute" )
-   INT32 rtnCoordCMDEval::execute( CHAR *pReceiveBuffer,
-                                   SINT32 packSize,
+   INT32 rtnCoordCMDEval::execute( MsgHeader *pMsg,
                                    pmdEDUCB *cb,
-                                   MsgOpReply &replyHeader,
+                                   INT64 &contextID,
                                    rtnContextBuf *buf )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNCOCMDEVAL_EXE ) ;
       spdSession *session = NULL ;
-
-      MsgHeader *pHeader               = (MsgHeader *)pReceiveBuffer;
-      replyHeader.header.messageLength = sizeof( MsgOpReply );
-      replyHeader.header.opCode        = MSG_BS_QUERY_RES;
-      replyHeader.header.requestID     = pHeader->requestID;
-      replyHeader.header.routeID.value = 0;
-      replyHeader.header.TID           = pHeader->TID;
-      replyHeader.contextID            = -1;
-      replyHeader.flags                = SDB_OK;
-      replyHeader.numReturned          = 0;
-      replyHeader.startFrom            = 0;
+      contextID           = -1 ;
 
       CHAR *pQuery = NULL ;
       BSONObj procedures ;
       spcCoordDownloader downloader( this, cb ) ;
-      SINT64 contextID = -1 ;
       BSONObj runInfo ;
 
-      rc = msgExtractQuery( pReceiveBuffer, NULL, NULL,
+      rc = msgExtractQuery( (CHAR*)pMsg, NULL, NULL,
                             NULL, NULL, &pQuery, NULL,
                             NULL, NULL );
       if ( SDB_OK != rc )
@@ -7418,7 +6952,6 @@ namespace engine
          }
       }
 
-      replyHeader.contextID = contextID ;
       runInfo = BSON( FIELD_NAME_RTYPE << session->resType() ) ;
       *buf = rtnContextBuf( runInfo ) ;
 
@@ -7432,7 +6965,11 @@ namespace engine
       PD_TRACE_EXITRC( SDB_RTNCOCMDEVAL_EXE, rc ) ;
       return rc ;
    error:
-      replyHeader.flags = rc ;
+      if ( contextID >= 0 )
+      {
+         pmdGetKRCB()->getRTNCB()->contextDelete( contextID, cb ) ;
+         contextID = -1 ;
+      }
       goto done ;
    }
 
@@ -7460,30 +6997,19 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOORDCMDRMPROCEDURE_EXE, "rtnCoordCMDRmProcedure::execute" )
-   INT32 rtnCoordCMDRmProcedure::execute( CHAR *pReceiveBuffer,
-                                          SINT32 packSize,
+   INT32 rtnCoordCMDRmProcedure::execute( MsgHeader *pMsg,
                                           pmdEDUCB *cb,
-                                          MsgOpReply &replyHeader,
+                                          INT64 &contextID,
                                           rtnContextBuf *buf )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY(SDB_RTNCOORDCMDRMPROCEDURE_EXE) ;
+      contextID = -1 ;
 
-      MsgHeader *pHeader               = (MsgHeader *)pReceiveBuffer;
-      replyHeader.header.messageLength = sizeof( MsgOpReply );
-      replyHeader.header.opCode        = MSG_BS_QUERY_RES;
-      replyHeader.header.requestID     = pHeader->requestID;
-      replyHeader.header.routeID.value = 0;
-      replyHeader.header.TID           = pHeader->TID;
-      replyHeader.contextID            = -1;
-      replyHeader.flags                = SDB_OK;
-      replyHeader.numReturned          = 0;
-      replyHeader.startFrom            = 0;
-
-      MsgOpQuery *forward  = (MsgOpQuery *)pReceiveBuffer ;
+      MsgOpQuery *forward  = (MsgOpQuery *)pMsg ;
       forward->header.opCode = MSG_CAT_RM_PROCEDURES_REQ ;
 
-      rc = executeOnCataGroup ( pHeader, cb, TRUE ) ;
+      rc = executeOnCataGroup ( pMsg, cb, TRUE ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "failed to rm procedures, rc = %d",
@@ -7495,7 +7021,6 @@ namespace engine
       PD_TRACE_EXITRC(SDB_RTNCOORDCMDRMPROCEDURE_EXE, rc ) ;
       return rc ;
    error:
-      replyHeader.flags = rc ;
       goto done ;
    }
 
@@ -7567,10 +7092,9 @@ namespace engine
    }
 
    //PD_TRACE_DECLARE_FUNCTION( SDB_RTNCOCMDLINKCL_EXE, "rtnCoordCMDLinkCollection::execute" )
-   INT32 rtnCoordCMDLinkCollection::execute( CHAR *pReceiveBuffer,
-                                             SINT32 packSize,
+   INT32 rtnCoordCMDLinkCollection::execute( MsgHeader *pMsg,
                                              pmdEDUCB *cb,
-                                             MsgOpReply &replyHeader,
+                                             INT64 &contextID,
                                              rtnContextBuf *buf )
    {
       INT32 rc                         = SDB_OK;
@@ -7581,23 +7105,14 @@ namespace engine
       CoordGroupList groupLst ;
 
       // fill default-reply(delete success)
-      MsgHeader *pHeader               = (MsgHeader *)pReceiveBuffer;
-      replyHeader.header.messageLength = sizeof( MsgOpReply );
-      replyHeader.header.opCode        = MSG_BS_QUERY_RES;
-      replyHeader.header.requestID     = pHeader->requestID;
-      replyHeader.header.routeID.value = 0;
-      replyHeader.header.TID           = pHeader->TID;
-      replyHeader.contextID            = -1;
-      replyHeader.flags                = SDB_OK;
-      replyHeader.numReturned          = 0;
-      replyHeader.startFrom            = 0;
+      contextID = -1 ;
 
-      MsgOpQuery *pLinkReq           = (MsgOpQuery *)pReceiveBuffer;
+      MsgOpQuery *pLinkReq           = (MsgOpQuery *)pMsg;
 
       try
       {
          CHAR *pQuery                     = NULL;
-         rc = msgExtractQuery( pReceiveBuffer, NULL, NULL,
+         rc = msgExtractQuery( (CHAR*)pMsg, NULL, NULL,
                                NULL, NULL, &pQuery, NULL,
                                NULL, NULL ) ;
          if ( rc != SDB_OK )
@@ -7634,14 +7149,14 @@ namespace engine
 
       // send request to catalog
       pLinkReq->header.opCode        = MSG_CAT_LINK_CL_REQ;
-      rc = executeOnCataGroup ( pHeader, cb, &groupLst ) ;
+      rc = executeOnCataGroup ( pMsg, cb, &groupLst ) ;
       PD_RC_CHECK( rc, PDERROR,
                    "failed to execute on catalog(rc=%d)",
                    rc ) ;
 
       //send request to data-node
       pLinkReq->header.opCode        = MSG_BS_QUERY_REQ ;
-      rc = executeOnCL( pHeader, cb, mainCLName.c_str(), TRUE,
+      rc = executeOnCL( pMsg, cb, mainCLName.c_str(), TRUE,
                         &groupLst, NULL, NULL ) ;
       if ( rc )
       {
@@ -7657,46 +7172,35 @@ namespace engine
    error_rollback:
       {
          INT32 rcRBk = SDB_OK;
-         pHeader->opCode = MSG_CAT_UNLINK_CL_REQ ;
-         rcRBk = executeOnCataGroup ( pHeader,  cb, &groupLst ) ;
+         pMsg->opCode = MSG_CAT_UNLINK_CL_REQ ;
+         rcRBk = executeOnCataGroup ( pMsg,  cb, &groupLst ) ;
          PD_RC_CHECK( rcRBk, PDERROR, "Failed to execute on catalog(rc=%d), "
                       "rollback failed!", rcRBk ) ;
       }
    error :
-      replyHeader.flags = rc ;
       goto done ;
    }
 
    //PD_TRACE_DECLARE_FUNCTION( SDB_RTNCOCMDUNLINKCL_EXE, "rtnCoordCMDUnlinkCollection::execute" )
-   INT32 rtnCoordCMDUnlinkCollection::execute( CHAR *pReceiveBuffer,
-                                               SINT32 packSize,
+   INT32 rtnCoordCMDUnlinkCollection::execute( MsgHeader *pMsg,
                                                pmdEDUCB *cb,
-                                               MsgOpReply &replyHeader,
+                                               INT64 &contextID,
                                                rtnContextBuf *buf )
    {
       INT32 rc                         = SDB_OK;
       PD_TRACE_ENTRY ( SDB_RTNCOCMDUNLINKCL_EXE ) ;
 
       // fill default-reply(delete success)
-      MsgHeader *pHeader               = (MsgHeader *)pReceiveBuffer;
-      replyHeader.header.messageLength = sizeof( MsgOpReply );
-      replyHeader.header.opCode        = MSG_BS_QUERY_RES;
-      replyHeader.header.requestID     = pHeader->requestID;
-      replyHeader.header.routeID.value = 0;
-      replyHeader.header.TID           = pHeader->TID;
-      replyHeader.contextID            = -1;
-      replyHeader.flags                = SDB_OK;
-      replyHeader.numReturned          = 0;
-      replyHeader.startFrom            = 0;
+      contextID = -1 ;
 
-      MsgOpQuery *pReqMsg              = (MsgOpQuery *)pReceiveBuffer;
+      MsgOpQuery *pReqMsg              = (MsgOpQuery *)pMsg;
 
       CoordGroupList groupLst ;
       CHAR *pQuery                     = NULL ;
       string strMainCLName ;
       string strSubClName ;
 
-      rc = msgExtractQuery( pReceiveBuffer, NULL, NULL, NULL,
+      rc = msgExtractQuery( (CHAR*)pMsg, NULL, NULL, NULL,
                             NULL, &pQuery, NULL, NULL, NULL ) ;
       PD_RC_CHECK( rc, PDERROR,
                    "Failed to parse unlink collection request(rc=%d)",
@@ -7727,7 +7231,7 @@ namespace engine
 
       // send request to catalog
       pReqMsg->header.opCode = MSG_CAT_UNLINK_CL_REQ ;
-      rc = executeOnCataGroup ( pHeader, cb, &groupLst ) ;
+      rc = executeOnCataGroup ( pMsg, cb, &groupLst ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "Unlink collection failed on catalog, rc = %d",
@@ -7737,7 +7241,7 @@ namespace engine
 
       // restore opcode 
       pReqMsg->header.opCode = MSG_BS_QUERY_REQ ;
-      rc = executeOnCL( pHeader, cb, strMainCLName.c_str(), TRUE,
+      rc = executeOnCL( pMsg, cb, strMainCLName.c_str(), TRUE,
                         &groupLst, NULL, NULL ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to unlink collection"
                    "(MainCL:%s, subCL:%s), execute on data-node failed, "
@@ -7748,33 +7252,22 @@ namespace engine
       PD_TRACE_EXITRC ( SDB_RTNCOCMDUNLINKCL_EXE, rc ) ;
       return rc;
    error :
-      replyHeader.flags = rc ;
       goto done ;
    }
 
    //PD_TRACE_DECLARE_FUNCTION( SDB_RTNCOCMDSETSESSATTR_EXE, "rtnCoordCMDSetSessionAttr::execute" )
-   INT32 rtnCoordCMDSetSessionAttr::execute( CHAR *pReceiveBuffer,
-                                             SINT32 packSize,
+   INT32 rtnCoordCMDSetSessionAttr::execute( MsgHeader *pMsg,
                                              pmdEDUCB *cb,
-                                             MsgOpReply &replyHeader,
+                                             INT64 &contextID,
                                              rtnContextBuf *buf )
    {
       INT32 rc = SDB_OK;
       PD_TRACE_ENTRY ( SDB_RTNCOCMDSETSESSATTR_EXE ) ;
       // fill default-reply(delete success)
-      MsgHeader *pHeader               = (MsgHeader *)pReceiveBuffer;
-      replyHeader.header.messageLength = sizeof( MsgOpReply );
-      replyHeader.header.opCode        = MSG_BS_QUERY_RES;
-      replyHeader.header.requestID     = pHeader->requestID;
-      replyHeader.header.routeID.value = 0;
-      replyHeader.header.TID           = pHeader->TID;
-      replyHeader.contextID            = -1;
-      replyHeader.flags                = SDB_OK;
-      replyHeader.numReturned          = 0;
-      replyHeader.startFrom            = 0;
+      contextID = -1 ;
 
       CHAR *pQuery                     = NULL ;
-      rc = msgExtractQuery( pReceiveBuffer, NULL, NULL, NULL, NULL,
+      rc = msgExtractQuery( (CHAR*)pMsg, NULL, NULL, NULL, NULL,
                             &pQuery, NULL, NULL, NULL );
       PD_RC_CHECK( rc, PDERROR,
                    "Failed to parse unlink collection request(rc=%d)",
@@ -7821,37 +7314,26 @@ namespace engine
       PD_TRACE_EXITRC ( SDB_RTNCOCMDSETSESSATTR_EXE, rc ) ;
       return rc;
    error:
-      replyHeader.flags = rc;
       goto done;
    }
 
    // PD_TRACE_DECLARE_FUNCTION( SDB_RTNCOCMDCREATEDOMAIN_EXE, "rtnCoordCMDCreateDomain::execute" )
-   INT32 rtnCoordCMDCreateDomain::execute( CHAR *pReceiveBuffer,
-                                           SINT32 packSize,
+   INT32 rtnCoordCMDCreateDomain::execute( MsgHeader *pMsg,
                                            pmdEDUCB *cb,
-                                           MsgOpReply &replyHeader,
+                                           INT64 &contextID,
                                            rtnContextBuf *buf )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNCOCMDCREATEDOMAIN_EXE ) ;
 
-      MsgHeader *pHeader               = (MsgHeader *)pReceiveBuffer;
-      replyHeader.header.messageLength = sizeof( MsgOpReply );
-      replyHeader.header.opCode        = MSG_BS_QUERY_RES;
-      replyHeader.header.requestID     = pHeader->requestID;
-      replyHeader.header.routeID.value = 0;
-      replyHeader.header.TID           = pHeader->TID;
-      replyHeader.contextID            = -1;
-      replyHeader.flags                = SDB_OK;
-      replyHeader.numReturned          = 0;
-      replyHeader.startFrom            = 0;
+      contextID = -1 ;
 
-      MsgOpQuery *forward  = (MsgOpQuery *)pReceiveBuffer;
+      MsgOpQuery *forward  = (MsgOpQuery *)pMsg;
       forward->header.opCode = MSG_CAT_CREATE_DOMAIN_REQ;
 
-      _printDebug ( pReceiveBuffer, "rtnCoordCMDCreateDomain" ) ;
+      _printDebug ( (CHAR*)pMsg, "rtnCoordCMDCreateDomain" ) ;
 
-      rc = executeOnCataGroup ( pHeader, cb, TRUE ) ;
+      rc = executeOnCataGroup ( pMsg, cb, TRUE ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "failed to create domain, rc = %d", rc ) ;
@@ -7862,37 +7344,26 @@ namespace engine
       PD_TRACE_EXITRC ( SDB_RTNCOCMDCREATEDOMAIN_EXE, rc ) ;
       return rc ;
    error :
-      replyHeader.flags = rc ;
       goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION( SDB_RTNCOCMDDROPDOMAIN_EXE, "rtnCoordCMDDropDomain::execute" )
-   INT32 rtnCoordCMDDropDomain::execute( CHAR *pReceiveBuffer,
-                                         SINT32 packSize,
+   INT32 rtnCoordCMDDropDomain::execute( MsgHeader *pMsg,
                                          pmdEDUCB *cb,
-                                         MsgOpReply &replyHeader,
+                                         INT64 &contextID,
                                          rtnContextBuf *buf )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNCOCMDDROPDOMAIN_EXE ) ;
 
-      MsgHeader *pHeader               = (MsgHeader *)pReceiveBuffer;
-      replyHeader.header.messageLength = sizeof( MsgOpReply );
-      replyHeader.header.opCode        = MSG_BS_QUERY_RES;
-      replyHeader.header.requestID     = pHeader->requestID;
-      replyHeader.header.routeID.value = 0;
-      replyHeader.header.TID           = pHeader->TID;
-      replyHeader.contextID            = -1;
-      replyHeader.flags                = SDB_OK;
-      replyHeader.numReturned          = 0;
-      replyHeader.startFrom            = 0;
+      contextID = -1 ;
 
-      MsgOpQuery *forward  = (MsgOpQuery *)pReceiveBuffer ;
+      MsgOpQuery *forward  = (MsgOpQuery *)pMsg ;
       forward->header.opCode = MSG_CAT_DROP_DOMAIN_REQ;
 
-      _printDebug ( pReceiveBuffer, "rtnCoordCMDDropDomain" ) ;
+      _printDebug ( (CHAR*)pMsg, "rtnCoordCMDDropDomain" ) ;
 
-      rc = executeOnCataGroup ( pHeader, cb, TRUE ) ;
+      rc = executeOnCataGroup ( pMsg, cb, TRUE ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "failed to drop domain, rc = %d", rc ) ;
@@ -7903,38 +7374,26 @@ namespace engine
       PD_TRACE_EXITRC ( SDB_RTNCOCMDDROPDOMAIN_EXE, rc ) ;
       return rc ;
    error :
-      replyHeader.flags = rc ;
       goto done ;
-
    }
 
    // PD_TRACE_DECLARE_FUNCTION( SDB_RTNCOCMDALTERDOMAIN_EXE, "rtnCoordCMDAlterDomain::execute" )
-   INT32 rtnCoordCMDAlterDomain::execute( CHAR *pReceiveBuffer,
-                                          SINT32 packSize,
+   INT32 rtnCoordCMDAlterDomain::execute( MsgHeader *pMsg,
                                           pmdEDUCB *cb,
-                                          MsgOpReply &replyHeader,
+                                          INT64 &contextID,
                                           rtnContextBuf *buf )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNCOCMDALTERDOMAIN_EXE ) ;
 
-      MsgHeader *pHeader               = (MsgHeader *)pReceiveBuffer;
-      replyHeader.header.messageLength = sizeof( MsgOpReply );
-      replyHeader.header.opCode        = MSG_BS_QUERY_RES;
-      replyHeader.header.requestID     = pHeader->requestID;
-      replyHeader.header.routeID.value = 0;
-      replyHeader.header.TID           = pHeader->TID;
-      replyHeader.contextID            = -1;
-      replyHeader.flags                = SDB_OK;
-      replyHeader.numReturned          = 0;
-      replyHeader.startFrom            = 0;
+      contextID = -1 ;
 
-      MsgOpQuery *forward  = (MsgOpQuery *)pReceiveBuffer;
+      MsgOpQuery *forward  = (MsgOpQuery *)pMsg;
       forward->header.opCode = MSG_CAT_ALTER_DOMAIN_REQ;
 
-      _printDebug ( pReceiveBuffer, "rtnCoordCMDAlterDomain" ) ;
+      _printDebug ( (CHAR*)pMsg, "rtnCoordCMDAlterDomain" ) ;
 
-      rc = executeOnCataGroup ( pHeader, cb, TRUE ) ;
+      rc = executeOnCataGroup ( pMsg, cb, TRUE ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "failed to alter domain, rc = %d", rc ) ;
@@ -7945,25 +7404,22 @@ namespace engine
       PD_TRACE_EXITRC ( SDB_RTNCOCMDALTERDOMAIN_EXE, rc ) ;
       return rc ;
    error :
-      replyHeader.flags = rc ;
       goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION( SDB_RTNCOCMDADDDOMAINGROUP_EXE, "rtnCoordCMDAddDomainGroup::execute" )
-   INT32 rtnCoordCMDAddDomainGroup::execute( CHAR *pReceiveBuffer,
-                                             SINT32 packSize,
+   INT32 rtnCoordCMDAddDomainGroup::execute( MsgHeader *pMsg,
                                              pmdEDUCB *cb,
-                                             MsgOpReply &replyHeader,
+                                             INT64 &contextID,
                                              rtnContextBuf *buf )
    {
       return SDB_OK ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION( SDB_RTNCOCMDREMOVEDOMAINGROUP_EXE, "rtnCoordCMDRemoveDomainGroup::execute" )
-   INT32 rtnCoordCMDRemoveDomainGroup::execute( CHAR *pReceiveBuffer,
-                                                SINT32 packSize,
+   INT32 rtnCoordCMDRemoveDomainGroup::execute( MsgHeader *pMsg,
                                                 pmdEDUCB *cb,
-                                                MsgOpReply &replyHeader,
+                                                INT64 &contextID,
                                                 rtnContextBuf *buf )
    {
       return SDB_OK ;
@@ -8104,10 +7560,9 @@ namespace engine
 
 
    // PD_TRACE_DECLARE_FUNCTION( CMD_RTNCOCMDLISTCLINDOMAIN_EXECUTE, "rtnCoordCMDListCLInDomain::execute" )
-   INT32 rtnCoordCMDListCLInDomain::execute( CHAR *pReceiveBuffer,
-                                             SINT32 packSize,
+   INT32 rtnCoordCMDListCLInDomain::execute( MsgHeader *pMsg,
                                              pmdEDUCB *cb,
-                                             MsgOpReply &replyHeader,
+                                             INT64 &contextID,
                                              rtnContextBuf *buf )
    {
       INT32 rc = SDB_OK ;
@@ -8121,21 +7576,11 @@ namespace engine
       CHAR *msgBuf = NULL ;
       rtnQueryOptions queryOptions ;
 
-      std::vector<BSONObj> replyFromCata ;
+      vector<BSONObj> replyFromCata ;
 
-      MsgHeader *reqHeader = (MsgHeader *)pReceiveBuffer;
+      contextID = -1 ;
 
-      replyHeader.header.messageLength = sizeof( MsgOpReply );
-      replyHeader.header.opCode        = MSG_BS_QUERY_RES;
-      replyHeader.header.requestID     = reqHeader->requestID;
-      replyHeader.header.routeID.value = 0;
-      replyHeader.header.TID           = reqHeader->TID;
-      replyHeader.contextID            = -1;
-      replyHeader.flags                = SDB_OK;
-      replyHeader.numReturned          = 0;
-      replyHeader.startFrom            = 0;
-
-      rc = msgExtractQuery( pReceiveBuffer, NULL, NULL,
+      rc = msgExtractQuery( (CHAR*)pMsg, NULL, NULL,
                             NULL, NULL, &query,
                             &selector, NULL, NULL );
       if ( rc != SDB_OK )
@@ -8176,15 +7621,12 @@ namespace engine
       }
 
       {
-         SINT64 contextID = -1 ;
          rc = _rebuildListResult( replyFromCata, cb, contextID ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "failed to rebuild list result:%d", rc ) ;
             goto error ;
          }
-         replyHeader.flags = SDB_OK ;
-         replyHeader.contextID = contextID ;
       }
 
    done:
@@ -8196,7 +7638,11 @@ namespace engine
       PD_TRACE_EXITRC( CMD_RTNCOCMDLISTCLINDOMAIN_EXECUTE, rc )  ;
       return rc ;
    error:
-      replyHeader.flags = rc ;
+      if ( contextID >= 0 )
+      {
+         pmdGetKRCB()->getRTNCB()->contextDelete( contextID, cb ) ;
+         contextID = -1 ;
+      }
       goto done ;
    }
 
@@ -8451,10 +7897,9 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION( CMD_RTNCOCMDINVALIDATECACHE_EXEC, "rtnCoordCMDInvalidateCache::execute" )
-   INT32 rtnCoordCMDInvalidateCache::execute( CHAR *pReceiveBuffer,
-                                              SINT32 packSize,
+   INT32 rtnCoordCMDInvalidateCache::execute( MsgHeader *pMsg,
                                               pmdEDUCB *cb,
-                                              MsgOpReply &replyHeader,
+                                              INT64 &contextID,
                                               rtnContextBuf *buf )
    {
       INT32 rc = SDB_OK ;
@@ -8466,18 +7911,9 @@ namespace engine
       ROUTE_SET nodes ;
       ROUTE_RC_MAP uncompleted ;
 
-      MsgHeader *reqHeader = (MsgHeader *)pReceiveBuffer ;
-      replyHeader.header.messageLength = sizeof( MsgOpReply ) ;
-      replyHeader.header.opCode = MSG_BS_QUERY_RES ;
-      replyHeader.header.requestID = reqHeader->requestID ;
-      replyHeader.header.routeID.value = 0 ;
-      replyHeader.header.TID = reqHeader->TID ;
-      replyHeader.contextID = -1 ;
-      replyHeader.flags = SDB_OK ;
-      replyHeader.numReturned = 0 ;
-      replyHeader.startFrom = 0 ;
+      contextID = -1 ;
 
-      rc = msgExtractQuery( pReceiveBuffer, NULL, NULL,
+      rc = msgExtractQuery( (CHAR*)pMsg, NULL, NULL,
                             NULL, NULL, &query,
                             NULL, NULL, NULL );
       if ( rc != SDB_OK )
@@ -8509,8 +7945,8 @@ namespace engine
       sdbGetCoordCB()->invalidateGroupInfo() ;
 
       /// send msg to specified nodes
-      reqHeader->TID = cb->getTID() ;
-      rc = _executeOnMultiNodes( pReceiveBuffer,
+      pMsg->TID = cb->getTID() ;
+      rc = _executeOnMultiNodes( (CHAR*)pMsg,
                                  cb, nodes, uncompleted ) ;
       if ( SDB_OK != rc )
       {
@@ -8540,15 +7976,13 @@ namespace engine
       PD_TRACE_EXITRC( CMD_RTNCOCMDINVALIDATECACHE_EXEC, rc ) ;
       return rc ;
    error:
-      replyHeader.flags = rc ;
       goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION( CMD_RTNCOCMDLISTLOBS_EXEC, "rtnCoordListLobs::execute" )   
-   INT32 rtnCoordCMDListLobs::execute( CHAR *pReceiveBuffer,
-                                       SINT32 packSize,
+   INT32 rtnCoordCMDListLobs::execute( MsgHeader *pMsg,
                                        pmdEDUCB *cb,
-                                       MsgOpReply &replyHeader,
+                                       INT64 &contextID,
                                        rtnContextBuf *buf )
    {
       INT32 rc = SDB_OK ;
@@ -8566,18 +8000,9 @@ namespace engine
       CoordCB *pCoordcb = pmdGetKRCB()->getCoordCB() ;
       netMultiRouteAgent *pRouteAgent = pCoordcb->getRouteAgent() ;
 
-      MsgHeader *pHeader = (MsgHeader *)pReceiveBuffer ;
-      replyHeader.header.messageLength = sizeof( MsgOpReply );
-      replyHeader.header.opCode = MSG_BS_QUERY_RES ;
-      replyHeader.header.requestID = pHeader->requestID;
-      replyHeader.header.routeID.value = 0 ;
-      replyHeader.header.TID = pHeader->TID ;
-      replyHeader.contextID = -1 ;
-      replyHeader.flags = SDB_OK ;
-      replyHeader.numReturned = 0 ;
-      replyHeader.startFrom = 0 ;
+      contextID = -1 ;
 
-      rc = msgExtractQuery( pReceiveBuffer, NULL, NULL,
+      rc = msgExtractQuery( (CHAR*)pMsg, NULL, NULL,
                             NULL, NULL, &pQuery,
                             NULL, NULL, NULL ) ;
 
@@ -8606,19 +8031,18 @@ namespace engine
 
       queryConf._openEmptyContext = TRUE ;
       queryConf._allCataGroups = TRUE ;
-      rc = queryOpr.queryOrDoOnCL( pHeader, pRouteAgent, cb, &context,
+      rc = queryOpr.queryOrDoOnCL( pMsg, pRouteAgent, cb, &context,
                                    sendOpt, &queryConf ) ;
       PD_RC_CHECK( rc, PDERROR, "List lobs[%s] on groups failed, rc: %d",
                    queryConf._realCLName.c_str(), rc ) ;
 
       // set context id
-      replyHeader.contextID = context->contextID() ;
+      contextID = context->contextID() ;
 
    done:
       PD_TRACE_EXITRC( CMD_RTNCOCMDLISTLOBS_EXEC, rc ) ;
       return rc ;
    error:
-      replyHeader.flags = rc;
       if ( context )
       {
          pRtncb->contextDelete( context->contextID(), cb ) ;
@@ -8627,15 +8051,13 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION( CMD_RTNCOCMDREELECTION_EXEC, "rtnCoordCMDReelection::execute" )
-   INT32 rtnCoordCMDReelection::execute( CHAR *pReceiveBuffer,
-                                         SINT32 packSize,
+   INT32 rtnCoordCMDReelection::execute( MsgHeader *pMsg,
                                          pmdEDUCB *cb,
-                                         MsgOpReply &replyHeader,
+                                         INT64 &contextID,
                                          rtnContextBuf *buf )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( CMD_RTNCOCMDREELECTION_EXEC ) ;
-      MsgHeader *header = (MsgHeader *)pReceiveBuffer ;
       CHAR *pQuery = NULL ;
       BSONObj query ;
       BSONElement ele ;
@@ -8645,17 +8067,9 @@ namespace engine
       GROUP_VEC gpVec ;
       BSONObj obj ;
 
-      replyHeader.header.messageLength = sizeof( MsgOpReply );
-      replyHeader.header.opCode        = MSG_BS_QUERY_RES;
-      replyHeader.header.requestID     = header->requestID;
-      replyHeader.header.routeID.value = 0;
-      replyHeader.header.TID           = header->TID;
-      replyHeader.contextID            = -1;
-      replyHeader.flags                = SDB_OK;
-      replyHeader.numReturned          = 0;
-      replyHeader.startFrom            = 0; 
+      contextID = -1 ;
 
-      rc = msgExtractQuery( pReceiveBuffer, NULL, NULL,
+      rc = msgExtractQuery( (CHAR*)pMsg, NULL, NULL,
                             NULL, NULL, &pQuery,
                             NULL, NULL, NULL ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to parse the "
@@ -8690,7 +8104,7 @@ namespace engine
       }
 
       gpLst[gpInfo->getGroupID()] = gpInfo->getGroupID() ;
-      rc = executeOnDataGroup( header, cb, gpLst, TRUE, NULL, NULL, NULL ) ;
+      rc = executeOnDataGroup( pMsg, cb, gpLst, TRUE, NULL, NULL, NULL ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to execute on group[%s], rc:%d",
@@ -8699,7 +8113,6 @@ namespace engine
       }
 
    done:
-      replyHeader.flags = rc;
       PD_TRACE_EXITRC( CMD_RTNCOCMDREELECTION_EXEC, rc ) ;
       return rc ;
    error:

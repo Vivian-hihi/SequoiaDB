@@ -45,26 +45,16 @@
 namespace engine
 {
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOINTERRUPT_EXECUTE, "rtnCoordInterrupt::execute" )
-   INT32 rtnCoordInterrupt::execute( CHAR * pReceiveBuffer,
-                                     SINT32 packSize,
-                                     pmdEDUCB * cb,
-                                     MsgOpReply & replyHeader,
+   INT32 rtnCoordInterrupt::execute( MsgHeader *pMsg,
+                                     pmdEDUCB *cb,
+                                     INT64 &contextID,
                                      rtnContextBuf *buf )
    {
       INT32 rc = SDB_OK;
       PD_TRACE_ENTRY ( SDB_RTNCOINTERRUPT_EXECUTE ) ;
-      MsgHeader *pInterrupt = (MsgHeader *)pReceiveBuffer;
-      replyHeader.header.messageLength = sizeof( MsgOpReply );
-      replyHeader.header.opCode = MSG_BS_INTERRUPTE;
-      replyHeader.header.TID = pInterrupt->TID;
-      replyHeader.header.routeID.value = 0;
-      replyHeader.header.requestID = pInterrupt->requestID;
-      replyHeader.flags = SDB_OK ;
-      replyHeader.startFrom = 0;
-      replyHeader.numReturned = 0;
-
       pmdKRCB *pKrcb = pmdGetKRCB();
       SDB_RTNCB *pRtncb = pKrcb->getRTNCB();
+      contextID = -1 ;
 
       // send interrut message to all sub-session
       CoordSession *pSession = cb->getCoordSession();

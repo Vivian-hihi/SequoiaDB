@@ -870,7 +870,7 @@ namespace engine
    }
 
    INT32 _pmdCoordProcessor::_processCoordMsg( MsgHeader *msg, 
-                                               MsgOpReply &replyHeader,
+                                               INT64 &contextID,
                                                rtnContextBuf &contextBuff )
    {
       INT32 rc = SDB_OK ;
@@ -917,10 +917,7 @@ namespace engine
                            pProcesserFactory->getCommandProcesser( pQueryMsg ) ;
                if ( NULL != pCmdProcesser )
                {
-                  rc = pCmdProcesser->execute( ( CHAR *)msg,
-                                               msg->messageLength,
-                                               eduCB(),
-                                               replyHeader,
+                  rc = pCmdProcesser->execute( msg, eduCB(), contextID,
                                                &contextBuff ) ;
                   break ;
                }
@@ -933,23 +930,18 @@ namespace engine
             rtnCoordOperator *pOperator = 
                            pProcesserFactory->getOperator( msg->opCode ) ;
             needRollback = pOperator->needRollback() ;
-            rc = pOperator->execute( ( CHAR* )msg,
-                                     msg->messageLength,
-                                     eduCB(),
-                                     replyHeader,
-                                     &contextBuff ) ;
+            rc = pOperator->execute( msg, eduCB(), contextID, &contextBuff ) ;
             // query with return data
             if ( MSG_BS_QUERY_REQ == msg->opCode 
                  && ( ((MsgOpQuery*)msg)->flags & FLG_QUERY_WITH_RETURNDATA )
-                 && -1 != replyHeader.contextID 
-                 && NULL != ( pContext = _pRTNCB->contextFind( 
-                                                    replyHeader.contextID ) ) )
+                 && -1 != contextID 
+                 && NULL != ( pContext = _pRTNCB->contextFind( contextID ) ) )
             {
                rc = pContext->getMore( -1, contextBuff, eduCB() ) ;
                if ( rc || pContext->eof() )
                {
-                  _pRTNCB->contextDelete( replyHeader.contextID, eduCB() ) ;
-                  replyHeader.contextID = -1 ;
+                  _pRTNCB->contextDelete( contextID, eduCB() ) ;
+                  contextID = -1 ;
                }
 
                if ( SDB_DMS_EOC == rc )
@@ -989,27 +981,13 @@ namespace engine
                                          BOOLEAN &needReply )
    {
       INT32 rc = SDB_OK ;
-      ossMemset( &_replyHeader, 0, sizeof( _replyHeader ) ) ;
-      _replyHeader.header.messageLength = sizeof( MsgOpReply ) ;
-      _replyHeader.header.opCode        = MAKE_REPLY_TYPE( msg->opCode ) ;
-      _replyHeader.header.requestID     = msg->requestID ;
-      _replyHeader.header.routeID.value = pmdGetNodeID().value ;
-      _replyHeader.header.TID           = msg->TID ;
-      _replyHeader.contextID            = -1 ;
-      _replyHeader.flags                = SDB_OK ;
-      _replyHeader.numReturned          = 0 ;
-      _replyHeader.startFrom            = 0 ;
 
-      rc = _processCoordMsg( msg, _replyHeader, contextBuff ) ;
+      rc = _processCoordMsg( msg, contextID, contextBuff ) ;
       if ( SDB_COORD_UNKNOWN_OP_REQ == rc )
       {
          contextBuff.release() ;
          rc = _pmdDataProcessor::processMsg( msg, contextBuff,
                                              contextID, needReply ) ;
-      }
-      else if ( SDB_OK == rc )
-      {
-         contextID = _replyHeader.contextID ;
       }
 
       if ( rc )

@@ -541,23 +541,13 @@ namespace engine
    */
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOOPDEFAULT_EXECUTE, "rtnCoordOperatorDefault::execute" )
-   INT32 rtnCoordOperatorDefault::execute( CHAR *pReceiveBuffer,
-                                           SINT32 packSize,
+   INT32 rtnCoordOperatorDefault::execute( MsgHeader *pMsg,
                                            pmdEDUCB *cb,
-                                           MsgOpReply &replyHeader,
+                                           INT64 &contextID,
                                            rtnContextBuf *buf )
    {
       PD_TRACE_ENTRY ( SDB_RTNCOOPDEFAULT_EXECUTE ) ;
-      MsgHeader *pHeader = (MsgHeader *)pReceiveBuffer ;
-      replyHeader.header.messageLength = sizeof(MsgOpReply) ;
-      replyHeader.header.opCode        = MAKE_REPLY_TYPE(pHeader->opCode) ;
-      replyHeader.header.requestID     = pHeader->requestID ;
-      replyHeader.header.routeID.value = 0 ;
-      replyHeader.header.TID           = pHeader->TID ;
-      replyHeader.contextID            = -1 ;
-      replyHeader.flags                = SDB_COORD_UNKNOWN_OP_REQ ;
-      replyHeader.numReturned          = 0 ;
-      replyHeader.startFrom            = 0 ;
+      contextID          = -1 ;
       PD_TRACE_EXIT ( SDB_RTNCOOPDEFAULT_EXECUTE ) ;
       return SDB_COORD_UNKNOWN_OP_REQ ;
    }
@@ -833,10 +823,9 @@ namespace engine
    /*
       rtnCoordMsg implement
    */
-   INT32 rtnCoordMsg::execute( CHAR *pReceiveBuffer,
-                               SINT32 packSize,
+   INT32 rtnCoordMsg::execute( MsgHeader *pMsg,
                                pmdEDUCB *cb,
-                               MsgOpReply &replyHeader,
+                               INT64 &contextID,
                                rtnContextBuf *buf )
    {
       INT32 rc = SDB_OK ;
@@ -848,18 +837,9 @@ namespace engine
       REPLY_QUE replyQue ;
 
       // fill default-reply
-      MsgHeader *pHeader               = (MsgHeader *)pReceiveBuffer ;
-      replyHeader.header.messageLength = sizeof( MsgOpReply ) ;
-      replyHeader.header.opCode        = MSG_BS_MSG_RES ;
-      replyHeader.header.requestID     = pHeader->requestID ;
-      replyHeader.header.routeID.value = 0 ;
-      replyHeader.header.TID           = pHeader->TID ;
-      replyHeader.contextID            = -1 ;
-      replyHeader.flags                = SDB_OK ;
-      replyHeader.numReturned          = 0 ;
-      replyHeader.startFrom            = 0 ;
+      contextID    = -1 ;
       // set tid
-      pHeader->TID = cb->getTID() ;
+      pMsg->TID = cb->getTID() ;
 
       CoordGroupList groupLst ;
 
@@ -868,7 +848,7 @@ namespace engine
       ROUTE_RC_MAP failedNodes ;
 
       // run msg
-      rtnMsg( (MsgOpMsg *)pReceiveBuffer ) ;
+      rtnMsg( (MsgOpMsg *)pMsg ) ;
 
       // list all groups
       rc = rtnCoordGetAllGroupList( cb, groupLst, NULL, FALSE ) ;
@@ -886,7 +866,7 @@ namespace engine
       }
 
       // send msg
-      rtnCoordSendRequestToNodes( pReceiveBuffer, sendNodes, 
+      rtnCoordSendRequestToNodes( (void*)pMsg, sendNodes, 
                                   pRouteAgent, cb, successNodes,
                                   failedNodes ) ;
       rcTmp = rtnCoordGetReply( cb, successNodes, replyQue,
@@ -907,7 +887,6 @@ namespace engine
       return rc ;
    error:
       rtnCoordClearRequest( cb, successNodes ) ;
-      replyHeader.flags = rc ;
       goto done ;
    }
 

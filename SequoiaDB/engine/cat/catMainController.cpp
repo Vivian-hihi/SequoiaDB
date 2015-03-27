@@ -823,7 +823,6 @@ namespace engine
       CHAR *pFieldSelector  = NULL ;
       CHAR *pOrderByBuffer  = NULL ;
       CHAR *pHintBuffer     = NULL ;
-      INT32 iNameLen        = 0 ;
       rtnContextBuf buffObj ;
       BOOLEAN bIsDelay      = FALSE ;
 

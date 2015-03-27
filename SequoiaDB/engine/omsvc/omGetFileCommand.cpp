@@ -7370,7 +7370,6 @@ namespace engine
    {
       INT32 rc              = SDB_OK ;
       BOOLEAN isRepSet      = FALSE ;
-      BOOLEAN isGroupNumSet = FALSE ;
       BSONObjIterator iter( properties ) ;
       while ( iter.more() )
       {
@@ -7418,7 +7417,6 @@ namespace engine
          else if ( name == OM_TEMPLATE_DATAGROUP_NUM )
          {
             groupNum      = ossAtoi( value.c_str() ) ;
-            isGroupNumSet = TRUE ;
          }
       }
 

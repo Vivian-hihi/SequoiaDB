@@ -213,7 +213,7 @@ namespace engine
       CHAR *pMsg    = NULL ;
       INT32 bufSize = 0 ;
       BSONObj obj ;
-      MsgOpReply dummyReply ;
+      INT64 contextID = -1  ;
       SDB_DMSCB *dmsCB = pKrcb->getDMSCB() ;
       SDB_DPSCB *dpsCB = pKrcb->getDPSCB() ;
 
@@ -248,12 +248,10 @@ namespace engine
                   goto error ;
                }
 
-               rc = insert.execute ( pMsg, *(SINT32*)pMsg, eduCB,
-                                     dummyReply, NULL ) ;
+               rc = insert.execute ( (MsgHeader*)pMsg, eduCB,
+                                     contextID, NULL ) ;
                PD_RC_CHECK ( rc, PDERROR, "Failed to execute insert on coord, "
                              "rc = %d", rc ) ;
-//               SDB_OSS_FREE ( pMsg ) ;
-//               pMsg = NULL ;
             }
             else
             {
@@ -264,6 +262,7 @@ namespace engine
             }
          }
       }
+
    done:
       if ( pMsg )
       {

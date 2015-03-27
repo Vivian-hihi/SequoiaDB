@@ -567,9 +567,6 @@ namespace engine
                           clsCatalogSet * cataSet, pmdEDUCB * cb, INT16 w )
    {
       INT32 rc = SDB_OK ;
-      pmdKRCB *krcb = pmdGetKRCB() ;
-      SDB_DMSCB *dmsCB = krcb->getDMSCB() ;
-      SDB_DPSCB *dpsCB = krcb->getDPSCB() ;
       UINT64 taskID = 0 ;
       BSONObj taskObj ;
       BSONObj cataInfo ;

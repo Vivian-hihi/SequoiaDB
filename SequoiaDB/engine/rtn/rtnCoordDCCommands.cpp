@@ -46,10 +46,9 @@ namespace engine
    /*
       rtnCoordAlterImage implement
    */
-   INT32 rtnCoordAlterImage::execute( CHAR *pReceiveBuffer,
-                                      SINT32 packSize,
+   INT32 rtnCoordAlterImage::execute( MsgHeader *pMsg,
                                       pmdEDUCB *cb,
-                                      MsgOpReply &replyHeader,
+                                      INT64 &contextID,
                                       rtnContextBuf *buf )
    {
       INT32 rc = SDB_OK ;
@@ -58,24 +57,15 @@ namespace engine
       const CHAR *pAction = NULL ;
 
       // fill default-reply
-      MsgHeader *pHeader               = (MsgHeader *)pReceiveBuffer;
-      replyHeader.header.messageLength = sizeof( MsgOpReply );
-      replyHeader.header.opCode        = MSG_BS_QUERY_RES ;
-      replyHeader.header.requestID     = pHeader->requestID;
-      replyHeader.header.routeID.value = 0;
-      replyHeader.header.TID           = pHeader->TID;
-      replyHeader.contextID            = -1;
-      replyHeader.flags                = SDB_OK;
-      replyHeader.numReturned          = 0;
-      replyHeader.startFrom            = 0;
+      contextID                        = -1 ;
 
-      MsgOpQuery *pAttachMsg           = (MsgOpQuery *)pReceiveBuffer ;
+      MsgOpQuery *pAttachMsg           = (MsgOpQuery *)pMsg ;
       pAttachMsg->header.opCode        = MSG_CAT_ALTER_IMAGE_REQ ;
 
       // extrace query msg
       {
          CHAR *pQuery = NULL ;
-         rc = msgExtractQuery( pReceiveBuffer, NULL, NULL, NULL, NULL,
+         rc = msgExtractQuery( (CHAR*)pMsg, NULL, NULL, NULL, NULL,
                                &pQuery, NULL, NULL, NULL ) ;
          PD_RC_CHECK( rc, PDERROR, "Extract command[%s] msg failed, rc: %d",
                       COORD_CMD_ALTER_IMAGE, rc ) ;
@@ -103,7 +93,7 @@ namespace engine
       }
 
       // 1. execute on catalog
-      rc = executeOnCataGroup( pHeader, cb, &datagroups ) ;
+      rc = executeOnCataGroup( pMsg, cb, &datagroups ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Failed to execute %s:%s on catalog node, rc: %d",
@@ -131,7 +121,6 @@ namespace engine
       }
 
    done:
-      replyHeader.flags = rc ;
       return rc ;
    error:
       goto done ;

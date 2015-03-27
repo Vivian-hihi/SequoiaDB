@@ -190,7 +190,6 @@ namespace engine
 
       CHAR *msg = NULL ;
       INT32 bufSize = 0 ;
-      MsgOpReply dummyReply ;
 
       if ( SQL_GRAMMAR::CRTCS == _commandType )
       {
@@ -206,8 +205,7 @@ namespace engine
             goto error ;
          }
 
-         rc = coord.execute( msg, *(SINT32*)msg, eduCB,
-                             dummyReply, NULL ) ;
+         rc = coord.execute( (MsgHeader*)msg, eduCB, _contextID, NULL ) ;
          if ( SDB_OK != rc )
          {
             goto error ;
@@ -227,8 +225,7 @@ namespace engine
             goto error ;
          }
 
-         rc = coord.execute( msg, *(SINT32*)msg, eduCB,
-                              dummyReply, NULL ) ;
+         rc = coord.execute( (MsgHeader*)msg, eduCB, _contextID, NULL ) ;
          if ( SDB_OK != rc )
          {
             goto error ;
@@ -259,8 +256,7 @@ namespace engine
             goto error ;
          }
 
-         rc = coord.execute( msg, *(SINT32*)msg, eduCB,
-                              dummyReply, NULL ) ;
+         rc = coord.execute( (MsgHeader*)msg, eduCB, _contextID, NULL ) ;
          if ( SDB_OK != rc )
          {
             goto error ;
@@ -281,8 +277,7 @@ namespace engine
             goto error ;
          }
 
-         rc = coord.execute( msg, *(SINT32*)msg, eduCB,
-                              dummyReply, NULL ) ;
+         rc = coord.execute( (MsgHeader*)msg, eduCB, _contextID, NULL ) ;
          if ( SDB_OK != rc )
          {
             goto error ;
@@ -325,8 +320,7 @@ namespace engine
          {
             goto error ;
          }
-         rc = coord.execute( msg, *(SINT32*)msg, eduCB,
-                              dummyReply, NULL ) ;
+         rc = coord.execute( (MsgHeader*)msg, eduCB, _contextID, NULL ) ;
          if ( SDB_OK != rc )
          {
             goto error ;
@@ -348,8 +342,7 @@ namespace engine
             goto error ;
          }
 
-         rc = coord.execute( msg, *(SINT32*)msg, eduCB,
-                              dummyReply, NULL ) ;
+         rc = coord.execute( (MsgHeader*)msg, eduCB, _contextID, NULL ) ;
          if ( SDB_OK != rc )
          {
             goto error ;
@@ -368,13 +361,11 @@ namespace engine
             goto error ;
          }
 
-         rc = coord.execute( msg, *(SINT32*)msg, eduCB,
-                              dummyReply, NULL ) ;
+         rc = coord.execute( (MsgHeader*)msg, eduCB, _contextID, NULL ) ;
          if ( SDB_OK != rc )
          {
             goto error ;
          }
-         _contextID = dummyReply.contextID ;
       }
       else if ( SQL_GRAMMAR::LISTCL == _commandType )
       {
@@ -389,14 +380,11 @@ namespace engine
             goto error ;
          }
 
-         rc = coord.execute( msg, *(SINT32*)msg, eduCB,
-                              dummyReply, NULL ) ;
+         rc = coord.execute( (MsgHeader*)msg, eduCB, _contextID, NULL ) ;
          if ( SDB_OK != rc )
          {
             goto error ;
          }
-
-         _contextID = dummyReply.contextID ;
       }
       else if ( SQL_GRAMMAR::BEGINTRAN == _commandType )
       {
@@ -407,11 +395,8 @@ namespace engine
          transMsg.TID = 0 ;
          transMsg.routeID.value = 0 ;
 
-         rc = coord.execute( ( CHAR *)(&transMsg),
-                              transMsg.messageLength,
-                              eduCB,
-                              dummyReply,
-                              NULL ) ;
+         rc = coord.execute( ( MsgHeader *)(&transMsg),
+                              eduCB, _contextID, NULL ) ;
          if ( SDB_OK != rc )
          {
             goto error ;
@@ -426,8 +411,7 @@ namespace engine
             goto error ;
          }
 
-         rc = coord.execute( msg, *(SINT32*)msg, eduCB,
-                              dummyReply, NULL ) ;
+         rc = coord.execute( (MsgHeader*)msg, eduCB, _contextID, NULL ) ;
          if ( SDB_OK != rc )
          {
             goto error ;
@@ -442,8 +426,7 @@ namespace engine
             goto error ;
          }
 
-         rc = coord.execute( msg, *(SINT32*)msg, eduCB,
-                              dummyReply, NULL ) ;
+         rc = coord.execute( (MsgHeader*)msg, eduCB, _contextID, NULL ) ;
          if ( SDB_OK != rc )
          {
             goto error ;

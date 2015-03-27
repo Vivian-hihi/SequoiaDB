@@ -37,21 +37,19 @@
 
 namespace engine
 {
-   INT32 _rtnCoordSql::execute( CHAR * pReceiveBuffer,
-                                SINT32 packSize,
-                                pmdEDUCB * cb,
-                                MsgOpReply & replyHeader,
+   INT32 _rtnCoordSql::execute( MsgHeader *pMsg,
+                                pmdEDUCB *cb,
+                                INT64 &contextID,
                                 rtnContextBuf *buf )
 
    {
-      INT32 rc = SDB_OK ;
-      pmdKRCB *krcb = pmdGetKRCB();
-      SQL_CB *sqlcb = krcb->getSqlCB() ;
-      NodeID curNodeID = pmdGetNodeID() ;
-      MsgHeader *header = (MsgHeader *)pReceiveBuffer;
-      CHAR *sql = NULL ;
-      SINT64 contextID = -1 ;
-      rc = msgExtractSql( pReceiveBuffer, &sql ) ;
+      INT32 rc          = SDB_OK ;
+      SQL_CB *sqlcb     = pmdGetKRCB()->getSqlCB() ;
+      CHAR *sql         = NULL ;
+
+      contextID         = -1 ;
+
+      rc = msgExtractSql( (CHAR*)pMsg, &sql ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to extract sql" ) ;
@@ -60,14 +58,8 @@ namespace engine
       }
 
       rc = sqlcb->exec( sql, cb, contextID ) ;
+
    done:
-      msgBuildReplyMsgHeader( replyHeader,
-                              sizeof(replyHeader),
-                              header->opCode,
-                              rc,
-                              contextID, 0, 0,
-                              curNodeID,
-                              header->requestID ) ;
       return rc ;
    error:
       goto done ;

@@ -47,10 +47,9 @@ using namespace bson;
 namespace engine
 {
    //PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOUPDATE_EXECUTE, "rtnCoordUpdate::execute" )
-   INT32 rtnCoordUpdate::execute( CHAR *pReceiveBuffer,
-                                  SINT32 packSize,
+   INT32 rtnCoordUpdate::execute( MsgHeader *pMsg,
                                   pmdEDUCB *cb,
-                                  MsgOpReply &replyHeader,
+                                  INT64 &contextID,
                                   rtnContextBuf *buf )
    {
       INT32 rc = SDB_OK ;
@@ -62,7 +61,7 @@ namespace engine
 
       // process define
       rtnSendOptions sendOpt( TRUE ) ;
-      rtnSendMsgIn inMsg( (MsgHeader*)pReceiveBuffer ) ;
+      rtnSendMsgIn inMsg( pMsg ) ;
       rtnProcessResult result ;
       ROUTE_RC_MAP nokRC ;
       result._pNokRC = &nokRC ;
@@ -80,16 +79,8 @@ namespace engine
       BOOLEAN emptyUpdateCata          = FALSE ;
 
       // fill default-reply(update success)
-      MsgOpUpdate *pUpdate             = (MsgOpUpdate *)pReceiveBuffer;
-      replyHeader.header.messageLength = sizeof( MsgOpReply );
-      replyHeader.header.opCode        = MSG_BS_UPDATE_RES;
-      replyHeader.header.requestID     = pUpdate->header.requestID;
-      replyHeader.header.routeID.value = 0;
-      replyHeader.header.TID           = pUpdate->header.TID;
-      replyHeader.contextID            = -1;
-      replyHeader.flags                = SDB_OK;
-      replyHeader.numReturned          = 0;
-      replyHeader.startFrom            = 0;
+      MsgOpUpdate *pUpdate             = (MsgOpUpdate *)pMsg ;
+      contextID                        = -1 ;
 
       INT32 flag                       = 0;
       CHAR *pCollectionName            = NULL ;
@@ -99,7 +90,7 @@ namespace engine
       BSONObj boSelector ;
       BSONObj boHint ;
       BSONObj boUpdator ;
-      rc = msgExtractUpdate( pReceiveBuffer, &flag, &pCollectionName,
+      rc = msgExtractUpdate( (CHAR*)pMsg, &flag, &pCollectionName,
                              &pSelector, &pUpdator, &pHint );
       PD_RC_CHECK( rc, PDERROR, "Failed to parse update request, rc: %d",
                    rc ) ;
@@ -275,9 +266,8 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR, "failed to build insert message, rc: %d",
                       rc ) ;
 
-         rc = pOpProcesser->execute( pMsgBuff,
-                                     ((MsgHeader*)pMsgBuff)->messageLength,
-                                     cb, replyHeader, buf ) ;
+         rc = pOpProcesser->execute( (MsgHeader*)pMsgBuff,
+                                     cb, contextID, buf ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to insert the data[%s], rc: %d",
                       target.toString().c_str(), rc ) ;
       }
@@ -285,7 +275,7 @@ namespace engine
    done:
       if ( flag & FLG_UPDATE_RETURNNUM )
       {
-         replyHeader.contextID = updateNum ;
+         contextID = updateNum ;
       }
       if ( pMsgBuff )
       {
@@ -294,7 +284,6 @@ namespace engine
       PD_TRACE_EXITRC ( SDB_RTNCOUPDATE_EXECUTE, rc ) ;
       return rc ;
    error:
-      replyHeader.flags = rc ;
       goto done;
    }
 

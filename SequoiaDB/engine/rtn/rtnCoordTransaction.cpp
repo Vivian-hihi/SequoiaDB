@@ -41,54 +41,32 @@
 
 namespace engine
 {
-   INT32 rtnCoordTransBegin::execute( CHAR * pReceiveBuffer,
-                                      SINT32 packSize,
-                                      pmdEDUCB * cb,
-                                      MsgOpReply & replyHeader,
+   INT32 rtnCoordTransBegin::execute( MsgHeader *pMsg,
+                                      pmdEDUCB *cb,
+                                      INT64 &contextID,
                                       rtnContextBuf *buf )
    {
-      INT32 rc = SDB_OK ;
+      INT32 rc    = SDB_OK ;
+      contextID   = -1 ;
 
-      MsgHeader *pHeader               = (MsgHeader *)pReceiveBuffer ;
-      replyHeader.header.messageLength = sizeof( MsgOpReply ) ;
-      replyHeader.header.opCode        = MSG_BS_TRANS_BEGIN_RSP ;
-      replyHeader.header.requestID     = pHeader->requestID ;
-      replyHeader.header.routeID.value = 0 ;
-      replyHeader.header.TID           = pHeader->TID ;
-      replyHeader.contextID            = -1 ;
-      replyHeader.flags                = SDB_OK ;
-      replyHeader.numReturned          = 0 ;
-      replyHeader.startFrom            = 0 ;
       rc = cb->createTransaction() ;
-      PD_RC_CHECK( rc, PDERROR,
-                  "create transaction failed(rc=%d)",
-                  rc );
+      PD_RC_CHECK( rc, PDERROR, "create transaction failed(rc=%d)", rc ) ;
+
    done:
       return rc;
    error:
-      replyHeader.flags = rc;
       goto done;
    }
 
-   INT32 rtnCoord2PhaseCommit::execute( CHAR * pReceiveBuffer,
-                                        SINT32 packSize,
-                                        pmdEDUCB * cb,
-                                        MsgOpReply &replyHeader,
+   INT32 rtnCoord2PhaseCommit::execute( MsgHeader *pMsg,
+                                        pmdEDUCB *cb,
+                                        INT64 &contextID,
                                         rtnContextBuf *buf )
    {
       INT32 rc = SDB_OK;
       INT32 rcTmp = SDB_OK;
 
-      MsgHeader *pHeader               = (MsgHeader *)pReceiveBuffer;
-      replyHeader.header.messageLength = sizeof( MsgOpReply );
-      replyHeader.header.opCode        = MSG_BS_TRANS_COMMIT_RSP;
-      replyHeader.header.requestID     = pHeader->requestID;
-      replyHeader.header.routeID.value = 0;
-      replyHeader.header.TID           = pHeader->TID;
-      replyHeader.contextID            = -1;
-      replyHeader.flags                = SDB_OK;
-      replyHeader.numReturned          = 0;
-      replyHeader.startFrom            = 0;
+      contextID                        = -1 ;
 
       if ( !cb->isTransaction() )
       {
@@ -96,52 +74,43 @@ namespace engine
          goto error;
       }
 
-      rc = doPhase1( pReceiveBuffer, packSize, cb, replyHeader );
+      rc = doPhase1( pMsg, cb, contextID, buf );
       PD_CHECK( SDB_OK == rc, rc, errorcancel, PDERROR,
                 "Execute failed on phase1(rc=%d)", rc ) ;
 
-      rc = doPhase2( pReceiveBuffer, packSize, cb, replyHeader );
+      rc = doPhase2( pMsg, cb, contextID, buf );
       PD_RC_CHECK( rc, PDERROR,
                    "Execute failed on phase2(rc=%d)", rc ) ;
 
    done:
       return rc ;
    errorcancel:
-      rcTmp = cancelOp( pReceiveBuffer, packSize, cb, replyHeader );
+      rcTmp = cancelOp( pMsg, cb, contextID, buf );
       if ( rcTmp )
       {
          PD_LOG ( PDERROR, "Failed to cancel the operate, rc: %d",
                   rcTmp );
       }
    error:
-      replyHeader.flags = rc ;
       goto done ;
    }
 
-   INT32 rtnCoord2PhaseCommit::doPhase1( CHAR * pReceiveBuffer,
-                                         SINT32 packSize,
-                                         pmdEDUCB * cb,
-                                         MsgOpReply & replyHeader )
+   INT32 rtnCoord2PhaseCommit::doPhase1( MsgHeader *pMsg,
+                                         pmdEDUCB *cb,
+                                         INT64 &contextID,
+                                         rtnContextBuf *buf )
    {
       INT32 rc = SDB_OK;
       pmdKRCB *pKrcb                   = pmdGetKRCB();
-      CoordCB *pCoordcb                = pKrcb->getCoordCB();
-      netMultiRouteAgent *pRouteAgent  = pCoordcb->getRouteAgent();
       CHAR *pMsgReq                    = NULL;
-      MsgHeader *pMsgHead              = NULL;
-      CoordGroupList groupLst;
-      CoordGroupList sendGroupLst;
 
-      rc = buildPhase1Msg( pReceiveBuffer, &pMsgReq );
+      rc = buildPhase1Msg( (CHAR*)pMsg, &pMsgReq );
       PD_RC_CHECK( rc, PDERROR,
                    "Failed to build the message on phase1(rc=%d)",
                    rc );
 
-      pMsgHead = (MsgHeader *)pMsgReq;
-      pMsgHead->TID = cb->getTID();
-
       // execute on data nodes
-      rc = executeOnDataGroup( pMsgReq, pRouteAgent, cb ) ;
+      rc = executeOnDataGroup( (MsgHeader*)pMsgReq, cb, contextID, buf ) ;
       PD_RC_CHECK( rc, PDERROR,
                    "Failed to execute on data-group on phase1(rc=%d)",
                    rc ) ;
@@ -157,30 +126,22 @@ namespace engine
       goto done;
    }
 
-   INT32 rtnCoord2PhaseCommit::doPhase2( CHAR * pReceiveBuffer,
-                                         SINT32 packSize,
-                                         pmdEDUCB * cb,
-                                         MsgOpReply & replyHeader )
+   INT32 rtnCoord2PhaseCommit::doPhase2( MsgHeader *pMsg,
+                                         pmdEDUCB *cb,
+                                         INT64 &contextID,
+                                         rtnContextBuf *buf )
    {
-      INT32 rc = SDB_OK;
-      pmdKRCB *pKrcb                   = pmdGetKRCB();
-      CoordCB *pCoordcb                = pKrcb->getCoordCB();
-      netMultiRouteAgent *pRouteAgent  = pCoordcb->getRouteAgent();
+      INT32 rc = SDB_OK ;
       CHAR *pMsgReq                    = NULL;
       MsgHeader *pMsgHead              = NULL;
-      CoordGroupList groupLst;
-      CoordGroupList sendGroupLst;
 
-      rc = buildPhase2Msg( pReceiveBuffer, &pMsgReq );
+      rc = buildPhase2Msg( (CHAR*)pMsg, &pMsgReq );
       PD_RC_CHECK( rc, PDERROR,
                    "Failed to build the message on phase1(rc=%d)",
                    rc ) ;
 
-      pMsgHead = (MsgHeader *)pMsgReq;
-      pMsgHead->TID = cb->getTID();
-
       // execute on data nodes
-      rc = executeOnDataGroup( pMsgReq, pRouteAgent, cb );
+      rc = executeOnDataGroup( (MsgHeader*)pMsgReq, cb, contextID, buf );
       PD_RC_CHECK( rc, PDERROR,
                    "Failed to execute on data-group on phase1(rc=%d)",
                    rc ) ;
@@ -196,31 +157,32 @@ namespace engine
       goto done;
    }
 
-   INT32 rtnCoord2PhaseCommit::cancelOp( CHAR * pReceiveBuffer,
-                                         SINT32 packSize,
-                                         pmdEDUCB * cb,
-                                         MsgOpReply & replyHeader )
+   INT32 rtnCoord2PhaseCommit::cancelOp( MsgHeader *pMsg,
+                                         pmdEDUCB *cb,
+                                         INT64 &contextID,
+                                         rtnContextBuf *buf )
    {
       // do nothing, rollback will do in session
       return SDB_OK ;
    }
 
-   INT32 rtnCoordTransCommit::executeOnDataGroup( CHAR * pMsg,
-                                                  netMultiRouteAgent * pRouteAgent,
-                                                  pmdEDUCB * cb )
+   INT32 rtnCoordTransCommit::executeOnDataGroup( MsgHeader *pMsg,
+                                                  pmdEDUCB *cb,
+                                                  INT64 &contextID,
+                                                  rtnContextBuf *buf )
    {
       INT32 rc = SDB_OK ;
       INT32 rcTmp = SDB_OK ;
+      netMultiRouteAgent *pAgent = pmdGetKRCB()->getCoordCB()->getRouteAgent() ;
       REQUESTID_MAP requestIdMap ;
       REPLY_QUE replyQue;
-      MsgHeader *pMsgHead = (MsgHeader *)pMsg;
       DpsTransNodeMap *pNodeMap = cb->getTransNodeLst();
       DpsTransNodeMap::iterator iterMap = pNodeMap->begin();
 
       while( iterMap != pNodeMap->end() )
       {
          rcTmp = rtnCoordSendRequestToNode( (void *)pMsg, iterMap->second,
-                                            pRouteAgent, cb, requestIdMap ) ;
+                                            pAgent, cb, requestIdMap ) ;
          if ( rcTmp )
          {
             rc = rc ? rc : rcTmp ;
@@ -233,7 +195,7 @@ namespace engine
       }
 
       rcTmp = rtnCoordGetReply( cb, requestIdMap, replyQue,
-                                MAKE_REPLY_TYPE( pMsgHead->opCode ) ) ;
+                                MAKE_REPLY_TYPE( pMsg->opCode ) ) ;
       if ( rcTmp )
       {
          rc = rc ? rc : rcTmp ;
@@ -291,16 +253,14 @@ namespace engine
       return msgBuildTransCommitMsg( pMsg, &bufferSize );
    }
 
-   INT32 rtnCoordTransCommit::execute( CHAR * pReceiveBuffer,
-                                       SINT32 packSize,
-                                       pmdEDUCB * cb,
-                                       MsgOpReply & replyHeader,
+   INT32 rtnCoordTransCommit::execute( MsgHeader *pMsg,
+                                       pmdEDUCB *cb,
+                                       INT64 &contextID,
                                        rtnContextBuf *buf )
    {
       INT32 rc = SDB_OK ;
 
-      rc = rtnCoord2PhaseCommit::execute( pReceiveBuffer, packSize, 
-                                          cb, replyHeader, NULL );
+      rc = rtnCoord2PhaseCommit::execute( pMsg, cb, contextID, buf ) ;
       PD_RC_CHECK( rc, PDERROR,
                    "Failed to commit the transaction(rc=%d)",
                    rc ) ;
@@ -318,10 +278,9 @@ namespace engine
       return TRUE ;
    }
 
-   INT32 rtnCoordTransRollback::execute( CHAR * pReceiveBuffer,
-                                         SINT32 packSize,
-                                         pmdEDUCB * cb,
-                                         MsgOpReply & replyHeader,
+   INT32 rtnCoordTransRollback::execute( MsgHeader *pMsg,
+                                         pmdEDUCB *cb,
+                                         INT64 &contextID,
                                          rtnContextBuf *buf )
    {
       INT32 rc                         = SDB_OK;
@@ -329,20 +288,7 @@ namespace engine
       CoordCB *pCoordcb                = pKrcb->getCoordCB();
       netMultiRouteAgent *pRouteAgent  = pCoordcb->getRouteAgent();
 
-      MsgHeader *pHeader               = (MsgHeader *)pReceiveBuffer ;
-      replyHeader.header.messageLength = sizeof( MsgOpReply ) ;
-      replyHeader.header.opCode        = MSG_BS_TRANS_ROLLBACK_RSP ;
-      replyHeader.header.routeID.value = 0 ;
-      replyHeader.contextID            = -1 ;
-      replyHeader.flags                = SDB_OK ;
-      replyHeader.numReturned          = 0 ;
-      replyHeader.startFrom            = 0 ;
-
-      if ( pHeader )
-      {
-         replyHeader.header.requestID     = pHeader->requestID;
-         replyHeader.header.TID           = pHeader->TID;
-      }
+      contextID                        = -1 ;
 
       if ( !cb->isTransaction() )
       {
@@ -356,7 +302,6 @@ namespace engine
    done:
       return rc ;
    error:
-      replyHeader.flags = rc ;
       goto done;
    }
 

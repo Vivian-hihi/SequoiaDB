@@ -47,10 +47,9 @@ namespace engine
    class rtnCoordAlterImage : public rtnCoordCommand
    {
       public:
-         virtual INT32 execute( CHAR *pReceiveBuffer,
-                                SINT32 packSize,
+         virtual INT32 execute( MsgHeader *pMsg,
                                 pmdEDUCB *cb,
-                                MsgOpReply &replyHeader,
+                                INT64 &contextID,
                                 rtnContextBuf *buf ) ;
 
    } ;

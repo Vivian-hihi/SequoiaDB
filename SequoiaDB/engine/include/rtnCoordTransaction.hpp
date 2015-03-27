@@ -43,54 +43,52 @@ namespace engine
    class rtnCoordTransBegin : public rtnCoordOperator
    {
    public:
-      virtual INT32 execute( CHAR * pReceiveBuffer,
-                             SINT32 packSize,
-                             pmdEDUCB * cb,
-                             MsgOpReply & replyHeader,
+      virtual INT32 execute( MsgHeader *pMsg,
+                             pmdEDUCB *cb,
+                             INT64 &contextID,
                              rtnContextBuf *buf ) ;
    };
 
    class rtnCoord2PhaseCommit : public rtnCoordOperator
    {
    public:
-      virtual INT32 execute( CHAR * pReceiveBuffer,
-                             SINT32 packSize,
-                             pmdEDUCB * cb,
-                             MsgOpReply & replyHeader,
+      virtual INT32 execute( MsgHeader *pMsg,
+                             pmdEDUCB *cb,
+                             INT64 &contextID,
                              rtnContextBuf *buf ) ;
 
    private:
-      virtual INT32 doPhase1( CHAR * pReceiveBuffer,
-                              SINT32 packSize,
-                              pmdEDUCB * cb,
-                              MsgOpReply & replyHeader );
+      virtual INT32 doPhase1( MsgHeader *pMsg,
+                              pmdEDUCB *cb,
+                              INT64 &contextID,
+                              rtnContextBuf *buf );
 
-      virtual INT32 doPhase2( CHAR * pReceiveBuffer,
-                              SINT32 packSize,
-                              pmdEDUCB * cb,
-                              MsgOpReply & replyHeader );
+      virtual INT32 doPhase2( MsgHeader *pMsg,
+                              pmdEDUCB *cb,
+                              INT64 &contextID,
+                              rtnContextBuf *buf );
 
-      virtual INT32 cancelOp( CHAR * pReceiveBuffer,
-                              SINT32 packSize,
-                              pmdEDUCB * cb,
-                              MsgOpReply & replyHeader );
+      virtual INT32 cancelOp( MsgHeader *pMsg,
+                              pmdEDUCB *cb,
+                              INT64 &contextID,
+                              rtnContextBuf *buf );
 
       virtual INT32 buildPhase1Msg( CHAR * pReceiveBuffer, CHAR **pMsg ) = 0;
 
       virtual INT32 buildPhase2Msg( CHAR * pReceiveBuffer, CHAR **pMsg ) = 0;
 
-      virtual INT32 executeOnDataGroup ( CHAR *pMsg,
-                                         netMultiRouteAgent *pRouteAgent,
-                                         pmdEDUCB *cb ) = 0;
+      virtual INT32 executeOnDataGroup ( MsgHeader *pMsg,
+                                         pmdEDUCB *cb,
+                                         INT64 &contextID,
+                                         rtnContextBuf *buf ) = 0;
    };
 
    class rtnCoordTransCommit : public rtnCoord2PhaseCommit
    {
    public:
-      virtual INT32 execute( CHAR * pReceiveBuffer,
-                             SINT32 packSize,
-                             pmdEDUCB * cb,
-                             MsgOpReply & replyHeader,
+      virtual INT32 execute( MsgHeader *pMsg,
+                             pmdEDUCB *cb,
+                             INT64 &contextID,
                              rtnContextBuf *buf ) ;
 
       virtual BOOLEAN      needRollback() const ;
@@ -100,18 +98,18 @@ namespace engine
 
       virtual INT32 buildPhase2Msg( CHAR * pReceiveBuffer, CHAR **pMsg );
 
-      virtual INT32 executeOnDataGroup ( CHAR *pMsg,
-                                         netMultiRouteAgent *pRouteAgent,
-                                         pmdEDUCB *cb );
+      virtual INT32 executeOnDataGroup ( MsgHeader *pMsg,
+                                         pmdEDUCB *cb,
+                                         INT64 &contextID,
+                                         rtnContextBuf *buf ) ;
    };
 
    class rtnCoordTransRollback : public rtnCoordTransOperator
    {
    public:
-      virtual INT32 execute( CHAR * pReceiveBuffer,
-                             SINT32 packSize,
-                             pmdEDUCB * cb,
-                             MsgOpReply & replyHeader,
+      virtual INT32 execute( MsgHeader *pMsg,
+                             pmdEDUCB *cb,
+                             INT64 &contextID,
                              rtnContextBuf *buf ) ;
 
    protected:

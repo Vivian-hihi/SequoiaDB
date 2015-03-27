@@ -46,10 +46,9 @@ using namespace bson;
 namespace engine
 {
    //PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCODEL_EXECUTE, "rtnCoordDelete::execute" )
-   INT32 rtnCoordDelete::execute( CHAR *pReceiveBuffer,
-                                  SINT32 packSize,
+   INT32 rtnCoordDelete::execute( MsgHeader *pMsg,
                                   pmdEDUCB *cb,
-                                  MsgOpReply &replyHeader,
+                                  INT64 &contextID,
                                   rtnContextBuf *buf )
    {
       INT32 rc = SDB_OK ;
@@ -61,7 +60,7 @@ namespace engine
 
       // process define
       rtnSendOptions sendOpt( TRUE ) ;
-      rtnSendMsgIn inMsg( (MsgHeader*)pReceiveBuffer ) ;
+      rtnSendMsgIn inMsg( pMsg ) ;
       rtnProcessResult result ;
       ROUTE_RC_MAP nokRC ;
       result._pNokRC = &nokRC ;
@@ -75,22 +74,14 @@ namespace engine
       BSONObj boDeletor ;
 
       // fill default-reply(delete success)
-      MsgOpDelete *pDelMsg             = (MsgOpDelete *)pReceiveBuffer;
-      replyHeader.header.messageLength = sizeof( MsgOpReply );
-      replyHeader.header.opCode        = MSG_BS_DELETE_RES;
-      replyHeader.header.requestID     = pDelMsg->header.requestID ;
-      replyHeader.header.routeID.value = 0;
-      replyHeader.header.TID           = pDelMsg->header.TID ;
-      replyHeader.contextID            = -1 ;
-      replyHeader.flags                = SDB_OK ;
-      replyHeader.numReturned          = 0 ;
-      replyHeader.startFrom            = 0 ;
+      MsgOpDelete *pDelMsg             = (MsgOpDelete *)pMsg ;
+      contextID                        = -1 ;
 
       INT32 flag = 0;
       CHAR *pCollectionName = NULL ;
       CHAR *pDeletor = NULL ;
       CHAR *pHint = NULL ;
-      rc = msgExtractDelete( pReceiveBuffer, &flag, &pCollectionName,
+      rc = msgExtractDelete( (CHAR*)pMsg, &flag, &pCollectionName,
                              &pDeletor, &pHint ) ;
       PD_RC_CHECK( rc, PDERROR,
                    "Failed to parse delete request, rc: %d", rc ) ;
@@ -152,7 +143,6 @@ namespace engine
       PD_TRACE_EXITRC ( SDB_RTNCODEL_EXECUTE, rc ) ;
       return rc ;
    error:
-      replyHeader.flags = rc ;
       goto done ;
    }
 

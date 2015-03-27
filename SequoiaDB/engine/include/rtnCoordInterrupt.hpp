@@ -43,10 +43,9 @@ namespace engine
    class rtnCoordInterrupt : public rtnCoordOperator
    {
    public:
-      virtual INT32 execute( CHAR * pReceiveBuffer,
-                             SINT32 packSize,
-                             pmdEDUCB * cb,
-                             MsgOpReply & replyHeader,
+      virtual INT32 execute( MsgHeader *pMsg,
+                             pmdEDUCB *cb,
+                             INT64 &contextID,
                              rtnContextBuf *buf ) ;
    private:
       void SendInterrupt( pmdEDUCB *cb, ROUTE_SET &routeMap );

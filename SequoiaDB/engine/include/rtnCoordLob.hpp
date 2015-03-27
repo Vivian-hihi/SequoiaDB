@@ -43,10 +43,9 @@ namespace engine
       rtnCoordOpenLob(){}
       virtual ~rtnCoordOpenLob(){}
    public:
-      virtual INT32 execute( CHAR * pReceiveBuffer,
-                             SINT32 packSize,
-                             pmdEDUCB * cb,
-                             MsgOpReply & replyHeader,
+      virtual INT32 execute( MsgHeader *pMsg,
+                             pmdEDUCB *cb,
+                             INT64 &contextID,
                              rtnContextBuf *buf ) ;
    } ;
 
@@ -56,10 +55,9 @@ namespace engine
       rtnCoordWriteLob(){}
       virtual ~rtnCoordWriteLob(){}
    public:
-      virtual INT32 execute( CHAR * pReceiveBuffer,
-                             SINT32 packSize,
-                             pmdEDUCB * cb,
-                             MsgOpReply & replyHeader,
+      virtual INT32 execute( MsgHeader *pMsg,
+                             pmdEDUCB *cb,
+                             INT64 &contextID,
                              rtnContextBuf *buf ) ;
    } ;
 
@@ -69,10 +67,9 @@ namespace engine
       rtnCoordReadLob(){}
       virtual ~rtnCoordReadLob(){}
    public:
-      virtual INT32 execute( CHAR * pReceiveBuffer,
-                             SINT32 packSize,
-                             pmdEDUCB * cb,
-                             MsgOpReply & replyHeader,
+      virtual INT32 execute( MsgHeader *pMsg,
+                             pmdEDUCB *cb,
+                             INT64 &contextID,
                              rtnContextBuf *buf ) ;
    } ;
 
@@ -82,10 +79,9 @@ namespace engine
       rtnCoordCloseLob(){}
       virtual ~rtnCoordCloseLob(){}
    public:
-      virtual INT32 execute( CHAR * pReceiveBuffer,
-                             SINT32 packSize,
-                             pmdEDUCB * cb,
-                             MsgOpReply & replyHeader,
+      virtual INT32 execute( MsgHeader *pMsg,
+                             pmdEDUCB *cb,
+                             INT64 &contextID,
                              rtnContextBuf *buf ) ;
    } ;
 
@@ -95,10 +91,9 @@ namespace engine
       rtnCoordRemoveLob(){}
       virtual ~rtnCoordRemoveLob(){}
    public:
-      virtual INT32 execute( CHAR * pReceiveBuffer,
-                             SINT32 packSize,
-                             pmdEDUCB * cb,
-                             MsgOpReply & replyHeader,
+      virtual INT32 execute( MsgHeader *pMsg,
+                             pmdEDUCB *cb,
+                             INT64 &contextID,
                              rtnContextBuf *buf ) ;
    } ;
 }

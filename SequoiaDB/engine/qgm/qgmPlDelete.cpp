@@ -101,7 +101,7 @@ namespace engine
       if ( SDB_ROLE_COORD == role )
       {
          INT32 bufSize = 0 ;
-         MsgOpReply dummyReply ;
+         INT64 contextID = -1 ;
          rtnCoordDelete del ;
          rc = msgBuildDeleteMsg( &msg, &bufSize,
                                  _collection.toString().c_str(),
@@ -113,9 +113,7 @@ namespace engine
             goto error ;
          }
 
-         rc = del.execute( msg, *((SINT32 *)msg),
-                           eduCB, dummyReply,
-                           NULL ) ;
+         rc = del.execute( (MsgHeader*)msg, eduCB, contextID, NULL ) ;
       }
       else
       {
