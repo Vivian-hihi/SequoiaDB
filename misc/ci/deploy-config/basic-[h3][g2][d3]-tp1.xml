@@ -19,7 +19,7 @@
 		<classpath>
 			<pathelement location="${WORKSPACE}/deploy/ant-sdbtasks/*.jar" />
 		</classpath>
-	</taskdef> 
+	</taskdef>
 
 	<target name="Deploy" depends="">
 		<parallel>
@@ -116,7 +116,7 @@
 	<target name="H3-G2-D3" depends="">
 		<hostinfo prefix="host" />
 		<!-- <property name="test-type-list" value="driver-python" /> -->
-		<property name="test-type-list" value="basic" />
+		<property name="test-type-list" value="driver-python" />
 		<property name="copy.test.log" value="true"/>
 
 		<parallel>
@@ -167,7 +167,7 @@
 					<equals arg1="${copy.test.log}" arg2="true" />
 					<then>
 						<echo message="The copy.test.log is true , then copy all test log to ${save.testLog.hostname}:${save.testLog.dir}"/>
-						
+
 						<echo message="Mkdir ${test.log.path}" />
 						<mkdir dir="${test.log.path}" />
 
@@ -197,6 +197,6 @@
 			</catch>
 			<finally>
 			</finally>
-		</trycatch>		
+		</trycatch>
 	</target>
 </project>
