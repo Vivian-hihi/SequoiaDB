@@ -54,7 +54,7 @@
 
 	<target name="H1-G1-D1" depends="">
 		<hostinfo prefix="host" />
-		<property name="test-type-list" value="basic" />
+		<property name="test-type-list" value="basic,driver-php" />
 		<property name="copy.test.log" value="true"/>
 		<!-- <property name="import.file.name" value="basic-testcases-time.json" /> -->
 
