@@ -34,8 +34,8 @@
 					<else>
 						<echo message="Begin to test basic tests under parallel env..." />
 						<parallel>
-							<sdbtest host="${test.machine.no1.basic}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${testcase.path}/js_testcases/reports" masterreports="${test.reports.path}" >
-								<param name="basic.testcase.path" value="${testcase.path}/js_testcases" />
+							<sdbtest host="${test.machine.no1.basic}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${testcase.path}/basic_testcases/reports" masterreports="${test.reports.path}" >
+								<param name="basic.testcase.path" value="${testcase.path}/basic_testcases" />
 								<param name="excludes.dir.patterns" value="vote" />
 								<!-- <param name="includes.dir.patterns" value="${basic_list1}" /> -->
 								<param name="includes.dir.patterns" value="${basic_list4}" />
@@ -48,8 +48,8 @@
 								<!-- <param name="parallel.count" value="${parallel.count}" /> -->
 								<param name="test.log" value="${test.log}" />
 							</sdbtest>
-							<sdbtest host="${test.machine.no2.basic}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${testcase.path}/js_testcases/reports" masterreports="${test.reports.path}" >
-								<param name="basic.testcase.path" value="${testcase.path}/js_testcases" />
+							<sdbtest host="${test.machine.no2.basic}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${testcase.path}/basic_testcases/reports" masterreports="${test.reports.path}" >
+								<param name="basic.testcase.path" value="${testcase.path}/basic_testcases" />
 								<param name="excludes.dir.patterns" value="vote" />
 								<!-- <param name="includes.dir.patterns" value="${basic_list2}" /> -->
 								<param name="includes.dir.patterns" value="${basic_list5}" />
@@ -62,8 +62,8 @@
 								<!-- <param name="parallel.count" value="${parallel.count}" /> -->
 								<param name="test.log" value="${test.log}" />
 							</sdbtest>
-							<sdbtest host="${test.machine.no3.basic}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${testcase.path}/js_testcases/reports" masterreports="${test.reports.path}" >
-								<param name="basic.testcase.path" value="${testcase.path}/js_testcases" />
+							<sdbtest host="${test.machine.no3.basic}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${testcase.path}/basic_testcases/reports" masterreports="${test.reports.path}" >
+								<param name="basic.testcase.path" value="${testcase.path}/basic_testcases" />
 								<param name="excludes.dir.patterns" value="vote" />
 								<!-- <param name="includes.dir.patterns" value="${basic_list3}" /> -->
 								<param name="includes.dir.patterns" value="${basic_list6}" />
@@ -219,8 +219,8 @@
 
 			<default>
 				<echo message="begin to test js tests ..." />
-				<sdbtest host="${test.machine.no2.basic}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${test.machine.deploy.path}/deploy/hlt/js_testcases/reports" masterreports="${test.reports.path}" >
-					<param name="testcase.path" value="${test.machine.deploy.path}/deploy/hlt/js_testcases/" />
+				<sdbtest host="${test.machine.no2.basic}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${test.machine.deploy.path}/deploy/hlt/basic_testcases/reports" masterreports="${test.reports.path}" >
+					<param name="testcase.path" value="${test.machine.deploy.path}/deploy/hlt/basic_testcases/" />
 					<param name="install.path" value="${install.path}" />
 					<param name="excludes.dir.patterns" value="vote" />
 					<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
