@@ -17,8 +17,8 @@
 					<equals arg1="${parallel.flag}" arg2="unparallel" />
 					<then>
 						<echo message="Begin to test basic tests under unparallel env..." />
-						<sdbtest host="${test.host.NAME}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${testcase.path}/js_testcases/reports" masterreports="${test.reports.path}" >
-							<param name="basic.testcase.path" value="${testcase.path}/js_testcases" />
+						<sdbtest host="${test.host.NAME}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${testcase.path}/basic_testcases/reports" masterreports="${test.reports.path}" >
+							<param name="basic.testcase.path" value="${testcase.path}/basic_testcases" />
 							<param name="includes.dir.patterns" value="*" />
 							<param name="excludes.dir.patterns" value="vote" />
 							<param name="deploy.case.fullname" value="${deploy.case.fullname}" />
@@ -88,7 +88,7 @@
 					<param name="deploy.case.fullname" value="${deploy.case.fullname}" />
 					<param name="excludes.dir.patterns" value="reports*" />
 					<param name="includes.dir.patterns" value="*" />
-					
+
 					<!-- <param name="coord.service.port" value="50000" /> -->
 					<!-- <param name="cata.service.port" value="60000" /> -->
 					<!-- <param name="data.service.port" value="51000" /> -->
@@ -105,9 +105,9 @@
 					<param name="deploy.case.fullname" value="${deploy.case.fullname}" />
 					<param name="excludes.dir.patterns" value="reports*" />
 					<param name="includes.dir.patterns" value="*" />
-					
+
 					<!-- <param name="coord.service.port" value="50000" />
-					<param name="data.service.port" value="21100" /> -->				
+					<param name="data.service.port" value="21100" /> -->
 				</sdbtest>
 				<echo message="... Test python driver is over ..." />
 			</case>
@@ -139,7 +139,7 @@
 			</case>
 
 			<case value="driver-C">
-				<echo message="...Test c driver..." />     
+				<echo message="...Test c driver..." />
 				<sdbtest host="${test.host.NAME}" testscript="${test.machine.deploy.path}/deploy/exec-driver-C-test.xml" remotereports="${testcase.path}/drivers_testcases/C/reports" masterreports="${test.reports.path}" >
 					<param name="ci.properties.path" value="${test.machine.software.path}/ci.test.properties" />
 					<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
@@ -152,7 +152,7 @@
 			</case>
 
 			<case value="driver-CPP">
-				<echo message="...Test c++ driver..." />  
+				<echo message="...Test c++ driver..." />
 				<sdbtest host="${test.host.NAME}" testscript="${test.machine.deploy.path}/deploy/exec-driver-CPP-test.xml" remotereports="${testcase.path}/drivers_testcases/CPP/reports" masterreports="${test.reports.path}" >
 					<param name="ci.properties.path" value="${test.machine.software.path}/ci.test.properties" />
 					<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
@@ -193,14 +193,14 @@
 				<echo message=" ... tpcc test over ..." />
 			</case>
 
-			<case value="hadoop-conn">     
+			<case value="hadoop-conn">
 				<echo message=" ...begin to test hadoop-conn ..." />
 				<sdbtest host="${test.machine.no2.basic}" testscript="${test.machine.deploy.path}/deploy/exec-hadoop-conn-testcases.xml" remotereports="${test.machine.deploy.path}/deploy/hlt/conn_testcases/reports" masterreports="${test.reports.path}" timeout="250m" antFileName="${antFileName}">
 					<param name="testcase.path" value="${test.machine.deploy.path}/deploy/hlt/conn_testcases" />
 					<param name="install.path" value="${install.path}" />
 					<param name="deploy.case.fullname" value="${deploy.case.fullname}" />
 				</sdbtest>
-				<echo message="... test hadoop conn is over ..." />				
+				<echo message="... test hadoop conn is over ..." />
 			</case>
 
 			<case value="unusual">
