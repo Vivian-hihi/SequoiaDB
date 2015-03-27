@@ -265,6 +265,12 @@
 					<stentry>boolean</stentry>
 					<stentry>Enable authentication. default is true</stentry>
 				</strow>
+				<strow>
+					<stentry>--fap</stentry>
+					<stentry>--</stentry>
+					<stentry>str</stentry>
+					<stentry>加载外部接入协议模块，需指定要加载的模块(动态链接库)名。目前暂支持fapmongo。例如：--fap fapmongo，则自动加载fapmongo.so</stentry>
+				</strow>
 			</simpletable>
 			<note>
 				<p>SequoiaDB supports setting configuration with command line,configuration file, or both of them. When both of them are used, parameters in command line will overwrite those in configuration file.</p>

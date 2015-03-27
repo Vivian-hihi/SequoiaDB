@@ -818,6 +818,8 @@
                     <file name="references/console/topics/psize.dita"/>
                     <file name="references/console/topics/rename_en.dita"/>
                     <file name="references/console/topics/rename.dita"/>
+                    <file name="references/console/topics/replace_en.dita"/>
+                    <file name="references/console/topics/replace.dita"/>
                     <file name="references/console/topics/select_en.dita"/>
                     <file name="references/console/topics/select.dita"/>
                     <file name="references/console/topics/selector.dita"/>

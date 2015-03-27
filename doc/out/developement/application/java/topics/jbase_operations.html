@@ -55,7 +55,7 @@ public class Sample {
 		  // 获取所有 Collection 信息，并打印出来
 		  DBCursor cursor = sdb.listCollections();
 		  while(cursor.hasNext()) {
-		    System.out.println(cursor.getCurrent());
+		    System.out.println(cursor.getNext());
 	      }
 	  } catch (BaseException e) {
 		  System.out.println("Sequoiadb driver error, error description:" + e.getErrorType());

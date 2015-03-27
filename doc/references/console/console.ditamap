@@ -43,6 +43,7 @@
         <topicref href="topics/gpull_all.dita"/>
         <topicref href="topics/gpush.dita"/>
         <topicref href="topics/gpush_all.dita"/>
+         <topicref href="topics/replace.dita"/>
      </topicref>
      <topicref href="topics/aggregate.dita">
          <topicref href="topics/project.dita"/>

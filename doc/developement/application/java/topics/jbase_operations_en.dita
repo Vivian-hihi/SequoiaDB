@@ -25,7 +25,7 @@ public class Sample {
 		  //  get and print all the Collection information
 		  DBCursor cursor = sdb.listCollections();
 		  while(cursor.hasNext()) {
-		    System.out.println(cursor.getCurrent());
+		    System.out.println(cursor.getNext());
 	      }
 	  } catch (BaseException e) {
 		  System.out.println("Sequoiadb driver error, error description:" + e.getErrorType());

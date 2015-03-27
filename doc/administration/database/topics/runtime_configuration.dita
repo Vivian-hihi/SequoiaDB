@@ -248,19 +248,25 @@
 					<stentry>--weight</stentry>
 					<stentry>--</stentry>
 					<stentry>num</stentry>
-					<stentry>节点选举权重, 默认值为10, 取值范围[1, 100]</stentry>
+					<stentry>节点选举权重，默认值为10，取值范围[1, 100]</stentry>
 				</strow>
 				<strow>
 					<stentry>--usessl</stentry>
 					<stentry>--</stentry>
 					<stentry>boolean</stentry>
-					<stentry>允许客户端使用SSL连接（仅限企业版），默认为false</stentry>
+					<stentry>允许客户端使用 SSL 连接（仅限企业版），默认为 false</stentry>
 				</strow>
 				<strow>
 					<stentry>--auth</stentry>
 					<stentry>--</stentry>
 					<stentry>boolean</stentry>
-					<stentry>开启鉴权功能.默认为true</stentry>
+					<stentry>开启鉴权功能，默认为 true</stentry>
+				</strow>
+				<strow>
+					<stentry>--fap</stentry>
+					<stentry>--</stentry>
+					<stentry>str</stentry>
+					<stentry>加载外部接入协议模块，需指定要加载的模块(动态链接库)名。目前暂支持fapmongo。例如：--fap fapmongo，则自动加载fapmongo.so</stentry>
 				</strow>
 			</simpletable>
 			<note>

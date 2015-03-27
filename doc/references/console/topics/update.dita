@@ -66,6 +66,12 @@
             <stentry>将给定数组中每一个值插入目标数组，目标元素必须为数组。</stentry>
             <stentry> db.foo.bar.update({$push_all:{array:[2,3,4}}) </stentry>
           </strow>
+          <strow>
+            <stentry><xref href="replace.dita">$replace</xref></stentry>
+            <stentry> 替换文档 </stentry>
+            <stentry>将整个文档替换为给定值。</stentry>
+            <stentry> db.foo.bar.update({$replace:{name:'foo'}}) </stentry>
+          </strow>
         </simpletable>
       </p>
     </section>

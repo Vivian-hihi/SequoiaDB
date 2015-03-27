@@ -36,6 +36,7 @@
      <topicref href="topics/gpull_all_en.dita"/>
      <topicref href="topics/gpush_en.dita"/>
      <topicref href="topics/gpush_all_en.dita"/>
+         <topicref href="topics/replace_en.dita"/>
      </topicref>
      <topicref href="topics/aggregate_en.dita">
          <topicref href="topics/project_en.dita"/>
