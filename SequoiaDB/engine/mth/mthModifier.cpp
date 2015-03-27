@@ -172,6 +172,11 @@ namespace engine
             PD_LOG_MSG ( PDERROR, "Faild field name : %s", ele.fieldName() ) ;
             goto error ;
          }
+         if ( type == REPLACE && dollarNum > 0 )
+         {
+            PD_LOG_MSG ( PDERROR, "REPALCE can't have dollar argument" ) ;
+            goto error ;
+         }
          ModifierElement me( ele, type, dollarNum ) ;
          _modifierElements.push_back( me ) ;
       }
@@ -1016,6 +1021,12 @@ namespace engine
             {
                return RENAME ;
             }
+            else if ( field[2] == 'e' && field[3] == 'p' &&
+                      field[4] == 'l' && field[5] == 'a' &&
+                      field[6] == 'c' && field[7] == 'e' && field[8] == 0 )
+            {
+               return REPLACE ;
+            }
          } // r
          else if ( field[1] == 's' )
          {
@@ -1058,6 +1069,19 @@ namespace engine
       if ( UNKNOW == type )
       {
          PD_LOG_MSG ( PDERROR, "Updator operator[%s] error", ele.fieldName () ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      if ( type == REPLACE )
+      {
+         _isReplace = TRUE ;
+      }
+
+      if ( _isReplace && type != REPLACE )
+      {
+         PD_LOG_MSG ( PDERROR, "REPLACE can't support other operator[%s]",
+                      ele.fieldName() ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }
@@ -1818,6 +1842,40 @@ namespace engine
       return rc ;
    }
 
+   template<class Builder>
+   INT32 _mthModifier::_buildNewObjReplace( Builder &b,
+                                            BSONObjIteratorSorted &es )
+   {
+      UINT32 i = 0 ;
+      while ( es.more() )
+      {
+         BSONElement e = es.next() ;
+         if ( ossStrcmp( e.fieldName(), DMS_ID_KEY_NAME ) == 0 )
+         {
+            b.append( e ) ;
+            //break ;
+         }
+         else
+         {
+            ADD_CHG_ELEMENT_AS ( _srcChgBuilder, e, e.fieldName(), 
+                                 "$replace" ) ;
+         }
+
+         //e = es.next() ;
+      }
+
+      while ( i < _modifierElements.size() )
+      {
+         ADD_CHG_ELEMENT_AS ( _dstChgBuilder, _modifierElements[i]._toModify, 
+                              _modifierElements[i]._toModify.fieldName(), 
+                              "$replace" ) ;
+         b.append( _modifierElements[i]._toModify ) ;
+         i++ ;
+      }
+
+      return SDB_OK  ;
+   }
+
    // Builder could be BSONObjBuilder or BSONArrayBuilder
    // This function is recursively called to build new object
    // The prerequisit is that _modifierElement is sorted, which supposed to
@@ -1836,11 +1894,18 @@ namespace engine
       PD_TRACE_ENTRY ( SDB__MTHMDF__BLDNEWOBJ ) ;
 
       // get the next element in the object
-      BSONElement e = es.next() ;
+      BSONElement e ;
       // previous element is set to empty
       BSONElement prevE ;
       UINT32 compareLeftPos = 0 ;
       INT32 newRootLen = rootLen ;
+
+      if ( _isReplace )
+      {
+         return _buildNewObjReplace( b, es ) ;
+      }
+
+      e = es.next() ;
 
       // loop until we hit end of original object, or end of modifier list
       while( !e.eoo() && (*modifierIndex)<(SINT32)_modifierElements.size() )

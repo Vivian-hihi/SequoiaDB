@@ -71,6 +71,7 @@ namespace engine
       ADDTOSET,
       RENAME,
       NULLOPR,
+      REPLACE,
 
       UNKNOW
    } ;
@@ -177,6 +178,7 @@ namespace engine
       vector<INT64> *_dollarList ;
       _compareFieldNames1  _fieldCompare ;
       BOOLEAN        _ignoreTypeError ;
+      BOOLEAN        _isReplace ;
 
       INT32 _addModifier ( const BSONElement &ele, ModType type ) ;
       INT32 _parseElement ( const BSONElement &ele ) ;
@@ -286,6 +288,9 @@ namespace engine
                            BSONObjIteratorSorted &es,
                            SINT32 *modifierIndex,
                            BOOLEAN hasCreateNewRoot ) ;
+
+      template<class Builder>
+      INT32 _buildNewObjReplace( Builder &b, BSONObjIteratorSorted &es ) ;
    public :
       _mthModifier ()
       {
@@ -294,6 +299,7 @@ namespace engine
          _dstChgBuilder = NULL ;
          _dollarList    = NULL ;
          _ignoreTypeError = TRUE ;
+         _isReplace     = FALSE ;
       }
       ~_mthModifier()
       {
