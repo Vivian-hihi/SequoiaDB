@@ -16,6 +16,7 @@ copy.log.path=/test_log
 coord.service.port=50000
 cata.service.port=30000
 data.service.port=21100
+fap.service.port=50007 #coord.service + 7
 sharingbreak=20000
 
 jenkins.master.ip=ubun-test1
