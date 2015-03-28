@@ -282,27 +282,26 @@ namespace engine
                goto update ;
             }
 
-            PD_LOG( PDERROR, "Send msg[opCode: %d, TID: %u] to group[%u] 's "
+            PD_LOG( PDWARNING, "Send msg[opCode: %d, TID: %u] to group[%u] 's "
                     "primary node[%s] failed, rc: %d", pBuffer->opCode,
                     pBuffer->TID, groupInfo->getGroupID(),
                     routeID2String( primaryRouteID ).c_str(), rc ) ;
-            goto error ;
+            // not go to error, send to any one node
          }
       }
-      else
+
+      // send to any one node
+      rc = SDB_RTN_NO_PRIMARY_FOUND ;
+      if ( !hasRetry )
       {
-         rc = SDB_RTN_NO_PRIMARY_FOUND ;
-         if ( !hasRetry )
-         {
-            goto update ;
-         }
-         // send to any one node, so the group has no primary, will wait some
-         // time at data node
-         rc = _rtnCoordSendRequestToOne( pBuffer, groupInfo, sendNodes,
-                                         pRouteAgent, type, cb,
-                                         pIOVec, TRUE ) ;
-         goto done ;
+         goto update ;
       }
+      // send to any one node, so the group has no primary, will wait some
+      // time at data node
+      rc = _rtnCoordSendRequestToOne( pBuffer, groupInfo, sendNodes,
+                                      pRouteAgent, type, cb,
+                                      pIOVec, TRUE ) ;
+      goto done ;
 
    update:
       if ( rc && !hasRetry )
