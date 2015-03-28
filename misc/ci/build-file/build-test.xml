@@ -71,6 +71,7 @@
 	<target name="Build-Testcases" depends="Build-Driver-Testcases">
 		<mkdir dir="${deploy.path}/hlt/ant_testcases" />
 		<mkdir dir="${deploy.path}/hlt/js_testcases" />
+		<mkdir dir="${deploy.path}/hlt/basic_testcases" />
 		<!-- <mkdir dir="${deploy.path}/hlt/sql_testcases" /> -->
 		<!-- <mkdir dir="${deploy.path}/hlt/unusual_testcases" /> -->
 
@@ -85,6 +86,9 @@
 		</copy>
 		<copy todir="${deploy.path}/hlt/js_testcases">
 			<fileset dir="${build.testcases}/js_testcases" includes="**/*" />
+		</copy>
+		<copy todir="${deploy.path}/hlt/basic_testcases">
+			<fileset dir="${build.testcases}/basic_testcases" includes="**/*" />
 		</copy>
 		<!-- <copy todir="${deploy.path}/hlt/php_testcases">
 			<fileset dir="${build.testcases}/drivers_testcases/php" includes="**/*" />
