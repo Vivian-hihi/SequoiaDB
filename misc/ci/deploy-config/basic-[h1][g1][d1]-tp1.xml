@@ -36,6 +36,7 @@
 				<node host="${test.machine.no3.data}" baseport="${cata.service.port}" dbpath="${install.path}/sequoiadb/database/cata/${cata.service.port}">
 					<confitem name="diaglevel" value="5" />
 					<confitem name="sharingbreak" value="300000" />
+					<confitem name="fap" value="fapmongo" />
 				</node>
 			</catagroup>
 		</sdbdeploy>
@@ -47,6 +48,7 @@
 					<confitem name="transactionon" value="true" />
 					<confitem name="sharingbreak" value="300000" />
 					<confitem name="diagnum" value="80" />
+					<confitem name="fap" value="fapmongo" />
 				</node>
 			</datagroup>
 		</sdbdeploy>
