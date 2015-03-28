@@ -64,6 +64,12 @@
 				<replaceregexp file="${db.path}/conf/local/${coord.service.port}/sdb.conf" match="httpname=11814" replace="httpname=50004" flags="g" />
 
 				<echo file="${db.path}/conf/local/${coord.service.port}/sdb.conf" append="true" message="sharingbreak= 300000" />
+				<if>
+					   <equals arg1="${os.arch}" arg2="amd64" />
+					   <then>
+					      <echo file="${db.path}/conf/local/${coord.service.port}/sdb.conf"  append="true" message="fap=fapmongo" />
+					   </then>
+				</if>
 
 				<echo message="Start standalone process: su - sdbadmin -c '${db.path}/bin/sdbstart -c ${db.path}/conf/local/${coord.service.port}'" />
 				<exec dir="${db.path}/bin" executable="su" failonerror="true" failifexecutionfails="true" >
@@ -83,7 +89,12 @@
 				<replaceregexp file="${db.path}/conf/local/${coord.service.port}/sdb.conf" match="httpname=11814" replace="httpname=50004" flags="g" />
 
 				<echo file="${db.path}/conf/local/${coord.service.port}/sdb.conf"  append="true" message="sharingbreak= 300000" />
-
+			  <if>
+					   <equals arg1="${os.arch}" arg2="amd64" />
+					   <then>
+					      <echo file="${db.path}/conf/local/${coord.service.port}/sdb.conf"  append="true" message="fap=fapmongo" />
+					   </then>
+				</if>
 				<if>
 					<equals arg1="${is.coord.master}" arg2="false" />
 					<then>
