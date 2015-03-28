@@ -1846,31 +1846,33 @@ namespace engine
    INT32 _mthModifier::_buildNewObjReplace( Builder &b,
                                             BSONObjIteratorSorted &es )
    {
+      BOOLEAN isIDReplaced = FALSE ;
       UINT32 i = 0 ;
+      while ( i < _modifierElements.size() )
+      {
+         const CHAR *pTmpFieldName = _modifierElements[i]._toModify.fieldName() ;
+         ADD_CHG_ELEMENT_AS ( _dstChgBuilder, _modifierElements[i]._toModify, 
+                              pTmpFieldName, 
+                              "$replace" ) ;
+         b.append( _modifierElements[i]._toModify ) ;
+         if ( ossStrcmp( pTmpFieldName, DMS_ID_KEY_NAME ) == 0 )
+         {
+            isIDReplaced = TRUE ;
+         }
+         i++ ;
+      }
+      
       while ( es.more() )
       {
          BSONElement e = es.next() ;
-         if ( ossStrcmp( e.fieldName(), DMS_ID_KEY_NAME ) == 0 )
+         if ( ossStrcmp( e.fieldName(), DMS_ID_KEY_NAME ) == 0 
+              && !isIDReplaced )
          {
             b.append( e ) ;
-            //break ;
-         }
-         else
-         {
-            ADD_CHG_ELEMENT_AS ( _srcChgBuilder, e, e.fieldName(), 
-                                 "$replace" ) ;
          }
 
-         //e = es.next() ;
-      }
-
-      while ( i < _modifierElements.size() )
-      {
-         ADD_CHG_ELEMENT_AS ( _dstChgBuilder, _modifierElements[i]._toModify, 
-                              _modifierElements[i]._toModify.fieldName(), 
+         ADD_CHG_ELEMENT_AS ( _srcChgBuilder, e, e.fieldName(), 
                               "$replace" ) ;
-         b.append( _modifierElements[i]._toModify ) ;
-         i++ ;
       }
 
       return SDB_OK  ;
