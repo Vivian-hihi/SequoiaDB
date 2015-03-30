@@ -43,6 +43,6 @@ db.traceOff() exported.
 .SH "Examples"
 
 .sp 2
-格式化输出文件
+Formatted the output file
 .sp 2
 traceFmt(0, "/opt/sequoiadb/trace.dump", "/opt/sequoiadb/trace.flw")
