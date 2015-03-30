@@ -35,7 +35,7 @@
     </section>    
     <section>
       <title>Examples</title>
-      <p>格式化输出文件 </p>
+      <p>Formatted the output file </p>
       <codeblock>traceFmt(0, "/opt/sequoiadb/trace.dump", "/opt/sequoiadb/trace.flw")</codeblock>      
     </section>
   </body>
