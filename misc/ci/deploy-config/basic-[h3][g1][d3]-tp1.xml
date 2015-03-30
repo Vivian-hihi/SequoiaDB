@@ -45,38 +45,32 @@
 				<property name="catalog.addrs" value="${test.machine.no1.data}:30003,${test.machine.no2.data}:30003,${test.machine.no3.data}:30003" />
 			</ant>
 		</parallel>
+		<if>
+		   <equals arg1="${os.arch}" arg2="amd64" />
+			 <then>
+			    <property name="fap.value" value="fapmongo" />
+			 </then>
+			 <else>
+			    <property name="fap.value" value="" />
+			 </else>
+		</if>
 
 		<sdbdeploy host="${test.machine.no1.basic}" coordport="${coord.service.port}">
 			<catagroup name="cata1">
 				<node host="${test.machine.no1.data}" baseport="${cata.service.port}" dbpath="${install.path}/sequoiadb/database/cata/${cata.service.port}">
 					<confitem name="diaglevel" value="5" />
 					<confitem name="sharingbreak" value="300000" />
-					<if>
-					   <equals arg1="${os.arch}" arg2="amd64" />
-					   <then>
-					      <confitem name="fap" value="fapmongo" />
-					   </then>
-				  </if>
+					<confitem name="fap" value="${fap.value}" />
 				</node>
 				<node host="${test.machine.no2.data}" baseport="${cata.service.port}" dbpath="${install.path}/sequoiadb/database/cata/${cata.service.port}">
 					<confitem name="diaglevel" value="5" />
 					<confitem name="sharingbreak" value="300000" />
-					<if>
-					   <equals arg1="${os.arch}" arg2="amd64" />
-					   <then>
-					      <confitem name="fap" value="fapmongo" />
-					   </then>
-				  </if>
+					<confitem name="fap" value="${fap.value}" />
 				</node>
 				<node host="${test.machine.no3.data}" baseport="${cata.service.port}" dbpath="${install.path}/sequoiadb/database/cata/${cata.service.port}">
 					<confitem name="diaglevel" value="5" />
 					<confitem name="sharingbreak" value="300000" />
-					<if>
-					   <equals arg1="${os.arch}" arg2="amd64" />
-					   <then>
-					      <confitem name="fap" value="fapmongo" />
-					   </then>
-				  </if>
+					<confitem name="fap" value="${fap.value}" />
 				</node>
 			</catagroup>
 		</sdbdeploy>
@@ -88,36 +82,21 @@
 					<confitem name="transactionon" value="true" />
 					<confitem name="sharingbreak" value="300000" />
 					<confitem name="diagnum" value="80" />
-					<if>
-					   <equals arg1="${os.arch}" arg2="amd64" />
-					   <then>
-					      <confitem name="fap" value="fapmongo" />
-					   </then>
-				  </if>
+					<confitem name="fap" value="${fap.value}" />
 				</node>
 				<node host="${test.machine.no2.data}" baseport="${data.service.port}" dbpath="${install.path}/sequoiadb/database/data/${data.service.port}">
 					<confitem name="diaglevel" value="5" />
 					<confitem name="transactionon" value="true" />
 					<confitem name="sharingbreak" value="300000" />
 					<confitem name="diagnum" value="80" />
-					<if>
-					   <equals arg1="${os.arch}" arg2="amd64" />
-					   <then>
-					      <confitem name="fap" value="fapmongo" />
-					   </then>
-				  </if>
+					<confitem name="fap" value="${fap.value}" />
 				</node>
 				<node host="${test.machine.no3.data}" baseport="${data.service.port}" dbpath="${install.path}/sequoiadb/database/data/${data.service.port}">
 					<confitem name="diaglevel" value="5" />
 					<confitem name="transactionon" value="true" />
 					<confitem name="sharingbreak" value="300000" />
 					<confitem name="diagnum" value="80" />
-					<if>
-					   <equals arg1="${os.arch}" arg2="amd64" />
-					   <then>
-					      <confitem name="fap" value="fapmongo" />
-					   </then>
-				  </if>
+					<confitem name="fap" value="${fap.value}" />
 				</node>
 			</datagroup>
 		</sdbdeploy>	
