@@ -15,11 +15,11 @@
 <project name="H3-G1-D3" default="H3-G1-D3">
 	<property name="properties.dir" value="${basedir}/../ci.test.properties" />
 	<property file="${properties.dir}" />
-	<taskdef resource="net/sf/antcontrib/antlib.xml">
+	<!-- <taskdef resource="net/sf/antcontrib/antlib.xml">
 		<classpath>
 			<pathelement location="/usr/share/java/ant-contrib.jar" />
 		</classpath>
-	</taskdef>
+	</taskdef> -->
 
 	<target name="Deploy" depends="">
 		<parallel>
@@ -99,7 +99,7 @@
 					<confitem name="fap" value="${fap.value}" />
 				</node>
 			</datagroup>
-		</sdbdeploy>	
+		</sdbdeploy>
 	</target>
 
 	<target name="H3-G1-D3" depends="">
@@ -130,7 +130,7 @@
 		<echo message="test.log.path=${test.log.path}" />
 		<echo message="test.log=${test.log}" />
 		<echo message="**************************************************************" />
-		
+
 		<for list="${test-type-list}" param="Test-Type">
 			<sequential>
 				<antfetch antfile="${WORKSPACE}/sequoiadb/misc/ci/test-type.xml" dir="." inheritAll="false" >
@@ -193,6 +193,6 @@
 			</catch>
 			<finally>
 			</finally>
-		</trycatch>	
+		</trycatch>
 	</target>
 </project>
