@@ -73,7 +73,7 @@ namespace engine
       mthModifier    _modifier ;
       vector<INT64>  _dollarList ;
    } ;
-   typedef struct _rtnQueryModifier rtnQueryModifier ;
+   typedef class _rtnQueryModifier rtnQueryModifier ;
 }
 
 #endif /* RTN_QUERYMODIFIER_HPP_ */
