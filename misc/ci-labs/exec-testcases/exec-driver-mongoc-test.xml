@@ -1,0 +1,80 @@
+<!--@param ${ci.properties.path}: The path where ci-properties file direcotry.-->
+<!--@param ${antTask.jar.path}: The path where ant-sdbtask.jar direcotry.-->
+<!--@param ${mongoc.testcase.path}: The path where test case direcotry.-->
+<!--@param ${mongoc.testcase.libpath}: The path where test case dependent libraries direcotry.-->
+<!--@param ${deploy.case.fullname}: The run in which env -->
+<!--@param ${reports.path}: The path where test case direcotry.-->
+<!--@param ${test_name}: will not test name. -->
+<project name="Exec-mongoc-Testcases" default="Test-Driver-mongoc">
+   <property file="${ci.properties.path}" />
+   <property name="test.type" value="driver" />
+   <proerty name="mongoc.test.host" value="localhost:${fap.service.port}">
+   <taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
+      <classpath>
+         <fileset dir="${antTask.jar.path}" includes="*.jar" />
+      </classpath>
+   </taskdef>
+   
+   <target name="Clean-mongoc-Reports">
+      <echo message="Reports' path is ${reports.path}" />
+      <delete dir="${reports.path}" failonerror="false" />
+      <mkdir dir="${reports.path}" />
+      <echo message="Clean deploy result reports compeleted." />
+   </target>
+   
+   <target name="Test-Driver-mongoc" depends="Clean-mongoc-Reports">
+      <hostinfo prefix="host" />
+      <echo message="Begin test driver mongoc testcases..." />
+      <echo message="Perform the driver mongoc testcases,with testcase.path=${mongoc.testcase.path}" />
+      
+      <basename property="deploy.name" file="${deploy.case.fullname}" suffix=".xml" />
+      <!--property name="test.suite.class.name" value="testcases-driver-c.${deploy.name}-${host.NAME}-${parallel.num}" /-->      
+      <exec executable="test-mongo" dir="${testcases.path}" timeout="60000" output="./testcases.txt" resultproperty="ret.code" failonerror="false">
+         <arg line="--help" />
+         <env key="LD_LIBRARY_PATH" path="${LD_LIBRARY_PATH}:${mongoc.testcase.libpath}" />
+      </exec>
+      <exec executable="/usr/bin/grep" timeout="60000" input="./testcases.txt" output="./testcases.txt" resultproperty="ret.code" failonerror="false">
+         <arg line="'^    /'" />
+         <env key="LD_LIBRARY_PATH" path="${LD_LIBRARY_PATH}:${mongoc.testcase.libpath}" />
+      </exec>
+      <loadfile property="testcases" srcFile="./testcases.txt" failonerror="true" />
+      <echo file="${reports.path}/TEST-mongoc.xml" message="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot; ?&gt;&#10;&lt;testsuite name=&quot;mongoc&quot; type=&quot;${test.type}&quot; deploy=&quot;${deploy.name}&quot; hostname=&quot;${host.NAME}&quot; tests=&quot;1&quot; failure=&quot;0&quot;&gt;&#10;" />
+      <foreach list="${lines}" target="test-one-case" param="test.case.name" delimiter=" ">
+         <param name="testcases.path" value="${mongoc.testcase.path}" />
+      </foreach>
+      <echo file="${reports.path}/TEST-mongoc.xml" message="&lt;/testsuite&gt;&#10;" append="true" />
+
+      <echo message="parallel executable" />
+      <echo message="current parallel execute all testcases" /> 
+      <echo message="Exec test-mongo -f " /> 
+      <echo message="Env:LD_LIBRARY_PATH=${mongoc.testcase.libpath}" />
+      <echo message="The testcases path on ${testcases.path}" />
+      <exec executable="test-mongo" dir="${testcases.path}" timeout="60000" outputproperty="screen.output" resultproperty="ret.code" failonerror="false">
+         <arg value="-f" />
+         <arg value="-F ${reports.path}/concurrent_report.xml" />
+         <env key="LD_LIBRARY_PATH" path="${LD_LIBRARY_PATH}:${mongoc.testcase.libpath}" />
+         <env key="MONGOC_TEST_HOST" value="${mongoc.test.host}" />
+      </exec>
+      <echo message="${screen.output}" />
+      <echo message="The result = ${ret.code} after exec parallel testcase." />
+   </target>        
+    
+   <target name="test-one-case">
+      <echo message="current execute ${test.case.name}" />  
+      <echo message="Exec test-mongo -f -p -l ${test.case.name}" />
+      <echo message="Env:LD_LIBRARY_PATH=${mongoc.testcase.libpath}" />
+      <echo message="The testcase ${test.case.name} path on ${testcases.path}" />
+      
+      <exec executable="test-mongo" dir="${testcases.path}" timeout="60000" outputproperty="screen.output" resultproperty="ret.code" failonerror="false">
+         <arg value="-f" />
+         <arg value="-p" />
+         <arg value="-l ${test.case.name}" />
+         <arg value="-F ${reports.path}/${test.case.name}_report.xml"
+         <env key="LD_LIBRARY_PATH" path="${LD_LIBRARY_PATH}:${mongoc.testcase.libpath}" />
+         <env key="MONGOC_TEST_HOST" value="${mongoc.test.host}" />
+      </exec>     
+      <echo message="${screen.output}" />
+      <echo message="The result = ${ret.code} after exec ${test.case.name} testcase." />
+   </target> 
+</project>
+
