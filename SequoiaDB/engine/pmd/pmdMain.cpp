@@ -186,6 +186,9 @@ namespace engine
          return rc ;
       }
 
+      //// for test
+      ossPrintf( "TEST: resolve arguments suc\n" ) ;
+
       // 2. enalble pd log
       sdbEnablePD( pmdGetOptionCB()->getDiagLogPath(),
                    pmdGetOptionCB()->diagFileNum() ) ;
@@ -196,6 +199,8 @@ namespace engine
                pmdGetOptionCB()->krcbRole(), SDB_ENGINE_VERISON_CURRENT,
                SDB_ENGINE_SUBVERSION_CURRENT, SDB_ENGINE_RELEASE_CURRENT,
                SDB_ENGINE_BUILD_TIME ) ;
+
+      ossPrintf( "TEST: set pd info suc\n" ) ;
 
       // 3. printf all configs
       {
@@ -245,7 +250,7 @@ namespace engine
       if ( PMD_IS_DB_DOWN )
       {
          rc = krcb->getExitCode() ;
-         PD_LOG( PDERROR, "Start failed, rc: %d", rc ) ;
+         //PD_LOG( PDERROR, "Start failed, rc: %d", rc ) ;
          goto error ;
       }
       else if ( startTimerCount >= PMD_START_WAIT_TIME )
@@ -285,6 +290,7 @@ namespace engine
       {
          ossSleepsecs ( 1 ) ;
          sdbGetPMDController()->onTimer( OSS_ONE_SEC ) ;
+         ossPrintf( "Test: xxxxxxxxx \n" ) ;
       }
       rc = krcb->getExitCode() ;
 
