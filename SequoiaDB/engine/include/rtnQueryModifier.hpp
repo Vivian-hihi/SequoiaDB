@@ -45,8 +45,8 @@ namespace engine
    {
    public:
       _rtnQueryModifier( BOOLEAN isUpdate,
-                             BOOLEAN isRemove,
-                             BOOLEAN returnNew = FALSE ) ;
+                         BOOLEAN isRemove,
+                         BOOLEAN returnNew = FALSE ) ;
 
       ~_rtnQueryModifier()
       {
