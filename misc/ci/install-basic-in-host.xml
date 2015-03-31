@@ -21,15 +21,15 @@
 		<classpath>
 			<pathelement location="${test.machine.deploy.path}/deploy/ant-sdbtasks/ant-sdbtasks.jar" />
 		</classpath>
-	</taskdef> 
+	</taskdef>
 
 	<target name="clean-install" depends="">
 		<hostinfo prefix="host" />
 		<echo message="Begin to clean install env..." />
-		
+
 		<exec executable="service" dir="" failonerror="false">
 			<arg value="sdbcm" />
-			<arg value="stop" />		
+			<arg value="stop" />
 		</exec>
 		<exec executable="${db.path}/bin/sdbstop" dir="" failonerror="true" />
 		<!-- <stafTools workHost="${host.NAME}" workType="shell" workDir="${db.path}" common="ps -ef|grep sdb | grep -v grep | awk '{print $2}' | xargs kill -9" failonerror="true" /> -->
@@ -63,12 +63,11 @@
 				<replaceregexp file="${db.path}/conf/local/${coord.service.port}/sdb.conf" match="catalogname=11813" replace="catalogname=50003" flags="g" />
 				<replaceregexp file="${db.path}/conf/local/${coord.service.port}/sdb.conf" match="httpname=11814" replace="httpname=50004" flags="g" />
 
-				<echo file="${db.path}/conf/local/${coord.service.port}/sdb.conf" append="true" message="sharingbreak= 300000" />
+				<echo file="${db.path}/conf/local/${coord.service.port}/sdb.conf" append="true" message="sharingbreak=300000" />
 				<if>
 					   <equals arg1="${os.arch}" arg2="amd64" />
 					   <then>
-					      <echo file="${db.path}/conf/local/${coord.service.port}/sdb.conf"  append="true" >
-fap=fapmongo</echo>
+					      <echo file="${db.path}/conf/local/${coord.service.port}/sdb.conf"  append="true" >fap=fapmongo</echo>
 					   </then>
 				</if>
 
@@ -89,11 +88,11 @@ fap=fapmongo</echo>
 				<replaceregexp file="${db.path}/conf/local/${coord.service.port}/sdb.conf" match="catalogname=11813" replace="catalogname=50003" flags="g" />
 				<replaceregexp file="${db.path}/conf/local/${coord.service.port}/sdb.conf" match="httpname=11814" replace="httpname=50004" flags="g" />
 
-				<echo file="${db.path}/conf/local/${coord.service.port}/sdb.conf"  append="true" message="sharingbreak= 300000" />
+				<echo file="${db.path}/conf/local/${coord.service.port}/sdb.conf"  append="true" message="sharingbreak=300000" />
 			  <if>
 					   <equals arg1="${os.arch}" arg2="amd64" />
 					   <then>
-					      <echo file="${db.path}/conf/local/${coord.service.port}/sdb.conf"  append="true" message="fap=fapmongo" />
+						 	<echo file="${db.path}/conf/local/${coord.service.port}/sdb.conf"  append="true" >fap=fapmongo</echo>
 					   </then>
 				</if>
 				<if>
