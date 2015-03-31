@@ -50,10 +50,10 @@
 
 // macro for debug
 #ifdef _DEBUG
-   #define OUTPUT_FUNCTION( str, funcName ) \
-      std::cout << str << funcName << std::endl
+   #define OUTPUT_FUNCTION( str, funcName, rc ) \
+      std::cout << str << funcName << " rc = " << rc << std::endl
 #else
-   #define OUTPUT_FUNCTION( str, funcName )
+   #define OUTPUT_FUNCTION( str, funcName, rc )
 #endif // _DEBUG
 
 #define CHECK_VALUE( condition, label )   \

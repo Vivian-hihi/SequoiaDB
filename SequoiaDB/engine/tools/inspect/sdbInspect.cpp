@@ -169,7 +169,7 @@ namespace
    done:
       return rc ;
    error:
-      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__ ) ;
+      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__, rc ) ;
       goto done ;
    }
 
@@ -215,7 +215,7 @@ namespace
    done:
       return rc ;
    error:
-      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__ ) ;
+      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__, rc ) ;
       goto done ;
    }
 
@@ -281,7 +281,7 @@ namespace
    done:
       return rc ;
    error:
-      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__ ) ;
+      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__, rc ) ;
       goto done ;
    }
 
@@ -329,7 +329,7 @@ namespace
    done:
       return rc ;
    error:
-      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__ ) ;
+      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__, rc ) ;
       goto done ;
    }
 
@@ -437,7 +437,7 @@ namespace
    done:
       return rc ;
    error:
-      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__ ) ;
+      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__, rc ) ;
       goto done ;
    }
 
@@ -490,7 +490,7 @@ namespace
       else if ( 1 == tail._exitCode )
       {
          len += ossSnprintf( buffer + len, bufferSize - len,
-                             "Reson for exit : exit with less than 1%% of "
+                             "Reason for exit : exit with less than 1%% of "
                              "records not synchronized"OSS_NEWLINE ) ;
       }
       else
@@ -561,7 +561,7 @@ namespace
    done:
       return rc ;
    error:
-      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__ ) ;
+      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__, rc ) ;
       goto done ;
    }
 
@@ -592,7 +592,7 @@ namespace
    done:
       return rc ;
    error:
-      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__ ) ;
+      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__, rc ) ;
       goto done ;
    }
 
@@ -625,7 +625,7 @@ namespace
    done:
       return rc ;
    error:
-      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__ ) ;
+      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__, rc ) ;
       goto done ;
    }
 
@@ -786,7 +786,7 @@ namespace
    done:
       return rc ;
    error:
-      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__ ) ;
+      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__, rc ) ;
       goto done ;
    }
 
@@ -807,7 +807,7 @@ namespace
    done:
       return rc ;
    error:
-      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__ ) ;
+      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__, rc ) ;
       goto done ;
    }
 
@@ -835,7 +835,7 @@ namespace
    done:
       return rc ;
    error:
-      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__ ) ;
+      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__, rc ) ;
       goto done ;
    }
 
@@ -862,7 +862,7 @@ namespace
    done:
       return rc ;
    error:
-      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__ ) ;
+      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__, rc ) ;
       goto done ;
    }
 
@@ -888,7 +888,7 @@ namespace
    done:
       return rc ;
    error:
-      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__ ) ;
+      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__, rc ) ;
       goto done ;
    }
 
@@ -913,7 +913,7 @@ namespace
    done:
       return rc ;
    error:
-      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__ ) ;
+      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__, rc ) ;
       goto done ;
    }
 
@@ -960,7 +960,7 @@ namespace
    done:
       return rc ;
    error:
-      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__ ) ;
+      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__, rc ) ;
       goto done ;
    }
 
@@ -1012,7 +1012,7 @@ namespace
    done:
       return rc ;
    error:
-      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__ ) ;
+      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__, rc ) ;
       goto done ;
    }
 
@@ -1033,7 +1033,7 @@ namespace
    done:
       return rc ;
    error:
-      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__ ) ;
+      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__, rc ) ;
       goto done ;
    }
 
@@ -1210,7 +1210,7 @@ namespace
    done:
       return rc ;
    error:
-      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__ ) ;
+      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__, rc ) ;
       goto done ;
    }
 
@@ -1336,7 +1336,7 @@ namespace
       }
       return rc ;
    error:
-      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__ ) ;
+      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__, rc ) ;
       goto done ;
    }
 
@@ -1393,7 +1393,7 @@ namespace
    done:
       return rc ;
    error:
-      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__ ) ;
+      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__, rc ) ;
       goto done ;
    }
 
@@ -1414,7 +1414,7 @@ namespace
    done:
       return rc ;
    error:
-      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__ ) ;
+      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__, rc ) ;
       goto done ;
    }
 
@@ -1461,7 +1461,7 @@ namespace
    done:
       return rc ;
    error:
-      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__ ) ;
+      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__, rc ) ;
       goto done ;
    }
 
@@ -1506,7 +1506,7 @@ namespace
    done:
       return rc ;
    error:
-      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__ ) ;
+      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__, rc ) ;
       goto done ;
    }
 
@@ -1527,7 +1527,7 @@ namespace
    done:
       return rc ;
    error:
-      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__ ) ;
+      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__, rc ) ;
       goto done ;
    }
 
@@ -1568,7 +1568,7 @@ namespace
    done:
       return rc ;
    error:
-      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__ ) ;
+      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__, rc ) ;
       goto done ;
    }
    INT32 writeMainSubCl( OSSFILE &out, const mainCl &mainCls, CHAR *&buffer,
@@ -1630,7 +1630,7 @@ namespace
    done:
       return rc ;
    error:
-      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__ ) ;
+      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__, rc ) ;
       goto done ;
    }
 
@@ -1675,7 +1675,7 @@ namespace
    done:
       return rc ;
    error:
-      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__ ) ;
+      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__, rc ) ;
       goto done ;
    }
 
@@ -1741,7 +1741,7 @@ namespace
    done:
       return rc ;
    error:
-      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__ ) ;
+      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__, rc ) ;
       goto done ;
    }
 
@@ -1845,7 +1845,7 @@ namespace
    done:
       return rc ;
    error:
-      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__ ) ;
+      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__, rc ) ;
       goto done ;
    }
 
@@ -1918,7 +1918,7 @@ namespace
 
       return rc ;
    error:
-      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__ ) ;
+      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__, rc ) ;
       goto done ;
    }
 
@@ -1927,6 +1927,18 @@ namespace
       INT32 rc = SDB_OK ;
       sdbclient::sdbCursor cursor ;
       bson::BSONObj record ;
+
+      if ( NULL == coord )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      if ( !coord->isValid() )
+      {
+         rc = SDB_NETWORK ;
+         goto error ;
+      }
 
       rc = coord->getSnapshot( cursor, 8 ) ;
       CHECK_VALUE( ( SDB_OK != rc ), error ) ;
@@ -1962,7 +1974,7 @@ namespace
    done:
       return rc ;
    error:
-      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__ ) ;
+      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__, rc ) ;
       goto done ;
    }
 
@@ -1973,10 +1985,23 @@ namespace
                      ciLinkList< ciGroup > &groupList )
    {
       INT32 rc = SDB_OK ;
+
       BOOLEAN hasGroup = ( 0 != ossStrncmp( "", groupName,
                                             CI_GROUPNAME_SIZE ) ) ;
       bson::BSONObj obj ;
       sdbclient::sdbCursor cursor ;
+
+      if ( NULL == coord )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      if ( !coord->isValid() )
+      {
+         rc = SDB_NETWORK ;
+         goto error ;
+      }
 
       rc = coord->listReplicaGroups( cursor ) ;
       if ( SDB_OK != rc )
@@ -2036,7 +2061,7 @@ namespace
    done:
       return rc ;
    error:
-      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__ ) ;
+      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__, rc ) ;
       goto done ;
    }
 
@@ -2048,6 +2073,12 @@ namespace
    {
       INT32 rc = SDB_OK ;
 
+      if ( NULL == coord )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
       if ( NULL != group )
       {
          INT32 index = 0 ;
@@ -2055,7 +2086,14 @@ namespace
          header._groupID = group->_groupID ;
          ossMemset( header._groupName, 0, CI_GROUPNAME_SIZE ) ;
          ossMemcpy( header._groupName, group->_groupName, CI_GROUPNAME_SIZE ) ;
+
          // query replica group
+         if ( !coord->isValid() )
+         {
+            rc = SDB_NETWORK ;
+            goto error ;
+         }
+
          sdbclient::sdbReplicaGroup rg ;
          rc = coord->getReplicaGroup( group->_groupName, rg ) ;
          if ( SDB_OK != rc )
@@ -2165,7 +2203,7 @@ namespace
    done:
       return rc ;
    error:
-      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__ ) ;
+      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__, rc ) ;
       goto done ;
    }
 
@@ -2336,7 +2374,7 @@ namespace
    done:
       return rc ;
    error:
-      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__ ) ;
+      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__, rc ) ;
       goto done ;
    }
 
@@ -2437,7 +2475,7 @@ namespace
    done:
       return rc ;
    error:
-      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__ ) ;
+      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__, rc ) ;
       goto done ;
    }
 
@@ -2659,7 +2697,7 @@ namespace
 
       return rc ;
    error:
-      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__ ) ;
+      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__, rc ) ;
       goto done ;
    }
 
@@ -2899,8 +2937,7 @@ namespace
 
       return rc ;
    error:
-      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__ ) ;
-      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__ ) ;
+      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__, rc ) ;
       goto done ;
    }
 }
@@ -3214,7 +3251,7 @@ done:
    }
    return rc ;
 error:
-   OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__ ) ;
+   OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__, rc ) ;
    goto done ;
 }
 
@@ -3363,7 +3400,7 @@ done:
 
    return rc ;
 error:
-   OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__ ) ;
+   OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__, rc ) ;
    goto done ;
 }
 
@@ -3469,7 +3506,7 @@ done:
 
    return rc ;
 error:
-   OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__ ) ;
+   OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__, rc ) ;
    goto done ;
 }
 
