@@ -665,7 +665,6 @@ INT32 _ossSocket::connect ( INT32 timeout )
    if ( fcntl( native(), F_SETFL, flags & ~O_NONBLOCK ) <0 )
    {
       PD_LOG( PDERROR, "failed to fcntl sock:%d",native() ) ;
-      close() ;
       rc = SDB_SYS ;
       goto error ;
    }
@@ -734,6 +733,7 @@ void _ossSocket::close ()
 #else
       ::close ( _fd ) ;
 #endif
+      _fd = SOCKET_INVALIDSOCKET ;
       _init = FALSE ;
    }
    PD_TRACE_EXIT ( SDB_OSSSK_CLOSE );
