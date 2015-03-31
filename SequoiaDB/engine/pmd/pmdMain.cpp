@@ -250,7 +250,7 @@ namespace engine
       if ( PMD_IS_DB_DOWN )
       {
          rc = krcb->getExitCode() ;
-         //PD_LOG( PDERROR, "Start failed, rc: %d", rc ) ;
+         PD_LOG( PDERROR, "Start failed, rc: %d", rc ) ;
          goto error ;
       }
       else if ( startTimerCount >= PMD_START_WAIT_TIME )
@@ -290,7 +290,7 @@ namespace engine
       {
          ossSleepsecs ( 1 ) ;
          sdbGetPMDController()->onTimer( OSS_ONE_SEC ) ;
-         ossPrintf( "Test: xxxxxxxxx \n" ) ;
+         // ossPrintf( "Test: xxxxxxxxx \n" ) ;
       }
       rc = krcb->getExitCode() ;
 
