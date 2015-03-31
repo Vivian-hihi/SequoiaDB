@@ -4931,7 +4931,7 @@ do                                                            \
       {
          rc = clientBuildDisconnectMsg ( &pBuffer, &bufferSize, 0,
                                          _endianConvert ) ;
-         if ( !rc )
+         if ( _sock->isConnected() && !rc )
          {
             clientSocketSend ( _sock, pBuffer, bufferSize ) ;
          }

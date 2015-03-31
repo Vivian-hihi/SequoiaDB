@@ -406,6 +406,10 @@ done :
    PD_TRACE_EXITRC ( SDB_OSSSK_SEND, rc );
    return rc ;
 error :
+   if ( SDB_NETWORK == rc )
+   {
+      close() ;
+   }
    goto done ;
 }
 
@@ -616,6 +620,10 @@ INT32 _ossSocket::recv ( CHAR *pMsg, INT32 len,
 done :
    return rc ;
 error :
+   if ( SDB_NETWORK == rc || SDB_NETWORK_CLOSE == rc )
+   {
+      close() ;
+   }
    goto done ;
 }
 

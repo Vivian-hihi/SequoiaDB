@@ -66,7 +66,7 @@ namespace engine
       }
 
       // master loop for tcp listener
-      while ( ! cb->isDisconnected() )
+      while ( !cb->isDisconnected() && !pListerner->isClosed() )
       {
          SOCKET s ;
          // timeout in 10ms, so we won't hold global bind latch for too long
