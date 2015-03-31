@@ -55,6 +55,29 @@ using namespace bson;
 
 namespace engine
 {
+   INT32 rtnCoordQuery::_checkQueryModify( rtnSendMsgIn &inMsg,
+                                           rtnSendOptions &options )
+   {
+      MsgOpQuery *queryMsg = ( MsgOpQuery* )inMsg.msg() ;
+      INT32 rc = SDB_OK ;
+
+      if ( queryMsg->flags & FLG_QUERY_MODIFY )
+      {
+         if ( options._groupLst.size() > 1 )
+         {
+            rtnQueryPvtData *privateData = ( rtnQueryPvtData* )inMsg._pvtData ;
+            if ( privateData->_pContext->getLimitNum() > 0 ||
+                 privateData->_pContext->getSkipNum() > 0 )
+            {
+               rc = SDB_RTN_QUERYMODIFY_MULTI_NODES ;
+               PD_LOG( PDERROR, "query and modify can't use skip and limit "
+                  "in multiple nodes, rc: %d", rc ) ;
+            }
+         }
+      }
+
+      return rc ;
+   }
 
    void rtnCoordQuery::_optimize( rtnSendMsgIn &inMsg,
                                   rtnSendOptions &options,
@@ -110,8 +133,20 @@ namespace engine
                                       rtnProcessResult &result,
                                       ossValuePtr &outPtr )
    {
+      INT32 rc = SDB_OK ;
+
       _optimize( inMsg, options, result ) ;
-      return SDB_OK ;
+
+      rc = _checkQueryModify( inMsg, options ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    void rtnCoordQuery::_doneCLOp( ossValuePtr itPtr,
@@ -208,6 +243,12 @@ namespace engine
       CoordGroupSubCLMap::iterator it ;
 
       _optimize( inMsg, options, result ) ;
+
+      rc = _checkQueryModify( inMsg, options ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
 
       if ( options._useSpecialGrp )
       {

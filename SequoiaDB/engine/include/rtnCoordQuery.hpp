@@ -116,6 +116,9 @@ namespace engine
       BSONObj _buildNewQuery( const BSONObj &query,
                               const CoordSubCLlist &subCLList ) ;
 
+      INT32 _checkQueryModify( rtnSendMsgIn &inMsg,
+                               rtnSendOptions &options ) ;
+
       void  _optimize( rtnSendMsgIn &inMsg,
                        rtnSendOptions &options,
                        rtnProcessResult &result ) ;

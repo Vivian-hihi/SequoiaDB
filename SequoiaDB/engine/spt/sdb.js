@@ -50,6 +50,27 @@ function rand () {
    return Math.random() ;
 }
 
+// return merged json object
+function mergeJsonObject(obj1, obj2) {
+   var result = {};
+   for (var attr in obj1) {
+      result[attr] = obj1[attr];
+   }
+   for (var attr in obj2) {
+      result[attr] = obj2[attr];
+   }
+
+   return result;
+}
+
+function isEmptyObject(obj) {
+   for (var name in obj) {
+      return false;
+   }
+
+   return true;
+}
+
 // end Global functions
 
 // Bson
@@ -242,7 +263,11 @@ SdbQuery.prototype.sort = function( sort ) {
 
 SdbQuery.prototype.hint = function( hint ) {
    this._checkExecuted();
-   this._hint = hint;
+   if (undefined == this._hint) {
+      this._hint = hint;
+   } else {
+      this._hint = mergeJsonObject(hint, this._hint);
+   }
    return this;
 }
 
@@ -279,6 +304,47 @@ SdbQuery.prototype.close = function() {
    return this._cursor.close();
 }
 
+SdbQuery.prototype.update = function( rule, returnNew ) {
+   if ((typeof rule) != "object" || isEmptyObject(rule)) {
+      throw "SdbQuery.update(): the 1st param should be non-empty object";
+   }
+   if (undefined != returnNew && (typeof returnNew) != "boolean") {
+      throw "SdbQuery.update(): the 2nd param should be boolean";
+   }
+
+   this._checkExecuted();
+
+   if (undefined == this._hint) {
+      this._hint = {};
+   } else if (undefined != this._hint.$Modify) {
+      throw "SdbQuery.update(): duplicate modification";
+   }
+
+   var modify = {};
+   modify.op = "update";
+   modify.update = rule;
+   modify.returnnew = (returnNew != undefined) ? returnNew : false;
+   this._hint.$Modify = modify;
+
+   return this;
+}
+
+SdbQuery.prototype.remove = function() {
+   this._checkExecuted();
+   if (undefined == this._hint) {
+      this._hint = {};
+   } else if (undefined != this._hint.$Modify) {
+      throw "SdbQuery.update(): duplicate modification";
+   }
+
+   var modify = {};
+   modify.op = "remove";
+   modify.remove = true;
+   this._hint.$Modify = modify;
+
+   return this;
+}
+
 /*
 SdbQuery.prototype.updateCurrent = function ( rule ) {
    this._exec();
@@ -300,6 +366,9 @@ SdbQuery.prototype.arrayAccess = function( idx ) {
 }
 
 SdbQuery.prototype.count = function() {
+   if (undefined != this._hint && undefined != this._hint.$Modify) {
+      throw "count() cannot be executed with update() or remove()";
+   }
    return this._collection.count( this._query ) ;
 }
 
