@@ -37,8 +37,8 @@ using namespace bson ;
 namespace engine
 {
    _rtnQueryModifier::_rtnQueryModifier( BOOLEAN isUpdate,
-                                             BOOLEAN isRemove,
-                                             BOOLEAN returnNew )
+                                         BOOLEAN isRemove,
+                                         BOOLEAN returnNew )
    : _isUpdate( isUpdate ),
    _isRemove ( isRemove ),
    _returnNew ( returnNew )
@@ -65,7 +65,7 @@ namespace engine
       try
       {
          rc = _modifier.loadPattern ( updator,
-                                     &_dollarList ) ;
+                                      &_dollarList ) ;
          PD_RC_CHECK( rc, PDERROR, "Invalid pattern is detected for updator: "
                       "%s", updator.toString().c_str() ) ;
       }
