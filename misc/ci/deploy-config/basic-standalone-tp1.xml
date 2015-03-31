@@ -12,14 +12,14 @@
 <!-- depends:deploy-test-all.xml -->
 <!-- call:deploy-software-in-host.xml,deploy-test-in-host.xml,test-type.xml -->
 
-<project name="Standalone" default="Standalone"> 
+<project name="Standalone" default="Standalone">
 	<property name="properties.dir" value="${basedir}/../ci.test.properties" />
 	<property file="${properties.dir}" />
-	<taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
+	<!-- <taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
 		<classpath>
 			<pathelement location="${WORKSPACE}/deploy/ant-sdbtasks/ant-sdbtasks.jar" />
 		</classpath>
-	</taskdef> 
+	</taskdef>  -->
 
 	<target name="Deploy" depends="">
 		<ant antfile="deploy-software-in-host.xml" dir="." inheritAll="false">
@@ -98,7 +98,7 @@
 
 						<echo message="Tar ${test.log.path}.tar.gz..." />
 						<tar basedir="${WORKSPACE}/reports" destfile="${test.log.path}.tar.gz" compression="gzip" includes="**/*" />
-	
+
 						<stafTools workType="copy" workHost="${host.NAME}" fileName="${test.log.path}.tar.gz"  toHost="${save.testLog.hostname}"  saveDir="${save.testLog.dir}" />
 						<sdbProperty name="delete.diaglogFile" value="dir=$(find /opt/sequoiadb/database -name diaglog); for d in $dir ; do echo rm -f $d/* ; rm -f $d/* ; done" />
 
@@ -116,5 +116,5 @@
 			<finally>
 			</finally>
 		</trycatch>
-	</target>	
+	</target>
 </project>

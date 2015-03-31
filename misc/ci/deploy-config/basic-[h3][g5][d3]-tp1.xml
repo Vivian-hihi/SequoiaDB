@@ -15,11 +15,11 @@
 <project name="H3-G5-D3" default="H3-G5-D3">
 	<property name="properties.dir" value="${basedir}/../ci.test.properties" />
 	<property file="${properties.dir}" />
-	<taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
+	<!-- <taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
 		<classpath>
 			<pathelement location="${WORKSPACE}/deploy/ant-sdbtasks/*.jar" />
 		</classpath>
-	</taskdef> 
+	</taskdef>  -->
 
 	<target name="Deploy" depends="">
 		<parallel>
@@ -56,7 +56,7 @@
 			    <property name="fap.value" value="" />
 			 </else>
 		</if>
-		
+
 		<sdbdeploy host="${test.machine.no1.basic}" coordport="50000">
 			<catagroup name="cata1">
 				<node host="${test.machine.no1.data}" baseport="${cata.service.port}" dbpath="${install.path}/sequoiadb/database/cata/${cata.service.port}">
@@ -125,7 +125,7 @@
 					<confitem name="diagnum" value="80" />
 					<confitem name="fap" value="${fap.value}" />
 				</node>
-			</datagroup>	
+			</datagroup>
 			<datagroup name="group3">
 				<node host="${test.machine.no3.data}" baseport="23100" dbpath="${install.path}/sequoiadb/database/data/23100">
 					<confitem name="diaglevel" value="5" />
@@ -227,7 +227,7 @@
 		<echo message="test.log.path=${test.log.path}" />
 		<echo message="test.log=${test.log}" />
 		<echo message="**************************************************************" />
-		
+
 		<!-- <basename property="antFileName" file="${ant.file}" suffix=".xml" /> -->
 		<for list="${test-type-list}" param="Test-Type">
 			<sequential>
@@ -247,7 +247,7 @@
 
 					<property name="test.log" value="${test.log}" />
 				</ant>
-			</sequential>	
+			</sequential>
 		</for>
 
 		<trycatch>
@@ -290,6 +290,6 @@
 			</catch>
 			<finally>
 			</finally>
-		</trycatch>			
+		</trycatch>
 	</target>
 </project>

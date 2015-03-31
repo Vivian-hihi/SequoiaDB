@@ -15,11 +15,11 @@
 <project name="H3-G2-D3" default="H3-G2-D3">
 	<property name="properties.dir" value="${basedir}/../ci.test.properties" />
 	<property file="${properties.dir}" />
-	<taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
+	<!-- <taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
 		<classpath>
 			<pathelement location="${WORKSPACE}/deploy/ant-sdbtasks/*.jar" />
 		</classpath>
-	</taskdef>
+	</taskdef> -->
 
 	<target name="Deploy" depends="">
 		<parallel>

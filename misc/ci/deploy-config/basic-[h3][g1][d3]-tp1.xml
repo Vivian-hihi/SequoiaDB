@@ -15,11 +15,6 @@
 <project name="H3-G1-D3" default="H3-G1-D3">
 	<property name="properties.dir" value="${basedir}/../ci.test.properties" />
 	<property file="${properties.dir}" />
-	<!-- <taskdef resource="net/sf/antcontrib/antlib.xml">
-		<classpath>
-			<pathelement location="/usr/share/java/ant-contrib.jar" />
-		</classpath>
-	</taskdef> -->
 
 	<target name="Deploy" depends="">
 		<parallel>

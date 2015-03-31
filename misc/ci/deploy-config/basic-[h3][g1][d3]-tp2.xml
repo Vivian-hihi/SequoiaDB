@@ -15,11 +15,11 @@
 <project name="H3-G1-D3-P2" default="H3-G1-D3-P2">
 	<property name="properties.dir" value="${basedir}/../ci.test.properties" />
 	<property file="${properties.dir}" />
-	<taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
+	<!-- <taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
 		<classpath>
 			<pathelement location="${WORKSPACE}/deploy/ant-sdbtasks/ant-sdbtasks.jar" />
 		</classpath>
-	</taskdef> 
+	</taskdef>  -->
 
 	<target name="Deploy" depends="">
 		<parallel>
@@ -134,7 +134,7 @@
 			<for list="${test-type-list}" param="test-type">
 				<sequential>
 					<antfetch antfile="${WORKSPACE}/sequoiadb/misc/ci/test-type.xml" dir="." inheritAll="false">
-						
+
 						<property name="deploy.case.fullname" value="${deploy.case.fullname}" />
 						<property name="test.reports.path" value="${test.reports.path}" />
 						<property name="Test-Type" value="@{Test-Type}" />
@@ -150,7 +150,7 @@
 			<for list="${test-type-list}" param="test-type">
 				<sequential>
 					<antfetch antfile="${WORKSPACE}/sequoiadb/misc/ci/test-type.xml" dir="." inheritAll="false">
-						
+
 						<property name="deploy.case.fullname" value="${deploy.case.fullname}" />
 						<property name="test.reports.path" value="${test.reports.path}" />
 						<property name="Test-Type" value="@{Test-Type}" />
@@ -244,6 +244,6 @@
 			</catch>
 			<finally>
 			</finally>
-		</trycatch>		
+		</trycatch>
 	</target>
 </project>

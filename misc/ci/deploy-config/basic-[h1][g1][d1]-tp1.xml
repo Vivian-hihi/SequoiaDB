@@ -15,11 +15,11 @@
 <project name="H1-G1-D1" default="H1-G1-D1">
 	<property name="properties.dir" value="${basedir}/../ci.test.properties" />
 	<property file="${properties.dir}" />
-	<taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
+	<!-- <taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
 		<classpath>
 			<pathelement location="${WORKSPACE}/deploy/ant-sdbtasks/ant-sdbtasks.jar" />
 		</classpath>
-	</taskdef>
+	</taskdef> -->
 
 	<target name="Deploy" depends="">
 		<ant antfile="deploy-software-in-host.xml" dir="." inheritAll="false">
@@ -30,7 +30,7 @@
 			<property name="is.coord.master" value="true" />
 			<property name="catalog.addrs" value="${test.machine.no3.data}:30003" />
 		</ant>
-		
+
 		<if>
 		   <equals arg1="${os.arch}" arg2="amd64" />
 			 <then>
