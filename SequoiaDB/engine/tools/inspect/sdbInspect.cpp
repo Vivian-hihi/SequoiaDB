@@ -490,7 +490,7 @@ namespace
       else if ( 1 == tail._exitCode )
       {
          len += ossSnprintf( buffer + len, bufferSize - len,
-                             "Reson for exit : exit with less than 1% of "
+                             "Reson for exit : exit with less than 1%% of "
                              "records not synchronized"OSS_NEWLINE ) ;
       }
       else
