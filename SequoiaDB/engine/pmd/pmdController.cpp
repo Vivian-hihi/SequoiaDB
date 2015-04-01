@@ -41,6 +41,7 @@
 #include "../bson/lib/md5.hpp"
 #include "ossDynamicLoad.hpp"
 #include "pmdModuleLoader.hpp"
+#include "ossProc.hpp"
 
 namespace engine
 {
@@ -605,12 +606,14 @@ namespace engine
       _pRSManager = pRSManager ;
    }
 
-   INT32 _pmdController::initForeignModule( const CHAR *strName )
+   INT32 _pmdController::initForeignModule( const CHAR *moduleName )
    {
       INT32 rc = SDB_OK ;
       UINT16 protocolPort = 0 ;
+      CHAR rootPath[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
+      CHAR path[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
 
-      if (  NULL == strName || '\0' == strName[ 0 ] )
+      if (  NULL == moduleName || '\0' == moduleName[ 0 ] )
       {
          goto done ;
       }
@@ -622,10 +625,23 @@ namespace engine
          rc = SDB_OOM ;
          goto error ;
       }
-
-      rc = _fapMongo->load( strName, FAP_MODULE_PATH ) ;
+      rc = ossGetEWD( rootPath, OSS_MAX_PATHSIZE ) ;
+      if ( rc )
+      {
+         ossPrintf ( "Failed to get excutable file's working "
+                     "directory"OSS_NEWLINE ) ;
+         goto error ;
+      }
+      rc = utilBuildFullPath( rootPath, FAP_MODULE_PATH,
+                              OSS_MAX_PATHSIZE, path );
+      if ( rc )
+      {
+         ossPrintf( "Failed to build module path: %d"OSS_NEWLINE, rc ) ;
+         goto error ;
+      }
+      rc = _fapMongo->load( moduleName, path ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to load module: %s, path: %s"
-                   " rc: %d", strName, FAP_MODULE_PATH, rc ) ;
+                   " rc: %d", moduleName, FAP_MODULE_PATH, rc ) ;
       rc = _fapMongo->create( _protocol ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to create protocol service" ) ;
 
