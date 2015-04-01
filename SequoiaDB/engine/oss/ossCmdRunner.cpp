@@ -266,11 +266,15 @@ namespace engine
          rc = ossReadNamedPipe( _out, buff, OSS_MAX_PATHSIZE, &readLen ) ;
          if ( SDB_OK != rc )
          {
-            if ( SDB_TIMEOUT == rc )
+            if ( _stop )
+            {
+               rc = SDB_OK ;
+            }
+            else if ( SDB_TIMEOUT == rc )
             {
                continue ;
             }
-            if ( SDB_EOF != rc )
+            else if ( SDB_EOF != rc )
             {
                PD_LOG( PDERROR, "failed to read data from pipe:%d", rc ) ;
                goto error ;
@@ -313,9 +317,9 @@ namespace engine
       _stop = TRUE ;
       if ( OSS_INVALID_PID != _id )
       {
-         _monitorEvent.wait() ;
          ossCloseNamedPipe( _out ) ;
          _id = OSS_INVALID_PID ;
+         _monitorEvent.wait() ;
       }
       return SDB_OK ;
    }
