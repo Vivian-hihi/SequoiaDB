@@ -41,6 +41,8 @@ using namespace bson ;
 
 namespace engine
 {
+   #define PMD_RECV_DATA_AFTER_LENGTH_TIMEOUT         ( 30 * OSS_ONE_SEC )
+
    /*
       _pmdLocalSession implement
    */
@@ -183,8 +185,10 @@ namespace engine
             }
             buffSize = getBuffLen() ;
             *(UINT32*)pBuff = msgSize ;
-            // recv the rest msg
-            rc = recvData( pBuff + sizeof(UINT32), msgSize - sizeof(UINT32) ) ;
+            // recv the rest msg, need timeout
+            rc = recvData( pBuff + sizeof(UINT32),
+                           msgSize - sizeof(UINT32),
+                           PMD_RECV_DATA_AFTER_LENGTH_TIMEOUT ) ;
             if ( rc )
             {
                if ( SDB_APP_FORCED != rc )
@@ -245,7 +249,8 @@ namespace engine
       *(INT32*)(*ppBuff) = msgSize ;
 
       // recv recvSize1
-      rc = recvData( *ppBuff + sizeof(UINT32), recvSize - sizeof( UINT32 ) ) ;
+      rc = recvData( *ppBuff + sizeof(UINT32), recvSize - sizeof( UINT32 ),
+                     PMD_RECV_DATA_AFTER_LENGTH_TIMEOUT ) ;
       if ( rc )
       {
          if ( SDB_APP_FORCED != rc )
