@@ -1351,6 +1351,88 @@ SDB_EXPORT INT32 sdbQuery ( sdbCollectionHandle cHandle,
                             INT64 numToReturn,
                             sdbCursorHandle *handle ) ;
 
+/** \fn INT32 sdbQueryAndUpdate ( sdbCollectionHandle cHandle,
+                                  bson *condition,
+                                  bson *select,
+                                  bson *orderBy,
+                                  bson *hint,
+                                  bson *update,
+                                  INT64 numToSkip,
+                                  INT64 numToReturn,
+                                  INT32 flag,
+                                  BOOLEAN returnNew,
+                                  sdbCursorHandle *handle )
+    \brief Get the matching documents in current collection and update
+    \param [in] cHandle The collection handle
+    \param [in] condition The matching rule, return all the documents if null
+    \param [in] select The selective rule, return the whole document if null
+    \param [in] orderBy The ordered rule, never sort if null
+    \param [in] hint The hint, automatically match the optimal hint if null
+    \param [in] update The update rule, can't be null
+    \param [in] numToSkip Skip the first numToSkip documents, never skip if this parameter is 0
+    \param [in] numToReturn Only return numToReturn documents, return all if this parameter is -1
+    \param [in] flag The query flag, default to be 0
+
+        FLG_QUERY_FORCE_HINT(0x00000080)      : Force to use specified hint to query, if database have no index assigned by the hint, fail to query
+        FLG_QUERY_PARALLED(0x00000100)        : Enable paralled sub query
+        FLG_QUERY_WITH_RETURNDATA(0x00000200) : In general, query won't return data until cursor get from database,
+                                                when add this flag, return data in query response, it will be more high-performance
+
+    \param [in] returnNew When TRUE, returns the updated document rather than the original
+    \param [out] handle The cursor handle of current query
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+SDB_EXPORT INT32 sdbQueryAndUpdate ( sdbCollectionHandle cHandle,
+                                     bson *condition,
+                                     bson *select,
+                                     bson *orderBy,
+                                     bson *hint,
+                                     bson *update,
+                                     INT64 numToSkip,
+                                     INT64 numToReturn,
+                                     INT32 flag,
+                                     BOOLEAN returnNew,
+                                     sdbCursorHandle *handle ) ;
+
+/** \fn INT32 sdbQueryAndRemove ( sdbCollectionHandle cHandle,
+                                  bson *condition,
+                                  bson *select,
+                                  bson *orderBy,
+                                  bson *hint,
+                                  INT64 numToSkip,
+                                  INT64 numToReturn,
+                                  INT32 flag,
+                                  sdbCursorHandle *handle )
+    \brief Get the matching documents in current collection and remove
+    \param [in] cHandle The collection handle
+    \param [in] condition The matching rule, return all the documents if null
+    \param [in] select The selective rule, return the whole document if null
+    \param [in] orderBy The ordered rule, never sort if null
+    \param [in] hint The hint, automatically match the optimal hint if null
+    \param [in] numToSkip Skip the first numToSkip documents, never skip if this parameter is 0
+    \param [in] numToReturn Only return numToReturn documents, return all if this parameter is -1
+    \param [in] flag The query flag, default to be 0
+
+        FLG_QUERY_FORCE_HINT(0x00000080)      : Force to use specified hint to query, if database have no index assigned by the hint, fail to query
+        FLG_QUERY_PARALLED(0x00000100)        : Enable paralled sub query
+        FLG_QUERY_WITH_RETURNDATA(0x00000200) : In general, query won't return data until cursor get from database,
+                                                when add this flag, return data in query response, it will be more high-performance
+
+    \param [out] handle The cursor handle of current query
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+SDB_EXPORT INT32 sdbQueryAndRemove ( sdbCollectionHandle cHandle,
+                                     bson *condition,
+                                     bson *select,
+                                     bson *orderBy,
+                                     bson *hint,
+                                     INT64 numToSkip,
+                                     INT64 numToReturn,
+                                     INT32 flag,
+                                     sdbCursorHandle *handle ) ;
+
 /** \fn INT32 sdbExplain ( sdbCollectionHandle cHandle,
                            bson *condition,
                            bson *select,

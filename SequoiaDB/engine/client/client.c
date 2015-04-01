@@ -101,6 +101,13 @@ do                                        \
    bsoninit = TRUE ;                      \
 }while ( FALSE )                            
 
+#define BSON_INIT2( bsonobj, flag )       \
+do                                        \
+{                                         \
+   bson_init( &bsonobj );                 \
+   flag = TRUE ;                          \
+} while ( FALSE )
+
 #define BSON_APPEND_NULL( bsonobj, key )                 \
 do                                                       \
 {                                                        \
@@ -142,6 +149,15 @@ do                                 \
    {                               \
       bson_destroy( &bson ) ;      \
    }                               \
+}while( FALSE )
+
+#define BSON_DESTROY2( bson, flag )       \
+do                                        \
+{                                         \
+   if ( flag )                            \
+   {                                      \
+      bson_destroy( &bson ) ;             \
+   }                                      \
 }while( FALSE )
 
 #define SET_INVALID_HANDLE( handle ) \
@@ -4796,6 +4812,126 @@ error :
    }
    SET_INVALID_HANDLE( handle ) ;
    goto done ;
+}
+
+static INT32 _mergeBson( bson* to, bson* from )
+{
+   INT32 rc = SDB_OK ;
+   bson_iterator iter ;
+
+   if ( NULL == to || NULL == from )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   bson_iterator_init( &iter, from ) ;
+   while ( bson_iterator_more( &iter ) )
+   {
+      bson_iterator_next( &iter ) ;
+      BSON_APPEND( *to, NULL, &iter, element ) ;
+   }
+
+done:
+   return rc ;
+error:
+   goto done ;
+}
+
+static INT32 _sdbQueryAndModify ( sdbCollectionHandle cHandle,
+                                  bson *condition,
+                                  bson *select,
+                                  bson *orderBy,
+                                  bson *hint,
+                                  bson *update,
+                                  INT64 numToSkip,
+                                  INT64 numToReturn,
+                                  INT32 flag,
+                                  BOOLEAN returnNew,
+                                  BOOLEAN isUpdate,
+                                  sdbCursorHandle *handle )
+{
+   INT32 rc = SDB_OK ;
+   bson newHint ;
+   bson modify ;
+   BOOLEAN hintInit = FALSE;
+   BOOLEAN modifyInit = FALSE;
+
+   /* create $Modify object */
+   BSON_INIT2( modify, modifyInit ) ;
+   if ( isUpdate )
+   {
+      if ( NULL == update )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      BSON_APPEND( modify, FIELD_NAME_OP, FIELD_OP_VALUE_UPDATE, string ) ;
+      BSON_APPEND( modify, FIELD_NAME_LUPDATE, update, bson ) ;
+      BSON_APPEND( modify, FIELD_NAME_RETURNNEW, returnNew, bool ) ;
+   }
+   else
+   {
+      BSON_APPEND( modify, FIELD_NAME_OP, FIELD_OP_VALUE_REMOVE, string ) ;
+      BSON_APPEND( modify, FIELD_NAME_REMOVE, TRUE, bool ) ;
+   }
+   BSON_FINISH( modify ) ;
+
+   /* create new hint */
+   BSON_INIT2( newHint, hintInit ) ;
+   if ( NULL != hint )
+   {
+      rc = _mergeBson( &newHint, hint ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+   }
+   BSON_APPEND( newHint, FIELD_NAME_MODIFY, &modify, bson ) ;
+   BSON_FINISH( newHint ) ;
+
+   flag |= FLG_QUERY_MODIFY ;
+
+   rc = sdbQuery1( cHandle, condition, select, orderBy, &newHint, 
+                     numToSkip, numToReturn, flag, handle ) ;
+
+done:
+   BSON_DESTROY2( modify, modifyInit ) ;
+   BSON_DESTROY2( newHint, hintInit ) ;
+   return rc ;
+error:
+   goto done ;
+}
+
+SDB_EXPORT INT32 sdbQueryAndUpdate ( sdbCollectionHandle cHandle,
+                             bson *condition,
+                             bson *select,
+                             bson *orderBy,
+                             bson *hint,
+                             bson *update,
+                             INT64 numToSkip,
+                             INT64 numToReturn,
+                             INT32 flag,
+                             BOOLEAN returnNew,
+                             sdbCursorHandle *handle )
+{
+   return _sdbQueryAndModify( cHandle, condition, select, orderBy, hint, update,
+                           numToSkip, numToReturn, flag, returnNew, TRUE, handle ) ;
+}
+
+SDB_EXPORT INT32 sdbQueryAndRemove ( sdbCollectionHandle cHandle,
+                             bson *condition,
+                             bson *select,
+                             bson *orderBy,
+                             bson *hint,
+                             INT64 numToSkip,
+                             INT64 numToReturn,
+                             INT32 flag,
+                             sdbCursorHandle *handle )
+{
+   return _sdbQueryAndModify( cHandle, condition, select, orderBy, hint, NULL,
+                           numToSkip, numToReturn, flag, FALSE, FALSE, handle ) ;
 }
 
 SDB_EXPORT INT32 sdbNext ( sdbCursorHandle cHandle,
