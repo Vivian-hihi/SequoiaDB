@@ -267,6 +267,16 @@ const UINT32 BUF_SIZE = 2 * 1024 * 1024 ;
          }
       }
 
+      ele = options.getField( FIELD_NAME_PREFERED_INSTANCE ) ;
+      if ( String == ele.type() )
+      {
+         ops.prefer = ele.valuestr() ;
+      }
+      else if ( ele.isNumber() )
+      {
+         ops.preferNum = ele.Number() ;
+      }
+
 #ifdef SDB_SSL
       ele = options.getField( MIG_SSL ) ;
       if ( ele.eoo() )
@@ -1035,6 +1045,27 @@ const UINT32 BUF_SIZE = 2 * 1024 * 1024 ;
       {
          PD_LOG( PDERROR, "failed to get collection[%s], rc:%d",
                   ops.collection, rc ) ;
+         goto error ;
+      }
+
+      if ( NULL != ops.prefer )
+      {
+         rc = _db->setSessionAttr(
+                  BSON( FIELD_NAME_PREFERED_INSTANCE << ops.prefer ) ) ;
+      }
+      else if ( 0 != ops.preferNum )
+      {
+         rc = _db->setSessionAttr(
+                  BSON( FIELD_NAME_PREFERED_INSTANCE << ops.preferNum ) ) ;
+      }
+      else
+      {
+         goto done ;
+      }
+
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to set session's attribute:%d", rc ) ;
          goto error ;
       }
    done:

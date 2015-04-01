@@ -58,7 +58,8 @@ using namespace std ;
         ( MIG_DST_SERVICE, boost::program_options::value<string>(), "The service name of destination coord. Default value is localhost.(Specify it when use migration)" )\
         ( MIG_DST_USRNAME, boost::program_options::value<string>(), "Destination username(Specify it when use migration)" )\
         ( MIG_DST_PASSWD, boost::program_options::value<string>(), "Destination password(Specify it when use migration)" )\
-        ( MIG_DST_CL, boost::program_options::value<string>(), "Destination collection(Specify it when use migration)" )
+        ( MIG_DST_CL, boost::program_options::value<string>(), "Destination collection(Specify it when use migration)" )\
+        ( MIG_SESSION_PREFER, boost::program_options::value<string>(), "Indicate which instance to respond export request in current session. (\"m\"/\"M\"/\"s\"/\"S\"/\"a\"/\"A\"/1-7 default is \"M\")" )
 
 static void initDesc( po::options_description &desc )
 {
@@ -201,6 +202,25 @@ static INT32 parseCmdLine( const po::options_description &desc,
    else
    {
       builder.append( MIG_DST_PASSWD, "" ) ;
+   }
+
+   if ( vm.count( MIG_SESSION_PREFER ) )
+   {
+      std::string prefer = vm[MIG_SESSION_PREFER].as<string>() ;
+      UINT32 preferNum = 0 ;
+      try
+      {
+         preferNum = boost::lexical_cast<UINT32>( prefer ) ;
+         builder.append( FIELD_NAME_PREFERED_INSTANCE, preferNum ) ;
+      }
+      catch ( boost::bad_lexical_cast &e )
+      {
+         builder.append( FIELD_NAME_PREFERED_INSTANCE, "M" ) ;
+      }
+   }
+   else
+   {
+       builder.append( FIELD_NAME_PREFERED_INSTANCE, "M" ) ;
    }
 
    if ( isMig )

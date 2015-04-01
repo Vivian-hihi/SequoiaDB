@@ -54,6 +54,7 @@ namespace lobtool
 #define MIG_DST_CL "dstcollection"
 #define MIG_DST_USRNAME "dstusrname"
 #define MIG_DST_PASSWD "dstpasswd"
+#define MIG_SESSION_PREFER "prefer"
 
 #define MIG_OP_IMPRT "import"
 #define MIG_OP_EXPRT "export"
@@ -83,6 +84,8 @@ enum MIG_OP_TYPE
       const CHAR *dstcl ;
       const CHAR *dstusrname ;
       const CHAR *dstpasswd ;
+      const CHAR *prefer ;
+      UINT32 preferNum ;
 #ifdef SDB_SSL
       BOOLEAN     useSSL ;
 #endif
@@ -100,7 +103,9 @@ enum MIG_OP_TYPE
        dstservice( NULL ),
        dstcl( NULL ),
        dstusrname( NULL ),
-       dstpasswd( NULL )
+       dstpasswd( NULL ),
+       prefer( NULL ),
+       preferNum( 0 )
       {
 #ifdef SDB_SSL
          useSSL = FALSE ;
