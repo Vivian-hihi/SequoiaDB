@@ -1137,7 +1137,7 @@ namespace
                rc = SDB_OOM ;
                goto error ;
             }
-
+            curNode->_db = db;
             rc = db->connect( curNode->_hostname, curNode->_serviceName ) ;
             if ( SDB_OK != rc )
             {
