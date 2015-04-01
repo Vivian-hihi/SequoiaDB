@@ -128,6 +128,18 @@ namespace sdbclient
       }
       //void _renameAttempt ( const CHAR *pOldName, const CHAR *pNewName ) ;
 
+      INT32 _queryAndModify  ( _sdbCursor **cursor,
+                               const BSONObj &condition,
+                               const BSONObj &selected,
+                               const BSONObj &orderBy,
+                               const BSONObj &hint,
+                               const BSONObj &update,
+                               INT64 numToSkip,
+                               INT64 numToReturn,
+                               INT32 flag,
+                               BOOLEAN isUpdate,
+                               BOOLEAN returnNew ) ;
+
       INT32 _update ( const BSONObj &rule,
                       const BSONObj &condition,
                       const BSONObj &hint,
@@ -233,6 +245,55 @@ namespace sdbclient
                         condition, selected, orderBy, hint,
                         numToSkip, numToReturn, flag ) ;
       }
+
+      // query objects from current collection and update
+      // given:
+      // update rule ( required )
+      // query condition ( optional )
+      // query selected def ( optional )
+      // query orderby ( optional )
+      // hint ( optional )
+      // flag ( optional )
+      // returnNew ( optioinal )
+      // output: sdbCursor ( required )
+      INT32 queryAndUpdate  ( _sdbCursor **cursor,
+                              const BSONObj &update,
+                              const BSONObj &condition = _sdbStaticObject,
+                              const BSONObj &selected  = _sdbStaticObject,
+                              const BSONObj &orderBy   = _sdbStaticObject,
+                              const BSONObj &hint      = _sdbStaticObject,
+                              INT64 numToSkip          = 0,
+                              INT64 numToReturn        = -1,
+                              INT32 flag               = 0,
+                              BOOLEAN returnNew        = FALSE )
+      {
+         return _queryAndModify( cursor, condition, selected, orderBy,
+                                 hint, update, numToSkip, numToReturn,
+                                 flag, TRUE, returnNew ) ;
+      }
+
+      // query objects from current collection and remove
+      // given:
+      // query condition ( optional )
+      // query selected def ( optional )
+      // query orderby ( optional )
+      // hint ( optional )
+      // flag ( optional )
+      // output: sdbCursor ( required )
+      INT32 queryAndRemove  ( _sdbCursor **cursor,
+                              const BSONObj &condition = _sdbStaticObject,
+                              const BSONObj &selected  = _sdbStaticObject,
+                              const BSONObj &orderBy   = _sdbStaticObject,
+                              const BSONObj &hint      = _sdbStaticObject,
+                              INT64 numToSkip          = 0,
+                              INT64 numToReturn        = -1,
+                              INT32 flag               = 0 )
+      {
+         return _queryAndModify( cursor, condition, selected, orderBy,
+                                 hint, _sdbStaticObject, numToSkip, numToReturn,
+                                 flag, FALSE, FALSE ) ;
+      }
+
       //INT32 rename ( const CHAR *pNewName ) ;
       // create an index for the current collection
       // given:

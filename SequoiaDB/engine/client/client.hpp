@@ -319,6 +319,47 @@ namespace sdbclient
                              INT64 numToReturn  = -1,
                              INT32 flag         = 0
                            ) = 0 ;
+
+      // query objects from current collection and update
+      // given:
+      // update rule ( required )
+      // query condition ( optional )
+      // query selected def ( optional )
+      // query orderby ( optional )
+      // hint ( optional )
+      // flag ( optional )
+      // returnNew ( optioinal )
+      // output: sdbCursor ( required )
+      virtual INT32 queryAndUpdate  ( _sdbCursor **cursor,
+                                      const bson::BSONObj &update,
+                                      const bson::BSONObj &condition = _sdbStaticObject,
+                                      const bson::BSONObj &selected  = _sdbStaticObject,
+                                      const bson::BSONObj &orderBy   = _sdbStaticObject,
+                                      const bson::BSONObj &hint      = _sdbStaticObject,
+                                      INT64 numToSkip                = 0,
+                                      INT64 numToReturn              = -1,
+                                      INT32 flag                     = 0,
+                                      BOOLEAN returnNew              = FALSE 
+                                   ) = 0 ;
+
+      // query objects from current collection and remove
+      // given:
+      // query condition ( optional )
+      // query selected def ( optional )
+      // query orderby ( optional )
+      // hint ( optional )
+      // flag ( optional )
+      // output: sdbCursor ( required )
+      virtual INT32 queryAndRemove  ( _sdbCursor **cursor,
+                                      const bson::BSONObj &condition = _sdbStaticObject,
+                                      const bson::BSONObj &selected  = _sdbStaticObject,
+                                      const bson::BSONObj &orderBy   = _sdbStaticObject,
+                                      const bson::BSONObj &hint      = _sdbStaticObject,
+                                      INT64 numToSkip                = 0,
+                                      INT64 numToReturn              = -1,
+                                      INT32 flag                     = 0 
+                                   ) = 0 ;
+
       //virtual INT32 rename ( const CHAR *pNewName ) = 0 ;
       // create an index for the current collection
       // given:
@@ -780,6 +821,98 @@ namespace sdbclient
             return SDB_NOT_CONNECTED ;
          return pCollection->query ( cursor, condition, selected, orderBy,
                                      hint, numToSkip, numToReturn, flag ) ;
+      }
+
+/** \fn INT32 queryAndUpdate ( sdbCursor &cursor,
+                               const bson::BSONObj &update,
+                               const bson::BSONObj &condition,
+                               const bson::BSONObj &selected,
+                               const bson::BSONObj &orderBy,
+                               const bson::BSONObj &hint,
+                               INT64 numToSkip,
+                               INT64 numToReturn,
+                               INT32 flag,
+                               BOOLEAN returnNew
+                            )
+    \brief Get the matching documents in current collection and update
+    \param [in] update The update rule, can't be empty
+    \param [in] condition The matching rule, return all the documents if not provided
+    \param [in] selected The selective rule, return the whole document if not provided
+    \param [in] orderBy The ordered rule, result set is unordered if not provided
+    \param [in] hint The hint, automatically match the optimal hint if not provided
+    \param [in] numToSkip Skip the first numToSkip documents, default is 0
+    \param [in] numToReturn Only return numToReturn documents, default is -1 for returning all results
+    \param [in] flag The query flag, defalt to be 0
+
+        FLG_QUERY_FORCE_HINT(0x00000080)      : Force to use specified hint to query, if database have no index assigned by the hint, fail to query
+        FLG_QUERY_PARALLED(0x00000100)        : Enable paralled sub query
+        FLG_QUERY_WITH_RETURNDATA(0x00000200) : In general, query won't return data until cursor get from database,
+                                                when add this flag, return data in query response, it will be more high-performance
+    \param [in] returnNew When TRUE, returns the updated document rather than the original
+    \param [out] cursor The cursor of current query
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+      INT32 queryAndUpdate ( sdbCursor &cursor,
+                             const bson::BSONObj &update,
+                             const bson::BSONObj &condition = _sdbStaticObject,
+                             const bson::BSONObj &selected  = _sdbStaticObject,
+                             const bson::BSONObj &orderBy   = _sdbStaticObject,
+                             const bson::BSONObj &hint      = _sdbStaticObject,
+                             INT64 numToSkip                = 0,
+                             INT64 numToReturn              = -1,
+                             INT32 flag                     = 0,
+                             BOOLEAN returnNew              = FALSE
+                          )
+      {
+         if ( !pCollection )
+            return SDB_NOT_CONNECTED ;
+         return pCollection->queryAndUpdate( &cursor.pCursor , update, condition,
+                                             selected, orderBy, hint,
+                                             numToSkip, numToReturn, flag, returnNew ) ;
+      }
+
+/** \fn INT32 queryAndRemove ( sdbCursor &cursor,
+                               const bson::BSONObj &condition,
+                               const bson::BSONObj &selected,
+                               const bson::BSONObj &orderBy,
+                               const bson::BSONObj &hint,
+                               INT64 numToSkip,
+                               INT64 numToReturn,
+                               INT32 flag
+                            )
+    \brief Get the matching documents in current collection and remove
+    \param [in] condition The matching rule, return all the documents if not provided
+    \param [in] selected The selective rule, return the whole document if not provided
+    \param [in] orderBy The ordered rule, result set is unordered if not provided
+    \param [in] hint The hint, automatically match the optimal hint if not provided
+    \param [in] numToSkip Skip the first numToSkip documents, default is 0
+    \param [in] numToReturn Only return numToReturn documents, default is -1 for returning all results
+    \param [in] flag The query flag, defalt to be 0
+
+        FLG_QUERY_FORCE_HINT(0x00000080)      : Force to use specified hint to query, if database have no index assigned by the hint, fail to query
+        FLG_QUERY_PARALLED(0x00000100)        : Enable paralled sub query
+        FLG_QUERY_WITH_RETURNDATA(0x00000200) : In general, query won't return data until cursor get from database,
+                                                when add this flag, return data in query response, it will be more high-performance
+    \param [out] cursor The cursor of current query
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+      INT32 queryAndRemove ( sdbCursor &cursor,
+                             const bson::BSONObj &condition = _sdbStaticObject,
+                             const bson::BSONObj &selected  = _sdbStaticObject,
+                             const bson::BSONObj &orderBy   = _sdbStaticObject,
+                             const bson::BSONObj &hint      = _sdbStaticObject,
+                             INT64 numToSkip                = 0,
+                             INT64 numToReturn              = -1,
+                             INT32 flag                     = 0
+                          )
+      {
+         if ( !pCollection )
+            return SDB_NOT_CONNECTED ;
+         return pCollection->queryAndRemove( &cursor.pCursor , condition,
+                                             selected, orderBy, hint,
+                                             numToSkip, numToReturn, flag ) ;
       }
 
 /* \fn INT32 rename ( const CHAR *pNewName )

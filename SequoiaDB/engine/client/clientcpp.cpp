@@ -1396,6 +1396,77 @@ do                                                            \
       goto done;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT__QUERYANDMODIFY, "_sdbCollectionImpl::_queryAndModify" )
+   INT32 _sdbCollectionImpl::_queryAndModify  ( _sdbCursor **cursor,
+                                                const BSONObj &condition,
+                                                const BSONObj &selected,
+                                                const BSONObj &orderBy,
+                                                const BSONObj &hint,
+                                                const BSONObj &update,
+                                                INT64 numToSkip,
+                                                INT64 numToReturn,
+                                                INT32 flag,
+                                                BOOLEAN isUpdate,
+                                                BOOLEAN returnNew )
+   {
+      PD_TRACE_ENTRY ( SDB_CLIENT__QUERYANDMODIFY ) ;
+      INT32 rc = SDB_OK ;
+      BSONObj newHint ;
+
+      try
+      {
+         BSONObjBuilder newHintBuilder ;
+         BSONObjBuilder modifyBuilder ;
+         BSONObj modify ;
+
+         // create $Modify
+         if ( isUpdate )
+         {
+            if ( update.isEmpty() )
+            {
+               rc = SDB_INVALIDARG ;
+               goto error ;
+            }
+
+            modifyBuilder.append( FIELD_NAME_OP, FIELD_OP_VALUE_UPDATE ) ;
+            modifyBuilder.appendObject( FIELD_NAME_LUPDATE, update.objdata() ) ;
+            modifyBuilder.appendBool( FIELD_NAME_RETURNNEW, returnNew ) ;
+         }
+         else
+         {
+            modifyBuilder.append( FIELD_NAME_OP, FIELD_OP_VALUE_REMOVE ) ;
+            modifyBuilder.appendBool( FIELD_NAME_REMOVE, TRUE ) ;
+         }
+         modify = modifyBuilder.obj() ;
+
+         // create new hint with $Modify
+         if ( !hint.isEmpty() )
+         {
+            newHintBuilder.appendElements( hint ) ;
+         }
+         newHintBuilder.appendObject( FIELD_NAME_MODIFY, modify.objdata() ) ;
+         newHint = newHintBuilder.obj() ;
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG ( PDWARNING, "Failed to create $Modify, %s",
+                  e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      flag |= FLG_QUERY_MODIFY ;
+
+      rc = query( cursor, condition, selected, orderBy, newHint,
+                  numToSkip, numToReturn, flag ) ;
+
+   done:
+      PD_TRACE_EXITRC ( SDB_CLIENT__QUERYANDMODIFY, rc );
+      return rc ;
+   error:
+      goto done ;
+   }
+
    PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_GETQUERYMETA, "_sdbCollectionImpl::getQueryMeta" )
    INT32 _sdbCollectionImpl::getQueryMeta ( _sdbCursor **cursor,
                                      const BSONObj &condition,
