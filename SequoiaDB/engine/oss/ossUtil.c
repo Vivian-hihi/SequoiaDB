@@ -255,6 +255,20 @@ void ossCloseAllOpenFileHandles ( BOOLEAN closeSTD )
       }
    }
 }
+
+void ossCloseStdFds()
+{
+   INT32 fd = 0 ;
+
+   fd = open ( SDB_DEV_NULL, O_RDWR ) ;
+   if ( -1 != fd )
+   {
+      dup2 ( fd, STDIN_FILENO ) ;
+      dup2 ( fd, STDOUT_FILENO ) ;
+      dup2 ( fd, STDERR_FILENO ) ;
+   }
+}
+
 #endif
 INT32 ossStrncasecmp ( const CHAR *pString1, const CHAR *pString2,
                        size_t iLength)

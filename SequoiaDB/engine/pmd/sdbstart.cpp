@@ -443,7 +443,6 @@ namespace engine
          OSSHANDLE &handle = handles[ j ] ;
          ossCmdRunner *runner = cmdRunners[ j ] ;
          UINT32 exitCode = 0 ;
-         UINT32 timeout = 0 ;
 
          if ( !info._orgname.empty() )
          {
@@ -456,11 +455,23 @@ namespace engine
             continue ;
          }
 
-         while ( timeout < OSS_ONE_SEC )
+         tmpRC = utilWaitNodeOK( info, info._svcname.c_str(), info._pid ) ;
+         /// notify node to end pipe
+         utilEndNodePipeDup( info._svcname.c_str(), info._pid ) ;
+         runner->done() ;
+         if ( SDB_OK == tmpRC )
          {
-            ossSleep( 100 ) ;
-            timeout += 100 ;
-            if ( !ossIsProcessRunning( info._pid ) )
+            ossPrintf ( "Success: %s(%s) is successfully started (%d)"
+                        OSS_NEWLINE, utilDBTypeStr( (SDB_TYPE)info._type ),
+                        info._svcname.c_str(), info._pid ) ;
+            ++succeedNum ;
+         }
+         else
+         {
+            rc = tmpRC ;
+
+            /// read out
+            if ( ( OSSHANDLE)0 != handle )
             {
                string outString ;
                runner->read( outString ) ;
@@ -478,22 +489,8 @@ namespace engine
                              outString.c_str(),
                              OSS_NEWLINE ) ;
                }
-               break ;
             }
-         }
-         runner->done() ;
 
-         tmpRC = utilWaitNodeOK( info, info._svcname.c_str(), info._pid ) ;
-         if ( SDB_OK == tmpRC )
-         {
-            ossPrintf ( "Success: %s(%s) is successfully started (%d)"
-                        OSS_NEWLINE, utilDBTypeStr( (SDB_TYPE)info._type ),
-                        info._svcname.c_str(), info._pid ) ;
-            ++succeedNum ;
-         }
-         else
-         {
-            rc = tmpRC ;
             if ( !ossIsProcessRunning( info._pid ) &&
                  (OSSHANDLE)0 != handle &&
                  SDB_OK == ossGetExitCodeProcess( handle, exitCode ) )

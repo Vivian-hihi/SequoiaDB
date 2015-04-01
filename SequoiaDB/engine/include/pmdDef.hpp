@@ -281,6 +281,7 @@ namespace engine
    #define ENGINE_NPIPE_MSG_GNAME      "$gname"
    #define ENGINE_NPIPE_MSG_PATH       "$path"
    #define ENGINE_NPIPE_MSG_PRIMARY    "$primary"
+   #define ENGINE_NPIPE_MSG_ENDPIPE    "$endpipe"
 
    /*
       Config define

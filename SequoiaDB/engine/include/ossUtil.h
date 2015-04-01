@@ -137,6 +137,7 @@ INT32 ossANSI2WC ( LPCSTR lpcszString,
                    DWORD  *lpdwWCString ) ;
 #elif defined (_LINUX)
 void ossCloseAllOpenFileHandles ( BOOLEAN closeSTD ) ;
+void ossCloseStdFds() ;
 #endif
 #define OSS_BIT_SET(x,y)     ((x) |= (y))
 #define OSS_BIT_CLEAR(x,y)   ((x) &= ~(y))

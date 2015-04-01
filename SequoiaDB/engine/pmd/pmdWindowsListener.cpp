@@ -63,6 +63,7 @@ namespace engine
       INT32 role = pmdGetDBRole() ;
       INT32 type = pmdGetDBType() ;
       utilNodePipe nodePipe ;
+      BOOLEAN hasClosedStdFds = FALSE ;
 
       INT32 hasRead = 0 ;
       rc = eduMgr->activateEDU ( myEDUID ) ;
@@ -178,6 +179,20 @@ namespace engine
                INT32 primary = pmdIsPrimary() ? 1 : 0 ;
                rc = nodePipe.writePipe( (const CHAR*)&primary,
                                         sizeof(primary) ) ;
+            }
+            else if ( 0 == ossStrncmp( tempBuffer, ENGINE_NPIPE_MSG_ENDPIPE,
+                                       sizeof( ENGINE_NPIPE_MSG_ENDPIPE ) ) )
+            {
+               INT32 result = SDB_OK ;
+               if ( !hasClosedStdFds )
+               {
+#if defined( _LINUX )
+                  ossCloseStdFds() ;
+#endif // _LINUX
+                  hasClosedStdFds = TRUE ;
+               }
+               rc = nodePipe.writePipe( ( const CHAR * )&result,
+                                        sizeof( result ) ) ;
             }
 
             if ( rc )

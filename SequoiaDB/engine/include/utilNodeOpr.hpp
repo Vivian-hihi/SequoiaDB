@@ -170,6 +170,11 @@ namespace engine
    INT32    utilStopNode ( utilNodeInfo &node,
                            INT32 timeout = UTIL_STOP_NODE_TIMEOUT ) ;
 
+   /*
+      Notiry the sdb node to end pipe dup
+   */
+   INT32    utilEndNodePipeDup( const CHAR *svcname, OSSPID pid ) ;
+
    struct _utilNodeVerInfo
    {
       INT32    _version ;

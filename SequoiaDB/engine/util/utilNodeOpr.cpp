@@ -1058,6 +1058,26 @@ namespace engine
       goto done ;
    }
 
+   INT32 utilEndNodePipeDup( const CHAR *svcname, OSSPID pid )
+   {
+      INT32 rc = SDB_OK ;
+      INT32 result = SDB_OK ;
+
+      rc = _utilWriteReadPipe( svcname, pid, ENGINE_NPIPE_MSG_ENDPIPE,
+                               sizeof( ENGINE_NPIPE_MSG_ENDPIPE ) ,
+                               ( CHAR* )&result, sizeof( result ),
+                               FALSE ) ;
+      if ( SDB_OK == rc )
+      {
+         rc = result ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 utilGetNodeVerInfo( const CHAR *pCommand,
                              utilNodeVerInfo & verInfo )
    {

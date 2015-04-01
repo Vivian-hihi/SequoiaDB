@@ -53,6 +53,7 @@ namespace engine
       _hasRead = FALSE ;
       _readResult = SDB_OK ;
       _timeout = -1 ;
+      _stop = TRUE ;
    }
 
    _ossCmdRunner::~_ossCmdRunner()
@@ -90,6 +91,7 @@ namespace engine
          _monitorEvent.signal() ;
          return ;
       }
+      _stop = FALSE ;
    }
 
    void _ossCmdRunner::asyncRead()
@@ -117,6 +119,9 @@ namespace engine
                break ;
             }
          }
+
+         _stop = TRUE ;
+         _event.wait() ;
       }
       _monitorEvent.signalAll( rc ) ;
    }
@@ -135,15 +140,15 @@ namespace engine
       CHAR *arguments = NULL ;
       INT32 argLen = 0 ;
       ossResultCode res ;
-      INT32 flags = OSS_EXEC_SSAVE | OSS_EXEC_NODETACHED ; // OSS_EXEC_SSAVE 
+      INT32 flags = OSS_EXEC_NODETACHED ;
 
 #if defined( _LINUX )
       std::vector<std::string> vecArgs ;
 #endif // _LINUX
 
-      if ( isBackground )
+      if ( !isBackground )
       {
-         flags = 0 ;
+         flags |= OSS_EXEC_SSAVE ;
       }
 
       if ( !needResize )
@@ -186,6 +191,8 @@ namespace engine
       _hasRead = FALSE ;
       _readResult = SDB_OK ;
       _outStr = "" ;
+      done() ;
+
       rc = ossExec( arguments, arguments, NULL, flags,
                     _id, res, NULL, &_out, this, pHandle ) ;
       if ( SDB_OK != rc )
@@ -195,13 +202,21 @@ namespace engine
          goto error ;
       }
 
-      _monitorEvent.wait( -1, &rc ) ;
-      if ( rc ) // run timeout
+      if ( !isBackground )
       {
-         exit = (UINT32)rc ;
-         rc = SDB_OK ;
-         _outStr += "***Error: run it timeout" ;
-         goto done ;
+         _monitorEvent.wait( -1, &rc ) ;
+         if ( rc ) // run timeout
+         {
+            exit = (UINT32)rc ;
+            rc = SDB_OK ;
+            _outStr += "***Error: run it timeout" ;
+            goto done ;
+         }
+      }
+      else
+      {
+         // background mode, the process is not quit, so, the pipe will
+         // all the way in use, so can't wait here
       }
 
       exit = res.exitcode ;
@@ -218,6 +233,12 @@ namespace engine
    INT32 _ossCmdRunner::read( string &out, BOOLEAN readEOF )
    {
       INT32 rc = SDB_OK ;
+
+      if ( !_hasRead )
+      {
+         done() ;
+      }
+
       if ( _hasRead )
       {
          out = _outStr ;
@@ -240,7 +261,7 @@ namespace engine
       INT64 totalSize = out.length() ;
       BOOLEAN addAndSo = FALSE ;
 
-      while ( TRUE )
+      while ( FALSE == _stop )
       {
          rc = ossReadNamedPipe( _out, buff, OSS_MAX_PATHSIZE, &readLen ) ;
          if ( SDB_OK != rc )
@@ -289,8 +310,10 @@ namespace engine
 
    INT32 _ossCmdRunner::done()
    {
+      _stop = TRUE ;
       if ( OSS_INVALID_PID != _id )
       {
+         _monitorEvent.wait() ;
          ossCloseNamedPipe( _out ) ;
          _id = OSS_INVALID_PID ;
       }

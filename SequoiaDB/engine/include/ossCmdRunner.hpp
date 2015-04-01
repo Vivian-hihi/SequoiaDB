@@ -82,6 +82,7 @@ namespace engine
    private:
       OSSNPIPE       _out ;
       OSSPID         _id ;
+      BOOLEAN        _stop ;
       ossEvent       _event ;
       ossEvent       _monitorEvent ;
       BOOLEAN        _hasRead ;

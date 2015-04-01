@@ -664,9 +664,16 @@ INT32 ossExec ( const CHAR * program,
       {
          rc = retcode ;
       }
-      if ( pProcessHandle )
+      else
       {
-         *pProcessHandle = ( OSSHANDLE )pid ;
+         if ( pProcessHandle )
+         {
+            *pProcessHandle = ( OSSHANDLE )pid ;
+         }
+         if ( pHandle )
+         {
+            pHandle->handleInOutPipe( pid, npHandleStdin, npHandleStdout ) ;
+         }
       }
    }
 done :
@@ -1611,15 +1618,14 @@ INT32 ossExec ( const CHAR * program,
          *pProcessHandle = procInfo.hProcess ;
          // need close by caller
       }
+      if ( pHandle )
+      {
+         pHandle->handleInOutPipe( procInfo.dwProcessId, npHandleStdin,
+                                   npHandleStdout ) ;
+      }
 
       if ( flag & OSS_EXEC_SSAVE )
       {
-         if ( pHandle )
-         {
-            pHandle->handleInOutPipe( procInfo.dwProcessId, npHandleStdin,
-                                      npHandleStdout ) ;
-         }
-
          // if we need to wait for result
          rc = ossWaitInterrupt ( procInfo.hProcess, INFINITE ) ;
          if ( rc == SDB_OK )
