@@ -123,6 +123,17 @@
 #define CI_NODE_SIZE ( ( CI_HOSTNAME_SIZE + 1 )    + \
                        ( CI_SERVICENAME_SIZE + 1 ) + \
                          sizeof( INT32 ) * 3 )
+
+#define DELETE_PTR(ptr)       \
+do                            \
+{                             \
+   if ( NULL != ptr )         \
+   {                          \
+      delete ptr ;            \
+      ptr = NULL ;            \
+   }                          \
+} while (FALSE);
+
 // max node count of group
 #define MAX_NODE_COUNT 7
 
@@ -315,13 +326,14 @@ typedef _ciGroup ciGroup ;
 
 struct _ciNode
 {
-   INT32    _index ;
-   INT32    _nodeID ;
-   INT32    _state ; // 0:normal 1:disconnected 2:lost connection
-   _ciNode *_next ;
-   CHAR     _hostname[ CI_HOSTNAME_SIZE + 1 ] ;
-   CHAR     _serviceName[ CI_SERVICENAME_SIZE + 1 ] ;
-   _ciNode() : _index( 0 ), _nodeID( 0 ), _state( 0 ), _next( NULL )
+   INT32           _index ;
+   INT32           _nodeID ;
+   INT32           _state ; // 0:normal 1:disconnected 2:lost connection
+   sdbclient::sdb *_db ;
+   _ciNode        *_next ;
+   CHAR            _hostname[ CI_HOSTNAME_SIZE + 1 ] ;
+   CHAR            _serviceName[ CI_SERVICENAME_SIZE + 1 ] ;
+   _ciNode() : _index( 0 ), _nodeID( 0 ), _state( 0 ), _db( NULL ), _next( NULL )
    {
       ossMemset( _hostname, 0, CI_HOSTNAME_SIZE + 1 ) ;
       ossMemset( _serviceName, 0, CI_SERVICENAME_SIZE + 1 ) ;
@@ -329,6 +341,12 @@ struct _ciNode
 
    ~_ciNode()
    {
+      if ( NULL != _db )
+      {
+         delete _db ;
+         _db = NULL ;
+      }
+
       if ( NULL != _next )
       {
          delete _next ;
@@ -395,7 +413,7 @@ struct _ciCursor
    {
       if ( NULL != _db )
       {
-         delete _db ;
+         //delete _db ;
          _db = NULL ;
       }
 

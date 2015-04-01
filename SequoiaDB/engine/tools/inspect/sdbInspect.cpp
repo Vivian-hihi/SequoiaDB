@@ -1123,85 +1123,93 @@ namespace
          cursor->_index = curNode->_index ;
 
 
-         sdbclient::sdb *db = new sdbclient::sdb() ;
+         sdbclient::sdb *db = curNode->_db ;
+         sdbclient::sdbCollection cl ;
+         sdbclient::sdbCursor *cr = NULL ;
+
          if ( NULL == db )
          {
-            std::cout << "Error: failed to allocate sdbclient::sdb"
-                      << std::endl ;
-            rc = SDB_OOM ;
-            goto error ;
-         }
-
-         sdbclient::sdbCollection cl ;
-
-         rc = db->connect( curNode->_hostname, curNode->_serviceName ) ;
-         if ( SDB_OK != rc )
-         {
-            //std::cout << "Warning: cannot connect to " << curNode->_hostname
-            //          << ":" << curNode->_serviceName << std::endl ;
-            //std::cout << "Node is invalid, it will not be inspected"
-            //          << std::endl ;
-            rc = SDB_OK ;
-            curNode->_state = 1 ;// cannot connect to node
-
-            // goto error ;
-            // we should not goto error, and we considerate that the
-            // node is empty.
-         }
-
-         rc = db->getCollection( clName, cl ) ;
-         if ( SDB_OK != rc )
-         {
-            //std::cout << "Error: failed to get collection:"
-            //          << clName << std::endl ;
-            // goto error ;
-            // we should not goto error, and we considerate that the
-            // node is empty.
-            curNode->_state = 1 ;//cannot get collection
-            delete db ;
-            db = NULL ;
-         }
-
-         sdbclient::sdbCursor *cr = new sdbclient::sdbCursor() ;
-         if ( NULL == cr )
-         {
-            std::cout << "Error: failed to allocate sdbclient::sdbCursor"
-                      << std::endl ;
-            rc = SDB_OOM ;
-            delete db ;
-            db = NULL ;
-            goto error ;
-         }
-
-         if ( orderCon )
-         {
-            rc = cl.query( *cr, sdbclient::_sdbStaticObject,
-                            sdbclient::_sdbStaticObject, con ) ;
-         }
-         else
-         {
-            rc = cl.query( *cr, con ) ;
-         }
-         if ( SDB_OK != rc )
-         {
-            //std::cout << "Warning: failed to query" << std::endl ;
-            // goto error ;
-            // we should not goto error, and we considerate that the
-            // node is empty.
-            if ( NULL != db )
+            db = new sdbclient::sdb() ;
+            if ( NULL == db )
             {
-               delete db ;
-               db = NULL ;
+               std::cout << "Error: failed to allocate sdbclient::sdb"
+                         << std::endl ;
+               rc = SDB_OOM ;
+               goto error ;
             }
-            delete cr ;
-            curNode->_state = 2 ;//cannot get cursor
-            rc = SDB_OK ; //
+
+            rc = db->connect( curNode->_hostname, curNode->_serviceName ) ;
+            if ( SDB_OK != rc )
+            {
+               //std::cout << "Warning: cannot connect to " << curNode->_hostname
+               //          << ":" << curNode->_serviceName << std::endl ;
+               //std::cout << "Node is invalid, it will not be inspected"
+               //          << std::endl ;
+               //rc = SDB_OK ;
+               curNode->_state = 1 ;// cannot connect to node
+
+               // goto error ;
+               // we should not goto error, and we considerate that the
+               // node is empty.
+            }
          }
-         else
+
+         if ( 1 != curNode->_state )
          {
-            cursor->_db = db ;
-            cursor->_cursor = cr ;
+            rc = db->getCollection( clName, cl ) ;
+            if ( SDB_OK != rc )
+            {
+               //std::cout << "Error: failed to get collection:"
+               //          << clName << std::endl ;
+               // goto error ;
+               // we should not goto error, and we considerate that the
+               // node is empty.
+               curNode->_state = 1 ;//cannot get collection
+               //DELETE_PTR(db);
+            }
          }
+
+         if ( 1 != curNode->_state )
+         {
+            cr = new sdbclient::sdbCursor() ;
+            if ( NULL == cr )
+            {
+               std::cout << "Error: failed to allocate sdbclient::sdbCursor"
+                         << std::endl ;
+               rc = SDB_OOM ;
+               //DELETE_PTR(db);
+               goto error ;
+            }
+
+            // success to get cl
+            if ( orderCon )
+            {
+               rc = cl.query( *cr, sdbclient::_sdbStaticObject,
+                              sdbclient::_sdbStaticObject, con ) ;
+            }
+            else
+            {
+               rc = cl.query( *cr, con ) ;
+            }
+            if ( SDB_OK != rc )
+            {
+               //std::cout << "Warning: failed to query" << std::endl ;
+               // goto error ;
+               // we should not goto error, and we considerate that the
+               // node is empty.
+               //DELETE_PTR(db);
+               DELETE_PTR(cr);
+               curNode->_state = 2 ;//cannot get cursor
+            }
+//             else
+//             {
+//                cursor->_db = db ;
+//                cursor->_cursor = cr ;
+//             }
+         }
+         cursor->_db = db ;
+         cursor->_cursor = cr ;
+         rc = SDB_OK ;
 
          cursors.add( cursor ) ;
          curNode = nodes.next() ;
@@ -2276,7 +2284,7 @@ namespace
          ossSnprintf( fullName, CI_CL_FULLNAME_SIZE, "%s.%s", csName, clName ) ;
       }
 
-      // get collections of master node
+      // get collections from master node
       rc = db.connect( master->_hostname, master->_serviceName ) ;
       if ( SDB_OK != rc )
       {
