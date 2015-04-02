@@ -1024,16 +1024,16 @@ namespace engine
          SDB_ASSERT( NULL != _queryModifier->getDollarList(), "dollarList can't be null" ) ;
 
          rc = _su->data()->updateRecord( _mbContext, recordID,
-                              recordDataPtr, eduCB, _dpsCB,
-                              _queryModifier->getModifier(),
-                              newObjPtr ) ;
+                                         recordDataPtr, eduCB, _dpsCB,
+                                         _queryModifier->getModifier(),
+                                         newObjPtr ) ;
          PD_RC_CHECK( rc, PDERROR, "Update record failed, rc: %d", rc ) ;
          _queryModifier->getDollarList()->clear() ;
       }
       else if ( _queryModifier->isRemove() )
       {
          rc = _su->data()->deleteRecord( _mbContext, recordID,
-                              recordDataPtr, eduCB, _dpsCB ) ;
+                                         recordDataPtr, eduCB, _dpsCB ) ;
          PD_RC_CHECK( rc, PDERROR, "Delete record failed, rc: %d", rc ) ;
       }
 

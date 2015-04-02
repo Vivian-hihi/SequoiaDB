@@ -216,7 +216,8 @@ namespace engine
                INT32 recvLen  = 0 ;
 
                rc = _socket.recv( buff, sizeof( buff ), recvLen,
-                           PMD_REST_SESSION_SNIFF_TIMEOUT, MSG_PEEK, TRUE, TRUE ) ;
+                                  PMD_REST_SESSION_SNIFF_TIMEOUT,
+                                  MSG_PEEK, TRUE, TRUE ) ;
                if ( rc < 0 )
                {
                   break;
