@@ -43,43 +43,43 @@
 
     <div class="section"><h2 class="title sectiontitle">参数描述</h2>
       <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d115115e26" class="stentry">参数名</th>
+          <th valign="bottom" align="left" id="d115144e26" class="stentry">参数名</th>
 
-          <th valign="bottom" align="left" id="d115115e29" class="stentry">参数类型</th>
+          <th valign="bottom" align="left" id="d115144e29" class="stentry">参数类型</th>
 
-          <th valign="bottom" align="left" id="d115115e32" class="stentry">描述</th>
+          <th valign="bottom" align="left" id="d115144e32" class="stentry">描述</th>
 
-          <th valign="bottom" align="left" id="d115115e35" class="stentry">是否必填</th>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d115115e26" class="stentry">options</td>
-
-          <td valign="top" headers="d115115e29" class="stentry">Json 对象</td>
-
-          <td valign="top" headers="d115115e32" class="stentry">设定备份名，指定复制组，路径等参数</td>
-
-          <td valign="top" headers="d115115e35" class="stentry">否</td>
+          <th valign="bottom" align="left" id="d115144e35" class="stentry">是否必填</th>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d115115e26" class="stentry">cond</td>
+          <td valign="top" headers="d115144e26" class="stentry">options</td>
 
-          <td valign="top" headers="d115115e29" class="stentry">Json 对象</td>
+          <td valign="top" headers="d115144e29" class="stentry">Json 对象</td>
 
-          <td valign="top" headers="d115115e32" class="stentry">备份过滤条件</td>
+          <td valign="top" headers="d115144e32" class="stentry">设定备份名，指定复制组，路径等参数</td>
 
-          <td valign="top" headers="d115115e35" class="stentry">否</td>
+          <td valign="top" headers="d115144e35" class="stentry">否</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d115115e26" class="stentry">sel</td>
+          <td valign="top" headers="d115144e26" class="stentry">cond</td>
 
-          <td valign="top" headers="d115115e29" class="stentry">Json 对象</td>
+          <td valign="top" headers="d115144e29" class="stentry">Json 对象</td>
 
-          <td valign="top" headers="d115115e32" class="stentry">查看备份选择输出的字段</td>
+          <td valign="top" headers="d115144e32" class="stentry">备份过滤条件</td>
 
-          <td valign="top" headers="d115115e35" class="stentry">否</td>
+          <td valign="top" headers="d115144e35" class="stentry">否</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d115144e26" class="stentry">sel</td>
+
+          <td valign="top" headers="d115144e29" class="stentry">Json 对象</td>
+
+          <td valign="top" headers="d115144e32" class="stentry">查看备份选择输出的字段</td>
+
+          <td valign="top" headers="d115144e35" class="stentry">否</td>
 
         </tr>
 </table>
@@ -88,60 +88,60 @@
 
     <div class="section"><h2 class="title sectiontitle">Options格式</h2>
       <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d115115e94" class="stentry">属性名</th>
+          <th valign="bottom" align="left" id="d115144e94" class="stentry">属性名</th>
 
-          <th valign="bottom" align="left" id="d115115e97" class="stentry">描述</th>
+          <th valign="bottom" align="left" id="d115144e97" class="stentry">描述</th>
 
-          <th valign="bottom" align="left" id="d115115e100" class="stentry">格式</th>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d115115e94" class="stentry">GroupID</td>
-
-          <td valign="top" headers="d115115e97" class="stentry">指定备份的复制组 ID，缺省为所有复制组</td>
-
-          <td valign="top" headers="d115115e100" class="stentry">GroupID:1000 或 GroupID:[1000, 1001]</td>
+          <th valign="bottom" align="left" id="d115144e100" class="stentry">格式</th>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d115115e94" class="stentry">GroupName</td>
+          <td valign="top" headers="d115144e94" class="stentry">GroupID</td>
 
-          <td valign="top" headers="d115115e97" class="stentry">指定备份的复制组名，缺省为所有复制组</td>
+          <td valign="top" headers="d115144e97" class="stentry">指定备份的复制组 ID，缺省为所有复制组</td>
 
-          <td valign="top" headers="d115115e100" class="stentry">GroupName:"data1" 或 GroupName:["data1", "data2"]</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d115115e94" class="stentry">Name</td>
-
-          <td valign="top" headers="d115115e97" class="stentry">备份名称，缺省查看所有备份</td>
-
-          <td valign="top" headers="d115115e100" class="stentry">Name:"backup-2014-1-1"</td>
+          <td valign="top" headers="d115144e100" class="stentry">GroupID:1000 或 GroupID:[1000, 1001]</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d115115e94" class="stentry">Path</td>
+          <td valign="top" headers="d115144e94" class="stentry">GroupName</td>
 
-          <td valign="top" headers="d115115e97" class="stentry">备份路径，缺省为配置参数指定的备份路径。<div class="fig fignone"/>
+          <td valign="top" headers="d115144e97" class="stentry">指定备份的复制组名，缺省为所有复制组</td>
+
+          <td valign="top" headers="d115144e100" class="stentry">GroupName:"data1" 或 GroupName:["data1", "data2"]</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d115144e94" class="stentry">Name</td>
+
+          <td valign="top" headers="d115144e97" class="stentry">备份名称，缺省查看所有备份</td>
+
+          <td valign="top" headers="d115144e100" class="stentry">Name:"backup-2014-1-1"</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d115144e94" class="stentry">Path</td>
+
+          <td valign="top" headers="d115144e97" class="stentry">备份路径，缺省为配置参数指定的备份路径。<div class="fig fignone"/>
 该路径支持通配符（%g/%G: group name, %h/%H: host name, %s/%S:service name）</td>
 
-          <td valign="top" headers="d115115e100" class="stentry">Path:"/opt/sequoiadb/backup/%g"</td>
+          <td valign="top" headers="d115144e100" class="stentry">Path:"/opt/sequoiadb/backup/%g"</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d115115e94" class="stentry">IsSubDir</td>
+          <td valign="top" headers="d115144e94" class="stentry">IsSubDir</td>
 
-          <td valign="top" headers="d115115e97" class="stentry">上述 Path 参数所配置的路径是否为配置参数指定的备份路径的子目录，缺省为 false</td>
+          <td valign="top" headers="d115144e97" class="stentry">上述 Path 参数所配置的路径是否为配置参数指定的备份路径的子目录，缺省为 false</td>
 
-          <td valign="top" headers="d115115e100" class="stentry">IsSubDir:false</td>
+          <td valign="top" headers="d115144e100" class="stentry">IsSubDir:false</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d115115e94" class="stentry">Prefix</td>
+          <td valign="top" headers="d115144e94" class="stentry">Prefix</td>
 
-          <td valign="top" headers="d115115e97" class="stentry">备份前缀名，支持通配符（%g,%G,%h,%H,%s,%S），缺省为空</td>
+          <td valign="top" headers="d115144e97" class="stentry">备份前缀名，支持通配符（%g,%G,%h,%H,%s,%S），缺省为空</td>
 
-          <td valign="top" headers="d115115e100" class="stentry">Prefix:"%g_bk_"</td>
+          <td valign="top" headers="d115144e100" class="stentry">Prefix:"%g_bk_"</td>
 
         </tr>
 </table>
