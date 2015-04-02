@@ -287,7 +287,6 @@ INT32 _ossSocket::send ( const CHAR *pMsg, INT32 len,
    INT32 rc = SDB_OK ;
    PD_TRACE_ENTRY ( SDB_OSSSK_SEND );
    SDB_ASSERT ( pMsg, "message is NULL" ) ;
-   SDB_ASSERT ( _init, "socket is not initialized" ) ;
 
    sentLen = 0 ;
    SOCKET maxFD = _fd ;
@@ -406,6 +405,10 @@ done :
    PD_TRACE_EXITRC ( SDB_OSSSK_SEND, rc );
    return rc ;
 error :
+   if ( SDB_NETWORK == rc )
+   {
+      close() ;
+   }
    goto done ;
 }
 
@@ -448,7 +451,6 @@ INT32 _ossSocket::recv ( CHAR *pMsg, INT32 len,
 {
    INT32 rc = SDB_OK ;
    SDB_ASSERT ( pMsg, "message is NULL" ) ;
-   SDB_ASSERT ( _init, "socket is not init" ) ;
    UINT32 retries = 0 ;
    SOCKET maxFD = _fd ;
    struct timeval maxSelectTime ;
@@ -616,6 +618,10 @@ INT32 _ossSocket::recv ( CHAR *pMsg, INT32 len,
 done :
    return rc ;
 error :
+   if ( SDB_NETWORK == rc || SDB_NETWORK_CLOSE == rc )
+   {
+      close() ;
+   }
    goto done ;
 }
 
@@ -746,7 +752,6 @@ INT32 _ossSocket::accept ( SOCKET *sock, struct sockaddr *addr, socklen_t
    SOCKET maxFD = _fd ;
    INT32 sysError = 0 ;
    struct timeval maxSelectTime ;
-   SDB_ASSERT ( _init, "socket is not initialized" ) ;
    SDB_ASSERT ( sock, "Output sock is NULL" ) ;
 
    fd_set fds ;
@@ -818,7 +823,6 @@ INT32 _ossSocket::disableNagle ()
    INT32 rc = SDB_OK ;
    PD_TRACE_ENTRY ( SDB_OSSSK_DISNAG );
    INT32 temp = 1 ;
-   SDB_ASSERT ( _init, "socket is not initialized" ) ;
 
    PD_CHECK( _init, SDB_SYS, error, PDWARNING, "Socket is not init" ) ;
 
@@ -1069,7 +1073,6 @@ INT32 _ossSocket::setTimeout ( INT32 milliSeconds )
 {
    INT32 rc = SDB_OK ;
    PD_TRACE_ENTRY ( SDB_OSSSK_SETTMOUT );
-   SDB_ASSERT ( _init, "socket is not initialized" ) ;
    struct timeval tv ;
 
    PD_CHECK( _init, SDB_SYS, error, PDWARNING, "Socket is not init" ) ;
