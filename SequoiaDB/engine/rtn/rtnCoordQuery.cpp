@@ -74,6 +74,9 @@ namespace engine
                   "in multiple nodes, rc: %d", rc ) ;
             }
          }
+
+         // modification can only be executed in primary node
+         options._primary = TRUE ;
       }
 
       return rc ;
