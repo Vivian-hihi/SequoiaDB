@@ -156,8 +156,7 @@
 		</exec>
 		<echo message="Now testcase ${test.case.name}.js begin with ${testcase.begin.time}"/>
 
-		<property name="CS_PRIX" value="cs_prefix" />
-		<sdbprefix prefixName="CL_PRIX">
+		<sdbprefix prefixName="CHANGEDPREFIX">
 			<param name="${host.NAME}" value="${host.NAME}" />
 			<param name="${test.case.name}" value="${test.case.name}" />
 			<param name="${parallel.num}" value="${parallel.num}" />
@@ -179,7 +178,7 @@
 				</exec>
 				<echo message="${beforeTestcase.screen.output}" />
 
-				<property name="sdb.cmd.argument" value=" -e &quot;var CSPREFIX='${CS_PRIX}';var CLPREFIX='${CL_PRIX}';var COORDSVCNAME='${coord.service.port}';&quot; -f &quot;${testcases.path}/libs/func.js,${commlib.option},${test.case.fullname}&quot;" />
+				<property name="sdb.cmd.argument" value=" -e &quot;var CLPREFIX='${CHANGEDPREFIX}';var COORDSVCNAME='${coord.service.port}';&quot; -f &quot;${testcases.path}/libs/func.js,${commlib.option},${test.case.fullname}&quot;" />
 				<property name="command" value="${sdb.fullname}${sdb.cmd.argument}" />
 				<echo message="Command:${command}" />
 				<echo message="The testcase ${test.case.fullname} path on ${testcases.path}" />
@@ -196,7 +195,7 @@
 				<echo message="${afterTestcase.screen.output}" />
 			</then>
 			<else>
-				<property name="sdb.cmd.argument" value=" -e &quot;var CSPREFIX='${CS_PRIX}';var CLPREFIX='${CL_PRIX}';var COORDSVCNAME='${coord.service.port}';&quot; -f &quot;${commlib.option},${test.case.fullname}&quot;" />
+				<property name="sdb.cmd.argument" value=" -e &quot;var CLPREFIX='${CHANGEDPREFIX}';var COORDSVCNAME='${coord.service.port}';&quot; -f &quot;${commlib.option},${test.case.fullname}&quot;" />
 				<property name="command" value="${sdb.fullname}${sdb.cmd.argument}" />
 				<echo message="Command:${command}" />
 				<echo message="The testcase ${test.case.fullname} path on ${testcases.path}" />
@@ -240,7 +239,7 @@
 			</else>
 		</if>
 
-		<sdbHaveMaster waitTime="10" propertyName="haveMaster" groupName="1" hostName="localhost" failonerror="false" />
+		<!-- <sdbHaveMaster waitTime="10" propertyName="haveMaster" groupName="1" hostName="localhost" failonerror="false" />
 		<echo message="${haveMaster}" />
 		<if>
 			<equals arg1="${haveMaster}" arg2="true"/>
@@ -251,6 +250,6 @@
 			<else>
 				<echo message="test is failed , CS_PRIX is ${CS_PRIX} , but when drop the cs , there are no catalog master node" />
 			</else>
-		</if>
+		</if> -->
 	</target>
 </project>
