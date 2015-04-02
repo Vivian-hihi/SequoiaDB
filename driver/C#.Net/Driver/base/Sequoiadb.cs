@@ -386,7 +386,11 @@ namespace SequoiaDB
          */
         public void ChangeConnectionOptions(ConfigOptions opts)
         {
+            // reset socket
             connection.ChangeConfigOptions(opts);
+            // reset endian info
+            isBigEndian = RequestSysInfo();
+            // auth agent
             try
             {
                 Auth();
