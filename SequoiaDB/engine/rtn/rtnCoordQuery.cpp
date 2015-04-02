@@ -56,14 +56,17 @@ using namespace bson;
 namespace engine
 {
    INT32 rtnCoordQuery::_checkQueryModify( rtnSendMsgIn &inMsg,
-                                           rtnSendOptions &options )
+                                           rtnSendOptions &options,
+                                           CoordGroupSubCLMap *grpSubCl )
    {
       MsgOpQuery *queryMsg = ( MsgOpQuery* )inMsg.msg() ;
       INT32 rc = SDB_OK ;
 
       if ( queryMsg->flags & FLG_QUERY_MODIFY )
       {
-         if ( options._groupLst.size() > 1 )
+         if ( ( options._groupLst.size() > 1 ) ||
+              ( grpSubCl && grpSubCl->size() >= 1 &&
+                grpSubCl->begin()->second.size() > 1 ) )
          {
             rtnQueryPvtData *privateData = ( rtnQueryPvtData* )inMsg._pvtData ;
             if ( privateData->_pContext->getLimitNum() > 0 ||
@@ -71,7 +74,7 @@ namespace engine
             {
                rc = SDB_RTN_QUERYMODIFY_MULTI_NODES ;
                PD_LOG( PDERROR, "query and modify can't use skip and limit "
-                  "in multiple nodes, rc: %d", rc ) ;
+                       "in multiple nodes, rc: %d", rc ) ;
             }
          }
 

@@ -117,7 +117,8 @@ namespace engine
                               const CoordSubCLlist &subCLList ) ;
 
       INT32 _checkQueryModify( rtnSendMsgIn &inMsg,
-                               rtnSendOptions &options ) ;
+                               rtnSendOptions &options,
+                               CoordGroupSubCLMap *grpSubCl ) ;
 
       void  _optimize( rtnSendMsgIn &inMsg,
                        rtnSendOptions &options,
