@@ -429,6 +429,7 @@
 #define CMD_NAME_FORCE_STEP_UP               "force step up"
 
 #define CMD_NAME_JSON_LOAD                   "json load"
+#define CMD_NAME_TRUNCATE                    "truncate"
 
 #define CMD_VALUE_NAME_ATTACH                "attach"
 #define CMD_VALUE_NAME_DETACH                "detach"

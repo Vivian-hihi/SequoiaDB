@@ -2620,6 +2620,36 @@ error :
    goto done ;
 }
 
+// PD_TRACE_DECLARE_FUNCTION ( SDB_COLL_TRUNCATE, "collection_truncate" )
+static JSBool collection_truncate ( JSContext *cx , uintN argc , jsval *vp )
+{
+   PD_TRACE_ENTRY ( SDB_COLL_TRUNCATE );
+   INT32 rc = SDB_OK ;
+   JSBool ret = JS_TRUE ;
+   sdbCollectionHandle *clHandle = NULL ;
+   sdbCollectionStruct *collection = NULL ;
+
+   REPORT ( 0 == argc ,
+            "SdbCollection.truncate(): need none arguments" ) ;
+   clHandle = (sdbCollectionHandle *)
+      JS_GetPrivate ( cx , JS_THIS_OBJECT ( cx , vp ) ) ;
+   REPORT ( clHandle , "SdbCollection.truncate(): no collection handle" ) ;
+
+   collection = ( sdbCollectionStruct * )( *clHandle ) ;
+
+   rc = sdbTruncateCollection( collection->_connection,
+                               collection->_collectionFullName ) ;
+   REPORT_RC ( SDB_OK == rc,
+               "SdbCollection.truncate()" , rc ) ;
+  
+   JS_SET_RVAL( cx, vp, JSVAL_VOID ) ; 
+done:
+   PD_TRACE_EXIT( SDB_COLL_TRUNCATE ) ;
+   return ret ;
+error:
+   goto done ;
+}
+
 static JSFunctionSpec collection_functions[] = {
     JS_FS ( "rawFind" , collection_raw_find , 0 , 0 ) ,
     JS_FS ( "_insert" , collection_insert , 1 , 0 ) ,
@@ -2644,6 +2674,7 @@ static JSFunctionSpec collection_functions[] = {
     JS_FS ( "deleteLob", collection_delete_lob, 1, 0 ) ,
     JS_FS ( "listLobs", collection_list_lobs, 1, 0 ) ,
     JS_FS ( "listLobPieces", collection_list_lob_pieces, 1, 0 ) ,
+    JS_FS ( "truncate", collection_truncate, 0, 0 ),
     JS_FS_END
 } ;
 

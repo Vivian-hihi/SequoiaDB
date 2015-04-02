@@ -8254,3 +8254,44 @@ error:
    goto done ;
 }
 
+SDB_EXPORT INT32 sdbTruncateCollection( sdbConnectionHandle cHandle,
+                                        const CHAR *fullName )
+{
+   INT32 rc = SDB_OK ;
+   bson option ;
+   BOOLEAN bsoninit = FALSE ;
+   BOOLEAN result = FALSE ;
+   sdbConnectionStruct *connection = (sdbConnectionStruct*)cHandle ;
+   HANDLE_CHECK( cHandle, connection, SDB_HANDLE_TYPE_CONNECTION ) ;
+
+   if ( NULL == fullName ||
+        0 == ossStrlen( fullName ) )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   BSON_INIT( option ) ;
+   BSON_APPEND( option, FIELD_NAME_COLLECTION, fullName, string ) ;
+   BSON_FINISH( option ) ;
+
+   rc = _runCommand ( cHandle, connection->_sock,
+                      &connection->_pSendBuffer,
+                      &connection->_sendBufferSize,
+                      &connection->_pReceiveBuffer,
+                      &connection->_receiveBufferSize,
+                      connection->_endianConvert,
+                      CMD_ADMIN_PREFIX CMD_NAME_TRUNCATE,
+                      &result, &option,
+                      NULL, NULL, NULL ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+done:
+   BSON_DESTROY( option ) ;
+   return rc ;
+error:
+   goto done ;
+}
+
