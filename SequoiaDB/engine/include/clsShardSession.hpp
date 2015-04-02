@@ -198,7 +198,10 @@ namespace engine
          INT32 _getSubCLList( const BSONObj &matcher,
                               const CHAR *pCollectionName,
                               BSONObj &boNewMatcher,
-                              std::vector< std::string > &strSubCLList );
+                              std::vector< std::string > &strSubCLList ) ;
+
+         INT32 _sortSubCLListByBound( const CHAR *pCollectionName,
+                                      std::vector< std::string > &strSubCLList ) ;
 
          INT32 _aggregateMainCLExplaining( const CHAR *fullName,
                                            pmdEDUCB *cb,

@@ -178,7 +178,7 @@ namespace engine
       }
    }
 
-   void _clsCataItemKey::operator= ( const _clsCataItemKey &right )
+   _clsCataItemKey &_clsCataItemKey::operator= ( const _clsCataItemKey &right )
    {
       _keyType = right._keyType ;
       if ( _clsCataItemKey::CLS_KEY_BSON == _keyType )
@@ -190,6 +190,8 @@ namespace engine
          _keyData._number = right._keyData._number ;
       }
       _ordering = right._ordering ;
+
+      return *this ;
    }
 
    /*
@@ -202,7 +204,8 @@ namespace engine
       _saveName = saveName ;
       _isHash  = FALSE ;
       _isSubCl = isSubCl ;
-      _isLast = FALSE ;
+      _isLast  = FALSE ;
+      _ID      = 0 ;
    }
 
    _clsCatalogItem::~_clsCatalogItem ()
@@ -248,7 +251,7 @@ namespace engine
       }
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSCTIM_UDIM, "_clsCatalogItem::updateItem" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSCTIM_UDIM, "_clsCatalogItem::updateItem" )
    INT32 _clsCatalogItem::updateItem( const BSONObj & obj, BOOLEAN isSharding,
                                       BOOLEAN isHash )
    {
@@ -261,6 +264,13 @@ namespace engine
 
       try
       {
+         /// get the id
+         BSONElement idEle = obj.getField( FIELD_NAME_ID ) ;
+         if ( idEle.isNumber() )
+         {
+            _ID = (UINT32)idEle.numberInt() ;
+         }
+
          if ( _isSubCl )
          {
             BSONElement eleSubCLName = obj.getField( CAT_SUBCL_NAME );
@@ -344,13 +354,15 @@ namespace engine
          {
             if ( !_saveName )
             {
-               return BSON ( CAT_CATALOGGROUPID_NAME << _groupID <<
+               return BSON ( FIELD_NAME_ID << ( INT32 )_ID <<
+                             CAT_CATALOGGROUPID_NAME << _groupID <<
                              CAT_LOWBOUND_NAME << _lowBound <<
                              CAT_UPBOUND_NAME << _upBound ) ;
             }
             else
             {
-               return BSON ( CAT_CATALOGGROUPID_NAME << _groupID <<
+               return BSON ( FIELD_NAME_ID << ( INT32 )_ID <<
+                             CAT_CATALOGGROUPID_NAME << _groupID <<
                              CAT_GROUPNAME_NAME << _groupName <<
                              CAT_LOWBOUND_NAME << _lowBound <<
                              CAT_UPBOUND_NAME << _upBound ) ;
@@ -358,7 +370,8 @@ namespace engine
          }
          else
          {
-            return BSON ( CAT_SUBCL_NAME << _subCLName <<
+            return BSON ( FIELD_NAME_ID << ( INT32 )_ID <<
+                          CAT_SUBCL_NAME << _subCLName <<
                           CAT_LOWBOUND_NAME << _lowBound <<
                           CAT_UPBOUND_NAME << _upBound ) ;
          }
@@ -412,6 +425,7 @@ namespace engine
       _attribute = 0 ;
       _isMainCL = FALSE ;
       _internalV = 0 ;
+      _maxID = 0 ;
    }
 
    _clsCatalogSet::~_clsCatalogSet ()
@@ -455,7 +469,7 @@ namespace engine
       return &_vecGroupID ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSCTSET_GETALLGPID, "_clsCatalogSet::getAllGroupID" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSCTSET_GETALLGPID, "_clsCatalogSet::getAllGroupID" )
    UINT32 _clsCatalogSet::getAllGroupID ( VEC_GROUP_ID &vecGroup )
    {
       PD_TRACE_ENTRY ( SDB__CLSCTSET_GETALLGPID ) ;
@@ -498,7 +512,7 @@ namespace engine
       return _isWholeRange ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSCTSET_ADDGPID, "_clsCatalogSet::_addGroupID" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSCTSET_ADDGPID, "_clsCatalogSet::_addGroupID" )
    void _clsCatalogSet::_addGroupID ( UINT32 groupID )
    {
       PD_TRACE_ENTRY ( SDB__CLSCTSET_ADDGPID ) ;
@@ -516,22 +530,14 @@ namespace engine
       PD_TRACE_EXIT ( SDB__CLSCTSET_ADDGPID ) ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSCTSET_ADDSUBCLNAME, "_clsCatalogSet::_addSubClName" )
-   void _clsCatalogSet::_addSubClName( const std::string strClName )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSCTSET_ADDSUBCLNAME, "_clsCatalogSet::_addSubClName" )
+   void _clsCatalogSet::_addSubClName( UINT32 id,
+                                       const std::string &strClName )
    {
       PD_TRACE_ENTRY ( SDB__CLSCTSET_ADDSUBCLNAME ) ;
-      _subCLList.push_back( strClName );
+      _subCLList.insert( std::make_pair( id, strClName ) ) ;
       PD_TRACE_EXIT ( SDB__CLSCTSET_ADDSUBCLNAME ) ;
    }
-
-   //PD_TRACE_DECLARE_FUNCTION ( SDB__CLSCTSET_CLEARSUBCLNAME, "_clsCatalogSet::_clearSubClName" )
-   void _clsCatalogSet::_clearSubClName()
-   {
-      //PD_TRACE_ENTRY ( SDB__CLSCTSET_CLEARSUBCLNAME ) ;
-      _subCLList.clear();
-      //PD_TRACE_EXIT ( SDB__CLSCTSET_CLEARSUBCLNAME ) ;
-   }
-
 
    BOOLEAN _clsCatalogSet::isSharding () const
    {
@@ -539,7 +545,7 @@ namespace engine
              || CLS_CA_SHARDINGTYPE_HASH == _shardingType ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSCTSET_ISINSDKEY, "_clsCatalogSet::isIncludeShardingKey" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSCTSET_ISINSDKEY, "_clsCatalogSet::isIncludeShardingKey" )
    BOOLEAN _clsCatalogSet::isIncludeShardingKey( const bson::BSONObj &record ) const
    {
       PD_TRACE_ENTRY ( SDB__CLSCTSET_ISINSDKEY ) ;
@@ -569,7 +575,7 @@ namespace engine
       return isInclude;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSCTSET__CLEAR, "_clsCatalogSet::_clear" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSCTSET__CLEAR, "_clsCatalogSet::_clear" )
    void _clsCatalogSet::_clear ()
    {
       PD_TRACE_ENTRY ( SDB__CLSCTSET__CLEAR ) ;
@@ -596,17 +602,18 @@ namespace engine
 
       _vecGroupID.clear() ;
       _groupCount = 0 ;
+      _subCLList.clear() ;
 
       _isWholeRange = TRUE ;
       _w = 1 ;
       _version = -1 ;
 
       _shardingType = CLS_CA_SHARDINGTYPE_NONE;
-      _shardingKey = BSONObj().copy() ;
+      _shardingKey = BSONObj() ;
       PD_TRACE_EXIT ( SDB__CLSCTSET__CLEAR ) ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSCTSET_GENKEYOBJ, "_clsCatalogSet::genKeyObj" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSCTSET_GENKEYOBJ, "_clsCatalogSet::genKeyObj" )
    INT32 _clsCatalogSet::genKeyObj( const BSONObj & obj, BSONObj & keyObj )
    {
       PD_TRACE_ENTRY ( SDB__CLSCTSET_GENKEYOBJ ) ;
@@ -674,7 +681,7 @@ namespace engine
    // record
    // obj [in]: data record
    // item [out]: node satisfy the key
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSCTSET_FINDIM, "_clsCatalogSet::findItem" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSCTSET_FINDIM, "_clsCatalogSet::findItem" )
    INT32 _clsCatalogSet::findItem ( const BSONObj &obj,
                                     clsCatalogItem *& item )
    {
@@ -742,7 +749,7 @@ namespace engine
    // record
    // key [in]: data key
    // item [out]: node satisfy the key
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSCTSET__FINDIM, "_clsCatalogSet::_findItem" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSCTSET__FINDIM, "_clsCatalogSet::_findItem" )
    INT32 _clsCatalogSet::_findItem( const clsCataItemKey &findKey,
                                     clsCatalogItem *& item )
    {
@@ -796,7 +803,7 @@ namespace engine
    }
 
    // given a data record, find the groupID satisfy the partition key
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSCTSET_FINDGPID, "_clsCatalogSet::findGroupID" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSCTSET_FINDGPID, "_clsCatalogSet::findGroupID" )
    INT32 _clsCatalogSet::findGroupID ( const BSONObj & obj, UINT32 &groupID )
    {
       INT32 rc              = SDB_OK ;
@@ -845,7 +852,7 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSCTSET_FINDGPIDS, "_clsCatalogSet::findGroupIDS" )
    INT32 _clsCatalogSet::findGroupIDS ( const BSONObj &matcher,
-                                       VEC_GROUP_ID &vecGroup )
+                                        VEC_GROUP_ID &vecGroup )
    {
       PD_TRACE_ENTRY ( SDB__CLSCTSET_FINDGPIDS ) ;
       INT32 rc = SDB_OK;
@@ -879,8 +886,8 @@ namespace engine
             {
                rc = hashMatcher.matches( iter->second, result );
                PD_RC_CHECK( rc, PDERROR,
-                           "failed to match sharding-key(rc=%d)",
-                           rc );
+                            "failed to match sharding-key(rc=%d)",
+                            rc ) ;
                if ( result )
                {
                   vecGroup.push_back( iter->second->getGroupID() );
@@ -959,7 +966,7 @@ namespace engine
    }
 
    // check whether a given object in the specified group
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSCTSET_ISOBJINGP, "_clsCatalogSet::isObjInGroup" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSCTSET_ISOBJINGP, "_clsCatalogSet::isObjInGroup" )
    BOOLEAN _clsCatalogSet::isObjInGroup ( const BSONObj &obj, UINT32 groupID )
    {
       INT32 rc          = SDB_OK ;
@@ -982,7 +989,7 @@ namespace engine
    // the key must be well organized by generated from sharding key before
    // calling the function.
    // for the original data record, please use isObjInGroup function instead
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSCTSET_ISKEYINGP, "_clsCatalogSet::isKeyInGroup" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSCTSET_ISKEYINGP, "_clsCatalogSet::isKeyInGroup" )
    BOOLEAN _clsCatalogSet::isKeyInGroup ( const BSONObj &obj, UINT32 groupID )
    {
       INT32 rc              = SDB_OK ;
@@ -1016,7 +1023,7 @@ namespace engine
    }
 
    // check whether a given key is on boundary of any group
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSCTSET_ISKEYONBD, "_clsCatalogSet::isKeyOnBoundary" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSCTSET_ISKEYONBD, "_clsCatalogSet::isKeyOnBoundary" )
    BOOLEAN _clsCatalogSet::isKeyOnBoundary ( const BSONObj &obj,
                                              UINT32* pGroupID )
    {
@@ -1087,7 +1094,7 @@ namespace engine
 
    // add a new range on a given group id
    // note a split must happen on full range
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSCTSET_SPLIT, "_clsCatalogSet::split" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSCTSET_SPLIT, "_clsCatalogSet::split" )
    INT32 _clsCatalogSet::split ( const BSONObj &splitKey,
                                  const BSONObj &splitEndKey,
                                  UINT32 groupID, const CHAR *groupName )
@@ -1387,7 +1394,7 @@ namespace engine
 
    // this function removes adj ranges with same group id, by merging those
    // groups together
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSCTSET__DEDUP, "_clsCatalogSet::_deduplicate" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSCTSET__DEDUP, "_clsCatalogSet::_deduplicate" )
    void _clsCatalogSet::_deduplicate ()
    {
       PD_TRACE_ENTRY ( SDB__CLSCTSET__DEDUP ) ;
@@ -1420,7 +1427,7 @@ namespace engine
    // { "CataInfo":[{"GroupID":1000, "LowBound":{"":MinKey, "":MinKey},
    // "UpBound":{"":5,"":"abc"}}, { "GroupID":1001, "LowBound":{"":5, "":"abc"},
    // "UpBound":{"":MaxKey, "":MaxKey}}]}
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSCTSET_TOCTINFOBSON, "_clsCatalogSet::toCataInfoBson" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSCTSET_TOCTINFOBSON, "_clsCatalogSet::toCataInfoBson" )
    BSONObj _clsCatalogSet::toCataInfoBson ()
    {
       PD_TRACE_ENTRY ( SDB__CLSCTSET_TOCTINFOBSON ) ;
@@ -1486,7 +1493,7 @@ namespace engine
    // catSet [in]: collection record, which is in SYSCAT.SYSCOLLECTIONS
    // groupID [in]: the groupID we want to filter, 0 means all groups
    // note the catSet record should always be fetched from catalog collection
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSCT_UDCATSET, "_clsCatalogSet::updateCatSet" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSCT_UDCATSET, "_clsCatalogSet::updateCatSet" )
    INT32 _clsCatalogSet::updateCatSet( const BSONObj & catSet, UINT32 groupID )
    {
       INT32 rc = SDB_OK ;
@@ -1670,8 +1677,6 @@ namespace engine
                     SDB_CAT_CORRUPTION, error, PDSEVERE,
                     "The catalog info must be 1 item when not sharding" ) ;
 
-         _clearSubClName();
-
          // loop through each element
          BSONObjIterator objItr ( objCataInfo ) ;
          while ( objItr.more () )
@@ -1695,6 +1700,11 @@ namespace engine
                PD_LOG ( PDERROR, "Failed to update cataItem, rc = %d", rc ) ;
                SDB_OSS_DEL cataItem ;
                goto error ;
+            }
+
+            if ( _maxID < cataItem->getID() )
+            {
+               _maxID = cataItem->getID() ;
             }
 
             // make sure the created cata item is for the filter group
@@ -1724,7 +1734,7 @@ namespace engine
             else
             {
                // add sub-collection name
-               _addSubClName( cataItem->getSubClName() );
+               _addSubClName( cataItem->getID(), cataItem->getSubClName() );
             }
          }
       }
@@ -1765,7 +1775,7 @@ namespace engine
       return SDB_OK ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSCTSET__ISOBJALLMK, "_clsCatalogSet::_isObjAllMaxKey" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSCTSET__ISOBJALLMK, "_clsCatalogSet::_isObjAllMaxKey" )
    BOOLEAN _clsCatalogSet::_isObjAllMaxKey ( BSONObj &obj )
    {
       PD_TRACE_ENTRY ( SDB__CLSCTSET__ISOBJALLMK ) ;
@@ -1826,22 +1836,41 @@ namespace engine
    {
       return _isMainCL;
    }
-   INT32 _clsCatalogSet::getSubCLList( std::vector<std::string> &subCLLst )
+   INT32 _clsCatalogSet::getSubCLList( std::vector<std::string> &subCLLst,
+                                       CLS_SUBCL_SORT_TYPE sortType )
    {
-      subCLLst = _subCLList;
+      /// sort by id desc, newest sub cl in first
+      if ( SUBCL_SORT_BY_ID == sortType )
+      {
+         std::multimap<UINT32, std::string>::reverse_iterator rit =
+            _subCLList.rbegin() ;
+         while( rit != _subCLList.rend() )
+         {
+            subCLLst.push_back( rit->second ) ;
+            ++rit ;
+         }
+      }
+      else
+      {
+         MAP_CAT_ITEM_IT it = _mapItems.begin() ;
+         while( it != _mapItems.end() )
+         {
+            subCLLst.push_back( it->second->getSubClName() ) ;
+            ++it ;
+         }
+      }
       return SDB_OK;
    }
    BOOLEAN _clsCatalogSet::isContainSubCL( const std::string &subCLName )
    {
-      std::vector<std::string>::iterator iterLst
-                           = _subCLList.begin();
-      while( iterLst != _subCLList.end() )
+      std::multimap<UINT32, std::string>::iterator it = _subCLList.begin();
+      while( it != _subCLList.end() )
       {
-         if ( 0 == subCLName.compare( *iterLst ) )
+         if ( 0 == subCLName.compare( it->second ) )
          {
             return TRUE;
          }
-         ++iterLst;
+         ++it;
       }
       return FALSE;
    }
@@ -1849,29 +1878,6 @@ namespace engine
    {
       return _mainCLName;
    }
-
-   /*INT32 _clsCatalogSet::_getBoundByRecord( const BSONObj &record,
-                                          BSONObj &bound )
-   {
-      INT32 rc = SDB_OK;
-      ixmIndexKeyGen keyGen( _shardingKey );
-      BSONObjSet keys ;
-      BSONObjSet::iterator keyIter;
-      rc = keyGen.getKeys( record, keys );
-      PD_RC_CHECK( rc, PDERROR,
-                  "Failed to generate key(rc=%d, ShardingKey:%s, record:%s)",
-                  rc, _shardingKey.toString().c_str(), record.toString().c_str() );
-      PD_CHECK( keys.size()==1, SDB_INVALID_SHARDINGKEY, error, PDERROR,
-               "can't generate the key by the record, the key-value must be unique"
-               "(ShardingKey:%s, record:%s)",
-               _shardingKey.toString().c_str(), record.toString().c_str() );
-      keyIter = keys.begin();
-      bound = (*keyIter).copy();
-   done:
-      return rc;
-   error:
-      goto done;
-   }*/
 
    INT32 _clsCatalogSet::addSubCL ( const CHAR *subCLName, const BSONObj &lowBound,
                                     const BSONObj &upBound )
@@ -1899,6 +1905,7 @@ namespace engine
       pNewItem->_lowBound = lowBoundObj;
       pNewItem->_upBound = upBoundObj;
       pNewItem->_subCLName = subCLName;
+      pNewItem->_ID = ++_maxID ;
 
       // check if the new boundary is conflict with existing boundary
       {
@@ -1987,8 +1994,8 @@ namespace engine
       }
       rc = _addItem( pNewItem );
       PD_RC_CHECK( rc, PDERROR,
-                  "failed to add the new item(rc=%d)",
-                  rc );
+                   "Failed to add the new item(rc=%d)",
+                   rc );
    done:
       return rc;
    error:
@@ -2017,7 +2024,8 @@ namespace engine
       return SDB_OK;
    }
 
-   INT32 _clsCatalogSet::findSubCLName ( const BSONObj &obj, std::string &subCLName )
+   INT32 _clsCatalogSet::findSubCLName ( const BSONObj &obj,
+                                         std::string &subCLName )
    {
       INT32 rc = SDB_OK;
 
@@ -2035,20 +2043,34 @@ namespace engine
    }
 
    INT32 _clsCatalogSet::findSubCLNames( const bson::BSONObj &matcher,
-                                       std::vector< std::string > &subCLList )
+                                         std::vector< std::string > &subCLList,
+                                         CLS_SUBCL_SORT_TYPE sortType )
    {
       INT32 rc = SDB_OK;
       BOOLEAN result = FALSE;
+      std::multimap<UINT32, clsCatalogItem* > mapSubItem ;
       MAP_CAT_ITEM::iterator iter;
       clsCatalogMatcher clsMatcher( _shardingKey );
+
       PD_CHECK ( !_mapItems.empty(), SDB_CAT_NO_MATCH_CATALOG, error, PDERROR,
                "the collection[%s] cataItem is empty", name() );
+
+      subCLList.clear() ;
+
       if ( isHashSharding() )
       {
          iter = _mapItems.begin();
          while( iter != _mapItems.end() )
          {
-            subCLList.push_back( iter->second->getSubClName() );
+            if ( SUBCL_SORT_BY_ID == sortType )
+            {
+               mapSubItem.insert( std::make_pair( iter->second->getID(),
+                                                  iter->second ) ) ;
+            }
+            else
+            {
+               subCLList.push_back( iter->second->getSubClName() ) ;
+            }
             ++iter;
          }
          goto done ;
@@ -2063,20 +2085,49 @@ namespace engine
       {
          rc = clsMatcher.matches( iter->second, result );
          PD_RC_CHECK( rc, PDERROR,
-                     "failed to match sharding-key(rc=%d)",
-                     rc );
+                      "Failed to match sharding-key(rc=%d)",
+                      rc ) ;
          if ( result )
          {
-            subCLList.push_back( iter->second->getSubClName() );
+            if ( SUBCL_SORT_BY_ID == sortType )
+            {
+               mapSubItem.insert( std::make_pair( iter->second->getID(),
+                                                  iter->second ) ) ;
+            }
+            else
+            {
+               subCLList.push_back( iter->second->getSubClName() ) ;
+            }
          }
          ++iter;
       }
-      PD_CHECK( subCLList.size() != 0, SDB_CAT_NO_MATCH_CATALOG,
-               error, PDERROR, "couldn't find the match catalog" );
+
+      if ( SUBCL_SORT_BY_ID == sortType )
+      {
+         PD_CHECK( mapSubItem.size() != 0, SDB_CAT_NO_MATCH_CATALOG,
+                   error, PDERROR, "couldn't find the match catalog" ) ;
+      }
+      else
+      {
+         PD_CHECK( subCLList.size() != 0, SDB_CAT_NO_MATCH_CATALOG,
+                   error, PDERROR, "couldn't find the match catalog" ) ;
+      }
+
    done:
-      return rc;
+      if ( SDB_OK == rc && SUBCL_SORT_BY_ID == sortType )
+      {
+         /// make sure sort by id desc, the newest sub cl in first
+         std::multimap<UINT32, clsCatalogItem* >::reverse_iterator rit =
+               mapSubItem.rbegin() ;
+         while( rit != mapSubItem.rend() )
+         {
+            subCLList.push_back( rit->second->getSubClName() ) ;
+            ++rit ;
+         }
+      }
+      return rc ;
    error:
-      goto done;
+      goto done ;
    }
 
    /*
@@ -2097,7 +2148,7 @@ namespace engine
       return _catVersion ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSCTAGENT_GETALLNAMES, "_clsCatalogAgent::getAllNames" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSCTAGENT_GETALLNAMES, "_clsCatalogAgent::getAllNames" )
    void _clsCatalogAgent::getAllNames( std::vector<string> &names )
    {
       PD_TRACE_ENTRY ( SDB__CLSCTAGENT_GETALLNAMES ) ;
@@ -2115,7 +2166,7 @@ namespace engine
       return ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSCTAGENT_CLVS, "_clsCatalogAgent::collectionVersion" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSCTAGENT_CLVS, "_clsCatalogAgent::collectionVersion" )
    INT32 _clsCatalogAgent::collectionVersion ( const CHAR* name )
    {
       PD_TRACE_ENTRY ( SDB__CLSCTAGENT_CLVS ) ;
@@ -2140,7 +2191,7 @@ namespace engine
       return SDB_CLS_NO_CATALOG_INFO ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSCTAGENT_CLINFO, "_clsCatalogAgent::collectionInfo" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSCTAGENT_CLINFO, "_clsCatalogAgent::collectionInfo" )
    INT32 _clsCatalogAgent::collectionInfo ( const CHAR * name , INT32 &version,
                                             UINT32 &w )
    {
@@ -2157,7 +2208,7 @@ namespace engine
       return SDB_CLS_NO_CATALOG_INFO ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSCTAGENT_CLSET, "_clsCatalogAgent::collectionSet" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSCTAGENT_CLSET, "_clsCatalogAgent::collectionSet" )
    _clsCatalogSet *_clsCatalogAgent::collectionSet ( const CHAR * name )
    {
       PD_TRACE_ENTRY ( SDB__CLSCTAGENT_CLSET ) ;
@@ -2181,7 +2232,7 @@ namespace engine
       return set ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSCTAGENT__ADDCLSET, "_clsCatalogAgent::_addCollectionSet" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSCTAGENT__ADDCLSET, "_clsCatalogAgent::_addCollectionSet" )
    _clsCatalogSet *_clsCatalogAgent::_addCollectionSet ( const CHAR * name )
    {
       PD_TRACE_ENTRY ( SDB__CLSCTAGENT__ADDCLSET ) ;
@@ -2213,7 +2264,7 @@ namespace engine
       return catSet ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSCTAGENT_UPCT, "_clsCatalogAgent::updateCatalog" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSCTAGENT_UPCT, "_clsCatalogAgent::updateCatalog" )
    INT32 _clsCatalogAgent::updateCatalog ( INT32 version, UINT32 groupID,
                                            const CHAR* objdata, UINT32 length,
                                            _clsCatalogSet **ppSet )
@@ -2279,7 +2330,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSCTAGENT_CLEAR, "_clsCatalogAgent::clear" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSCTAGENT_CLEAR, "_clsCatalogAgent::clear" )
    INT32 _clsCatalogAgent::clear ( const CHAR* name )
    {
       PD_TRACE_ENTRY ( SDB__CLSCTAGENT_CLEAR ) ;
@@ -2325,7 +2376,7 @@ namespace engine
       return SDB_OK ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSCTAGENT_CRBYSPACENAME, "_clsCatalogAgent::clearBySpaceName" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSCTAGENT_CRBYSPACENAME, "_clsCatalogAgent::clearBySpaceName" )
    INT32 _clsCatalogAgent::clearBySpaceName ( const CHAR * name )
    {
       PD_TRACE_ENTRY ( SDB__CLSCTAGENT_CRBYSPACENAME ) ;
@@ -2397,7 +2448,7 @@ namespace engine
       return SDB_OK ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSCTAGENT_CLALL, "_clsCatalogAgent::clearAll" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSCTAGENT_CLALL, "_clsCatalogAgent::clearAll" )
    INT32 _clsCatalogAgent::clearAll ()
    {
       PD_TRACE_ENTRY ( SDB__CLSCTAGENT_CLALL ) ;
@@ -2495,7 +2546,7 @@ namespace engine
       return &_vecNodes ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSGPIM_GETNDID2, "_clsGroupItem::getNodeID" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSGPIM_GETNDID2, "_clsGroupItem::getNodeID" )
    INT32 _clsGroupItem::getNodeID ( UINT32 pos, MsgRouteID& id,
                                     MSG_ROUTE_SERVICE_TYPE type )
    {
@@ -2517,7 +2568,7 @@ namespace engine
       return rc ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSGPIM_GETNDID, "_clsGroupItem::getNodeID" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSGPIM_GETNDID, "_clsGroupItem::getNodeID" )
    INT32 _clsGroupItem::getNodeID ( const std::string& hostName,
                                     const std::string& serviceName,
                                     MsgRouteID& id,
@@ -2546,7 +2597,7 @@ namespace engine
       return rc ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSGPIM_GETNDINFO1, "_clsGroupItem::getNodeInfo" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSGPIM_GETNDINFO1, "_clsGroupItem::getNodeInfo" )
    INT32 _clsGroupItem::getNodeInfo ( UINT32 pos, MsgRouteID & id,
                                       string & hostName, string & serviceName,
                                       MSG_ROUTE_SERVICE_TYPE type )
@@ -2571,7 +2622,7 @@ namespace engine
       return rc ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSGPIM_GETNDINFO2, "_clsGroupItem::getNodeInfo" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSGPIM_GETNDINFO2, "_clsGroupItem::getNodeInfo" )
    INT32 _clsGroupItem::getNodeInfo ( const MsgRouteID& id, string& hostName,
                                       string& serviceName )
    {
@@ -2593,7 +2644,7 @@ namespace engine
       return rc ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSGPIM_GETNDINFO3, "_clsGroupItem::getNodeInfo" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSGPIM_GETNDINFO3, "_clsGroupItem::getNodeInfo" )
    INT32 _clsGroupItem::getNodeInfo ( UINT32 pos, SINT32 &status )
    {
       INT32 rc = SDB_OK;
@@ -2694,7 +2745,7 @@ namespace engine
       _primaryPos = CLS_RG_NODE_POS_INVALID ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSGPIM_UPPRRIMARY, "_clsGroupItem::updatePrimary" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSGPIM_UPPRRIMARY, "_clsGroupItem::updatePrimary" )
    INT32 _clsGroupItem::updatePrimary ( const MsgRouteID & nodeID,
                                         BOOLEAN primary )
    {
@@ -2747,7 +2798,7 @@ namespace engine
       return rc ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSGPIM_UPNODESTAT, "_clsGroupItem::updateNodeStat" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSGPIM_UPNODESTAT, "_clsGroupItem::updateNodeStat" )
    void _clsGroupItem::updateNodeStat( UINT16 nodeID,
                                        NET_NODE_STATUS status )
    {
@@ -2822,7 +2873,7 @@ namespace engine
       return (INT32)_groupNameMap.size() ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSNDMGRAG_GPVS, "_clsNodeMgrAgent::groupVersion" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSNDMGRAG_GPVS, "_clsNodeMgrAgent::groupVersion" )
    INT32 _clsNodeMgrAgent::groupVersion ( UINT32 id )
    {
       INT32 rc = SDB_OK ;
@@ -2839,7 +2890,7 @@ namespace engine
       return rc ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLDNDMGRAGENT_GPID2NAME, "_clsNodeMgrAgent::groupID2Name" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLDNDMGRAGENT_GPID2NAME, "_clsNodeMgrAgent::groupID2Name" )
    INT32 _clsNodeMgrAgent::groupID2Name ( UINT32 id, std::string & name )
    {
       INT32 rc = SDB_OK ;
@@ -2856,7 +2907,7 @@ namespace engine
       return rc ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSNDMGRAGENT_GPNM2ID, "_clsNodeMgrAgent::groupName2ID" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSNDMGRAGENT_GPNM2ID, "_clsNodeMgrAgent::groupName2ID" )
    INT32 _clsNodeMgrAgent::groupName2ID ( const CHAR * name, UINT32 & id )
    {
       INT32 rc = SDB_OK ;
@@ -2873,7 +2924,7 @@ namespace engine
       return rc ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSNDMGRAGENT_GPNDCOUNT, "_clsNodeMgrAgent::groupNodeCount" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSNDMGRAGENT_GPNDCOUNT, "_clsNodeMgrAgent::groupNodeCount" )
    INT32 _clsNodeMgrAgent::groupNodeCount ( UINT32 id )
    {
       INT32 rc = SDB_OK ;
@@ -2890,7 +2941,7 @@ namespace engine
       return rc ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSNDMGRAGENT_GPPRYND, "_clsNodeMgrAgent::groupPrimaryNode" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSNDMGRAGENT_GPPRYND, "_clsNodeMgrAgent::groupPrimaryNode" )
    INT32 _clsNodeMgrAgent::groupPrimaryNode ( UINT32 id, MsgRouteID & primary,
                                               MSG_ROUTE_SERVICE_TYPE type )
    {
@@ -2908,7 +2959,7 @@ namespace engine
       return rc ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSNDMGRAGENT_CELPRY, "_clsNodeMgrAgent::cancelPrimary" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSNDMGRAGENT_CELPRY, "_clsNodeMgrAgent::cancelPrimary" )
    INT32 _clsNodeMgrAgent::cancelPrimary( UINT32 id )
    {
       INT32 rc = SDB_OK ;
@@ -2924,7 +2975,7 @@ namespace engine
       PD_TRACE_EXITRC ( SDB__CLSNDMGRAGENT_CELPRY, rc ) ;
       return rc ;
    }
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSNDMGRAGENT_GPIM1, "_clsNodeMgrAgent::groupItem" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSNDMGRAGENT_GPIM1, "_clsNodeMgrAgent::groupItem" )
    clsGroupItem* _clsNodeMgrAgent::groupItem ( const CHAR * name )
    {
       PD_TRACE_ENTRY ( SDB__CLSNDMGRAGENT_GPIM1 ) ;
@@ -2939,7 +2990,7 @@ namespace engine
       return it == _groupNameMap.end() ? NULL : groupItem ( it->second ) ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSNDMGRAGENT_GPIM2, "_clsNodeMgrAgent::groupItem" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSNDMGRAGENT_GPIM2, "_clsNodeMgrAgent::groupItem" )
    clsGroupItem* _clsNodeMgrAgent::groupItem ( UINT32 id )
    {
       PD_TRACE_ENTRY ( SDB__CLSNDMGRAGENT_GPIM2) ;
@@ -2948,7 +2999,7 @@ namespace engine
       return it == _groupMap.end() ? NULL : it->second ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSNDMGRAGENT_CLALL, "_clsNodeMgrAgent::clearAll" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSNDMGRAGENT_CLALL, "_clsNodeMgrAgent::clearAll" )
    INT32 _clsNodeMgrAgent::clearAll ()
    {
       PD_TRACE_ENTRY ( SDB__CLSNDMGRAGENT_CLALL ) ;
@@ -2964,7 +3015,7 @@ namespace engine
       return SDB_OK ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSNDMGRAGENT_CLGP, "_clsNodeMgrAgent::clearGroup" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSNDMGRAGENT_CLGP, "_clsNodeMgrAgent::clearGroup" )
    INT32 _clsNodeMgrAgent::clearGroup ( UINT32 id )
    {
       PD_TRACE_ENTRY ( SDB__CLSNDMGRAGENT_CLGP ) ;
@@ -3005,7 +3056,7 @@ namespace engine
       return _rwMutex.release_w () ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSNDMGRAGENT_UPGPINFO, "_clsNodeMgrAgent::updateGroupInfo" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSNDMGRAGENT_UPGPINFO, "_clsNodeMgrAgent::updateGroupInfo" )
    INT32 _clsNodeMgrAgent::updateGroupInfo ( const CHAR * objdata,
                                              UINT32 length, UINT32 *pGroupID )
    {
@@ -3075,7 +3126,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSNDMGRAGENT__ADDGPIM, "_clsNodeMgrAgent::_addGroupItem" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSNDMGRAGENT__ADDGPIM, "_clsNodeMgrAgent::_addGroupItem" )
    clsGroupItem* _clsNodeMgrAgent::_addGroupItem ( UINT32 id )
    {
       PD_TRACE_ENTRY ( SDB__CLSNDMGRAGENT__ADDGPIM ) ;
@@ -3088,7 +3139,7 @@ namespace engine
       return item ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSNDMGRAGENT__ADDGPNAME, "_clsNodeMgrAgent::_addGroupName" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSNDMGRAGENT__ADDGPNAME, "_clsNodeMgrAgent::_addGroupName" )
    INT32 _clsNodeMgrAgent::_addGroupName ( const std::string& name, UINT32 id )
    {
       INT32 rc = SDB_OK ;

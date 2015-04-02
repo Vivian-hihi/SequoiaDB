@@ -1550,7 +1550,7 @@ namespace engine
             goto error;
          }
          isRange = pCataSet->isRangeSharding();
-         shardingKey = pCataSet->getShardingKey().copy();
+         shardingKey = pCataSet->getShardingKey().getOwned() ;
          _pCatAgent->release_r () ;
          catLocked = FALSE;
          if ( !isRange )
@@ -1576,9 +1576,8 @@ namespace engine
       }
       catch( std::exception &e )
       {
-         PD_RC_CHECK( SDB_SYS, PDERROR,
-                     "occur unexpected error:%s",
-                     e.what() );
+         PD_RC_CHECK( SDB_SYS, PDERROR, "occur unexpected error:%s",
+                      e.what() );
       }
    done:
       if ( catLocked )
@@ -1609,14 +1608,10 @@ namespace engine
       BOOLEAN includeShardingOrder = FALSE;
       SINT64 tmpContextID = -1 ;
       INT64 subNumToReturn = numToReturn ;
+      INT64 subNumToSkip = 0 ;
 
       SDB_ASSERT( pCollectionName, "collection name can't be NULL!" ) ;
       SDB_ASSERT( cb, "educb can't be NULL!" );
-
-      if ( numToReturn > 0 && numToSkip > 0 )
-      {
-         subNumToReturn = numToReturn + numToSkip ;
-      }
 
       rc = _includeShardingOrder( pCollectionName, orderBy,
                                   includeShardingOrder );
@@ -1628,6 +1623,30 @@ namespace engine
       if ( rc != SDB_OK )
       {
          goto error;
+      }
+
+      if ( strSubCLList.size() <= 1 )
+      {
+         includeShardingOrder = FALSE ;
+         subNumToSkip = numToSkip ;
+         numToSkip = 0 ;
+      }
+      else
+      {
+         if ( numToReturn > 0 && numToSkip > 0 )
+         {
+            subNumToReturn = numToReturn + numToSkip ;
+         }
+      }
+
+      if ( includeShardingOrder )
+      {
+         rc = _sortSubCLListByBound( pCollectionName, strSubCLList ) ;
+         if ( rc )
+         {
+            /// can't optimize
+            includeShardingOrder = FALSE ;
+         }
       }
 
       rc = _pRtnCB->contextNew( RTN_CONTEXT_MAINCL,
@@ -1644,19 +1663,21 @@ namespace engine
                    rc );
 
       {
-      std::vector< std::string >::iterator iterSubCLSet = strSubCLList.begin();
-      while( iterSubCLSet != strSubCLList.end() )
-      {
-         SINT64 subContextID = -1;
-         rc = rtnQuery( (*iterSubCLSet).c_str(), selector, boNewMatcher,
-                        orderBy, hint, flags, cb, 0, subNumToReturn, _pDmsCB,
-                        _pRtnCB, subContextID ) ;
-         PD_RC_CHECK( rc, PDERROR,
-                      "Query sub-collection(%s) failed!(rc=%d)",
-                      iterSubCLSet->c_str(), rc );
-         pContextMainCL->addSubContext( subContextID );
-         ++iterSubCLSet;
-      }
+         std::vector< std::string >::iterator iterSubCLSet =
+            strSubCLList.begin() ;
+         while( iterSubCLSet != strSubCLList.end() )
+         {
+            SINT64 subContextID = -1;
+            rc = rtnQuery( (*iterSubCLSet).c_str(), selector, boNewMatcher,
+                           orderBy, hint, flags, cb, subNumToSkip,
+                           subNumToReturn, _pDmsCB, _pRtnCB,
+                           subContextID ) ;
+            PD_RC_CHECK( rc, PDERROR,
+                         "Query sub-collection(%s) failed!(rc=%d)",
+                         iterSubCLSet->c_str(), rc );
+            pContextMainCL->addSubContext( subContextID ) ;
+            ++iterSubCLSet;
+         }
       }
 
       if ( FLG_QUERY_EXPLAIN & flags )
@@ -1694,6 +1715,75 @@ namespace engine
          tmpContextID = -1;
       }
       goto done;
+   }
+
+   INT32 _clsShdSession::_sortSubCLListByBound( const CHAR *pCollectionName,
+                                                std::vector<std::string> &strSubCLList )
+   {
+      INT32 rc = SDB_OK ;
+      std::vector< std::string > strSubCLListTmp ;
+      _clsCatalogSet *pCataSet = NULL ;
+      std::vector< std::string >::iterator itTmp ;
+      std::vector< std::string >::iterator it ;
+      BOOLEAN bFind = FALSE ;
+
+      _pCatAgent->lock_r () ;
+      pCataSet = _pCatAgent->collectionSet( pCollectionName ) ;
+      if ( NULL == pCataSet )
+      {
+         _pCatAgent->release_r () ;
+         rc = SDB_DMS_NOTEXIST ;
+         goto error ;
+      }
+      pCataSet->getSubCLList( strSubCLListTmp, SUBCL_SORT_BY_BOUND ) ;
+      _pCatAgent->release_r () ;
+
+      itTmp = strSubCLListTmp.begin();
+      while( itTmp != strSubCLListTmp.end() )
+      {
+         bFind = FALSE ;
+         it = strSubCLList.begin() ;
+         while( it != strSubCLList.end() )
+         {
+            if ( *itTmp == *it )
+            {
+               strSubCLList.erase( it ) ;
+               bFind = TRUE ;
+               break ;
+            }
+            ++it ;
+         }
+
+         if ( !bFind )
+         {
+            itTmp = strSubCLListTmp.erase( itTmp ) ;
+         }
+         else
+         {
+            ++itTmp ;
+         }
+      }
+
+      /// has some sub cl not found
+      if ( strSubCLList.size() > 0 )
+      {
+         rc = SDB_SYS ;
+         itTmp = strSubCLListTmp.begin() ;
+         while( itTmp != strSubCLListTmp.end() )
+         {
+            strSubCLList.push_back( *itTmp ) ;
+            ++itTmp ;
+         }
+      }
+      else
+      {
+         strSubCLList = strSubCLListTmp ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    INT32 _clsShdSession::_getSubCLList( const BSONObj &matcher,
@@ -1738,6 +1828,7 @@ namespace engine
                       "occur unexpected error:%s",
                       e.what() );
       }
+
       if ( strSubCLList.empty() )
       {
          std::vector< std::string > strSubCLListTmp;
@@ -1847,7 +1938,7 @@ namespace engine
       std::vector< std::string > strSubCLList;
       INT64 delNum = 0;
       rc = _getSubCLList( deletor, pCollectionName,
-                        boNewDeletor, strSubCLList );
+                          boNewDeletor, strSubCLList );
       if ( rc != SDB_OK )
       {
          goto error;
