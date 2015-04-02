@@ -128,6 +128,14 @@ namespace SequoiaDB
         public const string FIELD_LOB_SIZE = "Size";
         public const string FIELD_LOB_CREATTIME = "CreateTime";
 
+        public const string FIELD_MODIFY = "$Modify";
+        public const string FIELD_OP = "op";
+        public const string FIELD_LUPDATE = "update";
+        public const string FIELD_RETURNNEW = "returnnew";
+        public const string FIELD_REMOVE = "remove";
+        public const string FIELD_OP_VALUE_UPDATE = "update";
+        public const string FIELD_OP_VALUE_REMOVE = "remove";
+
         public const string IXM_NAME = "name";
         public const string IXM_KEY = "key";
         public const string IXM_UNIQUE = "unique";

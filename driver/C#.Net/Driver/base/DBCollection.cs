@@ -563,6 +563,94 @@ namespace SequoiaDB
             return new DBCursor(rtnSDBMessage, this);
         }
 
+        private DBCursor _queryAndModify(BsonDocument query, BsonDocument selector, BsonDocument orderBy, BsonDocument hint,
+                                         BsonDocument update, long skipRows, long returnRows, int flag, bool isUpdate, bool returnNew)
+        {
+            BsonDocument modify = new BsonDocument();
+            if (isUpdate)
+            {
+                if (update == null)
+                {
+                    throw new BaseException("SDB_INVALIDARG");
+                }
+
+                modify.Add(SequoiadbConstants.FIELD_OP, SequoiadbConstants.FIELD_OP_VALUE_UPDATE);
+                modify.Add(SequoiadbConstants.FIELD_LUPDATE, update);
+                modify.Add(SequoiadbConstants.FIELD_RETURNNEW, returnNew);
+            }
+            else
+            {
+                modify.Add(SequoiadbConstants.FIELD_OP, SequoiadbConstants.FIELD_OP_VALUE_REMOVE);
+                modify.Add(SequoiadbConstants.FIELD_REMOVE, true);
+            }
+
+            BsonDocument newHint = new BsonDocument();
+            if (hint != null)
+            {
+                newHint.Merge(hint);
+            }
+            newHint.Add(SequoiadbConstants.FIELD_MODIFY, modify);
+
+            flag |= DBQuery.FLG_QUERY_MODIFY;
+            return Query(query, selector, orderBy, newHint, skipRows, returnRows, flag);
+        }
+
+        /** \fn DBCursor QueryAndUpdate(BsonDocument query, BsonDocument selector, BsonDocument orderBy, BsonDocument hint, 
+         *                              BsonDocument update, long skipRows, long returnRows, int flag, bool returnNew) 
+         *  \brief Find documents of current collection
+         *  \param query The matching condition
+         *  \paramselector The selective rule
+         *  \param orderBy The ordered rule
+         *  \param hint One of the indexs in current collection, using default index to query if not provided
+         *           eg:{"":"ageIndex"}
+         *  \param update The update rule
+         *  \param skipRows Skip the first numToSkip documents, default is 0
+         *  \param returnRows Only return numToReturn documents, default is -1 for returning all results
+         *  \param flag the flag is used to choose the way to query, the optional options are as below:
+         *
+         *      DBQuery.FLG_QUERY_FORCE_HINT(0x00000080)      : Force to use specified hint to query, if database have no index assigned by the hint, fail to query
+         *      DBQuery.FLG_QUERY_PARALLED(0x00000100)        : Enable paralled sub query
+         *      DBQuery.FLG_QUERY_WITH_RETURNDATA(0x00000200) : In general, query won't return data until cursor get from database,
+         *                                                      when add this flag, return data in query response, it will be more high-performance
+         *
+         *  \param returnNew When true, returns the updated document rather than the original
+         *  \return The DBCursor of matching documents or null
+         *  \exception SequoiaDB.BaseException
+         *  \exception System.Exception
+         */
+        public DBCursor QueryAndUpdate(BsonDocument query, BsonDocument selector, BsonDocument orderBy, BsonDocument hint,
+                                       BsonDocument update, long skipRows, long returnRows, int flag, bool returnNew)
+        {
+            return _queryAndModify(query, selector, orderBy, hint, update, skipRows, returnRows, flag, true, returnNew);
+        }
+
+        /** \fn DBCursor QueryAndRemove(BsonDocument query, BsonDocument selector, BsonDocument orderBy, BsonDocument hint, 
+         *                              long skipRows, long returnRows, int flag) 
+         *  \brief Find documents of current collection
+         *  \param query The matching condition
+         *  \paramselector The selective rule
+         *  \param orderBy The ordered rule
+         *  \param hint One of the indexs in current collection, using default index to query if not provided
+         *           eg:{"":"ageIndex"}
+         *  \param skipRows Skip the first numToSkip documents, default is 0
+         *  \param returnRows Only return numToReturn documents, default is -1 for returning all results
+         *  \param flag the flag is used to choose the way to query, the optional options are as below:
+         *
+         *      DBQuery.FLG_QUERY_FORCE_HINT(0x00000080)      : Force to use specified hint to query, if database have no index assigned by the hint, fail to query
+         *      DBQuery.FLG_QUERY_PARALLED(0x00000100)        : Enable paralled sub query
+         *      DBQuery.FLG_QUERY_WITH_RETURNDATA(0x00000200) : In general, query won't return data until cursor get from database,
+         *                                                      when add this flag, return data in query response, it will be more high-performance
+         *
+         *  \return The DBCursor of matching documents or null
+         *  \exception SequoiaDB.BaseException
+         *  \exception System.Exception
+         */
+        public DBCursor QueryAndRemove(BsonDocument query, BsonDocument selector, BsonDocument orderBy, BsonDocument hint,
+                                       long skipRows, long returnRows, int flag)
+        {
+            return _queryAndModify(query, selector, orderBy, hint, null, skipRows, returnRows, flag, false, false);
+        }
+
         /** \fn DBCursor Explain(BsonDocument query, BsonDocument selector, BsonDocument orderBy, BsonDocument hint,
          *                       long skipRows, long returnRows, int flag, BsonDocument options) 
          *  \brief Find documents of current collection

@@ -42,6 +42,11 @@ namespace SequoiaDB
 	     */
         public const int FLG_QUERY_EXPLAIN = 0x00000400;
 
+        /** \memberof FLG_QUERY_MODIFY 0x00001000
+	     *  \brief query and modify
+	     */
+        public const int FLG_QUERY_MODIFY = 0x00001000;
+
        /** \property Matcher
         *  \brief Matching rule
         */
