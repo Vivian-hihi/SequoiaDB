@@ -143,7 +143,7 @@ namespace engine
 
       _optimize( inMsg, options, result ) ;
 
-      rc = _checkQueryModify( inMsg, options ) ;
+      rc = _checkQueryModify( inMsg, options, NULL ) ;
       if ( SDB_OK != rc )
       {
          goto error ;
@@ -250,7 +250,7 @@ namespace engine
 
       _optimize( inMsg, options, result ) ;
 
-      rc = _checkQueryModify( inMsg, options ) ;
+      rc = _checkQueryModify( inMsg, options, &grpSubCl ) ;
       if ( SDB_OK != rc )
       {
          goto error ;
