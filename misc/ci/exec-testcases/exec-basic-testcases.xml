@@ -95,7 +95,7 @@
 			<then>
 				<echo message="${test.suite.fullname}/commlib is exist , then test will add it " />
 				<sdbProperty name="commlib.option" value="${test.suite.fullname}/commlib.js" />
-			</then>	
+			</then>
 			<else>
 				<echo message="${test.suite.fullname}/commlib is not exist , then test will not add it" />
 				<sdbProperty name="commlib.option" value="" />
@@ -121,9 +121,6 @@
 		<exec executable="${sdb.fullname}" timeout="100000" dir="" outputproperty="db.RG.info" resultproperty="ret.code.forShards">
 			<arg line=" -s &quot; db = new Sdb('localhost',${coord.service.port});var rg = db.listReplicaGroups();println(rg);db.close(); &quot;" />
 		</exec>
-		<echo message="################################" />
-		<echo message="resultproperty=${resultproperty},coord=${coord.service.port}" />
-		<echo message="################################" />
 
 		<exec executable="${sdb.fullname}" timeout="100000" dir="" outputproperty="SDB.VERSION.INFO" resultproperty="ret.sdb.version.exec">
 			<arg line=" --version" />
@@ -145,7 +142,7 @@
 			<property name="URL.download.pre" value="http://192.168.30.184:8080" />
 		</else>
 		</if>
-		
+
 		<tstamp>
 			<format property="testcase.begin.time" pattern="yyyy-MM-dd-hh.mm.ss a" />
 		</tstamp>
@@ -159,16 +156,12 @@
 		</exec>
 		<echo message="Now testcase ${test.case.name}.js begin with ${testcase.begin.time}"/>
 
-		<sdbprefix prefixName="CS_PRIX">
+		<property name="CS_PRIX" value="cs_prefix" />
+		<sdbprefix prefixName="CL_PRIX">
 			<param name="${host.NAME}" value="${host.NAME}" />
 			<param name="${test.case.name}" value="${test.case.name}" />
 			<param name="${parallel.num}" value="${parallel.num}" />
-			<!-- <param name="${parallel.count}" value="${parallel.count}" /> -->
 		</sdbprefix>
-
-		<echo message="################################################" />
-		<echo message="CS_PRIX=${CS_PRIX}" />
-		<echo message="################################################" />
 
 		<sdbProperty name="testBeginStr" value="begin test,file is ${test.case.fullname}" />
 		<sdbProperty name="testEndStr" value="over test,file is ${test.case.fullname}" />
@@ -186,7 +179,7 @@
 				</exec>
 				<echo message="${beforeTestcase.screen.output}" />
 
-				<property name="sdb.cmd.argument" value=" -e &quot;var CSPREFIX='${CS_PRIX}';var COORDSVCNAME='${coord.service.port}';&quot; -f &quot;${testcases.path}/libs/func.js,${commlib.option},${test.case.fullname}&quot;" />
+				<property name="sdb.cmd.argument" value=" -e &quot;var CSPREFIX='${CS_PRIX}';var CLPREFIX='${CL_PRIX}';var COORDSVCNAME='${coord.service.port}';&quot; -f &quot;${testcases.path}/libs/func.js,${commlib.option},${test.case.fullname}&quot;" />
 				<property name="command" value="${sdb.fullname}${sdb.cmd.argument}" />
 				<echo message="Command:${command}" />
 				<echo message="The testcase ${test.case.fullname} path on ${testcases.path}" />
@@ -194,7 +187,7 @@
 					<arg line="${sdb.cmd.argument}" />
 				</exec>
 				<echo message="${screen.output}" />
-				
+
 				<property name="sdb.cmd.afterTestcase" value=" -e &quot; var COORDSVCNAME='${coord.service.port}' ;&quot; -f &quot;${testcases.path}/libs/func.js,${testcases.path}/libs/after_usecase.js&quot;" />
 				<echo message="Exec:${sdb.fullname} ${sdb.cmd.afterTestcase}" />
 				<exec executable="${sdb.fullname}" dir="" timeout="900000" outputproperty="afterTestcase.screen.output" resultproperty="afterTestcase.ret.code">
@@ -203,7 +196,7 @@
 				<echo message="${afterTestcase.screen.output}" />
 			</then>
 			<else>
-				<property name="sdb.cmd.argument" value=" -e &quot;var CSPREFIX='${CS_PRIX}';var COORDSVCNAME='${coord.service.port}';&quot; -f &quot;${commlib.option},${test.case.fullname}&quot;" />
+				<property name="sdb.cmd.argument" value=" -e &quot;var CSPREFIX='${CS_PRIX}';var CLPREFIX='${CL_PRIX}';var COORDSVCNAME='${coord.service.port}';&quot; -f &quot;${commlib.option},${test.case.fullname}&quot;" />
 				<property name="command" value="${sdb.fullname}${sdb.cmd.argument}" />
 				<echo message="Command:${command}" />
 				<echo message="The testcase ${test.case.fullname} path on ${testcases.path}" />
