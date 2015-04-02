@@ -1334,6 +1334,7 @@ namespace engine
             newItem->_groupID  = groupID ;
             newItem->_groupName = groupName ;
             newItem->_isHash   = item->_isHash ;
+            newItem->_ID       = ++_maxID ;
 
             item->_lowBound    = endKeyObj.getOwned() ;
 
@@ -1360,6 +1361,7 @@ namespace engine
          newItem->_groupID    = groupID ;
          newItem->_groupName  = groupName ;
          newItem->_isHash     = item->_isHash ;
+         newItem->_ID         = ++_maxID ;
 
          item->_upBound = beginKeyObj.getOwned() ;
 
