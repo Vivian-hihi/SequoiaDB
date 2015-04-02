@@ -9,9 +9,9 @@
 	<property name="build.testcases" value="${WORKSPACE}/sequoiadb/testcases/hlt" />
 	<property name="DRIVER.DIR" value="${WORKSPACE}/release/driver" />
 	<property file="${ci.script.path}/ci.test.properties" />
-	<taskdef resource="net/sf/antcontrib/antlib.xml">
+	<taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
 		<classpath>
-			<pathelement location="/usr/share/java/ant-contrib.jar" />
+			<pathelement location="${ci.script.path}/exec-tools/ant-sdbtasks.jar" />
 		</classpath>
 	</taskdef>
 

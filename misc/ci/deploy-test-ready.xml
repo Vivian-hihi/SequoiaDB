@@ -7,12 +7,12 @@
 	<property environment="env" />
 	<hostinfo prefix="local" />
 	<property name="release.path" value="${WORKSPACE}/release" />
-	
+
  	<taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
 		<classpath>
 			<pathelement location="${ci.script.path}/exec-tools/ant-sdbtasks.jar" />
 		</classpath>
-	</taskdef> 
+	</taskdef>
 
 	<target name="check" depends="">
 		<available file="${release.path}/build.version" property="build.version.exist" />
@@ -37,13 +37,13 @@
 		</if>
 		<echo message="check build.version is OK , now check the version is old?" />
 		<delete file="${release.path}/build.version" failonerror="false" />
-		<mkdir dir="${release.path}" />	
+		<mkdir dir="${release.path}" />
 		<copy file="${ci.script.path}/ci-properies-files/ci.test.properties.${os.publish.name}" tofile="${ci.script.path}/ci.test.properties" />
 		<property file="${ci.script.path}/ci.test.properties" />
-		
+
 		<stafTools workType="copy" workHost="${target.deploy_tar_gz.ip}" fileName="${copy_tar}/build.version" saveDir="${release.path}" toHost="${local.ADDR4}" />
-    	<property file="${release.path}/build.version" />
-    
+    <property file="${release.path}/build.version" />
+
 		<echo message="Old software is ${BUILD.NUMBER.LOCAL}" />
 		<echo message="New software is ${BUILD.NUMBER}" />
 		<if>
@@ -75,6 +75,3 @@
 		<untar src="${release.path}/${BUILD.DRIVER.FILENAME}" dest="${release.path}" compression="gzip" />
 	</target>
 </project>
-
-
-
