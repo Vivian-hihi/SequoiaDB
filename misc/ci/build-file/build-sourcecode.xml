@@ -21,13 +21,13 @@
   		<delete dir="${RELEASE_DIR}/" failonerror="false" />
 		<echo message="copy the ${CODE_DIR}/misc/ci/ci.build.properties.${CPU.version} file to be named ${CODE_DIR}/misc/ci/ci.build.properties" />
 		<copy file="${CODE_DIR}/misc/ci/ci-properies-files/ci.build.properties.${CPU.version}" tofile="${CODE_DIR}/misc/ci/ci.build.properties" />
-		<echo message="copy ${CODE_DIR}/misc/ci/ci.build.properties.${CPU.version} to ${CODE_DIR}/misc/ci/ci.build.properties is OK" />		
+		<echo message="copy ${CODE_DIR}/misc/ci/ci.build.properties.${CPU.version} to ${CODE_DIR}/misc/ci/ci.build.properties is OK" />
   	</target>
 
 	<target name="compile-src" depends="ready">
 		<property name="java.driver.jar.name" value="sequoiadb.jar" />
 
-		<echo message="Begin to compile source code..." />		
+		<echo message="Begin to compile source code..." />
 		<delete dir="${CODE_DIR}/bin"  failonerror="true" />
     	<mkdir dir="${CODE_DIR}/bin" />
     	<delete dir="${CODE_DIR}/build" failonerror="true" />
@@ -75,7 +75,7 @@
 			<arg line=" all" />
 		</exec>
 
-		<ant antfile="${WORKSPACE}/sequoiadb/driver/java/build_driver.xml" >
+		<ant antfile="${WORKSPACE}/sequoiadb/driver/java/build.xml" >
 		   <property name="JDK.VERSION.5" value="${choise.jdk5}" />
 		   <property name="base.dir" value="${WORKSPACE}/sequoiadb/driver/java" />
 		</ant>
@@ -104,8 +104,8 @@
     		<arg line="${CODE_DIR}/misc/ci/exec-tools/print_version.c -o ${CODE_DIR}/misc/ci/exec-tools/print_version -I${CODE_DIR}/SequoiaDB/engine/include" />
     	</exec>
     	<exec executable="${CODE_DIR}/misc/ci/exec-tools/print_version" dir="${CODE_DIR}/misc/ci/exec-tools/" failonerror="true" outputproperty="project.version" />
-    	<echo message="&#10;project.version=${project.version}" file="${CODE_DIR}/misc/ci/ci.build.properties" append="true" />	
-		<echo message="compile source code completed." />		
+    	<echo message="&#10;project.version=${project.version}" file="${CODE_DIR}/misc/ci/ci.build.properties" append="true" />
+		<echo message="compile source code completed." />
 	</target>
 
 	<target name="mk-driver" depends="compile-src">
@@ -171,11 +171,11 @@
 		<tar destfile="${RELEASE_DIR}/${project.name}-driver-${project.version}-${os.and.platform}.tar.gz" basedir="${RELEASE_DIR}" includes="driver/**" compression="gzip" />
 		<echo message="Make driver package completed." />
 	</target>
-  
+
   	<target name="build-and-copy-php" depends="">
   		<delete dir="${CODE_DIR}/driver/php5/build}" />
   		<mkdir dir="${RELEASE_DIR}/sequoiadb/lib/phplib" />
-  	
+
   		<chmod perm="u+x" file="${WORKSPACE}/sequoiadb/thirdparty/php/linux/retriConfig.sh" />
   		<exec executable="${WORKSPACE}/sequoiadb/thirdparty/php/linux/retriConfig.sh" dir="${WORKSPACE}/sequoiadb/thirdparty/php/linux" failonerror="true">
 			<arg line="  ${php.version} " />
@@ -183,7 +183,7 @@
 		<exec executable="scons" dir="${WORKSPACE}/sequoiadb/driver/php5" failonerror="true">
 			<arg line=" ${compile.arg.line} --phpversion=${php.version}" />
 		</exec>
-		
+
 		<copy file="${CODE_DIR}/driver/php5/build/${build.result.dir}/libsdbphp-${php.version}.so" todir="${DRIVER.DIR}/lib/phplib" />
 		<copy file="${CODE_DIR}/driver/php5/build/${build.result.dir}/libsdbphp-${php.version}.so" todir="${RELEASE_DIR}/sequoiadb/lib/phplib" />
  	</target>
@@ -198,7 +198,7 @@
 		</exec>
 		<copy file="${python.dir}/${python.tar}" todir="${DRIVER.DIR}/python" />
  	</target>
-  
+
 	<target name="mk-release" depends="mk-driver,compile-src">
 		<property name="DRIVER.DIR" value="${RELEASE_DIR}/driver" />
 
@@ -244,7 +244,7 @@
 	    </copy>
 		<copy todir="${RELEASE_DIR}/sequoiadb/lib">
 			<fileset dir="${CODE_DIR}/client/lib/" includes="**/*" />
-		</copy>	
+		</copy>
 		<copy todir="${RELEASE_DIR}/sequoiadb/tools/sdbsupport">
 			<fileset dir="${CODE_DIR}/tools/sdbsupport" includes="**/*" />
 		</copy>
@@ -274,7 +274,7 @@
 		<copy file="${CODE_DIR}/driver/postgresql/sdb_fdw.so" tofile="${RELEASE_DIR}/sequoiadb/postgresql/sdb_fdw.so" />
 		<copy file="${CODE_DIR}/driver/postgresql/sdb_fdw.control" tofile="${RELEASE_DIR}/sequoiadb/postgresql/sdb_fdw.control" />
 		<copy file="${CODE_DIR}/driver/postgresql/sdb_fdw--1.0.sql" tofile="${RELEASE_DIR}/sequoiadb/postgresql/sdb_fdw--1.0.sql" />
-		
+
 		<if>
 			<equals arg1="${os.arch}" arg2="ppc64" />
 			<then>
@@ -293,7 +293,7 @@
 				<property name="PHP.VERSION" value="php_win" />
 			</else>
 		</if>
-	
+
 		<copy todir="${RELEASE_DIR}/sequoiadb/java/jdk">
 			<fileset dir="${CODE_DIR}/java/${jdk.file.dir}/" />
 		</copy>
@@ -301,7 +301,7 @@
 			<fileset dir="${CODE_DIR}/conf/samples/" />
 		</copy>
 		<copy file="${CODE_DIR}/conf/sdbcm.conf" todir="${RELEASE_DIR}/sequoiadb/conf" />
-		
+
 		<copy todir="${RELEASE_DIR}/sequoiadb/tools/server/php">
 			<fileset dir="${CODE_DIR}/tools/server/${PHP.VERSION}/" />
 		</copy>
@@ -311,7 +311,7 @@
 		<copy file="${CODE_DIR}/script/install_om.sh" todir="${RELEASE_DIR}/sequoiadb/" />
 
 	  	<copy file="${CODE_DIR}/script/sdbwsart" todir="${RELEASE_DIR}/sequoiadb/bin" />
-	  	<replaceregexp file="${RELEASE_DIR}/sequoiadb/bin/sdbwsart" match="&#13;&#10;" replace="&#10;" flags="g" />  
+	  	<replaceregexp file="${RELEASE_DIR}/sequoiadb/bin/sdbwsart" match="&#13;&#10;" replace="&#10;" flags="g" />
 	  	<copy file="${CODE_DIR}/script/sdbwstop" todir="${RELEASE_DIR}/sequoiadb/bin" />
 	  	<replaceregexp file="${RELEASE_DIR}/sequoiadb/bin/sdbwstop" match="&#13;&#10;" replace="&#10;" flags="g" />
 		<copy todir="${RELEASE_DIR}/sequoiadb/doc">
@@ -345,7 +345,7 @@
 				<echo message="${version.name}" />
 			</else>
 		</if>
-		
+
 		<exec dir="${RELEASE_DIR}" executable="builder" failonerror="true">
 			<arg line="build sequoiadb_server.xml --setvars project.version=${project.version}  --setvars platform=${os.and.platform} --setvars enterpriseversion=${version.name} --setvars project.outputDirectory=${RELEASE_DIR}" />
 		</exec>
@@ -365,7 +365,7 @@
 		        <delete file="/usr/src/packages/SPECS/sequoiadb-${project.version}.spec" />
 				<echo message="Make rpm package completed.." /> -->
 
-				
+
 				<!-- <echo message="begin to make rpm package.." />
 				<exec executable="python" timeout="100000" dir="${WORKSPACE}/sequoiadb/script" outputproperty="RPM.INFO" resultproperty="ret.rpm">
 					<arg line=" package.py" />
