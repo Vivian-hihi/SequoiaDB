@@ -2,12 +2,6 @@
 <!--@param ${JDK.VERSION.5}: choise true|false-->
 <!--@param ${basedir} : where the java driver source's root is -->
 <project name="build_java_driver" default="build_java_driver" basedir=".">
-    
-	<taskdef resource="net/sf/antcontrib/antlib.xml">
-		<classpath>
-			<pathelement location="${basedir}/lib/ant-contrib.jar" />
-		</classpath>
-	</taskdef>
   <target name="clean_env" depends="">
     <delete dir="${basedir}/build" failonerror="false" />
     <delete dir="${basedir}/temp" failonerror="false" />
