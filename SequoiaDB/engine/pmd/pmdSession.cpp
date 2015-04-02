@@ -150,7 +150,7 @@ namespace engine
             else
             {
                PD_LOG( PDERROR, "SSL handshake received but server is started "
-                                "without SSL support" ) ;
+                       "without SSL support" ) ;
                rc = SDB_NETWORK ;
                break ;
             }
@@ -193,8 +193,9 @@ namespace engine
             {
                if ( SDB_APP_FORCED != rc )
                {
-                  PD_LOG( PDERROR, "Session failed to recv rest msg, rc: %d",
-                          sessionName(), rc ) ;
+                  PD_LOG( PDERROR, "Session[%s] failed to recv msg[len: %u], "
+                          "rc: %d", sessionName(), msgSize - sizeof(UINT32),
+                          rc ) ;
                }
                break ;
             }
