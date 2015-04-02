@@ -106,7 +106,7 @@ namespace engine
    }
 
    static INT32 _rtnParseQueryModify( BSONObj &hint,
-                                           rtnQueryModifier** modifier )
+                                      rtnQueryModifier** modifier )
    {
       BSONObjBuilder builder ;
       BSONObjIterator iter( hint );
@@ -566,7 +566,7 @@ namespace engine
       {
          dataContext->getSelector().setStringOutput( TRUE ) ;
       }
-      
+
       if ( ppContext )
       {
          *ppContext = dataContext ;

@@ -1062,8 +1062,21 @@ namespace engine
       {
          rtnContextBase *pContext = NULL ;
          _pCollectionName = pCollectionName ;
+
+         if ( flags & FLG_QUERY_MODIFY )
+         {
+            rc = _check ( w ) ;
+            if ( SDB_OK != rc )
+            {
+               goto error ;
+            }
+         }
+         else
+         {
+            w = 1 ;
+         }
+
          //check cata
-         w = 1 ;
          rc = _checkCata ( pQuery->version, pCollectionName, w, isMainCL ) ;
          if ( SDB_OK != rc )
          {
@@ -1077,12 +1090,12 @@ namespace engine
             BSONObj orderBy ( pOrderByBuffer ) ;
             BSONObj hint ( pHintBuffer ) ;
             MON_SAVE_OP_DETAIL( _pEDUCB->getMonAppCB(), MSG_BS_QUERY_REQ,
-                              "CL:%s, Match:%s, Selector:%s, OrderBy:%s, Hint:%s",
-                              pCollectionName,
-                              matcher.toString().c_str(),
-                              selector.toString().c_str(),
-                              orderBy.toString().c_str(),
-                              hint.toString().c_str() ) ;
+                                "CL:%s, Match:%s, Selector:%s, OrderBy:%s, Hint:%s",
+                                pCollectionName,
+                                matcher.toString().c_str(),
+                                selector.toString().c_str(),
+                                orderBy.toString().c_str(),
+                                hint.toString().c_str() ) ;
 
             PD_LOG ( PDDEBUG, "Session[%s] Query: matcher: %s\nselector: "
                      "%s\norderBy: %s\nhint:%s", sessionName(),
@@ -1093,7 +1106,8 @@ namespace engine
             {
                rc = rtnQuery( pCollectionName, selector, matcher, orderBy,
                               hint, flags, _pEDUCB, numToSkip, numToReturn,
-                              _pDmsCB, _pRtnCB, contextID, &pContext, TRUE ) ;
+                              _pDmsCB, _pRtnCB, contextID, &pContext, TRUE,
+                              _pDpsCB ) ;
             }
             else
             {
@@ -1671,7 +1685,7 @@ namespace engine
             rc = rtnQuery( (*iterSubCLSet).c_str(), selector, boNewMatcher,
                            orderBy, hint, flags, cb, subNumToSkip,
                            subNumToReturn, _pDmsCB, _pRtnCB,
-                           subContextID ) ;
+                           subContextID, NULL, FALSE, _pDpsCB ) ;
             PD_RC_CHECK( rc, PDERROR,
                          "Query sub-collection(%s) failed!(rc=%d)",
                          iterSubCLSet->c_str(), rc );
