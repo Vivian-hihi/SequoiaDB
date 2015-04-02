@@ -975,6 +975,117 @@ public class DBCollection {
 		return cursor;
 	}
 
+	private DBCursor _queryAndModify(BSONObject matcher, BSONObject selector,
+									 BSONObject orderBy, BSONObject hint, BSONObject update,
+									 long skipRows, long returnRows, int flag,
+									 boolean isUpdate, boolean returnNew)
+									 throws BaseException {
+		BSONObject modify = new BasicBSONObject();
+
+		if (isUpdate) {
+			if (update == null || update.isEmpty()) {
+				throw new BaseException("SDB_INVALIDARG", "update can't be empty");
+			}
+
+			modify.put(SequoiadbConstants.FIELD_NAME_OP,
+					   SequoiadbConstants.FIELD_OP_VALUE_UPDATE);
+			modify.put(SequoiadbConstants.FIELD_NAME_LUPDATE, update);
+			modify.put(SequoiadbConstants.FIELD_NAME_RETURNNEW, returnNew);
+		} else {
+			modify.put(SequoiadbConstants.FIELD_NAME_OP,
+					   SequoiadbConstants.FIELD_OP_VALUE_REMOVE);
+			modify.put(SequoiadbConstants.FIELD_NAME_REMOVE, true);
+		}
+
+		BSONObject newHint = new BasicBSONObject();
+		if (hint != null) {
+			newHint.putAll(hint);
+		}
+		newHint.put(SequoiadbConstants.FIELD_NAME_MODIFY, modify);
+
+		flag |= DBQuery.FLG_QUERY_MODIFY;
+		return query(matcher, selector, orderBy, newHint,
+					 skipRows, returnRows, flag);
+	}
+
+	/**
+	 * @fn DBCursor queryAndUpdate(BSONObject matcher, BSONObject selector,
+	 *                             BSONObject orderBy, BSONObject hint, BSONObject update,
+	 *                             long skipRows, long returnRows,
+	 *                             int flag, boolean returnNew)
+	 * @brief Get the matching documents in current collection and update.
+     * @param matcher 
+     *            the matching rule, return all the documents if null
+	 * @param selector
+	 *            the selective rule, return the whole document if null
+	 * @param orderBy
+	 *            the ordered rule, never sort if null
+	 * @param update
+	 *            the update rule, can't be null
+	 * @param hint
+	 *            the hint, automatically match the optimal hint if null
+	 * @param skipRows
+	 *            skip the first numToSkip documents, never skip if this parameter is 0
+	 * @param returnRows
+	 *            only return returnRows documents, return all if this parameter is -1
+	 * @param flag the flag is used to choose the way to query, the optional options are as below:  
+     * <ul>
+     * <li>DBQuery.FLG_QUERY_STRINGOUT
+     * <li>DBQuery.FLG_QUERY_FORCE_HINT 
+     * <li>DBQuery.FLG_QUERY_PARALLED
+     * <li>DBQuery.FLG_QUERY_WITH_RETURNDATA
+     * <li>DBQuery.FLG_QUERY_EXPLAIN
+     * </ul>
+     * @param returnNew
+	 *            When true, returns the updated document rather than the original
+	 * @return a DBCursor instance of the result or null if no any matched document
+	 * @exception com.sequoiadb.exception.BaseException
+	 */
+	public DBCursor queryAndUpdate(BSONObject matcher, BSONObject selector,
+								   BSONObject orderBy, BSONObject hint, BSONObject update,
+								   long skipRows, long returnRows, int flag, boolean returnNew)
+								   throws BaseException {
+		return _queryAndModify(matcher, selector, orderBy, hint, update,
+							   skipRows, returnRows, flag, true, returnNew);
+	}
+
+	/**
+	 * @fn DBCursor queryAndRemove(BSONObject matcher, BSONObject selector,
+	 *                             BSONObject orderBy, BSONObject hint,
+	 *                             long skipRows, long returnRows,
+	 *                             int flag)
+	 * @brief Get the matching documents in current collection and update.
+     * @param matcher 
+     *            the matching rule, return all the documents if null
+	 * @param selector
+	 *            the selective rule, return the whole document if null
+	 * @param orderBy
+	 *            the ordered rule, never sort if null
+	 * @param hint
+	 *            the hint, automatically match the optimal hint if null
+	 * @param skipRows
+	 *            skip the first numToSkip documents, never skip if this parameter is 0
+	 * @param returnRows
+	 *            only return returnRows documents, return all if this parameter is -1
+	 * @param flag the flag is used to choose the way to query, the optional options are as below:  
+     * <ul>
+     * <li>DBQuery.FLG_QUERY_STRINGOUT
+     * <li>DBQuery.FLG_QUERY_FORCE_HINT 
+     * <li>DBQuery.FLG_QUERY_PARALLED
+     * <li>DBQuery.FLG_QUERY_WITH_RETURNDATA
+     * <li>DBQuery.FLG_QUERY_EXPLAIN
+     * </ul>
+	 * @return a DBCursor instance of the result or null if no any matched document
+	 * @exception com.sequoiadb.exception.BaseException
+	 */
+	public DBCursor queryAndRemove(BSONObject matcher, BSONObject selector,
+								   BSONObject orderBy, BSONObject hint,
+								   long skipRows, long returnRows, int flag)
+								   throws BaseException {
+		return _queryAndModify(matcher, selector, orderBy, hint, null,
+							   skipRows, returnRows, flag, false, false);
+	}
+
 	/**
 	 * @fn DBCursor getIndex(String name)
 	 * @brief Get all of or one of the indexes in current collection

@@ -154,6 +154,14 @@ public class SequoiadbConstants {
 	public final static String FIELD_NAME_LOB_OID = "Oid";
 	public final static String FIELD_NAME_LOB_SIZE = "Size";
     public final static String FIELD_NAME_LOB_CREATTIME = "CreateTime";
+
+	public final static String FIELD_NAME_MODIFY = "$Modify";
+	public final static String FIELD_NAME_OP = "op";
+	public final static String FIELD_NAME_LUPDATE = "update";
+	public final static String FIELD_NAME_RETURNNEW = "returnnew";
+	public final static String FIELD_NAME_REMOVE = "remove";
+	public final static String FIELD_OP_VALUE_UPDATE = "update";
+	public final static String FIELD_OP_VALUE_REMOVE = "remove";
 	
 	public final static String FMP_FUNC_TYPE = "funcType";
 	public final static String FIELD_COLLECTION = "Collection";
