@@ -1337,6 +1337,15 @@ namespace engine
    public:
       virtual const CHAR * name () { return NAME_TRUNCATE ; }
       virtual RTN_COMMAND_TYPE type () { return CMD_TRUNCATE ; }
+      virtual BOOLEAN writable()
+      {
+         return TRUE ;
+      }
+
+      virtual const CHAR * collectionFullName()
+      {
+         return _fullName ;
+      }
 
       virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
                            const CHAR *pMatcherBuff,

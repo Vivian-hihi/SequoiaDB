@@ -2039,6 +2039,9 @@ namespace engine
          rc = _dropMainCL( pCommand->collectionFullName(), w, contextID );
          break;
 
+      case CMD_TRUNCATE:
+         rc = _truncateMainCL( pCommand->collectionFullName() ) ;
+         break ;
       default:
          rc = SDB_MAIN_CL_OP_ERR;
          break;
@@ -3089,6 +3092,62 @@ namespace engine
       {
          rtnCB->contextDelete( context->contextID(), _pEDUCB ) ;
       }
+      goto done ;
+   }
+
+   INT32 _clsShdSession::_truncateMainCL( const CHAR *fullName )
+   {
+      INT32 rc = SDB_OK ;
+      BOOLEAN agentLocked = FALSE ;
+      std::vector< std::string > subCLs ;
+      std::vector< std::string >::iterator itr ;
+      _clsCatalogAgent *cataAgent = pmdGetKRCB()->getClsCB()->getCatAgent() ;
+      cataAgent->lock_r();
+      agentLocked = TRUE ;
+      _clsCatalogSet *cataSet = cataAgent->collectionSet( fullName );
+      if ( NULL == cataSet )
+      {
+         cataAgent->release_r() ;
+         agentLocked = FALSE ;
+         rc = SDB_DMS_NOTEXIST ;
+         PD_LOG( PDERROR, "can not find main collection:%s", fullName );
+         goto error;
+      }
+
+      cataSet->getSubCLList( subCLs );
+      cataAgent->release_r() ;
+      agentLocked = FALSE ;
+
+      for ( itr = subCLs.begin(); itr != subCLs.end(); ++itr )
+      {
+         rc = rtnTruncCollectionCommand( itr->c_str(),
+                                         _pEDUCB,
+                                         _pDmsCB,
+                                         _pDpsCB ) ;
+         if ( SDB_DMS_NOTEXIST == rc ||
+              SDB_DMS_CS_NOTEXIST == rc )
+         {
+            rc = SDB_OK ;
+            continue ;
+         }
+         else if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to truncate collection:%s, rc:%d",
+                    itr->c_str(), rc ) ;
+            goto error ;
+         }
+         else
+         {
+            continue ;
+         }
+      }
+   done:
+      if ( agentLocked )
+      {
+         cataAgent->release_r() ;
+      }
+      return rc ;
+   error:
       goto done ;
    }
 }

@@ -137,6 +137,7 @@ namespace engine
    RTN_COORD_CMD_ADD( COORD_CMD_LIST_LOBS, rtnCoordCMDListLobs )
    RTN_COORD_CMD_ADD( COORD_CMD_ALTER_IMAGE, rtnCoordAlterImage )
    RTN_COORD_CMD_ADD( COORD_CMD_REELECT, rtnCoordCMDReelection )
+   RTN_COORD_CMD_ADD( COORD_CMD_TRUNCATE, rtnCoordCMDTruncate )
    RTN_COORD_CMD_END
 
    /*

@@ -123,6 +123,7 @@ namespace engine
    #define COORD_CMD_LIST_LOBS                CMD_ADMIN_PREFIX CMD_NAME_LIST_LOBS
    #define COORD_CMD_ALTER_IMAGE              CMD_ADMIN_PREFIX CMD_NAME_ALTER_IMAGE
    #define COORD_CMD_REELECT                  CMD_ADMIN_PREFIX CMD_NAME_REELECT
+   #define COORD_CMD_TRUNCATE                 CMD_ADMIN_PREFIX CMD_NAME_TRUNCATE
 
    class rtnCoordCommand : virtual public rtnCoordOperator
    {
@@ -1283,5 +1284,13 @@ namespace engine
                              rtnContextBuf *buf ) ;
    } ;
 
+   class rtnCoordCMDTruncate : public rtnCoordCommand
+   {
+   public:
+      virtual INT32 execute( MsgHeader *pMsg,
+                             pmdEDUCB *cb,
+                             INT64 &contextID,
+                             rtnContextBuf *buf ) ;
+   } ;
 }
 #endif

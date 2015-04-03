@@ -208,6 +208,8 @@ namespace engine
                                            SINT64 &mainCLContextID,
                                            SINT64 &contextID ) ;
 
+         INT32 _truncateMainCL( const CHAR *fullName ) ;
+
       protected:
          _clsReplicateSet       *_pReplSet ;
          _clsShardMgr           *_pShdMgr ;
