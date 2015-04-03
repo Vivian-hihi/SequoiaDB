@@ -1701,6 +1701,109 @@ done:
    return MAKE_RETURN_INT( rc ) ;
 }
 
+__METHOD_IMP(cl_query_and_update)
+{
+   INT32 rc                       = 0 ;
+   INT32 return_new_num           = 0 ;
+   BOOLEAN return_new             = FALSE ;
+   INT64 num_to_skip              = 0 ;
+   INT64 num_to_return            = -1 ;
+   PYOBJECT *obj                  = NULL ;
+   PYOBJECT *cursor_object        = NULL ;
+   PYOBJECT *bson_condition       = NULL ;
+   PYOBJECT *bson_selector        = NULL ;
+   PYOBJECT *bson_order_by        = NULL ;
+   PYOBJECT *bson_hint            = NULL ;
+   PYOBJECT *bson_update          = NULL ;
+   sdbCollection *cl              = NULL ;
+   sdbCursor *cursor              = NULL ;
+   const bson::BSONObj *condition = NULL ;
+   const bson::BSONObj *selector  = NULL ;
+   const bson::BSONObj *order_by  = NULL ;
+   const bson::BSONObj *hint      = NULL ;
+   const bson::BSONObj *update    = NULL ;
+
+   if ( !PARSE_PYTHON_ARGS( args, "OOOOOOLLiO", &obj, &cursor_object,
+        &bson_condition,  &bson_selector, &bson_order_by,
+        &bson_hint, &num_to_skip, &num_to_return, &return_new_num, &bson_update ) )
+   {
+      rc = SDB_INVALIDARGS ;
+      goto done ;
+   }
+
+   CAST_PYOBJECT_TO_COBJECT( obj, sdbCollection, cl ) ;
+   CAST_PYOBJECT_TO_COBJECT( cursor_object, sdbCursor, cursor ) ;
+   CAST_PYBSON_TO_CPPBSON( bson_condition, condition ) ;
+   CAST_PYBSON_TO_CPPBSON( bson_selector, selector ) ;
+   CAST_PYBSON_TO_CPPBSON( bson_order_by, order_by ) ;
+   CAST_PYBSON_TO_CPPBSON( bson_hint, hint ) ;
+   CAST_PYBSON_TO_CPPBSON( bson_update, update ) ;
+   return_new = return_new_num != 0 ? TRUE : FALSE ;
+
+   rc = cl->queryAndUpdate( *cursor, *update, *condition, *selector, *order_by, *hint,
+      num_to_skip, num_to_return, 0, return_new ) ;
+   if ( rc )
+   {
+      goto done ;
+   }
+
+done:
+   DELETE_CPPOBJECT( condition ) ;
+   DELETE_CPPOBJECT( selector ) ;
+   DELETE_CPPOBJECT( order_by ) ;
+   DELETE_CPPOBJECT( hint ) ;
+   DELETE_CPPOBJECT( update ) ;
+   return MAKE_RETURN_INT( rc ) ;
+}
+
+__METHOD_IMP(cl_query_and_remove)
+{
+   INT32 rc                       = 0 ;
+   INT64 num_to_skip              = 0 ;
+   INT64 num_to_return            = -1 ;
+   PYOBJECT *obj                  = NULL ;
+   PYOBJECT *cursor_object        = NULL ;
+   PYOBJECT *bson_condition       = NULL ;
+   PYOBJECT *bson_selector        = NULL ;
+   PYOBJECT *bson_order_by        = NULL ;
+   PYOBJECT *bson_hint            = NULL ;
+   sdbCollection *cl              = NULL ;
+   sdbCursor *cursor              = NULL ;
+   const bson::BSONObj *condition = NULL ;
+   const bson::BSONObj *selector  = NULL ;
+   const bson::BSONObj *order_by  = NULL ;
+   const bson::BSONObj *hint      = NULL ;
+
+   if ( !PARSE_PYTHON_ARGS( args, "OOOOOOLL", &obj, &cursor_object,
+      &bson_condition,  &bson_selector, &bson_order_by,
+      &bson_hint, &num_to_skip, &num_to_return ) )
+   {
+      rc = SDB_INVALIDARGS ;
+      goto done ;
+   }
+
+   CAST_PYOBJECT_TO_COBJECT( obj, sdbCollection, cl ) ;
+   CAST_PYOBJECT_TO_COBJECT( cursor_object, sdbCursor, cursor ) ;
+   CAST_PYBSON_TO_CPPBSON( bson_condition, condition ) ;
+   CAST_PYBSON_TO_CPPBSON( bson_selector, selector ) ;
+   CAST_PYBSON_TO_CPPBSON( bson_order_by, order_by ) ;
+   CAST_PYBSON_TO_CPPBSON( bson_hint, hint ) ;
+
+   rc = cl->queryAndRemove( *cursor, *condition, *selector, *order_by, *hint,
+      num_to_skip, num_to_return, 0 ) ;
+   if ( rc )
+   {
+      goto done ;
+   }
+
+done:
+   DELETE_CPPOBJECT( condition ) ;
+   DELETE_CPPOBJECT( selector ) ;
+   DELETE_CPPOBJECT( order_by ) ;
+   DELETE_CPPOBJECT( hint ) ;
+   return MAKE_RETURN_INT( rc ) ;
+}
+
 __METHOD_IMP(cl_create_index)
 {
    INT32 rc                       = 0 ;
@@ -3087,6 +3190,8 @@ static PyMethodDef sequoiadb_methods[] = {
    {"cl_upsert",                       cl_upsert,                       METH_VARARGS},
    {"cl_delete",                       cl_del,                          METH_VARARGS},
    {"cl_query",                        cl_query,                        METH_VARARGS},
+   {"cl_query_and_update",             cl_query_and_update,             METH_VARARGS},
+   {"cl_query_and_remove",             cl_query_and_remove,             METH_VARARGS},
    {"cl_create_index",                 cl_create_index,                 METH_VARARGS},
    {"cl_get_index",                    cl_get_index,                    METH_VARARGS},
    {"cl_drop_index",                   cl_drop_index,                   METH_VARARGS},

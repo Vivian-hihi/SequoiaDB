@@ -69,6 +69,8 @@ __METHOD_DECLARE(cl_update) ;
 __METHOD_DECLARE(cl_upsert) ;
 __METHOD_DECLARE(cl_del) ;
 __METHOD_DECLARE(cl_query) ;
+__METHOD_DECLARE(cl_query_and_update) ;
+__METHOD_DECLARE(cl_query_and_remove) ;
 __METHOD_DECLARE(cl_create_index) ;
 __METHOD_DECLARE(cl_get_index) ;
 __METHOD_DECLARE(cl_drop_index) ;
