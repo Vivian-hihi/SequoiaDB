@@ -17,11 +17,11 @@
 			<pathelement location="/usr/share/java/ant-contrib.jar" />
 		</classpath>
 	</taskdef> -->
-	<taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
+	<!-- <taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
 		<classpath>
 			<pathelement location="${test.machine.deploy.path}/deploy/ant-sdbtasks/ant-sdbtasks.jar" />
 		</classpath>
-	</taskdef>
+	</taskdef> -->
 
 	<target name="clean-install" depends="">
 		<hostinfo prefix="host" />
