@@ -1072,10 +1072,7 @@ namespace engine
          rc = result ;
       }
 
-   done:
       return rc ;
-   error:
-      goto done ;
    }
 
    INT32 utilGetNodeVerInfo( const CHAR *pCommand,
@@ -1102,7 +1099,8 @@ namespace engine
       fread( buff, OSS_MAX_PATHSIZE, 1, fp ) ;
 
       rc = utilParseVersion( buff, verInfo._version, verInfo._subVersion,
-                             verInfo._release, verInfo._buildStr ) ;
+                             verInfo._fixVersion, verInfo._release,
+                             verInfo._buildStr ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Failed to parse version info[%s], rc: %d",
