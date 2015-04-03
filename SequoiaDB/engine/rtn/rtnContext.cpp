@@ -1047,7 +1047,6 @@ namespace engine
    {
       vector<INT64>* dollarList = NULL ;
       DMS_ACCESS_TYPE accessType = DMS_ACCESS_TYPE_FETCH ;
-      BOOLEAN writable = FALSE ;
       INT32 rc = SDB_OK ;
 
       if ( _queryModifier )
@@ -1086,7 +1085,7 @@ namespace engine
    done:
       return rc ;
    error:
-      goto error ;
+      goto done ;
    }
 
    INT32 _rtnContextData::_prepareByTBScan( pmdEDUCB * cb,

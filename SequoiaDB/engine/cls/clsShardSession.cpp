@@ -1670,7 +1670,11 @@ namespace engine
                    "Failed to create new main-collection context(rc=%d)",
                    rc );
 
-      rc = pContextMainCL->open( orderBy, numToReturn, numToSkip,
+      rc = pContextMainCL->open( orderBy,
+                                 ( FLG_QUERY_EXPLAIN & flags ) ?
+                                 -1 : numToReturn,
+                                 ( FLG_QUERY_EXPLAIN & flags ) ?
+                                 0 : numToSkip,
                                  includeShardingOrder );
       PD_RC_CHECK( rc, PDERROR,
                    "Open main-collection context failed(rc=%d)",
