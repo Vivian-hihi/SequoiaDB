@@ -11,12 +11,6 @@
 <project name="Install-Software" default="install-software">
 	<property file="${test.basedir}/ci.test.properties" />
 	<property name="db.path" value="${install.path}/sequoiadb" />
-
-	<!-- <taskdef resource="net/sf/antcontrib/antlib.xml">
-		<classpath>
-			<pathelement location="/usr/share/java/ant-contrib.jar" />
-		</classpath>
-	</taskdef> -->
 	<taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
 		<classpath>
 			<pathelement location="${test.machine.deploy.path}/deploy/ant-sdbtasks/ant-sdbtasks.jar" />
