@@ -818,7 +818,7 @@ namespace engine
                                orderBy, realHint,
                                pCollectionName,
                                numToSkip, numToReturn,
-                               OSS_BIT_CLEAR( flags, FLG_QUERY_EXPLAIN),
+                               OSS_BIT_CLEAR( flags, FLG_QUERY_EXPLAIN | FLG_QUERY_MODIFY ),
                                FALSE ) ;
 
       rtnContextExplain *context = NULL ;
