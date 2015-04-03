@@ -81,12 +81,11 @@
 				<property name="deploy.host.name" value="${test.machine.no3.basic}" />
 			</ant>
 		</parallel>
-		<sleep seconds="5"/>
 	</target>
 
 	<target name="Deploy-And-Test-Case" depends="Clean-Env-Before-Test">
 		<echo message="Begin to deploy one case and test.... " />
-	    <echo message="Command:antfile  -f ${deploy.case.fullname} --target=Deploy -Dinstall.package.fullname=${release.path}/${BUILD.INSTALL.FILENAME} -Ddeploy.file.fullname=${deploy.file.fullname} -Ddeploy.path=${WORKSPACE}/deploy " />	
+	    <echo message="Command:antfile -f ${deploy.case.fullname} --target=Deploy -Dinstall.package.fullname=${release.path}/${BUILD.INSTALL.FILENAME} -Ddeploy.file.fullname=${deploy.file.fullname} -Ddeploy.path=${WORKSPACE}/deploy " />	
 		<ant antfile="${deploy.case.fullname}" dir="${ci.script.file.path}" target="Deploy" inheritAll="true">
 			<property name="install.package.fullname" value="${release.path}/${BUILD.INSTALL.FILENAME}" />
 			<property name="deploy.file.fullname" value="${deploy.file.fullname}" />

@@ -19,13 +19,13 @@
 	</taskdef>  -->
 
 	<target name="Uninstall-Software" depends="">
-    <stafTools workHost="${deploy.host.name}" workType="shell" workDir="${test.machine.software.path}" common="ant -l ${test.machine.software.path}/clean-install-basic-in-host.log -f ${test.machine.software.path}/install-basic-in-host.xml clean-install -Dtest.basedir=${test.machine.software.path}" />
-    <stafTools workHost="${deploy.host.name}" worktype="get" fileName="${test.machine.software.path}/clean-install-basic-in-host.log" />
+	    <stafTools workHost="${deploy.host.name}" workType="shell" workDir="${test.machine.software.path}" common="ant -l ${test.machine.software.path}/clean-install-basic-in-host.log -f ${test.machine.software.path}/install-basic-in-host.xml clean-install -Dtest.basedir=${test.machine.software.path}" />
+	    <stafTools workHost="${deploy.host.name}" worktype="get" fileName="${test.machine.software.path}/clean-install-basic-in-host.log" />
 
-    <stafTools workType="copy" workHost="${deploy.host.name}" fileName="${test.machine.software.path}/clean-install-basic-in-host.log" saveDir="/opt" toHost="${deploy.host.name}" />
+	    <stafTools workType="copy" workHost="${deploy.host.name}" fileName="${test.machine.software.path}/clean-install-basic-in-host.log" saveDir="/opt" toHost="${deploy.host.name}" />
 
-    <stafTools workHost="${deploy.host.name}" worktype="delete" fileName="${test.machine.software.path}" />
-    <stafTools workHost="${deploy.host.name}" worktype="create" filename="${test.machine.software.path}" />
+	    <stafTools workHost="${deploy.host.name}" worktype="delete" fileName="${test.machine.software.path}" />
+	    <stafTools workHost="${deploy.host.name}" worktype="create" filename="${test.machine.software.path}" />
 	</target>
 
 	<target name="Install-Software" depends="">
