@@ -212,13 +212,7 @@ INT32 parseArguments ( int argc , CHAR ** argv , ArgInfo & argInfo )
    }
    if ( vm.count( "version" ) )
    {
-      INT32 version, subVersion, release ;
-      const CHAR *pBuild = NULL ;
-      ossGetVersion ( &version, &subVersion, &release, &pBuild ) ;
-      std::cout << "SequoiaDB shell version: " << version << "."
-      << subVersion << std::endl ;
-      std::cout << "Release: " << release << std::endl ;
-      std::cout << "Build: " << pBuild <<std::endl ;
+      ossPrintVersion( "SequoiaDB shell version" ) ;
       rc = SDB_SDB_VERSION_ONLY ;
       goto done ;
    }

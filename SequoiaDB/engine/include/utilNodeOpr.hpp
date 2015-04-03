@@ -179,6 +179,7 @@ namespace engine
    {
       INT32    _version ;
       INT32    _subVersion ;
+      INT32    _fixVersion ;
       INT32    _release ;
       string   _buildStr ;
    } ;

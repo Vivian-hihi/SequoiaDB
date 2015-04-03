@@ -429,6 +429,7 @@ namespace engine
    INT32 utilParseVersion( CHAR * pVersionStr,
                            INT32 &version,
                            INT32 &subVersion,
+                           INT32 &fixVersion,
                            INT32 &release,
                            string &buildInfo )
    {
@@ -444,7 +445,7 @@ namespace engine
       }
 
       pToken = ossStrtok( pVersionStr, pDelim, &pLast ) ;
-      // XXX version: 1.8
+      // XXX version: 1.8[.x]
       if ( !pToken )
       {
          rc = SDB_INVALIDARG ;
@@ -454,7 +455,7 @@ namespace engine
       {
          CHAR *pTokenTmp = NULL ;
          CHAR *pLastTmp = NULL ;
-         // 1.8
+         // 1.8[.x]
          CHAR *pVerPtr = ossStrstr( pToken, ":" ) ;
          if ( !pVerPtr )
          {
@@ -478,6 +479,14 @@ namespace engine
             goto error ;
          }
          subVersion = ossAtoi( pTokenTmp ) ;
+
+         fixVersion = 0 ;
+         //[.x]
+         pTokenTmp = ossStrtok( NULL, " .", &pLastTmp ) ;
+         if ( pTokenTmp )
+         {
+            fixVersion = ossAtoi( pTokenTmp ) ;
+         }
       }
 
       // Release: 14702

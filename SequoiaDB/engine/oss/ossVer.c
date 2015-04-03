@@ -36,9 +36,11 @@
 *******************************************************************************/
 #include "ossVer.h"
 #include <iostream>
+#include <sstream>
 
 void ossGetVersion ( INT32 *version,
                      INT32 *subVersion,
+                     INT32 *fixVersion,
                      INT32 *release,
                      const CHAR **ppBuild )
 {
@@ -48,21 +50,37 @@ void ossGetVersion ( INT32 *version,
       *subVersion = SDB_ENGINE_SUBVERSION_CURRENT ;
    if ( release )
       *release = SDB_ENGINE_RELEASE_CURRENT ;
+   if ( fixVersion )
+   {
+#ifdef SDB_ENGINE_FIXVERSION_CURRENT
+      *fixVersion = SDB_ENGINE_FIXVERSION_CURRENT ;
+#else
+      *fixVersion = 0 ;
+#endif // SDB_ENGINE_FIXVERSION_CURRENT
+   }
    if ( ppBuild )
       *ppBuild = SDB_ENGINE_BUILD_TIME ;
 }
 
+std::string ossSprintVersion( const CHAR *prompt )
+{
+   std::stringstream ss ;
+#ifdef SDB_ENGINE_FIXVERSION_CURRENT
+   ss << prompt << ": " << SDB_ENGINE_VERISON_CURRENT << "."
+      << SDB_ENGINE_SUBVERSION_CURRENT << "."
+      << SDB_ENGINE_FIXVERSION_CURRENT << std::endl ;
+#else
+   ss << prompt << ": " << SDB_ENGINE_VERISON_CURRENT << "."
+      << SDB_ENGINE_SUBVERSION_CURRENT << std::endl ;
+#endif //SDB_ENGINE_FIXVERSION_CURRENT
+   ss << "Release: " << SDB_ENGINE_RELEASE_CURRENT << std::endl ;
+   ss << SDB_ENGINE_BUILD_TIME << std::endl ;
+
+   return ss.str() ;
+}
+
 void ossPrintVersion( const CHAR *prompt )
 {
-#ifdef SDB_ENGINE_FIXVERSION_CURRENT
-   std::cout << prompt << ": " << SDB_ENGINE_VERISON_CURRENT << "."
-             << SDB_ENGINE_SUBVERSION_CURRENT << "."
-             << SDB_ENGINE_FIXVERSION_CURRENT << std::endl ;
-#else
-   std::cout << prompt << ": " << SDB_ENGINE_VERISON_CURRENT << "."
-             << SDB_ENGINE_SUBVERSION_CURRENT << std::endl ;
-#endif //SDB_ENGINE_FIXVERSION_CURRENT
-   std::cout << "Release: " << SDB_ENGINE_RELEASE_CURRENT << std::endl ;
-   std::cout << SDB_ENGINE_BUILD_TIME << std::endl ;
+   std::cout << ossSprintVersion( prompt ) ;
 }
 

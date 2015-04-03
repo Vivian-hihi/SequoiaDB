@@ -88,6 +88,7 @@ namespace engine
    INT32 utilParseVersion( CHAR *pVersionStr,    // in
                            INT32 &version,       // out
                            INT32 &subVersion,    // out
+                           INT32 &fixVersion,    // out
                            INT32 &release,       // out
                            string &buildInfo ) ;
 
