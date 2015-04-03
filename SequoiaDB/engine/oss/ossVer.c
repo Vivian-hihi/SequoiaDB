@@ -54,8 +54,14 @@ void ossGetVersion ( INT32 *version,
 
 void ossPrintVersion( const CHAR *prompt )
 {
+#ifdef SDB_ENGINE_FIXVERSION_CURRENT
+   std::cout << prompt << ": " << SDB_ENGINE_VERISON_CURRENT << "."
+             << SDB_ENGINE_SUBVERSION_CURRENT << "."
+             << SDB_ENGINE_FIXVERSION_CURRENT << std::endl ;
+#else
    std::cout << prompt << ": " << SDB_ENGINE_VERISON_CURRENT << "."
              << SDB_ENGINE_SUBVERSION_CURRENT << std::endl ;
+#endif //SDB_ENGINE_FIXVERSION_CURRENT
    std::cout << "Release: " << SDB_ENGINE_RELEASE_CURRENT << std::endl ;
    std::cout << SDB_ENGINE_BUILD_TIME << std::endl ;
 }
