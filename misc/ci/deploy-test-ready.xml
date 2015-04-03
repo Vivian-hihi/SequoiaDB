@@ -38,6 +38,7 @@
 		<echo message="check build.version is OK , now check the version is old?" />
 		<delete file="${release.path}/build.version" failonerror="false" />
 		<mkdir dir="${release.path}" />
+		<delete file="${ci.script.path}/ci.test.properties" failonerror="false" />
 		<copy file="${ci.script.path}/ci-properies-files/ci.test.properties.${os.publish.name}" tofile="${ci.script.path}/ci.test.properties" />
 		<property file="${ci.script.path}/ci.test.properties" />
 
