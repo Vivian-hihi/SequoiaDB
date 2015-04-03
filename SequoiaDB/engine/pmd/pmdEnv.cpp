@@ -107,11 +107,21 @@ namespace engine
    {
       PD_TRACE_ENTRY ( SDB_PMDSIGHND ) ;
 
+      static BOOLEAN s_closeStdFds = FALSE ;
+
       // set signum
       PMD_SIGNUM = sigNum ;
 
       if ( sigNum > 0 && sigNum <= OSS_MAX_SIGAL )
       {
+         if ( SIGPIPE == sigNum && !s_closeStdFds &&
+              1 == ossGetCurrentProcessID() )
+         {
+            /// close std fds
+            ossCloseStdFds() ;
+            s_closeStdFds = TRUE ;
+         }
+
          PD_LOG ( PDEVENT, "Recieve signal[%d:%s, %s]",
                   sigNum, pmdGetSignalInfo( sigNum )._name,
                   pmdGetSignalInfo( sigNum )._handle ? "QUIT" : "IGNORE" ) ;
