@@ -88,16 +88,21 @@
     <trycatch>
     	<try>
     		<echo file="${base.dir}/temp/print_version.c" >
-     		 #include &lt;stdio.h&gt;
-         #include &quot;ossVer.h&quot;
-         int main()
-         {
-     	   /*
-     	    * this file just to print the software version on the screen for ant to catch
-     	    */
-           printf(&quot;%d.%d&quot;,SDB_ENGINE_VERISON_CURRENT , SDB_ENGINE_SUBVERSION_CURRENT);
+     		 #include <stdio.h>
+        #include "ossVer.h"
+        int main()
+        {
+           /*
+           * this file just to print the software version on the screen for ant to catch 
+           */
+        #ifdef SDB_ENGINE_FIXVERSION_CURRENT
+           printf("%d.%d.%d",SDB_ENGINE_VERISON_CURRENT , SDB_ENGINE_SUBVERSION_CURRENT,
+                  SDB_ENGINE_FIXVERSION_CURRENT );
+        #else
+           printf("%d.%d",SDB_ENGINE_VERISON_CURRENT , SDB_ENGINE_SUBVERSION_CURRENT );
+        #endif // SDB_ENGINE_FIXVERSION_CURRENT
            return 0;
-         }
+        }
      		</echo>
 
      		<echo>
@@ -110,7 +115,7 @@
 
     	</try>
     	<catch>
-    	   <property name="project.version" value="nuknow" />
+    	   <property name="project.version" value="unknow" />
     	</catch>
     	<finally>
     	</finally>
