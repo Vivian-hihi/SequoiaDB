@@ -693,10 +693,7 @@ namespace engine
          ++iterGroup ;
       }
 
-   done:
       return rc ;
-   error:
-      goto done ;
    }
 
 }
