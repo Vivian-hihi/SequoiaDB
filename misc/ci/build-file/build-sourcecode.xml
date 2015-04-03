@@ -349,12 +349,12 @@
 		<exec dir="${RELEASE_DIR}" executable="builder" failonerror="true">
 			<arg line="build sequoiadb_server.xml --setvars project.version=${project.version}  --setvars platform=${os.and.platform} --setvars enterpriseversion=${version.name} --setvars project.outputDirectory=${RELEASE_DIR}" />
 		</exec>
-		<echo message="Make relase package completed." />
+		<!-- <echo message="Make relase package completed." />
 		<echo message="os.name=${os.name}, os.arch=${os.arch}" />
 		<if>
 			<equals arg1="${os.arch}" arg2="amd64" />
 			<then>
-				<!-- <echo message="begin to make rpm package.." />
+				<echo message="begin to make rpm package.." />
 				<echo message="tar the sequoiadb-${project.version}.tar.gz to /usr/src/packages/SOURCES..." />
 				<move file="${RELEASE_DIR}/sequoiadb" tofile="${RELEASE_DIR}/sequoiadb-${project.version}" />
 				<tar destfile="/usr/src/packages/SOURCES/sequoiadb-${project.version}.tar.gz" basedir="${RELEASE_DIR}" includes="sequoiadb-${project.version}/**" compression="gzip" />
@@ -363,16 +363,16 @@
 				<copy file="/usr/src/packages/RPMS/x86_64/sequoiadb-${project.version}-1.x86_64.rpm" todir="${RELEASE_DIR}" failonerror="false" />
 		        <delete file="/usr/src/packages/SOURCES/sequoiadb-${project.version}.tar.gz" />
 		        <delete file="/usr/src/packages/SPECS/sequoiadb-${project.version}.spec" />
-				<echo message="Make rpm package completed.." /> -->
+				<echo message="Make rpm package completed.." />
 
 
-				<!-- <echo message="begin to make rpm package.." />
+				<echo message="begin to make rpm package.." />
 				<exec executable="python" timeout="100000" dir="${WORKSPACE}/sequoiadb/script" outputproperty="RPM.INFO" resultproperty="ret.rpm">
 					<arg line=" package.py" />
 				</exec>
 				<copy file="${WORKSPACE}/sequoiadb/script/sequoiadb-${project.version}-1.x86_64.rpm" todir="${RELEASE_DIR}" />
-				<delete file="${WORKSPACE}/sequoiadb/script/sequoiadb-${project.version}-1.x86_64.rpm" /> -->
+				<delete file="${WORKSPACE}/sequoiadb/script/sequoiadb-${project.version}-1.x86_64.rpm" />
 			</then>
-		</if>
+		</if> -->
 	</target>
 </project>
