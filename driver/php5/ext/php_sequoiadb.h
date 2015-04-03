@@ -112,6 +112,8 @@ PHP_METHOD ( SequoiaCL, insert ) ;
 PHP_METHOD ( SequoiaCL, update ) ;
 PHP_METHOD ( SequoiaCL, remove ) ;
 PHP_METHOD ( SequoiaCL, find ) ;
+PHP_METHOD ( SequoiaCL, findAndUpdate ) ;
+PHP_METHOD ( SequoiaCL, findAndRemove ) ;
 PHP_METHOD ( SequoiaCL, split ) ;
 PHP_METHOD ( SequoiaCL, drop ) ;
 PHP_METHOD ( SequoiaCL, aggregate ) ;

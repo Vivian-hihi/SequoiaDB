@@ -298,6 +298,8 @@ const zend_function_entry sequoiadb_collection_functions[] = {
    PHP_ME ( SequoiaCL, remove           , NULL, ZEND_ACC_PUBLIC )
    PHP_ME ( SequoiaCL, drop             , NULL, ZEND_ACC_PUBLIC )
    PHP_ME ( SequoiaCL, find             , NULL, ZEND_ACC_PUBLIC )
+   PHP_ME ( SequoiaCL, findAndUpdate    , NULL, ZEND_ACC_PUBLIC )
+   PHP_ME ( SequoiaCL, findAndRemove    , NULL, ZEND_ACC_PUBLIC )
    PHP_ME ( SequoiaCL, aggregate        , NULL, ZEND_ACC_PUBLIC )
    //PHP_ME ( SequoiaCL, rename           , NULL, ZEND_ACC_PUBLIC )
    PHP_ME ( SequoiaCL, createIndex      , NULL, ZEND_ACC_PUBLIC )
@@ -2081,6 +2083,177 @@ PHP_METHOD ( SequoiaCL, find )
    }
 
    rc = queryData ( collection, &query,
+                    condition,
+                    selected,
+                    orderBy,
+                    hint,
+                    numToSkip64,
+                    numToReturn64 ) ;
+   SETERROR ( getThis(), rc ) ;
+   if ( rc )
+   {
+      RETURN_NULL () ;
+   }
+   zval *sdbobj = NULL ;
+   MAKE_STD_ZVAL ( sdbobj ) ;
+   GETZVAL ( getThis(), "_connection", sdbobj ) ;
+   SETZVAL ( cursor_obj, "_connection", sdbobj ) ;
+   //SETCLASSFROMZVAL ( cursor_obj, "_cursor", sdbCursor, &query ) ;
+   RETURN_ZVAL( cursor_obj, 1, 0 ) ;
+}
+
+PHP_METHOD ( SequoiaCL, findAndUpdate )
+{
+   INT32 rc = SDB_OK ;
+   CHAR *error = NULL ;
+   sdbCollection *collection = NULL ;
+   sdbCursor *query = NULL ;
+   zval *cursor_obj = NULL ;
+
+   zval *pUpdate       = NULL ;
+   zval *pCondition    = NULL ;
+   zval *pSelected     = NULL ;
+   zval *pOrderBy      = NULL ;
+   zval *pHint         = NULL ;
+   CHAR *update        = NULL ;
+   CHAR *condition     = NULL ;
+   CHAR *selected      = NULL ;
+   CHAR *orderBy       = NULL ;
+   CHAR *hint          = NULL ;
+   zval *pNumToSkip    = NULL ;
+   zval *pNumToReturn  = NULL ;
+   INT64 numToSkip64     = 0  ;
+   INT64 numToReturn64   = -1 ;
+   BOOLEAN returnNew     = FALSE ;
+
+   if ( zend_parse_parameters ( ZEND_NUM_ARGS () TSRMLS_CC,
+                                "z|zzzzzzz",
+                                &pUpdate,
+                                &pCondition,
+                                &pSelected,
+                                &pOrderBy,
+                                &pHint,
+                                &pNumToSkip,
+                                &pNumToReturn,
+                                &returnNew ) == FAILURE )
+   {
+      SETERROR ( getThis(), SDB_PHP_DRIVER_INTERNAL_ERROR ) ;
+      RETURN_NULL () ;
+   }
+
+   MAKE_STD_ZVAL ( cursor_obj ) ;
+   object_init_ex ( cursor_obj, pSequoiadbCursor ) ;
+   CREATECLASS ( cursor_obj, "_cursor", sdbCursor, query ) ;
+   if ( !query )
+   {
+      SETERROR ( getThis(), SDB_PHP_DRIVER_INTERNAL_ERROR ) ;
+      RETURN_NULL() ;
+   }
+
+   GETCLASSFROMZVAL ( getThis(), "_collection", sdbCollection, collection ) ;
+   if ( !collection )
+   {
+      SETERROR ( getThis(), SDB_PHP_DRIVER_INTERNAL_ERROR ) ;
+      RETURN_NULL () ;
+   }
+
+   if ( !php_toJson ( &update   , pUpdate    TSRMLS_CC ) ||
+        !php_toJson ( &condition, pCondition TSRMLS_CC ) ||
+        !php_toJson ( &selected , pSelected  TSRMLS_CC ) ||
+        !php_toJson ( &orderBy  , pOrderBy   TSRMLS_CC ) ||
+        !php_toJson ( &hint     , pHint      TSRMLS_CC ) ||
+        !php_toNum64 ( numToSkip64, pNumToSkip TSRMLS_CC ) ||
+        !php_toNum64 ( numToReturn64, pNumToReturn TSRMLS_CC ) )
+   {
+      SETERROR ( getThis(), SDB_INVALIDARG ) ;
+      RETURN_NULL() ;
+   }
+
+   rc = queryAndUpdate ( collection,
+                    &query,
+                    update,
+                    condition,
+                    selected,
+                    orderBy,
+                    hint,
+                    numToSkip64,
+                    numToReturn64,
+                    returnNew ) ;
+   SETERROR ( getThis(), rc ) ;
+   if ( rc )
+   {
+      RETURN_NULL () ;
+   }
+   zval *sdbobj = NULL ;
+   MAKE_STD_ZVAL ( sdbobj ) ;
+   GETZVAL ( getThis(), "_connection", sdbobj ) ;
+   SETZVAL ( cursor_obj, "_connection", sdbobj ) ;
+   //SETCLASSFROMZVAL ( cursor_obj, "_cursor", sdbCursor, &query ) ;
+   RETURN_ZVAL( cursor_obj, 1, 0 ) ;
+}
+
+PHP_METHOD ( SequoiaCL, findAndRemove )
+{
+   INT32 rc = SDB_OK ;
+   CHAR *error = NULL ;
+   sdbCollection *collection = NULL ;
+   sdbCursor *query = NULL ;
+   zval *cursor_obj = NULL ;
+
+   zval *pCondition    = NULL ;
+   zval *pSelected     = NULL ;
+   zval *pOrderBy      = NULL ;
+   zval *pHint         = NULL ;
+   CHAR *condition     = NULL ;
+   CHAR *selected      = NULL ;
+   CHAR *orderBy       = NULL ;
+   CHAR *hint          = NULL ;
+   zval *pNumToSkip    = NULL ;
+   zval *pNumToReturn  = NULL ;
+   INT64 numToSkip64     = 0  ;
+   INT64 numToReturn64   = -1 ;
+
+   if ( zend_parse_parameters ( ZEND_NUM_ARGS () TSRMLS_CC,
+                                "|zzzzzz",
+                                &pCondition,
+                                &pSelected,
+                                &pOrderBy,
+                                &pHint,
+                                &pNumToSkip,
+                                &pNumToReturn ) == FAILURE )
+   {
+      SETERROR ( getThis(), SDB_PHP_DRIVER_INTERNAL_ERROR ) ;
+      RETURN_NULL () ;
+   }
+
+   MAKE_STD_ZVAL ( cursor_obj ) ;
+   object_init_ex ( cursor_obj, pSequoiadbCursor ) ;
+   CREATECLASS ( cursor_obj, "_cursor", sdbCursor, query ) ;
+   if ( !query )
+   {
+      SETERROR ( getThis(), SDB_PHP_DRIVER_INTERNAL_ERROR ) ;
+      RETURN_NULL() ;
+   }
+
+   GETCLASSFROMZVAL ( getThis(), "_collection", sdbCollection, collection ) ;
+   if ( !collection )
+   {
+      SETERROR ( getThis(), SDB_PHP_DRIVER_INTERNAL_ERROR ) ;
+      RETURN_NULL () ;
+   }
+
+   if ( !php_toJson ( &condition, pCondition TSRMLS_CC ) ||
+        !php_toJson ( &selected , pSelected  TSRMLS_CC ) ||
+        !php_toJson ( &orderBy  , pOrderBy   TSRMLS_CC ) ||
+        !php_toJson ( &hint     , pHint      TSRMLS_CC ) ||
+        !php_toNum64 ( numToSkip64, pNumToSkip TSRMLS_CC ) ||
+        !php_toNum64 ( numToReturn64, pNumToReturn TSRMLS_CC ) )
+   {
+      SETERROR ( getThis(), SDB_INVALIDARG ) ;
+      RETURN_NULL() ;
+   }
+
+   rc = queryAndRemove ( collection, &query,
                     condition,
                     selected,
                     orderBy,

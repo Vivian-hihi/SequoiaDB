@@ -288,6 +288,56 @@ public:
                         int $numToSkip = 0,
                         int $numToReturn = -1 ) ;
 
+   /** \fn SequoiaCursor findAndUpdate ( array|string $update,
+                                        [array|string $condition],
+                                        [array|string $select],
+                                        [array|string $orderBy],
+                                        [array|string $hint],
+                                        [int $numToSkip],
+                                        [int $numToReturn],
+                                        [bool $returnNew] )
+       \brief Querys this collection, returning a SequoiaCursor for the result set and update
+	   \param [in] $update The update rule, can't be null
+       \param [in] $condition The matching rule, return all the documents if null
+       \param [in] $select The selective rule, return the whole document if null
+       \param [in] $orderBy The ordered rule, never sort if null
+       \param [in] $hint The hint, automatically match the optimal hint if null
+       \param [in] $numToSkip Skip the first numToSkip documents, never skip if this parameter is 0
+       \param [in] $numToReturn Only return numToReturn documents, return all if this parameter is -1
+	   \param [in] $returnNew When TRUE, returns the updated document rather than the original
+       \retval Returns a SequoiaCursor for the result set
+   */
+   SequoiaCursor findAndUpdate ( array|string $update,
+                                 array|string $condition = NULL,
+                                 array|string $select = NULL,
+                                 array|string $orderBy = NULL,
+                                 array|string $hint = NULL,
+                                 int $numToSkip = 0,
+                                 int $numToReturn = -1,
+                                 bool $returnNew = FALSE ) ;
+
+   /** \fn SequoiaCursor findAndRemove ( [array|string $condition],
+                                         [array|string $select],
+                                         [array|string $orderBy],
+                                         [array|string $hint],
+                                         [int $numToSkip],
+                                         [int $numToReturn] )
+       \brief Querys this collection, returning a SequoiaCursor for the result set and remove
+       \param [in] $condition The matching rule, return all the documents if null
+       \param [in] $select The selective rule, return the whole document if null
+       \param [in] $orderBy The ordered rule, never sort if null
+       \param [in] $hint The hint, automatically match the optimal hint if null
+       \param [in] $numToSkip Skip the first numToSkip documents, never skip if this parameter is 0
+       \param [in] $numToReturn Only return numToReturn documents, return all if this parameter is -1
+       \retval Returns a SequoiaCursor for the result set
+   */
+   SequoiaCursor findAndRemove ( array|string $condition = NULL,
+                                 array|string $select = NULL,
+                                 array|string $orderBy = NULL,
+                                 array|string $hint = NULL,
+                                 int $numToSkip = 0,
+                                 int $numToReturn = -1 ) ;
+
    /** \fn array|string split ( string $sourceName, string $destName, array|string $condition, array|string $endCondition )
        \brief data split,source collection split to dest collection
        \param [in] $sourceName source collection

@@ -587,6 +587,117 @@ INT32 queryData ( sdbCollection *collection, sdbCursor **query ,
    return rc ;
 }
 
+INT32 queryAndUpdate ( sdbCollection *collection, sdbCursor **query , const CHAR* update,
+                       const CHAR *condition , const CHAR *selected ,
+                       const CHAR *orderBy   , const CHAR *hint     ,
+                       INT64 numToSkip       , INT64 numToReturn    , BOOLEAN returnNew )
+{
+   INT32 rc = SDB_OK ;
+   BSONObj condition_bson ;
+   BSONObj selected_bson ;
+   BSONObj orderBy_bson ;
+   BSONObj hint_bson ;
+   BSONObj update_bson ;
+
+   if ( condition && *condition )
+   {
+      rc = fromjson ( condition, condition_bson ) ;
+      if ( rc )
+         return rc ;
+   }
+
+   if ( selected && *selected )
+   {
+      rc = fromjson ( selected, selected_bson ) ;
+      if ( rc )
+         return rc ;
+   }
+
+   if ( orderBy && *orderBy )
+   {
+      rc = fromjson ( orderBy, orderBy_bson ) ;
+      if ( rc )
+         return rc ;
+   }
+
+   if ( hint && *hint )
+   {
+      rc = fromjson ( hint, hint_bson ) ;
+      if ( rc )
+         return rc ;
+   }
+
+   if ( update && *update )
+   {
+      rc = fromjson ( update, update_bson ) ;
+      if ( rc )
+         return rc ;
+   }
+
+   rc = collection->queryAndUpdate ( **query,
+                                     update_bson,
+                                     condition_bson,
+                                     selected_bson,
+                                     orderBy_bson,
+                                     hint_bson,
+                                     numToSkip,
+                                     numToReturn,
+                                     0,
+                                     returnNew ) ;
+
+   return rc ;
+}
+
+INT32 queryAndRemove ( sdbCollection *collection, sdbCursor **query ,
+                       const CHAR *condition , const CHAR *selected ,
+                       const CHAR *orderBy   , const CHAR *hint     ,
+                       INT64 numToSkip       , INT64 numToReturn )
+{
+   INT32 rc = SDB_OK ;
+   BSONObj condition_bson ;
+   BSONObj selected_bson ;
+   BSONObj orderBy_bson ;
+   BSONObj hint_bson ;
+
+   if ( condition && *condition )
+   {
+      rc = fromjson ( condition, condition_bson ) ;
+      if ( rc )
+         return rc ;
+   }
+
+   if ( selected && *selected )
+   {
+      rc = fromjson ( selected, selected_bson ) ;
+      if ( rc )
+         return rc ;
+   }
+
+   if ( orderBy && *orderBy )
+   {
+      rc = fromjson ( orderBy, orderBy_bson ) ;
+      if ( rc )
+         return rc ;
+   }
+
+   if ( hint && *hint )
+   {
+      rc = fromjson ( hint, hint_bson ) ;
+      if ( rc )
+         return rc ;
+   }
+
+   rc = collection->queryAndRemove ( **query,
+                                     condition_bson,
+                                     selected_bson,
+                                     orderBy_bson,
+                                     hint_bson,
+                                     numToSkip,
+                                     numToReturn ) ;
+
+   return rc ;
+}
+
 INT32 aggregate ( sdbCollection *collection, sdbCursor **query ,
                   std::vector<CHAR *> &json )
 {

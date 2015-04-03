@@ -132,6 +132,16 @@ INT32 queryData ( sdbCollection *collection, sdbCursor **query ,
                   const CHAR *orderBy   , const CHAR *hint     ,
                   INT64 numToSkip       , INT64 numToReturn ) ;
 
+INT32 queryAndUpdate ( sdbCollection *collection, sdbCursor **query , const CHAR* update,
+                       const CHAR *condition , const CHAR *selected ,
+                       const CHAR *orderBy   , const CHAR *hint     ,
+                       INT64 numToSkip       , INT64 numToReturn    ,  BOOLEAN returnNew ) ;
+
+INT32 queryAndRemove ( sdbCollection *collection, sdbCursor **query ,
+                       const CHAR *condition , const CHAR *selected ,
+                       const CHAR *orderBy   , const CHAR *hint     ,
+                       INT64 numToSkip       , INT64 numToReturn ) ;
+
 INT32 aggregate ( sdbCollection *collection, sdbCursor **query ,
                   std::vector<CHAR *> &json ) ;
 
