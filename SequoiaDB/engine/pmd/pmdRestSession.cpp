@@ -607,9 +607,7 @@ namespace engine
    INT32 _pmdRestSession::_processOMRestMsg( HTTP_PARSE_COMMON command, 
                                              const CHAR *pFilePath )
    {
-      restAdaptor *pAdptor          = NULL ;
       omRestCommandBase *pOmCommand = NULL ;
-      pAdptor = sdbGetPMDController()->getRestAdptor() ;
       pOmCommand = _createCommand( command, pFilePath ) ;
       if ( NULL == pOmCommand )
       {
@@ -1000,6 +998,14 @@ namespace engine
       {
          rc = _convertUpdate( pAdaptor, msg ) ;
       }
+      else if ( ossStrcasecmp( pSubCommand, REST_CMD_NAME_QUERY_UPDATE ) == 0 )
+      {
+         rc = _convertQueryModify( pAdaptor, msg, TRUE ) ;
+      }
+      else if ( ossStrcasecmp( pSubCommand, REST_CMD_NAME_QUERY_REMOVE ) == 0 )
+      {
+         rc = _convertQueryModify( pAdaptor, msg, FALSE ) ;
+      }
       else if ( ossStrcasecmp( pSubCommand, CMD_NAME_CREATE_COLLECTIONSPACE ) == 0 )
       {
          rc = _convertCreateCS( pAdaptor, msg ) ;
@@ -1268,13 +1274,18 @@ namespace engine
       goto done ;
    }
 
-   INT32 RestToMSGTransfer::_convertQuery( restAdaptor *pAdaptor, 
-                                           MsgHeader **msg )
+   INT32 RestToMSGTransfer::_convertQueryBasic( restAdaptor* pAdaptor, 
+                                                const CHAR** collectionName,
+                                                BSONObj& match,
+                                                BSONObj& selector,
+                                                BSONObj& order,
+                                                BSONObj& hint,
+                                                INT32* flag,
+                                                INT32* skip,
+                                                INT32* returnRow )
    {
       INT32 rc              = SDB_OK ;
-      CHAR *pBuff           = NULL ;
-      INT32 buffSize        = 0 ;
-      const CHAR *pTable    = NULL ;
+      const CHAR *pTable          = NULL ;
       const CHAR *pOrder    = NULL ;
       const CHAR *pHint     = NULL ;
       const CHAR *pMatch    = NULL ;
@@ -1282,90 +1293,121 @@ namespace engine
       const CHAR *pFlag     = NULL ;
       const CHAR *pSkip     = NULL ;
       const CHAR *pReturnRow = NULL ;
+
+      SDB_ASSERT( pAdaptor, "pAdaptor can't be null") ;
+      SDB_ASSERT( collectionName, "collectionName can't be null") ;
+      SDB_ASSERT( flag, "flag can't be null") ;
+      SDB_ASSERT( skip, "skip can't be null") ;
+      SDB_ASSERT( returnRow, "returnRow can't be null") ;
+
       pAdaptor->getQuery( _restSession, FIELD_NAME_NAME, &pTable ) ;
       if ( NULL == pTable )
       {
          PD_LOG_MSG( PDERROR, "get field failed:field=%s", 
                      FIELD_NAME_NAME ) ;
+         rc = SDB_INVALIDARG ;
          goto error ;
       }
+      *collectionName = pTable ;
 
-      pAdaptor->getQuery( _restSession, FIELD_NAME_SORT, &pOrder ) ;
-      pAdaptor->getQuery( _restSession, FIELD_NAME_HINT, &pHint ) ;
       pAdaptor->getQuery( _restSession, FIELD_NAME_FILTER, &pMatch ) ;
       pAdaptor->getQuery( _restSession, FIELD_NAME_SELECTOR, &pSelector ) ;
+      pAdaptor->getQuery( _restSession, FIELD_NAME_SORT, &pOrder ) ;
+      pAdaptor->getQuery( _restSession, FIELD_NAME_HINT, &pHint ) ;
       pAdaptor->getQuery( _restSession, REST_KEY_NAME_FLAG, &pFlag ) ;
       pAdaptor->getQuery( _restSession, FIELD_NAME_SKIP, &pSkip ) ;
-      pAdaptor->getQuery( _restSession, FIELD_NAME_RETURN_NUM, 
-                          &pReturnRow ) ;
+      pAdaptor->getQuery( _restSession, FIELD_NAME_RETURN_NUM, &pReturnRow ) ;
+
+      if ( NULL != pMatch )
+      {
+         rc = fromjson( pMatch, match ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG_MSG( PDERROR, "field's format error:field=%s, value=%s", 
+                        FIELD_NAME_FILTER, pMatch ) ;
+            goto error ;
+         }
+      }
+
+      if ( NULL != pSelector )
+      {
+         rc = fromjson( pSelector, selector ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG_MSG( PDERROR, "field's format error:field=%s, value=%s", 
+                        FIELD_NAME_SELECTOR, pSelector ) ;
+            goto error ;
+         }
+      }
+
+      if ( NULL != pOrder )
+      {
+         rc = fromjson( pOrder, order ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG_MSG( PDERROR, "field's format error:field=%s, value=%s", 
+                        FIELD_NAME_SORT, pOrder ) ;
+            goto error ;
+         }
+      }
+
+      if ( NULL != pHint )
+      {
+         rc = fromjson( pHint, hint ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG_MSG( PDERROR, "field's format error:field=%s, value=%s", 
+                        FIELD_NAME_HINT, pHint ) ;
+            goto error ;
+         }
+      }
+
+      if ( NULL != pFlag )
+      {
+         *flag = ossAtoi( pFlag ) ;
+         *flag = *flag | FLG_QUERY_WITH_RETURNDATA ;
+      }
+
+      if ( NULL != pSkip )
+      {
+         *skip = ossAtoi( pSkip ) ;
+      }
+
+      if ( NULL != pReturnRow )
+      {
+         *returnRow = ossAtoi( pReturnRow ) ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 RestToMSGTransfer::_convertQuery( restAdaptor *pAdaptor, 
+                                           MsgHeader **msg )
+   {
+      INT32 rc              = SDB_OK ;
+      CHAR *pBuff           = NULL ;
+      INT32 buffSize        = 0 ;
+      const CHAR *pTable    = NULL ;
+
       {
          BSONObj order ;
          BSONObj hint ;
          BSONObj match ;
          BSONObj selector ;
-         INT32 flag = FLG_QUERY_WITH_RETURNDATA ;
+         INT32 flag = 0 ;
          INT32 skip = 0 ;
          INT32 returnRow = -1 ;
-         if ( NULL != pOrder )
-         {
-            rc = fromjson( pOrder, order ) ;
-            if ( SDB_OK != rc )
-            {
-               PD_LOG_MSG( PDERROR, "field's format error:field=%s, value=%s", 
-                           FIELD_NAME_SORT, pOrder ) ;
-               goto error ;
-            }
-         }
 
-         if ( NULL != pHint )
+         rc = _convertQueryBasic( pAdaptor, &pTable, match, selector, order, hint,
+                                  &flag, &skip, &returnRow ) ;
+         if ( SDB_OK != rc )
          {
-            rc = fromjson( pHint, hint ) ;
-            if ( SDB_OK != rc )
-            {
-               PD_LOG_MSG( PDERROR, "field's format error:field=%s, value=%s", 
-                           FIELD_NAME_HINT, pHint ) ;
-               goto error ;
-            }
+            PD_LOG_MSG( PDERROR, "convert basic queryMsg failed:rc=%d", rc ) ;
+            goto error ;
          }
-
-         if ( NULL != pMatch )
-         {
-            rc = fromjson( pMatch, match ) ;
-            if ( SDB_OK != rc )
-            {
-               PD_LOG_MSG( PDERROR, "field's format error:field=%s, value=%s", 
-                           FIELD_NAME_FILTER, pMatch ) ;
-               goto error ;
-            }
-         }
-
-         if ( NULL != pSelector )
-         {
-            rc = fromjson( pSelector, selector ) ;
-            if ( SDB_OK != rc )
-            {
-               PD_LOG_MSG( PDERROR, "field's format error:field=%s, value=%s", 
-                           FIELD_NAME_SELECTOR, pSelector ) ;
-               goto error ;
-            }
-         }
-
-         if ( NULL != pFlag )
-         {
-            flag = ossAtoi( pFlag ) ;
-            flag = flag | FLG_QUERY_WITH_RETURNDATA ;
-         }
-
-         if ( NULL != pSkip )
-         {
-            skip = ossAtoi( pSkip ) ;
-         }
-
-         if ( NULL != pReturnRow )
-         {
-            returnRow = ossAtoi( pReturnRow ) ;
-         }
-
 
          rc = msgBuildQueryMsg( &pBuff, &buffSize, pTable, flag, 0, skip, 
                                 returnRow, &match, &selector, &order, &hint ) ;
@@ -1374,6 +1416,128 @@ namespace engine
             PD_LOG_MSG( PDERROR, "build queryMSG failed:rc=%d", rc ) ;
             goto error ;
          }
+      }
+
+      *msg = ( MsgHeader * )pBuff ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 RestToMSGTransfer::_convertQueryModify( restAdaptor *pAdaptor,
+                                                 MsgHeader **msg,
+                                                 BOOLEAN isUpdate )
+   {
+      INT32 rc              = SDB_OK ;
+      CHAR *pBuff           = NULL ;
+      INT32 buffSize        = 0 ;
+      const CHAR *pTable    = NULL ;
+      INT32 flag            = 0 ;
+      INT32 skip            = 0 ;
+      INT32 returnRow       = -1 ;
+      BSONObj order ;
+      BSONObj hint ;
+      BSONObj match ;
+      BSONObj selector ;
+      BSONObj newHint ;
+
+      rc = _convertQueryBasic( pAdaptor, &pTable, match, selector, order, hint,
+                               &flag, &skip, &returnRow ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG_MSG( PDERROR, "convert basic queryMsg failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      try
+      {
+         BSONObjBuilder newHintBuilder ;
+         BSONObjBuilder modifyBuilder ;
+         BSONObj modify ;
+
+         // create $Modify
+         if ( isUpdate )
+         {
+            const CHAR* pUpdate = NULL ;
+            const CHAR* pReturnNew = NULL ;
+            BSONObj update ;
+            BOOLEAN returnNew = FALSE ;
+
+            pAdaptor->getQuery( _restSession, REST_KEY_NAME_UPDATOR, &pUpdate ) ;
+            if ( NULL == pUpdate )
+            {
+               PD_LOG_MSG( PDERROR, "get field failed:field=%s", 
+                           REST_KEY_NAME_UPDATOR ) ;
+               rc = SDB_INVALIDARG ;
+               goto error ;
+            }
+
+            rc = fromjson( pUpdate, update ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG_MSG( PDERROR, "field's format error:field=%s, value=%s", 
+                           FIELD_NAME_LUPDATE, pUpdate ) ;
+               goto error ;
+            }
+
+            pAdaptor->getQuery( _restSession, FIELD_NAME_RETURNNEW, &pReturnNew ) ;
+            if ( NULL != pReturnNew )
+            {
+               // true
+               if ( 0 == ossStrcasecmp(pReturnNew, "true") )
+               {
+                  returnNew = TRUE ;
+               }
+               // false
+               else if ( 0 == ossStrcasecmp(pReturnNew, "false") )
+               {
+                  returnNew = FALSE ;
+               }
+               else
+               {
+                  PD_LOG_MSG( PDERROR, "field's format error:field=%s, value=%s", 
+                           FIELD_NAME_RETURNNEW, pReturnNew ) ;
+                  rc = SDB_INVALIDARG ;
+                  goto error ;
+               }
+            }
+
+            modifyBuilder.append( FIELD_NAME_OP, FIELD_OP_VALUE_UPDATE ) ;
+            modifyBuilder.appendObject( FIELD_NAME_LUPDATE, update.objdata() ) ;
+            modifyBuilder.appendBool( FIELD_NAME_RETURNNEW, returnNew ) ;
+         }
+         else
+         {
+            modifyBuilder.append( FIELD_NAME_OP, FIELD_OP_VALUE_REMOVE ) ;
+            modifyBuilder.appendBool( FIELD_NAME_REMOVE, TRUE ) ;
+         }
+         modify = modifyBuilder.obj() ;
+
+         // create new hint with $Modify
+         if ( !hint.isEmpty() )
+         {
+            newHintBuilder.appendElements( hint ) ;
+         }
+         newHintBuilder.appendObject( FIELD_NAME_MODIFY, modify.objdata() ) ;
+         newHint = newHintBuilder.obj() ;
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG ( PDWARNING, "Failed to create $Modify, %s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      flag |= FLG_QUERY_MODIFY ;
+
+      rc = msgBuildQueryMsg( &pBuff, &buffSize, pTable, flag, 0, skip, 
+                             returnRow, &match, &selector, &order, &newHint ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG_MSG( PDERROR, "build queryMSG failed:rc=%d", rc ) ;
+         goto error ;
       }
 
       *msg = ( MsgHeader * )pBuff ;

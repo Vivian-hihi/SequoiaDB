@@ -229,6 +229,8 @@ namespace engine
    #define REST_CMD_NAME_INSERT        "insert"
    #define REST_CMD_NAME_UPDATE        "update"
    #define REST_CMD_NAME_DELETE        "delete"
+   #define REST_CMD_NAME_QUERY_UPDATE  "queryandupdate"
+   #define REST_CMD_NAME_QUERY_REMOVE  "queryandremove"
 
    #define REST_KEY_NAME_FLAG          "Flag"
    #define REST_KEY_NAME_INSERTOR      "Insertor"
@@ -253,7 +255,19 @@ namespace engine
          INT32       _convertDropCS( restAdaptor *pAdaptor, MsgHeader **msg ) ;
          INT32       _convertDropCL( restAdaptor *pAdaptor, MsgHeader **msg ) ;
 
+         INT32       _convertQueryBasic( restAdaptor *pAdaptor,
+                                         const CHAR** collectionName,
+                                         BSONObj& match,
+                                         BSONObj& selector,
+                                         BSONObj& order,
+                                         BSONObj& hint,
+                                         INT32* flag,
+                                         INT32* skip,
+                                         INT32* returnRow ) ;
          INT32       _convertQuery( restAdaptor *pAdaptor, MsgHeader **msg ) ;
+         INT32       _convertQueryModify( restAdaptor *pAdaptor,
+                                          MsgHeader **msg,
+                                          BOOLEAN isUpdate ) ;
          INT32       _convertInsert( restAdaptor *pAdaptor, MsgHeader **msg ) ;
          INT32       _convertUpdate( restAdaptor *pAdaptor, MsgHeader **msg ) ;
          INT32       _convertDelete( restAdaptor *pAdaptor, MsgHeader **msg ) ;
