@@ -33,39 +33,14 @@
 	</target>
 
 	<target name="Deploy-Test-All" depends="Clean-Last-Build-Reports">
-		<if>
-			<equals arg1="${deploy.conffile.wildcard}" arg2="*" />
-			<then>
-				<foreach target="Deploy-And-Test-Case" param="deploy.case.fullname" parallel="true">
-					<path>
-						<fileset dir="${deploy.config.path}" >
-							<include name="${test.environment}-[h1][g1][d1]-tp1.xml" />
-							<include name="${test.environment}-standalone-tp1.xml" />
-						</fileset>
-					</path>
-					<param name="deploy.file.fullname" value="${WORKSPACE}/${deploy.tar.file.name}" />
-				</foreach>
-
-				<foreach target="Deploy-And-Test-Case" param="deploy.case.fullname">
-					<path>
-						<fileset dir="${deploy.config.path}">
-							<include name="${test.environment}-${deploy.conffile.wildcard}.xml" /> 
-							<exclude name="${test.environment}-[h1][g1][d1]-tp1.xml" />
-							<exclude name="${test.environment}-standalone-tp1.xml" />
-						</fileset>
-					</path>
-					<param name="deploy.file.fullname" value="${WORKSPACE}/${deploy.tar.file.name}" />
-				</foreach>
-			</then>
-			<else>
-				<foreach target="Deploy-And-Test-Case" param="deploy.case.fullname">
-					<path>
-						<fileset dir="${deploy.config.path}" includes="${test.environment}-${deploy.conffile.wildcard}.xml" />
-					</path>
-					<param name="deploy.file.fullname" value="${WORKSPACE}/${deploy.tar.file.name}" />
-				</foreach>
-			</else>
-		</if>
+		<foreach target="Deploy-And-Test-Case" param="deploy.case.fullname">
+			<path>
+				<fileset dir="${deploy.config.path}">
+					<include name="${test.environment}-${deploy.conffile.wildcard}.xml" />
+				</fileset>
+			</path>
+			<param name="deploy.file.fullname" value="${WORKSPACE}/${deploy.tar.file.name}" />
+		</foreach>
 	</target>
 
 	<target name="Clean-Env-Before-Test" depends="">
