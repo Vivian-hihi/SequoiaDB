@@ -35,8 +35,8 @@
 
 *******************************************************************************/
 #include "ossVer.h"
+#include "ossUtil.h"
 #include <iostream>
-#include <sstream>
 
 void ossGetVersion ( INT32 *version,
                      INT32 *subVersion,
@@ -62,25 +62,36 @@ void ossGetVersion ( INT32 *version,
       *ppBuild = SDB_ENGINE_BUILD_TIME ;
 }
 
-std::string ossSprintVersion( const CHAR *prompt )
+void ossSprintVersion( const CHAR *prompt, CHAR *pBuff, UINT32 len )
 {
-   std::stringstream ss ;
-#ifdef SDB_ENGINE_FIXVERSION_CURRENT
-   ss << prompt << ": " << SDB_ENGINE_VERISON_CURRENT << "."
-      << SDB_ENGINE_SUBVERSION_CURRENT << "."
-      << SDB_ENGINE_FIXVERSION_CURRENT << std::endl ;
-#else
-   ss << prompt << ": " << SDB_ENGINE_VERISON_CURRENT << "."
-      << SDB_ENGINE_SUBVERSION_CURRENT << std::endl ;
-#endif //SDB_ENGINE_FIXVERSION_CURRENT
-   ss << "Release: " << SDB_ENGINE_RELEASE_CURRENT << std::endl ;
-   ss << SDB_ENGINE_BUILD_TIME << std::endl ;
+   if ( 0 == len )
+   {
+      return ;
+   }
+   ossMemset( pBuff, 0, len ) ;
 
-   return ss.str() ;
+#ifdef SDB_ENGINE_FIXVERSION_CURRENT
+   ossSnprintf( pBuff, len - 1, "%s: %d.%d.%d%sRelease: %d%s%s%s",
+                prompt, SDB_ENGINE_VERISON_CURRENT,
+                SDB_ENGINE_SUBVERSION_CURRENT,
+                SDB_ENGINE_FIXVERSION_CURRENT,
+                OSS_NEWLINE, SDB_ENGINE_RELEASE_CURRENT,
+                OSS_NEWLINE, SDB_ENGINE_BUILD_TIME,
+                OSS_NEWLINE ) ;
+#else
+   ossSnprintf( pBuff, len - 1, "%s: %d.%d%sRelease: %d%s%s%s",
+                prompt, SDB_ENGINE_VERISON_CURRENT,
+                SDB_ENGINE_SUBVERSION_CURRENT,
+                OSS_NEWLINE, SDB_ENGINE_RELEASE_CURRENT,
+                OSS_NEWLINE, SDB_ENGINE_BUILD_TIME,
+                OSS_NEWLINE ) ;
+#endif //SDB_ENGINE_FIXVERSION_CURRENT
 }
 
 void ossPrintVersion( const CHAR *prompt )
 {
-   std::cout << ossSprintVersion( prompt ) ;
+   CHAR verText[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
+   ossSprintVersion( prompt, verText, sizeof( verText ) ) ;
+   std::cout << verText ;
 }
 

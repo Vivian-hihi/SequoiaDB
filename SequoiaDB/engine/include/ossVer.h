@@ -38,7 +38,6 @@
 
 #include "core.h"
 #include "ossVer_Autogen.h"
-#include <string>
 
 /*
  *    SequoiaDB Engine Version
@@ -103,7 +102,7 @@ void ossGetVersion ( INT32 *version,
 
 void ossPrintVersion( const CHAR *prompt ) ;
 
-std::string ossSprintVersion( const CHAR *prompt ) ;
+void ossSprintVersion( const CHAR *prompt, CHAR *pBuff, UINT32 len ) ;
 
 #endif /* OSSVER_HPP_ */
 
