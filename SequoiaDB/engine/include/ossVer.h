@@ -38,6 +38,7 @@
 
 #include "core.h"
 #include "ossVer_Autogen.h"
+#include <string>
 
 /*
  *    SequoiaDB Engine Version
@@ -76,9 +77,9 @@
 #ifdef SDB_ENTERPRISE
 
    #ifdef _DEBUG
-      #define SDB_ENGINE_BUILD_TIME    SDB_ENGINE_BUILD_CURRENT"-Enterprise(Debug)"
+      #define SDB_ENGINE_BUILD_TIME    SDB_ENGINE_BUILD_CURRENT"(Enterprise-Debug)"
    #else
-      #define SDB_ENGINE_BUILD_TIME    SDB_ENGINE_BUILD_CURRENT"-Enterprise"
+      #define SDB_ENGINE_BUILD_TIME    SDB_ENGINE_BUILD_CURRENT"(Enterprise)"
    #endif // _DEBUG
 
 #else
@@ -96,10 +97,13 @@
  */
 void ossGetVersion ( INT32 *version,
                      INT32 *subVersion,
+                     INT32 *fixVersion,
                      INT32 *release,
                      const CHAR **ppBuild ) ;
 
 void ossPrintVersion( const CHAR *prompt ) ;
+
+std::string ossSprintVersion( const CHAR *prompt ) ;
 
 #endif /* OSSVER_HPP_ */
 
