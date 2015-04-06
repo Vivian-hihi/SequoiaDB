@@ -38,6 +38,8 @@
 	<target name="install-software" depends="">
 		<echo message="Begin to install..." />
 		<chmod file="${test.basedir}/${install.package.filename}" perm="u+x" />
+
+		<echo file="/opt/install.log" message="${test.basedir}/${install.package.filename}" />
 		<exec executable="${test.basedir}/${install.package.filename}">
 			<arg line="--mode unattended --prefix ${db.path} --username ${install.user} --userpasswd ${install.password}" />
 		</exec>
