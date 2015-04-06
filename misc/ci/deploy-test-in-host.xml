@@ -6,7 +6,7 @@
 <!-- call:install-test-in-host.xml -->
 
 <project name="deploy-test-in-host" default="Deploy-Test-In-Host">
-	<property file="ci.test.properties" />
+	<!-- <property file="ci.test.properties" /> -->
 
 	<target name="Clean-Deploy-In-Host" depends="">
 		<stafTools workHost="${deploy.host.name}" workType="delete" fileName="${test.machine.deploy.path}" failonerror="false" />

@@ -13,7 +13,7 @@
 	<property name="db.path" value="${install.path}/sequoiadb" />
 	<taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
 		<classpath>
-			<pathelement location="${test.machine.deploy.path}/deploy/ant-sdbtasks/ant-sdbtasks.jar" />
+			<pathelement location="${test.machine.software.path}/ant-sdbtasks.jar" />
 		</classpath>
 	</taskdef>
 
@@ -34,13 +34,9 @@
 		<echo message="Clean install env compeleted." />
 	</target>
 
-
 	<target name="install-software" depends="">
 		<echo message="Begin to install..." />
-		<echo file="/opt/install.log" message="${test.basedir}/${install.package.filename}" />
 		<chmod file="${test.basedir}/${install.package.filename}" perm="u+x" />
-
-
 		<exec executable="${test.basedir}/${install.package.filename}">
 			<arg line="--mode unattended --prefix ${db.path} --username ${install.user} --userpasswd ${install.password}" />
 		</exec>
@@ -86,12 +82,11 @@
 				<replaceregexp file="${db.path}/conf/local/${coord.service.port}/sdb.conf" match="httpname=11814" replace="httpname=50004" flags="g" />
 
 				<echo file="${db.path}/conf/local/${coord.service.port}/sdb.conf"  append="true" message="sharingbreak=300000" />
-			  <if>
-					   <equals arg1="${os.arch}" arg2="amd64" />
-					   <then>
-						 	<!-- <echo file="${db.path}/conf/local/${coord.service.port}/sdb.conf"  append="true" >fap=fapmongo</echo> -->
-							<echo file="${db.path}/conf/local/${coord.service.port}/sdb.conf"  append="true" message="${line.separator}fap=fapmongo" />
-					   </then>
+			  	<if>
+				   <equals arg1="${os.arch}" arg2="amd64" />
+				   <then>
+						<echo file="${db.path}/conf/local/${coord.service.port}/sdb.conf"  append="true" message="${line.separator}fap=fapmongo" />
+				   </then>
 				</if>
 				<if>
 					<equals arg1="${is.coord.master}" arg2="false" />

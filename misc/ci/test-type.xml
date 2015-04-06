@@ -178,68 +178,6 @@
 				</sdbtest>
 				<echo message="... Test mongoc driver is over ..." />
 			</case>
-
-			<case value="samples">
-				<echo message="... Test the sample test ..." />
-				<sdbtest host="${test.host.NAME}" testscript="${test.machine.deploy.path}/deploy/exec-samples-testcases.xml" remotereports="${testcase.path}/samples_testcases/reports" masterreports="${test.reports.path}" >
-					<param name="ci.properties.path" value="${test.machine.software.path}/ci.test.properties" />
-					<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
-					<param name="samples.testcase.path" value="${testcase.path}/samples_testcases" />
-					<param name="deploy.case.fullname" value="${deploy.case.fullname}" />
-				</sdbtest>
-				<echo message="... Samples test is over ..." />
-				<!-- <echo message="... test the client sample test ..." />
-				<sdbtest host="${test.host.NAME}" testscript="${test.machine.deploy.path}/deploy/exec-samples-testcases.xml" remotereports="${test.machine.deploy.path}/deploy/hlt/samples_testcases/CPP/reports" masterreports="${test.reports.path}" >
-					<param name="samples.testcase.path" value="${testcase.path}/samples_testcases" />
-					<param name="deploy.case.fullname" value="${deploy.case.fullname}" />
-					<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
-				</sdbtest>
-				<echo message="... client sample test is over ..." /> -->
-			</case>
-
-			<case value="tpcc">
-				<echo message=" ...begin to test tpcc ..." />
-				<sdbtest host="${test.machine.no2.basic}" testscript="${test.machine.deploy.path}/deploy/exec-tpcc-testcases.xml" remotereports="${test.machine.deploy.path}/deploy/hlt/tpcc_testcases/reports" masterreports="${test.reports.path}" timeout="250m" antFileName="${antFileName}">
-					<param name="testcase.path" value="${test.machine.deploy.path}/deploy/hlt/sql_testcases/" />
-					<param name="install.path" value="${install.path}" />
-					<param name="deploy.case.fullname" value="${deploy.case.fullname}" />
-					<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
-				</sdbtest>
-				<echo message=" ... tpcc test over ..." />
-			</case>
-
-			<case value="hadoop-conn">
-				<echo message=" ...begin to test hadoop-conn ..." />
-				<sdbtest host="${test.machine.no2.basic}" testscript="${test.machine.deploy.path}/deploy/exec-hadoop-conn-testcases.xml" remotereports="${test.machine.deploy.path}/deploy/hlt/conn_testcases/reports" masterreports="${test.reports.path}" timeout="250m" antFileName="${antFileName}">
-					<param name="testcase.path" value="${test.machine.deploy.path}/deploy/hlt/conn_testcases" />
-					<param name="install.path" value="${install.path}" />
-					<param name="deploy.case.fullname" value="${deploy.case.fullname}" />
-				</sdbtest>
-				<echo message="... test hadoop conn is over ..." />
-			</case>
-
-			<case value="unusual">
-				<echo message=" ...begin to test unusual cases ..." />
-				<sdbtest host="${test.machine.no2.basic}" testscript="${test.machine.deploy.path}/deploy/exec-unusual-testcases.xml" remotereports="${test.machine.deploy.path}/deploy/hlt/unusual_testcases/reports" masterreports="${test.reports.path}" timeout="250m" antFileName="${antFileName}">
-					<param name="testcase.path" value="${test.machine.deploy.path}/deploy/hlt/unusual_testcases" />
-					<param name="install.path" value="${install.path}" />
-					<param name="deploy.case.fullname" value="${deploy.case.fullname}" />
-					<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
-				</sdbtest>
-				<echo message=" ... unusual testcases are over ..." />
-			</case>
-
-			<default>
-				<echo message="begin to test js tests ..." />
-				<sdbtest host="${test.machine.no2.basic}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${test.machine.deploy.path}/deploy/hlt/basic_testcases/reports" masterreports="${test.reports.path}" >
-					<param name="testcase.path" value="${test.machine.deploy.path}/deploy/hlt/basic_testcases/" />
-					<param name="install.path" value="${install.path}" />
-					<param name="excludes.dir.patterns" value="vote" />
-					<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
-					<param name="ci.properties.path" value="${test.machine.software.path}/ci.test.properties" />
-				</sdbtest>
-				<echo message="...test js tests are over ..." />
-			</default>
 		</switch>
 	</target>
 </project>

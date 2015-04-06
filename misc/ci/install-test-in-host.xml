@@ -5,14 +5,8 @@
 <!-- depends:install-test-in-host.xml -->
 <!-- call:null -->
 
-<project name="Install-Test" default="Install-Test">	
-	<target name="Clean-Test-Env" depends="">
-		<echo message="Begin to clean test env..." />
-		<delete dir="${test.basedir}/deploy" />
-		<echo message="Clean deploy env compeleted." />
-	</target>
-
-	<target name="Install-Test" depends="Clean-Test-Env">
+<project default="build-test">	
+	<target name="build-test" depends="">
 		<echo message="Begin untar test all..." />
 		<untar src="${test.basedir}/${deploy.tar.file.name}" dest="${test.basedir}" compression="gzip" />
 	</target>

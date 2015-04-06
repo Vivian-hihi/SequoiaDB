@@ -13,13 +13,8 @@
 <!-- call:deploy-software-in-host.xml,deploy-test-in-host.xml,test-type.xml -->
 
 <project name="H3-G5-D3" default="H3-G5-D3">
-	<property name="properties.dir" value="${basedir}/../ci.test.properties" />
-	<property file="${properties.dir}" />
-	<!-- <taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
-		<classpath>
-			<pathelement location="${WORKSPACE}/deploy/ant-sdbtasks/*.jar" />
-		</classpath>
-	</taskdef>  -->
+<!-- 	<property name="properties.dir" value="${basedir}/../ci.test.properties" />
+	<property file="${properties.dir}" /> -->
 
 	<target name="Deploy" depends="">
 		<parallel>
@@ -169,7 +164,7 @@
 					<confitem name="transactionon" value="true" />
 					<confitem name="sharingbreak" value="300000" />
 					<confitem name="diagnum" value="80" />
-          <confitem name="fap" value="${fap.value}" />
+          			<confitem name="fap" value="${fap.value}" />
 				</node>
 			</datagroup>
 			<datagroup name="group5">
@@ -200,7 +195,7 @@
 
 	<target name="H3-G5-D3" depends="">
 		<hostinfo prefix="host" />
-		<property name="test-type-list" value="basic,ant" />
+		<property name="test-type-list" value="basic" />
 		<property name="copy.test.log" value="true"/>
 
 		<parallel>
