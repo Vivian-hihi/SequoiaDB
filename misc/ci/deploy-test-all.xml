@@ -64,6 +64,7 @@
 					<property name="deploy.conffile.wildcard" value="${deploy.conffile.wildcard}" />
 					<property name="ci.script.file.path" value="${ci.script.file.path}" />
 					<property name="BUILD_NUMBER" value="${BUILD_NUMBER}" />
+					<property name="deploy.file.fullname" value="${WORKSPACE}/${deploy.tar.file.name}" />
 				</ant>
 			</then>
 		</if>
