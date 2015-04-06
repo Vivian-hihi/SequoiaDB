@@ -1126,14 +1126,15 @@ done:
 
 __METHOD_IMP(sdb_get_version)
 {
-   int version = 0 ;
-   int sub_version = 0 ;
-   int release = 0 ;
+   INT32 version = 0 ;
+   INT32 sub_version = 0 ;
+   INT32 fixed = 0;
+   INT32 release = 0 ;
    const CHAR *build = NULL ;
 
-   ossGetVersion( &version, &sub_version, &release, &build ) ;
+   ossGetVersion( &version, &sub_version, &fixed, &release, &build ) ;
 
-   return MAKE_RETURN_INT_INT_INT_STRING( version, sub_version, release, build ) ;
+   return MAKE_RETURN_INT_INT_INT_INT_STRING( version, sub_version, fixed, release, build ) ;
 }
 
 ///< implement collection space
