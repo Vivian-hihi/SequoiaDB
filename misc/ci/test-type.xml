@@ -17,8 +17,8 @@
 					<equals arg1="${parallel.flag}" arg2="unparallel" />
 					<then>
 						<echo message="Begin to test basic tests under unparallel env..." />
-						<sdbtest host="${test.host.NAME}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${testcase.path}/js_testcases/reports" masterreports="${test.reports.path}" >
-							<param name="basic.testcase.path" value="${testcase.path}/js_testcases" />
+						<sdbtest host="${test.host.NAME}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${testcase.path}/basic_testcases/reports" masterreports="${test.reports.path}" >
+							<param name="basic.testcase.path" value="${testcase.path}/basic_testcases" />
 							<param name="includes.dir.patterns" value="*" />
 							<param name="excludes.dir.patterns" value="vote" />
 							<param name="deploy.case.fullname" value="${deploy.case.fullname}" />
