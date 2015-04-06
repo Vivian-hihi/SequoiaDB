@@ -49,7 +49,7 @@
 			</ant>
 		</parallel>
 
-    <if>
+    	<if>
 		   <equals arg1="${os.arch}" arg2="amd64" />
 			 <then>
 			    <property name="fap.value" value="fapmongo" />
@@ -128,41 +128,6 @@
 				<property name="deploy.host.name" value="${test.machine.no3.basic}" />
 			</ant>
 		</parallel>
-
-		<!-- <echo message="Begin to test basic tests under parallel env on a machine..." />
-		<parallel>
-			<for list="${test-type-list}" param="test-type">
-				<sequential>
-					<antfetch antfile="${WORKSPACE}/sequoiadb/misc/ci/test-type.xml" dir="." inheritAll="false">
-
-						<property name="deploy.case.fullname" value="${deploy.case.fullname}" />
-						<property name="test.reports.path" value="${test.reports.path}" />
-						<property name="Test-Type" value="@{Test-Type}" />
-						<property name="parallel.flag" value="parallel" />
-						<property name="WORKSPACE" value="${WORKSPACE}" />
-						<property name="ci.script.file.path" value="${ci.script.file.path}" />
-						<property name="test.host.NAME" value="${test.machine.no2.basic}" />
-						<property name="parallel.count" value="1" />
-					</antfetch>
-				</sequential>
-			</for>
-
-			<for list="${test-type-list}" param="test-type">
-				<sequential>
-					<antfetch antfile="${WORKSPACE}/sequoiadb/misc/ci/test-type.xml" dir="." inheritAll="false">
-
-						<property name="deploy.case.fullname" value="${deploy.case.fullname}" />
-						<property name="test.reports.path" value="${test.reports.path}" />
-						<property name="Test-Type" value="@{Test-Type}" />
-						<property name="parallel.flag" value="parallel" />
-						<property name="WORKSPACE" value="${WORKSPACE}" />
-						<property name="ci.script.file.path" value="${ci.script.file.path}" />
-						<property name="test.host.NAME" value="${test.machine.no2.basic}" />
-						<property name="parallel.count" value="2" />
-					</antfetch>
-				</sequential>
-			</for>
-		</parallel> -->
 
 		<tstamp>
 			<format property="current.time.log" pattern="yyyy-MM-dd-hh.mm.ss_a" />
