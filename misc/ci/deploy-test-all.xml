@@ -39,10 +39,7 @@
 					<include name="${test.environment}-${deploy.conffile.wildcard}.xml" />
 				</fileset>
 			</path>
-			<!-- <param name="deploy.file.fullname" value="${WORKSPACE}/${deploy.tar.file.name}" /> -->
 		</foreach>
-
-		<echo file="/opt/ci-test-para.log" message="deploy.case.fullname=${deploy.case.fullname}&#10;" />
 	</target>
 
 	<target name="Deploy-And-Test-Case" depends="">
