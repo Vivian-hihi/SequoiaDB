@@ -163,10 +163,10 @@
 			</sequential>
 		</for>
 
-		<!-- <antcall target="build-and-copy-python" inheritAll="true">
+		<antcall target="build-and-copy-python" inheritAll="true">
 			<param name="python.dir" value="${CODE_DIR}/driver/python" />
 			<param name="DRIVER.DIR" value="${DRIVER.DIR}" />
-		</antcall> -->
+		</antcall>
 
 		<tar destfile="${RELEASE_DIR}/${project.name}-driver-${project.version}-${os.and.platform}.tar.gz" basedir="${RELEASE_DIR}" includes="driver/**" compression="gzip" />
 		<echo message="Make driver package completed." />
