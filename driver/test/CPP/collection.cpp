@@ -1263,3 +1263,45 @@ TEST( collection, sdbCppQueryOne )
    ASSERT_EQ( SDB_OK, rc ) ;
 */
 }
+
+TEST(collection, truncate)
+{
+   sdb connection ;
+   sdbCollectionSpace cs ;
+   sdbCollection cl ;
+   // initialize local variables
+   const CHAR *pHostName                    = HOST ;
+   const CHAR *pPort                        = SERVER ;
+   const CHAR *pUsr                         = USER ;
+   const CHAR *pPasswd                      = PASSWD ;
+   INT32 rc                                 = SDB_OK ;
+   INT32 i                                  = 0 ;
+   SINT64 count                             = 0 ;
+   SINT64 NUM                               = 100 ;
+
+   // initialize the work environment
+   rc = initEnv() ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // connect to database
+   rc = connection.connect( pHostName, pPort, pUsr, pPasswd ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // get cs
+   rc = getCollectionSpace( connection, COLLECTION_SPACE_NAME, cs ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // get cl
+   rc = getCollection( cs, COLLECTION_NAME, cl ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // insert some record
+   rc = insertRecords ( cl, NUM ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // test
+   rc = cl.truncate() ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // check
+   rc = cl.getCount( count ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   ASSERT_EQ( 0, count ) ;
+   // disconnect the connection
+   connection.disconnect() ;
+}
+
