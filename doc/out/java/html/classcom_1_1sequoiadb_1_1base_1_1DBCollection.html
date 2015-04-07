@@ -195,6 +195,12 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>setConnection</b> (IC
 <tr class="memitem:a169a70056eb95af85f78591b67911f97"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCursor.html">DBCursor</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCollection.html#a169a70056eb95af85f78591b67911f97">getIndexes</a> ()  throws BaseException </td></tr>
 <tr class="memdesc:a169a70056eb95af85f78591b67911f97"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get all the indexes of current collection.  <a href="#a169a70056eb95af85f78591b67911f97"></a><br/></td></tr>
 <tr class="separator:a169a70056eb95af85f78591b67911f97"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a564a4b8125cb443a40b800993dfcc311"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCursor.html">DBCursor</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCollection.html#a564a4b8125cb443a40b800993dfcc311">queryAndUpdate</a> (BSONObject matcher, BSONObject selector, BSONObject orderBy, BSONObject hint, BSONObject <a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCollection.html#aa2c739b429b5a48f8cf5bf5ef02ba772">update</a>, long skipRows, long returnRows, int flag, boolean returnNew)  throws BaseException </td></tr>
+<tr class="memdesc:a564a4b8125cb443a40b800993dfcc311"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the matching documents in current collection and update.  <a href="#a564a4b8125cb443a40b800993dfcc311"></a><br/></td></tr>
+<tr class="separator:a564a4b8125cb443a40b800993dfcc311"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1d81878f8271c8a4cd4d843a6af30577"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCursor.html">DBCursor</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCollection.html#a1d81878f8271c8a4cd4d843a6af30577">queryAndRemove</a> (BSONObject matcher, BSONObject selector, BSONObject orderBy, BSONObject hint, long skipRows, long returnRows, int flag)  throws BaseException </td></tr>
+<tr class="memdesc:a1d81878f8271c8a4cd4d843a6af30577"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the matching documents in current collection and remove.  <a href="#a1d81878f8271c8a4cd4d843a6af30577"></a><br/></td></tr>
+<tr class="separator:a1d81878f8271c8a4cd4d843a6af30577"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abdd89b20edbd831a1df977408203372a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCursor.html">DBCursor</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCollection.html#abdd89b20edbd831a1df977408203372a">getIndex</a> (String name)  throws BaseException </td></tr>
 <tr class="memdesc:abdd89b20edbd831a1df977408203372a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get all of or one of the indexes in current collection.  <a href="#abdd89b20edbd831a1df977408203372a"></a><br/></td></tr>
 <tr class="separator:abdd89b20edbd831a1df977408203372a"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -2210,6 +2216,214 @@ BDQuery.FLG_QUERY_PARALLED </li>
 
 </div>
 </div>
+<a class="anchor" id="a1d81878f8271c8a4cd4d843a6af30577"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCursor.html">DBCursor</a> com.sequoiadb.base.DBCollection.queryAndRemove </td>
+          <td>(</td>
+          <td class="paramtype">BSONObject&#160;</td>
+          <td class="paramname"><em>matcher</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">BSONObject&#160;</td>
+          <td class="paramname"><em>selector</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">BSONObject&#160;</td>
+          <td class="paramname"><em>orderBy</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">BSONObject&#160;</td>
+          <td class="paramname"><em>hint</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">long&#160;</td>
+          <td class="paramname"><em>skipRows</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">long&#160;</td>
+          <td class="paramname"><em>returnRows</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>flag</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td>  throws BaseException </td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Get the matching documents in current collection and remove. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">matcher</td><td>the matching rule, return all the documents if null </td></tr>
+    <tr><td class="paramname">selector</td><td>the selective rule, return the whole document if null </td></tr>
+    <tr><td class="paramname">orderBy</td><td>the ordered rule, never sort if null </td></tr>
+    <tr><td class="paramname">hint</td><td>the hint, automatically match the optimal hint if null </td></tr>
+    <tr><td class="paramname">skipRows</td><td>skip the first numToSkip documents, never skip if this parameter is 0 </td></tr>
+    <tr><td class="paramname">returnRows</td><td>only return returnRows documents, return all if this parameter is -1 </td></tr>
+    <tr><td class="paramname">flag</td><td>the flag is used to choose the way to query, the optional options are as below: <ul>
+<li>
+<a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBQuery.html#a2b4c991db1d4024d6bde92849c6b300c" title="Normally, query return bson stream, when this flag is added, query return binary data stream...">DBQuery.FLG_QUERY_STRINGOUT</a> </li>
+<li>
+<a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBQuery.html#ac26e2c0cee7cf2b23fa52a288abb698c" title="Force to use specified hint to query, if database have no index assigned by the hint, fail to query.">DBQuery.FLG_QUERY_FORCE_HINT</a> </li>
+<li>
+<a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBQuery.html#ad3dbd2e5fe88a3a683fe78d8d73b8a3d" title="Enable paralled sub query.">DBQuery.FLG_QUERY_PARALLED</a> </li>
+<li>
+<a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBQuery.html#a3dfd00ad8d166cee821c46ca18359859" title="return data in query response">DBQuery.FLG_QUERY_WITH_RETURNDATA</a> </li>
+<li>
+<a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBQuery.html#a334a60ade03231167cab57ae23c84ba1" title="explain query">DBQuery.FLG_QUERY_EXPLAIN</a> </li>
+</ul>
+</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>a <a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCursor.html" title="Database operation interfaces of cursor.">DBCursor</a> instance of the result or null if no any matched document </dd></dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname">com.sequoiadb.exception.BaseException</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="a564a4b8125cb443a40b800993dfcc311"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCursor.html">DBCursor</a> com.sequoiadb.base.DBCollection.queryAndUpdate </td>
+          <td>(</td>
+          <td class="paramtype">BSONObject&#160;</td>
+          <td class="paramname"><em>matcher</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">BSONObject&#160;</td>
+          <td class="paramname"><em>selector</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">BSONObject&#160;</td>
+          <td class="paramname"><em>orderBy</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">BSONObject&#160;</td>
+          <td class="paramname"><em>hint</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">BSONObject&#160;</td>
+          <td class="paramname"><em>update</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">long&#160;</td>
+          <td class="paramname"><em>skipRows</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">long&#160;</td>
+          <td class="paramname"><em>returnRows</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>flag</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">boolean&#160;</td>
+          <td class="paramname"><em>returnNew</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td>  throws BaseException </td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Get the matching documents in current collection and update. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">matcher</td><td>the matching rule, return all the documents if null </td></tr>
+    <tr><td class="paramname">selector</td><td>the selective rule, return the whole document if null </td></tr>
+    <tr><td class="paramname">orderBy</td><td>the ordered rule, never sort if null </td></tr>
+    <tr><td class="paramname">update</td><td>the update rule, can't be null </td></tr>
+    <tr><td class="paramname">hint</td><td>the hint, automatically match the optimal hint if null </td></tr>
+    <tr><td class="paramname">skipRows</td><td>skip the first numToSkip documents, never skip if this parameter is 0 </td></tr>
+    <tr><td class="paramname">returnRows</td><td>only return returnRows documents, return all if this parameter is -1 </td></tr>
+    <tr><td class="paramname">flag</td><td>the flag is used to choose the way to query, the optional options are as below: <ul>
+<li>
+<a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBQuery.html#a2b4c991db1d4024d6bde92849c6b300c" title="Normally, query return bson stream, when this flag is added, query return binary data stream...">DBQuery.FLG_QUERY_STRINGOUT</a> </li>
+<li>
+<a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBQuery.html#ac26e2c0cee7cf2b23fa52a288abb698c" title="Force to use specified hint to query, if database have no index assigned by the hint, fail to query.">DBQuery.FLG_QUERY_FORCE_HINT</a> </li>
+<li>
+<a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBQuery.html#ad3dbd2e5fe88a3a683fe78d8d73b8a3d" title="Enable paralled sub query.">DBQuery.FLG_QUERY_PARALLED</a> </li>
+<li>
+<a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBQuery.html#a3dfd00ad8d166cee821c46ca18359859" title="return data in query response">DBQuery.FLG_QUERY_WITH_RETURNDATA</a> </li>
+<li>
+<a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBQuery.html#a334a60ade03231167cab57ae23c84ba1" title="explain query">DBQuery.FLG_QUERY_EXPLAIN</a> </li>
+</ul>
+</td></tr>
+    <tr><td class="paramname">returnNew</td><td>When true, returns the updated document rather than the original </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>a <a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCursor.html" title="Database operation interfaces of cursor.">DBCursor</a> instance of the result or null if no any matched document </dd></dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname">com.sequoiadb.exception.BaseException</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <a class="anchor" id="a0b522f44602324c540505807065ca1e7"></a>
 <div class="memitem">
 <div class="memproto">
@@ -2882,12 +3096,12 @@ BDQuery.FLG_QUERY_PARALLED </li>
 </div>
 </div>
 <hr/>The documentation for this class was generated from the following file:<ul>
-<li>E:/work/sequoiadb/driver/java/src/main/java/com/sequoiadb/base/DBCollection.java</li>
+<li>C:/sequoiadb/driver/java/src/main/java/com/sequoiadb/base/DBCollection.java</li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Mar 6 2015 09:29:13 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Tue Apr 7 2015 10:31:04 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.2
 </small></address>
