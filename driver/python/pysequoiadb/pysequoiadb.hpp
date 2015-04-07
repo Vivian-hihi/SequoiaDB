@@ -85,6 +85,7 @@ __METHOD_DECLARE(cl_create_lob) ;
 __METHOD_DECLARE(cl_get_lob) ;
 __METHOD_DECLARE(cl_remove_lob) ;
 __METHOD_DECLARE(cl_list_lobs) ;
+__METHOD_DECLARE(cl_truncate) ;
 
 ///< cursor
 __METHOD_DECLARE(create_cursor) ;

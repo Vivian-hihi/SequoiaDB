@@ -1240,3 +1240,10 @@ class collection(object):
          raise
 
       return result
+
+   def truncate(self):
+      try:
+         rc = sdb.cl_truncate(self._cl)
+         pysequoiadb._raise_if_error("Truncate failed", rc)
+      except SDBBaseError:
+            raise

@@ -2199,6 +2199,27 @@ error:
    goto done ;
 }
 
+__METHOD_IMP(cl_truncate)
+{
+   INT32 rc           = SDB_OK ;
+   PYOBJECT *obj      = NULL ;
+   sdbCollection *cl  = NULL ;
+
+   if ( !PARSE_PYTHON_ARGS(args, "O", &obj) )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   CAST_PYOBJECT_TO_COBJECT( obj, sdbCollection, cl ) ;
+   rc = cl->truncate() ;
+
+done:
+   return MAKE_RETURN_INT(rc) ;
+error:
+   goto done ;
+}
+
 __METHOD_IMP(cl_explain)
 {
    INT32 rc                       = 0 ;
@@ -3208,6 +3229,7 @@ static PyMethodDef sequoiadb_methods[] = {
    {"cl_remove_lob",                   cl_remove_lob,                   METH_VARARGS},
    {"cl_list_lobs",                    cl_list_lobs,                    METH_VARARGS},
    {"cl_explain",                      cl_explain,                      METH_VARARGS},
+   {"cl_truncate",                     cl_truncate,                     METH_VARARGS},
    /** cr */
    {"create_cursor",                   create_cursor,                   METH_VARARGS},
    {"release_cursor",                  release_cursor,                  METH_VARARGS},
