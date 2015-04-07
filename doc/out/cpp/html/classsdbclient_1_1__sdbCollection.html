@@ -119,6 +119,12 @@ virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>query</b> (<
 <tr class="memitem:af1a3c1c078a7bcf9b1c115d73b49952f"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="af1a3c1c078a7bcf9b1c115d73b49952f"></a>
 virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>query</b> (<a class="el" href="classsdbclient_1_1sdbCursor.html">sdbCursor</a> &amp;cursor, const bson::BSONObj &amp;condition=_sdbStaticObject, const bson::BSONObj &amp;selected=_sdbStaticObject, const bson::BSONObj &amp;orderBy=_sdbStaticObject, const bson::BSONObj &amp;hint=_sdbStaticObject, INT64 numToSkip=0, INT64 numToReturn=-1, INT32 flag=0)=0</td></tr>
 <tr class="separator:af1a3c1c078a7bcf9b1c115d73b49952f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ada3e8c116d95b0fcf7bccacfacb076b6"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ada3e8c116d95b0fcf7bccacfacb076b6"></a>
+virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>queryAndUpdate</b> (<a class="el" href="classsdbclient_1_1__sdbCursor.html">_sdbCursor</a> **cursor, const bson::BSONObj &amp;update, const bson::BSONObj &amp;condition=_sdbStaticObject, const bson::BSONObj &amp;selected=_sdbStaticObject, const bson::BSONObj &amp;orderBy=_sdbStaticObject, const bson::BSONObj &amp;hint=_sdbStaticObject, INT64 numToSkip=0, INT64 numToReturn=-1, INT32 flag=0, BOOLEAN returnNew=FALSE)=0</td></tr>
+<tr class="separator:ada3e8c116d95b0fcf7bccacfacb076b6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1e45b2aff6bfd456f1ddb4f1ba588893"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a1e45b2aff6bfd456f1ddb4f1ba588893"></a>
+virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>queryAndRemove</b> (<a class="el" href="classsdbclient_1_1__sdbCursor.html">_sdbCursor</a> **cursor, const bson::BSONObj &amp;condition=_sdbStaticObject, const bson::BSONObj &amp;selected=_sdbStaticObject, const bson::BSONObj &amp;orderBy=_sdbStaticObject, const bson::BSONObj &amp;hint=_sdbStaticObject, INT64 numToSkip=0, INT64 numToReturn=-1, INT32 flag=0)=0</td></tr>
+<tr class="separator:a1e45b2aff6bfd456f1ddb4f1ba588893"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5cbd0c3c1bd7cadecb11cddf85f94861"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a5cbd0c3c1bd7cadecb11cddf85f94861"></a>
 virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>createIndex</b> (const bson::BSONObj &amp;indexDef, const CHAR *pName, BOOLEAN isUnique, BOOLEAN isEnforced)=0</td></tr>
 <tr class="separator:a5cbd0c3c1bd7cadecb11cddf85f94861"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -198,12 +204,12 @@ virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>listLobs</b>
 <tr class="separator:abf797a0a829dcf71faaa2eed68228f31"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <hr/>The documentation for this class was generated from the following file:<ul>
-<li>E:/sequoiadb/client/include/<a class="el" href="client_8hpp_source.html">client.hpp</a></li>
+<li>C:/sequoiadb/client/include/<a class="el" href="client_8hpp_source.html">client.hpp</a></li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Mar 16 2015 11:16:32 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Tue Apr 7 2015 10:25:03 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.2
 </small></address>
