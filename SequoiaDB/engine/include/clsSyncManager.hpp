@@ -108,8 +108,7 @@ namespace engine
    private:
       INT32 _wait( _pmdEDUCB *&cb, UINT32 sub, INT64 timeout = -1 ) ;
 
-      void _createWakePlan( const DPS_LSN_OFFSET &offset,
-                            CLS_WAKE_PLAN &plan ) ;
+      void _createWakePlan( CLS_WAKE_PLAN &plan ) ;
 
       void _wake( CLS_WAKE_PLAN &plan ) ;
 
@@ -120,8 +119,6 @@ namespace engine
       void _clearSyncList( UINT32 removed, UINT32 removedAlives,
                            UINT32 preAlives, UINT32 preSyncNum,                           
                            _clsSyncStatus *left ) ;
-
-      INT32 _findStartPoint( const DPS_LSN &remote, DPS_LSN &lsn ) ;
 
    private:
       /// sub between <0, CLS_REPLSET_MAX_NODE_SIZE - 2>.
@@ -139,6 +136,8 @@ namespace engine
       UINT32 _validSync ;
       UINT32 _timeout ;
       UINT32 _aliveCount ;
+
+      UINT32 _wakeTimeout ;
 
    } ;
 }

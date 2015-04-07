@@ -63,6 +63,7 @@ namespace engine
    class _pmdEDUCB ;
 
    #define CLS_SYNCCTRL_THRESHOLD_SIZE          (10)
+   #define CLS_SYNC_DFT_TIMEOUT                 ( 3600 * OSS_ONE_SEC )
 
    /*
       _clsReplicateSet define
@@ -176,7 +177,7 @@ namespace engine
          OSS_INLINE INT32 sync( const DPS_LSN_OFFSET &offset,
                                 _pmdEDUCB *eduCB,
                                 UINT32 w = 1,
-                                INT64 timeout = -1 )
+                                INT64 timeout = CLS_SYNC_DFT_TIMEOUT )
          {
             if ( DPS_INVALID_LSN_OFFSET == offset || 1 >= w )
             {

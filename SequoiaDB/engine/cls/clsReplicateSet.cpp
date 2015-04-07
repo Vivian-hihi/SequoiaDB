@@ -483,6 +483,7 @@ namespace engine
          _checkBreak( interval ) ;
 
          _vote.handleTimeout( interval ) ;
+         _sync.handleTimeout( interval ) ;
       }
 
    done:
@@ -725,8 +726,7 @@ namespace engine
       /// w when change value
       PD_TRACE_ENTRY ( SDB__CLSREPSET__CHKBRK );
       BOOLEAN needErase = FALSE ;
-      map<UINT64, _clsSharingStatus *>::iterator itr =
-                                        _info.alives.begin() ;
+      map<UINT64, _clsSharingStatus *>::iterator itr = _info.alives.begin() ;
       for ( ; itr != _info.alives.end(); itr++ )
       {
          itr->second->timeout += millisec ;
@@ -900,9 +900,8 @@ namespace engine
          _clsSharingStatus &status = itr->second ;
          _info.mtx.lock_w() ;
          _info.alives.insert( make_pair( itr->first, &status ) ) ;
-         _info.mtx.release_w() ;
-
          _sync.updateNodeStatus( status.beat.identity, TRUE ) ;
+         _info.mtx.release_w() ;
 
          PD_LOG( PDEVENT, "vote: [node:%d] aliving from break",
                  status.beat.identity.columns.nodeID ) ;

@@ -57,6 +57,8 @@ namespace engine
    #define CLS_W_2_SUB( num ) ( (num) - 2 )
    #define CLS_SUB_2_W( sub ) ( (sub) + 2 )
 
+   #define CLS_WAKE_W_TIMEOUT             ( CLS_SYNC_REQ_INTERVAL )
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSYNCMAG__CLSSYNCMAG, "_clsSyncManager::_clsSyncManager" )
    _clsSyncManager::_clsSyncManager( _netRouteAgent *agent,
                                      _clsGroupInfo *info ):
@@ -68,6 +70,7 @@ namespace engine
    {
       PD_TRACE_ENTRY ( SDB__CLSSYNCMAG__CLSSYNCMAG ) ;
       _syncSrc.value = MSG_INVALID_ROUTEID ;
+      _wakeTimeout = 0 ;
 
       for ( UINT32 i = 0 ; i < CLS_REPLSET_MAX_NODE_SIZE - 1 ; i++ )
       {
@@ -82,8 +85,8 @@ namespace engine
 
    }
 
-   // The function is called by clsMgr thread, and the _notifyList is also in
-   // the same thread, so don't use lock
+   // The function is called already in _info->mtx.lock_w(),
+   // so can't lock any way
    void _clsSyncManager::updateNodeStatus( const MsgRouteID & id,
                                            BOOLEAN valid )
    {
@@ -278,6 +281,16 @@ namespace engine
          _info->mtx.release_r() ;
          goto done ;
       }
+      else if ( MSG_INVALID_ROUTEID != _info->primary.value ||
+                _info->primary.value != _info->local.value )
+      {
+         /// has change to secondary. Why need to check primary again,
+         /// because change primary will cut(0), but this thread has not push
+         /// to wait queue, so, need to check again
+         rc = SDB_CLS_WAIT_SYNC_FAILED ;
+         _info->mtx.release_r() ;
+         goto error ;
+      }
       else if ( _aliveCount < _validSync && w > _aliveCount + 1 )
       {
          rc = SDB_CLS_WAIT_SYNC_FAILED ;
@@ -364,6 +377,15 @@ namespace engine
 
    void _clsSyncManager::handleTimeout( const UINT32 &interval )
    {
+      _wakeTimeout += interval ;
+
+      if ( _wakeTimeout > CLS_WAKE_W_TIMEOUT )
+      {
+         ossScopedRWLock lock( &_info->mtx, SHARED ) ;
+         CLS_WAKE_PLAN plan ;
+         _createWakePlan( plan ) ;
+         _wake( plan ) ;
+      }
    }
 
    // The function is called by repl session(src), so need use lock
@@ -608,7 +630,7 @@ namespace engine
       {
          /// wake up agent thread which is waiting
          CLS_WAKE_PLAN plan ;
-         _createWakePlan( lsn.offset, plan ) ;
+         _createWakePlan( plan ) ;
          _wake( plan ) ;
       }
       PD_TRACE_EXIT ( SDB__CLSSYNCMAG__COMPLETE ) ;
@@ -628,6 +650,7 @@ namespace engine
       /// plan is empty. the waking is done.
 
       PD_TRACE_ENTRY ( SDB__CLSSYNCMAG__WAKE ) ;
+      _wakeTimeout = 0 ;
       SDB_ASSERT( plan.size() <= CLS_REPLSET_MAX_NODE_SIZE - 1,
                   "plan size should <= CLS_REPLSET_MAX_NODE_SIZE - 1" ) ;
 
@@ -663,8 +686,7 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSYNCMAG__CTWAKEPLAN, "_clsSyncManager::_createWakePlan" )
-   void _clsSyncManager::_createWakePlan( const DPS_LSN_OFFSET &offset,
-                                          CLS_WAKE_PLAN &plan )
+   void _clsSyncManager::_createWakePlan( CLS_WAKE_PLAN &plan )
    {
       PD_TRACE_ENTRY ( SDB__CLSSYNCMAG__CTWAKEPLAN ) ;
 
@@ -674,10 +696,8 @@ namespace engine
       {
          if ( DPS_INVALID_LSN_OFFSET == _notifyList[i].offset )
          {
-            /// DPS_INVALID_LSN_OFFSET is 0xFFFFFFFFFFFFFFFFll.
-            /// we use 0 to instead it. there will be no actual
-            /// impact.
-            plan.insert( 0 ) ;
+            /// DPS_INVALID_LSN_OFFSET is for full sync, so ignore the node.
+            plan.insert( DPS_INVALID_LSN_OFFSET - 1 ) ;
          }
          else
          {
@@ -786,7 +806,7 @@ namespace engine
             {
                session.eduCB->getEvent().signal ( SDB_OK ) ;
             }
-            else if ( 0 == endRemovedSub || preSyncNum != preAlives )
+            else if ( removedSub + 1 > endRemovedSub + removed )
             {
                session.eduCB->getEvent().signal ( SDB_CLS_WAIT_SYNC_FAILED ) ;
             }
@@ -802,7 +822,7 @@ namespace engine
          {
             _mtxs[endRemovedSub-1].release() ;
          }
-         else
+         else if ( 0 == removedSub )
          {
             break ;
          }
