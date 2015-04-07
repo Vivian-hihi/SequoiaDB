@@ -297,14 +297,14 @@ public:
                                         [int $numToReturn],
                                         [bool $returnNew] )
        \brief Querys this collection, returning a SequoiaCursor for the result set and update
-	   \param [in] $update The update rule, can't be null
+       \param [in] $update The update rule, can't be null
        \param [in] $condition The matching rule, return all the documents if null
        \param [in] $select The selective rule, return the whole document if null
        \param [in] $orderBy The ordered rule, never sort if null
        \param [in] $hint The hint, automatically match the optimal hint if null
        \param [in] $numToSkip Skip the first numToSkip documents, never skip if this parameter is 0
        \param [in] $numToReturn Only return numToReturn documents, return all if this parameter is -1
-	   \param [in] $returnNew When TRUE, returns the updated document rather than the original
+       \param [in] $returnNew When TRUE, returns the updated document rather than the original
        \retval Returns a SequoiaCursor for the result set
    */
    SequoiaCursor findAndUpdate ( array|string $update,
