@@ -80,6 +80,7 @@ namespace SequoiaDB
         public const string RM_PROCEDURES_CMD = "remove procedures";
         public const string ALTER_COLLECTION = "alter collection";
         public const string LIST_LOBS_CMD = "list lobs";
+        public const string TRUNCATE = "truncate";
 
 
         public const string OID = "_id";

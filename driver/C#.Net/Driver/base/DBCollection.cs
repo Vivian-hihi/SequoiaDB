@@ -1126,6 +1126,27 @@ namespace SequoiaDB
 
         }
 
+        /** \fn void Truncate()
+         * \brief Truncate the collection
+         * \exception SequoiaDB.BaseException
+         * \exception System.Exception
+         */
+        public void Truncate()
+        {
+            // build a bson to send
+            BsonDocument newObj = new BsonDocument();
+            newObj.Add(SequoiadbConstants.FIELD_COLLECTION, collectionFullName);
+            // build command
+            string commandString = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.TRUNCATE;
+            BsonDocument dummyObj = new BsonDocument();
+            // run command
+            SDBMessage rtnSDBMessage = AdminCommand(commandString, newObj, dummyObj, dummyObj, dummyObj, 0, -1, 0);
+            // check the return flag
+            int flags = rtnSDBMessage.Flags;
+            if (flags != 0)
+                throw new BaseException(flags);
+        }
+
         private void _Update(int flag, BsonDocument matcher, BsonDocument modifier, BsonDocument hint)
         {
             if ( modifier == null )

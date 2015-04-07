@@ -1031,5 +1031,23 @@ namespace DriverTest
             Assert.IsTrue(2 == returnNum);
         }
 
+        [TestMethod()]
+        public void TruncateTest()
+        {
+            int num = 100 ;
+            long recordNum = 0;            
+            for (int i = 0; i < num; i++)
+            {
+                BsonDocument obj = new BsonDocument { { "test_truncate", "test" } };
+                coll.Insert(obj);
+            }
+            // test api
+            coll.Truncate();
+            // check
+            recordNum = coll.GetCount(new BsonDocument());
+            Assert.IsTrue(0 == recordNum);
+        }
+
+
     }
 }
