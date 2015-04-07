@@ -146,6 +146,12 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a1c31a90e8cfd456a4fd16b08ef290f14"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classSequoiaDB_1_1DBCursor.html">DBCursor</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaDB_1_1DBCollection.html#a1c31a90e8cfd456a4fd16b08ef290f14">Query</a> (BsonDocument query, BsonDocument selector, BsonDocument orderBy, BsonDocument hint, long skipRows, long returnRows, int flag)</td></tr>
 <tr class="memdesc:a1c31a90e8cfd456a4fd16b08ef290f14"><td class="mdescLeft">&#160;</td><td class="mdescRight">Find documents of current collection.  <a href="#a1c31a90e8cfd456a4fd16b08ef290f14"></a><br/></td></tr>
 <tr class="separator:a1c31a90e8cfd456a4fd16b08ef290f14"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a89d462bb82479035e5fef7c7afdeb21a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classSequoiaDB_1_1DBCursor.html">DBCursor</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaDB_1_1DBCollection.html#a89d462bb82479035e5fef7c7afdeb21a">QueryAndUpdate</a> (BsonDocument query, BsonDocument selector, BsonDocument orderBy, BsonDocument hint, BsonDocument update, long skipRows, long returnRows, int flag, bool returnNew)</td></tr>
+<tr class="memdesc:a89d462bb82479035e5fef7c7afdeb21a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Find documents of current collection and update.  <a href="#a89d462bb82479035e5fef7c7afdeb21a"></a><br/></td></tr>
+<tr class="separator:a89d462bb82479035e5fef7c7afdeb21a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3d1ceb7087a4d059f1e391fef4838588"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classSequoiaDB_1_1DBCursor.html">DBCursor</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaDB_1_1DBCollection.html#a3d1ceb7087a4d059f1e391fef4838588">QueryAndRemove</a> (BsonDocument query, BsonDocument selector, BsonDocument orderBy, BsonDocument hint, long skipRows, long returnRows, int flag)</td></tr>
+<tr class="memdesc:a3d1ceb7087a4d059f1e391fef4838588"><td class="mdescLeft">&#160;</td><td class="mdescRight">Find documents of current collection and remove.  <a href="#a3d1ceb7087a4d059f1e391fef4838588"></a><br/></td></tr>
+<tr class="separator:a3d1ceb7087a4d059f1e391fef4838588"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a440565fcef581f92742e8cbeab24869e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classSequoiaDB_1_1DBCursor.html">DBCursor</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaDB_1_1DBCollection.html#a440565fcef581f92742e8cbeab24869e">Explain</a> (BsonDocument query, BsonDocument selector, BsonDocument orderBy, BsonDocument hint, long skipRows, long returnRows, int flag, BsonDocument options)</td></tr>
 <tr class="memdesc:a440565fcef581f92742e8cbeab24869e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Find documents of current collection.  <a href="#a440565fcef581f92742e8cbeab24869e"></a><br/></td></tr>
 <tr class="separator:a440565fcef581f92742e8cbeab24869e"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -1415,6 +1421,198 @@ DBQuery.FLG_QUERY_WITH_RETURNDATA(0x00000200) : In general, query won't return d
 
 </div>
 </div>
+<a class="anchor" id="a3d1ceb7087a4d059f1e391fef4838588"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classSequoiaDB_1_1DBCursor.html">DBCursor</a> SequoiaDB.DBCollection.QueryAndRemove </td>
+          <td>(</td>
+          <td class="paramtype">BsonDocument&#160;</td>
+          <td class="paramname"><em>query</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">BsonDocument&#160;</td>
+          <td class="paramname"><em>selector</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">BsonDocument&#160;</td>
+          <td class="paramname"><em>orderBy</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">BsonDocument&#160;</td>
+          <td class="paramname"><em>hint</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">long&#160;</td>
+          <td class="paramname"><em>skipRows</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">long&#160;</td>
+          <td class="paramname"><em>returnRows</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>flag</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Find documents of current collection and remove. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">query</td><td>The matching condition  The selective rule </td></tr>
+    <tr><td class="paramname">orderBy</td><td>The ordered rule </td></tr>
+    <tr><td class="paramname">hint</td><td>One of the indexs in current collection, using default index to query if not provided eg:{"":"ageIndex"} </td></tr>
+    <tr><td class="paramname">skipRows</td><td>Skip the first numToSkip documents, default is 0 </td></tr>
+    <tr><td class="paramname">returnRows</td><td>Only return numToReturn documents, default is -1 for returning all results </td></tr>
+    <tr><td class="paramname">flag</td><td>the flag is used to choose the way to query, the optional options are as below: <pre class="fragment">DBQuery.FLG_QUERY_FORCE_HINT(0x00000080)      : Force to use specified hint to query, if database have no index assigned by the hint, fail to query
+DBQuery.FLG_QUERY_PARALLED(0x00000100)        : Enable paralled sub query
+DBQuery.FLG_QUERY_WITH_RETURNDATA(0x00000200) : In general, query won't return data until cursor get from database,
+                                                when add this flag, return data in query response, it will be more high-performance
+</pre></td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>The <a class="el" href="classSequoiaDB_1_1DBCursor.html" title="Database collection cursor.">DBCursor</a> of matching documents or null </dd></dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname"><a class="el" href="classSequoiaDB_1_1BaseException.html" title="Database operation exception.">SequoiaDB.BaseException</a></td><td></td></tr>
+    <tr><td class="paramname">System.Exception</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="a89d462bb82479035e5fef7c7afdeb21a"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classSequoiaDB_1_1DBCursor.html">DBCursor</a> SequoiaDB.DBCollection.QueryAndUpdate </td>
+          <td>(</td>
+          <td class="paramtype">BsonDocument&#160;</td>
+          <td class="paramname"><em>query</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">BsonDocument&#160;</td>
+          <td class="paramname"><em>selector</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">BsonDocument&#160;</td>
+          <td class="paramname"><em>orderBy</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">BsonDocument&#160;</td>
+          <td class="paramname"><em>hint</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">BsonDocument&#160;</td>
+          <td class="paramname"><em>update</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">long&#160;</td>
+          <td class="paramname"><em>skipRows</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">long&#160;</td>
+          <td class="paramname"><em>returnRows</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>flag</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>returnNew</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Find documents of current collection and update. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">query</td><td>The matching condition  The selective rule </td></tr>
+    <tr><td class="paramname">orderBy</td><td>The ordered rule </td></tr>
+    <tr><td class="paramname">hint</td><td>One of the indexs in current collection, using default index to query if not provided eg:{"":"ageIndex"} </td></tr>
+    <tr><td class="paramname">update</td><td>The update rule </td></tr>
+    <tr><td class="paramname">skipRows</td><td>Skip the first numToSkip documents, default is 0 </td></tr>
+    <tr><td class="paramname">returnRows</td><td>Only return numToReturn documents, default is -1 for returning all results </td></tr>
+    <tr><td class="paramname">flag</td><td>the flag is used to choose the way to query, the optional options are as below: <pre class="fragment">DBQuery.FLG_QUERY_FORCE_HINT(0x00000080)      : Force to use specified hint to query, if database have no index assigned by the hint, fail to query
+DBQuery.FLG_QUERY_PARALLED(0x00000100)        : Enable paralled sub query
+DBQuery.FLG_QUERY_WITH_RETURNDATA(0x00000200) : In general, query won't return data until cursor get from database,
+                                                when add this flag, return data in query response, it will be more high-performance
+</pre></td></tr>
+    <tr><td class="paramname">returnNew</td><td>When true, returns the updated document rather than the original </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>The <a class="el" href="classSequoiaDB_1_1DBCursor.html" title="Database collection cursor.">DBCursor</a> of matching documents or null </dd></dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname"><a class="el" href="classSequoiaDB_1_1BaseException.html" title="Database operation exception.">SequoiaDB.BaseException</a></td><td></td></tr>
+    <tr><td class="paramname">System.Exception</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <a class="anchor" id="ad279d81752b315cda9ec48445ad999a1"></a>
 <div class="memitem">
 <div class="memproto">
@@ -1926,12 +2124,12 @@ DBQuery.FLG_QUERY_WITH_RETURNDATA(0x00000200) : In general, query won't return d
 </div>
 </div>
 <hr/>The documentation for this class was generated from the following file:<ul>
-<li>E:/sequoiadb/driver/C#.Net/Driver/base/DBCollection.cs</li>
+<li>C:/sequoiadb/driver/C#.Net/Driver/base/DBCollection.cs</li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Mar 16 2015 11:29:46 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Tue Apr 7 2015 10:36:03 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.2
 </small></address>
