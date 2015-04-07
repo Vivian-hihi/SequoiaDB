@@ -179,8 +179,7 @@ namespace engine
             /// the length might be changed. DPS_INVALID_TAG is a stop flag.
             break ;
          }
-         else if ( valueSize >= (UINT32)totalSize ||
-                   totalSize - loadSize < (INT32)valueSize )
+         else if ( (UINT32)( totalSize - loadSize ) < valueSize )
          {
             PD_LOG( PDERROR, "get a invalid value size:%d, total size: %d, "
                     "load size: %d", valueSize, totalSize, loadSize ) ;
