@@ -102,6 +102,12 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a2a1c45c62ae4bf9ad626c86dfd5eb8ef"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classSequoiaCursor.html">SequoiaCursor</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaCL.html#a2a1c45c62ae4bf9ad626c86dfd5eb8ef">find</a> (array|string $condition=NULL, array|string $select=NULL, array|string $orderBy=NULL, array|string $hint=NULL, int $numToSkip=0, int $numToReturn=-1)</td></tr>
 <tr class="memdesc:a2a1c45c62ae4bf9ad626c86dfd5eb8ef"><td class="mdescLeft">&#160;</td><td class="mdescRight">Querys this collection, returning a <a class="el" href="classSequoiaCursor.html">SequoiaCursor</a> for the result set.  <a href="#a2a1c45c62ae4bf9ad626c86dfd5eb8ef"></a><br/></td></tr>
 <tr class="separator:a2a1c45c62ae4bf9ad626c86dfd5eb8ef"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9d23829fa9ade514e3cdb40cc1870e14"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classSequoiaCursor.html">SequoiaCursor</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaCL.html#a9d23829fa9ade514e3cdb40cc1870e14">findAndUpdate</a> (array|string $<a class="el" href="classSequoiaCL.html#a9fda470494d214378b80ce30d45141c8">update</a>, array|string $condition=NULL, array|string $select=NULL, array|string $orderBy=NULL, array|string $hint=NULL, int $numToSkip=0, int $numToReturn=-1, bool $returnNew=FALSE)</td></tr>
+<tr class="memdesc:a9d23829fa9ade514e3cdb40cc1870e14"><td class="mdescLeft">&#160;</td><td class="mdescRight">Querys this collection, returning a <a class="el" href="classSequoiaCursor.html">SequoiaCursor</a> for the result set and update.  <a href="#a9d23829fa9ade514e3cdb40cc1870e14"></a><br/></td></tr>
+<tr class="separator:a9d23829fa9ade514e3cdb40cc1870e14"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac209a664eec43bc6f9967b9381cced99"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classSequoiaCursor.html">SequoiaCursor</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaCL.html#ac209a664eec43bc6f9967b9381cced99">findAndRemove</a> (array|string $condition=NULL, array|string $select=NULL, array|string $orderBy=NULL, array|string $hint=NULL, int $numToSkip=0, int $numToReturn=-1)</td></tr>
+<tr class="memdesc:ac209a664eec43bc6f9967b9381cced99"><td class="mdescLeft">&#160;</td><td class="mdescRight">Querys this collection, returning a <a class="el" href="classSequoiaCursor.html">SequoiaCursor</a> for the result set and remove.  <a href="#ac209a664eec43bc6f9967b9381cced99"></a><br/></td></tr>
+<tr class="separator:ac209a664eec43bc6f9967b9381cced99"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae44abe1394d7a1e0c6c34c442a173e9c"><td class="memItemLeft" align="right" valign="top">array string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaCL.html#ae44abe1394d7a1e0c6c34c442a173e9c">split</a> (string $sourceName, string $destName, array|string $condition, array|string $endCondition=NULL)</td></tr>
 <tr class="memdesc:ae44abe1394d7a1e0c6c34c442a173e9c"><td class="mdescLeft">&#160;</td><td class="mdescRight">data split,source collection split to dest collection  <a href="#ae44abe1394d7a1e0c6c34c442a173e9c"></a><br/></td></tr>
 <tr class="separator:ae44abe1394d7a1e0c6c34c442a173e9c"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -356,6 +362,158 @@ Public Member Functions</h2></td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">$hint</td><td>The hint, automatically match the optimal hint if null </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">$numToSkip</td><td>Skip the first numToSkip documents, never skip if this parameter is 0 </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">$numToReturn</td><td>Only return numToReturn documents, return all if this parameter is -1 </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname">Returns</td><td>a <a class="el" href="classSequoiaCursor.html">SequoiaCursor</a> for the result set </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="ac209a664eec43bc6f9967b9381cced99"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classSequoiaCursor.html">SequoiaCursor</a> SequoiaCL::findAndRemove </td>
+          <td>(</td>
+          <td class="paramtype">array|string&#160;</td>
+          <td class="paramname"><em>$condition</em> = <code>NULL</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">array|string&#160;</td>
+          <td class="paramname"><em>$select</em> = <code>NULL</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">array|string&#160;</td>
+          <td class="paramname"><em>$orderBy</em> = <code>NULL</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">array|string&#160;</td>
+          <td class="paramname"><em>$hint</em> = <code>NULL</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>$numToSkip</em> = <code>0</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>$numToReturn</em> = <code>-1</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Querys this collection, returning a <a class="el" href="classSequoiaCursor.html">SequoiaCursor</a> for the result set and remove. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">$condition</td><td>The matching rule, return all the documents if null </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">$select</td><td>The selective rule, return the whole document if null </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">$orderBy</td><td>The ordered rule, never sort if null </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">$hint</td><td>The hint, automatically match the optimal hint if null </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">$numToSkip</td><td>Skip the first numToSkip documents, never skip if this parameter is 0 </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">$numToReturn</td><td>Only return numToReturn documents, return all if this parameter is -1 </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname">Returns</td><td>a <a class="el" href="classSequoiaCursor.html">SequoiaCursor</a> for the result set </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="a9d23829fa9ade514e3cdb40cc1870e14"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classSequoiaCursor.html">SequoiaCursor</a> SequoiaCL::findAndUpdate </td>
+          <td>(</td>
+          <td class="paramtype">array|string&#160;</td>
+          <td class="paramname"><em>$update</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">array|string&#160;</td>
+          <td class="paramname"><em>$condition</em> = <code>NULL</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">array|string&#160;</td>
+          <td class="paramname"><em>$select</em> = <code>NULL</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">array|string&#160;</td>
+          <td class="paramname"><em>$orderBy</em> = <code>NULL</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">array|string&#160;</td>
+          <td class="paramname"><em>$hint</em> = <code>NULL</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>$numToSkip</em> = <code>0</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>$numToReturn</em> = <code>-1</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>$returnNew</em> = <code>FALSE</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Querys this collection, returning a <a class="el" href="classSequoiaCursor.html">SequoiaCursor</a> for the result set and update. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">$update</td><td>The update rule, can't be null </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">$condition</td><td>The matching rule, return all the documents if null </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">$select</td><td>The selective rule, return the whole document if null </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">$orderBy</td><td>The ordered rule, never sort if null </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">$hint</td><td>The hint, automatically match the optimal hint if null </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">$numToSkip</td><td>Skip the first numToSkip documents, never skip if this parameter is 0 </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">$numToReturn</td><td>Only return numToReturn documents, return all if this parameter is -1 </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">$returnNew</td><td>When TRUE, returns the updated document rather than the original </td></tr>
   </table>
   </dd>
 </dl>
@@ -694,12 +852,12 @@ Public Member Functions</h2></td></tr>
 </div>
 </div>
 <hr/>The documentation for this class was generated from the following file:<ul>
-<li>E:/sequoiadb/driver/php5/ext/<a class="el" href="sequoiadb_8h_source.html">sequoiadb.h</a></li>
+<li>C:/sequoiadb/driver/php5/ext/<a class="el" href="sequoiadb_8h_source.html">sequoiadb.h</a></li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Mar 16 2015 11:16:05 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Tue Apr 7 2015 10:50:54 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.2
 </small></address>
