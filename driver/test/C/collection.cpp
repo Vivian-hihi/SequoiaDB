@@ -1593,3 +1593,5 @@ TEST( collection, sdbCQueryOne )
    sdbReleaseCS( cs ) ;
    sdbReleaseConnection( db ) ;
 }
+
+

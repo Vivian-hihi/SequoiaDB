@@ -896,6 +896,47 @@ TEST(sdb, sdbIsClose)
    sdbReleaseConnection ( connection1 ) ;
 }
 
+TEST(sdb, truncate)
+{
+   sdbConnectionHandle connection = 0 ;
+   sdbCollectionHandle collection = 0 ;
+   INT32 rc                       = SDB_OK ;
+   INT32 i                        = 0 ;
+   INT32 num                      = 100 ;
+   SINT64 totalNum                = 0 ;
+   rc = initEnv( HOST, SERVER, USER, PASSWD ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // connect to database
+   rc = sdbConnect ( HOST, SERVER, USER, PASSWD, &connection ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // get cl
+   rc = getCollection ( connection, COLLECTION_FULL_NAME , &collection ) ;
+   sleep( 3 ) ;
+   CHECK_MSG("%s%d\n","rc = ", rc) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // insert some record
+   for ( ; i < num; i++ )
+   {
+      bson obj ;
+      bson_init( &obj ) ;
+      bson_append_string ( &obj, "test_truncate_in_c", "test" ) ;
+      bson_finish ( &obj ) ;
+      rc = sdbInsert( collection, &obj ) ;
+      ASSERT_EQ( SDB_OK, rc ) ;
+      bson_destroy( &obj ) ;
+   }
+   // test
+   rc = sdbTruncateCollection( connection, COLLECTION_FULL_NAME ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // check
+   rc = sdbGetCount ( collection, NULL, &totalNum ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   ASSERT_EQ( 0, totalNum ) ;
+
+   sdbDisconnect ( connection ) ;
+   sdbReleaseCollection ( collection ) ;
+   sdbReleaseConnection ( connection ) ;
+}
 
 
 
