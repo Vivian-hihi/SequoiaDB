@@ -1054,7 +1054,7 @@ public class DBCollection {
 	 *                             BSONObject orderBy, BSONObject hint,
 	 *                             long skipRows, long returnRows,
 	 *                             int flag)
-	 * @brief Get the matching documents in current collection and update.
+	 * @brief Get the matching documents in current collection and remove.
      * @param matcher 
      *            the matching rule, return all the documents if null
 	 * @param selector
