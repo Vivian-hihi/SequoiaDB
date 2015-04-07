@@ -597,7 +597,7 @@ namespace SequoiaDB
 
         /** \fn DBCursor QueryAndUpdate(BsonDocument query, BsonDocument selector, BsonDocument orderBy, BsonDocument hint, 
          *                              BsonDocument update, long skipRows, long returnRows, int flag, bool returnNew) 
-         *  \brief Find documents of current collection
+         *  \brief Find documents of current collection and update
          *  \param query The matching condition
          *  \paramselector The selective rule
          *  \param orderBy The ordered rule
@@ -626,7 +626,7 @@ namespace SequoiaDB
 
         /** \fn DBCursor QueryAndRemove(BsonDocument query, BsonDocument selector, BsonDocument orderBy, BsonDocument hint, 
          *                              long skipRows, long returnRows, int flag) 
-         *  \brief Find documents of current collection
+         *  \brief Find documents of current collection and remove
          *  \param query The matching condition
          *  \paramselector The selective rule
          *  \param orderBy The ordered rule
