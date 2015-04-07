@@ -191,11 +191,19 @@ namespace engine
                    pmdGetOptionCB()->diagFileNum() ) ;
       setPDLevel( (PDLEVEL)( pmdGetOptionCB()->getDiagLevel() ) ) ;
 
+#ifdef SDB_ENGINE_FIXVERSION_CURRENT
+      PD_LOG ( ( getPDLevel() > PDEVENT ? PDEVENT : getPDLevel() ) ,
+               "Start sequoiadb(%s) [Ver: %d.%d.%d, Release: %d, Build: %s]...",
+               pmdGetOptionCB()->krcbRole(), SDB_ENGINE_VERISON_CURRENT,
+               SDB_ENGINE_SUBVERSION_CURRENT, SDB_ENGINE_FIXVERSION_CURRENT,
+               SDB_ENGINE_RELEASE_CURRENT, SDB_ENGINE_BUILD_TIME ) ;
+#else
       PD_LOG ( ( getPDLevel() > PDEVENT ? PDEVENT : getPDLevel() ) ,
                "Start sequoiadb(%s) [Ver: %d.%d, Release: %d, Build: %s]...",
                pmdGetOptionCB()->krcbRole(), SDB_ENGINE_VERISON_CURRENT,
                SDB_ENGINE_SUBVERSION_CURRENT, SDB_ENGINE_RELEASE_CURRENT,
                SDB_ENGINE_BUILD_TIME ) ;
+#endif // SDB_ENGINE_FIXVERSION_CURRENT
 
       // 3. printf all configs
       {
