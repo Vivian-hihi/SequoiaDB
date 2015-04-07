@@ -2982,6 +2982,59 @@ do                                                            \
    }
 */
 
+   //PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_TRUNCATE, "_sdbCollectionImpl::truncate" )
+   INT32 _sdbCollectionImpl::truncate()
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_CLIENT_TRUNCATE ) ;
+      BSONObj obj ;
+      BOOLEAN locked = FALSE ;
+      BOOLEAN result = TRUE ;
+      SINT64 contextID = -1 ;
+
+      if ( '\0' == _collectionFullName[0] || NULL == _connection )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      obj = BSON( FIELD_NAME_COLLECTION << _collectionFullName ) ;
+      rc = clientBuildQueryMsgCpp ( &_pSendBuffer, &_sendBufferSize,
+                                    CMD_ADMIN_PREFIX CMD_NAME_TRUNCATE,
+                                    0, 0, -1, -1,
+                                    obj.objdata(), NULL, NULL, NULL,
+                                    _connection->_endianConvert ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+
+      _connection->lock () ;
+      locked = TRUE ;
+      rc = _connection->_send ( _pSendBuffer ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+      rc = _connection->_recvExtract ( &_pReceiveBuffer, &_receiveBufferSize,
+                                       contextID, result ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
+      CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, _connection ) ;
+   done:
+      if ( locked )
+      {
+         _connection->unlock () ;
+      }
+      PD_TRACE_EXITRC( SDB_CLIENT_TRUNCATE, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
    /*
     * _sdbNodeImpl
     * Sdb Node Implementation

@@ -441,6 +441,9 @@ namespace sdbclient
       virtual INT32 openLob( sdbLob &lob, const bson::OID &oid ) = 0 ;
       
       virtual INT32 listLobs( sdbCursor &cursor ) = 0 ;
+
+      /// truncate
+      virtual INT32 truncate() = 0 ;
       
    } ;
 
@@ -1277,11 +1280,25 @@ namespace sdbclient
        return pCollection->listLobs( cursor ) ;
     }
 
+    INT32 truncate()
+    {
+       if ( !pCollection )
+          return SDB_NOT_CONNECTED ;
+        return pCollection->truncate() ;
+    }
+
    } ;
 
 /** \enum sdbNodeStatus
     \breif The status of the node.
 */
+
+/** \fn INT32 listLobs( sdbCursor &cursor )
+    \brief Truncate the collection.
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+
    enum sdbNodeStatus
    {
       SDB_NODE_ALL = 0,

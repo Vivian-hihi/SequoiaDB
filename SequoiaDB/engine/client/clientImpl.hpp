@@ -425,6 +425,9 @@ namespace sdbclient
          return listLobs( &cursor.pCursor ) ;
       }
 
+      /// truncate
+      INT32 truncate() ;
+
    } ;
    
    typedef class _sdbCollectionImpl sdbCollectionImpl ;
