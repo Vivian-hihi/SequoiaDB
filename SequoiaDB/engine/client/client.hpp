@@ -1280,6 +1280,11 @@ namespace sdbclient
        return pCollection->listLobs( cursor ) ;
     }
 
+/** \fn INT32 truncate()
+ *  \brief truncate the collection
+ *  \retval SDB_OK Operation Success
+ *  \retval Others Operation Fail
+ */
     INT32 truncate()
     {
        if ( !pCollection )

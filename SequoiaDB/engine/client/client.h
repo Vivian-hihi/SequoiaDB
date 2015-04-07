@@ -2134,6 +2134,7 @@ SDB_EXPORT INT32 sdbForceStepUp( sdbConnectionHandle cHandle,
 
 /** \fn INT32 sdbTruncateCollection( sdbConnectionHandle cHandle,
  *                                   const CHAR *fullName )
+ *  \brief truncate the collection
  *  \param [in] cHandle The handle of connection.
  *  \param [in] fullName The full name of collection to be truncated, eg: foo.bar.
  *  \retval SDB_OK Operation Success
