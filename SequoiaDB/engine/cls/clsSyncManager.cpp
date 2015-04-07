@@ -281,7 +281,7 @@ namespace engine
          _info->mtx.release_r() ;
          goto done ;
       }
-      else if ( MSG_INVALID_ROUTEID != _info->primary.value ||
+      else if ( MSG_INVALID_ROUTEID == _info->primary.value ||
                 _info->primary.value != _info->local.value )
       {
          /// has change to secondary. Why need to check primary again,
