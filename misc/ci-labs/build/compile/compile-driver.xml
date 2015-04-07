@@ -16,9 +16,9 @@
 	<target name="3.1 Java-Driver-Compilation" depends="">
 		<echo level="info" message="Step1 : Compile the driver of java" />
     <ant antfile="build-java-driver.xml" dir="${driver_base_dir}" target="3.1.2 Build-java-driver" inheritAll="false">
-      <property name="JDK5" value="${JDK5}" />
-      <property name="code_dir" value="${code_dir}" />
-			<property name="java_base_dir" value="${code_dir}/driver/java" />
+      	<property name="JDK5" value="${JDK5}" />
+      	<property name="code_dir" value="${code_dir}" />
+		<property name="java_base_dir" value="${code_dir}/driver/java" />
     </ant>
   </target>
 

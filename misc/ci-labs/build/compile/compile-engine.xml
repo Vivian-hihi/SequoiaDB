@@ -11,14 +11,14 @@
 
 <project default="2.1 Build-Engine">
 	<target name="2.1 Build-Engine" depends="">
-  	<if>
+	  	<if>
 			<equals arg1="${DEBUG}" arg2="true" />
 			<then>
-				<echo message="@ The building version is debug now" />
+				<echo message="@ The building version is debug now." />
 				<property name="compile_parameter" value=" --dd" />
 			</then>
 			<else>
-				<echo message="@ The building version is release now" />
+				<echo message="@ The building version is release now." />
 				<property name="compile_parameter" value=" " />
 			</else>
 		</if>
@@ -33,7 +33,7 @@
 				<property name="enterprise_parameter" value=" " />
 			</else>
 		</if>
-		<echo level="info" message="Step1 : Begin to compile engine,the command is &lt;scons ${compile_parameter}${enterprise_parameter} --all -j 4&gt;" />
+		<echo level="info" message="Step1 : Begin to compile engine,the command is &lt;scons ${compile_parameter}${enterprise_parameter} --all -j 4&gt;." />
 		<exec executable="scons" dir="${code_dir}" failonerror="true">
 			<arg line="${compile_parameter}${enterprise_parameter} --all -j 4" />
 		</exec>
