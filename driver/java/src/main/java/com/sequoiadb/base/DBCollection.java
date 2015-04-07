@@ -1929,4 +1929,22 @@ public class DBCollection {
             throw new BaseException( flag, removeObj );
         }
     }
+    
+    /**
+     * @fn void truncate()
+     * @brief truncate the collection
+     * @exception com.sequoiadb.exception.BaseException
+     */
+    public void truncate() throws BaseException {
+        String commandString = SequoiadbConstants.ADMIN_PROMPT
+                + SequoiadbConstants.CMD_NAME_TRUNCATE;
+        BSONObject dummyObj = new BasicBSONObject();
+        BSONObject query = new BasicBSONObject();
+        query.put(SequoiadbConstants.FIELD_COLLECTION, collectionFullName);
+        SDBMessage rtnSDBMessage = adminCommand(commandString, query,
+                dummyObj, dummyObj, dummyObj, -1, -1, 0);
+        int flags = rtnSDBMessage.getFlags();
+        if (flags != 0)
+            throw new BaseException(flags, query);
+    }
 }

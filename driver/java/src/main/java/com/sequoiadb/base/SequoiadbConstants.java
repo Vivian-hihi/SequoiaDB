@@ -115,6 +115,7 @@ public class SequoiadbConstants {
 	public final static String CMD_NAME_ADD_DOMAIN_GROUP = "add domain group";
 	public final static String CMD_NAME_REMOVE_DOMAIN_GROUP = "remove domain group";
 	public final static String CMD_NAME_ALTER_COLLECTION = "alter collection";
+	public final static String CMD_NAME_TRUNCATE = "truncate";
 	
 	public final static String FIELD_NAME_NAME = "Name";
 	public final static String FIELD_NAME_OLDNAME = "OldName";
