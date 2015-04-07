@@ -50,6 +50,7 @@
 
 #define MFILE_SUFFIX ".cli"
 
+#define GLOBAL_CATEGORY     "global"
 #define DB_CATEGORY         "db"
 #define CS_CATEGORY         "cs"
 #define CL_CATEGORY         "cl"
@@ -85,9 +86,10 @@
 
 namespace fs = boost::filesystem ;
 
-#define CATE_SIZE  13
+#define CATE_SIZE  14
 const CHAR* CATE_ARR[ CATE_SIZE ] =
 {
+   GLOBAL_CATEGORY,
    DB_CATEGORY,
    CS_CATEGORY,
    CL_CATEGORY,
@@ -149,6 +151,8 @@ manHelp::manHelp( const CHAR *path )
       troffFileNotEixt = TRUE ;
    }
    // init classify info
+   _classify.insert( pair< string, ssmap_ref >( string(GLOBAL_CATEGORY),
+                                                _global._first ) ) ;
    _classify.insert( pair< string, ssmap_ref >( string(DB_CATEGORY),
                                                 _db._first ) ) ;
    _classify.insert( pair< string, ssmap_ref >( string(CS_CATEGORY),
@@ -407,7 +411,12 @@ INT32 manHelp::scanFile()
             }
             // put synopsis and cutline to map
             // put funcName and fileName to map
-            if ( string(DB_CATEGORY) == categoryName )
+            if ( string(GLOBAL_CATEGORY) == categoryName )
+            {
+               _global._first.insert( pair<string, string>(funcName, pFileName) ) ;
+               _global._second.insert( pair<string, string>(synopsis, cutline) ) ;
+            }
+            else if ( string(DB_CATEGORY) == categoryName )
             {
                _db._first.insert( pair<string, string>(funcName, pFileName) ) ;
                _db._second.insert( pair<string, string>(synopsis, cutline) ) ;
@@ -655,7 +664,12 @@ typedef std::map<string, string> ssmap ;
 
 ssmap& manHelp::getCategoryMap( const CHAR *category )
 {
-    if ( ossMemcmp( category, DB_CATEGORY,
+    if ( ossMemcmp( category, GLOBAL_CATEGORY,
+                    ossStrlen( category ) ) == 0 )
+    {
+       return _global._second ;
+    }
+    else if ( ossMemcmp( category, DB_CATEGORY,
                     ossStrlen( category ) ) == 0 )
     {
        return _db._second ;

@@ -78,6 +78,7 @@ private:
    ssmap _nmap ;
    CHAR _filePath[ OSS_MAX_PATHSIZE + 1 ] ;
    Classified_info _empty ;
+   Classified_info _global ;
    Classified_info _db ;
    Classified_info _cs ;
    Classified_info _cl ;
