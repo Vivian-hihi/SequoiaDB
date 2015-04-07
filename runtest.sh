@@ -51,7 +51,7 @@ function display()
    echo " -s stopFlag : 发生用例错误是否停止，0表示继续，1表示停止"
    echo " -n svcname  : 指定测试的COORD节点服务名"
    echo " -h hostname : 指定测试的COORD节点HostName或IP"
-   echo " -addpid     : 是否在CSPREFIX上加上当前进行PID"
+   echo " -addpid     : 是否在CHANGEDPREFIX上加上当前进行PID"
    echo " -print      : 是否在屏幕上打印用例的输出"
    echo ""
    exit $1
@@ -107,7 +107,7 @@ function prepareRun()
 function runJSFile()
 {
    result=0 ;
-   lastCmdStr="$sdbRoot/sdb -e \"var CSPREFIX='${csprefix}'; var COORDSVCNAME='${coordsvcname}'; var COORDHOSTNAME='${coordhostname}'; var UUID=$uuid; var UUNAME='${uuname}'; var RUNRESULT=$runresult; \" -f \"${libRoot}/func.js,$1\""
+   lastCmdStr="$sdbRoot/sdb -e \"var CHANGEDPREFIX='${csprefix}'; var COORDSVCNAME='${coordsvcname}'; var COORDHOSTNAME='${coordhostname}'; var UUID=$uuid; var UUNAME='${uuname}'; var RUNRESULT=$runresult; \" -f \"${libRoot}/func.js,$1\""
    runresult=0
    if [ $printOut -ne 0 -o $# -gt 1 ] ; then
       echo "CMD: $lastCmdStr"
@@ -249,7 +249,7 @@ else
    findCmdStr=${findCmdStr}${beginPrefix}${endPrefix}"-type f -print"
 fi
 echo "*******************************************************************************"
-echo "CSPREFIX     : $csprefix"
+echo "CHANGEDPREFIX: $csprefix"
 echo "UUID         : $uuid"
 echo "UUNAME       : $uuname"
 echo "COORDSVCNAME : $coordsvcname"
