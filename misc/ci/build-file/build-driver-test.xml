@@ -13,11 +13,6 @@
 
 <project default="6.8 Build-Mongoc-Testcases">
 	<property file="${SCRIPT_DIR}/ci.test.properties" />
-	<!-- <taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
-		<classpath>
-			<pathelement location="${SCRIPT_DIR}/exec-tools/ant-sdbtasks.jar" />
-		</classpath>
-	</taskdef> -->
 	<target name="6.1 Clean-Driver-Testcases" depends="">
 		<echo level="info" message="Step1 : Rebuild the folders &lt;${testcases_dir}/C/build_test&gt;,&lt;${testcases_dir}/CPP/build_test&gt;,&lt;${testcases_dir}/mongoc/build_test&gt;." />
 		<delete dir="${testcases_dir}/C/build_test"  failonerror="false" />
@@ -70,7 +65,7 @@
     	<echo level="info" message="Step1 : Copy the file &lt;${driver_dir}/java/sequoiadb.jar&gt; to &lt;${deploy_dir}/hlt/drivers_testcases/java/lib/sequoiadb.jar&gt;." />
 		<copy file="${driver_dir}/java/sequoiadb.jar" tofile="${deploy_dir}/hlt/drivers_testcases/java/lib/sequoiadb.jar" />
 		<echo level="info" message="Step2 : Compile the java driver testcases." />
-		<javac executable="${WORKSPACE}/sequoiadb/java/${jdk.name}/bin/javac" srcdir="${testcases_dir}/java" destdir="${deploy_dir}/hlt/drivers_testcases/java/build" fork="yes" debug="true" includeAntRuntime="false" includeJavaRuntime="false" encoding="GBK">
+		<javac executable="${WORKSPACE}/sequoiadb/java/${jdk_name}/bin/javac" srcdir="${testcases_dir}/java" destdir="${deploy_dir}/hlt/drivers_testcases/java/build" fork="yes" debug="true" includeAntRuntime="false" includeJavaRuntime="false" encoding="GBK">
 			<classpath>
 				<pathelement location="${deploy_dir}/ant-sdbtasks/ant-sdbtasks.jar" />
 				<pathelement location="${deploy_dir}/hlt/drivers_testcases/java/lib/sequoiadb.jar" />
