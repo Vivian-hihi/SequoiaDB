@@ -4,13 +4,13 @@ install.path=/opt
 install.user=sdbadmin
 install.password=sdbadmin
 
-test.machine.software.path=/tmp/sequoiadb
 test.machine.deploy.path=/tmp/sequoiadb_test
+test.machine.software.path=/tmp/sequoiadb
 
 save.testLog.hostname=bl465-4
 save.testLog.dir=/opt/apache-tomcat-6.0.37/webapps/ROOT
 copy_tar=/test_tar
-target.deploy_tar_gz.ip=bl465-4
+deploy_tar_hostname=bl465-4
 copy.log.path=/test_log
 
 coord.service.port=11810
@@ -19,23 +19,17 @@ data.service.port=21100
 fap.service.port=11817
 sharingbreak=20000
 
-jenkins.master.ip=centos-ci001
-test.machine.no1.basic=centos-ci002
-test.machine.no2.basic=centos-ci003
-test.machine.no3.basic=centos-ci004
-
-basic_list4=collectionAlter,domain,createIndex
-basic_list5=dropCL,dropCS,dropIndex,insert,listCL,listCS,operators,procedures,aggregate,bakupRestore,countHint,createCL,createCS,cursor,delete,sql,subCL,syndate,update,upsert
-basic_list6=query,split,transaction
-
-test.machine.no1.data=centos-ci002
-test.machine.no2.data=centos-ci003
-test.machine.no3.data=centos-ci004
+jenkins_master=centos-ci001
+test_machine_no1=centos-ci002
+test_machine_no2=centos-ci003
+test_machine_no3=centos-ci004
 
 basic_list1=collectionAlter,domain,createIndex
 basic_list2=dropCL,dropCS,dropIndex,insert,listCL,listCS,operators,procedures,aggregate,bakupRestore,countHint,createCL,createCS,cursor,delete,sql,subCL,syndate,update,upsert
 basic_list3=query,split,transaction
+basic_list4=collectionAlter,domain,createIndex
+basic_list5=dropCL,dropCS,dropIndex,insert,listCL,listCS,operators,procedures,aggregate,bakupRestore,countHint,createCL,createCS,cursor,delete,sql,subCL,syndate,update,upsert
+basic_list6=query,split,transaction
 
 testcase.path=/tmp/sequoiadb_test/deploy/hlt
-
 import.file.name=basic-testcases-time.json
