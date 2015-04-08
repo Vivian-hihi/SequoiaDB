@@ -1138,8 +1138,8 @@ namespace engine
       if ( SDB_OK != _result )
       {
          len += ossSnprintf( outBuf + len, outSize - len,
-                             OSS_NEWLINE"*ERROR* : %d"OSS_NEWLINE,
-                             _result ) ;
+                             OSS_NEWLINE"*ERROR* : %d(%s)"OSS_NEWLINE,
+                             _result, getErrDesp( _result ) ) ;
       }
 
    done:
