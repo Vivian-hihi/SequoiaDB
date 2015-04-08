@@ -263,8 +263,7 @@ namespace engine
 
       while ( FALSE == _stop )
       {
-         rc = ossReadNamedPipe( _out, buff, OSS_MAX_PATHSIZE, &readLen,
-                                OSS_ONE_SEC ) ;
+         rc = ossReadNamedPipe( _out, buff, OSS_MAX_PATHSIZE, &readLen, 1 ) ;
          if ( SDB_OK != rc )
          {
             if ( _stop )
