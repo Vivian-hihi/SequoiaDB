@@ -1297,13 +1297,6 @@ namespace sdbclient
 /** \enum sdbNodeStatus
     \breif The status of the node.
 */
-
-/** \fn INT32 listLobs( sdbCursor &cursor )
-    \brief Truncate the collection.
-    \retval SDB_OK Operation Success
-    \retval Others Operation Fail
-*/
-
    enum sdbNodeStatus
    {
       SDB_NODE_ALL = 0,
