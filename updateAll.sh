@@ -10,11 +10,12 @@ startSdb=0
 hostName=`hostname`
 #curDir=`pwd`
 homePath=`pwd`
+runAll=0
 
 # common function
 function display()
 {
-   echo "$0 [-c compile] [-nocompile] [-release] [-noup] [-start] [-install] [-test] [-dbpath <db home path>]"
+   echo "$0 [-c compile] [-nocompile] [-release] [-noup] [-start] [-install] [-test] [-dbpath <db home path>] [-full]"
    exit $1
 }
 
@@ -228,7 +229,11 @@ function autoTest()
    sleep 10
    chmod 777 runtest.sh
    echo "=============================Begin to test usecases============================"
-   ./runtest.sh -s 0
+   if [ $runAll -eq 0 ]; then
+      ./runtest.sh -s 0
+   else
+      ./runtest.sh -s 0 -all
+   fi
    echo "=============================End test usecases================================="
 }
 
@@ -253,6 +258,8 @@ while [ "$1" != "" ]; do
                           ;;
       -dbpath )           shift
                           homePath=$1
+                          ;;
+      -full )             runAll=1
                           ;;
       * )                 echo "Invalid argument: $p"
                           display 1
