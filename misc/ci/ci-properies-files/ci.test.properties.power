@@ -13,8 +13,8 @@ copy_tar=/test_tar
 target.deploy_tar_gz.ip=powersuse1
 copy.log.path=/test_log
 
-coord.service.port=50000
-cata.service.port=30000
+coord.service.port=11810
+cata.service.port=11800
 data.service.port=21100
 sharingbreak=20000
 

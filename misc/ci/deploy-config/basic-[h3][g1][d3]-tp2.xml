@@ -15,18 +15,12 @@
 <project name="H3-G1-D3-P2" default="H3-G1-D3-P2">
 	<property name="properties.dir" value="${basedir}/../ci.test.properties" />
 	<property file="${properties.dir}" />
-	<!-- <taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
-		<classpath>
-			<pathelement location="${WORKSPACE}/deploy/ant-sdbtasks/ant-sdbtasks.jar" />
-		</classpath>
-	</taskdef>  -->
 
 	<target name="Deploy" depends="">
 		<parallel>
 			<ant antfile="deploy-software-in-host.xml" dir="." inheritAll="false">
 				<property name="install.package.fullname" value="${install.package.fullname}" />
 				<property name="deploy.host.name" value="${test.machine.no1.basic}" />
-				<!-- <property name="coord.service.port" value="${coord.service.port}" /> -->
 				<property name="is.standalone.mode" value="false" />
 				<property name="is.coord.master" value="true"/>
 				<property name="catalog.addrs" value="${test.machine.no1.data}:30003,${test.machine.no2.data}:30003,${test.machine.no3.data}:30003" />
@@ -34,7 +28,6 @@
 			<ant antfile="deploy-software-in-host.xml" dir="." inheritAll="false">
 				<property name="install.package.fullname" value="${install.package.fullname}" />
 				<property name="deploy.host.name" value="${test.machine.no2.basic}" />
-				<!-- <property name="coord.service.port" value="${coord.service.port}" /> -->
 				<property name="is.standalone.mode" value="false" />
 				<property name="is.coord.master" value="false"/>
 				<property name="catalog.addrs" value="${test.machine.no1.data}:30003,${test.machine.no2.data}:30003,${test.machine.no3.data}:30003" />
@@ -42,7 +35,6 @@
 			<ant antfile="deploy-software-in-host.xml" dir="." inheritAll="false">
 				<property name="install.package.fullname" value="${install.package.fullname}" />
 				<property name="deploy.host.name" value="${test.machine.no3.basic}" />
-				<!-- <property name="coord.service.port" value="${coord.service.port}" /> -->
 				<property name="is.standalone.mode" value="false" />
 				<property name="is.coord.master" value="false"/>
 				<property name="catalog.addrs" value="${test.machine.no1.data}:30003,${test.machine.no2.data}:30003,${test.machine.no3.data}:30003" />
@@ -112,7 +104,6 @@
 		<hostinfo prefix="host" />
 		<property name="test-type-list" value="basic" />
 		<property name="copy.test.log" value="true"/>
-		<!-- <property name="import.file.name" value="basic-testcases-time.json" /> -->
 
 		<parallel>
 			<ant antfile="deploy-test-in-host.xml" dir="." inheritAll="false">
@@ -134,15 +125,11 @@
 		</tstamp>
 		<property name="test.log.path" value="${test.reports.path}/${test.environment}-${deploy.conffile.wildcard}-${host.NAME}-${current.time.log}-${BUILD_NUMBER}" />
 		<property name="test.log" value="${test.environment}-${deploy.conffile.wildcard}-${host.NAME}-${current.time.log}-${BUILD_NUMBER}" />
-		<echo message="**************************************************************" />
-		<echo message="test.log.path=${test.log.path}" />
-		<echo message="test.log=${test.log}" />
-		<echo message="**************************************************************" />
 
 		<parallel>
 			<echo message="Begin to test basic tests under parallel env on a machine..." />
-			<sdbtest host="${test.machine.no2.basic}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${testcase.path}/js_testcases/reports" masterreports="${test.reports.path}" >
-				<param name="basic.testcase.path" value="${testcase.path}/js_testcases" />
+			<sdbtest host="${test.machine.no2.basic}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${testcase.path}/basic_testcases/reports" masterreports="${test.reports.path}" >
+				<param name="basic.testcase.path" value="${testcase.path}/basic_testcases" />
 				<param name="includes.dir.patterns" value="*" />
 				<param name="excludes.dir.patterns" value="vote" />
 				<param name="deploy.case.fullname" value="${deploy.case.fullname}" />
@@ -154,8 +141,8 @@
 
 				<param name="test.log" value="${test.log}" />
 			</sdbtest>
-			<sdbtest host="${test.machine.no2.basic}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${testcase.path}/js_testcases/reports" masterreports="${test.reports.path}" >
-				<param name="basic.testcase.path" value="${testcase.path}/js_testcases" />
+			<sdbtest host="${test.machine.no2.basic}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${testcase.path}/basic_testcases/reports" masterreports="${test.reports.path}" >
+				<param name="basic.testcase.path" value="${testcase.path}/basic_testcases" />
 				<param name="includes.dir.patterns" value="*" />
 				<param name="excludes.dir.patterns" value="vote" />
 				<param name="deploy.case.fullname" value="${deploy.case.fullname}" />
@@ -164,7 +151,6 @@
 				<param name="WORKSPACE" value="${WORKSPACE}" />
 				<param name="ci.script.file.path" value="${ci.script.file.path}" />
 				<param name="parallel.count" value="2" />
-
 				<param name="test.log" value="${test.log}" />
 			</sdbtest>
 		</parallel>

@@ -10,16 +10,16 @@ test.machine.software.path=/tmp/sequoiadb
 save.testLog.hostname=bl465-4
 save.testLog.dir=/opt/apache-tomcat-6.0.37/webapps/ROOT
 copy_tar=/test_tar
-target.deploy_tar_gz.ip=bl465-4
+deploy_tar_hostname=bl465-4
 copy.log.path=/test_log
 
-coord.service.port=50000
-cata.service.port=30000
+coord.service.port=11810
+cata.service.port=11800
 data.service.port=21100
-fap.service.port=50007 #coord.service + 7
+fap.service.port=11817
 sharingbreak=20000
 
-jenkins.master.ip=suse-test1.control
+jenkins_master=suse-test1.control
 test.machine.no1.basic=suse-test2.control
 test.machine.no2.basic=suse-test3.control
 test.machine.no3.basic=suse-test4.control

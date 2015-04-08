@@ -1,67 +1,97 @@
-<!--@param ${WORKSPACE}: the path where for this job-->
-<!--@param ${os.publish.name}: os name for example suse/ubuntu/redhat-->
-<!--@param ${ci.script.path} : The path where place ci script files-->
-<!--@param ${antTask.jar.path} : The path where the ant task jar is it-->
+<!--
+	@Description:
+		Compile testcases and ant-sdbtasks.jar
+	@Parameters:
+		${DEPLOY_WILDCARD} from Jenkins test intrgration framework
+		${TEST_SCENE} from Jenkins test intrgration framework
+		${TEST_CHOICE} from Jenkins test intrgration framework
+		${WORKSPACE} from Jenkins test intrgration framework
+		${SCRIPT_DIR} from Jenkins test intrgration framework
+	@Invocation:
+		build.xml
+		build-driver-test.xml
+-->
 
-<project name="Build-Testcases" default="Build-Testcases">
-	<property name="deploy.path" value="${WORKSPACE}/deploy" />
-	<property name="release.path" value="${WORKSPACE}/release" />
-	<property name="build.testcases" value="${WORKSPACE}/sequoiadb/testcases/hlt" />
-	<property name="DRIVER.DIR" value="${WORKSPACE}/release/driver" />
-	<property file="${ci.script.path}/ci.test.properties" />
+<project default="7.Build-Testcases">
+	<property file="${SCRIPT_DIR}/ci.test.properties" />
+	<property name="deploy_dir" value="${WORKSPACE}/deploy" />
+	<property name="testcases_dir" value="${WORKSPACE}/sequoiadb/testcases/hlt" />
 	<taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
 		<classpath>
-			<pathelement location="${ci.script.path}/exec-tools/ant-sdbtasks.jar" />
+			<pathelement location="${SCRIPT_DIR}/exec-tools/ant-sdbtasks.jar" />
 		</classpath>
 	</taskdef>
 
-	<target name="Clean-Last-Deploy" depends="">
-		<echo message="Begin to clean environments" />
-		<delete dir="${deploy.path}/" />
-		<mkdir dir="${deploy.path}" /> 
-		<echo message="Clean environments completed" />
+	<target name="4.Clean-Last-Deploy" depends="">
+		<echo level="info" message="Step1 : Rebuild the folder &lt;${deploy_dir}&gt;." />
+		<delete dir="${deploy_dir}" failonerror="false" />
+		<mkdir dir="${deploy_dir}" />
+		<trycatch>
+    		<try>
+        		<exec dir="${build_dir}" executable="svn" output="${build_dir}/svn.status.txt" failonerror="false" >
+          			<arg line="status -u" />
+        		</exec>
+        		<exec dir="${build_dir}" executable="grep" output="${build_dir}/svn.grep.txt" failonerror="false" >
+          			<arg line="&apos;Status against revision&apos;" />
+          			<arg line="${build_dir}/svn.status.txt" />
+        		</exec>
+        		<exec dir="${build_dir}" executable="awk" outputproperty="svn_version" failonerror="false" >
+          			<arg line="-F &apos;:&apos; &apos;{print $2}&apos;" />
+          			<arg line="${build_dir}/svn.grep.txt" />
+        		</exec>
+    		</try>
+    		<catch>
+    			<property name="svn_version" value="unknow" />
+    		</catch>
+    		<finally>
+				<echo level="info" message="Catch svn info,the command:&#10;
+					@ &lt;svn status -u&gt; to ${build_dir}/svn.status.txt&#10;
+					@ &lt;grep &apos;Status against revision&apos; ${build_dir}/svn.status.txt&gt; to ${build_dir}/svn.grep.txt&#10;
+					@ &lt;awk -F &apos;:&apos; &apos;{print $2}&apos; ${build_dir}/svn.grep.txt&gt; to paramater &lt;svn_version&gt;.&#10;" />
+    		</finally>
+    	</trycatch> 
 	</target>
 
-	<target name="Build-Sdbtasks-Jar" depends="Clean-Last-Deploy" >
-		<echo message="Begin to build ant-sdbtask.jar" />
-		<ant antfile="${ci.script.path}/ant-sdbtask/build.xml">
-			<property name="java.driver.jar" value="${WORKSPACE}/release/driver/java/sequoiadb.jar" />
-			<property name="javac.base.dir" value="${WORKSPACE}/sequoiadb" />
-			<property name="base.path" value="${ci.script.path}/ant-sdbtask" />
+	<target name="5.Build-Sdbtasks-Jar" depends="4.Clean-Last-Deploy" >
+		<ant antfile="${SCRIPT_DIR}/ant-sdbtask/build.xml">
+			<property name="WORKSPACE" value="${WORKSPACE}" />
+			<property name="sdbtask_path" value="${SCRIPT_DIR}/ant-sdbtask" />
+			<property name="deploy_dir" value="${deploy_dir}" />
+			<property name="svn_version" value="${svn_version}" />
 		</ant>
-		<mkdir dir="${deploy.path}/ant-sdbtasks" />
-		<copy file="${ci.script.path}/ant-sdbtask/ant-sdbtasks.jar" todir="${deploy.path}/ant-sdbtasks" />
-		<copy file="${WORKSPACE}/release/driver/java/sequoiadb.jar" todir="${deploy.path}/ant-sdbtasks" />
-		<echo message="Compelete to build ant-sdbtask" />
 	</target>
 
-	<target name="Build-Driver-Testcases" depends="Build-Sdbtasks-Jar">
-		<echo message="Begin to build the driver testcases" />
-		<ant antfile="${ci.script.path}/build-file/build-driver-test.xml">
-			<property name="build.testcases" value="${build.testcases}/drivers_testcases" />
-			<property name="deploy.path" value="${deploy.path}" />
-			<property name="lib.dir" value="${WORKSPACE}/release/driver" />
+	<target name="6.Build-Driver-Testcases" depends="5.Build-Sdbtasks-Jar">
+		<ant antfile="${SCRIPT_DIR}/build-file/build-driver-test.xml">
+			<property name="testcases_dir" value="${testcases_dir}/drivers_testcases" />
+			<property name="deploy_dir" value="${deploy_dir}" />
+			<property name="driver_dir" value="${WORKSPACE}/release/driver" />
+			<property name="svn_version" value="${svn_version}" />
 		</ant>
-		<echo message="Compelete to build driver testcases" />
 	</target>
 
-	<target name="Build-Testcases" depends="Build-Driver-Testcases">
-		<mkdir dir="${deploy.path}/hlt/ant_testcases" />
-		<mkdir dir="${deploy.path}/hlt/js_testcases" />
-		<mkdir dir="${deploy.path}/hlt/basic_testcases" />
-
-		<copy todir="${deploy.path}/hlt/ant_testcases">
-			<fileset dir="${build.testcases}/ant_testcases" includes="**/*" />
+	<target name="7.Build-Testcases" depends="6.Build-Driver-Testcases">
+		<echo level="info" message="Step1 : Begin to built folders &lt;${deploy_dir}/hlt/ant_testcases&gt;,&lt;${deploy_dir}/hlt/js_testcases&gt;,&lt;${deploy_dir}/hlt/basic_testcases&gt;." />
+		<mkdir dir="${deploy_dir}/hlt/ant_testcases" />
+		<mkdir dir="${deploy_dir}/hlt/js_testcases" />
+		<mkdir dir="${deploy_dir}/hlt/basic_testcases" />
+		<echo level="info" message="Step2 : Copy the folder from &lt;${testcases_dir}/ant_testcases&gt; to folder &lt;${deploy_dir}/hlt/ant_testcases&gt;." />
+		<copy todir="${deploy_dir}/hlt/ant_testcases">
+			<fileset dir="${testcases_dir}/ant_testcases" includes="**/*" />
 		</copy>
-		<copy todir="${deploy.path}/hlt/js_testcases">
-			<fileset dir="${build.testcases}/js_testcases" includes="**/*" />
+		<echo level="info" message="Step3 : Copy the folder from &lt;${testcases_dir}/js_testcases&gt; to folder &lt;${deploy_dir}/hlt/js_testcases&gt;." />
+		<copy todir="${deploy_dir}/hlt/js_testcases">
+			<fileset dir="${testcases_dir}/js_testcases" includes="**/*" />
 		</copy>
-		<copy todir="${deploy.path}/hlt/basic_testcases">
-			<fileset dir="${build.testcases}/basic_testcases" includes="**/*" />
+		<echo level="info" message="Step4 : Copy the folder from &lt;${testcases_dir}/basic_testcases&gt; to folder &lt;${deploy_dir}/hlt/basic_testcases&gt;." />
+		<copy todir="${deploy_dir}/hlt/basic_testcases">
+			<fileset dir="${testcases_dir}/basic_testcases" includes="**/*" />
 		</copy>
-		<copy file="${ci.script.path}/ci.test.properties" todir="${deploy.path}" />
-		<copy todir="${deploy.path}">
-			<fileset dir="${ci.script.path}/exec-testcases" includes="exec*.xml" />
+		<echo level="info" message="Step5 : Copy the file &lt;${SCRIPT_DIR}/ci.test.properties&gt; to folder &lt;${deploy_dir}&gt;." />
+		<copy file="${SCRIPT_DIR}/ci.test.properties" todir="${deploy_dir}" />
+		<echo level="info" message="Step6 : Copy the exec scripts from &lt;${SCRIPT_DIR}/exec-testcases&gt; to folder &lt;${deploy_dir}&gt;." />
+		<copy todir="${deploy_dir}">
+			<fileset dir="${SCRIPT_DIR}/exec-testcases" includes="exec*.xml" />
 		</copy>
 	</target>
 </project>

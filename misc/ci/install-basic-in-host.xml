@@ -49,17 +49,11 @@
 				<replaceregexp file="${db.path}/conf/local/${coord.service.port}/sdb.conf" match="diaglevel=.*" replace="diaglevel=5" flags="g" />
 				<replaceregexp file="${db.path}/conf/local/${coord.service.port}/sdb.conf" match="transactionon=false" replace="transactionon=true" flags="g" />
 
-				<!--for fix coord port change to 11810 , we change coord port to 50000-->
-				<replaceregexp file="${db.path}/conf/local/${coord.service.port}/sdb.conf" match="svcname=11810" replace="svcname=50000" flags="g" />
-				<replaceregexp file="${db.path}/conf/local/${coord.service.port}/sdb.conf" match="replname=11811" replace="replname=50001" flags="g" />
-				<replaceregexp file="${db.path}/conf/local/${coord.service.port}/sdb.conf" match="shardname=11812" replace="shardname=50002" flags="g" />
-				<replaceregexp file="${db.path}/conf/local/${coord.service.port}/sdb.conf" match="catalogname=11813" replace="catalogname=50003" flags="g" />
-				<replaceregexp file="${db.path}/conf/local/${coord.service.port}/sdb.conf" match="httpname=11814" replace="httpname=50004" flags="g" />
 				<if>
-					   <equals arg1="${os.arch}" arg2="amd64" />
-					   <then>
-					      <echo file="${db.path}/conf/local/${coord.service.port}/sdb.conf"  append="true" message="&#10;fap=fapmongo" />
-					   </then>
+				   <equals arg1="${os.arch}" arg2="amd64" />
+				   <then>
+				      <echo file="${db.path}/conf/local/${coord.service.port}/sdb.conf"  append="true" message="&#10;fap=fapmongo" />
+				   </then>
 				</if>
 				<echo message="Start standalone process: su - sdbadmin -c '${db.path}/bin/sdbstart -c ${db.path}/conf/local/${coord.service.port}'" />
 				<exec dir="${db.path}/bin" executable="su" failonerror="true" failifexecutionfails="true" >
@@ -70,13 +64,6 @@
 				<mkdir dir="${db.path}/conf/local/${coord.service.port}" />
 				<copy file="${db.path}/conf/samples/sdb.conf.coord" tofile="${db.path}/conf/local/${coord.service.port}/sdb.conf" />
 				<replaceregexp file="${db.path}/conf/local/${coord.service.port}/sdb.conf" match="diaglevel=.*" replace="diaglevel=5" flags="g" />
-
-				<!--for fix coord port change to 11810 , we change coord port to 50000-->
-				<replaceregexp file="${db.path}/conf/local/${coord.service.port}/sdb.conf" match="svcname=11810" replace="svcname=50000" flags="g" />
-				<replaceregexp file="${db.path}/conf/local/${coord.service.port}/sdb.conf" match="replname=11811" replace="replname=50001" flags="g" />
-				<replaceregexp file="${db.path}/conf/local/${coord.service.port}/sdb.conf" match="shardname=11812" replace="shardname=50002" flags="g" />
-				<replaceregexp file="${db.path}/conf/local/${coord.service.port}/sdb.conf" match="catalogname=11813" replace="catalogname=50003" flags="g" />
-				<replaceregexp file="${db.path}/conf/local/${coord.service.port}/sdb.conf" match="httpname=11814" replace="httpname=50004" flags="g" />
 
 				<echo file="${db.path}/conf/local/${coord.service.port}/sdb.conf"  append="true" message="sharingbreak=300000" />
 			  	<if>
