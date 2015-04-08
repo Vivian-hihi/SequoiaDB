@@ -19,10 +19,10 @@ data.service.port=21100
 fap.service.port=11817
 sharingbreak=20000
 
-jenkins_master=suse-test1.control
-test.machine.no1.basic=suse-test2.control
-test.machine.no2.basic=suse-test3.control
-test.machine.no3.basic=suse-test4.control
+jenkins_master=suse-test1
+test.machine.no1.basic=suse-test2
+test.machine.no2.basic=suse-test3
+test.machine.no3.basic=suse-test4
 
 basic_list4=collectionAlter,domain,createIndex
 basic_list5=dropCL,dropCS,dropIndex,insert,listCL,listCS,operators,procedures,aggregate,bakupRestore,countHint,createCL,createCS,cursor,delete,sql,subCL,syndate,update,upsert
