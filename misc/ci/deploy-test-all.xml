@@ -1,6 +1,6 @@
-<!--@param ${deploy.conffile.wildcard}: deploy config file wildcard. just for debug -->
+<!--@param ${DEPLOY_WILDCARD}: deploy config file wildcard. just for debug -->
 <!--@param ${test.environment} : the control the test Environment -->
-<!--@param ${is.test}: the flag for whether execute test, if set false, then just deploy. just for debug -->
+<!--@param ${TEST_CHOICE}: the flag for whether execute test, if set false, then just deploy. just for debug -->
 <!--@param ${WORKSPACE}: The path where the deploy directory -->
 <!--@param ${ci.script.file.path} : the ci-script file path -->
 <!--@param ${BUILD_NUMBER} : what number is it build -->
@@ -51,14 +51,14 @@
 		</ant>
 
 		<if>
-			<equals arg1="${is.test}" arg2="true" />
+			<equals arg1="${TEST_CHOICE}" arg2="true" />
 			<then>
 				<ant antfile="${deploy.case.fullname}" dir="${ci.script.file.path}" inheritAll="true">
 					<property name="test.reports.path" value="${WORKSPACE}/reports" />
 					<property name="deploy.case.fullname" value="${deploy.case.fullname}" />
 					<property name="WORKSPACE" value="${WORKSPACE}" />
 					<property name="test.environment" value="${test.environment}" />
-					<property name="deploy.conffile.wildcard" value="${deploy.conffile.wildcard}" />
+					<property name="DEPLOY_WILDCARD" value="${DEPLOY_WILDCARD}" />
 					<property name="ci.script.file.path" value="${ci.script.file.path}" />
 					<property name="BUILD_NUMBER" value="${BUILD_NUMBER}" />
 					<property name="deploy.file.fullname" value="${WORKSPACE}/${deploy.tar.file.name}" />

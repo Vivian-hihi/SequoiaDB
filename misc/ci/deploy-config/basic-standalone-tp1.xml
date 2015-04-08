@@ -4,7 +4,7 @@
 <!--@param ${test.reports.path}: The path where test reports directory. -->
 <!--@param ${deploy.case.fullname}:all kind of test environment. -->
 <!--@param ${WORKSPACE}: where the working space is it-->
-<!--@param ${deploy.conffile.wildcard}: deploy config file wildcard. just for debug -->
+<!--@param ${DEPLOY_WILDCARD}: deploy config file wildcard. just for debug -->
 <!--@param ${test.environment} : the control the test Environment -->
 <!--@param ${ci.script.file.path} : where the ci.test.properties file is it -->
 
@@ -41,8 +41,8 @@
 		<tstamp>
 			<format property="current.time.log" pattern="yyyy-MM-dd-hh.mm.ss_a" />
 		</tstamp>
-		<property name="test.log.path" value="${test.reports.path}/${test.environment}-${deploy.conffile.wildcard}-${host.NAME}-${current.time.log}-${BUILD_NUMBER}" />
-		<property name="test.log" value="${test.environment}-${deploy.conffile.wildcard}-${host.NAME}-${current.time.log}-${BUILD_NUMBER}" />
+		<property name="test.log.path" value="${test.reports.path}/${test.environment}-${DEPLOY_WILDCARD}-${host.NAME}-${current.time.log}-${BUILD_NUMBER}" />
+		<property name="test.log" value="${test.environment}-${DEPLOY_WILDCARD}-${host.NAME}-${current.time.log}-${BUILD_NUMBER}" />
 
 		<for list="${test-type-list}" param="Test-Type">
 			<sequential>
@@ -50,7 +50,7 @@
 					<property name="deploy.case.fullname" value="${deploy.case.fullname}" />
 					<property name="test.reports.path" value="${test.reports.path}" />
 					<property name="Test-Type" value="@{Test-Type}" />
-					<property name="deploy.conffile.wildcard" value="unparallel" />
+					<property name="DEPLOY_WILDCARD" value="unparallel" />
 					<property name="parallel.flag" value="unparallel" />
 					<property name="WORKSPACE" value="${WORKSPACE}" />
 					<property name="ci.script.file.path" value="${ci.script.file.path}" />
@@ -71,7 +71,7 @@
 							<format property="current.time.log" pattern="yyyy-MM-dd-hh.mm.ss a" />
 						</tstamp>
 
-						<property name="test.log.path" value="${WORKSPACE}/reports/${test.environment}-${deploy.conffile.wildcard}-${host.NAME}-${current.time.log}-${BUILD_NUMBER}" />
+						<property name="test.log.path" value="${WORKSPACE}/reports/${test.environment}-${DEPLOY_WILDCARD}-${host.NAME}-${current.time.log}-${BUILD_NUMBER}" />
 						<echo message="Mkdir ${test.log.path}" />
 						<mkdir dir="${test.log.path}" />
 
