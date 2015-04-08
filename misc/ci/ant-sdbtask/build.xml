@@ -24,36 +24,29 @@
 			<format property="sdbtasks_jar_begintime" pattern="yyyy-MM-dd-hh.mm.ss a" />
 		</tstamp>
 		<if>
-    		<equals arg1="${os.arch}" arg2="ppc64" />
-    		<then>
-    			<property name="jdk_name" value="jdk_ppclinux64" />
-      		</then>
-			<elseif>
-				<equals arg1="os.arch" arg2="amd64" />
-				<then>
-					<if>
-						<equals arg1="${os.name}" arg2="Linux" />
-						<then>
-							<property name="jdk_name" value="jdk_linux64" />
-						</then>
-						<else>
-							<property name="jdk_name" value="jdk_win64" />
-						</else>
-					</if>
-			    </then>
-			    <else>
-					<if>
-						<equals arg1="${os.name}" arg2="Linux" />
-						<then>
-							<property name="jdk_name" value="jdk_linux32" />
-						</then>
-						<else>
-							<property name="jdk_name" value="jdk_win32" />
-						</else>
-					</if>
-				</else>
-			</elseif>
-    	</if>
+			<equals arg1="${os.name}" arg2="Linux" />
+			<then>
+				<property name="jdk_name_os" value="jdk_linux" />
+			</then>
+			<else>
+				<property name="jdk_name_os" value="jdk_win" />
+			</else>
+		</if>
+		<if>
+			<equals arg1="${os.arch}" arg2="ppc64" />
+			<then>
+				<property name="jdk_name" value="jdk_ppclinux64" />
+			</then>
+		</if>
+		<if>
+			<equals arg1="${os.arch}" arg2="amd64" />
+			<then>
+				<property name="jdk_name" value="${jdk_name_os}64" />
+			</then>
+			<else>
+				<property name="jdk_name" value="${jdk_name_os}32" />
+			</else>
+		</if>
     	<echo level="info" message="Step1 : Build the java driver testcases." />
 		<javac srcdir="${sdbtask_path}/src" destdir="${build_dir}" debug="true" debuglevel="lines,vars,source" classpath="" fork="yes" executable="${WORKSPACE}/sequoiadb/java/${jdk_name}/bin/javac">
 			<classpath>
