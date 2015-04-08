@@ -65,6 +65,7 @@ namespace engine
                                         OSSNPIPE * const npHandleStdin,
                                         OSSNPIPE * const npHandleStdout )
    {
+      _stop = FALSE ;
       try
       {
          _event.reset() ;
@@ -91,7 +92,6 @@ namespace engine
          _monitorEvent.signal() ;
          return ;
       }
-      _stop = FALSE ;
    }
 
    void _ossCmdRunner::asyncRead()
