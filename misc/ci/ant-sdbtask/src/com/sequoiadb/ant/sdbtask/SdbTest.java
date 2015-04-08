@@ -168,19 +168,19 @@ public class SdbTest extends Task {
 			// path="${env.LD_LIBRARY_PATH}:${STAF.PATH}/lib" />
 			// <env key="STAFCONVDIR" path="${STAF.PATH}/codepage" />
 			// </exec>
-			// final String hostName1 = "suse-test1";
-			// final String hostName2 = "suse-test2";
-			// final String hostName3 = "suse-test3";
-			// final String hostName4 = "suse-test4";
-			// String value = InetAddress.getLocalHost().getHostName() ; 
-			// String varHostName = value ;
-			// if( value.equals( hostName1 ) ) varHostName = "suse-test1.control" ; 
-			// if( value.equals( hostName2 ) ) varHostName = "suse-test2.control" ; 
-			// if( value.equals( hostName3 ) ) varHostName = "suse-test3.control" ; 
-			// if( value.equals( hostName4 ) ) varHostName = "suse-test4.control" ; 
+			final String hostName1 = "suse-test1";
+			final String hostName2 = "suse-test2";
+			final String hostName3 = "suse-test3";
+			final String hostName4 = "suse-test4";
+			String value = InetAddress.getLocalHost().getHostName() ; 
+			String varHostName = value ;
+			if( value.equals( hostName1 ) ) varHostName = "suse-test1" ; 
+			if( value.equals( hostName2 ) ) varHostName = "suse-test2" ; 
+			if( value.equals( hostName3 ) ) varHostName = "suse-test3" ; 
+			if( value.equals( hostName4 ) ) varHostName = "suse-test4" ; 
 			request = "COPY DIRECTORY " + this.remoteReportsPath
 					+ " TODIRECTORY " + this.masterReportsPath + " TOMACHINE "
-					+ hostName ;
+					+ varHostName ;
 
 			log("exec: staf " + hostName + " FS " + request);
 			result = handle.submit2(hostName, "FS", request);
