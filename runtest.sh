@@ -1,8 +1,8 @@
 #bin/bash
 
 # define root path
-testRoot="testcases/hlt/js_testcases/js"
-libRoot="testcases/hlt/js_testcases/libs"
+testRoot="testcases/hlt/basic_testcases/js"
+libRoot="testcases/hlt/basic_testcases/libs"
 sdbRoot="bin"
 csprefix="local_test"
 uuid=$$
@@ -44,7 +44,7 @@ function display()
 {
    echo "run testcase 1.0.0 2014/2/25"
    echo "$0 --help"
-   echo "$0 [-p path]|[-f file] [-s stopFlag] [-n svcname] [-h hostname] [-addpid] [-print]"
+   echo "$0 [-p path]|[-f file] [-s stopFlag] [-n svcname] [-h hostname] [-addpid] [-print] [-all]"
    echo ""
    echo " -p path     : 运行指定路径下的JS用例，如果为相对目录，则默认根目录已为用例目录"
    echo " -f file     : 运行指定的JS用例，如果为相对目录，则默认根目录已为用例目录"
@@ -53,6 +53,7 @@ function display()
    echo " -h hostname : 指定测试的COORD节点HostName或IP"
    echo " -addpid     : 是否在CHANGEDPREFIX上加上当前进行PID"
    echo " -print      : 是否在屏幕上打印用例的输出"
+   echo " -all        : 是否跑所有的测试用例.默认跑基本测试用例(htl/basic_testcases)  "
    echo ""
    exit $1
 }
@@ -156,6 +157,10 @@ while [ "$1" != "" ]; do
                       ;;
       -addpid )       csprefix="local_para_$$"
                       reportDir=${csprefix}"_report"
+                      ;;
+      -all )          testRoot="testcases/hlt/js_testcases/js"
+                      libRoot="testcases/hlt/js_testcases/libs"
+                      testDir=$testRoot
                       ;;
       * )             echo "invalid arguments: $1"
                       display 1
