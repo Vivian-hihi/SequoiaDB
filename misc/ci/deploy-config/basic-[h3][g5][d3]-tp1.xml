@@ -193,7 +193,7 @@
 
 	<target name="H3-G5-D3" depends="">
 		<hostinfo prefix="host" />
-		<property name="test-type-list" value="basic" />
+		<property name="test-type-list" value="basic,driver-mongoc" />
 		<property name="copy.test.log" value="true"/>
 
 		<parallel>
