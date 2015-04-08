@@ -60,8 +60,8 @@ class ossPrimitiveFileOp ;
 #endif
 
 #if defined OSS_ARCH_64
-   #define OSS_PRIxPTR "%016x"
-   #define OSS_PRIXPTR "%016X"
+   #define OSS_PRIxPTR "%016lx"
+   #define OSS_PRIXPTR "%016lX"
 #elif defined ( OSS_ARCH_32 )
    #define OSS_PRIxPTR "%08lx"
    #define OSS_PRIXPTR "%08lX"
