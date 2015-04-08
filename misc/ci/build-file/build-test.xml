@@ -63,6 +63,7 @@
 
 	<target name="6.Build-Driver-Testcases" depends="5.Build-Sdbtasks-Jar">
 		<ant antfile="${SCRIPT_DIR}/build-file/build-driver-test.xml">
+			<property name="SCRIPT_DIR" value="${SCRIPT_DIR}" />
 			<property name="testcases_dir" value="${testcases_dir}/drivers_testcases" />
 			<property name="deploy_dir" value="${deploy_dir}" />
 			<property name="driver_dir" value="${WORKSPACE}/release/driver" />

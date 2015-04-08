@@ -23,23 +23,14 @@
 	</taskdef>
 
 	<target name="1.Check-Version" depends="">
-		<echo level="info" message="Step1 : Checking the file &lt;${build_dir}/build.version&gt; exists." />
+		<echo level="info" message="Step1 : Delete the file &lt;${build_dir}/build.version.local&gt;." />
+		<delete file="${build_dir}/build.version.local" failonerror="false" />
+		<echo level="info" message="Step2 : Checking the file &lt;${build_dir}/build.version&gt; exists and if its true,copy the file &lt;${build_dir}/build.version&gt; to the file &lt;${build_dir}/build.version&gt;,and change parameters &lt;BUILD.NUMBER&gt; to &lt;BUILD.NUMBER.LOCAL&gt;,parameters &lt;BUILD.INSTALL.FILENAME&gt; to &lt;BUILD.INSTALL.FILENAME.LOCAL&gt;,parameters &lt;BUILD.DRIVER.FILENAME&gt; to &lt;BUILD.DRIVER.FILENAME&gt; in file &lt;${build_dir}/build.version.local&gt;." />
 		<available property="build_version_exist" file="${build_dir}/build.version" />
 		<if>
 			<equals arg1="${build_version_exist}" arg2="true" />
 			<then>
 				<echo message="@ The file &lt;${build_dir}/build.version&gt; is exist." />
-			</then>
-			<else>
-				<echo message="@ The file &lt;${build_dir}/build.version&gt; is not exist." />
-			</else>
-		</if>
-		<echo level="info" message="Step2 : Delete the file &lt;${build_dir}/build.version.local&gt;." />
-		<delete file="${build_dir}/build.version.local" failonerror="false" />
-		<echo level="info" message="Step3 : Copy the file &lt;${build_dir}/build.version&gt; to the file &lt;${build_dir}/build.version&gt;,and change parameters &lt;BUILD.NUMBER&gt; to &lt;BUILD.NUMBER.LOCAL&gt;,parameters &lt;BUILD.INSTALL.FILENAME&gt; to &lt;BUILD.INSTALL.FILENAME.LOCAL&gt;,parameters &lt;BUILD.DRIVER.FILENAME&gt; to &lt;BUILD.DRIVER.FILENAME&gt; in file &lt;${build_dir}/build.version.local&gt;." />
-		<if>
-			<isset property="build_version_exist" />
-			<then>
 				<copy file="${build_dir}/build.version" tofile="${build_dir}/build.version.local" failonerror="false" />
 				<property file="${build_dir}/build.version.local" />
 				<replace file="${build_dir}/build.version.local" token="BUILD.NUMBER" value="BUILD.NUMBER.LOCAL" />
@@ -51,14 +42,14 @@
 				<property name="BUILD.NUMBER.LOCAL" value="-1" />
 			</else>
 		</if>
-		<echo level="info" message="Step4 : Delete the file &lt;${build_dir}/build.version&gt;." />
+		<echo level="info" message="Step3 : Delete the file &lt;${build_dir}/build.version&gt;." />
 		<delete file="${build_dir}/build.version" failonerror="false" />
 		<mkdir dir="${build_dir}" />
-		<echo level="info" message="Step5 : Rebuild the file &lt;${SCRIPT_DIR}/ci.test.properties&gt;." />
+		<echo level="info" message="Step4 : Rebuild the file &lt;${SCRIPT_DIR}/ci.test.properties&gt;." />
 		<delete file="${SCRIPT_DIR}/ci.test.properties" failonerror="false" />
 		<copy file="${SCRIPT_DIR}/ci-properies-files/ci.test.properties.${OS_NAME}" tofile="${SCRIPT_DIR}/ci.test.properties" failonerror="false" />
 		<property file="${SCRIPT_DIR}/ci.test.properties" />
-		<echo level="info" message="Step5 : Copy the file &lt;${copy_tar}/build.version&gt; from &lt;${deploy_tar_hostname}&gt;,command:&lt;staf ${deploy_tar_hostname} FS COPY FILE ${copy_tar}/build.version TODIRECTORY ${build_dir} TOMACHINE ${jenkins.master.ip}&gt;." />
+		<echo level="info" message="Step5 : Copy the file &lt;${copy_tar}/build.version&gt; from &lt;${deploy_tar_hostname}&gt;,command:staf &lt;${deploy_tar_hostname}&gt; FS COPY FILE ${copy_tar}/build.version TODIRECTORY ${build_dir} TOMACHINE ${jenkins_master}&gt;." />
 		<stafTools workType="copy" workHost="${deploy_tar_hostname}" fileName="${copy_tar}/build.version" saveDir="${build_dir}" toHost="${jenkins_master}" />
     	<property file="${build_dir}/build.version" />
 		<echo message="**************************************************************************************************************************************************************" />

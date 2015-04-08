@@ -11,6 +11,7 @@
 -->
 
 <project default="5.3 Jar-Ant-Sdbtasks">
+	<property file="${sdbtask_path}/../ci.test.properties" />
 	<property name="build_dir" value="${sdbtask_path}/build_ant_sdbtask" />
 	<target name="5.1 Clean-Last-Sdbtasks">
 		<echo level="info" message="Step1 : Rebuild the folder &lt;${build_dir}&gt;." />
