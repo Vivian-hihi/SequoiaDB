@@ -12,6 +12,8 @@ coordhostname="localhost"
 runresult=0
 commlibstr="commlib.js"
 reportDir=${csprefix}"_report"
+passDir=$testRoot
+passFile=""
 
 # define test parameter
 testDir=$testRoot
@@ -139,10 +141,10 @@ fi
 while [ "$1" != "" ]; do
    case $1 in
       -p )            shift
-                      testDir="$(getMyPath $1)"
+                      passDir=$1
                       ;;
       -f )            shift
-                      testFile="$(getMyPath $1)"
+                      passFile=$1
                       ;;
       -s )            shift
                       stopWhenFailed=$(($1))
@@ -168,6 +170,11 @@ while [ "$1" != "" ]; do
    esac
    shift
 done
+testDir="$(getMyPath $passDir)"
+if [ ""X != "$passFile"X ]; then
+   testFile="$(getMyPath $passFile)"
+fi
+
 #for p in $@
 #do
 #   if [ $readType -eq 1 ] ; then
