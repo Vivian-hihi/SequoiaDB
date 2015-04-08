@@ -20,22 +20,16 @@ fap.service.port=11817
 sharingbreak=20000
 
 jenkins_master=suse-test1
-test.machine.no1.basic=suse-test2
-test.machine.no2.basic=suse-test3
-test.machine.no3.basic=suse-test4
-
-basic_list4=collectionAlter,domain,createIndex
-basic_list5=dropCL,dropCS,dropIndex,insert,listCL,listCS,operators,procedures,aggregate,bakupRestore,countHint,createCL,createCS,cursor,delete,sql,subCL,syndate,update,upsert
-basic_list6=query,split,transaction
-
-test.machine.no1.data=suse-test2
-test.machine.no2.data=suse-test3
-test.machine.no3.data=suse-test4
+test_machine_no1=suse-test2
+test_machine_no2=suse-test3
+test_machine_no3=suse-test4
 
 basic_list1=collectionAlter,domain,createIndex
 basic_list2=dropCL,dropCS,dropIndex,insert,listCL,listCS,operators,procedures,aggregate,bakupRestore,countHint,createCL,createCS,cursor,delete,sql,subCL,syndate,update,upsert
 basic_list3=query,split,transaction
+basic_list4=collectionAlter,domain,createIndex
+basic_list5=dropCL,dropCS,dropIndex,insert,listCL,listCS,operators,procedures,aggregate,bakupRestore,countHint,createCL,createCS,cursor,delete,sql,subCL,syndate,update,upsert
+basic_list6=query,split,transaction
 
 testcase.path=/tmp/sequoiadb_test/deploy/hlt
-
 import.file.name=basic-testcases-time.json

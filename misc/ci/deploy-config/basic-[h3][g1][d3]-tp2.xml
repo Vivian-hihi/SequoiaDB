@@ -20,24 +20,24 @@
 		<parallel>
 			<ant antfile="deploy-software-in-host.xml" dir="." inheritAll="false">
 				<property name="install.package.fullname" value="${install.package.fullname}" />
-				<property name="deploy.host.name" value="${test.machine.no1.basic}" />
+				<property name="deploy.host.name" value="${test_machine_no1}" />
 				<property name="is.standalone.mode" value="false" />
 				<property name="is.coord.master" value="true"/>
-				<property name="catalog.addrs" value="${test.machine.no1.data}:30003,${test.machine.no2.data}:30003,${test.machine.no3.data}:30003" />
+				<property name="catalog.addrs" value="${test_machine_no1}:30003,${test_machine_no2}:30003,${test_machine_no3}:30003" />
 			</ant>
 			<ant antfile="deploy-software-in-host.xml" dir="." inheritAll="false">
 				<property name="install.package.fullname" value="${install.package.fullname}" />
-				<property name="deploy.host.name" value="${test.machine.no2.basic}" />
+				<property name="deploy.host.name" value="${test_machine_no2}" />
 				<property name="is.standalone.mode" value="false" />
 				<property name="is.coord.master" value="false"/>
-				<property name="catalog.addrs" value="${test.machine.no1.data}:30003,${test.machine.no2.data}:30003,${test.machine.no3.data}:30003" />
+				<property name="catalog.addrs" value="${test_machine_no1}:30003,${test_machine_no2}:30003,${test_machine_no3}:30003" />
 			</ant>
 			<ant antfile="deploy-software-in-host.xml" dir="." inheritAll="false">
 				<property name="install.package.fullname" value="${install.package.fullname}" />
-				<property name="deploy.host.name" value="${test.machine.no3.basic}" />
+				<property name="deploy.host.name" value="${test_machine_no3}" />
 				<property name="is.standalone.mode" value="false" />
 				<property name="is.coord.master" value="false"/>
-				<property name="catalog.addrs" value="${test.machine.no1.data}:30003,${test.machine.no2.data}:30003,${test.machine.no3.data}:30003" />
+				<property name="catalog.addrs" value="${test_machine_no1}:30003,${test_machine_no2}:30003,${test_machine_no3}:30003" />
 			</ant>
 		</parallel>
 
@@ -50,21 +50,21 @@
 				<property name="fap.value" value="" />
 			</else>
 		</if>
-		<sdbdeploy host="${test.machine.no1.basic}" coordport="${coord.service.port}">
+		<sdbdeploy host="${test_machine_no1}" coordport="${coord.service.port}">
 			<catagroup name="cata1">
-				<node host="${test.machine.no1.data}" baseport="${cata.service.port}" dbpath="${install.path}/sequoiadb/database/cata/${cata.service.port}">
+				<node host="${test_machine_no1}" baseport="${cata.service.port}" dbpath="${install.path}/sequoiadb/database/cata/${cata.service.port}">
 					<confitem name="diaglevel" value="5" />
 					<confitem name="transactionon" value="true" />
 					<confitem name="sharingbreak" value="300000" />
 					<confitem name="fap" value="${fap.value}" />
 				</node>
-				<node host="${test.machine.no2.data}" baseport="${cata.service.port}" dbpath="${install.path}/sequoiadb/database/cata/${cata.service.port}">
+				<node host="${test_machine_no2}" baseport="${cata.service.port}" dbpath="${install.path}/sequoiadb/database/cata/${cata.service.port}">
 					<confitem name="diaglevel" value="5" />
 					<confitem name="transactionon" value="true" />
 					<confitem name="sharingbreak" value="300000" />
 					<confitem name="fap" value="${fap.value}" />
 				</node>
-				<node host="${test.machine.no3.data}" baseport="${cata.service.port}" dbpath="${install.path}/sequoiadb/database/cata/${cata.service.port}">
+				<node host="${test_machine_no3}" baseport="${cata.service.port}" dbpath="${install.path}/sequoiadb/database/cata/${cata.service.port}">
 					<confitem name="diaglevel" value="5" />
 					<confitem name="transactionon" value="true" />
 					<confitem name="sharingbreak" value="300000" />
@@ -73,23 +73,23 @@
 			</catagroup>
 		</sdbdeploy>
 
-		<sdbdeploy host="${test.machine.no1.basic}" coordport="${coord.service.port}">
+		<sdbdeploy host="${test_machine_no1}" coordport="${coord.service.port}">
 			<datagroup name="group1">
-				<node host="${test.machine.no1.data}" baseport="${data.service.port}" dbpath="${install.path}/sequoiadb/database/data/${data.service.port}">
+				<node host="${test_machine_no1}" baseport="${data.service.port}" dbpath="${install.path}/sequoiadb/database/data/${data.service.port}">
 					<confitem name="diaglevel" value="5" />
 					<confitem name="transactionon" value="true" />
 					<confitem name="sharingbreak" value="300000" />
 					<confitem name="diagnum" value="80" />
 					<confitem name="fap" value="${fap.value}" />
 				</node>
-				<node host="${test.machine.no2.data}" baseport="${data.service.port}" dbpath="${install.path}/sequoiadb/database/data/${data.service.port}">
+				<node host="${test_machine_no2}" baseport="${data.service.port}" dbpath="${install.path}/sequoiadb/database/data/${data.service.port}">
 					<confitem name="diaglevel" value="5" />
 					<confitem name="transactionon" value="true" />
 					<confitem name="sharingbreak" value="300000" />
 					<confitem name="diagnum" value="80" />
 					<confitem name="fap" value="${fap.value}" />
 				</node>
-				<node host="${test.machine.no3.data}" baseport="${data.service.port}" dbpath="${install.path}/sequoiadb/database/data/${data.service.port}">
+				<node host="${test_machine_no3}" baseport="${data.service.port}" dbpath="${install.path}/sequoiadb/database/data/${data.service.port}">
 					<confitem name="diaglevel" value="5" />
 					<confitem name="transactionon" value="true" />
 					<confitem name="sharingbreak" value="300000" />
@@ -108,15 +108,15 @@
 		<parallel>
 			<ant antfile="deploy-test-in-host.xml" dir="." inheritAll="false">
 				<property name="deploy.file.fullname" value="${deploy.file.fullname}" />
-				<property name="deploy.host.name" value="${test.machine.no1.basic}" />
+				<property name="deploy.host.name" value="${test_machine_no1}" />
 			</ant>
 			<ant antfile="deploy-test-in-host.xml" dir="." inheritAll="false">
 				<property name="deploy.file.fullname" value="${deploy.file.fullname}" />
-				<property name="deploy.host.name" value="${test.machine.no2.basic}" />
+				<property name="deploy.host.name" value="${test_machine_no2}" />
 			</ant>
 			<ant antfile="deploy-test-in-host.xml" dir="." inheritAll="false">
 				<property name="deploy.file.fullname" value="${deploy.file.fullname}" />
-				<property name="deploy.host.name" value="${test.machine.no3.basic}" />
+				<property name="deploy.host.name" value="${test_machine_no3}" />
 			</ant>
 		</parallel>
 
@@ -128,7 +128,7 @@
 
 		<parallel>
 			<echo message="Begin to test basic tests under parallel env on a machine..." />
-			<sdbtest host="${test.machine.no2.basic}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${testcase.path}/basic_testcases/reports" masterreports="${test.reports.path}" >
+			<sdbtest host="${test_machine_no2}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${testcase.path}/basic_testcases/reports" masterreports="${test.reports.path}" >
 				<param name="basic.testcase.path" value="${testcase.path}/basic_testcases" />
 				<param name="includes.dir.patterns" value="*" />
 				<param name="excludes.dir.patterns" value="vote" />
@@ -141,7 +141,7 @@
 
 				<param name="test.log" value="${test.log}" />
 			</sdbtest>
-			<sdbtest host="${test.machine.no2.basic}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${testcase.path}/basic_testcases/reports" masterreports="${test.reports.path}" >
+			<sdbtest host="${test_machine_no2}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${testcase.path}/basic_testcases/reports" masterreports="${test.reports.path}" >
 				<param name="basic.testcase.path" value="${testcase.path}/basic_testcases" />
 				<param name="includes.dir.patterns" value="*" />
 				<param name="excludes.dir.patterns" value="vote" />
@@ -170,9 +170,9 @@
 						<mkdir dir="${test.log.path}" />
 
 						<echo message="It's the cluster mod..." />
-						<sdbCopyAndTar fileHostName="${test.machine.no1.basic}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/database" savePath="${test.log.path}" />
-						<sdbCopyAndTar fileHostName="${test.machine.no2.basic}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/database" savePath="${test.log.path}" />
-						<sdbCopyAndTar fileHostName="${test.machine.no3.basic}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/database" savePath="${test.log.path}" />
+						<sdbCopyAndTar fileHostName="${test_machine_no1}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/database" savePath="${test.log.path}" />
+						<sdbCopyAndTar fileHostName="${test_machine_no2}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/database" savePath="${test.log.path}" />
+						<sdbCopyAndTar fileHostName="${test_machine_no3}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/database" savePath="${test.log.path}" />
 
 						<echo message="Tar ${test.log.path}.tar.gz..." />
 						<tar basedir="${test.reports.path}" destfile="${test.log.path}.tar.gz" compression="gzip" includes="**/*" />
@@ -180,9 +180,9 @@
 						<stafTools workType="copy" workHost="${host.NAME}" fileName="${test.log.path}.tar.gz"  toHost="${save.testLog.hostname}"  saveDir="${save.testLog.dir}" />
 						<sdbProperty name="delete.diaglogFile" value="dir=$(find /opt/sequoiadb/database -name diaglog); for d in $dir ; do echo rm -f $d/* ; rm -f $d/* ; done" />
 
-						<stafTools workType="shell" workHost="${test.machine.no1.basic}" workDir="${install.path}/sequoiadb/database" common="${delete.diaglogFile}" failonerror="false" />
-						<stafTools workType="shell" workHost="${test.machine.no2.basic}" workDir="${install.path}/sequoiadb/database" common="${delete.diaglogFile}" failonerror="false" />
-						<stafTools workType="shell" workHost="${test.machine.no3.basic}" workDir="${install.path}/sequoiadb/database" common="${delete.diaglogFile}" failonerror="false" />
+						<stafTools workType="shell" workHost="${test_machine_no1}" workDir="${install.path}/sequoiadb/database" common="${delete.diaglogFile}" failonerror="false" />
+						<stafTools workType="shell" workHost="${test_machine_no2}" workDir="${install.path}/sequoiadb/database" common="${delete.diaglogFile}" failonerror="false" />
+						<stafTools workType="shell" workHost="${test_machine_no3}" workDir="${install.path}/sequoiadb/database" common="${delete.diaglogFile}" failonerror="false" />
 
 						<echo message="Delete ${test.log.path}.tar.gz and ${test.log.path} dir ..." />
 						<delete file="${test.log.path}.tar.gz" failonerror="false" />

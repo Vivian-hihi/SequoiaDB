@@ -19,10 +19,10 @@
 	<target name="Deploy" depends="">
 		<ant antfile="deploy-software-in-host.xml" dir="." inheritAll="false">
 			<property name="install.package.fullname" value="${install.package.fullname}" />
-			<property name="deploy.host.name" value="${test.machine.no2.basic}" />
+			<property name="deploy.host.name" value="${test_machine_no2}" />
 			<property name="is.standalone.mode" value="true" />
 			<property name="is.coord.master" value="false"/>
-			<property name="catalog.addrs" value="${test.machine.no1.data}:30003,${test.machine.no2.data}:30003,${test.machine.no3.data}:30003" />
+			<property name="catalog.addrs" value="${test_machine_no1}:30003,${test_machine_no2}:30003,${test_machine_no3}:30003" />
 		</ant>
 	</target>
 
@@ -34,7 +34,7 @@
 		<parallel>
 			<ant antfile="deploy-test-in-host.xml" dir="." inheritAll="false">
 				<property name="deploy.file.fullname" value="${deploy.file.fullname}" />
-				<property name="deploy.host.name" value="${test.machine.no2.basic}" />
+				<property name="deploy.host.name" value="${test_machine_no2}" />
 			</ant>
 		</parallel>
 
@@ -54,7 +54,7 @@
 					<property name="parallel.flag" value="unparallel" />
 					<property name="WORKSPACE" value="${WORKSPACE}" />
 					<property name="ci.script.file.path" value="${ci.script.file.path}" />
-					<property name="test.host.NAME" value="${test.machine.no2.basic}" />
+					<property name="test.host.NAME" value="${test_machine_no2}" />
 					<property name="parallel.count" value="0" />
 					<property name="test.log" value="${test.log}" />
 				</ant>
@@ -76,9 +76,9 @@
 						<mkdir dir="${test.log.path}" />
 
 						<echo message="It's the standalone mod..." />
-						<sdbCopyAndTar fileHostName="${test.machine.no2.basic}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/database" savePath="${test.log.path}" />
+						<sdbCopyAndTar fileHostName="${test_machine_no2}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/database" savePath="${test.log.path}" />
 
-						<sdbCopyAndTar fileHostName="${test.machine.no2.basic}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/conf/local" savePath="${test.log.path}/${test.config.file}" />
+						<sdbCopyAndTar fileHostName="${test_machine_no2}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/conf/local" savePath="${test.log.path}/${test.config.file}" />
 
 						<echo message="Tar ${test.log.path}.tar.gz..." />
 						<tar basedir="${WORKSPACE}/reports" destfile="${test.log.path}.tar.gz" compression="gzip" includes="**/*" />
@@ -86,7 +86,7 @@
 						<stafTools workType="copy" workHost="${host.NAME}" fileName="${test.log.path}.tar.gz"  toHost="${save.testLog.hostname}"  saveDir="${save.testLog.dir}" />
 						<sdbProperty name="delete.diaglogFile" value="dir=$(find /opt/sequoiadb/database -name diaglog); for d in $dir ; do echo rm -f $d/* ; rm -f $d/* ; done" />
 
-						<stafTools workType="shell" workHost="${test.machine.no2.basic}" workDir="${install.path}/sequoiadb/database" common="${delete.diaglogFile}" failonerror="false" />
+						<stafTools workType="shell" workHost="${test_machine_no2}" workDir="${install.path}/sequoiadb/database" common="${delete.diaglogFile}" failonerror="false" />
 
 						<echo message="Delete ${test.log.path}.tar.gz and ${test.log.path} dir ..." />
 						<delete file="${test.log.path}.tar.gz" failonerror="false" />
