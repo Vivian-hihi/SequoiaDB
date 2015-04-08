@@ -149,9 +149,7 @@ namespace engine
       }
       else if ( SDB_ROLE_COORD == pmdGetDBRole() )
       {
-         CHAR *pResult = NULL ;
          INT64 contextID = -1 ;
-         BSONObj *pErrObj = NULL ;
          rtnContextBuf buf ;
 
          CoordCB *pCoordcb = pmdGetKRCB()->getCoordCB();
