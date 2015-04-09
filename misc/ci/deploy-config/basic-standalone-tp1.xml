@@ -17,24 +17,81 @@
 	<property file="${properties.dir}" />
 
 	<target name="Deploy" depends="">
-		<ant antfile="deploy-software-in-host.xml" dir="." inheritAll="false">
-			<property name="install.package.fullname" value="${install.package.fullname}" />
-			<property name="deploy.host.name" value="${test_machine_no2}" />
-			<property name="is.standalone.mode" value="true" />
-			<property name="is.coord.master" value="false"/>
-			<property name="catalog.addrs" value="${test_machine_no1}:30003,${test_machine_no2}:30003,${test_machine_no3}:30003" />
-		</ant>
+		<parallel>
+			<ant antfile="deploy-software-in-host.xml" dir="." inheritAll="false">
+				<property name="install.package.fullname" value="${install.package.fullname}" />
+				<property name="deploy.host.name" value="${test_machine_no1}" />
+				<property name="is.standalone.mode" value="true" />
+				<property name="is.coord.master" value="false"/>
+				<property name="catalog.addrs" value="${test_machine_no1}:11803,${test_machine_no2}:11803,${test_machine_no3}:11803" />
+			</ant>
+			<ant antfile="deploy-software-in-host.xml" dir="." inheritAll="false">
+				<property name="install.package.fullname" value="${install.package.fullname}" />
+				<property name="deploy.host.name" value="${test_machine_no2}" />
+				<property name="is.standalone.mode" value="true" />
+				<property name="is.coord.master" value="false"/>
+				<property name="catalog.addrs" value="${test_machine_no1}:11803,${test_machine_no2}:11803,${test_machine_no3}:11803" />
+			</ant>
+			<ant antfile="deploy-software-in-host.xml" dir="." inheritAll="false">
+				<property name="install.package.fullname" value="${install.package.fullname}" />
+				<property name="deploy.host.name" value="${test_machine_no3}" />
+				<property name="is.standalone.mode" value="true" />
+				<property name="is.coord.master" value="false"/>
+				<property name="catalog.addrs" value="${test_machine_no1}:11803,${test_machine_no2}:11803,${test_machine_no3}:11803" />
+			</ant>
+			<ant antfile="deploy-software-in-host.xml" dir="." inheritAll="false">
+				<property name="install.package.fullname" value="${install.package.fullname}" />
+				<property name="deploy.host.name" value="${test_machine_no4}" />
+				<property name="is.standalone.mode" value="true" />
+				<property name="is.coord.master" value="false"/>
+				<property name="catalog.addrs" value="${test_machine_no1}:11803,${test_machine_no2}:11803,${test_machine_no3}:11803" />
+			</ant>
+			<ant antfile="deploy-software-in-host.xml" dir="." inheritAll="false">
+				<property name="install.package.fullname" value="${install.package.fullname}" />
+				<property name="deploy.host.name" value="${test_machine_no5}" />
+				<property name="is.standalone.mode" value="true" />
+				<property name="is.coord.master" value="false"/>
+				<property name="catalog.addrs" value="${test_machine_no1}:11803,${test_machine_no2}:11803,${test_machine_no3}:11803" />
+			</ant>
+			<ant antfile="deploy-software-in-host.xml" dir="." inheritAll="false">
+				<property name="install.package.fullname" value="${install.package.fullname}" />
+				<property name="deploy.host.name" value="${test_machine_no6}" />
+				<property name="is.standalone.mode" value="true" />
+				<property name="is.coord.master" value="false"/>
+				<property name="catalog.addrs" value="${test_machine_no1}:11803,${test_machine_no2}:11803,${test_machine_no3}:11803" />
+			</ant>
+		</parallel>
 	</target>
 
 	<target name="Standalone" depends="">
 		<hostinfo prefix="host" />
-		<property name="test-type-list" value="basic,driver-C,driver-CPP" />
+		<property name="test-type-list" value="basic" />
 		<property name="copy.test.log" value="true"/>
 
 		<parallel>
 			<ant antfile="deploy-test-in-host.xml" dir="." inheritAll="false">
 				<property name="deploy.file.fullname" value="${deploy.file.fullname}" />
+				<property name="deploy.host.name" value="${test_machine_no1}" />
+			</ant>
+			<ant antfile="deploy-test-in-host.xml" dir="." inheritAll="false">
+				<property name="deploy.file.fullname" value="${deploy.file.fullname}" />
 				<property name="deploy.host.name" value="${test_machine_no2}" />
+			</ant>
+			<ant antfile="deploy-test-in-host.xml" dir="." inheritAll="false">
+				<property name="deploy.file.fullname" value="${deploy.file.fullname}" />
+				<property name="deploy.host.name" value="${test_machine_no3}" />
+			</ant>
+			<ant antfile="deploy-test-in-host.xml" dir="." inheritAll="false">
+				<property name="deploy.file.fullname" value="${deploy.file.fullname}" />
+				<property name="deploy.host.name" value="${test_machine_no4}" />
+			</ant>
+			<ant antfile="deploy-test-in-host.xml" dir="." inheritAll="false">
+				<property name="deploy.file.fullname" value="${deploy.file.fullname}" />
+				<property name="deploy.host.name" value="${test_machine_no5}" />
+			</ant>
+			<ant antfile="deploy-test-in-host.xml" dir="." inheritAll="false">
+				<property name="deploy.file.fullname" value="${deploy.file.fullname}" />
+				<property name="deploy.host.name" value="${test_machine_no6}" />
 			</ant>
 		</parallel>
 
@@ -76,9 +133,19 @@
 						<mkdir dir="${test.log.path}" />
 
 						<echo message="It's the standalone mod..." />
+						<sdbCopyAndTar fileHostName="${test_machine_no1}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/database" savePath="${test.log.path}" />
 						<sdbCopyAndTar fileHostName="${test_machine_no2}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/database" savePath="${test.log.path}" />
+						<sdbCopyAndTar fileHostName="${test_machine_no3}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/database" savePath="${test.log.path}" />
+						<sdbCopyAndTar fileHostName="${test_machine_no4}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/database" savePath="${test.log.path}" />
+						<sdbCopyAndTar fileHostName="${test_machine_no5}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/database" savePath="${test.log.path}" />
+						<sdbCopyAndTar fileHostName="${test_machine_no6}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/database" savePath="${test.log.path}" />
 
+						<sdbCopyAndTar fileHostName="${test_machine_no1}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/conf/local" savePath="${test.log.path}/${test.config.file}" />
 						<sdbCopyAndTar fileHostName="${test_machine_no2}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/conf/local" savePath="${test.log.path}/${test.config.file}" />
+						<sdbCopyAndTar fileHostName="${test_machine_no3}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/conf/local" savePath="${test.log.path}/${test.config.file}" />
+						<sdbCopyAndTar fileHostName="${test_machine_no4}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/conf/local" savePath="${test.log.path}/${test.config.file}" />
+						<sdbCopyAndTar fileHostName="${test_machine_no5}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/conf/local" savePath="${test.log.path}/${test.config.file}" />
+						<sdbCopyAndTar fileHostName="${test_machine_no6}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/conf/local" savePath="${test.log.path}/${test.config.file}" />
 
 						<echo message="Tar ${test.log.path}.tar.gz..." />
 						<tar basedir="${WORKSPACE}/reports" destfile="${test.log.path}.tar.gz" compression="gzip" includes="**/*" />
@@ -86,7 +153,12 @@
 						<stafTools workType="copy" workHost="${host.NAME}" fileName="${test.log.path}.tar.gz"  toHost="${save.testLog.hostname}"  saveDir="${save.testLog.dir}" failonerror="true"/>
 						<sdbProperty name="delete.diaglogFile" value="dir=$(find /opt/sequoiadb/database -name diaglog); for d in $dir ; do echo rm -f $d/* ; rm -f $d/* ; done" />
 
+						<stafTools workType="shell" workHost="${test_machine_no1}" workDir="${install.path}/sequoiadb/database" common="${delete.diaglogFile}" failonerror="true"/>
 						<stafTools workType="shell" workHost="${test_machine_no2}" workDir="${install.path}/sequoiadb/database" common="${delete.diaglogFile}" failonerror="true"/>
+						<stafTools workType="shell" workHost="${test_machine_no3}" workDir="${install.path}/sequoiadb/database" common="${delete.diaglogFile}" failonerror="true"/>
+						<stafTools workType="shell" workHost="${test_machine_no4}" workDir="${install.path}/sequoiadb/database" common="${delete.diaglogFile}" failonerror="true"/>
+						<stafTools workType="shell" workHost="${test_machine_no5}" workDir="${install.path}/sequoiadb/database" common="${delete.diaglogFile}" failonerror="true"/>
+						<stafTools workType="shell" workHost="${test_machine_no6}" workDir="${install.path}/sequoiadb/database" common="${delete.diaglogFile}" failonerror="true"/>
 
 						<echo message="Delete ${test.log.path}.tar.gz and ${test.log.path} dir ..." />
 						<delete file="${test.log.path}.tar.gz" failonerror="false" />

@@ -18,27 +18,52 @@
 
 	<target name="Deploy" depends="">
 		<parallel>
-			<ant antfile="deploy-software-in-host.xml" dir="." inheritAll="false">
-				<property name="install.package.fullname" value="${install.package.fullname}" />
-				<property name="deploy.host.name" value="${test_machine_no1}" />
-				<property name="is.standalone.mode" value="false" />
-				<property name="is.coord.master" value="true"/>
-				<property name="catalog.addrs" value="${test_machine_no1}:30003,${test_machine_no2}:30003,${test_machine_no3}:30003" />
-			</ant>
-			<ant antfile="deploy-software-in-host.xml" dir="." inheritAll="false">
-				<property name="install.package.fullname" value="${install.package.fullname}" />
-				<property name="deploy.host.name" value="${test_machine_no2}" />
-				<property name="is.standalone.mode" value="false" />
-				<property name="is.coord.master" value="false"/>
-				<property name="catalog.addrs" value="${test_machine_no1}:30003,${test_machine_no2}:30003,${test_machine_no3}:30003" />
-			</ant>
-			<ant antfile="deploy-software-in-host.xml" dir="." inheritAll="false">
-				<property name="install.package.fullname" value="${install.package.fullname}" />
-				<property name="deploy.host.name" value="${test_machine_no3}" />
-				<property name="is.standalone.mode" value="false" />
-				<property name="is.coord.master" value="false"/>
-				<property name="catalog.addrs" value="${test_machine_no1}:30003,${test_machine_no2}:30003,${test_machine_no3}:30003" />
-			</ant>
+			<parallel>
+				<ant antfile="deploy-software-in-host.xml" dir="." inheritAll="false">
+					<property name="install.package.fullname" value="${install.package.fullname}" />
+					<property name="deploy.host.name" value="${test_machine_no1}" />
+					<property name="is.standalone.mode" value="false" />
+					<property name="is.coord.master" value="true"/>
+					<property name="catalog.addrs" value="${test_machine_no1}:11803,${test_machine_no2}:11803,${test_machine_no3}:11803" />
+				</ant>
+				<ant antfile="deploy-software-in-host.xml" dir="." inheritAll="false">
+					<property name="install.package.fullname" value="${install.package.fullname}" />
+					<property name="deploy.host.name" value="${test_machine_no2}" />
+					<property name="is.standalone.mode" value="false" />
+					<property name="is.coord.master" value="false"/>
+					<property name="catalog.addrs" value="${test_machine_no1}:11803,${test_machine_no2}:11803,${test_machine_no3}:11803" />
+				</ant>
+				<ant antfile="deploy-software-in-host.xml" dir="." inheritAll="false">
+					<property name="install.package.fullname" value="${install.package.fullname}" />
+					<property name="deploy.host.name" value="${test_machine_no3}" />
+					<property name="is.standalone.mode" value="false" />
+					<property name="is.coord.master" value="false"/>
+					<property name="catalog.addrs" value="${test_machine_no1}:11803,${test_machine_no2}:11803,${test_machine_no3}:11803" />
+				</ant>
+			</parallel>
+			<parallel>
+				<ant antfile="deploy-software-in-host.xml" dir="." inheritAll="false">
+					<property name="install.package.fullname" value="${install.package.fullname}" />
+					<property name="deploy.host.name" value="${test_machine_no4}" />
+					<property name="is.standalone.mode" value="false" />
+					<property name="is.coord.master" value="true"/>
+					<property name="catalog.addrs" value="${test_machine_no4}:11803,${test_machine_no5}:11803,${test_machine_no6}:11803" />
+				</ant>
+				<ant antfile="deploy-software-in-host.xml" dir="." inheritAll="false">
+					<property name="install.package.fullname" value="${install.package.fullname}" />
+					<property name="deploy.host.name" value="${test_machine_no5}" />
+					<property name="is.standalone.mode" value="false" />
+					<property name="is.coord.master" value="false"/>
+					<property name="catalog.addrs" value="${test_machine_no4}:11803,${test_machine_no5}:11803,${test_machine_no6}:11803" />
+				</ant>
+				<ant antfile="deploy-software-in-host.xml" dir="." inheritAll="false">
+					<property name="install.package.fullname" value="${install.package.fullname}" />
+					<property name="deploy.host.name" value="${test_machine_no6}" />
+					<property name="is.standalone.mode" value="false" />
+					<property name="is.coord.master" value="false"/>
+					<property name="catalog.addrs" value="${test_machine_no4}:11803,${test_machine_no5}:11803,${test_machine_no6}:11803" />
+				</ant>
+			</parallel>
 		</parallel>
 		<if>
 		   <equals arg1="${os.arch}" arg2="amd64" />
@@ -49,146 +74,196 @@
 			    <property name="fap.value" value="" />
 			 </else>
 		</if>
-
-		<sdbdeploy host="${test_machine_no1}" coordport="${coord.service.port}">
-			<catagroup name="cata1">
-				<node host="${test_machine_no1}" baseport="${cata.service.port}" dbpath="${install.path}/sequoiadb/database/cata/${cata.service.port}">
-					<confitem name="diaglevel" value="5" />
-					<confitem name="transactionon" value="true" />
-					<confitem name="sharingbreak" value="300000" />
-					<confitem name="fap" value="${fap.value}" />
-				</node>
-				<node host="${test_machine_no2}" baseport="${cata.service.port}" dbpath="${install.path}/sequoiadb/database/cata/${cata.service.port}">
-					<confitem name="diaglevel" value="5" />
-					<confitem name="transactionon" value="true" />
-					<confitem name="sharingbreak" value="300000" />
-					<confitem name="fap" value="${fap.value}" />
-				</node>
-				<node host="${test_machine_no3}" baseport="${cata.service.port}" dbpath="${install.path}/sequoiadb/database/cata/${cata.service.port}">
-					<confitem name="diaglevel" value="5" />
-					<confitem name="transactionon" value="true" />
-					<confitem name="sharingbreak" value="300000" />
-					<confitem name="fap" value="${fap.value}" />
-				</node>
-			</catagroup>
-		</sdbdeploy>
-		<sdbdeploy host="${test_machine_no1}" coordport="${coord.service.port}">
-			<datagroup name="group1">
-				<node host="${test_machine_no1}" baseport="21100" dbpath="${install.path}/sequoiadb/database/data/21100">
-					<confitem name="diaglevel" value="5" />
-					<confitem name="transactionon" value="true" />
-					<confitem name="sharingbreak" value="300000" />
-					<confitem name="diagnum" value="80" />
-					<confitem name="fap" value="${fap.value}" />
-				</node>
-				<node host="${test_machine_no2}" baseport="21100" dbpath="${install.path}/sequoiadb/database/data/21100">
-					<confitem name="diaglevel" value="5" />
-					<confitem name="transactionon" value="true" />
-					<confitem name="sharingbreak" value="300000" />
-					<confitem name="diagnum" value="80" />
-					<confitem name="fap" value="${fap.value}" />
-				</node>
-				<node host="${test_machine_no3}" baseport="21100" dbpath="${install.path}/sequoiadb/database/data/21100">
-					<confitem name="diaglevel" value="5" />
-					<confitem name="transactionon" value="true" />
-					<confitem name="sharingbreak" value="300000" />
-					<confitem name="diagnum" value="80" />
-					<confitem name="fap" value="${fap.value}" />
-				</node>
-			</datagroup>
-			<datagroup name="group2">
-				<node host="${test_machine_no3}" baseport="22100" dbpath="${install.path}/sequoiadb/database/data/22100">
-					<confitem name="diaglevel" value="5" />
-					<confitem name="transactionon" value="true" />
-					<confitem name="sharingbreak" value="300000" />
-					<confitem name="diagnum" value="80" />
-					<confitem name="fap" value="${fap.value}" />
-				</node>
-				<node host="${test_machine_no1}" baseport="22100" dbpath="${install.path}/sequoiadb/database/data/22100">
-					<confitem name="diaglevel" value="5" />
-					<confitem name="transactionon" value="true" />
-					<confitem name="sharingbreak" value="300000" />
-					<confitem name="diagnum" value="80" />
-					<confitem name="fap" value="${fap.value}" />
-				</node>
-				<node host="${test_machine_no2}" baseport="22100" dbpath="${install.path}/sequoiadb/database/data/22100">
-					<confitem name="diaglevel" value="5" />
-					<confitem name="transactionon" value="true" />
-					<confitem name="sharingbreak" value="300000" />
-					<confitem name="diagnum" value="80" />
-					<confitem name="fap" value="${fap.value}" />
-				</node>
-			</datagroup>
-			<datagroup name="group3">
-				<node host="${test_machine_no3}" baseport="23100" dbpath="${install.path}/sequoiadb/database/data/23100">
-					<confitem name="diaglevel" value="5" />
-					<confitem name="transactionon" value="true" />
-					<confitem name="sharingbreak" value="300000" />
-					<confitem name="diagnum" value="80" />
-          <confitem name="fap" value="${fap.value}" />
-				</node>
-				<node host="${test_machine_no1}" baseport="23100" dbpath="${install.path}/sequoiadb/database/data/23100">
-					<confitem name="diaglevel" value="5" />
-					<confitem name="transactionon" value="true" />
-					<confitem name="sharingbreak" value="300000" />
-					<confitem name="diagnum" value="80" />
-          <confitem name="fap" value="${fap.value}" />
-				</node>
-				<node host="${test_machine_no2}" baseport="23100" dbpath="${install.path}/sequoiadb/database/data/23100">
-					<confitem name="diaglevel" value="5" />
-					<confitem name="transactionon" value="true" />
-					<confitem name="sharingbreak" value="300000" />
-					<confitem name="diagnum" value="80" />
-					<confitem name="fap" value="${fap.value}" />
-				</node>
-			</datagroup>
-			<datagroup name="group4">
-				<node host="${test_machine_no3}" baseport="24100" dbpath="${install.path}/sequoiadb/database/data/24100">
-					<confitem name="diaglevel" value="5" />
-					<confitem name="transactionon" value="true" />
-					<confitem name="sharingbreak" value="300000" />
-					<confitem name="diagnum" value="80" />
-					<confitem name="fap" value="${fap.value}" />
-				</node>
-				<node host="${test_machine_no1}" baseport="24100" dbpath="${install.path}/sequoiadb/database/data/24100">
-					<confitem name="diaglevel" value="5" />
-					<confitem name="transactionon" value="true" />
-					<confitem name="sharingbreak" value="300000" />
-					<confitem name="diagnum" value="80" />
-					<confitem name="fap" value="${fap.value}" />
-				</node>
-				<node host="${test_machine_no2}" baseport="24100" dbpath="${install.path}/sequoiadb/database/data/24100">
-					<confitem name="diaglevel" value="5" />
-					<confitem name="transactionon" value="true" />
-					<confitem name="sharingbreak" value="300000" />
-					<confitem name="diagnum" value="80" />
-          			<confitem name="fap" value="${fap.value}" />
-				</node>
-			</datagroup>
-			<datagroup name="group5">
-				<node host="${test_machine_no3}" baseport="25100" dbpath="${install.path}/sequoiadb/database/data/25100">
-					<confitem name="diaglevel" value="5" />
-					<confitem name="transactionon" value="true" />
-					<confitem name="sharingbreak" value="300000" />
-					<confitem name="diagnum" value="80" />
-					<confitem name="fap" value="${fap.value}" />
-				</node>
-				<node host="${test_machine_no1}" baseport="25100" dbpath="${install.path}/sequoiadb/database/data/25100">
-					<confitem name="diaglevel" value="5" />
-					<confitem name="transactionon" value="true" />
-					<confitem name="sharingbreak" value="300000" />
-					<confitem name="diagnum" value="80" />
-					<confitem name="fap" value="${fap.value}" />
-				</node>
-				<node host="${test_machine_no2}" baseport="25100" dbpath="${install.path}/sequoiadb/database/data/25100">
-					<confitem name="diaglevel" value="5" />
-					<confitem name="transactionon" value="true" />
-					<confitem name="sharingbreak" value="300000" />
-					<confitem name="diagnum" value="80" />
-					<confitem name="fap" value="${fap.value}" />
-				</node>
-			</datagroup>
-		</sdbdeploy>
+		<parallel>
+			<sdbdeploy host="${test_machine_no1}" coordport="${coord.service.port}">
+				<catagroup name="cata1">
+					<node host="${test_machine_no1}" baseport="${cata.service.port}" dbpath="${install.path}/sequoiadb/database/cata/${cata.service.port}">
+						<confitem name="diaglevel" value="5" />
+						<confitem name="transactionon" value="true" />
+						<confitem name="sharingbreak" value="300000" />
+						<confitem name="fap" value="${fap.value}" />
+					</node>
+					<node host="${test_machine_no2}" baseport="${cata.service.port}" dbpath="${install.path}/sequoiadb/database/cata/${cata.service.port}">
+						<confitem name="diaglevel" value="5" />
+						<confitem name="transactionon" value="true" />
+						<confitem name="sharingbreak" value="300000" />
+						<confitem name="fap" value="${fap.value}" />
+					</node>
+					<node host="${test_machine_no3}" baseport="${cata.service.port}" dbpath="${install.path}/sequoiadb/database/cata/${cata.service.port}">
+						<confitem name="diaglevel" value="5" />
+						<confitem name="transactionon" value="true" />
+						<confitem name="sharingbreak" value="300000" />
+						<confitem name="fap" value="${fap.value}" />
+					</node>
+				</catagroup>
+			</sdbdeploy>
+			<sdbdeploy host="${test_machine_no4}" coordport="${coord.service.port}">
+				<catagroup name="cata1">
+					<node host="${test_machine_no4}" baseport="${cata.service.port}" dbpath="${install.path}/sequoiadb/database/cata/${cata.service.port}">
+						<confitem name="diaglevel" value="5" />
+						<confitem name="transactionon" value="true" />
+						<confitem name="sharingbreak" value="300000" />
+						<confitem name="fap" value="${fap.value}" />
+					</node>
+					<node host="${test_machine_no5}" baseport="${cata.service.port}" dbpath="${install.path}/sequoiadb/database/cata/${cata.service.port}">
+						<confitem name="diaglevel" value="5" />
+						<confitem name="transactionon" value="true" />
+						<confitem name="sharingbreak" value="300000" />
+						<confitem name="fap" value="${fap.value}" />
+					</node>
+					<node host="${test_machine_no6}" baseport="${cata.service.port}" dbpath="${install.path}/sequoiadb/database/cata/${cata.service.port}">
+						<confitem name="diaglevel" value="5" />
+						<confitem name="transactionon" value="true" />
+						<confitem name="sharingbreak" value="300000" />
+						<confitem name="fap" value="${fap.value}" />
+					</node>
+				</catagroup>
+			</sdbdeploy>
+		</parallel>
+		<parallel>
+			<sdbdeploy host="${test_machine_no1}" coordport="${coord.service.port}">
+				<datagroup name="group1">
+					<node host="${test_machine_no1}" baseport="21100" dbpath="${install.path}/sequoiadb/database/data/21100">
+						<confitem name="diaglevel" value="5" />
+						<confitem name="transactionon" value="true" />
+						<confitem name="sharingbreak" value="300000" />
+						<confitem name="diagnum" value="80" />
+						<confitem name="fap" value="${fap.value}" />
+					</node>
+					<node host="${test_machine_no2}" baseport="21100" dbpath="${install.path}/sequoiadb/database/data/21100">
+						<confitem name="diaglevel" value="5" />
+						<confitem name="transactionon" value="true" />
+						<confitem name="sharingbreak" value="300000" />
+						<confitem name="diagnum" value="80" />
+						<confitem name="fap" value="${fap.value}" />
+					</node>
+					<node host="${test_machine_no3}" baseport="21100" dbpath="${install.path}/sequoiadb/database/data/21100">
+						<confitem name="diaglevel" value="5" />
+						<confitem name="transactionon" value="true" />
+						<confitem name="sharingbreak" value="300000" />
+						<confitem name="diagnum" value="80" />
+						<confitem name="fap" value="${fap.value}" />
+					</node>
+				</datagroup>
+				<datagroup name="group2">
+					<node host="${test_machine_no3}" baseport="22100" dbpath="${install.path}/sequoiadb/database/data/22100">
+						<confitem name="diaglevel" value="5" />
+						<confitem name="transactionon" value="true" />
+						<confitem name="sharingbreak" value="300000" />
+						<confitem name="diagnum" value="80" />
+						<confitem name="fap" value="${fap.value}" />
+					</node>
+					<node host="${test_machine_no1}" baseport="22100" dbpath="${install.path}/sequoiadb/database/data/22100">
+						<confitem name="diaglevel" value="5" />
+						<confitem name="transactionon" value="true" />
+						<confitem name="sharingbreak" value="300000" />
+						<confitem name="diagnum" value="80" />
+						<confitem name="fap" value="${fap.value}" />
+					</node>
+					<node host="${test_machine_no2}" baseport="22100" dbpath="${install.path}/sequoiadb/database/data/22100">
+						<confitem name="diaglevel" value="5" />
+						<confitem name="transactionon" value="true" />
+						<confitem name="sharingbreak" value="300000" />
+						<confitem name="diagnum" value="80" />
+						<confitem name="fap" value="${fap.value}" />
+					</node>
+				</datagroup>
+				<datagroup name="group3">
+					<node host="${test_machine_no3}" baseport="23100" dbpath="${install.path}/sequoiadb/database/data/23100">
+						<confitem name="diaglevel" value="5" />
+						<confitem name="transactionon" value="true" />
+						<confitem name="sharingbreak" value="300000" />
+						<confitem name="diagnum" value="80" />
+	          			<confitem name="fap" value="${fap.value}" />
+					</node>
+					<node host="${test_machine_no1}" baseport="23100" dbpath="${install.path}/sequoiadb/database/data/23100">
+						<confitem name="diaglevel" value="5" />
+						<confitem name="transactionon" value="true" />
+						<confitem name="sharingbreak" value="300000" />
+						<confitem name="diagnum" value="80" />
+	          			<confitem name="fap" value="${fap.value}" />
+					</node>
+					<node host="${test_machine_no2}" baseport="23100" dbpath="${install.path}/sequoiadb/database/data/23100">
+						<confitem name="diaglevel" value="5" />
+						<confitem name="transactionon" value="true" />
+						<confitem name="sharingbreak" value="300000" />
+						<confitem name="diagnum" value="80" />
+						<confitem name="fap" value="${fap.value}" />
+					</node>
+				</datagroup>
+			</sdbdeploy>
+			<sdbdeploy host="${test_machine_no4}" coordport="${coord.service.port}">
+				<datagroup name="group1">
+					<node host="${test_machine_no4}" baseport="21100" dbpath="${install.path}/sequoiadb/database/data/21100">
+						<confitem name="diaglevel" value="5" />
+						<confitem name="transactionon" value="true" />
+						<confitem name="sharingbreak" value="300000" />
+						<confitem name="diagnum" value="80" />
+						<confitem name="fap" value="${fap.value}" />
+					</node>
+					<node host="${test_machine_no5}" baseport="21100" dbpath="${install.path}/sequoiadb/database/data/21100">
+						<confitem name="diaglevel" value="5" />
+						<confitem name="transactionon" value="true" />
+						<confitem name="sharingbreak" value="300000" />
+						<confitem name="diagnum" value="80" />
+						<confitem name="fap" value="${fap.value}" />
+					</node>
+					<node host="${test_machine_no6}" baseport="21100" dbpath="${install.path}/sequoiadb/database/data/21100">
+						<confitem name="diaglevel" value="5" />
+						<confitem name="transactionon" value="true" />
+						<confitem name="sharingbreak" value="300000" />
+						<confitem name="diagnum" value="80" />
+						<confitem name="fap" value="${fap.value}" />
+					</node>
+				</datagroup>
+				<datagroup name="group2">
+					<node host="${test_machine_no4}" baseport="22100" dbpath="${install.path}/sequoiadb/database/data/22100">
+						<confitem name="diaglevel" value="5" />
+						<confitem name="transactionon" value="true" />
+						<confitem name="sharingbreak" value="300000" />
+						<confitem name="diagnum" value="80" />
+						<confitem name="fap" value="${fap.value}" />
+					</node>
+					<node host="${test_machine_no5}" baseport="22100" dbpath="${install.path}/sequoiadb/database/data/22100">
+						<confitem name="diaglevel" value="5" />
+						<confitem name="transactionon" value="true" />
+						<confitem name="sharingbreak" value="300000" />
+						<confitem name="diagnum" value="80" />
+						<confitem name="fap" value="${fap.value}" />
+					</node>
+					<node host="${test_machine_no6}" baseport="22100" dbpath="${install.path}/sequoiadb/database/data/22100">
+						<confitem name="diaglevel" value="5" />
+						<confitem name="transactionon" value="true" />
+						<confitem name="sharingbreak" value="300000" />
+						<confitem name="diagnum" value="80" />
+						<confitem name="fap" value="${fap.value}" />
+					</node>
+				</datagroup>
+				<datagroup name="group3">
+					<node host="${test_machine_no4}" baseport="23100" dbpath="${install.path}/sequoiadb/database/data/23100">
+						<confitem name="diaglevel" value="5" />
+						<confitem name="transactionon" value="true" />
+						<confitem name="sharingbreak" value="300000" />
+						<confitem name="diagnum" value="80" />
+	          			<confitem name="fap" value="${fap.value}" />
+					</node>
+					<node host="${test_machine_no5}" baseport="23100" dbpath="${install.path}/sequoiadb/database/data/23100">
+						<confitem name="diaglevel" value="5" />
+						<confitem name="transactionon" value="true" />
+						<confitem name="sharingbreak" value="300000" />
+						<confitem name="diagnum" value="80" />
+						<confitem name="fap" value="${fap.value}" />
+					</node>
+					<node host="${test_machine_no6}" baseport="23100" dbpath="${install.path}/sequoiadb/database/data/23100">
+						<confitem name="diaglevel" value="5" />
+						<confitem name="transactionon" value="true" />
+						<confitem name="sharingbreak" value="300000" />
+						<confitem name="diagnum" value="80" />
+	          			<confitem name="fap" value="${fap.value}" />
+					</node>
+				</datagroup>
+			</sdbdeploy>
+		</parallel>
 	</target>
 
 	<target name="H3-G5-D3" depends="">
@@ -208,6 +283,18 @@
 			<ant antfile="deploy-test-in-host.xml" dir="." inheritAll="false">
 				<property name="deploy.file.fullname" value="${deploy.file.fullname}" />
 				<property name="deploy.host.name" value="${test_machine_no3}" />
+			</ant>
+			<ant antfile="deploy-test-in-host.xml" dir="." inheritAll="false">
+				<property name="deploy.file.fullname" value="${deploy.file.fullname}" />
+				<property name="deploy.host.name" value="${test_machine_no4}" />
+			</ant>
+			<ant antfile="deploy-test-in-host.xml" dir="." inheritAll="false">
+				<property name="deploy.file.fullname" value="${deploy.file.fullname}" />
+				<property name="deploy.host.name" value="${test_machine_no5}" />
+			</ant>
+			<ant antfile="deploy-test-in-host.xml" dir="." inheritAll="false">
+				<property name="deploy.file.fullname" value="${deploy.file.fullname}" />
+				<property name="deploy.host.name" value="${test_machine_no6}" />
 			</ant>
 		</parallel>
 
@@ -251,6 +338,9 @@
 						<sdbCopyAndTar fileHostName="${test_machine_no1}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/database" savePath="${test.log.path}" />
 						<sdbCopyAndTar fileHostName="${test_machine_no2}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/database" savePath="${test.log.path}" />
 						<sdbCopyAndTar fileHostName="${test_machine_no3}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/database" savePath="${test.log.path}" />
+						<sdbCopyAndTar fileHostName="${test_machine_no4}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/database" savePath="${test.log.path}" />
+						<sdbCopyAndTar fileHostName="${test_machine_no5}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/database" savePath="${test.log.path}" />
+						<sdbCopyAndTar fileHostName="${test_machine_no6}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/database" savePath="${test.log.path}" />
 
 						<echo message="Tar ${test.log.path}.tar.gz..." />
 						<tar basedir="${test.reports.path}" destfile="${test.log.path}.tar.gz" compression="gzip" includes="**/*" />
@@ -261,6 +351,9 @@
 						<stafTools workType="shell" workHost="${test_machine_no1}" workDir="${install.path}/sequoiadb/database" common="${delete.diaglogFile}" failonerror="true"/>
 						<stafTools workType="shell" workHost="${test_machine_no2}" workDir="${install.path}/sequoiadb/database" common="${delete.diaglogFile}" failonerror="true"/>
 						<stafTools workType="shell" workHost="${test_machine_no3}" workDir="${install.path}/sequoiadb/database" common="${delete.diaglogFile}" failonerror="true"/>
+						<stafTools workType="shell" workHost="${test_machine_no4}" workDir="${install.path}/sequoiadb/database" common="${delete.diaglogFile}" failonerror="true"/>
+						<stafTools workType="shell" workHost="${test_machine_no5}" workDir="${install.path}/sequoiadb/database" common="${delete.diaglogFile}" failonerror="true"/>
+						<stafTools workType="shell" workHost="${test_machine_no6}" workDir="${install.path}/sequoiadb/database" common="${delete.diaglogFile}" failonerror="true"/>
 
 						<echo message="Delete ${test.log.path}.tar.gz and ${test.log.path} dir ..." />
 						<delete file="${test.log.path}.tar.gz" failonerror="false" />

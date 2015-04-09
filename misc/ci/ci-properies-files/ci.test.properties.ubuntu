@@ -23,6 +23,9 @@ jenkins_master=ubun-test1
 test_machine_no1=ubun-test2
 test_machine_no2=ubun-test3
 test_machine_no3=ubun-test4
+test_machine_no4=ubuntu-ci001
+test_machine_no5=ubuntu-ci002
+test_machine_no6=ubuntu-ci003
 
 basic_list1=collectionAlter,domain,createIndex
 basic_list2=dropCL,dropCS,dropIndex,insert,listCL,listCS,operators,procedures,aggregate,bakupRestore,countHint,createCL,createCS,cursor,delete,sql,subCL,syndate,update,upsert

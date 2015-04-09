@@ -15,9 +15,7 @@
 	<target name="Uninstall-Software" depends="">
 	    <stafTools workHost="${deploy.host.name}" workType="shell" workDir="${test.machine.software.path}" common="ant -l ${test.machine.software.path}/clean-install-basic-in-host.log -f ${test.machine.software.path}/install-basic-in-host.xml clean-install -Dtest.basedir=${test.machine.software.path}" failonerror="true"/>
 	    <stafTools workHost="${deploy.host.name}" worktype="get" fileName="${test.machine.software.path}/clean-install-basic-in-host.log" failonerror="true"/>
-
 	    <stafTools workType="copy" workHost="${deploy.host.name}" fileName="${test.machine.software.path}/clean-install-basic-in-host.log" saveDir="/opt" toHost="${deploy.host.name}" failonerror="true"/>
-
 	    <stafTools workHost="${deploy.host.name}" worktype="delete" fileName="${test.machine.software.path}" failonerror="true"/>
 	    <stafTools workHost="${deploy.host.name}" worktype="create" filename="${test.machine.software.path}" failonerror="true"/>
 	</target>
@@ -30,7 +28,6 @@
 		<basename property="install.package.filename" file="${install.package.fullname}"/>
 		<stafTools workType="shell" workHost="${deploy.host.name}" workDir="${test.machine.software.path}" waitTime="30m" common="ant -l ${test.machine.software.path}/install-basic-in-host.log -f ${test.machine.software.path}/install-basic-in-host.xml -Dtest.basedir=${test.machine.software.path} -Dinstall.package.filename=${install.package.filename} -Dis.standalone.mode=${is.standalone.mode} -Dis.coord.master=${is.coord.master} -Dcatalog.addrs=${catalog.addrs} " failonerror="true"/>
 		<stafTools workType="get" workHost="${deploy.host.name}" fileName="${test.machine.software.path}/install-basic-in-host.log" failonerror="true"/>
-
 		<stafTools workType="copy" workHost="LOCAL" fileName="${basedir}/deploy-test-result.xml" saveDir="${test.machine.software.path}" toHost="${deploy.host.name}" failonerror="true"/>
 		<!-- <stafTools workType="shell" workHost="${deploy.host.name}" workDir="${test.machine.software.path}" waitTime="30m" common="vim /etc/profile" />
 		<stafTools workType="shell" workHost="${deploy.host.name}" workDir="${test.machine.software.path}" waitTime="30m" common="echo 'ulimit -c unlimited' >> /etc/profile" />
