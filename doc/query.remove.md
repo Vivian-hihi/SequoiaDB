@@ -10,7 +10,7 @@
 #####Note:
 - 不能与query.count()、query.update()同时使用。
 - 与query.sort()同时使用时，在单个节点上排序必须使用索引。
-- 在集群中与query.limit()或query.skip()同时使用时，要保证查询查询条件会在单个节点执行。
+- 在集群中与query.limit()或query.skip()同时使用时，要保证查询条件会在单个节点执行。
 
 #####Related information
 [db.collectionspace.collection.find()]()<br>
