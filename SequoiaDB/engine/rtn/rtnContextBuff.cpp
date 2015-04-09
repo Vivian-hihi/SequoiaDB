@@ -134,6 +134,8 @@ namespace engine
          CHAR *pBuff = ( CHAR* )SDB_OSS_MALLOC( _buffSize ) ;
          if ( pBuff )
          {
+            // copy buf data to own
+            ossMemcpy( pBuff, _pBuff, _buffSize ) ;
             _pBuff = pBuff ;
             _owned = TRUE ;
          }
