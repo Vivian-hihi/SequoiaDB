@@ -1595,3 +1595,321 @@ TEST( collection, sdbCQueryOne )
 }
 
 
+TEST( collection, sdbQueryAndUpdate )
+{
+   sdbConnectionHandle connection = 0 ;
+   sdbCSHandle cs                 = 0 ;
+   sdbCollectionHandle cl         = 0 ;
+   sdbCursorHandle cursor         = 0 ;
+   INT32 rc                       = SDB_OK ;
+   SINT64 NUM                     = 100 ;
+   INT32 i                        = 0 ;
+   INT32 set_value                = 100 ;
+   const CHAR *pIndexName1        = "test_index1" ;
+   const CHAR *pIndexName2        = "test_index2" ;
+   const CHAR *pField1            = "testQueryAndUpdate1" ;
+   const CHAR *pField2            = "testQueryAndUpdate2" ;
+
+
+   bson index ;
+   bson tmp ;
+   bson condition ;
+   bson selector ;
+   bson orderBy ;
+   bson hint ;
+   bson update ;
+
+   // initialize
+   rc = initEnv( HOST, SERVER, USER, PASSWD ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // connect to database
+   rc = sdbConnect ( HOST, SERVER, USER, PASSWD, &connection ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // get cs
+   rc = getCollectionSpace ( connection,
+                             COLLECTION_SPACE_NAME,
+                             &cs ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // get cl
+   rc = getCollection ( connection,
+                        COLLECTION_FULL_NAME,
+                        &cl ) ;
+   CHECK_MSG("%s%d\n","rc = ", rc) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   // create index
+   bson_init( &index ) ;
+   bson_append_int( &index, pField1, -1 ) ;
+   bson_finish( &index ) ;
+   rc = sdbCreateIndex( cl, &index, pIndexName1, FALSE, FALSE ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   bson_destroy( &index ) ;
+
+   bson_init( &index ) ;
+   bson_append_int( &index, pField2, 1 ) ;
+   bson_finish( &index ) ;
+   rc = sdbCreateIndex( cl, &index, pIndexName2, FALSE, FALSE ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   bson_destroy( &index ) ;
+
+   // gen some record
+   for ( i = 0; i < NUM; i++ )
+   {
+      bson obj ;
+      bson_init( &obj ) ;
+      bson_append_int( &obj, pField1, i ) ;
+      bson_append_int( &obj, pField2, i ) ;
+      bson_finish( &obj ) ;
+      rc = sdbInsert( cl, &obj ) ;
+      ASSERT_EQ( SDB_OK, rc ) ;
+      bson_destroy( &obj ) ;
+   }
+
+   /// in case: update and return the new record
+   bson_init( &tmp ) ;
+   bson_append_int( &tmp, "$gte", 0 ) ;
+   bson_append_int( &tmp, "$lt", 10 ) ;
+   bson_finish( &tmp ) ;
+   bson_init( &condition ) ;
+   bson_append_bson( &condition, pField1, &tmp ) ;
+   bson_finish( &condition ) ;
+
+   bson_init( &update ) ;
+   bson_append_start_object( &update, "$set" ) ;
+   bson_append_int( &update, pField2, set_value ) ;
+   bson_append_finish_object( &update ) ;
+   bson_finish( &update ) ;
+   // test
+   rc = sdbQueryAndUpdate( cl, &condition, NULL, NULL, NULL, &update,
+                           0, -1, 0, TRUE, &cursor ) ;
+   ASSERT_EQ ( SDB_OK, rc ) ;
+   bson_destroy( &tmp ) ;
+   bson_destroy( &condition ) ;
+   // check
+   i = 0 ;
+   while ( SDB_OK == ( rc = sdbNext( cursor, &tmp ) ) )
+   {
+      i++ ;
+      bson_iterator it ;
+      bson_iterator_init( &it, &tmp ) ;
+      while ( bson_iterator_more( &it ) )
+      {
+         const CHAR *pKey = bson_iterator_key( &it ) ;
+         if ( 0 == strncmp( pKey, pField2, strlen(pField2) ) )
+         {
+            INT32 value = bson_iterator_int( &it ) ;
+            ASSERT_EQ( set_value, value ) ;
+         }
+         bson_iterator_next( &it ) ;
+      }
+      bson_destroy( &tmp ) ;
+   }
+   ASSERT_EQ( 10, i ) ;
+
+   /// in case: update and return the original one
+   bson_init( &tmp ) ;
+   bson_append_int( &tmp, "$gte", 10 ) ;
+   bson_append_int( &tmp, "$lt", 20 ) ;
+   bson_finish( &tmp ) ;
+   bson_init( &condition ) ;
+   bson_append_bson( &condition, pField1, &tmp ) ;
+   bson_finish( &condition ) ;
+
+   // test
+   rc = sdbQueryAndUpdate( cl, &condition, NULL, NULL, NULL, &update,
+                           0, -1, 0, FALSE, &cursor ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   bson_destroy( &tmp ) ;
+   bson_destroy( &condition ) ;
+   // check
+   i = 0 ;
+   while ( SDB_OK == ( rc = sdbNext( cursor, &tmp ) ) )
+   {
+      i++ ;
+      bson_iterator it ;
+      bson_iterator_init( &it, &tmp ) ;
+      while ( bson_iterator_more( &it ) )
+      {
+         const CHAR *pKey = bson_iterator_key( &it ) ;
+         if ( 0 == strncmp( pKey, pField2, strlen(pField2) ) )
+         {
+            INT32 value = bson_iterator_int( &it ) ;
+            ASSERT_TRUE( 10 <= value && value < 20 ) ;
+         }
+         bson_iterator_next( &it ) ;
+      }
+      bson_destroy( &tmp ) ;
+   }
+   ASSERT_EQ( 10, i ) ;
+   /// in case: use selector orderBy without hint
+   bson_init( &selector ) ;
+   bson_append_string( &selector, pField2, "" ) ;
+   bson_finish( &selector ) ;
+
+   bson_init( &orderBy ) ;
+   bson_append_int( &orderBy, pField2, 1 ) ;
+   bson_finish( &orderBy ) ;
+
+   bson_init( &tmp ) ;
+   bson_append_int( &tmp, "$gte", 20 ) ;
+   bson_append_int( &tmp, "$lt", 30 ) ;
+   bson_finish( &tmp ) ;
+   bson_init( &condition ) ;
+   bson_append_bson( &condition, pField1, &tmp ) ;
+   bson_finish( &condition ) ;
+
+   rc = sdbQueryAndUpdate( cl, &condition, &selector, &orderBy, NULL,
+                           &update, 0, -1, 0, TRUE, &cursor ) ;
+   ASSERT_EQ( SDB_RTN_QUERYMODIFY_SORT_NO_IDX, rc ) ;
+
+   /// in case: use selector orderBy with hint
+   bson_init( &hint ) ;
+   bson_append_string( &hint, "", pIndexName2 ) ;
+   bson_finish( &hint ) ;
+
+   // test
+   rc = sdbQueryAndUpdate( cl, &condition, &selector, &orderBy, &hint,
+                           &update, 0, -1, 0, TRUE, &cursor ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   bson_destroy( &tmp ) ;
+   bson_destroy( &condition ) ;
+   bson_destroy( &selector ) ;
+   bson_destroy( &orderBy ) ;
+   bson_destroy( &hint ) ;
+   // check
+   i = 0 ;
+   while ( SDB_OK == ( rc = sdbNext( cursor, &tmp ) ) )
+   {
+      i++ ;
+      bson_iterator it ;
+      bson_iterator_init( &it, &tmp ) ;
+      const CHAR *pKey = bson_iterator_key( &it ) ;
+      ASSERT_EQ( 0, strncmp( pKey, pField2, strlen(pField2) ) ) ;
+      INT32 value =  bson_iterator_int( &it ) ;
+      ASSERT_EQ( set_value, value ) ;
+      bson_destroy( &tmp ) ;
+   }
+   ASSERT_EQ( 10, i ) ;
+
+   /// in case: use limit and skip in single group
+   // TODO: limit and skip
+   bson_init( &tmp ) ;
+   bson_append_int( &tmp, "$gte", 30 ) ;
+   bson_append_int( &tmp, "$lt", 40 ) ;
+   bson_finish( &tmp ) ;
+   bson_init( &condition ) ;
+   bson_append_bson( &condition, pField1, &tmp ) ;
+   bson_finish( &condition ) ;
+
+   rc = sdbQueryAndUpdate( cl, &condition, NULL, NULL, NULL,
+                           &update, 10, -1, 0, TRUE, &cursor ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   /// in case: use limit and skip in different groups, need to split
+   //ASSERT_EQ( SDB_RTN_QUERYMODIFY_MULTI_NODES, rc ) ;
+
+   /// in case: use flag
+   // FLG_QUERY_FORCE_HINT
+   bson_init( &tmp ) ;
+   bson_append_int( &tmp, "$gte", 40 ) ;
+   bson_append_int( &tmp, "$lt", 50 ) ;
+   bson_finish( &tmp ) ;
+   bson_init( &condition ) ;
+   bson_append_bson( &condition, pField1, &tmp ) ;
+   bson_finish( &condition ) ;
+
+   bson_init( &hint ) ;
+   bson_append_string( &hint, "", pIndexName2 ) ;
+   bson_finish( &hint ) ;
+
+   // watch what index sdbQueryAndUpdate going to use
+   bson option ;
+   bson_init( &option ) ;
+   bson_append_int( &option, "Run", 1 ) ;
+   bson_finish( &option ) ;
+   rc = sdbExplain( cl, &condition, NULL, NULL, &hint,
+                    0x00000080, 0, -1, &option, &cursor ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   printf("The explain of query with FLG_QUERY_FORCE_HINT is: \n") ;
+   while ( SDB_OK == ( rc = sdbNext(cursor, &tmp ) ) )
+   {
+      bson_print( &tmp ) ;
+      bson_destroy( &tmp ) ;
+   }
+
+   rc = sdbQueryAndUpdate( cl, &condition, NULL, NULL, &hint,
+                           &update, 0, -1, 0x00000080, TRUE, &cursor ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   bson_destroy( &hint ) ;
+   // check
+   printf("Test using flag: FLG_QUERY_FORCE_HINT\n") ;
+   i = 0 ;
+   while ( SDB_OK == ( rc = sdbNext( cursor, &tmp ) ) )
+   {
+      i++ ;
+      bson_iterator it ;
+      bson_iterator_init( &it, &tmp ) ;
+      bson_print( &tmp ) ;
+      bson_destroy( &tmp ) ;
+   }
+   ASSERT_EQ( 10, i ) ;
+
+   // FLG_QUERY_PARALLED
+   bson_init( &tmp ) ;
+   bson_append_int( &tmp, "$gte", 50 ) ;
+   bson_append_int( &tmp, "$lt", 60 ) ;
+   bson_finish( &tmp ) ;
+   bson_init( &condition ) ;
+   bson_append_bson( &condition, pField1, &tmp ) ;
+   bson_finish( &condition ) ;
+   rc = sdbQueryAndUpdate( cl, &condition, NULL, NULL, NULL,
+                           &update, 0, -1, 0x00000100, TRUE, &cursor ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // check
+   printf("Test using flag: FLG_QUERY_PARALLED\n") ;
+   i = 0 ;
+   while ( SDB_OK == ( rc = sdbNext( cursor, &tmp ) ) )
+   {
+      i++ ;
+      bson_iterator it ;
+      bson_iterator_init( &it, &tmp ) ;
+      bson_print( &tmp ) ;
+      bson_destroy( &tmp ) ;
+   }
+   ASSERT_EQ( 10, i ) ;
+
+
+   // FLG_QUERY_WITH_RETURNDATA
+   bson_init( &tmp ) ;
+   bson_append_int( &tmp, "$gte", 60 ) ;
+   bson_append_int( &tmp, "$lt", 70 ) ;
+   bson_finish( &tmp ) ;
+   bson_init( &condition ) ;
+   bson_append_bson( &condition, pField1, &tmp ) ;
+   bson_finish( &condition ) ;
+   rc = sdbQueryAndUpdate( cl, &condition, NULL, NULL, NULL,
+                           &update, 0, -1, 0x00000200, TRUE, &cursor ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // check
+   printf("Test using flag: FLG_QUERY_WITH_RETURNDATA\n") ;
+   i = 0 ;
+   while ( SDB_OK == ( rc = sdbNext( cursor, &tmp ) ) )
+   {
+      i++ ;
+      bson_iterator it ;
+      bson_iterator_init( &it, &tmp ) ;
+      bson_print( &tmp ) ;
+      bson_destroy( &tmp ) ;
+   }
+   ASSERT_EQ( 10, i ) ;
+
+   // realse
+   sdbCloseCursor( cursor ) ;
+   sdbReleaseCursor ( cursor ) ;
+   sdbReleaseCollection ( cl ) ;
+   sdbReleaseCS ( cs ) ;
+   sdbDisconnect ( connection ) ;
+   sdbReleaseConnection ( connection ) ;
+}
+
