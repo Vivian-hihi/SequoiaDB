@@ -36,7 +36,7 @@
 		<stafTools workType="copy" workHost="LOCAL" fileName="${release.path}/${software.package.name}.${BUILD_NUMBER}" saveDir="${copy_tar}" toHost="${target.deploy_tar_gz.ip}" failonerror="true"/>
 		<stafTools workType="copy" workHost="LOCAL" fileName="${release.path}/${driver.package.name}.${BUILD_NUMBER}" saveDir="${copy_tar}" toHost="${target.deploy_tar_gz.ip}" failonerror="true"/>
 		<echo message="delete the file ${copy_tar}/build.version" />
-		<stafTools workType="delete" workHost="LOCAL" fileName="${copy_tar}/build.version" failonerror="false" failonerror="true"/>
+		<stafTools workType="delete" workHost="LOCAL" fileName="${copy_tar}/build.version" failonerror="true"/>
 
 		<if>
 			<equals arg1="${compile.debug}" arg2="false" />
