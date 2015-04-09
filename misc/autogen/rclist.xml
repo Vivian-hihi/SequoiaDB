@@ -1341,7 +1341,7 @@
       <code>
          <name>SDB_RTN_CMD_NO_SERVICE_AUTH</name>
          <description>
-            <en>The command can't be run in the serice plane</en>
+            <en>The command can't be run in the service plane</en>
             <cn>该服务平面不能运行该命令</cn>
          </description>
       </code>
