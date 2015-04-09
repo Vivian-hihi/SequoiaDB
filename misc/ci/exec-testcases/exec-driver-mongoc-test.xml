@@ -8,7 +8,7 @@
 <project name="Exec-mongoc-Testcases" default="Test-Driver-mongoc">
    <property file="${ci.properties.path}" />
    <property name="test.type" value="driver" />
-   <property name="mongoc.test.host" value="localhost:${fap.service.port}">
+   <property name="mongoc.test.host" value="localhost:${fap.service.port}" />
    <taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
       <classpath>
          <fileset dir="${antTask.jar.path}" includes="*.jar" />
