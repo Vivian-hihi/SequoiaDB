@@ -3809,6 +3809,17 @@ namespace engine
             {
                iterSubCTXSkip->second.popN( _numToSkip );
                _numToSkip = 0;
+
+               // popN() only changed the offset of rtnContextBuf, so it's
+               // need to jump over '_numToSkip' records
+               rtnContextBuf buf = iterSubCTXSkip->second.buffer() ;
+               rc = appendObjs( buf.front(),
+                                buf.size() - buf.offset(),
+                                iterSubCTXSkip->second.recordNum() ) ;
+               PD_RC_CHECK( rc, PDERROR, "Failed to append objs, rc: %d", rc ) ;
+
+               rc = this->_rtnContextBase::getMore( maxNumToReturn, buffObj, cb );
+               goto done ;
             }
          }
 
