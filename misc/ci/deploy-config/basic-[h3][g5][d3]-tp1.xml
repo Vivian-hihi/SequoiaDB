@@ -72,7 +72,7 @@
 				</node>
 			</catagroup>
 		</sdbdeploy>
-		<sdbdeploy host="${test_machine_no1}" coordport="coord.service.port">
+		<sdbdeploy host="${test_machine_no1}" coordport="${coord.service.port}">
 			<datagroup name="group1">
 				<node host="${test_machine_no1}" baseport="21100" dbpath="${install.path}/sequoiadb/database/data/21100">
 					<confitem name="diaglevel" value="5" />
