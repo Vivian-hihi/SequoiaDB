@@ -56,7 +56,7 @@
 				</propertyfile>
 			</else>
 		</if>
-		<stafTools workType="copy" workHost="LOCAL" fileName="${WORKSPACE}/sequoiadb/misc/ci/build.version" saveDir="${copy_tar}" toHost="LOCAL" failonerror="true" failonerror="true"/>
+		<stafTools workType="copy" workHost="LOCAL" fileName="${WORKSPACE}/sequoiadb/misc/ci/build.version" saveDir="${copy_tar}" toHost="LOCAL" failonerror="true"/>
 		<stafTools workType="shell" workHost="LOCAL" common="/usr/bin/find ${copy_tar} -mtime +7 -delete;" workDir="${copy_tar}" waitTime="30m" failonerror="true"/>
 
 		<delete file="${release.path}/${software.package.name}.${BUILD_NUMBER}" />
