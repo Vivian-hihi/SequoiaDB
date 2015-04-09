@@ -48,6 +48,7 @@
 
 namespace fs = boost::filesystem ;
 
+#define W_OK 2
 //using namespace engine;
 ///< _dpsCmdBase implementation
 _dpsLogFilter::_dpsLogFilter( const dpsCmdData* data )
@@ -106,7 +107,7 @@ BOOLEAN _dpsLogFilter::isFileExisted( const CHAR *path )
    {
       if( SDB_PERM == retValue )
       {
-         printf( "File: %s has no permition", path ) ;
+         printf( "File: %s has no permission", path ) ;
       }
       else
       {
@@ -125,11 +126,15 @@ BOOLEAN _dpsLogFilter::isDir( const CHAR *path )
 {
    BOOLEAN rc = FALSE ;
    SDB_OSS_FILETYPE fileType = SDB_OSS_UNK ;
-   INT32 retValue = ossGetPathType( path, &fileType ) ;
-   if( SDB_OSS_DIR == fileType && !retValue )
+   INT32 retVal = ossAccess( path, W_OK ) ;
+   if ( SDB_OK == retVal )
    {
-      rc =  TRUE ;
-      goto done ;
+      INT32 retValue = ossGetPathType( path, &fileType ) ;
+      if( SDB_OSS_DIR == fileType && !retValue )
+      {
+         rc =  TRUE ;
+         goto done ;
+      }
    }
 
 done:
@@ -145,8 +150,17 @@ INT32 _dpsLogFilter::doParse()
 
    if( isDir( _cmdData->dstPath ) )
    {
-      ossSnprintf( dstFile, OSS_MAX_PATHSIZE, "%s"OSS_FILE_SEP"%s",
-                   _cmdData->dstPath, "tmpLog.log" ) ;   
+      INT32 len = ossStrlen( _cmdData->dstPath ) ;
+      if ( OSS_FILE_SEP_CHAR == _cmdData->dstPath[ len - 1 ] )
+      {
+         ossSnprintf( dstFile, OSS_MAX_PATHSIZE, "%s%s",
+            _cmdData->dstPath, "tmpLog.log" ) ; 
+      }
+      else
+      {
+         ossSnprintf( dstFile, OSS_MAX_PATHSIZE, "%s"OSS_FILE_SEP"%s",
+            _cmdData->dstPath, "tmpLog.log" ) ;
+      }
    }
    else
    {

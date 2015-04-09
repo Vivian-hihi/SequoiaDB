@@ -117,6 +117,8 @@ OSSFILE gFile ;
 
 #define DMS_DUMPFILE "dmsdump"
 
+#define W_OK 2
+
 // max size of a output file
 #define MAX_FILE_SIZE 500 * 1024 * 1024
 // increase delta max 64MB
@@ -308,17 +310,38 @@ INT32 resolveArgument ( po::options_description &desc, INT32 argc, CHAR **argv )
       }
       ossStrncpy ( gOutputFile, output, sizeof(gOutputFile) ) ;
       SDB_OSS_FILETYPE fileType = SDB_OSS_UNK ;
-      INT32 retValue = ossGetPathType( gOutputFile, &fileType ) ;
-      if( SDB_OSS_DIR == fileType && !retValue )
+      rc = ossAccess( output, W_OK ) ;
+      if ( SDB_OK == rc )
       {
-         ossSnprintf( outputFile, OSS_MAX_PATHSIZE, "%s"DMS_DUMPFILE".%d",
-                      gOutputFile, gCurFileIndex ) ;
+         INT32 retValue = ossGetPathType( gOutputFile, &fileType ) ;
+         if( SDB_OSS_DIR == fileType && !retValue )
+         {
+            INT32 len = ossStrlen( gOutputFile ) ;
+            if ( OSS_FILE_SEP_CHAR != gOutputFile[ len - 1 ] )
+            {
+               gOutputFile[ len - 1 ] = OSS_FILE_SEP_CHAR ;
+               gOutputFile[ len ] = '\0' ;
+            }
+
+            ossSnprintf( outputFile, OSS_MAX_PATHSIZE, "%s"DMS_DUMPFILE".%d",
+                         gOutputFile, gCurFileIndex ) ;
+         }
+         else
+         {
+            ossSnprintf( outputFile, OSS_MAX_PATHSIZE, "%s.%d",
+                         gOutputFile, gCurFileIndex ) ;
+         }
       }
-      else
+      else if ( SDB_FNE == rc )
       {
          ossSnprintf( outputFile, OSS_MAX_PATHSIZE, "%s.%d",
                       gOutputFile, gCurFileIndex ) ;
       }
+      else
+      {
+         goto error ;
+      }
+      
       rc = ossOpen ( outputFile, OSS_REPLACE | OSS_WRITEONLY,
                      OSS_RU|OSS_WU|OSS_RG, gFile ) ;
       if ( rc )
