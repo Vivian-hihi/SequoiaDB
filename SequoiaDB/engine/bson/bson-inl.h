@@ -631,7 +631,68 @@ namespace bson {
     inline void BSONElement::toString(StringBuilder& s, bool includeFieldName,
       bool full ) const {
         if ( includeFieldName && type() != EOO )
-            s << "\"" << fieldName() << "\": ";
+            //s << "\"" << fieldName() << "\": ";
+            s << "\"" ;
+            int len = 0 ;
+            const char *tempData = fieldName() ;
+            len = strlen( tempData ) ;
+            for ( int i = 0; i < len; ++i )
+            {
+               switch( *tempData )
+               {
+               /*
+                 the JSON standard does not need to be
+                 escaped single quotation marks
+               */
+               /*case '\'':
+               {
+                  s << "\\\'" ;
+                  break ;
+               }*/
+               case '\"':
+               {
+                  s << "\\\"" ;
+                  break ;
+               }
+               case '\\':
+               {
+                  s << "\\\\" ;
+                  break ;
+               }
+               case '\b':
+               {
+                  s << "\\b" ;
+                  break ;
+               }
+               case '\f':
+               {
+                  s << "\\f" ;
+                  break ;
+               }
+               case '\n':
+               {
+                  s << "\\n" ;
+                  break ;
+               }
+               case '\r':
+               {
+                  s << "\\r" ;
+                  break ;
+               }
+               case '\t':
+               {
+                  s << "\\t" ;
+                  break ;
+               }
+               default:
+               {
+                  s << (*tempData) ;
+                  break ;
+               }
+               }
+               ++tempData ;
+            }
+            s << "\": " ;
         switch ( type() ) {
         case EOO:
             s << "EOO";
