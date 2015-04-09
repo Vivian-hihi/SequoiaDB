@@ -50,7 +50,7 @@
 		<copy file="${SCRIPT_DIR}/ci-properies-files/ci.test.properties.${OS_NAME}" tofile="${SCRIPT_DIR}/ci.test.properties" failonerror="false" />
 		<property file="${SCRIPT_DIR}/ci.test.properties" />
 		<echo level="info" message="Step5 : Copy the file &lt;${copy_tar}/build.version&gt; from &lt;${deploy_tar_hostname}&gt;,command:staf &lt;${deploy_tar_hostname}&gt; FS COPY FILE &lt;${copy_tar}/build.version&gt; TODIRECTORY &lt;${build_dir}&gt; TOMACHINE &lt;${jenkins_master}&gt;." />
-		<stafTools workType="copy" workHost="${deploy_tar_hostname}" fileName="${copy_tar}/build.version" saveDir="${build_dir}" toHost="${jenkins_master}" />
+		<stafTools workType="copy" workHost="${deploy_tar_hostname}" fileName="${copy_tar}/build.version" saveDir="${build_dir}" toHost="${jenkins_master}" failonerror="true"/>
     	<property file="${build_dir}/build.version" />
 		<echo message="**************************************************************************************************************************************************************" />
 		<echo level="info" message="The old SequoiaDB version is ${BUILD.NUMBER.LOCAL} and the new SequoiaDB version is ${BUILD.NUMBER}."/>
@@ -84,9 +84,9 @@
 	<target name="3.Copy-Software-Package" depends="2.Clean-Last-Software">
 		<property file="${SCRIPT_DIR}/ci.test.properties" />
 		<echo level="info" message="Step1 : Copy the files &lt;${copy_tar}/build.version&gt;,&lt;${copy_tar}/${BUILD.INSTALL.FILENAME}.${BUILD.NUMBER}&gt;,&lt;${copy_tar}/${BUILD.DRIVER.FILENAME}.${BUILD.NUMBER}&gt; from ${deploy_tar_hostname}." />
-		<stafTools workType="copy" workHost="${deploy_tar_hostname}" fileName="${copy_tar}/build.version" saveDir="${build_dir}" toHost="${jenkins_master}" />
-		<stafTools workType="copy" workHost="${deploy_tar_hostname}" fileName="${copy_tar}/${BUILD.INSTALL.FILENAME}.${BUILD.NUMBER}" saveDir="${build_dir}" toHost="${jenkins_master}" />
-		<stafTools workType="copy" workHost="${deploy_tar_hostname}" fileName="${copy_tar}/${BUILD.DRIVER.FILENAME}.${BUILD.NUMBER}" saveDir="${build_dir}" toHost="${jenkins_master}" />
+		<stafTools workType="copy" workHost="${deploy_tar_hostname}" fileName="${copy_tar}/build.version" saveDir="${build_dir}" toHost="${jenkins_master}" failonerror="true"/>
+		<stafTools workType="copy" workHost="${deploy_tar_hostname}" fileName="${copy_tar}/${BUILD.INSTALL.FILENAME}.${BUILD.NUMBER}" saveDir="${build_dir}" toHost="${jenkins_master}" failonerror="true"/>
+		<stafTools workType="copy" workHost="${deploy_tar_hostname}" fileName="${copy_tar}/${BUILD.DRIVER.FILENAME}.${BUILD.NUMBER}" saveDir="${build_dir}" toHost="${jenkins_master}" failonerror="true"/>
 		<echo level="info" message="Step2 : Change the files' name &lt;${build_dir}/${BUILD.INSTALL.FILENAME}.${BUILD.NUMBER}&gt; to &lt;${build_dir}/${BUILD.INSTALL.FILENAME}&gt;,&lt;${build_dir}/${BUILD.DRIVER.FILENAME}.${BUILD.NUMBER}&gt; to &lt;${build_dir}/${BUILD.DRIVER.FILENAME}&gt;." />
 		<move file="${build_dir}/${BUILD.INSTALL.FILENAME}.${BUILD.NUMBER}" tofile="${build_dir}/${BUILD.INSTALL.FILENAME}" />
 		<move file="${build_dir}/${BUILD.DRIVER.FILENAME}.${BUILD.NUMBER}" tofile="${build_dir}/${BUILD.DRIVER.FILENAME}" />
