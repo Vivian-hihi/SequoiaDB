@@ -69,7 +69,7 @@
          <arg value="-f" />
          <arg value="-p" />
          <arg value="-l ${test.case.name}" />
-         <arg value="-F ${reports.path}/${test.case.name}_report.xml"
+         <arg value="-F ${reports.path}/${test.case.name}_report.xml" />
          <env key="LD_LIBRARY_PATH" path="${LD_LIBRARY_PATH}:${mongoc.testcase.libpath}" />
          <env key="MONGOC_TEST_HOST" value="${mongoc.test.host}" />
       </exec>     
