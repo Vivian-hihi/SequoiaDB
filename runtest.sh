@@ -12,7 +12,7 @@ coordhostname="localhost"
 runresult=0
 commlibstr="commlib.js"
 reportDir=${csprefix}"_report"
-passDir=$testRoot
+passDir=""
 passFile=""
 
 # define test parameter
@@ -170,7 +170,9 @@ while [ "$1" != "" ]; do
    esac
    shift
 done
-testDir="$(getMyPath $passDir)"
+if [ ""X != "$passDir"X ]; then
+   testDir="$(getMyPath $passDir)"
+fi
 if [ ""X != "$passFile"X ]; then
    testFile="$(getMyPath $passFile)"
 fi
