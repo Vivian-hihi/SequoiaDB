@@ -450,7 +450,7 @@
 					<property name="parallel.flag" value="parallel" />
 					<property name="WORKSPACE" value="${WORKSPACE}" />
 					<property name="ci.script.file.path" value="${ci.script.file.path}" />
-					<property name="test.host.NAME" value="${test_machine_no2}" />
+					<!-- <property name="test.host.NAME" value="${test_machine_no2}" /> -->
 					<property name="parallel.count" value="1" />
 					<property name="test.log" value="${test.log}" />
 				</ant>
