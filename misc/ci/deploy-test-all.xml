@@ -62,6 +62,8 @@
 					<property name="ci.script.file.path" value="${ci.script.file.path}" />
 					<property name="BUILD_NUMBER" value="${BUILD_NUMBER}" />
 					<property name="deploy.file.fullname" value="${WORKSPACE}/${deploy.tar.file.name}" />
+
+					<property name="test-type-list" value="${test-type-list}" />
 				</ant>
 			</then>
 		</if>
