@@ -180,7 +180,7 @@ namespace engine
     public:
          OSS_INLINE BOOLEAN next()
          {
-            if ( DPS_MERGE_BLOCK_MAX_DATA == ++_current )
+            if ( DPS_MERGE_BLOCK_MAX_DATA <= ++_current )
             {
                return FALSE ;
             }

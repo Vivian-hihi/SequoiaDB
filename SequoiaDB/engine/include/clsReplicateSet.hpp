@@ -252,8 +252,6 @@ namespace engine
 
          _MsgRouteID getPrimary () ;
 
-         void tearDown() ;
-
          INT64 netIn() ;
          INT64 netOut() ;
          void resetMon() ;
