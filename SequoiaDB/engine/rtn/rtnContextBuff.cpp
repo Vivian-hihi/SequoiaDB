@@ -55,15 +55,7 @@ namespace engine
 
    _rtnObjBuff::~_rtnObjBuff ()
    {
-      if ( _pBuff && _owned )
-      {
-         SDB_OSS_FREE( (CHAR*)_pBuff ) ;
-      }
-      _owned = FALSE ;
-      _pBuff = NULL ;
-      _buffSize = 0 ;
-      _recordNum = 0 ;
-      _curOffset = 0 ;
+      release() ;
    }
 
    _rtnObjBuff& _rtnObjBuff::operator=( const _rtnObjBuff &right )
@@ -145,6 +137,19 @@ namespace engine
          }
       }
       return rc ;
+   }
+
+   void _rtnObjBuff::release()
+   {
+      if ( _pBuff && _owned )
+      {
+         SDB_OSS_FREE( (CHAR*)_pBuff ) ;
+      }
+      _owned = FALSE ;
+      _pBuff = NULL ;
+      _buffSize = 0 ;
+      _recordNum = 0 ;
+      _curOffset = 0 ;
    }
 
    /*
@@ -268,11 +273,9 @@ namespace engine
          _pOrgBuff      = NULL ;
       }
 
-      _pBuff         = NULL ;
-      _buffSize      = 0 ;
-      _recordNum     = 0 ;
-      _curOffset     = 0 ;
-      _startFrom     = 0 ;
+      _startFrom = 0 ;
+
+      _rtnObjBuff::release() ;
    }
 
    void _rtnContextBuf::_reference( INT32 * pCounter, ossRWMutex *pMutex )

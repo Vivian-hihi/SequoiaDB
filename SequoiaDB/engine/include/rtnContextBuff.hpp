@@ -85,6 +85,7 @@ namespace engine
             ensure buff is owned
          */
          virtual INT32        getOwned() ;
+         virtual void         release() ;
 
          _rtnObjBuff&         operator=( const _rtnObjBuff &right ) ;
 
