@@ -2325,8 +2325,8 @@
       <code>
          <name>SDB_RTN_QUERYMODIFY_MULTI_NODES</name>
          <description>
-            <en>'query and modify' can't use skip and limit in multiple nodes</en>
-            <cn>’查询并修改‘操作不能在多个节点上执行skip和limit操作</cn>
+            <en>'query and modify' can't use skip and limit in multiple nodes or sub-collections</en>
+            <cn>’查询并修改‘操作不能在多个节点或子表上执行skip和limit操作</cn>
          </description>
       </code>
 

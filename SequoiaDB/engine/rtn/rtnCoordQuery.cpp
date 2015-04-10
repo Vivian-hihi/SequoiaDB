@@ -70,11 +70,13 @@ namespace engine
          {
             rtnQueryPvtData *privateData = ( rtnQueryPvtData* )inMsg._pvtData ;
             if ( privateData->_pContext->getLimitNum() > 0 ||
-                 privateData->_pContext->getSkipNum() > 0 )
+                 privateData->_pContext->getSkipNum() > 0 || 
+                 queryMsg->numToReturn > 0 ||
+                 queryMsg->numToSkip > 0 )
             {
                rc = SDB_RTN_QUERYMODIFY_MULTI_NODES ;
                PD_LOG( PDERROR, "query and modify can't use skip and limit "
-                       "in multiple nodes, rc: %d", rc ) ;
+                       "in multiple nodes or sub-collections, rc: %d", rc ) ;
             }
          }
 
