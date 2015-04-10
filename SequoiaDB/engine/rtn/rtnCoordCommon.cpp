@@ -2676,7 +2676,7 @@ namespace engine
          {
             cataInfo->getGroupByMatcher( *query, groupList ) ;
          }
-         SDB_ASSERT( groupList.size() > 0, "group list can't be empty!" );
+         // SDB_ASSERT( groupList.size() > 0, "group list can't be empty!" );
          iterGroup = groupList.begin();
          while( iterGroup != groupList.end() )
          {
