@@ -631,6 +631,7 @@ namespace bson {
     inline void BSONElement::toString(StringBuilder& s, bool includeFieldName,
       bool full ) const {
         if ( includeFieldName && type() != EOO )
+        {
             //s << "\"" << fieldName() << "\": ";
             s << "\"" ;
             int len = 0 ;
@@ -693,6 +694,7 @@ namespace bson {
                ++tempData ;
             }
             s << "\": " ;
+        }
         switch ( type() ) {
         case EOO:
             s << "EOO";
