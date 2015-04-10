@@ -52,6 +52,7 @@
 		<echo level="info" message="Step5 : Copy the file &lt;${copy_tar}/build.version&gt; from &lt;${deploy_tar_hostname}&gt;,command:staf &lt;${deploy_tar_hostname}&gt; FS COPY FILE &lt;${copy_tar}/build.version&gt; TODIRECTORY &lt;${build_dir}&gt; TOMACHINE &lt;${jenkins_master}&gt;." />
 		<stafTools workType="copy" workHost="${deploy_tar_hostname}" fileName="${copy_tar}/build.version" saveDir="${build_dir}" toHost="${jenkins_master}" failonerror="true"/>
     	<property file="${build_dir}/build.version" />
+    	<property file="${build_dir}/build.version.local" />
 		<echo message="**************************************************************************************************************************************************************" />
 		<echo level="info" message="The old SequoiaDB version is ${BUILD.NUMBER.LOCAL} and the new SequoiaDB version is ${BUILD.NUMBER}."/>
 		<echo message="**************************************************************************************************************************************************************" />
