@@ -511,7 +511,7 @@
 								<stafTools workType="shell" workHost="${test_machine_no2}" workDir="${install.path}/sequoiadb/database" common="${delete.diaglogFile}" failonerror="true"/>
 								<stafTools workType="shell" workHost="${test_machine_no3}" workDir="${install.path}/sequoiadb/database" common="${delete.diaglogFile}" failonerror="true"/>
 							</else>
-						</is>
+						</if>
 						
 
 						<echo message="Delete ${test.log.path}.tar.gz and ${test.log.path} dir ..." />

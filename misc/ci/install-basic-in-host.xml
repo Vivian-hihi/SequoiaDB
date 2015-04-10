@@ -18,7 +18,7 @@
 	</taskdef>
 
 	<target name="clean-install" depends="">
-		<hostinfo prefix="host" />
+		<!-- <hostinfo prefix="host" /> -->
 		<echo message="Begin to clean install env..." />
 
 		<exec executable="service" dir="" failonerror="false">
