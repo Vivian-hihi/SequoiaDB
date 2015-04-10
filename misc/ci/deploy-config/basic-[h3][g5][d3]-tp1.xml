@@ -487,7 +487,7 @@
 								<sdbCopyAndTar fileHostName="${test_machine_no2}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/database" savePath="${test.log.path}" />
 								<sdbCopyAndTar fileHostName="${test_machine_no3}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/database" savePath="${test.log.path}" />
 							</else>
-						</is>
+						</if>
 						
 
 						<echo message="Tar ${test.log.path}.tar.gz..." />
