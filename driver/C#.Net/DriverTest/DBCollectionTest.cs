@@ -1048,6 +1048,147 @@ namespace DriverTest
             Assert.IsTrue(0 == recordNum);
         }
 
+        [TestMethod()]
+        public void QueryAndUpdate()
+        {
+            DBCursor cursor = null;
+            BsonDocument condition;
+            BsonDocument selector;
+            BsonDocument orderBy;
+            BsonDocument hint;
+            BsonDocument update;
+            BsonDocument tmp;
+            string field1 = "testField1";
+            string field2 = "testField2";
+            string indexName1 = "test_index1";
+            string indexName2 = "test_index2";
+            int num = 100;
+            int set_value = 100;
+            int i = 0;
+            BsonDocument index1 = new BsonDocument{{field1,1}};
+            BsonDocument index2 = new BsonDocument{{field2,-1}};
+            // create indexes
+            coll.CreateIndex(indexName1,index1,false,false);
+            coll.CreateIndex(indexName2,index2,false,false);
+            for (i = 0; i < num; i++)
+            {
+                BsonDocument obj = new BsonDocument { { field1, i },{ field2, i } };
+                coll.Insert(obj);
+            }
+
+            condition = new BsonDocument { { field1, new BsonDocument { { "$gte", 0 } } } };
+            selector = new BsonDocument { { field2, "" } };
+            orderBy = new BsonDocument { { field2, 1 } };
+            hint = new BsonDocument { { "", indexName1 } };
+            update = new BsonDocument { { "$set", new BsonDocument { { field2, set_value } } } };
+            // test api
+            // in case: use extend sort
+            try
+            {
+                cursor = coll.QueryAndUpdate(condition, selector, orderBy, hint, update, 0, -1, 0, true);
+            }
+            catch (BaseException e)
+            {
+                Assert.IsTrue(new BaseException("SDB_RTN_QUERYMODIFY_SORT_NO_IDX").ErrorCode == e.ErrorCode);
+            }
+            // in case: does not use extend sort
+            try
+            {
+                hint = new BsonDocument { { "", indexName2 } };
+                cursor = coll.QueryAndUpdate(condition, selector, orderBy, hint, update, 0, -1, 0, true);
+            }
+            catch (BaseException e)
+            {
+                Assert.Fail();
+            }
+
+            // check
+            i = 0;
+            while (null != (tmp = cursor.Next()))
+            {
+                i++;
+                num = tmp[0].AsInt32;
+                Assert.IsTrue(set_value == num);
+            }
+            Assert.IsTrue(100 == i);
+        }
+
+        [TestMethod()]
+        public void QueryAndRemove()
+        {
+            DBCursor cursor = null;
+            BsonDocument condition;
+            BsonDocument selector;
+            BsonDocument orderBy;
+            BsonDocument hint;
+            BsonDocument update;
+            BsonDocument tmp;
+            string field1 = "testField1";
+            string field2 = "testField2";
+            string indexName1 = "test_index1";
+            string indexName2 = "test_index2";
+            int num = 100;
+            int set_value = 100;
+            long recordNum = 0;
+            int i = 0;
+            BsonDocument index1 = new BsonDocument { { field1, 1 } };
+            BsonDocument index2 = new BsonDocument { { field2, -1 } };
+            // create indexes
+            coll.CreateIndex(indexName1, index1, false, false);
+            coll.CreateIndex(indexName2, index2, false, false);
+            for (i = 0; i < num; i++)
+            {
+                BsonDocument obj = new BsonDocument { { field1, i }, { field2, i } };
+                coll.Insert(obj);
+            }
+
+            condition = new BsonDocument { { field1, new BsonDocument { { "$gte", 0 } } } };
+            selector = new BsonDocument { { field2, "" } };
+            orderBy = new BsonDocument { { field2, 1 } };
+            hint = new BsonDocument { { "", indexName1 } };
+            update = new BsonDocument { { "$set", new BsonDocument { { field2, set_value } } } };
+            // test api
+            // in case: use extend sort
+            try
+            {
+                cursor = coll.QueryAndRemove(condition, selector, orderBy, hint, 0, -1, 0);
+            }
+            catch (BaseException e)
+            {
+                Assert.IsTrue(new BaseException("SDB_RTN_QUERYMODIFY_SORT_NO_IDX").ErrorCode == e.ErrorCode);
+            }
+            // in case: does not use extend sort
+            try
+            {
+                hint = new BsonDocument { { "", indexName2 } };
+                cursor = coll.QueryAndRemove(condition, selector, orderBy, hint, 50, 10, 0x00000080);
+            }
+            catch (BaseException e)
+            {
+                Assert.Fail();
+            }
+
+            // check
+            i = 0;
+            while (null != (tmp = cursor.Next()))
+            {
+                num = tmp[0].AsInt32;
+                Assert.IsTrue((50 + i) == num);
+                i++;
+            }
+            Assert.IsTrue(10 == i);
+            i = 100;
+            while ( 0 != (i--))
+            {
+                recordNum = coll.GetCount(condition);
+                if (90 == recordNum)
+                    break;
+            }
+            if (0 == i)
+            {
+                Assert.IsTrue(0 == recordNum);
+            }
+        }
 
     }
 }
