@@ -323,6 +323,22 @@
 							</ant>
 						</sequential>
 					</for>
+					<for list="${test-type-list}" param="Test-Type">
+						<sequential>
+							<ant antfile="${WORKSPACE}/sequoiadb/misc/ci/test-type.xml" dir="." inheritAll="false">
+								<property name="deploy.case.fullname" value="${deploy.case.fullname}" />
+								<property name="test.reports.path" value="${test.reports.path}" />
+								<property name="Test-Type" value="@{Test-Type}" />
+								<property name="DEPLOY_WILDCARD" value="unparallel" />
+								<property name="parallel.flag" value="unparallel" />
+								<property name="WORKSPACE" value="${WORKSPACE}" />
+								<property name="ci.script.file.path" value="${ci.script.file.path}" />
+								<!-- <property name="test.host.NAME" value="${test_machine_no2}" /> -->
+								<property name="parallel.count" value="0" />
+								<property name="test.log" value="${test.log}" />
+							</ant>
+						</sequential>
+					</for>
 				</parallel>
 			</then>
 			<else>
