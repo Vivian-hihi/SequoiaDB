@@ -17,83 +17,133 @@
 	<property file="${properties.dir}" />
 
 	<target name="Deploy" depends="">
-		<parallel>
-			<ant antfile="deploy-software-in-host.xml" dir="." inheritAll="false">
-				<property name="install.package.fullname" value="${install.package.fullname}" />
-				<property name="deploy.host.name" value="${test_machine_no1}" />
-				<property name="is.standalone.mode" value="true" />
-				<property name="is.coord.master" value="false"/>
-				<property name="catalog.addrs" value="${test_machine_no1}:11803,${test_machine_no2}:11803,${test_machine_no3}:11803" />
-			</ant>
-			<ant antfile="deploy-software-in-host.xml" dir="." inheritAll="false">
-				<property name="install.package.fullname" value="${install.package.fullname}" />
-				<property name="deploy.host.name" value="${test_machine_no2}" />
-				<property name="is.standalone.mode" value="true" />
-				<property name="is.coord.master" value="false"/>
-				<property name="catalog.addrs" value="${test_machine_no1}:11803,${test_machine_no2}:11803,${test_machine_no3}:11803" />
-			</ant>
-			<ant antfile="deploy-software-in-host.xml" dir="." inheritAll="false">
-				<property name="install.package.fullname" value="${install.package.fullname}" />
-				<property name="deploy.host.name" value="${test_machine_no3}" />
-				<property name="is.standalone.mode" value="true" />
-				<property name="is.coord.master" value="false"/>
-				<property name="catalog.addrs" value="${test_machine_no1}:11803,${test_machine_no2}:11803,${test_machine_no3}:11803" />
-			</ant>
-			<ant antfile="deploy-software-in-host.xml" dir="." inheritAll="false">
-				<property name="install.package.fullname" value="${install.package.fullname}" />
-				<property name="deploy.host.name" value="${test_machine_no4}" />
-				<property name="is.standalone.mode" value="true" />
-				<property name="is.coord.master" value="false"/>
-				<property name="catalog.addrs" value="${test_machine_no1}:11803,${test_machine_no2}:11803,${test_machine_no3}:11803" />
-			</ant>
-			<ant antfile="deploy-software-in-host.xml" dir="." inheritAll="false">
-				<property name="install.package.fullname" value="${install.package.fullname}" />
-				<property name="deploy.host.name" value="${test_machine_no5}" />
-				<property name="is.standalone.mode" value="true" />
-				<property name="is.coord.master" value="false"/>
-				<property name="catalog.addrs" value="${test_machine_no1}:11803,${test_machine_no2}:11803,${test_machine_no3}:11803" />
-			</ant>
-			<ant antfile="deploy-software-in-host.xml" dir="." inheritAll="false">
-				<property name="install.package.fullname" value="${install.package.fullname}" />
-				<property name="deploy.host.name" value="${test_machine_no6}" />
-				<property name="is.standalone.mode" value="true" />
-				<property name="is.coord.master" value="false"/>
-				<property name="catalog.addrs" value="${test_machine_no1}:11803,${test_machine_no2}:11803,${test_machine_no3}:11803" />
-			</ant>
-		</parallel>
+		<if>
+		   	<equals arg1="${os.arch}" arg2="amd64" />
+			<then>
+				<parallel>
+					<ant antfile="deploy-software-in-host.xml" dir="." inheritAll="false">
+						<property name="install.package.fullname" value="${install.package.fullname}" />
+						<property name="deploy.host.name" value="${test_machine_no1}" />
+						<property name="is.standalone.mode" value="true" />
+						<property name="is.coord.master" value="false"/>
+						<property name="catalog.addrs" value="${test_machine_no1}:11803,${test_machine_no2}:11803,${test_machine_no3}:11803" />
+					</ant>
+					<ant antfile="deploy-software-in-host.xml" dir="." inheritAll="false">
+						<property name="install.package.fullname" value="${install.package.fullname}" />
+						<property name="deploy.host.name" value="${test_machine_no2}" />
+						<property name="is.standalone.mode" value="true" />
+						<property name="is.coord.master" value="false"/>
+						<property name="catalog.addrs" value="${test_machine_no1}:11803,${test_machine_no2}:11803,${test_machine_no3}:11803" />
+					</ant>
+					<ant antfile="deploy-software-in-host.xml" dir="." inheritAll="false">
+						<property name="install.package.fullname" value="${install.package.fullname}" />
+						<property name="deploy.host.name" value="${test_machine_no3}" />
+						<property name="is.standalone.mode" value="true" />
+						<property name="is.coord.master" value="false"/>
+						<property name="catalog.addrs" value="${test_machine_no1}:11803,${test_machine_no2}:11803,${test_machine_no3}:11803" />
+					</ant>
+					<ant antfile="deploy-software-in-host.xml" dir="." inheritAll="false">
+						<property name="install.package.fullname" value="${install.package.fullname}" />
+						<property name="deploy.host.name" value="${test_machine_no4}" />
+						<property name="is.standalone.mode" value="true" />
+						<property name="is.coord.master" value="false"/>
+						<property name="catalog.addrs" value="${test_machine_no1}:11803,${test_machine_no2}:11803,${test_machine_no3}:11803" />
+					</ant>
+					<ant antfile="deploy-software-in-host.xml" dir="." inheritAll="false">
+						<property name="install.package.fullname" value="${install.package.fullname}" />
+						<property name="deploy.host.name" value="${test_machine_no5}" />
+						<property name="is.standalone.mode" value="true" />
+						<property name="is.coord.master" value="false"/>
+						<property name="catalog.addrs" value="${test_machine_no1}:11803,${test_machine_no2}:11803,${test_machine_no3}:11803" />
+					</ant>
+					<ant antfile="deploy-software-in-host.xml" dir="." inheritAll="false">
+						<property name="install.package.fullname" value="${install.package.fullname}" />
+						<property name="deploy.host.name" value="${test_machine_no6}" />
+						<property name="is.standalone.mode" value="true" />
+						<property name="is.coord.master" value="false"/>
+						<property name="catalog.addrs" value="${test_machine_no1}:11803,${test_machine_no2}:11803,${test_machine_no3}:11803" />
+					</ant>
+				</parallel>
+			</then>
+			<else>
+				<parallel>
+					<ant antfile="deploy-software-in-host.xml" dir="." inheritAll="false">
+						<property name="install.package.fullname" value="${install.package.fullname}" />
+						<property name="deploy.host.name" value="${test_machine_no1}" />
+						<property name="is.standalone.mode" value="true" />
+						<property name="is.coord.master" value="false"/>
+						<property name="catalog.addrs" value="${test_machine_no1}:11803,${test_machine_no2}:11803,${test_machine_no3}:11803" />
+					</ant>
+					<ant antfile="deploy-software-in-host.xml" dir="." inheritAll="false">
+						<property name="install.package.fullname" value="${install.package.fullname}" />
+						<property name="deploy.host.name" value="${test_machine_no2}" />
+						<property name="is.standalone.mode" value="true" />
+						<property name="is.coord.master" value="false"/>
+						<property name="catalog.addrs" value="${test_machine_no1}:11803,${test_machine_no2}:11803,${test_machine_no3}:11803" />
+					</ant>
+					<ant antfile="deploy-software-in-host.xml" dir="." inheritAll="false">
+						<property name="install.package.fullname" value="${install.package.fullname}" />
+						<property name="deploy.host.name" value="${test_machine_no3}" />
+						<property name="is.standalone.mode" value="true" />
+						<property name="is.coord.master" value="false"/>
+						<property name="catalog.addrs" value="${test_machine_no1}:11803,${test_machine_no2}:11803,${test_machine_no3}:11803" />
+					</ant>
+				</parallel>
+			</else>
+		</if>	
 	</target>
 
 	<target name="Standalone" depends="">
 		<hostinfo prefix="host" />
-		<property name="test-type-list" value="basic" />
 		<property name="copy.test.log" value="true"/>
 
-		<parallel>
-			<ant antfile="deploy-test-in-host.xml" dir="." inheritAll="false">
-				<property name="deploy.file.fullname" value="${deploy.file.fullname}" />
-				<property name="deploy.host.name" value="${test_machine_no1}" />
-			</ant>
-			<ant antfile="deploy-test-in-host.xml" dir="." inheritAll="false">
-				<property name="deploy.file.fullname" value="${deploy.file.fullname}" />
-				<property name="deploy.host.name" value="${test_machine_no2}" />
-			</ant>
-			<ant antfile="deploy-test-in-host.xml" dir="." inheritAll="false">
-				<property name="deploy.file.fullname" value="${deploy.file.fullname}" />
-				<property name="deploy.host.name" value="${test_machine_no3}" />
-			</ant>
-			<ant antfile="deploy-test-in-host.xml" dir="." inheritAll="false">
-				<property name="deploy.file.fullname" value="${deploy.file.fullname}" />
-				<property name="deploy.host.name" value="${test_machine_no4}" />
-			</ant>
-			<ant antfile="deploy-test-in-host.xml" dir="." inheritAll="false">
-				<property name="deploy.file.fullname" value="${deploy.file.fullname}" />
-				<property name="deploy.host.name" value="${test_machine_no5}" />
-			</ant>
-			<ant antfile="deploy-test-in-host.xml" dir="." inheritAll="false">
-				<property name="deploy.file.fullname" value="${deploy.file.fullname}" />
-				<property name="deploy.host.name" value="${test_machine_no6}" />
-			</ant>
-		</parallel>
+		<if>
+		   	<equals arg1="${os.arch}" arg2="amd64" />
+			<then>
+				<parallel>
+					<ant antfile="deploy-test-in-host.xml" dir="." inheritAll="false">
+						<property name="deploy.file.fullname" value="${deploy.file.fullname}" />
+						<property name="deploy.host.name" value="${test_machine_no1}" />
+					</ant>
+					<ant antfile="deploy-test-in-host.xml" dir="." inheritAll="false">
+						<property name="deploy.file.fullname" value="${deploy.file.fullname}" />
+						<property name="deploy.host.name" value="${test_machine_no2}" />
+					</ant>
+					<ant antfile="deploy-test-in-host.xml" dir="." inheritAll="false">
+						<property name="deploy.file.fullname" value="${deploy.file.fullname}" />
+						<property name="deploy.host.name" value="${test_machine_no3}" />
+					</ant>
+					<ant antfile="deploy-test-in-host.xml" dir="." inheritAll="false">
+						<property name="deploy.file.fullname" value="${deploy.file.fullname}" />
+						<property name="deploy.host.name" value="${test_machine_no4}" />
+					</ant>
+					<ant antfile="deploy-test-in-host.xml" dir="." inheritAll="false">
+						<property name="deploy.file.fullname" value="${deploy.file.fullname}" />
+						<property name="deploy.host.name" value="${test_machine_no5}" />
+					</ant>
+					<ant antfile="deploy-test-in-host.xml" dir="." inheritAll="false">
+						<property name="deploy.file.fullname" value="${deploy.file.fullname}" />
+						<property name="deploy.host.name" value="${test_machine_no6}" />
+					</ant>
+				</parallel>
+			</then>
+			<else>
+				<parallel>
+					<ant antfile="deploy-test-in-host.xml" dir="." inheritAll="false">
+						<property name="deploy.file.fullname" value="${deploy.file.fullname}" />
+						<property name="deploy.host.name" value="${test_machine_no1}" />
+					</ant>
+					<ant antfile="deploy-test-in-host.xml" dir="." inheritAll="false">
+						<property name="deploy.file.fullname" value="${deploy.file.fullname}" />
+						<property name="deploy.host.name" value="${test_machine_no2}" />
+					</ant>
+					<ant antfile="deploy-test-in-host.xml" dir="." inheritAll="false">
+						<property name="deploy.file.fullname" value="${deploy.file.fullname}" />
+						<property name="deploy.host.name" value="${test_machine_no3}" />
+					</ant>
+				</parallel>
+			</else>
+		</if>
 
 		<tstamp>
 			<format property="current.time.log" pattern="yyyy-MM-dd-hh.mm.ss_a" />
@@ -101,6 +151,7 @@
 		<property name="test.log.path" value="${test.reports.path}/${test.environment}-${DEPLOY_WILDCARD}-${host.NAME}-${current.time.log}-${BUILD_NUMBER}" />
 		<property name="test.log" value="${test.environment}-${DEPLOY_WILDCARD}-${host.NAME}-${current.time.log}-${BUILD_NUMBER}" />
 
+		<property name="test-type-list" value="basic" />
 		<for list="${test-type-list}" param="Test-Type">
 			<sequential>
 				<ant antfile="${WORKSPACE}/sequoiadb/misc/ci/test-type.xml" dir="." inheritAll="false">
