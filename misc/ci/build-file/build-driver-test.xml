@@ -129,19 +129,31 @@
 		<tstamp>
 			<format property="c_testcases_begintime" pattern="yyyy-MM-dd-hh.mm.ss a" />
 		</tstamp>
-		<echo level="info" message="Step1 : Compile the C driver dynamic testcases,command: &lt;scons ${testcases_dir}/C lib_path=${driver_dir}/lib include_path=${driver_dir}/include&gt;." />
+		<echo level="info" message="Step1 : Rebuild folder &lt;${WORKSPACE}/sequoiadb/client/lib&gt;,copy folder &lt;${driver_dir}/lib&gt; to &lt;${WORKSPACE}/sequoiadb/client/lib&gt;." />
+		<delete dir="${WORKSPACE}/sequoiadb/client/lib" failonerror="false"/>
+		<mkdir dir="${WORKSPACE}/sequoiadb/client/lib" />
+		<copy todir="${WORKSPACE}/sequoiadb/client/lib">
+			<fileset dir="${driver_dir}/lib" includes="*" />
+		</copy>
+		<echo level="info" message="Step2 : Rebuild folder &lt;${WORKSPACE}/sequoiadb/client/include&gt;,copy folder &lt;${driver_dir}/include&gt; to &lt;${WORKSPACE}/sequoiadb/client/include&gt;." />
+		<delete dir="${WORKSPACE}/sequoiadb/client/include" failonerror="false"/>
+		<mkdir dir="${WORKSPACE}/sequoiadb/client/include" />
+		<copy todir="${WORKSPACE}/sequoiadb/client/include">
+			<fileset dir="${driver_dir}/include" includes="**/*" />
+		</copy>
+		<echo level="info" message="Step3 : Compile the C driver dynamic testcases,command: &lt;scons ${testcases_dir}/C lib_path=${driver_dir}/lib include_path=${driver_dir}/include&gt;." />
 		<exec executable="scons" dir="${testcases_dir}/C" failonerror="false">
 			<arg line=" --lib_path=${driver_dir}/lib --include_path=${driver_dir}/include" />
 		</exec>
-		<echo level="info" message="Step2 : Compile the C driver static testcases,command: &lt;scons ${testcases_dir}/C/staticlib --dd lib_path=${driver_dir}/lib include_path=${driver_dir}/include&gt;." />
+		<echo level="info" message="Step4 : Compile the C driver static testcases,command: &lt;scons ${testcases_dir}/C/staticlib --dd lib_path=${driver_dir}/lib include_path=${driver_dir}/include&gt;." />
 		<exec executable="scons" dir="${testcases_dir}/C/staticlib" failonerror="false">
 			<arg line=" --dd --lib_path=${driver_dir}/lib --include_path=${driver_dir}/include" />
 		</exec>
-		<echo level="info" message="Step3 : Copy the C driver dynamic testcases from &lt;${testcases_dir}/C/build_test&gt; to &lt;${deploy_dir}/hlt/drivers_testcases/C/build&gt;." />
+		<echo level="info" message="Step5 : Copy the C driver dynamic testcases from &lt;${testcases_dir}/C/build_test&gt; to &lt;${deploy_dir}/hlt/drivers_testcases/C/build&gt;." />
 		<copy todir="${deploy_dir}/hlt/drivers_testcases/C/build">
 			<fileset dir="${testcases_dir}/C/build_test" includes="*" />
 		</copy>
-		<echo level="info" message="Step4 : Copy the C driver static testcases from &lt;${testcases_dir}/C/staticlib/build_test&gt; to &lt;${deploy_dir}/hlt/drivers_testcases/C/build&gt;." />
+		<echo level="info" message="Step6 : Copy the C driver static testcases from &lt;${testcases_dir}/C/staticlib/build_test&gt; to &lt;${deploy_dir}/hlt/drivers_testcases/C/build&gt;." />
 		<copy todir="${deploy_dir}/hlt/drivers_testcases/C/build">
 			<fileset dir="${testcases_dir}/C/staticlib/build_test" includes="*static" />
 		</copy>
