@@ -327,9 +327,10 @@ namespace engine
          /// we try to set matchall only when all fields converted into predicates
          if ( _matcher.totallyConverted() )
          {
-            detail.matchAll = ( 0 != matchedFields ) &&
-                              ( matchedFields == nQueryFields ) &&
-                               matchedFields <= idxPattern.nFields() ;
+            detail.matchAll = ( ( 0 != matchedFields ) &&
+                                ( matchedFields == nQueryFields ) &&
+                                  matchedFields <= idxPattern.nFields() ) ||
+                              ( 0 == nQueryFields );
          }
       }
       PD_LOG ( PDDEBUG, "Index Scan Estimation: %s : %d",
