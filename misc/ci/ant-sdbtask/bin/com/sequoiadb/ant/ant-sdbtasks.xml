@@ -12,6 +12,7 @@
     <typedef name="sdbisclexist" classname="com.sequoiadb.ant.sdbtask.SdbIsCLExist" onerror="ignore" />
 	<typedef name="sdbcount" classname="com.sequoiadb.ant.sdbtask.SdbCount" onerror="ignore" />
 	<typedef name="sdbinsert" classname="com.sequoiadb.ant.sdbtask.SdbInsert" onerror="ignore" />
+    <typedef name="sdbTime" classname="com.sequoiadb.ant.sdbtask.SdbTime" onerror="ignore" />
 	<typedef name="sdbquery" classname="com.sequoiadb.ant.sdbtask.SdbQuery" onerror="ignore" />
     <typedef name="sdbdelete" classname="com.sequoiadb.ant.sdbtask.SdbDelete" onerror="ignore" />
 	<typedef name="sdbcreateindex" classname="com.sequoiadb.ant.sdbtask.SdbCreateIndex" onerror="ignore"/>
@@ -47,48 +48,19 @@
 	
     <!-- typedef the tasks that work for ant less than 1.6 -->
     <taskdef resource="net/sf/antcontrib/antcontrib.properties"/>
+    <taskdef name="for" classname="net.sf.antcontrib.logic.ForTask" onerror="ignore"/>   
+    <typedef name="httpState" classname="net.sf.antcontrib.net.httpclient.HttpStateType" onerror="ignore" />
+    <typedef name="httpClient" classname="net.sf.antcontrib.net.httpclient.HttpClientType" onerror="ignore" />        
+    <taskdef name="getCookie" classname="net.sf.antcontrib.net.httpclient.GetCookieTask" onerror="ignore" />
+    <taskdef name="addCookie" classname="net.sf.antcontrib.net.httpclient.AddCookieTask" onerror="ignore" />
+    <taskdef name="clearCookies" classname="net.sf.antcontrib.net.httpclient.ClearCookiesTask" onerror="ignore" />
+    <taskdef name="addCredentials" classname="net.sf.antcontrib.net.httpclient.AddCredentialsTask" onerror="ignore" />
+    <taskdef name="clearCredentials" classname="net.sf.antcontrib.net.httpclient.ClearCredentialsTask" onerror="ignore" />
+    <taskdef name="purgeExpiredCookies" classname="net.sf.antcontrib.net.httpclient.PurgeExpiredCookiesTask" onerror="ignore" />
+    <taskdef name="postMethod" classname="net.sf.antcontrib.net.httpclient.PostMethodTask" onerror="ignore" />
+    <taskdef name="getMethod" classname="net.sf.antcontrib.net.httpclient.GetMethodTask" onerror="ignore" />
+    <taskdef name="headMethod" classname="net.sf.antcontrib.net.httpclient.HeadMethodTask" onerror="ignore" />
+    <taskdef name="importurl" classname="net.sf.antcontrib.net.URLImportTask" onerror="ignore"/>
 
-    <taskdef
-        name="for"
-        classname="net.sf.antcontrib.logic.ForTask"
-        onerror="ignore"/>
-        
-    <typedef
-        name="httpState"
-        classname="net.sf.antcontrib.net.httpclient.HttpStateType"
-        onerror="ignore" />
-    <typedef
-        name="httpClient"
-        classname="net.sf.antcontrib.net.httpclient.HttpClientType"
-        onerror="ignore" />        
-    <taskdef name="getCookie"
-        classname="net.sf.antcontrib.net.httpclient.GetCookieTask"
-        onerror="ignore" />
-    <taskdef name="addCookie"
-        classname="net.sf.antcontrib.net.httpclient.AddCookieTask"
-        onerror="ignore" />
-    <taskdef name="clearCookies"
-        classname="net.sf.antcontrib.net.httpclient.ClearCookiesTask"
-        onerror="ignore" />
-    <taskdef name="addCredentials"
-        classname="net.sf.antcontrib.net.httpclient.AddCredentialsTask"
-        onerror="ignore" />
-    <taskdef name="clearCredentials"
-        classname="net.sf.antcontrib.net.httpclient.ClearCredentialsTask"
-        onerror="ignore" />
-    <taskdef name="purgeExpiredCookies"
-        classname="net.sf.antcontrib.net.httpclient.PurgeExpiredCookiesTask"
-        onerror="ignore" />
-    <taskdef name="postMethod"
-        classname="net.sf.antcontrib.net.httpclient.PostMethodTask"
-        onerror="ignore" />
-    <taskdef name="getMethod"
-        classname="net.sf.antcontrib.net.httpclient.GetMethodTask"
-        onerror="ignore" />
-    <taskdef name="headMethod"
-        classname="net.sf.antcontrib.net.httpclient.HeadMethodTask"
-        onerror="ignore" />
-    <taskdef name="importurl"
-             classname="net.sf.antcontrib.net.URLImportTask"
-             onerror="ignore"/>
+    <taskdef name="junit" classname="org.apache.tools.ant.taskdefs.optional.junit.JUnitTask" onerror="ignore"/>
 </antlib>
