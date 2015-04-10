@@ -1305,3 +1305,183 @@ TEST(collection, truncate)
    connection.disconnect() ;
 }
 
+TEST(collection, queryAndUpdate)
+{
+   sdb connection ;
+   sdbCollectionSpace cs ;
+   sdbCollection cl ;
+   sdbCursor cursor ;
+   // initialize local variables
+   const CHAR *pHostName                    = HOST ;
+   const CHAR *pPort                        = SERVER ;
+   const CHAR *pUsr                         = USER ;
+   const CHAR *pPasswd                      = PASSWD ;
+   const CHAR *pField1                      = "testField1" ;
+   const CHAR *pField2                      = "testField2" ;
+   const CHAR *pIndexName1                  = "testIndex1" ;
+//   const CHAR *pIndexName2                  = "testIndex2" ;
+   INT32 rc                                 = SDB_OK ;
+   INT32 i                                  = 0 ;
+   SINT64 count                             = 0 ;
+   SINT64 NUM                               = 100 ;
+   BSONObj update ;
+   BSONObj condition ;
+   BSONObj selector ;
+   BSONObj orderBy ;
+   BSONObj hint ;
+
+   // initialize the work environment
+   rc = initEnv() ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // connect to database
+   rc = connection.connect( pHostName, pPort, pUsr, pPasswd ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // get cs
+   rc = getCollectionSpace( connection, COLLECTION_SPACE_NAME, cs ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // get cl
+   rc = getCollection( cs, COLLECTION_NAME, cl ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   // create index
+   BSONObj index = BSON( pField1 << 1 ) ;
+   rc = cl.createIndex( index, pIndexName1, FALSE, FALSE ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   // insert some record
+   for ( i = 0; i < NUM; i++ )
+   {
+      BSONObj obj = BSON( pField1 << i << pField2 << i ) ;
+      rc = cl.insert( obj ) ;
+      ASSERT_EQ( SDB_OK, rc ) ;
+   }
+
+   update = BSON( "$set" << BSON( pField2 << 100 ) ) ;
+   condition = BSON( pField1 << BSON( "$gte" << 0 ) ) ;
+   selector = BSON( pField2 << "" ) ;
+   orderBy = BSON( pField1 << -1 ) ;
+   hint = BSON( "" << pIndexName1 ) ;
+
+   // test
+   rc = cl.queryAndUpdate( cursor, update, condition, selector,
+                           orderBy, hint, 0, -1, 0, TRUE ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // check
+   BSONObj obj ;
+   i = 0 ;
+   while( SDB_OK == cursor.next( obj ) )
+   {
+      i++ ;
+      BSONObjIterator it( obj ) ;
+      BSONElement ele = it.next() ;
+      INT32 num = ele.Int() ;
+      ASSERT_EQ( 100, num ) ;
+   }
+   ASSERT_EQ( 100, i ) ;
+
+   // disconnect the connection
+   connection.disconnect() ;
+}
+
+TEST(collection, queryAndRemove)
+{
+   sdb connection ;
+   sdbCollectionSpace cs ;
+   sdbCollection cl ;
+   sdbCursor cursor ;
+   // initialize local variables
+   const CHAR *pHostName                    = HOST ;
+   const CHAR *pPort                        = SERVER ;
+   const CHAR *pUsr                         = USER ;
+   const CHAR *pPasswd                      = PASSWD ;
+   const CHAR *pField1                      = "testField1" ;
+   const CHAR *pField2                      = "testField2" ;
+   const CHAR *pIndexName1                  = "testIndex1" ;
+   const CHAR *pIndexName2                  = "testIndex2" ;
+   INT32 rc                                 = SDB_OK ;
+   INT32 i                                  = 0 ;
+   SINT64 count                             = 0 ;
+   SINT64 NUM                               = 100 ;
+   BSONObj condition ;
+   BSONObj selector ;
+   BSONObj orderBy ;
+   BSONObj hint ;
+   BSONObj hint2 ;
+
+   // initialize the work environment
+   rc = initEnv() ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // connect to database
+   rc = connection.connect( pHostName, pPort, pUsr, pPasswd ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // get cs
+   rc = getCollectionSpace( connection, COLLECTION_SPACE_NAME, cs ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // get cl
+   rc = getCollection( cs, COLLECTION_NAME, cl ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   // create index
+   BSONObj index = BSON( pField1 << 1 ) ;
+   rc = cl.createIndex( index, pIndexName1, FALSE, FALSE ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   BSONObj index2 = BSON( pField2 << 1 ) ;
+   rc = cl.createIndex( index2, pIndexName2, FALSE, FALSE ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // insert some record
+   for ( i = 0; i < NUM; i++ )
+   {
+      BSONObj obj = BSON( pField1 << i << pField2 << i ) ;
+      rc = cl.insert( obj ) ;
+      ASSERT_EQ( SDB_OK, rc ) ;
+   }
+
+   condition = BSON( pField1 << BSON( "$gte" << 0 ) ) ;
+   selector = BSON( pField2 << "" ) ;
+   orderBy = BSON( pField1 << -1 ) ;
+   hint = BSON( "" << pIndexName1 ) ;
+   hint2 = BSON( "" << pIndexName2 ) ;
+
+   BSONObj tmp ;
+
+   // test
+   // case 1: use extend sort
+   rc = cl.queryAndRemove( cursor, condition, selector,
+                           orderBy, hint2, 0, -1, 0 ) ;
+   ASSERT_EQ( SDB_RTN_QUERYMODIFY_SORT_NO_IDX, rc ) ;
+
+   // case 2: does not use extend sort
+   rc = cl.queryAndRemove( cursor, condition, selector,
+                           orderBy, hint, 0, -1, 0 ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // check
+   BSONObj obj ;
+   i = 0 ;
+   while( SDB_OK == cursor.next( obj ) )
+   {
+      i++ ;
+      BSONObjIterator it( obj ) ;
+      BSONElement ele = it.next() ;
+      INT32 num = ele.Int() ;
+      ASSERT_EQ( 100 - i, num ) ;
+   }
+   ASSERT_EQ( 100, i ) ;
+   i = 100 ;
+   while( i-- )
+   {
+      rc = cl.getCount( count ) ;
+      ASSERT_EQ( SDB_OK, rc ) ;
+      if ( 0 == count )
+         break ;
+   }
+   if ( 0 == i )
+   {
+      ASSERT_EQ( 0, count ) ;
+   }
+
+   // disconnect the connection
+   connection.disconnect() ;
+}
+
+

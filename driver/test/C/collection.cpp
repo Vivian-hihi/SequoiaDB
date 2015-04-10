@@ -1913,3 +1913,146 @@ TEST( collection, sdbQueryAndUpdate )
    sdbReleaseConnection ( connection ) ;
 }
 
+TEST( collection, sdbQueryAndRemove )
+{
+   sdbConnectionHandle connection = 0 ;
+   sdbCSHandle cs                 = 0 ;
+   sdbCollectionHandle cl         = 0 ;
+   sdbCursorHandle cursor         = 0 ;
+   INT32 rc                       = SDB_OK ;
+   SINT64 NUM                     = 100 ;
+   SINT64 count                   = 0 ;
+   INT32 i                        = 0 ;
+   INT32 set_value                = 100 ;
+   const CHAR *pIndexName1        = "test_index1" ;
+   const CHAR *pIndexName2        = "test_index2" ;
+   const CHAR *pField1            = "testQueryAndUpdate1" ;
+   const CHAR *pField2            = "testQueryAndUpdate2" ;
+
+
+   bson index ;
+   bson tmp ;
+   bson condition ;
+   bson selector ;
+   bson orderBy ;
+   bson hint ;
+
+   // initialize
+   rc = initEnv( HOST, SERVER, USER, PASSWD ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // connect to database
+   rc = sdbConnect ( HOST, SERVER, USER, PASSWD, &connection ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // get cs
+   rc = getCollectionSpace ( connection,
+                             COLLECTION_SPACE_NAME,
+                             &cs ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // get cl
+   rc = getCollection ( connection,
+                        COLLECTION_FULL_NAME,
+                        &cl ) ;
+   CHECK_MSG("%s%d\n","rc = ", rc) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   // create index
+   bson_init( &index ) ;
+   bson_append_int( &index, pField1, -1 ) ;
+   bson_finish( &index ) ;
+   rc = sdbCreateIndex( cl, &index, pIndexName1, FALSE, FALSE ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   bson_destroy( &index ) ;
+
+   bson_init( &index ) ;
+   bson_append_int( &index, pField2, 1 ) ;
+   bson_finish( &index ) ;
+   rc = sdbCreateIndex( cl, &index, pIndexName2, FALSE, FALSE ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   bson_destroy( &index ) ;
+
+   // gen some record
+   for ( i = 0; i < NUM; i++ )
+   {
+      bson obj ;
+      bson_init( &obj ) ;
+      bson_append_int( &obj, pField1, i ) ;
+      bson_append_int( &obj, pField2, i ) ;
+      bson_finish( &obj ) ;
+      rc = sdbInsert( cl, &obj ) ;
+      ASSERT_EQ( SDB_OK, rc ) ;
+      bson_destroy( &obj ) ;
+   }
+
+   /// in case: use extend sort
+   bson_init( &selector ) ;
+   bson_append_string( &selector, pField2, "" ) ;
+   bson_finish( &selector ) ;
+
+   bson_init( &orderBy ) ;
+   bson_append_int( &orderBy, pField2, 1 ) ;
+   bson_finish( &orderBy ) ;
+
+   bson_init( &tmp ) ;
+   bson_append_int( &tmp, "$gte", 0 ) ;
+   bson_finish( &tmp ) ;
+   bson_init( &condition ) ;
+   bson_append_bson( &condition, pField1, &tmp ) ;
+   bson_finish( &condition ) ;
+
+   bson_init( &hint ) ;
+   bson_append_string( &hint, "", pIndexName1 ) ;
+   bson_finish( &hint ) ;
+
+   rc = sdbQueryAndRemove( cl, &condition, &selector, &orderBy, &hint,
+                           0, -1, 0, &cursor ) ;
+   ASSERT_EQ( SDB_RTN_QUERYMODIFY_SORT_NO_IDX, rc ) ;
+   bson_destroy( &hint ) ;
+
+   /// in case: does not use extend sort
+   bson_init( &hint ) ;
+   bson_append_string( &hint, "", pIndexName2 ) ;
+   bson_finish( &hint ) ;
+
+   // test
+   rc = sdbQueryAndRemove( cl, &condition, &selector, &orderBy, &hint,
+                           50, 10, 0x00000080, &cursor ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   bson_destroy( &tmp ) ;
+   bson_destroy( &condition ) ;
+   bson_destroy( &selector ) ;
+   bson_destroy( &orderBy ) ;
+   bson_destroy( &hint ) ;
+   // check
+   i = 0 ;
+   while ( SDB_OK == ( rc = sdbNext( cursor, &tmp ) ) )
+   {
+      bson_iterator it ;
+      bson_iterator_init( &it, &tmp ) ;
+      const CHAR *pKey = bson_iterator_key( &it ) ;
+      ASSERT_EQ( 0, strncmp( pKey, pField2, strlen(pField2) ) ) ;
+      INT32 value =  bson_iterator_int( &it ) ;
+      ASSERT_EQ( 50 + i, value ) ;
+      bson_destroy( &tmp ) ;
+      i++ ;
+   }
+   ASSERT_EQ( 10, i ) ;
+   i = 100 ;
+   while ( i-- )
+   {
+      rc = sdbGetCount( cl, NULL, &count ) ;
+      ASSERT_EQ( rc, SDB_OK ) ;
+      if ( 0 == count )
+         break ;
+   }
+   if ( 0 == i )
+      ASSERT_EQ( 0, count ) ;
+
+   // realse
+   sdbCloseCursor( cursor ) ;
+   sdbReleaseCursor ( cursor ) ;
+   sdbReleaseCollection ( cl ) ;
+   sdbReleaseCS ( cs ) ;
+   sdbDisconnect ( connection ) ;
+   sdbReleaseConnection ( connection ) ;
+}
+
