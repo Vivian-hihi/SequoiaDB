@@ -86,6 +86,10 @@
 		<basename property="deploy.name" file="${deploy.case.fullname}" suffix=".xml" />
 		<property name="test.suite.class.name" value="testcases-${test-type}.${deploy.name}-${host.NAME}-${parallel.num}-${test.suite.name}" />
 
+		<tstamp>
+			<format property="testsuite_begintime" pattern="yyyy-MM-dd-hh.mm.ss a" />
+		</tstamp>
+
 		<echo message="Now testsuite ${test.suite.name} ..." />
 		<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" message="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot; ?&gt;&#10;&lt;testsuite name=&quot;${test.suite.name}&quot; type=&quot;${test-type}&quot; deploy=&quot;${deploy.name}&quot; hostname=&quot;${host.NAME}&quot; tests=&quot;1&quot; failure=&quot;0&quot;&gt;&#10;" />
 
@@ -115,6 +119,15 @@
 		</foreach>
 
 		<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" message="&lt;/testsuite&gt;&#10;" append="true" />
+		<tstamp>
+			<format property="testsuite_endtime" pattern="yyyy-MM-dd-hh.mm.ss a" />
+		</tstamp>
+		<sdbTime beginTime="${testsuite_begintime}" endTime="${testsuite_endtime}" output="testsuite_time" />
+		<echo message="**************************************************************************************************************************************************************" />
+		<echo level="info" message="The java driver testcases compilation project began at &lt;${testsuite_begintime}&gt;, end at &lt;${testsuite_endtime}&gt;,total spending ${testsuite_time}s." />
+		<echo message="Now testsuite ${test.suite.name} ..." />
+		<echo file="/opt/testsuite.log" append="true" message="Now testsuite ${test.suite.name},cost ${testsuite_time}s,hostname=${host.NAME}&#10;" />
+		<echo message="**************************************************************************************************************************************************************" />
 	</target>
 
 	<target name="test-one-case" depends="">
