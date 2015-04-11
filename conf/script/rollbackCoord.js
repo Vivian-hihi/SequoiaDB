@@ -73,7 +73,37 @@ function _removeCoordGroup( db )
 
    try
    {
-      rg = db.getCoordRG() ;
+      // test whether catalog is ok or not
+      // when catalog has no primary, wait for a while
+      var i = 0 ;
+      for ( ; i < OMA_WAIT_CATALOG_TRY_TIMES; i++ )
+      {
+         try
+         {
+            rg = db.getCoordRG() ;
+         }
+         catch( e )
+         {
+            if ( SDB_CLS_NOT_PRIMARY == e )
+            {
+               PD_LOG2( task_id, arguments, PDWARNING, FILE_NAME_ROLLBACK_COORD,
+                        "Catalog has no primary, waiting 1 sec" ) ;
+               sleep( 1000 ) ; // l sec
+               continue ;
+            }
+            else
+            {
+               throw e ;
+            }
+         }
+         break ;
+      }
+      if ( OMA_WAIT_CATALOG_TRY_TIMES == i )
+      {
+         PD_LOG2( task_id, arguments, PDERROR, FILE_NAME_ROLLBACK_COORD,
+                  "Catalog has no primary" ) ;
+         throw SDB_CLS_NOT_PRIMARY ;
+      }
    }
    catch ( e )
    {

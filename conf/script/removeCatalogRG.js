@@ -109,7 +109,35 @@ function main()
       // 3. remove catalog group
       try
       {
-         db.removeCatalogRG() ;
+         var j = 0 ;
+         for ( ; j < OMA_WAIT_CATALOG_TRY_TIMES; j++ )
+         {
+            try
+            {
+               db.removeCatalogRG() ;
+            }
+            catch( e )
+            {
+               if ( SDB_CLS_NOT_PRIMARY == e )
+               {
+                  PD_LOG2( task_id, arguments, PDWARNING, FILE_NAME_REMOVE_CATALOG_RG,
+                           "Catalog has no primary, waiting 1 sec" ) ;
+                  sleep( 1000 ) ; // l sec
+                  continue ;
+               }
+               else
+               {
+                  throw e ;
+               }
+            }
+            break ;
+         }
+         if ( OMA_WAIT_CATALOG_TRY_TIMES == j )
+         {
+            PD_LOG2( task_id, arguments, PDERROR, FILE_NAME_REMOVE_CATALOG_RG,
+                     "Catalog has no primary" ) ;
+            throw SDB_CLS_NOT_PRIMARY ;
+         }
       }
       catch ( e )
       {

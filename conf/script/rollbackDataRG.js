@@ -74,7 +74,37 @@ function _removeGroup( db, name )
    // get rg
    try
    {
-      rg = db.getRG( name ) ;
+      // test whether catalog is ok or not
+      // when catalog has no primary, wait for a while
+      var i = 0 ;
+      for ( ; i < OMA_WAIT_CATALOG_TRY_TIMES; i++ )
+      {
+         try
+         {
+            rg = db.getRG( name ) ;
+         }
+         catch( e )
+         {
+            if ( SDB_CLS_NOT_PRIMARY == e )
+            {
+               PD_LOG2( task_id, arguments, PDWARNING, FILE_NAME_ROLLBACK_DATA_RG,
+                        "Catalog has no primary, waiting 1 sec" ) ;
+               sleep( 1000 ) ; // l sec
+               continue ;
+            }
+            else
+            {
+               throw e ;
+            }
+         }
+         break ;
+      }
+      if ( OMA_WAIT_CATALOG_TRY_TIMES == i )
+      {
+         PD_LOG2( task_id, arguments, PDERROR, FILE_NAME_ROLLBACK_DATA_RG,
+                  "Catalog has no primary" ) ;
+         throw SDB_CLS_NOT_PRIMARY ;
+      }
    }
    catch ( e )
    {
@@ -181,7 +211,6 @@ function main()
       }
       // 3. test whether catalog is running or not
       // if catalog is not running, no need to rollback data group
-      var flag = isCatalogRunning( db ) ;
       if ( false == isCatalogRunning( db ) )
       {
          PD_LOG2( task_id, arguments, PDEVENT, FILE_NAME_ROLLBACK_DATA_RG,
