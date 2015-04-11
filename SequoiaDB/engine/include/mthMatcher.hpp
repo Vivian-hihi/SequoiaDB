@@ -393,6 +393,9 @@ namespace engine
       INT32 matches ( const BSONObj &matchTarget,
                       BOOLEAN &result,
                       vector<INT64> *dollarList = NULL ) ;
+      void _extractEqualityMatches( _LogicMatchElement* lme,
+                                    BSONObjBuilder& builder ) ;
+      BSONObj getEqualityQueryObject() ;
       BOOLEAN isInitialized () { return _initialized ; }
       BOOLEAN isMatchesAll() { return _matchesAll ; }
       const rtnPredicateSet &getPredicateSet ()

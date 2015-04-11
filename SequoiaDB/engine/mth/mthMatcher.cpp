@@ -2348,6 +2348,71 @@ namespace engine
       return ;
    }
 
+   void _mthMatcher::_extractEqualityMatches( _LogicMatchElement* lme,
+                                              BSONObjBuilder& builder )
+   {
+      SDB_ASSERT( NULL != lme, "lme can't be null" ) ;
+
+      if ( MTH_LOGIC_AND == lme->_logicType )
+      {
+         for ( UINT32 i = 0; i < lme->_vlme.size(); i++ )
+         {
+            _LogicMatchElement* innerLME = lme->_vlme[i] ;
+            BSONObjBuilder innerBuilder ;
+
+            _extractEqualityMatches( innerLME, innerBuilder ) ;
+            builder.appendElements( innerBuilder.obj() ) ;
+         }
+      }
+      else if ( MTH_LOGIC_OTHER == lme->_logicType )
+      {
+         _MatchElement* me = lme->_me ;
+
+         if ( NULL != me )
+         {
+            if ( BSONObj::Equality == me->_op )
+            {
+               builder.append( me->_toMatch ) ;
+            }
+            else if ( BSONObj::opALL == me->_op )
+            {
+               BSONElement ele = me->_toMatch ;
+               BSONElement inner = ele.embeddedObject().getField( "$all" ) ;
+               if ( !inner.eoo() )
+               {
+                  builder.appendAs( inner, ele.fieldName() ) ;
+               }
+            }
+         }
+      }
+   }
+
+   // get equality query fields from matcher
+   BSONObj _mthMatcher::getEqualityQueryObject()
+   {
+      BSONObj obj ;
+
+      if ( NULL == _rlme )
+      {
+         goto done ;
+      }
+
+      try
+      {
+         BSONObjBuilder builder ;
+         _extractEqualityMatches( _rlme, builder ) ;
+         obj = dotted2nested( builder.obj() ) ;
+      }
+      catch (  std::exception &e )
+      {
+         PD_LOG ( PDWARNING, "Failed to extract equality matches: %s", e.what() ) ;
+         goto done ;
+      }
+
+   done:
+      return obj ;
+   }
+
    /*PD_TRACE_DECLARE_FUNCTION ( SDB__MTHMACH_GETDOLLARNUMBER,"_mthMatcher::_getDollarNumber" )
    INT32 _mthMatcher::_getDollarNumber ( const CHAR *pFieldName, INT32 &number )
    {

@@ -242,11 +242,18 @@ namespace engine
       // upsert
       if ( ( flag & FLG_UPDATE_UPSERT ) && 0 == updateNum )
       {
+         mthMatcher matcher ;
          mthModifier modifier;
          BSONObj source ;
          BSONObj target ;
          rtnCoordProcesserFactory *pProcesserFactory = NULL ;
          rtnCoordOperator *pOpProcesser = NULL ;
+
+         rc = matcher.loadPattern ( boSelector ) ;
+         PD_RC_CHECK ( rc, PDERROR, "Failed to load matcher, "
+                       "query: %s, rc: %d",
+                       boSelector.toString().c_str(), rc ) ;
+         source = matcher.getEqualityQueryObject() ;
 
          rc = modifier.loadPattern( boUpdator ) ;
          PD_RC_CHECK( rc, PDERROR, "Invalid pattern is detected for "

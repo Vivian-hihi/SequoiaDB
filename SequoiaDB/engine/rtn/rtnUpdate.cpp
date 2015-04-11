@@ -220,8 +220,10 @@ namespace engine
       // upsert
       if ( ( 0 == numUpdatedRecords ) && ( FLG_UPDATE_UPSERT & flags ) )
       {
-         //BSONObj source = plan->getMatcher().getMatchPattern () ;
-         BSONObj source ;
+         BSONObj source = plan->getMatcher().getEqualityQueryObject() ;
+         PD_LOG ( PDDEBUG, "equality query object: %s",
+                     source.toString().c_str() ) ;
+
          BSONObj target ;
          // upsertor means generate a new record from empty source
          rc = modifier.modify ( source, target ) ;
@@ -231,6 +233,8 @@ namespace engine
                      rc ) ;
             goto error ;
          }
+         PD_LOG ( PDDEBUG, "modified equality query object: %s",
+                     target.toString().c_str() ) ;
          rc = su->data()->insertRecord( mbContext, target, cb, dpsCB,
                                         TRUE, TRUE ) ;
          if ( rc )
