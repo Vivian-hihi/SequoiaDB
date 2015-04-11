@@ -553,7 +553,9 @@ namespace engine
                 << std::endl ;
       if ( SDB_OK != krcb->getExitCode() )
       {
-         std::cout << "Restore failed: " << krcb->getExitCode() << std::endl ;
+         std::cout << "Restore failed: " << krcb->getExitCode()
+                   << "(" << getErrDesp( krcb->getExitCode() ) << ")"
+                   << std::endl ;
       }
       else
       {
