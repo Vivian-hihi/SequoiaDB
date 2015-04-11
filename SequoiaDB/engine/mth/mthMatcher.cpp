@@ -2372,7 +2372,11 @@ namespace engine
          {
             if ( BSONObj::Equality == me->_op )
             {
-               builder.append( me->_toMatch ) ;
+               string fieldName = me->_toMatch.fieldName() ;
+               if ( string::npos == fieldName.find( '$', 0 ) )
+               {
+                  builder.append( me->_toMatch ) ;
+               }
             }
             else if ( BSONObj::opALL == me->_op )
             {
@@ -2380,7 +2384,11 @@ namespace engine
                BSONElement inner = ele.embeddedObject().getField( "$all" ) ;
                if ( !inner.eoo() )
                {
-                  builder.appendAs( inner, ele.fieldName() ) ;
+                  string fieldName = ele.fieldName() ;
+                  if ( string::npos == fieldName.find( '$', 0 ) )
+                  {
+                     builder.appendAs( inner, fieldName ) ;
+                  }
                }
             }
          }
