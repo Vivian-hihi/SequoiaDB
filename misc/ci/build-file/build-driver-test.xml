@@ -6,7 +6,6 @@
 		${testcases_dir} from build-test.xml
 		${deploy_dir} from build-test.xml
 		${driver_dir} from build-test.xml
-		${svn_version} from build-test.xml
 	@Invocation:
 		NULL
 -->
@@ -84,7 +83,6 @@
 		<sdbTime beginTime="${java_testcases_begintime}" endTime="${java_testcases_endtime}" output="java_testcases_time" />
 		<echo message="**************************************************************************************************************************************************************" />
 		<echo level="info" message="The machine which is compiled java driver testcases is &lt;${os.arch}&gt; architecture and &lt;${os.name}&gt; operating system,so use &lt;${jdk_name}&gt;." />
-		<echo level="info" message="The java driver testcases' svn version is &lt;${svn_version}&gt;." />
 		<echo level="info" message="The java driver testcases compilation project began at &lt;${java_testcases_begintime}&gt;, end at &lt;${java_testcases_endtime}&gt;,total spending ${java_testcases_time}s." />
 		<echo message="**************************************************************************************************************************************************************" />
 	</target>
@@ -102,7 +100,6 @@
 		</tstamp>
 		<sdbTime beginTime="${python_testcases_begintime}" endTime="${python_testcases_endtime}" output="python_testcases_time" />
 		<echo message="**************************************************************************************************************************************************************" />
-		<echo level="info" message="The python driver testcases' svn version is &lt;${svn_version}&gt;." />
 		<echo level="info" message="The python driver testcases compilation project began at &lt;${python_testcases_begintime}&gt;, end at &lt;${python_testcases_endtime}&gt;,total spending ${python_testcases_time}s." />
 		<echo message="**************************************************************************************************************************************************************" />
 	</target>
@@ -120,7 +117,6 @@
 		</tstamp>
 		<sdbTime beginTime="${php_testcases_begintime}" endTime="${php_testcases_endtime}" output="php_testcases_time" />
 		<echo message="**************************************************************************************************************************************************************" />
-		<echo level="info" message="The php driver testcases' svn version is &lt;${svn_version}&gt;." />
 		<echo level="info" message="The php driver testcases compilation project began at &lt;${php_testcases_begintime}&gt;, end at &lt;${php_testcases_endtime}&gt;,total spending ${php_testcases_time}s." />
 		<echo message="**************************************************************************************************************************************************************" />
 	</target>
@@ -162,7 +158,6 @@
 		</tstamp>
 		<sdbTime beginTime="${c_testcases_begintime}" endTime="${c_testcases_endtime}" output="c_testcases_time" />
 		<echo message="**************************************************************************************************************************************************************" />
-		<echo level="info" message="The c driver testcases' svn version is &lt;${svn_version}&gt;." />
 		<echo level="info" message="The c driver testcases compilation project began at &lt;${c_testcases_begintime}&gt;, end at &lt;${c_testcases_endtime}&gt;,total spending ${c_testcases_time}s." />
 		<echo message="**************************************************************************************************************************************************************" />
 	</target>
@@ -192,7 +187,6 @@
 		</tstamp>
 		<sdbTime beginTime="${cpp_testcases_begintime}" endTime="${cpp_testcases_endtime}" output="cpp_testcases_time" />
 		<echo message="**************************************************************************************************************************************************************" />
-		<echo level="info" message="The cpp driver testcases' svn version is &lt;${svn_version}&gt;." />
 		<echo level="info" message="The cpp driver testcases compilation project began at &lt;${cpp_testcases_begintime}&gt;, end at &lt;${cpp_testcases_endtime}&gt;,total spending ${cpp_testcases_time}s." />
 		<echo message="**************************************************************************************************************************************************************" />
 	</target>
@@ -214,7 +208,6 @@
 		</tstamp>
 		<sdbTime beginTime="${lob_testcases_begintime}" endTime="${lob_testcases_endtime}" output="lob_testcases_time" />
 		<echo message="**************************************************************************************************************************************************************" />
-		<echo level="info" message="The lob testcases' svn version is &lt;${svn_version}&gt;." />
 		<echo level="info" message="The lob testcases compilation project began at &lt;${lob_testcases_begintime}&gt;, end at &lt;${lob_testcases_endtime}&gt;,total spending ${lob_testcases_time}s." />
 		<echo message="**************************************************************************************************************************************************************" />
 	</target>
@@ -244,7 +237,6 @@
 		<sdbTime beginTime="${mongoc_testcases_begintime}" endTime="${mongoc_testcases_endtime}" output="mongoc_testcases_time" />
 		<echo message="**************************************************************************************************************************************************************" />
 		<echo level="info" message="The machine which is compiled mongoc testcases is &lt;${os.arch}&gt;." />
-		<echo level="info" message="The mongoc testcases' svn version is &lt;${svn_version}&gt;." />
 		<echo level="info" message="The mongoc testcases compilation project began at &lt;${mongoc_testcases_begintime}&gt;, end at &lt;${mongoc_testcases_endtime}&gt;,total spending ${mongoc_testcases_time}s." />
 		<echo message="**************************************************************************************************************************************************************" />
 	</target>

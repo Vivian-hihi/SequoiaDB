@@ -26,30 +26,6 @@
 		<echo level="info" message="Step1 : Rebuild the folder &lt;${deploy_dir}&gt;." />
 		<delete dir="${deploy_dir}" failonerror="false" />
 		<mkdir dir="${deploy_dir}/temp" />
-		<trycatch>
-    		<try>
-        		<exec dir="${deploy_dir}/temp" executable="svn" output="${deploy_dir}/temp/svn.status.txt" failonerror="false" >
-          			<arg line="status -u" />
-        		</exec>
-        		<exec dir="${deploy_dir}/temp" executable="grep" output="${deploy_dir}/temp/svn.grep.txt" failonerror="false" >
-          			<arg line="&apos;Status against revision&apos;" />
-          			<arg line="${deploy_dir}/temp/svn.status.txt" />
-        		</exec>
-        		<exec dir="${deploy_dir}/temp" executable="awk" outputproperty="svn_version" failonerror="false" >
-          			<arg line="-F &apos;:&apos; &apos;{print $2}&apos;" />
-          			<arg line="${deploy_dir}/temp/svn.grep.txt" />
-        		</exec>
-    		</try>
-    		<catch>
-    			<property name="svn_version" value="unknow" />
-    		</catch>
-    		<finally>
-				<echo level="info" message="Catch svn info,the command:&#10;
-					@ &lt;svn status -u&gt; to ${deploy_dir}/temp/svn.status.txt&#10;
-					@ &lt;grep &apos;Status against revision&apos; ${deploy_dir}/temp/svn.status.txt&gt; to ${deploy_dir}/temp/svn.grep.txt&#10;
-					@ &lt;awk -F &apos;:&apos; &apos;{print $2}&apos; ${deploy_dir}/temp/svn.grep.txt&gt; to paramater &lt;svn_version&gt;.&#10;" />
-    		</finally>
-    	</trycatch> 
 	</target>
 
 	<target name="5.Build-Sdbtasks-Jar" depends="4.Clean-Last-Deploy" >
@@ -57,7 +33,6 @@
 			<property name="WORKSPACE" value="${WORKSPACE}" />
 			<property name="sdbtask_path" value="${SCRIPT_DIR}/ant-sdbtask" />
 			<property name="deploy_dir" value="${deploy_dir}" />
-			<property name="svn_version" value="${svn_version}" />
 		</ant>
 	</target>
 
@@ -67,7 +42,6 @@
 			<property name="testcases_dir" value="${testcases_dir}/drivers_testcases" />
 			<property name="deploy_dir" value="${deploy_dir}" />
 			<property name="driver_dir" value="${WORKSPACE}/release/driver" />
-			<property name="svn_version" value="${svn_version}" />
 		</ant>
 	</target>
 

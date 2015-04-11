@@ -5,7 +5,6 @@
 		${WORKSPACE} from build-test.xml
 		${sdbtask_path} from build-test.xml
 		${deploy_dir} from build-test.xml
-		${svn_version} from build-test.xml
 	@Invocation:
 		NULL
 -->
@@ -85,7 +84,6 @@
 		<sdbTime beginTime="${sdbtasks_jar_begintime}" endTime="${sdbtasks_jar_endtime}" output="sdbtasks_jar_time" />
 		<echo message="**************************************************************************************************************************************************************" />
 		<echo level="info" message="The machine which is compiled ant-sdbtasks.jar is &lt;${os.arch}&gt; architecture and &lt;${os.name}&gt; operating system,so use &lt;${jdk_name}&gt;." />
-		<echo level="info" message="The ant-sdbtasks.jar's svn version is &lt;${svn_version}&gt;." />
 		<echo level="info" message="The ant-sdbtasks.jar compilation project began at &lt;${sdbtasks_jar_begintime}&gt;, end at &lt;${sdbtasks_jar_endtime}&gt;,total spending ${sdbtasks_jar_time}s." />
 		<echo message="**************************************************************************************************************************************************************" />
 	</target>
