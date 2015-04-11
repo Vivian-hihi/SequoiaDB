@@ -1383,6 +1383,62 @@ namespace engine
       goto done ;
    }
 
+   INT32 _omAgentNodeMgr::getOptions( const CHAR *arg1,
+                                      bson::BSONObj &options )
+   {
+      INT32 rc = SDB_OK ;
+      const CHAR *pSvcName = _getSvcNameFromArg( arg1 ) ;
+      CHAR  cfgPath[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
+      CHAR  cfgFile[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
+      pmdOptionsCB nodeOptions ;
+      BOOLEAN hasLock = FALSE ;
+
+      rc = utilBuildFullPath( sdbGetOMAgentOptions()->getLocalCfgPath(),
+                              pSvcName, OSS_MAX_PATHSIZE, cfgPath ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Build config path for service[%s] failed, rc: %d",
+                 pSvcName, rc ) ;
+         goto error ;
+      }
+
+      rc = utilBuildFullPath( cfgPath, PMD_DFT_CONF, OSS_MAX_PATHSIZE,
+                              cfgFile ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Build config file for service[%s] failed, rc: %d",
+                 pSvcName, rc ) ;
+         goto error ;
+      }
+
+      lockBucket( pSvcName ) ;
+      hasLock = TRUE ;
+
+      rc = nodeOptions.initFromFile( cfgFile, FALSE ) ;
+      if ( SDB_OK != rc )
+      {
+         if ( SDB_FNE == rc )
+         {
+            rc = SDBCM_NODE_NOTEXISTED ;
+         }
+         else
+         {
+            PD_LOG( PDERROR, "Extract node[%s] config failed, rc: %d",
+                    pSvcName, rc ) ;
+         }
+         goto error ;
+      }
+
+      nodeOptions.toBSON( options ) ;
+   done:
+      if ( hasLock )
+      {
+         releaseBucket( pSvcName ) ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
 }
 
 

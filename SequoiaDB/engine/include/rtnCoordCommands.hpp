@@ -818,6 +818,20 @@ namespace engine
                              pmdEDUCB *cb,
                              INT64 &contextID,
                              rtnContextBuf *buf ) ;
+   private:
+      INT32 _createNode( MsgHeader *pMsg,
+                         pmdEDUCB *cb,
+                         INT64 &contextID,
+                         rtnContextBuf *buf ) ;
+
+      INT32 _attachNode( const BSONObj &obj,
+                         pmdEDUCB *cb ) ;
+
+      INT32 _buildAttachMsg( const BSONObj &conf,
+                             const CHAR *groupName,
+                             const CHAR *host,
+                             CHAR *&buf,
+                             MsgOpQuery *&header ) ;
    };
 
    class rtnCoordCMDRemoveNode : public rtnCoordCommand,
@@ -1292,5 +1306,6 @@ namespace engine
                              INT64 &contextID,
                              rtnContextBuf *buf ) ;
    } ;
+
 }
 #endif

@@ -65,7 +65,8 @@ namespace engine
       SDBMODIFY      = 4,
       SDBRM          = 5,
       SDBSTARTALL    = 6,
-      SDBSTOPALL     = 7
+      SDBSTOPALL     = 7,
+      SDBGETCONF     = 8,
    } ;
 
    /*

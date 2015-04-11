@@ -55,10 +55,11 @@ namespace engine
    INT32 rtnRemoteExec ( SINT32 remoCode,
                          const CHAR * hostname,
                          SINT32 *retCode,
-                         BSONObj *arg1,
-                         BSONObj *arg2,
-                         BSONObj *arg3,
-                         BSONObj *arg4 )
+                         const BSONObj *arg1,
+                         const BSONObj *arg2,
+                         const BSONObj *arg3,
+                         const BSONObj *arg4,
+                         std::vector<BSONObj> *retObjs )
    {
       SDB_ASSERT ( retCode && hostname , "Invalid input" ) ;
       INT32 rc = SDB_OK ;
@@ -210,13 +211,16 @@ namespace engine
 
       // process reply
       {
-         vector<BSONObj> objList ;
          SINT64 contextID  = 0 ;
          SINT32 startFrom = 0 ;
          SINT32 numReturned = 0 ;
+         vector<BSONObj> objLst ;
+         vector<BSONObj> *lstPtr = NULL == retObjs ?
+                                   &objLst : retObjs ;
+        
          // extract message
          rc = msgExtractReply ( pReceiveBuffer, retCode, &contextID,
-                                &startFrom, &numReturned, objList ) ;
+                                &startFrom, &numReturned, *lstPtr ) ;
          if ( rc )
          {
             PD_LOG ( PDERROR, "Failed to extract cm reply message, rc=%d",
@@ -225,10 +229,10 @@ namespace engine
          }
          SDB_ASSERT( contextID == -1, "Context id must be invalid" ) ;
 
-         for ( UINT32 i = 0 ; i < objList.size() ; ++i )
+         for ( UINT32 i = 0 ; i < lstPtr->size() ; ++i )
          {
             PD_LOG( PDEVENT, "RemoteExec recv obj: %s",
-                    objList[i].toString().c_str() ) ;
+                    (*lstPtr)[i].toString().c_str() ) ;
          }
       }
 
@@ -244,6 +248,10 @@ namespace engine
       PD_TRACE_EXITRC ( SDB_REMOTEEXEC, rc ) ;
       return rc ;
    error:
+      if ( NULL != retObjs )
+      {
+         retObjs->clear() ;
+      }
       goto done ;
    }
 

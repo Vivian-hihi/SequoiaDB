@@ -8295,3 +8295,108 @@ error:
    goto done ;
 }
 
+SDB_EXPORT INT32 sdbDetachNode( sdbReplicaGroupHandle cHandle,
+                                const CHAR *hostName,
+                                const CHAR *serviceName,
+                                const bson *options )
+{
+   INT32 rc = SDB_OK ;
+   BOOLEAN bsoninit = FALSE ;
+   BOOLEAN result = FALSE ;
+   bson obj ;
+   sdbRGStruct *rg = (sdbRGStruct*)cHandle ;
+
+   HANDLE_CHECK( cHandle, rg, SDB_HANDLE_TYPE_REPLICAGROUP ) ;
+   BSON_INIT( obj ) ;
+   if ( NULL == hostName || NULL == serviceName )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   BSON_APPEND( obj, FIELD_NAME_GROUPNAME, rg->_replicaGroupName, string ) ;
+   BSON_APPEND( obj, FIELD_NAME_HOST, hostName, string ) ;
+   BSON_APPEND( obj, PMD_OPTION_SVCNAME, serviceName, string ) ;
+   BSON_APPEND( obj, FIELD_NAME_ONLY_DETACH, 1, bool ) ;
+   if ( NULL != options )
+   {
+      bson_iterator it ;
+      bson_iterator_init ( &it, options ) ;
+      while ( BSON_EOO != bson_iterator_next ( &it ) )
+      {
+         bson_append_element( &obj, NULL, &it ) ;
+      }
+   }
+   BSON_FINISH( obj ) ;
+
+   rc = _runCommand ( rg->_connection, rg->_sock, &rg->_pSendBuffer,
+                      &rg->_sendBufferSize,
+                      &rg->_pReceiveBuffer,
+                      &rg->_receiveBufferSize,
+                      rg->_endianConvert,
+                      CMD_ADMIN_PREFIX CMD_NAME_REMOVE_NODE, &result, &obj,
+                      NULL, NULL, NULL ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+done:
+   BSON_DESTROY( obj ) ;
+   return rc ;
+error:
+   goto done ;
+}
+
+SDB_EXPORT INT32 sdbAttachNode( sdbReplicaGroupHandle cHandle,
+                                const CHAR *hostName,
+                                const CHAR *serviceName,
+                                const bson *options )
+{
+   INT32 rc = SDB_OK ;
+   BOOLEAN bsoninit = FALSE ;
+   BOOLEAN result = FALSE ;
+   bson obj ;
+   sdbRGStruct *rg = (sdbRGStruct*)cHandle ;
+
+   HANDLE_CHECK( cHandle, rg, SDB_HANDLE_TYPE_REPLICAGROUP ) ;
+   BSON_INIT( obj ) ;
+   if ( NULL == hostName || NULL == serviceName )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   BSON_APPEND( obj, FIELD_NAME_GROUPNAME, rg->_replicaGroupName, string ) ;
+   BSON_APPEND( obj, FIELD_NAME_HOST, hostName, string ) ;
+   BSON_APPEND( obj, PMD_OPTION_SVCNAME, serviceName, string ) ;
+   BSON_APPEND( obj, FIELD_NAME_ONLY_ATTACH, 1, bool ) ;
+   if ( NULL != options )
+   {
+      bson_iterator it ;
+      bson_iterator_init ( &it, options ) ;
+      while ( BSON_EOO != bson_iterator_next ( &it ) )
+      {
+         bson_append_element( &obj, NULL, &it ) ;
+      }
+   }
+   BSON_FINISH( obj ) ;
+
+   rc = _runCommand ( rg->_connection, rg->_sock, &rg->_pSendBuffer,
+                      &rg->_sendBufferSize,
+                      &rg->_pReceiveBuffer,
+                      &rg->_receiveBufferSize,
+                      rg->_endianConvert,
+                      CMD_ADMIN_PREFIX CMD_NAME_CREATE_NODE,
+                      &result, &obj,
+                      NULL, NULL, NULL ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+done:
+   BSON_DESTROY( obj ) ;
+   return rc ;
+error:
+   goto done ;
+}
+

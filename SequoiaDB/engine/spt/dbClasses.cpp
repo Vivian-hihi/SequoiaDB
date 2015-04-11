@@ -3455,9 +3455,120 @@ static JSBool rg_reelect ( JSContext *cx, uintN argc, jsval *vp )
    JS_SET_RVAL ( cx , vp , JSVAL_VOID ) ;
 done:
    SAFE_BSON_DISPOSE( options ) ;
+   PD_TRACE_EXIT( SDB_RG_REELECT ) ;
    return ret ;
 error :
    TRY_REPORT ( cx , "RG.reelect(): false" ) ;
+   goto done ;
+}
+
+// PD_TRACE_DECLARE_FUNCTION ( SDB_RG_DETACH, "rg_detach" )
+static JSBool rg_detach( JSContext *cx, uintN argc, jsval *vp )
+{
+   PD_TRACE_ENTRY( SDB_RG_DETACH ) ;
+   JSBool ret = JS_TRUE ;
+   INT32 rc = SDB_OK ;
+   sdbReplicaGroupHandle *rg = NULL ;
+   JSString *jsHost = NULL ;
+   JSString *jsSvc = NULL ;
+   JSObject *jsOption = NULL ;
+   CHAR *host = NULL ;
+   CHAR *svc = NULL ;
+   bson *options = NULL ;
+
+   ret = JS_ConvertArguments ( cx , argc , JS_ARGV ( cx , vp ) ,
+                               "SS/o", &jsHost, &jsSvc, &jsOption ) ;
+   REPORT ( ret, "RG.detach(): wrong arguments" ) ;
+
+   if ( NULL != jsOption )
+   {
+      ret = objToBson ( cx , jsOption , &options ) ;
+      VERIFY ( ret ) ;
+   }
+
+   host = (CHAR *) JS_EncodeString ( cx , jsHost ) ;
+   VERIFY ( host ) ;
+
+   svc = (CHAR *) JS_EncodeString ( cx , jsSvc ) ;
+   VERIFY ( jsSvc ) ;
+
+   if ( NULL != jsOption )
+   {
+      ret = objToBson ( cx , jsOption, &options ) ;
+      VERIFY ( ret ) ;
+   }
+
+   rg = (sdbReplicaGroupHandle *)JS_GetPrivate ( cx, JS_THIS_OBJECT ( cx, vp ) ) ;
+   REPORT ( rg, "RG.detach(): no replica group handle" ) ;
+
+   rc = sdbDetachNode( *rg, host, svc, options ) ;
+   REPORT_RC ( SDB_OK == rc, "RG.detach()", rc ) ;
+
+   JS_SET_RVAL ( cx , vp , JSVAL_VOID ) ;
+done:
+   SAFE_BSON_DISPOSE( options ) ;
+   SAFE_JS_FREE ( cx , host ) ;
+   SAFE_JS_FREE ( cx , svc ) ;
+   PD_TRACE_EXIT( SDB_RG_DETACH ) ;
+   return ret ;
+error :
+   TRY_REPORT ( cx , "RG.detach(): false" ) ;
+   ret = JS_FALSE ;
+   goto done ;
+}
+
+// PD_TRACE_DECLARE_FUNCTION ( SDB_RG_ATTACH, "rg_attach" )
+static JSBool rg_attach( JSContext *cx, uintN argc, jsval *vp )
+{
+   PD_TRACE_ENTRY( SDB_RG_ATTACH ) ;
+   JSBool ret = JS_TRUE ;
+   INT32 rc = SDB_OK ;
+   sdbReplicaGroupHandle *rg = NULL ;
+   JSString *jsHost = NULL ;
+   JSString *jsSvc = NULL ;
+   JSObject *jsOption = NULL ;
+   CHAR *host = NULL ;
+   CHAR *svc = NULL ;
+   bson *options = NULL ;
+
+   ret = JS_ConvertArguments ( cx , argc , JS_ARGV ( cx , vp ) ,
+                               "SS/o", &jsHost, &jsSvc, &jsOption ) ;
+   REPORT ( ret, "RG.attach(): wrong arguments" ) ;
+
+   if ( NULL != jsOption )
+   {
+      ret = objToBson ( cx , jsOption , &options ) ;
+      VERIFY ( ret ) ;
+   }
+
+   host = (CHAR *) JS_EncodeString ( cx , jsHost ) ;
+   VERIFY ( host ) ;
+
+   svc = (CHAR *) JS_EncodeString ( cx , jsSvc ) ;
+   VERIFY ( jsSvc ) ;
+
+   if ( NULL != jsOption )
+   {
+      ret = objToBson ( cx , jsOption, &options ) ;
+      VERIFY ( ret ) ;
+   }
+
+   rg = (sdbReplicaGroupHandle *)JS_GetPrivate ( cx, JS_THIS_OBJECT ( cx, vp ) ) ;
+   REPORT ( rg, "RG.attach(): no replica group handle" ) ;
+
+   rc = sdbAttachNode( *rg, host, svc, options ) ;
+   REPORT_RC ( SDB_OK == rc, "RG.attach()", rc ) ;
+
+   JS_SET_RVAL ( cx , vp , JSVAL_VOID ) ;
+done:
+   SAFE_BSON_DISPOSE( options ) ;
+   SAFE_JS_FREE ( cx , host ) ;
+   SAFE_JS_FREE ( cx , svc ) ;
+   PD_TRACE_EXIT( SDB_RG_ATTACH ) ;
+   return ret ;
+error :
+   TRY_REPORT ( cx , "RG.detach(): false" ) ;
+   ret = JS_FALSE ;
    goto done ;
 }
 
@@ -3470,6 +3581,8 @@ static JSFunctionSpec rg_functions[] = {
    JS_FS ( "removeNode", rg_remove_node, 0 , 0 ) ,
    JS_FS ( "getNode" , rg_get_node , 1 , 0 ) ,
    JS_FS ( "reelect", rg_reelect, 1, 0 ),
+   JS_FS ( "detach", rg_detach, 2, 0 ),
+   JS_FS ( "attach", rg_attach, 2, 0 ),
    JS_FS_END
 } ;
 

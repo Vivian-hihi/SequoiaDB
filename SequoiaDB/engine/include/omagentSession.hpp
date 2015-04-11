@@ -86,7 +86,9 @@ namespace engine
 
          INT32 _reply ( MsgOpReply *header, const CHAR *pBody,
                         INT32 bodyLen ) ;
-         INT32 _reply ( INT32 flags, MsgHeader *pSrcReqMsg ) ;
+         INT32 _reply ( INT32 flags, MsgHeader *pSrcReqMsg,
+                        const CHAR *body = NULL,
+                        const INT32 *bodyLen = NULL ) ;
 
          INT32 _buildReplyHeader( MsgHeader *pMsg ) ;
 

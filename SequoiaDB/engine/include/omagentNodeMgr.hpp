@@ -36,6 +36,7 @@
 #include "omagentDef.hpp"
 #include "pmdDaemon.hpp"
 #include "rtnBackgroundJobBase.hpp"
+#include "../bson/bson.hpp"
 
 #include <deque>
 #include <string>
@@ -200,6 +201,9 @@ namespace engine
          INT32    mdyANode( const CHAR *arg1 ) ;
          INT32    startANode( const CHAR *arg1 ) ;
          INT32    stopANode( const CHAR *arg1 ) ;
+
+         INT32    getOptions( const CHAR *arg1,
+                              bson::BSONObj &options ) ;
 
       public:
 

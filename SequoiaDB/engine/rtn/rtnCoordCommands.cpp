@@ -3391,14 +3391,236 @@ namespace engine
       return rc;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDCTN_EXE, "rtnCoordCMDCreateNode::execute" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDCTN_EXEC, "rtnCoordCMDCreateNode::execute" )
    INT32 rtnCoordCMDCreateNode::execute( MsgHeader *pMsg,
                                          pmdEDUCB *cb,
                                          INT64 &contextID,
                                          rtnContextBuf *buf )
    {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_RTNCOCMDCTN_EXEC ) ;
+      INT32 flag = 0 ;
+      CHAR *pCMDName = NULL ;
+      SINT64 numToSkip = 0 ;
+      SINT64 numToReturn = 0 ;
+      CHAR *pQuery = NULL ;
+      CHAR *pFieldSelector = NULL ;
+      CHAR *pOrderBy = NULL ;
+      CHAR *pHint = NULL ;
+      BOOLEAN onlyAttach = FALSE ;
+      BSONObj query ;
+
+      rc = msgExtractQuery( (CHAR*)pMsg, &flag, &pCMDName, &numToSkip,
+                            &numToReturn, &pQuery, &pFieldSelector,
+                            &pOrderBy, &pHint );
+      if ( rc != SDB_OK )
+      {
+         PD_LOG ( PDERROR,
+                  "failed to parse create node request(rc=%d)",
+                  rc );
+         goto error ;
+      }
+
+      try
+      {
+         query = BSONObj( pQuery ) ;
+         BSONElement e = query.getField( FIELD_NAME_ONLY_ATTACH ) ;
+         if ( e.eoo() )
+         {
+            onlyAttach = FALSE ;
+         }
+         else if ( Bool == e.type() )
+         {
+            onlyAttach = e.Bool() ;
+         }
+         else
+         {
+            PD_LOG( PDERROR, "invalid type of \"OnlyAttach\" in msg:%s",
+                    query.toString( FALSE, TRUE ).c_str() ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG( PDERROR, "unexpected err happened:%s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      if ( !onlyAttach )
+      {
+         rc = _createNode( pMsg, cb, contextID, buf ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to create node:%d", rc ) ;
+            goto error ;
+         }
+      }
+      else
+      {
+         rc = _attachNode( query, cb ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to attach node:%d", rc ) ;
+            goto error ;
+         }
+      }
+   done:
+      PD_TRACE_EXITRC( SDB_RTNCOCMDCTN_EXEC, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDCTN__ATTACHNODE, "rtnCoordCMDCreateNode::_attachNode" )
+   INT32 rtnCoordCMDCreateNode::_attachNode( const BSONObj &info,
+                                             pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_RTNCOCMDCTN__ATTACHNODE ) ;
+      BSONElement hostEle ;
+      BSONElement gpEle ;
+      std::vector<BSONObj> objs ;
+      BSONObj nodeConf ;
+      SINT32 retCode = SDB_OK ;
+      CHAR *buf = NULL ;
+      MsgOpQuery *header = NULL ;
+      BOOLEAN onCata = FALSE ;
+
+      try
+      {
+         hostEle = info.getField( FIELD_NAME_HOST ) ;
+         if ( hostEle.eoo() || String != hostEle.type() )
+         {
+            PD_LOG( PDERROR, "invalid type of \"HostName\" in msg:%s",
+                    info.toString( FALSE, TRUE ).c_str() ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+
+         gpEle = info.getField( FIELD_NAME_GROUPNAME ) ;
+         if ( String != gpEle.type() )
+         {
+            PD_LOG( PDERROR, "invalid type of \"GroupName\" in msg:%s",
+                    info.toString( FALSE, TRUE ).c_str() ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG( PDERROR, "unexpected error happened:%s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      rc = rtnRemoteExec( SDBGETCONF, hostEle.valuestr(),
+                          &retCode, &info,
+                          NULL, NULL, NULL, &objs ) ;
+      if ( SDB_OK != rc ||
+           SDB_OK != retCode )
+      {
+         PD_LOG( PDERROR, "failed to get conf of node, "
+                 "rc:%d, retCode:%d", rc, retCode ) ;
+         goto error ;
+      }
+      else if ( 1 != objs.size() )
+      {
+         PD_LOG( PDERROR, "invalid objs's size:%d", objs.size() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      nodeConf = objs.at( 0 ) ;
+      rc = _buildAttachMsg( nodeConf, gpEle.valuestr(),
+                            hostEle.valuestr(), buf, header ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to build msg:%d", rc ) ;
+         goto error ;
+      }
+
+      rc = executeOnCataGroup( &( header->header ), cb, TRUE ) ;
+      if ( rc != SDB_OK )
+      {
+         PD_LOG( PDERROR, "failed to execute on catalog:%d", rc ) ;
+         goto error ;
+      }
+      onCata = TRUE ;
+
+      rc = rtnRemoteExec ( SDBSTART, hostEle.valuestr(),
+                           &retCode, &info ) ;
+      if ( SDB_OK != rc ||
+           SDB_OK != retCode )
+      {
+         PD_LOG( PDERROR, "failed to get conf of node, "
+                 "rc:%d, retCode:%d", rc, retCode ) ;
+         goto error ;
+      }
+   done:
+      PD_TRACE_EXITRC( SDB_RTNCOCMDCTN__ATTACHNODE, rc ) ;
+      SAFE_OSS_FREE( buf ) ;
+      return rc ;
+   error:
+      if ( onCata )
+      {
+         PD_LOG( PDEVENT, "begin to rollback info on catalog" ) ;
+         header->header.opCode = MSG_CAT_DEL_NODE_REQ ;
+         INT32 rrc = executeOnCataGroup( &( header->header ), cb, TRUE ) ;
+         if ( SDB_OK != rrc )
+         {
+            PD_LOG( PDERROR, "failed to rollback on catalog:%d", rc ) ;
+         }
+         else
+         {
+            PD_LOG( PDEVENT, "rollback done on catalog" ) ;
+         }
+      }
+      goto done ;
+   }
+
+   INT32 rtnCoordCMDCreateNode::_buildAttachMsg( const BSONObj &conf,
+                                                 const CHAR *gpName,
+                                                 const CHAR *host,
+                                                 CHAR *&buf,
+                                                 MsgOpQuery *&header )
+   {
+      INT32 rc = SDB_OK ;
+      INT32 bufSize = 0 ;
+      BSONObjBuilder builder ;
+      BSONObj obj ;
+
+      builder.append( FIELD_NAME_GROUPNAME, gpName ) ;
+      builder.append( FIELD_NAME_HOST, host ) ;
+      builder.appendElements( conf ) ;
+      obj = builder.obj() ;
+      rc = msgBuildQueryMsg( &buf, &bufSize,
+                             CMD_ADMIN_PREFIX CMD_NAME_CREATE_NODE,
+                             0, 0, 0, -1,
+                             &obj ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to build msg:%d", rc ) ;
+         goto error ;
+      }
+
+      header = ( MsgOpQuery * )buf ;
+      header->header.opCode = MSG_CAT_CREATE_NODE_REQ ;
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDCTN__CRTNODE, "rtnCoordCMDCreateNode::_createNode" )
+   INT32 rtnCoordCMDCreateNode::_createNode( MsgHeader *pMsg,
+                                             pmdEDUCB *cb,
+                                             INT64 &contextID,
+                                             rtnContextBuf *buf )
+   {
       INT32 rc                         = SDB_OK;
-      PD_TRACE_ENTRY ( SDB_RTNCOCMDCTN_EXE ) ;
+      PD_TRACE_ENTRY ( SDB_RTNCOCMDCTN__CRTNODE ) ;
 
       // fill default-reply(create group success)
       contextID                        = -1 ;
@@ -3551,7 +3773,7 @@ namespace engine
          break ;
       }while ( FALSE ) ;
 
-      PD_TRACE_EXITRC ( SDB_RTNCOCMDCTN_EXE, rc ) ;
+      PD_TRACE_EXITRC ( SDB_RTNCOCMDCTN__CRTNODE, rc ) ;
       return rc ;
    }
 
@@ -3574,6 +3796,8 @@ namespace engine
 
       CHAR *pQuery = NULL ;
       BSONObj rInfo ;
+
+      BOOLEAN onlyDetach = FALSE ;
 
       forward = (MsgOpQuery *)pMsg ;
       forward->header.opCode = MSG_CAT_DEL_NODE_REQ ;
@@ -3619,6 +3843,23 @@ namespace engine
             goto error ;
          }
          srv = ele.String() ;
+
+         ele = rInfo.getField( FIELD_NAME_ONLY_DETACH ) ;
+         if ( ele.eoo() )
+         {
+            onlyDetach = FALSE ;
+         }
+         else if ( Bool == ele.type() )
+         {
+            onlyDetach = ele.Bool() ; 
+         }
+         else
+         {
+            PD_LOG( PDERROR, "unexpected type(%d) of \"OnlyDetach\""
+                    "it should be bool", ele.type() ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
       }
       catch ( std::exception &e )
       {
@@ -3661,7 +3902,7 @@ namespace engine
          }
       }
 
-      // remove node by cm
+      // notify cm to stop and remove node 
       {
          SINT32 retCode;
          INT32 rrc = SDB_OK ;
@@ -3675,14 +3916,17 @@ namespace engine
             rc = SDB_CATA_FAILED_TO_CLEANUP ;
          }
 
-         rrc = rtnRemoteExec ( SDBRM, host.c_str(),
-                               &retCode, &rInfo ) ;
-         if ( SDB_OK != rrc )
+         if ( !onlyDetach )
          {
-            PD_LOG( PDERROR,
-                    "remote node execute(configure) failed(rc=%d)",
-                    rrc );
-            rc = SDB_CATA_FAILED_TO_CLEANUP ;
+            rrc = rtnRemoteExec ( SDBRM, host.c_str(),
+                                  &retCode, &rInfo ) ;
+            if ( SDB_OK != rrc )
+            {
+               PD_LOG( PDERROR,
+                       "remote node execute(configure) failed(rc=%d)",
+                       rrc );
+               rc = SDB_CATA_FAILED_TO_CLEANUP ;
+             }
          }
       }
 

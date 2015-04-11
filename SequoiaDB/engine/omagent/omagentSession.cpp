@@ -172,33 +172,39 @@ namespace engine
       goto done ;
    }
 
-   INT32 _omaSession::_reply( INT32 flags, MsgHeader * pSrcReqMsg )
+   INT32 _omaSession::_reply( INT32 flags, MsgHeader * pSrcReqMsg,
+                              const CHAR *pBody, const INT32 *bodyLen )
    {
-      const CHAR *pBody = NULL ;
-      INT32 bodyLen     = 0 ;
+      const CHAR *body = pBody ;
+      INT32 bLen = NULL == bodyLen ?
+                   0 : *bodyLen ;
 
       //Build reply message
       _replyHeader.header.opCode = MAKE_REPLY_TYPE( pSrcReqMsg->opCode ) ;
-      _replyHeader.header.messageLength = sizeof ( MsgOpReply ) ;
+      _replyHeader.header.messageLength = sizeof ( MsgOpReply ) + bLen ; 
       _replyHeader.header.requestID = pSrcReqMsg->requestID ;
       _replyHeader.header.TID = pSrcReqMsg->TID ;
       _replyHeader.header.routeID.value = 0 ;
       _replyHeader.flags = flags ;
       _replyHeader.contextID = -1 ;
-      _replyHeader.numReturned = 0 ;
+
+      /// when we have more than one record to return,
+      /// rewrite here.
+      _replyHeader.numReturned = ( sizeof ( MsgOpReply ) < _replyHeader.header.messageLength )
+                                 ?  1 : 0 ;
       _replyHeader.startFrom = 0 ;
 
       if ( flags )
       {
          _errorInfo = utilGetErrorBson( flags, _pEDUCB->getInfo(
                                         EDU_INFO_ERROR ) ) ;
-         bodyLen  = _errorInfo.objsize() ;
-         pBody    = _errorInfo.objdata() ;
-         _replyHeader.header.messageLength += bodyLen ;
+         bLen  = _errorInfo.objsize() ;
+         body    = _errorInfo.objdata() ;
+         _replyHeader.header.messageLength += bLen ;
          _replyHeader.numReturned = 1 ;
       }
 
-      return _reply( &_replyHeader, pBody, bodyLen ) ;
+      return _reply( &_replyHeader, body, bLen ) ;
    }
 
    INT32 _omaSession::_onAuth( const NET_HANDLE & handle, MsgHeader * pMsg )
@@ -248,6 +254,9 @@ namespace engine
       CHAR *arg2 = NULL ;
       CHAR *arg3 = NULL ;
       CHAR *arg4 = NULL ;
+      BSONObj obj ;
+      const CHAR *body = NULL ;
+      INT32 bodyLen = 0 ;
 
       if ( sdbGetOMAgentOptions()->isStandAlone() )
       {
@@ -295,6 +304,16 @@ namespace engine
          case SDBSTOPALL :
             rc = _pNodeMgr->stopAllNodes() ;
             break ;
+         case SDBGETCONF :
+         {
+            rc = _pNodeMgr->getOptions( arg1, obj ) ;
+            if ( SDB_OK == rc && !obj.isEmpty() )
+            {
+               body = obj.objdata() ;
+               bodyLen = obj.objsize() ;
+            }
+            break ;
+         }
          default :
             PD_LOG( PDERROR, "Unknow remote code[%d] in session[%s]",
                     pCMReq->remoCode, sessionName() ) ;
@@ -309,7 +328,7 @@ namespace engine
       }
 
    done:
-      return _reply( rc, pMsg ) ;
+      return _reply( rc, pMsg, body, &bodyLen ) ;
    }
 
    INT32 _omaSession::_onOMAgentReq( const NET_HANDLE &handle,

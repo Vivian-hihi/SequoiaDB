@@ -48,10 +48,11 @@ namespace engine
    INT32 rtnRemoteExec ( SINT32 remoCode,
                          const CHAR * hostname,
                          SINT32 *retCode,
-                         BSONObj *arg1 = NULL,
-                         BSONObj *arg2 = NULL,
-                         BSONObj *arg3 = NULL,
-                         BSONObj *arg4 = NULL ) ;
+                         const BSONObj *arg1 = NULL,
+                         const BSONObj *arg2 = NULL,
+                         const BSONObj *arg3 = NULL,
+                         const BSONObj *arg4 = NULL,
+                         std::vector<BSONObj> *retObjs = NULL ) ;
 
 }
 

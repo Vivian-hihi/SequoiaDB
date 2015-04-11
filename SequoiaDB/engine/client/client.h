@@ -2143,6 +2143,40 @@ SDB_EXPORT INT32 sdbForceStepUp( sdbConnectionHandle cHandle,
 SDB_EXPORT INT32 sdbTruncateCollection( sdbConnectionHandle cHandle,
                                         const CHAR *fullName ) ;
 
+/** \fn INT32 sdbDetachNode( sdbReplicaGroupHandle cHandle,
+ *                           const CHAR *hostName,
+ *                           const CHAR *serviceName,
+ *                           const bson *options )
+ *  \brief detach a node from the group
+ *  \param [in] cHandle The handle of group.
+ *  \param [in] hostName The host name of node.
+ *  \param [in] serviceName The service name of node.
+ *  \param [in] optoins The options of detach.
+ *  \retval SDB_OK Operation Success
+ *  \retval Others Operation Fail
+ */
+SDB_EXPORT INT32 sdbDetachNode( sdbReplicaGroupHandle cHandle,
+                                const CHAR *hostName,
+                                const CHAR *serviceName,
+                                const bson *options ) ;
+
+/** \fn INT32 sdbAttachNode( sdbReplicaGroupHandle cHandle,
+ *                           const CHAR *hostName,
+ *                           const CHAR *serviceName,
+ *                           const bson *options )
+ *  \brief attach a node to the group
+ *  \param [in] cHandle The handle of group.
+ *  \param [in] hostName The host name of node.
+ *  \param [in] serviceName The service name of node.
+ *  \param [in] optoins The options of attach.
+ *  \retval SDB_OK Operation Success
+ *  \retval Others Operation Fail
+ */
+SDB_EXPORT INT32 sdbAttachNode( sdbReplicaGroupHandle cHandle,
+                                const CHAR *hostName,
+                                const CHAR *serviceName,
+                                const bson *options ) ;
+
 SDB_EXTERN_C_END
 #endif
 
