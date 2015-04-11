@@ -165,6 +165,7 @@
 					<!-- <property name="test.host.NAME" value="${test_machine_no2}" /> -->
 					<property name="parallel.count" value="0" />
 					<property name="test.log" value="${test.log}" />
+					<property name="test-type-list" value="${test-type-list}" />
 				</ant>
 			</sequential>
 		</for>

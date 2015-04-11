@@ -302,50 +302,19 @@
 		<property name="test.log.path" value="${test.reports.path}/${test.environment}-${DEPLOY_WILDCARD}-${host.NAME}-${current.time.log}-${BUILD_NUMBER}" />
 		<property name="test.log" value="${test.environment}-${DEPLOY_WILDCARD}-${host.NAME}-${current.time.log}-${BUILD_NUMBER}" />
 
-		<echo message="Begin to test basic tests under parallel env on a machine..." />
+		<property name="test_list1" value="${test-type-list}_list1" />
+		<property name="test_list2" value="${test-type-list}_list2" />
+		<property name="test_list3" value="${test-type-list}_list3" />
+		<property name="test_list4" value="${test-type-list}_list4" />
+		<property name="test_list5" value="${test-type-list}_list5" />
+		<property name="test_list6" value="${test-type-list}_list6" />
 		<if>
 		   	<equals arg1="${os.arch}" arg2="amd64" />
 			<then>
 				<parallel>
-					<for list="${test-type-list}" param="Test-Type">
-						<sequential>
-							<ant antfile="${WORKSPACE}/sequoiadb/misc/ci/test-type.xml" dir="." inheritAll="false">
-								<property name="deploy.case.fullname" value="${deploy.case.fullname}" />
-								<property name="test.reports.path" value="${test.reports.path}" />
-								<property name="Test-Type" value="@{Test-Type}" />
-								<property name="DEPLOY_WILDCARD" value="unparallel" />
-								<property name="parallel.flag" value="unparallel" />
-								<property name="WORKSPACE" value="${WORKSPACE}" />
-								<property name="ci.script.file.path" value="${ci.script.file.path}" />
-								<!-- <property name="test.host.NAME" value="${test_machine_no2}" /> -->
-								<property name="parallel.count" value="0" />
-								<property name="test.log" value="${test.log}" />
-							</ant>
-						</sequential>
-					</for>
-					<for list="${test-type-list}" param="Test-Type">
-						<sequential>
-							<ant antfile="${WORKSPACE}/sequoiadb/misc/ci/test-type.xml" dir="." inheritAll="false">
-								<property name="deploy.case.fullname" value="${deploy.case.fullname}" />
-								<property name="test.reports.path" value="${test.reports.path}" />
-								<property name="Test-Type" value="@{Test-Type}" />
-								<property name="DEPLOY_WILDCARD" value="unparallel" />
-								<property name="parallel.flag" value="unparallel" />
-								<property name="WORKSPACE" value="${WORKSPACE}" />
-								<property name="ci.script.file.path" value="${ci.script.file.path}" />
-								<!-- <property name="test.host.NAME" value="${test_machine_no2}" /> -->
-								<property name="parallel.count" value="0" />
-								<property name="test.log" value="${test.log}" />
-							</ant>
-						</sequential>
-					</for>
-				</parallel>
-			</then>
-			<else>
-				<parallel>
-					<sdbtest host="${test_machine_no2}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${testcase.path}/basic_testcases/reports" masterreports="${test.reports.path}" >
-						<param name="basic.testcase.path" value="${testcase.path}/basic_testcases" />
-						<param name="includes.dir.patterns" value="*" />
+					<sdbtest host="${test_machine_no2}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${testcase.path}/${test-type-list}_testcases/reports" masterreports="${test.reports.path}" >
+						<param name="basic.testcase.path" value="${testcase.path}/${test-type-list}_testcases" />
+						<param name="includes.dir.patterns" value="${test_list1},${test_list2},${test_list3}" />
 						<param name="excludes.dir.patterns" value="vote" />
 						<param name="deploy.case.fullname" value="${deploy.case.fullname}" />
 						<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
@@ -355,9 +324,63 @@
 						<param name="parallel.count" value="2" />
 						<param name="test.log" value="${test.log}" />
 					</sdbtest>
-					<sdbtest host="${test_machine_no2}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${testcase.path}/basic_testcases/reports" masterreports="${test.reports.path}" >
-						<param name="basic.testcase.path" value="${testcase.path}/basic_testcases" />
-						<param name="includes.dir.patterns" value="*" />
+					<sdbtest host="${test_machine_no3}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${testcase.path}/${test-type-list}_testcases/reports" masterreports="${test.reports.path}" >
+						<param name="basic.testcase.path" value="${testcase.path}/${test-type-list}_testcases" />
+						<param name="includes.dir.patterns" value="${test_list1},${test_list2},${test_list3}" />
+						<param name="excludes.dir.patterns" value="vote" />
+						<param name="deploy.case.fullname" value="${deploy.case.fullname}" />
+						<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
+						<param name="ci.properties.path" value="${test.machine.software.path}/ci.test.properties" />
+						<param name="WORKSPACE" value="${WORKSPACE}" />
+						<param name="ci.script.file.path" value="${ci.script.file.path}" />
+						<param name="parallel.count" value="2" />
+						<param name="test.log" value="${test.log}" />
+					</sdbtest>
+				</parallel>
+				<parallel>
+					<sdbtest host="${test_machine_no5}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${testcase.path}/${test-type-list}_testcases/reports" masterreports="${test.reports.path}" >
+						<param name="basic.testcase.path" value="${testcase.path}/${test-type-list}_testcases" />
+						<param name="includes.dir.patterns" value="${test_list4},${test_list5},${test_list6}" />
+						<param name="excludes.dir.patterns" value="vote" />
+						<param name="deploy.case.fullname" value="${deploy.case.fullname}" />
+						<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
+						<param name="ci.properties.path" value="${test.machine.software.path}/ci.test.properties" />
+						<param name="WORKSPACE" value="${WORKSPACE}" />
+						<param name="ci.script.file.path" value="${ci.script.file.path}" />
+						<param name="parallel.count" value="2" />
+						<param name="test.log" value="${test.log}" />
+					</sdbtest>
+					<sdbtest host="${test_machine_no6}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${testcase.path}/${test-type-list}_testcases/reports" masterreports="${test.reports.path}" >
+						<param name="basic.testcase.path" value="${testcase.path}/${test-type-list}_testcases" />
+						<param name="includes.dir.patterns" value="${test_list4},${test_list5},${test_list6}" />
+						<param name="excludes.dir.patterns" value="vote" />
+						<param name="deploy.case.fullname" value="${deploy.case.fullname}" />
+						<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
+						<param name="ci.properties.path" value="${test.machine.software.path}/ci.test.properties" />
+						<param name="WORKSPACE" value="${WORKSPACE}" />
+						<param name="ci.script.file.path" value="${ci.script.file.path}" />
+						<param name="parallel.count" value="2" />
+						<param name="test.log" value="${test.log}" />
+					</sdbtest>
+				</parallel>
+			</then>
+			<else>
+				<parallel>
+					<sdbtest host="${test_machine_no2}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${testcase.path}/${test-type-list}_testcases/reports" masterreports="${test.reports.path}" >
+						<param name="basic.testcase.path" value="${testcase.path}/${test-type-list}_testcases" />
+						<param name="includes.dir.patterns" value="${test_list1},${test_list2}" />
+						<param name="excludes.dir.patterns" value="vote" />
+						<param name="deploy.case.fullname" value="${deploy.case.fullname}" />
+						<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
+						<param name="ci.properties.path" value="${test.machine.software.path}/ci.test.properties" />
+						<param name="WORKSPACE" value="${WORKSPACE}" />
+						<param name="ci.script.file.path" value="${ci.script.file.path}" />
+						<param name="parallel.count" value="2" />
+						<param name="test.log" value="${test.log}" />
+					</sdbtest>
+					<sdbtest host="${test_machine_no3}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${testcase.path}/${test-type-list}_testcases/reports" masterreports="${test.reports.path}" >
+						<param name="basic.testcase.path" value="${testcase.path}/${test-type-list}_testcases" />
+						<param name="includes.dir.patterns" value="${test_list3}" />
 						<param name="excludes.dir.patterns" value="vote" />
 						<param name="deploy.case.fullname" value="${deploy.case.fullname}" />
 						<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
