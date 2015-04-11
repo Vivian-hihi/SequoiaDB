@@ -49,6 +49,8 @@
 #include "../bson/bson.h"
 #include "ossUtil.hpp"
 
+using namespace bson ;
+
 namespace engine
 {
    class _dmsMBContext ;

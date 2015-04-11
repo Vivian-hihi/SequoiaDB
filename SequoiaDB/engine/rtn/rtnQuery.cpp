@@ -105,10 +105,9 @@ namespace engine
       goto done ;
    }
 
-   static INT32 _rtnParseQueryModify( BSONObj &hint,
+   static INT32 _rtnParseQueryModify( const BSONObj &hint,
                                       rtnQueryModifier** modifier )
    {
-      BSONObjBuilder builder ;
       BSONObjIterator iter( hint );
       BOOLEAN isUpdate = FALSE ;
       BOOLEAN isRemove = FALSE ;
@@ -178,10 +177,6 @@ namespace engine
                goto error ;
             }
          }
-         else
-         {
-            builder.append( elem ) ;
-         }
       }
 
       if ( !isUpdate && !isRemove )
@@ -206,7 +201,6 @@ namespace engine
                   updator.toString().c_str() ) ;
       }
 
-      hint = builder.obj() ;
       *modifier = queryModifier ;
 
    done:

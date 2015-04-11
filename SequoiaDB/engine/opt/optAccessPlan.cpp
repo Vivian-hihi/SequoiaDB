@@ -138,6 +138,7 @@ namespace engine
       PD_TRACE_ENTRY ( SDB__OPTACCPLAN__OPTHINT3 ) ;
       SDB_ASSERT ( !_hint.isEmpty(), "hint can't be empty" ) ;
 
+      BOOLEAN hasError = FALSE ;
       BSONObjIterator it ( _hint ) ;
       PD_LOG ( PDDEBUG, "Hint is provided: %s", _hint.toString().c_str() ) ;
       rc = SDB_RTN_INVALID_HINT ;
@@ -171,18 +172,30 @@ namespace engine
                _sortRequired = TRUE ;
             }
          }
+         else if ( hint.isABSONObj() )
+         {
+            continue ;
+         }
+
          if ( SDB_OK == rc )
          {
             break ;
+         }
+         else
+         {
+            hasError = TRUE ;
          }
       }
 
       // let's check return value
       if ( rc )
       {
-         PD_LOG ( PDWARNING, "Hint is not valid: %s",
-                  _hint.toString().c_str() ) ;
-         _hintFailed = TRUE ;
+         if ( hasError )
+         {
+            PD_LOG ( PDWARNING, "Hint is not valid: %s",
+                     _hint.toString().c_str() ) ;
+            _hintFailed = TRUE ;
+         }
          goto error ;
       }
       PD_LOG ( PDDEBUG, "Hint is successfully applied" ) ;
@@ -440,7 +453,11 @@ namespace engine
          const CHAR *idxName = indexCB.getName() ;
          ossMemcpy( _idxName, idxName, ossStrlen( idxName ) ) ;
          }
-         _matcher.setMatchesAll( detail.matchAll ) ;
+
+         if ( !_matcher.isMatchesAll() && detail.matchAll )
+         {
+            _matcher.setMatchesAll( TRUE ) ;
+         }
       }
 
    done :
@@ -616,9 +633,45 @@ namespace engine
       if ( !_orderBy.shallowEqual ( orderBy ) )
          return FALSE ;
 
-      // hint must be identical
-      if ( !_hint.shallowEqual ( hint ) )
-         return FALSE ;
+      /// hint must compare field by field, and need ignore object field and
+      /// field name
+      BSONObjIterator itr( hint ) ;
+      BSONObjIterator itrSelf( _hint ) ;
+      while( itr.more() )
+      {
+         BSONElement e2 ;
+         BSONElement e1 = itr.next() ;
+         if ( e1.isABSONObj() )
+         {
+            continue ;
+         }
+
+         while( itrSelf.more() )
+         {
+            e2 = itrSelf.next() ;
+            if ( e2.isABSONObj() )
+            {
+               continue ;
+            }
+            break ;
+         }
+
+         if ( !itrSelf.more() ||
+              0 != e1.woCompare( e2, false ) )
+         {
+            return FALSE ;
+         }
+      }
+
+      /// if _hint has other hint field, not the same
+      while( itrSelf.more() )
+      {
+         BSONElement e = itrSelf.next() ;
+         if ( !e.isABSONObj() )
+         {
+            return FALSE ;
+         }
+      }
 
       return TRUE ;
    }
