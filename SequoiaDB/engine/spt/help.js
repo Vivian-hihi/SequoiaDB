@@ -34,7 +34,7 @@ var help = function( val ) {
    }
    else
    {
-      man( "global", val ) ;
+      man( "", val ) ;
    }
 }
 
