@@ -21,9 +21,9 @@
    2014-7-26 Zhaobo Tan  Init
 @parameter
    BUS_JSON: the format is:
-      { "InstallConfig":{ "clustername":"c2", "businessname":"b2", "usertag":"tmpCoord" }, "CataAddr":[] }
+      { "clustername": "myCluster", "businessname": "myModule", "usertag": "tmpCoord", "CataAddr": [] }
       or
-      { "InstallConfig":{ "clustername":"c1", "businessname":"b1", "usertag":"tmpCoord" }, "CataAddr":[ { "HostName":"suse", "SvcName":"11803" }, { "HostName":"rhel64-test8", "SvcName":"11803" }, { "HostName":"rhel64-test9", "SvcName":"11803" } ] } ;
+      { "clustername": "myCluster", "businessname": "myModule", "usertag": "tmpCoord", "CataAddr":[ { "HostName":"suse", "SvcName":"11803" }, { "HostName":"rhel64-test8", "SvcName":"11803" }, { "HostName":"rhel64-test9", "SvcName":"11803" } ] } ;
    SYS_JSON: the format is: { "TaskID" : 5 }
 @return
    RET_JSON: the format is: { "Port", "10000" }
@@ -307,7 +307,9 @@ function _rollback( tmpCoordHostName, tmpCoordSvcName )
                   continue ;
                }
                else
+               {
                   throw e ;
+               }
             }
             break ;
          }
@@ -332,7 +334,34 @@ function _rollback( tmpCoordHostName, tmpCoordSvcName )
       // 2. test whether the temporary coord can connect to catalog or not
       try
       {
-         db.list( SDB_LIST_GROUPS ) ;
+         for ( i = 0; i < OMA_WAIT_CATALOG_TRY_TIMES; i++ )
+         {
+            try
+            {
+               db.list( SDB_LIST_GROUPS ) ;
+            }
+            catch( e )
+            {
+               if ( SDB_CLS_NOT_PRIMARY == e )
+               {
+                  PD_LOG2( task_id, arguments, PDWARNING, FILE_NAME_INSTALL_TEMPORARY_COORD,
+                           "Catalog has no primary, waiting 1 sec" ) ;
+                  sleep( 1000 ) ; // l sec
+                  continue ;
+               }
+               else
+               {
+                  throw e ;
+               }
+            }
+            break ;
+         }
+         if ( OMA_WAIT_CATALOG_TRY_TIMES == i )
+         {
+            PD_LOG2( task_id, arguments, PDERROR, FILE_NAME_INSTALL_TEMPORARY_COORD,
+                     "Catalog has no primary" ) ;
+            throw SDB_CLS_NOT_PRIMARY ;
+         }
       }
       catch( e )
       {
@@ -471,7 +500,7 @@ function _handleerror( tmpCoordHostName, cfgInfoObj )
    {
       SYSEXPHANDLE( e ) ;
       rc = GETLASTERROR() ;
-      errMsg = "Failed get info for checking whether error had happened" ;
+      errMsg = "Failed to get info for checking whether error had happened" ;
       PD_LOG2( task_id, arguments, PDERROR, FILE_NAME_INSTALL_TEMPORARY_COORD,
                sprintf( errMsg + ", rc: ?, detail: ?", rc, GETLASTERRMSG() ) ) ;
       exception_handle( rc, errMsg ) ;

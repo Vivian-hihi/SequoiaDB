@@ -502,7 +502,7 @@ function _stopOMAgent( ssh )
             // "2" means file does not exist
             if ( 2 == ssh.getLastRet() )
             {
-               PD_LOG2( task_id, arguments, PDEVENT, FILE_NAME_ADD_HOST,
+               PD_LOG2( task_id, arguments, PDWARNING, FILE_NAME_ADD_HOST,
                         sprintf( "Program[?] does not exist in host[?]", str, ssh.getPeerIP() ) ) ;
                return ;
             }
@@ -564,6 +564,8 @@ function _installDBPacket( ssh, sdbuser, sdbpasswd, omagentservice, packet, path
       cmd = OMA_PATH_TEMP_PACKET_DIR + packetName + option ;
       try
       {
+         PD_LOG2( task_id, arguments, PDDEBUG, FILE_NAME_ADD_HOST,
+                  sprintf( "Install db packet run command: ?", cmd ) ) ;
          ssh.exec( cmd ) ;
       }
       catch ( e )

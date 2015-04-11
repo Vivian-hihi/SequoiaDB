@@ -224,4 +224,5 @@ var OMA_SLEEP_TIME                         = 500 ; // ms
 var OMA_TRY_TIMES                          = 6 ;
 var OMA_WAIT_CATA_RG_TRY_TIMES             = 600 ; // sec
 var OMA_GTE_VERSION_TIME                   = 10000 // ms
+var OMA_WAIT_CATALOG_TRY_TIMES             = 30 ;
 

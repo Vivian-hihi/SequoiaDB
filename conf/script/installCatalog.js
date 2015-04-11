@@ -152,10 +152,39 @@ function _createCatalogNode( db, hostName, svcName, installPath, config )
 {
    var rg = null ;
    var node = null ;
+   var i  = 0 ;
    // try to get system catalog group
    try
    {
-      rg = db.getRG( OMA_SYS_CATALOG_RG ) ;
+      // when catalog has no primary, wait for a while
+      for ( ; i < OMA_WAIT_CATALOG_TRY_TIMES; i++ )
+      {
+         try
+         {
+            rg = db.getRG( OMA_SYS_CATALOG_RG ) ;
+         }
+         catch( e )
+         {
+            if ( SDB_CLS_NOT_PRIMARY == e )
+            {
+               PD_LOG2( task_id, arguments, PDWARNING, FILE_NAME_INSTALL_CATALOG,
+                        "Catalog has no primary, waiting 1 sec" ) ;
+               sleep( 1000 ) ; // l sec
+               continue ;
+            }
+            else
+            {
+               throw e ;
+            }
+         }
+         break ;
+      }
+      if ( OMA_WAIT_CATALOG_TRY_TIMES == i )
+      {
+         PD_LOG2( task_id, arguments, PDERROR, FILE_NAME_INSTALL_CATALOG,
+                  "Catalog has no primary" ) ;
+         throw SDB_CLS_NOT_PRIMARY ;
+      }
    }
    // catalog has not been created
    catch ( e )

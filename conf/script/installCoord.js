@@ -94,10 +94,39 @@ function _createCoordNode( db, hostName, svcName, installPath, config )
 {
    var rg = null ;
    var node = null ;
-   // try to get system catalog group
+   var i = 0 ;
+   // try to get system coord group
    try
    {
-      rg = db.getRG( OMA_SYS_COORD_RG ) ;
+      // when catalog has no primary, wait for a while
+      for ( ; i < OMA_WAIT_CATALOG_TRY_TIMES; i++ )
+      {
+         try
+         {
+            rg = db.getRG( OMA_SYS_COORD_RG ) ;
+         }
+         catch( e )
+         {
+            if ( SDB_CLS_NOT_PRIMARY == e )
+            {
+               PD_LOG2( task_id, arguments, PDWARNING, FILE_NAME_INSTALL_COORD,
+                        "Catalog has no primary, waiting 1 sec" ) ;
+               sleep( 1000 ) ; // l sec
+               continue ;
+            }
+            else
+            {
+               throw e ;
+            }
+         }
+         break ;
+      }
+      if ( OMA_WAIT_CATALOG_TRY_TIMES == i )
+      {
+         PD_LOG2( task_id, arguments, PDERROR, FILE_NAME_INSTALL_COORD,
+                  "Catalog has no primary" ) ;
+         throw SDB_CLS_NOT_PRIMARY ;
+      }
    }
    catch ( e )
    {
