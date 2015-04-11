@@ -92,7 +92,7 @@ function _extractOMAInfo( installInfoObj, omaInfoObj )
       try
       {
          installpath = installInfoObj[INSTALL_DIR] ;
-         retObj[Path] = installpath ;
+         retObj[Path] = adaptPath(installpath ) ;
       }
       catch( e )
       {
