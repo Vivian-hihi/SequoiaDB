@@ -378,8 +378,11 @@ namespace engine
       _curRID._offset = DMS_INVALID_OFFSET ;
       goto done ;
    error_release:
-      _pTransCB->transLockRelease( cb, _pSu->logicalID(), _context->mbID(),
-                                   &_curRID ) ;
+      if ( _recordXLock )
+      {
+         _pTransCB->transLockRelease( cb, _pSu->logicalID(), _context->mbID(),
+                                      &_curRID ) ;
+      }
       goto error ;
    }
 
@@ -523,6 +526,7 @@ namespace engine
       _includeStartKey     = FALSE ;
       _includeEndKey       = FALSE ;
       _blockScanDir        = 1 ;
+      _countOnly           = FALSE ;
 
       if ( DMS_ACCESS_TYPE_UPDATE == _accessType ||
            DMS_ACCESS_TYPE_DELETE == _accessType ||
@@ -623,8 +627,16 @@ namespace engine
       INT32 rc          = SDB_OK ;
       _pTransCB         = pmdGetKRCB()->getTransCB() ;
       _pMonAppCB        = cb ? cb->getMonAppCB() : NULL ;
-      INT32 lockType    = _recordXLock ? EXCLUSIVE : SHARED ;
+      INT32 lockType    = SHARED ;
 
+      if ( _countOnly )
+      {
+         _recordXLock = FALSE ;
+      }
+      if ( _recordXLock )
+      {
+         lockType = EXCLUSIVE ;
+      }
       if ( _recordXLock && DPS_INVALID_TRANS_ID == cb->getTransID() )
       {
          _needUnLock = TRUE ;
@@ -763,10 +775,23 @@ namespace engine
          }
 
          // don't read data
-         if ( !_match && _skipNum > 0 )
+         if ( !_match )
          {
-            --_skipNum ;
-            continue ;
+            if ( _skipNum > 0 )
+            {
+               --_skipNum ;
+               continue ;
+            }
+            else if ( _countOnly )
+            {
+               if ( _maxRecords > 0 )
+               {
+                  --_maxRecords ;
+               }
+               recordID = _curRID ;
+               recordDataPtr = 0 ;
+               goto done ;
+            }
          }
 
          _curRecordPtr = (ossValuePtr)_pSu->extentAddr( _curRID._extent ) +
@@ -936,8 +961,11 @@ namespace engine
       _curRID._offset = DMS_INVALID_OFFSET ;
       goto done ;
    error_release:
-      _pTransCB->transLockRelease( cb, _pSu->logicalID(), _context->mbID(),
-                                   &_curRID ) ;
+      if ( _recordXLock )
+      {
+         _pTransCB->transLockRelease( cb, _pSu->logicalID(), _context->mbID(),
+                                      &_curRID ) ;
+      }
       goto error ;
    }
 

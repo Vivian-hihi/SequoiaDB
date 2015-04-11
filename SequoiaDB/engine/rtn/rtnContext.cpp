@@ -133,6 +133,8 @@ namespace engine
       _prefetchRet         = SDB_OK ;
       _pPrefWatcher        = NULL ;
       _pMonAppCB           = NULL ;
+
+      _countOnly           = FALSE ;
    }
 
    _rtnContextBase::~_rtnContextBase()
@@ -318,22 +320,31 @@ namespace engine
          _isOpened = TRUE ;
       }
 
-      _bufferEndOffset = ossAlign4( (UINT32)_bufferEndOffset ) ;
-      if ( _bufferEndOffset + result.objsize () > _resultBufferSize )
+      if ( !_countOnly )
       {
-         rc = _reallocBuffer ( _bufferEndOffset + result.objsize() ) ;
-         if ( rc )
+         _bufferEndOffset = ossAlign4( (UINT32)_bufferEndOffset ) ;
+         if ( _bufferEndOffset + result.objsize () > _resultBufferSize )
          {
-            PD_LOG ( PDERROR, "Failed to reallocate buffer for context, rc: "
-                     "%d", rc ) ;
-            goto error ;
+            rc = _reallocBuffer ( _bufferEndOffset + result.objsize() ) ;
+            if ( rc )
+            {
+               PD_LOG ( PDERROR, "Failed to reallocate buffer for context, rc: "
+                        "%d", rc ) ;
+               goto error ;
+            }
          }
+         ossMemcpy ( &(_pResultBuffer[_bufferEndOffset]), result.objdata(),
+                     result.objsize() ) ;
+
+         ++_totalRecords ; // total num
+         ++_bufferNumRecords ; // cur buff num
+         _bufferEndOffset += result.objsize() ;
       }
-      ossMemcpy ( &(_pResultBuffer[_bufferEndOffset]), result.objdata(),
-                  result.objsize() ) ;
-      ++_totalRecords ; // total num
-      ++_bufferNumRecords ; // cur buff num
-      _bufferEndOffset += result.objsize() ;
+      else
+      {
+         ++_totalRecords ; // total num
+         ++_bufferNumRecords ; // cur buff num
+      }
 
    done:
       return rc ;
@@ -351,30 +362,38 @@ namespace engine
          _isOpened = TRUE ;
       }
 
-      if ( 0 < len )
+      if ( !_countOnly )
       {
-         if ( needAliened )
+         if ( 0 < len )
          {
-            _bufferEndOffset = ossAlign4( (UINT32)_bufferEndOffset ) ;
-         }
-
-         if ( _bufferEndOffset + len > _resultBufferSize )
-         {
-            rc = _reallocBuffer ( _bufferEndOffset + len ) ;
-            if ( rc )
+            if ( needAliened )
             {
-               PD_LOG ( PDERROR, "Failed to reallocate buffer for context, "
-                        "rc: %d", rc ) ;
-               goto error ;
+               _bufferEndOffset = ossAlign4( (UINT32)_bufferEndOffset ) ;
             }
+
+            if ( _bufferEndOffset + len > _resultBufferSize )
+            {
+               rc = _reallocBuffer ( _bufferEndOffset + len ) ;
+               if ( rc )
+               {
+                  PD_LOG ( PDERROR, "Failed to reallocate buffer for context, "
+                           "rc: %d", rc ) ;
+                  goto error ;
+               }
+            }
+
+            ossMemcpy ( &(_pResultBuffer[_bufferEndOffset]), pObjBuff, len ) ;
          }
 
-         ossMemcpy ( &(_pResultBuffer[_bufferEndOffset]), pObjBuff, len ) ;
+         _totalRecords += num ; // total num
+         _bufferNumRecords += num ; // cur buff num
+         _bufferEndOffset += len ;
       }
-
-      _totalRecords += num ; // total num
-      _bufferNumRecords += num ; // cur buff num
-      _bufferEndOffset += len ;
+      else
+      {
+         _totalRecords += num ; // total num
+         _bufferNumRecords += num ; // cur buff num
+      }
 
    done:
       return rc ; 
@@ -560,64 +579,80 @@ namespace engine
       // if not empty, get current data
       if ( !isEmpty() )
       {
-         _bufferCurrentOffset = ossAlign4( (UINT32)_bufferCurrentOffset ) ;
-         buffObj._pOrgBuff = _pResultBuffer ;
-         buffObj._pBuff = &_pResultBuffer[ _bufferCurrentOffset ] ;
-         buffObj._startFrom = _totalRecords - _bufferNumRecords ;
-
-         // return cur all
-         if ( maxNumToReturn < 0 )
+         if ( !_countOnly )
          {
-            buffObj._buffSize = _bufferEndOffset - _bufferCurrentOffset ;
-            buffObj._recordNum = _bufferNumRecords ;
-            // clean info
-            _bufferCurrentOffset = _bufferEndOffset ;
-            _bufferNumRecords = 0 ;
+            _bufferCurrentOffset = ossAlign4( (UINT32)_bufferCurrentOffset ) ;
+            buffObj._pOrgBuff = _pResultBuffer ;
+            buffObj._pBuff = &_pResultBuffer[ _bufferCurrentOffset ] ;
+            buffObj._startFrom = _totalRecords - _bufferNumRecords ;
+
+            // return cur all
+            if ( maxNumToReturn < 0 )
+            {
+               buffObj._buffSize = _bufferEndOffset - _bufferCurrentOffset ;
+               buffObj._recordNum = _bufferNumRecords ;
+               // clean info
+               _bufferCurrentOffset = _bufferEndOffset ;
+               _bufferNumRecords = 0 ;
+            }
+            else
+            {
+               INT32 prevCurOffset = _bufferCurrentOffset ;
+               while ( _bufferCurrentOffset < _bufferEndOffset &&
+                       maxNumToReturn > 0 )
+               {
+                  try
+                  {
+                     BSONObj obj( &_pResultBuffer[_bufferCurrentOffset] ) ;
+                     _bufferCurrentOffset += ossAlign4( (UINT32)obj.objsize() ) ;
+                  }
+                  catch ( std::exception &e )
+                  {
+                     PD_LOG( PDERROR, "Can't convert into BSON object: %s",
+                             e.what() ) ;
+                     rc = SDB_SYS ;
+                     goto error ;
+                  }
+
+                  ++buffObj._recordNum ;
+                  --_bufferNumRecords ;
+                  --maxNumToReturn ;
+               } // end while
+
+               if ( _bufferCurrentOffset > _bufferEndOffset )
+               {
+                  _bufferCurrentOffset = _bufferEndOffset ;
+                  SDB_ASSERT( 0 == _bufferNumRecords, "buffer num records must "
+                              " be zero" ) ;
+               }
+               buffObj._buffSize = _bufferCurrentOffset - prevCurOffset ;
+            }
+
+            buffObj._reference( RTN_GET_REFERENCE( _pResultBuffer ), &_dataLock ) ;
+            locked = FALSE ;
+            rc = SDB_OK ;
+
+            // if get all data
+            if ( isEmpty() && !eof() )
+            {
+               _bufferCurrentOffset = 0 ;
+               _bufferEndOffset     = 0 ;
+
+               _onDataEmpty() ;
+            }
          }
          else
          {
-            INT32 prevCurOffset = _bufferCurrentOffset ;
-            while ( _bufferCurrentOffset < _bufferEndOffset &&
-                    maxNumToReturn > 0 )
+            if ( maxNumToReturn < 0 || maxNumToReturn >= _bufferNumRecords )
             {
-               try
-               {
-                  BSONObj obj( &_pResultBuffer[_bufferCurrentOffset] ) ;
-                  _bufferCurrentOffset += ossAlign4( (UINT32)obj.objsize() ) ;
-               }
-               catch ( std::exception &e )
-               {
-                  PD_LOG( PDERROR, "Can't convert into BSON object: %s",
-                          e.what() ) ;
-                  rc = SDB_SYS ;
-                  goto error ;
-               }
-
-               ++buffObj._recordNum ;
-               --_bufferNumRecords ;
-               --maxNumToReturn ;
-            } // end while
-
-            if ( _bufferCurrentOffset > _bufferEndOffset )
-            {
-               _bufferCurrentOffset = _bufferEndOffset ;
-               SDB_ASSERT( 0 == _bufferNumRecords, "buffer num records must "
-                           " be zero" ) ;
+               buffObj._recordNum = _bufferNumRecords ;
+               _bufferNumRecords = 0 ;
             }
-            buffObj._buffSize = _bufferCurrentOffset - prevCurOffset ;
-         }
-
-         buffObj._reference( RTN_GET_REFERENCE( _pResultBuffer ), &_dataLock ) ;
-         locked = FALSE ;
-         rc = SDB_OK ;
-
-         // if get all data
-         if ( isEmpty() && !eof() )
-         {
-            _bufferCurrentOffset = 0 ;
-            _bufferEndOffset     = 0 ;
-
-            _onDataEmpty() ;
+            else
+            {
+               buffObj._recordNum = maxNumToReturn ;
+               _bufferNumRecords -= maxNumToReturn ;
+            }
          }
       }
       else
@@ -1295,57 +1330,71 @@ namespace engine
                                              _indexRIDs[1],
                                              _direction ) ;
          }
+         if ( isCountMode() )
+         {
+            secScanner.enableCountMode() ;
+         }
 
          while ( SDB_OK == ( rc = secScanner.advance( recordID, recordDataPtr,
                                                       cb, dollarList ) ) )
          {
-            try
+            if ( !isCountMode() )
             {
-               BSONObj selObj ;
-               BSONObj obj( (const CHAR*)recordDataPtr ) ;
+               try
+               {
+                  BSONObj selObj ;
+                  BSONObj obj( (const CHAR*)recordDataPtr ) ;
 
-               if ( _queryModifier )
-               {
-                  rc = _queryModify( cb, recordID, recordDataPtr, obj ) ;
-                  PD_RC_CHECK( rc, PDERROR, "Failed to query modify" ) ;
-               }
+                  if ( _queryModifier )
+                  {
+                     rc = _queryModify( cb, recordID, recordDataPtr, obj ) ;
+                     PD_RC_CHECK( rc, PDERROR, "Failed to query modify" ) ;
+                  }
 
-               if ( selector )
-               {
-                  rc = selector->select( obj, selObj ) ;
-                  PD_RC_CHECK( rc, PDERROR, "Failed to build select record,"
-                               "src obj: %s, rc: %d", obj.toString().c_str(),
-                               rc ) ;
-               }
-               else
-               {
-                  selObj = obj ;
-               }
-               rc = append( selObj ) ;
-               PD_RC_CHECK( rc, PDERROR, "Append obj[%s] failed, rc: %d",
-                            selObj.toString().c_str(), rc ) ;
+                  if ( selector )
+                  {
+                     rc = selector->select( obj, selObj ) ;
+                     PD_RC_CHECK( rc, PDERROR, "Failed to build select record,"
+                                  "src obj: %s, rc: %d", obj.toString().c_str(),
+                                  rc ) ;
+                  }
+                  else
+                  {
+                     selObj = obj ;
+                  }
+                  rc = append( selObj ) ;
+                  PD_RC_CHECK( rc, PDERROR, "Append obj[%s] failed, rc: %d",
+                               selObj.toString().c_str(), rc ) ;
 
-               // make sure we still have room to read another
-               // record_max_sz (i.e. 16MB). if we have less than 16MB
-               // to 256MB, we can't safely assume the next record we
-               // read will not overflow the buffer, so let's just break
-               // before reading the next record
-               if ( buffEndOffset() + DMS_RECORD_MAX_SZ >
-                    RTN_RESULTBUFFER_SIZE_MAX )
-               {
-                  secScanner.stop () ;
-                  // let's break if there's no room for another max record
-                  break ;
+                  // make sure we still have room to read another
+                  // record_max_sz (i.e. 16MB). if we have less than 16MB
+                  // to 256MB, we can't safely assume the next record we
+                  // read will not overflow the buffer, so let's just break
+                  // before reading the next record
+                  if ( buffEndOffset() + DMS_RECORD_MAX_SZ >
+                       RTN_RESULTBUFFER_SIZE_MAX )
+                  {
+                     secScanner.stop () ;
+                     // let's break if there's no room for another max record
+                     break ;
+                  }
                }
+               catch ( std::exception &e )
+               {
+                  PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+                  rc = SDB_SYS ;
+                  goto error ;
+               }
+               // increase counter
+               DMS_MON_OP_COUNT_INC( pMonAppCB, MON_SELECT, 1 ) ;
             }
-            catch ( std::exception &e )
+            else
             {
-               PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
-               rc = SDB_SYS ;
-               goto error ;
+               static BSONObj dummyObj ;
+               rc = append( dummyObj ) ;
+               PD_RC_CHECK( rc, PDERROR, "Append empty obj failed, rc: %d",
+                            rc ) ;
             }
-            // increase counter
-            DMS_MON_OP_COUNT_INC( pMonAppCB, MON_SELECT, 1 ) ;
          }
 
          if ( rc && SDB_DMS_EOC != rc )

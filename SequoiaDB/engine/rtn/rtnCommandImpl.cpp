@@ -122,9 +122,11 @@ namespace engine
       }
       if ( !matcher.isEmpty() )
       {
+         rtnContextBase *pContextBase = NULL ;
          SINT64 queryContextID = -1 ;
          rc = rtnQuery ( pCollection, obj, matcher, obj, hint, flags, cb,
-                         0, -1, dmsCB, rtnCB, queryContextID ) ;
+                         0, -1, dmsCB, rtnCB, queryContextID,
+                         &pContextBase ) ;
          if ( rc )
          {
             // any error will clean up queryContext
@@ -143,6 +145,7 @@ namespace engine
          }
          else
          {
+            pContextBase->enableCountMode() ;
             rtnContextBuf buffObj ;
 
             while ( TRUE )

@@ -187,6 +187,8 @@ namespace engine
                                      const dmsRecordID &endRID,
                                      INT32 direction ) ;
 
+         void  enableCountMode() { _countOnly = TRUE ; }
+
          INT64 getMaxRecords() const { return _maxRecords ; }
          INT64 getSkipNum () const { return _skipNum ; }
 
@@ -232,6 +234,8 @@ namespace engine
          BOOLEAN              _includeStartKey ;
          BOOLEAN              _includeEndKey ;
 
+         BOOLEAN              _countOnly ;
+
    } ;
    typedef _dmsIXSecScanner dmsIXSecScanner ;
 
@@ -259,7 +263,6 @@ namespace engine
 
       protected:
          void  _resetIXSecScanner() ;
-         INT32 _firstInit() ;
 
       private:
          dmsIXSecScanner            _secScanner ;

@@ -189,6 +189,9 @@ namespace engine
 
          INT32    getReference() const ;
 
+         void     enableCountMode() { _countOnly = TRUE ; }
+         BOOLEAN  isCountMode() const { return _countOnly ; }
+
       // prefetch
       public:
          void     enablePrefetch ( _pmdEDUCB *cb,
@@ -251,6 +254,8 @@ namespace engine
          INT32                   _prefetchRet ;
          rtnPrefWatcher          *_pPrefWatcher ;
          _monAppCB               *_pMonAppCB ;
+
+         BOOLEAN                 _countOnly ;
    } ;
    typedef _rtnContextBase rtnContextBase ;
 
@@ -259,7 +264,14 @@ namespace engine
    */
    OSS_INLINE BOOLEAN _rtnContextBase::isEmpty () const
    {
-      return _bufferCurrentOffset >= _bufferEndOffset ;
+      if ( !_countOnly )
+      {
+         return _bufferCurrentOffset >= _bufferEndOffset ;
+      }
+      else
+      {
+         return _bufferNumRecords <= 0 ? TRUE : FALSE ;
+      }
    }
    OSS_INLINE void _rtnContextBase::_empty ()
    {
