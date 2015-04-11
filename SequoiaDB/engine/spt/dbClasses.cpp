@@ -3581,8 +3581,8 @@ static JSFunctionSpec rg_functions[] = {
    JS_FS ( "removeNode", rg_remove_node, 0 , 0 ) ,
    JS_FS ( "getNode" , rg_get_node , 1 , 0 ) ,
    JS_FS ( "reelect", rg_reelect, 1, 0 ),
-   JS_FS ( "detach", rg_detach, 2, 0 ),
-   JS_FS ( "attach", rg_attach, 2, 0 ),
+   JS_FS ( "detachNode", rg_detach, 2, 0 ),
+   JS_FS ( "attachNode", rg_attach, 2, 0 ),
    JS_FS_END
 } ;
 
