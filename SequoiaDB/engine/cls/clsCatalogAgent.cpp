@@ -630,7 +630,7 @@ namespace engine
          goto error ;
       }
 
-      rc = _pKeyGen->getKeys( obj , objSet ) ;
+      rc = _pKeyGen->getKeys( obj , objSet, NULL, TRUE ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG ( PDERROR, "Object[%s] gen sharding key obj failed[rc:%d]",

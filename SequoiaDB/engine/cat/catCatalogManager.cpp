@@ -1673,7 +1673,7 @@ namespace engine
             if ( !clInfo._isHash )
             {
                Ordering order = Ordering::make( clInfo._shardingKey ) ;
-               rc = _buildInitBound ( clInfo._shardingKey.nFields(), order ,
+               rc = _buildInitBound ( clInfo._shardingKey, order ,
                                       lowBound, upBound ) ;
             }
             else
@@ -1713,32 +1713,38 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR_BUILDINITBOUND, "catCatalogueManager::_buildInitBound" )
-   INT32 catCatalogueManager::_buildInitBound ( UINT32 fieldNum,
+   INT32 catCatalogueManager::_buildInitBound ( const BSONObj &shardingKey,
                                                 const Ordering & order,
                                                 BSONObj & lowBound,
                                                 BSONObj & upBound )
    {
       PD_TRACE_ENTRY ( SDB_CATALOGMGR_BUILDINITBOUND ) ;
-      PD_TRACE1 ( SDB_CATALOGMGR_BUILDINITBOUND,
-                  PD_PACK_UINT ( fieldNum ) ) ;
+//      PD_TRACE1 ( SDB_CATALOGMGR_BUILDINITBOUND,
+//                  PD_PACK_UINT ( shardingKey.nFields() ) ) ;
+
+      INT32 index = 0 ;
       BSONObjBuilder lowBoundBD ;
       BSONObjBuilder upBoundBD ;
 
-      UINT32 index = 0 ;
-      while ( index < fieldNum )
+      BSONObjIterator iter( shardingKey ) ;
+      while ( iter.more() )
       {
-         if ( order.get( (int)index ) == 1 )
+         BSONElement ele        = iter.next() ;
+         const CHAR * fieldName = ele.fieldName() ;
+         if ( order.get( index ) == 1 )
          {
-            lowBoundBD.appendMinKey ( "" ) ;
-            upBoundBD.appendMaxKey ( "" ) ;
+            lowBoundBD.appendMinKey ( fieldName ) ;
+            upBoundBD.appendMaxKey ( fieldName ) ;
          }
          else
          {
-            lowBoundBD.appendMaxKey ( "" ) ;
-            upBoundBD.appendMinKey ( "" ) ;
+            lowBoundBD.appendMaxKey ( fieldName ) ;
+            upBoundBD.appendMinKey ( fieldName ) ;
          }
+
          ++index ;
       }
+
       lowBound = lowBoundBD.obj () ;
       upBound = upBoundBD.obj () ;
       PD_TRACE_EXIT ( SDB_CATALOGMGR_BUILDINITBOUND ) ;

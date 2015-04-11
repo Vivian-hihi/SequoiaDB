@@ -125,7 +125,8 @@ namespace engine
       // input: BSONObj obj
       // output: BSONObjSet &keys
       // PD_TRACE_DECLARE_FUNCTION ( SDB__IXMKEYGEN_GETKEYS, "_ixmKeyGenerator::getKeys" )
-      INT32 getKeys ( const BSONObj &obj, BSONObjSet &keys,
+      INT32 getKeys ( const BSONObj &obj, BOOLEAN isKeepKeyName, 
+                      BSONObjSet &keys,
                       BSONElement *pArrEle ) const
       {
          INT32 rc = SDB_OK ;
@@ -136,7 +137,7 @@ namespace engine
          BSONElement arrEle ;
          try
          {
-            rc = _getKeys( fieldNames, obj, keys, &arrEle ) ;
+            rc = _getKeys( fieldNames, obj, isKeepKeyName, keys, &arrEle ) ;
          }
          catch ( std::exception &e )
          {
@@ -171,6 +172,7 @@ namespace engine
       // PD_TRACE_DECLARE_FUNCTION ( SDB__IXMKEYGEN__GETKEYS, "_ixmKeyGenerator::_getKeys" )
       INT32 _getKeys( vector<const CHAR *> &fieldNames,
                       const BSONObj &obj,
+                      BOOLEAN isKeepKeyName,
                       BSONObjSet &keys,
                       BSONElement *arrEle ) const
       {
@@ -238,9 +240,9 @@ namespace engine
          }
          else if ( !arrEle->eoo() )
          {
-            rc = _genKeyWithArrayEle( keyEles, fieldNames.size(),
+            rc = _genKeyWithArrayEle( keyEles, fieldNames,
                                       arrEle,
-                                      arrEleName, arrElePos,
+                                      arrEleName, arrElePos, isKeepKeyName, 
                                       keys ) ;
             if ( SDB_OK != rc )
             {
@@ -250,7 +252,8 @@ namespace engine
          }
          else
          {
-            rc = _genKeyWithNormalEle( keyEles, fieldNames.size(), keys ) ;
+            rc = _genKeyWithNormalEle( keyEles, fieldNames, isKeepKeyName, 
+                                       keys ) ;
             if ( SDB_OK != rc )
             {
                PD_LOG( PDERROR, "failed to gen keys with normal element:%d", rc ) ;
@@ -271,20 +274,23 @@ namespace engine
 
       // PD_TRACE_DECLARE_FUNCTION ( SDB__IXMKEYGEN__GENKEYSWITHARRELE, "_ixmKeyGenerator::_genKeyWithArrayEle" )
       INT32 _genKeyWithArrayEle( BSONElement *keyEles,
-                                 UINT32 eleNum,
+                                 vector<const CHAR *> &fieldNames,
                                  const BSONElement *arrElement,
                                  const CHAR *arrEleName,
                                  UINT32 arrElePos,
+                                 BOOLEAN isKeepKeyName,
                                  BSONObjSet &keys ) const
       {
          PD_TRACE_ENTRY ( SDB__IXMKEYGEN__GENKEYSWITHARRELE );
          INT32 rc = SDB_OK ;
+         UINT32 eleNum = fieldNames.size() ;
          BSONObj arrObj = arrElement->embeddedObject() ;
          /// the element must be an empty array key when it is a empty array
          if ( arrObj.firstElement().eoo() )
          {
             keyEles[arrElePos] = *arrElement ;
-            rc = _genKeyWithNormalEle( keyEles, eleNum, keys ) ;
+            rc = _genKeyWithNormalEle( keyEles, fieldNames, isKeepKeyName, 
+                                       keys ) ;
             if ( SDB_OK != rc )
             {
                goto error ;
@@ -299,7 +305,8 @@ namespace engine
             while ( itr.more() )
             {
                e = itr.next() ;
-               rc = _genKeyWithNormalEle( keyEles, eleNum, keys ) ;
+               rc = _genKeyWithNormalEle( keyEles, fieldNames, isKeepKeyName,
+                                          keys ) ;
                if ( SDB_OK != rc )
                {
                   goto error ;
@@ -320,10 +327,9 @@ namespace engine
                      .getFieldDottedOrArray( dottedName ) ;
                   if ( Array == e.type() )
                   {
-                     rc = _genKeyWithArrayEle(keyEles, eleNum,
-                                              &e,
-                                              dottedName, arrElePos,
-                                              keys) ;
+                     rc = _genKeyWithArrayEle(keyEles, fieldNames,
+                                              &e, dottedName, arrElePos,
+                                              isKeepKeyName, keys) ;
                      if ( SDB_OK != rc )
                      {
                         goto error ;
@@ -343,7 +349,8 @@ namespace engine
                   keyEles[arrElePos] = BSONElement() ;
                }
 
-               rc = _genKeyWithNormalEle( keyEles, eleNum, keys ) ;
+               rc = _genKeyWithNormalEle( keyEles, fieldNames, isKeepKeyName,
+                                          keys ) ;
                if ( SDB_OK != rc )
                {
                   goto error ;
@@ -359,22 +366,26 @@ namespace engine
 
       // PD_TRACE_DECLARE_FUNCTION ( SDB__IXMKEYGEN__GENKEYSWITHNORMALELE, "_ixmKeyGenerator::_genKeyWithNormalEle" )
       INT32 _genKeyWithNormalEle( BSONElement *keyELes,
-                                  UINT32 eleNum,
+                                  vector<const CHAR *> &fieldNames,
+                                  BOOLEAN isKeepKeyName ,
                                   BSONObjSet &keys ) const
       {
          PD_TRACE_ENTRY ( SDB__IXMKEYGEN__GENKEYSWITHNORMALELE );
          INT32 rc = SDB_OK ;
+         UINT32 eleNum = fieldNames.size() ;
          BSONObjBuilder builder ;
+         string keyName ;
          for ( UINT32 i = 0; i < eleNum; i++ )
          {
             BSONElement &e = keyELes[i] ;
+            keyName = isKeepKeyName ? fieldNames[i] : "" ;
             if ( e.eoo() )
-            {
-               builder.appendAs( gUndefinedElt, "" ) ;
+            {  
+               builder.appendAs( gUndefinedElt, keyName ) ;
             }
             else
             {
-               builder.appendAs( e, "" ) ;
+               builder.appendAs( e, keyName ) ;
             }
          }
 
@@ -428,14 +439,15 @@ namespace engine
    }
 
    INT32 _ixmIndexKeyGen::getKeys ( const BSONObj &obj, BSONObjSet &keys,
-                                    BSONElement *pArrEle ) const
+                                    BSONElement *pArrEle, 
+                                    BOOLEAN isKeepKeyName ) const
    {
       ixmKeyGenerator g (this) ;
       if ( pArrEle )
       {
          *pArrEle = BSONElement() ;
       }
-      return g.getKeys ( obj, keys, pArrEle ) ;
+      return g.getKeys ( obj, isKeepKeyName, keys, pArrEle ) ;
    }
 
    // return True if there are at least one element match the name

@@ -5037,7 +5037,7 @@ namespace engine
          ixmIndexKeyGen keyGen ( shardingKey ) ;
          BSONObjSet keys ;
          BSONObjSet::iterator keyIter ;
-         rc = keyGen.getKeys ( obj, keys ) ;
+         rc = keyGen.getKeys ( obj, keys, NULL, TRUE ) ;
          PD_RC_CHECK ( rc, PDERROR, "Failed to extract keys\nkeyDef = %s\n"
                        "record = %s\nrc = %d", shardingKey.toString().c_str(),
                        obj.toString().c_str(), rc ) ;

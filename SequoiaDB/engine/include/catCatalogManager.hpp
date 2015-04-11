@@ -249,7 +249,7 @@ namespace engine
       INT32 _getGroupsOfCollections( const std::vector<string> &clNames,
                                      BSONObj &groups  ) ;
    private:
-      INT32 _buildInitBound ( UINT32 fieldNum,
+      INT32 _buildInitBound ( const BSONObj &shardingKey,
                               const Ordering& order,
                               BSONObj& lowBound,
                               BSONObj& upBound ) ;
