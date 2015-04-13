@@ -137,7 +137,7 @@ namespace engine
          if ( _plans.size() >= RTN_APL_SIZE )
          {
             vector<optAccessPlan *>::reverse_iterator rit ;
-            for ( rit = _plans.rbegin(); rit != _plans.rend(); ++rit )
+            for ( rit = _plans.rbegin() ; rit != _plans.rend(); )
             {
                if ( (*rit)->getCount() == 0 )
                {
@@ -150,6 +150,10 @@ namespace engine
                   //vector<optAccessPlan *>::iterator tempIter = _plans.erase (
                   //   --rit.base() ) ;
                   //rit = vector<optAccessPlan *>::reverse_iterator(tempIter) ;
+               }
+               else
+               {
+                  ++rit ;
                }
             }
          }
