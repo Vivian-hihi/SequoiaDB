@@ -110,7 +110,7 @@
 		</tstamp>
 		<sdbTime beginTime="${testsuite_begintime}" endTime="${testsuite_endtime}" output="testsuite_time" />
 		<echo message="**************************************************************************************************************************************************************" />
-		<echo level="info" message="The java driver testcases compilation project began at &lt;${testsuite_begintime}&gt;, end at &lt;${testsuite_endtime}&gt;,total spending ${testsuite_time}s." />
+		<echo level="info" message="The testsuite began at &lt;${testsuite_begintime}&gt;, end at &lt;${testsuite_endtime}&gt;,total spending ${testsuite_time}s." />
 		<echo message="Now testsuite ${test.suite.name} ..." />
 		<echo file="/opt/testsuite.log" append="true" message="Now testsuite ${test.suite.name},cost ${testsuite_time}s,hostname=${host.NAME}&#10;" />
 		<echo message="**************************************************************************************************************************************************************" />
