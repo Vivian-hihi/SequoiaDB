@@ -145,7 +145,6 @@ namespace engine
       }
       ~_rtnAccessPlanSet()
       {
-         SDB_ASSERT( 0 == _totalNum.peek(), "Total num should be 0" ) ;
          map<UINT32, rtnAccessPlanList *>::iterator it ;
          for ( it = _planLists.begin(); it != _planLists.end(); ++it )
          {
@@ -214,7 +213,6 @@ namespace engine
       }
       ~_rtnAccessPlanManager()
       {
-         SDB_ASSERT( 0 == _totalNum.peek(), "Total num should be 0" ) ;
 #if defined (_WINDOWS)
          map<const CHAR*, rtnAccessPlanSet*, cmp_str>::iterator it ;
 #elif defined (_LINUX)
