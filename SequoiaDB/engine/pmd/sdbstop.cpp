@@ -55,7 +55,7 @@
 
 namespace engine
 {
-   #define SDBSTOP_LOG_FILE_NAME    "sdbstart.log"
+   #define SDBSTOP_LOG_FILE_NAME    "sdbstop.log"
 
    #define COMMANDS_OPTIONS \
        ( PMD_COMMANDS_STRING(PMD_OPTION_HELP, ",h"), "help" )\
