@@ -450,8 +450,10 @@
 #define COORD_GROUPID                        2
 #define OM_GROUPID                           3
 #define OMAGENT_GROUPID                      4
+#define SPARE_GROUPID                        5
 #define CATALOG_GROUPNAME                    SYS_PREFIX"CatalogGroup"
 #define COORD_GROUPNAME                      SYS_PREFIX"Coord"
+#define SPARE_GROUPNAME                      SYS_PREFIX"Spare"
 #define NODE_NAME_SERVICE_SEP                ":"
 #define NODE_NAME_SERVICE_SEPCHAR            (((CHAR*)NODE_NAME_SERVICE_SEP)[0])
 #define INVALID_NODEID                       0

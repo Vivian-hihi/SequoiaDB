@@ -331,6 +331,7 @@ namespace engine
 
       MsgCatGroupReq *pGrpReq = (MsgCatGroupReq *)pMsg ;
       UINT32 groupID = pGrpReq->id.columns.groupID ;
+      UINT16 nodeID = pGrpReq->id.columns.nodeID ;
       const CHAR *name = NULL ;
 
       if ( 0 == groupID )
@@ -419,6 +420,16 @@ namespace engine
                builder.append( CAT_PRIMARY_NAME, (INT32)nodeID ) ;
             }
             boGroupInfo = builder.obj() ;
+         }
+      }
+      else if ( SPARE_GROUPID == boGroupInfo.getIntField( CAT_GROUPID_NAME ) )
+      {
+         /// we only return it's own info when it is a spare node
+         rc = _extractSpareGroupInfo( nodeID, boGroupInfo ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to extract spare group info:%d", rc ) ;
+            goto error ;
          }
       }
 
@@ -1741,6 +1752,12 @@ namespace engine
          role = SDB_ROLE_COORD ;
          status = SDB_CAT_GRP_ACTIVE ;
       }
+      else if ( 0 == ossStrcmp( groupName, SPARE_GROUPNAME ) )
+      {
+         newGroupID = SPARE_GROUPID ;
+         role = SDB_ROLE_DATA ;
+         status = SDB_CAT_GRP_ACTIVE ;
+      }
       else
       {
          rc = catGroupNameValidate( groupName, FALSE ) ;
@@ -2765,4 +2782,35 @@ namespace engine
          goto done ;
    }
 
+   INT32 catNodeManager::_extractSpareGroupInfo( UINT16 nodeId, BSONObj &info )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj obj ;
+      BSONObj pattern = BSON( FIELD_NAME_GROUP <<
+                              BSON( "$elemMatchOne" <<
+                                    BSON( FIELD_NAME_NODEID << nodeId ) ) ) ;
+      _mthSelector selector ;
+      rc = selector.loadPattern( pattern ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to load pattern:%s, rc:%d",
+                 pattern.toString( FALSE, TRUE ).c_str(), rc ) ;
+         goto error ;
+      }
+
+      rc = selector.select( info, obj ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to select fields:%d", rc ) ;
+         goto error ;
+      }
+
+      info = obj ;
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
 }
+

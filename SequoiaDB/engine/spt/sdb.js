@@ -36,6 +36,7 @@ var SDB_TRACE_FMT                = 1 ;
 
 var SDB_COORD_GROUP_NAME         = "SYSCoord" ;
 var SDB_CATALOG_GROUP_NAME       = "SYSCatalogGroup" ;
+var SDB_SPARE_GROUP_NAME         = "SYSSpare" ;
 
 // end Global Constants
 
@@ -500,6 +501,14 @@ Sdb.prototype.removeCoordRG = function() {
 
 Sdb.prototype.getCoordRG = function() {
    return this.getRG( SDB_COORD_GROUP_NAME ) ;
+}
+
+Sdb.prototype.createSpareGroup = function() {
+   return this.createRG(SDB_SPARE_GROUP_NAME) ;
+}
+
+Sdb.prototype.getSpareGroup = function() {
+   return this.getRG(SDB_SPARE_GROUP_NAME) ;
 }
 
 // end Sdb

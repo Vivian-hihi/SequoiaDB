@@ -4204,6 +4204,8 @@ static JSBool isSpecialCSName ( const CHAR *name )
                                    "removeCoordRG",
                                    "getCoordRG",
                                    "forceStepUp",
+                                   "createSpareGroup",
+                                   "getSpareGroup",
    };
    JSBool   in = JS_FALSE ;
    INT32    i  = 0 ;

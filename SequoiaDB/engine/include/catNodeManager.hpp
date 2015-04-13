@@ -137,6 +137,7 @@ namespace engine
 
       INT32 _getNodeInfoByConf( BSONObj &boConf, BSONObjBuilder &bobNodeInfo ) ;
       INT32 _checkLocalHost( BOOLEAN &isValid ) ;
+      INT32 _extractSpareGroupInfo( UINT16 nodeID, BSONObj &info ) ;
 
    private:
       _SDB_DMSCB                 *_pDmsCB;

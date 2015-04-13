@@ -424,7 +424,19 @@ namespace engine
       PD_TRACE_ENTRY ( SDB_CATGETGROUPOBJ ) ;
       BSONObj dummyObj ;
       BSONObj boMatcher ;
-      boMatcher = BSON( CAT_GROUPNAME_NAME << groupName ) ;
+      BSONObjBuilder builder ;
+ 
+      if ( dataGroupOnly )
+      {
+         builder.append( CAT_GROUPNAME_NAME, groupName ) ;
+         builder.append( FIELD_NAME_GROUPID,
+                         BSON( "$gte" << DATA_NODE_ID_BEGIN ) ) ;
+         boMatcher = builder.obj() ;
+      }
+      else
+      {
+         boMatcher = BSON( CAT_GROUPNAME_NAME << groupName ) ;
+      }
 
       rc = catGetOneObj( CAT_NODE_INFO_COLLECTION, dummyObj, boMatcher,
                          dummyObj, cb, obj ) ;
