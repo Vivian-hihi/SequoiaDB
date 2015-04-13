@@ -64,6 +64,7 @@ using namespace boost::algorithm ;
 
 namespace engine
 {
+   #define SDBSTART_LOG_FILE_NAME   "sdbstart.log"
 
    #define PMD_OPTION_FORCE         "force"
    #define PMD_OPTION_OPTIONS       "options"
@@ -291,8 +292,10 @@ namespace engine
       INT32 rc = SDB_OK ;
       INT32 tmpRC = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_SDBSTART_MAIN ) ;
+      CHAR dialogFile[ OSS_MAX_PATHSIZE + 1 ] = {0} ;
       CHAR rootPath[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
       CHAR enginePathName[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
+      CHAR verText[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
       vector< string > configs ;
       vector< utilNodeInfo > nodesInfo ;
       vector< OSSHANDLE > handles ;
@@ -355,6 +358,38 @@ namespace engine
                     rc ) ;
          goto error ;
       }
+
+      // dialog path and file
+      rc = utilBuildFullPath( rootPath, SDBCM_LOG_PATH,
+                              OSS_MAX_PATHSIZE, dialogFile ) ;
+      if ( rc )
+      {
+         ossPrintf( "Failed to build dialog path: %d"OSS_NEWLINE, rc ) ;
+         goto error ;
+      }
+      // make sure the dir exist
+      rc = ossMkdir( dialogFile, OSS_CREATE|OSS_READWRITE ) ;
+      if ( rc && SDB_FE != rc )
+      {
+         ossPrintf( "Create dialog dir[%s] failed, rc: %d"OSS_NEWLINE,
+                    dialogFile, rc ) ;
+         // not go to error, continue
+         rc = SDB_OK ;
+      }
+      rc = engine::utilCatPath( dialogFile, OSS_MAX_PATHSIZE,
+                                SDBSTART_LOG_FILE_NAME ) ;
+      if ( rc )
+      {
+         ossPrintf( "Failed to build dialog file: %d"OSS_NEWLINE, rc ) ;
+         // not go to error, continue
+         rc = SDB_OK ;
+      }
+      // enable pd log
+      sdbEnablePD( dialogFile ) ;
+      setPDLevel( PDINFO ) ;
+
+      ossSprintVersion( "Version", verText, OSS_MAX_PATHSIZE, FALSE ) ;
+      PD_LOG( PDEVENT, "Start programme[%s]...", verText ) ;
 
       if ( configs.size() == 0 )
       {
@@ -526,6 +561,7 @@ namespace engine
             ++it ;
          }
       }
+      PD_LOG( PDEVENT, "Stop programme." ) ;
       PD_TRACE_EXITRC ( SDB_SDBSTART_MAIN, rc );
       return SDB_OK == rc ? 0 : utilRC2ShellRC( rc ) ;
    error :

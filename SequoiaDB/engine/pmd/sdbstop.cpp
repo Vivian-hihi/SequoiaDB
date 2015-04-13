@@ -51,9 +51,11 @@
 #include "omagentDef.hpp"
 #include "utilStr.hpp"
 #include "ossVer.h"
+#include "ossIO.hpp"
 
 namespace engine
 {
+   #define SDBSTOP_LOG_FILE_NAME    "sdbstart.log"
 
    #define COMMANDS_OPTIONS \
        ( PMD_COMMANDS_STRING(PMD_OPTION_HELP, ",h"), "help" )\
@@ -168,6 +170,8 @@ namespace engine
       PD_TRACE_ENTRY ( SDB_SDBSTOP_MAIN ) ;
       INT32 success = 0 ;
       INT32 total = 0 ;
+      CHAR dialogFile[ OSS_MAX_PATHSIZE + 1 ] = {0} ;
+      CHAR verText[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
       vector<string> listServices ;
       UTIL_VEC_NODES listNodes ;
       BOOLEAN bFind = TRUE ;
@@ -192,6 +196,45 @@ namespace engine
          }
          goto done ;
       }
+
+      // make path
+      rc = ossGetEWD( dialogFile, OSS_MAX_PATHSIZE ) ;
+      if ( rc )
+      {
+         ossPrintf( "Error: Get module self path failed:  %d"OSS_NEWLINE,
+                    rc ) ;
+         goto error ;
+      }
+      // dialog path and file
+      rc = utilCatPath( dialogFile, OSS_MAX_PATHSIZE, SDBCM_LOG_PATH ) ;
+      if ( rc )
+      {
+         ossPrintf( "Failed to build dialog path: %d"OSS_NEWLINE, rc ) ;
+         goto error ;
+      }
+      // make sure the dir exist
+      rc = ossMkdir( dialogFile, OSS_CREATE|OSS_READWRITE ) ;
+      if ( rc && SDB_FE != rc )
+      {
+         ossPrintf( "Create dialog dir[%s] failed, rc: %d"OSS_NEWLINE,
+                    dialogFile, rc ) ;
+         // not go to error, continue
+         rc = SDB_OK ;
+      }
+      rc = engine::utilCatPath( dialogFile, OSS_MAX_PATHSIZE,
+                                SDBSTOP_LOG_FILE_NAME ) ;
+      if ( rc )
+      {
+         ossPrintf( "Failed to build dialog file: %d"OSS_NEWLINE, rc ) ;
+         // not go to error, continue
+         rc = SDB_OK ;
+      }
+      // enable pd log
+      sdbEnablePD( dialogFile ) ;
+      setPDLevel( PDINFO ) ;
+
+      ossSprintVersion( "Version", verText, OSS_MAX_PATHSIZE, FALSE ) ;
+      PD_LOG( PDEVENT, "Start programme[%s]...", verText ) ;
 
       if ( listServices.size() > 0 )
       {
@@ -269,8 +312,11 @@ namespace engine
       }
 
    done :
+      PD_LOG( PDEVENT, "Stop programme." ) ;
       PD_TRACE_EXITRC( SDB_SDBSTOP_MAIN, rc ) ;
       return ( rc >= 0 ) ? rc : utilRC2ShellRC( rc ) ;
+   error:
+      goto done ;
    }
 
 }

@@ -619,6 +619,26 @@ namespace engine
       goto done ;
    }
 
+   UINT32 _optAccessPlan::hash ( const BSONObj &query, const BSONObj &orderBy,
+                                 const BSONObj &hint )
+   {
+      UINT32 hashValue = ossHash ( query.objdata(), query.objsize() ) ^
+                         ossHash ( orderBy.objdata(), orderBy.objsize() ) ;
+      /// hint obj
+      BSONObjIterator itr( hint ) ;
+      while( itr.more() )
+      {
+         BSONElement e = itr.next() ;
+         if ( e.isABSONObj() )
+         {
+            continue ;
+         }
+         hashValue ^= ossHash( e.valuestr(), e.valuesize() ) ;
+      }
+
+      return hashValue ;
+   }
+
    BOOLEAN _optAccessPlan::Reusable ( const BSONObj &query,
                                       const BSONObj &orderBy,
                                       const BSONObj &hint ) const
@@ -656,8 +676,7 @@ namespace engine
             break ;
          }
 
-         if ( !itrSelf.more() ||
-              0 != e1.woCompare( e2, false ) )
+         if ( 0 != e1.woCompare( e2, false ) )
          {
             return FALSE ;
          }

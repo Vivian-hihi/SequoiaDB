@@ -106,27 +106,32 @@ namespace engine
                goto done ;
             }
          }
-         // first create an uninitialized plan
-         *out = SDB_OSS_NEW optAccessPlan ( _su, _collectionName, query,
-                                            orderBy, hint ) ;
-         if ( !(*out) )
-         {
-            PD_LOG ( PDERROR, "Not able to allocate memory for new plan" ) ;
-            rc = SDB_OOM ;
-            goto error ;
-         }
-         // set the parent of plan apm to this apm
-         (*out)->setAPM ( _apm ) ;
-         // if the plan is not in the list, let's try to optimize it
-         rc = (*out)->optimize() ;
-         PD_RC_CHECK ( rc, (SDB_RTN_INVALID_PREDICATES==rc)?PDINFO:PDERROR,
-                       "Failed to optimize plan, query: %s\norder %s\nhint %s",
-                       query.toString().c_str(),
-                       orderBy.toString().c_str(),
-                       hint.toString().c_str() ) ;
-         // now we have to insert it into the list, let's set incSize = TRUE for
-         // now
-         incSize = TRUE ;
+      }
+
+      // first create an uninitialized plan
+      *out = SDB_OSS_NEW optAccessPlan ( _su, _collectionName, query,
+                                         orderBy, hint ) ;
+      if ( !(*out) )
+      {
+         PD_LOG ( PDERROR, "Not able to allocate memory for new plan" ) ;
+         rc = SDB_OOM ;
+         goto error ;
+      }
+      // set the parent of plan apm to this apm
+      (*out)->setAPM ( _apm ) ;
+      // if the plan is not in the list, let's try to optimize it
+      rc = (*out)->optimize() ;
+      PD_RC_CHECK ( rc, (SDB_RTN_INVALID_PREDICATES==rc)?PDINFO:PDERROR,
+                    "Failed to optimize plan, query: %s\norder %s\nhint %s",
+                    query.toString().c_str(),
+                    orderBy.toString().c_str(),
+                    hint.toString().c_str() ) ;
+      // now we have to insert it into the list, let's set incSize = TRUE for
+      // now
+      incSize = TRUE ;
+
+      {
+         RTNAPL_XLOCK
          // now let's see how many plans we have, if so let's attempt to remove
          // any plan that not been used
          if ( _plans.size() >= RTN_APL_SIZE )

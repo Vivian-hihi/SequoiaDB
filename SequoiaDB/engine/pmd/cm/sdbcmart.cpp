@@ -126,6 +126,7 @@ namespace engine
       BOOLEAN asProc = FALSE ;
       BOOLEAN asStandalone = FALSE ;
       string  procShortName = PMDDMN_EXE_NAME ;
+      CHAR verText[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
 
       PMD_ADD_PARAM_OPTIONS_BEGIN ( desc )
          COMMANDS_OPTIONS
@@ -217,6 +218,9 @@ namespace engine
       sdbEnablePD( dialogFile ) ;
       setPDLevel( PDINFO ) ;
 
+      ossSprintVersion( "Version", verText, OSS_MAX_PATHSIZE, FALSE ) ;
+      PD_LOG( PDEVENT, "Start programme[%s]...", verText ) ;
+
       utilCatPath( progName, OSS_MAX_PATHSIZE, procShortName.c_str() ) ;
       argvs.push_back( progName ) ;
       for ( INT32 i = 1; i < argc ; ++i )
@@ -288,6 +292,7 @@ namespace engine
       }
 
    done:
+      PD_LOG( PDEVENT, "Stop programme[%s]" ) ;
       PD_TRACE_EXITRC ( SDB_CMMINTHREADENTY, rc );
       return SDB_OK == rc ? 0 : 1 ;
    error:

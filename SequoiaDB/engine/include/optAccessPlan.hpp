@@ -262,12 +262,7 @@ namespace engine
       }
 
       static UINT32 hash ( const BSONObj &query, const BSONObj &orderBy,
-                           const BSONObj &hint )
-      {
-         return ossHash ( query.objdata(), query.objsize() ) ^
-                ossHash ( orderBy.objdata(), orderBy.objsize() ) ^
-                ossHash ( hint.objdata(), hint.objsize() ) ;
-      }
+                           const BSONObj &hint ) ;
 
       const CHAR *getName()
       {

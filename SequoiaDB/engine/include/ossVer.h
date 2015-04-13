@@ -103,7 +103,8 @@ void ossGetVersion ( INT32 *version,
 
 void ossPrintVersion( const CHAR *prompt ) ;
 
-void ossSprintVersion( const CHAR *prompt, CHAR *pBuff, UINT32 len ) ;
+void ossSprintVersion( const CHAR *prompt, CHAR *pBuff, UINT32 len,
+                       BOOLEAN multiLine ) ;
 
 #endif /* OSSVER_HPP_ */
 

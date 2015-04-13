@@ -119,6 +119,7 @@ namespace engine
       cCMService svc;
       cPmdDaemon daemon( PMDDMN_SVCNAME_DEFAULT ) ;
       BOOLEAN asProc = FALSE ;
+      CHAR verText[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
       po::variables_map vm ;
 
       rc = ossGetEWD( dialogFile, OSS_MAX_PATHSIZE ) ;
@@ -163,9 +164,8 @@ namespace engine
       sdbEnablePD( dialogFile ) ;
       setPDLevel( PDINFO ) ;
 
-      PD_LOG( PDEVENT, "Start cmd[Ver: %d.%d, Release: %d, Build: %s]...",
-              SDB_ENGINE_VERISON_CURRENT, SDB_ENGINE_SUBVERSION_CURRENT,
-              SDB_ENGINE_RELEASE_CURRENT, SDB_ENGINE_BUILD_TIME ) ;
+      ossSprintVersion( "Version", verText, OSS_MAX_PATHSIZE, FALSE ) ;
+      PD_LOG( PDEVENT, "Start cmd[%s]...", verText ) ;
 
       svc.setArgInfo( argc, argv ) ;
       rc = svc.init() ;

@@ -126,6 +126,7 @@ namespace engine
       CHAR dialogPath[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
       CHAR dialogFile[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
       INT32 delSig[] = { 17, 0 } ; // del SIGCHLD
+      CHAR verText[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
       po::variables_map vm ;
 
       rc = initArgs( argc, argv, vm ) ;
@@ -171,9 +172,8 @@ namespace engine
       }
       sdbEnablePD( dialogFile ) ;
 
-      PD_LOG( PDEVENT, "Start cm[Ver: %d.%d, Release: %d, Build: %s]...",
-              SDB_ENGINE_VERISON_CURRENT, SDB_ENGINE_SUBVERSION_CURRENT,
-              SDB_ENGINE_RELEASE_CURRENT, SDB_ENGINE_BUILD_TIME ) ;
+      ossSprintVersion( "Version", verText, OSS_MAX_PATHSIZE, FALSE ) ;
+      PD_LOG( PDEVENT, "Start cm[%s]...", verText) ;
 
       // 3. init param
       rc = sdbGetOMAgentOptions()->init( currentPath ) ;
@@ -227,6 +227,20 @@ namespace engine
       rc = krcb->init() ;
       PD_RC_CHECK( rc, PDERROR, "Failed to init krcb, rc: %d", rc ) ;
 
+      {
+         EDUID agentEDU = PMD_INVALID_EDUID ;
+         pmdEDUMgr *eduMgr = krcb->getEDUMgr() ;
+         // Then start windows listener thread for "backdoor" listening
+         eduMgr->startEDU ( EDU_TYPE_PIPESLISTENER,
+                            (void*)sdbGetOMAgentOptions()->getCMServiceName(),
+                            &agentEDU ) ;
+         eduMgr->regSystemEDU ( EDU_TYPE_PIPESLISTENER, agentEDU ) ;
+
+         rc = eduMgr->waitUntil( agentEDU, PMD_EDU_RUNNING ) ;
+         PD_RC_CHECK( rc, PDERROR, "Wait pipe listener to running "
+                      "failed, rc: %d", rc ) ;
+      }
+
       // 8. change process name
 #if defined (_LINUX)
       {
@@ -238,15 +252,6 @@ namespace engine
          ossRenameProcess ( pmdProcessName ) ;
       }
 #endif // _LINUX
-      {
-         EDUID agentEDU = PMD_INVALID_EDUID ;
-         pmdEDUMgr *eduMgr = krcb->getEDUMgr() ;
-         // Then start windows listener thread for "backdoor" listening
-         eduMgr->startEDU ( EDU_TYPE_PIPESLISTENER,
-                            (void*)sdbGetOMAgentOptions()->getCMServiceName(),
-                            &agentEDU ) ;
-         eduMgr->regSystemEDU ( EDU_TYPE_PIPESLISTENER, agentEDU ) ;
-      }
 
       // Now master thread get into big loop and check shutdown flag
       while ( PMD_IS_DB_UP )

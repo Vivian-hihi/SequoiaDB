@@ -282,6 +282,7 @@ namespace engine
       CHAR dialogFile[ OSS_MAX_PATHSIZE + 1 ] = {0} ;
       BOOLEAN asProc = FALSE ;
       string port = "" ;
+      CHAR verText[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
 
       init ( desc, all ) ;
       // validate arguments
@@ -363,6 +364,9 @@ namespace engine
       sdbEnablePD( dialogFile ) ;
       setPDLevel( PDINFO ) ;
 
+      ossSprintVersion( "Version", verText, OSS_MAX_PATHSIZE, FALSE ) ;
+      PD_LOG( PDEVENT, "Start programme[%s]...", verText ) ;
+
       // stop cm
       rc = stopSdbcm ( asProc, port ) ;
       if ( rc )
@@ -377,6 +381,7 @@ namespace engine
       }
 
    done:
+      PD_LOG( PDEVENT, "Stop programme." ) ;
       PD_TRACE_EXITRC ( SDB_CMSTOP_MAIN, rc ) ;
       return SDB_OK == rc ? 0 : 1 ;
    error:

@@ -172,6 +172,7 @@ namespace engine
       PD_TRACE_ENTRY ( SDB_PMDMSTTHRDMAIN );
       pmdKRCB   *krcb     = pmdGetKRCB () ;
       UINT32     startTimerCount = 0 ;
+      CHAR      verText[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
 
       // 1. read command line first
       rc = pmdResolveArguments ( argc, argv ) ;
@@ -191,19 +192,11 @@ namespace engine
                    pmdGetOptionCB()->diagFileNum() ) ;
       setPDLevel( (PDLEVEL)( pmdGetOptionCB()->getDiagLevel() ) ) ;
 
-#ifdef SDB_ENGINE_FIXVERSION_CURRENT
+      ossSprintVersion( "Version", verText, OSS_MAX_PATHSIZE, FALSE ) ;
+
       PD_LOG ( ( getPDLevel() > PDEVENT ? PDEVENT : getPDLevel() ) ,
-               "Start sequoiadb(%s) [Ver: %d.%d.%d, Release: %d, Build: %s]...",
-               pmdGetOptionCB()->krcbRole(), SDB_ENGINE_VERISON_CURRENT,
-               SDB_ENGINE_SUBVERSION_CURRENT, SDB_ENGINE_FIXVERSION_CURRENT,
-               SDB_ENGINE_RELEASE_CURRENT, SDB_ENGINE_BUILD_TIME ) ;
-#else
-      PD_LOG ( ( getPDLevel() > PDEVENT ? PDEVENT : getPDLevel() ) ,
-               "Start sequoiadb(%s) [Ver: %d.%d, Release: %d, Build: %s]...",
-               pmdGetOptionCB()->krcbRole(), SDB_ENGINE_VERISON_CURRENT,
-               SDB_ENGINE_SUBVERSION_CURRENT, SDB_ENGINE_RELEASE_CURRENT,
-               SDB_ENGINE_BUILD_TIME ) ;
-#endif // SDB_ENGINE_FIXVERSION_CURRENT
+               "Start sequoiadb(%s) [%s]...",
+               pmdGetOptionCB()->krcbRole(), verText ) ;
 
       // 3. printf all configs
       {
@@ -261,6 +254,22 @@ namespace engine
          PD_LOG( PDWARNING, "Start warning (timeout)" ) ;
       }
 
+      {
+         EDUID agentEDU = PMD_INVALID_EDUID ;
+         pmdEDUMgr *eduMgr = pmdGetKRCB()->getEDUMgr() ;
+         // Then start pipe listener for "fast status check" service
+         // Note this listener doesn't need to authenticate
+         // It's only valid for status check, not for any status change
+         eduMgr->startEDU ( EDU_TYPE_PIPESLISTENER,
+                            (void*)pmdGetOptionCB()->getServiceAddr(),
+                            &agentEDU ) ;
+         eduMgr->regSystemEDU ( EDU_TYPE_PIPESLISTENER, agentEDU ) ;
+
+         rc = eduMgr->waitUntil( agentEDU, PMD_EDU_RUNNING ) ;
+         PD_RC_CHECK( rc, PDERROR, "Wait pipe listener to running "
+                      "failed, rc: %d", rc ) ;
+      }
+
 #if defined (_LINUX)
       {
          // once all threads starts ( especially we need to make sure the
@@ -276,17 +285,6 @@ namespace engine
          ossRenameProcess ( pmdProcessName ) ;
       }
 #endif // _LINUX
-      {
-         EDUID agentEDU = PMD_INVALID_EDUID ;
-         pmdEDUMgr *eduMgr = pmdGetKRCB()->getEDUMgr() ;
-         // Then start pipe listener for "fast status check" service
-         // Note this listener doesn't need to authenticate
-         // It's only valid for status check, not for any status change
-         eduMgr->startEDU ( EDU_TYPE_PIPESLISTENER,
-                            (void*)pmdGetOptionCB()->getServiceAddr(),
-                            &agentEDU ) ;
-         eduMgr->regSystemEDU ( EDU_TYPE_PIPESLISTENER, agentEDU ) ;
-      }
 
       // Now master thread get into big loop and check shutdown flag
       while ( PMD_IS_DB_UP )

@@ -1072,6 +1072,10 @@ namespace engine
          rc = result ;
       }
 
+#ifdef _DEBUG
+      PD_LOG( PDEVENT, "End node[%s: %d] pipe result: %d", svcname, pid, rc ) ;
+#endif // _DEBUG
+
       return rc ;
    }
 
