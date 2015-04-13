@@ -311,6 +311,10 @@
 		<if>
 		   	<equals arg1="${os.arch}" arg2="amd64" />
 			<then>
+				<echo message="**************************************************************************************************************************************************************" />
+				<echo level="info" message="list1=${test_list1},${test_list2},${test_list3}" />
+				<echo level="info" message="list2=${test_list4},${test_list5},${test_list6}" />
+				<echo message="**************************************************************************************************************************************************************" />
 				<parallel>
 					<sdbtest host="${test_machine_no2}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${testcase.path}/${test-type-list}_testcases/reports" masterreports="${test.reports.path}" >
 						<param name="basic.testcase.path" value="${testcase.path}/${test-type-list}_testcases" />
