@@ -34,20 +34,6 @@
 		<echo message="Clean deploy result reports compeleted." />
 	</target>
 
-	<target name="Test-Basic-Samples" depends="">
-		<echo message="Begin test basic samples testcases..." />
-		<echo message="Perform the basic samples testcases,with testcase.path=${samples.testcase.path}/JS" />
-		<foreach target="test-one-suite" param="test.suite.fullname">
-			<path>
-				<dirset dir="${samples.testcase.path}/JS" includes="${includes.dir.patterns}" excludes="${excludes.dir.patterns}" />
-			</path>
-			<param name="testcases.path" value="${samples.testcase.path}/JS" />
-			<param name="test-type" value="samples-basic" />
-			<param name="includes.case.patterns" value="*.js" />
-			<param name="excludes.case.patterns" value="" />
-		</foreach>
-	</target>
-
 	<target name="Test-Basic-Testcases" depends="Clean-Basic-Reports">
 		<echo message="Begin test basic testcases..." />
 		<echo message="Perform the basic testcases,with testcase.path=${basic.testcase.path}/js" />

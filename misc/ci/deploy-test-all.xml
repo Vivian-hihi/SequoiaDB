@@ -33,6 +33,28 @@
 	</target>
 
 	<target name="Deploy-Test-All" depends="Clean-Last-Build-Reports">
+		<if>
+		   	<equals arg1="${test-type-list}" arg2="basic" />
+			<then>
+				<foreach target="Deploy-And-Test-Case" param="deploy.case.fullname">
+					<path>
+						<fileset dir="${deploy.config.path}">
+							<include name="${test.environment}-${DEPLOY_WILDCARD}.xml" />
+							<exclude name="${test.environment}-[h3][g1][d3]-tp2.xml" />
+						</fileset>
+					</path>
+				</foreach>
+			</then>
+			<else>
+				<foreach target="Deploy-And-Test-Case" param="deploy.case.fullname">
+					<path>
+						<fileset dir="${deploy.config.path}">
+							<include name="${test.environment}-${DEPLOY_WILDCARD}.xml" />
+						</fileset>
+					</path>
+				</foreach>
+			</else>
+		</if>
 		<foreach target="Deploy-And-Test-Case" param="deploy.case.fullname">
 			<path>
 				<fileset dir="${deploy.config.path}">
