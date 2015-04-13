@@ -9,7 +9,7 @@
     <section><title>示例</title>
       <ul>
         <li>
-          <p>查询集合 bar 下 age 字段值大于10的记录，并将符合提交的记录删除。</p>
+          <p>查询集合 bar 下 age 字段值大于10的记录，并将符合条件的记录删除。</p>
           <p><codeblock>db.foo.bar.find({age:{$gt:10}}).remove()</codeblock></p>
         </li>
       </ul>

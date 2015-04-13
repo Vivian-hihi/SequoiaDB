@@ -37,7 +37,7 @@
     <section><title>示例</title>
       <ul>
         <li>
-          <p>查询集合 bar 下 age 字段值大于10的记录，并将符合提交的记录的 age 字段加1。</p>
+          <p>查询集合 bar 下 age 字段值大于10的记录，并将符合条件的记录的 age 字段加1。</p>
           <p><codeblock>db.foo.bar.find({age:{$gt:10}}).update({$inc:{age:1}})</codeblock></p>
         </li>
       </ul>
