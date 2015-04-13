@@ -1038,6 +1038,8 @@
                     <file name="references/methods/setSessionAttr.dita"/>
                     <file name="references/methods/topics/splitAsync_en.dita"/>
                     <file name="references/methods/topics/splitAsync.dita"/>
+                    <file name="references/methods/topics/sqremove.dita"/>
+                    <file name="references/methods/topics/squpdate.dita"/>
                     <file name="references/methods/topics/startRG_en.dita"/>
                     <file name="references/methods/topics/startRG.dita"/>
                     <file name="references/methods/topics/toArray_en.dita"/>
@@ -1177,7 +1179,6 @@
                     <file name="references/methods/topics_en_v2/rg.start.dita"/>
                     <file name="references/methods/topics_en_v2/rg.stop.dita"/>
                 </folder>
-                <file name="references/methods/111.dita"/>
                 <file name="references/methods/global.dita"/>
                 <file name="references/methods/global.ditamap"/>
                 <file name="references/methods/jscollection.dita"/>

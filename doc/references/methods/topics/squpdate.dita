@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
+<topic id="topic_pfb_cms_rr">
+  <title>query.update()</title>
+  <body>
+    <section><title>query.update(&lt;update>,[returnNew])</title>
+      <p>更新查询结果集。</p>
+    </section>
+    <section><title>参数描述</title>
+      <simpletable id="references_method_skip_table">
+        <sthead>
+          <stentry>参数名</stentry>
+          <stentry>参数类型</stentry>
+          <stentry>描述</stentry>
+          <stentry>是否必填</stentry>
+        </sthead>
+        <strow>
+          <stentry>update</stentry>
+          <stentry>Json 对象</stentry>
+          <stentry>更新规则。记录按 update 的内容更新。</stentry>
+          <stentry>是</stentry>
+        </strow>
+        <strow>
+          <stentry>returnNew</stentry>
+          <stentry>bool</stentry>
+          <stentry>是否返回更新后的记录。</stentry>
+          <stentry>否</stentry>
+        </strow>
+      </simpletable>
+      
+    </section>
+    <section>
+      <title>格式</title>
+      <p>query.update()方法的定义格式包含 update 参数和 returnNew 参数。其中 update 参数是 Json 对象，与 SdbCollection.update()的 rule 参数相同，参见 <xref href="../../methods/topics/dbupdate.dita">db.collectionspace.collection.update()</xref>。returnNew 参数可选，为 bool 类型，默认为 false。当为 true 时，返回修改后的记录值。</p>
+      
+    </section>
+    <section><title>示例</title>
+      <ul>
+        <li>
+          <p>查询集合 bar 下 age 字段值大于10的记录，并将符合提交的记录的 age 字段加1。</p>
+          <p><codeblock>db.foo.bar.find({age:{$gt:10}}).update({$inc:{age:1}})</codeblock></p>
+        </li>
+      </ul>
+      <note>
+        <p>不能与 query.count()、query.remove()同时使用。</p>
+        <p>与 query.sort()同时使用时，在单个节点上排序必须使用索引。</p>
+        <p>在集群中与 query.limit()或 query.skip()同时使用时，要保证查询查询条件会在单个节点执行。</p>
+      </note>
+    </section>
+  </body>
+  <related-links>    
+    <link href="find.dita" format="dita" type="topic"></link>
+    <link href="dbupdate.dita" format="dita" type="topic"></link>
+    <link href="sqremove.dita" format="dita" type="topic"></link>
+  </related-links>
+</topic>

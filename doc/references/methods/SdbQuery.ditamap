@@ -7,10 +7,12 @@
     <topicref href="topics/query_gen.count.dita"/>
     <topicref href="topics/query_gen.index.dita"/>
    <topicref href="topics/hint.dita"/>
-   <topicref href="topics/climit.dita"/>  
+   <topicref href="topics/climit.dita"/>
+   <topicref href="topics/sqremove.dita"/>
    <topicref href="topics/csize.dita"/>
    <topicref href="topics/cskip.dita"/>
    <topicref href="topics/csort.dita"/>   
    <topicref href="topics/toArray.dita"/>
+   <topicref href="topics/squpdate.dita"/>
    </topicref>
 </map>
