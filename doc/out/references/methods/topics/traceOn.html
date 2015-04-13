@@ -47,43 +47,43 @@
 
     <div class="section"><h2 class="title sectiontitle">参数描述</h2>
       <a name="topic_gwj_vzm_zj__references_method_createNode_table"><!-- --></a><table cellpadding="4" cellspacing="0" summary="" id="topic_gwj_vzm_zj__references_method_createNode_table" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d153644e26" class="stentry">参数名</th>
+          <th valign="bottom" align="left" id="d154448e26" class="stentry">参数名</th>
 
-          <th valign="bottom" align="left" id="d153644e29" class="stentry">参数类型</th>
+          <th valign="bottom" align="left" id="d154448e29" class="stentry">参数类型</th>
 
-          <th valign="bottom" align="left" id="d153644e32" class="stentry">描述</th>
+          <th valign="bottom" align="left" id="d154448e32" class="stentry">描述</th>
 
-          <th valign="bottom" align="left" id="d153644e35" class="stentry">是否必填</th>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d153644e26" class="stentry">bufferSize</td>
-
-          <td valign="top" headers="d153644e29" class="stentry">int</td>
-
-          <td valign="top" headers="d153644e32" class="stentry">开启追踪的文件大小。</td>
-
-          <td valign="top" headers="d153644e35" class="stentry">是</td>
+          <th valign="bottom" align="left" id="d154448e35" class="stentry">是否必填</th>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d153644e26" class="stentry">strComp</td>
+          <td valign="top" headers="d154448e26" class="stentry">bufferSize</td>
 
-          <td valign="top" headers="d153644e29" class="stentry">string</td>
+          <td valign="top" headers="d154448e29" class="stentry">int</td>
 
-          <td valign="top" headers="d153644e32" class="stentry">指定模块。</td>
+          <td valign="top" headers="d154448e32" class="stentry">开启追踪的文件大小。</td>
 
-          <td valign="top" headers="d153644e35" class="stentry">否</td>
+          <td valign="top" headers="d154448e35" class="stentry">是</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d153644e26" class="stentry">strBreakPoint</td>
+          <td valign="top" headers="d154448e26" class="stentry">strComp</td>
 
-          <td valign="top" headers="d153644e29" class="stentry">string</td>
+          <td valign="top" headers="d154448e29" class="stentry">string</td>
 
-          <td valign="top" headers="d153644e32" class="stentry">于函数处打断点进行跟踪。</td>
+          <td valign="top" headers="d154448e32" class="stentry">指定模块。</td>
 
-          <td valign="top" headers="d153644e35" class="stentry">否</td>
+          <td valign="top" headers="d154448e35" class="stentry">否</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d154448e26" class="stentry">strBreakPoint</td>
+
+          <td valign="top" headers="d154448e29" class="stentry">string</td>
+
+          <td valign="top" headers="d154448e32" class="stentry">于函数处打断点进行跟踪。</td>
+
+          <td valign="top" headers="d154448e35" class="stentry">否</td>
 
         </tr>
 </table>
@@ -95,7 +95,7 @@
         <li class="li">开启数据库引擎程序跟踪的功能，默认为所有模块：<pre class="pre codeblock">db.traceOn(10000000);</pre>
 </li>
 
-        <li class="li">开户数据库引擎程序跟踪功能，指定跟踪的模块名称和指定断点进行跟踪：<pre class="pre codeblock">db.traceOn(10000000, "cls, dms, mth", "_dmsTempCB::init") ;</pre>
+        <li class="li">开启数据库引擎程序跟踪功能，指定跟踪的模块名称和指定断点进行跟踪：<pre class="pre codeblock">db.traceOn(10000000, "cls, dms, mth", "_dmsTempCB::init") ;</pre>
 </li>
 
       </ul>

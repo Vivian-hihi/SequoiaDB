@@ -444,7 +444,7 @@ description: 失败时的错误描述<div class="fig fignone"/>
       
     </div>
 
-    <div class="section"><h2 class="title sectiontitle">删除记录</h2>
+    <div class="section"><h2 class="title sectiontitle">查询更新数据</h2>
       <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
           <th valign="bottom" align="left" id="d61052e607" class="stentry"/>
 
@@ -464,11 +464,17 @@ description: 失败时的错误描述<div class="fig fignone"/>
 <tr class="strow">
           <td valign="top" headers="d61052e607" class="stentry">请求内容</td>
 
-          <td valign="top" headers="d61052e609" class="stentry">cmd: delete<div class="fig fignone"/>
+          <td valign="top" headers="d61052e609" class="stentry">cmd: queryandupdate<div class="fig fignone"/>
 name: 集合的全称(集合空间.集合)<div class="fig fignone"/>
-deletor: 删除条件</td>
+updator: 更新操作<div class="fig fignone"/>
+sort: 排序字段名(可选参数，可不填)<div class="fig fignone"/>
+selector: 查询结果列(可选参数，可不填)<div class="fig fignone"/>
+skip: 跳过多少行(可选参数，可不填)<div class="fig fignone"/>
+returnnum: 最大返回条数(可选参数，可不填)<div class="fig fignone"/>
+filter: 查询条件(可选参数，可不填)<div class="fig fignone"/>
+returnnew: 是否返回更新后记录(可选参数，可不填)</td>
 
-          <td valign="top" headers="d61052e612" class="stentry">cmd=delete&amp;name=cs.cl&amp;deletor={"name":"hello"}</td>
+          <td valign="top" headers="d61052e612" class="stentry">cmd=queryandupdate&amp;name=cs.cl&amp;updator={$set:{"age":100}}&amp;filter={"name":"hello"}&amp;returnnew=true</td>
           
         </tr>
 <tr class="strow">
@@ -493,10 +499,15 @@ deletor: 删除条件</td>
           <td valign="top" headers="d61052e609" class="stentry">{<div class="fig fignone"/>
 errno: 返回值，0表示成功，其他为失败<div class="fig fignone"/>
 description: 失败时的错误描述<div class="fig fignone"/>
-}            
+}<div class="fig fignone"/>
+{<div class="fig fignone"/>
+返回表里的记录<div class="fig fignone"/>
+}<div class="fig fignone"/>
+…
+            
           </td>
 
-          <td valign="top" headers="d61052e612" class="stentry">{ "errno": 0 }</td>
+          <td valign="top" headers="d61052e612" class="stentry">{ "errno": 0 }{ "_id": { "$oid": "54def72f0d8737161d9d6934" }, "age": 12, "name": "hello" }</td>
           
         </tr>
 <tr class="strow">
@@ -511,68 +522,211 @@ description: 失败时的错误描述<div class="fig fignone"/>
       
     </div>
 
-    <div class="section"><h2 class="title sectiontitle">更新记录</h2>
+    <div class="section"><h2 class="title sectiontitle">查询删除数据</h2>
       <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d61052e703" class="stentry"/>
+          <th valign="bottom" align="left" id="d61052e725" class="stentry"/>
 
-          <th valign="bottom" align="left" id="d61052e705" class="stentry">说明</th>
+          <th valign="bottom" align="left" id="d61052e727" class="stentry">说明</th>
 
-          <th valign="bottom" align="left" id="d61052e708" class="stentry">例子</th>
+          <th valign="bottom" align="left" id="d61052e730" class="stentry">例子</th>
           
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d61052e703" class="stentry">请求头</td>
+          <td valign="top" headers="d61052e725" class="stentry">请求头</td>
 
-          <td valign="top" headers="d61052e705" class="stentry">同通用请求头</td>
+          <td valign="top" headers="d61052e727" class="stentry">同通用请求头</td>
 
-          <td valign="top" headers="d61052e708" class="stentry"> </td>
+          <td valign="top" headers="d61052e730" class="stentry"> </td>
           
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d61052e703" class="stentry">请求内容</td>
+          <td valign="top" headers="d61052e725" class="stentry">请求内容</td>
 
-          <td valign="top" headers="d61052e705" class="stentry">cmd: update<div class="fig fignone"/>
+          <td valign="top" headers="d61052e727" class="stentry">cmd: queryandremove<div class="fig fignone"/>
 name: 集合的全称(集合空间.集合)<div class="fig fignone"/>
-updator: 更新操作<div class="fig fignone"/>
-filter: 更新条件</td>
+sort: 排序字段名(可选参数，可不填)<div class="fig fignone"/>
+selector: 查询结果列(可选参数，可不填)<div class="fig fignone"/>
+skip: 跳过多少行(可选参数，可不填)<div class="fig fignone"/>
+returnnum: 最大返回条数(可选参数，可不填)<div class="fig fignone"/>
+filter: 查询条件(可选参数，可不填)</td>
 
-          <td valign="top" headers="d61052e708" class="stentry">cmd=update&amp;name=cs.cl&amp;updator={$set:{"age":100}}&amp;filter={"name": "hello"}</td>
+          <td valign="top" headers="d61052e730" class="stentry">cmd=queryandremove&amp;name=cs.cl&amp;filter={"name":"hello"}</td>
           
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d61052e703" class="stentry">说明</td>
+          <td valign="top" headers="d61052e725" class="stentry">说明</td>
 
-          <td valign="top" headers="d61052e705" class="stentry"> </td>
+          <td valign="top" headers="d61052e727" class="stentry"> </td>
 
-          <td valign="top" headers="d61052e708" class="stentry"> </td>
+          <td valign="top" headers="d61052e730" class="stentry"> </td>
           
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d61052e703" class="stentry">响应头</td>
+          <td valign="top" headers="d61052e725" class="stentry">响应头</td>
 
-          <td valign="top" headers="d61052e705" class="stentry">同通用响应头</td>
+          <td valign="top" headers="d61052e727" class="stentry">同通用响应头</td>
 
-          <td valign="top" headers="d61052e708" class="stentry"> </td>
+          <td valign="top" headers="d61052e730" class="stentry"> </td>
           
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d61052e703" class="stentry">响应内容</td>
+          <td valign="top" headers="d61052e725" class="stentry">响应内容</td>
 
-          <td valign="top" headers="d61052e705" class="stentry">{<div class="fig fignone"/>
+          <td valign="top" headers="d61052e727" class="stentry">{<div class="fig fignone"/>
+errno: 返回值，0表示成功，其他为失败<div class="fig fignone"/>
+description: 失败时的错误描述<div class="fig fignone"/>
+}<div class="fig fignone"/>
+{<div class="fig fignone"/>
+返回表里的记录<div class="fig fignone"/>
+}<div class="fig fignone"/>
+…
+            
+          </td>
+
+          <td valign="top" headers="d61052e730" class="stentry">{ "errno": 0 }{ "_id": { "$oid": "54def72f0d8737161d9d6934" }, "age": 12, "name": "hello" }</td>
+          
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d61052e725" class="stentry">说明</td>
+
+          <td valign="top" headers="d61052e727" class="stentry"> </td>
+
+          <td valign="top" headers="d61052e730" class="stentry"> </td>
+          
+        </tr>
+</table>
+      
+    </div>
+
+    <div class="section"><h2 class="title sectiontitle">删除记录</h2>
+      <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
+          <th valign="bottom" align="left" id="d61052e839" class="stentry"/>
+
+          <th valign="bottom" align="left" id="d61052e841" class="stentry">说明</th>
+
+          <th valign="bottom" align="left" id="d61052e844" class="stentry">例子</th>
+          
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d61052e839" class="stentry">请求头</td>
+
+          <td valign="top" headers="d61052e841" class="stentry">同通用请求头</td>
+
+          <td valign="top" headers="d61052e844" class="stentry"> </td>
+          
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d61052e839" class="stentry">请求内容</td>
+
+          <td valign="top" headers="d61052e841" class="stentry">cmd: delete<div class="fig fignone"/>
+name: 集合的全称(集合空间.集合)<div class="fig fignone"/>
+deletor: 删除条件</td>
+
+          <td valign="top" headers="d61052e844" class="stentry">cmd=delete&amp;name=cs.cl&amp;deletor={"name":"hello"}</td>
+          
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d61052e839" class="stentry">说明</td>
+
+          <td valign="top" headers="d61052e841" class="stentry"> </td>
+
+          <td valign="top" headers="d61052e844" class="stentry"> </td>
+          
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d61052e839" class="stentry">响应头</td>
+
+          <td valign="top" headers="d61052e841" class="stentry">同通用响应头</td>
+
+          <td valign="top" headers="d61052e844" class="stentry"> </td>
+          
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d61052e839" class="stentry">响应内容</td>
+
+          <td valign="top" headers="d61052e841" class="stentry">{<div class="fig fignone"/>
 errno: 返回值，0表示成功，其他为失败<div class="fig fignone"/>
 description: 失败时的错误描述<div class="fig fignone"/>
 }            
           </td>
 
-          <td valign="top" headers="d61052e708" class="stentry">{ "errno": 0 }</td>
+          <td valign="top" headers="d61052e844" class="stentry">{ "errno": 0 }</td>
           
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d61052e703" class="stentry">说明</td>
+          <td valign="top" headers="d61052e839" class="stentry">说明</td>
 
-          <td valign="top" headers="d61052e705" class="stentry"> </td>
+          <td valign="top" headers="d61052e841" class="stentry"> </td>
 
-          <td valign="top" headers="d61052e708" class="stentry"> </td>
+          <td valign="top" headers="d61052e844" class="stentry"> </td>
+          
+        </tr>
+</table>
+      
+    </div>
+
+    <div class="section"><h2 class="title sectiontitle">更新记录</h2>
+      <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
+          <th valign="bottom" align="left" id="d61052e935" class="stentry"/>
+
+          <th valign="bottom" align="left" id="d61052e937" class="stentry">说明</th>
+
+          <th valign="bottom" align="left" id="d61052e940" class="stentry">例子</th>
+          
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d61052e935" class="stentry">请求头</td>
+
+          <td valign="top" headers="d61052e937" class="stentry">同通用请求头</td>
+
+          <td valign="top" headers="d61052e940" class="stentry"> </td>
+          
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d61052e935" class="stentry">请求内容</td>
+
+          <td valign="top" headers="d61052e937" class="stentry">cmd: update<div class="fig fignone"/>
+name: 集合的全称(集合空间.集合)<div class="fig fignone"/>
+updator: 更新操作<div class="fig fignone"/>
+filter: 更新条件</td>
+
+          <td valign="top" headers="d61052e940" class="stentry">cmd=update&amp;name=cs.cl&amp;updator={$set:{"age":100}}&amp;filter={"name": "hello"}</td>
+          
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d61052e935" class="stentry">说明</td>
+
+          <td valign="top" headers="d61052e937" class="stentry"> </td>
+
+          <td valign="top" headers="d61052e940" class="stentry"> </td>
+          
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d61052e935" class="stentry">响应头</td>
+
+          <td valign="top" headers="d61052e937" class="stentry">同通用响应头</td>
+
+          <td valign="top" headers="d61052e940" class="stentry"> </td>
+          
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d61052e935" class="stentry">响应内容</td>
+
+          <td valign="top" headers="d61052e937" class="stentry">{<div class="fig fignone"/>
+errno: 返回值，0表示成功，其他为失败<div class="fig fignone"/>
+description: 失败时的错误描述<div class="fig fignone"/>
+}            
+          </td>
+
+          <td valign="top" headers="d61052e940" class="stentry">{ "errno": 0 }</td>
+          
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d61052e935" class="stentry">说明</td>
+
+          <td valign="top" headers="d61052e937" class="stentry"> </td>
+
+          <td valign="top" headers="d61052e940" class="stentry"> </td>
           
         </tr>
 </table>
@@ -581,50 +735,50 @@ description: 失败时的错误描述<div class="fig fignone"/>
 
     <div class="section"><h2 class="title sectiontitle">获取记录数</h2>
       <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d61052e801" class="stentry"/>
+          <th valign="bottom" align="left" id="d61052e1033" class="stentry"/>
 
-          <th valign="bottom" align="left" id="d61052e803" class="stentry">说明</th>
+          <th valign="bottom" align="left" id="d61052e1035" class="stentry">说明</th>
 
-          <th valign="bottom" align="left" id="d61052e806" class="stentry">例子</th>
+          <th valign="bottom" align="left" id="d61052e1038" class="stentry">例子</th>
           
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d61052e801" class="stentry">请求头</td>
+          <td valign="top" headers="d61052e1033" class="stentry">请求头</td>
 
-          <td valign="top" headers="d61052e803" class="stentry">同通用请求头</td>
+          <td valign="top" headers="d61052e1035" class="stentry">同通用请求头</td>
 
-          <td valign="top" headers="d61052e806" class="stentry"> </td>
+          <td valign="top" headers="d61052e1038" class="stentry"> </td>
           
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d61052e801" class="stentry">请求内容</td>
+          <td valign="top" headers="d61052e1033" class="stentry">请求内容</td>
 
-          <td valign="top" headers="d61052e803" class="stentry">cmd: get count<div class="fig fignone"/>
+          <td valign="top" headers="d61052e1035" class="stentry">cmd: get count<div class="fig fignone"/>
 name: 集合的全称(集合空间.集合)</td>
 
-          <td valign="top" headers="d61052e806" class="stentry">cmd=get count&amp;name=cs.cl</td>
+          <td valign="top" headers="d61052e1038" class="stentry">cmd=get count&amp;name=cs.cl</td>
           
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d61052e801" class="stentry">说明</td>
+          <td valign="top" headers="d61052e1033" class="stentry">说明</td>
 
-          <td valign="top" headers="d61052e803" class="stentry"> </td>
+          <td valign="top" headers="d61052e1035" class="stentry"> </td>
 
-          <td valign="top" headers="d61052e806" class="stentry"> </td>
+          <td valign="top" headers="d61052e1038" class="stentry"> </td>
           
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d61052e801" class="stentry">响应头</td>
+          <td valign="top" headers="d61052e1033" class="stentry">响应头</td>
 
-          <td valign="top" headers="d61052e803" class="stentry">同通用响应头</td>
+          <td valign="top" headers="d61052e1035" class="stentry">同通用响应头</td>
 
-          <td valign="top" headers="d61052e806" class="stentry"> </td>
+          <td valign="top" headers="d61052e1038" class="stentry"> </td>
           
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d61052e801" class="stentry">响应内容</td>
+          <td valign="top" headers="d61052e1033" class="stentry">响应内容</td>
 
-          <td valign="top" headers="d61052e803" class="stentry">{<div class="fig fignone"/>
+          <td valign="top" headers="d61052e1035" class="stentry">{<div class="fig fignone"/>
 errno: 返回值，0表示成功，其他为失败<div class="fig fignone"/>
 description: 失败时的错误描述<div class="fig fignone"/>
 }<div class="fig fignone"/>
@@ -634,15 +788,15 @@ Total: 总计数<div class="fig fignone"/>
             
           </td>
 
-          <td valign="top" headers="d61052e806" class="stentry">{ "errno": 0 }{ "Total": 1 }</td>
+          <td valign="top" headers="d61052e1038" class="stentry">{ "errno": 0 }{ "Total": 1 }</td>
           
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d61052e801" class="stentry">说明</td>
+          <td valign="top" headers="d61052e1033" class="stentry">说明</td>
 
-          <td valign="top" headers="d61052e803" class="stentry"> </td>
+          <td valign="top" headers="d61052e1035" class="stentry"> </td>
 
-          <td valign="top" headers="d61052e806" class="stentry"> </td>
+          <td valign="top" headers="d61052e1038" class="stentry"> </td>
           
         </tr>
 </table>
@@ -651,66 +805,66 @@ Total: 总计数<div class="fig fignone"/>
 
     <div class="section"><h2 class="title sectiontitle">修改表属性</h2>
       <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d61052e902" class="stentry"/>
+          <th valign="bottom" align="left" id="d61052e1135" class="stentry"/>
 
-          <th valign="bottom" align="left" id="d61052e904" class="stentry">说明</th>
+          <th valign="bottom" align="left" id="d61052e1137" class="stentry">说明</th>
 
-          <th valign="bottom" align="left" id="d61052e907" class="stentry">例子</th>
+          <th valign="bottom" align="left" id="d61052e1140" class="stentry">例子</th>
           
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d61052e902" class="stentry">请求头</td>
+          <td valign="top" headers="d61052e1135" class="stentry">请求头</td>
 
-          <td valign="top" headers="d61052e904" class="stentry">同通用请求头</td>
+          <td valign="top" headers="d61052e1137" class="stentry">同通用请求头</td>
 
-          <td valign="top" headers="d61052e907" class="stentry"> </td>
+          <td valign="top" headers="d61052e1140" class="stentry"> </td>
           
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d61052e902" class="stentry">请求内容</td>
+          <td valign="top" headers="d61052e1135" class="stentry">请求内容</td>
 
-          <td valign="top" headers="d61052e904" class="stentry">cmd: alter collection<div class="fig fignone"/>
+          <td valign="top" headers="d61052e1137" class="stentry">cmd: alter collection<div class="fig fignone"/>
 name: 集合的全称(集合空间.集合)<div class="fig fignone"/>
 options: 属性</td>
 
-          <td valign="top" headers="d61052e907" class="stentry">cmd=alter collection&amp;name=cs.cl&amp;options={ShardingKey:{age:1},ShardingType:"hash"}</td>
+          <td valign="top" headers="d61052e1140" class="stentry">cmd=alter collection&amp;name=cs.cl&amp;options={ShardingKey:{age:1},ShardingType:"hash"}</td>
           
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d61052e902" class="stentry">说明</td>
+          <td valign="top" headers="d61052e1135" class="stentry">说明</td>
 
-          <td valign="top" headers="d61052e904" class="stentry"> </td>
+          <td valign="top" headers="d61052e1137" class="stentry"> </td>
 
-          <td valign="top" headers="d61052e907" class="stentry"> </td>
+          <td valign="top" headers="d61052e1140" class="stentry"> </td>
           
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d61052e902" class="stentry">响应头</td>
+          <td valign="top" headers="d61052e1135" class="stentry">响应头</td>
 
-          <td valign="top" headers="d61052e904" class="stentry">同通用响应头</td>
+          <td valign="top" headers="d61052e1137" class="stentry">同通用响应头</td>
 
-          <td valign="top" headers="d61052e907" class="stentry"> </td>
+          <td valign="top" headers="d61052e1140" class="stentry"> </td>
           
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d61052e902" class="stentry">响应内容</td>
+          <td valign="top" headers="d61052e1135" class="stentry">响应内容</td>
 
-          <td valign="top" headers="d61052e904" class="stentry">{<div class="fig fignone"/>
+          <td valign="top" headers="d61052e1137" class="stentry">{<div class="fig fignone"/>
 errno: 返回值，0表示成功，其他为失败<div class="fig fignone"/>
 description: 失败时的错误描述<div class="fig fignone"/>
 }
             
           </td>
 
-          <td valign="top" headers="d61052e907" class="stentry">{ "errno": 0 }</td>
+          <td valign="top" headers="d61052e1140" class="stentry">{ "errno": 0 }</td>
           
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d61052e902" class="stentry">说明</td>
+          <td valign="top" headers="d61052e1135" class="stentry">说明</td>
 
-          <td valign="top" headers="d61052e904" class="stentry"> </td>
+          <td valign="top" headers="d61052e1137" class="stentry"> </td>
 
-          <td valign="top" headers="d61052e907" class="stentry"> </td>
+          <td valign="top" headers="d61052e1140" class="stentry"> </td>
           
         </tr>
 </table>
@@ -719,25 +873,25 @@ description: 失败时的错误描述<div class="fig fignone"/>
 
     <div class="section"><h2 class="title sectiontitle">表分区</h2>
       <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d61052e998" class="stentry"/>
+          <th valign="bottom" align="left" id="d61052e1231" class="stentry"/>
 
-          <th valign="bottom" align="left" id="d61052e1000" class="stentry">说明</th>
+          <th valign="bottom" align="left" id="d61052e1233" class="stentry">说明</th>
 
-          <th valign="bottom" align="left" id="d61052e1003" class="stentry">例子</th>
+          <th valign="bottom" align="left" id="d61052e1236" class="stentry">例子</th>
           
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d61052e998" class="stentry">请求头</td>
+          <td valign="top" headers="d61052e1231" class="stentry">请求头</td>
 
-          <td valign="top" headers="d61052e1000" class="stentry">同通用请求头</td>
+          <td valign="top" headers="d61052e1233" class="stentry">同通用请求头</td>
 
-          <td valign="top" headers="d61052e1003" class="stentry"> </td>
+          <td valign="top" headers="d61052e1236" class="stentry"> </td>
           
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d61052e998" class="stentry">请求内容</td>
+          <td valign="top" headers="d61052e1231" class="stentry">请求内容</td>
 
-          <td valign="top" headers="d61052e1000" class="stentry">cmd: split<div class="fig fignone"/>
+          <td valign="top" headers="d61052e1233" class="stentry">cmd: split<div class="fig fignone"/>
 name: 集合的全称(集合空间.集合)<div class="fig fignone"/>
 source: 源数据组;<div class="fig fignone"/>
 target: 目标数据组;<div class="fig fignone"/>
@@ -745,44 +899,44 @@ splitpercent: 百分比<div class="fig fignone"/>
 splitquery: 开始条件<div class="fig fignone"/>
 splitEndQuery: 结束条件</td>
 
-          <td valign="top" headers="d61052e1003" class="stentry">cmd=split&amp;name=cs.cl&amp;source=db1&amp;target=db2&amp;splitpercent=50</td>
+          <td valign="top" headers="d61052e1236" class="stentry">cmd=split&amp;name=cs.cl&amp;source=db1&amp;target=db2&amp;splitpercent=50</td>
           
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d61052e998" class="stentry">说明</td>
+          <td valign="top" headers="d61052e1231" class="stentry">说明</td>
 
-          <td valign="top" headers="d61052e1000" class="stentry"> </td>
+          <td valign="top" headers="d61052e1233" class="stentry"> </td>
 
-          <td valign="top" headers="d61052e1003" class="stentry"> </td>
+          <td valign="top" headers="d61052e1236" class="stentry"> </td>
           
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d61052e998" class="stentry">响应头</td>
+          <td valign="top" headers="d61052e1231" class="stentry">响应头</td>
 
-          <td valign="top" headers="d61052e1000" class="stentry">同通用响应头</td>
+          <td valign="top" headers="d61052e1233" class="stentry">同通用响应头</td>
 
-          <td valign="top" headers="d61052e1003" class="stentry"> </td>
+          <td valign="top" headers="d61052e1236" class="stentry"> </td>
           
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d61052e998" class="stentry">响应内容</td>
+          <td valign="top" headers="d61052e1231" class="stentry">响应内容</td>
 
-          <td valign="top" headers="d61052e1000" class="stentry">{<div class="fig fignone"/>
+          <td valign="top" headers="d61052e1233" class="stentry">{<div class="fig fignone"/>
 errno: 返回值，0表示成功，其他为失败<div class="fig fignone"/>
 description: 失败时的错误描述<div class="fig fignone"/>
 }
             
           </td>
 
-          <td valign="top" headers="d61052e1003" class="stentry">{ "errno": 0 }</td>
+          <td valign="top" headers="d61052e1236" class="stentry">{ "errno": 0 }</td>
           
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d61052e998" class="stentry">说明</td>
+          <td valign="top" headers="d61052e1231" class="stentry">说明</td>
 
-          <td valign="top" headers="d61052e1000" class="stentry"> </td>
+          <td valign="top" headers="d61052e1233" class="stentry"> </td>
 
-          <td valign="top" headers="d61052e1003" class="stentry"> </td>
+          <td valign="top" headers="d61052e1236" class="stentry"> </td>
           
         </tr>
 </table>
@@ -791,49 +945,49 @@ description: 失败时的错误描述<div class="fig fignone"/>
 
     <div class="section"><h2 class="title sectiontitle">列出数据组</h2>
       <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d61052e1104" class="stentry"/>
+          <th valign="bottom" align="left" id="d61052e1336" class="stentry"/>
 
-          <th valign="bottom" align="left" id="d61052e1106" class="stentry">说明</th>
+          <th valign="bottom" align="left" id="d61052e1338" class="stentry">说明</th>
 
-          <th valign="bottom" align="left" id="d61052e1109" class="stentry">例子</th>
+          <th valign="bottom" align="left" id="d61052e1341" class="stentry">例子</th>
           
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d61052e1104" class="stentry">请求头</td>
+          <td valign="top" headers="d61052e1336" class="stentry">请求头</td>
 
-          <td valign="top" headers="d61052e1106" class="stentry">同通用请求头</td>
+          <td valign="top" headers="d61052e1338" class="stentry">同通用请求头</td>
 
-          <td valign="top" headers="d61052e1109" class="stentry"> </td>
+          <td valign="top" headers="d61052e1341" class="stentry"> </td>
           
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d61052e1104" class="stentry">请求内容</td>
+          <td valign="top" headers="d61052e1336" class="stentry">请求内容</td>
 
-          <td valign="top" headers="d61052e1106" class="stentry">cmd: list groups</td>
+          <td valign="top" headers="d61052e1338" class="stentry">cmd: list groups</td>
 
-          <td valign="top" headers="d61052e1109" class="stentry">cmd=list groups</td>
+          <td valign="top" headers="d61052e1341" class="stentry">cmd=list groups</td>
           
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d61052e1104" class="stentry">说明</td>
+          <td valign="top" headers="d61052e1336" class="stentry">说明</td>
 
-          <td valign="top" headers="d61052e1106" class="stentry"> </td>
+          <td valign="top" headers="d61052e1338" class="stentry"> </td>
 
-          <td valign="top" headers="d61052e1109" class="stentry"> </td>
+          <td valign="top" headers="d61052e1341" class="stentry"> </td>
           
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d61052e1104" class="stentry">响应头</td>
+          <td valign="top" headers="d61052e1336" class="stentry">响应头</td>
 
-          <td valign="top" headers="d61052e1106" class="stentry">同通用响应头</td>
+          <td valign="top" headers="d61052e1338" class="stentry">同通用响应头</td>
 
-          <td valign="top" headers="d61052e1109" class="stentry"> </td>
+          <td valign="top" headers="d61052e1341" class="stentry"> </td>
           
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d61052e1104" class="stentry">响应内容</td>
+          <td valign="top" headers="d61052e1336" class="stentry">响应内容</td>
 
-          <td valign="top" headers="d61052e1106" class="stentry">{<div class="fig fignone"/>
+          <td valign="top" headers="d61052e1338" class="stentry">{<div class="fig fignone"/>
 errno: 返回值，0表示成功，其他为失败<div class="fig fignone"/>
 description: 失败时的错误描述<div class="fig fignone"/>
 }<div class="fig fignone"/>
@@ -843,15 +997,15 @@ description: 失败时的错误描述<div class="fig fignone"/>
                       
           </td>
 
-          <td valign="top" headers="d61052e1109" class="stentry">{ "errno": 0 }</td>
+          <td valign="top" headers="d61052e1341" class="stentry">{ "errno": 0 }</td>
           
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d61052e1104" class="stentry">说明</td>
+          <td valign="top" headers="d61052e1336" class="stentry">说明</td>
 
-          <td valign="top" headers="d61052e1106" class="stentry"> </td>
+          <td valign="top" headers="d61052e1338" class="stentry"> </td>
 
-          <td valign="top" headers="d61052e1109" class="stentry"> </td>
+          <td valign="top" headers="d61052e1341" class="stentry"> </td>
           
         </tr>
 </table>
