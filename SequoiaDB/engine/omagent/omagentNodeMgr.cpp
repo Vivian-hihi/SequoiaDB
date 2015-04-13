@@ -40,6 +40,9 @@
 #include "pmd.hpp"
 
 #include "../bson/bson.h"
+#include "pd.hpp"
+#include "ossPath.hpp"
+#include "omagentNodePathGuard.hpp"
 
 using namespace bson ;
 
@@ -261,6 +264,12 @@ namespace engine
 
       _mapLatch.release() ;
 
+      rc = _initNodePathGuard( option->getLocalCfgPath() ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+      
    done:
       return rc ;
    error:
@@ -298,6 +307,14 @@ namespace engine
    INT32 _omAgentNodeMgr::fini()
    {
       cCMService::fini() ;
+
+      for ( UINT32 idx = 0 ; idx < _nodeGuards.size() ; ++idx )
+      {
+         omaNodePathGuard *guard = _nodeGuards[ idx ] ;
+         SDB_OSS_DEL guard ;
+         guard = NULL ;
+      }
+
       return SDB_OK ;
    }
 
@@ -942,6 +959,18 @@ namespace engine
          goto error ;
       }
 
+      for ( INT32 idx = 0 ; idx < _nodeGuards.size() ; ++idx )
+      {
+         omaNodePathGuard *guard = _nodeGuards[ idx ] ;
+         if ( !guard->checkFolderPath( pSvcName, dbPath ) )
+         {
+            PD_LOG ( PDERROR, "path: %s belongs to other node or not empty",
+                              dbPath ) ;
+            rc = SDB_FE ;
+            goto error ;
+         }
+      }
+
       rc = ossAccess( dbPath, W_OK ) ;
       // if we get permission, we can't continue
       if ( SDB_PERM == rc )
@@ -959,6 +988,28 @@ namespace engine
             goto error ;
          }
          createDBPath = TRUE ;
+         // add new path to node guard
+         omaNodePathGuard *guard = NULL ;
+         for ( INT32 idx = 0 ; idx < _nodeGuards.size() ; ++idx )
+         {
+            if ( 0 == ossStrncmp( pSvcName, _nodeGuards[idx]->name(),
+                                  OSS_MAX_SERVICENAME ) )
+            {
+               guard = _nodeGuards[ idx ] ;
+               break ;
+            }
+         }
+         if ( NULL == guard )
+         {
+            guard = SDB_OSS_NEW omaNodePathGuard( pSvcName ) ;
+            if ( NULL == guard )
+            {
+               rc = SDB_OOM ;
+               goto error ;
+            }
+            _nodeGuards.push_back( guard ) ;
+         }
+         guard->addToPath( dbPath ) ;
       }
       else if ( rc )
       {
@@ -1377,6 +1428,156 @@ namespace engine
       PD_LOG( PDEVENT, "Stop Sequoiadb node succeed, svcname = %s",
               pSvcName ) ;
 
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _omAgentNodeMgr::_initNodePathGuard( const CHAR *localCfgPath )
+   {
+      SDB_ASSERT( localCfgPath, "local config path cannot be NULL" ) ;
+
+      INT32 rc = SDB_OK ;
+      std::string path = localCfgPath ;
+      std::vector<std::string> vecSvc ;
+      rc = omGetSvcListFromConfig( localCfgPath, vecSvc ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to get service list from config, "
+                   "rc: %d", rc ) ;
+
+      path += OSS_FILE_SEP ;
+      for ( UINT32 idx = 0; idx < vecSvc.size(); ++idx )
+      {
+         typedef std::map<std::string, std::string>::iterator MAP_STR_STR_IT ;
+
+         std::map<std::string, std::string> cfgFiles ;
+         std::string cfgDir = path + vecSvc[ idx ] ;
+         ossEnumFiles( cfgDir.c_str(), cfgFiles, NULL, 1 ) ;
+
+         MAP_STR_STR_IT cit = cfgFiles.begin() ;
+         for ( ; cfgFiles.end() != cit; ++cit )
+         {
+            po::options_description all ;
+            po::variables_map vm ;
+            all.add_options()
+               ( PMD_OPTION_SVCNAME,     po::value<string>(), "svcname" )
+               ( PMD_OPTION_CONFPATH,    po::value<string>(), "confpath" )
+               ( PMD_OPTION_DBPATH,      po::value<string>(), "dbpath" )
+               ( PMD_OPTION_IDXPATH,     po::value<string>(), "indexpath" )
+               ( PMD_OPTION_DIAGLOGPATH, po::value<string>(), "diagpath" )
+               ( PMD_OPTION_LOGPATH,     po::value<string>(), "logpath" )
+               ( PMD_OPTION_BKUPPATH,    po::value<string>(), "bkuppath" )
+               ( PMD_OPTION_WWWPATH,     po::value<string>(), "wwwpath" )
+               ( PMD_OPTION_LOBPATH,     po::value<string>(), "lobpath" ) ;
+            std::string cfg = cit->second ;
+            rc = utilReadConfigureFile( cfg.c_str(), all, vm ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG ( PDERROR, "Failed to read configure file, rc = %d", rc );
+               goto error ;
+            }
+
+            omaNodePathGuard *guard = NULL ;
+            if ( vm.count( PMD_OPTION_SVCNAME ) )
+            {
+               std::string svcname = vm[PMD_OPTION_SVCNAME].as<std::string>() ;
+               std::vector<omaNodePathGuard*>::iterator itr = _nodeGuards.begin() ;
+               for ( ; _nodeGuards.end() != itr; ++itr )
+               {
+                  if ( 0 == ossStrncmp( (*itr)->name(), svcname.c_str(),
+                                        OSS_MAX_SERVICENAME ) )
+                  {
+                     guard = *itr ;
+                  }
+               }
+
+               if ( NULL == guard )
+               {
+                  guard = SDB_OSS_NEW omaNodePathGuard( svcname.c_str() ) ;
+                  if ( NULL == guard )
+                  {
+                     rc = SDB_OOM ;
+                     goto error ;
+                  }
+               }
+            }
+
+            // confpath
+            if ( vm.count( PMD_OPTION_CONFPATH ) )
+            {
+               std::string confPath = vm[ PMD_OPTION_CONFPATH ].as<std::string>() ;
+               if ( NULL != guard )
+               {
+                  guard->addToPath( confPath.c_str() ) ;
+               }
+            }
+            // dbpath
+            if ( vm.count( PMD_OPTION_DBPATH ) )
+            {
+               std::string dbPath = vm[ PMD_OPTION_DBPATH ].as<std::string>() ;
+               if ( NULL != guard )
+               {
+                  guard->addToPath( dbPath.c_str() ) ;
+               }
+            }
+            // indexpath
+            if ( vm.count( PMD_OPTION_IDXPATH ) )
+            {
+               std::string idxPath = vm[ PMD_OPTION_IDXPATH ].as<std::string>() ;
+               if ( NULL != guard )
+               {
+                  guard->addToPath( idxPath.c_str() ) ;
+               }
+            }
+            // dialogpath
+            if ( vm.count( PMD_OPTION_DIAGLOGPATH ) )
+            {
+               std::string dialogPath = vm[ PMD_OPTION_DIAGLOGPATH ].as<std::string>() ;
+               if ( NULL != guard )
+               {
+                  guard->addToPath( dialogPath.c_str() ) ;
+               }
+            }
+            // logpath
+            if ( vm.count( PMD_OPTION_LOGPATH ) )
+            {
+               std::string logPath = vm[ PMD_OPTION_LOGPATH ].as<std::string>() ;
+               if ( NULL != guard )
+               {
+                  guard->addToPath( logPath.c_str() ) ;
+               }
+            }
+            // bkuppath
+            if ( vm.count( PMD_OPTION_BKUPPATH ) )
+            {
+               std::string bkPath = vm[ PMD_OPTION_BKUPPATH ].as<std::string>() ;
+               if ( NULL != guard )
+               {
+                  guard->addToPath( bkPath.c_str() ) ;
+               }
+            }
+            // wwwpath
+            if ( vm.count( PMD_OPTION_WWWPATH ) )
+            {
+               std::string wwwPath = vm[ PMD_OPTION_WWWPATH ].as<std::string>() ;
+               if ( NULL != guard )
+               {
+                  guard->addToPath( wwwPath.c_str() ) ;
+               }
+            }
+            // logpath
+            if ( vm.count( PMD_OPTION_LOBPATH ) )
+            {
+               std::string lobPath = vm[ PMD_OPTION_LOBPATH ].as<std::string>() ;
+               if ( NULL != guard )
+               {
+                  guard->addToPath( lobPath.c_str() ) ;
+               }
+            }
+
+            _nodeGuards.push_back( guard ) ;
+         }
+      }
    done:
       return rc ;
    error:

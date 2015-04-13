@@ -148,7 +148,8 @@ omagentFiles = [
       "omagent/omagentTaskBase.cpp",
       "omagent/omagentTask.cpp",
       "omagent/omagentSubTask.cpp",
-      "omagent/omagentJob.cpp"
+      "omagent/omagentJob.cpp",
+      "omagent/omagentNodePathGuard.cpp"
       ]
 
 sptFiles = [

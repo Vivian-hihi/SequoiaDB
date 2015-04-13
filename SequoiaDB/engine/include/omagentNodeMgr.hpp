@@ -47,6 +47,7 @@ namespace engine
 {
 
    class _omAgentNodeMgr ;
+   class _omaNodePathGuard ;
 
    #define OM_NODE_LOCK_BUCKET_SIZE          ( 256 )
 
@@ -231,11 +232,13 @@ namespace engine
          void     _checkNodeByStartupFile( const CHAR *pSvcName,
                                            dbProcessInfo *pInfo ) ;
 
-      private:
-         MAP_DB_PROCESS                _mapDBProcess ;
-         ossSpinSLatch                 _mapLatch ;
-         ossSpinXLatch                 _lockBucket[ OM_NODE_LOCK_BUCKET_SIZE ] ;
+         INT32    _initNodePathGuard( const CHAR *localCfgPath ) ;
 
+      private:
+         MAP_DB_PROCESS               _mapDBProcess ;
+         ossSpinSLatch                _mapLatch ;
+         ossSpinXLatch                _lockBucket[ OM_NODE_LOCK_BUCKET_SIZE ] ;
+         std::vector<_omaNodePathGuard*> _nodeGuards ;
    } ;
    typedef _omAgentNodeMgr omAgentNodeMgr ;
 
