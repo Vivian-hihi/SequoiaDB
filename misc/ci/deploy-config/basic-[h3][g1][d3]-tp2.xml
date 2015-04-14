@@ -305,7 +305,7 @@
 		<property name="test_list1" value="${test-type-list}_list1" />
 		<property name="test_list2" value="${test-type-list}_list2" />
 		<property name="test_list3" value="${test-type-list}_list3" />
-		<property name="test_list4" value="${test-type-list}_list4" />
+		<property name="test_list4" value="${test-nihe-list}_list4" />
 		<property name="test_list5" value="${test-type-list}_list5" />
 		<property name="test_list6" value="${test-type-list}_list6" />
 		<if>
