@@ -88,6 +88,7 @@ namespace engine {
    BOOLEAN _omaNodePathGuard::muteXOn( _omaNodePathGuard *pOther )
    {
       BOOLEAN ret = FALSE ;
+      std::vector< std::string > *paths = NULL ;
 
       /// name is same
       if ( 0 == ossStrcmp( name(), pOther->name() ) )
@@ -95,7 +96,7 @@ namespace engine {
          goto done ;
       }
 
-      std::vector< std::string > *paths = pOther->getPaths() ;
+      paths = pOther->getPaths() ;
       for ( UINT32 i = 0 ; i < _nodePaths.size() ; ++i )
       {
          string &path1 = _nodePaths[ i ] ;
