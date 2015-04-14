@@ -4574,6 +4574,46 @@ SDB_EXPORT INT32 sdbUpsert ( sdbCollectionHandle cHandle,
 {
    return __sdbUpdate ( cHandle, FLG_UPDATE_UPSERT, rule, condition, hint ) ;
 }
+
+SDB_EXPORT INT32 sdbUpsert1 ( sdbCollectionHandle cHandle,
+                              bson *rule,
+                              bson *condition,
+                              bson *hint,
+                              bson *setOnInsert )
+{
+   bson* hintPtr = hint ;
+   bson newHint ;
+   BOOLEAN bsoninit = FALSE ;
+   INT32 rc = SDB_OK ;
+
+   if ( NULL != setOnInsert )
+   {
+      BSON_INIT( newHint ) ;
+
+      if ( NULL != hint )
+      {
+         rc = bson_append_elements( &newHint, hint ) ;
+         if ( rc )
+         {
+            rc = SDB_SYS ;
+            goto error ;
+         }
+      }
+
+      BSON_APPEND( newHint, FIELD_NAME_SET_ON_INSERT, setOnInsert, bson ) ;
+      BSON_FINISH( newHint ) ;
+      hintPtr = &newHint ;
+   }
+
+   rc = sdbUpsert ( cHandle, rule, condition, hintPtr ) ;
+
+done:
+   BSON_DESTROY( newHint ) ;
+   return rc ;
+error:
+   goto done ;
+}
+
 /*
 static INT32 _sdbDelete ( SOCKET sock, CHAR *pCollectionFullName,
                           CHAR **ppSendBuffer, INT32 *sendBufferSize,

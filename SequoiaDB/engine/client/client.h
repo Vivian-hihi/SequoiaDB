@@ -1269,6 +1269,27 @@ SDB_EXPORT INT32 sdbUpsert ( sdbCollectionHandle cHandle,
                              bson *condition,
                              bson *hint ) ;
 
+/** \fn INT32 sdbUpsert1 ( sdbCollectionHandle cHandle,
+                           bson *rule,
+                           bson *condition,
+                           bson *hint,
+                           bson *setOnInsert )
+    \brief Update the matching documents in current collection, insert if no matching
+    \param [in] cHandle The collection handle
+    \param [in] rule The updating rule, cannot be null
+    \param [in] condition The matching rule, update all the documents if this parameter is null
+    \param [in] hint The hint, automatically match the optimal hint if null
+    \param [in] setOnInsert The setOnInsert assigns the specified values to the fileds when insert
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+    \note It won't work to upsert the "ShardingKey" field, but the other fields take effect
+*/
+SDB_EXPORT INT32 sdbUpsert1 ( sdbCollectionHandle cHandle,
+                              bson *rule,
+                              bson *condition,
+                              bson *hint,
+                              bson *setOnInsert ) ;
+
 /** \fn INT32 sdbDelete ( sdbCollectionHandle cHandle,
                           bson *condition,
                           bson *hint )
