@@ -32,6 +32,12 @@
 		<mkdir dir="${WORKSPACE}/reports" />
 	</target>
 
+	<echo message="**************************************************************************************************************************************************************" />
+	<echo level="info" message="test-type-list=${test-type-list}" />
+	<echo level="info" message="test.environment=${test.environment}" />
+	<echo level="info" message="DEPLOY_WILDCARD=${DEPLOY_WILDCARD}" />
+	<echo message="**************************************************************************************************************************************************************" />
+
 	<target name="Deploy-Test-All" depends="Clean-Last-Build-Reports">
 		<if>
 		   	<equals arg1="${test-type-list}" arg2="basic" />
