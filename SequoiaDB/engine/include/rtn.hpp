@@ -104,6 +104,8 @@ namespace engine
                      pmdEDUCB *cb, SDB_DMSCB *dmsCB, SDB_DPSCB *dpsCB,
                      INT16 w = 1, INT64 *pUpdateNum = NULL ) ;
 
+   INT32 rtnUpsertSet( const BSONElement& setOnInsert, BSONObj& target ) ;
+
    INT32 rtnDelete ( const CHAR *pCollectionName, const BSONObj &deletor,
                      const BSONObj &hint, INT32 flags, pmdEDUCB *cb,
                      INT64 *pDelNum = NULL ) ;

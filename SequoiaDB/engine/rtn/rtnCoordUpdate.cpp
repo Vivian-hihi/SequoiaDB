@@ -35,6 +35,7 @@
 *******************************************************************************/
 
 #include "rtnCoordUpdate.hpp"
+#include "rtn.hpp"
 #include "pmd.hpp"
 #include "pmdCB.hpp"
 #include "msgMessage.hpp"
@@ -263,6 +264,13 @@ namespace engine
          rc = modifier.modify( source, target ) ;
          PD_RC_CHECK( rc, PDERROR, "failed to generate upsertor "
                       "record(rc=%d)", rc ) ;
+
+         BSONElement setOnInsert = boHint.getField( FIELD_NAME_SET_ON_INSERT ) ;
+         if ( !setOnInsert.eoo() )
+         {
+            rc = rtnUpsertSet( setOnInsert, target ) ;
+            PD_RC_CHECK( rc, PDERROR, "failed to set when upsert, rc: %d", rc ) ;
+         }
 
          pProcesserFactory = pCoordcb->getProcesserFactory() ;
          pOpProcesser = pProcesserFactory->getOperator( MSG_BS_INSERT_REQ ) ;

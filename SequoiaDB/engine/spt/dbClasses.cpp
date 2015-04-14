@@ -1345,9 +1345,12 @@ static JSBool collection_upsert ( JSContext *cx , uintN argc , jsval *vp )
    JSObject *           objRule     = NULL ;
    JSObject *           objCond     = NULL ;
    JSObject *           objHint     = NULL ;
+   JSObject *           objSetOnInsert = NULL ;
    bson *               bsonRule    = NULL ;
    bson *               bsonCond    = NULL ;
    bson *               bsonHint    = NULL ;
+   bson *               bsonNewHint = NULL ;
+   bson *               bsonSetOnInsert = NULL ;
    INT32                rc          = SDB_OK ;
    JSBool               ret         = JS_TRUE ;
    jsval *              argv        = JS_ARGV ( cx , vp ) ;
@@ -1385,6 +1388,35 @@ static JSBool collection_upsert ( JSContext *cx , uintN argc , jsval *vp )
       }
    }
 
+   if ( argc >= 4 && SDB_JSVAL_IS_OBJECT ( argv[3] ) )
+   {
+      objSetOnInsert = SDB_JSVAL_TO_OBJECT ( argv[3] ) ;
+      if ( objSetOnInsert )
+      {
+         argv[3] = OBJECT_TO_JSVAL ( objSetOnInsert ) ;
+         // bsonSetOnInsert is freed in done:
+         VERIFY ( objToBson ( cx , objSetOnInsert , &bsonSetOnInsert ) ) ;
+
+         // create new hint and insert $setOnInsert into it
+         bsonNewHint = bson_create() ;
+         VERIFY ( bsonNewHint ) ;
+         if ( NULL != bsonHint )
+         {
+            rc == bson_append_elements( bsonNewHint, bsonHint ) ;
+            VERIFY ( BSON_OK == rc ) ;
+         }
+         rc = bson_append_bson ( bsonNewHint, FIELD_NAME_SET_ON_INSERT, bsonSetOnInsert ) ;
+         VERIFY ( BSON_OK == rc ) ;
+         rc = bson_finish( bsonNewHint ) ;
+         VERIFY ( BSON_OK == rc ) ;
+
+         // let bsonHint points to bsonNewHint
+         SAFE_BSON_DISPOSE ( bsonHint ) ;
+         bsonHint = bsonNewHint ;
+         bsonNewHint = NULL ;
+      }
+   }
+
    rc = sdbUpsert ( *collection , bsonRule , bsonCond , bsonHint ) ;
    REPORT_RC ( SDB_OK == rc , "SdbCollection.upsert()" , rc ) ;
 
@@ -1394,6 +1426,8 @@ done :
    SAFE_BSON_DISPOSE ( bsonRule ) ;
    SAFE_BSON_DISPOSE ( bsonCond ) ;
    SAFE_BSON_DISPOSE ( bsonHint ) ;
+   SAFE_BSON_DISPOSE ( bsonNewHint ) ;
+   SAFE_BSON_DISPOSE ( bsonSetOnInsert ) ;
    PD_TRACE_EXIT ( SDB_COLL_UPSERT );
    return ret ;
 error :

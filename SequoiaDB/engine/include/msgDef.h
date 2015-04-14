@@ -233,6 +233,7 @@
 #define FIELD_NAME_STARTRID                  "StartRID"
 #define FIELD_NAME_ENDRID                    "EndRID"
 #define FIELD_NAME_META                      "$Meta"
+#define FIELD_NAME_SET_ON_INSERT             "$SetOnInsert"
 #define FIELD_NAME_MODIFY                    "$Modify"
 #define FIELD_NAME_OP                        "op"
 #define FIELD_NAME_LUPDATE                   "update"

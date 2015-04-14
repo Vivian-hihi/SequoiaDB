@@ -235,6 +235,14 @@ namespace engine
          }
          PD_LOG ( PDDEBUG, "modified equality query object: %s",
                      target.toString().c_str() ) ;
+
+         BSONElement setOnInsert = hint.getField( FIELD_NAME_SET_ON_INSERT ) ;
+         if ( !setOnInsert.eoo() )
+         {
+            rc = rtnUpsertSet( setOnInsert, target ) ;
+            PD_RC_CHECK( rc, PDERROR, "failed to set when upsert, rc: %d", rc ) ;
+         }
+
          rc = su->data()->insertRecord( mbContext, target, cb, dpsCB,
                                         TRUE, TRUE ) ;
          if ( rc )
@@ -278,6 +286,42 @@ namespace engine
          }
       }
       PD_TRACE_EXITRC ( SDB_RTNUPDATE2, rc ) ;
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   INT32 rtnUpsertSet( const BSONElement& setOnInsert, BSONObj& target )
+   {
+      INT32 rc = SDB_OK ;
+
+      try
+      {
+         BSONObj newTarget ;
+         BSONObj setObj ;
+         BSONObjBuilder builder ;
+         builder.appendAs( setOnInsert, "$set" ) ;
+         setObj = builder.obj() ;
+
+         mthModifier setModifier ;
+         rc = setModifier.loadPattern( setObj ) ;
+         PD_RC_CHECK( rc, PDERROR, "Invalid pattern is detected: { %s }, rc: %d",
+                      setOnInsert.toString().c_str(), rc ) ;
+         rc = setModifier.modify( target, newTarget ) ;
+         PD_RC_CHECK( rc, PDERROR, "failed to generate upsertor "
+                      "record(rc=%d) by " FIELD_NAME_SET_ON_INSERT, rc ) ;
+
+         target = newTarget ;
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG ( PDERROR, "failed to generate upsertor on { %s }, %s",
+                  setOnInsert.toString().c_str(), e.what() ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+   done:
       return rc ;
    error :
       goto done ;
