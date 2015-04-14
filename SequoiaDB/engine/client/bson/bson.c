@@ -1548,6 +1548,21 @@ SDB_EXPORT int bson_append_element( bson *b, const char *name_or_null, const bso
     return BSON_OK;
 }
 
+SDB_EXPORT int bson_append_elements( bson *dst, const bson *src ) {
+   bson_iterator iter ;
+
+   if ( !dst || !src ) return BSON_ERROR;
+   if ( !src->finished ) return BSON_ERROR;
+
+   bson_iterator_init( &iter, src );
+   while ( bson_iterator_more( &iter ) ) {
+      bson_iterator_next( &iter );
+      if ( bson_append_element( dst, NULL, &iter ) == BSON_ERROR ) return BSON_ERROR;
+   }
+
+   return BSON_OK;
+}
+
 SDB_EXPORT int bson_append_timestamp( bson *b, const char *name, bson_timestamp_t *ts ) {
     if ( bson_append_estart( b, BSON_TIMESTAMP, name, 8 ) == BSON_ERROR ) return BSON_ERROR;
 

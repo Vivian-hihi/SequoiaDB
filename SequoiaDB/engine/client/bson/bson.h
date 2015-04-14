@@ -1009,6 +1009,16 @@ SDB_EXPORT int bson_append_array( bson *b, const char *name, const bson *bson );
 SDB_EXPORT int bson_append_element( bson *b, const char *name_or_null, const bson_iterator *elem );
 
 /**
+ * Append all the elements of a bson to another bson.
+ *
+ * @param dst the destination bson.
+ * @param src the source bson.
+ *
+ * @return BSON_OK or BSON_ERROR.
+ */
+SDB_EXPORT int bson_append_elements( bson *dst, const bson *src );
+
+/**
  * Append a bson_timestamp_t value to a bson.
  *
  * @param b the bson to append to.
