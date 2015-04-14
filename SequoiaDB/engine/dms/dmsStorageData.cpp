@@ -547,11 +547,15 @@ namespace engine
    INT32 _dmsStorageData::_logDPS( SDB_DPSCB *dpsCB, dpsMergeInfo &info,
                                    pmdEDUCB *cb, dmsMBContext *context,
                                    dmsExtentID extLID,
-                                   BOOLEAN needUnLock )
+                                   BOOLEAN needUnLock,
+                                   UINT32 *clLID )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__DMSSTORAGEDATA__LOGDPS1 ) ;
-      info.setInfoEx( logicalID(), context->clLID(), extLID, cb ) ;
+      info.setInfoEx( logicalID(),
+                      NULL == clLID ?
+                      context->clLID() : *clLID,
+                      extLID, cb ) ;
       rc = dpsCB->prepare( info ) ;
       if ( rc )
       {
@@ -1668,6 +1672,7 @@ namespace engine
       INT32 rc           = SDB_OK ;
       BOOLEAN getContext = FALSE ;
       UINT32 newCLID     = DMS_INVALID_CLID ;
+      UINT32 oldCLID     = DMS_INVALID_CLID ;
 
       PD_TRACE_ENTRY ( SDB__DMSSTORAGEDATA_TRUNCATECOLLECTION ) ;
       CHAR fullName[DMS_COLLECTION_FULL_NAME_SZ + 1] = {0} ;
@@ -1753,6 +1758,7 @@ namespace engine
       // change mb metadata
       if ( needChangeCLID )
       {
+         oldCLID = context->_clLID ;
          context->mb()->_logicalID = newCLID ;
          context->_clLID           = newCLID ;
       }
@@ -1775,7 +1781,7 @@ namespace engine
       // write dps log
       if ( dpscb )
       {
-         rc = _logDPS( dpscb, info, cb, context, DMS_INVALID_EXTENT, TRUE ) ;
+         rc = _logDPS( dpscb, info, cb, context, DMS_INVALID_EXTENT, TRUE, &oldCLID ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to insert CLTrunc record to log, "
                       "rc: %d", rc ) ;
       }

@@ -681,7 +681,8 @@ namespace engine
 
          INT32          _logDPS( SDB_DPSCB *dpsCB, dpsMergeInfo &info,
                                  _pmdEDUCB *cb, dmsMBContext *context,
-                                 dmsExtentID extLID, BOOLEAN needUnLock ) ;
+                                 dmsExtentID extLID, BOOLEAN needUnLock,
+                                 UINT32 *clLID = NULL ) ;
 
       private:
          //   must be hold the mb EXCLUSIVE lock in this functions :
