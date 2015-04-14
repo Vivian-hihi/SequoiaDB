@@ -55,7 +55,7 @@ function display()
    echo " -h hostname : 指定测试的COORD节点HostName或IP"
    echo " -addpid     : 是否在CHANGEDPREFIX上加上当前进行PID"
    echo " -print      : 是否在屏幕上打印用例的输出"
-   echo " -all        : 是否跑所有的测试用例.默认跑基本测试用例(htl/basic_testcases)  "
+   echo " -all        : 是否跑所有的测试用例.默认跑基本测试用例(hlt/basic_testcases)  "
    echo ""
    exit $1
 }
