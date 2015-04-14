@@ -2330,5 +2330,13 @@
          </description>
       </code>
 
+      <code>
+         <name>SDB_DIR_NOT_EMPTY</name>
+         <description>
+            <en>Given path is not empty</en>
+            <cn>指定目录不为空</cn>
+         </description>
+      </code>
+
    </codelist>
 </rclist>
