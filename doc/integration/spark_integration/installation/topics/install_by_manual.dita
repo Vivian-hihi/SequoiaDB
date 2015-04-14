@@ -75,11 +75,11 @@ Server3: echo "3" > /data/zookeeper/myid</codeblock>
       <note><p>推荐在每个 SequoiaDB 集群的主机中，运行一个 Worker 节点。</p></note>
           <p>SequoiaDB 和 Apache Spark 对接需要相应的驱动，登录 <xref href = "https://oss.sonatype.org">https://oss.sonatype.org</xref>，搜索 sequoiadb-driver 下载 SequoiaDB 最新的 java 驱动， 搜索 spark-sequoiadb 下载 SequoiaDB 最新的 spark 驱动，注意 scala 版本，然后把他们复制集群中的每个节点 $SPARK_HOME/lib 目录。</p>
       <p>Apache Spark 配置文件默认位于conf/spark-env.sh，假设 SequoiaDB 安装在 /opt/sequoiadb，你可以复制一个 spark-env.sh.template 后作出以下的配置修改：</p>
-      <codeblock>SPARK_DAEMON_JAVA_OPTS="-Dspark.deploy.recoveryMode=ZOOKEEPER -Dspark.deploy.zookeeper.url=server1:2181,server2:2181,server3:2181 -Dspark.deploy.zookeeper.dir=/data/zookeeper"
+      <codeblock>SPARK_DAEMON_JAVA_OPTS="-Dspark.deploy.recoveryMode=ZOOKEEPER -Dspark.deploy.zookeeper.url=server1:2181,server2:2181,server3:2181 -Dspark.deploy.zookeeper.dir=/spark"
 SPARK_WORKER_DIR=/data/spark_works
 SPARK_LOCAL_DIRS=/data/spark_data1,/data/spark_data2
 SPARK_CLASSPATH=${SPARK_HOME/lib/sequoiadb-driver-1.12.jar:$SPARK_HOME/lib/spark-sequoiadb_2.10-1.12.0.jar"</codeblock>
-          <note><p>替换 ${SPARK_HOME 为 Spark 的绝对路径。</p></note>
+          <note><p>1. 替换 ${SPARK_HOME 为 Spark 的绝对路径。</p><p>2. spark.deploy.zookeeper.dir 配置的目录必须与其他主机上的配置一致。</p></note>
       <p>下列的配置参数是非必须的，其基于硬件和负载设置。若通过 SequoiaDB Administration Center 安装，那么 SequoiaDB 将会自动设置这些参数：</p>
       <codeblock>SPARK_WORKER_MEMORY</codeblock>
       <p>5)	启动 Spark 的 master 节点</p>
