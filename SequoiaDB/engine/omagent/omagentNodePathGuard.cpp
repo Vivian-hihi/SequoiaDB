@@ -189,6 +189,10 @@ namespace engine {
             goto error ;
          }
       }
+      else
+      {
+         rc = SDB_OK ;
+      }
 
    done:
       return rc ;
