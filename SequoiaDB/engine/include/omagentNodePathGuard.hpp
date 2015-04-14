@@ -34,6 +34,7 @@
 
 #include "oss.hpp"
 #include "ossSocket.hpp"
+#include "pmdOptionsMgr.hpp"
 #include <vector>
 
 namespace engine {
@@ -41,27 +42,30 @@ namespace engine {
    class _omaNodePathGuard : public SDBObject
    {
    public:
-      _omaNodePathGuard( const CHAR *nodeName );
-      ~_omaNodePathGuard();
+      _omaNodePathGuard() ;
+      ~_omaNodePathGuard() ;
 
-      const CHAR* name() const
-      {
-         return _nodeName ;
-      }
+      void  init( const CHAR *nodeName, pmdOptionsCB *options ) ;
 
-      void addToPath( const CHAR *path ) ;
+      const CHAR* name() const { return _nodeName ; }
+      std::vector< std::string > *getPaths() { return &_nodePaths ; }
 
-      bool checkFolderPath( const CHAR *nodeName, const CHAR *path );
+      BOOLEAN muteXOn( _omaNodePathGuard *pOther ) ;
+      INT32   checkValid( pmdOptionsCB *options ) ;
 
    protected:
-      bool _contains( const CHAR *path );
-      bool _existedFiles( const CHAR* path );
+      INT32    _checkExistedFiles( const CHAR* path,
+                                   const CHAR *filter = NULL,
+                                   UINT32 deep = 1 ) ;
 
    private:
       CHAR _nodeName[ OSS_MAX_SERVICENAME + 1 ] ;
-      std::vector<std::string> _nodePaths;
+      std::vector<std::string> _nodePaths ;
+
    };
 
    typedef _omaNodePathGuard omaNodePathGuard ;
 }
-#endif
+
+#endif // OMAGENT_NODEPATHGUARD_HPP_
+

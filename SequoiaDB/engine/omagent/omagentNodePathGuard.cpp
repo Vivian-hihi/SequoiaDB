@@ -37,82 +37,163 @@
 
 namespace engine {
 
-   #define W_OK 2
-
-   _omaNodePathGuard::_omaNodePathGuard( const CHAR *nodeName )
+   _omaNodePathGuard::_omaNodePathGuard()
    {
-      ossMemset( _nodeName, 0, OSS_MAX_SERVICENAME + 1 ) ;
-      ossMemcpy( _nodeName, nodeName, ossStrlen(nodeName) ) ;
+      ossMemset( _nodeName, 0, sizeof( _nodeName ) ) ;
+   }
+
+   void _omaNodePathGuard::init( const CHAR *nodeName,
+                                 pmdOptionsCB *options )
+   {
+      ossStrncpy( _nodeName, nodeName, OSS_MAX_SERVICENAME ) ;
+      _nodeName[ OSS_MAX_SERVICENAME ] = 0 ;
+
+      const CHAR *dbpath = options->getDbPath() ;
+      UINT32 pathLen = ossStrlen( dbpath ) ;
+
+      /// dbpath
+      _nodePaths.push_back( dbpath ) ;
+      /// indexpath
+      if ( 0 != ossStrncmp( dbpath, options->getIndexPath(), pathLen ) )
+      {
+         _nodePaths.push_back( options->getIndexPath() ) ;
+      }
+      /// lobpath
+      if ( 0 != ossStrncmp( dbpath, options->getLobPath(), pathLen ) )
+      {
+         _nodePaths.push_back( options->getLobPath() ) ;
+      }
+      /// dialog path
+      if ( 0 != ossStrncmp( dbpath, options->getDiagLogPath(), pathLen ) )
+      {
+         _nodePaths.push_back( options->getDiagLogPath() ) ;
+      }
+      /// repl-log path
+      if ( 0 != ossStrncmp( dbpath, options->getReplLogPath(), pathLen ) )
+      {
+         _nodePaths.push_back( options->getReplLogPath() ) ;
+      }
+      /// backup path
+      if ( 0 != ossStrncmp( dbpath, options->getBkupPath(), pathLen ) )
+      {
+         _nodePaths.push_back( options->getBkupPath() ) ;
+      }
+      /// temp path
+      if ( 0 != ossStrncmp( dbpath, options->getTmpPath(), pathLen ) )
+      {
+         _nodePaths.push_back( options->getTmpPath() ) ;
+      }
+   }
+
+   BOOLEAN _omaNodePathGuard::muteXOn( _omaNodePathGuard *pOther )
+   {
+      BOOLEAN ret = FALSE ;
+
+      /// name is same
+      if ( 0 == ossStrcmp( name(), pOther->name() ) )
+      {
+         goto done ;
+      }
+
+      std::vector< std::string > *paths = pOther->getPaths() ;
+      for ( UINT32 i = 0 ; i < _nodePaths.size() ; ++i )
+      {
+         string &path1 = _nodePaths[ i ] ;
+
+         for ( UINT32 j = 0 ; j < paths->size() ; ++j )
+         {
+            string &path2 = (*paths)[ j ] ;
+
+            if ( 0 == ossStrncmp( path1.c_str(), path2.c_str(),
+                                  ossStrlen( path1.c_str() ) ) ||
+                 0 == ossStrncmp( path1.c_str(), path2.c_str(),
+                                  ossStrlen( path2.c_str() ) ) )
+            {
+               PD_LOG( PDERROR, "The node[%s]'s path[%s] is conflict with "
+                       "an other node[%s]'s path[%s]", name(),
+                       path1.c_str(), pOther->name(), path2.c_str() ) ;
+               ret = TRUE ;
+               break ;
+            }
+         }
+      }
+
+   done:
+      return ret ;
+   }
+
+   INT32 _omaNodePathGuard::checkValid( pmdOptionsCB *options )
+   {
+      INT32 rc = SDB_OK ;
+
+      /// dbpath
+      rc = _checkExistedFiles( options->getDbPath(), "*.data", 1 ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+      /// indexpath
+      rc = _checkExistedFiles( options->getIndexPath(), "*.idx", 1 ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+      /// lob path
+      rc = _checkExistedFiles( options->getLobPath(), "*.lobm", 1 ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+      /// repl path
+      rc = _checkExistedFiles( options->getReplLogPath(),
+                               "sequoiadbLog.*", 1 ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    _omaNodePathGuard::~_omaNodePathGuard()
    {
    }
 
-   void _omaNodePathGuard::addToPath( const CHAR *path )
-   {
-      SDB_ASSERT( NULL != path, "path cannot be NULL" ) ;
-
-      std::string addPath = path ;
-      _nodePaths.push_back( addPath ) ;
-   }
-
-   bool _omaNodePathGuard::checkFolderPath( const CHAR *nodeName, const CHAR *path )
-   {
-      INT32 rc = SDB_OK ;
-      if ( 0 != ossStrncmp( nodeName, _nodeName, OSS_MAX_SERVICENAME ) )
-      {
-         if ( _contains( path ) || _existedFiles( path ) )
-         {
-            rc = SDB_FE ;
-         }
-      }
-
-      return SDB_OK == rc ;
-   }
-
-   bool _omaNodePathGuard::_contains( const CHAR *path )
-   {
-      INT32 rc = SDB_OK ;
-      std::vector<string>::const_iterator cit = _nodePaths.begin() ;
-      for ( ; _nodePaths.end() != cit; ++cit)
-      {
-         if ( 0 == ossStrncmp( (*cit).c_str(), path,
-                               ossStrlen( path ) )
-              || 0 == ossStrncmp( (*cit).c_str(), path,
-                               ossStrlen( (*cit).c_str() ) ) )
-         {
-            // path should not be created
-            rc = SDB_FE ;
-         }
-      }
-
-      return SDB_OK != rc ;
-   }
-
-   bool _omaNodePathGuard::_existedFiles( const CHAR* path )
+   INT32 _omaNodePathGuard::_checkExistedFiles( const CHAR* path,
+                                                const CHAR *filter,
+                                                UINT32 deep )
    {
       SDB_ASSERT( NULL != path, "path cannot be NULL" ) ;
 
       INT32 rc = SDB_OK ;
 
-      rc = ossAccess(path, W_OK );
+      /// if dir is exist, need to check which has files
+      rc = ossAccess( path ) ;
       if ( SDB_OK == rc )
       {
          std::map<std::string, std::string> subFiles ;
-         ossEnumFiles( path, subFiles, NULL, 5 ) ;
-         if ( !subFiles.empty() )
+         rc = ossEnumFiles( path, subFiles, filter, deep ) ;
+         if ( rc )
          {
-            PD_LOG( PDERROR, "The path: %s is existed and not empty ",
-                    path ) ;
-            rc = SDB_FE ;
+            goto error ;
+         }
+         else if ( !subFiles.empty() )
+         {
+            PD_LOG( PDERROR, "The node[%s]'s path: %s is not empty",
+                    name(), path ) ;
+            rc = SDB_DIR_NOT_EMPTY ;
             goto error ;
          }
       }
 
    done:
-      return ( SDB_OK == rc ) ;
+      return rc ;
    error:
       goto done;
    }
+
 }
+

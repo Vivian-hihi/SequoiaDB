@@ -212,6 +212,10 @@ namespace engine
          INT32    delNodeProcessInfo( const string &svcname ) ;
          dbProcessInfo* getNodeProcessInfo( const string &svcname ) ;
 
+         INT32    addNodeGuard( _omaNodePathGuard &nodeGuard ) ;
+         INT32    addNodeGuard( const string &svcname ) ;
+         INT32    delNodeGuard( const string &svcname ) ;
+
          INT32    startANode( const CHAR *svcname, NODE_START_TYPE type,
                               BOOLEAN needLock ) ;
          INT32    stopANode( const CHAR *svcname, NODE_START_TYPE type,
@@ -232,13 +236,14 @@ namespace engine
          void     _checkNodeByStartupFile( const CHAR *pSvcName,
                                            dbProcessInfo *pInfo ) ;
 
-         INT32    _initNodePathGuard( const CHAR *localCfgPath ) ;
+         _omaNodePathGuard*   _getNodeGuard( const CHAR *svcname ) ;
 
       private:
          MAP_DB_PROCESS               _mapDBProcess ;
          ossSpinSLatch                _mapLatch ;
          ossSpinXLatch                _lockBucket[ OM_NODE_LOCK_BUCKET_SIZE ] ;
-         std::vector<_omaNodePathGuard*> _nodeGuards ;
+         vector<_omaNodePathGuard>    _nodeGuards ;
+         ossSpinSLatch                _guardLatch ;
    } ;
    typedef _omAgentNodeMgr omAgentNodeMgr ;
 
