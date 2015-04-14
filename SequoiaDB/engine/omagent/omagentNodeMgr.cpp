@@ -264,12 +264,10 @@ namespace engine
       _mapLatch.release() ;
 
       /// init node guards
-      _guardLatch.get() ;
       for ( UINT32 i = 0 ; i < vecSvc.size() ; ++i )
       {
          addNodeGuard( vecSvc[i] ) ;
       }
-      _guardLatch.release() ;
 
    done:
       return rc ;
@@ -855,6 +853,7 @@ namespace engine
             _nodeGuards.erase( it ) ;
             break ;
          }
+         ++it ;
       }
       return rc ;
    }
