@@ -739,6 +739,10 @@ namespace engine
                  sessionName(), fullName, _fullNames.at( _current ).c_str() ) ;
          goto done ;
       }
+
+      PD_LOG( PDEVENT, "Session[%s]: Begin to sync collection[%s]",
+              sessionName(), fullName ) ;
+
       // create local cs and collection
       rc = _replayer.replayCrtCS( cs.c_str(), pageSize, lobPageSize,
                                   eduCB(),
@@ -938,6 +942,12 @@ namespace engine
          {
             _expectLSN = msg->lsn ;
             _status = CLS_FS_STATUS_META ;
+
+            PD_LOG( PDEVENT, "Session[%s]: Sync collection[%s] finished, "
+                    "expect lsn: %d.%lld", sessionName(),
+                    _fullNames[ _current ].c_str(), _expectLSN.version,
+                    _expectLSN.offset ) ;
+
             ++_current ;
             _notify( CLS_FS_NOTIFY_TYPE_OVER ) ;
             //get next collection
@@ -1454,6 +1464,8 @@ namespace engine
 
       if ( STEP_TS_END == _tsStep )
       {
+         PD_LOG( PDEVENT, "FS Session[%s]: End to pull trans log",
+                 sessionName() ) ;
          goto doend ;
       }
       else if ( STEP_TS_BEGIN == _tsStep )
@@ -1464,6 +1476,8 @@ namespace engine
             _tsStep = STEP_TS_END ;
             goto doend ;
          }
+         PD_LOG( PDEVENT, "FS Session[%s]: Begin to pull trans log",
+                 sessionName() ) ;
       }
       else
       {
@@ -1474,12 +1488,17 @@ namespace engine
       goto done;
 
    doend:
-      if ( 0 != _expectLSN.compare(lsn) &&
-           SDB_OK != dpsCB->move ( _expectLSN.offset, _expectLSN.version ) )
+      if ( 0 != _expectLSN.compare(lsn) )
       {
-         PD_LOG ( PDERROR, "FS Session[%s]: failed to move lsn[%d,%lld]",
-                  sessionName(), _expectLSN.version, _expectLSN.offset );
-         goto error ;
+         INT32 rcTmp = dpsCB->move ( _expectLSN.offset, _expectLSN.version ) ;
+         if ( rcTmp )
+         {
+            PD_LOG ( PDERROR, "FS Session[%s]: failed to move lsn[%d,%lld]",
+                     sessionName(), _expectLSN.version, _expectLSN.offset ) ;
+            goto error ;
+         }
+         PD_LOG( PDEVENT, "FS Session[%s]: Move repl-log to %d.%lld",
+                 sessionName(), _expectLSN.version, _expectLSN.offset ) ;
       }
       msg.header.TID = CLS_TID( _sessionID ) ;
       msg.header.requestID = ++_requestID ;

@@ -1005,11 +1005,16 @@ namespace engine
                                     BOOLEAN delWhenExist )
    {
       SDB_ASSERT( NULL != cs, "cs should not be NULL" ) ;
-      return rtnCreateCollectionSpaceCommand( cs, eduCB, _dmsCB,
-                                              _dpsCB, pageSize,
-                                              lobPageSize,
-                                              TRUE,
-                                              delWhenExist ) ;
+      INT32 rc = rtnTestCollectionSpaceCommand( cs, _dmsCB ) ;
+      if ( SDB_DMS_CS_NOTEXIST == rc )
+      {
+         rc = rtnCreateCollectionSpaceCommand( cs, eduCB, _dmsCB,
+                                               _dpsCB, pageSize,
+                                               lobPageSize,
+                                               TRUE,
+                                               delWhenExist ) ;
+      }
+      return rc ;
    }
 
    INT32 _clsReplayer::replayCrtCollection( const CHAR *collection,
@@ -1017,8 +1022,13 @@ namespace engine
                                             _pmdEDUCB *eduCB )
    {
       SDB_ASSERT( NULL != collection, "collection should not be NULL" ) ;
-      return rtnCreateCollectionCommand( collection, attributes, eduCB,
-                                         _dmsCB, _dpsCB, 0, TRUE ) ;
+      INT32 rc = rtnTestCollectionCommand( collection, _dmsCB ) ;
+      if ( SDB_DMS_NOTEXIST == rc )
+      {
+         rc = rtnCreateCollectionCommand( collection, attributes, eduCB,
+                                          _dmsCB, _dpsCB, 0, TRUE ) ;
+      }
+      return rc ;
    }
 
    INT32 _clsReplayer::replayIXCrt( const CHAR *collection,
