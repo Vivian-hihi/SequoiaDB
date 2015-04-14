@@ -442,7 +442,8 @@ namespace engine
                          dummyObj, cb, obj ) ;
       if ( SDB_DMS_EOC == rc )
       {
-         rc = SDB_CLS_GRP_NOT_EXIST ;
+         rc = dataGroupOnly ?
+              SDB_CAT_IS_NOT_DATAGROUP : SDB_CLS_GRP_NOT_EXIST ;
       }
       else if ( rc )
       {
