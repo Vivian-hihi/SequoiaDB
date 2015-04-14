@@ -1840,7 +1840,8 @@ namespace engine
 
       // check name is valid
       if ( 0 != ossStrcmp( groupName, COORD_GROUPNAME ) &&
-           0 != ossStrcmp( groupName, CATALOG_GROUPNAME ) )
+           0 != ossStrcmp( groupName, CATALOG_GROUPNAME ) &&
+           0 != ossStrcmp( groupName, SPARE_GROUPNAME ) )
       {
          rc = catGroupNameValidate( groupName, FALSE ) ;
          PD_RC_CHECK( rc, PDERROR, "Group name[%s] is invalid", groupName ) ;
@@ -2081,7 +2082,8 @@ namespace engine
       }
 
       // node num judge
-      if ( 1 == groupsObj.nFields() && !forced )
+      if ( 0 != ossStrcmp( groupName, SPARE_GROUPNAME ) &&
+           1 == groupsObj.nFields() && !forced )
       {
          rc = SDB_CATA_RM_NODE_FORBIDDEN ;
          PD_LOG( PDERROR, "Can not remove node when group[%s] is only one node",

@@ -42,7 +42,7 @@ namespace engine
     _mbContext( NULL ),
     _pos( DMS_LOB_INVALID_PAGEID ),
     _onlyMetaPage( FALSE ),
-    _hitEnd( FALSE )
+    _lastErr( SDB_OK )
    {
 
    }
@@ -85,7 +85,7 @@ namespace engine
          goto error ;
       }
 
-      _hitEnd = FALSE ;
+      _lastErr = SDB_OK ;
       _pos = 0 ;
       _onlyMetaPage = onlyMetaPage ;
    done:
@@ -104,9 +104,9 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNLOBFETCHER_FETCH ) ;
 
-      if ( _hitEnd )
+      if ( SDB_OK != _lastErr )
       {
-         rc = SDB_DMS_EOC ;
+         rc = _lastErr ;
          goto error ;
       }
 
@@ -126,7 +126,6 @@ namespace engine
 
       if ( !_su->lob()->isOpened() )
       {
-         _hitEnd = TRUE ;
          rc = SDB_DMS_EOC ;
          goto error ;
       }
@@ -135,11 +134,7 @@ namespace engine
                                  cb, _mbContext, page ) ;
       if ( SDB_OK != rc )
       {
-         if ( SDB_DMS_EOC == rc )
-         {
-            _hitEnd = TRUE ;
-         }
-         else
+         if ( SDB_DMS_EOC != rc )
          {
             PD_LOG( PDERROR, "failed to read lob pages:%d", rc ) ;
          }
@@ -190,6 +185,7 @@ namespace engine
       return rc ;
    error:
       _fini() ;
+      _lastErr = rc ;
       goto done ;
    }
 

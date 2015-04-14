@@ -645,7 +645,7 @@ namespace engine
          _mb.writePtr( alignedLen ) ;
          _mb.writePtr( bmSize + _mb.length() ) ;
          rc = _lobFetcher.fetch( eduCB(), page, &_mb ) ;
-         if ( SDB_DMS_EOC == rc )
+         if ( SDB_DMS_EOC == rc || SDB_DMS_NOTEXIST == rc )
          {
             _mb.writePtr( oldSize ) ;
             rc = SDB_OK ;

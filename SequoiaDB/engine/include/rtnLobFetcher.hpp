@@ -55,7 +55,8 @@ namespace engine
 
       BOOLEAN hitEnd() const
       {
-         return _hitEnd ;
+         return SDB_DMS_EOC == _lastErr ||
+                SDB_DMS_NOTEXIST == _lastErr ;
       }
 
       DMS_LOB_PAGEID toBeFetched() const
@@ -76,7 +77,7 @@ namespace engine
       _dmsMBContext *_mbContext ;
       DMS_LOB_PAGEID _pos ;
       BOOLEAN _onlyMetaPage ;
-      BOOLEAN _hitEnd ;
+      INT32 _lastErr ;
    } ;
    typedef class _rtnLobFetcher rtnLobFetcher ;
 }

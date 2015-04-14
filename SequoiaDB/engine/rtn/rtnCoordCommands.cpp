@@ -3533,6 +3533,19 @@ namespace engine
       }
 
       nodeConf = objs.at( 0 ) ;
+
+      /// node's role must be suit for group
+      /// TODO: we can modify node's role here.
+      if ( 0 == ossStrcmp( gpEle.valuestr(),
+                           CATALOG_GROUPNAME ) ||
+           0 == ossStrcmp( gpEle.valuestr(),
+                           COORD_GROUPNAME ) )
+      {
+         PD_LOG( PDERROR, "only data-group surpports \"attachNode\" now" ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
       rc = _buildAttachMsg( nodeConf, gpEle.valuestr(),
                             hostEle.valuestr(), buf, header ) ;
       if ( SDB_OK != rc )
