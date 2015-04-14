@@ -2159,8 +2159,9 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR,
                      "failed to parse group info(rc=%d)",
                      rc );
-         // coord group not limited
-         if ( groupInfo.getGroupID() != COORD_GROUPID )
+         // coord and spare group not limited
+         if ( groupInfo.getGroupID() != COORD_GROUPID && 
+              groupInfo.getGroupID() != SPARE_GROUPID )
          {
             PD_CHECK( groupInfo.getGroupSize() < CLS_REPLSET_MAX_NODE_SIZE,
                       SDB_DMS_REACHED_MAX_NODES, error, PDERROR,
