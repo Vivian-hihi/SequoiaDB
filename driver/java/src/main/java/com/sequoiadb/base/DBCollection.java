@@ -593,6 +593,37 @@ public class DBCollection {
 			throws BaseException {
 		_update(SequoiadbConstants.FLG_UPDATE_UPSERT, matcher, modifier, hint);
 	}
+
+	/**
+	 * @fn void upsert(BSONObject matcher, BSONObject modifier, BSONObject hint, BSONObject setOnInsert)
+	 * @brief Update the BSONObject of current collection, insert if no matching
+	 * @param matcher
+	 *            The matching condition
+	 * @param modifier
+	 *            The updating rule
+	 * @param hint
+	 *            Hint
+	 * @param setOnInsert
+	 *            The setOnInsert assigns the specified values to the fileds when insert
+	 * @exception com.sequoiadb.exception.BaseException
+	 * @note when save include update shardingKey field, the shardingKey modify action is not take effect, but the other
+	 *       field update is take effect.
+	 *       Because of current version is not support update shardingKey field.
+	 */
+	public void upsert(BSONObject matcher, BSONObject modifier, BSONObject hint, BSONObject setOnInsert)
+			throws BaseException {
+		BSONObject newHint;
+		if (setOnInsert != null) {
+			newHint = new BasicBSONObject();
+			if (hint != null) {
+				newHint.putAll(hint);
+			}
+			newHint.put(SequoiadbConstants.FIELD_NAME_SET_ON_INSERT, setOnInsert);
+		} else {
+			newHint = hint;
+		}
+		upsert(matcher, modifier, newHint);
+	}
 	
 	/**
      * @fn DBCursor explain(BSONObject matcher, BSONObject selector,

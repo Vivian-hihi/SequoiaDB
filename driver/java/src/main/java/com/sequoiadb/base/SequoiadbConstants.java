@@ -163,6 +163,8 @@ public class SequoiadbConstants {
 	public final static String FIELD_NAME_REMOVE = "remove";
 	public final static String FIELD_OP_VALUE_UPDATE = "update";
 	public final static String FIELD_OP_VALUE_REMOVE = "remove";
+
+	public final static String FIELD_NAME_SET_ON_INSERT = "$SetOnInsert";
 	
 	public final static String FMP_FUNC_TYPE = "funcType";
 	public final static String FIELD_COLLECTION = "Collection";
