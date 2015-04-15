@@ -433,6 +433,9 @@ Functions</h2></td></tr>
 <tr class="memitem:a9b63de6126ba54457ea7476a036e8869"><td class="memItemLeft" align="right" valign="top">SDB_EXPORT INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="client_8h.html#a9b63de6126ba54457ea7476a036e8869">sdbUpsert</a> (sdbCollectionHandle cHandle, bson *rule, bson *condition, bson *hint)</td></tr>
 <tr class="memdesc:a9b63de6126ba54457ea7476a036e8869"><td class="mdescLeft">&#160;</td><td class="mdescRight">Update the matching documents in current collection, insert if no matching.  <a href="#a9b63de6126ba54457ea7476a036e8869"></a><br/></td></tr>
 <tr class="separator:a9b63de6126ba54457ea7476a036e8869"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a732b464cd7c81bd90009ea1f6f30434f"><td class="memItemLeft" align="right" valign="top">SDB_EXPORT INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="client_8h.html#a732b464cd7c81bd90009ea1f6f30434f">sdbUpsert1</a> (sdbCollectionHandle cHandle, bson *rule, bson *condition, bson *hint, bson *setOnInsert)</td></tr>
+<tr class="memdesc:a732b464cd7c81bd90009ea1f6f30434f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Update the matching documents in current collection, insert if no matching.  <a href="#a732b464cd7c81bd90009ea1f6f30434f"></a><br/></td></tr>
+<tr class="separator:a732b464cd7c81bd90009ea1f6f30434f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abf027cb1e46bd11980da26cbf38d2b80"><td class="memItemLeft" align="right" valign="top">SDB_EXPORT INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="client_8h.html#abf027cb1e46bd11980da26cbf38d2b80">sdbDelete</a> (sdbCollectionHandle cHandle, bson *condition, bson *hint)</td></tr>
 <tr class="memdesc:abf027cb1e46bd11980da26cbf38d2b80"><td class="mdescLeft">&#160;</td><td class="mdescRight">Delete the matching documents in current collection, never rollback if failed.  <a href="#abf027cb1e46bd11980da26cbf38d2b80"></a><br/></td></tr>
 <tr class="separator:abf027cb1e46bd11980da26cbf38d2b80"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -600,7 +603,14 @@ SDB_EXPORT INT32&#160;</td><td class="memItemRight" valign="bottom"><b>_sdbMsg</
 <tr class="memitem:a59d49e845a277e677faffd5278dbb230"><td class="memItemLeft" align="right" valign="top">SDB_EXPORT INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="client_8h.html#a59d49e845a277e677faffd5278dbb230">sdbForceStepUp</a> (sdbConnectionHandle cHandle, const bson *options)</td></tr>
 <tr class="separator:a59d49e845a277e677faffd5278dbb230"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:add259dddb71fe600d0465182d3114f8a"><td class="memItemLeft" align="right" valign="top">SDB_EXPORT INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="client_8h.html#add259dddb71fe600d0465182d3114f8a">sdbTruncateCollection</a> (sdbConnectionHandle cHandle, const CHAR *fullName)</td></tr>
+<tr class="memdesc:add259dddb71fe600d0465182d3114f8a"><td class="mdescLeft">&#160;</td><td class="mdescRight">truncate the collection  <a href="#add259dddb71fe600d0465182d3114f8a"></a><br/></td></tr>
 <tr class="separator:add259dddb71fe600d0465182d3114f8a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ace5a117bc6e05b0a9fcccae3bd66518e"><td class="memItemLeft" align="right" valign="top">SDB_EXPORT INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="client_8h.html#ace5a117bc6e05b0a9fcccae3bd66518e">sdbDetachNode</a> (sdbReplicaGroupHandle cHandle, const CHAR *hostName, const CHAR *serviceName, const bson *options)</td></tr>
+<tr class="memdesc:ace5a117bc6e05b0a9fcccae3bd66518e"><td class="mdescLeft">&#160;</td><td class="mdescRight">detach a node from the group  <a href="#ace5a117bc6e05b0a9fcccae3bd66518e"></a><br/></td></tr>
+<tr class="separator:ace5a117bc6e05b0a9fcccae3bd66518e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a35c6c62749e40429be370cfd51511f26"><td class="memItemLeft" align="right" valign="top">SDB_EXPORT INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="client_8h.html#a35c6c62749e40429be370cfd51511f26">sdbAttachNode</a> (sdbReplicaGroupHandle cHandle, const CHAR *hostName, const CHAR *serviceName, const bson *options)</td></tr>
+<tr class="memdesc:a35c6c62749e40429be370cfd51511f26"><td class="mdescLeft">&#160;</td><td class="mdescRight">attach a node to the group  <a href="#a35c6c62749e40429be370cfd51511f26"></a><br/></td></tr>
+<tr class="separator:a35c6c62749e40429be370cfd51511f26"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>C Client Driver. </p>
@@ -1144,6 +1154,62 @@ AutoSplit: Alter current domain to have the ability of automatically split or no
     <tr><td class="paramdir">[in]</td><td class="paramname">cHandle</td><td>The collection handle </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">subClFullName</td><td>The name of the subcollection </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">options</td><td>The low boudary and up boudary eg: {"LowBound":{a:1},"UpBound":{a:100}} </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname">SDB_OK</td><td>Operation Success </td></tr>
+    <tr><td class="paramname">Others</td><td>Operation Fail </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="a35c6c62749e40429be370cfd51511f26"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">INT32 sdbAttachNode </td>
+          <td>(</td>
+          <td class="paramtype">sdbReplicaGroupHandle&#160;</td>
+          <td class="paramname"><em>cHandle</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const CHAR *&#160;</td>
+          <td class="paramname"><em>hostName</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const CHAR *&#160;</td>
+          <td class="paramname"><em>serviceName</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const bson *&#160;</td>
+          <td class="paramname"><em>options</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>attach a node to the group </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">cHandle</td><td>The handle of group. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">hostName</td><td>The host name of node. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">serviceName</td><td>The service name of node. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">optoins</td><td>The options of attach. </td></tr>
   </table>
   </dd>
 </dl>
@@ -2296,6 +2362,62 @@ AutoSplit: If this option is set to be true, while creating collection(ShardingT
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">cHandle</td><td>The collection handle </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">subClFullName</td><td>The name of the subcollection </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname">SDB_OK</td><td>Operation Success </td></tr>
+    <tr><td class="paramname">Others</td><td>Operation Fail </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="ace5a117bc6e05b0a9fcccae3bd66518e"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">INT32 sdbDetachNode </td>
+          <td>(</td>
+          <td class="paramtype">sdbReplicaGroupHandle&#160;</td>
+          <td class="paramname"><em>cHandle</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const CHAR *&#160;</td>
+          <td class="paramname"><em>hostName</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const CHAR *&#160;</td>
+          <td class="paramname"><em>serviceName</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const bson *&#160;</td>
+          <td class="paramname"><em>options</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>detach a node from the group </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">cHandle</td><td>The handle of group. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">hostName</td><td>The host name of node. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">serviceName</td><td>The service name of node. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">optoins</td><td>The options of detach. </td></tr>
   </table>
   </dd>
 </dl>
@@ -6853,6 +6975,8 @@ util   : Utilities
         </tr>
       </table>
 </div><div class="memdoc">
+
+<p>truncate the collection </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">cHandle</td><td>The handle of connection. </td></tr>
@@ -6984,6 +7108,70 @@ util   : Utilities
 
 </div>
 </div>
+<a class="anchor" id="a732b464cd7c81bd90009ea1f6f30434f"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">INT32 sdbUpsert1 </td>
+          <td>(</td>
+          <td class="paramtype">sdbCollectionHandle&#160;</td>
+          <td class="paramname"><em>cHandle</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bson *&#160;</td>
+          <td class="paramname"><em>rule</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bson *&#160;</td>
+          <td class="paramname"><em>condition</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bson *&#160;</td>
+          <td class="paramname"><em>hint</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bson *&#160;</td>
+          <td class="paramname"><em>setOnInsert</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Update the matching documents in current collection, insert if no matching. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">cHandle</td><td>The collection handle </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">rule</td><td>The updating rule, cannot be null </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">condition</td><td>The matching rule, update all the documents if this parameter is null </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">hint</td><td>The hint, automatically match the optimal hint if null </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">setOnInsert</td><td>The setOnInsert assigns the specified values to the fileds when insert </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname">SDB_OK</td><td>Operation Success </td></tr>
+    <tr><td class="paramname">Others</td><td>Operation Fail </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section note"><dt>Note</dt><dd>It won't work to upsert the "ShardingKey" field, but the other fields take effect </dd></dl>
+
+</div>
+</div>
 <a class="anchor" id="a487b4a3fbe98f2cd8a2496c2a15cfec6"></a>
 <div class="memitem">
 <div class="memproto">
@@ -7085,7 +7273,7 @@ util   : Utilities
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Apr 7 2015 10:18:13 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Wed Apr 15 2015 13:54:30 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.2
 </small></address>

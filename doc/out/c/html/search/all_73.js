@@ -36,6 +36,7 @@ var searchData=
   ['sdbaltercollection',['sdbAlterCollection',['../client_8h.html#a5645263c7ff024bab0eae498596f8221',1,'client.h']]],
   ['sdbalterdomain',['sdbAlterDomain',['../client_8h.html#a9e0f5374ef4f6a0ea3bcee786651a90f',1,'client.h']]],
   ['sdbattachcollection',['sdbAttachCollection',['../client_8h.html#a856b9ef9d1511f8d39071fc0cc9286b7',1,'client.h']]],
+  ['sdbattachnode',['sdbAttachNode',['../client_8h.html#a35c6c62749e40429be370cfd51511f26',1,'client.h']]],
   ['sdbbackupoffline',['sdbBackupOffline',['../client_8h.html#a226cdd6bd12bc76e1c0aa4e4cd8f6a69',1,'client.h']]],
   ['sdbbulkinsert',['sdbBulkInsert',['../client_8h.html#a42e4bc8674da51ab5459fdf84e5c02b3',1,'client.h']]],
   ['sdbcanceltask',['sdbCancelTask',['../client_8h.html#aac029248a456673d6f9c153f4aa3572f',1,'client.h']]],
@@ -59,6 +60,7 @@ var searchData=
   ['sdbcurrent',['sdbCurrent',['../client_8h.html#a1eacbd9fe97c4b5da544a13d45836c26',1,'client.h']]],
   ['sdbdelete',['sdbDelete',['../client_8h.html#abf027cb1e46bd11980da26cbf38d2b80',1,'client.h']]],
   ['sdbdetachcollection',['sdbDetachCollection',['../client_8h.html#a16f4f27dfaf5b02a2dd9fe5ec8802a4f',1,'client.h']]],
+  ['sdbdetachnode',['sdbDetachNode',['../client_8h.html#ace5a117bc6e05b0a9fcccae3bd66518e',1,'client.h']]],
   ['sdbdisconnect',['sdbDisconnect',['../client_8h.html#a1b6ee0ada5b847277ccdae9d7c6da371',1,'client.h']]],
   ['sdbdropcollection',['sdbDropCollection',['../client_8h.html#a4422c40ed5213c789bdbadcdc9d48e0c',1,'client.h']]],
   ['sdbdropcollectionspace',['sdbDropCollectionSpace',['../client_8h.html#acdf033199f44a300b00eb0ffa8e9ca7e',1,'client.h']]],
@@ -164,6 +166,7 @@ var searchData=
   ['sdbtruncatecollection',['sdbTruncateCollection',['../client_8h.html#add259dddb71fe600d0465182d3114f8a',1,'client.h']]],
   ['sdbupdate',['sdbUpdate',['../client_8h.html#adc06f96d5957884294f2ba0da4d810e4',1,'client.h']]],
   ['sdbupsert',['sdbUpsert',['../client_8h.html#a9b63de6126ba54457ea7476a036e8869',1,'client.h']]],
+  ['sdbupsert1',['sdbUpsert1',['../client_8h.html#a732b464cd7c81bd90009ea1f6f30434f',1,'client.h']]],
   ['sdbwaittasks',['sdbWaitTasks',['../client_8h.html#a487b4a3fbe98f2cd8a2496c2a15cfec6',1,'client.h']]],
   ['sdbwritelob',['sdbWriteLob',['../client_8h.html#a974974b64b16e1f1808e929788bd6d08',1,'client.h']]]
 ];
