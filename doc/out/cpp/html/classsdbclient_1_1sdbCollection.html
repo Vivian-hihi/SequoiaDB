@@ -136,9 +136,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a4a0d3636bfd79c2c9d7f61e101cb0fcb"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdbCollection.html#a4a0d3636bfd79c2c9d7f61e101cb0fcb">update</a> (const bson::BSONObj &amp;rule, const bson::BSONObj &amp;condition=_sdbStaticObject, const bson::BSONObj &amp;hint=_sdbStaticObject)</td></tr>
 <tr class="memdesc:a4a0d3636bfd79c2c9d7f61e101cb0fcb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Update the matching documents in current collection.  <a href="#a4a0d3636bfd79c2c9d7f61e101cb0fcb"></a><br/></td></tr>
 <tr class="separator:a4a0d3636bfd79c2c9d7f61e101cb0fcb"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab50ed90fd2420790deff1a2f36254ede"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdbCollection.html#ab50ed90fd2420790deff1a2f36254ede">upsert</a> (const bson::BSONObj &amp;rule, const bson::BSONObj &amp;condition=_sdbStaticObject, const bson::BSONObj &amp;hint=_sdbStaticObject)</td></tr>
-<tr class="memdesc:ab50ed90fd2420790deff1a2f36254ede"><td class="mdescLeft">&#160;</td><td class="mdescRight">Update the matching documents in current collection, insert if no matching.  <a href="#ab50ed90fd2420790deff1a2f36254ede"></a><br/></td></tr>
-<tr class="separator:ab50ed90fd2420790deff1a2f36254ede"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a210c2127a414bc0616ff7fe4af9ca1c3"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdbCollection.html#a210c2127a414bc0616ff7fe4af9ca1c3">upsert</a> (const bson::BSONObj &amp;rule, const bson::BSONObj &amp;condition=_sdbStaticObject, const bson::BSONObj &amp;hint=_sdbStaticObject, const bson::BSONObj &amp;setOnInsert=_sdbStaticObject)</td></tr>
+<tr class="memdesc:a210c2127a414bc0616ff7fe4af9ca1c3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Update the matching documents in current collection, insert if no matching.  <a href="#a210c2127a414bc0616ff7fe4af9ca1c3"></a><br/></td></tr>
+<tr class="separator:a210c2127a414bc0616ff7fe4af9ca1c3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a282d616532a50056a8583e1725bea04c"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdbCollection.html#a282d616532a50056a8583e1725bea04c">del</a> (const bson::BSONObj &amp;condition=_sdbStaticObject, const bson::BSONObj &amp;hint=_sdbStaticObject)</td></tr>
 <tr class="memdesc:a282d616532a50056a8583e1725bea04c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Delete the matching documents in current collection.  <a href="#a282d616532a50056a8583e1725bea04c"></a><br/></td></tr>
 <tr class="separator:a282d616532a50056a8583e1725bea04c"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -214,6 +214,9 @@ INT32&#160;</td><td class="memItemRight" valign="bottom"><b>getQueryMeta</b> (<a
 <tr class="memitem:ad9256ad1c6815a3941e4f7d2178588eb"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdbCollection.html#ad9256ad1c6815a3941e4f7d2178588eb">listLobs</a> (<a class="el" href="classsdbclient_1_1sdbCursor.html">sdbCursor</a> &amp;cursor)</td></tr>
 <tr class="memdesc:ad9256ad1c6815a3941e4f7d2178588eb"><td class="mdescLeft">&#160;</td><td class="mdescRight">List all the lobs' meta data in current collection.  <a href="#ad9256ad1c6815a3941e4f7d2178588eb"></a><br/></td></tr>
 <tr class="separator:ad9256ad1c6815a3941e4f7d2178588eb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5211b8c4862ce35d22bfef25c3c76be4"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdbCollection.html#a5211b8c4862ce35d22bfef25c3c76be4">truncate</a> ()</td></tr>
+<tr class="memdesc:a5211b8c4862ce35d22bfef25c3c76be4"><td class="mdescLeft">&#160;</td><td class="mdescRight">truncate the collection  <a href="#a5211b8c4862ce35d22bfef25c3c76be4"></a><br/></td></tr>
+<tr class="separator:a5211b8c4862ce35d22bfef25c3c76be4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"></a>
 Public Attributes</h2></td></tr>
@@ -1822,6 +1825,38 @@ FLG_QUERY_WITH_RETURNDATA(0x00000200) : In general, query won't return data unti
 
 </div>
 </div>
+<a class="anchor" id="a5211b8c4862ce35d22bfef25c3c76be4"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">INT32 sdbclient::sdbCollection::truncate </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>truncate the collection </p>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname">SDB_OK</td><td>Operation Success </td></tr>
+    <tr><td class="paramname">Others</td><td>Operation Fail </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <a class="anchor" id="a4a0d3636bfd79c2c9d7f61e101cb0fcb"></a>
 <div class="memitem">
 <div class="memproto">
@@ -1880,7 +1915,7 @@ FLG_QUERY_WITH_RETURNDATA(0x00000200) : In general, query won't return data unti
 
 </div>
 </div>
-<a class="anchor" id="ab50ed90fd2420790deff1a2f36254ede"></a>
+<a class="anchor" id="a210c2127a414bc0616ff7fe4af9ca1c3"></a>
 <div class="memitem">
 <div class="memproto">
 <table class="mlabels">
@@ -1903,7 +1938,13 @@ FLG_QUERY_WITH_RETURNDATA(0x00000200) : In general, query won't return data unti
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">const bson::BSONObj &amp;&#160;</td>
-          <td class="paramname"><em>hint</em> = <code>_sdbStaticObject</code>&#160;</td>
+          <td class="paramname"><em>hint</em> = <code>_sdbStaticObject</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const bson::BSONObj &amp;&#160;</td>
+          <td class="paramname"><em>setOnInsert</em> = <code>_sdbStaticObject</code>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -1924,6 +1965,7 @@ FLG_QUERY_WITH_RETURNDATA(0x00000200) : In general, query won't return data unti
     <tr><td class="paramdir">[in]</td><td class="paramname">rule</td><td>The updating rule </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">condition</td><td>The matching rule, update all the documents if not provided </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">hint</td><td>The hint, automatically match the optimal hint if not provided </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">setOnInsert</td><td>The setOnInsert assigns the specified values to the fileds when insert </td></tr>
   </table>
   </dd>
 </dl>
@@ -1959,7 +2001,7 @@ FLG_QUERY_WITH_RETURNDATA(0x00000200) : In general, query won't return data unti
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Apr 7 2015 10:25:03 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Wed Apr 15 2015 13:57:32 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.2
 </small></address>

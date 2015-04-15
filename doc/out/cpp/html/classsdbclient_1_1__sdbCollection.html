@@ -107,9 +107,9 @@ virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>bulkInsert</
 <tr class="memitem:abe44845ebdbe5ba2d9434ddb7fd438f7"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="abe44845ebdbe5ba2d9434ddb7fd438f7"></a>
 virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>update</b> (const bson::BSONObj &amp;rule, const bson::BSONObj &amp;condition=_sdbStaticObject, const bson::BSONObj &amp;hint=_sdbStaticObject)=0</td></tr>
 <tr class="separator:abe44845ebdbe5ba2d9434ddb7fd438f7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2a44fc949fadc0205ec776374d5c9d3d"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a2a44fc949fadc0205ec776374d5c9d3d"></a>
-virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>upsert</b> (const bson::BSONObj &amp;rule, const bson::BSONObj &amp;condition=_sdbStaticObject, const bson::BSONObj &amp;hint=_sdbStaticObject)=0</td></tr>
-<tr class="separator:a2a44fc949fadc0205ec776374d5c9d3d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a706692e6f590ffea123e4682ecc38a08"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a706692e6f590ffea123e4682ecc38a08"></a>
+virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>upsert</b> (const bson::BSONObj &amp;rule, const bson::BSONObj &amp;condition=_sdbStaticObject, const bson::BSONObj &amp;hint=_sdbStaticObject, const bson::BSONObj &amp;setOnInsert=_sdbStaticObject)=0</td></tr>
+<tr class="separator:a706692e6f590ffea123e4682ecc38a08"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a45a47366149741eb79e1bbe3a72e446f"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a45a47366149741eb79e1bbe3a72e446f"></a>
 virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>del</b> (const bson::BSONObj &amp;condition=_sdbStaticObject, const bson::BSONObj &amp;hint=_sdbStaticObject)=0</td></tr>
 <tr class="separator:a45a47366149741eb79e1bbe3a72e446f"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -202,6 +202,10 @@ virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>openLob</b> 
 <tr class="memitem:abf797a0a829dcf71faaa2eed68228f31"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="abf797a0a829dcf71faaa2eed68228f31"></a>
 virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>listLobs</b> (<a class="el" href="classsdbclient_1_1sdbCursor.html">sdbCursor</a> &amp;cursor)=0</td></tr>
 <tr class="separator:abf797a0a829dcf71faaa2eed68228f31"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a95e434522ba723bb743d0df68e6129a9"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a95e434522ba723bb743d0df68e6129a9"></a>
+virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1__sdbCollection.html#a95e434522ba723bb743d0df68e6129a9">truncate</a> ()=0</td></tr>
+<tr class="memdesc:a95e434522ba723bb743d0df68e6129a9"><td class="mdescLeft">&#160;</td><td class="mdescRight">truncate <br/></td></tr>
+<tr class="separator:a95e434522ba723bb743d0df68e6129a9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <hr/>The documentation for this class was generated from the following file:<ul>
 <li>C:/sequoiadb/client/include/<a class="el" href="client_8hpp_source.html">client.hpp</a></li>
@@ -209,7 +213,7 @@ virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>listLobs</b>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Apr 7 2015 10:25:03 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Wed Apr 15 2015 13:57:32 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.2
 </small></address>
