@@ -1044,9 +1044,9 @@ namespace engine
       clInfo._pCLName            = NULL ;
       clInfo._replSize           = 1 ;
       clInfo._enSureShardIndex   = true ;
-      clInfo._pShardingType      = CAT_SHARDING_TYPE_RANGE ;
+      clInfo._pShardingType      = CAT_SHARDING_TYPE_HASH ;
       clInfo._shardPartition     = CAT_SHARDING_PARTITION_DEFAULT ;
-      clInfo._isHash             = FALSE ;
+      clInfo._isHash             = TRUE ;
       clInfo._isSharding         = FALSE ;
       clInfo._isMainCL           = false;
       clInfo._assignType         = ASSIGN_RANDOM ;
@@ -1129,11 +1129,8 @@ namespace engine
                       CAT_SHARDING_TYPE_HASH, CAT_SHARDING_TYPE_RANGE ) ;
             fieldMask |= CAT_MASK_SHDTYPE ;
 
-            if ( 0 == ossStrcmp( clInfo._pShardingType,
-                                 CAT_SHARDING_TYPE_HASH ) )
-            {
-               clInfo._isHash = TRUE ;
-            }
+            clInfo._isHash = ( 0 == ossStrcmp( clInfo._pShardingType,
+                                               CAT_SHARDING_TYPE_HASH ) ) ; 
          }
          // sharding partition
          else if ( ossStrcmp( eleTmp.fieldName(),
@@ -1174,7 +1171,12 @@ namespace engine
                       PDERROR, "Field[%s] type[%d] error",
                       CAT_IS_MAINCL, eleTmp.type() ) ;
             clInfo._isMainCL = eleTmp.boolean() ;
-            fieldMask |= CAT_MASK_ISMAINCL;
+            fieldMask |= CAT_MASK_ISMAINCL ;
+            if ( !( fieldMask & CAT_MASK_SHDTYPE ) )
+            {
+               clInfo._pShardingType = CAT_SHARDING_TYPE_RANGE ;
+               clInfo._isHash = FALSE ;
+            }
          }
          // group specified
          else if ( 0 == ossStrcmp( eleTmp.fieldName(),

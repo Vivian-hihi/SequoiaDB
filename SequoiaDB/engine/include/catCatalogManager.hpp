@@ -95,7 +95,7 @@ namespace engine
          _pCLName             = NULL ;
          _replSize            = 1 ;
          _enSureShardIndex    = TRUE ;
-         _pShardingType       = CAT_SHARDING_TYPE_RANGE ;
+         _pShardingType       = CAT_SHARDING_TYPE_HASH ;
          _shardPartition      = CAT_SHARDING_PARTITION_DEFAULT ;
          _isHash              = FALSE ;
          _isSharding          = FALSE ;
