@@ -716,8 +716,9 @@ namespace engine
       // SDB_DPS_LOG_NOT_IN_BUF
       if ( beginLSN.invalid() )
       {
-         PD_LOG( PDERROR, "begin lsn invalid [offset:%lld] [version:%d]",
-                 beginLSN.offset, beginLSN.version ) ;
+         PD_LOG( PDERROR, "begin lsn invalid [offset:%lld] [version:%d], "
+                 "begin: %d, work: %d", beginLSN.offset, beginLSN.version,
+                 _begin, _work ) ;
          rc = SDB_DPS_LOG_NOT_IN_BUF ;
          goto error ;
       }
