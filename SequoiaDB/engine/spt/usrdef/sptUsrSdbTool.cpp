@@ -423,6 +423,23 @@ namespace engine
                                            const BSONObj &conf )
    {
       BSONObjBuilder builder ;
+      struct tm otm ;
+      time_t tt = node._startTime ;
+      CHAR tmpTime[ 21 ] = { 0 } ;
+#if defined (_WINDOWS)
+         localtime_s( &otm, &tt ) ;
+#else
+         localtime_r( &tt, &otm ) ;
+#endif
+         ossSnprintf( tmpTime, sizeof( tmpTime ) - 1,
+                      "%04d-%02d-%02d-%02d.%02d.%02d",
+                      otm.tm_year+1900,
+                      otm.tm_mon+1,
+                      otm.tm_mday,
+                      otm.tm_hour,
+                      otm.tm_min,
+                      otm.tm_sec ) ;
+
       builder.append( "svcname", info._svcname ) ;
       builder.append( "type", utilDBTypeStr( (SDB_TYPE)info._type ) ) ;
       builder.append( "role", utilDBRoleStr( (SDB_ROLE)info._role ) ) ;
@@ -432,6 +449,7 @@ namespace engine
       builder.append( "primary", info._primary ) ;
       builder.append( "isalone", info._isAlone ) ;
       builder.append( "groupname", info._groupName ) ;
+      builder.append( "starttime", tmpTime ) ;
       if ( !info._dbPath.empty() )
       {
          builder.append( "dbpath", info._dbPath ) ;

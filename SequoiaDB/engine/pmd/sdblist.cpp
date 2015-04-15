@@ -227,7 +227,8 @@ namespace engine
 #else
          localtime_r( &tt, &otm ) ;
 #endif
-         ossSnprintf( tmpTime, 30, "%04d-%02d-%02d-%02d.%02d.%02d",
+         ossSnprintf( tmpTime, sizeof( tmpTime ) - 1,
+                      "%04d-%02d-%02d-%02d.%02d.%02d",
                       otm.tm_year+1900,
                       otm.tm_mon+1,
                       otm.tm_mday,
