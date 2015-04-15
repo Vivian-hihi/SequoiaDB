@@ -50,7 +50,7 @@
       <echo message="Exec test-mongo -f " /> 
       <echo message="Env:LD_LIBRARY_PATH=${mongoc.testcase.libpath}" />
       <echo message="The testcases path on ${testcases.path}" />
-      <exec executable="test-mongo" dir="${testcases.path}" timeout="60000" outputproperty="screen.output" resultproperty="ret.code" failonerror="false">
+      <exec executable="./test-mongo" dir="${mongoc.testcase.path}" timeout="60000" outputproperty="screen.output" resultproperty="ret.code" failonerror="false">
          <arg value="-f" />
          <arg value="-F ${reports.path}/concurrent_report.xml" />
          <env key="LD_LIBRARY_PATH" path="${LD_LIBRARY_PATH}:${mongoc.testcase.libpath}" />
@@ -66,7 +66,7 @@
       <echo message="Env:LD_LIBRARY_PATH=${mongoc.testcase.libpath}" />
       <echo message="The testcase ${test.case.name} path on ${testcases.path}" />
       
-      <exec executable="test-mongo" dir="${testcases.path}" timeout="60000" outputproperty="screen.output" resultproperty="ret.code" failonerror="false">
+      <exec executable="./test-mongo" dir="${testcases.path}" timeout="60000" outputproperty="screen.output" resultproperty="ret.code" failonerror="false">
          <arg value="-f" />
          <arg value="-p" />
          <arg value="-l ${test.case.name}" />
