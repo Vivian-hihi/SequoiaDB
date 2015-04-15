@@ -28,18 +28,19 @@
       <echo message="Perform the driver mongoc testcases,with testcase.path=${mongoc.testcase.path}" />
       
       <basename property="deploy.name" file="${deploy.case.fullname}" suffix=".xml" />
-      <!--property name="test.suite.class.name" value="testcases-driver-c.${deploy.name}-${host.NAME}-${parallel.num}" /-->      
-      <exec executable="test-mongo" dir="${testcase.path}" timeout="60000" output="./testcases.txt" resultproperty="ret.code" failonerror="false">
-         <arg line="--help" />
+      <!--property name="test.suite.class.name" value="testcases-driver-c.${deploy.name}-${host.NAME}-${parallel.num}" /--> 
+      <chmod file="${mongoc.testcase.path}/test-mongo" perm="u+x" />     
+      <exec executable="./test-mongo" dir="${mongoc.testcase.path}" timeout="60000" output="./testcases.txt" resultproperty="ret.code" failonerror="false">
+         <arg line=" --help" />
          <env key="LD_LIBRARY_PATH" path="${LD_LIBRARY_PATH}:${mongoc.testcase.libpath}" />
       </exec>
-      <exec executable="/usr/bin/grep" timeout="60000" input="./testcases.txt" output="./testcases.txt" resultproperty="ret.code" failonerror="false">
+      <exec executable="grep" timeout="60000" input="./testcases.txt" output="./testcases.txt" resultproperty="ret.code" failonerror="false">
          <arg line="'^    /'" />
          <env key="LD_LIBRARY_PATH" path="${LD_LIBRARY_PATH}:${mongoc.testcase.libpath}" />
       </exec>
       <loadfile property="testcases" srcFile="./testcases.txt" failonerror="false" />
       <echo file="${reports.path}/TEST-mongoc.xml" message="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot; ?&gt;&#10;&lt;testsuite name=&quot;mongoc&quot; type=&quot;${test.type}&quot; deploy=&quot;${deploy.name}&quot; hostname=&quot;${host.NAME}&quot; tests=&quot;1&quot; failure=&quot;0&quot;&gt;&#10;" />
-      <foreach list="${lines}" target="test-one-case" param="test.case.name" delimiter=" ">
+      <foreach list="${testcases}" target="test-one-case" param="test.case.name" delimiter=" ">
          <param name="testcases.path" value="${mongoc.testcase.path}" />
       </foreach>
       <echo file="${reports.path}/TEST-mongoc.xml" message="&lt;/testsuite&gt;&#10;" append="true" />
