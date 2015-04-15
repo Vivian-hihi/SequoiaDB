@@ -413,9 +413,18 @@ namespace engine
       {
          if ( ossStrcasecmp( pSubCommand, OM_LOGOUT_REQ ) == 0 )
          {
-            doLogout() ;
-            pAdaptor->sendResponse( this, HTTP_OK ) ;
-            goto done ;
+            if ( isAuthOK() ) 
+            {
+               doLogout() ;
+               pAdaptor->sendResponse( this, HTTP_OK ) ;
+               goto done ;
+            }
+            else
+            {
+               rc = SDB_PMD_SESSION_NOT_EXIST ;
+               PD_LOG_MSG( PDERROR, "session is not exist:rc=%d", rc ) ;
+               _sendOpError2Web( rc, pAdaptor, this, _pEDUCB ) ;
+            }
          }
       }
 
