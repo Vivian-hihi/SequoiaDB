@@ -166,6 +166,9 @@ def&#160;</td><td class="memItemRight" valign="bottom"><b>__repr__</b></td></tr>
 <tr class="separator:a6aa9dd355f9f4a2e40dd5ea139dbf42b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0421c5ab6b8534bd89a94e258d1684c4"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpysequoiadb_1_1collection_1_1collection.html#a0421c5ab6b8534bd89a94e258d1684c4">explain</a></td></tr>
 <tr class="separator:a0421c5ab6b8534bd89a94e258d1684c4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1d643e911ce109cc1b73e3dd56959ab1"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a1d643e911ce109cc1b73e3dd56959ab1"></a>
+def&#160;</td><td class="memItemRight" valign="bottom"><b>truncate</b></td></tr>
+<tr class="separator:a1d643e911ce109cc1b73e3dd56959ab1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><pre class="fragment">Collection for SequoiaDB
@@ -1521,13 +1524,14 @@ Note:
    no matching.
 
 Parameters:
-   Name        Type  Info:
-   rule        dict  The updating rule.
-   **kwargs          Useful options are below
-   - condition dict  The matching rule, update all the documents
-                     if not provided.
-   - hint      dict  The hint, automatically match the optimal hint
-                     if not provided
+   Name          Type  Info:
+   rule          dict  The updating rule.
+   **kwargs            Useful options are below
+   - condition   dict  The matching rule, update all the documents
+                       if not provided.
+   - hint        dict  The hint, automatically match the optimal hint
+                       if not provided
+   - setOnInsert dict  The setOnInsert assigns the specified values to the fileds when insert
 Exceptions:
    pysequoiadb.error.SDBTypeError
    pysequoiadb.error.SDBBaseError
@@ -1543,7 +1547,7 @@ Note:
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Apr 7 2015 10:38:01 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Wed Apr 15 2015 14:07:01 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.2
 </small></address>
