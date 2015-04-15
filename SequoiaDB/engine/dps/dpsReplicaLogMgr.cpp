@@ -979,11 +979,6 @@ namespace engine
          // how much data still left?
          needAlloc -= allocLen;
 
-         if ( _begin == _work && _rollFlag )
-         {
-            _begin = _incPageID ( _begin ) ;
-         }
-
          // if we don't have any extra space in the current page, let's move to
          // next
          if ( 0 == WORK_PAGE->getLastSize() )
@@ -993,6 +988,10 @@ namespace engine
             if ( !_rollFlag && _begin != _work )
             {
                _rollFlag = TRUE ;
+            }
+            else if ( _begin == _work && _rollFlag )
+            {
+               _begin = _incPageID ( _begin ) ;
             }
          }
       } while ( needAlloc > 0 ) ;
