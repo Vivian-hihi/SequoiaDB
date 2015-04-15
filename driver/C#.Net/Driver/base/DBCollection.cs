@@ -440,6 +440,35 @@ namespace SequoiaDB
             _Update(SequoiadbConstants.FLG_UPDATE_UPSERT, matcher, modifier, hint);
         }
 
+        /** \fn void Upsert(BsonDocument matcher, BsonDocument modifier, BsonDocument hint, BsonDocument setOnInsert)
+         *  \brief Update the document of current collection, insert if no matching
+         *  \param matcher The matching condition
+         *  \param modifier The updating rule
+         *  \param hint Hint
+         *  \param setOnInsert The setOnInsert assigns the specified values to the fileds when insert
+         *  \exception SequoiaDB.BaseException
+         *  \exception System.Exception
+         *  \note It won't work to upsert the "ShardingKey" field, but the other fields take effect
+         */
+        public void Upsert(BsonDocument matcher, BsonDocument modifier, BsonDocument hint, BsonDocument setOnInsert)
+        {
+            BsonDocument newHint;
+            if (setOnInsert != null)
+            {
+                newHint = new BsonDocument(); ;
+                if (hint != null)
+                {
+                    newHint.Merge(hint);
+                }
+                newHint.Add(SequoiadbConstants.FIELD_SET_ON_INSERT, setOnInsert);
+            }
+            else
+            {
+                newHint = hint;
+            }
+            Upsert(matcher, modifier, newHint);
+        }
+
         /** \fn DBCursor Query()
          *  \brief Find all documents of current collection
          *  \return The DBCursor of matching documents or null

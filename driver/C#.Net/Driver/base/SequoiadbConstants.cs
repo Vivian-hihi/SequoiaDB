@@ -137,6 +137,8 @@ namespace SequoiaDB
         public const string FIELD_OP_VALUE_UPDATE = "update";
         public const string FIELD_OP_VALUE_REMOVE = "remove";
 
+        public const string FIELD_SET_ON_INSERT = "$SetOnInsert";
+
         public const string IXM_NAME = "name";
         public const string IXM_KEY = "key";
         public const string IXM_UNIQUE = "unique";
