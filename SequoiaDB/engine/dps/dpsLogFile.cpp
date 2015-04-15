@@ -54,6 +54,7 @@ namespace engine
       _fileSize = 0 ;
       _fileNum  = 0 ;
       _idleSize = 0 ;
+      _inRestore= FALSE ;
    }
 
    _dpsLogFile::~_dpsLogFile()
@@ -209,6 +210,8 @@ namespace engine
       CHAR *lastRecord = NULL ;
       UINT64 lastOffset = 0 ;
       UINT32 lastLen = 0 ;
+
+      _inRestore = TRUE ;
 
       //Judge the length is right
       rc = ossGetFileSize( _file, &fileSize ) ;
@@ -398,6 +401,7 @@ namespace engine
       _idleSize = _fileSize - offSet ;
 
    done:
+      _inRestore = FALSE ;
       SAFE_OSS_FREE( lastRecord ) ;
       PD_TRACE_EXITRC ( SDB__DPSLOGFILE__RESTRORE, rc );
       return rc ;
@@ -561,7 +565,7 @@ namespace engine
          goto error ;
       }
       /// make sure the read data is all flushed
-      while ( offset + len > getLength() )
+      while ( !_inRestore && offset + len > getLength() )
       {
          if ( SDB_OK == _writeEvent.wait( OSS_ONE_SEC ) )
          {

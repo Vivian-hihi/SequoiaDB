@@ -101,6 +101,7 @@ namespace engine
       UINT32         _idleSize ;
       dpsLogHeader   _logHeader ;
       ossAutoEvent   _writeEvent ;
+      BOOLEAN        _inRestore ;
 
    public:
       _dpsLogFile();
