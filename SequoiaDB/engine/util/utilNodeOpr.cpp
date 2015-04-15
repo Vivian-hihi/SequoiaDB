@@ -520,6 +520,15 @@ namespace engine
       goto done ;
    }
 
+   INT32 utilWriteReadPipe( const CHAR *pSvcName, OSSPID pid,
+                            const CHAR *pWriteBuf, INT32 writeLen,
+                            CHAR *pReadBuf, INT32 readLen,
+                            BOOLEAN checkLen )
+   {
+      return _utilWriteReadPipe( pSvcName, pid, pWriteBuf, writeLen,
+                                 pReadBuf, readLen, checkLen ) ;
+   }
+
    INT32 utilGetNodeExtraInfo( utilNodeInfo & info )
    {
       INT32 rc = SDB_OK ;
@@ -594,6 +603,17 @@ namespace engine
          goto error ;
       }
       info._dbPath = dbPath ;
+
+      // start time
+      rc = _utilWriteReadPipe( info._svcname.c_str(), info._pid,
+                               ENGINE_NPIPE_MSG_STARTTIME,
+                               sizeof( ENGINE_NPIPE_MSG_STARTTIME ),
+                               (CHAR*)&info._startTime,
+                               sizeof( UINT64 ), TRUE ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
 
    done:
       return rc ;

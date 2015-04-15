@@ -123,8 +123,22 @@ namespace engine
       virtual BOOLEAN            isCBValue( SDB_CB_TYPE type ) const ;
 
       virtual UINT16             getLocalPort() const ;
+      virtual const CHAR*        getSvcname() const ;
+      virtual const CHAR*        getDBPath() const ;
       virtual SDB_ROLE           getDBRole() const ;
       virtual const CHAR*        getHostName() const { return _hostName ; }
+      virtual const CHAR*        getGroupName () const { return _groupName ; }
+      virtual UINT32             getNodeID() const ;
+      virtual UINT32             getGroupID() const ;
+      virtual BOOLEAN            isShutdown() const ;
+      virtual BOOLEAN            isPrimary() const ;
+      virtual UINT64             getStartTime() const ;
+
+      virtual void               getVersion( INT32 &ver,
+                                             INT32 &subVer,
+                                             INT32 &fixVer,
+                                             INT32 &release,
+                                             const CHAR **build ) const ;
 
       INT32             registerCB( IControlBlock *pCB, void *pOrg ) ;
 
@@ -171,10 +185,6 @@ namespace engine
       pmdEDUMgr *getEDUMgr ()
       {
          return &_eduMgr ;
-      }
-      const CHAR *getGroupName () const
-      {
-         return _groupName ;
       }
       CHAR *getGroupName ( CHAR *pBuffer, UINT32 size ) const
       {

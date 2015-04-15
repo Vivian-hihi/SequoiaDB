@@ -84,6 +84,11 @@ namespace engine
       pmdGetSysInfo()->_isPrimary.init( primary ) ;
    }
 
+   UINT64 pmdGetStartTime()
+   {
+      return pmdGetSysInfo()->_startTime ;
+   }
+
    BOOLEAN pmdIsQuitApp()
    {
       return pmdGetSysInfo()->_quitFlag ;

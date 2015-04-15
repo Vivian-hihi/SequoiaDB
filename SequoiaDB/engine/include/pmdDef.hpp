@@ -282,6 +282,7 @@ namespace engine
    #define ENGINE_NPIPE_MSG_PATH       "$path"
    #define ENGINE_NPIPE_MSG_PRIMARY    "$primary"
    #define ENGINE_NPIPE_MSG_ENDPIPE    "$endpipe"
+   #define ENGINE_NPIPE_MSG_STARTTIME  "$starttime"
 
    /*
       Config define

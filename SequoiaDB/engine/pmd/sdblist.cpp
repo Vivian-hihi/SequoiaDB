@@ -83,8 +83,8 @@ namespace engine
    /*
       Long format define
    */
-   #define PMD_LIST_LONG_FORMAT  "%-10.9s %-13.12s %-11.10s %-6.5s %-6.5s %-6.5s %-4.3s %-20.19s %s"
-   #define PMD_LIST_TITLE        "Name       SvcName       Role        PID    GID    NID    PRY  GroupName            DBPath"
+   #define PMD_LIST_LONG_FORMAT  "%-10.9s %-13.12s %-11.10s %-6.5s %-6.5s %-6.5s %-4.3s %-20.19s %-21.20s %s"
+   #define PMD_LIST_TITLE        "Name       SvcName       Role        PID    GID    NID    PRY  GroupName            StartTime             DBPath"
 
    //print node's detail configuration by sdb conf file and svcname
    void _printfDetail( const CHAR *rootPath, const CHAR *svcname, INT32 type )
@@ -210,13 +210,30 @@ namespace engine
       }
       else
       {
+         struct tm otm ;
+         time_t tt = node._startTime ;
+
          CHAR tmpGID[ 11 ] = { '-', 0 } ;
          CHAR tmpNID[ 11 ] = { '-', 0 } ;
          CHAR tmpPRY[ 11 ] = { '-', 0 } ;
+         CHAR tmpTime[ 31 ] = { 0 } ;
          string roleStr = utilDBRoleStr( (SDB_ROLE)node._role ) ;
-         // name       svcname       role        pid    gid    nid    gname           dbpath
-         // sequoaidb  11810         standalone  15896  1001   1001   db1             /opt/sequoiadb/database/coord/11810
-         // sdbcm      11790         -           10076  -      -      -               -
+         // name       svcname       role        pid    gid    nid    gname           StartTime             dbpath
+         // sequoaidb  11810         standalone  15896  1001   1001   db1             2014-02-02-11:01:01   /opt/sequoiadb/database/coord/11810
+         // sdbcm      11790         -           10076  -      -      -               2014-02-02-11:01:01   -
+
+#if defined (_WINDOWS)
+         localtime_s( &otm, &tt ) ;
+#else
+         localtime_r( &tt, &otm ) ;
+#endif
+         ossSnprintf( tmpTime, 30, "%04d-%02d-%02d-%02d.%02d.%02d",
+                      otm.tm_year+1900,
+                      otm.tm_mon+1,
+                      otm.tm_mday,
+                      otm.tm_hour,
+                      otm.tm_min,
+                      otm.tm_sec ) ;
 
          if ( 0 != node._groupID )
          {
@@ -241,6 +258,7 @@ namespace engine
                     tmpNID,
                     tmpPRY,
                     node._groupName.empty() ? "-" : node._groupName.c_str(),
+                    tmpTime,
                     node._dbPath.empty() ? "-" : node._dbPath.c_str() ) ;
       }
 

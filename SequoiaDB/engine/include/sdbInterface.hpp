@@ -309,9 +309,24 @@ namespace engine
          virtual BOOLEAN            isCBValue( SDB_CB_TYPE type ) const = 0 ;
          virtual void*              getOrgPointByType( SDB_CB_TYPE type ) = 0 ;
 
+         virtual BOOLEAN            isShutdown() const = 0 ;
+         virtual BOOLEAN            isPrimary() const = 0 ;
+
          virtual UINT16             getLocalPort() const = 0 ;
+         virtual const CHAR*        getSvcname() const = 0 ;
+         virtual const CHAR*        getDBPath() const = 0 ;
          virtual SDB_ROLE           getDBRole() const = 0 ;
          virtual const CHAR*        getHostName() const = 0 ;
+         virtual const CHAR*        getGroupName () const = 0 ;
+         virtual UINT32             getNodeID() const = 0 ;
+         virtual UINT32             getGroupID() const = 0 ;
+         virtual UINT64             getStartTime() const = 0 ;
+
+         virtual void               getVersion( INT32 &ver,
+                                                INT32 &subVer,
+                                                INT32 &fixVer,
+                                                INT32 &release,
+                                                const CHAR **build ) const = 0 ;
 
    } ;
    typedef _IResource IResource ;

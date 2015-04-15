@@ -57,6 +57,7 @@ namespace engine
       MsgRouteID                    _nodeID ;
       ossAtomic32                   _isPrimary ;
       SDB_TYPE                      _dbType ;
+      UINT64                        _startTime ;
 
       BOOLEAN                       _quitFlag ;
       PMD_ON_QUIT_FUNC              _pQuitFunc ;
@@ -69,6 +70,7 @@ namespace engine
          _quitFlag      = FALSE ;
          _dbType        = SDB_TYPE_DB ;
          _pQuitFunc     = NULL ;
+         _startTime     = time( NULL ) ;
       }
    } pmdSysInfo ;
 
@@ -80,6 +82,8 @@ namespace engine
    void           pmdSetNodeID( MsgRouteID id ) ;
    BOOLEAN        pmdIsPrimary() ;
    void           pmdSetPrimary( BOOLEAN primary ) ;
+
+   UINT64         pmdGetStartTime() ;
 
    void           pmdSetQuit() ;
    BOOLEAN        pmdIsQuitApp() ;

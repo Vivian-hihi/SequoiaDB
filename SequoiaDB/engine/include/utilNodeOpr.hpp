@@ -109,6 +109,7 @@ namespace engine
       INT32    _isAlone ;
       string   _groupName ;
       string   _dbPath ;
+      UINT64   _startTime ;
       // extra info end
 
       _utilNodeInfo()
@@ -120,6 +121,7 @@ namespace engine
          _nodeID     = 0 ;
          _primary    = -1 ;
          _isAlone    = 0 ;
+         _startTime  = 0 ;
       }
    } ;
    typedef _utilNodeInfo utilNodeInfo ;
@@ -135,6 +137,14 @@ namespace engine
                            OSSPID pidFilter = OSS_INVALID_PID,
                            INT32 roleFilter = -1,
                            BOOLEAN allowAloneCM = FALSE ) ;
+
+   /*
+      send command to node pipe and read result from node pipe
+   */
+   INT32 utilWriteReadPipe( const CHAR *pSvcName, OSSPID pid,
+                            const CHAR *pWriteBuf, INT32 writeLen,
+                            CHAR *pReadBuf, INT32 readLen,
+                            BOOLEAN checkLen ) ;
 
    /*
       get node group id/name, node id, dbpath info

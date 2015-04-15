@@ -37,6 +37,7 @@
 #include <string.h>
 #include "core.hpp"
 #include "pmd.hpp"
+#include "ossVer.h"
 #include "pdTrace.hpp"
 
 namespace engine
@@ -125,9 +126,50 @@ namespace engine
       return _optioncb.getServicePort() ;
    }
 
+   const CHAR* _SDB_KRCB::getSvcname() const
+   {
+      return _optioncb.getServiceAddr() ;
+   }
+
+   const CHAR* _SDB_KRCB::getDBPath() const
+   {
+      return _optioncb.getDbPath() ;
+   }
+
    SDB_ROLE _SDB_KRCB::getDBRole() const
    {
       return _role ;
+   }
+
+   UINT32 _SDB_KRCB::getNodeID() const
+   {
+      return (UINT32)pmdGetNodeID().columns.nodeID ;
+   }
+
+   UINT32 _SDB_KRCB::getGroupID() const
+   {
+      return (UINT32)pmdGetNodeID().columns.groupID ;
+   }
+
+   BOOLEAN _SDB_KRCB::isShutdown() const
+   {
+      return ( PMD_DB_NORMAL != getDBStatus() ? TRUE : FALSE ) ;
+   }
+
+   BOOLEAN _SDB_KRCB::isPrimary() const
+   {
+      return pmdIsPrimary() ;
+   }
+
+   UINT64 _SDB_KRCB::getStartTime() const
+   {
+      return pmdGetStartTime() ;
+   }
+
+   void _SDB_KRCB::getVersion( INT32 &ver, INT32 &subVer, INT32 &fixVer,
+                               INT32 &release, const CHAR **build ) const
+   {
+      ossGetVersion( &ver, &subVer, &fixVer, &release, build ) ;
    }
 
    INT32 _SDB_KRCB::registerCB( IControlBlock *pCB, void *pOrg )
