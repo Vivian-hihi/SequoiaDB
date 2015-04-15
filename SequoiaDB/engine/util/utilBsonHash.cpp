@@ -41,9 +41,9 @@ using namespace bson ;
 #define HASH_COMBINE( hash, v )\
         do\
         {\
-           size_t h = ( hash ) ;\
-           boost::hash_combine( h, (v) ) ;\
-           (hash) = h ;\
+           size_t __h = ( hash ) ;\
+           boost::hash_combine( __h, (v) ) ;\
+           (hash) = __h ;\
         } while ( FALSE )
 
 namespace engine
