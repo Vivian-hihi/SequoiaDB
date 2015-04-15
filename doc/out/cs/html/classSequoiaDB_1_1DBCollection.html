@@ -131,6 +131,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:ada3adf9dc7a1cf9f049e1618ffa5683a"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaDB_1_1DBCollection.html#ada3adf9dc7a1cf9f049e1618ffa5683a">Upsert</a> (BsonDocument matcher, BsonDocument modifier, BsonDocument hint)</td></tr>
 <tr class="memdesc:ada3adf9dc7a1cf9f049e1618ffa5683a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Update the document of current collection, insert if no matching.  <a href="#ada3adf9dc7a1cf9f049e1618ffa5683a"></a><br/></td></tr>
 <tr class="separator:ada3adf9dc7a1cf9f049e1618ffa5683a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aeca3ec119e6a34160f79c503b7106943"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaDB_1_1DBCollection.html#aeca3ec119e6a34160f79c503b7106943">Upsert</a> (BsonDocument matcher, BsonDocument modifier, BsonDocument hint, BsonDocument setOnInsert)</td></tr>
+<tr class="memdesc:aeca3ec119e6a34160f79c503b7106943"><td class="mdescLeft">&#160;</td><td class="mdescRight">Update the document of current collection, insert if no matching.  <a href="#aeca3ec119e6a34160f79c503b7106943"></a><br/></td></tr>
+<tr class="separator:aeca3ec119e6a34160f79c503b7106943"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a506a6e77561213842bfae13f8d6ee140"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classSequoiaDB_1_1DBCursor.html">DBCursor</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaDB_1_1DBCollection.html#a506a6e77561213842bfae13f8d6ee140">Query</a> ()</td></tr>
 <tr class="memdesc:a506a6e77561213842bfae13f8d6ee140"><td class="mdescLeft">&#160;</td><td class="mdescRight">Find all documents of current collection.  <a href="#a506a6e77561213842bfae13f8d6ee140"></a><br/></td></tr>
 <tr class="separator:a506a6e77561213842bfae13f8d6ee140"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -200,6 +203,18 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:ad279d81752b315cda9ec48445ad999a1"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaDB_1_1DBCollection.html#ad279d81752b315cda9ec48445ad999a1">RemoveLob</a> (ObjectId id)</td></tr>
 <tr class="memdesc:ad279d81752b315cda9ec48445ad999a1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Remove an existing lob with the speceifed oid.  <a href="#ad279d81752b315cda9ec48445ad999a1"></a><br/></td></tr>
 <tr class="separator:ad279d81752b315cda9ec48445ad999a1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4d948f13e4ad46618a4622d682175755"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a4d948f13e4ad46618a4622d682175755"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaDB_1_1DBCollection.html#a4d948f13e4ad46618a4622d682175755">Truncate</a> ()</td></tr>
+<tr class="memdesc:a4d948f13e4ad46618a4622d682175755"><td class="mdescLeft">&#160;</td><td class="mdescRight">Truncate the collection </p>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname"><a class="el" href="classSequoiaDB_1_1BaseException.html" title="Database operation exception.">SequoiaDB.BaseException</a></td><td></td></tr>
+    <tr><td class="paramname">System.Exception.</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+<br/></td></tr>
+<tr class="separator:a4d948f13e4ad46618a4622d682175755"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="properties"></a>
 Properties</h2></td></tr>
@@ -2054,6 +2069,71 @@ DBQuery.FLG_QUERY_WITH_RETURNDATA(0x00000200) : In general, query won't return d
 
 </div>
 </div>
+<a class="anchor" id="aeca3ec119e6a34160f79c503b7106943"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void SequoiaDB.DBCollection.Upsert </td>
+          <td>(</td>
+          <td class="paramtype">BsonDocument&#160;</td>
+          <td class="paramname"><em>matcher</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">BsonDocument&#160;</td>
+          <td class="paramname"><em>modifier</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">BsonDocument&#160;</td>
+          <td class="paramname"><em>hint</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">BsonDocument&#160;</td>
+          <td class="paramname"><em>setOnInsert</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Update the document of current collection, insert if no matching. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">matcher</td><td>The matching condition </td></tr>
+    <tr><td class="paramname">modifier</td><td>The updating rule </td></tr>
+    <tr><td class="paramname">hint</td><td>Hint </td></tr>
+    <tr><td class="paramname">setOnInsert</td><td>The setOnInsert assigns the specified values to the fileds when insert </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname"><a class="el" href="classSequoiaDB_1_1BaseException.html" title="Database operation exception.">SequoiaDB.BaseException</a></td><td></td></tr>
+    <tr><td class="paramname">System.Exception</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section note"><dt>Note</dt><dd>It won't work to upsert the "ShardingKey" field, but the other fields take effect </dd></dl>
+
+</div>
+</div>
 <h2 class="groupheader">Property Documentation</h2>
 <a class="anchor" id="af260a2a0eab053c5702fe7ddc96f13d9"></a>
 <div class="memitem">
@@ -2129,7 +2209,7 @@ DBQuery.FLG_QUERY_WITH_RETURNDATA(0x00000200) : In general, query won't return d
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Apr 7 2015 10:36:03 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Wed Apr 15 2015 14:01:53 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.2
 </small></address>
