@@ -1203,9 +1203,44 @@ do                                                            \
 
    INT32 _sdbCollectionImpl::upsert ( const BSONObj &rule,
                                       const BSONObj &condition,
-                                      const BSONObj &hint )
+                                      const BSONObj &hint,
+                                      const BSONObj &setOnInsert )
    {
-      return _update ( rule, condition, hint, FLG_UPDATE_UPSERT ) ;
+      BSONObj newHint ;
+      INT32 rc = SDB_OK ;
+
+      try
+      {
+         if ( !setOnInsert.isEmpty() )
+         {
+            BSONObjBuilder newHintBuilder ;
+
+            if ( !hint.isEmpty() )
+            {
+               newHintBuilder.appendElements( hint ) ;
+            }
+            newHintBuilder.append( FIELD_NAME_SET_ON_INSERT, setOnInsert ) ;
+            newHint = newHintBuilder.obj() ;
+         }
+         else
+         {
+            newHint = hint ;
+         }
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG ( PDWARNING, "Failed to create new hint, %s",
+                  e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      rc = _update ( rule, condition, newHint, FLG_UPDATE_UPSERT ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT__UPDATE, "_sdbCollectionImpl::_update" )

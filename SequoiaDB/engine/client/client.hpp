@@ -280,9 +280,11 @@ namespace sdbclient
       // update rule ( required )
       // update condition ( optional )
       // hint ( optional )
+      // setOnInsert ( optional )
       virtual INT32 upsert ( const bson::BSONObj &rule,
                              const bson::BSONObj &condition = _sdbStaticObject,
-                             const bson::BSONObj &hint      = _sdbStaticObject
+                             const bson::BSONObj &hint      = _sdbStaticObject,
+                             const bson::BSONObj &setOnInsert = _sdbStaticObject
                            ) = 0 ;
 
       // delete bson objects from current collection
@@ -708,18 +710,20 @@ namespace sdbclient
     \param [in] rule The updating rule
     \param [in] condition The matching rule, update all the documents if not provided
     \param [in] hint The hint, automatically match the optimal hint if not provided
+    \param [in] setOnInsert The setOnInsert assigns the specified values to the fileds when insert
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
     \note It won't work to upsert the "ShardingKey" field, but the other fields take effect
 */
       INT32 upsert ( const bson::BSONObj &rule,
                      const bson::BSONObj &condition = _sdbStaticObject,
-                     const bson::BSONObj &hint      = _sdbStaticObject
+                     const bson::BSONObj &hint      = _sdbStaticObject,
+                     const bson::BSONObj &setOnInsert = _sdbStaticObject
                    )
       {
          if ( !pCollection )
             return SDB_NOT_CONNECTED ;
-         return pCollection->upsert ( rule, condition, hint ) ;
+         return pCollection->upsert ( rule, condition, hint, setOnInsert ) ;
       }
 
 /** \fn   INT32 del ( const bson::BSONObj &condition,

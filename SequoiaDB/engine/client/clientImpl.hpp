@@ -202,9 +202,11 @@ namespace sdbclient
       // update rule ( required )
       // update condition ( optional )
       // hint ( optional )
+      // setOnInsert ( optional )
       INT32 upsert ( const BSONObj &rule,
                      const BSONObj &condition = _sdbStaticObject,
-                     const BSONObj &hint = _sdbStaticObject
+                     const BSONObj &hint = _sdbStaticObject,
+                     const BSONObj &setOnInsert = _sdbStaticObject
                    ) ;
       // delete bson objects from current collection
       // given:
