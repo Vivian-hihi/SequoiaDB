@@ -1962,9 +1962,10 @@ public class DBCollection {
     }
     
     /**
-     * @fn void truncate()
-     * @brief truncate the collection
-     * @exception com.sequoiadb.exception.BaseException
+     * @fn void truncate() 
+     * @brief truncate the collection 
+     * @return void
+     * @exception com.sequoiadb.exception.BaseException 
      */
     public void truncate() throws BaseException {
         String commandString = SequoiadbConstants.ADMIN_PROMPT
