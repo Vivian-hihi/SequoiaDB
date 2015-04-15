@@ -1,0 +1,64 @@
+sbin/为系统应用和脚本
+bin/下为工具
+默认情况下,为单机模式运行. 计算直接在工具里面进行处理并输出结果. 例如spark-shell
+当设置了master参数后, 工具将会连接主节点,并将任务发送给主节点去处理
+
+
+1. 配置zookeeper
+
+  a.修改zoo.cfg. 配置zookeeper节点
+    server.1=server1:2888:3888
+    server.2=server2:2888:3888
+    
+  b.配置数据目录
+    dataDir=/home/mount/zookeeper/data
+    
+  c.设置本机所属的节点id
+    server1上:
+    echo 1 > /home/mount/zookeeper/data/myid
+    
+    server2上:
+    echo 2 > /home/mount/zookeeper/data/myid
+    
+
+
+2. 配置spark-env.sh
+	SPARK_DAEMON_JAVA_OPTS="-Dspark.deploy.recoveryMode=ZOOKEEPER -Dspark.deploy.zookeeper.url=suse-lyb:2181 -Dspark.deploy.zookeeper.dir=/spark"
+	SPARK_WORKER_DIR=/home/mount/spark/data/workers
+	SPARK_LOCAL_DIRS=/home/mount/spark/data/local1,/home/mount/spark/data/local2
+	SPARK_CLASSPATH=/home/mount/spark/lib/sequoiadb-driver-1.12.jar:/home/mount/spark/lib/spark-sequoiadb_2.10-1.12.jar
+	
+	注： 
+	   spark.deploy.zookeeper.dir为zookeeper对外提供的数据目录。 可以不指定默认为/spark。 所有spark中的配置必须一致
+	   SPARK_WORKER_DIR：工作目录，包括日志
+	   SPARK_LOCAL_DIRS：RDD的临时存放目录
+		 SPARK_CLASSPATH：依赖包目录
+		 SPARK_MASTER_IP：master的IP
+		 SPARK_MASTER_PORT：master的端口号
+
+3. 启动master
+	 每台机器上执行 
+	 ./start-master.sh
+	 
+4. 启动slave
+   编辑conf/masters文件
+   填入所有master的机器名：
+   serverA
+   serverB
+   
+   每台机器上执行start-slaves.sh
+
+5. 创建SequoiaDB表
+   db.cs.cl.insert({a:2, n:"name"})
+6. 使用spark-shell连接SequoiaDB
+
+   a. 连接master节点
+   ./spark-shell --master spark://suse-lyb:7077
+   
+   b. 连接SequoiaDB
+   sqlContext.sql("CREATE temporary table datatable ( a int, n string ) using com.sequoiadb.spark OPTIONS ( host 'suse-lyb:50000', collectionspace 'cs', collection 'cl')")
+   
+   sqlContext.sql("select * from datatable").foreach(println)
+   
+   结果数据生成在spark-env.sh中配置的SPARK_WORKER_DIR目录下.
+
