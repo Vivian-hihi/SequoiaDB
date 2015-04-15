@@ -17,7 +17,7 @@
 		${test.environment}-${DEPLOY_WILDCARD}.xml
 -->
 
-<project name="deploy-test-all" default="Deploy-Test-All">
+<project name="deploy-test-all" default="10.Deploy-Test-All">
 	<hostinfo prefix="host" />
 	<property file="${ci.script.file.path}/ci.test.properties" />
 	<property name="deploy.config.path" value="${ci.script.file.path}/deploy-config" />
