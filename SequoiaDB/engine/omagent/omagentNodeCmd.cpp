@@ -251,7 +251,7 @@ namespace engine
                                                        &omsvc ) ;
       // if create om, need to add om address to config, and then
       // save config
-      if ( SDB_OK == rc &&
+      if ( ( SDB_OK == rc || SDBCM_NODE_EXISTED == rc ) &&
            0 == ossStrcmp( _roleStr.c_str(), SDB_ROLE_OM_STR ) )
       {
          sdbGetOMAgentOptions()->addOMAddr( pmdGetKRCB()->getHostName(),

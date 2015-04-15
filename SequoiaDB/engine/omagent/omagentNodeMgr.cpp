@@ -1110,6 +1110,14 @@ namespace engine
       else if ( !isModify && ( NULL != getNodeProcessInfo( pSvcName ) ||
                 SDB_OK == ossAccess( cfgFile ) ) )
       {
+         /// need to return omsvc
+         if ( omsvc )
+         {
+            pmdOptionsCB nodeOptions ;
+            nodeOptions.initFromFile( cfgFile ) ;
+            *omsvc = nodeOptions.getOMService() ;
+         }
+
          PD_LOG ( PDERROR, "service[%s] node existed", pSvcName ) ;
          rc = SDBCM_NODE_EXISTED ;
          goto error ;
