@@ -12,11 +12,11 @@
 <!-- depends:deploy-test-all.xml -->
 <!-- call:deploy-software-in-host.xml,deploy-test-in-host.xml,test-type.xml -->
 
-<project name="Standalone" default="Standalone">
+<project default="Standalone">
 	<property name="properties.dir" value="${basedir}/../ci.test.properties" />
 	<property file="${properties.dir}" />
 
-	<target name="Deploy" depends="">
+	<target name="11.1Deploy-Software" depends="">
 		<if>
 		   	<equals arg1="${os.arch}" arg2="amd64" />
 			<then>

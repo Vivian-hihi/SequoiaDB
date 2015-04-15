@@ -7,12 +7,10 @@
 
 <project name="deploy-test-in-host" default="Deploy-Test-In-Host">
 	<property file="ci.test.properties" />
-
 	<target name="Clean-Deploy-In-Host" depends="">
 		<stafTools workHost="${deploy.host.name}" workType="delete" fileName="${test.machine.deploy.path}" failonerror="true" />
 		<stafTools workHost="${deploy.host.name}" workType="create" fileName="${test.machine.deploy.path}" failonerror="true"/>
 	</target>
-
 	<target name="Deploy-Test-In-Host" depends="Clean-Deploy-In-Host">
 		<stafTools workType="copy" workHost="LOCAL" fileName="${deploy.file.fullname}" saveDir="${test.machine.deploy.path}" toHost="${deploy.host.name}" failonerror="true"/>
 		<stafTools workType="copy" workHost="LOCAL" fileName="${basedir}/install-test-in-host.xml" saveDir="${test.machine.deploy.path}" toHost="${deploy.host.name}" failonerror="true"/>

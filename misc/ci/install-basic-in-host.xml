@@ -10,7 +10,7 @@
 
 <project name="Install-Software" default="install-software">
 	<property file="${test.basedir}/ci.test.properties" />
-	<property name="db.path" value="${install.path}/sequoiadb" />
+	<!-- <property name="db.path" value="${install.path}/sequoiadb" /> -->
 	<taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
 		<classpath>
 			<pathelement location="${test.machine.software.path}/ant-sdbtasks.jar" />
@@ -18,29 +18,23 @@
 	</taskdef>
 
 	<target name="clean-install" depends="">
-		<!-- <hostinfo prefix="host" /> -->
-		<echo message="Begin to clean install env..." />
-
-		<exec executable="service" dir="" failonerror="false">
+		<!-- <exec executable="service" dir="" failonerror="false">
 			<arg value="sdbcm" />
 			<arg value="stop" />
-		</exec>
-		<exec executable="${db.path}/bin/sdbstop" dir="" failonerror="true" />
+		</exec> -->
+		<!-- <exec executable="${db.path}/bin/sdbstop" dir="" failonerror="true" /> -->
 		<!-- <stafTools workHost="${host.NAME}" workType="shell" workDir="${db.path}" common="ps -ef|grep sdb | grep -v grep | awk '{print $2}' | xargs kill -9" failonerror="true" /> -->
 		<exec executable="${db.path}/uninstall" dir="${db.path}" failonerror="true">
 			<arg line="--mode unattended" />
 		</exec>
 		<delete dir="${db.path}" />
-		<echo message="Clean install env compeleted." />
 	</target>
 
 	<target name="install-software" depends="">
-		<echo message="Begin to install..." />
 		<chmod file="${test.basedir}/${install.package.filename}" perm="u+x" />
 		<exec executable="${test.basedir}/${install.package.filename}">
 			<arg line="--mode unattended --prefix ${db.path} --username ${install.user} --userpasswd ${install.password}" />
 		</exec>
-
 		<if>
 			<equals arg1="${is.standalone.mode}" arg2="true" />
 			<then>
@@ -48,7 +42,6 @@
 				<copy file="${db.path}/conf/samples/sdb.conf.standalone" tofile="${db.path}/conf/local/${coord.service.port}/sdb.conf" />
 				<replaceregexp file="${db.path}/conf/local/${coord.service.port}/sdb.conf" match="diaglevel=.*" replace="diaglevel=5" flags="g" />
 				<replaceregexp file="${db.path}/conf/local/${coord.service.port}/sdb.conf" match="transactionon=false" replace="transactionon=true" flags="g" />
-
 				<if>
 				   <equals arg1="${os.arch}" arg2="amd64" />
 				   <then>
@@ -64,8 +57,7 @@
 				<mkdir dir="${db.path}/conf/local/${coord.service.port}" />
 				<copy file="${db.path}/conf/samples/sdb.conf.coord" tofile="${db.path}/conf/local/${coord.service.port}/sdb.conf" />
 				<replaceregexp file="${db.path}/conf/local/${coord.service.port}/sdb.conf" match="diaglevel=.*" replace="diaglevel=5" flags="g" />
-
-				<echo file="${db.path}/conf/local/${coord.service.port}/sdb.conf"  append="true" message="sharingbreak=300000" />
+				<replaceregexp file="${db.path}/conf/local/${coord.service.port}/sdb.conf" match="transactionon=false" replace="transactionon=true" flags="g" />
 			  	<if>
 				   <equals arg1="${os.arch}" arg2="amd64" />
 				   <then>
@@ -78,26 +70,23 @@
 						<replaceregexp file="${db.path}/conf/local/${coord.service.port}/sdb.conf" match="# catalogaddr=" replace="catalogaddr=${catalog.addrs}" flags="g" />
 					</then>
 				</if>
-
 				<exec executable="chown" dir="${db.path}/conf/local">
-                    <arg line=" -R ${install.user} ${coord.service.port}" />
+                    <arg line=" -R ${install.user}:${install.user}_group ${coord.service.port}" />
                 </exec>
-                <exec executable="chgrp" dir="${db.path}/conf/local">
+                <!-- <exec executable="chgrp" dir="${db.path}/conf/local">
                     <arg line=" -R ${install.user}_group ${coord.service.port}" />
-                </exec>
-
+                </exec> -->
 				<echo message="Start coord: su - sdbadmin -c  '${db.path}/bin/sdbstart -c ${db.path}/conf/local/${coord.service.port}'" />
-				<exec dir="${db.path}/bin" executable="su" spawn="false">
+				<exec executable="su" dir="${db.path}/bin" spawn="false">
 					<arg line=" - sdbadmin -c  '${db.path}/bin/sdbstart -c ${db.path}/conf/local/${coord.service.port}'" />
 				</exec>
 			</else>
 		</if>
 
-		<waitfor maxwait="30" maxwaitunit="second" checkevery="500">
+		<!-- <waitfor maxwait="30" maxwaitunit="second" checkevery="500">
 			<and>
 				<socket server="${ADDR4}" port="${coord.service.port}" />
 			</and>
-		</waitfor>
-		<echo message="Install compeleted." />
+		</waitfor> -->
 	</target>
 </project>

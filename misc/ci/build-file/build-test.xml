@@ -25,7 +25,6 @@
 	<target name="4.Clean-Last-Deploy" depends="">
 		<echo level="info" message="Step1 : Rebuild the folder &lt;${deploy_dir}&gt;." />
 		<delete dir="${deploy_dir}" failonerror="false" />
-		<mkdir dir="${deploy_dir}/temp" />
 	</target>
 
 	<target name="5.Build-Sdbtasks-Jar" depends="4.Clean-Last-Deploy" >
@@ -68,7 +67,5 @@
 		<copy todir="${deploy_dir}">
 			<fileset dir="${SCRIPT_DIR}/exec-testcases" includes="exec*.xml" />
 		</copy>
-		<echo level="info" message="Step7 : Delete the folder &lt;${deploy_dir}/temp&gt;." />
-		<delete dir="${deploy_dir}/temp" failonerror="false" />
 	</target>
 </project>
