@@ -1592,13 +1592,15 @@ __METHOD_IMP(cl_upsert)
    PYOBJECT *bson_rule            = NULL ;
    PYOBJECT *bson_condition       = NULL ;
    PYOBJECT *bson_hint            = NULL ;
+   PYOBJECT *bson_setOnInsert     = NULL ;
    sdbCollection *cl              = NULL ;
    const bson::BSONObj *rule      = NULL ;
    const bson::BSONObj *condition = NULL ;
    const bson::BSONObj *hint      = NULL ;
+   const bson::BSONObj *setOnInsert = NULL ;
 
-   if ( !PARSE_PYTHON_ARGS( args, "OOOO", &obj, &bson_rule,
-      &bson_condition, &bson_hint ) )
+   if ( !PARSE_PYTHON_ARGS( args, "OOOOO", &obj, &bson_rule,
+      &bson_condition, &bson_hint, &bson_setOnInsert ) )
    {
       rc = SDB_INVALIDARGS ;
       goto done ;
@@ -1608,8 +1610,9 @@ __METHOD_IMP(cl_upsert)
    CAST_PYBSON_TO_CPPBSON( bson_rule, rule ) ;
    CAST_PYBSON_TO_CPPBSON( bson_condition, condition ) ;
    CAST_PYBSON_TO_CPPBSON( bson_hint, hint ) ;
+   CAST_PYBSON_TO_CPPBSON( bson_setOnInsert, setOnInsert ) ;
 
-   rc = cl->upsert( *rule, *condition, *hint ) ;
+   rc = cl->upsert( *rule, *condition, *hint, *setOnInsert ) ;
    if ( rc )
    {
       goto done ;

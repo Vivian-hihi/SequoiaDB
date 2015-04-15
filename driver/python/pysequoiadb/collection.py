@@ -404,6 +404,7 @@ class collection(object):
                                  if not provided.
          - hint      dict  The hint, automatically match the optimal hint
                                  if not provided
+         - setOnInsert dict The setOnInsert assigns the specified values to the fileds when insert
       Exceptions:
          pysequoiadb.error.SDBTypeError
          pysequoiadb.error.SDBBaseError
@@ -417,6 +418,7 @@ class collection(object):
 
       bson_condition = None
       bson_hint = None
+      bson_setOnInsert = None
 
       if "condition" in kwargs:
          if not isinstance(kwargs.get("condition"), dict):
@@ -426,9 +428,13 @@ class collection(object):
          if not isinstance(kwargs.get("hint"), dict):
             raise SDBTypeError("hint must be an instance of dict")
          bson_hint = bson.BSON.encode(kwargs.get("hint"))
+      if "setOnInsert" in kwargs:
+         if not isinstance(kwargs.get("setOnInsert"), dict):
+            raise SDBTypeError("setOnInsert must be an instance of dict")
+         bson_setOnInsert = bson.BSON.encode(kwargs.get("setOnInsert"))
 
       try:
-         rc = sdb.cl_upsert(self._cl, bson_rule, bson_condition, bson_hint)
+         rc = sdb.cl_upsert(self._cl, bson_rule, bson_condition, bson_hint, bson_setOnInsert)
          pysequoiadb._raise_if_error("Failed to update", rc)
       except SDBBaseError:
          raise
