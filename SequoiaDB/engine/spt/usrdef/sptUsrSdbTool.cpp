@@ -424,7 +424,7 @@ namespace engine
    {
       BSONObjBuilder builder ;
       struct tm otm ;
-      time_t tt = node._startTime ;
+      time_t tt = info._startTime ;
       CHAR tmpTime[ 21 ] = { 0 } ;
 #if defined (_WINDOWS)
          localtime_s( &otm, &tt ) ;
