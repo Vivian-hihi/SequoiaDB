@@ -292,7 +292,7 @@ namespace engine
       }
 
    done:
-      PD_LOG( PDEVENT, "Stop programme[%s]" ) ;
+      PD_LOG( PDEVENT, "Stop programme." ) ;
       PD_TRACE_EXITRC ( SDB_CMMINTHREADENTY, rc );
       return SDB_OK == rc ? 0 : 1 ;
    error:
