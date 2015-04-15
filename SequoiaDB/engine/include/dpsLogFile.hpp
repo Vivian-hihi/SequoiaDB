@@ -45,6 +45,7 @@
 #include "ossUtil.hpp"
 #include "dpsLogDef.hpp"
 #include <string>
+#include "ossEvent.hpp"
 
 using namespace std ;
 
@@ -99,6 +100,7 @@ namespace engine
       UINT32         _fileNum ;
       UINT32         _idleSize ;
       dpsLogHeader   _logHeader ;
+      ossAutoEvent   _writeEvent ;
 
    public:
       _dpsLogFile();

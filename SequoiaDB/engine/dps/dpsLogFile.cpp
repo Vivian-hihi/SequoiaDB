@@ -46,6 +46,8 @@
 
 namespace engine
 {
+   #define DPS_LOGFILE_READ_TIMEOUT          ( 10000 )
+
    _dpsLogFile::_dpsLogFile()
    {
       _file = NULL ;
@@ -527,6 +529,7 @@ namespace engine
          rc = SDB_SYS ;
          goto error ;
       }
+      _writeEvent.signalAll() ;
 
    done:
       PD_TRACE_EXITRC ( SDB__DPSLOGFILE_WRITE, rc );
@@ -544,6 +547,7 @@ namespace engine
       PD_TRACE_ENTRY ( SDB__DPSLOGFILE_READ );
       SINT64 readLen = 0;
       UINT32 read = 0 ;
+      UINT32 readTimerCounter = 0 ;
       UINT32 offset = lOffset % _fileSize ;
       // make sure we don't read out of range
       SDB_ASSERT ( offset + len <= _fileSize,
@@ -556,6 +560,20 @@ namespace engine
          rc = SDB_DPS_LOG_NOT_IN_FILE ;
          goto error ;
       }
+      /// make sure the read data is all flushed
+      while ( offset + len > getLength() )
+      {
+         if ( SDB_OK == _writeEvent.wait( OSS_ONE_SEC ) )
+         {
+            continue ;
+         }
+         readTimerCounter += OSS_ONE_SEC ;
+         if ( readTimerCounter >= DPS_LOGFILE_READ_TIMEOUT )
+         {
+            break ;
+         }
+      }
+
       while ( read < len )
       {
          // seeks to given offset and read
