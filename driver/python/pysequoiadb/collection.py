@@ -397,14 +397,14 @@ class collection(object):
          no matching.
 
       Parameters:
-         Name        Type  Info:
-         rule        dict  The updating rule.
-         **kwargs          Useful options are below
-         - condition dict  The matching rule, update all the documents
-                                 if not provided.
-         - hint      dict  The hint, automatically match the optimal hint
-                                 if not provided
-         - setOnInsert dict The setOnInsert assigns the specified values to the fileds when insert
+         Name          Type  Info:
+         rule          dict  The updating rule.
+         **kwargs            Useful options are below
+         - condition   dict  The matching rule, update all the documents
+                                   if not provided.
+         - hint        dict  The hint, automatically match the optimal hint
+                                   if not provided
+         - setOnInsert dict  The setOnInsert assigns the specified values to the fileds when insert
       Exceptions:
          pysequoiadb.error.SDBTypeError
          pysequoiadb.error.SDBBaseError
