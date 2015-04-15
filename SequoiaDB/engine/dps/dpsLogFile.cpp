@@ -46,7 +46,7 @@
 
 namespace engine
 {
-   #define DPS_LOGFILE_READ_TIMEOUT          ( 10000 )
+   #define DPS_LOGFILE_READ_TIMEOUT          ( 30000 )
 
    _dpsLogFile::_dpsLogFile()
    {
