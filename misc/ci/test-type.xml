@@ -20,7 +20,7 @@
 							<sdbtest host="${test_machine_no1}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${testcase.path}/${test-type-list}_testcases/reports" masterreports="${test.reports.path}" >
 								<param name="basic.testcase.path" value="${testcase.path}/${test-type-list}_testcases" />
 								<param name="excludes.dir.patterns" value="vote" />
-								<param name="includes.dir.patterns" value="${basic_list1}" />
+								<param name="includes.dir.patterns" value="${test-type-list}_list1" />
 								<param name="deploy.case.fullname" value="${deploy.case.fullname}" />
 								<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
 								<param name="ci.properties.path" value="${test.machine.software.path}/ci.test.properties" />
@@ -31,7 +31,7 @@
 							<sdbtest host="${test_machine_no2}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${testcase.path}/${test-type-list}_testcases/reports" masterreports="${test.reports.path}" >
 								<param name="basic.testcase.path" value="${testcase.path}/${test-type-list}_testcases" />
 								<param name="excludes.dir.patterns" value="vote" />
-								<param name="includes.dir.patterns" value="${basic_list2}" />
+								<param name="includes.dir.patterns" value="${test-type-list}_list2" />
 								<param name="deploy.case.fullname" value="${deploy.case.fullname}" />
 								<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
 								<param name="ci.properties.path" value="${test.machine.software.path}/ci.test.properties" />
@@ -42,7 +42,7 @@
 							<sdbtest host="${test_machine_no3}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${testcase.path}/${test-type-list}_testcases/reports" masterreports="${test.reports.path}" >
 								<param name="basic.testcase.path" value="${testcase.path}/${test-type-list}_testcases" />
 								<param name="excludes.dir.patterns" value="vote" />
-								<param name="includes.dir.patterns" value="${basic_list3}" />
+								<param name="includes.dir.patterns" value="${test-type-list}_list3" />
 								<param name="deploy.case.fullname" value="${deploy.case.fullname}" />
 								<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
 								<param name="ci.properties.path" value="${test.machine.software.path}/ci.test.properties" />
@@ -53,7 +53,7 @@
 							<sdbtest host="${test_machine_no4}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${testcase.path}/${test-type-list}_testcases/reports" masterreports="${test.reports.path}" >
 								<param name="basic.testcase.path" value="${testcase.path}/${test-type-list}_testcases" />
 								<param name="excludes.dir.patterns" value="vote" />
-								<param name="includes.dir.patterns" value="${basic_list4}" />
+								<param name="includes.dir.patterns" value="${test-type-list}_list4" />
 								<param name="deploy.case.fullname" value="${deploy.case.fullname}" />
 								<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
 								<param name="ci.properties.path" value="${test.machine.software.path}/ci.test.properties" />
@@ -64,7 +64,7 @@
 							<sdbtest host="${test_machine_no5}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${testcase.path}/${test-type-list}_testcases/reports" masterreports="${test.reports.path}" >
 								<param name="basic.testcase.path" value="${testcase.path}/${test-type-list}_testcases" />
 								<param name="excludes.dir.patterns" value="vote" />
-								<param name="includes.dir.patterns" value="${basic_list5}" />
+								<param name="includes.dir.patterns" value="${test-type-list}_list5" />
 								<param name="deploy.case.fullname" value="${deploy.case.fullname}" />
 								<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
 								<param name="ci.properties.path" value="${test.machine.software.path}/ci.test.properties" />
@@ -75,7 +75,7 @@
 							<sdbtest host="${test_machine_no6}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${testcase.path}/${test-type-list}_testcases/reports" masterreports="${test.reports.path}" >
 								<param name="basic.testcase.path" value="${testcase.path}/${test-type-list}_testcases" />
 								<param name="excludes.dir.patterns" value="vote" />
-								<param name="includes.dir.patterns" value="${basic_list6}" />
+								<param name="includes.dir.patterns" value="${test-type-list}_list6" />
 								<param name="deploy.case.fullname" value="${deploy.case.fullname}" />
 								<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
 								<param name="ci.properties.path" value="${test.machine.software.path}/ci.test.properties" />
@@ -90,7 +90,7 @@
 							<sdbtest host="${test_machine_no1}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${testcase.path}/${test-type-list}_testcases/reports" masterreports="${test.reports.path}" >
 								<param name="basic.testcase.path" value="${testcase.path}/${test-type-list}_testcases" />
 								<param name="excludes.dir.patterns" value="vote" />
-								<param name="includes.dir.patterns" value="${basic_list1}" />
+								<param name="includes.dir.patterns" value="${test-type-list}_list1,${test-type-list}_list2" />
 								<param name="deploy.case.fullname" value="${deploy.case.fullname}" />
 								<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
 								<param name="ci.properties.path" value="${test.machine.software.path}/ci.test.properties" />
@@ -101,7 +101,7 @@
 							<sdbtest host="${test_machine_no2}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${testcase.path}/${test-type-list}_testcases/reports" masterreports="${test.reports.path}" >
 								<param name="basic.testcase.path" value="${testcase.path}/${test-type-list}_testcases" />
 								<param name="excludes.dir.patterns" value="vote" />
-								<param name="includes.dir.patterns" value="${basic_list2}" />
+								<param name="includes.dir.patterns" value="${test-type-list}_list3,${test-type-list}_list4" />
 								<param name="deploy.case.fullname" value="${deploy.case.fullname}" />
 								<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
 								<param name="ci.properties.path" value="${test.machine.software.path}/ci.test.properties" />
@@ -112,7 +112,7 @@
 							<sdbtest host="${test_machine_no3}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${testcase.path}/${test-type-list}_testcases/reports" masterreports="${test.reports.path}" >
 								<param name="basic.testcase.path" value="${testcase.path}/${test-type-list}_testcases" />
 								<param name="excludes.dir.patterns" value="vote" />
-								<param name="includes.dir.patterns" value="${basic_list3}" />
+								<param name="includes.dir.patterns" value="${test-type-list}_list5,${test-type-list}_list6" />
 								<param name="deploy.case.fullname" value="${deploy.case.fullname}" />
 								<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
 								<param name="ci.properties.path" value="${test.machine.software.path}/ci.test.properties" />
