@@ -218,6 +218,17 @@ namespace bson {
         return *this;
     }
 
+    inline BSONObjBuilder& BSONObjBuilder::appendElementsWithoutName(BSONObj x) 
+    {
+        BSONObjIterator it(x);
+        while ( it.moreWithEOO() ) {
+            BSONElement e = it.next();
+            if ( e.eoo() ) break;
+            appendAs(e, "");
+        }
+        return *this;
+    }
+
     /* add all the fields from the object specified to this object if they don't
        exist */
     inline BSONObjBuilder& BSONObjBuilder::appendElementsUnique(BSONObj x) {

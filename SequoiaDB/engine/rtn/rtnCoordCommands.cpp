@@ -5067,9 +5067,17 @@ namespace engine
          {
             if ( !beSplitQuery.eoo() )
             {
-               boKeyStart = beSplitQuery.embeddedObject() ;
-               boKeyEnd = beSplitEndQuery.eoo() ?
-                          BSONObj() : beSplitEndQuery.embeddedObject() ;
+               BSONObj tmpStart = beSplitQuery.embeddedObject() ;
+               BSONObjBuilder tmpStartBuilder ;
+               tmpStartBuilder.appendElementsWithoutName( tmpStart ) ;
+               boKeyStart = tmpStartBuilder.obj() ;
+               if ( !beSplitEndQuery.eoo() )
+               {
+                  BSONObj tmpEnd = beSplitEndQuery.embeddedObject() ;
+                  BSONObjBuilder tmpEndBuilder ;
+                  tmpEndBuilder.appendElementsWithoutName( tmpEnd ) ;
+                  boKeyEnd = tmpEndBuilder.obj() ;
+               }
             }
          }
          else

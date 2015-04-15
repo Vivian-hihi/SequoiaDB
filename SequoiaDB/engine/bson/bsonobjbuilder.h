@@ -126,6 +126,10 @@ namespace bson {
         /** add all the fields from the object specified to this object */
         BSONObjBuilder& appendElements(BSONObj x);
 
+        //add all the fields(without fieldName) from the object 
+        //specified to this object
+        BSONObjBuilder& appendElementsWithoutName(BSONObj x);
+
         /** add all the fields from the object specified to this object if they
             don't exist already */
         BSONObjBuilder& appendElementsUnique( BSONObj x );
