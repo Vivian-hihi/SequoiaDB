@@ -16,7 +16,7 @@
 	<property name="properties.dir" value="${basedir}/../ci.test.properties" />
 	<property file="${properties.dir}" />
 
-	<target name="11.1Deploy-Software" depends="">
+	<target name="12.1Deploy-Software" depends="">
 		<if>
 		   	<equals arg1="${os.arch}" arg2="amd64" />
 			<then>
