@@ -51,14 +51,14 @@
       <echo message="Exec test-mongo -f " /> 
       <echo message="Env:LD_LIBRARY_PATH=${mongoc.testcase.libpath}" />
       <echo message="The testcases path on ${testcases.path}" />
-      <exec executable="./test-mongo" dir="${mongoc.testcase.path}" timeout="60000" outputproperty="screen.output" resultproperty="ret.code" failonerror="false">
+      <exec executable="./test-mongo" dir="${mongoc.testcase.path}" timeout="60000" outputproperty="mongo.screen.output" resultproperty="mongo.ret.code" failonerror="false">
          <arg value=" -f" />
          <arg value=" -F ${reports.path}/concurrent_report.xml" />
          <env key="LD_LIBRARY_PATH" path="${LD_LIBRARY_PATH}:${mongoc.testcase.libpath}" />
          <env key="MONGOC_TEST_HOST" value="${mongoc.test.host}" />
       </exec>
-      <echo message="${screen.output}" />
-      <echo message="The result = ${ret.code} after exec parallel testcase." />
+      <echo message="${mongo.screen.output}" />
+      <echo message="The result = ${mongo.ret.code} after exec parallel testcase." />
 
    </target>        
     
@@ -71,7 +71,7 @@
       <tstamp>
          <format property="testcase.begin.time" pattern="yyyy-MM-dd-hh.mm.ss a" />
       </tstamp>
-      <echo message="Now testcase ${test.case.name}.js begin with ${testcase.begin.time}"/>
+      <echo message="Now testcase ${test.case.name} begin with ${testcase.begin.time}"/>
       
       <exec executable="./test-mongo" dir="${testcases.path}" timeout="60000" outputproperty="screen.output" resultproperty="ret.code" failonerror="false">
          <arg value=" -f" />
