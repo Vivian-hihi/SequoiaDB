@@ -96,7 +96,7 @@
             <echo message="The result code is ${ret.code} and it's fail ..." />
             <echo message="The testcase ${test.case.name} end with ${testcase.failure.end.time} and cost ${testcase.failure.timeOutput} s in total..." />
 
-            <echo file="${reports.path}/TEST-mongoc.xml" append="true" message="&lt;testcase classname=&quot;test.type&quot; name=&quot;${test.case.name}&quot; begin_time=&quot;${testcase.begin.time}&quot; end_time=&quot;${testcase.failure.end.time}&quot; time=&quot;${testcase.failure.timeOutput}&quot; path=&quot;${testcases.path}&quot; status=&quot;fail&quot;&gt;&#10;&lt;failure&gt;&#10;&lt;![CDATA[screen.output]]&gt;&#10;&lt;/failure&gt;&#10;&lt;/testcase&gt;&#10;" />
+            <echo file="${reports.path}/TEST-mongoc.xml" append="true" message="&lt;testcase classname=&quot;test.type&quot; name=&quot;${test.case.name}&quot; begin_time=&quot;${testcase.begin.time}&quot; end_time=&quot;${testcase.failure.end.time}&quot; time=&quot;${testcase.failure.timeOutput}&quot; path=&quot;${testcases.path}&quot; status=&quot;fail&quot;&gt;&#10;&lt;failure&gt;&#10;&lt;![CDATA[${screen.output}]]&gt;&#10;&lt;/failure&gt;&#10;&lt;/testcase&gt;&#10;" />
          </then>
          <else>
             <tstamp>
