@@ -1007,6 +1007,10 @@ namespace engine
       {
          rc = _convertUpdate( pAdaptor, msg ) ;
       }
+      else if ( ossStrcasecmp( pSubCommand, REST_CMD_NAME_UPSERT ) == 0 )
+      {
+         rc = _convertUpdate( pAdaptor, msg, TRUE ) ;
+      }
       else if ( ossStrcasecmp( pSubCommand, REST_CMD_NAME_QUERY_UPDATE ) == 0 )
       {
          rc = _convertQueryModify( pAdaptor, msg, TRUE ) ;
@@ -1618,7 +1622,8 @@ namespace engine
    }
 
    INT32 RestToMSGTransfer::_convertUpdate( restAdaptor *pAdaptor,
-                                            MsgHeader **msg )
+                                            MsgHeader **msg,
+                                            BOOLEAN isUpsert )
    {
       INT32 rc              = SDB_OK ;
       CHAR *pBuff           = NULL ;
@@ -1686,6 +1691,44 @@ namespace engine
             PD_LOG_MSG( PDERROR, "field's format error:field=%s,value=%s", 
                         FIELD_NAME_HINT, pHint ) ;
             goto error ;
+         }
+      }
+
+      if ( isUpsert )
+      {
+         const CHAR* pSetOnInsert = NULL ;
+         BSONObj setOnInsert ;
+
+         pAdaptor->getQuery( _restSession, REST_KEY_NAME_SET_ON_INSERT, &pSetOnInsert ) ;
+         if ( NULL != pSetOnInsert )
+         {
+            rc = fromjson( pSetOnInsert, setOnInsert ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG_MSG( PDERROR, "field's format error:field=%s,value=%s", 
+                           REST_KEY_NAME_SET_ON_INSERT, pSetOnInsert ) ;
+               goto error ;
+            }
+
+            try
+            {
+               BSONObjBuilder newHintBuilder ;
+               if ( !hint.isEmpty() )
+               {
+                  newHintBuilder.appendElements( hint ) ;
+               }
+               newHintBuilder.append( FIELD_NAME_SET_ON_INSERT, setOnInsert ) ;
+               hint = newHintBuilder.obj() ;
+            }
+            catch ( std::exception &e )
+            {
+               PD_LOG_MSG ( PDERROR, "Failed to create BSON object: %s",
+                        e.what() ) ;
+               rc = SDB_SYS ;
+               goto error ;
+            }
+
+            flag |= FLG_UPDATE_UPSERT ;
          }
       }
 

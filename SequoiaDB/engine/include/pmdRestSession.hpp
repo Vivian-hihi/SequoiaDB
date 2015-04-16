@@ -231,12 +231,14 @@ namespace engine
    #define REST_CMD_NAME_DELETE        "delete"
    #define REST_CMD_NAME_QUERY_UPDATE  "queryandupdate"
    #define REST_CMD_NAME_QUERY_REMOVE  "queryandremove"
+   #define REST_CMD_NAME_UPSERT        "upsert"
 
    #define REST_KEY_NAME_FLAG          "Flag"
    #define REST_KEY_NAME_INSERTOR      "Insertor"
    #define REST_KEY_NAME_UPDATOR       "Updator"
    #define REST_KEY_NAME_DELETOR       "Deletor"
-   
+   #define REST_KEY_NAME_SET_ON_INSERT "setoninsert"
+
    class RestToMSGTransfer : public SDBObject
    {
       public:
@@ -269,7 +271,8 @@ namespace engine
                                           MsgHeader **msg,
                                           BOOLEAN isUpdate ) ;
          INT32       _convertInsert( restAdaptor *pAdaptor, MsgHeader **msg ) ;
-         INT32       _convertUpdate( restAdaptor *pAdaptor, MsgHeader **msg ) ;
+         INT32       _convertUpdate( restAdaptor *pAdaptor, MsgHeader **msg,
+                                     BOOLEAN isUpsert = FALSE ) ;
          INT32       _convertDelete( restAdaptor *pAdaptor, MsgHeader **msg ) ;
 
          INT32       _convertSplit( restAdaptor *pAdaptor, MsgHeader **msg ) ;
