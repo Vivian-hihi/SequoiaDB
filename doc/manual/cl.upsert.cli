@@ -15,7 +15,7 @@ upsert - Update collection records.
 .sp 2
 
 .sp 2
-db.collectionspace.collection.upsert(\fB<rule>\fR,\fB[cond]\fR,\fB[hint]\fR)
+db.collectionspace.collection.upsert(\fB<rule>\fR,\fB[cond]\fR,\fB[hint]\fR,\fB[setOnInsert]\fR)
 .SH "CATEGORY"
 
 .sp 2
@@ -62,6 +62,10 @@ according to the parameter "cond", "update" does nothing, but
               operator 1":"value 1"},"field name 2":{"match
               operator 2":"value 2"},...}],[{"":"index
               name"|null}]}
+.sp 2
+\fBsetOnInsert (json object)\fR
+.br
+       Assigns the specified values to the fileds when insert.
 .sp 2
 \fBNote: \fR
 .sp 2
