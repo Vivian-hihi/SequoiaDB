@@ -115,6 +115,8 @@ namespace engine
       _extent->_scanExtLID     = DMS_INVALID_EXTENT ;
       // not creating index root page yet
       _extent->_rootExtentID   = DMS_INVALID_EXTENT ;
+      _extent->_refNum         = 0 ;
+      ossMemset( _extent->_reserved, 0, sizeof( _extent->_reserved ) ) ;
       // copy index def into extent. when it is replay op(has oid already),
       // no need to add oid.
       if ( !infoObj.hasField (DMS_ID_KEY_NAME) )
