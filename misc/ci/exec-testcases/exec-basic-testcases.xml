@@ -167,43 +167,29 @@
 			<arg line=" -s &quot; db = new Sdb('localhost',${coord.service.port});db.msg('${testBeginStr}');db.close(); &quot;" />
 		</exec>
 
-		<if>
-			<equals arg1="${test-type}" arg2="basic" />
-			<then>
-				<property name="sdb.cmd.beforeTestcase" value=" -e &quot; var COORDSVCNAME='${coord.service.port}' ;&quot; -f &quot;${testcases.path}/libs/func.js,${testcases.path}/libs/before_usecase.js&quot;" />
-				<echo message="Exec:${sdb.fullname}${sdb.cmd.beforeTestcase}" />
-				<exec executable="${sdb.fullname}" dir="" timeout="900000" outputproperty="beforeTestcase.screen.output" resultproperty="beforeTestcase.ret.code">
-					<arg line="${sdb.cmd.beforeTestcase}" />
-				</exec>
-				<echo message="${beforeTestcase.screen.output}" />
+		<property name="sdb.cmd.beforeTestcase" value=" -e &quot; var COORDSVCNAME='${coord.service.port}' ;&quot; -f &quot;${testcases.path}/libs/func.js,${testcases.path}/libs/before_usecase.js&quot;" />
+		<echo message="Exec:${sdb.fullname}${sdb.cmd.beforeTestcase}" />
+		<exec executable="${sdb.fullname}" dir="" timeout="900000" outputproperty="beforeTestcase.screen.output" resultproperty="beforeTestcase.ret.code">
+			<arg line="${sdb.cmd.beforeTestcase}" />
+		</exec>
+		<echo message="${beforeTestcase.screen.output}" />
 
-				<property name="sdb.cmd.argument" value=" -e &quot;var CHANGEDPREFIX='${CHANGEDSTRING}';var COORDSVCNAME='${coord.service.port}';&quot; -f &quot;${testcases.path}/libs/func.js,${commlib.option},${test.case.fullname}&quot;" />
-				<property name="command" value="${sdb.fullname}${sdb.cmd.argument}" />
-				<echo message="Command:${command}" />
-				<echo message="The testcase ${test.case.fullname} path on ${testcases.path}" />
-				<exec executable="${sdb.fullname}" dir="" timeout="90000000" outputproperty="screen.output" resultproperty="ret.code" failonerror="false">
-					<arg line="${sdb.cmd.argument}" />
-				</exec>
-				<echo message="${screen.output}" />
+		<property name="sdb.cmd.argument" value=" -e &quot;var CHANGEDPREFIX='${CHANGEDSTRING}';var COORDSVCNAME='${coord.service.port}';&quot; -f &quot;${testcases.path}/libs/func.js,${commlib.option},${test.case.fullname}&quot;" />
+		<property name="command" value="${sdb.fullname}${sdb.cmd.argument}" />
+		<echo message="Command:${command}" />
+		<echo message="The testcase ${test.case.fullname} path on ${testcases.path}" />
+		<exec executable="${sdb.fullname}" dir="" timeout="90000000" outputproperty="screen.output" resultproperty="ret.code" failonerror="false">
+			<arg line="${sdb.cmd.argument}" />
+		</exec>
+		<echo message="${screen.output}" />
 
-				<property name="sdb.cmd.afterTestcase" value=" -e &quot; var COORDSVCNAME='${coord.service.port}' ;&quot; -f &quot;${testcases.path}/libs/func.js,${testcases.path}/libs/after_usecase.js&quot;" />
-				<echo message="Exec:${sdb.fullname} ${sdb.cmd.afterTestcase}" />
-				<exec executable="${sdb.fullname}" dir="" timeout="900000" outputproperty="afterTestcase.screen.output" resultproperty="afterTestcase.ret.code">
-					<arg line="${sdb.cmd.afterTestcase}" />
-				</exec>
-				<echo message="${afterTestcase.screen.output}" />
-			</then>
-			<else>
-				<property name="sdb.cmd.argument" value=" -e &quot;var CHANGEDPREFIX='${CHANGEDSTRING}';var COORDSVCNAME='${coord.service.port}';&quot; -f &quot;${commlib.option},${test.case.fullname}&quot;" />
-				<property name="command" value="${sdb.fullname}${sdb.cmd.argument}" />
-				<echo message="Command:${command}" />
-				<echo message="The testcase ${test.case.fullname} path on ${testcases.path}" />
-				<exec executable="${sdb.fullname}" dir="" timeout="900000" outputproperty="screen.output" resultproperty="ret.code" failonerror="false">
-					<arg line="${sdb.cmd.argument}" />
-				</exec>
-				<echo message="${screen.output}" />
-			</else>
-		</if>
+		<property name="sdb.cmd.afterTestcase" value=" -e &quot; var COORDSVCNAME='${coord.service.port}' ;&quot; -f &quot;${testcases.path}/libs/func.js,${testcases.path}/libs/after_usecase.js&quot;" />
+		<echo message="Exec:${sdb.fullname} ${sdb.cmd.afterTestcase}" />
+		<exec executable="${sdb.fullname}" dir="" timeout="900000" outputproperty="afterTestcase.screen.output" resultproperty="afterTestcase.ret.code">
+			<arg line="${sdb.cmd.afterTestcase}" />
+		</exec>
+		<echo message="${afterTestcase.screen.output}" />
+
 		<exec executable="${sdb.fullname}" dir="" timeout="100000">
 			<arg line=" -s &quot; db = new Sdb('localhost',${coord.service.port});db.msg('${testEndStr}');db.close(); &quot;" />
 		</exec>
