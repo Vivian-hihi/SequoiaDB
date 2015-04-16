@@ -9,7 +9,7 @@
     </section>
     <section>
       <title>SYNOPSIS</title>
-      <p></p><apiname>db.collectionspace.collection.upsert</apiname>(<parmname>&lt;rule></parmname>,<parmname>[cond]</parmname>,<parmname>[hint]</parmname>)
+      <p></p><apiname>db.collectionspace.collection.upsert</apiname>(<parmname>&lt;rule></parmname>,<parmname>[cond]</parmname>,<parmname>[hint]</parmname>,<parmname>[setOnInsert]</parmname>)
     </section>
     <section>
       <title>CATEGORY</title>
@@ -40,7 +40,11 @@
                 <pd>{&lt; {&lt;{""update operator 1"":{field name 1:"value"},"update operator 2":{"field name 2":"value 2"},...}>,[{"field name 1":{"match operator 1":"value 1"},"field name 2":{"match operator 2":"value 2"},...}],[{"":"index name"|null}]}</pd>
               </plentry>
             </parml></pd>
-        </plentry>        
+        </plentry>
+        <plentry>
+          <pt>setOnInsert (json object)</pt>
+          <pd>Assigns the specified values to the fileds when insert.</pd>
+        </plentry>
       </parml>
       <note>
         <p>
