@@ -91,15 +91,27 @@
 				<sdbProperty name="commlib.option" value="" />
 			</else>
 		</if>
+		<available property="basic_testcases_exist" file="${test.suite.fullname}/basic_testcases.list" />
 		<if>
 		   	<equals arg1="${test-type-list}" arg2="basic" />
 			<then>
-				<property file="$${test.suite.fullname}/basic_testcases.list" />
-				<echo message="**************************************************************************************************************************************************************" />
-				<echo message="basic_list=${basic_list}" />
-				<property name="includes.case.patterns" value="${basic_list}" />
-				<echo message="includes.case.patterns=${includes.case.patterns}" />
-				<echo message="**************************************************************************************************************************************************************" />
+				<if>
+					<equals arg1="${basic_testcases_exist}" arg2="true" />
+					<then>
+						<property file="${test.suite.fullname}/basic_testcases.list" />
+						<echo message="**************************************************************************************************************************************************************" />
+						<echo message="basic_list=${basic_list}" />
+						<property name="includes.case.patterns" value="${basic_list}" />
+						<echo message="includes.case.patterns=${includes.case.patterns}" />
+						<echo message="**************************************************************************************************************************************************************" />
+					</then>
+					<else>
+						<echo message="**************************************************************************************************************************************************************" />
+						<property name="includes.case.patterns" value="" />
+						<echo message="includes.case.patterns=${includes.case.patterns}" />
+						<echo message="**************************************************************************************************************************************************************" />
+					</else>
+				</if>	
 			</then>
 			<else>
 				<echo message="**************************************************************************************************************************************************************" />

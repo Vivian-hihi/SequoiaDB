@@ -77,7 +77,7 @@
 	</target>
 
 	<target name="11.Deploy-And-Test-Case" depends="">
-		<echo level="info" message="Step1 : Call the target &lt;11.1 Deploy-Software&gt; on script file &lt;${deploy.case.fullname}&gt; on &lt;${ci.script.file.path}&gt;,command:&lt;ant -f ${deploy.case.fullname} --target=12.Deploy-Software -Dinstall.package.fullname=${release.path}/${BUILD.INSTALL.FILENAME} -Ddeploy.file.fullname=${deploy.file.fullname} -Ddeploy.path=${WORKSPACE}/deploy&gt;." />
+		<echo level="info" message="Step1 : Call the target &lt;12.Deploy-Software&gt; on script file &lt;${deploy.case.fullname}&gt; on &lt;${ci.script.file.path}&gt;,command:&lt;ant -f ${deploy.case.fullname} --target=12.Deploy-Software -Dinstall.package.fullname=${release.path}/${BUILD.INSTALL.FILENAME} -Ddeploy.file.fullname=${deploy.file.fullname} -Ddeploy.path=${WORKSPACE}/deploy&gt;." />
 		<ant antfile="${deploy.case.fullname}" dir="${ci.script.file.path}" target="12.Deploy-Software" inheritAll="true">
 			<property name="install.package.fullname" value="${release.path}/${BUILD.INSTALL.FILENAME}" />
 			<property name="deploy.file.fullname" value="${WORKSPACE}/${deploy.tar.file.name}" />
