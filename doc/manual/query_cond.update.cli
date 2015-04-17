@@ -15,7 +15,7 @@ update - update the queried document set.
 .sp 2
 
 .sp 2
-query.skip(\fB<update>\fR,\fB[returnNew]\fR)
+query.update(\fB<update>\fR,\fB[returnNew]\fR)
 .SH "CATEGORY"
 
 .sp 2
