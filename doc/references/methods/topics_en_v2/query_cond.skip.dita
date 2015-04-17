@@ -41,7 +41,7 @@
     </section>
     <note>
       <p>If the amount of records in a result set is lesser than 5, no record will be returned. If
-        the amount of records in a result set is greater than 5, it will return all the records after the fourth one..</p>
+        the amount of records in a result set is greater than 5, it will return all the records after the fourth one.</p>
     </note>
   </body>
   <related-links>

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
+<topic id="topic_5mv_bq5_sr">
+  <title>query.remove()</title>
+  <body>
+    <section>
+      <title>NAME</title>
+      <p>remove - delete the queried document set.</p>
+    </section>
+    <section>
+      <title>SYNOPSIS</title>
+      <p></p><apiname>query.remove</apiname>()
+    </section>
+    <section>
+      <title>CATEGORY</title>
+      <p></p>Query
+    </section>
+    <section>
+      <title>DESCRIPTION</title> 
+      <p>delete the queried document set.</p>            
+    </section>    
+    <section>
+      <title>Examples</title>
+      <p>query from collection 'bar' where age is large than 10, and remove the documents satified the condition.</p>
+      <codeblock>db.foo.bar.find({age:{$gt:10}}).remove()</codeblock>   
+    </section>
+    <note>
+      <p>can not be called simultaneously with query.count(), query.remove().</p>
+      <p>sorting must use index when called with query.sort() in a single node.</p>
+      <p>query must be ensured to run in a single node or a singe sub-collection when query.update() is called simultaneously with query.limit() or query.skip() in cluster.</p>
+    </note>
+  </body>  
+</topic>

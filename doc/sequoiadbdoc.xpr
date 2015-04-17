@@ -1159,8 +1159,10 @@
                     <file name="references/methods/topics_en_v2/oma.stopNode.dita"/>
                     <file name="references/methods/topics_en_v2/query_cond.hint.dita"/>
                     <file name="references/methods/topics_en_v2/query_cond.limit.dita"/>
+                    <file name="references/methods/topics_en_v2/query_cond.remove.dita"/>
                     <file name="references/methods/topics_en_v2/query_cond.skip.dita"/>
                     <file name="references/methods/topics_en_v2/query_cond.sort.dita"/>
+                    <file name="references/methods/topics_en_v2/query_cond.update.dita"/>
                     <file name="references/methods/topics_en_v2/query_curs.close.dita"/>
                     <file name="references/methods/topics_en_v2/query_curs.current.dita"/>
                     <file name="references/methods/topics_en_v2/query_curs.next.dita"/>

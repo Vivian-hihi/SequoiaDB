@@ -1,0 +1,47 @@
+.TH COMMAND * 2014-04-08 "SequoiaDB" "Sequoiadb Method's Manual"
+.ad l.ll 72.ce 1000
+\fBquery.remove()\fR
+.ce 0
+.sp 2
+
+.SH "NAME"
+
+.sp 2
+remove - delete the queried document set.
+.SH "SYNOPSIS"
+
+.sp 2
+
+.sp 2
+
+.sp 2
+query.remove()
+.SH "CATEGORY"
+
+.sp 2
+
+.sp 2
+Query
+.SH "DESCRIPTION"
+
+.sp 2
+delete the queried document set.
+.SH "Examples"
+
+.sp 2
+query from collection 'bar' where age is large than 10, and
+remove the documents satified the condition.
+.sp 2
+db.foo.bar.find({age:{$gt:10}}).remove()
+.sp 2
+\fBNote: \fR
+.sp 2
+can not be called simultaneously with query.count(),
+query.remove().
+.sp 2
+sorting must use index when called with query.sort() in a single
+node.
+.sp 2
+query must be ensured to run in a single node or a singe
+sub-collection when query.update() is called simultaneously with
+query.limit() or query.skip() in cluster.
