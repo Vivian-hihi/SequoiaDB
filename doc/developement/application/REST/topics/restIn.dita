@@ -406,6 +406,46 @@
         </strow>
       </simpletable>      
     </section>
+    <section><title>更新或插入记录</title>
+      <simpletable>
+        <sthead>
+          <stentry></stentry>
+          <stentry>说明</stentry>
+          <stentry>例子</stentry>          
+        </sthead>
+        <strow>
+          <stentry>请求头</stentry>
+          <stentry>同通用请求头</stentry>
+          <stentry></stentry>          
+        </strow>
+        <strow>
+          <stentry>请求内容</stentry>
+          <stentry>cmd: upsert<fig></fig>name: 集合的全称(集合空间.集合)<fig></fig>updator: 更新操作<fig></fig>filter: 更新条件(可选参数，可不填)<fig></fig>setoninsert: 插入数据(可选参数，可不填)</stentry>
+          <stentry>cmd=upsert&amp;name=cs.cl&amp;updator={$set:{"age":100}}&amp;filter={"name": "hello"}&amp;setoninsert={"sex":"male"}</stentry>          
+        </strow>
+        <strow>
+          <stentry>说明</stentry>
+          <stentry></stentry>
+          <stentry></stentry>          
+        </strow>
+        <strow>
+          <stentry>响应头</stentry>
+          <stentry>同通用响应头</stentry>
+          <stentry></stentry>          
+        </strow>
+        <strow>
+          <stentry>响应内容</stentry>
+          <stentry>{<fig></fig>errno: 返回值，0表示成功，其他为失败<fig></fig>description: 失败时的错误描述<fig></fig>}            
+          </stentry>
+          <stentry>{ "errno": 0 }</stentry>          
+        </strow>
+        <strow>
+          <stentry>说明</stentry>
+          <stentry></stentry>
+          <stentry></stentry>          
+        </strow>
+      </simpletable>      
+    </section>
     <section><title>获取记录数</title>
       <simpletable>
         <sthead>

@@ -64,44 +64,44 @@
           <p class="p">在数据库安装目录的 conf 子目录下，有一个 sdbcm.conf 的配置文件，该文件给出了启动 sdbcm 时的配置信息，如下所示： </p>
 
           <a name="developement_sdbcm__developement_sdbcm_table"><!-- --></a><table cellpadding="4" cellspacing="0" summary="" id="developement_sdbcm__developement_sdbcm_table" border="1" class="simpletable"><tr class="sthead">
-              <th valign="bottom" align="left" id="d71649e53" class="stentry">参数</th>
+              <th valign="bottom" align="left" id="d71988e53" class="stentry">参数</th>
 
-              <th valign="bottom" align="left" id="d71649e56" class="stentry">描述</th>
+              <th valign="bottom" align="left" id="d71988e56" class="stentry">描述</th>
 
-              <th valign="bottom" align="left" id="d71649e59" class="stentry">示例</th>
-
-            </tr>
-<tr class="strow">
-              <td valign="top" headers="d71649e53" class="stentry">defaultPort</td>
-
-              <td valign="top" headers="d71649e56" class="stentry">sdbcm 的默认监听端口</td>
-
-              <td valign="top" headers="d71649e59" class="stentry">defaultPort=11790</td>
+              <th valign="bottom" align="left" id="d71988e59" class="stentry">示例</th>
 
             </tr>
 <tr class="strow">
-              <td valign="top" headers="d71649e53" class="stentry">&lt;hostname&gt;_Port</td>
+              <td valign="top" headers="d71988e53" class="stentry">defaultPort</td>
 
-              <td valign="top" headers="d71649e56" class="stentry">物理主机 hostname 上 sdbcm 的监听端口。若在该配置文件中找不到对应主机的参数，sdbcm 会以 defaultPort 启动；若 defaultPort 也不存在，则 sdbcm 以默认端口11790启动。</td>
+              <td valign="top" headers="d71988e56" class="stentry">sdbcm 的默认监听端口</td>
 
-              <td valign="top" headers="d71649e59" class="stentry">&lt;hostname&gt;_Port=11790  </td>
-
-            </tr>
-<tr class="strow">
-              <td valign="top" headers="d71649e53" class="stentry">RestartCount</td>
-
-              <td valign="top" headers="d71649e56" class="stentry">重启次数，即定义 sdbcm 对节点的最大重启次数。该参数不存在时默认置为-1，即不断重启。</td>
-
-              <td valign="top" headers="d71649e59" class="stentry">RestartCount=5</td>
+              <td valign="top" headers="d71988e59" class="stentry">defaultPort=11790</td>
 
             </tr>
 <tr class="strow">
-              <td valign="top" headers="d71649e53" class="stentry">RestartInterval</td>
+              <td valign="top" headers="d71988e53" class="stentry">&lt;hostname&gt;_Port</td>
 
-              <td valign="top" headers="d71649e56" class="stentry">重启间隔，即定义 sdbcm 的最大重启间隔，单位是分钟。该参数与 RestartCount 结合定义了重启间隔内 sdbcm 对节点的最大重启次数，超出时则<div class="fig fignone"/>
+              <td valign="top" headers="d71988e56" class="stentry">物理主机 hostname 上 sdbcm 的监听端口。若在该配置文件中找不到对应主机的参数，sdbcm 会以 defaultPort 启动；若 defaultPort 也不存在，则 sdbcm 以默认端口11790启动。</td>
+
+              <td valign="top" headers="d71988e59" class="stentry">&lt;hostname&gt;_Port=11790  </td>
+
+            </tr>
+<tr class="strow">
+              <td valign="top" headers="d71988e53" class="stentry">RestartCount</td>
+
+              <td valign="top" headers="d71988e56" class="stentry">重启次数，即定义 sdbcm 对节点的最大重启次数。该参数不存在时默认置为-1，即不断重启。</td>
+
+              <td valign="top" headers="d71988e59" class="stentry">RestartCount=5</td>
+
+            </tr>
+<tr class="strow">
+              <td valign="top" headers="d71988e53" class="stentry">RestartInterval</td>
+
+              <td valign="top" headers="d71988e56" class="stentry">重启间隔，即定义 sdbcm 的最大重启间隔，单位是分钟。该参数与 RestartCount 结合定义了重启间隔内 sdbcm 对节点的最大重启次数，超出时则<div class="fig fignone"/>
 不再重启。该参数不存在时默认置为0，即不考虑重启间隔。</td>
 
-              <td valign="top" headers="d71649e59" class="stentry">RestartInterval=0</td>
+              <td valign="top" headers="d71988e59" class="stentry">RestartInterval=0</td>
 
             </tr>
 </table>
