@@ -1112,7 +1112,6 @@
                     <file name="references/methods/topics_en_v2/db.getCS.dita"/>
                     <file name="references/methods/topics_en_v2/db.getDomain.dita"/>
                     <file name="references/methods/topics_en_v2/db.getRG.dita"/>
-                    <file name="references/methods/topics_en_v2/db.interrupt.dita"/>
                     <file name="references/methods/topics_en_v2/db.invalidateCache.dita"/>
                     <file name="references/methods/topics_en_v2/db.list.dita"/>
                     <file name="references/methods/topics_en_v2/db.listBackup.dita"/>
@@ -1129,7 +1128,6 @@
                     <file name="references/methods/topics_en_v2/db.setSessionAttr.dita"/>
                     <file name="references/methods/topics_en_v2/db.snapshot.dita"/>
                     <file name="references/methods/topics_en_v2/db.startRG.dita"/>
-                    <file name="references/methods/topics_en_v2/db.traceFmt.dita"/>
                     <file name="references/methods/topics_en_v2/db.traceOff.dita"/>
                     <file name="references/methods/topics_en_v2/db.traceOn.dita"/>
                     <file name="references/methods/topics_en_v2/db.traceResume.dita"/>
