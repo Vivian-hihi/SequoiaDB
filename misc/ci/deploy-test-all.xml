@@ -83,8 +83,8 @@
 		<foreach target="11.Deploy-And-Test-Case" param="deploy.case.fullname">
 			<path>
 				<fileset dir="${deploy.config.path}">
-					<include name="${test.environment}-${DEPLOY_WILDCARD}.xml" />
-					<exclude name="${exclude_value}" />
+					<include file="${test.environment}-${DEPLOY_WILDCARD}.xml" />
+					<exclude file="${exclude_value}" />
 				</fileset>
 			</path>
 		</foreach>
