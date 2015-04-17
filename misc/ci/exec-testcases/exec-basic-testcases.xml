@@ -102,7 +102,7 @@
 						<echo message="**************************************************************************************************************************************************************" />
 						<echo message="basic_list=${basic_list}" />
 						<property name="includes.case.patterns" value="${basic_list}" />
-						<echo message="includes.case.patterns=${includes.case.patterns}" />
+						<echo message="includes.case.patterns=${basic_list}" />
 						<echo message="**************************************************************************************************************************************************************" />
 					</then>
 					<else>
