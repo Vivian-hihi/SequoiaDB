@@ -48,6 +48,7 @@
 #include "clsTrace.hpp"
 #include "dpsLogRecordDef.hpp"
 #include "rtnLob.hpp"
+#include "pmdStartup.hpp"
 #include <set>
 
 using namespace bson ;
@@ -1425,10 +1426,20 @@ namespace engine
          goto done ;
       }
 
+      if ( !pmdGetStartup().isOK () )
+      {
+         PD_LOG ( PDWARNING, "FS Session[%s] database is not repared,"
+                  "can't be the fs source node", sessionName() ) ;
+         msg.header.res = SDB_RTN_IN_REBUILD ;
+         _quit = TRUE ;
+         _agent->syncSend( handle, &msg ) ;
+         goto done ;
+      }
+
       /// steps:
       /// begin
       /// loop: meta
-      ///       indexs
+      ///       indexes
       ///       loop: notify
       /// end
 
