@@ -8364,7 +8364,12 @@ SDB_EXPORT INT32 sdbDetachNode( sdbReplicaGroupHandle cHandle,
       bson_iterator_init ( &it, options ) ;
       while ( BSON_EOO != bson_iterator_next ( &it ) )
       {
-         bson_append_element( &obj, NULL, &it ) ;
+         const CHAR *key = bson_iterator_key( &it ) ;
+         if ( 0 != ossStrcmp( key,
+                              FIELD_NAME_ONLY_DETACH ) )
+         {
+            bson_append_element( &obj, NULL, &it ) ;
+         }
       }
    }
    BSON_FINISH( obj ) ;
@@ -8414,9 +8419,14 @@ SDB_EXPORT INT32 sdbAttachNode( sdbReplicaGroupHandle cHandle,
    {
       bson_iterator it ;
       bson_iterator_init ( &it, options ) ;
-      while ( BSON_EOO != bson_iterator_next ( &it ) )
+      while ( BSON_EOO != bson_iterator_next( &it ) )
       {
-         bson_append_element( &obj, NULL, &it ) ;
+         const CHAR *key = bson_iterator_key( &it ) ;
+         if ( 0 != ossStrcmp( key,
+                              FIELD_NAME_ONLY_ATTACH ) )
+         {
+            bson_append_element( &obj, NULL, &it ) ;
+         }
       }
    }
    BSON_FINISH( obj ) ;
