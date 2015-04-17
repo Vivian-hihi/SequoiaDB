@@ -595,7 +595,6 @@ namespace engine
       PD_TRACE_ENTRY ( SDB__CLSDSBS__DISCONN );
       PD_LOG( PDDEBUG, "Session[%s]: disconnect with peer", sessionName() ) ;
       _agent->syncSend( netHandle(), &_disconnectMsg ) ;
-      _reset() ;
       _quit = TRUE ;
       PD_TRACE_EXIT ( SDB__CLSDSBS__DISCONN );
       return ;
