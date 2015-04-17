@@ -38,7 +38,7 @@
 		</tstamp>
 
 		<tar destfile="${WORKSPACE}/${deploy.tar.file.name}" basedir="${WORKSPACE}" includes="deploy/**/*" compression="gzip" />
-		
+
 		<tstamp>
 			<format property="deploy_tar_endtime" pattern="yyyy-MM-dd-hh.mm.ss a" />
 		</tstamp>
@@ -58,11 +58,11 @@
 		<if>
 			<equals arg1="${test-type-list}" arg2="basic" />
 			<then>
-				<property name="exclude_value" value="${test.environment}-[h3][g1][d3]-tp2.xml" />
+				<property name="exclude_value" value="${test.environment}-[h3][g1][d3]-tp2.xml,${test.environment}-[h1][g1][d1]-tp1.xml" />
 				<property name="environment_information" value="The build test environment is &lt;${test.environment}-[h3][g3][d3]-tp1&gt;,&lt;${test.environment}-standalone-tp1&gt;." />
 			</then>
 			<else>
-				<property name="exclude_value" value="" />
+				<property name="exclude_value" value="${test.environment}-[h1][g1][d1]-tp1.xml" />
 				<property name="environment_information" value="The build test environment is &lt;${test.environment}-[h3][g1][d3]-tp2&gt;,&lt;${test.environment}-[h3][g3][d3]-tp1&gt;,&lt;${test.environment}-standalone-tp1&gt;." />
 			</else>
 		</if>
