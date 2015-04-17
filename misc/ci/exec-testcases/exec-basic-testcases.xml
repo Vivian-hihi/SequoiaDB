@@ -91,6 +91,7 @@
 				<sdbProperty name="commlib.option" value="" />
 			</else>
 		</if>
+
 		<available property="basic_testcases_exist" file="${test.suite.fullname}/basic_testcases.list" />
 		<if>
 		   	<equals arg1="${test-type-list}" arg2="basic" />
@@ -101,24 +102,18 @@
 						<property file="${test.suite.fullname}/basic_testcases.list" />
 						<echo message="**************************************************************************************************************************************************************" />
 						<echo message="basic_list=${basic_list}" />
-						<property name="includes.case.patterns" value="${basic_list}" />
+						<var name="includes.case.patterns" value="${basic_list}" />
 						<echo message="includes.case.patterns=${basic_list}" />
 						<echo message="**************************************************************************************************************************************************************" />
 					</then>
 					<else>
 						<echo message="**************************************************************************************************************************************************************" />
-						<property name="includes.case.patterns" value="" />
+						<var name="includes.case.patterns" value="" />
 						<echo message="includes.case.patterns=${includes.case.patterns}" />
 						<echo message="**************************************************************************************************************************************************************" />
 					</else>
 				</if>	
 			</then>
-			<else>
-				<echo message="**************************************************************************************************************************************************************" />
-				<property name="includes.case.patterns" value="${includes.case.patterns}" />
-				<echo message="includes.case.patterns=${includes.case.patterns}" />
-				<echo message="**************************************************************************************************************************************************************" />
-			</else>
 		</if>
 		<foreach target="test-one-case" param="test.case.fullname">
 			<fileset dir="${test.suite.fullname}" includes="${includes.case.patterns}" excludes="${excludes.case.patterns}" />
