@@ -82,10 +82,7 @@
 		</if>
 		<foreach target="11.Deploy-And-Test-Case" param="deploy.case.fullname">
 			<path>
-				<fileset dir="${deploy.config.path}">
-					<include file="${test.environment}-${DEPLOY_WILDCARD}.xml" />
-					<exclude file="${exclude_value}" />
-				</fileset>
+				<fileset dir="${deploy.config.path}" includes="${test.environment}-${DEPLOY_WILDCARD}.xml" excludes="${exclude_value}" />
 			</path>
 		</foreach>
 	</target>
