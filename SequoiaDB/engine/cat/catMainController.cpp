@@ -129,7 +129,7 @@ namespace engine
       UINT32 handle        = 0 ;
       UINT32 tryTime       = 0 ;
 
-      if ( NULL == _lastDelayEvent &&
+      if ( NULL == _lastDelayEvent._Data &&
            ( PMD_EDU_EVENT_MSG != last->_eventType ||
              NULL == last->_Data ) )
       {
