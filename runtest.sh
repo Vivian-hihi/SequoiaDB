@@ -1,8 +1,10 @@
 #bin/bash
 
 # define root path
-testRoot="testcases/hlt/basic_testcases/js"
-libRoot="testcases/hlt/basic_testcases/libs"
+#testRoot="testcases/hlt/basic_testcases/js"
+testRoot="testcases/hlt/js_testcases/js"
+libRoot="testcases/hlt/js_testcases/libs"
+#libRoot="testcases/hlt/basic_testcases/libs"
 sdbRoot="bin"
 csprefix="local_test"
 uuid=$$
@@ -21,6 +23,7 @@ testFile=""
 stopWhenFailed=1
 printOut=0
 showNameWidth=60
+runAllTest=0
 
 # define stat parameter
 sucNum=0
@@ -36,7 +39,7 @@ testcaseETimeSec=0
 
 printStr=""
 lastCmdStr=""
-
+needExit=0
 # define ignore path and file
 pathArray=("vote")
 fileArray=("commlib.js")
@@ -55,7 +58,7 @@ function display()
    echo " -h hostname : 指定测试的COORD节点HostName或IP"
    echo " -addpid     : 是否在CHANGEDPREFIX上加上当前进行PID"
    echo " -print      : 是否在屏幕上打印用例的输出"
-   echo " -all        : 是否跑所有的测试用例.默认跑基本测试用例(hlt/basic_testcases)  "
+   echo " -all        : 是否跑所有的测试用例.默认跑基本测试用例(htl/basic_testcases)  "
    echo ""
    exit $1
 }
@@ -127,6 +130,133 @@ function runJSFile()
    return $result ;
 }
 
+function procJSFile()
+{
+   file=$1
+   shortFile="${file#$testRoot/}"
+   shortDir="${shortFile%/*}"
+   if [ "${shortDir:0:1}" == "/" ] ; then
+      shortDir=""
+   fi
+   shortDir=${reportDir}"/"${shortDir}
+   printOutFile=${reportDir}"/"${shortFile}"_out.txt"
+
+   postfix="${file##*.}"
+   if [ "$postfix" != "js" ] ; then
+      return 1
+   fi
+
+
+   libJSStr="${file%/*}"
+   libJSStr=${libJSStr}/${commlibstr}
+   if [ -e $libJSStr ] ; then
+         testFile=${libJSStr}","${file}
+   else
+         testFile=${file}
+   fi
+
+   if [ $printOut -ne 0 ] ; then
+      echo "===>[$shortFile]"
+   else
+      #echo -n "$shortFile   "
+      printf "===> %-${showNameWidth}s" $shortFile
+   fi
+
+   # run prepare for testcase
+   runJSFile "${libRoot}/before_usecase.js"
+
+   testcaseBTimeSec=`date +%s`
+   $sdbRoot/sdb -s "try{ db.msg('Begin test[$file]') ; } catch( e ) { } "
+   runJSFile "$testFile"
+   ret=$?
+   runresult=$ret
+   $sdbRoot/sdb -s "try{ db.msg('End test[$file]') ; } catch( e ) {} "
+   testcaseETimeSec=`date +%s`
+   if [ $printOut -ne 0 ] ; then
+      echo -n "<===[$shortFile]"
+   fi
+   if [ $ret -ne 0 ]
+   then
+      failedNum=`expr $failedNum + 1`
+      #printResult "$shortFile --- [ Failed ] `expr $testcaseETimeSec - $testcaseBTimeSec`(s)"
+      printResult "$(printf "===> %-${showNameWidth}s" $shortFile) [ Failed ] `expr $testcaseETimeSec - $testcaseBTimeSec`(s)"
+      echo -e "\033[31;49;1m [ Failed:$failedNum ] `expr $testcaseETimeSec - $testcaseBTimeSec`(s) \033[39;49;0m"
+   else
+      sucNum=`expr $sucNum + 1`
+      #printResult "$shortFile --- [ Done ] `expr $testcaseETimeSec - $testcaseBTimeSec`(s)"
+      printResult "$(printf "===> %-${showNameWidth}s" $shortFile) [ Done ] `expr $testcaseETimeSec - $testcaseBTimeSec`(s)"
+      echo -e "\033[32;49;1m [ Done:$sucNum ] `expr $testcaseETimeSec - $testcaseBTimeSec`(s) \033[39;49;0m"
+   fi
+
+   # run clear for testcase
+   runJSFile "${libRoot}/after_usecase.js"
+
+   if [ $ret -ne 0 -a $stopWhenFailed -ne 0 ] ; then
+      return 2
+   fi
+
+   if [ $printOut -ne 0 ] ; then
+      echo ""
+   fi
+   return 0
+}
+
+function procBasicTestCase()
+{
+   if [ $needExit -eq 1 ]
+   then
+      return
+   fi
+   if [ -d "$1" ];then
+      for dir in $pathArray
+      do
+         if [ "$1" == "$testRoot/$dir" ]
+         then
+            return;
+         fi
+      done
+      
+      if [  -f "$1/basic_testcases.list" ]
+      then
+         IFS=,
+         arr=(`cat $1/basic_testcases.list |awk -F '=' '{print $2}'`)
+         IFS=
+         for item in ${arr[*]}
+         do
+            if [ -f "$1/$item" ]
+            then
+               procJSFile "$1/$item"
+               retCode=$?
+               if [ $retCode -eq 2 ]
+               then
+                 needExit=1
+                 break; 
+               fi
+            fi
+         done
+         return;
+      fi
+
+      #if [ -f "$1/basic.txt" ];then
+      #   while read line
+      #   do
+      #      if [ -f "$1/$line" ];then
+      #         procJSFile "$1/$line"
+      #      fi
+      #   done < "$1/basic.txt"
+      #   return
+      #fi
+
+      for cur in `ls -l $1 |awk '{print $9}'`
+      do
+         procBasicTestCase "$1/$cur";
+      done
+   else
+      #procJSFile $1
+      return;
+   fi
+}
+
 # ***************************************************************
 # run entry
 # ***************************************************************
@@ -160,9 +290,10 @@ while [ "$1" != "" ]; do
       -addpid )       csprefix="local_para_$$"
                       reportDir=${csprefix}"_report"
                       ;;
-      -all )          testRoot="testcases/hlt/js_testcases/js"
-                      libRoot="testcases/hlt/js_testcases/libs"
-                      testDir=$testRoot
+      -all )          #testRoot="testcases/hlt/js_testcases/js"
+                      #libRoot="testcases/hlt/js_testcases/libs"
+                      #testDir=$testRoot
+                      runAllTest=1
                       ;;
       * )             echo "invalid arguments: $1"
                       display 1
@@ -173,10 +304,11 @@ done
 if [ ""X != "$passDir"X ]; then
    testDir="$(getMyPath $passDir)"
 fi
+echo "after "$testDir
 if [ ""X != "$passFile"X ]; then
    testFile="$(getMyPath $passFile)"
 fi
-
+echo $testFile
 #for p in $@
 #do
 #   if [ $readType -eq 1 ] ; then
@@ -236,40 +368,52 @@ findCmdStr="find $testDir "
 beginPrefix=""
 endPrefix=""
 
-for data in ${pathArray[@]}
-do
-   if [ "$pathString" != "" ] ; then
-      pathString=${pathString}" -o "
-   fi
-   pathString=${pathString}"-path ""\""*/${data}"\""
-   beginPrefix=" "
-   endPrefix=" -prune -o  "
-done
+if [ $runAllTest -eq 1 -o "$testFile"X != ""X ]
+then
+   for data in ${pathArray[@]}
+   do
+      if [ "$pathString" != "" ] ; then
+         pathString=${pathString}" -o "
+      fi
+      pathString=${pathString}"-path ""\""*/${data}"\""
+      beginPrefix=" "
+      endPrefix=" -prune -o  "
+   done
 
-for data in ${fileArray[@]}
-do
-   if [ "$fileString" != "" -o "$pathString" != "" ] ; then
-      fileString=${fileString}" -o "
-   fi
-   fileString=${fileString}"-name ""\""${data}"\""
-   beginPrefix=" "
-   endPrefix=" -prune -o "
-done
+   for data in ${fileArray[@]}
+   do
+      if [ "$fileString" != "" -o "$pathString" != "" ] ; then
+         fileString=${fileString}" -o "
+      fi
+      fileString=${fileString}"-name ""\""${data}"\""
+      beginPrefix=" "
+      endPrefix=" -prune -o "
+   done
 
-# construct find command
-if [ "$pathString" != "" -o "$fileString" != "" ] ; then
-   findCmdStr=${findCmdStr}${beginPrefix}"\( "${pathString}${fileString}" \)"${endPrefix}"-type f -print"
+   # construct find command
+   if [ "$pathString" != "" -o "$fileString" != "" ] ; then
+      findCmdStr=${findCmdStr}${beginPrefix}"\( "${pathString}${fileString}" \)"${endPrefix}"-type f -print"
+   else
+      findCmdStr=${findCmdStr}${beginPrefix}${endPrefix}"-type f -print"
+   fi
+   echo "*******************************************************************************"
+   echo "CHANGEDPREFIX: $csprefix"
+   echo "UUID         : $uuid"
+   echo "UUNAME       : $uuname"
+   echo "COORDSVCNAME : $coordsvcname"
+   echo "COORDSVCHOST : $coordhostname"
+   echo "Find command : $findCmdStr"
+   echo "*******************************************************************************"
 else
-   findCmdStr=${findCmdStr}${beginPrefix}${endPrefix}"-type f -print"
+   echo "*******************************************************************************"
+   echo "CHANGEDPREFIX: $csprefix"
+   echo "UUID         : $uuid"
+   echo "UUNAME       : $uuname"
+   echo "COORDSVCNAME : $coordsvcname"
+   echo "COORDSVCHOST : $coordhostname"
+   echo "Find command : $findCmdStr"
+   echo "*******************************************************************************"
 fi
-echo "*******************************************************************************"
-echo "CHANGEDPREFIX: $csprefix"
-echo "UUID         : $uuid"
-echo "UUNAME       : $uuname"
-echo "COORDSVCNAME : $coordsvcname"
-echo "COORDSVCHOST : $coordhostname"
-echo "Find command : $findCmdStr"
-echo "*******************************************************************************"
 
 #for file in `eval $findCmdStr`
 #do
@@ -306,73 +450,24 @@ if [ "$printStr" != "" ] ; then
    printResult ""
 fi
 
-for file in `eval $findCmdStr`
-do
-   shortFile="${file#$testRoot/}"
-   shortDir="${shortFile%/*}"
-   if [ "${shortDir:0:1}" == "/" ] ; then
-      shortDir=""
-   fi
-   shortDir=${reportDir}"/"${shortDir}
-   printOutFile=${reportDir}"/"${shortFile}"_out.txt"
+if [ $runAllTest -eq 1 -o "$testFile"X != ""X ]
+then
+   for file in `eval $findCmdStr`
+   do
+      procJSFile $file
+      retCode=$?
+      if [ $retCode -eq 1 ]
+      then
+         continue
+      elif [ $retCode -eq 2 ]
+      then
+         break
+      fi      
+   done
+else
+   procBasicTestCase $testDir
+fi
 
-   postfix="${file##*.}"
-   if [ "$postfix" != "js" ] ; then
-      continue
-   fi
-
-   libJSStr="${file%/*}"
-   libJSStr=${libJSStr}/${commlibstr}
-   if [ -e $libJSStr ] ; then
-      testFile=${libJSStr}","${file}
-   else
-      testFile=${file}
-   fi
-
-   if [ $printOut -ne 0 ] ; then
-      echo "===>[$shortFile]"
-   else
-      #echo -n "$shortFile   "
-      printf "===> %-${showNameWidth}s" $shortFile
-   fi
-
-   # run prepare for testcase
-   runJSFile "${libRoot}/before_usecase.js"
-
-   testcaseBTimeSec=`date +%s`
-   $sdbRoot/sdb -s "try{ db.msg('Begin test[$file]') ; } catch( e ) { } "
-   runJSFile "$testFile"
-   ret=$?
-   runresult=$ret
-   $sdbRoot/sdb -s "try{ db.msg('End test[$file]') ; } catch( e ) {} "
-   testcaseETimeSec=`date +%s`
-   if [ $printOut -ne 0 ] ; then
-      echo -n "<===[$shortFile]"
-   fi
-   if [ $ret -ne 0 ]
-   then
-      failedNum=`expr $failedNum + 1`
-      #printResult "$shortFile --- [ Failed ] `expr $testcaseETimeSec - $testcaseBTimeSec`(s)"
-      printResult "$(printf "===> %-${showNameWidth}s" $shortFile) [ Failed ] `expr $testcaseETimeSec - $testcaseBTimeSec`(s)"
-      echo -e "\033[31;49;1m [ Failed:$failedNum ] `expr $testcaseETimeSec - $testcaseBTimeSec`(s) \033[39;49;0m"
-   else
-      sucNum=`expr $sucNum + 1`
-      #printResult "$shortFile --- [ Done ] `expr $testcaseETimeSec - $testcaseBTimeSec`(s)"
-      printResult "$(printf "===> %-${showNameWidth}s" $shortFile) [ Done ] `expr $testcaseETimeSec - $testcaseBTimeSec`(s)"
-      echo -e "\033[32;49;1m [ Done:$sucNum ] `expr $testcaseETimeSec - $testcaseBTimeSec`(s) \033[39;49;0m"
-   fi
-
-   # run clear for testcase
-   runJSFile "${libRoot}/after_usecase.js"
-
-   if [ $ret -ne 0 -a $stopWhenFailed -ne 0 ] ; then
-      break ;
-   fi
-
-   if [ $printOut -ne 0 ] ; then
-      echo ""
-   fi
-done
 endTime=`date`
 endTimeSec=`date +%s`
 
