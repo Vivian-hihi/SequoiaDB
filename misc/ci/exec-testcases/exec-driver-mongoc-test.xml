@@ -74,7 +74,7 @@
       <echo message="Now testcase ${test.case.name} begin with ${testcase.begin.time}"/>
       
       <exec executable="./test-mongo" dir="${testcases.path}" timeout="60000" outputproperty="screen.output" resultproperty="ret.code" failonerror="false">
-         <arg value=" -f -p -l ${test.case.name} -F ${reports.path}/${test.case.name}_report.xml" />
+         <arg line=" -f -p -l ${test.case.name} -F ${reports.path}/${test.case.name}_report.xml" />
          <!-- <arg value=" -p" />
          <arg value=" -l ${test.case.name}" />
          <arg value=" -F ${reports.path}/${test.case.name}_report.xml" /> -->
