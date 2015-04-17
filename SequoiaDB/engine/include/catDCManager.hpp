@@ -157,6 +157,7 @@ namespace engine
       BOOLEAN                    _isImageCmd ;
       DPS_LSN                    _lsn ;
       _dpsMessageBlock           _mb ;
+      BOOLEAN                    _isActived ;
 
    } ;
    typedef _catDCManager catDCManager ;

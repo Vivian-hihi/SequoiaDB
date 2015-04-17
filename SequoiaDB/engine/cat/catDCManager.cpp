@@ -66,6 +66,7 @@ namespace engine
       _pDCBaseInfo = NULL ;
       _isImageCmd = FALSE ;
       _pLogMgr = FALSE ;
+      _isActived = FALSE ;
    }
 
    _catDCManager::~_catDCManager()
@@ -188,6 +189,11 @@ namespace engine
       INT32 rc = SDB_OK ;
       DPS_LSN expectLSN = _pDpsCB->expectLsn() ;
 
+      if ( !_isActived )
+      {
+         goto done ;
+      }
+
       // read lsn to expect lsn
       while( !expectLSN.invalid() &&
              _lsn.compareOffset( expectLSN.offset ) < 0 )
@@ -252,6 +258,8 @@ namespace engine
       rc = _pLogMgr->restore() ;
       PD_RC_CHECK( rc, PDERROR, "Restore system log failed, rc: %d", rc ) ;
 
+      _isActived = TRUE ;
+
    done :
       return rc ;
    error :
@@ -263,6 +271,7 @@ namespace engine
 
    INT32 _catDCManager::deactive()
    {
+      _isActived = FALSE ;
       return SDB_OK ;
    }
 
