@@ -141,7 +141,7 @@ namespace engine
          event._eventType = PMD_EDU_EVENT_MSG ;
 
          // if the msg has already delayed
-         if ( _lastDelayEvent._Data == last->_Data )
+         if ( _lastDelayEvent._Data )
          {
             ossUnpack32From64( _lastDelayEvent._userData, tryTime, handle ) ;
 
