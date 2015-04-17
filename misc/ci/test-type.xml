@@ -28,6 +28,7 @@
 								<param name="ci.script.file.path" value="${ci.script.file.path}" />
 								<param name="test.log" value="${test.log}" />
 								<param name="test-type-list" value="${test-type-list}" />
+								<param name="BUILD_NUMBER" value="${BUILD_NUMBER}" />
 							</sdbtest>
 							<sdbtest host="${test_machine_no2}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${testcase.path}/js_testcases/reports" masterreports="${test.reports.path}" >
 								<param name="basic.testcase.path" value="${testcase.path}/js_testcases" />
@@ -40,6 +41,7 @@
 								<param name="ci.script.file.path" value="${ci.script.file.path}" />
 								<param name="test.log" value="${test.log}" />
 								<param name="test-type-list" value="${test-type-list}" />
+								<param name="BUILD_NUMBER" value="${BUILD_NUMBER}" />
 							</sdbtest>
 							<sdbtest host="${test_machine_no3}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${testcase.path}/js_testcases/reports" masterreports="${test.reports.path}" >
 								<param name="basic.testcase.path" value="${testcase.path}/js_testcases" />
@@ -52,6 +54,7 @@
 								<param name="ci.script.file.path" value="${ci.script.file.path}" />
 								<param name="test.log" value="${test.log}" />
 								<param name="test-type-list" value="${test-type-list}" />
+								<param name="BUILD_NUMBER" value="${BUILD_NUMBER}" />
 							</sdbtest>
 							<sdbtest host="${test_machine_no4}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${testcase.path}/js_testcases/reports" masterreports="${test.reports.path}" >
 								<param name="basic.testcase.path" value="${testcase.path}/js_testcases" />
@@ -64,6 +67,7 @@
 								<param name="ci.script.file.path" value="${ci.script.file.path}" />
 								<param name="test.log" value="${test.log}" />
 								<param name="test-type-list" value="${test-type-list}" />
+								<param name="BUILD_NUMBER" value="${BUILD_NUMBER}" />
 							</sdbtest>
 							<sdbtest host="${test_machine_no5}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${testcase.path}/js_testcases/reports" masterreports="${test.reports.path}" >
 								<param name="basic.testcase.path" value="${testcase.path}/js_testcases" />
@@ -76,6 +80,7 @@
 								<param name="ci.script.file.path" value="${ci.script.file.path}" />
 								<param name="test.log" value="${test.log}" />
 								<param name="test-type-list" value="${test-type-list}" />
+								<param name="BUILD_NUMBER" value="${BUILD_NUMBER}" />
 							</sdbtest>
 							<sdbtest host="${test_machine_no6}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${testcase.path}/js_testcases/reports" masterreports="${test.reports.path}" >
 								<param name="basic.testcase.path" value="${testcase.path}/js_testcases" />
@@ -88,6 +93,7 @@
 								<param name="ci.script.file.path" value="${ci.script.file.path}" />
 								<param name="test.log" value="${test.log}" />
 								<param name="test-type-list" value="${test-type-list}" />
+								<param name="BUILD_NUMBER" value="${BUILD_NUMBER}" />
 							</sdbtest>
 						</parallel>
 					</then>
@@ -104,6 +110,7 @@
 								<param name="ci.script.file.path" value="${ci.script.file.path}" />
 								<param name="test.log" value="${test.log}" />
 								<param name="test-type-list" value="${test-type-list}" />
+								<param name="BUILD_NUMBER" value="${BUILD_NUMBER}" />
 							</sdbtest>
 							<sdbtest host="${test_machine_no2}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${testcase.path}/js_testcases/reports" masterreports="${test.reports.path}" >
 								<param name="basic.testcase.path" value="${testcase.path}/js_testcases" />
@@ -116,6 +123,7 @@
 								<param name="ci.script.file.path" value="${ci.script.file.path}" />
 								<param name="test.log" value="${test.log}" />
 								<param name="test-type-list" value="${test-type-list}" />
+								<param name="BUILD_NUMBER" value="${BUILD_NUMBER}" />
 							</sdbtest>
 							<sdbtest host="${test_machine_no3}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${testcase.path}/js_testcases/reports" masterreports="${test.reports.path}" >
 								<param name="basic.testcase.path" value="${testcase.path}/js_testcases" />
@@ -128,6 +136,7 @@
 								<param name="ci.script.file.path" value="${ci.script.file.path}" />
 								<param name="test.log" value="${test.log}" />
 								<param name="test-type-list" value="${test-type-list}" />
+								<param name="BUILD_NUMBER" value="${BUILD_NUMBER}" />
 							</sdbtest>
 						</parallel>
 					</else>
@@ -143,6 +152,8 @@
 					<param name="deploy.case.fullname" value="${deploy.case.fullname}" />
 					<param name="excludes.dir.patterns" value="reports*" />
 					<param name="includes.dir.patterns" value="*" />
+					<param name="BUILD_NUMBER" value="${BUILD_NUMBER}" />
+					<param name="test-type-list" value="${test-type-list}" />
 				</sdbtest>
 				<echo message="... Test ant testcases is over ..." />
 			</case>
@@ -156,6 +167,8 @@
 					<param name="deploy.case.fullname" value="${deploy.case.fullname}" />
 					<param name="excludes.dir.patterns" value="reports*" />
 					<param name="includes.dir.patterns" value="*" />
+					<param name="BUILD_NUMBER" value="${BUILD_NUMBER}" />
+					<param name="test-type-list" value="${test-type-list}" />
 				</sdbtest>
 				<echo message="... Test python driver is over ..." />
 			</case>
@@ -171,6 +184,8 @@
 					<param name="includes.dir.patterns" value="*" />
 					<param name="php-bin.dir" value="/opt/sequoiadb/tools/server/php/bin" />
 					<param name="phpunit.phar.dir" value="${testcase.path}/drivers_testcases/php/tools/phpunit.phar" />
+					<param name="BUILD_NUMBER" value="${BUILD_NUMBER}" />
+					<param name="test-type-list" value="${test-type-list}" />
 				</sdbtest>
 				<echo message="... Test php driver is over ..." />
 			</case>
@@ -181,6 +196,8 @@
 					<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
 					<param name="java.testcase.path" value="${testcase.path}/drivers_testcases/java" />
 					<param name="deploy.case.fullname" value="${deploy.case.fullname}" />
+					<param name="BUILD_NUMBER" value="${BUILD_NUMBER}" />
+					<param name="test-type-list" value="${test-type-list}" />
 				</sdbtest>
 				<echo message="... Test java driver is over ..." />
 			</case>
@@ -194,6 +211,8 @@
 					<param name="deploy.case.fullname" value="${deploy.case.fullname}" />
 					<param name="excludes.dir.patterns" value="" />
 					<param name="includes.dir.patterns" value="*" />
+					<param name="BUILD_NUMBER" value="${BUILD_NUMBER}" />
+					<param name="test-type-list" value="${test-type-list}" />
 				</sdbtest>
 				<echo message="... Test c driver is over ..." />
 			</case>
@@ -207,6 +226,8 @@
 					<param name="deploy.case.fullname" value="${deploy.case.fullname}" />
 					<param name="excludes.dir.patterns" value="rg" />
 					<param name="includes.dir.patterns" value="*" />
+					<param name="BUILD_NUMBER" value="${BUILD_NUMBER}" />
+					<param name="test-type-list" value="${test-type-list}" />
 				</sdbtest>
 				<echo message="... Test c++ driver is over ..." />
 			</case>
@@ -219,6 +240,8 @@
 					<param name="mongoc.testcase.path" value="${testcase.path}/drivers_testcases/mongoc/build" />
 					<param name="mongoc.testcase.libpath" value="${testcase.path}/drivers_testcases/mongoc/lib" />
 					<param name="deploy.case.fullname" value="${deploy.case.fullname}" />
+					<param name="BUILD_NUMBER" value="${BUILD_NUMBER}" />
+					<param name="test-type-list" value="${test-type-list}" />
 				</sdbtest>
 				<echo message="... Test mongoc driver is over ..." />
 			</case>
@@ -234,6 +257,8 @@
 					<param name="WORKSPACE" value="${WORKSPACE}" />
 					<param name="ci.script.file.path" value="${ci.script.file.path}" />
 					<param name="test.log" value="${test.log}" />
+					<param name="BUILD_NUMBER" value="${BUILD_NUMBER}" />
+					<param name="test-type-list" value="${test-type-list}" />
 				</sdbtest>
 			</case>
 		</switch>

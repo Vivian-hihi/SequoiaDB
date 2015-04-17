@@ -16,6 +16,10 @@
     </target>
 
     <target name="Test-Driver-Java" depends="Clean-Java-Reports">
+        <tstamp>
+            <format property="testtype_begintime" pattern="yyyy-MM-dd-hh.mm.ss a" />
+        </tstamp>
+        
         <junit printsummary="yes" fork="yes" showoutput="true" timeout="1200000">
             <classpath>
                 <pathelement path="${antTask.jar.path}/ant-sdbtasks.jar" />
@@ -35,6 +39,15 @@
                 </fileset>
             </batchtest>
         </junit>
+
+        <tstamp>
+            <format property="testtype_endtime" pattern="yyyy-MM-dd-hh.mm.ss a" />
+        </tstamp>
+        <sdbTime beginTime="${testtype_begintime}" endTime="${testtype_endtime}" output="testtype_time" />
+        <echo message="**************************************************************************************************************************************************************" />
+        <echo level="info" message="The java began at &lt;${testtype_begintime}&gt;, end at &lt;${testtype_endtime}&gt;,total spending ${testtype_time}s." />
+        <echo file="/opt/testsuite.log${BUILD_NUMBER}" append="true" message="Now testtype is driver-java,cost ${testtype_time}s,hostname=${host.NAME}&#10;" />
+        <echo message="**************************************************************************************************************************************************************" /> 
     </target>
 
     <target name="Exec-Testcases-Over" depends="Test-Driver-Java">

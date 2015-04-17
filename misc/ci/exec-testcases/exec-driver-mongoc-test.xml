@@ -23,6 +23,11 @@
    </target>
    
    <target name="Test-Driver-mongoc" depends="Clean-mongoc-Reports">
+
+      <tstamp>
+         <format property="testtype_begintime" pattern="yyyy-MM-dd-hh.mm.ss a" />
+      </tstamp>
+
       <hostinfo prefix="host" />
       <echo message="Begin test driver mongoc testcases..." />
       <echo message="Perform the driver mongoc testcases,with testcase.path=${mongoc.testcase.path}" />
@@ -52,13 +57,21 @@
       <echo message="Env:LD_LIBRARY_PATH=${mongoc.testcase.libpath}" />
       <echo message="The testcases path on ${testcases.path}" />
       <exec executable="./test-mongo" dir="${mongoc.testcase.path}" timeout="60000" outputproperty="mongo.screen.output" resultproperty="mongo.ret.code" failonerror="false">
-         <arg value=" -f" />
-         <arg value=" -F ${reports.path}/concurrent_report.xml" />
+         <arg line=" -f -F ${reports.path}/concurrent_report.xml" />
          <env key="LD_LIBRARY_PATH" path="${LD_LIBRARY_PATH}:${mongoc.testcase.libpath}" />
          <env key="MONGOC_TEST_HOST" value="${mongoc.test.host}" />
       </exec>
       <echo message="${mongo.screen.output}" />
       <echo message="The result = ${mongo.ret.code} after exec parallel testcase." />
+
+      <tstamp>
+         <format property="testtype_endtime" pattern="yyyy-MM-dd-hh.mm.ss a" />
+      </tstamp>
+      <sdbTime beginTime="${testtype_begintime}" endTime="${testtype_endtime}" output="testtype_time" />
+      <echo message="**************************************************************************************************************************************************************" />
+      <echo level="info" message="The mongo began at &lt;${testtype_begintime}&gt;, end at &lt;${testtype_endtime}&gt;,total spending ${testtype_time}s." />
+      <echo file="/opt/testsuite.log${BUILD_NUMBER}" append="true" message="Now testtype is driver-mongoc,cost ${testtype_time}s,hostname=${host.NAME}&#10;" />
+      <echo message="**************************************************************************************************************************************************************" />
 
    </target>        
     
@@ -73,8 +86,14 @@
       </tstamp>
       <echo message="Now testcase ${test.case.name} begin with ${testcase.begin.time}"/>
       
+      <property name="test_case_name" value="${test.case.name}_report.xml" />
+      <echo message="**************************************************************************************************************************************************************" />
+      <echo message="test.case.name=${test.case.name}" />
+      <echo message="reports.path=${reports.path}" />
+      <echo message="test_case_name=${test_case_name}" />
+      <echo message="**************************************************************************************************************************************************************" />
       <exec executable="./test-mongo" dir="${testcases.path}" timeout="60000" outputproperty="screen.output" resultproperty="ret.code" failonerror="false">
-         <arg line=" -f -p -l ${test.case.name} -F ${reports.path}/${test.case.name}_report.xml" />
+         <arg line=" -f -p -l ${test.case.name} -F ${reports.path}/${test_case_name}" />
          <!-- <arg value=" -p" />
          <arg value=" -l ${test.case.name}" />
          <arg value=" -F ${reports.path}/${test.case.name}_report.xml" /> -->

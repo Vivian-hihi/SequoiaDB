@@ -207,152 +207,167 @@
 					<property name="parallel.count" value="0" />
 					<property name="test.log" value="${test.log}" />
 					<property name="test-type-list" value="${test-type-list}" />
+					<property name="BUILD_NUMBER" value="${BUILD_NUMBER}" />
 				</ant>
 			</sequential>
 		</for>
-		<property name="test-driver-list-A" value="driver-mongoc" />
-		<property name="test-driver-list-B" value="ant" />
-		<property name="test-driver-list-C" value="driver-java,driver-C,driver-CPP,driver-php,driver-python" />
-		<if>
-		   	<equals arg1="${os.arch}" arg2="amd64" />
-			<then>
-				<parallel>
-					<for list="driver-mongoc" param="Test-Type">
-						<sequential>
-							<ant antfile="${WORKSPACE}/sequoiadb/misc/ci/test-type.xml" dir="." inheritAll="false">
-								<property name="test.host.NAME" value="${test_machine_no1}" />
-								<property name="deploy.case.fullname" value="${deploy.case.fullname}" />
-								<property name="test.reports.path" value="${test.reports.path}" />
-								<property name="Test-Type" value="@{Test-Type}" />
-								<property name="parallel.flag" value="parallel" />
-								<property name="WORKSPACE" value="${WORKSPACE}" />
-								<property name="ci.script.file.path" value="${ci.script.file.path}" />
-								<property name="parallel.count" value="1" />
-								<property name="test.log" value="${test.log}" />
-								<property name="test-type-list" value="${test-type-list}" />
-							</ant>
-						</sequential>
-					</for>
-					<for list="driver-python,driver-CPP" param="Test-Type">
-						<sequential>
-							<ant antfile="${WORKSPACE}/sequoiadb/misc/ci/test-type.xml" dir="." inheritAll="false">
-								<property name="test.host.NAME" value="${test_machine_no2}" />
-								<property name="deploy.case.fullname" value="${deploy.case.fullname}" />
-								<property name="test.reports.path" value="${test.reports.path}" />
-								<property name="Test-Type" value="@{Test-Type}" />
-								<property name="parallel.flag" value="parallel" />
-								<property name="WORKSPACE" value="${WORKSPACE}" />
-								<property name="ci.script.file.path" value="${ci.script.file.path}" />
-								<property name="parallel.count" value="1" />
-								<property name="test.log" value="${test.log}" />
-								<property name="test-type-list" value="${test-type-list}" />
-							</ant>
-						</sequential>
-					</for>
-					<for list="driver-php,driver-C" param="Test-Type">
-						<sequential>
-							<ant antfile="${WORKSPACE}/sequoiadb/misc/ci/test-type.xml" dir="." inheritAll="false">
-								<property name="test.host.NAME" value="${test_machine_no3}" />
-								<property name="deploy.case.fullname" value="${deploy.case.fullname}" />
-								<property name="test.reports.path" value="${test.reports.path}" />
-								<property name="Test-Type" value="@{Test-Type}" />
-								<property name="parallel.flag" value="parallel" />
-								<property name="WORKSPACE" value="${WORKSPACE}" />
-								<property name="ci.script.file.path" value="${ci.script.file.path}" />
-								<property name="parallel.count" value="1" />
-								<property name="test.log" value="${test.log}" />
-								<property name="test-type-list" value="${test-type-list}" />
-							</ant>
-						</sequential>
-					</for>
-					<for list="driver-java" param="Test-Type">
-						<sequential>
-							<ant antfile="${WORKSPACE}/sequoiadb/misc/ci/test-type.xml" dir="." inheritAll="false">
-								<property name="test.host.NAME" value="${test_machine_no4}" />
-								<property name="deploy.case.fullname" value="${deploy.case.fullname}" />
-								<property name="test.reports.path" value="${test.reports.path}" />
-								<property name="Test-Type" value="@{Test-Type}" />
-								<property name="parallel.flag" value="parallel" />
-								<property name="WORKSPACE" value="${WORKSPACE}" />
-								<property name="ci.script.file.path" value="${ci.script.file.path}" />
-								<property name="parallel.count" value="1" />
-								<property name="test.log" value="${test.log}" />
-								<property name="test-type-list" value="${test-type-list}" />
-							</ant>
-						</sequential>
-					</for>
-					<for list="ant" param="Test-Type">
-						<sequential>
-							<ant antfile="${WORKSPACE}/sequoiadb/misc/ci/test-type.xml" dir="." inheritAll="false">
-								<property name="test.host.NAME" value="${test_machine_no5}" />
-								<property name="deploy.case.fullname" value="${deploy.case.fullname}" />
-								<property name="test.reports.path" value="${test.reports.path}" />
-								<property name="Test-Type" value="@{Test-Type}" />
-								<property name="parallel.flag" value="parallel" />
-								<property name="WORKSPACE" value="${WORKSPACE}" />
-								<property name="ci.script.file.path" value="${ci.script.file.path}" />
-								<property name="parallel.count" value="1" />
-								<property name="test.log" value="${test.log}" />
-								<property name="test-type-list" value="${test-type-list}" />
-							</ant>
-						</sequential>
-					</for>
-				</parallel>
-			</then>
-			<else>
-				<parallel>
-					<for list="${test-driver-list-A},${test-driver-list-B}" param="Test-Type">
-						<sequential>
-							<ant antfile="${WORKSPACE}/sequoiadb/misc/ci/test-type.xml" dir="." inheritAll="false">
-								<property name="test.host.NAME" value="${test_machine_no1}" />
-								<property name="deploy.case.fullname" value="${deploy.case.fullname}" />
-								<property name="test.reports.path" value="${test.reports.path}" />
-								<property name="Test-Type" value="@{Test-Type}" />
-								<property name="parallel.flag" value="parallel" />
-								<property name="WORKSPACE" value="${WORKSPACE}" />
-								<property name="ci.script.file.path" value="${ci.script.file.path}" />
-								<property name="parallel.count" value="1" />
-								<property name="test.log" value="${test.log}" />
-								<property name="test-type-list" value="${test-type-list}" />
-							</ant>
-						</sequential>
-					</for>
-					<for list="${test-driver-list-B},${test-driver-list-B}" param="Test-Type">
-						<sequential>
-							<ant antfile="${WORKSPACE}/sequoiadb/misc/ci/test-type.xml" dir="." inheritAll="false">
-								<property name="test.host.NAME" value="${test_machine_no2}" />
-								<property name="deploy.case.fullname" value="${deploy.case.fullname}" />
-								<property name="test.reports.path" value="${test.reports.path}" />
-								<property name="Test-Type" value="@{Test-Type}" />
-								<property name="parallel.flag" value="parallel" />
-								<property name="WORKSPACE" value="${WORKSPACE}" />
-								<property name="ci.script.file.path" value="${ci.script.file.path}" />
-								<property name="parallel.count" value="1" />
-								<property name="test.log" value="${test.log}" />
-								<property name="test-type-list" value="${test-type-list}" />
-							</ant>
-						</sequential>
-					</for>
-					<for list="${test-driver-list-C},${test-driver-list-B}" param="Test-Type">
-						<sequential>
-							<ant antfile="${WORKSPACE}/sequoiadb/misc/ci/test-type.xml" dir="." inheritAll="false">
-								<property name="test.host.NAME" value="${test_machine_no3}" />
-								<property name="deploy.case.fullname" value="${deploy.case.fullname}" />
-								<property name="test.reports.path" value="${test.reports.path}" />
-								<property name="Test-Type" value="@{Test-Type}" />
-								<property name="parallel.flag" value="parallel" />
-								<property name="WORKSPACE" value="${WORKSPACE}" />
-								<property name="ci.script.file.path" value="${ci.script.file.path}" />
-								<property name="parallel.count" value="1" />
-								<property name="test.log" value="${test.log}" />
-								<property name="test-type-list" value="${test-type-list}" />
-							</ant>
-						</sequential>
-					</for>
-				</parallel>
-			</else>
-		</if>
 
+		<if>
+		   	<equals arg1="${test-type-list}" arg2="js" />
+			<then>
+				<property name="test-driver-list-A" value="driver-mongoc" />
+				<property name="test-driver-list-B" value="ant" />
+				<property name="test-driver-list-C" value="driver-java,driver-C,driver-CPP,driver-php,driver-python" />
+				<if>
+				   	<equals arg1="${os.arch}" arg2="amd64" />
+					<then>
+						<parallel>
+							<for list="driver-mongoc" param="Test-Type">
+								<sequential>
+									<ant antfile="${WORKSPACE}/sequoiadb/misc/ci/test-type.xml" dir="." inheritAll="false">
+										<property name="test.host.NAME" value="${test_machine_no1}" />
+										<property name="deploy.case.fullname" value="${deploy.case.fullname}" />
+										<property name="test.reports.path" value="${test.reports.path}" />
+										<property name="Test-Type" value="@{Test-Type}" />
+										<property name="parallel.flag" value="parallel" />
+										<property name="WORKSPACE" value="${WORKSPACE}" />
+										<property name="ci.script.file.path" value="${ci.script.file.path}" />
+										<property name="parallel.count" value="1" />
+										<property name="test.log" value="${test.log}" />
+										<property name="test-type-list" value="${test-type-list}" />
+										<property name="BUILD_NUMBER" value="${BUILD_NUMBER}" />
+									</ant>
+								</sequential>
+							</for>
+							<for list="driver-python,driver-CPP" param="Test-Type">
+								<sequential>
+									<ant antfile="${WORKSPACE}/sequoiadb/misc/ci/test-type.xml" dir="." inheritAll="false">
+										<property name="test.host.NAME" value="${test_machine_no2}" />
+										<property name="deploy.case.fullname" value="${deploy.case.fullname}" />
+										<property name="test.reports.path" value="${test.reports.path}" />
+										<property name="Test-Type" value="@{Test-Type}" />
+										<property name="parallel.flag" value="parallel" />
+										<property name="WORKSPACE" value="${WORKSPACE}" />
+										<property name="ci.script.file.path" value="${ci.script.file.path}" />
+										<property name="parallel.count" value="1" />
+										<property name="test.log" value="${test.log}" />
+										<property name="test-type-list" value="${test-type-list}" />
+										<property name="BUILD_NUMBER" value="${BUILD_NUMBER}" />
+									</ant>
+								</sequential>
+							</for>
+							<for list="driver-php,driver-C" param="Test-Type">
+								<sequential>
+									<ant antfile="${WORKSPACE}/sequoiadb/misc/ci/test-type.xml" dir="." inheritAll="false">
+										<property name="test.host.NAME" value="${test_machine_no3}" />
+										<property name="deploy.case.fullname" value="${deploy.case.fullname}" />
+										<property name="test.reports.path" value="${test.reports.path}" />
+										<property name="Test-Type" value="@{Test-Type}" />
+										<property name="parallel.flag" value="parallel" />
+										<property name="WORKSPACE" value="${WORKSPACE}" />
+										<property name="ci.script.file.path" value="${ci.script.file.path}" />
+										<property name="parallel.count" value="1" />
+										<property name="test.log" value="${test.log}" />
+										<property name="test-type-list" value="${test-type-list}" />
+										<property name="BUILD_NUMBER" value="${BUILD_NUMBER}" />
+									</ant>
+								</sequential>
+							</for>
+							<for list="driver-java" param="Test-Type">
+								<sequential>
+									<ant antfile="${WORKSPACE}/sequoiadb/misc/ci/test-type.xml" dir="." inheritAll="false">
+										<property name="test.host.NAME" value="${test_machine_no4}" />
+										<property name="deploy.case.fullname" value="${deploy.case.fullname}" />
+										<property name="test.reports.path" value="${test.reports.path}" />
+										<property name="Test-Type" value="@{Test-Type}" />
+										<property name="parallel.flag" value="parallel" />
+										<property name="WORKSPACE" value="${WORKSPACE}" />
+										<property name="ci.script.file.path" value="${ci.script.file.path}" />
+										<property name="parallel.count" value="1" />
+										<property name="test.log" value="${test.log}" />
+										<property name="test-type-list" value="${test-type-list}" />
+										<property name="BUILD_NUMBER" value="${BUILD_NUMBER}" />
+									</ant>
+								</sequential>
+							</for>
+							<for list="ant" param="Test-Type">
+								<sequential>
+									<ant antfile="${WORKSPACE}/sequoiadb/misc/ci/test-type.xml" dir="." inheritAll="false">
+										<property name="test.host.NAME" value="${test_machine_no5}" />
+										<property name="deploy.case.fullname" value="${deploy.case.fullname}" />
+										<property name="test.reports.path" value="${test.reports.path}" />
+										<property name="Test-Type" value="@{Test-Type}" />
+										<property name="parallel.flag" value="parallel" />
+										<property name="WORKSPACE" value="${WORKSPACE}" />
+										<property name="ci.script.file.path" value="${ci.script.file.path}" />
+										<property name="parallel.count" value="1" />
+										<property name="test.log" value="${test.log}" />
+										<property name="test-type-list" value="${test-type-list}" />
+										<property name="BUILD_NUMBER" value="${BUILD_NUMBER}" />
+									</ant>
+								</sequential>
+							</for>
+						</parallel>
+					</then>
+					<else>
+						<parallel>
+							<for list="${test-driver-list-A},${test-driver-list-B}" param="Test-Type">
+								<sequential>
+									<ant antfile="${WORKSPACE}/sequoiadb/misc/ci/test-type.xml" dir="." inheritAll="false">
+										<property name="test.host.NAME" value="${test_machine_no1}" />
+										<property name="deploy.case.fullname" value="${deploy.case.fullname}" />
+										<property name="test.reports.path" value="${test.reports.path}" />
+										<property name="Test-Type" value="@{Test-Type}" />
+										<property name="parallel.flag" value="parallel" />
+										<property name="WORKSPACE" value="${WORKSPACE}" />
+										<property name="ci.script.file.path" value="${ci.script.file.path}" />
+										<property name="parallel.count" value="1" />
+										<property name="test.log" value="${test.log}" />
+										<property name="test-type-list" value="${test-type-list}" />
+										<property name="BUILD_NUMBER" value="${BUILD_NUMBER}" />
+									</ant>
+								</sequential>
+							</for>
+							<for list="${test-driver-list-B},${test-driver-list-B}" param="Test-Type">
+								<sequential>
+									<ant antfile="${WORKSPACE}/sequoiadb/misc/ci/test-type.xml" dir="." inheritAll="false">
+										<property name="test.host.NAME" value="${test_machine_no2}" />
+										<property name="deploy.case.fullname" value="${deploy.case.fullname}" />
+										<property name="test.reports.path" value="${test.reports.path}" />
+										<property name="Test-Type" value="@{Test-Type}" />
+										<property name="parallel.flag" value="parallel" />
+										<property name="WORKSPACE" value="${WORKSPACE}" />
+										<property name="ci.script.file.path" value="${ci.script.file.path}" />
+										<property name="parallel.count" value="1" />
+										<property name="test.log" value="${test.log}" />
+										<property name="test-type-list" value="${test-type-list}" />
+										<property name="BUILD_NUMBER" value="${BUILD_NUMBER}" />
+									</ant>
+								</sequential>
+							</for>
+							<for list="${test-driver-list-C},${test-driver-list-B}" param="Test-Type">
+								<sequential>
+									<ant antfile="${WORKSPACE}/sequoiadb/misc/ci/test-type.xml" dir="." inheritAll="false">
+										<property name="test.host.NAME" value="${test_machine_no3}" />
+										<property name="deploy.case.fullname" value="${deploy.case.fullname}" />
+										<property name="test.reports.path" value="${test.reports.path}" />
+										<property name="Test-Type" value="@{Test-Type}" />
+										<property name="parallel.flag" value="parallel" />
+										<property name="WORKSPACE" value="${WORKSPACE}" />
+										<property name="ci.script.file.path" value="${ci.script.file.path}" />
+										<property name="parallel.count" value="1" />
+										<property name="test.log" value="${test.log}" />
+										<property name="test-type-list" value="${test-type-list}" />
+										<property name="BUILD_NUMBER" value="${BUILD_NUMBER}" />
+									</ant>
+								</sequential>
+							</for>
+						</parallel>
+					</else>
+				</if>
+			</then>
+		</if>
+		
 		<trycatch>
 			<try>
 				<if>

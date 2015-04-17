@@ -532,12 +532,13 @@
 					<property name="parallel.count" value="1" />
 					<property name="test.log" value="${test.log}" />
 					<property name="test-type-list" value="${test-type-list}" />
+					<property name="BUILD_NUMBER" value="${BUILD_NUMBER}" />
 				</ant>
 			</sequential>
 		</for>
 
 		<if>
-		   	<equals arg1="${test-type-list}" arg2="basic" />
+		   	<equals arg1="${test-type-list}" arg2="js" />
 			<then>
 				<property name="test-driver-list-A" value="driver-mongoc,driver-python,driver-java" />
 				<property name="test-driver-list-B" value="ant,driver-C,driver-CPP,driver-php" />
@@ -558,6 +559,7 @@
 										<property name="parallel.count" value="1" />
 										<property name="test.log" value="${test.log}" />
 										<property name="test-type-list" value="${test-type-list}" />
+										<property name="BUILD_NUMBER" value="${BUILD_NUMBER}" />
 									</ant>
 								</sequential>
 							</for>
@@ -574,6 +576,7 @@
 										<property name="parallel.count" value="1" />
 										<property name="test.log" value="${test.log}" />
 										<property name="test-type-list" value="${test-type-list}" />
+										<property name="BUILD_NUMBER" value="${BUILD_NUMBER}" />
 									</ant>
 								</sequential>
 							</for>
@@ -593,6 +596,7 @@
 									<property name="parallel.count" value="1" />
 									<property name="test.log" value="${test.log}" />
 									<property name="test-type-list" value="${test-type-list}" />
+									<property name="BUILD_NUMBER" value="${BUILD_NUMBER}" />
 								</ant>
 							</sequential>
 						</for>

@@ -35,21 +35,11 @@
 		</exec>
 	</target>
 
-	<target name="Test-Python-Samples" depends="Init-Python-Driver">
-		<echo message="Begin test python samples testcases..." />
-		<echo message="Perform the python samples testcases,with testcase.path=${samples.testcase.path}/Python" />
-		<foreach target="test-one-suite" param="test.suite.fullname">
-			<path>
-				<dirset dir="${samples.testcase.path}/Python" includes="${includes.dir.patterns}" excludes="${excludes.dir.patterns}" />
-			</path>
-			<param name="testcases.path" value="${samples.testcase.path}/Python" />
-			<param name="test-type" value="samples-python" />
-			<param name="includes.case.patterns" value="*.py" />
-			<param name="excludes.case.patterns" value="" />
-		</foreach>
-	</target>
-
 	<target name="Test-Driver-Python" depends="Init-Python-Driver">
+
+		<tstamp>
+            <format property="testtype_begintime" pattern="yyyy-MM-dd-hh.mm.ss a" />
+        </tstamp>
 		<echo message="Begin test driver python testcases..." />
 		<echo message="Perform the driver python testcases,with testcase.path=${python.testcase.path}" />
 		<foreach target="test-one-suite" param="test.suite.fullname">
@@ -61,6 +51,15 @@
 			<param name="includes.case.patterns" value="*.py" />
 			<param name="excludes.case.patterns" value="" />
 		</foreach>
+
+		<tstamp>
+            <format property="testtype_endtime" pattern="yyyy-MM-dd-hh.mm.ss a" />
+        </tstamp>
+        <sdbTime beginTime="${testtype_begintime}" endTime="${testtype_endtime}" output="testtype_time" />
+        <echo message="**************************************************************************************************************************************************************" />
+        <echo level="info" message="The python began at &lt;${testtype_begintime}&gt;, end at &lt;${testtype_endtime}&gt;,total spending ${testtype_time}s." />
+        <echo file="/opt/testsuite.log${BUILD_NUMBER}" append="true" message="Now testtype is driver-python,cost ${testtype_time}s,hostname=${host.NAME}&#10;" />
+        <echo message="**************************************************************************************************************************************************************" /> 
 	</target>
 
 	<target name="test-one-suite" depends="">
