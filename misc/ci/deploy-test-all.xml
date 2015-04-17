@@ -32,7 +32,20 @@
 	
 	<target name="8.Tar-Deploy-Package" depends="" >
 		<echo level="info" message="Step1 : Tar the package &lt;${WORKSPACE}/${deploy.tar.file.name}&gt; on &lt;${WORKSPACE}&gt;." />
+
+		<tstamp>
+			<format property="deploy_tar_begintime" pattern="yyyy-MM-dd-hh.mm.ss a" />
+		</tstamp>
+
 		<tar destfile="${WORKSPACE}/${deploy.tar.file.name}" basedir="${WORKSPACE}" includes="deploy/**/*" compression="gzip" />
+		
+		<tstamp>
+			<format property="deploy_tar_endtime" pattern="yyyy-MM-dd-hh.mm.ss a" />
+		</tstamp>
+		<sdbTime beginTime="${deploy_tar_begintime}" endTime="${deploy_tar_endtime}" output="deploy_tar_time" />
+		<echo message="**************************************************************************************************************************************************************" />
+		<echo level="info" message="The tar deploy-file part began at &lt;${deploy_tar_begintime}&gt;, end at &lt;${deploy_tar_endtime}&gt;,total spending ${deploy_tar_time}s." />
+		<echo message="**************************************************************************************************************************************************************" />
 	</target>
 	
 	<target name="9.Clean-Last-Build-Reports" depends="8.Tar-Deploy-Package">

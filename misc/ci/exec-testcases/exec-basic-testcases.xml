@@ -38,6 +38,10 @@
 		<echo message="Begin test basic testcases..." />
 		<echo message="Perform the basic testcases,with testcase.path=${basic.testcase.path}/js" />
 
+		<tstamp>
+			<format property="test_js_begintime" pattern="yyyy-MM-dd-hh.mm.ss a" />
+		</tstamp>
+
 		<property name="sdb.cmd.allPrepare" value=" -e &quot;var COORDSVCNAME=${coord.service.port};&quot; -f &quot;${basic.testcase.path}/libs/func.js,${basic.testcase.path}/libs/all_prepare.js&quot;" />
 		<echo message="Exec:${sdb.fullname} ${sdb.cmd.allPrepare}" />
 		<exec executable="${sdb.fullname}" dir="" timeout="100000" outputproperty="allPrepare.screen.output"  resultproperty="allPrepare.ret.code">
@@ -65,6 +69,15 @@
 		<stafTools workType="copy" workHost="${host.NAME}" fileName="${install.path}/${import.file}"  toHost="bl465-4" saveDir="${install.path}" />
 		<stafTools workType="shell" workHost="${host.NAME}" workDir="${test.machine.software.path}" common="${import.cmd}" failonerror="false" />
 		<stafTools workType="get" workHost="${host.NAME}" fileName="${test.machine.software.path}/deploy-test-result.log" />
+
+		<tstamp>
+			<format property="test_js_endtime" pattern="yyyy-MM-dd-hh.mm.ss a" />
+		</tstamp>
+		<sdbTime beginTime="${test_js_begintime}" endTime="${test_js_endtime}" output="test_js_time" />
+		<echo message="**************************************************************************************************************************************************************" />
+		<echo level="info" message="The testsuite began at &lt;${test_js_begintime}&gt;, end at &lt;${test_js_endtime}&gt;,total spending ${test_js_time}s." />
+		<echo message="**************************************************************************************************************************************************************" />
+
 	</target>
 
 	<target name="test-one-suite" depends="">
@@ -110,6 +123,8 @@
 						<echo message="**************************************************************************************************************************************************************" />
 						<var name="includes.case.patterns" value="" />
 						<echo message="includes.case.patterns=${includes.case.patterns}" />
+						<var name="excludes.case.patterns" value="*" />
+						<echo message="excludes.case.patterns=${excludes.case.patterns}" />
 						<echo message="**************************************************************************************************************************************************************" />
 					</else>
 				</if>	
