@@ -10,6 +10,7 @@ csprefix="local_test"
 uuid=$$
 uuname="s$$test"
 coordsvcname="50000"
+catasvcname="30000"
 coordhostname="localhost"
 runresult=0
 commlibstr="commlib.js"
@@ -56,9 +57,10 @@ function display()
    echo " -s stopFlag : 发生用例错误是否停止，0表示继续，1表示停止"
    echo " -n svcname  : 指定测试的COORD节点服务名"
    echo " -h hostname : 指定测试的COORD节点HostName或IP"
+   echo " -c cataport : 指定测试的CATALOG节点服务名"
    echo " -addpid     : 是否在CHANGEDPREFIX上加上当前进行PID"
    echo " -print      : 是否在屏幕上打印用例的输出"
-   echo " -all        : 是否跑所有的测试用例.默认跑基本测试用例(htl/basic_testcases)  "
+   echo " -all        : 是否跑所有的测试用例.默认跑基本测试用例  "
    echo ""
    exit $1
 }
@@ -113,7 +115,7 @@ function prepareRun()
 function runJSFile()
 {
    result=0 ;
-   lastCmdStr="$sdbRoot/sdb -e \"var CHANGEDPREFIX='${csprefix}'; var COORDSVCNAME='${coordsvcname}'; var COORDHOSTNAME='${coordhostname}'; var UUID=$uuid; var UUNAME='${uuname}'; var RUNRESULT=$runresult; \" -f \"${libRoot}/func.js,$1\""
+   lastCmdStr="$sdbRoot/sdb -e \"var CHANGEDPREFIX='${csprefix}'; var COORDSVCNAME='${coordsvcname}'; var COORDHOSTNAME='${coordhostname}'; var CATASVCNAME='$catasvcname'; var UUID=$uuid; var UUNAME='${uuname}'; var RUNRESULT=$runresult; \" -f \"${libRoot}/func.js,$1\""
    runresult=0
    if [ $printOut -ne 0 -o $# -gt 1 ] ; then
       echo "CMD: $lastCmdStr"
@@ -284,6 +286,9 @@ while [ "$1" != "" ]; do
                       ;;
       -h )            shift
                       coordhostname="$1"
+                      ;;
+      -c )            shift
+                      catasvcname="$1"
                       ;;
       -print )        printOut=1
                       ;;
