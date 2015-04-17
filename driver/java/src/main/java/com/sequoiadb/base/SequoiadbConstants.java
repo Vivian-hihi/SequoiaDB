@@ -172,6 +172,9 @@ public class SequoiadbConstants {
 	public final static String FIELD_INDEX = "Index";
 	public final static String FIELD_NAME_PREFERED_INSTANCE = "PreferedInstance";
 	public final static String FIELD_NAME_RETYE = "ReturnType";
+	
+	public final static String FIELD_NAME_ONLY_DETACH = "OnlyDetach";
+	public final static String FIELD_NAME_ONLY_ATTACH = "OnlyAttach";
 
 	public final static String IXM_NAME = "name";
 	public final static String IXM_KEY = "key";

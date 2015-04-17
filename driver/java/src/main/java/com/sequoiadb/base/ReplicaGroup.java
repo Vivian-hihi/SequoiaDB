@@ -294,6 +294,88 @@ public class ReplicaGroup {
 		}
 		return null;
 	}
+	
+	/**
+     * @fn Node attachNode(String hostName, int port,
+            Map<String, String> configure)
+     * @brief Attach node.
+     * @param hostName
+     *          host name
+     * @param port
+     *          port
+     * @param configure
+     *          configuration for this operation
+     * @return the attach Node object
+     * @exception com.sequoiadb.exception.BaseException
+     */
+    public Node attachNode(String hostName, int port,
+            Map<String, String> configure) throws BaseException {
+        BSONObject config = new BasicBSONObject();
+        config.put(SequoiadbConstants.FIELD_NAME_GROUPNAME, name);
+        config.put(SequoiadbConstants.FIELD_NAME_HOST, hostName);
+        config.put(SequoiadbConstants.PMD_OPTION_SVCNAME,
+                Integer.toString(port));
+        config.put(SequoiadbConstants.FIELD_NAME_ONLY_ATTACH, true);
+        if (configure != null){
+            for (String key : configure.keySet()) {
+                if (key.equals(SequoiadbConstants.FIELD_NAME_GROUPNAME)
+                        || key.equals(SequoiadbConstants.FIELD_NAME_HOST)
+                        || key.equals(SequoiadbConstants.PMD_OPTION_SVCNAME)
+                        || key.equals(SequoiadbConstants.FIELD_NAME_ONLY_ATTACH))
+                    continue;
+                
+                config.put(key, configure.get(key));
+            }
+        }
+        SDBMessage rtn = adminCommand(SequoiadbConstants.CREATE_CMD,
+                SequoiadbConstants.NODE, config);
+        int flags = rtn.getFlags();
+        if (flags != 0) {
+            throw new BaseException(flags, hostName, port, configure);
+        }
+        
+        return getNode(hostName, port);
+    }
+    
+    /**
+     * @fn void detachNode(String hostName, int port,
+            Map<String, String> configure)
+     * @brief Detach node.
+     * @param hostName
+     *          host name
+     * @param port
+     *          port
+     * @param configure
+     *          configuration for this operation
+     * @return void
+     * @exception com.sequoiadb.exception.BaseException
+     */
+    public void detachNode(String hostName, int port,
+            Map<String, String> configure) throws BaseException {
+        BSONObject config = new BasicBSONObject();
+        config.put(SequoiadbConstants.FIELD_NAME_GROUPNAME, name);
+        config.put(SequoiadbConstants.FIELD_NAME_HOST, hostName);
+        config.put(SequoiadbConstants.PMD_OPTION_SVCNAME,
+                Integer.toString(port));
+        config.put(SequoiadbConstants.FIELD_NAME_ONLY_DETACH, true);
+        if (configure != null){
+            for (String key : configure.keySet()) {
+                if (key.equals(SequoiadbConstants.FIELD_NAME_GROUPNAME)
+                        || key.equals(SequoiadbConstants.FIELD_NAME_HOST)
+                        || key.equals(SequoiadbConstants.PMD_OPTION_SVCNAME)
+                        || key.equals(SequoiadbConstants.FIELD_NAME_ONLY_DETACH))
+                    continue;
+                
+                config.put(key, configure.get(key));
+            }
+        }
+        SDBMessage rtn = adminCommand(SequoiadbConstants.REMOVE_CMD,
+                SequoiadbConstants.NODE, config);
+        int flags = rtn.getFlags();
+        if (flags != 0) {
+            throw new BaseException(flags, hostName, port, configure);
+        }
+    }
 
 	/**
 	 * @fn Node createNode(String hostName, int port, String dbPath,
