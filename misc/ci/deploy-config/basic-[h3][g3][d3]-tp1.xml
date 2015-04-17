@@ -17,9 +17,6 @@
 	<property file="${properties.dir}" />
 
 	<target name="12.Deploy-Software" depends="">
-
-		
-
 		<if>
 		   <equals arg1="${os.arch}" arg2="amd64" />
 			 <then>
@@ -510,7 +507,7 @@
 				</tstamp>
 				<sdbTime beginTime="${deploy_test_begintime}" endTime="${deploy_test_endtime}" output="deploy_test_time" />
 				<echo message="**************************************************************************************************************************************************************" />
-				<echo level="info" message="The deploy-software part began at &lt;${deploy_test_begintime}&gt;, end at &lt;${deploy_test_endtime}&gt;,total spending ${deploy_test_time}s." />
+				<echo level="info" message="The deploy-test part began at &lt;${deploy_test_begintime}&gt;, end at &lt;${deploy_test_endtime}&gt;,total spending ${deploy_test_time}s." />
 				<echo message="**************************************************************************************************************************************************************" />
 
 			</else>

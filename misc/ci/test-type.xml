@@ -235,6 +235,7 @@
 					<param name="ci.script.file.path" value="${ci.script.file.path}" />
 					<param name="test.log" value="${test.log}" />
 				</sdbtest>
+			</case>
 		</switch>
 	</target>
 </project>
