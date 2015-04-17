@@ -588,7 +588,7 @@ namespace engine
                             procs[ i ]._pid ) ;
                ossPrintf( PMD_LIST_LONG_FORMAT OSS_NEWLINE,
                           PMDDMN_SVCNAME_DEFAULT,
-                          "-", "-", tmpPID, "-", "-", "-", "-", "-" ) ;
+                          "-", "-", tmpPID, "-", "-", "-", "-", "-", "-" ) ;
             }
          }
       }
