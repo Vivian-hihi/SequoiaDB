@@ -338,7 +338,7 @@ namespace engine
                   _vecEventHandler[i]->onPrepareLog( info.getCSLID(),
                                                      info.getCLLID(),
                                                      info.getExtentLID(),
-                                                     head._lsn ) ;
+                                                     dummyhead._lsn ) ;
                }
             }
          }
