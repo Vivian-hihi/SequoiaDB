@@ -1,0 +1,90 @@
+<!--
+	@Description:
+		Control the deployment and testing process
+	@Parameters:
+		${test.environment} from Jenkins test intrgration framework
+		${ci.script.file.path} from Jenkins test intrgration framework
+		${BUILD_NUMBER} from Jenkins test intrgration framework
+		${WORKSPACE} from Jenkins test intrgration framework
+		${test-type-list} from Jenkins test intrgration framework
+
+		test.environment=$TEST_SCENE
+		WORKSPACE=$WORKSPACE
+		ci.script.file.path=$WORKSPACE/sequoiadb/misc/ci
+		BUILD_NUMBER=$BUILD_NUMBER
+		test-type-list=js
+	@Invocation:
+		${test.environment}-${DEPLOY_WILDCARD}.xml
+-->
+
+<project name="deploy-test-all" default="10.Deploy-Test-All">
+	<hostinfo prefix="host" />
+	<property file="${ci.script.file.path}/ci.test.properties" />
+	<property name="deploy.config.path" value="${ci.script.file.path}/deploy-config" />
+	<property name="release.path" value="${WORKSPACE}/release" />
+<!-- 	<property name="deploy.tar.file.name" value="deploy.tar.gz" /> -->
+	<property file="${release.path}/build.version" />
+	<taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
+		<classpath>
+			<fileset dir="${WORKSPACE}/deploy/ant-sdbtasks" includes="ant-sdbtasks.jar" />
+		</classpath>
+	</taskdef>
+	
+	<target name="8.Tar-Deploy-Package" depends="" >
+		<echo level="info" message="Step1 : Tar the package &lt;${WORKSPACE}/${deploy.tar.file.name}&gt; on &lt;${WORKSPACE}&gt;." />
+
+		<tstamp>
+			<format property="deploy_tar_begintime" pattern="yyyy-MM-dd-hh.mm.ss a" />
+		</tstamp>
+
+		<tar destfile="${WORKSPACE}/${deploy.tar.file.name}" basedir="${WORKSPACE}" includes="deploy/**/*" compression="gzip" />
+
+		<tstamp>
+			<format property="deploy_tar_endtime" pattern="yyyy-MM-dd-hh.mm.ss a" />
+		</tstamp>
+		<sdbTime beginTime="${deploy_tar_begintime}" endTime="${deploy_tar_endtime}" output="deploy_tar_time" />
+		<echo message="**************************************************************************************************************************************************************" />
+		<echo level="info" message="The tar deploy-file part began at &lt;${deploy_tar_begintime}&gt;, end at &lt;${deploy_tar_endtime}&gt;,total spending ${deploy_tar_time}s." />
+		<echo message="**************************************************************************************************************************************************************" />
+	</target>
+	
+	<target name="9.Clean-Last-Build-Reports" depends="8.Tar-Deploy-Package">
+		<echo level="info" message="Step1 : Rebuild the folder &lt;${WORKSPACE}/reports&gt;." />
+		<delete dir="${WORKSPACE}/reports" failonerror="false" />
+		<mkdir dir="${WORKSPACE}/reports" />
+	</target>
+
+	<target name="10.Deploy-Test-All" depends="9.Clean-Last-Build-Reports">
+		<foreach target="11.Deploy-And-Test-Case" param="deploy.case.fullname">
+			<path>
+				<fileset dir="${deploy.config.path}" includes="${test.environment}-${DEPLOY_WILDCARD}.xml" excludes="" />
+			</path>
+		</foreach>
+	</target>
+
+	<target name="11.Deploy-And-Test-Case" depends="">
+		<echo level="info" message="Step1 : Call the target &lt;12.Deploy-Software&gt; on script file &lt;${deploy.case.fullname}&gt; on &lt;${ci.script.file.path}&gt;,command:&lt;ant -f ${deploy.case.fullname} --target=12.Deploy-Software -Dinstall.package.fullname=${release.path}/${BUILD.INSTALL.FILENAME} -Ddeploy.file.fullname=${deploy.file.fullname} -Ddeploy.path=${WORKSPACE}/deploy&gt;." />
+		<ant antfile="${deploy.case.fullname}" dir="${ci.script.file.path}" target="12.Deploy-Software" inheritAll="true">
+			<property name="install.package.fullname" value="${release.path}/${BUILD.INSTALL.FILENAME}" />
+			<property name="deploy.file.fullname" value="${WORKSPACE}/${deploy.tar.file.name}" />
+		</ant>
+		<if>
+			<equals arg1="${TEST_CHOICE}" arg2="true" />
+			<then>
+				<ant antfile="${deploy.case.fullname}" dir="${ci.script.file.path}" inheritAll="true">
+					<property name="test.reports.path" value="${WORKSPACE}/reports" />
+					<property name="deploy.case.fullname" value="${deploy.case.fullname}" />
+					<property name="WORKSPACE" value="${WORKSPACE}" />
+					<property name="test.environment" value="${test.environment}" />
+					<property name="DEPLOY_WILDCARD" value="${DEPLOY_WILDCARD}" />
+					<property name="ci.script.file.path" value="${ci.script.file.path}" />
+					<property name="BUILD_NUMBER" value="${BUILD_NUMBER}" />
+					<property name="deploy.file.fullname" value="${WORKSPACE}/${deploy.tar.file.name}" />
+
+					<property name="test-type-list" value="${test-type-list}" />
+				</ant>
+			</then>
+		</if>
+		<echo message="Deploy ${deploy.case.fullname} complete. " />
+	</target>
+</project>
