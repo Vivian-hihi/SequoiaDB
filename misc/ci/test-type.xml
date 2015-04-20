@@ -247,7 +247,7 @@
 			</case>
 
 			<case value="basic">
-				<sdbtest host="${test_machine_no2}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${testcase.path}/basic_testcases/reports" masterreports="${test.reports.path}" >
+				<sdbtest host="${test_machine_no2}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases-beta.xml" remotereports="${testcase.path}/basic_testcases/reports" masterreports="${test.reports.path}" >
 					<param name="basic.testcase.path" value="${testcase.path}/basic_testcases" />
 					<param name="excludes.dir.patterns" value="vote" />
 					<param name="includes.dir.patterns" value="*" />
