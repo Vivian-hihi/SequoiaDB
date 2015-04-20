@@ -340,7 +340,7 @@
 				</tstamp>
 				<sdbTime beginTime="${deploy_test_begintime}" endTime="${deploy_test_endtime}" output="deploy_test_time" />
 				<echo message="**************************************************************************************************************************************************************" />
-				<echo level="info" message="The deploy-software part began at &lt;${deploy_test_begintime}&gt;, end at &lt;${deploy_test_endtime}&gt;,total spending ${deploy_test_time}s." />
+				<echo level="info" message="The deploy-test part began at &lt;${deploy_test_begintime}&gt;, end at &lt;${deploy_test_endtime}&gt;,total spending ${deploy_test_time}s." />
 				<echo message="**************************************************************************************************************************************************************" />
 
 			</then>
@@ -385,10 +385,6 @@
 		<if>
 		   	<equals arg1="${os.arch}" arg2="amd64" />
 			<then>
-				<echo message="**************************************************************************************************************************************************************" />
-				<echo level="info" message="list1=${js_list1},${js_list2},${js_list3}" />
-				<echo level="info" message="list2=${js_list4},${js_list5},${js_list6}" />
-				<echo message="**************************************************************************************************************************************************************" />
 				<parallel>
 					<sdbtest host="${test_machine_no2}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${testcase.path}/js_testcases/reports" masterreports="${test.reports.path}" >
 						<param name="basic.testcase.path" value="${testcase.path}/js_testcases" />
@@ -402,6 +398,7 @@
 						<param name="parallel.count" value="2" />
 						<param name="test.log" value="${test.log}" />
 						<param name="BUILD_NUMBER" value="${BUILD_NUMBER}" />
+						<param name="test-type-list" value="${test-type-list}" />
 					</sdbtest>
 					<sdbtest host="${test_machine_no3}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${testcase.path}/js_testcases/reports" masterreports="${test.reports.path}" >
 						<param name="basic.testcase.path" value="${testcase.path}/js_testcases" />
@@ -415,6 +412,7 @@
 						<param name="parallel.count" value="2" />
 						<param name="test.log" value="${test.log}" />
 						<param name="BUILD_NUMBER" value="${BUILD_NUMBER}" />
+						<param name="test-type-list" value="${test-type-list}" />
 					</sdbtest>
 				</parallel>
 				<parallel>
@@ -430,6 +428,7 @@
 						<param name="parallel.count" value="2" />
 						<param name="test.log" value="${test.log}" />
 						<param name="BUILD_NUMBER" value="${BUILD_NUMBER}" />
+						<param name="test-type-list" value="${test-type-list}" />
 					</sdbtest>
 					<sdbtest host="${test_machine_no6}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${testcase.path}/js_testcases/reports" masterreports="${test.reports.path}" >
 						<param name="basic.testcase.path" value="${testcase.path}/js_testcases" />
@@ -443,6 +442,7 @@
 						<param name="parallel.count" value="2" />
 						<param name="test.log" value="${test.log}" />
 						<param name="BUILD_NUMBER" value="${BUILD_NUMBER}" />
+						<param name="test-type-list" value="${test-type-list}" />
 					</sdbtest>
 				</parallel>
 			</then>
@@ -460,6 +460,7 @@
 						<param name="parallel.count" value="2" />
 						<param name="test.log" value="${test.log}" />
 						<param name="BUILD_NUMBER" value="${BUILD_NUMBER}" />
+						<param name="test-type-list" value="${test-type-list}" />
 					</sdbtest>
 					<sdbtest host="${test_machine_no3}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${testcase.path}/js_testcases/reports" masterreports="${test.reports.path}" >
 						<param name="basic.testcase.path" value="${testcase.path}/js_testcases" />
@@ -473,6 +474,7 @@
 						<param name="parallel.count" value="2" />
 						<param name="test.log" value="${test.log}" />
 						<param name="BUILD_NUMBER" value="${BUILD_NUMBER}" />
+						<param name="test-type-list" value="${test-type-list}" />
 					</sdbtest>
 				</parallel>
 			</else>
@@ -507,11 +509,22 @@
 								<sdbCopyAndTar fileHostName="${test_machine_no4}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/database" savePath="${test.log.path}" />
 								<sdbCopyAndTar fileHostName="${test_machine_no5}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/database" savePath="${test.log.path}" />
 								<sdbCopyAndTar fileHostName="${test_machine_no6}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/database" savePath="${test.log.path}" />
+
+								<sdbCopyAndTar fileHostName="${test_machine_no1}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/conf/local" savePath="${test.log.path}" />
+								<sdbCopyAndTar fileHostName="${test_machine_no2}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/conf/local" savePath="${test.log.path}" />
+								<sdbCopyAndTar fileHostName="${test_machine_no3}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/conf/local" savePath="${test.log.path}" />
+								<sdbCopyAndTar fileHostName="${test_machine_no4}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/conf/local" savePath="${test.log.path}" />
+								<sdbCopyAndTar fileHostName="${test_machine_no5}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/conf/local" savePath="${test.log.path}" />
+								<sdbCopyAndTar fileHostName="${test_machine_no6}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/conf/local" savePath="${test.log.path}" />
 							</then>
 							<else>
 								<sdbCopyAndTar fileHostName="${test_machine_no1}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/database" savePath="${test.log.path}" />
 								<sdbCopyAndTar fileHostName="${test_machine_no2}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/database" savePath="${test.log.path}" />
 								<sdbCopyAndTar fileHostName="${test_machine_no3}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/database" savePath="${test.log.path}" />
+
+								<sdbCopyAndTar fileHostName="${test_machine_no1}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/conf/local" savePath="${test.log.path}" />
+								<sdbCopyAndTar fileHostName="${test_machine_no2}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/conf/local" savePath="${test.log.path}" />
+								<sdbCopyAndTar fileHostName="${test_machine_no3}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/conf/local" savePath="${test.log.path}" />
 							</else>
 						</if>
 						

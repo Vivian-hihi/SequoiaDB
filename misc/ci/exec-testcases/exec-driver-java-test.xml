@@ -9,6 +9,11 @@
             <pathelement location="${antTask.jar.path}/ant-sdbtasks.jar" />
         </classpath>
     </taskdef>
+    <taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
+      <classpath>
+         <fileset dir="${antTask.jar.path}" includes="*.jar" />
+      </classpath>
+   </taskdef>
 
     <target name="Clean-Java-Reports" depends="">
         <delete dir="${reports.path}" failonerror="false" />
@@ -16,6 +21,7 @@
     </target>
 
     <target name="Test-Driver-Java" depends="Clean-Java-Reports">
+        <hostinfo prefix="host" />
         <tstamp>
             <format property="testtype_begintime" pattern="yyyy-MM-dd-hh.mm.ss a" />
         </tstamp>

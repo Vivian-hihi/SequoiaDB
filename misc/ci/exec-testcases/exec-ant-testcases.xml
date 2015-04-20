@@ -26,6 +26,7 @@
 	</target>
 
 	<target name="Test-Ant-Testcases" depends="Clean-Ant-Reports">
+		<hostinfo prefix="host" />
 		<echo message="Begin test ant testcases..." />
 		<echo message="Perform the ant testcases,with testcase.path=${ant.testcase.path}" />
 		<tstamp>

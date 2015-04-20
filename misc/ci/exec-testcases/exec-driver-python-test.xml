@@ -36,7 +36,7 @@
 	</target>
 
 	<target name="Test-Driver-Python" depends="Init-Python-Driver">
-
+		<hostinfo prefix="host" />
 		<tstamp>
             <format property="testtype_begintime" pattern="yyyy-MM-dd-hh.mm.ss a" />
         </tstamp>

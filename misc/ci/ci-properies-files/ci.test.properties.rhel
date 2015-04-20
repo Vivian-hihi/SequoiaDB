@@ -28,11 +28,11 @@ test_machine_no5=rh-ci006
 test_machine_no6=rh-ci007
 
 js_list1=collectionAlter
-js_list2=dropCL,dropCS,dropIndex,insert,listCL,listCS,operators,procedures,update,upsert
-js_list3=query,rest
-js_list4=domain,createIndex
-js_list5=aggregate,bakupRestore,countHint,createCL,createCS,cursor,delete,sql,subCL,syndate
-js_list6=split,transaction
+js_list2=dropCL,dropCS,dropIndex,insert,listCL,listCS,procedures,update,upsert,rest
+js_list3=query
+js_list4=domain,createIndex,bakupRestore,delete
+js_list5=aggregate,countHint,createCL,createCS,cursor,sql,subCL,syndate
+js_list6=split,operators,transaction
 
 testcase.path=/tmp/sequoiadb_test/deploy/hlt
 import.file.name=basic-testcases-time.json
