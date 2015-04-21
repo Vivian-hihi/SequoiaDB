@@ -87,7 +87,6 @@ namespace engine
      _clsCB( NULL ),
      _timerID( CLS_INVALID_TIMERID ),
      _beatTime( 0 ),
-     _downloadTime( 0 ),
      _active( FALSE ),
      _replStatus( CLS_BS_NORMAL )
    {
@@ -97,6 +96,7 @@ namespace engine
 
       _totalLogSize = 0 ;
       _inSyncCtrl   = FALSE ;
+      _checkBreakTime = 0 ;
       memset( _sizethreshold, 0, sizeof( _sizethreshold ) ) ;
       memset( _timeThreshold, 0, sizeof( _timeThreshold ) ) ;
    }
@@ -674,14 +674,14 @@ namespace engine
       msg.beat.version = _info.version ;
       msg.beat.role = _vote.primaryIsMe() ?
                       CLS_GROUP_ROLE_PRIMARY : CLS_GROUP_ROLE_SECONDARY ;
-      msg.beat.beatID = ++_info.localBeatID ;
+      msg.beat.beatID = _info.nextBeatID() ;
       msg.beat.serviceStatus = pmdGetStartup().isOK() ?
                                SERVICE_NORMAL : SERVICE_ABNORMAL ;
       UINT8 weight = pmdGetOptionCB()->weight() ;
       UINT8 shadowWeight = _vote.getShadowWeight() ;
       msg.beat.weight = CLS_GET_WEIGHT( weight, shadowWeight ) ;
-      map<UINT64, _clsSharingStatus>::iterator itr =
-                                        _info.info.begin() ;
+
+      map<UINT64, _clsSharingStatus>::iterator itr = _info.info.begin() ;
       for ( ; itr != _info.info.end(); itr++ )
       {
          if ( itr->second.timeout >= pmdGetOptionCB()->sharingBreakTime() &&
@@ -725,11 +725,32 @@ namespace engine
       /// erase, we lock w. here we think that no need to lock
       /// w when change value
       PD_TRACE_ENTRY ( SDB__CLSREPSET__CHKBRK );
+
+      UINT64 nowTime = time( NULL ) ;
       BOOLEAN needErase = FALSE ;
-      map<UINT64, _clsSharingStatus *>::iterator itr = _info.alives.begin() ;
-      for ( ; itr != _info.alives.end(); itr++ )
+      map<UINT64, _clsSharingStatus *>::iterator itr ;
+      map< UINT64, _clsSharingStatus>::iterator itrInfo ;
+
+      /// avoid out-of-data's timeout event
+      if ( ( nowTime >= _checkBreakTime &&
+             ( nowTime - _checkBreakTime ) * OSS_ONE_SEC < millisec ) ||
+           ( nowTime <= _checkBreakTime &&
+             ( _checkBreakTime - nowTime ) * OSS_ONE_SEC < millisec ) )
+      {
+         goto done ;
+      }
+      _checkBreakTime = nowTime ;
+
+      for ( itr = _info.alives.begin() ; itr != _info.alives.end() ; itr++ )
       {
          itr->second->timeout += millisec ;
+         /// if the first add node( no heart-beat, timeout time is
+         /// start shift time )
+         if ( CLS_BEATID_INVALID == itr->second->beat.beatID &&
+              itr->second->timeout < pmdGetOptionCB()->startShiftTime() )
+         {
+            continue ;
+         }
          if ( pmdGetOptionCB()->sharingBreakTime() <= itr->second->timeout )
          {
             needErase = TRUE ;
@@ -737,8 +758,8 @@ namespace engine
       }
 
       // increase break node's break time
-      map< UINT64, _clsSharingStatus>::iterator itrInfo = _info.info.begin() ;
-      for ( ; itrInfo != _info.info.end() ; ++itrInfo )
+      for ( itrInfo = _info.info.begin() ; itrInfo != _info.info.end() ;
+            ++itrInfo )
       {
          if ( _info.alives.find( itrInfo->first ) != _info.alives.end() )
          {
@@ -756,6 +777,14 @@ namespace engine
       itr = _info.alives.begin() ;
       for ( ; itr != _info.alives.end(); )
       {
+         /// if the first add node( no heart-beat, timeout time is
+         /// start shift time )
+         if ( CLS_BEATID_INVALID == itr->second->beat.beatID &&
+              itr->second->timeout < pmdGetOptionCB()->startShiftTime() )
+         {
+            ++itr ;
+            continue ;
+         }
          if ( pmdGetOptionCB()->sharingBreakTime() <= itr->second->timeout )
          {
             if ( itr->first == _info.primary.value )
@@ -766,7 +795,7 @@ namespace engine
             }
             PD_LOG( PDERROR, "vote: [node:%d] alive break",
                     itr->second->beat.identity.columns.nodeID ) ;
-            itr->second->beat.beatID = 0 ;
+            itr->second->beat.beatID = CLS_BEATID_INVALID ;
             itr->second->beat.serviceStatus = SERVICE_UNKNOWN ;
 
             _sync.updateNodeStatus( itr->second->beat.identity, FALSE ) ;

@@ -65,6 +65,8 @@ namespace engine
    #define CLS_TID(sessionid)          ((UINT32)(sessionid & 0xFFFFFFFF))
    #define CLS_NODEID(sessionid)       ((UINT32)(sessionid >> 32))
 
+   #define CLS_BEATID_BEGIN                     ( 1 )
+   #define CLS_BEATID_INVALID                   ( 0 )
 
    //full sync node timeout
    #define CLS_FS_NORES_TIMEOUT 10000
@@ -111,9 +113,9 @@ namespace engine
 
    enum CLS_NODE_SERVICE_STATUS
    {
-      SERVICE_NORMAL          = 0,
-      SERVICE_ABNORMAL,
-      SERVICE_UNKNOWN
+      SERVICE_NORMAL          = 0,     /// node is normal, and data is normal
+      SERVICE_ABNORMAL,                /// node is normal, but data is abnormal
+      SERVICE_UNKNOWN                  /// node is abnormal(crashed)
    } ;
 
    /*
@@ -135,7 +137,7 @@ namespace engine
       _clsGroupBeat(): version( 0 ),
                        role( CLS_GROUP_ROLE_SECONDARY ),
                        syncStatus( CLS_SYNC_STATUS_NONE ),
-                       beatID( 0 ),
+                       beatID( CLS_BEATID_INVALID ),
                        serviceStatus( SERVICE_UNKNOWN )
       {
          UINT64 *p = ( UINT64 *)(&weight) ;
@@ -144,7 +146,11 @@ namespace engine
 
       BOOLEAN isValidID( const UINT32 &id )
       {
-         if ( beatID < id )
+         if ( CLS_BEATID_INVALID == beatID )
+         {
+            return TRUE ;
+         }
+         else if ( beatID < id )
          {
             return TRUE ;
          }
@@ -189,7 +195,7 @@ namespace engine
       _MsgRouteID local ;
       UINT32 localBeatID ;
       CLS_GROUP_VERSION version ;
-      _clsGroupInfo():localBeatID( 0 ),
+      _clsGroupInfo():localBeatID( CLS_BEATID_BEGIN ),
                       version( 0 )
       {
          local.value = 0 ;
@@ -199,6 +205,15 @@ namespace engine
       {
          alives.clear() ;
          info.clear() ;
+      }
+      UINT32 nextBeatID()
+      {
+         ++localBeatID ;
+         if ( localBeatID <= CLS_BEATID_BEGIN  )
+         {
+            localBeatID = CLS_BEATID_BEGIN + 1 ;
+         }
+         return localBeatID ;
       }
 
       UINT32 groupSize ()

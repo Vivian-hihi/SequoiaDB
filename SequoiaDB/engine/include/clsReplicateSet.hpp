@@ -302,9 +302,9 @@ namespace engine
          _clsMgr                 *_clsCB ;
          UINT64                  _timerID ;
          UINT32                  _beatTime ;
-         UINT32                  _downloadTime ;
          BOOLEAN                 _active ;
          CLS_BS_STATUS           _replStatus ;
+         UINT64                  _checkBreakTime ;
 
          UINT32                  _srcSessionNum ;
          ossRWMutex              _vecLatch ;
