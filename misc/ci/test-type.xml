@@ -246,7 +246,7 @@
 				<echo message="... Test mongoc driver is over ..." />
 			</case>
 
-			<case value="basic">
+			<case value="yuting">
 				<sdbtest host="${test_machine_no2}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases-beta.xml" remotereports="${testcase.path}/basic_testcases/reports" masterreports="${test.reports.path}" >
 					<param name="basic.testcase.path" value="${testcase.path}/basic_testcases" />
 					<param name="excludes.dir.patterns" value="vote" />
