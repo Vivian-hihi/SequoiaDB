@@ -43,6 +43,8 @@
          <arg line="'^    /'" />
          <env key="LD_LIBRARY_PATH" path="${LD_LIBRARY_PATH}:${mongoc.testcase.libpath}" />
       </exec>
+      <replaceregexp file="${mongoc.testcase.path}/testcases.txt" match="    " replace="" flags="g" />
+      <replaceregexp file="${mongoc.testcase.path}/testcases.txt" match="\n" replace="," flags="g" />
       <loadfile property="testcases" srcFile="./testcases.txt" failonerror="false" />
 
       <echo file="${reports.path}/TEST-mongoc.xml" message="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot; ?&gt;&#10;&lt;testsuite name=&quot;mongoc&quot; type=&quot;${test.type}&quot; deploy=&quot;${deploy.name}&quot; hostname=&quot;${host.NAME}&quot; tests=&quot;1&quot; failure=&quot;0&quot;&gt;&#10;" />
