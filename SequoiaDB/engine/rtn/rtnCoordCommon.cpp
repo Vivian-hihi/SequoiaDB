@@ -768,7 +768,7 @@ namespace engine
             else
             {
                PD_LOG ( PDWARNING, 
-                        "received unexpected msg(opCode=%[%d]%d,"
+                        "received unexpected msg(opCode=[%d]%d,"
                         "expectOpCode=[%d]%d,"
                         "groupID=%u, nodeID=%u, serviceID=%u)",
                         IS_REPLY_TYPE( pReply->opCode ),
