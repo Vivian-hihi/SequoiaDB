@@ -239,6 +239,7 @@
 					<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
 					<param name="mongoc.testcase.path" value="${testcase.path}/drivers_testcases/mongoc/build" />
 					<param name="mongoc.testcase.libpath" value="${testcase.path}/drivers_testcases/mongoc/lib" />
+					<param name="mongoc.test.host" value="localhost:${fap.service.port}" />
 					<param name="deploy.case.fullname" value="${deploy.case.fullname}" />
 					<param name="BUILD_NUMBER" value="${BUILD_NUMBER}" />
 					<param name="test-type-list" value="${test-type-list}" />

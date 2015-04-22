@@ -1,13 +1,10 @@
 <project name="Exec-mongoc-Testcases" default="Test-Driver-mongoc">
    <property file="${ci.properties.path}" />
-   <!-- <property name="test.type" value="driver-mongo" /> -->
-   <property name="mongoc.test.host" value="localhost:${fap.service.port}" />
-
-   <taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
+   <!-- <taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
       <classpath>
          <fileset dir="${antTask.jar.path}" includes="*.jar" />
       </classpath>
-   </taskdef>
+   </taskdef> -->
    
    <target name="Clean-mongoc-Reports">
       <echo message="Reports' path is ${reports.path}" />
@@ -17,18 +14,12 @@
    </target>
    
    <target name="Test-Driver-mongoc" depends="Clean-mongoc-Reports">
-
       <tstamp>
          <format property="testtype_begintime" pattern="yyyy-MM-dd-hh.mm.ss a" />
       </tstamp>
-
       <hostinfo prefix="host" />
       <echo message="Begin test driver mongoc testcases..." />
       <echo message="Perform the driver mongoc testcases,with testcase.path=${mongoc.testcase.path}" />
-      
-      <basename property="deploy.name" file="${deploy.case.fullname}" suffix=".xml" />
-      <property name="test.suite.class.name" value="testcases-${test-type-list}.${deploy.name}-${host.NAME}-${parallel.num}-${test.suite.name}" />
-      <!--property name="test.suite.class.name" value="testcases-driver-c.${deploy.name}-${host.NAME}-${parallel.num}" /--> 
       <chmod file="${mongoc.testcase.path}/test-mongo" perm="u+x" />     
       <exec executable="./test-mongo" dir="${mongoc.testcase.path}" timeout="60000" output="${mongoc.testcase.path}/testcases.txt" resultproperty="ret.code" failonerror="true">
          <arg line=" --help" />
@@ -38,8 +29,6 @@
          <arg line="'^    /'" />
          <env key="LD_LIBRARY_PATH" path="${LD_LIBRARY_PATH}:${mongoc.testcase.libpath}" />
       </exec>
-      <!-- <replaceregexp file="${mongoc.testcase.path}/testcases.txt" match="    " replace="" flags="g" />
-      <replaceregexp file="${mongoc.testcase.path}/testcases.txt" match="\n" replace="," flags="g" /> -->
       <replace file="${mongoc.testcase.path}/testcases.txt" token="    " value="" />
       <replace file="${mongoc.testcase.path}/testcases.txt" token="&#10;" value="," />
       <loadfile property="testcases" srcFile="${mongoc.testcase.path}/testcases.txt" failonerror="false" />
@@ -53,8 +42,7 @@
       <echo message="Env:LD_LIBRARY_PATH=${mongoc.testcase.libpath}" />
       <echo message="The testcases path on ${testcases.path}" />
       <exec executable="./test-mongo" dir="${mongoc.testcase.path}" timeout="60000" outputproperty="mongo.screen.output" resultproperty="mongo.ret.code" failonerror="false">
-         <!-- <arg line=" -f -F ${reports.path}/concurrent_report.xml" /> -->
-         <arg line=" -f" />
+         <arg line=" -f -F ${reports.path}/concurrent_report.xml" />
          <env key="LD_LIBRARY_PATH" path="${LD_LIBRARY_PATH}:${mongoc.testcase.libpath}" />
          <env key="MONGOC_TEST_HOST" value="${mongoc.test.host}" />
       </exec>
@@ -69,7 +57,6 @@
       <echo level="info" message="The mongo began at &lt;${testtype_begintime}&gt;, end at &lt;${testtype_endtime}&gt;,total spending ${testtype_time}s." />
       <echo file="/opt/testsuite.log${BUILD_NUMBER}" append="true" message="Now testtype is driver-mongoc,cost ${testtype_time}s,hostname=${host.NAME}&#10;" />
       <echo message="**************************************************************************************************************************************************************" />
-
    </target>        
     
    <target name="test-one-case">
@@ -77,51 +64,24 @@
       <echo message="Exec test-mongo -f -p -l ${test.case.name}" />
       <echo message="Env:LD_LIBRARY_PATH=${mongoc.testcase.libpath}" />
       <echo message="The testcase ${test.case.name} path on ${testcases.path}" />
+      <basename property="deploy.name" file="${deploy.case.fullname}" suffix=".xml" />
+      <property name="test.suite.class.name" value="testcases-${test-type-list}.${deploy.name}-${host.NAME}-${parallel.num}-${test.case.name}" />
 
-      <tstamp>
-         <format property="testcase.begin.time" pattern="yyyy-MM-dd-hh.mm.ss a" />
-      </tstamp>
-      <echo message="Now testcase ${test.case.name} begin with ${testcase.begin.time}"/>
-      
-      <property name="test_case_name" value="${test.case.name}_report.xml" />
+      <echo message="**************************************************************************************************************************************************************" />
+      <echo message="test.suite.class.name=${test.suite.class.name}" />
+      <echo message="**************************************************************************************************************************************************************" />
+
       <echo message="**************************************************************************************************************************************************************" />
       <echo message="test.case.name=${test.case.name}" />
       <echo message="reports.path=${reports.path}" />
-      <echo message="test_case_name=${test_case_name}" />
       <echo message="**************************************************************************************************************************************************************" />
       <exec executable="./test-mongo" dir="${testcases.path}" timeout="60000" outputproperty="screen.output" resultproperty="ret.code" failonerror="false">
-         <!-- <arg line=" -f -p -l ${test.case.name} -F ${reports.path}/${test_case_name}" /> -->
-         <arg line=" -f -p -l ${test.case.name} -F ${reports.path}/${test.case.name}_report.xml" />
-         <!-- <arg value=" -p" />
-         <arg value=" -l ${test.case.name}" />
-         <arg value=" -F ${reports.path}/${test.case.name}_report.xml" /> -->
+         <arg line=" -f -p -l ${test.case.name} -F ${reports.path}/TEST-${test.suite.class.name}.xml" />
          <env key="LD_LIBRARY_PATH" path="${LD_LIBRARY_PATH}:${mongoc.testcase.libpath}" />
          <env key="MONGOC_TEST_HOST" value="${mongoc.test.host}" />
       </exec>     
       <echo message="${screen.output}" />
       <echo message="The result = ${ret.code} after exec ${test.case.name} testcase." />
-
-      <if>
-         <not>
-            <equals arg1="${ret.code}" arg2="0" />
-         </not>
-         <then>
-            <tstamp>
-               <format property="testcase.failure.end.time" pattern="yyyy-MM-dd-hh.mm.ss a" />
-            </tstamp>
-            <sdbTime beginTime="${testcase.begin.time}" endTime="${testcase.failure.end.time}" output="testcase.failure.timeOutput" />
-            <echo message="The result code is ${ret.code} and it's fail ..." />
-            <echo message="The testcase ${test.case.name} end with ${testcase.failure.end.time} and cost ${testcase.failure.timeOutput} s in total..." />
-         </then>
-         <else>
-            <tstamp>
-               <format property="testcase.end.time" pattern="yyyy-MM-dd-hh.mm.ss a" />
-            </tstamp>
-            <sdbTime beginTime="${testcase.begin.time}" endTime="${testcase.end.time}" output="testcase.timeOutput" />
-            <echo message="The result code is ${ret.code} and it's succ ..." />
-            <echo message="The testcase ${test.case.name} end with ${testcase.end.time} and cost ${testcase.timeOutput} s in total..." />
-         </else>
-      </if>
    </target> 
 </project>
 
