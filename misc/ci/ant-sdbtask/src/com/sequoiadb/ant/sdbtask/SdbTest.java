@@ -132,7 +132,7 @@ public class SdbTest extends Task {
 				request += "=" + param.getValue();
 			}
 
-			request += " WAIT " + maxWaitTime;
+			// request += " WAIT " + maxWaitTime;
 
 			log("exec: staf " + hostName + " PROCESS " + request);
 			STAFResult result = handle.submit2(hostName, "PROCESS", request);

@@ -3,7 +3,7 @@
 <!--@param ${deploy.case.fullname}: The run in which env -->
 <!--@param ${reports.path}: The path where test case direcotry.-->
 
-<project name="Exec-Java-Testcases" default="Exec-Testcases-Over">                
+<project default="Exec-Testcases-Over">                
     <taskdef name="junit" classname="org.apache.tools.ant.taskdefs.optional.junit.JUnitTask">
         <classpath>
             <pathelement location="${antTask.jar.path}/ant-sdbtasks.jar" />
