@@ -60,6 +60,7 @@
    </target>        
     
    <target name="test-one-case">
+      <hostinfo prefix="host" />
       <echo message="current execute ${test.case.name}" />  
       <echo message="Exec test-mongo -f -p -l ${test.case.name}" />
       <echo message="Env:LD_LIBRARY_PATH=${mongoc.testcase.libpath}" />
