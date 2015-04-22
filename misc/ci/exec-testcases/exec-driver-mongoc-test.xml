@@ -1,10 +1,10 @@
 <project name="Exec-mongoc-Testcases" default="Test-Driver-mongoc">
    <property file="${ci.properties.path}" />
-   <!-- <taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
+   <taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
       <classpath>
          <fileset dir="${antTask.jar.path}" includes="*.jar" />
       </classpath>
-   </taskdef> -->
+   </taskdef>
    
    <target name="Clean-mongoc-Reports">
       <echo message="Reports' path is ${reports.path}" />
