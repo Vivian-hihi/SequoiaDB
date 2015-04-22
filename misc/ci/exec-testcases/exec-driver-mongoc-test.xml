@@ -35,11 +35,11 @@
       <basename property="deploy.name" file="${deploy.case.fullname}" suffix=".xml" />
       <!--property name="test.suite.class.name" value="testcases-driver-c.${deploy.name}-${host.NAME}-${parallel.num}" /--> 
       <chmod file="${mongoc.testcase.path}/test-mongo" perm="u+x" />     
-      <exec executable="./test-mongo" dir="${mongoc.testcase.path}" timeout="60000" output="./testcases.txt" resultproperty="ret.code" failonerror="true">
+      <exec executable="./test-mongo" dir="${mongoc.testcase.path}" timeout="60000" output="${mongoc.testcase.path}/testcases.txt" resultproperty="ret.code" failonerror="true">
          <arg line=" --help" />
          <env key="LD_LIBRARY_PATH" path="${LD_LIBRARY_PATH}:${mongoc.testcase.libpath}" />
       </exec>
-      <exec executable="grep" timeout="60000" input="./testcases.txt" output="./testcases.txt" resultproperty="ret.code" failonerror="true">
+      <exec executable="grep" timeout="60000" input="${mongoc.testcase.path}/testcases.txt" output="${mongoc.testcase.path}/testcases.txt" resultproperty="ret.code" failonerror="true">
          <arg line="'^    /'" />
          <env key="LD_LIBRARY_PATH" path="${LD_LIBRARY_PATH}:${mongoc.testcase.libpath}" />
       </exec>
