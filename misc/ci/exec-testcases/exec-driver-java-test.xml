@@ -35,7 +35,7 @@
             <formatter type="xml" />
             <batchtest todir="${reports.path}">
                 <fileset dir="${java.testcase.path}/build">
-                    <include name="**/*.*" />
+                    <include name="**/*" />
                     <exclude name="**/TestConstant*.*" />
                     <exclude name="**/Replica*.*" />
                     <exclude name="**/*testdata*/*" />
