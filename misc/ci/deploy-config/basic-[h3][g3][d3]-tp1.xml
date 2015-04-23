@@ -537,7 +537,7 @@
 			</sequential>
 		</for> -->
 
-		<for list="driver-mongoc" param="Test-Type">
+		<for list="driver-java" param="Test-Type">
 			<sequential>
 				<ant antfile="${WORKSPACE}/sequoiadb/misc/ci/test-type.xml" dir="." inheritAll="false">
 					<property name="test.host.NAME" value="${test_machine_no2}" />
