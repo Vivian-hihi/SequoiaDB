@@ -70,8 +70,8 @@
 				<pathelement location="${deploy_dir}/hlt/drivers_testcases/java/lib/sequoiadb.jar" />
 			</classpath>
 		</javac>
-		<echo level="info" message="Step3 : Jar the &lt;java_test.jar&gt; to &lt;${deploy_dir}/hlt/drivers_testcases/java&gt;." />
-		<jar file="${deploy_dir}/hlt/drivers_testcases/java/java_test.jar">
+		<echo level="info" message="Step3 : Jar the &lt;java_test.jar&gt; to &lt;${deploy_dir}/hlt/drivers_testcases/java/lib&gt;." />
+		<jar file="${deploy_dir}/hlt/drivers_testcases/java/lib/java_test.jar">
 			<manifest>
 				<attribute name="Version" value="1.0" />
 			</manifest>
