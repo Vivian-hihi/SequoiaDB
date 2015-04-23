@@ -59,8 +59,8 @@
     <target name="Exec-Testcases-Over" depends="Test-Driver-Java">
         <hostinfo prefix="host" />
         <basename property="deploy.name" file="${deploy.case.fullname}" suffix=".xml" />
-        <replace token='name="com.sequoiadb.test' value='name="testcases-driver-java.${deploy.name}-${host.NAME}-${parallel.num}'>
-            <fileset dir="${reports.path}/"  includes="*" />
+        <replace token='name="com.sequoiadb.test.' value='classname="testcases-driver-java.${deploy.name}-${host.NAME}-${parallel.num}-'>
+            <fileset dir="${reports.path}"  includes="*" />
         </replace>
     </target>
 </project>

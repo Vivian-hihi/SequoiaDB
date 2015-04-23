@@ -67,7 +67,7 @@
       <echo message="Env:LD_LIBRARY_PATH=${mongoc.testcase.libpath}" />
       <echo message="The testcase ${test.case.name} path on ${testcases.path}" />
       <basename property="deploy.name" file="${deploy.case.fullname}" suffix=".xml" />
-      <property name="test.suite.class.name" value="testcases-${test-type-list}.${deploy.name}-${host.NAME}-${parallel.num}-${test.case.name}" />
+      <property name="test.suite.class.name" value="testcases-driver-mongoc.${deploy.name}-${host.NAME}-${parallel.num}-${test.case.name}" />
 
       <echo message="**************************************************************************************************************************************************************" />
       <echo message="test.suite.class.name=${test.suite.class.name}" />
