@@ -31,7 +31,7 @@
       </exec>
       <replace file="${mongoc.testcase.path}/testcases.txt" token="    " value="" />
       <replace file="${mongoc.testcase.path}/testcases.txt" token="&#10;" value="," />
-      <replace file="${mongoc.testcase.path}/testcases.txt" token="-h, --help   Show this help menu.,-f   Do not fork() before running tests.,-l NAME  Run test by name.,-p   Do not run tests in parallel.,-v   Be verbose with logs.,-tTest Suite executive duration," value="" />
+      <replace file="${mongoc.testcase.path}/testcases.txt" token="-h, --help   Show this help menu.,-f   Do not fork() before running tests.,-l NAME  Run test by name.,-p   Do not run tests in parallel.,-v   Be verbose with logs.,-tTest Suite executive duration-F   Test Report Path(.xml/.txt)," value="" />
       <loadfile property="testcases" srcFile="${mongoc.testcase.path}/testcases.txt" failonerror="false" />
       <foreach list="${testcases}" target="test-one-case" param="test.case.name" delimiter=",">
          <param name="testcases.path" value="${mongoc.testcase.path}" />
