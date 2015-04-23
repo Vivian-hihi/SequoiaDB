@@ -103,6 +103,8 @@ migExport::~migExport ()
 INT32 migExport::_connectDB()
 {
    INT32 rc = SDB_OK ;
+   bson obj ;
+   
    // connection is established
 
 #ifdef SDB_SSL
@@ -126,7 +128,30 @@ INT32 migExport::_connectDB()
                _pMigArg->pHostname, _pMigArg->pSvcname, rc ) ;
       goto error ;
    }
+   // set prefer instance
+   if( _pMigArg->pPrefInst )
+   {
+      if ( FALSE == jsonToBson2 ( &obj, _pMigArg->pPrefInst, 0, 1 ) )
+      {
+         rc = SDB_INVALIDARG ;
+         ossPrintf ( "prefered instance's format error"OSS_NEWLINE ) ;
+         PD_LOG ( PDERROR, "prefered instance's format error" ) ;
+         goto error ;
+      }
+      rc = sdbSetSessionAttr ( _gConnection, &obj ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG ( PDERROR, "Failed to set session attribute, rc = %d", rc ) ;
+         goto error ;
+      }
+   }
+   else
+   {
+      bson_empty( &obj ) ;
+   }
+   
 done:
+   bson_destroy ( &obj ) ;
    return rc ;
 error:
    goto done ;

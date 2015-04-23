@@ -67,6 +67,7 @@ namespace engine
    #define OPTION_INCLUDEREGEX      "includeregex"
    #define OPTION_FILTER            "filter"
    #define OPTION_SORT              "sort"
+   #define OPTION_PREF_INST         "preferedinstance"
    #define OPTION_SSL               "ssl"
 
    #define DEFAULT_HOSTNAME         "localhost"
@@ -110,6 +111,7 @@ namespace engine
       utilSdbObj.getArgString( OPTION_FIELD,        &exprtArg.pFields ) ;
       utilSdbObj.getArgString( OPTION_FILTER,       &exprtArg.pFiter ) ;
       utilSdbObj.getArgString( OPTION_SORT,         &exprtArg.pSort ) ;
+      utilSdbObj.getArgString( OPTION_PREF_INST,    &exprtArg.pPrefInst ) ;
       
       utilSdbObj.getArgChar( OPTION_DELCHAR,        &exprtArg.delChar ) ;
       utilSdbObj.getArgChar( OPTION_DELFIELD,       &exprtArg.delField ) ;
@@ -156,25 +158,26 @@ namespace engine
       return SDB_OK ;
    }
    
-   #define EXPLAIN_HOSTNAME         "host name, default: localhost"
-   #define EXPLAIN_SVCNAME          "service name, default: 11810"
-   #define EXPLAIN_USER             "username"
-   #define EXPLAIN_PASSWORD         "password"
-   #define EXPLAIN_DELCHAR          "string delimiter, default: '\"' ( csv only )"
-   #define EXPLAIN_DELFIELD         "field delimiter, default: ','  ( csv only )"
-   #define EXPLAIN_DELRECORD        "record delimiter, default: '\\n' "
-   #define EXPLAIN_COLLECTSPACE     "collection space name"
-   #define EXPLAIN_COLLECTION       "collection name"
-   #define EXPLAIN_FIELDS           "field names, separated by command (',')"
-   #define EXPLAIN_INCLUDE          "whether to include field names of the file, default: true ( csv only )"
-   #define EXPLAIN_FILENAME         "output file name"
-   #define EXPLAIN_TYPE             "type of file to load, default: csv (json,csv)"
-   #define EXPLAIN_ERRORSTOP        "whether stop by hitting error, default false"
-   #define EXPLAIN_INCLUDEBINARY    "whether to output a compelete binary, default false( csv only )"
-   #define EXPLAIN_INCLUDEREGEX     "whether to output a compelete regex, default false( csv only )"
-   #define EXPLAIN_FILTER           "the matching rule(e.g. --filter '{ age: 18 }')"
-   #define EXPLAIN_SORT             "the ordered rule(e.g. --sort '{ name: 1 }')"
-   #define EXPLAIN_SSL              "use SSL connection (arg: [true|false], e.g. --ssl true)"
+   #define EXPLAIN_HOSTNAME           "host name, default: localhost"
+   #define EXPLAIN_SVCNAME            "service name, default: 11810"
+   #define EXPLAIN_USER               "username"
+   #define EXPLAIN_PASSWORD           "password"
+   #define EXPLAIN_DELCHAR            "string delimiter, default: '\"' ( csv only )"
+   #define EXPLAIN_DELFIELD           "field delimiter, default: ','  ( csv only )"
+   #define EXPLAIN_DELRECORD          "record delimiter, default: '\\n' "
+   #define EXPLAIN_COLLECTSPACE       "collection space name"
+   #define EXPLAIN_COLLECTION         "collection name"
+   #define EXPLAIN_FIELDS             "field names, separated by command (',')"
+   #define EXPLAIN_INCLUDE            "whether to include field names of the file, default: true ( csv only )"
+   #define EXPLAIN_FILENAME           "output file name"
+   #define EXPLAIN_TYPE               "type of file to load, default: csv (json,csv)"
+   #define EXPLAIN_ERRORSTOP          "whether stop by hitting error, default false"
+   #define EXPLAIN_INCLUDEBINARY      "whether to output a compelete binary, default false( csv only )"
+   #define EXPLAIN_INCLUDEREGEX       "whether to output a compelete regex, default false( csv only )"
+   #define EXPLAIN_FILTER             "the matching rule(e.g. --filter '{ age: 18 }')"
+   #define EXPLAIN_SORT               "the ordered rule(e.g. --sort '{ name: 1 }')"
+   #define EXPLAIN_PREF_INST          "choise which instance to read(e.g. --preferedinstance { PreferedInstance:\"m\"/\"M\"/\"s\"/\"S\"/\"a\"/\"A\"/1-7}), default \"A\"" 
+   #define EXPLAIN_SSL                "use SSL connection (arg: [true|false], e.g. --ssl true)"
    
    INT32 mainEntry ( INT32 argc, CHAR **argv )
    {
@@ -207,6 +210,7 @@ namespace engine
       APPENDARGBOOL  ( utilSdbObj, OPTION_INCLUDEREGEX, OPTION_INCLUDEREGEX,      EXPLAIN_INCLUDEREGEX,     FALSE, FALSE  ) ;
       APPENDARGSTRING( utilSdbObj, OPTION_FILTER,       OPTION_FILTER,            EXPLAIN_FILTER,           FALSE, -1,                  NULL ) ;
       APPENDARGSTRING( utilSdbObj, OPTION_SORT,         OPTION_SORT,              EXPLAIN_SORT,             FALSE, -1,                  NULL ) ;
+      APPENDARGSTRING( utilSdbObj, OPTION_PREF_INST,    OPTION_PREF_INST,         EXPLAIN_PREF_INST,        FALSE, -1,                  NULL ) ;
 #ifdef SDB_SSL
       APPENDARGBOOL  ( utilSdbObj, OPTION_SSL,          OPTION_SSL,               EXPLAIN_SSL,              FALSE, FALSE ) ;
 #endif

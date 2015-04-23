@@ -70,6 +70,7 @@ struct migExprtArg : public SDBObject
    CHAR     *pFields ;
    CHAR     *pFiter ;
    CHAR     *pSort ;
+   CHAR     *pPrefInst ;
 #ifdef SDB_SSL
    BOOLEAN   useSSL ;
 #endif
@@ -91,7 +92,8 @@ struct migExprtArg : public SDBObject
                    pFile(NULL),
                    pFields(NULL),
                    pFiter(NULL),
-                   pSort(NULL)
+                   pSort(NULL),
+                   pPrefInst(NULL)
    {
 #ifdef SDB_SSL
       useSSL = FALSE ;
