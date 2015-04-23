@@ -26,7 +26,7 @@
          <env key="LD_LIBRARY_PATH" path="${LD_LIBRARY_PATH}:${mongoc.testcase.libpath}" />
       </exec>
       <exec executable="grep" timeout="60000" input="${mongoc.testcase.path}/testcases.txt" output="${mongoc.testcase.path}/testcases.txt" resultproperty="ret.code" failonerror="true">
-         <arg line="'^    /'" />
+         <arg line="'^    '" />
          <env key="LD_LIBRARY_PATH" path="${LD_LIBRARY_PATH}:${mongoc.testcase.libpath}" />
       </exec>
       <replace file="${mongoc.testcase.path}/testcases.txt" token="    " value="" />
