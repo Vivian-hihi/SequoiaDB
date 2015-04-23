@@ -1309,6 +1309,8 @@ namespace engine
 
       // --maxpool
       rdxUInt( pEX, PMD_OPTION_MAXPOOL, _krcbMaxPool, FALSE, TRUE, 0 ) ;
+      rdvMinMax( pEX, _krcbMaxPool, 0, 10000, TRUE ) ;
+
       // --diagnum
       rdxInt( pEX, PMD_OPTION_DIAGLOG_NUM, _dialogFileNum, FALSE, TRUE,
               PD_DFT_FILE_NUM ) ;

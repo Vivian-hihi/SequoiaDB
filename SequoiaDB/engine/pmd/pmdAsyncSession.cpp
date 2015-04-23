@@ -509,6 +509,7 @@ namespace engine
       _sessionTimerID         = NET_INVALID_TIMER_ID ;
       _forceChecktimer        = NET_INVALID_TIMER_ID ;
       _timerInterval          = OSS_ONE_SEC ;
+      _cacheSessionNum        = 0 ;
       PD_TRACE_EXIT ( PMD_SESSMGR ) ;
    }
 
@@ -600,6 +601,7 @@ namespace engine
          _releaseSession_i( _deqCacheSessions.front (), FALSE, FALSE ) ;
          _deqCacheSessions.pop_front () ;
       }
+      _cacheSessionNum = 0 ;
 
       while ( _deqDeletingSessions.size() > 0 )
       {
@@ -826,8 +828,10 @@ namespace engine
       }
 
       // can we get from cached session list?
-      if ( _canReuse( sessionType ) && _deqCacheSessions.size() > 0 )
+      if ( _canReuse( sessionType ) && _cacheSessionNum > 0 )
       {
+         ossScopedLock lock( &_deqDeletingMutex ) ;
+
          DEQSESSION::iterator itDeq = _deqCacheSessions.begin() ;
          while ( itDeq != _deqCacheSessions.end() )
          {
@@ -835,6 +839,7 @@ namespace engine
             {
                pSession = *itDeq ;
                _deqCacheSessions.erase( itDeq ) ;
+               --_cacheSessionNum ;
                break ;
             }
             ++itDeq ;
@@ -1042,9 +1047,10 @@ namespace engine
 
       // if the session can be reused, let's queue it
       if ( !_quit && _canReuse( pSession->sessionType() ) &&
-           _deqCacheSessions.size() < _maxCacheSize() )
+           _cacheSessionNum < _maxCacheSize() )
       {
          _deqCacheSessions.push_back( pSession ) ;
+         ++_cacheSessionNum ;
          goto done ;
       }
       // only free memory when it can't be queued
