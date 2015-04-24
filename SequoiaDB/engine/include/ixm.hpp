@@ -260,6 +260,26 @@ namespace engine
          _isInitialized = TRUE ;
       }
 
+      static BOOLEAN _isValidKey( const bson::BSONElement &e )
+      {
+         if ( e.eoo() )
+         {
+            return FALSE ;
+         }
+         else
+         {
+            const CHAR *fieldName = e.fieldName() ;
+            if ( NULL == fieldName ||
+                 0 == ossStrlen( fieldName ) ||
+                 NULL != ossStrchr( fieldName, '$' ) )
+            {
+               return FALSE ;
+            }
+         }
+
+         return TRUE ;
+      }
+
       // we want index key generator able to directly access control block
       // private data
       friend class _ixmIndexKeyGen ;
@@ -537,6 +557,15 @@ namespace engine
             return FALSE ;
          }
          fieldCount ++ ;
+
+         if ( !_isValidKey( obj.getField( IXM_KEY_FIELD ) ) )
+         {
+            PD_LOG( PDERROR, "index key is invalid:%s",
+                    obj.toString( FALSE, TRUE ).c_str() ) ;
+ 
+            return FALSE ;
+         }
+
          // if this is id index
          if ( !idIndex &&
               isSysIndexPattern ( obj.getObjectField( IXM_KEY_FIELD ) ))
@@ -681,6 +710,10 @@ namespace engine
       INT32 truncate ( BOOLEAN removeRoot ) ;
 
       BOOLEAN isSameDef( const BSONObj &defObj ) ;
+      /// set fbf as true when want to compare
+      /// index define field by field.
+//      BOOLEAN isSameDef( const BSONObj &defObj,
+//                         BOOLEAN fbf = TRUE ) ;
 
       OSS_INLINE BOOLEAN isRef() const
       {
