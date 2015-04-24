@@ -65,6 +65,7 @@
 					<equals arg1="${driver_exist}" arg2="true" />
 					<then>
 						<echo message="@ The folder &lt;${build_dir}/driver&gt; is exist." />
+						<antcall target="3.Copy-Software-Package" inheritAll="true" />
 					</then>
 					<else>
 						<echo message="@ The folder &lt;${build_dir}/driver&gt; is not exist." />
