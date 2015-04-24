@@ -45,6 +45,7 @@
 #include "curses.h"
 #include "sptCommon.hpp"
 #include "utilPath.hpp"
+#include "ossVer.hpp"
 //#include <time.h>
 #include <sys/time.h>
 #include <string>
@@ -251,15 +252,14 @@ const string DISPLAYMODECHOOSER[DISPLAYMODENUMBER] = { ABSOLUTE,
 #define BUTTON_Q_LOWER 'q'
 #define BUTTON_F5 542058306331
 
-#define PREFIX_TAB      " Tab  -  "
-#define PREFIX_LEFT     "  <   -  "
-#define PREFIX_RIGHT    "  >   -  "
-#define PREFIX_ENTER    "Enter -  "
-#define PREFIX_ESC      "ESC   -  "
-#define PREFIX_F5       "  F5  -  "
-#define PREFIX_NULL     " NULL -  "
-#define PREFIX_FORMAT   "  %c   -  "
-
+#define PREFIX_TAB      " Tab : "
+#define PREFIX_LEFT     "  <  : "
+#define PREFIX_RIGHT    "  >  : "
+#define PREFIX_ENTER    "Enter: "
+#define PREFIX_ESC      " ESC : "
+#define PREFIX_F5       " F5  : "
+#define PREFIX_NULL     "NULL : "
+#define PREFIX_FORMAT   "  %c  : "
 
 // read xml need
 #define REFERUPPERLEFT_X "referUpperLeft_X"
@@ -273,8 +273,10 @@ const string DISPLAYMODECHOOSER[DISPLAYMODENUMBER] = { ABSOLUTE,
 #define PREFIXCOLOUR_BACKGROUNDCOLOR "prefixColour.backGroundColor"
 #define CONTENTCOLOUR_FOREGROUNDCOLOR "contentColour.foreGroundColor"
 #define CONTENTCOLOUR_BACKGROUNDCOLOR "contentColour.backGroundColor"
-#define TABLEROW "tableRow"
-#define TABLECOLUMN "tableColumn"
+#define WNDROW "wndOptionRow"
+#define WNDCOLUMN "wndOptionColumn"
+#define OPTIONROW "optionRow"
+#define OPTIONCOL "optionColumn"
 #define CELLLENGTH "cellLength"
 #define EXPRESSIONNUMBER "expressionNumber"
 #define ROWNUMBER "rowNumber"
@@ -354,6 +356,8 @@ const string DISPLAYMODECHOOSER[DISPLAYMODENUMBER] = { ABSOLUTE,
 #define BUTTON "button"
 #define JUMPTYPE "jumpType"
 #define JUMPNAME "jumpName"
+#define KEYDESC "desc"
+#define WNDTYPE "wndtype"
 #define HEADERS "Headers"
 #define HEADERLENGTH "headerLength"
 #define HEADTAILMAP "HeadTailMap"
@@ -373,22 +377,20 @@ const string DISPLAYMODECHOOSER[DISPLAYMODENUMBER] = { ABSOLUTE,
 #define FOOTERLENGTH "footerLength"
 
 //DISPLAYTYPE_STATICTEXT_HELP_Header outputText
-CHAR* HELP_Header = "[Help for SDBTOP]";
+CHAR* HELP_DETAIL = "[Help for SDBTOP]";
 //DISPLAYTYPE_STATICTEXT_HELP_Header outputText
-CHAR* LICENSE_Footer =
+CHAR* SDB_TOP_LICENSE =
       "Licensed Materials - Property of SequoiaDB"OSS_NEWLINE
-      "Copyright SequoiaDB Corp. 2013-2014 All Rights Reserved.";
-CHAR* Hello_Body =
-" #####  ######  ######  ####### ####### ######   For help type h or ..."OSS_NEWLINE
-"#       #     # #     #    #    #     # #     #  sdbtop -h: usage"OSS_NEWLINE
-"#       #     # #     #    #    #     # #     #"OSS_NEWLINE
-" #####  #     # ######     #    #     # ######"OSS_NEWLINE
-"      # #     # #     #    #    #     # #"OSS_NEWLINE
-"      # #     # #     #    #    #     # #"OSS_NEWLINE
-" #####  ######  ######     #    ####### #"OSS_NEWLINE
-"\n"
-"SDB Interactive Snapshot Monitor V2.0\n"
-"Use these keys to navigate:\n";
+      "Copyright SequoiaDB Corp. 2013-2015 All Rights Reserved.";
+CHAR* SDB_TOP_DESC =
+" ###  ####  ####  #####  ###  ####   For help type h or ..."OSS_NEWLINE
+"#     #   # #   #   #   #   # #   #  sdbtop -h: usage"OSS_NEWLINE
+" ###  #   # ####    #   #   # ###*"OSS_NEWLINE
+"    # #   # #   #   #   #   # #"OSS_NEWLINE
+" ###  ###*  ####    #    ###  #"OSS_NEWLINE
+OSS_NEWLINE
+"SDB Interactive Snapshot Monitor V2.0"OSS_NEWLINE
+"Use these keys to ENTER:";
 
 #define BUFFERSIZE         256
 CHAR sdbtopBuffer[BUFFERSIZE] = {0} ;
@@ -409,6 +411,7 @@ BOOLEAN useSSL = FALSE ;
 #define OPTION_SERVICENAME   "servicename"
 #define OPTION_USRNAME       "usrname"
 #define OPTION_PASSWORD      "password"
+#define OPTION_VERSION       "version"
 #define OPTION_SSL           "ssl"
 
 
@@ -420,11 +423,12 @@ BOOLEAN useSSL = FALSE ;
 #define COMMANDS_STRING( a, b ) (string(a) +string( b)).c_str()
 #define COMMANDS_OPTIONS \
        ( COMMANDS_STRING(OPTION_HELP, ",h"), "help" )\
+       ( COMMANDS_STRING(OPTION_VERSION, ",v"), "version" ) \
        ( COMMANDS_STRING(OPTION_CONFPATH, ",c"),boost::program_options::value<string>(), "configuration file path" ) \
        ( COMMANDS_STRING(OPTION_HOSTNAME, ",i"), boost::program_options::value<string>(), "host name" ) \
        ( COMMANDS_STRING(OPTION_SERVICENAME, ",s"), boost::program_options::value<string>(), "service name" ) \
        ( COMMANDS_STRING(OPTION_USRNAME, ",u"), boost::program_options::value<string>(), "username" ) \
-       ( COMMANDS_STRING(OPTION_PASSWORD, ",p"), boost::program_options::value<string>(), "password" ) 
+       ( COMMANDS_STRING(OPTION_PASSWORD, ",p"),boost::program_options::value<string>(), "password" )
 
 struct Colours
 {
@@ -450,7 +454,7 @@ struct ExpValueStruct
    string expression ;
 } ;
 
-// store expression infomation from sdbtop.xml
+// store expression information from sdbtop.xml
 class ExpressionContent : public SDBObject
 {
 public:
@@ -471,7 +475,7 @@ public:
    INT32 rowLocation ;
 } ;
 
-// store content infomation if displaycontent is dynamic expression
+// store content information if displaycontent is dynamic expression
 struct DynamicExpressionOutPut
 {
    ExpressionContent *content ;
@@ -500,7 +504,7 @@ struct FiledWarningValue
 } ;
 
 
-// use it to save the snapshot'field of sequoiadb infomation
+// use it to save the snapshot'field of sequoiadb information
 class FieldStruct : public SDBObject
 {
 public:
@@ -565,11 +569,13 @@ struct DynamicSnapshotOutPut
 
 struct DynamicHelp
 {
-   //use table format to display help infomation
+   //use table format to display help information
    //the row of table which is extracted from sdbtop.xml
-   INT32 tableRow ;
+   INT32 wndOptionRow ;
    //the col of table which is extracted from sdbtop.xml
-   INT32 tableColumn ;
+   INT32 wndOptionCol ;
+   INT32 optionsRow ;
+   INT32 optionsCol ;
    //the length of table's cell
    INT32 cellLength ;
    //e.g s -   Sessions
@@ -591,7 +597,7 @@ struct DisplayContent
    DynamicHelp dynamicHelp ;
 } ;
 
-//store the window position infomation
+//store the window position information
 struct Position
 {
    // the position of the upper left corner
@@ -632,7 +638,7 @@ struct Panel
    INT32 numOfSubWindow ;
 };
 
-//store the hotKey infomation
+//store the hotKey information
 class HotKey : public SDBObject
 {
 public:
@@ -643,6 +649,8 @@ public:
    string jumpType ;
    // the name of hotKey display on the terminal
    string jumpName ;
+   string desc ;
+   BOOLEAN wndType ;
 } ;
 
 class KeySuite : public SDBObject
@@ -690,7 +698,7 @@ public:
    string helpPanelType ;
 } ;
 
-// used to store dynamic infomation
+// used to store dynamic information
 struct InputPanel
 {
    // ABSOLUTE or DELTA or AVERAGE .......pos of  DISPLAYMODECHOOSER[]
@@ -1071,7 +1079,7 @@ error :
    goto done ;
 }
 
-// store the position infomation which is come from sdbtop.xml
+// store the position information which is come from sdbtop.xml
 INT32 storePosition( ptree pt_position, Position& position )
 {
    INT32 rc = SDB_OK ;
@@ -1529,11 +1537,11 @@ INT32 storeDisplayContent( ptree pt_displayContent,
          sTContent.colour.backGroundColor =
                pt_displayContent.get<INT32>( COLOUR_BACKGROUNDCOLOR ) ;
          if( DISPLAYTYPE_STATICTEXT_HELP_Header == displayType )
-            sTContent.outputText = HELP_Header ;
+            sTContent.outputText = HELP_DETAIL ;
          else if( DISPLAYTYPE_STATICTEXT_LICENSE == displayType )
-            sTContent.outputText = LICENSE_Footer ;
+            sTContent.outputText = SDB_TOP_LICENSE ;
          else if( DISPLAYTYPE_STATICTEXT_MAIN == displayType )
-            sTContent.outputText = Hello_Body ;
+            sTContent.outputText = SDB_TOP_DESC ;
       }
       catch( std::exception &e )
       {
@@ -1560,8 +1568,10 @@ INT32 storeDisplayContent( ptree pt_displayContent,
                pt_displayContent.get<INT32>( CONTENTCOLOUR_FOREGROUNDCOLOR ) ;
          dHContent.contentColour.backGroundColor =
                pt_displayContent.get<INT32>( CONTENTCOLOUR_BACKGROUNDCOLOR ) ;
-         dHContent.tableRow = pt_displayContent.get<INT32>( TABLEROW ) ;
-         dHContent.tableColumn= pt_displayContent.get<INT32>( TABLECOLUMN ) ;
+         dHContent.wndOptionRow = pt_displayContent.get<INT32>( WNDROW ) ;
+         dHContent.wndOptionCol= pt_displayContent.get<INT32>( WNDCOLUMN ) ;
+         dHContent.optionsRow = pt_displayContent.get<INT32>( OPTIONROW ) ;
+         dHContent.optionsCol= pt_displayContent.get<INT32>( OPTIONCOL ) ;
          dHContent.cellLength= pt_displayContent.get<INT32>( CELLLENGTH ) ;
       }
       catch( std::exception &e )
@@ -2062,6 +2072,19 @@ INT32 storeKeySuites( ptree pt_KSs, RootWindow &root )
                         pt_hotkey->
                               second.get<string>(
                                     JUMPNAME ) ;
+                  hotkey->desc = pt_hotkey->
+                                 second.get<string>(KEYDESC) ;
+                  string wndtype = pt_hotkey->
+                                 second.get<string>(WNDTYPE) ;
+                  if ( 0 == ossStrncmp( wndtype.c_str(),
+                                        "true", wndtype.length() ) )
+                  {
+                     hotkey->wndType = TRUE ;
+                  }
+                  else
+                  {
+                     hotkey->wndType = FALSE ;
+                  }
                }
                catch( std::exception &e )
                {
@@ -2452,7 +2475,7 @@ INT32 Event::getActivatedHeadTailMap( BodyMap *activatedPanel,
    {
       ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
       ossSnprintf( errStr, errStrLength,
-                   "%s getActivatedHeadTailMap faild,"
+                   "%s getActivatedHeadTailMap failed,"
                    "SDB_HEADER_NULL"OSS_NEWLINE,
                    errStrBuf ) ;
       rc = SDB_ERROR;
@@ -2466,7 +2489,7 @@ INT32 Event::getActivatedHeadTailMap( BodyMap *activatedPanel,
          {
             ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
             ossSnprintf( errStr, errStrLength,
-                         "%s getActivatedHeadTailMap faild, "
+                         "%s getActivatedHeadTailMap failed, "
                          "SDB_HEADER_FOOTER_NULL\n", errStrBuf ) ;
             rc = SDB_ERROR;
             goto error ;
@@ -2475,7 +2498,7 @@ INT32 Event::getActivatedHeadTailMap( BodyMap *activatedPanel,
          {
             ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
             ossSnprintf( errStr, errStrLength,
-                         "%s getActivatedHeadTailMap faild, "
+                         "%s getActivatedHeadTailMap failed, "
                          "SDB_FOOTER_NULL\n", errStrBuf ) ;
             rc = SDB_ERROR;
             goto error ;
@@ -2680,7 +2703,7 @@ INT32 Event::getActualPosition( Position &actualPosition,
       rc = SDB_ERROR ;
       ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
       ossSnprintf( errStr, errStrLength,
-                "%s getActualPosition faild:"
+                "%s getActualPosition failed:"
                 "wrong zoomMode:%s"OSS_NEWLINE,
                 errStrBuf, zoomMode.c_str() ) ;
       rc = SDB_ERROR ;
@@ -2699,7 +2722,7 @@ INT32 Event::getActualPosition( Position &actualPosition,
          rc = SDB_ERROR ;
          ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
          ossSnprintf( errStr, errStrLength,
-                      "%s getActualPosition faild:"
+                      "%s getActualPosition failed:"
                       "wrong occupyMode:%s"OSS_NEWLINE,
                       errStrBuf, occupyMode.c_str() ) ;
          rc = SDB_ERROR ;
@@ -2773,8 +2796,8 @@ INT32 Event::mvprintw_SDBTOP( const string &expression, INT32 expressionLength,
    {
       ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
       ossSnprintf( errStr, errStrLength,
-                   "%s MVPRINTW_TOP faild,"
-                   "SNPRINTF_TOP faild"OSS_NEWLINE,
+                   "%s MVPRINTW_TOP failed,"
+                   "SNPRINTF_TOP failed"OSS_NEWLINE,
                    errStrBuf ) ;
       goto error ;
    }
@@ -2804,8 +2827,8 @@ INT32 Event::mvprintw_SDBTOP( const char *expression, INT32 expressionLength,
    {
       ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
       ossSnprintf( errStr, errStrLength,
-                   "%s MVPRINTW_TOP faild,"
-                   "SNPRINTF_TOP faild"OSS_NEWLINE,
+                   "%s MVPRINTW_TOP failed,"
+                   "SNPRINTF_TOP failed"OSS_NEWLINE,
                    errStrBuf ) ;
       goto error ;
    }
@@ -3176,7 +3199,19 @@ INT32 Event::getExpression( string& expression, string& result )
    }
    else if( EXPRESSION_VERSION == expression )
    {
-      result = SDBTOP_VERSION ;
+      INT32 version = 0 ;
+      INT32 subVersion = 0 ;
+      INT32 fixedVersion = 0 ;
+      INT32 release = 0 ;
+      const CHAR *pBuild = NULL ;
+      CHAR strVersion[BUFFERSIZE] = { 0 } ;
+
+      ossGetVersion( &version, &subVersion,
+                     &fixedVersion, &release, &pBuild ) ;
+
+      ossSnprintf( strVersion, BUFFERSIZE, "version %d.%d.%d",
+                   version, subVersion, fixedVersion ) ;
+      result = strVersion ;
    }
    else if( EXPRESSION_REFRESH_TIME == expression )
    {
@@ -3494,7 +3529,7 @@ INT32 Event::getCurSnapshot()
       ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
       ossSnprintf( errStr, errStrLength,
                    "%s refreshDisplayContent failed, "
-                   "snapShotCursor.next( bsonobj ) faild,"
+                   "snapShotCursor.next( bsonobj ) failed,"
                    "rc = %d"OSS_NEWLINE,
                    errStrBuf, rc ) ;
       goto error ;
@@ -3636,7 +3671,7 @@ error :
    goto done ;
 }
 
-// refresh infomation on the terminal
+// refresh information on the terminal
 // when displayType is DISPLAYTYPE_DYNAMIC_HELP
 INT32 Event::refreshDH( DynamicHelp &DH, Position &position )
 {
@@ -3658,6 +3693,7 @@ INT32 Event::refreshDH( DynamicHelp &DH, Position &position )
    INT32 sum               = 0 ;
    INT32 colNumber         = 0 ;
    INT32 pairNumber        = 0 ;
+   INT32 count             = 0;
    string printStr         = NULLSTRING ;
    INT32 cellLength        = DH.cellLength ;
    CHAR *pPrintfstr =
@@ -3666,14 +3702,14 @@ INT32 Event::refreshDH( DynamicHelp &DH, Position &position )
    {
       ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
       ossSnprintf( errStr, errStrLength,
-                   "%s MVPRINTW_TOP faild,"
+                   "%s MVPRINTW_TOP failed,"
                    "can't malloc memory for printfstr :%d"OSS_NEWLINE,
                    errStrBuf, cellLength ) ;
       rc = SDB_OOM ;
       goto error ;
    }
 
-   if( DH.tableRow > position.length_Y )
+   if( DH.wndOptionRow + DH.optionsRow > position.length_Y )
    {
       ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
       ossSnprintf( errStr, errStrLength, 
@@ -3690,18 +3726,38 @@ INT32 Event::refreshDH( DynamicHelp &DH, Position &position )
    }
    // calculate the Y position which used to print first row help field
    rc = fixedOutputLocation( Y, X, start_Y, start_X,
-                             position.length_Y - DH.tableRow, 0,
-                             DH.autoSetType) ;
+                             position.length_Y - DH.wndOptionRow - DH.optionsRow,
+                             0, DH.autoSetType) ;
    if( rc )
    {
       goto error ;
    }
-   for( rowNumber = 0; rowNumber < DH.tableRow; ++rowNumber )
+
    {
-      start_Y += rowNumber ;
+      ossMemset( pPrintfstr, 0, cellLength );
+      ossSnprintf(pPrintfstr, cellLength, "window options"
+                  "(choose to enter window):" ) ;
+
+      getColourPN( DH.prefixColour, pairNumber ) ;
+      attron( COLOR_PAIR( pairNumber ) ) ;
+      rc = mvprintw_SDBTOP( pPrintfstr, ossStrlen( pPrintfstr), LEFT,
+                            start_Y, pos_X ) ;
+      if( rc )
+      {
+         goto error ;
+      }
+      attroff( COLOR_PAIR( pairNumber ) ) ;
+      ++rowNumber ;
+   }
+
+   hotKey_pos = 0 ;
+   while ( rowNumber < DH.wndOptionRow && hotKey_pos < keySuite->hotKeyLength )
+   {
+      start_X = position.referUpperLeft_X ;
+      start_Y += 1 ;
       sum = 0 ;
       // get the sum of every help field length in specific row
-      for( colNumber = 0; colNumber< DH.tableColumn; ++ colNumber )
+      for( colNumber = 0; colNumber< DH.wndOptionCol; ++ colNumber )
       {
          if( sum > position.length_X )
             break ;
@@ -3714,18 +3770,23 @@ INT32 Event::refreshDH( DynamicHelp &DH, Position &position )
       {
          goto error ;
       }
-      // print every help field infomation in specific row
-      for( colNumber = 0; colNumber< DH.tableColumn; ++ colNumber )
+
+      ossMemset( pPrintfstr, 0, cellLength );
+      // make window option first
+      while ( hotKey_pos < keySuite->hotKeyLength )
       {
-         if( hotKey_pos >= keySuite->hotKeyLength )
-            break ;
          if( start_X + cellLength - X  > position.length_X )
          {
             break ;
          }
          hotkey = &keySuite->hotKey[hotKey_pos];
+         if ( !hotkey->wndType )
+         {
+            ++hotKey_pos ;
+            continue ;
+         }
+
          pos_X = start_X ;
-         ossMemset( pPrintfstr, 0, cellLength );
          //printf prefix e.g.the prefix of s -   Sessions is s -
          // judge the string whether write fixed in program
          // if find , save it in the printfstr
@@ -3746,14 +3807,15 @@ INT32 Event::refreshDH( DynamicHelp &DH, Position &position )
             else if( BUTTON_Q_LOWER == hotkey->button ||
                      BUTTON_H_LOWER == hotkey->button )
                ossSnprintf( pPrintfstr, cellLength,
-                            PREFIX_FORMAT,
-                            ( CHAR )hotkey->button ) ;
+                            PREFIX_FORMAT, ( CHAR )hotkey->button ) ;
             else
                ossSnprintf( pPrintfstr, cellLength, PREFIX_NULL ) ;
          }
          else
             ossSnprintf( pPrintfstr, cellLength, PREFIX_FORMAT,
-                        ( CHAR )hotkey->button ) ;
+                         ( CHAR )hotkey->button ) ;
+
+         ++count ;
          printStr = pPrintfstr ;
          // get the colour of the prefix string and print it on terminal
          getColourPN( DH.prefixColour, pairNumber ) ;
@@ -3770,7 +3832,7 @@ INT32 Event::refreshDH( DynamicHelp &DH, Position &position )
          ossMemset( pPrintfstr, 0, cellLength ) ;
          getColourPN( DH.contentColour, pairNumber ) ;
          attron( COLOR_PAIR( pairNumber ) ) ;
-         rc = mvprintw_SDBTOP( hotkey->jumpName, hotkey->jumpName.length(),
+         rc = mvprintw_SDBTOP( hotkey->desc, hotkey->desc.length(),
                                LEFT, start_Y, pos_X );
          if( rc )
          {
@@ -3779,8 +3841,135 @@ INT32 Event::refreshDH( DynamicHelp &DH, Position &position )
          attroff( COLOR_PAIR( pairNumber ) ) ;
          start_X += DH.cellLength ;
          ++hotKey_pos ;
+         if ( 0 == count % DH.wndOptionCol ||
+              hotKey_pos + 1 >= keySuite->hotKeyLength )
+         {
+            // break inner while
+            ++rowNumber ;
+            break ;
+         }
       }
-      start_Y -= rowNumber ;
+   }
+
+   // draw options
+   {
+      ++start_Y ;
+      start_X = position.referUpperLeft_X ;
+      pos_X = start_X ;
+      ossSnprintf(pPrintfstr, cellLength,
+                  "options(use under window above): " ) ;
+
+      getColourPN( DH.prefixColour, pairNumber ) ;
+      attron( COLOR_PAIR( pairNumber ) ) ;
+      rc = mvprintw_SDBTOP( pPrintfstr, ossStrlen( pPrintfstr), LEFT,
+                            start_Y, pos_X ) ;
+      if( rc )
+      {
+         goto error ;
+      }
+      attroff( COLOR_PAIR( pairNumber ) ) ;
+   }
+
+   hotKey_pos = 0 ;
+   rowNumber = 0 ;
+   count = 0 ;
+   while ( rowNumber < DH.optionsRow )
+   {
+      start_Y += 1 ;
+      sum = 0 ;
+      // get the sum of every help field length in specific row
+      for( colNumber = 0; colNumber< DH.optionsCol; ++ colNumber )
+      {
+         if( sum > position.length_X )
+            break ;
+         sum += cellLength ;
+      }
+      // calculate the X position which used to print first help field
+      rc = fixedOutputLocation( start_Y, X, start_Y, start_X, 0,
+                                position.length_X - sum, DH.autoSetType) ;
+      if( rc )
+      {
+         goto error ;
+      }
+
+      ossMemset( pPrintfstr, 0, cellLength );
+      // print every help field information in specific row
+      while ( hotKey_pos < keySuite->hotKeyLength )
+      {
+         if( start_X + cellLength - X  > position.length_X )
+         {
+            break ;
+         }
+         hotkey = &keySuite->hotKey[hotKey_pos];
+         if ( hotkey->wndType )
+         {
+            ++hotKey_pos ;
+            continue ;
+         }
+
+         ++count ;
+         pos_X = start_X ;
+         //printf prefix e.g.the prefix of s -   Sessions is s -
+         // judge the string whether write fixed in program
+         // if find , save it in the printfstr
+         if( JUMPTYPE_FIXED == hotkey->jumpType )
+         {
+            if( BUTTON_TAB == hotkey->button )
+               ossSnprintf( pPrintfstr, cellLength, PREFIX_TAB ) ;
+            else if( BUTTON_LEFT == hotkey->button )
+               ossSnprintf( pPrintfstr, cellLength, PREFIX_LEFT ) ;
+            else if( BUTTON_RIGHT == hotkey->button )
+               ossSnprintf( pPrintfstr, cellLength, PREFIX_RIGHT ) ;
+            else if( BUTTON_ENTER == hotkey->button )
+               ossSnprintf( pPrintfstr, cellLength, PREFIX_ENTER ) ;
+            else if( BUTTON_ESC == hotkey->button )
+               ossSnprintf( pPrintfstr, cellLength, PREFIX_ESC ) ;
+            else if( BUTTON_F5 == hotkey->button )
+               ossSnprintf( pPrintfstr, cellLength, PREFIX_F5 ) ;
+            else if( BUTTON_Q_LOWER == hotkey->button ||
+                     BUTTON_H_LOWER == hotkey->button )
+               ossSnprintf( pPrintfstr, cellLength,
+                            PREFIX_FORMAT, ( CHAR )hotkey->button ) ;
+            else
+               ossSnprintf( pPrintfstr, cellLength, PREFIX_NULL ) ;
+         }
+         else
+            ossSnprintf( pPrintfstr, cellLength, PREFIX_FORMAT,
+                         ( CHAR )hotkey->button ) ;
+
+         printStr = pPrintfstr ;
+         // get the colour of the prefix string and print it on terminal
+         getColourPN( DH.prefixColour, pairNumber ) ;
+         attron( COLOR_PAIR( pairNumber ) ) ;
+         rc = mvprintw_SDBTOP( printStr, printStr.length(), LEFT,
+                               start_Y, pos_X ) ;
+         if( rc )
+         {
+            goto error ;
+         }
+         attroff( COLOR_PAIR( pairNumber ) ) ;
+         pos_X += printStr.length() ;
+         //printf content e.g.the content of s -   Sessions is Session
+         ossMemset( pPrintfstr, 0, cellLength ) ;
+         getColourPN( DH.contentColour, pairNumber ) ;
+         attron( COLOR_PAIR( pairNumber ) ) ;
+         rc = mvprintw_SDBTOP( hotkey->desc, hotkey->desc.length(),
+                               LEFT, start_Y, pos_X );
+         if( rc )
+         {
+            goto error ;
+         }
+         attroff( COLOR_PAIR( pairNumber ) ) ;
+         start_X += DH.cellLength ;
+         ++hotKey_pos ;
+
+         if ( 0 == count % DH.optionsCol ||
+              hotKey_pos + 1 >= keySuite->hotKeyLength )
+         {
+            ++rowNumber ;
+            break ;
+         }
+      }
    }
 
 done :
@@ -3791,7 +3980,7 @@ error :
    goto done ;
 }
 
-// refresh infomation on the terminal
+// refresh information on the terminal
 // when displayType is DISPLAYTYPE_DYNAMIC_EXPRESSION
 INT32 Event::refreshDE( DynamicExpressionOutPut &DE, Position &position )
 {
@@ -3856,7 +4045,7 @@ INT32 Event::refreshDE( DynamicExpressionOutPut &DE, Position &position )
                ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
                ossSnprintf( errStr, errStrLength,
                             "%s refreshDisplayContent failed,"
-                            "getExpression faild"OSS_NEWLINE,
+                            "getExpression failed"OSS_NEWLINE,
                             errStrBuf ) ;
                goto error ;
             }
@@ -4471,7 +4660,7 @@ done :
 error :
    goto done ;
 }
-// refresh infomation on the terminal
+// refresh information on the terminal
 // when displayType is DISPLAYTYPE_DYNAMIC_SNAPSHOT
 INT32 Event::refreshDS( DynamicSnapshotOutPut &DS, Position &position )
 {
@@ -4617,7 +4806,7 @@ error :
 INT32 Event::refreshNodeWindow( NodeWindow &window )
 {
    INT32 rc = SDB_OK ;
-   //used to store the termial position infomation
+   //used to store the termial position information
    Position actualPosition ;
    INT32 row = 0;
    INT32 col = 0;
@@ -4635,7 +4824,7 @@ INT32 Event::refreshNodeWindow( NodeWindow &window )
       ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
       ossSnprintf( errStr, errStrLength,
                    "%s refreshNodeWindow failed,"
-                   "getActualPosition faild"OSS_NEWLINE,
+                   "getActualPosition failed"OSS_NEWLINE,
                    errStrBuf ) ;
       goto error ;
    }
@@ -4654,7 +4843,7 @@ INT32 Event::refreshNodeWindow( NodeWindow &window )
 
       ossSnprintf( errStrBuf, errStrLength, "%s", errStr ) ;
       ossSnprintf( errStr, errStrLength, "%s refreshNodeWindow failed,"
-                   "refreshDisplayContent faild"OSS_NEWLINE,
+                   "refreshDisplayContent failed"OSS_NEWLINE,
                    errStrBuf );
       goto error;
    }
@@ -4682,7 +4871,7 @@ INT32 Event::refreshHT( HeadTailMap *headtail )
 
          ossSnprintf( errStrBuf, errStrLength, "%s", errStr ) ;
          ossSnprintf( errStr, errStrLength, "%s refreshHeadTail failed,"
-                      "refreshNodeWindow faild,"
+                      "refreshNodeWindow failed,"
                       "numOfSubWindow = %d"OSS_NEWLINE,
                       errStrBuf, numOfSubWindow ) ;
          goto error ;
@@ -4711,7 +4900,7 @@ INT32 Event::refreshBD( BodyMap *body )
          ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
          ossSnprintf( errStr, errStrLength,
                       "%s refreshBody failed,"
-                      "refreshNodeWindow faild,"
+                      "refreshNodeWindow failed,"
                       "numOfSubWindow = %d"OSS_NEWLINE,
                       errStrBuf, numOfSubWindow ) ;
          goto error ;
@@ -4757,6 +4946,8 @@ INT32 Event::addFixedHotKey()
          hotkey->button = BUTTON_TAB ;
          hotkey->jumpType = JUMPTYPE_FIXED;
          hotkey->jumpName = "Evaluation Model" ;
+         hotkey->desc = "switch display Model" ;
+         hotkey->wndType = FALSE ;
          ++keyLength ;
       }
       else
@@ -4771,6 +4962,8 @@ INT32 Event::addFixedHotKey()
          hotkey->button = BUTTON_LEFT;
          hotkey->jumpType = JUMPTYPE_FIXED;
          hotkey->jumpName = "Move left" ;
+         hotkey->desc = "move left" ;
+         hotkey->wndType = FALSE ;
          ++keyLength ;
       }
       else
@@ -4785,6 +4978,8 @@ INT32 Event::addFixedHotKey()
          hotkey->button = BUTTON_RIGHT ;
          hotkey->jumpType = JUMPTYPE_FIXED ;
          hotkey->jumpName = "Move right" ;
+         hotkey->desc = "move right" ;
+         hotkey->wndType = FALSE ;
          ++keyLength ;
       }
       else
@@ -4799,6 +4994,8 @@ INT32 Event::addFixedHotKey()
          hotkey->button = BUTTON_ENTER ;
          hotkey->jumpType = JUMPTYPE_FIXED ;
          hotkey->jumpName = "last view" ;
+         hotkey->desc = "to last view, used under help window" ;
+         hotkey->wndType = FALSE ;
          ++keyLength ;
       }
       else
@@ -4813,6 +5010,8 @@ INT32 Event::addFixedHotKey()
          hotkey->button = BUTTON_ESC;
          hotkey->jumpType = JUMPTYPE_FIXED ;
          hotkey->jumpName = "cancel the operation" ;
+         hotkey->desc = "cancel current operation" ;
+         hotkey->wndType = FALSE ;
          ++keyLength ;
       }
       else
@@ -4827,6 +5026,8 @@ INT32 Event::addFixedHotKey()
          hotkey->button = BUTTON_F5;
          hotkey->jumpType = JUMPTYPE_FIXED ;
          hotkey->jumpName = "refresh" ;
+         hotkey->desc = "refresh immediately" ;
+         hotkey->wndType = FALSE ;
          ++keyLength ;
       }
       else
@@ -4841,6 +5042,8 @@ INT32 Event::addFixedHotKey()
          hotkey->button = BUTTON_H_LOWER;
          hotkey->jumpType = JUMPTYPE_FIXED ;
          hotkey->jumpName = "Help" ;
+         hotkey->desc = "help" ;
+         hotkey->wndType = TRUE ;
          ++keyLength ;
       }
       else
@@ -4855,6 +5058,8 @@ INT32 Event::addFixedHotKey()
          hotkey->button = BUTTON_Q_LOWER;
          hotkey->jumpType = JUMPTYPE_FIXED ;
          hotkey->jumpName = "Quit" ;
+         hotkey->desc = "quit" ;
+         hotkey->wndType = FALSE ;
          ++keyLength ;
       }
       else
@@ -5176,7 +5381,7 @@ INT32 Event::eventManagement( INT64 key ,BOOLEAN isFirstStart )
                {
                   ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
                   ossSnprintf( errStr, errStrLength,
-                               "%s buttonManagement faild,"
+                               "%s buttonManagement failed,"
                                "select ( maxfd, &fds, NULL, NULL, NULL) "
                                "failed"OSS_NEWLINE,
                                errStrBuf ) ;
@@ -5265,7 +5470,7 @@ INT32 Event::eventManagement( INT64 key ,BOOLEAN isFirstStart )
                rc = eventManagement( BUTTON_H_LOWER, FALSE ) ;
                goto done ;
             }
-            note = "please input the displayName which need order by asc : " ;
+            note = "please input the column name to sort by asc : " ;
             getmaxyx( stdscr, row, col ) ;
             curs_set( 2 ) ;
             ossMemset( sdbtopBuffer, 0, BUFFERSIZE ) ;
@@ -5298,7 +5503,7 @@ INT32 Event::eventManagement( INT64 key ,BOOLEAN isFirstStart )
                rc = eventManagement( BUTTON_H_LOWER, FALSE ) ;
                goto done ;
             }
-            note = "please input the displayName which need order by desc : ";
+            note = "please input the column name to sort by desc : ";
             getmaxyx( stdscr, row, col ) ;
             curs_set( 2 );
             ossMemset( sdbtopBuffer, 0, BUFFERSIZE );
@@ -5331,7 +5536,7 @@ INT32 Event::eventManagement( INT64 key ,BOOLEAN isFirstStart )
                rc = eventManagement( BUTTON_H_LOWER, FALSE ) ;
                goto done ;
             }
-            note = "please input the filter condition : ";
+            note = "please input the filter condition(eg: TID:12345) : ";
             getmaxyx( stdscr, row, col ) ;
             curs_set( 2 ) ;
             ossMemset( sdbtopBuffer, 0, BUFFERSIZE ) ;
@@ -5372,7 +5577,7 @@ INT32 Event::eventManagement( INT64 key ,BOOLEAN isFirstStart )
                rc = eventManagement( BUTTON_H_LOWER, FALSE ) ;
                goto done ;
             }
-            note = "please input the filter number : ";
+            note = "please input the filter number(the number is additive) : ";
             getmaxyx( stdscr, row, col ) ;
             curs_set( 2 ) ;
             ossMemset( sdbtopBuffer, 0, BUFFERSIZE ) ;
@@ -5429,7 +5634,7 @@ INT32 Event::eventManagement( INT64 key ,BOOLEAN isFirstStart )
                rc = eventManagement( BUTTON_H_LOWER, FALSE ) ;
                goto done ;
             }
-            note = "please input the refreshInterval : ";
+            note = "please input the refresh interval(eg: 5) : ";
             getmaxyx( stdscr, row, col ) ;
             curs_set( 2 ) ;
             ossMemset( sdbtopBuffer, 0, BUFFERSIZE ) ;
@@ -5720,6 +5925,24 @@ void displayArg ( po::options_description &desc )
    std::cout << desc << std::endl ;
 }
 
+void displayVersion()
+{
+   INT32 version = 0 ;
+   INT32 subVersion = 0 ;
+   INT32 fixedVersion = 0 ;
+   INT32 release = 0 ;
+   const CHAR *pBuild = NULL ;
+   CHAR strVersion[BUFFERSIZE] = { 0 } ;
+
+   ossGetVersion( &version, &subVersion, &fixedVersion, &release, &pBuild ) ;
+
+   ossSnprintf( strVersion, BUFFERSIZE, "SequoiaDB version %d.%d.%d"OSS_NEWLINE
+                "Release: %d"OSS_NEWLINE"%s", version, subVersion,
+                fixedVersion, release, pBuild ) ;
+
+   std::cout << strVersion << std::endl ;
+}
+
 // resolve input argument
 INT32 resolveArgument ( po::options_description &desc,
                         INT32 argc, CHAR **argv )
@@ -5756,6 +5979,13 @@ INT32 resolveArgument ( po::options_description &desc,
    if ( vm.count ( OPTION_HELP ) )
    {
       displayArg ( desc ) ;
+      rc = SDB_PMD_HELP_ONLY ;
+      goto done ;
+   }
+
+   if ( vm.count( OPTION_VERSION ) )
+   {
+      displayVersion();
       rc = SDB_PMD_HELP_ONLY ;
       goto done ;
    }

@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Event>
    <RootWindow>
-      <referWindowRow>24</referWindowRow>
+      <referWindowRow>32</referWindowRow>
       <referWindowColumn>80</referWindowColumn>
-      <actualWindowMinRow>24</actualWindowMinRow>
+      <actualWindowMinRow>32</actualWindowMinRow>
       <actualWindowMinColumn>80</actualWindowMinColumn>
       <refreshInterval>3</refreshInterval>
       <colourOfTheMax>
@@ -31,76 +31,106 @@
                <button>m</button>
                <jumpType>JUMPTYPE_PANEL</jumpType>
                <jumpName>Main Window</jumpName>
+               <desc>return to main window</desc>
+               <wndtype>true</wndtype>
             </HotKey>
             <HotKey>
                <button>s</button>
                <jumpType>JUMPTYPE_PANEL</jumpType>
                <jumpName>Sessions</jumpName>
+               <desc>show sessions of SequoiaDB</desc>
+               <wndtype>true</wndtype>
             </HotKey>
             <HotKey>
                <button>c</button>
                <jumpType>JUMPTYPE_PANEL</jumpType>
                <jumpName>CollectionSpaces</jumpName>
+               <desc>show collection spaces</desc>
+               <wndtype>true</wndtype>
             </HotKey>
             <HotKey>
                <button>t</button>
                <jumpType>JUMPTYPE_PANEL</jumpType>
                <jumpName>System</jumpName>
+               <desc>show system resources</desc>
+               <wndtype>true</wndtype>
             </HotKey>
             <HotKey>
                <button>d</button>
                <jumpType>JUMPTYPE_PANEL</jumpType>
                <jumpName>Database</jumpName>
+               <desc>show database state</desc>
+               <wndtype>true</wndtype>
             </HotKey>
             <HotKey>
                <button>G</button>
                <jumpType>JUMPTYPE_GLOBAL</jumpType>
                <jumpName>GLOBAL_SNAPSHOT</jumpName>
+               <desc>global</desc>
+               <wndtype>false</wndtype>
             </HotKey>
             <HotKey>
                <button>g</button>
                <jumpType>JUMPTYPE_GROUP</jumpType>
                <jumpName>GROUP_SNAPSHOT</jumpName>
+               <desc>filter by specified group</desc>
+               <wndtype>false</wndtype>
             </HotKey>
             <HotKey>
                <button>n</button>
                <jumpType>JUMPTYPE_NODE</jumpType>
                <jumpName>NODE_SNAPSHOT</jumpName>
+               <desc>filter by specified node</desc>
+               <wndtype>false</wndtype>
             </HotKey>
             <HotKey>
                <button>r</button>
                <jumpType>JUMPTYPE_REFRESHINTERVAL</jumpType>
                <jumpName>reset refreshInterval</jumpName>
+               <desc>set interval of refresh(second)</desc>
+               <wndtype>false</wndtype>
             </HotKey>
             <HotKey>
                <button>A</button>
                <jumpType>JUMPTYPE_ASC</jumpType>
                <jumpName>Ascending order</jumpName>
+               <desc>sort column by ascending order </desc>
+               <wndtype>false</wndtype>
             </HotKey>
             <HotKey>
                <button>D</button>
                <jumpType>JUMPTYPE_DESC</jumpType>
                <jumpName>Descending order</jumpName>
+               <desc>sort column by descending order</desc>
+               <wndtype>false</wndtype>
             </HotKey>
             <HotKey>
                <button>C</button>
                <jumpType>JUMPTYPE_FILTER_CONDITION</jumpType>
                <jumpName>filter condition</jumpName>
-            </HotKey>            
+               <desc>specify filter condition</desc>
+               <wndtype>false</wndtype>
+            </HotKey>
             <HotKey>
                <button>Q</button>
                <jumpType>JUMPTYPE_NO_FILTER_CONDITION</jumpType>
                <jumpName>no filter condition</jumpName>
+               <desc>cancel filter condition</desc>
+               <wndtype>false</wndtype>
             </HotKey>
             <HotKey>
                <button>N</button>
                <jumpType>JUMPTYPE_FILTER_NUMBER</jumpType>
                <jumpName>filter number</jumpName>
+               <desc>skip specified lines ahead</desc>
+               <wndtype>false</wndtype>
             </HotKey>
             <HotKey>
                <button>W</button>
                <jumpType>JUMPTYPE_NO_FILTER_NUMBER</jumpType>
                <jumpName>no filter number</jumpName>
+               <desc>show all lines</desc>
+               <wndtype>false</wndtype>
             </HotKey>
          </KeySuite>
       </KeySuites>
@@ -111,7 +141,7 @@
             <value>
                <numOfSubWindow>1</numOfSubWindow>
                <NodeWindow>
-                  <actualWindowMinRow>24</actualWindowMinRow>
+                  <actualWindowMinRow>32</actualWindowMinRow>
                   <actualWindowMinColumn>80</actualWindowMinColumn>
                   <zoomMode>ZOOM_MODE_NONE</zoomMode>
                   <displayType>DISPLAYTYPE_STATICTEXT_HELP_Header</displayType>
@@ -136,7 +166,7 @@
             <value>
                <numOfSubWindow>16</numOfSubWindow>
                <NodeWindow>
-                  <actualWindowMinRow>24</actualWindowMinRow>
+                  <actualWindowMinRow>32</actualWindowMinRow>
                   <actualWindowMinColumn>80</actualWindowMinColumn>
                   <zoomMode>ZOOM_MODE_COL</zoomMode>
                   <displayType>DISPLAYTYPE_DYNAMIC_EXPRESSION</displayType>
@@ -192,7 +222,7 @@
                   </position>
                </NodeWindow>
                <NodeWindow>
-                  <actualWindowMinRow>24</actualWindowMinRow>
+                  <actualWindowMinRow>32</actualWindowMinRow>
                   <actualWindowMinColumn>80</actualWindowMinColumn>
                   <zoomMode>ZOOM_MODE_COL_POS_X</zoomMode>
                   <displayType>DISPLAYTYPE_DYNAMIC_EXPRESSION</displayType>
@@ -222,7 +252,7 @@
                   </position>
                </NodeWindow>
                <NodeWindow>
-                  <actualWindowMinRow>24</actualWindowMinRow>
+                  <actualWindowMinRow>32</actualWindowMinRow>
                   <actualWindowMinColumn>80</actualWindowMinColumn>
                   <zoomMode>ZOOM_MODE_COL_POS_X</zoomMode>
                   <displayType>DISPLAYTYPE_DYNAMIC_EXPRESSION</displayType>
@@ -232,7 +262,7 @@
                      <rowNumber>1</rowNumber>
                      <ExpressionContent>
                         <expressionType>STATIC_EXPRESSION</expressionType>
-                        <expressionLength>33</expressionLength>
+                        <expressionLength>32</expressionLength>
                         <expressionValue>
                            <text>snapshotMode:</text>
                         </expressionValue>
@@ -265,7 +295,7 @@
                   </position>
                </NodeWindow>
                <NodeWindow>
-                  <actualWindowMinRow>24</actualWindowMinRow>
+                  <actualWindowMinRow>32</actualWindowMinRow>
                   <actualWindowMinColumn>80</actualWindowMinColumn>
                   <zoomMode>ZOOM_MODE_COL</zoomMode>
                   <displayType>DISPLAYTYPE_DYNAMIC_EXPRESSION</displayType>
@@ -308,7 +338,7 @@
                   </position>
                </NodeWindow>
                <NodeWindow>
-                  <actualWindowMinRow>24</actualWindowMinRow>
+                  <actualWindowMinRow>32</actualWindowMinRow>
                   <actualWindowMinColumn>80</actualWindowMinColumn>
                   <zoomMode>ZOOM_MODE_COL_POS_X</zoomMode>
                   <displayType>DISPLAYTYPE_DYNAMIC_EXPRESSION</displayType>
@@ -338,7 +368,7 @@
                   </position>
                </NodeWindow>
                <NodeWindow>
-                  <actualWindowMinRow>24</actualWindowMinRow>
+                  <actualWindowMinRow>32</actualWindowMinRow>
                   <actualWindowMinColumn>80</actualWindowMinColumn>
                   <zoomMode>ZOOM_MODE_COL_POS_X</zoomMode>
                   <displayType>DISPLAYTYPE_DYNAMIC_EXPRESSION</displayType>
@@ -348,7 +378,7 @@
                      <rowNumber>1</rowNumber>
                      <ExpressionContent>
                         <expressionType>STATIC_EXPRESSION</expressionType>
-                        <expressionLength>33</expressionLength>
+                        <expressionLength>32</expressionLength>
                         <expressionValue>
                            <text>snapshotModeInput:</text>
                         </expressionValue>
@@ -381,7 +411,7 @@
                   </position>
                </NodeWindow>
                <NodeWindow>
-                  <actualWindowMinRow>24</actualWindowMinRow>
+                  <actualWindowMinRow>32</actualWindowMinRow>
                   <actualWindowMinColumn>80</actualWindowMinColumn>
                   <zoomMode>ZOOM_MODE_COL</zoomMode>
                   <displayType>DISPLAYTYPE_DYNAMIC_EXPRESSION</displayType>
@@ -424,7 +454,7 @@
                   </position>
                </NodeWindow>
                <NodeWindow>
-                  <actualWindowMinRow>24</actualWindowMinRow>
+                  <actualWindowMinRow>32</actualWindowMinRow>
                   <actualWindowMinColumn>80</actualWindowMinColumn>
                   <zoomMode>ZOOM_MODE_COL_POS_X</zoomMode>
                   <displayType>DISPLAYTYPE_DYNAMIC_EXPRESSION</displayType>
@@ -434,7 +464,7 @@
                      <rowNumber>1</rowNumber>
                      <ExpressionContent>
                         <expressionType>STATIC_EXPRESSION</expressionType>
-                        <expressionLength>33</expressionLength>
+                        <expressionLength>32</expressionLength>
                         <expressionValue>
                            <text>filtering Number:</text>
                         </expressionValue>
@@ -467,7 +497,7 @@
                   </position>
                </NodeWindow>
                <NodeWindow>
-                  <actualWindowMinRow>24</actualWindowMinRow>
+                  <actualWindowMinRow>32</actualWindowMinRow>
                   <actualWindowMinColumn>80</actualWindowMinColumn>
                   <zoomMode>ZOOM_MODE_COL</zoomMode>
                   <displayType>DISPLAYTYPE_DYNAMIC_EXPRESSION</displayType>
@@ -510,7 +540,7 @@
                   </position>
                </NodeWindow>
                <NodeWindow>
-                  <actualWindowMinRow>24</actualWindowMinRow>
+                  <actualWindowMinRow>32</actualWindowMinRow>
                   <actualWindowMinColumn>80</actualWindowMinColumn>
                   <zoomMode>ZOOM_MODE_COL_POS_X</zoomMode>
                   <displayType>DISPLAYTYPE_DYNAMIC_EXPRESSION</displayType>
@@ -520,7 +550,7 @@
                      <rowNumber>1</rowNumber>
                      <ExpressionContent>
                         <expressionType>STATIC_EXPRESSION</expressionType>
-                        <expressionLength>33</expressionLength>
+                        <expressionLength>32</expressionLength>
                         <expressionValue>
                            <text>sortingWay:</text>
                         </expressionValue>
@@ -546,7 +576,7 @@
                      </ExpressionContent> 
                      <ExpressionContent>
                         <expressionType>STATIC_EXPRESSION</expressionType>
-                        <expressionLength>33</expressionLength>
+                        <expressionLength>32</expressionLength>
                         <expressionValue>
                            <text>sortingField:</text>
                         </expressionValue>
@@ -579,7 +609,7 @@
                   </position>
                </NodeWindow>
                <NodeWindow>
-                  <actualWindowMinRow>24</actualWindowMinRow>
+                  <actualWindowMinRow>32</actualWindowMinRow>
                   <actualWindowMinColumn>80</actualWindowMinColumn>
                   <zoomMode>ZOOM_MODE_COL</zoomMode>
                   <displayType>DISPLAYTYPE_DYNAMIC_EXPRESSION</displayType>
@@ -622,7 +652,7 @@
                   </position>
                </NodeWindow>
                <NodeWindow>
-                  <actualWindowMinRow>24</actualWindowMinRow>
+                  <actualWindowMinRow>32</actualWindowMinRow>
                   <actualWindowMinColumn>80</actualWindowMinColumn>
                   <zoomMode>ZOOM_MODE_COL_POS_X</zoomMode>
                   <displayType>DISPLAYTYPE_DYNAMIC_EXPRESSION</displayType>
@@ -661,7 +691,7 @@
             <value>
                <numOfSubWindow>2</numOfSubWindow>
                <NodeWindow>
-                  <actualWindowMinRow>24</actualWindowMinRow>
+                  <actualWindowMinRow>32</actualWindowMinRow>
                   <actualWindowMinColumn>80</actualWindowMinColumn>
                   <zoomMode>ZOOM_MODE_NONE</zoomMode>
                   <displayType>DISPLAYTYPE_STATICTEXT_MAIN</displayType>
@@ -674,20 +704,22 @@
                   </displayContent>
                   <position>
                      <referUpperLeft_X>0</referUpperLeft_X>
-                     <referUpperLeft_Y>6</referUpperLeft_Y>
+                     <referUpperLeft_Y>5</referUpperLeft_Y>
                      <length_X>80</length_X>
-                     <length_Y>10</length_Y>
+                     <length_Y>8</length_Y>
                   </position>
                </NodeWindow>
                <NodeWindow>
-                  <actualWindowMinRow>24</actualWindowMinRow>
+                  <actualWindowMinRow>32</actualWindowMinRow>
                   <actualWindowMinColumn>80</actualWindowMinColumn>
                   <zoomMode>ZOOM_MODE_ROW_COL</zoomMode>
                   <displayType>DISPLAYTYPE_DYNAMIC_HELP</displayType>
                   <displayContent>
-                     <tableRow>5</tableRow>
-                     <tableColumn>3</tableColumn>
-                     <cellLength>30</cellLength>
+                     <wndOptionRow>5</wndOptionRow>
+                     <wndOptionColumn>2</wndOptionColumn>
+                     <optionRow>9</optionRow>
+                     <optionColumn>2</optionColumn>
+                     <cellLength>40</cellLength>
                      <autoSetType>UPPER_LEFT</autoSetType>
                      <prefixColour>
                         <foreGroundColor>2</foreGroundColor>
@@ -700,9 +732,9 @@
                   </displayContent>
                   <position>
                      <referUpperLeft_X>0</referUpperLeft_X>
-                     <referUpperLeft_Y>16</referUpperLeft_Y>
+                     <referUpperLeft_Y>14</referUpperLeft_Y>
                      <length_X>80</length_X>
-                     <length_Y>6</length_Y>
+                     <length_Y>15</length_Y>
                   </position>
                </NodeWindow>
             </value>
@@ -718,7 +750,7 @@
             <value>
                <numOfSubWindow>1</numOfSubWindow>
                <NodeWindow>
-                  <actualWindowMinRow>24</actualWindowMinRow>
+                  <actualWindowMinRow>32</actualWindowMinRow>
                   <actualWindowMinColumn>80</actualWindowMinColumn>
                   <zoomMode>ZOOM_MODE_ROW_COL</zoomMode>
                   <displayType>DISPLAYTYPE_DYNAMIC_SNAPSHOT</displayType>
@@ -802,7 +834,7 @@
             <value>
                <numOfSubWindow>30</numOfSubWindow>
                <NodeWindow>
-                  <actualWindowMinRow>24</actualWindowMinRow>
+                  <actualWindowMinRow>32</actualWindowMinRow>
                   <actualWindowMinColumn>80</actualWindowMinColumn>
                   <zoomMode>ZOOM_MODE_ROW_COL</zoomMode>
                   <displayType>DISPLAYTYPE_DYNAMIC_SNAPSHOT</displayType>
@@ -1252,7 +1284,7 @@
             <value>
                <numOfSubWindow>30</numOfSubWindow>
                <NodeWindow>
-                  <actualWindowMinRow>24</actualWindowMinRow>
+                  <actualWindowMinRow>32</actualWindowMinRow>
                   <actualWindowMinColumn>80</actualWindowMinColumn>
                   <zoomMode>ZOOM_MODE_ROW_COL</zoomMode>
                   <displayType>DISPLAYTYPE_DYNAMIC_SNAPSHOT</displayType>
@@ -1625,7 +1657,7 @@
             <value>
                <numOfSubWindow>1</numOfSubWindow>
                <NodeWindow>
-                  <actualWindowMinRow>24</actualWindowMinRow>
+                  <actualWindowMinRow>32</actualWindowMinRow>
                   <actualWindowMinColumn>80</actualWindowMinColumn>
                   <zoomMode>ZOOM_MODE_ROW_COL</zoomMode>
                   <displayType>DISPLAYTYPE_DYNAMIC_SNAPSHOT</displayType>
@@ -1922,14 +1954,16 @@
             <value>
                <numOfSubWindow>1</numOfSubWindow>
                <NodeWindow>
-                  <actualWindowMinRow>24</actualWindowMinRow>
+                  <actualWindowMinRow>32</actualWindowMinRow>
                   <actualWindowMinColumn>80</actualWindowMinColumn>
                   <zoomMode>ZOOM_MODE_ROW_COL</zoomMode>
                   <displayType>DISPLAYTYPE_DYNAMIC_HELP</displayType>
                   <displayContent>
-                     <tableRow>8</tableRow>
-                     <tableColumn>3</tableColumn>
-                     <cellLength>30</cellLength>
+                     <wndOptionRow>5</wndOptionRow>
+                     <wndOptionColumn>2</wndOptionColumn>
+                     <optionRow>9</optionRow>
+                     <optionColumn>2</optionColumn>
+                     <cellLength>40</cellLength>
                      <autoSetType>UPPER_LEFT</autoSetType>
                      <prefixColour>
                         <foreGroundColor>2</foreGroundColor>
@@ -1961,7 +1995,7 @@
             <value>
                <numOfSubWindow>1</numOfSubWindow>
                <NodeWindow>
-                  <actualWindowMinRow>24</actualWindowMinRow>
+                  <actualWindowMinRow>32</actualWindowMinRow>
                   <actualWindowMinColumn>80</actualWindowMinColumn>
                   <zoomMode>ZOOM_MODE_ALL</zoomMode>
                   <displayType>DISPLAYTYPE_STATICTEXT_LICENSE</displayType>
@@ -1974,7 +2008,7 @@
                   </displayContent>
                   <position>
                      <referUpperLeft_X>0</referUpperLeft_X>
-                     <referUpperLeft_Y>22</referUpperLeft_Y>
+                     <referUpperLeft_Y>30</referUpperLeft_Y>
                      <length_X>80</length_X>
                      <length_Y>2</length_Y>
                   </position>
@@ -1986,7 +2020,7 @@
             <value>
                <numOfSubWindow>3</numOfSubWindow>
                <NodeWindow>
-                  <actualWindowMinRow>24</actualWindowMinRow>
+                  <actualWindowMinRow>32</actualWindowMinRow>
                   <actualWindowMinColumn>80</actualWindowMinColumn>
                   <zoomMode>ZOOM_MODE_ALL</zoomMode>
                   <displayType>DISPLAYTYPE_DYNAMIC_EXPRESSION</displayType>
@@ -2016,7 +2050,7 @@
                   </position>
                </NodeWindow>
                <NodeWindow>
-                  <actualWindowMinRow>24</actualWindowMinRow>
+                  <actualWindowMinRow>32</actualWindowMinRow>
                   <actualWindowMinColumn>80</actualWindowMinColumn>
                   <zoomMode>ZOOM_MODE_ALL</zoomMode>
                   <displayType>DISPLAYTYPE_DYNAMIC_EXPRESSION</displayType>
@@ -2046,7 +2080,7 @@
                   </position>
                </NodeWindow>
                <NodeWindow>
-                  <actualWindowMinRow>24</actualWindowMinRow>
+                  <actualWindowMinRow>32</actualWindowMinRow>
                   <actualWindowMinColumn>80</actualWindowMinColumn>
                   <zoomMode>ZOOM_MODE_ALL</zoomMode>
                   <displayType>DISPLAYTYPE_DYNAMIC_EXPRESSION</displayType>
