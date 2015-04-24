@@ -58,9 +58,7 @@
 		<echo level="info" message="The old SequoiaDB version is ${BUILD.NUMBER.LOCAL} and the new SequoiaDB version is ${BUILD.NUMBER}."/>
 		<echo message="**************************************************************************************************************************************************************" />
 		<if>
-			<not>
-				<equals arg1="${BUILD.NUMBER}" arg2="${BUILD.NUMBER.LOCAL}" />
-			</not>
+			<equals arg1="${BUILD.NUMBER}" arg2="${BUILD.NUMBER.LOCAL}" />
 			<then>
 				<available property="driver_exist" file="${build_dir}/driver" type="dir" />
 				<if>
@@ -75,7 +73,6 @@
 				</if>
 			</then>
 			<else>
-				<echo message="@ The folder &lt;${build_dir}/driver&gt; is not exist." />
 				<antcall target="3.Copy-Software-Package" inheritAll="true" />
 			</else>
 		</if>
