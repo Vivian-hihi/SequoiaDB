@@ -104,7 +104,7 @@ INT32 migExport::_connectDB()
 {
    INT32 rc = SDB_OK ;
    bson obj ;
-   
+   bson_init( &obj ) ;
    // connection is established
 
 #ifdef SDB_SSL
