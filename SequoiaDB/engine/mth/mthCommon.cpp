@@ -274,7 +274,7 @@ namespace engine
             }
             else
             {
-               PD_LOG( PDERROR, "argument should be a numeric" ) ;
+               PD_LOG( PDDEBUG, "argument should be a numeric" ) ;
                rc = SDB_INVALIDARG ;
                goto error ;
             }
@@ -282,7 +282,7 @@ namespace engine
 
          if ( 0 == numberLen )
          {
-            PD_LOG( PDERROR, "invalid action in selector:%s", desc ) ;
+            PD_LOG( PDDEBUG, "invalid action in selector:%s", desc ) ;
             rc = SDB_INVALIDARG ;
             goto error ;
          }
