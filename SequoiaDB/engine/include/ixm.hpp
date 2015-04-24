@@ -164,13 +164,7 @@ namespace engine
       dmsExtentID _scanExtLID ;  // only when flag is IXM_INDEX_FLAG_CREATING,
                                  // the _scanExtLID is valid
       UINT16      _type ;
-
-      // if this extent is in indexes slots. zero means it is a real
-      // index extent. or it's root extent id references to real extent.
-      // if this is a referenced extent, we can know how many extents
-      // depend on it from _refNum.
-      UINT8       _refNum ;
-      CHAR        _reserved[5] ;
+      CHAR        _reserved[6] ;
    } ;
    typedef class _ixmIndexCBExtent ixmIndexCBExtent ;
    #define IXM_INDEX_CB_EXTENT_METADATA_SIZE (sizeof(ixmIndexCBExtent))
@@ -567,7 +561,7 @@ namespace engine
          {
             PD_LOG( PDERROR, "index key is invalid:%s",
                     obj.toString( FALSE, TRUE ).c_str() ) ;
- 
+
             return FALSE ;
          }
 
@@ -713,23 +707,7 @@ namespace engine
          return curOID == oid ;
       }
       INT32 truncate ( BOOLEAN removeRoot ) ;
-
       BOOLEAN isSameDef( const BSONObj &defObj ) ;
-      /// set fbf as true when want to compare
-      /// index define field by field.
-//      BOOLEAN isSameDef( const BSONObj &defObj,
-//                         BOOLEAN fbf = TRUE ) ;
-
-      OSS_INLINE BOOLEAN isRef() const
-      {
-         return 0 != _extent->_refNum ;
-      }
-
-      OSS_INLINE void incRef()
-      {
-         ++_extent->_refNum ;
-         return ;
-      }
    } ;
    typedef class _ixmIndexCB ixmIndexCB ;
 
