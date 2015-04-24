@@ -292,7 +292,7 @@ namespace engine
       }
       else
       {
-         PD_LOG( PDERROR, "invalid action:%s", desc ) ;
+         PD_LOG( PDDEBUG, "invalid action:%s", desc ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }

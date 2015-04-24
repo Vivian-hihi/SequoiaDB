@@ -330,6 +330,7 @@ namespace engine
       SDB_ASSERT( NULL != fieldName, "can not be null" ) ;
       _mthSColumn *father = this ;
       _mthSColumn *node = NULL ;
+      INT32 eleNumber = 0 ;
 
       /// WARNING: fieldName may be changed when get next.
       /// do not use it again until i is destroyed.
@@ -340,16 +341,12 @@ namespace engine
          const CHAR *columnName = i.next() ;
 
          /// a.$[0].b
-         if ( '$' == *columnName )
+         if ( '$' == *columnName &&
+              NULL != father &&
+              SDB_OK == mthConvertSubElemToNumeric( columnName,
+                                                    eleNumber ) )
          {
-            if ( NULL == father )
-            {
-               PD_LOG( PDERROR, "$ can not exist in top level" ) ;
-               rc = SDB_INVALIDARG ;
-               goto error ;
-            }
-
-            rc = _addMiddleAction( father, columnName ) ;
+            rc = _addMiddleAction( father, eleNumber ) ;
             if ( SDB_OK != rc )
             {
                PD_LOG( PDERROR, "failed to add action to column:%d", rc ) ;
@@ -431,7 +428,7 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__MTHSCOLUMNMATRIX__ADDMIDDLEACTION, "_mthSColumnMatrix::_addMiddleAction" )
    INT32 _mthSColumnMatrix::_addMiddleAction( _mthSColumn *column,
-                                              const CHAR *desc )
+                                              INT32 numberic )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__MTHSCOLUMNMATRIX__ADDMIDDLEACTION ) ;
@@ -446,13 +443,6 @@ namespace engine
          goto error ;
       }
 
-      rc = mthConvertSubElemToNumeric( desc, elemNumber ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to parse action:%d", rc ) ;
-         goto error ;
-      }
-
       rc = _actionPool.allocate( action ) ;
       if ( SDB_OK != rc )
       {
@@ -460,7 +450,7 @@ namespace engine
          goto error ;
       }
 
-      rc = parser->buildSliceAction( elemNumber, 1, *action ) ;
+      rc = parser->buildSliceAction( numberic, 1, *action ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to build default value action:%d", rc ) ;
