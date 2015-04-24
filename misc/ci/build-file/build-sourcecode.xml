@@ -105,6 +105,7 @@
     	</exec>
     	<exec executable="${CODE_DIR}/misc/ci/exec-tools/print_version" dir="${CODE_DIR}/misc/ci/exec-tools/" failonerror="true" outputproperty="project.version" />
     	<echo message="&#10;project.version=${project.version}" file="${CODE_DIR}/misc/ci/ci.build.properties" append="true" />
+    	<echo message="project.version=${project.version}" />
 		<echo message="compile source code completed." />
 	</target>
 
@@ -349,6 +350,7 @@
 		<exec dir="${RELEASE_DIR}" executable="builder" failonerror="true">
 			<arg line="build sequoiadb_server.xml --setvars project.version=${project.version}  --setvars platform=${os.and.platform} --setvars enterpriseversion=${version.name} --setvars project.outputDirectory=${RELEASE_DIR}" />
 		</exec>
+		<echo message="build sequoiadb_server.xml --setvars project.version=${project.version}  --setvars platform=${os.and.platform} --setvars enterpriseversion=${version.name} --setvars project.outputDirectory=${RELEASE_DIR}" />
 		<!-- <echo message="Make relase package completed." />
 		<echo message="os.name=${os.name}, os.arch=${os.arch}" />
 		<if>
