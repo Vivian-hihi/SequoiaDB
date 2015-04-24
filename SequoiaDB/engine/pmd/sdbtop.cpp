@@ -383,11 +383,11 @@ CHAR* SDB_TOP_LICENSE =
       "Licensed Materials - Property of SequoiaDB"OSS_NEWLINE
       "Copyright SequoiaDB Corp. 2013-2015 All Rights Reserved.";
 CHAR* SDB_TOP_DESC =
-" ###  ####  ####  #####  ###  ####   For help type h or ..."OSS_NEWLINE
+" #### ####  ####  #####  ###  ####   For help type h or ..."OSS_NEWLINE
 "#     #   # #   #   #   #   # #   #  sdbtop -h: usage"OSS_NEWLINE
-" ###  #   # ####    #   #   # ###*"OSS_NEWLINE
+" ###  #   # ####    #   #   # ####"OSS_NEWLINE
 "    # #   # #   #   #   #   # #"OSS_NEWLINE
-" ###  ###*  ####    #    ###  #"OSS_NEWLINE
+"####  ####  ####    #    ###  #"OSS_NEWLINE
 OSS_NEWLINE
 "SDB Interactive Snapshot Monitor V2.0"OSS_NEWLINE
 "Use these keys to ENTER:";
