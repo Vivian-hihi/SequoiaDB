@@ -24,18 +24,19 @@
 
 	<target name="1.Check-Version" depends="">
 		<echo level="info" message="Step1 : Delete the file &lt;${build_dir}/build.version.local&gt;." />
-		<delete file="${build_dir}/build.version.local" failonerror="false" />
-		<echo level="info" message="Step2 : Checking the file &lt;${build_dir}/build.version&gt; exists and if its true,copy the file &lt;${build_dir}/build.version&gt; to the file &lt;${build_dir}/build.version&gt;,and change parameters &lt;BUILD.NUMBER&gt; to &lt;BUILD.NUMBER.LOCAL&gt;,parameters &lt;BUILD.INSTALL.FILENAME&gt; to &lt;BUILD.INSTALL.FILENAME.LOCAL&gt;,parameters &lt;BUILD.DRIVER.FILENAME&gt; to &lt;BUILD.DRIVER.FILENAME&gt; in file &lt;${build_dir}/build.version.local&gt;." />
 		<available property="build_version_exist" file="${build_dir}/build.version" />
+		<delete file="${build_dir}/build.version.local" failonerror="false" />	
+		<echo level="info" message="Step2 : Checking the file &lt;${build_dir}/build.version&gt; exists and if its true,copy the file &lt;${build_dir}/build.version&gt; to the file &lt;${build_dir}/build.version&gt;,and change parameters &lt;BUILD.NUMBER&gt; to &lt;BUILD.NUMBER.LOCAL&gt;,parameters &lt;BUILD.INSTALL.FILENAME&gt; to &lt;BUILD.INSTALL.FILENAME.LOCAL&gt;,parameters &lt;BUILD.DRIVER.FILENAME&gt; to &lt;BUILD.DRIVER.FILENAME&gt; in file &lt;${build_dir}/build.version.local&gt;." />
 		<if>
-			<equals arg1="${build_version_exist}" arg2="true" />
+			<isset property="build_version_exist" />
 			<then>
 				<echo message="@ The file &lt;${build_dir}/build.version&gt; is exist." />
-				<copy file="${build_dir}/build.version" tofile="${build_dir}/build.version.local" failonerror="false" />
 				<property file="${build_dir}/build.version.local" />
+				<copy file="${build_dir}/build.version" tofile="${build_dir}/build.version.local" failonerror="true" />		
 				<replace file="${build_dir}/build.version.local" token="BUILD.NUMBER" value="BUILD.NUMBER.LOCAL" />
 				<replace file="${build_dir}/build.version.local" token="BUILD.INSTALL.FILENAME" value="BUILD.INSTALL.FILENAME.LOCAL" />
 				<replace file="${build_dir}/build.version.local" token="BUILD.DRIVER.FILENAME" value="BUILD.DRIVER.FILENAME.LOCAL" />
+				<property file="${build_dir}/build.version.local" />
 			</then>
 			<else>
 				<echo message="@ The file &lt;${build_dir}/build.version&gt; is not exist." />
@@ -52,7 +53,7 @@
 		<echo level="info" message="Step5 : Copy the file &lt;${copy_tar}/build.version&gt; from &lt;${deploy_tar_hostname}&gt;,command:staf &lt;${deploy_tar_hostname}&gt; FS COPY FILE &lt;${copy_tar}/build.version&gt; TODIRECTORY &lt;${build_dir}&gt; TOMACHINE &lt;${jenkins_master}&gt;." />
 		<stafTools workType="copy" workHost="${deploy_tar_hostname}" fileName="${copy_tar}/build.version" saveDir="${build_dir}" toHost="${jenkins_master}" failonerror="true"/>
     	<property file="${build_dir}/build.version" />
-    	<property file="${build_dir}/build.version.local" />
+    	<!-- <property file="${build_dir}/build.version.local" /> -->
 		<echo message="**************************************************************************************************************************************************************" />
 		<echo level="info" message="The old SequoiaDB version is ${BUILD.NUMBER.LOCAL} and the new SequoiaDB version is ${BUILD.NUMBER}."/>
 		<echo message="**************************************************************************************************************************************************************" />
@@ -67,6 +68,10 @@
 					<then>
 						<echo message="@ The folder &lt;${build_dir}/driver&gt; is exist." />
 					</then>
+					<else>
+						<echo message="@ The folder &lt;${build_dir}/driver&gt; is not exist." />
+						<antcall target="3.Copy-Software-Package" inheritAll="true" />
+					</else>
 				</if>
 			</then>
 			<else>
