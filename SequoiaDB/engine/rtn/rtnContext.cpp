@@ -1647,7 +1647,7 @@ namespace engine
                                     optAccessPlan *plan, pmdEDUCB *cb,
                                     const BSONObj &selector, INT64 numToReturn,
                                     INT64 numToSkip, const BSONObj *blockObj,
-                                    INT32 direction )
+                                    INT32 direction, SDB_DPSCB* dpsCB )
    {
       INT32 rc = SDB_OK ;
       _step = pmdGetKRCB()->getOptionCB()->maxSubQuery() ;
@@ -1658,7 +1658,7 @@ namespace engine
 
       rc = _rtnContextData::open( su, mbContext, plan, cb, selector,
                                   numToReturn, numToSkip, blockObj,
-                                  direction ) ;
+                                  direction, dpsCB ) ;
       if ( rc )
       {
          goto error ;

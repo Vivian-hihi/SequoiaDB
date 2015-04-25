@@ -397,7 +397,8 @@ namespace engine
                              const BSONObj &selector, INT64 numToReturn = -1,
                              INT64 numToSkip = 0,
                              const BSONObj *blockObj = NULL,
-                             INT32 direction = 1 ) ;
+                             INT32 direction = 1,
+                             SDB_DPSCB* dpsCB = NULL ) ;
 
       public:
          virtual RTN_CONTEXT_TYPE getType () const ;
