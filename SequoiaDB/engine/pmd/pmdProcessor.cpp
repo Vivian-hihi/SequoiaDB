@@ -732,7 +732,7 @@ namespace engine
          goto error ;
       }
 
-      rc = rtnRemoveLob( meta, header->w, eduCB(), dpsCB ) ;
+      rc = rtnRemoveLob( meta, header->flags, header->w, eduCB(), dpsCB ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to remove lob:%d", rc ) ;

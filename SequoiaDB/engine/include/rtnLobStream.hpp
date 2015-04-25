@@ -59,6 +59,7 @@ namespace engine
       INT32 open( const CHAR *fullName,
                   const bson::OID &oid,
                   INT32 mode,
+                  INT32 flags,
                   _pmdEDUCB *cb ) ;
 
       INT32 close( _pmdEDUCB *cb ) ;
@@ -143,6 +144,11 @@ namespace engine
          return _mode ;
       }
 
+      INT32 _getFlags() const
+      {
+         return _flags ;
+      }
+
    private:
       virtual INT32 _prepare( const CHAR *fullName,
                               const bson::OID &oid,
@@ -203,6 +209,7 @@ namespace engine
       BOOLEAN _opened ;
       _rtnLobWindow _lw ;
       UINT32 _mode ;
+      INT32  _flags ;
       SINT32 _lobPageSz ;
       SINT64 _offset ;
    } ;

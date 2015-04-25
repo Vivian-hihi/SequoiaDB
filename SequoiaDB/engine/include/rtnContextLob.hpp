@@ -55,6 +55,7 @@ namespace engine
    public:
       INT32 open( const BSONObj &lob,
                   BOOLEAN isLocal,
+                  INT32 flags,
                   _pmdEDUCB *cb,
                   SDB_DPSCB *dpsCB ) ;
 

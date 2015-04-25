@@ -75,6 +75,7 @@ namespace engine
    :_dpsCB( NULL ),
     _opened( FALSE ),
     _mode( 0 ),
+    _flags( 0 ),
     _lobPageSz( DMS_DO_NOT_CREATE_LOB ),
     _offset( 0 )
    {
@@ -91,6 +92,7 @@ namespace engine
    INT32 _rtnLobStream::open( const CHAR *fullName,
                               const bson::OID &oid,
                               INT32 mode,
+                              INT32 flags,
                               _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
@@ -99,6 +101,7 @@ namespace engine
       ossMemcpy( _fullName, fullName, ossStrlen( fullName ) ) ;
       ossMemcpy( &_oid, &oid, sizeof( oid ) ) ;
       _mode = mode ;
+      _flags = flags ;
 
       rc = _prepare( fullName, oid, mode, cb ) ;
       if ( SDB_OK != rc )

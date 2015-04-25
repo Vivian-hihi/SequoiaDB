@@ -65,6 +65,7 @@ namespace engine
                       pmdEDUCB *cb ) ;
 
    INT32 rtnRemoveLob( const BSONObj &lob,
+                       INT32 flags,
                        SINT16 w,
                        _pmdEDUCB *cb,
                        SDB_DPSCB *dpsCB ) ;

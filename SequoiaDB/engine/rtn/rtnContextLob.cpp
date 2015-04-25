@@ -71,7 +71,8 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNCONTEXTLOB_OPEN, "_rtnContextLob::open" )
    INT32 _rtnContextLob::open( const BSONObj &lob,
-                               BOOLEAN isLocal, 
+                               BOOLEAN isLocal,
+                               INT32 flags,
                                _pmdEDUCB *cb,
                                SDB_DPSCB *dpsCB )
    {
@@ -125,7 +126,9 @@ namespace engine
       _stream->setDPSCB( dpsCB ) ;
       rc = _stream->open( fullName.valuestr(),
                           oid.OID(),
-                          mode.Int(), cb ) ;
+                          mode.Int(),
+                          flags,
+                          cb ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to open lob stream:%d", rc ) ;

@@ -66,6 +66,7 @@ namespace engine
 
       protected:
          INT32   _check ( INT16 &w ) ;
+         INT32   _checkRead( INT32 flag, INT32 checkBit ) ;
          INT32   _checkCata ( INT32 version, const CHAR * name, INT16 &w,
                               BOOLEAN &isMainCL, BOOLEAN exceptVer = FALSE ) ;
          INT32   _reply ( MsgOpReply *header, const CHAR *buff, UINT32 size ) ;

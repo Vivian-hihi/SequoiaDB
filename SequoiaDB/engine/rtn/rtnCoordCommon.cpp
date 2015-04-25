@@ -84,17 +84,32 @@ namespace engine
       if ( pSession )
       {
          preferReplicaType = pSession->getPreferReplType() ;
-         if ( PREFER_REPL_MASTER == preferReplicaType &&
-              MSG_BS_QUERY_REQ == pBuffer->opCode )
+         if ( PREFER_REPL_MASTER == preferReplicaType )
          {
-            MsgOpQuery *pQuery = ( MsgOpQuery* )pBuffer ;
-            if ( FALSE == isResend )
+            if ( MSG_BS_QUERY_REQ == pBuffer->opCode )
             {
-               pQuery->flags |= FLG_QUERY_PRIMARY_FIRST ;
+               MsgOpQuery *pQuery = ( MsgOpQuery* )pBuffer ;
+               if ( FALSE == isResend )
+               {
+                  pQuery->flags |= FLG_QUERY_PRIMARY ;
+               }
+               else
+               {
+                  pQuery->flags &= ~FLG_QUERY_PRIMARY ;
+               }
             }
-            else if( isResend )
+            else if ( pBuffer->opCode > MSG_LOB_BEGIN &&
+                      pBuffer->opCode < MSG_LOB_END )
             {
-               pQuery->flags &= ~FLG_QUERY_PRIMARY_FIRST ;
+               MsgOpLob *pLobMsg = ( MsgOpLob* )pBuffer ;
+               if ( FALSE == isResend )
+               {
+                  pLobMsg->flags |= FLG_LOBREAD_PRIMARY ;
+               }
+               else
+               {
+                  pLobMsg->flags &= ~FLG_LOBREAD_PRIMARY ;
+               }
             }
          }
       }

@@ -279,6 +279,48 @@ namespace engine
       goto done ;
    }
 
+   INT32 _clsShdSession::_checkRead( INT32 flag, INT32 checkBit )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( flag & checkBit )
+      {
+         UINT32 waitTime = 0 ;
+         while( TRUE )
+         {
+            if ( _pReplSet->primaryIsMe() )
+            {
+               rc = SDB_OK ;
+               break ;
+            }
+            rc = SDB_CLS_NOT_PRIMARY ;
+
+            // if know primary exist or no majority size, return at now,
+            // otherwise, need to wait some time
+            if ( MSG_INVALID_ROUTEID !=
+                 ( _primaryID.value = _pReplSet->getPrimary().value ) )
+            {
+               /// do nothing
+            }
+            else if ( !CLS_IS_MAJORITY( _pReplSet->getAlivesByTimeout(),
+                                        _pReplSet->groupSize() ) )
+            {
+               /// do nothing
+            }
+            else if ( waitTime < SHD_NOTPRIMARY_WAITTIME &&
+                      !_pEDUCB->isInterrupted() )
+            {
+               ossSleep( SHD_WAITTIME_INTERVAL ) ;
+               waitTime += SHD_WAITTIME_INTERVAL ;
+               continue ;
+            }
+            break ;
+         }
+      }
+
+      return rc ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDSESS__CKCATA, "_clsShdSession::_checkCata" )
    INT32 _clsShdSession::_checkCata ( INT32 version, const CHAR * name,
                                       INT16 &w, BOOLEAN &isMainCL,
@@ -1074,6 +1116,11 @@ namespace engine
          else
          {
             w = 1 ;
+            rc = _checkRead( flags, FLG_QUERY_PRIMARY ) ;
+            if ( rc )
+            {
+               goto error ;
+            }
          }
 
          //check cata
@@ -1183,6 +1230,11 @@ namespace engine
          else
          {
             w = 1 ;
+            rc = _checkRead( flags, FLG_QUERY_PRIMARY ) ;
+            if ( rc )
+            {
+               goto error ;
+            }
          }
 
          //check cata
@@ -1361,9 +1413,11 @@ namespace engine
    }
    INT32 _clsShdSession::_onTransBeginMsg ()
    {
-      if ( !(_pReplSet->primaryIsMe ()) )
+      INT16 w = 1 ;
+      INT32 rc = _check( w ) ;
+      if ( rc )
       {
-         return SDB_CLS_NOT_PRIMARY;
+         return rc;
       }
       return rtnTransBegin( _pEDUCB ) ;
    }
@@ -1390,9 +1444,9 @@ namespace engine
    {
       if ( _pEDUCB->getTransID() == DPS_INVALID_TRANS_ID )
       {
-         return SDB_DPS_TRANS_NO_TRANS;
+         return SDB_DPS_TRANS_NO_TRANS ;
       }
-      return SDB_OK;
+      return SDB_OK ;
    }
 
    INT32 _clsShdSession::_onTransUpdateReqMsg ( NET_HANDLE handle,
@@ -2617,6 +2671,15 @@ namespace engine
             goto error ;
          }
       }
+      else
+      {
+         w = 1 ;
+         rc = _checkRead( header->flags, FLG_LOBREAD_PRIMARY ) ;
+         if ( rc )
+         {
+            goto error ;
+         }
+      }
 
       rc = _checkCata( header->version, fullName.valuestr(),
                        w, isMainCL ) ;
@@ -2861,7 +2924,16 @@ namespace engine
 
       lobContext = ( rtnContextShdOfLob * )context ;
       _pCollectionName = lobContext->getFullName() ;
-      w = lobContext->getW() ;
+
+      /// check primary by flags
+      w = 1 ;
+      rc = _checkRead( header->flags, FLG_LOBREAD_PRIMARY ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
+      /// check catalog version
       rc = _checkCata( header->version, lobContext->getFullName(),
                        w, isMainCl, FALSE ) ;
       if ( SDB_OK != rc )

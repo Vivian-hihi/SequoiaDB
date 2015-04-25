@@ -172,7 +172,7 @@ namespace engine
       }
 
       SDB_ASSERT( NULL != lobContext, "can not be null" ) ;
-      rc = lobContext->open( lob, isLocal, cb, dpsCB ) ;
+      rc = lobContext->open( lob, isLocal, flags, cb, dpsCB ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to open lob context:%d", rc ) ;
@@ -384,6 +384,7 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNREMOVELOB, "rtnRemoveLob" )
    INT32 rtnRemoveLob( const BSONObj &meta,
+                       INT32 flags,
                        SINT16 w,
                        _pmdEDUCB *cb,
                        SDB_DPSCB *dpsCB )
@@ -416,7 +417,7 @@ namespace engine
 
       rc = stream.open( fullName.valuestr(),
                         oid, SDB_LOB_MODE_REMOVE,
-                        cb ) ;
+                        flags, cb ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to remove lob:%s, rc:%d",

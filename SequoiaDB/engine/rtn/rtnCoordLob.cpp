@@ -61,7 +61,7 @@ namespace engine
          goto error ;
       }
 
-      rc = rtnOpenLob( obj, 0, FALSE, cb,
+      rc = rtnOpenLob( obj, header->flags, FALSE, cb,
                        NULL, 0, contextID,
                        meta ) ;
       if ( SDB_OK != rc )
@@ -231,6 +231,7 @@ namespace engine
 
       rc = stream.open( fullName,
                         ele.__oid(), SDB_LOB_MODE_REMOVE,
+                        header->flags,
                         cb ) ;
       if ( SDB_OK != rc )
       {

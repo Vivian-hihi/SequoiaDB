@@ -503,8 +503,8 @@ typedef struct _MsgOpInsert MsgOpInsert ;
 #define FLG_QUERY_WITH_RETURNDATA     0x00000200
 // explain query
 #define FLG_QUERY_EXPLAIN             0x00000400
-// First to query the primary node
-#define FLG_QUERY_PRIMARY_FIRST       0x00000800
+// Query from the primary node( only use in inner )
+#define FLG_QUERY_PRIMARY             0x00000800
 // query and modify
 #define FLG_QUERY_MODIFY              0x00001000
 
@@ -692,6 +692,8 @@ typedef struct _MsgOpAggregate
 }MsgOpAggregate;
 
 
+/// read on primary node( use only in inner)
+#define FLG_LOBREAD_PRIMARY               0x00000001
 
 /// when it is open reg |MsgOpLob|bsonobj|
 /// when it is open res |MsgOpReply|bsonobj|

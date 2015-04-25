@@ -1592,6 +1592,7 @@ namespace engine
       header.header.opCode = opCode ;
       header.bsonLen = bsonLen ;
       header.contextID = contextID ;
+      header.flags = _getFlags() ;
       header.header.messageLength = msgLen < 0 ?
                                     sizeof( header ) + bsonLen :
                                     msgLen ;
