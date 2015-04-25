@@ -9,7 +9,7 @@
     </section>
     <section>
       <title>SYNOPSIS</title>
-      <p></p><apiname>query.skip</apiname>(<parmname>&lt;update></parmname>,<parmname>[returnNew]</parmname>)
+      <p></p><apiname>query.update</apiname>(<parmname>&lt;update></parmname>,<parmname>[returnNew]</parmname>)
     </section>
     <section>
       <title>CATEGORY</title>

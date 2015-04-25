@@ -1,4 +1,5 @@
 //Auto generated index for searching.
+w["terminal:"]="120*1,121*1";
 w["terminate"]="885*2,1752*2,1771*1";
 w["terminated"]="185*2,263*1,474*1,1747*1,1775*1";
 w["terminated."]="1775*1";

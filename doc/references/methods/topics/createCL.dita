@@ -47,7 +47,7 @@
         </strow>
         <strow>
           <stentry>ShardingType</stentry>
-          <stentry>分区方式，默认为 range 分区。</stentry>
+          <stentry>分区方式，默认为 hash 分区。</stentry>
           <stentry>ShardingType:"hash"|"range"</stentry>
         </strow>
         <strow>
