@@ -322,9 +322,9 @@ namespace engine
 
       protected:
          INT32 _queryModify( _pmdEDUCB* eduCB,
-                                 const dmsRecordID& recordID,
-                                 ossValuePtr recordDataPtr,
-                                 BSONObj& obj ) ;
+                             const dmsRecordID& recordID,
+                             ossValuePtr recordDataPtr,
+                             BSONObj& obj ) ;
          virtual INT32     _prepareData( _pmdEDUCB *cb ) ;
          virtual BOOLEAN   _canPrefetch () const { return TRUE ; }
          virtual void      _toString( stringstream &ss ) ;
