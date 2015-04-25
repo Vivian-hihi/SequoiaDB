@@ -25,6 +25,7 @@ stopWhenFailed=1
 printOut=0
 showNameWidth=60
 runAllTest=0
+specificDirorFile=0
 
 # define stat parameter
 sucNum=0
@@ -273,9 +274,11 @@ fi
 while [ "$1" != "" ]; do
    case $1 in
       -p )            shift
+                      specificDirorFile=1
                       passDir=$1
                       ;;
       -f )            shift
+                      specificDirorFile=1
                       passFile=$1
                       ;;
       -s )            shift
@@ -373,7 +376,7 @@ findCmdStr="find $testDir "
 beginPrefix=""
 endPrefix=""
 
-if [ $runAllTest -eq 1 -o "$testFile"X != ""X ]
+if [ $runAllTest -eq 1 -o $specificDirorFile -eq 1 ]
 then
    for data in ${pathArray[@]}
    do
@@ -416,7 +419,7 @@ else
    echo "UUNAME       : $uuname"
    echo "COORDSVCNAME : $coordsvcname"
    echo "COORDSVCHOST : $coordhostname"
-   echo "Find command : $findCmdStr"
+   echo "Exec command : ls $testDir/*/basic_testcases.list" 
    echo "*******************************************************************************"
 fi
 
@@ -455,7 +458,7 @@ if [ "$printStr" != "" ] ; then
    printResult ""
 fi
 
-if [ $runAllTest -eq 1 -o "$testFile"X != ""X ]
+if [ $runAllTest -eq 1 -o $specificDirorFile -eq 1 ]
 then
    for file in `eval $findCmdStr`
    do
