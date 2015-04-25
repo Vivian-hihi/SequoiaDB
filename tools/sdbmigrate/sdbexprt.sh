@@ -1,13 +1,13 @@
 #!/bin/bash
 
-PROGPATH=$(cd `dirname $0`; pwd)
-SDB=${PROGPATH}/sdb
-SDBEXPRT=${PROGPATH}/sdbexprt
+CUR_PATH=$(cd `dirname $0`; pwd)
 
-DEFAULT_HOSTNAME="localhost"
-DEFAULT_SVCNAME="11810"
-DEFAULT_USER=""
-DEFAULT_PASSWORD=""
+# import common functions
+source ${CUR_PATH}/common.sh
+
+SDBEXPRT=`getProgFullPath "sdbexprt"`
+PROG_PATH=`dirname ${SDBEXPRT}`
+SDB=${PROG_PATH}/sdb
 
 opt_version="--version"
 opt_help="--help"
@@ -41,9 +41,6 @@ opt_argument_str=""
 arr_options=( "-h" "-s" "-p" "-u" "-w" "-a" "-e" "-r" "-c" "-l" "--help" "--version" "--hostname" "--svcname" "--user" "--password" "--delchar" "--delfield" "--delrecord" "--csname" "--clname" "--file" "--type" "--fields" "--include" "--errorstop" "--includebinary" "--includeregex" "--filter" "--sort" "--ssl" "--output" "--debug" )
 
 ################################################################################
-
-# import common functions
-source $PROGPATH/common.sh
 
 #
 #@description: display usage
@@ -180,6 +177,57 @@ function genArgForExport()
 }
 
 #
+#@description: display debug info
+#@argument:
+#@return 0 for success
+#
+function displayDebugInfo
+{
+   local elem=""
+
+   # user input options
+   echo ""
+   echo "#################################################################################"
+   echo ""
+   echo "Debug: User input: "
+   echo "$opt_argument_str"
+   echo ""
+   
+   # cs user expect
+   echo "Debug: Collection space to export:"
+   for elem in ${arr_input_cs[*]}
+   do
+      echo "${elem}"
+   done
+   echo ""
+ 
+   # cl user expect
+   echo "Debug: Collection to export:"
+   for elem in ${arr_input_cl[*]}
+   do
+      echo "${elem}"
+   done
+   echo ""
+ 
+   # cs in db
+   echo "Debug: Collection space in database:"
+   for elem in ${arr_db_cs[*]}
+   do
+      echo "${elem}"
+   done
+   echo ""
+
+   # cl in db
+   echo "Debug: Collection in database:"
+   for elem in ${arr_db_cl[*]}
+   do
+      echo "${elem}"
+   done
+
+   return 0
+}
+
+#
 #@description: export data
 #@argument:
 #@return 0 for success
@@ -202,8 +250,12 @@ function exportData()
    local val_begin_time=""
    local val_end_time=""
 
-   cd $PROGPATH
+   # let dialog leaves in current path
+   cd ${CUR_PATH}
    
+   echo ""
+   echo "#################################################################################"
+   echo ""
    for val_item in ${arr_input_cl[*]}
    do
       cl_full_name=`separateAndRet "$val_item" ":" 0`
@@ -221,25 +273,31 @@ function exportData()
       val_arguments=`genArgForExport "$cs_name" "$cl_name" "$val_output_file" "$val_type"`
 
       # import
-      echo "#################################################################################"
       echo "Begin to export '$cl_full_name' to '$val_output_file'."
       val_begin_time=`date +"%Y-%m-%d %H:%M:%S"`
 
       val_command="${SDBEXPRT} ${val_arguments}" # nerver use "${val_arguments}"
       if [ "true" = "${opt_debug}" ] ; then
-         echo "Debug: The command is: ${val_command}" # debug
+         echo "Debug: The command is: "
+         echo "${val_command}" # debug
       fi
 
       # run command to export
       eval ${val_command}
       rc=$?
+      if [ 0 -ne $rc ] ; then
+         echo "Error: error happen."
+         echo ""
+         break
+      fi
 
       val_end_time=`date +"%Y-%m-%d %H:%M:%S"`
       spendTime "$val_begin_time" "$val_end_time"
-      echo "#################################################################################"
       echo ""
 
    done
+   echo "#################################################################################"
+   echo ""
 
    return $rc
 }
@@ -360,12 +418,6 @@ do
    shift
 done
                                             
-if [ "true" == "${opt_debug}" ] ; then
-   echo ""
-   echo "Debug: User input: $opt_argument_str" #debug
-   echo ""
-fi
-
 # check input path
 verifyArgumentsForExport
 
@@ -383,7 +435,14 @@ getCLFromDB "$opt_hostname" "$opt_svcname" "$opt_user" "$opt_password"
 # check whether all the input cs and cl exist in database or not
 compareCSCLWithDBForExport "$opt_hostname" "$opt_svcname" "$opt_user" "$opt_password" "$opt_csname" "$opt_clname"
 
-echo ""
+# display debug info
+if [ "true" = "${opt_debug}" ] ; then
+   displayDebugInfo
+fi
 
 # begin to import data
 exportData "$opt_output" "$opt_type"
+if [ 0 != $? ] ; then
+   echo "Error: Failed to export."
+fi
+

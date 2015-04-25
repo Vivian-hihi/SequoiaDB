@@ -1,14 +1,13 @@
 #!/bin/bash
 
-PROGPATH=$(cd `dirname $0`; pwd)
-cd ${PROGPATH}
-SDB=${PROGPATH}/sdb
-SDBIMPRT=${PROGPATH}/sdbimprt
+CUR_PATH=$(cd `dirname $0`; pwd)
 
-DEFAULT_HOSTNAME="localhost"
-DEFAULT_SVCNAME="11810"
-DEFAULT_USER=""
-DEFAULT_PASSWORD=""
+# import common functions
+source ${CUR_PATH}/common.sh
+
+SDBIMPRT=`getProgFullPath "sdbimprt"`
+PROG_PATH=`dirname ${SDBIMPRT}`
+SDB=${PROG_PATH}/sdb
 
 opt_version="--version"
 opt_help="--help"
@@ -40,8 +39,6 @@ opt_argument_str=""
 arr_options=( "-h" "-s" "-p" "-u" "-w" "-a" "-e" "-r" "-c" "-l" "-n" "--help" "--version" "--hostname" "--svcname" "--user" "--password" "--delchar" "--delfield" "--delrecord" "--csname" "--clname" "--insertnum" "--file" "--type" "--fields" "--headerline" "--sparse" "--extra" "--linepriority" "--errorstop" "--force" "--ssl" "--input" "--debug" )
 
 ################################################################################
-# import common functions
-source $PROGPATH/common.sh
 
 #
 #@description: display usage
@@ -176,6 +173,74 @@ function genArgForImport()
 }
 
 #
+#@description: display debug info
+#@argument:
+#@return 0 for success
+#
+function displayDebugInfo
+{
+   local val_type=""
+   local elem=""
+
+   # user input options
+   echo ""
+   echo "#################################################################################"
+   echo ""
+   echo "Debug: User input: "
+   echo "$opt_argument_str"
+   echo ""
+
+   # cs user expect
+   echo "Debug: Collection space to import:"
+   for elem in ${arr_input_cs[*]}
+   do
+      echo "${elem}"
+   done
+   echo ""
+
+   # cl user expect
+   echo "Debug: Collection to import:"
+   for elem in ${arr_input_cl[*]}
+   do
+      echo "${elem}"
+   done
+   echo ""
+
+   # cs in db
+   echo "Debug: Collection space in database:"
+   for elem in ${arr_db_cs[*]}
+   do
+      echo "${elem}"
+   done
+   echo ""
+
+   # cl in db
+   echo "Debug: Collection in database:"
+   for elem in ${arr_db_cl[*]}
+   do
+      echo "${elem}"
+   done
+   echo ""
+
+   # cs in input path
+   echo "Debug: Collection space in input path:"
+   for elem in ${arr_file_cs[*]}
+   do
+      echo "${elem}"
+   done
+   echo ""
+
+   # cl in input path
+   echo "Debug: Collection in input path:"
+   for elem in ${arr_file_cl[*]}
+   do
+      echo "${elem}"
+   done
+
+   return 0
+}
+
+#
 #@description: import data
 #@arguments: 1. the path where input files are in
 #            2. import csv or json files
@@ -198,8 +263,12 @@ function importData()
    local val_begin_time=""
    local val_end_time=""
 
-   cd $PROGPATH
+   # let dialog leaves in current path
+   cd ${CUR_PATH}
 
+   echo ""
+   echo "#################################################################################"
+   echo ""
    for val_item in ${arr_input_cl[*]}
    do
       cl_full_name=`separateAndRet "$val_item" ":" 0`
@@ -210,29 +279,35 @@ function importData()
       val_src_file="$val_path/$val_cs_dir/$cl_full_name.$val_type"
       val_arguments=`genArgForImport "$cs_name" "$cl_name" "$val_src_file"`
       # import
-      echo "#################################################################################"
+
       echo "Begin to import '$val_src_file' to '$new_cl_full_name'."
       val_begin_time=`date +"%Y-%m-%d %H:%M:%S"`
-
       val_command="${SDBIMPRT} ${val_arguments}" # nerver use "${val_arguments}"
       if [ "true" = "${opt_debug}" ] ; then
-         echo "Debug: The command is: ${val_command}" # debug
+         echo "Debug: The command is:"
+         echo "${val_command}" # debug
       fi
       
       # run command to import
       eval ${val_command}
       rc=$?
+      if [ 0 -ne $rc ] ; then
+         echo "Error: error happen."
+         echo ""
+         break
+      fi
 
       val_end_time=`date +"%Y-%m-%d %H:%M:%S"`
       spendTime "$val_begin_time" "$val_end_time"
-      echo "#################################################################################"
+
       echo ""
 
    done
+   echo "#################################################################################"
+   echo ""
 
    return $rc
 }
-
 
 ################################################################################
 
@@ -350,12 +425,6 @@ do
    shift
 done
 
-if [ "true" == "${opt_debug}" ] ; then
-   echo ""
-   echo "Debug: User input: $opt_argument_str" #debug
-   echo ""
-fi
-                                            
 # check input path
 verifyArguments
 
@@ -375,8 +444,13 @@ compareCSCLWithLocalForImport "$opt_csname" "$opt_clname" "$opt_input" "$opt_typ
 # check whether all the input cs and cl exist in database or not
 compareCSCLWithDBForImport "$opt_hostname" "$opt_svcname" "$opt_user" "$opt_password" "$opt_csname" "$opt_clname"
 
-echo ""
+# display debug info
+if [ "true" = "${opt_debug}" ] ; then
+   displayDebugInfo
+fi
 
 # begin to import data
 importData "$opt_input" "$opt_type"
-
+if [ 0 != $? ] ; then
+   echo "Error: Failed to import all the data to database."
+fi

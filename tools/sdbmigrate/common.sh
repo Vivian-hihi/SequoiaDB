@@ -1,6 +1,11 @@
 #!/bin/bash
 
-PROGPATH=$(cd `dirname $0`; pwd)
+DEF_INSTALL_PATH=/etc/default/sequoiadb
+
+DEFAULT_HOSTNAME="localhost"
+DEFAULT_SVCNAME="11810"
+DEFAULT_USER=""
+DEFAULT_PASSWORD=""
 
 # define global array
 arr_input_cs=()
@@ -19,6 +24,11 @@ arr_separate_result3=()
 
 ############################ global function ##################################
 
+#
+#@description: get the full path according to a relative path
+#@arguemnts: a relative path
+#@return: the full path
+#
 function getFullPath()
 {
    local relative_path=$1
@@ -174,6 +184,65 @@ function separateAndRet3()
 }
 
 #
+#@description: get the full path of the specified program
+#@arguments: the name of the program
+#@return: the full path of the program. e.g. /opt/sequoiadb/bin/sdbexprt
+#         when can't find the program, stop running
+#
+function getProgFullPath()
+{
+   local ret_str=""
+   local val_prog=$1
+   local val_install_path=""
+   local arr_tmp=()
+   local val_tmp_str1=""
+   local val_tmp_str2=""
+   local val_flag1=0
+   local val_flag2=0
+   local len=0
+   local i=0
+
+   # get from install path
+   if [ -f "${DEF_INSTALL_PATH}" ] ; then
+      source ${DEF_INSTALL_PATH}
+      if [ -f "${INSTALL_DIR}/bin/${val_prog}" ] ; then
+         val_tmp_str1=${INSTALL_DIR}/bin/${val_prog}
+         val_flag1=1
+      fi
+   fi
+
+   # get from whereis
+   arr_tmp=(`whereis "${val_prog}"`)
+   for (( i = 1; i < ${#arr_tmp[@]}; i++ ))
+   do
+      val_tmp_str2=${arr_tmp[$i]}
+      separateByMark "$val_tmp_str2" "/"
+      len=${#arr_separate_result[@]}
+      if [ "${val_prog}" = "${arr_separate_result[$len-1]}" ]
+      then
+         val_flag2=1
+         break
+      fi
+   done
+
+   # get program full path 
+   if [ -f "${CUR_PATH}/${val_prog}" ] ; then # get from current path
+      ret_str="${CUR_PATH}/${val_prog}"
+   elif [ 1 -eq ${val_flag1} ] ; then # get from default install path
+      ret_str="${val_tmp_str1}"
+   elif [ -f "${CUR_PATH}/../../bin/${val_prog}" ] ; then # get from relative path "../../bin/"
+      ret_str="${CUR_PATH}/../../bin/${val_prog}"
+   elif [ 1 -eq ${val_flag2} ] ; then # get from whereis ${val_prog}
+      ret_str="${val_tmp_str2}"
+   else # can't find, echo error and stop running
+      echo "Error: can not find program ${val_prog}."
+      exit
+   fi
+
+   echo ${ret_str}
+}
+
+#
 #@description: gen the specified option
 #@argument: 1. the type of the option
 #           2. the value of the option
@@ -191,7 +260,6 @@ function genOption()
       then
          return_str="--${option} '${value}'"
       fi
-      # debug # TODO: check the follow 3 options
       if [ "delchar" = "${option}" ] || [ "delfield" = "${option}" ] || [ "delrecord" = "${option}" ]
       then
          if [ "'" = "${value}" ] ; then
