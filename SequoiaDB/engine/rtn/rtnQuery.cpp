@@ -595,6 +595,10 @@ namespace engine
       {
          dmsCB->writeDown( cb ) ;
       }
+      if ( queryModifier )
+      {
+         SDB_OSS_DEL queryModifier ;
+      }
       goto done ;
    }
 
