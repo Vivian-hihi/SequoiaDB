@@ -52,6 +52,7 @@ public class DBCollection {
 	private String csName;
 	private String collectionFullName;
 	private Set<String> mainKeys;
+	private boolean ensureOID;
 
 	private IoBuffer insert_buffer;
 	private static final int DEF_BUFFER_LENGTH = 64*1024;
@@ -161,6 +162,7 @@ public class DBCollection {
 		this.connection = sequoiadb.getConnection();
 		this.insert_buffer = null;
 		this.mainKeys = new HashSet<String>();
+		this.ensureOID=true;
 	}
 
 	/**
@@ -361,6 +363,14 @@ public class DBCollection {
 		}
 	}
 	
+	public void ensureOID(boolean flag) {
+		ensureOID=flag;
+	}
+	
+	public boolean isOIDEnsured() {
+		return ensureOID;
+	}
+	
 	/**
 	 * @fn void bulkInsert(List<BSONObject> insertor, int flag)
 	 * @brief Insert a bulk of bson objects into current collection
@@ -395,7 +405,7 @@ public class DBCollection {
 
 		int messageLength = SDBMessageHelper.buildBulkInsertRequest(
 				insert_buffer, sequoiadb.getNextRequstID(), collectionFullName, 
-				insertor, flag);
+				insertor, flag, this.ensureOID);
 
 		connection.sendMessage(insert_buffer.array(), messageLength);
 		
