@@ -133,9 +133,9 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNLOBDATAPOOL_NEXT, "_rtnLobDataPool::next" )
-   BOOLEAN _rtnLobDataPool::next( UINT32 len, const CHAR **buf, UINT32 &read )
+   INT32 _rtnLobDataPool::next( UINT32 len, const CHAR **buf, UINT32 &read )
    {
-      BOOLEAN res = FALSE ;
+      INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNLOBDATAPOOL_NEXT ) ;
 
       if ( 0 <= _current )
@@ -146,7 +146,6 @@ namespace engine
          read = realLen ;
          _currentTuple.len -= realLen ;
          _lastDataSz -= realLen ;
-         res = TRUE ;
 
          if ( 0 == _currentTuple.len )
          {
@@ -157,8 +156,10 @@ namespace engine
                _currentTuple.clear() ;
                SDB_ASSERT( 0 == _lastDataSz, "must be zero" ) ;
             }
-
-            _currentTuple = _pool[_current] ;
+            else
+            {
+               _currentTuple = _pool.at(_current) ;
+            }
          }
          else
          {
@@ -166,9 +167,18 @@ namespace engine
             _currentTuple.offset += realLen ;
          }
       }
+      else
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "current tuple is invalid" ) ;
+         goto error ;
+      }
 
+   done:
       PD_TRACE_EXIT( SDB_RTNLOBDATAPOOL_NEXT ) ;
-      return res ;
+      return rc ;
+   error:
+      goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNLOBDATAPOOL_PUSH, "_rtnLobDataPool::push" )
@@ -210,7 +220,7 @@ namespace engine
       }
 #endif
       _current = 0 ;
-      _currentTuple = _pool[_current ] ;
+      _currentTuple = _pool.at(_current) ;
       PD_TRACE_EXIT( SDB_RTNLOBDATAPOOL_PUSHDONE ) ;
       return ;
    }

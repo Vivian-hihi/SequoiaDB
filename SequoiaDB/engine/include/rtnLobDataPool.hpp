@@ -116,7 +116,7 @@ namespace engine
 
       BOOLEAN match( SINT64 offset ) ;
 
-      BOOLEAN next( UINT32 len, const CHAR **data, UINT32 &read ) ;
+      INT32 next( UINT32 len, const CHAR **data, UINT32 &read ) ;
 
       void clear() ;
 
