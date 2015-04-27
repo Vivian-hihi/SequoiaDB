@@ -366,6 +366,51 @@ error :
    goto done ;
 }
 
+INT32 msgReceiveSysInfoRes ()
+{
+   INT32 rc = SDB_OK ;
+   INT32 length = sizeof( MsgSysInfoReply ) ;
+   INT32 receivedLen = 0 ;
+   INT32 totalReceivedLen = 0 ;
+   if ( !sock )
+   {
+      printf ( "-Error: Connection does not exist\n" ) ;
+      rc = SDB_SYS ;
+      goto error ;
+   }
+
+   while ( !quit )
+   {
+      // get unsigned int length first
+      rc = sock->recv ( &pInBuffer[ totalReceivedLen ],
+                        length-totalReceivedLen,
+                        receivedLen ) ;
+      totalReceivedLen += receivedLen ;
+      if ( rc == SDB_TIMEOUT )
+      {
+         continue ;
+      }
+      if ( rc == SDB_NETWORK_CLOSE )
+      {
+         printf ( "-Error: Remote connection is closed\n" ) ;
+         delete ( sock ) ;
+         sock = NULL ;
+         goto error ;
+      }
+      if ( rc )
+      {
+         printf("-Error: Invalid bytes received, rc: %d\n", rc ) ;
+         goto error ;
+      }
+      break ;
+   }
+
+done :
+   return rc ;
+error :
+   goto done ;
+}
+
 INT32 msgReceiveExtract ( BOOLEAN *querySuccess )
 {
    INT32 rc = SDB_OK ;
@@ -1147,6 +1192,29 @@ INT32 connect ( vector<string> arg )
       goto error ;
    }
    sock->disableNagle();
+
+   /// sys info message
+   {
+      INT32 sentLen = 0 ;
+      rc = msgBuildSysInfoRequest( &pOutBuffer, &outBufferSize ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+      rc = sock->send ( pOutBuffer, sizeof( MsgSysInfoRequest ),
+                        sentLen ) ;
+      if ( rc )
+      {
+         printf ( "-Error: Failed to send data, rc: %d\n", rc ) ;
+         goto error ;
+      }
+
+      rc = msgReceiveSysInfoRes() ;
+      if ( rc )
+      {
+         goto error ;
+      }
+   }
 
    if ( g_auth )
    {
