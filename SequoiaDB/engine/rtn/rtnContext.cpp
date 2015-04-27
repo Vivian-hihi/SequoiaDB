@@ -2781,9 +2781,12 @@ namespace engine
          if ( _needReOrder )
          {
             rc = _reOrderSubContext() ;
-            PD_LOG( PDERROR, "Re-order sub context last record "
-                    "failed, rc: %d", rc ) ;
-            goto error ;
+            if ( rc )
+            {
+               PD_LOG( PDERROR, "Re-order sub context last record "
+                       "failed, rc: %d", rc ) ;
+               goto error ;
+            }
          }
 
          rc = pSubContext->getOrderKey( orderKey, _keyGen ) ;
