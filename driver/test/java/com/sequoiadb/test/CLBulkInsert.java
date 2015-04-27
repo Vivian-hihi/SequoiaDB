@@ -1,5 +1,6 @@
 package com.sequoiadb.test;
 
+import static org.junit.Assert.*;
 import static org.junit.Assert.assertEquals;
 
 import java.util.ArrayList;
@@ -7,6 +8,7 @@ import java.util.List;
 
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
+import org.bson.types.ObjectId;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -17,6 +19,7 @@ import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
+import com.sequoiadb.base.SequoiadbConstants;
 import com.sequoiadb.exception.BaseException;
 
 
@@ -72,6 +75,118 @@ public class CLBulkInsert {
 	    	i++;
 	    }
 	    assertEquals(100000,i);
+	}
+	
+	@Test
+	public void bulkInsert2(){
+		int i =0 ;
+		BSONObject record=null;
+		// build list
+		List<BSONObject>list = ConstantsInsert.createRecordList(2);
+		
+		// case 1:
+		// check isOIDEnsured()
+		cl.ensureOID(false);
+		assertFalse(cl.isOIDEnsured());
+		
+		// bulk insert
+		cl.bulkInsert(list, DBCollection.FLG_INSERT_CONTONDUP);
+		cursor = cl.query();
+		// check
+		i = 0;
+	    while(cursor.hasNext()){
+	    	cursor.getNext();
+	    	i++;
+	    }
+	    assertEquals(2,i);
+	    for ( i = 0; i < list.size(); i++ )
+	    {
+	    	record=list.get(i);
+	    	if ( null != record.get(SequoiadbConstants.OID) )
+	    	{
+	    		assertTrue("Record should not contain oid add by bulk insert", false);
+	    	}
+	    }
+	    
+	    // case 2:
+		// build another record
+		cl.ensureOID(true);
+		
+		// check isOIDEnsured()
+		assertTrue(cl.isOIDEnsured());
+		
+		// bulk insert
+		cl.bulkInsert(list, DBCollection.FLG_INSERT_CONTONDUP);
+		cursor = cl.query();
+		// check
+		i = 0;
+	    while(cursor.hasNext()){
+	    	cursor.getNext();
+	    	i++;
+	    }
+	    assertEquals(4,i);
+	    for ( i = 0; i < list.size(); i++ )
+	    {
+	    	record=list.get(i);
+	    	if ( null == record.get(SequoiadbConstants.OID) )
+	    	{
+	    		assertTrue("Record has no oid add by bulk insert", false);
+	    	}
+	    }
+	    
+	    // case 3:
+		BSONObject obj = new BasicBSONObject() ;
+		ObjectId oid=ObjectId.get();
+		obj.put(SequoiadbConstants.OID, oid);
+		obj.put("a", 1);
+		list=ConstantsInsert.createRecordList(1);
+		list.add(obj);
+		// bulk insert
+		cl.bulkInsert(list, DBCollection.FLG_INSERT_CONTONDUP);
+		cursor = cl.query();
+		// check
+		i = 0;
+	    while(cursor.hasNext()){
+	    	cursor.getNext();
+	    	i++;
+	    }
+	    assertEquals(6,i);
+	    for ( i = 0; i < list.size(); i++ )
+	    {
+	    	record=list.get(i);
+	    	if ( null == record.get(SequoiadbConstants.OID) )
+	    	{
+	    		assertTrue("Record has no oid add by bulk insert", false);
+	    	}
+	    	if ( null != record.get("a"))
+	    	{
+	    		ObjectId id = (ObjectId)record.get(SequoiadbConstants.OID);
+	    		if ( false == id.toString().endsWith(oid.toString()) )
+	    		{
+	    			assertTrue("Record's oid should not be changed by bulk insert", false);
+	    		}
+	    	}
+	    }
+	    assertEquals(2, i);
+	    
+	    // case 4:
+	    try
+	    {
+	    	cl.bulkInsert(list, DBCollection.FLG_INSERT_CONTONDUP);
+	    }
+	    catch(BaseException e)
+	    {
+	    	assertTrue(false);
+	    }
+	    try
+	    {
+	    	cl.bulkInsert(list, 0);
+	    	// should not go on
+	    	assertTrue(false);
+	    }
+	    catch(BaseException e)
+	    {
+	    }
 	}
 	
 	@Test
