@@ -136,11 +136,19 @@ public class CLBulkInsert {
 	    
 	    // case 3:
 		BSONObject obj = new BasicBSONObject() ;
+		BSONObject obj1 = new BasicBSONObject() ;
+		BSONObject obj2 = new BasicBSONObject() ;
 		ObjectId oid=ObjectId.get();
 		obj.put(SequoiadbConstants.OID, oid);
 		obj.put("a", 1);
+		obj1.put(SequoiadbConstants.OID, "2");
+		obj1.put("b", 2);
+		obj2.put(SequoiadbConstants.OID, 3);
+		obj2.put("c", 3);
 		list=ConstantsInsert.createRecordList(1);
 		list.add(obj);
+		list.add(obj1);
+		list.add(obj2);
 		// bulk insert
 		cl.bulkInsert(list, DBCollection.FLG_INSERT_CONTONDUP);
 		cursor = cl.query();
@@ -150,7 +158,7 @@ public class CLBulkInsert {
 	    	cursor.getNext();
 	    	i++;
 	    }
-	    assertEquals(6,i);
+	    assertEquals(8,i);
 	    for ( i = 0; i < list.size(); i++ )
 	    {
 	    	record=list.get(i);
@@ -166,8 +174,24 @@ public class CLBulkInsert {
 	    			assertTrue("Record's oid should not be changed by bulk insert", false);
 	    		}
 	    	}
+	    	if ( null != record.get("b"))
+	    	{
+	    		String id = (String)record.get(SequoiadbConstants.OID);
+	    		if ( false == id.toString().equals("2") )
+	    		{
+	    			assertTrue("Record's oid should not be changed by bulk insert", false);
+	    		}
+	    	}
+	    	if ( null != record.get("c"))
+	    	{
+	    		int id = (Integer)record.get(SequoiadbConstants.OID);
+	    		if (3 != id )
+	    		{
+	    			assertTrue("Record's oid should not be changed by bulk insert", false);
+	    		}
+	    	}
 	    }
-	    assertEquals(2, i);
+	    assertEquals(4, i);
 	    
 	    // case 4:
 	    try
