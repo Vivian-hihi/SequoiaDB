@@ -558,8 +558,7 @@ namespace engine
       while ( 0 < needLen )
       {
          UINT32 dataLen = 0 ;
-         rc = _pool.next( needLen, &data, dataLen ) ;
-         if ( SDB_OK == rc )
+         if( _pool.next( needLen, &data, dataLen ) )
          {
             needLen -= dataLen ;
             readLen += dataLen ;
@@ -572,8 +571,7 @@ namespace engine
          }
          else
          {
-            PD_LOG( PDERROR, "failed to read data from pool:%d", rc ) ;
-            goto error ;
+            break ;
          }
       }
 
