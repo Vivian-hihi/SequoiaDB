@@ -627,6 +627,8 @@ namespace engine
          INT32    _send2EmptyNodes( _pmdEDUCB *cb ) ;
          INT32    _getPrepareNodesData( _pmdEDUCB *cb, BOOLEAN waitAll ) ;
 
+         INT32    _reOrderSubContext() ;
+
       private:
          // rest number of records to expect, -1 means select all
          SINT64                     _numToReturn ;
@@ -646,6 +648,8 @@ namespace engine
 
          _ixmIndexKeyGen            *_keyGen ;
          mthSelector                _selector ;
+
+         BOOLEAN                    _needReOrder ;
    } ;
    typedef _rtnContextCoord rtnContextCoord ;
 

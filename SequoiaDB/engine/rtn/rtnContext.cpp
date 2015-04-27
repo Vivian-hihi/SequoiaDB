@@ -2345,6 +2345,7 @@ namespace engine
       _netAgent         = NULL ;
       _preRead          = preRead ;
       _keyGen           = NULL ;
+      _needReOrder      = FALSE ;
    }
 
    _rtnContextCoord::~_rtnContextCoord ()
@@ -2352,7 +2353,6 @@ namespace engine
       pmdKRCB *krcb = pmdGetKRCB() ;
       pmdEDUMgr *eduMgr = krcb->getEDUMgr() ;
       pmdEDUCB *cb = eduMgr->getEDUByID( eduID() ) ;
-
 
       killSubContexts( cb ) ;
       SAFE_OSS_DELETE( _keyGen ) ;
@@ -2699,6 +2699,29 @@ namespace engine
       goto done ;
    }
 
+   INT32 _rtnContextCoord::_reOrderSubContext()
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( _needReOrder && 1 == _subContextMap.size() && requireOrder() )
+      {
+         coordSubContext *pSubContext = _subContextMap.begin()->second ;
+         coordOrderKey orderKey ;
+         rc = pSubContext->getOrderKey( orderKey, _keyGen ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to get orderKey, rc:%d", rc ) ;
+
+         _subContextMap.clear() ;
+         _subContextMap.insert( SUB_CONTEXT_MAP::value_type( orderKey,
+                                pSubContext ) ) ;
+      }
+
+   done:
+      _needReOrder = FALSE ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 _rtnContextCoord::_appendSubData( CHAR * pData )
    {
       INT32 rc = SDB_OK ;
@@ -2754,6 +2777,15 @@ namespace engine
       else
       {
          coordOrderKey orderKey ;
+
+         if ( _needReOrder )
+         {
+            rc = _reOrderSubContext() ;
+            PD_LOG( PDERROR, "Re-order sub context last record "
+                    "failed, rc: %d", rc ) ;
+            goto error ;
+         }
+
          rc = pSubContext->getOrderKey( orderKey, _keyGen ) ;
          if ( rc != SDB_OK )
          {
@@ -2823,8 +2855,15 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       takeOver = FALSE ;
+      BOOLEAN isEmpty = FALSE ;
 
       SDB_ASSERT ( NULL != pReply, "reply can't be NULL" ) ;
+
+      if ( _subContextMap.empty() && _emptyContextMap.empty() &&
+           _prepareContextMap.empty() )
+      {
+         isEmpty = TRUE ;
+      }
 
       rc = addSubContext( pReply->header.routeID, pReply->contextID ) ;
       if ( rc )
@@ -2838,6 +2877,11 @@ namespace engine
          EMPTY_CONTEXT_MAP::iterator it ;
          it = _emptyContextMap.find( pReply->header.routeID.value ) ;
          SDB_ASSERT( it != _emptyContextMap.end(), "System error" ) ;
+
+         if ( !_needReOrder && isEmpty )
+         {
+            _needReOrder = TRUE ;
+         }
 
          _prepareContextMap.insert( EMPTY_CONTEXT_MAP::value_type(
                                     it->first, it->second ) ) ;
