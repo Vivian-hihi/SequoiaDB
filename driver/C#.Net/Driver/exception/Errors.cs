@@ -292,7 +292,8 @@ namespace SequoiaDB
             SDB_CAT_DUAL_ACTIVE              = -286,
             SDB_CAT_CLUSTER_NOT_ACTIVE       = -287,
             SDB_RTN_QUERYMODIFY_SORT_NO_IDX  = -288,
-            SDB_RTN_QUERYMODIFY_MULTI_NODES  = -289
+            SDB_RTN_QUERYMODIFY_MULTI_NODES  = -289,
+            SDB_DIR_NOT_EMPTY                = -290
         };
 
         public static readonly string[] descriptions = {
@@ -584,7 +585,8 @@ namespace SequoiaDB
                                                     "This cluster and image cluster is both active",
                                                     "This cluster is not active",
                                                     "Sorting of 'query and modify' must use index",
-                                                    "'query and modify' can't use skip and limit in multiple nodes or sub-collections"
+                                                    "'query and modify' can't use skip and limit in multiple nodes or sub-collections",
+                                                    "Given path is not empty"
                                                 };
     }
 }

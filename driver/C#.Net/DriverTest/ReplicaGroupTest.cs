@@ -12,13 +12,24 @@ namespace DriverTest
         private TestContext testContextInstance;
         private static Config config = null;
         private static Sequoiadb sdb = null;
-        private ReplicaGroup group = null;
-        private SequoiaDB.Node node = null;
+        private static ReplicaGroup group = null;
+        private static SequoiaDB.Node node = null;
+        private static SequoiaDB.Node node2 = null;
 
-        private string groupName = null;
-        private string hostName = null;
-        private int port = -1;
-        private string dbpath = null;
+        private static string groupName = null;
+        private static string hostName = null;
+        private static int port = -1;
+        private static string dbpath = null;
+
+        private static string groupName2 = null;
+        private static string hostName2 = null;
+        private static int port2 = -1;
+        private static string dbpath2 = null;
+
+        private static bool connect_flag = false;
+        private static bool create_rg_flag = false;
+        private static bool create_node_flag = false;
+        private static bool create_node2_flag = false;
 
         public TestContext TestContext
         {
@@ -41,28 +52,16 @@ namespace DriverTest
                 config = new Config();
             sdb = new Sequoiadb(config.conf.Coord.Address);
             sdb.Connect(config.conf.UserName, config.conf.Password);
-        }
-        //使用 SequoiadbCleamUp 在运行完类中的所有测试后再运行代码
-        [ClassCleanup()]
-        public static void SequoiadbCleamUp()
-        {
-            sdb.Disconnect();
-        }
-        //使用 TestInitialize 在运行每个测试前先运行代码
-        [TestInitialize()]
-        public void MyTestInitialize()
-        {
             // check whether it is in the cluster environment or not
             if (!Constants.isClusterEnv(sdb))
             {
-                Console.WriteLine("removeRG is for cluster environment only.");
                 return;
             }
             // argument
-            groupName = config.conf.Groups[0].GroupName;
-            hostName = config.conf.Groups[0].Nodes[0].HostName;
-            port = config.conf.Groups[0].Nodes[0].Port;
-            dbpath = config.conf.Groups[0].Nodes[0].DBPath;
+            groupName = config.conf.Groups[3].GroupName;
+            hostName = config.conf.Groups[3].Nodes[0].HostName;
+            port = config.conf.Groups[3].Nodes[0].Port;
+            dbpath = config.conf.Groups[3].Nodes[0].DBPath;
             // drop the exist group
             group = sdb.GetReplicaGroup(groupName);
             if (group != null)
@@ -99,25 +98,26 @@ namespace DriverTest
             // create a new group
             group = sdb.CreateReplicaGroup(groupName);
             Assert.IsTrue(groupName.Equals(group.GroupName));
+            create_rg_flag = true;
             // create a node
-            Dictionary<string, string> map = new Dictionary<string, string>();
-            map.Add("diaglevel", config.conf.Groups[0].Nodes[0].DiagLevel);
-            node = group.CreateNode(hostName, port, dbpath, map);
+            BsonDocument options = new BsonDocument();
+            options.Add("logfilenum", 1);
+            node = group.CreateNode(hostName, port, dbpath, options);
             Assert.IsNotNull(node);
-            group.Start();
+            node.Start();
+            create_node_flag = true;
         }
-        //使用 TestCleanup 在运行完每个测试后运行代码
-        [TestCleanup()]
-        public void MyTestCleanup()
+        //使用 SequoiadbCleamUp 在运行完类中的所有测试后再运行代码
+        [ClassCleanup()]
+        public static void SequoiadbCleamUp()
         {
             // check whether it is in the cluster environment or not
             if (!Constants.isClusterEnv(sdb))
             {
-                Console.WriteLine("removeRG is for cluster environment only.");
                 return;
             }
             group = sdb.GetReplicaGroup(groupName);
-            if (group != null)
+            if (null != group)
             {
                 // drop all the cs in current group, and then remove this group
                 int nodeNum = group.GetNodeNum(SDBConst.NodeStatus.SDB_NODE_ALL);
@@ -150,7 +150,53 @@ namespace DriverTest
                     Console.WriteLine("Error code is: " + errInfo);
                 }
             }
+            create_node_flag = false;
+            create_node2_flag = false;
+            // disconnect
             sdb.Disconnect();
+        }
+        //使用 TestInitialize 在运行每个测试前先运行代码
+        [TestInitialize()]
+        public void MyTestInitialize()
+        {
+            // check whether it is in the cluster environment or not
+            if (!Constants.isClusterEnv(sdb))
+            {
+                return;
+            }
+            // init
+            create_node2_flag = false;
+            // argument
+            groupName2 = config.conf.Groups[3].GroupName;
+            hostName2 = config.conf.Groups[3].Nodes[1].HostName;
+            port2 = config.conf.Groups[3].Nodes[1].Port;
+            dbpath2 = config.conf.Groups[3].Nodes[1].DBPath;
+            // drop the exist group
+            group = sdb.GetReplicaGroup(groupName);
+            if (null == group)
+                return;
+            // create a node
+            BsonDocument options = new BsonDocument();
+            options.Add("logfilenum", 1);
+            node2 = group.CreateNode(hostName2, port2, dbpath2, options);
+            Assert.IsNotNull(node2);
+            node2.Start();
+        }
+        //使用 TestCleanup 在运行完每个测试后运行代码
+        [TestCleanup()]
+        public void MyTestCleanup()
+        {
+            // check whether it is in the cluster environment or not
+            if (false == Constants.isClusterEnv(sdb))
+            {
+                return;
+            }
+            group = sdb.GetReplicaGroup(groupName);
+            if (null != group)
+            {
+                group.RemoveNode(hostName2, port2, null);
+            }
+            create_node2_flag = false;
         }
         #endregion
 
@@ -161,7 +207,7 @@ namespace DriverTest
             // check whether it is in the cluster environment or not
             if (!Constants.isClusterEnv(sdb))
             {
-                Console.WriteLine("removeRG is for cluster environment only.");
+                Console.WriteLine("It's not a cluster environment.");
                 return;
             }
             group = sdb.GetReplicaGroup(groupName);
@@ -207,7 +253,7 @@ namespace DriverTest
             // check whether it is in the cluster environment or not
             if (!Constants.isClusterEnv(sdb))
             {
-                Console.WriteLine("removeRG is for cluster environment only.");
+                Console.WriteLine("It's not a cluster environment.");
                 return;
             }
             // get rg
@@ -237,6 +283,32 @@ namespace DriverTest
                 Console.WriteLine("Error code is: " + errInfo);
             }
             group.Stop();
+        }
+
+        [TestMethod()]
+        public void attach_and_detach_node()
+        {
+            SequoiaDB.Node data_node = null;
+
+            // check whether it is in the cluster environment or not
+            if (!Constants.isClusterEnv(sdb))
+            {
+                Console.WriteLine("It's not a cluster environment.");
+                return;
+            }
+            // detach node
+            group.detachNode(hostName2, port2, null);
+
+            // check
+            data_node = group.GetNode(hostName2, port2);
+            Assert.IsNull(data_node);
+
+            //attach node 
+            group.attachNode(hostName2, port2, null);
+
+            // check
+            data_node = group.GetNode(hostName2, port2);
+            Assert.IsNotNull(data_node);
         }
 
     }

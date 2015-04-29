@@ -168,7 +168,7 @@ namespace SequoiaDB
         public Node CreateNode(string hostName, int port, string dbpath,
                                Dictionary<string, string> map)
         {
-            if (hostName == null || port < 0 || port < 0 || port > 65535 ||
+            if (hostName == null || port < 0 || port > 65535 ||
                 dbpath == null )
             throw new BaseException("SDB_INVALIDARG");
             string command = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.CREATE_CMD + " "
@@ -185,6 +185,46 @@ namespace SequoiaDB
             Dictionary<string, string>.Enumerator it = map.GetEnumerator();
             while (it.MoveNext())
                 configuration.Add(it.Current.Key, it.Current.Value);
+            BsonDocument dummyObj = new BsonDocument();
+            SDBMessage rtn = AdminCommand(command, configuration, dummyObj, dummyObj, dummyObj);
+            int flags = rtn.Flags;
+            if (flags != 0)
+                throw new BaseException(flags);
+            else
+                return GetNode(hostName, port);
+        }
+
+        /** \fn Node CreateNode(string hostName, int port, string dbpath,
+                                BsonDocument configure)
+         *  \brief Create the replica node
+         *  \param hostName The host name of node
+         *  \param port The port of node
+         *  \param dbpath The database path of node
+         *  \param configure The other configure information of node
+         *  \return The Node object
+         *  \exception SequoiaDB.BaseException
+         *  \exception System.Exception
+         */
+        public Node CreateNode(string hostName, int port, string dbpath,
+                               BsonDocument configure)
+        {
+            if (hostName == null || port < 0 || port > 65535 || dbpath == null)
+                throw new BaseException("SDB_INVALIDARG");
+            string command = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.CREATE_CMD + " "
+                             + SequoiadbConstants.NODE;
+            BsonDocument configuration = new BsonDocument();
+            configuration.Add(SequoiadbConstants.FIELD_GROUPNAME, groupName);
+            configuration.Add(SequoiadbConstants.FIELD_HOSTNAME, hostName);
+            configuration.Add(SequoiadbConstants.SVCNAME, port.ToString());
+            configuration.Add(SequoiadbConstants.DBPATH, dbpath);
+            if (null != configure)
+            {
+                configure.Remove(SequoiadbConstants.FIELD_GROUPNAME);
+                configure.Remove(SequoiadbConstants.FIELD_HOSTNAME);
+                configure.Remove(SequoiadbConstants.SVCNAME);
+                configure.Remove(SequoiadbConstants.DBPATH);
+                configuration.Add(configure);
+            }
             BsonDocument dummyObj = new BsonDocument();
             SDBMessage rtn = AdminCommand(command, configuration, dummyObj, dummyObj, dummyObj);
             int flags = rtn.Flags;
@@ -381,6 +421,82 @@ namespace SequoiaDB
             {
                 return null;
             }
+        }
+
+        /** \fn void attachNode( string hostName, 
+         *                       int port, 
+         *                       BsonDocument options )
+         *  \brief Attach a node to the group
+         *  \param [in] hostName The host name of node.
+         *  \param [in] port The port for the node.
+         *  \param [in] optoins The options of attach.
+         *  \retval SDB_OK Operation Success
+         *  \retval Others Operation Fail
+         */
+        public void attachNode(string hostName, int port, BsonDocument options)
+        {
+            if (hostName == null || port < 0 || port > 65535 )
+                throw new BaseException("SDB_INVALIDARG");
+            string command = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.CREATE_CMD + " "
+                             + SequoiadbConstants.NODE;
+            BsonDocument newObj = new BsonDocument();
+            newObj.Add(SequoiadbConstants.FIELD_GROUPNAME, groupName);
+            newObj.Add(SequoiadbConstants.FIELD_HOSTNAME, hostName);
+            newObj.Add(SequoiadbConstants.SVCNAME, port.ToString());
+            newObj.Add(SequoiadbConstants.FIELD_NAME_ONLY_ATTACH, true);
+
+            if (options != null && options.ElementCount != 0)
+            {
+                foreach (string key in options.Names)
+                {
+                    if (SequoiadbConstants.FIELD_NAME_ONLY_ATTACH != key )
+                        newObj.Add(options.GetElement(key));
+                }
+            }
+
+            BsonDocument dummyObj = new BsonDocument();
+            SDBMessage rtn = AdminCommand(command, newObj, dummyObj, dummyObj, dummyObj);
+            int flags = rtn.Flags;
+            if (flags != 0)
+                throw new BaseException(flags);
+        }
+
+        /** \fn void detachNode( string hostName,
+         *                       int port,
+         *                       BsonDocument options )
+         *  \brief Detach a node from the group
+         *  \param [in] pHostName The host name of node.
+         *  \param [in] port The port for the node.
+         *  \param [in] optoins The options of detach.
+         *  \retval SDB_OK Operation Success
+         *  \retval Others Operation Fail
+         */
+        public void detachNode(string hostName, int port, BsonDocument options)
+        {
+            if (hostName == null || port < 0 || port > 65535)
+                throw new BaseException("SDB_INVALIDARG");
+            string command = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.REMOVE_CMD + " "
+                             + SequoiadbConstants.NODE;
+            BsonDocument newObj = new BsonDocument();
+            newObj.Add(SequoiadbConstants.FIELD_GROUPNAME, groupName);
+            newObj.Add(SequoiadbConstants.FIELD_HOSTNAME, hostName);
+            newObj.Add(SequoiadbConstants.SVCNAME, port.ToString());
+            newObj.Add(SequoiadbConstants.FIELD_NAME_ONLY_DETACH, true);
+
+            if (options != null && options.ElementCount != 0)
+            {
+                foreach (string key in options.Names)
+                {
+                    if (SequoiadbConstants.FIELD_NAME_ONLY_DETACH != key)
+                        newObj.Add(options.GetElement(key));
+                }
+            }
+
+            BsonDocument dummyObj = new BsonDocument();
+            SDBMessage rtn = AdminCommand(command, newObj, dummyObj, dummyObj, dummyObj);
+            int flags = rtn.Flags;
+            if (flags != 0)
+                throw new BaseException(flags);
         }
 
         private SDBMessage AdminCommand(string command, BsonDocument arg1, BsonDocument arg2,

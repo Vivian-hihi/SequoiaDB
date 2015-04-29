@@ -128,6 +128,8 @@ namespace SequoiaDB
         public const string FIELD_LOB_OPEN_MODE = "Mode";
         public const string FIELD_LOB_SIZE = "Size";
         public const string FIELD_LOB_CREATTIME = "CreateTime";
+        public const string FIELD_NAME_ONLY_DETACH = "OnlyDetach";
+        public const string FIELD_NAME_ONLY_ATTACH = "OnlyAttach";
 
         public const string FIELD_MODIFY = "$Modify";
         public const string FIELD_OP = "op";
