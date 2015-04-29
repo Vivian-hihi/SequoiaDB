@@ -644,3 +644,16 @@ void getUniqueName( const CHAR *modName, CHAR getName[] )
    pid = getpid() ;
    sprintf( getName, "%s%s_%d", uniqName, modName, (unsigned int)pid ) ;
 }
+
+BOOLEAN isCluster( sdb &db )
+{
+   INT32 rc = SDB_OK ;
+   sdbCursor cursor ;
+
+   rc = db.listReplicaGroups( cursor ) ;
+   if ( SDB_OK == rc )
+   {
+      return TRUE ;
+   }
+   return FALSE ;
+}

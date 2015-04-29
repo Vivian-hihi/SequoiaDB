@@ -11,9 +11,9 @@
 //#define HOST                  "192.168.20.192"
 //#define HOST                  "192.168.20.186"
 #define HOST                  "localhost"
-#define SERVER                "50000"
+//#define SERVER                "50000"
 //#define SERVER                "60000"
-//#define SERVER                "11810"
+#define SERVER                "11810"
 #define SERVER1               "30000"
 #define SERVER2               "21100"
 #define USER                  ""
@@ -161,6 +161,8 @@ long getRecordNum ( sdbCursorHandle cursor ) ;
 
 /* get name have pid, add by xiaojun */
 void getUniqueName( const CHAR *modName, CHAR getName[] ) ;
+
+BOOLEAN isCluster( sdbConnectionHandle db ) ;
 
 SDB_EXTERN_C_END
 

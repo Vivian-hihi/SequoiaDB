@@ -697,3 +697,16 @@ void getUniqueName( const CHAR *modName, CHAR getName[] )
    pid = getpid() ;
    sprintf( getName, "%s%s_%d", uniqName, modName, (unsigned int)pid ) ;
 }
+
+BOOLEAN isCluster( sdbConnectionHandle db )
+{
+   INT32 rc = SDB_OK ;
+   sdbCursorHandle cur ;
+
+   rc = sdbListReplicaGroups( db, &cur ) ;
+   if ( SDB_OK != rc )
+   {
+      return FALSE ;
+   }
+   return TRUE ;
+}

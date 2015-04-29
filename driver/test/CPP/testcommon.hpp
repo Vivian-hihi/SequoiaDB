@@ -30,10 +30,10 @@
 
 //#define HOST                "192.168.30.161" ;
 //#define SERVER              "11810" ;
-//#define HOST                "localhost"
-//#define SERVER              "50000"
-#define HOST                "192.168.20.165"
-#define SERVER              "11810"
+#define HOST                "localhost"
+#define SERVER              "50000"
+//#define HOST                "192.168.20.165"
+//#define SERVER              "11810"
 #define SERVER1             "58000"
 #define SERVER2             "58100"
 #define SERVER3             "58200"
@@ -148,5 +148,6 @@ void getDataPath ( CHAR *buffer, INT32 len, const CHAR *dp1, const CHAR *dp2 ) ;
 /* get name have pid, add by xiaojun */
 //void getUniqueName( const CHAR *modName, CHAR getName[] ) ;
 
+BOOLEAN isCluster( sdb &db ) ;
 
 #endif

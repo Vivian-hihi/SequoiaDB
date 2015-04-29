@@ -58,6 +58,10 @@ testFiles12 = [
         "../../testcommon.c",
         "selector_query.cpp"
       ]
+testFiles13 = [
+        "../../testcommon.c",
+        "rg.cpp"
+      ]
 
 
 #Google Test
@@ -83,6 +87,10 @@ cbson = env.Program("cbson", [testFiles9, gtestMainObj])
 domain = env.Program("domain", [testFiles10, gtestMainObj])
 lob = env.Program("lob", [testFiles11, gtestMainObj])
 selector = env.Program("selector", [testFiles12, gtestMainObj])
+rg = env.Program("rg", [testFiles13, gtestMainObj])
 
+#env.Install( '#/build_test', [collection,collectionspace,cursor,sdb,snapshot,concurrent,
+#                              shard, debug, cbson, domain, lob, selector, rg] )
+                              
 env.Install( '#/build_test', [collection,collectionspace,cursor,sdb,snapshot,concurrent,
                               shard, debug, cbson, domain, lob, selector] )
