@@ -1537,6 +1537,12 @@ namespace sdbclient
                                  const CHAR *pServiceName,
                                  const CHAR *pDatabasePath,
                                  std::map<std::string,std::string> &config )= 0;
+
+      virtual INT32 createNode ( const CHAR *pHostName,
+                                 const CHAR *pServiceName,
+                                 const CHAR *pDatabasePath,
+                                 const bson::BSONObj &options = _sdbStaticObject )= 0;
+      
       // remove the specified node in current replica group
       virtual INT32 removeNode ( const CHAR *pHostName,
                                  const CHAR *pServiceName,
@@ -1552,6 +1558,16 @@ namespace sdbclient
 
       // whether the current replica group is catalog replica group or not
       virtual BOOLEAN isCatalog () = 0 ;
+
+      // attach node
+      virtual INT32 attachNode( const CHAR *pHostName,
+                                const CHAR *pSvcName,
+                                const bson::BSONObj &options = _sdbStaticObject ) = 0 ;
+
+      // detach node
+      virtual INT32 detachNode( const CHAR *pHostName,
+                                const CHAR *pSvcName,
+                                const bson::BSONObj &options = _sdbStaticObject ) = 0 ;
    } ;
 
 /** \class sdbReplicaGroup
@@ -1766,6 +1782,30 @@ namespace sdbclient
          return pReplicaGroup->createNode ( pHostName, pServiceName,
                                             pDatabasePath, config ) ;
       }
+
+/** \fn INT32 createNode ( const CHAR *pHostName,
+                           const CHAR *pServiceName,
+                           const CHAR *pDatabasePath,
+                           const bson::BSONObj &options )
+    \brief Create node in a given replica group.
+    \param [in] pHostName The hostname for the node
+    \param [in] pServiceName The servicename for the node
+    \param [in] pDatabasePath The database path for the node
+    \param [in] options The configurations for the node
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+      INT32 createNode ( const CHAR *pHostName,
+                         const CHAR *pServiceName,
+                         const CHAR *pDatabasePath,
+                         const bson::BSONObj &options = _sdbStaticObject )
+      {
+         if ( !pReplicaGroup )
+            return SDB_NOT_CONNECTED ;
+         return pReplicaGroup->createNode ( pHostName, pServiceName,
+                                            pDatabasePath, options ) ;
+      }
+
 /** \fn INT32 removeNode ( const CHAR *pHostName,
                                         const CHAR *pServiceName,
                                         const BSONObj &configure = _sdbStaticObject  )
@@ -1831,6 +1871,45 @@ namespace sdbclient
             return FALSE ;
          return pReplicaGroup->isCatalog() ;
       }
+
+/** \fn INT32 attachNode( const CHAR *pHostName,
+ *                        const CHAR *pSvcName,
+ *                        const bson::BSONObj &options )
+ *  \brief Attach a node to the group
+ *  \param [in] pHostName The host name of node.
+ *  \param [in] pSvcName The service name of node.
+ *  \param [in] optoins The options of attach.
+ *  \retval SDB_OK Operation Success
+ *  \retval Others Operation Fail
+ */
+      INT32 attachNode( const CHAR *pHostName,
+                        const CHAR *pSvcName,
+                        const bson::BSONObj &options = _sdbStaticObject )
+      {
+         if ( !pReplicaGroup )
+            return FALSE ;
+         return pReplicaGroup->attachNode( pHostName, pSvcName, options ) ;
+      }
+
+/** \fn INT32 detachNode( const CHAR *pHostName,
+ *                         const CHAR *pSvcName,
+ *                         const bson::BSONObj &options )
+ *  \brief Detach a node from the group
+ *  \param [in] pHostName The host name of node.
+ *  \param [in] pSvcName The service name of node.
+ *  \param [in] optoins The options of detach.
+ *  \retval SDB_OK Operation Success
+ *  \retval Others Operation Fail
+ */
+      INT32 detachNode( const CHAR *pHostName,
+                        const CHAR *pSvcName,
+                        const bson::BSONObj &options = _sdbStaticObject )
+      {
+         if ( !pReplicaGroup )
+            return FALSE ;
+         return pReplicaGroup->detachNode( pHostName, pSvcName, options ) ;
+      }
+
    } ;
 
    class DLLEXPORT _sdbCollectionSpace

@@ -3288,6 +3288,62 @@ do                                                            \
       goto done ;
    }
 
+   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_CREATENODE2, "_sdbReplicaGroupImpl::createNode" )
+   INT32 _sdbReplicaGroupImpl::createNode ( const CHAR *pHostName,
+                                            const CHAR *pServiceName,
+                                            const CHAR *pDatabasePath,
+                                            const bson::BSONObj &options )
+   {
+      PD_TRACE_ENTRY ( SDB_CLIENT_CREATENODE ) ;
+      INT32 rc = SDB_OK ;
+      BSONObj configuration ;
+      BSONObj pattern ;
+      BSONObj tmpObj ;
+      BSONObjBuilder ob ;
+      BOOLEAN result ;
+      string command = string ( CMD_ADMIN_PREFIX CMD_NAME_CREATE_NODE ) ;
+      map<string,string>::iterator it ;
+      if ( !_connection || ossStrlen ( _replicaGroupName ) == 0 ||
+           !pHostName || !pServiceName || !pDatabasePath )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      // GroupName is required
+      ob.append ( CAT_GROUPNAME_NAME, _replicaGroupName ) ;
+
+      // HostName is required
+      ob.append ( CAT_HOST_FIELD_NAME, pHostName ) ;
+
+      // service name is required
+      ob.append ( PMD_OPTION_SVCNAME, pServiceName ) ;
+
+      // database path is required
+      ob.append ( PMD_OPTION_DBPATH, pDatabasePath ) ;
+
+      // append all other parameters into configuration
+      pattern = BSON( CAT_GROUPNAME_NAME   << 1 <<
+                      CAT_HOST_FIELD_NAME  << 1 <<
+                      PMD_OPTION_SVCNAME   << 1 <<
+                      PMD_OPTION_DBPATH    << 1  ) ;
+      tmpObj = options.filterFieldsUndotted( pattern, false ) ;
+      ob.appendElements( tmpObj ) ;
+      configuration = ob.obj () ;
+
+      // run command
+      rc = _connection->_runCommand ( command.c_str(), result, &configuration );
+      if ( rc )
+      {
+         goto error ;
+      }
+
+   done :
+      PD_TRACE_EXITRC ( SDB_CLIENT_CREATENODE, rc );
+      return rc ;
+   error :
+      goto done ;
+   }
+
    PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_CREATENODE, "_sdbReplicaGroupImpl::createNode" )
    INT32 _sdbReplicaGroupImpl::createNode ( const CHAR *pHostName,
                                             const CHAR *pServiceName,
@@ -3843,6 +3899,120 @@ do                                                            \
       }
    done :
       PD_TRACE_EXITRC ( SDB_CLIENT_STOPRS, rc );
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_ATTACHNODE, "_sdbReplicaGroupImpl::attachNode" )
+   INT32 _sdbReplicaGroupImpl::attachNode( const CHAR *pHostName,
+                                           const CHAR *pSvcName,
+                                           const bson::BSONObj &options )
+   {
+      PD_TRACE_ENTRY ( SDB_CLIENT_ATTACHNODE ) ;
+      INT32 rc = SDB_OK ;
+      BSONObjBuilder bob ;
+      BSONElement ele ;
+      BSONObj newObj ;
+      BSONObjIterator it ( options ) ;
+      const CHAR *pKey = NULL ;
+      BOOLEAN result = FALSE ;
+      string command = string ( CMD_ADMIN_PREFIX CMD_NAME_CREATE_NODE ) ;
+
+      // check
+      if ( !_connection || ossStrlen ( _replicaGroupName ) == 0 )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      if ( NULL == pHostName || NULL == pSvcName )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      // build obj
+      bob.append( FIELD_NAME_GROUPNAME, _replicaGroupName ) ;
+      bob.append( FIELD_NAME_HOST, pHostName ) ;
+      bob.append( PMD_OPTION_SVCNAME, pSvcName ) ;
+      bob.appendBool( FIELD_NAME_ONLY_ATTACH, 1 ) ;
+      while ( it.more() )
+      {
+         ele = it.next() ;
+         pKey = ele.fieldName() ;
+         if ( 0 != ossStrcmp( pKey, FIELD_NAME_ONLY_ATTACH ) )
+         {
+            bob.append( ele ) ;
+         }
+      }
+      newObj = bob.obj() ;
+
+      // run command
+      rc = _connection->_runCommand ( command.c_str(), result, &newObj ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
+   done :
+      PD_TRACE_EXITRC ( SDB_CLIENT_ATTACHNODE, rc );
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_DETACHNODE, "_sdbReplicaGroupImpl::detachNode" ) 
+   INT32 _sdbReplicaGroupImpl::detachNode( const CHAR *pHostName,
+                                           const CHAR *pSvcName,
+                                           const bson::BSONObj &options )
+   {
+      PD_TRACE_ENTRY ( SDB_CLIENT_DETACHNODE ) ;
+      INT32 rc = SDB_OK ;
+      BSONObjBuilder bob ;
+      BSONElement ele ;
+      BSONObj newObj ;
+      BSONObjIterator it ( options ) ;
+      const CHAR *pKey = NULL ;
+      BOOLEAN result = FALSE ;
+      string command = string ( CMD_ADMIN_PREFIX CMD_NAME_REMOVE_NODE ) ;
+
+      // check
+      if ( !_connection || ossStrlen ( _replicaGroupName ) == 0 )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      if ( NULL == pHostName || NULL == pSvcName )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      // build obj
+      bob.append( FIELD_NAME_GROUPNAME, _replicaGroupName ) ;
+      bob.append( FIELD_NAME_HOST, pHostName ) ;
+      bob.append( PMD_OPTION_SVCNAME, pSvcName ) ;
+      bob.appendBool( FIELD_NAME_ONLY_DETACH, 1 ) ;
+      while ( it.more() )
+      {
+         ele = it.next() ;
+         pKey = ele.fieldName() ;
+         if ( 0 != ossStrcmp( pKey, FIELD_NAME_ONLY_DETACH ) )
+         {
+            bob.append( ele ) ;
+         }
+      }
+      newObj = bob.obj() ;
+
+      // run command
+      rc = _connection->_runCommand ( command.c_str(), result, &newObj ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
+   done :
+      PD_TRACE_EXITRC ( SDB_CLIENT_DETACHNODE, rc );
       return rc ;
    error :
       goto done ;

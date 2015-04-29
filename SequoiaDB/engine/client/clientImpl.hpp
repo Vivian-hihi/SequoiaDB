@@ -571,6 +571,11 @@ namespace sdbclient
                          const CHAR *pDatabasePath,
                          std::map<std::string,std::string> &config ) ;
 
+      INT32 createNode ( const CHAR *pHostName,
+                         const CHAR *pServiceName,
+                         const CHAR *pDatabasePath,
+                         const bson::BSONObj &options = _sdbStaticObject ) ;
+
       // remove the specified node in current replica group
       INT32 removeNode ( const CHAR *pHostName,
                          const CHAR *pServiceName,
@@ -593,6 +598,14 @@ namespace sdbclient
       {
          return _isCatalog ;
       }
+
+      INT32 attachNode( const CHAR *pHostName,
+                        const CHAR *pSvcName,
+                        const bson::BSONObj &options = _sdbStaticObject ) ;
+      INT32 detachNode( const CHAR *pHostName,
+                        const CHAR *pSvcName,
+                        const bson::BSONObj &options = _sdbStaticObject ) ;
+      
    } ;
    
    typedef class _sdbReplicaGroupImpl sdbReplicaGroupImpl ;
