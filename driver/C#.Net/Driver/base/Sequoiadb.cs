@@ -205,10 +205,13 @@ namespace SequoiaDB
          */
         public void Disconnect()
         {
-            byte[] request = SDBMessageHelper.BuildDisconnectRequest(isBigEndian);
-            connection.SendMessage(request);
-            connection.Close();
-            connection = null;
+            if (null != connection)
+            {
+                byte[] request = SDBMessageHelper.BuildDisconnectRequest(isBigEndian);
+                connection.SendMessage(request);
+                connection.Close();
+                connection = null;
+            }
         }
 
         /** \fn bool IsClosed()
