@@ -275,7 +275,7 @@ namespace engine
       }
 
       // get collection space all groups
-      rc = catGetCSGroupsFromCLs( csName, _pEduCB, groups ) ;
+      rc = catGetCSGroupsFromCLs( csName, _pEduCB, groups, TRUE ) ;
       PD_RC_CHECK( rc, PDERROR, "Get collection space[%s] all groups failed, "
                    "rc: %d", csName, rc ) ;
 

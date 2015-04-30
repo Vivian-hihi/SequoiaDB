@@ -314,7 +314,8 @@ namespace engine
                                  const CHAR* objdata, UINT32 length,
                                  _clsCatalogSet **ppSet = NULL ) ;
          INT32   clear ( const CHAR* name ) ;
-         INT32   clearBySpaceName ( const CHAR* name ) ;
+         INT32   clearBySpaceName ( const CHAR* name,
+                                    vector< string > *pRelatedCLs = NULL ) ;
          INT32   clearAll () ;
 
          INT32   lock_r ( INT32 millisec = -1 ) ;

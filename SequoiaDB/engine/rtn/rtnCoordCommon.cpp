@@ -1082,8 +1082,16 @@ namespace engine
                isNeedRefresh = TRUE ;
                continue ;
             }
+
             PD_LOG( PDERROR, "Get catalog info[%s] from remote failed, rc: %d",
                     pCollectionName, rc ) ;
+
+            if ( ( SDB_DMS_NOTEXIST == rc || SDB_DMS_EOC == rc ) &&
+                 pCoordcb->isSubCollection( pCollectionName ) )
+            {
+               /// change the error
+               rc = SDB_CLS_COORD_NODE_CAT_VER_OLD ;
+            }
          }
          break ;
       }while ( TRUE ) ;
@@ -2680,9 +2688,9 @@ namespace engine
          CoordGroupList::iterator iterGroup;
          rc = rtnCoordGetCataInfo( cb, (*iterCL).c_str(),
                                    FALSE, cataInfo );
-         PD_RC_CHECK( rc, PDWARNING,
-                     "failed to get catalog info of sub-collection(%s)",
-                     (*iterCL).c_str() ) ;
+         PD_RC_CHECK( rc, PDWARNING, "Failed to get catalog info of "
+                      "sub-collection[%s], rc: %d", (*iterCL).c_str(),
+                      rc ) ;
          if ( NULL == query || query->isEmpty() )
          {
             cataInfo->getGroupLst( groupList );

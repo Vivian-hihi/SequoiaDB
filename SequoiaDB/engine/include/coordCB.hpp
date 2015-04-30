@@ -39,6 +39,8 @@
 #include "core.hpp"
 #include "oss.hpp"
 #include <map>
+#include <vector>
+#include <string>
 #include <boost/shared_ptr.hpp>
 #include "netRouteAgent.hpp"
 #include "netMultiRouteAgent.hpp"
@@ -49,6 +51,8 @@
 #include "clsCatalogAgent.hpp"
 #include "coordDef.hpp"
 #include "sdbInterface.hpp"
+
+using namespace std ;
 
 namespace engine
 {
@@ -155,13 +159,17 @@ namespace engine
       INT32 getGroupInfo ( const CHAR *groupName,
                            CoordGroupInfoPtr &groupInfo ) ;
 
-      void  updateCataInfo ( const std::string &collectionName,
+      void  updateCataInfo ( const string &collectionName,
                              CoordCataInfoPtr &cataInfo ) ;
 
-      INT32 getCataInfo ( const std::string &strCollectionName,
+      INT32 getCataInfo ( const string &strCollectionName,
                           CoordCataInfoPtr &cataInfo ) ;
 
-      void  delCataInfo ( const std::string &collectionName ) ;
+      void  delCataInfo ( const string &collectionName ) ;
+      void  delCataInfoByCS( const CHAR *csName,
+                             vector< string > *pRelatedCLs = NULL ) ;
+
+      BOOLEAN isSubCollection( const CHAR *pCLName ) ;
 
       void  invalidateCataInfo() ;
       void  invalidateGroupInfo() ;

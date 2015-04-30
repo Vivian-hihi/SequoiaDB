@@ -40,6 +40,7 @@
 #include "catDef.hpp"
 #include "clsCataHashMatcher.hpp"
 #include "utilBsonHash.hpp"
+#include <set>
 
 #include "../bson/lib/md5.hpp"
 #include "../bson/lib/md5.h"
@@ -2379,7 +2380,8 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSCTAGENT_CRBYSPACENAME, "_clsCatalogAgent::clearBySpaceName" )
-   INT32 _clsCatalogAgent::clearBySpaceName ( const CHAR * name )
+   INT32 _clsCatalogAgent::clearBySpaceName ( const CHAR * name,
+                                              vector< string > *pRelatedCLs )
    {
       PD_TRACE_ENTRY ( SDB__CLSCTAGENT_CRBYSPACENAME ) ;
       _clsCatalogSet *preSet = NULL ;
@@ -2387,9 +2389,15 @@ namespace engine
       _clsCatalogSet *tmpSet = NULL ;
       UINT32 nameLen = ossStrlen(name) ;
       BOOLEAN itAdd  = TRUE ;
-      std::set< std::string > mainCLList ;
-
+      set< string > mainCLList ;
+      set< string >::iterator iterMain ;
       CAT_MAP_IT it = _mapCatalog.begin() ;
+
+      if ( 0 == nameLen )
+      {
+         goto done ;
+      }
+
       while ( it != _mapCatalog.end() )
       {
          itAdd = TRUE ;
@@ -2398,10 +2406,19 @@ namespace engine
 
          while ( curSet )
          {
+            /// add sub collections
+            if ( pRelatedCLs &&
+                 0 == ossStrncmp( curSet->_mainCLName.c_str(),
+                                  name, nameLen ) &&
+                 '.' == curSet->_mainCLName.at( nameLen ) )
+            {
+               pRelatedCLs->push_back( curSet->_name ) ;
+            }
+
             if ( ossStrncmp ( curSet->name(), name, nameLen ) == 0
                && (curSet->name())[nameLen] == '.' )
             {
-               std::string strMainCL = curSet->getMainCLName() ;
+               string strMainCL = curSet->getMainCLName() ;
                if ( !strMainCL.empty() )
                {
                   mainCLList.insert( strMainCL ) ;
@@ -2439,13 +2456,14 @@ namespace engine
          }
       }
 
-      std::set< std::string >::iterator iterMain = mainCLList.begin() ;
+      iterMain = mainCLList.begin() ;
       while ( iterMain != mainCLList.end() )
       {
          clear( (*iterMain).c_str() ) ;
          ++iterMain ;
       }
 
+   done:
       PD_TRACE_EXIT ( SDB__CLSCTAGENT_CRBYSPACENAME ) ;
       return SDB_OK ;
    }

@@ -406,14 +406,14 @@ namespace engine
       return rc ;
    }
 
-   void _CoordCB::updateCataInfo ( const std::string &collectionName,
+   void _CoordCB::updateCataInfo ( const string &collectionName,
                                    CoordCataInfoPtr &cataInfo )
    {
       ossScopedLock _lock( &_cataInfoMutex, EXCLUSIVE );
       _cataInfoMap[collectionName] = cataInfo ;
    }
 
-   INT32 _CoordCB::getCataInfo ( const std::string &strCollectionName,
+   INT32 _CoordCB::getCataInfo ( const string &strCollectionName,
                                  CoordCataInfoPtr &cataInfo )
    {
       INT32 rc = SDB_CAT_NO_MATCH_CATALOG;
@@ -428,10 +428,78 @@ namespace engine
       return rc;
    }
 
-   void _CoordCB::delCataInfo ( const std::string &collectionName )
+   BOOLEAN _CoordCB::isSubCollection( const CHAR *pCLName )
+   {
+      string strSubCLName = pCLName ;
+      CoordCataMap::iterator it ;
+      clsCatalogSet *pCatSet = NULL ;
+      ossScopedLock _lock( &_cataInfoMutex, SHARED ) ;
+
+      it = _cataInfoMap.begin() ;
+      while( it != _cataInfoMap.end() )
+      {
+         pCatSet = it->second->getCatalogSet() ;
+         if ( !pCatSet || !pCatSet->isMainCL() )
+         {
+            /// do nothing
+         }
+         else if ( pCatSet->isContainSubCL( strSubCLName ) )
+         {
+            return TRUE ;
+         }
+         ++it ;
+      }
+      return FALSE ;
+   }
+
+   void _CoordCB::delCataInfo ( const string &collectionName )
    {
       ossScopedLock _lock( &_cataInfoMutex, EXCLUSIVE );
       _cataInfoMap.erase( collectionName );
+   }
+
+   void _CoordCB::delCataInfoByCS( const CHAR *csName,
+                                   vector< string > *pRelatedCLs )
+   {
+      UINT32 len = ossStrlen( csName ) ;
+      clsCatalogSet *pCatSet = NULL ;
+      const CHAR *pCLName = NULL ;
+      CoordCataMap::iterator it ;
+
+      ossScopedLock _lock( &_cataInfoMutex, EXCLUSIVE ) ;
+      it = _cataInfoMap.begin() ;
+
+      if ( 0 == len )
+      {
+         return ;
+      }
+
+      while( it != _cataInfoMap.end() )
+      {
+         pCatSet = it->second->getCatalogSet() ;
+         pCLName = it->first.c_str() ;
+
+         if ( pRelatedCLs && len > 0 && pCatSet )
+         {
+            string strMainCL = pCatSet->getMainCLName() ;
+
+            if ( 0 == ossStrncmp( strMainCL.c_str(), csName, len ) &&
+                 '.' == strMainCL.at( len ) )
+            {
+               pRelatedCLs->push_back( it->first ) ;
+            }
+         }
+
+         if ( 0 == ossStrncmp( pCLName, csName, len ) &&
+              '.' == pCLName[ len ] )
+         {
+            _cataInfoMap.erase( it++ ) ;
+         }
+         else
+         {
+            ++it ;
+         }
+      }
    }
 
    void _CoordCB::invalidateCataInfo()

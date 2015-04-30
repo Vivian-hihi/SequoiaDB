@@ -801,8 +801,7 @@ namespace engine
       enum delCSPhase
       {
          DELCSPHASE_0 = 0,
-         DELCSPHASE_1,
-         DELCSPHASE_2
+         DELCSPHASE_1
       };
    public:
       _rtnContextDelCS( SINT64 contextID, UINT64 eduID ) ;
@@ -852,7 +851,7 @@ namespace engine
       virtual _dmsStorageUnit* getSU () { return NULL ; }
 
       INT32 open( const CHAR *pCollectionName,
-                  _pmdEDUCB *cb );
+                  _pmdEDUCB *cb, INT32 w );
 
       virtual INT32 getMore( INT32 maxNumToReturn, rtnContextBuf &buffObj,
                              _pmdEDUCB *cb );
@@ -881,6 +880,7 @@ namespace engine
 
       _dmsStorageUnit      *_su ;
       _dmsMBContext        *_mbContext ;
+      INT32                _w ;
    };
    typedef class _rtnContextDelCL rtnContextDelCL;
 
@@ -898,7 +898,10 @@ namespace engine
       virtual _dmsStorageUnit* getSU () { return NULL ; }
 
       INT32 open( const CHAR *pCollectionName,
-                  _pmdEDUCB *cb );
+                  vector< string > &subCLList,
+                  INT32 version,
+                  _pmdEDUCB *cb,
+                  INT32 w ) ;
 
       virtual INT32 getMore( INT32 maxNumToReturn, rtnContextBuf &buffObj,
                              _pmdEDUCB *cb ) ;
@@ -913,8 +916,9 @@ namespace engine
       _clsCatalogAgent           *_pCatAgent;
       _SDB_RTNCB                 *_pRtncb;
       CHAR                       _name[ DMS_COLLECTION_FULL_NAME_SZ + 1 ];
-      SUBCL_CONTEXT_LIST         _subContextList;
-      INT32                      _version;
+      SUBCL_CONTEXT_LIST         _subContextList ;
+      INT32                      _version ;
+
    };
    typedef class _rtnContextDelMainCL rtnContextDelMainCL;
 

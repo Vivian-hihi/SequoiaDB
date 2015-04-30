@@ -4483,6 +4483,19 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Invalid cs name(name:%s)",
                    pCollectionName );
 
+      /// test collection space exist
+      rc = rtnTestCollectionSpaceCommand( pCollectionName, _pDmsCB ) ;
+      if ( SDB_DMS_CS_NOTEXIST == rc )
+      {
+         /// ignore collection space not exist
+         PD_LOG( PDINFO, "Ignored error[%d] when drop collection space[%s]",
+                 rc, pCollectionName ) ;
+         rc = SDB_OK ;
+         ossStrncpy( _name, pCollectionName, DMS_COLLECTION_SPACE_NAME_SZ ) ;
+         _isOpened = TRUE ;
+         goto done ;
+      }
+
       if ( NULL != _pDpsCB )
       {
          // reserved log-size
@@ -4526,26 +4539,47 @@ namespace engine
                                     rtnContextBuf &buffObj,
                                     _pmdEDUCB *cb )
    {
-      INT32 rc = SDB_OK;
+      INT32 rc = SDB_OK ;
+      clsCB *pClsCB = sdbGetClsCB() ;
+      shardCB *pShdMgr = pClsCB->getShardCB() ;
+      vector< string > subCLs ;
+      vector< string >::iterator it ;
+
       if ( !isOpened() )
       {
          rc = SDB_DMS_CONTEXT_IS_CLOSE;
          goto error ;
       }
-      _pCatAgent->lock_w () ;
-      _pCatAgent->clearBySpaceName ( _name ) ;
-      _pCatAgent->release_w () ;
-      pmdGetKRCB()->getClsCB()->invalidateCata( _name ) ;
 
-      PD_CHECK( pmdIsPrimary(), SDB_CLS_NOT_PRIMARY, error, PDERROR,
-                "Failed to drop cs before phase2(%d)", rc ) ;
+      _pCatAgent->lock_w() ;
+      _pCatAgent->clearBySpaceName( _name, &subCLs ) ;
+      _pCatAgent->release_w() ;
 
-      _status = DELCSPHASE_2 ;
-      rc = rtnDropCollectionSpaceP2( _name, cb, _pDmsCB, _pDpsCB ) ;
-      PD_RC_CHECK( rc, PDERROR,
-                  "Failed to drop cs in phase2(%d)", rc );
-      _clean( cb );
-      _status = DELCSPHASE_0 ;
+      it = subCLs.begin() ;
+      while( it != subCLs.end() )
+      {
+         if ( SDB_OK != pShdMgr->syncUpdateCatalog( (*it).c_str() ) )
+         {
+            _pCatAgent->lock_w() ;
+            _pCatAgent->clear( (*it).c_str() ) ;
+            _pCatAgent->release_w() ;
+         }
+         pClsCB->invalidateCata( (*it).c_str() ) ;
+         ++it ;
+      }
+      pClsCB->invalidateCata( _name ) ;
+
+      /// already drop phrase1
+      if ( DELCSPHASE_1 == _status )
+      {
+         rc = rtnDropCollectionSpaceP2( _name, cb, _pDmsCB, _pDpsCB ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to drop cs in phase2(%d)", rc ) ;
+         _status = DELCSPHASE_0 ;
+         _clean( cb ) ;
+      }
+
+      /// close context
       _isOpened = FALSE ;
       rc = SDB_DMS_EOC ;
 
@@ -4632,6 +4666,7 @@ namespace engine
       _hasDropped    = FALSE ;
       _mbContext     = NULL ;
       _su            = NULL ;
+      _w             = 0 ;
    }
 
    _rtnContextDelCL::~_rtnContextDelCL()
@@ -4696,9 +4731,11 @@ namespace engine
    }
 
    INT32 _rtnContextDelCL::open( const CHAR *pCollectionName,
-                                 _pmdEDUCB *cb )
+                                 _pmdEDUCB *cb, INT32 w )
    {
       INT32 rc = SDB_OK ;
+      _w= w ;
+
       SDB_ASSERT( pCollectionName, "pCollectionName can't be null!" );
       PD_CHECK( pCollectionName, SDB_INVALIDARG, error, PDERROR,
                "pCollectionName is null!" );
@@ -4736,9 +4773,6 @@ namespace engine
       _pCatAgent->release_w () ;
       pmdGetKRCB()->getClsCB()->invalidateCata( _collectionName.c_str() ) ;
 
-      PD_CHECK( pmdIsPrimary(), SDB_CLS_NOT_PRIMARY, error, PDERROR,
-                "Failed to drop cs before phase2(%d)", rc );
-
       // drop collection
       rc = _su->data()->dropCollection ( _clShortName.c_str(), cb, _pDpsCB,
                                          TRUE, _mbContext ) ;
@@ -4748,6 +4782,13 @@ namespace engine
                   _collectionName.c_str(), rc ) ;
          goto error ;
       }
+
+      /// wait sync
+      if ( _w > 1 )
+      {
+         _pDpsCB->completeOpr( cb, _w ) ;
+      }
+
       _su->getAPM()->invalidatePlans ( _clShortName.c_str() ) ;
       _hasDropped = TRUE ;
 
@@ -4799,7 +4840,7 @@ namespace engine
    {
       _pCatAgent     = pmdGetKRCB()->getClsCB()->getCatAgent() ;
       _pRtncb        = pmdGetKRCB()->getRTNCB();
-      _version       = -1;
+      _version       = -1 ;
       ossMemset( _name, 0, DMS_COLLECTION_FULL_NAME_SZ + 1 );
    }
 
@@ -4829,78 +4870,56 @@ namespace engine
    }
 
    INT32 _rtnContextDelMainCL::open( const CHAR *pCollectionName,
-                                     _pmdEDUCB *cb )
+                                     vector< string > &subCLList,
+                                     INT32 version,
+                                     _pmdEDUCB *cb,
+                                     INT32 w )
    {
       INT32 rc = SDB_OK ;
-      std::vector< std::string > strSubCLList ;
-      std::vector< std::string > strSubCLListTmp ;
-      std::vector< std::string >::iterator iter ;
+      vector< string >::iterator iter ;
+      rtnContextDelCL *delContext   = NULL ;
+      SINT64 contextID              = -1 ;
+
+      _version                      = version ;
+
       SDB_ASSERT( pCollectionName, "pCollectionName can't be null!" ) ;
       PD_CHECK( pCollectionName, SDB_INVALIDARG, error, PDERROR,
                 "pCollectionName is null!" ) ;
+
       rc = dmsCheckFullCLName( pCollectionName ) ;
       PD_RC_CHECK( rc, PDERROR, "Invalid collection name[%s])",
                    pCollectionName ) ;
 
+      /// open sub collection context
+      iter = subCLList.begin() ;
+      while( iter != subCLList.end() )
       {
-      _clsCatalogSet *pCataSet = NULL;
-      _pCatAgent->lock_r();
-      pCataSet = _pCatAgent->collectionSet( pCollectionName );
-      if ( NULL == pCataSet )
-      {
-         _pCatAgent->release_r();
-         rc = SDB_DMS_NOTEXIST ;
-         PD_LOG( PDERROR, "Can not find collection:%s", pCollectionName );
-         goto error;
-      }
-      _version = pCataSet->getVersion();
-      pCataSet->getSubCLList( strSubCLListTmp );
-      iter = strSubCLListTmp.begin();
-      while( iter != strSubCLListTmp.end() )
-      {
-         _clsCatalogSet *pSubSet = NULL;
-         pSubSet = _pCatAgent->collectionSet( iter->c_str() );
-         if ( NULL == pSubSet || 0 == pSubSet->groupCount() )
-         {
-            ++iter;
-            continue;
-         }
-         strSubCLList.push_back( *iter );
-         ++iter;
-      }
-      _pCatAgent->release_r();
-      }
+         rc = _pRtncb->contextNew( RTN_CONTEXT_DELCL,
+                                   (rtnContext **)&delContext,
+                                   contextID, cb ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to create sub-context of sub-"
+                      "collection[%s] in drop collection[%s], rc: %d",
+                      (*iter).c_str(), pCollectionName, rc ) ;
 
-      {
-         iter = strSubCLList.begin();
-         while( iter != strSubCLList.end() )
+         rc = delContext->open( (*iter).c_str(), cb, w ) ;
+         if ( rc != SDB_OK )
          {
-            rtnContextDelCL *delContext = NULL;
-            SINT64 contextID;
-            rc = _pRtncb->contextNew( RTN_CONTEXT_DELCL,
-                                      (rtnContext **)&delContext,
-                                      contextID, cb ) ;
-            PD_RC_CHECK( rc, PDERROR, "Failed to create sub-context, "
-                         "drop cl failed, rc: %d", rc ) ;
-            rc = delContext->open( (*iter).c_str(), cb ) ;
-            if ( rc != SDB_OK )
+            _pRtncb->contextDelete( contextID, cb ) ;
+            if ( SDB_DMS_NOTEXIST == rc )
             {
-               _pRtncb->contextDelete( contextID, cb ) ;
-               if ( SDB_DMS_NOTEXIST == rc )
-               {
-                  ++iter;
-                  continue;
-               }
-               PD_LOG( PDERROR, "Failed to open sub-context, drop "
-                       "cl failed(rc=%d)", rc ) ;
-               goto error;
+               ++iter;
+               continue;
             }
-            _subContextList[ *iter ] = contextID ;
-            ++iter;
+            PD_LOG( PDERROR, "Failed to open sub-context of sub-"
+                    "collection[%s] in drop collection[%s], rc: %d",
+                    (*iter).c_str(), pCollectionName, rc ) ;
+            goto error;
          }
+         _subContextList[ *iter ] = contextID ;
+         ++iter ;
       }
 
-      ossStrcpy( _name, pCollectionName );
+      ossStrcpy( _name, pCollectionName ) ;
       _isOpened = TRUE;
    done:
       return rc;
@@ -4912,115 +4931,58 @@ namespace engine
                                         rtnContextBuf &buffObj,
                                         _pmdEDUCB *cb )
    {
-      INT32 rc = SDB_OK;
-      INT32 curVer = -1;
-      std::vector< std::string > strSubCLList;
+      INT32 rc = SDB_OK ;
+      INT32 curVer = -1 ;
+      _clsCatalogSet *pCataSet = NULL ;
+      SUBCL_CONTEXT_LIST::iterator iterCtx ;
+
       if ( !isOpened() )
       {
          rc = SDB_DMS_CONTEXT_IS_CLOSE;
          goto error ;
       }
 
-      PD_CHECK( pmdIsPrimary(), SDB_CLS_NOT_PRIMARY, error, PDERROR,
-                "Failed to drop cs before phase2(%d)", rc );
-
+      /// get last catalog info
+      _pCatAgent->lock_r() ;
+      pCataSet = _pCatAgent->collectionSet( _name ) ;
+      if ( pCataSet )
       {
-      _clsCatalogSet *pCataSet = NULL;
-      _pCatAgent->lock_r();
-      pCataSet = _pCatAgent->collectionSet( _name );
-      if ( NULL == pCataSet )
-      {
-         _pCatAgent->release_r();
-         rc = SDB_DMS_NOTEXIST;
-         PD_LOG( PDERROR, "can not find collection:%s", _name );
-         goto error;
+         curVer = pCataSet->getVersion() ;
       }
-      pCataSet->getSubCLList( strSubCLList );
-      curVer = pCataSet->getVersion();
-      _pCatAgent->release_r();
+      _pCatAgent->release_r() ;
+
+      if ( -1 != curVer && curVer != _version )
+      {
+         rc = SDB_CLS_COORD_NODE_CAT_VER_OLD ;
+         goto error ;
       }
 
+      /// drop sub collections
+      iterCtx = _subContextList.begin() ;
+      while( iterCtx != _subContextList.end() )
       {
-         if ( _version != curVer )
-         {
-            SUBCL_CONTEXT_LIST::iterator iterCtx;
-            std::vector< std::string >::iterator iterCl
-                                    = strSubCLList.begin();
-            while( iterCl != strSubCLList.end() )
-            {
-               iterCtx = _subContextList.find( *iterCl );
-               if ( _subContextList.end() == iterCtx )
-               {
-                  PD_LOG( PDERROR, "The version is changed, "
-                          "sub-collection(%s) have not been delete",
-                          (*iterCl).c_str() );
-               }
-               else
-               {
-                  rtnContextBuf buffObj;
-                  rc = rtnGetMore( iterCtx->second, -1, buffObj, cb, _pRtncb ) ;
-                  PD_CHECK( SDB_DMS_EOC == rc || SDB_DMS_NOTEXIST == rc,
-                            rc, error, PDERROR,
-                            "Failed to del sub-collection, rc: %d",
-                            rc ) ;
-                  rc = SDB_OK;
-                  _subContextList.erase( iterCtx );
-               }
-               ++iterCl;
-            }
-            iterCtx = _subContextList.begin();
-            while( iterCtx != _subContextList.end() )
-            {
-               PD_LOG( PDERROR, "The version is changed, "
-                       "sub-collection(%s) have not been delete",
-                       (iterCtx->first).c_str() ) ;
-               ++iterCtx ;
-            }
-         }
-         else
-         {
-            SUBCL_CONTEXT_LIST::iterator iterCtx = _subContextList.begin();
-            while( iterCtx != _subContextList.end() )
-            {
-               rtnContextBuf buffObj;
-               rc = rtnGetMore( iterCtx->second, -1, buffObj, cb, _pRtncb );
-               PD_CHECK( SDB_DMS_EOC == rc || SDB_DMS_NOTEXIST == rc,
-                         rc, error, PDERROR,
-                         "Failed to del sub-collection, rc: %d",
-                         rc );
-               rc = SDB_OK;
-               _subContextList.erase( iterCtx++ );
-            }
-         }
+         rtnContextBuf buffObj;
+         rc = rtnGetMore( iterCtx->second, -1, buffObj, cb, _pRtncb ) ;
+         PD_CHECK( SDB_DMS_EOC == rc || SDB_DMS_NOTEXIST == rc,
+                   rc, error, PDERROR,
+                   "Failed to del sub-collection, rc: %d",
+                   rc ) ;
+         rc = SDB_OK ;
+         _subContextList.erase( iterCtx++ ) ;
       }
 
+      /// clear main collection's catalog info
       _pCatAgent->lock_w () ;
       _pCatAgent->clear ( _name ) ;
       _pCatAgent->release_w () ;
       pmdGetKRCB()->getClsCB()->invalidateCata( _name ) ;
-      _isOpened = FALSE;
-      if ( _version != curVer &&
-           ( !_subContextList.empty() || !strSubCLList.empty() ) )
-      {
-         std::vector< std::string >::iterator iterClTmp;
-         iterClTmp = strSubCLList.begin();
-         while( iterClTmp != strSubCLList.end() )
-         {
-            PD_LOG( PDERROR, "The version is changed, "
-                    "sub-collection(%s) have not been delete",
-                    (*iterClTmp).c_str() );
-            ++iterClTmp;
-         }
-         rc = SDB_CLS_COORD_NODE_CAT_VER_OLD ;
-      }
-      else
-      {
-         rc = SDB_DMS_EOC ;
-      }
+      _isOpened = FALSE ;
+      rc = SDB_DMS_EOC ;
+
    done:
-      return rc;
+      return rc ;
    error:
-      goto done;
+      goto done ;
    }
 
    _rtnContextExplain::_rtnContextExplain( INT64 contextID,

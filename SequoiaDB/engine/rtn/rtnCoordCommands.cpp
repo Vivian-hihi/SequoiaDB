@@ -2292,28 +2292,30 @@ namespace engine
       pmdKRCB *pKrcb = pmdGetKRCB();
       _SDB_RTNCB *pRtncb = pKrcb->getRTNCB();
       SET_RC ignoreRCList ;
+      string strName ;
 
       contextID = -1 ;
-      getIgnoreRCList( ignoreRCList ) ;
+      _getIgnoreRCList( ignoreRCList ) ;
 
       // phase 1
-      rc = doP1OnDataGroup( (CHAR*)pMsg, cb, contextID, ignoreRCList ) ;
+      rc = doP1OnDataGroup( (CHAR*)pMsg, cb, ignoreRCList,
+                            contextID, strName ) ;
       PD_RC_CHECK( rc, PDERROR,
                    "Failed to execute phase1 on data group(rc=%d)",
                    rc );
 
-      rc = doOnCataGroup( (CHAR*)pMsg, cb );
+      rc = doOnCataGroup( (CHAR*)pMsg, cb, strName );
       PD_RC_CHECK( rc, PDERROR,
                    "Failed to execute on cata group(rc=%d)",
                    rc );
 
       // phase 2
-      rc = doP2OnDataGroup( (CHAR*)pMsg, cb, contextID );
+      rc = doP2OnDataGroup( (CHAR*)pMsg, cb, strName, contextID );
       PD_RC_CHECK( rc, PDERROR,
                    "Failed to execute phase2 on data group(rc=%d)",
                    rc ) ;
 
-      rc = complete( (CHAR*)pMsg, cb ) ;
+      rc = complete( (CHAR*)pMsg, cb, strName ) ;
       PD_RC_CHECK( rc, PDERROR,
                    "Failed to complete the operation(rc=%d)",
                    rc ) ;
@@ -2330,12 +2332,13 @@ namespace engine
       goto done ;
    }
 
-   void rtnCoordCMD2PhaseCommit::getIgnoreRCList( SET_RC &ignoreRCList )
+   void rtnCoordCMD2PhaseCommit::_getIgnoreRCList( SET_RC &ignoreRCList )
    {
    }
 
    INT32 rtnCoordCMD2PhaseCommit::complete( CHAR *pReceiveBuffer,
-                                            pmdEDUCB * cb )
+                                            pmdEDUCB * cb,
+                                            const string &strName )
    {
       return SDB_OK;
    }
@@ -2343,22 +2346,23 @@ namespace engine
    //PD_TRACE_DECLARE_FUNCTION (SDB_RTNCOCMD2PC_DOP1, "rtnCoordCMD2PhaseCommit::doP1OnDataGroup" )
    INT32 rtnCoordCMD2PhaseCommit::doP1OnDataGroup( CHAR *pReceiveBuffer,
                                                    pmdEDUCB *cb,
+                                                   SET_RC &ignoreRCList,
                                                    SINT64 &contextID,
-                                                   SET_RC &ignoreRCList )
+                                                   string &strName )
    {
       INT32 rc = SDB_OK;
       PD_TRACE_ENTRY ( SDB_RTNCOCMD2PC_DOP1 ) ;
 
       rtnContextCoord *pContext = NULL ;
       CoordGroupList groupLst ;
-      string clName ;
 
-      rc = getGroupList( pReceiveBuffer, cb, groupLst, clName ) ;
+      rc = _getGroupList( pReceiveBuffer, cb, groupLst, strName ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to get group-list, rc: %d", rc ) ;
 
-      if ( !clName.empty() )
+      /// is collection
+      if ( NULL != ossStrchr( strName.c_str(), '.' ) )
       {
-         rc = executeOnCL( (MsgHeader*)pReceiveBuffer, cb, clName.c_str(),
+         rc = executeOnCL( (MsgHeader*)pReceiveBuffer, cb, strName.c_str(),
                            FALSE, NULL, &ignoreRCList, NULL, &pContext ) ;
       }
       else
@@ -2392,6 +2396,7 @@ namespace engine
    //PD_TRACE_DECLARE_FUNCTION (SDB_RTNCOCMD2PC_DOP2, "rtnCoordCMD2PhaseCommit::doP2OnDataGroup" )
    INT32 rtnCoordCMD2PhaseCommit::doP2OnDataGroup( CHAR *pReceiveBuffer,
                                                    pmdEDUCB * cb,
+                                                   const string &strName,
                                                    SINT64 &contextID )
    {
       INT32 rc = SDB_OK;
@@ -2407,7 +2412,7 @@ namespace engine
       }
       PD_RC_CHECK( rc, PDERROR,
                    "Failed to execute phase-2 on data node(rc=%d)",
-                   rc );
+                   rc ) ;
    done:
       PD_TRACE_EXITRC ( SDB_RTNCOCMD2PC_DOP2, rc ) ;
       return rc;
@@ -2420,14 +2425,14 @@ namespace engine
       goto done;
    }
 
-   void rtnCoordCMDDropCollection::getIgnoreRCList( SET_RC &ignoreRCList )
+   void rtnCoordCMDDropCollection::_getIgnoreRCList( SET_RC &ignoreRCList )
    {
       ignoreRCList.insert( SDB_DMS_NOTEXIST );
    }
 
-   //PD_TRACE_DECLARE_FUNCTION (SDB_RTNCODROPCL_GETCLNAME, "rtnCoordCMDDropCollection::getCLName" )
-   INT32 rtnCoordCMDDropCollection::getCLName( CHAR *pReceiveBuffer,
-                                               string &strCLName )
+   //PD_TRACE_DECLARE_FUNCTION (SDB_RTNCODROPCL_GETCLNAME, "rtnCoordCMDDropCollection::_getCLName" )
+   INT32 rtnCoordCMDDropCollection::_getCLName( CHAR *pReceiveBuffer,
+                                                string &strCLName )
    {
       INT32 rc = SDB_OK;
       PD_TRACE_ENTRY ( SDB_RTNCODROPCL_GETCLNAME ) ;
@@ -2460,16 +2465,16 @@ namespace engine
       goto done ;
    }
 
-   //PD_TRACE_DECLARE_FUNCTION (SDB_RTNCODROPCL_GETGPLST, "rtnCoordCMDDropCollection::getGroupList" )
-   INT32 rtnCoordCMDDropCollection::getGroupList( CHAR *pReceiveBuffer,
-                                                  pmdEDUCB *cb,
-                                                  CoordGroupList &groupLst,
-                                                  string &clName )
+   //PD_TRACE_DECLARE_FUNCTION (SDB_RTNCODROPCL_GETGPLST, "rtnCoordCMDDropCollection::_getGroupList" )
+   INT32 rtnCoordCMDDropCollection::_getGroupList( CHAR *pReceiveBuffer,
+                                                   pmdEDUCB *cb,
+                                                   CoordGroupList &groupLst,
+                                                   string &strName )
    {
       INT32 rc = SDB_OK;
       PD_TRACE_ENTRY ( SDB_RTNCODROPCL_GETGPLST ) ;
 
-      rc = getCLName( pReceiveBuffer, clName ) ;
+      rc = _getCLName( pReceiveBuffer, strName ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to get collection name, rc: %d",
                    rc ) ;
 
@@ -2482,27 +2487,24 @@ namespace engine
 
    //PD_TRACE_DECLARE_FUNCTION (SDB_RTNCODROPCL_CMPL, "rtnCoordCMDDropCollection::complete" )
    INT32 rtnCoordCMDDropCollection::complete( CHAR *pReceiveBuffer,
-                                              pmdEDUCB * cb )
+                                              pmdEDUCB * cb,
+                                              const string &strName )
    {
       INT32 rc = SDB_OK;
       PD_TRACE_ENTRY ( SDB_RTNCODROPCL_CMPL ) ;
       pmdKRCB *pKrcb = pmdGetKRCB();
       CoordCB *pCoordcb = pKrcb->getCoordCB();
 
-      string strCLName ;
       string strMainCLName ;
       CoordCataInfoPtr cataInfo ;
-      rc = getCLName( pReceiveBuffer, strCLName ) ;
-      PD_RC_CHECK( rc, PDERROR,
-                   "Failed to get collection name, rc: %d", rc ) ;
 
-      rc = rtnCoordGetCataInfo( cb, strCLName.c_str(), FALSE, cataInfo ) ;
+      rc = rtnCoordGetCataInfo( cb, strName.c_str(), FALSE, cataInfo ) ;
       PD_RC_CHECK( rc, PDWARNING,
                    "Failed to get catalog, complete drop-CL failed(rc=%d)",
                    rc ) ;
 
       strMainCLName = cataInfo->getCatalogSet()->getMainCLName() ;
-      pCoordcb->delCataInfo( strCLName ) ;
+      pCoordcb->delCataInfo( strName ) ;
       if ( !strMainCLName.empty() )
       {
          pCoordcb->delCataInfo( strMainCLName ) ;
@@ -2517,21 +2519,17 @@ namespace engine
 
    //PD_TRACE_DECLARE_FUNCTION (SDB_RTNCODROPCL_DOONCATA, "rtnCoordCMDDropCollection::doOnCataGroup" )
    INT32 rtnCoordCMDDropCollection::doOnCataGroup( CHAR *pReceiveBuffer,
-                                                   pmdEDUCB * cb )
+                                                   pmdEDUCB * cb,
+                                                   const string &strName )
    {
       INT32 rc = SDB_OK;
       PD_TRACE_ENTRY ( SDB_RTNCODROPCL_DOONCATA ) ;
       MsgOpQuery *pDropReq             = (MsgOpQuery *)pReceiveBuffer ;
       SINT32 opCode                    = pDropReq->header.opCode ;
       UINT32 TID                       = pDropReq->header.TID ;
-      string clName ;
-
-      rc = getCLName( pReceiveBuffer, clName ) ;
-      PD_RC_CHECK( rc, PDERROR, "Get collection name from input buffer "
-                   "failed, rc: %d", rc ) ;
 
       pDropReq->header.opCode = MSG_CAT_DROP_COLLECTION_REQ ;
-      rc = executeOnCataCL( pDropReq, cb, clName.c_str(), TRUE ) ;
+      rc = executeOnCataCL( pDropReq, cb, strName.c_str(), TRUE ) ;
       PD_RC_CHECK( rc, PDERROR,
                    "Failed to drop the catalog of cl(rc=%d)",
                    rc ) ;
@@ -2545,16 +2543,16 @@ namespace engine
       goto done;
    }
 
-   void rtnCoordCMDDropCollectionSpace::getIgnoreRCList( SET_RC &ignoreRCList )
+   void rtnCoordCMDDropCollectionSpace::_getIgnoreRCList( SET_RC &ignoreRCList )
    {
       ignoreRCList.insert( SDB_DMS_CS_NOTEXIST );
    }
 
-   //PD_TRACE_DECLARE_FUNCTION (SDB_RTNCODROPCS_GETGPLST, "rtnCoordCMDDropCollectionSpace::getGroupList" )
-   INT32 rtnCoordCMDDropCollectionSpace::getGroupList( CHAR *pReceiveBuffer,
-                                                       pmdEDUCB *cb,
-                                                       CoordGroupList &groupLst,
-                                                       string &clName )
+   //PD_TRACE_DECLARE_FUNCTION (SDB_RTNCODROPCS_GETGPLST, "rtnCoordCMDDropCollectionSpace::_getGroupList" )
+   INT32 rtnCoordCMDDropCollectionSpace::_getGroupList( CHAR *pReceiveBuffer,
+                                                        pmdEDUCB *cb,
+                                                        CoordGroupList &groupLst,
+                                                        string &strName )
    {
       INT32 rc = SDB_OK;
       PD_TRACE_ENTRY ( SDB_RTNCODROPCS_GETGPLST ) ;
@@ -2581,6 +2579,7 @@ namespace engine
          BSONElement beCSName = boQuery.getField( CAT_COLLECTION_SPACE_NAME );
          PD_CHECK( beCSName.type() == String, SDB_INVALIDARG,
                    error, PDERROR, "failed to get cs name" );
+         strName = beCSName.str() ;
       }
       catch( std::exception &e )
       {
@@ -2610,7 +2609,8 @@ namespace engine
 
    //PD_TRACE_DECLARE_FUNCTION (SDB_RTNCODROPCS_DOONCATA, "rtnCoordCMDDropCollectionSpace::doOnCataGroup" )
    INT32 rtnCoordCMDDropCollectionSpace::doOnCataGroup( CHAR *pReceiveBuffer,
-                                                        pmdEDUCB * cb )
+                                                        pmdEDUCB *cb,
+                                                        const string &strName )
    {
       INT32 rc = SDB_OK;
       PD_TRACE_ENTRY ( SDB_RTNCODROPCS_DOONCATA ) ;
@@ -2632,6 +2632,24 @@ namespace engine
       return rc;
    error:
       goto done;
+   }
+
+   INT32 rtnCoordCMDDropCollectionSpace::complete( CHAR *pReceiveBuffer,
+                                                   pmdEDUCB *cb,
+                                                   const string &strName )
+   {
+      vector< string > subCLSet ;
+      CoordCB *pCoordCB = pmdGetKRCB()->getCoordCB() ;
+      pCoordCB->delCataInfoByCS( strName.c_str(), &subCLSet ) ;
+
+      /// clear relate sub collection's catalog info
+      vector< string >::iterator it = subCLSet.begin() ;
+      while( it != subCLSet.end() )
+      {
+         pCoordCB->delCataInfo( *it ) ;
+         ++it ;
+      }
+      return SDB_OK ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDQUBASE_QUTOCANOGR, "rtnCoordCMDQueryBase::queryToCataNodeGroup" )

@@ -1399,6 +1399,10 @@ namespace engine
       else
       {
          _clsCatalogSet *catSet = NULL ;
+         INT32 version = 0 ;
+         UINT32 groupCount = 0 ;
+         const CHAR *pCLType = "normal" ;
+         string collectionName ;
          rc = msgExtractReply ( (CHAR *)msg, &flag, &contextID, &startFrom,
                                 &numReturned, objList ) ;
          if ( SDB_OK != rc )
@@ -1413,6 +1417,20 @@ namespace engine
          _pCatAgent->lock_w () ;
          rc = _pCatAgent->updateCatalog ( 0, groupID, objList[0].objdata(),
                                           objList[0].objsize(), &catSet ) ;
+         if ( catSet )
+         {
+            version = catSet->getVersion() ;
+            groupCount = catSet->groupCount() ;
+            collectionName = catSet->name() ;
+            if ( catSet->isMainCL() )
+            {
+               pCLType = "main" ;
+            }
+            else if ( !catSet->getMainCLName().empty() )
+            {
+               pCLType = "sub" ;
+            }
+         }
          _pCatAgent->release_w () ;
          if ( SDB_OK != rc )
          {
@@ -1420,8 +1438,9 @@ namespace engine
             goto error ;
          }
 
-         PD_LOG ( PDEVENT, "Update catalog [version:%u, rc: %d]",
-                  NULL == catSet ? 0 : catSet->getVersion(), rc ) ;
+         PD_LOG ( PDEVENT, "Update catalog[name: %s, version:%u, type: %s, "
+                  "group count: %d, rc: %d]", collectionName.c_str(),
+                  version, pCLType, groupCount, rc ) ;
 
          //signal collection info event, since the previous pEVentInfo
          //could be NULL ( if it's async call, requestID is 0 ), we'll have

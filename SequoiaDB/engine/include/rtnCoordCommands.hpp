@@ -664,64 +664,75 @@ namespace engine
                              INT64 &contextID,
                              rtnContextBuf *buf ) ;
    protected:
-      virtual void  getIgnoreRCList( SET_RC &ignoreRCList );
-
-      virtual INT32 getGroupList( CHAR *pReceiveBuffer,
-                                  pmdEDUCB *cb,
-                                  CoordGroupList &groupLst,
-                                  string &clName ) = 0 ;
+      virtual void  _getIgnoreRCList( SET_RC &ignoreRCList ) ;
+      virtual INT32 _getGroupList( CHAR *pReceiveBuffer,
+                                   pmdEDUCB *cb,
+                                   CoordGroupList &groupLst,
+                                   string &strName ) = 0 ;
 
    private:
       virtual INT32 doP1OnDataGroup( CHAR *pReceiveBuffer,
                                      pmdEDUCB *cb,
+                                     SET_RC &ignoreRCList,
                                      SINT64 &contextID,
-                                     SET_RC &ignoreRCList ) ;
+                                     string &strName ) ;
 
       virtual INT32 doP2OnDataGroup( CHAR *pReceiveBuffer,
                                      pmdEDUCB * cb,
+                                     const string &strName,
                                      SINT64 &contextID ) ;
 
       virtual INT32 doOnCataGroup( CHAR *pReceiveBuffer,
-                                   pmdEDUCB * cb ) = 0;
+                                   pmdEDUCB * cb,
+                                   const string &strName ) = 0;
 
       virtual INT32 complete( CHAR *pReceiveBuffer,
-                              pmdEDUCB * cb );
+                              pmdEDUCB * cb,
+                              const string &strName );
    };
 
    class rtnCoordCMDDropCollection : public rtnCoordCMD2PhaseCommit
    {
    protected:
-      virtual INT32 getGroupList( CHAR *pReceiveBuffer,
-                                  pmdEDUCB *cb,
-                                  CoordGroupList &groupLst,
-                                  string &clName ) ;
+      virtual INT32 _getGroupList( CHAR *pReceiveBuffer,
+                                   pmdEDUCB *cb,
+                                   CoordGroupList &groupLst,
+                                   string &strName ) ;
 
-      virtual void  getIgnoreRCList( SET_RC &ignoreRCList ) ;
+      virtual void  _getIgnoreRCList( SET_RC &ignoreRCList ) ;
 
    private:
       virtual INT32 doOnCataGroup( CHAR *pReceiveBuffer,
-                                   pmdEDUCB * cb );
+                                   pmdEDUCB * cb,
+                                   const string &strName );
 
       virtual INT32 complete( CHAR *pReceiveBuffer,
-                              pmdEDUCB * cb );
+                              pmdEDUCB * cb,
+                              const string &strName );
 
-      INT32 getCLName( CHAR *pReceiveBuffer,
-                       string &strCLName );
+      INT32 _getCLName( CHAR *pReceiveBuffer,
+                        string &strCLName ) ;
    };
 
    class rtnCoordCMDDropCollectionSpace : public rtnCoordCMD2PhaseCommit
    {
    protected:
-      virtual INT32 getGroupList( CHAR *pReceiveBuffer,
-                                  pmdEDUCB *cb,
-                                  CoordGroupList &groupLst,
-                                  string &clName ) ;
+      virtual INT32 _getGroupList( CHAR *pReceiveBuffer,
+                                   pmdEDUCB *cb,
+                                   CoordGroupList &groupLst,
+                                   string &strName ) ;
 
-      virtual void  getIgnoreRCList( SET_RC &ignoreRCList );
+      virtual void  _getIgnoreRCList( SET_RC &ignoreRCList ) ;
 
    private:
       virtual INT32 doOnCataGroup( CHAR *pReceiveBuffer,
-                                   pmdEDUCB * cb ) ;
+                                   pmdEDUCB * cb,
+                                   const string &strName ) ;
+
+      virtual INT32 complete( CHAR *pReceiveBuffer,
+                              pmdEDUCB * cb,
+                              const string &strName ) ;
+
    };
 
    class rtnCoordCMDQueryBase : public rtnCoordCommand

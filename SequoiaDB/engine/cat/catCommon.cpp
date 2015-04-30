@@ -1139,7 +1139,8 @@ namespace engine
    }
 
    INT32 catGetCSGroupsFromCLs( const CHAR *csName, pmdEDUCB *cb,
-                                vector< UINT32 > &groups )
+                                vector< UINT32 > &groups,
+                                BOOLEAN includeSubCLGroups )
    {
       INT32 rc = SDB_OK ;
       BSONObj matcher ;
@@ -1153,7 +1154,23 @@ namespace engine
       std::stringstream ss ;
 
       ss << "^" << csName << "\\." ;
-      builder.appendRegex( CAT_COLLECTION_NAME, ss.str() ) ;
+
+      if ( FALSE == includeSubCLGroups )
+      {
+         builder.appendRegex( CAT_COLLECTION_NAME, ss.str() ) ;
+      }
+      else
+      {
+         /// get the sub collection's groups
+         BSONArrayBuilder orBuilder( builder.subarrayStart( "$or" ) ) ;
+         BSONObjBuilder nameObjBuilder( orBuilder.subobjStart() ) ;
+         nameObjBuilder.appendRegex( CAT_COLLECTION_NAME, ss.str() ) ;
+         nameObjBuilder.done() ;
+         BSONObjBuilder subCLObjBuilder( orBuilder.subobjStart() ) ;
+         subCLObjBuilder.appendRegex( CAT_MAINCL_NAME, ss.str() ) ;
+         subCLObjBuilder.done() ;
+         orBuilder.done() ;         
+      }
       matcher = builder.obj() ;
 
       // query

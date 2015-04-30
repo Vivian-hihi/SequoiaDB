@@ -792,7 +792,7 @@ namespace engine
                                  *pContextID, cb );
          PD_RC_CHECK( rc, PDERROR, "Failed to create context, drop "
                       "collection failed(rc=%d)", rc );
-         rc = delContext->open( _collectionName, cb );
+         rc = delContext->open( _collectionName, cb, w ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to open context, drop "
                       "collection failed(rc=%d)",
                       rc );
