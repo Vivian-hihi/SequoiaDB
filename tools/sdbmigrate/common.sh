@@ -381,18 +381,19 @@ function checkInputCSOrCLNameList()
       if [ "cl" = "$val_type" ] ; then
          verifyName "$first_part" "cl"
          if [ 0 -ne $? ] ; then
-            arr_tmp[$count]="$name"
+            arr_tmp[$count]="$first_part"
             (( count++ ))
          fi
          if [ "" != "$second_part" ] ; then
             verifyName "$second_part" "cl"
             if [ 0 -ne $? ] ; then
-               arr_tmp[$count]="$name"
+               arr_tmp[$count]="$second_part"
                (( count++ ))
             fi
          else # get rid of "foo.bar:"
             if [ ":" = "${name: -1}" ] ; then
                arr_tmp[$count]="$name"
+               (( count++ ))
             fi
          fi
          
@@ -411,6 +412,7 @@ function checkInputCSOrCLNameList()
          else # get rid of "foo:"
             if [ ":" = "${name: -1}" ] ; then
                arr_tmp[$count]="$name"
+               (( count++ ))
             fi
          fi
       fi
