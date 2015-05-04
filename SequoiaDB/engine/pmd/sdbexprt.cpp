@@ -178,7 +178,7 @@ namespace engine
    #define EXPLAIN_INCLUDEREGEX       "whether to output a compelete regex, default false( csv only )"
    #define EXPLAIN_FILTER             "the matching rule(e.g. --filter '{ age: 18 }')"
    #define EXPLAIN_SORT               "the ordered rule(e.g. --sort '{ name: 1 }')"
-   #define EXPLAIN_PREF_INST          "choise which instance to read, default 'A', value enum: M,S,A,1-7 (e.g. --preferedinstance { PreferedInstance:\"M\"})" 
+   #define EXPLAIN_PREF_INST          "choise which instance to read, default \"A\", value enum: \"M\",\"S\",\"A\",1-7 (e.g. --preferedinstance { PreferedInstance:\"M\"})" 
    #define EXPLAIN_SSL                "use SSL connection (arg: [true|false], e.g. --ssl true)"
    
    INT32 mainEntry ( INT32 argc, CHAR **argv )
