@@ -541,6 +541,8 @@ namespace engine
       {
          INT32 fieldCount = 0 ;
          BOOLEAN idIndex = isSys ;
+         BOOLEAN isUniq = FALSE ;
+         BOOLEAN enforced = FALSE ;
          // make sure the index def is not too large
          if ( obj.objsize() + sizeof(_IDToInsert) +
               IXM_INDEX_CB_EXTENT_METADATA_SIZE >= IXM_PAGE_SIZE4K )
@@ -595,10 +597,14 @@ namespace engine
          }
          if ( obj.hasField ( IXM_UNIQUE_FIELD ))
          {
+            BSONElement e = obj.getField( IXM_UNIQUE_FIELD ) ;
+            isUniq = e.booleanSafe() ;
             fieldCount ++ ;
          }
          if ( obj.hasField ( IXM_ENFORCED_FIELD ))
          {
+            BSONElement e = obj.getField( IXM_ENFORCED_FIELD ) ;
+            enforced = e.booleanSafe() ;
             fieldCount ++ ;
          }
          if ( obj.hasField ( IXM_DROPDUP_FIELD ))
@@ -613,6 +619,13 @@ namespace engine
          // make sure no other fields, unless it is a geo index.
          if ( fieldCount != obj.nFields() )
          {
+            return FALSE ;
+         }
+
+         if ( !isUniq && enforced )
+         {
+            PD_LOG( PDERROR, "should not specify \"enforced\" as true in an"
+                    " non-unique index" ) ;
             return FALSE ;
          }
          return TRUE ;
