@@ -78,7 +78,7 @@
           </ul>
 
           <strong class="ph b"><em class="ph i">静态链接：</em></strong><p class="p"/>
-使用 lib 目录下的 libstaticsdbc.a 静态库，gcc 编译参数形式如：<pre class="pre codeblock">cc testClient.c -o testClientC -I &lt;PATH&gt;/sdbdriver/include –L &lt;PATH&gt;/sdbdriver/lib/libstaticsdbc.a -lm</pre>
+使用 lib 目录下的 libstaticsdbc.a 静态库，gcc 编译参数形式如：<pre class="pre codeblock">cc testClient.c -o testClientC -I &lt;PATH&gt;/sdbdriver/include –L &lt;PATH&gt;/sdbdriver/lib/libstaticsdbc.a -lm -ldl</pre>
 
         </li>
 

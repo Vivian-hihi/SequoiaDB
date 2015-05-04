@@ -73,7 +73,7 @@ Use lib directory libsdbcpp.so dynamic library, g++ compiler parameters forms su
 </ul>
 
           <strong class="ph b"><em class="ph i">Static Link:</em></strong><p class="p"/>
-Use lib directory libstaticsdbc.a static library, g++ compiler parameters forms such as:<pre class="pre codeblock">g++ main.c -o test -I &lt;path&gt;/sdbdriver/include –L &lt;path&gt;/sdbdriver/lib/libstaticsdbcpp.a –lm -lpthread</pre>
+Use lib directory libstaticsdbc.a static library, g++ compiler parameters forms such as:<pre class="pre codeblock">g++ main.c -o test -I &lt;path&gt;/sdbdriver/include –L &lt;path&gt;/sdbdriver/lib/libstaticsdbcpp.a –lm -lpthread -ldl</pre>
 </li>
 
         <li class="li">Windows <p class="p">Windows driver development kit is not released yet. </p>

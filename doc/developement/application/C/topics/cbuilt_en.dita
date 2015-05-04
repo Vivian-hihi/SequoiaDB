@@ -21,7 +21,7 @@
           <p>error while loading shared libraries: libsdbc.so: cannot open shared object file: No such file or directory</p>
           <p>Said LD_LIBRARY_PATH environment variable is not set properly, it is recommmended to set to /etc/profile or application startup script, avoiding each new terminal will need to re-open setting. </p>
         </note></li></ul>
-          <b><i>Static Link:</i></b><p></p>Use lib directory libstaticsdbc.a static library, gcc compiler parameters forms such as:<codeblock>cc testClient.c -o testClientC -I &lt;path>/sdbdriver/include –L &lt;path>/sdbdriver/lib/libstaticsdbc.a -lm</codeblock>
+          <b><i>Static Link:</i></b><p></p>Use lib directory libstaticsdbc.a static library, gcc compiler parameters forms such as:<codeblock>cc testClient.c -o testClientC -I &lt;path>/sdbdriver/include –L &lt;path>/sdbdriver/lib/libstaticsdbc.a -lm -ldl</codeblock>
         </li>
         <li>Windows
           <p>Windows driver development kit is not released yet.</p>

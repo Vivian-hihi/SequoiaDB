@@ -26,7 +26,7 @@
               </note>
             </li>
           </ul>
-          <b><i>静态链接：</i></b><p></p>使用 lib 目录下的 libstaticsdbc.a 静态库，g++ 编译参数形式如：<codeblock>g++ main.c -o test -I &lt;path>/sdbdriver/include –L &lt;path>/sdbdriver/lib/libstaticsdbcpp.a –lm -lpthread</codeblock>
+          <b><i>静态链接：</i></b><p></p>使用 lib 目录下的 libstaticsdbc.a 静态库，g++ 编译参数形式如：<codeblock>g++ main.c -o test -I &lt;path>/sdbdriver/include –L &lt;path>/sdbdriver/lib/libstaticsdbcpp.a –lm -lpthread -ldl</codeblock>
         </li>
         <li>Windows<p>暂未推出 Windows 驱动开发包。</p></li>
       </ul>

@@ -21,7 +21,7 @@
             No such file or directory </p>
           <p>Said LD_LIBRARY_PATH environment variable is not set properly, it is recommmended to set to /etc/profile or application startup script, avoiding each new terminal will need to re-open setting. </p>
         </note></li></ul>
-          <b><i>Static Link:</i></b><p></p>Use lib directory libstaticsdbc.a static library, g++ compiler parameters forms such as:<codeblock>g++ main.c -o test -I &lt;path>/sdbdriver/include –L &lt;path>/sdbdriver/lib/libstaticsdbcpp.a –lm -lpthread</codeblock></li>
+          <b><i>Static Link:</i></b><p></p>Use lib directory libstaticsdbc.a static library, g++ compiler parameters forms such as:<codeblock>g++ main.c -o test -I &lt;path>/sdbdriver/include –L &lt;path>/sdbdriver/lib/libstaticsdbcpp.a –lm -lpthread -ldl</codeblock></li>
         <li>Windows <p>Windows driver development kit is not released yet. </p></li>
       </ul>
       
