@@ -24,9 +24,20 @@
 		</exec> -->
 		<!-- <exec executable="${db.path}/bin/sdbstop" dir="" failonerror="true" /> -->
 		<!-- <stafTools workHost="${host.NAME}" workType="shell" workDir="${db.path}" common="ps -ef|grep sdb | grep -v grep | awk '{print $2}' | xargs kill -9" failonerror="true" /> -->
-		<exec executable="${db.path}/uninstall" dir="${db.path}" failonerror="true">
+		<exec executable="${db.path}/uninstall" dir="${db.path}" resultproperty="clean.ret.code" failonerror="true">
 			<arg line="--mode unattended" />
 		</exec>
+		<if>
+			<not>
+				<equals arg1="${clean.ret.code}" arg2="0" />
+			</not>
+			<then>
+				<mkdir dir="/opt/back" />
+				<copy todir="/opt/back" >
+		    		<fileset dir="${db.path}" includes="**/*" />
+		    	</copy>
+			</then>
+		</if>
 		<delete dir="${db.path}" />
 	</target>
 
