@@ -130,8 +130,12 @@ namespace engine
       if ( imprtArg.type == MIGIMPRT_CSV &&
            !imprtArg.isHeaderline && !imprtArg.pFields )
       {
-         ossPrintf ( "if not read first line,than must input fields" ) ;
-         PD_LOG ( PDERROR, "if not read first line,than must input fields" ) ;
+         ossPrintf ( "Error: for csv format, when option \"--%s\" is false, "
+                  "option \"--%s\" must be specified"OSS_NEWLINE, OPTION_HEADERLINE,
+                  OPTION_FIELD ) ;
+         PD_LOG ( PDERROR, "For csv format, when option \"--%s\" is false, "
+                  "option \"--%s\" must be specified", OPTION_HEADERLINE,
+                  OPTION_FIELD ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }

@@ -127,8 +127,10 @@ namespace engine
 
       if ( !exprtArg.pFields && exprtArg.type == MIGEXPRT_CSV )
       {
-         ossPrintf ( "CSV format must complete the --fields"OSS_NEWLINE ) ;
-         PD_LOG ( PDERROR, "CSV format must complete the --fields" ) ;
+         ossPrintf ( "Error: for CSV format, option \"--%s\" must be "
+                     "specified"OSS_NEWLINE, OPTION_FIELD) ;
+         PD_LOG ( PDERROR, "For CSV format, option \"--%s\" must be specified",
+                  OPTION_FIELD ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }
@@ -176,7 +178,7 @@ namespace engine
    #define EXPLAIN_INCLUDEREGEX       "whether to output a compelete regex, default false( csv only )"
    #define EXPLAIN_FILTER             "the matching rule(e.g. --filter '{ age: 18 }')"
    #define EXPLAIN_SORT               "the ordered rule(e.g. --sort '{ name: 1 }')"
-   #define EXPLAIN_PREF_INST          "choise which instance to read(e.g. --preferedinstance { PreferedInstance:\"m\"/\"M\"/\"s\"/\"S\"/\"a\"/\"A\"/1-7}), default \"A\"" 
+   #define EXPLAIN_PREF_INST          "choise which instance to read, default 'A', value enum: M,S,A,1-7 (e.g. --preferedinstance { PreferedInstance:\"M\"})" 
    #define EXPLAIN_SSL                "use SSL connection (arg: [true|false], e.g. --ssl true)"
    
    INT32 mainEntry ( INT32 argc, CHAR **argv )
