@@ -1,10 +1,10 @@
 package com.sequoiadb.test;
 
 import static org.junit.Assert.*;
-import static org.junit.Assert.assertEquals;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
@@ -69,7 +69,7 @@ public class CLSplit {
 		try{
 			rg = sdb.createReplicaGroup(targetRGName);
 			rg.createNode(host, nodePort,
-					             nodePath, null);
+					             nodePath, (Map<String, String>)null);
 			// start node
 			rg.start();
 			Thread.sleep(5000);

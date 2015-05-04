@@ -297,7 +297,7 @@ public class ReplicaGroup {
 	
 	/**
      * @fn Node attachNode(String hostName, int port,
-            Map<String, String> configure)
+            BSONObject configure)
      * @brief Attach node.
      * @param hostName
      *          host name
@@ -309,7 +309,7 @@ public class ReplicaGroup {
      * @exception com.sequoiadb.exception.BaseException
      */
     public Node attachNode(String hostName, int port,
-            Map<String, String> configure) throws BaseException {
+            BSONObject configure) throws BaseException {
         BSONObject config = new BasicBSONObject();
         config.put(SequoiadbConstants.FIELD_NAME_GROUPNAME, name);
         config.put(SequoiadbConstants.FIELD_NAME_HOST, hostName);
@@ -339,7 +339,7 @@ public class ReplicaGroup {
     
     /**
      * @fn void detachNode(String hostName, int port,
-            Map<String, String> configure)
+            BSONObject configure)
      * @brief Detach node.
      * @param hostName
      *          host name
@@ -351,7 +351,7 @@ public class ReplicaGroup {
      * @exception com.sequoiadb.exception.BaseException
      */
     public void detachNode(String hostName, int port,
-            Map<String, String> configure) throws BaseException {
+            BSONObject configure) throws BaseException {
         BSONObject config = new BasicBSONObject();
         config.put(SequoiadbConstants.FIELD_NAME_GROUPNAME, name);
         config.put(SequoiadbConstants.FIELD_NAME_HOST, hostName);
@@ -416,6 +416,46 @@ public class ReplicaGroup {
 		}
 		return getNode(hostName, port);
 	}
+	
+	/**
+     * @fn Node createNode(String hostName, int port, String dbPath,
+            BSONObject configure)
+     * @brief Create node.
+     * @param hostName
+     *          host name
+     * @param port
+     *          port
+     * @param dbPath
+     *          the path for node
+     * @param configure
+     *          configuration for this operation
+     * @return the created Node object
+     * @exception com.sequoiadb.exception.BaseException
+     */
+    public Node createNode(String hostName, int port, String dbPath,
+            BSONObject configure) throws BaseException {
+        BSONObject config = new BasicBSONObject();
+        config.put(SequoiadbConstants.FIELD_NAME_GROUPNAME, name);
+        config.put(SequoiadbConstants.FIELD_NAME_HOST, hostName);
+        config.put(SequoiadbConstants.PMD_OPTION_SVCNAME,
+                Integer.toString(port));
+        config.put(SequoiadbConstants.PMD_OPTION_DBPATH, dbPath);
+        if (configure != null)
+            for (String key : configure.keySet()) {
+                if (key.equals(SequoiadbConstants.FIELD_NAME_GROUPNAME)
+                        || key.equals(SequoiadbConstants.FIELD_NAME_HOST)
+                        || key.equals(SequoiadbConstants.PMD_OPTION_SVCNAME))
+                    continue;
+                config.put(key, configure.get(key));
+            }
+        SDBMessage rtn = adminCommand(SequoiadbConstants.CREATE_CMD,
+                SequoiadbConstants.NODE, config);
+        int flags = rtn.getFlags();
+        if (flags != 0) {
+            throw new BaseException(flags, hostName, port, dbPath, configure);
+        }
+        return getNode(hostName, port);
+    }
 
 	/**
 	 * @fn void removeNode(String hostName, int port,
