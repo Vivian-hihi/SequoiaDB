@@ -135,6 +135,8 @@ namespace engine
       _pMonAppCB           = NULL ;
 
       _countOnly           = FALSE ;
+      _pDpsCB              = NULL ;
+      _w                   = 1 ;
    }
 
    _rtnContextBase::~_rtnContextBase()
@@ -180,6 +182,12 @@ namespace engine
          _dataLock.lock_r() ;
          _dataLock.release_r() ;
       }
+   }
+
+   void _rtnContextBase::setWriteInfo( SDB_DPSCB *dpsCB, INT16 w )
+   {
+      _pDpsCB  = dpsCB ;
+      _w       = w ;
    }
 
    INT32 _rtnContextBase::getReference() const
@@ -692,7 +700,6 @@ namespace engine
       _scanner          = NULL ;
       _direction        = 0 ;
       _queryModifier    = NULL ;
-      _dpsCB            = NULL ;
    }
 
    _rtnContextData::~_rtnContextData ()
@@ -729,6 +736,11 @@ namespace engine
    RTN_CONTEXT_TYPE _rtnContextData::getType() const
    {
       return RTN_CONTEXT_DATA ;
+   }
+
+   BOOLEAN _rtnContextData::isWrite() const
+   {
+      return _queryModifier ? TRUE : FALSE ;
    }
 
    void _rtnContextData::_toString( stringstream & ss )
@@ -856,7 +868,7 @@ namespace engine
                                 const BSONObj &selector, INT64 numToReturn,
                                 INT64 numToSkip,
                                 const BSONObj *blockObj,
-                                INT32 direction, SDB_DPSCB* dpsCB )
+                                INT32 direction )
    {
       INT32 rc = SDB_OK ;
 
@@ -926,7 +938,6 @@ namespace engine
       _scanType = plan->getScanType() ;
       _numToReturn = numToReturn ;
       _numToSkip = numToSkip > 0 ? numToSkip : 0 ;
-      _dpsCB = dpsCB ;
 
       if ( 0 == _numToReturn )
       {
@@ -1056,10 +1067,11 @@ namespace engine
             obj = obj.getOwned() ;
          }
 
-         SDB_ASSERT( NULL != _queryModifier->getDollarList(), "dollarList can't be null" ) ;
+         SDB_ASSERT( NULL != _queryModifier->getDollarList(),
+                     "dollarList can't be null" ) ;
 
          rc = _su->data()->updateRecord( _mbContext, recordID,
-                                         recordDataPtr, eduCB, _dpsCB,
+                                         recordDataPtr, eduCB, getDPSCB(),
                                          _queryModifier->getModifier(),
                                          newObjPtr ) ;
          PD_RC_CHECK( rc, PDERROR, "Update record failed, rc: %d", rc ) ;
@@ -1068,7 +1080,7 @@ namespace engine
       else if ( _queryModifier->isRemove() )
       {
          rc = _su->data()->deleteRecord( _mbContext, recordID,
-                                         recordDataPtr, eduCB, _dpsCB ) ;
+                                         recordDataPtr, eduCB, getDPSCB() ) ;
          PD_RC_CHECK( rc, PDERROR, "Delete record failed, rc: %d", rc ) ;
       }
 
@@ -1647,7 +1659,7 @@ namespace engine
                                     optAccessPlan *plan, pmdEDUCB *cb,
                                     const BSONObj &selector, INT64 numToReturn,
                                     INT64 numToSkip, const BSONObj *blockObj,
-                                    INT32 direction, SDB_DPSCB* dpsCB )
+                                    INT32 direction )
    {
       INT32 rc = SDB_OK ;
       _step = pmdGetKRCB()->getOptionCB()->maxSubQuery() ;
@@ -1658,7 +1670,7 @@ namespace engine
 
       rc = _rtnContextData::open( su, mbContext, plan, cb, selector,
                                   numToReturn, numToSkip, blockObj,
-                                  direction, dpsCB ) ;
+                                  direction ) ;
       if ( rc )
       {
          goto error ;
@@ -4453,7 +4465,8 @@ namespace engine
       if ( DELCSPHASE_1 == _status )
       {
          INT32 rcTmp = SDB_OK;
-         rcTmp = rtnDropCollectionSpaceP1Cancel( _name, cb, _pDmsCB, _pDpsCB );
+         rcTmp = rtnDropCollectionSpaceP1Cancel( _name, cb, _pDmsCB,
+                                                 getDPSCB() );
          if ( rcTmp )
          {
             PD_LOG( PDERROR, "failed to cancel drop cs(name:%s, rc=%d)",
@@ -4496,7 +4509,7 @@ namespace engine
          goto done ;
       }
 
-      if ( NULL != _pDpsCB )
+      if ( NULL != getDPSCB() )
       {
          // reserved log-size
          UINT32 logRecSize = 0;
@@ -4504,7 +4517,7 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR,
                       "Failed to build record:%d",rc ) ;
 
-         rc = _pDpsCB->checkSyncControl( record.alignedLen(), cb ) ;
+         rc = getDPSCB()->checkSyncControl( record.alignedLen(), cb ) ;
          PD_RC_CHECK( rc, PDERROR, "Check sync control failed, rc: %d", rc ) ;
 
          logRecSize = record.alignedLen() ;
@@ -4523,7 +4536,7 @@ namespace engine
       rc = _tryLock( pCollectionName, cb );
       PD_RC_CHECK( rc, PDERROR, "Failed to lock, rc: %d", rc ) ;
 
-      rc = rtnDropCollectionSpaceP1( _name, cb, _pDmsCB, _pDpsCB );
+      rc = rtnDropCollectionSpaceP1( _name, cb, _pDmsCB, getDPSCB() );
       PD_RC_CHECK( rc, PDERROR, "Failed to drop cs in phase1, rc: %d", rc );
       _status = DELCSPHASE_1 ;
       _isOpened = TRUE ;
@@ -4572,7 +4585,7 @@ namespace engine
       /// already drop phrase1
       if ( DELCSPHASE_1 == _status )
       {
-         rc = rtnDropCollectionSpaceP2( _name, cb, _pDmsCB, _pDpsCB ) ;
+         rc = rtnDropCollectionSpaceP2( _name, cb, _pDmsCB, getDPSCB() ) ;
          PD_RC_CHECK( rc, PDERROR,
                       "Failed to drop cs in phase2(%d)", rc ) ;
          _status = DELCSPHASE_0 ;
@@ -4593,7 +4606,7 @@ namespace engine
                                      _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK;
-      if ( _pDpsCB )
+      if ( getDPSCB() )
       {
          dmsStorageUnitID suID = DMS_INVALID_CS;
          UINT32 logicCSID = DMS_INVALID_LOGICCSID;
@@ -4625,7 +4638,7 @@ namespace engine
    INT32 _rtnContextDelCS::_releaseLock( _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK;
-      if ( cb && _pDpsCB && ( _logicCSID != DMS_INVALID_LOGICCSID ) )
+      if ( cb && getDPSCB() && ( _logicCSID != DMS_INVALID_LOGICCSID ) )
       {
          _pTransCB->transLockRelease( cb, _logicCSID );
          ossMemset( _name, 0, DMS_COLLECTION_SPACE_NAME_SZ );
@@ -4666,7 +4679,6 @@ namespace engine
       _hasDropped    = FALSE ;
       _mbContext     = NULL ;
       _su            = NULL ;
-      _w             = 0 ;
    }
 
    _rtnContextDelCL::~_rtnContextDelCL()
@@ -4693,7 +4705,7 @@ namespace engine
       _clShortName    = pCollectionShortName ;
 
       // lock collection
-      if ( _pDpsCB && _pTransCB->isTransOn() )
+      if ( getDPSCB() && _pTransCB->isTransOn() )
       {
          rc = _su->data()->getMBContext( &_mbContext, pCollectionShortName,
                                          EXCLUSIVE ) ;
@@ -4731,10 +4743,12 @@ namespace engine
    }
 
    INT32 _rtnContextDelCL::open( const CHAR *pCollectionName,
-                                 _pmdEDUCB *cb, INT32 w )
+                                 _pmdEDUCB *cb, INT16 w )
    {
       INT32 rc = SDB_OK ;
-      _w= w ;
+
+      /// set w info
+      _w = w ;
 
       SDB_ASSERT( pCollectionName, "pCollectionName can't be null!" );
       PD_CHECK( pCollectionName, SDB_INVALIDARG, error, PDERROR,
@@ -4774,19 +4788,13 @@ namespace engine
       pmdGetKRCB()->getClsCB()->invalidateCata( _collectionName.c_str() ) ;
 
       // drop collection
-      rc = _su->data()->dropCollection ( _clShortName.c_str(), cb, _pDpsCB,
+      rc = _su->data()->dropCollection ( _clShortName.c_str(), cb, getDPSCB(),
                                          TRUE, _mbContext ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "Failed to drop collection %s, rc: %d",
                   _collectionName.c_str(), rc ) ;
          goto error ;
-      }
-
-      /// wait sync
-      if ( _w > 1 )
-      {
-         _pDpsCB->completeOpr( cb, _w ) ;
       }
 
       _su->getAPM()->invalidatePlans ( _clShortName.c_str() ) ;
@@ -4824,7 +4832,8 @@ namespace engine
          if ( _hasDropped )
          {
             // ignore errors
-            _pDmsCB->dropEmptyCollectionSpace( csname.c_str(), cb, _pDpsCB ) ;
+            _pDmsCB->dropEmptyCollectionSpace( csname.c_str(),
+                                               cb, getDPSCB() ) ;
          }
       }
       if ( _gotDmsCBWrite )
@@ -4873,7 +4882,7 @@ namespace engine
                                      vector< string > &subCLList,
                                      INT32 version,
                                      _pmdEDUCB *cb,
-                                     INT32 w )
+                                     INT16 w )
    {
       INT32 rc = SDB_OK ;
       vector< string >::iterator iter ;

@@ -143,7 +143,8 @@ namespace engine
                                SINT64 numToSkip,
                                SINT64 numToReturn,
                                SINT64 &contextID,
-                               _rtnContextBase **ppContext = NULL ) ;
+                               _rtnContextBase **ppContext = NULL,
+                               INT16 w = 1 ) ;
          INT32 _updateToMainCL( const CHAR *pCollectionName,
                                 const BSONObj &selector,
                                 const BSONObj &updator,

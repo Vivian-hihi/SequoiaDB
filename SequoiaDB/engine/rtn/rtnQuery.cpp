@@ -97,6 +97,12 @@ namespace engine
          goto error ;
       }
 
+      /// wait for sync
+      if ( context->isWrite() && context->getDPSCB() && context->getW() > 1 )
+      {
+         context->getDPSCB()->completeOpr( cb, context->getW() ) ;
+      }
+
    done :
       PD_TRACE_EXITRC ( SDB_RTNGETMORE, rc ) ;
       return rc ;
@@ -344,8 +350,7 @@ namespace engine
                     SDB_RTNCB *rtnCB,
                     SINT64 &contextID,
                     rtnContextBase **ppContext,
-                    BOOLEAN enablePrefetch,
-                    SDB_DPSCB* dpsCB )
+                    BOOLEAN enablePrefetch )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNQUERY ) ;
@@ -510,7 +515,7 @@ namespace engine
                                  selector,
                                  numToReturn,
                                  numToSkip,
-                                 pBlockObj, direction, dpsCB ) ;
+                                 pBlockObj, direction ) ;
          PD_RC_CHECK( rc, PDERROR, "Open data context failed, rc: %d", rc ) ;
 
          if ( FLG_QUERY_MODIFY & flags )

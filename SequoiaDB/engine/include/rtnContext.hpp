@@ -192,6 +192,11 @@ namespace engine
          void     enableCountMode() { _countOnly = TRUE ; }
          BOOLEAN  isCountMode() const { return _countOnly ; }
 
+         /// write info( some context will write data, drop collection, etc..)
+         void           setWriteInfo( SDB_DPSCB *dpsCB, INT16 w ) ;
+         SDB_DPSCB*     getDPSCB() { return _pDpsCB ; }
+         INT16          getW() const { return _w ; }
+
       // prefetch
       public:
          void     enablePrefetch ( _pmdEDUCB *cb,
@@ -211,6 +216,7 @@ namespace engine
          virtual RTN_CONTEXT_TYPE getType () const = 0 ;
          virtual _dmsStorageUnit* getSU () = 0 ;
          virtual _optAccessPlan*  getPlan () { return NULL ; }
+         virtual BOOLEAN          isWrite() const { return FALSE ; }
 
       protected:
          void              _onDataEmpty () ;
@@ -233,6 +239,9 @@ namespace engine
          // status
          BOOLEAN                 _hitEnd ;
          BOOLEAN                 _isOpened ;
+
+         SDB_DPSCB               *_pDpsCB ;
+         INT16                   _w ;
 
       private:
          INT64                   _contextID ;
@@ -305,8 +314,7 @@ namespace engine
                              const BSONObj &selector, INT64 numToReturn = -1,
                              INT64 numToSkip = 0,
                              const BSONObj *blockObj = NULL,
-                             INT32 direction = 1,
-                             SDB_DPSCB* dpsCB = NULL ) ;
+                             INT32 direction = 1 ) ;
 
          INT32 openTraversal( _dmsStorageUnit *su, _dmsMBContext *mbContext,
                               _optAccessPlan *plan, _rtnIXScanner *scanner,
@@ -319,6 +327,7 @@ namespace engine
          virtual RTN_CONTEXT_TYPE getType () const ;
          virtual _dmsStorageUnit* getSU () { return _su ; }
          virtual _optAccessPlan*  getPlan () { return _plan ; }
+         virtual BOOLEAN          isWrite() const ;
 
       protected:
          INT32 _queryModify( _pmdEDUCB* eduCB,
@@ -379,7 +388,6 @@ namespace engine
 
          // query modify
          rtnQueryModifier*          _queryModifier ;
-         SDB_DPSCB*                 _dpsCB ;
    } ;
    typedef _rtnContextData rtnContextData ;
 
@@ -397,8 +405,7 @@ namespace engine
                              const BSONObj &selector, INT64 numToReturn = -1,
                              INT64 numToSkip = 0,
                              const BSONObj *blockObj = NULL,
-                             INT32 direction = 1,
-                             SDB_DPSCB* dpsCB = NULL ) ;
+                             INT32 direction = 1 ) ;
 
       public:
          virtual RTN_CONTEXT_TYPE getType () const ;
@@ -808,6 +815,7 @@ namespace engine
       ~_rtnContextDelCS();
       virtual RTN_CONTEXT_TYPE getType () const;
       virtual _dmsStorageUnit* getSU () { return NULL ; }
+      virtual BOOLEAN          isWrite() const { return TRUE ; }
 
       INT32 open( const CHAR *pCollectionName,
                   _pmdEDUCB *cb );
@@ -829,7 +837,6 @@ namespace engine
    private:
       delCSPhase           _status;
       SDB_DMSCB            *_pDmsCB;
-      SDB_DPSCB            *_pDpsCB;
       dpsTransCB           *_pTransCB;
       _clsCatalogAgent     *_pCatAgent;
       CHAR                 _name[ DMS_COLLECTION_SPACE_NAME_SZ + 1 ];
@@ -849,9 +856,10 @@ namespace engine
       ~_rtnContextDelCL();
       virtual RTN_CONTEXT_TYPE getType () const;
       virtual _dmsStorageUnit* getSU () { return NULL ; }
+      virtual BOOLEAN          isWrite() const { return TRUE ; }
 
-      INT32 open( const CHAR *pCollectionName,
-                  _pmdEDUCB *cb, INT32 w );
+      INT32 open( const CHAR *pCollectionName, _pmdEDUCB *cb,
+                  INT16 w );
 
       virtual INT32 getMore( INT32 maxNumToReturn, rtnContextBuf &buffObj,
                              _pmdEDUCB *cb );
@@ -869,7 +877,6 @@ namespace engine
 
    private:
       SDB_DMSCB            *_pDmsCB;
-      SDB_DPSCB            *_pDpsCB;
       _clsCatalogAgent     *_pCatAgent;
       dpsTransCB           *_pTransCB;
       std::string          _collectionName ;
@@ -880,7 +887,6 @@ namespace engine
 
       _dmsStorageUnit      *_su ;
       _dmsMBContext        *_mbContext ;
-      INT32                _w ;
    };
    typedef class _rtnContextDelCL rtnContextDelCL;
 
@@ -901,7 +907,7 @@ namespace engine
                   vector< string > &subCLList,
                   INT32 version,
                   _pmdEDUCB *cb,
-                  INT32 w ) ;
+                  INT16 w ) ;
 
       virtual INT32 getMore( INT32 maxNumToReturn, rtnContextBuf &buffObj,
                              _pmdEDUCB *cb ) ;

@@ -895,8 +895,6 @@ namespace engine
 
    done:
       return rc ;
-   error:
-      goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDSESS__ONUPREQMSG, "_clsShdSession::_onUpdateReqMsg" )
@@ -1225,19 +1223,24 @@ namespace engine
             {
                rc = rtnQuery( pCollectionName, selector, matcher, orderBy,
                               hint, flags, _pEDUCB, numToSkip, numToReturn,
-                              _pDmsCB, _pRtnCB, contextID, &pContext, TRUE,
-                              _pDpsCB ) ;
+                              _pDmsCB, _pRtnCB, contextID, &pContext, TRUE ) ;
             }
             else
             {
                rc = _queryToMainCL( pCollectionName, selector, matcher,
                                     orderBy, hint, flags, _pEDUCB, numToSkip,
-                                    numToReturn, contextID, &pContext ) ;
+                                    numToReturn, contextID, &pContext, w ) ;
             }
 
             if ( rc )
             {
                goto error ;
+            }
+
+            /// set write info
+            if ( pContext && pContext->isWrite() )
+            {
+               pContext->setWriteInfo( _pDpsCB, w ) ;
             }
 
             // query with return data
@@ -1741,7 +1744,8 @@ namespace engine
                                          SINT64 numToSkip,
                                          SINT64 numToReturn,
                                          SINT64 &contextID,
-                                         _rtnContextBase **ppContext )
+                                         _rtnContextBase **ppContext,
+                                         INT16 w )
    {
       INT32 rc = SDB_OK;
       std::vector< std::string > strSubCLList;
@@ -1809,6 +1813,7 @@ namespace engine
                    rc );
 
       {
+         rtnContextBase *pSubContext = NULL ;
          std::vector< std::string >::iterator iterSubCLSet =
             strSubCLList.begin() ;
          while( iterSubCLSet != strSubCLList.end() )
@@ -1817,11 +1822,16 @@ namespace engine
             rc = rtnQuery( (*iterSubCLSet).c_str(), selector, boNewMatcher,
                            orderBy, hint, flags, cb, subNumToSkip,
                            subNumToReturn, _pDmsCB, _pRtnCB,
-                           subContextID, NULL, FALSE, _pDpsCB ) ;
+                           subContextID, &pSubContext ) ;
             PD_RC_CHECK( rc, PDERROR,
                          "Query sub-collection(%s) failed!(rc=%d)",
                          iterSubCLSet->c_str(), rc ) ;
-
+            /// set write info
+            if ( pSubContext && pSubContext->isWrite() )
+            {
+               pSubContext->setWriteInfo( _pDpsCB, w ) ;
+            }
+            /// add sub context
             pContextMainCL->addSubContext( subContextID ) ;
             ++iterSubCLSet;
          }
@@ -2622,6 +2632,7 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Failed to open context, drop "
                    "main collection[%s] failed, rc: %d", pCollection,
                    rc ) ;
+
    done:
       return rc;
    error:

@@ -314,10 +314,16 @@ namespace engine
 
             rc = rtnQuery( pCollectionName, selector, matcher, orderBy,
                            hint, flags, eduCB(), numToSkip, numToReturn,
-                           _pDMSCB, _pRTNCB, contextID, &pContext, TRUE, dpsCB ) ;
+                           _pDMSCB, _pRTNCB, contextID, &pContext, TRUE ) ;
             if ( rc )
             {
                goto error ;
+            }
+
+            /// if write operator, need set dps info( local session: w=1)
+            if ( pContext && pContext->isWrite() )
+            {
+               pContext->setWriteInfo( dpsCB, 1 ) ;
             }
 
             if ( ( flags & FLG_QUERY_WITH_RETURNDATA ) && NULL != pContext )

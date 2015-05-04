@@ -151,8 +151,7 @@ namespace engine
                     SDB_RTNCB *rtnCB,
                     SINT64 &contextID,
                     rtnContextBase **ppContext = NULL,
-                    BOOLEAN enablePrefetch = FALSE,
-                    SDB_DPSCB* dpsCB = NULL ) ;
+                    BOOLEAN enablePrefetch = FALSE ) ;
 
    INT32 rtnSort ( rtnContext **ppContext,
                    const BSONObj &orderBy,

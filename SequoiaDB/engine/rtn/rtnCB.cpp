@@ -108,6 +108,14 @@ namespace engine
       {
          INT32 reference = pContext->getReference() ;
          pContext->waitForPrefetch() ;
+
+         /// wait for sync
+         if ( pContext->isWrite() && pContext->getDPSCB() &&
+              pContext->getW() > 1 )
+         {
+            pContext->getDPSCB()->completeOpr( cb, pContext->getW() ) ;
+         }
+
          SDB_OSS_DEL pContext ;
          PD_LOG( PDDEBUG, "delete context(contextID=%lld, reference: %d)",
                  contextID, reference ) ;
