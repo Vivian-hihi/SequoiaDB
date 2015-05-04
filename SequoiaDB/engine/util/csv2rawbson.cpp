@@ -665,6 +665,11 @@ INT32 csvParser::_parseNumber( CHAR *pBuffer, INT32 size,
          ++pBuffer ;
       }
    }
+   else if( size == 1 && *pBuffer == '.' )
+   {
+      ++pBuffer ;
+      --size ;
+   }
 
    if ( size > 0 && ( *pBuffer == 'e' || *pBuffer == 'E' ) )
    {
