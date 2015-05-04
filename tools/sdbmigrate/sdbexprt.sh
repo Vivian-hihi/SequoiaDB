@@ -8,6 +8,9 @@ source ${CUR_PATH}/common.sh
 SDBEXPRT=`getProgFullPath "sdbexprt"`
 PROG_PATH=`dirname ${SDBEXPRT}`
 SDB=${PROG_PATH}/sdb
+SDBEXPRT_LOG="sdbexprt.log"
+SDBEXPRT_SH_LOG="sdbexprt.sh.log"
+DEFAULT_TYPE="csv"
 
 opt_version="--version"
 opt_help="--help"
@@ -33,8 +36,6 @@ opt_prefinst=""
 opt_ssl=""
 opt_output=""
 opt_debug=""
-
-OUTPUT_DEFAULT_DIR="export_result"
 
 opt_argument_str=""
 
@@ -62,6 +63,8 @@ function displayUsage()
    echo "                         --clname 'foo.bar:foo.newbar'"
    echo "                         or --clname 'foo.bar,foo1.bar1,foo2.bar2:newfoo2.newbar2'"
    echo "  --output arg           specified the directory where output files are put in"
+   echo "  --debug arg            specified the debug level, enum: 1-3, false 1, "
+   echo "                         the least information"
 }
 
 #
@@ -129,10 +132,16 @@ function verifyArgumentsForExport()
    # change relative path to full path
    opt_output=`getFullPath "$opt_output"`
 
-   # check opt_type
+   # try to set the debug level
+   if [ "" = "$opt_debug" ] ; then
+      opt_debug="1"
+   fi
+
+   # try to set opt_type
    if [ "csv" != "$opt_type" ] && [ "json" != "$opt_type" ] ; then
-      echo "Error: option '--type' should be specified as one of the follow: 'csv', 'json'."
-      exit
+      opt_type="$DEFAULT_TYPE"
+#      echo "Error: option '--type' should be specified as one of the follow: 'csv', 'json'."
+#      exit
    fi
 
    return 0
@@ -142,7 +151,7 @@ function verifyArgumentsForExport()
 #@description: gen the arguments for export one collection
 #@argument: cs name and cl name
 #@return: the argument string, e.g. 
-# --hostname susetzb --svcname 11810 --csname foo1 --clname bar1 --file export_result/foo1/foo1.bar1.csv --type csv --fields a,b,c --include true 
+# --hostname susetzb --svcname 11810 --csname foo1 --clname bar1 --file foo1/foo1.bar1.csv --type csv --fields a,b,c --include true 
 #
 function genArgForExport()
 {
@@ -186,8 +195,6 @@ function displayDebugInfo
    local elem=""
 
    # user input options
-   echo ""
-   echo "#################################################################################"
    echo ""
    echo "Debug: User input: "
    echo "$opt_argument_str"
@@ -247,23 +254,36 @@ function exportData()
    local val_output_file=""
    local val_command=""
    local val_arguments=""
+   local val_total_begin_time=""
+   local val_total_end_time=""
    local val_begin_time=""
    local val_end_time=""
+   local val_total_num=0
+   local val_finish_num=0
+   local val_error_num=0
+   local val_stop_flag=0
 
    # let dialog leaves in current path
    cd ${CUR_PATH}
+   rm -f ${SDBEXPRT_SH_LOG}
    
-   echo ""
-   echo "#################################################################################"
-   echo ""
+   val_total_num=${#arr_input_cl[@]}
+   val_total_begin_time=`date +"%Y-%m-%d %H:%M:%S"`  
+
+   if [ "2" = "${opt_debug}" ] || [ "3" = "${opt_debug}" ] ; then
+      echo ""
+      echo "#################################################################################"
+      echo ""
+   fi
    for val_item in ${arr_input_cl[*]}
    do
+      val_stop_flag=0
       cl_full_name=`separateAndRet "$val_item" ":" 0`
       cs_name=`separateAndRet "$cl_full_name" "." 0`
       cl_name=`separateAndRet "$cl_full_name" "." 1`
       new_cl_full_name=`separateAndRet "$val_item" ":" 1`
       new_cs_name=`separateAndRet "$new_cl_full_name" "." 0`
-      val_output_dir="$val_path/$OUTPUT_DEFAULT_DIR/$new_cs_name"
+      val_output_dir="$val_path/$new_cs_name"
       val_output_file="$val_output_dir/$new_cl_full_name.$val_type"
 
       # create output path
@@ -271,33 +291,64 @@ function exportData()
       
       # get arguments
       val_arguments=`genArgForExport "$cs_name" "$cl_name" "$val_output_file" "$val_type"`
-
-      # import
-      echo "Begin to export '$cl_full_name' to '$val_output_file'."
-      val_begin_time=`date +"%Y-%m-%d %H:%M:%S"`
-
       val_command="${SDBEXPRT} ${val_arguments}" # nerver use "${val_arguments}"
-      if [ "true" = "${opt_debug}" ] ; then
+
+      # display debug info
+      if [ "2" = "${opt_debug}" ] || [ "3" = "${opt_debug}" ] ; then
+         echo "Begin to export '$cl_full_name' to '$val_output_file'."
+      fi
+      if [ "3" = "${opt_debug}" ] ; then
          echo "Debug: The command is: "
          echo "${val_command}" # debug
       fi
 
-      # run command to export
-      eval ${val_command}
-      rc=$?
+      # get begin time
+      val_begin_time=`date +"%Y-%m-%d %H:%M:%S"`
+
+      # run command to export and check
+      if [ "1" = "${opt_debug}" ] ; then
+         eval ${val_command} >> ${SDBEXPRT_SH_LOG}
+         rc=$?
+      else
+         eval ${val_command}
+         rc=$?
+      fi
       if [ 0 -ne $rc ] ; then
-         echo "Error: error happen."
+         (( val_error_num++ ))
+         if [ "true" = "${opt_errorstop}" ] ; then
+            val_stop_flag=1
+         fi
+      else
+         (( val_finish_num++ ))
+      fi
+
+      # get finish time
+      val_end_time=`date +"%Y-%m-%d %H:%M:%S"`
+      if [ "2" = "${opt_debug}" ] || [ "3" = "${opt_debug}" ] ; then
+         spendTime "$val_begin_time" "$val_end_time"
          echo ""
+      fi
+ 
+      # check stop running or not
+      if [ 1 -eq ${val_stop_flag} ] ; then
          break
       fi
 
-      val_end_time=`date +"%Y-%m-%d %H:%M:%S"`
-      spendTime "$val_begin_time" "$val_end_time"
-      echo ""
-
    done
-   echo "#################################################################################"
-   echo ""
+   if [ "2" = "${opt_debug}" ] || [ "3" = "${opt_debug}" ] ; then
+      echo "#################################################################################"
+      echo ""
+   fi
+
+   val_total_end_time=`date +"%Y-%m-%d %H:%M:%S"`
+
+   # summanrizing the result
+   echo "Export result:"
+   echo "Total   : ${val_total_num} collection(s)."
+   echo "Finish  : ${val_finish_num} collection(s)."
+   echo "Fail    : ${val_error_num} collection(s)."
+   echo "See ${SDBEXPRT_LOG} or ${SDBEXPRT_SH_LOG} for more detail."
+   spendTime "$val_total_begin_time" "$val_total_end_time"
 
    return $rc
 }
@@ -363,6 +414,11 @@ do
    --errorstop)
       opt_errorstop=$2
       verifyArgument "--errorstop" "$opt_errorstop"
+      if [ "true" != "${opt_errorstop}" ] && [ "false" != "${opt_errorstop}" ]
+      then
+         echo "Error: argument of option '--errorstop' should be 'true' or 'false'"
+         exit
+      fi
       opt_argument_str=${opt_argument_str}" --errorstop "${opt_errorstop} ;;
    --includebinary)
       opt_includebinary=$2
@@ -403,9 +459,9 @@ do
    --debug)
       opt_debug=$2
       verifyArgument "--debug" "$opt_debug"
-      if [ "true" != "${opt_debug}" ] && [ "false" != "${opt_debug}" ]
+      if [ "1" != "${opt_debug}" ] && [ "2" != "${opt_debug}" ] && [ "3" != "${opt_debug}" ]
       then
-         echo "Error: invalid argument for option '--debug'"
+         echo "Error: argument of option '--debug' should be 1-3"
          exit
       fi
       opt_argument_str=${opt_argument_str}" --debug "${opt_debug} ;; 
@@ -436,13 +492,10 @@ getCLFromDB "$opt_hostname" "$opt_svcname" "$opt_user" "$opt_password"
 compareCSCLWithDBForExport "$opt_hostname" "$opt_svcname" "$opt_user" "$opt_password" "$opt_csname" "$opt_clname"
 
 # display debug info
-if [ "true" = "${opt_debug}" ] ; then
+if [ "3" = "${opt_debug}" ] ; then
    displayDebugInfo
 fi
 
 # begin to import data
 exportData "$opt_output" "$opt_type"
-if [ 0 != $? ] ; then
-   echo "Error: Failed to export."
-fi
 

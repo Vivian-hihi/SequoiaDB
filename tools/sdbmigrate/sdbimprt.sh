@@ -8,6 +8,9 @@ source ${CUR_PATH}/common.sh
 SDBIMPRT=`getProgFullPath "sdbimprt"`
 PROG_PATH=`dirname ${SDBIMPRT}`
 SDB=${PROG_PATH}/sdb
+SDBIMPRT_LOG="sdbimport.log"
+SDBIMPRT_SH_LOG="sdbimport.sh.log"
+DEFAULT_TYPE="csv"
 
 opt_version="--version"
 opt_help="--help"
@@ -58,6 +61,8 @@ function displayUsage()
    echo "                         --clname 'foo.bar:newfoo.newbar' "
    echo "                         or --clname 'foo.bar,foo1.bar1,foo2.bar2:newfoo2.newbar2' "
    echo "  --input arg            specified the directory where input files are in "
+   echo "  --debug arg            specified the debug level, enum: 1-3, false 1, "
+   echo "                         the least information"
 }
 
 #
@@ -126,10 +131,16 @@ function verifyArguments()
    # change relative path to full path
    opt_input=`getFullPath "$opt_input"`
 
-   # check opt_type
+   # try to set the debug level
+   if [ "" = "$opt_debug" ] ; then
+      opt_debug="1"
+   fi
+
+   # try to set opt_type
    if [ "csv" != "$opt_type" ] && [ "json" != "$opt_type" ] ; then
-      echo "Error: option '--type' should be specified as one of the follow: 'csv', 'json'."
-      exit
+      opt_type="$DEFAULT_TYPE"
+#      echo "Error: option '--type' should be specified as one of the follow: 'csv', 'json'."
+#      exit
    fi
 
    return 0
@@ -260,51 +271,98 @@ function importData()
    local val_src_file=""
    local val_command=""
    local val_arguments=""
+   local val_total_begin_time=""
+   local val_total_end_time=""
    local val_begin_time=""
    local val_end_time=""
+   local val_total_num=0
+   local val_finish_num=0
+   local val_error_num=0
+   local val_stop_flag=0
+
 
    # let dialog leaves in current path
    cd ${CUR_PATH}
+   rm -f ${SDBIMPRT_SH_LOG}
+   
+   val_total_num=${#arr_input_cl[@]}
+   val_total_begin_time=`date +"%Y-%m-%d %H:%M:%S"`
 
-   echo ""
-   echo "#################################################################################"
-   echo ""
+   if [ "2" = "${opt_debug}" ] || [ "3" = "${opt_debug}" ] ; then
+      echo ""
+      echo "#################################################################################"
+      echo ""
+   fi
    for val_item in ${arr_input_cl[*]}
    do
+      val_stop_flag=0
       cl_full_name=`separateAndRet "$val_item" ":" 0`
       val_cs_dir=`separateAndRet "$cl_full_name" "." 0`
       new_cl_full_name=`separateAndRet "$val_item" ":" 1`
       cs_name=`separateAndRet "$new_cl_full_name" "." 0`
       cl_name=`separateAndRet "$new_cl_full_name" "." 1`
       val_src_file="$val_path/$val_cs_dir/$cl_full_name.$val_type"
-      val_arguments=`genArgForImport "$cs_name" "$cl_name" "$val_src_file"`
-      # import
 
-      echo "Begin to import '$val_src_file' to '$new_cl_full_name'."
-      val_begin_time=`date +"%Y-%m-%d %H:%M:%S"`
+      # get arguments
+      val_arguments=`genArgForImport "$cs_name" "$cl_name" "$val_src_file"`
       val_command="${SDBIMPRT} ${val_arguments}" # nerver use "${val_arguments}"
-      if [ "true" = "${opt_debug}" ] ; then
+
+      # display debug info
+      if [ "2" = "${opt_debug}" ] || [ "3" = "${opt_debug}" ] ; then
+         echo "Begin to import '$val_src_file' to '$new_cl_full_name'."
+      fi
+      if [ "3" = "${opt_debug}" ] ; then
          echo "Debug: The command is:"
          echo "${val_command}" # debug
       fi
+
+      # get begin time
+      val_begin_time=`date +"%Y-%m-%d %H:%M:%S"`
       
       # run command to import
-      eval ${val_command}
-      rc=$?
+      if [ "1" = "${opt_debug}" ] ; then
+         eval ${val_command} >> ${SDBIMPRT_SH_LOG}
+         rc=$?
+      else
+         eval ${val_command}
+         rc=$?
+      fi
       if [ 0 -ne $rc ] ; then
-         echo "Error: error happen."
+         (( val_error_num++ ))
+         if [ "true" = "${opt_errorstop}" ] ; then
+            val_stop_flag=1
+         fi
+      else
+         (( val_finish_num++ ))
+      fi
+
+      # get finish time
+      val_end_time=`date +"%Y-%m-%d %H:%M:%S"`
+      if [ "2" = "${opt_debug}" ] || [ "3" = "${opt_debug}" ] ; then
+         spendTime "$val_begin_time" "$val_end_time"
          echo ""
+      fi
+
+      # check stop running or not
+      if [ 1 -eq ${val_stop_flag} ] ; then
          break
       fi
 
-      val_end_time=`date +"%Y-%m-%d %H:%M:%S"`
-      spendTime "$val_begin_time" "$val_end_time"
-
-      echo ""
-
    done
-   echo "#################################################################################"
-   echo ""
+   if [ "2" = "${opt_debug}" ] || [ "3" = "${opt_debug}" ] ; then
+      echo "#################################################################################"
+      echo ""
+   fi
+
+   val_total_end_time=`date +"%Y-%m-%d %H:%M:%S"`
+
+   # summanrizing the result
+   echo "Import result:"
+   echo "Total   : ${val_total_num} collection(s)."
+   echo "Finish  : ${val_finish_num} collection(s)."
+   echo "Fail    : ${val_error_num} collection(s)."
+   echo "See ${SDBIMPRT_LOG} or ${SDBIMPRT_SH_LOG} for more detail."
+   spendTime "$val_total_begin_time" "$val_total_end_time"
 
    return $rc
 }
@@ -410,9 +468,9 @@ do
    --debug)
       opt_debug=$2
       verifyArgument "--debug" "$opt_debug"
-      if [ "true" != "${opt_debug}" ] && [ "false" != "${opt_debug}" ]
+      if [ "1" != "${opt_debug}" ] && [ "2" != "${opt_debug}" ] && [ "3" != "${opt_debug}" ]
       then
-         echo "Error: invalid argument for option '--debug'"
+         echo "Error: argument of option '--debug' should be 1-3"
          exit
       fi
       opt_argument_str=${opt_argument_str}" --debug "${opt_debug} ;;
@@ -445,12 +503,9 @@ compareCSCLWithLocalForImport "$opt_csname" "$opt_clname" "$opt_input" "$opt_typ
 compareCSCLWithDBForImport "$opt_hostname" "$opt_svcname" "$opt_user" "$opt_password" "$opt_csname" "$opt_clname"
 
 # display debug info
-if [ "true" = "${opt_debug}" ] ; then
+if [ "3" = "${opt_debug}" ] ; then
    displayDebugInfo
 fi
 
 # begin to import data
 importData "$opt_input" "$opt_type"
-if [ 0 != $? ] ; then
-   echo "Error: Failed to import all the data to database."
-fi
