@@ -16,6 +16,7 @@ BOOLEAN INITED = FALSE ;
 INT32 getCollection()
 {
    INT32 rc = SDB_OK ;
+   sdbCollectionSpace cs ;
 
    if ( INITED )
    {
@@ -29,13 +30,30 @@ INT32 getCollection()
       goto error ;
    }
 
+   db.dropCollectionSpace( "foo" ) ;
+
+   rc = db.createCollectionSpace( "foo", 4096, cs ) ;
+   if ( SDB_OK != rc )
+   {
+      cerr << "failed to create cs:" << rc << endl ;
+      goto error ;
+   }
+
+   rc = cs.createCollection( "bar", BSONObj(), cl ) ;
+   if ( SDB_OK != rc )
+   {
+      cerr << "failed to create cl:" << rc << endl ;
+      goto error ;
+   }
+
+/*
    rc = db.getCollection( CL_NAME, cl ) ;
    if ( SDB_OK != rc )
    {
       cerr << "failed to get cl:" << rc << endl ;
       goto error ;
    }
-
+*/
    INITED = TRUE ;
 done:
    return rc ;
