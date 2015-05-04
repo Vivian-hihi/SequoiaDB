@@ -388,4 +388,6 @@ TEST( mthmatcher, dollar_match_9 )
    ASSERT_STREQ( e.valuestrsafe(), "ixscan" ) ;
    e = obj.getField( "IndexName" ) ;
    ASSERT_STREQ( e.valuestrsafe(), "a" ) ;
+
+   cursor.close() ;
 }
