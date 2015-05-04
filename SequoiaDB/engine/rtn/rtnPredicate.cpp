@@ -1313,7 +1313,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__RTNPREDSET_ADDPRED ) ;
-      map<string, rtnPredicate>::const_iterator f ;
+      std::pair<map<string, rtnPredicate>::iterator, BOOLEAN> ret ;
       rtnPredicate pred ( e, isNot ) ;
       if ( !pred.isInit() )
       {
@@ -1322,17 +1322,13 @@ namespace engine
          rc = SDB_INVALIDARG ;
          goto error ;
       }
-      f = _predicates.find(fieldName);
-      if ( _predicates.end() == f )
+
+      ret = _predicates.insert( std::make_pair( fieldName,
+                                                pred ) ) ;
+      if ( !(ret.second) )
       {
-         // we assign rtnPredicate object to a static pointer
-         // this memory is not released until process terminate
-         if ( !genericPredicate )
-            genericPredicate = SDB_OSS_NEW rtnPredicate
-                                     (BSONObj().firstElement(),FALSE);
-         _predicates[fieldName] = *genericPredicate ;
+         ret.first->second &= pred ;
       }
-      _predicates[fieldName] &= pred ;
    done :
       PD_TRACE_EXITRC ( SDB__RTNPREDSET_ADDPRED, rc ) ;
       return rc ;

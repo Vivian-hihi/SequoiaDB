@@ -138,7 +138,12 @@ namespace engine
          // need not add predicate
          if ( predicatable )
          {
-            _predicateSet.addPredicate ( ele.fieldName(), ele, isNot ) ;
+            rc = _addPredicate ( ele.fieldName(), ele, isNot ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "failed to add predicate:%d", rc ) ;
+               goto error ;
+            }
          }
          
          break ;
@@ -388,9 +393,14 @@ namespace engine
             if ( predicatable )
             {
                // key name push predicate must not command
-               _predicateSet.addPredicate ( ele.fieldName(),
-                                            ele,
-                                            isNot ) ;
+               rc = _addPredicate ( ele.fieldName(),
+                                    ele,
+                                    isNot ) ;
+               if ( SDB_OK != rc )
+               {
+                  PD_LOG( PDERROR, "failed to add predicate:%d", rc ) ;
+                  goto error ;
+               }
             }
             rc = _injectElement ( ele, BSONObj::Equality, lme ) ;
             if ( rc )
@@ -410,9 +420,14 @@ namespace engine
                if ( predicatable )
                {
                   // key name push predicate must not command
-                  _predicateSet.addPredicate ( eFieldName,
-                                               ele,
-                                               isNot ) ;
+                  rc = _addPredicate ( eFieldName,
+                                       ele,
+                                       isNot ) ;
+                  if ( SDB_OK != rc )
+                  {
+                     PD_LOG( PDERROR, "failed to add predicate:%d", rc ) ;
+                     goto error ;
+                  }
                }
                rc = _injectElement ( ele, BSONObj::Equality, lme ) ;
                if ( rc )
@@ -475,7 +490,12 @@ namespace engine
 
                         if ( predicatable )
                         {
-                           _predicateSet.addPredicate ( ele.fieldName(), ele, isNot ) ;
+                           rc = _addPredicate ( ele.fieldName(), ele, isNot ) ;
+                           if ( SDB_OK != rc )
+                           {
+                              PD_LOG( PDERROR, "failed to add predicate:%d", rc ) ;
+                              goto error ;
+                           }
                         }                        
                         
                         continue;
@@ -503,9 +523,14 @@ namespace engine
                                     " object or array" ) ;
                            goto error ;
                         }
-                        _predicateSet.addPredicate ( ele.fieldName(),
-                                                     embEle,
-                                                     isNot ) ;
+                        rc = _addPredicate ( ele.fieldName(),
+                                             embEle,
+                                             isNot ) ;
+                        if ( SDB_OK != rc )
+                        {
+                           PD_LOG( PDERROR, "failed to add predicate:%d", rc ) ;
+                            goto error ;
+                        }
                      }
                      rc = _addOperator( ele,
                                         embEle,
@@ -603,9 +628,14 @@ namespace engine
                                        "must object or array") ;
                               goto error ;
                            }
-                           _predicateSet.addPredicate ( ele.fieldName(),
-                                                        embEle,
-                                                        isNot ) ;
+                           rc = _addPredicate ( ele.fieldName(),
+                                                embEle,
+                                                isNot ) ;
+                           if ( SDB_OK != rc )
+                           {
+                              PD_LOG( PDERROR, "failed to add predicate:%d", rc ) ;
+                              goto error ;
+                           }
                         }
                         rc = _addOperator( ele,
                                            embEle,
@@ -644,9 +674,14 @@ namespace engine
                      }
                      if ( predicatable )
                      {
-                         _predicateSet.addPredicate ( ele.fieldName(),
-                                                      embEle,
-                                                      isNot ) ;
+                         rc = _addPredicate ( ele.fieldName(),
+                                              embEle,
+                                              isNot ) ;
+                         if ( SDB_OK != rc )
+                         {
+                            PD_LOG( PDERROR, "failed to add predicate:%d", rc ) ;
+                            goto error ;
+                         }
                      }
                      rc = _injectElement ( ele, BSONObj::Equality, lme ) ;
                      if ( rc )
@@ -680,9 +715,14 @@ namespace engine
             if ( predicatable )
             {
                // key name push predicate must not command
-               _predicateSet.addPredicate ( ele.fieldName(),
-                                            ele,
-                                            isNot ) ;
+               rc = _addPredicate ( ele.fieldName(),
+                                    ele,
+                                    isNot ) ;
+               if ( SDB_OK != rc )
+               {
+                  PD_LOG( PDERROR, "failed to add predicate:%d", rc ) ;
+                  goto error ;
+               }
             }
             rc = _injectElement ( ele, BSONObj::Equality, lme ) ;
             if ( rc )
@@ -776,7 +816,12 @@ namespace engine
       // add the element into predicate set
       if ( predicatable )
       {
-         _predicateSet.addPredicate ( ele.fieldName(), embEle, isNot ) ;
+         rc = _addPredicate ( ele.fieldName(), embEle, isNot ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to add predicate:%d", rc ) ;
+            goto error ;
+         }
       }
 
       switch ( op )
@@ -1708,108 +1753,15 @@ namespace engine
          {
             // if the field is object or array, we call _matches by recursive
             // and pass it the embedded object
-            INT32 childFieldNameLen = 0 ;
-            INT32 dollarNum = 0 ;
-            CHAR *pChildFieldName = NULL ;
             if ( MTH_OPERATOR_EYECATCHER == *(p + 1) )
             {
-               //rc = _getDollarNumber ( p + 1, dollarNum ) ;
-               rc = ossStrToInt ( p + 2, &dollarNum ) ;
-               if ( rc )
+               rc = _dollarMatches( p + 1, toMatch, rootObj,
+                                    se, op, isNot, isFieldCom,
+                                    bm, result, dollarList ) ;
+               if ( SDB_OK != rc )
                {
-                  PD_LOG ( PDERROR, "Failed to parse number, rc: %d", rc ) ;
+                  PD_LOG( PDERROR, "failed to match dollar list:%d", rc ) ;
                   goto error ;
-               }
-               if ( Array == se.type() )
-               {
-                  childFieldNameLen = ossStrlen ( (p + 1) ) ;
-                  pChildFieldName = ossStrnchr ( p + 1,
-                                                 MTH_FIELDNAME_SEP,
-                                                 childFieldNameLen ) ;
-                  // $xxx.xxx ... : xxx
-                  if ( pChildFieldName )
-                  {
-                     BSONObjIterator it( se.embeddedObject() ) ;
-                     while ( it.more() )
-                     {
-                        BSONElement z = it.next() ;
-                        if ( Object == z.type() )
-                        {
-                           BSONObj eo = z.embeddedObject () ;
-                           rc = _matches ( pChildFieldName + 1, toMatch,
-                                           rootObj, eo, op,
-                                           Array == z.type(), isFieldCom, bm,
-                                           isNot, result, dollarList ) ;
-                           if ( rc )
-                           {
-                              PD_LOG ( PDERROR, "Failed to match NE, rc: %d",
-                              rc ) ;
-                              goto error ;
-                           }
-                        }
-                        else
-                        {
-                           if ( _valuesMatch(z, toMatch, op, bm, dollarList) )
-                           {
-                              result = MATCH ;
-                           }
-                        }
-                        if ( ( !isNot && MATCH == result ) ||
-                             ( isNot && NMATCH == result ) )
-                        {
-                           if ( dollarList )
-                           {
-                              INT64 temp = 0 ;
-                              INT32 dollarNum2 = ossAtoi( z.fieldName() ) ;
-                              temp = (((INT64)dollarNum)<<32)|
-                                     (((INT64)dollarNum2)&0xFFFFFFFF) ;
-                              dollarList->push_back ( temp );
-                           }
-                        }
-                        if ( MATCH == result )
-                        {
-                           goto done ;
-                        }
-                     }
-                     result = NMATCH ;
-                     goto done ;
-                  }
-                  // $xxx : xxx
-                  else
-                  {
-                     BSONObjIterator it( se.embeddedObject() ) ;
-                     BOOLEAN isMatch = FALSE ;
-                     while ( it.more() )
-                     {
-                        BSONElement z = it.next() ;
-                        isMatch = _valuesMatch(z, toMatch, op, bm, dollarList) ;
-                        if ( ( !isNot && isMatch ) ||
-                             ( isNot && !isMatch ) )
-                        {
-                           if ( dollarList )
-                           {
-                              //number is z.fieldName()
-                              INT64 temp = 0 ;
-                              INT32 dollarNum2 = ossAtoi( z.fieldName() ) ;
-                              temp = (((INT64)dollarNum)<<32)|
-                                     (((INT64)dollarNum2)&0xFFFFFFFF) ;
-                              dollarList->push_back ( temp );
-                           }
-                        }
-                        if ( isMatch )
-                        {
-                           result = MATCH ;
-                           goto done ;
-                        }
-                     }
-                     result = NMATCH ;
-                     goto done ;
-                  }
-               }
-               else
-               {
-                  result = NMATCH ;
-                  goto done ;
                }
             }
             else
@@ -1819,8 +1771,14 @@ namespace engine
                rc = _matches ( p+1, toMatch, rootObj, eo, op,
                                Array == se.type(), isFieldCom,
                                bm, isNot, result, dollarList ) ;
-               goto done ;
+               if ( SDB_OK != rc )
+               {
+                  PD_LOG( PDERROR, "failed to match child field:%d", rc ) ;
+                  goto error ;
+               }
             }
+
+            goto done ;
          }
       }
 
@@ -2306,8 +2264,12 @@ namespace engine
    void _mthMatcher::_checkTotallyConverted( LogicMatchElement *ele )
    {
       const LogicMatchElement *lme = ele ;
-      if ( MTH_LOGIC_OR == lme->_logicType ||
-           MTH_LOGIC_NOT == lme->_logicType )
+      if ( _hasDollarVar )
+      {
+         _totallyConverted = FALSE ;
+      }
+      else if ( MTH_LOGIC_OR == lme->_logicType ||
+                MTH_LOGIC_NOT == lme->_logicType )
       {
          _totallyConverted = FALSE ;
       }
@@ -2319,7 +2281,8 @@ namespace engine
                 BSONObj::GT != me->_op &&
                 BSONObj::GTE != me->_op &&
                 BSONObj::LT != me->_op &&
-                BSONObj::LTE != me->_op ) )
+                BSONObj::LTE != me->_op &&
+                BSONObj::opIN != me->_op ) )
          {
             _totallyConverted = FALSE ;
          }
@@ -2518,6 +2481,208 @@ namespace engine
       }
 
       return ;
+   }
+
+   INT32 _mthMatcher::_addPredicate( const CHAR *fieldName,
+                                     const bson::BSONElement &e,
+                                     BOOLEAN isNot )
+   {
+      INT32 rc = SDB_OK ;
+      SDB_ASSERT( NULL != fieldName, "can not be null" ) ;
+      const UINT32 bufLen = 31 ;
+      CHAR staticBuf[bufLen+1] = { 0 } ;
+      CHAR *buf = staticBuf ;
+      BOOLEAN rebuildName = FALSE ;
+
+      if ( NULL != ossStrstr( fieldName, ".$" ) )
+      {
+         UINT32 pos = 0 ;
+         const CHAR *p = fieldName ;
+         BOOLEAN ignored = FALSE ;
+         rebuildName = TRUE ;
+
+         while ( '\0' != *p )
+         {
+            if ( !ignored )
+            {
+               if ( '$' == *p &&
+                    0 < ( p - fieldName ) &&
+                    '.' == *( p - 1 ) )
+               {
+                  ignored = TRUE ;
+                  --pos ;
+               }
+               else
+               {
+                  buf[pos++] = *p ;
+               }
+            }
+            else if ( '.' == *p )
+            {
+               ignored = FALSE ;
+               buf[pos++] = *p ;
+            }
+            else
+            {
+               /// do nothing
+            }
+
+            ++p ;
+            if ( bufLen == pos )
+            {
+               UINT32 allocLen = ossStrlen( fieldName ) + 1 ;
+               buf = ( CHAR * )SDB_OSS_MALLOC( allocLen ) ;
+               if ( NULL == buf )
+               {
+                  PD_LOG( PDERROR, "failed to allocate mem." ) ;
+                  rc = SDB_OOM ;
+                  goto error ;
+               }
+               ossMemcpy( buf, staticBuf, pos ) ;
+            }
+         }
+         buf[pos] = '\0' ;
+      }
+
+      PD_LOG( PDDEBUG, "add preicate[%s] to predicates set",
+              rebuildName ? buf : fieldName ) ;
+      _predicateSet.addPredicate ( rebuildName ?
+                                   buf : fieldName,
+                                   e, isNot ) ;
+      if ( !_hasDollarVar && rebuildName )
+      {
+         _hasDollarVar = TRUE ;
+      }
+   done:
+      if ( buf != staticBuf && NULL != buf )
+      {
+         SDB_OSS_FREE( buf ) ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _mthMatcher::_dollarMatches( const CHAR *fieldName,
+                                      const BSONElement &toMatch,
+                                      const BSONObj &rootObj,
+                                      const BSONElement &field,
+                                      BSONObj::MatchType op,
+                                      BOOLEAN isNot,
+                                      BOOLEAN isFieldCom,
+                                      const MatchElement &bm,
+                                      INT32 &result,
+                                      vector<INT64> *dollarList )
+   {
+      INT32 rc = SDB_OK ;
+      const CHAR *p = fieldName ;
+      SDB_ASSERT( NULL != fieldName &&
+                  MTH_OPERATOR_EYECATCHER == *p, "impossible" ) ;
+      const CHAR *childName = NULL ;
+      INT32 dollarValue = 0 ;
+      UINT32 childNameLen = 0 ;
+      INT32 matched = NMATCH ;
+
+      rc = ossStrToInt ( p + 1, &dollarValue ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG ( PDERROR, "Failed to parse number, rc: %d", rc ) ;
+                  goto error ;
+         goto error ;
+      }
+
+      if ( Array != field.type() ||
+           ossStrlen( fieldName ) <= 1 )
+      {
+         matched = FALSE ;
+         goto done ;
+      }
+
+      childNameLen = ossStrlen( p ) ;
+      childName = ossStrnchr( p,
+                              MTH_FIELDNAME_SEP,
+                              childNameLen ) ;
+
+      {
+      BSONObjIterator i( field.embeddedObject() ) ;
+      while ( i.more() )
+      {
+         BSONElement e = i.next() ;
+         if ( NULL != childName )
+         {
+            /// a.$0.$1, now childName is .$1
+            if ( MTH_OPERATOR_EYECATCHER == *( childName + 1 ) &&
+                 Array == e.type() )
+            {
+               rc = _dollarMatches( childName + 1,
+                                    toMatch,
+                                    rootObj,
+                                    e, op,
+                                    isNot,
+                                    isFieldCom,
+                                    bm,
+                                    matched,
+                                    dollarList) ;
+               if ( SDB_OK != rc )
+               {
+                  PD_LOG( PDERROR, "failed to child field name:%s, rc:%d",
+                          childName, rc ) ;
+                  goto error ;
+               }
+            }
+            /// a.$0.b..., now childName is .b
+            else if ( Object == e.type() )
+            {
+               rc = _matches ( childName + 1, toMatch,
+                               rootObj, e.embeddedObject(), op,
+                               FALSE, isFieldCom, bm,
+                               isNot, matched, dollarList ) ;
+               if ( SDB_OK != rc )
+               {
+                  PD_LOG( PDERROR, "failed to child field name:%s, rc:%d",
+                          childName, rc ) ;
+                  goto error ;
+               }
+            }
+            else
+            {
+               matched = NMATCH ;
+            }
+         } /// if ( NULL != childName )
+         else
+         {
+            matched = _valuesMatch(e,
+                                   isFieldCom ?
+                                   rootObj.getField( toMatch.valuestrsafe() ) :
+                                   toMatch,
+                                   op, bm, dollarList) ?
+                      MATCH : NMATCH ;
+         }
+
+         if ( NULL != dollarList &&
+              ( ( !isNot && MATCH == matched ) || 
+                ( isNot && NMATCH == matched ) ) )
+         {
+            INT64 temp = 0 ;
+            INT32 dollarNum2 = ossAtoi( e.fieldName() ) ;
+            temp = (((INT64)dollarValue)<<32)|
+                   (((INT64)dollarNum2)&0xFFFFFFFF) ;
+            dollarList->push_back ( temp );
+         }
+
+         if ( MATCH == matched )
+         {
+            goto done ;
+         }
+      } /// while ( i.more() )
+      }
+
+      matched = NMATCH ;
+   done:
+      result = matched ;
+      return rc ;
+   error:
+      goto done ;
    }
 }
 
