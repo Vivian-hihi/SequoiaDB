@@ -8,8 +8,8 @@ source ${CUR_PATH}/common.sh
 SDBEXPRT=`getProgFullPath "sdbexprt"`
 PROG_PATH=`dirname ${SDBEXPRT}`
 SDB=${PROG_PATH}/sdb
-SDBEXPRT_LOG="sdbexprt.log"
-SDBEXPRT_SH_LOG="sdbexprt.sh.log"
+SDBEXPRT_LOG="sdbexport.log"
+SDBEXPRT_SH_LOG="sdbexport.sh.log"
 DEFAULT_TYPE="csv"
 
 opt_version="--version"
