@@ -2633,31 +2633,27 @@ __METHOD_IMP(gp_create_node)
    const CHAR *nodename    = NULL ;
    const CHAR *servicename = NULL ;
    const CHAR *nodepath    = NULL ;
-   PYOBJECT *dict          = NULL ;
-   std::map<std::string,std::string> config ;
+   PYOBJECT *config        = NULL ;
+   const bson::BSONObj *bson_config = NULL ;
    Group *replica_group    = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "OsssO", &obj, &nodename, 
-      &servicename, &nodepath, &dict ) )
+      &servicename, &nodepath, &config ) )
    {
       rc = SDB_INVALIDARGS ;
       goto error ;
    }
 
    CAST_PYOBJECT_TO_COBJECT( obj, Group, replica_group ) ;
+   CAST_PYBSON_TO_CPPBSON( config, bson_config ) ;
 
-   rc = pydict_to_cmap( dict, config ) ;
-   if ( SDB_OK != rc )
-   {
-      goto error ;
-   }
-
-   rc = replica_group->createNode( nodename, servicename, nodepath, config ) ;
+   rc = replica_group->createNode( nodename, servicename, nodepath, *bson_config ) ;
    if ( SDB_OK != rc )
    {
       goto error ;
    }
 done :
+   DELETE_CPPOBJECT( bson_config ) ;
    return MAKE_RETURN_INT( rc ) ;
 error :
    goto done ;
@@ -2691,6 +2687,72 @@ __METHOD_IMP(gp_remove_node)
       rc = replica_group->removeNode( hostname, servicename, cbson ) ;
    }
 done :
+   return MAKE_RETURN_INT( rc ) ;
+error :
+   goto done ;
+}
+
+__METHOD_IMP(gp_attach_node)
+{
+   INT32 rc                = 0 ;
+   PYOBJECT *obj           = NULL ;
+   const CHAR *nodename    = NULL ;
+   const CHAR *servicename = NULL ;
+   PYOBJECT *options       = NULL ;
+   const bson::BSONObj *bson_options = NULL ;
+   Group *replica_group    = NULL ;
+
+   if ( !PARSE_PYTHON_ARGS( args, "OssO", &obj,
+                            &nodename, &servicename, &options ) )
+   {
+      rc = SDB_INVALIDARGS ;
+      goto error ;
+   }
+
+   CAST_PYOBJECT_TO_COBJECT( obj, Group, replica_group ) ;
+   CAST_PYBSON_TO_CPPBSON( options, bson_options ) ;
+
+   rc = replica_group->attachNode( nodename, servicename, *bson_options ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+
+done :
+   DELETE_CPPOBJECT( bson_options ) ;
+   return MAKE_RETURN_INT( rc ) ;
+error :
+   goto done ;
+}
+
+__METHOD_IMP(gp_detach_node)
+{
+   INT32 rc                = 0 ;
+   PYOBJECT *obj           = NULL ;
+   const CHAR *nodename    = NULL ;
+   const CHAR *servicename = NULL ;
+   PYOBJECT *options       = NULL ;
+   const bson::BSONObj *bson_options = NULL ;
+   Group *replica_group    = NULL ;
+
+   if ( !PARSE_PYTHON_ARGS( args, "OssO", &obj,
+                            &nodename, &servicename, &options ) )
+   {
+      rc = SDB_INVALIDARGS ;
+      goto error ;
+   }
+
+   CAST_PYOBJECT_TO_COBJECT( obj, Group, replica_group ) ;
+   CAST_PYBSON_TO_CPPBSON( options, bson_options ) ;
+
+   rc = replica_group->detachNode( nodename, servicename, *bson_options ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+
+done :
+   DELETE_CPPOBJECT( bson_options ) ;
    return MAKE_RETURN_INT( rc ) ;
 error :
    goto done ;
@@ -3250,6 +3312,8 @@ static PyMethodDef sequoiadb_methods[] = {
    {"gp_get_nodebyendpoint",           gp_get_node_by_endpoint,         METH_VARARGS},
    {"gp_create_node",                  gp_create_node,                  METH_VARARGS},
    {"gp_remove_node",                  gp_remove_node,                  METH_VARARGS},
+   {"gp_attach_node",                  gp_attach_node,                  METH_VARARGS},
+   {"gp_detach_node",                  gp_detach_node,                  METH_VARARGS},
    {"gp_start",                        gp_start,                        METH_VARARGS},
    {"gp_stop",                         gp_stop,                         METH_VARARGS},
    {"gp_is_catalog",                   gp_is_catalog,                   METH_VARARGS},

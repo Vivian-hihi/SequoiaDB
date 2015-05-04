@@ -105,6 +105,8 @@ __METHOD_DECLARE(gp_get_node_by_name) ;
 __METHOD_DECLARE(gp_get_node_by_endpoint) ;
 __METHOD_DECLARE(gp_create_node) ;
 __METHOD_DECLARE(gp_remove_node) ;
+__METHOD_DECLARE(gp_attach_node) ;
+__METHOD_DECLARE(gp_detach_node) ;
 __METHOD_DECLARE(gp_start) ;
 __METHOD_DECLARE(gp_stop) ;
 __METHOD_DECLARE(gp_is_catalog) ;

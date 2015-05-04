@@ -262,12 +262,11 @@ class replicagroup(object):
       if config is not None and not isinstance(config, dict):
          raise SDBTypeError("config must be an instance of dict")
 
-      if config is None:
-         config = {}
-
+      if config is not None:
+         bson_options = bson.BSON.encode(config)
       try:
          rc = sdb.gp_create_node(self._group, hostname, servicename,
-                                          dbpath, config)
+                                          dbpath, bson_options)
          pysequoiadb._raise_if_error("Failed to create node", rc)
       except SDBBaseError:
          raise
@@ -349,3 +348,59 @@ class replicagroup(object):
          raise
 
       return iscatalog
+
+   def attach_node(self, hostname, servicename, dbpath, config = None):
+      """Attach node in a given replica group.
+
+      Parameters:
+         Name         Type     Info:
+         hostname     str      The host name for the node.
+         servicename  str      The servicename for the node.
+         config       dict     The configurations for the node.
+      Exceptions:
+         pysequoiadb.error.SDBTypeError
+         pysequoiadb.error.SDBBaseError
+      """
+      if not isinstance(hostname, basestring):
+         raise SDBTypeError("host must be an instance of basestring")
+      if not isinstance(servicename, basestring):
+         raise SDBTypeError("service name must be an instance of basestring")
+      if config is not None and not isinstance(config, dict):
+         raise SDBTypeError("config must be an instance of dict")
+
+      if config is not None:
+         bson_options = bson.BSON.encode(config)
+      try:
+         rc = sdb.gp_attach_node(self._group,
+                                 hostname, servicename, bson_options)
+         pysequoiadb._raise_if_error("Failed to attach node", rc)
+      except SDBBaseError:
+         raise
+
+   def detach_node(self, hostname, servicename, config = None):
+      """Detach node in a given replica group.
+
+      Parameters:
+         Name         Type     Info:
+         hostname     str      The host name for the node.
+         servicename  str      The servicename for the node.
+         config       dict     The configurations for the node.
+      Exceptions:
+         pysequoiadb.error.SDBTypeError
+         pysequoiadb.error.SDBBaseError
+      """
+      if not isinstance(hostname, basestring):
+         raise SDBTypeError("host must be an instance of basestring")
+      if not isinstance(servicename, basestring):
+         raise SDBTypeError("service name must be an instance of basestring")
+      if config is not None and not isinstance(config, dict):
+         raise SDBTypeError("config must be an instance of dict")
+
+      if config is not None:
+         bson_options = bson.BSON.encode(config)
+      try:
+         rc = sdb.gp_detach_node(self._group,
+                                 hostname, servicename, bson_options)
+         pysequoiadb._raise_if_error("Failed to detach node", rc)
+      except SDBBaseError:
+         raise
