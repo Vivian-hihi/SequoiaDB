@@ -134,7 +134,7 @@ INT32 migExport::_connectDB()
       if ( FALSE == jsonToBson2 ( &obj, _pMigArg->pPrefInst, 0, 1 ) )
       {
          rc = SDB_INVALIDARG ;
-         ossPrintf ( "prefered instance's format error"OSS_NEWLINE ) ;
+         ossPrintf ( "Error: prefered instance's format error"OSS_NEWLINE ) ;
          PD_LOG ( PDERROR, "prefered instance's format error" ) ;
          goto error ;
       }
