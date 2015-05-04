@@ -391,3 +391,78 @@ TEST( mthmatcher, dollar_match_9 )
 
    cursor.close() ;
 }
+
+/// record {a:[{b:[{c:1}, {c:2}]}]}
+///        {a:[{b:[{c:3}, {c:4}]}]}
+//  match {"a.$0.b.$1.c":1}
+//  return {a:[{b:[{c:1}, {c:2}]}]}
+TEST( mthmatcher, dollar_match_10 )
+{
+   INT32 rc = SDB_OK ;
+   SINT64 cnt = 0 ;
+   BSONObj r1, r2, rule, con, obj ;
+
+   rc = getCollection() ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   rc = cl.del() ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   r2 = BSON( "a" << BSON_ARRAY( BSON( "b" << BSON_ARRAY( BSON( "c" << 3) << BSON( "c" << 4 ))) ) ) ;
+   rc = cl.insert( r2 ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   r1 = BSON( "a" << BSON_ARRAY( BSON( "b" << BSON_ARRAY( BSON( "c" << 1) << BSON( "c" << 2 ))) ) ) ; 
+   rc = cl.insert( r1 ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   con = BSON( "a.$0.b.$1.c" << 1 ) ;
+   rc = cl.queryOne( obj, con, BSON( "_id" << BSON( "$include" << 0 ) ) ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   ASSERT_EQ( 0, obj.woCompare( r1 ) ) ;
+
+   rc = cl.getCount( cnt, con ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   ASSERT_EQ( 1, cnt ) ;
+}
+
+/// record {a:[{b:[{c:1}, {c:2}]}]}
+//         {a:[{b:[{c:3}, {c:4}]}]}
+//   match {"a.$0.b.$1.c":1}  set {"a.$0.b.$1.c":5}
+//   final      {a:[{b:[{c:51}, {c:2}]}]}
+//              {a:[{b:[{c:3}, {c:4}]}]}
+TEST( mthmatcher, dollar_match_11 )
+{
+   INT32 rc = SDB_OK ;
+   SINT64 cnt = 0 ;
+   BSONObj r1, r2, rule, con, obj ;
+
+   rc = getCollection() ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   rc = cl.del() ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   r2 = BSON( "a" << BSON_ARRAY( BSON( "b" << BSON_ARRAY( BSON( "c" << 3) << BSON( "c" << 4 ))) ) ) ;
+   rc = cl.insert( r2 ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   r1 = BSON( "a" << BSON_ARRAY( BSON( "b" << BSON_ARRAY( BSON( "c" << 1) << BSON( "c" << 2 ))) ) ) ;
+   rc = cl.insert( r1 ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   rule = BSON( "$set" << BSON( "a.$0.b.$1.c" << 5) ) ;
+   con = BSON( "a.$0.b.$1.c" << 1 ) ;
+   rc = cl.update( rule, con ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   rc = cl.getCount( cnt, con ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   ASSERT_EQ( 0, cnt ) ;
+
+   rc = cl.getCount( cnt, BSON( "a.$0.b.$1.c" << 5 ) ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   ASSERT_EQ( 1, cnt ) ;   
+}
+
