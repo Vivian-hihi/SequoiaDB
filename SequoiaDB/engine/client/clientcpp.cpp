@@ -1431,6 +1431,45 @@ do                                                            \
       goto done;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_QUERYONE, "queryOne" )
+   INT32 _sdbCollectionImpl::queryOne( bson::BSONObj &obj,
+                                       const bson::BSONObj &condition,
+                                       const bson::BSONObj &selected,
+                                       const bson::BSONObj &orderBy,
+                                       const bson::BSONObj &hint,
+                                       INT64 numToSkip,
+                                       INT32 flag )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_CLIENT_QUERYONE ) ;
+      sdbCursor cursor ;
+
+      rc = query( cursor,
+                  condition,
+                  selected,
+                  orderBy,
+                  hint,
+                  numToSkip,
+                  1,
+                  flag | FLG_QUERY_WITH_RETURNDATA ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+
+      rc = cursor.next( obj ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+   done:
+      cursor.close() ;
+      PD_TRACE_EXITRC( SDB_CLIENT_QUERYONE, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT__QUERYANDMODIFY, "_sdbCollectionImpl::_queryAndModify" )
    INT32 _sdbCollectionImpl::_queryAndModify  ( _sdbCursor **cursor,
                                                 const BSONObj &condition,

@@ -248,6 +248,14 @@ namespace sdbclient
                         numToSkip, numToReturn, flag ) ;
       }
 
+      INT32 queryOne( bson::BSONObj &obj,
+                      const bson::BSONObj &condition = _sdbStaticObject,
+                      const bson::BSONObj &selected  = _sdbStaticObject,
+                      const bson::BSONObj &orderBy   = _sdbStaticObject,
+                      const bson::BSONObj &hint      = _sdbStaticObject,
+                      INT64 numToSkip    = 0,
+                      INT32 flag = 0 ) ;
+
       // query objects from current collection and update
       // given:
       // update rule ( required )

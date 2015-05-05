@@ -322,6 +322,14 @@ namespace sdbclient
                              INT32 flag         = 0
                            ) = 0 ;
 
+      virtual INT32 queryOne( bson::BSONObj &obj,
+                              const bson::BSONObj &condition = _sdbStaticObject,
+                              const bson::BSONObj &selected  = _sdbStaticObject,
+                              const bson::BSONObj &orderBy   = _sdbStaticObject,
+                              const bson::BSONObj &hint      = _sdbStaticObject,
+                              INT64 numToSkip    = 0,
+                              INT32 flag         = 0 ) = 0 ;
+
       // query objects from current collection and update
       // given:
       // update rule ( required )
@@ -828,6 +836,45 @@ namespace sdbclient
             return SDB_NOT_CONNECTED ;
          return pCollection->query ( cursor, condition, selected, orderBy,
                                      hint, numToSkip, numToReturn, flag ) ;
+      }
+
+/** \fn INT32 queryOne( BSONObj &obj,
+                        const bson::BSONObj &condition,
+                        const bson::BSONObj &selected,
+                        const bson::BSONObj &orderBy,
+                        const bson::BSONObj &hint,
+                        INT64 numToSkip,
+                        INT32 flag
+                       )
+    \brief Get the first matching documents in current collection
+    \param [in] condition The matching rule, return all the documents if not provided
+    \param [in] selected The selective rule, return the whole document if not provided
+    \param [in] orderBy The ordered rule, result set is unordered if not provided
+    \param [in] hint The hint, automatically match the optimal hint if not provided
+    \param [in] numToSkip Skip the first numToSkip documents, default is 0
+    \param [in] flag The query flag, defalt to be 0
+
+        FLG_QUERY_FORCE_HINT(0x00000080)      : Force to use specified hint to query, if database have no index assigned by the hint, fail to query
+        FLG_QUERY_PARALLED(0x00000100)        : Enable paralled sub query
+        FLG_QUERY_WITH_RETURNDATA(0x00000200) : In general, query won't return data until cursor get from database,
+                                                when add this flag, return data in query response, it will be more high-performance
+
+    \param [out] obj The first matching object
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+      INT32 queryOne( bson::BSONObj &obj,
+                      const bson::BSONObj &condition = _sdbStaticObject,
+                      const bson::BSONObj &selected  = _sdbStaticObject,
+                      const bson::BSONObj &orderBy   = _sdbStaticObject,
+                      const bson::BSONObj &hint      = _sdbStaticObject,
+                      INT64 numToSkip    = 0,
+                      INT32 flag         = 0 )
+      {
+         if ( !pCollection )
+            return SDB_NOT_CONNECTED ;
+         return pCollection->queryOne( obj, condition, selected, orderBy,
+                                       hint, numToSkip, flag ) ;
       }
 
 /** \fn INT32 queryAndUpdate ( sdbCursor &cursor,
