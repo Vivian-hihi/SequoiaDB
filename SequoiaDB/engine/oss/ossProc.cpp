@@ -96,7 +96,7 @@ BOOLEAN ossIsProcessRunning ( OSSPID pid )
          {
             if ( status[0] == PROC_STATUS_ZOMBIE )
             {
-               PD_LOG( PDERROR, "Process[%d, %d] is zombie", procName,
+               PD_LOG( PDERROR, "Process[%s, %d] is zombie", procName,
                        readpid ) ;
                isRunning = FALSE ;
             }
