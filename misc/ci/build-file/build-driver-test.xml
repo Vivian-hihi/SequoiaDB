@@ -18,11 +18,13 @@
 		<delete dir="${testcases_dir}/C/staticlib/build_test"  failonerror="false" />
 		<delete dir="${testcases_dir}/CPP/build_test"  failonerror="false" />
 		<delete dir="${testcases_dir}/CPP/staticlib/build_test"  failonerror="false" />
+		<delete dir="${testcases_dir}/lob/build_test"  failonerror="false" />
 		<delete dir="${testcases_dir}/mongoc/build_test" failonerror="false" />
 		<mkdir dir="${testcases_dir}/C/build_test" />
 		<mkdir dir="${testcases_dir}/C/staticlib/build_test" />
 		<mkdir dir="${testcases_dir}/CPP/build_test" />
 		<mkdir dir="${testcases_dir}/CPP/staticlib/build_test" />
+		<mkdir dir="${testcases_dir}/lob/build_test"/>
 		<mkdir dir="${testcases_dir}/mongoc/build_test" />
 		<echo level="info" message="Step2 : Rebuild the folders &lt;${deploy_dir}/hlt/drivers_testcases&gt;." />
 		<delete dir="${deploy_dir}/hlt/drivers_testcases" failonerror="false" />
@@ -199,13 +201,13 @@
 		<tstamp>
 			<format property="lob_testcases_begintime" pattern="yyyy-MM-dd-hh.mm.ss a" />
 		</tstamp>
-		<echo level="info" message="Step1 : Compile the Lob testcases,command: &lt;scons ${testcases_dir}/../lob_testcases lib_path=${driver_dir}/lib include_path=${driver_dir}/include&gt;." />
-		<exec executable="scons" dir="${testcases_dir}/../lob_testcases" failonerror="false">
+		<echo level="info" message="Step1 : Compile the Lob testcases,command: &lt;scons ${testcases_dir}/lob lib_path=${driver_dir}/lib include_path=${driver_dir}/include&gt;." />
+		<exec executable="scons" dir="${testcases_dir}/lob" failonerror="false">
 			<arg line=" --lib_path=${driver_dir}/lib --include_path=${driver_dir}/include" />
 		</exec>
-		<echo level="info" message="Step2 : Copy the Lob testcases from &lt;${testcases_dir}/../lob_testcases/build_test&gt; to &lt;${deploy_dir}/hlt/drivers_testcases/C/build&gt;." />
+		<echo level="info" message="Step2 : Copy the Lob testcases from &lt;${testcases_dir}/lob/build_test&gt; to &lt;${deploy_dir}/hlt/drivers_testcases/C/build&gt;." />
 		<copy todir="${deploy_dir}/hlt/drivers_testcases/C/build">
-			<fileset dir="${testcases_dir}/../lob_testcases/build_test" includes="*" />
+			<fileset dir="${testcases_dir}/lob/build_test" includes="*" />
 		</copy>
 		<tstamp>
 			<format property="lob_testcases_endtime" pattern="yyyy-MM-dd-hh.mm.ss a" />
