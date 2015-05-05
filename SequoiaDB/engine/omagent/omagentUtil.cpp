@@ -358,10 +358,21 @@ namespace engine
          string outString ;
          runner.read( outString ) ;
          string nodeOut = omPickNodeOutString( outString, pSvcName ) ;
-         if ( !nodeOut.empty() )
+
+         if ( nodeOut.length() < PD_LOG_STRINGMAX - 100 )
          {
-            PD_LOG( PDERROR, "node[%s] start[cmd: %s] failed, out info:%s%s",
-                    pSvcName, cmdline.c_str(), OSS_NEWLINE, nodeOut.c_str() ) ;
+            PD_LOG( PDERROR, "node[%s] start[cmd: %s] failed, "
+                    "out info:===>%s%s%s<===", pSvcName,
+                    cmdline.c_str(), OSS_NEWLINE, nodeOut.c_str(),
+                    OSS_NEWLINE ) ;
+         }
+         else
+         {
+            PD_LOG( PDERROR, "node[%s] start[cmd: %s] failed, "
+                    "out info:===>", pSvcName,
+                    cmdline.c_str() ) ;
+            PD_LOG_RAW( PDERROR, nodeOut.c_str() ) ;
+            PD_LOG_RAW( PDERROR, OSS_NEWLINE"<==="OSS_NEWLINE ) ;
          }
       }
 

@@ -298,7 +298,7 @@ static INT32 _pdLogArchive( pdCfgInfo &info )
 
 // PD_TRACE_DECLARE_FUNCTION ( SDB_PDLOGFILEWRITE, "pdLogFileWrite" )
 // return code is errno
-static INT32 pdLogFileWrite ( _pdLogType type, CHAR *pData )
+static INT32 pdLogFileWrite ( _pdLogType type, const CHAR *pData )
 {
    INT32 rc = SDB_OK ;
    PD_TRACE_ENTRY ( SDB_PDLOGFILEWRITE ) ;
@@ -377,7 +377,7 @@ error :
 }
 
 void pdLog( PDLEVEL level, const CHAR* func, const CHAR* file,
-            UINT32 line, std::string message )
+            UINT32 line, const std::string &message )
 {
    pdLog(level, func, file, line, message.c_str() );
 }
@@ -403,22 +403,12 @@ void pdLog( PDLEVEL level, const CHAR* func, const CHAR* file,
       return ;
    va_list ap;
    PD_TRACE_ENTRY ( SDB_PDLOG ) ;
-   CHAR userInfo[ PD_LOG_STRINGMAX ];       // for user defined message
-   CHAR sysInfo[ PD_LOG_STRINGMAX ];        // for log header
    struct tm otm ;
    struct timeval tv;
    struct timezone tz;
    time_t tt ;
-
-   // use thread specific pointer to make sure there's no nested pdLog (i.e.
-   // calling pdLog in signal handler when the thread is already in pdLog
-   // function will not proceed)
-   static OSS_THREAD_LOCAL BOOLEAN amIInPD = FALSE ;
-   if ( amIInPD )
-   {
-      goto done ;
-   }
-   amIInPD = TRUE ;
+   CHAR userInfo[ PD_LOG_STRINGMAX + 1 ] = { 0 } ;
+   CHAR sysInfo[ PD_LOG_STRINGMAX + 1 ] = { 0 } ;  // for log header
 
    gettimeofday(&tv, &tz);
    tt = tv.tv_sec ;
@@ -450,30 +440,52 @@ void pdLog( PDLEVEL level, const CHAR* func, const CHAR* file,
                line,                        // 12) Line number (UINT32)
                file,                        // 13) File Name (string)
                userInfo                     // 14) Message
-   );
+   ) ;
+
+   pdLogRaw( level, sysInfo ) ;
+
+   PD_TRACE_EXITRC ( SDB_PDLOG, rc ) ;
+   return ;
+}
+
+void pdLogRaw( PDLEVEL level, const CHAR *pData )
+{
+   INT32 rc = SDB_OK ;
+
+   if ( getPDLevel() < level )
+      return ;
+
+   // use thread specific pointer to make sure there's no nested pdLog (i.e.
+   // calling pdLog in signal handler when the thread is already in pdLog
+   // function will not proceed)
+   static OSS_THREAD_LOCAL BOOLEAN amIInPD = FALSE ;
+   if ( amIInPD )
+   {
+      goto done ;
+   }
+   amIInPD = TRUE ;
 
    // if we run outside engine, _pdLogPath may not be set, in this case we
    // simply output to screen
 #if defined (_DEBUG) && defined (SDB_ENGINE)
-      ossPrintf ( "%s"OSS_NEWLINE, sysInfo ) ;
+      ossPrintf ( "%s"OSS_NEWLINE, pData ) ;
 #else
    /* We write into log file if the string is not empty */
    if ( _getPDCfgInfo().isEnabled() )
 #endif
    {
-      rc = pdLogFileWrite ( PD_DIAGLOG, sysInfo ) ;
+      rc = pdLogFileWrite ( PD_DIAGLOG, pData ) ;
       if ( rc )
       {
          ossPrintf ( "Failed to write into log file, rc: %d"OSS_NEWLINE, rc ) ;
-         ossPrintf ( "%s"OSS_NEWLINE, sysInfo ) ;
+         ossPrintf ( "%s"OSS_NEWLINE, pData ) ;
       }
    }
 
    // make sure to reset this before leaving
    amIInPD = FALSE ;
 
-done :
-   PD_TRACE_EXITRC ( SDB_PDLOG, rc ) ;
+done:
    return ;
 }
 

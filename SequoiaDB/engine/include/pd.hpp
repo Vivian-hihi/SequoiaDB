@@ -89,6 +89,14 @@
       } \
    } while ( 0 )
 
+#define PD_LOG_RAW(level, msg) \
+   do { \
+      if ( getPDLevel() >= level ) \
+      { \
+         pdLogRaw(level, msg); \
+      } \
+   }while (0)
+
 #define PD_CHECK(cond, retCode, gotoLabel, level, fmt, ...) \
    do {                                                     \
       if ( !(cond) )                                        \
@@ -163,7 +171,9 @@ void pdLog( PDLEVEL level, const CHAR* func, const CHAR* file,
             UINT32 line, const CHAR* format, ...) ;
 
 void pdLog( PDLEVEL level, const CHAR* func, const CHAR* file,
-            UINT32 line, std::string message ) ;
+            UINT32 line, const std::string &message ) ;
+
+void pdLogRaw( PDLEVEL level, const CHAR* pData ) ;
 
 #endif // PD_HPP_
 
