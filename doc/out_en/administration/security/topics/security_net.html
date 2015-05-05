@@ -9,6 +9,7 @@
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="网络安全"/>
 <meta name="description" content="SequoiaDB 通过配置可以支持 SSL。SequoiaDB 客户端和 SequoiaDB 实例直接可以使用 SSL 加密连接。 SequoiaDB 支持 若要使用 SSL 加密连接，需要 SequoiaDB 1.12 或之后的版本。 目前该特性仅限于 SequoiaDB 企业版，社区版暂不支持。 客户端支持 所有官方支持的客户端驱动都支持 SSL，包括 ..."/>
+<meta name="DC.Relation" scheme="URI" content="../../../administration/security/topics/security_main.html"/>
 <meta name="DC.Format" content="XHTML"/>
 <meta name="DC.Identifier" content="topic_twc_vdh_jr"/>
 <link rel="stylesheet" type="text/css" href="../../../commonltr.css"/>
@@ -30,7 +31,7 @@
 <body onload="highlightSearchTerm()" id="topic_twc_vdh_jr"><a name="topic_twc_vdh_jr"><!-- --></a>
 <table class="nav"><tbody><tr><td><div class="navheader"><span class="frames" onclick="redirectFrames(location.pathname)"><script type="text/javascript"><!--
   if (parent.window.location.pathname == window.location.pathname ) document.write('With Frames');                    
-                    --></script></span></div></td><td width="50%"/></tr></tbody></table>
+                    --></script></span><a class="link" href="../../../administration/security/topics/security_main.html" title="安全"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">安全</span></a>  </div></td><td width="50%"><a class="navheader_parent_path" href="../../topics/administration.html" title="数据库管理">数据库管理</a> / <a class="navheader_parent_path" href="../../../administration/security/topics/security_main.html" title="安全">安全</a></td></tr></tbody></table>
 
   <h1 class="title topictitle1">网络安全</h1>
 
@@ -60,7 +61,7 @@
       <div class="p">参考如下：<pre class="pre codeblock">sequoiadb --usessl=true</pre>
 </div>
 
-      <p class="p">也支持使用配置文件配置，参见<a class="xref" href="../../../administration/database/topics/runtime_configuration.html">数据库配置</a>。</p>
+      <p class="p">也支持使用配置文件配置，参见<a class="xref" href="../../database/topics/runtime_configuration.html">数据库配置</a>。</p>
 
       <p class="p">SequoiaDB 在开启 SSL 后会自动创建证书，不需要用户指定。</p>
       
@@ -149,13 +150,14 @@
 
     <div class="section"><h2 class="title sectiontitle">工具支持</h2>
             
-      <p class="p">sdbexprt、sdbimprt、sdblobtool、sdbtop 支持 SSL 连接，参见<a class="xref" href="../../../administration/database/database_tool/topics/database_tool.html">数据库工具</a>。</p>
+      <p class="p">sdbexprt、sdbimprt、sdblobtool、sdbtop 支持 SSL 连接，参见<a class="xref" href="../../database/database_tool/topics/database_tool.html">数据库工具</a>。</p>
         
     </div>
 
   </div>
 
-<div class="navfooter"><script type="text/javascript"><!--         
+<div class="related-links"/>
+<div class="navfooter"><a class="link" href="../../../administration/security/topics/security_main.html" title="安全"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">安全</span></a>  <script type="text/javascript"><!--         
     function expand(){
         parent.tocwin.expandToTopic(window.location.href, this.getAttribute('href'));
     }

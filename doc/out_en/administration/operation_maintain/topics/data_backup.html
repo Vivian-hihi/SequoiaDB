@@ -9,6 +9,7 @@
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="数据备份"/>
 <meta name="description" content="当前版本中，数据备份支持离线备份，即数据备份期间需要中断插入、更新、删除等变更操作，只支持查询操作。当前备份支持两种方式：全量备份和增量备份 全量备份：备份整个数据库的配置、数据和日志； 增量备份：在上一个全量备份或增量备份的基础上备份新增的日志和配置； 离线备份参数说明 参数 说明 Name 备份名称，缺省则以当前时间格式命名，如“2013-11-13-15:00:00”。 ..."/>
+<meta name="DC.Relation" scheme="URI" content="../../../administration/operation_maintain/topics/bandr.html"/>
 <meta name="DC.Format" content="XHTML"/>
 <meta name="DC.Identifier" content="topic_2br_n2d_pl"/>
 <link rel="stylesheet" type="text/css" href="../../../commonltr.css"/>
@@ -30,7 +31,7 @@
 <body onload="highlightSearchTerm()" id="topic_2br_n2d_pl"><a name="topic_2br_n2d_pl"><!-- --></a>
 <table class="nav"><tbody><tr><td><div class="navheader"><span class="frames" onclick="redirectFrames(location.pathname)"><script type="text/javascript"><!--
   if (parent.window.location.pathname == window.location.pathname ) document.write('With Frames');                    
-                    --></script></span></div></td><td width="50%"/></tr></tbody></table>
+                    --></script></span><a class="link" href="../../../administration/operation_maintain/topics/bandr.html" title="备份恢复"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">备份恢复</span></a>  </div></td><td width="50%"><a class="navheader_parent_path" href="operation_maintain.html" title="运维">运维</a> / <a class="navheader_parent_path" href="../../../administration/operation_maintain/topics/bandr.html" title="备份恢复">备份恢复</a></td></tr></tbody></table>
 
   <h1 class="title topictitle1">数据备份</h1>
 
@@ -47,45 +48,45 @@
     <div class="section"><h2 class="title sectiontitle">离线备份参数说明</h2>
       
       <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d59979e31" class="stentry">参数</th>
+          <th valign="bottom" align="left" id="d44945e31" class="stentry">参数</th>
 
-          <th valign="bottom" align="left" id="d59979e34" class="stentry">说明</th>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d59979e31" class="stentry">Name</td>
-
-          <td valign="top" headers="d59979e34" class="stentry">备份名称，缺省则以当前时间格式命名，如“2013-11-13-15:00:00”。</td>
+          <th valign="bottom" align="left" id="d44945e34" class="stentry">说明</th>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d59979e31" class="stentry">Description</td>
+          <td valign="top" headers="d44945e31" class="stentry">Name</td>
 
-          <td valign="top" headers="d59979e34" class="stentry">备份用户描述信息。</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d59979e31" class="stentry">Path</td>
-
-          <td valign="top" headers="d59979e34" class="stentry">本次备份的指定路径，缺省为配置参数“bkuppath”中指定的路径。</td>
+          <td valign="top" headers="d44945e34" class="stentry">备份名称，缺省则以当前时间格式命名，如“2013-11-13-15:00:00”。</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d59979e31" class="stentry">EnsureInc</td>
+          <td valign="top" headers="d44945e31" class="stentry">Description</td>
 
-          <td valign="top" headers="d59979e34" class="stentry">备份方式，true 表示增量备份，false 表示全量备份，缺省为 false。</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d59979e31" class="stentry">OverWrite</td>
-
-          <td valign="top" headers="d59979e34" class="stentry">对于同名备份是否覆盖，true 表示覆盖，false 表示不覆盖，如果同名则报错；缺省为 true。</td>
+          <td valign="top" headers="d44945e34" class="stentry">备份用户描述信息。</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d59979e31" class="stentry">GroupName</td>
+          <td valign="top" headers="d44945e31" class="stentry">Path</td>
 
-          <td valign="top" headers="d59979e34" class="stentry">对指定组进行备份，缺省为对全系统备份，当需要对多个组进行备份可以指定为数组类型，如：["datagroup1","datagroup2"]。</td>
+          <td valign="top" headers="d44945e34" class="stentry">本次备份的指定路径，缺省为配置参数“bkuppath”中指定的路径。</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d44945e31" class="stentry">EnsureInc</td>
+
+          <td valign="top" headers="d44945e34" class="stentry">备份方式，true 表示增量备份，false 表示全量备份，缺省为 false。</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d44945e31" class="stentry">OverWrite</td>
+
+          <td valign="top" headers="d44945e34" class="stentry">对于同名备份是否覆盖，true 表示覆盖，false 表示不覆盖，如果同名则报错；缺省为 true。</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d44945e31" class="stentry">GroupName</td>
+
+          <td valign="top" headers="d44945e34" class="stentry">对指定组进行备份，缺省为对全系统备份，当需要对多个组进行备份可以指定为数组类型，如：["datagroup1","datagroup2"]。</td>
 
         </tr>
 </table>
@@ -129,7 +130,8 @@
     
   </div>
 
-<div class="navfooter"><script type="text/javascript"><!--         
+<div class="related-links"/>
+<div class="navfooter"><a class="link" href="../../../administration/operation_maintain/topics/bandr.html" title="备份恢复"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">备份恢复</span></a>  <script type="text/javascript"><!--         
     function expand(){
         parent.tocwin.expandToTopic(window.location.href, this.getAttribute('href'));
     }
@@ -138,7 +140,7 @@
     for (i = 0; i< aArray.length; i++){
       aArray[i].onclick = expand;
     }
-//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.9B
+//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.12
           
     </div>
 </body>
