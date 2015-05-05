@@ -15,10 +15,14 @@
 	<target name="6.1 Clean-Driver-Testcases" depends="">
 		<echo level="info" message="Step1 : Rebuild the folders &lt;${testcases_dir}/C/build_test&gt;,&lt;${testcases_dir}/CPP/build_test&gt;,&lt;${testcases_dir}/mongoc/build_test&gt;." />
 		<delete dir="${testcases_dir}/C/build_test"  failonerror="false" />
+		<delete dir="${testcases_dir}/C/staticlib/build_test"  failonerror="false" />
 		<delete dir="${testcases_dir}/CPP/build_test"  failonerror="false" />
+		<delete dir="${testcases_dir}/CPP/staticlib/build_test"  failonerror="false" />
 		<delete dir="${testcases_dir}/mongoc/build_test" failonerror="false" />
 		<mkdir dir="${testcases_dir}/C/build_test" />
+		<mkdir dir="${testcases_dir}/C/staticlib/build_test" />
 		<mkdir dir="${testcases_dir}/CPP/build_test" />
+		<mkdir dir="${testcases_dir}/CPP/staticlib/build_test" />
 		<mkdir dir="${testcases_dir}/mongoc/build_test" />
 		<echo level="info" message="Step2 : Rebuild the folders &lt;${deploy_dir}/hlt/drivers_testcases&gt;." />
 		<delete dir="${deploy_dir}/hlt/drivers_testcases" failonerror="false" />
