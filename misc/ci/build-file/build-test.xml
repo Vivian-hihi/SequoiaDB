@@ -16,7 +16,7 @@
 	<property file="${SCRIPT_DIR}/ci.test.properties" />
 	<property name="deploy_dir" value="${WORKSPACE}/deploy" />
 	<property name="testcases_dir" value="${WORKSPACE}/sequoiadb/testcases/hlt" />
-	<property name="driver_testcases_dir" value="${WORKSPACE}/sequoiadb/driver/test">
+	<property name="driver_testcases_dir" value="${WORKSPACE}/sequoiadb/driver/test" />
 	<taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
 		<classpath>
 			<pathelement location="${SCRIPT_DIR}/exec-tools/ant-sdbtasks.jar" />
