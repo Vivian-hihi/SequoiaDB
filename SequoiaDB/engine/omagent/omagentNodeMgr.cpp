@@ -1149,6 +1149,14 @@ namespace engine
                     pSvcName, rc ) ;
             goto error ;
          }
+         else if ( 0 == ossStrcmp( sdbGetOMAgentOptions()->getCMServiceName(),
+                                   nodeOptions.getServiceAddr() ) )
+         {
+            PD_LOG( PDERROR, "Node[%s] svcname[%s] is same with omagent",
+                    pSvcName, nodeOptions.getServiceAddr() ) ;
+            rc = SDB_CM_CONFIG_CONFLICTS ;
+            goto error ;
+         }
 
          if ( omsvc )
          {
