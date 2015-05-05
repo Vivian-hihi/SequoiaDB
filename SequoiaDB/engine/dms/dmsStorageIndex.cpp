@@ -259,24 +259,24 @@ namespace engine
          }
          ixmIndexCB curIdxCB( context->mb()->_indexExtent[indexID], this,
                               context ) ;
-         if ( 0 == ossStrncmp ( index.getStringField( IXM_FIELD_NAME_NAME ),
-                                curIdxCB.getName(), IXM_INDEX_NAME_SIZE) )
+         if ( curIdxCB.isSameDef( index ) )
          {
-            // this could be user error by typing same index name, so we log as
-            // info
-            if ( curIdxCB.isSameDef( index ))
-            {
-               PD_LOG ( PDINFO, "Duplicate index define: %s",
-                        index.getStringField( IXM_FIELD_NAME_NAME ) );
-               rc = SDB_IXM_REDEF ;
-            }
-            else
-            {
-               PD_LOG ( PDINFO, "Duplicate index name: %s",
-                        index.getStringField( IXM_FIELD_NAME_NAME ) );
-               rc = SDB_IXM_EXIST;
-            }
+            PD_LOG ( PDERROR, "Duplicate index define: %s",
+                     index.getStringField( IXM_FIELD_NAME_NAME ) );
+            rc = SDB_IXM_REDEF ;
             goto error ;
+         }
+         else if ( 0 == ossStrncmp ( index.getStringField( IXM_FIELD_NAME_NAME ),
+                                     curIdxCB.getName(), IXM_INDEX_NAME_SIZE) )
+         {
+            PD_LOG ( PDINFO, "Duplicate index name: %s",
+                     index.getStringField( IXM_FIELD_NAME_NAME ) );
+            rc = SDB_IXM_EXIST;
+            goto error ;
+         }
+         else
+         {
+            continue ;
          }
       }
       if ( DMS_COLLECTION_MAX_INDEX == indexID )

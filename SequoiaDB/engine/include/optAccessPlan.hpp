@@ -100,6 +100,7 @@ namespace engine
       UINT32 _hashValue ;
       ossAtomicSigned32 _useCount ;
       BOOLEAN _sortRequired ; // whether we need to explicit sort the resultset
+      BOOLEAN _autoHint ;
    private:
       struct _estimateDetail
       {
@@ -168,6 +169,7 @@ namespace engine
          _apm = NULL ;
          _sortRequired = FALSE ;
          _isAutoPlan = FALSE ;
+         _autoHint = FALSE ;
       }
 
       ~_optAccessPlan()

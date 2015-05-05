@@ -267,10 +267,22 @@ namespace engine
          {
             rIsUnique = TRUE;
          }
-         if ( lIsUnique != rIsUnique )
+
+         if ( lIsUnique )
+         {
+            /// it is useless to create any same defined index
+            /// when an unique index exists.
+            rs = TRUE ;
+            goto done ;         
+         }
+         else if ( lIsUnique != rIsUnique )
          {
             rs = FALSE;
             goto done;
+         }
+         else
+         {
+            /// do nothing.
          }
 
          BOOLEAN lEnforced = FALSE;
@@ -285,6 +297,7 @@ namespace engine
          {
             rEnforced = TRUE;
          }
+
          if ( lEnforced != rEnforced )
          {
             rs = FALSE;

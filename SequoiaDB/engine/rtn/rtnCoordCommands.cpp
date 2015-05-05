@@ -5268,6 +5268,7 @@ namespace engine
    INT32 rtnCoordCMDSplit::_getBoundRecordOnData( const CHAR *cl,
                                                   const BSONObj &condition,
                                                   const BSONObj &hint,
+                                                  const BSONObj &sort,
                                                   INT32 flag,
                                                   INT64 skip,
                                                   CoordGroupList &groupList,
@@ -5293,7 +5294,7 @@ namespace engine
 
       if ( condition.isEmpty() )
       {
-         rc = rtnCoordNodeQuery( cl, condition, empty, empty,
+         rc = rtnCoordNodeQuery( cl, condition, empty, sort,
                                  hint, skip, 1, groupList,
                                  cb, &context, NULL, flag ) ;
          PD_RC_CHECK ( rc, PDERROR, "Failed to query from data group, rc = %d",
@@ -5383,7 +5384,7 @@ namespace engine
       PD_CHECK ( !shardingKey.isEmpty(), SDB_COLLECTION_NOTSHARD, error,
                   PDWARNING, "Collection must be sharded: %s", cl ) ;
 
-      rc = _getBoundRecordOnData( cl, begin, BSONObj(),
+      rc = _getBoundRecordOnData( cl, begin, BSONObj(),BSONObj(),
                                   0, 0, grpTmp, cb,
                                   shardingKey, lowBound ) ;
       if ( SDB_OK != rc )
@@ -5395,7 +5396,7 @@ namespace engine
       if ( !end.isEmpty() )
       {
          grpTmp = groupList ;
-         rc = _getBoundRecordOnData( cl, end, BSONObj(),
+         rc = _getBoundRecordOnData( cl, end, BSONObj(),BSONObj(),
                                      0, 0, grpTmp, cb,
                                      shardingKey, upBound ) ;
          if ( SDB_OK != rc )
@@ -5456,10 +5457,12 @@ namespace engine
             }
 
             skipCount = (INT64)(totalCount * ( 1 - percent/100 )) ;
-            hint = BSON( "" << IXM_SHARD_KEY_NAME ) ;
+            hint = BSON( "" << "" ) ;
             flag = FLG_QUERY_FORCE_HINT ;
 
-            rc = _getBoundRecordOnData( cl, BSONObj(), hint,
+            /// sort by shardingKey that if $shard index does not exist
+            /// can still match index.
+            rc = _getBoundRecordOnData( cl, BSONObj(), hint, shardingKey,
                                         flag, skipCount, grpTmp,
                                         cb, shardingKey, lowBound ) ;
             if ( SDB_DMS_EOC == rc )

@@ -987,6 +987,7 @@ namespace engine
       INT32 _getBoundRecordOnData( const CHAR *cl,
                                    const BSONObj &condition,
                                    const BSONObj &hint,
+                                   const BSONObj &sort,
                                    INT32 flag,
                                    INT64 skip,
                                    CoordGroupList &groupList,

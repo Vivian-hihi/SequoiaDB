@@ -1249,9 +1249,15 @@ namespace engine
             BSONObj shardKeyObj = BSON ( "key"<<shardingKey<<"name"<<
                                          IXM_SHARD_KEY_NAME<<"v"<<0 ) ;
             rc = rtnCreateIndexCommand ( pCollection, shardKeyObj,
-                                         cb, dmsCB, dpsCB, TRUE ) ;
-            if ( rc )
+                                         cb, dmsCB, dpsCB, TRUE ) ;\
+            if ( SDB_IXM_REDEF == rc )
             {
+               /// same defined index already exists.
+               rc = SDB_OK ;
+            }
+            else if ( SDB_OK != rc )
+            {
+     
                PD_LOG ( PDERROR, "Failed to create sharding key for "
                         "collection %s, rc = %d", pCollection, rc ) ;
                goto error_rollback ;

@@ -149,9 +149,20 @@ namespace engine
          BSONElement hint = it.next() ;
          if ( hint.type() == String )
          {
-            PD_LOG ( PDDEBUG, "Try to use index: %s", hint.valuestr() ) ;
-            // search based on index name
-            rc = _optimizeHint ( mbContext, hint.valuestr(), predSet ) ;
+            if ( '\0' != *( hint.valuestr() ) )
+            {
+               PD_LOG ( PDDEBUG, "Try to use index: %s", hint.valuestr() ) ;
+               // search based on index name
+               rc = _optimizeHint ( mbContext, hint.valuestr(), predSet ) ;
+            }
+            else
+            {
+               /// return error that go to auto-estimate
+               _autoHint = TRUE ;
+               _hintFailed = TRUE ;
+               rc = SDB_RTN_INVALID_HINT ;
+               goto error ;
+            }
          }
          else if ( hint.type() == jstOID )
          {
@@ -608,6 +619,11 @@ namespace engine
          _isValid = TRUE ;
       }
 
+      if ( _autoHint && _hintFailed &&
+           IXSCAN == getScanType() )
+      {
+         _hintFailed = FALSE ;
+      }
    done :
       if ( mbContext )
       {
