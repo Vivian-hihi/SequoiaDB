@@ -96,6 +96,15 @@ namespace engine
       return _quit ;
    }
 
+   void _clsReplDstSession::onRecieve( const NET_HANDLE netHandle,
+                                       MsgHeader *msg )
+   {
+      if ( MSG_INVALID_ROUTEID != _syncSrc.value )
+      {
+         _repl->aliveNode( _syncSrc ) ;
+      }
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSDSTREPSN_ONTIMER, "_clsReplDstSession::onTimer" )
    void _clsReplDstSession::onTimer( UINT64 timerID, UINT32 interval )
    {
@@ -909,6 +918,7 @@ namespace engine
                                         MsgHeader * msg )
    {
       _timeout = 0 ;
+      _repl->aliveNode( msg->routeID ) ;
    }
 
    BOOLEAN _clsReplSrcSession::timeout( UINT32 interval )

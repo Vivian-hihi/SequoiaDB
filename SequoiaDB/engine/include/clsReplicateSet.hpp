@@ -268,6 +268,8 @@ namespace engine
 
          INT32 primaryCheck( pmdEDUCB *cb, INT16 w ) ;
 
+         INT32 aliveNode( const MsgRouteID &id ) ;
+
       private:
          INT32 _setGroupSet( const CLS_GROUP_VERSION &version,
                              map<UINT64, _netRouteNode> &nodes ) ;

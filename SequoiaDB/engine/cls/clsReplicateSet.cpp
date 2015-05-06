@@ -912,6 +912,31 @@ namespace engine
       return _alive( msg->identity ) ;
    }
 
+   INT32 _clsReplicateSet::aliveNode( const MsgRouteID &id )
+   {
+      INT32 rc = SDB_OK ;
+
+      /// wait for 100 mili-secs
+      rc = _info.mtx.lock_r( 100 ) ;
+
+      if ( SDB_OK == rc )
+      {
+         map<UINT64, _clsSharingStatus*>::iterator itr =
+            _info.alives.find( id.value ) ;
+         if ( itr != _info.alives.end() )
+         {
+            itr->second->timeout = 0 ;
+            itr->second->breakTime = 0 ;
+         }
+         else
+         {
+            rc = SDB_CLS_NODE_BSFAULT ;
+         }
+         _info.mtx.release_r() ;
+      }
+      return rc ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION (SDB__CLSREPSET__ALIVE, "_clsReplicateSet::_alive" )
    INT32 _clsReplicateSet::_alive( const _MsgRouteID &id )
    {
