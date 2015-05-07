@@ -233,6 +233,11 @@ namespace engine
          ++sendOpt._retryTimes ;
          goto retry ;
       }
+      else if ( SDB_CAT_NO_MATCH_CATALOG == rcTmp )
+      {
+         /// ignore
+         rc = SDB_OK ;
+      }
       else
       {
          PD_LOG( PDERROR, "Update failed on node[%s], rc: %d",
