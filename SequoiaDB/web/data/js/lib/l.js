@@ -176,7 +176,7 @@ var __levelNum = 0 ;
 	var htmlJsPath = '' ;
 	var num = 0 ;
 	(function(){
-		var rootPath = './js/public' ;
+		var rootPath = 'js/public' ;
 		var fileName = 'index' ;
 		var pathName = window.document.location.pathname ;
 		if( pathName == '/' )

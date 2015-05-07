@@ -38,10 +38,7 @@ var sdbjs = {
 		obj._tab.addTabItem( { tabid: 'insert', text: '插入', url: M( 'sdbbusiness/structure/export.html' ), showClose: false } ) ;
 		obj._tab.addTabItem( { tabid: 'export', text: '导出', url: M( 'sdbbusiness/structure/insert.html' ), showClose: false } ) ;
 		obj._tab.selectTabItem( 'browse' ) ;
-		//加载集合列表
-//		var clList = $( '#clDataGrid' ).ligerSdbIframe( { url: M( 'sdbbusiness/partitionedcllist.html' ), callback: function(){
-//			clList.getIframeObj().sdbjs._csName = obj._csName ;
-//		} } ) ;
+		
 		obj.resize() ;
 	},
 	synData: function(){
