@@ -728,7 +728,7 @@ namespace engine
             }
             if ( rc )
             {
-               // findItem may return SDB_CLS_NO_CATALOG_INFO as expected, so
+               // findItem may return SDB_CAT_NO_MATCH_CATALOG as expected, so
                // don't log anything
                goto done ;
             }
@@ -772,12 +772,12 @@ namespace engine
          MAP_CAT_ITEM_IT it = _mapItems.upper_bound ( findKey ) ;
          // if we build this object by specifying group restricts, the
          // _mapItem may not always contains MaxKey, in this case
-         // SDB_CLS_NO_CATALOG_INFO represents the given groups does not
+         // SDB_CAT_NO_MATCH_CATALOG represents the given groups does not
          // include ranges for the record
          if ( it == _mapItems.end () )
          {
             item = _lastItem ;
-            rc = item ? SDB_OK : SDB_CLS_NO_CATALOG_INFO ;
+            rc = item ? SDB_OK : SDB_CAT_NO_MATCH_CATALOG ;
             goto done ;
          }
 
@@ -790,7 +790,7 @@ namespace engine
             // we should not log anything
             if ( findKey < it->second->getLowBoundKey( getOrdering() ) )
             {
-               rc = SDB_CLS_NO_CATALOG_INFO ;
+               rc = SDB_CAT_NO_MATCH_CATALOG ;
                goto error ;
             }
          }
@@ -946,7 +946,7 @@ namespace engine
          }
          ++it ;
       }
-      return SDB_CLS_NO_CATALOG_INFO ;
+      return SDB_CAT_NO_MATCH_CATALOG ;
    }
 
    INT32 _clsCatalogSet::getGroupUpBound( UINT32 groupID, BSONObj & upBound )const
@@ -963,7 +963,7 @@ namespace engine
          }
          ++rit ;
       }
-      return SDB_CLS_NO_CATALOG_INFO ;
+      return SDB_CAT_NO_MATCH_CATALOG ;
    }
 
    // check whether a given object in the specified group
@@ -1054,7 +1054,7 @@ namespace engine
             it = _mapItems.lower_bound ( findKey ) ;
 
             // if we build this object by specifying group restricts, the _mapItem
-            // may not always contains MaxKey, in this case SDB_CLS_NO_CATALOG_INFO
+            // may not always contains MaxKey, in this case SDB_CAT_NO_MATCH_CATALOG
             // represents the given groups does not include ranges for the key
             if ( it == _mapItems.end() )
             {
@@ -1070,7 +1070,7 @@ namespace engine
             it = _mapItems.lower_bound ( findKey ) ;
 
             // if we build this object by specifying group restricts, the _mapItem
-            // may not always contains MaxKey, in this case SDB_CLS_NO_CATALOG_INFO
+            // may not always contains MaxKey, in this case SDB_CAT_NO_MATCH_CATALOG
             // represents the given groups does not include ranges for the key
             if ( it == _mapItems.end() )
             {
