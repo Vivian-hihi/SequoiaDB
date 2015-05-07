@@ -61,7 +61,7 @@ namespace engine
       //Wait event msg and dispatch msg
       while ( !cb->isDisconnected() )
       {
-         if ( cb->waitEvent( eventData, OSS_ONE_SEC ) )
+         if ( cb->waitEvent( eventData, OSS_ONE_SEC, TRUE ) )
          {
             if ( PMD_EDU_EVENT_TERM == eventData._eventType )
             {

@@ -68,7 +68,7 @@ namespace engine
          cb->resetInterrupt() ;
          cb->resetInfo( EDU_INFO_ERROR ) ;
 
-         if ( cb->waitEvent( event, OSS_ONE_SEC ) )
+         if ( cb->waitEvent( event, OSS_ONE_SEC, TRUE ) )
          { 
             if ( PMD_EDU_EVENT_TERM == event._eventType )
             {

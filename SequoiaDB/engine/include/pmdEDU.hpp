@@ -200,7 +200,8 @@ namespace engine
          _queue.push ( data ) ;
       }
 
-      BOOLEAN waitEvent ( pmdEDUEvent &data, INT64 millsec )
+      BOOLEAN waitEvent ( pmdEDUEvent &data, INT64 millsec,
+                          BOOLEAN resetStat = FALSE )
       {
          // no need latch since _queue is already latched
          // if millsec not 0, that means we want timeout
@@ -208,7 +209,7 @@ namespace engine
 
          BOOLEAN waitMsg   = FALSE ;
          _writingDB        = FALSE ;
-         if ( PMD_EDU_IDLE != _status )
+         if ( resetStat && PMD_EDU_IDLE != _status )
          {
             _status = PMD_EDU_WAITING ;
          }
@@ -230,7 +231,7 @@ namespace engine
             {
                _ctrlFlag |= ( EDU_CTRL_DISCONNECTED|EDU_CTRL_INTERRUPTED );
             }
-            else
+            else if ( resetStat )
             {
                _status = PMD_EDU_RUNNING ;
             }
@@ -240,7 +241,7 @@ namespace engine
       }
 
       BOOLEAN waitEvent( pmdEDUEventTypes type, pmdEDUEvent &data,
-                         INT64 millsec )
+                         INT64 millsec, BOOLEAN resetStat = FALSE )
       {
          BOOLEAN ret = FALSE ;
          INT64 waitTime = 0 ;
@@ -254,7 +255,7 @@ namespace engine
          while ( !isInterrupted() )
          {
             waitTime = millsec < OSS_ONE_SEC ? millsec : OSS_ONE_SEC ;
-            if ( !waitEvent( data, waitTime ) )
+            if ( !waitEvent( data, waitTime, resetStat ) )
             {
                millsec -= waitTime ;
                if ( millsec <= 0 )
