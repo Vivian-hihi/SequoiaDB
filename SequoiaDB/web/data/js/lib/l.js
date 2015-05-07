@@ -176,7 +176,7 @@ var __levelNum = 0 ;
 	var htmlJsPath = '' ;
 	var num = 0 ;
 	(function(){
-		var rootPath = 'js/public' ;
+		var rootPath = './js/public' ;
 		var fileName = 'index' ;
 		var pathName = window.document.location.pathname ;
 		if( pathName == '/' )
@@ -197,7 +197,7 @@ var __levelNum = 0 ;
 				fileName = fileName.split( '.' ) ;
 				fileName = fileName[0] ;
 				rootPath += '/' + fileName + '.js' ;
-				num = pathNum - 2 ;
+				num = pathNum - 3 ;
 			}
 			else
 			{
@@ -207,14 +207,14 @@ var __levelNum = 0 ;
 		htmlJsPath = rootPath ;
 	})() ;
 	var files = [
-		'css/skins/Aqua/css/ligerui-all.css',
-		'css/extend.css',
-		'css/style.css',
-		'js/lib/jquery/jquery-1.11.1.min.js',
-		'js/lib/jquery.cookie.js',
-		'js/lib/json2.js',
-		'js/lib/ligerUI/js/ligerui.all.js',
-		'js/lib/ligerUI/js/ligerui.extend.js',
+		'./css/skins/Aqua/css/ligerui-all.css',
+		'./css/extend.css',
+		'./css/style.css',
+		'./js/lib/jquery/jquery-1.11.1.min.js',
+		'./js/lib/jquery.cookie.js',
+		'./js/lib/json2.js',
+		'./js/lib/ligerUI/js/ligerui.all.js',
+		'./js/lib/ligerUI/js/ligerui.extend.js',
 		htmlJsPath
 	] ;
 	__levelNum = num ;
