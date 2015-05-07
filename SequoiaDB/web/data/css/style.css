@@ -1,0 +1,3 @@
+
+.listPoint{ list-style-type:disc; list-style-position:inside; margin:10px;  }
+.listPoint > li{ list-style-type:disc; list-style-position:inside; margin-top:5px; }

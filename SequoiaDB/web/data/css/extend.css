@@ -1,0 +1,76 @@
+body{ margin:0; padding:0; font-size:12px; font-family:Verdana,Georgia,宋体; color:#4B4B4B; }
+
+/* 分页 */
+.l-tab-links { height:32px; -moz-user-select:none; -khtml-user-select:none; -ms-user-select: none; -webkit-user-select:none; position:relative; overflow:hidden; background:#EEE; }
+.l-tab-links ul{ position:absolute; width:9999px; list-style:none; padding:0; margin:0; border-bottom:#DDD solid 1px; background:#EEE; display:table; font-weight:bold; padding-top:5px; }
+.l-tab-links li{ float:left; padding:5px 0 5px 0; border-bottom:#DDD solid 0px; cursor:pointer; border-radius:4px 4px 0 0; margin-bottom: -1px; color:#505A64; position: relative; letter-spacing:1px; border:#EEE solid 1px; border-bottom:#DDD solid 1px; height:15px; }
+.l-tab-links li:first-child{ margin-left:10px; }
+.l-tab-links li:hover{ color:#023365; }
+.l-tab-links .l-selected{ border:#DDD solid 1px; border-bottom:#FFF solid 1px; cursor:default; background:#FFF; color:#505A64; }
+.l-tab-links .l-selected:hover{ color:#555555; }
+.l-tab-links li a{ max-width:120px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; display:block; margin-left:15px; margin-right:25px; text-decoration:none; color:#333; }
+
+.l-tab-links-left{ position:absolute; top:7px; left:0; width:17px; height:23px; overflow:hidden; background:url(./skins/Aqua/images/layout/tabs-tools.gif) 0px 0px; z-index:13; cursor:pointer;}
+.l-tab-links-right{ position:absolute; top:7px; right:0;width:17px; height:23px; overflow:hidden;background:url(./skins/Aqua/images/layout/tabs-tools.gif) -51px 0px;z-index:13; cursor:pointer;}
+
+/* 内容 */
+.ext-context{ margin:0px; background:#f8f8f8; }
+/* 底部 */
+.ext-foot{ height:45px; background:#f8f8f8; }
+
+/* 置右 */
+.ext-right{ float: right !important; }
+
+/* 上分隔 */
+.top-partition{ margin-top:10px; }
+
+/* 下分隔 */
+.bottom-partition{ margin-bottom:10px; }
+
+/* 导航 */
+.ext-nav{ font-size:14px; height:35px; -moz-user-select:none; -khtml-user-select:none; -ms-user-select: none; -webkit-user-select:none; }
+.ext-nav > .ext-colum { height:35px; width:100%; background-color:#2E76CA; }
+.ext-nav > .ext-colum > ul { margin:0; padding:0; list-style:none; z-index:1; line-height:150%; }
+.ext-nav > .ext-colum > ul > li { float:left; min-width:120px; position:relative; }
+.ext-nav > .ext-colum > ul > li > a { background:#2E76CA; color:#fff; display:block; padding:8px 7px 8px 7px; text-decoration:none; text-align:center; z-index:1; height:19px; text-overflow:ellipsis; overflow:hidden; cursor:pointer;}
+.ext-nav > .ext-colum > ul > li > a:hover { background:#005AA4; color:#FFF; }
+.ext-nav > .ext-menu { position:relative; left:0px; top:1px; z-index:800; }
+.ext-nav > .ext-menu > ul{ display:none; margin:0; padding:0; list-style:none; border:1px solid #ccc; width:148px; z-index:9999; padding:5px 0 5px 0; background-color:#FFF; *border-right-width:2px; *border-bottom-width:2px; -webkit-border-radius:6px; -moz-border-radius:6px; border-radius:6px; -webkit-box-shadow:0 5px 10px rgba(0, 0, 0, 0.2); -moz-box-shadow:0 5px 10px rgba(0, 0, 0, 0.2); box-shadow:0 5px 10px rgba(0, 0, 0, 0.2); -webkit-background-clip:padding-box; -moz-background-clip:padding; background-clip:padding-box; }
+.ext-nav > .ext-menu > ul > li { position:relative; }
+.ext-nav > .ext-menu > ul > li > a { color:#000; display:block; padding:5px 7px 5px 7px; text-decoration:none; text-align:center; height:30px; line-height:200%; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+.ext-nav > .ext-menu > ul > li > a:hover{ background:#0082C4; color:#FFF; }
+
+/* 列表 */
+.ext-list { overflow-y:auto; overflow-x:hidden; -moz-user-select:none; -khtml-user-select:none; -ms-user-select: none; -webkit-user-select:none; }
+.ext-list > li { cursor:pointer; }
+.ext-list > li > a { padding:10px; height:18px; display: block; line-height:18px; text-decoration: none; color:#183152; overflow:hidden; text-overflow:ellipsis; }
+.ext-list > li:hover{ background-color:#F3F3F3; }
+
+/* 表格 */
+.table{ width:100%; border-collapse:collapse; word-wrap:break-word; }
+.table th {  }
+.table td {  }
+/* 紧凑表格 */
+.compact th{ padding:1px; }
+.compact td{ padding:1px; }
+/* 宽松表格 */
+.loosen th{ padding:5px; }
+.loosen td{ padding:5px; }
+/* 外边框表格 */
+.simple{ border:#ddd solid 1px; border-bottom-width:0px; }
+.simple th{ border-bottom:1px solid #ddd; }
+.simple td{ border-bottom:1px solid #ddd; }
+/* 内外边框表格 */
+.border{ border:#ddd solid 1px; }
+.border th{ border:1px solid #ddd; }
+.border td{ border:1px solid #ddd; }
+
+/* 表格表头 */
+.l-grid-header{  background-color: #eaf2fe; border-bottom: 1px solid #BED5F3; font-weight: bold;line-height: 28px;}
+.l-grid-hd-cell-text{ padding-left: 3px;}
+
+
+/* 表格样式 */
+.l-grid-row-cell-inner{ line-height: 28px;}
+.l-grid-row-over .l-grid-row-cell,.l-grid-row-over{ background: rgba(182, 255, 240, 0.19); }
+
