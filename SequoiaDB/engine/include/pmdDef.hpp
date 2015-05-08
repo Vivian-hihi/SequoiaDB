@@ -59,7 +59,8 @@ namespace engine
       PMD_EDU_EVENT_BP_RESUME,    // break point resume
       PMD_EDU_EVENT_TRANS_STOP,   // stop transaction
       PMD_EDU_EVENT_STEP_DOWN,    // step down
-      PMD_EDU_EVENT_STEP_UP       // step up
+      PMD_EDU_EVENT_STEP_UP,      // step up
+      PMD_EDU_EVENT_KILLCONTEXT   // kill specified context
    } ;
 
    /*

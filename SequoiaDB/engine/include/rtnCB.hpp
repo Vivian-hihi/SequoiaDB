@@ -88,6 +88,8 @@ namespace engine
 
       void contextDelete ( SINT64 contextID, _pmdEDUCB *cb ) ;
 
+      UINT32 preDelContext( const CHAR *csName ) ;
+
       OSS_INLINE rtnContext *contextFind ( SINT64 contextID )
       {
          RTNCB_SLOCK

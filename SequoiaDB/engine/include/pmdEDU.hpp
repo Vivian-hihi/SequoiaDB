@@ -180,7 +180,6 @@ namespace engine
       const CHAR *getInfo ( EDU_INFO_TYPE type ) ;
       void  resetInfo ( EDU_INFO_TYPE type ) ;
 
-      void setClientInfo ( const CHAR *clientName, UINT16 clientPort ) ;
       void setUserInfo( const string &userName, const string &password ) ;
       void setName ( const CHAR *name ) ;
       void setClientSock ( ossSocket *pSock ) { _pClientSock = pSock ; }
@@ -197,7 +196,16 @@ namespace engine
       void postEvent ( pmdEDUEvent const &data )
       {
          // no need latch since _queue is already latched
-         _queue.push ( data ) ;
+         if ( PMD_EDU_EVENT_KILLCONTEXT == data._eventType )
+         {
+#if defined ( SDB_ENGINE )
+            _selfQue.push( data ) ;
+#endif // SDB_ENGINE
+         }
+         else
+         {
+            _queue.push ( data ) ;
+         }
       }
 
       BOOLEAN waitEvent ( pmdEDUEvent &data, INT64 millsec,
@@ -213,6 +221,9 @@ namespace engine
          {
             _status = PMD_EDU_WAITING ;
          }
+
+         /// process self event
+         _processSelf() ;
 
          if ( 0 > millsec )
          {
@@ -398,6 +409,8 @@ namespace engine
       CHAR*    _getBuffInfo ( EDU_INFO_TYPE type, UINT32 &size ) ;
       BOOLEAN  _allocFromCatch( INT32 len, CHAR **ppBuff, INT32 &buffLen ) ;
 
+      void     _processSelf() ;
+
    private :
       ossRWMutex     _callInMutex ;
       EDUID          _eduID ;
@@ -450,7 +463,7 @@ namespace engine
       ossEvent                _event ;   // for cls replSet notify
 
       std::set<SINT64>        _contextList ;
-      ossQueue<pmdEDUEvent>   _bpEventQueue ;
+      ossQueue<pmdEDUEvent>   _selfQue ;
 
       UINT32                  _dmsLockLevel ; // for dms lock
 

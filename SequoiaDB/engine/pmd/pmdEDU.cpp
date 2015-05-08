@@ -343,6 +343,9 @@ namespace engine
       PD_TRACE_ENTRY ( SDB__PMDEDUCB_ISINT );
       BOOLEAN ret = FALSE ;
 
+      /// process self event
+      _processSelf() ;
+
       // mask interrupt while doing rollback
       if ( !onlyFlag && _isDoRollback )
       {
@@ -414,14 +417,6 @@ namespace engine
    {
       _userName = userName ;
       _passWord = password ;
-   }
-
-   void _pmdEDUCB::setClientInfo ( const CHAR *clientName, UINT16 clientPort )
-   {
-      ossScopedLock _lock ( &_mutex, EXCLUSIVE ) ;
-      ossSnprintf( _Name, PMD_EDU_NAME_LENGTH, "%s:%u",
-                   clientName, clientPort ) ;
-      _Name[PMD_EDU_NAME_LENGTH] = 0 ;
    }
 
    void _pmdEDUCB::setName ( const CHAR * name )
@@ -735,6 +730,25 @@ namespace engine
       }
 
       return _pUncompressBuff ;
+   }
+
+   void _pmdEDUCB::_processSelf()
+   {
+#if defined ( SDB_ENGINE )
+      SDB_RTNCB *rtnCB = pmdGetKRCB()->getRTNCB() ;
+      SINT64 contextID = -1 ;
+      pmdEDUEvent event ;
+      while( _selfQue.try_pop( event ) )
+      {
+         ++_processEventCount ;
+         if ( PMD_EDU_EVENT_KILLCONTEXT == event._eventType )
+         {
+            contextID = (SINT64)event._userData ;
+            rtnCB->contextDelete( contextID, this ) ;
+         }
+         pmdEduEventRelase( event, this ) ;
+      }
+#endif // SDB_ENGINE
    }
 
 #if defined ( SDB_ENGINE )

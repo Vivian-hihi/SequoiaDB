@@ -536,6 +536,8 @@ namespace engine
       SDB_RTNCB *rtnCB = pmdGetKRCB()->getRTNCB() ;
       SINT64 contextID = -1 ;
       BOOLEAN writable = FALSE ;
+      UINT32 retryTime = 0 ;
+
       SDB_ASSERT ( pCollectionSpace, "collection space can't be NULL" ) ;
       SDB_ASSERT ( dmsCB, "dms control block can't be NULL" ) ;
       // make sure the collectionspace length is not out of range
@@ -582,18 +584,31 @@ namespace engine
          }
       }
 
-      if ( dropFile )
+      while ( retryTime++ < 100 )
       {
-         rc = dmsCB->dropCollectionSpace ( pCollectionSpace, cb, dpsCB ) ;
-         PD_RC_CHECK ( rc, PDERROR, "Failed to drop collectionspace %s, "
-                       "rc: %d", pCollectionSpace, rc ) ;
+         if ( rtnCB->preDelContext( pCollectionSpace ) > 0 )
+         {
+            ossSleep( 200 ) ;
+         }
+
+         if ( dropFile )
+         {
+            rc = dmsCB->dropCollectionSpace ( pCollectionSpace, cb, dpsCB ) ;
+         }
+         else
+         {
+            rc = dmsCB->unloadCollectonSpace( pCollectionSpace, cb ) ;
+         }
+
+         if ( SDB_LOCK_FAILED == rc )
+         {
+            continue ;
+         }
+         break ;
       }
-      else
-      {
-         rc = dmsCB->unloadCollectonSpace( pCollectionSpace, cb ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to unload collectionspace %s, "
-                      "rc: %d", pCollectionSpace, rc ) ;
-      }
+      PD_RC_CHECK( rc, PDERROR, "Failed to %s collectionspace %s, "
+                   "rc: %d", dropFile ? "drop" : "unload",
+                   pCollectionSpace, rc ) ;
 
    done :
       if ( writable )
