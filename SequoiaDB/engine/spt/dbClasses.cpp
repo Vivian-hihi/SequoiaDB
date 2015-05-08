@@ -1402,7 +1402,7 @@ static JSBool collection_upsert ( JSContext *cx , uintN argc , jsval *vp )
          VERIFY ( bsonNewHint ) ;
          if ( NULL != bsonHint )
          {
-            rc == bson_append_elements( bsonNewHint, bsonHint ) ;
+            rc = bson_append_elements( bsonNewHint, bsonHint ) ;
             VERIFY ( BSON_OK == rc ) ;
          }
          rc = bson_append_bson ( bsonNewHint, FIELD_NAME_SET_ON_INSERT, bsonSetOnInsert ) ;
