@@ -219,6 +219,9 @@ add_option( "fap", "foreign access protocol", 0, False )
 #enterprise options
 add_option( "enterprise", "build enterprise sequoiadb ( with SSL )", 0, False )
 
+#gprof option
+add_option("gprof", "enable gprofile for sequoiadb", 0, False)
+
 # don't run configure if user calls --help
 if GetOption('help'):
     Return()
@@ -300,6 +303,7 @@ hasFmp = has_option("fmp")
 hasAll = has_option( "all" )
 hasFap = has_option("fap")
 hasEnterprise = has_option("enterprise")
+hasGProf = has_option("gprof")
 hasSSL = False
 
 # build enterprise edition
@@ -699,6 +703,11 @@ clientCEnv.Append( CPPDEFINES=[ "SDB_SSL" ] )
 shellEnv.Append( CPPDEFINES=[ "SDB_SSL" ] )
 if hasSSL:
     env.Append( CPPDEFINES=[ "SDB_SSL" ] )
+
+if linux:
+    if hasGProf:
+        env.Append( CPPFLAGS=" -pg " )
+        env.Append( LINKFLAGS=" -pg " )
 
 env['INSTALL_DIR'] = installDir
 if testEnv is not None:
