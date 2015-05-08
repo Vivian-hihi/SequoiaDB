@@ -1457,6 +1457,7 @@ namespace engine
       PD_TRACE_ENTRY ( SDB_RTNDROPCSP1 ) ;
       SDB_RTNCB *rtnCB = pmdGetKRCB()->getRTNCB() ;
       SINT64 contextID = -1 ;
+      UINT32 retryTime = 0 ;
       SDB_ASSERT ( pCollectionSpace, "collection space can't be NULL" ) ;
       SDB_ASSERT ( dmsCB, "dms control block can't be NULL" ) ;
       // make sure the collectionspace length is not out of range
@@ -1502,13 +1503,22 @@ namespace engine
          }
       }
 
-      rc = dmsCB->dropCollectionSpaceP1( pCollectionSpace, cb, dpsCB ) ;
-      if ( rc )
+      while ( retryTime++ < 100 )
       {
-         PD_LOG ( PDERROR, "Failed to drop collectionspace %s, rc: %d",
-                  pCollectionSpace, rc ) ;
-         goto error ;
+         if ( rtnCB->preDelContext( pCollectionSpace ) > 0 )
+         {
+            ossSleep( 200 ) ;
+         }
+
+         rc = dmsCB->dropCollectionSpaceP1( pCollectionSpace, cb, dpsCB ) ;
+         if ( SDB_LOCK_FAILED == rc )
+         {
+            continue ;
+         }
+         break ;
       }
+      PD_RC_CHECK( rc, PDERROR, "Failed to drop collectionspace %s, "
+                   "rc: %d", pCollectionSpace, rc ) ;
 
    done :
       PD_TRACE_EXITRC ( SDB_RTNDROPCSP1, rc ) ;
