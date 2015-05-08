@@ -1,0 +1,13 @@
+start...
+batch 0: 8.93280816078 seconds.
+batch 1: 8.12386488914 seconds.
+batch 2: 7.1818420887 seconds.
+batch 3: 7.85993814468 seconds.
+batch 4: 8.24121999741 seconds.
+batch 5: 8.19577908516 seconds.
+batch 6: 7.96185803413 seconds.
+batch 7: 8.15490198135 seconds.
+batch 8: 9.7158510685 seconds.
+batch 9: 9.12687301636 seconds.
+total: 88.2475378513 seconds.
+Success

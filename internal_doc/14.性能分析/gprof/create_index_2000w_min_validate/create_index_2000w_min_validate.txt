@@ -1,0 +1,2 @@
+foo.bar.createIndex("i_idx", {i:1})
+Takes 869.321166s.
