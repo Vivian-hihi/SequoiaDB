@@ -254,6 +254,18 @@ function O( path )
 	return path ;
 }
 
+function I( path )
+{
+	var tmpPath = '' ;
+	for( var i = 0; i < __levelNum; ++i )
+	{
+		tmpPath += '../' ;
+	}
+	path = tmpPath + 'images/' + path ;
+	return path ;
+}
+
+
 function setUrlParam()
 {
 	var param = '' ;
