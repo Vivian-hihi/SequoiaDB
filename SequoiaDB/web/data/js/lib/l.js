@@ -187,9 +187,9 @@ var __levelNum = 0 ;
 		{
 			var pathArr = pathName.split( '/' ) ;
 			var pathNum = pathArr.length ;
-			if( pathNum > 2 )
+			if( pathNum > 3 )
 			{
-				for( var i = 2; i < pathNum - 1; ++i )
+				for( var i = 3; i < pathNum - 1; ++i )
 				{
 					rootPath += '/' + pathArr[i] ;
 				}

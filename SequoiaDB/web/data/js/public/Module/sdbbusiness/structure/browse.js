@@ -96,7 +96,7 @@ var sdbjs = {
 		
 		obj._grid = $( '#maingrid' ).ligerGrid( { columns: columns,
                                                   data: { Rows: griddata },
-                                                  pageSize:17,
+                                                  pageSize:20,
                                                   isScroll: true,
                                                   height: height } ) ;
 		obj.resize() ;
