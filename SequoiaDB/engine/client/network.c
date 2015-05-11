@@ -160,6 +160,10 @@ error :
       _clientDisconnect ( rawSocket ) ;
       rawSocket = -1 ;
    }
+   if ( NULL != s )
+   {
+      SDB_OSS_FREE ( s ) ;
+   }
    goto done ;
 }
 
