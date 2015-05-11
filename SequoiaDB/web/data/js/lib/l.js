@@ -187,15 +187,15 @@ var __levelNum = 0 ;
 		{
 			var pathArr = pathName.split( '/' ) ;
 			var pathNum = pathArr.length ;
+            fileName = pathArr[pathNum-1] ;
+            fileName = fileName.split( '.' ) ;
+            fileName = fileName[0] ;
 			if( pathNum > 3 )
 			{
 				for( var i = 3; i < pathNum - 1; ++i )
 				{
 					rootPath += '/' + pathArr[i] ;
 				}
-				fileName = pathArr[pathNum-1] ;
-				fileName = fileName.split( '.' ) ;
-				fileName = fileName[0] ;
 				rootPath += '/' + fileName + '.js' ;
 				num = pathNum - 3 ;
 			}
