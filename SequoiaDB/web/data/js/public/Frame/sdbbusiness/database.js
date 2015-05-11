@@ -22,7 +22,7 @@ var sdbjs = {
 		//设置左框标题
 		$( '#layout > [position="left"]' ).attr( 'title', '集合空间列表' ) ;
 		//创建布局
-		obj._layout = $( '#layout' ).ligerLayout( { leftWidth: 300, allowLeftCollapse: true, allowLeftResize: true, heightDiff: -15 } ) ;
+		obj._layout = $( '#layout' ).ligerLayout( { leftWidth: 300, allowLeftCollapse: true, allowLeftResize: true, heightDiff: -5 } ) ;
 		//加载集合空间列表
 		var csList = $( '#csList' ).ligerSdbIframe( { url: M( 'sdbbusiness/database/collectionspacelist.html' ) } ) ;
 		//创建右框里面的分页

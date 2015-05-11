@@ -105,6 +105,7 @@
 			item.click && newA.click( function (){
 				 item.click( item ) ;
 			} ) ;
+            item.click && newLi.css( 'cursor', 'pointer' ) ;
 			ul.append( newLi ) ;
 		},
 		_addMenu: function( p ){
