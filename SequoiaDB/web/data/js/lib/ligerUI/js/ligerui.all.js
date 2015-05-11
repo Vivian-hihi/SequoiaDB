@@ -17582,17 +17582,21 @@
             return $("li[tabid=" + tabid + "]", g.tab.links.ul).length > 0;
         },
         //增加一个tab
-        addTabItem: function (options)
-        {
-            var g = this, p = this.options; 
-            if (g.trigger('beforeAddTabItem', [options]) == false)
+		//0508 增加icon属性
+        addTabItem: function (options) {
+            var g = this, p = this.options;
+            if (g.trigger('beforeAddTabItem', [tabid]) == false)
                 return false;
             var tabid = options.tabid;
             if (tabid == undefined) tabid = g.getNewTabid();
-            var url = options.url, content = options.content, text = options.text, showClose = options.showClose, height = options.height;
+            var url = options.url;
+            var content = options.content;
+            var text = options.text;
+            var icon = options.icon;
+            var showClose = options.showClose;
+            var height = options.height;
             //如果已经存在
-            if (g.isTabItemExist(tabid))
-            {
+            if (g.isTabItemExist(tabid)) {
                 g.selectTabItem(tabid);
                 return;
             }
@@ -17600,73 +17604,60 @@
             var contentitem = $("<div class='l-tab-content-item'><div class='l-tab-loading' style='display:block;'></div><iframe frameborder='0'></iframe></div>");
             var iframeloading = $("div:first", contentitem);
             var iframe = $("iframe:first", contentitem);
-            if (g.makeFullHeight)
-            {
+            if (g.makeFullHeight) {
                 var newheight = g.tab.height() - g.tab.links.height();
                 contentitem.height(newheight);
             }
             tabitem.attr("tabid", tabid);
-            contentitem.attr("tabid", tabid); 
-            if (url)
-            {
-                iframe[0].tab = g;//增加iframe对tab对象的引用 
+            contentitem.attr("tabid", tabid);
+            if (url) {
                 iframe.attr("name", tabid)
                  .attr("id", tabid)
                  .attr("src", url)
-                 .bind('load.tab', function ()
-                 {
+                 .bind('load.tab', function () {
                      iframeloading.hide();
                      if (options.callback)
                          options.callback();
                  });
             }
-            else
-            {
-                iframe.remove(); 
+            else {
+                iframe.remove();
                 iframeloading.remove();
             }
-            if (content)
-            {
+
+            if (content) {
                 contentitem.html(content);
-                if (options.callback)
-                    options.callback();
             }
-            else if (options.target)
-            {
+            else if (options.target) {
                 contentitem.append(options.target);
-                if (options.callback)
-                    options.callback();
             }
             if (showClose == undefined) showClose = true;
             if (showClose == false) $(".l-tab-links-item-close", tabitem).remove();
             if (text == undefined) text = tabid;
             if (height) contentitem.height(height);
-            $("a", tabitem).text(text);
-            if ($(".l-tab-itemswitch", g.tab.links.ul).length)
-            {
-                tabitem.insertBefore($(".l-tab-itemswitch", g.tab.links.ul));
-            } else
-            {
-                g.tab.links.ul.append(tabitem);
+            if (icon) {
+                var o = "<div style='float:left; margin-right:2px;'><img width=17px height=17px src='" + icon + "'/></div>";
+                $("a", tabitem).html(o + text);
             }
+            else {
+                $("a", tabitem).text(text);
+            }
+
+            g.tab.links.ul.append(tabitem);
             g.tab.content.append(contentitem);
-            g.selectTabItem(tabid); 
-            if (g.setTabButton())
-            { 
-                g.moveToTabItem(tabid);
-            } 
+            g.selectTabItem(tabid);
+            if (g.setTabButton()) {
+                g.moveToLastTabItem();
+            }
             //增加事件
             g._addTabItemEvent(tabitem);
-            if (p.dragToMove && $.fn.ligerDrag)
-            {
+            if (p.dragToMove && $.fn.ligerDrag) {
                 g.drags = g.drags || [];
-                tabitem.each(function ()
-                {
+                tabitem.each(function () {
                     g.drags.push(g._applyDrag(this));
                 });
             }
-            g.toggleSwitch();
-            g.trigger('afterAddTabItem', [options]);
+            g.trigger('afterAddTabItem', [tabid]);
         },
         _addTabItemEvent: function (tabitem)
         {

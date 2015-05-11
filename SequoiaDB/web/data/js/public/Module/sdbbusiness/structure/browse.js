@@ -24,7 +24,7 @@ var sdbjs = {
 							  { id: 'role', user:'ad' }, 
 							  { id: 'logfilesz', name: '64', user:'ad' }, 
 							  { id: 'logfilenum', name: '20' }, 
-							  { id: 'transactionon', name: 'false', user:'ad' }, 
+							  { id: 'transactionon', name:'false', user:'ad' }, 
 							  { id: 'preferdinstance', name: 'A', user:'ad' }, 
 							  { id: 'numpagecleaners', name: '1', user:'ad' }, 
 							  { name: '10000', user:'ad' }, 
@@ -96,7 +96,7 @@ var sdbjs = {
 		
 		obj._grid = $( '#maingrid' ).ligerGrid( { columns: columns,
                                                   data: { Rows: griddata },
-                                                  pageSize:30,
+                                                  pageSize:17,
                                                   isScroll: true,
                                                   height: height } ) ;
 		obj.resize() ;
