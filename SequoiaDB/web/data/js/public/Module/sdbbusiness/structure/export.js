@@ -96,6 +96,9 @@ var sdbjs = {
                                                   isScroll: true,
                                                   height: height } ) ;
 		obj.resize() ;
+		$( window ).click(function(){
+					obj.resize();
+				});
 	},
 	synData: function(){
 		return ;

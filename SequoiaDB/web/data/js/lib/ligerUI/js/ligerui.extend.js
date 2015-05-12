@@ -284,18 +284,18 @@ $.extend( $.ligerui.controls.Grid.prototype, {
 			g.setHeight( height ) ;
 			if( g.hasBodyScroll() )
 			{
-				g.setHeight( height ) ;
+				g.setHeight( height );
 			}
 			else
 			{
 				var inner = g.gridbody.find(".l-grid-body-inner:first");
-				var newHeight = inner.height() + g.gridheader.height() ;
+				var newHeight = inner.height() + g.gridheader.height() + 33 ;
 				g.setHeight( newHeight ) ;
 			}
 		}
 		if( g.hasBodyScroll() )
 		{
-			width -= 20 ;
+			width -= 22 ;
 		}
 		$.each( p.columns, function( index, column ){
 			var curWidth = 0 ;
