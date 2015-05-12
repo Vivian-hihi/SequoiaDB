@@ -1,6 +1,6 @@
 function openAboutus(){
-    $.ligerDialog.open( { height: 270,
-                          width: 500,
+    $.ligerDialog.open( { height: 240,
+                          width: 630,
                           title: '关于SAC',
                           url: M('public/aboutus.html'),
                           showMax: false,
@@ -8,7 +8,8 @@ function openAboutus(){
                           showMin: false,
                           isResize: false,
                           slide: false,
-                          show: false } ) ;
+                          show: false,
+                          cls: 'ext-modal' } ) ;
 }
 
 var sdbjs = {
