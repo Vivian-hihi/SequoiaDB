@@ -2947,33 +2947,33 @@ namespace engine
       goto done ;
    }
 
-   IMPLEMENT_CMD_AUTO_REGISTER( _rtnRPCCommand )
-   _rtnRPCCommand::_rtnRPCCommand()
+   IMPLEMENT_CMD_AUTO_REGISTER( _rtnAlterCommand )
+   _rtnAlterCommand::_rtnAlterCommand()
    {
 
    }
 
-   _rtnRPCCommand::~_rtnRPCCommand()
+   _rtnAlterCommand::~_rtnAlterCommand()
    {
 
    }
 
-   const CHAR *_rtnRPCCommand::collectionFullName()
+   const CHAR *_rtnAlterCommand::collectionFullName()
    {
-      return RTN_RPC_TYPE_CL == _runner.getType() &&
+      return RTN_ALTER_TYPE_CL == _runner.getType() &&
              NULL != _runner.getName() ?
              _runner.getName() : NULL ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION( SDB__RTNRPCCOMMAND_INIT, "_rtnRPCCommand::init" )
-   INT32 _rtnRPCCommand::init( INT32 flags, INT64 numToSkip, INT64 numToReturn,
+   // PD_TRACE_DECLARE_FUNCTION( SDB__RTNALTERCOMMAND_INIT, "_rtnAlterCommand::init" )
+   INT32 _rtnAlterCommand::init( INT32 flags, INT64 numToSkip, INT64 numToReturn,
                            const CHAR *pMatcherBuff,
                            const CHAR *pSelectBuff,
                            const CHAR *pOrderByBuff,
                            const CHAR *pHintBuff )
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB__RTNRPCCOMMAND_INIT ) ;
+      PD_TRACE_ENTRY( SDB__RTNALTERCOMMAND_INIT ) ;
 
       try
       {
@@ -2992,27 +2992,27 @@ namespace engine
          goto error ;
       }
    done:
-      PD_TRACE_EXITRC( SDB__RTNRPCCOMMAND_INIT, rc ) ;
+      PD_TRACE_EXITRC( SDB__RTNALTERCOMMAND_INIT, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION( SDB__RTNRPCCOMMAND_DOIT, "_rtnRPCCommand::doit" )
-   INT32 _rtnRPCCommand::doit( _pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
-                        _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
-                        INT16 w, INT64 *pContextID )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__RTNALTERCOMMAND_DOIT, "_rtnAlterCommand::doit" )
+   INT32 _rtnAlterCommand::doit( _pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
+                                 _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
+                                 INT16 w, INT64 *pContextID )
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB__RTNRPCCOMMAND_DOIT ) ;
+      PD_TRACE_ENTRY( SDB__RTNALTERCOMMAND_DOIT ) ;
       rc = _runner.run( cb, dpsCB ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to run rpc:%d", rc ) ;
+         PD_LOG( PDERROR, "failed to run alter command:%d", rc ) ;
          goto error ;
       }
    done:
-      PD_TRACE_EXITRC( SDB__RTNRPCCOMMAND_DOIT, rc ) ;
+      PD_TRACE_EXITRC( SDB__RTNALTERCOMMAND_DOIT, rc ) ;
       return rc ;
    error:
       goto done ;

@@ -14,7 +14,7 @@
    You should have received a copy of the GNU Affero General Public License
    along with this program. If not, see <http://www.gnu.org/license/>.
 
-   Source File Name = rtnRPCRunner.hpp
+   Source File Name = rtnAlterRunner.hpp
 
    Dependencies: N/A
 
@@ -29,24 +29,24 @@
 
 *******************************************************************************/
 
-#ifndef RTN_RPCRUNNER_HPP_
-#define RTN_RPCRUNNER_HPP_
+#ifndef RTN_ALTERRUNNER_HPP_
+#define RTN_ALTERRUNNER_HPP_
 
-#include "rtnRPCDef.hpp"
-#include "rtnRPCFuncList.hpp"
+#include "rtnAlterDef.hpp"
+#include "rtnAlterFuncList.hpp"
 
 namespace engine
 {
    class _pmdEDUCB ;
 
-   class _rtnRPCRunner : public SDBObject
+   class _rtnAlterRunner : public SDBObject
    {
    public:
-      _rtnRPCRunner() ;
-      virtual ~_rtnRPCRunner() ;
+      _rtnAlterRunner() ;
+      virtual ~_rtnAlterRunner() ;
 
    public:
-      OSS_INLINE RTN_RPC_TYPE getType() const
+      OSS_INLINE RTN_ALTER_TYPE getType() const
       {
          return _type ;
       }
@@ -65,20 +65,20 @@ namespace engine
    private:
       OSS_INLINE BOOLEAN _inited() const
       {
-         return RTN_RPC_INVALID != _type ;
+         return RTN_ALTER_INVALID != _type ;
       }
 
-      INT32 _getObjType( const CHAR *str, RTN_RPC_TYPE &type ) ;
+      INT32 _getObjType( const CHAR *str, RTN_ALTER_TYPE &type ) ;
 
       INT32 _run( const bson::BSONObj &rpc,
                   _pmdEDUCB *cb,
                   _dpsLogWrapper *dpsCB ) ;
 
       INT32 _getFunc( const CHAR *name,
-                      RTN_RPC_FUNC &func ) ;
+                      RTN_ALTER_FUNC &func ) ;
    private:
-      _rtnRPCOptions _options ;
-      RTN_RPC_TYPE _type ;
+      _rtnAlterOptions _options ;
+      RTN_ALTER_TYPE _type ;
       const CHAR *_name ;
       INT32 _v ;
       bson::BSONObj _obj ;
@@ -87,7 +87,7 @@ namespace engine
       bson::BSONObj _hint ;
       bson::BSONObjIterator _i ;
 
-      static _rtnRPCFuncList _funcList ;
+      static _rtnAlterFuncList _funcList ;
    } ;
 }
 

@@ -206,9 +206,9 @@ rtnFiles = [
       "rtn/rtnContextShdOfLob.cpp",
       "rtn/rtnLobFetcher.cpp",
       "rtn/rtnContextListLob.cpp",
-      "rtn/rtnRPCFuncList.cpp",
-      "rtn/rtnRPCFuncs.cpp",
-      "rtn/rtnRPCRunner.cpp"
+      "rtn/rtnAlterFuncList.cpp",
+      "rtn/rtnAlterFuncs.cpp",
+      "rtn/rtnAlterRunner.cpp"
       ]
 
 msgFiles = [

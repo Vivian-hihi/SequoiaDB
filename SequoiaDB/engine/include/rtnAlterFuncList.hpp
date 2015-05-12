@@ -14,7 +14,7 @@
    You should have received a copy of the GNU Affero General Public License
    along with this program. If not, see <http://www.gnu.org/license/>.
 
-   Source File Name = rtnRPCFuncList.hpp
+   Source File Name = rtnAlterFuncList.hpp
 
    Dependencies: N/A
 
@@ -29,21 +29,21 @@
 
 *******************************************************************************/
 
-#ifndef RTN_RPCFUNCLIST_HPP_
-#define RTN_RPCFUNCLIST_HPP_
+#ifndef RTN_ALTERFUNCLIST_HPP_
+#define RTN_ALTERFUNCLIST_HPP_
 
-#include "rtnRPCDef.hpp"
+#include "rtnAlterDef.hpp"
 #include "ossLatch.hpp"
 #include "ossUtil.hpp"
 #include <map>
 
 namespace engine
 {
-   class _rtnRPCFuncList : public SDBObject
+   class _rtnAlterFuncList : public SDBObject
    {
    public:
-      _rtnRPCFuncList() ; 
-      ~_rtnRPCFuncList() ;
+      _rtnAlterFuncList() ; 
+      ~_rtnAlterFuncList() ;
 
    private:
       struct comp
@@ -55,27 +55,27 @@ namespace engine
          }
       } ;
 
-      typedef std::map<const CHAR *, RTN_RPC_FUNC, comp> FUNC_LST ;
+      typedef std::map<const CHAR *, RTN_ALTER_FUNC, comp> FUNC_LST ;
 
       struct funcObj
       {
-         RTN_RPC_TYPE type ;
+         RTN_ALTER_TYPE type ;
          FUNC_LST fl ;
       } ;
 
-      typedef std::map<RTN_RPC_TYPE, funcObj> ALL_FUNCS ;
+      typedef std::map<RTN_ALTER_TYPE, funcObj> ALL_FUNCS ;
 
-      typedef std::map<const CHAR *, RTN_RPC_TYPE, comp> ALL_TYPES ;
+      typedef std::map<const CHAR *, RTN_ALTER_TYPE, comp> ALL_TYPES ;
 
    public:
       INT32 init() ;
 
-      INT32 getFunc( RTN_RPC_TYPE type,
+      INT32 getFunc( RTN_ALTER_TYPE type,
                      const CHAR *name,
-                     RTN_RPC_FUNC &func ) ;
+                     RTN_ALTER_FUNC &func ) ;
 
       INT32 getObjType( const CHAR *name,
-                        RTN_RPC_TYPE &type ) ;
+                        RTN_ALTER_TYPE &type ) ;
 
    private:
       INT32 _init() ;

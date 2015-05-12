@@ -14,7 +14,7 @@
    You should have received a copy of the GNU Affero General Public License
    along with this program. If not, see <http://www.gnu.org/license/>.
 
-   Source File Name = rtnRPCFuncList.cpp
+   Source File Name = rtnAlterFuncList.cpp
 
    Dependencies: N/A
 
@@ -29,25 +29,25 @@
 
 *******************************************************************************/
 
-#include "rtnRPCFuncList.hpp"
+#include "rtnAlterFuncList.hpp"
 #include "dpsLogWrapper.hpp"
-#include "rtnRPCFuncs.hpp"
+#include "rtnAlterFuncs.hpp"
 
 namespace engine
 {
-   _rtnRPCFuncList::_rtnRPCFuncList()
+   _rtnAlterFuncList::_rtnAlterFuncList()
    :_inited( FALSE )
    {
 
    }
 
-   _rtnRPCFuncList::~_rtnRPCFuncList()
+   _rtnAlterFuncList::~_rtnAlterFuncList()
    {
       _fl.clear() ;
       _tl.clear() ;
    }
 
-   INT32 _rtnRPCFuncList::init()
+   INT32 _rtnAlterFuncList::init()
    {
       INT32 rc = SDB_OK ;
       BOOLEAN locked = FALSE ;
@@ -75,9 +75,9 @@ namespace engine
       goto done ;
    }
 
-   INT32 _rtnRPCFuncList::getFunc( RTN_RPC_TYPE type,
-                                   const CHAR *name,
-                                   RTN_RPC_FUNC &func )
+   INT32 _rtnAlterFuncList::getFunc( RTN_ALTER_TYPE type,
+                                     const CHAR *name,
+                                     RTN_ALTER_FUNC &func )
    {
       INT32 rc = SDB_OK ;
       ALL_FUNCS::const_iterator itrObj ;
@@ -117,8 +117,8 @@ namespace engine
       goto done ;
    }
 
-   INT32 _rtnRPCFuncList::getObjType( const CHAR *name,
-                                      RTN_RPC_TYPE &type )
+   INT32 _rtnAlterFuncList::getObjType( const CHAR *name,
+                                      RTN_ALTER_TYPE &type )
    {
       INT32 rc = SDB_OK ;
       if ( !_inited )
@@ -152,41 +152,41 @@ namespace engine
       goto done ;
    }
 
-   INT32 _rtnRPCFuncList::_init()
+   INT32 _rtnAlterFuncList::_init()
    {
       INT32 rc = SDB_OK ;
 
       /// init types
-      _tl.insert( std::make_pair( SDB_RPC_CL, RTN_RPC_TYPE_CL ) ) ;
+      _tl.insert( std::make_pair( SDB_ALTER_CL, RTN_ALTER_TYPE_CL ) ) ;
 
       /// collection
       {
          funcObj obj ;
-         obj.type = RTN_RPC_TYPE_CL ;
+         obj.type = RTN_ALTER_TYPE_CL ;
 
          /// create id index
          if ( !obj.fl.insert(
-                  std::make_pair( SDB_RPC_CRT_ID_INDEX,
+                  std::make_pair( SDB_ALTER_CRT_ID_INDEX,
                                   &rtnCreateIDIndex ) ).second )
          {
             PD_LOG( PDERROR, "duplicate func name:%s",
-                    SDB_RPC_CRT_ID_INDEX ) ;
+                    SDB_ALTER_CRT_ID_INDEX ) ;
             rc = SDB_SYS ;
             goto error ;
          }
 
          /// drop id index
          if ( !obj.fl.insert(
-                  std::make_pair( SDB_RPC_DROP_ID_INDEX,
+                  std::make_pair( SDB_ALTER_DROP_ID_INDEX,
                                   &rtnDropIDIndex ) ).second )
          {
             PD_LOG( PDERROR, "duplicate func name:%s",
-                    SDB_RPC_CRT_ID_INDEX ) ;
+                    SDB_ALTER_CRT_ID_INDEX ) ;
             rc = SDB_SYS ;
             goto error ;
          }
 
-         if ( !_fl.insert( std::make_pair( RTN_RPC_TYPE_CL, obj ) ).second )
+         if ( !_fl.insert( std::make_pair( RTN_ALTER_TYPE_CL, obj ) ).second )
          {
             PD_LOG( PDERROR, "duplicate obj type:%d",
                     obj.type ) ;

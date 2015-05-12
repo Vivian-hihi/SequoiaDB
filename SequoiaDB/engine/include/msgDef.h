@@ -325,9 +325,9 @@
 #define FIELD_NAME_RTYPE                     "ReturnType"
 #define FIELD_NAME_ONLY_DETACH               "OnlyDetach"
 #define FIELD_NAME_ONLY_ATTACH               "OnlyAttach"
-#define FIELD_NAME_RPC_TYPE                  "RpcType"
+#define FIELD_NAME_ALTER_TYPE                "AlterType"
 #define FIELD_NAME_ARGS                      "Args"
-#define FIELD_NAME_RPC                       "Rpc"
+#define FIELD_NAME_ALTER                     "Alter"
 
 #define FIELD_OP_VALUE_UPDATE                "update"
 #define FIELD_OP_VALUE_REMOVE                "remove"
@@ -438,7 +438,7 @@
 
 #define CMD_NAME_JSON_LOAD                   "json load"
 #define CMD_NAME_TRUNCATE                    "truncate"
-#define CMD_NAME_RPC                         "rpc"
+#define CMD_NAME_ALTER                       "alter"
 
 #define CMD_VALUE_NAME_ATTACH                "attach"
 #define CMD_VALUE_NAME_DETACH                "detach"
@@ -501,21 +501,21 @@ enum SDB_LOB_MODE
    SDB_LOB_MODE_W = 0x00000008, /// not supported yet.
 } ;
 
-#define SDB_RPC_VERSION 1
+#define SDB_ALTER_VERSION 1
 
 /// rpc type
 /// append only, do not change any existing types.
-#define SDB_RPC_DB          "db"
-#define SDB_RPC_CL          "collection"
-#define SDB_RPC_CS          "collection space"
-#define SDB_RPC_DOMAIN      "domain"
-#define SDB_RPC_GROUP       "group"
-#define SDB_RPC_NODE        "node"
+#define SDB_ALTER_DB          "db"
+#define SDB_ALTER_CL          "collection"
+#define SDB_ALTER_CS          "collection space"
+#define SDB_ALTER_DOMAIN      "domain"
+#define SDB_ALTER_GROUP       "group"
+#define SDB_ALTER_NODE        "node"
 /// rcp type end
 
 /// rpc
-#define SDB_RPC_CRT_ID_INDEX     "create id index"
-#define SDB_RPC_DROP_ID_INDEX    "drop id index"
+#define SDB_ALTER_CRT_ID_INDEX     "create id index"
+#define SDB_ALTER_DROP_ID_INDEX    "drop id index"
 /// rpc end
 
 #endif // MSGDEF_H__

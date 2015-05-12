@@ -96,7 +96,7 @@ namespace engine
 #define NAME_FORCE_STEP_UP                   CMD_NAME_FORCE_STEP_UP
 #define NAME_JSON_LOAD                       CMD_NAME_JSON_LOAD
 #define NAME_TRUNCATE                        CMD_NAME_TRUNCATE
-#define NAME_RPC                             CMD_NAME_RPC
+#define NAME_ALTER                           CMD_NAME_ALTER
 
 // the commands that does not supported by data nodes or standalone mode
 #define NAME_CREATE_GROUP                    CMD_NAME_CREATE_GROUP
@@ -202,7 +202,7 @@ namespace engine
       CMD_LINK_COLLECTION                    = 150,
       CMD_UNLINK_COLLECTION                  = 151,
       CMD_TRUNCATE                           = 152,
-      CMD_RPC                                = 153,
+      CMD_ALTER                              = 153,
 
       // trace commands
       CMD_TRACE_START                        = 160,

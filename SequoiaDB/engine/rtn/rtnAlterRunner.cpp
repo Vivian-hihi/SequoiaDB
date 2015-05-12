@@ -13,7 +13,7 @@
    You should have received a copy of the GNU Affero General Public License
    along with this program. If not, see <http://www.gnu.org/license/>.
 
-   Source File Name = rtnRPCRunner.cpp
+   Source File Name = rtnAlterRunner.cpp
 
    Dependencies: N/A
 
@@ -28,7 +28,7 @@
 
 *******************************************************************************/
 
-#include "rtnRPCRunner.hpp"
+#include "rtnAlterRunner.hpp"
 #include "pdTrace.hpp"
 #include "pd.hpp"
 #include "rtnTrace.hpp"
@@ -40,10 +40,10 @@ using namespace bson ;
 
 namespace engine
 {
-   _rtnRPCFuncList _rtnRPCRunner::_funcList ;
+   _rtnAlterFuncList _rtnAlterRunner::_funcList ;
 
-   _rtnRPCRunner::_rtnRPCRunner()
-   :_type( RTN_RPC_INVALID ),
+   _rtnAlterRunner::_rtnAlterRunner()
+   :_type( RTN_ALTER_INVALID ),
     _name( NULL ),
     _v( 0 ),
     /// only to init bsonobjiterator. we will reset it later.
@@ -53,16 +53,16 @@ namespace engine
 
    }
 
-   _rtnRPCRunner::~_rtnRPCRunner()
+   _rtnAlterRunner::~_rtnAlterRunner()
    {
       clear() ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNRPCRUNNER_INIT, "_rtnRPCRunner::init" ) 
-   INT32 _rtnRPCRunner::init( const BSONObj &obj )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNALTERRUNNER_INIT, "_rtnAlterRunner::init" ) 
+   INT32 _rtnAlterRunner::init( const BSONObj &obj )
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB__RTNRPCRUNNER_INIT ) ;
+      PD_TRACE_ENTRY( SDB__RTNALTERRUNNER_INIT ) ;
       try
       {
          _obj = obj.copy() ;
@@ -76,18 +76,18 @@ namespace engine
          }
 
          _v = e.Number() ;
-         if ( SDB_RPC_VERSION != _v )
+         if ( SDB_ALTER_VERSION != _v )
          {
             PD_LOG( PDERROR, "invalid version:%d", _v ) ;
             rc = SDB_INVALIDARG ;
             goto error ;
          }
          
-         e = _obj.getField( FIELD_NAME_RPC_TYPE ) ;
+         e = _obj.getField( FIELD_NAME_ALTER_TYPE ) ;
          if ( String != e.type() )
          {
             PD_LOG( PDERROR, "invalid type of field [%s],request obj: %s",
-                    FIELD_NAME_RPC_TYPE, _obj.toString( FALSE, TRUE ).c_str() ) ;
+                    FIELD_NAME_ALTER_TYPE, _obj.toString( FALSE, TRUE ).c_str() ) ;
             rc = SDB_INVALIDARG ;
             goto error ;
          }
@@ -95,7 +95,7 @@ namespace engine
          rc = _getObjType( e.valuestrsafe(), _type ) ;
          if ( SDB_OK != rc )
          {
-            PD_LOG( PDERROR, "invalid rpc type:%s", e.valuestrsafe() ) ;
+            PD_LOG( PDERROR, "invalid alter type:%s", e.valuestrsafe() ) ;
             goto error ;
          }
 
@@ -109,11 +109,11 @@ namespace engine
          }
          _name = e.valuestrsafe() ;
 
-         e = _obj.getField( FIELD_NAME_RPC ) ;
+         e = _obj.getField( FIELD_NAME_ALTER ) ;
          if ( Array != e.type() )
          {
             PD_LOG( PDERROR, "invalid type of field [%s],request obj: %s",
-                    FIELD_NAME_RPC, _obj.toString( FALSE, TRUE ).c_str() ) ;
+                    FIELD_NAME_ALTER, _obj.toString( FALSE, TRUE ).c_str() ) ;
             rc = SDB_INVALIDARG ;
             goto error ;
          }
@@ -139,18 +139,18 @@ namespace engine
          goto error ;
       }
    done:
-      PD_TRACE_EXITRC( SDB__RTNRPCRUNNER_INIT, rc ) ;
+      PD_TRACE_EXITRC( SDB__RTNALTERRUNNER_INIT, rc ) ;
       return rc ;
    error:
       clear() ;
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNRPCRUNNER_CLEAR, "_rtnRPCRunner::clear" )
-   void _rtnRPCRunner::clear()
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNALTERRUNNER_CLEAR, "_rtnAlterRunner::clear" )
+   void _rtnAlterRunner::clear()
    {
-      PD_TRACE_ENTRY( SDB__RTNRPCRUNNER_INIT ) ;
-      _type = RTN_RPC_INVALID ;
+      PD_TRACE_ENTRY( SDB__RTNALTERRUNNER_INIT ) ;
+      _type = RTN_ALTER_INVALID ;
       _name = NULL ;
       _v = 0 ;
       _args = BSONObj() ;
@@ -159,15 +159,15 @@ namespace engine
       _obj = BSONObj() ;
       _i = BSONObjIterator( _obj ) ;
       _options.reset() ;
-      PD_TRACE_EXIT( SDB__RTNRPCRUNNER_INIT ) ;
+      PD_TRACE_EXIT( SDB__RTNALTERRUNNER_INIT ) ;
       return ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNRPCRUNNER_RUN, "_rtnRPCRunner::run" )
-   INT32 _rtnRPCRunner::run( _pmdEDUCB *cb, _dpsLogWrapper *dpsCB )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNALTERRUNNER_RUN, "_rtnAlterRunner::run" )
+   INT32 _rtnAlterRunner::run( _pmdEDUCB *cb, _dpsLogWrapper *dpsCB )
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB__RTNRPCRUNNER_RUN ) ;
+      PD_TRACE_ENTRY( SDB__RTNALTERRUNNER_RUN ) ;
       if ( !_inited() )
       {
          PD_LOG( PDERROR, "runner has not been initialized yet" ) ;
@@ -180,7 +180,7 @@ namespace engine
          BSONElement e = _i.next() ;
          if ( Object != e.type() )
          {
-            PD_LOG( PDERROR, "invalid rpc:%s",
+            PD_LOG( PDERROR, "invalid alter:%s",
                     e.toString( FALSE, TRUE ).c_str() ) ;
             if ( _options.ignoreException )
             {
@@ -196,7 +196,7 @@ namespace engine
          rc = _run( e.embeddedObject(), cb,  dpsCB ) ;
          if ( SDB_OK != rc )
          {
-            PD_LOG( PDERROR, "failed to run rpc:%d", rc ) ;
+            PD_LOG( PDERROR, "failed to run alter:%d", rc ) ;
             if ( _options.ignoreException )
             {
                rc = SDB_OK ;
@@ -209,25 +209,25 @@ namespace engine
          }
       }
    done:
-      PD_TRACE_EXITRC( SDB__RTNRPCRUNNER_RUN, rc ) ;
+      PD_TRACE_EXITRC( SDB__RTNALTERRUNNER_RUN, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNRPCRUNNER__RUN, "_rtnRPCRunner::_run" )
-   INT32 _rtnRPCRunner::_run( const bson::BSONObj &rpc,
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNALTERRUNNER__RUN, "_rtnAlterRunner::_run" )
+   INT32 _rtnAlterRunner::_run( const bson::BSONObj &rpc,
                               _pmdEDUCB *cb,
                               _dpsLogWrapper *dpsCB )
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB__RTNRPCRUNNER__RUN ) ;
-      RTN_RPC_FUNC func = NULL ;
+      PD_TRACE_ENTRY( SDB__RTNALTERRUNNER__RUN ) ;
+      RTN_ALTER_FUNC func = NULL ;
       BSONElement args ;
       BSONElement name = rpc.getField( FIELD_NAME_NAME ) ;
       if ( String != name.type() )
       {
-         PD_LOG( PDERROR, "invalid rpc name:%s",
+         PD_LOG( PDERROR, "invalid alter name:%s",
                  rpc.toString( FALSE, TRUE ).c_str() ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
@@ -236,7 +236,7 @@ namespace engine
       rc = _getFunc( name.valuestr(), func ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to get func of rpc[%s], rc:%d",
+         PD_LOG( PDERROR, "failed to get func of alter[%s], rc:%d",
                  name.valuestr(), rc ) ;
          goto error ;
       }
@@ -248,24 +248,24 @@ namespace engine
                     dpsCB ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "rpc returned error:%d", rc ) ;
+         PD_LOG( PDERROR, "alter returned error:%d", rc ) ;
          goto error ;
       }
    done:
-      PD_TRACE_EXITRC( SDB__RTNRPCRUNNER__RUN, rc ) ;
+      PD_TRACE_EXITRC( SDB__RTNALTERRUNNER__RUN, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
-   INT32 _rtnRPCRunner::_getFunc( const CHAR *name,
-                                  RTN_RPC_FUNC &func )
+   INT32 _rtnAlterRunner::_getFunc( const CHAR *name,
+                                  RTN_ALTER_FUNC &func )
    {
       return _funcList.getFunc( _type, name, func ) ;
    }
 
-   INT32 _rtnRPCRunner::_getObjType( const CHAR *name,
-                                      RTN_RPC_TYPE &type )
+   INT32 _rtnAlterRunner::_getObjType( const CHAR *name,
+                                      RTN_ALTER_TYPE &type )
    {
       return _funcList.getObjType( name, type ) ;
    }

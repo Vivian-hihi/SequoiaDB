@@ -14,7 +14,7 @@
    You should have received a copy of the GNU Affero General Public License
    along with this program. If not, see <http://www.gnu.org/license/>.
 
-   Source File Name = rtnRPCDef.hpp
+   Source File Name = rtnAlterFuncs.hpp
 
    Dependencies: N/A
 
@@ -29,51 +29,30 @@
 
 *******************************************************************************/
 
-#ifndef RTN_RPCDEF_HPP_
-#define RTN_RPCDEF_HPP_
+#ifndef RTN_ALTERFUNCS_HPP_
+#define RTN_ALTERFUNCS_HPP_
 
-#include "core.hpp"
-#include "oss.hpp"
-#include "../bson/bson.hpp"
+#include "rtnAlterDef.hpp"
 
 namespace engine
 {
    class _pmdEDUCB ;
    class _dpsLogWrapper ;
+   /// see func's name in msgDef.hpp
 
-   enum RTN_RPC_TYPE
-   {
-      RTN_RPC_INVALID = -1,
-      RTN_RPC_TYPE_DB = 0,
-      RTN_RPC_TYPE_CL,
-      RTN_RPC_TYPE_CS,
-      RTN_RPC_TYPE_DOMAIN,
-      RTN_RPC_TYPE_GROUP,
-      RTN_RPC_TYPE_NODE
-   } ;
+   /// SDB_ALTER_CRT_ID_INDEX
+   INT32 rtnCreateIDIndex( const CHAR *name,
+                           const bson::BSONObj &pubArgs,
+                           const bson::BSONObj &args,
+                           _pmdEDUCB *cb,
+                           _dpsLogWrapper *dpsCB ) ;
 
-   struct _rtnRPCOptions
-   {
-      /// ignore one rpc's exception and continue to run next.
-      BOOLEAN ignoreException ;
-
-      _rtnRPCOptions()
-      :ignoreException( FALSE )
-      {
-
-      }
-
-      void reset()
-      {
-         ignoreException = FALSE ;
-      }
-   } ;
-
-   typedef INT32 ( *RTN_RPC_FUNC )( const CHAR *name,
-                                    const bson::BSONObj &pubArgs,
-                                    const bson::BSONObj &args,
-                                    _pmdEDUCB *cb,
-                                    _dpsLogWrapper *dpsCB ) ;
+   /// SDB_ALTER_DROP_ID_INDEX
+   INT32 rtnDropIDIndex( const CHAR *name,
+                         const bson::BSONObj &pubArgs,
+                         const bson::BSONObj &args,
+                         _pmdEDUCB *cb,
+                         _dpsLogWrapper *dpsCB ) ;
 }
 
 #endif

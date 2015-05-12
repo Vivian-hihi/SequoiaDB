@@ -2199,49 +2199,49 @@ SDB_EXPORT INT32 sdbAttachNode( sdbReplicaGroupHandle cHandle,
                                 const bson *options ) ;
 
 /*
-\fn INT32 sdbRunRPC( sdbConnectionHandle cHandle,
-                     const CHAR *type,
-                     const CHAR *name,
-                     const bson *publicArgs,
-                     const bson *rpc )
-    \brief Remot procedure call
+\fn INT32 sdbAlter( sdbConnectionHandle cHandle,
+                    const CHAR *type,
+                    const CHAR *name,
+                    const bson *publicArgs,
+                    const bson *alter )
+    \brief Alter object of database
     \param [in] cHandle The connection handle
-    \param [in] type The type of rpc
+    \param [in] type The type of alter
     \param [in] name The name of object
-    \param [in] publicArgs The public args of rpc
-    \param [in] rpc The rpc 
+    \param [in] publicArgs The public args of alter
+    \param [in] alter The desc of alter 
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
-SDB_EXPORT INT32 sdbRunRPC( sdbConnectionHandle cHandle,
-                            const CHAR *type,
-                            const CHAR *name,
-                            const bson *publicArgs,
-                            const bson *rpc ) ;
+SDB_EXPORT INT32 sdbAlter( sdbConnectionHandle cHandle,
+                           const CHAR *type,
+                           const CHAR *name,
+                           const bson *publicArgs,
+                           const bson *alter ) ;
 
 /*
-\fn INT32 sdbRunRPCList( sdbConnectionHandle cHandle,
+\fn INT32 sdbMultiAlter( sdbConnectionHandle cHandle,
                          const CHAR *type,
                          const CHAR *name,
                          const bson *publicArgs,
-                         UINT32 rpcNum,
-                         const bson *rpc[] )
-    \brief Multi remot procedure call
+                         UINT32 alterNum,
+                         const bson *alter[] )
+    \brief Multi alter
     \param [in] cHandle The connection handle
-    \param [in] type The type of rpc
+    \param [in] type The type of alter
     \param [in] name The name of object
-    \param [in] publicArgs The public args of rpc
-    \param [in] rpcNum The number of rpc
-    \param [in] rpc The rpc list
+    \param [in] publicArgs The public args of alter
+    \param [in] alterNum The number of alter
+    \param [in] alter The alter list
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
-SDB_EXPORT INT32 sdbRunRPCList( sdbConnectionHandle cHandle,
+SDB_EXPORT INT32 sdbMultiAlter( sdbConnectionHandle cHandle,
                                 const CHAR * type,
                                 const CHAR *name,
                                 const bson *publicArgs,
-                                UINT32 rpcNum,
-                                const bson *rpc[] ) ;
+                                UINT32 alterNum,
+                                const bson *alter[] ) ;
 
 
 /*
