@@ -120,4 +120,5 @@ $(document).ready( function(){
 } ) ;
 
 $( window ).resize( function(){
+	sdbjs.resize() ;
 } ) ;
