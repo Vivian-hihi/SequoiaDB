@@ -503,12 +503,14 @@ namespace engine
 
       if ( !pBaseInfo->hasImage() )
       {
-         BSONElement eleAddr = objQuery.getField( FIELD_NAME_ADDRESS ) ;
+         BSONElement eleAddr = objQuery.getFieldDotted(
+            FIELD_NAME_OPTIONS"."FIELD_NAME_ADDRESS ) ;
          if ( String != eleAddr.type() ||
               0 == ossStrlen( eleAddr.valuestr() ) )
          {
             PD_LOG( PDERROR, "Param[%s] is invalid in obj[%s]",
-                    FIELD_NAME_ADDRESS, objQuery.toString().c_str() ) ;
+                    FIELD_NAME_OPTIONS"."FIELD_NAME_ADDRESS,
+                    objQuery.toString().c_str() ) ;
             rc = SDB_INVALIDARG ;
             goto error ;
          }
@@ -540,7 +542,8 @@ namespace engine
       }
 
       // analysis groups
-      eleGroups = objQuery.getField( FIELD_NAME_GROUPS ) ;
+      eleGroups = objQuery.getFieldDotted(
+         FIELD_NAME_OPTIONS"."FIELD_NAME_GROUPS ) ;
       if ( Array == eleGroups.type() )
       {
          objGroups = eleGroups.embeddedObject() ;
@@ -548,7 +551,8 @@ namespace engine
       else if ( !eleGroups.eoo() )
       {
          PD_LOG( PDERROR, "Field[%s] is invalid in obj[%s]",
-                 FIELD_NAME_GROUPS, objQuery.toString().c_str() ) ;
+                 FIELD_NAME_OPTIONS"."FIELD_NAME_GROUPS,
+                 objQuery.toString().c_str() ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }
@@ -661,7 +665,7 @@ namespace engine
       }
 
       // analysis groups
-      eleGroups = objQuery.getField( FIELD_NAME_GROUPS ) ;
+      eleGroups = objQuery.getField( FIELD_NAME_OPTIONS"."FIELD_NAME_GROUPS ) ;
       if ( Array == eleGroups.type() )
       {
          objGroups = eleGroups.embeddedObject() ;
@@ -669,7 +673,8 @@ namespace engine
       else if ( !eleGroups.eoo() )
       {
          PD_LOG( PDERROR, "Field[%s] is invalid in obj[%s]",
-                 FIELD_NAME_GROUPS, objQuery.toString().c_str() ) ;
+                 FIELD_NAME_OPTIONS"."FIELD_NAME_GROUPS,
+                 objQuery.toString().c_str() ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }
