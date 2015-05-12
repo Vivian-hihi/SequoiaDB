@@ -6,7 +6,8 @@
             "添加业务",
             "业务列表",
             "删除集群",
-            "创建集群"
+            "创建集群",
+            "发现业务"
         ],
         "leftPanel": {
             "title": "状态",
@@ -76,7 +77,7 @@
 						  }
                 ]
             },
-				"createCluster": {
+            "createCluster": {
                 "title": "创建集群",
                 "body": [
                     {
@@ -105,25 +106,38 @@
 						  }
                 ]
             },
-				"addBusiness": {
+            "addBusiness": {
                 "title": "添加业务",
                 "body": [
-						  {
-						  		"name": "业务名:",
-								"desc": "安装的业务名"
-						  },
-						  {
-						  		"name": "业务类型:",
-								"desc": ""
-						  }
+                      {
+                            "name": "业务名:",
+                            "desc": "安装的业务名"
+                      },
+                      {
+                            "name": "业务类型:",
+                            "desc": ""
+                      }
                 ]
             },
-				"isRemoveCluster": {
-					 "title": "提示"
-				},
-				"isGoOnDeploy": {
-					 "title": "提示"
-				}
+            "appendBusiness": {
+                "title": "发现业务",
+                "body": [
+                      {
+                            "name": "业务名:",
+                            "desc": "追加的业务名"
+                      },
+                      {
+                            "name": "业务类型:",
+                            "desc": ""
+                      }
+                ]
+            },
+            "isRemoveCluster": {
+                 "title": "提示"
+            },
+            "isGoOnDeploy": {
+                 "title": "提示"
+            }
         }
     }
 }

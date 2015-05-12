@@ -162,6 +162,25 @@ function openAddBusinessModal( clusterID )
 	sdbjs.parts.modalBox.show( 'addBusiness' ) ;
 }
 
+//打开发现业务的模态框
+function openAppendBusinessModal( clusterID )
+{
+    sdbjs.fun.setCSS( 'appendBusinessFootAlert', { 'display': 'none' } ) ;
+	sdbjs.parts.buttonBox.update( 'appendBusinessOK', htmlEncode( _languagePack['public']['button']['ok'] ), 'primary', null, 'appendBusiness(' + clusterID + ')' ) ;
+    sdbjs.parts.modalBox.show( 'appendBusiness' ) ;
+}
+
+function appendBusiness( clusterID )
+{
+    var businessName = $( '#businessName_ap' ).val() ;
+	var businessType = $( '#businessType_ap' ).val() ;
+    if( !checkStrName( businessName ) )
+	{
+		showModalError( 'addBusinessFootAlert', _languagePack['error']['web']['create'][5] ) ;//'业务名格式错误，业务名只能由数字字母下划线组成，并且长度在 1 - 255 个字符内.'
+		return;
+	}
+}
+
 //添加业务
 function addBusiness( clusterID )
 {
@@ -792,6 +811,7 @@ function loadClusterList()
 				sdbjs.parts.dropDownBox.add( dropNodeName, htmlEncode( _languagePack['index']['clusterOperation'][1] ), true, 'gotoHostList(' + index + ')' ) ;//'主机列表'
 				sdbjs.parts.dropDownBox.add( dropNodeName, '', true ) ;
 				sdbjs.parts.dropDownBox.add( dropNodeName, htmlEncode( _languagePack['index']['clusterOperation'][2] ), true, 'openAddBusinessModal(' + index + ')' ) ;//'添加业务'
+                sdbjs.parts.dropDownBox.add( dropNodeName, htmlEncode( _languagePack['index']['clusterOperation'][6] ), true, 'openAppendBusinessModal(' + index + ')' ) ;//'发现业务'
 				sdbjs.parts.dropDownBox.add( dropNodeName, htmlEncode( _languagePack['index']['clusterOperation'][3] ), true, 'gotoBusinessList(' + index + ')' ) ;//业务列表
 				sdbjs.parts.dropDownBox.add( dropNodeName, '', true ) ;
 				sdbjs.parts.dropDownBox.add( dropNodeName, htmlEncode( _languagePack['index']['clusterOperation'][4] ), true, 'openRemoveCluster(' + index + ')' ) ;//'删除集群'
@@ -847,7 +867,7 @@ function loadBusinessType()
 			_businessList = jsonArr ;
 			$.each( _businessList, function( index, businessInfo ){
 				selectObj_1.append( '<option value="' + htmlEncode( businessInfo['BusinessType'] ) + '"' + ( index === 0 ? ' select' : '' ) + '>' + htmlEncode( businessInfo['BusinessType'] ) + '</option>' ) ;
-				selectObj_2.append( '<option value="' + htmlEncode( businessInfo['BusinessType'] ) + '"' + ( index === 0 ? ' select' : '' ) + '>' + htmlEncode( businessInfo['BusinessType'] ) + '</option>' )
+				selectObj_2.append( '<option value="' + htmlEncode( businessInfo['BusinessType'] ) + '"' + ( index === 0 ? ' select' : '' ) + '>' + htmlEncode( businessInfo['BusinessType'] ) + '</option>' ) ;
 				if( index === 0 )
 				{
 					sdbjs.parts.tableBox.updateBody( 'deployGuidTable', 3, 2, htmlEncode( businessInfo['BusinessDesc'] ) ) ;
@@ -867,6 +887,9 @@ function loadBusinessType()
 	}, function( json ){
 		showProcessError( json['detail'] ) ;
 	} ) ;
+
+    var selectObj_3 = $( '#businessType_ap' ) ;
+    selectObj_3.append( '<option value="' + htmlEncode( 'spark' ) + '"' + '>' + htmlEncode( 'spark' ) + '</option>' ) ;
 }
 
 //检测部署状态
@@ -1173,6 +1196,38 @@ function createHtml()
 																				//'关闭'
 																				sdbjs.parts.buttonBox.update( 'addBusinessClose', function( buttonObj ){
 																					$( buttonObj ).text( _languagePack['public']['button']['close'] ).attr( 'data-toggle', 'modalBox' ).attr( 'data-target', 'addBusiness' ) ;
+																				}, 'primary' ) ;
+																			}, 'width': 120  } ] ) ;
+    } ) ;
+
+    /* 发现业务的弹窗 */
+	sdbjs.parts.modalBox.create( $( document.body ), 'appendBusiness' ) ;
+	sdbjs.parts.modalBox.update( 'appendBusiness', htmlEncode( _languagePack['index']['modal']['appendBusiness']['title'] ), function( bodyObj ){
+		sdbjs.parts.tableBox.create( bodyObj, 'appendBusinessTable' ) ;
+		sdbjs.parts.tableBox.update( 'appendBusinessTable', 'loosen' ) ;
+		//'业务名：' '安装的业务名'
+		sdbjs.parts.tableBox.addBody( 'appendBusinessTable', [{ 'text': htmlEncode( _languagePack['index']['modal']['appendBusiness']['body'][0]['name'] ), 'width': 100 },
+																			{ 'text': '<input class="form-control" type="text" id="businessName_ap" value="mySpark">' },
+																			{ 'text': htmlEncode( _languagePack['index']['modal']['appendBusiness']['body'][0]['desc'] ) } ] ) ;
+		//'业务类型：'
+		sdbjs.parts.tableBox.addBody( 'appendBusinessTable', [{ 'text': htmlEncode( _languagePack['index']['modal']['appendBusiness']['body'][1]['name'] ), 'width': 100 },
+																			{ 'text': '<select class="form-control" id="businessType_ap"></select>' },
+																			{ 'text': htmlEncode( _languagePack['index']['modal']['appendBusiness']['body'][1]['desc'] ) } ] ) ;
+	}, function( footObj ){
+		sdbjs.parts.tableBox.create( footObj, 'appendBusinessFootTable' ) ;
+		sdbjs.parts.tableBox.addBody( 'appendBusinessFootTable', [{ 'text': function( tdObj ){
+																				sdbjs.parts.alertBox.create( tdObj, 'appendBusinessFootAlert' ) ;
+																				sdbjs.fun.setCSS( 'appendBusinessFootAlert', { 'display': 'none', 'padding': '8px', 'text-align': 'left' } ) ;
+																			} },
+																			{ 'text': function( tdObj ){
+																				sdbjs.parts.buttonBox.create( tdObj, 'appendBusinessOK' ) ;
+																				$( tdObj ).append( '&nbsp;' ) ;
+																				sdbjs.parts.buttonBox.create( tdObj, 'appendBusinessClose' ) ;
+																				//'确定'
+																				sdbjs.parts.buttonBox.update( 'appendBusinessOK', htmlEncode( _languagePack['public']['button']['ok'] ), 'primary', null, '' ) ;
+																				//'关闭'
+																				sdbjs.parts.buttonBox.update( 'appendBusinessClose', function( buttonObj ){
+																					$( buttonObj ).text( _languagePack['public']['button']['close'] ).attr( 'data-toggle', 'modalBox' ).attr( 'data-target', 'appendBusiness' ) ;
 																				}, 'primary' ) ;
 																			}, 'width': 120  } ] ) ;
 		
