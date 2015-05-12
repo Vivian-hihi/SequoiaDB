@@ -8047,11 +8047,29 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       string businessType ;
+      string businessName ;
+      string clusterName ;
       businessType = configInfo.getStringField( OM_BSON_BUSINESS_TYPE ) ;
       if ( businessType != OM_BUSINESS_SPARK )
       {
          rc = SDB_INVALIDARG ;
          PD_LOG_MSG( PDERROR, "get business type failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      businessName = configInfo.getStringField( OM_BSON_BUSINESS_NAME ) ;
+      if ( businessName.empty() )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "get business name failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      clusterName = configInfo.getStringField( OM_BSON_FIELD_CLUSTER_NAME ) ;
+      if ( clusterName.empty() )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "get cluster name failed:rc=%d", rc ) ;
          goto error ;
       }
 
@@ -8173,8 +8191,10 @@ namespace engine
       INT32 rc = SDB_OK ;
       string businessType ;
       string businessName ;
+      string clusterName ;
       BSONObj bRecord ;
 
+      clusterName  = configInfo.getStringField( OM_BSON_FIELD_CLUSTER_NAME ) ;
       businessType = configInfo.getStringField( OM_BSON_BUSINESS_TYPE ) ;
       businessName = configInfo.getStringField( OM_BSON_BUSINESS_NAME ) ;
       if ( businessName.empty() )
@@ -8189,7 +8209,7 @@ namespace engine
          builder.append( OM_BUSINESS_FIELD_NAME, businessName ) ;
          builder.append( OM_BUSINESS_FIELD_TYPE, businessType ) ;
          builder.append( OM_BUSINESS_FIELD_DEPLOYMOD, "" ) ;
-         builder.append( OM_BUSINESS_FIELD_CLUSTERNAME, "default" ) ;
+         builder.append( OM_BUSINESS_FIELD_CLUSTERNAME, clusterName ) ;
          builder.appendTimestamp( OM_BUSINESS_FIELD_TIME, 
                                   (unsigned long long)now * 1000, 0 ) ;
          builder.append( OM_BUSINESS_FIELD_ADDTYPE, 1 ) ;
