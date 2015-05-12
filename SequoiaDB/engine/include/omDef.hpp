@@ -70,6 +70,10 @@ namespace engine
    /*
       OM Field Define
    */
+
+   #define OM_BUSINESS_SPARK                 "spark"
+
+   
    #define OM_CS_DEPLOY                      "SYSDEPLOY"
 
    // deploy.cluster
@@ -131,6 +135,7 @@ namespace engine
    #define OM_BUSINESS_FIELD_DEPLOYMOD       "DeployMod"
    #define OM_BUSINESS_FIELD_CLUSTERNAME     OM_HOST_FIELD_CLUSTERNAME
    #define OM_BUSINESS_FIELD_TIME            "Time"
+   #define OM_BUSINESS_FIELD_ADDTYPE         "AddtionType"
    #define OM_BUSINESS_FIELD_LOCATION        "Location"
 
    #define OM_CS_DEPLOY_CL_BUSINESSIDX1      "{name:\"SYSDEPLOY_BUSINESS_IDX1\",key: {"\
@@ -314,6 +319,7 @@ namespace engine
    #define  OM_SET_BUSINESS_AUTH_REQ         "set business authority"
    #define  OM_REMOVE_BUSINESS_AUTH_REQ      "remove business authority"
    #define  OM_QUERY_BUSINESS_AUTH_REQ       "query business authority"
+   #define  OM_DISCOVERY_BUSINESS_REQ        "discovery business"
    //**************************************************************************
 
    //*********************param between rest and om****************************
@@ -400,6 +406,8 @@ namespace engine
    #define  OM_BSON_FIELD_TOTAL_SIZE         "TotalSize"
    #define  OM_BSON_FIELD_REDUNDANCY_RATE    "RedundancyRate"
    #define  OM_REST_LOG_NAME                 "Name"
+   #define  OM_BSON_MASTER_PORT              "MasterPort"
+   #define  OM_BSON_MASTER_WEBUI_PORT        "MasterWebuiPort"
 
    #define  OM_CONF_PATH_STR                 "conf"
    #define  OM_LOG_PATH_STR                  "log"

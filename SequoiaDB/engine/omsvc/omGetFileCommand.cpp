@@ -7984,8 +7984,6 @@ namespace engine
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "get query parameter failed:rc=%d", rc ) ;
-         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
-         _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
       }
 
@@ -7999,6 +7997,248 @@ namespace engine
       }
 
       _sendAuthInfo2Web( authInfo ) ;
+   done:
+      return rc ;
+   error:
+      _sendErrorRes2Web( rc, pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ) ;
+      goto done ;
+   }
+
+   // ****************omDiscoverBusinessCommand**********************
+   omDiscoverBusinessCommand::omDiscoverBusinessCommand( 
+                                                 restAdaptor *pRestAdaptor, 
+                                                 pmdRestSession *pRestSession )
+                             :omAuthCommand( pRestAdaptor, pRestSession )
+   {
+   }
+
+   omDiscoverBusinessCommand::~omDiscoverBusinessCommand()
+   {
+   }
+
+   INT32 omDiscoverBusinessCommand::_getRestBusinessInfo( BSONObj &configInfo )
+   {
+      const CHAR *pConfigInfo = NULL ;
+      INT32 rc = SDB_OK ;
+      _restAdaptor->getQuery(_restSession, OM_REST_CONFIG_INFO, &pConfigInfo ) ;
+      if ( NULL == pConfigInfo )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "get rest field failed:field=%s", 
+                     OM_REST_CONFIG_INFO) ;
+         goto error ;
+      }
+
+      rc = fromjson( pConfigInfo, configInfo ) ;
+      if ( rc )
+      {
+         PD_LOG_MSG( PDERROR, "change rest field to BSONObj failed:src=%s,"
+                     "rc=%d", pConfigInfo, rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omDiscoverBusinessCommand::_checkBusinssCFG( BSONObj &configInfo )
+   {
+      INT32 rc = SDB_OK ;
+      string businessType ;
+      businessType = configInfo.getStringField( OM_BSON_BUSINESS_TYPE ) ;
+      if ( businessType != OM_BUSINESS_SPARK )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "get business type failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      {
+         BSONElement ele = configInfo.getField( OM_BSON_BUSINESS_INFO ) ;
+         if ( Array != ele.type() )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG_MSG( PDERROR, "get businessinfo failed:rc=%d,type=%d", 
+                        rc, ele.type() ) ;
+            goto error ;
+         }
+
+         BSONObjIterator iter( ele.embeddedObject() ) ;
+         while ( iter.more() )
+         {
+            string hostName ;
+            string masterPort ;
+            string masterWebuiPort ;
+            BSONObj oneMaster ;
+            BSONElement masterEle = iter.next() ;
+            if ( Object != masterEle.type() )
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG_MSG( PDERROR, "business config is invalid:type=%d", 
+                           masterEle.type() ) ;
+               goto error ;
+            }
+
+            oneMaster  = masterEle.embeddedObject() ;
+            hostName   = oneMaster.getStringField( OM_BSON_FIELD_HOST_NAME ) ;
+            masterPort = oneMaster.getStringField( OM_BSON_MASTER_PORT ) ;
+            masterWebuiPort 
+                       = oneMaster.getStringField( OM_BSON_MASTER_WEBUI_PORT ) ;
+            if ( hostName.empty() || masterPort.empty() 
+                 || masterWebuiPort.empty() )
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG_MSG( PDERROR, "spark's master info is invalid:master=%s,"
+                           "port=%s,webuiport=%s", hostName.c_str(), 
+                           masterPort.c_str(), masterWebuiPort.c_str() ) ;
+               goto error ;
+            }
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   string omDiscoverBusinessCommand::_generateName( const string &keyName )
+   {
+      BSONObjBuilder builder ;
+      BSONObj selector ;
+      BSONObj matcher ;
+      BSONObj orderBy ;
+      BSONObj hint ;
+      string retName   = keyName + "1" ;
+      SINT64 contextID = -1 ;
+      INT32 rc         = SDB_OK ;
+      string regrex    = "^" + keyName ;
+
+      orderBy  = BSON( OM_BUSINESS_FIELD_NAME << -1 ) ;
+      builder.appendRegex( OM_BUSINESS_FIELD_NAME, regrex ) ;
+      matcher = builder.obj() ;
+      rc = rtnQuery( OM_CS_DEPLOY_CL_BUSINESS, selector, matcher, orderBy, hint, 
+                     1, _cb, 0, -1, _pDMSCB, _pRTNCB, contextID ) ;
+      if ( rc )
+      {
+         PD_LOG_MSG( PDERROR, "failed to query table:name=%s,rc=%d",
+                     OM_CS_DEPLOY_CL_BUSINESS, rc ) ;
+         goto error ;
+      }
+
+      while ( TRUE )
+      {
+         rtnContextBuf buffObj ;
+         rc = rtnGetMore ( contextID, 1, buffObj, _cb, _pRTNCB ) ;
+         if ( rc )
+         {
+            if ( SDB_DMS_EOC == rc )
+            {
+               rc = SDB_OK ;
+               
+               break ;
+            }
+
+            contextID = -1 ;
+            PD_LOG_MSG( PDERROR, "failed to get record from table:name=%s,"
+                        "rc=%d", OM_CS_DEPLOY_CL_BUSINESS, rc ) ;
+            goto error ;
+         }
+
+         BSONObj result( buffObj.data() ) ;
+         CHAR cNum[ OM_INT32_LENGTH + 1 ] = "" ;
+         string tmpName = result.getStringField( OM_BUSINESS_FIELD_NAME ) ;
+         string strNum  = tmpName.substr( keyName.length() ) ;
+         INT32 num      = ossAtoi( strNum.c_str() );
+         num++ ;
+         ossItoa( num, cNum, OM_INT32_LENGTH ) ;
+         retName = keyName + cNum ;
+         break ;
+      }
+
+   done:
+      if ( -1 != contextID )
+      {
+         _pRTNCB->contextDelete ( contextID, _cb ) ;
+      }
+      return retName ;
+   error:
+      goto done ;
+   }
+
+   INT32 omDiscoverBusinessCommand::_storeBusinessInfo( BSONObj &configInfo )
+   {
+      INT32 rc = SDB_OK ;
+      string businessType ;
+      string businessName ;
+      BSONObj bRecord ;
+
+      businessType = configInfo.getStringField( OM_BSON_BUSINESS_TYPE ) ;
+      businessName = configInfo.getStringField( OM_BSON_BUSINESS_NAME ) ;
+      if ( businessName.empty() )
+      {
+         businessName = _generateName( OM_BUSINESS_SPARK ) ;
+      }
+
+      {
+         BSONElement infoELe ;
+         BSONObjBuilder builder ;
+         time_t now = time( NULL ) ;
+         builder.append( OM_BUSINESS_FIELD_NAME, businessName ) ;
+         builder.append( OM_BUSINESS_FIELD_TYPE, businessType ) ;
+         builder.append( OM_BUSINESS_FIELD_DEPLOYMOD, "" ) ;
+         builder.append( OM_BUSINESS_FIELD_CLUSTERNAME, "default" ) ;
+         builder.appendTimestamp( OM_BUSINESS_FIELD_TIME, 
+                                  (unsigned long long)now * 1000, 0 ) ;
+         builder.append( OM_BUSINESS_FIELD_ADDTYPE, 1 ) ;
+
+         infoELe = configInfo.getField( OM_BSON_BUSINESS_INFO ) ;
+         builder.append( infoELe ) ;
+         bRecord = builder.obj() ;
+      }
+      
+      rc = rtnInsert( OM_CS_DEPLOY_CL_BUSINESS, bRecord, 1, 0, _cb ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG_MSG( PDERROR, "insert record failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omDiscoverBusinessCommand::doCommand()
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj configInfo ;
+      rc = _getRestBusinessInfo( configInfo ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "get rest business info failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      rc = _checkBusinssCFG( configInfo ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "check business config failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      rc = _storeBusinessInfo( configInfo ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "store business failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      _sendOKRes2Web() ;
    done:
       return rc ;
    error:

@@ -874,6 +874,24 @@ namespace engine
          void            _sendAuthInfo2Web( list<BSONObj> &authInfo ) ;
    } ;
 
+   class omDiscoverBusinessCommand : public omAuthCommand
+   {
+      public:
+         omDiscoverBusinessCommand( restAdaptor *pRestAdaptor, 
+                                    pmdRestSession *pRestSession ) ;
+
+         virtual ~omDiscoverBusinessCommand() ;
+
+      public:
+         virtual INT32   doCommand() ;
+
+      protected:
+         INT32           _getRestBusinessInfo( BSONObj &configInfo ) ;
+         INT32           _checkBusinssCFG( BSONObj &configInfo ) ;
+         string          _generateName( const string &keyName ) ;
+         INT32           _storeBusinessInfo( BSONObj &configInfo ) ;
+   } ;
+
    class omGetFileCommand : public omGetLogCommand
    {
       public:

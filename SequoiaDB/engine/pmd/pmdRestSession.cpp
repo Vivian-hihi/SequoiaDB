@@ -819,6 +819,12 @@ namespace engine
             commandIf = SDB_OSS_NEW omQueryBusinessAuthCommand( pAdptor, 
                                                                 this ) ;
          }
+         else if ( ossStrcasecmp( pSubCommand, 
+                                  OM_DISCOVERY_BUSINESS_REQ ) == 0 )
+         {
+            commandIf = SDB_OSS_NEW omDiscoverBusinessCommand( pAdptor, 
+                                                               this ) ;
+         }
          else
          {
             BSONObjBuilder builder ;

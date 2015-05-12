@@ -668,6 +668,7 @@ namespace engine
          s.shardname   = strPlus( svcName, 2 ) ;
          s.catalogname = strPlus( svcName, 3 ) ;
          s.httpname    = strPlus( svcName, 4 ) ;
+         //TODO: we must add one more like: s.innername = strPlus( svcName, 5 )
          _resourceList.push_back( s ) ;
 
          INT32 iAvailable = ossAtoi( _availableSvcName.c_str() ) ;
@@ -1119,7 +1120,11 @@ namespace engine
             PD_LOG_MSG( PDERROR, "dbpath is exist:dbpath=%s", dbPath.c_str() ) ;
             goto error ;
          }
-
+         /*TODO: we must check this also
+                 strPlus( svcName, 1 ) ; strPlus( svcName, 2 ) ;
+                 strPlus( svcName, 3 ) ; strPlus( svcName, 4 ) ;
+                 strPlus( svcName, 5 ) ;
+         */
          if ( hw->isSvcNameOccupayed( svcName ) )
          {
             rc = SDB_INVALIDARG ;
