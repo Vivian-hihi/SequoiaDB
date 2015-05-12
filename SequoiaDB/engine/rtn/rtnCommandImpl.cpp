@@ -1354,7 +1354,7 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNDROPINDEXCOMMAND, "rtnDropIndexCommand" )
    INT32 rtnDropIndexCommand ( const CHAR *pCollection,
-                               BSONElement &identifier,
+                               const BSONElement &identifier,
                                pmdEDUCB *cb,
                                SDB_DMSCB *dmsCB,
                                SDB_DPSCB *dpsCB,

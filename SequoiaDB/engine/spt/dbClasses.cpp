@@ -2664,7 +2664,7 @@ static JSBool collection_truncate ( JSContext *cx , uintN argc , jsval *vp )
    sdbCollectionStruct *collection = NULL ;
 
    REPORT ( 0 == argc ,
-            "SdbCollection.truncate(): need none arguments" ) ;
+            "SdbCollection.truncate(): need wrong arguments" ) ;
    clHandle = (sdbCollectionHandle *)
       JS_GetPrivate ( cx , JS_THIS_OBJECT ( cx , vp ) ) ;
    REPORT ( clHandle , "SdbCollection.truncate(): no collection handle" ) ;
@@ -2679,6 +2679,58 @@ static JSBool collection_truncate ( JSContext *cx , uintN argc , jsval *vp )
    JS_SET_RVAL( cx, vp, JSVAL_VOID ) ; 
 done:
    PD_TRACE_EXIT( SDB_COLL_TRUNCATE ) ;
+   return ret ;
+error:
+   goto done ;
+}
+
+// PD_TRACE_DECLARE_FUNCTION ( SDB_COLL_CRT_ID_IX, "collection_crt_id_index" )
+static JSBool collection_crt_id_index ( JSContext *cx , uintN argc , jsval *vp )
+{
+   PD_TRACE_ENTRY ( SDB_COLL_CRT_ID_IX );
+   INT32 rc = SDB_OK ;
+   JSBool ret = JS_TRUE ;
+   sdbCollectionHandle *clHandle = NULL ;
+
+   REPORT ( 0 == argc ,
+            "SdbCollection.createIdIndex(): wrong arguments" ) ;
+   clHandle = (sdbCollectionHandle *)
+      JS_GetPrivate ( cx , JS_THIS_OBJECT ( cx , vp ) ) ;
+   REPORT ( clHandle , "SdbCollection.createIdIndex(): no collection handle" ) ;
+
+   rc = sdbCeateIdIndex( *clHandle ) ;
+   REPORT_RC ( SDB_OK == rc,
+               "SdbCollection.createIdIndex()" , rc ) ;
+
+   JS_SET_RVAL( cx, vp, JSVAL_VOID ) ;
+done:
+   PD_TRACE_EXIT( SDB_COLL_CRT_ID_IX ) ;
+   return ret ;
+error:
+   goto done ;
+}
+
+// PD_TRACE_DECLARE_FUNCTION ( SDB_COLL_DROP_ID_IX, "collection_drop_id_index" )
+static JSBool collection_drop_id_index ( JSContext *cx , uintN argc , jsval *vp )
+{
+   PD_TRACE_ENTRY ( SDB_COLL_DROP_ID_IX );
+   INT32 rc = SDB_OK ;
+   JSBool ret = JS_TRUE ;
+   sdbCollectionHandle *clHandle = NULL ;
+
+   REPORT ( 0 == argc ,
+            "SdbCollection.dropIdIndex(): wrong arguments" ) ;
+   clHandle = (sdbCollectionHandle *)
+      JS_GetPrivate ( cx , JS_THIS_OBJECT ( cx , vp ) ) ;
+   REPORT ( clHandle , "SdbCollection.dropIdIndex(): no collection handle" ) ;
+
+   rc = sdbDropIdIndex( *clHandle ) ;
+   REPORT_RC ( SDB_OK == rc,
+               "SdbCollection.dropIdIndex()" , rc ) ;
+
+   JS_SET_RVAL( cx, vp, JSVAL_VOID ) ;
+done:
+   PD_TRACE_EXIT( SDB_COLL_DROP_ID_IX ) ;
    return ret ;
 error:
    goto done ;
@@ -2709,6 +2761,8 @@ static JSFunctionSpec collection_functions[] = {
     JS_FS ( "listLobs", collection_list_lobs, 1, 0 ) ,
     JS_FS ( "listLobPieces", collection_list_lob_pieces, 1, 0 ) ,
     JS_FS ( "truncate", collection_truncate, 0, 0 ),
+    JS_FS ( "createIdIndex", collection_crt_id_index, 0, 0 ),
+    JS_FS ( "dropIdIndex", collection_drop_id_index, 0, 0 ),
     JS_FS_END
 } ;
 

@@ -8450,3 +8450,141 @@ error:
    goto done ;
 }
 
+SDB_EXPORT INT32 sdbRunRPC( sdbConnectionHandle cHandle,
+                            const CHAR *type,
+                            const CHAR *name,
+                            const bson *publicArgs,
+                            const bson *rpc )
+{
+   INT32 rc = SDB_OK ;
+   const bson *objs[1] ;
+   objs[0] = rpc ;
+   rc = sdbRunRPCList( cHandle, type,
+                       name, publicArgs,
+                       1, objs ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+done:
+   return rc ;
+error:
+   goto done ;
+}
+
+SDB_EXPORT INT32 sdbRunRPCList( sdbConnectionHandle cHandle,
+                                const CHAR *type,
+                                const CHAR *name,
+                                const bson *publicArgs,
+                                UINT32 rpcNum,
+                                const bson *rpc[] )
+{
+   INT32 rc = SDB_OK ;
+   BOOLEAN bsoninit = FALSE ;
+   BOOLEAN result = FALSE ;
+   bson obj ;
+   UINT32 i = 0 ;
+
+   sdbConnectionStruct *connection = (sdbConnectionStruct*)cHandle ;
+   HANDLE_CHECK( cHandle, connection, SDB_HANDLE_TYPE_CONNECTION ) ;
+
+   if ( NULL == name )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   BSON_INIT( obj ) ;
+   BSON_APPEND( obj, FIELD_NAME_RPC_TYPE, type, string ) ;
+   BSON_APPEND( obj, FIELD_NAME_NAME, name, string ) ;
+   BSON_APPEND( obj, FIELD_NAME_VERSION, SDB_RPC_VERSION, int ) ;
+   if ( NULL != publicArgs )
+   {
+      BSON_APPEND( obj, FIELD_NAME_ARGS, publicArgs, bson ) ;
+   }
+
+   bson_append_start_array( &obj, FIELD_NAME_RPC ) ;
+   for ( i = 0; i < rpcNum; ++i )
+   {
+      bson_append_bson( &obj, "", rpc[i] ) ;
+   }
+   bson_append_finish_array( &obj ) ;
+   BSON_FINISH( obj ) ;
+
+   rc = _runCommand( cHandle, connection->_sock,
+                     &connection->_pSendBuffer,
+                     &connection->_sendBufferSize,
+                     &connection->_pReceiveBuffer,
+                     &connection->_receiveBufferSize,
+                     connection->_endianConvert,
+                     CMD_ADMIN_PREFIX CMD_NAME_RPC,
+                     &result, &obj,
+                     NULL, NULL, NULL ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+done:
+   return rc ;
+error:
+   goto done ;
+}
+
+
+
+SDB_EXPORT INT32 sdbCeateIdIndex( sdbCollectionHandle cHandle )
+{
+   INT32 rc = SDB_OK ;
+   bson obj ;
+   bson_init( &obj ) ;
+
+   sdbCollectionStruct *cs = (sdbCollectionStruct*)cHandle ;
+   HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_COLLECTION ) ;
+
+   bson_append_string( &obj, FIELD_NAME_NAME, SDB_RPC_CRT_ID_INDEX ) ;
+   bson_append_null( &obj, FIELD_NAME_ARGS ) ;
+   bson_finish( &obj ) ;
+
+   rc = sdbRunRPC( cs->_connection,
+                   SDB_RPC_CL,
+                   cs->_collectionFullName,
+                   NULL, &obj ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+done:
+   bson_destroy( &obj ) ;
+   return rc ;
+error:
+   goto done ;
+}
+
+SDB_EXPORT INT32 sdbDropIdIndex( sdbCollectionHandle cHandle )
+{
+   INT32 rc = SDB_OK ;
+   bson obj ;
+   bson_init( &obj ) ;
+
+   sdbCollectionStruct *cs = (sdbCollectionStruct*)cHandle ;
+   HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_COLLECTION ) ;
+
+   bson_append_string( &obj, FIELD_NAME_NAME, SDB_RPC_DROP_ID_INDEX ) ;
+   bson_append_null( &obj, FIELD_NAME_ARGS ) ;
+   bson_finish( &obj ) ;
+
+   rc = sdbRunRPC( cs->_connection,
+                   SDB_RPC_CL,
+                   cs->_collectionFullName,
+                   NULL, &obj ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+done:
+   bson_destroy( &obj ) ;
+   return rc ;
+error:
+   goto done ;   
+}
+

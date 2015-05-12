@@ -221,6 +221,7 @@ namespace engine
       UINT32 logRecSize            = 0;
       SDB_DPSCB *dropDps           = NULL ;
       INT32 rc1                    = 0 ;
+      const CHAR *indexName = NULL ;
 
       if ( !ixmIndexCB::validateKey ( index, isSys ) )
       {
@@ -251,6 +252,8 @@ namespace engine
          goto error ;
       }
 
+      indexName = index.getStringField( IXM_FIELD_NAME_NAME ) ;
+
       for ( indexID = 0 ; indexID < DMS_COLLECTION_MAX_INDEX ; indexID++ )
       {
          if ( DMS_INVALID_EXTENT == context->mb()->_indexExtent[indexID] )
@@ -266,7 +269,7 @@ namespace engine
             rc = SDB_IXM_REDEF ;
             goto error ;
          }
-         else if ( 0 == ossStrncmp ( index.getStringField( IXM_FIELD_NAME_NAME ),
+         else if ( 0 == ossStrncmp ( indexName,
                                      curIdxCB.getName(), IXM_INDEX_NAME_SIZE) )
          {
             PD_LOG ( PDINFO, "Duplicate index name: %s",
@@ -367,6 +370,18 @@ namespace engine
          goto error_after_create ;
       }
 
+      rc = context->mbLock( EXCLUSIVE ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to lock mb:%d", rc ) ;
+         goto error_after_create ;
+      }
+      // if it is $oid, set DMS_MB_ATTR_NOIDINDEX with false
+      if ( isSys && 0 == ossStrcmp( indexName, IXM_ID_KEY_NAME ) )
+      {
+         OSS_BIT_CLEAR( context->mb()->_attributes,
+                        DMS_MB_ATTR_NOIDINDEX ) ;
+      }
    done :
       if ( 0 != logRecSize )
       {
@@ -602,6 +617,14 @@ namespace engine
             rc = SDB_IXM_DROP_SHARD ;
             goto error ;
          }
+
+         if ( isSys && 0 == ossStrcmp( indexCB.getName(),
+                                       IXM_ID_KEY_NAME ) )
+         {
+            OSS_BIT_SET( context->mb()->_attributes,
+                         DMS_MB_ATTR_NOIDINDEX ) ; 
+         }
+                                       
 
          // reserved log-size
          if ( dpscb )

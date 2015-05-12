@@ -346,7 +346,7 @@ namespace engine
                                     BOOLEAN   sysCall = FALSE );
 
    INT32 rtnDropIndexCommand ( const CHAR *pCollection,
-                               BSONElement &identifier,
+                               const BSONElement &identifier,
                                pmdEDUCB *cb,
                                SDB_DMSCB *dmsCB,
                                SDB_DPSCB *dpsCB,

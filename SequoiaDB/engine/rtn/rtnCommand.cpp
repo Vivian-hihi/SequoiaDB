@@ -2946,6 +2946,77 @@ namespace engine
    error:
       goto done ;
    }
+
+   IMPLEMENT_CMD_AUTO_REGISTER( _rtnRPCCommand )
+   _rtnRPCCommand::_rtnRPCCommand()
+   {
+
+   }
+
+   _rtnRPCCommand::~_rtnRPCCommand()
+   {
+
+   }
+
+   const CHAR *_rtnRPCCommand::collectionFullName()
+   {
+      return RTN_RPC_TYPE_CL == _runner.getType() &&
+             NULL != _runner.getName() ?
+             _runner.getName() : NULL ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION( SDB__RTNRPCCOMMAND_INIT, "_rtnRPCCommand::init" )
+   INT32 _rtnRPCCommand::init( INT32 flags, INT64 numToSkip, INT64 numToReturn,
+                           const CHAR *pMatcherBuff,
+                           const CHAR *pSelectBuff,
+                           const CHAR *pOrderByBuff,
+                           const CHAR *pHintBuff )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__RTNRPCCOMMAND_INIT ) ;
+
+      try
+      {
+         rc = _runner.init( BSONObj( pMatcherBuff ) ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to init rpc runner:%d", rc ) ;
+            goto error ;
+         }
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG( PDERROR, "unexpected error happened:%s",
+                 e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+   done:
+      PD_TRACE_EXITRC( SDB__RTNRPCCOMMAND_INIT, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION( SDB__RTNRPCCOMMAND_DOIT, "_rtnRPCCommand::doit" )
+   INT32 _rtnRPCCommand::doit( _pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
+                        _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
+                        INT16 w, INT64 *pContextID )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__RTNRPCCOMMAND_DOIT ) ;
+      rc = _runner.run( cb, dpsCB ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to run rpc:%d", rc ) ;
+         goto error ;
+      }
+   done:
+      PD_TRACE_EXITRC( SDB__RTNRPCCOMMAND_DOIT, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
 }
 
 

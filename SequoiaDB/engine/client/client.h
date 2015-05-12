@@ -2198,6 +2198,70 @@ SDB_EXPORT INT32 sdbAttachNode( sdbReplicaGroupHandle cHandle,
                                 const CHAR *serviceName,
                                 const bson *options ) ;
 
+/*
+\fn INT32 sdbRunRPC( sdbConnectionHandle cHandle,
+                     const CHAR *type,
+                     const CHAR *name,
+                     const bson *publicArgs,
+                     const bson *rpc )
+    \brief Remot procedure call
+    \param [in] cHandle The connection handle
+    \param [in] type The type of rpc
+    \param [in] name The name of object
+    \param [in] publicArgs The public args of rpc
+    \param [in] rpc The rpc 
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+SDB_EXPORT INT32 sdbRunRPC( sdbConnectionHandle cHandle,
+                            const CHAR *type,
+                            const CHAR *name,
+                            const bson *publicArgs,
+                            const bson *rpc ) ;
+
+/*
+\fn INT32 sdbRunRPCList( sdbConnectionHandle cHandle,
+                         const CHAR *type,
+                         const CHAR *name,
+                         const bson *publicArgs,
+                         UINT32 rpcNum,
+                         const bson *rpc[] )
+    \brief Multi remot procedure call
+    \param [in] cHandle The connection handle
+    \param [in] type The type of rpc
+    \param [in] name The name of object
+    \param [in] publicArgs The public args of rpc
+    \param [in] rpcNum The number of rpc
+    \param [in] rpc The rpc list
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+SDB_EXPORT INT32 sdbRunRPCList( sdbConnectionHandle cHandle,
+                                const CHAR * type,
+                                const CHAR *name,
+                                const bson *publicArgs,
+                                UINT32 rpcNum,
+                                const bson *rpc[] ) ;
+
+
+/*
+\fn INT32 sdbCeateIdIndex( sdbCollectionHandle cHandle )
+    \brief Create $id index on collection
+    \param [in] cHandle The collection handle
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+SDB_EXPORT INT32 sdbCeateIdIndex( sdbCollectionHandle cHandle ) ;
+
+/*
+\fn INT32 sdbDropIdIndex( sdbCollectionHandle cHandle )
+    \brief Drop $id index on collection
+    \param [in] cHandle The collection handle
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+SDB_EXPORT INT32 sdbDropIdIndex( sdbCollectionHandle cHandle ) ;
+
 SDB_EXTERN_C_END
 #endif
 

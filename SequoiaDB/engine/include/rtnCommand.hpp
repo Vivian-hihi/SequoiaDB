@@ -40,6 +40,7 @@
 #include "dms.hpp"
 #include "msg.hpp"
 #include "migLoad.hpp"
+#include "rtnRPCRunner.hpp"
 
 using namespace bson ;
 
@@ -1357,6 +1358,32 @@ namespace engine
                            INT16 w = 1, INT64 *pContextID = NULL ) ;
    private:
       const CHAR * _fullName ;
+   } ;
+
+   class _rtnRPCCommand : public _rtnCommand
+   {
+   DECLARE_CMD_AUTO_REGISTER()
+   public:
+      _rtnRPCCommand() ;
+      virtual ~_rtnRPCCommand() ;
+
+   public:
+      virtual const CHAR * name () { return NAME_RPC ; }
+      virtual RTN_COMMAND_TYPE type() { return CMD_RPC ; }
+      virtual const CHAR * collectionFullName() ;
+      virtual BOOLEAN writable() { return TRUE ;}
+
+      virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
+                           const CHAR *pMatcherBuff,
+                           const CHAR *pSelectBuff,
+                           const CHAR *pOrderByBuff,
+                           const CHAR *pHintBuff ) ;
+      virtual INT32 doit ( _pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
+                           _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
+                           INT16 w = 1, INT64 *pContextID = NULL ) ;
+
+   private:
+      _rtnRPCRunner _runner ;
    } ;
 }
 

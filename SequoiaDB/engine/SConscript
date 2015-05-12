@@ -205,7 +205,10 @@ rtnFiles = [
       "rtn/rtnCoordLob.cpp",
       "rtn/rtnContextShdOfLob.cpp",
       "rtn/rtnLobFetcher.cpp",
-      "rtn/rtnContextListLob.cpp"
+      "rtn/rtnContextListLob.cpp",
+      "rtn/rtnRPCFuncList.cpp",
+      "rtn/rtnRPCFuncs.cpp",
+      "rtn/rtnRPCRunner.cpp"
       ]
 
 msgFiles = [
