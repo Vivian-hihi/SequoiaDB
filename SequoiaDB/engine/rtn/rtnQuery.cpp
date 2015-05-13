@@ -152,26 +152,26 @@ namespace engine
                   goto error ;
                }
 
-               rc = rtnGetObjElement( modify, FIELD_NAME_LUPDATE, updator ) ;
+               rc = rtnGetObjElement( modify, FIELD_NAME_OP_UPDATE, updator ) ;
                PD_RC_CHECK( rc, PDERROR,
                   "Query and modify has invalid field[%s] in hint: %s",
-                  FIELD_NAME_LUPDATE, hint.toString().c_str() ) ;
+                  FIELD_NAME_OP_UPDATE, hint.toString().c_str() ) ;
             }
             else if ( 0 == ossStrcmp( op, FIELD_OP_VALUE_REMOVE ) )
             {
                isRemove = TRUE ;
 
                BOOLEAN remove = FALSE ;
-               rc = rtnGetBooleanElement( modify, FIELD_NAME_REMOVE, remove ) ;
+               rc = rtnGetBooleanElement( modify, FIELD_NAME_OP_REMOVE, remove ) ;
                PD_RC_CHECK( rc, PDERROR,
                   "Query and modify has invalid field[%s] in hint: %s",
-                  FIELD_NAME_REMOVE, hint.toString().c_str() ) ;
+                  FIELD_NAME_OP_REMOVE, hint.toString().c_str() ) ;
 
                if ( TRUE != remove )
                {
                   PD_LOG( PDERROR,
                      "Query and modify has invalid field[%s] in hint: %s",
-                     FIELD_NAME_REMOVE, hint.toString().c_str() ) ;
+                     FIELD_NAME_OP_REMOVE, hint.toString().c_str() ) ;
                   goto error ;
                }
             }

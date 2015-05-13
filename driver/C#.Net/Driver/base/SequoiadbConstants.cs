@@ -132,10 +132,10 @@ namespace SequoiaDB
         public const string FIELD_NAME_ONLY_ATTACH = "OnlyAttach";
 
         public const string FIELD_MODIFY = "$Modify";
-        public const string FIELD_OP = "op";
-        public const string FIELD_LUPDATE = "update";
-        public const string FIELD_RETURNNEW = "returnnew";
-        public const string FIELD_REMOVE = "remove";
+        public const string FIELD_OP = "OP";
+        public const string FIELD_OP_UPDATE = "Update";
+        public const string FIELD_OP_REMOVE = "Remove";
+		public const string FIELD_RETURNNEW = "ReturnNew";
         public const string FIELD_OP_VALUE_UPDATE = "update";
         public const string FIELD_OP_VALUE_REMOVE = "remove";
 

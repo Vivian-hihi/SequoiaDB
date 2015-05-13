@@ -157,10 +157,10 @@ public class SequoiadbConstants {
     public final static String FIELD_NAME_LOB_CREATTIME = "CreateTime";
 
 	public final static String FIELD_NAME_MODIFY = "$Modify";
-	public final static String FIELD_NAME_OP = "op";
-	public final static String FIELD_NAME_LUPDATE = "update";
-	public final static String FIELD_NAME_RETURNNEW = "returnnew";
-	public final static String FIELD_NAME_REMOVE = "remove";
+	public final static String FIELD_NAME_OP = "OP";
+	public final static String FIELD_NAME_OP_UPDATE = "Update";
+	public final static String FIELD_NAME_OP_REMOVE = "Remove";
+	public final static String FIELD_NAME_RETURNNEW = "ReturnNew";
 	public final static String FIELD_OP_VALUE_UPDATE = "update";
 	public final static String FIELD_OP_VALUE_REMOVE = "remove";
 

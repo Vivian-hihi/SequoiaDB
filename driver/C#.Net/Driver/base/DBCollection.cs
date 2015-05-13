@@ -604,13 +604,13 @@ namespace SequoiaDB
                 }
 
                 modify.Add(SequoiadbConstants.FIELD_OP, SequoiadbConstants.FIELD_OP_VALUE_UPDATE);
-                modify.Add(SequoiadbConstants.FIELD_LUPDATE, update);
+                modify.Add(SequoiadbConstants.FIELD_OP_UPDATE, update);
                 modify.Add(SequoiadbConstants.FIELD_RETURNNEW, returnNew);
             }
             else
             {
                 modify.Add(SequoiadbConstants.FIELD_OP, SequoiadbConstants.FIELD_OP_VALUE_REMOVE);
-                modify.Add(SequoiadbConstants.FIELD_REMOVE, true);
+                modify.Add(SequoiadbConstants.FIELD_OP_REMOVE, true);
             }
 
             BsonDocument newHint = new BsonDocument();

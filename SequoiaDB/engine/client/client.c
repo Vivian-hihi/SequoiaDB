@@ -4908,13 +4908,13 @@ static INT32 _sdbQueryAndModify ( sdbCollectionHandle cHandle,
       }
 
       BSON_APPEND( modify, FIELD_NAME_OP, FIELD_OP_VALUE_UPDATE, string ) ;
-      BSON_APPEND( modify, FIELD_NAME_LUPDATE, update, bson ) ;
+      BSON_APPEND( modify, FIELD_NAME_OP_UPDATE, update, bson ) ;
       BSON_APPEND( modify, FIELD_NAME_RETURNNEW, returnNew, bool ) ;
    }
    else
    {
       BSON_APPEND( modify, FIELD_NAME_OP, FIELD_OP_VALUE_REMOVE, string ) ;
-      BSON_APPEND( modify, FIELD_NAME_REMOVE, TRUE, bool ) ;
+      BSON_APPEND( modify, FIELD_NAME_OP_REMOVE, TRUE, bool ) ;
    }
    BSON_FINISH( modify ) ;
 

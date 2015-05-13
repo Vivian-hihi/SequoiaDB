@@ -1503,13 +1503,13 @@ do                                                            \
             }
 
             modifyBuilder.append( FIELD_NAME_OP, FIELD_OP_VALUE_UPDATE ) ;
-            modifyBuilder.appendObject( FIELD_NAME_LUPDATE, update.objdata() ) ;
+            modifyBuilder.appendObject( FIELD_NAME_OP_UPDATE, update.objdata() ) ;
             modifyBuilder.appendBool( FIELD_NAME_RETURNNEW, returnNew ) ;
          }
          else
          {
             modifyBuilder.append( FIELD_NAME_OP, FIELD_OP_VALUE_REMOVE ) ;
-            modifyBuilder.appendBool( FIELD_NAME_REMOVE, TRUE ) ;
+            modifyBuilder.appendBool( FIELD_NAME_OP_REMOVE, TRUE ) ;
          }
          modify = modifyBuilder.obj() ;
 

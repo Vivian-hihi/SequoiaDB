@@ -1497,7 +1497,7 @@ namespace engine
             if ( SDB_OK != rc )
             {
                PD_LOG_MSG( PDERROR, "field's format error:field=%s, value=%s", 
-                           FIELD_NAME_LUPDATE, pUpdate ) ;
+                           FIELD_NAME_OP_UPDATE, pUpdate ) ;
                goto error ;
             }
 
@@ -1524,13 +1524,13 @@ namespace engine
             }
 
             modifyBuilder.append( FIELD_NAME_OP, FIELD_OP_VALUE_UPDATE ) ;
-            modifyBuilder.appendObject( FIELD_NAME_LUPDATE, update.objdata() ) ;
+            modifyBuilder.appendObject( FIELD_NAME_OP_UPDATE, update.objdata() ) ;
             modifyBuilder.appendBool( FIELD_NAME_RETURNNEW, returnNew ) ;
          }
          else
          {
             modifyBuilder.append( FIELD_NAME_OP, FIELD_OP_VALUE_REMOVE ) ;
-            modifyBuilder.appendBool( FIELD_NAME_REMOVE, TRUE ) ;
+            modifyBuilder.appendBool( FIELD_NAME_OP_REMOVE, TRUE ) ;
          }
          modify = modifyBuilder.obj() ;
 

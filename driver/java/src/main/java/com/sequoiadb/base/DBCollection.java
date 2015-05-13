@@ -1030,12 +1030,12 @@ public class DBCollection {
 
 			modify.put(SequoiadbConstants.FIELD_NAME_OP,
 					   SequoiadbConstants.FIELD_OP_VALUE_UPDATE);
-			modify.put(SequoiadbConstants.FIELD_NAME_LUPDATE, update);
+			modify.put(SequoiadbConstants.FIELD_NAME_OP_UPDATE, update);
 			modify.put(SequoiadbConstants.FIELD_NAME_RETURNNEW, returnNew);
 		} else {
 			modify.put(SequoiadbConstants.FIELD_NAME_OP,
 					   SequoiadbConstants.FIELD_OP_VALUE_REMOVE);
-			modify.put(SequoiadbConstants.FIELD_NAME_REMOVE, true);
+			modify.put(SequoiadbConstants.FIELD_NAME_OP_REMOVE, true);
 		}
 
 		BSONObject newHint = new BasicBSONObject();
