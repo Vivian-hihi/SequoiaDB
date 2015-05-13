@@ -432,7 +432,6 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__MTHSCOLUMNMATRIX__ADDMIDDLEACTION ) ;
-      INT32 elemNumber = 0 ;
       mthSAction *action = NULL ;
       const _mthSActionParser *parser = _mthSActionParser::instance() ;
 
