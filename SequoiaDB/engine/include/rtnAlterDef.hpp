@@ -34,6 +34,7 @@
 
 #include "core.hpp"
 #include "oss.hpp"
+#include "ossUtil.hpp"
 #include "../bson/bson.hpp"
 
 namespace engine
@@ -74,6 +75,45 @@ namespace engine
                                       const bson::BSONObj &args,
                                       _pmdEDUCB *cb,
                                       _dpsLogWrapper *dpsCB ) ;
+
+   struct rtnAlterFuncKey
+   {
+      RTN_ALTER_TYPE type ;
+      const CHAR *op ;
+
+      rtnAlterFuncKey( RTN_ALTER_TYPE t,
+                       const CHAR *o )
+      :type( t ),
+       op( o )
+      {
+
+      }
+
+      const std::string toString() const
+      {
+         std::stringstream ss ;
+         ss << "{type:" << type
+            << ", op:" << op
+            << "}" ;
+         return ss.str() ;
+      }
+
+      BOOLEAN operator<( const rtnAlterFuncKey &key )const
+      {
+         if ( type < key.type )
+         {
+            return TRUE ;
+         }
+         else if ( type > key.type )
+         {
+            return FALSE ;
+         }
+         else
+         {
+            return 0 < ossStrcmp( op, key.op ) ;
+         }
+      }
+   } ;
 }
 
 #endif

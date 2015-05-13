@@ -33,8 +33,8 @@
 #include "pd.hpp"
 #include "rtnTrace.hpp"
 #include "pmdEDU.hpp"
-#include "msgDef.hpp"
 #include "dpsLogWrapper.hpp"
+#include "pmd.hpp"
 
 using namespace bson ;
 
@@ -43,12 +43,6 @@ namespace engine
    _rtnAlterFuncList _rtnAlterRunner::_funcList ;
 
    _rtnAlterRunner::_rtnAlterRunner()
-   :_type( RTN_ALTER_INVALID ),
-    _name( NULL ),
-    _v( 0 ),
-    /// only to init bsonobjiterator. we will reset it later.
-    /// so do not use _i when _obj is reset.
-    _i( _obj )
    {
 
    }
@@ -63,79 +57,11 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNALTERRUNNER_INIT ) ;
-      try
+      clear() ;
+      rc = _job.init( obj ) ;
+      if ( SDB_OK != rc )
       {
-         _obj = obj.copy() ;
-         BSONElement e = _obj.getField( FIELD_NAME_VERSION ) ;
-         if ( !e.isNumber() )
-         {
-            PD_LOG( PDERROR, "invalid type of field [%s], request obj: %s",
-                    FIELD_NAME_VERSION, _obj.toString( FALSE, TRUE ).c_str() ) ;
-            rc = SDB_INVALIDARG ;
-            goto error ;
-         }
-
-         _v = e.Number() ;
-         if ( SDB_ALTER_VERSION != _v )
-         {
-            PD_LOG( PDERROR, "invalid version:%d", _v ) ;
-            rc = SDB_INVALIDARG ;
-            goto error ;
-         }
-         
-         e = _obj.getField( FIELD_NAME_ALTER_TYPE ) ;
-         if ( String != e.type() )
-         {
-            PD_LOG( PDERROR, "invalid type of field [%s],request obj: %s",
-                    FIELD_NAME_ALTER_TYPE, _obj.toString( FALSE, TRUE ).c_str() ) ;
-            rc = SDB_INVALIDARG ;
-            goto error ;
-         }
-
-         rc = _getObjType( e.valuestrsafe(), _type ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDERROR, "invalid alter type:%s", e.valuestrsafe() ) ;
-            goto error ;
-         }
-
-         e = _obj.getField( FIELD_NAME_NAME ) ;
-         if ( String != e.type() )
-         {
-            PD_LOG( PDERROR, "invalid type of field [%s], request obj: %s",
-                    FIELD_NAME_NAME, _obj.toString( FALSE, TRUE ).c_str() ) ;
-            rc = SDB_INVALIDARG ;
-            goto error ;
-         }
-         _name = e.valuestrsafe() ;
-
-         e = _obj.getField( FIELD_NAME_ALTER ) ;
-         if ( Array != e.type() )
-         {
-            PD_LOG( PDERROR, "invalid type of field [%s],request obj: %s",
-                    FIELD_NAME_ALTER, _obj.toString( FALSE, TRUE ).c_str() ) ;
-            rc = SDB_INVALIDARG ;
-            goto error ;
-         }
-         _rpc = e.embeddedObject() ;
-         _i = BSONObjIterator( _rpc ) ;
-
-         /// args is not necessary.
-         e = _obj.getField( FIELD_NAME_ARGS ) ;
-         if ( Object == e.type() )
-         {
-            _args = e.embeddedObject() ;
-            e = _args.getField( CMD_ADMIN_PREFIX FIELD_NAME_OPTIONS ) ;
-            if ( Object == e.type() )
-            {
-               _hint = e.embeddedObject() ;
-            }
-         }
-      }
-      catch ( std::exception &e )
-      {
-         PD_LOG( PDERROR, "unexpected error heppened:%s", e.what() ) ;
-         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "failed to init alter job:%d", rc ) ;
          goto error ;
       }
    done:
@@ -150,15 +76,7 @@ namespace engine
    void _rtnAlterRunner::clear()
    {
       PD_TRACE_ENTRY( SDB__RTNALTERRUNNER_INIT ) ;
-      _type = RTN_ALTER_INVALID ;
-      _name = NULL ;
-      _v = 0 ;
-      _args = BSONObj() ;
-      _rpc = BSONObj() ;
-      _hint = BSONObj () ;
-      _obj = BSONObj() ;
-      _i = BSONObjIterator( _obj ) ;
-      _options.reset() ;
+      _job.clear() ;
       PD_TRACE_EXIT( SDB__RTNALTERRUNNER_INIT ) ;
       return ;
    }
@@ -168,21 +86,23 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNALTERRUNNER_RUN ) ;
-      if ( !_inited() )
+      if ( _job.isEmpty() )
       {
          PD_LOG( PDERROR, "runner has not been initialized yet" ) ;
          rc = SDB_SYS ;
          goto error ;
       }
 
-      while ( _i.more() )
       {
-         BSONElement e = _i.next() ;
+      BSONObjIterator i( _job.getTasks() ) ;
+      while ( i.more() )
+      {
+         BSONElement e = i.next() ;
          if ( Object != e.type() )
          {
             PD_LOG( PDERROR, "invalid alter:%s",
                     e.toString( FALSE, TRUE ).c_str() ) ;
-            if ( _options.ignoreException )
+            if ( _job.getOptions().ignoreException )
             {
                continue ;
             }
@@ -197,7 +117,7 @@ namespace engine
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "failed to run alter:%d", rc ) ;
-            if ( _options.ignoreException )
+            if ( _job.getOptions().ignoreException )
             {
                rc = SDB_OK ;
                continue ;
@@ -207,6 +127,7 @@ namespace engine
                goto error ;
             }
          }
+      }
       }
    done:
       PD_TRACE_EXITRC( SDB__RTNALTERRUNNER_RUN, rc ) ;
@@ -241,8 +162,8 @@ namespace engine
          goto error ;
       }
 
-      rc = (*func)( _name,
-                    _args,
+      rc = (*func)( _job.getName(),
+                    _job.getOptionObj(),
                     rpc.getObjectField( FIELD_NAME_ARGS ),
                     cb,
                     dpsCB ) ;
@@ -261,13 +182,7 @@ namespace engine
    INT32 _rtnAlterRunner::_getFunc( const CHAR *name,
                                   RTN_ALTER_FUNC &func )
    {
-      return _funcList.getFunc( _type, name, func ) ;
-   }
-
-   INT32 _rtnAlterRunner::_getObjType( const CHAR *name,
-                                      RTN_ALTER_TYPE &type )
-   {
-      return _funcList.getObjType( name, type ) ;
+      return _funcList.getFunc( _job.getType(), name, func ) ;
    }
 }
 

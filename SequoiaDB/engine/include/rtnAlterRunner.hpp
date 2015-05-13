@@ -34,6 +34,7 @@
 
 #include "rtnAlterDef.hpp"
 #include "rtnAlterFuncList.hpp"
+#include "rtnAlterJob.hpp"
 
 namespace engine
 {
@@ -46,47 +47,27 @@ namespace engine
       virtual ~_rtnAlterRunner() ;
 
    public:
-      OSS_INLINE RTN_ALTER_TYPE getType() const
-      {
-         return _type ;
-      }
-
-      OSS_INLINE const CHAR *getName() const
-      {
-         return _name ;
-      }
-   public:
       INT32 init( const bson::BSONObj &obj ) ;
 
       void clear() ;
 
       INT32 run( _pmdEDUCB *cb, _dpsLogWrapper *dpsCB ) ;
 
-   private:
-      OSS_INLINE BOOLEAN _inited() const
+      OSS_INLINE const _rtnAlterJob &getJob() const
       {
-         return RTN_ALTER_INVALID != _type ;
+         return _job ;
       }
 
-      INT32 _getObjType( const CHAR *str, RTN_ALTER_TYPE &type ) ;
-
+   private:
       INT32 _run( const bson::BSONObj &rpc,
                   _pmdEDUCB *cb,
                   _dpsLogWrapper *dpsCB ) ;
 
       INT32 _getFunc( const CHAR *name,
                       RTN_ALTER_FUNC &func ) ;
-   private:
-      _rtnAlterOptions _options ;
-      RTN_ALTER_TYPE _type ;
-      const CHAR *_name ;
-      INT32 _v ;
-      bson::BSONObj _obj ;
-      bson::BSONObj _rpc ;
-      bson::BSONObj _args ;
-      bson::BSONObj _hint ;
-      bson::BSONObjIterator _i ;
 
+   private:
+      _rtnAlterJob _job ;
       static _rtnAlterFuncList _funcList ;
    } ;
 }

@@ -33,6 +33,16 @@
 #include "dpsLogWrapper.hpp"
 #include "rtnAlterFuncs.hpp"
 
+#define RTN_ALTER_REGISTER( type, op, func )\
+        do\
+        {\
+           rc = _registerFunc( rtnAlterFuncKey( (type), (op)), (func) ) ;\
+           if ( SDB_OK != rc )\
+           {\
+              goto error ;\
+           }\
+        } while ( FALSE )
+
 namespace engine
 {
    _rtnAlterFuncList::_rtnAlterFuncList()
@@ -44,7 +54,6 @@ namespace engine
    _rtnAlterFuncList::~_rtnAlterFuncList()
    {
       _fl.clear() ;
-      _tl.clear() ;
    }
 
    INT32 _rtnAlterFuncList::init()
@@ -80,8 +89,8 @@ namespace engine
                                      RTN_ALTER_FUNC &func )
    {
       INT32 rc = SDB_OK ;
-      ALL_FUNCS::const_iterator itrObj ;
       FUNC_LST::const_iterator itrFunc ;
+      rtnAlterFuncKey key( type, name ) ;
 
       if ( !_inited )
       {
@@ -93,19 +102,11 @@ namespace engine
          }
       }
 
-      itrObj = _fl.find( type ) ;
-      if ( _fl.end() == itrObj ) 
+      itrFunc = _fl.find( key ) ;
+      if ( _fl.end() == itrFunc ) 
       {
-         PD_LOG( PDERROR, "can not find type:%d", type ) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
-
-      itrFunc = itrObj->second.fl.find( name ) ;
-      if ( itrObj->second.fl.end() == itrFunc )
-      {
-         PD_LOG( PDERROR, "can not find func[%s] of type[%d]",
-                 name, type ) ;
+         PD_LOG( PDERROR, "can not find func[%s]",
+                 key.toString().c_str() ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }
@@ -117,82 +118,35 @@ namespace engine
       goto done ;
    }
 
-   INT32 _rtnAlterFuncList::getObjType( const CHAR *name,
-                                      RTN_ALTER_TYPE &type )
+   INT32 _rtnAlterFuncList::_init()
    {
       INT32 rc = SDB_OK ;
-      if ( !_inited )
-      {
-         rc = init() ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDERROR, "failed to init rpc func list:%d", rc ) ;
-            goto error ;
-         }
-      }
 
-      {
-      string str( name ) ;
-      boost::algorithm::to_lower( str ) ;
-      ALL_TYPES::const_iterator itr = _tl.find( str.c_str() ) ;
-      if ( _tl.end() != itr )
-      {
-         type = itr->second ;
-      }
-      else
-      {
-         PD_LOG( PDERROR, "invalid type:%s", name ) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
-      }
+      /// init funcs
+      RTN_ALTER_REGISTER( RTN_ALTER_TYPE_CL,
+                          SDB_ALTER_CRT_ID_INDEX,
+                          &rtnCreateIDIndex ) ;
+
+      RTN_ALTER_REGISTER( RTN_ALTER_TYPE_CL,
+                          SDB_ALTER_DROP_ID_INDEX,
+                          &rtnDropIDIndex ) ;
+
    done:
       return rc ;
    error:
       goto done ;
    }
 
-   INT32 _rtnAlterFuncList::_init()
+   INT32 _rtnAlterFuncList::_registerFunc( const rtnAlterFuncKey &key,
+                                           RTN_ALTER_FUNC func )
    {
       INT32 rc = SDB_OK ;
-
-      /// init types
-      _tl.insert( std::make_pair( SDB_ALTER_CL, RTN_ALTER_TYPE_CL ) ) ;
-
-      /// collection
+      if ( !_fl.insert( std::make_pair( key, func ) ).second )
       {
-         funcObj obj ;
-         obj.type = RTN_ALTER_TYPE_CL ;
-
-         /// create id index
-         if ( !obj.fl.insert(
-                  std::make_pair( SDB_ALTER_CRT_ID_INDEX,
-                                  &rtnCreateIDIndex ) ).second )
-         {
-            PD_LOG( PDERROR, "duplicate func name:%s",
-                    SDB_ALTER_CRT_ID_INDEX ) ;
-            rc = SDB_SYS ;
-            goto error ;
-         }
-
-         /// drop id index
-         if ( !obj.fl.insert(
-                  std::make_pair( SDB_ALTER_DROP_ID_INDEX,
-                                  &rtnDropIDIndex ) ).second )
-         {
-            PD_LOG( PDERROR, "duplicate func name:%s",
-                    SDB_ALTER_CRT_ID_INDEX ) ;
-            rc = SDB_SYS ;
-            goto error ;
-         }
-
-         if ( !_fl.insert( std::make_pair( RTN_ALTER_TYPE_CL, obj ) ).second )
-         {
-            PD_LOG( PDERROR, "duplicate obj type:%d",
-                    obj.type ) ;
-            rc = SDB_SYS ;
-            goto error ;
-         }
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "duplicate func:%s",
+                 key.toString().c_str() ) ;
+         goto error ;
       }
    done:
       return rc ;

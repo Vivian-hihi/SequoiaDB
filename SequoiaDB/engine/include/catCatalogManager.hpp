@@ -191,6 +191,9 @@ namespace engine
       INT32 processCmdDropDomain ( const CHAR *pQuery ) ;
       INT32 processCmdAlterDomain ( const CHAR *pQuery ) ;
 
+      INT32 processCmdAlter( const CHAR *pQuery,
+                             rtnContextBuf &ctxBuf ) ;
+
    // tool functions
    protected:
       void  _fillRspHeader( MsgHeader *rspMsg, const MsgHeader *reqMsg ) ;

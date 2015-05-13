@@ -210,6 +210,9 @@ enum MSG_TYPE
    MSG_CAT_ALTER_DOMAIN_REQ            = 3138,
    MSG_CAT_ALTER_DOMAIN_RSP            = MAKE_REPLY_TYPE(MSG_CAT_ALTER_DOMAIN_REQ),
 
+   MSG_CAT_ALTER_REQ                   = 3139,
+   MSG_CAT_ALTER_RES                   = MAKE_REPLY_TYPE(MSG_CAT_ALTER_REQ),
+
    // all messages for CATALOGUE must be smaller than MSG_CAT_CATALOGUE_END
    MSG_CAT_CATALOGUE_END               = 3199,
 

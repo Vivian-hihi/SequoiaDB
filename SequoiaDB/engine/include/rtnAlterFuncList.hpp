@@ -35,7 +35,9 @@
 #include "rtnAlterDef.hpp"
 #include "ossLatch.hpp"
 #include "ossUtil.hpp"
+#include "msgDef.h"
 #include <map>
+#include <sstream>
 
 namespace engine
 {
@@ -46,26 +48,7 @@ namespace engine
       ~_rtnAlterFuncList() ;
 
    private:
-      struct comp
-      {
-         BOOLEAN operator()( const CHAR *l,
-                             const CHAR *r ) const
-         {
-            return ossStrcmp( l, r ) < 0 ;
-         }
-      } ;
-
-      typedef std::map<const CHAR *, RTN_ALTER_FUNC, comp> FUNC_LST ;
-
-      struct funcObj
-      {
-         RTN_ALTER_TYPE type ;
-         FUNC_LST fl ;
-      } ;
-
-      typedef std::map<RTN_ALTER_TYPE, funcObj> ALL_FUNCS ;
-
-      typedef std::map<const CHAR *, RTN_ALTER_TYPE, comp> ALL_TYPES ;
+      typedef std::map<rtnAlterFuncKey, RTN_ALTER_FUNC> FUNC_LST ;
 
    public:
       INT32 init() ;
@@ -74,15 +57,14 @@ namespace engine
                      const CHAR *name,
                      RTN_ALTER_FUNC &func ) ;
 
-      INT32 getObjType( const CHAR *name,
-                        RTN_ALTER_TYPE &type ) ;
-
    private:
       INT32 _init() ;
 
+      INT32 _registerFunc( const rtnAlterFuncKey &key,
+                           RTN_ALTER_FUNC func ) ;
+
    private:
-      ALL_FUNCS _fl ;
-      ALL_TYPES _tl ;
+      FUNC_LST _fl ;
       _ossSpinXLatch _latch ;
       BOOLEAN _inited ;
    } ;

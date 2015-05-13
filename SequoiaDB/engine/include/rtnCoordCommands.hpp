@@ -124,6 +124,7 @@ namespace engine
    #define COORD_CMD_ALTER_IMAGE              CMD_ADMIN_PREFIX CMD_NAME_ALTER_IMAGE
    #define COORD_CMD_REELECT                  CMD_ADMIN_PREFIX CMD_NAME_REELECT
    #define COORD_CMD_TRUNCATE                 CMD_ADMIN_PREFIX CMD_NAME_TRUNCATE
+   #define COORD_CMD_ALTER                    CMD_ADMIN_PREFIX CMD_NAME_ALTER
 
    class rtnCoordCommand : virtual public rtnCoordOperator
    {
@@ -1317,6 +1318,22 @@ namespace engine
                              pmdEDUCB *cb,
                              INT64 &contextID,
                              rtnContextBuf *buf ) ;
+   } ;
+
+   class _rtnAlterJob ;
+   class rtnCoordCMDAlter : public rtnCoordCommand
+   {
+   public:
+      virtual INT32 execute( MsgHeader *pMsg,
+                             pmdEDUCB *cb,
+                             INT64 &contextID,
+                             rtnContextBuf *buf ) ;
+
+   private:
+      INT32 _doSthWithReply( MsgHeader *pMsg,
+                             const _rtnAlterJob *job,
+                             const vector<BSONObj> &reply,
+                             pmdEDUCB *cb ) ;
    } ;
 
 }

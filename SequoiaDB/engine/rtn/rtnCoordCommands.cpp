@@ -63,6 +63,7 @@
 #include "spdSession.hpp"
 #include "spdCoordDownloader.hpp"
 #include "rtnDataSet.hpp"
+#include "rtnAlterRunner.hpp"
 
 using namespace bson;
 namespace engine
@@ -8456,6 +8457,90 @@ namespace engine
       return rc ;
    error:
       goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION( CMD_RTNCOCMDALTER_EXEC, "rtnCoordCMDAlter::execute" )
+   INT32 rtnCoordCMDAlter::execute( MsgHeader *pMsg,
+                                    pmdEDUCB *cb,
+                                    INT64 &contextID,
+                                    rtnContextBuf *buf )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( CMD_RTNCOCMDALTER_EXEC ) ;
+      _rtnAlterJob job ;
+      CHAR *query = NULL ;
+      CoordGroupList gpList ;
+      vector<BSONObj> replyFromCata ;
+
+      rc = msgExtractQuery( (CHAR*)pMsg, NULL, NULL,
+                            NULL, NULL, &query,
+                            NULL, NULL, NULL ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to extract query msg:%d", rc ) ;
+         goto error ;
+      }
+
+      try
+      {
+         rc = job.init( BSONObj( query ) ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to init runner:%d", rc ) ;
+            goto error ;
+         }
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG( PDERROR, "unexpected error happened:%s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      pMsg->opCode = MSG_CAT_ALTER_REQ ;
+      rc = executeOnCataGroup( pMsg, cb, &gpList, &replyFromCata ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to execute on catalog:%d", rc ) ;
+         goto error ;
+      }
+
+      (( MsgHeader * )pMsg)->opCode = MSG_BS_QUERY_REQ ;
+      if ( RTN_ALTER_TYPE_CL == job.getType() )
+      {
+         rc = executeOnCL( pMsg, cb,
+                           job.getName(),
+                           TRUE,
+                           NULL ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to execute on cl:%s, rc:%d",
+                    job.getName(), rc ) ;
+            goto error ;
+         }
+      }
+      else
+      {
+         rc = _doSthWithReply( pMsg, &job, replyFromCata, cb ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to handle reply:%d", rc ) ;
+            goto error ;
+         }
+      }
+   done:
+      PD_TRACE_EXITRC( CMD_RTNCOCMDALTER_EXEC, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 rtnCoordCMDAlter::_doSthWithReply( MsgHeader *pMsg,
+                                            const _rtnAlterJob *job,
+                                            const vector<BSONObj> &reply,
+                                            pmdEDUCB *cb )
+   {
+      return SDB_OK ;
    }
 }
 

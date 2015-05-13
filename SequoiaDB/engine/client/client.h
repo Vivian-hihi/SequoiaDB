@@ -2202,13 +2202,13 @@ SDB_EXPORT INT32 sdbAttachNode( sdbReplicaGroupHandle cHandle,
 \fn INT32 sdbAlter( sdbConnectionHandle cHandle,
                     const CHAR *type,
                     const CHAR *name,
-                    const bson *publicArgs,
+                    const bson *options,
                     const bson *alter )
     \brief Alter object of database
     \param [in] cHandle The connection handle
     \param [in] type The type of alter
     \param [in] name The name of object
-    \param [in] publicArgs The public args of alter
+    \param [in] options The options of alter, could be NULL
     \param [in] alter The desc of alter 
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
@@ -2216,21 +2216,21 @@ SDB_EXPORT INT32 sdbAttachNode( sdbReplicaGroupHandle cHandle,
 SDB_EXPORT INT32 sdbAlter( sdbConnectionHandle cHandle,
                            const CHAR *type,
                            const CHAR *name,
-                           const bson *publicArgs,
+                           const bson *options,
                            const bson *alter ) ;
 
 /*
 \fn INT32 sdbMultiAlter( sdbConnectionHandle cHandle,
                          const CHAR *type,
                          const CHAR *name,
-                         const bson *publicArgs,
+                         const bson *options,
                          UINT32 alterNum,
                          const bson *alter[] )
     \brief Multi alter
     \param [in] cHandle The connection handle
     \param [in] type The type of alter
     \param [in] name The name of object
-    \param [in] publicArgs The public args of alter
+    \param [in] options The public args of alter, could be NULL
     \param [in] alterNum The number of alter
     \param [in] alter The alter list
     \retval SDB_OK Operation Success
@@ -2239,7 +2239,7 @@ SDB_EXPORT INT32 sdbAlter( sdbConnectionHandle cHandle,
 SDB_EXPORT INT32 sdbMultiAlter( sdbConnectionHandle cHandle,
                                 const CHAR * type,
                                 const CHAR *name,
-                                const bson *publicArgs,
+                                const bson *options,
                                 UINT32 alterNum,
                                 const bson *alter[] ) ;
 

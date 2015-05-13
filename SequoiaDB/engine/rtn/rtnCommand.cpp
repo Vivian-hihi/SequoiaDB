@@ -2960,9 +2960,9 @@ namespace engine
 
    const CHAR *_rtnAlterCommand::collectionFullName()
    {
-      return RTN_ALTER_TYPE_CL == _runner.getType() &&
-             NULL != _runner.getName() ?
-             _runner.getName() : NULL ;
+      return RTN_ALTER_TYPE_CL == _runner.getJob().getType() &&
+             NULL != _runner.getJob().getName() ?
+             _runner.getJob().getName() : NULL ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION( SDB__RTNALTERCOMMAND_INIT, "_rtnAlterCommand::init" )

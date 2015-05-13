@@ -8453,14 +8453,14 @@ error:
 SDB_EXPORT INT32 sdbAlter( sdbConnectionHandle cHandle,
                            const CHAR *type,
                            const CHAR *name,
-                           const bson *publicArgs,
+                           const bson *options,
                            const bson *alter )
 {
    INT32 rc = SDB_OK ;
    const bson *objs[1] ;
    objs[0] = alter ;
    rc = sdbMultiAlter( cHandle, type,
-                       name, publicArgs,
+                       name, options,
                        1, objs ) ;
    if ( SDB_OK != rc )
    {
@@ -8475,7 +8475,7 @@ error:
 SDB_EXPORT INT32 sdbMultiAlter( sdbConnectionHandle cHandle,
                                 const CHAR *type,
                                 const CHAR *name,
-                                const bson *publicArgs,
+                                const bson *options,
                                 UINT32 alterNum,
                                 const bson *alter[] )
 {
@@ -8498,9 +8498,9 @@ SDB_EXPORT INT32 sdbMultiAlter( sdbConnectionHandle cHandle,
    BSON_APPEND( obj, FIELD_NAME_ALTER_TYPE, type, string ) ;
    BSON_APPEND( obj, FIELD_NAME_NAME, name, string ) ;
    BSON_APPEND( obj, FIELD_NAME_VERSION, SDB_ALTER_VERSION, int ) ;
-   if ( NULL != publicArgs )
+   if ( NULL != options )
    {
-      BSON_APPEND( obj, FIELD_NAME_ARGS, publicArgs, bson ) ;
+      BSON_APPEND( obj, FIELD_NAME_OPTIONS, options, bson ) ;
    }
 
    bson_append_start_array( &obj, FIELD_NAME_ALTER ) ;

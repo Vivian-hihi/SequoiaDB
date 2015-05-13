@@ -47,6 +47,7 @@
 #include "catTrace.hpp"
 #include "catCommon.hpp"
 #include "clsCatalogAgent.hpp"
+#include "rtnAlterJob.hpp"
 
 using namespace bson;
 
@@ -1784,6 +1785,7 @@ namespace engine
       case MSG_CAT_CREATE_DOMAIN_REQ :
       case MSG_CAT_DROP_DOMAIN_REQ :
       case MSG_CAT_ALTER_DOMAIN_REQ :
+      case MSG_CAT_ALTER_REQ :
          {
             // up commands is run in cluster acitve status
             _pCatCB->getCatDCMgr()->setImageCommand( TRUE ) ;
@@ -1940,6 +1942,9 @@ namespace engine
             break ;
          case MSG_CAT_ALTER_DOMAIN_REQ :
             rc = processCmdAlterDomain ( pQuery ) ;
+            break ;
+         case MSG_CAT_ALTER_REQ :
+            rc = processCmdAlter( pQuery, ctxBuff ) ;
             break ;
          default :
             rc = SDB_INVALIDARG ;
@@ -2475,6 +2480,35 @@ namespace engine
       PD_TRACE_EXITRC ( SDB_CATALOGMGR_ALTERDOMAIN, rc ) ;
       return rc ;
    error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR_ALTER, "catCatalogueManager::processCmdAlter" )
+   INT32 catCatalogueManager::processCmdAlter( const CHAR *pQuery,
+                                               rtnContextBuf &ctxBuf )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_CATALOGMGR_ALTER ) ;
+      _rtnAlterJob job ;
+      try
+      {
+         rc = job.init( BSONObj( pQuery ) ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to init runner:%d", rc ) ;
+            goto error ;
+         }
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG( PDERROR, "unexpected error happened:%s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+   done:
+      PD_TRACE_EXITRC( SDB_CATALOGMGR_ALTER, rc ) ;
+      return rc ;
+   error:
       goto done ;
    }
 
