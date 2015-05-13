@@ -3,6 +3,7 @@ function addMaster()
     var address = $( '#address' ).val() ;
     var masterPort = $( '#mport' ).val() ;
     var webPort = $( '#wport' ).val() ;
+    $( '#address' ).val( '' ) ;
     parent.sdbjs.addMaster( address, masterPort, webPort ) ;
 }
         

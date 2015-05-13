@@ -294,3 +294,42 @@ function getUrlParam( key )
 	var r = window.location.search.substr(1).match(reg);
 	if (r != null) return decodeURI(r[2]); return null;
 }
+
+function parseJsons( str )
+{
+	var json_array = [] ;
+	var i = 0, len = str.length ;
+	var char, level, isEsc, isString, start, end, subStr, json ;
+	while( i < len )
+	{
+		while( i < len ){	char = str.charAt( i ) ;	if( char === '{' ){	break ;	}	++i ;	}
+		level = 0, isEsc = false, isString = false, start = i ;
+		while( i < len )
+		{
+			char = str.charAt( i ) ;
+			if( isEsc ){	isEsc = false ;	}
+			else
+			{
+				if( ( char === '{' || char === '[' ) && isString === false ){	++level ;	}
+				else if( ( char === '}' || char === ']' ) && isString === false )
+				{
+					--level ;
+					if( level === 0 )
+					{
+						++i ;
+						end = i ;
+						subStr = str.substring( start, end ) ;
+						//try{	json = eval( '(' + subStr + ')' ) ;	json_array.push( json ) ;	}catch(e){}
+						json = JSON.parse( subStr ) ;
+						json_array.push( json ) ;
+						break ;
+					}
+				}
+				else if( char === '"' ){	isString = !isString ;	}
+				else if( char === '\\' ){	isEsc = true ;	}
+			}
+			++i ;
+		}
+	}
+	return json_array ;
+}

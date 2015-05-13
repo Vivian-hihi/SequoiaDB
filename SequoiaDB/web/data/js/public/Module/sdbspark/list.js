@@ -1,6 +1,14 @@
 var sdbjs = {
 	_grid: null,
     _data: [],
+    getMasterList: function(){
+        var obj = this ;
+        var newData = [] ;
+        $.each( obj._data, function( key, value ){
+            newData.push( { HostName: value['address'], MasterPort: value['masterPort'], MasterWebuiPort: value['webPort'] } ) ;
+        } ) ;
+        return newData ;
+    },
 	resize: function(){
 		var obj = this ;
 		var height = $( window ).height() - 50 ;

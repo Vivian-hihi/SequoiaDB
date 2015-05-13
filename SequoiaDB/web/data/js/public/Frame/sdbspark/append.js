@@ -2,6 +2,10 @@ var sdbjs = {
 	_layout: null,
     _left: null,
     _right: null,
+    getMasterList: function(){
+        var obj = this ;
+        return obj._right.getIframeObj().sdbjs.getMasterList() ;
+    },
     addMaster: function( address, masterPort, webPort ){
         var obj = this ;
         obj._right.getIframeObj().sdbjs.addMaster( address, masterPort, webPort ) ;

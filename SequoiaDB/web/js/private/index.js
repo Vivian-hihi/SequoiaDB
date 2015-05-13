@@ -176,9 +176,11 @@ function appendBusiness( clusterID )
 	var businessType = $( '#businessType_ap' ).val() ;
     if( !checkStrName( businessName ) )
 	{
-		showModalError( 'addBusinessFootAlert', _languagePack['error']['web']['create'][5] ) ;//'业务名格式错误，业务名只能由数字字母下划线组成，并且长度在 1 - 255 个字符内.'
+		showModalError( 'appendBusinessFootAlert', _languagePack['error']['web']['create'][5] ) ;//'业务名格式错误，业务名只能由数字字母下划线组成，并且长度在 1 - 255 个字符内.'
 		return;
 	}
+    var SdbSessionID = sdbjs.fun.getData( 'SdbSessionID' ) ;
+    window.location = './data/appendspark.html?businessName=' + encodeURIComponent( businessName ) + '&businessType=' + encodeURIComponent( businessType ) + '&clusterName=' + encodeURIComponent( _clusterList[clusterID]['ClusterName'] ) + '&SdbSessionID=' + encodeURIComponent( SdbSessionID ) ;
 }
 
 //添加业务
