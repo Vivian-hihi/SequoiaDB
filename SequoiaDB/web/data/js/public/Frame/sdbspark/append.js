@@ -1,5 +1,11 @@
 var sdbjs = {
 	_layout: null,
+    _left: null,
+    _right: null,
+    addMaster: function( address, masterPort, webPort ){
+        var obj = this ;
+        obj._right.getIframeObj().sdbjs.addMaster( address, masterPort, webPort ) ;
+    },
 	resize: function(){
 		var obj = this ;
 		obj._layout._onResize() ;
@@ -25,9 +31,9 @@ var sdbjs = {
 		//创建布局
 		obj._layout = $( '#layout' ).ligerLayout( { leftWidth: 400, allowLeftCollapse: true, allowLeftResize: true, heightDiff: -5 } ) ;
 		//加载控制面板
-		var csList = $( '#operatePanel' ).ligerSdbIframe( { url: M( 'sdbspark/operate.html' ) } ) ;
+		obj._left = $( '#operatePanel' ).ligerSdbIframe( { url: M( 'sdbspark/operate.html' ) } ) ;
         //加载master表格
-        var csList = $( '#masterList' ).ligerSdbIframe( { url: M( '' ) } ) ;
+        obj._right = $( '#masterList' ).ligerSdbIframe( { url: M( 'sdbspark/list.html' ) } ) ;
 		obj.resize() ;
 	},
 	synData: function(){

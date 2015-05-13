@@ -297,6 +297,10 @@ $.extend( $.ligerui.controls.Grid.prototype, {
 		{
 			width -= 22 ;
 		}
+        if( p.rownumbers == true )
+        {
+            width -= g.gridview1.width() ;
+        }
 		$.each( p.columns, function( index, column ){
 			var curWidth = 0 ;
 			if( typeof( column['width'] ) == 'string' && column['width'].indexOf( '%' ) > 0 && index + 1 == columnsLen )
@@ -331,5 +335,4 @@ $.extend( $.ligerui.controls.Grid.prototype, {
 		return g.gridbody.height() < inner.height() ;
 	},
 } ) ;
-
 	

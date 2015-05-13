@@ -13,20 +13,20 @@
                     <tr>
                         <td style="width: 80px;">IP / HostName:</td>
                         <td style="width: 314px;">
-                            <textarea class="form-control" id="hostSearchAddress" rows="3"></textarea>
+                            <textarea class="form-control" id="address" rows="3"></textarea>
                         </td>
                     </tr>
                     <tr>
                         <td style="width: 80px;">Master Port:</td>
-                        <td><input class="form-control" type="text" id="hostSearchUser" value="root" disabled=""></td>
+                        <td><input class="form-control" type="text" id="mport"></td>
                     </tr>
                     <tr>
                         <td style="width: 80px;">Web Port:</td>
-                        <td><input class="form-control" type="password" id="hostSearchPasswd"></td>
+                        <td><input class="form-control" type="password" id="wport"></td>
                     </tr>
                     <tr>
                         <td colspan="2" style="text-align: right;">
-                            <button class="ext-btn ext-btn-primary" onclick="searchHostList()">添加</button>
+                            <button class="ext-btn ext-btn-primary" onclick="addMaster()">添加</button>
                         </td>
                     </tr>
                 </tbody>
