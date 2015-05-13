@@ -8013,6 +8013,7 @@
         onToPrev: null,                      //上一页，可以通过return false来阻止操作
         onToNext: null,                      //下一页，可以通过return false来阻止操作
         onToLast: null,                      //最后一页，可以通过return false来阻止操作
+        onEndChangePage: null,                  //翻页结束后的事件
         onAfterAddRow: null,                     //增加行后事件
         onBeforeEdit: null,                      //编辑前事件
         onBeforeSubmitEdit: null,               //验证编辑器结果是否通过
@@ -8173,6 +8174,7 @@
         {
             $.ligerui.controls.Grid.base._init.call(this);
             var g = this, p = this.options;
+            g.onEndChangePage = p.onEndChangePage ;
             p.dataType = p.url ? "server" : "local";
             if (p.dataType == "local")
             {
@@ -12267,6 +12269,7 @@
                         return false;
                     g.loadData(p.where);
                 }
+                g.onEndChangePage && g.onEndChangePage() ;
             }
         },
         select: function (rowParm)

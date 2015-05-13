@@ -35,7 +35,11 @@ var sdbjs = {
                                               isScroll: true,
                                               height: 'auto',
                                               rownumbers: true,
-                                              fixedCellHeight: false } ) ;
+                                              fixedCellHeight: false,
+                                              onEndChangePage: function(){
+                                                  var height = $( window ).height() - 50 ;
+                                                  obj._grid.resize( height ) ;
+                                              } } ) ;
 		obj.resize() ;
 	},
 	synData: function(){
