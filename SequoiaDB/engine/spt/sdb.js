@@ -322,9 +322,9 @@ SdbQuery.prototype.update = function( rule, returnNew ) {
    }
 
    var modify = {};
-   modify.op = "update";
-   modify.update = rule;
-   modify.returnnew = (returnNew != undefined) ? returnNew : false;
+   modify.OP = "update";
+   modify.Update = rule;
+   modify.ReturnNew = (returnNew != undefined) ? returnNew : false;
    this._hint.$Modify = modify;
 
    return this;
@@ -339,8 +339,8 @@ SdbQuery.prototype.remove = function() {
    }
 
    var modify = {};
-   modify.op = "remove";
-   modify.remove = true;
+   modify.OP = "remove";
+   modify.Remove = true;
    this._hint.$Modify = modify;
 
    return this;
