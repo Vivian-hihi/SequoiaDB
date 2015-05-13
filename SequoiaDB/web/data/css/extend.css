@@ -85,30 +85,51 @@ body{ margin:0; padding:0; font-size:12px; font-family:Verdana,Georgia,宋体; c
 .ext-modal > .foot { border-top:#E5E5E5 solid 1px; min-height: 40px; max-height: 75px; text-align:right; padding:10px 15px 10px 15px; }
 
 /* 按钮 */
-.btn { cursor:pointer; border-radius:5px; height:35px; padding:0 10px 0 10px; *padding:0 5px 0 5px; margin:0px; }
-.btn-lg{ height:28px; padding:0 5px 0 5px; *padding:0; *height:22px; }
-.btn-mg{ height:30px; padding:0 5px 0 5px; *padding:0; *height:24px; }
-.btn:active { -webkit-box-shadow:inset 0 3px 5px rgba(0, 0, 0, 0.125); box-shadow:inset 0 3px 5px rgba(0, 0, 0, 0.125); background-image:none; outline:0; }
+.ext-btn { cursor:pointer; border-radius:5px; height:35px; padding:0 10px 0 10px; *padding:0 5px 0 5px; margin:0px; }
+.ext-btn-lg{ height:28px; padding:0 5px 0 5px; *padding:0; *height:22px; }
+.ext-btn-mg{ height:30px; padding:0 5px 0 5px; *padding:0; *height:24px; }
+.ext-btn:active { -webkit-box-shadow:inset 0 3px 5px rgba(0, 0, 0, 0.125); box-shadow:inset 0 3px 5px rgba(0, 0, 0, 0.125); background-image:none; outline:0; }
 /* 默认 */ 
-.btn-default { border:#99CEEB solid 1px; background:#FFF; color:#333; }
-.btn-default:active { border:#99CEEB solid 1px; background:#EBEBEB; }
+.ext-btn-default { border:#99CEEB solid 1px; background:#FFF; color:#333; }
+.ext-btn-default:active { border:#99CEEB solid 1px; background:#EBEBEB; }
 /* 普通 */
-.btn-plain { border:#CCC solid 1px; background:#FFF; color:#333; }
-.btn-plain:active { border:#ADADAD solid 1px; background:#EBEBEB; }
+.ext-btn-plain { border:#CCC solid 1px; background:#FFF; color:#333; }
+.ext-btn-plain:active { border:#ADADAD solid 1px; background:#EBEBEB; }
 /* primary */
-.btn-primary { border:#357EBD solid 1px; background:#428BCA; color:#FFF; }
-.btn-primary:active { border:#285E8E solid 1px; background:#3276B1; }
+.ext-btn-primary { border:#357EBD solid 1px; background:#428BCA; color:#FFF; }
+.ext-btn-primary:active { border:#285E8E solid 1px; background:#3276B1; }
 /* success */
-.btn-success { border:#4AB04A solid 1px; background:#5CB85C; color:#FFF; }
-.btn-success:active { border:#398439 solid 1px; background:#47A447; }
+.ext-btn-success { border:#4AB04A solid 1px; background:#5CB85C; color:#FFF; }
+.ext-btn-success:active { border:#398439 solid 1px; background:#47A447; }
 /* warning */
-.btn-warnings { border:#EEA236 solid 1px; background:#F0AD4E; color:#FFF; }
-.btn-warnings:active { border:#D58512 solid 1px; background:#ED9C28; }
+.ext-btn-warnings { border:#EEA236 solid 1px; background:#F0AD4E; color:#FFF; }
+.ext-btn-warnings:active { border:#D58512 solid 1px; background:#ED9C28; }
 /* danger  */
-.btn-danger { border:#D43F3A solid 1px; background:#D9534F; color:#FFF; }
-.btn-danger:active { border:#AC2925 solid 1px; background:#D2322D; }
+.ext-btn-danger { border:#D43F3A solid 1px; background:#D9534F; color:#FFF; }
+.ext-btn-danger:active { border:#AC2925 solid 1px; background:#D2322D; }
 /* disabled */
-.disabled { background:#EBEBEB; color:#AAA; border:#CCC solid 1px; }
-.disabled:active { border:#ADADAD solid 1px; background:#EBEBEB; border:#CCC solid 1px;
+.ext-disabled { background:#EBEBEB; color:#AAA; border:#CCC solid 1px; }
+.ext-disabled:active { border:#ADADAD solid 1px; background:#EBEBEB; border:#CCC solid 1px;
 -webkit-box-shadow:inset 0 0 0 rgba(0, 0, 0, 0.125); box-shadow:inset 0 0 0 rgba(0, 0, 0, 0.125); }
 
+/* 输入框 */
+.form-control { width:100%; margin:0 0 0 0; font-size:100%; padding:4px 10px 4px 10px; *padding:4px 0 4px 0; *margin:0 -1px 0 -1px; border-radius:5px; border:1px solid #99CEEB; box-sizing:border-box; -moz-box-sizing:border-box; -webkit-box-sizing:border-box; word-break:break-all; font-weight:100; font-family:sans-serif; resize:none; }
+
+/* 表格 */
+.ext-table{ width:100%; border-collapse:collapse; word-wrap:break-word; }
+.ext-table th {  }
+.ext-table td {  }
+/* 紧凑表格 */
+.ext-compact th{ padding:1px; }
+.ext-compact td{ padding:1px; }
+/* 宽松表格 */
+.ext-loosen th{ padding:5px; }
+.ext-loosen td{ padding:5px; }
+/* 外边框表格 */
+.ext-simple{ border:#ddd solid 1px; border-bottom-width:0px; }
+.ext-simple th{ border-bottom:1px solid #ddd; }
+.ext-simple td{ border-bottom:1px solid #ddd; }
+/* 内外边框表格 */
+.ext-border{ border:#ddd solid 1px; }
+.ext-border th{ border:1px solid #ddd; }
+.ext-border td{ border:1px solid #ddd; }
