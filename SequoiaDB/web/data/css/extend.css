@@ -133,3 +133,6 @@ body{ margin:0; padding:0; font-size:12px; font-family:Verdana,Georgia,宋体; c
 .ext-border{ border:#ddd solid 1px; }
 .ext-border th{ border:1px solid #ddd; }
 .ext-border td{ border:1px solid #ddd; }
+/* 底部工具栏 */
+.l-bar-group {line-height: 26px;}
+.l-bar-btnnext , .l-bar-btnprev{margin-top:3px;}
