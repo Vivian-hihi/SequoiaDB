@@ -177,6 +177,21 @@
 			}
 			g.set( p ) ;
 		},
+        setUrl: function( url )
+        {
+            var g = this, p = this.options ;
+			if( url )
+			{
+                p.url = url ;
+				var content = g.SdbIframe.find( ".l-panel-content:first" ) ;
+				var iframeloading = $( ".l-panel-loading:first", content ) ;
+				iframeloading.show();
+				g.jiframe.attr("src", p.url).bind('load.panel', function (){
+					iframeloading.hide();
+					g.trigger('loaded');
+				} ) ;
+			}
+        },
 		reload: function()
 		{
 			var g = this, p = this.options ;
