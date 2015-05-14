@@ -2505,11 +2505,37 @@ namespace engine
          rc = SDB_SYS ;
          goto error ;
       }
+
+      switch ( job.getType() )
+      {
+      case RTN_ALTER_TYPE_CL :
+         rc = _processAlterCL( &job, ctxBuf ) ;
+         break ;
+      default:
+         rc = SDB_INVALIDARG ;
+         break ;
+      } ;
+
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to alter:%d", rc ) ;
+         goto error ;
+      }
    done:
       PD_TRACE_EXITRC( SDB_CATALOGMGR_ALTER, rc ) ;
       return rc ;
    error:
       goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR__PROCESSALTERCL, "catCatalogueManager::_processAlterCL" )
+   INT32 catCatalogueManager::_processAlterCL( const _rtnAlterJob *job,
+                                               rtnContextBuf &buf)
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_CATALOGMGR__PROCESSALTERCL ) ;
+      PD_TRACE_EXITRC( SDB_CATALOGMGR__PROCESSALTERCL, rc ) ;
+      return rc ;
    }
 
    static INT32 _findGroupWillBeRemoved( const map<string, UINT32> &groupsInDomain,

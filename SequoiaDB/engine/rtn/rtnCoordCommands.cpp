@@ -8469,8 +8469,6 @@ namespace engine
       PD_TRACE_ENTRY( CMD_RTNCOCMDALTER_EXEC ) ;
       _rtnAlterJob job ;
       CHAR *query = NULL ;
-      CoordGroupList gpList ;
-      vector<BSONObj> replyFromCata ;
 
       rc = msgExtractQuery( (CHAR*)pMsg, NULL, NULL,
                             NULL, NULL, &query,
@@ -8497,36 +8495,20 @@ namespace engine
          goto error ;
       }
 
-      pMsg->opCode = MSG_CAT_ALTER_REQ ;
-      rc = executeOnCataGroup( pMsg, cb, &gpList, &replyFromCata ) ;
+      switch ( job.getType() )
+      {
+      case RTN_ALTER_TYPE_CL :
+         rc = _alterCollection( &job, pMsg, cb ) ;
+         break ;
+      default:
+         rc = SDB_INVALIDARG ;
+         break ;
+      } ;
+
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to execute on catalog:%d", rc ) ;
+         PD_LOG( PDERROR, "failed to alter:%d", rc ) ;
          goto error ;
-      }
-
-      (( MsgHeader * )pMsg)->opCode = MSG_BS_QUERY_REQ ;
-      if ( RTN_ALTER_TYPE_CL == job.getType() )
-      {
-         rc = executeOnCL( pMsg, cb,
-                           job.getName(),
-                           TRUE,
-                           NULL ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDERROR, "failed to execute on cl:%s, rc:%d",
-                    job.getName(), rc ) ;
-            goto error ;
-         }
-      }
-      else
-      {
-         rc = _doSthWithReply( pMsg, &job, replyFromCata, cb ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDERROR, "failed to handle reply:%d", rc ) ;
-            goto error ;
-         }
       }
    done:
       PD_TRACE_EXITRC( CMD_RTNCOCMDALTER_EXEC, rc ) ;
@@ -8535,12 +8517,37 @@ namespace engine
       goto done ;
    }
 
-   INT32 rtnCoordCMDAlter::_doSthWithReply( MsgHeader *pMsg,
-                                            const _rtnAlterJob *job,
-                                            const vector<BSONObj> &reply,
-                                            pmdEDUCB *cb )
+   // PD_TRACE_DECLARE_FUNCTION( CMD_RTNCOCMDALTER__ALTERCL, "rtnCoordCMDAlter::_alterCollection" )
+   INT32 rtnCoordCMDAlter::_alterCollection( const _rtnAlterJob *job,
+                                             MsgHeader *pMsg,
+                                             pmdEDUCB *cb )
    {
-      return SDB_OK ;
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( CMD_RTNCOCMDALTER__ALTERCL ) ;
+      pMsg->opCode = MSG_CAT_ALTER_REQ ;
+      rc = executeOnCataGroup( pMsg, cb, TRUE ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to execute on catalog:%d", rc ) ;
+         goto error ;
+      }
+
+      pMsg->opCode = MSG_BS_QUERY_REQ ;
+      rc = executeOnCL( pMsg, cb,
+                        job->getName(),
+                        TRUE,
+                        NULL ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to execute on cl:%s, rc:%d",
+                 job->getName(), rc ) ;
+         goto error ;
+      }
+   done:
+      PD_TRACE_EXITRC( CMD_RTNCOCMDALTER__ALTERCL, rc ) ;
+      return rc ;
+   error:
+      goto done ;
    }
 }
 

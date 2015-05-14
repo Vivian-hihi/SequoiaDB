@@ -1330,10 +1330,9 @@ namespace engine
                              rtnContextBuf *buf ) ;
 
    private:
-      INT32 _doSthWithReply( MsgHeader *pMsg,
-                             const _rtnAlterJob *job,
-                             const vector<BSONObj> &reply,
-                             pmdEDUCB *cb ) ;
+      INT32 _alterCollection( const _rtnAlterJob *job,
+                              MsgHeader *pMsg,
+                              pmdEDUCB *cb ) ;
    } ;
 
 }

@@ -49,6 +49,7 @@ namespace engine
    class _dpsLogWrapper ;
    class sdbCatalogueCB ;
    class _SDB_DMSCB ;
+   class _rtnAlterJob ;
 
    // create collection assign group type
    enum CAT_ASSIGNGROUP_TYPE
@@ -266,6 +267,9 @@ namespace engine
       INT32 _buildAlterGroups( const BSONObj &domain,
                                const BSONElement &ele,
                                BSONObjBuilder &builder ) ;
+
+      INT32 _processAlterCL( const _rtnAlterJob *job,
+                             rtnContextBuf &buf) ;
    private:
       sdbCatalogueCB       *_pCatCB;
       _SDB_DMSCB           *_pDmsCB;

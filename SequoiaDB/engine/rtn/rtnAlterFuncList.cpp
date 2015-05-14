@@ -90,7 +90,9 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       FUNC_LST::const_iterator itrFunc ;
-      rtnAlterFuncKey key( type, name ) ;
+      string lower( name ) ;
+      boost::algorithm::to_lower( lower ) ;
+      rtnAlterFuncKey key( type, lower.c_str() ) ;
 
       if ( !_inited )
       {
