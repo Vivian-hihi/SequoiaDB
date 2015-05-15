@@ -75,13 +75,13 @@ collectionspace" OSS_NEWLINE,
       if ( rc )
       {
          /* if we failed to create new collectionspace */
-         printf ( "Failed to create collection space %s, rc = %d" OSS_NEWLINE,
+         printf ( "Failed to create collection space %s, rc = %d"OSS_NEWLINE,
                   pCSName, rc ) ;
       }
       else
       {
          /* if we successfully created new collectionspace */
-         printf ( "Collectionspace %s has been created" OSS_NEWLINE,
+         printf ( "Collectionspace %s has been created"OSS_NEWLINE,
                   pCSName ) ;
       }
    }
@@ -106,11 +106,11 @@ INT32 getCollection ( sdbConnectionHandle connection,
       CHAR *pTmp = NULL ;
       if ( !pStr )
       {
-         printf ( "Failed to allocate memory for new string" OSS_NEWLINE ) ;
+         printf ( "Error: failed to allocate memory for new string"OSS_NEWLINE ) ;
          return SDB_OOM ;
       }
       /* if the collection does not exist, we are going to create one */
-      printf ( "Collection %s does not exist, creating a new collection"
+      printf ( "Info: collection %s does not exist, creating a new collection"
                OSS_NEWLINE,
                pCollectionFullName ) ;
       /* get collection space first */
@@ -125,7 +125,7 @@ INT32 getCollection ( sdbConnectionHandle connection,
       rc = getCollectionSpace ( connection, pStr, &collectionSpace ) ;
       if ( rc )
       {
-         printf ( "Failed to get collectionspace %s, rc = %d" OSS_NEWLINE,
+         printf ( "Error: failed to get collectionspace %s, rc = %d"OSS_NEWLINE,
                   pStr, rc ) ;
       }
       else
@@ -135,13 +135,13 @@ INT32 getCollection ( sdbConnectionHandle connection,
          if ( rc )
          {
            /* if we failed to create collection, we are going to display rc */
-            printf ( "Failed to create new collection %s, rc = %d" OSS_NEWLINE,
+            printf ( "Error: failed to create new collection %s, rc = %d" OSS_NEWLINE,
                      pCollectionFullName, rc ) ;
          }
          else
          {
             /* if we successfully created collection */
-            printf ( "Successfully created new collection %s" OSS_NEWLINE,
+            printf ( "Info: successfully created new collection %s" OSS_NEWLINE,
                      pCollectionFullName ) ;
          }
       }
@@ -709,4 +709,9 @@ BOOLEAN isCluster( sdbConnectionHandle db )
       return FALSE ;
    }
    return TRUE ;
+}
+
+INT32 gettid()
+{ 
+   return (INT32)syscall(SYS_gettid) ;
 }

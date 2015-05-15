@@ -5,7 +5,9 @@
  ******************************************************************************/
 #ifndef COMMON_H__
 #define COMMON_H__
+#include <sys/syscall.h>
 #include "client.h"
+
 
 
 //#define HOST                  "192.168.20.192"
@@ -163,6 +165,8 @@ long getRecordNum ( sdbCursorHandle cursor ) ;
 void getUniqueName( const CHAR *modName, CHAR getName[] ) ;
 
 BOOLEAN isCluster( sdbConnectionHandle db ) ;
+
+INT32 gettid() ;
 
 SDB_EXTERN_C_END
 

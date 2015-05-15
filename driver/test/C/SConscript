@@ -63,6 +63,11 @@ testFiles13 = [
         "rg.cpp"
       ]
 
+testFiles14 = [
+        "../../testcommon.c",
+        "mutex.cpp"
+      ]
+
 
 #Google Test
 gtestall = env.StaticLibrary('gtest', gtestFiles)
@@ -88,9 +93,10 @@ domain = env.Program("domain", [testFiles10, gtestMainObj])
 lob = env.Program("lob", [testFiles11, gtestMainObj])
 selector = env.Program("selector", [testFiles12, gtestMainObj])
 rg = env.Program("rg", [testFiles13, gtestMainObj])
+mutex = env.Program("mutex", [testFiles14, gtestMainObj])
 
 #env.Install( '#/build_test', [collection,collectionspace,cursor,sdb,snapshot,concurrent,
-#                              shard, debug, cbson, domain, lob, selector, rg] )
+#                              shard, debug, cbson, domain, lob, selector, mutex, rg] )
                               
 env.Install( '#/build_test', [collection,collectionspace,cursor,sdb,snapshot,concurrent,
-                              shard, debug, cbson, domain, lob, selector] )
+                              shard, debug, cbson, domain, lob, selector, mutex] )
