@@ -540,7 +540,6 @@ namespace engine
       static BOOLEAN validateKey ( const BSONObj &obj, BOOLEAN isSys = FALSE )
       {
          INT32 fieldCount = 0 ;
-         BOOLEAN idIndex = isSys ;
          BOOLEAN isUniq = FALSE ;
          BOOLEAN enforced = FALSE ;
          // make sure the index def is not too large
@@ -567,21 +566,15 @@ namespace engine
             return FALSE ;
          }
 
-         // if this is id index
-         if ( !idIndex &&
-              isSysIndexPattern ( obj.getObjectField( IXM_KEY_FIELD ) ))
-         {
-            idIndex = TRUE ;
-         }
          if ( ossStrlen ( obj.getStringField( IXM_NAME_FIELD )) == 0 )
          {
             // if not have string name field, return FALSE
             return FALSE ;
          }
          fieldCount ++ ;
-         // validate index name, only idIndex can start with $
+         // validate index name, only sys index can start with $
          if ( SDB_OK != dmsCheckIndexName ( obj.getStringField(IXM_NAME_FIELD),
-                                            idIndex ) )
+                                            isSys ) )
          {
             return FALSE ;
          }
