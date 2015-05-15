@@ -542,7 +542,7 @@ namespace engine
          INT32 fieldCount = 0 ;
          BOOLEAN isUniq = FALSE ;
          BOOLEAN enforced = FALSE ;
-         // make sure the index def is not too large
+         // make sure the index def is not too large 
          if ( obj.objsize() + sizeof(_IDToInsert) +
               IXM_INDEX_CB_EXTENT_METADATA_SIZE >= IXM_PAGE_SIZE4K )
          {
