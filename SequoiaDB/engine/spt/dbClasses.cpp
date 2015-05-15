@@ -2698,7 +2698,7 @@ static JSBool collection_crt_id_index ( JSContext *cx , uintN argc , jsval *vp )
       JS_GetPrivate ( cx , JS_THIS_OBJECT ( cx , vp ) ) ;
    REPORT ( clHandle , "SdbCollection.createIdIndex(): no collection handle" ) ;
 
-   rc = sdbCeateIdIndex( *clHandle ) ;
+   rc = sdbCreateIdIndex( *clHandle ) ;
    REPORT_RC ( SDB_OK == rc,
                "SdbCollection.createIdIndex()" , rc ) ;
 

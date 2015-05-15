@@ -17,6 +17,7 @@
 #include "network.h"
 #include "ossUtil.h"
 #include "ossMem.h"
+#include "oss.h"
 #if defined (_LINUX)
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -47,6 +48,11 @@ struct Socket
 
 #if defined (_WINDOWS)
 static BOOLEAN sockInitialized = FALSE ;
+static ossMutex winSockInitMutex ;
+static void _winSockInit()
+{
+   ossMutexInit( &winSockInitMutex ) ;
+}
 #endif
 
 static INT32 _disableNagle( SOCKET sock ) ;
@@ -67,6 +73,10 @@ INT32 clientConnect ( const CHAR *pHostName,
    Socket* s = NULL ;
    SOCKET rawSocket = -1 ;
    UINT16 port ;
+#if defined (_WINDOWS)
+   static ossOnce initOnce = OSS_ONCE_INIT;
+#endif
+
 
    if ( !sock )
    {
@@ -75,16 +85,23 @@ INT32 clientConnect ( const CHAR *pHostName,
    }
 
 #if defined (_WINDOWS)
-   if ( !sockInitialized )
+   // init socket for windows
+   ossOnceRun( &initOnce, _winSockInit );
+   if ( FALSE == sockInitialized )
    {
-      WSADATA data = {0} ;
-      rc = WSAStartup ( MAKEWORD ( 2,2 ), &data ) ;
-      if ( INVALID_SOCKET == rc )
+      ossMutexLock( &winSockInitMutex ) ;
+      if ( FALSE == sockInitialized )
       {
-         rc = SDB_NETWORK ;
-         goto error ;
+         WSADATA data = {0} ;
+         rc = WSAStartup ( MAKEWORD ( 2,2 ), &data ) ;
+         if ( INVALID_SOCKET == rc )
+         {
+            rc = SDB_NETWORK ;
+            goto error ;
+         }
+         sockInitialized = TRUE ;
       }
-      sockInitialized = TRUE ;
+      ossMutexUnlock( &winSockInitMutex ) ;
    }
 #endif
 

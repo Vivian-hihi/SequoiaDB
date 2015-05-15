@@ -986,6 +986,28 @@ SDB_EXPORT INT32 sdbDropCollection ( sdbCSHandle cHandle,
 SDB_EXPORT INT32 sdbGetCSName ( sdbCSHandle cHandle,
                                 CHAR **ppCSName ) ;
 
+/** \fn INT32 sdbGetCLName ( sdbCollectionHandle cHandle,
+                             CHAR **ppCLName )
+    \brief Get the specified collection name
+    \param [in] cHandle The collection handle
+    \param [out] ppCLName The pointer to collection name
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+SDB_EXPORT INT32 sdbGetCLName ( sdbCSHandle cHandle,
+                                CHAR **ppCLName ) ;
+
+/** \fn INT32 sdbGetCLFullName ( sdbCollectionHandle cHandle,
+                                 CHAR **ppCLFullName )
+    \brief Get the specified collection full name
+    \param [in] cHandle The collection handle
+    \param [out] ppCLFullName The pointer to collection full name
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+SDB_EXPORT INT32 sdbGetCLFullName ( sdbCSHandle cHandle,
+                                    CHAR **ppCLFullName ) ;
+
 /** \fn INT32 sdbSplitCollection ( sdbCollectionHandle cHandle,
                                    const CHAR *pSourceShard,
                                    const CHAR *pTargetShard,
@@ -2245,13 +2267,13 @@ SDB_EXPORT INT32 sdbMultiAlter( sdbConnectionHandle cHandle,
 
 
 /*
-\fn INT32 sdbCeateIdIndex( sdbCollectionHandle cHandle )
+\fn INT32 sdbCreateIdIndex( sdbCollectionHandle cHandle )
     \brief Create $id index on collection
     \param [in] cHandle The collection handle
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
-SDB_EXPORT INT32 sdbCeateIdIndex( sdbCollectionHandle cHandle ) ;
+SDB_EXPORT INT32 sdbCreateIdIndex( sdbCollectionHandle cHandle ) ;
 
 /*
 \fn INT32 sdbDropIdIndex( sdbCollectionHandle cHandle )

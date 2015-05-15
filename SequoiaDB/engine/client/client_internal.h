@@ -20,6 +20,7 @@
 #include "core.h"
 #include "client.h"
 #include "network.h"
+#include "oss.h"
 #define SDB_HANDLE_TYPE_INVALID      0
 #define SDB_HANDLE_TYPE_CONNECTION   1
 #define SDB_HANDLE_TYPE_COLLECTION   2
@@ -51,6 +52,7 @@ struct _sdbConnectionStruct
    Node *_sockets ;
 
    UINT64 reserveSpace1 ;
+   ossMutex _sockMutex ;
 } ;
 typedef struct _sdbConnectionStruct sdbConnectionStruct ;
 
