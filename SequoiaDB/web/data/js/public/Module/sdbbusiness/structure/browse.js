@@ -17,7 +17,7 @@ var sdbjs = {
 		var height = $( window ).height() ;
 		var columns = [ { name: 'id',	display: '序号',	width: '10%', heightAlign:'left', align:'left' },
                        { name: 'user',	display: '用户',	width: '30%', heightAlign:'left', align:'left' },
-							 { name: 'name', display: '名称', width: '60%', heightAlign:'left', align:'left' }]
+							 { name: 'name', display: '名称', width: '60%', heightAlign:'left', align:'left' }];
 		var griddata = [ { id: 'dbpath', name: '/opt/sequoiadb/database/standalone' },
 							  { name: '11810', user:'afilesd' }, 
 							  { id: 'diaglevel', name: '3', user:'ad' }, 
@@ -94,28 +94,28 @@ var sdbjs = {
 							  { id: 'numpreload', name: '0' , user:'ad'}, 
 							  { id: 'maxprefpool', name: '200', user:'ad' }];
 		
-		obj._grid = $( '#maingrid1' ).ligerGrid( { columns: columns,
-                                                  data: { Rows: griddata },
-												 pageSize:30, usePager:true,
-                                                   isScroll: true,
-                                                  height: height } ) ;
+		obj._grid = $( '#maingrid1' ).ligerGrid( { 	columns: columns,
+												  	data: { Rows: griddata }, 
+			 										pageSize:30,  
+			 										height: height,
+			 										onEndChangePage: function(){
+														obj.resize() ; 
+													} } ) ;	
 		obj.resize() ;
-		$( window ).click(function(){
-					sdbjs.resize() ;
-					obj.resize();
-			
-				});
 	},
 	synData: function(){
 		return ;
 	}
 } ;
+$(document).click(function()){
+				  }
 
 $(document).ready( function(){
 	sdbjs.init() ;
 	if( sdbjs.check() ){
 		sdbjs.render() ;
 		sdbjs.synData() ;
+		
 	}
 } ) ;
 

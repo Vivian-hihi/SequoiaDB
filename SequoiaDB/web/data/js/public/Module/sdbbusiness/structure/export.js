@@ -16,7 +16,7 @@ var sdbjs = {
 		var obj = this ;
 		var height = $( window ).height() ;
 		var columns = [ { name: 'id',	display: '序号',	width: '30%', heightAlign:'left', align:'left' },
-							 { name: 'name', display: '名称', width: '70%', heightAlign:'left', align:'left' }]
+							 { name: 'name', display: '名称', width: '70%', heightAlign:'left', align:'left' }];
 		var griddata = [ { id: 'dbpath', name: '/opt/sequoiadb/database/standalone' },
 							  { id: 'svcname', name: '11810' }, 
 							  { id: 'diaglevel', name: '3' }, 
@@ -90,15 +90,14 @@ var sdbjs = {
 							  { id: 'numpreload', name: '0' }, 
 							  { id: 'maxprefpool', name: '200' }];
 		
-		obj._grid = $( '#maingrid' ).ligerGrid( { columns: columns,
-                                                  data: { Rows: griddata },
-                                                  pageSize:30,
-                                                  isScroll: true,
-                                                  height: height } ) ;
+		obj._grid = $( '#maingrid1' ).ligerGrid( { 	columns: columns,
+												  	data: { Rows: griddata }, 
+			 										pageSize:30,  
+			 										height: height,
+			 										onEndChangePage: function(){
+														obj.resize() ; 
+													} } ) ;	
 		obj.resize() ;
-		$( window ).click(function(){
-					obj.resize();
-				});
 	},
 	synData: function(){
 		return ;
