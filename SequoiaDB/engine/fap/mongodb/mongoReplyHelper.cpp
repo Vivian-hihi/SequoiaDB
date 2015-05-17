@@ -46,7 +46,7 @@ namespace fap
                                   engine::rtnContextBuf &buff )
       {
          bson::BSONObjBuilder bob ;
-         bob.append( "ismaster", FALSE ) ;
+         bob.append( "ismaster", TRUE ) ;
          bob.append("msg", "isdbgrid");
          // build
          // config at last
@@ -80,6 +80,7 @@ namespace fap
          bob.append( "ok", 1.0 ) ;
          bob.append( "code", rc ) ;
          bob.append( "errmsg", err.getStringField( OP_ERRDESP_FIELD) ) ;
+         bob.append( "$err", err.getStringField( OP_ERRDESP_FIELD) ) ;
          buff = engine::rtnContextBuf( bob.obj() ) ;
       }
 
@@ -92,6 +93,7 @@ namespace fap
          bob.append( "ok", 0 ) ;
          bob.append( "code", 59 ) ;
          bob.append( "errmsg", err.c_str() ) ;
+         bob.append( "$err", err.c_str() ) ;
          buff = engine::rtnContextBuf( bob.obj() ) ;
       }
 
