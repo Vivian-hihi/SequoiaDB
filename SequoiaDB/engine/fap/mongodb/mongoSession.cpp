@@ -468,7 +468,10 @@ INT32 _mongoSession::_reply( MsgOpReply *replyHeader,
                //pBody = objToSend.objdata() ;
                //reply.header.len = sizeof( mongoMsgReply ) + objToSend.objsize() ;
             }
-            _outBuffer.write( bsonBody ) ;
+            else
+            {
+               _outBuffer.write( bsonBody ) ;
+            }
          }
          else
          {
