@@ -415,7 +415,16 @@ INT32 _mongoSession::_reply( MsgOpReply *replyHeader,
    // _version
    reply.header._version = 0 ;
    // reservedFlag
-   reply.header.reservedFlags = 0 ;
+   if ( SDB_DMS_EOC == replyHeader->flags )
+   {
+      // told peer to close cursor
+      // 2 == ResultFlag_Errset in mongodb
+      reply.header.reservedFlags = 2;
+   }
+   else
+   {
+      reply.header.reservedFlags = 0 ;
+   }
    //cursorID
    if ( SDB_OK != replyHeader->flags )
    {
@@ -583,12 +592,13 @@ void _mongoSession::_handleResponse( const INT32 opType,
       bob.append( "n", obj.getIntField( "Total" ) ) ;
       buff = engine::rtnContextBuf( bob.obj() ) ;
       _replyHeader.contextID = -1 ;
+      _replyHeader.startFrom = 0 ;
    }
 
    if ( SDB_DMS_EOC == _replyHeader.flags )
    {
-      buff = engine::rtnContextBuf() ;
-      _replyHeader.numReturned = 0 ;
+      //buff = engine::rtnContextBuf() ;
+      _replyHeader.numReturned = 1 ;
       _replyHeader.contextID = -1 ;
    }
 }
