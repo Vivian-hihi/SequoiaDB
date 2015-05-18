@@ -200,14 +200,6 @@ INT32 _mongoSession::run()
                goto error ;
             }
 
-            // handle commands before dispatched
-            if ( _preProcessMsg( _converter->getParser(),
-                                 _resource, _contextBuff ) )
-            {
-               _pEDUCB->incEventCount() ;
-               goto reply ;
-            }
-
             _pEDUCB->incEventCount() ;
             // activate edu
             if ( SDB_OK != ( rc = pmdEDUMgr->activateEDU( _pEDUCB ) ) )
@@ -215,6 +207,13 @@ INT32 _mongoSession::run()
                PD_LOG( PDERROR, "Session[%s] activate edu failed, rc: %d",
                        sessionName(), rc ) ;
                goto error ;
+            }
+
+            // handle commands before dispatched
+            if ( _preProcessMsg( _converter->getParser(),
+                                 _resource, _contextBuff ) )
+            {
+               goto reply ;
             }
 
             pInMsg = _inBuffer.data() ;
@@ -420,8 +419,8 @@ INT32 _mongoSession::_reply( MsgOpReply *replyHeader,
    if ( SDB_DMS_EOC == replyHeader->flags )
    {
       // told peer to close cursor
-      // 2 == ResultFlag_Errset in mongodb
-      reply.header.reservedFlags = 2;
+      // 64 == QueryOptions_Exhaust in mongodb
+      reply.header.reservedFlags = 64;
    }
    else
    {
