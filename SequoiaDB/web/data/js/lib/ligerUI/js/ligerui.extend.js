@@ -312,6 +312,10 @@ $.extend( $.ligerui.controls.Grid.prototype, {
 		{
 			width -= 22 ;
 		}
+        if( p.checkbox == true )
+        {
+            width -= 8 ;
+        }
         if( p.rownumbers == true )
         {
             width -= g.gridview1.width() ;

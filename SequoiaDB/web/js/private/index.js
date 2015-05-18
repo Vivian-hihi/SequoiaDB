@@ -813,7 +813,7 @@ function loadClusterList()
 				sdbjs.parts.dropDownBox.add( dropNodeName, htmlEncode( _languagePack['index']['clusterOperation'][1] ), true, 'gotoHostList(' + index + ')' ) ;//'主机列表'
 				sdbjs.parts.dropDownBox.add( dropNodeName, '', true ) ;
 				sdbjs.parts.dropDownBox.add( dropNodeName, htmlEncode( _languagePack['index']['clusterOperation'][2] ), true, 'openAddBusinessModal(' + index + ')' ) ;//'添加业务'
-                sdbjs.parts.dropDownBox.add( dropNodeName, htmlEncode( _languagePack['index']['clusterOperation'][6] ), true, 'openAppendBusinessModal(' + index + ')' ) ;//'发现业务'
+                //sdbjs.parts.dropDownBox.add( dropNodeName, htmlEncode( _languagePack['index']['clusterOperation'][6] ), true, 'openAppendBusinessModal(' + index + ')' ) ;//'发现业务'
 				sdbjs.parts.dropDownBox.add( dropNodeName, htmlEncode( _languagePack['index']['clusterOperation'][3] ), true, 'gotoBusinessList(' + index + ')' ) ;//业务列表
 				sdbjs.parts.dropDownBox.add( dropNodeName, '', true ) ;
 				sdbjs.parts.dropDownBox.add( dropNodeName, htmlEncode( _languagePack['index']['clusterOperation'][4] ), true, 'openRemoveCluster(' + index + ')' ) ;//'删除集群'

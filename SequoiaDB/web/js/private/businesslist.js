@@ -163,28 +163,43 @@ function loadBusinessData()
 			}, function( json ){
 				showProcessError( json['detail'] ) ;
 			}, null, businessInfo['BusinessName'] ) ;
-			sdbjs.parts.gridBox.addBody( 'businessInfoGrid', [{ 'text': htmlEncode( businessInfo['BusinessName'] ), 'width': '25%' },
-																			  { 'text': htmlEncode( businessInfo['BusinessType'] ), 'width': '15%' },
-																			  { 'text': htmlEncode( businessInfo['DeployMod'] ), 'width': '15%' },
-																			  { 'text': htmlEncode( user === null ? _languagePack['businesslist']['businessGrid']['auth'][1] : _languagePack['businesslist']['businessGrid']['auth'][0] ), 'width': '10%' },
-																			  { 'text': htmlEncode( user === null ? '' : user ), 'width': '25%' },
-																			  { 'text': function( obj ){
-																				  sdbjs.parts.dropDownBox.create( obj, businessInfo['BusinessName'] + '_dropDown' ) ;
-																				  sdbjs.parts.dropDownBox.update( businessInfo['BusinessName'] + '_dropDown', htmlEncode( _languagePack['businesslist']['businessGrid']['button'][0] ), 'btn-lg' ) ;
-																				  if( user === null )
-																				  {
-																					  sdbjs.parts.dropDownBox.add( businessInfo['BusinessName'] + '_dropDown', htmlEncode( _languagePack['businesslist']['businessGrid']['button'][1] ), true, 'openSetAuthModal(' + index + ')' ) ;
-																					  sdbjs.parts.dropDownBox.add( businessInfo['BusinessName'] + '_dropDown', htmlEncode( _languagePack['businesslist']['businessGrid']['button'][2] ), false, '' ) ;
-																				  }
-																				  else
-																				  {
-																					  sdbjs.parts.dropDownBox.add( businessInfo['BusinessName'] + '_dropDown', htmlEncode( _languagePack['businesslist']['businessGrid']['button'][1] ), false, '' ) ;
-																					  sdbjs.parts.dropDownBox.add( businessInfo['BusinessName'] + '_dropDown', htmlEncode( _languagePack['businesslist']['businessGrid']['button'][2] ), true, 'removeAuth(' + index + ')' ) ;
-																				  }
-																				  sdbjs.parts.dropDownBox.add( businessInfo['BusinessName'] + '_dropDown', '', true, '' ) ;
-																				  sdbjs.parts.dropDownBox.add( businessInfo['BusinessName'] + '_dropDown', htmlEncode( _languagePack['businesslist']['businessGrid']['button'][3] ), true, 'openDelBusinessModal(' + index + ')' ) ;
-																			  }, 'width': '10%' } ] ) ;
-		} ) ;
+            if( businessInfo['BusinessType'] == 'spark' )
+            {
+                var businessName = businessInfo['BusinessName'] ;
+                var SdbSessionID = sdbjs.fun.getData( 'SdbSessionID' ) ;
+                var hrefStr = './data/spark.html?businessName=' + encodeURIComponent( businessName ) + '&SdbSessionID=' + encodeURIComponent( SdbSessionID ) ;
+                sdbjs.parts.gridBox.addBody( 'businessInfoGrid', [{ 'text': '<a class="anostyle" href="' + hrefStr + '">' + htmlEncode( businessInfo['BusinessName'] ) + '</a>', 'width': '25%' },
+                                                                                  { 'text': htmlEncode( businessInfo['BusinessType'] ), 'width': '15%' },
+                                                                                  { 'text': htmlEncode( businessInfo['DeployMod'] ), 'width': '15%' },
+                                                                                  { 'text': '', 'width': '10%' },
+                                                                                  { 'text': '', 'width': '25%' },
+                                                                                  { 'text': '', 'width': '10%' } ] ) ;
+            }
+            else
+            {
+                sdbjs.parts.gridBox.addBody( 'businessInfoGrid', [{ 'text': htmlEncode( businessInfo['BusinessName'] ), 'width': '25%' },
+                                                                                  { 'text': htmlEncode( businessInfo['BusinessType'] ), 'width': '15%' },
+                                                                                  { 'text': htmlEncode( businessInfo['DeployMod'] ), 'width': '15%' },
+                                                                                  { 'text': htmlEncode( user === null ? _languagePack['businesslist']['businessGrid']['auth'][1] : _languagePack['businesslist']['businessGrid']['auth'][0] ), 'width': '10%' },
+                                                                                  { 'text': htmlEncode( user === null ? '' : user ), 'width': '25%' },
+                                                                                  { 'text': function( obj ){
+                                                                                      sdbjs.parts.dropDownBox.create( obj, businessInfo['BusinessName'] + '_dropDown' ) ;
+                                                                                      sdbjs.parts.dropDownBox.update( businessInfo['BusinessName'] + '_dropDown', htmlEncode( _languagePack['businesslist']['businessGrid']['button'][0] ), 'btn-lg' ) ;
+                                                                                      if( user === null )
+                                                                                      {
+                                                                                          sdbjs.parts.dropDownBox.add( businessInfo['BusinessName'] + '_dropDown', htmlEncode( _languagePack['businesslist']['businessGrid']['button'][1] ), true, 'openSetAuthModal(' + index + ')' ) ;
+                                                                                          sdbjs.parts.dropDownBox.add( businessInfo['BusinessName'] + '_dropDown', htmlEncode( _languagePack['businesslist']['businessGrid']['button'][2] ), false, '' ) ;
+                                                                                      }
+                                                                                      else
+                                                                                      {
+                                                                                          sdbjs.parts.dropDownBox.add( businessInfo['BusinessName'] + '_dropDown', htmlEncode( _languagePack['businesslist']['businessGrid']['button'][1] ), false, '' ) ;
+                                                                                          sdbjs.parts.dropDownBox.add( businessInfo['BusinessName'] + '_dropDown', htmlEncode( _languagePack['businesslist']['businessGrid']['button'][2] ), true, 'removeAuth(' + index + ')' ) ;
+                                                                                      }
+                                                                                      sdbjs.parts.dropDownBox.add( businessInfo['BusinessName'] + '_dropDown', '', true, '' ) ;
+                                                                                      sdbjs.parts.dropDownBox.add( businessInfo['BusinessName'] + '_dropDown', htmlEncode( _languagePack['businesslist']['businessGrid']['button'][3] ), true, 'openDelBusinessModal(' + index + ')' ) ;
+                                                                                        }, 'width': '10%' } ] ) ;
+            }
+        } ) ;
 	}
 	sdbjs.parts.loadingBox.show( 'loading' ) ;
 	restGetClusterBusinessInfo( true, function( jsonArr, textStatus, jqXHR ){

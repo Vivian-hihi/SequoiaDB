@@ -230,15 +230,15 @@ body{ margin:0; padding:0; font-size:87.50%; font-family:Verdana,Georgia,宋体;
 .tooltip.right { padding:0 5px; }
 .tooltip.bottom { padding:5px 0; }
 .tooltip.left { padding:0 5px; }
-.tooltip.top				> .arrow { bottom:0; left:50%; margin-left:-5px; border-width:5px 5px 0; border-top-color:#666;}
-.tooltip.top-left			> .arrow { left:14px; }
+.tooltip.top			> .arrow { bottom:0; left:50%; margin-left:-5px; border-width:5px 5px 0; border-top-color:#666;}
+.tooltip.top-left		> .arrow { left:14px; }
 .tooltip.top-right		> .arrow { left:auto; right:10px; }
-.tooltip.right				> .arrow { top:14px; left:0; margin-top:-5px; border-width:5px 5px 5px 0; border-right-color:#666;}
+.tooltip.right			> .arrow { top:14px; left:0; margin-top:-5px; border-width:5px 5px 5px 0; border-right-color:#666;}
 .tooltip.right-bottom	> .arrow { top:auto; bottom:14px; }
-.tooltip.left				> .arrow { top:14px; right:0; margin-top:-5px; border-width:5px 0 5px 5px; border-left-color:#666; }
-.tooltip.left-bottom		> .arrow { top:auto; bottom:14px; }
+.tooltip.left			> .arrow { top:14px; right:0; margin-top:-5px; border-width:5px 0 5px 5px; border-left-color:#666; }
+.tooltip.left-bottom	> .arrow { top:auto; bottom:14px; }
 .tooltip.bottom			> .arrow { top:0; left:50%; margin-left:-5px; border-width:0 5px 5px; border-bottom-color:#666; }
-.tooltip.bottom-left		> .arrow { left:14px; }
+.tooltip.bottom-left	> .arrow { left:14px; }
 .tooltip.bottom-right	> .arrow { left:auto; right:10px; }
 
 /* 通知框 */
@@ -247,3 +247,6 @@ body{ margin:0; padding:0; font-size:87.50%; font-family:Verdana,Georgia,宋体;
 .notice > .header > .close { float:right; cursor:pointer; font-size:131.30%; font-weight:bold; color:#000; opacity:.2; filter:alpha(opacity=20); line-height:0.7; border:0; padding:0; background-color:#FFF; }
 .notice > .header > .close:hover{ opacity:.5; filter:alpha(opacity=50); }
 .notice > .body { margin:10px 15px 10px 15px; word-wrap:break-word; height:auto; }
+
+.anostyle{ color:#000; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; text-decoration:none; }
+.anostyle:hover{ color:#000; text-decoration:underline; }
