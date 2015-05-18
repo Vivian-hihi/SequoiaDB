@@ -211,4 +211,10 @@ private:
    BOOLEAN _bigEndian ;
 } ;
 
+struct cursorStartFrom
+{
+   INT64 cursorId;
+   INT32 startFrom;
+};
+
 #endif

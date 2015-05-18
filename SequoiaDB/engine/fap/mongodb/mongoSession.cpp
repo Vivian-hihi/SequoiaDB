@@ -417,6 +417,24 @@ INT32 _mongoSession::_reply( MsgOpReply *replyHeader,
    reply.header._version = 0 ;
    // reservedFlag
    reply.header.reservedFlags = 0 ;
+   // startingFrom
+   if ( -1 != replyHeader->contextID )
+   {
+      _cursorStartFrom.cursorId = reply.cursorId ;
+      reply.startingFrom = replyHeader->startFrom ;
+      _cursorStartFrom.startFrom = reply.startingFrom
+                                   + replyHeader->numReturned ;
+   }
+   else
+   {
+      if ( replyHeader->contextID == _cursorStartFrom.cursorId )
+      {
+         reply.startingFrom = _cursorStartFrom.startFrom ;
+      }
+      // reset cursorStartFrom
+      _cursorStartFrom.cursorId = 0 ;
+      _cursorStartFrom.startFrom = 0 ;
+   }
    //cursorID
    if ( SDB_OK != replyHeader->flags )
    {
@@ -426,8 +444,7 @@ INT32 _mongoSession::_reply( MsgOpReply *replyHeader,
    {
       reply.cursorId = replyHeader->contextID + 1 ;
    }
-   // startingFrom
-   reply.startingFrom = replyHeader->startFrom ;
+
    // nReturn
    if ( _converter->getParser().withCmd &&
         OP_GETMORE != _converter->getOpType() )
@@ -592,7 +609,8 @@ void _mongoSession::_handleResponse( const INT32 opType,
    {
       buff = engine::rtnContextBuf() ;
       _replyHeader.numReturned = 0 ;
-      _replyHeader.contextID = -1 ;
+      //_replyHeader.contextID = -1 ;
+      _replyHeader.startFrom = _cursorStartFrom.startFrom ;
    }
 }
 
