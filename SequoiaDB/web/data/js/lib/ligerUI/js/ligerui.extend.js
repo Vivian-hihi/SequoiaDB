@@ -293,7 +293,7 @@ $.extend( $.ligerui.controls.Grid.prototype, {
 		var g = this, p = this.options ;
 		var columnsWidth = [] ;
 		var columnsLen = p.columns.length ;
-		var width = $( this.element ).width() - columnsLen ;
+        var width = $( this.element ).width() - columnsLen ;
 		if( typeof( height) != 'undefined' )
 		{
 			g.setHeight( height ) ;
@@ -314,11 +314,24 @@ $.extend( $.ligerui.controls.Grid.prototype, {
 		}
         if( p.checkbox == true )
         {
-            width -= 8 ;
+            var grid1 = $( '.l-grid1', this.element ) ;
+            if( grid1.length > 0 && ( typeof( p.isFirstSetWidth ) != 'undefined' && p.isFirstSetWidth == true ) )
+            {
+                width -= grid1.width() ;
+            }
+            else
+            {
+                width -= 12 ;
+                p.isFirstSetWidth = true ;
+            }
         }
         if( p.rownumbers == true )
         {
             width -= g.gridview1.width() ;
+        }
+        if( width <= 0 )
+        {
+            return ;
         }
 		$.each( p.columns, function( index, column ){
 			var curWidth = 0 ;
@@ -351,7 +364,9 @@ $.extend( $.ligerui.controls.Grid.prototype, {
 		var inner = g.gridbody.find(".l-grid-body-inner:first");
 		if (!inner.length) return false;
 		//20为横向滚动条的宽度
-		return g.gridbody.height() < inner.height() ;
+        var a = g.gridbody.height() ;
+        var b = inner.height()
+		return a < b ;
 	},
 } ) ;
 	
