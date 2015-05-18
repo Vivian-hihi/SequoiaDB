@@ -1430,7 +1430,7 @@ namespace engine
                pHeader->setMetaData( metaObj.objdata(), metaObj.objsize() ) ;
 
                // read data
-               rc = pLobData->readRaw( _curOffset, pHeader->_dataSize,
+               rc = pLobData->readRaw( cb, _curOffset, pHeader->_dataSize,
                                        _pExtentBuff, readLen ) ;
                if ( rc )
                {
@@ -1480,7 +1480,7 @@ namespace engine
                pHeader->setMetaData( metaObj.objdata(), metaObj.objsize() ) ;
 
                // read data
-               rc = pLobData->readRaw( _curOffset, pHeader->_dataSize,
+               rc = pLobData->readRaw( cb, _curOffset, pHeader->_dataSize,
                                        _pExtentBuff, readLen ) ;
                if ( rc )
                {
