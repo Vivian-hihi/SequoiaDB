@@ -72,7 +72,7 @@ body{ margin:0; padding:0; font-size:12px; font-family:Verdana,Georgia,宋体; c
 
 /* 表格样式 */
 .l-grid-row-cell-inner{ line-height: 28px;}
-.l-grid-row-over .l-grid-row-cell,.l-grid-row-over{ background: rgba(182, 255, 240, 0.19); }
+.l-grid-row-over .l-grid-row-cell,.l-grid-row-over{ /*background: rgba(182, 255, 240, 0.19);*/ }
 
 /* 弹窗的样式 */
 .ext-modal { background:#FFF; border-radius:10px; border:#AAA solid 1px; }
