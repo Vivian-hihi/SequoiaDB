@@ -1075,7 +1075,7 @@ namespace engine
          // usually we don't expect agent sitting in creating for long time
          // the thread spawning the agent supposed to post event immediately
          // after the thread is created
-         if ( !cb->waitEvent ( event, OSS_ONE_SEC ) )
+         if ( !cb->waitEvent ( event, OSS_ONE_SEC, TRUE ) )
          {
             // if don't receive anything in 1000 milliseconds,
             // we should check "killed" mark for this session

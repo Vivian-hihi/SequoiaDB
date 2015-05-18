@@ -457,45 +457,6 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUMGR_WAITEDUPST, "_pmdEDUMgr::waitEDUPost" )
-   INT32 _pmdEDUMgr::waitEDUPost ( EDUID eduID, pmdEDUEvent& event,
-                                  INT64 millsecond = -1 )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB__PMDEDUMGR_WAITEDUPST );
-      pmdEDUCB* eduCB = NULL ;
-      std::map<EDUID, pmdEDUCB*>::iterator it ;
-      // shared lock the block, since we don't change anything
-      {
-         EDUMGR_SLOCK
-         if ( _runQueue.end () == ( it = _runQueue.find ( eduID )) )
-         {
-            // if we cannot find it in runqueue, we search for idle queue
-            // note that during the time, we already have EDUMgr locked,
-            // so thread cannot change queue from idle to run
-            // that means we are safe to exame both queues
-            if ( _idleQueue.end () == ( it = _idleQueue.find ( eduID )) )
-            {
-               // we can't find edu id anywhere
-               rc = SDB_SYS ;
-               goto error ;
-            }
-         }
-         eduCB = ( *it ).second ;
-         // wait for event. when millsecond is 0, it should always return TRUE
-         if ( !eduCB->waitEvent( event, millsecond ) )
-         {
-            rc = SDB_TIMEOUT ;
-            goto error ;
-         }
-      }
-   done :
-      PD_TRACE_EXITRC ( SDB__PMDEDUMGR_WAITEDUPST, rc );
-      return rc ;
-   error :
-      goto done ;
-   }
-
    // release control from a given EDU
    // EDUMgr should decide whether put the EDU to pool or destroy it
    // EDU Status must be in waiting or creating

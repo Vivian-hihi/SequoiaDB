@@ -351,25 +351,6 @@ namespace engine
                              void *pData = NULL,
                              UINT64 usrData = 0 ) ;
 
-
-      /*
-       * This function should wait an event for EDU
-       * If there are more than one event sitting in the queue
-       * waitEDU function should pick up the earliest event
-       * This function will wait forever if the input is less than 0
-       * Parameter:
-       *    EDU ID ( EDUID )
-       *    millisecond for the period of waiting ( -1 by default )
-       * Output:
-       *    Reference for event
-       * Return:
-       *   SDB_OK ( success )
-       *   SDB_SYS ( given EDU ID can't be found )
-       *   SDB_TIMEOUT ( timeout )
-       */
-      INT32    waitEDUPost ( EDUID eduID, pmdEDUEvent& event,
-                             INT64 millsecond ) ;
-
       /*
        * This function should return an waiting/creating EDU to pool
        * (cannot be running)
