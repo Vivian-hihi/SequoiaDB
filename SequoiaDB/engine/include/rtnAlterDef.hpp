@@ -44,17 +44,18 @@ namespace engine
 
    enum RTN_ALTER_TYPE
    {
-      RTN_ALTER_INVALID = -1,
-      RTN_ALTER_TYPE_DB = 0,
-      RTN_ALTER_TYPE_CL,
-      RTN_ALTER_TYPE_CS,
-      RTN_ALTER_TYPE_DOMAIN,
-      RTN_ALTER_TYPE_GROUP,
-      RTN_ALTER_TYPE_NODE
+      RTN_ALTER_INVALID = 0,
+      RTN_ALTER_TYPE_DB = 1,
+      RTN_ALTER_TYPE_CL = 2,
+      RTN_ALTER_TYPE_CS = 3,
+      RTN_ALTER_TYPE_DOMAIN = 4,
+      RTN_ALTER_TYPE_GROUP = 5,
+      RTN_ALTER_TYPE_NODE = 6
    } ;
 
-   struct _rtnAlterOptions
+   class _rtnAlterOptions : public SDBObject
    {
+   public:
       /// ignore one alter's exception and continue to run next.
       BOOLEAN ignoreException ;
 
@@ -76,42 +77,56 @@ namespace engine
                                       _pmdEDUCB *cb,
                                       _dpsLogWrapper *dpsCB ) ;
 
-   struct rtnAlterFuncKey
+   typedef INT32 ( *RTN_ALTER_VERIFY )( const bson::BSONObj &args ) ;
+
+
+   enum RTN_ALTER_FUNC_TYPE
    {
-      RTN_ALTER_TYPE type ;
-      const CHAR *op ;
+      RTN_ALTER_FUNC_INVALID = 0,
+      RTN_ALTER_CL_CRT_ID_IDX = 1,
+      RTN_ALTER_CL_DROP_ID_IDX = 2
+   } ;
 
-      rtnAlterFuncKey( RTN_ALTER_TYPE t,
-                       const CHAR *o )
-      :type( t ),
-       op( o )
+   class _rtnAlterFuncObj : public SDBObject
+   {
+   public:
+      const CHAR *name ;
+      RTN_ALTER_TYPE objType ;
+      RTN_ALTER_FUNC_TYPE type ;
+      RTN_ALTER_FUNC func ;
+      RTN_ALTER_VERIFY verify ;
+
+      _rtnAlterFuncObj()
+      :name( NULL ),
+       objType( RTN_ALTER_INVALID ),
+       type( RTN_ALTER_FUNC_INVALID ),
+       func( NULL ),
+       verify( NULL )
       {
 
       }
 
-      const std::string toString() const
+      _rtnAlterFuncObj( const CHAR *n,
+                        RTN_ALTER_TYPE ot,
+                        RTN_ALTER_FUNC_TYPE t,
+                        RTN_ALTER_FUNC f,
+                        RTN_ALTER_VERIFY v )
+      :name( n ),
+       objType( ot ),
+       type( t ),
+       func( f ),
+       verify( v )
       {
-         std::stringstream ss ;
-         ss << "{type:" << type
-            << ", op:" << op
-            << "}" ;
-         return ss.str() ;
+
       }
 
-      BOOLEAN operator<( const rtnAlterFuncKey &key )const
+      BOOLEAN isValid() const
       {
-         if ( type < key.type )
-         {
-            return TRUE ;
-         }
-         else if ( type > key.type )
-         {
-            return FALSE ;
-         }
-         else
-         {
-            return 0 < ossStrcmp( op, key.op ) ;
-         }
+         return NULL != name &&
+                RTN_ALTER_INVALID != objType &&
+                RTN_ALTER_FUNC_INVALID != type &&
+                NULL != func &&
+                NULL != verify ;
       }
    } ;
 }

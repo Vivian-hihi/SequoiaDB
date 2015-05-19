@@ -1360,16 +1360,16 @@ namespace engine
       const CHAR * _fullName ;
    } ;
 
-   class _rtnAlterCommand : public _rtnCommand
+   class _rtnAlterCollection: public _rtnCommand
    {
    DECLARE_CMD_AUTO_REGISTER()
    public:
-      _rtnAlterCommand() ;
-      virtual ~_rtnAlterCommand() ;
+      _rtnAlterCollection() ;
+      virtual ~_rtnAlterCollection() ;
 
    public:
-      virtual const CHAR * name () { return NAME_ALTER ; }
-      virtual RTN_COMMAND_TYPE type() { return CMD_ALTER ; }
+      virtual const CHAR * name () { return NAME_ALTER_COLLECTION ; }
+      virtual RTN_COMMAND_TYPE type() { return CMD_ALTER_COLLECTION ; }
       virtual const CHAR * collectionFullName() ;
       virtual BOOLEAN writable() { return TRUE ;}
 
@@ -1382,7 +1382,21 @@ namespace engine
                            _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
                            INT16 w = 1, INT64 *pContextID = NULL ) ;
 
+      OSS_INLINE const _rtnAlterRunner &getRunner() const
+      {
+         return _runner ;
+      }
+
    private:
+      INT32 _handleOldVersion( _pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
+                               _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
+                               INT16 w = 1, INT64 *pContextID = NULL ) ;
+
+   private:
+      /// old version
+      BSONObj _alterObj ;
+
+      /// new version
       _rtnAlterRunner _runner ;
    } ;
 }

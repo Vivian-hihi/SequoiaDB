@@ -33,127 +33,134 @@
 #include "dpsLogWrapper.hpp"
 #include "rtnAlterFuncs.hpp"
 
-#define RTN_ALTER_REGISTER( type, op, func )\
-        do\
-        {\
-           rc = _registerFunc( rtnAlterFuncKey( (type), (op)), (func) ) ;\
-           if ( SDB_OK != rc )\
-           {\
-              goto error ;\
-           }\
-        } while ( FALSE )
-
 namespace engine
 {
+   _rtnAlterFuncList::_rtnAlterFuncListInter _rtnAlterFuncList::_fl ;
    _rtnAlterFuncList::_rtnAlterFuncList()
-   :_inited( FALSE )
    {
 
    }
 
    _rtnAlterFuncList::~_rtnAlterFuncList()
    {
-      _fl.clear() ;
+
    }
 
-   INT32 _rtnAlterFuncList::init()
+   INT32 _rtnAlterFuncList::getFuncObj( RTN_ALTER_TYPE type,
+                                        const CHAR *name,
+                                        _rtnAlterFuncObj &obj )
+   {
+      return _fl.getFuncObj( type, name, obj ) ;
+   }
+
+   INT32 _rtnAlterFuncList::getFuncObj( RTN_ALTER_FUNC_TYPE type,
+                                        _rtnAlterFuncObj &obj )
+   {
+      return _fl.getFuncObj( type, obj ) ;
+   }
+
+   INT32 _rtnAlterFuncList::_rtnAlterFuncListInter::
+         getFuncObj( RTN_ALTER_TYPE type,
+                     const CHAR *name,
+                     _rtnAlterFuncObj &obj )
+   {
+      INT32 rc = SDB_OK ;
+      string lower ;
+      rc = init() ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+
+      lower.assign( name ) ;
+      boost::algorithm::to_lower( lower ) ;
+      for ( FOBJ_LIST::const_iterator itr = _fl.begin();
+            itr != _fl.end();
+            ++itr )
+      {
+         if ( type == itr->objType &&
+              0 == lower.compare( itr->name ) )
+         {
+            obj = *itr ;
+            goto done ;
+         }
+      }
+
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _rtnAlterFuncList::_rtnAlterFuncListInter::
+         getFuncObj( RTN_ALTER_FUNC_TYPE type,
+                     _rtnAlterFuncObj &obj )
+   {
+      INT32 rc = SDB_OK ;
+      rc = init() ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+
+      for ( FOBJ_LIST::const_iterator itr = _fl.begin();
+            itr != _fl.end();
+            ++itr )
+      {
+         if ( type == itr->type )
+         {
+            obj = *itr ;
+            goto done ;
+         }
+      }
+
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _rtnAlterFuncList::_rtnAlterFuncListInter::init()
    {
       INT32 rc = SDB_OK ;
       BOOLEAN locked = FALSE ;
-      if ( !_inited )
+      if ( _inited )
       {
-         _latch.get() ;
-         locked = TRUE ;
-         if ( !_inited )
-         {
-            rc = _init() ;
-            if ( SDB_OK != rc )
-            {
-               goto error ;
-            }
-            _inited = TRUE ;
-         }
+         goto done ;
       }
+
+      _latch.get() ;
+      locked = TRUE ;
+
+      if ( _inited )
+      {
+         goto done ;
+      }
+
+      _fl.push_front( _rtnAlterFuncObj( SDB_ALTER_CRT_ID_INDEX,
+                                        RTN_ALTER_TYPE_CL,
+                                        RTN_ALTER_CL_CRT_ID_IDX,
+                                        &rtnCreateIDIndex,
+                                        &rtnCreateIDIndexVerify ) ) ;
+
+      _fl.push_front( _rtnAlterFuncObj( SDB_ALTER_DROP_ID_INDEX,
+                                        RTN_ALTER_TYPE_CL,
+                                        RTN_ALTER_CL_DROP_ID_IDX,
+                                        &rtnDropIDIndex,
+                                        &rtnDropIDIndexVerify ) ) ;
+
+      _inited = TRUE ;
    done:
       if ( locked )
       {
          _latch.release() ;
       }
       return rc ;
-   error:
-      goto done ;
    }
 
-   INT32 _rtnAlterFuncList::getFunc( RTN_ALTER_TYPE type,
-                                     const CHAR *name,
-                                     RTN_ALTER_FUNC &func )
-   {
-      INT32 rc = SDB_OK ;
-      FUNC_LST::const_iterator itrFunc ;
-      string lower( name ) ;
-      boost::algorithm::to_lower( lower ) ;
-      rtnAlterFuncKey key( type, lower.c_str() ) ;
-
-      if ( !_inited )
-      {
-         rc = init() ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDERROR, "failed to init rpc func list:%d", rc ) ;
-            goto error ;
-         }
-      }
-
-      itrFunc = _fl.find( key ) ;
-      if ( _fl.end() == itrFunc ) 
-      {
-         PD_LOG( PDERROR, "can not find func[%s]",
-                 key.toString().c_str() ) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
-
-      func = itrFunc->second ;
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   INT32 _rtnAlterFuncList::_init()
-   {
-      INT32 rc = SDB_OK ;
-
-      /// init funcs
-      RTN_ALTER_REGISTER( RTN_ALTER_TYPE_CL,
-                          SDB_ALTER_CRT_ID_INDEX,
-                          &rtnCreateIDIndex ) ;
-
-      RTN_ALTER_REGISTER( RTN_ALTER_TYPE_CL,
-                          SDB_ALTER_DROP_ID_INDEX,
-                          &rtnDropIDIndex ) ;
-
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   INT32 _rtnAlterFuncList::_registerFunc( const rtnAlterFuncKey &key,
-                                           RTN_ALTER_FUNC func )
-   {
-      INT32 rc = SDB_OK ;
-      if ( !_fl.insert( std::make_pair( key, func ) ).second )
-      {
-         rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR, "duplicate func:%s",
-                 key.toString().c_str() ) ;
-         goto error ;
-      }
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
 }
 

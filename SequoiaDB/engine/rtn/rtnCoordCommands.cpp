@@ -1057,14 +1057,14 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDALCL_EXE, "rtnCoordCMDAlterCollection::execute" )
-   INT32 rtnCoordCMDAlterCollection::execute( MsgHeader *pMsg,
-                                              pmdEDUCB *cb,
-                                              INT64 &contextID,
-                                              rtnContextBuf *buf )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDALCL__EXEOLD, "rtnCoordCMDAlterCollection::_executeOld" )
+   INT32 rtnCoordCMDAlterCollection::_executeOld( MsgHeader *pMsg,
+                                                  pmdEDUCB *cb,
+                                                  INT64 &contextID,
+                                                  rtnContextBuf *buf )
    {
       INT32 rc                         = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB_RTNCOCMDALCL_EXE ) ;
+      PD_TRACE_ENTRY ( SDB_RTNCOCMDALCL__EXEOLD ) ;
       // fill default-reply
       contextID                        = -1 ;
 
@@ -1131,9 +1131,166 @@ namespace engine
       }
 
    done :
-      PD_TRACE_EXITRC ( SDB_RTNCOCMDALCL_EXE, rc ) ;
+      PD_TRACE_EXITRC ( SDB_RTNCOCMDALCL__EXEOLD, rc ) ;
       return rc;
    error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDALCL__TESTCL, "rtnCoordCMDAlterCollection::_testCollection" )
+   INT32 rtnCoordCMDAlterCollection::_testCollection( const CHAR *fullName, pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_RTNCOCMDALCL__TESTCL ) ;
+      CHAR *msg = NULL ;
+      INT32 msgSize = 0 ;
+      BSONObj obj = BSON( FIELD_NAME_NAME << fullName ) ;
+      rc = msgBuildQueryMsg( &msg, &msgSize,
+                             CMD_ADMIN_PREFIX CMD_NAME_TEST_COLLECTION,
+                             0, 0, 0, -1, &obj ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to build msg:%d", rc ) ;
+         goto error ;
+      }
+
+      rc = executeOnCL( ( MsgHeader * )msg, cb, fullName ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to test collection:%d", rc ) ;
+         goto error ;
+      }
+   done:
+      SAFE_OSS_FREE( msg ) ;
+      PD_TRACE_EXITRC( SDB_RTNCOCMDALCL__TESTCL, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDALCL__EXE, "rtnCoordCMDAlterCollection::_execute" )
+   INT32 rtnCoordCMDAlterCollection::_execute( MsgHeader *pMsg,
+                                               pmdEDUCB *cb,
+                                               INT64 &contextID,
+                                               rtnContextBuf *buf )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_RTNCOCMDALCL__EXE ) ;
+      _rtnAlterJob job ;
+      CHAR *query = NULL ;
+      INT32 opCode = pMsg->opCode ;
+      SET_RC ignoreLst ;
+
+      /// 1. extract msg
+      rc = msgExtractQuery( (CHAR*)pMsg, NULL, NULL,
+                            NULL, NULL, &query,
+                            NULL, NULL, NULL ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to extract query msg:%d", rc ) ;
+         goto error ;
+      }
+
+      /// 2. init job
+      try
+      {
+         rc = job.init( BSONObj( query ) ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to init alter job:%d", rc ) ;
+            goto error ;
+         }
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG( PDERROR, "unexpected error happened:%s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      /// 3. test collection
+      rc = _testCollection( job.getName(), cb ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to test collection[%s], rc:%d",
+                 job.getName(), rc ) ;
+         goto error ;
+      }
+
+      /// 4. on catalog
+      pMsg->opCode = MSG_CAT_ALTER_COLLECTION_REQ ;
+      rc = executeOnCataGroup( pMsg, cb, TRUE ) ;
+      pMsg->opCode = opCode ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to execute on catalog:%d", rc ) ;
+         goto error ;
+      }
+
+      ignoreLst.insert( SDB_IXM_REDEF ) ;
+      ignoreLst.insert( SDB_IXM_NOTEXIST ) ;
+
+      /// 5. on data
+      rc = executeOnCL( pMsg, cb,
+                        job.getName(),
+                        TRUE,
+                        NULL,
+                        &ignoreLst ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to execute on cl:%s, rc:%d",
+                 job.getName(), rc ) ;
+         goto error ;
+      }
+   done:
+      PD_TRACE_EXITRC( SDB_RTNCOCMDALCL__EXE, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDALCL_EXE, "rtnCoordCMDAlterCollection::execute" )
+   INT32 rtnCoordCMDAlterCollection::execute( MsgHeader *pMsg,
+                                              pmdEDUCB *cb,
+                                              INT64 &contextID,
+                                              rtnContextBuf *buf )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_RTNCOCMDALCL_EXE ) ;
+      CHAR *query = NULL ;
+      BOOLEAN isOld = FALSE ;
+      rc = msgExtractQuery( (CHAR*)pMsg, NULL, NULL,
+                            NULL, NULL, &query,
+                            NULL, NULL, NULL ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to extract query msg:%d", rc ) ;
+         goto error ;
+      }
+
+      try
+      {
+         isOld = BSONObj( query ).getField( FIELD_NAME_VERSION ).eoo() ;
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG( PDERROR, "unexpected error happened:%s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      rc = isOld ?
+           _executeOld( pMsg, cb, contextID, buf ) :
+           _execute( pMsg, cb, contextID, buf ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to alter collection:%d", rc ) ;
+         goto error ;
+      }
+   done:
+      PD_TRACE_EXITRC( SDB_RTNCOCMDALCL_EXE, rc ) ;
+      return rc ;
+   error:
       goto done ;
    }
 
@@ -8459,95 +8616,5 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION( CMD_RTNCOCMDALTER_EXEC, "rtnCoordCMDAlter::execute" )
-   INT32 rtnCoordCMDAlter::execute( MsgHeader *pMsg,
-                                    pmdEDUCB *cb,
-                                    INT64 &contextID,
-                                    rtnContextBuf *buf )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( CMD_RTNCOCMDALTER_EXEC ) ;
-      _rtnAlterJob job ;
-      CHAR *query = NULL ;
-
-      rc = msgExtractQuery( (CHAR*)pMsg, NULL, NULL,
-                            NULL, NULL, &query,
-                            NULL, NULL, NULL ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to extract query msg:%d", rc ) ;
-         goto error ;
-      }
-
-      try
-      {
-         rc = job.init( BSONObj( query ) ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDERROR, "failed to init runner:%d", rc ) ;
-            goto error ;
-         }
-      }
-      catch ( std::exception &e )
-      {
-         PD_LOG( PDERROR, "unexpected error happened:%s", e.what() ) ;
-         rc = SDB_SYS ;
-         goto error ;
-      }
-
-      switch ( job.getType() )
-      {
-      case RTN_ALTER_TYPE_CL :
-         rc = _alterCollection( &job, pMsg, cb ) ;
-         break ;
-      default:
-         rc = SDB_INVALIDARG ;
-         break ;
-      } ;
-
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to alter:%d", rc ) ;
-         goto error ;
-      }
-   done:
-      PD_TRACE_EXITRC( CMD_RTNCOCMDALTER_EXEC, rc ) ;
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION( CMD_RTNCOCMDALTER__ALTERCL, "rtnCoordCMDAlter::_alterCollection" )
-   INT32 rtnCoordCMDAlter::_alterCollection( const _rtnAlterJob *job,
-                                             MsgHeader *pMsg,
-                                             pmdEDUCB *cb )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( CMD_RTNCOCMDALTER__ALTERCL ) ;
-      pMsg->opCode = MSG_CAT_ALTER_REQ ;
-      rc = executeOnCataGroup( pMsg, cb, TRUE ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to execute on catalog:%d", rc ) ;
-         goto error ;
-      }
-
-      pMsg->opCode = MSG_BS_QUERY_REQ ;
-      rc = executeOnCL( pMsg, cb,
-                        job->getName(),
-                        TRUE,
-                        NULL ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to execute on cl:%s, rc:%d",
-                 job->getName(), rc ) ;
-         goto error ;
-      }
-   done:
-      PD_TRACE_EXITRC( CMD_RTNCOCMDALTER__ALTERCL, rc ) ;
-      return rc ;
-   error:
-      goto done ;
-   }
 }
 

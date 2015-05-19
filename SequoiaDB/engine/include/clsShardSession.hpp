@@ -190,13 +190,15 @@ namespace engine
                                      const CHAR *pCollection,
                                      const CHAR *pQuery,
                                      INT16 w,
-                                     SINT64 &contextID );
+                                     SINT64 &contextID,
+                                     BOOLEAN syscall = FALSE );
 
          INT32 _dropIndexOnMainCL( const CHAR *pCommand,
                                    const CHAR *pCollection,
                                    const CHAR *pQuery,
                                    INT16 w,
-                                   SINT64 &contextID );
+                                   SINT64 &contextID,
+                                   BOOLEAN syscall = FALSE );
 
          INT32 _dropMainCL( const CHAR *pCollection,
                            INT16 w,
@@ -221,6 +223,12 @@ namespace engine
 
          INT32 _truncateMainCL( const CHAR *fullName ) ;
 
+         INT32 _testMainCollection( const CHAR *fullName ) ;
+
+         INT32 _alterMainCL( _rtnCommand *command,
+                             pmdEDUCB *cb,
+                             SDB_DPSCB *dpsCB ) ;
+
       protected:
          _clsReplicateSet       *_pReplSet ;
          _clsShardMgr           *_pShdMgr ;
@@ -233,6 +241,7 @@ namespace engine
          MsgRouteID             _primaryID ;
          BSONObj                _errorInfo ;
          const CHAR             *_pCollectionName ;
+         std::string             _cmdCollectionName ;
 
          BOOLEAN                _isMainCL ;
          BOOLEAN                _hasUpdateCataInfo ;

@@ -40,8 +40,6 @@ using namespace bson ;
 
 namespace engine
 {
-   _rtnAlterFuncList _rtnAlterRunner::_funcList ;
-
    _rtnAlterRunner::_rtnAlterRunner()
    {
 
@@ -182,7 +180,22 @@ namespace engine
    INT32 _rtnAlterRunner::_getFunc( const CHAR *name,
                                   RTN_ALTER_FUNC &func )
    {
-      return _funcList.getFunc( _job.getType(), name, func ) ;
+      INT32 rc = SDB_OK ;
+      _rtnAlterFuncObj obj ;
+      rc = _fl.getFuncObj( _job.getType(), name, obj ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to get func:%s, rc:%d",
+                 name, rc ) ;
+         goto error ;
+      }
+
+      SDB_ASSERT( obj.isValid(), "must be valid" ) ;
+      func = obj.func ;
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 }
 

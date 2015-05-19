@@ -96,7 +96,7 @@ namespace engine
 #define NAME_FORCE_STEP_UP                   CMD_NAME_FORCE_STEP_UP
 #define NAME_JSON_LOAD                       CMD_NAME_JSON_LOAD
 #define NAME_TRUNCATE                        CMD_NAME_TRUNCATE
-#define NAME_ALTER                           CMD_NAME_ALTER
+#define NAME_ALTER_COLLECTION                CMD_NAME_ALTER_COLLECTION
 
 // the commands that does not supported by data nodes or standalone mode
 #define NAME_CREATE_GROUP                    CMD_NAME_CREATE_GROUP
@@ -111,7 +111,6 @@ namespace engine
 #define NAME_GET_CONFIG                      CMD_NAME_GET_CONFIG
 #define NAME_LIST_DOMAINS                    CMD_NAME_LIST_DOMAINS
 #define NAME_LIST_GROUPS                     CMD_NAME_LIST_GROUPS
-#define NAME_ALTER_COLLECTION                CMD_NAME_ALTER_COLLECTION
 #define NAME_CREATE_CATAGROUP                CMD_NAME_CREATE_CATA_GROUP
 #define NAME_CREATE_DOMAIN                   CMD_NAME_CREATE_DOMAIN
 #define NAME_DROP_DOMAIN                     CMD_NAME_DROP_DOMAIN

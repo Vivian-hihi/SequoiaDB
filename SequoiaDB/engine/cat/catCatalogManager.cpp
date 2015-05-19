@@ -564,11 +564,85 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR_ALTERCOLLECTION, "catCatalogueManager::processAlterCollection" )
-   INT32 catCatalogueManager::processAlterCollection ( const CHAR *pMsg,
+   INT32 catCatalogueManager::processAlterCollection( const CHAR *pMsg,
+                                                      rtnContextBuf &ctxBuf )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_CATALOGMGR_ALTERCOLLECTION ) ;
+      BSONObj obj ;
+      BOOLEAN isOld = TRUE ;
+      try
+      {
+         obj = BSONObj( pMsg ) ;
+         isOld = obj.getField( FIELD_NAME_VERSION ).eoo() ;
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG( PDERROR, "unexpected error happened:%s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      rc = isOld ?
+           _processAlterCollectionOld( obj, ctxBuf ) :
+           _processAlterCollection( obj, ctxBuf ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to alter collection:%d", rc ) ;
+         goto error ;
+      }
+   done:
+      PD_TRACE_EXITRC( SDB_CATALOGMGR_ALTERCOLLECTION, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR__ALTERCOLLECTION, "catCatalogueManager::_processAlterCollection" )
+   INT32 catCatalogueManager::_processAlterCollection( const BSONObj &obj,
                                                        rtnContextBuf &ctxBuf )
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB_CATALOGMGR_ALTERCOLLECTION ) ;
+      PD_TRACE_ENTRY( SDB_CATALOGMGR__ALTERCOLLECTION ) ;
+      _rtnAlterJob job ;
+      BSONObj clObj ;
+      BOOLEAN exists = FALSE ;
+      rc = job.init( obj ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to init alter job:%d", rc ) ;
+         goto error ;
+      }
+
+      rc = catCheckCollectionExist( job.getName(), exists,
+                                    clObj, _pEduCB ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to check collection:%d", rc ) ;
+         goto error ;
+      }
+
+      if ( !exists )
+      {
+         PD_LOG( PDERROR, "collection[%s] does not exist",
+                 job.getName() ) ;
+         rc = SDB_DMS_NOTEXIST ;
+         goto error ;
+      }
+      
+   done:
+      PD_TRACE_EXITRC( SDB_CATALOGMGR__ALTERCOLLECTION, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR__ALTERCOLLECTIONOLD, "catCatalogueManager::_processAlterCollectionOld" )
+   INT32 catCatalogueManager::_processAlterCollectionOld ( const BSONObj &obj,
+                                                           rtnContextBuf &ctxBuf )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB_CATALOGMGR__ALTERCOLLECTIONOLD ) ;
       // collection name related
       const CHAR *strName              = NULL ;
       BSONObj options ;
@@ -584,7 +658,7 @@ namespace engine
 
       try
       {
-         BSONObj boAlterObj ( pMsg ) ;
+         BSONObj boAlterObj ( obj ) ;
          // make sure collection name exists
          BSONElement beName = boAlterObj.getField ( CAT_COLLECTION_NAME ) ;
          BSONElement beOptions = boAlterObj.getField ( CAT_OPTIONS_NAME ) ;
@@ -702,7 +776,7 @@ namespace engine
       }
    done :
       PD_TRACE1 ( SDB_CATALOGMGR_ALTERCOLLECTION, PD_PACK_INT ( rc ) ) ;
-      PD_TRACE_EXITRC ( SDB_CATALOGMGR_ALTERCOLLECTION, rc ) ;
+      PD_TRACE_EXITRC ( SDB_CATALOGMGR__ALTERCOLLECTIONOLD, rc ) ;
       return rc ;
    error :
       goto done ;
@@ -1785,7 +1859,6 @@ namespace engine
       case MSG_CAT_CREATE_DOMAIN_REQ :
       case MSG_CAT_DROP_DOMAIN_REQ :
       case MSG_CAT_ALTER_DOMAIN_REQ :
-      case MSG_CAT_ALTER_REQ :
          {
             // up commands is run in cluster acitve status
             _pCatCB->getCatDCMgr()->setImageCommand( TRUE ) ;
@@ -1942,9 +2015,6 @@ namespace engine
             break ;
          case MSG_CAT_ALTER_DOMAIN_REQ :
             rc = processCmdAlterDomain ( pQuery ) ;
-            break ;
-         case MSG_CAT_ALTER_REQ :
-            rc = processCmdAlter( pQuery, ctxBuff ) ;
             break ;
          default :
             rc = SDB_INVALIDARG ;
@@ -2481,61 +2551,6 @@ namespace engine
       return rc ;
    error :
       goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR_ALTER, "catCatalogueManager::processCmdAlter" )
-   INT32 catCatalogueManager::processCmdAlter( const CHAR *pQuery,
-                                               rtnContextBuf &ctxBuf )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB_CATALOGMGR_ALTER ) ;
-      _rtnAlterJob job ;
-      try
-      {
-         rc = job.init( BSONObj( pQuery ) ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDERROR, "failed to init runner:%d", rc ) ;
-            goto error ;
-         }
-      }
-      catch ( std::exception &e )
-      {
-         PD_LOG( PDERROR, "unexpected error happened:%s", e.what() ) ;
-         rc = SDB_SYS ;
-         goto error ;
-      }
-
-      switch ( job.getType() )
-      {
-      case RTN_ALTER_TYPE_CL :
-         rc = _processAlterCL( &job, ctxBuf ) ;
-         break ;
-      default:
-         rc = SDB_INVALIDARG ;
-         break ;
-      } ;
-
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to alter:%d", rc ) ;
-         goto error ;
-      }
-   done:
-      PD_TRACE_EXITRC( SDB_CATALOGMGR_ALTER, rc ) ;
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR__PROCESSALTERCL, "catCatalogueManager::_processAlterCL" )
-   INT32 catCatalogueManager::_processAlterCL( const _rtnAlterJob *job,
-                                               rtnContextBuf &buf)
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB_CATALOGMGR__PROCESSALTERCL ) ;
-      PD_TRACE_EXITRC( SDB_CATALOGMGR__PROCESSALTERCL, rc ) ;
-      return rc ;
    }
 
    static INT32 _findGroupWillBeRemoved( const map<string, UINT32> &groupsInDomain,

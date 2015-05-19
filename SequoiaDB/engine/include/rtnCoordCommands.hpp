@@ -648,6 +648,7 @@ namespace engine
                                           pmdEDUCB *cb ) ;
    };
 
+   class _rtnAlterJob ;
    class rtnCoordCMDAlterCollection : public rtnCoordCommand
    {
    public :
@@ -655,6 +656,18 @@ namespace engine
                              pmdEDUCB *cb,
                              INT64 &contextID,
                              rtnContextBuf *buf ) ;
+   private:
+      INT32 _executeOld( MsgHeader *pMsg,
+                         pmdEDUCB *cb,
+                         INT64 &contextID,
+                         rtnContextBuf *buf ) ;
+
+      INT32 _execute( MsgHeader *pMsg,
+                      pmdEDUCB *cb,
+                      INT64 &contextID,
+                      rtnContextBuf *buf ) ;
+
+      INT32 _testCollection( const CHAR *fullName, pmdEDUCB *cb ) ;
    } ;
 
    class rtnCoordCMD2PhaseCommit : public rtnCoordCommand
@@ -1318,21 +1331,6 @@ namespace engine
                              pmdEDUCB *cb,
                              INT64 &contextID,
                              rtnContextBuf *buf ) ;
-   } ;
-
-   class _rtnAlterJob ;
-   class rtnCoordCMDAlter : public rtnCoordCommand
-   {
-   public:
-      virtual INT32 execute( MsgHeader *pMsg,
-                             pmdEDUCB *cb,
-                             INT64 &contextID,
-                             rtnContextBuf *buf ) ;
-
-   private:
-      INT32 _alterCollection( const _rtnAlterJob *job,
-                              MsgHeader *pMsg,
-                              pmdEDUCB *cb ) ;
    } ;
 
 }

@@ -53,20 +53,24 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNALTERJOB_INIT, "_rtnAlterJob::init" )
-   INT32 _rtnAlterJob::init( const bson::BSONObj &obj,
-                             BOOLEAN verifyTask )
+   INT32 _rtnAlterJob::init( const bson::BSONObj &obj )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNALTERJOB_INIT ) ;
+      SDB_ASSERT( _obj.isEmpty(), "clear it first" ) ;
       clear() ;
+
+      BSONObjBuilder builder ;
+      BSONArrayBuilder arrBuilder ;
+      string lower ;
       try
       {
-         _obj = obj.copy() ;
-         BSONElement e = _obj.getField( FIELD_NAME_VERSION ) ;
+         /// version
+         BSONElement e = obj.getField( FIELD_NAME_VERSION ) ;
          if ( !e.isNumber() )
          {
             PD_LOG( PDERROR, "invalid type of field [%s], request obj: %s",
-                    FIELD_NAME_VERSION, _obj.toString( FALSE, TRUE ).c_str() ) ;
+                    FIELD_NAME_VERSION, obj.toString( FALSE, TRUE ).c_str() ) ;
             rc = SDB_INVALIDARG ;
             goto error ;
          }
@@ -79,11 +83,14 @@ namespace engine
             goto error ;
          }
 
-         e = _obj.getField( FIELD_NAME_ALTER_TYPE ) ;
+         builder.append( FIELD_NAME_VERSION, _v ) ;
+
+         /// type
+         e = obj.getField( FIELD_NAME_ALTER_TYPE ) ;
          if ( String != e.type() )
          {
             PD_LOG( PDERROR, "invalid type of field [%s],request obj: %s",
-                    FIELD_NAME_ALTER_TYPE, _obj.toString( FALSE, TRUE ).c_str() ) ;
+                    FIELD_NAME_ALTER_TYPE, obj.toString( FALSE, TRUE ).c_str() ) ;
             rc = SDB_INVALIDARG ;
             goto error ;
          }
@@ -95,33 +102,51 @@ namespace engine
             goto error ;
          }
 
-         e = _obj.getField( FIELD_NAME_NAME ) ;
+         lower.assign( e.valuestrsafe() );
+         boost::algorithm::to_lower( lower ) ;
+         builder.append( FIELD_NAME_ALTER_TYPE, lower ) ;
+
+         /// name
+         e = obj.getField( FIELD_NAME_NAME ) ;
          if ( String != e.type() )
          {
             PD_LOG( PDERROR, "invalid type of field [%s], request obj: %s",
-                    FIELD_NAME_NAME, _obj.toString( FALSE, TRUE ).c_str() ) ;
+                    FIELD_NAME_NAME, obj.toString( FALSE, TRUE ).c_str() ) ;
             rc = SDB_INVALIDARG ;
             goto error ;
          }
-         _name = e.valuestrsafe() ;
+         builder.append( FIELD_NAME_NAME, e.valuestrsafe() ) ;
 
-         e = _obj.getField( FIELD_NAME_ALTER ) ;
-         if ( Array != e.type() )
+         /// alter list
+         e = obj.getField( FIELD_NAME_ALTER ) ;
+         if ( Array != e.type() &&
+              Object != e.type() )
          {
             PD_LOG( PDERROR, "invalid type of field [%s],request obj: %s",
-                    FIELD_NAME_ALTER, _obj.toString( FALSE, TRUE ).c_str() ) ;
+                    FIELD_NAME_ALTER, obj.toString( FALSE, TRUE ).c_str() ) ;
             rc = SDB_INVALIDARG ;
             goto error ;
          }
-         _tasks = e.embeddedObject() ;
+         rc = _extractTasks( e, arrBuilder ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to extract task list:%d", rc ) ;
+            goto error ;
+         }
+
+         builder.append( FIELD_NAME_ALTER, arrBuilder.arr() ) ;
 
          /// options is not necessary.
-         e = _obj.getField( FIELD_NAME_OPTIONS ) ;
+         e = obj.getField( FIELD_NAME_OPTIONS ) ;
          if ( Object == e.type() )
          {
-            _optionsObj = e.embeddedObject() ;
-            _extractOptions( _optionsObj ) ;
+            _extractOptions( e.embeddedObject() ) ;
          }
+
+         _obj = builder.obj() ;
+         _name = _obj.getStringField( FIELD_NAME_NAME ) ;
+         _tasks = _obj.getObjectField( FIELD_NAME_ALTER ) ;
+         _optionsObj = _obj.getObjectField( FIELD_NAME_OPTIONS ) ;
       }
       catch ( std::exception &e )
       {
@@ -130,15 +155,6 @@ namespace engine
          goto error ;
       }
 
-      if ( verifyTask )
-      {
-         rc = _verifyTasks() ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDERROR, "failed to verify tasks:%d", rc ) ;
-            goto error ;
-         }
-      } 
    done:
       PD_TRACE_EXITRC( SDB__RTNALTERJOB_INIT, rc ) ;
       return rc ;
@@ -190,10 +206,70 @@ namespace engine
       return type ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNALTERJOB__VERIFYTASKS, "_rtnAlterJob::_verifyTasks" )
-   INT32 _rtnAlterJob::_verifyTasks()
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNALTERJOB__EXTRACTTASKS1, "_rtnAlterJob::_extractTasks" )
+   INT32 _rtnAlterJob::_extractTasks( const BSONElement &tasks,
+                                      BSONArrayBuilder &builder )
    {
-      return SDB_OK ;
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__RTNALTERJOB__EXTRACTTASKS1 ) ;
+
+      BSONObj obj = tasks.embeddedObject() ;
+      if ( Object == tasks.type() )
+      {
+         const CHAR *taskName = NULL ;
+         BSONObjBuilder taskBuilder ;
+         BSONObj argObj ;
+         _rtnAlterFuncObj fObj ;
+
+         taskName = obj.getStringField( FIELD_NAME_NAME ) ;
+         rc = _fl.getFuncObj( _type, taskName, fObj ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "invalid name:%s", taskName ) ;
+            goto error ;
+         }
+
+         SDB_ASSERT( fObj.isValid(), "must be valid" ) ;
+
+         argObj = obj.getObjectField( FIELD_NAME_ARGS ) ;
+         rc = (*( fObj.verify ))( argObj ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "invalid args of func:%s", taskName ) ;
+            goto error ;
+         }
+
+         taskBuilder.append( FIELD_NAME_NAME, fObj.name ) ;
+         taskBuilder.append( FIELD_NAME_ARGS, argObj ) ;
+         taskBuilder.append( FIELD_NAME_TASKTYPE, fObj.type ) ;
+         builder << taskBuilder.obj() ;
+      }
+      else
+      {
+         BSONObjIterator i( obj ) ;
+         while ( i.more() )
+         {
+            BSONElement e = i.next() ;
+            if ( Object != e.type() )
+            {
+               PD_LOG( PDERROR, "type of task should be object" ) ;
+               rc = SDB_INVALIDARG ;
+               goto error ; 
+            }
+
+            rc = _extractTasks( e, builder ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "failed to extract task:%d", rc ) ;
+               goto error ;
+            }
+         }
+      }
+   done:
+      PD_TRACE_EXITRC( SDB__RTNALTERJOB__EXTRACTTASKS1, rc ) ;
+      return rc ;
+   error:
+      goto done ;
    }
 }
 

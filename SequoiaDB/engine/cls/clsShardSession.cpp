@@ -110,6 +110,7 @@ namespace engine
       _pRtnCB    = NULL ;
       _pDpsCB    = NULL ;
       _pCollectionName = NULL ;
+      _cmdCollectionName.clear() ;
    }
 
    SDB_SESSION_TYPE _clsShdSession::sessionType() const
@@ -458,6 +459,7 @@ namespace engine
       INT32 startFrom = 0 ;
       rtnContextBuf buffObj ;
       _pCollectionName = NULL ;
+      _cmdCollectionName.clear() ;
       _isMainCL        = FALSE ;
       _hasUpdateCataInfo = FALSE ;
       BOOLEAN isNeedRollback = FALSE;
@@ -1276,6 +1278,9 @@ namespace engine
       }
       else
       {
+         _pCollectionName = NULL ;
+         _cmdCollectionName.clear() ;
+
          rc = rtnParserCommand( pCollectionName, &pCommand ) ;
 
          if ( SDB_OK != rc )
@@ -1292,7 +1297,12 @@ namespace engine
          {
             goto error ;
          }
-         _pCollectionName = pCommand->collectionFullName () ;
+
+         if ( NULL != pCommand->collectionFullName() )
+         {
+            _cmdCollectionName.assign( pCommand->collectionFullName() ) ;
+            _pCollectionName = _cmdCollectionName.c_str() ;
+         }
 
          if ( pCommand->writable () )
          {
@@ -2242,12 +2252,18 @@ namespace engine
                                     pQuery, w, contextID );
          break;
 
+      case CMD_ALTER_COLLECTION :
+         writable = TRUE ;
+         rc = _alterMainCL( pCommand, _pEDUCB, _pDpsCB ) ;
+         break ;
       case CMD_DROP_INDEX:
          writable = TRUE ;
          rc = _dropIndexOnMainCL( pCommandName, pCommand->collectionFullName(),
                                   pQuery, w, contextID );
          break;
-
+      case CMD_TEST_COLLECTION:
+         rc = _testMainCollection( pCommand->collectionFullName() ) ;
+         break ;
       case CMD_LINK_COLLECTION:
       case CMD_UNLINK_COLLECTION:
          rc = rtnRunCommand( pCommand, CMD_SPACE_SERVICE_SHARD,
@@ -2457,7 +2473,8 @@ namespace engine
                                                const CHAR *pCollection,
                                                const CHAR *pQuery,
                                                INT16 w,
-                                               SINT64 &contextID )
+                                               SINT64 &contextID,
+                                               BOOLEAN syscall )
    {
       INT32 rc = SDB_OK;
       const CHAR *pSubCLName = NULL ;
@@ -2493,7 +2510,7 @@ namespace engine
          pSubCLName = iter->c_str() ;
 
          rcTmp = rtnCreateIndexCommand( pSubCLName, boIndex, _pEDUCB,
-                                        _pDmsCB, _pDpsCB ) ;
+                                        _pDmsCB, _pDpsCB, syscall ) ;
          if ( rcTmp )
          {
             rcTmp = _processSubCLResult( rcTmp, pSubCLName,
@@ -2529,7 +2546,8 @@ namespace engine
                                              const CHAR *pCollection,
                                              const CHAR *pQuery,
                                              INT16 w,
-                                             SINT64 &contextID )
+                                             SINT64 &contextID,
+                                             BOOLEAN syscall )
    {
       INT32 rc = SDB_OK ;
       const CHAR *pSubCLName = NULL ;
@@ -2569,7 +2587,7 @@ namespace engine
          pSubCLName = iter->c_str() ;
 
          rcTmp = rtnDropIndexCommand( pSubCLName, ele, _pEDUCB,
-                                      _pDmsCB, _pDpsCB ) ;
+                                      _pDmsCB, _pDpsCB, syscall ) ;
          if ( rcTmp )
          {
             rcTmp = _processSubCLResult( rcTmp, pSubCLName, pCollection ) ;
@@ -3439,6 +3457,94 @@ namespace engine
          ++itr ;
       }
 
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _clsShdSession::_testMainCollection( const CHAR *fullName )
+   {
+      INT32 rc = SDB_OK ;
+      const CHAR *pSubCLName = NULL ;
+      vector< string > subCLs ;
+      SDB_DMSCB *dmsCB = sdbGetDMSCB() ;
+      rc = _getSubCLList( fullName, subCLs ) ;
+      PD_RC_CHECK( rc, PDERROR, "Session[%s]: Get sub collection list "
+                   "failed, rc: %d", sessionName(), rc ) ;
+      for ( vector< string >::iterator itr =  subCLs.begin();
+            itr != subCLs.end();
+            ++itr )
+      {
+         pSubCLName = itr->c_str() ;
+         rc = rtnTestCollectionCommand( pSubCLName, dmsCB ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to test sub collection:%s, rc:%d",
+                    pSubCLName, rc ) ;
+            goto error ;
+         }
+         
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _clsShdSession::_alterMainCL( _rtnCommand *command,
+                                       pmdEDUCB *cb,
+                                       SDB_DPSCB *dpsCB )
+   {
+      INT32 rc = SDB_OK ;
+      vector< string > subCLs ;
+      const _rtnAlterCollection *alterCommand =
+                 ( const _rtnAlterCollection * )command ;
+      const _rtnAlterJob &job = alterCommand->getRunner().getJob() ;
+      const BSONObj &tasks = job.getTasks() ;
+
+      rc = _getSubCLList( job.getName(), subCLs ) ;
+      PD_RC_CHECK( rc, PDERROR, "Session[%s]: Get sub collection list "
+                   "failed, rc: %d", sessionName(), rc ) ;
+      for ( vector< string >::iterator itr =  subCLs.begin();
+            itr != subCLs.end();
+            ++itr )
+      {
+         const CHAR *fullName = itr->c_str() ;
+         BSONObjIterator i( tasks ) ;
+         while ( i.more() )
+         {
+            _rtnAlterRunner runner ;
+            BSONObj task ;
+            BSONObj newJob ;
+            BSONElement e = i.next() ;
+            if ( Object != e.type() )
+            {
+               PD_LOG( PDERROR, "type of task should be object:%s",
+                       tasks.toString( FALSE, TRUE ).c_str() ) ;
+               rc = SDB_SYS ;
+               goto error ;
+            }
+
+            task = e.embeddedObject() ;
+            newJob = BSON( FIELD_NAME_ALTER_TYPE << SDB_ALTER_CL
+                           << FIELD_NAME_VERSION << SDB_ALTER_VERSION
+                           << FIELD_NAME_NAME << fullName
+                           << FIELD_NAME_ALTER << task ) ;
+            rc = runner.init( newJob ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "faild to init runner:%d", rc ) ;
+               goto error ;
+            }
+            rc = runner.run( cb, dpsCB ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "failed to do alteration job:%d", rc ) ;
+               goto error ;
+            }
+         }
+      }   
    done:
       return rc ;
    error:

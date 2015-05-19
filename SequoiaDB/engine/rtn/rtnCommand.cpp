@@ -2947,41 +2947,74 @@ namespace engine
       goto done ;
    }
 
-   IMPLEMENT_CMD_AUTO_REGISTER( _rtnAlterCommand )
-   _rtnAlterCommand::_rtnAlterCommand()
+   IMPLEMENT_CMD_AUTO_REGISTER( _rtnAlterCollection )
+   _rtnAlterCollection::_rtnAlterCollection()
    {
 
    }
 
-   _rtnAlterCommand::~_rtnAlterCommand()
+   _rtnAlterCollection::~_rtnAlterCollection()
    {
 
    }
 
-   const CHAR *_rtnAlterCommand::collectionFullName()
+   const CHAR *_rtnAlterCollection::collectionFullName()
    {
-      return RTN_ALTER_TYPE_CL == _runner.getJob().getType() &&
-             NULL != _runner.getJob().getName() ?
-             _runner.getJob().getName() : NULL ;
+      if ( !_alterObj.isEmpty() )
+      {
+         return _alterObj.getField( FIELD_NAME_NAME ).valuestrsafe() ;
+      }
+      else
+      {
+         return RTN_ALTER_TYPE_CL == _runner.getJob().getType() &&
+                NULL != _runner.getJob().getName() ?
+                _runner.getJob().getName() : NULL ;
+      }
    }
 
-   // PD_TRACE_DECLARE_FUNCTION( SDB__RTNALTERCOMMAND_INIT, "_rtnAlterCommand::init" )
-   INT32 _rtnAlterCommand::init( INT32 flags, INT64 numToSkip, INT64 numToReturn,
+   // PD_TRACE_DECLARE_FUNCTION( SDB__RTNALTERCOLLECTION_INIT, "_rtnAlterCollection::init" )
+   INT32 _rtnAlterCollection::init( INT32 flags, INT64 numToSkip, INT64 numToReturn,
                            const CHAR *pMatcherBuff,
                            const CHAR *pSelectBuff,
                            const CHAR *pOrderByBuff,
                            const CHAR *pHintBuff )
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB__RTNALTERCOMMAND_INIT ) ;
+      PD_TRACE_ENTRY( SDB__RTNALTERCOLLECTION_INIT ) ;
 
       try
       {
-         rc = _runner.init( BSONObj( pMatcherBuff ) ) ;
-         if ( SDB_OK != rc )
+         BSONObj obj( pMatcherBuff ) ;
+         if ( obj.getField( FIELD_NAME_VERSION ).eoo() )
          {
-            PD_LOG( PDERROR, "failed to init rpc runner:%d", rc ) ;
-            goto error ;
+            _alterObj = BSONObj( pMatcherBuff ) ;
+            BSONElement options ;
+            BSONElement clName = _alterObj.getField( FIELD_NAME_NAME ) ;
+            if ( String != clName.type() )
+            {
+               PD_LOG( PDERROR, "invalid alter object:%s",
+                       _alterObj.toString( FALSE, TRUE ).c_str() ) ;
+               rc = SDB_INVALIDARG ;
+               goto error ;
+            }
+
+            options = _alterObj.getField( FIELD_NAME_OPTIONS ) ;
+            if ( Object != options.type() )
+            {
+               PD_LOG( PDERROR, "invalid alter object:%s",
+                       _alterObj.toString( FALSE, TRUE ).c_str() ) ;
+               rc = SDB_INVALIDARG ;
+               goto error ;
+            }
+         }
+         else
+         {
+            rc = _runner.init( BSONObj( pMatcherBuff ) ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "failed to init rpc runner:%d", rc ) ;
+               goto error ;
+            }
          }
       }
       catch ( std::exception &e )
@@ -2992,27 +3025,113 @@ namespace engine
          goto error ;
       }
    done:
-      PD_TRACE_EXITRC( SDB__RTNALTERCOMMAND_INIT, rc ) ;
+      PD_TRACE_EXITRC( SDB__RTNALTERCOLLECTION_INIT, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION( SDB__RTNALTERCOMMAND_DOIT, "_rtnAlterCommand::doit" )
-   INT32 _rtnAlterCommand::doit( _pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
+   // PD_TRACE_DECLARE_FUNCTION( SDB__RTNALTERCOLLECTION_DOIT, "_rtnAlterCollection::doit" )
+   INT32 _rtnAlterCollection::doit( _pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
                                  _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
                                  INT16 w, INT64 *pContextID )
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB__RTNALTERCOMMAND_DOIT ) ;
+      PD_TRACE_ENTRY( SDB__RTNALTERCOLLECTION_DOIT ) ;
+      if ( _alterObj.isEmpty() )
+      {
       rc = _runner.run( cb, dpsCB ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to run alter command:%d", rc ) ;
          goto error ;
       }
+      }
+      else
+      {
+         rc = _handleOldVersion( cb, dmsCB, rtnCB,
+                                 dpsCB, w, pContextID ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to alter collection:%d", rc ) ;
+            goto error ;
+         }
+      }
    done:
-      PD_TRACE_EXITRC( SDB__RTNALTERCOMMAND_DOIT, rc ) ;
+      PD_TRACE_EXITRC( SDB__RTNALTERCOLLECTION_DOIT, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION( SDB__RTNALTERCOLLECTION__HANDLEOLDVERSION, "_rtnAlterCollection::_handleOldVersion" )
+   INT32 _rtnAlterCollection::_handleOldVersion( _pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
+                                                 _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
+                                                 INT16 w, INT64 *pContextID )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__RTNALTERCOLLECTION__HANDLEOLDVERSION ) ;
+      BSONObj idxDef ;
+      BSONObj options ;
+      BSONElement ensureIndex  ;
+      BSONElement shardingKey ;
+      options = _alterObj.getField( FIELD_NAME_OPTIONS ).embeddedObject() ;
+      shardingKey = options.getField( FIELD_NAME_SHARDINGKEY ) ;
+
+      /// should get catalog info to do some more judgements.
+      /// coord send the message with the newest catalog version
+      if ( Object != shardingKey.type() )
+      {
+         PD_LOG( PDDEBUG, "no sharding key in the alter object, do noting." ) ;
+         goto done ;
+      }
+
+      ensureIndex = options.getField( FIELD_NAME_ENSURE_SHDINDEX ) ;
+      if ( Bool == ensureIndex.type() &&
+           !ensureIndex.Bool() )
+      {
+         PD_LOG( PDDEBUG, "ensureShardingIndex is false, do nothing." ) ;
+         goto done ;
+      }
+
+      idxDef = BSON( IXM_FIELD_NAME_KEY << shardingKey.embeddedObject()
+                     << IXM_FIELD_NAME_NAME << IXM_SHARD_KEY_NAME
+                     << "v"<<0 ) ;
+
+      rc = rtnCreateIndexCommand( collectionFullName(),
+                                  idxDef,
+                                  cb, dmsCB, dpsCB, TRUE ) ;
+      if ( SDB_IXM_REDEF == rc )
+      {
+         /// sharding key index already exists.
+         rc = SDB_OK ;
+         goto done ;
+      }
+      else if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to create sharding key index:%d", rc ) ;
+         goto error ;
+      }
+      else
+      {
+         /*
+         the version which is from coord has been updated.
+         we override the interface collectionFullName(). so
+         the local catalog info will be autoly updated before
+         this function is called.
+        
+         catalog info has been updated, clear local's info.
+          it will download the last info when next request comes.
+         catAgent *catAgent = sdbGetShardCB()->getCataAgent() ;
+         catAgent->lock_w() ;
+         catAgent->clear( collectionFullName() ) ;
+         catAgent->release_w() ;
+          notify other secondary nodes to clear catalog info.
+         sdbGetClsCB()->invalidateCata( collectionFullName() ) ;
+        */
+      }
+   done:
+      PD_TRACE_EXITRC( SDB__RTNALTERCOLLECTION__HANDLEOLDVERSION, rc ) ;
       return rc ;
    error:
       goto done ;

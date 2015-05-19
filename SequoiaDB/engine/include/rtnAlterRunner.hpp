@@ -68,7 +68,7 @@ namespace engine
 
    private:
       _rtnAlterJob _job ;
-      static _rtnAlterFuncList _funcList ;
+      _rtnAlterFuncList _fl ;
    } ;
 }
 

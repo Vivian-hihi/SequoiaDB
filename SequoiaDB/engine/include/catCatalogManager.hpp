@@ -192,9 +192,6 @@ namespace engine
       INT32 processCmdDropDomain ( const CHAR *pQuery ) ;
       INT32 processCmdAlterDomain ( const CHAR *pQuery ) ;
 
-      INT32 processCmdAlter( const CHAR *pQuery,
-                             rtnContextBuf &ctxBuf ) ;
-
    // tool functions
    protected:
       void  _fillRspHeader( MsgHeader *rspMsg, const MsgHeader *reqMsg ) ;
@@ -268,8 +265,12 @@ namespace engine
                                const BSONElement &ele,
                                BSONObjBuilder &builder ) ;
 
-      INT32 _processAlterCL( const _rtnAlterJob *job,
-                             rtnContextBuf &buf) ;
+      INT32 _processAlterCollectionOld( const bson::BSONObj &obj,
+                                        rtnContextBuf &ctxBuf ) ;
+
+      INT32 _processAlterCollection( const bson::BSONObj &obj,
+                                     rtnContextBuf &ctxBuf ) ;
+
    private:
       sdbCatalogueCB       *_pCatCB;
       _SDB_DMSCB           *_pDmsCB;

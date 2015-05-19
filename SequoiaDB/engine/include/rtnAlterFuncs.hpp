@@ -47,12 +47,22 @@ namespace engine
                            _pmdEDUCB *cb,
                            _dpsLogWrapper *dpsCB ) ;
 
+   INT32 rtnCreateIDIndexVerify( const bson::BSONObj &args )
+   {
+      return SDB_OK ;
+   }
+
    /// SDB_ALTER_DROP_ID_INDEX
    INT32 rtnDropIDIndex( const CHAR *name,
                          const bson::BSONObj &pubArgs,
                          const bson::BSONObj &args,
                          _pmdEDUCB *cb,
                          _dpsLogWrapper *dpsCB ) ;
+
+   INT32 rtnDropIDIndexVerify( const bson::BSONObj &args )
+   {
+      return SDB_OK ;
+   }
 }
 
 #endif

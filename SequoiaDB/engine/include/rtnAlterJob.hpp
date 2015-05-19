@@ -33,6 +33,7 @@
 #define RTN_ALTERJOB_HPP_
 
 #include "rtnAlterDef.hpp"
+#include "rtnAlterFuncList.hpp"
 
 namespace engine
 {
@@ -84,8 +85,7 @@ namespace engine
       }
 
    public:
-      INT32 init( const bson::BSONObj &obj,
-                  BOOLEAN verifyTask = TRUE ) ;
+      INT32 init( const bson::BSONObj &obj ) ;
 
       void clear() ;
 
@@ -94,7 +94,8 @@ namespace engine
 
       void _extractOptions( const bson::BSONObj &obj ) ;
 
-      INT32 _verifyTasks() ;
+      INT32 _extractTasks( const bson::BSONElement &tasks,
+                           bson::BSONArrayBuilder &builder ) ;
 
    private:
       _rtnAlterOptions _options ;
@@ -104,6 +105,7 @@ namespace engine
       bson::BSONObj _obj ;
       bson::BSONObj _tasks ;
       bson::BSONObj _optionsObj ;
+      _rtnAlterFuncList _fl ;
    } ;
 }
 

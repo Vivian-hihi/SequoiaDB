@@ -440,7 +440,6 @@
 
 #define CMD_NAME_JSON_LOAD                   "json load"
 #define CMD_NAME_TRUNCATE                    "truncate"
-#define CMD_NAME_ALTER                       "alter"
 
 #define CMD_VALUE_NAME_ATTACH                "attach"
 #define CMD_VALUE_NAME_DETACH                "detach"

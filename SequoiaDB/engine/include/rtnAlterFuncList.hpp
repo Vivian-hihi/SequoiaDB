@@ -36,39 +36,55 @@
 #include "ossLatch.hpp"
 #include "ossUtil.hpp"
 #include "msgDef.h"
-#include <map>
-#include <sstream>
+#include <list>
 
 namespace engine
 {
    class _rtnAlterFuncList : public SDBObject
    {
+   private:
+      typedef std::list<_rtnAlterFuncObj> FOBJ_LIST ;
+
+      class _rtnAlterFuncListInter
+      {
+      public:
+         _rtnAlterFuncListInter(){ _inited = FALSE ;}
+         ~_rtnAlterFuncListInter() {}
+
+      public:
+         typedef std::list<_rtnAlterFuncObj> FOBJ_LIST ;
+
+         INT32 getFuncObj( RTN_ALTER_TYPE type,
+                           const CHAR *name,
+                           _rtnAlterFuncObj &obj ) ;
+
+         INT32 getFuncObj( RTN_ALTER_FUNC_TYPE type,
+                           _rtnAlterFuncObj &obj ) ;
+
+         INT32 init() ;
+
+      public:
+         FOBJ_LIST _fl ;
+         _ossSpinXLatch _latch ;
+         BOOLEAN _inited ;
+      } ;
+
    public:
       _rtnAlterFuncList() ; 
       ~_rtnAlterFuncList() ;
 
-   private:
-      typedef std::map<rtnAlterFuncKey, RTN_ALTER_FUNC> FUNC_LST ;
-
    public:
-      INT32 init() ;
+      INT32 getFuncObj( RTN_ALTER_TYPE type,
+                        const CHAR *name,
+                        _rtnAlterFuncObj &obj ) ;
 
-      INT32 getFunc( RTN_ALTER_TYPE type,
-                     const CHAR *name,
-                     RTN_ALTER_FUNC &func ) ;
-
-   private:
-      INT32 _init() ;
-
-      INT32 _registerFunc( const rtnAlterFuncKey &key,
-                           RTN_ALTER_FUNC func ) ;
+      INT32 getFuncObj( RTN_ALTER_FUNC_TYPE type,
+                           _rtnAlterFuncObj &obj ) ;
 
    private:
-      FUNC_LST _fl ;
-      _ossSpinXLatch _latch ;
-      BOOLEAN _inited ;
+      static _rtnAlterFuncListInter _fl ;
    } ;
-
+   
 }
 
 #endif
