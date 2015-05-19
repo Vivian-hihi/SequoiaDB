@@ -4098,6 +4098,8 @@ namespace engine
          INT32 rrc = SDB_OK ;
          rrc = rtnRemoteExec ( SDBSTOP, host.c_str(),
                                &retCode, &rInfo ) ;
+         rrc = SDB_OK == rrc ?
+               retCode : rrc ;
          if ( SDB_OK != rrc )
          {
             PD_LOG( PDERROR,
@@ -4110,6 +4112,8 @@ namespace engine
          {
             rrc = rtnRemoteExec ( SDBRM, host.c_str(),
                                   &retCode, &rInfo ) ;
+            rrc = SDB_OK == rrc ?
+                  retCode : rrc ;
             if ( SDB_OK != rrc )
             {
                PD_LOG( PDERROR,
