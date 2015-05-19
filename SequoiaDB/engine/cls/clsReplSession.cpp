@@ -1106,8 +1106,14 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__CLSSRCREPSN__SYNCLOG );
-      time_t bTime = time( NULL ) ;
+
+      DPS_LSN fLsn ;
+      DPS_LSN mLsn ;
+      DPS_LSN eLsn ;
+      DPS_LSN expect ;
+      DPS_LSN search = req->next ;
       MsgReplSyncRes msg ;
+
       if ( DPS_INVALID_LSN_OFFSET == req->next.offset )
       {
          rc = SDB_CLS_SYNC_FAILED ;
@@ -1129,15 +1135,8 @@ namespace engine
       msg.header.header.requestID = req->header.requestID ;
       msg.identity = routeAgent()->localID() ;
 
-      {
-      DPS_LSN fLsn ;
-      DPS_LSN mLsn ;
-      DPS_LSN eLsn ;
-      DPS_LSN expect ;
-      DPS_LSN search = req->next ;
-
+      /// get lsn window and judge
       _logger->getLsnWindow( fLsn, mLsn, eLsn, &expect ) ;
-
       if ( 0 < fLsn.compareOffset( req->next.offset ) )
       {
          PD_LOG( PDWARNING, "Sync Session[%s]: Remote lsn is too old. "
@@ -1199,35 +1198,13 @@ namespace engine
                  sessionName(), req->next.offset, req->next.version,
                  fLsn.offset, fLsn.version, eLsn.offset, eLsn.version ) ;
          _mb.clear() ;
-         while ( TRUE )
-         {
-            rc = _logger->search( search, &_mb ) ;
-            if ( SDB_OK != rc )
-            {
-               break ;
-            }
-            else
-            {
-               dpsLogRecordHeader *header = ( dpsLogRecordHeader * )
-                                            _mb.readPtr() ;
-               _mb.readPtr( _mb.length() ) ;
-               if ( CLS_SYNC_MAX_LEN <= _mb.length() ||
-                    ( time( NULL ) - bTime >= CLS_REPL_MAX_TIME &&
-                      _mb.length() > 0 ) )
-               {
-                  break ;
-               }
-               else
-               {
-                  search.offset += header->_length ;
-               }
-            }
-         }
+
+         _logger->search( search, &_mb, DPS_SERCAH_ALL, -1,
+                          CLS_REPL_MAX_TIME, CLS_SYNC_MAX_LEN ) ;
       }
 
       msg.header.header.messageLength = sizeof( _MsgReplSyncRes) +
                                            _mb.length() ;
-
       if ( 0 != _mb.length() )
       {
          rc = SDB_OK ;
@@ -1243,7 +1220,6 @@ namespace engine
                  "offset:%lld]", sessionName(), search.version,
                  search.offset ) ;
          routeAgent()->syncSend( handle, &msg ) ;
-      }
       }
 
    done:

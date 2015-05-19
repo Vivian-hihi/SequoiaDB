@@ -156,10 +156,59 @@ namespace engine
 
    INT32 _dpsLogWrapper::search( const DPS_LSN &minLsn,
                                  _dpsMessageBlock *mb,
-                                 UINT8 type )
+                                 UINT8 type,
+                                 INT32 maxNum,
+                                 INT32 maxTime,
+                                 INT32 maxSize )
    {
       SDB_ASSERT ( _initialized, "shouldn't call search without init" ) ;
-      return _buf.search( minLsn, mb, type, FALSE ) ;
+
+      INT32 rc = SDB_OK ;
+      UINT32 length = 0 ;
+      DPS_LSN searchLsn = minLsn ;
+      UINT64 bTime = 0 ;
+
+      if ( maxTime > 0 )
+      {
+         bTime = (UINT64)time( NULL ) ;
+      }
+
+      while( TRUE )
+      {
+         rc = _buf.search( searchLsn, mb, type, FALSE, &length ) ;
+         if ( rc )
+         {
+            break ;
+         }
+         searchLsn.offset += length ;
+
+         if ( maxNum > 0 )
+         {
+            --maxNum ;
+         }
+         if ( maxSize > 0 )
+         {
+            maxSize = (UINT32)maxSize > length ? maxSize - length : 0 ;
+         }
+
+         /// max num check
+         if ( 0 == maxNum )
+         {
+            break ;
+         }
+         /// max size check
+         if ( 0 == maxSize )
+         {
+            break ;
+         }
+         /// max time check
+         if ( maxTime > 0 && time( NULL ) - bTime >= maxTime )
+         {
+            break ;
+         }
+      }
+
+      return rc ;
    }
 
    INT32 _dpsLogWrapper::searchHeader( const DPS_LSN &lsn,

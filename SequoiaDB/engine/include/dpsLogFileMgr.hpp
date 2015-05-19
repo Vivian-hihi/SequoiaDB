@@ -78,7 +78,8 @@ namespace engine
                    BOOLEAN shutdown = FALSE );
 
       INT32 load( const DPS_LSN &lsn, _dpsMessageBlock *mb,
-                  BOOLEAN onlyHeader = FALSE ) ;
+                  BOOLEAN onlyHeader = FALSE,
+                  UINT32 *pLength = NULL ) ;
 
       INT32 move( const DPS_LSN_OFFSET &offset, const DPS_LSN_VER &version ) ;
 

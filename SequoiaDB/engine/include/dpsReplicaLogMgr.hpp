@@ -153,7 +153,8 @@ namespace engine
       void  writeData ( dpsMergeInfo &info ) ;
 
       INT32 search( const DPS_LSN &minLsn, _dpsMessageBlock *mb,
-                    UINT8 type, BOOLEAN onlyHeader );
+                    UINT8 type, BOOLEAN onlyHeader,
+                    UINT32 *pLength = NULL );
       INT32 run( _pmdEDUCB *cb );
       INT32 tearDown();
       INT32 flushAll() ;
@@ -205,7 +206,8 @@ namespace engine
       INT32 _flushPage( _dpsLogPage *page, BOOLEAN shutdown = FALSE );
       INT32 _flushAll() ;
       INT32 _search ( const DPS_LSN &lsn, _dpsMessageBlock *mb,
-                      BOOLEAN onlyHeader ) ;
+                      BOOLEAN onlyHeader,
+                      UINT32 *pLength = NULL ) ;
       DPS_LSN _getStartLsn () ;
       INT32 _parse( UINT32 sub, UINT32 offset, UINT32 len, CHAR *out ) ;
 

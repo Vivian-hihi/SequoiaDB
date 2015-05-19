@@ -82,7 +82,9 @@ namespace engine
                                   _dpsMessageBlock *mb,
                                   _pmdEDUCB *cb,
                                   const BSONObj &orderby = BSONObj(),
-                                  INT64 limit = 1 ) ;
+                                  INT64 limit = 1,
+                                  INT32 maxTime = -1,
+                                  INT32 maxSize = 5242880 ) ;
          INT32          removeDataToLow( DPS_LSN_OFFSET lowOffset,
                                          _pmdEDUCB *cb ) ;
 
@@ -132,7 +134,10 @@ namespace engine
       public:
          virtual INT32     search( const DPS_LSN &minLsn,
                                    _dpsMessageBlock *mb,
-                                   UINT8 type = DPS_SERCAH_ALL ) ;
+                                   UINT8 type = DPS_SERCAH_ALL,
+                                   INT32 maxNum = 1,
+                                   INT32 maxTime = -1,
+                                   INT32 maxSize = 5242880 ) ;
 
          virtual INT32     searchHeader( const DPS_LSN &lsn,
                                          _dpsMessageBlock *mb,
@@ -169,7 +174,9 @@ namespace engine
                            catDCLogItem *pLog,
                            _dpsMessageBlock *mb,
                            const BSONObj &orderby = BSONObj(),
-                           INT64 limit = 1 ) ;
+                           INT64 limit = 1,
+                           INT32 maxTime = -1,
+                           INT32 maxSize = 5242880 ) ;
 
          DPS_LSN   _getStartLsn() ;
 

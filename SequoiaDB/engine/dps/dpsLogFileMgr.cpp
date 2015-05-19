@@ -296,7 +296,8 @@ namespace engine
    // retrieve lsn, find the log record and fill up mb
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DPSLGFILEMGR_LOAD, "_dpsLogFileMgr::load" )
    INT32 _dpsLogFileMgr::load( const DPS_LSN &lsn, _dpsMessageBlock *mb,
-                               BOOLEAN onlyHeader )
+                               BOOLEAN onlyHeader,
+                               UINT32 *pLength )
    {
       INT32 rc      = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__DPSLGFILEMGR_LOAD );
@@ -329,6 +330,11 @@ namespace engine
                   head._length ) ;
          rc = SDB_DPS_CORRUPTED_LOG ;
          goto error ;
+      }
+
+      if ( pLength )
+      {
+         *pLength = head._length ;
       }
 
       if ( onlyHeader )

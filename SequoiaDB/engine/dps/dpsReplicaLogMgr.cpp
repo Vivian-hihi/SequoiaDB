@@ -691,7 +691,8 @@ namespace engine
    // search lsn in memory
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DPSRPCMGR__SEARCH, "_dpsReplicaLogMgr::_search" )
    INT32 _dpsReplicaLogMgr::_search ( const DPS_LSN &lsn, _dpsMessageBlock *mb,
-                                      BOOLEAN onlyHeader )
+                                      BOOLEAN onlyHeader,
+                                      UINT32 *pLength )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__DPSRPCMGR__SEARCH );
@@ -762,6 +763,11 @@ namespace engine
                   lsn.offset, lsn.version, head._lsn, head._version ) ;
          rc = SDB_DPS_CORRUPTED_LOG ;
          goto error ;
+      }
+
+      if ( pLength )
+      {
+         *pLength = head._length ;
       }
 
       // set head length to len
@@ -870,7 +876,8 @@ namespace engine
    INT32 _dpsReplicaLogMgr::search( const DPS_LSN &minLsn,
                                     _dpsMessageBlock *mb,
                                     UINT8 type,
-                                    BOOLEAN onlyHeader )
+                                    BOOLEAN onlyHeader,
+                                    UINT32 *pLength )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__DPSRPCMGR_SEARCH );
@@ -882,7 +889,7 @@ namespace engine
       // if we indicates searching for memory, let's do internal index seach
       // note we ALWAYS search for mem
       {
-         rc = _search( minLsn, mb, onlyHeader );
+         rc = _search( minLsn, mb, onlyHeader, pLength );
          if ( rc )
          {
             // if we can't find it from memory
@@ -890,7 +897,7 @@ namespace engine
                  DPS_SEARCH_FILE & type )
             {
                // if we also want to find from file
-               rc = _logger.load( minLsn, mb, onlyHeader );
+               rc = _logger.load( minLsn, mb, onlyHeader, pLength );
                if ( rc )
                {
                   // we can't find from both memory and file

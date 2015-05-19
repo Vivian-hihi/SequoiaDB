@@ -302,12 +302,20 @@ namespace engine
                                   _dpsMessageBlock *mb,
                                   _pmdEDUCB *cb,
                                   const BSONObj &orderby,
-                                  INT64 limit )
+                                  INT64 limit,
+                                  INT32 maxTime,
+                                  INT32 maxSize )
    {
       INT32 rc = SDB_OK ;
       BSONObj hint ;
       INT64 contextID = -1 ;
       rtnContextBuf buffObj ;
+      UINT64 bTime = 0 ;
+
+      if ( maxTime > 0 )
+      {
+         bTime = ( UINT64 )time( NULL ) ;
+      }
 
       rc = rtnQuery( _clName.c_str(), hint, match, orderby, hint, 0, cb,
                      0, limit, _pDmsCB, _pRtnCB, contextID ) ;
@@ -317,7 +325,7 @@ namespace engine
 
       while( TRUE )
       {
-         rc = rtnGetMore( contextID, -1, buffObj, cb, _pRtnCB ) ;
+         rc = rtnGetMore( contextID, 1, buffObj, cb, _pRtnCB ) ;
          if( SDB_DMS_EOC == rc )
          {
             contextID = -1 ;
@@ -342,6 +350,22 @@ namespace engine
          // copy
          ossMemcpy( mb->writePtr(), buffObj.data(), buffObj.size() ) ;
          mb->writePtr( mb->length() + buffObj.size() ) ;
+
+         if ( maxSize > 0 )
+         {
+            maxSize = maxSize > buffObj.size() ? maxSize - buffObj.size() : 0 ;
+         }
+
+         /// max size check
+         if ( 0 == maxSize )
+         {
+            break ;
+         }
+         /// max time check
+         if ( maxTime > 0 && time( NULL ) - bTime >= maxTime )
+         {
+            break ;
+         }
       }
 
       if( 0 == mb->length() )
@@ -603,13 +627,18 @@ namespace engine
 
    INT32 _catDCLogMgr::search( const DPS_LSN &minLsn,
                                _dpsMessageBlock *mb,
-                               UINT8 type )
+                               UINT8 type,
+                               INT32 maxNum,
+                               INT32 maxTime,
+                               INT32 maxSize )
    {
       INT32 rc = SDB_OK ;
       UINT32 pos = 0 ;
       BOOLEAN hasLock = FALSE ;
       DPS_LSN begin ;
-      BSONObj matcher = BSON( FIELD_NAME_LSN_OFFSET << (INT64)minLsn.offset ) ;
+      BSONObj matcher = BSON( FIELD_NAME_LSN_OFFSET <<
+                              BSON( "$gte" << (INT64)minLsn.offset )
+                            ) ;
 
       if ( DPS_INVALID_LSN_OFFSET == minLsn.offset )
       {
@@ -643,7 +672,8 @@ namespace engine
          goto error ;
       }
 
-      rc = _readData( matcher, _vecLogCL[ pos ], mb, BSONObj(), 1 ) ;
+      rc = _readData( matcher, _vecLogCL[ pos ], mb, BSONObj(),
+                      (INT64)maxNum, maxTime, maxSize ) ;
       PD_RC_CHECK( rc, PDERROR, "Read data by matcher[%s] failed, rc: %d",
                    matcher.toString().c_str(), rc ) ;
 
@@ -897,9 +927,12 @@ namespace engine
                                   catDCLogItem *pLog,
                                   _dpsMessageBlock *mb,
                                   const BSONObj &orderby,
-                                  INT64 limit )
+                                  INT64 limit,
+                                  INT32 maxTime,
+                                  INT32 maxSize )
    {
-      return pLog->readData( match, mb, _pEduCB, orderby, limit ) ;
+      return pLog->readData( match, mb, _pEduCB, orderby, limit,
+                             maxTime, maxSize ) ;
    }
 
    DPS_LSN _catDCLogMgr::_getStartLsn()
