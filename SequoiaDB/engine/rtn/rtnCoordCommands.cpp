@@ -3694,11 +3694,11 @@ namespace engine
       rc = rtnRemoteExec( SDBGETCONF, hostEle.valuestr(),
                           &retCode, &info,
                           NULL, NULL, NULL, &objs ) ;
-      if ( SDB_OK != rc ||
-           SDB_OK != retCode )
+      rc = SDB_OK == rc ? retCode : rc ;
+      if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to get conf of node, "
-                 "rc:%d, retCode:%d", rc, retCode ) ;
+                 "rc:%d", rc ) ;
          goto error ;
       }
       else if ( 1 != objs.size() )
@@ -3740,11 +3740,12 @@ namespace engine
 
       rc = rtnRemoteExec ( SDBSTART, hostEle.valuestr(),
                            &retCode, &info ) ;
-      if ( SDB_OK != rc ||
-           SDB_OK != retCode )
+      rc = SDB_OK == rc ?
+           retCode : rc ;
+      if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to get conf of node, "
-                 "rc:%d, retCode:%d", rc, retCode ) ;
+                 "rc:%d", rc ) ;
          goto error ;
       }
    done:
