@@ -914,7 +914,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       valid = FALSE ;
 
-      static const CHAR *s_FilterCLs = {
+      static const CHAR *s_FilterCLs[] = {
          CAT_COLLECTION_SPACE_COLLECTION,
          CAT_COLLECTION_INFO_COLLECTION,
          CAT_TASK_INFO_COLLECTION,
