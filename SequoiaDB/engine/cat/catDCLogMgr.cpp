@@ -44,6 +44,7 @@
 #include "dpsLogWrapper.hpp"
 #include "catalogueCB.hpp"
 #include "dpsOp2Record.hpp"
+#include "authDef.hpp"
 #include "pdTrace.hpp"
 #include "catTrace.hpp"
 
