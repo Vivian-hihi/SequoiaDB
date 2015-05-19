@@ -43,6 +43,7 @@
 #include "rtnCB.hpp"
 #include "dpsLogWrapper.hpp"
 #include "catalogueCB.hpp"
+#include "dpsOp2Record.hpp"
 #include "pdTrace.hpp"
 #include "catTrace.hpp"
 
@@ -906,41 +907,109 @@ namespace engine
       return pLog->getFirstLSN() ;
    }
 
+   INT32 _catDCLogMgr::_filterLog( dpsLogRecordHeader *pHeader,
+                                   BOOLEAN &valid )
+   {
+      INT32 rc = SDB_OK ;
+      valid = FALSE ;
+
+      static const CHAR *s_FilterCLs = {
+         CAT_COLLECTION_SPACE_COLLECTION,
+         CAT_COLLECTION_INFO_COLLECTION,
+         CAT_TASK_INFO_COLLECTION,
+         CAT_DOMAIN_COLLECTION,
+         CAT_HISTORY_COLLECTION,
+         CAT_PROCEDURES_COLLECTION,
+         AUTH_USR_COLLECTION
+      } ;
+      static UINT32 s_Size = sizeof( s_FilterCLs ) / sizeof( const CHAR* ) ;
+
+      const CHAR *pFullName = NULL ;
+      BSONObj obj ;
+      BSONObj oldMatch, oldObj, newMatch ;
+
+      switch( pHeader->_type )
+      {
+         case LOG_TYPE_DATA_INSERT :
+            rc = dpsRecord2Insert( (const CHAR *)pHeader, &pFullName, obj ) ;
+            break ;
+         case LOG_TYPE_DATA_UPDATE :
+            rc = dpsRecord2Update( (const CHAR *)pHeader, &pFullName,
+                                   oldMatch, oldObj, newMatch, obj ) ;
+            break ;
+         case LOG_TYPE_DATA_DELETE :
+            rc = dpsRecord2Delete( (const CHAR *)pHeader, &pFullName, obj ) ;
+            break;
+         default :
+            goto done ; /// don't care
+      }
+
+      PD_RC_CHECK( rc, PDERROR, "Parse log failed, rc: %d", rc ) ;
+
+      for ( UINT32 i = 0 ; i < s_Size ; ++i )
+      {
+         if ( 0 == ossStrcmp( pFullName, s_FilterCLs[ i ] ) )
+         {
+            valid = TRUE ;
+            break ;
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 _catDCLogMgr::saveSysLog( dpsLogRecordHeader *pHeader,
                                    DPS_LSN *pRetLSN )
    {
       INT32 rc = SDB_OK ;
+      BOOLEAN valid = FALSE ;
       BSONObjBuilder builder ;
       BSONObj obj ;
       DPS_LSN_OFFSET orgOffset = pHeader->_lsn ;
 
-      ossScopedLock lock( &_latch, EXCLUSIVE ) ;
+      /// filter log
+      rc = _filterLog( pHeader, valid ) ;
+      PD_RC_CHECK( rc, PDERROR, "Filter log failed, rc: %d", rc ) ;
 
-      _setVersion( pHeader->_version ) ;
-
-      if ( DPS_INVALID_LSN_VERSION == _expectLsn.version )
+      if ( !valid )
       {
-         ++_expectLsn.version ;
+         /// don't save the log
+         goto done ;
       }
+      else
+      {
+         ossScopedLock lock( &_latch, EXCLUSIVE ) ;
 
-      pHeader->_preLsn = _curLsn.offset ;
-      pHeader->_lsn = _expectLsn.offset ;
-      pHeader->_version = _expectLsn.version ;
+         _setVersion( pHeader->_version ) ;
 
-      builder.append( FIELD_NAME_LSN_VERSION, (INT32)_expectLsn.version ) ;
-      builder.append( FIELD_NAME_LSN_OFFSET, (INT64)_expectLsn.offset ) ;
-      builder.append( FIELD_NAME_ORG_LSNOFFSET, (INT64)orgOffset ) ;
-      builder.append( FIELD_NAME_DATALEN, (INT32)pHeader->_length ) ;
-      builder.appendBinData( FIELD_NAME_DATA, (INT32)pHeader->_length,
-                             BinDataGeneral, ( const unsigned char *)pHeader ) ;
+         if ( DPS_INVALID_LSN_VERSION == _expectLsn.version )
+         {
+            ++_expectLsn.version ;
+         }
 
-      obj = builder.obj() ;
-      rc = _writeData( obj, _expectLsn ) ;
-      PD_RC_CHECK( rc, PDERROR, "Write obj[%s] to system log failed, rc: %d",
-                   obj.toString().c_str(), rc ) ;
+         pHeader->_preLsn = _curLsn.offset ;
+         pHeader->_lsn = _expectLsn.offset ;
+         pHeader->_version = _expectLsn.version ;
 
-      _curLsn = _expectLsn ;
-      _expectLsn.offset += 1 ;
+         builder.append( FIELD_NAME_LSN_VERSION, (INT32)_expectLsn.version ) ;
+         builder.append( FIELD_NAME_LSN_OFFSET, (INT64)_expectLsn.offset ) ;
+         builder.append( FIELD_NAME_ORG_LSNOFFSET, (INT64)orgOffset ) ;
+         builder.append( FIELD_NAME_DATALEN, (INT32)pHeader->_length ) ;
+         builder.appendBinData( FIELD_NAME_DATA, (INT32)pHeader->_length,
+                                BinDataGeneral,
+                                ( const unsigned char *)pHeader ) ;
+
+         obj = builder.obj() ;
+         rc = _writeData( obj, _expectLsn ) ;
+         PD_RC_CHECK( rc, PDERROR, "Write obj[%s] to system log failed, "
+                      "rc: %d", obj.toString().c_str(), rc ) ;
+
+         _curLsn = _expectLsn ;
+         _expectLsn.offset += 1 ;
+      }
 
    done:
       return rc ;

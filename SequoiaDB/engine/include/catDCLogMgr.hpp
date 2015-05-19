@@ -173,6 +173,9 @@ namespace engine
 
          DPS_LSN   _getStartLsn() ;
 
+         INT32     _filterLog( dpsLogRecordHeader *pHeader,
+                               BOOLEAN &valid ) ;
+
       private:
          _pmdEDUCB                  *_pEduCB;
          vector< catDCLogItem* >    _vecLogCL ;
