@@ -3503,6 +3503,12 @@ namespace engine
       const _rtnAlterJob &job = alterCommand->getRunner().getJob() ;
       const BSONObj &tasks = job.getTasks() ;
 
+      if ( job.isEmpty() )
+      {
+         /// old version alteration
+         goto done ;
+      }
+
       rc = _getSubCLList( job.getName(), subCLs ) ;
       PD_RC_CHECK( rc, PDERROR, "Session[%s]: Get sub collection list "
                    "failed, rc: %d", sessionName(), rc ) ;
