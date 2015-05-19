@@ -72,6 +72,7 @@ namespace engine
    */
 
    #define OM_BUSINESS_SPARK                 "spark"
+   #define OM_BUSINESS_HDFS                  "hdfs"
 
    
    #define OM_CS_DEPLOY                      "SYSDEPLOY"
@@ -408,6 +409,8 @@ namespace engine
    #define  OM_REST_LOG_NAME                 "Name"
    #define  OM_BSON_MASTER_PORT              "MasterPort"
    #define  OM_BSON_MASTER_WEBUI_PORT        "MasterWebuiPort"
+   #define  OM_BSON_NAMENODE_PORT            "NamenodePort"
+   #define  OM_BSON_NAMENODE_WEBUI_PORT      "NamenodeWebuiPort"
 
    #define  OM_CONF_PATH_STR                 "conf"
    #define  OM_LOG_PATH_STR                  "log"

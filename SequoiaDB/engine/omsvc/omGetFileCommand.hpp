@@ -887,9 +887,16 @@ namespace engine
 
       protected:
          INT32           _getRestBusinessInfo( BSONObj &configInfo ) ;
+
          INT32           _checkBusinssCFG( BSONObj &configInfo ) ;
+         INT32           _checkSparkCFG( BSONObj &configInfo ) ;
+         INT32           _checkHdfsCFG( BSONObj &configInfo ) ;
+
          string          _generateName( const string &keyName ) ;
          INT32           _storeBusinessInfo( BSONObj &configInfo ) ;
+         INT32           _storeSparkBInfo( BSONObj &configInfo ) ;
+         INT32           _storeHdfsBInfo( BSONObj &configInfo ) ;
+
    } ;
 
    class omGetFileCommand : public omGetLogCommand
