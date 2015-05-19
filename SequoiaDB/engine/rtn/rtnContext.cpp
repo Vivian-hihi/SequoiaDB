@@ -2705,6 +2705,13 @@ namespace engine
       if ( SDB_OK == rc && _numToReturn != 0 && _preRead )
       {
          _send2EmptyNodes( cb ) ;
+
+         /// when all sub context is closed
+         if ( _subContextMap.empty() && _emptyContextMap.empty() &&
+              _prepareContextMap.empty() )
+         {
+            _hitEnd = TRUE ;
+         }
       }
       return rc ;
    error:
