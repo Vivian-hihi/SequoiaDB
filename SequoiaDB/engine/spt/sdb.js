@@ -503,12 +503,16 @@ Sdb.prototype.getCoordRG = function() {
    return this.getRG( SDB_COORD_GROUP_NAME ) ;
 }
 
-Sdb.prototype.createSpareGroup = function() {
+Sdb.prototype.createSpareRG = function() {
    return this.createRG(SDB_SPARE_GROUP_NAME) ;
 }
 
-Sdb.prototype.getSpareGroup = function() {
+Sdb.prototype.getSpareRG = function() {
    return this.getRG(SDB_SPARE_GROUP_NAME) ;
+}
+
+Sdb.prototype.removeSpareRG  = function() {
+   return this.removeRG( SDB_SPARE_GROUP_NAME ) ;
 }
 
 // end Sdb
