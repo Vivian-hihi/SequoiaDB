@@ -167,7 +167,7 @@
 				<equals arg1="${ret.code.forShards}" arg2="0" />
 			</not>
 			<then>
-				<sdbProperty name="db.RG.info" value="this env is standalone , host is ${test.machine.no2.basic}"/>
+				<sdbProperty name="db.RG.info" value="this env is standalone , host is ${test.machine.no2}"/>
 			</then>
 		</if>
 		<if>
