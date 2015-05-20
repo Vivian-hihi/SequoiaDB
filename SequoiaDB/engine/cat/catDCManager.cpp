@@ -338,10 +338,13 @@ namespace engine
          {
             goto done ;
          }
-         PD_LOG ( PDWARNING, "Service deactive but received command: %s, "
-                  "opCode: %d, rc: %d", pCMDName,
-                  pQueryReq->header.opCode, rc ) ;
-         goto error ;
+         else if ( rc )
+         {
+            PD_LOG ( PDWARNING, "Service deactive but received command: %s, "
+                     "opCode: %d, rc: %d", pCMDName,
+                     pQueryReq->header.opCode, rc ) ;
+            goto error ;
+         }
       }
 
       // the second dispatch msg
