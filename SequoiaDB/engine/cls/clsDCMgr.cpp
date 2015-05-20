@@ -43,6 +43,8 @@ using namespace bson ;
 namespace engine 
 {
 
+   #define DC_UPDATE_FORCE_TIMEOUT           ( 60 * OSS_ONE_SEC )
+
    /*
       _clsDCBaseInfo implement
    */
@@ -664,7 +666,7 @@ namespace engine
       if ( ppRecvMsg )
       {
          rc = pmdSyncSendMsg( msg, ppRecvMsg, &sock, cb, useCBMem,
-                              (INT32)millsec ) ;
+                              (INT32)millsec, DC_UPDATE_FORCE_TIMEOUT ) ;
       }
       else
       {

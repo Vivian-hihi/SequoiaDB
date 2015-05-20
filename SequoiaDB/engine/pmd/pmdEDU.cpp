@@ -1262,7 +1262,8 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB_PMDRECV, "pmdRecv" )
    INT32 pmdRecv ( CHAR *pBuffer, INT32 recvSize,
                    ossSocket *sock, pmdEDUCB *cb,
-                   INT32 timeout )
+                   INT32 timeout,
+                   INT32 forceTimeout )
    {
       INT32 rc = SDB_OK ;
       SDB_ASSERT ( sock, "Socket is NULL" ) ;
@@ -1283,6 +1284,17 @@ namespace engine
          totalReceivedSize += receivedSize ;
          if ( SDB_TIMEOUT == rc )
          {
+            if ( forceTimeout > 0 && timeout > 0 )
+            {
+               if ( forceTimeout > timeout )
+               {
+                  forceTimeout -= timeout ;
+               }
+               else
+               {
+                  break ;
+               }
+            }
             continue ;
          }
          goto done ;
@@ -1337,7 +1349,7 @@ namespace engine
 
    INT32 pmdSyncSendMsg( const MsgHeader *pMsg, MsgHeader **ppRecvMsg,
                          ossSocket *sock, pmdEDUCB *cb, BOOLEAN useCBMem,
-                         INT32 timeout )
+                         INT32 timeout, INT32 forceTimeout )
    {
       INT32 rc = SDB_OK ;
       INT32 msgLen = 0 ;
@@ -1350,7 +1362,8 @@ namespace engine
          goto error ;
       }
       // recieve msg length
-      rc = pmdRecv( (CHAR*)&msgLen, sizeof(INT32), sock, cb, timeout ) ;
+      rc = pmdRecv( (CHAR*)&msgLen, sizeof(INT32), sock, cb, timeout,
+                    forceTimeout ) ;
       if ( rc )
       {
          goto error ;
@@ -1411,12 +1424,14 @@ namespace engine
    }
 
    INT32 pmdSendAndRecv2Que( const MsgHeader *pMsg, ossSocket *sock,
-                             pmdEDUCB *cb, INT32 timeout )
+                             pmdEDUCB *cb, INT32 timeout,
+                             INT32 forceTimeout )
    {
       INT32 rc = SDB_OK ;
       MsgHeader *pRecvMsg = NULL ;
       pmdEDUEvent event ;
-      rc = pmdSyncSendMsg( pMsg, &pRecvMsg, sock, cb, FALSE, timeout ) ;
+      rc = pmdSyncSendMsg( pMsg, &pRecvMsg, sock, cb, FALSE, timeout,
+                           forceTimeout ) ;
       if ( rc )
       {
          goto error ;

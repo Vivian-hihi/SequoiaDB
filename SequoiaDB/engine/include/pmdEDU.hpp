@@ -533,7 +533,8 @@ namespace engine
    */
    INT32 pmdRecv ( CHAR *pBuffer, INT32 recvSize,
                    ossSocket *sock, pmdEDUCB *cb,
-                   INT32 timeout = OSS_SOCKET_DFT_TIMEOUT ) ;
+                   INT32 timeout = OSS_SOCKET_DFT_TIMEOUT,
+                   INT32 forceTimeout = -1 ) ;
    INT32 pmdSend ( const CHAR *pBuffer, INT32 sendSize,
                    ossSocket *sock, pmdEDUCB *cb,
                    INT32 timeout = OSS_SOCKET_DFT_TIMEOUT ) ;
@@ -547,14 +548,16 @@ namespace engine
    INT32 pmdSyncSendMsg( const MsgHeader *pMsg, MsgHeader **ppRecvMsg,
                          ossSocket *sock, pmdEDUCB *cb,
                          BOOLEAN useCBMem = TRUE,
-                         INT32 timeout = OSS_SOCKET_DFT_TIMEOUT ) ;
+                         INT32 timeout = OSS_SOCKET_DFT_TIMEOUT,
+                         INT32 forceTimeout = -1 ) ;
 
    /*
       NOTE: recv the msg to cb queue
    */
    INT32 pmdSendAndRecv2Que( const MsgHeader *pMsg, ossSocket *sock,
                              pmdEDUCB *cb,
-                             INT32 timeout = OSS_SOCKET_DFT_TIMEOUT ) ;
+                             INT32 timeout = OSS_SOCKET_DFT_TIMEOUT,
+                             INT32 forceTimeout = -1 ) ;
 
    void  pmdEduEventRelase( pmdEDUEvent &event, pmdEDUCB *cb ) ;
 

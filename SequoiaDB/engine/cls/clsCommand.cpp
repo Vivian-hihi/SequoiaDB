@@ -566,5 +566,30 @@ namespace engine
    error:
       goto done ;
    }
+
+   IMPLEMENT_CMD_AUTO_REGISTER( _clsAlterImage )
+   _clsAlterImage::_clsAlterImage()
+   {
+   }
+
+   _clsAlterImage::~_clsAlterImage()
+   {
+   }
+
+   INT32 _clsAlterImage::init( INT32 flags, INT64 numToSkip,
+                               INT64 numToReturn, const CHAR *pMatcherBuff,
+                               const CHAR *pSelectBuff,
+                               const CHAR *pOrderByBuff,
+                               const CHAR *pHintBuff )
+   {
+      return SDB_OK ;
+   }
+
+   INT32 _clsAlterImage::doit( _pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
+                               _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
+                               INT16 w, INT64 *pContextID )
+   {
+      return SDB_OK ;
+   }
 }
 
