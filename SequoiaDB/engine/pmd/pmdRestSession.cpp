@@ -41,7 +41,7 @@
 #include "../omsvc/omGetFileCommand.hpp"
 #include "rtn.hpp"
 #include "msgAuth.hpp"
-
+#include "pmdTrace.hpp"
 #include "../bson/bson.h"
 
 using namespace bson ;
@@ -402,9 +402,11 @@ namespace engine
       return rc ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_PMDRESTSN_PROMSG, "_pmdRestSession::_processMsg" )
    INT32 _pmdRestSession::_processMsg( HTTP_PARSE_COMMON command, 
                                        const CHAR *pFilePath )
    {
+      PD_TRACE_ENTRY( SDB_PMDRESTSN_PROMSG );
       INT32 rc = SDB_OK ;
       restAdaptor *pAdaptor = sdbGetPMDController()->getRestAdptor() ;
       const CHAR *pSubCommand = NULL ;
@@ -447,6 +449,7 @@ namespace engine
       }
 
    done:
+      PD_TRACE_EXITRC ( SDB_PMDRESTSN_PROMSG, rc );
       return rc ;
    }
    INT32 _pmdRestSession::_processBusinessMsg( restAdaptor *pAdaptor, 

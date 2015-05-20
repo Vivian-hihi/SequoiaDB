@@ -36,6 +36,7 @@
 #include "msgMessage.hpp"
 #include "pmd.hpp"
 #include "rtn.hpp"
+#include "pmdTrace.hpp"
 
 using namespace bson ;
 
@@ -351,6 +352,7 @@ namespace engine
       MON_END_OP( _pEDUCB->getMonAppCB() ) ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_PMDLOCALSN_PROMSG, "_pmdLocalSession::_processMsg" )
    INT32 _pmdLocalSession::_processMsg( MsgHeader * msg )
    {
       INT32 rc          = SDB_OK ;
@@ -359,6 +361,7 @@ namespace engine
       rtnContextBuf contextBuff ;
       INT32 opCode      = msg->opCode ;
 
+      PD_TRACE_ENTRY( SDB_PMDLOCALSN_PROMSG );
       // prepare
       rc = _onMsgBegin( msg ) ;
       if ( SDB_OK == rc )
@@ -414,7 +417,7 @@ namespace engine
       // end
       _onMsgEnd( rc, msg ) ;
       rc = SDB_OK ;
-
+      PD_TRACE_EXITRC ( SDB_PMDLOCALSN_PROMSG, rc );
       return rc ;
    }
 
