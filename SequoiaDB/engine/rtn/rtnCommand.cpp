@@ -3101,7 +3101,7 @@ namespace engine
       rc = rtnCreateIndexCommand( collectionFullName(),
                                   idxDef,
                                   cb, dmsCB, dpsCB, TRUE ) ;
-      if ( SDB_IXM_REDEF == rc )
+      if ( SDB_IXM_REDEF == rc || SDB_IXM_EXIST_COVERD_ONE == rc )
       {
          /// sharding key index already exists.
          rc = SDB_OK ;

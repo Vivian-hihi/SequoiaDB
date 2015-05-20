@@ -1250,7 +1250,7 @@ namespace engine
                                          IXM_SHARD_KEY_NAME<<"v"<<0 ) ;
             rc = rtnCreateIndexCommand ( pCollection, shardKeyObj,
                                          cb, dmsCB, dpsCB, TRUE ) ;\
-            if ( SDB_IXM_REDEF == rc )
+            if ( SDB_IXM_REDEF == rc || SDB_IXM_EXIST_COVERD_ONE == rc )
             {
                /// same defined index already exists.
                rc = SDB_OK ;

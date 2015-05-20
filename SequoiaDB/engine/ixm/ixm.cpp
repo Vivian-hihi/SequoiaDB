@@ -240,7 +240,8 @@ namespace engine
    }
 
    //PD_TRACE_DECLARE_FUNCTION ( SDB__IXMINXCB_ISSAMEDEF, "_ixmIndexCB::isSameDef" )
-   BOOLEAN _ixmIndexCB::isSameDef( const BSONObj &defObj )
+   BOOLEAN _ixmIndexCB::isSameDef( const BSONObj &defObj,
+                                   BOOLEAN strict )
    {
       //PD_TRACE_ENTRY ( SDB__IXMINXCB_ISSAMEDEF );
       BOOLEAN rs = TRUE;
@@ -268,21 +269,32 @@ namespace engine
             rIsUnique = TRUE;
          }
 
-         if ( lIsUnique )
+         if ( !strict )
          {
-            /// it is useless to create any same defined index
-            /// when an unique index exists.
-            rs = TRUE ;
-            goto done ;         
-         }
-         else if ( lIsUnique != rIsUnique )
-         {
-            rs = FALSE;
-            goto done;
+            if ( lIsUnique )
+            {
+               /// it is useless to create any same defined index
+               /// when an unique index exists.
+               rs = TRUE ;
+               goto done ;         
+            }
+            else if ( lIsUnique != rIsUnique )
+            {
+               rs = FALSE;
+               goto done;
+            }
+            else
+            {
+               /// do nothing.
+            }
          }
          else
          {
-            /// do nothing.
+            if ( lIsUnique != rIsUnique )
+            {
+                rs = FALSE;
+                goto done ;
+            }
          }
 
          BOOLEAN lEnforced = FALSE;

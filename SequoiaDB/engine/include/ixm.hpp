@@ -713,7 +713,8 @@ namespace engine
          return curOID == oid ;
       }
       INT32 truncate ( BOOLEAN removeRoot ) ;
-      BOOLEAN isSameDef( const BSONObj &defObj ) ;
+      BOOLEAN isSameDef( const BSONObj &defObj,
+                         BOOLEAN strict = FALSE ) ;
    } ;
    typedef class _ixmIndexCB ixmIndexCB ;
 

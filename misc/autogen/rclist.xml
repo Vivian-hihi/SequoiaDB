@@ -2338,5 +2338,13 @@
          </description>
       </code>
 
+      <code>
+         <name>SDB_IXM_EXIST_COVERD_ONE</name>
+         <description>
+            <en>Exist one index which can cover this scene</en>
+            <cn>已经存在一个可以处理本场景的索引</cn>
+         </description>
+      </code>
+
    </codelist>
 </rclist>
