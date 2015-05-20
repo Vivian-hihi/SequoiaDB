@@ -994,6 +994,10 @@ namespace engine
       SDB_ASSERT( NULL != header, "header should not be NULL" ) ;
       _MsgReplConsultation *msg = ( _MsgReplConsultation * )header ;
       _MsgReplConsultationRes res ;
+      DPS_LSN fLsn ;
+      DPS_LSN mLsn ;
+      DPS_LSN eLsn ;
+
       res.header.header.TID = msg->header.TID ;
       res.header.header.routeID = msg->header.routeID ;
       res.header.header.requestID = msg->header.requestID ;
@@ -1005,10 +1009,6 @@ namespace engine
          goto done ;
       }
 
-      {
-      DPS_LSN fLsn ;
-      DPS_LSN mLsn ;
-      DPS_LSN eLsn ;
       _logger->getLsnWindow( fLsn, mLsn, eLsn ) ;
       PD_LOG( PDEVENT, "Sync Session[%s]: Recv a consult req. "
               "[remote offset:%lld, remote ver:%d, local foffset:%lld, "
@@ -1022,8 +1022,7 @@ namespace engine
          goto done ;
       }
       /// remote version 
-      else if ( 0 < fLsn.compare( msg->current )/* ||
-                0 > eLsn.compareVersion(  msg->current.version - 1 )*/ )
+      else if ( 0 < fLsn.compare( msg->current ) )
       {
          res.header.res = SDB_CLS_CONSULT_FAILED ;
          goto done ;
@@ -1090,7 +1089,7 @@ namespace engine
          }
          res.header.res = SDB_OK ;
       }
-      }
+
    done:
       PD_LOG( PDEVENT, "Sync Session[%s]: Consult[res:%d, return offset:%lld, "
               "return version:%d]", sessionName(), res.header.res,
