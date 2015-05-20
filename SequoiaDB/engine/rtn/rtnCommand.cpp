@@ -3040,12 +3040,18 @@ namespace engine
       PD_TRACE_ENTRY( SDB__RTNALTERCOLLECTION_DOIT ) ;
       if ( _alterObj.isEmpty() )
       {
-      rc = _runner.run( cb, dpsCB ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to run alter command:%d", rc ) ;
-         goto error ;
+         rc = _runner.run( cb, dpsCB ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to run alter command:%d", rc ) ;
+            goto error ;
+         }
       }
+      else if ( getFromService() != CMD_SPACE_SERVICE_SHARD )
+      {
+         rc = SDB_RTN_CMD_NO_SERVICE_AUTH ;
+         PD_LOG( PDERROR, "this request should be from shard port" ) ;
+         goto error ;
       }
       else
       {
