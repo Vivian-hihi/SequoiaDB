@@ -3501,56 +3501,55 @@ namespace engine
       const _rtnAlterCollection *alterCommand =
                  ( const _rtnAlterCollection * )command ;
       const _rtnAlterJob &job = alterCommand->getRunner().getJob() ;
-      const BSONObj &tasks = job.getTasks() ;
-
-      if ( job.isEmpty() )
+      /// do nothing when it is old version
+      const BSONObj &tasks = job.isEmpty() ? BSONObj() : job.getTasks() ;
+      BSONObjIterator i( tasks ) ;
+      while ( i.more() )
       {
-         /// old version alteration
-         goto done ;
-      }
-
-      rc = _getSubCLList( job.getName(), subCLs ) ;
-      PD_RC_CHECK( rc, PDERROR, "Session[%s]: Get sub collection list "
-                   "failed, rc: %d", sessionName(), rc ) ;
-      for ( vector< string >::iterator itr =  subCLs.begin();
-            itr != subCLs.end();
-            ++itr )
-      {
-         const CHAR *fullName = itr->c_str() ;
-         BSONObjIterator i( tasks ) ;
-         while ( i.more() )
+         RTN_ALTER_FUNC_TYPE taskType = RTN_ALTER_FUNC_INVALID ;
+         BSONObj task ;
+         BSONElement e = i.next() ;
+         if ( Object != e.type() )
          {
-            _rtnAlterRunner runner ;
-            BSONObj task ;
-            BSONObj newJob ;
-            BSONElement e = i.next() ;
-            if ( Object != e.type() )
-            {
-               PD_LOG( PDERROR, "type of task should be object:%s",
-                       tasks.toString( FALSE, TRUE ).c_str() ) ;
-               rc = SDB_SYS ;
-               goto error ;
-            }
-
-            task = e.embeddedObject() ;
-            newJob = BSON( FIELD_NAME_ALTER_TYPE << SDB_ALTER_CL
-                           << FIELD_NAME_VERSION << SDB_ALTER_VERSION
-                           << FIELD_NAME_NAME << fullName
-                           << FIELD_NAME_ALTER << task ) ;
-            rc = runner.init( newJob ) ;
-            if ( SDB_OK != rc )
-            {
-               PD_LOG( PDERROR, "faild to init runner:%d", rc ) ;
-               goto error ;
-            }
-            rc = runner.run( cb, dpsCB ) ;
-            if ( SDB_OK != rc )
-            {
-               PD_LOG( PDERROR, "failed to do alteration job:%d", rc ) ;
-               goto error ;
-            }
+            PD_LOG( PDERROR, "invalid task element" ) ;
+            rc = SDB_SYS ;
+            goto error ;
          }
-      }   
+
+         task = e.embeddedObject() ;
+         taskType = ( RTN_ALTER_FUNC_TYPE )
+                    ( task.getIntField( FIELD_NAME_TASKTYPE ) ) ;
+         if ( RTN_ALTER_CL_CRT_ID_IDX == taskType )
+         {
+            SINT64 contextID = -1 ;
+            BSONObj def = BSON( FIELD_NAME_INDEX
+                                << BSON( IXM_FIELD_NAME_KEY <<
+                                         BSON( DMS_ID_KEY_NAME << 1 ) <<
+                                         IXM_FIELD_NAME_NAME << IXM_ID_KEY_NAME
+                                         << IXM_FIELD_NAME_UNIQUE <<
+                                         true << IXM_FIELD_NAME_V << 0 <<
+                                         IXM_FIELD_NAME_ENFORCED << true ) );
+            rc = _createIndexOnMainCL( "", job.getName(),
+                                       def.objdata(),
+                                       1, contextID, TRUE ) ;
+         }
+         else if ( RTN_ALTER_CL_DROP_ID_IDX == taskType )
+         {
+            SINT64 contextID = -1 ;
+            BSONObj def = BSON( FIELD_NAME_INDEX <<
+                                BSON( IXM_FIELD_NAME_NAME
+                                      << IXM_ID_KEY_NAME ) ) ;
+            rc = _dropIndexOnMainCL( "", job.getName(),
+                                     def.objdata(),
+                                     1, contextID, TRUE ) ;
+         }
+         else
+         {
+            PD_LOG( PDERROR, "unknown task type:%d", taskType ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
+      }
    done:
       return rc ;
    error:
