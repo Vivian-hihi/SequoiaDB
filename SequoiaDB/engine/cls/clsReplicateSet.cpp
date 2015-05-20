@@ -330,6 +330,11 @@ namespace engine
       /// update new nodes, include the node with
       /// same id but different address
       BOOLEAN hasLocal = FALSE ;
+      if ( SPARE_GROUPID == _info.local.columns.groupID )
+      {
+         hasLocal = TRUE ;
+         nodes.clear() ;
+      }
       map<UINT64, _netRouteNode>::iterator itr =
                                           nodes.begin() ;
       for ( ; itr != nodes.end(); itr++ )
