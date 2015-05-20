@@ -431,6 +431,10 @@ INT32 _mongoSession::_reply( MsgOpReply *replyHeader,
       {
          reply.startingFrom = _cursorStartFrom.startFrom ;
       }
+      else
+      {
+         reply.startingFrom = 0;
+      }
       // reset cursorStartFrom
       _cursorStartFrom.cursorId = 0 ;
       _cursorStartFrom.startFrom = 0 ;
