@@ -452,7 +452,7 @@ namespace engine
       {
          *ppSource = s.valuestr() ;
       }
-      if ( *ppImage )
+      if ( ppImage )
       {
          *ppImage = d.valuestr() ;
       }
