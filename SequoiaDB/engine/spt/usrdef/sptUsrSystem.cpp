@@ -1665,9 +1665,9 @@ namespace engine
             diskBuilder.append( SPT_USR_SYSTEM_MOUNT, mount ) ;
             diskBuilder.appendBool( SPT_USR_SYSTEM_ISLOCAL,
                                     string::npos != columns.at( 0 ).find( "/dev/", 0, 5 ) ) ;
-         }
 
-         arrBuilder << diskBuilder.obj() ;
+            arrBuilder << diskBuilder.obj() ;
+         }
       }
 
       builder.append( SPT_USR_SYSTEM_DISKS, arrBuilder.arr() ) ;
