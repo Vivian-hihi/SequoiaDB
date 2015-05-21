@@ -1563,6 +1563,122 @@ namespace engine
    error:
       goto done ;
    }
+
+   INT32 _omAgentNodeMgr::clearData( const CHAR *arg1 )
+   {
+      INT32 rc = SDB_OK ;
+      const CHAR *pSvcName = _getSvcNameFromArg( arg1 ) ;
+      pmdOptionsCB nodeOptions ;
+      BOOLEAN hasLock = FALSE ;
+      CHAR  cfgPath[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
+      CHAR  cfgFile[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
+
+      if ( !pSvcName )
+      {
+         PD_LOG( PDERROR, "Failed to get svc name from arg" ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      rc = utilBuildFullPath( sdbGetOMAgentOptions()->getLocalCfgPath(),
+                              pSvcName, OSS_MAX_PATHSIZE, cfgPath ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Build config path for service[%s] failed, rc: %d",
+                 pSvcName, rc ) ;
+         goto error ;
+      }
+
+      rc = utilBuildFullPath( cfgPath, PMD_DFT_CONF, OSS_MAX_PATHSIZE,
+                              cfgFile ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Build config file for service[%s] failed, rc: %d",
+                 pSvcName, rc ) ;
+         goto error ;
+      }
+
+      lockBucket( pSvcName ) ;
+      hasLock = TRUE ;
+
+      rc = nodeOptions.initFromFile( cfgFile, FALSE ) ;
+      if ( rc )
+      {
+         if ( SDB_FNE == rc )
+         {
+            rc = SDBCM_NODE_NOTEXISTED ;
+         }
+         else
+         {
+            PD_LOG( PDERROR, "Extract node[%s] config failed, rc: %d",
+                    pSvcName, rc ) ;
+         }
+         goto error ;
+      }
+
+      try
+      {
+         BSONObj configObj( arg1 ) ;
+         BSONObjIterator itr( configObj ) ;
+         while ( itr.more() )
+         {
+            BSONElement e = itr.next() ;
+            if ( 0 != ossStrcmp( e.fieldName(), PMD_OPTION_CLUSTER_NAME ) &&
+                 0 != ossStrcmp( e.fieldName(), PMD_OPTION_BUSINESS_NAME ) &&
+                 0 != ossStrcmp( e.fieldName(), PMD_OPTION_USERTAG ) )
+            {
+               continue ;
+            }
+            string name ;
+            nodeOptions.getFieldStr( e.fieldName(), name, "" ) ;
+            if ( 0 != ossStrcmp( e.valuestrsafe(), name.c_str() ) )
+            {
+               rc = SDBCM_NODE_NOTEXISTED ;
+               goto error ;
+            }
+         }
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Extrace config obj occur exception: %s",
+                 e.what() ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      rc = stopANode( pSvcName, NODE_START_CLIENT, FALSE ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to stop node[%s]:%d", pSvcName, rc ) ;
+         goto error ;
+      }
+
+      PD_LOG( PDEVENT, "begin to delete data of node[%s]", pSvcName ) ;
+
+      rc = nodeOptions.removeAllDir() ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to remove dir of node[%s]:%d",
+                 pSvcName, rc ) ;
+         goto error ;
+      }
+
+      rc = nodeOptions.makeAllDir() ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to make all dir of node[%s]:%d",
+                 pSvcName, rc ) ;
+         goto error ;
+      }
+   done:
+      if ( hasLock )
+      {
+         releaseBucket( pSvcName ) ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
 }
 
 

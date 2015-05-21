@@ -3663,6 +3663,7 @@ namespace engine
       CHAR *buf = NULL ;
       MsgOpQuery *header = NULL ;
       BOOLEAN onCata = FALSE ;
+      BOOLEAN keepData = FALSE ;
 
       try
       {
@@ -3683,6 +3684,8 @@ namespace engine
             rc = SDB_INVALIDARG ;
             goto error ;
          }
+
+         keepData = info.getBoolField( FIELD_NAME_KEEP_DATA ) ;
       }
       catch ( std::exception &e )
       {
@@ -3737,6 +3740,20 @@ namespace engine
          goto error ;
       }
       onCata = TRUE ;
+
+      if ( !keepData )
+      {
+         rc = rtnRemoteExec( SDBCLEARDATA, hostEle.valuestr(),
+                             &retCode, &info ) ;
+         rc = SDB_OK == rc ?
+              retCode : rc ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to clear data on node, "
+                    "rc:%d", rc ) ;
+            goto error ;
+         }
+      }
 
       rc = rtnRemoteExec ( SDBSTART, hostEle.valuestr(),
                            &retCode, &info ) ;
@@ -3988,6 +4005,7 @@ namespace engine
       BSONObj rInfo ;
 
       BOOLEAN onlyDetach = FALSE ;
+      BOOLEAN keepData = FALSE ;
 
       forward = (MsgOpQuery *)pMsg ;
       forward->header.opCode = MSG_CAT_DEL_NODE_REQ ;
@@ -4050,6 +4068,8 @@ namespace engine
             rc = SDB_INVALIDARG ;
             goto error ;
          }
+
+         keepData = rInfo.getBoolField( FIELD_NAME_KEEP_DATA ) ;
       }
       catch ( std::exception &e )
       {
@@ -4121,6 +4141,19 @@ namespace engine
                        rrc );
                rc = SDB_CATA_FAILED_TO_CLEANUP ;
              }
+         }
+         else if ( !keepData )
+         {
+            rc = rtnRemoteExec( SDBCLEARDATA, host.c_str(),
+                                &retCode, &rInfo ) ;
+            rc = SDB_OK == rc ?
+                 retCode : rc ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "failed to clear data on node, "
+                       "rc:%d", rc ) ;
+               goto error ;
+            }
          }
       }
 

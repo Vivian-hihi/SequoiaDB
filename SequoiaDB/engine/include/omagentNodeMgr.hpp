@@ -206,6 +206,8 @@ namespace engine
          INT32    getOptions( const CHAR *arg1,
                               bson::BSONObj &options ) ;
 
+         INT32    clearData( const CHAR *arg1 ) ;
+
       public:
 
          INT32    addNodeProcessInfo( const string &svcname ) ;

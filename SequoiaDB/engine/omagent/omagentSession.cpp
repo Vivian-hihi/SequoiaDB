@@ -314,6 +314,9 @@ namespace engine
             }
             break ;
          }
+         case SDBCLEARDATA :
+            rc = _pNodeMgr->clearData( arg1 ) ;
+            break ;
          default :
             PD_LOG( PDERROR, "Unknow remote code[%d] in session[%s]",
                     pCMReq->remoCode, sessionName() ) ;
