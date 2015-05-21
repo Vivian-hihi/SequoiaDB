@@ -60,6 +60,7 @@ using namespace bson ;
 #define SPT_DISK_IGNORE_TYPE_DEVPTS       "devpts"
 #define SPT_DISK_IGNORE_TYPE_FUSECTL      "fusectl"
 #define SPT_DISK_IGNORE_TYPE_SECURITYFS   "securityfs"
+#define SPT_DISK_IGNORE_TYPE_GVFS         "fuse.gvfs-fuse-daemon"
 
 
 namespace engine
@@ -1648,6 +1649,7 @@ namespace engine
                  || ossStrcasecmp( SPT_DISK_IGNORE_TYPE_PROC, fsType ) == 0
                  || ossStrcasecmp( SPT_DISK_IGNORE_TYPE_DEVPTS, fsType ) == 0 
                  || ossStrcasecmp( SPT_DISK_IGNORE_TYPE_FUSECTL, fsType ) == 0 
+                 || ossStrcasecmp( SPT_DISK_IGNORE_TYPE_GVFS, fsType ) == 0
                  || ossStrcasecmp( SPT_DISK_IGNORE_TYPE_SECURITYFS, 
                                                                  fsType ) == 0 )
             {
