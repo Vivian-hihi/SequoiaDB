@@ -499,6 +499,8 @@ namespace engine
       const CHAR *businessName = NULL ;
       string address ;
 
+      nodeMgrAgent *pNodeAgent = NULL ;
+
       vector< string > vecSourceGrp ;
       BOOLEAN added = FALSE ;
       BSONElement eleGroups ;
@@ -544,6 +546,12 @@ namespace engine
                                  FALSE )->getBusinessName() ;
       }
 
+      // update image groups
+      rc = pDCMgr->updateImageAllGroups( _pEduCB ) ;
+      PD_RC_CHECK( rc, PDERROR, "Update image dc groups failed, rc: %d", rc ) ;
+
+      pNodeAgent = pDCMgr->getImageNodeMgrAgent() ;
+
       // analysis groups
       eleGroups = objQuery.getFieldDotted(
          FIELD_NAME_OPTIONS"."FIELD_NAME_GROUPS ) ;
@@ -562,6 +570,7 @@ namespace engine
       // if objGroups is empty, will map all groups by the same name
       if ( objGroups.isEmpty() || 0 == objGroups.nFields() )
       {
+         UINT32 tmpID = 0 ;
          vector< string > allGroups ;
          _pCatCB->getGroupsName( allGroups ) ;
          for ( UINT32 i = 0 ; i < allGroups.size() ; ++i )
@@ -572,6 +581,15 @@ namespace engine
                          allGroups[ i ].c_str(), rc ) ;
             if ( added )
             {
+               // check image group whether exist
+               if ( SDB_OK != pNodeAgent->groupName2ID( allGroups[i].c_str(),
+                                                        tmpID ) )
+               {
+                  PD_LOG( PDERROR, "Image group[%s] is not exist",
+                          allGroups[i].c_str() ) ;
+                  rc = SDB_CAT_GRP_NOT_EXIST ;
+                  goto error ;
+               }
                vecSourceGrp.push_back( allGroups[ i ] ) ;
             }
          }
@@ -583,7 +601,7 @@ namespace engine
          rc = pBaseInfo->addGroups( objGroups, &mapAddGrps ) ;
          PD_RC_CHECK( rc, PDERROR, "Add groups[%s] failed when attach "
                       "image, rc: %d", objGroups.toString().c_str(), rc ) ;
-         rc = _checkGroupsValid( mapAddGrps ) ;
+         rc = _checkGroupsValid( mapAddGrps, pNodeAgent ) ;
          PD_RC_CHECK( rc, PDERROR, "Groups[%s] is not all valid, rc: %d",
                       objGroups.toString().c_str(), rc ) ;
          it = mapAddGrps.begin() ;
@@ -1034,7 +1052,8 @@ namespace engine
       return conflict ;
    }
 
-   INT32 _catDCManager::_checkGroupsValid( map< string, string > &mapGroups )
+   INT32 _catDCManager::_checkGroupsValid( map< string, string > &mapGroups,
+                                           nodeMgrAgent *pNodeAgent )
    {
       INT32 rc = SDB_OK ;
       UINT32 groupID = CAT_INVALID_GROUPID ;
@@ -1053,6 +1072,14 @@ namespace engine
             PD_LOG( PDERROR, "Coord group[%s] can not image",
                     it->first.c_str() ) ;
             rc = SDB_CAT_IS_NOT_DATAGROUP ;
+            break ;
+         }
+         else if ( SDB_OK != pNodeAgent->groupName2ID( it->second.c_str(),
+                                                       groupID ) )
+         {
+            PD_LOG( PDERROR, "Image group[%s] is not exist",
+                    it->second.c_str() ) ;
+            rc = SDB_CAT_GRP_NOT_EXIST ;
             break ;
          }
          ++it ;

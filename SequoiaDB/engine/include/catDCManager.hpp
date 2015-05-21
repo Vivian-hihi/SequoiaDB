@@ -134,7 +134,8 @@ namespace engine
 
       BOOLEAN _isAddrConflictWithSelf( const string &addr ) ;
 
-      INT32   _checkGroupsValid( map< string, string > &mapGroups ) ;
+      INT32   _checkGroupsValid( map< string, string > &mapGroups,
+                                 nodeMgrAgent *pNodeAgent ) ;
 
    // tool fuctions
    private:
