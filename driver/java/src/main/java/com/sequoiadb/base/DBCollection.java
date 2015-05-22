@@ -1221,6 +1221,38 @@ public class DBCollection {
 			k = (BSONObject) JSON.parse(key);
 		createIndex(name, k, isUnique, enforced);
 	}
+	
+	/**
+     * @fn void createIdIndex()
+     * @brief Create an id index
+     * @exception com.sequoiadb.exception.BaseException
+     */
+    public void createIdIndex() throws BaseException {
+        BSONObject tmp = new BasicBSONObject();
+        tmp.put(SequoiadbConstants.FIELD_NAME_NAME, 
+                SequoiadbConstants.SDB_ALTER_CRT_ID_INDEX);
+        tmp.put(SequoiadbConstants.FIELD_NAME_ARGS, null);
+        
+        BSONObject options = new BasicBSONObject();
+        options.put(SequoiadbConstants.FIELD_NAME_ALTER, tmp);
+        alterCollection(options);
+    }
+    
+    /**
+     * @fn void dropIdIndex()
+     * @brief drop an id index
+     * @exception com.sequoiadb.exception.BaseException
+     */
+    public void dropIdIndex() throws BaseException {
+        BSONObject tmp = new BasicBSONObject();
+        tmp.put(SequoiadbConstants.FIELD_NAME_NAME, 
+                SequoiadbConstants.SDB_ALTER_DROP_ID_INDEX);
+        tmp.put(SequoiadbConstants.FIELD_NAME_ARGS, null);
+        
+        BSONObject options = new BasicBSONObject();
+        options.put(SequoiadbConstants.FIELD_NAME_ALTER, tmp);
+        alterCollection(options);
+    }
 
 	/**
 	 * @fn void dropIndex(String name)
@@ -1746,8 +1778,30 @@ public class DBCollection {
 		String command = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.CMD_NAME_ALTER_COLLECTION;
 		// build condition
 		BSONObject newobj = new BasicBSONObject();
-		newobj.put(SequoiadbConstants.FIELD_NAME_NAME, collectionFullName);
-		newobj.put(SequoiadbConstants.FIELD_NAME_OPTIONS, options);
+		if (!options.containsField(SequoiadbConstants.FIELD_NAME_ALTER)) {
+		    newobj.put(SequoiadbConstants.FIELD_NAME_NAME, collectionFullName);
+		    newobj.put(SequoiadbConstants.FIELD_NAME_OPTIONS, options);
+		}
+		else {
+		    Object tmpAlter = options.get(SequoiadbConstants.FIELD_NAME_ALTER);
+		    if ( tmpAlter instanceof BasicBSONObject ) {
+                newobj.put(SequoiadbConstants.FIELD_NAME_ALTER, tmpAlter);
+            }
+		    else {
+		        throw new BaseException("SDB_INVALIDARG", options);
+		    }
+		    newobj.put(SequoiadbConstants.FIELD_NAME_ALTER_TYPE, 
+		            SequoiadbConstants.SDB_ALTER_CL);
+		    newobj.put(SequoiadbConstants.FIELD_NAME_VERSION, 
+                    SequoiadbConstants.SDB_ALTER_VERSION);
+		    newobj.put(SequoiadbConstants.FIELD_NAME_NAME, collectionFullName);
+		    
+		    Object tmpOptions = options.get(SequoiadbConstants.FIELD_NAME_OPTIONS);
+		    if ( tmpOptions instanceof BasicBSONObject ) {
+		        newobj.put(SequoiadbConstants.FIELD_NAME_OPTIONS, tmpOptions);
+		    }
+		}
+		
 		// build message/send/receive/extract
 		SDBMessage rtnSDBMessage = adminCommand ( command, newobj, null, null, null,
 				      			                  0, -1, 0 );

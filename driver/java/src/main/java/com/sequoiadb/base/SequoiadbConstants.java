@@ -151,6 +151,21 @@ public class SequoiadbConstants {
 	public final static String FIELD_NAME_OPTIONS = "Options";
 	public final static String FIELD_NAME_DOMAIN = "Domain";
 	
+	public final static String FIELD_NAME_ARGS = "Args";
+	public final static String FIELD_NAME_ALTER = "Alter";
+	public final static String FIELD_NAME_ALTER_TYPE = "AlterType";
+	public final static String FIELD_NAME_VERSION = "Version";
+	
+	public final static int SDB_ALTER_VERSION = 1;
+    public final static String SDB_ALTER_DB = "db";
+    public final static String SDB_ALTER_CL = "collection";
+    public final static String SDB_ALTER_CS = "collection space";
+    public final static String SDB_ALTER_DOMAIN = "domain";
+    public final static String SDB_ALTER_GROUP = "group";
+    public final static String SDB_ALTER_NODE = "node";
+    public final static String SDB_ALTER_CRT_ID_INDEX = "create id index";
+    public final static String SDB_ALTER_DROP_ID_INDEX = "drop id index";
+	
 	public final static String FIELD_NAME_LOB_OPEN_MODE = "Mode";
 	public final static String FIELD_NAME_LOB_OID = "Oid";
 	public final static String FIELD_NAME_LOB_SIZE = "Size";
