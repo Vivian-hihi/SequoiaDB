@@ -515,15 +515,29 @@ BOOLEAN canContinueNextLine ( const CHAR * str )
              // skip "\"", because "\"" can use as content
              if ( str != mark )
              {
-                 if ( *(--str) != '\\' )
+                 const CHAR *temp_mark = str ;
+                 BOOLEAN flag = TRUE ; // need to set flag1 to be !flag1 or not
+                 while( (--str) != mark )
                  {
-                     flag1 = !flag1 ;
+                     if ( *str == '\\' )
+                     {
+                         flag = !flag ;
+                     }
+                     else
+                     {
+                         break ;
+                     }
                  }
-                 str++ ;
+                 if ( TRUE == flag )
+                 {
+                     flag1 = !flag1 ; 
+                 }
+                 str = temp_mark ;
              }
              else
              {
-                 flag1 = !flag1 ;
+                   // the first time we meed "
+                   flag1 = TRUE ;
              }
          }
          if ( ( ch == '\'' ) && flag1 == FALSE )
@@ -531,15 +545,29 @@ BOOLEAN canContinueNextLine ( const CHAR * str )
              // skip "\'", because "\'" can use as content
              if ( str != mark )
              {
-                 if ( *(--str) != '\\' )
+                 const CHAR *temp_mark = str ;
+                 BOOLEAN flag = TRUE ; // need to set flag2 to be !flag2 or not
+                 while( (--str) != mark )
                  {
-                     flag2 = !flag2 ;
+                     if ( *str == '\\' )
+                     {
+                         flag = !flag ;
+                     }
+                     else
+                     {
+                         break ;
+                     }
                  }
-                 str++ ;
+                 if ( TRUE == flag )
+                 {
+                     flag2 = !flag2 ; 
+                 }
+                 str = temp_mark ;
              }
              else
              {
-                 flag2 = !flag2 ;
+                 // the first time we meed '
+                 flag2 = TRUE ;
              }
          }
          str++ ;
