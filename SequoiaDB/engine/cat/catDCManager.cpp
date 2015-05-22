@@ -418,7 +418,17 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR, "Map dc base data to dc manager failed, "
                       "rc: %d", rc ) ;
 
-         if ( 0 == ossStrcasecmp( pAction, CMD_VALUE_NAME_ATTACH ) )
+         if ( 0 == ossStrcasecmp( pAction, CMD_VALUE_NAME_CREATE ) )
+         {
+            rc = processCmdCreateImage( handle, &dcMgr, objQuery,
+                                        retObjBuilder ) ;
+         }
+         else if ( 0 == ossStrcasecmp( pAction, CMD_VALUE_NAME_REMOVE ) )
+         {
+            rc = processCmdRemoveImage( handle, &dcMgr, objQuery,
+                                        retObjBuilder ) ;
+         }
+         else if ( 0 == ossStrcasecmp( pAction, CMD_VALUE_NAME_ATTACH ) )
          {
             rc = processCmdAttachImage( handle, &dcMgr, objQuery,
                                         retObjBuilder ) ;
@@ -488,7 +498,7 @@ namespace engine
       goto done ;
    }
 
-   INT32 _catDCManager::processCmdAttachImage( const NET_HANDLE &handle,
+   INT32 _catDCManager::processCmdCreateImage( const NET_HANDLE &handle,
                                                _clsDCMgr *pDCMgr,
                                                const BSONObj &objQuery,
                                                BSONObjBuilder &retObjBuilder )
@@ -498,18 +508,13 @@ namespace engine
       const CHAR *clusterName = NULL ;
       const CHAR *businessName = NULL ;
       string address ;
+      BOOLEAN checkAddr = FALSE ;
 
-      nodeMgrAgent *pNodeAgent = NULL ;
-
-      vector< string > vecSourceGrp ;
-      BOOLEAN added = FALSE ;
-      BSONElement eleGroups ;
-      BSONObj objGroups ;
+      BSONElement eleAddr = objQuery.getFieldDotted(
+         FIELD_NAME_OPTIONS"."FIELD_NAME_ADDRESS ) ;
 
       if ( !pBaseInfo->hasImage() )
       {
-         BSONElement eleAddr = objQuery.getFieldDotted(
-            FIELD_NAME_OPTIONS"."FIELD_NAME_ADDRESS ) ;
          if ( String != eleAddr.type() ||
               0 == ossStrlen( eleAddr.valuestr() ) )
          {
@@ -522,28 +527,152 @@ namespace engine
          rc = pDCMgr->setImageCatAddr( eleAddr.valuestr() ) ;
          PD_RC_CHECK( rc, PDERROR, "Parse image catalog address failed, "
                       "rc: %d", rc ) ;
-
-         // update image catalog
-         rc = pDCMgr->updateImageCataGroup( _pEduCB ) ;
-         PD_RC_CHECK( rc, PDERROR, "Update image catalog group failed, "
-                      "rc: %d", rc ) ;
-         address = pDCMgr->getImageCatAddr() ;
-
-         // check the address is self cluster
-         if ( _isAddrConflictWithSelf( address ) )
+      }
+      else if ( !eleAddr.eoo() )
+      {
+         if ( String != eleAddr.type() )
          {
-            rc = SDB_CAT_IMAGE_ADDR_CONFLICT ;
+            PD_LOG( PDERROR, "Param[%s] is invalid in obj[%s]",
+                    FIELD_NAME_OPTIONS"."FIELD_NAME_ADDRESS,
+                    objQuery.toString().c_str() ) ;
+            rc = SDB_INVALIDARG ;
             goto error ;
          }
+         if ( 0 != ossStrlen( eleAddr.valuestr() ) )
+         {
+            checkAddr = TRUE ;
+         }
+      }
 
-         // update image dc base info
-         rc = pDCMgr->updateImageDCBaseInfo( _pEduCB ) ;
-         PD_RC_CHECK( rc, PDERROR, "Update image dc base info failed, "
-                      "rc: %d", rc ) ;
-         clusterName = pDCMgr->getImageDCBaseInfo( _pEduCB,
-                                 FALSE )->getClusterName() ;
-         businessName = pDCMgr->getImageDCBaseInfo( _pEduCB,
-                                 FALSE )->getBusinessName() ;
+      // update image catalog
+      rc = pDCMgr->updateImageCataGroup( _pEduCB ) ;
+      PD_RC_CHECK( rc, PDERROR, "Update image catalog group failed, "
+                   "rc: %d", rc ) ;
+
+      // check the address is the same
+      if ( checkAddr && _isAddrConflict( eleAddr.valuestr(),
+                                         pDCMgr->getImageCatVec() ) )
+      {
+         rc = SDB_CAT_IMAGE_ADDR_CONFLICT ;
+         goto error ;
+      }
+
+      address = pDCMgr->getImageCatAddr() ;
+      // check the address is self cluster
+      if ( _isAddrConflict( address, pmdGetOptionCB()->catAddrs() ) )
+      {
+         rc = SDB_CAT_IMAGE_ADDR_CONFLICT ;
+         goto error ;
+      }
+
+      // update image dc base info
+      rc = pDCMgr->updateImageDCBaseInfo( _pEduCB ) ;
+      PD_RC_CHECK( rc, PDERROR, "Update image dc base info failed, "
+                   "rc: %d", rc ) ;
+      clusterName = pDCMgr->getImageDCBaseInfo( _pEduCB,
+                              FALSE )->getClusterName() ;
+      businessName = pDCMgr->getImageDCBaseInfo( _pEduCB,
+                              FALSE )->getBusinessName() ;
+
+      // update info to collection
+      {
+         BSONObjBuilder builder ;
+         if ( clusterName )
+         {
+            builder.append( FIELD_NAME_IMAGE"."FIELD_NAME_CLUSTERNAME,
+                            clusterName ) ;
+         }
+         if ( businessName )
+         {
+            builder.append( FIELD_NAME_IMAGE"."FIELD_NAME_BUSINESSNAME,
+                            businessName ) ;
+         }
+         if ( !address.empty() )
+         {
+            builder.append( FIELD_NAME_IMAGE"."FIELD_NAME_ADDRESS,
+                            address ) ;
+         }
+         BSONObj updator = BSON( "$set" << builder.obj() ) ;
+         BSONObj matcher = BSON( FIELD_NAME_TYPE <<
+                                 CAT_BASE_TYPE_GLOBAL_STR ) ;
+         BSONObj hint ;
+         rc = rtnUpdate( CAT_SYSDCBASE_COLLECTION_NAME, matcher, updator,
+                         hint, 0, _pEduCB, _pDmsCB, _pDpsCB, _majoritySize(),
+                         NULL ) ;
+         PD_RC_CHECK( rc, PDERROR, "Update obj[%s] to collection[%s] failed, "
+                      "rc: %d", updator.toString().c_str(),
+                      CAT_SYSDCBASE_COLLECTION_NAME, rc ) ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _catDCManager::processCmdRemoveImage( const NET_HANDLE &handle,
+                                               _clsDCMgr *pDCMgr,
+                                               const BSONObj &objQuery,
+                                               BSONObjBuilder &retObjBuilder )
+   {
+      INT32 rc = SDB_OK ;
+      clsDCBaseInfo *pBaseInfo = pDCMgr->getDCBaseInfo() ;
+      vector< string > vecGroups ;
+
+      // not image
+      if ( !pBaseInfo->hasImage() )
+      {
+         rc = SDB_CAT_IMAGE_NOT_CONFIG ;
+         goto error ;
+      }
+
+      // send to all groups
+      _pCatCB->getGroupsName( vecGroups ) ;
+      vecGroups.push_back( CATALOG_GROUPNAME ) ;
+
+      // make return obj
+      rc = _pCatCB->makeGroupsObj( retObjBuilder, vecGroups ) ;
+      PD_RC_CHECK( rc, PDERROR, "Make return groups object failed, rc: %d",
+                   rc ) ;
+
+      // update info to collection
+      {
+         BSONObj updator = BSON( "$unset" << FIELD_NAME_IMAGE ) ;
+         BSONObj matcher = BSON( FIELD_NAME_TYPE <<
+                                 CAT_BASE_TYPE_GLOBAL_STR ) ;
+         BSONObj hint ;
+         rc = rtnUpdate( CAT_SYSDCBASE_COLLECTION_NAME, matcher, updator,
+                         hint, 0, _pEduCB, _pDmsCB, _pDpsCB, _majoritySize(),
+                         NULL ) ;
+         PD_RC_CHECK( rc, PDERROR, "Update obj[%s] to collection[%s] failed, "
+                      "rc: %d", updator.toString().c_str(),
+                      CAT_SYSDCBASE_COLLECTION_NAME, rc ) ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _catDCManager::processCmdAttachImage( const NET_HANDLE &handle,
+                                               _clsDCMgr *pDCMgr,
+                                               const BSONObj &objQuery,
+                                               BSONObjBuilder &retObjBuilder )
+   {
+      INT32 rc = SDB_OK ;
+      clsDCBaseInfo *pBaseInfo = pDCMgr->getDCBaseInfo() ;
+      nodeMgrAgent *pNodeAgent = NULL ;
+
+      vector< string > vecSourceGrp ;
+      BOOLEAN added = FALSE ;
+      BSONElement eleGroups ;
+      BSONObj objGroups ;
+
+      if ( !pBaseInfo->hasImage() )
+      {
+         rc = SDB_CAT_IMAGE_NOT_CONFIG ;
+         goto error ;
       }
 
       // update image groups
@@ -626,21 +755,6 @@ namespace engine
       // update info to collection
       {
          BSONObjBuilder builder ;
-         if ( clusterName )
-         {
-            builder.append( FIELD_NAME_IMAGE"."FIELD_NAME_CLUSTERNAME,
-                            clusterName ) ;
-         }
-         if ( businessName )
-         {
-            builder.append( FIELD_NAME_IMAGE"."FIELD_NAME_BUSINESSNAME,
-                            businessName ) ;
-         }
-         if ( !address.empty() )
-         {
-            builder.append( FIELD_NAME_IMAGE"."FIELD_NAME_ADDRESS,
-                            address ) ;
-         }
          _dcBaseInfoGroups2Obj( pBaseInfo, builder,
                                 FIELD_NAME_IMAGE"."FIELD_NAME_GROUPS ) ;
          BSONObj updator = BSON( "$set" << builder.obj() ) ;
@@ -1024,20 +1138,20 @@ namespace engine
       }
    }
 
-   BOOLEAN _catDCManager::_isAddrConflictWithSelf( const string &addr )
+   BOOLEAN _catDCManager::_isAddrConflict( const string &addr,
+                                           const vector< pmdAddrPair > &dstAddr )
    {
       BOOLEAN conflict = FALSE ;
       vector< pmdAddrPair > vecAddr ;
-      vector< pmdAddrPair > vecSelfAddr = pmdGetOptionCB()->catAddrs() ;
       pmdOptionsCB option ;
       option.parseAddressLine( addr.c_str(), vecAddr ) ;
 
       for ( UINT32 i = 0 ; i < vecAddr.size() ; ++i )
       {
          pmdAddrPair &item = vecAddr[ i ] ;
-         for ( UINT32 j = 0 ; j < vecSelfAddr.size() ; ++j )
+         for ( UINT32 j = 0 ; j < dstAddr.size() ; ++j )
          {
-            pmdAddrPair &self = vecSelfAddr[ j ] ;
+            const pmdAddrPair &self = dstAddr[ j ] ;
 
             if ( 0 == ossStrcmp( item._host, self._host ) &&
                  0 == ossStrcmp( item._service, self._service ) )

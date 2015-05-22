@@ -442,10 +442,12 @@
 #define CMD_NAME_JSON_LOAD                   "json load"
 #define CMD_NAME_TRUNCATE                    "truncate"
 
-#define CMD_VALUE_NAME_ATTACH                "attach"
-#define CMD_VALUE_NAME_DETACH                "detach"
-#define CMD_VALUE_NAME_ENABLE                "enable"
-#define CMD_VALUE_NAME_DISABLE               "disable"
+#define CMD_VALUE_NAME_CREATE                "create image"
+#define CMD_VALUE_NAME_REMOVE                "remove image"
+#define CMD_VALUE_NAME_ATTACH                "attach groups"
+#define CMD_VALUE_NAME_DETACH                "detach groups"
+#define CMD_VALUE_NAME_ENABLE                "enable image"
+#define CMD_VALUE_NAME_DISABLE               "disable image"
 #define CMD_VALUE_NAME_ACTIVE                "activate"
 #define CMD_VALUE_NAME_DEACTIVE              "deactivate"
 

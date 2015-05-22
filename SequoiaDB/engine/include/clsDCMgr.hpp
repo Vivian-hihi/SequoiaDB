@@ -148,7 +148,7 @@ namespace engine
    */
    #define SEL_NODE_PRIMARY         0x0001
    #define SEL_NODE_SLAVE           0x0002
-   #define SEL_NODE_ALL             0x1111
+   #define SEL_NODE_ALL             0xFFFF
 
    /*
       Node send strategy define
@@ -172,6 +172,8 @@ namespace engine
 
          INT32          setImageCatAddr( const string &catAddr ) ;
          string         getImageCatAddr() ;
+
+         vector< pmdAddrPair > getImageCatVec() ;
 
          catAgent*      getImageCataAgent () ;
          nodeMgrAgent*  getImageNodeMgrAgent () ;

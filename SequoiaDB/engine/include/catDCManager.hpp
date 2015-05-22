@@ -98,6 +98,14 @@ namespace engine
 
    // inner process
    protected:
+      INT32 processCmdCreateImage( const NET_HANDLE &handle,
+                                   _clsDCMgr *pDCMgr,
+                                   const BSONObj &objQuery,
+                                   BSONObjBuilder &retObjBuilder ) ;
+      INT32 processCmdRemoveImage( const NET_HANDLE &handle,
+                                   _clsDCMgr *pDCMgr,
+                                   const BSONObj &objQuery,
+                                   BSONObjBuilder &retObjBuilder ) ;
       INT32 processCmdAttachImage( const NET_HANDLE &handle,
                                    _clsDCMgr *pDCMgr,
                                    const BSONObj &objQuery,
@@ -132,7 +140,8 @@ namespace engine
                                    BSONObjBuilder &builder,
                                    const CHAR *pFieldName ) ;
 
-      BOOLEAN _isAddrConflictWithSelf( const string &addr ) ;
+      BOOLEAN _isAddrConflict( const string &addr,
+                               const vector< pmdAddrPair > &dstAddr ) ;
 
       INT32   _checkGroupsValid( map< string, string > &mapGroups,
                                  nodeMgrAgent *pNodeAgent ) ;

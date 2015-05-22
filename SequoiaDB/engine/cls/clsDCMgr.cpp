@@ -854,6 +854,12 @@ namespace engine
       return option.makeAddressLine( _vecCatlog ) ;
    }
 
+   vector< pmdAddrPair > _clsDCMgr::getImageCatVec()
+   {
+      ossScopedLock lock( &_peerCatLatch ) ;
+      return _vecCatlog ;
+   }
+
    INT32 _clsDCMgr::updateImageCataGroup( pmdEDUCB *cb, INT64 millsec )
    {
       INT32 rc = SDB_OK ;
