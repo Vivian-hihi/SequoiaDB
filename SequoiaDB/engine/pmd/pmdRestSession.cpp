@@ -1736,9 +1736,9 @@ namespace engine
                rc = SDB_SYS ;
                goto error ;
             }
-
-            flag |= FLG_UPDATE_UPSERT ;
          }
+
+         flag |= FLG_UPDATE_UPSERT ;
       }
 
       rc = msgBuildUpdateMsg( &pBuff, &buffSize, pCollection, flag, 0, 
