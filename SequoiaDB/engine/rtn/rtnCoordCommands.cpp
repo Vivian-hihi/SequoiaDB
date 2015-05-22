@@ -8359,6 +8359,7 @@ namespace engine
       CoordCB *coordcb = pmdGetKRCB()->getCoordCB();
       netMultiRouteAgent *routeAgent = coordcb->getRouteAgent();
       REPLY_QUE replyQueue ;
+      CHAR *queueItr = NULL ;
 
       rc = rtnCoordSendRequestToNodes( msg,
                                        nodes,
@@ -8372,7 +8373,22 @@ namespace engine
          goto error ;
       }
 
+      rc = rtnCoordGetReply( cb, completed, replyQueue,
+                             MAKE_REPLY_TYPE( ( ( MsgHeader * )msg )->opCode ),
+                             TRUE, TRUE ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to get reply of multi nodes:%d", rc ) ;
+         goto error ;
+      }
+
    done:
+      while ( !replyQueue.empty() )
+      {
+         queueItr = replyQueue.front() ;
+         SAFE_OSS_FREE( queueItr ) ;
+         replyQueue.pop() ;
+      }
       return rc ;
    error:
       goto done ;
