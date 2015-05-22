@@ -2347,7 +2347,7 @@
       </code>
 
       <code>
-         <name>SDB_CAT_IMAGE_ALREADY_CONFIGURED</name>
+         <name>SDB_CAT_IMAGE_IS_CONFIGURED</name>
          <description>
             <en>The cluster's image has already configured</en>
             <cn>集群已配置镜像</cn>
