@@ -46,6 +46,6 @@ bsonFiles = [
 
 #fapmongo = fapEnv.SharedLibrary( 'fapmongo', [ bsonFiles, pdFiles, utilFiles, rtnFiles, pmdFiles, monFiles, fapMongoFiles ] )
 #fapmongo = fapEnv.SharedLibrary( 'fapmongo', [ bsonFiles, fapMongoFiles ] )
-fapmongo = fapEnv.SharedLibrary( 'fapmongo', [ pdFiles, fapMongoFiles ] )
+fapmongo = fapEnv.SharedLibrary( 'fapmongo', [ fapMongoFiles ] )
 
 fapEnv.Install( '#/bin/fap', fapmongo )
