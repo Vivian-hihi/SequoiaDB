@@ -637,7 +637,7 @@ namespace engine
 
       // update info to collection
       {
-         BSONObj updator = BSON( "$unset" << FIELD_NAME_IMAGE ) ;
+         BSONObj updator = BSON( "$unset" << BSON( FIELD_NAME_IMAGE << 0 ) ) ;
          BSONObj matcher = BSON( FIELD_NAME_TYPE <<
                                  CAT_BASE_TYPE_GLOBAL_STR ) ;
          BSONObj hint ;
