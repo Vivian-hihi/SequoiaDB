@@ -386,7 +386,7 @@
         </removeUnixService>
         <runProgram>
             <program>${installdir}/bin/sdbstop</program>
-            <programArguments></programArguments>
+            <programArguments>-t all</programArguments>
             <ruleList>
                 <platformTest>
                     <type>linux</type>
