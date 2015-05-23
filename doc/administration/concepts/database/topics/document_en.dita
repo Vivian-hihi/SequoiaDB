@@ -84,7 +84,6 @@ than one fiels with the same name, see your driver's documentation for more info
           <stentry>{ "key" : { "subobj" : "value" } }</stentry>
         </strow>
         <strow>
-          <stentry>Array</stentry>
           <stentry>Nested array object</stentry>
           <stentry>{ "key" : [ "abc", 0, "def" ] }</stentry>
         </strow>

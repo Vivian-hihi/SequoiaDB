@@ -7,14 +7,14 @@
 <meta name="copyright" content="(C) Copyright 2005"/>
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
-<meta name="DC.Title" content="db.collectionspace.collection.detachCL()"/>
-<meta name="description" content="db.collectionspace.collection.detachCL(&lt;subCLFullName&gt;) 从主分区集合中分离出子分区集合。 参数描述 参数名 参数类型 描述 是否必填 partitionName string 子分区名（原子分区集合名） 是 示例 从主分区集合中分离指定子分区 db.foo.year.detachCL(&#34;foo2.January&#34;}"/>
+<meta name="DC.Title" content="db.collectionspace.collection.createIdIndex()"/>
+<meta name="description" content="db.collectionspace.collection.createIdIndex() 在 SequoiaDB 中创建集合时可以根据需要将 AutoIndexId 置为 true。这样集合将不会创建默认的“$id”索引，同时数据的更新、删除操作降备禁止。本方法可以恢复“$id”索引，同时开放更新和删除功能。 常见的错误 错误码 可能的原因 解决方法 -247 $id 索引已经存在 - -291 ..."/>
 <meta name="DC.Relation" scheme="URI" content="../../../references/methods/jscollection.html"/>
 <meta name="DC.Format" content="XHTML"/>
-<meta name="DC.Identifier" content="topic_xwj_xpk_kn"/>
+<meta name="DC.Identifier" content="topic_hqb_hnx_cs"/>
 <link rel="stylesheet" type="text/css" href="../../../commonltr.css"/>
 <link rel="stylesheet" type="text/css" href="../../../assets/webhelp_topic.css"/>
-<title>db.collectionspace.collection.detachCL()</title>
+<title>db.collectionspace.collection.createIdIndex()</title>
 <script type="text/javascript" src="../../../assets/jquery-1.3.2.js"> </script><script type="text/javascript" src="../../../assets/jquery-ui-1.8.2.custom.min.js"> </script><script type="text/javascript" src="../../../assets/frames_redirect.js"> </script><script type="text/javascript"><!--
     var prefix = "../../../../index.html";
     var ratingFile = "";
@@ -28,56 +28,48 @@
         }
     }
 //--></script></head>
-<body onload="highlightSearchTerm()" id="topic_xwj_xpk_kn"><a name="topic_xwj_xpk_kn"><!-- --></a>
+<body onload="highlightSearchTerm()" id="topic_hqb_hnx_cs"><a name="topic_hqb_hnx_cs"><!-- --></a>
 <table class="nav"><tbody><tr><td><div class="navheader"><span class="frames" onclick="redirectFrames(location.pathname)"><script type="text/javascript"><!--
   if (parent.window.location.pathname == window.location.pathname ) document.write('With Frames');                    
                     --></script></span><a class="link" href="../../../references/methods/jscollection.html" title="SdbCollection"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">SdbCollection</span></a>  </div></td><td width="50%"><a class="navheader_parent_path" href="methodlist.html" title="SequoiaDB JavaScript 方法">SequoiaDB JavaScript 方法</a> / <a class="navheader_parent_path" href="../../../references/methods/jscollection.html" title="SdbCollection">SdbCollection</a></td></tr></tbody></table>
 
-  <h1 class="title topictitle1">db.collectionspace.collection.detachCL()</h1>
+  <h1 class="title topictitle1">db.collectionspace.collection.createIdIndex()</h1>
 
   <div class="body">
-    <div class="section"><h2 class="title sectiontitle">db.collectionspace.collection.detachCL(&lt;subCLFullName&gt;)</h2>
-      <p class="p">从主分区集合中分离出子分区集合。</p>
+    <div class="section"><h2 class="title sectiontitle">db.collectionspace.collection.createIdIndex()</h2>
+      <p class="p">在 SequoiaDB 中创建集合时可以根据需要将 AutoIndexId 置为 true。这样集合将不会创建默认的“$id”索引，同时数据的更新、删除操作降备禁止。本方法可以恢复“$id”索引，同时开放更新和删除功能。</p>
 
     </div>
 
-    <div class="section"><h2 class="title sectiontitle">参数描述</h2>
+    <div class="section"><h2 class="title sectiontitle">常见的错误</h2>
       <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d131068e26" class="stentry">参数名</th>
+          <th valign="bottom" align="left" id="d122544e26" class="stentry">错误码</th>
 
-          <th valign="bottom" align="left" id="d131068e29" class="stentry">参数类型</th>
+          <th valign="bottom" align="left" id="d122544e29" class="stentry">可能的原因</th>
 
-          <th valign="bottom" align="left" id="d131068e32" class="stentry">描述</th>
-
-          <th valign="bottom" align="left" id="d131068e35" class="stentry">是否必填</th>
-
+          <th valign="bottom" align="left" id="d122544e32" class="stentry">解决方法</th>
+          
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d131068e26" class="stentry">partitionName</td>
+          <td valign="top" headers="d122544e26" class="stentry">-247</td>
 
-          <td valign="top" headers="d131068e29" class="stentry">string</td>
+          <td valign="top" headers="d122544e29" class="stentry">$id 索引已经存在</td>
 
-          <td valign="top" headers="d131068e32" class="stentry">子分区名（原子分区集合名）</td>
+          <td valign="top" headers="d122544e32" class="stentry">-</td>
+          
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d122544e26" class="stentry">-291</td>
 
-          <td valign="top" headers="d131068e35" class="stentry">是</td>
+          <td valign="top" headers="d122544e29" class="stentry">存在一个相同定义的索引</td>
 
+          <td valign="top" headers="d122544e32" class="stentry">删除定义冲突的索引</td>
+          
         </tr>
 </table>
       
     </div>
     
-    <div class="section"><h2 class="title sectiontitle">示例</h2>
-      <ul class="ul">
-        <li class="li"><p class="p">从主分区集合中分离指定子分区</p>
-
-          <div class="p"><pre class="pre codeblock">db.foo.year.detachCL("foo2.January"}</pre>
-</div>
-</li>
-
-      </ul>
-      
-    </div>
-
   </div>
 
 <div class="related-links"/>

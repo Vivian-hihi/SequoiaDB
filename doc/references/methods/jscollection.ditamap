@@ -7,9 +7,11 @@
   <topicref href="topics/ccalter.dita"/>
   <topicref href="topics/attachCL.dita"/>
   <topicref href="topics/dbcount.dita"/>
+  <topicref href="topics/createIdIndex.dita"/>
   <topicref href="topics/createIndex.dita"/>
   <topicref href="topics/deleteLob.dita"/>
   <topicref href="topics/detachCL.dita"/>
+  <topicref href="topics/dropIdIndex.dita"/>
   <topicref href="topics/dropIndex.dita"/>
   <topicref href="topics/find.dita"/>
   <topicref href="topics/findOne.dita"/>
@@ -22,6 +24,7 @@
   <topicref href="topics/remove.dita"/>
   <topicref href="topics/dbsplit.dita"/>
   <topicref href="topics/splitAsync.dita"/>
+  <topicref href="topics/truncate.dita"/>
   <topicref href="topics/dbupdate.dita"/>
   <topicref href="topics/upsert.dita"/>  
  </topicref>

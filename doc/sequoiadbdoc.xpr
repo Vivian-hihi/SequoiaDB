@@ -885,6 +885,7 @@
                     <file name="references/methods/topics/createCS_en.dita"/>
                     <file name="references/methods/topics/createCS.dita"/>
                     <file name="references/methods/topics/createDomain.dita"/>
+                    <file name="references/methods/topics/createIdIndex.dita"/>
                     <file name="references/methods/topics/createIndex_en.dita"/>
                     <file name="references/methods/topics/createIndex.dita"/>
                     <file name="references/methods/topics/createNode_en.dita"/>
@@ -927,6 +928,7 @@
                     <file name="references/methods/topics/dropCS_en.dita"/>
                     <file name="references/methods/topics/dropCS.dita"/>
                     <file name="references/methods/topics/dropDomain.dita"/>
+                    <file name="references/methods/topics/dropIdIndex.dita"/>
                     <file name="references/methods/topics/dropIndex_en.dita"/>
                     <file name="references/methods/topics/dropIndex.dita"/>
                     <file name="references/methods/topics/dropUsr_en.dita"/>
@@ -1058,6 +1060,7 @@
                     <file name="references/methods/topics/transCommit.dita"/>
                     <file name="references/methods/topics/transRollback_en.dita"/>
                     <file name="references/methods/topics/transRollback.dita"/>
+                    <file name="references/methods/topics/truncate.dita"/>
                     <file name="references/methods/topics/updateCurrent_en.dita"/>
                     <file name="references/methods/topics/updateCurrent.dita"/>
                     <file name="references/methods/topics/upsert_en.dita"/>
