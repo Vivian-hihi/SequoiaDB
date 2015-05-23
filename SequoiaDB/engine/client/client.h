@@ -835,57 +835,57 @@ SDB_EXPORT INT32 sdbFlushConfigure( sdbConnectionHandle cHandle,
                                     bson *options ) ;
 
 /** \fn INT32 sdbCrtJSProcedure( sdbConnectionHandle cHandle,
- *                               const CHAR *code )
- *  \brief create a store procedure.
- *  \param [in] cHandle The collection space space handle
- *  \param [in] code The code of store procedures
- *  \retval SDB_OK Operation Success
- *  \retval Others  Operation Fail
+                                 const CHAR *code )
+    \brief create a store procedure.
+    \param [in] cHandle The collection space space handle
+    \param [in] code The code of store procedures
+    \retval SDB_OK Operation Success
+    \retval Others  Operation Fail
 */
 SDB_EXPORT INT32 sdbCrtJSProcedure( sdbConnectionHandle cHandle,
                                     const CHAR *code ) ;
 
 /** \fn INT32 sdbRmProcedure( sdbConnectionHandle cHandle,
- *                            const CHAR *spName )
- *  \brief remove a store procedure.
- *  \param [in] cHandle The collection space space handle
- *  \param [in] spName The name of store procedure
- *  \retval SDB_OK Operation Success
- *  \retval Others  Operation Fail
- */
+                              const CHAR *spName )
+    \brief remove a store procedure.
+    \param [in] cHandle The collection space space handle
+    \param [in] spName The name of store procedure
+    \retval SDB_OK Operation Success
+    \retval Others  Operation Fail
+*/
 SDB_EXPORT INT32 sdbRmProcedure( sdbConnectionHandle cHandle,
                                  const CHAR *spName ) ;
 
 
 /** \fn INT32 sdbListProcedures( sdbConnectionHandle cHandle,
- *                               bson *condition,
- *                               sdbCursorHandle *handle )
- *  \brief List store procedures.
- *  \param [in] cHandle The collection space space handle
- *  \param [in] condition The condition of list
- *  \param [out] handle The cursor handle
- *  \retval SDB_OK Operation Success
- *  \retval Others  Operation Fail
- */
+                                 bson *condition,
+                                 sdbCursorHandle *handle )
+    \brief List store procedures.
+    \param [in] cHandle The collection space space handle
+    \param [in] condition The condition of list
+    \param [out] handle The cursor handle
+    \retval SDB_OK Operation Success
+    \retval Others  Operation Fail
+*/
 SDB_EXPORT INT32 sdbListProcedures( sdbConnectionHandle cHandle,
                                     bson *condition,
                                     sdbCursorHandle *handle ) ;
 
 /** \fn INT32 sdbEvalJS( sdbConnectionHandle cHandle,
- *                       const CHAR *code,
- *                       SDB_SPD_RES_TYPE *type,
- *                       sdbCursorHandle *handle,
- *                       bson *errmsg )
- * \brief Eval a func.
- * \      type is declared in spd.h. see SDB_FMP_RES_TYPE.
- * \param [in] cHandle The collection space space handle
- * \param [in] code The code to eval
- * \param [out] type The type of value
- * \param [out] handle The cursor handle of current eval
- * \param [out] errmsg The errmsg from eval
- * \retval SDB_OK Operation Success
- * \retval Others  Operation Fail
- */
+                         const CHAR *code,
+                         SDB_SPD_RES_TYPE *type,
+                         sdbCursorHandle *handle,
+                         bson *errmsg )
+   \brief Eval a func.
+   \      type is declared in spd.h. see SDB_FMP_RES_TYPE.
+   \param [in] cHandle The collection space space handle
+   \param [in] code The code to eval
+   \param [out] type The type of value
+   \param [out] handle The cursor handle of current eval
+   \param [out] errmsg The errmsg from eval
+   \retval SDB_OK Operation Success
+   \retval Others  Operation Fail
+*/
 
 SDB_EXPORT INT32 sdbEvalJS( sdbConnectionHandle cHandle,
                             const CHAR *code,
