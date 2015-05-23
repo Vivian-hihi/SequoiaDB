@@ -2062,176 +2062,174 @@ SDB_EXPORT INT32 sdbWriteLob( sdbLobHandle lobHandle,
                           UINT32 len,
                           CHAR *buf,
                           UINT32 *read )
- *   \brief read lob
- *   \param [in] lobHandle The large object handle
- *   \param [in] len The length want to read
- *   \param [out] buf Put the data into buf
- *   \param [out] read The length of read
- *   \retval SDB_OK Operation Success
- *   \retval Others Operation Fail
- */
+    \brief read lob
+    \param [in] lobHandle The large object handle
+    \param [in] len The length want to read
+    \param [out] buf Put the data into buf
+    \param [out] read The length of read
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
 SDB_EXPORT INT32 sdbReadLob( sdbLobHandle lobHandle,
                              UINT32 len,
                              CHAR *buf,
                              UINT32 *read ) ;
 
 /** \fn INT32 sdbCloseLob( sdbLobHandle *lobHandle )
- *  \brief close lob 
- *  \param [in] lobHandle The large object handle
- *  \retval SDB_OK Operation Success
- *  \retval Others Operation Fail
- *  */
+    \brief close lob 
+    \param [in] lobHandle The large object handle
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
 SDB_EXPORT INT32 sdbCloseLob( sdbLobHandle *lobHandle ) ;
 
 /** \fn INT32 sdbRemoveLob( sdbCollectionHandle cHandle,
- *                          const bson_oid_t *oid )
- *   \brief remove lob
- *   \param [in] cHandle The handle of collection
- *   \param [in] oid The large object id
- *   \retval SDB_OK Operation Success
- *   \retval Others Operation Fail
- */
+                            const bson_oid_t *oid )
+    \brief remove lob
+    \param [in] cHandle The handle of collection
+    \param [in] oid The large object id
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
 SDB_EXPORT INT32 sdbRemoveLob( sdbCollectionHandle cHandle,
                                const bson_oid_t *oid ) ;
 
 /** \fn INT32 sdbGetLobSize( sdbLobHandle lobHandle,
- *                           SINT64 *size )
- *  \brief get the lob's size
- *  \param [in] lobHandle The large object handle
- *  \param [out] size The size of lob
- *  \retval SDB_OK Operation Success
- *  \retval Others Operation Fail
- */
+                             SINT64 *size )
+    \brief get the lob's size
+    \param [in] lobHandle The large object handle
+    \param [out] size The size of lob
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
 SDB_EXPORT INT32 sdbGetLobSize( sdbLobHandle lobHandle,
                                 SINT64 *size ) ;
 
 /** \fn INT32 sdbGetLobCreateTime( sdbLobHandle lobHandle,
- *                                 UINT64 *millis )
- *  \brief get lob's create time
- *  \param [in] lobHandle The large object handle
- *  \param [out] millis The create time in milliseconds of lob,
+                                   UINT64 *millis )
+    \brief get lob's create time
+    \param [in] lobHandle The large object handle
+    \param [out] millis The create time in milliseconds of lob,
                  while open a new lob, the create time is 0
- *  \retval SDB_OK Operation Success
- *  \retval Others Operation Fail
- */
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
 
 SDB_EXPORT INT32 sdbGetLobCreateTime( sdbLobHandle lobHandle,
                                       UINT64 *millis ) ;
 
 /** \fn INT32 sdbSeekLob( sdbLobHandle lobHandle,
- *                        SINT64 size,
- *                        SDB_LOB_SEEK whence )
- *  \brief seek the place to read
- *  \param [in] lobHandle The large object handle
- *  \param [in] size The size of seek
- *  \param [in] whence The whence of seek
- *  \retval SDB_OK Operation Success
- *  \retval Others Operation Fail
- */
+                          SINT64 size,
+                          SDB_LOB_SEEK whence )
+    \brief seek the place to read
+    \param [in] lobHandle The large object handle
+    \param [in] size The size of seek
+    \param [in] whence The whence of seek
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
 SDB_EXPORT INT32 sdbSeekLob( sdbLobHandle lobHandle,
                              SINT64 size,
                              SDB_LOB_SEEK whence ) ;
 
 /** \fn INT32 sdbListLobs( sdbCollectionHandle cHandle,
- *                         sdbCursorHandle *cursor )
- *  \brief list all the lobs' meta data in current collection
- *  \param [in] cHandle The collection handle
- *  \param [out] cursor The cursor handle of current query
- *  \retval SDB_OK Operation Success
- *  \retval Others Operation Fail
- */
+                           sdbCursorHandle *cursor )
+    \brief list all the lobs' meta data in current collection
+    \param [in] cHandle The collection handle
+    \param [out] cursor The cursor handle of current query
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
 SDB_EXPORT INT32 sdbListLobs( sdbCollectionHandle cHandle,
                               sdbCursorHandle *cursor ) ;
 
 /** \fn INT32 sdbListLobPieces( sdbCollectionHandle cHandle,
- *                              sdbCursorHandle *cursor )
- *  \brief list all the pieces in the lob
- *  \param [in] cHandle The collection handle
- *  \param [out] cursor The cursor handle of current query
- *  \retval SDB_OK Operation Success
- *  \retval Others Operation Fail
- */
+                                sdbCursorHandle *cursor )
+    \brief list all the pieces in the lob
+    \param [in] cHandle The collection handle
+    \param [out] cursor The cursor handle of current query
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
 SDB_EXPORT INT32 sdbListLobPieces( sdbCollectionHandle cHandle,
                                    sdbCursorHandle *cursor ) ;
 
 
 /** \fn INT32 sdbReelect( sdbReplicaGroupHandle cHandle,
- *                        const bson *options )
- *  \param [in] cHandle The shard handle
- *  \param [in] options The options of reelection
- *  \retval SDB_OK Operation Success
- *  \retval Others Operation Fail
- */
+                          const bson *options )
+    \param [in] cHandle The shard handle
+    \param [in] options The options of reelection
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
 SDB_EXPORT INT32 sdbReelect( sdbReplicaGroupHandle cHandle,
                              const bson *options ) ;
 
 /** \fn INT32 sdbForceStepUp( sdbConnectionHandle cHandle,
- *                            const bson *options )
- *  \param [in] cHandle The connection handle
- *  \param [in] options The options of step up
- *  \retval SDB_OK Operation Success
- *  \retval Others Operation Fail
- */
+                              const bson *options )
+    \param [in] cHandle The connection handle
+    \param [in] options The options of step up
+    \retval SDB_OK Operation Success
+   \retval Others Operation Fail
+*/
 SDB_EXPORT INT32 sdbForceStepUp( sdbConnectionHandle cHandle,
                                  const bson *options ) ;
 
 /** \fn INT32 sdbTruncateCollection( sdbConnectionHandle cHandle,
- *                                   const CHAR *fullName )
- *  \brief truncate the collection
- *  \param [in] cHandle The handle of connection.
- *  \param [in] fullName The full name of collection to be truncated, eg: foo.bar.
- *  \retval SDB_OK Operation Success
- *  \retval Others Operation Fail
- */
+                                    const CHAR *fullName )
+    \brief truncate the collection
+    \param [in] cHandle The handle of connection.
+    \param [in] fullName The full name of collection to be truncated, eg: foo.bar.
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
 SDB_EXPORT INT32 sdbTruncateCollection( sdbConnectionHandle cHandle,
                                         const CHAR *fullName ) ;
 
 /** \fn INT32 sdbDetachNode( sdbReplicaGroupHandle cHandle,
- *                           const CHAR *hostName,
- *                           const CHAR *serviceName,
- *                           const bson *options )
- *  \brief detach a node from the group
- *  \param [in] cHandle The handle of group.
- *  \param [in] hostName The host name of node.
- *  \param [in] serviceName The service name of node.
- *  \param [in] optoins The options of detach.
- *  \retval SDB_OK Operation Success
- *  \retval Others Operation Fail
- */
+                             const CHAR *hostName,
+                             const CHAR *serviceName,
+                             const bson *options )
+    \brief detach a node from the group
+    \param [in] cHandle The handle of group.
+    \param [in] hostName The host name of node.
+    \param [in] serviceName The service name of node.
+    \param [in] optoins The options of detach.
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
 SDB_EXPORT INT32 sdbDetachNode( sdbReplicaGroupHandle cHandle,
                                 const CHAR *hostName,
                                 const CHAR *serviceName,
                                 const bson *options ) ;
 
 /** \fn INT32 sdbAttachNode( sdbReplicaGroupHandle cHandle,
- *                           const CHAR *hostName,
- *                           const CHAR *serviceName,
- *                           const bson *options )
- *  \brief attach a node to the group
- *  \param [in] cHandle The handle of group.
- *  \param [in] hostName The host name of node.
- *  \param [in] serviceName The service name of node.
- *  \param [in] optoins The options of attach.
- *  \retval SDB_OK Operation Success
- *  \retval Others Operation Fail
- */
+                             const CHAR *hostName,
+                             const CHAR *serviceName,
+                             const bson *options )
+    \brief attach a node to the group
+    \param [in] cHandle The handle of group.
+    \param [in] hostName The host name of node.
+    \param [in] serviceName The service name of node.
+    \param [in] optoins The options of attach.
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
 SDB_EXPORT INT32 sdbAttachNode( sdbReplicaGroupHandle cHandle,
                                 const CHAR *hostName,
                                 const CHAR *serviceName,
                                 const bson *options ) ;
 
-/*
-\fn INT32 sdbCreateIdIndex( sdbCollectionHandle cHandle )
-    \brief Create $id index on collection
+/** \fn INT32 sdbCreateIdIndex( sdbCollectionHandle cHandle )
+    \brief Create $id index in collection
     \param [in] cHandle The collection handle
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
 SDB_EXPORT INT32 sdbCreateIdIndex( sdbCollectionHandle cHandle ) ;
 
-/*
-\fn INT32 sdbDropIdIndex( sdbCollectionHandle cHandle )
-    \brief Drop $id index on collection
+/** \fn INT32 sdbDropIdIndex( sdbCollectionHandle cHandle )
+    \brief Drop $id index in collection
     \param [in] cHandle The collection handle
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
