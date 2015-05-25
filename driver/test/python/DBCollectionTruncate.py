@@ -24,7 +24,10 @@ if __name__ == "__main__":
          basketball = {"Item":"basketball", "id":i}
          cl.insert(basketball)
 
+      print 'success to insert 10 number'
+
       # truncate
+      print 'truncate begin'
       cl.truncate();
 
       # verify
