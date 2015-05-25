@@ -2520,10 +2520,79 @@ do                                                            \
       goto done ;
    }
 
-//    PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_ALTERCOLLECTION, "_sdbCollectionImpl::alterCollection" )
-   INT32 _sdbCollectionImpl::alterCollection ( const bson::BSONObj &options )
+//    PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT__ALTERCOLLECTION2, "_sdbCollectionImpl::_alterCollection2" )
+   INT32 _sdbCollectionImpl::_alterCollection2 ( const bson::BSONObj &options )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_ALTERCOLLECTION ) ;
+      PD_TRACE_ENTRY ( SDB_CLIENT__ALTERCOLLECTION2 ) ;
+      INT32 rc            = SDB_OK ;
+      BOOLEAN result      = FALSE ;
+      BSONObjBuilder bob ;
+      BSONElement ele ;
+      BSONObj newObj ;
+      string collectionS ;
+      string command = string ( CMD_ADMIN_PREFIX CMD_NAME_ALTER_COLLECTION ) ;
+      // check
+      if ( '\0' == _collectionFullName[0] || !_connection )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      // build bson
+      collectionS = string (_collectionFullName) ;
+      try
+      {
+         bob.append( FIELD_NAME_ALTER_TYPE, SDB_ALTER_CL ) ;
+         bob.append( FIELD_NAME_VERSION, SDB_ALTER_VERSION ) ;
+         bob.append ( FIELD_NAME_NAME, collectionS ) ;
+
+         ele = options.getField( FIELD_NAME_ALTER ) ;
+         if ( Object == ele.type() )
+         {
+            bob.append( ele ) ;
+         }
+         else
+         {
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+
+         ele = options.getField( FIELD_NAME_OPTIONS ) ;
+         if ( Object == ele.type() )
+         {
+            bob.append( ele ) ;
+         }
+         else if ( EOO != ele.type() )
+         {
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+         
+         newObj = bob.obj() ;
+      }
+      catch ( std::exception )
+      {
+         rc = SDB_DRIVER_BSON_ERROR ;
+         goto error ;
+      }
+      // run command
+      rc = _connection->_runCommand ( command.c_str(), result, &newObj ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
+   done :
+      PD_TRACE_EXITRC ( SDB_CLIENT__ALTERCOLLECTION2, rc );
+      return rc ;
+   error :
+      goto done ;
+
+   }
+
+//    PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT__ALTERCOLLECTION1, "_sdbCollectionImpl::_alterCollection1" )
+   INT32 _sdbCollectionImpl::_alterCollection1 ( const bson::BSONObj &options )
+   {
+      PD_TRACE_ENTRY ( SDB_CLIENT__ALTERCOLLECTION1 ) ;
       INT32 rc            = SDB_OK ;
       BOOLEAN result      = FALSE ;
       BSONObjBuilder bob ;
@@ -2552,6 +2621,36 @@ do                                                            \
       // run command
       rc = _connection->_runCommand ( command.c_str(), result, &newObj ) ;
       if ( rc )
+      {
+         goto error ;
+      }
+
+   done :
+      PD_TRACE_EXITRC ( SDB_CLIENT__ALTERCOLLECTION1, rc );
+      return rc ;
+   error :
+      goto done ;
+
+   }
+
+//    PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_ALTERCOLLECTION, "_sdbCollectionImpl::alterCollection" )
+   INT32 _sdbCollectionImpl::alterCollection ( const bson::BSONObj &options )
+   {
+      PD_TRACE_ENTRY ( SDB_CLIENT_ALTERCOLLECTION ) ;
+      INT32 rc            = SDB_OK ;
+      BSONElement ele ;
+
+      ele = options.getField( FIELD_NAME_ALTER ) ;
+      if ( EOO == ele.type() )
+      {
+         rc = _alterCollection1( options ) ;
+      }
+      else
+      {
+         rc = _alterCollection2( options ) ;
+      }
+
+      if ( SDB_OK != rc )
       {
          goto error ;
       }
@@ -3104,6 +3203,58 @@ do                                                            \
          _connection->unlock () ;
       }
       PD_TRACE_EXITRC( SDB_CLIENT_TRUNCATE, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+//PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_CREATEIDINDEX, "_sdbCollectionImpl::createIdIndex" )
+   INT32 _sdbCollectionImpl::createIdIndex()
+   {
+      PD_TRACE_ENTRY( SDB_CLIENT_CREATEIDINDEX ) ;
+      INT32 rc = SDB_OK ;
+      BSONObjBuilder bob ;
+      BSONObj obj ;
+      BSONObj subObj ;
+
+      bob.append( FIELD_NAME_NAME, SDB_ALTER_CRT_ID_INDEX ) ;
+      bob.appendNull( FIELD_NAME_ARGS ) ;
+      subObj = bob.obj() ;
+      obj = BSON( FIELD_NAME_ALTER << subObj ) ;
+      rc = alterCollection( obj ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+
+   done:
+      PD_TRACE_EXITRC( SDB_CLIENT_CREATEIDINDEX, rc ) ;    
+      return rc ;
+   error:
+      goto done ;
+   }
+
+//PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_DROPIDINDEX, "_sdbCollectionImpl::dropIdIndex" )
+   INT32 _sdbCollectionImpl::dropIdIndex()
+   {
+      PD_TRACE_ENTRY( SDB_CLIENT_DROPIDINDEX ) ;
+      INT32 rc = SDB_OK ;
+      BSONObjBuilder bob ;
+      BSONObj obj ;
+      BSONObj subObj ;
+
+      bob.append( FIELD_NAME_NAME, SDB_ALTER_DROP_ID_INDEX ) ;
+      bob.appendNull( FIELD_NAME_ARGS ) ;
+      subObj = bob.obj() ;
+      obj = BSON( FIELD_NAME_ALTER << subObj ) ;
+      rc = alterCollection( obj ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+      
+   done:
+      PD_TRACE_EXITRC( SDB_CLIENT_DROPIDINDEX, rc ) ;    
       return rc ;
    error:
       goto done ;

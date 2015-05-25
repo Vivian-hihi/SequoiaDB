@@ -3788,7 +3788,7 @@ static INT32 _sdbAlterCollectionV2( sdbCollectionHandle cHandle,
    sdbCollectionStruct *cs = (sdbCollectionStruct*)cHandle ;
    HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_COLLECTION ) ;
 
-   if ( NULL == options ) 
+   if ( NULL == options )
    {
       rc = SDB_INVALIDARG ;
       goto error ;

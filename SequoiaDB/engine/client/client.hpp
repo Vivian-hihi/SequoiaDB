@@ -454,6 +454,11 @@ namespace sdbclient
 
       /// truncate
       virtual INT32 truncate() = 0 ;
+
+      /// create/drop $id index
+      virtual INT32 createIdIndex() = 0 ;
+
+      virtual INT32 dropIdIndex() = 0 ;
       
    } ;
 
@@ -1332,16 +1337,42 @@ namespace sdbclient
     }
 
 /** \fn INT32 truncate()
- *  \brief truncate the collection
- *  \retval SDB_OK Operation Success
- *  \retval Others Operation Fail
- */
+    \brief truncate the collection
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
     INT32 truncate()
     {
        if ( !pCollection )
           return SDB_NOT_CONNECTED ;
         return pCollection->truncate() ;
     }
+
+/** \fn INT32 createIdIndex()
+    \brief Create $id index in collection
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+    INT32 createIdIndex()
+    {
+       if ( !pCollection )
+          return SDB_NOT_CONNECTED ;
+        return pCollection->createIdIndex() ;
+    }
+
+/** \fn INT32 dropIdIndex()
+    \brief Drop $id index in collection
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+    \note delete, update and upsert do not work after index "$id" was drop
+*/
+    INT32 dropIdIndex()
+    {
+       if ( !pCollection )
+          return SDB_NOT_CONNECTED ;
+        return pCollection->dropIdIndex() ;
+    }
+
 
    } ;
 

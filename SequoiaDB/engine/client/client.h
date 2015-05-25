@@ -2233,6 +2233,7 @@ SDB_EXPORT INT32 sdbCreateIdIndex( sdbCollectionHandle cHandle ) ;
     \param [in] cHandle The collection handle
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
+    \note delete, update and upsert do not work after index "$id" was drop
 */
 SDB_EXPORT INT32 sdbDropIdIndex( sdbCollectionHandle cHandle ) ;
 

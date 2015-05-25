@@ -438,6 +438,15 @@ namespace sdbclient
       /// truncate
       INT32 truncate() ;
 
+      /// create/drop index
+      INT32 createIdIndex() ;
+
+      INT32 dropIdIndex() ;
+      
+   private:
+      INT32 _alterCollection1( const bson::BSONObj &options ) ;
+      INT32 _alterCollection2( const bson::BSONObj &options ) ;
+
    } ;
    
    typedef class _sdbCollectionImpl sdbCollectionImpl ;
