@@ -696,7 +696,8 @@ namespace engine
       hasLock = TRUE ;
 
       // first send to primary node
-      if ( _peerCatPrimary >= 0 && _peerCatPrimary < _vecCatlog.size() )
+      if ( _peerCatPrimary >= 0 && 
+           ( UINT32 )_peerCatPrimary < _vecCatlog.size() )
       {
          rc = _syncSend2PeerNode( cb, msg, ppRecvMsg,
                                   _vecCatlog[ _peerCatPrimary ],

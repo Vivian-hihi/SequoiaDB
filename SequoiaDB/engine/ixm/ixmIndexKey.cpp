@@ -283,7 +283,6 @@ namespace engine
       {
          PD_TRACE_ENTRY ( SDB__IXMKEYGEN__GENKEYSWITHARRELE );
          INT32 rc = SDB_OK ;
-         UINT32 eleNum = fieldNames.size() ;
          BSONObj arrObj = arrElement->embeddedObject() ;
          /// the element must be an empty array key when it is a empty array
          if ( arrObj.firstElement().eoo() )

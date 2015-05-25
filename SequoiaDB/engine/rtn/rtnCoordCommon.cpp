@@ -98,8 +98,8 @@ namespace engine
                   pQuery->flags &= ~FLG_QUERY_PRIMARY ;
                }
             }
-            else if ( pBuffer->opCode > MSG_LOB_BEGIN &&
-                      pBuffer->opCode < MSG_LOB_END )
+            else if ( pBuffer->opCode > ( SINT32 )MSG_LOB_BEGIN &&
+                      pBuffer->opCode < ( SINT32 )MSG_LOB_END )
             {
                MsgOpLob *pLobMsg = ( MsgOpLob* )pBuffer ;
                if ( FALSE == isResend )

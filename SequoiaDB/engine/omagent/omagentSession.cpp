@@ -190,7 +190,8 @@ namespace engine
 
       /// when we have more than one record to return,
       /// rewrite here.
-      _replyHeader.numReturned = ( sizeof ( MsgOpReply ) < _replyHeader.header.messageLength )
+      _replyHeader.numReturned = ( ( SINT32 )sizeof( MsgOpReply ) 
+                                          < _replyHeader.header.messageLength )
                                  ?  1 : 0 ;
       _replyHeader.startFrom = 0 ;
 

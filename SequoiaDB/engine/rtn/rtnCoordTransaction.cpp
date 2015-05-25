@@ -101,7 +101,6 @@ namespace engine
                                          rtnContextBuf *buf )
    {
       INT32 rc = SDB_OK;
-      pmdKRCB *pKrcb                   = pmdGetKRCB();
       CHAR *pMsgReq                    = NULL;
 
       rc = buildPhase1Msg( (CHAR*)pMsg, &pMsgReq );
@@ -133,7 +132,6 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       CHAR *pMsgReq                    = NULL;
-      MsgHeader *pMsgHead              = NULL;
 
       rc = buildPhase2Msg( (CHAR*)pMsg, &pMsgReq );
       PD_RC_CHECK( rc, PDERROR,
