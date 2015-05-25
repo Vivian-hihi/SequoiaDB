@@ -4,7 +4,7 @@
   <title>db.collectionspace.collection.createIdIndex()</title>
   <body>
     <section><title>db.collectionspace.collection.createIdIndex()</title>
-      <p>在 SequoiaDB 中创建集合时可以根据需要将 AutoIndexId 置为 true。这样集合将不会创建默认的“$id”索引，同时数据的更新、删除操作降备禁止。本方法可以恢复“$id”索引，同时开放更新和删除功能。</p>
+      <p>在 SequoiaDB 中创建集合时可以根据需要将 AutoIndexId 置为 true。这样集合将不会创建默认的“$id”索引，同时数据的更新、删除操作将被禁止。本方法可以恢复“$id”索引，同时开放更新和删除功能。</p>
     </section>
     <section><title>常见的错误</title>
       <simpletable>
