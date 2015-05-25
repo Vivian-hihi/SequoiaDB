@@ -1190,5 +1190,55 @@ namespace DriverTest
             }
         }
 
+        [TestMethod()]
+        public void Create_And_Drop_Id_Index()
+        {
+            const string id_name = "$id";
+            DBCursor cursor = null;
+            BsonDocument doc = null;
+            BsonValue value = null;
+
+            // test
+            coll.DropIdIndex();
+            // check 
+            cursor = coll.GetIndex(id_name);
+            doc = cursor.Next();
+            Assert.IsTrue(null == doc);
+
+            // test
+            coll.CreateIdIndex();
+            cursor = coll.GetIndex(id_name);
+            doc = null;
+            doc = cursor.Next();
+            Assert.IsTrue(null != doc);
+            if (doc.TryGetValue("IndexDef", out value))
+            {
+                BsonValue v = null ;
+                value.AsBsonDocument.TryGetValue("name", out v);
+                Assert.IsTrue(id_name == v.AsString);
+            }
+            else
+            {
+                Assert.IsTrue(false);
+            }
+        }
+
+        [TestMethod()]
+        public void TempTest()
+        {
+            int num = 100;
+            long recordNum = 0;
+            for (int i = 0; i < num; i++)
+            {
+                BsonDocument obj = new BsonDocument { { "test_truncate", "test" } };
+                coll.Insert(obj);
+            }
+            // test api
+            coll.Truncate();
+            // check
+            recordNum = coll.GetCount(new BsonDocument());
+            Assert.IsTrue(0 == recordNum);
+        }
+
     }
 }

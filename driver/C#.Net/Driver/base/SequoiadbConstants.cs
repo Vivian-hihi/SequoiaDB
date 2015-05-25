@@ -130,6 +130,10 @@ namespace SequoiaDB
         public const string FIELD_LOB_CREATTIME = "CreateTime";
         public const string FIELD_NAME_ONLY_DETACH = "OnlyDetach";
         public const string FIELD_NAME_ONLY_ATTACH = "OnlyAttach";
+        public const string FIELD_NAME_ALTER = "Alter";
+        public const string FIELD_NAME_ALTER_TYPE = "AlterType";
+        public const string FIELD_NAME_ARGS = "Args";
+        public const string FIELD_NAME_VERSION = "Version";
 
         public const string FIELD_MODIFY = "$Modify";
         public const string FIELD_OP = "OP";
@@ -138,6 +142,18 @@ namespace SequoiaDB
 		public const string FIELD_RETURNNEW = "ReturnNew";
         public const string FIELD_OP_VALUE_UPDATE = "update";
         public const string FIELD_OP_VALUE_REMOVE = "remove";
+
+        public const int SDB_ALTER_VERSION = 1;
+        public const string SDB_ALTER_DB = "db";
+        public const string SDB_ALTER_CL = "collection";
+        public const string SDB_ALTER_CS = "collection space";
+        public const string SDB_ALTER_DOMAIN = "domain";
+        public const string SDB_ALTER_GROUP = "group";
+        public const string SDB_ALTER_NODE = "node";
+
+        public const string SDB_ALTER_CRT_ID_INDEX = "create id index";
+        public const string SDB_ALTER_DROP_ID_INDEX = "drop id index";
+
 
         public const string FIELD_SET_ON_INSERT = "$SetOnInsert";
 

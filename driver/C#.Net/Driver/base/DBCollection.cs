@@ -1007,21 +1007,7 @@ namespace SequoiaDB
                 throw new BaseException(flags);
         }
 
-        /** \fn void Alter(BsonDocument options)
-         * \brief Alter the attributes of current collection
-         * \param options The options for altering current collection:
-         *
-         *     ReplSize     : Assign how many replica nodes need to be synchronized when a write request(insert, update, etc) is executed
-         *     ShardingKey  : Assign the sharding key
-         *     ShardingType : Assign the sharding type
-         *     Partition    : When the ShardingType is "hash", need to assign Partition, it's the bucket number for hash, the range is [2^3,2^20]
-         *                    e.g. {RepliSize:0, ShardingKey:{a:1}, ShardingType:"hash", Partition:1024}
-         * \note Can't alter attributes about split in partition collection; After altering a collection to
-         *       be a partition collection, need to split this collection manually
-         * \exception SequoiaDB.BaseException
-         * \exception System.Exception
-         */
-        public void Alter(BsonDocument options)
+        private void _Alter1(BsonDocument options)
         {
             // check argument
             if (null == options)
@@ -1041,6 +1027,90 @@ namespace SequoiaDB
             int flags = rtnSDBMessage.Flags;
             if (flags != 0)
                 throw new BaseException(flags);
+        }
+
+        private void _Alter2(BsonDocument options)
+        {
+            // check argument
+            if (null == options)
+            {
+                throw new BaseException("SDB_INVALIDARG");
+            }
+            // build a bson to send
+            BsonElement elem;
+            bool flag = false;
+            BsonDocument newObj = new BsonDocument();
+            newObj.Add(SequoiadbConstants.FIELD_NAME_ALTER_TYPE, SequoiadbConstants.SDB_ALTER_CL );
+            newObj.Add(SequoiadbConstants.FIELD_NAME_VERSION, SequoiadbConstants.SDB_ALTER_VERSION);
+            newObj.Add(SequoiadbConstants.FIELD_NAME, collectionFullName);
+            // append alters
+            flag = options.TryGetElement(SequoiadbConstants.FIELD_NAME_ALTER, out elem);
+            if (true == flag && elem.Value.IsBsonDocument)
+            {
+                newObj.Add(elem);
+            }
+            else
+            {
+                throw new BaseException("SDB_INVALIDARG");
+            }
+            // append options
+            flag = false ;
+            flag = options.TryGetElement(SequoiadbConstants.FIELD_OPTIONS, out elem);
+            if ( true == flag )
+            {
+                if (elem.Value.IsBsonDocument)
+                {
+                    newObj.Add(elem);
+                }
+                else
+                {
+                    throw new BaseException("SDB_INVALIDARG");
+                }
+            }
+
+            // build command
+            string commandString = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.ALTER_COLLECTION;
+            BsonDocument dummyObj = new BsonDocument();
+            // run command
+            SDBMessage rtnSDBMessage = AdminCommand(commandString, newObj, dummyObj, dummyObj, dummyObj, 0, -1, 0);
+            // check the return flag
+            int flags = rtnSDBMessage.Flags;
+            if (flags != 0)
+                throw new BaseException(flags);
+        }
+
+        /** \fn void Alter(BsonDocument options)
+         * \brief Alter the attributes of current collection
+         * \param options The options for altering current collection:
+         *
+         *     ReplSize     : Assign how many replica nodes need to be synchronized when a write request(insert, update, etc) is executed
+         *     ShardingKey  : Assign the sharding key
+         *     ShardingType : Assign the sharding type
+         *     Partition    : When the ShardingType is "hash", need to assign Partition, it's the bucket number for hash, the range is [2^3,2^20]
+         *                    e.g. {RepliSize:0, ShardingKey:{a:1}, ShardingType:"hash", Partition:1024}
+         * \note Can't alter attributes about split in partition collection; After altering a collection to
+         *       be a partition collection, need to split this collection manually
+         * \exception SequoiaDB.BaseException
+         * \exception System.Exception
+         */
+        public void Alter(BsonDocument options)
+        {
+            BsonValue tmp;
+
+            // check argument
+            if (null == options)
+            {
+                throw new BaseException("SDB_INVALIDARG");
+            }
+            // alter collection
+            if (options.TryGetValue(SequoiadbConstants.FIELD_NAME_ALTER, out tmp))
+            {
+                _Alter2(options);
+            }
+            else
+            {
+                _Alter1(options);
+            }
         }
 
         /** \fn DBCursor ListLobs()
@@ -1174,6 +1244,42 @@ namespace SequoiaDB
             int flags = rtnSDBMessage.Flags;
             if (flags != 0)
                 throw new BaseException(flags);
+        }
+
+        /** \fn void CreateIdIndex()
+         * \brief Create $id index in collection
+         * \exception SequoiaDB.BaseException
+         * \exception System.Exception
+         */
+        public void CreateIdIndex()
+        {
+            BsonDocument newObj = new BsonDocument();
+            BsonDocument subObj = new BsonDocument();
+
+            subObj.Add(SequoiadbConstants.FIELD_NAME, SequoiadbConstants.SDB_ALTER_CRT_ID_INDEX);
+            subObj.Add(SequoiadbConstants.FIELD_NAME_ARGS, null);
+
+            newObj.Add(SequoiadbConstants.FIELD_NAME_ALTER, subObj);
+
+            Alter(newObj);
+        }
+
+        /** \fn void DropIdIndex()
+         * \brief Drop $id index in collection
+         * \exception SequoiaDB.BaseException
+         * \exception System.Exception
+         */
+        public void DropIdIndex()
+        {
+            BsonDocument newObj = new BsonDocument();
+            BsonDocument subObj = new BsonDocument();
+
+            subObj.Add(SequoiadbConstants.FIELD_NAME, SequoiadbConstants.SDB_ALTER_DROP_ID_INDEX);
+            subObj.Add(SequoiadbConstants.FIELD_NAME_ARGS, BsonNull.Value);
+
+            newObj.Add(SequoiadbConstants.FIELD_NAME_ALTER, subObj);
+
+            Alter(newObj);
         }
 
         private void _Update(int flag, BsonDocument matcher, BsonDocument modifier, BsonDocument hint)

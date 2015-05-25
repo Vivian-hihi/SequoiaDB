@@ -110,7 +110,7 @@ namespace SequoiaDB
             BsonDocument matcher = new BsonDocument();
             BsonDocument selector = new BsonDocument();
             matcher.Add(SequoiadbConstants.FIELD_DOMAIN, this.name);
-            selector.Add(SequoiadbConstants.FIELD_NAME, null);
+            selector.Add(SequoiadbConstants.FIELD_NAME, BsonNull.Value);
             // get cs or cl in current domain 
             DBCursor cursor = this.sdb.GetList(type, matcher, selector, null);
             return cursor;
