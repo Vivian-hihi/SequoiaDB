@@ -3,6 +3,7 @@
 <map>
  <title>DITA Topic Map</title>
  <topicref href="jsrg.dita">
+  <topicref href="topics/attachNode.dita"/>
   <topicref href="topics/createNode.dita"/>
   <topicref href="topics/getDetail.dita"/>
   <topicref href="topics/getMaster.dita"/>

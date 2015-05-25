@@ -1,0 +1,262 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
+<topic id="topic_jk2_yqx_cs">
+  <title>rg.attachNode()</title>
+  <body>
+    <section><title>rg.attachNode(&lt;host>,&lt;service>, [options])</title>
+      <p>将一个已经创建完成但不属于任何组的节点加入到当前组。搭配 rg.detachNode() 使用。</p>
+    </section>
+    <section><title>参数描述</title>
+      <simpletable>
+        <sthead>
+          <stentry>参数名</stentry>
+          <stentry>参数类型</stentry>
+          <stentry>描述</stentry>
+          <stentry>是否必填</stentry>
+        </sthead>
+        <strow>
+          <stentry>host</stentry>
+          <stentry>string</stentry>
+          <stentry>节点的主机名或者主机 IP。</stentry>
+          <stentry>是</stentry>
+        </strow>
+        <strow>
+          <stentry>service</stentry>
+          <stentry>string</stentry>
+          <stentry>节点服务名或者端口。</stentry>
+          <stentry>是</stentry>
+        </strow>
+        <strow>
+          <stentry>options</stentry>
+          <stentry>Json 对象</stentry>
+          <stentry>attachNode 选项。</stentry>
+          <stentry>否</stentry>
+        </strow>
+      </simpletable>      
+    </section>
+    <section><title>options 选项</title>
+      <simpletable>
+        <sthead>
+          <stentry>参数名</stentry>
+          <stentry>参数类型</stentry>
+          <stentry>描述</stentry>
+          <stentry>默认值</stentry>
+        </sthead>
+        <strow>
+          <stentry>KeepData</stentry>
+          <stentry>bool</stentry>
+          <stentry>是否保留目标节点原有的数据。</stentry>
+          <stentry>false</stentry>
+        </strow>        
+      </simpletable>      
+    </section>
+    <note><ul>
+      <li>如果目标节点原本不属于当前组，切勿打开 KeepData。</li>                    
+    </ul></note>
+    <section><title>常见的错误</title>
+      <simpletable>
+        <sthead>
+          <stentry>错误码</stentry>
+          <stentry>可能的原因</stentry>
+          <stentry>解决方法</stentry>          
+        </sthead>
+        <strow>
+          <stentry>-15</stentry>
+          <stentry>网络错误</stentry>
+          <stentry>1. 检查 sdbcm 状态是否正常<fig></fig>2. 检查填写的 host 是否正确</stentry>          
+        </strow>
+        <strow>
+          <stentry>-146</stentry>
+          <stentry>节点不存在</stentry>
+          <stentry>检查目标节点是否被创建过</stentry>          
+        </strow>
+        <strow>
+          <stentry>-157</stentry>
+          <stentry>节点已存在于其他复制组</stentry>
+          <stentry>检查节点是否已属于其他复制组</stentry>          
+        </strow>
+      </simpletable>      
+    </section>
+    <section><title>示例</title>
+      <ul>
+        <li>
+          <p>将一个节点从 datagroup1 中分离，加入到 datagroup2 中。</p>
+          <p>使用 db.listReplicaGroups() 查看当前节点信息；</p>
+          <codeblock>{
+  "Group": [
+    {
+      "HostName": "host1",
+      "dbpath": "/data1",
+      "Service": [
+        {
+          "Type": 0,
+          "Name": "40060"
+        },
+        {
+          "Type": 1,
+          "Name": "40061"
+        },
+        {
+          "Type": 2,
+          "Name": "40062"
+        }
+      ],
+      "NodeID": 1004
+    },
+    {
+      "HostName": "host1",
+      "dbpath": "/data2",
+      "Service": [
+        {
+          "Type": 0,
+          "Name": "40070"
+        },
+        {
+          "Type": 1,
+          "Name": "40071"
+        },
+        {
+          "Type": 2,
+          "Name": "40072"
+        }
+      ],
+      "NodeID": 1005
+    }
+  ],
+  "GroupID": 1002,
+  "GroupName": "datagroup1",
+  "PrimaryNode": 1005,
+  "Role": 0,
+  "Status": 1,
+  "Version": 3,
+  "_id": {
+    "$oid": "555d7b71d1cbaf20ed74e7df"
+  }
+}
+
+{
+  "Group": [
+    {
+      "HostName": "host1",
+      "dbpath": "/data3",
+      "Service": [
+        {
+          "Type": 0,
+          "Name": "40040"
+        },
+        {
+          "Type": 1,
+          "Name": "40041"
+        },
+        {
+          "Type": 2,
+          "Name": "40042"
+        }
+      ],
+      "NodeID": 1003
+    }
+  ],
+  "GroupID": 1001,
+  "GroupName": "datagroup2",
+  "PrimaryNode": 1003,
+  "Role": 0,
+  "Status": 1,
+  "Version": 4,
+  "_id": {
+    "$oid": "555d7b5fd1cbaf20ed74e7de"
+  }
+  }</codeblock>
+          <p>分离“host:40060”节点；</p>
+          <codeblock>db.getRG('datagroup1').detachNode('host1', '40060');</codeblock>
+          <p>将节点加入到 datagroup2 中；</p>
+          <codeblock>db.getRG('datagroup2').attachNode('host1', '40060')</codeblock>
+          <p>使用 db.listReplicaGroups() 查看当前节点信息：</p>
+          <codeblock>{
+  "Group": [
+    {
+      "HostName": "host1",
+      "dbpath": "/data2",
+      "Service": [
+        {
+          "Type": 0,
+          "Name": "40070"
+        },
+        {
+          "Type": 1,
+          "Name": "40071"
+        },
+        {
+          "Type": 2,
+          "Name": "40072"
+        }
+      ],
+      "NodeID": 1005
+    }
+  ],
+  "GroupID": 1002,
+  "GroupName": "datagroup1",
+  "PrimaryNode": 1005,
+  "Role": 0,
+  "Status": 1,
+  "Version": 3,
+  "_id": {
+    "$oid": "555d7b71d1cbaf20ed74e7df"
+  }
+}
+
+{
+  "Group": [
+    {
+      "HostName": "host1",
+      "dbpath": "/data3",
+      "Service": [
+        {
+          "Type": 0,
+          "Name": "40040"
+        },
+        {
+          "Type": 1,
+          "Name": "40041"
+        },
+        {
+          "Type": 2,
+          "Name": "40042"
+        }
+      ],
+      "NodeID": 1003
+    },
+    {
+      "HostName": "host1",
+      "dbpath": "/data1",
+      "Service": [
+        {
+          "Type": 0,
+          "Name": "40060"
+        },
+        {
+          "Type": 1,
+          "Name": "40061"
+        },
+        {
+          "Type": 2,
+          "Name": "40062"
+        }
+      ],
+      "NodeID": 1006
+    }
+  ],
+  "GroupID": 1001,
+  "GroupName": "datagroup2",
+  "PrimaryNode": 1003,
+  "Role": 0,
+  "Status": 1,
+  "Version": 4,
+  "_id": {
+    "$oid": "555d7b5fd1cbaf20ed74e7de"
+  }
+}</codeblock>
+        </li>        
+      </ul>   
+    </section>
+  </body>
+</topic>
