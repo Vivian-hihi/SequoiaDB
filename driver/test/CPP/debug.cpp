@@ -525,7 +525,6 @@ TEST(debug, explain)
    // disconnect the connection
    db.disconnect() ;
 }
-*/
 
 TEST(debug, queryone)
 {
@@ -638,3 +637,408 @@ TEST(debug, queryone)
    db.disconnect() ;
 }
 
+*/
+
+/*
+TEST(debug, queryAndUpdate)
+{
+   sdb connection ;
+   sdbCollectionSpace cs ;
+   sdbCollection cl ;
+   sdbCursor cursor ;
+   // initialize local variables
+   const CHAR *pHostName                    = HOST ;
+   const CHAR *pPort                        = SERVER ;
+   const CHAR *pUsr                         = USER ;
+   const CHAR *pPasswd                      = PASSWD ;
+   const CHAR *pField1                      = "testField1" ;
+   const CHAR *pField2                      = "testField2" ;
+   const CHAR *pIndexName1                  = "testIndex1" ;
+//   const CHAR *pIndexName2                  = "testIndex2" ;
+   INT32 rc                                 = SDB_OK ;
+   INT32 i                                  = 0 ;
+   SINT64 count                             = 0 ;
+   SINT64 NUM                               = 100 ;
+   BSONObj update ;
+   BSONObj condition ;
+   BSONObj selector ;
+   BSONObj orderBy ;
+   BSONObj hint ;
+
+   // initialize the work environment
+   rc = initEnv() ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // connect to database
+   rc = connection.connect( pHostName, pPort, pUsr, pPasswd ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // get cs
+   rc = getCollectionSpace( connection, COLLECTION_SPACE_NAME, cs ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // get cl
+   rc = getCollection( cs, COLLECTION_NAME, cl ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   
+   // create index
+   BSONObj index = BSON( pField1 << 1 ) ;
+   rc = cl.createIndex( index, pIndexName1, FALSE, FALSE ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   
+   // insert some record
+   for ( i = 0; i < NUM; i++ )
+   {
+      BSONObj obj = BSON( pField1 << i << pField2 << i ) ;
+      rc = cl.insert( obj ) ;
+      ASSERT_EQ( SDB_OK, rc ) ;
+   }
+   
+   update = BSON( "$set" << BSON( pField2 << 100 ) ) ;
+   condition = BSON( pField1 << BSON( "$gte" << 0 ) ) ;
+   selector = BSON( pField2 << "" ) ;
+   orderBy = BSON( pField1 << -1 ) ;
+   hint = BSON( "" << pIndexName1 ) ;
+
+   // test
+   rc = cl.queryAndUpdate( cursor, update, condition, selector,
+                           orderBy, hint, 0, -1, 0, TRUE ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // check
+   BSONObj obj ;
+   i = 0 ;
+   while( SDB_OK == cursor.next( obj ) )
+   {
+      i++ ;
+      BSONObjIterator it( obj ) ;
+      BSONElement ele = it.next() ;
+      INT32 num = ele.Int() ;
+      ASSERT_EQ( 100, num ) ;
+   }
+   ASSERT_EQ( 100, i ) ;
+
+   // disconnect the connection
+   connection.disconnect() ;
+}
+*/
+
+//TEST(debug, queryAndRemove)
+//{
+//   sdb connection ;
+//   sdbCollectionSpace cs ;
+//   sdbCollection cl ;
+//   sdbCursor cursor ;
+//   // initialize local variables
+//   const CHAR *pHostName                    = HOST ;
+//   const CHAR *pPort                        = SERVER ;
+//   const CHAR *pUsr                         = USER ;
+//   const CHAR *pPasswd                      = PASSWD ;
+//   const CHAR *pField1                      = "testField1" ;
+//   const CHAR *pField2                      = "testField2" ;
+//   const CHAR *pIndexName1                  = "testIndex1" ;
+//   const CHAR *pIndexName2                  = "testIndex2" ;
+//   INT32 rc                                 = SDB_OK ;
+//   INT32 i                                  = 0 ;
+//   SINT64 count                             = 0 ;
+//   SINT64 NUM                               = 100 ;
+//   BSONObj condition ;
+//   BSONObj selector ;
+//   BSONObj orderBy ;
+//   BSONObj hint ;
+//   BSONObj hint2 ;
+//
+//   // initialize the work environment
+//   rc = initEnv() ;
+//   ASSERT_EQ( SDB_OK, rc ) ;
+//   // connect to database
+//   rc = connection.connect( pHostName, pPort, pUsr, pPasswd ) ;
+//   ASSERT_EQ( SDB_OK, rc ) ;
+//   // get cs
+//   rc = getCollectionSpace( connection, COLLECTION_SPACE_NAME, cs ) ;
+//   ASSERT_EQ( SDB_OK, rc ) ;
+//   // get cl
+//   rc = getCollection( cs, COLLECTION_NAME, cl ) ;
+//   ASSERT_EQ( SDB_OK, rc ) ;
+//   
+//   // create index
+//   BSONObj index = BSON( pField1 << 1 ) ;
+//   rc = cl.createIndex( index, pIndexName1, FALSE, FALSE ) ;
+//   ASSERT_EQ( SDB_OK, rc ) ;
+//
+//   BSONObj index2 = BSON( pField2 << 1 ) ;
+//   rc = cl.createIndex( index2, pIndexName2, FALSE, FALSE ) ;
+//   ASSERT_EQ( SDB_OK, rc ) ;
+//   
+//   // insert some record
+//   for ( i = 0; i < NUM; i++ )
+//   {
+//      BSONObj obj = BSON( pField1 << i << pField2 << i ) ;
+//      rc = cl.insert( obj ) ;
+//      ASSERT_EQ( SDB_OK, rc ) ;
+//   }
+//   
+//   condition = BSON( pField1 << BSON( "$gte" << 0 ) ) ;
+//   selector = BSON( pField2 << "" ) ;
+//   orderBy = BSON( pField1 << -1 ) ;
+//   hint = BSON( "" << pIndexName1 ) ;
+//   hint2 = BSON( "" << pIndexName2 ) ;
+//
+//   BSONObj tmp ;
+//
+//   // test
+//   // case 1: use extend sort
+//   rc = cl.queryAndRemove( cursor, condition, selector,
+//                           orderBy, hint2, 0, -1, 0 ) ;
+//   ASSERT_EQ( SDB_RTN_QUERYMODIFY_SORT_NO_IDX, rc ) ;
+//
+//   // case 2: does not use extend sort
+//   rc = cl.queryAndRemove( cursor, condition, selector,
+//                           orderBy, hint, 0, -1, 0 ) ;
+//   ASSERT_EQ( SDB_OK, rc ) ;
+//   // check
+//   BSONObj obj ;
+//   i = 0 ;
+//   while( SDB_OK == cursor.next( obj ) )
+//   {
+//      i++ ;
+//      BSONObjIterator it( obj ) ;
+//      BSONElement ele = it.next() ;
+//      INT32 num = ele.Int() ;
+//      ASSERT_EQ( 100 - i, num ) ;
+//   }
+//   ASSERT_EQ( 100, i ) ;
+//   i = 100 ;
+//   while( i-- )
+//   {
+//      rc = cl.getCount( count ) ;
+//      ASSERT_EQ( SDB_OK, rc ) ;
+//      if ( 0 == count )
+//         break ;
+//   }
+//   if ( 0 == i )
+//   {
+//      ASSERT_EQ( 0, count ) ;
+//   }
+//
+//   // disconnect the connection
+//   connection.disconnect() ;
+//}
+//
+
+//TEST( debug, create_remove_id_index )
+//{
+//   sdb db ;
+//   sdbCollectionSpace cs ;
+//   sdbCollection cl ;
+//   sdbCursor cursor ;
+//   // initialize the work environment
+//
+//   const CHAR *pHostName                    = HOST ;
+//   const CHAR *pPort                        = SERVER ;
+//   const CHAR *pUsr                         = USER ;
+//   const CHAR *pPasswd                      = PASSWD ;
+//   const CHAR *pCLFullName                  = "" ;
+//   const CHAR *pIndexName                   = "$id" ;
+//   INT32 rc                                 = SDB_OK ;
+//   INT32 count                              = 0 ;
+//   BSONObj obj ;
+//   BSONObj record ;
+//   BSONObj updater ;
+//
+//   rc = initEnv() ;
+//   ASSERT_EQ( SDB_OK, rc ) ;
+//   // connect to database
+//   rc = db.connect( pHostName, pPort, pUsr, pPasswd ) ;
+//   ASSERT_EQ( SDB_OK, rc ) ;
+//   // get cs
+//   rc = getCollectionSpace ( db, COLLECTION_SPACE_NAME, cs ) ;
+//   // get cl
+//   rc = getCollection ( cs, COLLECTION_NAME, cl ) ;
+//   ASSERT_EQ( SDB_OK, rc ) ;
+//
+//   // build record
+//   obj = BSON( "a" << 1 ) ;
+//   updater = BSON( "$set" << BSON( "a" << 2 ) ) ;
+//
+//   // insert into collection
+//   rc = cl.insert( obj ) ;
+//   ASSERT_EQ( SDB_OK, rc ) ;
+//
+//   // remove $id index
+//   rc = cl.dropIdIndex() ;
+//   ASSERT_EQ( SDB_OK, rc ) ;
+//
+//   // check
+//   rc = cl.getIndexes( cursor, pIndexName ) ;
+//   ASSERT_EQ( SDB_OK, rc ) ;
+//
+//   while( SDB_OK == (rc = cursor.next( record ) ) )
+//   {
+//      count++ ;
+//   }
+//   ASSERT_EQ( 0, count ) << "Index $id may not be drop" ;
+//
+//   rc = cl.query( cursor ) ;
+//   ASSERT_EQ( SDB_OK, rc ) ;
+//   
+//   count = 0 ;
+//   while( SDB_OK == (rc = cursor.next( record ) ) )
+//   {
+//      count++ ;
+//   }
+//   ASSERT_EQ( 1, count ) ;
+//
+//   rc = cl.update( updater ) ;
+//   ASSERT_EQ( SDB_RTN_AUTOINDEXID_IS_FALSE, rc ) ;
+//
+//   rc = cl.upsert( updater ) ;
+//   ASSERT_EQ( SDB_RTN_AUTOINDEXID_IS_FALSE, rc ) ;
+//
+//   rc = cl.del() ;
+//   ASSERT_EQ( SDB_RTN_AUTOINDEXID_IS_FALSE, rc ) ;
+//
+//   // create $id index
+//   rc = cl.createIdIndex() ;
+//   ASSERT_EQ( SDB_OK, rc ) ;
+//
+//   rc = cl.del() ;
+//   ASSERT_EQ( SDB_OK, rc ) ;
+//   count = 0 ;
+//   while( SDB_OK == (rc = cursor.next( record ) ) )
+//   {
+//      count++ ;
+//   }
+//   ASSERT_EQ( 0, count ) ;
+//
+//   obj = BSON( "$set" << BSON( "a" << 10 ) ) ;
+//   rc = cl.upsert( obj ) ;
+//   ASSERT_EQ( SDB_OK, rc ) ;
+//
+//   rc = cl.query( cursor ) ;
+//   ASSERT_EQ( SDB_OK, rc ) ;
+//
+//   count = 0 ;
+//   while( SDB_OK == (rc = cursor.next( record ) ) )
+//   {
+//      count++ ;
+//   }
+//   ASSERT_EQ( 1, count ) ;
+//
+//   rc = cl.update( updater ) ;
+//   ASSERT_EQ( SDB_OK, rc ) ;
+//
+//   obj = BSON( "a" << 2 ) ;
+//   rc = cl.query( cursor, obj ) ;
+//   ASSERT_EQ( SDB_OK, rc ) ;
+//
+//   count = 0 ;
+//   while( SDB_OK == (rc = cursor.next( record ) ) )
+//   {
+//      count++ ;
+//   }
+//   ASSERT_EQ( 1, count ) ;
+//
+//
+//   // disconnect the connection
+//   db.disconnect() ; 
+//}
+//
+//
+//TEST( debug, alter_collection )
+//{
+//   sdb db ;
+//   sdbCollectionSpace cs ;
+//   sdbCollection cl ;
+//   sdbCursor cursor ;
+//   // initialize the work environment
+//
+//   const CHAR *pHostName                    = HOST ;
+//   const CHAR *pPort                        = SERVER ;
+//   const CHAR *pUsr                         = USER ;
+//   const CHAR *pPasswd                      = PASSWD ;
+//   const CHAR *pCSName                      = "test_alter_cs" ;
+//   const CHAR *pCLName                      = "test_alter_cl" ;
+//   const CHAR *pCLFullName                  = "test_alter_cs.test_alter_cl" ;
+//   const CHAR *pValue                       = NULL ;
+//
+//   INT32 rc                                 = SDB_OK ;
+//   BSONObjBuilder bob ;
+//   BSONObjBuilder bob2 ;
+//   BSONElement ele ;
+//   BSONObj option ;
+//   BSONObj matcher ;
+//   BSONObj record ;
+//   BSONObj obj ;
+//   INT32 n_value = 0 ;
+//
+//   bob.append( "Name", pCLFullName ) ;
+//   matcher = bob.obj() ; 
+// 
+//   bob2.append( "ReplSize", 0 ) ;
+//   bob2.append( "ShardingKey", BSON( "a" << 1 ) ) ;
+//   bob2.append( "ShardingType", "hash" ) ;
+//   bob2.append( "Partition", 1024 ) ;
+//   option = bob2.obj() ;
+//
+//   rc = initEnv() ;
+//   ASSERT_EQ( SDB_OK, rc ) ;
+//
+//
+//   // connect to database
+//   rc = db.connect( pHostName, pPort, pUsr, pPasswd ) ;
+//   ASSERT_EQ( SDB_OK, rc ) ;
+//
+//   if ( FALSE == isCluster( db ) )
+//   {
+//      return ;
+//   }
+//
+//   // drop cs
+//   rc = db.dropCollectionSpace( pCSName ) ;
+//   if ( SDB_OK != rc && SDB_DMS_CS_NOTEXIST != rc )
+//   {
+//      ASSERT_EQ( 0, 1 ) << "failed to drop cs " << pCSName ;
+//   }
+//
+//   // create cs and cl
+//   rc = db.createCollectionSpace( pCSName, 4096, cs ) ;
+//   ASSERT_EQ( SDB_OK, rc ) ;
+//
+//   rc = cs.createCollection( pCLName, cl ) ;
+//   ASSERT_EQ( SDB_OK, rc ) ;
+//
+//   // alter
+//   rc = cl.alterCollection( option ) ;
+//   ASSERT_EQ( SDB_OK, rc ) ;
+//
+//   // check
+//   rc = db.getSnapshot( cursor, SDB_SNAP_CATALOG, matcher ) ;
+//   ASSERT_EQ( SDB_OK, rc ) ; 
+// 
+//   rc = cursor.next( record ) ;
+//   ASSERT_EQ( SDB_OK, rc ) ;
+//
+//   ele = record.getField( "Name" ) ;
+//   ASSERT_EQ( String, ele.type() ) << "bson element is not a string type" ;
+//   pValue = ele.String().c_str() ;
+//   ASSERT_EQ( 0, strcmp( pValue, pCLFullName ) ) << "after alter cl, the cl's name is not what we want" ;
+//
+//   ele = record.getField( "ReplSize" ) ;
+//   n_value = ele.Int() ;
+//   ASSERT_EQ( 7, n_value ) << "after alter cl, replSize is not 0" ;
+//
+//   ele = record.getField( "ShardingKey" ) ;
+//   obj = ele.Obj() ;
+//   ele = obj.getField( "a" ) ;
+//   n_value = ele.Int() ;
+//   ASSERT_EQ( 1, n_value ) << "after alter cl, the sharding key is not what we want" ;
+//   
+//   ele = record.getField( "ShardingType" ) ;
+//   pValue = ele.String().c_str() ;
+//   ASSERT_EQ( SDB_OK, strcmp( pValue, "hash") ) << "after alter cl, the sharding type is not what we want" ;
+//   ele = record.getField( "Partition" ) ;
+//   n_value = ele.Int() ;
+//   ASSERT_EQ( 1024, n_value ) ;
+//   
+//   rc = db.dropCollectionSpace( pCSName ) ;
+//   ASSERT_EQ( SDB_OK, rc ) ;
+//   
+//   db.disconnect() ;
+//}
