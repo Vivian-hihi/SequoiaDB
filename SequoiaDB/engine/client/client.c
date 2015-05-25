@@ -3813,6 +3813,11 @@ static INT32 _sdbAlterCollectionV2( sdbCollectionHandle cHandle,
    {
       bson_append_element( &obj, NULL, &itr ) ;
    }
+   else if ( BSON_EOO != bson_find( &itr, options, FIELD_NAME_OPTIONS ) )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
 
    BSON_FINISH( obj ) ;
 
