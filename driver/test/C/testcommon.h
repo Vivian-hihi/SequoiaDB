@@ -11,12 +11,12 @@
 
 
 //#define HOST                  "192.168.20.192"
-//#define HOST                  "192.168.20.186"
+//#define HOST                  "192.168.20.165"
 #define HOST                  "localhost"
 //#define SERVER                "50000"
 //#define SERVER                "60000"
 #define SERVER                "11810"
-#define SERVER1               "30000"
+#define SERVER1               "11800"
 #define SERVER2               "21100"
 #define USER                  ""
 #define PASSWD                ""

@@ -4,12 +4,20 @@
 #include "client.h"
 #include "base64c.h"
 
+#include <iostream>
+#include <boost/thread/thread.hpp>
+#include <boost/thread/xtime.hpp>
+
+using namespace std ;
+
 #define USERDEF       "sequoiadb"
 #define PASSWDDEF     "sequoiadb"
+
 TEST(debug, debug)
 {
    ASSERT_TRUE( 1 == 1 ) ;
 }
+
 /*
 TEST(debug,sdbGetList_SDB_LIST_GROUPS)
 {
@@ -427,108 +435,546 @@ TEST(debug, binary)
    free ( out ) ;
 }
 */
+//
+//TEST(debug, regex)
+//{
+//   sdbConnectionHandle db = 0 ;
+//   sdbCSHandle cs    = 0 ;
+//   sdbCollectionHandle cl = 0 ;
+//   sdbCursorHandle cursor         = 0 ;
+//   INT32 rc                       = SDB_OK ;
+//   bson obj ;
+//   bson rule ;
+//   bson cond ;
+//   CHAR buf[64] = { 0 } ;
+//   const CHAR* regex = "^31" ;
+//   const CHAR* options = "i" ;
+//   INT32 num = 10 ;
+//   rc = initEnv( HOST, SERVER, USER, PASSWD ) ;
+//   ASSERT_EQ( SDB_OK, rc ) ;
+//   // connect to database
+//   rc = sdbConnect ( HOST, SERVER, USER, PASSWD, &db ) ;
+//   ASSERT_TRUE( rc == SDB_OK ) ;
+//   // get cs
+//   rc = getCollectionSpace ( db,
+//                             COLLECTION_SPACE_NAME,
+//                             &cs ) ;
+//   ASSERT_TRUE( rc == SDB_OK ) ;
+//   // get cl
+//   rc = getCollection ( db,
+//                        COLLECTION_FULL_NAME,
+//                        &cl ) ;
+//   CHECK_MSG("%s%d\n","rc = ", rc) ;
+//   ASSERT_TRUE( rc==SDB_OK ) ;
+//
+//   // insert some recored
+//   for ( INT32 i = 0 ; i < num; i++ )
+//   {
+//      CHAR buff[32] = { 0 } ;
+//      CHAR bu[2] = { 0 } ;
+//      sprintf( bu,"%d",i ) ;
+//      strcat( buff, "31" ) ;
+//      strncat( buff, bu, 1 ) ;
+//      bson_init ( &obj ) ;
+//      bson_append_string( &obj, "name", buff  ) ;
+//      bson_append_int ( &obj, "age", 30 + i ) ;
+//      bson_finish( &obj ) ;
+//      rc = sdbInsert( cl, &obj ) ;
+//      ASSERT_TRUE( rc==SDB_OK ) ;
+//      bson_destroy( &obj ) ;
+//   }
+//   // insert some recored
+//   for ( INT32 i = 0 ; i < num; i++ )
+//   {
+//      CHAR buff[32] = { 0 } ;
+//      CHAR bu[2] = { 0 } ;
+//      sprintf( bu, "%d", i ) ;
+//      strcat( buff, "41" ) ;
+//      strncat( buff, bu, 1 ) ;
+//      bson_init ( &obj ) ;
+//      bson_append_string( &obj, "name", buff  ) ;
+//      bson_append_int ( &obj, "age", 40 + i ) ;
+//      bson_finish( &obj ) ;
+//      rc = sdbInsert( cl, &obj ) ;
+//      ASSERT_TRUE( rc==SDB_OK ) ;
+//      bson_destroy( &obj ) ;
+//   }
+//
+//   // cond
+//   bson_init ( &cond ) ;
+//// *************************************************************
+//// 情况1
+////   bson_append_regex( &cond, "name", regex, options ) ;
+//// *************************************************************
+//// 情况2
+//     bson_append_start_object( &cond, "name" ) ;
+//     bson_append_string ( &cond, "$regex", "^31" ) ;
+//     bson_append_string ( &cond, "$options", "i" ) ;
+//     bson_append_finish_object( &cond ) ;
+//// *************************************************************
+//   rc = bson_finish( &cond ) ;
+//   ASSERT_TRUE( rc==SDB_OK ) ;
+//printf("cond is: \n" ) ;
+//bson_print(&cond) ;
+//   // rule
+//   bson_init ( &rule ) ;
+//   bson_append_start_object( &rule, "$set" ) ;
+//   bson_append_int ( &rule, "age", 999 ) ;
+//   bson_append_finish_object( &rule ) ;
+//   rc = bson_finish ( &rule ) ;
+//   ASSERT_TRUE( rc==SDB_OK ) ;
+//   // update with regex expression
+//   rc = sdbUpdate( cl, &rule, &cond, NULL ) ;
+//   CHECK_MSG("%s%d\n","rc = ", rc) ;
+//   ASSERT_TRUE( rc==SDB_OK ) ;
+//
+//   // query
+//   rc = sdbQuery( cl, NULL, NULL, NULL, NULL, 0, -1, &cursor ) ;
+//   ASSERT_TRUE( rc==SDB_OK ) ;
+//   // print the records
+//   displayRecord( &cursor ) ;
+//
+//   sdbDisconnect ( db ) ;
+//   sdbReleaseCursor ( cursor ) ;
+//   sdbReleaseCollection ( cl ) ;
+//   sdbReleaseCS ( cs ) ;
+//   sdbReleaseConnection ( db ) ;
+//}
+//
 
-TEST(debug, regex)
-{
-   sdbConnectionHandle db = 0 ;
-   sdbCSHandle cs    = 0 ;
-   sdbCollectionHandle cl = 0 ;
-   sdbCursorHandle cursor         = 0 ;
-   INT32 rc                       = SDB_OK ;
-   bson obj ;
-   bson rule ;
-   bson cond ;
-   CHAR buf[64] = { 0 } ;
-   const CHAR* regex = "^31" ;
-   const CHAR* options = "i" ;
-   INT32 num = 10 ;
-   rc = initEnv( HOST, SERVER, USER, PASSWD ) ;
-   ASSERT_EQ( SDB_OK, rc ) ;
-   // connect to database
-   rc = sdbConnect ( HOST, SERVER, USER, PASSWD, &db ) ;
-   ASSERT_TRUE( rc == SDB_OK ) ;
-   // get cs
-   rc = getCollectionSpace ( db,
-                             COLLECTION_SPACE_NAME,
-                             &cs ) ;
-   ASSERT_TRUE( rc == SDB_OK ) ;
-   // get cl
-   rc = getCollection ( db,
-                        COLLECTION_FULL_NAME,
-                        &cl ) ;
-   CHECK_MSG("%s%d\n","rc = ", rc) ;
-   ASSERT_TRUE( rc==SDB_OK ) ;
+//TEST( debug, sdbQueryAndRemove )
+//{
+//   sdbConnectionHandle connection = 0 ;
+//   sdbCSHandle cs                 = 0 ;
+//   sdbCollectionHandle cl         = 0 ;
+//   sdbCursorHandle cursor         = 0 ;
+//   INT32 rc                       = SDB_OK ;
+//   SINT64 NUM                     = 100 ;
+//   SINT64 count                   = 0 ;
+//   INT32 i                        = 0 ;
+//   INT32 set_value                = 100 ;
+//   const CHAR *pIndexName1        = "test_index1" ;
+//   const CHAR *pIndexName2        = "test_index2" ;
+//   const CHAR *pField1            = "testQueryAndUpdate1" ;
+//   const CHAR *pField2            = "testQueryAndUpdate2" ;
+//
+//
+//   bson index ;
+//   bson tmp ;
+//   bson condition ;
+//   bson selector ;
+//   bson orderBy ;
+//   bson hint ;
+//
+//   // initialize
+//   rc = initEnv( HOST, SERVER, USER, PASSWD ) ;
+//   ASSERT_EQ( SDB_OK, rc ) ;
+//   // connect to database
+//   rc = sdbConnect ( HOST, SERVER, USER, PASSWD, &connection ) ;
+//   ASSERT_EQ( SDB_OK, rc ) ;
+//   // get cs
+//   rc = getCollectionSpace ( connection,
+//                             COLLECTION_SPACE_NAME,
+//                             &cs ) ;
+//   ASSERT_EQ( SDB_OK, rc ) ;
+//   // get cl
+//   rc = getCollection ( connection,
+//                        COLLECTION_FULL_NAME,
+//                        &cl ) ;
+//   CHECK_MSG("%s%d\n","rc = ", rc) ;
+//   ASSERT_EQ( SDB_OK, rc ) ;
+//
+//   // create index
+//   bson_init( &index ) ;
+//   bson_append_int( &index, pField1, -1 ) ;
+//   bson_finish( &index ) ;
+//   rc = sdbCreateIndex( cl, &index, pIndexName1, FALSE, FALSE ) ;
+//   ASSERT_EQ( SDB_OK, rc ) ;
+//   bson_destroy( &index ) ;
+//
+//   bson_init( &index ) ;
+//   bson_append_int( &index, pField2, 1 ) ;
+//   bson_finish( &index ) ;
+//   rc = sdbCreateIndex( cl, &index, pIndexName2, FALSE, FALSE ) ;
+//   ASSERT_EQ( SDB_OK, rc ) ;
+//   bson_destroy( &index ) ;
+//
+//   // gen some record
+//   for ( i = 0; i < NUM; i++ )
+//   {
+//      bson obj ;
+//      bson_init( &obj ) ;
+//      bson_append_int( &obj, pField1, i ) ;
+//      bson_append_int( &obj, pField2, i ) ;
+//      bson_finish( &obj ) ;
+//      rc = sdbInsert( cl, &obj ) ;
+//      ASSERT_EQ( SDB_OK, rc ) ;
+//      bson_destroy( &obj ) ;
+//   }
+//
+//   /// in case: use extend sort 
+//   bson_init( &selector ) ;
+//   bson_append_string( &selector, pField2, "" ) ;
+//   bson_finish( &selector ) ;
+//   
+//   bson_init( &orderBy ) ;
+//   bson_append_int( &orderBy, pField2, 1 ) ;
+//   bson_finish( &orderBy ) ;
+//
+//   bson_init( &tmp ) ;
+//   bson_append_int( &tmp, "$gte", 0 ) ;
+//   bson_finish( &tmp ) ;
+//   bson_init( &condition ) ;
+//   bson_append_bson( &condition, pField1, &tmp ) ;
+//   bson_finish( &condition ) ;
+//
+//   bson_init( &hint ) ;
+//   bson_append_string( &hint, "", pIndexName1 ) ;
+//   bson_finish( &hint ) ;
+//
+//   rc = sdbQueryAndRemove( cl, &condition, &selector, &orderBy, &hint,
+//                           0, -1, 0, &cursor ) ;
+//   ASSERT_EQ( SDB_RTN_QUERYMODIFY_SORT_NO_IDX, rc ) ;
+//   bson_destroy( &hint ) ;
+//
+//   /// in case: does not use extend sort 
+//   bson_init( &hint ) ;
+//   bson_append_string( &hint, "", pIndexName2 ) ;
+//   bson_finish( &hint ) ;
+//   
+//   // test
+//   rc = sdbQueryAndRemove( cl, &condition, &selector, &orderBy, &hint,
+//                           50, 10, 0x00000080, &cursor ) ;
+//   ASSERT_EQ( SDB_OK, rc ) ;
+//   bson_destroy( &tmp ) ;
+//   bson_destroy( &condition ) ;
+//   bson_destroy( &selector ) ;
+//   bson_destroy( &orderBy ) ;
+//   bson_destroy( &hint ) ;
+//   // check
+//   i = 0 ;
+//   while ( SDB_OK == ( rc = sdbNext( cursor, &tmp ) ) )
+//   {
+//      bson_iterator it ;
+//      bson_iterator_init( &it, &tmp ) ;
+//      const CHAR *pKey = bson_iterator_key( &it ) ;
+//      ASSERT_EQ( 0, strncmp( pKey, pField2, strlen(pField2) ) ) ;
+//      INT32 value =  bson_iterator_int( &it ) ;
+//      ASSERT_EQ( 50 + i, value ) ;
+//      bson_destroy( &tmp ) ;
+//      i++ ;
+//   }
+//   ASSERT_EQ( 10, i ) ;
+//   i = 100 ;
+//   while ( i-- )
+//   {
+//      rc = sdbGetCount( cl, NULL, &count ) ;
+//      ASSERT_EQ( rc, SDB_OK ) ;
+//      if ( 0 == count )
+//         break ;
+//   }
+//   if ( 0 == i )
+//      ASSERT_EQ( 0, count ) ;
+//
+//   // realse
+//   sdbCloseCursor( cursor ) ;
+//   sdbReleaseCursor ( cursor ) ;
+//   sdbReleaseCollection ( cl ) ;
+//   sdbReleaseCS ( cs ) ;
+//   sdbDisconnect ( connection ) ;
+//   sdbReleaseConnection ( connection ) ;
+//}
+//
 
-   // insert some recored
-   for ( INT32 i = 0 ; i < num; i++ )
-   {
-      CHAR buff[32] = { 0 } ;
-      CHAR bu[2] = { 0 } ;
-      sprintf( bu,"%d",i ) ;
-      strcat( buff, "31" ) ;
-      strncat( buff, bu, 1 ) ;
-      bson_init ( &obj ) ;
-      bson_append_string( &obj, "name", buff  ) ;
-      bson_append_int ( &obj, "age", 30 + i ) ;
-      bson_finish( &obj ) ;
-      rc = sdbInsert( cl, &obj ) ;
-      ASSERT_TRUE( rc==SDB_OK ) ;
-      bson_destroy( &obj ) ;
-   }
-   // insert some recored
-   for ( INT32 i = 0 ; i < num; i++ )
-   {
-      CHAR buff[32] = { 0 } ;
-      CHAR bu[2] = { 0 } ;
-      sprintf( bu, "%d", i ) ;
-      strcat( buff, "41" ) ;
-      strncat( buff, bu, 1 ) ;
-      bson_init ( &obj ) ;
-      bson_append_string( &obj, "name", buff  ) ;
-      bson_append_int ( &obj, "age", 40 + i ) ;
-      bson_finish( &obj ) ;
-      rc = sdbInsert( cl, &obj ) ;
-      ASSERT_TRUE( rc==SDB_OK ) ;
-      bson_destroy( &obj ) ;
-   }
 
-   // cond
-   bson_init ( &cond ) ;
-// *************************************************************
-// 情况1
-//   bson_append_regex( &cond, "name", regex, options ) ;
-// *************************************************************
-// 情况2
-     bson_append_start_object( &cond, "name" ) ;
-     bson_append_string ( &cond, "$regex", "^31" ) ;
-     bson_append_string ( &cond, "$options", "i" ) ;
-     bson_append_finish_object( &cond ) ;
-// *************************************************************
-   rc = bson_finish( &cond ) ;
-   ASSERT_TRUE( rc==SDB_OK ) ;
-printf("cond is: \n" ) ;
-bson_print(&cond) ;
-   // rule
-   bson_init ( &rule ) ;
-   bson_append_start_object( &rule, "$set" ) ;
-   bson_append_int ( &rule, "age", 999 ) ;
-   bson_append_finish_object( &rule ) ;
-   rc = bson_finish ( &rule ) ;
-   ASSERT_TRUE( rc==SDB_OK ) ;
-   // update with regex expression
-   rc = sdbUpdate( cl, &rule, &cond, NULL ) ;
-   CHECK_MSG("%s%d\n","rc = ", rc) ;
-   ASSERT_TRUE( rc==SDB_OK ) ;
+//struct MyThreadFunc
+//{
+//   void operator()()
+//   {
+//      INT32 rc = SDB_OK ;
+//      sdbConnectionHandle db = 0 ;
+//      
+//      rc = sdbConnect( "192.168.20.165", "11810", "", "", &db ) ;
+//      if ( SDB_OK != rc )
+//      {
+//         cout << "Error: failed to connect to database, rc = " << rc << endl ;
+//         return ;
+//      }
+//      sdbDisconnect( db ) ;
+//      sdbReleaseConnection( db ) ;
+//      cout << "ok" <<endl ;
+//   }
+//} threadFun ;
+//
+//TEST( debug, multi_thread_build_connect )
+//{
+//   boost::thread myThread( threadFun ) ;
+//
+//   boost::thread::yield() ;
+//
+//   myThread.join() ;
+//   
+//}
 
-   // query
-   rc = sdbQuery( cl, NULL, NULL, NULL, NULL, 0, -1, &cursor ) ;
-   ASSERT_TRUE( rc==SDB_OK ) ;
-   // print the records
-   displayRecord( &cursor ) ;
-
-   sdbDisconnect ( db ) ;
-   sdbReleaseCursor ( cursor ) ;
-   sdbReleaseCollection ( cl ) ;
-   sdbReleaseCS ( cs ) ;
-   sdbReleaseConnection ( db ) ;
-}
+//TEST( debug, alter_collection )
+//{
+//   sdbConnectionHandle db = 0 ;
+//   sdbCSHandle cs         = 0 ;
+//   sdbCollectionHandle cl = 0 ;
+//   sdbCursorHandle cursor = 0 ;
+//
+//   INT32 rc                = SDB_OK ;
+//   const CHAR *pCSName     = "test_alter_cs_in_c" ;
+//   const CHAR *pCLName     = "test_alter_cl_in_c" ;
+//   const CHAR *pCLFullName = "test_alter_cs_in_c.test_alter_cl_in_c" ;
+//   const CHAR *pValue      = NULL ;
+//   INT32 n_value = 0 ;
+//   bson_iterator it ;
+//   bson_iterator it2 ;
+//   bson option ;
+//   bson matcher ;
+//   bson record ;
+//   bson obj ;
+//
+//   rc = initEnv( HOST, SERVER, USER, PASSWD ) ;
+//   ASSERT_EQ( SDB_OK, rc ) ;
+//
+//   // connect to database
+//   rc = sdbConnect ( HOST, SERVER, USER, PASSWD, &db ) ;
+//   ASSERT_EQ( SDB_OK, rc ) ;
+//
+//   if ( FALSE == isCluster( db ) )
+//   {
+//      return ;
+//   }
+//
+//   // drop cs
+//   rc = sdbDropCollectionSpace( db, pCSName ) ;
+//   if ( SDB_OK != rc && SDB_DMS_CS_NOTEXIST != rc )
+//   {
+//      ASSERT_EQ( 0, 1 ) << "failed to drop cs " << pCSName ;
+//   }
+//
+//   // create cs 
+//   rc = sdbCreateCollectionSpace( db, pCSName, 4096, &cs ) ;
+//   ASSERT_EQ( SDB_OK, rc ) ;
+//
+//   // create cl 
+//   rc = sdbCreateCollection( cs, pCLName, &cl ) ;
+//   ASSERT_EQ( SDB_OK, rc ) ;
+//
+//   bson_init( &option ) ;
+//   bson_append_int( &option, "ReplSize", 0 ) ;
+//   bson_append_start_object( &option, "ShardingKey" ) ;
+//   bson_append_int( &option, "a", 1 ) ;
+//   bson_append_finish_object( &option ) ;
+//   bson_append_string( &option, "ShardingType", "hash" ) ;
+//   bson_append_int( &option, "Partition", 1024 ) ;
+//   bson_finish( &option) ;
+//
+//   rc = sdbAlterCollection( cl, &option ) ;
+//   ASSERT_EQ( SDB_OK, rc ) ;
+//
+//   // check
+//   bson_init( &matcher ) ;
+//   bson_append_string( &matcher, "Name", pCLFullName ) ;
+//   bson_finish( &matcher ) ;
+//   rc = sdbGetSnapshot( db, SDB_SNAP_CATALOG, &matcher, NULL, NULL, &cursor ) ;
+//   ASSERT_EQ( SDB_OK, rc ) ;
+//
+//   bson_init( &record ) ;
+//   rc = sdbNext( cursor, &record ) ;
+//   ASSERT_EQ( SDB_OK, rc ) ;
+//
+//   // check Name
+//   if ( BSON_STRING != bson_find( &it, &record, "Name" ) )
+//   {
+//      ASSERT_EQ( 0, 1 ) << "after alter cl, the snapshot record is not the one we want" ;
+//   }
+//   pValue = bson_iterator_string( &it ) ;
+//   ASSERT_EQ( 0, strcmp( pValue, pCLFullName ) ) << "after alter cl, the cl's name is not what we want" ;
+//
+//   // check ReplSize
+//   if ( BSON_INT != bson_find( &it, &record, "ReplSize" ) )
+//   {
+//      ASSERT_EQ( 0, 1 ) << "after alter cl, the sharding type is not the one we want" ;
+//   }
+//   n_value = bson_iterator_int( &it ) ;
+//   ASSERT_EQ( 7, n_value ) ;
+//
+//   // check ShardingType
+//   if ( BSON_STRING != bson_find( &it, &record, "ShardingType" ) )
+//   {
+//      ASSERT_EQ( 0, 1 ) << "after alter cl, the sharding type is not the noe we want" ;
+//   }
+//   pValue = bson_iterator_string( &it ) ;
+//
+//   // check partition
+//   if ( BSON_INT != bson_find( &it, &record, "Partition" ) )
+//   {
+//      ASSERT_EQ( 0, 1 ) << "after alter cl, the partition is not the one we want" ;
+//   }
+//   n_value = bson_iterator_int( &it ) ;
+//   ASSERT_EQ( 1024, n_value ) ;
+//
+//   // check ShardingKey
+//   if ( BSON_OBJECT != bson_find( &it, &record, "ShardingKey" ) )
+//   {
+//      ASSERT_EQ( 0, 1 ) << "after alter cl, the sharding key is not the one we want" ;
+//   }
+//   bson_iterator_subobject( &it, &obj ) ;
+//   if ( BSON_INT != bson_find( &it2, &obj, "a" ) )
+//   {
+//      ASSERT_EQ( 0, 1 ) << "after alter cl, the sharding key is not the one we want" ; 
+//   }
+//   n_value = bson_iterator_int( &it2 ) ;
+//   ASSERT_EQ( 1, n_value ) ; 
+//   
+//   rc = sdbDropCollectionSpace( db, pCSName ) ;
+//   ASSERT_EQ( SDB_OK, rc ) ;
+//
+//   bson_destroy( &option ) ;
+//   bson_destroy( &matcher ) ;
+//   bson_destroy( &record ) ;
+//   bson_destroy( &obj ) ;
+//
+//
+//   sdbDisconnect ( db ) ;
+//   sdbReleaseCursor ( cursor ) ;
+//   sdbReleaseCollection ( cl ) ;
+//   sdbReleaseCS ( cs ) ;
+//   sdbReleaseConnection ( db ) ;
+//}
+//
+//TEST( debug, create_and_remove_id_index )
+//{
+//   sdbConnectionHandle db = 0 ;
+//   sdbCSHandle cs         = 0 ;
+//   sdbCollectionHandle cl = 0 ;
+//   sdbCursorHandle cursor = 0 ;
+//
+//   INT32 rc               = SDB_OK ;  
+//   const CHAR *pIndexName = "$id" ;
+//   INT32 count            = 0 ;
+//   bson obj ;
+//   bson record ;
+//   bson updater ;
+//
+//   rc = initEnv( HOST, SERVER, USER, PASSWD ) ;
+//   ASSERT_EQ( SDB_OK, rc ) ;
+//   // connect to database
+//   rc = sdbConnect ( HOST, SERVER, USER, PASSWD, &db ) ;
+//   ASSERT_EQ( SDB_OK, rc ) ;
+//
+//   // get cs
+//   rc = getCollectionSpace ( db, COLLECTION_SPACE_NAME, &cs ) ;
+//   ASSERT_EQ( SDB_OK, rc ) ;
+//
+//   // get cl
+//   rc = getCollection ( db, COLLECTION_FULL_NAME, &cl ) ;
+//   ASSERT_EQ( SDB_OK, rc ) ;
+//
+//   bson_init( &obj ) ;
+//   bson_append_int( &obj, "a", 1 ) ;
+//   bson_finish( &obj ) ;
+//
+//   bson_init( &record ) ;
+//   bson_append_start_object( &record, "$set" ) ;
+//   bson_append_int( &record, "a", 2 ) ;
+//   bson_append_finish_object( &record ) ;
+//   bson_finish( &record ) ;
+//
+//   bson_init( &updater ) ; 
+//   bson_append_start_object( &updater, "$set" ) ;
+//   bson_append_int( &updater, "a", 10 ) ;
+//   bson_append_finish_object( &updater ) ;
+//   rc = bson_finish( &updater ) ;
+//   ASSERT_EQ( SDB_OK, rc ) ;
+//
+//   rc = sdbInsert( cl, &obj ) ;
+//   ASSERT_EQ( SDB_OK, rc ) ;
+//
+//   // test
+//   rc = sdbDropIdIndex( cl ) ;
+//   ASSERT_EQ( SDB_OK, rc ) ;
+//
+//   // check
+//   rc = sdbGetIndexes( cl, pIndexName, &cursor ) ;
+//   ASSERT_EQ( SDB_OK, rc ) ;
+//
+//   while( SDB_OK == ( rc = sdbNext( cursor, &obj ) ) )
+//   {
+//      count++ ;
+//   }
+//   ASSERT_EQ( 0, count ) << "after drop id index, &id index still exist" ;
+//   
+//   rc = sdbQuery( cl, NULL, NULL, NULL, NULL, 0, -1, &cursor ) ;
+//   ASSERT_EQ( SDB_OK, rc ) ;
+//
+//   count = 0 ;
+//   while( SDB_OK == ( rc = sdbNext( cursor, &obj ) ) )
+//   {
+//      count++ ;
+//   }
+//   ASSERT_EQ( 1, count ) ;
+//
+//   rc = sdbUpdate( cl, &updater, NULL, NULL ) ;
+//   ASSERT_EQ( SDB_RTN_AUTOINDEXID_IS_FALSE, rc ) ;
+//
+//   rc = sdbUpsert( cl, &updater, NULL, NULL ) ;
+//   ASSERT_EQ( SDB_RTN_AUTOINDEXID_IS_FALSE, rc ) ;
+//
+//   rc = sdbDelete( cl, NULL, NULL ) ;
+//   ASSERT_EQ( SDB_RTN_AUTOINDEXID_IS_FALSE, rc ) ;
+//
+//   // test
+//   rc = sdbCreateIdIndex( cl ) ;
+//   ASSERT_EQ( SDB_OK, rc ) ;
+//
+//   rc = sdbDelete( cl, NULL, NULL ) ;
+//   ASSERT_EQ( SDB_OK, rc ) ;
+//  
+//   count = 0 ;
+//   while( SDB_OK == ( rc = sdbNext( cursor, &obj ) ) )
+//   {
+//      count++ ;
+//   }
+//   ASSERT_EQ( 0, count ) ;
+//
+//   rc = sdbUpsert( cl, &record, NULL, NULL ) ;
+//   ASSERT_EQ( SDB_OK, rc ) ;
+//
+//   rc = sdbQuery( cl, NULL, NULL, NULL, NULL, 0, -1, &cursor ) ;
+//   ASSERT_EQ( SDB_OK, rc ) ;
+//
+//   count = 0 ;
+//   while( SDB_OK == ( rc = sdbNext( cursor, &obj ) ) )
+//   {
+//      count++ ;
+//   }
+//   ASSERT_EQ( 1, count ) ;
+//
+//   rc = sdbUpdate( cl, &updater, NULL, NULL ) ;
+//   ASSERT_EQ( SDB_OK, rc ) ;
+//
+//   bson_init( &obj ) ;
+//   bson_append_int( &obj, "a", 10 ) ;
+//   bson_finish( &obj ) ;
+//   rc = sdbQuery( cl, &obj, NULL, NULL, NULL, 0, -1, &cursor ) ;
+//   count = 0 ;
+//   while( SDB_OK == ( rc = sdbNext( cursor, &record ) ) )
+//   {
+//      count++ ;
+//   }
+//   ASSERT_EQ( 1, count ) ;
+//   
+//   bson_destroy( &record ) ;
+//   bson_destroy( &obj ) ;
+//   bson_destroy( &updater ) ;
+//
+//   sdbDisconnect ( db ) ;
+//   sdbReleaseCursor ( cursor ) ;
+//   sdbReleaseCollection ( cl ) ;
+//   sdbReleaseCS ( cs ) ;
+//   sdbReleaseConnection ( db ) ;
+//}

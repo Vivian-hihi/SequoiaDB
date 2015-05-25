@@ -2056,3 +2056,268 @@ TEST( collection, sdbQueryAndRemove )
    sdbReleaseConnection ( connection ) ;
 }
 
+TEST( collection, alter_collection )
+{
+   sdbConnectionHandle db = 0 ;
+   sdbCSHandle cs         = 0 ;
+   sdbCollectionHandle cl = 0 ;
+   sdbCursorHandle cursor = 0 ;
+
+   INT32 rc                = SDB_OK ;
+   const CHAR *pCSName     = "test_alter_cs_in_c" ;
+   const CHAR *pCLName     = "test_alter_cl_in_c" ;
+   const CHAR *pCLFullName = "test_alter_cs_in_c.test_alter_cl_in_c" ;
+   const CHAR *pValue      = NULL ;
+   INT32 n_value = 0 ;
+   bson_iterator it ;
+   bson_iterator it2 ;
+   bson option ;
+   bson matcher ;
+   bson record ;
+   bson subObj ;
+
+   bson_init( &subObj ) ;
+
+   rc = initEnv( HOST, SERVER, USER, PASSWD ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   // connect to database
+   rc = sdbConnect ( HOST, SERVER, USER, PASSWD, &db ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   if ( FALSE == isCluster( db ) )
+   {
+      return ;
+   }
+
+   // drop cs
+   rc = sdbDropCollectionSpace( db, pCSName ) ;
+   if ( SDB_OK != rc && SDB_DMS_CS_NOTEXIST != rc )
+   {
+      ASSERT_EQ( 0, 1 ) << "failed to drop cs " << pCSName ;
+   }
+
+   // create cs
+   rc = sdbCreateCollectionSpace( db, pCSName, 4096, &cs ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   // create cl
+   rc = sdbCreateCollection( cs, pCLName, &cl ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   bson_init( &option ) ;
+   bson_append_int( &option, "ReplSize", 0 ) ;
+   bson_append_start_object( &option, "ShardingKey" ) ;
+   bson_append_int( &option, "a", 1 ) ;
+   bson_append_finish_object( &option ) ;
+   bson_append_string( &option, "ShardingType", "hash" ) ;
+   bson_append_int( &option, "Partition", 1024 ) ;
+   bson_finish( &option) ;
+
+   rc = sdbAlterCollection( cl, &option ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   // check
+   bson_init( &matcher ) ;
+   bson_append_string( &matcher, "Name", pCLFullName ) ;
+   bson_finish( &matcher ) ;
+   rc = sdbGetSnapshot( db, SDB_SNAP_CATALOG, &matcher, NULL, NULL, &cursor ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   bson_init( &record ) ;
+   rc = sdbNext( cursor, &record ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   // check Name
+   if ( BSON_STRING != bson_find( &it, &record, "Name" ) )
+   {
+      ASSERT_EQ( 0, 1 ) << "after alter cl, the snapshot record is not the one we want" ;
+   }
+   pValue = bson_iterator_string( &it ) ;
+   ASSERT_EQ( 0, strcmp( pValue, pCLFullName ) ) << "after alter cl, the cl's name is not what we want" ;
+
+   // check ReplSize
+   if ( BSON_INT != bson_find( &it, &record, "ReplSize" ) )
+   {
+      ASSERT_EQ( 0, 1 ) << "after alter cl, the sharding type is not the one we want" ;
+   }
+   n_value = bson_iterator_int( &it ) ;
+   ASSERT_EQ( 7, n_value ) ;
+
+   // check ShardingType
+   if ( BSON_STRING != bson_find( &it, &record, "ShardingType" ) )
+   {
+      ASSERT_EQ( 0, 1 ) << "after alter cl, the sharding type is not the noe we want" ;
+   }
+   pValue = bson_iterator_string( &it ) ;
+
+   // check partition
+   if ( BSON_INT != bson_find( &it, &record, "Partition" ) )
+   {
+      ASSERT_EQ( 0, 1 ) << "after alter cl, the partition is not the one we want" ;
+   }
+   n_value = bson_iterator_int( &it ) ;
+   ASSERT_EQ( 1024, n_value ) ;
+
+   // check ShardingKey
+   if ( BSON_OBJECT != bson_find( &it, &record, "ShardingKey" ) )
+   {
+      ASSERT_EQ( 0, 1 ) << "after alter cl, the sharding key is not the one we want" ;
+   }
+   bson_iterator_subobject( &it, &subObj ) ;
+   if ( BSON_INT != bson_find( &it2, &subObj, "a" ) )
+   {
+      ASSERT_EQ( 0, 1 ) << "after alter cl, the sharding key is not the one we want" ;
+   }
+   n_value = bson_iterator_int( &it2 ) ;
+   ASSERT_EQ( 1, n_value ) ;
+
+   rc = sdbDropCollectionSpace( db, pCSName ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   bson_destroy( &option ) ;
+   bson_destroy( &matcher ) ;
+   bson_destroy( &record ) ;
+   bson_destroy( &subObj ) ;
+
+
+   sdbDisconnect ( db ) ;
+   sdbReleaseCursor ( cursor ) ;
+   sdbReleaseCollection ( cl ) ;
+   sdbReleaseCS ( cs ) ;
+   sdbReleaseConnection ( db ) ;
+}
+
+TEST( collection, create_and_remove_id_index )
+{
+   sdbConnectionHandle db = 0 ;
+   sdbCSHandle cs         = 0 ;
+   sdbCollectionHandle cl = 0 ;
+   sdbCursorHandle cursor = 0 ;
+
+   INT32 rc               = SDB_OK ;
+   const CHAR *pIndexName = "$id" ;
+   INT32 count            = 0 ;
+   bson obj ;
+   bson record ;
+   bson updater ;
+
+   rc = initEnv( HOST, SERVER, USER, PASSWD ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // connect to database
+   rc = sdbConnect ( HOST, SERVER, USER, PASSWD, &db ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   // get cs
+   rc = getCollectionSpace ( db, COLLECTION_SPACE_NAME, &cs ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   // get cl
+   rc = getCollection ( db, COLLECTION_FULL_NAME, &cl ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   bson_init( &obj ) ;
+   bson_append_int( &obj, "a", 1 ) ;
+   bson_finish( &obj ) ;
+
+   bson_init( &record ) ;
+   bson_append_start_object( &record, "$set" ) ;
+   bson_append_int( &record, "a", 2 ) ;
+   bson_append_finish_object( &record ) ;
+   bson_finish( &record ) ;
+
+   bson_init( &updater ) ;
+   bson_append_start_object( &updater, "$set" ) ;
+   bson_append_int( &updater, "a", 10 ) ;
+   bson_append_finish_object( &updater ) ;
+   rc = bson_finish( &updater ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   rc = sdbInsert( cl, &obj ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   // test
+   rc = sdbDropIdIndex( cl ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   // check
+   rc = sdbGetIndexes( cl, pIndexName, &cursor ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   while( SDB_OK == ( rc = sdbNext( cursor, &obj ) ) )
+   {
+      count++ ;
+   }
+   ASSERT_EQ( 0, count ) << "after drop id index, &id index still exist" ;
+
+   rc = sdbQuery( cl, NULL, NULL, NULL, NULL, 0, -1, &cursor ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   count = 0 ;
+   while( SDB_OK == ( rc = sdbNext( cursor, &obj ) ) )
+   {
+      count++ ;
+   }
+   ASSERT_EQ( 1, count ) ;
+
+   rc = sdbUpdate( cl, &updater, NULL, NULL ) ;
+   ASSERT_EQ( SDB_RTN_AUTOINDEXID_IS_FALSE, rc ) ;
+
+   rc = sdbUpsert( cl, &updater, NULL, NULL ) ;
+   ASSERT_EQ( SDB_RTN_AUTOINDEXID_IS_FALSE, rc ) ;
+
+   rc = sdbDelete( cl, NULL, NULL ) ;
+   ASSERT_EQ( SDB_RTN_AUTOINDEXID_IS_FALSE, rc ) ;
+
+   // test
+   rc = sdbCreateIdIndex( cl ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   rc = sdbDelete( cl, NULL, NULL ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   count = 0 ;
+   while( SDB_OK == ( rc = sdbNext( cursor, &obj ) ) )
+   {
+      count++ ;
+   }
+   ASSERT_EQ( 0, count ) ;
+
+   rc = sdbUpsert( cl, &record, NULL, NULL ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   rc = sdbQuery( cl, NULL, NULL, NULL, NULL, 0, -1, &cursor ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   count = 0 ;
+   while( SDB_OK == ( rc = sdbNext( cursor, &obj ) ) )
+   {
+      count++ ;
+   }
+   ASSERT_EQ( 1, count ) ;
+
+   rc = sdbUpdate( cl, &updater, NULL, NULL ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   bson_init( &obj ) ;
+   bson_append_int( &obj, "a", 10 ) ;
+   bson_finish( &obj ) ;
+   rc = sdbQuery( cl, &obj, NULL, NULL, NULL, 0, -1, &cursor ) ;
+   count = 0 ;
+   while( SDB_OK == ( rc = sdbNext( cursor, &record ) ) )
+   {
+      count++ ;
+   }
+   ASSERT_EQ( 1, count ) ;
+
+   bson_destroy( &record ) ;
+   bson_destroy( &obj ) ;
+   bson_destroy( &updater ) ;
+
+   sdbDisconnect ( db ) ;
+   sdbReleaseCursor ( cursor ) ;
+   sdbReleaseCollection ( cl ) ;
+   sdbReleaseCS ( cs ) ;
+   sdbReleaseConnection ( db ) ;
+}
+
