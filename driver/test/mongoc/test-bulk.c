@@ -44,7 +44,7 @@ test_bulk (void)
    bson_t doc = BSON_INITIALIZER;
    bson_t q   = BSON_INITIALIZER;
    bool r;
-   
+
    client = mongoc_client_new (gTestUri);
    ASSERT_CMPPTR (client, !=, NULL);
 
@@ -77,7 +77,7 @@ test_bulk (void)
    BSON_APPEND_INT32(&q, "hello", 123);
    int recordnum = check_records(collection, q, true);
    ASSERT_CMPINT(recordnum, ==, 4);
-   
+
    ASSERT_CMPINT (bson_iter_init_find (&iter, &reply, "nInserted"), ==, true);
    ASSERT_CMPINT (BSON_ITER_HOLDS_INT32 (&iter), ==, true);
 #if 0
@@ -107,8 +107,8 @@ test_bulk (void)
    ASSERT_CMPINT (bson_iter_init_find (&iter, &reply, "nUpserted"), ==, true);
    ASSERT_CMPINT (BSON_ITER_HOLDS_INT32 (&iter), ==, true);
    ASSERT_CMPINT (bson_iter_int32 (&iter), ==, false);
-   
-   mongoc_bulk_operation_destroy (bulk); 
+
+   mongoc_bulk_operation_destroy (bulk);
    bulk = mongoc_collection_create_bulk_operation (collection, true, NULL);
 
    bson_init (&del);
@@ -117,7 +117,7 @@ test_bulk (void)
    bson_destroy (&del);
 
    r = mongoc_bulk_operation_execute (bulk, &reply, &error);
-   ASSERT_CMPINT (r, ==, true);  
+   ASSERT_CMPINT (r, ==, true);
    ASSERT_CMPINT (bson_iter_init_find (&iter, &reply, "nRemoved"), ==, true);
    ASSERT_CMPINT (BSON_ITER_HOLDS_INT32 (&iter), ==, true);
 #if 0
@@ -171,7 +171,7 @@ test_update_upserted (void)
 
    r = mongoc_bulk_operation_execute (bulk, &reply, &error);
    ASSERT_CMPINT (r, ==, true);
-   
+
    bson_init(&q);
    BSON_APPEND_UTF8(&q,"hello","there");
    ASSERT_CMPINT(check_records(collection, q,true), ==, 1);
@@ -281,7 +281,7 @@ test_index_offset (void)
 
    r = mongoc_bulk_operation_execute (bulk, &reply, &error);
    ASSERT_CMPINT (r, ==, true);
-   
+
    ASSERT_CMPINT (bson_iter_init_find (&iter, &reply, "nUpserted"), ==, true);
    ASSERT_CMPINT (BSON_ITER_HOLDS_INT32 (&iter), ==, true);
 #if 0
@@ -593,7 +593,7 @@ test_bulk_new (void)
    //ASSERT_CMPINT (error.domain, ==, MONGOC_ERROR_CLIENT);
    //ASSERT_CMPINT (error.code, ==, MONGOC_ERROR_COMMAND_INVALID_ARG);
 
-   mongoc_bulk_operation_set_database (bulk, "test");
+   mongoc_bulk_operation_set_database (bulk, "fapmongo_test");
    r = mongoc_bulk_operation_execute (bulk, NULL, &error);
    ASSERT_CMPINT (r, ==, false);
    //ASSERT_CMPINT (error.domain, ==, MONGOC_ERROR_CLIENT);
