@@ -77,13 +77,14 @@ namespace engine
 
       INT32 updateGlobalAddr() ;
 
-      BOOLEAN isDCActive() const ;
-      BOOLEAN isImageEnable() const ;
+      BOOLEAN isDCActivated() const ;
+      BOOLEAN isDCReadonly() const ;
+      BOOLEAN isImageEnabled() const ;
       BOOLEAN groupInImage( UINT32 groupID ) ;
       BOOLEAN groupInImage( const string &groupName ) ;
 
-      void    setImageCommand( BOOLEAN imageCmd ) { _isImageCmd = imageCmd ; }
-      BOOLEAN isImageCommand() const { return _isImageCmd ; }
+      void    setWritedCommand( BOOLEAN writed ) { _isWritedCmd = writed ; }
+      BOOLEAN isWritedCommand() const { return _isWritedCmd ; }
 
       void    onCommandBegin( MsgHeader *pMsg ) ;
       void    onCommandEnd( MsgHeader *pMsg, INT32 result ) ;
@@ -122,14 +123,22 @@ namespace engine
                                     _clsDCMgr *pDCMgr,
                                     const BSONObj &objQuery,
                                     BSONObjBuilder &retObjBuilder) ;
-      INT32 processCmdActiveImage( const NET_HANDLE &handle,
-                                   _clsDCMgr *pDCMgr,
-                                   const BSONObj &objQuery,
-                                   BSONObjBuilder &retObjBuilder ) ;
-      INT32 processCmdDeactiveImage( const NET_HANDLE &handle,
-                                     _clsDCMgr *pDCMgr,
-                                     const BSONObj &objQuery,
-                                     BSONObjBuilder &retObjBuilder ) ;
+      INT32 processCmdActivate( const NET_HANDLE &handle,
+                                _clsDCMgr *pDCMgr,
+                                const BSONObj &objQuery,
+                                BSONObjBuilder &retObjBuilder ) ;
+      INT32 processCmdDeactivate( const NET_HANDLE &handle,
+                                  _clsDCMgr *pDCMgr,
+                                  const BSONObj &objQuery,
+                                  BSONObjBuilder &retObjBuilder ) ;
+      INT32 processCmdEnableReadonly( const NET_HANDLE &handle,
+                                      _clsDCMgr *pDCMgr,
+                                      const BSONObj &objQuery,
+                                      BSONObjBuilder &retObjBuilder ) ;
+      INT32 processCmdDisableReadonly( const NET_HANDLE &handle,
+                                       _clsDCMgr *pDCMgr,
+                                       const BSONObj &objQuery,
+                                       BSONObjBuilder &retObjBuilder ) ;
 
    protected:
       void  _fillRspHeader( MsgHeader *rspMsg, const MsgHeader *reqMsg ) ;
@@ -164,7 +173,7 @@ namespace engine
       _catDCLogMgr               *_pLogMgr ;
 
       // for commands
-      BOOLEAN                    _isImageCmd ;
+      BOOLEAN                    _isWritedCmd ;
       DPS_LSN                    _lsn ;
       _dpsMessageBlock           _mb ;
       BOOLEAN                    _isActived ;

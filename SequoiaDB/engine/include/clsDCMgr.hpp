@@ -89,10 +89,12 @@ namespace engine
          void           setBusinessName( const string &name ) ;
          void           setAddress( const string &addr ) ;
 
-         void           setAcitve( BOOLEAN active ) ;
+         void           setAcitvated( BOOLEAN activated ) ;
+         void           setReadonly( BOOLEAN readonly ) ;
 
       public:
-         BOOLEAN        isActive() const { return _active ; }
+         BOOLEAN        isActivated() const { return _activated ; }
+         BOOLEAN        isReadonly() const { return _readonly ; }
 
          const CHAR*    getClusterName() const ;
          const CHAR*    getBusinessName() const ;
@@ -102,7 +104,7 @@ namespace engine
          const CHAR*    getImageClusterName() const ;
          const CHAR*    getImageBusinessName() const ;
          const CHAR*    getImageAddress() const ;
-         BOOLEAN        imageIsEnable() const { return _imageIsEnable ; }
+         BOOLEAN        imageIsEnabled() const { return _imageIsEnabled ; }
 
          map<string, string>* getImageGroups() { return &_imageGroups ; }
          map<string, string>* getRImageGroups() { return &_imageRGroups ; }
@@ -127,13 +129,14 @@ namespace engine
          string         _clusterName ;
          string         _businessName ;
          string         _address ;
-         BOOLEAN        _active ;
+         BOOLEAN        _activated ;
+         BOOLEAN        _readonly ;
 
          string         _imageClusterName ;
          string         _imageBusinessName ;
          string         _imageAddress ;
          BOOLEAN        _hasImage ;
-         BOOLEAN        _imageIsEnable ;
+         BOOLEAN        _imageIsEnabled ;
 
          map< string, string >  _imageGroups ;  // source 2 dest
          map< string, string >  _imageRGroups ; // dest 2 source

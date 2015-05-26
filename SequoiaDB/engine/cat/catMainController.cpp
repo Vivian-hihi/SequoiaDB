@@ -1062,13 +1062,13 @@ namespace engine
          }
       case MSG_AUTH_CRTUSR_REQ :
          {
-            _pCatCB->getCatDCMgr()->setImageCommand( TRUE ) ;
+            _pCatCB->getCatDCMgr()->setWritedCommand( TRUE ) ;
             rc = _processAuthCrt( handle, pMsg ) ;
             break ;
          }
       case MSG_AUTH_DELUSR_REQ :
          {
-            _pCatCB->getCatDCMgr()->setImageCommand( TRUE ) ;
+            _pCatCB->getCatDCMgr()->setWritedCommand( TRUE ) ;
             rc = _processAuthDel( handle, pMsg ) ;
             break ;
          }
@@ -1141,10 +1141,10 @@ namespace engine
          goto error ;
       }
 
-      if ( _pCatCB->getCatDCMgr()->isImageCommand() &&
-           !_pCatCB->isDCActive() )
+      if ( _pCatCB->getCatDCMgr()->isWritedCommand() &&
+           _pCatCB->isDCReadonly() )
       {
-         rc = SDB_CAT_CLUSTER_NOT_ACTIVE ;
+         rc = SDB_CAT_CLUSTER_IS_READONLY ;
          goto error ;
       }
 
@@ -1252,10 +1252,10 @@ namespace engine
          goto error ;
       }
 
-      if ( _pCatCB->getCatDCMgr()->isImageCommand() &&
-           !_pCatCB->isDCActive() )
+      if ( _pCatCB->getCatDCMgr()->isWritedCommand() &&
+           _pCatCB->isDCReadonly() )
       {
-         rc = SDB_CAT_CLUSTER_NOT_ACTIVE ;
+         rc = SDB_CAT_CLUSTER_IS_READONLY ;
          goto error ;
       }
 

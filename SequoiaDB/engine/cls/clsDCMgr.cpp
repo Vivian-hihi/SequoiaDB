@@ -66,8 +66,9 @@ namespace engine
       _imageBusinessName = "" ;
       _imageAddress = "" ;
       _hasImage = FALSE ;
-      _imageIsEnable = FALSE ;
-      _active = FALSE ;
+      _imageIsEnabled = FALSE ;
+      _activated = FALSE ;
+      _readonly = FALSE ;
 
       _orgObj = BSONObj() ;
       _imageGroups.clear() ;
@@ -124,10 +125,20 @@ namespace engine
          goto error ;
       }
 
-      e = obj.getField( FIELD_NAME_ACTIVE ) ;
+      e = obj.getField( FIELD_NAME_ACTIVATED ) ;
       if ( Bool == e.type() )
       {
-         _active = e.Bool() ? TRUE : FALSE ;
+         _activated = e.Bool() ? TRUE : FALSE ;
+      }
+      else if ( !e.eoo() )
+      {
+         goto error ;
+      }
+
+      e = obj.getField( FIELD_NAME_READONLY ) ;
+      if ( Bool == e.type() )
+      {
+         _readonly = e.Bool() ? TRUE : FALSE ;
       }
       else if ( !e.eoo() )
       {
@@ -151,7 +162,7 @@ namespace engine
          subEle = subObj.getField( FIELD_NAME_ENABLE ) ;
          if ( Bool == subEle.type() )
          {
-            _imageIsEnable = subEle.boolean() ? TRUE : FALSE ;
+            _imageIsEnabled = subEle.boolean() ? TRUE : FALSE ;
          }
          else if ( !subEle.eoo() )
          {
@@ -212,7 +223,7 @@ namespace engine
       if ( _imageAddress.empty() )
       {
          _hasImage = FALSE ;
-         _imageIsEnable = FALSE ;
+         _imageIsEnabled = FALSE ;
       }
       else
       {
@@ -232,7 +243,7 @@ namespace engine
 
    void _clsDCBaseInfo::enableImage( BOOLEAN enable )
    {
-      _imageIsEnable = enable ;
+      _imageIsEnabled = enable ;
    }
 
    INT32 _clsDCBaseInfo::addGroups( const BSONObj &groups,
@@ -422,9 +433,14 @@ namespace engine
       _address = addr ;
    }
 
-   void _clsDCBaseInfo::setAcitve( BOOLEAN active )
+   void _clsDCBaseInfo::setAcitvated( BOOLEAN activated )
    {
-      _active = active ;
+      _activated = activated ;
+   }
+
+   void _clsDCBaseInfo::setReadonly( BOOLEAN readonly )
+   {
+      _readonly = readonly ;
    }
 
    INT32 _clsDCBaseInfo::_addGroup( const BSONObj &obj, BOOLEAN check,

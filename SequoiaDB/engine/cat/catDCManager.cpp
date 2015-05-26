@@ -64,7 +64,7 @@ namespace engine
       _pEduCB = NULL ;
       _pDCMgr = NULL ;
       _pDCBaseInfo = NULL ;
-      _isImageCmd = FALSE ;
+      _isWritedCmd = FALSE ;
       _pLogMgr = FALSE ;
       _isActived = FALSE ;
    }
@@ -142,20 +142,29 @@ namespace engine
                                     TRUE, _pEduCB, 1 ) ;
    }
 
-   BOOLEAN _catDCManager::isDCActive() const
+   BOOLEAN _catDCManager::isDCActivated() const
    {
       if ( _pDCBaseInfo )
       {
-         return _pDCBaseInfo->isActive() ;
+         return _pDCBaseInfo->isActivated() ;
       }
       return FALSE ;
    }
 
-   BOOLEAN _catDCManager::isImageEnable() const
+   BOOLEAN _catDCManager::isDCReadonly() const
    {
       if ( _pDCBaseInfo )
       {
-         return _pDCBaseInfo->imageIsEnable() ;
+         return _pDCBaseInfo->isReadonly() ;
+      }
+      return TRUE ;
+   }
+
+   BOOLEAN _catDCManager::isImageEnabled() const
+   {
+      if ( _pDCBaseInfo )
+      {
+         return _pDCBaseInfo->imageIsEnabled() ;
       }
       return FALSE ;
    }
@@ -180,7 +189,7 @@ namespace engine
 
    void _catDCManager::onCommandBegin( MsgHeader *pMsg )
    {
-      setImageCommand( FALSE ) ;
+      setWritedCommand( FALSE ) ;
       _lsn = _pDpsCB->expectLsn() ;
    }
 
@@ -448,15 +457,27 @@ namespace engine
             rc = processCmdDisableImage( handle, &dcMgr, objQuery,
                                          retObjBuilder ) ;
          }
-         else if ( 0 == ossStrcasecmp( pAction, CMD_VALUE_NAME_ACTIVE ) )
+         else if ( 0 == ossStrcasecmp( pAction, CMD_VALUE_NAME_ACTIVATE ) )
          {
-            rc = processCmdActiveImage( handle, &dcMgr, objQuery,
-                                        retObjBuilder ) ;
+            rc = processCmdActivate( handle, &dcMgr, objQuery,
+                                     retObjBuilder ) ;
          }
-         else if ( 0 == ossStrcasecmp( pAction, CMD_VALUE_NAME_DEACTIVE ) )
+         else if ( 0 == ossStrcasecmp( pAction, CMD_VALUE_NAME_DEACTIVATE ) )
          {
-            rc = processCmdDeactiveImage( handle, &dcMgr, objQuery,
-                                          retObjBuilder ) ;
+            rc = processCmdDeactivate( handle, &dcMgr, objQuery,
+                                       retObjBuilder ) ;
+         }
+         else if ( 0 == ossStrcasecmp( pAction,
+                                       CMD_VALUE_NAME_ENABLE_READONLY ) )
+         {
+            rc = processCmdEnableReadonly( handle, &dcMgr,
+                                           objQuery, retObjBuilder ) ;
+         }
+         else if ( 0 == ossStrcasecmp( pAction,
+                                       CMD_VALUE_NAME_DISABLE_READONLY ) )
+         {
+            rc = processCmdDisableReadonly(  handle, &dcMgr,
+                                             objQuery, retObjBuilder ) ;
          }
          else
          {
@@ -508,7 +529,6 @@ namespace engine
       const CHAR *clusterName = NULL ;
       const CHAR *businessName = NULL ;
       string address ;
-      BOOLEAN checkAddr = FALSE ;
 
       BSONElement eleAddr = objQuery.getFieldDotted(
          FIELD_NAME_OPTIONS"."FIELD_NAME_ADDRESS ) ;
@@ -538,9 +558,10 @@ namespace engine
             rc = SDB_INVALIDARG ;
             goto error ;
          }
-         if ( 0 != ossStrlen( eleAddr.valuestr() ) )
-         {
-            checkAddr = TRUE ;
+         else if ( 0 != ossStrlen( eleAddr.valuestr() ) )
+         {         
+            rc = SDB_CAT_IMAGE_IS_CONFIGURED ;
+            goto error ;
          }
       }
 
@@ -548,15 +569,6 @@ namespace engine
       rc = pDCMgr->updateImageCataGroup( _pEduCB ) ;
       PD_RC_CHECK( rc, PDERROR, "Update image catalog group failed, "
                    "rc: %d", rc ) ;
-
-      // check the address is the same
-      if ( checkAddr && _isAddrConflict( eleAddr.valuestr(),
-                                         pDCMgr->getImageCatVec() ) )
-      {
-         rc = SDB_CAT_IMAGE_ADDR_CONFLICT ;
-         goto error ;
-      }
-
       address = pDCMgr->getImageCatAddr() ;
       // check the address is self cluster
       if ( _isAddrConflict( address, pmdGetOptionCB()->catAddrs() ) )
@@ -787,7 +799,7 @@ namespace engine
       vector< string > vecGroups ;
 
       // detach only when disable
-      if ( pBaseInfo->imageIsEnable() )
+      if ( pBaseInfo->imageIsEnabled() )
       {
          rc = SDB_CAT_IMAGE_IS_ENABLED ;
          goto error ;
@@ -879,7 +891,7 @@ namespace engine
       vector< string > allGroups ;
 
       // is already enable
-      if ( pBaseInfo->imageIsEnable() )
+      if ( pBaseInfo->imageIsEnabled() )
       {
          goto done ;
       }
@@ -889,16 +901,16 @@ namespace engine
          goto error ;
       }
 
-      // check is dual active
-      if ( pBaseInfo->isActive() )
+      // check is dual writable
+      if ( !pBaseInfo->isReadonly() )
       {
-         // check image wether is active
+         // check image wether is non-readonly
          rc = pDCMgr->updateImageDCBaseInfo( _pEduCB ) ;
          PD_RC_CHECK( rc, PDERROR, "Update image dc base info failed, rc: %d",
                       rc ) ;
-         if ( pDCMgr->getImageDCBaseInfo( _pEduCB, FALSE )->isActive() )
+         if ( !pDCMgr->getImageDCBaseInfo( _pEduCB, FALSE )->isReadonly() )
          {
-            rc = SDB_CAT_DUAL_ACTIVE ;
+            rc = SDB_CAT_DUAL_WRITABLE ;
             goto error ;
          }
       }
@@ -968,7 +980,7 @@ namespace engine
          rc = SDB_CAT_IMAGE_NOT_CONFIG ;
          goto error ;
       }
-      else if ( !pBaseInfo->imageIsEnable() )
+      else if ( !pBaseInfo->imageIsEnabled() )
       {
          goto done ;
       }
@@ -1004,10 +1016,10 @@ namespace engine
       goto done ;
    }
 
-   INT32 _catDCManager::processCmdActiveImage( const NET_HANDLE &handle,
-                                               _clsDCMgr *pDCMgr,
-                                               const BSONObj &objQuery,
-                                               BSONObjBuilder &retObjBuilder )
+   INT32 _catDCManager::processCmdActivate( const NET_HANDLE &handle,
+                                            _clsDCMgr *pDCMgr,
+                                            const BSONObj &objQuery,
+                                            BSONObjBuilder &retObjBuilder )
    {
       INT32 rc = SDB_OK ;
       clsDCBaseInfo *pBaseInfo = pDCMgr->getDCBaseInfo() ;
@@ -1021,28 +1033,16 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Make return groups object failed, rc: %d",
                    rc ) ;
 
-      if ( !pBaseInfo->isActive() )
+      if ( !pBaseInfo->isActivated() )
       {
-         if ( pBaseInfo->hasImage() && pBaseInfo->imageIsEnable() )
-         {
-            if ( SDB_OK == pDCMgr->updateImageDCBaseInfo( _pEduCB ) )
-            {
-               // if can update image's dc base info, need to check wether it
-               // is active
-               if ( pDCMgr->getImageDCBaseInfo( _pEduCB, FALSE )->isActive() )
-               {
-                  rc = SDB_CAT_DUAL_ACTIVE ;
-                  goto error ;
-               }
-            }
-         }
-
          // update to collection
-         rc = catActiveDC( TRUE, _pEduCB, _majoritySize(), _pDmsCB, _pDpsCB ) ;
+         rc = catUpdateDCStatus( FIELD_NAME_ACTIVATED, TRUE, _pEduCB,
+                                 _majoritySize(), _pDmsCB, _pDpsCB ) ;
          if ( rc )
          {
             // rollback
-            catActiveDC( FALSE, _pEduCB, 1, _pDmsCB, _pDpsCB ) ;
+            catUpdateDCStatus( FIELD_NAME_ACTIVATED, FALSE, _pEduCB, 1,
+                               _pDmsCB, _pDpsCB ) ;
             goto error ;
          }
       }
@@ -1053,10 +1053,10 @@ namespace engine
       goto done ;
    }
 
-   INT32 _catDCManager::processCmdDeactiveImage( const NET_HANDLE &handle,
-                                                 _clsDCMgr *pDCMgr,
-                                                 const BSONObj &objQuery,
-                                                 BSONObjBuilder &retObjBuilder )
+   INT32 _catDCManager::processCmdDeactivate( const NET_HANDLE &handle,
+                                              _clsDCMgr *pDCMgr,
+                                              const BSONObj &objQuery,
+                                              BSONObjBuilder &retObjBuilder )
    {
       INT32 rc = SDB_OK ;
       clsDCBaseInfo *pBaseInfo = pDCMgr->getDCBaseInfo() ;
@@ -1070,14 +1070,104 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Make return groups object failed, rc: %d",
                    rc ) ;
 
-      if ( pBaseInfo->isActive() )
+      if ( pBaseInfo->isActivated() )
       {
          // update to collection
-         rc = catActiveDC( FALSE, _pEduCB, _majoritySize(), _pDmsCB, _pDpsCB ) ;
+         rc = catUpdateDCStatus( FIELD_NAME_ACTIVATED, FALSE, _pEduCB,
+                                 _majoritySize(), _pDmsCB, _pDpsCB ) ;
          if ( rc )
          {
             // rollback
-            catActiveDC( TRUE, _pEduCB, 1, _pDmsCB, _pDpsCB ) ;
+            catUpdateDCStatus( FIELD_NAME_ACTIVATED, TRUE, _pEduCB, 1,
+                               _pDmsCB, _pDpsCB ) ;
+            goto error ;
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _catDCManager::processCmdEnableReadonly( const NET_HANDLE &handle,
+                                                  _clsDCMgr *pDCMgr,
+                                                  const BSONObj &objQuery,
+                                                  BSONObjBuilder &retObjBuilder )
+   {
+      INT32 rc = SDB_OK ;
+      clsDCBaseInfo *pBaseInfo = pDCMgr->getDCBaseInfo() ;
+      vector< string > vecGroups ;
+
+      _pCatCB->getGroupsName( vecGroups ) ;
+      vecGroups.push_back( CATALOG_GROUPNAME ) ;
+
+      // make return obj
+      rc = _pCatCB->makeGroupsObj( retObjBuilder, vecGroups ) ;
+      PD_RC_CHECK( rc, PDERROR, "Make return groups object failed, rc: %d",
+                   rc ) ;
+
+      if ( !pBaseInfo->isReadonly() )
+      {
+         // update to collection
+         rc = catUpdateDCStatus( FIELD_NAME_READONLY, TRUE, _pEduCB,
+                                 _majoritySize(), _pDmsCB, _pDpsCB ) ;
+         if ( rc )
+         {
+            // rollback
+            catUpdateDCStatus( FIELD_NAME_READONLY, FALSE, _pEduCB, 1,
+                               _pDmsCB, _pDpsCB ) ;
+            goto error ;
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _catDCManager::processCmdDisableReadonly( const NET_HANDLE &handle,
+                                                   _clsDCMgr *pDCMgr,
+                                                   const BSONObj &objQuery,
+                                                   BSONObjBuilder &retObjBuilder )
+   {
+      INT32 rc = SDB_OK ;
+      clsDCBaseInfo *pBaseInfo = pDCMgr->getDCBaseInfo() ;
+      vector< string > vecGroups ;
+
+      _pCatCB->getGroupsName( vecGroups ) ;
+      vecGroups.push_back( CATALOG_GROUPNAME ) ;
+
+      // make return obj
+      rc = _pCatCB->makeGroupsObj( retObjBuilder, vecGroups ) ;
+      PD_RC_CHECK( rc, PDERROR, "Make return groups object failed, rc: %d",
+                   rc ) ;
+
+      if ( pBaseInfo->isReadonly() )
+      {
+         if ( pBaseInfo->hasImage() && pBaseInfo->imageIsEnabled() )
+         {
+            if ( SDB_OK == pDCMgr->updateImageDCBaseInfo( _pEduCB ) )
+            {
+               // if can update image's dc base info, need to check wether it
+               // is readonly
+               if ( !pDCMgr->getImageDCBaseInfo( _pEduCB, FALSE )->isReadonly() )
+               {
+                  rc = SDB_CAT_DUAL_WRITABLE ;
+                  goto error ;
+               }
+            }
+         }
+
+         // update to collection
+         rc = catUpdateDCStatus( FIELD_NAME_READONLY, FALSE, _pEduCB,
+                                 _majoritySize(), _pDmsCB, _pDpsCB ) ;
+         if ( rc )
+         {
+            // rollback
+            catUpdateDCStatus( FIELD_NAME_READONLY, TRUE, _pEduCB, 1,
+                               _pDmsCB, _pDpsCB ) ;
             goto error ;
          }
       }
@@ -1231,7 +1321,8 @@ namespace engine
                            FIELD_NAME_CLUSTERNAME << clusterName <<
                            FIELD_NAME_BUSINESSNAME << businessName <<
                            FIELD_NAME_ADDRESS << option->getCatAddr() ) <<
-                         FIELD_NAME_ACTIVE << true ) ;
+                         FIELD_NAME_ACTIVATED << true <<
+                         FIELD_NAME_READONLY << false ) ;
          rc = rtnInsert( CAT_SYSDCBASE_COLLECTION_NAME, infoObj, 1, 0,
                          _pEduCB, _pDmsCB, _pDpsCB, 1 ) ;
          PD_RC_CHECK( rc, PDERROR, "Insert global info[%s] to collection[%s] "

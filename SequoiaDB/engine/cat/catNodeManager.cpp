@@ -1871,7 +1871,7 @@ namespace engine
       }
 
       // can't remove group when group has image and image is enable
-      if ( _pCatCB->isImageEnable() &&
+      if ( _pCatCB->isImageEnabled() &&
            _pCatCB->getCatDCMgr()->groupInImage(  groupName ) )
       {
          rc = SDB_CAT_GROUP_HAS_IMAGE ;

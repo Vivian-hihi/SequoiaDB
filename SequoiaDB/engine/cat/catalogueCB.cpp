@@ -553,7 +553,7 @@ namespace engine
                iterMap = _grpIdMap.begin() ;
             }
 
-            if ( _catDCMgr.isImageEnable() &&
+            if ( _catDCMgr.isImageEnabled() &&
                  !_catDCMgr.groupInImage( iterMap->second ) )
             {
                ++iterMap ;

@@ -1760,8 +1760,9 @@ namespace engine
       goto done ;
    }
 
-   INT32 catActiveDC( BOOLEAN active, pmdEDUCB *cb, INT16 w,
-                      _SDB_DMSCB *dmsCB, _dpsLogWrapper *dpsCB )
+   INT32 catUpdateDCStatus( const CHAR *pField, BOOLEAN status,
+                            pmdEDUCB *cb, INT16 w,
+                            _SDB_DMSCB *dmsCB, _dpsLogWrapper *dpsCB )
    {
       INT32 rc = SDB_OK ;
       BSONObj updator ;
@@ -1770,13 +1771,13 @@ namespace engine
       INT64 updateNum = 0 ;
       BSONObj hint ;
 
-      if ( active )
+      if ( status )
       {
-         updator = BSON( "$set" << BSON( FIELD_NAME_ACTIVE << true ) ) ;
+         updator = BSON( "$set" << BSON( pField << true ) ) ;
       }
       else
       {
-         updator = BSON( "$set" << BSON( FIELD_NAME_ACTIVE << false ) ) ;
+         updator = BSON( "$set" << BSON( pField << false ) ) ;
       }
       rc = rtnUpdate( CAT_SYSDCBASE_COLLECTION_NAME, matcher, updator,
                       hint, 0, cb, dmsCB, dpsCB, w, &updateNum ) ;

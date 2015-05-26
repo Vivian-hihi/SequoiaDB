@@ -185,8 +185,9 @@ namespace engine
    INT32 catEnableImage( BOOLEAN enable, pmdEDUCB *cb, INT16 w,
                          _SDB_DMSCB *dmsCB, _dpsLogWrapper * dpsCB ) ;
 
-   INT32 catActiveDC( BOOLEAN active, pmdEDUCB *cb, INT16 w,
-                      _SDB_DMSCB *dmsCB, _dpsLogWrapper *dpsCB ) ;
+   INT32 catUpdateDCStatus( const CHAR *pField, BOOLEAN status,
+                            pmdEDUCB *cb, INT16 w,
+                            _SDB_DMSCB *dmsCB, _dpsLogWrapper *dpsCB ) ;
 
    /* Other Tools */
    INT32 catRemoveCLEx( const CHAR *clFullName,  pmdEDUCB *cb,

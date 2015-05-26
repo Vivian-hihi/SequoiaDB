@@ -117,8 +117,9 @@ namespace engine
                                 BOOLEAN &isDelay ) ;
          UINT16   getPrimaryNode() const { return _primaryID.columns.nodeID ; }
 
-         BOOLEAN  isDCActive() const { return _catDCMgr.isDCActive() ; }
-         BOOLEAN  isImageEnable() const { return _catDCMgr.isImageEnable() ; }
+         BOOLEAN  isDCActivated() const { return _catDCMgr.isDCActivated() ; }
+         BOOLEAN  isImageEnabled() const { return _catDCMgr.isImageEnabled() ; }
+         BOOLEAN  isDCReadonly() const { return _catDCMgr.isDCReadonly() ; }
 
          UINT32   setTimer( UINT32 milliSec ) ;
          void     killTimer( UINT32 timerID ) ;

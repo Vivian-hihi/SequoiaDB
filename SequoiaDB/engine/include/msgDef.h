@@ -253,7 +253,8 @@
 #define FIELD_NAME_DATACENTER                "DataCenter"
 #define FIELD_NAME_ADDRESS                   "Address"
 #define FIELD_NAME_IMAGE                     "Image"
-#define FIELD_NAME_ACTIVE                    "Active"
+#define FIELD_NAME_ACTIVATED                 "Activated"
+#define FIELD_NAME_READONLY                  "Readonly"
 #define FIELD_NAME_ENABLE                    "Enable"
 #define FIELD_NAME_ACTION                    "Action"
 #define FIELD_NAME_DATA                      "Data"
@@ -448,8 +449,10 @@
 #define CMD_VALUE_NAME_DETACH                "detach groups"
 #define CMD_VALUE_NAME_ENABLE                "enable image"
 #define CMD_VALUE_NAME_DISABLE               "disable image"
-#define CMD_VALUE_NAME_ACTIVE                "activate"
-#define CMD_VALUE_NAME_DEACTIVE              "deactivate"
+#define CMD_VALUE_NAME_ACTIVATE              "activate"
+#define CMD_VALUE_NAME_DEACTIVATE            "deactivate"
+#define CMD_VALUE_NAME_ENABLE_READONLY       "enable readonly"
+#define CMD_VALUE_NAME_DISABLE_READONLY      "disable readonly"
 
 #define CLS_REPLSET_MAX_NODE_SIZE            7
 #define SDB_MAX_MSG_LENGTH                   ( 512 * 1024 * 1024 )

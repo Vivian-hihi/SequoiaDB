@@ -957,7 +957,7 @@ namespace engine
             vecGroups.push_back( groupID ) ;
             BSONObjBuilder replyBuild ;
 
-            if ( _pCatCB->isImageEnable() &&
+            if ( _pCatCB->isImageEnabled() &&
                  !_pCatCB->getCatDCMgr()->groupInImage( groupID ) )
             {
                // the group that has no image can't be as collection' location
@@ -1861,7 +1861,7 @@ namespace engine
       case MSG_CAT_ALTER_DOMAIN_REQ :
          {
             // up commands is run in cluster acitve status
-            _pCatCB->getCatDCMgr()->setImageCommand( TRUE ) ;
+            _pCatCB->getCatDCMgr()->setWritedCommand( TRUE ) ;
             rc = processCommandMsg( handle, pMsg, TRUE ) ;
             break;
          }
@@ -1957,10 +1957,10 @@ namespace engine
          }
       }
 
-      if ( _pCatCB->getCatDCMgr()->isImageCommand() &&
-           !_pCatCB->isDCActive() )
+      if ( _pCatCB->getCatDCMgr()->isWritedCommand() &&
+           _pCatCB->isDCReadonly() )
       {
-         rc = SDB_CAT_CLUSTER_NOT_ACTIVE ;
+         rc = SDB_CAT_CLUSTER_IS_READONLY ;
          goto error ;
       }
 
@@ -2279,7 +2279,7 @@ namespace engine
             }
             expectedObjSize ++ ;
 
-            if ( _pCatCB->isImageEnable() )
+            if ( _pCatCB->isImageEnabled() )
             {
                // the group that has no image can't be added to domain when
                // image is enabled
@@ -2478,7 +2478,7 @@ namespace engine
          goto error ;
       }
 
-      if ( _pCatCB->isImageEnable() )
+      if ( _pCatCB->isImageEnabled() )
       {
          // the group that has no image can't be added to domain when
          // image is enabled
@@ -2746,7 +2746,7 @@ namespace engine
 
          groupName.assign( clInfo._gpSpecified ) ;
 
-         if ( _pCatCB->isImageEnable() &&
+         if ( _pCatCB->isImageEnabled() &&
               !_pCatCB->getCatDCMgr()->groupInImage( groupName ) )
          {
             // the group that has no image can't be as the collection location
