@@ -44,12 +44,12 @@ namespace engine
 {
 
    /*
-      rtnCoordAlterImage implement
+      rtnCoordAlterDC implement
    */
-   INT32 rtnCoordAlterImage::execute( MsgHeader *pMsg,
-                                      pmdEDUCB *cb,
-                                      INT64 &contextID,
-                                      rtnContextBuf *buf )
+   INT32 rtnCoordAlterDC::execute( MsgHeader *pMsg,
+                                   pmdEDUCB *cb,
+                                   INT64 &contextID,
+                                   rtnContextBuf *buf )
    {
       INT32 rc = SDB_OK ;
       CoordGroupList datagroups ;
@@ -68,7 +68,7 @@ namespace engine
          rc = msgExtractQuery( (CHAR*)pMsg, NULL, NULL, NULL, NULL,
                                &pQuery, NULL, NULL, NULL ) ;
          PD_RC_CHECK( rc, PDERROR, "Extract command[%s] msg failed, rc: %d",
-                      COORD_CMD_ALTER_IMAGE, rc ) ;
+                      COORD_CMD_ALTER_DC, rc ) ;
          try
          {
             BSONObj objQuery( pQuery ) ;
@@ -76,7 +76,7 @@ namespace engine
             if ( String != eleAction.type() )
             {
                PD_LOG( PDERROR, "The field[%s] is not valid in command[%s]'s "
-                       "param[%s]", FIELD_NAME_ACTION, COORD_CMD_ALTER_IMAGE,
+                       "param[%s]", FIELD_NAME_ACTION, COORD_CMD_ALTER_DC,
                        objQuery.toString().c_str() ) ;
                rc = SDB_INVALIDARG ;
                goto error ;
@@ -87,7 +87,7 @@ namespace engine
          {
             rc = SDB_INVALIDARG ;
             PD_LOG( PDERROR, "Parse command[%s]'s param occur exception: %s",
-                    COORD_CMD_ALTER_IMAGE, e.what() ) ;
+                    COORD_CMD_ALTER_DC, e.what() ) ;
             goto error ;
          }
       }
@@ -97,7 +97,7 @@ namespace engine
       if ( rc )
       {
          PD_LOG( PDERROR, "Failed to execute %s:%s on catalog node, rc: %d",
-                 COORD_CMD_ALTER_IMAGE, pAction, rc ) ;
+                 COORD_CMD_ALTER_DC, pAction, rc ) ;
          goto error ;
       }
 
@@ -116,7 +116,7 @@ namespace engine
       if ( rc )
       {
          PD_LOG( PDWARNING, "Failed to execute %s:%s on data nodes, "
-                 "rc: %d", COORD_CMD_ALTER_IMAGE, pAction, rc ) ;
+                 "rc: %d", COORD_CMD_ALTER_DC, pAction, rc ) ;
          rc = SDB_OK ;
       }
 

@@ -436,7 +436,7 @@
 #define CMD_NAME_INVALIDATE_CACHE            "invalidate cache"
 #define CMD_NAME_FORCE_SESSION               "force session"
 #define CMD_NAME_LIST_LOBS                   "list lobs"
-#define CMD_NAME_ALTER_IMAGE                 "alter image"
+#define CMD_NAME_ALTER_DC                    "alter dc"
 #define CMD_NAME_REELECT                     "reelect"
 #define CMD_NAME_FORCE_STEP_UP               "force step up"
 

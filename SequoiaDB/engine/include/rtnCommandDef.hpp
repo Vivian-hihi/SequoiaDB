@@ -97,7 +97,7 @@ namespace engine
 #define NAME_JSON_LOAD                       CMD_NAME_JSON_LOAD
 #define NAME_TRUNCATE                        CMD_NAME_TRUNCATE
 #define NAME_ALTER_COLLECTION                CMD_NAME_ALTER_COLLECTION
-#define NAME_ALTER_IMAGE                     CMD_NAME_ALTER_IMAGE
+#define NAME_ALTER_DC                        CMD_NAME_ALTER_DC
 
 // the commands that does not supported by data nodes or standalone mode
 #define NAME_CREATE_GROUP                    CMD_NAME_CREATE_GROUP

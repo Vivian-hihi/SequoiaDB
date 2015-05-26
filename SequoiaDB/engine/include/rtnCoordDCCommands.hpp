@@ -42,9 +42,9 @@
 namespace engine
 {
    /*
-      rtnCoordAlterImage define
+      rtnCoordAlterDC define
    */
-   class rtnCoordAlterImage : public rtnCoordCommand
+   class rtnCoordAlterDC : public rtnCoordCommand
    {
       public:
          virtual INT32 execute( MsgHeader *pMsg,

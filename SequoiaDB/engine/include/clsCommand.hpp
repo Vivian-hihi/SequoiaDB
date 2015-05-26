@@ -217,16 +217,16 @@ namespace engine
       UINT32 _seconds ;
    } ;
 
-   class _clsAlterImage : public _rtnCommand
+   class _clsAlterDC : public _rtnCommand
    {
       DECLARE_CMD_AUTO_REGISTER()
 
       public:
-         _clsAlterImage() ;
-         virtual ~_clsAlterImage() ;
+         _clsAlterDC() ;
+         virtual ~_clsAlterDC() ;
 
       public:
-         virtual const CHAR * name () { return NAME_ALTER_IMAGE ; }
+         virtual const CHAR * name () { return NAME_ALTER_DC ; }
          virtual RTN_COMMAND_TYPE type () { return CMD_ALTER_IMAGE ; }
          virtual BOOLEAN      writable () { return TRUE ; }
 
