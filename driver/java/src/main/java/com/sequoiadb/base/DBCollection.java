@@ -1796,10 +1796,16 @@ public class DBCollection {
                     SequoiadbConstants.SDB_ALTER_VERSION);
 		    newobj.put(SequoiadbConstants.FIELD_NAME_NAME, collectionFullName);
 		    
-		    Object tmpOptions = options.get(SequoiadbConstants.FIELD_NAME_OPTIONS);
-		    if ( tmpOptions instanceof BasicBSONObject ) {
-		        newobj.put(SequoiadbConstants.FIELD_NAME_OPTIONS, tmpOptions);
+		    if (options.containsField(SequoiadbConstants.FIELD_NAME_OPTIONS)) {
+		        Object tmpOptions = options.get(SequoiadbConstants.FIELD_NAME_OPTIONS);
+                if ( tmpOptions instanceof BasicBSONObject ) {
+                    newobj.put(SequoiadbConstants.FIELD_NAME_OPTIONS, tmpOptions);
+                }
+                else {
+                    throw new BaseException("SDB_INVALIDARG", options);
+                }
 		    }
+		    
 		}
 		
 		// build message/send/receive/extract
