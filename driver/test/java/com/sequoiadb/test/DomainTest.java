@@ -45,10 +45,16 @@ public class DomainTest {
 	
 	@Before
 	public void setUp() throws Exception {
+	    if (sdb.isCollectionSpaceExist(csName1)) {
+	        sdb.dropCollectionSpace(csName1);
+	    }
 	}
 	
 	@After
 	public void tearDown() throws Exception {
+	    if (sdb.isCollectionSpaceExist(csName1)) {
+            sdb.dropCollectionSpace(csName1);
+        }
 	}
 	
 	@Test

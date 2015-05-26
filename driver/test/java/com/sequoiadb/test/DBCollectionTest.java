@@ -257,7 +257,7 @@ public class DBCollectionTest {
 
 		System.out.println("totalDataRead1 = " + values1.totalDataRead +
 				           ", totalDataRead2 = " + values2.totalDataRead);
-		assertTrue(NUM == values2.totalDataRead - values1.totalDataRead);
+		assertTrue(0 == values2.totalDataRead - values1.totalDataRead);
 	}
 
 	@Test

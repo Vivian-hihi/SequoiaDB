@@ -61,6 +61,7 @@ public class CLBulkInsert {
 
 	@After
 	public void tearDown() throws Exception {
+	    cl.truncate();
 	}
 	
 	@Test
