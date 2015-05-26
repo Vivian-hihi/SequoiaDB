@@ -2299,18 +2299,18 @@
       </code>
 
       <code>
-         <name>SDB_CAT_DUAL_ACTIVE</name>
+         <name>SDB_CAT_DUAL_WRITABLE</name>
          <description>
-            <en>This cluster and image cluster is both active</en>
-            <cn>本集群和镜像集群都为激活状态</cn>
+            <en>This cluster and image cluster is both writable</en>
+            <cn>本集群和镜像集群都为可写状态</cn>
          </description>
       </code>
 
       <code>
-         <name>SDB_CAT_CLUSTER_NOT_ACTIVE</name>
+         <name>SDB_CAT_CLUSTER_IS_READONLY</name>
          <description>
-            <en>This cluster is not active</en>
-            <cn>集群未激活</cn>
+            <en>This cluster is readonly</en>
+            <cn>集群为只读模式</cn>
          </description>
       </code>
 
