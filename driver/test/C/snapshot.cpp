@@ -28,7 +28,9 @@ TEST(sdb,sdbGetSnapshot_SDB_SANP_CONTEXTS)
    else if ( rc == SDB_OK )
    {
       rc = sdbConnect ( HOST, SERVER1, USER, PASSWD, &cdb ) ;
-      ASSERT_EQ( SDB_OK, rc ) ;
+      ASSERT_EQ( SDB_OK, rc ) << "host is: " << HOST << " , server is: "
+                              << SERVER1 << " , user is: " << USER
+                              << " , passwd is: " << PASSWD ;
       rc = sdbConnect ( HOST, SERVER2, USER, PASSWD, &ddb ) ;
       ASSERT_EQ( SDB_OK, rc ) ;
       rc = sdbGetSnapshot( cdb, SDB_SNAP_CONTEXTS,
