@@ -923,6 +923,7 @@
                     <file name="references/methods/topics/deleteLob.dita"/>
                     <file name="references/methods/topics/detachCL_en.dita"/>
                     <file name="references/methods/topics/detachCL.dita"/>
+                    <file name="references/methods/topics/detachNode.dita"/>
                     <file name="references/methods/topics/domainalter.dita"/>
                     <file name="references/methods/topics/dropCL_en.dita"/>
                     <file name="references/methods/topics/dropCL.dita"/>

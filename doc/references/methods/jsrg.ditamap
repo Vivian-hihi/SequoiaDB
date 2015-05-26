@@ -5,6 +5,7 @@
  <topicref href="jsrg.dita">
   <topicref href="topics/attachNode.dita"/>
   <topicref href="topics/createNode.dita"/>
+  <topicref href="topics/detachNode.dita"/>
   <topicref href="topics/getDetail.dita"/>
   <topicref href="topics/getMaster.dita"/>
   <topicref href="topics/getNode.dita"/>
