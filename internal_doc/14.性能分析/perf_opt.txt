@@ -1,0 +1,93 @@
+测试对大数据量做排序、创建索引（顺序字段、随机字段）操作的性能
+
+inner_obj = {"x":"abcdefghijklmnopqrstuvwxyz#1234567890", "y":"1234567890", "z":"abcdefghijklmnopqrstuvwxyz#abcdefghijklmnopqrstuvwxyz"}
+# insert records
+batches = 10 
+record_per_batch = 100000
+for batch in range(0, batches):
+    records = []
+    for idx in range(0, record_per_batch):
+        obj = {"i":batch * record_per_batch + idx, "obj":inner_obj, "int":random.randint(0, idx)}
+	    records.append(obj)
+    cl.bulk_insert(1, records)
+
+1、1500w数据，4.2GB
+单线程
+> foo.bar.find().sort({int:1}).skip(14999999).limit(1)
+{
+  "_id": {
+    "$oid": "5564344576d7be1b03fdea53"
+  },
+  "i": 14991154,
+  "int": 14989934,
+  "strobj": "abcdefghijklmnopqrstuvwxyz#14991154",
+  "obj": {
+    "y": "1234567890",
+    "x": "abcdefghijklmnopqrstuvwxyz#1234567890",
+    "z": "abcdefghijklmnopqrstuvwxyz#abcdefghijklmnopqrstuvwxyz"
+  }
+}
+Return 1 row(s).
+Takes 242.579092s.
+> foo.bar.createIndex("i_idx", {i:1})
+Takes 74.973457s.
+> foo.bar.createIndex("int_idx", {int:1})
+Takes 103.194990s.
+>
+
+2、5000w数据，14GB
+单线程
+> foo.bar.find().sort({int:1}).skip(14999999).limit(1)
+{
+  "_id": {
+    "$oid": "5564452c85eeb77f9438bbc5"
+  },
+  "i": 4573773,
+  "int": 4361359,
+  "strobj": "abcdefghijklmnopqrstuvwxyz#4573773",
+  "obj": {
+    "y": "1234567890",
+    "x": "abcdefghijklmnopqrstuvwxyz#1234567890",
+    "z": "abcdefghijklmnopqrstuvwxyz#abcdefghijklmnopqrstuvwxyz"
+  }
+}
+Return 1 row(s).
+Takes 955.371652s.
+> foo.bar.createIndex("i_idx", {i:1})
+Takes 316.876228s.
+> 
+> 
+> foo.bar.createIndex("int_idx", {int:1})
+Takes 429.139837s.
+>
+
+3、两个集合空间各有一个集合，都是5000w数据，14GB，在其中一个上循环执行查询（全表扫描，没有排序）
+> for (var i = 0; i < 100000; i++) {
+... var obj = foo2.bar.find().skip(49999999).toArray();
+... }
+两线程
+> foo.bar.find().sort({int:1}).skip(49999999)
+{
+  "_id": {
+    "$oid": "5564564a85eeb77f94edd734"
+  },
+  "i": 49997244,
+  "int": 49994217,
+  "strobj": "abcdefghijklmnopqrstuvwxyz#49997244",
+  "obj": {
+    "y": "1234567890",
+    "x": "abcdefghijklmnopqrstuvwxyz#1234567890",
+    "z": "abcdefghijklmnopqrstuvwxyz#abcdefghijklmnopqrstuvwxyz"
+  }
+}
+Return 1 row(s).
+Takes 1215.204346s.
+> 
+> foo.bar.createIndex("i_idx", {i:1})
+Takes 763.49088s.
+>
+> foo.bar.createIndex("int_idx", {int:1})
+Takes 1270.645123s.
+> 
+
+
