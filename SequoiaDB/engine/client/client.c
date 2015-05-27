@@ -542,13 +542,16 @@ static INT32 _extractEval ( MsgHeader *msg, INT32 size,
                             BOOLEAN endianConvert )
 {
    INT32 rc          = SDB_OK ;
+   INT32 tmpRc       = SDB_OK ;
    INT32 replyFlag   = -1 ;
    INT32 numReturned = -1 ;
    INT32 startFrom   = -1 ;
    CHAR *pBuffer   = (CHAR*)msg ;
    MsgOpReply *replyHeader = NULL ;
    bson_iterator rType ;
+   bson localObj ;
    bson runInfo ;
+   bson_init( &localObj ) ;
    bson_init( &runInfo ) ;
 
    replyHeader = (MsgOpReply *)(pBuffer) ;
@@ -566,7 +569,19 @@ static INT32 _extractEval ( MsgHeader *msg, INT32 size,
       rc = replyFlag ;
       if ( errmsg && sizeof(MsgOpReply) != replyHeader->header.messageLength )
       {
-         bson_init_finished_data( errmsg, pBuffer + sizeof(MsgOpReply) ) ;
+         tmpRc = bson_init_finished_data( &localObj, pBuffer + sizeof(MsgOpReply) ) ;
+         if ( SDB_OK != tmpRc )
+         {
+            rc = SDB_CORRUPTED_RECORD ;
+            goto error ;
+         }
+         // copy to output result
+         tmpRc = bson_copy ( errmsg, &localObj ) ;
+         if ( SDB_OK != tmpRc )
+         {
+            rc = SDB_SYS ;
+            goto error ;
+         }
       }
       goto error ;
    }
@@ -590,6 +605,7 @@ static INT32 _extractEval ( MsgHeader *msg, INT32 size,
    }
 
 done :
+   bson_destroy( &localObj ) ;
    bson_destroy( &runInfo ) ;
    return rc ;
 error :
