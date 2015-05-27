@@ -1441,12 +1441,11 @@ namespace engine
 
    //message function
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSMGR__ONCATREGRES, "_clsMgr::_onCatRegisterRes" )
-   INT32 _clsMgr::_onCatRegisterRes ( NET_HANDLE handle, MsgHeader* msg )
+   INT32 _clsMgr::_onCatRegisterRes ( NET_HANDLE handle, MsgHeader*msg )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__CLSMGR__ONCATREGRES );
       NodeID nodeID ;
-      _MsgCatRegisterRsp * res = (_MsgCatRegisterRsp*)msg ;
 
       // have register succeed
       if ( _regTimerID == CLS_INVALID_TIMERID )
@@ -1454,22 +1453,21 @@ namespace engine
          goto done ;
       }
 
-      rc = res->header.res ;
-      if ( SDB_CLS_NOT_PRIMARY == res->header.res )
+      rc = MSG_GET_INNER_REPLY_RC( msg ) ;
+      if ( SDB_CLS_NOT_PRIMARY == rc )
       {
          updateCatGroup ( TRUE ) ;
          goto error ;
       }
-      else if ( res->header.res != SDB_OK )
+      else if ( rc != SDB_OK )
       {
-         PD_LOG ( PDSEVERE, "Node register failed[Respone:%d]",
-                  res->header.res ) ;
+         PD_LOG ( PDSEVERE, "Node register failed[Respone:%d]", rc ) ;
          goto error ;
       }
 
       {
          //get nodeid
-         BSONObj object ( (const char*)(res->data) );
+         BSONObj object ( MSG_GET_INNER_REPLY_DATA(msg) ) ;
          BSONElement gidEl = object.getField ( CAT_GROUPID_NAME ) ;
          BSONElement nidEl = object.getField ( CAT_NODEID_NAME ) ;
 
@@ -1544,7 +1542,7 @@ namespace engine
       return rc ;
    error:
       //Need to shutdown
-      if ( res->header.res == SDB_CAT_AUTH_FAILED )
+      if ( rc == SDB_CAT_AUTH_FAILED )
       {
          PD_LOG ( PDSEVERE, "Catlog auth the db node failed, shutdown..." ) ;
          PMD_SHUTDOWN_DB( SDB_CAT_AUTH_FAILED ) ;

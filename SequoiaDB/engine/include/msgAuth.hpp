@@ -41,50 +41,50 @@ using namespace bson ;
 
 namespace engine
 {
-   struct _MsgAuthReply
+   /* struct _MsgAuthReplyV0
    {
       MsgInternalReplyHeader header ;
-      _MsgAuthReply()
+      _MsgAuthReplyV0()
       {
          header.res = 0 ;
-         header.header.messageLength = sizeof( _MsgAuthReply ) ;
+         header.header.messageLength = sizeof( _MsgAuthReplyV0 ) ;
          header.header.opCode = MSG_AUTH_VERIFY_RES ;
          header.header.routeID.value = MSG_INVALID_ROUTEID ;
          header.header.TID = 0 ;
          header.header.requestID = 0 ;
       }
-   } ;
-   typedef struct _MsgAuthReply MsgAuthReply ;
+   } ; */
+   typedef MsgOpReply   MsgAuthReply ;
 
-   struct _MsgAuthCrtReply
+   /* struct _MsgAuthCrtReplyV0
    {
       MsgInternalReplyHeader header ;
-      _MsgAuthCrtReply()
+      _MsgAuthCrtReplyV0()
       {
          header.res = 0 ;
-         header.header.messageLength = sizeof(_MsgAuthCrtReply ) ;
+         header.header.messageLength = sizeof(_MsgAuthCrtReplyV0 ) ;
          header.header.opCode = MSG_AUTH_CRTUSR_RES ;
          header.header.routeID.value = MSG_INVALID_ROUTEID ;
          header.header.TID = 0 ;
          header.header.requestID = 0 ;
       }
-   } ;
-   typedef struct _MsgAuthCrtReply MsgAuthCrtReply ;
+   } ; */
+   typedef MsgOpReply   MsgAuthCrtReply ;
 
-   struct _MsgAuthDelReply
+   /* struct _MsgAuthDelReplyV0
    {
       MsgInternalReplyHeader header ;
-      _MsgAuthDelReply()
+      _MsgAuthDelReplyV0()
       {
          header.res = 0 ;
-         header.header.messageLength = sizeof(_MsgAuthCrtReply ) ;
+         header.header.messageLength = sizeof(_MsgAuthDelReplyV0 ) ;
          header.header.opCode = MSG_AUTH_DELUSR_RES ;
          header.header.routeID.value = MSG_INVALID_ROUTEID ;
          header.header.TID = 0 ;
          header.header.requestID = 0 ;
       }
-   } ;
-   typedef struct _MsgAuthDelReply MsgAuthDelReply ;
+   } ; */
+   typedef MsgOpReply   MsgAuthDelReply ;
 
    INT32 extractAuthMsg( MsgHeader *header, BSONObj &obj ) ;
 

@@ -1353,15 +1353,17 @@ namespace engine
 
          // process reply
          BOOLEAN getExpected = FALSE ;
+         UINT32 primaryID = 0 ;
          while ( !replyQue.empty() )
          {
-            MsgCatGroupRes *pReply = NULL;
-            pReply = (MsgCatGroupRes *)(replyQue.front());
+            MsgHeader *pReply = NULL;
+            pReply = (MsgHeader *)(replyQue.front());
             replyQue.pop() ;
 
             if ( FALSE == getExpected )
             {
-               nodeID.value = pReply->header.header.routeID.value ;
+               nodeID.value = pReply->routeID.value ;
+               primaryID = MSG_GET_INNER_REPLY_STARTFROM( pReply ) ;
                rc = rtnCoordProcessGetGroupReply( pReply, groupInfo ) ;
                if ( SDB_OK == rc )
                {
@@ -1383,7 +1385,8 @@ namespace engine
          if ( rc != SDB_OK )
          {
             if ( rtnCoordGroupReplyCheck( cb, rc, !isNeedRefresh, nodeID,
-                                          cataGroupInfo, NULL ) )
+                                          cataGroupInfo, NULL, TRUE,
+                                          primaryID ) )
             {
                isNeedRefresh = TRUE ;
                continue;
@@ -1481,7 +1484,7 @@ namespace engine
       pmdKRCB *pKrcb                   = pmdGetKRCB();
       CoordCB *pCoordcb                = pKrcb->getCoordCB();
       netMultiRouteAgent *pRouteAgent  = pCoordcb->getRouteAgent();
-      MsgCatCatGroupRes *pReply        = NULL;
+      MsgHeader *pReply                = NULL;
       ossQueue<pmdEDUEvent> tmpQue ;
       UINT32 sendPos                   = 0 ;
 
@@ -1574,7 +1577,7 @@ namespace engine
             }
             // recv the reply msg
             cb->getCoordSession()->delRequest( reqID ) ;
-            pReply = (MsgCatCatGroupRes *)pMsg ;
+            pReply = (MsgHeader *)pMsg ;
             break ;
          }
 
@@ -1691,15 +1694,17 @@ namespace engine
          }
 
          BOOLEAN getExpected = FALSE ;
+         UINT32 primaryID = 0 ;
          while ( !replyQue.empty() )
          {
-            MsgCatCatGroupRes *pReply = NULL;
-            pReply = (MsgCatGroupRes *)(replyQue.front());
+            MsgHeader *pReply = NULL;
+            pReply = (MsgHeader *)(replyQue.front());
             replyQue.pop();
 
             if ( FALSE == getExpected )
             {
-               nodeID.value = pReply->header.header.routeID.value ;
+               nodeID.value = pReply->routeID.value ;
+               primaryID = MSG_GET_INNER_REPLY_STARTFROM(pReply) ;
                rc = rtnCoordProcessGetGroupReply( pReply, groupInfo ) ;
                if ( SDB_OK == rc )
                {
@@ -1721,7 +1726,8 @@ namespace engine
          if ( rc != SDB_OK )
          {
             if ( rtnCoordGroupReplyCheck( cb, rc, !hasRetry, nodeID,
-                                          cataGroupInfo, NULL ) )
+                                          cataGroupInfo, NULL,
+                                          TRUE, primaryID ) )
             {
                hasRetry = TRUE ;
                continue;
@@ -2347,23 +2353,22 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOPROCESSGETGROUPREPLY, "rtnCoordProcessGetGroupReply" )
-   INT32 rtnCoordProcessGetGroupReply ( MsgCatGroupRes *pReply,
+   INT32 rtnCoordProcessGetGroupReply ( MsgHeader *pReply,
                                         CoordGroupInfoPtr &groupInfo )
    {
       INT32 rc = SDB_OK;
       PD_TRACE_ENTRY ( SDB_RTNCOPROCESSGETGROUPREPLY ) ;
+      UINT32 headerLen = MSG_GET_INNER_REPLY_HEADER_LEN(pReply) ;
+
       do
       {
-         if ( SDB_OK == pReply->header.res &&
-              pReply->header.header.messageLength >=
-              (INT32)sizeof(MsgCatGroupRes) + 5 )
+         if ( SDB_OK == MSG_GET_INNER_REPLY_RC(pReply) &&
+              pReply->messageLength >= headerLen + 5 )
          {
             try
             {
-               BSONObj boGroupInfo( (CHAR *)pReply
-                                    + sizeof(MsgCatGroupRes) );
-               BSONElement beGroupID
-                              = boGroupInfo.getField( CAT_GROUPID_NAME );
+               BSONObj boGroupInfo( MSG_GET_INNER_REPLY_DATA(pReply) );
+               BSONElement beGroupID = boGroupInfo.getField( CAT_GROUPID_NAME );
                if ( beGroupID.eoo() || !beGroupID.isNumber() )
                {
                   rc = SDB_INVALIDARG;
@@ -2401,7 +2406,7 @@ namespace engine
          }
          else
          {
-            rc = pReply->header.res ;
+            rc = MSG_GET_INNER_REPLY_RC(pReply) ;
          }
       }while ( FALSE );
       PD_TRACE_EXITRC ( SDB_RTNCOPROCESSGETGROUPREPLY, rc ) ;

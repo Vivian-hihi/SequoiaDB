@@ -96,6 +96,21 @@ string routeID2String( UINT64 nodeID )
    return routeID2String( *(MsgRouteID*)&nodeID ) ;
 }
 
+BOOLEAN msgIsInnerOpReply( MsgHeader *pMsg )
+{
+   if ( pMsg->messageLength < sizeof( MsgOpReply ) )
+   {
+      return FALSE ;
+   }
+   MsgOpReply *pReply = ( MsgOpReply* )pMsg ;
+   /// context id must be -1
+   if ( -1 != pReply->contextID  )
+   {
+      return FALSE ;
+   }
+   return TRUE ;
+}
+
 // PD_TRACE_DECLARE_FUNCTION ( SDB_MSGBLDUPMSG, "msgBuildUpdateMsg" )
 INT32 msgBuildUpdateMsg ( CHAR **ppBuffer, INT32 *bufferSize,
                           const CHAR *CollectionName, SINT32 flag, UINT64 reqID,

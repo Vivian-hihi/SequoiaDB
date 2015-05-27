@@ -992,13 +992,13 @@ namespace engine
                                        UINT32 groupID )
    {
       INT32 rc = SDB_OK ;
-      MsgCatGroupRes *res = ( MsgCatGroupRes* )pRes ;
 
-      if ( SDB_OK != res->header.res )
+      if ( SDB_OK != MSG_GET_INNER_REPLY_RC(pRes) )
       {
+         INT32 flags = MSG_GET_INNER_REPLY_RC(pRes) ;
          // let's check if response shows unable to find group
-         if ( SDB_CLS_GRP_NOT_EXIST == res->header.res ||
-              SDB_DMS_EOC == res->header.res )
+         if ( SDB_CLS_GRP_NOT_EXIST == flags ||
+              SDB_DMS_EOC == flags )
          {
             // in that case, let's clear local group cache information
             _pNodeMgrAgent->lock_w() ;
@@ -1007,7 +1007,7 @@ namespace engine
          }
          else
          {
-            rc = res->header.res ;
+            rc = MSG_GET_INNER_REPLY_RC(pRes) ;
             PD_LOG( PDWARNING, "Update group[%d] failed[rc:%d]",
                     groupID, rc ) ;
             goto error ;
@@ -1017,8 +1017,9 @@ namespace engine
       {
          _pNodeMgrAgent->lock_w() ;
 
-         const CHAR* objdata = (const CHAR*)res + sizeof( MsgCatGroupRes ) ;
-         UINT32 length = pRes->messageLength - sizeof( MsgCatGroupRes ) ;
+         const CHAR* objdata = MSG_GET_INNER_REPLY_DATA(pRes) ;
+         UINT32 length = pRes->messageLength -
+                         MSG_GET_INNER_REPLY_HEADER_LEN(pRes) ;
          UINT32 tmpGroupID = 0 ;
 
          rc = _pNodeMgrAgent->updateGroupInfo( objdata, length, &tmpGroupID ) ;

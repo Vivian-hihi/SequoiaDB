@@ -96,16 +96,16 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSCATCLR_REMOVE, "_clsCatalogCaller::remove" )
-   void _clsCatalogCaller::remove( _MsgInternalReplyHeader *header )
+   void _clsCatalogCaller::remove( const MsgHeader *header, INT32 result )
    {
       SDB_ASSERT( NULL != header, "header should not be NULL" ) ;
       PD_TRACE_ENTRY ( SDB__CLSCATCLR_REMOVE );
-      callerMeta::iterator itr = _meta.find( header->header.opCode ) ;
-      if ( _meta.end() != itr && SDB_OK == header->res )
+      callerMeta::iterator itr = _meta.find( header->opCode ) ;
+      if ( _meta.end() != itr && SDB_OK == result )
       {
          PD_LOG( PDEVENT, "response is ok, remove msg[(%d)%d]",
-                 IS_REPLY_TYPE( header->header.opCode ),
-                 GET_REQUEST_TYPE( header->header.opCode ) ) ;
+                 IS_REPLY_TYPE( header->opCode ),
+                 GET_REQUEST_TYPE( header->opCode ) ) ;
          itr->second.timeout = CLS_CALLER_NO_SEND ;
       }
 

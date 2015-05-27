@@ -43,6 +43,7 @@
 #include "clsMgr.hpp"
 #include "clsFSSrcSession.hpp"
 #include "pmdStartup.hpp"
+#include "msgMessage.hpp"
 #include "pdTrace.hpp"
 #include "clsTrace.hpp"
 
@@ -536,12 +537,12 @@ namespace engine
    INT32 _clsReplicateSet::handleMsg( NET_HANDLE handle, MsgHeader* msg )
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB__CLSREPSET_HNDMSG );
+      PD_TRACE_ENTRY ( SDB__CLSREPSET_HNDMSG ) ;
       switch ( msg->opCode )
       {
          case MSG_CAT_GRP_RES:
          {
-            rc = _handleGroupRes( (const _MsgCatGroupRes *)msg ) ;
+            rc = _handleGroupRes( (const MsgCatGroupRes *)msg ) ;
             break ;
          }
          case MSG_CLS_BEAT :
@@ -552,14 +553,14 @@ namespace engine
          }
          case MSG_CAT_PAIMARY_CHANGE_RES:
          {
-            MsgInternalReplyHeader *changeRes = (MsgInternalReplyHeader *)msg ;
-            if ( SDB_CLS_NOT_PRIMARY == changeRes->res )
+            INT32 result = MSG_GET_INNER_REPLY_RC( msg ) ;
+            if ( SDB_CLS_NOT_PRIMARY == result )
             {
                _clsCB->updateCatGroup ( TRUE ) ;
             }
-            else if ( SDB_OK == changeRes->res )
+            else if ( SDB_OK == result )
             {
-               _cata.remove( ( _MsgInternalReplyHeader *)msg ) ;
+               _cata.remove( msg, result ) ;
             }
             break ;
          }
@@ -603,20 +604,21 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSREPSET__HNDGPRES, "_clsReplicateSet::_handleGroupRes" )
-   INT32 _clsReplicateSet::_handleGroupRes( const _MsgCatGroupRes *msg )
+   INT32 _clsReplicateSet::_handleGroupRes( const MsgCatGroupRes *msg )
    {
       INT32 rc = SDB_OK ;
+      MsgHeader *pHeader = ( MsgHeader* )msg ;
       PD_TRACE_ENTRY ( SDB__CLSREPSET__HNDGPRES );
 
-      if ( SDB_OK != msg->header.res )
+      if ( SDB_OK != MSG_GET_INNER_REPLY_RC(pHeader) )
       {
-         if ( SDB_CLS_NOT_PRIMARY == msg->header.res )
+         if ( SDB_CLS_NOT_PRIMARY == MSG_GET_INNER_REPLY_RC(pHeader) )
          {
             _clsCB->updateCatGroup ( TRUE ) ;
          }
 
          PD_LOG( PDWARNING, "download group info request was refused, rc: %d",
-                 msg->header.res ) ;
+                 MSG_GET_INNER_REPLY_RC(pHeader) ) ;
          goto error ;
       }
       {
@@ -626,7 +628,7 @@ namespace engine
       rc = msgParseCatGroupRes( msg, version, groupName, group ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDWARNING, "parse _MsgCatGroupRes err, rc = %d", rc ) ;
+         PD_LOG( PDWARNING, "parse MsgCatGroupRes err, rc = %d", rc ) ;
          goto error ;
       }
 
@@ -637,7 +639,7 @@ namespace engine
          goto error ;
       }
 
-      _cata.remove( (MsgInternalReplyHeader *)msg ) ;
+      _cata.remove( &(msg->header), MSG_GET_INNER_REPLY_RC(pHeader) ) ;
 
       pmdGetKRCB()->setGroupName ( groupName.c_str() ) ;
       if ( !_active )

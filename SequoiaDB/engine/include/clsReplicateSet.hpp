@@ -280,7 +280,7 @@ namespace engine
 
          INT32 _handleSharingBeatRes( const _MsgClsBeatRes *msg ) ;
 
-         INT32 _handleGroupRes( const _MsgCatGroupRes *msg ) ;
+         INT32 _handleGroupRes( const MsgCatGroupRes *msg ) ;
 
          void _sharingBeat() ;
 

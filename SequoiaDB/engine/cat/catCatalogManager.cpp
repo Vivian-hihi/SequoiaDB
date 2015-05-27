@@ -2068,17 +2068,6 @@ namespace engine
       rspMsg->TID = reqMsg->TID ;
    }
 
-   INT32 catCatalogueManager::_sendFailedRsp( NET_HANDLE handle,
-                                              INT32 res,
-                                              MsgHeader * reqMsg )
-   {
-      MsgInternalReplyHeader reply ;
-      reply.res = res ;
-      reply.header.messageLength = sizeof( MsgInternalReplyHeader ) ;
-      _fillRspHeader( &(reply.header), reqMsg ) ;
-      return _pCatCB->netWork()->syncSend( handle, (void*)&reply ) ;
-   }
-
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR__BUILDHASHBOUND, "catCatalogueManager::_buildHashBound" )
    INT32 catCatalogueManager::_buildHashBound( BSONObj& lowBound,
                                                BSONObj& upBound,

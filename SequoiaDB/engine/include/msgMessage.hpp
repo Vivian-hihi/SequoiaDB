@@ -52,6 +52,24 @@ INT32 extractRC ( BSONObj &obj ) ;
 string routeID2String( MsgRouteID routeID ) ;
 string routeID2String( UINT64 nodeID ) ;
 
+BOOLEAN msgIsInnerOpReply( MsgHeader *pMsg ) ;
+
+#define MSG_GET_INNER_REPLY_RC(msg) \
+   ( msgIsInnerOpReply(msg) ? ((MsgOpReply*)(msg))->flags : \
+                              ((MsgInternalReplyHeader*)(msg))->res )
+
+#define MSG_GET_INNER_REPLY_DATA(msg) \
+   ( msgIsInnerOpReply(msg) ? (const CHAR*)(msg) + sizeof(MsgOpReply) :\
+                              (const CHAR*)(msg) + sizeof(MsgInternalReplyHeader) )
+
+#define MSG_GET_INNER_REPLY_STARTFROM(msg) \
+   ( msgIsInnerOpReply(msg) ? ((MsgOpReply*)(msg))->startFrom : 0 )
+
+#define MSG_GET_INNER_REPLY_HEADER_LEN(msg) \
+   ( msgIsInnerOpReply(msg) ? sizeof(MsgOpReply) : \
+                              sizeof(MsgInternalReplyHeader) )
+
+
 /*
  * Create Update Message in ppBuffer
  * in/out ppBuffer

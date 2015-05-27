@@ -1064,11 +1064,11 @@ namespace engine
       MsgCatCatGroupRes *res = (MsgCatCatGroupRes*)msg ;
 
       // sanity check, make sure the response is OKAY
-      if ( SDB_OK != res->header.res )
+      if ( SDB_OK != MSG_GET_INNER_REPLY_RC(msg) )
       {
          PD_LOG ( PDERROR, "Update catalog group info failed[rc: %d]",
-                  res->header.res ) ;
-         rc = res->header.res ;
+                  MSG_GET_INNER_REPLY_RC(msg) ) ;
+         rc = MSG_GET_INNER_REPLY_RC(msg) ;
          goto error ;
       }
 
@@ -1192,11 +1192,10 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__CLSSHDMGR__ONCATGRPRES );
-      MsgCatGroupRes *res = ( MsgCatGroupRes* )msg ;
       clsEventItem *pEventInfo = NULL ;
 
       PD_LOG ( PDDEBUG, "Recieve catalog group res[requestID:%lld,flag:%d]",
-               msg->requestID, res->header.res ) ;
+               msg->requestID, MSG_GET_INNER_REPLY_RC(msg) ) ;
 
       ossScopedLock lock ( &_catLatch ) ;
 
@@ -1206,19 +1205,19 @@ namespace engine
       // group id
       pEventInfo = _findNMSyncEvent( msg->requestID ) ;
 
-      if ( SDB_OK != res->header.res )
+      if ( SDB_OK != MSG_GET_INNER_REPLY_RC(msg) )
       {
          // for error handling
          // 1) group not exist -> we have to clear local cache
          // 2) not primary -> ignore or resend request
          // 3) others report error
-         rc = res->header.res ;
+         rc = MSG_GET_INNER_REPLY_RC(msg) ;
          // if we are able to find the event
          if ( pEventInfo )
          {
             // let's check if response shows unable to find group
-            if ( SDB_CLS_GRP_NOT_EXIST == res->header.res ||
-                 SDB_DMS_EOC == res->header.res )
+            if ( SDB_CLS_GRP_NOT_EXIST == rc ||
+                 SDB_DMS_EOC == rc )
             {
                // in that case, let's clear local group cache information
                _pNodeMgrAgent->lock_w() ;
@@ -1226,7 +1225,7 @@ namespace engine
                _pNodeMgrAgent->release_w() ;
                pEventInfo->event.signalAll( SDB_CLS_GRP_NOT_EXIST ) ;
             }
-            else if ( SDB_CLS_NOT_PRIMARY == res->header.res )
+            else if ( SDB_CLS_NOT_PRIMARY == rc )
             {
                // if response shows it's not primary, we keep decrease sendnum
                // once it hits 0 we have to resend the request
@@ -1261,8 +1260,8 @@ namespace engine
             {
                // error handling
                PD_LOG ( PDERROR, "Update group[%d] failed[rc:%d]",
-                        pEventInfo->groupID, res->header.res ) ;
-               pEventInfo->event.signalAll( res->header.res ) ;
+                        pEventInfo->groupID, rc ) ;
+               pEventInfo->event.signalAll( rc ) ;
             }
          }
       }
@@ -1270,8 +1269,9 @@ namespace engine
       {
          // if successful returned
          _pNodeMgrAgent->lock_w() ;
-         const CHAR* objdata = (const CHAR*)res + sizeof( MsgCatGroupRes ) ;
-         UINT32 length = msg->messageLength - sizeof( MsgCatGroupRes ) ;
+         const CHAR* objdata = MSG_GET_INNER_REPLY_DATA(msg) ;
+         UINT32 length = msg->messageLength -
+                         MSG_GET_INNER_REPLY_HEADER_LEN(msg) ;
          UINT32 groupID = 0 ;
 
          rc = _pNodeMgrAgent->updateGroupInfo( objdata, length, &groupID ) ;

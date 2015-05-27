@@ -35,6 +35,7 @@
 *******************************************************************************/
 
 #include "msgCatalog.hpp"
+#include "msgMessage.hpp"
 #include "pd.hpp"
 #include "../bson/bsonobj.h"
 #include "pmd.hpp"
@@ -45,8 +46,8 @@
 using namespace bson ;
 namespace engine
 {
-   PD_TRACE_DECLARE_FUNCTION ( SDB_MSGPASCATGRPRES, "msgParseCatGroupRes" )
-   INT32 msgParseCatGroupRes( const _MsgCatGroupRes *msg,
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_MSGPASCATGRPRES, "msgParseCatGroupRes" )
+   INT32 msgParseCatGroupRes( const MsgCatGroupRes *msg,
                               CLS_GROUP_VERSION &version,
                               string &groupName,
                               map<UINT64, _netRouteNode> &group,
@@ -54,25 +55,26 @@ namespace engine
    {
       SDB_ASSERT( NULL != msg, "data should not be NULL" ) ;
       INT32 rc = SDB_OK ;
+      MsgHeader *pHeader = (MsgHeader*)msg ;
       PD_TRACE_ENTRY ( SDB_MSGPASCATGRPRES );
 
-      if ( SDB_OK != msg->header.res )
+      if ( SDB_OK != MSG_GET_INNER_REPLY_RC( pHeader ) )
       {
-         rc = msg->header.res ;
+         rc = MSG_GET_INNER_REPLY_RC( pHeader ) ;
          goto done ;
       }
       {
          UINT32 groupID = 0 ;
-         rc = msgParseCatGroupObj( (const CHAR*)msg + sizeof( _MsgCatGroupRes ),
-                                     version, groupID, groupName,
-                                     group, pPrimary ) ;
+         rc = msgParseCatGroupObj( MSG_GET_INNER_REPLY_DATA( pHeader ),
+                                   version, groupID, groupName,
+                                   group, pPrimary ) ;
       }                               
    done :
       PD_TRACE_EXITRC ( SDB_MSGPASCATGRPRES, rc );
       return rc ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_MSGPASCATGRPOBJ, "msgParseCatGroupObj" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_MSGPASCATGRPOBJ, "msgParseCatGroupObj" )
    INT32 msgParseCatGroupObj( const CHAR* objdata,
                               CLS_GROUP_VERSION &version,
                               UINT32 &groupID,
@@ -296,7 +298,7 @@ namespace engine
       return strName ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_GETSHDSVCNAME, "getShardServiceName" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_GETSHDSVCNAME, "getShardServiceName" )
    const CHAR * getShardServiceName ( BSONElement &beService )
    {
       PD_TRACE_ENTRY ( SDB_GETSHDSVCNAME );

@@ -57,6 +57,7 @@ using namespace std ;
 
 namespace engine
 {
+
    /************************************************
    * node register request message
    * data is a BsonObject:
@@ -82,7 +83,7 @@ namespace engine
       _MsgCatRegisterMessage ( _MsgCatRegisterMessage const & ) ;
       _MsgCatRegisterMessage& operator=(_MsgCatRegisterMessage const & ) ;
    } ;
-   typedef class _MsgCatRegisterMessage MsgCatRegisterReq;
+   typedef _MsgCatRegisterMessage      MsgCatRegisterReq;
 
    /************************************************
    * response message of node register
@@ -92,12 +93,12 @@ namespace engine
    *               {"Type":1,"Name":"repl"},
    *               {"Type":2, "Name":"shard"}]}
    ************************************************/
-   class _MsgCatRegisterRsp : public SDBObject
+   /*class _MsgCatRegisterRspV0 : public SDBObject
    {
    public :
       _MsgInternalReplyHeader    header;
       BYTE                       data[0];
-      _MsgCatRegisterRsp()
+      _MsgCatRegisterRspV0()
       {
          header.header.messageLength = 0 ;
          header.header.TID = 0 ;
@@ -106,10 +107,10 @@ namespace engine
          header.header.routeID.value = 0 ;
       }
    private :
-      _MsgCatRegisterRsp ( _MsgCatRegisterRsp const & ) ;
-      _MsgCatRegisterRsp& operator=( _MsgCatRegisterRsp const & ) ;
-   } ;
-   typedef class _MsgCatRegisterRsp MsgCatRegisterRsp;
+      _MsgCatRegisterRspV0 ( _MsgCatRegisterRspV0 const & ) ;
+      _MsgCatRegisterRspV0& operator=( _MsgCatRegisterRspV0 const & ) ;
+   } ; */
+   typedef MsgOpReply                  MsgCatRegisterRsp ;
 
    /// download group info
    /// may be :| -- _MsgCatGroupReq -- | -- char *name -- |
@@ -132,19 +133,18 @@ namespace engine
       _MsgCatGroupReq ( _MsgCatGroupReq const & ) ;
       _MsgCatGroupReq& operator=( _MsgCatGroupReq const & ) ;
    } ;
-
-   typedef class _MsgCatGroupReq MsgCatGroupReq ;
+   typedef _MsgCatGroupReq       MsgCatGroupReq ;
 
    /// {"GroupID":2000, "Role":0,"Version":0, "PrimaryNode":1
    ///  "Group":[{"NodeID":"001", "Host":"vmsrv1","Service":
    ///                                            [{"Type":0, "Name":"repl1"},
    ///                                             {"Type":1, "Name":"Shard1"},
    ///                                             {"Type":2, "Name":"cat1"}]}]}
-   class _MsgCatGroupRes : public SDBObject
+   /* class _MsgCatGroupResV0 : public SDBObject
    {
    public :
       MsgInternalReplyHeader header ;
-      _MsgCatGroupRes()
+      _MsgCatGroupResV0()
       {
          header.header.opCode = MSG_CAT_GRP_RES ;
          header.header.TID = 0 ;
@@ -152,13 +152,12 @@ namespace engine
          header.header.routeID.value = 0 ;
       }
    private :
-      _MsgCatGroupRes ( _MsgCatGroupRes const & ) ;
-      _MsgCatGroupRes& operator=( _MsgCatGroupRes const & ) ;
-   } ;
+      _MsgCatGroupResV0 ( _MsgCatGroupResV0 const & ) ;
+      _MsgCatGroupResV0& operator=( _MsgCatGroupResV0 const & ) ;
+   } ; */
+   typedef MsgOpReply            MsgCatGroupRes ;
 
-   typedef class _MsgCatGroupRes MsgCatGroupRes ;
-
-   INT32 msgParseCatGroupRes( const _MsgCatGroupRes *msg,
+   INT32 msgParseCatGroupRes( const MsgCatGroupRes *msg,
                               CLS_GROUP_VERSION &version,
                               string &groupName,
                               map<UINT64, _netRouteNode> &group,
@@ -173,11 +172,12 @@ namespace engine
 
    const CHAR* getShardServiceName ( bson::BSONElement &beService ) ;
    
-   std::string getServiceName ( bson::BSONElement &beService, INT32 serviceType ) ;
+   std::string getServiceName ( bson::BSONElement &beService,
+                                INT32 serviceType ) ;
 
    //down catalog group info
-   typedef _MsgCatGroupReq       MsgCatCatGroupReq ;
-   typedef _MsgCatGroupRes       MsgCatCatGroupRes ;
+   typedef MsgCatGroupReq        MsgCatCatGroupReq ;
+   typedef MsgOpReply            MsgCatCatGroupRes ;
 
    class _MsgCatPrimaryChange : public SDBObject
    {
@@ -201,27 +201,27 @@ namespace engine
       _MsgCatPrimaryChange ( _MsgCatPrimaryChange const & ) ;
       _MsgCatPrimaryChange& operator=( _MsgCatPrimaryChange const & ) ;
    } ;
-   typedef class _MsgCatPrimaryChange MsgCatPrimaryChange ;
+   typedef _MsgCatPrimaryChange        MsgCatPrimaryChange ;
 
-   class _MsgCatPrimaryChangeRes : public SDBObject
+   /*class _MsgCatPrimaryChangeResV0 : public SDBObject
    {
    public :
       MsgInternalReplyHeader header ;
-      _MsgCatPrimaryChangeRes()
+      _MsgCatPrimaryChangeResV0()
       {
-         header.header.messageLength = sizeof( _MsgCatPrimaryChangeRes ) ;
+         header.header.messageLength = sizeof( _MsgCatPrimaryChangeResV0 ) ;
          header.header.opCode = MSG_CAT_PAIMARY_CHANGE_RES ;
          header.header.TID = 0 ;
          header.header.requestID = 0 ;
          header.header.routeID.value = 0 ;
       }
    private :
-      _MsgCatPrimaryChangeRes ( _MsgCatPrimaryChangeRes const & ) ;
-      _MsgCatPrimaryChangeRes& operator=( _MsgCatPrimaryChangeRes const & ) ;
-   } ;
-   typedef class _MsgCatPrimaryChangeRes MsgCatPrimaryChangeRes ;
+      _MsgCatPrimaryChangeResV0 ( _MsgCatPrimaryChangeResV0 const & ) ;
+      _MsgCatPrimaryChangeResV0& operator=( _MsgCatPrimaryChangeResV0 const & ) ;
+   } ; */
+   typedef MsgOpReply                  MsgCatPrimaryChangeRes ;
 
-   typedef MsgOpQuery MsgCatQueryCatReq;
+   typedef MsgOpQuery   MsgCatQueryCatReq;
 
    // the reply take a catalogue record which is a bson-obj:
    // {  name: "SpaceName.CollectionName", Version: 1,
@@ -229,7 +229,7 @@ namespace engine
    //    CataInfo:
    //       [ { GroupID: 1000, LowBound:{"":MinKey,"":MaxKey }, UpBound:{"":Key1Value,"":Key2Value} },
    //         { GroupID: 1001, LowBound:{"":Key1Value,"":Key2Value}, UpBound:{"":MaxKey,"":MinKey } } ]
-   typedef MsgOpReply MsgCatQueryCatRsp;
+   typedef MsgOpReply   MsgCatQueryCatRsp;
 
    enum SDB_CAT_GROUP_STATUS
    {

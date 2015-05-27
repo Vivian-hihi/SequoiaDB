@@ -41,6 +41,7 @@
    #include "coordCB.hpp"
    #include "rtnCoord.hpp"
    #include "rtnCoordOperator.hpp"
+   #include "msgMessage.hpp"
 #endif // SDB_ENGINE
 
 #include "../bson/bson.h"
@@ -202,7 +203,7 @@ namespace engine
                PD_LOG( PDERROR, "syncsend return ok but res is NULL" ) ;
                goto error ;
             }
-            rc = (( MsgInternalReplyHeader *)pAuthRes)->res ;
+            rc = MSG_GET_INNER_REPLY_RC(pAuthRes) ;
             SDB_OSS_FREE( (BYTE*)pAuthRes ) ;
             pAuthRes = NULL ;
 

@@ -1131,6 +1131,17 @@ namespace engine
       MsgAuthCrtReply reply ;
       BOOLEAN bIsDelay = FALSE ;
 
+      /// fill reply header
+      reply.header.messageLength = sizeof( MsgAuthCrtReply ) ;
+      reply.header.opCode = MAKE_REPLY_TYPE( pMsg->opCode ) ;
+      reply.header.requestID = pMsg->requestID ;
+      reply.header.routeID.value = 0 ;
+      reply.header.TID = pMsg->TID ;
+      reply.contextID = -1 ;
+      reply.flags = SDB_OK ;
+      reply.numReturned = 0 ;
+      reply.startFrom = 0 ;
+
       rc = _pCatCB->primaryCheck( _pEDUCB, TRUE, bIsDelay ) ;
       if ( bIsDelay )
       {
@@ -1163,16 +1174,17 @@ namespace engine
    done:
       if ( !isDelayed() )
       {
-         reply.header.res = rc ;
-         PD_TRACE1 ( SDB_CATMAINCT_AUTHCRT,
-                     PD_PACK_INT ( rc ) ) ;
-         reply.header.header.TID = msg->header.TID ;
-         reply.header.header.requestID = msg->header.requestID ;
+         PD_TRACE1 ( SDB_CATMAINCT_AUTHCRT, PD_PACK_INT ( rc ) ) ;
          _pCatCB->netWork()->syncSend( handle, &reply ) ;
       }
       PD_TRACE_EXITRC ( SDB_CATMAINCT_AUTHCRT, rc ) ;
       return rc ;
    error:
+      reply.flags = rc ;
+      if ( SDB_CLS_NOT_PRIMARY == rc )
+      {
+         reply.startFrom = _pCatCB->getPrimaryNode() ;
+      }
       goto done ;
    }
 
@@ -1186,6 +1198,17 @@ namespace engine
       BSONObj obj ;
       MsgAuthReply reply ;
       BOOLEAN bIsDelay = FALSE ;
+
+      /// fill reply header
+      reply.header.messageLength = sizeof( MsgAuthReply ) ;
+      reply.header.opCode = MAKE_REPLY_TYPE( pMsg->opCode ) ;
+      reply.header.requestID = pMsg->requestID ;
+      reply.header.routeID.value = 0 ;
+      reply.header.TID = pMsg->TID ;
+      reply.contextID = -1 ;
+      reply.flags = SDB_OK ;
+      reply.numReturned = 0 ;
+      reply.startFrom = 0 ;
 
       if ( !_pAuthCB->needAuthenticate() )
       {
@@ -1214,19 +1237,21 @@ namespace engine
       {
          goto error ;
       }
+
    done:
       if ( !isDelayed() )
       {
-         reply.header.res = rc ;
-         PD_TRACE1 ( SDB_CATMAINCT_AUTHENTICATE,
-                     PD_PACK_INT ( rc ) ) ;
-         reply.header.header.TID = msg->header.TID ;
-         reply.header.header.requestID = msg->header.requestID ;
+         PD_TRACE1 ( SDB_CATMAINCT_AUTHENTICATE, PD_PACK_INT ( rc ) ) ;
          _pCatCB->netWork()->syncSend( handle, &reply ) ;
       }
       PD_TRACE_EXITRC ( SDB_CATMAINCT_AUTHENTICATE, rc ) ;
       return rc ;
    error:
+      reply.flags = rc ;
+      if ( SDB_CLS_NOT_PRIMARY == rc )
+      {
+         reply.startFrom = _pCatCB->getPrimaryNode() ;
+      }
       goto done ;
    }
 
@@ -1240,6 +1265,17 @@ namespace engine
       BSONObj obj ;
       MsgAuthDelReply reply ;
       BOOLEAN bIsDelay = FALSE ;
+
+      /// fill reply header
+      reply.header.messageLength = sizeof( MsgAuthDelReply ) ;
+      reply.header.opCode = MAKE_REPLY_TYPE( pMsg->opCode ) ;
+      reply.header.requestID = pMsg->requestID ;
+      reply.header.routeID.value = 0 ;
+      reply.header.TID = pMsg->TID ;
+      reply.contextID = -1 ;
+      reply.flags = SDB_OK ;
+      reply.numReturned = 0 ;
+      reply.startFrom = 0 ;
 
       // primary check
       rc = _pCatCB->primaryCheck( _pEDUCB, TRUE, bIsDelay ) ;
@@ -1274,16 +1310,17 @@ namespace engine
    done:
       if ( !isDelayed() )
       {
-         reply.header.res = rc ;
-         PD_TRACE1 ( SDB_CATMAINCT_AUTHDEL,
-                     PD_PACK_INT ( rc ) ) ;
-         reply.header.header.TID = msg->header.TID ;
-         reply.header.header.requestID = msg->header.requestID ;
+         PD_TRACE1 ( SDB_CATMAINCT_AUTHDEL, PD_PACK_INT ( rc ) ) ;
          _pCatCB->netWork()->syncSend( handle, &reply ) ;
       }
       PD_TRACE_EXITRC ( SDB_CATMAINCT_AUTHDEL, rc ) ;
       return rc ;
    error:
+      reply.flags = rc ;
+      if ( SDB_CLS_NOT_PRIMARY == rc )
+      {
+         reply.startFrom = _pCatCB->getPrimaryNode() ;
+      }
       goto done ;
    }
 

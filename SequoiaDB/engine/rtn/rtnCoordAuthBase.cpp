@@ -62,6 +62,7 @@ namespace engine
       REPLY_QUE replyQue ;
       NodeID curNodeID = pmdGetNodeID() ;
       UINT32 times = 0 ;
+      UINT32 primaryID = 0 ;
 
       contextID = -1 ;
 
@@ -109,19 +110,20 @@ namespace engine
 
       if ( !replyQue.empty() )
       {
-         MsgInternalReplyHeader *res = ( MsgInternalReplyHeader * )
-                                       ( replyQue.front() ) ;
-         if ( rtnCoordGroupReplyCheck( cb, res->res, _canRetry( times ),
-                                       res->header.routeID, cata, NULL,
-                                       TRUE, 0 ) )
+         MsgHeader *res = (MsgHeader*)( replyQue.front() ) ;
+         primaryID = MSG_GET_INNER_REPLY_STARTFROM(res) ;
+         rc = MSG_GET_INNER_REPLY_RC(res) ;
+
+         if ( rc )
          {
-            rtnClearReplyQue( &replyQue ) ;
-            ++times ;
-            goto retry ;
-         }
-         else
-         {
-            rc = res->res ;
+            if ( rtnCoordGroupReplyCheck( cb, rc, _canRetry( times ),
+                                          res->routeID, cata, NULL,
+                                          TRUE, primaryID ) )
+            {
+               rtnClearReplyQue( &replyQue ) ;
+               ++times ;
+               goto retry ;
+            }
          }
       }
       else

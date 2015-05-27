@@ -85,7 +85,7 @@ namespace engine
    public:
       INT32 call( MsgHeader *header ) ;
 
-      void remove( _MsgInternalReplyHeader *header ) ;
+      void remove( const MsgHeader *header, INT32 result ) ;
       void remove( INT32 opCode ) ;
 
       void handleTimeout( const UINT32 &millisec ) ;

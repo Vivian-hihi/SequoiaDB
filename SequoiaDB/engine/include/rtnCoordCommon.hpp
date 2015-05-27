@@ -315,7 +315,7 @@ namespace engine
    /*
       will update node stat by reply flag
    */
-   INT32 rtnCoordProcessGetGroupReply ( MsgCatGroupRes *pReply,
+   INT32 rtnCoordProcessGetGroupReply ( MsgHeader *pReply,
                                         CoordGroupInfoPtr &groupInfo ) ;
 
    INT32 rtnCoordUpdateRoute ( CoordGroupInfoPtr &groupInfo,

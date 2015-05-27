@@ -245,12 +245,15 @@ namespace engine
       PD_TRACE2 ( SDB_CATNODEMGR_PRIMARYCHANGE,
                   PD_PACK_UINT ( groupID ),
                   PD_PACK_USHORT ( nodeID ) ) ;
-      MsgCatPrimaryChangeRes msgReply;
-      msgReply.header.header.messageLength = sizeof(MsgCatPrimaryChange);
-      msgReply.header.header.opCode = MSG_CAT_PAIMARY_CHANGE_RES;
-      msgReply.header.header.requestID = pRequest->header.requestID;
-      msgReply.header.header.routeID.value= 0;
-      msgReply.header.header.TID = pRequest->header.TID;
+      MsgCatPrimaryChangeRes replyHeader;
+
+      /// fill reply header
+      _fillRspHeader( &replyHeader.header, pMsg ) ;
+      replyHeader.contextID = -1 ;
+      replyHeader.flags = SDB_OK ;
+      replyHeader.numReturned = 0 ;
+      replyHeader.startFrom = 0 ;
+      replyHeader.header.messageLength = sizeof( MsgCatPrimaryChangeRes ) ;
 
       // the msg is send by timer, don't use _pCatCB->primaryCheck()
       if ( !pmdIsPrimary() )
@@ -305,9 +308,8 @@ namespace engine
       }
 
    done:
-      msgReply.header.res = rc ;
       PD_TRACE1 ( SDB_CATNODEMGR_PRIMARYCHANGE, PD_PACK_INT ( rc ) ) ;
-      rc = _pCatCB->netWork()->syncSend( handle, &msgReply ) ;
+      rc = _pCatCB->netWork()->syncSend( handle, &replyHeader ) ;
       if ( rc )
       {
 	      PD_LOG( PDERROR, "failed to send response(primary-change)(rc=%d)",
@@ -316,6 +318,7 @@ namespace engine
       PD_TRACE_EXITRC ( SDB_CATNODEMGR_PRIMARYCHANGE, rc ) ;
       return rc ;
    error:
+      replyHeader.flags = rc ;
       goto done ;
    }
 
@@ -325,13 +328,21 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_CATNODEMGR_GRPREQ ) ;
-      MsgCatGroupRes *pMsgRsp = NULL ;
-      SINT32 msgLen = 0 ;
+      MsgOpReply replyHeader ;
+      SINT32 dataLen = 0 ;
       BSONObj boGroupInfo ;
 
       MsgCatGroupReq *pGrpReq = (MsgCatGroupReq *)pMsg ;
       UINT32 groupID = pGrpReq->id.columns.groupID ;
       const CHAR *name = NULL ;
+
+      /// fill reply header
+      _fillRspHeader( &(replyHeader.header), &(pGrpReq->header) ) ;
+      replyHeader.contextID = -1 ;
+      replyHeader.flags = SDB_OK ;
+      replyHeader.numReturned = 0 ;
+      replyHeader.startFrom = 0 ;
+      replyHeader.header.messageLength = sizeof( MsgOpReply ) ;
 
       if ( 0 == groupID )
       {
@@ -423,42 +434,37 @@ namespace engine
       }
 
       // build the response message
-      msgLen = sizeof( MsgCatGroupRes ) + boGroupInfo.objsize() ;
-      pMsgRsp = (MsgCatGroupRes *)SDB_OSS_MALLOC( msgLen ) ;
-      PD_CHECK( pMsgRsp, SDB_OOM, error, PDERROR,
-                "Failed to alloc msg group-info request(size=%d)", msgLen ) ;
-      pMsgRsp->header.res = SDB_OK ;
-      pMsgRsp->header.header.messageLength = msgLen ;
-      _fillRspHeader( &(pMsgRsp->header.header), &(pGrpReq->header) ) ;
-      ossMemcpy( (CHAR *)pMsgRsp+sizeof(MsgCatGroupRes), boGroupInfo.objdata(),
-                 boGroupInfo.objsize() );
-      PD_TRACE1 ( SDB_CATNODEMGR_GRPREQ,
-                  PD_PACK_INT ( rc ) ) ;
-      rc = _pCatCB->netWork()->syncSend( handle, pMsgRsp ) ;
-      PD_LOG( PDDEBUG, "Response the group request(succeed)" ) ;
+      dataLen = boGroupInfo.objsize() ;
 
    done:
-      PD_TRACE_EXITRC ( SDB_CATNODEMGR_GRPREQ, rc ) ;
-      if ( pMsgRsp )
+      // send reply
+      if ( !_pCatCB->isDelayed() )
       {
-         SDB_OSS_FREE( pMsgRsp ) ;
+         PD_TRACE1 ( SDB_CATNODEMGR_GRPREQ, PD_PACK_INT ( rc ) ) ;
+         if ( 0 == dataLen )
+         {
+            rc = _pCatCB->netWork()->syncSend( handle, (void*)&replyHeader ) ;
+         }
+         else
+         {
+            replyHeader.header.messageLength += dataLen ;
+            replyHeader.numReturned = 1 ;
+            rc = _pCatCB->netWork()->syncSend( handle,
+                                               &(replyHeader.header),
+                                               (void*)boGroupInfo.objdata(),
+                                               dataLen ) ;
+         }
       }
+      PD_TRACE_EXITRC ( SDB_CATNODEMGR_GRPREQ, rc ) ;
       return rc ;
    error:
-      PD_TRACE1 ( SDB_CATNODEMGR_GRPREQ, PD_PACK_INT ( rc ) ) ;
-      rc = _sendFailedRsp( handle, rc, &(pGrpReq->header) ) ;
-      PD_LOG( PDDEBUG, "Response the group request(failed)" ) ;
+      replyHeader.flags = rc ;
+      if ( SDB_CLS_NOT_PRIMARY == rc )
+      {
+         // primary node id store in startFrom
+         replyHeader.startFrom = _pCatCB->getPrimaryNode() ;
+      }
       goto done;
-   }
-
-   INT32 catNodeManager::_sendFailedRsp( NET_HANDLE handle, INT32 res,
-                                         MsgHeader *reqMsg )
-   {
-      MsgInternalReplyHeader reply ;
-      reply.res = res ;
-      reply.header.messageLength = sizeof( MsgInternalReplyHeader ) ;
-      _fillRspHeader( &(reply.header), reqMsg ) ;
-      return _pCatCB->netWork()->syncSend( handle, (void*)&reply ) ;
    }
 
    void catNodeManager::_fillRspHeader( MsgHeader * rspMsg,
@@ -477,11 +483,20 @@ namespace engine
       INT32 rc = SDB_OK ;
       INT32 nodeRole = SDB_ROLE_DATA ;
       BSONObj boReq ;
-      MsgCatRegisterRsp *pMsgRsp = NULL ;
-      SINT32 msgLen = 0;
+      MsgCatRegisterRsp replyHeader ;
+      SINT32 dataLen = 0;
       MsgCatRegisterReq *pRegReq = (MsgCatRegisterReq *)pMsg ;
       PD_TRACE_ENTRY ( SDB_CATNODEMGR_REGREQ ) ;
       BSONObj boNodeInfo;
+
+      /// fill reply header
+      _fillRspHeader( &replyHeader.header, pMsg ) ;
+      replyHeader.header.messageLength = sizeof( MsgCatRegisterRsp ) ;
+      replyHeader.flags = SDB_OK ;
+      replyHeader.contextID = -1 ;
+      replyHeader.numReturned = 0 ;
+      replyHeader.startFrom = 0 ;
+
       try
       {
          boReq = BSONObj( ( CHAR *)pRegReq + sizeof(MsgCatRegisterReq));
@@ -517,35 +532,27 @@ namespace engine
       }
 
       // build the response message
-      msgLen = sizeof( MsgCatRegisterRsp ) + boNodeInfo.objsize();
-      pMsgRsp = (MsgCatRegisterRsp *)SDB_OSS_MALLOC( msgLen );
-      PD_CHECK( pMsgRsp!=NULL, SDB_OOM, error, PDERROR,
-                "failed to build response(group-info request), malloc "
-                "failed(size=%d)", msgLen );
-      pMsgRsp->header.res = SDB_OK;
-      pMsgRsp->header.header.messageLength = msgLen;
-      pMsgRsp->header.header.opCode = MAKE_REPLY_TYPE(pRegReq->header.opCode);
-      pMsgRsp->header.header.requestID = pRegReq->header.requestID;
-      pMsgRsp->header.header.routeID.value = 0;
-      pMsgRsp->header.header.TID = pRegReq->header.TID;
-      ossMemcpy((CHAR *)pMsgRsp+sizeof(MsgCatRegisterRsp), boNodeInfo.objdata(),
-                boNodeInfo.objsize() );
-      PD_TRACE1 ( SDB_CATNODEMGR_REGREQ, PD_PACK_INT ( rc ) ) ;
-      rc = _pCatCB->netWork()->syncSend( handle, pMsgRsp );
-      SDB_OSS_FREE( pMsgRsp );
+      dataLen = boNodeInfo.objsize() ;
+
    done:
+      PD_TRACE1 ( SDB_CATNODEMGR_REGREQ, PD_PACK_INT ( rc ) ) ;
+      if ( 0 == dataLen )
+      {
+         rc = _pCatCB->netWork()->syncSend( handle, (void*)&replyHeader ) ;
+      }
+      else
+      {
+         replyHeader.header.messageLength += dataLen ;
+         replyHeader.numReturned = 1 ;
+         rc = _pCatCB->netWork()->syncSend( handle,
+                                            &(replyHeader.header),
+                                            (void*)boNodeInfo.objdata(),
+                                            dataLen ) ;
+      }
       PD_TRACE_EXITRC ( SDB_CATNODEMGR_REGREQ, rc ) ;
       return rc;
    error:
-      MsgCatRegisterRsp msgRsp;
-      msgRsp.header.res = rc;
-      msgRsp.header.header.messageLength = sizeof( MsgCatGroupRes );
-      msgRsp.header.header.opCode = MAKE_REPLY_TYPE(pRegReq->header.opCode);
-      msgRsp.header.header.requestID = pRegReq->header.requestID;
-      msgRsp.header.header.routeID.value = 0;
-      msgRsp.header.header.TID = pRegReq->header.TID;
-      PD_TRACE1 ( SDB_CATNODEMGR_REGREQ, PD_PACK_INT ( rc ) ) ;
-      rc = _pCatCB->netWork()->syncSend( handle, &msgRsp );
+      replyHeader.flags = rc ;
       goto done;
    }
 
