@@ -1931,6 +1931,7 @@ namespace engine
            MSG_CAT_SPLIT_FINISH_REQ == opCode )
       {
          fillPeerRouteID = TRUE ;
+         _pCatCB->getCatDCMgr()->setWritedCommand( FALSE ) ;
       }
 
       // extract msg
