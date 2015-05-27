@@ -67,7 +67,7 @@ namespace sdbclient
       {
 #if defined (_WINDOWS)
          srand ( (UINT32) time ( NULL ) ) ;
-#elif defined (_LINuX)
+#elif defined (_LINUX)
          _sdbRandSeed = time ( NULL ) ;
 #endif
          _sdbIsSrand = TRUE ;
