@@ -884,5 +884,21 @@
       </detail>
       <typeofweb>boolean</typeofweb>
    </opt>
+
+   <opt>
+      <name>PMD_OPTION_PLAN_BUCKETS</name>
+      <long>planbuckets</long>
+      <default>500</default>
+      <type>int</type>
+      <description>
+         <en>The buckets of access plan cache. Sdb will not cache any access plan if it is zero</en>
+         <cn>访问计划缓存内桶的个数。当其为零时Sdb将不会缓存任何访问计划</cn>
+      </description>
+      <detail>
+         <en>The buckets of access plan cache. Sdb will not cache any access plan if it is zero</en>
+         <cn>访问计划缓存内桶的个数。当其为零时Sdb将不会缓存任何访问计划</cn>
+      </detail>
+      <typeofweb>num</typeofweb>
+  </opt>
 </optlist>
 

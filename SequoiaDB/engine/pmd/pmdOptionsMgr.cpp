@@ -1256,6 +1256,7 @@ namespace engine
       _sparseFile          = FALSE ;
       _weight              = 0 ;
       _auth                = TRUE ;
+      _planBucketNum       = 500 ;
 
 #ifdef SDB_ENTERPRISE
 
@@ -1467,6 +1468,9 @@ namespace engine
       // --auth
       rdxBooleanS( pEX, PMD_OPTION_AUTH, _auth,
                    FALSE, FALSE, TRUE, FALSE ) ;
+
+      rdxUInt( pEX, PMD_OPTION_PLAN_BUCKETS, _planBucketNum,
+               FALSE, TRUE, 500, FALSE ) ;
 
       // end map
 

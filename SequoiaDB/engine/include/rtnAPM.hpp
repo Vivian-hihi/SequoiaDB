@@ -67,7 +67,7 @@ namespace engine
    #define RTNAPL_SLOCK ossScopedLock _lock ( &_mutex, SHARED ) ;
       ossSpinSLatch _mutex ;
       // hash result and plan map
-      vector<optAccessPlan *> _plans ;
+      list<optAccessPlan *> _plans ;
       _dmsStorageUnit *_su ;
       CHAR *_collectionName ;
       _rtnAccessPlanManager *_apm ;
@@ -81,7 +81,7 @@ namespace engine
       }
       ~_rtnAccessPlanList()
       {
-         vector<optAccessPlan *>::iterator it ;
+         list<optAccessPlan *>::iterator it ;
          for ( it = _plans.begin(); it != _plans.end(); ++it )
          {
             SDB_OSS_DEL (*it) ;
@@ -92,7 +92,7 @@ namespace engine
       void invalidate ( UINT32 &cleanNum ) ;
       INT32 getPlan ( const BSONObj &query, const BSONObj &orderBy,
                       const BSONObj &hint, optAccessPlan **out,
-                      BOOLEAN &incSize ) ;
+                      SINT32 &incSize ) ;
 
       void releasePlan ( optAccessPlan *plan ) ;
 
@@ -155,7 +155,7 @@ namespace engine
       void invalidate ( UINT32 &cleanNum ) ;
       INT32 getPlan ( const BSONObj &query, const BSONObj &orderBy,
                       const BSONObj &hint, optAccessPlan **out,
-                      BOOLEAN &incSize ) ;
+                      SINT32 &incSize ) ;
 
       void releasePlan ( optAccessPlan *plan ) ;
 
@@ -204,20 +204,20 @@ namespace engine
          }
       } ;
       _dmsStorageUnit *_su ;
-      map<const CHAR*, _rtnAccessPlanSet*, cmp_str> _planSets ;
+      typedef map<const CHAR*, _rtnAccessPlanSet*, cmp_str> PLAN_SETS ;
+
+#if defined (_WINDOWS)
+      typedef map<const CHAR*, rtnAccessPlanSet*, cmp_str>::iterator PLAN_SETS_ITERATOR ;
+#elif defined (_LINUX)
+      typedef map<const CHAR*, rtnAccessPlanSet*>::iterator PLAN_SETS_ITERATOR ;
+#endif
+      PLAN_SETS _planSets ;
+      UINT32 _bucketsNum ;
    public :
-      explicit _rtnAccessPlanManager( _dmsStorageUnit *su )
-      :_totalNum( 0 )
-      {
-         _su = su ;
-      }
+      explicit _rtnAccessPlanManager( _dmsStorageUnit *su ) ;
       ~_rtnAccessPlanManager()
       {
-#if defined (_WINDOWS)
-         map<const CHAR*, rtnAccessPlanSet*, cmp_str>::iterator it ;
-#elif defined (_LINUX)
-         map<const CHAR*, rtnAccessPlanSet*>::iterator it ;
-#endif
+         PLAN_SETS_ITERATOR it ;
          for ( it = _planSets.begin(); it != _planSets.end(); ++it )
          {
             SDB_OSS_DEL (*it).second ;

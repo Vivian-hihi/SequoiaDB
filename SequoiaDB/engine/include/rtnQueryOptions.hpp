@@ -104,6 +104,23 @@ namespace engine
 
       }
 
+      _rtnQueryOptions( const _rtnQueryOptions &o )
+      :_query( o._query ),
+       _selector( o._selector ),
+       _orderBy( o._orderBy ),
+       _hint( o._hint ),
+       _fullName( o._fullName ),
+       _fullNameBuf( NULL ),
+       _skip( o._skip ),
+       _limit( o._limit ),
+       _flag( o._flag ),
+       _enablePrefetch( o._enablePrefetch )
+      {
+
+      }
+
+      _rtnQueryOptions &operator=( const _rtnQueryOptions &o ) ;
+
       virtual ~_rtnQueryOptions() ;
 
       INT32 getOwned() ;
@@ -119,6 +136,7 @@ namespace engine
       SINT64 _limit ;
       INT32 _flag ;
       BOOLEAN _enablePrefetch ;
+
    } ;
    typedef class _rtnQueryOptions rtnQueryOptions ;
 }

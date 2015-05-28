@@ -80,4 +80,23 @@ namespace engine
    error:
       goto done ;
    }
+
+   _rtnQueryOptions &_rtnQueryOptions::operator=( const _rtnQueryOptions &o )
+   {
+      _query = o._query ;
+      _selector = o._selector ;
+      _orderBy = o._orderBy ;
+      _hint = o._hint ;
+      _fullName = o._fullName ;
+      if ( NULL != _fullNameBuf )
+      {
+         SDB_OSS_FREE( _fullNameBuf ) ;
+         _fullNameBuf = NULL ;
+      }
+      _skip = o._skip ;
+      _limit = o._limit ;
+      _flag = o._flag ;
+      _enablePrefetch = o._enablePrefetch ;
+      return *this ;
+   }
 }

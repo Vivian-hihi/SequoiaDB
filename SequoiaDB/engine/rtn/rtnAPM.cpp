@@ -39,14 +39,50 @@
 #include "dmsStorageUnit.hpp"
 #include "pdTrace.hpp"
 #include "rtnTrace.hpp"
+#include "pmd.hpp"
 namespace engine
 {
+   static INT32 createNewPlan( _dmsStorageUnit *su,
+                               const CHAR *name,
+                               const BSONObj &query,
+                               const BSONObj &orderBy,
+                               const BSONObj &hint,
+                               optAccessPlan **out )
+   {
+      INT32 rc = SDB_OK ;
+      *out = SDB_OSS_NEW optAccessPlan ( su, name, query,
+                                         orderBy, hint ) ;
+      if ( !(*out) )
+      {
+         PD_LOG ( PDERROR, "Not able to allocate memory for new plan" ) ;
+         rc = SDB_OOM ;
+         goto error ;
+      }
+
+      (*out)->setAPM ( NULL ) ;
+      rc = (*out)->optimize() ;
+      PD_RC_CHECK ( rc, (SDB_RTN_INVALID_PREDICATES==rc)?PDINFO:PDERROR,
+                    "Failed to optimize plan, query: %s\norder %s\nhint %s",
+                    query.toString().c_str(),
+                    orderBy.toString().c_str(),
+                    hint.toString().c_str() ) ;
+   done:
+      return rc ;
+   error:
+      if ( NULL != *out )
+      {
+         SDB_OSS_DEL (*out) ;
+         (*out) = NULL ;
+      }
+      goto done ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNACCESSPL_INVALIDATE, "_rtnAccessPlanList::invalidate" )
    void _rtnAccessPlanList::invalidate ( UINT32 &cleanNum )
    {
       PD_TRACE_ENTRY ( SDB__RTNACCESSPL_INVALIDATE );
       cleanNum = 0 ;
-      vector<optAccessPlan *>::iterator it ;
+      list<optAccessPlan *>::iterator it ;
       RTNAPL_XLOCK
       // check if the plan is in the list
       for ( it = _plans.begin(); it != _plans.end(); )
@@ -75,14 +111,15 @@ namespace engine
                                        const BSONObj &orderBy,
                                        const BSONObj &hint,
                                        optAccessPlan **out,
-                                       BOOLEAN &incSize )
+                                       SINT32 &incCount )
    {
       INT32 rc = SDB_OK ;
       BOOLEAN hasDel = FALSE ;
       PD_TRACE_ENTRY ( SDB__RTNACCESSPL_GETPLAN );
       SDB_ASSERT ( out, "out can't be NULL" ) ;
       (*out) = NULL ;
-      vector<optAccessPlan *>::iterator it ;
+      SINT32 inc = 0 ;
+      list<optAccessPlan *>::iterator it ;
       {
          RTNAPL_XLOCK
          // check if the plan is in the list
@@ -92,14 +129,13 @@ namespace engine
             {
                // we found one plan match, then let's delete the plan we just
                // created and return the existing one
-               incSize = FALSE ;
                *out = *it ;
                // if it's not the first one, let's remove it and re-add to begin
                // of the list
                if ( it != _plans.begin() )
                {
                   _plans.erase(it) ;
-                  _plans.insert ( _plans.begin(), *out ) ;
+                  _plans.push_front( *out ) ;
                }
                // increase usage count
                (*out)->incCount() ;
@@ -108,27 +144,17 @@ namespace engine
          }
       }
 
-      // first create an uninitialized plan
-      *out = SDB_OSS_NEW optAccessPlan ( _su, _collectionName, query,
-                                         orderBy, hint ) ;
-      if ( !(*out) )
+      rc = createNewPlan( _su, _collectionName,
+                          query, orderBy, hint,
+                          out ) ;
+      if ( SDB_OK != rc )
       {
-         PD_LOG ( PDERROR, "Not able to allocate memory for new plan" ) ;
-         rc = SDB_OOM ;
+         PD_LOG( PDERROR, "failed to create new plan:%d", rc ) ;
          goto error ;
       }
-      // set the parent of plan apm to this apm
+
       (*out)->setAPM ( _apm ) ;
-      // if the plan is not in the list, let's try to optimize it
-      rc = (*out)->optimize() ;
-      PD_RC_CHECK ( rc, (SDB_RTN_INVALID_PREDICATES==rc)?PDINFO:PDERROR,
-                    "Failed to optimize plan, query: %s\norder %s\nhint %s",
-                    query.toString().c_str(),
-                    orderBy.toString().c_str(),
-                    hint.toString().c_str() ) ;
-      // now we have to insert it into the list, let's set incSize = TRUE for
-      // now
-      incSize = TRUE ;
+      inc = 1 ;
 
       {
          RTNAPL_XLOCK
@@ -136,13 +162,13 @@ namespace engine
          // any plan that not been used
          if ( _plans.size() >= RTN_APL_SIZE )
          {
-            vector<optAccessPlan *>::reverse_iterator rit ;
+            list<optAccessPlan *>::reverse_iterator rit ;
             for ( rit = _plans.rbegin() ; rit != _plans.rend(); )
             {
                if ( (*rit)->getCount() == 0 )
                {
                   // we can remove existing, let's reset incSize back to FALSE
-                  incSize = FALSE ;
+                  inc = 0 ;
                   SDB_OSS_DEL (*rit) ;
                   _plans.erase( (++rit).base() ) ;
                   hasDel = TRUE ;
@@ -161,7 +187,7 @@ namespace engine
          // otherwise insert the new plan into plan list
          if ( !hasDel && _plans.size() >= RTN_APL_SIZE )
          {
-            incSize = FALSE ;
+            inc = 0 ;
             (*out)->setAPM ( NULL ) ;
             PD_LOG ( PDWARNING, "AccessPlanList is full" ) ;
          }
@@ -173,6 +199,7 @@ namespace engine
       }
 
    done :
+      incCount = inc ;
       PD_TRACE_EXITRC ( SDB__RTNACCESSPL_GETPLAN, rc );
       return rc ;
    error :
@@ -188,7 +215,7 @@ namespace engine
    void _rtnAccessPlanList::releasePlan ( optAccessPlan *plan )
    {
       PD_TRACE_ENTRY ( SDB_RTNACCESSPL_RELPL );
-      vector<optAccessPlan *>::iterator it ;
+      list<optAccessPlan *>::iterator it ;
       RTNAPL_SLOCK
       // check if the plan is in the list
       for ( it = _plans.begin(); it != _plans.end(); ++it )
@@ -213,7 +240,7 @@ namespace engine
    {
       PD_TRACE_ENTRY ( SDB__RTNACCESSPL_CLEAR );
       cleanNum = 0 ;
-      vector<optAccessPlan *>::iterator it ;
+      list<optAccessPlan *>::iterator it ;
       RTNAPL_XLOCK
       // check if the plan is in the list
       for ( it = _plans.begin(); it != _plans.end(); )
@@ -259,39 +286,40 @@ namespace engine
                                       const BSONObj &orderBy,
                                       const BSONObj &hint,
                                       optAccessPlan **out,
-                                      BOOLEAN &incSize )
+                                      SINT32 &incCount )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__RTNACCESSPS_GETPLAN );
       UINT32 hash = optAccessPlan::hash ( query, orderBy, hint ) ;
-      // let's try to remove emptys
-      if ( _totalNum.peek() > RTN_APS_SIZE )
-      {
-         UINT32 cleanNum = 0 ;
-         clear ( cleanNum, FALSE ) ;
-      }
+      SINT32 inc = 0 ;
       {
          RTNAPS_SLOCK
-         if ( _planLists.find ( hash ) != _planLists.end() )
+         map<UINT32, rtnAccessPlanList *>::iterator itr =
+                                                 _planLists.find ( hash ) ;
+         SINT32 tmp = 0 ;
+         if ( _planLists.end() != itr )
          {
+            rtnAccessPlanList *planList = itr->second ;
             // if the hash already exist, then let's get in and see
-            rc = _planLists[hash]->getPlan ( query, orderBy, hint,
-                                             out, incSize ) ;
+            rc = planList->getPlan ( query, orderBy, hint,
+                                     out, tmp ) ;
             if ( rc )
             {
                PD_LOG ( PDERROR, "Failed to get plan, rc = %d", rc ) ;
                goto error ;
             }
 
-            if ( incSize )
+            if ( 0 != tmp )
             {
-               _totalNum.inc() ;
+               inc += tmp ;
+               _totalNum.add( tmp ) ;
             }
             goto done ;
          }
       }
       {
          BOOLEAN newAlloc = FALSE ;
+         SINT32 tmp = 0 ;
          RTNAPS_XLOCK
          // check again just in case someone else added after we release S
          // lock
@@ -310,7 +338,7 @@ namespace engine
          }
          rtnAccessPlanList *planlist = _planLists[hash] ;
          SDB_ASSERT( planlist, "not able to find the planlist" ) ;
-         rc = planlist->getPlan ( query, orderBy, hint, out, incSize ) ;
+         rc = planlist->getPlan ( query, orderBy, hint, out, tmp ) ;
          if ( rc )
          {
             // let's delete the newly created list
@@ -322,18 +350,27 @@ namespace engine
             PD_LOG ( PDERROR, "Failed to get plan, rc = %d", rc ) ;
             goto error ;
          }
-         if ( incSize )
+         if ( 0 != tmp )
          {
-            _totalNum.inc() ;
+            inc += tmp ;
+            _totalNum.add( tmp ) ;
          }
          goto done ;
       }
 
    done :
+      if ( SDB_OK == rc &&
+           0 < inc &&
+           _totalNum.peek() > RTN_APS_SIZE )
+      {
+         UINT32 cleanNum = 0 ;
+         clear ( cleanNum, FALSE ) ;
+         inc -= cleanNum ;
+      }
+      incCount = inc ;
       PD_TRACE_EXITRC ( SDB__RTNACCESSPS_GETPLAN, rc );
       return rc ;
    error :
-      incSize = FALSE ;
       goto done ;
    }
 
@@ -391,6 +428,15 @@ namespace engine
       return ;
    }
 
+   _rtnAccessPlanManager::_rtnAccessPlanManager( _dmsStorageUnit *su )
+   :_totalNum( 0 ),
+    _su( su ),
+    _bucketsNum( 0 )
+    
+   {
+      _bucketsNum = pmdGetOptionCB()->getPlanBuckets() ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNACCESSPLMAN_INVALIDATEPL, "_rtnAccessPlanManager::invalidatePlans" )
    void _rtnAccessPlanManager::invalidatePlans ( const CHAR *collectionName )
    {
@@ -431,26 +477,38 @@ namespace engine
       PD_TRACE_ENTRY ( SDB__RTNACCESSPLMAN );
       SDB_ASSERT ( collectionName, "collection name can't be NULL" ) ;
       SDB_ASSERT ( out, "out can't be NULL" ) ;
-      if ( _totalNum.peek() > RTN_APM_SIZE )
+      SINT32 incCount = 0 ;
+
+      if ( 0 == _bucketsNum )
       {
-         clear ( FALSE ) ;
+         rc = createNewPlan( _su, collectionName,
+                             query, orderBy,
+                             hint, out ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to create new plan:%d", rc ) ;
+            goto error ;
+         }
+         goto done ;
       }
-      BOOLEAN incSize ;
+
       {
          RTNAPM_SLOCK
-         if ( _planSets.find ( collectionName ) != _planSets.end() )
+         PLAN_SETS_ITERATOR itr = _planSets.find ( collectionName ) ;
+         if ( _planSets.end() != itr )
          {
+            _rtnAccessPlanSet *plan = itr->second ;
             // if we are able to find the collection name
-            rc = _planSets[collectionName]->getPlan ( query, orderBy,
-                                                      hint, out, incSize ) ;
+            rc = plan->getPlan ( query, orderBy,
+                                 hint, out, incCount ) ;
             if ( rc )
             {
                PD_LOG ( PDERROR, "Failed to get plan, rc = %d", rc ) ;
                goto error ;
             }
-            if ( incSize )
+            if ( 0 != incCount )
             {
-               _totalNum.inc() ;
+               _totalNum.add( incCount ) ;
             }
             goto done ;
          }
@@ -481,7 +539,7 @@ namespace engine
          }
          rtnAccessPlanSet *planset = _planSets[collectionName] ;
          SDB_ASSERT ( planset, "not able to find the planset" ) ;
-         rc = planset->getPlan ( query, orderBy, hint, out, incSize ) ;
+         rc = planset->getPlan ( query, orderBy, hint, out, incCount ) ;
          if ( rc )
          {
             // clean up the currently allocated set
@@ -497,12 +555,13 @@ namespace engine
             PD_LOG ( PDERROR, "Failed to get plan, rc = %d", rc ) ;
             goto error ;
          }
-         if ( incSize )
+         if ( 0 != incCount )
          {
-            _totalNum.inc() ;
+            _totalNum.add( incCount ) ;
          }
          goto done ;
       } // X lock scope
+
    done :
       PD_TRACE_EXITRC ( SDB__RTNACCESSPLMAN, rc );
       return rc ;
