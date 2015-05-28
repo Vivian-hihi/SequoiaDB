@@ -18,6 +18,8 @@ cata.service.port=11800
 data.service.port=21100
 fap.service.port=11817
 sharingbreak=20000
+all.spare.port.start=26000
+all.spare.port.stop=29000
 
 jenkins_master=rh-ci001
 test_machine_no1=rh-ci002
