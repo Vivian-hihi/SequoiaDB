@@ -752,43 +752,35 @@ namespace engine
    class rtnCoordCMDQueryBase : public rtnCoordCommand
    {
    public:
-      virtual INT32 queryToCataNodeGroup( CHAR *pBuffer,
-                                          netMultiRouteAgent *pRouteAgent,
-                                          pmdEDUCB *cb,
-                                          rtnContextCoord *pContext );
-
       virtual INT32 execute( MsgHeader *pMsg,
                              pmdEDUCB *cb,
                              INT64 &contextID,
                              rtnContextBuf *buf ) ;
 
-      virtual INT32 buildQueryRequest( CHAR *pIntput,
-                                       pmdEDUCB *cb,
-                                       CHAR **pOutput ) = 0;
+   protected:
+      virtual INT32 _preProcess( rtnQueryOptions &queryOpt,
+                                 string &clName ) = 0 ;
    };
 
    class rtnCoordCMDSnapshotCata : public rtnCoordCMDQueryBase
    {
-   public:
-      virtual INT32 buildQueryRequest( CHAR *pIntput,
-                                       pmdEDUCB *cb,
-                                       CHAR **ppOutput );
+   protected:
+      virtual INT32 _preProcess( rtnQueryOptions &queryOpt,
+                                 string &clName ) ;
    };
 
    class rtnCoordCMDListCollectionSpace : public rtnCoordCMDQueryBase
    {
-   public:
-      virtual INT32 buildQueryRequest( CHAR *pIntput,
-                                       pmdEDUCB *cb,
-                                       CHAR **ppOutput );
+   protected:
+      virtual INT32 _preProcess( rtnQueryOptions &queryOpt,
+                                 string &clName ) ;
    };
 
    class rtnCoordCMDListCollection : public rtnCoordCMDQueryBase
    {
-   public:
-      virtual INT32 buildQueryRequest( CHAR *pIntput,
-                                       pmdEDUCB *cb,
-                                       CHAR **ppOutput );
+   protected:
+      virtual INT32 _preProcess( rtnQueryOptions &queryOpt,
+                                 string &clName ) ;
    };
 
    class rtnCoordCMDTestCollectionSpace : public rtnCoordCommand
@@ -1020,13 +1012,11 @@ namespace engine
                              rtnContextBuf *buf ) ;
    } ;
 
-   class rtnCoordCmdListTask : public rtnCoordCommand
+   class rtnCoordCmdListTask : public rtnCoordCMDQueryBase
    {
-   public:
-      virtual INT32 execute( MsgHeader *pMsg,
-                             pmdEDUCB *cb,
-                             INT64 &contextID,
-                             rtnContextBuf *buf ) ;
+   protected:
+      virtual INT32 _preProcess( rtnQueryOptions &queryOpt,
+                                 string &clName ) ;
    } ;
 
    class rtnCoordCmdCancelTask : public rtnCoordCommand
@@ -1174,10 +1164,9 @@ namespace engine
 
    class rtnCoordCMDListProcedures : public rtnCoordCMDQueryBase
    {
-   public:
-      virtual INT32 buildQueryRequest( CHAR *pIntput,
-                                       pmdEDUCB *cb,
-                                       CHAR **ppOutput );
+   protected:
+      virtual INT32 _preProcess( rtnQueryOptions &queryOpt,
+                                 string &clName ) ;
    } ;
 
    class rtnCoordCMDLinkCollection : public rtnCoordCommand
@@ -1254,18 +1243,16 @@ namespace engine
 
    class rtnCoordCMDListDomains : public rtnCoordCMDQueryBase
    {
-   public:
-      virtual INT32 buildQueryRequest( CHAR *pIntput,
-                                       pmdEDUCB *cb,
-                                       CHAR **ppOutput );
+   protected:
+      virtual INT32 _preProcess( rtnQueryOptions &queryOpt,
+                                 string &clName ) ;
    } ;
 
    class rtnCoordCMDListCSInDomain : public rtnCoordCMDQueryBase
    {
-   public:
-      virtual INT32 buildQueryRequest( CHAR *pIntput,
-                                       pmdEDUCB *cb,
-                                       CHAR **ppOutput );
+   protected:
+      virtual INT32 _preProcess( rtnQueryOptions &queryOpt,
+                                 string &clName ) ;
    } ;
 
 

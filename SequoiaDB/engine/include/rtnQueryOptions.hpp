@@ -41,6 +41,9 @@
 #include "core.hpp"
 #include "oss.hpp"
 #include "../bson/bson.hpp"
+#include <string>
+
+using namespace std ;
 
 namespace engine
 {
@@ -124,6 +127,8 @@ namespace engine
       virtual ~_rtnQueryOptions() ;
 
       INT32 getOwned() ;
+
+      string toString() const ;
 
    public:
       bson::BSONObj _query ;

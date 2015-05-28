@@ -166,7 +166,7 @@ namespace engine
                                    TRUE, FALSE ) ;
          if ( rcTmp != SDB_OK )
          {
-            PD_LOG ( PDWARNING, "Failed to delete on data-node,"
+            PD_LOG ( PDWARNING, "Failed to do on data-node,"
                      "get reply failed(rc=%d)", rcTmp ) ;
             rc = rc ? rc : rcTmp ;
          }

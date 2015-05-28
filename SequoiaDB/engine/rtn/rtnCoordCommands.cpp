@@ -221,6 +221,10 @@ namespace engine
          }
          pTmpContext = *ppContext ;
 
+         // context for catalog: only primary, so query,sel,orderby...will
+         // push to catalog
+         // context for data: only for drop cs/cl execute command, not any
+         // return obj
          rc = pTmpContext->open( BSONObj(), BSONObj(), -1, 0 ) ;
          PD_RC_CHECK( rc, PDERROR, "Open context failed(rc=%d)", rc ) ;
       }
@@ -2810,97 +2814,6 @@ namespace engine
       return SDB_OK ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDQUBASE_QUTOCANOGR, "rtnCoordCMDQueryBase::queryToCataNodeGroup" )
-   INT32 rtnCoordCMDQueryBase::queryToCataNodeGroup( CHAR *pBuffer,
-                                                     netMultiRouteAgent *pRouteAgent,
-                                                     pmdEDUCB *cb,
-                                                     rtnContextCoord *pContext )
-   {
-      INT32 rc = SDB_OK;
-      BOOLEAN isNeedRefresh = FALSE;
-      BOOLEAN takeOver = FALSE ;
-      PD_TRACE_ENTRY ( SDB_RTNCOCMDQUBASE_QUTOCANOGR );
-
-      do
-      {
-         CoordGroupInfoPtr catGroupInfo;
-         rc = rtnCoordGetCatGroupInfo( cb, isNeedRefresh, catGroupInfo );
-         if ( rc != SDB_OK )
-         {
-            PD_LOG ( PDERROR, "Failed to get catalogue-group info(rc=%d)",
-                     rc );
-            break;
-         }
-         REQUESTID_MAP sendNodes;
-         rc = rtnCoordSendRequestToPrimary( pBuffer, catGroupInfo,
-                                            sendNodes, pRouteAgent,
-                                            MSG_ROUTE_CAT_SERVICE,
-                                            cb );
-         if ( rc != SDB_OK )
-         {
-            rtnCoordClearRequest( cb, sendNodes );
-            if ( SDB_RTN_NO_PRIMARY_FOUND == rc && FALSE == isNeedRefresh )
-            {
-               isNeedRefresh = TRUE;
-               continue;
-            }
-            PD_LOG( PDERROR, "Failed to send the query request to "
-                    "catalogue-group(rc=%d)", rc );
-            break;
-         }
-
-         REPLY_QUE replyQue;
-         rc = rtnCoordGetReply( cb, sendNodes, replyQue,
-                                MSG_BS_QUERY_RES );
-         if ( rc != SDB_OK )
-         {
-            PD_LOG ( PDERROR, "Failed to get reply from catalogue-node(rc=%d)",
-                     rc );
-            break;
-         }
-         while ( !replyQue.empty() )
-         {
-            takeOver             = FALSE ;
-            MsgOpReply *pReply   = NULL;
-            pReply = (MsgOpReply *)(replyQue.front());
-            replyQue.pop();
-            if ( SDB_OK == rc )
-            {
-               if ( SDB_OK == pReply->flags )
-               {
-                  rc = pContext->addSubContext( pReply, takeOver );
-               }
-               else
-               {
-                  rc = pReply->flags ;
-               }
-            }
-            if ( !takeOver )
-            {
-               SDB_OSS_FREE( pReply ) ;
-            }
-         }
-         if ( rc != SDB_OK && rc != SDB_DMS_EOC )
-         {
-            PD_LOG ( PDERROR, "Error occured while process catalogue-node "
-                     "reply(rc=%d)", rc );
-            if ( SDB_CLS_NOT_PRIMARY == rc && FALSE == isNeedRefresh )
-            {
-               isNeedRefresh = TRUE;
-               continue;
-            }
-         }
-         else
-         {
-            pContext->addSubDone( cb ) ;
-         }
-         break;
-      }while ( TRUE );
-
-      PD_TRACE_EXITRC ( SDB_RTNCOCMDQUBASE_QUTOCANOGR, rc ) ;
-      return rc;
-   }
-
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDQUBASE_EXE, "rtnCoordCMDQueryBase::execute" )
    INT32 rtnCoordCMDQueryBase::execute( MsgHeader *pMsg,
                                         pmdEDUCB *cb,
@@ -2909,197 +2822,92 @@ namespace engine
    {
       INT32 rc                         = SDB_OK;
       PD_TRACE_ENTRY ( SDB_RTNCOCMDQUBASE_EXE ) ;
-      pmdKRCB *pKrcb                   = pmdGetKRCB();
-      SDB_RTNCB *pRtncb                = pKrcb->getRTNCB();
-      CoordCB *pCoordcb                = pKrcb->getCoordCB();
-      netMultiRouteAgent *pRouteAgent  = pCoordcb->getRouteAgent();
 
-      contextID                 = -1;
+      contextID                        = -1 ;
+      string clName ;
+      rtnQueryOptions queryOpt ;
+      CHAR *pQuery                     = NULL ;
+      CHAR *pSelector                  = NULL ;
+      CHAR *pOrderBy                   = NULL ;
+      CHAR *pHint                      = NULL ;
 
-      do
+      // parse msg
+      rc = msgExtractQuery( (CHAR *)pMsg, &queryOpt._flag,
+                            (CHAR**)&queryOpt._fullName, &queryOpt._skip,
+                            &queryOpt._limit, &pQuery, &pSelector,
+                            &pOrderBy, &pHint ) ;
+      if ( rc )
       {
-         MsgOpQuery *pSrc = (MsgOpQuery *)pMsg;
-         rtnContextCoord *pContext = NULL ;
-         rc = pRtncb->contextNew( RTN_CONTEXT_COORD, (rtnContext**)&pContext,
-                                  contextID, cb );
-         if ( rc != SDB_OK )
-         {
-            PD_LOG ( PDERROR, "failed to allocate context(rc=%d)", rc );
-            break;
-         }
-         rc = pContext->open( BSONObj(), BSONObj(), pSrc->numToReturn,
-                              pSrc->numToSkip ) ;
-         if ( rc != SDB_OK )
-         {
-            PD_LOG( PDERROR, "Open context failed, rc: %d", rc ) ;
-            break ;
-         }
-
-         CHAR *pListReq = NULL;
-         rc = buildQueryRequest( (CHAR*)pMsg, cb, &pListReq );
-         if ( rc != SDB_OK )
-         {
-            PD_LOG ( PDERROR,
-                     "build query request failed(rc=%d)",
-                     rc );
-            break;
-         }
-         rc = queryToCataNodeGroup( pListReq, pRouteAgent,
-                                    cb, pContext );
-         if ( NULL != pListReq )
-         {
-            SDB_OSS_FREE( pListReq );
-         }
-         if ( rc != SDB_OK && rc != SDB_DMS_EOC )
-         {
-            PD_LOG ( PDERROR, "Failed to query on catalogue-node(rc=%d)",
-                     rc );
-            break;
-         }
-      }while ( FALSE ) ;
-
-      if ( rc != SDB_OK && contextID >= 0 )
-      {
-         pRtncb->contextDelete( contextID, cb );
-         contextID = -1 ;
+         PD_LOG( PDERROR, "Extract query message failed, rc: %d", rc ) ;
+         goto error ;
       }
 
+      try
+      {
+         queryOpt._query = BSONObj( pQuery ) ;
+         queryOpt._selector = BSONObj( pSelector ) ;
+         queryOpt._orderBy = BSONObj( pOrderBy ) ;
+         queryOpt._hint = BSONObj( pHint ) ;
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Extract query message occur exception: %s",
+                 e.what() ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      rc = _preProcess( queryOpt, clName ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "PreProcess[%s] failed, rc: %d",
+                 queryOpt.toString().c_str(), rc ) ;
+         goto error ;
+      }
+      if ( !clName.empty() )
+      {
+         queryOpt._fullName = clName.c_str() ;
+      }
+
+      // query on catalog
+      rc = queryOnCatalog( queryOpt, cb, contextID ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Query on catalog[%s] failed, rc: %d",
+                 queryOpt.toString().c_str(), rc ) ;
+         goto error ;
+      }
+
+   done:
       PD_TRACE_EXITRC ( SDB_RTNCOCMDQUBASE_EXE, rc ) ;
-      return rc;
+      return rc ;
+   error:
+      if ( -1 != contextID )
+      {
+         pmdGetKRCB()->getRTNCB()->contextDelete( contextID, cb ) ;
+         contextID = -1 ;
+      }
+      goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDLISTCS_BQREQ, "rtnCoordCMDListCollectionSpace::buildQueryRequest" )
-   INT32 rtnCoordCMDListCollectionSpace::buildQueryRequest( CHAR *pIntput,
-                                                            pmdEDUCB *cb,
-                                                            CHAR **ppOutput )
+   INT32 rtnCoordCMDListCollectionSpace::_preProcess( rtnQueryOptions &queryOpt,
+                                                      string &clName )
    {
-      INT32 rc = SDB_OK;
-      PD_TRACE_ENTRY ( SDB_RTNCOCMDLISTCS_BQREQ ) ;
-      do
-      {
-         INT32 flag = 0;
-         CHAR *pCollectionName = NULL;
-         SINT64 numToSkip = 0;
-         SINT64 numToReturn = 0;
-         CHAR *pQuery = NULL;
-         CHAR *pFieldSelector = NULL;
-         CHAR *pOrderBy = NULL;
-         CHAR *pHint = NULL;
-         rc = msgExtractQuery( pIntput, &flag, &pCollectionName,
-                               &numToSkip, &numToReturn, &pQuery, 
-                               &pFieldSelector, &pOrderBy, &pHint );
-         if ( rc != SDB_OK )
-         {
-            PD_LOG ( PDERROR,
-                     "failed to parse query request(rc=%d)",
-                     rc );
-            break;
-         }
-         INT32 bufferSize = 0;
-         BSONObj query;
-         BSONObj fieldSelector;
-         BSONObj orderBy;
-         BSONObj hint;
-         try
-         {
-            query = BSONObj ( pQuery );
-            orderBy = BSONObj ( pOrderBy );
-            hint = BSONObj ( pHint );
-            BSONObjBuilder bobFieldSelector;
-            bobFieldSelector.appendNull( CAT_COLLECTION_SPACE_NAME );
-            fieldSelector = bobFieldSelector.obj();
-         }
-         catch ( std::exception &e )
-         {
-            rc = SDB_INVALIDARG;
-            PD_LOG ( PDERROR, "occured unexpected error:%s",
-                     e.what() );
-            break;
-         }
-         rc = msgBuildQueryMsg( ppOutput, &bufferSize,
-                                CAT_COLLECTION_SPACE_COLLECTION,
-                                flag, 0, numToSkip, numToReturn,
-                                &query, &fieldSelector,
-                                &orderBy, &hint ) ;
-         if ( rc != SDB_OK )
-         {
-            PD_LOG ( PDERROR, "Failed to build the query message(rc=%d)",
-                     rc );
-            break;
-         }
-         MsgOpQuery *pQueryMsg = (MsgOpQuery *)(*ppOutput);
-         pQueryMsg->header.routeID.value = 0;
-         pQueryMsg->header.TID = cb->getTID();
-      }while( FALSE );
-      PD_TRACE_EXITRC ( SDB_RTNCOCMDLISTCS_BQREQ, rc ) ;
-      return rc;
+      BSONObjBuilder builder ;
+      clName = CAT_COLLECTION_SPACE_COLLECTION ;
+      builder.appendNull( CAT_COLLECTION_SPACE_NAME ) ;
+      queryOpt._selector = builder.obj() ;
+      return SDB_OK ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDLISTCL_BQREQ, "rtnCoordCMDListCollection::buildQueryRequest" )
-   INT32 rtnCoordCMDListCollection::buildQueryRequest( CHAR *pIntput,
-                                                       pmdEDUCB *cb,
-                                                       CHAR **ppOutput )
+   INT32 rtnCoordCMDListCollection::_preProcess( rtnQueryOptions &queryOpt,
+                                                 string & clName )
    {
-      INT32 rc = SDB_OK;
-      PD_TRACE_ENTRY ( SDB_RTNCOCMDLISTCL_BQREQ ) ;
-      do
-      {
-         INT32 flag = 0;
-         CHAR *pCollectionName = NULL;
-         SINT64 numToSkip = 0;
-         SINT64 numToReturn = 0;
-         CHAR *pQuery = NULL;
-         CHAR *pFieldSelector = NULL;
-         CHAR *pOrderBy = NULL;
-         CHAR *pHint = NULL;
-         rc = msgExtractQuery( pIntput, &flag, &pCollectionName,
-                               &numToSkip, &numToReturn, &pQuery, 
-                               &pFieldSelector, &pOrderBy, &pHint ) ;
-         if ( rc != SDB_OK )
-         {
-            PD_LOG ( PDERROR, "Failed to parse query request(rc=%d)",
-                     rc );
-            break;
-         }
-         INT32 bufferSize = 0;
-         BSONObj query;
-         BSONObj fieldSelector;
-         BSONObj orderBy;
-         BSONObj hint;
-         try
-         {
-            query = BSONObj ( pQuery );
-            orderBy = BSONObj ( pOrderBy );
-            hint = BSONObj ( pHint );
-            BSONObjBuilder bobFieldSelector;
-            bobFieldSelector.appendNull( CAT_COLLECTION_NAME );
-            fieldSelector = bobFieldSelector.obj();
-         }
-         catch ( std::exception &e )
-         {
-            rc = SDB_INVALIDARG;
-            PD_LOG ( PDERROR,
-                     "occured unexpected error:%s",
-                     e.what() );
-            break;
-         }
-         rc = msgBuildQueryMsg( ppOutput, &bufferSize,
-                                CAT_COLLECTION_INFO_COLLECTION,
-                                flag, 0, numToSkip, numToReturn,
-                                &query, &fieldSelector,
-                                &orderBy, &hint ) ;
-         if ( rc != SDB_OK )
-         {
-            PD_LOG ( PDERROR, "Failed to build the query message(rc=%d)",
-                     rc ) ;
-            break;
-         }
-         MsgOpQuery *pQueryMsg = (MsgOpQuery *)(*ppOutput);
-         pQueryMsg->header.routeID.value = 0;
-         pQueryMsg->header.TID = cb->getTID();
-      }while( FALSE );
-      PD_TRACE_EXITRC ( SDB_RTNCOCMDLISTCL_BQREQ, rc ) ;
-      return rc;
+      BSONObjBuilder builder ;
+      clName = CAT_COLLECTION_INFO_COLLECTION ;
+      builder.appendNull( CAT_COLLECTION_NAME ) ;
+      queryOpt._selector = builder.obj() ;
+      return SDB_OK ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDTESTCS_EXE, "rtnCoordCMDTestCollectionSpace::execute" )
@@ -5692,13 +5500,16 @@ namespace engine
                                        rtnContextBuf *buf )
    {
       INT32 rc = SDB_OK ;
+      SET_RC ignoreRC ;
+      rtnContextCoord *pContext        = NULL ;
+      rtnContextBuf buffObj ;
       pmdKRCB *pKRCB                   = pmdGetKRCB () ;
-      CoordCB *pCoordcb                = pKRCB->getCoordCB () ;
-      netMultiRouteAgent *pRouteAgent  = pCoordcb->getRouteAgent () ;
-
       contextID                        = -1 ;
       pMsg->opCode                     = MSG_CAT_QUERY_TASK_REQ ;
       pMsg->TID                        = cb->getTID() ;
+
+      ignoreRC.insert( SDB_DMS_EOC ) ;
+      ignoreRC.insert( SDB_CAT_TASK_NOTFOUND ) ;
 
       while ( TRUE )
       {
@@ -5708,101 +5519,44 @@ namespace engine
             goto error ;
          }
 
-         BOOLEAN isNeedRefresh = FALSE ;
-         CoordGroupInfoPtr catGroupInfo ;
-         REQUESTID_MAP sendNodes ;
-         REPLY_QUE replyQue ;
-
-      retry:
-         rc = rtnCoordGetCatGroupInfo( cb, isNeedRefresh, catGroupInfo ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to get cat group info, rc: %d",
-                      rc ) ;
-         rc = rtnCoordSendRequestToPrimary( (CHAR*)pMsg, catGroupInfo,
-                                            sendNodes, pRouteAgent,
-                                            MSG_ROUTE_CAT_SERVICE, cb ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to send msg to primary node, rc: %d",
-                      rc ) ;
-         rc = rtnCoordGetReply( cb, sendNodes, replyQue, MSG_CAT_QUERY_TASK_RSP,
-                                TRUE, TRUE ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to get reply, rc: %d", rc ) ;
-
-         while ( !replyQue.empty() )
+         rc = executeOnCataGroup( pMsg, cb, TRUE, &ignoreRC, &pContext ) ;
+         if ( rc )
          {
-            MsgOpReply *pReply = (MsgOpReply *)( replyQue.front() ) ;
-            replyQue.pop() ;
-            if ( SDB_OK == rc )
-            {
-               rc = pReply->flags ;
-            }
-            SDB_OSS_FREE( pReply ) ;
+            PD_LOG( PDERROR, "Query task on catalog failed, rc: %d", rc ) ;
+            goto error ;
          }
-
-         if ( ( SDB_RTN_NO_PRIMARY_FOUND == rc || SDB_CLS_NOT_PRIMARY == rc ) &&
-              !isNeedRefresh )
-         {
-            isNeedRefresh = TRUE ;
-            goto retry ;
-         }
-         else if ( SDB_DMS_EOC == rc || SDB_CAT_TASK_NOTFOUND == rc )
+         rc = pContext->getMore( -1, buffObj, cb ) ;
+         if ( SDB_DMS_EOC == rc )
          {
             rc = SDB_OK ;
             break ;
          }
+         else if ( rc )
+         {
+            PD_LOG( PDERROR, "Get more failed, rc: %d", rc ) ;
+            goto error ;
+         }
+
+         pKRCB->getRTNCB()->contextDelete( pContext->contextID(), cb ) ;
+         pContext = NULL ;
          ossSleep( OSS_ONE_SEC ) ;
       }
 
    done:
+      if ( pContext )
+      {
+         pKRCB->getRTNCB()->contextDelete( pContext->contextID(),  cb ) ;
+      }
       return rc ;
    error:
       goto done ;
    }
 
-   INT32 rtnCoordCmdListTask::execute( MsgHeader *pMsg,
-                                       pmdEDUCB *cb,
-                                       INT64 &contextID,
-                                       rtnContextBuf *buf )
+   INT32 rtnCoordCmdListTask::_preProcess( rtnQueryOptions &queryOpt,
+                                           string &clName )
    {
-      INT32 rc = SDB_OK ;
-
-      contextID = -1 ;
-
-      INT32 flag = 0 ;
-      CHAR *pCollectionName = NULL ;
-      INT64 numToSkip = 0 ;
-      INT64 numToReturn = -1 ;
-      CHAR *pQueryBuf = NULL ;
-      CHAR *pSelectorBuf = NULL ;
-      CHAR *pOrderbyBuf = NULL ;
-      CHAR *pHintBuf = NULL ;
-
-      rc = msgExtractQuery( (CHAR*)pMsg, &flag, &pCollectionName, &numToSkip,
-                            &numToReturn, &pQueryBuf, &pSelectorBuf,
-                            &pOrderbyBuf, &pHintBuf ) ;
-      PD_RC_CHECK( rc, PDERROR, "Extract query msg failed, rc: %d", rc ) ;
-
-      try
-      {
-         BSONObj matcher( pQueryBuf ) ;
-         BSONObj selector( pSelectorBuf ) ;
-         BSONObj orderby( pOrderbyBuf ) ;
-         BSONObj hint( pHintBuf ) ;
-
-         rc = rtnCoordCataQuery( CAT_TASK_INFO_COLLECTION, selector, matcher,
-                                 orderby, hint, flag, cb, numToSkip,
-                                 numToReturn, contextID ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to query to catalog, rc: %d", rc ) ;
-      }
-      catch ( std::exception &e )
-      {
-         PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
-
-   done:
-      return rc ;
-   error:
-      goto done ;
+      clName = CAT_TASK_INFO_COLLECTION ;
+      return SDB_OK ;
    }
 
    INT32 rtnCoordCmdCancelTask::execute( MsgHeader *pMsg,
@@ -7271,70 +7025,11 @@ namespace engine
       return COORD_CMD_SNAPSHOTSESSCURINTR;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOORDCMDSSCATA_BUILDREQ, "rtnCoordCMDSnapshotCata::buildQueryRequest" )
-   INT32 rtnCoordCMDSnapshotCata::buildQueryRequest( CHAR *pIntput,
-                                                     pmdEDUCB *cb,
-                                                     CHAR **ppOutput )
+   INT32 rtnCoordCMDSnapshotCata::_preProcess( rtnQueryOptions &queryOpt,
+                                               string &clName )
    {
-      INT32 rc = SDB_OK;
-      PD_TRACE_ENTRY ( SDB_RTNCOORDCMDSSCATA_BUILDREQ ) ;
-      do
-      {
-         INT32 flag = 0;
-         CHAR *pCollectionName = NULL;
-         SINT64 numToSkip = 0;
-         SINT64 numToReturn = 0;
-         CHAR *pQuery = NULL;
-         CHAR *pFieldSelector = NULL;
-         CHAR *pOrderBy = NULL;
-         CHAR *pHint = NULL;
-         rc = msgExtractQuery( pIntput, &flag, &pCollectionName,
-                               &numToSkip, &numToReturn, &pQuery, 
-                               &pFieldSelector, &pOrderBy, &pHint );
-         if ( rc != SDB_OK )
-         {
-            PD_LOG ( PDERROR,
-                     "failed to parse query request(rc=%d)",
-                     rc );
-            break;
-         }
-         INT32 bufferSize = 0;
-         BSONObj query;
-         BSONObj fieldSelector;
-         BSONObj orderBy;
-         BSONObj hint;
-         try
-         {
-            query = BSONObj ( pQuery );
-            orderBy = BSONObj ( pOrderBy );
-            hint = BSONObj ( pHint );
-            fieldSelector = BSONObj( pFieldSelector );
-         }
-         catch ( std::exception &e )
-         {
-            rc = SDB_INVALIDARG;
-            PD_LOG ( PDERROR, "occured unexpected error:%s",
-                     e.what() );
-            break;
-         }
-         rc = msgBuildQueryMsg( ppOutput, &bufferSize,
-                                CAT_COLLECTION_INFO_COLLECTION,
-                                flag, 0, numToSkip, numToReturn,
-                                &query, &fieldSelector,
-                                &orderBy, &hint ) ;
-         if ( rc != SDB_OK )
-         {
-            PD_LOG ( PDERROR, "Failed to build the query message(rc=%d)",
-                     rc );
-            break ;
-         }
-         MsgOpQuery *pQueryMsg = (MsgOpQuery *)(*ppOutput);
-         pQueryMsg->header.routeID.value = 0;
-         pQueryMsg->header.TID = cb->getTID() ;
-      }while( FALSE );
-
-      PD_TRACE_EXITRC ( SDB_RTNCOORDCMDSSCATA_BUILDREQ, rc ) ;
-      return rc;
+      clName = CAT_COLLECTION_INFO_COLLECTION ;
+      return SDB_OK ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOORDCMDCRTPROCEDURE_EXE, "rtnCoordCMDCrtProcedure::execute" )
@@ -7506,71 +7201,11 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION( SDB_RTNCOCMDLISTPROCEDURES_BUILD, "rtnCoordCMDListProcedures::buildQueryRequest" )
-   INT32 rtnCoordCMDListProcedures::buildQueryRequest( CHAR *pIntput,
-                                                       pmdEDUCB *cb,
-                                                       CHAR **ppOutput )
+   INT32 rtnCoordCMDListProcedures::_preProcess( rtnQueryOptions &queryOpt,
+                                                 string &clName )
    {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB_RTNCOCMDLISTPROCEDURES_BUILD ) ;
-      INT32 flag = 0;
-      CHAR *pCollectionName = NULL;
-      SINT64 numToSkip = 0;
-      SINT64 numToReturn = 0;
-      CHAR *pQuery = NULL;
-      CHAR *pFieldSelector = NULL;
-      CHAR *pOrderBy = NULL;
-      CHAR *pHint = NULL;
-      INT32 bufferSize = 0;
-      BSONObj query;
-      BSONObj fieldSelector;
-      BSONObj orderBy;
-      BSONObj hint;
-
-      rc = msgExtractQuery( pIntput, &flag, &pCollectionName,
-                            &numToSkip, &numToReturn, &pQuery, 
-                            &pFieldSelector, &pOrderBy, &pHint );
-      if ( rc != SDB_OK )
-      {
-         PD_LOG ( PDERROR, "failed to parse query request(rc=%d)", rc ) ;
-         goto error ;
-      }
-
-      try
-      {
-         query = BSONObj ( pQuery );
-         orderBy = BSONObj ( pOrderBy );
-         hint = BSONObj ( pHint );
-         fieldSelector = BSONObj( pFieldSelector ) ;
-      }
-      catch ( std::exception &e )
-      {
-         PD_LOG( PDERROR, "unexpected err happened:%s", e.what() ) ;
-         rc = SDB_SYS ;
-         goto error ;
-      }
-
-      rc = msgBuildQueryMsg( ppOutput, &bufferSize,
-                             CAT_PROCEDURES_COLLECTION,
-                             flag, 0, numToSkip, numToReturn, &query,
-                             &fieldSelector, &orderBy, &hint ) ;
-      if ( rc != SDB_OK )
-      {
-         PD_LOG ( PDERROR, "Failed to build the query message(rc=%d)", rc );
-         goto error;
-      }
-
-      {
-         MsgOpQuery *pQueryMsg = (MsgOpQuery *)(*ppOutput);
-         pQueryMsg->header.routeID.value = 0;
-         pQueryMsg->header.TID = cb->getTID();
-      }
-
-   done:
-      PD_TRACE_EXITRC( SDB_RTNCOCMDLISTPROCEDURES_BUILD, rc ) ;
-      return rc ;
-   error:
-      goto done ;
+      clName = CAT_PROCEDURES_COLLECTION ;
+      return SDB_OK ;
    }
 
    //PD_TRACE_DECLARE_FUNCTION( SDB_RTNCOCMDLINKCL_EXE, "rtnCoordCMDLinkCollection::execute" )
@@ -7907,139 +7542,19 @@ namespace engine
       return SDB_OK ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION( SDB_RTNCOCMDLISTDOMAINS_BUILD, "rtnCoordCMDListDomains::buildQueryRequest" )
-   INT32 rtnCoordCMDListDomains::buildQueryRequest( CHAR *pInput,
-                                                    pmdEDUCB *cb,
-                                                    CHAR **ppOutput )
+   INT32 rtnCoordCMDListDomains::_preProcess( rtnQueryOptions &queryOpt,
+                                              string &clName )
    {
-      INT32 rc              = SDB_OK ;
-      PD_TRACE_ENTRY( SDB_RTNCOCMDLISTDOMAINS_BUILD ) ;
-      INT32 flag            = 0;
-      CHAR *pCollectionName = NULL;
-      SINT64 numToSkip      = 0;
-      SINT64 numToReturn    = 0;
-      CHAR *pQuery          = NULL;
-      CHAR *pFieldSelector  = NULL;
-      CHAR *pOrderBy        = NULL;
-      CHAR *pHint           = NULL;
-      INT32 bufferSize      = 0;
-      BSONObj query;
-      BSONObj fieldSelector;
-      BSONObj orderBy;
-      BSONObj hint;
-
-      rc = msgExtractQuery( pInput, &flag, &pCollectionName,
-                            &numToSkip, &numToReturn, &pQuery,
-                            &pFieldSelector, &pOrderBy, &pHint );
-      if ( rc != SDB_OK )
-      {
-         PD_LOG ( PDERROR, "failed to parse query request(rc=%d)", rc ) ;
-         goto error ;
-      }
-
-      try
-      {
-         query = BSONObj ( pQuery );
-         orderBy = BSONObj ( pOrderBy );
-         hint = BSONObj ( pHint );
-         fieldSelector = BSONObj( pFieldSelector ) ;
-      }
-      catch ( std::exception &e )
-      {
-         PD_LOG( PDERROR, "unexpected err happened:%s", e.what() ) ;
-         rc = SDB_SYS ;
-         goto error ;
-      }
-
-      rc = msgBuildQueryMsg( ppOutput, &bufferSize, CAT_DOMAIN_COLLECTION,
-                             flag, 0, numToSkip, numToReturn, &query,
-                             &fieldSelector, &orderBy, &hint ) ;
-      if ( rc != SDB_OK )
-      {
-         PD_LOG ( PDERROR, "Failed to build the query message(rc=%d)", rc );
-         goto error;
-      }
-
-      {
-         MsgOpQuery *pQueryMsg = (MsgOpQuery *)(*ppOutput);
-         pQueryMsg->header.routeID.value = 0;
-         pQueryMsg->header.TID = cb->getTID();
-      }
-   done:
-      PD_TRACE_EXITRC( SDB_RTNCOCMDLISTPROCEDURES_BUILD, rc ) ;
-      return rc ;
-   error:
-      goto done ;
+      clName = CAT_DOMAIN_COLLECTION ;
+      return SDB_OK ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION( CMD_RTNCOCMDLISTCSINDOMAIN_BUILD, "rtnCoordCMDListCSInDomain::buildQueryRequest" )
-   INT32 rtnCoordCMDListCSInDomain::buildQueryRequest( CHAR *pInput,
-                                                       pmdEDUCB *cb,
-                                                       CHAR **ppOutput )
+   INT32 rtnCoordCMDListCSInDomain::_preProcess( rtnQueryOptions &queryOpt,
+                                                 string &clName )
    {
-      INT32 rc              = SDB_OK ;
-      PD_TRACE_ENTRY( CMD_RTNCOCMDLISTCSINDOMAIN_BUILD ) ;
-      INT32 flag            = 0;
-      CHAR *pCollectionName = NULL;
-      SINT64 numToSkip      = 0;
-      SINT64 numToReturn    = 0;
-      CHAR *pQuery          = NULL;
-      CHAR *pFieldSelector  = NULL;
-      CHAR *pOrderBy        = NULL;
-      CHAR *pHint           = NULL;
-      INT32 bufferSize      = 0;
-      BSONObj query;
-      BSONObj fieldSelector;
-      BSONObj orderBy;
-      BSONObj hint;
-
-      rc = msgExtractQuery( pInput, &flag, &pCollectionName,
-                            &numToSkip, &numToReturn, &pQuery,
-                            &pFieldSelector, &pOrderBy, &pHint );
-      if ( rc != SDB_OK )
-      {
-         PD_LOG ( PDERROR, "failed to parse query request(rc=%d)", rc ) ;
-         goto error ;
-      }
-
-      try
-      {
-         query = BSONObj ( pQuery );
-         orderBy = BSONObj ( pOrderBy );
-         hint = BSONObj ( pHint );
-         fieldSelector = BSONObj( pFieldSelector ) ;
-      }
-      catch ( std::exception &e )
-      {
-         PD_LOG( PDERROR, "unexpected err happened:%s", e.what() ) ;
-         rc = SDB_SYS ;
-         goto error ;
-      }
-
-      rc = msgBuildQueryMsg( ppOutput, &bufferSize,
-                             CAT_COLLECTION_SPACE_COLLECTION,
-                             flag, 0, numToSkip, numToReturn, &query,
-                             &fieldSelector,
-                             &orderBy, &hint ) ;
-      if ( rc != SDB_OK )
-      {
-         PD_LOG ( PDERROR, "Failed to build the query message(rc=%d)", rc );
-         goto error;
-      }
-
-      {
-         MsgOpQuery *pQueryMsg = (MsgOpQuery *)(*ppOutput) ;
-         pQueryMsg->header.routeID.value = 0;
-         pQueryMsg->header.TID = cb->getTID();
-      }
-
-   done:
-      PD_TRACE_EXITRC( CMD_RTNCOCMDLISTCSINDOMAIN_BUILD, rc ) ;
-      return rc ;
-   error:
-      goto done ;
+      clName = CAT_COLLECTION_SPACE_COLLECTION ;
+      return SDB_OK ;
    }
-
 
    // PD_TRACE_DECLARE_FUNCTION( CMD_RTNCOCMDLISTCLINDOMAIN_EXECUTE, "rtnCoordCMDListCLInDomain::execute" )
    INT32 rtnCoordCMDListCLInDomain::execute( MsgHeader *pMsg,

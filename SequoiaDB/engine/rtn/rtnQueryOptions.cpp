@@ -37,6 +37,7 @@
 
 #include "rtnQueryOptions.hpp"
 #include "ossUtil.hpp"
+#include <sstream>
 
 namespace engine
 {
@@ -99,4 +100,22 @@ namespace engine
       _enablePrefetch = o._enablePrefetch ;
       return *this ;
    }
+
+   string _rtnQueryOptions::toString() const
+   {
+      stringstream ss ;
+      if ( _fullName )
+      {
+         ss << "Name: " << _fullName ;
+         ss << ", Query: " << _query.toString() ;
+         ss << ", Selector: " << _selector.toString() ;
+         ss << ", OrderBy: " << _orderBy.toString() ;
+         ss << ", Hint: " << _hint.toString() ;
+         ss << ", Skip: " << _skip ;
+         ss << ", Limit: " << _limit ;
+         ss << ", Flags: " << _flag ;
+      }
+      return ss.str() ;
+   }
+
 }
