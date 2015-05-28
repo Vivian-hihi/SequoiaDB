@@ -211,8 +211,35 @@
 			<arg line="${sdb.cmd.beforeTestcase}" />
 		</exec>
 		<echo message="${beforeTestcase.screen.output}" />
+		
+		 <math result="spare.port.step" datatype="int">
+         <op op="/">
+            <op op="-">
+            <num value="${all.spare.port.stop}"/>
+            <num value="${all.spare.port.start}"/>
+            </op>
+         <num value="${parallel-num}"/>
+         </op>
+      </math>
 
-		<property name="sdb.cmd.argument" value=" -e &quot;var CHANGEDPREFIX='${CHANGEDSTRING}';var COORDSVCNAME='${coord.service.port}';&quot; -f &quot;${testcases.path}/libs/func.js,${commlib.option},${test.case.fullname}&quot;" />
+      <math result="spare.port.stop" datatype="int">
+         <op op="+">
+         <num value="${all.spare.port.start}"/>
+            <op op="*">
+            <num value="${parallel-id}"/>
+            <num value="${spare.port.step}"/>
+            </op>
+         </op>
+      </math>
+
+      <math result="spare.port.start" datatype="int">
+         <op op="-">
+         <num value="${spare.port.stop}"/>
+         <num value="${spare.port.step}"/>
+         </op>
+      </math>
+
+		<property name="sdb.cmd.argument" value=" -e &quot;var CHANGEDPREFIX='${CHANGEDSTRING}';var SPAREPORTSTART='${spare.port.start}';var SPAREPORTSTOP='${spare.port.stop}';var COORDSVCNAME='${coord.service.port}';&quot; -f &quot;${testcases.path}/libs/func.js,${commlib.option},${test.case.fullname}&quot;" />
 		<property name="command" value="${sdb.fullname}${sdb.cmd.argument}" />
 		<echo message="Command:${command}" />
 		<echo message="The testcase ${test.case.fullname} path on ${testcases.path}" />
