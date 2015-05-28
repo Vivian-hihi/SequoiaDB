@@ -316,11 +316,10 @@ namespace engine
                               " Version: 0x%08lx(%d)"OSS_NEWLINE,
                               _head._version, _head._version ) ;
          len += ossSnprintf ( outBuf + len, outSize - len,
-                              OSS_NEWLINE
-                              " LSN    : 0x%16lx(%lld)"OSS_NEWLINE,
+                              " LSN    : 0x%016lx(%lld)"OSS_NEWLINE,
                               _head._lsn, _head._lsn ) ;
          len += ossSnprintf ( outBuf + len, outSize - len,
-                              " PreLSN : 0x%16lx(%lld)"OSS_NEWLINE,
+                              " PreLSN : 0x%016lx(%lld)"OSS_NEWLINE,
                               _head._preLsn, _head._preLsn ) ;
          len += ossSnprintf ( outBuf + len, outSize - len,
                               " Length : %d"OSS_NEWLINE,
