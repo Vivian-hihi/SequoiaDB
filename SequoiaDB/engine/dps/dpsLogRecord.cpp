@@ -303,20 +303,25 @@ namespace engine
          dpsLogRecord::iterator itrTransID, itrTransLsn, itrTransRel ;
 
          /* dump output looks like:
-          * LSN     : 0x12345678
-          * PreLSN  : 0x10002354
+          * Version : 0x00000001(1)
+          * LSN     : 0x0000000012345678(305419896)
+          * PreLSN  : 0x0000000010002354(268444500)
           * Length  : 356
-          * Type    : INSERT
-          * Name    : foo
+          * Type    : INSERT(1)
+          * Name    : foo.bar
           * Insert  : { hello: "world" }
           */
          len += ossSnprintf ( outBuf + len, outSize - len,
                               OSS_NEWLINE
-                              " LSN    : 0x%08lx"OSS_NEWLINE,
-                              _head._lsn ) ;
+                              " Version: 0x%08lx(%d)"OSS_NEWLINE,
+                              _head._version, _head._version ) ;
          len += ossSnprintf ( outBuf + len, outSize - len,
-                              " PreLSN : 0x%08lx"OSS_NEWLINE,
-                              _head._preLsn ) ;
+                              OSS_NEWLINE
+                              " LSN    : 0x%16lx(%lld)"OSS_NEWLINE,
+                              _head._lsn, _head._lsn ) ;
+         len += ossSnprintf ( outBuf + len, outSize - len,
+                              " PreLSN : 0x%16lx(%lld)"OSS_NEWLINE,
+                              _head._preLsn, _head._preLsn ) ;
          len += ossSnprintf ( outBuf + len, outSize - len,
                               " Length : %d"OSS_NEWLINE,
                               _head._length ) ;
