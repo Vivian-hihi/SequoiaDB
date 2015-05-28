@@ -1641,30 +1641,39 @@ error :
 SDB_EXPORT void sdbDisconnect ( sdbConnectionHandle cHandle )
 {
    INT32 rc                        = SDB_OK ;
+   BOOLEAN hasLock                 = FALSE ;
    sdbConnectionStruct *connection = (sdbConnectionStruct*)cHandle ;
 
    CLIENT_UNUSED( rc ) ;
 
    HANDLE_CHECK( cHandle, connection, SDB_HANDLE_TYPE_CONNECTION ) ;
+
+   ossMutexLock( &connection->_sockMutex );
+   hasLock = TRUE ;
+   
    // if we had disconnected
    if ( NULL == connection->_sock )
    {
-      return ;
+      goto done ;
    }
-
-   if ( !clientBuildDisconnectMsg ( &connection->_pSendBuffer,
-                                    &connection->_sendBufferSize,
-                                    0, connection->_endianConvert ))
+   
+   // build disconnect msg
+   if ( SDB_OK == clientBuildDisconnectMsg ( &connection->_pSendBuffer,
+                                             &connection->_sendBufferSize,
+                                             0, connection->_endianConvert ) )
    {
-      _sendAndRecv( cHandle, connection->_sock, (MsgHeader*)connection->_pSendBuffer,
-                    NULL, NULL, FALSE, connection->_endianConvert ) ;
+      _send ( cHandle, connection->_sock, (MsgHeader*)connection->_pSendBuffer,
+              connection->_endianConvert ) ;
    }
 
-   ossMutexLock( &connection->_sockMutex );
+   // release cursor and socket resource and set socket to be NULL
    _sdbDisconnect_inner( cHandle ) ;
-   ossMutexUnlock( &connection->_sockMutex );
-
+   
 done:
+   if ( TRUE == hasLock )
+   {
+      ossMutexUnlock( &connection->_sockMutex ) ;
+   }
    return ;
 error:
    goto done ;
