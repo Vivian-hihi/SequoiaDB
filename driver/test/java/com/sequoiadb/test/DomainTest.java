@@ -73,21 +73,6 @@ public class DomainTest {
 	}
 	
 	@Test
-	public void csOfDomain(){
-		boolean result;
-		
-		result = createCSofDomain(csName1,domainName);
-		assertEquals(!standaloneFlag,result);
-		
-		if(result){
-			result = createHashCL(clName1, csName1);
-			assertEquals(!standaloneFlag,result);
-			if(!standaloneFlag)
-				getCLDetail(csName1 + "." + clName1);
-		}
-	}
-	
-	@Test
 	public void listDomains(){
 		boolean result;
 		result = listDomainsLow();
