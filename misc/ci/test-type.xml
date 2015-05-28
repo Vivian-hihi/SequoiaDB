@@ -29,6 +29,8 @@
 								<param name="test.log" value="${test.log}" />
 								<param name="test-type-list" value="${test-type-list}" />
 								<param name="BUILD_NUMBER" value="${BUILD_NUMBER}" />
+								<param name="parallel-id" value="1" />
+								<param name="parallel-num" value="3" />
 							</sdbtest>
 							<sdbtest host="${test_machine_no2}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${testcase.path}/js_testcases/reports" masterreports="${test.reports.path}" >
 								<param name="basic.testcase.path" value="${testcase.path}/js_testcases" />
@@ -42,6 +44,8 @@
 								<param name="test.log" value="${test.log}" />
 								<param name="test-type-list" value="${test-type-list}" />
 								<param name="BUILD_NUMBER" value="${BUILD_NUMBER}" />
+								<param name="parallel-id" value="2" />
+								<param name="parallel-num" value="3" />
 							</sdbtest>
 							<sdbtest host="${test_machine_no3}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${testcase.path}/js_testcases/reports" masterreports="${test.reports.path}" >
 								<param name="basic.testcase.path" value="${testcase.path}/js_testcases" />
@@ -55,6 +59,8 @@
 								<param name="test.log" value="${test.log}" />
 								<param name="test-type-list" value="${test-type-list}" />
 								<param name="BUILD_NUMBER" value="${BUILD_NUMBER}" />
+								<param name="parallel-id" value="3" />
+								<param name="parallel-num" value="3" />
 							</sdbtest>
 							<sdbtest host="${test_machine_no4}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${testcase.path}/js_testcases/reports" masterreports="${test.reports.path}" >
 								<param name="basic.testcase.path" value="${testcase.path}/js_testcases" />
@@ -68,6 +74,8 @@
 								<param name="test.log" value="${test.log}" />
 								<param name="test-type-list" value="${test-type-list}" />
 								<param name="BUILD_NUMBER" value="${BUILD_NUMBER}" />
+								<param name="parallel-id" value="1" />
+								<param name="parallel-num" value="3" />
 							</sdbtest>
 							<sdbtest host="${test_machine_no5}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${testcase.path}/js_testcases/reports" masterreports="${test.reports.path}" >
 								<param name="basic.testcase.path" value="${testcase.path}/js_testcases" />
@@ -81,6 +89,8 @@
 								<param name="test.log" value="${test.log}" />
 								<param name="test-type-list" value="${test-type-list}" />
 								<param name="BUILD_NUMBER" value="${BUILD_NUMBER}" />
+								<param name="parallel-id" value="2" />
+								<param name="parallel-num" value="3" />
 							</sdbtest>
 							<sdbtest host="${test_machine_no6}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${testcase.path}/js_testcases/reports" masterreports="${test.reports.path}" >
 								<param name="basic.testcase.path" value="${testcase.path}/js_testcases" />
@@ -94,6 +104,8 @@
 								<param name="test.log" value="${test.log}" />
 								<param name="test-type-list" value="${test-type-list}" />
 								<param name="BUILD_NUMBER" value="${BUILD_NUMBER}" />
+								<param name="parallel-id" value="3" />
+								<param name="parallel-num" value="3" />
 							</sdbtest>
 						</parallel>
 					</then>
@@ -111,6 +123,8 @@
 								<param name="test.log" value="${test.log}" />
 								<param name="test-type-list" value="${test-type-list}" />
 								<param name="BUILD_NUMBER" value="${BUILD_NUMBER}" />
+								<param name="parallel-id" value="1" />
+								<param name="parallel-num" value="3" />
 							</sdbtest>
 							<sdbtest host="${test_machine_no2}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${testcase.path}/js_testcases/reports" masterreports="${test.reports.path}" >
 								<param name="basic.testcase.path" value="${testcase.path}/js_testcases" />
@@ -124,6 +138,8 @@
 								<param name="test.log" value="${test.log}" />
 								<param name="test-type-list" value="${test-type-list}" />
 								<param name="BUILD_NUMBER" value="${BUILD_NUMBER}" />
+								<param name="parallel-id" value="2" />
+								<param name="parallel-num" value="3" />
 							</sdbtest>
 							<sdbtest host="${test_machine_no3}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${testcase.path}/js_testcases/reports" masterreports="${test.reports.path}" >
 								<param name="basic.testcase.path" value="${testcase.path}/js_testcases" />
@@ -137,6 +153,8 @@
 								<param name="test.log" value="${test.log}" />
 								<param name="test-type-list" value="${test-type-list}" />
 								<param name="BUILD_NUMBER" value="${BUILD_NUMBER}" />
+								<param name="parallel-id" value="3" />
+								<param name="parallel-num" value="3" />
 							</sdbtest>
 						</parallel>
 					</else>
