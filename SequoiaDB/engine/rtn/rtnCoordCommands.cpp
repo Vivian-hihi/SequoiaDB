@@ -5503,7 +5503,7 @@ namespace engine
       SET_RC ignoreRC ;
       rtnContextCoord *pContext        = NULL ;
       rtnContextBuf buffObj ;
-      pmdKRCB *pKRCB                   = pmdGetKRCB () ;
+      pmdKRCB *pKRCB                   = pmdGetKRCB() ;
       contextID                        = -1 ;
       pMsg->opCode                     = MSG_CAT_QUERY_TASK_REQ ;
       pMsg->TID                        = cb->getTID() ;

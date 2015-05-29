@@ -174,6 +174,7 @@ namespace engine
       CHAR *pBuff             = NULL ;
       INT32 buffLen           = 0 ;
       INT32 buffPos           = 0 ;
+      vector<CHAR*> *pBlock   = NULL ;
 
       CoordGroupSubCLMap::iterator it ;
 
@@ -188,9 +189,13 @@ namespace engine
       boDeletor = BSONObj( pDeletor ) ;
       boHint = BSONObj( pHint ) ;
 
-      rc = cb->allocBuff( DMS_PAGE_SIZE4K, &pBuff, buffLen ) ;
-      PD_RC_CHECK( rc, PDERROR, "Alloc buff[%d] failed, rc: %d",
-                   DMS_PAGE_SIZE4K, rc ) ;
+      pBlock = new vector< CHAR* >( 16 ) ;
+      if ( !pBlock )
+      {
+         PD_LOG( PDERROR, "Alloc vector failed" ) ;
+         rc = SDB_OOM ;
+         goto error ;
+      }
 
       it = grpSubCl.begin() ;
       while( it != grpSubCl.end() )
@@ -213,9 +218,13 @@ namespace engine
          INT32 roundLen = ossRoundUpToMultipleX( boNew.objsize(), 4 ) ;
          if ( buffPos + roundLen > buffLen )
          {
-            rc = cb->reallocBuff( roundLen + buffLen, &pBuff, buffLen ) ;
-            PD_RC_CHECK( rc, PDERROR, "Realloc buff[%d] failed, rc: %d",
-                         roundLen + buffLen, rc ) ;
+            INT32 alignLen = ossRoundUpToMultipleX( roundLen,
+                                                    DMS_PAGE_SIZE4K ) ;
+            rc = cb->allocBuff( alignLen, &pBuff, buffLen ) ;
+            PD_RC_CHECK( rc, PDERROR, "Alloc buff[%d] failed, rc: %d",
+                         alignLen, rc ) ;
+            pBlock->push_back( pBuff ) ;
+            buffPos = 0 ;
          }
          ossMemcpy( &pBuff[ buffPos ], boNew.objdata(), boNew.objsize() ) ;
          ioItem.iovBase = &pBuff[ buffPos ] ;
@@ -231,14 +240,19 @@ namespace engine
          ++it ;
       }
 
-      outPtr = ( ossValuePtr )pBuff ;
+      outPtr = ( ossValuePtr )pBlock ;
 
    done:
       return rc ;
    error:
-      if ( pBuff )
+      if ( pBlock )
       {
-         cb->releaseBuff( pBuff ) ;
+         for ( INT32 i = 0 ; i < pBlock->size() ; ++i )
+         {
+            cb->releaseBuff( (*pBlock)[ i ] ) ;
+         }
+         delete pBlock ;
+         pBlock = NULL ;
       }
       goto done ;
    }
@@ -252,10 +266,15 @@ namespace engine
                                        pmdEDUCB *cb,
                                        rtnProcessResult &result )
    {
-      CHAR *pBuff = ( CHAR* )itPtr ;
-      if ( NULL != pBuff )
+      vector<CHAR*> *pBlock = ( vector<CHAR*>* )itPtr ;
+      if ( NULL != pBlock )
       {
-         cb->releaseBuff( pBuff ) ;
+         for ( INT32 i = 0 ; i < pBlock->size() ; ++i )
+         {
+            cb->releaseBuff( (*pBlock)[ i ] ) ;
+         }
+         delete pBlock ;
+         pBlock = NULL ;
       }
       inMsg._datas.clear() ;
    }
