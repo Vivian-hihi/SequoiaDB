@@ -5,37 +5,37 @@
 		<BusinessType>spark</BusinessType>
                 <Property type="array">
                 	<FILLER>
-                		<Name>zoonodenum</Name>
+                		<Name>masternum</Name>
                 		<Type>int</Type>
-                		<Default>3</Default>
-                		<Valid>1,3,5,7</Valid>
+                		<Default>1</Default>
+                		<Valid>1-</Valid>
                 		<Display>select box</Display>
                 		<Edit>true</Edit>
-                		<Desc>zookeeper node Number</Desc>
+                		<Desc>spark master's Number</Desc>
                 		<Level>0</Level>
-                		<WebName>zookeeper node Number</WebName>
+                		<WebName>spark master's Number</WebName>
                 	</FILLER>
                 	<FILLER>
-                		<Name>sparkmasternum</Name>
+                		<Name>workernum</Name>
                 		<Type>int</Type>
                 		<Default>1</Default>
                 		<Valid>1-</Valid>
-                		<Display>edit box</Display>
+                		<Display>select box</Display>
                 		<Edit>true</Edit>
-                		<Desc>Spark Master node Number</Desc>
+                		<Desc>spark worker's Number</Desc>
                 		<Level>0</Level>
-                		<WebName>Spark Master node Number</WebName>
+                		<WebName>spark worker's Number</WebName>
                 	</FILLER>
                 	<FILLER>
-                		<Name>sparkworkernum</Name>
-                		<Type>int</Type>
-                		<Default>1</Default>
-                		<Valid>1-</Valid>
-                		<Display>edit box</Display>
+                		<Name>dependbusiness</Name>
+                		<Type>string</Type>
+                		<Default></Default>
+                		<Valid></Valid>
+                		<Display>select box</Display>
                 		<Edit>true</Edit>
-                		<Desc>Spark Worker node Number</Desc>
+                		<Desc>spark's dependence businessname</Desc>
                 		<Level>0</Level>
-                		<WebName>Spark Worker node Number</WebName>
+                		<WebName>spark's dependence businessname</WebName>
                 	</FILLER>
                 </Property>
  	</FILLER>
