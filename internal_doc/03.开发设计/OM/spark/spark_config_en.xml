@@ -1,0 +1,106 @@
+<Property type="array">
+	<FILLER>
+		<Name>zooinstallpath</Name>
+		<WebName>zookeeper's install path</WebName>
+		<Type>path</Type>
+		<Default>/opt/zookeeper</Default>
+		<Valid></Valid>
+		<Display>text box</Display>
+		<Edit>true</Edit>
+		<Desc>zookeeper's install path</Desc>
+		<Level>0</Level>
+		<DynamicEdit>false</DynamicEdit>
+		<BatchEdit>false</BatchEdit>
+	</FILLER>
+	<FILLER>
+		<Name>zoodatapath</Name>
+		<WebName>zookeeper's data path</WebName>
+		<Type>path</Type>
+		<Default>/opt/zookeeper/z1/data/</Default>
+		<Valid></Valid>
+		<Display>text box</Display>
+		<Edit>true</Edit>
+		<Desc>zookeeper's data path</Desc>
+		<Level>0</Level>
+		<DynamicEdit>false</DynamicEdit>
+		<BatchEdit>false</BatchEdit>
+	</FILLER>
+	<FILLER>
+		<Name>zooid</Name>
+		<WebName>zookeeper's node id</WebName>
+		<Type>int</Type>
+		<Default>1</Default>
+		<Valid></Valid>
+		<Display>text box</Display>
+		<Edit>true</Edit>
+		<Desc>zookeeper's node id</Desc>
+		<Level>0</Level>
+		<DynamicEdit>false</DynamicEdit>
+		<BatchEdit>false</BatchEdit>
+	</FILLER>
+	<FILLER>
+		<Name>sparkworkpath</Name>
+		<WebName>spark's work directory path</WebName>
+		<Type>path</Type>
+		<Default>/opt/spark/data/work</Default>
+		<Valid></Valid>
+		<Display>text box</Display>
+		<Edit>true</Edit>
+		<Desc>spark's work directory path</Desc>
+		<Level>0</Level>
+		<DynamicEdit>false</DynamicEdit>
+		<BatchEdit>false</BatchEdit>
+	</FILLER>
+	<FILLER>
+		<Name>sparklocalpath</Name>
+		<WebName>spark's local directory path</WebName>
+		<Type>path</Type>
+		<Default>/opt/spark/data/local</Default>
+		<Valid></Valid>
+		<Display>text box</Display>
+		<Edit>true</Edit>
+		<Desc>spark's local directory path</Desc>
+		<Level>0</Level>
+		<DynamicEdit>false</DynamicEdit>
+		<BatchEdit>false</BatchEdit>
+	</FILLER>
+	<FILLER>
+		<Name>sparkmasterport</Name>
+		<WebName>spark master node port</WebName>
+		<Type>int</Type>
+		<Default>7077</Default>
+		<Valid></Valid>
+		<Display>text box</Display>
+		<Edit>true</Edit>
+		<Desc>spark master node port</Desc>
+		<Level>0</Level>
+		<DynamicEdit>false</DynamicEdit>
+		<BatchEdit>false</BatchEdit>
+	</FILLER>
+	<FILLER>
+		<Name>sparkjavaopts</Name>
+		<WebName>spark daemon java opts</WebName>
+		<Type>string</Type>
+		<Default>"-Dspark.deploy.recoveryMode=ZOOKEEPER -Dspark.deploy.zookeeper.url=suse-lyb:2181 -Dspark.deploy.zookeeper.dir=/spark"</Default>
+		<Valid></Valid>
+		<Display>text box</Display>
+		<Edit>true</Edit>
+		<Desc>spark daemon java opts</Desc>
+		<Level>0</Level>
+		<DynamicEdit>false</DynamicEdit>
+		<BatchEdit>false</BatchEdit>
+	</FILLER>
+	<FILLER>
+		<Name>sparkclasspath</Name>
+		<WebName>spark's classpath</WebName>
+		<Type>string</Type>
+		<Default>/home/mount/spark/lib/sequoiadb-driver-1.12.jar:/home/mount/spark/lib/spark-sequoiadb_2.10-1.12.jar</Default>
+		<Valid></Valid>
+		<Display>text box</Display>
+		<Edit>true</Edit>
+		<Desc>spark's classpath</Desc>
+		<Level>0</Level>
+		<DynamicEdit>false</DynamicEdit>
+		<BatchEdit>false</BatchEdit>
+	</FILLER>
+</Property>
