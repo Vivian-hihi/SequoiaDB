@@ -42,6 +42,7 @@
 			<property name="testcases_dir" value="${driver_testcases_dir}" />
 			<property name="deploy_dir" value="${deploy_dir}" />
 			<property name="driver_dir" value="${WORKSPACE}/release/driver" />
+			<property name="lob_testcases_dir" value="${testcases_dir}/lob_testcases" />
 		</ant>
 	</target>
 

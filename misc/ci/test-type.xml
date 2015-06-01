@@ -220,8 +220,23 @@
 				<echo message="... Test java driver is over ..." />
 			</case>
 
+			<case value="lob">
+				<echo message="... Test lob testcases ..." />
+				<sdbtest host="${test.host.NAME}" testscript="${test.machine.deploy.path}/deploy/exec-lob-testcases.xml" remotereports="${testcase.path}/lob_testcases/reports" masterreports="${test.reports.path}" >
+					<param name="ci.properties.path" value="${test.machine.software.path}/ci.test.properties" />
+					<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
+					<param name="lob.testcase.path" value="${testcase.path}/lob_testcases/build" />
+					<param name="deploy.case.fullname" value="${deploy.case.fullname}" />
+					<param name="excludes.dir.patterns" value="" />
+					<param name="includes.dir.patterns" value="*" />
+					<param name="BUILD_NUMBER" value="${BUILD_NUMBER}" />
+					<param name="test-type-list" value="${test-type-list}" />
+				</sdbtest>
+				<echo message="... Test lob testcases ..." />
+			</case>
+
 			<case value="driver-C">
-				<echo message="...Test c driver..." />
+				<echo message="... Test c driver ..." />
 				<sdbtest host="${test.host.NAME}" testscript="${test.machine.deploy.path}/deploy/exec-driver-C-test.xml" remotereports="${testcase.path}/drivers_testcases/C/reports" masterreports="${test.reports.path}" >
 					<param name="ci.properties.path" value="${test.machine.software.path}/ci.test.properties" />
 					<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
@@ -236,7 +251,7 @@
 			</case>
 
 			<case value="driver-CPP">
-				<echo message="...Test c++ driver..." />
+				<echo message="... Test c++ driver ..." />
 				<sdbtest host="${test.host.NAME}" testscript="${test.machine.deploy.path}/deploy/exec-driver-CPP-test.xml" remotereports="${testcase.path}/drivers_testcases/CPP/reports" masterreports="${test.reports.path}" >
 					<param name="ci.properties.path" value="${test.machine.software.path}/ci.test.properties" />
 					<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
