@@ -212,7 +212,11 @@
 		</exec>
 		<echo message="${beforeTestcase.screen.output}" />
 		
-		 <math result="spare.port.step" datatype="int">
+		<echo message="all.spare.port.stop=${all.spare.port.stop}" />
+		<echo message="all.spare.port.start=${all.spare.port.start}" />
+		<echo message="parallel-num=${parallel-num}" />
+		<echo message="spare.port.step=${spare.port.step}" />
+		<math result="spare.port.step" datatype="int">
          <op op="/">
             <op op="-">
             <num value="${all.spare.port.stop}"/>
