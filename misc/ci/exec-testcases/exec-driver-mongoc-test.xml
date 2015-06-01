@@ -14,11 +14,13 @@
    </target>
    
    <target name="Test-Driver-mongoc" depends="Clean-mongoc-Reports">
+      <hostinfo prefix="host" />
+      <basename property="deploy.name" file="${deploy.case.fullname}" suffix=".xml" />
       <property name="test.suite.class.name" value="testcases-driver-mongoc.${deploy.name}-${host.NAME}-${parallel.num}" />
       <tstamp>
          <format property="testtype_begintime" pattern="yyyy-MM-dd-hh.mm.ss a" />
       </tstamp>
-      <hostinfo prefix="host" />
+      
       <echo message="Begin test driver mongoc testcases..." />
       <echo message="Perform the driver mongoc testcases,with testcase.path=${mongoc.testcase.path}" />
       <chmod file="${mongoc.testcase.path}/test-mongo" perm="u+x" />     
@@ -38,10 +40,10 @@
          <param name="testcases.path" value="${mongoc.testcase.path}" />
       </foreach>
 
-      <!-- <replaceregexp match='" name="' replace='" name="${test.suite.class.name}' flags="g" byline="true" encoding="utf-8">
+      <replaceregexp match='name=""' replace='name="${test.suite.class.name}"' flags="g" byline="true" encoding="utf-8">
          <fileset dir="${reports.path}/" includes="*" />
-      </replaceregexp> -->
-      <replaceregexp match='testcases name="' replace='classname="${test.suite.class.name}-' flags="g" byline="true" encoding="utf-8">
+      </replaceregexp>
+      <replaceregexp match='testcase name="' replace='classname="${test.suite.class.name}-' flags="g" byline="true" encoding="utf-8">
          <fileset dir="${reports.path}/" includes="*" />
      </replaceregexp>
 
@@ -75,7 +77,7 @@
       <echo message="Exec test-mongo -f -p -l ${test.case.name}" />
       <echo message="Env:LD_LIBRARY_PATH=${mongoc.testcase.libpath}" />
       <echo message="The testcase ${test.case.name} path on ${testcases.path}" />
-      <basename property="deploy.name" file="${deploy.case.fullname}" suffix=".xml" />
+      
       
 
       <echo message="**************************************************************************************************************************************************************" />
@@ -84,7 +86,7 @@
       <echo message="reports.path=${reports.path}" />
       <echo message="**************************************************************************************************************************************************************" />
       <exec executable="./test-mongo" dir="${testcases.path}" timeout="60000" outputproperty="screen.output" resultproperty="ret.code" failonerror="false">
-         <arg line=" -f -p -l ${test.case.name} -F ${reports.path}/TEST-${test.suite.class.name}.xml" />
+         <arg line=" -f -p -l ${test.case.name} -F ${reports.path}/${test.case.name}.xml" />
          <env key="LD_LIBRARY_PATH" path="${LD_LIBRARY_PATH}:${mongoc.testcase.libpath}" />
          <env key="MONGOC_TEST_HOST" value="${mongoc.test.host}" />
       </exec>     
