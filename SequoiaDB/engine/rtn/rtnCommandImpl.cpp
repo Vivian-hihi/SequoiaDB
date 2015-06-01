@@ -1494,8 +1494,7 @@ namespace engine
             // note since everyone must wait for lock before deleting su, since this
             // session is holding SU, that means no other sessions are allowed to remove
             // su and the moment, that means it's safe to directly call ctx->_su->CSName
-            if ( ossStrncmp ( ctx->getSU()->CSName(),
-                              pCollectionSpace, DMS_SU_NAME_SZ ) == 0 )
+            if ( ossStrcmp ( ctx->getSU()->CSName(), pCollectionSpace ) == 0 )
             {
                // if the su is held by myself, i have to kill the context from global
                rtnCB->contextDelete( contextID, cb ) ;
