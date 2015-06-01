@@ -37,6 +37,13 @@
          <param name="testcases.path" value="${mongoc.testcase.path}" />
       </foreach>
 
+      <replaceregexp match='" name="' replace='" name="${test.suite.class.name}' flags="g" byline="true" encoding="utf-8">
+         <fileset dir="${reports.path}/" includes="*" />
+      </replaceregexp>
+      <replaceregexp match='name="' replace='classname="${test.suite.class.name}-' flags="g" byline="true" encoding="utf-8">
+         <fileset dir="${reports.path}/" includes="*" />
+     </replaceregexp>
+
       <echo message="parallel executable" />
       <echo message="current parallel execute all testcases" /> 
       <echo message="Exec test-mongo -f " /> 
@@ -82,12 +89,6 @@
       </exec>     
       <echo message="${screen.output}" />
       <echo message="The result = ${ret.code} after exec ${test.case.name} testcase." />
-      <replaceregexp match='" name="' replace='" name="${test.suite.class.name}' flags="g" byline="true" encoding="utf-8">
-         <fileset dir="${reports.path}/" includes="*" />
-      </replaceregexp>
-      <replaceregexp match='testcase ' replace='testcases classname="${test.suite.class.name}-${test.case.name}" ' flags="g" byline="true" encoding="utf-8">
-         <fileset dir="${reports.path}/" includes="*" />
-     </replaceregexp>
    </target> 
 </project>
 
