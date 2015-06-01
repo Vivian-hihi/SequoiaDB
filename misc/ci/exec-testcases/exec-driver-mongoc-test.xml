@@ -14,6 +14,7 @@
    </target>
    
    <target name="Test-Driver-mongoc" depends="Clean-mongoc-Reports">
+      <property name="test.suite.class.name" value="testcases-driver-mongoc.${deploy.name}-${host.NAME}-${parallel.num}" />
       <tstamp>
          <format property="testtype_begintime" pattern="yyyy-MM-dd-hh.mm.ss a" />
       </tstamp>
@@ -37,10 +38,10 @@
          <param name="testcases.path" value="${mongoc.testcase.path}" />
       </foreach>
 
-      <replaceregexp match='" name="' replace='" name="${test.suite.class.name}' flags="g" byline="true" encoding="utf-8">
+      <!-- <replaceregexp match='" name="' replace='" name="${test.suite.class.name}' flags="g" byline="true" encoding="utf-8">
          <fileset dir="${reports.path}/" includes="*" />
-      </replaceregexp>
-      <replaceregexp match='name="' replace='classname="${test.suite.class.name}-' flags="g" byline="true" encoding="utf-8">
+      </replaceregexp> -->
+      <replaceregexp match='testcases name="' replace='classname="${test.suite.class.name}-' flags="g" byline="true" encoding="utf-8">
          <fileset dir="${reports.path}/" includes="*" />
      </replaceregexp>
 
@@ -75,7 +76,7 @@
       <echo message="Env:LD_LIBRARY_PATH=${mongoc.testcase.libpath}" />
       <echo message="The testcase ${test.case.name} path on ${testcases.path}" />
       <basename property="deploy.name" file="${deploy.case.fullname}" suffix=".xml" />
-      <property name="test.suite.class.name" value="testcases-driver-mongoc.${deploy.name}-${host.NAME}-${parallel.num}-${test.case.name}" />
+      
 
       <echo message="**************************************************************************************************************************************************************" />
       <echo message="test.suite.class.name=${test.suite.class.name}" />
