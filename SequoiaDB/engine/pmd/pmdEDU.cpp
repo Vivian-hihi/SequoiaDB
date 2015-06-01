@@ -343,9 +343,6 @@ namespace engine
       PD_TRACE_ENTRY ( SDB__PMDEDUCB_ISINT );
       BOOLEAN ret = FALSE ;
 
-      /// process self event
-      _processSelf() ;
-
       // mask interrupt while doing rollback
       if ( !onlyFlag && _isDoRollback )
       {
