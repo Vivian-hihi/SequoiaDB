@@ -536,6 +536,7 @@ namespace engine
       SDB_RTNCB *rtnCB = pmdGetKRCB()->getRTNCB() ;
       SINT64 contextID = -1 ;
       BOOLEAN writable = FALSE ;
+      BOOLEAN setDel = FALSE ;
       UINT32 retryTime = 0 ;
 
       SDB_ASSERT ( pCollectionSpace, "collection space can't be NULL" ) ;
@@ -553,6 +554,11 @@ namespace engine
       rc = dmsCB->writable( cb ) ;
       PD_RC_CHECK( rc, PDERROR, "Database is not writable, rc = %d", rc ) ;
       writable = TRUE ;
+
+      rc = dmsCB->setDeleting( pCollectionSpace, TRUE ) ;
+      PD_RC_CHECK( rc, PDERROR, "Set collectionspace[%s] deleting failed, "
+                   "rc: %d", pCollectionSpace, rc ) ;
+      setDel = TRUE ;
 
       // let's find out whether the collection space is held by this
       // EDU. If so we have to get rid of those contexts
@@ -617,6 +623,10 @@ namespace engine
       PD_TRACE_EXITRC ( SDB_RTNDELCSCOMMAND, rc ) ;
       return rc ;
    error :
+      if ( setDel )
+      {
+         dmsCB->setDeleting( pCollectionSpace, FALSE ) ;
+      }
       goto done ;
    }
 

@@ -873,6 +873,38 @@ namespace engine
       }
    }
 
+   INT32 _SDB_DMSCB::setDeleting( const CHAR *pName, BOOLEAN deleting )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( !pName )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      else
+      {
+         SDB_DMS_CSCB *cscb = NULL;
+         dmsStorageUnit *su = NULL ;
+         _mutex.get_shared() ;
+         rc = _CSCBNameLookup( pName, &cscb ) ;
+         if ( rc )
+         {
+            _mutex.release_shared() ;
+            goto error ;
+         }
+         su = cscb->_su ;
+         SDB_ASSERT ( su, "storage unit pointer can't be NULL" ) ;
+         su->setDeletingCS( deleting ) ;
+         _mutex.release_shared() ;
+      }
+
+   done :
+      return rc ;
+   error :
+      goto done ;
+   }
+
    INT32 _SDB_DMSCB::nameToSUAndLock ( const CHAR *pName,
                                        dmsStorageUnitID &suID,
                                        _dmsStorageUnit **su,

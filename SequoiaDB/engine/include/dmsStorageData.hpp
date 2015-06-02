@@ -428,6 +428,7 @@ namespace engine
       private:
          dmsMB             *_mb ;
          dmsMBStatInfo     *_mbStat ;
+         BOOLEAN           *_deletingCS ;
          ossSpinSLatch     *_latch ;
          UINT32            _clLID ;
          UINT16            _mbID ;
@@ -447,7 +448,7 @@ namespace engine
       {
          return SDB_INVALIDARG ;
       }
-      if ( _mbLockType == lockType )
+      if ( FALSE == *_deletingCS && _mbLockType == lockType )
       {
          return SDB_OK ;
       }
@@ -460,6 +461,10 @@ namespace engine
       if ( !DMS_IS_MB_INUSE(_mb->_flag) || _clLID != _mb->_logicalID )
       {
          return SDB_DMS_NOTEXIST ;
+      }
+      else if ( *_deletingCS )
+      {
+         return SDB_DMS_CS_DELETING ;
       }
       ossLatch( _latch, (OSS_LATCH_MODE)lockType ) ;
       // check after lock
@@ -561,6 +566,8 @@ namespace engine
 
          UINT32 logicalID () const { return _logicalCSID ; }
          dmsStorageUnitID CSID () const { return _CSID ; }
+
+         void  setDeletingCS( BOOLEAN delCS ) { _deletingCS = delCS ; }
 
          OSS_INLINE INT32  getMBContext( dmsMBContext **pContext, UINT16 mbID,
                                          UINT32 clLID, INT32 lockType = -1 );
@@ -753,6 +760,8 @@ namespace engine
          UINT32                              _logicalCSID ;
          dmsStorageUnitID                    _CSID ;
 
+         BOOLEAN                             _deletingCS ;
+
          vector<dmsMBContext*>               _vecContext ;
          ossSpinXLatch                       _latchContext ;
 
@@ -871,6 +880,7 @@ namespace engine
       (*pContext)->_mbID = mbID ;
       (*pContext)->_mb = &_dmsMME->_mbList[mbID] ;
       (*pContext)->_mbStat = &_mbStatInfo[mbID] ;
+      (*pContext)->_deletingCS = &_deletingCS ;
       (*pContext)->_latch = &_mblock[mbID] ;
       if ( SHARED == lockType || EXCLUSIVE == lockType )
       {

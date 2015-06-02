@@ -1457,6 +1457,7 @@ namespace engine
       PD_TRACE_ENTRY ( SDB_RTNDROPCSP1 ) ;
       SDB_RTNCB *rtnCB = pmdGetKRCB()->getRTNCB() ;
       SINT64 contextID = -1 ;
+      BOOLEAN setDel = FALSE ;
       UINT32 retryTime = 0 ;
       SDB_ASSERT ( pCollectionSpace, "collection space can't be NULL" ) ;
       SDB_ASSERT ( dmsCB, "dms control block can't be NULL" ) ;
@@ -1469,6 +1470,11 @@ namespace engine
          rc = SDB_INVALIDARG ;
          goto error ;
       }
+
+      rc = dmsCB->setDeleting( pCollectionSpace, TRUE ) ;
+      PD_RC_CHECK( rc, PDWARNING, "Set collectionspace[%s] deleting failed, "
+                   "rc: %d", pCollectionSpace, rc ) ;
+      setDel = TRUE ;
 
       // let's find out whether the collection space is held by this
       // EDU. If so we have to get rid of those contexts
@@ -1523,6 +1529,10 @@ namespace engine
       PD_TRACE_EXITRC ( SDB_RTNDROPCSP1, rc ) ;
       return rc ;
    error :
+      if ( setDel )
+      {
+         dmsCB->setDeleting( pCollectionSpace, FALSE ) ;
+      }
       goto done ;
    }
 

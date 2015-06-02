@@ -176,6 +176,8 @@ namespace engine
       virtual INT32  deactive () ;
       virtual INT32  fini () ;
 
+      INT32 setDeleting( const CHAR *pName, BOOLEAN deleting ) ;
+
       INT32 nameToSUAndLock ( const CHAR *pName, dmsStorageUnitID &suID,
                               _dmsStorageUnit **su,
                               OSS_LATCH_MODE lockType = SHARED,

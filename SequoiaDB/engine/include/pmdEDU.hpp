@@ -222,8 +222,11 @@ namespace engine
             _status = PMD_EDU_WAITING ;
          }
 
-         /// process self event
-         _processSelf() ;
+         /// process self event, only in agent dispatch
+         if ( resetStat )
+         {
+            _processSelf() ;
+         }
 
          if ( 0 > millsec )
          {

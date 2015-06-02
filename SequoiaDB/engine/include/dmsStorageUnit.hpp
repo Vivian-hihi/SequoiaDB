@@ -111,6 +111,7 @@ namespace engine
          UINT32      CSSequence() const { return _storageInfo._sequence ; }
          UINT32      LogicalCSID() const { return _pDataSu->logicalID() ; }
          dmsStorageUnitID CSID() const { return _pDataSu->CSID() ; }
+         void        setDeletingCS( BOOLEAN delCS ) { _pDataSu->setDeletingCS( delCS ) ; }
 
          INT64       totalSize ( UINT32 type = DMS_SU_ALL ) const ;
          INT64       totalDataPages( UINT32 type = DMS_SU_ALL ) const ;
