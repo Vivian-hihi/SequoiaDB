@@ -330,7 +330,7 @@
 #define FIELD_NAME_ALTER_TYPE                "AlterType"
 #define FIELD_NAME_ARGS                      "Args"
 #define FIELD_NAME_ALTER                     "Alter"
-#define FIELD_NAME_IGNORE_EXCEPTION          "IgnoreExcepton"
+#define FIELD_NAME_IGNORE_EXCEPTION          "IgnoreException"
 #define FIELD_NAME_KEEP_DATA                 "KeepData"
 
 #define FIELD_OP_VALUE_UPDATE                "update"
