@@ -382,7 +382,8 @@ public class CLSaveWithListArg {
 			basicObj.setUserMap(users);
 			list1.add(basicObj);
 		}
-		String[] mainKeys = {"mapProp","notExistMainKey"};
+		//String[] mainKeys = {"mapProp","notExistMainKey"};
+		String[] mainKeys = {"notExistMainKey1", "notExistMainKey2"};
 		cl.setMainKeys(mainKeys);
 		cl.save(list1);
 		DBCursor cursor = cl.query();
