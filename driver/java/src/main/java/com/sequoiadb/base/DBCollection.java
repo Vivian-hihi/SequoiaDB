@@ -125,7 +125,8 @@ public class DBCollection {
 	 * @brief Set the main keys used in save(). if no main keys are set, use the
 	 * 		  default main key "_id". 
 	 * @param keys
-	 * 		  the main keys specified by user.
+	 * 		  the main keys specified by user. the main key should exist in the
+	 *        object
 	 * @exception com.sequoiadb.Exception.BaseException when keys is null
 	 * @note 
 	 *        every time invokes the method,
@@ -286,12 +287,15 @@ public class DBCollection {
 				String key = it.next();
 				if (obj.containsField(key))
 					matcher.put(key, obj.get(key));
-				else
-					matcher.put(key, null);
 			}
 			// build rule
-			modifer.put("$set", obj);
-			upsert(matcher, modifer, null);
+			if (!matcher.isEmpty()) {
+			    modifer.put("$set", obj);
+                upsert(matcher, modifer, null);
+			}
+			else {
+			    insert(obj);
+			}
 		}
 	}
 	
@@ -353,12 +357,15 @@ public class DBCollection {
 					String key = i.next();
 					if (obj.containsField(key))
 						matcher.put(key, obj.get(key));
-					else
-						matcher.put(key, null);
 				}
-				// build rule
-				modifer.put("$set", obj);
-				upsert(matcher, modifer, null);
+				if (!matcher.isEmpty()) {
+				    // build rule
+				    modifer.put("$set", obj);
+				    upsert(matcher, modifer, null);
+				}
+				else {
+				    insert(obj);
+				}
 			}
 		}
 	}
