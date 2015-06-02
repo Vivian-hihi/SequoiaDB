@@ -744,8 +744,12 @@ namespace engine
 
       INT32 open( const bson::BSONObj & orderBy,
                   INT64 numToReturn,
-                  INT64 numToSkip,
-                  BOOLEAN includeShardingOrder = FALSE );
+                  INT64 numToSkip ) ;
+
+      INT32 open( const _rtnQueryOptions &options,
+                  const std::vector<string> &subs,
+                  BOOLEAN shardSort,
+                  _pmdEDUCB *cb ) ;
 
       virtual INT32 getMore( INT32 maxNumToReturn, rtnContextBuf &buffObj,
                              _pmdEDUCB *cb ) ;
@@ -753,24 +757,32 @@ namespace engine
       INT32 addSubContext( SINT64 contextID );
 
       BOOLEAN requireOrder () const;
-
    protected:
       virtual INT32 _prepareData( _pmdEDUCB *cb );
 
    private:
-      INT32 _prepareSubCTXData( SubCLBufList::iterator iterSubCTX,
-                              _pmdEDUCB * cb,
-                              INT32 maxNumToReturn = -1 );
+      INT32 _prepareSubCTXData( SINT64 contextID,
+                                _pmdEDUCB * cb,
+                                INT32 maxNumToReturn = -1 );
       INT32 _prepareDataByOrder( _pmdEDUCB *cb );
 
+      INT32 _initCLBuf( _pmdEDUCB *cb ) ;
+
+      INT32 _getNextContext( _pmdEDUCB *cb,
+                             SINT64 &contextID ) ;
+
+      INT32 _initArgs( const _rtnQueryOptions &options,
+                       const std::vector<string> &subs,
+                       BOOLEAN shardSort ) ;
+
    private:
-      INT64             _numToReturn;
-      INT64             _numToSkip;
-      BSONObj           _orderBy;
+      _rtnQueryOptions  _options ;
       SubCLBufList      _subCLBufList;
-      SubCLBufList      _emptyBufList;
       BOOLEAN           _includeShardingOrder;
       _ixmIndexKeyGen   *_keyGen;
+      std::list< std::string > _subs ;
+      INT64             _numToReturn ;
+      INT64             _numToSkip ;
    };
    typedef class _rtnContextMainCL rtnContextMainCL;
 

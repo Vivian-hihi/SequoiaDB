@@ -1763,8 +1763,16 @@ namespace engine
       rtnContextMainCL *pContextMainCL = NULL;
       BOOLEAN includeShardingOrder = FALSE;
       SINT64 tmpContextID = -1 ;
-      INT64 subNumToReturn = numToReturn ;
-      INT64 subNumToSkip = 0 ;
+      _rtnQueryOptions options( matcher,
+                                selector,
+                                orderBy,
+                                hint,
+                                pCollectionName,
+                                ( FLG_QUERY_EXPLAIN & flags ) ?
+                                0 : numToSkip,
+                                ( FLG_QUERY_EXPLAIN & flags ) ?
+                                -1 : numToReturn,
+                                flags, FALSE ) ;
 
       SDB_ASSERT( pCollectionName, "collection name can't be NULL!" ) ;
       SDB_ASSERT( cb, "educb can't be NULL!" );
@@ -1781,19 +1789,7 @@ namespace engine
          goto error;
       }
 
-      if ( strSubCLList.size() <= 1 )
-      {
-         includeShardingOrder = FALSE ;
-         subNumToSkip = numToSkip ;
-         numToSkip = 0 ;
-      }
-      else
-      {
-         if ( numToReturn > 0 && numToSkip > 0 )
-         {
-            subNumToReturn = numToReturn + numToSkip ;
-         }
-      }
+      options._query = boNewMatcher ;
 
       if ( includeShardingOrder )
       {
@@ -1812,40 +1808,13 @@ namespace engine
                    "Failed to create new main-collection context(rc=%d)",
                    rc );
 
-      rc = pContextMainCL->open( orderBy,
-                                 ( FLG_QUERY_EXPLAIN & flags ) ?
-                                 -1 : numToReturn,
-                                 ( FLG_QUERY_EXPLAIN & flags ) ?
-                                 0 : numToSkip,
-                                 includeShardingOrder );
+      rc = pContextMainCL->open( options,
+                                 strSubCLList,
+                                 includeShardingOrder,
+                                 cb );
       PD_RC_CHECK( rc, PDERROR,
                    "Open main-collection context failed(rc=%d)",
                    rc );
-
-      {
-         rtnContextBase *pSubContext = NULL ;
-         std::vector< std::string >::iterator iterSubCLSet =
-            strSubCLList.begin() ;
-         while( iterSubCLSet != strSubCLList.end() )
-         {
-            SINT64 subContextID = -1;
-            rc = rtnQuery( (*iterSubCLSet).c_str(), selector, boNewMatcher,
-                           orderBy, hint, flags, cb, subNumToSkip,
-                           subNumToReturn, _pDmsCB, _pRtnCB,
-                           subContextID, &pSubContext ) ;
-            PD_RC_CHECK( rc, PDERROR,
-                         "Query sub-collection(%s) failed!(rc=%d)",
-                         iterSubCLSet->c_str(), rc ) ;
-            /// set write info
-            if ( pSubContext && pSubContext->isWrite() )
-            {
-               pSubContext->setWriteInfo( _pDpsCB, w ) ;
-            }
-            /// add sub context
-            pContextMainCL->addSubContext( subContextID ) ;
-            ++iterSubCLSet;
-         }
-      }
 
       if ( FLG_QUERY_EXPLAIN & flags )
       {
