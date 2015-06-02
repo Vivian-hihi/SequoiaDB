@@ -64,17 +64,8 @@ const UINT32 RTN_LOOP_WRITE_LEN = DMS_PAGE_SIZE512K * 4 ;
    INT32 _rtnLobWindow::init( INT32 pageSize )
    {
       INT32 rc = SDB_OK ;
-/*
       SDB_ASSERT( DMS_DO_NOT_CREATE_LOB < pageSize,
                   "invalid arguments" ) ;
-*/
-      if ( pageSize <= DMS_DO_NOT_CREATE_LOB )
-      {
-         PD_LOG( PDERROR, "invalid page size:%d, it should be larger than 0",
-                 pageSize ) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
 
       SDB_ASSERT( _writeData.empty(), "impossible" ) ;
 
