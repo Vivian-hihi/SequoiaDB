@@ -21,6 +21,7 @@
 package com.sequoiadb.base;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -245,6 +246,15 @@ public class Sequoiadb {
 		ConfigOptions opts = options;
 		if (options == null)
 			opts = new ConfigOptions();
+		
+		Iterator<String> tmpIter = connStrings.iterator();
+		while ( tmpIter.hasNext() ) {
+		    String tmpStr = tmpIter.next();
+		    if ( null == tmpStr ) {
+		        tmpIter.remove();
+		    }
+		}
+
 		int size = connStrings.size();
 		if (0 == size)
 		{
