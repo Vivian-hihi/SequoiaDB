@@ -556,7 +556,7 @@ namespace engine
       writable = TRUE ;
 
       rc = dmsCB->setDeleting( pCollectionSpace, TRUE ) ;
-      PD_RC_CHECK( rc, PDERROR, "Set collectionspace[%s] deleting failed, "
+      PD_RC_CHECK( rc, PDWARNING, "Set collectionspace[%s] deleting failed, "
                    "rc: %d", pCollectionSpace, rc ) ;
       setDel = TRUE ;
 
