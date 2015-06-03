@@ -421,6 +421,12 @@ public:
        \retval Returns the number of documents matching the query
    */
    int count ( array|string $condition = NULL ) ;
+
+   /** \fn int truncate ( void )
+       \brief Removes all rows from a collection without logging the individual row deletions.
+       \retval Returns the database response
+   */
+   int truncate ( void ) ;
 } ;
 
 /** \class SequoiaCursor

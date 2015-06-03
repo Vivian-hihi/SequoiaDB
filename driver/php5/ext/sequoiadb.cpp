@@ -311,6 +311,7 @@ const zend_function_entry sequoiadb_collection_functions[] = {
    PHP_ME ( SequoiaCL, count            , NULL, ZEND_ACC_PUBLIC )
    PHP_ME ( SequoiaCL, __destruct       , NULL, ZEND_ACC_PUBLIC )
    PHP_ME ( SequoiaCL, split            , NULL, ZEND_ACC_PUBLIC )
+   PHP_ME ( SequoiaCL, truncate         , NULL, ZEND_ACC_PUBLIC )
    PHP_FE_END
 };
 
@@ -2528,6 +2529,25 @@ PHP_METHOD ( SequoiaCL, count )
       RETURN_LONG ( -1 ) ;
    }
    RETURN_LONG ( count ) ;
+}
+
+PHP_METHOD ( SequoiaCL, truncate )
+{
+   INT32 rc = SDB_OK ;
+   sdbCollection *collection = NULL ;
+   CHAR *error     = NULL ;
+
+   GETCLASSFROMZVAL ( getThis(), "_collection", sdbCollection, collection ) ;
+   if ( !collection )
+   {
+      SETERROR ( getThis(), SDB_PHP_DRIVER_INTERNAL_ERROR ) ;
+      PRINTFERROR ( SDB_PHP_DRIVER_INTERNAL_ERROR, error ) ;
+      RETURN_ARRAY_STRING ( getThis(), error, 0 ) ;
+   }
+   rc = clTruncate ( collection ) ;
+   SETERROR ( getThis(), rc ) ;
+   PRINTFERROR ( rc, error ) ;
+   RETURN_ARRAY_STRING ( getThis(), error, 0 ) ;
 }
 
 PHP_METHOD ( SequoiaCL, __destruct )

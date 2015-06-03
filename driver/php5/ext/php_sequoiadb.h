@@ -124,6 +124,7 @@ PHP_METHOD ( SequoiaCL, getCSName ) ;
 PHP_METHOD ( SequoiaCL, getCollectionName ) ;
 PHP_METHOD ( SequoiaCL, getFullName ) ;
 PHP_METHOD ( SequoiaCL, count ) ;
+PHP_METHOD ( SequoiaCL, truncate ) ;
 
 PHP_METHOD ( SequoiaCursor, __construct ) ;
 PHP_METHOD ( SequoiaCursor, __destruct ) ;

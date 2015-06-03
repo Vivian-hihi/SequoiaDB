@@ -861,6 +861,11 @@ INT32 getCount ( sdbCollection *collection,
    return rc ;
 }
 
+INT32 clTruncate( sdbCollection *collection )
+{
+   return collection->truncate() ;
+}
+
 INT32 getNext ( sdbCursor *query, CHAR **pBuf, INT32 *bufSize )
 {
    INT32 rc = SDB_OK ;

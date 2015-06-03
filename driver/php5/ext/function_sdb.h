@@ -183,6 +183,8 @@ INT32 getCount ( sdbCollection *collection,
                  const CHAR *condition ,
                  INT64 &count ) ;
 
+INT32 clTruncate( sdbCollection *collection ) ;
+
 /*************** cursor ******************************/
 
 INT32 getNext ( sdbCursor *query, CHAR **pBuf, INT32 *bufSize ) ;
