@@ -150,6 +150,14 @@ namespace engine
 
       INT32 groupName2ID ( const CHAR* name, UINT32 &id ) ;
 
+      UINT32   getLocalGroupList( GROUP_VEC &groupLst,
+                                  BOOLEAN exceptCata = FALSE,
+                                  BOOLEAN exceptCoord = TRUE ) ;
+
+      UINT32   getLocalGroupList( CoordGroupList &groupLst,
+                                  BOOLEAN exceptCata = FALSE,
+                                  BOOLEAN exceptCoord = TRUE ) ;
+
       void  addGroupInfo ( CoordGroupInfoPtr &groupInfo ) ;
 
       void  removeGroupInfo( UINT32 groupID ) ;

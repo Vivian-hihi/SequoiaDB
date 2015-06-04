@@ -172,6 +172,142 @@ namespace engine
       return rc ;
    }
 
+   INT32 rtnCoordCommand::_processNodesReply( REPLY_QUE &replyQue,
+                                              ROUTE_RC_MAP &faileds,
+                                              rtnContextCoord *pContext,
+                                              SET_RC *pIgnoreRC,
+                                              ROUTE_SET *pSucNodes )
+   {
+      INT32 rc = SDB_OK ;
+      BOOLEAN takeOver = FALSE ;
+      MsgOpReply *pReply = NULL ;
+      MsgRouteID nodeID ;
+
+      while( !replyQue.empty() )
+      {
+         pReply = ( MsgOpReply *)( replyQue.front() ) ;
+         replyQue.pop() ;
+
+         takeOver = FALSE ;
+         nodeID.value = pReply->header.routeID.value ;
+
+         if ( SDB_OK == pReply->flags )
+         {
+            if ( pSucNodes )
+            {
+               pSucNodes->insert( nodeID.value ) ;
+            }
+
+            if ( pContext )
+            {
+               rc = pContext->addSubContext( pReply, takeOver ) ;
+               if ( rc )
+               {
+                  PD_LOG( PDERROR, "Add sub data[node: %s, context: %lld] to "
+                          "context[%s] failed, rc: %d",
+                          routeID2String( nodeID ).c_str(), pReply->contextID,
+                          pContext->toString().c_str(), rc ) ;
+               }
+            }
+            else
+            {
+               SDB_ASSERT( pReply->contextID == -1, "Context leak" ) ;
+            }
+         }
+         else if ( pIgnoreRC && pIgnoreRC->end() !=
+                   pIgnoreRC->find( pReply->flags ) )
+         {
+            /// ignored
+         }
+         else
+         {
+            PD_LOG( PDINFO, "Failed to process reply[node: %s, flag: %d]",
+                    routeID2String( nodeID ).c_str(), pReply->flags ) ;
+            faileds[ nodeID.value ] = pReply->flags ;
+         }
+
+         if ( !takeOver )
+         {
+            SDB_OSS_FREE( pReply ) ;
+            pReply = NULL ;
+         }
+      }
+
+      return rc ;
+   }
+
+   INT32 rtnCoordCommand::_buildFailedNodeReply( ROUTE_RC_MAP &failedNodes,
+                                                 rtnContextCoord *pContext )
+   {
+      INT32 rc = SDB_OK ;
+      SDB_ASSERT( pContext != NULL, "pContext can't be NULL!" ) ;
+
+      CoordCB *pCoordcb = pmdGetKRCB()->getCoordCB() ;
+      ROUTE_RC_MAP::iterator iter ;
+      CoordGroupInfoPtr groupInfo ;
+      string strHostName ;
+      string strServiceName ;
+      string strNodeName ;
+      MsgRouteID routeID ;
+      BSONObj errObj ;
+      BSONObjBuilder builder ;
+      BSONArrayBuilder arrayBD( builder.subarrayStart(
+                                FIELD_NAME_ERROR_NODES ) ) ;
+
+      if ( 0 == failedNodes.size() )
+      {
+         goto done ;
+      }
+
+      iter = failedNodes.begin() ;
+      while ( iter != failedNodes.end() )
+      {
+         routeID.value = iter->first ;
+         rc = pCoordcb->getGroupInfo( routeID.columns.groupID, groupInfo ) ;
+         if ( rc )
+         {
+            PD_LOG( PDWARNING, "Failed to get group[%d] info, rc: %d",
+                    routeID.columns.groupID, rc ) ;
+            errObj = BSON( FIELD_NAME_NODEID <<
+                           (INT32)routeID.columns.nodeID <<
+                           FIELD_NAME_RCFLAG << iter->second ) ;
+         }
+         else
+         {
+            routeID.columns.serviceID = MSG_ROUTE_LOCAL_SERVICE ;
+            rc = groupInfo->getGroupItem()->getNodeInfo( routeID, strHostName,
+                                                         strServiceName ) ;
+            if ( rc )
+            {
+               PD_LOG( PDWARNING, "Failed to get node[%d] info failed, rc: %d",
+                       routeID.columns.nodeID, rc ) ;
+               errObj = BSON( FIELD_NAME_NODEID <<
+                              (INT32)routeID.columns.nodeID <<
+                              FIELD_NAME_RCFLAG << iter->second ) ;
+            }
+            else
+            {
+               strNodeName = strHostName + ":" + strServiceName ;
+               errObj = BSON( FIELD_NAME_NODE_NAME << strNodeName <<
+                              FIELD_NAME_RCFLAG << iter->second ) ;
+            }
+         }
+
+         arrayBD.append( errObj ) ;
+         ++iter ;
+      }
+
+      arrayBD.done() ;
+      rc = pContext->append( builder.obj() ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to append obj, rc: %d", rc ) ;
+      rc = SDB_OK ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 rtnCoordCommand::_executeOnGroups( MsgHeader *pMsg,
                                             pmdEDUCB *cb,
                                             const CoordGroupList &groupLst,
@@ -484,12 +620,7 @@ namespace engine
       INT32 msgBufLen = 0 ;
       contextID = -1 ;
 
-      rc = msgBuildQueryMsg( &msgBuf, &msgBufLen, options._fullName,
-                             options._flag, 0, options._skip,
-                             options._limit, &( options._query ),
-                             &( options._selector ),
-                             &( options._orderBy ),
-                             &( options._hint ) ) ;
+      rc = options.toQueryMsg( &msgBuf, msgBufLen ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to build query msg:%d", rc ) ;
@@ -618,6 +749,239 @@ namespace engine
    error :
       goto done ;
    #endif // _DEBUG
+   }
+
+   INT32 rtnCoordCommand::executeOnNodes( MsgHeader *pMsg,
+                                          pmdEDUCB *cb,
+                                          ROUTE_SET &nodes,
+                                          ROUTE_RC_MAP &faileds,
+                                          ROUTE_SET *pSucNodes,
+                                          SET_RC *pIgnoreRC,
+                                          rtnContextCoord *pContext )
+   {
+      INT32 rc                      = SDB_OK ;
+      INT32 rcTmp                   = SDB_OK ;
+      pmdKRCB *krcb                 = pmdGetKRCB() ;
+      CoordCB *pCoordCB             = krcb->getCoordCB() ;
+      netMultiRouteAgent *pAgent    = pCoordCB->getRouteAgent() ;
+      REQUESTID_MAP sendNodes ;
+      REPLY_QUE replyQue ;
+
+      /// clear msg
+      pMsg->TID = cb->getTID() ;
+      pMsg->routeID.value = MSG_INVALID_ROUTEID ;
+
+      /// send msg
+      rtnCoordSendRequestToNodes( (void *)pMsg, nodes, pAgent, cb,
+                                  sendNodes, faileds ) ;
+      /// recv reply
+      rcTmp = rtnCoordGetReply( cb, sendNodes, replyQue,
+                                MAKE_REPLY_TYPE(pMsg->opCode),
+                                TRUE, FALSE ) ;
+      rc = rc ? rc : rcTmp ;
+      /// process reply
+      rcTmp = _processNodesReply( replyQue, faileds, pContext,
+                                  pIgnoreRC, pSucNodes ) ;
+      rc = rc ? rc : rcTmp ;
+
+      if ( rc )
+      {
+         rtnClearReplyQue( &replyQue ) ;
+         rtnCoordClearRequest( cb, sendNodes ) ;
+      }
+
+      return rc ;
+   }
+
+   INT32 rtnCoordCommand::executeOnNodes( MsgHeader *pMsg,
+                                          pmdEDUCB *cb,
+                                          FILTER_BSON_ID filterID,
+                                          NODE_SEL_STY emptyFilterSel,
+                                          rtnContextCoord **ppContext,
+                                          BOOLEAN openEmptyContext,
+                                          SET_RC *pIgnoreRC,
+                                          ROUTE_RC_MAP *pFailedNodes,
+                                          ROUTE_SET *pSucNodes )
+   {
+      INT32 rc = SDB_OK ;
+      pmdKRCB *pKrcb = pmdGetKRCB() ;
+      SDB_RTNCB *pRtncb = pKrcb->getRTNCB() ;
+      CoordCB *pCoordcb = pKrcb->getCoordCB() ;
+      rtnQueryOptions queryOption ;
+      const CHAR *pSrcFilterObjData = NULL ;
+      BSONObj *pFilterObj = NULL ;
+      rtnCoordCtrlParam ctrlParam ;
+
+      CoordGroupList allGroupLst ;
+      CoordGroupList groupLst ;
+      ROUTE_SET sendNodes ;
+      ROUTE_RC_MAP failedNodes ;
+      BSONObj newFilterObj ;
+
+      CHAR *pNewMsg = NULL ;
+      INT32 newMsgSize = 0 ;
+      INT64 contextID = -1 ;
+      rtnContextCoord *pTmpContext = NULL ;
+      BOOLEAN needReset = FALSE ;
+
+      /// 1. extrace msg
+      rc = queryOption.fromQueryMsg( (CHAR*)pMsg ) ;
+      PD_RC_CHECK( rc, PDERROR, "Extrace query msg failed, rc: %d", rc ) ;
+      /// 2. get filter obj
+      pFilterObj = rtnCoordGetFilterByID( filterID, queryOption ) ;
+      pSrcFilterObjData = pFilterObj->objdata() ;
+      /// 3. parse control param
+      rc = rtnCoordParseControlParam( *pFilterObj, ctrlParam, &newFilterObj ) ;
+      PD_RC_CHECK( rc, PDERROR, "prase control param failed, rc: %d", rc ) ;
+      *pFilterObj = newFilterObj ;
+
+      if ( ctrlParam._onSelf )
+      {
+         rc = SDB_COORD_UNKNOWN_OP_REQ ;
+         goto error ;
+      }
+      /// 4. parse groups
+      rc = rtnCoordGetAllGroupList( cb, allGroupLst ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to get all group list, rc: %d",
+                   rc ) ;
+      if ( !pFilterObj->isEmpty() )
+      {
+         rc = rtnCoordParseGroupList( cb, *pFilterObj, groupLst,
+                                      &newFilterObj ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to parse groups, rc: %d", rc  ) ;
+         *pFilterObj = newFilterObj ;
+      }
+      if ( 0 == groupLst.size() )
+      {
+         groupLst = allGroupLst ;
+      }
+      /// 5. parse nodes
+      rc = rtnCoordGetGroupNodes( cb, *pFilterObj, emptyFilterSel,
+                                  groupLst, sendNodes, &newFilterObj ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to get nodes, rc: %d", rc ) ;
+      if ( sendNodes.size() == 0 )
+      {
+         PD_LOG( PDWARNING, "Node specfic nodes[%s]",
+                 pFilterObj->toString().c_str() ) ;
+         rc = SDB_CLS_NODE_NOT_EXIST ;
+         goto error ;
+      }
+      *pFilterObj = newFilterObj ;
+
+      ///6. open context
+      if ( ppContext )
+      {
+         if ( NULL == *ppContext )
+         {
+            // create context
+            rc = pRtncb->contextNew( RTN_CONTEXT_COORD,
+                                     (rtnContext **)ppContext,
+                                     contextID, cb ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to allocate context(rc=%d)",
+                         rc ) ;
+         }
+         else
+         {
+            contextID = (*ppContext)->contextID() ;
+            // the context is create in out side, do nothing
+         }
+         pTmpContext = *ppContext ;
+      }
+      if ( pTmpContext && !pTmpContext->isOpened() )
+      {
+         if ( openEmptyContext )
+         {
+            rc = pTmpContext->open( BSONObj(), BSONObj(), -1, 0 ) ;
+         }
+         else
+         {
+            BSONObj srcSelector = queryOption._selector ;
+            INT64 srcLimit = queryOption._limit ;
+            INT64 srcSkip = queryOption._skip ;
+
+            if ( sendNodes.size() > 1 )
+            {
+               if ( srcLimit > 0 && srcSkip > 0 )
+               {
+                  queryOption._limit = srcLimit + srcSkip ;
+               }
+               queryOption._skip = 0 ;
+            }
+            else
+            {
+               srcLimit = -1 ;
+               srcSkip = 0 ;
+            }
+
+            // build new selector
+            rtnNeedResetSelector( srcSelector, queryOption._orderBy,
+                                  needReset ) ;
+            if ( needReset )
+            {
+               queryOption._selector = BSONObj() ;
+            }
+            // open context
+            rc = pTmpContext->open( queryOption._orderBy,
+                                    needReset ? srcSelector : BSONObj(),
+                                    srcLimit, srcSkip ) ;
+         }
+         PD_RC_CHECK( rc, PDERROR, "Open context failed(rc=%d)", rc ) ;
+      }
+
+      /// 7. ensure new msg
+      if ( pSrcFilterObjData == pFilterObj->objdata() && !needReset )
+      {
+         /// not change
+         pNewMsg = (CHAR*)pMsg ;
+         MsgOpQuery *pQueryMsg = ( MsgOpQuery* )pNewMsg ;
+         pQueryMsg->numToReturn = queryOption._limit ;
+         pQueryMsg->numToSkip = queryOption._skip ;
+      }
+      else
+      {
+         rc = queryOption.toQueryMsg( &pNewMsg, newMsgSize ) ;
+         PD_RC_CHECK( rc, PDERROR, "Build new query message failed, rc: %d",
+                      rc ) ;
+      }
+
+      /// 8. execute
+      rc = executeOnNodes( (MsgHeader*)pNewMsg, cb, sendNodes,
+                           failedNodes, pSucNodes, pIgnoreRC,
+                           pTmpContext ) ;
+      PD_RC_CHECK( rc, PDERROR, "Execute on nodes failed, rc: %d", rc ) ;
+
+      /// 9. build failed result
+      if ( pFailedNodes )
+      {
+         *pFailedNodes = failedNodes ;
+      }
+      if ( pTmpContext )
+      {
+         rc = _buildFailedNodeReply( failedNodes, pTmpContext ) ;
+         PD_RC_CHECK( rc, PDERROR, "Build failed node reply failed, rc: %d",
+                      rc ) ;
+      }
+      else if ( !pFailedNodes && failedNodes.size() > 0 )
+      {
+         rc = failedNodes.begin()->second ;
+         goto error ;
+      }
+
+   done:
+      if ( pNewMsg != (CHAR*)pMsg )
+      {
+         SDB_OSS_FREE( pNewMsg ) ;
+         pNewMsg = NULL ;
+         newMsgSize = 0 ;
+      }
+      return rc ;
+   error:
+      if ( -1 != contextID )
+      {
+         pRtncb->contextDelete( contextID, cb ) ;
+         *ppContext = NULL ;
+      }
+      goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCODEFCOM_EXE, "rtnCoordDefaultCommand::execute" )
@@ -2832,10 +3196,7 @@ namespace engine
       CHAR *pHint                      = NULL ;
 
       // parse msg
-      rc = msgExtractQuery( (CHAR *)pMsg, &queryOpt._flag,
-                            (CHAR**)&queryOpt._fullName, &queryOpt._skip,
-                            &queryOpt._limit, &pQuery, &pSelector,
-                            &pOrderBy, &pHint ) ;
+      rc = queryOpt.fromQueryMsg( (CHAR*)pMsg ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Extract query message failed, rc: %d", rc ) ;

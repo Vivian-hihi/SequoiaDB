@@ -189,6 +189,24 @@ namespace engine
                                              pmdEDUCB *cb,
                                              vector<BSONObj> &objs ) ;
 
+      INT32         executeOnNodes( MsgHeader *pMsg,
+                                    pmdEDUCB *cb,
+                                    ROUTE_SET &nodes,
+                                    ROUTE_RC_MAP &faileds,
+                                    ROUTE_SET *pSucNodes = NULL,
+                                    SET_RC *pIgnoreRC = NULL,
+                                    rtnContextCoord *pContext = NULL ) ;
+
+      INT32         executeOnNodes( MsgHeader *pMsg,
+                                    pmdEDUCB *cb,
+                                    FILTER_BSON_ID filterID,
+                                    NODE_SEL_STY emptyFilterSel,
+                                    rtnContextCoord **ppContext = NULL,
+                                    BOOLEAN openEmptyContext = FALSE,
+                                    SET_RC *pIgnoreRC = NULL,
+                                    ROUTE_RC_MAP *pFailedNodes = NULL,
+                                    ROUTE_SET *pSucNodes = NULL ) ;
+
    protected:
       virtual void _printDebug ( CHAR *pReceiveBuffer, const CHAR *pFuncName ) ;
 
@@ -201,6 +219,15 @@ namespace engine
 
       INT32 _processSucReply( ROUTE_REPLY_MAP &okReply,
                               rtnContextCoord *pContext ) ;
+
+      INT32 _processNodesReply( REPLY_QUE &replyQue,
+                                ROUTE_RC_MAP &faileds,
+                                rtnContextCoord *pContext = NULL,
+                                SET_RC *pIgnoreRC = NULL,
+                                ROUTE_SET *pSucNodes = NULL ) ;
+
+      INT32 _buildFailedNodeReply( ROUTE_RC_MAP &failedNodes,
+                                   rtnContextCoord *pContext ) ;
 
       INT32 _executeOnGroups ( MsgHeader *pMsg,
                                pmdEDUCB *cb,

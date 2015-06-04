@@ -37,7 +37,10 @@
 
 #include "rtnQueryOptions.hpp"
 #include "ossUtil.hpp"
+#include "msgMessage.hpp"
 #include <sstream>
+
+using namespace bson ;
 
 namespace engine
 {
@@ -118,4 +121,61 @@ namespace engine
       return ss.str() ;
    }
 
+   INT32 _rtnQueryOptions::fromQueryMsg( CHAR *pMsg )
+   {
+      INT32 rc = SDB_OK ;
+      CHAR *pQuery = NULL ;
+      CHAR *pSelector = NULL ;
+      CHAR *pOrderBy = NULL ;
+      CHAR *pHint = NULL ;
+
+      rc = msgExtractQuery( pMsg, &_flag, (CHAR**)&_fullName, &_skip, &_limit,
+                            &pQuery, &pSelector, &pOrderBy, &pHint ) ;
+      PD_RC_CHECK( rc, PDERROR, "Extrace query msg failed, rc: %d", rc ) ;
+
+      if ( NULL != _fullNameBuf )
+      {
+         SDB_OSS_FREE( _fullNameBuf ) ;
+         _fullNameBuf = NULL ;
+      }
+
+      try
+      {
+         _query = BSONObj( pQuery ) ;
+         _selector = BSONObj( pSelector ) ;
+         _orderBy = BSONObj( pOrderBy ) ;
+         _hint = BSONObj( pHint ) ;
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Extrace query msg occur exception: %s",
+                 e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _rtnQueryOptions::toQueryMsg( CHAR **ppMsg, INT32 &buffSize ) const
+   {
+      INT32 rc = SDB_OK ;
+
+      SDB_ASSERT( ppMsg, "ppMsg can't be NULL" ) ;
+
+      rc = msgBuildQueryMsg( ppMsg, &buffSize, _fullName, _flag, 0,
+                             _skip, _limit, &_query, &_selector, &_orderBy,
+                             &_hint ) ;
+      PD_RC_CHECK( rc, PDERROR, "Build query msg failed, rc: %d", rc ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
 }
+

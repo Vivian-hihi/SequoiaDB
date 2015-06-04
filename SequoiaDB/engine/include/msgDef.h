@@ -260,6 +260,7 @@
 #define FIELD_NAME_DATA                      "Data"
 #define FIELD_NAME_DATALEN                   "DataLen"
 #define FIELD_NAME_ORG_LSNOFFSET             "OrgOffset"
+#define FIELD_NAME_ONSELF                    "OnSelf"
 
 #define FIELD_NAME_MODIFY                    "$Modify"
 #define FIELD_NAME_OP                        "OP"

@@ -355,6 +355,58 @@ namespace engine
       return SDB_OK ;
    }
 
+   UINT32 _CoordCB::getLocalGroupList( GROUP_VEC &groupLst,
+                                       BOOLEAN exceptCata,
+                                       BOOLEAN exceptCoord )
+   {
+      UINT32 count = 0 ;
+      ossScopedLock _lock( &_nodeGroupMutex, SHARED ) ;
+      CoordGroupMap::iterator it = _nodeGroupInfo.begin() ;
+      while( it != _nodeGroupInfo.end() )
+      {
+         if ( CATALOG_GROUPID == it->first && exceptCata )
+         {
+            ++it ;
+            continue ;
+         }
+         else if ( COORD_GROUPID == it->first && exceptCoord )
+         {
+            ++it ;
+            continue ;
+         }
+         groupLst.push_back( it->second ) ;
+         ++count ;
+         ++it ;
+      }
+      return count ;
+   }
+
+   UINT32 _CoordCB::getLocalGroupList( CoordGroupList &groupLst,
+                                       BOOLEAN exceptCata,
+                                       BOOLEAN exceptCoord )
+   {
+      UINT32 count = 0 ;
+      ossScopedLock _lock( &_nodeGroupMutex, SHARED ) ;
+      CoordGroupMap::iterator it = _nodeGroupInfo.begin() ;
+      while( it != _nodeGroupInfo.end() )
+      {
+         if ( CATALOG_GROUPID == it->first && exceptCata )
+         {
+            ++it ;
+            continue ;
+         }
+         else if ( COORD_GROUPID == it->first && exceptCoord )
+         {
+            ++it ;
+            continue ;
+         }
+         groupLst[ it->first ] = it->first ;
+         ++count ;
+         ++it ;
+      }
+      return count ;
+   }
+
    void _CoordCB::addGroupInfo ( CoordGroupInfoPtr &groupInfo )
    {
       ossScopedLock _lock( &_nodeGroupMutex, EXCLUSIVE ) ;

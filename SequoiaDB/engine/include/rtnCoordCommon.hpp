@@ -47,7 +47,6 @@ using namespace bson ;
 namespace engine
 {
    typedef std::queue<CHAR *>                         REPLY_QUE ;
-   typedef std::vector< CoordGroupInfoPtr >           GROUP_VEC ;
    typedef std::map< UINT64, INT32 >                  ROUTE_RC_MAP ;
    typedef std::map< UINT64, MsgHeader* >             ROUTE_REPLY_MAP ;
    typedef std::map< UINT32, netIOVec >               GROUP_2_IOVEC ;
@@ -333,7 +332,8 @@ namespace engine
                                     const BSONObj *query = NULL );
 
    INT32 rtnCoordParseGroupList( pmdEDUCB *cb, const BSONObj &obj,
-                                 CoordGroupList &groupList ) ;
+                                 CoordGroupList &groupList,
+                                 BSONObj *pNewObj = NULL ) ;
 
    enum FILTER_BSON_ID
    {
@@ -342,6 +342,10 @@ namespace engine
       FILTER_ID_ORDERBY,
       FILTER_ID_HINT
    } ;
+
+   BSONObj* rtnCoordGetFilterByID( FILTER_BSON_ID filterID,
+                                   rtnQueryOptions &queryOption ) ;
+
    INT32 rtnCoordParseGroupList( pmdEDUCB *cb, MsgOpQuery *pMsg,
                                  FILTER_BSON_ID filterObjID,
                                  CoordGroupList &groupList ) ;
@@ -349,12 +353,14 @@ namespace engine
    INT32 rtnCoordGetAllGroupList( pmdEDUCB * cb, GROUP_VEC &groupLst,
                                   const BSONObj *query = NULL,
                                   BOOLEAN exceptCata = FALSE,
-                                  BOOLEAN exceptCoord = TRUE ) ;
+                                  BOOLEAN exceptCoord = TRUE,
+                                  BOOLEAN useLocalWhenFailed = TRUE ) ;
 
    INT32 rtnCoordGetAllGroupList( pmdEDUCB * cb, CoordGroupList &groupList,
                                   const BSONObj *query = NULL,
                                   BOOLEAN exceptCata = FALSE,
-                                  BOOLEAN exceptCoord = TRUE ) ;
+                                  BOOLEAN exceptCoord = TRUE,
+                                  BOOLEAN useLocalWhenFailed = TRUE ) ;
 
    INT32 rtnGroupList2GroupPtr( pmdEDUCB *cb, CoordGroupList &groupList,
                                 CoordGroupMap &groupMap,
@@ -371,7 +377,8 @@ namespace engine
    } ;
    INT32 rtnCoordGetGroupNodes( pmdEDUCB *cb, const BSONObj &filterObj,
                                 NODE_SEL_STY emptyFilterSel,
-                                CoordGroupList &groupList, ROUTE_SET &nodes ) ;
+                                CoordGroupList &groupList, ROUTE_SET &nodes,
+                                BSONObj *pNewObj = NULL ) ;
 
    void  rtnCoordGetNodePos( INT32 preferReplicaType,
                              clsGroupItem *groupItem,
@@ -408,6 +415,21 @@ namespace engine
                                    BOOLEAN canUpdate = TRUE ) ;
 
    INT32 rtnCataChangeNtyToAllNodes( pmdEDUCB *cb ) ;
+
+   struct _rtnCoordCtrlParam
+   {
+      BOOLEAN     _onSelf ;
+
+      _rtnCoordCtrlParam()
+      {
+         _onSelf  = FALSE ;
+      }
+   } ;
+   typedef _rtnCoordCtrlParam rtnCoordCtrlParam ;
+
+   INT32 rtnCoordParseControlParam( const BSONObj &obj,
+                                    rtnCoordCtrlParam &param,
+                                    BSONObj *pNewObj = NULL ) ;
 
 }
 

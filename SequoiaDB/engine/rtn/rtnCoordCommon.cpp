@@ -2363,7 +2363,7 @@ namespace engine
       do
       {
          if ( SDB_OK == MSG_GET_INNER_REPLY_RC(pReply) &&
-              pReply->messageLength >= headerLen + 5 )
+              (UINT32)pReply->messageLength >= headerLen + 5 )
          {
             try
             {
@@ -2493,13 +2493,14 @@ namespace engine
 
    INT32 rtnCoordGetAllGroupList( pmdEDUCB * cb, CoordGroupList &groupList,
                                   const BSONObj *query, BOOLEAN exceptCata,
-                                  BOOLEAN exceptCoord )
+                                  BOOLEAN exceptCoord,
+                                  BOOLEAN useLocalWhenFailed )
    {
       INT32 rc = SDB_OK ;
       GROUP_VEC vecGrpPtr ;
 
       rc = rtnCoordGetAllGroupList( cb, vecGrpPtr, query, exceptCata,
-                                    exceptCoord ) ;
+                                    exceptCoord, useLocalWhenFailed ) ;
       if ( rc )
       {
          goto error ;
@@ -2523,7 +2524,8 @@ namespace engine
 
    INT32 rtnCoordGetAllGroupList( pmdEDUCB * cb, GROUP_VEC &groupLst,
                                   const BSONObj *query, BOOLEAN exceptCata,
-                                  BOOLEAN exceptCoord )
+                                  BOOLEAN exceptCoord,
+                                  BOOLEAN useLocalWhenFailed )
    {
       INT32 rc = SDB_OK;
       pmdKRCB *pKrcb = pmdGetKRCB();
@@ -2625,6 +2627,11 @@ namespace engine
       SAFE_OSS_FREE( pListReq ) ;
       return rc;
    error:
+      if ( useLocalWhenFailed )
+      {
+         pCoordcb->getLocalGroupList( groupLst, exceptCata, exceptCoord ) ;
+         rc = SDB_OK ;
+      }
       goto done;
    }
 
@@ -2727,65 +2734,103 @@ namespace engine
       goto done;
    }
 
-
    INT32 rtnCoordParseGroupList( pmdEDUCB *cb,
                                  const BSONObj &obj,
-                                 CoordGroupList &groupList )
+                                 CoordGroupList &groupList,
+                                 BSONObj *pNewObj )
    {
       INT32 rc = SDB_OK ;
-      BSONElement ele ;
       CoordGroupInfoPtr grpPtr ;
+      BSONObjBuilder builder ;
+      BOOLEAN isModify = FALSE ;
 
-      // group id
-      ele = obj.getField( CAT_GROUPID_NAME ) ;
-      if ( ele.type() == NumberInt )
+      BSONObjIterator it( obj ) ;
+      while( it.more() )
       {
-         groupList[ (UINT32)ele.numberInt() ] = (UINT32)ele.numberInt() ;
-      }
-      else if ( ele.type() == Array )
-      {
-         BSONObjIterator itr( ele.embeddedObject() ) ;
-         while ( itr.more() )
+         BSONElement ele = it.next() ;
+
+         // group id
+         if ( 0 == ossStrcasecmp( ele.fieldName(), CAT_GROUPID_NAME ) )
          {
-            ele = itr.next () ;
-            if ( ele.type() != NumberInt )
+            isModify = TRUE ;
+            if ( ele.type() == NumberInt )
+            {
+               groupList[(UINT32)ele.numberInt()] = (UINT32)ele.numberInt() ;
+            }
+            else if ( ele.type() == Array )
+            {
+               BSONObjIterator tmpItr( ele.embeddedObject() ) ;
+               while ( tmpItr.more() )
+               {
+                  BSONElement e1 = tmpItr.next () ;
+                  if ( e1.type() != NumberInt )
+                  {
+                     rc = SDB_INVALIDARG ;
+                     goto error ;
+                  }
+                  groupList[(UINT32)e1.numberInt()] = (UINT32)e1.numberInt() ;
+               }
+            }
+            else
             {
                rc = SDB_INVALIDARG ;
                goto error ;
             }
-            groupList[ (UINT32)ele.numberInt() ] = (UINT32)ele.numberInt() ;
+         }
+         // group name
+         else if ( 0 == ossStrcasecmp( ele.fieldName(),
+                                       FIELD_NAME_GROUPNAME ) ||
+                   0 == ossStrcasecmp( ele.fieldName(),
+                                       FIELD_NAME_GROUPS ) )
+         {
+            isModify = TRUE ;
+            if ( ele.type() == String )
+            {
+               rc = rtnCoordGetGroupInfo( cb, ele.str().c_str(),
+                                          FALSE, grpPtr ) ;
+               PD_RC_CHECK( rc, PDERROR, "Get group[%s] failed, rc: %d",
+                            ele.str().c_str(), rc ) ;
+               groupList[ grpPtr->getGroupID() ] = grpPtr->getGroupID() ;
+            }
+            else if ( ele.type() == Array )
+            {
+               BSONObjIterator tmpItr( ele.embeddedObject() ) ;
+               while ( tmpItr.more() )
+               {
+                  BSONElement e1 = tmpItr.next() ;
+                  if ( e1.type() != String )
+                  {
+                     rc = SDB_INVALIDARG ;
+                     goto error ;
+                  }
+                  rc = rtnCoordGetGroupInfo( cb, e1.str().c_str(),
+                                             FALSE, grpPtr ) ;
+                  PD_RC_CHECK( rc, PDERROR, "Get group[%s] failed, rc: %d",
+                               e1.str().c_str(), rc ) ;
+                  groupList[ grpPtr->getGroupID() ] = grpPtr->getGroupID() ;
+               }
+            }
+            else
+            {
+               rc = SDB_INVALIDARG ;
+               goto error ;
+            }
+         }
+         else if ( pNewObj )
+         {
+            builder.append( ele ) ;
          }
       }
-      else if ( !ele.eoo() )
-      {
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
 
-      // group name
-      ele = obj.getField( FIELD_NAME_GROUPNAME ) ;
-      if ( ele.type() == String )
+      if ( pNewObj )
       {
-         rc = rtnCoordGetGroupInfo( cb, ele.str().c_str(), FALSE, grpPtr ) ;
-         PD_RC_CHECK( rc, PDERROR, "Get group[%s] failed, rc: %d",
-                      ele.str().c_str(), rc ) ;
-         groupList[ grpPtr->getGroupID() ] = grpPtr->getGroupID() ;
-      }
-      else if ( ele.type() == Array )
-      {
-         BSONObjIterator itr( ele.embeddedObject() ) ;
-         while ( itr.more() )
+         if ( isModify )
          {
-            ele = itr.next() ;
-            if ( ele.type() != String )
-            {
-               rc = SDB_INVALIDARG ;
-               goto error ;
-            }
-            rc = rtnCoordGetGroupInfo( cb, ele.str().c_str(), FALSE, grpPtr ) ;
-            PD_RC_CHECK( rc, PDERROR, "Get group[%s] failed, rc: %d",
-                         ele.str().c_str(), rc ) ;
-            groupList[ grpPtr->getGroupID() ] = grpPtr->getGroupID() ;
+            *pNewObj = builder.obj() ;
+         }
+         else
+         {
+            *pNewObj = obj ;
          }
       }
 
@@ -2797,48 +2842,45 @@ namespace engine
       goto done ;
    }
 
+   BSONObj* rtnCoordGetFilterByID( FILTER_BSON_ID filterID,
+                                   rtnQueryOptions &queryOption )
+   {
+      BSONObj *pFilter = NULL ;
+      switch ( filterID )
+      {
+         case FILTER_ID_SELECTOR:
+            pFilter = &queryOption._selector ;
+            break ;
+         case FILTER_ID_ORDERBY:
+            pFilter = &queryOption._orderBy ;
+            break ;
+         case FILTER_ID_HINT:
+            pFilter = &queryOption._hint ;
+            break ;
+         default:
+            pFilter = &queryOption._query ;
+            break ;
+      }
+      return pFilter ;
+   }
+
    INT32 rtnCoordParseGroupList( pmdEDUCB *cb, MsgOpQuery *pMsg,
                                  FILTER_BSON_ID filterObjID,
                                  CoordGroupList &groupList )
    {
       INT32 rc = SDB_OK ;
-      INT32 flag = 0 ;
-      CHAR *pCollectionName = NULL ;
-      INT64 numToSkip = 0 ;
-      INT64 numToReturn = 0 ;
-      CHAR *pQuery = NULL ;
-      CHAR *pSelector = NULL ;
-      CHAR *pOrderBy = NULL ;
-      CHAR *pHint = NULL ;
-      CHAR *pParseData = NULL ;
+      rtnQueryOptions queryOption ;
+      BSONObj *pFilterObj = NULL ;
 
-      rc = msgExtractQuery( (CHAR *)pMsg, &flag, &pCollectionName, &numToSkip,
-                            &numToReturn, &pQuery, &pSelector, &pOrderBy,
-                            &pHint ) ;
+      rc = queryOption.fromQueryMsg( (CHAR *)pMsg ) ;
       PD_RC_CHECK( rc, PDERROR, "Extract query msg failed, rc: %d", rc ) ;
 
-      switch ( filterObjID )
-      {
-         case FILTER_ID_SELECTOR:
-            pParseData = pSelector ;
-            break ;
-         case FILTER_ID_ORDERBY:
-            pParseData = pOrderBy ;
-            break ;
-         case FILTER_ID_HINT:
-            pParseData = pHint ;
-            break ;
-         default:
-            pParseData = pQuery ;
-            break ;
-      }
-
+      pFilterObj = rtnCoordGetFilterByID( filterObjID, queryOption ) ;
       try
       {
-         BSONObj obj( pParseData ) ;
-         if ( !obj.isEmpty() )
+         if ( !pFilterObj->isEmpty() )
          {
-            rc = rtnCoordParseGroupList( cb, obj, groupList ) ;
+            rc = rtnCoordParseGroupList( cb, *pFilterObj, groupList ) ;
             if ( rc )
             {
                goto error ;
@@ -2933,7 +2975,8 @@ namespace engine
 
    INT32 rtnCoordGetGroupNodes( pmdEDUCB *cb, const BSONObj &filterObj,
                                 NODE_SEL_STY emptyFilterSel,
-                                CoordGroupList &groupList, ROUTE_SET &nodes )
+                                CoordGroupList &groupList, ROUTE_SET &nodes,
+                                BSONObj *pNewObj )
    {
       INT32 rc = SDB_OK ;
       CoordGroupInfoPtr ptr ;
@@ -2941,57 +2984,122 @@ namespace engine
       GROUP_VEC groupPtrs ;
       GROUP_VEC::iterator it ;
 
-      UINT16 nodeID = 0 ;
-      string hostName ;
-      string svcName ;
+      vector< UINT16 > vecNodeID ;
+      vector< string > vecHostName ;
+      vector< string > vecSvcName ;
       BOOLEAN emptyFilter = TRUE ;
-      BSONElement ele ;
+
+      BSONObjBuilder builder ;
+      BOOLEAN isModify = FALSE ;
 
       nodes.clear() ;
 
       rc = rtnGroupList2GroupPtr( cb, groupList, groupPtrs ) ;
       PD_RC_CHECK( rc, PDERROR, "Group ids to group info failed, rc: %d", rc ) ;
 
-      ele = filterObj.getField( CAT_NODEID_NAME ) ;
-      if ( ele.type() == NumberInt )
+      /// parse obj
       {
-         nodeID = ele.numberInt() ;
-         emptyFilter = FALSE ;
-      }
-      else if ( !ele.eoo() )
-      {
-         PD_LOG( PDWARNING, "Field[%s] type[%d] error", CAT_NODEID_NAME,
-                 ele.type() ) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
+         BSONObjIterator itr( filterObj ) ;
+         while( itr.more() )
+         {
+            BSONElement ele = itr.next() ;
 
-      ele = filterObj.getField( FIELD_NAME_HOST ) ;
-      if ( ele.type() == String )
-      {
-         hostName = ele.str() ;
-         emptyFilter = FALSE ;
-      }
-      else if ( !ele.eoo() )
-      {
-         PD_LOG( PDWARNING, "Field[%s] type[%d] error", FIELD_NAME_HOST,
-                 ele.type() ) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
-
-      ele = filterObj.getField( PMD_OPTION_SVCNAME ) ;
-      if ( ele.type() == String )
-      {
-         svcName = ele.str() ;
-         emptyFilter = FALSE ;
-      }
-      else if ( !ele.eoo() )
-      {
-         PD_LOG( PDWARNING, "Field[%s] type[%d] error", PMD_OPTION_SVCNAME,
-                 ele.type() ) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
+            if ( 0 == ossStrcasecmp( ele.fieldName(), CAT_NODEID_NAME ) )
+            {
+               if ( ele.type() == NumberInt )
+               {
+                  vecNodeID.push_back( ele.numberInt() ) ;
+                  emptyFilter = FALSE ;
+               }
+               else if ( ele.type() == Array )
+               {
+                  BSONObjIterator tmpItr( ele.embeddedObject() ) ;
+                  while( tmpItr.more() )
+                  {
+                     BSONElement e1 = tmpItr.next() ;
+                     if ( NumberInt != e1.type() )
+                     {
+                        rc = SDB_INVALIDARG ;
+                        goto error ;
+                     }
+                     vecNodeID.push_back( e1.numberInt() ) ;
+                     emptyFilter = FALSE ;
+                  }
+               }
+               else
+               {
+                  PD_LOG( PDWARNING, "Field[%s] type[%d] error",
+                          CAT_NODEID_NAME, ele.type() ) ;
+                  rc = SDB_INVALIDARG ;
+                  goto error ;
+               }
+            }
+            else if ( 0 == ossStrcasecmp( ele.fieldName(), FIELD_NAME_HOST ) )
+            {
+               if ( ele.type() == String )
+               {
+                  vecHostName.push_back( ele.str() ) ;
+                  emptyFilter = FALSE ;
+               }
+               else if ( ele.type() == Array )
+               {
+                  BSONObjIterator tmpItr( ele.embeddedObject() ) ;
+                  while( tmpItr.more() )
+                  {
+                     BSONElement e1 = tmpItr.next() ;
+                     if ( String != e1.type() )
+                     {
+                        rc = SDB_INVALIDARG ;
+                        goto error ;
+                     }
+                     vecHostName.push_back( e1.str() ) ;
+                     emptyFilter = FALSE ;
+                  }
+               }
+               else
+               {
+                  PD_LOG( PDWARNING, "Field[%s] type[%d] error",
+                          FIELD_NAME_HOST, ele.type() ) ;
+                  rc = SDB_INVALIDARG ;
+                  goto error ;
+               }
+            }
+            else if ( 0 == ossStrcasecmp( ele.fieldName(),
+                                          PMD_OPTION_SVCNAME ) )
+            {
+               if ( ele.type() == String )
+               {
+                  vecSvcName.push_back( ele.str() ) ;
+                  emptyFilter = FALSE ;
+               }
+               else if ( ele.type() == Array )
+               {
+                  BSONObjIterator tmpItr( ele.embeddedObject() ) ;
+                  while( tmpItr.more() )
+                  {
+                     BSONElement e1 = tmpItr.next() ;
+                     if ( String != e1.type() )
+                     {
+                        rc = SDB_INVALIDARG ;
+                        goto error ;
+                     }
+                     vecSvcName.push_back( e1.str() ) ;
+                     emptyFilter = FALSE ;
+                  }
+               }
+               else
+               {
+                  PD_LOG( PDWARNING, "Field[%s] type[%d] error",
+                          PMD_OPTION_SVCNAME, ele.type() ) ;
+                  rc = SDB_INVALIDARG ;
+                  goto error ;
+               }
+            }
+            else if ( pNewObj )
+            {
+               builder.append( ele ) ;
+            } // end if
+         } // end while
       }
 
       it = groupPtrs.begin() ;
@@ -3009,18 +3117,50 @@ namespace engine
          {
             if ( FALSE == emptyFilter )
             {
-               if ( 0 != nodeID && nodeID != itrn->_id.columns.nodeID )
+               BOOLEAN findNode = FALSE ;
+               UINT32 index = 0 ;
+               /// check node id
+               for ( index = 0 ; index < vecNodeID.size() ; ++index )
+               {
+                  if ( vecNodeID[ index ] == itrn->_id.columns.nodeID )
+                  {
+                     findNode = TRUE ;
+                     break ;
+                  }
+               }
+               if ( index > 0 && !findNode )
                {
                   continue ;
                }
-               else if ( !hostName.empty() &&
-                         0 != hostName.compare( itrn->_host ) )
+
+               findNode = FALSE ;
+               /// check host name
+               for ( index = 0 ; index < vecHostName.size() ; ++index )
+               {
+                  if ( 0 == vecHostName[ index ].compare(
+                            itrn->_service[ MSG_ROUTE_LOCAL_SERVICE ] ) )
+                  {
+                     findNode = TRUE ;
+                     break ;
+                  }
+               }
+               if ( index > 0 && !findNode )
                {
                   continue ;
                }
-               else if ( !svcName.empty() &&
-                         0 != svcName.compare(
-                         itrn->_service[MSG_ROUTE_LOCAL_SERVICE] ) )
+
+               findNode = FALSE ;
+               /// check svcname
+               for ( index = 0 ; index < vecSvcName.size() ; ++index )
+               {
+                  if ( 0 == vecSvcName[ index ].compare(
+                            itrn->_service[MSG_ROUTE_LOCAL_SERVICE] ) )
+                  {
+                     findNode = TRUE ;
+                     break ;
+                  }
+               }
+               if ( index > 0 && !findNode )
                {
                   continue ;
                }
@@ -3049,6 +3189,18 @@ namespace engine
             nodes.insert( routeID.value ) ;
          }
          ++it ;
+      }
+
+      if ( pNewObj )
+      {
+         if ( emptyFilter )
+         {
+            *pNewObj = filterObj ;
+         }
+         else
+         {
+            *pNewObj = builder.obj() ;
+         }
       }
 
    done:
@@ -3261,6 +3413,54 @@ namespace engine
          rc = failedNodes.begin()->second ;
       }
       rtnCoordClearRequest( cb, successNodes ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 rtnCoordParseControlParam( const BSONObj &obj,
+                                    rtnCoordCtrlParam &param,
+                                    BSONObj *pNewObj )
+   {
+      INT32 rc = SDB_OK ;
+
+      BOOLEAN modify = FALSE ;
+      BSONObjBuilder builder ;
+      BSONObjIterator it( obj ) ;
+      while( it.more() )
+      {
+         BSONElement e = it.next() ;
+         if ( 0 == ossStrcasecmp( e.fieldName(), FIELD_NAME_ONSELF ) )
+         {
+            if ( !e.isBoolean() )
+            {
+               PD_LOG( PDERROR, "Field[%s] is invalid in obj[%s]",
+                       FIELD_NAME_ONSELF, obj.toString().c_str() ) ;
+               rc = SDB_INVALIDARG ;
+               goto error ;
+            }
+            param._onSelf = e.boolean() ? TRUE : FALSE ;
+            modify = TRUE ;
+         }
+         else if ( pNewObj )
+         {
+            builder.append( e ) ;
+         }
+      }
+
+      if ( pNewObj )
+      {
+         if ( modify )
+         {
+            *pNewObj = builder.obj() ;
+         }
+         else
+         {
+            *pNewObj = obj ;
+         }
+      }
 
    done:
       return rc ;

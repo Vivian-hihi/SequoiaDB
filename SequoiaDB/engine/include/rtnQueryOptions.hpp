@@ -126,6 +126,9 @@ namespace engine
 
       virtual ~_rtnQueryOptions() ;
 
+      INT32 fromQueryMsg( CHAR *pMsg ) ;
+      INT32 toQueryMsg( CHAR **ppMsg, INT32 &buffSize ) const ;
+
       INT32 getOwned() ;
 
       string toString() const ;
