@@ -258,18 +258,6 @@ namespace engine
                              rtnContextBuf *buf ) ;
 
    protected:
-      INT32          _getFilterFromMsg( MsgHeader *pMsg,
-                                        BSONObj &filterObj,
-                                        BSONObj *pOrderByObj = NULL,
-                                        INT64 *pNumToReturn = NULL,
-                                        INT64 *pNumToSkip = NULL ) ;
-      INT32          _processReply( pmdEDUCB *cb, REPLY_QUE &replyQue,
-                                    ROUTE_RC_MAP &failedNodes,
-                                    rtnContextCoord *pContext ) ;
-      INT32          _buildFailedNodeReply( ROUTE_RC_MAP &failedNodes,
-                                            rtnContextCoord *pContext ) ;
-
-   protected:
       virtual FILTER_BSON_ID  _getGroupMatherIndex () = 0 ;
       virtual NODE_SEL_STY    _nodeSelWhenNoFilter () = 0 ;
       virtual BOOLEAN         _allowFailed () = 0 ;
