@@ -3190,31 +3190,12 @@ namespace engine
       contextID                        = -1 ;
       string clName ;
       rtnQueryOptions queryOpt ;
-      CHAR *pQuery                     = NULL ;
-      CHAR *pSelector                  = NULL ;
-      CHAR *pOrderBy                   = NULL ;
-      CHAR *pHint                      = NULL ;
 
       // parse msg
       rc = queryOpt.fromQueryMsg( (CHAR*)pMsg ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Extract query message failed, rc: %d", rc ) ;
-         goto error ;
-      }
-
-      try
-      {
-         queryOpt._query = BSONObj( pQuery ) ;
-         queryOpt._selector = BSONObj( pSelector ) ;
-         queryOpt._orderBy = BSONObj( pOrderBy ) ;
-         queryOpt._hint = BSONObj( pHint ) ;
-      }
-      catch( std::exception &e )
-      {
-         PD_LOG( PDERROR, "Extract query message occur exception: %s",
-                 e.what() ) ;
-         rc = SDB_INVALIDARG ;
          goto error ;
       }
 
