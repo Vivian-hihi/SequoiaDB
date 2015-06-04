@@ -105,6 +105,7 @@ namespace engine
       bson::BSONObj _orderObj ;
       _ixmIndexKeyGen _keyGen ;
       bson::Ordering _order ;
+      BSONObjSet _keySet ;
       CHAR *_begin ;
       UINT64 _totalSize ;
       UINT64 _headOffset ;

@@ -58,7 +58,9 @@ namespace engine
     _mergeBlk(NULL),
     _blkBegin(0),
     _fino(0),
-    _limit(-1)
+    _limit(-1),
+    _cpBuf( NULL ),
+    _cpBufSize( 4 * 1024 * 1024 )
    {
 
    }
@@ -66,6 +68,7 @@ namespace engine
    _rtnSorting::~_rtnSorting()
    {
       SAFE_OSS_FREE( _sortBuf ) ;
+      SAFE_OSS_FREE( _cpBuf ) ;
 
       if ( NULL != _context )
       {
@@ -333,6 +336,8 @@ namespace engine
       INT32 rc = SDB_OK ;
       UINT64 mvSize = 0 ;
       _rtnSortTuple *tuple = NULL ;
+      UINT32 inBufSize = 0 ;
+      UINT32 notInBufSize = 0 ;
 
       if ( !_unit.isOpened() )
       {
@@ -344,30 +349,75 @@ namespace engine
          }
       }
 
-      while ( TRUE )
+      if ( NULL == _cpBuf )
       {
-         if ( inter->more() )
+         _cpBuf = ( CHAR * )SDB_OSS_MALLOC( _cpBufSize ) ;
+         if ( NULL == _cpBuf )
          {
-            rc = inter->next( &tuple ) ;
-            if ( SDB_OK != rc )
-            {
-               PD_LOG( PDERROR, "failed to fetch next from internal blk:%d", rc ) ;
-               goto error ;
-            }
+            PD_LOG( PDERROR, "failed to allocate mem." ) ;
+            rc = SDB_OOM ;
+            goto error ;
+         } 
+      }
 
-            rc = _unit.write( tuple, tuple->len(), TRUE ) ;
+      do
+      {
+         UINT32 cpSize = 0 ;
+         if ( NULL == tuple )
+         {
+            if ( inter->more() )
+            {
+               rc = inter->next( &tuple ) ;
+               if ( SDB_OK != rc )
+               {
+                  PD_LOG( PDERROR, "failed to fetch next from internal blk:%d", rc ) ;
+                  goto error ;
+               }
+               notInBufSize = tuple->len() ;
+            }
+            else
+            {
+               break ;
+            }
+         }
+
+         cpSize = notInBufSize <= ( _cpBufSize - inBufSize ) ?
+                  notInBufSize : ( _cpBufSize - inBufSize ) ;
+         ossMemcpy( _cpBuf + inBufSize,
+                    ( const CHAR * )tuple + ( tuple->len() - notInBufSize ),
+                    cpSize ) ;
+         notInBufSize -= cpSize ;
+         inBufSize += cpSize ;
+
+         if ( 0 == notInBufSize  )
+         {
+            tuple = NULL ;
+         }
+
+         if ( inBufSize == _cpBufSize )
+         {
+            rc = _unit.write( _cpBuf, _cpBufSize, TRUE ) ;
             if ( SDB_OK != rc )
             {
                PD_LOG( PDERROR, "failed to extend unit:%d", rc ) ;
                goto error ;
             }
+            mvSize += _cpBufSize ;
+            inBufSize = 0 ;
+         }
+         
+      } while ( TRUE ) ;
 
-            mvSize += tuple->len() ;
-         }
-         else
+      if ( 0 < inBufSize )
+      {
+         rc = _unit.write( _cpBuf, inBufSize, TRUE ) ;
+         if ( SDB_OK != rc )
          {
-            break ;
+            PD_LOG( PDERROR, "failed to extend unit:%d", rc ) ;
+            goto error ;
          }
+         mvSize += inBufSize ;
+         inBufSize = 0 ; 
       }
 
       if ( 0 != mvSize )
@@ -384,6 +434,7 @@ namespace engine
          _blkBegin += mvSize ;
          PD_LOG( PDDEBUG, "build blk[%s]", blk.toString().c_str() ) ;
       }
+
    done:
       PD_TRACE_EXITRC( SDB__RTNSORTING__MVTEXBLKS , rc ) ;
       return rc ;

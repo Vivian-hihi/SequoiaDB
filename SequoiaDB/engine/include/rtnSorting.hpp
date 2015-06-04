@@ -94,6 +94,8 @@ namespace engine
       UINT64 _blkBegin ;
       SINT64 _fino ;
       SINT64 _limit ;
+      CHAR *_cpBuf ;
+      const UINT32 _cpBufSize ;
    };
 
    typedef class _rtnSorting rtnSorting;

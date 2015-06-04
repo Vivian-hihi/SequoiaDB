@@ -64,6 +64,7 @@ namespace engine
    :_orderObj( orderby ),
     _keyGen( orderby ),
     _order( Ordering::make( orderby ) ),
+    _keySet( _orderObj ),
     _begin( buf ),
     _totalSize( size ),
     _headOffset( 0 ),
@@ -85,20 +86,19 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       BSONElement arrEle ;
-      BSONObjSet keySet( _orderObj ) ;
-      rc = _keyGen.getKeys( obj, keySet, &arrEle ) ;
+      rc = _keyGen.getKeys( obj, _keySet, &arrEle ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed gen sort keys:%d", rc ) ;
          goto error ;
       }
 
-      SDB_ASSERT( !keySet.empty(), "can not be empty" ) ;
+      SDB_ASSERT( !_keySet.empty(), "can not be empty" ) ;
       SDB_ASSERT( _headOffset <= _tailOffset, "impossible" ) ;
 
       {
       /// check whether the remaining space is enough.
-      const BSONObj &keyObj = *(keySet.begin() ) ;
+      const BSONObj &keyObj = *(_keySet.begin() ) ;
       if ( _tailOffset - _headOffset <
            (keyObj.objsize() + obj.objsize() +
             sizeof(_rtnSortTuple) + sizeof( _rtnSortTuple *)) )
@@ -141,6 +141,7 @@ namespace engine
       SDB_ASSERT( _headOffset <= _tailOffset, "impossible" ) ;
       }
    done:
+      _keySet.clear() ; 
       return rc ;
    error:
       goto done ;
