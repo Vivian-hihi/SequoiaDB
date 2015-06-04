@@ -1011,7 +1011,15 @@ namespace engine
                            _nodeSelWhenNoFilter(),
                            _useContext() ? &pContext : NULL,
                            FALSE, NULL, &failedNodes, NULL ) ;
-      PD_RC_CHECK( rc, PDERROR, "Execute on nodes failed, rc: %d" ) ;
+      if ( rc )
+      {
+         if ( SDB_COORD_UNKNOWN_OP_REQ == rc )
+         {
+            rc = SDB_INVALIDARG ;
+         }
+         PD_LOG( PDERROR, "Execute on nodes failed, rc: %d", rc ) ;
+         goto error ;
+      }
 
       if ( pContext )
       {
