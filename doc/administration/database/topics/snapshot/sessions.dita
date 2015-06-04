@@ -22,7 +22,7 @@
         </sthead>
         <strow>
           <stentry>SessionID</stentry>
-          <stentry>整型或长整型</stentry>
+          <stentry>字符串</stentry>
           <stentry>会话 ID（主机名：端口号：ID）</stentry>
         </strow>
         <strow>

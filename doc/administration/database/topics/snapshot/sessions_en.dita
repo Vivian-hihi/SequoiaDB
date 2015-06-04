@@ -20,7 +20,7 @@
         </sthead>
         <strow>
           <stentry>SessionID</stentry>
-          <stentry>Integer or long integer</stentry>
+          <stentry>String</stentry>
           <stentry>Session ID(Hostname:Port:ID)</stentry>
         </strow>
         <strow>
