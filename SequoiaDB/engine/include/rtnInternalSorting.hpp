@@ -58,7 +58,7 @@ namespace engine
       virtual ~_rtnInternalSorting() ;
 
    public:
-      INT32 push( const BSONObj &obj ) ;
+      INT32 push( const BSONObj& keyObj, const CHAR* obj, INT32 objLen, BSONElement* arrElement ) ;
 
       void clearBuf() ;
 
@@ -102,10 +102,7 @@ namespace engine
    private:
       //std::vector<UINT32> _rands ;
       //UINT32 _rand ;
-      bson::BSONObj _orderObj ;
-      _ixmIndexKeyGen _keyGen ;
       bson::Ordering _order ;
-      BSONObjSet _keySet ;
       CHAR *_begin ;
       UINT64 _totalSize ;
       UINT64 _headOffset ;

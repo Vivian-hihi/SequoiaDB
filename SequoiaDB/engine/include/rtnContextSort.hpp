@@ -65,10 +65,16 @@ namespace engine
       virtual INT32 _prepareData( _pmdEDUCB *cb ) ;
 
    private:
+      INT32 _sortData( _pmdEDUCB *cb );
       INT32 _rebuildSrcContext( const BSONObj &orderBy,
                                 rtnContext *srcContext ) ;
 
    private:
+      rtnContext* _dataContext ;
+      _pmdEDUCB * _eduCB;
+      BSONObj _orderby ;
+      _ixmIndexKeyGen _keyGen ;
+      BOOLEAN _dataSorted ;
       _rtnSorting _sorting ;
       SINT64 _skip ;
       SINT64 _limit ;

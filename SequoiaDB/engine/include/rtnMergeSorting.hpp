@@ -92,7 +92,7 @@ namespace engine
       INT32 init( CHAR *buf, UINT64 size,
                   RTN_SORT_BLKS &src, SINT64 limit = -1) ;
 
-      INT32 fetch( BSONObj &next, _pmdEDUCB *cb ) ;
+      INT32 fetch( BSONObj &key, const CHAR** obj, INT32* objLen, _pmdEDUCB *cb ) ;
 
    private:
       INT32 _merge( _pmdEDUCB *cb ) ;

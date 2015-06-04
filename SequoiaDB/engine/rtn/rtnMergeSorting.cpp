@@ -199,7 +199,7 @@ namespace engine
       goto done ;
    }
 
-   INT32 _rtnMergeSorting::fetch( BSONObj &next, _pmdEDUCB *cb )
+   INT32 _rtnMergeSorting::fetch( BSONObj &key, const CHAR** obj, INT32* objLen, _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
       SDB_ASSERT( NULL != _buf && 0 < _size && NULL != _src,
@@ -229,11 +229,15 @@ namespace engine
       {
          SDB_ASSERT( NULL != node.tuple() && NULL != node.tuple()->obj(),
                      "can not be NULL" ) ;
-         BSONObj popped( node.obj() ) ;
-         ossMemcpy( _buf, popped.objdata(), popped.objsize()) ;
+         BSONObj poppedKey( node.key() ) ;
+         INT32 keySize = poppedKey.objsize() ;
+         INT32 objSize = node.objLen() ;
+         ossMemcpy( _buf, poppedKey.objdata(), keySize + objSize ) ;
          try
          {
-             next = BSONObj( _buf ) ;
+             key = BSONObj( _buf ) ;
+             *obj = _buf + keySize ;
+             *objLen = objSize ;
          }
          catch ( std::exception &e )
          {

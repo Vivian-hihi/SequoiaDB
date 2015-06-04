@@ -61,10 +61,7 @@ namespace engine
    ///_rtnInternalSorting
    _rtnInternalSorting::_rtnInternalSorting( const BSONObj &orderby,
                                              CHAR *buf, UINT64 size )
-   :_orderObj( orderby ),
-    _keyGen( orderby ),
-    _order( Ordering::make( orderby ) ),
-    _keySet( _orderObj ),
+   :_order( Ordering::make( orderby ) ),
     _begin( buf ),
     _totalSize( size ),
     _headOffset( 0 ),
@@ -82,26 +79,21 @@ namespace engine
       /// it will be freed in rtnSorting.
    }
 
-   INT32 _rtnInternalSorting::push( const BSONObj &obj )
+   INT32 _rtnInternalSorting::push( const BSONObj& keyObj, const CHAR* obj, INT32 objLen, BSONElement* arrEle )
    {
       INT32 rc = SDB_OK ;
-      BSONElement arrEle ;
-      rc = _keyGen.getKeys( obj, _keySet, &arrEle ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed gen sort keys:%d", rc ) ;
-         goto error ;
-      }
+      _rtnSortTuple *tuple ;
+      const CHAR* key = keyObj.objdata() ;
+      INT32 keyLen = keyObj.objsize() ;
 
-      SDB_ASSERT( !_keySet.empty(), "can not be empty" ) ;
+      SDB_ASSERT( NULL != key, "key can't be NULL" ) ;
+      SDB_ASSERT( NULL != obj, "obj can't be NULL" ) ;
+      SDB_ASSERT( keyLen > 0, "keyLen must be greater than 0") ;
+      SDB_ASSERT( objLen > 0, "objLen must be greater than 0") ;
       SDB_ASSERT( _headOffset <= _tailOffset, "impossible" ) ;
 
-      {
-      /// check whether the remaining space is enough.
-      const BSONObj &keyObj = *(_keySet.begin() ) ;
       if ( _tailOffset - _headOffset <
-           (keyObj.objsize() + obj.objsize() +
-            sizeof(_rtnSortTuple) + sizeof( _rtnSortTuple *)) )
+           ( keyLen + objLen + sizeof(_rtnSortTuple) + sizeof( _rtnSortTuple *) ) )
       {
          rc = SDB_HIT_HIGH_WATERMARK ;
          goto error ;
@@ -112,36 +104,30 @@ namespace engine
        */
 
       /// set data.
-      {
-      _tailOffset -= ( obj.objsize() + keyObj.objsize() + sizeof(_rtnSortTuple) );
-      _rtnSortTuple *tuple = ( _rtnSortTuple * )( _begin + _tailOffset ) ;
+      _tailOffset -= ( objLen + keyLen + sizeof(_rtnSortTuple) );
+      tuple = ( _rtnSortTuple * )( _begin + _tailOffset ) ;
 
-      ossMemcpy( ( CHAR * )tuple + sizeof( _rtnSortTuple ),
-                 keyObj.objdata(), keyObj.objsize() ) ;
-      ossMemcpy( ( CHAR * )tuple + sizeof( _rtnSortTuple ) +
-                   keyObj.objsize(),
-                  obj.objdata(), obj.objsize() ) ;
-      tuple->setLen( keyObj.objsize(), obj.objsize() ) ;
-      if ( arrEle.eoo() )
+      ossMemcpy( ( CHAR * )tuple + sizeof( _rtnSortTuple ), key, keyLen ) ;
+      ossMemcpy( ( CHAR * )tuple + sizeof( _rtnSortTuple ) + keyLen, obj, objLen ) ;
+      tuple->setLen( keyLen, objLen ) ;
+      if ( NULL == arrEle || arrEle->eoo() )
       {
          tuple->setHash( 0, 0 ) ;
       }
       else
       {
-         ixmMakeHashValue( arrEle, tuple->hashValue() ) ;
+         ixmMakeHashValue( *arrEle, tuple->hashValue() ) ;
       }
 
       /// set sort header.
-         *(( _rtnSortTuple ** )( _begin + _headOffset )) = tuple ;
-         _headOffset += sizeof( _rtnSortTuple * ) ;
-      }
+      *(( _rtnSortTuple ** )( _begin + _headOffset )) = tuple ;
+      _headOffset += sizeof( _rtnSortTuple * ) ;
 
       ++_objNum ;
 
       SDB_ASSERT( _headOffset <= _tailOffset, "impossible" ) ;
-      }
+
    done:
-      _keySet.clear() ; 
       return rc ;
    error:
       goto done ;

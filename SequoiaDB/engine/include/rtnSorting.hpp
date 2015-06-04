@@ -61,24 +61,27 @@ namespace engine
    public:
       INT32 init( UINT64 bufSize,
                   const BSONObj &orderby,
-                  rtnContext *context,
                   SINT64 fino,
                   SINT64 limit,
                   _pmdEDUCB *cb );
 
-      /// do not ensure that the next is get owned.
-      INT32 fetch( BSONObj &next, _pmdEDUCB *cb ) ;
+      INT32 push( const BSONObj& key, const CHAR* obj, INT32 objLen,
+                    BSONElement* arrEle, _pmdEDUCB *cb ) ;
+
+      INT32 sort( _pmdEDUCB *cb ) ;
+
+      /// do not ensure that the key and obj is get owned.
+      INT32 fetch( BSONObj &key, const CHAR** obj, INT32* objLen, _pmdEDUCB *cb ) ;
 
    private:
-      INT32 _crtSortedBlks( RTN_SORT_BLKS &blks, _pmdEDUCB *cb ) ;
 
       INT32 _moveToExternalBlks( _rtnInternalSorting *inter,
                                  RTN_SORT_BLKS &blks,
                                  _pmdEDUCB *cb ) ;
 
-      INT32 _fetchFromInter( BSONObj &next ) ;
+      INT32 _fetchFromInter( BSONObj &key, const CHAR** obj, INT32* objLen ) ;
 
-      INT32 _fetchFromExter( BSONObj &next,
+      INT32 _fetchFromExter( BSONObj &next, const CHAR** obj, INT32* objLen,
                              _pmdEDUCB *cb ) ;
    private:
       _dmsTmpBlkUnit _unit ;
@@ -87,7 +90,6 @@ namespace engine
       UINT64 _totalBufSize ;
       RTN_SORT_STEP _step ;
       _pmdEDUCB *_cb ;
-      rtnContext *_context ;
       _rtnInternalSorting *_internalBlk ;
       _rtnMergeSorting *_mergeBlk ;
       RTN_SORT_BLKS _blks ;

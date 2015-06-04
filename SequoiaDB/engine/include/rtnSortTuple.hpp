@@ -84,6 +84,11 @@ namespace engine
                 *((INT32 *)key()) ;
       }
 
+      OSS_INLINE UINT32 objLen() const
+      {
+         return ( _len - sizeof( _rtnSortTuple ) - *( (UINT32 *)key() ) ) ;
+      }
+
       OSS_INLINE const UINT64 &hash() const
       {
          return _hash.hash ;
@@ -153,6 +158,11 @@ namespace engine
       const CHAR *obj()const
       {
          return _tuple->obj() ;
+      }
+
+      UINT32 objLen() const
+      {
+         return _tuple->objLen() ;
       }
 
       const CHAR *key() const

@@ -4358,6 +4358,10 @@ namespace engine
 
    _rtnContextSort::_rtnContextSort( INT64 contextID, UINT64 eduID )
    :_rtnContextData( contextID, eduID ),
+    _dataContext( NULL ),
+    _eduCB( NULL ),
+    _keyGen ( BSONObj() ),
+    _dataSorted ( FALSE ),
     _skip( 0 ),
     _limit( -1 ),
     _planForExplain( NULL )
@@ -4370,6 +4374,14 @@ namespace engine
       _skip = 0 ;
       _limit = 0 ;
       _planForExplain = NULL ;
+
+      if ( NULL != _dataContext )
+      {
+         pmdGetKRCB()->getRTNCB()->contextDelete( _dataContext->contextID(), _eduCB ) ;
+         _dataContext = NULL ;
+      }
+
+      _eduCB = NULL ;
    }
 
    RTN_CONTEXT_TYPE _rtnContextSort::getType() const
@@ -4395,7 +4407,7 @@ namespace engine
          limit += numToSkip ;
       }
 
-      rc = _sorting.init( sortBufSz, orderby, context,
+      rc = _sorting.init( sortBufSz, orderby,
                           contextID(), limit, cb ) ;
       if ( SDB_OK != rc )
       {
@@ -4421,6 +4433,11 @@ namespace engine
          ///  except keeping plan for explain. -- yunwu.
          _planForExplain = ( ( _rtnContextData * )context )->getPlan() ;
       }
+
+      _dataContext = context ;
+      _eduCB = cb ;
+      _orderby = orderby.getOwned() ;
+      _keyGen = _ixmIndexKeyGen( _orderby ) ;
 
    done:
       return rc ;
@@ -4458,6 +4475,68 @@ namespace engine
       goto done ;
    }
 
+   INT32 _rtnContextSort::_sortData( _pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+      rtnContextBuf bufObj ;
+      BSONObj obj ;
+
+      for(;;)
+      {
+         rc = _dataContext->getMore( -1, bufObj, cb ) ;
+         if ( SDB_DMS_EOC == rc )
+         {
+            rc = _sorting.sort( cb ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "failed to sort: %d", rc ) ;
+               goto error ;
+            }
+            break ;
+         }
+         else if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to getmore:%d", rc ) ;
+            goto error ;
+         }
+
+         while ( SDB_OK == ( rc = bufObj.nextObj( obj ) ) )
+         {
+            BSONElement arrEle ;
+            BSONObjSet keySet( _orderby ) ;
+            rc = _keyGen.getKeys( obj, keySet, &arrEle ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "failed gen sort keys:%d", rc ) ;
+               goto error ;
+            }
+
+            SDB_ASSERT( !keySet.empty(), "can not be empty" ) ;
+            const BSONObj &keyObj = *(keySet.begin() ) ;
+
+            rc = _sorting.push( keyObj,
+                                obj.objdata(), obj.objsize(),
+                                &arrEle, cb ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "failed to push obj: %d", rc ) ;
+               goto error ;
+            }
+         }
+
+         if ( SDB_DMS_EOC != rc )
+         {
+            PD_LOG( PDERROR, "failed to get next obj from objBuf: %d", rc ) ;
+            goto error ;
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 _rtnContextSort::_prepareData( _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
@@ -4465,6 +4544,7 @@ namespace engine
       const INT32 maxNum = 1000000 ;
       const INT32 breakBufferSize = 2097152 ; /// 2MB
       const INT32 minRecordNum = 4 ;
+      BSONObj key ;
       BSONObj obj ;
       monAppCB *pMonAppCB = cb ? cb->getMonAppCB() : NULL ;
 
@@ -4475,9 +4555,22 @@ namespace engine
          goto error ;
       }
 
+      if ( !_dataSorted )
+      {
+         rc = _sortData( cb ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to sort data:%d", rc ) ;
+            goto error ;
+         }
+         _dataSorted = TRUE ;
+      }
+
       for ( INT32 i = 0; i < maxNum; i++ )
       {
-         rc = _sorting.fetch( obj, cb ) ;
+         const CHAR* objdata ;
+         INT32 objlen ;
+         rc = _sorting.fetch( key, &objdata, &objlen, cb ) ;
          if ( SDB_DMS_EOC == rc )
          {
             _hitEnd = TRUE ;
@@ -4504,6 +4597,7 @@ namespace engine
          {
             const BSONObj *record = NULL ;
             BSONObj selected ;
+            obj = BSONObj( objdata ) ;
             if ( _selector.isInitialized() )
             {
                rc = _selector.select( obj, selected ) ;
