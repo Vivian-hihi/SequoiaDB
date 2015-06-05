@@ -172,7 +172,7 @@ TEST(collectonspace,sdbGetCSName)
    sdbConnectionHandle connection = 0 ;
    sdbCSHandle collectionspace    = 0 ;
    INT32 rc                       = SDB_OK ;
-   CHAR *pCSName                  = NULL ;
+   CHAR pCSName[ NAME_LEN + 1 ]   = { 0 } ;
    // memset ( pCSName, 0, sizeof(char)*128 ) ;
    rc = initEnv( HOST, SERVER, USER, PASSWD ) ;
    ASSERT_EQ( SDB_OK, rc ) ;
@@ -185,7 +185,7 @@ TEST(collectonspace,sdbGetCSName)
                              &collectionspace ) ;
    ASSERT_EQ( SDB_OK, rc ) ;
    // get cs name
-   rc = sdbGetCSName ( collectionspace, &pCSName ) ;
+   rc = sdbGetCSName ( collectionspace, pCSName, NAME_LEN ) ;
    ASSERT_EQ( SDB_OK, rc ) ;
    printf("CS name is :%s\n",pCSName ) ;
    sdbDisconnect ( connection ) ;

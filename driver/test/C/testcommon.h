@@ -50,6 +50,8 @@
 #define SERVER_NAME2          "58100"
 #define SERVER_NAME3          "58200"
 
+#define NAME_LEN              255
+
 #define CHECK_MSG(fmt, args ...) printf("%s[%d]:"fmt,__FILE__,__LINE__,##args)
 
 SDB_EXTERN_C_START

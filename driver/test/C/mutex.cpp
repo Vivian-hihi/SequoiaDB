@@ -110,12 +110,12 @@ BOOLEAN _checkRecordNumAndReleaseHandle( sdbCollectionHandle *pArr, INT32 num )
    SINT64 count = 0 ;
    sdbCollectionHandle cl = 0 ;
    BOOLEAN run_status_flag = TRUE ;
-   CHAR *pCLFullName = NULL ;
+   CHAR pCLFullName[ NAME_LEN + 1 ] = { 0 } ;
 
    for ( i = 0; i < num; i++ )
    {
       cl = pArr[i] ;
-      rc = sdbGetCLFullName( cl, &pCLFullName ) ;
+      rc = sdbGetCLFullName( cl, pCLFullName, NAME_LEN ) ;
       if ( SDB_OK != rc )
       {
          run_status_flag = FALSE ;
@@ -155,10 +155,10 @@ void* func_insert( void* arg )
    thread_argument *pStru = (thread_argument*)arg ;
    sdbCollectionHandle cl = pStru->cl ;
    pStru->thread_id = gettid() ;
-   CHAR *pCLFullName = NULL ;
+   CHAR pCLFullName[ NAME_LEN + 1 ] = { 0 } ;
    bson record ;
    
-   rc = sdbGetCLFullName( cl, &pCLFullName ) ;
+   rc = sdbGetCLFullName( cl, pCLFullName, NAME_LEN ) ;
    if ( SDB_OK != rc )
    {
       printf( "Error: %s:%d, failed to get collection full name, rc = %d",
@@ -200,7 +200,7 @@ void* func_delete( void* arg )
    SINT64 count = 0 ;
 #define RETRY_TIME 10
    INT32 retry_time = RETRY_TIME ;
-   CHAR *pCLFullName = NULL ;
+   CHAR pCLFullName[ NAME_LEN + 1 ] = { 0 } ;
    struct timeval tv_start, tv_end ;
    bson matcher ;
 
@@ -210,7 +210,7 @@ void* func_delete( void* arg )
    bson_append_finish_object( &matcher ) ;
    bson_finish( &matcher ) ;
 
-   rc = sdbGetCLFullName( cl, &pCLFullName ) ;
+   rc = sdbGetCLFullName( cl, pCLFullName, NAME_LEN ) ;
    if ( SDB_OK != rc )
    {
       printf( "Error: %s:%d, failed to get collection full name, rc = %d",
@@ -300,7 +300,7 @@ void* func_update( void* arg )
 #define RETRY_TIME 10
    INT32 retry_time = RETRY_TIME ;
    struct timeval tv_start, tv_end ;
-   CHAR *pCLFullName = NULL ;
+   CHAR pCLFullName[ NAME_LEN + 1 ] = { 0 } ;
 
    bson matcher ;
    bson updater ;
@@ -318,7 +318,7 @@ void* func_update( void* arg )
    bson_append_finish_object( &updater ) ;
    bson_finish( &updater ) ;
 
-   rc = sdbGetCLFullName( cl, &pCLFullName ) ;
+   rc = sdbGetCLFullName( cl, pCLFullName, NAME_LEN ) ;
    if ( SDB_OK != rc )
    {
       printf( "Error: %s:%d: failed to get collection full name, rc = %d",
@@ -406,9 +406,9 @@ void* func_query( void* arg )
    sdbCursorHandle cursor = 0 ;
    SINT64 count = 0 ;
    struct timeval tv_start, tv_end ;
-   CHAR *pCLFullName = NULL ;
+   CHAR pCLFullName[ NAME_LEN ] = { 0 } ;
 
-   rc = sdbGetCLFullName( cl, &pCLFullName ) ;
+   rc = sdbGetCLFullName( cl, pCLFullName, NAME_LEN ) ;
    if ( SDB_OK != rc )
    {
       printf( "Error: %s:%d, failed to get collection full name, rc = %d",
