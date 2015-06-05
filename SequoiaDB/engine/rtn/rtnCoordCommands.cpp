@@ -810,6 +810,7 @@ namespace engine
       rtnQueryOptions queryOption ;
       const CHAR *pSrcFilterObjData = NULL ;
       BSONObj *pFilterObj = NULL ;
+      BOOLEAN hasNodeOrGroupFilter = FALSE ;
 
       CoordGroupList allGroupLst ;
       CoordGroupList groupLst ;
@@ -842,6 +843,10 @@ namespace engine
          rc = rtnCoordParseGroupList( cb, *pFilterObj, groupLst,
                                       &newFilterObj ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to parse groups, rc: %d", rc  ) ;
+         if ( pFilterObj->objdata() != newFilterObj.objdata() )
+         {
+            hasNodeOrGroupFilter = TRUE ;
+         }
          *pFilterObj = newFilterObj ;
       }
       if ( 0 == groupLst.size() )
@@ -859,12 +864,16 @@ namespace engine
          rc = SDB_CLS_NODE_NOT_EXIST ;
          goto error ;
       }
+      if ( pFilterObj->objdata() != newFilterObj.objdata() )
+      {
+         hasNodeOrGroupFilter = TRUE ;
+      }
       *pFilterObj = newFilterObj ;
 
       if ( !ctrlParam._isGlobal )
       {
          /// no group and node info
-         if ( pSrcFilterObjData == pFilterObj->objdata() )
+         if ( !hasNodeOrGroupFilter )
          {
             rc = SDB_RTN_CMD_IN_LOCAL_MODE ;
             goto error ;
@@ -1223,7 +1232,8 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDALCL__TESTCL, "rtnCoordCMDAlterCollection::_testCollection" )
-   INT32 rtnCoordCMDAlterCollection::_testCollection( const CHAR *fullName, pmdEDUCB *cb )
+   INT32 rtnCoordCMDAlterCollection::_testCollection( const CHAR *fullName,
+                                                      pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNCOCMDALCL__TESTCL ) ;
@@ -1623,238 +1633,6 @@ namespace engine
       return rc ;
    error:
       goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDSSONNODE_EXE, "rtnCoordCMDSnapshotOnNode::execute" )
-   INT32 rtnCoordCMDSnapshotOnNode::execute( MsgHeader *pMsg,
-                                             pmdEDUCB *cb,
-                                             INT64 &contextID,
-                                             rtnContextBuf *buf )
-   {
-      INT32 rc = SDB_OK;
-      PD_TRACE_ENTRY ( SDB_RTNCOCMDSSONNODE_EXE ) ;
-      pmdKRCB *pKrcb                   = pmdGetKRCB();
-      SDB_RTNCB *pRtncb                = pKrcb->getRTNCB();
-      CoordCB *pCoordcb                = pKrcb->getCoordCB();
-      netMultiRouteAgent *pRouteAgent  = pCoordcb->getRouteAgent();
-      contextID                        = -1;
-
-      do
-      {
-         INT32 flag = 0;
-         CHAR *pCollectionName = NULL;
-         SINT64 numToSkip = 0;
-         SINT64 numToReturn = 0;
-         CHAR *pQuery = NULL;
-         CHAR *pFieldSelector = NULL;
-         CHAR *pOrderBy = NULL;
-         CHAR *pHint = NULL;
-         MsgOpQuery *pSrc = (MsgOpQuery *)pMsg;
-
-         rc = msgExtractQuery( (CHAR*)pMsg, &flag, &pCollectionName,
-                               &numToSkip, &numToReturn, &pQuery,
-                               &pFieldSelector, &pOrderBy, &pHint );
-         if ( rc != SDB_OK )
-         {
-            PD_LOG ( PDERROR, "Snapshot failed, failed to parse query "
-                     "request(rc=%d)", rc ) ;
-            break;
-         }
-
-         UINT32 groupID;
-         UINT16 nodeID;
-         BSONObj boQuery;
-         BSONObj boOrderBy;
-         BSONObj boFieldSelector;
-         BSONObj boHint;
-         BSONObj boDummy ;
-         try
-         {
-            boQuery = BSONObj ( pQuery ) ;
-            boOrderBy = BSONObj( pOrderBy );
-            boFieldSelector = BSONObj ( pFieldSelector );
-            boHint = BSONObj ( pHint );
-            BSONElement beGroupID = boQuery.getField( CAT_GROUPID_NAME );
-            if ( beGroupID.eoo() || !beGroupID.isNumber() )
-            {
-               rc = SDB_INVALIDARG;
-               PD_LOG ( PDERROR, "Snapshot failed, failed to get the "
-                        "field(%s)", CAT_GROUPID_NAME ) ;
-               break ;
-            }
-            groupID = beGroupID.number();
-            BSONElement beNodeID = boQuery.getField( CAT_NODEID_NAME );
-            if ( beNodeID.eoo() || !beNodeID.isNumber() )
-            {
-               rc = SDB_INVALIDARG;
-               PD_LOG ( PDERROR, "Snapshot failed, failed to get the "
-                        "field(%s)", CAT_NODEID_NAME ) ;
-               break ;
-            }
-            nodeID = beNodeID.number() ;
-         }
-         catch ( std::exception &e )
-         {
-            rc = SDB_INVALIDARG;
-            PD_LOG ( PDERROR, "Snapshot failed, received unexpected: %s",
-                     e.what() );
-            break;
-         }
-         rtnContextCoord *pContext = NULL ;
-         rc = pRtncb->contextNew( RTN_CONTEXT_COORD, (rtnContext**)&pContext,
-                                  contextID, cb );
-         if ( rc != SDB_OK )
-         {
-            PD_LOG ( PDERROR, "snapshot failed, failed to allocate "
-                     "context(rc=%d)", rc ) ;
-            break;
-         }
-
-         /// ignore SEQUOIADBMAINSTREAM-506 --yunwu
-         rc = pContext->open( boOrderBy,
-                              boFieldSelector,
-                              pSrc->numToReturn,
-                              pSrc->numToSkip ) ;
-         if ( rc != SDB_OK )
-         {
-            PD_LOG( PDERROR, "Open context failed, rc: %d", rc ) ;
-            break ;
-         }
-
-         MsgOpQuery *pSnapshotReq = NULL;
-         INT32 msgSize = 0;
-         rc = BuildRequestMsg( ((CHAR **)&pSnapshotReq), &msgSize, flag,
-                               numToSkip, numToReturn, &boDummy,
-                               &boDummy, &boOrderBy, &boHint );
-         if ( rc != SDB_OK )
-         {
-            PD_LOG ( PDERROR, "snapshot failed, failed to build the "
-                     "request message(rc=%d)",
-                     rc );
-            break;
-         }
-
-         pSnapshotReq->header.routeID.value = 0;
-         pSnapshotReq->header.TID = cb->getTID() ;
-         BOOLEAN isNeedRefresh = FALSE;
-         while ( TRUE )
-         {
-            CoordGroupInfoPtr groupInfo ;
-            rc = rtnCoordGetGroupInfo( cb, groupID, isNeedRefresh, groupInfo );
-            if ( rc != SDB_OK )
-            {
-               PD_LOG ( PDERROR, "snapshot failed, failed to get the group "
-                        "info(groupID=%u, rc=%d)",
-                        groupID, rc );
-               break;
-            }
-            clsGroupItem *groupItem = groupInfo->getGroupItem() ;
-            MsgRouteID routeID ;
-            routeID.value = MSG_INVALID_ROUTEID ;
-            INT32 nodePos = groupItem->nodePos( nodeID ) ;
-
-            if ( nodePos >= 0 )
-            {
-               groupItem->getNodeID( nodePos, routeID,
-                                     MSG_ROUTE_SHARD_SERVCIE ) ;
-            }
-
-            // not get node routeid
-            if ( MSG_INVALID_ROUTEID == routeID.value )
-            {
-               if ( !isNeedRefresh )
-               {
-                  isNeedRefresh = TRUE ;
-                  continue;
-               }
-               else
-               {
-                  rc = SDB_INVALIDARG ;
-                  PD_LOG ( PDERROR, "Snapshot failed, failed to get the node "
-                           "info(groupID=%u, nodeID=%u)", groupID, nodeID ) ;
-                  break;
-               }
-            }
-            REQUESTID_MAP requestIdMap;
-            rc = rtnCoordSendRequestToNode( (void *)pSnapshotReq, routeID,
-                                            pRouteAgent,
-                                            cb, requestIdMap ) ;
-            if ( rc != SDB_OK )
-            {
-               rtnCoordClearRequest( cb, requestIdMap );
-               if ( !isNeedRefresh )
-               {
-                  isNeedRefresh = TRUE;
-                  continue;
-               }
-               else
-               {
-                  PD_LOG ( PDERROR, "Snapshot failed, failed to send the "
-                           "request to node(groupID=%u, nodeID=%u, rc=%d)",
-                           groupID, nodeID, rc );
-                  break;
-               }
-            }
-            REPLY_QUE replyQue;
-            rc = rtnCoordGetReply ( cb, requestIdMap, replyQue,
-                                    MSG_BS_QUERY_RES ) ;
-            if ( rc != SDB_OK )
-            {
-               PD_LOG ( PDERROR, "Snapshot failed, failed to get the reply "
-                        "from node(rc=%d)", rc ) ;
-            }
-            while ( !replyQue.empty() )
-            {
-               MsgOpReply *pReply = NULL;
-               pReply = (MsgOpReply *)( replyQue.front() ) ;
-               replyQue.pop() ;
-               if ( SDB_OK == rc )
-               {
-                  // snapshot reset does not return context ID, but all other
-                  // logics are the same, so we put it in same snapshot
-                  // processing function with special handling here
-                  if ( SDB_OK == pReply->flags &&
-                       pReply->contextID != -1 )
-                  {
-                     rc = pContext->addSubContext( routeID,
-                                                   pReply->contextID );
-                  }
-                  else
-                  {
-                     rc = pReply->flags ;
-                  }
-               }
-               SDB_OSS_FREE( pReply ) ;
-            }
-
-            if ( rc != SDB_OK )
-            {
-               if ( !isNeedRefresh )
-               {
-                  isNeedRefresh = TRUE ;
-                  continue;
-               }
-               else
-               {
-                  PD_LOG ( PDERROR, "Snapshot failed, error occured while "
-                           "process node-reply(rc=%d)", rc );
-               }
-            }
-            break ;
-         }
-         if ( NULL != pSnapshotReq )
-         {
-            SDB_OSS_FREE( pSnapshotReq );
-         }
-      }while ( FALSE ) ;
-
-      if ( rc && contextID >= 0 )
-      {
-         pRtncb->contextDelete( contextID, cb ) ;
-         contextID = -1 ;
-      }
-      PD_TRACE_EXITRC ( SDB_RTNCOCMDSSONNODE_EXE, rc ) ;
-      return rc ;
    }
 
    INT32 rtnCoordCMDSnapshotIntrBase::execute( MsgHeader *pMsg,
@@ -2394,82 +2172,7 @@ namespace engine
       PD_TRACE_EXITRC ( SDB_RTNCOCMDSSRESET_BUILDREQMSG, rc ) ;
       return rc ;
    }
-   INT32 rtnCoordCMDSnapshotDataBaseTmp::BuildRequestMsg  ( CHAR **ppBuffer,
-                                                            INT32 *bufferSize,
-                                                            SINT32 flag,
-                                                            SINT64 numToSkip,
-                                                            SINT64 numToReturn,
-                                                            bson::BSONObj *query,
-                                                            bson::BSONObj *fieldSelector,
-                                                            bson::BSONObj *orderBy,
-                                                            bson::BSONObj *hint )
-   {
-      INT32 rc = SDB_OK ;
-      rc = msgBuildQueryMsg( ppBuffer, bufferSize, COORD_CMD_SNAPSHOTDATABASE,
-                             flag, 0, numToSkip, numToReturn, query,
-                             fieldSelector, orderBy, hint ) ;
-      return rc ;
-   }
-   
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDSSSYS_BUILDREQMSG, "rtnCoordCMDSnapshotSystemTmp::BuildRequestMsg" )
-   INT32 rtnCoordCMDSnapshotSystemTmp::BuildRequestMsg  ( CHAR **ppBuffer,
-                                                          INT32 *bufferSize,
-                                                          SINT32 flag,
-                                                          SINT64 numToSkip,
-                                                          SINT64 numToReturn,
-                                                          bson::BSONObj *query,
-                                                          bson::BSONObj *fieldSelector,
-                                                          bson::BSONObj *orderBy,
-                                                          bson::BSONObj *hint )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB_RTNCOCMDSSSYS_BUILDREQMSG ) ;
-      rc = msgBuildQueryMsg( ppBuffer, bufferSize, COORD_CMD_SNAPSHOTSYSTEM,
-                             flag, 0, numToSkip, numToReturn, query,
-                             fieldSelector, orderBy, hint ) ;
-      PD_TRACE_EXITRC ( SDB_RTNCOCMDSSSYS_BUILDREQMSG, rc ) ;
-      return rc ;
-   }
-   
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDSSSE_BUILDREQMSG, "rtnCoordCMDSnapshotSessions::BuildRequestMsg" )
-   INT32 rtnCoordCMDSnapshotSessionsTmp::BuildRequestMsg  ( CHAR **ppBuffer,
-                                                            INT32 *bufferSize,
-                                                            SINT32 flag,
-                                                            SINT64 numToSkip,
-                                                            SINT64 numToReturn,
-                                                            bson::BSONObj *query,
-                                                            bson::BSONObj *fieldSelector,
-                                                            bson::BSONObj *orderBy,
-                                                            bson::BSONObj *hint )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB_RTNCOCMDSSSE_BUILDREQMSG ) ;
-      rc = msgBuildQueryMsg( ppBuffer, bufferSize, COORD_CMD_SNAPSHOTSESSIONS,
-                             flag, 0, numToSkip, numToReturn, query,
-                             fieldSelector, orderBy, hint ) ;
-      PD_TRACE_EXITRC ( SDB_RTNCOCMDSSSE_BUILDREQMSG, rc ) ;
-      return rc ;
-   }
-   
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDSSCONT_BUILDREQMSG, "rtnCoordCMDSnapshotContexts::BuildRequestMsg" )
-   INT32 rtnCoordCMDSnapshotContextsTmp::BuildRequestMsg  ( CHAR **ppBuffer,
-                                                            INT32 *bufferSize,
-                                                            SINT32 flag,
-                                                            SINT64 numToSkip,
-                                                            SINT64 numToReturn,
-                                                            bson::BSONObj *query,
-                                                            bson::BSONObj *fieldSelector,
-                                                            bson::BSONObj *orderBy,
-                                                            bson::BSONObj *hint )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB_RTNCOCMDSSCONT_BUILDREQMSG ) ;
-      rc = msgBuildQueryMsg( ppBuffer, bufferSize, COORD_CMD_SNAPSHOTCONTEXTS,
-                             flag, 0, numToSkip, numToReturn, query,
-                             fieldSelector, orderBy, hint );
-      PD_TRACE_EXITRC ( SDB_RTNCOCMDSSCONT_BUILDREQMSG, rc ) ;
-      return rc ;
-   }
+
    // snapshot collection operation. Basically this operation from coord does
    // not broadcast to data node. Instead it works like ListGroups, which sends
    // request to catalog
@@ -2500,27 +2203,6 @@ namespace engine
                             MSG_CAT_QUERY_COLLECTIONSPACES_REQ,
                             cb, contextID, buf ) ;
       PD_TRACE_EXITRC ( SDB_RTNCOCMDSSCSS_EXE, rc ) ;
-      return rc ;
-   }
-
-   //PD_TRACE_DECLARE_FUNCTION (SDB_RTNCOCMDSSRESETTMP_BUILDREQMSG, "rtnCoordCMDSnapshotResetTmp::BuildRequestMsg" )
-   INT32 rtnCoordCMDSnapshotResetTmp::BuildRequestMsg  ( CHAR **ppBuffer,
-                                                         INT32 *bufferSize,
-                                                         SINT32 flag,
-                                                         SINT64 numToSkip,
-                                                         SINT64 numToReturn,
-                                                         BSONObj *query,
-                                                         BSONObj *fieldSelector,
-                                                         BSONObj *orderBy,
-                                                         BSONObj *hint )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB_RTNCOCMDSSRESETTMP_BUILDREQMSG ) ;
-      rc = msgBuildQueryMsg( ppBuffer, bufferSize, COORD_CMD_SNAPSHOTRESET,
-                             flag, 0, numToSkip, numToReturn, query,
-                             fieldSelector,
-                             orderBy, hint );
-      PD_TRACE_EXITRC ( SDB_RTNCOCMDSSRESETTMP_BUILDREQMSG, rc ) ;
       return rc ;
    }
 
@@ -4628,79 +4310,79 @@ namespace engine
    {
       INT32 rc                         = SDB_OK;
       PD_TRACE_ENTRY ( SDB_RTNCOCMDOPONNODE_EXE ) ;
+
+      rtnQueryOptions queryOption ;
+      const CHAR *strHostName = NULL ;
+      const CHAR *svcname = NULL ;
+
+      BSONObj boNodeConf;
+      BSONObjBuilder bobNodeConf ;
+
+      SINT32 opType = getOpType() ;
+      SINT32 retCode = SDB_OK ;
+
       // fill default-reply(active group success)
       contextID                        = -1 ;
 
-      do
-      {
-         INT32 flag;
-         CHAR *pCMDName;
-         SINT64 numToSkip;
-         SINT64 numToReturn;
-         CHAR *pQuery;
-         CHAR *pFieldSelector;
-         CHAR *pOrderBy;
-         CHAR *pHint;
-         rc = msgExtractQuery( (CHAR*)pMsg, &flag, &pCMDName, &numToSkip,
-                               &numToReturn, &pQuery, &pFieldSelector,
-                               &pOrderBy, &pHint );
-         if ( rc != SDB_OK )
-         {
-            PD_LOG ( PDERROR, "failed to parse the request(rc=%d)", rc );
-            break;
-         }
-         const CHAR *strHostName = NULL ;
-         BSONObj boNodeConf;
-         try
-         {
-            BSONObj boQuery( pQuery );
-            BSONElement beHostName = boQuery.getField( FIELD_NAME_HOST );
-            if ( beHostName.eoo() || beHostName.type()!=String )
-            {
-               rc = SDB_INVALIDARG;
-               PD_LOG ( PDERROR, "failed to get the field(%s)",
-                        FIELD_NAME_HOST );
-               break;
-            }
-            strHostName = beHostName.valuestrsafe () ;
-            BSONElement beSvcName = boQuery.getField( PMD_OPTION_SVCNAME );
-            if ( beSvcName.eoo() || beSvcName.type()!=String )
-            {
-               rc = SDB_INVALIDARG;
-               PD_LOG ( PDERROR, "failed to get the field(%s)",
-                        PMD_OPTION_SVCNAME );
-               break;
-            }
-            BSONObjBuilder bobNodeConf;
-            bobNodeConf.append( beSvcName );
-            boNodeConf = bobNodeConf.obj();
-         }
-         catch ( std::exception &e )
-         {
-            rc = SDB_INVALIDARG;
-            PD_LOG ( PDERROR, "occured unexpected error:%s",
-                     e.what() );
-            break;
-         }
-         SINT32 opType = getOpType();
-         SINT32 retCode;
-         rc = rtnRemoteExec ( opType, strHostName,
-                              &retCode, &boNodeConf ) ;
-         if ( rc != SDB_OK )
-         {
-            PD_LOG( PDERROR, "operate failed(rc=%d)", rc );
-            break;
-         }
-         if ( retCode != SDB_OK )
-         {
-            rc = retCode;
-            PD_LOG ( PDERROR, "remote node execute failed(rc=%d)", rc ) ;
-         }
-         break ;
-      }while ( FALSE );
+      rc = queryOption.fromQueryMsg( (CHAR *)pMsg ) ;
+      PD_RC_CHECK( rc, PDERROR, "Extract msg failed, rc: %d", rc ) ;
 
+      try
+      {
+         BSONObj objQuery = queryOption._query ;
+         BSONElement ele = objQuery.getField( FIELD_NAME_HOST );
+         if ( ele.eoo() || ele.type() != String )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG ( PDERROR, "Field[%s] is invalid[%s]",
+                     FIELD_NAME_HOST, objQuery.toString().c_str() ) ;
+            goto error ;
+         }
+         strHostName = ele.valuestrsafe () ;
+
+         ele = objQuery.getField( PMD_OPTION_SVCNAME ) ;
+         if ( ele.eoo() || ele.type() != String )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG ( PDERROR, "Field[%s] is invalid[%s]",
+                     PMD_OPTION_SVCNAME, objQuery.toString().c_str() ) ;
+            goto error ;
+         }
+         svcname = ele.valuestrsafe() ;
+
+         bobNodeConf.append( ele ) ;
+         boNodeConf = bobNodeConf.obj() ;
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_INVALIDARG;
+         PD_LOG ( PDERROR, "occured unexpected error:%s",
+                  e.what() );
+         goto error ;
+      }
+
+      /// execute on node
+      rc = rtnRemoteExec ( opType, strHostName,
+                           &retCode, &boNodeConf ) ;
+      if ( rc != SDB_OK )
+      {
+         PD_LOG( PDERROR, "Excute operate[%d] on node[%s:%s] failed, rc: %d",
+                 opType, strHostName, svcname, rc ) ;
+         goto error ;
+      }
+      if ( retCode != SDB_OK )
+      {
+         rc = retCode ;
+         PD_LOG( PDERROR, "Excute operate[%d] on node[%s:%s] failed, rc: %d",
+                 opType, strHostName, svcname, rc ) ;
+         goto error ;
+      }
+
+   done:
       PD_TRACE_EXITRC ( SDB_RTNCOCMDOPONNODE_EXE, rc ) ;
-      return rc;
+      return rc ;
+   error:
+      goto done ;
    }
 
    SINT32 rtnCoordCMDStartupNode::getOpType()

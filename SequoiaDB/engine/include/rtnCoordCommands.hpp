@@ -299,21 +299,6 @@ namespace engine
                              INT64 &contextID,
                              rtnContextBuf *buf ) ;
    };
-   class rtnCoordCMDSnapshotOnNode : public rtnCoordCommand
-   {
-   public:
-      virtual INT32 execute( MsgHeader *pMsg,
-                             pmdEDUCB *cb,
-                             INT64 &contextID,
-                             rtnContextBuf *buf ) ;
-   private:
-      virtual INT32 BuildRequestMsg  ( CHAR **ppBuffer, INT32 *bufferSize,
-                                       SINT32 flag, SINT64 numToSkip,
-                                       SINT64 numToReturn, BSONObj *query,
-                                       BSONObj *fieldSelector,
-                                       BSONObj *orderBy,
-                                       BSONObj *hint ) = 0;
-   };
 
    class rtnCoordCMDSnapshotIntrBase : public rtnCoordCommand
    {
@@ -566,50 +551,6 @@ namespace engine
       virtual const CHAR *getIntrCMDName();
    };
 
-   class rtnCoordCMDSnapshotDataBaseTmp : public rtnCoordCMDSnapshotOnNode
-   {
-   private:
-      virtual INT32 BuildRequestMsg  ( CHAR **ppBuffer, INT32 *bufferSize,
-                                       SINT32 flag, SINT64 numToSkip,
-                                       SINT64 numToReturn, BSONObj *query,
-                                       BSONObj *fieldSelector,
-                                       BSONObj *orderBy,
-                                       BSONObj *hint );
-   };
-
-   class rtnCoordCMDSnapshotSystemTmp : public rtnCoordCMDSnapshotOnNode
-   {
-   private:
-      virtual INT32 BuildRequestMsg  ( CHAR **ppBuffer, INT32 *bufferSize,
-                                       SINT32 flag, SINT64 numToSkip,
-                                       SINT64 numToReturn, BSONObj *query,
-                                       BSONObj *fieldSelector,
-                                       BSONObj *orderBy,
-                                       BSONObj *hint );
-   };
-
-   class rtnCoordCMDSnapshotSessionsTmp : public rtnCoordCMDSnapshotOnNode
-   {
-   private:
-      virtual INT32 BuildRequestMsg  ( CHAR **ppBuffer, INT32 *bufferSize,
-                                       SINT32 flag, SINT64 numToSkip,
-                                       SINT64 numToReturn, BSONObj *query,
-                                       BSONObj *fieldSelector,
-                                       BSONObj *orderBy,
-                                       BSONObj *hint );
-   };
-
-   class rtnCoordCMDSnapshotContextsTmp : public rtnCoordCMDSnapshotOnNode
-   {
-   private:
-      virtual INT32 BuildRequestMsg  ( CHAR **ppBuffer, INT32 *bufferSize,
-                                       SINT32 flag, SINT64 numToSkip,
-                                       SINT64 numToReturn, BSONObj *query,
-                                       BSONObj *fieldSelector,
-                                       BSONObj *orderBy,
-                                       BSONObj *hint );
-   };
-
    class rtnCoordCMDSnapshotCollectionsTmp : public rtnCoordCommand
    {
    public :
@@ -627,17 +568,6 @@ namespace engine
                              INT64 &contextID,
                              rtnContextBuf *buf ) ;
    };
-
-   class rtnCoordCMDSnapshotResetTmp : public rtnCoordCMDSnapshotOnNode
-   {
-   private:
-      virtual INT32 BuildRequestMsg  ( CHAR **ppBuffer, INT32 *bufferSize,
-                                       SINT32 flag, SINT64 numToSkip,
-                                       SINT64 numToReturn, BSONObj *query,
-                                       BSONObj *fieldSelector,
-                                       BSONObj *orderBy,
-                                       BSONObj *hint );
-   } ;
 
    class rtnCoordCMDCreateCollectionSpace : public rtnCoordCommand
    {
