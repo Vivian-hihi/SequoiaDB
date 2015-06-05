@@ -260,7 +260,6 @@
 #define FIELD_NAME_DATA                      "Data"
 #define FIELD_NAME_DATALEN                   "DataLen"
 #define FIELD_NAME_ORG_LSNOFFSET             "OrgOffset"
-#define FIELD_NAME_ONSELF                    "OnSelf"
 
 #define FIELD_NAME_MODIFY                    "$Modify"
 #define FIELD_NAME_OP                        "OP"
@@ -289,7 +288,7 @@
 #define FIELD_NAME_HEADERLINE                "headerline"
 #define FIELD_NAME_LTYPE                     "type"
 #define FIELD_NAME_CHARACTER                 "character"
-#define FIELD_NAME_EXPORTCONF_GLOBAL         "Global"
+#define FIELD_NAME_GLOBAL                    "Global"
 #define FIELD_NAME_ERROR_NODES               "ErrNodes"
 #define FIELD_NAME_FUNC                      "func"
 #define FIELD_NAME_FUNCTYPE                  "funcType"

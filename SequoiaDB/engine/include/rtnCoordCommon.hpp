@@ -418,11 +418,15 @@ namespace engine
 
    struct _rtnCoordCtrlParam
    {
-      BOOLEAN     _onSelf ;
+      BOOLEAN              _isGlobal ;
+      FILTER_BSON_ID       _filterID ;
+      NODE_SEL_STY         _emptyFilterSel ;
 
       _rtnCoordCtrlParam()
       {
-         _onSelf  = FALSE ;
+         _isGlobal = TRUE ;
+         _filterID = FILTER_ID_MATCHER ;
+         _emptyFilterSel = NODE_SEL_ALL ;
       }
    } ;
    typedef _rtnCoordCtrlParam rtnCoordCtrlParam ;

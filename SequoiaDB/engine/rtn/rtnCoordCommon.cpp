@@ -3432,16 +3432,28 @@ namespace engine
       while( it.more() )
       {
          BSONElement e = it.next() ;
-         if ( 0 == ossStrcasecmp( e.fieldName(), FIELD_NAME_ONSELF ) )
+         if ( 0 == ossStrcasecmp( e.fieldName(), FIELD_NAME_GLOBAL ) )
          {
             if ( !e.isBoolean() )
             {
                PD_LOG( PDERROR, "Field[%s] is invalid in obj[%s]",
-                       FIELD_NAME_ONSELF, obj.toString().c_str() ) ;
+                       FIELD_NAME_GLOBAL, obj.toString().c_str() ) ;
                rc = SDB_INVALIDARG ;
                goto error ;
             }
-            param._onSelf = e.boolean() ? TRUE : FALSE ;
+            param._isGlobal = e.boolean() ? TRUE : FALSE ;
+            modify = TRUE ;
+         }
+         else if ( e.isNull() &&
+                  ( 0 == ossStrcasecmp( e.fieldName(),
+                                        FIELD_NAME_GROUPS ) ||
+                    0 == ossStrcasecmp( e.fieldName(),
+                                        FIELD_NAME_GROUPNAME ) ||
+                    0 == ossStrcasecmp( e.fieldName(),
+                                        FIELD_NAME_GROUPID ) )
+                 )
+         {
+            param._isGlobal = FALSE ;
             modify = TRUE ;
          }
          else if ( pNewObj )

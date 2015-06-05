@@ -221,7 +221,8 @@ namespace engine
          }
          else
          {
-            PD_LOG( PDINFO, "Failed to process reply[node: %s, flag: %d]",
+            PD_LOG( ( pContext ? PDINFO : PDWARNING ),
+                    "Failed to process reply[node: %s, flag: %d]",
                     routeID2String( nodeID ).c_str(), pReply->flags ) ;
             faileds[ nodeID.value ] = pReply->flags ;
          }
@@ -795,8 +796,7 @@ namespace engine
 
    INT32 rtnCoordCommand::executeOnNodes( MsgHeader *pMsg,
                                           pmdEDUCB *cb,
-                                          FILTER_BSON_ID filterID,
-                                          NODE_SEL_STY emptyFilterSel,
+                                          rtnCoordCtrlParam &ctrlParam,
                                           ROUTE_RC_MAP faileds,
                                           rtnContextCoord **ppContext,
                                           BOOLEAN openEmptyContext,
@@ -810,7 +810,6 @@ namespace engine
       rtnQueryOptions queryOption ;
       const CHAR *pSrcFilterObjData = NULL ;
       BSONObj *pFilterObj = NULL ;
-      rtnCoordCtrlParam ctrlParam ;
 
       CoordGroupList allGroupLst ;
       CoordGroupList groupLst ;
@@ -827,18 +826,13 @@ namespace engine
       rc = queryOption.fromQueryMsg( (CHAR*)pMsg ) ;
       PD_RC_CHECK( rc, PDERROR, "Extrace query msg failed, rc: %d", rc ) ;
       /// 2. get filter obj
-      pFilterObj = rtnCoordGetFilterByID( filterID, queryOption ) ;
+      pFilterObj = rtnCoordGetFilterByID( ctrlParam._filterID, queryOption ) ;
       pSrcFilterObjData = pFilterObj->objdata() ;
       /// 3. parse control param
       rc = rtnCoordParseControlParam( *pFilterObj, ctrlParam, &newFilterObj ) ;
       PD_RC_CHECK( rc, PDERROR, "prase control param failed, rc: %d", rc ) ;
       *pFilterObj = newFilterObj ;
 
-      if ( ctrlParam._onSelf )
-      {
-         rc = SDB_COORD_UNKNOWN_OP_REQ ;
-         goto error ;
-      }
       /// 4. parse groups
       rc = rtnCoordGetAllGroupList( cb, allGroupLst ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to get all group list, rc: %d",
@@ -855,7 +849,7 @@ namespace engine
          groupLst = allGroupLst ;
       }
       /// 5. parse nodes
-      rc = rtnCoordGetGroupNodes( cb, *pFilterObj, emptyFilterSel,
+      rc = rtnCoordGetGroupNodes( cb, *pFilterObj, ctrlParam._emptyFilterSel,
                                   groupLst, sendNodes, &newFilterObj ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to get nodes, rc: %d", rc ) ;
       if ( sendNodes.size() == 0 )
@@ -866,6 +860,17 @@ namespace engine
          goto error ;
       }
       *pFilterObj = newFilterObj ;
+
+      if ( !ctrlParam._isGlobal )
+      {
+         /// no group and node info
+         if ( pSrcFilterObjData == pFilterObj->objdata() )
+         {
+            rc = SDB_RTN_CMD_IN_LOCAL_MODE ;
+            goto error ;
+         }
+         ctrlParam._isGlobal = TRUE ;
+      }
 
       ///6. open context
       if ( ppContext )
@@ -992,18 +997,21 @@ namespace engine
                                       rtnContextBuf *buf )
    {
       INT32 rc = SDB_OK ;
+      rtnCoordCtrlParam ctrlParam ;
       rtnContextCoord *pContext = NULL ;
       ROUTE_RC_MAP failedNodes ;
 
       contextID = -1 ;
+      ctrlParam._isGlobal = TRUE ;
+      ctrlParam._filterID = _getGroupMatherIndex() ;
+      ctrlParam._emptyFilterSel = _nodeSelWhenNoFilter() ;
 
-      rc = executeOnNodes( pMsg, cb, _getGroupMatherIndex(),
-                           _nodeSelWhenNoFilter(), failedNodes,
+      rc = executeOnNodes( pMsg, cb, ctrlParam, failedNodes,
                            _useContext() ? &pContext : NULL,
                            FALSE, NULL, NULL ) ;
       if ( rc )
       {
-         if ( SDB_COORD_UNKNOWN_OP_REQ == rc )
+         if ( SDB_RTN_CMD_IN_LOCAL_MODE == rc )
          {
             rc = SDB_INVALIDARG ;
          }
@@ -6405,145 +6413,36 @@ namespace engine
                                         rtnContextBuf *buf )
    {
       INT32 rc = SDB_OK ;
-      pmdKRCB *pKrcb =  pmdGetKRCB();
-      contextID      = -1 ;
+      ROUTE_RC_MAP faileds ;
+      rtnCoordCtrlParam ctrlParam ;
 
-      CHAR *query = NULL ;
-      rc = msgExtractQuery( (CHAR*)pMsg, NULL, NULL,
-                            NULL, NULL, &query,
-                            NULL, NULL, NULL ) ;
-      PD_RC_CHECK ( rc, PDERROR,
-                    "Execute failed, failed to parse query request(rc=%d)",
-                    rc );
+      ctrlParam._isGlobal = FALSE ;
+      ctrlParam._filterID = FILTER_ID_MATCHER ;
+      ctrlParam._emptyFilterSel = NODE_SEL_ALL ;
+      contextID = -1 ;
 
-      try
+      rc = executeOnNodes( pMsg, cb, ctrlParam, faileds ) ;
+      if ( SDB_RTN_CMD_IN_LOCAL_MODE == rc )
       {
-         BSONObj param( query ) ;
-         BSONElement ele ;
-         ele = param.getField( FIELD_NAME_EXPORTCONF_GLOBAL ) ;
-         if ( ele.eoo() )
-         {
-            rc = SDB_INVALIDARG ;
-            PD_LOG( PDERROR, "invalid arg:%s",param.toString().c_str() ) ;
-            goto error ;
-         }
-         else if ( Bool == ele.type() )
-         {
-            if ( ele.Bool() )
-            {
-               ROUTE_SET nodeSet ;
-               rc = _getNodesSet( cb, nodeSet ) ;
-               if ( SDB_OK != rc )
-               {
-                  PD_LOG( PDERROR, "failed to get nodes:%d",rc ) ;
-                  rc = SDB_SYS ;
-                  goto error ;
-               }
-
-               {
-               REQUESTID_MAP completed ;
-               ROUTE_RC_MAP uncompleted ;
-               CoordCB *coordcb = pmdGetKRCB()->getCoordCB();
-               netMultiRouteAgent *routeAgent = coordcb->getRouteAgent();
-               REPLY_QUE replyQueue ;
-               pMsg->TID = cb->getTID() ;
-               rtnCoordSendRequestToNodes( (void*)pMsg,
-                                           nodeSet,
-                                           routeAgent,
-                                           cb,
-                                           completed,
-                                           uncompleted ) ;
-               if ( !uncompleted.empty() )
-               {
-                  PD_LOG( PDERROR, "Not all requests are successful,"
-                          "failed num:%d", uncompleted.size() ) ;
-                  rc = SDB_RTN_EXPORTCONF_NOT_COMPLETE ;
-               }
-
-               if ( !completed.empty() )
-               {
-                  rc = rtnCoordGetReply( cb, completed, replyQueue,
-                                         MSG_BS_QUERY_RES ) ;
-                  CHAR *queueItr = NULL ;
-                  while ( !replyQueue.empty() )
-                  {
-                     queueItr = replyQueue.front() ;
-                     MsgOpReply *reply = ( MsgOpReply * )queueItr ;
-                     if ( SDB_OK != reply->flags )
-                     {
-                        rc = SDB_RTN_EXPORTCONF_NOT_COMPLETE ;
-                     }
-                     SAFE_OSS_FREE( queueItr ) ;
-                     replyQueue.pop() ;
-                  }
-                  if ( SDB_OK != rc )
-                  {
-                     PD_LOG( PDERROR, "failed to get reply:%d",rc ) ;
-                     goto error ;
-                  }
-               }
-               }
-            }
-            else
-            {
-               rc = pKrcb->getOptionCB()->reflush2File() ;
-               if ( SDB_OK != rc )
-               {
-                  PD_LOG( PDERROR, "failed to export configration: %d", rc ) ;
-                  goto error ;
-               }
-            }
-         }
-         else
-         {
-            PD_LOG( PDERROR, "unrecognized param:%s",
-                    param.toString().c_str() ) ;
-            rc = SDB_INVALIDARG ;
-            goto error ;
-         }
+         /// submmit to local command
+         rc = SDB_COORD_UNKNOWN_OP_REQ ;
+         goto error ;
       }
-      catch (std::exception &e )
+      PD_RC_CHECK( rc, PDERROR, "Execute on nodes failed, rc: %d", rc ) ;
+
+      /// do on local
+      rc = pmdGetKRCB()->getOptionCB()->reflush2File() ;
+      if ( rc )
       {
-         PD_RC_CHECK ( rc, PDERROR, "unexpected err happened: %s", e.what() );
-         rc = SDB_SYS ;
+         PD_LOG( PDWARNING, "Flush local config to file failed, rc: %d", rc ) ;
+         rc = SDB_RTN_EXPORTCONF_NOT_COMPLETE ;
          goto error ;
       }
 
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   INT32 rtnCoordCMDExpConfig::_getNodesSet( pmdEDUCB *cb, ROUTE_SET &nSet )
-   {
-      INT32 rc = SDB_OK ;
-      GROUP_VEC grpVec ;
-      rc = rtnCoordGetAllGroupList( cb, grpVec ) ;
-      if ( SDB_OK != rc )
+      if ( faileds.size() > 0 )
       {
-         PD_LOG( PDERROR, "failed to get group list:%d", rc ) ;
-         rc = SDB_SYS ;
+         rc = SDB_RTN_EXPORTCONF_NOT_COMPLETE ;
          goto error ;
-      }
-
-      for ( GROUP_VEC::const_iterator itr = grpVec.begin();
-            itr != grpVec.end();
-            itr++ )
-      {
-         MsgRouteID routeID ;
-         routeID.value = MSG_INVALID_ROUTEID ;
-         clsGroupItem *grp = (*itr)->getGroupItem() ;
-         routeID.columns.groupID = grp->groupID() ;
-         const VEC_NODE_INFO *nodesInfo = grp->getNodes() ;
-         for ( VEC_NODE_INFO::const_iterator itrn = nodesInfo->begin();
-               itrn != nodesInfo->end();
-               itrn++ )
-         {
-            routeID.columns.nodeID = itrn->_id.columns.nodeID ;
-            routeID.columns.serviceID = MSG_ROUTE_SHARD_SERVCIE ;
-            nSet.insert( routeID.value ) ;
-         }
       }
 
    done:
@@ -7787,179 +7686,6 @@ namespace engine
       goto done ;
    }
 
-   INT32 rtnCoordCMDOnMultiNodes::_extractExecRange( const BSONObj &condition,
-                                                     pmdEDUCB *cb,
-                                                     ROUTE_SET &nodes )
-   {
-      INT32 rc = SDB_OK ;
-      BSONElement groups = condition.getField( FIELD_NAME_GROUPS ) ;
-      /// means all groups 
-      if ( groups.eoo() )
-      {
-         GROUP_VEC gpLst ;
-         rc = rtnCoordGetAllGroupList( cb, gpLst ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDERROR, "failed to get group list:%d", rc ) ;
-            rc = SDB_SYS ;
-            goto error ;
-         }
-
-         for ( GROUP_VEC::const_iterator itr = gpLst.begin();
-               itr != gpLst.end();
-               itr++ )
-         {
-            MsgRouteID routeID ;
-            routeID.value = MSG_INVALID_ROUTEID ;
-            clsGroupItem *grp = (*itr)->getGroupItem() ;
-            routeID.columns.groupID = grp->groupID() ;
-            const VEC_NODE_INFO *nodesInfo = grp->getNodes() ;
-            for ( VEC_NODE_INFO::const_iterator itrn = nodesInfo->begin();
-                  itrn != nodesInfo->end();
-                itrn++ )
-            {
-               routeID.columns.nodeID = itrn->_id.columns.nodeID ;
-               routeID.columns.serviceID = MSG_ROUTE_SHARD_SERVCIE ;
-               nodes.insert( routeID.value ) ;
-            }
-         }
-      }
-      /// only on this coord
-      else if ( groups.isNull() )
-      {
-         /// do nothing
-      }
-      /// a data group specified
-      else if ( String == groups.type() )
-      {
-         CoordGroupInfoPtr gpInfo ;
-         rc = rtnCoordGetGroupInfo( cb, groups.valuestr(),
-                                    FALSE, gpInfo ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDERROR, "failed to get group info which is specified[%s],"
-                    "rc:%d", groups.valuestr(), rc ) ;
-            goto error ;
-         }
-
-         {
-         MsgRouteID routeID ;
-         routeID.value = MSG_INVALID_ROUTEID ;
-         clsGroupItem *grp = gpInfo->getGroupItem() ;
-         routeID.columns.groupID = grp->groupID() ;
-         const VEC_NODE_INFO *nodesInfo = grp->getNodes() ;
-         for ( VEC_NODE_INFO::const_iterator itrn = nodesInfo->begin();
-               itrn != nodesInfo->end();
-               itrn++ )
-         {
-            routeID.columns.nodeID = itrn->_id.columns.nodeID ;
-            routeID.columns.serviceID = MSG_ROUTE_SHARD_SERVCIE ;
-            nodes.insert( routeID.value ) ;
-         }
-         }
-      }
-      /// some data groups specified
-      else if ( Array == groups.type() )
-      {
-         BSONObjIterator itr( groups.embeddedObject() ) ;
-         while ( itr.more() )
-         {
-            BSONElement ele = itr.next() ;
-            if ( String != ele.type() )
-            {
-               PD_LOG( PDERROR, "invalid condition object:%s",
-                       condition.toString( FALSE, TRUE ).c_str() ) ;
-               rc = SDB_INVALIDARG ;
-               goto error ;
-            }
-
-            {
-            CoordGroupInfoPtr gpInfo ;
-            rc = rtnCoordGetGroupInfo( cb, ele.valuestr(),
-                                       FALSE, gpInfo ) ;
-            if ( SDB_OK != rc )
-            {
-               PD_LOG( PDERROR, "failed to get group info which is specified[%s],"
-                       "rc:%d", groups.valuestr(), rc ) ;
-               goto error ;
-            }
-
-            {
-            MsgRouteID routeID ;
-            routeID.value = MSG_INVALID_ROUTEID ;
-            clsGroupItem *grp = gpInfo->getGroupItem() ;
-            routeID.columns.groupID = grp->groupID() ;
-            const VEC_NODE_INFO *nodesInfo = grp->getNodes() ;
-            for ( VEC_NODE_INFO::const_iterator itrn = nodesInfo->begin();
-                     itrn != nodesInfo->end();
-                   itrn++ )
-            {
-               routeID.columns.nodeID = itrn->_id.columns.nodeID ;
-               routeID.columns.serviceID = MSG_ROUTE_SHARD_SERVCIE ;
-               nodes.insert( routeID.value ) ;
-            }
-            }
-            }
-         } 
-      }
-      else
-      {
-         PD_LOG( PDERROR, "invalid condition object:%s",
-                 condition.toString( FALSE, TRUE ).c_str() ) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   INT32 rtnCoordCMDOnMultiNodes::_executeOnMultiNodes( CHAR *msg,
-                                                        pmdEDUCB *cb,
-                                                        ROUTE_SET &nodes,
-                                                        ROUTE_RC_MAP &uncompleted )
-   {
-      INT32 rc = SDB_OK ;
-      REQUESTID_MAP completed ;
-      CoordCB *coordcb = pmdGetKRCB()->getCoordCB();
-      netMultiRouteAgent *routeAgent = coordcb->getRouteAgent();
-      REPLY_QUE replyQueue ;
-      CHAR *queueItr = NULL ;
-
-      rc = rtnCoordSendRequestToNodes( msg,
-                                       nodes,
-                                       routeAgent,
-                                       cb,
-                                       completed,
-                                       uncompleted ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to send request to multi nodes:%d", rc ) ;
-         goto error ;
-      }
-
-      rc = rtnCoordGetReply( cb, completed, replyQueue,
-                             MAKE_REPLY_TYPE( ( ( MsgHeader * )msg )->opCode ),
-                             TRUE, TRUE ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to get reply of multi nodes:%d", rc ) ;
-         goto error ;
-      }
-
-   done:
-      while ( !replyQueue.empty() )
-      {
-         queueItr = replyQueue.front() ;
-         SAFE_OSS_FREE( queueItr ) ;
-         replyQueue.pop() ;
-      }
-      return rc ;
-   error:
-      goto done ;
-   }
-
    // PD_TRACE_DECLARE_FUNCTION( CMD_RTNCOCMDINVALIDATECACHE_EXEC, "rtnCoordCMDInvalidateCache::execute" )
    INT32 rtnCoordCMDInvalidateCache::execute( MsgHeader *pMsg,
                                               pmdEDUCB *cb,
@@ -7969,73 +7695,32 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( CMD_RTNCOCMDINVALIDATECACHE_EXEC ) ;
 
-      CHAR *query = NULL ;
-      BSONObj condition ;
-      BSONElement execRange ;
-      ROUTE_SET nodes ;
       ROUTE_RC_MAP uncompleted ;
+      rtnCoordCtrlParam ctrlParam ;
 
       contextID = -1 ;
-
-      rc = msgExtractQuery( (CHAR*)pMsg, NULL, NULL,
-                            NULL, NULL, &query,
-                            NULL, NULL, NULL );
-      if ( rc != SDB_OK )
-      {
-         PD_LOG ( PDERROR, "failed to parse query request(rc=%d)", rc ) ;
-         goto error ;
-      }
-
-      try
-      {
-         condition = BSONObj( query ) ;
-      }
-      catch ( std::exception &e )
-      {
-         PD_LOG( PDERROR, "unexpected err happened:%s", e.what() ) ;
-         rc = SDB_SYS ;
-         goto error ;
-      }
-
-      rc = _extractExecRange( condition, cb, nodes ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to extract range from object:%d", rc ) ;
-         goto error ;
-      }
+      ctrlParam._isGlobal = TRUE ;
+      ctrlParam._filterID = FILTER_ID_MATCHER ;
+      ctrlParam._emptyFilterSel = NODE_SEL_ALL ;
 
       /// invalidate local catalog cache and group cache
       sdbGetCoordCB()->invalidateCataInfo() ;
       sdbGetCoordCB()->invalidateGroupInfo() ;
 
-      /// send msg to specified nodes
-      pMsg->TID = cb->getTID() ;
-      rc = _executeOnMultiNodes( (CHAR*)pMsg,
-                                 cb, nodes, uncompleted ) ;
-      if ( SDB_OK != rc )
+      rc = executeOnNodes( pMsg, cb, ctrlParam, uncompleted ) ;
+      if ( SDB_RTN_CMD_IN_LOCAL_MODE == rc )
       {
-         PD_LOG( PDERROR, "failed to execute on multi nodes:%d", rc ) ;
-         goto error ;
+         rc = SDB_OK ;
+         goto done ;
       }
+      PD_RC_CHECK( rc, PDERROR, "Execute on nodes failed, rc: %d", rc ) ;
 
       if ( !uncompleted.empty() )
       {
-         std::stringstream ss ;
-         MsgRouteID routeID ;
-         routeID.value = MSG_INVALID_ROUTEID ;
-         for ( ROUTE_RC_MAP::const_iterator itr = uncompleted.begin() ;
-               itr != uncompleted.end() ;
-               itr++ )
-         {
-            routeID.value = itr->first ;
-            ss << " [" << routeID.columns.groupID << "," << routeID.columns.nodeID
-               << "]:" << itr->second ;
-         }
-         PD_LOG( PDERROR, "not all nodes returned ok:%s",
-                 ss.str().c_str() ) ;
          rc = SDB_COORD_NOT_ALL_DONE ;
          goto error ;
       }
+
    done:
       PD_TRACE_EXITRC( CMD_RTNCOCMDINVALIDATECACHE_EXEC, rc ) ;
       return rc ;

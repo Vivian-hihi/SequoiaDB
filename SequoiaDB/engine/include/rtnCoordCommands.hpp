@@ -199,8 +199,7 @@ namespace engine
 
       INT32         executeOnNodes( MsgHeader *pMsg,
                                     pmdEDUCB *cb,
-                                    FILTER_BSON_ID filterID,
-                                    NODE_SEL_STY emptyFilterSel,
+                                    rtnCoordCtrlParam &ctrlParam,
                                     ROUTE_RC_MAP faileds,
                                     rtnContextCoord **ppContext = NULL,
                                     BOOLEAN openEmptyContext = FALSE,
@@ -1141,9 +1140,6 @@ namespace engine
                              pmdEDUCB *cb,
                              INT64 &contextID,
                              rtnContextBuf *buf ) ;
-
-   private:
-      INT32 _getNodesSet( pmdEDUCB *cb, ROUTE_SET &nSet ) ;
    } ;
 
    class rtnCoordCMDCrtProcedure : public rtnCoordCommand
@@ -1285,21 +1281,7 @@ namespace engine
                                 SINT64 &contextID ) ;
    } ;
 
-   class rtnCoordCMDOnMultiNodes : public rtnCoordCommand
-   {
-   protected:
-      INT32 _extractExecRange( const BSONObj &condition,
-                               pmdEDUCB *cb,
-                               ROUTE_SET &range ) ;
-
-      INT32 _executeOnMultiNodes( CHAR *msg,
-                                  pmdEDUCB *cb,
-                                  ROUTE_SET &nodes,
-                                  ROUTE_RC_MAP &uncompleted ) ;
-
-   } ;
-
-   class rtnCoordCMDInvalidateCache : public rtnCoordCMDOnMultiNodes
+   class rtnCoordCMDInvalidateCache : public rtnCoordCommand
    {
    public:
       virtual INT32 execute( MsgHeader *pMsg,
