@@ -201,10 +201,10 @@ namespace engine
                                     pmdEDUCB *cb,
                                     FILTER_BSON_ID filterID,
                                     NODE_SEL_STY emptyFilterSel,
+                                    ROUTE_RC_MAP faileds,
                                     rtnContextCoord **ppContext = NULL,
                                     BOOLEAN openEmptyContext = FALSE,
                                     SET_RC *pIgnoreRC = NULL,
-                                    ROUTE_RC_MAP *pFailedNodes = NULL,
                                     ROUTE_SET *pSucNodes = NULL ) ;
 
    protected:

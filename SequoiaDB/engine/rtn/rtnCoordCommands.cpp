@@ -797,10 +797,10 @@ namespace engine
                                           pmdEDUCB *cb,
                                           FILTER_BSON_ID filterID,
                                           NODE_SEL_STY emptyFilterSel,
+                                          ROUTE_RC_MAP faileds,
                                           rtnContextCoord **ppContext,
                                           BOOLEAN openEmptyContext,
                                           SET_RC *pIgnoreRC,
-                                          ROUTE_RC_MAP *pFailedNodes,
                                           ROUTE_SET *pSucNodes )
    {
       INT32 rc = SDB_OK ;
@@ -815,7 +815,6 @@ namespace engine
       CoordGroupList allGroupLst ;
       CoordGroupList groupLst ;
       ROUTE_SET sendNodes ;
-      ROUTE_RC_MAP failedNodes ;
       BSONObj newFilterObj ;
 
       CHAR *pNewMsg = NULL ;
@@ -946,25 +945,16 @@ namespace engine
 
       /// 8. execute
       rc = executeOnNodes( (MsgHeader*)pNewMsg, cb, sendNodes,
-                           failedNodes, pSucNodes, pIgnoreRC,
+                           faileds, pSucNodes, pIgnoreRC,
                            pTmpContext ) ;
       PD_RC_CHECK( rc, PDERROR, "Execute on nodes failed, rc: %d", rc ) ;
 
       /// 9. build failed result
-      if ( pFailedNodes )
-      {
-         *pFailedNodes = failedNodes ;
-      }
       if ( pTmpContext )
       {
-         rc = _buildFailedNodeReply( failedNodes, pTmpContext ) ;
+         rc = _buildFailedNodeReply( faileds, pTmpContext ) ;
          PD_RC_CHECK( rc, PDERROR, "Build failed node reply failed, rc: %d",
                       rc ) ;
-      }
-      else if ( !pFailedNodes && failedNodes.size() > 0 )
-      {
-         rc = failedNodes.begin()->second ;
-         goto error ;
       }
 
    done:
@@ -1008,9 +998,9 @@ namespace engine
       contextID = -1 ;
 
       rc = executeOnNodes( pMsg, cb, _getGroupMatherIndex(),
-                           _nodeSelWhenNoFilter(),
+                           _nodeSelWhenNoFilter(), failedNodes,
                            _useContext() ? &pContext : NULL,
-                           FALSE, NULL, &failedNodes, NULL ) ;
+                           FALSE, NULL, NULL ) ;
       if ( rc )
       {
          if ( SDB_COORD_UNKNOWN_OP_REQ == rc )
@@ -1069,7 +1059,7 @@ namespace engine
 
    BOOLEAN rtnCoordRemoveBackup::_allowFailed ()
    {
-      return TRUE ;
+      return FALSE ;
    }
 
    BOOLEAN rtnCoordRemoveBackup::_useContext ()
