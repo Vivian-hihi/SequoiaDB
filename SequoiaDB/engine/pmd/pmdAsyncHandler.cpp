@@ -261,10 +261,10 @@ namespace engine
       // If the session doesn't exist, we'll check bCreate, if bCreate=TRUE it
       // will create one, otherwise will not
       pSession = _pSessionMgr->getSession( sessionID ,
-                                                             PMD_SESSION_PASSIVE,
-                                                             handle, bCreate,
-                                                             header->opCode,
-                                                             NULL ) ;
+                                           PMD_SESSION_PASSIVE,
+                                           handle, bCreate,
+                                           header->opCode,
+                                           NULL ) ;
       // Determine whether a session is created or retreived
       if ( NULL == pSession )
       {
