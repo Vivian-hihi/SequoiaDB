@@ -73,9 +73,9 @@ private:
                         const jsval &val,
                         bson *bs ) ;
 
-   BOOLEAN _addSpecialObj( JSObject *obj,
-                           const CHAR *key,
-                           bson *bs ) ;
+   INT32 _addSpecialObj( JSObject *obj,
+                         const CHAR *key,
+                         bson *bs ) ;
 
    INT32 _addJsonTypes( JSObject *obj,
                         const CHAR *key,

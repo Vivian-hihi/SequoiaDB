@@ -528,15 +528,16 @@ error:
    goto done ; 
 }
 
-BOOLEAN sptConvertor::_addSpecialObj( JSObject *obj,
-                                      const CHAR *key,
-                                      bson *bs )
+INT32 sptConvertor::_addSpecialObj( JSObject *obj,
+                                    const CHAR *key,
+                                    bson *bs )
 {
    BOOLEAN ret = TRUE ;
    INT32 rc = SDB_OK ;
    JSIdArray *properties = JS_Enumerate( _cx, obj ) ;
    if ( NULL == properties || 0 == properties->length )
    {
+      rc = SDB_SPT_NOT_SPECIAL_JSON ;
       goto error ;
    }
 
@@ -547,23 +548,27 @@ BOOLEAN sptConvertor::_addSpecialObj( JSObject *obj,
    std::string name ;
    if ( !JS_IdToValue( _cx, id, &fieldName ))
    {
+      rc = SDB_SYS ;
       goto error ;
    }
 
    rc = _toString( fieldName, name ) ;
    if ( SDB_OK != rc )
    {
+      rc = SDB_SYS ;
       goto error ;
    }
 
    if ( name.length() <= 1 )
    {
+      rc = SDB_SPT_NOT_SPECIAL_JSON ;
       goto error ;
    }
 
    /// start with '$'
    if ( SPT_CONVERTOR_SPE_OBJSTART != name.at(0) )
    {
+      rc = SDB_SPT_NOT_SPECIAL_JSON ;
       goto error ;
    }
 
@@ -573,6 +578,7 @@ BOOLEAN sptConvertor::_addSpecialObj( JSObject *obj,
       jsval value ;
       if ( !_getProperty( obj, name.c_str(), JSTYPE_NUMBER, value ) )
       {
+         rc = SDB_INVALIDARG ;
          goto error ;
       }
 
@@ -584,6 +590,7 @@ BOOLEAN sptConvertor::_addSpecialObj( JSObject *obj,
       jsval value ;
       if ( !_getProperty( obj, name.c_str(), JSTYPE_NUMBER, value ) )
       {
+         rc = SDB_INVALIDARG ;
          goto error ;
       }
 
@@ -596,17 +603,20 @@ BOOLEAN sptConvertor::_addSpecialObj( JSObject *obj,
       jsval value ;
       if ( !_getProperty( obj, name.c_str(), JSTYPE_STRING, value ))
       {
+         rc = SDB_INVALIDARG ;
          goto error ;
       }
 
       rc = _toString( value, strValue ) ;
       if ( SDB_OK != rc )
       {
+         rc = SDB_INVALIDARG ;
          goto error ;
       }
 
       if ( 24 != strValue.length() )
       {
+         rc = SDB_INVALIDARG ;
          goto error ;
       }
 
@@ -624,12 +634,14 @@ BOOLEAN sptConvertor::_addSpecialObj( JSObject *obj,
       bson_timestamp_t btm ;
       if ( !_getProperty( obj, name.c_str(), JSTYPE_STRING, value ))
       {
+         rc = SDB_INVALIDARG ;
          goto error ;
       }
 
       rc = _toString( value, strValue ) ;
       if ( SDB_OK != rc )
       {
+         rc = SDB_INVALIDARG ;
          goto error ;
       }
 
@@ -637,6 +649,7 @@ BOOLEAN sptConvertor::_addSpecialObj( JSObject *obj,
                                             tm,
                                             &usec ))
       {
+         rc = SDB_INVALIDARG ;
          goto error ;
       }
 
@@ -653,18 +666,21 @@ BOOLEAN sptConvertor::_addSpecialObj( JSObject *obj,
       bson_date_t datet ;
       if ( !_getProperty( obj, name.c_str(), JSTYPE_STRING, value ))
       {
+         rc = SDB_INVALIDARG ;
          goto error ;
       }
 
       rc = _toString( value, strValue ) ;
       if ( SDB_OK != rc )
       {
+         rc = SDB_INVALIDARG ;
          goto error ;
       }
 
       if ( SDB_OK != engine::utilStr2Date( strValue.c_str(),
                                            tm ) )
       {
+         rc = SDB_INVALIDARG ;
          goto error ;
       }
 
@@ -682,41 +698,48 @@ BOOLEAN sptConvertor::_addSpecialObj( JSObject *obj,
 
       if ( !JS_IdToValue( _cx, optionid, &optionValName ))
       {
+         rc = SDB_INVALIDARG ;
          goto error ;
       }
 
       rc = _toString( optionValName, optionName ) ;
       if ( SDB_OK != rc )
       {
+         rc = SDB_INVALIDARG ;
          goto error ;
       }
 
       if ( 0 != optionName.compare( SPT_SPEOBJ_OPTION ) )
       {
+         rc = SDB_INVALIDARG ;
          goto error ;
       }
 
       if ( !_getProperty( obj, name.c_str(),
                           JSTYPE_STRING, jsRegex ))
       {
+         rc = SDB_INVALIDARG ;
          goto error ;
       }
 
       if ( !_getProperty( obj, optionName.c_str(),
                           JSTYPE_STRING, jsOption ))
       {
+         rc = SDB_INVALIDARG ;
          goto error ;
       }
 
       rc = _toString( jsRegex, strRegex ) ;
       if ( SDB_OK != rc )
       {
+         rc = SDB_INVALIDARG ;
          goto error ;
       }
 
       rc = _toString( jsOption, strOption ) ;
       if ( SDB_OK != rc )
       {
+         rc = SDB_INVALIDARG ;
          goto error ;
       }
 
@@ -736,41 +759,48 @@ BOOLEAN sptConvertor::_addSpecialObj( JSObject *obj,
 
       if ( !JS_IdToValue( _cx, typeId, &typeValName ))
       {
+         rc = SDB_INVALIDARG ;
          goto error ;
       }
 
       rc = _toString( typeValName, typeName ) ;
       if ( SDB_OK != rc )
       {
+         rc = SDB_INVALIDARG ;
          goto error ;
       }
 
       if ( 0 != typeName.compare( SPT_SPEOBJ_TYPE ) )
       {
+         rc = SDB_INVALIDARG ;
          goto error ;
       }
 
       if ( !_getProperty( obj, name.c_str(),
                           JSTYPE_STRING, jsBin ))
       {
+         rc = SDB_INVALIDARG ;
          goto error ;
       }
 
       if ( !_getProperty( obj, typeName.c_str(),
                           JSTYPE_STRING, jsType ))
       {
+         rc = SDB_INVALIDARG ;
          goto error ;
       }
 
       rc = _toString( jsBin, strBin ) ;
       if ( SDB_OK != rc )
       {
+         rc = SDB_INVALIDARG ;
          goto error ;
       }
 
       rc = _toString( jsType, strType ) ;
       if ( SDB_OK != rc || strType.empty())
       {
+         rc = SDB_INVALIDARG ;
          goto error ;
       }
 
@@ -817,12 +847,13 @@ BOOLEAN sptConvertor::_addSpecialObj( JSObject *obj,
    }
    else
    {
+      rc = SDB_SPT_NOT_SPECIAL_JSON ;
       goto error ;
    }
    }
 
 done:
-   return ret ;
+   return rc ;
 error:
    ret = FALSE ;
    goto done ;
@@ -912,29 +943,37 @@ INT32 sptConvertor::_appendToBson( const std::string &name,
                   goto error ;
                }
             }
-            else if ( !_addSpecialObj( obj, name.c_str(), bs ) )
+            else
             {
-               bson *bsobj = NULL ;
-               rc = toBson( obj, &bsobj ) ;
-               if ( SDB_OK != rc )
+               rc = _addSpecialObj( obj, name.c_str(), bs ) ;
+               if ( SDB_SPT_NOT_SPECIAL_JSON == rc )
+               {
+                  bson *bsobj = NULL ;
+                  rc = toBson( obj, &bsobj ) ;
+                  if ( SDB_OK != rc )
+                  {
+                     goto error ;
+                  }
+
+                  if ( JS_IsArrayObject( _cx, obj ) )
+                  {
+                     bson_append_array( bs, name.c_str(), bsobj ) ;
+                  }
+                  else
+                  {
+                     bson_append_bson( bs, name.c_str(), bsobj ) ;
+                  }
+
+                  bson_destroy( bsobj ) ;
+               }
+               else if ( SDB_OK != rc )
                {
                   goto error ;
                }
-
-               if ( JS_IsArrayObject( _cx, obj ) )
-               {
-                  bson_append_array( bs, name.c_str(), bsobj ) ;
-               }
                else
                {
-                  bson_append_bson( bs, name.c_str(), bsobj ) ;
+                  /// do nothing.
                }
-
-               bson_destroy( bsobj ) ;
-            }
-            else
-            {
-               /// do noting
             }
          }
          break ;
