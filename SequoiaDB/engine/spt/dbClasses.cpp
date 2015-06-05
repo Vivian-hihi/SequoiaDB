@@ -6398,11 +6398,11 @@ static JSBool sdb_drop_user ( JSContext *cx , uintN argc , jsval *vp )
 
    connection = ( sdbConnectionHandle * )
          JS_GetPrivate ( cx, JS_THIS_OBJECT ( cx, vp ) ) ;
-   REPORT ( connection, "Sdb.createUsr(): no connection handle" ) ;
+   REPORT ( connection, "Sdb.dropUsr(): no connection handle" ) ;
 
    ret = JS_ConvertArguments ( cx , argc , JS_ARGV ( cx , vp ) ,
                                "SS" , &strUsrName , &strUsrPwd ) ;
-   REPORT ( ret , "Sdb.createUsr(): wrong arguments" ) ;
+   REPORT ( ret , "Sdb.dropUsr(): wrong arguments" ) ;
 
    if ( strUsrName )
    {
@@ -6413,7 +6413,7 @@ static JSBool sdb_drop_user ( JSContext *cx , uintN argc , jsval *vp )
          usrPwd = (CHAR *) JS_EncodeString ( cx , strUsrPwd ) ;
          VERIFY ( usrPwd ) ;
          rc = sdbRemoveUsr( *connection , usrName , usrPwd ) ;
-         REPORT_RC ( SDB_OK == rc , "Sdb.createUsr()" , rc ) ;
+         REPORT_RC ( SDB_OK == rc , "Sdb.dropUsr()" , rc ) ;
       }
       else
       {
