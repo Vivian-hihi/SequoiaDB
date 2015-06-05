@@ -145,6 +145,8 @@ namespace engine
       void _delContextByHandle( const UINT32 &handle ) ;
       void _delContext( const UINT32 &handle, UINT32 tid ) ;
       void _delContextByID( INT64 contextID, BOOLEAN rtnDel ) ;
+      void _handleBeatMsg( const NET_HANDLE &handle,
+                           const _MsgHeader *header ) ;
 
    private :
       pmdEDUMgr         *_pEduMgr;

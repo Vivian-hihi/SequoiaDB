@@ -39,6 +39,7 @@
 #include "ossUtil.hpp"
 #include "pdTrace.hpp"
 #include "pmdTrace.hpp"
+#include "pmdEnv.hpp"
 
 namespace engine
 {
@@ -237,8 +238,8 @@ namespace engine
       INT32 rc        = SDB_OK ;
       BOOLEAN bCreate = TRUE ;
       PD_TRACE_ENTRY ( SDB__PMDMSGHND_HNDSNMSG );
-
-      UINT64 sessionID = _pSessionMgr->makeSessionID( handle, header ) ;
+      UINT64 sessionID = 0 ;
+      _pmdAsyncSession *pSession = NULL ;
 
       // if opcode is disconnect or interrupt, we don't expect to create
       // new session
@@ -247,11 +248,19 @@ namespace engine
       {
          bCreate = FALSE ;
       }
+      else if ( MSG_CLS_BEAT == header->opCode )
+      {
+         /// heart beat detection from coord
+         _handleBeatMsg( handle, header ) ;
+         goto done ;
+      }
+
+      sessionID = _pSessionMgr->makeSessionID( handle, header ) ;
 
       // Find the associated session if exist
       // If the session doesn't exist, we'll check bCreate, if bCreate=TRUE it
       // will create one, otherwise will not
-      _pmdAsyncSession *pSession = _pSessionMgr->getSession( sessionID ,
+      pSession = _pSessionMgr->getSession( sessionID ,
                                                              PMD_SESSION_PASSIVE,
                                                              handle, bCreate,
                                                              header->opCode,
@@ -363,6 +372,39 @@ namespace engine
                                            PMD_EDU_MEM_ALLOC,
                                            pNewMsg, (UINT64)handle ) ) ;
       PD_TRACE_EXIT ( SDB__PMDMSGHND_POSTMAINMSG ) ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDMSGHND__HANDLEBEATMSG, "_pmdAsyncMsgHandler::_handleBeatMsg" )
+   void _pmdAsyncMsgHandler::_handleBeatMsg( const NET_HANDLE &handle,
+                                             const _MsgHeader *reqHeader )
+   {
+      INT32 rc = SDB_OK ;
+      rc = dbIsAbnormal() ? SDB_SYS : SDB_OK ;
+      BSONObjBuilder builder ;
+      builder.append( FIELD_NAME_STATUS, rc ) ;
+      BSONObj obj = builder.obj() ;
+
+      MsgOpReply header ;
+      header.header.opCode = MAKE_REPLY_TYPE( reqHeader->opCode ) ;
+      header.header.messageLength = sizeof ( MsgOpReply ) +
+                                    obj.objsize() ;
+      header.header.requestID = reqHeader->requestID ;
+      header.header.TID = reqHeader->TID ;
+      header.header.routeID.value = 0 ;
+      header.flags = rc ;
+      header.contextID = -1 ;
+      header.numReturned = 1 ;
+      header.startFrom = 0 ;
+      rc = SDB_OK ;
+
+      rc = _pSessionMgr->getRouteAgent()->syncSend ( handle, &( header.header ),
+                                                     (void*)(obj.objdata()),
+                                                     obj.objsize() ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to reply beat request:%d", rc ) ;
+      }
+      return ;
    }
 }
 

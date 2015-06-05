@@ -43,6 +43,8 @@ using namespace bson ;
 
 namespace engine
 {
+   #define PMD_DB_IS_NORMAL 0
+   #define PMD_DB_IS_ABNORMAL 1
    /*
       When recieve quit event or signal, will call
    */
@@ -62,6 +64,12 @@ namespace engine
       BOOLEAN                       _quitFlag ;
       PMD_ON_QUIT_FUNC              _pQuitFunc ;
 
+      /// loop updated by pmdSyncClockEntryPoint
+      volatile UINT64               _tick ;
+
+      /// loop updated by clsReplicaSet
+      volatile UINT64               _validationTick ;
+
       _pmdSysInfo()
       :_isPrimary( 0 )
       {
@@ -71,6 +79,8 @@ namespace engine
          _dbType        = SDB_TYPE_DB ;
          _pQuitFunc     = NULL ;
          _startTime     = time( NULL ) ;
+         _tick          = 0 ;
+         _validationTick = 0 ;
       }
    } pmdSysInfo ;
 
@@ -87,6 +97,19 @@ namespace engine
 
    void           pmdSetQuit() ;
    BOOLEAN        pmdIsQuitApp() ;
+
+   void           updateDBTick() ;
+
+   UINT64         getDBTick() ;
+
+   void           updateValidationTick() ;
+
+   UINT64         getValidationTick() ;
+
+   void           getTicks( UINT64 &tick,
+                            UINT64 &validationTick ) ;
+
+   BOOLEAN        dbIsAbnormal() ;
 
    pmdSysInfo*    pmdGetSysInfo () ;
 

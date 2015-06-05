@@ -292,6 +292,10 @@ namespace engine
 
          INT32 _handleStepUp( UINT32 seconds ) ;
 
+         void _localValidate( UINT32 millis ) ;
+
+         BOOLEAN _dbIsAbNormal() const ;
+
       private:
          _netRouteAgent          *_agent ;
          _clsGroupInfo           _info ;
@@ -322,7 +326,6 @@ namespace engine
          UINT64                  _sizethreshold[ CLS_SYNCCTRL_THRESHOLD_SIZE ] ;
          UINT32                  _timeThreshold[ CLS_SYNCCTRL_THRESHOLD_SIZE ] ;
          BOOLEAN                 _inSyncCtrl ;
-
    } ;
 
    typedef class _clsReplicateSet clsReplicateSet ;

@@ -350,7 +350,8 @@ clsFiles = [
       "cls/clsCataHashMatcher.cpp",
       "cls/clsCommand.cpp",
       "cls/clsReelection.cpp",
-      "cls/clsDCMgr.cpp"
+      "cls/clsDCMgr.cpp",
+      "cls/clsLocalValidation.cpp"
       ]
 
 dpsFiles = [

@@ -46,6 +46,7 @@
 #include "msgMessage.hpp"
 #include "pdTrace.hpp"
 #include "clsTrace.hpp"
+#include "clsLocalValidation.hpp"
 
 namespace engine
 {
@@ -479,11 +480,14 @@ namespace engine
          {
             goto done ;
          }
+
+
          _beatTime += interval ;
          if ( CLS_SHARING_BETA_INTERVAL <= _beatTime )
          {
             _sharingBeat() ;
             _beatTime = 0 ;
+            _localValidate( interval ) ;
          }
 
          _checkBreak( interval ) ;
@@ -670,6 +674,7 @@ namespace engine
       {
          goto done ;
       }
+
       {
       DPS_LSN fBegin ;
       DPS_LSN mBegin ;
@@ -1217,6 +1222,30 @@ namespace engine
       return rc ;
    error:
       goto done ;
-   } 
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION (SDB__CLSREPSET__LOCALVALIDATE, "_clsReplicateSet::_localValidate()" )
+   void _clsReplicateSet::_localValidate( UINT32 millis )
+   {
+      INT32 rc = SDB_OK ;
+      _clsLocalValidation v ;
+      rc = v.run() ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to run local validation:%d", rc ) ;
+      }
+
+      if ( _dbIsAbNormal() )
+      {
+         PD_LOG( PDSEVERE, "db is under abnormal status, we must restart!" ) ;
+         PMD_RESTART_DB( SDB_SYS ) ;
+      }
+      return ;
+   }
+
+   BOOLEAN _clsReplicateSet::_dbIsAbNormal() const
+   {
+      return dbIsAbnormal() ;
+   }
 }
 

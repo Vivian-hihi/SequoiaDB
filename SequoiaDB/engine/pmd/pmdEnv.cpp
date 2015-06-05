@@ -374,6 +374,53 @@ namespace engine
 
 #endif // _LINUX
 
+   void updateDBTick()
+   {
+      ++(pmdGetSysInfo()->_tick) ;
+      return ;
+   }
+
+   UINT64 getDBTick()   
+   {
+      return pmdGetSysInfo()->_tick ;
+   }
+
+   void updateValidationTick()
+   {
+      pmdGetSysInfo()->_validationTick = getDBTick() ;
+      return ;
+   } 
+
+   UINT64 getValidationTick()
+   {
+      return pmdGetSysInfo()->_validationTick ;
+   }
+
+   void getTicks( UINT64 &tick,
+                  UINT64 &validationTick )
+   {
+      /// ticks may be modified by other thread.
+      /// get validationTick first that we can
+      /// ensure validationTick <= tick.
+      validationTick = pmdGetSysInfo()->_validationTick ;
+      tick = pmdGetSysInfo()->_tick ;
+      return ;
+   }
+
+   BOOLEAN dbIsAbnormal()
+   {
+      UINT64 validationTick = 0 ;
+      UINT64 tick = 0 ;
+      getTicks( tick, validationTick ) ;
+      /// 30s
+      if ( 3000 <= ( tick - validationTick ) )
+      {
+         PD_LOG( PDERROR, "db is abnormal, tick[%lld], validation tick[%ldd]",
+                 tick, validationTick ) ;
+         return TRUE ;
+      }
+      return FALSE ;
+   }
 }
 
 
