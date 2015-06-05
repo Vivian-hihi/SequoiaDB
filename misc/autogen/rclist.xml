@@ -2354,5 +2354,13 @@
          </description>
       </code>
 
+      <code>
+         <name>SDB_RTN_CMD_IN_LOCAL_MODE</name>
+         <description>
+            <en>The command is in local mode</en>
+            <cn>命令为本地运行模式</cn>
+         </description>
+      </code>
+
    </codelist>
 </rclist>
