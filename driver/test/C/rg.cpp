@@ -21,10 +21,10 @@ BOOLEAN create_rg_flag     = FALSE ;
 BOOLEAN create_node_flag   = FALSE ;
 BOOLEAN create_node_flag2  = FALSE ;
 
-const CHAR *pHostName      = "192.168.20.166" ;
-//const CHAR *pHostName      = HOST ;
-//const CHAR *pSvcName       = SERVER ;
-const CHAR *pSvcName       = "11810" ;
+//const CHAR *pHostName      = "192.168.20.166" ;
+const CHAR *pHostName      = HOST ;
+const CHAR *pSvcName       = SERVER ;
+//const CHAR *pSvcName       = "11810" ;
 const CHAR *pUser          = USER ;
 const CHAR *pPassword      = PASSWD ;
 
@@ -218,6 +218,31 @@ TEST_F( replicaGroupTest, init_test )
    ASSERT_EQ( TRUE, create_rg_flag ) << "Error: Failed to create rg in database" ; 
    ASSERT_EQ( TRUE, create_node_flag ) << "Error: Failed to create data node in database" ;
    ASSERT_EQ( TRUE, create_node_flag2 ) << "Error: Failed to create data node in database" ;
+}
+
+TEST_F( replicaGroupTest, getRGName )
+{
+   // check in cluster or not
+   if ( FALSE == is_cluster )
+      return ;
+   ASSERT_EQ( TRUE, connect_flag ) << "Error: Failed to connect to database" ;
+   ASSERT_EQ( TRUE, create_rg_flag ) << "Error: Failed to create rg in database" ;
+   ASSERT_EQ( TRUE, create_node_flag ) << "Error: Failed to create data node in database" ;
+   ASSERT_EQ( TRUE, create_node_flag2 ) << "Error: Failed to create data node in database" ;
+
+   INT32 rc                 = SDB_OK ;
+   CHAR pBuffer[ NAME_LEN ] = { 0 } ;
+   CHAR *pBuffer2           = NULL ;
+
+   rc = sdbGetRGName( rg, pBuffer, NAME_LEN ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   ASSERT_EQ( 0, strncmp( pBuffer, pGroupName, strlen(pGroupName) ) ) ;
+
+   rc = sdbGetRGName( rg, pBuffer, 1 ) ;
+   ASSERT_EQ( SDB_INVALIDSIZE, rc ) ;
+ 
+   rc = sdbGetRGName( rg, pBuffer2, 1 ) ;
+   ASSERT_EQ( SDB_INVALIDARG, rc ) ;
 }
 
 TEST_F( replicaGroupTest, detachNode )

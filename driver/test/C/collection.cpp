@@ -4,6 +4,59 @@
 #include "testcommon.h"
 #include "client.h"
 
+TEST(collection,sdbGetName)
+{
+   sdbConnectionHandle connection = 0 ;
+   sdbCSHandle collectionspace    = 0 ;
+   sdbCollectionHandle collection = 0 ;
+   sdbCursorHandle cursor         = 0 ;
+   CHAR pBuffer[ NAME_LEN + 1 ]   = { 0 } ;
+   CHAR pBuffer2[ 1 ]             = { 0 } ;
+   CHAR *pBuffer3                 = NULL ;
+   INT32 rc                       = SDB_OK ;
+
+   rc = initEnv( HOST, SERVER, USER, PASSWD ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // connect to database
+   rc = sdbConnect ( HOST, SERVER, USER, PASSWD, &connection ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // get cs
+   rc = getCollectionSpace ( connection,
+                             COLLECTION_SPACE_NAME,
+                             &collectionspace ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // get cl
+   rc = getCollection ( connection,
+                        COLLECTION_FULL_NAME,
+                        &collection ) ;
+   CHECK_MSG("%s%d\n","rc = ", rc) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   
+   rc = sdbGetCSName( collectionspace, pBuffer, NAME_LEN + 1 ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   ASSERT_EQ( 0, strncmp( pBuffer, COLLECTION_SPACE_NAME, strlen(COLLECTION_SPACE_NAME) ) ) ;
+
+   rc = sdbGetCLName( collection, pBuffer, NAME_LEN + 1 ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   ASSERT_EQ( 0, strncmp( pBuffer, COLLECTION_NAME, strlen(COLLECTION_NAME) ) ) ;
+     
+   rc = sdbGetCLFullName( collection, pBuffer, NAME_LEN + 1 ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   ASSERT_EQ( 0, strncmp( pBuffer, COLLECTION_FULL_NAME, strlen(COLLECTION_FULL_NAME) ) ) ;
+
+   rc = sdbGetCLFullName( collection, pBuffer2, 1 ) ;
+   ASSERT_EQ( SDB_INVALIDSIZE, rc ) ;
+
+   rc = sdbGetCLFullName( collection, pBuffer3, 1 ) ;
+   ASSERT_EQ( SDB_INVALIDARG, rc ) ;
+
+   sdbDisconnect ( connection ) ;
+   sdbReleaseCursor ( cursor ) ;
+   sdbReleaseCollection ( collection ) ;
+   sdbReleaseCS ( collectionspace ) ;
+   sdbReleaseConnection ( connection ) ;
+}
+
 TEST(collection,sdbGetIndexes)
 {
    sdbConnectionHandle connection = 0 ;
