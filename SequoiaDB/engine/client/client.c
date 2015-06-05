@@ -1115,10 +1115,10 @@ error :
    goto done ;
 }
 
-static INT32 _sdbShardExtractNode ( sdbReplicaGroupHandle cHandle,
-                                    sdbNodeHandle *handle,
-                                    const CHAR *data,
-                                    BOOLEAN endianConvert )
+static INT32 _sdbRGExtractNode ( sdbReplicaGroupHandle cHandle,
+                                 sdbNodeHandle *handle,
+                                 const CHAR *data,
+                                 BOOLEAN endianConvert )
 {
    INT32 rc       = SDB_OK ;
    sdbRNStruct *r = NULL ;
@@ -2315,17 +2315,51 @@ error :
 }
 
 SDB_EXPORT INT32 sdbGetReplicaGroupName ( sdbReplicaGroupHandle cHandle,
-                                          CHAR **ppShardName )
+                                          CHAR **ppRGName )
 {
    INT32 rc                 = SDB_OK ;
    sdbRGStruct *r           = (sdbRGStruct*)cHandle ;
 
    HANDLE_CHECK( cHandle, r, SDB_HANDLE_TYPE_REPLICAGROUP ) ;
 
-   if ( ppShardName )
+   if ( ppRGName )
    {
-      *ppShardName = r->_replicaGroupName ;
+      *ppRGName = r->_replicaGroupName ;
    }
+done :
+   return rc ;
+error :
+   goto done ;
+}
+
+SDB_EXPORT INT32 sdbGetRGName ( sdbReplicaGroupHandle cHandle,
+                                CHAR *pBuffer, INT32 size )
+{
+   INT32 rc                 = SDB_OK ;
+   INT32 name_len           = 0 ;
+   sdbRGStruct *r           = (sdbRGStruct*)cHandle ;
+
+   HANDLE_CHECK( cHandle, r, SDB_HANDLE_TYPE_REPLICAGROUP ) ;
+   if ( NULL == pBuffer )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+   if ( size <= 0 )
+   {
+      rc = SDB_INVALIDSIZE ;
+      goto error ;
+   }
+
+   name_len = ossStrlen( r->_replicaGroupName ) ;
+   if ( size < name_len + 1 )
+   {
+      rc = SDB_INVALIDSIZE ;
+      goto error ;
+   }
+   ossStrncpy( pBuffer, r->_replicaGroupName, name_len ) ;
+   pBuffer[name_len] = 0 ;
+
 done :
    return rc ;
 error :
@@ -2357,7 +2391,7 @@ SDB_EXPORT INT32 sdbCreateReplicaCataGroup ( sdbConnectionHandle cHandle,
 {
    INT32 rc         = SDB_OK ;
    BOOLEAN result   = FALSE ;
-   CHAR *pCataShard = CMD_ADMIN_PREFIX CMD_NAME_CREATE_CATA_GROUP ;
+   CHAR *pCataRG = CMD_ADMIN_PREFIX CMD_NAME_CREATE_CATA_GROUP ;
    BOOLEAN bsoninit = FALSE ;
    bson configuration ;
    sdbConnectionStruct *connection = (sdbConnectionStruct*)cHandle ;
@@ -2403,7 +2437,7 @@ SDB_EXPORT INT32 sdbCreateReplicaCataGroup ( sdbConnectionHandle cHandle,
                       &connection->_pReceiveBuffer,
                       &connection->_receiveBufferSize,
                       connection->_endianConvert,
-                      pCataShard, &result, &configuration,
+                      pCataRG, &result, &configuration,
                       NULL, NULL, NULL ) ;
    if ( SDB_OK != rc )
    {
@@ -2704,7 +2738,7 @@ SDB_EXPORT INT32 sdbCreateReplicaGroup ( sdbConnectionHandle cHandle,
 {
    INT32 rc           = SDB_OK ;
    BOOLEAN result     = FALSE ;
-   CHAR *pCreateShard = CMD_ADMIN_PREFIX CMD_NAME_CREATE_GROUP ;
+   CHAR *pCreateRG    = CMD_ADMIN_PREFIX CMD_NAME_CREATE_GROUP ;
    CHAR *pName        = FIELD_NAME_GROUPNAME ;
    sdbRGStruct *r     = NULL ;
    BOOLEAN bsoninit   = FALSE ;
@@ -2728,7 +2762,7 @@ SDB_EXPORT INT32 sdbCreateReplicaGroup ( sdbConnectionHandle cHandle,
                       &connection->_pReceiveBuffer,
                       &connection->_receiveBufferSize,
                       connection->_endianConvert,
-                      pCreateShard, &result, &newObj,
+                      pCreateRG, &result, &newObj,
                       NULL, NULL, NULL ) ;
    if ( SDB_OK != rc )
    {
@@ -2812,7 +2846,7 @@ SDB_EXPORT INT32 sdbStartReplicaGroup ( sdbReplicaGroupHandle cHandle )
 {
    INT32 rc             = SDB_OK ;
    BOOLEAN result       = FALSE ;
-   CHAR *pActivateShard = CMD_ADMIN_PREFIX CMD_NAME_ACTIVE_GROUP ;
+   CHAR *pActivateRG    = CMD_ADMIN_PREFIX CMD_NAME_ACTIVE_GROUP ;
    CHAR *pName          = FIELD_NAME_GROUPNAME ;
    sdbRGStruct *r       = (sdbRGStruct*)cHandle ;
    BOOLEAN bsoninit     = FALSE ;
@@ -2828,7 +2862,7 @@ SDB_EXPORT INT32 sdbStartReplicaGroup ( sdbReplicaGroupHandle cHandle )
                       &r->_pReceiveBuffer,
                       &r->_receiveBufferSize,
                       r->_endianConvert,
-                      pActivateShard, &result, &newObj,
+                      pActivateRG, &result, &newObj,
                       NULL, NULL, NULL ) ;
    if ( SDB_OK != rc )
    {
@@ -2875,10 +2909,10 @@ error :
 }
 
 /*
-static INT32 _sdbShardExtractNode ( SOCKET sock,
-                                    sdbNodeHandle *handle,
-                                    const CHAR *data,
-                                    BOOLEAN endianConvert )
+static INT32 _sdbRGExtractNode ( SOCKET sock,
+                                 sdbNodeHandle *handle,
+                                 const CHAR *data,
+                                 BOOLEAN endianConvert )
 */
 
 SDB_EXPORT INT32 sdbGetNodeMaster ( sdbReplicaGroupHandle cHandle,
@@ -2959,8 +2993,8 @@ SDB_EXPORT INT32 sdbGetNodeMaster ( sdbReplicaGroupHandle cHandle,
    }
    if ( primaryData )
    {
-      rc = _sdbShardExtractNode ( cHandle, handle, primaryData,
-                                  r->_endianConvert ) ;
+      rc = _sdbRGExtractNode ( cHandle, handle, primaryData,
+                               r->_endianConvert ) ;
       if ( SDB_OK != rc )
       {
          goto error ;
@@ -3110,8 +3144,8 @@ SDB_EXPORT INT32 sdbGetNodeSlave ( sdbReplicaGroupHandle cHandle,
       goto error ;
    }
 
-   rc = _sdbShardExtractNode ( cHandle, handle, primaryData,
-                               r->_endianConvert ) ;
+   rc = _sdbRGExtractNode ( cHandle, handle, primaryData,
+                            r->_endianConvert ) ;
    if ( SDB_OK != rc )
    {
       goto error ;
@@ -3219,9 +3253,9 @@ SDB_EXPORT INT32 sdbGetNodeByHost ( sdbReplicaGroupHandle cHandle,
       // loop for all elements in Group
       while ( BSON_EOO != bson_iterator_next ( &i ) )
       {
-         rc = _sdbShardExtractNode ( cHandle, &interhandle,
-                                     (CHAR*)bson_iterator_value ( &i ),
-                                     r->_endianConvert ) ;
+         rc = _sdbRGExtractNode ( cHandle, &interhandle,
+                                  (CHAR*)bson_iterator_value ( &i ),
+                                  r->_endianConvert ) ;
          if ( SDB_OK != rc )
          {
             goto error ;
@@ -3957,18 +3991,32 @@ error :
 }
 
 SDB_EXPORT INT32 sdbGetCSName ( sdbCSHandle cHandle,
-                                CHAR **ppCSName )
+                                CHAR *pBuffer, INT32 size )
 {
    INT32 rc                        = SDB_OK ;
+   INT32 name_len                  = 0 ;
    sdbCSStruct *cs                 = (sdbCSStruct*)cHandle ;
    HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_CS ) ;
-   if ( !ppCSName )
+   if ( NULL == pBuffer )
    {
       rc = SDB_INVALIDARG ;
       goto error ;
    }
+   if ( size <= 0 )
+   {
+      rc = SDB_INVALIDSIZE ;
+      goto error ;
+   }
 
-   *ppCSName = &cs->_CSName[0] ;
+   name_len = ossStrlen( cs->_CSName ) ;
+   if ( size < name_len + 1 )
+   {
+      rc = SDB_INVALIDSIZE ;
+      goto error ;
+   }
+   ossStrncpy( pBuffer, cs->_CSName, name_len ) ;
+   pBuffer[name_len] = 0 ;
+   
 done :
    return rc ;
 error :
@@ -3976,18 +4024,32 @@ error :
 }
 
 SDB_EXPORT INT32 sdbGetCLName ( sdbCollectionHandle cHandle,
-                                CHAR **ppCLName )
+                                CHAR *pBuffer, INT32 size )
 {
    INT32 rc                        = SDB_OK ;
+   INT32 name_len                  = 0 ;
    sdbCollectionStruct *cs         = (sdbCollectionStruct*)cHandle ;
    HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_COLLECTION) ;
-   if ( !ppCLName )
+   if ( NULL == pBuffer )
    {
       rc = SDB_INVALIDARG ;
       goto error ;
    }
+   if ( size <= 0 )
+   {
+      rc = SDB_INVALIDSIZE ;
+      goto error ;
+   }
 
-   *ppCLName = &cs->_collectionName[0] ;
+   name_len = ossStrlen( cs->_collectionName ) ;
+   if ( size < name_len + 1 )
+   {
+      rc = SDB_INVALIDSIZE ;
+      goto error ;
+   }
+   ossStrncpy( pBuffer, cs->_collectionName, name_len ) ;
+   pBuffer[name_len] = 0 ;
+   
 done :
    return rc ;
 error :
@@ -3995,18 +4057,32 @@ error :
 }
 
 SDB_EXPORT INT32 sdbGetCLFullName ( sdbCollectionHandle cHandle,
-                                    CHAR **ppCLFullName )
+                                    CHAR *pBuffer, INT32 size )
 {
    INT32 rc                        = SDB_OK ;
+   INT32 name_len                  = 0 ;
    sdbCollectionStruct *cs         = (sdbCollectionStruct*)cHandle ;
    HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_COLLECTION) ;
-   if ( !ppCLFullName )
+   if ( NULL == pBuffer )
    {
       rc = SDB_INVALIDARG ;
       goto error ;
    }
+   if ( size <= 0 )
+   {
+      rc = SDB_INVALIDSIZE ;
+      goto error ;
+   }
 
-   *ppCLFullName = &cs->_collectionFullName[0] ;
+   name_len = ossStrlen( cs->_collectionFullName ) ;
+   if ( size < name_len + 1 )
+   {
+      rc = SDB_INVALIDSIZE ;
+      goto error ;
+   }
+   ossStrncpy( pBuffer, cs->_collectionFullName, name_len ) ;
+   pBuffer[name_len] = 0 ;
+
 done :
    return rc ;
 error :

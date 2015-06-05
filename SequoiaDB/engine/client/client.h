@@ -481,26 +481,26 @@ SDB_EXPORT INT32 sdbGetCollectionSpace ( sdbConnectionHandle cHandle,
                                          sdbCSHandle *handle ) ;
 
 /** \fn INT32 sdbGetReplicaGroup ( sdbConnectionHandle cHandle,
-                                   const CHAR *pShardName,
+                                   const CHAR *pRGName,
                                    sdbReplicaGroupHandle *handle )
-    \brief Get the specified shard
+    \brief Get the specified replica group
     \param [in] cHandle The database connection handle
-    \param [in] pShardName The name of shard
-    \param [out] handle The shard handle
+    \param [in] pRGName The name of replica group
+    \param [out] handle The replica group handle
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
 SDB_EXPORT INT32 sdbGetReplicaGroup ( sdbConnectionHandle cHandle,
-                                      const CHAR *pShardName,
+                                      const CHAR *pRGName,
                                       sdbReplicaGroupHandle *handle ) ;
 
 /** \fn INT32 sdbGetReplicaGroup1 ( sdbConnectionHandle cHandle,
                                     UINT32 id,
                                     sdbReplicaGroupHandle *handle )
-    \brief Get the specified shard
+    \brief Get the specified replica group
     \param [in] cHandle The database connection handle
-    \param [in] id The id of shard
-    \param [out] handle The shard handle
+    \param [in] id The id of the replica group
+    \param [out] handle The replica group handle
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
@@ -509,21 +509,34 @@ SDB_EXPORT INT32 sdbGetReplicaGroup1 ( sdbConnectionHandle cHandle,
                                        sdbReplicaGroupHandle *handle ) ;
 
 /** \fn INT32 sdbGetReplicaGroupName ( sdbReplicaGroupHandle cHandle,
-                                       CHAR **ppShardName )
-    \brief Get the specified shard name
-    \param [in] cHandle The shard handle
-    \param [out] ppShardName The shard name
+                                       CHAR **ppRGName )
+    \brief Get the specified replica group's name
+    \param [in] cHandle The replica group handle
+    \param [out] ppRGName The replica group name
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+    \deprecated This api will be deprecated at version 2.x
+*/
+SDB_EXPORT INT32 sdbGetReplicaGroupName ( sdbReplicaGroupHandle cHandle,
+                                          CHAR **ppRGName ) ;
+
+/** \fn INT32 sdbGetRGName ( sdbReplicaGroupHandle cHandle,
+                             CHAR *pBuffer, INT32 size )
+    \brief Get the specified replica group's name
+    \param [in] cHandle The replica group handle
+    \param [in] pBuffer The buffer for output replica group name
+    \param [in] size the size of the buffer
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
-SDB_EXPORT INT32 sdbGetReplicaGroupName ( sdbReplicaGroupHandle cHandle,
-                                          CHAR **ppShardName ) ;
+SDB_EXPORT INT32 sdbGetRGName ( sdbReplicaGroupHandle cHandle,
+                                CHAR *pBuffer, INT32 size ) ;
 
 /** \fn BOOLEAN sdbIsReplicaGroupCatalog ( sdbReplicaGroupHandle cHandle )
-    \brief Test whether the specified shard is catalog
-    \param [in] cHandle The shard handle
-    \retval TRUE The shard is catalog
-    \retval FALSE The shard is not catalog
+    \brief Test whether the specified replica group is catalog
+    \param [in] cHandle The replica group handle
+    \retval TRUE The replica group is catalog
+    \retval FALSE The replica group is not catalog
 */
 SDB_EXPORT BOOLEAN sdbIsReplicaGroupCatalog ( sdbReplicaGroupHandle cHandle ) ;
 
@@ -587,33 +600,33 @@ SDB_EXPORT INT32 sdbDropCollectionSpace ( sdbConnectionHandle cHandle,
                                           const CHAR *pCollectionSpaceName ) ;
 
 /** \fn INT32 sdbCreateReplicaGroup ( sdbConnectionHandle cHandle,
-                                      const CHAR *pShardName,
+                                      const CHAR *pRGName,
                                       sdbReplicaGroupHandle *handle )
-    \brief Create the specified shard
+    \brief Create the specified replica group
     \param [in] cHandle The database connection handle
-    \param [in] pShardName The name of the shard
-    \param [out] handle The shard handle
+    \param [in] pRGName The name of the replica group
+    \param [out] handle The replica group handle
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
 SDB_EXPORT INT32 sdbCreateReplicaGroup ( sdbConnectionHandle cHandle,
-                                         const CHAR *pShardName,
+                                         const CHAR *pRGName,
                                          sdbReplicaGroupHandle *handle ) ;
 
 /** \fn INT32 sdbRemoveReplicaGroup ( sdbConnectionHandle cHandle,
-                                      const CHAR *pShardName )
-    \brief Remove the specified shard
+                                      const CHAR *pRGName )
+    \brief Remove the specified replica group
     \param [in] cHandle The database connection handle
-    \param [in] pShardName The name of the shard
+    \param [in] pRGName The name of the replica group
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
 SDB_EXPORT INT32 sdbRemoveReplicaGroup ( sdbConnectionHandle cHandle,
-                                         const CHAR *pShardName ) ;
+                                         const CHAR *pRGName ) ;
 
 /** \fn INT32 sdbStartReplicaGroup ( sdbReplicaGroupHandle cHandle )
-    \brief Start and activate the specified shard
-    \param [in] cHandle The shard handle
+    \brief Start and activate the specified replica group
+    \param [in] cHandle The replica group handle
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
@@ -621,8 +634,8 @@ SDB_EXPORT INT32 sdbStartReplicaGroup ( sdbReplicaGroupHandle cHandle ) ;
 
 /** \fn INT32 sdbGetNodeMaster ( sdbReplicaGroupHandle cHandle,
                                  sdbNodeHandle *handle )
-    \brief Get the master node of the specified shard
-    \param [in] cHandle The shard handle
+    \brief Get the master node of the specified replica group
+    \param [in] cHandle The replica group handle
     \param [out] handle The master node handle
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
@@ -632,9 +645,9 @@ SDB_EXPORT INT32 sdbGetNodeMaster ( sdbReplicaGroupHandle cHandle,
 
 /** \fn INT32 sdbGetNodeSlave ( sdbReplicaGroupHandle cHandle,
                                 sdbNodeHandle *handle )
-    \brief Get one of slave node of the specified shard,
+    \brief Get one of slave node of the specified replica group,
            if no slave exists then get master
-    \param [in] cHandle The shard handle
+    \param [in] cHandle The replica group handle
     \param [out] handle The slave node handle
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
@@ -645,8 +658,8 @@ SDB_EXPORT INT32 sdbGetNodeSlave ( sdbReplicaGroupHandle cHandle,
 /** \fn INT32 sdbGetNodeByName ( sdbReplicaGroupHandle cHandle,
                                  const CHAR *pNodeName,
                                  sdbNodeHandle *handle )
-    \brief Get the node from the specified shard
-    \param [in] cHandle The shard handle
+    \brief Get the node from the specified replica group
+    \param [in] cHandle The replica group handle
     \param [in] pNodeName The name of node
     \param [out] handle The node handle, when fail to get node,
                       *handle == -1, and error code is return
@@ -661,8 +674,8 @@ SDB_EXPORT INT32 sdbGetNodeByName ( sdbReplicaGroupHandle cHandle,
                                  const CHAR *pHostName,
                                  const CHAR *pServiceName,
                                  sdbNodeHandle *handle )
-    \brief Get the node from the specified shard
-    \param [in] cHandle The shard handle
+    \brief Get the node from the specified replica group
+    \param [in] cHandle The replica group handle
     \param [in] pHostName The host of node
     \param [in] pServiceName The service name of the node
     \param [out] handle The node handle, when fail to get node,
@@ -712,8 +725,8 @@ SDB_EXPORT INT32 sdbStartNode ( sdbNodeHandle cHandle ) ;
 SDB_EXPORT INT32 sdbStopNode ( sdbNodeHandle cHandle ) ;
 
 /** \fn INT32 sdbStopReplicaGroup ( sdbReplicaGroupHandle cHandle )
-    \brief Stop the specified shard
-    \param [in] cHandle The shard handle
+    \brief Stop the specified replica group
+    \param [in] cHandle The replica group handle
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
@@ -724,12 +737,12 @@ SDB_EXPORT INT32 sdbStopReplicaGroup ( sdbReplicaGroupHandle cHandle ) ;
                                           const CHAR *pServiceName,
                                           const CHAR *pDatabasePath,
                                           bson *configure )
-    \brief Create a catalog shard
+    \brief Create a catalog replica group
     \param [in] cHandle The database connection handle
-    \param [in] pHostName The hostname for the catalog shard
-    \param [in] pServiceName The servicename for the catalog shard
-    \param [in] pDatabasePath The path for the catalog shard
-    \param [in] configure The configurations for the catalog shard
+    \param [in] pHostName The hostname for the catalog replica group
+    \param [in] pServiceName The servicename for the catalog replica group
+    \param [in] pDatabasePath The path for the catalog replica group
+    \param [in] configure The configurations for the catalog replica group
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
@@ -744,8 +757,8 @@ SDB_EXPORT INT32 sdbCreateReplicaCataGroup ( sdbConnectionHandle cHandle,
                               const CHAR *pServiceName,
                               const CHAR *pDatabasePath,
                               bson *configure )
-    \brief Create node in a given shard
-    \param [in] cHandle The shard handle
+    \brief Create node in a given replica group
+    \param [in] cHandle The replica group handle
     \param [in] pHostName The hostname for the node
     \param [in] pServiceName The servicename for the node
     \param [in] pDatabasePath The database path for the node
@@ -763,8 +776,8 @@ SDB_EXPORT INT32 sdbCreateNode ( sdbReplicaGroupHandle cHandle,
                               const CHAR *pHostName,
                               const CHAR *pServiceName,
                               bson *configure )
-    \brief remove node in a given shard
-    \param [in] cHandle The shard handle
+    \brief remove node in a given replica group
+    \param [in] cHandle The replica group handle
     \param [in] pHostName The hostname for the node
     \param [in] pServiceName The servicename for the node
     \param [in] configure The configurations for the node
@@ -800,9 +813,9 @@ SDB_EXPORT INT32 sdbListCollections ( sdbConnectionHandle cHandle,
 
 /** \fn INT32 sdbListReplicaGroups ( sdbConnectionHandle cHandle,
                                      sdbCursorHandle *handle )
-    \brief List all shards of current database
+    \brief List all the replica groups of current database
     \param [in] cHandle The database connection handle
-    \param [out] handle The cursor handle of all shards
+    \param [out] handle The cursor handle of all replica groups
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
@@ -976,123 +989,126 @@ SDB_EXPORT INT32 sdbDropCollection ( sdbCSHandle cHandle,
                                      const CHAR *pCollectionName ) ;
 
 /** \fn INT32 sdbGetCSName ( sdbCSHandle cHandle,
-                             CHAR **ppCSName )
+                             CHAR *pCSName, INT32 size )
     \brief Get the specified collection space name
     \param [in] cHandle The collection space handle
-    \param [out] ppCSName The pointer to collection space name
+    \param [in] pBuffer The buffer for output cs name
+    \param [in] size The size of the buffer
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
 SDB_EXPORT INT32 sdbGetCSName ( sdbCSHandle cHandle,
-                                CHAR **ppCSName ) ;
+                                CHAR *pBuffer, INT32 size ) ;
 
 /** \fn INT32 sdbGetCLName ( sdbCollectionHandle cHandle,
-                             CHAR **ppCLName )
+                             CHAR *pCLName, INT32 size )
     \brief Get the specified collection name
     \param [in] cHandle The collection handle
-    \param [out] ppCLName The pointer to collection name
+    \param [in] pBuffer The buffer for output cl name
+    \param [in] size The size of the buffer
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
 SDB_EXPORT INT32 sdbGetCLName ( sdbCSHandle cHandle,
-                                CHAR **ppCLName ) ;
+                                CHAR *pBuffer, INT32 size ) ;
 
 /** \fn INT32 sdbGetCLFullName ( sdbCollectionHandle cHandle,
-                                 CHAR **ppCLFullName )
+                                 CHAR *pBuffer, INT32 size )
     \brief Get the specified collection full name
     \param [in] cHandle The collection handle
-    \param [out] ppCLFullName The pointer to collection full name
+    \param [in] pBuffer The buffer for output cl full name
+    \param [in] size The size of the buffer
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
 SDB_EXPORT INT32 sdbGetCLFullName ( sdbCSHandle cHandle,
-                                    CHAR **ppCLFullName ) ;
+                                    CHAR *pBuffer, INT32 size ) ;
 
 /** \fn INT32 sdbSplitCollection ( sdbCollectionHandle cHandle,
-                                   const CHAR *pSourceShard,
-                                   const CHAR *pTargetShard,
+                                   const CHAR *pSourceRG,
+                                   const CHAR *pTargetRG,
                                    const bson *pSplitCondition,
                                    const bson *pSplitEndCondition )
-    \brief Split the specified collection from source shard to target by range
+    \brief Split the specified collection from source replica group to target by range
     \param [in] cHandle The collection handle
-    \param [in] pSourceShard The source shard name
-    \param [in] pTargetShard The target shard name
+    \param [in] pSourceRG The source replica group name
+    \param [in] pTargetRG The target replica group name
     \param [in] pSplitCondition The split condition
     \param [in] splitEndCondition The split end condition or null
               eg:If we create a collection with the option {ShardingKey:{"age":1},ShardingType:"Hash",Partition:2^10},
               we can fill {age:30} as the splitCondition, and fill {age:60} as the splitEndCondition. when split,
-              the target shard will get the records whose age's hash value are in [30,60). If splitEndCondition is null,
+              the target replica group will get the records whose age's hash value are in [30,60). If splitEndCondition is null,
               they are in [30,max).
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
 SDB_EXPORT INT32 sdbSplitCollection ( sdbCollectionHandle cHandle,
-                                      const CHAR *pSourceShard,
-                                      const CHAR *pTargetShard,
+                                      const CHAR *pSourceRG,
+                                      const CHAR *pTargetRG,
                                       const bson *pSplitCondition,
                                       const bson *pSplitEndCondition ) ;
 
 /** \fn INT32 sdbSplitCLAsync ( sdbCollectionHandle cHandle,
-                                const CHAR *pSourceShard,
-                                const CHAR *pTargetShard,
+                                const CHAR *pSourceRG,
+                                const CHAR *pTargetRG,
                                 const bson *pSplitCondition,
                                 const bson *pSplitEndCondition,
                                 SINT64 *taskID )
-    \brief Split the specified collection from source shard to target by range
+    \brief Split the specified collection from source replica group to target by range
     \param [in] cHandle The collection handle
-    \param [in] pSourceShard The source shard name
-    \param [in] pTargetShard The target shard name
+    \param [in] pSourceRG The source replica group name
+    \param [in] pTargetRG The target replica group name
     \param [in] pSplitCondition The split condition
     \param [in] splitEndCondition The split end condition or null
               eg:If we create a collection with the option {ShardingKey:{"age":1},ShardingType:"Hash",Partition:2^10},
               we can fill {age:30} as the splitCondition, and fill {age:60} as the splitEndCondition. when split,
-              the target shard will get the records whose age's hash value are in [30,60). If splitEndCondition is null,
+              the target replica group will get the records whose age's hash value are in [30,60). If splitEndCondition is null,
               they are in [30,max).
     \param [out] taskID The id of current task
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
 SDB_EXPORT INT32 sdbSplitCLAsync ( sdbCollectionHandle cHandle,
-                                   const CHAR *pSourceShard,
-                                   const CHAR *pTargetShard,
+                                   const CHAR *pSourceRG,
+                                   const CHAR *pTargetRG,
                                    const bson *pSplitCondition,
                                    const bson *pSplitEndCondition,
                                    SINT64 *taskID ) ;
 
 /** \fn INT32 sdbSplitCollectionByPercent ( sdbCollectionHandle cHandle,
-                                            const CHAR *pSourceShard,
-                                            const CHAR *pTargetShard,
+                                            const CHAR *pSourceRG,
+                                            const CHAR *pTargetRG,
                                             FLOAT64 percent )
-    \brief Split the specified collection from source shard to target by percent
+    \brief Split the specified collection from source replica group to target by percent
     \param [in] cHandle The collection handle
-    \param [in] pSourceShard The source shard name
-    \param [in] pTargetShard The target shard name
+    \param [in] pSourceRG The source replica group name
+    \param [in] pTargetRG The target replica group name
     \param [in] percent The split percent, Range:(0.0, 100.0]
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
 SDB_EXPORT INT32 sdbSplitCollectionByPercent ( sdbCollectionHandle cHandle,
-                                               const CHAR *pSourceShard,
-                                               const CHAR *pTargetShard,
+                                               const CHAR *pSourceRG,
+                                               const CHAR *pTargetRG,
                                                FLOAT64 percent ) ;
 
 /** \fn INT32 sdbSplitCLByPercentAsync ( sdbCollectionHandle cHandle,
-                                         const CHAR *pSourceShard,
-                                         const CHAR *pTargetShard,
+                                         const CHAR *pSourceRG,
+                                         const CHAR *pTargetRG,
                                          FLOAT64 percent,
                                          SINT64 *taskID )
-    \brief Split the specified collection from source shard to target by percent
+    \brief Split the specified collection from source replica group to target by percent
     \param [in] cHandle The collection handle
-    \param [in] pSourceShard The source shard name
-    \param [in] pTargetShard The target shard name
+    \param [in] pSourceRG The source replica group name
+    \param [in] pTargetRG The target replica group name
     \param [in] percent The split percent, Range:(0.0, 100.0]
     \param [out] taskID The id of current task
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
 SDB_EXPORT INT32 sdbSplitCLByPercentAsync ( sdbCollectionHandle cHandle,
-                                            const CHAR *pSourceShard,
-                                            const CHAR *pTargetShard,
+                                            const CHAR *pSourceRG,
+                                            const CHAR *pTargetRG,
                                             FLOAT64 percent,
                                             SINT64 *taskID ) ;
 
@@ -1652,8 +1668,8 @@ SDB_EXPORT void sdbReleaseCS ( sdbCSHandle cHandle ) ;
 SDB_EXPORT void sdbReleaseCursor ( sdbCursorHandle cHandle ) ;
 
 /** \fn void sdbReleaseReplicaGroup ( sdbReplicaGroupHandle cHandle )
-    \brief Release the shard handle
-    \param [in] cHandle The shard handle
+    \brief Release the replica group handle
+    \param [in] cHandle The replica group handle
 */
 SDB_EXPORT void sdbReleaseReplicaGroup ( sdbReplicaGroupHandle cHandle ) ;
 
@@ -1738,9 +1754,9 @@ SDB_EXPORT INT32 sdbDetachCollection ( sdbCollectionHandle cHandle,
 
 /** \fn INT32 sdbBackupOffline ( sdbConnectionHandle cHandle,
                                  bson *options)
-    \brief Backup the whole database or specifed shard.
+    \brief Backup the whole database or specifed replica group.
     \param [in] cHandle The connection handle
-    \param [in] options Contains a series of backup configuration infomations. Backup the whole cluster if null. The "options" contains 5 options as below. All the elements in options are optional. eg: {"GroupName":["shardName1", "shardName2"], "Path":"/opt/sequoiadb/backup", "Name":"backupName", "Description":description, "EnsureInc":true, "OverWrite":true}
+    \param [in] options Contains a series of backup configuration infomations. Backup the whole cluster if null. The "options" contains 5 options as below. All the elements in options are optional. eg: {"GroupName":["RGName1", "RGName2"], "Path":"/opt/sequoiadb/backup", "Name":"backupName", "Description":description, "EnsureInc":true, "OverWrite":true}
 
         GroupID     : The id(s) of replica group(s) which to be backuped
         GroupName   : The replica groups which to be backuped
@@ -1767,9 +1783,9 @@ SDB_EXPORT INT32 sdbBackupOffline ( sdbConnectionHandle cHandle,
                               sdbCursorHandle *handle );
     \brief List the backups.
     \param [in] cHandle The connection handle
-    \param [in] options Contains configuration infomations for remove backups, list all the backups in the default backup path if null. The "options" contains 3 options as below. All the elements in options are optional. eg: {"GroupName":["shardName1", "shardName2"], "Path":"/opt/sequoiadb/backup", "Name":"backupName"}
+    \param [in] options Contains configuration infomations for remove backups, list all the backups in the default backup path if null. The "options" contains 3 options as below. All the elements in options are optional. eg: {"GroupName":["RGName1", "RGName2"], "Path":"/opt/sequoiadb/backup", "Name":"backupName"}
 
-        GroupName   : Assign the backups of specifed shards to be list
+        GroupName   : Assign the backups of specifed replica groups to be list
         Path        : Assign the backups in specifed path to be list, if not assign, use the backup path asigned in the configuration file
         Name        : Assign the backups with specifed name to be list
     \param [in] condition The matching rule, return all the documents if null
@@ -1790,9 +1806,9 @@ SDB_EXPORT INT32 sdbListBackup ( sdbConnectionHandle cHandle,
                                 bson *options) ;
     \brief Remove the backups.
     \param [in] cHandle The connection handle
-    \param [in] options Contains configuration infomations for remove backups, remove all the backups in the default backup path if null. The "options" contains 3 options as below. All the elements in options are optional. eg: {"GroupName":["shardName1", "shardName2"], "Path":"/opt/sequoiadb/backup", "Name":"backupName"}
+    \param [in] options Contains configuration infomations for remove backups, remove all the backups in the default backup path if null. The "options" contains 3 options as below. All the elements in options are optional. eg: {"GroupName":["RGName1", "RGName2"], "Path":"/opt/sequoiadb/backup", "Name":"backupName"}
 
-        GroupName   : Assign the backups of specifed shards to be remove
+        GroupName   : Assign the backups of specifed replica groups to be remove
         Path        : Assign the backups in specifed path to be remove, if not assign, use the backup path asigned in the configuration file
         Name        : Assign the backups with specifed name to be remove
     \retval SDB_OK Operation Success
@@ -2157,7 +2173,7 @@ SDB_EXPORT INT32 sdbListLobPieces( sdbCollectionHandle cHandle,
 
 /** \fn INT32 sdbReelect( sdbReplicaGroupHandle cHandle,
                           const bson *options )
-    \param [in] cHandle The shard handle
+    \param [in] cHandle The replica group handle
     \param [in] options The options of reelection
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
