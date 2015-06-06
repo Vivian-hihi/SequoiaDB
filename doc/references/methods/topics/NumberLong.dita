@@ -3,9 +3,9 @@
 <topic id="topic_jtl_kz4_gs">
   <title>NumberLong</title>
   <body>
-    <section><title>Json 格式</title>
-      <p><codeblock>{ "$oid" : &lt;24字节16进制字符串> }</codeblock></p>
-    </section>
+    <!--<section><title>Json 格式</title>
+      <p><codeblock>NumberLong(数字:值)</codeblock></p>
+    </section>-->
     <section><title>函数格式</title>
       <simpletable id="references_method_createNode_table">
         <sthead>
@@ -13,20 +13,20 @@
           <stentry>描述</stentry>          
         </sthead>
         <strow>
-          <stentry>ObjectId()</stentry>
-          <stentry>生成一个 OID</stentry>          
+          <stentry>NumberLong(数字:值)</stentry>
+          <stentry>使用数字指定64位整数</stentry>          
         </strow>
         <strow>
-          <stentry>ObjectId(24字节16进制字符串)</stentry>
-          <stentry>生成一个指定值的 OID</stentry>          
+          <stentry>NumberLong(字符串: 值)</stentry>
+          <stentry>使用字符串指定64位整数</stentry>          
         </strow>
-      </simpletable>      
+      </simpletable>
+      <note>NumerLong 中数字类型的参数类型为 double。当操作超过精度的值时使用字符串类型的参数。</note>      
     </section>    
     <section><title>示例</title>
       <ul>
-        <li>按照 OID 查询<codeblock>db.foo.bar.find({"_id":{"$oid": "55713f7953e6769804000001"}}) ;
-db.foo.bar.find(ObjectId("55713f7953e6769804000001"));</codeblock></li>
-        <li>插入一个 OID 类型的记录<codeblock>db.foo.bar.insert({id:ObjectId()});</codeblock></li>        
+        <li>插入一个长整型<codeblock>db.foo.bar.insert({number:NumberLong(100)});
+db.foo.bar.insert({number:NumberLong("100")});</codeblock></li>               
       </ul>      
     </section>
   </body>

@@ -4,7 +4,7 @@
   <title>BinData</title>
   <body>
     <section><title>Json 格式</title>
-      <p><codeblock>{ "$oid" : &lt;24字节16进制字符串> }</codeblock></p>
+      <p><codeblock>{ "$binary" : &lt;数据>, "$type" : &lt;类型> }</codeblock></p>
     </section>
     <section><title>函数格式</title>
       <simpletable id="references_method_createNode_table">
@@ -13,20 +13,15 @@
           <stentry>描述</stentry>          
         </sthead>
         <strow>
-          <stentry>ObjectId()</stentry>
-          <stentry>生成一个 OID</stentry>          
-        </strow>
-        <strow>
-          <stentry>ObjectId(24字节16进制字符串)</stentry>
-          <stentry>生成一个指定值的 OID</stentry>          
-        </strow>
+          <stentry>BinData(字符串: base64加密后的内容,字符串: 类型)</stentry>
+          <stentry>指定二进制对象</stentry>          
+        </strow>        
       </simpletable>      
     </section>    
     <section><title>示例</title>
       <ul>
-        <li>按照 OID 查询<codeblock>db.foo.bar.find({"_id":{"$oid": "55713f7953e6769804000001"}}) ;
-db.foo.bar.find(ObjectId("55713f7953e6769804000001"));</codeblock></li>
-        <li>插入一个 OID 类型的记录<codeblock>db.foo.bar.insert({id:ObjectId()});</codeblock></li>        
+        <li>插入二进制类型记录<codeblock>db.foo.bar.insert({bin:{ "$binary" : "aGVsbG8gd29ybGQ=", "$type" : "1" }});
+db.foo.bar.insert({bin:BinData("aGVsbG8gd29ybGQ=", "1" )});</codeblock></li>           
       </ul>      
     </section>
   </body>
