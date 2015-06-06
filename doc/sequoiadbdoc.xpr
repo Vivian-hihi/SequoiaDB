@@ -869,6 +869,7 @@
                     <file name="references/methods/topics/attachNode.dita"/>
                     <file name="references/methods/topics/backupoffline_en.dita"/>
                     <file name="references/methods/topics/backupoffline.dita"/>
+                    <file name="references/methods/topics/BinData.dita"/>
                     <file name="references/methods/topics/cancelTask_en_v2.dita"/>
                     <file name="references/methods/cancelTask_en.dita"/>
                     <file name="references/methods/cancelTask.dita"/>
@@ -995,8 +996,10 @@
                     <file name="references/methods/topics/listReplicaGroups.dita"/>
                     <file name="references/methods/listTasks_en.dita"/>
                     <file name="references/methods/listTasks.dita"/>
+                    <file name="references/methods/topics/MaxKey.dita"/>
                     <file name="references/methods/topics/methodlist_en.dita"/>
                     <file name="references/methods/topics/methodlist.dita"/>
+                    <file name="references/methods/topics/MinKey.dita"/>
                     <file name="references/methods/topics/next_en.dita"/>
                     <file name="references/methods/topics/next.dita"/>
                     <file name="references/methods/topics/nodeconnect_en.dita"/>
@@ -1005,6 +1008,8 @@
                     <file name="references/methods/topics/nodestart.dita"/>
                     <file name="references/methods/topics/nodestop_en.dita"/>
                     <file name="references/methods/topics/nodestop.dita"/>
+                    <file name="references/methods/topics/NumberLong.dita"/>
+                    <file name="references/methods/topics/OID.dita"/>
                     <file name="references/methods/topics/omaclose.dita"/>
                     <file name="references/methods/topics/omacreateCoord.dita"/>
                     <file name="references/methods/topics/omacreateData.dita"/>
@@ -1018,6 +1023,7 @@
                     <file name="references/methods/topics/query_gen.count.dita"/>
                     <file name="references/methods/topics/query_gen.index.dita"/>
                     <file name="references/methods/topics/reelect.dita"/>
+                    <file name="references/methods/topics/Regex.dita"/>
                     <file name="references/methods/topics/remove_en.dita"/>
                     <file name="references/methods/topics/remove.dita"/>
                     <file name="references/methods/removeBackup_en.dita"/>
@@ -1038,6 +1044,7 @@
                     <file name="references/methods/topics/rgstart.dita"/>
                     <file name="references/methods/topics/rgstop_en.dita"/>
                     <file name="references/methods/topics/rgstop.dita"/>
+                    <file name="references/methods/topics/SdbDate.dita"/>
                     <file name="references/methods/setSessionAttr_en.dita"/>
                     <file name="references/methods/setSessionAttr.dita"/>
                     <file name="references/methods/topics/splitAsync_en.dita"/>
@@ -1046,6 +1053,7 @@
                     <file name="references/methods/topics/squpdate.dita"/>
                     <file name="references/methods/topics/startRG_en.dita"/>
                     <file name="references/methods/topics/startRG.dita"/>
+                    <file name="references/methods/topics/Timestamp.dita"/>
                     <file name="references/methods/topics/toArray_en.dita"/>
                     <file name="references/methods/topics/toArray.dita"/>
                     <file name="references/methods/topics/traceFmt_en.dita"/>
@@ -1209,6 +1217,8 @@
                 <file name="references/methods/SdbQuery.ditamap"/>
                 <file name="references/methods/SecureSdb.dita"/>
                 <file name="references/methods/SecureSdb.ditamap"/>
+                <file name="references/methods/stobject.dita"/>
+                <file name="references/methods/stobject.ditamap"/>
             </folder>
             <folder name="questions">
                 <folder name="topics">

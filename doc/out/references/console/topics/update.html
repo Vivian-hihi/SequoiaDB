@@ -49,113 +49,113 @@
     <div class="section">
       <div class="p">
         <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-            <th valign="bottom" align="left" id="d105575e18" class="stentry">更新符</th>
+            <th valign="bottom" align="left" id="d105596e18" class="stentry">更新符</th>
 
-            <th valign="bottom" align="left" id="d105575e21" class="stentry">描述</th>
+            <th valign="bottom" align="left" id="d105596e21" class="stentry">描述</th>
 
-            <th valign="bottom" align="left" id="d105575e24" class="stentry">信息</th>
+            <th valign="bottom" align="left" id="d105596e24" class="stentry">信息</th>
 
-            <th valign="bottom" align="left" id="d105575e27" class="stentry">示例</th>
-
-          </tr>
-<tr class="strow">
-            <td valign="top" headers="d105575e18" class="stentry"><a class="xref" href="inc.html">$inc</a></td>
-
-            <td valign="top" headers="d105575e21" class="stentry"> 添加</td>
-
-            <td valign="top" headers="d105575e24" class="stentry"> 将指定字段名的值增加给定的值</td>
-
-            <td valign="top" headers="d105575e27" class="stentry"> db.foo.bar.update({$inc:{age:25}}) </td>
+            <th valign="bottom" align="left" id="d105596e27" class="stentry">示例</th>
 
           </tr>
 <tr class="strow">
-            <td valign="top" headers="d105575e18" class="stentry"><a class="xref" href="gset.html">$set</a></td>
+            <td valign="top" headers="d105596e18" class="stentry"><a class="xref" href="inc.html">$inc</a></td>
 
-            <td valign="top" headers="d105575e21" class="stentry"> 设置指定字段</td>
+            <td valign="top" headers="d105596e21" class="stentry"> 添加</td>
 
-            <td valign="top" headers="d105575e24" class="stentry">将给定字段名设定为给定值 </td>
+            <td valign="top" headers="d105596e24" class="stentry"> 将指定字段名的值增加给定的值</td>
 
-            <td valign="top" headers="d105575e27" class="stentry"> db.foo.bar.update({$set:{age:10}}) </td>
-
-          </tr>
-<tr class="strow">
-            <td valign="top" headers="d105575e18" class="stentry"><a class="xref" href="unset.html">$unset</a></td>
-
-            <td valign="top" headers="d105575e21" class="stentry"> 删除指定字段</td>
-
-            <td valign="top" headers="d105575e24" class="stentry">删除对象中的指定字段</td>
-
-            <td valign="top" headers="d105575e27" class="stentry"> db.foo.bar.update({$unset:{age:""}}) </td>
+            <td valign="top" headers="d105596e27" class="stentry"> db.foo.bar.update({$inc:{age:25}}) </td>
 
           </tr>
 <tr class="strow">
-            <td valign="top" headers="d105575e18" class="stentry"><a class="xref" href="gaddtoset.html">$addtoset</a></td>
+            <td valign="top" headers="d105596e18" class="stentry"><a class="xref" href="gset.html">$set</a></td>
 
-            <td valign="top" headers="d105575e21" class="stentry">加入集合 </td>
+            <td valign="top" headers="d105596e21" class="stentry"> 设置指定字段</td>
 
-            <td valign="top" headers="d105575e24" class="stentry">如果添加元素不存在在数组中则添加，否则跳过。目标字段必须为数组。 </td>
+            <td valign="top" headers="d105596e24" class="stentry">将给定字段名设定为给定值 </td>
 
-            <td valign="top" headers="d105575e27" class="stentry"> db.foo.bar.update({$addtoset:{array:[3,4,5]}}) </td>
-
-          </tr>
-<tr class="strow">
-            <td valign="top" headers="d105575e18" class="stentry"><a class="xref" href="pop.html">$pop</a></td>
-
-            <td valign="top" headers="d105575e21" class="stentry"> 消除数组中最后 N 个数值</td>
-
-            <td valign="top" headers="d105575e24" class="stentry"> 删除数组中最后 N 个数值，目标字段必须为数组（如果 N 小于0意味着从数组起始删除第 -N 个数值）。</td>
-
-            <td valign="top" headers="d105575e27" class="stentry"> db.foo.bar.update({$pop:{array:2}}) </td>
+            <td valign="top" headers="d105596e27" class="stentry"> db.foo.bar.update({$set:{age:10}}) </td>
 
           </tr>
 <tr class="strow">
-            <td valign="top" headers="d105575e18" class="stentry"><a class="xref" href="gpull.html">$pull</a></td>
+            <td valign="top" headers="d105596e18" class="stentry"><a class="xref" href="unset.html">$unset</a></td>
 
-            <td valign="top" headers="d105575e21" class="stentry"> 消除数值 </td>
+            <td valign="top" headers="d105596e21" class="stentry"> 删除指定字段</td>
 
-            <td valign="top" headers="d105575e24" class="stentry">目标数组中清除给定数值，目标元素必须为数组 </td>
+            <td valign="top" headers="d105596e24" class="stentry">删除对象中的指定字段</td>
 
-            <td valign="top" headers="d105575e27" class="stentry"> db.foo.bar.update({$pull:{array:2}}) </td>
-
-          </tr>
-<tr class="strow">
-            <td valign="top" headers="d105575e18" class="stentry"><a class="xref" href="gpull_all.html">$pull_all</a></td>
-
-            <td valign="top" headers="d105575e21" class="stentry"> 消除数组 </td>
-
-            <td valign="top" headers="d105575e24" class="stentry">目标数组中清除给定数组中每个元素的数值，目标元素必须为数组 。</td>
-
-            <td valign="top" headers="d105575e27" class="stentry"> db.foo.bar.update({$pull_all:{array:[2,3,4}}) </td>
+            <td valign="top" headers="d105596e27" class="stentry"> db.foo.bar.update({$unset:{age:""}}) </td>
 
           </tr>
 <tr class="strow">
-            <td valign="top" headers="d105575e18" class="stentry"><a class="xref" href="gpush.html">$push</a></td>
+            <td valign="top" headers="d105596e18" class="stentry"><a class="xref" href="gaddtoset.html">$addtoset</a></td>
 
-            <td valign="top" headers="d105575e21" class="stentry"> 推入数值 </td>
+            <td valign="top" headers="d105596e21" class="stentry">加入集合 </td>
 
-            <td valign="top" headers="d105575e24" class="stentry"> 将数值插入目标数组，目标元素必须为数组 。</td>
+            <td valign="top" headers="d105596e24" class="stentry">如果添加元素不存在在数组中则添加，否则跳过。目标字段必须为数组。 </td>
 
-            <td valign="top" headers="d105575e27" class="stentry"> db.foo.bar.update({$push:{array:2}}) </td>
-
-          </tr>
-<tr class="strow">
-            <td valign="top" headers="d105575e18" class="stentry"><a class="xref" href="gpush_all.html">$push_all</a></td>
-
-            <td valign="top" headers="d105575e21" class="stentry"> 推入数组 </td>
-
-            <td valign="top" headers="d105575e24" class="stentry">将给定数组中每一个值插入目标数组，目标元素必须为数组。</td>
-
-            <td valign="top" headers="d105575e27" class="stentry"> db.foo.bar.update({$push_all:{array:[2,3,4}}) </td>
+            <td valign="top" headers="d105596e27" class="stentry"> db.foo.bar.update({$addtoset:{array:[3,4,5]}}) </td>
 
           </tr>
 <tr class="strow">
-            <td valign="top" headers="d105575e18" class="stentry"><a class="xref" href="replace.html">$replace</a></td>
+            <td valign="top" headers="d105596e18" class="stentry"><a class="xref" href="pop.html">$pop</a></td>
 
-            <td valign="top" headers="d105575e21" class="stentry"> 替换文档 </td>
+            <td valign="top" headers="d105596e21" class="stentry"> 消除数组中最后 N 个数值</td>
 
-            <td valign="top" headers="d105575e24" class="stentry">将整个文档替换为给定值。</td>
+            <td valign="top" headers="d105596e24" class="stentry"> 删除数组中最后 N 个数值，目标字段必须为数组（如果 N 小于0意味着从数组起始删除第 -N 个数值）。</td>
 
-            <td valign="top" headers="d105575e27" class="stentry"> db.foo.bar.update({$replace:{name:'foo'}}) </td>
+            <td valign="top" headers="d105596e27" class="stentry"> db.foo.bar.update({$pop:{array:2}}) </td>
+
+          </tr>
+<tr class="strow">
+            <td valign="top" headers="d105596e18" class="stentry"><a class="xref" href="gpull.html">$pull</a></td>
+
+            <td valign="top" headers="d105596e21" class="stentry"> 消除数值 </td>
+
+            <td valign="top" headers="d105596e24" class="stentry">目标数组中清除给定数值，目标元素必须为数组 </td>
+
+            <td valign="top" headers="d105596e27" class="stentry"> db.foo.bar.update({$pull:{array:2}}) </td>
+
+          </tr>
+<tr class="strow">
+            <td valign="top" headers="d105596e18" class="stentry"><a class="xref" href="gpull_all.html">$pull_all</a></td>
+
+            <td valign="top" headers="d105596e21" class="stentry"> 消除数组 </td>
+
+            <td valign="top" headers="d105596e24" class="stentry">目标数组中清除给定数组中每个元素的数值，目标元素必须为数组 。</td>
+
+            <td valign="top" headers="d105596e27" class="stentry"> db.foo.bar.update({$pull_all:{array:[2,3,4}}) </td>
+
+          </tr>
+<tr class="strow">
+            <td valign="top" headers="d105596e18" class="stentry"><a class="xref" href="gpush.html">$push</a></td>
+
+            <td valign="top" headers="d105596e21" class="stentry"> 推入数值 </td>
+
+            <td valign="top" headers="d105596e24" class="stentry"> 将数值插入目标数组，目标元素必须为数组 。</td>
+
+            <td valign="top" headers="d105596e27" class="stentry"> db.foo.bar.update({$push:{array:2}}) </td>
+
+          </tr>
+<tr class="strow">
+            <td valign="top" headers="d105596e18" class="stentry"><a class="xref" href="gpush_all.html">$push_all</a></td>
+
+            <td valign="top" headers="d105596e21" class="stentry"> 推入数组 </td>
+
+            <td valign="top" headers="d105596e24" class="stentry">将给定数组中每一个值插入目标数组，目标元素必须为数组。</td>
+
+            <td valign="top" headers="d105596e27" class="stentry"> db.foo.bar.update({$push_all:{array:[2,3,4}}) </td>
+
+          </tr>
+<tr class="strow">
+            <td valign="top" headers="d105596e18" class="stentry"><a class="xref" href="replace.html">$replace</a></td>
+
+            <td valign="top" headers="d105596e21" class="stentry"> 替换文档 </td>
+
+            <td valign="top" headers="d105596e24" class="stentry">将整个文档替换为给定值。</td>
+
+            <td valign="top" headers="d105596e27" class="stentry"> db.foo.bar.update({$replace:{name:'foo'}}) </td>
 
           </tr>
 </table>
