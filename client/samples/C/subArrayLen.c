@@ -16,7 +16,7 @@
  *       copy ..\..\lib\sdbc.dll .
  *    Static Linking:
  *    Linux: cc subArrayLen.c common.c -o subArrayLen.static -I../../include -O0
- *           -ggdb ../../lib/libstaticsdbc.a -lm
+ *           -ggdb ../../lib/libstaticsdbc.a -lm -ldl -lpthread
  *    Win:
  *       cl /FosubArrayLenstatic.obj /c subArrayLen.c /I..\..\include /wd4047 /DSDB_STATIC_BUILD
  *       cl /Focommonstatic.obj /c common.c /I..\..\include /wd4047 /DSDB_STATIC_BUILD

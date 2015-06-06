@@ -21,7 +21,7 @@
  *       copy ..\..\lib\sdbc.dll .
  *    Static Linking:
  *    Linux: cc update_use_id.c common.c -o update_use_id.static -I../../include -O0
- *           -ggdb ../../lib/libstaticsdbc.a -lm
+ *           -ggdb ../../lib/libstaticsdbc.a -lm -ldl -lpthread
  *    Win:
  *       cl /Foupdate_use_idstatic.obj /c update_use_id.c /I..\..\include /wd4047 /DSDB_STATIC_BUILD
  *       cl /Focommonstatic.obj /c common.c /I..\..\include /wd4047 /DSDB_STATIC_BUILD

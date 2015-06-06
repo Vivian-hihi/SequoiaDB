@@ -21,7 +21,7 @@
  *       copy ..\..\lib\sdbc.dll .
  *    Static Linking:
  *    Linux: cc snap.c common.c -o snap.static -I../../include -O0
- *           -ggdb ../../lib/libstaticsdbc.a -lm
+ *           -ggdb ../../lib/libstaticsdbc.a -lm -ldl -lpthread
  *    Win:
  *       cl /Fosnapstatic.obj /c snap.c /I..\..\include /wd4047 /DSDB_STATIC_BUILD
  *       cl /Focommonstatic.obj /c common.c /I..\..\include /wd4047 /DSDB_STATIC_BUILD

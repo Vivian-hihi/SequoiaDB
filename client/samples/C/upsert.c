@@ -21,7 +21,7 @@
  *       copy ..\..\lib\sdbc.dll .
  *    Static Linking:
  *       Linux: cc upsert.c common.c -o upsert.static -I../../include -O0
- *              -ggdb ../../lib/libstaticsdbc.a -lm
+ *              -ggdb ../../lib/libstaticsdbc.a -lm -ldl -lpthread
  *       Win:
  *          cl /Foupsertstatic.obj /c upsert.c /I..\..\include /wd4047 /DSDB_STATIC_BUILD
  *          cl /Focommonstatic.obj /c common.c /I..\..\include /wd4047 /DSDB_STATIC_BUILD

@@ -22,11 +22,11 @@
  *       copy ..\..\lib\sdbc.dll .
  *    Static Linking:
  *    Linux: cc insert.c common.c -o insert.static -I../../include -O0
- *           -ggdb ../../lib/libstaicsdbc.a -lm
+ *           -ggdb ../../lib/libstaticsdbc.a -lm -ldl -lpthread
  *    Win:
  *       cl /Foinsertstatic.obj /c insert.c /I..\..\include /wd4047 /DSDB_STATIC_BUILD
  *       cl /Focommonstatic.obj /c common.c /I..\..\include /wd4047 /DSDB_STATIC_BUILD
- *       link /OUT:insertstaic.exe /LIBPATH:..\..\lib staticsdbc.lib insertstatic.obj commonstatic.obj
+ *       link /OUT:insertstatic.exe /LIBPATH:..\..\lib staticsdbc.lib insertstatic.obj commonstatic.obj
  * Run:
  *    Linux: LD_LIBRARY_PATH=<path for libsdbc.so> ./insert <hostname> <servicename> \
  *           <Username> <Username>
