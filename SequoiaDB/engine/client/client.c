@@ -3247,7 +3247,7 @@ SDB_EXPORT INT32 sdbGetNodeByHost ( sdbReplicaGroupHandle cHandle,
       INT32 nodeID = 0 ;
       const CHAR *groupList = bson_iterator_value ( &it ) ;
       bson_iterator i ;
-      sdbNodeHandle interhandle;
+      sdbNodeHandle interhandle = SDB_INVALID_HANDLE ;
       bson_iterator_from_buffer ( &i, groupList ) ;
 
       // loop for all elements in Group
