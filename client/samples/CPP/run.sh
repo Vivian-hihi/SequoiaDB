@@ -1,4 +1,10 @@
 #!/bin/bash
+
+if [ $# -lt 4 ] ; then
+   echo  "Usage: $0 <hostname> <servicename> <username> <password>"
+   exit 1
+fi
+
 echo "###############building file..."
 ./buildApp.sh connect
 ./buildApp.sh query
@@ -10,38 +16,38 @@ echo "###############building file..."
 ./buildApp.sh lob
 
 echo "###############running connect..."
-./build/connect localhost 11810 "" ""
+./build/connect $1 $2 "$3" "$4"
 echo "###############running snap..."
-./build/query localhost 11810 "" ""
+./build/query $1 $2 "$3" "$4"
 #echo "###############running replicaGroup..."
-#./build/replicaGroup localhost 11810 "" ""
+#./build/replicaGroup $1 $2 "" ""
 echo "###############running index..."
-./build/index localhost 11810 "" ""
+./build/index $1 $2 "$3" "$4"
 echo "###############running sql..."
-./build/sql localhost 11810 "" ""
+./build/sql $1 $2 "$3" "$4"
 echo "###############running insert..."
-./build/insert localhost 11810 "" ""
+./build/insert $1 $2 "$3" "$4"
 echo "###############running update..."
-./build/update localhost 11810 "" ""
+./build/update $1 $2 "$3" "$4"
 echo "###############running lob..."
-./build/lob localhost 11810 "" ""
+./build/lob $1 $2 "$3" "$4"
 
 
 
 echo "###############running connect.static..."
-./build/connect.static localhost 11810 "" ""
+./build/connect.static $1 $2 "$3" "$4"
 echo "###############running snap.static..."
-./build/query.static localhost 11810 "" ""
+./build/query.static $1 $2 "$3" "$4"
 #echo "###############running replicaGroup.static..."
-#./build/replicaGroup.static localhost 11810 "" ""
+#./build/replicaGroup.static $1 $2 "$3" "$4"
 echo "###############running index.static..."
-./build/index.static localhost 11810 "" ""
+./build/index.static $1 $2 "$3" "$4"
 echo "###############running sql.static..."
-./build/sql.static localhost 11810 "" ""
+./build/sql.static $1 $2 "$3" "$4"
 echo "###############running insert.static..."
-./build/insert.static localhost 11810 "" ""
+./build/insert.static $1 $2 "$3" "$4"
 echo "###############running update.staic..."
-./build/update.static localhost 11810 "" ""
+./build/update.static $1 $2 "$3" "$4"
 echo "###############running lob.staic..."
-./build/lob.static localhost 11810 "" ""
+./build/lob.static $1 $2 "$3" "$4"
 

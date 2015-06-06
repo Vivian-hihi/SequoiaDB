@@ -24,7 +24,7 @@
  *       copy ..\..\lib\sdbcpp.dll .
  *    Static Linking:
  *    Linux: g++ query.cpp common.cpp -o query.static -I../../include -O0
- *           -ggdb -Wno-deprecated ../../lib/libstaticsdbcpp.a -lm -lpthread
+ *           -ggdb -Wno-deprecated ../../lib/libstaticsdbcpp.a -lm -ldl -lpthread
  * Run:
  *    Linux: LD_LIBRARY_PATH=<path for libsdbcpp.so> ./query <hostname> \
  *           <servicename> <username> <password>

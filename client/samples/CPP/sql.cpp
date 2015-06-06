@@ -25,7 +25,7 @@
  *       copy ..\..\lib\sdbcpp.dll .
  *    Static Linking:
  *    Linux: g++ sql.cpp common.cpp -o sql.static -I../../include -O0
- *           -ggdb -Wno-deprecated ../../lib/libstaticsdbcpp.a -lm -lpthread
+ *           -ggdb -Wno-deprecated ../../lib/libstaticsdbcpp.a -lm -ldl -lpthread
  * Run:
  *    Linux: LD_LIBRARY_PATH=<path for libsdbcpp.so> ./insert <hostname> \
  *           <servicename> <username> <password>
