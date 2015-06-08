@@ -144,7 +144,7 @@ namespace engine
       // 4.build physical plan
       {
          qgmBuilder builder( pContainer->ptrTable(),
-                           pContainer->paramTable() );
+                             pContainer->paramTable() );
          rc = builder.build( pExtend, pContainer->plan() );
          PD_RC_CHECK( rc, PDERROR,
                      "failed to build the physical plan(rc=%d)",
