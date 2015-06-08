@@ -2077,6 +2077,27 @@ namespace engine
          }
       }
 
+      if ( !forced )
+      {
+         BSONElement primary = groupInfo.getField( FIELD_NAME_PRIMARY ) ;
+         if ( !primary.isNumber() )
+         {
+            PD_LOG( PDEVENT, "no primary node exists in this group:%s",
+                              groupInfo.toString( FALSE, TRUE ).c_str() ) ;
+         }
+         else if ( primary.numberInt() == removeNode )
+         {
+            PD_LOG( PDERROR, "can not remove primary node of group:%s",
+                   groupInfo.toString( FALSE, TRUE ).c_str() ) ;
+            rc = SDB_CATA_RM_NODE_FORBIDDEN ;
+            goto error ;
+         }
+         else
+         {
+            /// do nothing.
+         }
+      }
+
       // node num judge
       if ( 0 != ossStrcmp( groupName, SPARE_GROUPNAME ) &&
            1 == groupsObj.nFields() && !forced )
