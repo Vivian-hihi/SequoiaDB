@@ -2560,6 +2560,7 @@ SDB_EXPORT INT32 sdbRemoveNode ( sdbReplicaGroupHandle cHandle,
          const CHAR *key = bson_iterator_key ( &it ) ;
          if ( ossStrcmp ( key, FIELD_NAME_HOST ) == 0  ||
               ossStrcmp ( key, FIELD_NAME_SERVICE_NAME ) == 0 ||
+              ossStrcmp ( key, PMD_OPTION_SVCNAME ) == 0 ||
               ossStrcmp ( key, CAT_GROUPNAME_NAME ) == 0 )
          {
             // skip the ones we already created
