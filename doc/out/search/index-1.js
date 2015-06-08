@@ -7301,5 +7301,4 @@ w["datanode.start"]="176*1,177*1";
 w["datanode.stop"]="180*1,181*1";
 w["datanodes"]="193*1";
 w["datanodes."]="193*1";
-w["datare"]="1775*1";
 

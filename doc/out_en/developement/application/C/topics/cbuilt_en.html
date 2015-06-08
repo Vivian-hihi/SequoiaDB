@@ -73,7 +73,7 @@ Use lib directory libsdbc.so dynamic library, gcc compiler parameters forms such
 </ul>
 
           <strong class="ph b"><em class="ph i">Static Link:</em></strong><p class="p"/>
-Use lib directory libstaticsdbc.a static library, gcc compiler parameters forms such as:<pre class="pre codeblock">cc testClient.c -o testClientC -I &lt;path&gt;/sdbdriver/include –L &lt;path&gt;/sdbdriver/lib/libstaticsdbc.a -lm -ldl</pre>
+Use lib directory libstaticsdbc.a static library, gcc compiler parameters forms such as:<pre class="pre codeblock">cc testClient.c -o testClientC -I &lt;path&gt;/sdbdriver/include –L &lt;path&gt;/sdbdriver/lib/libstaticsdbc.a -lm -ldl -lpthread</pre>
 
         </li>
 

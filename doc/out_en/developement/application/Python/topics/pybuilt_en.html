@@ -8,7 +8,7 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="Python Environment to Build"/>
-<meta name="description" content="Get Driver Development Kit Download SequoiaDBDriver Development kit for the corresponding operating systems from http://www.sequoiadb.com . Configure the Development Environment Linux 1. Extract the ..."/>
+<meta name="description" content="Get Driver Development Kit Download SequoiaDBDriver Development kit for the corresponding operating systems from http://www.sequoiadb.com . Configure the Development Environment Linux 编译： 编译需要 scons ..."/>
 <meta name="DC.Relation" scheme="URI" content="../../../../developement/application/Python/topics/python_en.html"/>
 <meta name="DC.Relation" scheme="URI" content="pybasic_en.html"/>
 <meta name="DC.Format" content="XHTML"/>
@@ -47,6 +47,12 @@
       
       <ul class="ul">
         <li class="li">Linux
+          <p class="p">编译：</p>
+
+          <p class="p">编译需要 scons 环境，中确保 scons 已经安装后，切换到 driver/python 目录，执行 scons。scons 执行完毕，会自动打包生成 pysequoiadb.tar.gz 压缩包。</p>
+
+          <p class="p">安装：</p>
+
           <p class="p">1. Extract the Driver Development Kit to get the python directory.</p>
 
           <p class="p">2. Copy the bson and pysequoiadb directories into the development project directory( recommend to put into the third party library directory).</p>
