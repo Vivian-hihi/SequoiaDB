@@ -1253,3 +1253,17 @@ class collection(object):
          pysequoiadb._raise_if_error("Truncate failed", rc)
       except SDBBaseError:
             raise
+
+   def create_id_index(self):
+      try:
+         rc = sdb.cl_create_id_index(self._cl)
+         pysequoiadb._raise_if_error("Create id index failed", rc)
+      except SDBBaseError:
+         raise
+
+   def drop_id_index(self):
+      try:
+         rc = sdb.cl_drop_id_index(self._cl)
+         pysequoiadb._raise_if_error("Drop id index failed", rc)
+      except SDBBaseError:
+         raise
