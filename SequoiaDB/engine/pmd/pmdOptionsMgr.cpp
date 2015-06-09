@@ -898,6 +898,7 @@ namespace engine
          else
          {
             pValue[ len - 1 ] = 0 ;
+            utilCatPath( pValue, len, "" ) ;
          }
       }
       return _result ;
@@ -1565,7 +1566,8 @@ namespace engine
       {
          if ( SDB_OK != utilBuildFullPath( _krcbDbPath, PMD_OPTION_DIAG_PATH,
                                            OSS_MAX_PATHSIZE,
-                                           _krcbDiagLogPath ) )
+                                           _krcbDiagLogPath ) ||
+              SDB_OK != utilCatPath( _krcbDiagLogPath, OSS_MAX_PATHSIZE, "" ) )
          {
             std::cerr << "diaglog path is too long!" << endl ;
             rc = SDB_INVALIDPATH ;
@@ -1575,7 +1577,8 @@ namespace engine
       if ( 0 == _krcbLogPath[0] )
       {
          if ( SDB_OK != utilBuildFullPath( _krcbDbPath, PMD_OPTION_LOG_PATH,
-                                           OSS_MAX_PATHSIZE, _krcbLogPath ) )
+                                           OSS_MAX_PATHSIZE, _krcbLogPath ) ||
+              SDB_OK != utilCatPath( _krcbDbPath, OSS_MAX_PATHSIZE, "" ) )
          {
             std::cerr << "repicalog path is too long!" << endl ;
             rc = SDB_INVALIDPATH ;
@@ -1585,7 +1588,8 @@ namespace engine
       if ( 0 == _krcbBkupPath[0] )
       {
          if ( SDB_OK != utilBuildFullPath( _krcbDbPath, PMD_OPTION_BK_PATH,
-                                           OSS_MAX_PATHSIZE, _krcbBkupPath ) )
+                                           OSS_MAX_PATHSIZE, _krcbBkupPath ) ||
+              SDB_OK != utilCatPath( _krcbBkupPath, OSS_MAX_PATHSIZE, "" ) )
          {
             std::cerr << "bakup path is too long!" << endl ;
             rc = SDB_INVALIDPATH ;
@@ -1623,6 +1627,7 @@ namespace engine
             rc = SDB_INVALIDPATH ;
             goto error ;
          }
+         utilCatPath( _krcbWWWPath, OSS_MAX_PATHSIZE, "" ) ;
       }
 
       if ( 0 == _krcbLobPath[0] )
@@ -1633,7 +1638,8 @@ namespace engine
       if ( 0 == _dmsTmpBlkPath[0] )
       {
          if ( SDB_OK != utilBuildFullPath( _krcbDbPath, PMD_OPTION_TMPBLK_PATH,
-                                           OSS_MAX_PATHSIZE, _dmsTmpBlkPath ) )
+                                           OSS_MAX_PATHSIZE, _dmsTmpBlkPath ) ||
+              SDB_OK != utilCatPath( _dmsTmpBlkPath, OSS_MAX_PATHSIZE, "" ) )
          {
             std::cerr << "diaglog path is too long!" << endl ;
             rc = SDB_INVALIDPATH ;
