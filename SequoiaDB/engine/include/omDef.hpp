@@ -43,6 +43,7 @@ namespace engine
    #define OM_PATH_CONFIG                    "config"
    #define OM_PATH_VERSION                   "version"
 
+   // Sequoiadb's template configure
    #define OM_TEMPLATE_REPLICA_NUM           "replicanum"
    #define OM_TEMPLATE_DATAGROUP_NUM         "datagroupnum"
    #define OM_TEMPLATE_CATALOG_NUM           "catalognum"
@@ -67,10 +68,27 @@ namespace engine
    #define OM_CONF_DETAIL_PCINTERVAL         PMD_OPTION_PAGECLEANINTERVAL
    #define OM_CONF_DETAIL_DATAGROUPNAME      "datagroupname"
 
+   // Zookeeper's template configure
+   #define OM_TEMPLATE_ZOO_NUM               "zoonodenum"
+
+   // Zookeeper's extend configure
+   #define OM_ZOO_CONF_DETAIL_ZOOID          "zooid"
+   // /opt/$businessType/$businessName/$dataport
+   #define OM_ZOO_CONF_DETAIL_INSTALLPATH    "installpath"
+   // /disk/$businessType/$businessName/database/$$dataport
+   #define OM_ZOO_CONF_DETAIL_DATAPATH       "datapath"
+   #define OM_ZOO_CONF_DETAIL_DATAPORT       "dataport"
+   #define OM_ZOO_CONF_DETAIL_ELECTPORT      "electport"
+   #define OM_ZOO_CONF_DETAIL_CLIENTPORT     "clientport"
+   #define OM_ZOO_CONF_DETAIL_SYNCLIMIT      "synclimit"
+   #define OM_ZOO_CONF_DETAIL_INITLIMIT      "initlimit"
+   #define OM_ZOO_CONF_DETAIL_TICKTIME       "ticktime"
+
    /*
       OM Field Define
    */
-
+   #define OM_BUSINESS_SEQUOIADB             "sequoiadb"
+   #define OM_BUSINESS_ZOOKEEPER             "zookeeper"
    #define OM_BUSINESS_SPARK                 "spark"
    #define OM_BUSINESS_HDFS                  "hdfs"
 
@@ -245,6 +263,12 @@ namespace engine
    #define  OM_DEFAULT_INSTALL_PATH          "C:\\Program Files\\sequoiadb\\"
 #else 
    #define  OM_DEFAULT_INSTALL_PATH          "/opt/sequoiadb/"
+#endif
+
+#if defined _WINDOWS
+   #define  OM_DEFAULT_INSTALL_ROOT_PATH     "C:\\Program Files\\"
+#else 
+   #define  OM_DEFAULT_INSTALL_ROOT_PATH     "/opt/"
 #endif
 
    //*************************default values***********************************

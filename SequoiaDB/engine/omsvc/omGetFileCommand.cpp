@@ -47,6 +47,7 @@ using namespace boost::property_tree;
 
 namespace engine
 {
+   static INT32 getPacketFile( const string &businessType, string &filePath ) ;
    static INT32 getMaxTaskID( INT64 &taskID ) ;
    static INT32 createTask( INT32 taskType, INT64 taskID, 
                             const string &taskName, const string &agentHost, 
@@ -55,6 +56,38 @@ namespace engine
 
    static INT32 removeTask( INT64 taskID ) ;
 
+   INT32 getPacketFile( const string &businessType, string &filePath )
+   {
+      INT32 rc = SDB_OK ;
+      CHAR tmpPath[ OSS_MAX_PATHSIZE + 1 ] = "" ;
+      ossGetEWD( tmpPath, OSS_MAX_PATHSIZE ) ;
+      utilCatPath( tmpPath, OSS_MAX_PATHSIZE, ".." ) ;
+      utilCatPath( tmpPath, OSS_MAX_PATHSIZE, OM_PACKET_SUBPATH ) ;
+      string filter = businessType + "*" ;
+      map< string, string> mapFiles ;      
+      rc = ossEnumFiles( tmpPath, mapFiles, filter.c_str() ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG_MSG( PDERROR, "path is invalid:path=%s,filter=%s,rc=%d", 
+                     tmpPath, filter.c_str(), rc ) ;
+         goto error ;
+      }
+
+      if ( mapFiles.size() != 1 )
+      {
+         rc = SDB_FNE ;
+         PD_LOG_MSG( PDERROR, "path is invalid:path=%s,filter=%s,count=%d", 
+                     tmpPath, filter.c_str(), mapFiles.size() ) ;
+         goto error ;
+      }
+
+      filePath = mapFiles.begin()->second ;
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+   
    INT32 getMaxTaskID( INT64 &taskID )
    {
       INT32 rc = SDB_OK ;
@@ -2662,38 +2695,6 @@ namespace engine
       goto done ;
    }
 
-   INT32 omAddHostCommand::_getPacketFullPath( char *path )
-   {
-      INT32 rc = SDB_OK ;
-      CHAR tmpPath[ OSS_MAX_PATHSIZE + 1 ] = "" ;
-      ossGetEWD( tmpPath, OSS_MAX_PATHSIZE ) ;
-      utilCatPath( tmpPath, OSS_MAX_PATHSIZE, ".." ) ;
-      utilCatPath( tmpPath, OSS_MAX_PATHSIZE, OM_PACKET_SUBPATH ) ;
-
-      map< string, string> mapFiles ;      
-      rc = ossEnumFiles( tmpPath, mapFiles ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG_MSG( PDERROR, "path is invalid:path=%s,rc=%d", tmpPath, rc ) ;
-         goto error ;
-      }
-
-      if ( mapFiles.size() != 1 )
-      {
-         rc = SDB_FNE ;
-         PD_LOG_MSG( PDERROR, "path is invalid:path=%s,fileCount=%d", tmpPath, 
-                     mapFiles.size() ) ;
-         goto error ;
-      }
-
-      ossSnprintf( path, OSS_MAX_PATHSIZE, "%s", 
-                   mapFiles.begin()->second.c_str() ) ;
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
    void omAddHostCommand::_generateTableField( BSONObjBuilder &builder, 
                                                const string &newFieldName,
                                                BSONObj &bsonOld,
@@ -2764,8 +2765,8 @@ namespace engine
       string sdbUser ;
       string sdbPasswd ;
       string sdbUserGroup ;
-      CHAR packetPath[ OSS_MAX_PATHSIZE ] = "" ;
-      rc = _getPacketFullPath( packetPath ) ;
+      string packetPath ;
+      rc = getPacketFile( OM_BUSINESS_SEQUOIADB, packetPath ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "get packet path failed:rc=%d", rc ) ;
@@ -3701,8 +3702,8 @@ namespace engine
       BSONObj selector ;
       BSONObj order ;
       BSONObj hint ;
-      SINT64 contextID        = -1 ;
-      INT32 rc                = SDB_OK ;
+      SINT64 contextID = -1 ;
+      INT32 rc         = SDB_OK ;
 
       BSONObjBuilder condBuilder ;
       condBuilder.append( OM_CONFIGURE_FIELD_HOSTNAME, hostName ) ;
@@ -3754,10 +3755,19 @@ namespace engine
             BSONObjIterator iter( tmpConf ) ;
             while ( iter.more() )
             {  
+               string businessType ;
                BSONObjBuilder innerBuilder ;
                BSONElement ele     = iter.next() ;
 
                innerBuilder.appendElements( ele.embeddedObject() ) ;
+               rc = _getBusinessType( businessName, businessType ) ;
+               if ( SDB_OK != rc )
+               {
+                  PD_LOG( PDERROR, "failed to get businessType:businessName=%s",
+                          businessName.c_str() ) ;
+                  goto error ;
+               }
+               innerBuilder.append( OM_BSON_BUSINESS_TYPE, businessType ) ;
                innerBuilder.append( OM_BSON_BUSINESS_NAME, businessName ) ;
                arrayBuilder.append( innerBuilder.obj() ) ;
             }
@@ -3767,8 +3777,8 @@ namespace engine
       /*
          {
             "Config":
-            [{"BusinessName":"b1","dbpath":"","svcname":"11810", ...}
-               , ...
+            [{"BusinessName":"b1","BusinessType":"sequoiadb","dbpath":"",
+            "svcname":"11810", ...} , ...
             ]
          }
       */
@@ -3776,6 +3786,11 @@ namespace engine
       config = confBuilder.obj() ;
 
    done:
+      if ( -1 != contextID )
+      {
+         _pRTNCB->contextDelete ( contextID, _cb ) ;
+         contextID = -1 ;
+      }
       return rc ;
    error:
       goto done ;
@@ -4018,6 +4033,7 @@ namespace engine
       if ( -1 != contextID )
       {
          _pRTNCB->contextDelete ( contextID, _cb ) ;
+         contextID = -1 ;
       }
       return rc ;
    error:
@@ -4168,7 +4184,7 @@ namespace engine
    }
    */
    INT32 omConfigBusinessCommand::_getConfigDetail( const BSONObj &bsonTemplate, 
-                                                  BSONObj &bsonConfDetail )
+                                                    BSONObj &bsonConfDetail )
    {
       INT32 rc = SDB_OK ;
       string confDetailFile = "" ;
@@ -4233,24 +4249,59 @@ namespace engine
                                                   BSONObj &bsonConfig )
    {
       INT32 rc = SDB_OK ;
-      omConfigGenerator confGenerator ;
       BSONObjBuilder builder ;
       BSONObj tmpConf ;
-      /* tmpConf:
-         {
-            "Config":
-            [
-              {"HostName":"host1","DataGroupName":"",
-               "DBPath": "/home/db2/coord/11830", "SvcName": "11830", ... 
-              }, ...
-            ]
-         }
-      */
-      rc = confGenerator.generateSDBConfig( bsonTemplate, bsonConfigItem, 
-                                            bsonHostInfo, tmpConf ) ;
-      if ( SDB_OK != rc )
+      string businessType ;
+      businessType = bsonTemplate.getStringField( OM_REST_BUSINESS_TYPE ) ;
+      if ( businessType == OM_BUSINESS_ZOOKEEPER )
       {
-         PD_LOG_MSG( PDERROR, "%s", confGenerator.getErrorDetail().c_str() ) ;
+         omZooConfigGenerator zooConfGenerator ;
+         /* tmpConf:
+            {
+               "Config":
+               [
+                 {"HostName":"host1","zooid":"1",
+                  "datapath": "/home/data/zookeeper/z1/data/", 
+                  "clientport": "2181", ... 
+                 }, ...
+               ]
+            }
+         */
+         rc = zooConfGenerator.generateConfig( bsonTemplate, bsonConfigItem, 
+                                               bsonHostInfo, tmpConf ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG_MSG( PDERROR, "%s", 
+                        zooConfGenerator.getErrorDetail().c_str() ) ;
+            goto error ;
+         } 
+      }
+      else if ( businessType == OM_BUSINESS_SEQUOIADB )
+      {
+         omConfigGenerator confGenerator ;
+         /* tmpConf:
+            {
+               "Config":
+               [
+                 {"HostName":"host1","DataGroupName":"",
+                  "DBPath": "/home/db2/coord/11830", "SvcName": "11830", ... 
+                 }, ...
+               ]
+            }
+         */
+         rc = confGenerator.generateSDBConfig( bsonTemplate, bsonConfigItem, 
+                                               bsonHostInfo, tmpConf ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG_MSG( PDERROR, "%s", confGenerator.getErrorDetail().c_str() ) ;
+            goto error ;
+         }         
+      }
+      else
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "unreconigzed business:type=%s", 
+                     businessType.c_str() ) ;
          goto error ;
       }
 
@@ -4748,12 +4799,15 @@ namespace engine
                 ]
    }
    */
-   void omInstallBusinessReq::_compeleteConfValue( const BSONObj &bsonHostInfo, 
+   INT32 omInstallBusinessReq::_compeleteConfValue( const BSONObj &bsonHostInfo, 
                                                    BSONObj &bsonConfValue )
    {
+      INT32 rc = SDB_OK ;
       map< string, simpleHostInfo > hostMap ;
       map< string, simpleHostInfo >::iterator iterMap ;
+      string businessType ;
       BSONObj hostInfos ;
+      businessType = bsonConfValue.getStringField( OM_BSON_BUSINESS_TYPE ) ;
       hostInfos = bsonHostInfo.getObjectField( OM_BSON_FIELD_HOST_INFO ) ;
       BSONObjIterator iter( hostInfos ) ;
       while ( iter.more() )
@@ -4804,7 +4858,6 @@ namespace engine
          }
       }
 
-      INT32 rc = SDB_OK ;
       string clusterName ;
       string sdbUser ;
       string sdbUserGroup ;
@@ -4822,8 +4875,25 @@ namespace engine
 
       valueBuilder.append( OM_BSON_FIELD_CONFIG, arrayBuilder.arr() ) ;
       valueBuilder.appendElements( commons ) ;
+      if ( businessType == OM_BUSINESS_ZOOKEEPER )
+      {
+         string packetPath ;
+         rc = getPacketFile( businessType, packetPath ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "get packet path failed:type=%s", 
+                    businessType.c_str() ) ;
+            goto error ;
+         }
+
+         valueBuilder.append( OM_BSON_FIELD_PATCKET_PATH, packetPath ) ;
+      }
 
       bsonConfValue = valueBuilder.obj() ;
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    INT32 omInstallBusinessReq::_getRestInfo( BSONObj &bsonConfValue )
@@ -4891,13 +4961,28 @@ namespace engine
                                                   BSONArray &resultInfo )
    {
       INT32 rc = SDB_OK ;
+      string businessType ;
       taskInfo = bsonConfValue.copy() ;
       BSONArrayBuilder arrayBuilder ;
-      BSONObj condition = BSON( OM_BSON_FIELD_HOST_NAME << "" 
-                                << OM_CONF_DETAIL_SVCNAME << "" 
-                                << OM_CONF_DETAIL_ROLE << "" 
-                                << OM_CONF_DETAIL_DATAGROUPNAME << "" ) ;
-
+      BSONObj condition ;
+      businessType = bsonConfValue.getStringField( OM_BSON_BUSINESS_TYPE ) ;
+      if ( businessType == OM_BUSINESS_SEQUOIADB )
+      {
+         condition = BSON( OM_BSON_FIELD_HOST_NAME << "" 
+                           << OM_CONF_DETAIL_SVCNAME << "" 
+                           << OM_CONF_DETAIL_ROLE << "" 
+                           << OM_CONF_DETAIL_DATAGROUPNAME << "" ) ;
+      }
+      else if ( businessType == OM_BUSINESS_ZOOKEEPER )
+      {
+         condition = BSON( OM_BSON_FIELD_HOST_NAME << "" 
+                           << OM_ZOO_CONF_DETAIL_ZOOID << "" ) ;
+      }
+      else
+      {
+         SDB_ASSERT( FALSE, businessType.c_str() ) ;
+      }
+      
       BSONObj nodes = bsonConfValue.getObjectField( OM_BSON_FIELD_CONFIG ) ;
       BSONObjIterator iter( nodes ) ;
       while ( iter.more() )
@@ -4931,7 +5016,6 @@ namespace engine
    INT32 omInstallBusinessReq::doCommand()
    {
       INT32 rc = SDB_OK ;
-      omConfigGenerator confGenerator ;
       BSONObjBuilder opBuilder ;
       BSONObj bsonConfValue ;
       BSONObj bsonHostInfo ;
@@ -4985,17 +5069,45 @@ namespace engine
          goto error ;
       }
 
-      rc = confGenerator.checkSDBConfig( bsonConfValue, bsonAllConf, 
+      if ( _businessType == OM_BUSINESS_SEQUOIADB )
+      {
+         omConfigGenerator confGenerator ;
+         rc = confGenerator.checkSDBConfig( bsonConfValue, bsonAllConf, 
+                                            bsonHostInfo ) ;
+         if ( SDB_OK != rc )
+         {
+            _errorDetail = confGenerator.getErrorDetail() ;
+            PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
+            _sendErrorRes2Web( rc, _errorDetail ) ;
+            goto error ;
+         }
+      }
+      else if ( _businessType == OM_BUSINESS_ZOOKEEPER )
+      {
+         omZooConfigGenerator confGenerator ;
+         rc = confGenerator.checkConfig( bsonConfValue, bsonAllConf, 
                                          bsonHostInfo ) ;
+         if ( SDB_OK != rc )
+         {
+            _errorDetail = confGenerator.getErrorDetail() ;
+            PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
+            _sendErrorRes2Web( rc, _errorDetail ) ;
+            goto error ;
+         }
+      }
+      else
+      {
+         SDB_ASSERT( FALSE, _businessType.c_str() ) ;
+      }
+
+      rc = _compeleteConfValue( bsonHostInfo, bsonConfValue ) ;
       if ( SDB_OK != rc )
       {
-         _errorDetail = confGenerator.getErrorDetail() ;
+         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
          PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
       }
-
-      _compeleteConfValue( bsonHostInfo, bsonConfValue ) ;
 
       {
          BSONObj taskInfo ;
@@ -5122,6 +5234,7 @@ namespace engine
       if ( -1 != contextID )
       {
          _pRTNCB->contextDelete ( contextID, _cb ) ;
+         contextID = -1 ;
       }
       return rc ;
    error:
@@ -6505,16 +6618,31 @@ namespace engine
       taskInfoBuilder.append( OM_BSON_BUSINESS_TYPE, type ) ;
       taskInfoBuilder.append( OM_BSON_BUSINESS_NAME, businessName ) ;
       taskInfoBuilder.append( OM_BSON_DEPLOY_MOD, deployMod ) ;
-      taskInfoBuilder.append( OM_SDB_AUTH_USER, authUser ) ;
-      taskInfoBuilder.append( OM_SDB_AUTH_PASSWD, authPasswd ) ;
-      taskInfo = taskInfoBuilder.obj() ;
-
+      
       {
          BSONArrayBuilder arrayBuilder ;
-         BSONObj filter = BSON( OM_BSON_FIELD_HOST_NAME << ""
-                                << OM_CONF_DETAIL_SVCNAME << "" 
-                                << OM_CONF_DETAIL_ROLE << "" 
-                                << OM_CONF_DETAIL_DATAGROUPNAME << "" ) ;
+         BSONObj condition ;
+         if ( type == OM_BUSINESS_SEQUOIADB )
+         {
+            taskInfoBuilder.append( OM_SDB_AUTH_USER, authUser ) ;
+            taskInfoBuilder.append( OM_SDB_AUTH_PASSWD, authPasswd ) ;
+            condition = BSON( OM_BSON_FIELD_HOST_NAME << "" 
+                              << OM_CONF_DETAIL_SVCNAME << "" 
+                              << OM_CONF_DETAIL_ROLE << "" 
+                              << OM_CONF_DETAIL_DATAGROUPNAME << "" ) ;
+         }
+         else if ( type == OM_BUSINESS_ZOOKEEPER )
+         {
+            condition = BSON( OM_BSON_FIELD_HOST_NAME << "" 
+                              << OM_ZOO_CONF_DETAIL_ZOOID << "" ) ;
+         }
+         else
+         {
+            SDB_ASSERT( FALSE, type.c_str() ) ;
+         }
+
+         taskInfo = taskInfoBuilder.obj() ;
+
          BSONObj nodes = nodeInfos.getObjectField( OM_BSON_FIELD_CONFIG ) ;
          BSONObjIterator iter( nodes ) ;
          while ( iter.more() )
@@ -6522,7 +6650,7 @@ namespace engine
             BSONElement ele = iter.next() ;
             BSONObj oneNode = ele.embeddedObject() ;
 
-            BSONObj tmp = oneNode.filterFieldsUndotted( filter, true ) ;
+            BSONObj tmp = oneNode.filterFieldsUndotted( condition, true ) ;
             BSONObjBuilder builder ;
             builder.appendElements( tmp ) ;
             builder.append( OM_TASKINFO_FIELD_STATUS, OM_TASK_STATUS_INIT ) ;

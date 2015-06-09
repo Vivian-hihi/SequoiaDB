@@ -294,8 +294,7 @@ namespace engine
    class hostHardWare : public SDBObject
    {
       public:
-         hostHardWare( const string &hostName, propertyContainer *pc, 
-                       clusterNodeCounter *nodeCounter ) ;
+         hostHardWare( const string &hostName, string startSvcName ) ;
          ~hostHardWare() ;
 
       public:
@@ -304,7 +303,8 @@ namespace engine
                                        UINT64 totalSize, UINT64 freeSize ) ;
          string               getName() ;
          INT32                occupayResource( const string &path, 
-                                               const string &svcName ) ;
+                                               list<string> &svcName, 
+                                               BOOLEAN checkPath = TRUE ) ;
 
          string               getDiskName( const string &dbPath ) ;
          string               getMountPath( const string &dbPath ) ;
@@ -314,24 +314,21 @@ namespace engine
          // get the disk count that no used before
          INT32                getFreeDiskCount() ;
 
-         INT32                createNode( const string &role, 
-                                          simpleDiskInfo **diskInfo, 
-                                          string &svcName ) ;
-
          BOOLEAN              isDiskExist( const string &dbPath ) ;
          BOOLEAN              isPathOccupayed( const string &dbPath ) ;
          BOOLEAN              isSvcNameOccupayed( const string &svcName ) ;
+         string               getAvailableSvcName() ;
+
+         map<string, simpleDiskInfo> *getDiskMap() ;
       private:
          simpleDiskInfo*      _getDiskInfo( const string &dbPath ) ;
-         simpleDiskInfo*      _getBestDisk( const string &role ) ;
 
       private:
          string                      _hostName ;
          map<string, simpleDiskInfo> _mapDisk ;
          set<string>                 _inUseDisk ;
-         list<hostResource>          _resourceList ;
-         propertyContainer           *_propertyContainer ;
-         clusterNodeCounter          *_nodeCounter ;
+         set<string>                 _occupayPathSet ;
+         set<string>                 _occupayPortSet ;
          string                      _availableSvcName ;
    } ;
 
@@ -349,8 +346,7 @@ namespace engine
                                           const string &businessName,
                                           const string &role,
                                           const string &groupName,
-                                          string &hostName, string &diskName, 
-                                          string &svcName, string &dbPath ) ;
+                                          omNodeConf &node ) ;
          INT32                getHostNum() ;
 
          INT32                increaseGroupID() ;
@@ -362,6 +358,10 @@ namespace engine
 
       private:
          hostHardWare*        _getBestHost( const string &role ) ;
+         INT32                _getBestResourceFromHost( hostHardWare *host, 
+                                                      const string &role, 
+                                                      simpleDiskInfo **diskInfo, 
+                                                      string &svcName ) ;
 
       private:
          map<string, hostHardWare*> _mapHost ;
@@ -479,13 +479,259 @@ namespace engine
       private:
          omConfTemplate    _template ;
          propertyContainer _propertyContainer ;
-         omNodeConf        _nodeSample ;
          omCluster         _cluster ;
          string            _errorDetail ;
 
          //check
          omBusinessConfigure _businessConf ;
    } ;
+
+   //********************Zookeeper begin*******************************
+   class omZooConfTemplate : public SDBObject
+   {
+      public:
+         omZooConfTemplate() ;
+         ~omZooConfTemplate() ;
+
+      public:
+         INT32             init( const BSONObj &confTemplate ) ;
+         string            getBusinessType() ;
+         string            getBusinessName() ;
+         string            getClusterName() ;
+         string            getDeployMod() ;
+         INT32             getZooNum() ;
+
+      public:
+         void              clear() ;
+
+      private:
+         BOOLEAN           _isAllProperySet() ;
+         INT32             _setPropery( BSONObj &property ) ;
+
+      private:
+         string            _businessType ;
+         string            _businessName ;
+         string            _clusterName ;
+         string            _deployMod ;
+         INT32             _zooNum ;
+   } ;
+
+   class omZooNodeConf : public SDBObject
+   {
+      public:
+         omZooNodeConf() ;
+         omZooNodeConf( const omZooNodeConf &right ) ;
+         ~omZooNodeConf() ;
+
+      public:
+         void              setInstallPath( const string &installPath ) ;
+         void              setDataPath( const string &dataPath ) ;
+         void              setZooID( const string &zooID ) ;
+         void              setDataPort( const string &dataPort ) ;
+         void              setElectPort( const string &electPort ) ;
+         void              setClientPort( const string &clientPort ) ;
+         void              setHostName( const string &hostName ) ;
+         void              setDiskName( const string &diskName ) ;
+         void              setAdditionalConf( const string &key, 
+                                              const string &value ) ;
+
+         string            getInstallPath() ;
+         string            getDataPath() ;
+         string            getZooID() ;
+         string            getDataPort() ;
+         string            getElectPort() ;
+         string            getClientPort() ;
+         string            getHostName() ;
+         string            getDiskName() ;
+         string            getAdditionlConf( const string &key ) ;
+         const map<string, string> * getAdditionalMap() ;
+
+
+      private:
+         //**********configure******************
+         string            _installPath ;
+         string            _dataPath ;
+         string            _zooID ;
+         string            _dataPort ;
+         string            _electPort ;
+         string            _clientPort ;
+
+         map<string, string> _additionalConfMap ;
+         //*************************************
+
+         //***********other attribute***********
+         string            _hostName ;
+         string            _diskName ;
+         //*************************************
+   } ;
+
+   class zooPropertyContainer : public SDBObject
+   {
+      public:
+         zooPropertyContainer() ;
+         ~zooPropertyContainer() ;
+
+      public:
+         INT32          addProperty( const BSONObj &property ) ;
+         INT32          checkValue( const string &name, const string &value ) ;
+         BOOLEAN        isAllPropertySet() ;
+         void           clear() ;
+
+         INT32          createSample( omZooNodeConf &sample ) ;
+
+         string         getDefaultValue( const string &name ) ;
+
+      private:
+         confProperty*  _getConfProperty( const string &name ) ;
+
+      private:
+         confProperty                  *_installPathProperty ;
+         confProperty                  *_dataPathProperty ;
+         confProperty                  *_zooIDProperty ;
+         confProperty                  *_dataPortProperty ;
+         confProperty                  *_electPortProperty ;
+         confProperty                  *_clientPortProperty ;
+         map<string, confProperty*>    _additionalPropertyMap ;
+   } ;
+
+   class zooNodeCounter
+   {
+      public:
+         zooNodeCounter() ;
+         ~zooNodeCounter() ;
+
+      public:
+         INT32                addNode( const string &hostName,
+                                       const string &diskName,
+                                       const string &businessName, 
+                                       const string &zooID ) ;
+
+         INT32                getCountInHost( const string &hostName ) ;
+
+         INT32                getCountInDisk( const string &hostName,
+                                              const string &diskName ) ;
+
+         INT32                increaseZooID() ;
+         void                 clear() ;
+
+      private:
+         map<string, hostNodeCounter *>  _mapHostNodeCounter ;
+         nodeCounter          _counter ;
+         INT32                _availableZooID ;
+   } ;
+
+   class omZooCluster 
+   {
+      public:
+         omZooCluster() ;
+         ~omZooCluster() ;
+
+      public:
+         void                 setPropertyContainer( zooPropertyContainer *pc ) ;
+         INT32                addHost( const BSONObj &host, 
+                                       const BSONObj &config ) ;
+         INT32                createNode( const string &businessType,
+                                          const string &businessName,
+                                          omZooNodeConf &node ) ;
+         INT32                getHostNum() ;
+
+         INT32                increaseZooID() ;
+
+         void                 clear() ;
+
+         INT32                checkAndAddNode( const string &businessName,
+                                               omZooNodeConf *node ) ;
+
+      private:
+         hostHardWare*        _getBestHost( ) ;
+         INT32                _getBestResourceFromHost( hostHardWare *host, 
+                                                      simpleDiskInfo **diskInfo, 
+                                                      string &svcName ) ;
+
+      private:
+         map<string, hostHardWare*> _mapHost ;
+         zooNodeCounter             _nodeCounter ;
+         zooPropertyContainer       *_propertyContainer ;
+   } ;
+
+
+   /*
+   newBusinessConf:
+   {
+      "BusinessType":"zookeeper", "BusinessName":"z1", "DeployMod":"xx", 
+      "ClusterName":"c1", 
+      "Config":
+      [
+         {"HostName": "host1", "zooid": "1", 
+          "datapath": "/home/zookeeper/z1/2888", "dataport": "2888", ...}
+         ,...
+      ]
+   }
+   */
+   class omZooBizConfigure : public SDBObject
+   {
+      public:
+         omZooBizConfigure() ;
+         ~omZooBizConfigure() ;
+
+      public:
+         INT32             init( zooPropertyContainer *pc,
+                                 const BSONObj &business ) ;
+         void              clear() ;
+
+         void              getNodeList( list<omZooNodeConf> &nodeList ) ;
+
+         string            getBusinessName() ;
+      private:
+         INT32             _innerCheck() ;
+         INT32             _setNodeConf( BSONObj &oneNode, 
+                                         omZooNodeConf &nodeConf ) ;
+      private:
+         list<omZooNodeConf>  _nodeList ;
+         string              _businessType ;
+         string              _businessName ;
+         string              _deployMod ;
+         string              _clusterName ;
+         zooPropertyContainer *_propertyContainer ;
+   } ;
+
+   class omZooConfigGenerator : public SDBObject
+   {
+      public:
+         omZooConfigGenerator() ;
+         virtual ~omZooConfigGenerator() ;
+
+      public:
+         INT32       generateConfig( const BSONObj &bsonTemplate, 
+                                     const BSONObj &confProperties, 
+                                     const BSONObj &bsonHostInfo, 
+                                     BSONObj &bsonConfig ) ;
+
+         INT32       checkConfig( BSONObj &bsonConfValue,
+                                  const BSONObj &bsonAllconf, 
+                                  const BSONObj &bsonHostInfo ) ;
+
+         string      getErrorDetail() ;
+
+      private:
+         INT32       _parseProperties( const BSONObj &confProperties ) ;
+         INT32       _parseCluster( const BSONObj &bsonHostInfo ) ;
+
+         INT32       _generate( BSONObj &bsonConfig ) ;
+         INT32       _parseNewBusiness( const BSONObj &newBusinessConf ) ;
+
+      private:
+         omZooConfTemplate    _template ;
+         zooPropertyContainer _propertyContainer ;
+         omZooNodeConf        _nodeSample ;
+         omZooCluster         _cluster ;
+         string               _errorDetail ;
+
+         //check
+         omZooBizConfigure    _businessConf ;
+   } ;
+
+   //*****************Zookeeper end**************************************
 }
 
 

@@ -363,7 +363,6 @@ namespace engine
                                               const string &oldFiledName ) ;
          INT32           _getClusterInstallPath( const string &clusterName, 
                                                  string &installPath ) ;
-         INT32           _getPacketFullPath( char *path ) ;
          INT32           _checkHostExistence( list<BSONObj> &hostInfoList ) ;
 
          INT32           _generateTaskInfo( const string &clusterName, 
@@ -540,7 +539,7 @@ namespace engine
          INT32          _sendMsgToLocalAgent( omManager *om,
                                               pmdRemoteSession *remoteSession, 
                                               MsgHeader *pMsg ) ;
-         void           _compeleteConfValue( const BSONObj &bsonHostInfo, 
+         INT32          _compeleteConfValue( const BSONObj &bsonHostInfo, 
                                              BSONObj &bsonConfValue ) ;
          void           _clearSession( omManager *om, 
                                        pmdRemoteSession *remoteSession) ;

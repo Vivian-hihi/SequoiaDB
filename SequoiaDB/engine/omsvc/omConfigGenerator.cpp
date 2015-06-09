@@ -59,7 +59,7 @@ namespace engine
    #define OM_NODE_ROLE_CATALOG           SDB_ROLE_CATALOG_STR
    #define OM_NODE_ROLE_DATA              SDB_ROLE_DATA_STR
 
-   #define OM_SVCNAME_STEP                (10)
+   #define OM_SVCNAME_STEP                (5)
    #define OM_PATH_LENGTH                 (256)
    #define OM_INT32_MAXVALUE_STR          "2147483647"
 
@@ -513,14 +513,9 @@ namespace engine
    }
 
 
-   hostHardWare::hostHardWare( const string &hostName, propertyContainer *pc,
-                               clusterNodeCounter *nodeCounter )
-                :_hostName( hostName ), _propertyContainer( pc ),
-                 _nodeCounter( nodeCounter )
+   hostHardWare::hostHardWare( const string &hostName, string startSvcName )
+                :_hostName( hostName ), _availableSvcName( startSvcName )
    {
-      _availableSvcName = 
-                 _propertyContainer->getDefaultValue( OM_CONF_DETAIL_SVCNAME ) ;
-
       CHAR local[ OSS_MAX_HOSTNAME + 1 ] = "" ;
       ossGetHostName( local, OSS_MAX_HOSTNAME ) ;
       if ( _hostName.compare( local ) == 0 )
@@ -544,9 +539,9 @@ namespace engine
    hostHardWare::~hostHardWare()
    {
       _mapDisk.clear() ;
-      _resourceList.clear() ;
+      _occupayPathSet.clear() ;
+      _occupayPortSet.clear() ;
       _inUseDisk.clear() ;
-      _propertyContainer = NULL ;
    }
 
    INT32 hostHardWare::addDisk( const string &diskName, 
@@ -643,43 +638,45 @@ namespace engine
    }
 
    INT32 hostHardWare::occupayResource( const string &path, 
-                                        const string &svcName )
+                                        list<string> &svcNameList,
+                                        BOOLEAN checkPath )
    {
       INT32 rc = SDB_OK ;
-      string diskName = getDiskName( path ) ;
-      if ( "" == diskName )
+      if ( checkPath )
       {
-         rc = SDB_DMS_RECORD_NOTEXIST ;
-         PD_LOG_MSG( PDERROR, "path's disk is not exist:path=%s", 
-                     path.c_str() ) ;
-         goto error ;
-      }
+         string diskName = getDiskName( path ) ;
+         if ( "" == diskName )
+         {
+            rc = SDB_DMS_RECORD_NOTEXIST ;
+            PD_LOG_MSG( PDERROR, "path's disk is not exist:path=%s", 
+                        path.c_str() ) ;
+            goto error ;
+         }
 
-      {
          _inUseDisk.insert( diskName ) ;
+      }      
 
-         hostResource s ;
-         s.path = path ;
-         trimLeft( s.path, " " ) ;
-         trimRight( s.path, " " ) ;
-         trimRight( s.path, OSS_FILE_SEP ) ;
-         s.svcName     = svcName ;
-         s.replname    = strPlus( svcName, 1 ) ;
-         s.shardname   = strPlus( svcName, 2 ) ;
-         s.catalogname = strPlus( svcName, 3 ) ;
-         s.httpname    = strPlus( svcName, 4 ) ;
-         //TODO: we must add one more like: s.innername = strPlus( svcName, 5 )
-         _resourceList.push_back( s ) ;
+      {
+         INT32 iMaxPort = 0 ;
+         _occupayPathSet.insert( path ) ;
+         list<string>::iterator iterList = svcNameList.begin() ;
+         while ( iterList != svcNameList.end() )
+         {
+            string tmpPort = *iterList ;
+            INT32 iTmpPort = ossAtoi( tmpPort.c_str() ) ;
+            if ( iTmpPort > iMaxPort )
+            {
+               iMaxPort = iTmpPort ;
+            }
+
+            _occupayPortSet.insert( tmpPort ) ;
+            iterList++ ;
+         }
 
          INT32 iAvailable = ossAtoi( _availableSvcName.c_str() ) ;
-         INT32 iSvcName   = ossAtoi( svcName.c_str() ) ;
-         if ( iAvailable <= iSvcName )
+         if ( iAvailable <= iMaxPort )
          {
-            _availableSvcName = strPlus( iSvcName, OM_SVCNAME_STEP ) ;
-         }
-         else if( iAvailable < iSvcName + OM_SVCNAME_STEP )
-         {
-            _availableSvcName = strPlus( iAvailable, OM_SVCNAME_STEP ) ;
+            _availableSvcName = strPlus( iMaxPort, OM_SVCNAME_STEP ) ;
          }
       }
 
@@ -701,10 +698,10 @@ namespace engine
       trimLeft( tmpPath, " " ) ;
       trimRight( tmpPath, " " ) ;
       trimRight( tmpPath, OSS_FILE_SEP ) ;
-      list<hostResource>::iterator iter = _resourceList.begin() ;
-      while ( iter != _resourceList.end() )
+      set<string>::iterator iter = _occupayPathSet.begin() ;
+      while ( iter != _occupayPathSet.end() )
       {
-         if ( tmpPath == iter->path )
+         if ( tmpPath == *iter )
          {
             return TRUE ;
          }
@@ -720,12 +717,10 @@ namespace engine
       string tmpName = svcName ;
       trimLeft( tmpName, " " ) ;
       trimRight( tmpName, " " ) ;
-      list<hostResource>::iterator iter = _resourceList.begin() ;
-      while ( iter != _resourceList.end() )
+      set<string>::iterator iter = _occupayPortSet.begin() ;
+      while ( iter != _occupayPortSet.end() )
       {
-         if ( tmpName == iter->svcName || tmpName == iter->replname ||
-              tmpName == iter->shardname || tmpName == iter->catalogname ||
-              tmpName == iter->httpname )
+         if ( tmpName == *iter )
          {
             return TRUE ;
          }
@@ -736,78 +731,14 @@ namespace engine
       return FALSE ;
    }
 
-   simpleDiskInfo *hostHardWare::_getBestDisk( const string &role ) 
+   string hostHardWare::getAvailableSvcName() 
    {
-      simpleDiskInfo *bestDisk = NULL ;
-      map<string, simpleDiskInfo>::iterator iter = _mapDisk.begin() ;
-      while ( iter != _mapDisk.end() )
-      {
-         if ( NULL == bestDisk )
-         {
-            bestDisk = &( iter->second ) ;
-            iter++ ;
-            continue ;
-         }
-
-         simpleDiskInfo *pTmp = &( iter->second ) ;
-
-         INT32 bestRoleCount = _nodeCounter->getCountInDisk( _hostName, 
-                                                             bestDisk->diskName, 
-                                                             role ) ;
-         INT32 tmpRoleCount  = _nodeCounter->getCountInDisk( _hostName,
-                                                             pTmp->diskName ,
-                                                             role ) ;
-         if ( tmpRoleCount != bestRoleCount  )
-         {
-            if ( tmpRoleCount < bestRoleCount )
-            {
-               bestDisk = &( iter->second ) ;
-            }
-
-            iter++;
-            continue ;
-         }
-
-         INT32 bestCount = _nodeCounter->getCountInDisk( _hostName, 
-                                                         bestDisk->diskName ) ;
-         INT32 tmpCount  = _nodeCounter->getCountInDisk( _hostName,
-                                                         pTmp->diskName ) ;
-         if ( tmpCount != bestCount  )
-         {
-            if ( tmpCount < bestCount )
-            {
-               bestDisk = &( iter->second ) ;
-            }
-
-            iter++;
-            continue ;
-         }
-
-         iter++ ;
-      }
-
-      return bestDisk ;
+      return _availableSvcName ;
    }
 
-   INT32 hostHardWare::createNode( const string &role, 
-                                   simpleDiskInfo **diskInfo, 
-                                   string &svcName )
+   map<string, simpleDiskInfo> *hostHardWare::getDiskMap()
    {
-      INT32 rc = SDB_OK ;
-      *diskInfo = _getBestDisk( role ) ;
-      if ( NULL == *diskInfo )
-      {
-         rc = SDB_DMS_RECORD_NOTEXIST ;
-         PD_LOG( PDERROR, "get disk failed:role=%s", role.c_str() ) ;
-         goto error ;
-      }
-
-      svcName = _availableSvcName ;
-
-   done:
-      return rc ;
-   error:
-      goto done ;
+      return &_mapDisk ;
    }
 
    omCluster::omCluster()
@@ -849,9 +780,10 @@ namespace engine
       string hostName = host.getStringField( OM_BSON_FIELD_HOST_NAME ) ;
       map<string, hostHardWare*>::iterator iter = _mapHost.find( hostName ) ;
       SDB_ASSERT( iter == _mapHost.end(), "" ) ;
+      string defaultSvcName = _propertyContainer->getDefaultValue(
+                                                     OM_CONF_DETAIL_SVCNAME ) ;
       hostHardWare *pHostHW = SDB_OSS_NEW hostHardWare( hostName, 
-                                                        _propertyContainer,
-                                                        &_nodeCounter ) ;
+                                                        defaultSvcName ) ;
       if ( NULL == pHostHW )
       {
          rc = SDB_OOM ;
@@ -890,29 +822,72 @@ namespace engine
             BSONElement ele = i.next() ;
             if ( Object == ele.type() )
             {
+               list<string> portList ;
                BSONObj oneNode = ele.embeddedObject() ;
-               string businessName ;
-               string dbPath ;
-               string role ;
-               string svcName ;
-               string groupName ;
-               string diskName ;
-               businessName = oneNode.getStringField( OM_BSON_BUSINESS_NAME ) ;
-               dbPath       = oneNode.getStringField( OM_CONF_DETAIL_DBPATH ) ;
-               role         = oneNode.getStringField( OM_CONF_DETAIL_ROLE ) ;
-               svcName      = oneNode.getStringField( OM_CONF_DETAIL_SVCNAME ) ;
-               groupName    = oneNode.getStringField( 
-                                                OM_CONF_DETAIL_DATAGROUPNAME ) ;
-               diskName     = pHostHW->getDiskName( dbPath ) ;
-               SDB_ASSERT( diskName != "" ,"" ) ;
-
-               pHostHW->occupayResource( dbPath, svcName ) ;
-               rc = _nodeCounter.addNode( hostName, diskName, businessName, 
-                                          role, groupName ) ;
-               if ( SDB_OK != rc )
+               string businessType ;
+               businessType = oneNode.getStringField( OM_BUSINESS_FIELD_TYPE ) ;
+               if ( businessType == OM_BUSINESS_SEQUOIADB )
                {
-                  PD_LOG( PDERROR, "add node failed:rc=%d", rc ) ;
-                  goto error ;
+                  string businessName ;
+                  string dbPath ;
+                  string role ;
+                  string svcName ;
+                  string groupName ;
+                  string diskName ;
+                  businessName = oneNode.getStringField( OM_BSON_BUSINESS_NAME ) ;
+                  dbPath       = oneNode.getStringField( OM_CONF_DETAIL_DBPATH ) ;
+                  role         = oneNode.getStringField( OM_CONF_DETAIL_ROLE ) ;
+                  svcName      = oneNode.getStringField( OM_CONF_DETAIL_SVCNAME ) ;
+                  groupName    = oneNode.getStringField( 
+                                                   OM_CONF_DETAIL_DATAGROUPNAME ) ;
+                  diskName     = pHostHW->getDiskName( dbPath ) ;
+                  SDB_ASSERT( diskName != "" ,"" ) ;
+
+                  portList.push_back( svcName ) ;
+                  portList.push_back( strPlus( svcName, 1 ) ) ;
+                  portList.push_back( strPlus( svcName, 2 ) ) ;
+                  portList.push_back( strPlus( svcName, 3 ) ) ;
+                  portList.push_back( strPlus( svcName, 4 ) ) ;
+                  portList.push_back( strPlus( svcName, 5 ) ) ;
+                  pHostHW->occupayResource( dbPath, portList ) ;
+                  rc = _nodeCounter.addNode( hostName, diskName, businessName, 
+                                             role, groupName ) ;
+                  if ( SDB_OK != rc )
+                  {
+                     PD_LOG( PDERROR, "add node failed:rc=%d", rc ) ;
+                     goto error ;
+                  }
+               }
+               else if ( businessType == OM_BUSINESS_ZOOKEEPER )
+               {
+                  string businessName = oneNode.getStringField( 
+                                             OM_BSON_BUSINESS_NAME ) ;
+                  string installPath  = oneNode.getStringField( 
+                                             OM_ZOO_CONF_DETAIL_INSTALLPATH ) ;
+                  string zooID        = oneNode.getStringField( 
+                                             OM_ZOO_CONF_DETAIL_ZOOID ) ;
+                  string dataPath     = oneNode.getStringField( 
+                                             OM_ZOO_CONF_DETAIL_DATAPATH ) ;
+                  string dataPort     = oneNode.getStringField( 
+                                             OM_ZOO_CONF_DETAIL_DATAPORT ) ;
+                  string electPort    = oneNode.getStringField( 
+                                             OM_ZOO_CONF_DETAIL_ELECTPORT) ;
+                  string clientPort   = oneNode.getStringField( 
+                                             OM_ZOO_CONF_DETAIL_CLIENTPORT ) ;
+                  string diskName     = pHostHW->getDiskName( dataPath ) ;
+                  SDB_ASSERT( diskName != "" ,"" ) ;
+
+                  //empty list
+                  pHostHW->occupayResource( installPath, portList ) ;
+
+                  portList.push_back( dataPort ) ;
+                  portList.push_back( electPort ) ;
+                  portList.push_back( clientPort ) ;
+                  pHostHW->occupayResource( dataPath, portList ) ;
+               }
+               else
+               {
+                  SDB_ASSERT( FALSE, businessType.c_str() ) ;
                }
             }
          }
@@ -924,15 +899,95 @@ namespace engine
       goto done ;
    }
 
+   INT32 omCluster::_getBestResourceFromHost( hostHardWare *host, 
+                                              const string &role, 
+                                              simpleDiskInfo **diskInfo, 
+                                              string &svcName )
+   {
+      INT32 rc                 = SDB_OK ;
+      simpleDiskInfo *bestDisk = NULL ;
+      string hostName          = host->getName() ;
+
+      map<string, simpleDiskInfo> *mapDisk       = host->getDiskMap() ;
+      map<string, simpleDiskInfo>::iterator iter = mapDisk->begin() ;
+      while ( iter != mapDisk->end() )
+      {
+         if ( NULL == bestDisk )
+         {
+            //get the first disk
+            bestDisk = &( iter->second ) ;
+            iter++ ;
+            continue ;
+         }
+
+         simpleDiskInfo *pTmp = &( iter->second ) ;
+         INT32 bestRoleCount = _nodeCounter.getCountInDisk( hostName, 
+                                                             bestDisk->diskName, 
+                                                             role ) ;
+         INT32 tmpRoleCount  = _nodeCounter.getCountInDisk( hostName,
+                                                             pTmp->diskName ,
+                                                             role ) ;
+         if ( tmpRoleCount != bestRoleCount  )
+         {
+            //role count less, the better
+            if ( tmpRoleCount < bestRoleCount )
+            {
+               bestDisk = &( iter->second ) ;
+            }
+
+            iter++;
+            continue ;
+         }
+
+         INT32 bestCount = _nodeCounter.getCountInDisk( hostName, 
+                                                         bestDisk->diskName ) ;
+         INT32 tmpCount  = _nodeCounter.getCountInDisk( hostName,
+                                                         pTmp->diskName ) ;
+         if ( tmpCount != bestCount  )
+         {
+            //total count less, the better
+            if ( tmpCount < bestCount )
+            {
+               bestDisk = &( iter->second ) ;
+            }
+
+            iter++;
+            continue ;
+         }
+
+         iter++ ;
+      }
+
+      *diskInfo = bestDisk ;
+      if ( NULL == *diskInfo )
+      {
+         rc = SDB_DMS_RECORD_NOTEXIST ;
+         PD_LOG( PDERROR, "get disk failed:role=%s", role.c_str() ) ;
+         goto error ;
+      }
+
+      svcName = host->getAvailableSvcName() ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 omCluster::createNode( const string &businessType, 
                                 const string &businessName,
                                 const string &role, 
-                                const string &groupName,
-                                string &hostName, string &diskName, 
-                                string &svcName, string &dbPath )
+                                const string &groupName, omNodeConf &node )
    {
       INT32 rc = SDB_OK ;
+      list <string> portList ;
+      INT32 pathAdjustIndex    = 0 ;
       simpleDiskInfo *diskInfo = NULL ;
+      string hostName ;
+      string diskName ;
+      string svcName ;
+      string dbPath ;
+      _propertyContainer->createSample( node ) ;
       hostHardWare *host = _getBestHost( role ) ;
       if ( NULL == host )
       {
@@ -942,29 +997,46 @@ namespace engine
          goto error ;
       }
 
-      rc = host->createNode( role, &diskInfo, svcName ) ;
+      rc = _getBestResourceFromHost( host, role, &diskInfo, svcName ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "create node failed:host=%s", 
-                 host->getName().c_str() ) ;
+         PD_LOG( PDERROR, "_getBestResourceFromHost failed:host=%s,role=%s", 
+                 host->getName().c_str(), role.c_str() ) ;
          goto error ;
       }
 
+      do 
       {
          CHAR tmpDbPath[OM_PATH_LENGTH + 1] = "";
          utilBuildFullPath( diskInfo->mountPath.c_str(), businessType.c_str(), 
                             OM_PATH_LENGTH, tmpDbPath ) ;
          utilCatPath( tmpDbPath, OM_PATH_LENGTH, OM_DBPATH_PREFIX_DATABASE ) ;
          utilCatPath( tmpDbPath, OM_PATH_LENGTH, role.c_str() ) ;
-         utilCatPath( tmpDbPath, OM_PATH_LENGTH, svcName.c_str() ) ;
-
-         dbPath   = tmpDbPath ;
-      }
+         if ( 0 == pathAdjustIndex )
+         {
+            utilCatPath( tmpDbPath, OM_PATH_LENGTH, svcName.c_str() ) ;
+         }
+         else
+         {
+            CHAR tmpSvcName[OM_PATH_LENGTH + 1] = "";
+            ossSnprintf( tmpSvcName, OM_PATH_LENGTH, "%s_%d", svcName.c_str(), 
+                         pathAdjustIndex ) ;
+            utilCatPath( tmpDbPath, OM_PATH_LENGTH, tmpSvcName ) ;
+         }
+         pathAdjustIndex++ ;
+         dbPath = tmpDbPath ;
+      }while ( host->isPathOccupayed( dbPath ) ) ;
 
       hostName = host->getName() ;
       diskName = diskInfo->diskName ;
 
-      host->occupayResource( dbPath, svcName ) ;
+      portList.push_back( svcName ) ;
+      portList.push_back( strPlus( svcName, 1 ) ) ;
+      portList.push_back( strPlus( svcName, 2 ) ) ;
+      portList.push_back( strPlus( svcName, 3 ) ) ;
+      portList.push_back( strPlus( svcName, 4 ) ) ;
+      portList.push_back( strPlus( svcName, 5 ) ) ;
+      host->occupayResource( dbPath, portList ) ;
       rc = _nodeCounter.addNode( hostName, diskName, businessName, role, 
                                  groupName ) ;
       if ( SDB_OK != rc )
@@ -972,6 +1044,13 @@ namespace engine
          PD_LOG( PDERROR, "addNode failed:rc=%d", rc ) ;
          goto error ;
       }
+
+      node.setDataGroupName( groupName ) ;
+      node.setDbPath( dbPath ) ;
+      node.setRole( role ) ;
+      node.setSvcName( svcName ) ;
+      node.setDiskName( diskName ) ;
+      node.setHostName( hostName ) ;
 
    done:
       return rc ;
@@ -1105,6 +1184,7 @@ namespace engine
 
       {
          string diskName ;
+         list <string> portList ;
          hostHardWare *hw = iter->second ;
          if ( !hw->isDiskExist( dbPath ) )
          {
@@ -1133,7 +1213,13 @@ namespace engine
             goto error ;
          }
 
-         hw->occupayResource( dbPath, svcName ) ;
+         portList.push_back( svcName ) ;
+         portList.push_back( strPlus( svcName, 1 ) ) ;
+         portList.push_back( strPlus( svcName, 2 ) ) ;
+         portList.push_back( strPlus( svcName, 3 ) ) ;
+         portList.push_back( strPlus( svcName, 4 ) ) ;
+         portList.push_back( strPlus( svcName, 5 ) ) ;
+         hw->occupayResource( dbPath, portList ) ;
          diskName = hw->getDiskName( dbPath ) ;
 
          _nodeCounter.addNode( hostName, diskName, businessName, role, 
@@ -1342,7 +1428,6 @@ namespace engine
       _dataGroupNum = -1 ;
       _catalogNum   = -1 ;
       _coordNum     = -1 ;
-
    }
 
    BOOLEAN omConfTemplate::_isAllProperySet()
@@ -2356,9 +2441,9 @@ namespace engine
    }
    */
    INT32 omConfigGenerator::generateSDBConfig( const BSONObj &bsonTemplate, 
-                                                const BSONObj &confProperties, 
-                                                const BSONObj &bsonHostInfo, 
-                                                BSONObj &bsonConfig )
+                                               const BSONObj &confProperties, 
+                                               const BSONObj &bsonHostInfo, 
+                                               BSONObj &bsonConfig )
    {
       _cluster.clear() ;
       _propertyContainer.clear() ;
@@ -2385,7 +2470,6 @@ namespace engine
          goto error ;
       }
 
-      _propertyContainer.createSample( _nodeSample ) ;
       rc = _generate( bsonConfig ) ;
       if ( SDB_OK != rc )
       {
@@ -2525,15 +2609,10 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       omNodeConf node ;
-      string svcName ;
-      string dbPath ;
-      string hostName ;
-      string diskName ;
       string businessType = _template.getBusinessType() ;
       string businessName = _template.getBusinessName() ;
       rc = _cluster.createNode( businessType, businessName,
-                                OM_NODE_ROLE_STANDALONE, "",
-                                hostName, diskName, svcName, dbPath ) ;
+                                OM_NODE_ROLE_STANDALONE, "", node ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "createNode failed:businessName=%s,businessType=%s,"
@@ -2542,13 +2621,6 @@ namespace engine
          goto error ;
       }
 
-      node = _nodeSample ;
-      node.setDataGroupName( "" ) ;
-      node.setDbPath( dbPath ) ;
-      node.setRole( OM_NODE_ROLE_STANDALONE ) ;
-      node.setSvcName( svcName ) ;
-      node.setDiskName( diskName ) ;
-      node.setHostName( hostName ) ;
       nodeList.push_back( node ) ;
 
    done:
@@ -2573,13 +2645,8 @@ namespace engine
       while ( iCoordCount < coordNum )
       {
          omNodeConf node ;
-         string svcName ;
-         string dbPath ;
-         string hostName ;
-         string diskName ;
          rc = _cluster.createNode( businessType, businessName,
-                                   OM_NODE_ROLE_COORD, "",
-                                   hostName, diskName, svcName, dbPath ) ;
+                                   OM_NODE_ROLE_COORD, "", node ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "createNode failed:businessName=%s,businessType=%s,"
@@ -2587,13 +2654,7 @@ namespace engine
                     OM_NODE_ROLE_COORD, rc ) ;
             goto error ;
          }
-         node = _nodeSample ;
-         node.setDataGroupName( "" ) ;
-         node.setDbPath( dbPath ) ;
-         node.setRole( OM_NODE_ROLE_COORD ) ;
-         node.setSvcName( svcName ) ;
-         node.setDiskName( diskName ) ;
-         node.setHostName( hostName ) ;
+
          nodeList.push_back( node ) ;
 
          iCoordCount++ ;
@@ -2605,13 +2666,8 @@ namespace engine
          while ( iCatalogCount < catalogNum )
          {
             omNodeConf node ;
-            string svcName ;
-            string dbPath ;
-            string hostName ;
-            string diskName ;
             rc = _cluster.createNode( businessType,  businessName,
-                                      OM_NODE_ROLE_CATALOG, "",
-                                      hostName, diskName, svcName, dbPath ) ;
+                                       OM_NODE_ROLE_CATALOG, "", node ) ;
             if ( SDB_OK != rc )
             {
                PD_LOG( PDERROR, "createNode failed:businessName=%s,businessType=%s,"
@@ -2619,15 +2675,8 @@ namespace engine
                        OM_NODE_ROLE_CATALOG, rc ) ;
                goto error ;
             }
-            node = _nodeSample ;
-            node.setDataGroupName( "" ) ;
-            node.setDbPath( dbPath ) ;
-            node.setRole( OM_NODE_ROLE_CATALOG ) ;
-            node.setSvcName( svcName ) ;
-            node.setDiskName( diskName ) ;
-            node.setHostName( hostName ) ;
-            nodeList.push_back( node ) ;
 
+            nodeList.push_back( node ) ;
             iCatalogCount++ ;
          }
       }
@@ -2640,14 +2689,9 @@ namespace engine
          while ( dataCount < _template.getDataNum() )
          {
             omNodeConf node ;
-            string svcName ;
-            string dbPath ;
-            string hostName ;
-            string diskName ;
             string groupName = strConnect( OM_DG_NAME_PATTERN, groupID ) ;
             rc = _cluster.createNode( businessType,  businessName,
-                                      OM_NODE_ROLE_DATA, groupName,
-                                      hostName, diskName, svcName, dbPath ) ;
+                                      OM_NODE_ROLE_DATA, groupName, node ) ;
             if ( SDB_OK != rc )
             {
                PD_LOG( PDERROR, "createNode failed:businessName=%s,businessType=%s,"
@@ -2656,13 +2700,6 @@ namespace engine
                goto error ;
             }
 
-            node = _nodeSample ;
-            node.setDataGroupName( groupName ) ;
-            node.setDbPath( dbPath ) ;
-            node.setRole( OM_NODE_ROLE_DATA ) ;
-            node.setSvcName( svcName ) ;
-            node.setDiskName( diskName ) ;
-            node.setHostName( hostName ) ;
             nodeList.push_back( node ) ;
 
             dataCount++ ;
@@ -2866,7 +2903,1776 @@ namespace engine
       return _errorDetail ;
    }
 
-}
+   //****************Zookeeper begin*********************************
+   omZooConfTemplate::omZooConfTemplate()
+                     :_businessType( "" ), _businessName( "" ), 
+                      _clusterName( "" ), _deployMod( "" ), _zooNum( -1 )
+   {
+   }
 
+   omZooConfTemplate::~omZooConfTemplate()
+   {
+      clear() ;
+   }
+
+   /*
+   bsonTemplate:
+   {
+      "ClusterName":"c1","BusinessType":"zookeeper", "BusinessName":"myzookeeper",
+      "DeployMod": "zookeeper", 
+      "Property":[{"Name":"zoonum", "Type":"int", "Default":"1", 
+                      "Valid":"1", "Display":"edit box", "Edit":"false", 
+                      "Desc":"", "WebName":"" }
+                      , ...
+                 ] 
+   }
+   */
+   INT32 omZooConfTemplate::init( const BSONObj &confTemplate )
+   {
+      INT32 rc = SDB_OK ;
+      rc = getValueAsString( confTemplate, OM_BSON_BUSINESS_TYPE, 
+                             _businessType ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG_MSG( PDERROR, "Template miss bson field[%s]", 
+                     OM_BSON_BUSINESS_TYPE ) ;
+         goto error ;
+      }
+
+      rc = getValueAsString( confTemplate, OM_BSON_BUSINESS_NAME, 
+                             _businessName ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG_MSG( PDERROR, "Template miss bson field[%s]", 
+                     OM_BSON_BUSINESS_NAME ) ;
+         goto error ;
+      }
+
+      rc = getValueAsString( confTemplate, OM_BSON_FIELD_CLUSTER_NAME, 
+                             _clusterName ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG_MSG( PDERROR, "Template miss bson field[%s]", 
+                     OM_BSON_FIELD_CLUSTER_NAME ) ;
+         goto error ;
+      }
+
+      rc = getValueAsString( confTemplate, OM_BSON_DEPLOY_MOD, _deployMod ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG_MSG( PDERROR, "Template miss bson field[%s]", 
+                     OM_BSON_DEPLOY_MOD ) ;
+         goto error ;
+      }
+
+      {
+         BSONElement propertyElement ;
+         propertyElement = confTemplate.getField( OM_BSON_PROPERTY_ARRAY ) ;
+         if ( propertyElement.eoo() || Array != propertyElement.type() )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG_MSG( PDERROR, "template's field is not Array:field=%s,"
+                        "type=%d", OM_BSON_PROPERTY_ARRAY, 
+                        propertyElement.type() ) ;
+            goto error ;
+         }
+
+         BSONObjIterator i( propertyElement.embeddedObject() ) ;
+         while ( i.more() )
+         {
+            BSONElement ele = i.next() ;
+            if ( ele.type() == Object )
+            {
+               BSONObj oneProperty = ele.embeddedObject() ;
+               rc = _setPropery( oneProperty ) ;
+               if ( SDB_OK != rc )
+               {
+                  PD_LOG( PDERROR, "_setPropery failed:rc=%d", rc ) ;
+                  goto error ;
+               }
+            }
+         }
+      }
+
+      if ( !_isAllProperySet() )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "miss template configur item" ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   string omZooConfTemplate::getBusinessType()
+   {
+      return _businessType ;
+   }
+
+   string omZooConfTemplate::getBusinessName()
+   {
+      return _businessName ;
+   }
+
+   string omZooConfTemplate::getClusterName()
+   {
+      return _clusterName ;
+   }
+
+   string omZooConfTemplate::getDeployMod()
+   {
+      return _deployMod ;
+   }
+
+   INT32 omZooConfTemplate::getZooNum()
+   {
+      return _zooNum ;
+   }
+
+   void omZooConfTemplate::clear()
+   {
+      _businessType = "" ;
+      _businessName = "" ;
+      _clusterName  = "" ;
+      _deployMod    = "" ;
+      _zooNum       = -1 ;
+   }
+
+   BOOLEAN omZooConfTemplate::_isAllProperySet()
+   {
+      if ( _zooNum == -1 )
+      {
+         PD_LOG_MSG( PDERROR, "%s have not been set", 
+                     OM_TEMPLATE_ZOO_NUM ) ;
+         return FALSE ;
+      }
+
+      return TRUE ;
+   }
+
+   INT32 omZooConfTemplate::_setPropery( BSONObj &property )
+   {
+      INT32 rc = SDB_OK ;
+      string itemName ;
+      string itemValue ;
+      rc = getValueAsString( property, OM_BSON_PROPERTY_NAME, itemName ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG_MSG( PDERROR, "property miss bson field=%s", 
+                     OM_BSON_PROPERTY_NAME ) ;
+         goto error ;
+      }
+
+      rc = getValueAsString( property, OM_BSON_PROPERTY_VALUE, 
+                             itemValue ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG_MSG( PDERROR, "property miss bson field=%s", 
+                     OM_BSON_PROPERTY_VALUE ) ;
+         goto error ;
+      }
+
+      if ( itemName.compare( OM_TEMPLATE_ZOO_NUM ) == 0 )
+      {
+         _zooNum = ossAtoi( itemValue.c_str() ) ;
+      }
+
+      {
+         confProperty oneProperty ;
+         rc = oneProperty.init( property ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "init property failed:rc=%d", rc ) ;
+            goto error ;
+         }
+
+         if ( !oneProperty.isValid( itemValue ) )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG_MSG( PDERROR, "Template value is invalid:item=%s,value=%s,"
+                        "valid=%s", itemName.c_str(), itemValue.c_str(), 
+                        oneProperty.getValidString().c_str() ) ;
+            goto error ;
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   zooPropertyContainer::zooPropertyContainer()
+                        :_installPathProperty( NULL ), 
+                         _dataPathProperty( NULL ), _zooIDProperty( NULL ),
+                         _dataPortProperty( NULL ), _electPortProperty( NULL ),
+                         _clientPortProperty( NULL )                    
+   {
+   }
+
+   zooPropertyContainer::~zooPropertyContainer()
+   {
+      clear() ;
+   }
+
+   INT32 zooPropertyContainer::addProperty( const BSONObj &property )
+   {
+      INT32 rc = SDB_OK ;
+      confProperty *pConfProperty = SDB_OSS_NEW confProperty() ;
+      if ( NULL == pConfProperty )
+      {
+         rc = SDB_OOM ;
+         PD_LOG_MSG( PDERROR, "new confProperty failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      rc = pConfProperty->init( property ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "init confProperty failed:property=%s,rc=%d", 
+                 property.toString(false, true ).c_str(), rc ) ;
+         goto error ;
+      }
+
+      if ( OM_ZOO_CONF_DETAIL_ZOOID == pConfProperty->getItemName() )
+      {
+         SDB_ASSERT( NULL == _zooIDProperty, "" ) ;
+         _zooIDProperty = pConfProperty ;
+      }
+      else if ( OM_ZOO_CONF_DETAIL_INSTALLPATH == pConfProperty->getItemName() )
+      {
+         SDB_ASSERT( NULL == _installPathProperty, "" ) ;
+         _installPathProperty = pConfProperty ;
+      }
+      else if ( OM_ZOO_CONF_DETAIL_DATAPATH == pConfProperty->getItemName() )
+      {
+         SDB_ASSERT( NULL == _dataPathProperty, "" ) ;
+         _dataPathProperty = pConfProperty ;
+      }
+      else if ( OM_ZOO_CONF_DETAIL_DATAPORT == pConfProperty->getItemName() )
+      {
+         SDB_ASSERT( NULL == _dataPortProperty, "" ) ;
+         _dataPortProperty = pConfProperty ;
+      }
+      else if ( OM_ZOO_CONF_DETAIL_ELECTPORT == pConfProperty->getItemName() )
+      {
+         SDB_ASSERT( NULL == _electPortProperty, "" ) ;
+         _electPortProperty = pConfProperty ;
+      }
+      else if ( OM_ZOO_CONF_DETAIL_CLIENTPORT == pConfProperty->getItemName() )
+      {
+         SDB_ASSERT( NULL == _clientPortProperty, "" ) ;
+         _clientPortProperty = pConfProperty ;
+      }
+      else
+      {
+         map<string, confProperty*>::iterator iter ;
+         iter = _additionalPropertyMap.find( pConfProperty->getItemName() ) ;
+         if ( iter != _additionalPropertyMap.end() )
+         {
+            confProperty *pTmp = iter->second ;
+            SDB_OSS_DEL pTmp ;
+            _additionalPropertyMap.erase( iter ) ;
+         }
+
+         _additionalPropertyMap.insert( map<string, confProperty*>::value_type( 
+                                                   pConfProperty->getItemName(),
+                                                   pConfProperty ) ) ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 zooPropertyContainer::checkValue( const string &name, 
+                                           const string &value )
+   {
+      INT32 rc = SDB_OK ;
+      confProperty *pProperty = _getConfProperty( name ) ;
+      if ( NULL == pProperty )
+      {
+         rc = SDB_DMS_RECORD_NOTEXIST ;
+         PD_LOG_MSG( PDERROR, "can't find the property:name=%s,rc=%d", 
+                     name.c_str(), rc ) ;
+         goto error ;
+      }
+
+      if ( !pProperty->isValid( value ) )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "property's value is invalid:name=%s,value=%s,"
+                     "valid=%s", name.c_str(), value.c_str(), 
+                     pProperty->getValidString().c_str() ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   BOOLEAN zooPropertyContainer::isAllPropertySet()
+   {
+      if ( NULL == _installPathProperty )
+      {
+         PD_LOG_MSG( PDERROR, "property [%s] have not been set", 
+                     OM_ZOO_CONF_DETAIL_INSTALLPATH ) ;
+         return FALSE ;
+      }
+
+      if ( NULL == _dataPathProperty )
+      {
+         PD_LOG_MSG( PDERROR, "property [%s] have not been set", 
+                     OM_ZOO_CONF_DETAIL_DATAPATH ) ;
+         return FALSE ;
+      }
+
+      if ( NULL == _zooIDProperty )
+      {
+         PD_LOG_MSG( PDERROR, "property [%s] have not been set", 
+                     OM_ZOO_CONF_DETAIL_ZOOID ) ;
+         return FALSE ;
+      }
+
+      if ( NULL == _dataPortProperty )
+      {
+         PD_LOG_MSG( PDERROR, "property [%s] have not been set", 
+                     OM_ZOO_CONF_DETAIL_DATAPORT ) ;
+         return FALSE ;
+      }
+
+      if ( NULL == _electPortProperty )
+      {
+         PD_LOG_MSG( PDERROR, "property [%s] have not been set", 
+                     OM_ZOO_CONF_DETAIL_ELECTPORT ) ;
+         return FALSE ;
+      }
+
+      if ( NULL == _clientPortProperty )
+      {
+         PD_LOG_MSG( PDERROR, "property [%s] have not been set", 
+                     OM_ZOO_CONF_DETAIL_CLIENTPORT ) ;
+         return FALSE ;
+      }
+
+      return TRUE ;
+   }
+
+   void zooPropertyContainer::clear()
+   {
+      map<string, confProperty*>::iterator iter ;
+      iter = _additionalPropertyMap.begin() ;
+      while ( iter != _additionalPropertyMap.end() )
+      {
+         confProperty *property = iter->second ;
+         SDB_OSS_DEL property ;
+         _additionalPropertyMap.erase( iter++ ) ;
+      }
+
+      if ( NULL != _installPathProperty )
+      {
+         SDB_OSS_DEL _installPathProperty ;
+         _installPathProperty = NULL ;
+      }
+
+      if ( NULL != _dataPathProperty )
+      {
+         SDB_OSS_DEL _dataPathProperty ;
+         _dataPathProperty = NULL ;
+      }
+
+      if ( NULL != _zooIDProperty )
+      {
+         SDB_OSS_DEL _zooIDProperty ;
+         _zooIDProperty = NULL ;
+      }
+
+      if ( NULL != _dataPortProperty )
+      {
+         SDB_OSS_DEL _dataPortProperty ;
+         _dataPortProperty = NULL ;
+      }
+
+      if ( NULL != _clientPortProperty )
+      {
+         SDB_OSS_DEL _clientPortProperty ;
+         _clientPortProperty = NULL ;
+      }
+
+      if ( NULL != _electPortProperty )
+      {
+         SDB_OSS_DEL _electPortProperty ;
+         _electPortProperty = NULL ;
+      }
+   }
+
+   INT32 zooPropertyContainer::createSample( omZooNodeConf &sample )
+   {
+      confProperty *property = NULL ;
+      map<string, confProperty*>::iterator iter ;
+      iter = _additionalPropertyMap.begin() ;
+      while ( iter != _additionalPropertyMap.end() )
+      {
+         property = iter->second ;
+         sample.setAdditionalConf( property->getItemName(), 
+                                   property->getDefaultValue() ) ;
+         iter++ ;
+      }
+
+      return SDB_OK ;
+   }
+
+   string zooPropertyContainer::getDefaultValue( const string &name )
+   {
+      confProperty *property = _getConfProperty( name ) ;
+      if ( NULL != property )
+      {
+         return property->getDefaultValue() ;
+      }
+
+      return "" ;
+   }
+
+   confProperty* zooPropertyContainer::_getConfProperty( const string &name )
+   {
+      confProperty *property = NULL ;
+      if ( OM_ZOO_CONF_DETAIL_INSTALLPATH == name )
+      {
+         property = _installPathProperty ;
+      }
+      else if ( OM_ZOO_CONF_DETAIL_DATAPATH == name )
+      {
+         property = _dataPathProperty ;
+      }
+      else if ( OM_ZOO_CONF_DETAIL_ZOOID == name )
+      {
+         property = _zooIDProperty ;
+      }
+      else if ( OM_ZOO_CONF_DETAIL_DATAPORT == name )
+      {
+         property = _dataPortProperty ;
+      }
+      else if ( OM_ZOO_CONF_DETAIL_ELECTPORT == name )
+      {
+         property = _electPortProperty ;
+      }
+      else if ( OM_ZOO_CONF_DETAIL_CLIENTPORT == name )
+      {
+         property = _clientPortProperty ;
+      }
+      else
+      {
+         map<string, confProperty*>::iterator iter ;
+         iter = _additionalPropertyMap.find( name ) ;
+         if ( iter != _additionalPropertyMap.end() )
+         {
+            property = iter->second ;
+         }
+      }
+
+      return property ;
+   }
+
+   omZooNodeConf::omZooNodeConf()
+   {
+      _installPath   = "" ;
+      _dataPath      = "" ;
+      _zooID         = "" ;
+      _dataPort      = "" ;
+      _electPort     = "" ;
+      _clientPort    = "" ;
+      _installPath   = "" ;
+      _additionalConfMap.clear() ;
+   }
+
+   omZooNodeConf::omZooNodeConf( const omZooNodeConf &right )
+   {
+      _installPath   = right._installPath ;
+      _dataPath      = right._dataPath ;
+      _zooID         = right._zooID ;
+      _dataPort      = right._dataPort ;
+      _electPort     = right._electPort ;
+      _clientPort    = right._clientPort ;
+      _hostName      = right._hostName ;
+      _diskName      = right._diskName ;
+
+      _additionalConfMap = right._additionalConfMap ;
+   }
+
+   omZooNodeConf::~omZooNodeConf()
+   {
+      _additionalConfMap.clear() ;
+   }
+
+   void omZooNodeConf::setInstallPath( const string &installPath )
+   {
+      _installPath = installPath ;
+   }
+
+   void omZooNodeConf::setDataPath( const string &dataPath )
+   {
+      _dataPath = dataPath ;
+   }
+
+   void omZooNodeConf::setZooID( const string &zooID )
+   {
+      _zooID = zooID ;
+   }
+
+   void omZooNodeConf::setDataPort( const string &dataPort )
+   {
+      _dataPort = dataPort ;
+   }
+
+   void omZooNodeConf::setElectPort( const string &electPort )
+   {
+      _electPort = electPort ;
+   }
+
+   void omZooNodeConf::setClientPort( const string &clientPort )
+   {
+      _clientPort = clientPort ;
+   }
+
+   void omZooNodeConf::setHostName( const string &hostName )
+   {
+      _hostName = hostName ;
+   }
+
+   void omZooNodeConf::setDiskName( const string &diskName )
+   {
+      _diskName = diskName ;
+   }
+
+   void omZooNodeConf::setAdditionalConf( const string &key, 
+                                          const string &value )
+   {
+      _additionalConfMap[key] = value ;
+   }
+
+   string omZooNodeConf::getInstallPath()
+   {
+      return _installPath ;
+   }
+
+   string omZooNodeConf::getDataPath()
+   {
+      return _dataPath ;
+   }
+
+   string omZooNodeConf::getZooID()
+   {
+      return _zooID ;
+   }
+
+   string omZooNodeConf::getDataPort()
+   {
+      return _dataPort ;
+   }
+
+   string omZooNodeConf::getElectPort()
+   {
+      return _electPort ;
+   }
+
+   string omZooNodeConf::getClientPort()
+   {
+      return _clientPort ;
+   }
+
+   string omZooNodeConf::getHostName()
+   {
+      return _hostName ;
+   }
+
+   string omZooNodeConf::getDiskName()
+   {
+      return _diskName ;
+   }
+
+   string omZooNodeConf::getAdditionlConf( const string &key )
+   {
+      string value = "" ;
+      map<string, string>::iterator iter = _additionalConfMap.find( key ) ;
+      if ( iter != _additionalConfMap.end() )
+      {
+         value = iter->second ;
+      }
+
+      return value ;
+   }
+
+   const map<string, string>* omZooNodeConf::getAdditionalMap()
+   {
+      return &_additionalConfMap ;
+   }
+
+   zooNodeCounter::zooNodeCounter()
+                  :_availableZooID( 1 )
+   {
+   }
+
+   zooNodeCounter::~zooNodeCounter()
+   {
+      clear() ;
+   }
+
+   INT32 zooNodeCounter::addNode( const string &hostName,
+                                  const string &diskName,
+                                  const string &businessName, 
+                                  const string &zooID )
+   {
+      INT32 rc       = SDB_OK ;
+      INT32 tmpZooID = 0 ;
+      map<string, hostNodeCounter *>::iterator iter ;
+      iter = _mapHostNodeCounter.find( hostName ) ;
+      if ( iter == _mapHostNodeCounter.end() )
+      {
+         hostNodeCounter *hnc = SDB_OSS_NEW hostNodeCounter( hostName ) ;
+         if ( NULL == hnc )
+         {
+            rc = SDB_OOM ;
+            PD_LOG_MSG( PDERROR, "out of memory" ) ;      
+            goto error ;
+         }
+
+         _mapHostNodeCounter.insert( 
+               map<string, hostNodeCounter*>::value_type( hostName, hnc ) ) ;
+      }
+
+      _mapHostNodeCounter[hostName]->addNode( diskName, businessName, 
+                                              OM_BUSINESS_ZOOKEEPER ) ;
+      _counter.increaseNode( OM_BUSINESS_ZOOKEEPER ) ;
+
+      tmpZooID = ossAtoi( zooID.c_str() ) ;
+      if ( tmpZooID  >= _availableZooID )
+      {
+         _availableZooID = tmpZooID  + 1 ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 zooNodeCounter::getCountInHost( const string &hostName )
+   {
+      INT32 count = 0 ;
+      map<string, hostNodeCounter *>::iterator iter ;
+      iter = _mapHostNodeCounter.find( hostName ) ;
+      if ( iter != _mapHostNodeCounter.end() )
+      {
+         hostNodeCounter *p = iter->second ;
+         count = p->getNodeCount() ;
+      }
+
+      return count ;
+   }
+
+   INT32 zooNodeCounter::getCountInDisk( const string &hostName,
+                                         const string &diskName )
+   {
+      INT32 count = 0 ;
+      map<string, hostNodeCounter *>::iterator iter ;
+      iter = _mapHostNodeCounter.find( hostName ) ;
+      if ( iter != _mapHostNodeCounter.end() )
+      {
+         hostNodeCounter *p = iter->second ;
+         count = p->getNodeCountInDisk( diskName ) ;
+      }
+
+      return count ;
+   }
+
+   INT32 zooNodeCounter::increaseZooID()
+   {
+      return _availableZooID++ ;
+   }
+
+   void zooNodeCounter::clear()
+   {
+      map<string, hostNodeCounter*>::iterator iter ;
+      iter = _mapHostNodeCounter.begin() ;
+      while ( iter != _mapHostNodeCounter.end() )
+      {
+         SDB_OSS_DEL iter->second ;
+         _mapHostNodeCounter.erase( iter++ ) ;
+      }
+
+      _availableZooID = 1 ;
+   }
+
+   omZooCluster::omZooCluster()
+   {
+   }
+
+   omZooCluster::~omZooCluster()
+   {
+      clear() ;
+   }
+
+   void omZooCluster::setPropertyContainer( zooPropertyContainer *pc )
+   {
+      _propertyContainer = pc ;
+   }
+
+   INT32 omZooCluster::addHost( const BSONObj &host, const BSONObj &config )
+   {
+      INT32 rc = SDB_OK ;
+      string hostName = host.getStringField( OM_BSON_FIELD_HOST_NAME ) ;
+      map<string, hostHardWare*>::iterator iter = _mapHost.find( hostName ) ;
+      SDB_ASSERT( iter == _mapHost.end(), "" ) ;
+      string defaultSvcName = _propertyContainer->getDefaultValue(
+                                                 OM_ZOO_CONF_DETAIL_DATAPORT ) ;
+      hostHardWare *pHostHW = SDB_OSS_NEW hostHardWare( hostName, 
+                                                        defaultSvcName ) ;
+      if ( NULL == pHostHW )
+      {
+         rc = SDB_OOM ;
+         PD_LOG( PDERROR, "new hostHardWare failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      _mapHost.insert( map<string, hostHardWare*>::value_type( hostName, 
+                                                               pHostHW ) ) ;
+
+      {
+         BSONObj disks = host.getObjectField( OM_BSON_FIELD_DISK ) ;
+         BSONObjIterator i( disks ) ;
+         while ( i.more() )
+         {
+            string tmp ;
+            BSONElement ele = i.next() ;
+            if ( Object == ele.type() )
+            {
+               BSONObj oneDisk = ele.embeddedObject() ;
+               string diskName ;
+               string mountPath ;
+               diskName  = oneDisk.getStringField( OM_BSON_FIELD_DISK_NAME ) ;
+               mountPath = oneDisk.getStringField( OM_BSON_FIELD_DISK_MOUNT ) ;
+               pHostHW->addDisk( diskName, mountPath, 0, 0 ) ;
+            }
+         }
+      }
+
+      {
+         BSONObj nodes = config.getObjectField( OM_BSON_FIELD_CONFIG ) ;
+         BSONObjIterator i( nodes ) ;
+         while ( i.more() )
+         {
+            string tmp ;
+            BSONElement ele = i.next() ;
+            if ( Object == ele.type() )
+            {
+               list<string> portList ;
+               BSONObj oneNode = ele.embeddedObject() ;
+               string businessType = oneNode.getStringField(
+                                             OM_BSON_BUSINESS_TYPE ) ;
+               if ( businessType == OM_BUSINESS_SEQUOIADB )
+               {
+                  string businessName ;
+                  string dbPath ;
+                  string role ;
+                  string svcName ;
+                  string groupName ;
+                  string diskName ;
+                  businessName = oneNode.getStringField( 
+                                                     OM_BSON_BUSINESS_NAME ) ;
+                  dbPath       = oneNode.getStringField( 
+                                                     OM_CONF_DETAIL_DBPATH ) ;
+                  role         = oneNode.getStringField( OM_CONF_DETAIL_ROLE ) ;
+                  svcName      = oneNode.getStringField( 
+                                                     OM_CONF_DETAIL_SVCNAME ) ;
+                  groupName    = oneNode.getStringField( 
+                                                OM_CONF_DETAIL_DATAGROUPNAME ) ;
+                  diskName     = pHostHW->getDiskName( dbPath ) ;
+                  SDB_ASSERT( diskName != "" ,"" ) ;
+
+                  portList.push_back( svcName ) ;
+                  portList.push_back( strPlus( svcName, 1 ) ) ;
+                  portList.push_back( strPlus( svcName, 2 ) ) ;
+                  portList.push_back( strPlus( svcName, 3 ) ) ;
+                  portList.push_back( strPlus( svcName, 4 ) ) ;
+                  portList.push_back( strPlus( svcName, 5 ) ) ;
+                  pHostHW->occupayResource( dbPath, portList ) ;
+               }
+               else if ( businessType == OM_BUSINESS_ZOOKEEPER )
+               {
+                  string businessName = oneNode.getStringField( 
+                                             OM_BSON_BUSINESS_NAME ) ;
+                  string installPath  = oneNode.getStringField( 
+                                             OM_ZOO_CONF_DETAIL_INSTALLPATH ) ;
+                  string zooID        = oneNode.getStringField( 
+                                             OM_ZOO_CONF_DETAIL_ZOOID ) ;
+                  string dataPath     = oneNode.getStringField( 
+                                             OM_ZOO_CONF_DETAIL_DATAPATH ) ;
+                  string dataPort     = oneNode.getStringField( 
+                                             OM_ZOO_CONF_DETAIL_DATAPORT ) ;
+                  string electPort    = oneNode.getStringField( 
+                                             OM_ZOO_CONF_DETAIL_ELECTPORT) ;
+                  string clientPort   = oneNode.getStringField( 
+                                             OM_ZOO_CONF_DETAIL_CLIENTPORT ) ;
+                  string diskName     = pHostHW->getDiskName( dataPath ) ;
+                  SDB_ASSERT( diskName != "" ,"" ) ;
+
+                  //empty list
+                  pHostHW->occupayResource( installPath, portList, FALSE ) ;
+
+                  portList.push_back( dataPort ) ;
+                  portList.push_back( electPort ) ;
+                  portList.push_back( clientPort ) ;
+                  pHostHW->occupayResource( dataPath, portList ) ;
+                  rc = _nodeCounter.addNode( hostName, diskName, businessName, 
+                                             zooID ) ;
+                  if ( SDB_OK != rc )
+                  {
+                     PD_LOG( PDERROR, "add node failed:rc=%d", rc ) ;
+                     goto error ;
+                  }
+               }
+               else
+               {
+                  SDB_ASSERT( FALSE, businessType.c_str() ) ;
+               }
+            }
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omZooCluster::_getBestResourceFromHost( hostHardWare *host, 
+                                                 simpleDiskInfo **diskInfo, 
+                                                 string &svcName )
+   {
+      INT32 rc                 = SDB_OK ;
+      simpleDiskInfo *bestDisk = NULL ;
+      string hostName          = host->getName() ;
+
+      map<string, simpleDiskInfo> *mapDisk       = host->getDiskMap() ;
+      map<string, simpleDiskInfo>::iterator iter = mapDisk->begin() ;
+      while ( iter != mapDisk->end() )
+      {
+         if ( NULL == bestDisk )
+         {
+            //get the first disk
+            bestDisk = &( iter->second ) ;
+            iter++ ;
+            continue ;
+         }
+
+         simpleDiskInfo *pTmp = &( iter->second ) ;
+         INT32 bestCount = _nodeCounter.getCountInDisk( hostName, 
+                                                        bestDisk->diskName ) ;
+         INT32 tmpCount  = _nodeCounter.getCountInDisk( hostName,
+                                                        pTmp->diskName ) ;
+         //total count less, the better
+         if ( tmpCount < bestCount )
+         {
+            bestDisk = &( iter->second ) ;
+         }
+
+         iter++ ;
+      }
+
+      *diskInfo = bestDisk ;
+      if ( NULL == *diskInfo )
+      {
+         rc = SDB_DMS_RECORD_NOTEXIST ;
+         PD_LOG( PDERROR, "get disk failed:host=%s", hostName.c_str() ) ;
+         goto error ;
+      }
+
+      svcName = host->getAvailableSvcName() ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omZooCluster::createNode( const string &businessType,
+                                   const string &businessName,
+                                   omZooNodeConf &node )
+   {
+      INT32 rc = SDB_OK ;
+      list <string> portList ;
+      INT32 pathAdjustIndex    = 0 ;
+      simpleDiskInfo *diskInfo = NULL ;
+      string hostName ;
+      string diskName ;
+      string zooID ;
+      string dataPort ;
+      string electPort ;
+      string clientPort ;
+      string installPath ;
+      string dataPath ;
+      _propertyContainer->createSample( node ) ;
+      hostHardWare *host = _getBestHost() ;
+      if ( NULL == host )
+      {
+         rc = SDB_DMS_RECORD_NOTEXIST ;
+         PD_LOG_MSG( PDERROR, 
+                     "create node failed:host is zero or disk is zero" ) ;
+         goto error ;
+      }
+
+      rc = _getBestResourceFromHost( host, &diskInfo, dataPort ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "_getBestResourceFromHost failed:host=%s", 
+                 host->getName().c_str() ) ;
+         goto error ;
+      }
+
+      // install path
+      do 
+      {
+         CHAR tmpInstallPath[OM_PATH_LENGTH + 1] = "";
+         utilBuildFullPath( OM_DEFAULT_INSTALL_ROOT_PATH, businessType.c_str(), 
+                            OM_PATH_LENGTH, tmpInstallPath ) ;
+         utilCatPath( tmpInstallPath, OM_PATH_LENGTH, businessName.c_str() ) ;
+         utilCatPath( tmpInstallPath, OM_PATH_LENGTH, 
+                      OM_DBPATH_PREFIX_DATABASE ) ;
+         if ( 0 == pathAdjustIndex )
+         {
+            utilCatPath( tmpInstallPath, OM_PATH_LENGTH, dataPort.c_str() ) ;
+         }
+         else
+         {
+            CHAR tmpSvcName[OM_PATH_LENGTH + 1] = "";
+            ossSnprintf( tmpSvcName, OM_PATH_LENGTH, "%s_%d", dataPort.c_str(), 
+                         pathAdjustIndex ) ;
+            utilCatPath( tmpInstallPath, OM_PATH_LENGTH, tmpSvcName ) ;
+         }
+         pathAdjustIndex++ ;
+         installPath = tmpInstallPath ;
+      }while ( host->isPathOccupayed( installPath ) ) ;
+
+      // data path
+      pathAdjustIndex = 0 ;
+      do 
+      {
+         CHAR tmpDataPath[OM_PATH_LENGTH + 1] = "";
+         utilBuildFullPath( diskInfo->mountPath.c_str(), businessType.c_str(), 
+                            OM_PATH_LENGTH, tmpDataPath ) ;
+         utilCatPath( tmpDataPath, OM_PATH_LENGTH, businessName.c_str() ) ;
+         utilCatPath( tmpDataPath, OM_PATH_LENGTH, OM_DBPATH_PREFIX_DATABASE ) ;
+         if ( 0 == pathAdjustIndex )
+         {
+            utilCatPath( tmpDataPath, OM_PATH_LENGTH, dataPort.c_str() ) ;
+         }
+         else
+         {
+            CHAR tmpSvcName[OM_PATH_LENGTH + 1] = "";
+            ossSnprintf( tmpSvcName, OM_PATH_LENGTH, "%s_%d", dataPort.c_str(), 
+                         pathAdjustIndex ) ;
+            utilCatPath( tmpDataPath, OM_PATH_LENGTH, tmpSvcName ) ;
+         }
+         pathAdjustIndex++ ;
+         dataPath = tmpDataPath ;
+      }while ( host->isPathOccupayed( dataPath ) ) ;
+
+      hostName = host->getName() ;
+      diskName = diskInfo->diskName ;
+
+      //empty list
+      portList.clear() ;
+      host->occupayResource( installPath, portList, FALSE ) ;
+
+      portList.push_back( dataPort ) ;
+      electPort  = strPlus( dataPort, 1 ) ;
+      clientPort = strPlus( dataPort, 2 ) ;
+      portList.push_back( electPort ) ;
+      portList.push_back( clientPort ) ;
+      host->occupayResource( dataPath, portList ) ;
+      {
+         CHAR cZooID[ OM_INT32_LENGTH + 1 ] = "" ;
+         INT32 iZooID = increaseZooID() ;
+         ossItoa( iZooID, cZooID, OM_INT32_LENGTH ) ;
+         zooID = cZooID ;
+      }
+      rc = _nodeCounter.addNode( hostName, diskName, businessName, zooID ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "addNode failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      node.setDataPath( dataPath ) ;
+      node.setInstallPath( installPath ) ;
+      node.setClientPort( clientPort ) ;
+      node.setDataPort( dataPort ) ;
+      node.setDiskName( diskName ) ;
+      node.setHostName( hostName ) ;
+      node.setElectPort( electPort ) ;
+      node.setZooID( zooID ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omZooCluster::getHostNum()
+   {
+      return _mapHost.size() ;
+   }
+
+   INT32 omZooCluster::increaseZooID()
+   {
+      return _nodeCounter.increaseZooID() ;
+   }
+
+   void omZooCluster::clear()
+   {
+      map<string, hostHardWare*>::iterator iter = _mapHost.begin() ;
+      while ( iter != _mapHost.end() )
+      {
+         hostHardWare *pHost = iter->second ;
+         SDB_OSS_DEL pHost ;
+         _mapHost.erase( iter++ ) ;
+      }
+
+      _propertyContainer = NULL ;
+      _nodeCounter.clear() ;
+   }
+
+   INT32 omZooCluster::checkAndAddNode( const string &businessName,
+                                        omZooNodeConf *node )
+   {
+      INT32 rc           = SDB_OK ;
+      string zooID       = node->getZooID() ;
+      string installPath = node->getInstallPath() ;
+      string dataPath    = node->getDataPath() ;
+      string dataPort    = node->getDataPort() ;
+      string electPort   = node->getElectPort() ;
+      string clientPort  = node->getClientPort() ;
+      string hostName    = node->getHostName() ;
+
+      map<string, hostHardWare*>::iterator iter = _mapHost.find( hostName ) ;
+      if ( iter == _mapHost.end() )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "host is not exist:hostName=%s", 
+                     hostName.c_str() ) ;
+         goto error ;
+      }
+
+      {
+         string diskName ;
+         list <string> portList ;
+         hostHardWare *hw = iter->second ;
+         if ( !hw->isDiskExist( dataPath ) )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG_MSG( PDERROR, "dataPath's disk is not exist:hostName=%s,"
+                        "dataPath=%s", hostName.c_str(), dataPath.c_str() ) ;
+            goto error ;
+         }
+
+         if ( hw->isPathOccupayed( dataPath ) )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG_MSG( PDERROR, "dataPath is exist:dataPath=%s", 
+                        dataPath.c_str() ) ;
+            goto error ;
+         }
+
+         if ( hw->isPathOccupayed( installPath ) )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG_MSG( PDERROR, "installpath is exist:installPath=%s", 
+                        installPath.c_str() ) ;
+            goto error ;
+         }
+
+         if ( hw->isSvcNameOccupayed( dataPort ) )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG_MSG( PDERROR, "dataPort is exist:dataPort=%s", 
+                        dataPort.c_str() ) ;
+            goto error ;
+         }
+
+         if ( hw->isSvcNameOccupayed( electPort ) )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG_MSG( PDERROR, "electPort is exist:electPort=%s", 
+                        electPort.c_str() ) ;
+            goto error ;
+         }
+
+         if ( hw->isSvcNameOccupayed( clientPort ) )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG_MSG( PDERROR, "clientPort is exist:clientPort=%s", 
+                        clientPort.c_str() ) ;
+            goto error ;
+         }
+
+         //add empty list
+         portList.clear() ;
+         hw->occupayResource( installPath, portList, FALSE ) ;
+
+         portList.push_back( dataPort ) ;
+         portList.push_back( electPort ) ;
+         portList.push_back( clientPort ) ;
+         hw->occupayResource( dataPath, portList ) ;
+         diskName = hw->getDiskName( dataPath ) ;
+         _nodeCounter.addNode( hostName, diskName, businessName, zooID ) ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   /*
+      get best host rule:
+          rule1: the more the better which host contains unused disk's count
+          rule2: the less the better which host contains node's count
+   */
+   hostHardWare* omZooCluster::_getBestHost()
+   {
+      map<string, hostHardWare*>::iterator iter ;
+      hostHardWare *bestHost = NULL ;
+      if ( _mapHost.size() == 0 )
+      {
+         PD_LOG( PDERROR, "host count is zero" ) ;
+         goto error ;
+      }
+
+      iter = _mapHost.begin() ;
+      while ( iter != _mapHost.end() )
+      {
+         hostHardWare *pTmpHost = iter->second ;
+
+         //ignore the host without disk
+         if ( 0 == pTmpHost->getDiskCount() )
+         {
+            iter++ ;
+            continue ;
+         }
+
+         //this is the first one. continue
+         if ( NULL == bestHost )
+         {
+            bestHost = pTmpHost ;
+            iter++ ;
+            continue ;
+         }
+
+         INT32 tmpFreeDiskCount  = pTmpHost->getFreeDiskCount();
+         INT32 bestFreeDiskCount = bestHost->getFreeDiskCount() ;
+         if ( tmpFreeDiskCount != bestFreeDiskCount )
+         {
+            if ( tmpFreeDiskCount > bestFreeDiskCount )
+            {
+               // rule1
+               bestHost = pTmpHost ;
+            }
+
+            iter++ ;
+            continue ;
+         }
+
+         INT32 tmpNodeCount  = _nodeCounter.getCountInHost( 
+                                                         pTmpHost->getName() ) ;
+         INT32 bestNodeCount = _nodeCounter.getCountInHost( 
+                                                         bestHost->getName() ) ;
+         if ( tmpNodeCount != bestNodeCount )
+         {
+            if ( tmpNodeCount < bestNodeCount )
+            {
+               // rule2
+               bestHost = pTmpHost ;
+            }
+
+            iter++ ;
+            continue ;
+         }
+
+         iter++ ;
+      }
+
+   done:
+      return bestHost ;
+   error:
+      goto done ;
+   }
+
+   omZooBizConfigure::omZooBizConfigure()
+   {
+   }
+   
+   omZooBizConfigure::~omZooBizConfigure()
+   {
+      clear() ;
+   }
+
+   /*
+   business:
+   {
+      "BusinessType":"zookeeper", "BusinessName":"z1", "DeployMod":"xx", 
+      "ClusterName":"c1", 
+      "Config":
+      [
+         {"HostName": "host1", "zooid": "1", 
+          "datapath": "/home/zookeeper/z1/2888", "dataport": "2888", ...}
+         ,...
+      ]
+   }
+   */
+   INT32 omZooBizConfigure::init( zooPropertyContainer *pc, 
+                                  const BSONObj &business )
+   {
+      _propertyContainer = pc ;
+      _businessType = business.getStringField( OM_BSON_BUSINESS_TYPE ) ;
+      _businessName = business.getStringField( OM_BSON_BUSINESS_NAME ) ;
+      _deployMod    = business.getStringField( OM_BSON_DEPLOY_MOD ) ;
+      _clusterName  = business.getStringField( OM_BSON_FIELD_CLUSTER_NAME ) ;
+
+      INT32 rc = SDB_OK ;
+      BSONElement configEle ;
+      configEle = business.getField( OM_BSON_FIELD_CONFIG ) ;
+      if ( configEle.eoo() || Array != configEle.type() )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "business's field is not Array:field=%s,"
+                     "type=%d", OM_BSON_FIELD_CONFIG, configEle.type() ) ;
+         goto error ;
+      }
+      {
+         BSONObjIterator i( configEle.embeddedObject() ) ;
+         while ( i.more() )
+         {
+            BSONElement ele = i.next() ;
+            if ( Object == ele.type() )
+            {
+               BSONObj oneNode = ele.embeddedObject() ;
+               omZooNodeConf nodeConf ;
+               rc = _setNodeConf( oneNode, nodeConf ) ;
+               if ( SDB_OK != rc )
+               {
+                  PD_LOG( PDERROR, "set node conf failed:rc=%d", rc ) ;
+                  goto error ;
+               }
+               _nodeList.push_back( nodeConf ) ;
+            }
+         }
+      }
+
+      rc = _innerCheck() ;
+      if (SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "check business failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+   
+   void omZooBizConfigure::clear()
+   {
+      _nodeList.clear() ;
+      _businessType = "" ;
+      _businessName = "" ;
+      _deployMod    = "" ;
+      _clusterName  = "" ;
+      _propertyContainer = NULL ;
+   }
+
+   void omZooBizConfigure::getNodeList( list<omZooNodeConf> &nodeList )
+   {
+      nodeList = _nodeList ;
+   }
+
+   string omZooBizConfigure::getBusinessName()
+   {
+      return _businessName ;
+   }
+   
+   INT32 omZooBizConfigure::_innerCheck()
+   {
+      INT32 rc = SDB_OK ;
+      if ( _nodeList.size() == 0 )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "node is zero!" ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+   
+   INT32 omZooBizConfigure::_setNodeConf( BSONObj &oneNode, 
+                                          omZooNodeConf &nodeConf )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObjIterator itemIter( oneNode ) ;
+      while ( itemIter.more() )
+      {
+         BSONElement itemEle = itemIter.next() ;
+         string fieldName    = itemEle.fieldName() ;
+         string value        = itemEle.String() ;
+         if ( OM_BSON_FIELD_HOST_NAME == fieldName )
+         {
+            nodeConf.setHostName( value ) ;
+         }
+         else 
+         {
+            rc = _propertyContainer->checkValue( fieldName, value ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "check value failed:name=%s,value=%s", 
+                       fieldName.c_str(), value.c_str() ) ;
+               goto error ;
+            }
+
+            if ( OM_ZOO_CONF_DETAIL_CLIENTPORT == fieldName )
+            {
+               nodeConf.setClientPort( value ) ;
+            }
+            else if ( OM_ZOO_CONF_DETAIL_DATAPATH == fieldName )
+            {
+               nodeConf.setDataPath( value ) ;
+            }
+            else if ( OM_ZOO_CONF_DETAIL_DATAPORT == fieldName )
+            {
+               nodeConf.setDataPort( value ) ;
+            }
+            else if ( OM_ZOO_CONF_DETAIL_ELECTPORT == fieldName )
+            {
+               nodeConf.setElectPort( value ) ;
+            }
+            else if ( OM_ZOO_CONF_DETAIL_INSTALLPATH == fieldName )
+            {
+               nodeConf.setInstallPath( value ) ;
+            }
+            else if ( OM_ZOO_CONF_DETAIL_ZOOID == fieldName )
+            {
+               nodeConf.setZooID( value ) ;
+            }
+            else 
+            {
+               nodeConf.setAdditionalConf( fieldName, value ) ;
+            }
+         }
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   omZooConfigGenerator::omZooConfigGenerator()
+   {
+   }
+   
+   omZooConfigGenerator::~omZooConfigGenerator()
+   {
+   }
+
+   /*
+   bsonTemplate:
+   {
+      "ClusterName":"c1","BusinessType":"zookeeper", "BusinessName":"z1",
+      "DeployMod": "distribution", 
+      "Property":[{"Name":"zoonum", "Type":"int", "Default":"1", 
+                      "Valid":"1", "Display":"edit box", "Edit":"false", 
+                      "Desc":"", "WebName":"" }
+                 ] 
+   }
+   confProperties:
+   {
+      "Property":[{"Name":"installpath", "Type":"path", "Default":"/opt/zookeeper", 
+                      "Valid":"1", "Display":"edit box", "Edit":"false", 
+                      "Desc":"", "WebName":"" }
+                      , ...
+                 ] 
+   }
+   bsonHostInfo:
+   { 
+     "HostInfo":[
+                   {
+                      "HostName":"host1", "ClusterName":"c1", 
+                      "Disk":{"Name":"/dev/sdb", Size:"", Mount:"", Used:""},
+                      "Config":[{"BusinessName":"b2","dbpath":"", svcname:"", 
+                                 "role":"", ... }, ...]
+                   }
+                    , ... 
+                ]
+   }
+   */
+   INT32 omZooConfigGenerator::generateConfig( const BSONObj &bsonTemplate, 
+                                               const BSONObj &confProperties, 
+                                               const BSONObj &bsonHostInfo, 
+                                               BSONObj &bsonConfig )
+   {
+      _cluster.clear() ;
+      _propertyContainer.clear() ;
+      _template.clear() ;
+
+      INT32 rc = _template.init( bsonTemplate ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "init template failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      rc = _parseProperties( confProperties ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "parse confProperties failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      rc = _parseCluster( bsonHostInfo ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "parse hostInfo failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      _propertyContainer.createSample( _nodeSample ) ;
+      rc = _generate( bsonConfig ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "parse hostInfo failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+      goto done ;
+   }
+
+   string omZooConfigGenerator::getErrorDetail()
+   {
+      return _errorDetail ;
+   }
+
+   /*
+   confProperties:
+   {
+      "Property":[{"Name":"installpath", "Type":"path", "Default":"/opt/sequoiadb", 
+                      "Valid":"1", "Display":"edit box", "Edit":"false", 
+                      "Desc":"", "WebName":"" }
+                      , ...
+                 ] 
+   }
+   */
+   INT32 omZooConfigGenerator::_parseProperties( const BSONObj &confProperties )
+   {
+      INT32 rc = SDB_OK ;
+      BSONElement propertyEle ;
+      propertyEle = confProperties.getField( OM_BSON_PROPERTY_ARRAY ) ;
+      if ( propertyEle.eoo() || Array != propertyEle.type() )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "confProperties's field is not Array:field=%s,"
+                     "type=%d", OM_BSON_PROPERTY_ARRAY, propertyEle.type() ) ;
+         goto error ;
+      }
+      {
+         BSONObjIterator i( propertyEle.embeddedObject() ) ;
+         while ( i.more() )
+         {
+            BSONElement ele = i.next() ;
+            if ( Object == ele.type() )
+            {
+               BSONObj oneProperty = ele.embeddedObject() ;
+               rc = _propertyContainer.addProperty( oneProperty ) ;
+               if ( SDB_OK != rc )
+               {
+                  PD_LOG( PDERROR, "addProperty failed:rc=%d", rc ) ;
+                  goto error ;
+               }
+            }
+         }
+
+         if ( !_propertyContainer.isAllPropertySet() )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG( PDERROR, "miss property configure" ) ;
+            goto error ;
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   /*
+   bsonHostInfo:
+   { 
+     "HostInfo":[
+                   {
+                      "HostName":"host1", "ClusterName":"c1", 
+                      "Disk":{"Name":"/dev/sdb", Size:"", Mount:"", Used:""},
+                      "Config":[{"BusinessName":"b2","BusinessType":"sequoiadb",
+                                 "dbpath":"", svcname:"", "role":"", ... }, ...
+                               ]
+                   }
+                    , ... 
+                ]
+   }
+   */
+   INT32 omZooConfigGenerator::_parseCluster( const BSONObj &bsonHostInfo )
+   {
+      INT32 rc = SDB_OK ;
+      _cluster.setPropertyContainer( &_propertyContainer ) ;
+
+      BSONObj confFilter = BSON( OM_BSON_FIELD_CONFIG << "" ) ;
+      BSONElement clusterEle = bsonHostInfo.getField( 
+                                                     OM_BSON_FIELD_HOST_INFO ) ;
+      if ( clusterEle.eoo() || Array != clusterEle.type() )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "hostInfo is not Array:field=%s,type=%d", 
+                     OM_BSON_FIELD_HOST_INFO, clusterEle.type() ) ;
+         goto error ;
+      }
+      {
+         BSONObjIterator iter( clusterEle.embeddedObject() ) ;
+         while ( iter.more() )
+         {
+            BSONObj oneHostConf ;
+            BSONElement ele = iter.next() ;
+            if ( Object == ele.type() )
+            {
+               BSONObj oneHostConf = ele.embeddedObject() ;
+               BSONObj config  = oneHostConf.filterFieldsUndotted( confFilter, 
+                                                                   true ) ;
+               BSONObj oneHost = oneHostConf.filterFieldsUndotted( confFilter, 
+                                                                   false ) ;
+               rc = _cluster.addHost( oneHost, config ) ;
+               if ( SDB_OK != rc )
+               {
+                  PD_LOG( PDERROR, "add host failed:rc=%d", rc ) ;
+                  goto error ;
+               }
+            }
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omZooConfigGenerator::_generate( BSONObj &bsonConfig )
+   {
+      INT32 rc = SDB_OK ;
+      INT32 num = 0 ;
+      list<omZooNodeConf> nodeList ;
+      string businessName = _template.getBusinessName() ;
+      string businessType = _template.getBusinessType() ;
+      while ( num < _template.getZooNum() )
+      {
+         omZooNodeConf node ;
+         rc = _cluster.createNode( businessType, businessName, node );
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "createNode failed:businessName=%s,businessType=%s,"
+                    "role=%s,rc=%d", businessType.c_str(), businessName.c_str(),
+                    OM_NODE_ROLE_DATA, rc ) ;
+            goto error ;
+         }
+
+         nodeList.push_back( node ) ;
+
+         num++ ;
+      }
+
+      {
+         BSONArrayBuilder arrBuilder ;
+         list<omZooNodeConf>::iterator iter = nodeList.begin() ;
+         while( iter != nodeList.end() )
+         {
+            BSONObjBuilder builder ;
+            builder.append( OM_BSON_FIELD_HOST_NAME, iter->getHostName() ) ;
+            builder.append( OM_ZOO_CONF_DETAIL_ZOOID, iter->getZooID() ) ;
+            builder.append( OM_ZOO_CONF_DETAIL_INSTALLPATH, 
+                            iter->getInstallPath() ) ;
+            builder.append( OM_ZOO_CONF_DETAIL_DATAPATH, iter->getDataPath() ) ;
+            builder.append( OM_ZOO_CONF_DETAIL_DATAPORT, iter->getDataPort() ) ;
+            builder.append( OM_ZOO_CONF_DETAIL_ELECTPORT, 
+                            iter->getElectPort() ) ;
+            builder.append( OM_ZOO_CONF_DETAIL_CLIENTPORT, 
+                            iter->getClientPort() ) ;
+
+            const map<string, string>* pAdditionalMap = iter->getAdditionalMap() ;
+            map<string, string>::const_iterator additionalIter ;
+            additionalIter = pAdditionalMap->begin() ;
+            while( additionalIter != pAdditionalMap->end() )
+            {
+               builder.append( additionalIter->first, additionalIter->second ) ;
+               additionalIter++ ;
+            }
+
+            arrBuilder.append( builder.obj() ) ;
+            iter++ ;
+         }
+
+         BSONObjBuilder confBuilder ;
+         confBuilder.append( OM_BSON_FIELD_CONFIG, arrBuilder.arr() ) ;
+         confBuilder.append( OM_BSON_BUSINESS_NAME, 
+                             _template.getBusinessName() ) ;
+         confBuilder.append( OM_BSON_BUSINESS_TYPE, 
+                             _template.getBusinessType() ) ;
+         confBuilder.append( OM_BSON_DEPLOY_MOD, _template.getDeployMod() ) ;
+         bsonConfig = confBuilder.obj() ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   /*
+   newBusinessConf:
+   {
+      "BusinessType":"zookeeper", "BusinessName":"z1", "DeployMod":"xx", 
+      "ClusterName":"c1", 
+      "Config":
+      [
+         {"HostName": "host1", "zooid": "1", 
+          "installpath": "/opt/zookeeper/z1/", "clientport": "2888", ...}
+         ,...
+      ]
+   }
+   confProperties:
+   {
+      "Property":[{"Name":"installpath", "Type":"path", "Default":"/opt/zookeeper", 
+                      "Valid":"1", "Display":"edit box", "Edit":"false", 
+                      "Desc":"", "WebName":"" }
+                      , ...
+                 ] 
+   }
+   bsonHostInfo:
+   { 
+     "HostInfo":[
+                   {
+                      "HostName":"host1", "ClusterName":"c1", 
+                      "Disk":{"Name":"/dev/sdb", Size:"", Mount:"", Used:""},
+                      "Config":[{"BusinessName":"z1","installpath":"", 
+                                 "clientport":"", "role":"", ... }, ...]
+                   }
+                    , ... 
+                ]
+   }
+   */
+   INT32 omZooConfigGenerator::checkConfig( BSONObj &newBusinessConf,
+                                            const BSONObj &confProperties, 
+                                            const BSONObj &bsonHostInfo )
+   {
+      _cluster.clear() ;
+      _propertyContainer.clear() ;
+      _template.clear() ;
+
+      INT32 rc = SDB_OK ;
+      rc = _parseProperties( confProperties ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "parse confProperties failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      rc = _parseCluster( bsonHostInfo ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "_parseCluster failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      // parse business
+      rc = _parseNewBusiness( newBusinessConf ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "_parseNewBusiness failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+      goto done ;
+   }
+
+   /*
+   newBusinessConf:
+   {
+      "BusinessType":"zookeeper", "BusinessName":"z1", "DeployMod":"xx", 
+      "ClusterName":"c1", 
+      "Config":
+      [
+         {"HostName": "host1", "datagroupname": "", 
+          "installpath": "/opt/zookeeper/z1", "clientport": "2888", ...}
+         ,...
+      ]
+   }
+   */
+   INT32 omZooConfigGenerator::_parseNewBusiness( const BSONObj &newBusinessConf )
+   {
+      INT32 rc = SDB_OK ;
+      rc = _businessConf.init( &_propertyContainer, newBusinessConf ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "init business configure failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      {
+         list<omZooNodeConf> nodeList ;
+         _businessConf.getNodeList( nodeList ) ;
+         list<omZooNodeConf>::iterator iter = nodeList.begin() ;
+         while ( iter != nodeList.end() )
+         {
+            omZooNodeConf *pNodeConf = &( *iter ) ;
+            rc = _cluster.checkAndAddNode( _businessConf.getBusinessName(), 
+                                           pNodeConf ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "check node failed:rc=%d", rc ) ;
+               goto error ;
+            }
+            iter++ ;
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   //*********************Zookeeper end**************************************
+}
 
 

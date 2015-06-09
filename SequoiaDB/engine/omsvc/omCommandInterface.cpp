@@ -712,6 +712,55 @@ namespace engine
       return isExist;
    }
 
+   INT32 omRestCommandBase::_getBusinessType( const string &businessName,
+                                              string &businessType ) 
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj selector ;
+      BSONObj matcher ;
+      BSONObj order ;
+      BSONObj hint ;
+      SINT64 contextID = -1 ;
+
+      selector = BSON( OM_BUSINESS_FIELD_TYPE << 1 ) ;
+      matcher = BSON( OM_BUSINESS_FIELD_NAME << businessName ) ;
+      rc = rtnQuery( OM_CS_DEPLOY_CL_BUSINESS, selector, matcher, order, hint, 
+                     0, _cb, 0, -1, _pDMSCB, _pRTNCB, contextID );
+      if ( rc )
+      {
+         PD_LOG_MSG( PDERROR, "fail to query table:%s,rc=%d",
+                     OM_CS_DEPLOY_CL_BUSINESS, rc ) ;
+         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         goto error ;
+      }
+
+      while ( TRUE )
+      {
+         rtnContextBuf buffObj ;
+         rc = rtnGetMore ( contextID, 1, buffObj, _cb, _pRTNCB ) ;
+         if ( rc )
+         {
+            contextID = -1 ;
+            PD_LOG_MSG( PDERROR, "failed to get record from table:%s,rc=%d", 
+                        OM_CS_DEPLOY_CL_BUSINESS, rc ) ;
+            _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+            goto error ;
+         }
+
+         BSONObj record( buffObj.data() ) ;
+         businessType = record.getStringField( OM_BUSINESS_FIELD_TYPE ) ;
+         break ;
+      }
+   done:
+      if ( -1 != contextID )
+      {
+         _pRTNCB->contextDelete ( contextID, _cb ) ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
+
    omAgentReqBase::omAgentReqBase( BSONObj &request )
                   :_request( request.copy() ), _response( BSONObj() )
    {

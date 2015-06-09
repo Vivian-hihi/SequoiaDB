@@ -123,6 +123,9 @@ namespace engine
 
          BOOLEAN           _isBusinessExistInTask( 
                                              const string &businessName ) ;
+
+         INT32             _getBusinessType( const string &businessName ,
+                                             string &businessType ) ;
          
       protected:
          SDB_RTNCB         *_pRTNCB ;
