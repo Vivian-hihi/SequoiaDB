@@ -50,7 +50,7 @@ namespace engine
    #define SPT_PUBLICKEY_FILE    "~/.ssh/id_rsa.pub"
    #define SPT_PRIVATEKEY_FILE   "~/.ssh/id_rsa"
 
-   #define MAX_OUT_STRING_LEN    ( 64 * 1024 )
+   #define MAX_OUT_STRING_LEN    ( 1024 * 1024 )
    #define READ_OUT_STR_LINE_LEN ( 1024 )
    
    static ossSpinSLatch *locks = NULL ;
@@ -313,6 +313,7 @@ namespace engine
       SDB_ASSERT( NULL != _channel, "can not be null" ) ;
 
       CHAR szReadBuf[ READ_OUT_STR_LINE_LEN + 1 ] = { 0 } ;
+      BOOLEAN addSoOn = FALSE ;
 
       UINT32 readSize = outStr.size() ;
 
@@ -323,7 +324,7 @@ namespace engine
          goto done ;
       }
 
-      while ( readSize < MAX_OUT_STRING_LEN )
+      while ( TRUE )
       {
          rc = libssh2_channel_read_ex( _channel, streamId,
                                        szReadBuf, READ_OUT_STR_LINE_LEN ) ;
@@ -331,6 +332,15 @@ namespace engine
          {
             PD_LOG( PDDEBUG, "read 0 bytes from channel" ) ;
             goto done ;
+         }
+         else if ( readSize >= MAX_OUT_STRING_LEN )
+         {
+            if ( !addSoOn )
+            {
+               outStr += "..." ;
+               addSoOn = TRUE ;
+            }
+            continue ;
          }
          else if ( 0 < rc )
          {
