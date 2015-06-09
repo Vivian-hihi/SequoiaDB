@@ -2077,7 +2077,8 @@ namespace engine
          }
       }
 
-      if ( !forced )
+      if ( !forced && ( 0 != ossStrcmp( groupName, SPARE_GROUPNAME ) &&
+                        0 != ossStrcmp( groupName, COORD_GROUPNAME ) ) )
       {
          BSONElement primary = groupInfo.getField( FIELD_NAME_PRIMARY ) ;
          if ( !primary.isNumber() )
