@@ -588,15 +588,6 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_CATMAINCT_ACTIVE ) ;
 
-      rc = _pAuthCB->checkNeedAuth( _pEDUCB, TRUE ) ;
-      if ( rc )
-      {
-         PD_LOG( PDSEVERE, "Failed to check need auth, rc: %d, restart db",
-                 rc ) ;
-         PMD_RESTART_DB( rc ) ;
-         goto error ;
-      }
-
       rc = _pCatCB->getCatNodeMgr()->active() ;
       PD_RC_CHECK( rc, PDERROR, "Active catalog node manager failed, rc: %d",
                    rc ) ;
@@ -1205,6 +1196,7 @@ namespace engine
       BSONObj obj ;
       MsgAuthReply reply ;
       BOOLEAN bIsDelay = FALSE ;
+      BOOLEAN needAuth = TRUE ;
 
       /// fill reply header
       reply.header.messageLength = sizeof( MsgAuthReply ) ;
@@ -1217,7 +1209,7 @@ namespace engine
       reply.numReturned = 0 ;
       reply.startFrom = 0 ;
 
-      if ( !_pAuthCB->needAuthenticate() )
+      if ( !_pAuthCB->authEnabled() )
       {
          goto done ;
       }

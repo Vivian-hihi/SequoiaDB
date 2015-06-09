@@ -260,6 +260,7 @@ namespace engine
       INT32 rc            = SDB_OK ;
       BSONObjBuilder bsonBuilder ;
       SDB_AUTHCB *pAuthCB = NULL ;
+      BOOLEAN need = TRUE ;
 
       cb = pmdGetThreadEDUCB() ;
 
@@ -342,8 +343,14 @@ namespace engine
       }
 
       pAuthCB = pmdGetKRCB()->getAuthCB() ;
-      pAuthCB->checkNeedAuth( cb, TRUE ) ;
-      if ( !pAuthCB->needAuthenticate() )
+      rc = pAuthCB->needAuthenticate( cb, need ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to check if need to authenticate:%d", rc ) ;
+         goto error ;
+      }
+
+      if ( !need )
       {
          md5::md5digest digest ;
          BSONObj obj ;
@@ -360,8 +367,19 @@ namespace engine
          PD_RC_CHECK ( rc, PDERROR, "Failed to create default user:rc = %d",
                        rc ) ;
       }
-      pAuthCB->checkNeedAuth( cb, TRUE ) ;
 
+      rc = pAuthCB->needAuthenticate( cb, need ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to check if need to authenticate:%d", rc ) ;
+         goto error ;
+      }
+      if ( !need )
+      {
+         PD_LOG( PDERROR, "can not start auth after adding user" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
    done:
       return rc ;
    error:
@@ -480,9 +498,9 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       SDB_AUTHCB *pAuthCB = pmdGetKRCB()->getAuthCB() ;
-
-      if ( !pAuthCB || !pAuthCB->needAuthenticate() )
+      if ( NULL == pAuthCB )
       {
+         SDB_ASSERT( FALSE, "auth cb can not be null" ) ;
          goto done ;
       }
 

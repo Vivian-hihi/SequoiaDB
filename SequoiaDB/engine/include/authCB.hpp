@@ -73,11 +73,11 @@ namespace engine
 
       INT32 authenticate( BSONObj &obj, _pmdEDUCB *cb ) ;
 
-      INT32 checkNeedAuth( _pmdEDUCB *cb, BOOLEAN forcecheck = FALSE ) ;
+      INT32 needAuthenticate( _pmdEDUCB *cb, BOOLEAN &need ) ;
 
-      BOOLEAN needAuthenticate()
+      BOOLEAN authEnabled() const
       {
-         return _authEnabled && _needAuth ;
+         return _authEnabled ;
       }
 
    private:
@@ -85,7 +85,6 @@ namespace engine
       INT32 _createUsr( BSONObj &obj, _pmdEDUCB *cb, INT32 w = 1 ) ;
       INT32 _valid( BSONObj &obj, BOOLEAN notEmpty ) ;
    private:
-      BOOLEAN _needAuth ;
       BOOLEAN _authEnabled ;
    } ;
 

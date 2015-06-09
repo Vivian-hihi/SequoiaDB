@@ -42,10 +42,8 @@ using namespace bson ;
 namespace engine
 {
    _authCB::_authCB()
-   :_needAuth( FALSE ),
-    _authEnabled( FALSE )
+   :_authEnabled( TRUE )
    {
-      _authEnabled = pmdGetOptionCB()->authEnabled() ;
    }
 
    _authCB::~_authCB()
@@ -54,23 +52,14 @@ namespace engine
 
    INT32 _authCB::init ()
    {
+      _authEnabled = pmdGetOptionCB()->authEnabled() ;
       pmdEDUCB *cb = pmdGetThreadEDUCB() ;
       return _initAuthentication( cb ) ;
    }
 
    INT32 _authCB::active ()
    {
-      pmdEDUCB *cb = pmdGetThreadEDUCB() ;
-      INT32 rc = checkNeedAuth( cb, TRUE ) ;
-      if ( rc )
-      {
-         goto error ;
-      }
-
-   done:
-      return rc ;
-   error:
-      goto done ;
+      return SDB_OK ;
    }
 
    INT32 _authCB::deactive ()
@@ -94,8 +83,21 @@ namespace engine
       SDB_RTNCB *rtnCB = pmdGetKRCB()->getRTNCB() ;
       SINT64 contextID = -1 ;
       rtnContextBuf buffObj ;
+      BOOLEAN need = TRUE ;
 
       PD_TRACE_ENTRY ( SDB_AUTHCB_AUTHENTICATE ) ;
+
+      rc = needAuthenticate( cb, need ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to check if need to authenticate:%d", rc ) ;
+         goto error ;
+      }
+      else if ( !need )
+      {
+         goto done ;
+      }
+
       try
       {
          hint = BSON( "" << AUTH_USR_INDEX_NAME ) ;
@@ -245,10 +247,6 @@ namespace engine
                     "rc: %d", rc ) ;
             goto error ;
          }
-         else
-         {
-            checkNeedAuth( cb, TRUE ) ;
-         }
       }
 
    done:
@@ -295,26 +293,22 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_AUTHCB_CHECKNEEDAUTH, "_authCB::checkNeedAuth" )
-   INT32 _authCB::checkNeedAuth( _pmdEDUCB *cb, BOOLEAN forcecheck )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_AUTHCB_NEEDAUTH, "_authCB::needAuthenticate" )
+   INT32 _authCB::needAuthenticate( _pmdEDUCB *cb, BOOLEAN &need )
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB_AUTHCB_CHECKNEEDAUTH ) ;
-      PD_TRACE2 ( SDB_AUTHCB_CHECKNEEDAUTH,
-                  PD_PACK_INT ( forcecheck ),
-                  PD_PACK_INT ( _needAuth ) ) ;
+      PD_TRACE_ENTRY ( SDB_AUTHCB_NEEDAUTH ) ;
       SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
       const CHAR *collection = NULL ;
       dmsStorageUnit *su = NULL ;
       dmsStorageUnitID suID = DMS_INVALID_SUID ;
       SINT64 totalCount = 0 ;
-      if ( !forcecheck )
+
+      if ( !_authEnabled )
       {
-         if ( _needAuth )
-         {
-            goto done ;
-         }
+         need = FALSE ;
       }
+
       rc = rtnResolveCollectionNameAndLock( AUTH_USR_COLLECTION,
                                             dmsCB, &su,
                                             &collection, suID ) ;
@@ -331,15 +325,15 @@ namespace engine
          SDB_ASSERT( FALSE, "impossible" ) ;
          goto error ;
       }
-      PD_TRACE1 ( SDB_AUTHCB_CHECKNEEDAUTH, PD_PACK_INT ( totalCount ) ) ;
-      _needAuth = ( 0 == totalCount ) ? FALSE : TRUE ;
+      PD_TRACE1 ( SDB_AUTHCB_NEEDAUTH, PD_PACK_INT ( totalCount ) ) ;
+      need = ( 0 != totalCount ) ;
 
    done:
       if ( DMS_INVALID_SUID != suID )
       {
          dmsCB->suUnlock( suID ) ;
       }
-      PD_TRACE_EXITRC ( SDB_AUTHCB_CHECKNEEDAUTH, rc ) ;
+      PD_TRACE_EXITRC ( SDB_AUTHCB_NEEDAUTH, rc ) ;
       return rc ;
    error:
       goto done ;
@@ -376,7 +370,7 @@ namespace engine
       }
       else
       {
-         _needAuth = TRUE ;
+         /// do nothing
       }
 
    done:
