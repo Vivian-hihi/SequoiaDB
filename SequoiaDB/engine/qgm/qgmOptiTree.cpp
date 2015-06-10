@@ -125,7 +125,7 @@ namespace engine
          goto done ;
       }
       else if ( src.begin() == dst.begin() &&
-                src.size() <= dst.size() + 2 )
+                src.size() + 2 <= dst.size() )
       {
          rc = '.' == *(dst.begin() + src.size());
       }
