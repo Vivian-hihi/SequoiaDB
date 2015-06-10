@@ -5,10 +5,10 @@
   <body>   
     <ul id="sequoiadb_postgresqls">
       <li>PostgreSQL 9.3.4</li>
-      <li>PostgreSQL 9.3.5</li>
+      <!--<li>PostgreSQL 9.3.5</li>
       <li>PostgreSQL 9.3.6</li>
       <li>PostgreSQL 9.4.0</li>
-      <li>PostgreSQL 9.4.1</li>
+      <li>PostgreSQL 9.4.1</li>-->
     </ul>
   </body>
 </topic>
