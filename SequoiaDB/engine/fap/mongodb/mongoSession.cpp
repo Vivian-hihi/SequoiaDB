@@ -221,6 +221,7 @@ INT32 _mongoSession::run()
             {
                // process msg
                rc = _processMsg( pInMsg ) ;
+
                rc = _converter->reConvert( _inBuffer, &_replyHeader ) ;
                if ( SDB_OK != rc )
                {
@@ -282,6 +283,7 @@ INT32 _mongoSession::_processMsg( const CHAR *pMsg )
    INT32 bodyLen = 0 ;
    BOOLEAN needReply = FALSE ;
    bson::BSONObjBuilder bob ;
+   mongoDataPacket &packet = _converter->getParser().dataPacket() ;
 
    rc = _onMsgBegin( (MsgHeader *) pMsg ) ;
    if ( SDB_OK != rc )
@@ -319,7 +321,7 @@ INT32 _mongoSession::_processMsg( const CHAR *pMsg )
 
    // when msg is with $cmd, need to reply
    // so value of bodyLen cannot be 0
-   if ( _converter->getParser().withCmd )
+   if ( packet.with( OPTION_CMD ) )
    {
       if ( 0 == bodyLen )
       {
@@ -399,6 +401,7 @@ INT32 _mongoSession::_reply( MsgOpReply *replyHeader,
    bson::BSONObjBuilder bob ;
    bson::BSONObj bsonBody ;
    bson::BSONObj objToSend ;
+   mongoDataPacket &packet = _converter->getParser().dataPacket() ;
 
    if ( OP_KILLCURSORS == _converter->getOpType() )
    {
@@ -406,15 +409,15 @@ INT32 _mongoSession::_reply( MsgOpReply *replyHeader,
       goto done;
    }
    // id
-   reply.header.id = 0 ;
+   reply.header.requestId = 0 ;
    // responseTo, cast UINT64 to INT32
    reply.header.responseTo = replyHeader->header.requestID ;
    // opCode
    reply.header.opCode = dbReply ;
    // _flags
-   reply.header._flags = 0 ;
+   reply.header.flags = 0 ;
    // _version
-   reply.header._version = 0 ;
+   reply.header.version = 0 ;
    // reservedFlag
    reply.header.reservedFlags = 0 ;
    // startingFrom
@@ -450,7 +453,7 @@ INT32 _mongoSession::_reply( MsgOpReply *replyHeader,
    }
 
    // nReturn
-   if ( _converter->getParser().withCmd &&
+   if ( packet.with( OPTION_CMD ) &&
         OP_GETMORE != _converter->getOpType() )
    {
       reply.nReturned = ( replyHeader->numReturned > 0 ?
@@ -518,7 +521,7 @@ INT32 _mongoSession::_reply( MsgOpReply *replyHeader,
    {
       pBody = _outBuffer.data() ;
    }
-   reply.header.len = sizeof( mongoMsgReply ) + _outBuffer.size() ;
+   reply.header.msgLen = sizeof( mongoMsgReply ) + _outBuffer.size() ;
 
    rc = sendData( (CHAR *)&reply, sizeof( mongoMsgReply ) ) ;
    if ( rc )
@@ -530,7 +533,7 @@ INT32 _mongoSession::_reply( MsgOpReply *replyHeader,
 
    if ( pBody )
    {
-      rc = sendData( pBody, reply.header.len - sizeof( mongoMsgReply ) ) ;
+      rc = sendData( pBody, reply.header.msgLen - sizeof( mongoMsgReply ) ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Session[%s] failed to send response body, rc: %d",
@@ -545,36 +548,38 @@ error:
    goto done ;
 }
 
-BOOLEAN _mongoSession::_preProcessMsg( const mongoParser &parser,
+BOOLEAN _mongoSession::_preProcessMsg( msgParser &parser,
                                        engine::IResource *resource,
                                        engine::rtnContextBuf &buff )
 {
    BOOLEAN handled = FALSE ;
+   mongoDataPacket &packet = parser.dataPacket() ;
 
-   if ( OP_CMD_ISMASTER == parser.opType )
+   if ( OP_CMD_ISMASTER == parser.currentOption() )
    {
       handled = TRUE ;
       // build ismaster msg
       fap::mongo::buildIsMasterReplyMsg( resource, buff ) ;
    }
-   else if ( OP_CMD_GETNONCE == parser.opType )
+   else if ( OP_CMD_GETNONCE == parser.currentOption() )
    {
       handled = TRUE ;
       // build getnonce msg
       fap::mongo::buildGetNonceReplyMsg( buff ) ;
    }
-   else if ( OP_CMD_GETLASTERROR == parser.opType )
+   else if ( OP_CMD_GETLASTERROR == parser.currentOption() )
    {
       handled = TRUE ;
       // build getlasterror msg
       fap::mongo::buildGetLastErrorReplyMsg( _errorInfo, buff ) ;
    }
-   else if ( OP_CMD_NOT_SUPPORTED == parser.opType )
+   else if ( OP_CMD_NOT_SUPPORTED == parser.currentOption() )
    {
       handled = TRUE ;
-      fap::mongo::buildNotSupportReplyMsg( _contextBuff, parser.cmdName ) ;
+      fap::mongo::buildNotSupportReplyMsg( _contextBuff,
+                                packet.all.firstElementFieldName() ) ;
    }
-   else if ( OP_CMD_PING == parser.opType )
+   else if ( OP_CMD_PING == parser.currentOption() )
    {
        handled = TRUE ;
        fap::mongo::buildPingReplyMsg( _contextBuff ) ;
@@ -586,8 +591,8 @@ BOOLEAN _mongoSession::_preProcessMsg( const mongoParser &parser,
       _replyHeader.contextID            = -1 ;
       _replyHeader.numReturned          = 1 ;
       _replyHeader.startFrom            = 0 ;
-      _replyHeader.header.opCode        = MAKE_REPLY_TYPE(parser.opCode) ;
-      _replyHeader.header.requestID     = parser.id ;
+      _replyHeader.header.opCode        = MAKE_REPLY_TYPE(packet.opCode) ;
+      _replyHeader.header.requestID     = packet.requestId ;
       _replyHeader.header.TID           = 0 ;
       _replyHeader.header.routeID.value = 0 ;
       _replyHeader.flags         = SDB_OK ;
@@ -621,8 +626,10 @@ void _mongoSession::_handleResponse( const INT32 opType,
 INT32 _mongoSession::_setSeesionAttr()
 {
    INT32 rc = SDB_OK ;
+   engine::pmdEDUMgr *pmdEDUMgr = _pEDUCB->getEDUMgr() ;
    const CHAR *cmd = CMD_ADMIN_PREFIX CMD_NAME_SETSESS_ATTR ;
    MsgOpQuery *set = NULL ;
+
    bson::BSONObj obj ;
    bson::BSONObj emptyObj ;
 
@@ -655,12 +662,29 @@ INT32 _mongoSession::_setSeesionAttr()
    msgSetAttr.write( emptyObj, TRUE ) ;
    msgSetAttr.write( emptyObj, TRUE ) ;
    msgSetAttr.doneLen() ;
+
+   // activate edu
+   if ( SDB_OK != ( rc = pmdEDUMgr->activateEDU( _pEDUCB ) ) )
+   {
+      PD_LOG( PDERROR, "Session[%s] activate edu failed, rc: %d",
+              sessionName(), rc ) ;
+      goto error ;
+   }
+
    rc = _processMsg( msgSetAttr.data() ) ;
    if ( SDB_OK != rc )
    {
       goto error ;
    }
    _masterRead = TRUE ;
+
+   // wait edu
+   if ( SDB_OK != ( rc = pmdEDUMgr->waitEDU( _pEDUCB ) ) )
+   {
+      PD_LOG( PDERROR, "Session[%s] wait edu failed, rc: %d",
+              sessionName(), rc ) ;
+      goto error ;
+   }
 
 done:
    return rc ;

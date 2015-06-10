@@ -42,7 +42,8 @@
 INT32 mongoConverter::convert( msgBuffer &out )
 {
    INT32 rc = SDB_OK ;
-   _parser.init( _msgdata, _msglen ) ;
+   baseCommand *&cmd = _parser.command() ;
+   _parser.extractMsg( _msgdata, _msglen ) ;
 
    // convert mongodb msg to sequoiadb msg
    // for all kinds of requests available
@@ -53,37 +54,44 @@ INT32 mongoConverter::convert( msgBuffer &out )
       goto error ;
    }
 
-   if ( dbInsert == _parser.opCode )
+   if ( dbInsert == _parser.dataPacket().opCode )
    {
-      _cmd = cmdMgr->findCommand( "insert" ) ;
+      cmd = cmdMgr->findCommand( "insert" ) ;
    }
-   else if ( dbDelete == _parser.opCode )
+   else if ( dbDelete == _parser.dataPacket().opCode )
    {
-      _cmd = cmdMgr->findCommand( "delete" ) ;
+      cmd = cmdMgr->findCommand( "delete" ) ;
    }
-   else if ( dbUpdate == _parser.opCode )
+   else if ( dbUpdate == _parser.dataPacket().opCode )
    {
-      _cmd = cmdMgr->findCommand( "update" ) ;
+      cmd = cmdMgr->findCommand( "update" ) ;
    }
-   else if ( dbQuery == _parser.opCode )
+   else if ( dbQuery == _parser.dataPacket().opCode )
    {
-      _cmd = cmdMgr->findCommand( "query" ) ;
+      cmd = cmdMgr->findCommand( "query" ) ;
    }
-   else if ( dbGetMore == _parser.opCode )
+   else if ( dbGetMore == _parser.dataPacket().opCode )
    {
-      _cmd = cmdMgr->findCommand( "getMore" ) ;
+      cmd = cmdMgr->findCommand( "getMore" ) ;
    }
-   else if ( dbKillCursors == _parser.opCode )
+   else if ( dbKillCursors == _parser.dataPacket().opCode )
    {
-      _cmd = cmdMgr->findCommand( "killCursors" ) ;
+      cmd = cmdMgr->findCommand( "killCursors" ) ;
    }
 
-   if ( NULL == _cmd )
+   if ( NULL == cmd )
+   {
+      rc = SDB_OPTION_NOT_SUPPORT ;
+      goto error ;
+   }
+
+   rc = cmd->convert( _parser ) ;
+   if ( SDB_OK != rc )
    {
       goto error ;
    }
 
-   rc = _cmd->convertRequest( _parser, out ) ;
+   rc = cmd->buildMsg( _parser, out ) ;
    if ( SDB_OK != rc )
    {
       goto error ;
@@ -99,6 +107,7 @@ INT32 mongoConverter::reConvert( msgBuffer &out, MsgOpReply *reply )
 {
    INT32 rc = SDB_OK ;
    INT32 numToReturn = -1 ;
+   baseCommand *&cmd = _parser.command() ;
    commandMgr *cmdMgr = commandMgr::instance() ;
    if ( NULL == cmdMgr )
    {
@@ -106,7 +115,7 @@ INT32 mongoConverter::reConvert( msgBuffer &out, MsgOpReply *reply )
       goto error ;
    }
 
-   if ( OP_CMD_GET_INDEX == _parser.opType )
+   if ( OP_CMD_GET_INDEX == _parser.currentOption() )
    {
       if ( SDB_OK != reply->flags )
       {
@@ -133,7 +142,7 @@ INT32 mongoConverter::reConvert( msgBuffer &out, MsgOpReply *reply )
 
    out.zero() ;
 
-   if ( OP_CMD_COUNT == _parser.opType )
+   if ( OP_CMD_COUNT == _parser.currentOption() )
    {
       if ( SDB_OK != reply->flags )
       {
@@ -142,7 +151,7 @@ INT32 mongoConverter::reConvert( msgBuffer &out, MsgOpReply *reply )
       }
 
       numToReturn = 1 ;
-      _parser.opType = OP_CMD_COUNT_MORE ;
+      _parser.setCurrentOp( OP_CMD_COUNT_MORE );
 
       fap::mongo::buildGetMoreMsg( out ) ;
       MsgOpReply *msg = ( MsgOpReply *)out.data() ;
@@ -153,7 +162,7 @@ INT32 mongoConverter::reConvert( msgBuffer &out, MsgOpReply *reply )
    }
 
    // create collection failed
-   if ( OP_CMD_CREATE == _parser.opType )
+   if ( OP_CMD_CREATE == _parser.currentOption() )
    {
       // here mean mongo msg was converted to multi sdb msg
       // like create collection command msg
@@ -163,10 +172,15 @@ INT32 mongoConverter::reConvert( msgBuffer &out, MsgOpReply *reply )
       if ( SDB_OK != reply->flags && SDB_DMS_CS_NOTEXIST == reply->flags )
       {
          _parser.reparse() ;
-         _cmd = cmdMgr->findCommand( "createCS" ) ;
-         if ( NULL != _cmd )
+         cmd = cmdMgr->findCommand( "createCS" ) ;
+         if ( NULL != cmd )
          {
-            rc = _cmd->convertRequest( _parser, out ) ;
+            rc = cmd->convert( _parser ) ;
+            if ( SDB_OK != rc )
+            {
+               goto error ;
+            }
+            rc = cmd->buildMsg( _parser, out ) ;
             if ( SDB_OK != rc )
             {
                goto error ;
@@ -182,7 +196,7 @@ INT32 mongoConverter::reConvert( msgBuffer &out, MsgOpReply *reply )
    }
 
    // if is create collection space msg
-   if ( OP_CMD_CREATE_CS == _parser.opType )
+   if ( OP_CMD_CREATE_CS == _parser.currentOption() )
    {
       if ( SDB_OK != reply->flags && SDB_DMS_CS_EXIST != reply->flags )
       {
@@ -192,10 +206,15 @@ INT32 mongoConverter::reConvert( msgBuffer &out, MsgOpReply *reply )
 
       // then, try to create collection again
       _parser.reparse() ;
-      _cmd = cmdMgr->findCommand( "create" ) ;
-      if ( NULL != _cmd )
+      cmd = cmdMgr->findCommand( "create" ) ;
+      if ( NULL != cmd )
       {
-         rc = _cmd->convertRequest( _parser, out ) ;
+         rc = cmd->convert( _parser ) ;
+         if ( SDB_OK != rc )
+         {
+            goto error ;
+         }
+         rc = cmd->buildMsg( _parser, out ) ;
          if ( SDB_OK != rc )
          {
             goto error ;

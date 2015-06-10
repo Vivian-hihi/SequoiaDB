@@ -39,7 +39,7 @@
 
 #include "util.hpp"
 #include "oss.hpp"
-#include "mongodef.hpp"
+#include "parser.hpp"
 #include "commands.hpp"
 #include "msg.hpp"
 
@@ -48,7 +48,7 @@ class command ;
 class mongoConverter : public baseConverter
 {
 public:
-   mongoConverter() : _cmd( NULL )
+   mongoConverter()
    {
       _bigEndian = checkBigEndian() ;
       _parser.setEndian( _bigEndian ) ;
@@ -56,7 +56,6 @@ public:
 
    ~mongoConverter()
    {
-      resetCommand() ;
    }
 
    BOOLEAN isBigEndian() const
@@ -64,17 +63,12 @@ public:
       return _bigEndian ;
    }
 
-   void resetCommand()
+   const UINT32 getOpType()
    {
-      _cmd = NULL ;
+      return _parser.currentOption() ;
    }
 
-   const INT32 getOpType() const
-   {
-      return _parser.opType ;
-   }
-
-   const mongoParser& getParser() const
+   msgParser& getParser()
    {
       return _parser ;
    }
@@ -83,10 +77,8 @@ public:
    virtual INT32 convert( msgBuffer &out ) ;
    virtual INT32 reConvert( msgBuffer &out, MsgOpReply *reply ) ;
 
-
 private:
    BOOLEAN _bigEndian ;
-   command *_cmd ;
-   mongoParser _parser ;
+   msgParser _parser ;
 };
 #endif
