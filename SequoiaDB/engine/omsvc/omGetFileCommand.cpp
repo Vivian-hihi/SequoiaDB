@@ -5135,6 +5135,45 @@ namespace engine
             _sendErrorRes2Web( rc, _errorDetail ) ;
             goto error ;
          }
+
+         //TEST CODE
+//         {
+//            BSONObj node1 = BSON( OM_BSON_FIELD_HOST_NAME << "suse-lyb"
+//                                  << OM_ZOO_CONF_DETAIL_ZOOID << "1"
+//                                  << OM_TASKINFO_FIELD_STATUS << 4
+//                                  << OM_TASKINFO_FIELD_STATUS_DESC << "FINISH"
+//                                  << OM_TASKINFO_FIELD_ERRNO << 0
+//                                  << OM_TASKINFO_FIELD_DETAIL << ""
+//                                  << OM_TASKINFO_FIELD_FLOW << "") ;
+//            BSONObj node2 = BSON( OM_BSON_FIELD_HOST_NAME << "suse-lyb"
+//                                  << OM_ZOO_CONF_DETAIL_ZOOID << "2"
+//                                  << OM_TASKINFO_FIELD_STATUS << 4
+//                                  << OM_TASKINFO_FIELD_STATUS_DESC << "FINISH"
+//                                  << OM_TASKINFO_FIELD_ERRNO << 0
+//                                  << OM_TASKINFO_FIELD_DETAIL << ""
+//                                  << OM_TASKINFO_FIELD_FLOW << "") ;
+//            BSONObj node3 = BSON( OM_BSON_FIELD_HOST_NAME << "suse-lyb"
+//                                  << OM_ZOO_CONF_DETAIL_ZOOID << "3"
+//                                  << OM_TASKINFO_FIELD_STATUS << 4
+//                                  << OM_TASKINFO_FIELD_STATUS_DESC << "FINISH"
+//                                  << OM_TASKINFO_FIELD_ERRNO << 0
+//                                  << OM_TASKINFO_FIELD_DETAIL << ""
+//                                  << OM_TASKINFO_FIELD_FLOW << "") ;
+//            BSONArrayBuilder arrayBuilder ;
+//            arrayBuilder.append( node1 ) ;
+//            arrayBuilder.append( node2 ) ;
+//            arrayBuilder.append( node3 ) ;
+//            BSONObj taskUpdateInfo = BSON( OM_TASKINFO_FIELD_TASKID << taskID
+//                                           << OM_TASKINFO_FIELD_STATUS << 4
+//                                           << OM_TASKINFO_FIELD_ERRNO << 0
+//                                           << OM_TASKINFO_FIELD_PROGRESS << 100
+//                                           << OM_TASKINFO_FIELD_RESULTINFO <<
+//                                           arrayBuilder.arr() ) ;
+//            sdbGetOMManager()->getTaskManager()->updateTask( taskID, 
+//                                                             taskUpdateInfo ) ;
+//            
+//         }
+         //TEST CODE END
       }
 
       rc = _notifyAgentTask( taskID ) ;

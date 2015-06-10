@@ -137,13 +137,13 @@ namespace engine
          INT32                getCountInDisk( const string &hostName,
                                               const string &diskName ) ;
 
-         INT32                increaseGroupID() ;
+         INT32                increaseGroupID( const string &businessName ) ;
          void                 clear() ;
 
       private:
          map<string, hostNodeCounter *>  _mapHostNodeCounter ;
          nodeCounter          _counter ;
-         INT32                _availableGroupID ;
+         map<string, INT32>   _availableGroupIDMap ;
    } ;
 
    class rangeValidator : public SDBObject
@@ -349,7 +349,7 @@ namespace engine
                                           omNodeConf &node ) ;
          INT32                getHostNum() ;
 
-         INT32                increaseGroupID() ;
+         INT32                increaseGroupID( const string &businessName ) ;
 
          void                 clear() ;
 
@@ -611,13 +611,13 @@ namespace engine
          INT32                getCountInDisk( const string &hostName,
                                               const string &diskName ) ;
 
-         INT32                increaseZooID() ;
+         INT32                increaseZooID( const string &businessName ) ;
          void                 clear() ;
 
       private:
          map<string, hostNodeCounter *>  _mapHostNodeCounter ;
          nodeCounter          _counter ;
-         INT32                _availableZooID ;
+         map<string, INT32>   _availableZooIDMap ;
    } ;
 
    class omZooCluster 
@@ -635,7 +635,7 @@ namespace engine
                                           omZooNodeConf &node ) ;
          INT32                getHostNum() ;
 
-         INT32                increaseZooID() ;
+         INT32                increaseZooID( const string &businessName ) ;
 
          void                 clear() ;
 

@@ -375,7 +375,6 @@ namespace engine
    }
 
    clusterNodeCounter::clusterNodeCounter()
-                      :_availableGroupID( 1 )
    {
    }
 
@@ -394,12 +393,23 @@ namespace engine
          _mapHostNodeCounter.erase( iter++ ) ;
       }
 
-      _availableGroupID = 1 ;
+      _availableGroupIDMap.clear() ;
    }
 
-   INT32 clusterNodeCounter::increaseGroupID()
+   INT32 clusterNodeCounter::increaseGroupID( const string &businessName )
    {
-      return _availableGroupID++ ;
+      INT32 id = 1 ;
+      map<string, INT32>::iterator iter ;
+      iter = _availableGroupIDMap.find( businessName) ;
+      if ( iter == _availableGroupIDMap.end() )
+      {
+         _availableGroupIDMap[ businessName ] = 1 ;
+      }
+
+      id = _availableGroupIDMap[ businessName ] ;
+      _availableGroupIDMap[ businessName ]++ ;
+
+      return id ;
    }
 
    INT32 clusterNodeCounter::getCountInHost( const string &hostName, 
@@ -498,10 +508,20 @@ namespace engine
             INT32 id ;
             string::size_type start = pos + ossStrlen( OM_DG_NAME_PATTERN ) ;
             groupID = groupName.substr( start ) ;
-            id      = ossAtoi( groupID.c_str() ) ;
-            if ( id >= _availableGroupID )
+            
             {
-               _availableGroupID = id + 1 ;
+               map<string, INT32>::iterator iter ;
+               iter = _availableGroupIDMap.find( businessName) ;
+               if ( iter == _availableGroupIDMap.end() )
+               {
+                  _availableGroupIDMap[ businessName ] = 1 ;
+               }
+            }
+
+            id = ossAtoi( groupID.c_str() ) ;
+            if ( id  >= _availableGroupIDMap[ businessName ] )
+            {
+               _availableGroupIDMap[ businessName ] = id  + 1 ;
             }
          }
       }
@@ -1063,9 +1083,9 @@ namespace engine
       return _mapHost.size() ;
    }
 
-   INT32 omCluster::increaseGroupID()
+   INT32 omCluster::increaseGroupID( const string &businessName )
    {
-      return _nodeCounter.increaseGroupID() ;
+      return _nodeCounter.increaseGroupID( businessName ) ;
    }
 
    /*
@@ -2682,7 +2702,7 @@ namespace engine
       }
 
       {
-         INT32 groupID      = _cluster.increaseGroupID() ;
+         INT32 groupID      = _cluster.increaseGroupID( businessName ) ;
          INT32 replicaNum   = _template.getReplicaNum() ;
          INT32 groupIDCycle = 0 ;
          INT32 dataCount    = 0 ;
@@ -2706,7 +2726,7 @@ namespace engine
             groupIDCycle++ ;
             if ( groupIDCycle >= replicaNum )
             {
-               groupID      = _cluster.increaseGroupID() ;
+               groupID      = _cluster.increaseGroupID( businessName ) ;
                groupIDCycle = 0 ;
             }
          }
@@ -3514,7 +3534,6 @@ namespace engine
    }
 
    zooNodeCounter::zooNodeCounter()
-                  :_availableZooID( 1 )
    {
    }
 
@@ -3550,10 +3569,19 @@ namespace engine
                                               OM_BUSINESS_ZOOKEEPER ) ;
       _counter.increaseNode( OM_BUSINESS_ZOOKEEPER ) ;
 
-      tmpZooID = ossAtoi( zooID.c_str() ) ;
-      if ( tmpZooID  >= _availableZooID )
       {
-         _availableZooID = tmpZooID  + 1 ;
+         map<string, INT32>::iterator iter ;
+         iter = _availableZooIDMap.find( businessName) ;
+         if ( iter == _availableZooIDMap.end() )
+         {
+            _availableZooIDMap[ businessName ] = 1 ;
+         }
+      }
+
+      tmpZooID = ossAtoi( zooID.c_str() ) ;
+      if ( tmpZooID  >= _availableZooIDMap[ businessName ] )
+      {
+         _availableZooIDMap[ businessName ] = tmpZooID  + 1 ;
       }
 
    done:
@@ -3591,9 +3619,20 @@ namespace engine
       return count ;
    }
 
-   INT32 zooNodeCounter::increaseZooID()
+   INT32 zooNodeCounter::increaseZooID( const string &businessName )
    {
-      return _availableZooID++ ;
+      INT32 id = 1 ;
+      map<string, INT32>::iterator iter ;
+      iter = _availableZooIDMap.find( businessName) ;
+      if ( iter == _availableZooIDMap.end() )
+      {
+         _availableZooIDMap[ businessName ] = 1 ;
+      }
+
+      id = _availableZooIDMap[ businessName ] ;
+      _availableZooIDMap[ businessName ]++ ;
+
+      return id ;
    }
 
    void zooNodeCounter::clear()
@@ -3606,7 +3645,7 @@ namespace engine
          _mapHostNodeCounter.erase( iter++ ) ;
       }
 
-      _availableZooID = 1 ;
+      _availableZooIDMap.clear() ;
    }
 
    omZooCluster::omZooCluster()
@@ -3898,7 +3937,7 @@ namespace engine
       host->occupayResource( dataPath, portList ) ;
       {
          CHAR cZooID[ OM_INT32_LENGTH + 1 ] = "" ;
-         INT32 iZooID = increaseZooID() ;
+         INT32 iZooID = increaseZooID( businessName ) ;
          ossItoa( iZooID, cZooID, OM_INT32_LENGTH ) ;
          zooID = cZooID ;
       }
@@ -3929,9 +3968,9 @@ namespace engine
       return _mapHost.size() ;
    }
 
-   INT32 omZooCluster::increaseZooID()
+   INT32 omZooCluster::increaseZooID( const string &businessName )
    {
-      return _nodeCounter.increaseZooID() ;
+      return _nodeCounter.increaseZooID( businessName ) ;
    }
 
    void omZooCluster::clear()

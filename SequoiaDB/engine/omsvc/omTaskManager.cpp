@@ -802,6 +802,7 @@ namespace engine
       }
 
       rc = _storeConfigInfo( taskInfoValue ) ;
+      if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "store configure info failed:rc=%d", rc ) ;
          goto error ;
