@@ -209,7 +209,7 @@ namespace engine
                      "unknow aggregation-operator name(%s)",
                      pAggrOp );
             rc = iterMap->second->parse( bePara, root, pPtrTable,
-                                       pParamTable, pCLNameTmp );
+                                         pParamTable, pCLNameTmp );
             PD_RC_CHECK( rc, PDERROR,
                         "failed to build the opti tree(rc=%d)", rc );
             pDataPos += ossAlignX( (ossValuePtr)paraObj.objsize(), 4 );

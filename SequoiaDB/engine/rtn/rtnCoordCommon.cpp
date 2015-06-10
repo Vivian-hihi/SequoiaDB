@@ -2750,7 +2750,8 @@ namespace engine
          BSONElement ele = it.next() ;
 
          // group id
-         if ( 0 == ossStrcasecmp( ele.fieldName(), CAT_GROUPID_NAME ) )
+         if ( 0 == ossStrcasecmp( ele.fieldName(), CAT_GROUPID_NAME ) &&
+              ( NumberInt == ele.type() || Array == ele.type() ) )
          {
             isModify = TRUE ;
             if ( ele.type() == NumberInt )
@@ -2778,10 +2779,11 @@ namespace engine
             }
          }
          // group name
-         else if ( 0 == ossStrcasecmp( ele.fieldName(),
+         else if ( ( 0 == ossStrcasecmp( ele.fieldName(),
                                        FIELD_NAME_GROUPNAME ) ||
-                   0 == ossStrcasecmp( ele.fieldName(),
-                                       FIELD_NAME_GROUPS ) )
+                     0 == ossStrcasecmp( ele.fieldName(),
+                                       FIELD_NAME_GROUPS ) ) &&
+                   ( String == ele.type() || Array == ele.type() ) )
          {
             isModify = TRUE ;
             if ( ele.type() == String )
@@ -3004,7 +3006,8 @@ namespace engine
          {
             BSONElement ele = itr.next() ;
 
-            if ( 0 == ossStrcasecmp( ele.fieldName(), CAT_NODEID_NAME ) )
+            if ( 0 == ossStrcasecmp( ele.fieldName(), CAT_NODEID_NAME ) &&
+                 ( NumberInt == ele.type() || Array == ele.type() ) )
             {
                if ( ele.type() == NumberInt )
                {
@@ -3034,7 +3037,8 @@ namespace engine
                   goto error ;
                }
             }
-            else if ( 0 == ossStrcasecmp( ele.fieldName(), FIELD_NAME_HOST ) )
+            else if ( 0 == ossStrcasecmp( ele.fieldName(), FIELD_NAME_HOST ) &&
+                      ( String == ele.type() || Array == ele.type() ) )
             {
                if ( ele.type() == String )
                {
@@ -3064,10 +3068,11 @@ namespace engine
                   goto error ;
                }
             }
-            else if ( 0 == ossStrcasecmp( ele.fieldName(),
-                                          FIELD_NAME_SERVICE_NAME ) ||
-                      0 == ossStrcasecmp( ele.fieldName(),
-                                          PMD_OPTION_SVCNAME ) )
+            else if ( ( 0 == ossStrcasecmp( ele.fieldName(),
+                                            FIELD_NAME_SERVICE_NAME ) ||
+                        0 == ossStrcasecmp( ele.fieldName(),
+                                            PMD_OPTION_SVCNAME ) ) &&
+                      ( String == ele.type() || Array == ele.type() ) )
             {
                if ( ele.type() == String )
                {
