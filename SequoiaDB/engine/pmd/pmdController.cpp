@@ -149,6 +149,10 @@ namespace engine
    done:
       return rc ;
    error:
+      if ( SDB_NETWORK == rc )
+      {
+         rc = SDB_NET_CANNOT_LISTEN ;
+      }
       goto done ;
    }
 
