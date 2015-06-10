@@ -41,6 +41,7 @@
 #include "msg.hpp"
 #include "migLoad.hpp"
 #include "rtnAlterRunner.hpp"
+#include "aggrBuilder.hpp"
 
 using namespace bson ;
 
@@ -150,7 +151,7 @@ namespace engine
       protected:
          _rtnCoordOnly () {}
       public:
-         ~_rtnCoordOnly () {}
+         virtual ~_rtnCoordOnly () {}
          virtual INT32 spaceNode () { return CMD_SPACE_NODE_COORD ; }
          virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
                               const CHAR *pMatcherBuff,
@@ -169,7 +170,7 @@ namespace engine
       DECLARE_CMD_AUTO_REGISTER()
       public:
          _rtnCreateGroup () {}
-         ~_rtnCreateGroup () {}
+         virtual ~_rtnCreateGroup () {}
          virtual const CHAR * name () { return NAME_CREATE_GROUP ; }
          virtual RTN_COMMAND_TYPE type () { return CMD_CREATE_GROUP ; }
    } ;
@@ -180,7 +181,7 @@ namespace engine
 
       public:
          _rtnRemoveGroup () {}
-         ~_rtnRemoveGroup () {}
+         virtual ~_rtnRemoveGroup () {}
          virtual const CHAR * name () { return NAME_REMOVE_GROUP ; }
          virtual RTN_COMMAND_TYPE type () { return CMD_REMOVE_GROUP ; }
    };
@@ -190,7 +191,7 @@ namespace engine
       DECLARE_CMD_AUTO_REGISTER()
       public:
          _rtnCreateNode () {}
-         ~_rtnCreateNode () {}
+         virtual ~_rtnCreateNode () {}
          virtual const CHAR * name () { return NAME_CREATE_NODE ; }
          virtual RTN_COMMAND_TYPE type () { return CMD_CREATE_NODE ; }
    } ;
@@ -200,7 +201,7 @@ namespace engine
       DECLARE_CMD_AUTO_REGISTER()
       public:
          _rtnRemoveNode () {}
-         ~_rtnRemoveNode () {}
+         virtual ~_rtnRemoveNode () {}
          virtual const CHAR * name () { return NAME_REMOVE_NODE ; }
          virtual RTN_COMMAND_TYPE type () { return CMD_REMOVE_NODE ; }
    };
@@ -210,7 +211,7 @@ namespace engine
       DECLARE_CMD_AUTO_REGISTER()
       public:
          _rtnUpdateNode () {}
-         ~_rtnUpdateNode () {}
+         virtual ~_rtnUpdateNode () {}
          virtual const CHAR * name () { return NAME_UPDATE_NODE ; }
          virtual RTN_COMMAND_TYPE type () { return CMD_UPDATE_NODE ; }
    } ;
@@ -220,7 +221,7 @@ namespace engine
       DECLARE_CMD_AUTO_REGISTER()
       public:
          _rtnActiveGroup () {}
-         ~_rtnActiveGroup () {}
+         virtual ~_rtnActiveGroup () {}
          virtual const CHAR * name () { return NAME_ACTIVE_GROUP ; }
          virtual RTN_COMMAND_TYPE type () { return CMD_ACTIVE_GROUP ; }
    } ;
@@ -230,7 +231,7 @@ namespace engine
       DECLARE_CMD_AUTO_REGISTER()
       public:
          _rtnStartNode () {}
-         ~_rtnStartNode () {}
+         virtual ~_rtnStartNode () {}
          virtual const CHAR * name () { return NAME_START_NODE ; }
          virtual RTN_COMMAND_TYPE type () { return CMD_START_NODE ; }
    };
@@ -240,7 +241,7 @@ namespace engine
       DECLARE_CMD_AUTO_REGISTER()
       public:
          _rtnShutdownNode () {}
-         ~_rtnShutdownNode () {}
+         virtual ~_rtnShutdownNode () {}
          virtual const CHAR * name () { return NAME_SHUTDOWN_NODE ; }
          virtual RTN_COMMAND_TYPE type () { return CMD_SHUTDOWN_NODE ; }
    };
@@ -250,7 +251,7 @@ namespace engine
       DECLARE_CMD_AUTO_REGISTER()
       public:
          _rtnShutdownGroup () {}
-         ~_rtnShutdownGroup () {}
+         virtual ~_rtnShutdownGroup () {}
          virtual const CHAR * name () { return NAME_SHUTDOWN_GROUP ; }
          virtual RTN_COMMAND_TYPE type () { return CMD_SHUTDOWN_GROUP ; }
    };
@@ -260,7 +261,7 @@ namespace engine
       DECLARE_CMD_AUTO_REGISTER()
       public:
          _rtnGetConfig () {}
-         ~_rtnGetConfig () {}
+         virtual ~_rtnGetConfig () {}
          virtual const CHAR * name () { return NAME_GET_CONFIG ; }
          virtual RTN_COMMAND_TYPE type () { return CMD_GET_CONFIG ; }
    } ;
@@ -270,7 +271,7 @@ namespace engine
       DECLARE_CMD_AUTO_REGISTER()
       public:
          _rtnListGroups () {}
-         ~_rtnListGroups () {}
+         virtual ~_rtnListGroups () {}
          virtual const CHAR * name () { return NAME_LIST_GROUPS ; }
          virtual RTN_COMMAND_TYPE type () { return CMD_LIST_GROUPS ; }
    };
@@ -280,7 +281,7 @@ namespace engine
       DECLARE_CMD_AUTO_REGISTER()
       public:
          _rtnCreateCataGroup () {}
-         ~_rtnCreateCataGroup () {}
+         virtual ~_rtnCreateCataGroup () {}
          virtual const CHAR * name () { return NAME_CREATE_CATAGROUP ; }
          virtual RTN_COMMAND_TYPE type () { return CMD_CREATE_CATAGROUP ; }
    };
@@ -290,7 +291,7 @@ namespace engine
       DECLARE_CMD_AUTO_REGISTER()
       public:
          _rtnCreateDomain () {}
-         ~_rtnCreateDomain () {}
+         virtual ~_rtnCreateDomain () {}
          virtual const CHAR * name () { return NAME_CREATE_DOMAIN ; }
          virtual RTN_COMMAND_TYPE type () { return CMD_CREATE_DOMAIN ; }
    } ;
@@ -300,7 +301,7 @@ namespace engine
       DECLARE_CMD_AUTO_REGISTER()
       public:
          _rtnDropDomain () {}
-         ~_rtnDropDomain () {}
+         virtual ~_rtnDropDomain () {}
          virtual const CHAR * name () { return NAME_DROP_DOMAIN ; }
          virtual RTN_COMMAND_TYPE type () { return CMD_DROP_DOMAIN ; }
    } ;
@@ -310,7 +311,7 @@ namespace engine
       DECLARE_CMD_AUTO_REGISTER()
       public:
          _rtnAlterDomain () {}
-         ~_rtnAlterDomain () {}
+         virtual ~_rtnAlterDomain () {}
          virtual const CHAR * name () { return NAME_ALTER_DOMAIN ; }
          virtual RTN_COMMAND_TYPE type () { return CMD_ALTER_DOMAIN ; }
    } ;
@@ -320,7 +321,7 @@ namespace engine
       DECLARE_CMD_AUTO_REGISTER()
       public:
          _rtnAddDomainGroup () {}
-         ~_rtnAddDomainGroup () {}
+         virtual ~_rtnAddDomainGroup () {}
          virtual const CHAR * name () { return NAME_ADD_DOMAIN_GROUP ; }
          virtual RTN_COMMAND_TYPE type () { return CMD_ADD_DOMAIN_GROUP ; }
    };
@@ -330,7 +331,7 @@ namespace engine
       DECLARE_CMD_AUTO_REGISTER()
       public:
          _rtnRemoveDomainGroup () {}
-         ~_rtnRemoveDomainGroup () {}
+         virtual ~_rtnRemoveDomainGroup () {}
          virtual const CHAR * name () { return NAME_REMOVE_DOMAIN_GROUP ; }
          virtual RTN_COMMAND_TYPE type () { return CMD_REMOVE_DOMAIN_GROUP ; }
    };
@@ -340,7 +341,7 @@ namespace engine
       DECLARE_CMD_AUTO_REGISTER()
       public:
          _rtnListDomains () {}
-         ~_rtnListDomains () {}
+         virtual ~_rtnListDomains () {}
          virtual const CHAR * name () { return NAME_LIST_DOMAINS ; }
          virtual RTN_COMMAND_TYPE type () { return CMD_LIST_DOMAINS ; }
    };
@@ -350,7 +351,7 @@ namespace engine
       DECLARE_CMD_AUTO_REGISTER()
       public:
          _rtnSnapshotCata () {}
-         ~_rtnSnapshotCata () {}
+         virtual ~_rtnSnapshotCata () {}
          virtual const CHAR * name () { return NAME_SNAPSHOT_CATA ; }
          virtual RTN_COMMAND_TYPE type () { return CMD_SNAPSHOT_CATA ; }
    };
@@ -360,7 +361,7 @@ namespace engine
       DECLARE_CMD_AUTO_REGISTER()
       public:
          _rtnWaitTask () {}
-         ~_rtnWaitTask () {}
+         virtual ~_rtnWaitTask () {}
          virtual const CHAR * name () { return NAME_WAITTASK ; }
          virtual RTN_COMMAND_TYPE type () { return CMD_WAITTASK ; }
    } ;
@@ -370,7 +371,7 @@ namespace engine
       DECLARE_CMD_AUTO_REGISTER()
       public:
          _rtnListTask () {}
-         ~_rtnListTask () {}
+         virtual ~_rtnListTask () {}
          virtual const CHAR * name () { return NAME_LIST_TASKS ; }
          virtual RTN_COMMAND_TYPE type () { return CMD_LIST_TASKS ; }
    } ;
@@ -381,7 +382,7 @@ namespace engine
 
       public:
          _rtnBackup () ;
-         ~_rtnBackup () ;
+         virtual ~_rtnBackup () ;
 
          virtual BOOLEAN      writable () { return TRUE ; }
          virtual const CHAR * name () ;
@@ -411,7 +412,7 @@ namespace engine
 
       public:
          _rtnCreateCollection () ;
-         ~_rtnCreateCollection () ;
+         virtual ~_rtnCreateCollection () ;
 
          virtual const CHAR * name () ;
          virtual RTN_COMMAND_TYPE type () ;
@@ -440,7 +441,7 @@ namespace engine
 
      public:
          _rtnCreateCollectionspace () ;
-         ~_rtnCreateCollectionspace () ;
+         virtual ~_rtnCreateCollectionspace () ;
 
          virtual const CHAR * name () ;
          virtual RTN_COMMAND_TYPE type () ;
@@ -468,7 +469,7 @@ namespace engine
 
       public:
          _rtnCreateIndex () ;
-         ~_rtnCreateIndex () ;
+         virtual ~_rtnCreateIndex () ;
 
          virtual const CHAR * name () ;
          virtual RTN_COMMAND_TYPE type () ;
@@ -496,7 +497,7 @@ namespace engine
 
       public:
          _rtnDropCollection () ;
-         ~_rtnDropCollection () ;
+         virtual ~_rtnDropCollection () ;
 
          virtual const CHAR * name () ;
          virtual RTN_COMMAND_TYPE type () ;
@@ -522,7 +523,7 @@ namespace engine
 
       public:
          _rtnDropCollectionspace () ;
-         ~_rtnDropCollectionspace () ;
+         virtual ~_rtnDropCollectionspace () ;
 
          const CHAR *spaceName () ;
 
@@ -548,7 +549,7 @@ namespace engine
 
       public:
          _rtnDropIndex () ;
-         ~_rtnDropIndex () ;
+         virtual ~_rtnDropIndex () ;
 
          virtual const CHAR * name () ;
          virtual RTN_COMMAND_TYPE type () ;
@@ -572,7 +573,7 @@ namespace engine
    {
       protected:
          _rtnGet () ;
-         ~_rtnGet () ;
+         virtual ~_rtnGet () ;
       public:
          virtual const CHAR * collectionFullName () ;
          virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn, 
@@ -601,7 +602,7 @@ namespace engine
 
       public:
          _rtnGetCount () ;
-         ~_rtnGetCount () ;
+         virtual ~_rtnGetCount () ;
 
          virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn, 
                               const CHAR *pMatcherBuff,
@@ -619,7 +620,7 @@ namespace engine
 
       public:
          _rtnGetIndexes () ;
-         ~_rtnGetIndexes () ;
+         virtual ~_rtnGetIndexes () ;
 
          virtual const CHAR * name () ;
          virtual RTN_COMMAND_TYPE type () ;
@@ -631,7 +632,7 @@ namespace engine
 
       public:
          _rtnGetDatablocks () ;
-         ~_rtnGetDatablocks () ;
+         virtual ~_rtnGetDatablocks () ;
 
          virtual const CHAR * name () ;
          virtual RTN_COMMAND_TYPE type () ;
@@ -643,7 +644,7 @@ namespace engine
 
       public:
          _rtnGetQueryMeta () ;
-         ~_rtnGetQueryMeta () ;
+         virtual ~_rtnGetQueryMeta () ;
 
          virtual const CHAR * name () ;
          virtual RTN_COMMAND_TYPE type () ;
@@ -658,7 +659,7 @@ namespace engine
    {
       protected:
          _rtnList () ;
-         ~_rtnList () ;
+         virtual ~_rtnList () ;
       protected:
          virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn, 
                               const CHAR *pMatcherBuff,
@@ -684,7 +685,7 @@ namespace engine
 
       public:
          _rtnListCollections () {}
-         ~_rtnListCollections () {}
+         virtual ~_rtnListCollections () {}
 
          virtual const CHAR * name () { return NAME_LIST_COLLECTIONS ; }
          virtual RTN_COMMAND_TYPE type () { return CMD_LIST_COLLECTIONS ; }
@@ -696,7 +697,7 @@ namespace engine
 
       public:
          _rtnListCollectionspaces () {}
-         ~_rtnListCollectionspaces () {}
+         virtual ~_rtnListCollectionspaces () {}
 
          virtual const CHAR * name () { return NAME_LIST_COLLECTIONSPACES ; }
          virtual RTN_COMMAND_TYPE type () { return CMD_LIST_COLLECTIONSPACES ; }
@@ -708,7 +709,7 @@ namespace engine
 
       public:
          _rtnListContexts () {}
-         ~_rtnListContexts () {}
+         virtual ~_rtnListContexts () {}
 
          virtual const CHAR * name () { return NAME_LIST_CONTEXTS ; }
          virtual RTN_COMMAND_TYPE type () { return CMD_LIST_CONTEXTS ; }
@@ -720,7 +721,7 @@ namespace engine
 
       public:
          _rtnListContextsCurrent () {}
-         ~_rtnListContextsCurrent () {}
+         virtual ~_rtnListContextsCurrent () {}
 
          virtual const CHAR * name () { return NAME_LIST_CONTEXTS_CURRENT ; }
          virtual RTN_COMMAND_TYPE type () { return CMD_LIST_CONTEXTS_CURRENT ; }
@@ -732,7 +733,7 @@ namespace engine
 
       public:
          _rtnListSessions () {}
-         ~_rtnListSessions () {}
+         virtual ~_rtnListSessions () {}
 
          virtual const CHAR * name () { return NAME_LIST_SESSIONS ; }
          virtual RTN_COMMAND_TYPE type () { return CMD_LIST_SESSIONS ; }
@@ -744,7 +745,7 @@ namespace engine
 
       public:
          _rtnListSessionsCurrent () {}
-         ~_rtnListSessionsCurrent () {}
+         virtual ~_rtnListSessionsCurrent () {}
 
          virtual const CHAR * name () { return NAME_LIST_SESSIONS_CURRENT ; }
          virtual RTN_COMMAND_TYPE type () { return CMD_LIST_SESSIONS_CURRENT ; }
@@ -756,7 +757,7 @@ namespace engine
 
       public:
          _rtnListStorageUnits () {}
-         ~_rtnListStorageUnits () {}
+         virtual ~_rtnListStorageUnits () {}
 
          virtual const CHAR * name () { return NAME_LIST_STORAGEUNITS ; }
          virtual RTN_COMMAND_TYPE type () { return CMD_LIST_STORAGEUNITS ; }
@@ -768,7 +769,7 @@ namespace engine
 
       public:
          _rtnListBackups () {} ;
-         ~_rtnListBackups () {} ;
+         virtual ~_rtnListBackups () {} ;
 
          virtual const CHAR * name () { return NAME_LIST_BACKUPS ; }
          virtual RTN_COMMAND_TYPE type () { return CMD_LIST_BACKUPS ; }
@@ -780,7 +781,7 @@ namespace engine
 
       public:
          _rtnRenameCollection () ;
-         ~_rtnRenameCollection () ;
+         virtual ~_rtnRenameCollection () ;
 
          virtual const CHAR * name () ;
          virtual RTN_COMMAND_TYPE type () ;
@@ -799,14 +800,14 @@ namespace engine
          const CHAR           *_oldCollectionName ;
          const CHAR           *_newCollectionName ;
          const CHAR           *_csName ;
-         std::string          fullCollectionName ;
+         std::string          _fullCollectionName ;
    };
 
    class _rtnReorg : public _rtnCommand
    {
       protected:
          _rtnReorg () ;
-         ~_rtnReorg () ;
+         virtual ~_rtnReorg () ;
          virtual INT32 spaceNode () ;
       public:
          virtual const CHAR * collectionFullName () ;
@@ -831,7 +832,7 @@ namespace engine
 
       public:
          _rtnReorgOffline () ;
-         ~_rtnReorgOffline () ;
+         virtual ~_rtnReorgOffline () ;
 
          virtual const CHAR * name () ;
          virtual RTN_COMMAND_TYPE type () ;
@@ -843,7 +844,7 @@ namespace engine
 
       public:
          _rtnReorgOnline () ;
-         ~_rtnReorgOnline () ;
+         virtual ~_rtnReorgOnline () ;
 
          virtual const CHAR * name () ;
          virtual RTN_COMMAND_TYPE type () ;
@@ -855,7 +856,7 @@ namespace engine
 
       public:
          _rtnReorgRecover () ;
-         ~_rtnReorgRecover () ;
+         virtual ~_rtnReorgRecover () ;
 
          virtual const CHAR * name () ;
          virtual RTN_COMMAND_TYPE type () ;
@@ -867,7 +868,7 @@ namespace engine
 
       public:
          _rtnShutdown () ;
-         ~_rtnShutdown () ;
+         virtual ~_rtnShutdown () ;
 
          virtual const CHAR * name () ;
          virtual RTN_COMMAND_TYPE type () ;
@@ -881,11 +882,11 @@ namespace engine
                               INT16 w = 1, INT64 *pContextID = NULL  ) ;
    };
 
-   class _rtnSnapshot : public _rtnCommand
+   class _rtnSnapshot : public _rtnCommand, public _aggrCmdBase
    {
       protected:
          _rtnSnapshot () ;
-         ~_rtnSnapshot () ;
+         virtual ~_rtnSnapshot () ;
       public:
          virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn, 
                               const CHAR *pMatcherBuff,
@@ -895,14 +896,35 @@ namespace engine
          virtual INT32 doit ( _pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
                               _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
                               INT16 w = 1, INT64 *pContextID = NULL  ) ;
+
+      private:
+         virtual const CHAR *getIntrCMDName() = 0 ;
+
       protected:
          INT64                _numToReturn ;
          INT64                _numToSkip ;
          const CHAR           *_matcherBuff ;
          const CHAR           *_selectBuff ;
          const CHAR           *_orderByBuff ;
+         const CHAR           *_hintBuff ;
+         
          INT32                _flags ;
    };
+
+   class _rtnSnapshotInner : public _rtnSnapshot
+   {
+      protected:
+         _rtnSnapshotInner () ;
+         virtual ~_rtnSnapshotInner () ;
+
+      public:
+         virtual INT32 doit ( _pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
+                              _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
+                              INT16 w = 1, INT64 *pContextID = NULL  ) ;
+
+    private:
+         virtual const CHAR *getIntrCMDName() { return "" ; }
+   } ;
 
    class _rtnSnapshotSystem : public _rtnSnapshot
    {
@@ -910,11 +932,26 @@ namespace engine
 
       public :
          _rtnSnapshotSystem () ;
-         ~_rtnSnapshotSystem () ;
+         virtual ~_rtnSnapshotSystem () ;
 
          virtual const CHAR * name () ;
          virtual RTN_COMMAND_TYPE type () ;
+
+      private:
+         virtual const CHAR *getIntrCMDName() ;
    };
+
+   class _rtnSnapshotSystemInner : public _rtnSnapshotInner
+   {
+      DECLARE_CMD_AUTO_REGISTER()
+
+      public:
+         _rtnSnapshotSystemInner() {}
+         virtual ~_rtnSnapshotSystemInner() {}
+
+         virtual const CHAR * name () ;
+         virtual RTN_COMMAND_TYPE type () ;
+   } ;
 
    class _rtnSnapshotContexts : public _rtnSnapshot
    {
@@ -922,11 +959,26 @@ namespace engine
 
       public:
          _rtnSnapshotContexts () ;
-         ~_rtnSnapshotContexts () ;
+         virtual ~_rtnSnapshotContexts () ;
 
          virtual const CHAR * name () ;
          virtual RTN_COMMAND_TYPE type () ;
+
+      private:
+         virtual const CHAR *getIntrCMDName() ;
    };
+
+   class _rtnSnapshotContextsInner : public _rtnSnapshotInner
+   {
+      DECLARE_CMD_AUTO_REGISTER()
+
+      public:
+         _rtnSnapshotContextsInner() {}
+         virtual ~_rtnSnapshotContextsInner() {}
+
+         virtual const CHAR * name () ;
+         virtual RTN_COMMAND_TYPE type () ;
+   } ;
 
    class _rtnSnapshotContextsCurrent : public _rtnSnapshot
    {
@@ -934,11 +986,25 @@ namespace engine
 
       public:
          _rtnSnapshotContextsCurrent () ;
-         ~_rtnSnapshotContextsCurrent () ;
+         virtual ~_rtnSnapshotContextsCurrent () ;
 
          virtual const CHAR * name () ;
          virtual RTN_COMMAND_TYPE type () ;
+
+      private:
+         virtual const CHAR *getIntrCMDName() ;
    };
+
+   class _rtnSnapshotContextsCurrentInner : public _rtnSnapshotInner
+   {
+      DECLARE_CMD_AUTO_REGISTER()
+
+      public:
+         _rtnSnapshotContextsCurrentInner() {}
+         virtual ~_rtnSnapshotContextsCurrentInner() {}
+         virtual const CHAR * name () ;
+         virtual RTN_COMMAND_TYPE type () ;
+   } ;
 
    class _rtnSnapshotDatabase : public _rtnSnapshot
    {
@@ -946,8 +1012,22 @@ namespace engine
 
       public:
          _rtnSnapshotDatabase () ;
-         ~_rtnSnapshotDatabase () ;
+         virtual ~_rtnSnapshotDatabase () ;
 
+         virtual const CHAR * name () ;
+         virtual RTN_COMMAND_TYPE type () ;
+
+      private:
+         virtual const CHAR *getIntrCMDName() ;
+   };
+
+   class _rtnSnapshotDatabaseInner : public _rtnSnapshotInner
+   {
+      DECLARE_CMD_AUTO_REGISTER()
+
+      public:
+         _rtnSnapshotDatabaseInner () {}
+         virtual ~_rtnSnapshotDatabaseInner () {}
          virtual const CHAR * name () ;
          virtual RTN_COMMAND_TYPE type () ;
    };
@@ -958,8 +1038,22 @@ namespace engine
 
       public:
          _rtnSnapshotCollections () ;
-         ~_rtnSnapshotCollections () ;
+         virtual ~_rtnSnapshotCollections () ;
 
+         virtual const CHAR * name () ;
+         virtual RTN_COMMAND_TYPE type () ;
+
+      private:
+         virtual const CHAR *getIntrCMDName() ;
+   };
+
+   class _rtnSnapshotCollectionsInner : public _rtnSnapshotInner
+   {
+      DECLARE_CMD_AUTO_REGISTER()
+
+      public:
+         _rtnSnapshotCollectionsInner () {}
+         virtual ~_rtnSnapshotCollectionsInner () {}
          virtual const CHAR * name () ;
          virtual RTN_COMMAND_TYPE type () ;
    };
@@ -970,19 +1064,33 @@ namespace engine
 
       public:
          _rtnSnapshotCollectionSpaces () ;
-         ~_rtnSnapshotCollectionSpaces () ;
+         virtual ~_rtnSnapshotCollectionSpaces () ;
 
+         virtual const CHAR * name () ;
+         virtual RTN_COMMAND_TYPE type () ;
+
+      private:
+         virtual const CHAR *getIntrCMDName() ;
+   };
+
+   class _rtnSnapshotCollectionSpacesInner : public _rtnSnapshotInner
+   {
+      DECLARE_CMD_AUTO_REGISTER()
+
+      public:
+         _rtnSnapshotCollectionSpacesInner () {}
+         virtual ~_rtnSnapshotCollectionSpacesInner () {}
          virtual const CHAR * name () ;
          virtual RTN_COMMAND_TYPE type () ;
    };
 
-   class _rtnSnapshotReset : public _rtnSnapshot
+   class _rtnSnapshotReset : public _rtnSnapshotInner
    {
       DECLARE_CMD_AUTO_REGISTER()
 
       public:
          _rtnSnapshotReset () ;
-         ~_rtnSnapshotReset () ;
+         virtual ~_rtnSnapshotReset () ;
 
          virtual const CHAR * name () ;
          virtual RTN_COMMAND_TYPE type () ;
@@ -994,8 +1102,22 @@ namespace engine
 
       public:
          _rtnSnapshotSessions () ;
-         ~_rtnSnapshotSessions () ;
+         virtual ~_rtnSnapshotSessions () ;
 
+         virtual const CHAR * name () ;
+         virtual RTN_COMMAND_TYPE type () ;
+
+      private:
+         virtual const CHAR *getIntrCMDName() ;
+   };
+
+   class _rtnSnapshotSessionsInner : public _rtnSnapshotInner
+   {
+      DECLARE_CMD_AUTO_REGISTER()
+
+      public:
+         _rtnSnapshotSessionsInner () {}
+         virtual ~_rtnSnapshotSessionsInner () {}
          virtual const CHAR * name () ;
          virtual RTN_COMMAND_TYPE type () ;
    };
@@ -1006,8 +1128,22 @@ namespace engine
 
       public:
          _rtnSnapshotSessionsCurrent () ;
-         ~_rtnSnapshotSessionsCurrent () ;
+         virtual ~_rtnSnapshotSessionsCurrent () ;
 
+         virtual const CHAR * name () ;
+         virtual RTN_COMMAND_TYPE type () ;
+
+      private:
+         virtual const CHAR *getIntrCMDName() ;
+   };
+
+   class _rtnSnapshotSessionsCurrentInner : public _rtnSnapshotInner
+   {
+      DECLARE_CMD_AUTO_REGISTER()
+
+      public:
+         _rtnSnapshotSessionsCurrentInner () {}
+         virtual ~_rtnSnapshotSessionsCurrentInner () {}
          virtual const CHAR * name () ;
          virtual RTN_COMMAND_TYPE type () ;
    };
@@ -1016,7 +1152,7 @@ namespace engine
    {
       protected:
          _rtnTest () ;
-         ~_rtnTest () ;
+         virtual ~_rtnTest () ;
       public:
          virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn, 
                               const CHAR *pMatcherBuff,
@@ -1036,7 +1172,7 @@ namespace engine
 
       public:
          _rtnTestCollection () ;
-         ~_rtnTestCollection () ;
+         virtual ~_rtnTestCollection () ;
 
          virtual const CHAR * collectionFullName () ;
          virtual const CHAR * name () ;
@@ -1049,7 +1185,7 @@ namespace engine
 
       public:
          _rtnTestCollectionspace () ;
-         ~_rtnTestCollectionspace () ;
+         virtual ~_rtnTestCollectionspace () ;
 
          virtual const CHAR * name () ;
          virtual RTN_COMMAND_TYPE type () ;
@@ -1061,7 +1197,7 @@ namespace engine
 
       public:
          _rtnSetPDLevel () ;
-         ~_rtnSetPDLevel () ;
+         virtual ~_rtnSetPDLevel () ;
 
       public:
          virtual const CHAR * name () ;
@@ -1084,7 +1220,7 @@ namespace engine
 
       public:
          _rtnTraceStart () ;
-         ~_rtnTraceStart () ;
+         virtual ~_rtnTraceStart () ;
 
          virtual const CHAR * name () ;
          virtual RTN_COMMAND_TYPE type () ;
@@ -1109,7 +1245,7 @@ namespace engine
 
       public:
          _rtnTraceResume () ;
-         ~_rtnTraceResume () ;
+         virtual ~_rtnTraceResume () ;
 
          virtual const CHAR * name () ;
          virtual RTN_COMMAND_TYPE type () ;
@@ -1129,7 +1265,7 @@ namespace engine
 
       public:
          _rtnTraceStop () ;
-         ~_rtnTraceStop () ;
+         virtual ~_rtnTraceStop () ;
 
          virtual const CHAR * name () ;
          virtual RTN_COMMAND_TYPE type () ;
@@ -1151,7 +1287,7 @@ namespace engine
 
       public:
          _rtnTraceStatus () ;
-         ~_rtnTraceStatus () ;
+         virtual ~_rtnTraceStatus () ;
 
          virtual const CHAR * name () ;
          virtual RTN_COMMAND_TYPE type () ;
@@ -1178,7 +1314,7 @@ namespace engine
 
       public:
          _rtnLoad () ;
-         ~_rtnLoad () ;
+         virtual ~_rtnLoad () ;
 
          virtual const CHAR * name () ;
          virtual RTN_COMMAND_TYPE type () ;
@@ -1229,7 +1365,7 @@ namespace engine
 
       public:
          _rtnRemoveBackup () ;
-         ~_rtnRemoveBackup () {}
+         virtual ~_rtnRemoveBackup () {}
 
       public:
          virtual const CHAR * name () { return NAME_REMOVE_BACKUP ; }

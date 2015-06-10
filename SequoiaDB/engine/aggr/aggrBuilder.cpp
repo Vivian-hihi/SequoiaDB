@@ -46,8 +46,8 @@
 #include "aggrLimit.hpp"
 #include "aggrSort.hpp"
 #include "aggrProject.hpp"
+#include "rtnDataSet.hpp"
 #include "aggrTrace.h"
-
 
 using namespace bson;
 
@@ -100,7 +100,7 @@ namespace engine
       return SDB_OK ;
    }
 
-   INT32 aggrBuilder::build( BSONObj &objs, INT32 objNum,
+   INT32 aggrBuilder::build( const BSONObj &objs, INT32 objNum,
                              const CHAR *pCLName, _pmdEDUCB *cb,
                              SINT64 &contextID )
    {
@@ -120,7 +120,7 @@ namespace engine
 
       // 1.parse the input objs and build the opti tree
       rc = buildTree( objs, objNum, pOptiTree, pContainer->ptrTable(),
-                     pContainer->paramTable(), pCLName );
+                      pContainer->paramTable(), pCLName );
       PD_RC_CHECK( rc, PDERROR,
                   "failed to build the opti tree(rc=%d)",
                   rc );
@@ -181,7 +181,7 @@ namespace engine
       goto done;
    }
 
-   INT32 aggrBuilder::buildTree( BSONObj &objs, INT32 objNum,
+   INT32 aggrBuilder::buildTree( const BSONObj &objs, INT32 objNum,
                                  _qgmOptiTreeNode *&root,
                                  _qgmPtrTable * pPtrTable,
                                  _qgmParamTable *pParamTable,
@@ -259,6 +259,256 @@ namespace engine
          rtnCB->contextDelete ( contextID, cb ) ;
          contextID = -1 ;
       }
+      goto done ;
+   }
+
+
+   INT32 _aggrCmdBase::appendObj( const BSONObj &obj,
+                                  CHAR *&pOutputBuffer,
+                                  INT32 &bufferSize,
+                                  INT32 &bufUsed,
+                                  INT32 &buffObjNum )
+   {
+      INT32 rc = SDB_OK ;
+      INT32 bufEnd = bufUsed ;
+      INT32 curUsedSize = 0 ;
+
+      bufEnd = ossRoundUpToMultipleX( bufEnd, 4 ) ;
+      curUsedSize = bufEnd + obj.objsize() ;
+      if ( curUsedSize > bufferSize )
+      {
+         INT32 newBufSize = ossRoundUpToMultipleX( curUsedSize,
+                                                   DMS_PAGE_SIZE4K ) ;
+         CHAR *pOrgBuff = pOutputBuffer ;
+         pOutputBuffer = (CHAR *)SDB_OSS_REALLOC( pOutputBuffer,
+                                                  newBufSize ) ;
+         if ( !pOutputBuffer )
+         {
+            PD_LOG( PDERROR, "Failed to realloc %d bytes memory",
+                    newBufSize ) ;
+            pOutputBuffer = pOrgBuff ;
+            rc = SDB_OOM ;
+            goto error ;
+         }
+         bufferSize = newBufSize ;
+      }
+      ossMemcpy( pOutputBuffer + bufEnd, obj.objdata(), obj.objsize() ) ;
+      bufUsed = curUsedSize ;
+      ++buffObjNum ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _aggrCmdBase::openContext( const CHAR *pObjBuff,
+                                    INT32 objNum,
+                                    const CHAR *pInnerCmd,
+                                    const BSONObj &selector,
+                                    _pmdEDUCB *cb,
+                                    SINT64 &contextID )
+   {
+      INT32 rc = SDB_OK ;
+      rtnContextDump *context = NULL ;
+      SDB_RTNCB *rtnCB = pmdGetKRCB()->getRTNCB() ;
+      SINT64 aggrContextID = -1 ;
+      BSONObj obj ;
+
+      try
+      {
+         obj = BSONObj( pObjBuff ) ;
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      rc = pmdGetKRCB()->getAggrCB()->build( obj, objNum,
+                                             pInnerCmd,
+                                             cb, aggrContextID ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to build context, rc: %d", rc ) ;
+         goto error ;
+      }
+
+      rc = rtnCB->contextNew ( RTN_CONTEXT_DUMP, (rtnContext**)&context,
+                               contextID, cb ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG ( PDERROR, "Failed to create new context, rc: %d", rc ) ;
+         goto error ;
+      }
+
+      rc = context->open( selector, BSONObj() ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to open dump context, rc: %d", rc ) ;
+         goto error ;
+      }
+
+      /// dump data
+      {
+         rtnDataSet ds( aggrContextID, cb ) ;
+         while( TRUE )
+         {
+            rc = ds.next( obj ) ;
+            if ( SDB_OK == rc )
+            {
+               rc = context->monAppend( obj ) ;
+               if ( SDB_OK != rc )
+               {
+                  PD_LOG( PDERROR, "Failed to append obj to context, rc: %d",
+                          rc ) ;
+                  goto error ;
+               }
+            }
+            else if ( SDB_DMS_EOC == rc )
+            {
+               aggrContextID = -1 ;
+               rc = SDB_OK ;
+               break ;
+            }
+            else
+            {
+               PD_LOG( PDERROR, "Failed to get next obj, rc: %d", rc ) ;
+               goto error ;
+            }
+         }
+      }
+
+   done:
+      if ( -1 != aggrContextID )
+      {
+         rtnCB->contextDelete ( aggrContextID, cb ) ;
+         aggrContextID = -1 ;
+      }
+      return rc ;
+   error:
+      if ( -1 != contextID )
+      {
+         rtnCB->contextDelete ( contextID, cb ) ;
+         contextID = -1 ;
+      }
+      goto done ;
+   }
+
+   INT32 _aggrCmdBase::parseUserAggr( const BSONObj &hint,
+                                      vector<BSONObj> &vecObj )
+   {
+      INT32 rc = SDB_OK ;
+
+      try
+      {
+         BSONElement e = hint.getField( FIELD_NAME_SYS_AGGR ) ;
+         if ( e.eoo() )
+         {
+            goto done ;
+         }
+         else if ( Object == e.type() )
+         {
+            vecObj.push_back( e.embeddedObject() ) ;
+         }
+         else if ( Array != e.type() )
+         {
+            PD_LOG( PDERROR, "User aggr must be Array" ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+         else
+         {
+            BSONObjIterator it( e.embeddedObject() ) ;
+            while( it.more() )
+            {
+               e = it.next() ;
+               if ( Object != e.type() )
+               {
+                  PD_LOG( PDERROR, "User aggr must be obj" ) ;
+                  rc = SDB_INVALIDARG ;
+                  goto error ;
+               }
+               vecObj.push_back( e.embeddedObject() ) ;
+            }
+         }
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Parse user define aggr occur exception: %s",
+                 e.what() ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _aggrCmdBase::parseMatcher( const BSONObj &query,
+                                     BSONObj &nodesMatcher,
+                                     BSONObj &newMatcher,
+                                     BOOLEAN ignoreNodeParam,
+                                     BOOLEAN ignoreCtrlParam )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObjBuilder matcherBuilder ;
+      BSONObjBuilder nodesCondBuilder ;
+
+      try
+      {
+         BSONObjIterator iter( query ) ;
+         while( iter.more() )
+         {
+            BSONElement ele = iter.next() ;
+
+            if ( !ignoreNodeParam && (
+                 0 == ossStrcasecmp( ele.fieldName(), FIELD_NAME_GROUPID ) ||
+                 0 == ossStrcasecmp( ele.fieldName(), FIELD_NAME_GROUPNAME ) ||
+                 0 == ossStrcasecmp( ele.fieldName(), FIELD_NAME_GROUPS ) ||
+                 0 == ossStrcasecmp( ele.fieldName(), FIELD_NAME_NODEID ) ||
+                 0 == ossStrcasecmp( ele.fieldName(), FIELD_NAME_HOST ) ||
+                 0 == ossStrcasecmp( ele.fieldName(), PMD_OPTION_SVCNAME ) ||
+                 0 == ossStrcasecmp( ele.fieldName(), FIELD_NAME_SERVICE_NAME )
+                ) )
+            {
+               nodesCondBuilder.append( ele ) ;
+            }
+            else if ( !ignoreCtrlParam && (
+                      0 == ossStrcasecmp( ele.fieldName(),
+                                          FIELD_NAME_NODE_SELECT ) ||
+                      0 == ossStrcasecmp( ele.fieldName(),
+                                          FIELD_NAME_GLOBAL ) ||
+                      0 == ossStrcasecmp( ele.fieldName(),
+                                          FIELD_NAME_ROLE ) ||
+                      0 == ossStrcasecmp( ele.fieldName(),
+                                          FIELD_NAME_RAWDATA )
+                     ) )
+            {
+               nodesCondBuilder.append( ele ) ;
+            }
+            else
+            {
+               matcherBuilder.append( ele );
+            }
+         }
+
+         newMatcher = matcherBuilder.obj() ;
+         nodesMatcher = nodesCondBuilder.obj() ;
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Occur unexpected error:%s", e.what() ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
       goto done ;
    }
 

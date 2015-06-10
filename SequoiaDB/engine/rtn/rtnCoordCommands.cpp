@@ -797,6 +797,7 @@ namespace engine
    INT32 rtnCoordCommand::executeOnNodes( MsgHeader *pMsg,
                                           pmdEDUCB *cb,
                                           rtnCoordCtrlParam &ctrlParam,
+                                          UINT32 mask,
                                           ROUTE_RC_MAP faileds,
                                           rtnContextCoord **ppContext,
                                           BOOLEAN openEmptyContext,
@@ -830,14 +831,31 @@ namespace engine
       pFilterObj = rtnCoordGetFilterByID( ctrlParam._filterID, queryOption ) ;
       pSrcFilterObjData = pFilterObj->objdata() ;
       /// 3. parse control param
-      rc = rtnCoordParseControlParam( *pFilterObj, ctrlParam, &newFilterObj ) ;
+      rc = rtnCoordParseControlParam( *pFilterObj, ctrlParam, mask,
+                                      &newFilterObj ) ;
       PD_RC_CHECK( rc, PDERROR, "prase control param failed, rc: %d", rc ) ;
       *pFilterObj = newFilterObj ;
 
       /// 4. parse groups
-      rc = rtnCoordGetAllGroupList( cb, allGroupLst ) ;
+      rc = rtnCoordGetAllGroupList( cb, allGroupLst, NULL,
+                                    !ctrlParam._role[ SDB_ROLE_CATALOG ],
+                                    !ctrlParam._role[ SDB_ROLE_COORD ] ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to get all group list, rc: %d",
                    rc ) ;
+      if ( !ctrlParam._role[ SDB_ROLE_DATA ] )
+      {
+         CoordGroupList::iterator itGrp = allGroupLst.begin() ;
+         while( itGrp != allGroupLst.end() )
+         {
+            if ( itGrp->second >= DATA_GROUP_ID_BEGIN &&
+                 itGrp->second <= DATA_GROUP_ID_END )
+            {
+               allGroupLst.erase( itGrp++ ) ;
+               continue ;
+            }
+            ++itGrp ;
+         }
+      }
       if ( !pFilterObj->isEmpty() )
       {
          rc = rtnCoordParseGroupList( cb, *pFilterObj, groupLst,
@@ -1009,13 +1027,14 @@ namespace engine
       rtnCoordCtrlParam ctrlParam ;
       rtnContextCoord *pContext = NULL ;
       ROUTE_RC_MAP failedNodes ;
+      UINT32 mask = _getMask() ;
 
       contextID = -1 ;
       ctrlParam._isGlobal = TRUE ;
       ctrlParam._filterID = _getGroupMatherIndex() ;
       ctrlParam._emptyFilterSel = _nodeSelWhenNoFilter() ;
 
-      rc = executeOnNodes( pMsg, cb, ctrlParam, failedNodes,
+      rc = executeOnNodes( pMsg, cb, ctrlParam, mask, failedNodes,
                            _useContext() ? &pContext : NULL,
                            FALSE, NULL, NULL ) ;
       if ( rc )
@@ -1024,7 +1043,10 @@ namespace engine
          {
             rc = SDB_INVALIDARG ;
          }
-         PD_LOG( PDERROR, "Execute on nodes failed, rc: %d", rc ) ;
+         else
+         {
+            PD_LOG( PDERROR, "Execute on nodes failed, rc: %d", rc ) ;
+         }
          goto error ;
       }
 
@@ -1064,6 +1086,11 @@ namespace engine
       return TRUE ;
    }
 
+   UINT32 rtnCoordListBackup::_getMask() const
+   {
+      return RTN_CTRL_MASK_ALL ;
+   }
+
    FILTER_BSON_ID rtnCoordRemoveBackup::_getGroupMatherIndex ()
    {
       return FILTER_ID_MATCHER ;
@@ -1084,6 +1111,11 @@ namespace engine
       return FALSE ;
    }
 
+   UINT32 rtnCoordRemoveBackup::_getMask() const
+   {
+      return ~RTN_CTRL_MASK_NODE_SELECT ;
+   }
+
    FILTER_BSON_ID rtnCoordBackupOffline::_getGroupMatherIndex ()
    {
       return FILTER_ID_MATCHER ;
@@ -1102,6 +1134,11 @@ namespace engine
    BOOLEAN rtnCoordBackupOffline::_useContext ()
    {
       return FALSE ;
+   }
+
+   UINT32 rtnCoordBackupOffline::_getMask() const
+   {
+      return ~RTN_CTRL_MASK_NODE_SELECT ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDLISTGRS_EXE, "rtnCoordCMDListGroups::execute" )
@@ -1641,536 +1678,37 @@ namespace engine
                                                rtnContextBuf *buf )
    {
       INT32 rc = SDB_OK ;
-      INT32 rcTmp = SDB_OK ;
-      pmdKRCB *pKrcb = pmdGetKRCB() ;
-      SDB_RTNCB *pRtncb = pKrcb->getRTNCB() ;
-      CoordCB *pCoordcb = pKrcb->getCoordCB() ;
-      netMultiRouteAgent *pRouteAgent = pCoordcb->getRouteAgent() ;
-      ROUTE_SET sendNodes;
-      REQUESTID_MAP successNodes;
-      ROUTE_RC_MAP failedNodes;
-      CHAR *pSnapshotReq = NULL;
-      INT32 bufferSize = 0;
-      REPLY_QUE replyQue;
-      contextID = -1;
-
-      INT32 flag = 0;
-      CHAR *pCollectionName = NULL;
-      SINT64 numToSkip = 0;
-      SINT64 numToReturn = 0;
-      CHAR *pQuery = NULL;
-      CHAR *pFieldSelector = NULL;
-      CHAR *pOrderBy = NULL;
-      CHAR *pHint = NULL;
-      BSONObj boQuery;
-      BSONObj boOrderBy;
-      BSONObj boFieldSelector;
-      BSONObj boHint;
-      BSONObj boDummy;
-      BSONObj newQuery;
+      rtnCoordCtrlParam ctrlParam ;
+      ROUTE_RC_MAP faileds ;
       rtnContextCoord *pContext = NULL ;
 
-      rc = msgExtractQuery( (CHAR*)pMsg, &flag, &pCollectionName,
-                            &numToSkip, &numToReturn, &pQuery,
-                            &pFieldSelector, &pOrderBy, &pHint );
-      PD_RC_CHECK( rc, PDERROR, "Snapshot failed, failed to parse query "
-                   "request(rc=%d)", rc ) ;
-      try
-      {
-         boQuery = BSONObj( pQuery );
-         boOrderBy = BSONObj( pOrderBy );
-         boFieldSelector = BSONObj( pFieldSelector );
-         boHint = BSONObj( pHint );
-      }
-      catch ( std::exception &e )
-      {
-         PD_RC_CHECK( SDB_INVALIDARG, PDERROR, "Snapshot failed, received "
-                      "unexpected error:%s", e.what() ) ;
-      }
-      rc = getNodes( cb, boQuery, sendNodes, newQuery ) ;
-      PD_RC_CHECK( rc, PDERROR, "Snapshot failed, failed to get node "
-                   "list(rc=%d)", rc );
-      rc = BuildRequestMsg( &pSnapshotReq, &bufferSize, flag, numToSkip,
-                            numToReturn, &newQuery, &boFieldSelector,
-                            &boOrderBy, &boHint ) ;
-      PD_RC_CHECK( rc, PDERROR, "Snapshot failed, failed to build "
-                   "requst(rc=%d)", rc ) ;
+      contextID = -1 ;
+      ctrlParam._role[ SDB_ROLE_CATALOG ] = 0 ;
 
-      rtnCoordSendRequestToNodes( pSnapshotReq, sendNodes, 
-                                  pRouteAgent, cb, successNodes,
-                                  failedNodes ) ;
-
-      rc = rtnCoordGetReply( cb, successNodes, replyQue, MSG_BS_QUERY_RES,
-                             TRUE, FALSE ) ;
-      if ( rc != SDB_OK )
+      rc = executeOnNodes( pMsg, cb, ctrlParam, RTN_CTRL_MASK_ALL,
+                           faileds, &pContext, FALSE, NULL, NULL ) ;
+      if ( rc )
       {
-         PD_LOG( PDERROR, "Failed to get the reply(rc=%d)", rc );
-      }
-
-      rcTmp = pmdGetKRCB()->getRTNCB()->contextNew( RTN_CONTEXT_COORD,
-                                                    (rtnContext**)&pContext,
-                                                    contextID, cb ) ;
-      if ( rcTmp )
-      {
-         if ( SDB_OK == rc )
+         if ( SDB_RTN_CMD_IN_LOCAL_MODE == rc )
          {
-            rc = rcTmp ;
+            rc = SDB_COORD_UNKNOWN_OP_REQ ;
          }
-         PD_LOG( PDERROR, "failed to create context(rc=%d)", rcTmp ) ;
-         goto error;
-      }
-
-      /// ignore SEQUOIADBMAINSTREAM-506 --yunwu
-      rcTmp = pContext->open( boOrderBy, BSONObj(), numToReturn, numToSkip ) ;
-      if ( rcTmp )
-      {
-         if ( SDB_OK == rc )
+         else
          {
-            rc = rcTmp ;
+            PD_LOG( PDERROR, "Execute on nodes failed, rc: %d", rc ) ;
          }
-         PD_LOG( PDERROR, "failed to open context(rc=%d)", rcTmp );
          goto error ;
       }
 
-      processReply( cb, replyQue, failedNodes, pContext ) ;
-
-      rcTmp = buildFailedNodeReply( failedNodes, pContext );
-      if ( rcTmp )
+      if ( pContext )
       {
-         if ( SDB_OK == rc )
-         {
-            rc = rcTmp ;
-         }
-         PD_LOG( PDERROR, "failed to build error reply(rc=%d)", rcTmp );
-         goto error ;
+         contextID = pContext->contextID() ;
       }
-
-   done:
-      SAFE_OSS_FREE( pSnapshotReq );
-      while ( !replyQue.empty() )
-      {
-         MsgOpReply *pReply = NULL;
-         pReply = ( MsgOpReply *)( replyQue.front() );
-         replyQue.pop();
-         SDB_OSS_FREE( pReply );
-      }
-      return rc;
-   error:
-      rtnCoordClearRequest( cb, successNodes );
-      if ( contextID >= 0 )
-      {
-         pRtncb->contextDelete( contextID, cb );
-         contextID = -1 ;
-      }
-      goto done ;
-   }
-
-   INT32 rtnCoordCMDSnapshotIntrBase::getNodes( pmdEDUCB *cb, BSONObj &query,
-                                                ROUTE_SET &nodes,
-                                                BSONObj &newQuery )
-   {
-      INT32 rc = SDB_OK;
-      UINT16 nodeID = 0;
-      BSONObj groupCond;
-      std::string strHost;
-      std::string strSvcName;
-      GROUP_VEC groupLst;
-      UINT32 i = 0;
-
-      try
-      {
-         BSONObjBuilder queryBuilder;
-         BSONObjBuilder groupCondBuilder;
-         BSONObjBuilder nodesCondBuilder;
-         BSONObjIterator iter( query );
-         while( iter.more() )
-         {
-            BSONElement beField = iter.next();
-            if ( 0 == ossStrcmp( beField.fieldName(),
-                                 CAT_GROUPID_NAME ) ||
-                0 == ossStrcmp( beField.fieldName(),
-                                FIELD_NAME_GROUPNAME ) )
-            {
-               groupCondBuilder.append( beField ) ;
-               continue ;
-            }
-            else if ( 0 == ossStrcmp( beField.fieldName(),
-                                      CAT_NODEID_NAME ) &&
-                      beField.isNumber() )
-            {
-               nodesCondBuilder.append( beField );
-               nodeID = beField.number();
-               continue;
-            }
-            else if ( 0 == ossStrcmp( beField.fieldName(),
-                                      FIELD_NAME_HOST ) &&
-                      beField.type() == String )
-            {
-               nodesCondBuilder.append( beField );
-               strHost = beField.str() ;
-               continue ;
-            }
-            else if ( 0 == ossStrcmp( beField.fieldName(),
-                                      PMD_OPTION_SVCNAME ) &&
-                      beField.type() == String )
-            {
-               nodesCondBuilder.appendAs( beField,
-                              FIELD_NAME_SERVICE"."FIELD_NAME_NAME );
-               strSvcName = beField.str();
-               continue ;
-            }
-            queryBuilder.append( beField ) ;
-         }
-         BSONObj nodesObj = nodesCondBuilder.obj();
-         if ( !nodesObj.isEmpty() )
-         {
-            groupCondBuilder.append( FIELD_NAME_GROUP,
-                              BSON( "$elemMatch" << nodesObj ) ) ;
-         }
-         newQuery = queryBuilder.obj() ;
-         groupCond = groupCondBuilder.obj();
-      }
-      catch ( std::exception &e )
-      {
-         PD_RC_CHECK( SDB_INVALIDARG, PDERROR,
-                      "Received unexpected error:%s",
-                      e.what() ) ;
-      }
-
-      rc = rtnCoordGetAllGroupList( cb, groupLst, &groupCond ) ;
-      PD_RC_CHECK( rc, PDERROR, "failed to get group list, rc: %d", rc ) ;
-
-      for ( i = 0 ; i < groupLst.size() ; i++ )
-      {
-         // ignore the catalog-group
-         if ( groupCond.isEmpty() &&
-              CATALOG_GROUPID == groupLst[i]->getGroupID() )
-         {
-            continue ;
-         }
-         const VEC_NODE_INFO *pNodeLst =
-            groupLst[i]->getGroupItem()->getNodes() ;
-         SDB_ASSERT( pNodeLst != NULL, "pNodeLst can't be NULL!" ) ;
-
-         UINT32 j = 0 ;
-         for ( j = 0 ; j < pNodeLst->size(); j++ )
-         {
-            if ( !strHost.empty() &&
-                 0 != strHost.compare((*pNodeLst)[j]._host ) )
-            {
-               continue;
-            }
-            if ( !strSvcName.empty() &&
-                 0 != strSvcName.compare(
-                    (*pNodeLst)[j]._service[MSG_ROUTE_LOCAL_SERVICE] ) )
-            {
-               continue ;
-            }
-            if ( nodeID != 0 &&
-                 nodeID != (*pNodeLst)[j]._id.columns.nodeID )
-            {
-               continue ;
-            }
-            MsgRouteID routeID = (*pNodeLst)[j]._id ;
-            routeID.columns.serviceID = MSG_ROUTE_SHARD_SERVCIE ;
-            nodes.insert( routeID.value ) ;
-         }
-      }
-
-      PD_RC_CHECK( rc, PDERROR, "Failed to get nodes list, rc: %d",
-                   rc ) ;
 
    done:
       return rc ;
    error:
       goto done ;
-   }
-
-   INT32 rtnCoordCMDSnapshotIntrBase::processReply( _pmdEDUCB * pEDUCB,
-                                                    REPLY_QUE &replyQue,
-                                                    ROUTE_RC_MAP &failedNodes,
-                                                    rtnContextCoord *pContext )
-   {
-      INT32 rc = SDB_OK;
-      SDB_ASSERT( pContext != NULL, "pContext can't be NULL!" ) ;
-
-      while( !replyQue.empty() )
-      {
-         MsgOpReply *pReply = NULL;
-         pReply = ( MsgOpReply *)( replyQue.front() );
-         replyQue.pop();
-         rc = pReply->flags;
-         if ( SDB_OK == rc )
-         {
-            if ( pReply->contextID != -1 )
-            {
-               rc = pContext->addSubContext( pReply->header.routeID,
-                                             pReply->contextID );
-               if ( rc != SDB_OK )
-               {
-                  PD_LOG ( PDERROR, "Failed to add sub-context(rc=%d)",
-                           rc );
-               }
-            }
-            else
-            {
-               rc = SDB_SYS;
-               PD_LOG( PDERROR, "node return invalid contextID(%lld)",
-                       pReply->contextID ) ;
-            }
-         }
-         if ( rc != SDB_OK )
-         {
-            PD_LOG( PDERROR,
-                    "Failed to process reply"
-                    "(groupID=%u, nodeID=%u, serviceID=%u, rc=%d)",
-                    pReply->header.routeID.columns.groupID,
-                    pReply->header.routeID.columns.nodeID,
-                    pReply->header.routeID.columns.serviceID,
-                    rc );
-            failedNodes[ pReply->header.routeID.value ] = rc ;
-         }
-         SDB_OSS_FREE( pReply );
-      }
-
-      return SDB_OK;
-   }
-
-   INT32 rtnCoordCMDSnapshotIntrBase::buildFailedNodeReply( ROUTE_RC_MAP &failedNodes,
-                                                            rtnContext *pContext )
-   {
-      INT32 rc = SDB_OK;
-      SDB_ASSERT( pContext != NULL, "pContext can't be NULL!" ) ;
-
-      CoordCB *pCoordcb = pmdGetKRCB()->getCoordCB();
-      ROUTE_RC_MAP::iterator iter = failedNodes.begin();
-      while ( iter != failedNodes.end() )
-      {
-         try
-         {
-            MsgRouteID routeID;
-            routeID.value = iter->first;
-            CoordGroupInfoPtr groupInfo;
-            std::string strHostName;
-            std::string strServiceName;
-            std::string strNodeName;
-            BSONObj errObj;
-            rc = pCoordcb->getGroupInfo( routeID.columns.groupID,
-                                       groupInfo );
-            PD_CHECK( SDB_OK == rc, rc, save, PDERROR,
-                     "failed to get group info(rc=%d)",
-                        rc );
-            routeID.columns.serviceID = MSG_ROUTE_LOCAL_SERVICE;
-            rc = groupInfo->getGroupItem()->getNodeInfo( routeID, strHostName,
-                                                         strServiceName );
-            if ( rc != SDB_OK )
-            {
-               rc = SDB_CAT_NODE_NOT_FOUND;
-            }
-            PD_CHECK( SDB_OK == rc, rc, save, PDERROR,
-                     "failed to get node info(rc=%d)",
-                     rc );
-   save:
-            strNodeName = strHostName + ":" + strServiceName;
-            errObj = BSON( FIELD_NAME_ERROR_NODES
-                           << BSON( FIELD_NAME_NODE_NAME << strNodeName
-                                    << FIELD_NAME_RCFLAG << iter->second ));
-            rc = pContext->append( errObj );
-            PD_RC_CHECK( rc, PDERROR,
-                        "failed to append the error info" );
-         }
-         catch( std::exception &e )
-         {
-            PD_RC_CHECK( SDB_SYS, PDERROR,
-                        "recieved unexpected error:%s",
-                        e.what() );
-         }
-         ++iter;
-      }
-   done:
-      return SDB_OK;
-   error:
-      goto done;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDSSDBINTR_BUILDREQMSG, "rtnCoordCMDSnapshotDBIntr::BuildRequestMsg" )
-   INT32 rtnCoordCMDSnapshotDBIntr::BuildRequestMsg  ( CHAR **ppBuffer,
-                                                       INT32 *bufferSize,
-                                                       SINT32 flag,
-                                                       SINT64 numToSkip,
-                                                       SINT64 numToReturn,
-                                                       bson::BSONObj *query,
-                                                       bson::BSONObj *fieldSelector,
-                                                       bson::BSONObj *orderBy,
-                                                       bson::BSONObj *hint )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB_RTNCOCMDSSDBINTR_BUILDREQMSG ) ;
-      rc = msgBuildQueryMsg( ppBuffer, bufferSize, COORD_CMD_SNAPSHOTDATABASE,
-                             flag, 0, numToSkip, numToReturn, query,
-                             fieldSelector, orderBy, hint ) ;
-      PD_TRACE_EXITRC ( SDB_RTNCOCMDSSDBINTR_BUILDREQMSG, rc ) ;
-      return rc ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDSSSYSINTR_BUILDREQMSG, "rtnCoordCMDSnapshotSysIntr::BuildRequestMsg" )
-   INT32 rtnCoordCMDSnapshotSysIntr::BuildRequestMsg  ( CHAR **ppBuffer,
-                                                        INT32 *bufferSize,
-                                                        SINT32 flag,
-                                                        SINT64 numToSkip,
-                                                        SINT64 numToReturn,
-                                                        bson::BSONObj *query,
-                                                        bson::BSONObj *fieldSelector,
-                                                        bson::BSONObj *orderBy,
-                                                        bson::BSONObj *hint )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB_RTNCOCMDSSSYSINTR_BUILDREQMSG ) ;
-      rc = msgBuildQueryMsg( ppBuffer, bufferSize, COORD_CMD_SNAPSHOTSYSTEM,
-                             flag, 0, numToSkip, numToReturn, query,
-                             fieldSelector, orderBy, hint ) ;
-      PD_TRACE_EXITRC ( SDB_RTNCOCMDSSSYSINTR_BUILDREQMSG, rc ) ;
-      return rc ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDSSCLINTR_BUILDREQMSG, "rtnCoordCMDSnapshotClIntr::BuildRequestMsg" )
-   INT32 rtnCoordCMDSnapshotClIntr::BuildRequestMsg  ( CHAR **ppBuffer,
-                                                       INT32 *bufferSize,
-                                                       SINT32 flag,
-                                                       SINT64 numToSkip,
-                                                       SINT64 numToReturn,
-                                                       bson::BSONObj *query,
-                                                       bson::BSONObj *fieldSelector,
-                                                       bson::BSONObj *orderBy,
-                                                       bson::BSONObj *hint )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB_RTNCOCMDSSCLINTR_BUILDREQMSG ) ;
-      rc = msgBuildQueryMsg( ppBuffer, bufferSize, COORD_CMD_SNAPSHOTCOLLECTIONS,
-                             flag, 0, numToSkip, numToReturn, query,
-                             fieldSelector, orderBy, hint ) ;
-      PD_TRACE_EXITRC ( SDB_RTNCOCMDSSCLINTR_BUILDREQMSG, rc ) ;
-      return rc ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDSSCSINTR_BUILDREQMSG, "rtnCoordCMDSnapshotCsIntr::BuildRequestMsg" )
-   INT32 rtnCoordCMDSnapshotCsIntr::BuildRequestMsg  ( CHAR **ppBuffer,
-                                                       INT32 *bufferSize,
-                                                       SINT32 flag,
-                                                       SINT64 numToSkip,
-                                                       SINT64 numToReturn,
-                                                       bson::BSONObj *query,
-                                                       bson::BSONObj *fieldSelector,
-                                                       bson::BSONObj *orderBy,
-                                                       bson::BSONObj *hint )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB_RTNCOCMDSSCSINTR_BUILDREQMSG ) ;
-      rc = msgBuildQueryMsg( ppBuffer, bufferSize, COORD_CMD_SNAPSHOTCOLLECTIONSPACES,
-                             flag, 0, numToSkip, numToReturn, query,
-                             fieldSelector, orderBy, hint ) ;
-      PD_TRACE_EXITRC ( SDB_RTNCOCMDSSCSINTR_BUILDREQMSG, rc ) ;
-      return rc ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDSSCTXINTR_BUILDREQMSG, "rtnCoordCMDSnapshotCtxIntr::BuildRequestMsg" )
-   INT32 rtnCoordCMDSnapshotCtxIntr::BuildRequestMsg  ( CHAR **ppBuffer,
-                                                        INT32 *bufferSize,
-                                                        SINT32 flag,
-                                                        SINT64 numToSkip,
-                                                        SINT64 numToReturn,
-                                                        bson::BSONObj *query,
-                                                        bson::BSONObj *fieldSelector,
-                                                        bson::BSONObj *orderBy,
-                                                        bson::BSONObj *hint )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB_RTNCOCMDSSCTXINTR_BUILDREQMSG ) ;
-      rc = msgBuildQueryMsg( ppBuffer, bufferSize, COORD_CMD_SNAPSHOTCONTEXTS,
-                             flag, 0, numToSkip, numToReturn, query,
-                             fieldSelector, orderBy, hint ) ;
-      PD_TRACE_EXITRC ( SDB_RTNCOCMDSSCTXINTR_BUILDREQMSG, rc ) ;
-      return rc ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDSSCTXCURINTR_BUILDREQMSG, "rtnCoordCMDSnapshotCtxCurIntr::BuildRequestMsg" )
-   INT32 rtnCoordCMDSnapshotCtxCurIntr::BuildRequestMsg  ( CHAR **ppBuffer,
-                                                           INT32 *bufferSize,
-                                                           SINT32 flag,
-                                                           SINT64 numToSkip,
-                                                           SINT64 numToReturn,
-                                                           bson::BSONObj *query,
-                                                           bson::BSONObj *fieldSelector,
-                                                           bson::BSONObj *orderBy,
-                                                           bson::BSONObj *hint )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB_RTNCOCMDSSCTXCURINTR_BUILDREQMSG ) ;
-      rc = msgBuildQueryMsg( ppBuffer, bufferSize, COORD_CMD_SNAPSHOTCONTEXTSCUR,
-                             flag, 0, numToSkip, numToReturn, query,
-                             fieldSelector, orderBy, hint ) ;
-      PD_TRACE_EXITRC ( SDB_RTNCOCMDSSCTXCURINTR_BUILDREQMSG, rc ) ;
-      return rc ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDSSSESSIONINTR_BUILDREQMSG, "rtnCoordCMDSnapshotSessionIntr::BuildRequestMsg" )
-   INT32 rtnCoordCMDSnapshotSessionIntr::BuildRequestMsg  ( CHAR **ppBuffer,
-                                                            INT32 *bufferSize,
-                                                            SINT32 flag,
-                                                            SINT64 numToSkip,
-                                                            SINT64 numToReturn,
-                                                            bson::BSONObj *query,
-                                                            bson::BSONObj *fieldSelector,
-                                                            bson::BSONObj *orderBy,
-                                                            bson::BSONObj *hint )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB_RTNCOCMDSSSESSIONINTR_BUILDREQMSG ) ;
-      rc = msgBuildQueryMsg( ppBuffer, bufferSize, COORD_CMD_SNAPSHOTSESSIONS,
-                             flag, 0, numToSkip, numToReturn, query,
-                             fieldSelector, orderBy, hint ) ;
-      PD_TRACE_EXITRC ( SDB_RTNCOCMDSSSESSIONINTR_BUILDREQMSG, rc ) ;
-      return rc ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDSSSESSIONCURINTR_BUILDREQMSG, "rtnCoordCMDSnapshotSessionCurIntr::BuildRequestMsg" )
-   INT32 rtnCoordCMDSnapshotSessionCurIntr::BuildRequestMsg  ( CHAR **ppBuffer,
-                                                               INT32 *bufferSize,
-                                                               SINT32 flag,
-                                                               SINT64 numToSkip,
-                                                               SINT64 numToReturn,
-                                                               bson::BSONObj *query,
-                                                               bson::BSONObj *fieldSelector,
-                                                               bson::BSONObj *orderBy,
-                                                               bson::BSONObj *hint )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB_RTNCOCMDSSSESSIONCURINTR_BUILDREQMSG ) ;
-      rc = msgBuildQueryMsg( ppBuffer, bufferSize, COORD_CMD_SNAPSHOTSESSIONSCUR,
-                             flag, 0, numToSkip, numToReturn, query,
-                             fieldSelector, orderBy, hint );
-      PD_TRACE_EXITRC ( SDB_RTNCOCMDSSSESSIONCURINTR_BUILDREQMSG, rc ) ;
-      return rc ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDSSRESET_BUILDREQMSG, "rtnCoordCMDSnapshotReset::BuildRequestMsg" )
-   INT32 rtnCoordCMDSnapshotReset::BuildRequestMsg  ( CHAR **ppBuffer,
-                                                      INT32 *bufferSize,
-                                                      SINT32 flag,
-                                                      SINT64 numToSkip,
-                                                      SINT64 numToReturn,
-                                                      bson::BSONObj *query,
-                                                      bson::BSONObj *fieldSelector,
-                                                      bson::BSONObj *orderBy,
-                                                      bson::BSONObj *hint )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB_RTNCOCMDSSRESET_BUILDREQMSG ) ;
-      rc = msgBuildQueryMsg( ppBuffer, bufferSize, COORD_CMD_SNAPSHOTRESET,
-                             flag, 0, numToSkip, numToReturn, query,
-                             fieldSelector, orderBy, hint );
-      PD_TRACE_EXITRC ( SDB_RTNCOCMDSSRESET_BUILDREQMSG, rc ) ;
-      return rc ;
    }
 
    // snapshot collection operation. Basically this operation from coord does
@@ -5504,8 +5042,8 @@ namespace engine
                BSONElement beOldDef =
                   iter->second.getField( IXM_FIELD_NAME_INDEX_DEF );
                PD_CHECK ( beOldDef.type() == Object, SDB_INVALIDARG, error,
-                       PDERROR, "Get index failed, failed to get the field(%s)",
-                       IXM_FIELD_NAME_INDEX_DEF ) ;
+                          PDERROR, "Get index failed, failed to get the field(%s)",
+                          IXM_FIELD_NAME_INDEX_DEF ) ;
                boOldDef = beOldDef.embeddedObject();
                while( newIter.more() )
                {
@@ -6103,7 +5641,7 @@ namespace engine
       ctrlParam._emptyFilterSel = NODE_SEL_ALL ;
       contextID = -1 ;
 
-      rc = executeOnNodes( pMsg, cb, ctrlParam, faileds ) ;
+      rc = executeOnNodes( pMsg, cb, ctrlParam, RTN_CTRL_MASK_ALL, faileds ) ;
       if ( SDB_RTN_CMD_IN_LOCAL_MODE == rc )
       {
          /// submmit to local command
@@ -6133,407 +5671,162 @@ namespace engine
       goto done ;
    }
 
+   INT32 rtnCoordAggrCmdBase::appendObjs( const CHAR *pInputBuffer,
+                                          CHAR *&pOutputBuffer,
+                                          INT32 &bufferSize,
+                                          INT32 &bufUsed,
+                                          INT32 &buffObjNum )
+   {
+      INT32 rc = SDB_OK ;
+      const CHAR *pEnd = pInputBuffer ;
+      string strline ;
+      BSONObj obj ;
+
+      while ( *pEnd != '\0' )
+      {
+         strline.clear() ;
+         while( *pEnd && *pEnd != '\r' && *pEnd != '\n' )
+         {
+            strline += *pEnd ;
+            ++pEnd ;
+         }
+
+         if ( strline.empty() )
+         {
+            ++pEnd ;
+            continue ;
+         }
+
+         rc = fromjson( strline, obj ) ;
+         PD_RC_CHECK( rc, PDERROR, "Parse string[%s] to json failed, rc: %d",
+                      strline.c_str(), rc ) ;
+
+         rc = appendObj( obj, pOutputBuffer, bufferSize,
+                         bufUsed, buffObjNum ) ;
+         PD_RC_CHECK( rc, PDERROR, "Append obj failed, rc: %d", rc ) ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 rtnCoordCMDSnapShotBase::execute( MsgHeader *pMsg,
                                            pmdEDUCB *cb,
                                            INT64 &contextID,
                                            rtnContextBuf *buf )
    {
-      INT32 rc = SDB_OK;
-      INT32 objNum = 0;
-      BSONObj objs;
-      CHAR *pCMDName = NULL;
-      CHAR *pObjsBuffer = NULL;
-      SDB_RTNCB *rtnCB = pmdGetKRCB()->getRTNCB() ;
-      BSONObj selector ;
-
-      contextID = -1;
-
-      rc = generateAggrObjs( (CHAR*)pMsg, pObjsBuffer,
-                             objNum, pCMDName, selector );
-      PD_RC_CHECK( rc, PDERROR,
-                   "failed to generate aggregation object(rc=%d)",
-                   rc );
-      SDB_ASSERT( pObjsBuffer != NULL, "pObjsBuffer can't be NULL!" );
-
-      try
-      {
-         objs = BSONObj( pObjsBuffer );
-      }
-      catch ( std::exception &e )
-      {
-         PD_RC_CHECK( rc, PDERROR,
-                      "failed to execute snapshot, received unexpecte error:%s",
-                      e.what() );
-      }
-
-      rc = openContext( objs, objNum, selector, cb, contextID ) ;
-      PD_RC_CHECK( rc, PDERROR,
-                   "failed to build snapshot context(rc=%d)",
-                   rc );
-
-   done:
-      SAFE_OSS_FREE( pObjsBuffer );
-      return rc;
-   error:
-      if ( -1 != contextID )
-      {
-         rtnCB->contextDelete ( contextID, cb ) ;
-         contextID = -1 ;
-      }
-      goto done;
-   }
-
-   INT32 rtnCoordCMDSnapShotBase::parseMatcher( BSONObj &query,
-                                                BSONObj &nodesMatcher,
-                                                BSONObj &newMatcher )
-   {
-      INT32 rc = SDB_OK;
-      try
-      {
-         BSONObjBuilder matcherBuilder;
-         BSONObjBuilder nodesCondBuilder;
-         BSONObjIterator iter( query );
-         while( iter.more() )
-         {
-            BSONElement beField = iter.next();
-            if ( 0 == ossStrcmp( beField.fieldName(),
-                                 CAT_GROUPID_NAME ) ||
-                 0 == ossStrcmp( beField.fieldName(),
-                                 FIELD_NAME_GROUPNAME ))
-            {
-               nodesCondBuilder.append( beField );
-            }
-            else if ( 0 == ossStrcmp( beField.fieldName(),
-                                      CAT_NODEID_NAME ) &&
-                      beField.isNumber() )
-            {
-               nodesCondBuilder.append( beField );
-            }
-            else if ( 0 == ossStrcmp( beField.fieldName(),
-                                      FIELD_NAME_HOST ) &&
-                      beField.type() == String )
-            {
-               nodesCondBuilder.append( beField );
-            }
-            else if ( 0 == ossStrcmp( beField.fieldName(),
-                                      PMD_OPTION_SVCNAME ) &&
-                      beField.type() == String )
-            {
-               nodesCondBuilder.append( beField );
-            }
-            else
-            {
-               matcherBuilder.append( beField );
-            }
-         }
-         newMatcher = matcherBuilder.obj();
-         nodesMatcher = nodesCondBuilder.obj();
-      }
-      catch ( std::exception &e )
-      {
-         PD_RC_CHECK( SDB_INVALIDARG, PDERROR,
-                      "received unexpected error:%s",
-                      e.what() );
-      }
-   done:
-      return rc;
-   error:
-      goto done;
-   }
-
-   INT32 rtnCoordCMDSnapShotBase::generateAggrObjs( CHAR *pInputBuffer,
-                                                    CHAR *&pOutputBuffer,
-                                                    INT32 &objNum,
-                                                    CHAR *&pCLName,
-                                                    BSONObj &selector   )
-   {
-      INT32 rc = SDB_OK;
-
-      BSONObj nodesMatcher;
-      BSONObj newMatcher;
-      BSONObj orderBy;
-
-      INT32 flag = 0;
-      SINT64 numToSkip = 0;
-      SINT64 numToReturn = 0;
-      CHAR *pQuery = NULL;
-      CHAR *pFieldSelector = NULL;
-      CHAR *pOrderBy = NULL;
-      CHAR *pHint = NULL;
-      INT32 addObjNum = 0;
-      INT32 bufUsed = 0;
-      INT32 bufSize = 0;
-
-      rc = msgExtractQuery( pInputBuffer, &flag, &pCLName, &numToSkip,
-                            &numToReturn, &pQuery, &pFieldSelector,
-                            &pOrderBy, &pHint ) ;
-      PD_RC_CHECK( rc, PDERROR,
-                   "failed to parse request message(rc=%d)",
-                   rc );
-
-      pOutputBuffer = (CHAR *)SDB_OSS_MALLOC( RTNCOORD_ALLO_UNIT_SIZE );
-      PD_CHECK( pOutputBuffer != NULL, SDB_OOM, error, PDERROR,
-                "malloc failed(size=%d)", RTNCOORD_ALLO_UNIT_SIZE );
-      bufSize = RTNCOORD_ALLO_UNIT_SIZE;
-
-      try
-      {
-         BSONObj query( pQuery );
-         if ( !query.isEmpty() )
-         {
-            BSONObj boNodes;
-            BSONObj boMatcher;
-            rc = parseMatcher( query, boNodes, boMatcher );
-            PD_RC_CHECK( rc, PDERROR,
-                        "failed to parse the matcher(rc=%d)", rc );
-            if ( !boNodes.isEmpty() )
-            {
-               nodesMatcher = BSON( AGGR_MATCH_PARSER_NAME << boNodes );
-            }
-            if ( !boMatcher.isEmpty() )
-            {
-               newMatcher = BSON( AGGR_MATCH_PARSER_NAME << boMatcher );
-            }
-         }
-
-         selector = BSONObj( pFieldSelector );
-
-         BSONObj boOrderBy( pOrderBy ) ;
-         if ( !boOrderBy.isEmpty() )
-         {
-            orderBy = BSON( AGGR_SORT_PARSER_NAME << boOrderBy ) ;
-         }
-      }
-      catch( std::exception &e )
-      {
-         PD_RC_CHECK( SDB_INVALIDARG, PDERROR,
-                      "received unexpected error:%s",
-                      e.what() ) ;
-      }
-      // nodesMatcher
-      if ( !nodesMatcher.isEmpty() )
-      {
-         rc = appendObj( nodesMatcher, pOutputBuffer, bufSize, bufUsed );
-         PD_RC_CHECK( rc, PDERROR,
-                     "failed to append nodes-matcher objs(rc=%d)",
-                        rc );
-         ++addObjNum;
-      }
-
-      // aggregation
-      rc = appendAggrObjs( pOutputBuffer, bufSize, addObjNum, bufUsed );
-      PD_RC_CHECK( rc, PDERROR,
-                   "failed to append aggregation operation objs(rc=%d)",
-                   rc );
-
-      // matcher
-      if ( !newMatcher.isEmpty() )
-      {
-         rc = appendObj( newMatcher, pOutputBuffer, bufSize, bufUsed );
-         PD_RC_CHECK( rc, PDERROR,
-                      "failed to append matcher objs(rc=%d)",
-                      rc );
-         ++addObjNum;
-      }
-
-      // orderBy
-      if ( !orderBy.isEmpty() )
-      {
-         rc = appendObj( orderBy, pOutputBuffer, bufSize, bufUsed );
-         PD_RC_CHECK( rc, PDERROR,
-                      "failed to append orderBy objs(rc=%d)",
-                      rc );
-         ++addObjNum;
-      }
-
-      // selector
-/*
-      if ( !selector.isEmpty() )
-      {
-         rc = appendObj( selector, pOutputBuffer, bufSize, bufUsed );
-         PD_RC_CHECK( rc, PDERROR,
-                     "failed to append selector objs(rc=%d)",
-                        rc );
-         ++addObjNum;
-      }
-*/
-      objNum = addObjNum;
-
-   done:
-      return rc;
-   error:
-      selector = BSONObj() ;
-      SAFE_OSS_FREE( pOutputBuffer );
-      goto done;
-   }
-
-   INT32 rtnCoordCMDSnapShotBase::appendObjs( const CHAR *pInputBuffer,
-                                              CHAR *&pOutputBuffer,
-                                              INT32 &bufferSize,
-                                              INT32 &addObjNum,
-                                              INT32 &bufUsed )
-   {
-   #define RTNCOORD_OBJS_BUF_SIZE      (4096+1)
-      INT32 rc = SDB_OK;
-      SDB_ASSERT( strlen( pInputBuffer ) < RTNCOORD_OBJS_BUF_SIZE,
-                  "invalid input length" );
-      CHAR szBuffer[ RTNCOORD_OBJS_BUF_SIZE ] = {0};
-      while ( *pInputBuffer != '\0' )
-      {
-         rc = rtnCoordReadALine( pInputBuffer, szBuffer );
-         PD_RC_CHECK( rc, PDERROR, "read failed(rc=%d)", rc );
-         if ( strlen(szBuffer) != 0 )
-         {
-            try
-            {
-               BSONObj obj;
-               rc = fromjson( szBuffer, obj ) ;
-               PD_RC_CHECK( rc, PDERROR,
-                            "failed to parsed the json(rc=%d)",
-                            rc );
-               rc = appendObj( obj, pOutputBuffer, bufferSize, bufUsed );
-               PD_RC_CHECK( rc, PDERROR,
-                            "failed to append the obj(rc=%d)",
-                            rc );
-               ++addObjNum;
-            }
-            catch ( std::exception &e )
-            {
-               PD_RC_CHECK( SDB_INVALIDARG, PDERROR,
-                            "received unexpected error:%s",
-                            e.what() );
-            }
-         }
-
-         if ( '\0' == *pInputBuffer )
-         {
-            break;
-         }
-         ++pInputBuffer;
-      }
-   done:
-      return rc;
-   error:
-      goto done;
-   }
-
-   INT32 rtnCoordCMDSnapShotBase::appendObj( bson::BSONObj &obj,
-                                             CHAR *&pOutputBuffer,
-                                             INT32 &bufferSize,
-                                             INT32 &bufUsed )
-   {
-      INT32 rc = SDB_OK;
-      INT32 bufEnd = bufUsed;
-      INT32 curUsedSize = 0;
-      try
-      {
-         bufEnd = ossRoundUpToMultipleX( bufEnd, 4 );
-         curUsedSize = bufEnd + obj.objsize();
-         if ( curUsedSize > bufferSize )
-         {
-            INT32 newBufSize = bufferSize;
-            while ( newBufSize < curUsedSize )
-            {
-               newBufSize += RTNCOORD_ALLO_UNIT_SIZE;
-            }
-            CHAR *pOrgBuff = pOutputBuffer ;
-            pOutputBuffer = (CHAR *)SDB_OSS_REALLOC( pOutputBuffer,
-                                                     newBufSize ) ;
-            if ( !pOutputBuffer )
-            {
-               PD_LOG( PDERROR, "Failed to realloc %d bytes memory",
-                       newBufSize ) ;
-               pOutputBuffer = pOrgBuff ;
-               rc = SDB_OOM ;
-               goto error ;
-            }
-            bufferSize = newBufSize;
-         }
-         ossMemcpy( pOutputBuffer + bufEnd, obj.objdata(),
-                     obj.objsize() );
-         bufUsed = curUsedSize;
-      }
-      catch( std::exception &e )
-      {
-         PD_RC_CHECK( SDB_INVALIDARG, PDERROR,
-                      "received unexpected error:%s",
-                      e.what() );
-      }
-   done:
-      return rc;
-   error:
-      goto done;
-   }
-
-   INT32 rtnCoordCMDSnapShotBase::openContext( BSONObj &objs,
-                                               INT32 objNum,
-                                               const BSONObj &selector,
-                                               pmdEDUCB *cb,
-                                               SINT64 &contextID )
-   {
       INT32 rc = SDB_OK ;
-      rtnContextDump *context = NULL ;
       SDB_RTNCB *rtnCB = pmdGetKRCB()->getRTNCB() ;
-      SINT64 aggrContextID = -1 ;
-      BSONObj obj ;
-      rc = pmdGetKRCB()->getAggrCB()->build( objs,
-                                             objNum,
-                                             getIntrCMDName(),
-                                             cb, aggrContextID );
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to build context:%d", rc ) ;
-         goto error ;
-      }
+      CHAR *pOutBuff = NULL ;
+      INT32 buffSize = 0 ;
+      INT32 buffUsedSize = 0 ;
+      INT32 buffObjNum = 0 ;
 
-      rc = rtnCB->contextNew ( RTN_CONTEXT_DUMP, (rtnContext**)&context,
-                               contextID, cb ) ;
-      if ( SDB_OK != rc )
-      {
-         context = NULL ;
-         PD_LOG ( PDERROR, "Failed to create new context" ) ;
-         goto error ;
-      }
+      rtnQueryOptions queryOption ;
+      rtnCoordCtrlParam ctrlParam ;
+      vector< BSONObj > vecUserAggr ;
 
-      rc = context->open( selector, BSONObj() ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to open dump context:%d", rc ) ;
-         goto error ;
-      }
+      contextID = -1 ;
 
+      rc = queryOption.fromQueryMsg( (CHAR*)pMsg ) ;
+      PD_RC_CHECK( rc, PDERROR, "Extract command failed, rc: %d", rc ) ;
+
+      rc = rtnCoordParseControlParam( queryOption._query, ctrlParam,
+                                      RTN_CTRL_MASK_RAWDATA ) ;
+      PD_RC_CHECK( rc, PDERROR, "Parse control param failed, rc: %d", rc ) ;
+
+      rc = parseUserAggr( queryOption._hint, vecUserAggr ) ;
+      PD_RC_CHECK( rc, PDERROR, "Parse user define aggr[%s] failed, rc: %d",
+                   queryOption._hint.toString().c_str(), rc ) ;
+
+      if ( !ctrlParam._rawData || vecUserAggr.size() > 0 )
       {
-      rtnDataSet ds( aggrContextID, cb ) ;
-      do
-      {
-         rc = ds.next( obj ) ;
-         if ( SDB_OK == rc )
+         /// add aggr operators
+         BSONObj nodeMatcher ;
+         BSONObj newMatcher ;
+         rc = parseMatcher( queryOption._query, nodeMatcher, newMatcher ) ;
+         PD_RC_CHECK( rc, PDERROR, "Parse matcher failed, rc: %d", rc ) ;
+
+         /// add nodes matcher to the botton
+         if ( !nodeMatcher.isEmpty() )
          {
-            rc = context->monAppend( obj ) ;
-            if ( SDB_OK != rc )
-            {
-               PD_LOG( PDERROR, "failed to append obj to context:%d", rc ) ;
-               goto error ;
-            }
+            rc = appendObj( BSON( AGGR_MATCH_PARSER_NAME << nodeMatcher ),
+                            pOutBuff, buffSize, buffUsedSize,
+                            buffObjNum ) ;
+            PD_RC_CHECK( rc, PDERROR, "Append node matcher failed, rc: %d",
+                         rc ) ;
          }
-         else if ( SDB_DMS_EOC == rc )
+
+         if ( !ctrlParam._rawData )
          {
-            aggrContextID = -1 ;
-            rc = SDB_OK ;
-            break ;
+            rc = appendObjs( getInnerAggrContent(), pOutBuff, buffSize,
+                             buffUsedSize, buffObjNum ) ;
+            PD_RC_CHECK( rc, PDERROR, "Append objs[%s] failed, rc: %d",
+                         getInnerAggrContent(), rc ) ;
          }
-         else
+
+         /// add new matcher
+         if ( !newMatcher.isEmpty() )
          {
-            PD_LOG( PDERROR, "failed to get next obj:%d", rc ) ;
+            rc = appendObj( BSON( AGGR_MATCH_PARSER_NAME << newMatcher ),
+                            pOutBuff, buffSize, buffUsedSize, buffObjNum ) ;
+            PD_RC_CHECK( rc, PDERROR, "Append new matcher failed, rc: %d",
+                         rc ) ;
+         }
+
+         /// order by
+         if ( !queryOption._orderBy.isEmpty() )
+         {
+            rc = appendObj( BSON( AGGR_SORT_PARSER_NAME <<
+                                  queryOption._orderBy ),
+                            pOutBuff, buffSize, buffUsedSize, buffObjNum ) ;
+            PD_RC_CHECK( rc, PDERROR, "Append order by failed, rc: %d",
+                         rc ) ;
+         }
+
+         for ( UINT32 i = 0 ; i < vecUserAggr.size() ; ++i )
+         {
+            rc = appendObj( vecUserAggr[ i ], pOutBuff, buffSize,
+                            buffUsedSize, buffObjNum ) ;
+            PD_RC_CHECK( rc, PDERROR, "Append user define aggr[%s] failed, "
+                         "rc: %d", vecUserAggr[ i ].toString().c_str(),
+                         rc ) ;
+         }
+
+         /// open context
+         rc = openContext( pOutBuff, buffObjNum, getIntrCMDName(),
+                           queryOption._selector, cb, contextID ) ;
+         PD_RC_CHECK( rc, PDERROR, "Open context failed, rc: %d", rc ) ;
+      }
+      else
+      {
+         CoordCB *pCoordCB = pmdGetKRCB()->getCoordCB() ;
+         rtnCoordProcesserFactory *pCmdFactor = NULL ;
+         rtnCoordCommand *pCmd = NULL ;
+         pCmdFactor = pCoordCB->getProcesserFactory() ;
+         pCmd = pCmdFactor->getCommandProcesser( getIntrCMDName() ) ;
+         if ( !pCmd )
+         {
+            PD_LOG( PDERROR, "Get command[%s] failed", getIntrCMDName() ) ;
+            rc = SDB_SYS ;
             goto error ;
          }
-      } while ( TRUE ) ;
+         rc = pCmd->execute( pMsg, cb, contextID, buf ) ;
+         if ( rc )
+         {
+            goto error ;
+         }
       }
+
    done:
-      if ( -1 != aggrContextID )
+      if ( pOutBuff )
       {
-         rtnCB->contextDelete ( aggrContextID, cb ) ;
-         aggrContextID = -1 ;
+         SDB_OSS_FREE( pOutBuff ) ;
+         pOutBuff = NULL ;
+         buffSize = 0 ;
+         buffUsedSize = 0 ;
       }
       return rc ;
    error:
@@ -6542,119 +5835,87 @@ namespace engine
          rtnCB->contextDelete ( contextID, cb ) ;
          contextID = -1 ;
       }
-      goto done ;
+      goto done;
    }
 
-   INT32 rtnCoordCMDSnapshotDataBase::appendAggrObjs( CHAR *&pOutputBuffer,
-                                                      INT32 &bufferSize,
-                                                      INT32 &addObjNum,
-                                                      INT32 &bufUsed )
-   {
-      return appendObjs( RTNCOORD_SNAPSHOTDB_INPUT, pOutputBuffer,
-                         bufferSize, addObjNum, bufUsed );
-   }
-
-   const CHAR * rtnCoordCMDSnapshotDataBase::getIntrCMDName()
+   const CHAR* rtnCoordCMDSnapshotDataBase::getIntrCMDName()
    {
       return COORD_CMD_SNAPSHOTDBINTR;
    }
 
-   INT32 rtnCoordCMDSnapshotSystem::appendAggrObjs( CHAR *&pOutputBuffer,
-                                                    INT32 &bufferSize,
-                                                    INT32 &addObjNum,
-                                                    INT32 &bufUsed )
+   const CHAR* rtnCoordCMDSnapshotDataBase::getInnerAggrContent()
    {
-      return appendObjs( RTNCOORD_SNAPSHOTSYS_INPUT, pOutputBuffer,
-                         bufferSize, addObjNum, bufUsed );
+      return RTNCOORD_SNAPSHOTDB_INPUT ;
    }
 
-   const CHAR * rtnCoordCMDSnapshotSystem::getIntrCMDName()
+   const CHAR* rtnCoordCMDSnapshotSystem::getIntrCMDName()
    {
       return COORD_CMD_SNAPSHOTSYSINTR;
    }
 
-   INT32 rtnCoordCMDSnapshotCollections::appendAggrObjs( CHAR *&pOutputBuffer,
-                                                         INT32 &bufferSize,
-                                                         INT32 &addObjNum,
-                                                         INT32 &bufUsed )
+   const CHAR* rtnCoordCMDSnapshotSystem::getInnerAggrContent()
    {
-      return appendObjs( RTNCOORD_SNAPSHOTCL_INPUT, pOutputBuffer,
-                         bufferSize, addObjNum, bufUsed ) ;
+      return RTNCOORD_SNAPSHOTSYS_INPUT ;
    }
 
-   const CHAR * rtnCoordCMDSnapshotCollections::getIntrCMDName()
+   const CHAR* rtnCoordCMDSnapshotCollections::getIntrCMDName()
    {
       return COORD_CMD_SNAPSHOTCLINTR;
    }
 
-   INT32 rtnCoordCMDSnapshotSpaces::appendAggrObjs( CHAR *&pOutputBuffer,
-                                                    INT32 &bufferSize,
-                                                    INT32 &addObjNum,
-                                                    INT32 &bufUsed )
+   const CHAR* rtnCoordCMDSnapshotCollections::getInnerAggrContent()
    {
-      return appendObjs( RTNCOORD_SNAPSHOTCS_INPUT, pOutputBuffer,
-                        bufferSize, addObjNum, bufUsed );
+      return RTNCOORD_SNAPSHOTCL_INPUT ;
    }
 
-   const CHAR * rtnCoordCMDSnapshotSpaces::getIntrCMDName()
+   const CHAR* rtnCoordCMDSnapshotSpaces::getIntrCMDName()
    {
       return COORD_CMD_SNAPSHOTCSINTR;
    }
 
-   INT32 rtnCoordCMDSnapshotContexts::appendAggrObjs( CHAR *&pOutputBuffer,
-                                                      INT32 &bufferSize,
-                                                      INT32 &addObjNum,
-                                                      INT32 &bufUsed )
+   const CHAR* rtnCoordCMDSnapshotSpaces::getInnerAggrContent()
    {
-      return appendObjs( RTNCOORD_SNAPSHOTCONTEXTS_INPUT, pOutputBuffer,
-                        bufferSize, addObjNum, bufUsed );
+      return RTNCOORD_SNAPSHOTCS_INPUT ;
    }
 
-   const CHAR * rtnCoordCMDSnapshotContexts::getIntrCMDName()
+   const CHAR* rtnCoordCMDSnapshotContexts::getIntrCMDName()
    {
       return COORD_CMD_SNAPSHOTCTXINTR;
    }
 
-   INT32 rtnCoordCMDSnapshotContextsCur::appendAggrObjs( CHAR *&pOutputBuffer,
-                                                         INT32 &bufferSize,
-                                                         INT32 &addObjNum,
-                                                         INT32 &bufUsed )
+   const CHAR* rtnCoordCMDSnapshotContexts::getInnerAggrContent()
    {
-      return appendObjs( RTNCOORD_SNAPSHOTCONTEXTSCUR_INPUT, pOutputBuffer,
-                        bufferSize, addObjNum, bufUsed );
+      return RTNCOORD_SNAPSHOTCONTEXTS_INPUT ;
    }
 
-   const CHAR * rtnCoordCMDSnapshotContextsCur::getIntrCMDName()
+   const CHAR* rtnCoordCMDSnapshotContextsCur::getIntrCMDName()
    {
       return COORD_CMD_SNAPSHOTCTXCURINTR;
    }
 
-   INT32 rtnCoordCMDSnapshotSessions::appendAggrObjs( CHAR *&pOutputBuffer,
-                                                      INT32 &bufferSize,
-                                                      INT32 &addObjNum,
-                                                      INT32 &bufUsed )
+   const CHAR* rtnCoordCMDSnapshotContextsCur::getInnerAggrContent()
    {
-      return appendObjs( RTNCOORD_SNAPSHOTSESS_INPUT, pOutputBuffer,
-                        bufferSize, addObjNum, bufUsed );
+      return RTNCOORD_SNAPSHOTCONTEXTSCUR_INPUT ;
    }
 
-   const CHAR * rtnCoordCMDSnapshotSessions::getIntrCMDName()
+   const CHAR* rtnCoordCMDSnapshotSessions::getIntrCMDName()
    {
       return COORD_CMD_SNAPSHOTSESSINTR;
    }
 
-   INT32 rtnCoordCMDSnapshotSessionsCur::appendAggrObjs( CHAR *&pOutputBuffer,
-                                                         INT32 &bufferSize,
-                                                         INT32 &addObjNum,
-                                                         INT32 &bufUsed )
+   const CHAR* rtnCoordCMDSnapshotSessions::getInnerAggrContent()
    {
-      return appendObjs( RTNCOORD_SNAPSHOTSESSCUR_INPUT, pOutputBuffer,
-                         bufferSize, addObjNum, bufUsed );
+      return RTNCOORD_SNAPSHOTSESS_INPUT ;
    }
 
-   const CHAR * rtnCoordCMDSnapshotSessionsCur::getIntrCMDName()
+   const CHAR* rtnCoordCMDSnapshotSessionsCur::getIntrCMDName()
    {
       return COORD_CMD_SNAPSHOTSESSCURINTR;
+   }
+
+   const CHAR* rtnCoordCMDSnapshotSessionsCur::getInnerAggrContent()
+   {
+      return RTNCOORD_SNAPSHOTSESSCUR_INPUT ;
    }
 
    INT32 rtnCoordCMDSnapshotCata::_preProcess( rtnQueryOptions &queryOpt,
@@ -7277,9 +6538,9 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION( CMD_RTNCOCMDLISTCLINDOMAIN__REBUILDRESULT, "rtnCoordCMDListCLInDomain::_rebuildListResult" )
    INT32 rtnCoordCMDListCLInDomain::_rebuildListResult(
-                                const std::vector<BSONObj> &infoFromCata,
-                                pmdEDUCB *cb,                       
-                                SINT64 &contextID )
+                                    const vector<BSONObj> &infoFromCata,
+                                    pmdEDUCB *cb,                       
+                                    SINT64 &contextID )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( CMD_RTNCOCMDLISTCLINDOMAIN__REBUILDRESULT ) ;
@@ -7389,7 +6650,8 @@ namespace engine
       sdbGetCoordCB()->invalidateCataInfo() ;
       sdbGetCoordCB()->invalidateGroupInfo() ;
 
-      rc = executeOnNodes( pMsg, cb, ctrlParam, uncompleted ) ;
+      rc = executeOnNodes( pMsg, cb, ctrlParam, RTN_CTRL_MASK_ALL,
+                           uncompleted ) ;
       if ( SDB_RTN_CMD_IN_LOCAL_MODE == rc )
       {
          rc = SDB_OK ;

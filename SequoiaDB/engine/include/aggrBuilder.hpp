@@ -45,6 +45,10 @@
 #include "qgmPlanContainer.hpp"
 #include "sdbInterface.hpp"
 #include <map>
+#include <vector>
+
+using namespace std ;
+using namespace bson ;
 
 namespace engine
 {
@@ -73,26 +77,58 @@ namespace engine
       virtual INT32  deactive () ;
       virtual INT32  fini () ;
 
-      INT32 build( bson::BSONObj &objs, INT32 objNum,
+      INT32 build( const BSONObj &objs, INT32 objNum,
                    const CHAR *pCLName, _pmdEDUCB *cb,
                    SINT64 &contextID  ) ;
 
    private:
-      INT32 buildTree( bson::BSONObj &objs,
-                     INT32 objNum,
-                     _qgmOptiTreeNode *&root,
-                     _qgmPtrTable * pPtrTable,
-                     _qgmParamTable *pParamTable,
-                     const CHAR *pCollectionName );
+      INT32 buildTree( const BSONObj &objs,
+                       INT32 objNum,
+                       _qgmOptiTreeNode *&root,
+                       _qgmPtrTable * pPtrTable,
+                       _qgmParamTable *pParamTable,
+                       const CHAR *pCollectionName );
 
       INT32 createContext( _qgmPlanContainer *container,
-                          _pmdEDUCB *cb, SINT64 &contextID );
+                           _pmdEDUCB *cb, SINT64 &contextID );
 
       void addParser();
 
    private:
       AGGR_PARSER_MAP         _parserMap ;
    } ;
+
+   class _aggrCmdBase
+   {
+      public:
+         _aggrCmdBase() {}
+         virtual ~_aggrCmdBase() {}
+
+      public:
+         INT32    appendObj( const BSONObj &obj,
+                             CHAR *&pOutputBuffer,
+                             INT32 &bufferSize,
+                             INT32 &bufUsed,
+                             INT32 &buffObjNum ) ;
+
+         INT32    openContext( const CHAR *pObjBuff,
+                               INT32 objNum,
+                               const CHAR *pInnerCmd,
+                               const BSONObj &selector,
+                               _pmdEDUCB *cb,
+                               SINT64 &contextID ) ;
+
+         INT32    parseUserAggr( const BSONObj &hint,
+                                 vector< BSONObj > &vecObj ) ;
+
+         INT32    parseMatcher( const BSONObj &query,
+                                BSONObj &nodesMatcher,
+                                BSONObj &newMatcher,
+                                BOOLEAN ignoreNodeParam = FALSE,
+                                BOOLEAN ignoreCtrlParam = FALSE ) ;
+
+   } ;
+   typedef _aggrCmdBase aggrCmdBase ;
 
    /*
       get global aggr cb

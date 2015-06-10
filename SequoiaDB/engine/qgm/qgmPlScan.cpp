@@ -47,6 +47,8 @@
 #include "qgmTrace.hpp"
 #include <sstream>
 
+using namespace bson ;
+
 namespace engine
 {
    _qgmPlScan::_qgmPlScan( const qgmDbAttr &collection,
@@ -139,7 +141,7 @@ namespace engine
       return ss.str() ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMPLSCAN__EXEC, "_qgmPlScan::_execute" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMPLSCAN__EXEC, "_qgmPlScan::_execute" )
    INT32 _qgmPlScan::_execute( _pmdEDUCB *eduCB )
    {
       PD_TRACE_ENTRY( SDB__QGMPLSCAN__EXEC ) ;
@@ -176,29 +178,74 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMPLSCAN__EXECONDATA, "_qgmPlScan::_executeOnData" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMPLSCAN__EXECONDATA, "_qgmPlScan::_executeOnData" )
    INT32 _qgmPlScan::_executeOnData( _pmdEDUCB *eduCB )
    {
       PD_TRACE_ENTRY( SDB__QGMPLSCAN__EXECONDATA ) ;
       INT32 rc = SDB_OK ;
+      _rtnCommand *pCommand = NULL ;
 
-      // close prefetch
+      string strName = _collection.toString() ;
+      const CHAR *pCLName = strName.c_str() ;
       BSONObj selector = _selector.selector() ;
-      rc = rtnQuery ( _collection.toString().c_str(), selector, _condition,
-                      _orderby, _hint, 0, eduCB, _skip, _return,
-                      _dmsCB, _rtnCB, _contextID, NULL, FALSE ) ;
-      if ( SDB_OK != rc )
+
+      if ( rtnIsCommand( pCLName ) )
       {
-         goto error ;
+         INT32 serviceType = CMD_SPACE_SERVICE_SHARD ;
+         if ( eduCB->isFromLocal() )
+         {
+            serviceType = CMD_SPACE_SERVICE_LOCAL ;
+         }
+         rc = rtnParserCommand( pCLName, &pCommand ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG ( PDERROR, "Parse command[%s] failed[rc:%d]",
+                     pCLName, rc ) ;
+            goto error ;
+         }
+         rc = rtnInitCommand( pCommand , 0, _skip, _return,
+                              _condition.objdata(), selector.objdata(),
+                              _orderby.objdata(), _hint.objdata() ) ;
+         if ( SDB_OK != rc )
+         {
+            goto error ;
+         }
+
+         PD_LOG ( PDDEBUG, "Command: %s", pCommand->name () ) ;
+
+         //run command
+         rc = rtnRunCommand( pCommand, serviceType,
+                             eduCB, _dmsCB, _rtnCB,
+                             NULL, 1, &_contextID ) ;
+         if ( rc )
+         {
+            goto error ;
+         }
       }
+      else
+      {
+         // close prefetch
+         rc = rtnQuery ( pCLName, selector, _condition,
+                         _orderby, _hint, 0, eduCB, _skip, _return,
+                         _dmsCB, _rtnCB, _contextID, NULL, FALSE ) ;
+         if ( SDB_OK != rc )
+         {
+            goto error ;
+         }
+      }
+
    done:
+      if ( pCommand )
+      {
+         rtnReleaseCommand( &pCommand ) ;
+      }
       PD_TRACE_EXITRC( SDB__QGMPLSCAN__EXECONDATA, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMPLSCAN__EXECONCOORD, "_qgmPlScan::_executeOnCoord" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMPLSCAN__EXECONCOORD, "_qgmPlScan::_executeOnCoord" )
    INT32 _qgmPlScan::_executeOnCoord( _pmdEDUCB *eduCB )
    {
       PD_TRACE_ENTRY( SDB__QGMPLSCAN__EXECONCOORD ) ;
@@ -237,7 +284,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMPLSCAN__FETCHNEXT, "_qgmPlScan::_fetchNext" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMPLSCAN__FETCHNEXT, "_qgmPlScan::_fetchNext" )
    INT32 _qgmPlScan::_fetchNext ( qgmFetchOut &next )
    {
       PD_TRACE_ENTRY( SDB__QGMPLSCAN__FETCHNEXT ) ;
@@ -299,7 +346,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMPLSCAN__FETCH, "_qgmPlScan::_fetch" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMPLSCAN__FETCH, "_qgmPlScan::_fetch" )
    INT32 _qgmPlScan::_fetch( const CHAR *&result )
    {
       PD_TRACE_ENTRY( SDB__QGMPLSCAN__FETCH );

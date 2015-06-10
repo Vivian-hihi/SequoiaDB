@@ -3065,6 +3065,8 @@ namespace engine
                }
             }
             else if ( 0 == ossStrcasecmp( ele.fieldName(),
+                                          FIELD_NAME_SERVICE_NAME ) ||
+                      0 == ossStrcasecmp( ele.fieldName(),
                                           PMD_OPTION_SVCNAME ) )
             {
                if ( ele.type() == String )
@@ -3422,6 +3424,7 @@ namespace engine
 
    INT32 rtnCoordParseControlParam( const BSONObj &obj,
                                     rtnCoordCtrlParam &param,
+                                    UINT32 mask,
                                     BSONObj *pNewObj )
    {
       INT32 rc = SDB_OK ;
@@ -3432,8 +3435,11 @@ namespace engine
       while( it.more() )
       {
          BSONElement e = it.next() ;
-         if ( 0 == ossStrcasecmp( e.fieldName(), FIELD_NAME_GLOBAL ) )
+         if ( ( mask & RTN_CTRL_MASK_GLOBAL ) &&
+              0 == ossStrcasecmp( e.fieldName(), FIELD_NAME_GLOBAL ) )
          {
+            modify = TRUE ;
+            param._parseMask |= RTN_CTRL_MASK_GLOBAL ;
             if ( !e.isBoolean() )
             {
                PD_LOG( PDERROR, "Field[%s] is invalid in obj[%s]",
@@ -3442,19 +3448,98 @@ namespace engine
                goto error ;
             }
             param._isGlobal = e.boolean() ? TRUE : FALSE ;
-            modify = TRUE ;
          }
-         else if ( e.isNull() &&
-                  ( 0 == ossStrcasecmp( e.fieldName(),
+         else if ( ( mask & RTN_CTRL_MASK_GLOBAL ) &&
+                   e.isNull() &&
+                   ( 0 == ossStrcasecmp( e.fieldName(),
                                         FIELD_NAME_GROUPS ) ||
-                    0 == ossStrcasecmp( e.fieldName(),
+                     0 == ossStrcasecmp( e.fieldName(),
                                         FIELD_NAME_GROUPNAME ) ||
-                    0 == ossStrcasecmp( e.fieldName(),
+                     0 == ossStrcasecmp( e.fieldName(),
                                         FIELD_NAME_GROUPID ) )
                  )
          {
             param._isGlobal = FALSE ;
             modify = TRUE ;
+            param._parseMask |= RTN_CTRL_MASK_GLOBAL ;
+         }
+         else if ( ( mask & RTN_CTRL_MASK_NODE_SELECT ) &&
+                   0 == ossStrcasecmp( e.fieldName(),
+                                       FIELD_NAME_NODE_SELECT ) )
+         {
+            modify = TRUE ;
+            param._parseMask |= RTN_CTRL_MASK_NODE_SELECT ;
+            if ( String != e.type() ||
+                 ( 0 != ossStrcasecmp( e.valuestr(), "all" ) &&
+                   0 != ossStrcasecmp( e.valuestr(), "primary" ) ) )
+            {
+               PD_LOG( PDERROR, "Field[%s] is invalid in obj[%s]",
+                       FIELD_NAME_NODE_SELECT, obj.toString().c_str() ) ;
+               rc = SDB_INVALIDARG ;
+               goto error ;
+            }
+            else if ( 0 == ossStrcasecmp( e.valuestr(), "all" ) )
+            {
+               param._emptyFilterSel = NODE_SEL_ALL ;
+            }
+            else
+            {
+               param._emptyFilterSel = NODE_SEL_PRIMARY ;
+            }
+         }
+         else if ( ( mask & RTN_CTRL_MASK_ROLE ) &&
+                   0 == ossStrcasecmp( e.fieldName(),
+                                       FIELD_NAME_ROLE ) )
+         {
+            ossMemset( &param._role, 0, sizeof( param._role ) ) ;
+            modify = TRUE ;
+            param._parseMask |= RTN_CTRL_MASK_NODE_SELECT ;
+            if ( String == e.type() &&
+                 SDB_ROLE_MAX != utilGetRoleEnum( e.valuestr() ) )
+            {
+               param._role[ utilGetRoleEnum( e.valuestr() ) ] = 1 ;
+            }
+            else if ( Array == e.type() )
+            {
+               BSONObjIterator tmpItr( e.embeddedObject() ) ;
+               while( tmpItr.more() )
+               {
+                  BSONElement tmpE = tmpItr.next() ;
+                  if ( String == e.type() &&
+                       SDB_ROLE_MAX != utilGetRoleEnum( tmpE.valuestr() ) )
+                  {
+                     param._role[ utilGetRoleEnum( tmpE.valuestr() ) ] = 1 ;
+                  }
+                  else
+                  {
+                     PD_LOG( PDERROR, "Field[%s] is invalid in obj[%s]",
+                             FIELD_NAME_ROLE, obj.toString().c_str() ) ;
+                     rc = SDB_INVALIDARG ;
+                     goto error ;
+                  }
+               }
+            }
+            else
+            {
+               PD_LOG( PDERROR, "Field[%s] is invalid in obj[%s]",
+                       FIELD_NAME_ROLE, obj.toString().c_str() ) ;
+               rc = SDB_INVALIDARG ;
+               goto error ;
+            }
+         }
+         else if ( ( mask & RTN_CTRL_MASK_RAWDATA ) &&
+                   0 == ossStrcasecmp( e.fieldName(), FIELD_NAME_RAWDATA ) )
+         {
+            modify = TRUE ;
+            param._parseMask |= RTN_CTRL_MASK_RAWDATA ;
+            if ( !e.isBoolean() )
+            {
+               PD_LOG( PDERROR, "Field[%s] is invalid in obj[%s]",
+                       FIELD_NAME_RAWDATA, obj.toString().c_str() ) ;
+               rc = SDB_INVALIDARG ;
+               goto error ;
+            }
+            param._rawData = e.Bool() ? TRUE : FALSE ;
          }
          else if ( pNewObj )
          {

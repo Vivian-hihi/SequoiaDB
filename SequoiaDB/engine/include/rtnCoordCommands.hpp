@@ -41,6 +41,7 @@
 #include "rtnCoordQuery.hpp"
 #include "msgDef.hpp"
 #include "rtnQueryOptions.hpp"
+#include "aggrBuilder.hpp"
 
 using namespace bson ;
 
@@ -124,7 +125,6 @@ namespace engine
    #define COORD_CMD_ALTER_DC                 CMD_ADMIN_PREFIX CMD_NAME_ALTER_DC
    #define COORD_CMD_REELECT                  CMD_ADMIN_PREFIX CMD_NAME_REELECT
    #define COORD_CMD_TRUNCATE                 CMD_ADMIN_PREFIX CMD_NAME_TRUNCATE
-   #define COORD_CMD_ALTER                    CMD_ADMIN_PREFIX CMD_NAME_ALTER
 
    class rtnCoordCommand : virtual public rtnCoordOperator
    {
@@ -200,6 +200,7 @@ namespace engine
       INT32         executeOnNodes( MsgHeader *pMsg,
                                     pmdEDUCB *cb,
                                     rtnCoordCtrlParam &ctrlParam,
+                                    UINT32 mask,
                                     ROUTE_RC_MAP faileds,
                                     rtnContextCoord **ppContext = NULL,
                                     BOOLEAN openEmptyContext = FALSE,
@@ -261,6 +262,7 @@ namespace engine
       virtual NODE_SEL_STY    _nodeSelWhenNoFilter () = 0 ;
       virtual BOOLEAN         _allowFailed () = 0 ;
       virtual BOOLEAN         _useContext () = 0 ;
+      virtual UINT32          _getMask() const = 0 ;
 
    } ;
 
@@ -271,6 +273,7 @@ namespace engine
       virtual NODE_SEL_STY    _nodeSelWhenNoFilter () ;
       virtual BOOLEAN         _allowFailed () ;
       virtual BOOLEAN         _useContext () ;
+      virtual UINT32          _getMask() const ;
    } ;
 
    class rtnCoordRemoveBackup : public rtnCoordBackupBase
@@ -280,6 +283,7 @@ namespace engine
       virtual NODE_SEL_STY    _nodeSelWhenNoFilter () ;
       virtual BOOLEAN         _allowFailed () ;
       virtual BOOLEAN         _useContext () ;
+      virtual UINT32          _getMask() const ;
    } ;
 
    class rtnCoordBackupOffline : public rtnCoordBackupBase
@@ -289,6 +293,7 @@ namespace engine
       virtual NODE_SEL_STY    _nodeSelWhenNoFilter () ;
       virtual BOOLEAN         _allowFailed () ;
       virtual BOOLEAN         _useContext () ;
+      virtual UINT32          _getMask() const ;
    } ;
 
    class rtnCoordCMDListGroups : public rtnCoordCommand
@@ -307,248 +312,84 @@ namespace engine
                              pmdEDUCB *cb,
                              INT64 &contextID,
                              rtnContextBuf *buf ) ;
-   private:
-      INT32 getNodes( pmdEDUCB *cb, BSONObj &query,
-                      ROUTE_SET &nodes, BSONObj &newQuery ) ;
-
-      virtual INT32 BuildRequestMsg  ( CHAR **ppBuffer, INT32 *bufferSize,
-                                       SINT32 flag, SINT64 numToSkip,
-                                       SINT64 numToReturn, BSONObj *query,
-                                       BSONObj *fieldSelector,
-                                       BSONObj *orderBy,
-                                       BSONObj *hint ) = 0 ;
-
-      INT32 processReply( _pmdEDUCB * pEDUCB,
-                          REPLY_QUE &replyQue,
-                          ROUTE_RC_MAP &failedNodes,
-                          rtnContextCoord *pContext );
-
-      INT32 buildFailedNodeReply( ROUTE_RC_MAP &failedNodes,
-                                  rtnContext *pContext ) ;
    };
 
-   class rtnCoordCMDSnapshotDBIntr : public rtnCoordCMDSnapshotIntrBase
+   class rtnCoordAggrCmdBase : public _aggrCmdBase
    {
-   private:
-      virtual INT32 BuildRequestMsg  ( CHAR **ppBuffer, INT32 *bufferSize,
-                                       SINT32 flag, SINT64 numToSkip,
-                                       SINT64 numToReturn, BSONObj *query,
-                                       BSONObj *fieldSelector,
-                                       BSONObj *orderBy,
-                                       BSONObj *hint );
-   };
+   public:
+      INT32 appendObjs( const CHAR *pInputBuffer,
+                        CHAR *&pOutputBuffer,
+                        INT32 &bufferSize,
+                        INT32 &bufUsed,
+                        INT32 &buffObjNum ) ;
+   } ;
 
-   class rtnCoordCMDSnapshotSysIntr : public rtnCoordCMDSnapshotIntrBase
-   {
-   private:
-      virtual INT32 BuildRequestMsg  ( CHAR **ppBuffer, INT32 *bufferSize,
-                                       SINT32 flag, SINT64 numToSkip,
-                                       SINT64 numToReturn, BSONObj *query,
-                                       BSONObj *fieldSelector,
-                                       BSONObj *orderBy,
-                                       BSONObj *hint );
-   };
-
-   class rtnCoordCMDSnapshotClIntr : public rtnCoordCMDSnapshotIntrBase
-   {
-   private:
-      virtual INT32 BuildRequestMsg  ( CHAR **ppBuffer, INT32 *bufferSize,
-                                       SINT32 flag, SINT64 numToSkip,
-                                       SINT64 numToReturn, BSONObj *query,
-                                       BSONObj *fieldSelector,
-                                       BSONObj *orderBy,
-                                       BSONObj *hint );
-   };
-
-   class rtnCoordCMDSnapshotCsIntr : public rtnCoordCMDSnapshotIntrBase
-   {
-   private:
-      virtual INT32 BuildRequestMsg  ( CHAR **ppBuffer, INT32 *bufferSize,
-                                       SINT32 flag, SINT64 numToSkip,
-                                       SINT64 numToReturn, BSONObj *query,
-                                       BSONObj *fieldSelector,
-                                       BSONObj *orderBy,
-                                       BSONObj *hint );
-   };
-
-   class rtnCoordCMDSnapshotCtxIntr : public rtnCoordCMDSnapshotIntrBase
-   {
-   private:
-      virtual INT32 BuildRequestMsg  ( CHAR **ppBuffer, INT32 *bufferSize,
-                                       SINT32 flag, SINT64 numToSkip,
-                                       SINT64 numToReturn, BSONObj *query,
-                                       BSONObj *fieldSelector,
-                                       BSONObj *orderBy,
-                                       BSONObj *hint );
-   };
-
-   class rtnCoordCMDSnapshotCtxCurIntr : public rtnCoordCMDSnapshotIntrBase
-   {
-   private:
-      virtual INT32 BuildRequestMsg  ( CHAR **ppBuffer, INT32 *bufferSize,
-                                       SINT32 flag, SINT64 numToSkip,
-                                       SINT64 numToReturn, BSONObj *query,
-                                       BSONObj *fieldSelector,
-                                       BSONObj *orderBy,
-                                       BSONObj *hint );
-   };
-
-   class rtnCoordCMDSnapshotSessionIntr : public rtnCoordCMDSnapshotIntrBase
-   {
-   private:
-      virtual INT32 BuildRequestMsg  ( CHAR **ppBuffer, INT32 *bufferSize,
-                                       SINT32 flag, SINT64 numToSkip,
-                                       SINT64 numToReturn, BSONObj *query,
-                                       BSONObj *fieldSelector,
-                                       BSONObj *orderBy,
-                                       BSONObj *hint );
-   };
-
-   class rtnCoordCMDSnapshotSessionCurIntr : public rtnCoordCMDSnapshotIntrBase
-   {
-   private:
-      virtual INT32 BuildRequestMsg  ( CHAR **ppBuffer, INT32 *bufferSize,
-                                       SINT32 flag, SINT64 numToSkip,
-                                       SINT64 numToReturn, BSONObj *query,
-                                       BSONObj *fieldSelector,
-                                       BSONObj *orderBy,
-                                       BSONObj *hint );
-   };
-
-   class rtnCoordCMDSnapshotReset : public rtnCoordCMDSnapshotIntrBase
-   {
-   private:
-      virtual INT32 BuildRequestMsg  ( CHAR **ppBuffer, INT32 *bufferSize,
-                                       SINT32 flag, SINT64 numToSkip,
-                                       SINT64 numToReturn, BSONObj *query,
-                                       BSONObj *fieldSelector,
-                                       BSONObj *orderBy,
-                                       BSONObj *hint );
-   };
-
-   class rtnCoordCMDSnapShotBase : public rtnCoordCommand
+   class rtnCoordCMDSnapShotBase : public rtnCoordCommand, public rtnCoordAggrCmdBase
    {
    public:
       virtual INT32 execute( MsgHeader *pMsg,
                              pmdEDUCB *cb,
                              INT64 &contextID,
                              rtnContextBuf *buf ) ;
-
-   protected:
-      virtual INT32 appendObjs( const CHAR *pInputBuffer,
-                                CHAR *&pOutputBuffer,
-                                INT32 &bufferSize,
-                                INT32 &addObjNum,
-                                INT32 &bufUsed );
-
-      INT32 appendObj( BSONObj &obj,
-                       CHAR *&pOutputBuffer,
-                       INT32 &bufferSize,
-                       INT32 &bufUsed );
-
    private:
-      INT32 parseMatcher( BSONObj &query,
-                          BSONObj &nodesMatcher,
-                          BSONObj &newMatcher );
-
-      virtual INT32 generateAggrObjs( CHAR *pInputBuffer,
-                                      CHAR *&pOutputBuffer,
-                                      INT32 &objNum,
-                                      CHAR *&pCLName,
-                                      BSONObj &selector );
-
-      virtual INT32 appendAggrObjs( CHAR *&pOutputBuffer,
-                                    INT32 &bufferSize,
-                                    INT32 &addObjNum,
-                                    INT32 &bufUsed ) = 0;
-
-      virtual const CHAR *getIntrCMDName() = 0;
-
-      INT32 openContext( BSONObj &objs,
-                         INT32 objNum,
-                         const BSONObj &selector,
-                         pmdEDUCB *cb,
-                         SINT64 &contextID ) ;
+      virtual const CHAR *getIntrCMDName() = 0 ;
+      virtual const CHAR *getInnerAggrContent() = 0 ;
    };
 
    class rtnCoordCMDSnapshotDataBase: public rtnCoordCMDSnapShotBase
    {
    private:
-      virtual INT32 appendAggrObjs( CHAR *&pOutputBuffer,
-                                    INT32 &bufferSize,
-                                    INT32 &addObjNum,
-                                    INT32 &bufUsed );
-      virtual const CHAR *getIntrCMDName();
+      virtual const CHAR *getIntrCMDName() ;
+      virtual const CHAR *getInnerAggrContent() ;
    };
 
    class rtnCoordCMDSnapshotSystem: public rtnCoordCMDSnapShotBase
    {
    private:
-      virtual INT32 appendAggrObjs( CHAR *&pOutputBuffer,
-                                    INT32 &bufferSize,
-                                    INT32 &addObjNum,
-                                    INT32 &bufUsed );
-      virtual const CHAR *getIntrCMDName();
+      virtual const CHAR *getIntrCMDName() ;
+      virtual const CHAR *getInnerAggrContent() ;
    };
 
    class rtnCoordCMDSnapshotCollections: public rtnCoordCMDSnapShotBase
    {
    private:
-      virtual INT32 appendAggrObjs( CHAR *&pOutputBuffer,
-                                    INT32 &bufferSize,
-                                    INT32 &addObjNum,
-                                    INT32 &bufUsed );
-      virtual const CHAR *getIntrCMDName();
+      virtual const CHAR *getIntrCMDName() ;
+      virtual const CHAR *getInnerAggrContent() ;
    };
 
    class rtnCoordCMDSnapshotSpaces: public rtnCoordCMDSnapShotBase
    {
    private:
-      virtual INT32 appendAggrObjs( CHAR *&pOutputBuffer,
-                                    INT32 &bufferSize,
-                                    INT32 &addObjNum,
-                                    INT32 &bufUsed );
-      virtual const CHAR *getIntrCMDName();
+      virtual const CHAR *getIntrCMDName() ;
+      virtual const CHAR *getInnerAggrContent() ;
    };
 
    class rtnCoordCMDSnapshotContexts: public rtnCoordCMDSnapShotBase
    {
    private:
-      virtual INT32 appendAggrObjs( CHAR *&pOutputBuffer,
-                                    INT32 &bufferSize,
-                                    INT32 &addObjNum,
-                                    INT32 &bufUsed );
-      virtual const CHAR *getIntrCMDName();
+      virtual const CHAR *getIntrCMDName() ;
+      virtual const CHAR *getInnerAggrContent() ;
    };
 
    class rtnCoordCMDSnapshotContextsCur: public rtnCoordCMDSnapShotBase
    {
    private:
-      virtual INT32 appendAggrObjs( CHAR *&pOutputBuffer,
-                                    INT32 &bufferSize,
-                                    INT32 &addObjNum,
-                                    INT32 &bufUsed );
-      virtual const CHAR *getIntrCMDName();
+      virtual const CHAR *getIntrCMDName() ;
+      virtual const CHAR *getInnerAggrContent() ;
    };
 
    class rtnCoordCMDSnapshotSessions: public rtnCoordCMDSnapShotBase
    {
    private:
-      virtual INT32 appendAggrObjs( CHAR *&pOutputBuffer,
-                                    INT32 &bufferSize,
-                                    INT32 &addObjNum,
-                                    INT32 &bufUsed );
-      virtual const CHAR *getIntrCMDName();
+      virtual const CHAR *getIntrCMDName() ;
+      virtual const CHAR *getInnerAggrContent() ;
    };
 
    class rtnCoordCMDSnapshotSessionsCur: public rtnCoordCMDSnapShotBase
    {
    private:
-      virtual INT32 appendAggrObjs( CHAR *&pOutputBuffer,
-                                    INT32 &bufferSize,
-                                    INT32 &addObjNum,
-                                    INT32 &bufUsed );
-      virtual const CHAR *getIntrCMDName();
+      virtual const CHAR *getIntrCMDName() ;
+      virtual const CHAR *getInnerAggrContent() ;
    };
 
    class rtnCoordCMDSnapshotCollectionsTmp : public rtnCoordCommand

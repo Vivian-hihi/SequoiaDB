@@ -43,8 +43,8 @@ using namespace bson;
 namespace engine
 {
    INT32 rtnAggregate( const CHAR *pCollectionName, BSONObj &objs,
-                     INT32 objNum, SINT32 flags, pmdEDUCB *cb,
-                     SDB_DMSCB *dmsCB, SINT64 &contextID )
+                       INT32 objNum, SINT32 flags, pmdEDUCB *cb,
+                       SDB_DMSCB *dmsCB, SINT64 &contextID )
    {
       INT32 rc = SDB_OK;
       rc = pmdGetKRCB()->getAggrCB()->build( objs, objNum, pCollectionName,

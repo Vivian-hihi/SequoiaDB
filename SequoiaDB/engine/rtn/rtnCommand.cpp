@@ -44,12 +44,14 @@
 #include "monDump.hpp"
 #include "ossMem.h"
 #include "rtnContextListLob.hpp"
+#include "aggrDef.hpp"
 
 #if defined (_DEBUG)
 // for qgmDebugQuery function
 #endif
 
 using namespace bson ;
+using namespace std ;
 
 namespace engine
 {
@@ -1300,7 +1302,7 @@ namespace engine
 
    const CHAR *_rtnRenameCollection::collectionFullName ()
    {
-      return fullCollectionName.c_str() ;
+      return _fullCollectionName.c_str() ;
    }
 
    PD_TRACE_DECLARE_FUNCTION ( SDB__RTNRENAMECL_INIT, "_rtnRenameCollection::init" )
@@ -1337,9 +1339,9 @@ namespace engine
          goto error ;
       }
 
-      fullCollectionName = _csName ;
-      fullCollectionName += "." ;
-      fullCollectionName += _oldCollectionName ;
+      _fullCollectionName = _csName ;
+      _fullCollectionName += "." ;
+      _fullCollectionName += _oldCollectionName ;
 
    done:
       PD_TRACE_EXITRC ( SDB__RTNRENAMECL_INIT, rc ) ;
@@ -1563,7 +1565,8 @@ namespace engine
    }
 
    _rtnSnapshot::_rtnSnapshot ()
-      :_matcherBuff ( NULL ), _selectBuff ( NULL ), _orderByBuff ( NULL )
+      :_matcherBuff ( NULL ), _selectBuff ( NULL ), _orderByBuff ( NULL ),
+       _hintBuff( NULL )
    {
       _flags = 0 ;
       _numToReturn = -1 ;
@@ -1586,11 +1589,12 @@ namespace engine
       _matcherBuff = pMatcherBuff ;
       _selectBuff = pSelectBuff ;
       _orderByBuff = pOrderByBuff ;
+      _hintBuff = pHintBuff ;
 
       return SDB_OK ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__RTNSNAPSHOT_DOIT, "_rtnSnapshot::doit" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNSNAPSHOT_DOIT, "_rtnSnapshot::doit" )
    INT32 _rtnSnapshot::doit( _pmdEDUCB *cb, SDB_DMSCB *dmsCB,
                              SDB_RTNCB *rtnCB, SDB_DPSCB *dpsCB,
                              INT16 w , INT64 *pContextID )
@@ -1599,17 +1603,158 @@ namespace engine
       SDB_ASSERT ( cb, "educb can't be NULL" ) ;
       SDB_ASSERT ( pContextID, "context id can't be NULL" ) ;
 
-      BSONObj matcher ( _matcherBuff ) ;
-      BSONObj selector ( _selectBuff ) ;
-      BSONObj orderBy ( _orderByBuff ) ;
-      BOOLEAN addInfo = getFromService() == CMD_SPACE_SERVICE_SHARD ?
-                        TRUE : FALSE ;
+      INT32 rc = SDB_OK ;
+      CHAR *pOutBuff = NULL ;
+      INT32 buffSize = 0 ;
+      INT32 buffUsedSize = 0 ;
+      INT32 buffObjNum = 0 ;
 
-      INT32 rc = rtnSnapCommandEntry ( type(), selector, matcher, orderBy,
-                                       _flags, cb, _numToSkip, _numToReturn,
-                                       dmsCB, rtnCB, *pContextID, addInfo ) ;
+      vector< BSONObj > vecUserAggr ;
+      BSONObj matcher ;
+      BSONObj selector ;
+      BSONObj orderBy ;
+      BSONObj hint ;
+
+      try
+      {
+         BSONObj tmpMatcher ( _matcherBuff ) ;
+         BSONObj nodeMatcher ;
+         selector = BSONObj( _selectBuff ) ;
+         orderBy = BSONObj( _orderByBuff ) ;
+         hint = BSONObj( _hintBuff ) ;
+
+         rc = parseMatcher( tmpMatcher, nodeMatcher, matcher, TRUE ) ;
+         PD_RC_CHECK( rc, PDERROR, "Parse matcher failed, rc: %d", rc ) ;
+
+         rc = parseUserAggr( hint, vecUserAggr ) ;
+         PD_RC_CHECK( rc, PDERROR, "Parse user define aggr failed, rc: %d",
+                      rc ) ;
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Parse param occur exception: %s", e.what() ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      if ( vecUserAggr.size() > 0 )
+      {
+         /// add new matcher
+         if ( !matcher.isEmpty() )
+         {
+            rc = appendObj( BSON( AGGR_MATCH_PARSER_NAME << matcher ),
+                            pOutBuff, buffSize, buffUsedSize, buffObjNum ) ;
+            PD_RC_CHECK( rc, PDERROR, "Append new matcher failed, rc: %d",
+                         rc ) ;
+         }
+
+         /// order by
+         if ( orderBy.isEmpty() )
+         {
+            rc = appendObj( BSON( AGGR_SORT_PARSER_NAME << orderBy ),
+                            pOutBuff, buffSize, buffUsedSize, buffObjNum ) ;
+            PD_RC_CHECK( rc, PDERROR, "Append order by failed, rc: %d",
+                         rc ) ;
+         }
+
+         for ( UINT32 i = 0 ; i < vecUserAggr.size() ; ++i )
+         {
+            rc = appendObj( vecUserAggr[ i ], pOutBuff, buffSize,
+                            buffUsedSize, buffObjNum ) ;
+            PD_RC_CHECK( rc, PDERROR, "Append user define aggr[%s] failed, "
+                         "rc: %d", vecUserAggr[ i ].toString().c_str(),
+                         rc ) ;
+         }
+
+         /// open context
+         rc = openContext( pOutBuff, buffObjNum, getIntrCMDName(),
+                           selector, cb, *pContextID ) ;
+         PD_RC_CHECK( rc, PDERROR, "Open context failed, rc: %d", rc ) ;
+      }
+      else
+      {
+         BOOLEAN addInfo = getFromService() == CMD_SPACE_SERVICE_SHARD ?
+                           TRUE : FALSE ;
+         rc = rtnSnapCommandEntry ( type(), selector, matcher, orderBy,
+                                    _flags, cb, _numToSkip, _numToReturn,
+                                    dmsCB, rtnCB, *pContextID, addInfo ) ;
+         if ( rc )
+         {
+            goto error ;
+         }
+      }
+
+   done:
+      if ( pOutBuff )
+      {
+         SDB_OSS_FREE( pOutBuff ) ;
+         pOutBuff = NULL ;
+         buffSize = 0 ;
+         buffUsedSize = 0 ;
+      }
       PD_TRACE_EXITRC ( SDB__RTNSNAPSHOT_DOIT, rc ) ;
       return rc ;
+   error:
+      if ( -1 != *pContextID )
+      {
+         rtnCB->contextDelete ( *pContextID, cb ) ;
+         *pContextID = -1 ;
+      }
+      goto done ;
+   }
+
+   _rtnSnapshotInner::_rtnSnapshotInner()
+   :_rtnSnapshot()
+   {
+   }
+
+   _rtnSnapshotInner::~_rtnSnapshotInner()
+   {
+   }
+
+   INT32 _rtnSnapshotInner::doit( _pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
+                                  _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
+                                  INT16 w, INT64 *pContextID )
+   {
+      INT32 rc = SDB_OK ;
+      SDB_ASSERT ( cb, "educb can't be NULL" ) ;
+      SDB_ASSERT ( pContextID, "context id can't be NULL" ) ;
+
+      BOOLEAN addInfo = getFromService() == CMD_SPACE_SERVICE_SHARD ?
+                        TRUE : FALSE ;
+      BSONObj matcher ;
+      BSONObj selector ;
+      BSONObj orderBy ;
+
+      try
+      {
+         BSONObj tmpMatcher ( _matcherBuff ) ;
+         BSONObj nodeMatcher ;
+         selector = BSONObj( _selectBuff ) ;
+         orderBy = BSONObj( _orderByBuff ) ;
+
+         rc = parseMatcher( tmpMatcher, nodeMatcher, matcher, TRUE ) ;
+         PD_RC_CHECK( rc, PDERROR, "Parse matcher failed, rc: %d", rc ) ;
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Parse param occur exception: %s", e.what() ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      rc = rtnSnapCommandEntry ( type(), selector, matcher, orderBy,
+                                 _flags, cb, _numToSkip, _numToReturn,
+                                 dmsCB, rtnCB, *pContextID, addInfo ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    IMPLEMENT_CMD_AUTO_REGISTER(_rtnSnapshotSystem)
@@ -1627,6 +1772,22 @@ namespace engine
    }
 
    RTN_COMMAND_TYPE _rtnSnapshotSystem::type ()
+   {
+      return CMD_SNAPSHOT_SYSTEM ;
+   }
+
+   const CHAR* _rtnSnapshotSystem::getIntrCMDName()
+   {
+      return CMD_NAME_SNAPSHOT_SYSTEM_INTR ;
+   }
+
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnSnapshotSystemInner)
+   const CHAR *_rtnSnapshotSystemInner::name ()
+   {
+      return CMD_NAME_SNAPSHOT_SYSTEM_INTR ;
+   }
+
+   RTN_COMMAND_TYPE _rtnSnapshotSystemInner::type ()
    {
       return CMD_SNAPSHOT_SYSTEM ;
    }
@@ -1650,6 +1811,22 @@ namespace engine
       return CMD_SNAPSHOT_CONTEXTS ;
    }
 
+   const CHAR* _rtnSnapshotContexts::getIntrCMDName()
+   {
+      return CMD_NAME_SNAPSHOT_CONTEX_INTR ;
+   }
+
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnSnapshotContextsInner)
+   const CHAR *_rtnSnapshotContextsInner::name ()
+   {
+      return CMD_NAME_SNAPSHOT_CONTEX_INTR ;
+   }
+
+   RTN_COMMAND_TYPE _rtnSnapshotContextsInner::type ()
+   {
+      return CMD_SNAPSHOT_CONTEXTS ;
+   }
+
    IMPLEMENT_CMD_AUTO_REGISTER(_rtnSnapshotContextsCurrent)
    _rtnSnapshotContextsCurrent::_rtnSnapshotContextsCurrent ()
    {
@@ -1669,6 +1846,22 @@ namespace engine
       return CMD_SNAPSHOT_CONTEXTS_CURRENT ;
    }
 
+   const CHAR* _rtnSnapshotContextsCurrent::getIntrCMDName()
+   {
+      return CMD_NAME_SNAPSHOT_CONTEXCUR_INTR ;
+   }
+
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnSnapshotContextsCurrentInner)
+   const CHAR *_rtnSnapshotContextsCurrentInner::name ()
+   {
+      return CMD_NAME_SNAPSHOT_CONTEXCUR_INTR ;
+   }
+
+   RTN_COMMAND_TYPE _rtnSnapshotContextsCurrentInner::type ()
+   {
+      return CMD_SNAPSHOT_CONTEXTS_CURRENT ;
+   }
+
    IMPLEMENT_CMD_AUTO_REGISTER(_rtnSnapshotDatabase)
    _rtnSnapshotDatabase::_rtnSnapshotDatabase ()
    {
@@ -1684,6 +1877,22 @@ namespace engine
    }
 
    RTN_COMMAND_TYPE _rtnSnapshotDatabase::type ()
+   {
+      return CMD_SNAPSHOT_DATABASE ;
+   }
+
+   const CHAR* _rtnSnapshotDatabase::getIntrCMDName()
+   {
+      return CMD_NAME_SNAPSHOT_DATABASE_INTR ;
+   }
+
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnSnapshotDatabaseInner)
+   const CHAR *_rtnSnapshotDatabaseInner::name ()
+   {
+      return CMD_NAME_SNAPSHOT_DATABASE_INTR ;
+   }
+
+   RTN_COMMAND_TYPE _rtnSnapshotDatabaseInner::type ()
    {
       return CMD_SNAPSHOT_DATABASE ;
    }
@@ -1726,6 +1935,21 @@ namespace engine
       return CMD_SNAPSHOT_SESSIONS ;
    }
 
+   const CHAR* _rtnSnapshotSessions::getIntrCMDName()
+   {
+      return CMD_NAME_SNAPSHOT_SESSION_INTR ;
+   }
+
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnSnapshotSessionsInner)
+   const CHAR *_rtnSnapshotSessionsInner::name ()
+   {
+      return CMD_NAME_SNAPSHOT_SESSION_INTR ;
+   }
+   RTN_COMMAND_TYPE _rtnSnapshotSessionsInner::type ()
+   {
+      return CMD_SNAPSHOT_SESSIONS ;
+   }
+
    IMPLEMENT_CMD_AUTO_REGISTER(_rtnSnapshotSessionsCurrent)
    _rtnSnapshotSessionsCurrent::_rtnSnapshotSessionsCurrent ()
    {
@@ -1741,6 +1965,21 @@ namespace engine
    }
 
    RTN_COMMAND_TYPE _rtnSnapshotSessionsCurrent::type ()
+   {
+      return CMD_SNAPSHOT_SESSIONS_CURRENT ;
+   }
+
+   const CHAR* _rtnSnapshotSessionsCurrent::getIntrCMDName()
+   {
+      return CMD_NAME_SNAPSHOT_SESSIONCUR_INTR ;
+   }
+
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnSnapshotSessionsCurrentInner)
+   const CHAR *_rtnSnapshotSessionsCurrentInner::name ()
+   {
+      return CMD_NAME_SNAPSHOT_SESSIONCUR_INTR ;
+   }
+   RTN_COMMAND_TYPE _rtnSnapshotSessionsCurrentInner::type ()
    {
       return CMD_SNAPSHOT_SESSIONS_CURRENT ;
    }
@@ -1764,6 +2003,21 @@ namespace engine
       return CMD_SNAPSHOT_COLLECTIONS ;
    }
 
+   const CHAR* _rtnSnapshotCollections::getIntrCMDName()
+   {
+      return CMD_NAME_SNAPSHOT_COLLECTION_INTR ;
+   }
+
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnSnapshotCollectionsInner)
+   const CHAR *_rtnSnapshotCollectionsInner::name ()
+   {
+      return CMD_NAME_SNAPSHOT_COLLECTION_INTR ;
+   }
+   RTN_COMMAND_TYPE _rtnSnapshotCollectionsInner::type ()
+   {
+      return CMD_SNAPSHOT_COLLECTIONS ;
+   }
+
    IMPLEMENT_CMD_AUTO_REGISTER(_rtnSnapshotCollectionSpaces)
    _rtnSnapshotCollectionSpaces::_rtnSnapshotCollectionSpaces ()
    {
@@ -1779,6 +2033,21 @@ namespace engine
    }
 
    RTN_COMMAND_TYPE _rtnSnapshotCollectionSpaces::type ()
+   {
+      return CMD_SNAPSHOT_COLLECTIONSPACES ;
+   }
+
+   const CHAR* _rtnSnapshotCollectionSpaces::getIntrCMDName()
+   {
+      return CMD_NAME_SNAPSHOT_SPACE_INTR ;
+   }
+
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnSnapshotCollectionSpacesInner)
+   const CHAR *_rtnSnapshotCollectionSpacesInner::name ()
+   {
+      return CMD_NAME_SNAPSHOT_SPACE_INTR ;
+   }
+   RTN_COMMAND_TYPE _rtnSnapshotCollectionSpacesInner::type ()
    {
       return CMD_SNAPSHOT_COLLECTIONSPACES ;
    }

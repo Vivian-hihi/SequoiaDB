@@ -121,8 +121,11 @@ extern "C"
 #define CJSON_OP_AVG       "$avg"
 #define CJSON_OP_SORT      "$sort"
 #define CJSON_OP_MERGEARRAYSET   "$mergearrayset"
-#define CJSON_INNER_META   "$Meta"
 
+#define CJSON_INNER_META         "$Meta"
+#define CJSON_INNER_AGGR         "$Aggr"
+#define CJSON_INNER_SETONINSERT  "$SetOnInsert"
+#define CJSON_INNER_MODIFY       "$Modify"
 
 /* The cJSON structure: */
 typedef struct cJSON {

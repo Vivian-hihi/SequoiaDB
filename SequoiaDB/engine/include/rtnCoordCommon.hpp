@@ -416,23 +416,40 @@ namespace engine
 
    INT32 rtnCataChangeNtyToAllNodes( pmdEDUCB *cb ) ;
 
+   #define RTN_CTRL_MASK_GLOBAL           0x00000001
+   #define RTN_CTRL_MASK_NODE_SELECT      0x00000002
+   #define RTN_CTRL_MASK_ROLE             0x00000004
+   #define RTN_CTRL_MASK_RAWDATA          0x00000008
+
+   #define RTN_CTRL_MASK_ALL              0xFFFFFFFF
+
    struct _rtnCoordCtrlParam
    {
-      BOOLEAN              _isGlobal ;
-      FILTER_BSON_ID       _filterID ;
-      NODE_SEL_STY         _emptyFilterSel ;
+      BOOLEAN           _isGlobal ;             // RTN_CTRL_MASK_GLOBAL
+      FILTER_BSON_ID    _filterID ;
+      NODE_SEL_STY      _emptyFilterSel ;       // RTN_CTRL_MASK_NODE_SELECT
+      INT32             _role[ SDB_ROLE_MAX ] ; // RTN_CTRL_MASK_ROLE
+      BOOLEAN           _rawData ;              // RTN_CTRL_MASK_RAWDATA
+
+      UINT32            _parseMask ;
 
       _rtnCoordCtrlParam()
       {
          _isGlobal = TRUE ;
          _filterID = FILTER_ID_MATCHER ;
          _emptyFilterSel = NODE_SEL_ALL ;
+         ossMemset( &_role, 0, sizeof( _role ) ) ;
+         _role[ SDB_ROLE_DATA ] = 1 ;
+         _role[ SDB_ROLE_CATALOG ] = 1 ;
+         _rawData = FALSE ;
+         _parseMask = 0 ;
       }
    } ;
    typedef _rtnCoordCtrlParam rtnCoordCtrlParam ;
 
    INT32 rtnCoordParseControlParam( const BSONObj &obj,
                                     rtnCoordCtrlParam &param,
+                                    UINT32 mask,
                                     BSONObj *pNewObj = NULL ) ;
 
 }
