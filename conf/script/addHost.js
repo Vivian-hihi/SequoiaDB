@@ -136,36 +136,6 @@ function _final()
 }
 
 /* *****************************************************************************
-@discretion: get the name of install packet
-@author: Tanzhaobo
-@parameter
-   packet[string]: the full name of the packet,
-                   e.g. /tmp/packet/sequoiadb-1.8-linux_x86_64-installer.run
-@return
-   packetname[string]: the name of the install packet
-***************************************************************************** */
-function _getInstallPacketName( packet )
-{
-   var s = "" ;
-   var i = 1 ;
-   var packetname = "" ;
-   if ( SYS_LINUX == SYS_TYPE )
-   {
-      s = "/" ;
-      i = packet.lastIndexOf( s ) ;
-      if ( -1 != i )
-         packetname = packet.substring( i+1 ) ;
-      else
-         packetname = packet ;
-   }
-   else
-   {
-      // TODO:
-   }
-   return packetname ;
-}
-
-/* *****************************************************************************
 @discretion: get local db packet's md5
 @author: Tanzhaobo
 @parameter
@@ -368,7 +338,7 @@ function _pushDBPacket( ssh, packet )
    var src  = "" ;
    var dest = "" ;
    var cmd  = "" ;
-   var packetName = _getInstallPacketName( packet ) ;
+   var packetName = getPacketName( packet ) ;
    
    if ( SYS_LINUX == SYS_TYPE )
    {
@@ -558,7 +528,7 @@ function _installDBPacket( ssh, sdbuser, sdbpasswd, omagentservice, packet, path
    option += " --mode unattended " + " --prefix " + path ;
    option += " --username " + sdbuser + " --userpasswd " + sdbpasswd ;
    option += " --port " + omagentservice ;
-   var packetName = _getInstallPacketName( packet ) ;
+   var packetName = getPacketName( packet ) ;
    if ( SYS_LINUX == SYS_TYPE )
    {
       cmd = OMA_PATH_TEMP_PACKET_DIR + packetName + option ;

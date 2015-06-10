@@ -29,7 +29,12 @@
 // println
 //var BUS_JSON = { "DeployMod":"destribution", "PacketPath":"/opt/sequoiadb/packet/zookeeper-3.4.6.tar.gz", "HostName":"rhel64-test8", "User": "root", "Passwd": "sequoiadb", "SdbUser": "sdbadmin", "SdbPasswd": "sdbadmin", "SdbUserGroup": "sdbadmin_group", "SshPort": "22", "zooid": 1, "installPath":"/opt/zookeeper", "datapath":"/opt/zookeeper/data", "dataport":"2888", "electport":"3888", "clientport":"2181", "synclimit":"5", "initlimit":"10", "ticktime":"2000", "ServerInfo":["server.1=susetzb:2888:3888", "server.2=rhel64-test8:2888:3888", "server.3=rhel64-test9:2888:3888"] } ;
 
-var BUS_JSON = { "DeployMod":"standalone", "PacketPath":"/opt/sequoiadb/packet/zookeeper-3.4.6.tar.gz", "HostName":"rhel64-test8", "User": "root", "Passwd": "sequoiadb", "SdbUser": "sdbadmin", "SdbPasswd": "sdbadmin", "SdbUserGroup": "sdbadmin_group", "SshPort": "22", "zooid": 1, "installPath":"/opt/zookeeper", "datapath":"/opt/zookeeper/data", "dataport":"2888", "electport":"3888", "clientport":"2181", "synclimit":"5", "initlimit":"10", "ticktime":"2000", "ServerInfo":["server.1=susetzb:2888:3888", "server.2=rhel64-test8:2888:3888", "server.3=rhel64-test9:2888:3888"] } ;
+var BUS_JSON = { "DeployMod":"destribution", "PacketPath":"/opt/sequoiadb/packet/zookeeper-3.4.6.tar.gz", "HostName":"susetzb", "User": "root", "Passwd": "sequoiadb", "SdbUser": "sdbadmin", "SdbPasswd": "sdbadmin", "SdbUserGroup": "sdbadmin_group", "SshPort": "22", "zooid": 1, "installPath":"/opt/zookeeper", "datapath":"/opt/zookeeper/data", "dataport":"2888", "electport":"3888", "clientport":"2181", "synclimit":"5", "initlimit":"10", "ticktime":"2000", "ServerInfo":["server.1=susetzb:2888:3888", "server.2=rhel64-test8:2888:3888", "server.3=rhel64-test9:2888:3888"] } ;
+
+//var BUS_JSON = { "DeployMod":"destribution", "PacketPath":"/opt/sequoiadb/packet/zookeeper-3.4.6.tar.gz", "HostName":"rhel64-test8", "User": "root", "Passwd": "sequoiadb", "SdbUser": "sdbadmin", "SdbPasswd": "sdbadmin", "SdbUserGroup": "sdbadmin_group", "SshPort": "22", "zooid": 2, "installPath":"/opt/zookeeper", "datapath":"/opt/zookeeper/data", "dataport":"2888", "electport":"3888", "clientport":"2181", "synclimit":"5", "initlimit":"10", "ticktime":"2000", "ServerInfo":["server.1=susetzb:2888:3888", "server.2=rhel64-test8:2888:3888", "server.3=rhel64-test9:2888:3888"] } ;
+
+//var BUS_JSON = { "DeployMod":"destribution", "PacketPath":"/opt/sequoiadb/packet/zookeeper-3.4.6.tar.gz", "HostName":"rhel64-test9", "User": "root", "Passwd": "sequoiadb", "SdbUser": "sdbadmin", "SdbPasswd": "sdbadmin", "SdbUserGroup": "sdbadmin_group", "SshPort": "22", "zooid": 3, "installPath":"/opt/zookeeper", "datapath":"/opt/zookeeper/data", "dataport":"2888", "electport":"3888", "clientport":"2181", "synclimit":"5", "initlimit":"10", "ticktime":"2000", "ServerInfo":["server.1=susetzb:2888:3888", "server.2=rhel64-test8:2888:3888", "server.3=rhel64-test9:2888:3888"] } ;
+
 
 var SYS_JSON = { "TaskID": 1 } ;
 
@@ -721,8 +726,9 @@ function main()
       changeDirOwner( ssh, installPath, sdbUser, sdbUserGroup ) ;
       changeDirOwner( ssh, dataPath, sdbUser, sdbUserGroup ) ;
       // 8. start zookeeper node
-      _startZNode( ssh, installPath, dataPath ) ;
-      // 9. disconnect
+      _startZNode( ssh2, installPath, dataPath ) ;
+      // 9. release resource
+      try { removeTmpDir2( ssh ) ; } catch(e){}
       try{ ssh.close() ; }catch(e){}
       try{ ssh2.close() ; }catch(e){}
    }

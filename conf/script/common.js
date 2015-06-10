@@ -150,4 +150,3 @@ function checkSAInfo()
    this.svcname                   = "" ;
 }
 
-

@@ -1051,4 +1051,32 @@ function getInstallInfoObj()
    return installInfoObj ;
 }
 
-
+/* *****************************************************************************
+@discretion: get the name of install packet
+@author: Tanzhaobo
+@parameter
+   packet[string]: the full name of the packet,
+                   e.g. /tmp/packet/sequoiadb-1.8-linux_x86_64-installer.run
+@return
+   packetname[string]: the name of the install packet
+***************************************************************************** */
+function getPacketName( packet )
+{
+   var s = "" ;
+   var i = 1 ;
+   var packetname = "" ;
+   if ( SYS_LINUX == SYS_TYPE )
+   {
+      s = "/" ;
+      i = packet.lastIndexOf( s ) ;
+      if ( -1 != i )
+         packetname = packet.substring( i+1 ) ;
+      else
+         packetname = packet ;
+   }
+   else
+   {
+      // TODO:
+   }
+   return packetname ;
+}

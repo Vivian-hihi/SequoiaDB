@@ -49,6 +49,7 @@ var Cpus                                   = "Cpus" ;
 var CanUse                                 = "CanUse" ;
 var Disk                                   = "Disk" ;
 var Disks                                  = "Disks" ;
+var DeployMod                              = "DeployMod" ;
 var Distributor                            = "Distributor" ;
 var Description                            = "Description" ;
 var Free                                   = "Free" ;
@@ -93,6 +94,7 @@ var Passwd                                 = "Passwd" ;
 var ProgPath                               = "ProgPath" ;
 var Port                                   = "Port" ;
 var PrimaryNode                            = "PrimaryNode" ;
+var PacketPath                             = "PacketPath" ;
 var Rc                                     = "Rc" ;
 var Reachable                              = "Reachable" ;
 var Result                                 = "Result" ;
@@ -102,6 +104,7 @@ var SdbUserGroup                           = "SdbUserGroup" ;
 var SdbPasswd                              = "SdbPasswd" ;
 var SdbUser                                = "SdbUser" ;
 var Service                                = "Service" ;
+var ServerInfo                             = "ServerInfo" ;
 var Size                                   = "Size" ;
 var SshPort                                = "SshPort" ;
 var Status                                 = "Status" ;
@@ -141,13 +144,36 @@ var Errno                                  = "errno" ;
 var Detail                                 = "detail" ;
 var Task                                   = "task" ;
 
+var InstallPath2                           = "installPath" ;
+var DataPath2                              = "dataPath" ;
+var DataDir2                               = "dataDir" ;
+var DataPort2                              = "dataPort" ;
+var ElectPort2                             = "electPort" ;
+var ClientPort2                            = "clientPort" ;
+var SyncLimit2                             = "syncLimit" ;
+var InitLimit2                             = "initLimit" ;
+var TickTime2                              = "tickTime" ;
 var CatalogAddr2                           = "catalogaddr" ;
 var SvcName2                               = "svcname" ;
 var ClusterName2                           = "clustername" ;
 var BusinessName2                          = "businessname" ;
 var UserTag2                               = "usertag" ;
 
+var DataPath3                              = "datapath" ;
+var DataDir3                               = "datadir" ;
+var DataPort3                              = "dataport" ;
+var ElectPort3                             = "electport" ;
+var ClientPort3                            = "clientport" ;
+var SyncLimit3                             = "synclimit" ;
+var InitLimit3                             = "initlimit" ;
+var TickTime3                              = "ticktime" ;
+var ZooID3                                 = "zooid" ;
+
 var DefaultPort2                           = "defaultPort" ;
+
+// deploy mode
+var  OMA_DEPLOY_CLUSTER                    = "distribution" ;
+var  OMA_DEPLOY_STANDALONE                 = "standalone" ;
 
 // file in linux
 var OMA_PATH_TEMP_OMA_DIR                  = "/tmp/omatmp/" ;
@@ -214,7 +240,15 @@ var OMA_OPTION_SDBCMART_STANDALONE         = "--standalone" ;
 var OMA_OPTION_SDBCMART_ALIVETIME          = "--alivetime" ;
 
 // other
-var OMA_NEW_LINE                           = "\n" ;
+var OMA_NEW_LINE                           = "" ;
+if ( SYS_LINUX == SYS_TYPE )
+{
+   OMA_NEW_LINE = "\n" ;
+}
+else
+{
+   OMA_NEW_LINE = "\r\n" ;
+}
 var OMA_SYS_CATALOG_RG                     = "SYSCatalogGroup" ;
 var OMA_SYS_COORD_RG                       = "SYSCoord" ;
 var OMA_LINUX                              = "LINUX" ;

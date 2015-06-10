@@ -27,9 +27,11 @@
 */
 
 // println
-var BUS_JSON = { "DeployMod":"destribution", "ServerInfo":[ {"HostName":"susetzb", "User": "root", "Passwd": "sequoiadb", "SdbUser": "sdbadmin", "SdbPasswd": "sdbadmin", "SdbUserGroup": "sdbadmin_group", "SshPort": "22", "zooid": 1, "installPath":"/opt/zookeeper", "datapath":"/opt/zookeeper/data", "dataport":"2888", "electport":"3888", "clientport":"2181", "synclimit":"5", "initLimit":"10", "ticktime":"2000"}, {"HostName":"rhel64-test8", "User": "root", "Passwd": "sequoiadb", "SdbUser": "sdbadmin", "SdbPasswd": "sdbadmin", "SdbUserGroup": "sdbadmin_group", "SshPort": "22", "zooid": 2, "installPath":"/opt/zookeeper", "datapath":"/opt/zookeeper/data", "dataport":"2888", "electport":"3888", "clientport":"2181", "synclimit":"5", "initLimit":"10", "ticktime":"2000"}, {"HostName":"rhel64-test9", "User": "root", "Passwd": "sequoiadb", "SdbUser": "sdbadmin", "SdbPasswd": "sdbadmin", "SdbUserGroup": "sdbadmin_group", "SshPort": "22", "zooid": 3, "installPath":"/opt/zookeeper", "datapath":"/opt/zookeeper/data", "dataport":"2888", "electport":"3888", "clientport":"2181", "synclimit":"5", "initLimit":"10", "ticktime":"2000"}] } ;
+var BUS_JSON = { "DeployMod":"standalone", "ServerInfo":[ {"HostName":"rhel64-test8", "User": "root", "Passwd": "sequoiadb", "SdbUser": "sdbadmin", "SdbPasswd": "sdbadmin", "SdbUserGroup": "sdbadmin_group", "SshPort": "22", "zooid": 1, "installPath":"/opt/zookeeper", "datapath":"/opt/zookeeper/data", "clientport":"2181", "ticktime":"2000"} ] } ;
 
-//var BUS_JSON = { "DeployMod":"standalone", "ServerInfo":[ {"HostName":"rhel64-test8", "User": "root", "Passwd": "sequoiadb", "SdbUser": "sdbadmin", "SdbPasswd": "sdbadmin", "SdbUserGroup": "sdbadmin_group", "SshPort": "22", "zooid": 1, "installPath":"/opt/zookeeper", "datapath":"/opt/zookeeper/data", "dataport":"2888", "electport":"3888", "clientport":"2181", "synclimit":"5", "initLimit":"10", "ticktime":"2000"}, {"HostName":"rhel64-test8", "User": "root", "Passwd": "sequoiadb", "SdbUser": "sdbadmin", "SdbPasswd": "sdbadmin", "SdbUserGroup": "sdbadmin_group", "SshPort": "22", "zooid": 1, "installPath":"/opt/zookeeper", "datapath":"/opt/zookeeper/data", "dataport":"2888", "electport":"3888", "clientport":"2181", "synclimit":"5", "initLimit":"10", "ticktime":"2000"} ] } ;
+// println
+//var BUS_JSON = { "DeployMod":"distribution", "ServerInfo":[ {"HostName":"susetzb", "User": "root", "Passwd": "sequoiadb", "SdbUser": "sdbadmin", "SdbPasswd": "sdbadmin", "SdbUserGroup": "sdbadmin_group", "SshPort": "22", "zooid": 1, "installPath":"/opt/zookeeper", "datapath":"/opt/zookeeper/data", "dataport":"2888", "electport":"3888", "clientport":"2181", "synclimit":"5", "initLimit":"10", "ticktime":"2000"}, {"HostName":"rhel64-test8", "User": "root", "Passwd": "sequoiadb", "SdbUser": "sdbadmin", "SdbPasswd": "sdbadmin", "SdbUserGroup": "sdbadmin_group", "SshPort": "22", "zooid": 2, "installPath":"/opt/zookeeper", "datapath":"/opt/zookeeper/data", "dataport":"2888", "electport":"3888", "clientport":"2181", "synclimit":"5", "initLimit":"10", "ticktime":"2000"}, {"HostName":"rhel64-test9", "User": "root", "Passwd": "sequoiadb", "SdbUser": "sdbadmin", "SdbPasswd": "sdbadmin", "SdbUserGroup": "sdbadmin_group", "SshPort": "22", "zooid": 3, "installPath":"/opt/zookeeper", "datapath":"/opt/zookeeper/data", "dataport":"2888", "electport":"3888", "clientport":"2181", "synclimit":"5", "initLimit":"10", "ticktime":"2000"}] } ;
+
 
 var SYS_JSON = { "TaskID": 1 } ;
 
@@ -112,7 +114,7 @@ function _checkStatus( ssh, installPath )
    {
       errMsg = sprintf( "zookeeper node is no ready in host[?]", ssh.getPeerIP() ) ;
       rc = SDB_SYS ;
-      PD_LOG2( task_id, arguments, PDERROR, FILE_NAME_INSTALL_ZOOKEEPER,
+      PD_LOG2( task_id, arguments, PDERROR, FILE_NAME_CHECK_ZNODES,
                sprintf( errMsg + ", rc: ?, detail: ?", ret, ssh.getLastOut() ) ) ;
       exception_handle( rc, errMsg ) ;
    }
@@ -143,7 +145,7 @@ function main()
       {
          deployMod  = BUS_JSON[DeployMod] ;
          serverInfo = BUS_JSON[ServerInfo] ;
-         if ( "destribution" == deployMod )
+         if ( OMA_DEPLOY_CLUSTER == deployMod )
          {
             isCluster = true ;
          }
@@ -224,8 +226,8 @@ function main()
          }
          catch( e )
          {
-            result[Errno] = rc ;
-            result[Detail] = errMsg ;
+            result[Errno] = GETLASTERROR() ;
+            result[Detail] = GETLASTERRMSG() ;
             hasFailed = true ;
             RET_JSON[Result].push( result ) ;
             try{ ssh.close() ; }catch(e){}
