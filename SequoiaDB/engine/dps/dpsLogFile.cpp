@@ -96,6 +96,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__DPSLOGFILE_INIT ) ;
+      BOOLEAN created = FALSE ;
 
       SDB_ASSERT ( 0 == ( _fileSize % DPS_DEFAULT_PAGE_SIZE ),
                    "Size must be multiple of DPS_DEFAULT_PAGE_SIZE bytes" ) ;
@@ -149,7 +150,6 @@ namespace engine
       }
 
       // open the file with "create only" and "read write" mode, for rx-r-----
-      // mode, use DirectIO for logging
       rc = ossOpen( path, OSS_CREATEONLY |OSS_READWRITE | OSS_SHAREWRITE,
                     OSS_RWXU, *_file );
 
@@ -158,6 +158,9 @@ namespace engine
          PD_LOG ( PDERROR, "Failed to open log file %s, rc = %d", path, rc ) ;
          goto error;
       }
+
+      created = TRUE ;
+
       // increase the file size to the given size plus log file header
       rc = ossExtendFile( _file, (SINT64)_fileSize + DPS_LOG_HEAD_LEN );
       if ( rc )
@@ -193,7 +196,17 @@ namespace engine
       if ( NULL != _file )
       {
          SDB_OSS_DEL _file;
-         _file = NULL;
+         _file = NULL ;
+      }
+      if ( created )
+      {
+         INT32 rcTmp = SDB_OK ;
+         rcTmp = ossDelete( path ) ;
+         if ( SDB_OK != rcTmp )
+         {
+            PD_LOG( PDERROR, "failed to remove new file[%s], rc:%d",
+                    path, rc ) ;
+         }
       }
       goto done;
    }
