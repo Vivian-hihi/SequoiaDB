@@ -3440,8 +3440,15 @@ namespace engine
       while( it.more() )
       {
          BSONElement e = it.next() ;
-         if ( ( mask & RTN_CTRL_MASK_GLOBAL ) &&
-              0 == ossStrcasecmp( e.fieldName(), FIELD_NAME_GLOBAL ) )
+         if ( Object == e.type() )
+         {
+            if ( pNewObj )
+            {
+               builder.append( e ) ;
+            }
+         }
+         else if ( ( mask & RTN_CTRL_MASK_GLOBAL ) &&
+                   0 == ossStrcasecmp( e.fieldName(), FIELD_NAME_GLOBAL ) )
          {
             modify = TRUE ;
             param._parseMask |= RTN_CTRL_MASK_GLOBAL ;
