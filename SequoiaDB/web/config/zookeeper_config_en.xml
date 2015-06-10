@@ -4,7 +4,7 @@
 		<WebName>zookeeper's node id</WebName>
 		<Type>int</Type>
 		<Default>1</Default>
-		<Valid></Valid>
+		<Valid>1-10000</Valid>
 		<Display>text box</Display>
 		<Edit>true</Edit>
 		<Desc>zookeeper's node id</Desc>
@@ -82,7 +82,7 @@
 		<WebName>zookeeper's synclimit</WebName>
 		<Type>int</Type>
 		<Default>2</Default>
-		<Valid></Valid>
+		<Valid>1-1000</Valid>
 		<Display>text box</Display>
 		<Edit>true</Edit>
 		<Desc>limits how far out of date a server can be from a leader</Desc>
@@ -95,7 +95,7 @@
 		<WebName>zookeeper's initlimit</WebName>
 		<Type>int</Type>
 		<Default>5</Default>
-		<Valid></Valid>
+		<Valid>1-1000</Valid>
 		<Display>text box</Display>
 		<Edit>true</Edit>
 		<Desc>limit the length of time the server in quorum have to connect to a leader</Desc>
@@ -108,7 +108,7 @@
 		<WebName>zookeeper's ticktime</WebName>
 		<Type>int</Type>
 		<Default>2000</Default>
-		<Valid></Valid>
+		<Valid>100-100000</Valid>
 		<Display>text box</Display>
 		<Edit>true</Edit>
 		<Desc>hearbeats interval(ms)</Desc>
