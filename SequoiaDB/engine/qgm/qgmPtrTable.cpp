@@ -77,8 +77,8 @@ namespace engine
          goto done ;
       }
 
-      field._begin = begin ;
-      field._size = size ;
+      f._begin = begin ;
+      f._size = size ;
       itr = _table.find( f ) ;
       if ( _table.end() == itr )
       {
