@@ -99,6 +99,7 @@ namespace engine
       :_src( src ),
        _ch( ch ),
        _last( NULL ),
+       _pLastPos( NULL ),
        _chRestore( 0 )
       {
          if ( _src && size > 0 )
