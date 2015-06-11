@@ -190,7 +190,7 @@ fetch:
    string _qgmPlSplitBy::toString() const
    {
       stringstream ss ;
-      ss << "split by [" << _splitby.toString() << "]" ;
+      ss << "split by [" << _splitby.toString() << "]" << "\n" ;
       return ss.str();
    }
 }
