@@ -120,8 +120,8 @@ class mongoDataPacket : public SDBObject
 public:
    INT32  optionMask ;
    INT32  msgLen ;
-   UINT32 requestId ;
-   UINT32 responseTo ;
+   INT32 requestId ;
+   INT32 responseTo ;
    SINT16 opCode ;
    CHAR   flags ;
    CHAR   version ;

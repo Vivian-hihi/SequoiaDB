@@ -409,9 +409,9 @@ INT32 _mongoSession::_reply( MsgOpReply *replyHeader,
       goto done;
    }
    // id
-   reply.header.requestId = replyHeader->header.requestID ;
+   reply.header.requestId = 0 ;//replyHeader->header.requestID ;
    // responseTo, cast UINT64 to INT32
-   reply.header.responseTo = replyHeader->header.requestID ;
+   reply.header.responseTo = packet.requestId ;
    // opCode
    reply.header.opCode = dbReply ;
    // _flags
