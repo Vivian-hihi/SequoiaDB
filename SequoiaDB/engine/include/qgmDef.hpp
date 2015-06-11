@@ -124,7 +124,7 @@ namespace engine
             return TRUE ;
          }
          const CHAR *l = _begin ;
-         const CHAR *r = _begin ;
+         const CHAR *r = field._begin ;
          while( *l && *r )
          {
             if ( *l != *r )
