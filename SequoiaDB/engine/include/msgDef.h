@@ -436,6 +436,7 @@
 #define CMD_NAME_FORCE_STEP_UP               "force step up"
 #define CMD_NAME_JSON_LOAD                   "json load"
 #define CMD_NAME_TRUNCATE                    "truncate"
+#define CMD_NAME_LIST_USERS                  "list users"
 
 #define CMD_NAME_SNAPSHOT_DATABASE_INTR      "SNAPSHOT_DB"
 #define CMD_NAME_SNAPSHOT_SYSTEM_INTR        "SNAPSHOT_SYSTEM"
