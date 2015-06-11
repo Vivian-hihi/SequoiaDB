@@ -12,6 +12,9 @@ void msgParser::extractMsg( const CHAR *in, const INT32 inLen )
    if ( NULL != _dataStart )
    {
       //_reset() ;
+      _offset = 0 ;
+      _currentOp = OP_INVALID ;
+      _dataPacket.clear() ;
    }
 
    _dataStart = in ;
@@ -42,7 +45,7 @@ void msgParser::extractMsg( const CHAR *in, const INT32 inLen )
    {
       ++nsLen ;
    }
-   _offset += nsLen ;
+   _offset += nsLen + 1 ;
 
    ptr = ossStrstr( dbName, ".$cmd" ) ;
    if ( NULL != ptr )
@@ -60,16 +63,18 @@ void msgParser::extractMsg( const CHAR *in, const INT32 inLen )
    else if ( NULL != ( ptr = ossStrstr( dbName, ".system.users" ) ) )
    {
       _dataPacket.optionMask |= OPTION_USR ;
-	   _dataPacket.csName = std::string( dbName ).substr( 0, ptr - dbName ) ;
+      _dataPacket.csName = std::string( dbName ).substr( 0, ptr - dbName ) ;
       //_dataPacket.fullName = AUTH_USR_COLLECTION ;
    }
    else if ( NULL != ( ptr = ossStrstr( dbName, ".system.namespaces" ) ) )
    {
       _dataPacket.optionMask |= OPTION_CLS ;
-	   _dataPacket.csName = std::string( dbName ).substr( 0, ptr - dbName ) ;
+      _dataPacket.csName = std::string( dbName ).substr( 0, ptr - dbName ) ;
       //_dataPacket.fullName = CAT_COLLECTION_INFO_COLLECTION ;
    }
-   else
+
+
+   if ( 0 == _dataPacket.optionMask )
    {
       _dataPacket.fullName = dbName ;
       ptr = ossStrstr( dbName, ".") ;

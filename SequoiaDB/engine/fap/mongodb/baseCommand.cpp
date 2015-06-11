@@ -3,7 +3,7 @@
 baseCommand::baseCommand( const CHAR *name, const CHAR *secondName )
 {
    commandMgr *mgr = commandMgr::instance() ;
-   if ( NULL == mgr )
+   if ( NULL != mgr )
    {
       mgr->addCommand( name, this ) ;
       _name = name ;

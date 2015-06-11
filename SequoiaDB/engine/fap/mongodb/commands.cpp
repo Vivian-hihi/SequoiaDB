@@ -473,7 +473,7 @@ INT32 queryCommand::convert( msgParser &parser )
    parser.readInt( sizeof( nToReturn ), ( CHAR * )&nToReturn ) ;
    packet.nToReturn = nToReturn < 0 ? -nToReturn : nToReturn ;
 
-   if ( 0 !=  packet.optionMask )
+   if ( 0 !=  packet.optionMask && !packet.with( OPTION_CMD ))
    {
       if ( packet.with( OPTION_IDX ) )
       {
@@ -1706,6 +1706,7 @@ INT32 getlasterrorCommand::convert( msgParser &parser )
 
 INT32 getlasterrorCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
 {
+   parser.setCurrentOp( OP_CMD_GETLASTERROR ) ;
    return SDB_OK ;
 }
 
@@ -1721,6 +1722,7 @@ INT32 pingCommand::convert( msgParser &parser )
 
 INT32 pingCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
 {
+   parser.setCurrentOp( OP_CMD_PING ) ;
    return SDB_OK ;
 }
 
@@ -1736,6 +1738,7 @@ INT32 ismasterCommand::convert( msgParser &parser )
 
 INT32 ismasterCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
 {
+   parser.setCurrentOp( OP_CMD_ISMASTER ) ;
    return SDB_OK ;
 }
 

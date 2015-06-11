@@ -120,8 +120,8 @@ class mongoDataPacket : public SDBObject
 public:
    INT32  optionMask ;
    INT32  msgLen ;
-   INT32  requestId ;
-   INT32  responseTo ;
+   UINT32 requestId ;
+   UINT32 responseTo ;
    SINT16 opCode ;
    CHAR   flags ;
    CHAR   version ;
@@ -144,6 +144,28 @@ public:
    {
       return ( optionMask & mask ) ;
    }
+
+   void clear()
+   {
+      optionMask = 0 ;
+      msgLen = 0 ;
+      requestId = 0 ;
+      responseTo = 0 ;
+      opCode = 0 ;
+      flags = 0 ;
+      version = 0 ;
+      reservedInt = 0 ;
+      nToSkip = 0 ;
+      nToReturn = 0 ;
+      cursorId = 0 ;
+      csName.clear() ;
+      fullName.clear() ;
+      all = empty ;
+      fieldToReturn = empty ;
+   }
+
+private:
+   bson::BSONObj empty ;
 } ;
 
 class baseCommand ;
