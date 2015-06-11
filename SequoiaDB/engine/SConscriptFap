@@ -8,8 +8,9 @@ fapMongoFiles = [
       "fap/mongodb/mongoConverter.cpp",
       "fap/mongodb/mongoSession.cpp",
       "fap/mongodb/msgBuffer.cpp",
-      "fap/mongodb/mongodef.cpp",
-      "fap/mongodb/mongoReplyHelper.cpp"
+      "fap/mongodb/mongoReplyHelper.cpp",
+      "fap/mongodb/baseCommand.cpp",
+      "fap/mongodb/parser.cpp"
       ]
 
 rtnFiles = [
