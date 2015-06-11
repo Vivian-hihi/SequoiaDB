@@ -118,7 +118,7 @@ namespace engine
             {
                srcObj = this->next->obj ;
             }
-            else if (  attr.relegation() == this->alias )
+            else if ( attr.relegation() == this->alias )
             {
                srcObj = this->obj ;
             }

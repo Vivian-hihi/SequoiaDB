@@ -209,7 +209,7 @@ namespace engine
          {
             oprUnit->addOpField( select.value, QGM_OPR_FILTER_COPY_FLAG ) ;
          }
-         else if ( select.value.type != SQL_GRAMMAR::WILDCARD )
+         else
          {
             vector<qgmOpField>::iterator itAttr = select.param.begin() ;
             while ( itAttr != select.param.end() )

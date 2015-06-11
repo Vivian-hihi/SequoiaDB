@@ -114,30 +114,7 @@ namespace engine
       return ;
    }
 
-//////// _qgmOpStream
-
-   static BOOLEAN qgmContains( const _qgmField &src,
-                               const _qgmField &dst )
-   {
-      BOOLEAN rc = TRUE ;
-      if ( src == dst )
-      {
-         goto done ;
-      }
-      else if ( src.begin() == dst.begin() &&
-                src.size() + 2 <= dst.size() )
-      {
-         rc = '.' == *(dst.begin() + src.size());
-      }
-      else
-      {
-         rc = FALSE ;
-      }
-   done:
-      return rc ;
-   }
-
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMOPSTREAM_FIND, "_qgmOpStream::find" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMOPSTREAM_FIND, "_qgmOpStream::find" )
    BOOLEAN _qgmOpStream::find( const _qgmDbAttr &field )
    {
       /// eg: select T.A from ( select a as A from table ) as T ;
@@ -170,7 +147,7 @@ namespace engine
       {
          if ( !itr->alias.empty() )
          {
-            if ( itr->alias == field.attr() )
+            if ( field.attr().isSubfix( itr->alias, TRUE ) )
             {
                found = TRUE ;
                goto done ;
@@ -189,9 +166,7 @@ namespace engine
                goto done ;
             }
 
-//            if ( itr->value.attr() == field.attr() )
-            if ( qgmContains( itr->value.attr(),
-                              field.attr() ))
+            if ( field.attr().isSubfix( itr->value.attr(), TRUE ) )
             {
                found = TRUE ;
                goto done ;
@@ -265,7 +240,7 @@ namespace engine
       addOpField( fields, delDup ) ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMOPRUNIT_ADDOPFIELD, "_qgmOprUnit::addOpField" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMOPRUNIT_ADDOPFIELD, "_qgmOprUnit::addOpField" )
    INT32 _qgmOprUnit::addOpField( const qgmOpField & field, BOOLEAN delDup )
    {
       PD_TRACE_ENTRY( SDB__QGMOPRUNIT_ADDOPFIELD ) ;
@@ -453,7 +428,7 @@ namespace engine
       _oprUnits.clear() ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMOPTITREENODE_ADDCHILD, "_qgmOptiTreeNode::addChild" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMOPTITREENODE_ADDCHILD, "_qgmOptiTreeNode::addChild" )
    INT32 _qgmOptiTreeNode::addChild( _qgmOptiTreeNode *child )
    {
       PD_TRACE_ENTRY( SDB__QGMOPTITREENODE_ADDCHILD ) ;
@@ -639,7 +614,7 @@ namespace engine
       return SDB_OK ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMOPTITREENODE__ONPUSHOPRUNIT, "_qgmOptiTreeNode::_onPushOprUnit" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMOPTITREENODE__ONPUSHOPRUNIT, "_qgmOptiTreeNode::_onPushOprUnit" )
    INT32 _qgmOptiTreeNode::_onPushOprUnit( qgmOprUnit * oprUnit, PUSH_FROM from )
    {
       PD_TRACE_ENTRY( SDB__QGMOPTITREENODE__ONPUSHOPRUNIT ) ;
@@ -737,7 +712,7 @@ namespace engine
       return ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMOPTITREENODE_PUSHOPRUNIT, "_qgmOptiTreeNode::pushOprUnit" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMOPTITREENODE_PUSHOPRUNIT, "_qgmOptiTreeNode::pushOprUnit" )
    INT32 _qgmOptiTreeNode::pushOprUnit( qgmOprUnit * oprUnit,
                                         qgmOptiTreeNode *fromNode,
                                         qgmOptiTreeNode::PUSH_FROM from )
@@ -846,7 +821,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMOPTITREENODE_RMOPRUNIT, "_qgmOptiTreeNode::removeOprUnit" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMOPTITREENODE_RMOPRUNIT, "_qgmOptiTreeNode::removeOprUnit" )
    INT32 _qgmOptiTreeNode::removeOprUnit( qgmOprUnit * oprUnit,
                                           BOOLEAN release,
                                           BOOLEAN updateLocal )
@@ -897,7 +872,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMOPTITREENODE_UPCHANGE, "_qgmOptiTreeNode::updateChange" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMOPTITREENODE_UPCHANGE, "_qgmOptiTreeNode::updateChange" )
    INT32 _qgmOptiTreeNode::updateChange( qgmOprUnit * oprUnit )
    {
       PD_TRACE_ENTRY( SDB__QGMOPTITREENODE_UPCHANGE ) ;
@@ -946,7 +921,7 @@ namespace engine
       return ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMOPTITREENODE_OUTPUTSORT, "_qgmOptiTreeNode::outputSort" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMOPTITREENODE_OUTPUTSORT, "_qgmOptiTreeNode::outputSort" )
    INT32 _qgmOptiTreeNode::outputSort( qgmOPFieldVec & sortFields )
    {
       PD_TRACE_ENTRY( SDB__QGMOPTITREENODE_OUTPUTSORT ) ;
@@ -984,7 +959,7 @@ namespace engine
       return ss.str() ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMOPTITREENODE_EXTEND, "_qgmOptiTreeNode::extend" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMOPTITREENODE_EXTEND, "_qgmOptiTreeNode::extend" )
    INT32 _qgmOptiTreeNode::extend( _qgmOptiTreeNode *&exNode )
    {
       PD_TRACE_ENTRY( SDB__QGMOPTITREENODE_EXTEND ) ;
@@ -1203,7 +1178,7 @@ namespace engine
       _prepare( _pRoot ) ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMOPTTREE__PREPARE, "_qgmOptTree::_prepare" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMOPTTREE__PREPARE, "_qgmOptTree::_prepare" )
    void _qgmOptTree::_prepare( qgmOptiTreeNode * treeNode )
    {
       // one: set parent
@@ -1251,7 +1226,7 @@ namespace engine
       return count ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMOPTTREE_INSERTBETWEEN, "_qgmOptTree::insertBetween" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMOPTTREE_INSERTBETWEEN, "_qgmOptTree::insertBetween" )
    INT32 _qgmOptTree::insertBetween( qgmOptiTreeNode * parent,
                                      qgmOptiTreeNode * sub,
                                      qgmOptiTreeNode * newNode )

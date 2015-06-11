@@ -102,7 +102,7 @@ namespace engine
 
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMBUILDER_BUILDORDERBY, "_qgmBuilder::buildOrderby" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMBUILDER_BUILDORDERBY, "_qgmBuilder::buildOrderby" )
    BSONObj _qgmBuilder::buildOrderby( const qgmOPFieldVec &orderby )
    {
       PD_TRACE_ENTRY( SDB__QGMBUILDER_BUILDORDERBY ) ;
@@ -126,7 +126,7 @@ namespace engine
       return builder.obj() ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMBUILDER_BUILD1, "_qgmBuilder::build" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMBUILDER_BUILD1, "_qgmBuilder::build" )
    INT32 _qgmBuilder::build( const SQL_CONTAINER &tree,
                              _qgmOptiTreeNode *&node )
    {
@@ -157,7 +157,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMBUILDER_BUILD2, "_qgmBuilder::build2" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMBUILDER_BUILD2, "_qgmBuilder::build2" )
    INT32 _qgmBuilder::build( _qgmOptiTreeNode *logicalTree,
                              _qgmPlan *&physicalTree )
    {
@@ -180,7 +180,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMBUILDER__BUILDPHYNODE, "_qgmBuilder::_buildPhysicalNode" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMBUILDER__BUILDPHYNODE, "_qgmBuilder::_buildPhysicalNode" )
    INT32 _qgmBuilder::_buildPhysicalNode( _qgmOptiTreeNode *logicalTree,
                                           _qgmPlan *&physicalTree )
    {
@@ -589,7 +589,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMBUILDER__ADDPHYCOMMAND, "_qgmBuilder::_addPhyCommand" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMBUILDER__ADDPHYCOMMAND, "_qgmBuilder::_addPhyCommand" )
    INT32 _qgmBuilder::_addPhyCommand( _qgmOptiCommand *command,
                                       _qgmPlan *&father )
    {
@@ -646,7 +646,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMBUILDER__ADDPHYAGGR, "_qgmBuilder::_addPhyAggr" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMBUILDER__ADDPHYAGGR, "_qgmBuilder::_addPhyAggr" )
    INT32 _qgmBuilder::_addPhyAggr( _qgmOptiAggregation *aggr,
                                    _qgmPlan *father,
                                    _qgmPlan *&pyh )
@@ -684,7 +684,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMBUILDER__CRTPHYSORT, "_qgmBuilder::_crtPhySort" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMBUILDER__CRTPHYSORT, "_qgmBuilder::_crtPhySort" )
    INT32 _qgmBuilder::_crtPhySort( _qgmOptiSort *sort,
                                    _qgmPlan *father,
                                    _qgmPlan *&phy )
@@ -713,7 +713,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMBUILDER__ADDPHYSCAN, "_qgmBuilder::_addPhyScan" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMBUILDER__ADDPHYSCAN, "_qgmBuilder::_addPhyScan" )
    INT32 _qgmBuilder::_addPhyScan( _qgmOptiSelect *s,
                                    _qgmPlan *father )
    {
@@ -752,7 +752,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMBUILDER__ADDMTHMATHERSCAN, "_qgmBuilder::_addMthMatcherScan" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMBUILDER__ADDMTHMATHERSCAN, "_qgmBuilder::_addMthMatcherScan" )
    INT32 _qgmBuilder::_addMthMatcherScan( qgmOptiMthMatchSelect *s,
                                           _qgmPlan *father )
    {
@@ -790,7 +790,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMBUILDER__CRTPHYJOIN, "_qgmBuilder::_crtPhyJoin" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMBUILDER__CRTPHYJOIN, "_qgmBuilder::_crtPhyJoin" )
    INT32 _qgmBuilder::_crtPhyJoin( _qgmOptiNLJoin *join,
                                    _qgmPlan *father,
                                    _qgmPlan *&phy )
@@ -835,7 +835,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMBUILDER__CRTPHYFILTER, "_qgmBuilder::_crtPhyFilter" ) ;
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMBUILDER__CRTPHYFILTER, "_qgmBuilder::_crtPhyFilter" ) ;
    INT32 _qgmBuilder::_crtPhyFilter( _qgmOptiSelect *s,
                                      _qgmPlan *father,
                                      _qgmPlan *&phy )
@@ -873,7 +873,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMBUILDER__CRTMTHMATHERFILTER, "_qgmBuilder::_crtMthMatcherFilter" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMBUILDER__CRTMTHMATHERFILTER, "_qgmBuilder::_crtMthMatcherFilter" )
    INT32 _qgmBuilder::_crtMthMatcherFilter( qgmOptiMthMatchSelect *s,
                                              _qgmPlan *father,
                                              _qgmPlan *&phy )
@@ -915,7 +915,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMBUILDER__BUILD1, "_qgmBuilder::_build" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMBUILDER__BUILD1, "_qgmBuilder::_build" )
    INT32 _qgmBuilder::_build( const SQL_CON_ITR &root,
                               _qgmOptiTreeNode *&node )
    {
@@ -1236,7 +1236,7 @@ namespace engine
       return rc ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMBUILDER__BUILDUPDATE, "_qgmBuilder::_buildUpdate" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMBUILDER__BUILDUPDATE, "_qgmBuilder::_buildUpdate" )
    INT32 _qgmBuilder::_buildUpdate( const SQL_CON_ITR &root,
                                     _qgmOptiUpdate *update )
    {
@@ -1273,7 +1273,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMBUILDER__ADDSET, "_qgmBuilder::_addSet" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMBUILDER__ADDSET, "_qgmBuilder::_addSet" )
    INT32 _qgmBuilder::_addSet( const SQL_CON_ITR &root,
                                 _qgmOptiUpdate *update )
    {
@@ -1344,7 +1344,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMBUILDER__BUILDDELETE, "_qgmBuilder::_buildDelete" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMBUILDER__BUILDDELETE, "_qgmBuilder::_buildDelete" )
    INT32 _qgmBuilder::_buildDelete( const SQL_CON_ITR &root,
                                     _qgmOptiDelete *node )
    {
@@ -1388,7 +1388,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMBUILDER__BUILDDROPCL, "_qgmBuilder::_buildDropCL" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMBUILDER__BUILDDROPCL, "_qgmBuilder::_buildDropCL" )
    INT32 _qgmBuilder::_buildDropCL( const SQL_CON_ITR &root,
                                     _qgmOptiCommand *node )
    {
@@ -1409,7 +1409,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMBUILDER__BUILDDROPINX, "_qgmBuilder::_buildDropIndex" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMBUILDER__BUILDDROPINX, "_qgmBuilder::_buildDropIndex" )
    INT32 _qgmBuilder::_buildDropIndex( const SQL_CON_ITR &root,
                                       _qgmOptiCommand *node )
    {
@@ -1437,7 +1437,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMBUILDER__BUILDCRTINX, "_qgmBuilder::_buildCrtIndex" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMBUILDER__BUILDCRTINX, "_qgmBuilder::_buildCrtIndex" )
    INT32 _qgmBuilder::_buildCrtIndex( const SQL_CON_ITR &root,
                                       _qgmOptiCommand *node )
    {
@@ -1481,7 +1481,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMBUILDER__BUILDINXCOLUMNS, "_qgmBuilder::_buildIndexColumns" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMBUILDER__BUILDINXCOLUMNS, "_qgmBuilder::_buildIndexColumns" )
    INT32 _qgmBuilder::_buildIndexColumns( const SQL_CON_ITR &root,
                                           qgmOPFieldVec &columns )
    {
@@ -1543,7 +1543,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMBUILDER__BUILDCRTCL, "_qgmBuilder::_buildCrtCL" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMBUILDER__BUILDCRTCL, "_qgmBuilder::_buildCrtCL" )
    INT32 _qgmBuilder::_buildCrtCL( const SQL_CON_ITR &root,
                                    _qgmOptiCommand *node )
    {
@@ -1582,7 +1582,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMBUILDER__BUILDCRTCS, "_qgmBuilder::_buildCrtCS" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMBUILDER__BUILDCRTCS, "_qgmBuilder::_buildCrtCS" )
    INT32 _qgmBuilder::_buildCrtCS( const SQL_CON_ITR &root,
                                    _qgmOptiCommand *node )
    {
@@ -1603,7 +1603,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMBUILDER__BUILDDROPCS, "_qgmBuilder::_buildDropCS" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMBUILDER__BUILDDROPCS, "_qgmBuilder::_buildDropCS" )
    INT32 _qgmBuilder::_buildDropCS( const SQL_CON_ITR &root,
                                     _qgmOptiCommand *node )
    {
@@ -1624,7 +1624,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMBUILDER__BUILDSELECT, "_qgmBuilder::_buildSelect" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMBUILDER__BUILDSELECT, "_qgmBuilder::_buildSelect" )
    INT32 _qgmBuilder::_buildSelect( const SQL_CON_ITR &root,
                                     _qgmOptiSelect *node,
                                     const CHAR *alias,
@@ -1738,7 +1738,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMBUILDER__BUILDINSERT, "_qgmBuilder::_buildInsert" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMBUILDER__BUILDINSERT, "_qgmBuilder::_buildInsert" )
    INT32 _qgmBuilder::_buildInsert( const SQL_CON_ITR &root,
                                     _qgmOptiInsert *insert )
    {
@@ -1815,7 +1815,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMBUILDER__ADDSELECTOR, "_qgmBuilder::_addSelector" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMBUILDER__ADDSELECTOR, "_qgmBuilder::_addSelector" )
    INT32 _qgmBuilder::_addSelector( const SQL_CON_ITR &root,
                                     _qgmOptiSelect *node,
                                     const CHAR *alias,
@@ -1933,7 +1933,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMBUILDER__ADDFROM, "_qgmBuilder::_addFrom" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMBUILDER__ADDFROM, "_qgmBuilder::_addFrom" )
    INT32 _qgmBuilder::_addFrom( const SQL_CON_ITR &root,
                                 _qgmOptiSelect *node,
                                 const CHAR *alias,
@@ -2082,7 +2082,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMBUILDER__BUILDJOIN, "_qgmBuilder::_buildJoin" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMBUILDER__BUILDJOIN, "_qgmBuilder::_buildJoin" )
    INT32 _qgmBuilder::_buildJoin( const SQL_CON_ITR &root,
                                   _qgmOptiNLJoin *node,
                                   const CHAR *alias,
@@ -2233,7 +2233,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMBUILDER__BUILDINCONDITION, "_qgmBuilder::_buildInCondition" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMBUILDER__BUILDINCONDITION, "_qgmBuilder::_buildInCondition" )
    INT32 _qgmBuilder::_buildInCondition( const SQL_CON_ITR &root,
                                          _qgmConditionNode *&condition )
    {
@@ -2284,7 +2284,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMBUILDER__BUILDCONDITION, "_qgmBuilder::_buildCondition" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMBUILDER__BUILDCONDITION, "_qgmBuilder::_buildCondition" )
    INT32 _qgmBuilder::_buildCondition( const SQL_CON_ITR &root,
                                        _qgmConditionNode *&condition )
    {
@@ -2463,7 +2463,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMBUILDER__ADDSPLITBY, "_qgmBuilder::_addSplitBy" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMBUILDER__ADDSPLITBY, "_qgmBuilder::_addSplitBy" )
    INT32 _qgmBuilder::_addSplitBy( const SQL_CON_ITR &root,
                                    _qgmOptiSelect *node )
    {
@@ -2485,7 +2485,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMBUILDER__ADDGROUPBY, "_qgmBuilder::_addGroupBy" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMBUILDER__ADDGROUPBY, "_qgmBuilder::_addGroupBy" )
    INT32 _qgmBuilder::_addGroupBy( const SQL_CON_ITR &root,
                                    _qgmOptiSelect *node )
    {
@@ -2581,7 +2581,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMBUILDER__ADDORDERBY, "_qgmBuilder::_addOrderBy" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMBUILDER__ADDORDERBY, "_qgmBuilder::_addOrderBy" )
    INT32 _qgmBuilder::_addOrderBy( const SQL_CON_ITR &root,
                                    qgmOPFieldVec &order )
    {
@@ -2679,7 +2679,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGBUILDER__ADDLIMIT, "_qgmBuilder::_addLimit" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGBUILDER__ADDLIMIT, "_qgmBuilder::_addLimit" )
    INT32 _qgmBuilder::_addLimit( const SQL_CON_ITR &root,
                                  _qgmOptiSelect *node )
    {
@@ -2721,7 +2721,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMBUILDER__ADDSKIP, "_qgmBuilder::_addSkip" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMBUILDER__ADDSKIP, "_qgmBuilder::_addSkip" )
    INT32 _qgmBuilder::_addSkip( const SQL_CON_ITR &root,
                                 _qgmOptiSelect *node )
    {
@@ -2763,7 +2763,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMBUILDER__ADDCOLUMNS, "_qgmBuilder::_addColumns" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMBUILDER__ADDCOLUMNS, "_qgmBuilder::_addColumns" )
    INT32 _qgmBuilder::_addColumns( const SQL_CON_ITR &root,
                                    _qgmOptiInsert *node )
    {
@@ -2816,7 +2816,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMBUILDER__ADDVALUES, "_qgmBuilder::_addValues" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMBUILDER__ADDVALUES, "_qgmBuilder::_addValues" )
    INT32 _qgmBuilder::_addValues( const SQL_CON_ITR &root,
                                   _qgmOptiInsert *node )
    {
@@ -2883,7 +2883,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMBUILDER__ADDHINT, "_qgmBuilder::_addHint" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMBUILDER__ADDHINT, "_qgmBuilder::_addHint" )
    INT32 _qgmBuilder::_addHint( const SQL_CON_ITR &root,
                                 _qgmOptiSelect *node )
    {

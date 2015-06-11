@@ -61,23 +61,25 @@ namespace engine
       _stringTable.clear() ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMPTRTABLE_GETFIELD, "_qgmPtrTable::getField" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMPTRTABLE_GETFIELD, "_qgmPtrTable::getField" )
    INT32 _qgmPtrTable::getField( const CHAR *begin, UINT32 size,
                                  qgmField &field )
    {
       PD_TRACE_ENTRY( SDB__QGMPTRTABLE_GETFIELD ) ;
       INT32 rc = SDB_OK ;
+      qgmField f ;
+      PTR_TABLE::const_iterator itr ;
+
       if ( NULL == begin || 0 == size )
       {
-         field._begin = NULL ;
+         field._begin = "" ;
          field._size = 0 ;
          goto done ;
       }
-      {
-      qgmField f ;
-      f._begin = begin ;
-      f._size = size ;
-      PTR_TABLE::const_iterator itr = _table.find( f ) ;
+
+      field._begin = begin ;
+      field._size = size ;
+      itr = _table.find( f ) ;
       if ( _table.end() == itr )
       {
          field = f ;
@@ -85,31 +87,33 @@ namespace engine
       }
       else
       {
-         field = *itr;
+         field = *itr ;
       }
-      }
+
    done:
       PD_TRACE_EXITRC( SDB__QGMPTRTABLE_GETFIELD, rc ) ;
       return rc ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMPTRTABLE_GETOWNFIELD, "_qgmPtrTable::getOwnField" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMPTRTABLE_GETOWNFIELD, "_qgmPtrTable::getOwnField" )
    INT32 _qgmPtrTable::getOwnField( const CHAR * begin, qgmField & field )
    {
       PD_TRACE_ENTRY( SDB__QGMPTRTABLE_GETOWNFIELD ) ;
       SDB_ASSERT( NULL != begin, "impossible" ) ;
       INT32 rc = SDB_OK ;
       UINT32 size = ossStrlen( begin ) ;
+      qgmField f ;
+      PTR_TABLE::const_iterator itr ;
+
       if ( NULL == begin || 0 == size )
       {
          rc = SDB_INVALIDARG ;
          goto error ;
       }
-      {
-      qgmField f ;
+
       f._begin = begin ;
       f._size = size ;
-      PTR_TABLE::const_iterator itr = _table.find( f ) ;
+      itr = _table.find( f ) ;
       if ( _table.end() == itr )
       {
          // new string
@@ -124,7 +128,7 @@ namespace engine
       {
          field = *itr;
       }
-      }
+
    done:
       PD_TRACE_EXITRC( SDB__QGMPTRTABLE_GETOWNFIELD, rc ) ;
       return rc ;
@@ -132,7 +136,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMPTRTABLE_GETATTR, "_qgmPtrTable::getAttr" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMPTRTABLE_GETATTR, "_qgmPtrTable::getAttr" )
    INT32 _qgmPtrTable::getAttr( const CHAR *begin, UINT32 size,
                                 qgmDbAttr &attr )
    {

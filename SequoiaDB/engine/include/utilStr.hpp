@@ -95,12 +95,18 @@ namespace engine
    class utilSplitIterator : public SDBObject
    {
    public:
-      utilSplitIterator( CHAR *src, CHAR ch = '.' )
+      utilSplitIterator( CHAR *src, CHAR ch = '.', INT32 size = -1 )
       :_src( src ),
        _ch( ch ),
-       _last( NULL )
+       _last( NULL ),
+       _chRestore( 0 )
       {
-
+         if ( _src && size > 0 )
+         {
+            _pLastPos = &_src[ size ] ;
+            _chRestore = *_pLastPos ;
+            *_pLastPos = '\0' ;
+         }
       }
 
       ~utilSplitIterator()
@@ -111,6 +117,11 @@ namespace engine
             _last = NULL ;
          }
          _src = NULL ;
+
+         if ( _pLastPos )
+         {
+            *_pLastPos = _chRestore ;
+         }
       }
 
    public:
@@ -120,6 +131,9 @@ namespace engine
       CHAR *_src ;
       CHAR _ch ;
       CHAR *_last ;
+
+      CHAR *_pLastPos ;
+      CHAR _chRestore ;
    } ;
 }
 

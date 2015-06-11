@@ -62,17 +62,15 @@ namespace engine
 
    public:
       _qgmField()
-      :_begin( NULL ),
+      :_begin( "" ),
        _size( 0 )
       {
-
       }
 
       _qgmField( const _qgmField &field )
       :_begin( field._begin ),
        _size( field._size)
       {
-
       }
 
       _qgmField &operator=(const _qgmField &field )
@@ -84,33 +82,59 @@ namespace engine
 
       ~_qgmField()
       {
-         _begin = NULL ;
+         _begin = "" ;
          _size = 0 ;
       }
 
       BOOLEAN empty() const
       {
-         return NULL == _begin ;
+         return 0 == _size ? TRUE : FALSE ;
       }
 
       void clear()
       {
-         _begin = NULL ;
+         _begin = "" ;
          _size = 0 ;
       }
 
-      /// note: compare the ptr rather than str
       BOOLEAN operator==( const _qgmField &field )const
       {
-         // return ossStrncmp( this->begin, field.begin, size ) ;
-         return this->_begin == field._begin
-                && this->_size == field._size ;
+         if ( _size != field._size )
+         {
+            return FALSE ;
+         }
+         const CHAR *l = _begin ;
+         const CHAR *r = field._begin ;
+         while( *l && *r )
+         {
+            if ( *l != *r )
+            {
+               return FALSE ;
+            }
+            ++l ;
+            ++r ;
+         }
+         return TRUE ;
       }
 
       BOOLEAN operator!=( const _qgmField &field )const
       {
-         return !( this->_begin == field._begin
-                   && this->_size == field._size ) ;
+         if ( _size != field._size )
+         {
+            return TRUE ;
+         }
+         const CHAR *l = _begin ;
+         const CHAR *r = _begin ;
+         while( *l && *r )
+         {
+            if ( *l != *r )
+            {
+               return TRUE ;
+            }
+            ++l ;
+            ++r ;
+         }
+         return FALSE ;
       }
 
       BOOLEAN operator<( const _qgmField &field )const
@@ -136,6 +160,32 @@ namespace engine
                 TRUE : FALSE ;
       }
 
+      BOOLEAN isSubfix( const _qgmField &field,
+                        BOOLEAN includeSame = FALSE ) const
+      {
+         UINT32 i = 0 ;
+         while( i < _size && i < field._size )
+         {
+            if ( _begin[i] != field._begin[i] )
+            {
+               break ;
+            }
+            ++i ;
+         }
+         if ( i == field._size )
+         {
+            if ( i + 2 <= _size && '.' == _begin[i] )
+            {
+               return TRUE ;
+            }
+            else if ( includeSame && i == _size )
+            {
+               return TRUE ;
+            }
+         }
+         return FALSE ;
+      }
+
       const CHAR *begin() const
       {
          return _begin ;
@@ -158,18 +208,18 @@ namespace engine
       string toFieldName() const
       {
          stringstream ss ;
-         string str = toString() ;
-         if ( !str.empty() )
+
+         if ( _size > 0 )
          {
-            utilSplitIterator i( ( CHAR * )( str.c_str() ) ) ;
+            INT32 num = 0 ;
+            utilSplitIterator i( (CHAR*)_begin, '.', _size ) ;
             while ( i.more() )
             {
                const CHAR *left = i.next() ;
-               if ( '$' == *left && '[' == *(left + 1) )
+               if ( '$' == *left && '[' == *(left + 1) &&
+                    SDB_OK == mthConvertSubElemToNumeric( left, num ) )
                {
-                  INT32 n = 0 ;
-                  mthConvertSubElemToNumeric( left, n ) ;
-                  ss << n << '.';
+                  ss << num << '.' ;
                }
                else
                {

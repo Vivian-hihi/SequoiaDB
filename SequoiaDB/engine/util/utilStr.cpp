@@ -527,21 +527,22 @@ namespace engine
 
    BOOLEAN utilSplitIterator::more() const
    {
-      return NULL != _src && _ch != *_src ;
+      return ( _src && *_src && _ch != *_src ) ? TRUE : FALSE ;
    }
 
    const CHAR *utilSplitIterator::next()
    {
       CHAR *ch = NULL ;
-      const CHAR *r = NULL ;
+      const CHAR *r = "" ;
 
+      /// restore
       if ( NULL != _last )
       {
          *_last = _ch ;
          _last = NULL ;
       }
 
-      if ( NULL == _src )
+      if ( !_src || !(*_src) )
       {
          goto done ;
       }
@@ -555,9 +556,8 @@ namespace engine
          _src = NULL ;
          goto done ;
       }
-
       /// ".abc"
-      if ( _src == ch )
+      else if ( _src == ch )
       {
          _src = NULL ;
          goto done ;
@@ -567,8 +567,9 @@ namespace engine
       _last = ch ;
       r = _src ;
 
-      /// "abc."
-      _src = ( '\0' == *( ch + 1 ) ) ? ch : ch + 1 ;
+      /// "abc.", "abc.ab"
+      _src = ( '\0' == *( ch + 1 ) ) ? NULL : ch + 1 ;
+
    done:
       return r ;
    } 

@@ -253,10 +253,11 @@ namespace engine
       const UINT32 maxLen = 10 ;
       CHAR number[maxLen + 1] = { 0 } ;
       UINT32 numberLen = 0 ;
-      if ( '[' == *( p + 1 ) )
+
+      if ( *p && '$' == *p && p[1] && '[' == p[1] )
       {
          p += 2 ;
-         while ( '\0' != *p )
+         while ( *p )
          {
             if ( '0' <= *p && *p <= '9' )
             {
@@ -280,7 +281,7 @@ namespace engine
             }
          }
 
-         if ( 0 == numberLen )
+         if ( 0 == numberLen || ']' != *p )
          {
             PD_LOG( PDDEBUG, "invalid action in selector:%s", desc ) ;
             rc = SDB_INVALIDARG ;
