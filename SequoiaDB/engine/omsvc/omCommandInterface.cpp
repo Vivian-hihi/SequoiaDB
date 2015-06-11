@@ -149,7 +149,6 @@ namespace engine
       {
          PD_LOG_MSG( PDERROR, "fail to query table:%s,rc=%d",
                      OM_CS_DEPLOY_CL_BUSINESS, rc ) ;
-         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
          goto error ;
       }
 
@@ -164,7 +163,6 @@ namespace engine
             contextID = -1 ;
             PD_LOG_MSG( PDERROR, "failed to get record from table:%s,rc=%d", 
                         OM_CS_DEPLOY_CL_BUSINESS, rc ) ;
-            _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
             goto error ;
          }
 
@@ -183,7 +181,7 @@ namespace engine
    }
 
    INT32 omRestCommandBase::_getHostInfo( string hostName, 
-                                           BSONObj &hostInfo )
+                                          BSONObj &hostInfo )
    {
       INT32 rc = SDB_OK ;
       BSONObj selector ;
@@ -199,7 +197,6 @@ namespace engine
       {
          PD_LOG_MSG( PDERROR, "fail to query table:%s,rc=%d",
                      OM_CS_DEPLOY_CL_HOST, rc ) ;
-         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
          goto error ;
       }
 
@@ -212,7 +209,6 @@ namespace engine
             contextID = -1 ;
             PD_LOG_MSG( PDERROR, "failed to get record from table:%s,rc=%d", 
                         OM_CS_DEPLOY_CL_HOST, rc ) ;
-            _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
             goto error ;
          }
 
@@ -276,9 +272,8 @@ namespace engine
                      0, _cb, 0, -1, _pDMSCB, _pRTNCB, contextID );
       if ( rc )
       {
-         _errorDetail = string( "fail to query table:" ) 
-                        + OM_CS_DEPLOY_CL_HOST ;
-         PD_LOG( PDERROR, "%s,rc=%d", _errorDetail.c_str(), rc ) ;
+         PD_LOG_MSG( PDERROR, "fail to query table:table=%s,rc=%d", 
+                     OM_CS_DEPLOY_CL_HOST, rc ) ;
          goto error ;
       }
 
@@ -295,9 +290,8 @@ namespace engine
             }
 
             contextID = -1 ;
-            _errorDetail = string( "failed to get record from table:" )
-                           + OM_CS_DEPLOY_CL_HOST ;
-            PD_LOG( PDERROR, "%s,rc=%d", _errorDetail.c_str(), rc ) ;
+            PD_LOG_MSG( PDERROR, "failed to get record from table:table=%s,"
+                        "rc=%d", OM_CS_DEPLOY_CL_HOST, rc ) ;
             goto error ;
          }
 
@@ -353,7 +347,6 @@ namespace engine
          PD_LOG_MSG( PDERROR, "failed to delete record from table:%s,"
                      "%s=%s,rc=%d", OM_CS_DEPLOY_CL_HOST, 
                      OM_HOST_FIELD_NAME, hostName.c_str(), rc ) ;
-         _errorDetail = _cb->getInfo( EDU_INFO_ERROR ) ;
          goto error ;
       }
 
@@ -469,9 +462,8 @@ namespace engine
                      0, _cb, 0, -1, _pDMSCB, _pRTNCB, contextID );
       if ( rc )
       {
-         PD_LOG( PDERROR, "failed to get record from table:%s,rc=%d", 
-                    OM_CS_DEPLOY_CL_CLUSTER, rc ) ;
-         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         PD_LOG_MSG( PDERROR, "failed to get record from table:table=%s,rc=%d", 
+                     OM_CS_DEPLOY_CL_CLUSTER, rc ) ;
          goto error ;
       }
 
@@ -482,9 +474,8 @@ namespace engine
          if ( rc )
          {
             contextID = -1 ;
-            PD_LOG( PDERROR, "failed to get record from table:%s,rc=%d", 
-                    OM_CS_DEPLOY_CL_CLUSTER, rc ) ;
-            _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+            PD_LOG_MSG( PDERROR, "failed to get record from table:table=%s,"
+                        "rc=%d", OM_CS_DEPLOY_CL_CLUSTER, rc ) ;
             goto error ;
          }
 
@@ -730,7 +721,6 @@ namespace engine
       {
          PD_LOG_MSG( PDERROR, "fail to query table:%s,rc=%d",
                      OM_CS_DEPLOY_CL_BUSINESS, rc ) ;
-         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
          goto error ;
       }
 
@@ -743,7 +733,6 @@ namespace engine
             contextID = -1 ;
             PD_LOG_MSG( PDERROR, "failed to get record from table:%s,rc=%d", 
                         OM_CS_DEPLOY_CL_BUSINESS, rc ) ;
-            _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
             goto error ;
          }
 

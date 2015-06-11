@@ -5043,14 +5043,17 @@ namespace engine
          goto error ;
       }
 
-      if ( _isBusinessExistInTask( _businessName ) )
       {
-         rc = SDB_INVALIDARG ;
-         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
-         _sendErrorRes2Web( rc, _errorDetail ) ;
-         goto error ;
+         if ( _isBusinessExistInTask( _businessName ) )
+         {
+            rc = SDB_INVALIDARG ;
+            _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+            _sendErrorRes2Web( rc, _errorDetail ) ;
+            goto error ;
+         }
+         pmdGetThreadEDUCB()->resetInfo( EDU_INFO_ERROR ) ;
       }
-
+      
       rc = _combineConfDetail( _businessType, _deployMod, bsonAllConf ) ;
       if ( SDB_OK != rc )
       {
@@ -6133,6 +6136,7 @@ namespace engine
          {
             rc   = SDB_OK ;
             flag = false ;
+            pmdGetThreadEDUCB()->resetInfo( EDU_INFO_ERROR ) ;
             goto done ;
          }
 
@@ -6142,6 +6146,7 @@ namespace engine
       }
 
       flag = TRUE ;
+
    done:
       return rc ;
    error:
@@ -6166,9 +6171,8 @@ namespace engine
                      0, _cb, 0, -1, _pDMSCB, _pRTNCB, contextID );
       if ( rc )
       {
-         _errorDetail = string( "fail to query table:" ) 
-                        + OM_CS_DEPLOY_CL_HOST ;
-         PD_LOG( PDERROR, "%s,rc=%d", _errorDetail.c_str(), rc ) ;
+         PD_LOG_MSG( PDERROR, "fail to query table:table=%s,rc=%d",
+                     OM_CS_DEPLOY_CL_HOST, rc ) ;
          goto error ;
       }
 
@@ -6186,9 +6190,8 @@ namespace engine
             }
 
             contextID = -1 ;
-            _errorDetail = string( "failed to get record from table:" )
-                           + OM_CS_DEPLOY_CL_HOST ;
-            PD_LOG( PDERROR, "%s,rc=%d", _errorDetail.c_str(), rc ) ;
+            PD_LOG_MSG( PDERROR, "failed to get record from table:table=%s,"
+                        "rc=%d", OM_CS_DEPLOY_CL_HOST, rc ) ;
             goto error ;
          }
 
@@ -6217,7 +6220,6 @@ namespace engine
          PD_LOG_MSG( PDERROR, "failed to delete taskinfo from table:%s,"
                      "%s=%s,rc=%d", OM_CS_DEPLOY_CL_CLUSTER, 
                      OM_CLUSTER_FIELD_NAME, clusterName.c_str(), rc ) ;
-         _errorDetail = _cb->getInfo( EDU_INFO_ERROR ) ;
          goto error ;
       }
 
@@ -6239,10 +6241,10 @@ namespace engine
                               &clusterName ) ;
       if ( NULL == clusterName )
       {
-         _errorDetail = "rest field:" + string( OM_REST_CLUSTER_NAME )
-                        + " is null" ;
          rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
+         PD_LOG_MSG( PDERROR, "rest field is miss:field=%s", 
+                     OM_REST_CLUSTER_NAME ) ;
+         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
       }
@@ -6250,7 +6252,8 @@ namespace engine
       rc = _getClusterExistFlag( clusterName, isClusterExist ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
+         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         PD_LOG( PDERROR, "_getClusterExistFlag failed:rc=%d", rc ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
       }
@@ -6258,8 +6261,8 @@ namespace engine
       if ( !isClusterExist )
       {
          rc = SDB_DMS_RECORD_NOTEXIST ;
-         _errorDetail = string( clusterName ) + " is not exist" ;
-         PD_LOG( PDERROR, "%s:rc=%d", _errorDetail.c_str(), rc ) ;
+         PD_LOG_MSG( PDERROR, "%s is not exist:rc=%d", clusterName, rc ) ;
+         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto done ;
       }
@@ -6267,7 +6270,8 @@ namespace engine
       rc = _getClusterExistHostFlag( clusterName, isClusterExistHost ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
+         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         PD_LOG( PDERROR, "_getClusterExistHostFlag failed:rc=%d", rc ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
       }
@@ -6275,9 +6279,9 @@ namespace engine
       if ( isClusterExistHost )
       {
          rc = SDB_INVALIDARG ;
-         _errorDetail = string( "host exist in cluster, host should be "
-                                "removed first:cluster=" ) + clusterName ;
-         PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
+         PD_LOG_MSG( PDERROR, "host exist in cluster, host should be removed "
+                     "first:cluster=", clusterName ) ;
+         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
       }
@@ -6285,7 +6289,8 @@ namespace engine
       rc = _removeCluster( clusterName ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
+         PD_LOG( PDERROR, "_removeCluster failed:rc=%d", rc ) ;
+         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
       }
@@ -6759,6 +6764,8 @@ namespace engine
             _sendErrorRes2Web( rc, _errorDetail ) ;
             goto done ;
          }
+
+         pmdGetThreadEDUCB()->resetInfo( EDU_INFO_ERROR ) ;
       }
 
       rc = _getNodeInfo( pBusinessName, nodeInfos, isBusinessExistNode ) ;
@@ -7784,6 +7791,7 @@ namespace engine
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "_getSpecificHostInfo failed:rc=%d", rc ) ;
+         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
       }
