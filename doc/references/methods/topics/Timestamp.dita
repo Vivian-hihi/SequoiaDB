@@ -28,8 +28,8 @@
     </section>    
     <section><title>示例</title>
       <ul>
-        <li>插入一个时间戳类型的记录<codeblock>db.foo.bar.insert({time: {"$timestamp": "2015-06-05-16.10.33.000000 "}}) ;
-db.foo.bar.insert({time:Timestamp("2015-06-05-16.10.33.000000 ")});
+        <li>插入一个时间戳类型的记录<codeblock>db.foo.bar.insert({time: {"$timestamp": "2015-06-05-16.10.33.000000"}}) ;
+db.foo.bar.insert({time:Timestamp("2015-06-05-16.10.33.000000")});
 db.foo.bar.insert({time:Timestamp(1433492413, 0)});</codeblock></li>            
       </ul>      
     </section>
