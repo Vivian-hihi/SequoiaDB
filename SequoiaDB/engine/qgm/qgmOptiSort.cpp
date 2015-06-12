@@ -56,7 +56,7 @@ namespace engine
       return &_orderby ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMOPTISORT_INIT, "_qgmOptiSort::init" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMOPTISORT_INIT, "_qgmOptiSort::init" )
    INT32 _qgmOptiSort::init()
    {
       PD_TRACE_ENTRY( SDB__QGMOPTISORT_INIT ) ;
@@ -79,7 +79,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMOPTISORT__PUSHOPRUNIT, "_qgmOptiSort::_pushOprUnit" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMOPTISORT__PUSHOPRUNIT, "_qgmOptiSort::_pushOprUnit" )
    INT32 _qgmOptiSort::_pushOprUnit( qgmOprUnit * oprUnit, PUSH_FROM from )
    {
       PD_TRACE_ENTRY( SDB__QGMOPTISORT__PUSHOPRUNIT ) ;
@@ -141,7 +141,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMOPTISORT__RMOPRUNIT, "_qgmOptiSort::_removeOprUnit" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMOPTISORT__RMOPRUNIT, "_qgmOptiSort::_removeOprUnit" )
    INT32 _qgmOptiSort::_removeOprUnit( qgmOprUnit * oprUnit )
    {
       PD_TRACE_ENTRY( SDB__QGMOPTISORT__RMOPRUNIT ) ;
@@ -187,7 +187,7 @@ namespace engine
       return (*(_children.begin()))->outputStream( stream ) ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMOPTISORT_APPEND, "_qgmOptiSort::append" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMOPTISORT_APPEND, "_qgmOptiSort::append" )
    INT32 _qgmOptiSort::append( const qgmOPFieldVec &field,
                                BOOLEAN keepRelegation )
    {

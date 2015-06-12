@@ -77,7 +77,7 @@ namespace engine
       return getOprUnitCount() == 0 ? TRUE : FALSE ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMOPTISELECT_INIT, "_qgmOptiSelect::init" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMOPTISELECT_INIT, "_qgmOptiSelect::init" )
    INT32 _qgmOptiSelect::init()
    {
       PD_TRACE_ENTRY( SDB__QGMOPTISELECT_INIT ) ;
@@ -118,7 +118,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMOPTISELECT_DONE, "_qgmOptiSelect::done" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMOPTISELECT_DONE, "_qgmOptiSelect::done" )
    INT32 _qgmOptiSelect::done()
    {
       PD_TRACE_ENTRY( SDB__QGMOPTISELECT_DONE ) ;
@@ -201,7 +201,7 @@ namespace engine
       }
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMOPTISELECT_OUTPUTSTREAM, "_qgmOptiSelect::outputStream" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMOPTISELECT_OUTPUTSTREAM, "_qgmOptiSelect::outputStream" )
    INT32 _qgmOptiSelect::outputStream( qgmOpStream &stream )
    {
       PD_TRACE_ENTRY( SDB__QGMOPTISELECT_OUTPUTSTREAM ) ;
@@ -333,7 +333,7 @@ namespace engine
       return count ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMOPTISELECT__PUSHOPRUNIT, "_qgmOptiSelect::_pushOprUnit" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMOPTISELECT__PUSHOPRUNIT, "_qgmOptiSelect::_pushOprUnit" )
    INT32 _qgmOptiSelect::_pushOprUnit( qgmOprUnit * oprUnit, PUSH_FROM from )
    {
       PD_TRACE_ENTRY( SDB__QGMOPTISELECT__PUSHOPRUNIT ) ;
@@ -416,7 +416,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMOPTISELECT__RMOPRUNIT, "_qgmOptiSelect::_removeOprUnit" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMOPTISELECT__RMOPRUNIT, "_qgmOptiSelect::_removeOprUnit" )
    INT32 _qgmOptiSelect::_removeOprUnit( qgmOprUnit * oprUnit )
    {
       PD_TRACE_ENTRY( SDB__QGMOPTISELECT__RMOPRUNIT ) ;
@@ -471,7 +471,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMOPTISELECT__EXTEND, "_qgmOptiSelect::_extend" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMOPTISELECT__EXTEND, "_qgmOptiSelect::_extend" )
    INT32 _qgmOptiSelect::_extend( _qgmOptiTreeNode *&exNode )
    {
       PD_TRACE_ENTRY( SDB__QGMOPTISELECT__EXTEND ) ;
@@ -558,7 +558,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMOPTISELECT__VALIDATEANDCRTPLAN, "_qgmOptiSelect::_validateAndCrtPlan" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMOPTISELECT__VALIDATEANDCRTPLAN, "_qgmOptiSelect::_validateAndCrtPlan" )
    INT32 _qgmOptiSelect::_validateAndCrtPlan( _qgmOpStream &stream,
                                               _qgmExtendSelectPlan *plan )
    {
@@ -902,7 +902,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMOPTISELECT__PARAMEXISTINSELECOTR, "_qgmOptiSelect::_paramExistInSelector" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMOPTISELECT__PARAMEXISTINSELECOTR, "_qgmOptiSelect::_paramExistInSelector" )
    INT32 _qgmOptiSelect::_paramExistInSelector( const qgmDbAttr &field,
                                                 BOOLEAN &found,
                                                 qgmOpField *&selector )
