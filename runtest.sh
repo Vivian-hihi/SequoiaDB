@@ -306,7 +306,7 @@ while [ "$1" != "" ]; do
                       catasvcname="$1"
                       ;;
       -sp)            shift
-                      spareportPort="$1"
+                      spareportPath="$1"
                       ;;
       -print )        printOut=1
                       ;;
