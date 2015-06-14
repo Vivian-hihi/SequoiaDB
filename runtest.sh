@@ -4,6 +4,7 @@
 #testRoot="testcases/hlt/basic_testcases/js"
 testRoot="testcases/hlt/js_testcases/js"
 libRoot="testcases/hlt/js_testcases/libs"
+spareportPath="/opt/sequoiadb/database/"
 #libRoot="testcases/hlt/basic_testcases/libs"
 sdbRoot="bin"
 csprefix="local_test"
@@ -53,15 +54,16 @@ function display()
 {
    echo "run testcase 1.0.0 2014/2/25"
    echo "$0 --help"
-   echo "$0 [-p path]|[-f file] [-s stopFlag] [-n svcname] [-h hostname] [-s1] [-s2] [-addpid] [-print] [-all]"
+   echo "$0 [-p path]|[-f file] [-s stopFlag] [-n svcname] [-h hostname] [-s1] [-s2] [-sp] [-addpid] [-print] [-all]"
    echo ""
    echo " -p path     : 运行指定路径下的JS用例，如果为相对目录，则默认根目录已为用例目录"
    echo " -f file     : 运行指定的JS用例，如果为相对目录，则默认根目录已为用例目录"
    echo " -s stopFlag : 发生用例错误是否停止，0表示继续，1表示停止"
    echo " -n svcname  : 指定测试的COORD节点服务名"
    echo " -h hostname : 指定测试的COORD节点HostName或IP"
-	echo " -s1         : 指定预留的SPAREPORTSTART端口号"
-   echo " -s2         : 指定预留的SPAREPORTSTOP端口号"
+	echo " -s1         : 指定预留的SPAREPORTSTART端口号，默认为26000"
+   echo " -s2         : 指定预留的SPAREPORTSTOP端口号，默认为27000"
+   echo " -sp         : 指定用预留端口创建节点的路径SPAREPORTPATH，默认为/opt/sequoiadb/database/"
    echo " -c cataport : 指定测试的CATALOG节点服务名"
    echo " -addpid     : 是否在CHANGEDPREFIX上加上当前进行PID"
    echo " -print      : 是否在屏幕上打印用例的输出"
@@ -120,7 +122,7 @@ function prepareRun()
 function runJSFile()
 {
    result=0 ;
-   lastCmdStr="$sdbRoot/sdb -e \"var CHANGEDPREFIX='${csprefix}'; var COORDSVCNAME='${coordsvcname}'; var COORDHOSTNAME='${coordhostname}';var SPAREPORTSTART='${spareportstart}';var SPAREPORTSTOP='${spareportstop}'; var CATASVCNAME='$catasvcname'; var UUID=$uuid; var UUNAME='${uuname}'; var RUNRESULT=$runresult; \" -f \"${libRoot}/func.js,$1\""
+   lastCmdStr="$sdbRoot/sdb -e \"var CHANGEDPREFIX='${csprefix}'; var COORDSVCNAME='${coordsvcname}'; var COORDHOSTNAME='${coordhostname}';var SPAREPORTSTART='${spareportstart}';var SPAREPORTSTOP='${spareportstop}'; var CATASVCNAME='$catasvcname'; var SPAREPORTPATH='$spareportPath'; var UUID=$uuid; var UUNAME='${uuname}'; var RUNRESULT=$runresult; \" -f \"${libRoot}/func.js,$1\""
    runresult=0
    if [ $printOut -ne 0 -o $# -gt 1 ] ; then
       echo "CMD: $lastCmdStr"
@@ -303,6 +305,9 @@ while [ "$1" != "" ]; do
       -c )            shift
                       catasvcname="$1"
                       ;;
+      -sp)            shift
+                      spareportPort="$1"
+                      ;;
       -print )        printOut=1
                       ;;
       -addpid )       csprefix="local_para_$$"
@@ -422,6 +427,7 @@ then
    echo "COORDSVCHOST  : $coordhostname"
    echo "SPAREPORTSTART: $spareportstart"
    echo "SPAREPORTSTOP : $spareportstop"
+   echo "SPAREPORTPATH : $spareportPath"
    echo "Find command  : $findCmdStr"
    echo "*******************************************************************************"
 else
@@ -433,6 +439,7 @@ else
    echo "COORDSVCHOST  : $coordhostname"
    echo "SPAREPORTSTART: $spareportstart"
    echo "SPAREPORTSTOP : $spareportstop"
+   echo "SPAREPORTPATH : $spareportPath"
    echo "Exec command  : ls $testDir/*/basic_testcases.list" 
    echo "*******************************************************************************"
 fi
