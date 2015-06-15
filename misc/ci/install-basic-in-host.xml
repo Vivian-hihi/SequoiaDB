@@ -18,24 +18,15 @@
 	</taskdef>
 
 	<target name="clean-install" depends="">
-		<!-- <exec executable="service" dir="" failonerror="false">
-			<arg value="sdbcm" />
-			<arg value="stop" />
-		</exec> -->
-		<!-- <exec executable="${db.path}/bin/sdbstop" dir="" failonerror="true" /> -->
-		<!-- <stafTools workHost="${host.NAME}" workType="shell" workDir="${db.path}" common="ps -ef|grep sdb | grep -v grep | awk '{print $2}' | xargs kill -9" failonerror="true" /> -->
 		<exec executable="${db.path}/uninstall" dir="${db.path}" resultproperty="clean.ret.code" failonerror="true">
-			<arg line="--mode unattended" />
+			<arg line=" --mode unattended" />
 		</exec>
 		<if>
 			<not>
 				<equals arg1="${clean.ret.code}" arg2="0" />
 			</not>
 			<then>
-				<mkdir dir="/opt/back" />
-				<copy todir="/opt/back" >
-		    		<fileset dir="${db.path}" includes="**/*" />
-		    	</copy>
+				<echo message="it's fail!" />
 			</then>
 		</if>
 		<delete dir="${db.path}" />
@@ -84,9 +75,6 @@
 				<exec executable="chown" dir="${db.path}/conf/local">
                     <arg line=" -R ${install.user}:${install.user}_group ${coord.service.port}" />
                 </exec>
-                <!-- <exec executable="chgrp" dir="${db.path}/conf/local">
-                    <arg line=" -R ${install.user}_group ${coord.service.port}" />
-                </exec> -->
 				<echo message="Start coord: su - sdbadmin -c  '${db.path}/bin/sdbstart -c ${db.path}/conf/local/${coord.service.port}'" />
 				<exec executable="su" dir="${db.path}/bin" spawn="false">
 					<arg line=" - sdbadmin -c  '${db.path}/bin/sdbstart -c ${db.path}/conf/local/${coord.service.port}'" />
