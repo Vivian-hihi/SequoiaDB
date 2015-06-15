@@ -61,7 +61,7 @@ function display()
    echo " -s stopFlag : 发生用例错误是否停止，0表示继续，1表示停止"
    echo " -n svcname  : 指定测试的COORD节点服务名"
    echo " -h hostname : 指定测试的COORD节点HostName或IP"
-	echo " -s1         : 指定预留的SPAREPORTSTART端口号，默认为26000"
+   echo " -s1         : 指定预留的SPAREPORTSTART端口号，默认为26000"
    echo " -s2         : 指定预留的SPAREPORTSTOP端口号，默认为27000"
    echo " -sp         : 指定用预留端口创建节点的路径SPAREPORTPATH，默认为/opt/sequoiadb/database/"
    echo " -c cataport : 指定测试的CATALOG节点服务名"
