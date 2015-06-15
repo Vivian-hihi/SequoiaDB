@@ -48,7 +48,7 @@ INT32 insertCommand::convert( msgParser &parser )
    baseCommand *&cmd       = parser.command() ;
    mongoDataPacket &packet = parser.dataPacket() ;
 
-   if ( 0 != packet.optionMask )
+   if ( 0 != packet.optionMask && !packet.with( OPTION_CMD ) )
    {
       if ( packet.with( OPTION_IDX ) )
       {
@@ -210,6 +210,7 @@ INT32 deleteCommand::convert( msgParser &parser )
    else
    {
       // do nothing here
+      parser.readInt( sizeof( INT32 ), (CHAR *)&packet.nToSkip ) ;
    }
 
    if ( !parser.more() )
@@ -1089,7 +1090,7 @@ INT32 createCSCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
    sdbMsg.write( cmdName, query->nameLength + 1, TRUE ) ;
    bson::BSONObj obj, empty ;
    obj = BSON( FIELD_NAME_NAME << packet.csName
-            << FIELD_NAME_PAGE_SIZE << 65535 ) ;
+            << FIELD_NAME_PAGE_SIZE << 65536 ) ;
 
    sdbMsg.write( obj, TRUE ) ;    // condition
    sdbMsg.write( empty, TRUE ) ;  // selector

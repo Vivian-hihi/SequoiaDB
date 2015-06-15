@@ -251,8 +251,8 @@ INT32 _mongoSession::run()
             INT32 rcTmp = _reply( &_replyHeader, pBody, bodyLen ) ;
             if ( rcTmp )
             {
-               PD_LOG( PDERROR, "Session[%s] failed to send response, rc: %d",
-                       sessionName(), rcTmp ) ;
+               PD_LOG( PDERROR, "Session[%s] failed to send response,"
+                       "rc: %d", sessionName(), rcTmp ) ;
                goto error ;
             }
             pBody = NULL ;
@@ -403,7 +403,10 @@ INT32 _mongoSession::_reply( MsgOpReply *replyHeader,
    bson::BSONObj objToSend ;
    mongoDataPacket &packet = _converter->getParser().dataPacket() ;
 
-   if ( OP_KILLCURSORS == _converter->getOpType() )
+   if ( OP_KILLCURSORS == _converter->getOpType() ||
+        dbInsert == packet.opCode ||
+        dbUpdate == packet.opCode ||
+        dbDelete == packet.opCode )
    {
       // should not send any msg
       goto done;

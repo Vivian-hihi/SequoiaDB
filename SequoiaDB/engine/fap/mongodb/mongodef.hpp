@@ -44,7 +44,8 @@
 enum mongoOption
 {
    dbReply       = 1,
-   dbUpdate      = 1000,
+   dbMsg         = 1000,
+   dbUpdate      = 2001,
    dbInsert      = 2002,
    dbQuery       = 2004,
    dbGetMore     = 2005,
