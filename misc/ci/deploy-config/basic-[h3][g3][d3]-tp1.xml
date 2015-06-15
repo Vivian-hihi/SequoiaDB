@@ -520,7 +520,7 @@
 		<property name="test.log" value="${test.environment}-${DEPLOY_WILDCARD}-${host.NAME}-${current.time.log}-${BUILD_NUMBER}" />
 
 		<property name="test-type" value="js" />
-		<for list="${test-type}" param="Test-Type">
+		<!-- <for list="${test-type}" param="Test-Type">
 			<sequential>
 				<ant antfile="${WORKSPACE}/sequoiadb/misc/ci/test-type.xml" dir="." inheritAll="false">
 					<property name="deploy.case.fullname" value="${deploy.case.fullname}" />
@@ -535,7 +535,7 @@
 					<property name="BUILD_NUMBER" value="${BUILD_NUMBER}" />
 				</ant>
 			</sequential>
-		</for>
+		</for> -->
 
 		<!-- <for list="driver-mongoc" param="Test-Type">
 			<sequential>
@@ -555,7 +555,7 @@
 			</sequential>
 		</for> -->
 
-		<if>
+		<!-- <if>
 		   	<equals arg1="${test-type-list}" arg2="js" />
 			<then>
 				<property name="test-driver-list-A" value="ant" />
@@ -621,7 +621,7 @@
 					</else>
 				</if>
 			</then>
-		</if>
+		</if> -->
 
 		<if>
 		   	<equals arg1="${test-type-list}" arg2="js" />
