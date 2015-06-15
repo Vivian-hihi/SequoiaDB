@@ -44,20 +44,18 @@
 namespace engine
 {
    // PD_TRACE_DECLARE_FUNCTION( SDB__QGMUTILFIRSTDOT, "qgmUtilFirstDot" )
-   BOOLEAN qgmUtilFirstDot( const CHAR *str, UINT32 len, UINT32 &num )
+   BOOLEAN qgmUtilFirstDot( const CHAR *str, UINT32 len, UINT32 &pos )
    {
       PD_TRACE_ENTRY( SDB__QGMUTILFIRSTDOT ) ;
       SDB_ASSERT( NULL != str, "impossible" ) ;
       BOOLEAN found = FALSE ;
-
       UINT32 tLen = 0 ;
 
       while ( tLen < len )
       {
-         const CHAR *tmp = str + tLen ;
-         if ( '.' == *tmp )
+         if ( '.' == str[ tLen ] )
          {
-            num = tLen + 1 ;
+            pos = tLen ;
             found = TRUE ;
             break ;
          }
@@ -465,24 +463,44 @@ namespace engine
 
    static INT32 downAFieldByFieldAlias( qgmOpField &field,
                                         const qgmOPFieldPtrVec & fieldAlias,
-                                        BOOLEAN needCopyAlias )
+                                        BOOLEAN needCopyAlias,
+                                        BOOLEAN isOptional )
    {
+      UINT32 subpos = 0 ;
+      BOOLEAN find = FALSE ;
       qgmOPFieldPtrVec::const_iterator cit = fieldAlias.begin() ;
       while ( cit != fieldAlias.end() )
       {
          if ( ( (*cit)->alias.empty() &&
-                field.value.attr() == (*cit)->value.attr() ) ||
+                field.value.attr().isSubfix( (*cit)->value.attr(),
+                                             TRUE, &subpos ) ) ||
               ( !(*cit)->alias.empty() &&
-                field.value.attr() == (*cit)->alias ) )
+                field.value.attr().isSubfix( (*cit)->alias,
+                                             TRUE, &subpos ) ) )
          {
-            field.value = (*cit)->value ;
+            if ( isOptional || subpos == _qgmField::npos )
+            {
+               field.value = (*cit)->value ;
+            }
+            else
+            {
+               field.value.relegation() = (*cit)->value.relegation() ;
+               field.value.attr().replace( 0, subpos, (*cit)->value.attr() ) ;
+            }
+
             if ( needCopyAlias && field.alias.empty() )
             {
                field.alias = (*cit)->alias ;
             }
+            find = TRUE ;
             break ;
          }
          ++cit ;
+      }
+
+      if ( !find && isOptional )
+      {
+         field.value.attr() = field.value.attr().rootField() ;
       }
 
       return SDB_OK ;
@@ -491,7 +509,8 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION( SDB__QDMDOWNFIELDSBYFIELDALIAS, "downFieldsByFieldAlias" )
    INT32 downFieldsByFieldAlias( qgmOPFieldVec & fields,
                                  const qgmOPFieldPtrVec & fieldAlias,
-                                 BOOLEAN needCopyAlias )
+                                 BOOLEAN needCopyAlias,
+                                 BOOLEAN isOptional )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__QDMDOWNFIELDSBYFIELDALIAS ) ;
@@ -500,7 +519,8 @@ namespace engine
       {
          if ( SQL_GRAMMAR::WILDCARD != (*it).type )
          {
-            downAFieldByFieldAlias( *it, fieldAlias, needCopyAlias ) ;
+            downAFieldByFieldAlias( *it, fieldAlias, needCopyAlias,
+                                    isOptional ) ;
          }
          ++it ;
       }
@@ -511,25 +531,47 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION( SDB__QGMDOWNATTRSBYFIELDALIAS, "downAttrsByFieldAlias" )
    INT32 downAttrsByFieldAlias( qgmDbAttrPtrVec & attrs,
-                                const qgmOPFieldPtrVec & fieldAlias )
+                                const qgmOPFieldPtrVec & fieldAlias,
+                                BOOLEAN isOptional )
    {
       PD_TRACE_ENTRY( SDB__QGMDOWNATTRSBYFIELDALIAS ) ;
       INT32 rc = SDB_OK ;
+      UINT32 subpos = 0 ;
+      BOOLEAN find = FALSE ;
       qgmDbAttrPtrVec::iterator it = attrs.begin() ;
       while ( it != attrs.end() )
       {
          qgmDbAttr &attr = *(*it) ;
+         find = FALSE ;
 
          qgmOPFieldPtrVec::const_iterator cit = fieldAlias.begin() ;
          while ( cit != fieldAlias.end() )
          {
-            if ( ( (*cit)->alias.empty() && attr.attr() == (*cit)->value.attr() )
-                 || ( !(*cit)->alias.empty() && attr.attr() == (*cit)->alias ) )
+            if ( ( (*cit)->alias.empty() &&
+                   attr.attr().isSubfix( (*cit)->value.attr(),
+                                         TRUE, &subpos ) ) ||
+                 ( !(*cit)->alias.empty() &&
+                   attr.attr().isSubfix( (*cit)->alias,
+                                         TRUE, &subpos ) ) )
             {
-               attr = (*cit)->value ;
+               if ( 0 == subpos || isOptional )
+               {
+                  attr = (*cit)->value ;
+               }
+               else
+               {
+                  attr.relegation() = (*cit)->value.relegation() ;
+                  attr.attr().replace( 0, subpos, (*cit)->value.attr() ) ;
+               }
+               find = TRUE ;
                break ;
             }
             ++cit ;
+         }
+
+         if ( !find && isOptional )
+         {
+            attr.attr() = attr.attr().rootField() ;
          }
          ++it ;
       }
@@ -540,25 +582,47 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION( SDB__QGMDOWNATTRSBYFIELDALIAS2, "downAttrsByFieldAlias" )
    INT32 downAttrsByFieldAlias( qgmDbAttrVec & attrs,
-                                const qgmOPFieldPtrVec & fieldAlias )
+                                const qgmOPFieldPtrVec & fieldAlias,
+                                BOOLEAN isOptional )
    {
       PD_TRACE_ENTRY( SDB__QGMDOWNATTRSBYFIELDALIAS2 ) ;
       INT32 rc = SDB_OK ;
+      UINT32 subpos = 0 ;
+      BOOLEAN find = FALSE ;
+
       qgmDbAttrVec::iterator it = attrs.begin() ;
       while ( it != attrs.end() )
       {
          qgmDbAttr &attr = *it ;
+         find = FALSE ;
 
          qgmOPFieldPtrVec::const_iterator cit = fieldAlias.begin() ;
          while ( cit != fieldAlias.end() )
          {
-            if ( ( (*cit)->alias.empty() && attr.attr() == (*cit)->value.attr() )
-                 || ( !(*cit)->alias.empty() && attr.attr() == (*cit)->alias ) )
+            if ( ( (*cit)->alias.empty() &&
+                   attr.attr().isSubfix( (*cit)->value.attr(),
+                                         TRUE, &subpos ) ) ||
+                 ( !(*cit)->alias.empty() &&
+                   attr.attr().isSubfix( (*cit)->alias,
+                                         TRUE, &subpos ) ) )
             {
-               attr = (*cit)->value ;
+               if ( 0 == subpos || isOptional )
+               {
+                  attr = (*cit)->value ;
+               }
+               else
+               {
+                  attr.relegation() = (*cit)->value.relegation() ;
+                  attr.attr().replace( 0, subpos, (*cit)->value.attr() ) ;
+               }
+               find = TRUE ;
                break ;
             }
             ++cit ;
+         }
+         if ( !find && isOptional )
+         {
+            attr.attr() = attr.attr().rootField() ;
          }
          ++it ;
       }
@@ -569,28 +633,51 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION( SDB__QGMDOWNAATTRBYFIELDALIAS, "downAAttrByFieldAlias" )
    INT32 downAAttrByFieldAlias( qgmDbAttr & attr,
-                                 const qgmOPFieldPtrVec & fieldAlias)
+                                const qgmOPFieldPtrVec & fieldAlias,
+                                BOOLEAN isOptional )
    {
       PD_TRACE_ENTRY( SDB__QGMDOWNAATTRBYFIELDALIAS ) ;
       INT32 rc = SDB_OK ;
+      UINT32 subpos = 0 ;
+      BOOLEAN find = FALSE ;
+
       qgmOPFieldPtrVec::const_iterator cit = fieldAlias.begin() ;
       while ( cit != fieldAlias.end() )
       {
-         if ( ( (*cit)->alias.empty() && attr.attr() == (*cit)->value.attr() )
-              || ( !(*cit)->alias.empty() && attr.attr() == (*cit)->alias ) )
+         if ( ( (*cit)->alias.empty() &&
+                attr.attr().isSubfix( (*cit)->value.attr(),
+                                      TRUE, &subpos ) ) ||
+              ( !(*cit)->alias.empty() &&
+                attr.attr().isSubfix( (*cit)->alias,
+                                      TRUE, &subpos ) ) )
          {
-            attr = (*cit)->value ;
+            if ( 0 == subpos || isOptional )
+            {
+               attr = (*cit)->value ;
+            }
+            else
+            {
+               attr.relegation() = (*cit)->value.relegation() ;
+               attr.attr().replace( 0, subpos, (*cit)->value.attr() ) ;
+            }
+            find = TRUE ;
             break ;
          }
          ++cit ;
       }
+      if ( !find && isOptional )
+      {
+         attr.attr() = attr.attr().rootField() ;
+      }
+
       PD_TRACE_EXITRC( SDB__QGMDOWNAATTRBYFIELDALIAS, rc ) ;
       return rc ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION( SDB__QGMDOWNAGGRSBYFIELDALIAS, "downAggrsByFieldAlias" )
-   INT32 downAggrsByFieldAlias( qgmAggrSelectorVec & aggrs,
-                                const qgmOPFieldPtrVec & fieldAlias )
+   INT32 downAggrsByFieldAlias( qgmAggrSelectorVec &aggrs,
+                                const qgmOPFieldPtrVec &fieldAlias,
+                                BOOLEAN isOptional )
    {
       PD_TRACE_ENTRY( SDB__QGMDOWNAGGRSBYFIELDALIAS ) ;
       INT32 rc = SDB_OK ;
@@ -604,13 +691,14 @@ namespace engine
             vector<qgmOpField>::iterator iter = selector.param.begin();
             while ( iter != selector.param.end() )
             {
-               downAAttrByFieldAlias( iter->value, fieldAlias );
+               downAAttrByFieldAlias( iter->value, fieldAlias, isOptional );
                ++iter;
             }
          }
          else if ( SQL_GRAMMAR::WILDCARD != selector.value.type )
          {
-            downAFieldByFieldAlias( selector.value, fieldAlias, TRUE ) ;
+            downAFieldByFieldAlias( selector.value, fieldAlias, TRUE,
+                                    isOptional ) ;
          }
          ++it ;
       }
@@ -628,6 +716,7 @@ namespace engine
          return SDB_OK ;
       }
 
+      UINT32 pos = 0 ;
       qgmOPFieldPtrVec::const_iterator cit = fieldAlias.begin() ;
       while ( cit != fieldAlias.end() )
       {
@@ -637,6 +726,11 @@ namespace engine
             if ( (*cit)->alias.empty() )
             {
                field.value.relegation().clear() ;
+            }
+            else if ( field.value.attr().isSubfix( (*cit)->alias,
+                                                   FALSE, &pos ) )
+            {
+               field.value.attr().replace( 0, pos, (*cit)->alias ) ;
             }
             else
             {
@@ -683,6 +777,7 @@ namespace engine
    {
       PD_TRACE_ENTRY( SDB__QGMUPATTRSBYFIELDALIAS ) ;
       INT32 rc = SDB_OK ;
+      UINT32 pos = 0 ;
       qgmDbAttrPtrVec::iterator it = attrs.begin() ;
       while ( it != attrs.end() )
       {
@@ -696,6 +791,10 @@ namespace engine
                if ( (*cit)->alias.empty() )
                {
                   attr.relegation().clear() ;
+               }
+               else if ( attr.attr().isSubfix( (*cit)->alias, FALSE, &pos ) )
+               {
+                  attr.attr().replace( 0, pos, (*cit)->alias ) ;
                }
                else
                {
@@ -718,6 +817,7 @@ namespace engine
    {
       PD_TRACE_ENTRY( SDB__QGMUPATTRSBYFIELDALIAS2 ) ;
       INT32 rc = SDB_OK ;
+      UINT32 pos = 0 ;
       qgmDbAttrVec::iterator it = attrs.begin() ;
       while ( it != attrs.end() )
       {
@@ -731,6 +831,10 @@ namespace engine
                if ( (*cit)->alias.empty() )
                {
                   attr.relegation().clear() ;
+               }
+               else if ( attr.attr().isSubfix( (*cit)->alias, FALSE, &pos ) )
+               {
+                  attr.attr().replace( 0, pos, (*cit)->alias ) ;
                }
                else
                {
@@ -753,6 +857,7 @@ namespace engine
    {
       PD_TRACE_ENTRY( SDB__QGMUPAATTRBYFIELDALIAS ) ;
       INT32 rc = SDB_OK ;
+      UINT32 pos = 0 ;
       qgmOPFieldPtrVec::const_iterator cit = fieldAlias.begin() ;
       while ( cit != fieldAlias.end() )
       {
@@ -761,6 +866,10 @@ namespace engine
             if ( (*cit)->alias.empty() )
             {
                attr.relegation().clear() ;
+            }
+            else if ( attr.attr().isSubfix( (*cit)->alias, FALSE, &pos ) )
+            {
+               attr.attr().replace( 0, pos, (*cit)->alias ) ;
             }
             else
             {

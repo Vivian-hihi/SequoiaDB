@@ -222,7 +222,7 @@ namespace engine
    {
       qgmDbAttrPtrVec attrs ;
       getCondFields( attrs ) ;
-      downAttrsByFieldAlias( attrs, fieldAlias ) ;
+      downAttrsByFieldAlias( attrs, fieldAlias, isOptional() ) ;
       return SDB_OK ;
    }
 
@@ -333,7 +333,7 @@ namespace engine
 
    INT32 _qgmAggrUnit::_replaceFieldAlias( const qgmOPFieldPtrVec & fieldAlias )
    {
-      return downAggrsByFieldAlias( _aggrSelect, fieldAlias ) ;
+      return downAggrsByFieldAlias( _aggrSelect, fieldAlias, isOptional() ) ;
    }
 
    INT32 _qgmAggrUnit::_restoreFieldAlias( const qgmOPFieldPtrVec & fieldAlias )

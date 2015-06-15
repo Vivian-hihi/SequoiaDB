@@ -48,43 +48,29 @@
 
 using namespace bson ;
 
-#define QGM_VALUE_PTR( itr, ptr, size )\
-        { ptr = &(*(itr->value.begin()));\
-          size = itr->value.end() - itr->value.begin() ;}
-
 namespace engine
 {
+   class _qgmPtrTable ;
+
+   /*
+      _qgmField define
+   */
    class _qgmField : public SDBObject
    {
+   public:
+      const static UINT32 npos ;
+
    private:
+      _qgmPtrTable *_ptrTable ;
       const CHAR *_begin ;
       UINT32 _size ;
 
    public:
-      _qgmField()
-      :_begin( "" ),
-       _size( 0 )
-      {
-      }
+      _qgmField() ;
+      _qgmField( const _qgmField &field ) ;
+      ~_qgmField() ;
 
-      _qgmField( const _qgmField &field )
-      :_begin( field._begin ),
-       _size( field._size)
-      {
-      }
-
-      _qgmField &operator=(const _qgmField &field )
-      {
-         _begin = field._begin ;
-         _size = field._size ;
-         return *this ;
-      }
-
-      ~_qgmField()
-      {
-         _begin = "" ;
-         _size = 0 ;
-      }
+      _qgmField &operator=(const _qgmField &field ) ;
 
       BOOLEAN empty() const
       {
@@ -97,94 +83,19 @@ namespace engine
          _size = 0 ;
       }
 
-      BOOLEAN operator==( const _qgmField &field )const
-      {
-         if ( _size != field._size )
-         {
-            return FALSE ;
-         }
-         const CHAR *l = _begin ;
-         const CHAR *r = field._begin ;
-         while( *l && *r )
-         {
-            if ( *l != *r )
-            {
-               return FALSE ;
-            }
-            ++l ;
-            ++r ;
-         }
-         return TRUE ;
-      }
-
-      BOOLEAN operator!=( const _qgmField &field )const
-      {
-         if ( _size != field._size )
-         {
-            return TRUE ;
-         }
-         const CHAR *l = _begin ;
-         const CHAR *r = field._begin ;
-         while( *l && *r )
-         {
-            if ( *l != *r )
-            {
-               return TRUE ;
-            }
-            ++l ;
-            ++r ;
-         }
-         return FALSE ;
-      }
-
-      BOOLEAN operator<( const _qgmField &field )const
-      {
-         UINT32 i = 0 ;
-         while ( i < this->_size && i < field._size )
-         {
-            if ( _begin[i] < field._begin[i] )
-            {
-               return TRUE ;
-            }
-            else if ( _begin[i] > field._begin[i] )
-            {
-               return FALSE ;
-            }
-            else
-            {
-               ++i ;
-            }
-         }
-
-         return this->_size < field._size ?
-                TRUE : FALSE ;
-      }
+      BOOLEAN operator==( const _qgmField &field ) const ;
+      BOOLEAN operator!=( const _qgmField &field ) const ;
+      BOOLEAN operator<( const _qgmField &field ) const ;
 
       BOOLEAN isSubfix( const _qgmField &field,
-                        BOOLEAN includeSame = FALSE ) const
-      {
-         UINT32 i = 0 ;
-         while( i < _size && i < field._size )
-         {
-            if ( _begin[i] != field._begin[i] )
-            {
-               break ;
-            }
-            ++i ;
-         }
-         if ( i == field._size )
-         {
-            if ( i + 2 <= _size && '.' == _begin[i] )
-            {
-               return TRUE ;
-            }
-            else if ( includeSame && i == _size )
-            {
-               return TRUE ;
-            }
-         }
-         return FALSE ;
-      }
+                        BOOLEAN includeSame = FALSE,
+                        UINT32 *pPos = NULL ) const ;
+
+      _qgmField subField( UINT32 pos, UINT32 size = _qgmField::npos ) ;
+      _qgmField rootField() ;
+
+      void      replace( UINT32 pos, UINT32 size,
+                         const _qgmField &field ) ;
 
       const CHAR *begin() const
       {
@@ -205,37 +116,17 @@ namespace engine
          return "" ;
       }
 
-      string toFieldName() const
-      {
-         stringstream ss ;
+      string toFieldName() const ;
 
-         if ( _size > 0 )
-         {
-            INT32 num = 0 ;
-            utilSplitIterator i( (CHAR*)_begin, '.', _size ) ;
-            while ( i.more() )
-            {
-               const CHAR *left = i.next() ;
-               if ( '$' == *left && '[' == *(left + 1) &&
-                    SDB_OK == mthConvertSubElemToNumeric( left, num ) )
-               {
-                  ss << num << '.' ;
-               }
-               else
-               {
-                  ss << left << '.' ;
-               }
-            }
-            ss.seekp( (INT32)ss.tellp() - 1 ) ;
-            ss << '\0' ;
-         }
-         return ss.str() ;
-      }
+      _qgmPtrTable* ptrTable() { return _ptrTable ; }
 
       friend class _qgmPtrTable ;
    } ;
    typedef class _qgmField qgmField ;
 
+   /*
+      _qgmDbAttr define
+   */
    class _qgmDbAttr : public SDBObject
    {
    public:
@@ -244,7 +135,6 @@ namespace engine
       :_relegation(relegation),
        _attr(attr)
       {
-
       }
 
       _qgmDbAttr(){}
@@ -253,7 +143,6 @@ namespace engine
       :_relegation( attr._relegation),
        _attr( attr._attr )
        {
-
        }
 
       _qgmDbAttr &operator=( const _qgmDbAttr &attr )
@@ -342,6 +231,9 @@ namespace engine
    typedef vector< qgmDbAttr* > qgmDbAttrPtrVec ;
    typedef vector< qgmDbAttr >  qgmDbAttrVec ;
 
+   /*
+      _qgmOpField define
+   */
    struct _qgmOpField : public SDBObject
    {
       qgmDbAttr value ;
@@ -414,7 +306,9 @@ namespace engine
    typedef std::vector< qgmOpField >  qgmOPFieldVec ;
    typedef std::vector< qgmOpField* > qgmOPFieldPtrVec ;
 
-
+   /*
+      _qgmFetchOut define
+   */
    struct _qgmFetchOut : public SDBObject
    {
       _qgmField alias ;
@@ -424,7 +318,6 @@ namespace engine
       _qgmFetchOut()
       :next( NULL )
       {
-
       }
 
       /// warning: we do not release next in destructor.
@@ -466,5 +359,5 @@ namespace engine
    } ;
 }
 
-#endif
+#endif // QGMDEF_HPP_
 

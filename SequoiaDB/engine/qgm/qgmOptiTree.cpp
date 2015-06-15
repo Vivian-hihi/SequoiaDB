@@ -352,7 +352,8 @@ namespace engine
       if ( !isWildCardField() )
       {
          BOOLEAN copyAlias = QGM_OPTI_TYPE_FILTER == getType() ? TRUE : FALSE ;
-         downFieldsByFieldAlias( _fields, fieldAlias, copyAlias ) ;
+         downFieldsByFieldAlias( _fields, fieldAlias, copyAlias,
+                                 isOptional() ) ;
       }
       return _replaceFieldAlias( fieldAlias ) ;
    }

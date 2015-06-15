@@ -46,7 +46,7 @@
 namespace engine
 {
 
-   BOOLEAN qgmUtilFirstDot( const CHAR *str, UINT32 len, UINT32 &num ) ;
+   BOOLEAN qgmUtilFirstDot( const CHAR *str, UINT32 len, UINT32 &pos ) ;
 
    BOOLEAN qgmUtilSame( const CHAR *src, UINT32 srcLen,
                         const CHAR *dst, UINT32 dstLen ) ;
@@ -81,15 +81,20 @@ namespace engine
 
    INT32 downFieldsByFieldAlias( qgmOPFieldVec &fields,
                                  const qgmOPFieldPtrVec & fieldAlias,
-                                 BOOLEAN needCopyAlias ) ;
+                                 BOOLEAN needCopyAlias,
+                                 BOOLEAN isOptional ) ;
    INT32 downAttrsByFieldAlias( qgmDbAttrPtrVec &attrs,
-                                const qgmOPFieldPtrVec & fieldAlias ) ;
+                                const qgmOPFieldPtrVec & fieldAlias,
+                                BOOLEAN isOptional ) ;
    INT32 downAttrsByFieldAlias( qgmDbAttrVec &attrs,
-                                const qgmOPFieldPtrVec & fieldAlias ) ;
+                                const qgmOPFieldPtrVec & fieldAlias,
+                                BOOLEAN isOptional ) ;
    INT32 downAAttrByFieldAlias( qgmDbAttr &attr,
-                                const qgmOPFieldPtrVec & fieldAlias ) ;
+                                const qgmOPFieldPtrVec & fieldAlias,
+                                BOOLEAN isOptional ) ;
    INT32 downAggrsByFieldAlias( qgmAggrSelectorVec &aggrs,
-                                const qgmOPFieldPtrVec & fieldAlias ) ;
+                                const qgmOPFieldPtrVec &fieldAlias,
+                                BOOLEAN isOptional ) ;
 
    INT32 upFieldsByFieldAlias( qgmOPFieldVec &fields,
                                const qgmOPFieldPtrVec & fieldAlias,

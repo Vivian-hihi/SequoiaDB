@@ -39,14 +39,34 @@
 #define QGMPTRTABLE_HPP_
 
 #include "qgmDef.hpp"
+#include <map>
 #include <set>
 #include "ossMem.hpp"
 
 namespace engine
 {
-   typedef std::set<qgmField> PTR_TABLE ;
-   typedef std::vector<CHAR*> STR_TABLE ;
+   /*
+      qgm_char_cmp define
+   */
+   struct qgm_char_cmp
+   {
+      bool operator()( const CHAR *a, const CHAR *b )
+      {
+         return ossStrcmp( a, b ) < 0 ;
+      }
+   } ;
 
+   typedef std::set<qgmField>                               PTR_TABLE ;
+   typedef std::map<const CHAR*, UINT32, qgm_char_cmp>      STR_TABLE ;
+#if defined (_WINDOWS)
+   typedef STR_TABLE::iterator                              STR_TABLE_IT ;
+#else
+   typedef std::map<const CHAR*, UINT32>::iterator          STR_TABLE_IT ;
+#endif // _WINDOWS
+
+   /*
+      _qgmPtrTable define
+   */
    class _qgmPtrTable : public SDBObject
    {
    public:
@@ -55,18 +75,14 @@ namespace engine
 
    public:
       INT32 getField( const SQL_CON_ITR &itr,
-                      qgmField &field )
-      {
-         const CHAR *begin = NULL ;
-         UINT32 size = 0 ;
-         QGM_VALUE_PTR( itr, begin, size )
-         return getField( begin, size, field ) ;
-      }
+                      qgmField &field ) ;
 
       INT32 getField( const CHAR *begin, UINT32 size,
                       qgmField &field ) ;
 
       INT32 getOwnField( const CHAR *begin, qgmField &field ) ;
+      INT32 getOwnField( const CHAR *begin, UINT32 size,
+                         qgmField &field ) ;
 
       INT32 getAttr( const SQL_CON_ITR &itr,
                      qgmDbAttr &attr ) ;
@@ -74,8 +90,15 @@ namespace engine
       INT32 getAttr( const CHAR *begin, UINT32 size,
                      qgmDbAttr &attr ) ;
 
+      INT32 getOwnAttr( const CHAR *begin, UINT32 size,
+                        qgmDbAttr &attr ) ;
+
       INT32 getUniqueFieldAlias( qgmField &field ) ;
       INT32 getUniqueTableAlias( qgmField &field ) ;
+
+      qgmField    getField( const qgmField &sub1,
+                            const qgmField &sub2 ) ;
+      const CHAR* getOwnedString( const CHAR *str ) ;
 
    private:
       PTR_TABLE _table ;
@@ -88,5 +111,5 @@ namespace engine
    typedef class _qgmPtrTable qgmPtrTable ;
 }
 
-#endif
+#endif // QGMPTRTABLE_HPP_
 

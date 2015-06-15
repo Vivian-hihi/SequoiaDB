@@ -596,6 +596,7 @@ namespace engine
          {
             BOOLEAN found = FALSE ;
             qgmOpField *sExist = NULL ;
+            UINT32 pos = 0 ;
             if ( !stream.find( itr->value ) )
             {
                rc = SDB_INVALIDARG ;
@@ -605,7 +606,7 @@ namespace engine
                goto error ;
             }
 
-            rc = _paramExistInSelector( itr->value, found, sExist ) ;
+            rc = _paramExistInSelector( itr->value, found, sExist, &pos ) ;
             if ( SDB_OK != rc )
             {
                goto error ;
@@ -625,7 +626,14 @@ namespace engine
             else if ( NULL != sExist && !sExist->alias.empty() )
             {
                itr->value.relegation().clear() ;
-               itr->value.attr() = sExist->alias ;
+               if ( 0 == pos )
+               {
+                  itr->value.attr() = sExist->alias ;
+               }
+               else
+               {
+                  itr->value.attr().replace(0, pos, sExist->alias ) ;
+               }
             }
          }
 
@@ -753,11 +761,13 @@ namespace engine
             {
                BOOLEAN found ;
                qgmOpField *sExist = NULL ;
+               UINT32 pos = 0 ;
                /// eg: select sum(T.a), T.a from T ;
                /// we do not need put T.a into selector.
                /// but if it is: select sum(T.a), T.b from T;
                /// we need push T.a into selector.
-               rc = _paramExistInSelector( itrPara->value, found, sExist ) ;
+               rc = _paramExistInSelector( itrPara->value, found,
+                                           sExist, &pos ) ;
                if ( SDB_OK != rc )
                {
                   PD_LOG ( PDERROR,
@@ -777,7 +787,14 @@ namespace engine
                else if ( NULL != sExist && !sExist->alias.empty() )
                {
                   itrPara->value.relegation().clear() ;
-                  itrPara->value.attr() = sExist->alias ;
+                  if ( 0 == pos )
+                  {
+                     itrPara->value.attr() = sExist->alias ;
+                  }
+                  else
+                  {
+                     itrPara->value.attr().replace( 0, pos, sExist->alias ) ;
+                  }
                }
             }
          }
@@ -805,7 +822,8 @@ namespace engine
          {
             qgmOpField *sExist = NULL ;
             BOOLEAN found = FALSE ;
-            rc = _paramExistInSelector( itr->value, found, sExist ) ;
+            UINT32 pos = 0 ;
+            rc = _paramExistInSelector( itr->value, found, sExist, &pos ) ;
             if ( SDB_OK != rc )
             {
                PD_LOG ( PDERROR,
@@ -819,7 +837,14 @@ namespace engine
                if( NULL != sExist && !sExist->alias.empty() )
                {
                   (*itr).value.relegation().clear() ;
-                  (*itr).value.attr() = sExist->alias ;
+                  if ( 0 == pos )
+                  {
+                     (*itr).value.attr() = sExist->alias ;
+                  }
+                  else
+                  {
+                     (*itr).value.attr().replace( 0, pos, sExist->alias ) ;
+                  }
                }
             }
             else
@@ -864,6 +889,7 @@ namespace engine
       {
          BOOLEAN found = FALSE ;
          qgmOpField *sExist = NULL ;
+         UINT32 pos = 0 ;
          if ( !stream.find( _splitby ) )
          {
             rc = SDB_INVALIDARG ;
@@ -873,7 +899,7 @@ namespace engine
             goto error ;
          }
 
-         rc = _paramExistInSelector( _splitby, found, sExist ) ;
+         rc = _paramExistInSelector( _splitby, found, sExist, &pos ) ;
          if ( SDB_OK != rc )
          {
             goto error ;
@@ -889,7 +915,14 @@ namespace engine
          else if ( NULL != sExist && !sExist->alias.empty() )
          {
             _splitby.relegation().clear() ;
-            _splitby.attr() = sExist->alias ;
+            if ( 0 == pos )
+            {
+               _splitby.attr() = sExist->alias ;
+            }
+            else
+            {
+               _splitby.attr().replace( 0, pos, sExist->alias ) ;
+            }
          }
 
          plan->insertPlan( QGM_EXTEND_SPLITBY ) ;
@@ -905,7 +938,8 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION( SDB__QGMOPTISELECT__PARAMEXISTINSELECOTR, "_qgmOptiSelect::_paramExistInSelector" )
    INT32 _qgmOptiSelect::_paramExistInSelector( const qgmDbAttr &field,
                                                 BOOLEAN &found,
-                                                qgmOpField *&selector )
+                                                qgmOpField *&selector,
+                                                UINT32 *pos )
    {
       PD_TRACE_ENTRY( SDB__QGMOPTISELECT__PARAMEXISTINSELECOTR ) ;
       INT32 rc = SDB_OK ;
@@ -923,14 +957,15 @@ namespace engine
             if ( !field.relegation().empty()
                  && !itr->value.relegation().empty() )
             {
-               if ( itr->value == field )
+               if ( itr->value.relegation() == field.relegation() &&
+                    field.attr().isSubfix( itr->value.attr(), TRUE, pos ) )
                {
                   found = TRUE ;
                   selector = &(*itr) ;
                   break ;
                }
             }
-            else if ( field.attr() == itr->value.attr() )
+            else if ( field.attr().isSubfix( itr->value.attr(), TRUE, pos ) )
             {
                found = TRUE ;
                selector = &(*itr) ;

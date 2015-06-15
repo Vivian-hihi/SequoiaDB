@@ -86,7 +86,8 @@ namespace engine
 
       INT32 _paramExistInSelector( const qgmDbAttr &field,
                                    BOOLEAN &found,
-                                   qgmOpField *&selector ) ;
+                                   qgmOpField *&selector,
+                                   UINT32 *pos ) ;
 
    public:
       qgmOPFieldVec        _selector ;

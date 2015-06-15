@@ -42,6 +42,16 @@
 
 namespace engine
 {
+   #define QGM_VALUE_PTR( itr, ptr, size ) \
+        do { \
+            ptr = &(*(itr->value.begin())) ; \
+            size = itr->value.end() - itr->value.begin() ; \
+        } while( 0 )
+
+
+   /*
+      _qgmPtrTable implement
+   */
    _qgmPtrTable::_qgmPtrTable()
    {
       _uniqueFieldID = 0 ;
@@ -55,14 +65,24 @@ namespace engine
       STR_TABLE::iterator it = _stringTable.begin() ;
       while ( it != _stringTable.end() )
       {
-         SDB_OSS_FREE( *it ) ;
+         SDB_OSS_FREE( (CHAR*)(it->first) ) ;
          ++it ;
       }
       _stringTable.clear() ;
    }
 
+   INT32 _qgmPtrTable::getField( const SQL_CON_ITR &itr,
+                                 qgmField &field )
+   {
+      const CHAR *begin = NULL ;
+      UINT32 size = 0 ;
+      QGM_VALUE_PTR( itr, begin, size ) ;
+      return getField( begin, size, field ) ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION( SDB__QGMPTRTABLE_GETFIELD, "_qgmPtrTable::getField" )
-   INT32 _qgmPtrTable::getField( const CHAR *begin, UINT32 size,
+   INT32 _qgmPtrTable::getField( const CHAR *begin,
+                                 UINT32 size,
                                  qgmField &field )
    {
       PD_TRACE_ENTRY( SDB__QGMPTRTABLE_GETFIELD ) ;
@@ -79,6 +99,7 @@ namespace engine
 
       f._begin = begin ;
       f._size = size ;
+      f._ptrTable = this ;
       itr = _table.find( f ) ;
       if ( _table.end() == itr )
       {
@@ -96,12 +117,13 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION( SDB__QGMPTRTABLE_GETOWNFIELD, "_qgmPtrTable::getOwnField" )
-   INT32 _qgmPtrTable::getOwnField( const CHAR * begin, qgmField & field )
+   INT32 _qgmPtrTable::getOwnField( const CHAR *begin,
+                                    UINT32 size,
+                                    qgmField &field )
    {
       PD_TRACE_ENTRY( SDB__QGMPTRTABLE_GETOWNFIELD ) ;
       SDB_ASSERT( NULL != begin, "impossible" ) ;
       INT32 rc = SDB_OK ;
-      UINT32 size = ossStrlen( begin ) ;
       qgmField f ;
       PTR_TABLE::const_iterator itr ;
 
@@ -113,20 +135,18 @@ namespace engine
 
       f._begin = begin ;
       f._size = size ;
+      f._ptrTable = this ;
       itr = _table.find( f ) ;
       if ( _table.end() == itr )
       {
-         // new string
-         CHAR *newStr = ossStrdup( begin ) ;
-         _stringTable.push_back( newStr ) ;
-
-         field._begin = ( const CHAR*)newStr ;
+         field._begin = getOwnedString( begin ) ;
          field._size = size ;
+         field._ptrTable = this ;
          _table.insert( field ) ;
       }
       else
       {
-         field = *itr;
+         field = *itr ;
       }
 
    done:
@@ -136,15 +156,48 @@ namespace engine
       goto done ;
    }
 
+   
+   INT32 _qgmPtrTable::getOwnField( const CHAR *begin,
+                                    qgmField &field )
+   {
+      if ( begin )
+      {
+         return getOwnField( begin, ossStrlen( begin ), field ) ;
+      }
+      return SDB_INVALIDARG ;
+   }
+
+   _qgmField _qgmPtrTable::getField( const qgmField &sub1,
+                                     const qgmField &sub2 )
+   {
+      if ( sub1.empty() )
+      {
+         return sub2 ;
+      }
+      else if ( sub2.empty() )
+      {
+         return sub1 ;
+      }
+      else
+      {
+         string str( sub1.begin(), sub1.size() ) ;
+         str += sub2.toString() ;
+         qgmField merge ;
+         getOwnField( str.c_str(), merge ) ;
+         return merge ;
+      }
+   }
+
    // PD_TRACE_DECLARE_FUNCTION( SDB__QGMPTRTABLE_GETATTR, "_qgmPtrTable::getAttr" )
-   INT32 _qgmPtrTable::getAttr( const CHAR *begin, UINT32 size,
+   INT32 _qgmPtrTable::getAttr( const CHAR *begin,
+                                UINT32 size,
                                 qgmDbAttr &attr )
    {
       PD_TRACE_ENTRY( SDB__QGMPTRTABLE_GETATTR ) ;
       INT32 rc = SDB_OK ;
-      UINT32 num = 0 ;
-      BOOLEAN hasDot = qgmUtilFirstDot( begin, size, num ) ;
-      if ( 1 == num || size == num )
+      UINT32 pos = 0 ;
+      BOOLEAN hasDot = qgmUtilFirstDot( begin, size, pos ) ;
+      if ( hasDot && ( 0 == pos || size - 1 == pos ) )
       {
          PD_LOG( PDERROR,
                  "the first char and the last char can not be '.'" ) ;
@@ -154,14 +207,53 @@ namespace engine
 
       if ( hasDot )
       {
-         rc = getField( begin, num - 1, attr.relegation() ) ;
+         rc = getField( begin, pos, attr.relegation() ) ;
          if ( SDB_OK != rc )
          {
             goto error ;
          }
+         ++pos ;
       }
 
-      rc = getField( begin + num, size - num, attr.attr() ) ;
+      rc = getField( begin + pos, size - pos, attr.attr() ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+
+   done:
+      PD_TRACE_EXITRC( SDB__QGMPTRTABLE_GETATTR, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _qgmPtrTable::getOwnAttr( const CHAR *begin,
+                                   UINT32 size,
+                                   qgmDbAttr &attr )
+   {
+      INT32 rc = SDB_OK ;
+      UINT32 pos = 0 ;
+      BOOLEAN hasDot = qgmUtilFirstDot( begin, size, pos ) ;
+      if ( hasDot && ( 0 == pos || size - 1 == pos ) )
+      {
+         PD_LOG( PDERROR,
+                 "the first char and the last char can not be '.'" ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      if ( hasDot )
+      {
+         rc = getOwnField( begin, pos, attr.relegation() ) ;
+         if ( SDB_OK != rc )
+         {
+            goto error ;
+         }
+         ++pos ;
+      }
+
+      rc = getOwnField( begin + pos, size - pos, attr.attr() ) ;
       if ( SDB_OK != rc )
       {
          goto error ;
@@ -179,7 +271,7 @@ namespace engine
    {
       const CHAR *begin = NULL ;
       UINT32 size = 0 ;
-      QGM_VALUE_PTR( itr, begin, size )
+      QGM_VALUE_PTR( itr, begin, size ) ;
       return getAttr( begin, size, attr ) ;
    }
 
@@ -195,6 +287,22 @@ namespace engine
       CHAR uniqueName[20] = {0} ;
       ossSnprintf( uniqueName, 19, "$SYS_T%d", ++_uniqueTableID ) ;
       return getOwnField( uniqueName, field ) ;
+   }
+
+   const CHAR* _qgmPtrTable::getOwnedString( const CHAR *str )
+   {
+      STR_TABLE_IT it = _stringTable.find( str ) ;
+      if ( it != _stringTable.end() )
+      {
+         ++( it->second ) ;
+         return it->first ;
+      }
+      else
+      {
+         CHAR *dup = ossStrdup( str ) ;
+         _stringTable[ dup ] = 1 ;
+         return dup ;
+      }
    }
 
 }
