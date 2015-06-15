@@ -1165,15 +1165,26 @@ namespace engine
                       PDERROR, "Field[%s] type[%d] error", CAT_CATALOG_W_NAME,
                       eleTmp.type() ) ;
             clInfo._replSize = eleTmp.numberInt() ;
-            if ( clInfo._replSize <= 0 )
+            if ( 1 <= clInfo._replSize &&
+                 clInfo._replSize <= CLS_REPLSET_MAX_NODE_SIZE )
+            {
+               /// do nothing.
+            }
+            else if ( clInfo._replSize == 0 )
             {
                clInfo._replSize = CLS_REPLSET_MAX_NODE_SIZE ;
             }
+            else if ( -1 == clInfo._replSize )
+            {
+               /// do nothing
+            }
+            else
+            {
+               PD_LOG( PDERROR, "invalid repl size:%d", clInfo._replSize ) ;
+               rc = SDB_INVALIDARG ;
+               goto error ;
+            }
 
-            PD_CHECK( clInfo._replSize <= CLS_REPLSET_MAX_NODE_SIZE,
-                      SDB_INVALIDARG, error, PDERROR,
-                      "Field[%s] value should less than or equal to %d",
-                      CAT_CATALOG_W_NAME, CLS_REPLSET_MAX_NODE_SIZE ) ;
             fieldMask |= CAT_MASK_REPLSIZE ;
          }
          // ensure sharding index

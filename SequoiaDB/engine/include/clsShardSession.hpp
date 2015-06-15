@@ -65,10 +65,22 @@ namespace engine
          virtual BOOLEAN timeout ( UINT32 interval ) ;
 
       protected:
-         INT32   _check ( INT16 &w ) ;
-         INT32   _checkRead( INT32 flag, INT32 checkBit ) ;
-         INT32   _checkCata ( INT32 version, const CHAR * name, INT16 &w,
-                              BOOLEAN &isMainCL, BOOLEAN exceptVer = FALSE ) ;
+         INT32 _checkWriteStatus() ;
+         INT32 _checkReadStatus( INT32 flag ) ;
+
+         /// do multi things to reduce times of getting lock
+         INT32 _checkCLStatusAndGetSth( const CHAR *name,
+                                        INT32 version,
+                                        BOOLEAN *isMainCL = NULL,
+                                        INT16 *w = NULL ) ;
+
+         /// valid: replSize == NULL and clientW != NULL
+         ///        replSize != NULL and clientW == NULL
+         ///        replSize != NULL and clientW != NULL
+         INT32 _calculateW( const INT16 *replSize,
+                            const INT16 *clientW,
+                            INT16 &w ) ;
+
          INT32   _reply ( MsgOpReply *header, const CHAR *buff, UINT32 size ) ;
 
          virtual void   _onDetach () ;
@@ -228,6 +240,12 @@ namespace engine
          INT32 _alterMainCL( _rtnCommand *command,
                              pmdEDUCB *cb,
                              SDB_DPSCB *dpsCB ) ;
+
+         INT32 _checkPrimaryStatus() ;
+
+         INT32 _checkRollbackStatus() ;
+
+         INT32 _checkReplStatus() ;
 
       protected:
          _clsReplicateSet       *_pReplSet ;

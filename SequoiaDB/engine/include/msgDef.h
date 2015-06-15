@@ -514,7 +514,6 @@ enum SDB_LOB_MODE
 
 #define SDB_ALTER_VERSION 1
 
-/// rpc type
 /// append only, do not change any existing types.
 #define SDB_ALTER_DB          "db"
 #define SDB_ALTER_CL          "collection"
@@ -522,11 +521,8 @@ enum SDB_LOB_MODE
 #define SDB_ALTER_DOMAIN      "domain"
 #define SDB_ALTER_GROUP       "group"
 #define SDB_ALTER_NODE        "node"
-/// rcp type end
 
-/// rpc
 #define SDB_ALTER_CRT_ID_INDEX     "create id index"
 #define SDB_ALTER_DROP_ID_INDEX    "drop id index"
-/// rpc end
 
 #endif // MSGDEF_H__

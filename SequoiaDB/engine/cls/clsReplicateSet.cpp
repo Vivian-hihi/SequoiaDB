@@ -1193,7 +1193,7 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION (SDB__CLSREPSET_PRIMARYCHECK, "_clsReplicateSet::primaryCheck" )
-   INT32 _clsReplicateSet::primaryCheck( pmdEDUCB *cb, INT16 w )
+   INT32 _clsReplicateSet::primaryCheck( pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__CLSREPSET_PRIMARYCHECK ) ;
@@ -1206,11 +1206,6 @@ namespace engine
       else if ( !primaryIsMe () )
       {
          rc = SDB_CLS_NOT_PRIMARY ;
-         goto error ;
-      }
-      else if ( w > 1 && (INT16)(ailves()) < w )
-      {
-         rc = SDB_CLS_NODE_NOT_ENOUGH ;
          goto error ;
       }
       else

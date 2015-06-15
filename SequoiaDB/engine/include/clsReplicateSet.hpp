@@ -138,6 +138,16 @@ namespace engine
             return num ;
          }
 
+         OSS_INLINE void getBoth( UINT32 &nodeCnt,
+                                  UINT32 &aliveCnt )
+         {
+            _info.mtx.lock_r() ;
+            nodeCnt = _info.groupSize() ;
+            aliveCnt = _info.aliveSize() ;
+            _info.mtx.release_r() ;
+            return ;
+         }
+
          // timeout: ms
          OSS_INLINE UINT32 getAlivesByTimeout( UINT32 timeout =
                                                CLS_NODE_KEEPALIVE_TIMEOUT )
@@ -266,7 +276,7 @@ namespace engine
          INT32 stepUp( UINT32 seconds,
                        pmdEDUCB *cb ) ;
 
-         INT32 primaryCheck( pmdEDUCB *cb, INT16 w ) ;
+         INT32 primaryCheck( pmdEDUCB *cb ) ;
 
          INT32 aliveNode( const MsgRouteID &id ) ;
 

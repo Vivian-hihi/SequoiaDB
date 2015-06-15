@@ -187,225 +187,6 @@ namespace engine
       return rc ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDSESS__CK, "_clsShdSession::_check" )
-   INT32 _clsShdSession::_check ( INT16 &w )
-   {
-      INT32 rc = SDB_OK ;
-      UINT32 waitTime = 0 ;
-      PD_TRACE_ENTRY ( SDB__CLSSHDSESS__CK ) ;
-
-      if ( w < 0 )
-      {
-         PD_LOG( PDWARNING, "we get a w<0 here." ) ;
-         w = 1 ;
-      }
-      // if w is 1, not get groupSize
-      else if ( w > 1 )
-      {
-         INT16 nodes = (INT16)_pReplSet->groupSize() ;
-         if ( w > nodes )
-         {
-            w = nodes ;
-         }
-      }
-      /// if 0 == w, according to w in cata.
-      else
-      {
-         /// do nothing.
-      }
-
-      waitTime = 0 ;
-      while( TRUE )
-      {
-         rc = _pReplSet->primaryCheck( _pEDUCB, w ) ;
-         if ( SDB_OK == rc )
-         {
-            _pEDUCB->writingDB( TRUE ) ;
-            break ;
-         }
-         else if ( SDB_CLS_NOT_PRIMARY != rc )
-         {
-            goto error ;
-         }
-
-         // if know primary exist or no majority size, return at now,
-         // otherwise, need to wait some time
-         if ( MSG_INVALID_ROUTEID !=
-              ( _primaryID.value = _pReplSet->getPrimary().value ) )
-         {
-            rc = SDB_CLS_NOT_PRIMARY ;
-            goto error ;
-         }
-         else if ( !CLS_IS_MAJORITY( _pReplSet->getAlivesByTimeout(),
-                                     _pReplSet->groupSize() ) )
-         {
-            goto error ;
-         }
-         else if ( waitTime < SHD_NOTPRIMARY_WAITTIME &&
-                   !_pEDUCB->isInterrupted() )
-         {
-            ossSleep( SHD_WAITTIME_INTERVAL ) ;
-            waitTime += SHD_WAITTIME_INTERVAL ;
-            continue ;
-         }
-         goto error ;
-      }
-
-      waitTime = 0 ;
-      while( TRUE )
-      {
-         if ( !pmdGetKRCB()->getTransCB()->isDoRollback() )
-         {
-            if ( waitTime > 0 && _pEDUCB->isInterrupted() )
-            {
-               rc = SDB_APP_INTERRUPT ;
-               goto error ;
-            }
-            break ;
-         }
-         else if ( waitTime < SHD_TRANSROLLBACK_WAITTIME &&
-                   !_pEDUCB->isInterrupted() )
-         {
-            ossSleep( SHD_WAITTIME_INTERVAL ) ;
-            waitTime += SHD_WAITTIME_INTERVAL ;
-            continue ;
-         }
-
-         rc = SDB_DPS_TRANS_DOING_ROLLBACK ;
-         goto error ;
-      }
-
-   done:
-      PD_TRACE_EXITRC ( SDB__CLSSHDSESS__CK, rc ) ;
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   INT32 _clsShdSession::_checkRead( INT32 flag, INT32 checkBit )
-   {
-      INT32 rc = SDB_OK ;
-
-      if ( flag & checkBit )
-      {
-         UINT32 waitTime = 0 ;
-         while( TRUE )
-         {
-            if ( _pReplSet->primaryIsMe() )
-            {
-               rc = SDB_OK ;
-               break ;
-            }
-            rc = SDB_CLS_NOT_PRIMARY ;
-
-            // if know primary exist or no majority size, return at now,
-            // otherwise, need to wait some time
-            if ( MSG_INVALID_ROUTEID !=
-                 ( _primaryID.value = _pReplSet->getPrimary().value ) )
-            {
-               /// do nothing
-            }
-            else if ( !CLS_IS_MAJORITY( _pReplSet->getAlivesByTimeout(),
-                                        _pReplSet->groupSize() ) )
-            {
-               /// do nothing
-            }
-            else if ( waitTime < SHD_NOTPRIMARY_WAITTIME &&
-                      !_pEDUCB->isInterrupted() )
-            {
-               ossSleep( SHD_WAITTIME_INTERVAL ) ;
-               waitTime += SHD_WAITTIME_INTERVAL ;
-               continue ;
-            }
-            break ;
-         }
-      }
-
-      return rc ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDSESS__CKCATA, "_clsShdSession::_checkCata" )
-   INT32 _clsShdSession::_checkCata ( INT32 version, const CHAR * name,
-                                      INT16 &w, BOOLEAN &isMainCL,
-                                      BOOLEAN exceptVer )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB__CLSSHDSESS__CKCATA ) ;
-      INT32 curVer = -1 ;
-      INT16 curW = 0 ;
-      UINT32 groupCount = 0 ;
-      _clsCatalogSet *set = NULL ;
-
-      if ( _pReplSet->isFullSync() )
-      {
-         rc = SDB_CLS_FULL_SYNC ;
-         goto error ;
-      }
-
-      if ( exceptVer )
-      {
-         goto done ;
-      }
-
-      _pCatAgent->lock_r () ;
-      set = _pCatAgent->collectionSet( name ) ;
-      if ( set )
-      {
-         curW = set->getW() ;
-         curVer = set->getVersion() ;
-         groupCount = set->groupCount() ;
-         isMainCL = set->isMainCL();
-      }
-      _pCatAgent->release_r () ;
-
-      //not update catalog info or version is old, need to update catalog
-      if ( curVer < 0 || curVer < version )
-      {
-         rc = curVer < 0 ? SDB_CLS_NO_CATALOG_INFO :
-                           SDB_CLS_DATA_NODE_CAT_VER_OLD ;
-      }
-      else if ( curVer > version
-               || ( 0 == groupCount && !isMainCL ) )
-      {
-         if ( 0 == groupCount )
-         {
-            _pCatAgent->lock_w() ;
-            _pCatAgent->clear( name ) ;
-            _pCatAgent->release_w() ;
-         }
-
-         PD_LOG ( PDINFO, "Collecton[%s]: self verions:%d, coord version:%d, "
-                  "groupCount:%d", name, curVer, version, groupCount ) ;
-         rc = SDB_CLS_COORD_NODE_CAT_VER_OLD ;
-      }
-      else if ( 0 == w )
-      {
-         if ( curW > 1 )
-         {
-            INT16 nodes = (INT16)_pReplSet->groupSize() ;
-            if ( curW > nodes )
-            {
-               curW = nodes ;
-            }
-         }
-
-         if ( curW > 1 && _pReplSet->ailves() < (UINT32)curW )
-         {
-            rc = SDB_CLS_NODE_NOT_ENOUGH ;
-         }
-         else
-         {
-            w = curW ;
-         }
-      }
-
-   done:
-      PD_TRACE_EXITRC ( SDB__CLSSHDSESS__CKCATA, rc ) ;
-      return rc ;
-   error:
-      goto done ;
-   }
-
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDSESS__REPLY, "_clsShdSession::_reply" )
    INT32 _clsShdSession::_reply ( MsgOpReply * header, const CHAR * buff,
                                   UINT32 size )
@@ -913,14 +694,17 @@ namespace engine
       CHAR *pSelectorBuffer = NULL ;
       CHAR *pUpdatorBuffer = NULL ;
       CHAR *pHintBuffer = NULL ;
-      INT16 w = pUpdate->w ;
+      INT16 w = 0 ;
+      INT16 clientW = pUpdate->w ;
+      INT16 replSize = 0 ;
 
-      rc = _check ( w ) ;
+      rc = _checkWriteStatus() ;
       if ( SDB_OK != rc )
       {
+         PD_LOG( PDERROR, "failed to check write status:%d", rc ) ;
          goto error ;
       }
-
+ 
       rc = msgExtractUpdate( (CHAR*)msg, &flags, &pCollectionName,
                              &pSelectorBuffer, &pUpdatorBuffer, &pHintBuffer );
       if ( SDB_OK != rc )
@@ -931,10 +715,19 @@ namespace engine
       }
       _pCollectionName = pCollectionName ;
 
-      //check version
-      rc = _checkCata ( pUpdate->version, pCollectionName, w, _isMainCL ) ;
+      rc = _checkCLStatusAndGetSth( pCollectionName,
+                                    pUpdate->version,
+                                    &_isMainCL, &replSize ) ;
       if ( SDB_OK != rc )
       {
+         PD_LOG( PDERROR, "failed to check cl status:%d", rc ) ;
+         goto error ;
+      }
+
+      rc = _calculateW( &replSize, &clientW, w ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to calculate w:%d", rc ) ;
          goto error ;
       }
 
@@ -995,10 +788,14 @@ namespace engine
       CHAR *pInsertorBuffer = NULL ;
       INT32 recordNum = 0 ;
       MsgOpInsert *pInsert = (MsgOpInsert*)msg ;
-      INT16 w = pInsert->w ;
-      rc = _check ( w ) ;
+      INT16 w = 0 ;
+      INT16 clientW = pInsert->w ;
+      INT16 replSize = 0 ;
+
+      rc = _checkWriteStatus() ;
       if ( SDB_OK != rc )
       {
+         PD_LOG( PDERROR, "failed to check write status:%d", rc ) ;
          goto error ;
       }
 
@@ -1012,13 +809,21 @@ namespace engine
       }
       _pCollectionName = pCollectionName ;
 
-      //check catalog
-      rc = _checkCata ( pInsert->version, pCollectionName, w, _isMainCL ) ;
+      rc = _checkCLStatusAndGetSth( pCollectionName,
+                                    pInsert->version,
+                                    &_isMainCL, &replSize ) ;
       if ( SDB_OK != rc )
       {
+         PD_LOG( PDERROR, "failed to check cl status:%d", rc ) ;
          goto error ;
       }
 
+      rc = _calculateW( &replSize, &clientW, w ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to calculate w:%d", rc ) ;
+         goto error ;
+      }
       try
       {
          BSONObj insertor ( pInsertorBuffer ) ;
@@ -1070,11 +875,14 @@ namespace engine
       CHAR *pDeletorBuffer = NULL ;
       CHAR *pHintBuffer = NULL ;
       MsgOpDelete * pDelete = (MsgOpDelete*)msg ;
-      INT16 w = pDelete->w ;
+      INT16 w = 0 ;
+      INT16 clientW = pDelete->w ;
+      INT16 replSize = 0 ;
 
-      rc = _check ( w ) ;
+      rc = _checkWriteStatus() ;
       if ( SDB_OK != rc )
       {
+         PD_LOG( PDERROR, "failed to check write status:%d", rc ) ;
          goto error ;
       }
 
@@ -1088,10 +896,19 @@ namespace engine
       }
       _pCollectionName = pCollectionName ;
 
-      //check cata
-      rc = _checkCata ( pDelete->version, pCollectionName, w, _isMainCL ) ;
+      rc = _checkCLStatusAndGetSth( pCollectionName,
+                                    pDelete->version,
+                                    &_isMainCL, &replSize ) ;
       if ( SDB_OK != rc )
       {
+         PD_LOG( PDERROR, "failed to check cl status:%d", rc ) ;
+         goto error ;
+      }
+
+      rc = _calculateW( &replSize, &clientW, w ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to calculate w:%d", rc ) ;
          goto error ;
       }
 
@@ -1159,7 +976,9 @@ namespace engine
       INT64 numToSkip = -1 ;
       INT64 numToReturn = -1 ;
       MsgOpQuery *pQuery = (MsgOpQuery*)msg ;
-      INT16 w = pQuery->w ;
+      INT16 clientW = pQuery->w ;
+      INT16 replSize = 0 ;
+      INT16 w = 1 ;
       _rtnCommand *pCommand = NULL ;
 
       rc = msgExtractQuery ( (CHAR *)msg, &flags, &pCollectionName,
@@ -1179,27 +998,42 @@ namespace engine
 
          if ( flags & FLG_QUERY_MODIFY )
          {
-            rc = _check ( w ) ;
+            rc = _checkWriteStatus() ;
             if ( SDB_OK != rc )
             {
+               PD_LOG( PDERROR, "failed to check write status:%d", rc ) ;
+               goto error ;
+            }
+
+            rc = _checkCLStatusAndGetSth( pCollectionName,
+                                    pQuery->version,
+                                    &_isMainCL, &replSize ) ;
+            if ( SDB_OK != rc )
+            {
+               goto error ;
+            }
+
+            rc = _calculateW( &replSize, &clientW, w ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "failed to calculate w:%d", rc ) ;
                goto error ;
             }
          }
          else
          {
-            w = 1 ;
-            rc = _checkRead( flags, FLG_QUERY_PRIMARY ) ;
+            rc = _checkReadStatus( flags ) ;
             if ( rc )
             {
                goto error ;
             }
-         }
-
-         //check cata
-         rc = _checkCata ( pQuery->version, pCollectionName, w, _isMainCL ) ;
-         if ( SDB_OK != rc )
-         {
-            goto error ;
+            rc = _checkCLStatusAndGetSth( pCollectionName,
+                                    pQuery->version,
+                                    &_isMainCL, NULL ) ;
+            if ( SDB_OK != rc )
+            {
+               goto error ;
+            }
          }
 
          try
@@ -1306,16 +1140,16 @@ namespace engine
 
          if ( pCommand->writable () )
          {
-            rc = _check ( w ) ;
+            rc = _checkWriteStatus() ;
             if ( SDB_OK != rc )
             {
+               PD_LOG( PDERROR, "failed to check write status:%d", rc ) ;
                goto error ;
             }
          }
          else
          {
-            w = 1 ;
-            rc = _checkRead( flags, FLG_QUERY_PRIMARY ) ;
+            rc = _checkReadStatus( flags ) ;
             if ( rc )
             {
                goto error ;
@@ -1323,18 +1157,34 @@ namespace engine
          }
 
          //check cata
-         if ( pCommand->collectionFullName() &&
-              SDB_OK != ( rc = _checkCata( pQuery->version,
-                          pCommand->collectionFullName(),
-                          w, _isMainCL ) ) )
+         if ( pCommand->collectionFullName() )
          {
-            goto error ;
+            rc = _checkCLStatusAndGetSth( pCommand->collectionFullName(),
+                                          pQuery->version,
+                                          &_isMainCL, &replSize ) ;
+            
+            if ( SDB_OK != rc )
+            {    
+               PD_LOG( PDERROR, "failed to check cl status:%d", rc ) ;
+               goto error ;
+            }
+
+            rc = _calculateW( &replSize, &clientW, w ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "failed to calculate w:%d", rc ) ;
+               goto error ;
+            }
          }
-         else if ( ( CMD_CREATE_COLLECTIONSPACE == pCommand->type() ||
-                     CMD_DROP_COLLECTIONSPACE == pCommand->type() ) &&
-                    SDB_OK != ( rc = _checkCata( 0, "", w, _isMainCL, TRUE ) ) )
+         else if ( CMD_CREATE_COLLECTIONSPACE == pCommand->type() ||
+                   CMD_DROP_COLLECTIONSPACE == pCommand->type() )
          {
-            goto error ;
+            rc = _checkReplStatus() ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "failed to check repl status:%d", rc ) ;
+               goto error ;
+            } 
          }
 
          PD_LOG ( PDDEBUG, "Command: %s", pCommand->name () ) ;
@@ -1490,8 +1340,7 @@ namespace engine
    }
    INT32 _clsShdSession::_onTransBeginMsg ()
    {
-      INT16 w = 1 ;
-      INT32 rc = _check( w ) ;
+      INT32 rc = _checkWriteStatus() ;
       if ( rc )
       {
          return rc;
@@ -2855,6 +2704,7 @@ namespace engine
       BSONElement fullName ;
       BSONElement mode ;
       INT16 w = 0 ;
+      INT16 replSize = 0 ;
       _rtnContextShdOfLob *context = NULL ;
       SDB_RTNCB *rtnCB = sdbGetRTNCB() ;
 
@@ -2883,31 +2733,40 @@ namespace engine
          goto error ;
       }
 
-      w = header->w ;
-
       if ( SDB_LOB_MODE_R != mode.Int() )
       {
-         rc = _check( w ) ;
+         rc = _checkWriteStatus() ;
          if ( SDB_OK != rc )
          {
+            PD_LOG( PDERROR, "failed to check write status:%d", rc ) ;
             goto error ;
          }
       }
       else
       {
-         w = 1 ;
-         rc = _checkRead( header->flags, FLG_LOBREAD_PRIMARY ) ;
+         rc = _checkReadStatus( header->flags ) ;
          if ( rc )
          {
+            PD_LOG( PDERROR, "failed to check read status:%d", rc ) ;
             goto error ;
          }
       }
 
-      rc = _checkCata( header->version, fullName.valuestr(),
-                       w, _isMainCL ) ;
+      rc = _checkCLStatusAndGetSth( fullName.valuestr(),
+                                    header->version,
+                                    &_isMainCL,
+                                    &replSize ) ;
+
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to check catainfo:%d", rc ) ;
+         goto error ;
+      }
+
+      rc = _calculateW( &replSize, &( header->w ), w ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to calculate w:%d", rc ) ;
          goto error ;
       }
 
@@ -2960,6 +2819,7 @@ namespace engine
       rtnContextShdOfLob *lobContext = NULL ;
       SDB_RTNCB *rtnCB = sdbGetRTNCB() ;
       INT16 w = 0 ;
+      INT16 wWhenOpen = 0 ;
 
       rc = msgExtractLobRequest( ( const CHAR * )msg,
                                  &header, obj,
@@ -2987,18 +2847,28 @@ namespace engine
 
       lobContext = ( rtnContextShdOfLob * )context ;
       _pCollectionName = lobContext->getFullName() ;
-      w = lobContext->getW() ;
-      rc = _check( w ) ;
+      wWhenOpen = lobContext->getW() ;
+
+      rc = _checkWriteStatus() ;
       if ( SDB_OK != rc )
       {
+         PD_LOG( PDERROR, "failed to check write status:%d", rc ) ;
          goto error ;
       }
 
-      rc = _checkCata( header->version, lobContext->getFullName(),
-                       w, _isMainCL, FALSE ) ;
+      rc = _checkCLStatusAndGetSth( lobContext->getFullName(),
+                                    header->version,
+                                    &_isMainCL, NULL ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to check catainfo:%d", rc ) ;
+         PD_LOG( PDERROR, "failed to check cl status:%d", rc ) ;
+         goto error ;
+      }
+
+      rc = _calculateW( &wWhenOpen, NULL, w ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to calculate w:%d", rc ) ;
          goto error ;
       }
 
@@ -3147,18 +3017,21 @@ namespace engine
 
       /// check primary by flags
       w = 1 ;
-      rc = _checkRead( header->flags, FLG_LOBREAD_PRIMARY ) ;
-      if ( rc )
+
+      rc = _checkReadStatus( header->flags ) ;
+      if ( SDB_OK != rc )
       {
+         PD_LOG( PDERROR, "failed to check read status:%d", rc ) ;
          goto error ;
       }
 
       /// check catalog version
-      rc = _checkCata( header->version, lobContext->getFullName(),
-                       w, _isMainCL, FALSE ) ;
+      rc = _checkCLStatusAndGetSth( lobContext->getFullName(),
+                                    header->version,
+                                    &_isMainCL, NULL ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to check catainfo:%d", rc ) ;
+         PD_LOG( PDERROR, "failed to check cl status:%d", rc ) ;
          goto error ;
       }
 
@@ -3194,6 +3067,7 @@ namespace engine
       UINT32 tuplesSize = 0 ;
       BSONObj obj ;
       INT16 w = 0 ;
+      INT16 wWhenOpen = 0 ;
       UINT32 tupleNum = 0 ;
 
       rc = msgExtractLobRequest( ( const CHAR * )msg, &header,
@@ -3222,18 +3096,28 @@ namespace engine
 
       lobContext = ( rtnContextShdOfLob * )context ;
       _pCollectionName = lobContext->getFullName() ;
-      w = lobContext->getW() ;
-      rc = _check( w ) ;
+      wWhenOpen = lobContext->getW() ;
+
+      rc = _checkWriteStatus() ;
       if ( SDB_OK != rc )
       {
+         PD_LOG( PDERROR, "failed to check write status:%d", rc ) ;
          goto error ;
       }
 
-      rc = _checkCata( header->version, lobContext->getFullName(),
-                       w, _isMainCL, FALSE ) ;
+      rc = _checkCLStatusAndGetSth( lobContext->getFullName(),
+                                    header->version,
+                                    &_isMainCL, NULL ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to check catainfo:%d", rc ) ;
+         PD_LOG( PDERROR, "failed to check cl status:%d", rc ) ;
+         goto error ;
+      }
+
+      rc = _calculateW( &wWhenOpen, NULL, w ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to calculate w:%d", rc ) ;
          goto error ;
       }
 
@@ -3298,6 +3182,7 @@ namespace engine
       rtnContextShdOfLob *lobContext = NULL ;
       SDB_RTNCB *rtnCB = sdbGetRTNCB() ;
       INT16 w = 0 ;
+      INT16 wWhenOpen = 0 ;
 
       rc = msgExtractLobRequest( ( const CHAR * )msg,
                                  &header, obj,
@@ -3325,21 +3210,31 @@ namespace engine
 
       lobContext = ( rtnContextShdOfLob * )context ;
       _pCollectionName = lobContext->getFullName() ;
-      w = lobContext->getW() ;
-      rc = _check( w ) ;
+      wWhenOpen = lobContext->getW() ;
+
+      rc = _checkWriteStatus() ;
       if ( SDB_OK != rc )
       {
+         PD_LOG( PDERROR, "failed to check write status:%d", rc ) ;
          goto error ;
       }
 
-      rc = _checkCata( header->version, lobContext->getFullName(),
-                       w, _isMainCL, FALSE ) ;
+      rc = _checkCLStatusAndGetSth( lobContext->getFullName(),
+                                    header->version,
+                                    &_isMainCL, NULL ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to check catainfo:%d", rc ) ;
+         PD_LOG( PDERROR, "failed to check cl status:%d", rc ) ;
          goto error ;
       }
 
+      rc = _calculateW( &wWhenOpen, NULL, w ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to calculate w:%d", rc ) ;
+         goto error ;
+      }
+   
       while ( TRUE )
       {
          BOOLEAN got = FALSE ;
@@ -3520,6 +3415,316 @@ namespace engine
          }
       }
    done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDSESS__CKPRIMARYSTATUS, "_clsShdSession::_checkPrimary" )
+   INT32 _clsShdSession::_checkPrimaryStatus()
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__CLSSHDSESS__CKPRIMARYSTATUS ) ;
+      UINT32 waitTime = 0 ;
+      while( TRUE )
+      {
+         rc = _pReplSet->primaryCheck( _pEDUCB ) ;
+         if ( SDB_OK == rc )
+         {
+            break ;
+         }
+         else if ( SDB_CLS_NOT_PRIMARY != rc )
+         {
+            goto error ;
+         }
+         else if ( MSG_INVALID_ROUTEID !=
+                  ( _primaryID.value = _pReplSet->getPrimary().value ))
+         {
+            rc = SDB_CLS_NOT_PRIMARY ;
+            goto error ;        
+         }
+         else if ( !CLS_IS_MAJORITY( _pReplSet->getAlivesByTimeout(),
+                                     _pReplSet->groupSize() ) )
+         {
+            rc = SDB_CLS_NOT_PRIMARY ;
+            goto error ;
+         }
+         else if ( waitTime < SHD_NOTPRIMARY_WAITTIME &&
+                   !_pEDUCB->isInterrupted() )
+         {
+            rc = SDB_OK ;
+            ossSleep( SHD_WAITTIME_INTERVAL ) ;
+            waitTime += SHD_WAITTIME_INTERVAL ;
+            continue ;
+         }
+         else
+         {
+            goto error ;
+         }
+      }
+   done:
+      PD_TRACE_EXITRC( SDB__CLSSHDSESS__CKPRIMARYSTATUS, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDSESS__CKRBSTATUS, "_clsShdSession::_checkRollbackStatus" )
+   INT32 _clsShdSession::_checkRollbackStatus()
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__CLSSHDSESS__CKRBSTATUS ) ;
+      UINT32 waitTime = 0 ;
+      while( TRUE )
+      {
+         if ( !pmdGetKRCB()->getTransCB()->isDoRollback() )
+         {
+            if ( waitTime > 0 && _pEDUCB->isInterrupted() )
+            {
+               rc = SDB_APP_INTERRUPT ;
+               goto error ;
+            }
+            break ;
+         }
+         else if ( waitTime < SHD_TRANSROLLBACK_WAITTIME &&
+                   !_pEDUCB->isInterrupted() )
+         {
+            ossSleep( SHD_WAITTIME_INTERVAL ) ;
+            waitTime += SHD_WAITTIME_INTERVAL ;
+            continue ;
+         }
+
+         rc = SDB_DPS_TRANS_DOING_ROLLBACK ;
+         goto error ;
+      }
+   done:
+      PD_TRACE_EXITRC( SDB__CLSSHDSESS__CKRBSTATUS, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDSESS__CKWRITESTATUS, "_clsShdSession::_checkWriteStatus" )
+   INT32 _clsShdSession::_checkWriteStatus()
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__CLSSHDSESS__CKWRITESTATUS ) ;
+      rc = _checkPrimaryStatus() ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to check primary status:%d", rc ) ;
+         goto error ;
+      }
+
+      rc = _checkRollbackStatus() ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to check rollback status:%d", rc ) ;
+         goto error ;
+      }
+
+      _pEDUCB->writingDB( TRUE ) ;
+   done:
+      PD_TRACE_EXITRC( SDB__CLSSHDSESS__CKWRITESTATUS, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDSESS__CKREADSTATUS, "_clsShdSession::_checkReadStatus" )
+   INT32 _clsShdSession::_checkReadStatus( INT32 flag )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__CLSSHDSESS__CKREADSTATUS ) ;
+      if ( flag & FLG_QUERY_PRIMARY )
+      {
+         rc = _checkPrimaryStatus() ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to check primary status:%d", rc ) ;
+            goto error ;
+         }
+      }
+   done:
+      PD_TRACE_EXITRC( SDB__CLSSHDSESS__CKREADSTATUS, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDSESS__CKREPLSTATUS, "_clsShdSession::_checkReplStatus" )
+   INT32 _clsShdSession::_checkReplStatus()
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__CLSSHDSESS__CKREPLSTATUS ) ;
+      if ( _pReplSet->isFullSync() )
+      {
+         rc = SDB_CLS_FULL_SYNC ;
+         goto error ;
+      }
+   done:
+      PD_TRACE_EXITRC( SDB__CLSSHDSESS__CKREPLSTATUS, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDSESS__CHECKCLSANDGET, "_clsShdSession::_checkCLStatusAndGetSth" )
+   INT32 _clsShdSession::_checkCLStatusAndGetSth( const CHAR *name,
+                                                  INT32 version,
+                                                  BOOLEAN *isMainCL,
+                                                  INT16 *w )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__CLSSHDSESS__CHECKCLSANDGET ) ;
+      INT32 curVer = -1 ;
+      INT16 replSize = 0 ;
+      UINT32 groupCount = 0 ;
+      _clsCatalogSet *set = NULL ;
+      BOOLEAN mainCL = FALSE ;
+      BOOLEAN agentLocked = FALSE ;
+
+      rc = _checkReplStatus() ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to check status of repl-set:%d", rc ) ;
+         goto error ;
+      }
+
+      _pCatAgent->lock_r () ;
+      agentLocked = TRUE ;
+      set = _pCatAgent->collectionSet( name ) ;
+      if ( NULL == set )
+      {
+         rc = SDB_CLS_NO_CATALOG_INFO ;
+         goto error ;
+      }
+
+      replSize = set->getW() ;
+      curVer = set->getVersion() ;
+      groupCount = set->groupCount() ;
+      mainCL = set->isMainCL();
+      _pCatAgent->release_r () ;
+      agentLocked = FALSE ;
+
+      if ( curVer < 0 )
+      {
+         rc = SDB_CLS_NO_CATALOG_INFO ;
+         goto error ;
+      }
+      else if ( curVer < version )
+      {
+         rc = SDB_CLS_DATA_NODE_CAT_VER_OLD ;
+         goto error ;
+      }
+      else if ( curVer > version
+                || ( 0 == groupCount && !isMainCL ) )
+      {
+         if ( 0 == groupCount )
+         {
+            _pCatAgent->lock_w() ;
+            _pCatAgent->clear( name ) ;
+            _pCatAgent->release_w() ;
+         }
+         PD_LOG ( PDINFO, "Collecton[%s]: self verions:%d, coord version:%d, "
+                  "groupCount:%d", name, curVer, version, groupCount ) ;
+         rc = SDB_CLS_COORD_NODE_CAT_VER_OLD ;
+         goto error ;
+      }
+      else
+      {
+         if ( NULL != isMainCL )
+         {
+            *isMainCL = mainCL ;      
+         }
+
+         if ( NULL != w )
+         {
+            *w = replSize ;
+         }
+      }
+   done:
+      if ( agentLocked )
+      {
+         _pCatAgent->release_r () ;
+      }
+      PD_TRACE_EXITRC( SDB__CLSSHDSESS__CHECKCLSANDGET, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDSESS__CALCW, "_clsShdSession::_calculateW" )
+   INT32 _clsShdSession::_calculateW( const INT16 *replSize,
+                                      const INT16 *clientW,
+                                      INT16 &final )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__CLSSHDSESS__CALCW ) ;
+      UINT32 N = 0 ; /// node count
+      UINT32 A = 0 ; /// alive count
+      INT16 w = 0 ;
+      _pReplSet->getBoth( N, A ) ;
+
+      if ( NULL != replSize )
+      {
+         w = ( NULL == clientW || 0 == *clientW ) ?
+                       *replSize : *clientW ;
+      }
+      else if ( 0 == *clientW )
+      {
+         w = 1 ;
+      }
+      else
+      {
+         w = *clientW ;
+      }
+
+      if ( 1 <= w &&
+           w <= CLS_REPLSET_MAX_NODE_SIZE )
+      {
+         w = w <= ( INT16 )N ? w: ( INT16 )N ;
+      }
+      else if ( -1 == w )
+      {
+         w = A ;
+      }
+      else if ( 0 == w )
+      {
+         w = N ;
+      }
+      else
+      {
+         stringstream ss ;
+         ss << "node size[" << N << "],"
+            << "alive size[" << A << "]," ;
+         if ( NULL != replSize )
+         {
+            ss << "repl size[" << *replSize << "]," ;
+         }
+         if ( NULL != clientW )
+         {
+            ss << "client w[" << *clientW << "]" ;
+         }
+         PD_LOG( PDERROR, "can not calculate w:%s",
+                 ss.str().c_str() ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      SDB_ASSERT( 1 <= w && w <= CLS_REPLSET_MAX_NODE_SIZE, "must be valid" ) ;
+      w = w <= 0 ? 1 : w ;
+      if ( ( INT16 )A < w )
+      {
+         PD_LOG( PDERROR, "alive num[%d] can not meet need[%d]",
+                 A, w ) ;
+         rc = SDB_CLS_NODE_NOT_ENOUGH ;
+         goto error ;
+      }
+
+      final = w ;
+   done:
+      PD_TRACE_EXITRC( SDB__CLSSHDSESS__CALCW, rc ) ;
       return rc ;
    error:
       goto done ;

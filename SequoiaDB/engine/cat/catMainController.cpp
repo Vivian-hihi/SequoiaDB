@@ -1196,7 +1196,6 @@ namespace engine
       BSONObj obj ;
       MsgAuthReply reply ;
       BOOLEAN bIsDelay = FALSE ;
-      BOOLEAN needAuth = TRUE ;
 
       /// fill reply header
       reply.header.messageLength = sizeof( MsgAuthReply ) ;
