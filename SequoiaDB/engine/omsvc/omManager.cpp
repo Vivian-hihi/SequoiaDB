@@ -350,7 +350,7 @@ namespace engine
          goto error ;
       }
 
-      if ( !need )
+      if ( !need && pAuthCB->authEnabled() )
       {
          md5::md5digest digest ;
          BSONObj obj ;
@@ -374,7 +374,7 @@ namespace engine
          PD_LOG( PDERROR, "failed to check if need to authenticate:%d", rc ) ;
          goto error ;
       }
-      if ( !need )
+      if ( !need && pAuthCB->authEnabled() )
       {
          PD_LOG( PDERROR, "can not start auth after adding user" ) ;
          rc = SDB_SYS ;
