@@ -83,8 +83,8 @@ namespace engine
    /*
       Long format define
    */
-   #define PMD_LIST_LONG_FORMAT  "%-10.9s %-13.12s %-11.10s %-6.5s %-6.5s %-6.5s %-4.3s %-20.19s %-20.19s %s"
-   #define PMD_LIST_TITLE        "Name       SvcName       Role        PID    GID    NID    PRY  GroupName            StartTime            DBPath"
+   #define PMD_LIST_LONG_FORMAT  "%-10.9s %-13.12s %-11.10s %-9.8s %-6.5s %-6.5s %-4.3s %-20.19s %-20.19s %s"
+   #define PMD_LIST_TITLE        "Name       SvcName       Role        PID       GID    NID    PRY  GroupName            StartTime            DBPath"
 
    //print node's detail configuration by sdb conf file and svcname
    void _printfDetail( const CHAR *rootPath, const CHAR *svcname, INT32 type )
