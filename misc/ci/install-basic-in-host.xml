@@ -19,7 +19,7 @@
 
 	<target name="clean-install" depends="">
 		<exec executable="${db.path}/bin/sdbstop" dir="${db.path}" resultproperty="clean.ret.code" failonerror="true">
-			<arg line=" --t all" />
+			<arg line=" -t all" />
 		</exec>
 		<echo message="clean.ret.code = ${clean.ret.code}" />
 		<if>
