@@ -21,6 +21,7 @@
 		<exec executable="${db.path}/uninstall" dir="${db.path}" resultproperty="clean.ret.code" failonerror="true">
 			<arg line=" --mode unattended" />
 		</exec>
+		<echo message="clean.ret.code = ${clean.ret.code}" />
 		<if>
 			<not>
 				<equals arg1="${clean.ret.code}" arg2="0" />
