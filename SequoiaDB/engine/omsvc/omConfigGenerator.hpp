@@ -160,6 +160,8 @@ namespace engine
 
       private:
          INT32          _compare( string left, string right ) ;
+         BOOLEAN        _isPureNumber( const char *value ) ;
+         BOOLEAN        _isNumber( const char *value ) ;
       private:
          string         _type ;
          BOOLEAN        _isClosed ;

@@ -998,6 +998,7 @@ namespace engine
       }
 
       rc = _removeConfigInfo( taskInfoValue ) ;
+      if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "store configure info failed:rc=%d", rc ) ;
          goto error ;

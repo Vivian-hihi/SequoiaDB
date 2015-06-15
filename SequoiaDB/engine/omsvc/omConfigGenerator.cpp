@@ -1690,8 +1690,52 @@ namespace engine
    {
    }
 
+   BOOLEAN rangeValidator::_isPureNumber( const char *value )
+   {
+      INT32 dotCount = 0 ;
+      while ( NULL != value && *value != '\0' )
+      {
+         if ( *value >= '0' && *value <= '9' )
+         {
+            value++ ;
+            continue ;
+         }
+         else if ( *value == '.' )
+         {
+            dotCount++ ;
+            if ( dotCount <= 1 )
+            {
+               value++ ;
+               continue ;
+            }
+         }
+
+         return FALSE ;
+      }
+
+      return TRUE ;
+   }
+
+   BOOLEAN rangeValidator::_isNumber( const char *value )
+   {
+      if ( *value == '+' || *value == '-' ) 
+      {
+         value++ ;
+      }
+
+      return _isPureNumber( value ) ;
+   }
+
    BOOLEAN rangeValidator::isValid( const string &value )
    {
+      if ( _type == OM_CONF_VALUE_INT_TYPE )
+      {
+         if ( !_isNumber( value.c_str() ) )
+         {
+            return FALSE ;
+         }
+      }
+
       if ( _isValidAll )
       {
          return TRUE ;
