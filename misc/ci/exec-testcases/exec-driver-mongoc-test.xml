@@ -90,6 +90,14 @@
          <env key="LD_LIBRARY_PATH" path="${LD_LIBRARY_PATH}:${mongoc.testcase.libpath}" />
          <env key="MONGOC_TEST_HOST" value="${mongoc.test.host}" />
       </exec>     
+      <if>
+         <not>
+            <equals arg1="${ret.code}" arg2="0" />
+         </not>
+         <then>
+            <echo file="${reports.path}/${test.case.name}.xml" message="&lt;testsuites tests=&quot;1&quot; failures=&quot;1&quot; errors=&quot;1&quot; name=&quot;&quot;&gt;&#10;&lt;testcase name=&quot;${test.case.name}&quot; status=&quot;fail&quot; time=&quot;1&quot; /&gt;&#10;&lt;/testsuites&gt;&#10;" />
+         </then>
+      </if>
       <echo message="${screen.output}" />
       <echo message="The result = ${ret.code} after exec ${test.case.name} testcase." />
    </target> 
