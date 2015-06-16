@@ -59,8 +59,7 @@ namespace engine
    #define RTN_COORD_RSP_WAIT_TIME        1000     //1s
    #define RTN_COORD_RSP_WAIT_TIME_QUICK  10       //10ms
 
-   #define RTN_COORD_CHECK_BEAT_INTERVAL  3000     //3s
-   #define RTN_COORD_BEAT_TIMEOUT         20000    //20s
+   #define RTN_COORD_CHECK_BEAT_INTERVAL  4000     //4s
 
    typedef std::map< UINT64, UINT64 >     ROUTE_COUNT_MAP ;
 
@@ -713,7 +712,7 @@ namespace engine
             timeCount += interval ;
          }
 
-         if ( timeCount >= RTN_COORD_BEAT_TIMEOUT )
+         if ( timeCount >= pmdGetOptionCB()->getOprTimeout() )
          {
             PD_LOG( PDWARNING, "Node[%s] beat timeout[%d], disconnect",
                     routeID2String( routeID ).c_str(), timeCount ) ;
@@ -735,6 +734,7 @@ namespace engine
       ossQueue<pmdEDUEvent> tmpQue ;
       ROUTE_COUNT_MAP failedNodes ;
       REQUESTID_MAP::iterator iterMap ;
+      UINT32 oprTimeout = pmdGetOptionCB()->getOprTimeout() ;
       INT64 waitTime = RTN_COORD_RSP_WAIT_TIME ;
       INT64 timeCounter = 0 ;
       BOOLEAN checkBeat = FALSE ;
@@ -758,19 +758,23 @@ namespace engine
             }
             else
             {
-               timeCounter += waitTime ;
-               if ( checkBeat )
+               if ( oprTimeout > 0 )
                {
-                  checkBeat = FALSE ;
-                  _rtnCoordCheckBeat( cb, failedNodes,
-                                      RTN_COORD_CHECK_BEAT_INTERVAL ) ;
-               }
-               else if ( timeCounter >= RTN_COORD_CHECK_BEAT_INTERVAL )
-               {
-                  timeCounter = 0 ;
-                  checkBeat = TRUE ;
-                  /// send beat msg to un-replyed node with the same request id
-                  _rtnCoordSendBeatMsg( cb, requestIdMap, failedNodes ) ;
+                  timeCounter += waitTime ;
+                  if ( checkBeat )
+                  {
+                     checkBeat = FALSE ;
+                     _rtnCoordCheckBeat( cb, failedNodes,
+                                         RTN_COORD_CHECK_BEAT_INTERVAL ) ;
+                  }
+                  else if ( timeCounter >= RTN_COORD_CHECK_BEAT_INTERVAL )
+                  {
+                     timeCounter = 0 ;
+                     checkBeat = TRUE ;
+                     /// send beat msg to un-replyed node with the same
+                     /// request id
+                     _rtnCoordSendBeatMsg( cb, requestIdMap, failedNodes ) ;
+                  }
                }
                continue ;
             }
