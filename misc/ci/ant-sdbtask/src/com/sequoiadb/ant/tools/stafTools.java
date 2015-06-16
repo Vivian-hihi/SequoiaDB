@@ -91,7 +91,7 @@ public class stafTools extends Task{
 				System.out.println("result : " + result);
 				System.out.println("failonerror : " + failonerror);
 				System.out.println("result.rc : " + result.rc);
-				System.out.println("STAFResult.Ok : " + STAFResult.Ok);
+				System.out.println("result.Ok : " + result.Ok);
 
 				if( failonerror){
 					if (result.rc != result.Ok) {
