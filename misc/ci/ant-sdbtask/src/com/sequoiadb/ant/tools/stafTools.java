@@ -87,6 +87,12 @@ public class stafTools extends Task{
 				request = "START SHELL COMMAND " + common + " WAIT "+waitTime+" WORKDIR "+workDir ; 
 				System.out.println("exec: staf " + workHost+ " PROCESS " + request);
 				result = handle.submit2( workHost , "PROCESS", request);
+
+				System.out.println("result : " + result);
+				System.out.println("failonerror : " + failonerror);
+				System.out.println("result.rc : " + result.rc);
+				System.out.println("STAFResult.Ok : " + STAFResult.Ok);
+
 				if( failonerror){
 					if (result.rc != STAFResult.Ok) {
 						throw new BuildException(STAFResultToString(result));
