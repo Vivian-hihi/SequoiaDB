@@ -20,28 +20,24 @@
 @modify list:
    2015-6-5 Zhaobo Tan  Init
 @parameter
-   BUS_JSON: the format is: 
-   SYS_JSON: the format is: 
+   BUS_JSON: the format is: { "DeployMod":"distribution", "ServerInfo":[ {"HostName":"susetzb", "User": "root", "Passwd": "sequoiadb", "SdbUser": "sdbadmin", "SdbPasswd": "sdbadmin", "SdbUserGroup": "sdbadmin_group", "SshPort": "22", "zooid": "1", "installpath":"/opt/zookeeper", "datapath":"/opt/zookeeper/data", "dataport":"2888", "electport":"3888", "clientport":"2181", "synclimit":"5", "initLimit":"10", "ticktime":"2000"}, {"HostName":"rhel64-test8", "User": "root", "Passwd": "sequoiadb", "SdbUser": "sdbadmin", "SdbPasswd": "sdbadmin", "SdbUserGroup": "sdbadmin_group", "SshPort": "22", "zooid": "2", "installpath":"/opt/zookeeper", "datapath":"/opt/zookeeper/data", "dataport":"2888", "electport":"3888", "clientport":"2181", "synclimit":"5", "initLimit":"10", "ticktime":"2000"}, {"HostName":"rhel64-test9", "User": "root", "Passwd": "sequoiadb", "SdbUser": "sdbadmin", "SdbPasswd": "sdbadmin", "SdbUserGroup": "sdbadmin_group", "SshPort": "22", "zooid": "3", "installpath":"/opt/zookeeper", "datapath":"/opt/zookeeper/data", "dataport":"2888", "electport":"3888", "clientport":"2181", "synclimit":"5", "initLimit":"10", "ticktime":"2000"}] } ;
+   SYS_JSON: the format is: { "TaskID": 1 } ;
 @return
-   RET_JSON: the format is: { "errno": 0, "detail": "" }
+   RET_JSON: the format is: { "errno": 0, "detail": "", "Result":[{"HostName":"susetzb", "zooid": "1", "errno": 0, "detail": ""},{"HostName":"rhel64-test8", "zooid": "2", "errno": 0, "detail": ""},{"HostName":"rhel64-test8", "zooid": "3", "errno": 0, "detail": ""}] } ;
 */
 
 // println
-var BUS_JSON = { "DeployMod":"standalone", "ServerInfo":[ {"HostName":"rhel64-test8", "User": "root", "Passwd": "sequoiadb", "SdbUser": "sdbadmin", "SdbPasswd": "sdbadmin", "SdbUserGroup": "sdbadmin_group", "SshPort": "22", "zooid": 1, "installPath":"/opt/zookeeper", "datapath":"/opt/zookeeper/data", "clientport":"2181", "ticktime":"2000"} ] } ;
+//var BUS_JSON = { "DeployMod":"standalone", "ServerInfo":[ {"HostName":"rhel64-test8", "User": "root", "Passwd": "sequoiadb", "SdbUser": "sdbadmin", "SdbPasswd": "sdbadmin", "SdbUserGroup": "sdbadmin_group", "SshPort": "22", "zooid": 1, "installpath":"/opt/zookeeper", "datapath":"/opt/zookeeper/data", "clientport":"2181", "ticktime":"2000"} ] } ;
 
 // println
-//var BUS_JSON = { "DeployMod":"distribution", "ServerInfo":[ {"HostName":"susetzb", "User": "root", "Passwd": "sequoiadb", "SdbUser": "sdbadmin", "SdbPasswd": "sdbadmin", "SdbUserGroup": "sdbadmin_group", "SshPort": "22", "zooid": 1, "installPath":"/opt/zookeeper", "datapath":"/opt/zookeeper/data", "dataport":"2888", "electport":"3888", "clientport":"2181", "synclimit":"5", "initLimit":"10", "ticktime":"2000"}, {"HostName":"rhel64-test8", "User": "root", "Passwd": "sequoiadb", "SdbUser": "sdbadmin", "SdbPasswd": "sdbadmin", "SdbUserGroup": "sdbadmin_group", "SshPort": "22", "zooid": 2, "installPath":"/opt/zookeeper", "datapath":"/opt/zookeeper/data", "dataport":"2888", "electport":"3888", "clientport":"2181", "synclimit":"5", "initLimit":"10", "ticktime":"2000"}, {"HostName":"rhel64-test9", "User": "root", "Passwd": "sequoiadb", "SdbUser": "sdbadmin", "SdbPasswd": "sdbadmin", "SdbUserGroup": "sdbadmin_group", "SshPort": "22", "zooid": 3, "installPath":"/opt/zookeeper", "datapath":"/opt/zookeeper/data", "dataport":"2888", "electport":"3888", "clientport":"2181", "synclimit":"5", "initLimit":"10", "ticktime":"2000"}] } ;
+//var BUS_JSON = { "DeployMod":"distribution", "ServerInfo":[ {"HostName":"susetzb", "User": "root", "Passwd": "sequoiadb", "SdbUser": "sdbadmin", "SdbPasswd": "sdbadmin", "SdbUserGroup": "sdbadmin_group", "SshPort": "22", "zooid": "1", "installpath":"/opt/zookeeper", "datapath":"/opt/zookeeper/data", "dataport":"2888", "electport":"3888", "clientport":"2181", "synclimit":"5", "initLimit":"10", "ticktime":"2000"}, {"HostName":"rhel64-test8", "User": "root", "Passwd": "sequoiadb", "SdbUser": "sdbadmin", "SdbPasswd": "sdbadmin", "SdbUserGroup": "sdbadmin_group", "SshPort": "22", "zooid": "2", "installpath":"/opt/zookeeper", "datapath":"/opt/zookeeper/data", "dataport":"2888", "electport":"3888", "clientport":"2181", "synclimit":"5", "initLimit":"10", "ticktime":"2000"}, {"HostName":"rhel64-test9", "User": "root", "Passwd": "sequoiadb", "SdbUser": "sdbadmin", "SdbPasswd": "sdbadmin", "SdbUserGroup": "sdbadmin_group", "SshPort": "22", "zooid": "3", "installpath":"/opt/zookeeper", "datapath":"/opt/zookeeper/data", "dataport":"2888", "electport":"3888", "clientport":"2181", "synclimit":"5", "initLimit":"10", "ticktime":"2000"}] } ;
 
-
-var SYS_JSON = { "TaskID": 1 } ;
-
-
-//RET_JSON = { "errno": 0, "detail": "", "Result":[{"HostName":"susetzb", "zooid": 1, "errno": 0, "detail": ""},{"HostName":"rhel64-test8", "zooid": 2, "errno": 0, "detail": ""},{"HostName":"rhel64-test8", "zooid": 3, "errno": 0, "detail": ""}] } ;
+//var SYS_JSON = { "TaskID": 1 } ;
 
 function checkZNodeResult()
 {
    this.HostName         = "" ;
-   this.zooid            = 0 ;
+   this.zooid            = "0" ;
    this.errno            = SDB_OK ;
    this.detail           = "" ;
 }
@@ -79,7 +75,7 @@ function _init()
    setTaskLogFileName( task_id ) ;
    
    PD_LOG2( task_id, arguments, PDEVENT, FILE_NAME_CHECK_ZNODES,
-            sprintf( "Begin to check zookeeper node's status in task[?]", task_id ) ) ;
+            sprintf( "Begin to check zookeeper nodes' status in task[?]", task_id ) ) ;
 }
 
 /* *****************************************************************************
@@ -91,7 +87,7 @@ function _init()
 function _final()
 {
    PD_LOG2( task_id, arguments, PDEVENT, FILE_NAME_CHECK_ZNODES,
-            sprintf( "Finish checking zookeeper node's status in task[?]", task_id ) ) ;
+            sprintf( "Finish checking zookeeper nodes' status in task[?]", task_id ) ) ;
 }
 
 /* *****************************************************************************
@@ -112,7 +108,7 @@ function _checkStatus( ssh, installPath )
    ret = ssh.getLastRet() ;
    if ( 0 != ret )
    {
-      errMsg = sprintf( "zookeeper node is no ready in host[?]", ssh.getPeerIP() ) ;
+      errMsg = sprintf( "zookeeper node is not ready in host[?]", ssh.getPeerIP() ) ;
       rc = SDB_SYS ;
       PD_LOG2( task_id, arguments, PDERROR, FILE_NAME_CHECK_ZNODES,
                sprintf( errMsg + ", rc: ?, detail: ?", ret, ssh.getLastOut() ) ) ;
@@ -185,7 +181,7 @@ function main()
             sdbUser          = elem[SdbUser] ;
             sdbPasswd        = elem[SdbPasswd] ;
             sshPort          = parseInt(elem[SshPort]) ;
-            installPath      = elem[InstallPath2] ;
+            installPath      = elem[InstallPath3] ;
          }
          catch( e )
          {
@@ -203,7 +199,7 @@ function main()
          // ssh to target host
          try
          {
-            ssh = new Ssh( hostName, sdbUser, sdbPasswd, sshPort ) ;
+            ssh = new Ssh( hostName, user, passwd, sshPort ) ;
          }
          catch( e )
          {
@@ -251,7 +247,7 @@ function main()
          }
          if ( SDB_OK == RET_JSON[Errno] )
          {
-            RET_JSON[Errnor] = SDB_SYS ;
+            RET_JSON[Errno] = SDB_SYS ;
          }
          RET_JSON[Detail] = sprintf( "The ? zookeeper is not ready", isCluster ? "replicated":"stand-alone" ) ;
       }
@@ -268,7 +264,7 @@ function main()
    }
    
    _final() ;
-println( "RET_JSON is: " + JSON.stringify(RET_JSON) ) ;
+//println( "RET_JSON is: " + JSON.stringify(RET_JSON) ) ;
    return RET_JSON ;
 }
 

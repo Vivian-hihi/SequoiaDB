@@ -20,37 +20,23 @@
 @modify list:
    2015-6-5 Zhaobo Tan  Init
 @parameter
-   BUS_JSON: the format is: 
-   SYS_JSON: the format is: 
+   BUS_JSON: the format is: { "DeployMod":"distribution", "ServerInfo":[ {"HostName":"susetzb", "User": "root", "Passwd": "sequoiadb", "SdbUser": "sdbadmin", "SdbPasswd": "sdbadmin", "SdbUserGroup": "sdbadmin_group", "SshPort": "22", "zooid": "1", "installpath":"/opt/zookeeper", "datapath":"/opt/zookeeper/data", "dataport":"2888", "electport":"3888", "clientport":"2181", "synclimit":"5", "initLimit":"10", "ticktime":"2000"}, {"HostName":"rhel64-test8", "User": "root", "Passwd": "sequoiadb", "SdbUser": "sdbadmin", "SdbPasswd": "sdbadmin", "SdbUserGroup": "sdbadmin_group", "SshPort": "22", "zooid": "2", "installpath":"/opt/zookeeper", "datapath":"/opt/zookeeper/data", "dataport":"2888", "electport":"3888", "clientport":"2181", "synclimit":"5", "initLimit":"10", "ticktime":"2000"}, {"HostName":"rhel64-test9", "User": "root", "Passwd": "sequoiadb", "SdbUser": "sdbadmin", "SdbPasswd": "sdbadmin", "SdbUserGroup": "sdbadmin_group", "SshPort": "22", "zooid": "3", "installpath":"/opt/zookeeper", "datapath":"/opt/zookeeper/data", "dataport":"2888", "electport":"3888", "clientport":"2181", "synclimit":"5", "initLimit":"10", "ticktime":"2000"} ] } ;
+   SYS_JSON: the format is: { "TaskID": 1 } ;
 @return
-   RET_JSON: the format is: { "errno": 0, "detail": "" }
+   RET_JSON: the format is: {"HostName":"susetzb", "zooid": "1", "errno": 0, "detail": ""} ;
 */
 
 // println
-//var BUS_JSON = { "DeployMod":"distribution", "ServerInfo":[ {"HostName":"susetzb", "User": "root", "Passwd": "sequoiadb", "SdbUser": "sdbadmin", "SdbPasswd": "sdbadmin", "SdbUserGroup": "sdbadmin_group", "SshPort": "22", "zooid": 1, "installPath":"/opt/zookeeper", "datapath":"/opt/zookeeper/data", "dataport":"2888", "electport":"3888", "clientport":"2181", "synclimit":"5", "initLimit":"10", "ticktime":"2000"}, {"HostName":"rhel64-test8", "User": "root", "Passwd": "sequoiadb", "SdbUser": "sdbadmin", "SdbPasswd": "sdbadmin", "SdbUserGroup": "sdbadmin_group", "SshPort": "22", "zooid": 2, "installPath":"/opt/zookeeper", "datapath":"/opt/zookeeper/data", "dataport":"2888", "electport":"3888", "clientport":"2181", "synclimit":"5", "initLimit":"10", "ticktime":"2000"}, {"HostName":"rhel64-test9", "User": "root", "Passwd": "sequoiadb", "SdbUser": "sdbadmin", "SdbPasswd": "sdbadmin", "SdbUserGroup": "sdbadmin_group", "SshPort": "22", "zooid": 3, "installPath":"/opt/zookeeper", "datapath":"/opt/zookeeper/data", "dataport":"2888", "electport":"3888", "clientport":"2181", "synclimit":"5", "initLimit":"10", "ticktime":"2000"} ] } ;
+//var BUS_JSON = { "DeployMod":"distribution", "ServerInfo":[ {"HostName":"susetzb", "User": "root", "Passwd": "sequoiadb", "SdbUser": "sdbadmin", "SdbPasswd": "sdbadmin", "SdbUserGroup": "sdbadmin_group", "SshPort": "22", "zooid": "1", "installpath":"/opt/zookeeper", "datapath":"/opt/zookeeper/data", "dataport":"2888", "electport":"3888", "clientport":"2181", "synclimit":"5", "initLimit":"10", "ticktime":"2000"}, {"HostName":"rhel64-test8", "User": "root", "Passwd": "sequoiadb", "SdbUser": "sdbadmin", "SdbPasswd": "sdbadmin", "SdbUserGroup": "sdbadmin_group", "SshPort": "22", "zooid": "2", "installpath":"/opt/zookeeper", "datapath":"/opt/zookeeper/data", "dataport":"2888", "electport":"3888", "clientport":"2181", "synclimit":"5", "initLimit":"10", "ticktime":"2000"}, {"HostName":"rhel64-test9", "User": "root", "Passwd": "sequoiadb", "SdbUser": "sdbadmin", "SdbPasswd": "sdbadmin", "SdbUserGroup": "sdbadmin_group", "SshPort": "22", "zooid": "3", "installpath":"/opt/zookeeper", "datapath":"/opt/zookeeper/data", "dataport":"2888", "electport":"3888", "clientport":"2181", "synclimit":"5", "initLimit":"10", "ticktime":"2000"} ] } ;
 
-// println
-var BUS_JSON = { "DeployMod":"standalone", "HostName":"rhel64-test8", "User": "root", "Passwd": "sequoiadb", "SdbUser": "sdbadmin", "SdbPasswd": "sdbadmin", "SdbUserGroup": "sdbadmin_group", "SshPort": "22", "zooid": 1, "installPath":"/opt/zookeeper", "datapath":"/opt/zookeeper/data", "clientport":"2181", "ticktime":"2000" } ;
-
-// println
-//var BUS_JSON = { "DeployMod":"distribution", "HostName":"susetzb", "User": "root", "Passwd": "sequoiadb", "SdbUser": "sdbadmin", "SdbPasswd": "sdbadmin", "SdbUserGroup": "sdbadmin_group", "SshPort": "22", "zooid": 1, "installPath":"/opt/zookeeper", "datapath":"/opt/zookeeper/data", "dataport":"2888", "electport":"3888", "clientport":"2181", "synclimit":"5", "initLimit":"10", "ticktime":"2000" } ;
-
-//var BUS_JSON = { "DeployMod":"distribution", "HostName":"rhel64-test8", "User": "root", "Passwd": "sequoiadb", "SdbUser": "sdbadmin", "SdbPasswd": "sdbadmin", "SdbUserGroup": "sdbadmin_group", "SshPort": "22", "zooid": 2, "installPath":"/opt/zookeeper", "datapath":"/opt/zookeeper/data", "dataport":"2888", "electport":"3888", "clientport":"2181", "synclimit":"5", "initLimit":"10", "ticktime":"2000" } ;
-
-//var BUS_JSON = { "DeployMod":"distribution", "HostName":"rhel64-test9", "User": "root", "Passwd": "sequoiadb", "SdbUser": "sdbadmin", "SdbPasswd": "sdbadmin", "SdbUserGroup": "sdbadmin_group", "SshPort": "22", "zooid": 3, "installPath":"/opt/zookeeper", "datapath":"/opt/zookeeper/data", "dataport":"2888", "electport":"3888", "clientport":"2181", "synclimit":"5", "initLimit":"10", "ticktime":"2000" } ;
-
-
-var SYS_JSON = { "TaskID": 1 } ;
-
-
-//RET_JSON = {"HostName":"susetzb", "zooid": 1, "errno": 0, "detail": ""} ;
+//var SYS_JSON = { "TaskID": 1 } ;
 
 function removeZNodeResult()
 {
    this.errno            = SDB_OK ;
    this.detail           = "" ;
    this.HostName         = "" ;
-   this.zooid            = 0 ;
+   this.zooid            = "0" ;
 }
 
 var FILE_NAME_REMOVE_ZNODE = "removeZNode.js" ;
@@ -70,7 +56,6 @@ else
 {
    // TODO: windows
 }
-
 
 /* *****************************************************************************
 @discretion: init
@@ -222,12 +207,12 @@ function main()
          
          hostName         = BUS_JSON[HostName] ;
          zooID            = BUS_JSON[ZooID3] ;
-//         user             = BUS_JSON[User] ;
-//         passwd           = BUS_JSON[Passwd] ;
+         user             = BUS_JSON[User] ;
+         passwd           = BUS_JSON[Passwd] ;
          sdbUser          = BUS_JSON[SdbUser] ;
          sdbPasswd        = BUS_JSON[SdbPasswd] ;
          sshPort          = parseInt(BUS_JSON[SshPort]) ;
-         installPath      = BUS_JSON[InstallPath2] ;
+         installPath      = BUS_JSON[InstallPath3] ;
          dataPath         = BUS_JSON[DataPath3] ;
       }
       catch( e )
@@ -244,7 +229,7 @@ function main()
       // 2. ssh to target host
       try
       {
-         ssh = new Ssh( hostName, sdbUser, sdbPasswd, sshPort ) ;
+         ssh = new Ssh( hostName, user, passwd, sshPort ) ; // sdbadmin can stop znode which runs in root 
       }
       catch( e )
       {
@@ -263,8 +248,8 @@ function main()
       }
       catch( e )
       {
-         result[Errno] = GETLASTERROR() ;
-         result[Detail] = GETLASTERRMSG() ;
+         rc = GETLASTERROR() ;
+         errMsg = GETLASTERRMSG() ;
          hasFailed = true ;
       }
       // remove znode
@@ -276,12 +261,16 @@ function main()
       {
          if ( false == hasFailed )
          {
-            result[Errno] = GETLASTERROR() ;
-            result[Detail] = GETLASTERRMSG() ;
+            rc = GETLASTERROR() ;
+            errMsg = GETLASTERRMSG() ;
             hasFailed = true ;
          }
       }
       try{ ssh.close() ; }catch(e){}
+      if ( true == hasFailed )
+      {
+         exception_handle( rc, errMsg ) ;
+      }
    }
    catch( e )
    {
@@ -295,7 +284,7 @@ function main()
    }
    
    _final() ;
-println( "RET_JSON is: " + JSON.stringify(RET_JSON) ) ;
+//println( "RET_JSON is: " + JSON.stringify(RET_JSON) ) ;
    return RET_JSON ;
 }
 

@@ -159,6 +159,7 @@ var ClusterName2                           = "clustername" ;
 var BusinessName2                          = "businessname" ;
 var UserTag2                               = "usertag" ;
 
+var InstallPath3                           = "installpath" ;
 var DataPath3                              = "datapath" ;
 var DataDir3                               = "datadir" ;
 var DataPort3                              = "dataport" ;
