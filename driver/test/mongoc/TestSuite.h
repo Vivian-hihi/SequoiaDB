@@ -108,12 +108,13 @@ struct _TestSuite
 typedef struct _XmlNode XmlNode;
 struct _XmlNode
 {
+   const char* name;
    const char *content;
    XmlNode *next;
 };
 
 void output_report(TestSuite *suite);
-void Add_XmlNode(TestSuite *suite, const char* content);
+void Add_XmlNode(TestSuite *suite, const char*name, const char* content);
 void Destrory_XmlNodes(TestSuite *suite);
 void TestSuite_Init    (TestSuite *suite,
                         const char *name,

@@ -407,7 +407,7 @@ TestSuite_RunTest (TestSuite *suite,       /* IN */
                                    (status == 0) ? "succ" : "FAIL",
                                    (unsigned)ts3.tv_sec,
                                    (unsigned)ts3.tv_nsec);
-          Add_XmlNode(suite, content);
+          Add_XmlNode(suite, name, content);
       }
 
       snprintf (buf, sizeof buf,
@@ -588,14 +588,49 @@ TestSuite_PrintXmlFooter (TestSuite *suite,
                           FILE *stream) /* IN */
 {
    XmlNode *iter;
+   Test *test;
+   char name[64];
+ 
    fprintf (stream, "<testsuites tests=\"%d\" failures=\"%d\" errors=\"%d\" name=\"%s\">\n",
                       suite->testcasesnum,
                       suite->failurenum,
                       suite->testcasesnum - suite->successfulnum,
                       suite->name);
+   
+   bool flag = false;
    for(iter = suite->reportnodes; NULL != iter; iter=iter->next){
       fprintf (stream, "%s\n", iter->content);
+      flag = true;
    }
+
+   if (suite->testname != NULL)
+   {
+      if (!flag)
+      {
+         fprintf(stream, "<testcase name=\"%s\" status=\"%s\" />\n",
+                    suite->testname, "UNKNOWN");
+      }
+   }
+   else
+   {
+      for (test = suite->tests; test; test = test->next) {
+         snprintf (name, sizeof name, "%s%s", suite->name, test->name);
+         name [sizeof name - 1] = '\0';
+         for(iter = suite->reportnodes; NULL != iter; iter=iter->next){
+            if (!strcmp(iter->name, name)){
+               break;
+            }
+         }
+      
+         if (iter != NULL)
+         {
+            continue;
+         }
+         fprintf(stream, "<testcase name=\"%s%s\" status=\"%s\" />\n",
+                 suite->name, test->name, "UNKNOWN");
+      }
+   }
+   
    fprintf (stream, "</testsuites>");
    fflush (stream);
 }
@@ -808,12 +843,13 @@ TestSuite_Destroy (TestSuite *suite)
    free (suite->testname);
 }
 
-void Add_XmlNode(TestSuite *suite, const char* content)
+void Add_XmlNode(TestSuite *suite, const char* name, const char* content)
 {
    XmlNode *iter;
    XmlNode *node = malloc(sizeof(XmlNode) * 1);
    node->content = content;
    node->next = NULL;
+   node->name = strdup(name);
 
    if (!suite->reportnodes){
       suite->reportnodes = node;
@@ -829,6 +865,7 @@ void Destrory_XmlNodes(TestSuite *suite)
     XmlNode *iter;
     for (iter = suite->reportnodes; NULL != iter; iter=iter->next){
         free((void*)(iter->content));
+        free((void*)iter->name);
         free(iter);
     }
 }

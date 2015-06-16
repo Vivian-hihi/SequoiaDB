@@ -3,6 +3,7 @@
 #include "TestSuite.h"
 #include "test-libmongoc.h"
 
+extern TestSuite suite;
 static char *gTestUri;
 static void
 print_doc (const bson_t *b)
@@ -25,7 +26,8 @@ ping (mongoc_database_t *db,
 
    cursor = mongoc_database_command(db, MONGOC_QUERY_NONE, 0, 1, 0, cmd, NULL, NULL);
    while (mongoc_cursor_next(cursor, &b)) {
-      BSON_ASSERT(b);
+      //BSON_ASSERT(b);
+      ASSERT_CMPPTR(b, !=, NULL);
       print_doc(b);
    }
    if (mongoc_cursor_error(cursor, &error)) {
@@ -45,7 +47,8 @@ fetch (mongoc_collection_t *col,
 
    cursor = mongoc_collection_find(col, MONGOC_QUERY_NONE, 0, 0, 0, spec, NULL, NULL);
    while (mongoc_cursor_next(cursor, &b)) {
-      BSON_ASSERT(b);
+      //BSON_ASSERT(b);
+      ASSERT_CMPPTR(b, !=, NULL);
       print_doc(b);
    }
    if (mongoc_cursor_error(cursor, &error)) {
@@ -68,7 +71,8 @@ test_load (void)
    bson_t q;
 
    client = mongoc_client_new (gTestUri);
-   assert (client);
+   ASSERT_CMPPTR(client, !=, NULL);
+   //assert (client);
 
    bson_init(&b);
    bson_append_int32(&b, "ping", 4, 1);
