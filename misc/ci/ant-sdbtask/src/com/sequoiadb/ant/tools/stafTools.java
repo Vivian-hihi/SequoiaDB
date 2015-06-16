@@ -89,7 +89,7 @@ public class stafTools extends Task{
 				System.out.println("exec: staf " + workHost+ " PROCESS " + request);
 				result = handle.submit2( workHost , "PROCESS", request);
 
-				System.out.println("failonerror : " + failonerror);
+				System.out.println("resultContext : " + result.result);
 				System.out.println("result.rc : " + result.rc);
 				System.out.println("result.Ok : " + result.Ok);
 
