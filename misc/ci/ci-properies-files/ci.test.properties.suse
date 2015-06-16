@@ -4,6 +4,9 @@ install.path=/opt
 install.user=sdbadmin
 install.password=sdbadmin
 
+remote.user=root
+remote.password=jenkins
+
 test.machine.deploy.path=/tmp/sequoiadb_test
 test.machine.software.path=/tmp/sequoiadb
 
