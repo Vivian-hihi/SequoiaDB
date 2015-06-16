@@ -90,6 +90,7 @@ public class stafTools extends Task{
 				result = handle.submit2( workHost , "PROCESS", request);
 				
 				System.out.println("########################################################################################");
+				System.out.println("host : " + workHost);
 				System.out.println("result.hashCode : " + result.hashCode());
 				System.out.println("result.rc : " + result.rc);
 				System.out.println("result.Ok : " + result.Ok);
