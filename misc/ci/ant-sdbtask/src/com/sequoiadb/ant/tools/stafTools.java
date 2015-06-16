@@ -94,7 +94,7 @@ public class stafTools extends Task{
 				System.out.println("STAFResult.Ok : " + STAFResult.Ok);
 
 				if( failonerror){
-					if (result.rc != STAFResult.Ok) {
+					if (result.rc != result.Ok) {
 						throw new BuildException(STAFResultToString(result));
 					}else{
 						System.out.println("The operation has been successful...");
