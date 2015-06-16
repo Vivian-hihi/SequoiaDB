@@ -18,13 +18,10 @@
 	</taskdef>
 
 	<target name="clean-install" depends="">
-		<exec executable="${db.path}/bin/sdbstop" dir="${db.path}" resultproperty="clean.ret.code" error="error" outputproperty="outputproperty" errorproperty="errorproperty" failonerror="true">
+		<exec executable="${db.path}/bin/sdbstop" dir="${db.path}" resultproperty="clean.ret.code" failonerror="true">
 			<arg line=" -t all" />
 		</exec>
 		<echo message="clean.ret.code = ${clean.ret.code}" />
-		<echo message="error = ${error}" />
-		<echo message="outputproperty = ${outputproperty}" />
-		<echo message="errorproperty = ${errorproperty}" />
 		<if>
 			<not>
 				<equals arg1="${clean.ret.code}" arg2="0" />
