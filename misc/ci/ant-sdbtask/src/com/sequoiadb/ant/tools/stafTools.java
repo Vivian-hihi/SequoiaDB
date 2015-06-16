@@ -81,6 +81,7 @@ public class stafTools extends Task{
 				
 				
 			}
+			
 			if( workType.equals("shell"))
 			{
 				System.out.println("shell work");
@@ -88,12 +89,13 @@ public class stafTools extends Task{
 				System.out.println("exec: staf " + workHost+ " PROCESS " + request);
 				result = handle.submit2( workHost , "PROCESS", request);
 
-				System.out.println("result : " + result);
+				System.out.println("result : " + STAFResultToString(result));
 				System.out.println("failonerror : " + failonerror);
 				System.out.println("result.rc : " + result.rc);
 				System.out.println("result.Ok : " + result.Ok);
 
 				if( failonerror){
+					result.rc = 1;
 					if (result.rc != result.Ok) {
 						throw new BuildException(STAFResultToString(result));
 					}else{
