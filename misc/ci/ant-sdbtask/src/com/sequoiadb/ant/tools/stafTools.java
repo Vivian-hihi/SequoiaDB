@@ -88,9 +88,12 @@ public class stafTools extends Task{
 				request = "START SHELL COMMAND " + common + " WAIT "+waitTime+" WORKDIR "+workDir ; 
 				System.out.println("exec: staf " + workHost+ " PROCESS " + request);
 				result = handle.submit2( workHost , "PROCESS", request);
-
+				
+				System.out.println("########################################################################################");
+				System.out.println("result.hashCode : " + result.hashCode());
 				System.out.println("result.rc : " + result.rc);
 				System.out.println("result.Ok : " + result.Ok);
+				System.out.println("########################################################################################");
 
 				if( failonerror){
 					if (result.rc != result.Ok) {
