@@ -89,12 +89,10 @@ public class stafTools extends Task{
 				System.out.println("exec: staf " + workHost+ " PROCESS " + request);
 				result = handle.submit2( workHost , "PROCESS", request);
 
-				System.out.println("resultContext : " + result.result);
 				System.out.println("result.rc : " + result.rc);
 				System.out.println("result.Ok : " + result.Ok);
 
 				if( failonerror){
-					result.rc = 1;
 					if (result.rc != result.Ok) {
 						throw new BuildException(STAFResultToString(result));
 					}else{
