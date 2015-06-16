@@ -660,7 +660,8 @@ namespace engine
       goto done ;
    }
 
-   static INT32 _rtnCoordSendBeatMsg( pmdEDUCB *cb, REQUESTID_MAP &nodes )
+   static INT32 _rtnCoordSendBeatMsg( pmdEDUCB *cb, REQUESTID_MAP &nodes,
+                                      ROUTE_COUNT_MAP &faileds )
    {
       INT32 rc = SDB_OK ;
       CoordCB *pCoordCB = pmdGetKRCB()->getCoordCB() ;
@@ -676,6 +677,11 @@ namespace engine
       it = nodes.begin() ;
       while( it != nodes.end() )
       {
+         if ( faileds.end() == faileds.find( it->second.value ) )
+         {
+            faileds[ it->second.value ] = 0 ;
+         }
+
          beatMsg.requestID = it->first ;
          rc = pAgent->syncSend( it->second, (void*)&beatMsg ) ;
          if ( rc )
@@ -764,7 +770,7 @@ namespace engine
                   timeCounter = 0 ;
                   checkBeat = TRUE ;
                   /// send beat msg to un-replyed node with the same request id
-                  _rtnCoordSendBeatMsg( cb, requestIdMap ) ;
+                  _rtnCoordSendBeatMsg( cb, requestIdMap, failedNodes ) ;
                }
                continue ;
             }
