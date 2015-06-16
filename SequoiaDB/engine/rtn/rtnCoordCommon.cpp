@@ -969,10 +969,10 @@ namespace engine
       goto done;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_GETSERVNAME, "getServiceName" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_GETSERVNAME, "getServiceName" )
    INT32 getServiceName ( BSONElement &beService,
-                                 INT32 serviceType,
-                                 std::string &strServiceName )
+                          INT32 serviceType,
+                          std::string &strServiceName )
    {
       INT32 rc = SDB_OK;
       PD_TRACE_ENTRY ( SDB_GETSERVNAME ) ;
