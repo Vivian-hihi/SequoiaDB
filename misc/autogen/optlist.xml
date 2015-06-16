@@ -900,5 +900,17 @@
       </detail>
       <typeofweb>num</typeofweb>
   </opt>
+
+   <opt>
+      <name>PMD_OPTION_OPERATOR_TIMEOUT</name>
+      <long>operatortimeout</long>
+      <description>
+         <en>The timeout period for heartbeat in each operator ( in ms ), default:30000, 0 for no-timeout </en>
+         <cn>判定操作中断的时间(ms),默认值:30000, 0表示不超时</cn>
+      </description>
+      <type>int</type>
+      <hidden>true</hidden>
+   </opt>
+
 </optlist>
 
