@@ -54,6 +54,17 @@ using namespace bson;
 namespace engine
 {
    /*
+      Local define
+   */
+   #define RTN_COORD_RSP_WAIT_TIME        1000     //1s
+   #define RTN_COORD_RSP_WAIT_TIME_QUICK  10       //10ms
+
+   #define RTN_COORD_CHECK_BEAT_INTERVAL  3000     //3s
+   #define RTN_COORD_BEAT_TIMEOUT         20000    //20s
+
+   typedef std::map< UINT64, UINT64 >     ROUTE_COUNT_MAP ;
+
+   /*
       Local function define
    */
 
@@ -649,19 +660,82 @@ namespace engine
       goto done ;
    }
 
+   static INT32 _rtnCoordSendBeatMsg( pmdEDUCB *cb, REQUESTID_MAP &nodes )
+   {
+      INT32 rc = SDB_OK ;
+      CoordCB *pCoordCB = pmdGetKRCB()->getCoordCB() ;
+      netRouteAgent *pAgent = pCoordCB->netWork() ;
+      REQUESTID_MAP::iterator it ;
+      MsgHeader beatMsg ;
+
+      beatMsg.messageLength = sizeof( MsgHeader ) ;
+      beatMsg.opCode = MSG_CLS_BEAT ;
+      beatMsg.routeID.value = 0 ;
+      beatMsg.TID = cb->getTID() ;
+
+      it = nodes.begin() ;
+      while( it != nodes.end() )
+      {
+         beatMsg.requestID = it->first ;
+         rc = pAgent->syncSend( it->second, (void*)&beatMsg ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Send beat msg to node[%s] failed, rc: %d",
+                    routeID2String( it->second ).c_str(), rc ) ;
+         }
+         ++it ;
+      }
+      return SDB_OK ;
+   }
+
+   static INT32 _rtnCoordCheckBeat( pmdEDUCB *cb, ROUTE_COUNT_MAP &faileds,
+                                    UINT32 interval )
+   {
+      MsgRouteID routeID ;
+      CoordSession *pCoordSession = cb->getCoordSession() ;
+      ROUTE_COUNT_MAP::iterator it = faileds.begin() ;
+      while( it != faileds.end() )
+      {
+         routeID.value = it->first ;
+         UINT64 &timeCount = it->second ;
+         if ( timeCount == ~0 )
+         {
+            pCoordSession->disConnect( routeID ) ;
+         }
+         else
+         {
+            timeCount += interval ;
+         }
+
+         if ( timeCount >= RTN_COORD_BEAT_TIMEOUT )
+         {
+            PD_LOG( PDWARNING, "Node[%s] beat timeout[%d], disconnect",
+                    routeID2String( routeID ).c_str(), timeCount ) ;
+            pCoordSession->disConnect( routeID ) ;            
+         }
+         ++it ;
+      }
+      return SDB_OK ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOGETREPLY, "rtnCoordGetReply" )
    INT32 rtnCoordGetReply ( pmdEDUCB *cb,  REQUESTID_MAP &requestIdMap,
                             REPLY_QUE &replyQue, const SINT32 opCode,
                             BOOLEAN isWaitAll, BOOLEAN clearReplyIfFailed )
    {
-      INT32 rc = SDB_OK;
-      ossQueue<pmdEDUEvent> tmpQue;
+      INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNCOGETREPLY ) ;
-      REQUESTID_MAP::iterator iterMap;
-      INT64 waitTime = RTN_COORD_RSP_WAIT_TIME;
+
+      ossQueue<pmdEDUEvent> tmpQue ;
+      ROUTE_COUNT_MAP failedNodes ;
+      REQUESTID_MAP::iterator iterMap ;
+      INT64 waitTime = RTN_COORD_RSP_WAIT_TIME ;
+      INT64 timeCounter = 0 ;
+      BOOLEAN checkBeat = FALSE ;
+
       while ( requestIdMap.size() > 0 )
       {
-         pmdEDUEvent pmdEvent;
+         pmdEDUEvent pmdEvent ;
          BOOLEAN isGotMsg = cb->waitEvent( pmdEvent, waitTime ) ;
          // if we hit interrupt, let's just get out of here. Don't need to worry
          // about cb queue, pmdEDUCB::clear() is going to clean it up.
@@ -674,92 +748,96 @@ namespace engine
          {
             if ( !isWaitAll && !replyQue.empty() )
             {
-               break;
+               break ;
             }
             else
             {
-               continue;
+               timeCounter += waitTime ;
+               if ( checkBeat )
+               {
+                  checkBeat = FALSE ;
+                  _rtnCoordCheckBeat( cb, failedNodes,
+                                      RTN_COORD_CHECK_BEAT_INTERVAL ) ;
+               }
+               else if ( timeCounter >= RTN_COORD_CHECK_BEAT_INTERVAL )
+               {
+                  timeCounter = 0 ;
+                  checkBeat = TRUE ;
+                  /// send beat msg to un-replyed node with the same request id
+                  _rtnCoordSendBeatMsg( cb, requestIdMap ) ;
+               }
+               continue ;
             }
          }
 
          if ( pmdEvent._eventType != PMD_EDU_EVENT_MSG )
          {
-            PD_LOG ( PDWARNING, "received unknown event(eventType:%d)",
+            PD_LOG ( PDWARNING, "Received unknown event(eventType:%d)",
                      pmdEvent._eventType ) ;
             pmdEduEventRelase( pmdEvent, cb ) ;
             pmdEvent.reset () ;
             continue;
          }
-         MsgHeader *pMsg = (MsgHeader *)(pmdEvent._Data);
-         if ( NULL == pMsg )
+         MsgHeader *pReply = (MsgHeader *)(pmdEvent._Data) ;
+         if ( NULL == pReply )
          {
-            PD_LOG ( PDWARNING, "received invalid event(data is null)" );
-            continue;
+            PD_LOG ( PDWARNING, "Received invalid event(data is null)" );
+            continue ;
          }
 
-         if ( MSG_COOR_REMOTE_DISC == pMsg->opCode )
+         if ( MSG_COOR_REMOTE_DISC == pReply->opCode )
          {
             // check if transaction-node
             MsgRouteID routeID;
-            routeID.value = pMsg->routeID.value;
-            if ( cb->isTransNode( routeID ))
+            routeID.value = pReply->routeID.value;
+            if ( cb->isTransNode( routeID ) )
             {
-               cb->setTransRC( SDB_COORD_REMOTE_DISC );
-               PD_LOG ( PDERROR,
-                        "transaction operation interrupt, "
-                        "remote-node disconnected:"
-                        "groupID=%u, nodeID=%u, serviceID=%u",
-                        routeID.columns.groupID,
-                        routeID.columns.nodeID,
-                        routeID.columns.serviceID );
+               cb->setTransRC( SDB_COORD_REMOTE_DISC ) ;
+               PD_LOG ( PDERROR, "Transaction operation interrupt, "
+                        "remote-node[%s] disconnected",
+                        routeID2String( routeID ).c_str() ) ;
             }
 
-            iterMap = requestIdMap.begin();
+            iterMap = requestIdMap.begin() ;
             while ( iterMap != requestIdMap.end() )
             {
                if ( iterMap->second.value == routeID.value )
                {
-                  break;
+                  break ;
                }
-               ++iterMap;
+               ++iterMap ;
             }
             if ( iterMap != requestIdMap.end() &&
-                 iterMap->first <= pMsg->requestID )
+                 iterMap->first <= pReply->requestID )
             {
-               // remote node disconnected,
-               // go on receive all reply then clear all
+               // remote node disconnected, go on receive all reply then
+               // clear all. Don't return the rc, the error will be detected
+               // while process the reply
+               PD_LOG ( PDERROR, "Get reply failed, remote-node[%s] "
+                        "disconnected",
+                        routeID2String( iterMap->second ).c_str() ) ;
 
-               // don't return the rc,
-               // the error will be detected while process the reply
-               // rc = rc ? rc : SDB_COORD_REMOTE_DISC;
-               PD_LOG ( PDERROR,
-                        "get reply failed, remote-node disconnected:"
-                        "groupID=%u, nodeID=%u, serviceID=%u",
-                        iterMap->second.columns.groupID,
-                        iterMap->second.columns.nodeID,
-                        iterMap->second.columns.serviceID ) ;
-               MsgOpReply *pDiscSrc = ( MsgOpReply *)(pmdEvent._Data);
-               MsgOpReply *pDiscMsg = NULL;
-               pDiscMsg = (MsgOpReply *)SDB_OSS_MALLOC(
-                  pDiscSrc->header.messageLength ) ;
+               MsgHeader *pDiscMsg = NULL ;
+               pDiscMsg = (MsgHeader *)SDB_OSS_MALLOC( pReply->messageLength ) ;
                if ( NULL == pDiscMsg )
                {
-                  rc = rc ? rc : SDB_OOM ;
-                  PD_LOG( PDERROR, "malloc failed(size=%d)",
-                          sizeof(MsgOpReply) ) ;
+                  rc = SDB_OOM ;
+                  PD_LOG( PDERROR, "Malloc failed(size=%d)",
+                          pReply->messageLength ) ;
                   goto error ;
                }
                else
                {
-                  ossMemcpy( (CHAR *)pDiscMsg, (CHAR *)pDiscSrc,
-                              pDiscSrc->header.messageLength );
+                  ossMemcpy( (CHAR *)pDiscMsg, (CHAR *)pReply,
+                              pReply->messageLength );
                   replyQue.push( (CHAR *)pDiscMsg ) ;
                }
                cb->getCoordSession()->delRequest( iterMap->first ) ;
                requestIdMap.erase( iterMap ) ;
+               failedNodes.erase( iterMap->second.value ) ;
             }
             if ( cb->getCoordSession()->isValidResponse( routeID,
-                                                         pMsg->requestID ) )
+                                                         pReply->requestID ) )
             {
                tmpQue.push( pmdEvent );
             }
@@ -769,12 +847,10 @@ namespace engine
                pmdEvent.reset () ;
             }
             continue ;
-         }
-         MsgHeader *pReply = ( MsgHeader *)(pmdEvent._Data) ;
+         } // if ( MSG_COOR_REMOTE_DISC == pReply->opCode )
 
-         if ( opCode != pReply->opCode ||
-              ( iterMap = requestIdMap.find( pReply->requestID ) )
-               == requestIdMap.end() )
+         iterMap = requestIdMap.find( pReply->requestID ) ;
+         if ( iterMap == requestIdMap.end() )
          {
             if ( cb->getCoordSession()->isValidResponse( pReply->requestID ) )
             {
@@ -782,42 +858,82 @@ namespace engine
             }
             else
             {
-               PD_LOG ( PDWARNING, 
-                        "received unexpected msg(opCode=[%d]%d,"
-                        "expectOpCode=[%d]%d,"
-                        "groupID=%u, nodeID=%u, serviceID=%u)",
+               PD_LOG ( ( MSG_CLS_BEAT_RES == pReply->opCode ?
+                          PDDEBUG : PDWARNING ),
+                        "Received expired or unexpected msg(opCode=[%d]%d,"
+                        "expectOpCode=[%d]%d, requestID=%lld, TID=%d) "
+                        "from node[%s]",
                         IS_REPLY_TYPE( pReply->opCode ),
                         GET_REQUEST_TYPE( pReply->opCode ),
                         IS_REPLY_TYPE( opCode ),
                         GET_REQUEST_TYPE( opCode ),
-                        pReply->routeID.columns.groupID,
-                        pReply->routeID.columns.nodeID,
-                        pReply->routeID.columns.serviceID );
+                        pReply->requestID, pReply->TID,
+                        routeID2String( pReply->routeID ).c_str() ) ;
                SDB_OSS_FREE( pReply ) ;
             }
          }
          else
          {
-            PD_LOG ( PDDEBUG, "received the reply("
-                     " opCode=[%d]%d, requestID=%llu, TID=%u, "
-                     "groupID=%u, nodeID=%u, serviceID=%u )",
-                     IS_REPLY_TYPE( pReply->opCode ),
-                     GET_REQUEST_TYPE( pReply->opCode ),
-                     pReply->requestID, pReply->TID,
-                     pReply->routeID.columns.groupID,
-                     pReply->routeID.columns.nodeID,
-                     pReply->routeID.columns.serviceID ) ;
-
-            requestIdMap.erase( iterMap ) ;
-            cb->getCoordSession()->delRequest( pReply->requestID ) ;
-            replyQue.push( (CHAR *)( pmdEvent._Data ) ) ;
-            pmdEvent.reset () ;
-            if ( !isWaitAll )
+            if ( MSG_CLS_BEAT_RES == pReply->opCode )
             {
-               waitTime = RTN_COORD_RSP_WAIT_TIME_QUICK;
+               SDB_ASSERT( pReply->routeID.value == iterMap->second.value,
+                           "Route id is not the same" ) ;
+               /// check request id
+               MsgOpReply *pBeatRes = ( MsgOpReply* )pReply ;
+               if ( SDB_OK == pBeatRes->flags )
+               {
+                  PD_LOG( PDDEBUG, "Recieve beat reply from node[%s]",
+                          routeID2String( pReply->routeID ).c_str() ) ;
+                  failedNodes[ iterMap->second.value ] = 0 ;
+               }
+               else
+               {
+                  PD_LOG( PDERROR, "Node[%s] beat failed, rc: %d",
+                          routeID2String( pReply->routeID ).c_str(),
+                          pBeatRes->flags ) ;
+                  failedNodes[ iterMap->second.value ] = ~0 ;
+               }
+               SDB_OSS_FREE( pReply ) ;
             }
-         }
-      }
+            else
+            {
+               if ( opCode != pReply->opCode ||
+                    pReply->routeID.value != iterMap->second.value )
+               {
+                  PD_LOG ( PDWARNING, "Received unexpected msg(opCode=[%d]%d,"
+                           "requestID=%lld, TID=%d, expectOpCode=[%d]%d, "
+                           "expectNode=%s) from node[%s]",
+                           IS_REPLY_TYPE( pReply->opCode ),
+                           GET_REQUEST_TYPE( pReply->opCode ),
+                           pReply->requestID, pReply->TID,
+                           IS_REPLY_TYPE( opCode ),
+                           GET_REQUEST_TYPE( opCode ),
+                           routeID2String( iterMap->second ).c_str(),
+                           routeID2String( pReply->routeID ).c_str() ) ;
+               }
+               else
+               {
+                  PD_LOG ( PDDEBUG , "Received the reply(opCode=[%d]%d, "
+                           "requestID=%llu, TID=%u) from node[%s]",
+                           IS_REPLY_TYPE( pReply->opCode ),
+                           GET_REQUEST_TYPE( pReply->opCode ),
+                           pReply->requestID, pReply->TID,
+                           routeID2String( pReply->routeID ).c_str() ) ;
+               }
+
+               requestIdMap.erase( iterMap ) ;
+               failedNodes.erase( iterMap->second.value ) ;
+               cb->getCoordSession()->delRequest( pReply->requestID ) ;
+               replyQue.push( (CHAR *)( pmdEvent._Data ) ) ;
+               pmdEvent.reset () ;
+               if ( !isWaitAll )
+               {
+                  waitTime = RTN_COORD_RSP_WAIT_TIME_QUICK ;
+               }
+            } // if ( MSG_CLS_BEAT_RES == pReply->opCode )
+         } // if ( iterMap == requestIdMap.end() )
+      } // while ( requestIdMap.size() > 0 )
+
       if ( rc )
       {
          goto error;

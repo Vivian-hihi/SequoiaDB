@@ -150,9 +150,6 @@ namespace engine
    */
    INT32 pmdSyncClockEntryPoint( pmdEDUCB * cb, void * arg )
    {
-      /// do not modify syncClockInterval, local validation
-      ///  depends on this time. --yunwu
-      const UINT32 syncClockInterval = 10 ; // 10ms
       ossTick tmp ;
       pmdKRCB *pKrcb = pmdGetKRCB() ;
 
@@ -162,7 +159,7 @@ namespace engine
       {
          pKrcb->syncCurTime() ;
          updateDBTick() ;
-         ossSleep( syncClockInterval ) ;
+         ossSleep( PMD_SYNC_CLOCK_INTERVAL ) ;
       }
       return SDB_OK ;
    }

@@ -411,9 +411,11 @@ namespace engine
    {
       UINT64 validationTick = 0 ;
       UINT64 tick = 0 ;
+      const static UINT64 s_maxTick = (30*OSS_ONE_SEC)/PMD_SYNC_CLOCK_INTERVAL ;
       getTicks( tick, validationTick ) ;
-      /// 30s
-      if ( 3000 <= ( tick - validationTick ) )
+
+      /// 30s is not update validation, we think db is abnormal
+      if ( tick > validationTick && tick - validationTick > s_maxTick )
       {
          PD_LOG( PDERROR, "db is abnormal, tick[%lld], validation tick[%ldd]",
                  tick, validationTick ) ;

@@ -36,6 +36,7 @@
 #include "rtn.hpp"
 #include "rtnDataSet.hpp"
 
+using namespace bson ;
 
 namespace engine
 {
@@ -64,7 +65,7 @@ namespace engine
       *( p + pLen - 1 ) = '\0' ;
 
       /// create new thread
-      try
+      /*try
       {
          boost::thread t( func ) ;
          t.join() ;
@@ -75,44 +76,44 @@ namespace engine
                  e.what() ) ;
          rc = SDB_SYS ;
          goto error ;
-      }
+      }*/
 
       /// dump dms
       {
-      BSONObj obj ;
-      rc = rtnSnapCommandEntry( CMD_SNAPSHOT_COLLECTIONSPACES,
-                                obj, obj, obj, 0,
-                                cb, 0, 1, sdbGetDMSCB(),
-                                rtnCB, contextID, FALSE ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to do snapshot:%d", rc ) ;
-         goto error ;
-      }
-
-      {
-      _rtnDataSet ds( contextID, cb ) ;
-      /// contextID has been managed by ds.
-      contextID = -1 ;
-      do
-      {
-         rc = ds.next( obj ) ;
-         if ( SDB_DMS_EOC == rc )
+         BSONObj obj ;
+         rc = rtnSnapCommandEntry( CMD_SNAPSHOT_COLLECTIONSPACES,
+                                   obj, obj, obj, 0,
+                                   cb, 0, 1, sdbGetDMSCB(),
+                                   rtnCB, contextID, FALSE ) ;
+         if ( SDB_OK != rc )
          {
-            rc = SDB_OK ;
-            break ;
-         }
-         else if ( SDB_OK == rc )
-         {
-            continue ;
-         }
-         else
-         {
-            PD_LOG( PDERROR, "failed to get data of snapshot:%d", rc ) ;
+            PD_LOG( PDERROR, "failed to do snapshot:%d", rc ) ;
             goto error ;
          }
-      } while ( TRUE ) ;
-      }
+
+         {
+            _rtnDataSet ds( contextID, cb ) ;
+            /// contextID has been managed by ds.
+            contextID = -1 ;
+            do
+            {
+               rc = ds.next( obj ) ;
+               if ( SDB_DMS_EOC == rc )
+               {
+                  rc = SDB_OK ;
+                  break ;
+               }
+               else if ( SDB_OK == rc )
+               {
+                  continue ;
+               }
+               else
+               {
+                  PD_LOG( PDERROR, "failed to get data of snapshot:%d", rc ) ;
+                  goto error ;
+               }
+            } while ( TRUE ) ;
+         }
       }
 
       /// update validation tick

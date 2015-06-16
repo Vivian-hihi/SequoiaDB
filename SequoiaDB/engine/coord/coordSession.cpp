@@ -127,8 +127,8 @@ namespace engine
       REPLY_QUE replyQue;
 
       rc = rtnCoordSendRequestToNodeWithoutCheck( (void *)(&msgReq), routeID,
-                                                pRouteAgent, _pEduCB,
-                                                requestIdMap );
+                                                  pRouteAgent, _pEduCB,
+                                                  requestIdMap );
       PD_RC_CHECK( rc, PDERROR,
                   "failed to send the message to the node"
                   "(groupID=%u, nodeID=%u, serviceID=%u)",
@@ -175,8 +175,8 @@ namespace engine
    {
       INT32 rc = SDB_OK;
       COORD_SUBSESSION_MAP::iterator iterMap = _subSessionMap.find( routeID.value );
-      if ( iterMap != _subSessionMap.end()
-         && TRUE == iterMap->second.isConnected )
+      if ( iterMap != _subSessionMap.end() &&
+           TRUE == iterMap->second.isConnected )
       {
          goto done;
       }
@@ -346,8 +346,8 @@ namespace engine
       REQUESTID_MAP::iterator iterMap = _requestMap.begin();
       while( iterMap != _requestMap.end() )
       {
-         if ( iterMap->second.value == routeID.value
-            && iterMap->first <= reqID )
+         if ( iterMap->second.value == routeID.value &&
+              iterMap->first <= reqID )
          {
             return TRUE;
          }

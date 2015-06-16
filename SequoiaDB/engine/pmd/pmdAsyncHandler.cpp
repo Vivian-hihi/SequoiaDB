@@ -185,6 +185,11 @@ namespace engine
       PD_TRACE_EXITRC ( SDB__PMDMSGHND_HNDMSG, rc ) ;
       return rc ;
    error :
+      if ( _pSessionMgr )
+      {
+         /// disconnect the connect
+         _pSessionMgr->getRouteAgent()->close( handle ) ;
+      }
       goto done ;
    }
 
@@ -296,6 +301,7 @@ namespace engine
          if ( rc )
          {
             PD_LOG ( PDWARNING, "Failed to release session, rc = %d", rc ) ;
+            rc = SDB_OK ;
          }
          goto done ;
       }
@@ -379,27 +385,20 @@ namespace engine
                                              const _MsgHeader *reqHeader )
    {
       INT32 rc = SDB_OK ;
-      rc = dbIsAbnormal() ? SDB_SYS : SDB_OK ;
-      BSONObjBuilder builder ;
-      builder.append( FIELD_NAME_STATUS, rc ) ;
-      BSONObj obj = builder.obj() ;
 
       MsgOpReply header ;
       header.header.opCode = MAKE_REPLY_TYPE( reqHeader->opCode ) ;
-      header.header.messageLength = sizeof ( MsgOpReply ) +
-                                    obj.objsize() ;
+      header.header.messageLength = sizeof ( MsgOpReply ) ;
       header.header.requestID = reqHeader->requestID ;
       header.header.TID = reqHeader->TID ;
       header.header.routeID.value = 0 ;
-      header.flags = rc ;
+      header.flags = dbIsAbnormal() ? SDB_SYS : SDB_OK ; ;
       header.contextID = -1 ;
-      header.numReturned = 1 ;
+      header.numReturned = 0 ;
       header.startFrom = 0 ;
-      rc = SDB_OK ;
 
-      rc = _pSessionMgr->getRouteAgent()->syncSend ( handle, &( header.header ),
-                                                     (void*)(obj.objdata()),
-                                                     obj.objsize() ) ;
+      rc = _pSessionMgr->getRouteAgent()->syncSend ( handle,
+                                                     (void*)(&header) ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to reply beat request:%d", rc ) ;
