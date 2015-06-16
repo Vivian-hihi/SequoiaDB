@@ -209,7 +209,8 @@ rtnFiles = [
       "rtn/rtnAlterFuncList.cpp",
       "rtn/rtnAlterFuncs.cpp",
       "rtn/rtnAlterRunner.cpp",
-      "rtn/rtnAlterJob.cpp"
+      "rtn/rtnAlterJob.cpp",
+      "rtn/rtnIxmKeySorter.cpp"
       ]
 
 msgFiles = [

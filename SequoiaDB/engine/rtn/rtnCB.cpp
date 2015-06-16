@@ -41,6 +41,8 @@
 #include "rtnContextLob.hpp"
 #include "rtnContextShdOfLob.hpp"
 #include "rtnContextListLob.hpp"
+#include "dmsCB.hpp"
+#include "rtnIxmKeySorter.hpp"
 
 using namespace std;
 namespace engine
@@ -63,7 +65,22 @@ namespace engine
 
    INT32 _SDB_RTNCB::init ()
    {
-      return SDB_OK ;
+      INT32 rc = SDB_OK ;
+
+      rtnIxmKeySorterCreator* creator = SDB_OSS_NEW _rtnIxmKeySorterCreator() ;
+      if ( NULL == creator )
+      {
+         PD_LOG ( PDERROR, "failed to create _rtnIxmKeySorterCreator" ) ;
+         rc = SDB_OOM ;
+         goto error ;
+      }
+
+      sdbGetDMSCB()->setIxmKeySorterCreator( creator ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    INT32 _SDB_RTNCB::active ()
@@ -78,6 +95,13 @@ namespace engine
 
    INT32 _SDB_RTNCB::fini ()
    {
+      dmsIxmKeySorterCreator* creator = sdbGetDMSCB()->getIxmKeySorterCreator() ;
+      if ( NULL != creator )
+      {
+         SDB_OSS_DEL( creator ) ;
+         sdbGetDMSCB()->setIxmKeySorterCreator( NULL ) ;
+      }
+
       return SDB_OK ;
    }
 

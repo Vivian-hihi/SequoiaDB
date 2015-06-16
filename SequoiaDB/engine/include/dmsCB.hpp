@@ -51,6 +51,7 @@
 #include "dpsLogWrapper.hpp"
 #include "ossEvent.hpp"
 #include "sdbInterface.hpp"
+#include "dmsIxmKeySorter.hpp"
 #include <map>
 #include <set>
 
@@ -129,6 +130,8 @@ namespace engine
       UINT32                  _logicalSUID ;
 
       dmsTempCB               _tempCB ;
+
+      dmsIxmKeySorterCreator* _ixmKeySorterCreator ;
 
    private:
       void  _logCSCBNameMap () ;
@@ -219,6 +222,11 @@ namespace engine
       _dmsStorageUnit *dispatchPageCleanSU ( dmsStorageUnitID *suID ) ;
 
       INT32 joinPageCleanSU ( dmsStorageUnitID suID ) ;
+
+      void setIxmKeySorterCreator( dmsIxmKeySorterCreator* creator ) ;
+      dmsIxmKeySorterCreator* getIxmKeySorterCreator() ;
+      dmsIxmKeySorter* createIxmKeySorter( INT64 bufSize, const _dmsIxmKeyComparer& comparer ) ;
+      void releaseIxmKeySorter( dmsIxmKeySorter* sorter ) ;
 
    public:
       typedef std::vector<SDB_DMS_CSCB*>::iterator CSCB_ITERATOR;

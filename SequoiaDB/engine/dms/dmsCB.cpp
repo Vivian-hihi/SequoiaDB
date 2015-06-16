@@ -82,7 +82,8 @@ namespace engine
    :_writeCounter(0),
     _dmsCBState(DMS_STATE_NORMAL),
     _logicalSUID(0),
-    _tempCB(this)
+    _tempCB(this),
+    _ixmKeySorterCreator( NULL )
    {
       for ( UINT32 i = 0 ; i< DMS_MAX_CS_NUM ; ++i )
       {
@@ -1512,6 +1513,33 @@ namespace engine
    {
       UINT32 pos = ossHash( pCSName ) % DMS_CS_MUTEX_BUCKET_SIZE ;
       _vecCSMutex[ pos ]->release() ;
+   }
+
+   void _SDB_DMSCB::setIxmKeySorterCreator( dmsIxmKeySorterCreator* creator )
+   {
+      _ixmKeySorterCreator = creator ;
+   }
+
+   dmsIxmKeySorterCreator* _SDB_DMSCB::getIxmKeySorterCreator()
+   {
+      return _ixmKeySorterCreator ;
+   }
+
+   dmsIxmKeySorter* _SDB_DMSCB::createIxmKeySorter( INT64 bufSize, const _dmsIxmKeyComparer& comparer )
+   {
+      SDB_ASSERT( NULL != _ixmKeySorterCreator, "_ixmKeySorterCreator can't be NULL" ) ;
+
+      return _ixmKeySorterCreator->createSorter( bufSize, comparer ) ;
+   }
+
+   void _SDB_DMSCB::releaseIxmKeySorter( dmsIxmKeySorter* sorter )
+   {
+      SDB_ASSERT( NULL != _ixmKeySorterCreator, "_ixmKeySorterCreator can't be NULL" ) ;
+
+      if ( NULL != sorter )
+      {
+         _ixmKeySorterCreator->releaseSorter( sorter ) ;
+      }
    }
 
    /*
