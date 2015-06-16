@@ -1184,5 +1184,444 @@ namespace engine
      goto done ;
    }
 
+   /*
+      _omaAddZNode
+   */
+   _omaAddZNode::_omaAddZNode ( AddZNInfo &info )
+   {
+      _addZNInfo = info ;
+   }
+
+   _omaAddZNode::~_omaAddZNode ()
+   {
+   }
+
+   INT32 _omaAddZNode::init( const CHAR *pInstallInfo )
+   {
+      INT32 rc = SDB_OK ;
+      try
+      {
+         BSONObj bus ;
+         BSONObj sys ;
+         stringstream ss ;
+         rc = _getAddZNInfo( bus, sys ) ;
+         if ( rc )
+         {
+            PD_LOG ( PDERROR, "Failed to get installing znode's info "
+                     "for js file, rc = %d", rc ) ;
+            goto error ;
+         }
+
+         // build js file arguments
+         ss << "var " << JS_ARG_BUS << " = " 
+            << bus.toString(FALSE, TRUE).c_str() << " ; "
+            << "var " << JS_ARG_SYS << " = "
+            << sys.toString(FALSE, TRUE).c_str() << " ; " ;
+         _jsFileArgs = ss.str() ;
+         PD_LOG ( PDDEBUG, "Installing znode passes argument: %s",
+                  _jsFileArgs.c_str() ) ;
+         // add js file
+         rc = addJsFile( FILE_INSTALL_ZOOKEEPER, _jsFileArgs.c_str() ) ;
+         if ( rc )
+         {
+            PD_LOG ( PDERROR, "Failed to add js file[%s], rc = %d ",
+                     FILE_INSTALL_ZOOKEEPER, rc ) ;
+            goto error ;
+         }
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG ( PDERROR, "Failed to build bson, exception is: %s",
+                  e.what() ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   INT32 _omaAddZNode::_getAddZNInfo( BSONObj &retObj1, BSONObj &retObj2 )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObjBuilder bob ;
+      BSONArrayBuilder bab ;
+      vector<string>::iterator it = _addZNInfo._common._serverInfo.begin() ;
+
+      // the output bson format for standalone is:
+      // { 
+      //  "DeployMod":"standalone",
+      //  "PacketPath":"/opt/sequoiadb/packet/zookeeper-3.4.6.tar.gz",
+      //  "HostName":"rhel64-test8",
+      //  "User": "root", "Passwd": "sequoiadb",
+      //  "SdbUser": "sdbadmin", "SdbPasswd": "sdbadmin", "SdbUserGroup": "sdbadmin_group",
+      //  "SshPort": "22",
+      //  "zooid": 1,
+      //  "installpath":"/opt/zookeeper",
+      //  "datapath":"/opt/zookeeper/data",
+      //  "clientport":"2181",
+      //  "ticktime":"2000"
+      // } 
+
+      // the output bson format for cluster is:
+      // { 
+      //  "DeployMod":"distribution",
+      //  "PacketPath":"/opt/sequoiadb/packet/zookeeper-3.4.6.tar.gz",
+      //  "HostName":"susetzb",
+      //  "User": "root", "Passwd": "sequoiadb",
+      //  "SdbUser": "sdbadmin", "SdbPasswd": "sdbadmin", "SdbUserGroup": "sdbadmin_group",
+      //  "SshPort": "22",
+      //  "zooid": 1,
+      //  "installpath":"/opt/zookeeper",
+      //  "datapath":"/opt/zookeeper/data",
+      //  "dataport":"2888",
+      //  "electport":"3888",
+      //  "clientport":"2181",
+      //  "synclimit":"5",
+      //  "initlimit":"10",
+      //  "ticktime":"2000",
+      //  "ServerInfo":["server.1=susetzb:2888:3888", "server.2=rhel64-test8:2888:3888", "server.3=rhel64-test9:2888:3888"]
+      // }
+
+
+      try
+      {
+         bob.append( OMA_FIELD_DEPLOYMOD, _addZNInfo._common._deployMod.c_str() ) ;
+         bob.append( OMA_FIELD_PACKET_PATH, _addZNInfo._common._installPacket.c_str() ) ;
+         bob.append( OMA_FIELD_HOSTNAME, _addZNInfo._item._hostName.c_str() ) ;
+         bob.append( OMA_FIELD_USER, _addZNInfo._item._user.c_str() ) ;
+         bob.append( OMA_FIELD_PASSWD, _addZNInfo._item._passwd.c_str() ) ;
+         bob.append( OMA_FIELD_SDBUSER, _addZNInfo._common._sdbUser.c_str() ) ;
+         bob.append( OMA_FIELD_SDBPASSWD, _addZNInfo._common._sdbPasswd.c_str() ) ;
+         bob.append( OMA_FIELD_SDBUSERGROUP, _addZNInfo._common._userGroup.c_str() ) ;
+         bob.append( OMA_FIELD_SSHPORT, _addZNInfo._item._sshPort.c_str() ) ;
+         bob.append( OMA_FIELD_ZOOID3, _addZNInfo._item._zooid.c_str() ) ;
+         bob.append( OMA_FIELD_INSTALLPATH3, _addZNInfo._item._installPath.c_str() ) ;
+         bob.append( OMA_FIELD_DATAPATH3, _addZNInfo._item._dataPath.c_str() ) ;
+         bob.append( OMA_FIELD_DATAPORT3, _addZNInfo._item._dataPort.c_str() ) ;
+         bob.append( OMA_FIELD_ELECTPORT3, _addZNInfo._item._electPort.c_str() ) ;
+         bob.append( OMA_FIELD_CLIENTPORT3, _addZNInfo._item._clientPort.c_str() ) ;
+         bob.append( OMA_FIELD_SYNCLIMIT3, _addZNInfo._item._syncLimit.c_str() ) ;
+         bob.append( OMA_FIELD_INITLIMIT3, _addZNInfo._item._initLimit.c_str() ) ;
+         bob.append( OMA_FIELD_TICKTIME3, _addZNInfo._item._tickTime.c_str() ) ;         
+         for ( ; it != _addZNInfo._common._serverInfo.end(); it++ )
+         {
+            bab.append( *it ) ;
+         }
+         bob.appendArray( OMA_FIELD_SERVERINFO, bab.arr() ) ;
+
+         // build retObj
+         retObj1 = bob.obj() ;
+         retObj2 = BSON( OMA_FIELD_TASKID << _addZNInfo._taskID ) ;
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG ( PDERROR, "Failed to build bson for add host, "
+                      "exception is: %s", e.what() ) ;
+         goto error ;
+      }
+      
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   /*
+      _omaRemoveZNode
+   */
+   _omaRemoveZNode::_omaRemoveZNode ( RemoveZNInfo &info )
+   {
+      _removeZNInfo = info ;
+   }
+
+   _omaRemoveZNode::~_omaRemoveZNode ()
+   {
+   }
+
+   INT32 _omaRemoveZNode::init( const CHAR *pInstallInfo )
+   {
+      INT32 rc = SDB_OK ;
+      try
+      {
+         BSONObj bus ;
+         BSONObj sys ;
+         stringstream ss ;
+         rc = _getRemoveZNInfo( bus, sys ) ;
+         if ( rc )
+         {
+            PD_LOG ( PDERROR, "Failed to get removing znode's info "
+                     "for js file, rc = %d", rc ) ;
+            goto error ;
+         }
+
+         // build js file arguments
+         ss << "var " << JS_ARG_BUS << " = " 
+            << bus.toString(FALSE, TRUE).c_str() << " ; "
+            << "var " << JS_ARG_SYS << " = "
+            << sys.toString(FALSE, TRUE).c_str() << " ; " ;
+         _jsFileArgs = ss.str() ;
+         PD_LOG ( PDDEBUG, "Removing znode passes argument: %s",
+                  _jsFileArgs.c_str() ) ;
+         // add js file
+         rc = addJsFile( FILE_REMOVE_ZOOKEEPER, _jsFileArgs.c_str() ) ;
+         if ( rc )
+         {
+            PD_LOG ( PDERROR, "Failed to add js file[%s], rc = %d ",
+                     FILE_REMOVE_ZOOKEEPER, rc ) ;
+            goto error ;
+         }
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG ( PDERROR, "Failed to build bson, exception is: %s",
+                  e.what() ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   INT32 _omaRemoveZNode::_getRemoveZNInfo( BSONObj &retObj1, BSONObj &retObj2 )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObjBuilder bob ;
+      BSONArrayBuilder bab ;
+      vector<string>::iterator it ;
+
+      // the output bson format for standalone is:
+      // { 
+      //  "DeployMod":"standalone",
+      //  "HostName":"rhel64-test8",
+      //  "User": "root",
+      //  "Passwd": "sequoiadb",
+      //  "SdbUser": "sdbadmin", "SdbPasswd": "sdbadmin", "SdbUserGroup": "sdbadmin_group",
+      //  "SshPort": "22",
+      //  "zooid": 1,
+      //  "installPath":"/opt/zookeeper",
+      //  "datapath":"/opt/zookeeper/data",
+      //  "clientport":"2181",
+      //  "ticktime":"2000"
+      // }
+
+      // the output bson format for cluster is:
+      // {
+      //  "DeployMod":"distribution",
+      //  "HostName":"susetzb",
+      //  "User": "root", "Passwd": "sequoiadb",
+      //  "SdbUser": "sdbadmin", "SdbPasswd": "sdbadmin", "SdbUserGroup": "sdbadmin_group",
+      //  "SshPort": "22",
+      //  "zooid": 1,
+      //  "installpath":"/opt/zookeeper",
+      //  "datapath":"/opt/zookeeper/data",
+      //  "dataport":"2888",
+      //  "electport":"3888",
+      //  "clientport":"2181",
+      //  "synclimit":"5",
+      //  "initLimit":"10",
+      //  "ticktime":"2000"
+      // }
+
+      try
+      {
+         bob.append( OMA_FIELD_DEPLOYMOD, _removeZNInfo._common._deployMod.c_str() ) ;
+         bob.append( OMA_FIELD_HOSTNAME, _removeZNInfo._item._hostName.c_str() ) ;
+         bob.append( OMA_FIELD_USER, _removeZNInfo._item._user.c_str() ) ;
+         bob.append( OMA_FIELD_PASSWD, _removeZNInfo._item._passwd.c_str() ) ;
+         bob.append( OMA_FIELD_SDBUSER, _removeZNInfo._common._sdbUser.c_str() ) ;
+         bob.append( OMA_FIELD_SDBPASSWD, _removeZNInfo._common._sdbPasswd.c_str() ) ;
+         bob.append( OMA_FIELD_SDBUSERGROUP, _removeZNInfo._common._userGroup.c_str() ) ;
+         bob.append( OMA_FIELD_SSHPORT, _removeZNInfo._item._sshPort.c_str() ) ;
+         bob.append( OMA_FIELD_ZOOID3, _removeZNInfo._item._zooid.c_str() ) ;
+         bob.append( OMA_FIELD_INSTALLPATH3, _removeZNInfo._item._installPath.c_str() ) ;
+         bob.append( OMA_FIELD_DATAPATH3, _removeZNInfo._item._dataPath.c_str() ) ;
+         bob.append( OMA_FIELD_DATAPORT3, _removeZNInfo._item._dataPort.c_str() ) ;
+         bob.append( OMA_FIELD_ELECTPORT3, _removeZNInfo._item._electPort.c_str() ) ;
+         bob.append( OMA_FIELD_CLIENTPORT3, _removeZNInfo._item._clientPort.c_str() ) ;
+         bob.append( OMA_FIELD_SYNCLIMIT3, _removeZNInfo._item._syncLimit.c_str() ) ;
+         bob.append( OMA_FIELD_INITLIMIT3, _removeZNInfo._item._initLimit.c_str() ) ;
+         bob.append( OMA_FIELD_TICKTIME3, _removeZNInfo._item._tickTime.c_str() ) ;
+
+         // build retObj
+         retObj1 = bob.obj() ;
+         retObj2 = BSON( OMA_FIELD_TASKID << _removeZNInfo._taskID ) ;
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG ( PDERROR, "Failed to build bson for add host, "
+                      "exception is: %s", e.what() ) ;
+         goto error ;
+      }
+      
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   /*
+      _omaCheckZNodes
+   */
+   _omaCheckZNodes::_omaCheckZNodes ( vector<CheckZNInfo> &info )
+   {
+      _checkZNInfos = info ;
+   }
+
+   _omaCheckZNodes::~_omaCheckZNodes ()
+   {
+   }
+
+   INT32 _omaCheckZNodes::init( const CHAR *pInstallInfo )
+   {
+      INT32 rc = SDB_OK ;
+      try
+      {
+         BSONObj bus ;
+         BSONObj sys ;
+         stringstream ss ;
+         rc = _getCheckZNInfos( bus, sys ) ;
+         if ( rc )
+         {
+            PD_LOG ( PDERROR, "Failed to get checking znodes' info "
+                     "for js file, rc = %d", rc ) ;
+            goto error ;
+         }
+
+         // build js file arguments
+         ss << "var " << JS_ARG_BUS << " = " 
+            << bus.toString(FALSE, TRUE).c_str() << " ; "
+            << "var " << JS_ARG_SYS << " = "
+            << sys.toString(FALSE, TRUE).c_str() << " ; " ;
+         _jsFileArgs = ss.str() ;
+         PD_LOG ( PDDEBUG, "Checking znodes pass argument: %s",
+                  _jsFileArgs.c_str() ) ;
+         // add js file
+         rc = addJsFile( FILE_CHECK_ZOOKEEPER, _jsFileArgs.c_str() ) ;
+         if ( rc )
+         {
+            PD_LOG ( PDERROR, "Failed to add js file[%s], rc = %d ",
+                     FILE_CHECK_ZOOKEEPER, rc ) ;
+            goto error ;
+         }
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG ( PDERROR, "Failed to build bson, exception is: %s",
+                  e.what() ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   INT32 _omaCheckZNodes::_getCheckZNInfos( BSONObj &retObj1, BSONObj &retObj2 )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObjBuilder bob ;
+      BSONArrayBuilder bab ;
+      const CHAR *pStr = NULL ;
+      INT64 taskID     = 0 ;
+      vector<CheckZNInfo>::iterator it = _checkZNInfos.begin() ;
+
+      // the output bson format for cluster is:
+      // { 
+      //  "DeployMod":"distribution",
+      //  "ServerInfo":
+      //   [ 
+      //     {
+      //      "HostName":"susetzb",
+      //      "User": "root",
+      //      "Passwd": "sequoiadb",
+      //      "SdbUser": "sdbadmin",
+      //      "SdbPasswd": "sdbadmin",
+      //      "SdbUserGroup": "sdbadmin_group",
+      //      "SshPort": "22",
+      //      "zooid": "1",
+      //      "installPath":"/opt/zookeeper",
+      //      "datapath":"/opt/zookeeper/data",
+      //      "dataport":"2888",
+      //      "electport":"3888",
+      //      "clientport":"2181",
+      //      "synclimit":"5",
+      //      "initLimit":"10",
+      //      "ticktime":"2000"
+      //     },
+      //     ...
+      //   ]
+      // }
+
+      if ( it == _checkZNInfos.end() )
+      {
+         rc = SDB_SYS;
+         PD_LOG_MSG ( PDERROR, "No znodes' info to check" ) ;
+         goto error ;
+      }
+
+      pStr = it->_common._deployMod.c_str() ;
+      taskID = it->_taskID ;
+
+      try
+      {
+         for( ; it != _checkZNInfos.end(); it++ )
+         {
+            BSONObjBuilder builder ;
+            BSONObj obj ;
+            
+            builder.append( OMA_FIELD_HOSTNAME, it->_item._hostName.c_str() ) ;
+            builder.append( OMA_FIELD_USER, it->_item._user.c_str() ) ;
+            builder.append( OMA_FIELD_PASSWD, it->_item._passwd.c_str() ) ;
+            builder.append( OMA_FIELD_SDBUSER, it->_common._sdbUser.c_str() ) ;
+            builder.append( OMA_FIELD_SDBPASSWD, it->_common._sdbPasswd.c_str() ) ;
+            builder.append( OMA_FIELD_SDBUSERGROUP, it->_common._userGroup.c_str() ) ;
+            builder.append( OMA_FIELD_SSHPORT, it->_item._sshPort.c_str() ) ;
+            builder.append( OMA_FIELD_ZOOID3, it->_item._zooid.c_str() ) ;
+            builder.append( OMA_FIELD_INSTALLPATH3, it->_item._installPath.c_str() ) ;
+            builder.append( OMA_FIELD_DATAPATH3, it->_item._dataPath.c_str() ) ;
+            builder.append( OMA_FIELD_DATAPORT3, it->_item._dataPort.c_str() ) ;
+            builder.append( OMA_FIELD_ELECTPORT3, it->_item._electPort.c_str() ) ;
+            builder.append( OMA_FIELD_CLIENTPORT3, it->_item._clientPort.c_str() ) ;
+            builder.append( OMA_FIELD_SYNCLIMIT3, it->_item._syncLimit.c_str() ) ;
+            builder.append( OMA_FIELD_INITLIMIT3, it->_item._initLimit.c_str() ) ;
+            builder.append( OMA_FIELD_TICKTIME3, it->_item._tickTime.c_str() ) ;
+
+            obj = builder.obj() ;
+            bab.append( obj ) ;
+         }
+
+         bob.append( OMA_FIELD_DEPLOYMOD, pStr ) ;
+         bob.append( OMA_FIELD_SERVERINFO, bab.arr() ) ;
+
+         // build retObj
+         retObj1 = bob.obj() ;
+         retObj2 = BSON( OMA_FIELD_TASKID << taskID ) ;
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG ( PDERROR, "Failed to build bson for add host, "
+                      "exception is: %s", e.what() ) ;
+         goto error ;
+      }
+      
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+
+
 }
 

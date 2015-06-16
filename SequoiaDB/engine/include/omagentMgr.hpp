@@ -251,6 +251,7 @@ namespace engine
                                              const BSONObj* match ) ;
 
       private:
+         INT32           _getTaskType( const BSONObj &obj, OMA_TASK_TYPE *type ) ;
          INT32           _startTask( const BSONObj &obj ) ;
 
       private:

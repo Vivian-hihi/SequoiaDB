@@ -109,7 +109,7 @@ namespace engine
          }
 
          // 2. get a host item to install
-         // if no host item need to install, let this backgroud
+         // if no host item needs to install, let this backgroud
          // thread finish
          pInfo = _pTask->getAddHostItem() ;
          if ( NULL == pInfo )
@@ -242,7 +242,7 @@ namespace engine
    : _omaTask( taskID )
    {
       _taskType = OMA_TASK_INSTALL_DB_SUB ;
-      _taskName = OMA_TASK_NAME_INSTALL_BUSINESS_SUB ;
+      _taskName = OMA_TASK_NAME_INSTALL_DB_BUSINESS_SUB ;
    }
 
    _omaInstDBBusSubTask::~_omaInstDBBusSubTask()
@@ -258,8 +258,8 @@ namespace engine
       if ( NULL == _pTask )
       {
          rc = SDB_INVALIDARG ;
-         PD_LOG_MSG( PDERROR, "No install db business task's info for "
-                     "install db business sub task" ) ;
+         PD_LOG_MSG( PDERROR, "No task information for "
+                     "installing db business sub task" ) ;
          goto error ;
       }
       ss << _taskName << "[" << _pTask->getSubTaskSerialNum() << "]" ;
@@ -468,6 +468,211 @@ namespace engine
             }
             goto error ;
          } // while
+         
+      } // while
+
+   done:
+      // set current sub task to finish
+      _pTask->setSubTaskStatus( _taskName, OMA_TASK_STATUS_FINISH ) ;
+      _pTask->notifyUpdateProgress() ;
+      return rc ;
+      
+   error:
+      _pTask->setIsTaskFail() ;
+      _pTask->setErrInfo( rc, pDetail ) ;
+      goto done ;
+   }
+
+   /*
+      install zookeeper business sub task
+   */
+   _omaInstZNBusSubTask::_omaInstZNBusSubTask( INT64 taskID )
+   : _omaTask( taskID )
+   {
+      _taskType = OMA_TASK_INSTALL_ZN_SUB ;
+      _taskName = OMA_TASK_NAME_INSTALL_ZN_BUSINESS_SUB ;
+   }
+
+   _omaInstZNBusSubTask::~_omaInstZNBusSubTask()
+   {
+   }
+
+
+   INT32 _omaInstZNBusSubTask::init( const BSONObj &info, void *ptr )
+   {
+      INT32 rc = SDB_OK ;
+      stringstream ss ;
+      _pTask = (_omaInstZNBusTask *)ptr ;
+      if ( NULL == _pTask )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "No task information for "
+                     "installing zookeeper business sub task" ) ;
+         goto error ;
+      }
+      ss << _taskName << "[" << _pTask->getSubTaskSerialNum() << "]" ;
+      _taskName = ss.str() ;
+      
+      done:
+         return rc ;
+      error:
+         goto done ;
+   }
+
+   INT32 _omaInstZNBusSubTask::doit()
+   {
+      INT32 rc      = SDB_OK ;
+      INT32 tmpRc   = SDB_OK ;
+      const CHAR *pDetail          = NULL ;
+
+      // set current sub task to be running
+      _pTask->setSubTaskStatus( _taskName, OMA_TASK_STATUS_RUNNING ) ;
+      
+      while( TRUE )
+      {
+         AddZNInfo *pInfo           = NULL ;
+         AddZNResultInfo resultInfo = { "", "0", OMA_TASK_STATUS_RUNNING,
+                                        OMA_TASK_STATUS_DESC_RUNNING,
+                                        SDB_OK, "" } ;
+         CHAR flow[OMA_BUFF_SIZE + 1] = { 0 } ;
+         const CHAR *pHostName        = NULL ;
+         INT32 errNum                 = 0 ;
+         stringstream ss ;
+         BSONObj retObj ;
+
+         // 1. judge whether program had been interrupted
+         if ( TRUE == pmdGetThreadEDUCB()->isInterrupted() )
+         {
+            PD_LOG( PDEVENT, "Program has been interrupted, stop task[%s]",
+                    _taskName.c_str() ) ;
+            goto done ;
+         }
+         // 2. judge whether task had fail
+         if ( TRUE == _pTask->getIsTaskFail() )
+         {
+            PD_LOG( PDEVENT, "Installing zookeeper business task had failed, "
+                    "sub task[%s] exits", _taskName.c_str() ) ;
+            goto done ;
+         }
+         // 3. get a znode item to install
+         // if no znode item needs to install, let this backgroud
+         // thread finish
+         pInfo = _pTask->getAddZNItem() ;
+         if ( NULL == pInfo )
+         {
+            PD_LOG( PDEVENT, "No znode needs to install now, sub task[%s] exits",
+                    _taskName.c_str() ) ;
+            goto done ;
+         }
+
+         pHostName            = pInfo->_item._hostName.c_str() ;
+         resultInfo._hostName = pHostName ;
+         resultInfo._zooid    = pInfo->_item._zooid ;
+
+         // 3. before install this znode, update the progress
+         ossSnprintf( flow, OMA_BUFF_SIZE, "Installing znode[%s]", pHostName ) ;
+         resultInfo._flow.push_back( flow ) ;
+         tmpRc = _pTask->updateProgressToTask( pInfo->_serialNum, resultInfo ) ;
+         if ( tmpRc )
+         {
+            PD_LOG( PDWARNING, "Failed to update installing znode[%s]'s progress, "
+                    "rc = %d", pHostName, tmpRc ) ;
+         }
+
+         // 4. add znode
+         _omaAddZNode runCmd( *pInfo ) ;
+         rc = runCmd.init( NULL ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Failed to init for installing "
+                    "znode[%s], rc = %d", pHostName, rc ) ;
+            pDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+            if ( NULL == pDetail || 0 == *pDetail )
+               pDetail = "Failed to init for installing znode" ;
+            goto build_error_result ;
+         }
+         // doit may return error before execute js file
+         // so, when rc != SDB_OK, we need to ensure where
+         // error happen
+         // a. rc != SDB_OK && retObj == {}, error happen before executing js
+         // b. rc == SDB_OK && retObj == { errno:xxx, detail:"xxx" }, error
+         // happen in js
+         rc = runCmd.doit( retObj ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Failed to do installing znode[%s], "
+                    "rc = %d", pHostName, rc ) ;
+            // if we can't get field "detail", it means we failed in CPP,
+            // we had not executed js file yet
+            tmpRc = omaGetStringElement ( retObj, OMA_FIELD_DETAIL, &pDetail ) ;
+            if ( SDB_OK != tmpRc )
+            {
+               pDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+               if ( NULL == pDetail || 0 == *pDetail )
+                  pDetail = "Not exeute js file yet" ;
+            }
+            goto build_error_result ;
+         }
+         // extract "errno"
+         rc = omaGetIntElement ( retObj, OMA_FIELD_ERRNO, errNum ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Failed to get errno from js after "
+                    "installing znode[%s], rc = %d", pHostName, rc ) ;
+            ss << "Failed to get errno from js after installing znode[" <<
+               pHostName << "]" ;
+            pDetail = ss.str().c_str() ;
+            goto build_error_result ;
+         }
+         // to see whether execute js successfully or not
+         if ( SDB_OK != errNum )
+         {
+            // get error detail
+            rc = omaGetStringElement ( retObj, OMA_FIELD_DETAIL, &pDetail ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "Failed to get error detail from js after "
+                       "installing znode[%s], rc = %d", pHostName, rc ) ;
+               ss << "Failed to get error detail from js after installing "
+                     "znode[" << pHostName << "]" ;
+               pDetail = ss.str().c_str() ;
+               goto build_error_result ;
+            }
+            rc = errNum ;
+            goto build_error_result ;
+         }
+         else
+         {
+            ossSnprintf( flow, OMA_BUFF_SIZE, "Finish installing "
+                         "znode[%s]", pHostName ) ;
+            PD_LOG ( PDEVENT, "Success to add znode[%s]", pHostName ) ;
+            resultInfo._status     = OMA_TASK_STATUS_FINISH ;
+            resultInfo._statusDesc = getTaskStatusDesc( OMA_TASK_STATUS_FINISH ) ;
+            resultInfo._flow.push_back( flow ) ;
+            tmpRc = _pTask->updateProgressToTask( pInfo->_serialNum, resultInfo ) ;
+            if ( tmpRc )
+            {
+               PD_LOG( PDWARNING, "Failed to update installing znode[%s]'s "
+                       "progress, rc = %d", pHostName, tmpRc ) ;
+            }
+         }
+         continue ; // if we success, nerver go to "build_error_result"
+         
+      build_error_result:
+         ossSnprintf( flow, OMA_BUFF_SIZE, "Failed to install "
+                      "znode[%s]", pHostName ) ;
+         resultInfo._status     = OMA_TASK_STATUS_ROLLBACK ;
+         resultInfo._statusDesc = getTaskStatusDesc( OMA_TASK_STATUS_ROLLBACK ) ;
+         resultInfo._errno      = rc ;
+         resultInfo._detail     = pDetail ;
+         resultInfo._flow.push_back( flow ) ;
+         tmpRc = _pTask->updateProgressToTask( pInfo->_serialNum, resultInfo ) ;
+         if ( tmpRc )
+         {
+            PD_LOG( PDWARNING, "Failed to update installing znode[%s]'s "
+                    "progress, rc = %d", pHostName, tmpRc ) ;
+         }
+         goto error ;
          
       } // while
 

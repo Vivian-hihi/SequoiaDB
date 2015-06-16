@@ -38,6 +38,12 @@
 #include "omDef.hpp"
 #include "omagentDef.hpp"
 
+// business type
+#define OMA_BUS_TYPE_SEQUOIADB OM_BUSINESS_SEQUOIADB
+#define OMA_BUS_TYPE_ZOOKEEPER OM_BUSINESS_ZOOKEEPER
+#define OMA_BUS_TYPE_SPARK     OM_BUSINESS_SPARK
+#define OMA_BUS_TYPE_HDFS      OM_BUSINESS_HDFS
+
 // field
 #define OMA_FIELD_HOSTINFO                         "HostInfo" /* OM_REST_FIELD_HOST_INFO */
 #define OMA_FIELD_SSH_PORT                         "SshPort" /* OM_BSON_FIELD_HOST_SSHPORT */
@@ -45,10 +51,21 @@
 #define OMA_FIELD_SDBUSER                          "SdbUser" /* OM_CLUSTER_FIELD_SDBUSER */
 #define OMA_FIELD_SDBPASSWD                        "SdbPasswd" /* OM_CLUSTER_FIELD_SDBPASSWD */
 #define OMA_FIELD_SDBUSERGROUP                     "SdbUserGroup" /* OM_CLUSTER_FIELD_SDBUSERGROUP */
-#define OMA_FIELD_INSTALLPATH                      "InstallPath" /* OM_HOST_FIELD_INSTALLPATH */
+#define OMA_FIELD_INSTALLPATH                      "InstallPath"
+#define OMA_FIELD_INSTALLPATH3                     "installpath"
 #define OMA_FIELD_TRANSACTION_ID                   "TransactionID" /* OM_BSON_FIELD_TRANSACTION_ID */
-#define OMA_FIELD_PACKET_PATH                      "InstallPacket" /* OM_BSON_FIELD_PATCKET_PATH */
+#define OMA_FIELD_PACKET_PATH                      "PacketPath"
 #define OMA_FIELD_CONFIG                           "Config" /* OM_CONFIGURE_FIELD_CONFIG */
+
+#define OMA_FIELD_ZOOID3                           "zooid"
+#define OMA_FIELD_INSTALLPATH3                     "installpath"
+#define OMA_FIELD_DATAPATH3                        "datapath"
+#define OMA_FIELD_DATAPORT3                        "dataport"
+#define OMA_FIELD_ELECTPORT3                       "electport"
+#define OMA_FIELD_CLIENTPORT3                      "clientport"
+#define OMA_FIELD_SYNCLIMIT3                       "synclimit"
+#define OMA_FIELD_INITLIMIT3                       "initlimit"
+#define OMA_FIELD_TICKTIME3                        "ticktime"
 
 #define OMA_FIELD_STAGE_INSTALL                    "install" /* OM_TASK_STATUS_INSTALL */
 #define OMA_FIELD_STAGE_UNINSTALL                  "uninstall" /* OM_TASK_STATUS_UNINSTALL */
@@ -135,6 +152,7 @@
 #define OMA_FIELD_CLUSTERNAME2                     "clustername"
 #define OMA_FIELD_BUSINESSNAME                     "BusinessName"
 #define OMA_FIELD_BUSINESSNAME2                    "businessname"
+#define OMA_FIELD_BUSINESSTYPE                     "BusinessType"
 #define OMA_FIELD_USERTAG                          "UserTag"
 #define OMA_FIELD_USERTAG2                         "usertag"
 
@@ -153,6 +171,7 @@
 #define OMA_FIELD_PORT                             "Port"
 #define OMA_FIELD_SERVICE                          "Service"
 #define OMA_FIELD_SAFETY                           "Safety"
+#define OMA_FIELD_SERVERINFO                       "ServerInfo"
 
 // om
 #define OMA_FIELD_VERSION                          "Version"

@@ -48,8 +48,9 @@
 using namespace std ;
 using namespace bson ;
 
-#define OMA_TASK_NAME_ADD_HOST_SUB           "add host sub task"
-#define OMA_TASK_NAME_INSTALL_BUSINESS_SUB   "install db business sub task"
+#define OMA_TASK_NAME_ADD_HOST_SUB              "add host sub task"
+#define OMA_TASK_NAME_INSTALL_DB_BUSINESS_SUB   "install db business sub task"
+#define OMA_TASK_NAME_INSTALL_ZN_BUSINESS_SUB   "install zookeeper business sub task"
 
 namespace engine
 {
@@ -105,7 +106,25 @@ namespace engine
          _omaInstDBBusTask    *_pTask ;
    } ;
    typedef _omaAddHostSubTask omaAddHostSubTask ;
-   
+
+
+   /*
+      add zookeeper sub task
+   */
+   class _omaInstZNBusSubTask : public _omaTask
+   {
+      public:
+         _omaInstZNBusSubTask( INT64 taskID ) ;
+         virtual ~_omaInstZNBusSubTask() ;
+
+      public:
+         INT32 init( const BSONObj &info, void *ptr = NULL ) ;
+         INT32 doit() ;
+
+      private:
+         _omaInstZNBusTask    *_pTask ;
+   } ;
+   typedef _omaInstZNBusSubTask omaInstZNBusSubTask ;
    
 }
 

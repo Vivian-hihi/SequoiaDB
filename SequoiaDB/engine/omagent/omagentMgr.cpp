@@ -1235,18 +1235,108 @@ namespace engine
       goto done ;
    }
 
+   INT32 _omAgentMgr::_getTaskType( const BSONObj &obj, OMA_TASK_TYPE *type )
+   {
+      INT32 rc = SDB_OK ;
+      INT32 num = 0 ;
+      OMA_TASK_TYPE taskType = OMA_TASK_END ;
+      BSONObj infoObj ;
+      const CHAR *pBusinessType = NULL ;
+      
+      // get task type
+      rc = omaGetIntElement( obj, OMA_FIELD_TASKTYPE, num ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                "Get field[%s] failed, rc: %d", OMA_FIELD_TASKTYPE, rc ) ;
+      taskType = (OMA_TASK_TYPE)num ;
+      // check
+      if ( taskType <= OMA_TASK_TYPE_BEGIN || taskType >= OMA_TASK_TYPE_END )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "Receive invalid task type[%d], rc = %d",
+                     taskType, rc ) ;
+         goto error ;
+      }
+      // get task sub type
+      if ( OMA_TASK_ADD_BUS == taskType || OMA_TASK_REMOVE_BUS == taskType )
+      {
+         rc = omaGetObjElement( obj, OMA_FIELD_INFO, infoObj ) ;
+         PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                   "Get field[%s] failed, rc: %d",
+                   OMA_FIELD_INFO, rc ) ;
+         // businessType
+         rc = omaGetStringElement( infoObj, OMA_FIELD_BUSINESSTYPE,
+                                   &pBusinessType) ;
+         PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                   "Get field[%s] failed, rc: %d",
+                   OMA_FIELD_BUSINESSTYPE, rc ) ;
+         if ( OMA_TASK_ADD_BUS == taskType )
+         {
+            if ( string(OMA_BUS_TYPE_SEQUOIADB) == string(pBusinessType) )
+            {
+               *type = OMA_TASK_INSTALL_DB ;
+               goto done ;
+            }
+            else if ( string(OMA_BUS_TYPE_ZOOKEEPER) == string(pBusinessType) )
+            {
+               *type = OMA_TASK_INSTALL_ZN ;
+               goto done ;
+            }
+            else
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG_MSG( PDERROR, "Unknow task sub type with name[%s], "
+                           "rc = %d", pBusinessType, rc ) ;
+               goto error ;
+            }   
+         }
+         else
+         {
+            if ( string(OMA_BUS_TYPE_SEQUOIADB) == string(pBusinessType) )
+            {
+               *type = OMA_TASK_REMOVE_DB ;
+               goto done ;
+            }
+            else if ( string(OMA_BUS_TYPE_ZOOKEEPER) == string(pBusinessType) )
+            {
+               *type = OMA_TASK_REMOVE_ZN ;
+               goto done ;
+            }
+            else
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG_MSG( PDERROR, "Unknow task sub type with name[%s], "
+                           "rc = %d", pBusinessType, rc ) ;
+               goto error ;
+            } 
+         }
+      }
+      else
+      {
+         *type = taskType ;
+         goto done ;
+      }
+      
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 _omAgentMgr::_startTask( const BSONObj &obj )
    {
-      INT32 rc       = SDB_OK ;
-      INT32 taskType = OMA_TASK_END ;
-      INT64 taskID   = 0 ;
+      INT32 rc               = SDB_OK ;
+      OMA_TASK_TYPE taskType = OMA_TASK_END ;
+      INT64 taskID           = 0 ;
       BSONElement ele ;
       BSONObj data ;
 
       // get task type
-      rc = omaGetIntElement( obj, OMA_FIELD_TASKTYPE, taskType ) ;
-      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
-                "Get field[%s] failed, rc: %d", OMA_FIELD_TASKTYPE, rc ) ;
+      rc = _getTaskType( obj, &taskType ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to get task type, rc = %d", rc ) ;
+         goto error ;
+      }
       // get task id
       ele = obj.getField( OM_TASKINFO_FIELD_TASKID ) ;
       if ( !ele.isNumber() )
@@ -1258,7 +1348,7 @@ namespace engine
       }
       taskID = (INT64)ele.numberLong() ;
       // run task as a background job
-      rc = startOmagentJob( (OMA_TASK_TYPE)taskType, taskID, obj, NULL ) ;
+      rc = startOmagentJob( taskType, taskID, obj, NULL ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Failed to start omagent job "

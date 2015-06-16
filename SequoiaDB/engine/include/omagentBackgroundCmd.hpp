@@ -382,6 +382,60 @@ namespace engine
    } ;
 
 
+   /*
+      _omaAddZNode
+   */
+   class _omaAddZNode : public _omaCommand
+   {
+      public:
+         _omaAddZNode ( AddZNInfo &info ) ;
+         ~_omaAddZNode () ;
+         virtual const CHAR * name () { return OMA_CMD_INSTALL_ZOOKEEPER ; }
+         virtual INT32 init ( const CHAR *pInstallInfo ) ;
+
+      private:
+         INT32 _getAddZNInfo( BSONObj &retObj1, BSONObj &retObj2 ) ;
+         
+      private:
+         AddZNInfo   _addZNInfo ;
+   } ;
+
+   /*
+      _omaRemoveZNode
+   */
+   class _omaRemoveZNode : public _omaCommand
+   {
+      public:
+         _omaRemoveZNode ( RemoveZNInfo &info ) ;
+         ~_omaRemoveZNode () ;
+         virtual const CHAR * name () { return OMA_CMD_REMOVE_ZOOKEEPER ; }
+         virtual INT32 init ( const CHAR *pInstallInfo ) ;
+
+      private:
+         INT32 _getRemoveZNInfo( BSONObj &retObj1, BSONObj &retObj2 ) ;
+         
+      private:
+         RemoveZNInfo   _removeZNInfo ;
+   } ;
+
+   /*
+      _omaCheckZNode
+   */
+   class _omaCheckZNodes : public _omaCommand
+   {
+      public:
+         _omaCheckZNodes ( vector<CheckZNInfo> &info ) ;
+         ~_omaCheckZNodes () ;
+         virtual const CHAR * name () { return OMA_CMD_CHECK_ZOOKEEPER ; }
+         virtual INT32 init ( const CHAR *pInstallInfo ) ;
+
+      private:
+         INT32 _getCheckZNInfos( BSONObj &retObj1, BSONObj &retObj2 ) ;
+         
+      private:
+         vector<CheckZNInfo>   _checkZNInfos ;
+   } ;
+
 } // namespace engine
 
 

@@ -180,7 +180,64 @@ namespace engine
       RemoveDBResult   _removeResult ;
    } ;
    typedef _RemoveDBBusInfo RemoveDBBusInfo ;
+
+   /*
+      add zookeeper
+   */
+   struct _AddZNCommon
+   {
+      string         _clusterName ;
+      string         _businessName ;
+      string         _deployMod ;
+      string         _sdbUser ;
+      string         _sdbPasswd ;
+      string         _userGroup ;
+      string         _installPacket ;
+      vector<string> _serverInfo ;
+   } ;
+   typedef struct _AddZNCommon AddZNCommon ;
    
+   struct _AddZNItem
+   {
+      string _hostName ;
+      string _user ;
+      string _passwd ;
+      string _sshPort ;
+      string _installPath ;
+      string _dataPath ;
+      string _dataPort ;
+      string _electPort ;
+      string _clientPort ;
+      string _syncLimit ;
+      string _initLimit ;
+      string _tickTime ;
+      string _zooid ;      
+   } ;
+   typedef struct _AddZNItem AddZNItem ;
+
+   struct _AddZNInfo
+   {
+      INT32       _serialNum ;
+      BOOLEAN     _flag ;   // whether the znode has been handled or not
+      INT64       _taskID ;
+      AddZNCommon _common ; // common field
+      AddZNItem   _item ;   // znode's conf info
+   } ;
+   typedef struct _AddZNInfo AddZNInfo ;
+   typedef AddZNInfo RemoveZNInfo ;
+   typedef AddZNInfo CheckZNInfo ;
+
+   struct _AddZNResultInfo
+   {
+      string         _hostName ;
+      string         _zooid ;
+      INT32          _status ;
+      string         _statusDesc ;
+      INT32          _errno ;
+      string         _detail ;
+      vector<string> _flow ;
+   } ;
+   typedef struct _AddZNResultInfo AddZNResultInfo ;
    
 }
 

@@ -156,23 +156,38 @@ namespace engine
       {
          // pTask will be free in _omagentJob::~_omagentJob()
          // when job is destroy
+         // add host
          case OMA_TASK_ADD_HOST :
             pTask = SDB_OSS_NEW _omaAddHostTask( taskID ) ;
             break ;
          case OMA_TASK_ADD_HOST_SUB :
             pTask = SDB_OSS_NEW _omaAddHostSubTask( taskID ) ;
             break ;
+         // remove host
          case OMA_TASK_REMOVE_HOST :
             pTask = SDB_OSS_NEW _omaRemoveHostTask( taskID ) ;
             break ;
+         // install db business
          case OMA_TASK_INSTALL_DB :
             pTask = SDB_OSS_NEW _omaInstDBBusTask( taskID ) ;
             break ;
          case OMA_TASK_INSTALL_DB_SUB :
             pTask = SDB_OSS_NEW _omaInstDBBusSubTask( taskID ) ;
             break ;
+         // remove db business
          case OMA_TASK_REMOVE_DB :
-            pTask= SDB_OSS_NEW _omaRemoveDBBusTask( taskID ) ;
+            pTask = SDB_OSS_NEW _omaRemoveDBBusTask( taskID ) ;
+            break ;
+         // add znode business
+         case OMA_TASK_INSTALL_ZN :
+            pTask = SDB_OSS_NEW _omaInstZNBusTask( taskID ) ;
+            break ;
+         case OMA_TASK_INSTALL_ZN_SUB :
+            pTask = SDB_OSS_NEW _omaInstZNBusSubTask( taskID ) ;
+            break ;
+         // remove znode business
+         case OMA_TASK_REMOVE_ZN :
+//            pTask = SDB_OSS_NEW _omaRemoveZNTask( taskID ) ;
             break ;
          default :
             PD_LOG_MSG( PDERROR, "Unknow task type[%d]", taskType ) ;

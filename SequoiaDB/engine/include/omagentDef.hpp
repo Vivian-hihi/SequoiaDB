@@ -142,6 +142,9 @@ namespace engine
    #define OMA_ROLLBACK_CATALOG                       "rollback installed catalog"
    #define OMA_ROLLBACK_COORD                         "rollback installed coord"
    #define OMA_ROLLBACK_DATA_RG                       "rollback installed data groups"
+   #define OMA_CMD_INSTALL_ZOOKEEPER                  "install zookeeper node"
+   #define OMA_CMD_REMOVE_ZOOKEEPER                   "remove zookeeper node"
+   #define OMA_CMD_CHECK_ZOOKEEPER                    "check zookeeper node"
 
    #define OMA_INIT_ENV                               "init for exeuting js"
 
@@ -190,6 +193,9 @@ namespace engine
    #define FILE_ROLLBACK_DATA_RG            "rollbackDataRG.js"
 
    #define FILE_INIT_ENV                    "initEnv.js"
+   #define FILE_INSTALL_ZOOKEEPER           "installZNode.js"
+   #define FILE_REMOVE_ZOOKEEPER            "removeZNode.js"
+   #define FILE_CHECK_ZOOKEEPER             "checkZNodes.js"
 
 
    /*
