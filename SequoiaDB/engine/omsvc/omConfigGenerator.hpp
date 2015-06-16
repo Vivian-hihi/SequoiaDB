@@ -645,15 +645,20 @@ namespace engine
                                                omZooNodeConf *node ) ;
 
       private:
-         hostHardWare*        _getBestHost( ) ;
+         hostHardWare*        _getBestHost() ;
          INT32                _getBestResourceFromHost( hostHardWare *host, 
                                                       simpleDiskInfo **diskInfo, 
                                                       string &svcName ) ;
+         void                 _addBizZooID( const string &businessName, 
+                                            const string &zooID ) ;
+         BOOLEAN              _isBizZooIDExist( const string &businessName, 
+                                                const string &zooID ) ;
 
       private:
          map<string, hostHardWare*> _mapHost ;
          zooNodeCounter             _nodeCounter ;
          zooPropertyContainer       *_propertyContainer ;
+         map< string, set<string> > _bizZooIDMap ;
    } ;
 
 

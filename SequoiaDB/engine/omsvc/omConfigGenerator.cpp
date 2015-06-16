@@ -4000,11 +4000,47 @@ namespace engine
       node.setHostName( hostName ) ;
       node.setElectPort( electPort ) ;
       node.setZooID( zooID ) ;
+      _addBizZooID( businessName, zooID ) ;
 
    done:
       return rc ;
    error:
       goto done ;
+   }
+
+   void omZooCluster::_addBizZooID( const string &businessName, 
+                                    const string &zooID )
+   {
+      map< string, set<string> >::iterator iter ;
+      iter = _bizZooIDMap.find( businessName ) ;
+      if ( iter == _bizZooIDMap.end() )
+      {
+         set<string> tmpSet ;
+         tmpSet.insert( zooID ) ;
+         _bizZooIDMap[ businessName ] = tmpSet ;
+      }
+      else
+      {
+         _bizZooIDMap[ businessName ].insert( zooID ) ;
+      }
+   }
+
+   BOOLEAN omZooCluster::_isBizZooIDExist( const string &businessName, 
+                                           const string &zooID )
+   {
+      map< string, set<string> >::iterator iter ;
+      iter = _bizZooIDMap.find( businessName ) ;
+      if ( iter != _bizZooIDMap.end() )
+      {
+         set<string>::iterator iterSet ;
+         iterSet = _bizZooIDMap[ businessName ].find( zooID ) ;
+         if ( iterSet != _bizZooIDMap[ businessName ].end() )
+         {
+            return TRUE ;
+         }
+      }
+
+      return FALSE ;
    }
 
    INT32 omZooCluster::getHostNum()
@@ -4029,6 +4065,7 @@ namespace engine
 
       _propertyContainer = NULL ;
       _nodeCounter.clear() ;
+      _bizZooIDMap.clear() ;
    }
 
    INT32 omZooCluster::checkAndAddNode( const string &businessName,
@@ -4103,6 +4140,16 @@ namespace engine
                         clientPort.c_str() ) ;
             goto error ;
          }
+
+         if ( _isBizZooIDExist( businessName, zooID ) )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG_MSG( PDERROR, "zooid is exist:businessName=%s,zooid=%s",
+                        businessName.c_str(), zooID.c_str() ) ;
+            goto error ;
+         }
+
+         _addBizZooID( businessName, zooID ) ;
 
          //add empty list
          portList.clear() ;
