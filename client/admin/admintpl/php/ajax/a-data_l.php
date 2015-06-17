@@ -5,6 +5,7 @@ $isfirst = true ;
 
 $array_1 = array() ;
 $array_2 = array() ;
+$array_3 = array() ;
 
 $cursor = $db -> getList ( SDB_LIST_COLLECTIONSPACES ) ;
 if ( !empty ( $cursor ) )
@@ -26,7 +27,32 @@ if ( !empty ( $cursor ) )
 	}
 }
 
+$cursor = $db -> getSnapshot ( 8 ) ;
+if ( !empty ( $cursor ) )
+{
+	while ( $arr = $cursor -> getNext() )
+	{
+        if( array_key_exists( 'IsMainCL', $arr ) && $arr['IsMainCL'] == true )
+        {
+            $tmpCSCL = explode( '.', $arr['Name'] ) ;
+            array_push( $array_3, $tmpCSCL  ) ;
+        }
+	}
+}
+
 $cscl_list = arrayMerges( $array_1, $array_2 ) ;
+
+foreach( $cscl_list as $key => $csInfo )
+{
+    foreach( $array_3 as $masterInfo )
+    {
+        if( $csInfo['Name'] == $masterInfo[0] )
+        {
+            array_push( $cscl_list[ $key ]['Collection'], array( 'Name' => $masterInfo[1] ) ) ;
+        }
+    }
+}
+
 $cscl_list = json_encode( array( 'name' => '数据库', 'child' => array( 'name' => '集合空间', 'child' => $cscl_list ) ), true ) ;
 
 $smarty -> assign( "cscl_list", $cscl_list ) ;
