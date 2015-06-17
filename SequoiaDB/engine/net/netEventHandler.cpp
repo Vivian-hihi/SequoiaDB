@@ -62,6 +62,7 @@ namespace engine
       _hasRecvMsg    = FALSE ;
       _lastSendTick  = pmdGetDBTick() ;
       _lastRecvTick  = pmdGetDBTick() ;
+      _lastBeatTick  = pmdGetDBTick() ;
       _isAcitve      = FALSE ;
    }
 
@@ -135,6 +136,11 @@ namespace engine
    BOOLEAN _netEventHandler::isLocalConnection() const
    {
       return localAddr() == remoteAddr() ? TRUE : FALSE ;
+   }
+
+   void _netEventHandler::syncLastBeatTick()
+   {
+      _lastBeatTick = pmdGetDBTick() ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__NETEVNHND_SETOPT, "_netEventHandler::setOpt" )
@@ -489,6 +495,7 @@ namespace engine
       }
 
       _lastRecvTick = pmdGetDBTick() ;
+      _lastBeatTick = _lastRecvTick ;
 
       if ( NET_EVENT_HANDLER_STATE_HEADER == _state )
       {

@@ -154,10 +154,11 @@ namespace engine
          _mtx.release_shared() ;
 
          /// send msg
-         if ( pmdGetTickSpanTime( eh->getLastSendTick() ) >= _beatInterval )
+         if ( pmdGetTickSpanTime( eh->getLastBeatTick() ) >= _beatInterval )
          {
             eh->mtx().get() ;
             eh->syncSend( (const void*)&beat, beat.messageLength ) ;
+            eh->syncLastBeatTick() ;
             eh->mtx().release() ;
          }
       }
@@ -218,10 +219,6 @@ namespace engine
          _beatLastTick = pmdGetDBTick() ;
          _checkBeat = TRUE ;
          _heartbeat() ;
-      }
-      else if ( spanTime >= NET_HEARTBEAT_INTERVAL )
-      {
-         _checkBreak( beatTimeout ) ;
       }
    }
 
