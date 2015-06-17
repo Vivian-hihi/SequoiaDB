@@ -210,6 +210,7 @@ function _pushPacket( ssh, packet, target_path )
 @parameter
    ssh[object]: ssh object
    insallPath[string]: install path
+   zooID[string]: zoo node id
    isCluster[bool]: install cluster environment or not
    bus_info[object]: business information
 @return void
@@ -232,14 +233,14 @@ server.1=susetzb:2888:3888
 server.2=rhel64-test8:2888:3888
 server.3=rhel64-test9:2888:3888
 */
-function _genConfFile( ssh, insallPath, isCluster, bus_info )
+function _genConfFile( ssh, insallPath, zooID, isCluster, bus_info )
 {
    var str = "" ;
    var conf_file = adaptPath( insallPath ) + "conf/zoo.cfg" ;
    var tmp_conf_file = "" ;
    if ( SYS_LINUX == SYS_TYPE )
    {
-      tmp_conf_file = "/tmp/zoo.cfg" ;
+      tmp_conf_file = "/tmp/zoo.cfg" + "_" + zooID ;
    }
    else
    {
@@ -729,7 +730,7 @@ function main()
       // 4. install zookeeper
       _installZNode( ssh, packetPath, installPath ) ;
       // 5. add config file
-      _genConfFile( ssh, installPath, isCluster, BUS_JSON ) ;
+      _genConfFile( ssh, installPath, zooID, isCluster, BUS_JSON ) ;
       // 6. add myid file
       _genMyIDFile( ssh, dataPath, zooID, isCluster ) ;
       // 7. change paths' owner
