@@ -320,7 +320,7 @@ namespace engine
          UINT32                  _beatTime ;
          BOOLEAN                 _active ;
          CLS_BS_STATUS           _replStatus ;
-         UINT64                  _checkBreakTime ;
+         UINT64                  _checkBreakTick ;
 
          UINT32                  _srcSessionNum ;
          ossRWMutex              _vecLatch ;

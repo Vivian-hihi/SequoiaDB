@@ -98,7 +98,7 @@ namespace engine
 
       _totalLogSize = 0 ;
       _inSyncCtrl   = FALSE ;
-      _checkBreakTime = 0 ;
+      _checkBreakTick = 0 ;
       memset( _sizethreshold, 0, sizeof( _sizethreshold ) ) ;
       memset( _timeThreshold, 0, sizeof( _timeThreshold ) ) ;
    }
@@ -738,20 +738,16 @@ namespace engine
       /// w when change value
       PD_TRACE_ENTRY ( SDB__CLSREPSET__CHKBRK );
 
-      UINT64 nowTime = time( NULL ) ;
       BOOLEAN needErase = FALSE ;
       map<UINT64, _clsSharingStatus *>::iterator itr ;
       map< UINT64, _clsSharingStatus>::iterator itrInfo ;
 
       /// avoid out-of-data's timeout event
-      if ( ( nowTime >= _checkBreakTime &&
-             ( nowTime - _checkBreakTime ) * OSS_ONE_SEC < millisec ) ||
-           ( nowTime <= _checkBreakTime &&
-             ( _checkBreakTime - nowTime ) * OSS_ONE_SEC < millisec ) )
+      if ( pmdGetTickSpanTime( _checkBreakTick ) < millisec )
       {
          goto done ;
       }
-      _checkBreakTime = nowTime ;
+      _checkBreakTick = pmdGetDBTick() ;
 
       for ( itr = _info.alives.begin() ; itr != _info.alives.end() ; itr++ )
       {
