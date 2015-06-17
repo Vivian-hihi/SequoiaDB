@@ -42,7 +42,16 @@
 			<format property="test_js_begintime" pattern="yyyy-MM-dd-hh.mm.ss a" />
 		</tstamp>
 
-		<property name="sdb.cmd.allPrepare" value=" -e &quot;var COORDSVCNAME=${coord.service.port};&quot; -f &quot;${basic.testcase.path}/libs/func.js,${basic.testcase.path}/libs/all_prepare.js&quot;" />
+		<exec command="/bin/sh -c 'eval echo $$$' " dir="" timeout="900000" outputproperty="pid" />
+		<sdbprefix prefixName="CHANGEDSTRING">
+			<param name="${begin.flag}" value="Test" />
+			<param name="${host.NAME}" value="${host.NAME}" />
+			<param name="${pid}" value="${pid}" />
+			<param name="${parallel.num}" value="${parallel.num}" />
+			<param name="${end.flag}" value="_end" />
+		</sdbprefix>
+
+		<property name="sdb.cmd.allPrepare" value=" -e &quot;var CHANGEDPREFIX='${CHANGEDSTRING}'; var COORDSVCNAME=${coord.service.port};&quot; -f &quot;${basic.testcase.path}/libs/func.js,${basic.testcase.path}/libs/all_prepare.js&quot;" />
 		<echo message="Exec:${sdb.fullname} ${sdb.cmd.allPrepare}" />
 		<exec executable="${sdb.fullname}" dir="" timeout="100000" outputproperty="allPrepare.screen.output"  resultproperty="allPrepare.ret.code">
 			<arg line="${sdb.cmd.allPrepare}" />
@@ -59,7 +68,7 @@
 			<param name="excludes.case.patterns" value="commlib.js" />
 		</foreach>
 
-		<property name="sdb.cmd.allClean" value=" -e &quot;var COORDSVCNAME=${coord.service.port};&quot; -f &quot;${basic.testcase.path}/libs/func.js,${basic.testcase.path}/libs/all_clean.js&quot;" />
+		<property name="sdb.cmd.allClean" value=" -e &quot;var CHANGEDPREFIX='${CHANGEDSTRING}'; var COORDSVCNAME=${coord.service.port};&quot; -f &quot;${basic.testcase.path}/libs/func.js,${basic.testcase.path}/libs/all_clean.js&quot;" />
 		<echo message="Exec:${sdb.fullname} ${sdb.cmd.allClean}" />
 		<exec executable="${sdb.fullname}" dir="" timeout="100000" outputproperty="allClean.screen.output" resultproperty="allClean.ret.code">
 			<arg line="${sdb.cmd.allClean}" />
@@ -193,19 +202,13 @@
 		</exec>
 		<echo message="Now testcase ${test.case.name}.js begin with ${testcase.begin.time}"/>
 
-		<sdbprefix prefixName="CHANGEDSTRING">
-			<param name="${host.NAME}" value="${host.NAME}" />
-			<param name="${test.case.name}" value="${test.case.name}" />
-			<param name="${parallel.num}" value="${parallel.num}" />
-		</sdbprefix>
-
 		<sdbProperty name="testBeginStr" value="begin test,file is ${test.case.fullname}" />
 		<sdbProperty name="testEndStr" value="over test,file is ${test.case.fullname}" />
 		<exec executable="${sdb.fullname}" dir="" timeout="100000">
 			<arg line=" -s &quot; db = new Sdb('localhost',${coord.service.port});db.msg('${testBeginStr}');db.close(); &quot;" />
 		</exec>
 
-		<property name="sdb.cmd.beforeTestcase" value=" -e &quot; var COORDSVCNAME='${coord.service.port}' ;&quot; -f &quot;${testcases.path}/libs/func.js,${testcases.path}/libs/before_usecase.js&quot;" />
+		<property name="sdb.cmd.beforeTestcase" value=" -e &quot;var CHANGEDPREFIX='${CHANGEDSTRING}'; var COORDSVCNAME='${coord.service.port}' ;&quot; -f &quot;${testcases.path}/libs/func.js,${testcases.path}/libs/before_usecase.js&quot;" />
 		<echo message="Exec:${sdb.fullname}${sdb.cmd.beforeTestcase}" />
 		<exec executable="${sdb.fullname}" dir="" timeout="900000" outputproperty="beforeTestcase.screen.output" resultproperty="beforeTestcase.ret.code">
 			<arg line="${sdb.cmd.beforeTestcase}" />
@@ -252,7 +255,7 @@
 		</exec>
 		<echo message="${screen.output}" />
 
-		<property name="sdb.cmd.afterTestcase" value=" -e &quot; var COORDSVCNAME='${coord.service.port}' ;&quot; -f &quot;${testcases.path}/libs/func.js,${testcases.path}/libs/after_usecase.js&quot;" />
+		<property name="sdb.cmd.afterTestcase" value=" -e &quot;var CHANGEDPREFIX='${CHANGEDSTRING}'; var COORDSVCNAME='${coord.service.port}' ;&quot; -f &quot;${testcases.path}/libs/func.js,${testcases.path}/libs/after_usecase.js&quot;" />
 		<echo message="Exec:${sdb.fullname} ${sdb.cmd.afterTestcase}" />
 		<exec executable="${sdb.fullname}" dir="" timeout="900000" outputproperty="afterTestcase.screen.output" resultproperty="afterTestcase.ret.code">
 			<arg line="${sdb.cmd.afterTestcase}" />
