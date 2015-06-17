@@ -5961,6 +5961,8 @@ namespace engine
                                                 BSONArrayBuilder &arrayBuilder )
    {
       INT32 rc = SDB_OK ;
+      string businessName ;
+      string businessType ;
       string hostName ;
       simpleHostInfo hostInfo ;
       BOOLEAN isHostExist = FALSE ;
@@ -5972,6 +5974,15 @@ namespace engine
          _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
          PD_LOG( PDERROR, "get host info failed:host=%s,rc=%d", 
                  hostName.c_str(), rc ) ;
+         goto error ;
+      }
+
+      businessName = record.getStringField( OM_CONFIGURE_FIELD_BUSINESSNAME ) ;
+      rc = _getBusinessType( businessName, businessType ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "get businessType failed:business=%s,rc=%d", 
+                 businessName.c_str(), rc ) ;
          goto error ;
       }
 
@@ -5994,15 +6005,22 @@ namespace engine
             BSONObj tmp = ele.embeddedObject() ;
             BSONObjBuilder builder ;
             builder.appendElements( tmp ) ;
-            //MSG_ROUTE_CAT_SERVICE
-            string svcName = tmp.getStringField( OM_CONF_DETAIL_SVCNAME ) ;
-            INT32 iSvcName = ossAtoi( svcName.c_str() ) ;
-            INT32 iCatName = iSvcName + MSG_ROUTE_CAT_SERVICE ;
-            ossItoa( iCatName, catName, OM_INT32_LENGTH ) ;
-            builder.append( OM_CONF_DETAIL_CATANAME, catName ) ;
+            if ( businessType == OM_BUSINESS_SEQUOIADB )
+            {
+               //MSG_ROUTE_CAT_SERVICE
+               string svcName = tmp.getStringField( OM_CONF_DETAIL_SVCNAME ) ;
+               INT32 iSvcName = ossAtoi( svcName.c_str() ) ;
+               INT32 iCatName = iSvcName + MSG_ROUTE_CAT_SERVICE ;
+               ossItoa( iCatName, catName, OM_INT32_LENGTH ) ;
+               builder.append( OM_CONF_DETAIL_CATANAME, catName ) ;
+            }
             builder.append( OM_BSON_FIELD_HOST_NAME, hostInfo.hostName ) ;
             builder.append( OM_BSON_FIELD_HOST_USER, hostInfo.user ) ;
             builder.append( OM_BSON_FIELD_HOST_PASSWD, hostInfo.passwd ) ;
+            if ( businessType == OM_BUSINESS_ZOOKEEPER )
+            {
+               builder.append( OM_BSON_FIELD_HOST_SSHPORT, hostInfo.sshPort ) ;
+            }
 
             BSONObj oneNode = builder.obj() ;
             arrayBuilder.append( oneNode ) ;
@@ -6662,7 +6680,6 @@ namespace engine
       taskInfoBuilder.append( OM_BSON_BUSINESS_TYPE, type ) ;
       taskInfoBuilder.append( OM_BSON_BUSINESS_NAME, businessName ) ;
       taskInfoBuilder.append( OM_BSON_DEPLOY_MOD, deployMod ) ;
-      
       {
          BSONArrayBuilder arrayBuilder ;
          BSONObj condition ;
@@ -6677,6 +6694,28 @@ namespace engine
          }
          else if ( type == OM_BUSINESS_ZOOKEEPER )
          {
+            string sdbUser ;
+            string sdbPasswd ;
+            string sdbUserGroup ;
+            BSONObj clusterInfo ;
+            rc = _getClusterInfo( clusterName, clusterInfo ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "get cluster info failed:cluster=%s", 
+                       clusterName.c_str() ) ;
+               goto error ;
+            }
+
+            sdbUser      = clusterInfo.getStringField( 
+                                               OM_CLUSTER_FIELD_SDBUSER ) ;
+            sdbPasswd    = clusterInfo.getStringField( 
+                                               OM_CLUSTER_FIELD_SDBPASSWD ) ;
+            sdbUserGroup = clusterInfo.getStringField(
+                                               OM_CLUSTER_FIELD_SDBUSERGROUP ) ;
+            taskInfoBuilder.append( OM_CLUSTER_FIELD_SDBUSER, sdbUser ) ;
+            taskInfoBuilder.append( OM_CLUSTER_FIELD_SDBPASSWD, sdbPasswd ) ;
+            taskInfoBuilder.append( OM_CLUSTER_FIELD_SDBUSERGROUP, 
+                                    sdbUserGroup ) ;
             condition = BSON( OM_BSON_FIELD_HOST_NAME << "" 
                               << OM_ZOO_CONF_DETAIL_ZOOID << "" ) ;
          }
