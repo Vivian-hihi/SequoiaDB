@@ -38,6 +38,7 @@
 #include "netEventHandler.hpp"
 #include "netFrame.hpp"
 #include "ossMem.hpp"
+#include "pmdEnv.hpp"
 #include "msgDef.h"
 #include "pd.hpp"
 #include "pdTrace.hpp"
@@ -59,6 +60,9 @@ namespace engine
       _isConnected   = FALSE ;
       _isInAsync     = FALSE ;
       _hasRecvMsg    = FALSE ;
+      _lastSendTick  = pmdGetDBTick() ;
+      _lastRecvTick  = pmdGetDBTick() ;
+      _isAcitve      = FALSE ;
    }
 
    _netEventHandler::~_netEventHandler()
@@ -214,6 +218,8 @@ namespace engine
       {
          close() ;
       }
+
+      _isAcitve = TRUE ;
 
 /*
       try
@@ -400,6 +406,10 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__NETEVNHND_SYNCSND );
       UINT32 send = 0 ;
+
+      /// not care send suc or failed
+      _lastSendTick = pmdGetDBTick() ;
+
       try
       {
          while ( send < len )
@@ -477,6 +487,8 @@ namespace engine
 
          goto error_close ;
       }
+
+      _lastRecvTick = pmdGetDBTick() ;
 
       if ( NET_EVENT_HANDLER_STATE_HEADER == _state )
       {

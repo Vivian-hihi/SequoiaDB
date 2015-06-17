@@ -1240,7 +1240,7 @@ namespace engine
 
    BOOLEAN _clsReplicateSet::_dbIsAbNormal() const
    {
-      return dbIsAbnormal() ;
+      return pmdDBIsAbnormal() ;
    }
 }
 

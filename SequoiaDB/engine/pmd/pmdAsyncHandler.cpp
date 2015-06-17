@@ -185,11 +185,8 @@ namespace engine
       PD_TRACE_EXITRC ( SDB__PMDMSGHND_HNDMSG, rc ) ;
       return rc ;
    error :
-      if ( _pSessionMgr )
-      {
-         /// disconnect the connect
-         _pSessionMgr->getRouteAgent()->close( handle ) ;
-      }
+      /// when this error, net will close the connect
+      rc = SDB_NET_BROKEN_MSG ;
       goto done ;
    }
 
@@ -252,12 +249,6 @@ namespace engine
            MSG_BS_INTERRUPTE == header->opCode )
       {
          bCreate = FALSE ;
-      }
-      else if ( MSG_CLS_BEAT == header->opCode )
-      {
-         /// heart beat detection from coord
-         _handleBeatMsg( handle, header ) ;
-         goto done ;
       }
 
       sessionID = _pSessionMgr->makeSessionID( handle, header ) ;
@@ -380,30 +371,5 @@ namespace engine
       PD_TRACE_EXIT ( SDB__PMDMSGHND_POSTMAINMSG ) ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDMSGHND__HANDLEBEATMSG, "_pmdAsyncMsgHandler::_handleBeatMsg" )
-   void _pmdAsyncMsgHandler::_handleBeatMsg( const NET_HANDLE &handle,
-                                             const _MsgHeader *reqHeader )
-   {
-      INT32 rc = SDB_OK ;
-
-      MsgOpReply header ;
-      header.header.opCode = MAKE_REPLY_TYPE( reqHeader->opCode ) ;
-      header.header.messageLength = sizeof ( MsgOpReply ) ;
-      header.header.requestID = reqHeader->requestID ;
-      header.header.TID = reqHeader->TID ;
-      header.header.routeID.value = 0 ;
-      header.flags = dbIsAbnormal() ? SDB_SYS : SDB_OK ; ;
-      header.contextID = -1 ;
-      header.numReturned = 0 ;
-      header.startFrom = 0 ;
-
-      rc = _pSessionMgr->getRouteAgent()->syncSend ( handle,
-                                                     (void*)(&header) ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to reply beat request:%d", rc ) ;
-      }
-      return ;
-   }
 }
 

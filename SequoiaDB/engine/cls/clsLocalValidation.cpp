@@ -117,7 +117,7 @@ namespace engine
       }
 
       /// update validation tick
-      updateValidationTick() ;
+      pmdUpdateValidationTick() ;
    done:
       SAFE_OSS_FREE( p ) ;
       if ( -1 != contextID )

@@ -374,30 +374,45 @@ namespace engine
 
 #endif // _LINUX
 
-   void updateDBTick()
+   void pmdUpdateDBTick()
    {
       ++(pmdGetSysInfo()->_tick) ;
       return ;
    }
 
-   UINT64 getDBTick()   
+   UINT64 pmdGetDBTick()   
    {
       return pmdGetSysInfo()->_tick ;
    }
 
-   void updateValidationTick()
+   UINT64 pmdGetTickSpanTime( UINT64 lastTick )
    {
-      pmdGetSysInfo()->_validationTick = getDBTick() ;
+      UINT64 curTick = pmdGetDBTick() ;
+      if ( curTick > lastTick )
+      {
+         return ( curTick - lastTick ) * PMD_SYNC_CLOCK_INTERVAL ;
+      }
+      return 0 ;
+   }
+
+   UINT64 pmdDBTickSpan2Time( UINT64 tickSpan )
+   {
+      return tickSpan * PMD_SYNC_CLOCK_INTERVAL ;
+   }
+
+   void pmdUpdateValidationTick()
+   {
+      pmdGetSysInfo()->_validationTick = pmdGetDBTick() ;
       return ;
    } 
 
-   UINT64 getValidationTick()
+   UINT64 pmdGetValidationTick()
    {
       return pmdGetSysInfo()->_validationTick ;
    }
 
-   void getTicks( UINT64 &tick,
-                  UINT64 &validationTick )
+   void pmdGetTicks( UINT64 &tick,
+                     UINT64 &validationTick )
    {
       /// ticks may be modified by other thread.
       /// get validationTick first that we can
@@ -407,12 +422,12 @@ namespace engine
       return ;
    }
 
-   BOOLEAN dbIsAbnormal()
+   BOOLEAN pmdDBIsAbnormal()
    {
       UINT64 validationTick = 0 ;
       UINT64 tick = 0 ;
       const static UINT64 s_maxTick = (30*OSS_ONE_SEC)/PMD_SYNC_CLOCK_INTERVAL ;
-      getTicks( tick, validationTick ) ;
+      pmdGetTicks( tick, validationTick ) ;
 
       /// 30s is not update validation, we think db is abnormal
       if ( tick > validationTick && tick - validationTick > s_maxTick )

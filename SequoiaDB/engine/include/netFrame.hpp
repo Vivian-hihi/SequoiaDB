@@ -55,6 +55,8 @@ namespace engine
 {
    class _netMsgHandler ;
 
+   #define NET_HEARTBEAT_INTERVAL            ( 5000 )
+
    class _netFrame : public SDBObject
    {
       public:
@@ -87,6 +89,11 @@ namespace engine
 
          void stop() ;
 
+         void heartbeat( UINT32 interval ) ;
+
+         void setBeatInfo( UINT32 beatTimeout,
+                           UINT32 beatInteval = NET_HEARTBEAT_INTERVAL ) ;
+
          NET_EH getEventHandle( const NET_HANDLE &handle ) ;
 
          /// can only be called for once. non-reentrant
@@ -106,7 +113,7 @@ namespace engine
                             const _MsgRouteID &id ) ;
 
          INT32 syncSend( const NET_HANDLE &handle,
-                          void *header ) ;
+                         void *header ) ;
 
          INT32 syncSendRaw( const NET_HANDLE &handle,
                             const CHAR *pBuff,
@@ -171,6 +178,11 @@ namespace engine
          void _erase( const NET_HANDLE &handle ) ;
 
          void _addRoute( NET_EH eh ) ;
+
+         void _heartbeat() ;
+
+         void _checkBreak( UINT32 timeout ) ;
+
       private:
          io_service                       _ioservice ;
          multimap<UINT64, NET_EH>         _route ;
@@ -184,6 +196,11 @@ namespace engine
          UINT32                           _timerID;
          ossAtomicSigned64                _netOut;
          ossAtomicSigned64                _netIn;
+
+         UINT32                           _beatInterval ;
+         UINT32                           _beatTimeout ;
+         UINT64                           _beatLastTick ;
+         BOOLEAN                          _checkBeat ;
 
    } ;
 

@@ -158,7 +158,7 @@ namespace engine
       while ( !cb->isDisconnected() )
       {
          pKrcb->syncCurTime() ;
-         updateDBTick() ;
+         pmdUpdateDBTick() ;
          ossSleep( PMD_SYNC_CLOCK_INTERVAL ) ;
       }
       return SDB_OK ;

@@ -103,9 +103,6 @@ namespace engine
                                const _MsgHeader *header,
                                const CHAR *msg ) ;
 
-         void _handleBeatMsg( const NET_HANDLE &handle,
-                              const _MsgHeader *reqHeader ) ;
-
       protected:
          virtual void _postMainMsg( const NET_HANDLE &handle,
                                     MsgHeader *pNewMsg ) ;

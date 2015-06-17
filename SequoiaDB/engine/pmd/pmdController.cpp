@@ -546,6 +546,11 @@ namespace engine
          _checkSession( interval ) ;
          _timeCounter = 0 ;
       }
+
+      for ( UINT32 i = 0 ; i < _vecMonNets.size() ; ++i )
+      {
+         _vecMonNets[ i ]->heartbeat( OSS_ONE_SEC ) ;
+      }
    }
 
    void _pmdController::releaseFixBuf( CHAR * pBuff )
@@ -608,6 +613,29 @@ namespace engine
    void _pmdController::setRSManager( _pmdRemoteSessionMgr * pRSManager )
    {
       _pRSManager = pRSManager ;
+   }
+
+   void _pmdController::registerNet( _netFrame *pNetFrame )
+   {
+      SDB_ASSERT( FALSE == pmdGetKRCB()->isActive(),
+                  "Can't register when actived" ) ;
+      _vecMonNets.push_back( pNetFrame ) ;
+   }
+
+   void _pmdController::unregNet( _netFrame *pNetFrame )
+   {
+      SDB_ASSERT( FALSE == pmdGetKRCB()->isActive(),
+                  "Can't register when actived" ) ;
+      vector< _netFrame* >::iterator it = _vecMonNets.begin() ;
+      while( it != _vecMonNets.end() )
+      {
+         if ( *it == pNetFrame )
+         {
+            _vecMonNets.erase( it ) ;
+            break ;
+         }
+         ++it ;
+      }
    }
 
    INT32 _pmdController::initForeignModule( const CHAR *moduleName )

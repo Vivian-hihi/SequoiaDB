@@ -241,14 +241,7 @@ namespace engine
       PD_TRACE1 ( SDB_CATMAINCT_HANDLEMSG,
                   PD_PACK_INT ( header->opCode ) ) ;
 
-      if ( MSG_CLS_BEAT == header->opCode )
-      {
-         _handleBeatMsg( handle, header ) ;
-      }
-      else
-      {
-         rc = _postMsg( handle, header ) ;
-      }
+      rc = _postMsg( handle, header ) ;
 
       PD_TRACE_EXITRC ( SDB_CATMAINCT_HANDLEMSG, rc ) ;
       return rc ;
@@ -1426,30 +1419,6 @@ namespace engine
          }
          _contextLst.erase( iterMap ) ;
       }
-   }
-
-   void catMainController::_handleBeatMsg( const NET_HANDLE &handle,
-                                           const _MsgHeader *header )
-   {
-      INT32 rc = SDB_OK ;
-
-      MsgOpReply reply ;
-      reply.header.opCode = MAKE_REPLY_TYPE( header->opCode ) ;
-      reply.header.messageLength = sizeof ( MsgOpReply ) ;
-      reply.header.requestID = header->requestID ;
-      reply.header.TID = header->TID ;
-      reply.header.routeID.value = 0 ;
-      reply.flags = dbIsAbnormal() ? SDB_SYS : SDB_OK ;
-      reply.contextID = -1 ;
-      reply.numReturned = 0 ;
-      reply.startFrom = 0 ;
-
-      rc = _pCatCB->netWork()->syncSend ( handle, (void*)(&reply) ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to reply beat request:%d", rc ) ;
-      }
-      return ;
    }
 
 }

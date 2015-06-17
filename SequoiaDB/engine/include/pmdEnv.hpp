@@ -98,18 +98,22 @@ namespace engine
    void           pmdSetQuit() ;
    BOOLEAN        pmdIsQuitApp() ;
 
-   void           updateDBTick() ;
+   void           pmdUpdateDBTick() ;
 
-   UINT64         getDBTick() ;
+   UINT64         pmdGetDBTick() ;
 
-   void           updateValidationTick() ;
+   UINT64         pmdGetTickSpanTime( UINT64 lastTick ) ;
 
-   UINT64         getValidationTick() ;
+   UINT64         pmdDBTickSpan2Time( UINT64 tickSpan ) ;
 
-   void           getTicks( UINT64 &tick,
-                            UINT64 &validationTick ) ;
+   void           pmdUpdateValidationTick() ;
 
-   BOOLEAN        dbIsAbnormal() ;
+   UINT64         pmdGetValidationTick() ;
+
+   void           pmdGetTicks( UINT64 &tick,
+                               UINT64 &validationTick ) ;
+
+   BOOLEAN        pmdDBIsAbnormal() ;
 
    pmdSysInfo*    pmdGetSysInfo () ;
 

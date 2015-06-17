@@ -118,6 +118,10 @@ namespace engine
             _sock.close() ;
             _mtx.release() ;
          }
+         OSS_INLINE UINT64 getLastSendTick() const { return _lastSendTick ; }
+         OSS_INLINE UINT64 getLastRecvTick() const { return _lastRecvTick ; }
+
+         OSS_INLINE BOOLEAN isAcitve() const { return _isAcitve ; }
 
       public:
          void asyncRead() ;
@@ -156,6 +160,10 @@ namespace engine
          BOOLEAN                          _isConnected ;
          BOOLEAN                          _isInAsync ;
          BOOLEAN                          _hasRecvMsg ;
+         UINT64                           _lastSendTick ;
+         UINT64                           _lastRecvTick ;
+
+         BOOLEAN                          _isAcitve ;
 
    };
 

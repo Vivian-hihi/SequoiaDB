@@ -40,6 +40,7 @@
 #include "pdTrace.hpp"
 #include "coordTrace.hpp"
 #include "coordDef.hpp"
+#include "pmdController.hpp"
 #include "pmdStartup.hpp"
 
 using namespace bson;
@@ -139,6 +140,7 @@ namespace engine
          rc = SDB_OOM ;
          goto error ;
       }
+      _pNetWork->getFrame()->setBeatInfo( pmdGetOptionCB()->getOprTimeout() ) ;
       _multiRouteAgent.setNetWork( _pNetWork ) ;
 
       pGroupInfo = SDB_OSS_NEW CoordGroupInfo( CAT_CATALOG_GROUPID ) ;
@@ -188,6 +190,7 @@ namespace engine
 
       // set to primary
       pmdSetPrimary( TRUE ) ;
+      sdbGetPMDController()->registerNet( _pNetWork->getFrame() ) ;
 
       // 1. start coord net work
       rc = pEDUMgr->startEDU ( EDU_TYPE_COORDNETWORK, (void*)netWork(),
@@ -209,6 +212,7 @@ namespace engine
       // 1. stop io
       if ( _pNetWork )
       {
+         sdbGetPMDController()->unregNet( _pNetWork->getFrame() ) ;
          _pNetWork->stop() ;
       }
       return SDB_OK ;
