@@ -89,6 +89,7 @@ private:
 
    msgBuffer               _inBuffer ;
    msgBuffer               _outBuffer ;
+   msgBuffer               _tmpBuffer ;
    engine::IResource      *_resource ;
 } ;
 

@@ -605,7 +605,7 @@ BOOLEAN _mongoSession::_preProcessMsg( msgParser &parser,
 }
 
 void _mongoSession::_handleResponse( const INT32 opType,
-                                    engine::rtnContextBuf &buff )
+                                     engine::rtnContextBuf &buff )
 {
    if ( OP_CMD_COUNT_MORE == opType )
    {
@@ -617,11 +617,33 @@ void _mongoSession::_handleResponse( const INT32 opType,
       _replyHeader.startFrom = 0 ;
    }
 
+   if ( OP_CMD_GET_CLS == opType &&
+        SDB_DMS_EOC != _replyHeader.flags &&
+        _replyHeader.numReturned > 0 )
+   {
+      INT32 offset = 0 ;
+      INT32 len = buff.size() ;
+      const CHAR *pBody = buff.data() ;
+      INT32 recordNum = buff.recordNum() ;
+      bson::BSONObj obj, tmp ;
+      _tmpBuffer.zero() ;
+      while ( offset < len )
+      {
+         tmp.init( pBody + offset ) ;
+         obj = BSON( "name" << tmp.getStringField( "Name" ) ) ;
+         _tmpBuffer.write( obj.objdata(), obj.objsize(), TRUE ) ;
+         offset += ossRoundUpToMultipleX( obj.objsize(), 4 ) ;
+      }
+      const CHAR *pBuffer = _tmpBuffer.data() ;
+      INT32 size = _tmpBuffer.size() ;
+      engine::rtnContextBuf ctx( pBuffer, size, recordNum ) ;
+      buff = ctx ;
+   }
+
    if ( SDB_DMS_EOC == _replyHeader.flags )
    {
       buff = engine::rtnContextBuf() ;
       _replyHeader.numReturned = 0 ;
-      //_replyHeader.contextID = -1 ;
       _replyHeader.startFrom = _cursorStartFrom.startFrom ;
    }
 }

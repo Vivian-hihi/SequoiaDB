@@ -115,7 +115,8 @@ INT32 mongoConverter::reConvert( msgBuffer &out, MsgOpReply *reply )
       goto error ;
    }
 
-   if ( OP_CMD_GET_INDEX == _parser.currentOption() )
+   if ( OP_CMD_GET_INDEX == _parser.currentOption() ||
+        OP_CMD_GET_CLS == _parser.currentOption() )
    {
       if ( SDB_OK != reply->flags )
       {

@@ -471,8 +471,16 @@ INT32 queryCommand::convert( msgParser &parser )
    mongoDataPacket &packet = parser.dataPacket() ;
 
    parser.readInt( sizeof( packet.nToSkip ), ( CHAR * )&packet.nToSkip ) ;
+   if ( 0 <= packet.nToReturn )
+   {
+      packet.nToReturn  = -1 ;
+   }
    parser.readInt( sizeof( nToReturn ), ( CHAR * )&nToReturn ) ;
    packet.nToReturn = nToReturn < 0 ? -nToReturn : nToReturn ;
+   if ( 0 == packet.nToReturn )
+   {
+      packet.nToReturn  = -1 ;
+   }
 
    if ( 0 !=  packet.optionMask && !packet.with( OPTION_CMD ))
    {
@@ -517,7 +525,7 @@ INT32 queryCommand::convert( msgParser &parser )
       const CHAR *cmdName = packet.all.firstElementFieldName() ;
       packet.fullName = packet.csName ;
       packet.fullName += "." ;
-      packet.fullName += cmdName ;
+      packet.fullName += packet.all.getStringField( cmdName ) ;
 
       cmd = commandMgr::instance()->findCommand( cmdName ) ;
       if ( NULL == cmd )
@@ -1217,6 +1225,10 @@ INT32 listCollectionCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
 
       query->numToSkip = getFieldInt( packet.all, "skip" ) ;
       query->numToReturn = getFieldInt( packet.all, "limit" ) ;
+      if ( 0 == query->numToReturn )
+      {
+         query->numToReturn = -1 ;
+      }
 
       sdbMsg.write( cond, TRUE ) ;
       sdbMsg.write( selector, TRUE ) ;
@@ -1309,6 +1321,10 @@ INT32 countCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
    mongoDataPacket &packet = parser.dataPacket() ;
    const CHAR *cmdName = CMD_ADMIN_PREFIX CMD_NAME_GET_COUNT ;
 
+   parser.setCurrentOp( OP_CMD_COUNT ) ;
+   sdbMsg.reverse( sizeof( MsgOpQuery ) ) ;
+   sdbMsg.advance( sizeof( MsgOpQuery ) - 4 ) ;
+
    query = ( MsgOpQuery * )sdbMsg.data() ;
    query->header.opCode = MSG_BS_QUERY_REQ ;
    query->header.TID = 0 ;
@@ -1331,13 +1347,14 @@ INT32 countCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
 
    sdbMsg.write( cmdName, query->nameLength + 1, TRUE ) ;
    {
-      bson::BSONObj obj, empty ;
+      bson::BSONObj cond, obj, empty ;
+      cond = packet.all.getObjectField( "query" ) ;
       obj = BSON( FIELD_NAME_COLLECTION << packet.fullName.c_str() ) ;
 
+      sdbMsg.write( cond, TRUE ) ;
+      sdbMsg.write( empty, TRUE ) ;
+      sdbMsg.write( empty, TRUE ) ;
       sdbMsg.write( obj, TRUE ) ;
-      sdbMsg.write( empty, TRUE ) ;
-      sdbMsg.write( empty, TRUE ) ;
-      sdbMsg.write( empty, TRUE ) ;
    }
 
    sdbMsg.doneLen() ;
@@ -1523,6 +1540,24 @@ INT32 createIndexesCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
          sdbMsg.write( bob.obj(), TRUE ) ;
          ++cit ;
       }
+   }
+   else if ( packet.with( OPTION_IDX ) )
+   {
+      if ( !parser.more() )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      parser.readNextObj( packet.all ) ;
+
+      packet.fullName = packet.all.getStringField( "ns" ) ;
+      bob.append( FIELD_NAME_COLLECTION, packet.fullName.c_str() ) ;
+
+      indexObj = BSON( "key" << packet.all.getObjectField( "key" ) <<
+                       "name" << packet.all.getStringField( "name") <<
+                       "unique" << packet.all.getBoolField( "unique" ) );
+      bob.append( "Index", indexObj ) ;
+      sdbMsg.write( bob.obj(), TRUE ) ;
    }
    else
    {
