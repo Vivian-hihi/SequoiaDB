@@ -866,6 +866,16 @@ INT32 clTruncate( sdbCollection *collection )
    return collection->truncate() ;
 }
 
+INT32 clCreateIdIndex( sdbCollection *collection )
+{
+   return collection->createIdIndex() ;
+}
+
+INT32 clDropIdIndex( sdbCollection *collection )
+{
+   return collection->dropIdIndex() ;
+}
+
 INT32 getNext ( sdbCursor *query, CHAR **pBuf, INT32 *bufSize )
 {
    INT32 rc = SDB_OK ;

@@ -427,6 +427,18 @@ public:
        \retval Returns the database response
    */
    int truncate ( void ) ;
+
+   /** \fn int createIdIndex ( void )
+       \brief create records "_id" index.
+       \retval Returns the database response
+   */
+   int createIdIndex ( void ) ;
+
+   /** \fn int dropIdIndex ( void )
+       \brief drop records "_id" index.
+       \retval Returns the database response
+   */
+   int dropIdIndex ( void ) ;
 } ;
 
 /** \class SequoiaCursor

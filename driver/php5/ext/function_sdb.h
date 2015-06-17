@@ -185,6 +185,10 @@ INT32 getCount ( sdbCollection *collection,
 
 INT32 clTruncate( sdbCollection *collection ) ;
 
+INT32 clCreateIdIndex( sdbCollection *collection ) ;
+
+INT32 clDropIdIndex( sdbCollection *collection ) ;
+
 /*************** cursor ******************************/
 
 INT32 getNext ( sdbCursor *query, CHAR **pBuf, INT32 *bufSize ) ;
