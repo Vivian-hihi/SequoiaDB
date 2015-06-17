@@ -104,8 +104,17 @@ function _checkStatus( ssh, installPath )
    var ret = 0 ;
 
    str = adaptPath( installPath ) + zkServer + " status " ;
-   try{ ssh.exec( str ) ; }catch( e ){}
-   ret = ssh.getLastRet() ;
+   for( var i = 0; i < OMA_WAIT_ZN_TRY_TIMES; i++ )
+   {
+      try{ ssh.exec( str ) ; }catch( e ){}
+      ret = ssh.getLastRet() ;
+      if ( 0 != ret )
+      {
+         sleep( OMA_SLEEP_TIME ) ;
+         continue ;
+      }
+      break ;
+   }
    if ( 0 != ret )
    {
       errMsg = sprintf( "zookeeper node is not ready in host[?]", ssh.getPeerIP() ) ;
