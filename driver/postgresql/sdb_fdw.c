@@ -2223,12 +2223,18 @@ static BOOLEAN sdbColumnTypesCompatible( sdbbson_type sdbbsonType, Oid columnTyp
       }
       break ;
    }
+   case JSONOID :
+   {
+      compatibleType = ( BSON_OBJECT == sdbbsonType ||
+                         BSON_ARRAY == sdbbsonType ) ;
+      break ;
+   }
    default :
    {
-      ereport( ERROR,( errcode( ERRCODE_FDW_INVALID_DATA_TYPE ),
-                         errmsg( "cannot convert sdbbson type to column type" ),
-                         errhint( "Column type: %u",
-                                   ( UINT32 )columnTypeId ) ) ) ;
+      ereport( WARNING,( errcode( ERRCODE_FDW_INVALID_DATA_TYPE ),
+                       errmsg( "cannot convert sdbbson type to column type" ),
+                       errhint( "Column type: %u",
+                                 ( UINT32 )columnTypeId ) ) ) ;
       break ;
    }
    }
@@ -2354,6 +2360,48 @@ static Datum sdbColumnValue( sdbbson_iterator *sdbbsonIterator, Oid columnTypeId
 
       break ;
    }
+   case JSONOID :
+   {
+      sdbbson_type type = sdbbson_iterator_type( sdbbsonIterator )  ;
+      if ( BSON_OBJECT == type || BSON_ARRAY == type )
+      {
+         INT32 length = 0 ;
+//         INT32 leftLength = 0 ;
+         CHAR *p = NULL ;
+//         CHAR *sprintP = NULL ;
+         sdbbson obj ;
+         text *result ;
+         StringInfo sBuf = makeStringInfo() ; 
+         sdbbson_init( &obj ) ;
+
+         sdbbson_iterator_subobject( sdbbsonIterator, &obj ) ;
+         length = sdbbson_sprint_length( &obj ) ;
+//         leftLength = length ;
+         p = (CHAR *)palloc( length ) ;
+         if ( NULL == p )
+         {
+            ereport( ERROR,( errcode( ERRCODE_FDW_OUT_OF_MEMORY ),
+                         errmsg( "cannot malloc memory" ),
+                         errhint( "cannot malloc memory" ) ) ) ;
+         }
+//         sprintP = p ;
+//         memset( p, 0, length ) ;
+//         sdbbson_sprint_raw( &sprintP, &leftLength, obj.data, (BSON_OBJECT == type)) ;
+         sdbbson_sprint( p, length, &obj ) ;
+         appendStringInfoString( sBuf, p ) ;
+         result = cstring_to_text_with_len( sBuf->data, sBuf->len ) ;
+         columnValue = PointerGetDatum( result ) ;
+         sdbbson_destroy( &obj ) ;
+         pfree( p ) ;
+      }
+      else
+      {
+         ereport( ERROR,( errcode( ERRCODE_FDW_INVALID_DATA_TYPE_DESCRIPTORS ),
+                         errmsg( "invalid data type" ),
+                         errhint( "invalid data type %d", type ) ) ) ;
+      }
+      break ;
+   }
    default :
    {
       ereport( ERROR,( errcode( ERRCODE_FDW_INVALID_DATA_TYPE ),
@@ -2425,7 +2473,14 @@ static Datum sdbColumnValueArray( sdbbson_iterator *sdbbsonIterator,
    {
       sdbbson_type sdbbsonType = sdbbson_iterator_type( &sdbbsonSubIterator ) ;
       BOOLEAN compatibleTypes = FALSE ;
-      compatibleTypes = sdbColumnTypesCompatible( sdbbsonType, valueTypeId ) ;
+      if ( BSON_ARRAY == sdbbsonType && OidIsValid( valueTypeId ) )
+      {
+         compatibleTypes = TRUE ;
+      }
+      else
+      {
+         compatibleTypes = sdbColumnTypesCompatible( sdbbsonType, valueTypeId ) ;
+      }
       /* skip the element if it's not compatible */
       if( BSON_NULL == sdbbsonType || !compatibleTypes )
       {
@@ -2438,8 +2493,20 @@ static Datum sdbColumnValueArray( sdbbson_iterator *sdbbsonIterator,
                                        arrayCapacity * sizeof( Datum ) ) ;
       }
       /* use default type modifier to convert column value */
+/*
+      if ( BSON_ARRAY == sdbbsonType )
+      {
+         columnValueArray[arrayIndex] = sdbColumnValueArray( &sdbbsonSubIterator,
+                                                              valueTypeId ) ;
+      }
+      else
+      {
+         columnValueArray[arrayIndex] = sdbColumnValue( &sdbbsonSubIterator,
+                                                         valueTypeId, 0 ) ;
+      }
+*/
       columnValueArray[arrayIndex] = sdbColumnValue( &sdbbsonSubIterator,
-                                                      valueTypeId, 0 ) ;
+                                                     valueTypeId, 0 ) ;
       ++arrayIndex ;
    }
 done :
@@ -2507,8 +2574,21 @@ static void sdbFillTupleSlot( const sdbbson *sdbbsonDocument,
       {
          sdbbsonFullKey = sdbbsonKey ;
       }
+
+      /* match columns for sdbbson key */
+      hashKey = ( void* )sdbbsonFullKey ;
+      columnMapping = ( SdbColumnMapping* )hash_search( columnMappingHash,
+                                                       hashKey,
+                                                       HASH_FIND,
+                                                       &handleFound ) ;
+      if ( NULL != columnMapping )
+      {
+         columnTypeId = columnMapping->columnTypeId ;
+         columnArrayTypeId = columnMapping->columnArrayTypeId ;
+      }
+
       /* recurse into nested objects */
-      if( BSON_OBJECT == sdbbsonType )
+      if( BSON_OBJECT == sdbbsonType && JSONOID != columnTypeId )
       {
          sdbbson subObject ;
          sdbbson_init( &subObject ) ;
@@ -2518,12 +2598,7 @@ static void sdbFillTupleSlot( const sdbbson *sdbbsonDocument,
          sdbbson_destroy( &subObject ) ;
          continue ;
       }
-      /* match columns for sdbbson key */
-      hashKey = ( void* )sdbbsonFullKey ;
-      columnMapping = ( SdbColumnMapping* )hash_search( columnMappingHash,
-                                                       hashKey,
-                                                       HASH_FIND,
-                                                       &handleFound ) ;
+
       /* if we cannot find the column, or if the sdbbson type is null, let's just
        * leave it as null
        */
@@ -2532,9 +2607,6 @@ static void sdbFillTupleSlot( const sdbbson *sdbbsonDocument,
          continue ;
       }
 
-      /* check if columns have compatible types */
-      columnTypeId = columnMapping->columnTypeId ;
-      columnArrayTypeId = columnMapping->columnArrayTypeId ;
       if( OidIsValid( columnArrayTypeId )&& sdbbsonType == BSON_ARRAY )
       {
          compatibleTypes = TRUE ;
