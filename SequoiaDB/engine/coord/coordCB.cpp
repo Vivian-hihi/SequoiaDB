@@ -230,6 +230,11 @@ namespace engine
 
    void _CoordCB::onConfigChange ()
    {
+      if ( _pNetWork )
+      {
+         UINT32 oprtimeout = pmdGetOptionCB()->getOprTimeout() ;
+         _pNetWork->getFrame()->setBeatInfo( oprtimeout ) ;
+      }
    }
 
    void _CoordCB::updateCatGroupInfo( CoordGroupInfoPtr &groupInfo )

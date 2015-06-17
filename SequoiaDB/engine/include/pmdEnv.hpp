@@ -43,8 +43,7 @@ using namespace bson ;
 
 namespace engine
 {
-   #define PMD_DB_IS_NORMAL 0
-   #define PMD_DB_IS_ABNORMAL 1
+
    /*
       When recieve quit event or signal, will call
    */
