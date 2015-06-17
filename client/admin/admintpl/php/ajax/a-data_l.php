@@ -15,8 +15,6 @@ if ( !empty ( $cursor ) )
 		array_push( $array_1, $arr ) ;
 	}
 }
-//$db -> install ( "{ install : true }" ) ;
-//$cscl_list .= ']}}' ;
 
 $cursor = $db -> getSnapshot ( SDB_LIST_COLLECTIONSPACES ) ;
 if ( !empty ( $cursor ) )
