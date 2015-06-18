@@ -369,6 +369,7 @@ namespace engine
       }
       else if ( SDB_IXM_DUP_KEY == rc )
       {
+         rc = SDB_AUTH_USER_ALREADY_EXIST ;
          goto error ;
       }
       else
