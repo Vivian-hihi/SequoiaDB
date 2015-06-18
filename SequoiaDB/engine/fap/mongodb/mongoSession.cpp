@@ -53,7 +53,8 @@
 /////////////////////////////////////////////////////////////////
 // implement for mongo processor
 _mongoSession::_mongoSession( SOCKET fd, engine::IResource *resource )
-   : engine::pmdSession( fd ), _masterRead( FALSE ), _resource( resource )
+   : engine::pmdSession( fd ), _masterRead( FALSE ),
+     _authed( FALSE ), _resource( resource )
 {
    _converter = SDB_OSS_NEW mongoConverter() ;
 }
@@ -130,13 +131,6 @@ INT32 _mongoSession::run()
       _pEDUCB->resetInterrupt() ;
       _pEDUCB->resetInfo( engine::EDU_INFO_ERROR ) ;
       _pEDUCB->resetLsn() ;
-
-      // set session attribute
-      rc = _setSeesionAttr() ;
-      if ( SDB_OK != rc )
-      {
-         goto error ;
-      }
 
       // recv msg
       rc = recvData( (CHAR*)&msgSize, sizeof(UINT32) ) ;
@@ -219,8 +213,25 @@ INT32 _mongoSession::run()
             pInMsg = _inBuffer.data() ;
             while ( NULL != pInMsg )
             {
+               // set session attribute
+               if ( !_masterRead && _authed )
+               {
+                  rc = _setSeesionAttr() ;
+                  if ( SDB_OK != rc )
+                  {
+                     goto error ;
+                  }
+               }
                // process msg
                rc = _processMsg( pInMsg ) ;
+               if ( SDB_OK == rc )
+               {
+                  MsgHeader *hdr = (MsgHeader *)pInMsg ;
+                  if ( MSG_AUTH_VERIFY_REQ == hdr->opCode )
+                  {
+                     _authed = TRUE ;
+                  }
+               }
 
                rc = _converter->reConvert( _inBuffer, &_replyHeader ) ;
                if ( SDB_OK != rc )
@@ -297,7 +308,6 @@ INT32 _mongoSession::_processMsg( const CHAR *pMsg )
                                        needReply ) ;
       _errorInfo = engine::utilGetErrorBson( rc,
                    _pEDUCB->getInfo( engine::EDU_INFO_ERROR ) ) ;
-
       if ( SDB_OK != rc )
       {
          tmp = _errorInfo.getIntField( OP_ERRNOFIELD ) ;
