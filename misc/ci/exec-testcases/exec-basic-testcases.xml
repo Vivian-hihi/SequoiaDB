@@ -66,6 +66,7 @@
 			<param name="test-type" value="${test-type-list}" />
 			<param name="includes.case.patterns" value="*.js" />
 			<param name="excludes.case.patterns" value="commlib.js" />
+			<param name="CHANGEDSTRING" value="${CHANGEDSTRING}" />
 		</foreach>
 
 		<property name="sdb.cmd.allClean" value=" -e &quot;var CHANGEDPREFIX='${CHANGEDSTRING}'; var COORDSVCNAME=${coord.service.port};&quot; -f &quot;${basic.testcase.path}/libs/func.js,${basic.testcase.path}/libs/all_clean.js&quot;" />
@@ -149,6 +150,7 @@
 			<param name="commlib.option" value="${commlib.option}" />
 			<param name="test.suite.name" value="${test.suite.name}" />
 			<param name="deploy.name" value="${deploy.name}" />
+			<param name="CHANGEDSTRING" value="${CHANGEDSTRING}" />
 		</foreach>
 
 		<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" message="&lt;/testsuite&gt;&#10;" append="true" />
