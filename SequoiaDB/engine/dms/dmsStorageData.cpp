@@ -2086,7 +2086,6 @@ namespace engine
             goto error ;
          }
 
-         logRecSize = ossAlign4( logRecord.alignedLen() + oidLen ) ;
          rc = pTransCB->reservedLogSpace( logRecSize ) ;
          if ( rc )
          {
