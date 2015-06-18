@@ -154,8 +154,17 @@ namespace engine
 
       _qgmConditionNodeHelper tree( _conditionNode ) ;
       _condition = tree.toBson( FALSE ) ;
-      rc = SDB_ROLE_COORD == _dbRole ?
-           _executeOnCoord( eduCB ) : _executeOnData( eduCB ) ;
+
+      if ( SDB_ROLE_COORD == _dbRole )
+      {
+         rc = _executeOnCoord( eduCB ) ;
+      }
+      /// not coord or rc is SDB_COORD_UNKNOWN_OP_REQ
+      if ( SDB_COORD_UNKNOWN_OP_REQ == rc ||
+           SDB_ROLE_COORD != _dbRole )
+      {
+         rc = _executeOnData( eduCB ) ;
+      }
 
       if ( SDB_RTN_INVALID_PREDICATES == rc )
       {
