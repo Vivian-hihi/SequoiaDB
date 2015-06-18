@@ -491,6 +491,7 @@
 
 #define SDB_AUTH_USER                        "User"
 #define SDB_AUTH_PASSWD                      "Passwd"
+#define SDB_AUTH_SOURCE                      "Source"
 
 #define SDB_LOB_OID_LEN                      16
 
