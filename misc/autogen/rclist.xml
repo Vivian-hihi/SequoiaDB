@@ -2370,5 +2370,13 @@
          </description>
       </code>
 
+      <code>
+         <name>SDB_AUTH_USER_ALREADY_EXIST</name>
+         <description>
+            <en>The specified user already exist</en>
+            <cn>指定用户已存在</cn>
+         </description>
+      </code>
+
    </codelist>
 </rclist>
