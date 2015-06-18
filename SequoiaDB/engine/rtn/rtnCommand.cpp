@@ -660,7 +660,8 @@ namespace engine
    IMPLEMENT_CMD_AUTO_REGISTER(_rtnCreateIndex)
 
    _rtnCreateIndex::_rtnCreateIndex ()
-   : _collectionName ( NULL )
+   : _collectionName ( NULL ),
+     _mode ( DMS_INDEX_BUILD_ONLINE )
    {
    }
 
@@ -698,6 +699,8 @@ namespace engine
    {
       PD_TRACE_ENTRY ( SDB__RTNCREATEINDEX_INIT ) ;
       BSONObj arg ( pMatcherBuff ) ;
+      BSONObj hint ( pHintBuff ) ;
+
       INT32 rc = rtnGetStringElement ( arg, FIELD_NAME_COLLECTION,
                                        &_collectionName ) ;
       if ( SDB_OK != rc )
@@ -711,6 +714,32 @@ namespace engine
       {
          PD_LOG ( PDERROR, "Failed to get object index " ) ;
          goto error ;
+      }
+
+      if ( hint.hasField( IXM_FIELD_NAME_MODE ) )
+      {
+         const CHAR* mode = NULL ;
+         rc = rtnGetStringElement( hint, IXM_FIELD_NAME_MODE, &mode ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG ( PDERROR, "Failed to get index mode, hint: %s",
+                     hint.toString().c_str() ) ;
+            goto error ;
+         }
+
+         if ( 0 == ossStrcmp( IXM_MODE_VALUE_ONLINE, mode ) )
+         {
+            _mode = DMS_INDEX_BUILD_ONLINE ;
+         }
+         else if ( 0 == ossStrcmp( IXM_MODE_VALUE_OFFLINE, mode ) )
+         {
+            _mode = DMS_INDEX_BUILD_OFFLINE ;
+         }
+         else
+         {
+            PD_LOG ( PDERROR, "invalid index build mode: %s", mode ) ;
+            goto error ;
+         }
       }
 
    done:
@@ -729,7 +758,7 @@ namespace engine
       PD_TRACE_ENTRY ( SDB__RTNCREATEINDEX_DOIT ) ;
 
       rc = rtnCreateIndexCommand ( _collectionName, _index, cb,
-                                   dmsCB, dpsCB ) ;
+                                   dmsCB, dpsCB, FALSE, _mode ) ;
       PD_TRACE_EXITRC ( SDB__RTNCREATEINDEX_DOIT, rc ) ;
       return rc ;
    }

@@ -128,6 +128,15 @@ namespace engine
    } ;
    typedef enum _DMS_ACCESS_TYPE DMS_ACCESS_TYPE ;
 
+   enum _DMS_INDEX_BUILD_MODE
+   {
+      DMS_INDEX_BUILD_ONLINE = 0,
+      DMS_INDEX_BUILD_OFFLINE,
+      DMS_INDEX_BUILD_INMEM,
+      DMS_INDEX_BUILD_MODE_NUM
+   } ;
+   typedef enum _DMS_INDEX_BUILD_MODE DMS_INDEX_BUILD_MODE ;
+
    typedef SINT32 dmsStorageUnitID ;
    typedef SINT32 dmsExtentID ;
    typedef SINT32 dmsOffset ;

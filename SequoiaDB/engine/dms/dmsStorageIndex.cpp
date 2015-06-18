@@ -205,7 +205,8 @@ namespace engine
                                         const BSONObj &index,
                                         pmdEDUCB * cb,
                                         SDB_DPSCB *dpscb,
-                                        BOOLEAN isSys )
+                                        BOOLEAN isSys,
+                                        DMS_INDEX_BUILD_MODE mode )
    {
       INT32 rc                     = SDB_OK ;
       dmsExtentID extentID         = DMS_INVALID_EXTENT ;
@@ -373,7 +374,7 @@ namespace engine
       dropDps = dpscb ;
 
       // now we finished allocation part, let's get into build part
-      rc = _rebuildIndex( context, indexID, indexLID, cb ) ;
+      rc = _rebuildIndex( context, indexID, indexLID, cb, mode ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Failed to build index[%s], rc = %d",
@@ -717,7 +718,7 @@ namespace engine
    }
 
    INT32 _dmsStorageIndex::_rebuildIndex( dmsMBContext *context, INT32 indexID,
-                                          dmsExtentID indexLID, pmdEDUCB * cb )
+                                          dmsExtentID indexLID, pmdEDUCB * cb, DMS_INDEX_BUILD_MODE mode )
    {
       INT32 rc                     = SDB_OK ;
       dmsExtentID firstExtent      = DMS_INVALID_EXTENT ;
@@ -958,7 +959,7 @@ namespace engine
       goto done ;
    }
 
-   INT32 _dmsStorageIndex::rebuildIndexes( dmsMBContext *context, pmdEDUCB *cb )
+   INT32 _dmsStorageIndex::rebuildIndexes( dmsMBContext *context, pmdEDUCB *cb, DMS_INDEX_BUILD_MODE mode )
    {
       INT32 rc                     = SDB_OK ;
       INT32  indexID               = 0 ;
@@ -987,7 +988,7 @@ namespace engine
       {
          PD_LOG ( PDEVENT, "Rebuilding index %d for collection %d",
                   indexID, context->mbID() ) ;
-         rc = _rebuildIndex ( context, indexID, DMS_INVALID_EXTENT, cb ) ;
+         rc = _rebuildIndex ( context, indexID, DMS_INVALID_EXTENT, cb, mode ) ;
          if ( rc )
          {
             PD_LOG ( PDERROR, "Failed to rebuild index %d, rc: %d", indexID,
@@ -1002,6 +1003,35 @@ namespace engine
       goto done ;
    }
 
+   INT32 _dmsStorageIndex::_indexInsert( _ixmIndexCB *indexCB,
+                                         const ixmKey &key,
+                                         const dmsRecordID &rid,
+                                         const Ordering& order,
+                                         _pmdEDUCB *cb,
+                                         BOOLEAN dupAllowed,
+                                         BOOLEAN dropDups )
+   {
+      INT32 rc = SDB_OK ;
+      monAppCB * pMonAppCB = cb ? cb->getMonAppCB() : NULL ;
+
+      // get root in each loop, since root page may change after each
+      // insert (root split)
+      ixmExtent rootidx ( indexCB->getRoot(), this ) ;
+
+      rc = rootidx.insert ( key, rid, order, dupAllowed, indexCB ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to insert index, rc: %d", rc ) ;
+         goto error ;
+      }
+      DMS_MON_OP_COUNT_INC( pMonAppCB, MON_INDEX_WRITE, 1 ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 _dmsStorageIndex::_indexInsert( dmsMBContext *context,
                                          ixmIndexCB *indexCB,
                                          BSONObj &inputObj,
@@ -1012,7 +1042,6 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       BSONObjSet keySet ;
-      monAppCB * pMonAppCB = cb ? cb->getMonAppCB() : NULL ;
 
       SDB_ASSERT ( indexCB, "indexCB can't be NULL" ) ;
 
@@ -1035,18 +1064,14 @@ namespace engine
 #if defined (_DEBUG)
             PD_LOG ( PDDEBUG, "Key %s", (*it).toString().c_str() ) ;
 #endif
-            // get root in each loop, since root page may change after each
-            // insert (root split)
-            ixmExtent rootidx ( indexCB->getRoot(), this ) ;
             ixmKeyOwned ko ((*it)) ;
 
-            rc = rootidx.insert ( ko, rid, order, dupAllowed, indexCB ) ;
+            rc = _indexInsert ( indexCB, ko, rid, order, cb, dupAllowed, dropDups ) ;
             if ( rc )
             {
                PD_LOG ( PDERROR, "Failed to insert index, rc: %d", rc ) ;
                goto error ;
             }
-            DMS_MON_OP_COUNT_INC( pMonAppCB, MON_INDEX_WRITE, 1 ) ;
          }
       }
 

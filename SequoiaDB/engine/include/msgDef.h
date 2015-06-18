@@ -349,6 +349,9 @@
 #define IXM_FIELD_NAME_INDEX_DEF             "IndexDef"
 #define IXM_FIELD_NAME_INDEX_FLAG            "IndexFlag"
 #define IXM_FIELD_NAME_SCAN_EXTLID           "ScanExtentLID"
+#define IXM_FIELD_NAME_MODE                  "Mode"
+#define IXM_MODE_VALUE_ONLINE                "online"
+#define IXM_MODE_VALUE_OFFLINE               "offline"
 
 #define CMD_NAME_ENFORCED                    "enforced"
 

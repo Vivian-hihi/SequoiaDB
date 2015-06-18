@@ -309,7 +309,8 @@ namespace engine
                                  _pmdEDUCB *cb,
                                  SDB_DMSCB *dmsCB,
                                  SDB_DPSCB *dpsCB,
-                                 BOOLEAN isSys = FALSE ) ;
+                                 BOOLEAN isSys = FALSE,
+                                 DMS_INDEX_BUILD_MODE mode = DMS_INDEX_BUILD_ONLINE ) ;
 
    INT32 rtnDropCollectionCommand ( const CHAR *pCollection,
                                     _pmdEDUCB *cb,

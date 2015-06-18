@@ -195,7 +195,8 @@ namespace engine
          INT32    createIndex ( const CHAR *pName, const BSONObj &index,
                                 _pmdEDUCB * cb, SDB_DPSCB *dpscb,
                                 BOOLEAN isSys = FALSE,
-                                dmsMBContext *context = NULL ) ;
+                                dmsMBContext *context = NULL,
+                                DMS_INDEX_BUILD_MODE mode = DMS_INDEX_BUILD_ONLINE ) ;
 
          INT32    dropIndex( const CHAR *pName, const CHAR *indexName,
                              _pmdEDUCB * cb, SDB_DPSCB *dpscb,

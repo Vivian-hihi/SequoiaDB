@@ -1299,7 +1299,8 @@ namespace engine
                                  _pmdEDUCB *cb,
                                  SDB_DMSCB *dmsCB,
                                  SDB_DPSCB *dpsCB,
-                                 BOOLEAN isSys )
+                                 BOOLEAN isSys,
+                                 DMS_INDEX_BUILD_MODE mode )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNCREATEINDEXCOMMAND ) ;
@@ -1325,7 +1326,7 @@ namespace engine
       writable = TRUE ;
 
       rc = su->createIndex ( pCollectionShortName, indexObj,
-                             cb, dpsCB, isSys ) ;
+                             cb, dpsCB, isSys, NULL, mode ) ;
       if ( rc )
       {
          // SDB_IXM_EXIST may happen when user mistakenly type index name with

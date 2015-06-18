@@ -488,6 +488,7 @@ namespace engine
       protected:
          const CHAR              *_collectionName ;
          BSONObj                 _index ;
+         DMS_INDEX_BUILD_MODE    _mode ;
 
    };
 
