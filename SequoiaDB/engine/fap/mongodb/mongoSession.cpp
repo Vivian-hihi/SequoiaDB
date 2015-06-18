@@ -568,7 +568,10 @@ BOOLEAN _mongoSession::_preProcessMsg( msgParser &parser,
    {
       handled = TRUE ;
       // build getnonce msg
-      fap::mongo::buildGetNonceReplyMsg( buff ) ;
+      bson::BSONObj obj ;
+      obj.init( _inBuffer.data() ) ;
+      buff = engine::rtnContextBuf( obj ) ;
+      //fap::mongo::buildGetNonceReplyMsg( buff ) ;
    }
    else if ( OP_CMD_GETLASTERROR == parser.currentOption() )
    {

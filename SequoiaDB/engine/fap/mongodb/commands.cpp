@@ -817,7 +817,7 @@ INT32 authenticateCommand::buildMsg( msgParser &parser,  msgBuffer &sdbMsg )
       bson::BSONObj obj ;
       obj = BSON( SDB_AUTH_USER << pUsername
                << SDB_AUTH_PASSWD << pKey
-               << SDB_FAP_MONGO << "mongo" ) ;
+               << SDB_AUTH_SOURCE << SDB_AUTH_SOURCE_FAP ) ;
       sdbMsg.write( obj, TRUE ) ;
    }
 
@@ -895,24 +895,34 @@ INT32 createUserCommand::buildMsg( msgParser& parser, msgBuffer &sdbMsg )
    user->header.routeID.value = 0 ;
    user->header.requestID = packet.requestId ;
 
-   const CHAR *pName = packet.all.getStringField( "user" ) ;
-   const CHAR *pPasswd = packet.all.getStringField( "pwd" ) ;
+   if ( !parser.more() )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
 
-   std::stringstream ss ;
-   generateNonce( ss ) ;
-   md5::md5digest d ;
-   md5_state_t st ;
-   md5_init( &st ) ;
-   md5_append( &st, ( const md5_byte_t * )ss.str().c_str(),
-               ossStrlen( ss.str().c_str() ) ) ;
-   md5_append( &st, ( const md5_byte_t * )pName, ossStrlen( pName ) ) ;
-   md5_append( &st, ( const md5_byte_t * )pPasswd, ossStrlen( pPasswd ) ) ;
-   md5_finish( &st, d ) ;
+   parser.readNextObj( packet.all ) ;
 
-   bson::BSONObj obj = BSON( SDB_AUTH_USER << pName <<
-                       SDB_AUTH_PASSWD << md5::digestToString( d ).c_str() <<
-                       SDB_FAP_MONGO << "mongo" ) ;
-   sdbMsg.write( obj, TRUE ) ;
+   {
+      const CHAR *pName = packet.all.getStringField( "user" ) ;
+      const CHAR *pPasswd = packet.all.getStringField( "pwd" ) ;
+
+      std::stringstream ss ;
+      generateNonce( ss ) ;
+      md5::md5digest d ;
+      md5_state_t st ;
+      md5_init( &st ) ;
+      md5_append( &st, ( const md5_byte_t * )ss.str().c_str(),
+                  ossStrlen( ss.str().c_str() ) ) ;
+      md5_append( &st, ( const md5_byte_t * )pName, ossStrlen( pName ) ) ;
+      md5_append( &st, ( const md5_byte_t * )pPasswd, ossStrlen( pPasswd ) ) ;
+      md5_finish( &st, d ) ;
+
+      bson::BSONObj obj = BSON( SDB_AUTH_USER << pName <<
+                          SDB_AUTH_PASSWD << md5::digestToString( d ).c_str() <<
+                          SDB_AUTH_SOURCE << SDB_AUTH_SOURCE_FAP ) ;
+      sdbMsg.write( obj, TRUE ) ;
+   }
 
    sdbMsg.doneLen() ;
 
@@ -993,11 +1003,26 @@ INT32 removeUserCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
    auth->header.routeID.value = 0 ;
    auth->header.requestID = packet.requestId ;
 
-   bson::BSONObj obj ;
-   obj = BSON( SDB_AUTH_USER << packet.all.getStringField( "user" ) <<
-               SDB_FAP_MONGO << "mongo" ) ;
+   {
+      INT32 removeFlags = 0 ;
+      parser.readInt( sizeof( INT32 ), (CHAR *)&removeFlags ) ;
+   }
 
-   sdbMsg.write( obj, TRUE ) ;
+   if ( !parser.more() )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   parser.readNextObj( packet.all ) ;
+
+   {
+      bson::BSONObj obj ;
+      obj = BSON( SDB_AUTH_USER << packet.all.getStringField( "user" ) <<
+                  SDB_AUTH_SOURCE << SDB_AUTH_SOURCE_FAP ) ;
+
+      sdbMsg.write( obj, TRUE ) ;
+   }
    sdbMsg.doneLen() ;
 
 done:
