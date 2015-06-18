@@ -415,6 +415,190 @@ namespace engine
       goto done ;
    }
 
+   #define RTN_COORD_PARSE_MASK_ET_DFT       0x00000001
+   #define RTN_COORD_PARSE_MASK_IN_DFT       0x00000002
+   #define RTN_COORD_PARSE_MASK_ET_OPR       0x00000004
+   #define RTN_COORD_PARSE_MASK_IN_OPR       0x00000008
+
+   #define RTN_COORD_PARSE_MASK_ET           ( RTN_COORD_PARSE_MASK_ET_DFT|\
+                                               RTN_COORD_PARSE_MASK_ET_OPR )
+   #define RTN_COORD_PARSE_MASK_ALL          0xFFFFFFFF
+
+   static INT32 _rtnCoordParseBoolean( BSONElement &e, BOOLEAN &value,
+                                       UINT32 mask )
+   {
+      INT32 rc = SDB_INVALIDARG ;
+      /// a:true
+      if ( e.isBoolean() && ( mask & RTN_COORD_PARSE_MASK_ET_DFT ) )
+      {
+         value = e.boolean() ? TRUE : FALSE ;
+         rc = SDB_OK ;
+      }
+      /// a:1
+      else if ( e.isNumber() && ( mask & RTN_COORD_PARSE_MASK_ET_DFT ) )
+      {
+         value = 0 != e.numberInt() ? TRUE : FALSE ;
+         rc = SDB_OK ;
+      }
+      /// a:{$et:true} or a:{$et:1}
+      else if ( Object == e.type() && ( mask & RTN_COORD_PARSE_MASK_ET_OPR ) )
+      {
+         BSONObj obj = e.embeddedObject() ;
+         BSONElement tmpE = obj.firstElement() ;
+         if ( 1 == obj.nFields() &&
+              0 == ossStrcmp( "$et", tmpE.fieldName() ) )
+         {
+            rc = _rtnCoordParseBoolean( tmpE, value,
+                                        RTN_COORD_PARSE_MASK_ET_DFT ) ;
+         }
+      }
+      return rc ;
+   }
+
+   static INT32 _rtnCoordParseInt( BSONElement &e, INT32 &value, UINT32 mask )
+   {
+      INT32 rc = SDB_INVALIDARG ;
+      /// a:1
+      if ( e.isNumber() && ( mask & RTN_COORD_PARSE_MASK_ET_DFT ) )
+      {
+         value = e.numberInt() ;
+         rc = SDB_OK ;
+      }
+      /// a:{$et:1}
+      else if ( Object == e.type() && ( mask & RTN_COORD_PARSE_MASK_ET_OPR ) )
+      {
+         BSONObj obj = e.embeddedObject() ;
+         BSONElement tmpE = obj.firstElement() ;
+         if ( 1 == obj.nFields() &&
+              0 == ossStrcmp( "$et", tmpE.fieldName() ) )
+         {
+            rc = _rtnCoordParseInt( tmpE, value,
+                                    RTN_COORD_PARSE_MASK_ET_DFT ) ;
+         }
+      }
+      return rc ;
+   }
+
+   static INT32 _rtnCoordParseInt( BSONElement &e, vector<INT32> &vecValue,
+                                   UINT32 mask )
+   {
+      INT32 rc = SDB_INVALIDARG ;
+      INT32 value = 0 ;
+
+      /// a:1 or a:{$et:1}
+      if ( !e.isABSONObj() ||
+           0 != ossStrcmp( e.embeddedObject().firstElement().fieldName(),
+                           "$in") )
+      {
+         rc = _rtnCoordParseInt( e, value, mask ) ;
+         if ( SDB_OK == rc )
+         {
+            vecValue.push_back( value ) ;
+         }
+      }
+      /// a:[1,2,3]
+      else if ( Array == e.type() && ( mask & RTN_COORD_PARSE_MASK_IN_DFT ) )
+      {
+         BSONObjIterator it( e.embeddedObject() ) ;
+         while ( it.more() )
+         {
+            BSONElement tmpE = it.next() ;
+            rc = _rtnCoordParseInt( tmpE, value,
+                                    RTN_COORD_PARSE_MASK_ET_DFT ) ;
+            if ( rc )
+            {
+               break ;
+            }
+            vecValue.push_back( value ) ;
+         }
+      }
+      /// a:{$in:[1,2,3]}
+      else if ( mask & RTN_COORD_PARSE_MASK_IN_OPR )
+      {
+         BSONObj obj = e.embeddedObject() ;
+         BSONElement tmpE = obj.firstElement() ;
+         if ( 1 == obj.nFields() )
+         {
+            rc = _rtnCoordParseInt( tmpE, vecValue,
+                                    RTN_COORD_PARSE_MASK_IN_DFT ) ;
+         }
+      }
+      return rc ;
+   }
+
+   static INT32 _rtnCoordParseString( BSONElement &e, const CHAR *&value,
+                                      UINT32 mask )
+   {
+      INT32 rc = SDB_INVALIDARG ;
+      /// a:"xxx"
+      if ( String == e.type() && ( mask & RTN_COORD_PARSE_MASK_ET_DFT ) )
+      {
+         value = e.valuestr() ;
+         rc = SDB_OK ;
+      }
+      /// a:{$et:"xxx"}
+      else if ( Object == e.type() && ( mask & RTN_COORD_PARSE_MASK_ET_OPR ) )
+      {
+         BSONObj obj = e.embeddedObject() ;
+         BSONElement tmpE = obj.firstElement() ;
+         if ( 1 == obj.nFields() &&
+              0 == ossStrcmp( "$et", tmpE.fieldName() ) )
+         {
+            rc = _rtnCoordParseString( tmpE, value,
+                                       RTN_COORD_PARSE_MASK_ET_DFT ) ;
+         }
+      }
+      return rc ;
+   }
+
+   static INT32 _rtnCoordParseString( BSONElement &e,
+                                      vector<const CHAR*> &vecValue,
+                                      UINT32 mask )
+   {
+      INT32 rc = SDB_INVALIDARG ;
+      const CHAR *value = NULL ;
+
+      /// a:"xxx" or a:{$et:"xxx"}
+      if ( !e.isABSONObj() ||
+           0 != ossStrcmp( e.embeddedObject().firstElement().fieldName(),
+                           "$in") )
+      {
+         rc = _rtnCoordParseString( e, value, mask ) ;
+         if ( SDB_OK == rc )
+         {
+            vecValue.push_back( value ) ;
+         }
+      }
+      /// a:["xxx", "yyy", "zzz"]
+      else if ( Array == e.type() && ( mask & RTN_COORD_PARSE_MASK_IN_DFT ) )
+      {
+         BSONObjIterator it( e.embeddedObject() ) ;
+         while ( it.more() )
+         {
+            BSONElement tmpE = it.next() ;
+            rc = _rtnCoordParseString( tmpE, value,
+                                       RTN_COORD_PARSE_MASK_ET_DFT ) ;
+            if ( rc )
+            {
+               break ;
+            }
+            vecValue.push_back( value ) ;
+         }
+      }
+      /// a:{$in:["xxx", "yyy", "zzz"]}
+      else if ( mask & RTN_COORD_PARSE_MASK_IN_OPR )
+      {
+         BSONObj obj = e.embeddedObject() ;
+         BSONElement tmpE = obj.firstElement() ;
+         if ( 1 == obj.nFields() )
+         {
+            rc = _rtnCoordParseString( tmpE, vecValue,
+                                       RTN_COORD_PARSE_MASK_IN_DFT ) ;
+         }
+      }
+      return rc ;
+   }
+
    /*
       End local function define
    */
@@ -2754,80 +2938,84 @@ namespace engine
       CoordGroupInfoPtr grpPtr ;
       BSONObjBuilder builder ;
       BOOLEAN isModify = FALSE ;
+      vector< INT32 > tmpVecInt ;
+      vector< const CHAR* > tmpVecStr ;
 
       BSONObjIterator it( obj ) ;
       while( it.more() )
       {
          BSONElement ele = it.next() ;
 
-         // group id
-         if ( 0 == ossStrcasecmp( ele.fieldName(), CAT_GROUPID_NAME ) &&
-              ( NumberInt == ele.type() || Array == ele.type() ) )
+         // $and:[{GroupID:1000}, {GroupName:"xxx"}]
+         if ( Array == ele.type() &&
+              0 == ossStrcmp( ele.fieldName(), "$and" ) )
          {
-            isModify = TRUE ;
-            if ( ele.type() == NumberInt )
+            BSONArrayBuilder sub( builder.subarrayStart( ele.fieldName() ) ) ;
+            BSONObj tmpNew ;
+            BSONObjIterator tmpItr( ele.embeddedObject() ) ;
+            while ( tmpItr.more() )
             {
-               groupList[(UINT32)ele.numberInt()] = (UINT32)ele.numberInt() ;
-            }
-            else if ( ele.type() == Array )
-            {
-               BSONObjIterator tmpItr( ele.embeddedObject() ) ;
-               while ( tmpItr.more() )
+               BSONElement tmpE = tmpItr.next() ;
+               if ( Object != tmpE.type() )
                {
-                  BSONElement e1 = tmpItr.next () ;
-                  if ( e1.type() != NumberInt )
+                  PD_LOG( PDERROR, "Parse obj[%s] groups failed: "
+                          "invalid $and", obj.toString().c_str() ) ;
+                  rc = SDB_INVALIDARG ;
+                  goto error ;
+               }
+               else
+               {
+                  BSONObj tmpObj = tmpE.embeddedObject() ;
+                  rc = rtnCoordParseGroupList( cb, tmpObj, groupList,
+                                               pNewObj ? &tmpNew : NULL ) ;
+                  PD_RC_CHECK( rc, PDERROR, "Parse obj[%s] groups failed",
+                               obj.toString().c_str() ) ;
+                  if ( pNewObj )
                   {
-                     rc = SDB_INVALIDARG ;
-                     goto error ;
+                     if ( tmpNew.objdata() != tmpObj.objdata() )
+                     {
+                        isModify = TRUE ;
+                        sub.append( tmpNew ) ;
+                     }
+                     else
+                     {
+                        sub.append( tmpObj ) ;
+                     }
                   }
-                  groupList[(UINT32)e1.numberInt()] = (UINT32)e1.numberInt() ;
                }
             }
-            else
+            sub.done() ;
+         } /// end $and
+         // group id
+         else if ( 0 == ossStrcasecmp( ele.fieldName(), CAT_GROUPID_NAME ) &&
+                   SDB_OK == _rtnCoordParseInt( ele, tmpVecInt,
+                                                RTN_COORD_PARSE_MASK_ALL ) )
+         {
+            isModify = TRUE ;
+            for ( UINT32 i = 0 ; i < tmpVecInt.size() ; ++i )
             {
-               rc = SDB_INVALIDARG ;
-               goto error ;
+               groupList[(UINT32)tmpVecInt[i]] = (UINT32)tmpVecInt[i] ;
             }
+            tmpVecInt.clear() ;
          }
          // group name
          else if ( ( 0 == ossStrcasecmp( ele.fieldName(),
                                        FIELD_NAME_GROUPNAME ) ||
                      0 == ossStrcasecmp( ele.fieldName(),
                                        FIELD_NAME_GROUPS ) ) &&
-                   ( String == ele.type() || Array == ele.type() ) )
+                    SDB_OK == _rtnCoordParseString( ele, tmpVecStr,
+                                                    RTN_COORD_PARSE_MASK_ALL ) )
          {
             isModify = TRUE ;
-            if ( ele.type() == String )
+
+            for ( UINT32 i = 0 ; i < tmpVecStr.size() ; ++i )
             {
-               rc = rtnCoordGetGroupInfo( cb, ele.str().c_str(),
-                                          FALSE, grpPtr ) ;
+               rc = rtnCoordGetGroupInfo( cb, tmpVecStr[i], FALSE, grpPtr ) ;
                PD_RC_CHECK( rc, PDERROR, "Get group[%s] failed, rc: %d",
-                            ele.str().c_str(), rc ) ;
+                            tmpVecStr[i], rc ) ;
                groupList[ grpPtr->getGroupID() ] = grpPtr->getGroupID() ;
             }
-            else if ( ele.type() == Array )
-            {
-               BSONObjIterator tmpItr( ele.embeddedObject() ) ;
-               while ( tmpItr.more() )
-               {
-                  BSONElement e1 = tmpItr.next() ;
-                  if ( e1.type() != String )
-                  {
-                     rc = SDB_INVALIDARG ;
-                     goto error ;
-                  }
-                  rc = rtnCoordGetGroupInfo( cb, e1.str().c_str(),
-                                             FALSE, grpPtr ) ;
-                  PD_RC_CHECK( rc, PDERROR, "Get group[%s] failed, rc: %d",
-                               e1.str().c_str(), rc ) ;
-                  groupList[ grpPtr->getGroupID() ] = grpPtr->getGroupID() ;
-               }
-            }
-            else
-            {
-               rc = SDB_INVALIDARG ;
-               goto error ;
-            }
+            tmpVecStr.clear() ;
          }
          else if ( pNewObj )
          {
@@ -2986,6 +3174,125 @@ namespace engine
       return SDB_OK ;
    }
 
+   static INT32 _rtnCoordParseNodesInfo( const BSONObj &obj,
+                                         vector< UINT16 > &vecNodeID,
+                                         vector< string > &vecHostName,
+                                         vector< string > &vecSvcName,
+                                         BSONObj *pNewObj )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObjBuilder builder ;
+      BOOLEAN isModify = FALSE ;
+
+      vector< INT32 > tmpVecInt ;
+      vector< const CHAR* > tmpVecStr ;
+
+      BSONObjIterator itr( obj ) ;
+      while( itr.more() )
+      {
+         BSONElement ele = itr.next() ;
+
+         // $and:[{NodeID:1001, HostName:"xxxx" }]
+         if ( Array == ele.type() &&
+              0 == ossStrcmp( ele.fieldName(), "$and" ) )
+         {
+            BSONArrayBuilder sub( builder.subarrayStart( ele.fieldName() ) ) ;
+            BSONObj tmpNew ;
+            BSONObjIterator tmpItr( ele.embeddedObject() ) ;
+            while ( tmpItr.more() )
+            {
+               BSONElement tmpE = tmpItr.next() ;
+               if ( Object != tmpE.type() )
+               {
+                  PD_LOG( PDERROR, "Parse obj[%s] nodes failed: "
+                          "invalid $and", obj.toString().c_str() ) ;
+                  rc = SDB_INVALIDARG ;
+                  goto error ;
+               }
+               else
+               {
+                  BSONObj tmpObj = tmpE.embeddedObject() ;
+                  rc = _rtnCoordParseNodesInfo( tmpObj, vecNodeID,
+                                                vecHostName, vecSvcName,
+                                                pNewObj ? &tmpNew : NULL ) ;
+                  PD_RC_CHECK( rc, PDERROR, "Parse obj[%s] nodes failed ",
+                               obj.toString().c_str() ) ;
+                  if ( pNewObj )
+                  {
+                     if ( tmpNew.objdata() != tmpObj.objdata() )
+                     {
+                        isModify = TRUE ;
+                        sub.append( tmpNew ) ;
+                     }
+                     else
+                     {
+                        sub.append( tmpObj ) ;
+                     }
+                  }
+               }
+            }
+            sub.done() ;
+         } /// end $and
+         else if ( 0 == ossStrcasecmp( ele.fieldName(), CAT_NODEID_NAME ) &&
+                   SDB_OK == _rtnCoordParseInt( ele, tmpVecInt,
+                                                RTN_COORD_PARSE_MASK_ALL ) )
+         {
+            for ( UINT32 i = 0 ; i < tmpVecInt.size() ; ++i )
+            {
+               isModify = TRUE ;
+               vecNodeID.push_back( (UINT16)tmpVecInt[i] ) ;
+            }
+            tmpVecInt.clear() ;
+         }
+         else if ( 0 == ossStrcasecmp( ele.fieldName(), FIELD_NAME_HOST ) &&
+                   SDB_OK == _rtnCoordParseString( ele, tmpVecStr,
+                                                   RTN_COORD_PARSE_MASK_ALL ) )
+         {
+            for ( UINT32 i = 0 ; i < tmpVecStr.size() ; ++i )
+            {
+               isModify = TRUE ;
+               vecHostName.push_back( tmpVecStr[i] ) ;
+            }
+            tmpVecStr.clear() ;
+         }
+         else if ( ( 0 == ossStrcasecmp( ele.fieldName(),
+                                         FIELD_NAME_SERVICE_NAME ) ||
+                     0 == ossStrcasecmp( ele.fieldName(),
+                                         PMD_OPTION_SVCNAME ) ) &&
+                    SDB_OK == _rtnCoordParseString( ele, tmpVecStr,
+                                                    RTN_COORD_PARSE_MASK_ALL ) )
+         {
+            for ( UINT32 i = 0 ; i < tmpVecStr.size() ; ++i )
+            {
+               isModify = TRUE ;
+               vecSvcName.push_back( tmpVecStr[i] ) ;
+            }
+            tmpVecStr.clear() ;
+         }
+         else if ( pNewObj )
+         {
+            builder.append( ele ) ;
+         } // end if
+      } // end while
+
+      if ( pNewObj )
+      {
+         if ( isModify )
+         {
+            *pNewObj = builder.obj() ;
+         }
+         else
+         {
+            *pNewObj = obj ;
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 rtnCoordGetGroupNodes( pmdEDUCB *cb, const BSONObj &filterObj,
                                 NODE_SEL_STY emptyFilterSel,
                                 CoordGroupList &groupList, ROUTE_SET &nodes,
@@ -3002,124 +3309,23 @@ namespace engine
       vector< string > vecSvcName ;
       BOOLEAN emptyFilter = TRUE ;
 
-      BSONObjBuilder builder ;
-      BOOLEAN isModify = FALSE ;
-
       nodes.clear() ;
 
       rc = rtnGroupList2GroupPtr( cb, groupList, groupPtrs ) ;
       PD_RC_CHECK( rc, PDERROR, "Group ids to group info failed, rc: %d", rc ) ;
 
-      /// parse obj
-      {
-         BSONObjIterator itr( filterObj ) ;
-         while( itr.more() )
-         {
-            BSONElement ele = itr.next() ;
+      rc = _rtnCoordParseNodesInfo( filterObj, vecNodeID, vecHostName,
+                                    vecSvcName, pNewObj ) ;
+      PD_RC_CHECK( rc, PDERROR, "Parse obj[%s] nodes info failed, rc: %d",
+                   filterObj.toString().c_str(), rc ) ;
 
-            if ( 0 == ossStrcasecmp( ele.fieldName(), CAT_NODEID_NAME ) &&
-                 ( NumberInt == ele.type() || Array == ele.type() ) )
-            {
-               if ( ele.type() == NumberInt )
-               {
-                  vecNodeID.push_back( ele.numberInt() ) ;
-                  emptyFilter = FALSE ;
-               }
-               else if ( ele.type() == Array )
-               {
-                  BSONObjIterator tmpItr( ele.embeddedObject() ) ;
-                  while( tmpItr.more() )
-                  {
-                     BSONElement e1 = tmpItr.next() ;
-                     if ( NumberInt != e1.type() )
-                     {
-                        rc = SDB_INVALIDARG ;
-                        goto error ;
-                     }
-                     vecNodeID.push_back( e1.numberInt() ) ;
-                     emptyFilter = FALSE ;
-                  }
-               }
-               else
-               {
-                  PD_LOG( PDWARNING, "Field[%s] type[%d] error",
-                          CAT_NODEID_NAME, ele.type() ) ;
-                  rc = SDB_INVALIDARG ;
-                  goto error ;
-               }
-            }
-            else if ( 0 == ossStrcasecmp( ele.fieldName(), FIELD_NAME_HOST ) &&
-                      ( String == ele.type() || Array == ele.type() ) )
-            {
-               if ( ele.type() == String )
-               {
-                  vecHostName.push_back( ele.str() ) ;
-                  emptyFilter = FALSE ;
-               }
-               else if ( ele.type() == Array )
-               {
-                  BSONObjIterator tmpItr( ele.embeddedObject() ) ;
-                  while( tmpItr.more() )
-                  {
-                     BSONElement e1 = tmpItr.next() ;
-                     if ( String != e1.type() )
-                     {
-                        rc = SDB_INVALIDARG ;
-                        goto error ;
-                     }
-                     vecHostName.push_back( e1.str() ) ;
-                     emptyFilter = FALSE ;
-                  }
-               }
-               else
-               {
-                  PD_LOG( PDWARNING, "Field[%s] type[%d] error",
-                          FIELD_NAME_HOST, ele.type() ) ;
-                  rc = SDB_INVALIDARG ;
-                  goto error ;
-               }
-            }
-            else if ( ( 0 == ossStrcasecmp( ele.fieldName(),
-                                            FIELD_NAME_SERVICE_NAME ) ||
-                        0 == ossStrcasecmp( ele.fieldName(),
-                                            PMD_OPTION_SVCNAME ) ) &&
-                      ( String == ele.type() || Array == ele.type() ) )
-            {
-               if ( ele.type() == String )
-               {
-                  vecSvcName.push_back( ele.str() ) ;
-                  emptyFilter = FALSE ;
-               }
-               else if ( ele.type() == Array )
-               {
-                  BSONObjIterator tmpItr( ele.embeddedObject() ) ;
-                  while( tmpItr.more() )
-                  {
-                     BSONElement e1 = tmpItr.next() ;
-                     if ( String != e1.type() )
-                     {
-                        rc = SDB_INVALIDARG ;
-                        goto error ;
-                     }
-                     vecSvcName.push_back( e1.str() ) ;
-                     emptyFilter = FALSE ;
-                  }
-               }
-               else
-               {
-                  PD_LOG( PDWARNING, "Field[%s] type[%d] error",
-                          PMD_OPTION_SVCNAME, ele.type() ) ;
-                  rc = SDB_INVALIDARG ;
-                  goto error ;
-               }
-            }
-            else if ( pNewObj )
-            {
-               builder.append( ele ) ;
-            } // end if
-         } // end while
+      if ( vecNodeID.size() > 0 || vecHostName.size() > 0 ||
+           vecSvcName.size() > 0 )
+      {
+         emptyFilter = FALSE ;
       }
 
+      /// parse nodes
       it = groupPtrs.begin() ;
       while ( it != groupPtrs.end() )
       {
@@ -3190,8 +3396,8 @@ namespace engine
                   MsgRouteID primaryNode = ptr->getPrimary() ;
                   if ( 0 == primaryNode.value )
                   {
-                     PD_LOG( PDERROR, "Group[%u] has no primary node",
-                             grp->groupID() ) ;
+                     PD_LOG( PDWARNING, "Group[%u] has no primary node, "
+                             "select other one", grp->groupID() ) ;
                      rc = SDB_RTN_NO_PRIMARY_FOUND ;
                      goto error ;
                   }
@@ -3207,18 +3413,6 @@ namespace engine
             nodes.insert( routeID.value ) ;
          }
          ++it ;
-      }
-
-      if ( pNewObj )
-      {
-         if ( emptyFilter )
-         {
-            *pNewObj = filterObj ;
-         }
-         else
-         {
-            *pNewObj = builder.obj() ;
-         }
       }
 
    done:
@@ -3444,33 +3638,63 @@ namespace engine
                                     BSONObj *pNewObj )
    {
       INT32 rc = SDB_OK ;
-
       BOOLEAN modify = FALSE ;
       BSONObjBuilder builder ;
+      const CHAR *tmpStr = NULL ;
+      vector< const CHAR* > tmpVecStr ;
+
       BSONObjIterator it( obj ) ;
       while( it.more() )
       {
          BSONElement e = it.next() ;
-         if ( Object == e.type() )
+
+         /// $and:[{a:1},{b:2}]
+         if ( Array == e.type() &&
+              0 == ossStrcmp( e.fieldName(), "$and" ) )
          {
-            if ( pNewObj )
+            BSONArrayBuilder sub( builder.subarrayStart( e.fieldName() ) ) ;
+            BSONObj tmpNew ;
+            BSONObjIterator tmpItr( e.embeddedObject() ) ;
+            while ( tmpItr.more() )
             {
-               builder.append( e ) ;
+               BSONElement tmpE = tmpItr.next() ;
+               if ( Object != tmpE.type() )
+               {
+                  PD_LOG( PDERROR, "Parse obj[%s] conrtol param failed: "
+                          "invalid $and", obj.toString().c_str() ) ;
+                  rc = SDB_INVALIDARG ;
+                  goto error ;
+               }
+               else
+               {
+                  BSONObj tmpObj = tmpE.embeddedObject() ;
+                  rc = rtnCoordParseControlParam( tmpObj, param, mask,
+                                                  pNewObj ? &tmpNew : NULL ) ;
+                  PD_RC_CHECK( rc, PDERROR, "Parse obj[%s] conrtol param "
+                               "failed", obj.toString().c_str() ) ;
+                  if ( pNewObj )
+                  {
+                     if ( tmpNew.objdata() != tmpObj.objdata() )
+                     {
+                        modify = TRUE ;
+                        sub.append( tmpNew ) ;
+                     }
+                     else
+                     {
+                        sub.append( tmpObj ) ;
+                     }
+                  }
+               }
             }
-         }
+            sub.done() ;
+         } /// end $and
          else if ( ( mask & RTN_CTRL_MASK_GLOBAL ) &&
-                   0 == ossStrcasecmp( e.fieldName(), FIELD_NAME_GLOBAL ) )
+                   0 == ossStrcasecmp( e.fieldName(), FIELD_NAME_GLOBAL ) &&
+                   SDB_OK == _rtnCoordParseBoolean( e, param._isGlobal,
+                                                    RTN_COORD_PARSE_MASK_ET ) )
          {
             modify = TRUE ;
             param._parseMask |= RTN_CTRL_MASK_GLOBAL ;
-            if ( !e.isBoolean() )
-            {
-               PD_LOG( PDERROR, "Field[%s] is invalid in obj[%s]",
-                       FIELD_NAME_GLOBAL, obj.toString().c_str() ) ;
-               rc = SDB_INVALIDARG ;
-               goto error ;
-            }
-            param._isGlobal = e.boolean() ? TRUE : FALSE ;
          }
          else if ( ( mask & RTN_CTRL_MASK_GLOBAL ) &&
                    e.isNull() &&
@@ -3488,81 +3712,47 @@ namespace engine
          }
          else if ( ( mask & RTN_CTRL_MASK_NODE_SELECT ) &&
                    0 == ossStrcasecmp( e.fieldName(),
-                                       FIELD_NAME_NODE_SELECT ) )
+                                       FIELD_NAME_NODE_SELECT ) &&
+                   SDB_OK == _rtnCoordParseString( e, tmpStr,
+                                                   RTN_COORD_PARSE_MASK_ET ) )
          {
             modify = TRUE ;
             param._parseMask |= RTN_CTRL_MASK_NODE_SELECT ;
-            if ( String != e.type() ||
-                 ( 0 != ossStrcasecmp( e.valuestr(), "all" ) &&
-                   0 != ossStrcasecmp( e.valuestr(), "primary" ) ) )
+            if ( 0 == ossStrcasecmp( tmpStr, "primary" ) )
             {
-               PD_LOG( PDERROR, "Field[%s] is invalid in obj[%s]",
-                       FIELD_NAME_NODE_SELECT, obj.toString().c_str() ) ;
-               rc = SDB_INVALIDARG ;
-               goto error ;
-            }
-            else if ( 0 == ossStrcasecmp( e.valuestr(), "all" ) )
-            {
-               param._emptyFilterSel = NODE_SEL_ALL ;
+               param._emptyFilterSel = NODE_SEL_PRIMARY ;
             }
             else
             {
-               param._emptyFilterSel = NODE_SEL_PRIMARY ;
+               param._emptyFilterSel = NODE_SEL_ALL ;
             }
          }
          else if ( ( mask & RTN_CTRL_MASK_ROLE ) &&
                    0 == ossStrcasecmp( e.fieldName(),
-                                       FIELD_NAME_ROLE ) )
+                                       FIELD_NAME_ROLE ) &&
+                   SDB_OK == _rtnCoordParseString( e, tmpVecStr,
+                                                   RTN_COORD_PARSE_MASK_ALL ) )
          {
             ossMemset( &param._role, 0, sizeof( param._role ) ) ;
             modify = TRUE ;
             param._parseMask |= RTN_CTRL_MASK_NODE_SELECT ;
-            if ( String == e.type() &&
-                 SDB_ROLE_MAX != utilGetRoleEnum( e.valuestr() ) )
+
+            for ( UINT32 i = 0 ; i < tmpVecStr.size() ; ++i )
             {
-               param._role[ utilGetRoleEnum( e.valuestr() ) ] = 1 ;
-            }
-            else if ( Array == e.type() )
-            {
-               BSONObjIterator tmpItr( e.embeddedObject() ) ;
-               while( tmpItr.more() )
+               if ( SDB_ROLE_MAX != utilGetRoleEnum( tmpVecStr[ i ] ) )
                {
-                  BSONElement tmpE = tmpItr.next() ;
-                  if ( String == e.type() &&
-                       SDB_ROLE_MAX != utilGetRoleEnum( tmpE.valuestr() ) )
-                  {
-                     param._role[ utilGetRoleEnum( tmpE.valuestr() ) ] = 1 ;
-                  }
-                  else
-                  {
-                     PD_LOG( PDERROR, "Field[%s] is invalid in obj[%s]",
-                             FIELD_NAME_ROLE, obj.toString().c_str() ) ;
-                     rc = SDB_INVALIDARG ;
-                     goto error ;
-                  }
+                  param._role[ utilGetRoleEnum( tmpVecStr[ i ] ) ] = 1 ;
                }
             }
-            else
-            {
-               PD_LOG( PDERROR, "Field[%s] is invalid in obj[%s]",
-                       FIELD_NAME_ROLE, obj.toString().c_str() ) ;
-               rc = SDB_INVALIDARG ;
-               goto error ;
-            }
+            tmpVecStr.clear() ;
          }
          else if ( ( mask & RTN_CTRL_MASK_RAWDATA ) &&
-                   0 == ossStrcasecmp( e.fieldName(), FIELD_NAME_RAWDATA ) )
+                   0 == ossStrcasecmp( e.fieldName(), FIELD_NAME_RAWDATA ) &&
+                   SDB_OK == _rtnCoordParseBoolean( e, param._rawData,
+                                                    RTN_COORD_PARSE_MASK_ET ) )
          {
             modify = TRUE ;
             param._parseMask |= RTN_CTRL_MASK_RAWDATA ;
-            if ( !e.isBoolean() )
-            {
-               PD_LOG( PDERROR, "Field[%s] is invalid in obj[%s]",
-                       FIELD_NAME_RAWDATA, obj.toString().c_str() ) ;
-               rc = SDB_INVALIDARG ;
-               goto error ;
-            }
-            param._rawData = e.Bool() ? TRUE : FALSE ;
          }
          else if ( pNewObj )
          {
@@ -3583,7 +3773,7 @@ namespace engine
       }
 
    done:
-      return rc ;
+      return SDB_OK ;
    error:
       goto done ;
    }
