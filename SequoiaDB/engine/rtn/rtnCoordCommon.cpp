@@ -3335,14 +3335,18 @@ namespace engine
 
          routeID.value = MSG_INVALID_ROUTEID ;
          clsGroupItem *grp = ptr->getGroupItem() ;
+         if ( grp->nodeCount() > 0 )
+         {
+            randNum %= grp->nodeCount() ;
+         }
 
          /// calc pos
          while ( calTimes++ < grp->nodeCount() )
          {
-            randNum %= grp->nodeCount() ;
             if ( NODE_SEL_SECONDARY == emptyFilterSel &&
                  randNum == grp->getPrimaryPos() )
             {
+               randNum = ( randNum + 1 ) % grp->nodeCount() ;
                continue ;
             }
             else if ( NODE_SEL_PRIMARY == emptyFilterSel &&
