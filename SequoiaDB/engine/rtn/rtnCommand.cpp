@@ -366,6 +366,7 @@ namespace engine
    IMPLEMENT_CMD_AUTO_REGISTER(_rtnAddDomainGroup)
    IMPLEMENT_CMD_AUTO_REGISTER(_rtnRemoveDomainGroup)
    IMPLEMENT_CMD_AUTO_REGISTER(_rtnSnapshotCata )
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnSnapshotCataIntr)
    IMPLEMENT_CMD_AUTO_REGISTER(_rtnWaitTask)
    IMPLEMENT_CMD_AUTO_REGISTER(_rtnListTask)
 
@@ -1721,6 +1722,11 @@ namespace engine
          buffSize = 0 ;
          buffUsedSize = 0 ;
       }
+      if ( -1 != *pContextID && !_useContext() )
+      {
+         rtnCB->contextDelete( *pContextID, cb ) ;
+         *pContextID = -1 ;
+      }
       PD_TRACE_EXITRC ( SDB__RTNSNAPSHOT_DOIT, rc ) ;
       return rc ;
    error:
@@ -1781,6 +1787,11 @@ namespace engine
       }
 
    done:
+      if ( -1 != *pContextID && !_useContext() )
+      {
+         rtnCB->contextDelete( *pContextID, cb ) ;
+         *pContextID = -1 ;
+      }
       return rc ;
    error:
       goto done ;

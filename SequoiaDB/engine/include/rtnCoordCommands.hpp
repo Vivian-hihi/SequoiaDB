@@ -104,6 +104,7 @@ namespace engine
    #define COORD_CMD_SNAPSHOTCTXCURINTR       CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_CONTEXCUR_INTR
    #define COORD_CMD_SNAPSHOTSESSINTR         CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_SESSION_INTR
    #define COORD_CMD_SNAPSHOTSESSCURINTR      CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_SESSIONCUR_INTR
+   #define COORD_CMD_SNAPSHOTCATAINTR         CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_CATA_INTR
    #define COORD_CMD_CRT_PROCEDURE            CMD_ADMIN_PREFIX CMD_NAME_CRT_PROCEDURE
    #define COORD_CMD_EVAL                     CMD_ADMIN_PREFIX CMD_NAME_EVAL
    #define COORD_CMD_RM_PROCEDURE             CMD_ADMIN_PREFIX CMD_NAME_RM_PROCEDURE
@@ -313,7 +314,17 @@ namespace engine
                              pmdEDUCB *cb,
                              INT64 &contextID,
                              rtnContextBuf *buf ) ;
+
+   private:
+      virtual BOOLEAN _useContext() { return TRUE ; }
+
    };
+
+   class rtnCoordCmdSnapshotReset : public rtnCoordCMDSnapshotIntrBase
+   {
+   private:
+      virtual BOOLEAN _useContext() { return FALSE ; }
+   } ;
 
    class rtnCoordAggrCmdBase : public _aggrCmdBase
    {
@@ -335,6 +346,7 @@ namespace engine
    private:
       virtual const CHAR *getIntrCMDName() = 0 ;
       virtual const CHAR *getInnerAggrContent() = 0 ;
+      virtual BOOLEAN    _useContext() { return TRUE ; }
    };
 
    class rtnCoordCMDSnapshotDataBase: public rtnCoordCMDSnapShotBase

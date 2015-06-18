@@ -356,6 +356,16 @@ namespace engine
          virtual RTN_COMMAND_TYPE type () { return CMD_SNAPSHOT_CATA ; }
    };
 
+   class _rtnSnapshotCataIntr : public _rtnCoordOnly
+   {
+      DECLARE_CMD_AUTO_REGISTER()
+      public:
+         _rtnSnapshotCataIntr () {}
+         virtual ~_rtnSnapshotCataIntr () {}
+         virtual const CHAR * name () { return CMD_NAME_SNAPSHOT_CATA_INTR ; }
+         virtual RTN_COMMAND_TYPE type () { return CMD_SNAPSHOT_CATA ; }
+   } ;
+
    class _rtnWaitTask : public _rtnCoordOnly
    {
       DECLARE_CMD_AUTO_REGISTER()
@@ -898,6 +908,9 @@ namespace engine
                               _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
                               INT16 w = 1, INT64 *pContextID = NULL  ) ;
 
+      protected:
+         virtual BOOLEAN _useContext() { return TRUE ; }
+
       private:
          virtual const CHAR *getIntrCMDName() = 0 ;
 
@@ -923,7 +936,7 @@ namespace engine
                               _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
                               INT16 w = 1, INT64 *pContextID = NULL  ) ;
 
-    private:
+      private:
          virtual const CHAR *getIntrCMDName() { return "" ; }
    } ;
 
@@ -1095,6 +1108,9 @@ namespace engine
 
          virtual const CHAR * name () ;
          virtual RTN_COMMAND_TYPE type () ;
+
+      protected:
+         virtual BOOLEAN _useContext() { return FALSE ; }
    };
 
    class _rtnSnapshotSessions : public _rtnSnapshot

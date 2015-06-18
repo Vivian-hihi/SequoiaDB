@@ -1703,7 +1703,16 @@ namespace engine
 
       if ( pContext )
       {
-         contextID = pContext->contextID() ;
+         if ( _useContext() )
+         {
+            contextID = pContext->contextID() ;
+         }
+         else
+         {
+            pmdGetKRCB()->getRTNCB()->contextDelete( pContext->contextID(),
+                                                     cb ) ;
+            pContext = NULL ;
+         }
       }
 
    done:
@@ -5841,6 +5850,11 @@ namespace engine
          pOutBuff = NULL ;
          buffSize = 0 ;
          buffUsedSize = 0 ;
+      }
+      if ( -1 != contextID && !_useContext() )
+      {
+         rtnCB->contextDelete( contextID, cb ) ;
+         contextID = -1 ;
       }
       return rc ;
    error:
