@@ -373,7 +373,9 @@ namespace engine
    enum NODE_SEL_STY
    {
       NODE_SEL_ALL         = 1,
-      NODE_SEL_PRIMARY
+      NODE_SEL_PRIMARY,
+      NODE_SEL_SECONDARY,
+      NODE_SEL_ANY
    } ;
    INT32 rtnCoordGetGroupNodes( pmdEDUCB *cb, const BSONObj &filterObj,
                                 NODE_SEL_STY emptyFilterSel,

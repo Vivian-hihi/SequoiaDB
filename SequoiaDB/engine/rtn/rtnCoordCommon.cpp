@@ -3329,15 +3329,35 @@ namespace engine
       it = groupPtrs.begin() ;
       while ( it != groupPtrs.end() )
       {
+         UINT32 calTimes = 0 ;
+         UINT32 randNum = ossRand() ;
          ptr = *it ;
 
          routeID.value = MSG_INVALID_ROUTEID ;
          clsGroupItem *grp = ptr->getGroupItem() ;
+
+         /// calc pos
+         while ( calTimes++ < grp->nodeCount() )
+         {
+            randNum %= grp->nodeCount() ;
+            if ( NODE_SEL_SECONDARY == emptyFilterSel &&
+                 randNum == grp->getPrimaryPos() )
+            {
+               continue ;
+            }
+            else if ( NODE_SEL_PRIMARY == emptyFilterSel &&
+                      CLS_RG_NODE_POS_INVALID != grp->getPrimaryPos() )
+            {
+               randNum = grp->getPrimaryPos() ;
+            }
+            break ;
+         }
+
          routeID.columns.groupID = grp->groupID() ;
          const VEC_NODE_INFO *nodesInfo = grp->getNodes() ;
          for ( VEC_NODE_INFO::const_iterator itrn = nodesInfo->begin() ;
                itrn != nodesInfo->end();
-               ++itrn )
+               ++itrn, --randNum )
          {
             if ( FALSE == emptyFilter )
             {
@@ -3389,24 +3409,9 @@ namespace engine
                   continue ;
                }
             }
-            else
+            else if ( NODE_SEL_ALL != emptyFilterSel && 0 != randNum )
             {
-               if ( NODE_SEL_PRIMARY == emptyFilterSel )
-               {
-                  MsgRouteID primaryNode = ptr->getPrimary() ;
-                  if ( 0 == primaryNode.value )
-                  {
-                     PD_LOG( PDWARNING, "Group[%u] has no primary node, "
-                             "select other one", grp->groupID() ) ;
-                     rc = SDB_RTN_NO_PRIMARY_FOUND ;
-                     goto error ;
-                  }
-
-                  if ( itrn->_id.columns.nodeID != primaryNode.columns.nodeID )
-                  {
-                     continue ;
-                  }
-               }
+               continue ;
             }
             routeID.columns.nodeID = itrn->_id.columns.nodeID ;
             routeID.columns.serviceID = MSG_ROUTE_SHARD_SERVCIE ;
@@ -3718,9 +3723,22 @@ namespace engine
          {
             modify = TRUE ;
             param._parseMask |= RTN_CTRL_MASK_NODE_SELECT ;
-            if ( 0 == ossStrcasecmp( tmpStr, "primary" ) )
+            if ( 0 == ossStrcasecmp( tmpStr, "primary" ) ||
+                 0 == ossStrcasecmp( tmpStr, "master" ) ||
+                 0 == ossStrcasecmp( tmpStr, "m" ) ||
+                 0 == ossStrcasecmp( tmpStr, "p" ) )
             {
                param._emptyFilterSel = NODE_SEL_PRIMARY ;
+            }
+            else if ( 0 == ossStrcasecmp( tmpStr, "any" ) ||
+                      0 == ossStrcasecmp( tmpStr, "a" ) )
+            {
+               param._emptyFilterSel = NODE_SEL_ANY ;
+            }
+            else if ( 0 == ossStrcasecmp( tmpStr, "secondary" ) ||
+                      0 == ossStrcasecmp( tmpStr, "s" ) )
+            {
+               param._emptyFilterSel = NODE_SEL_SECONDARY ;
             }
             else
             {
