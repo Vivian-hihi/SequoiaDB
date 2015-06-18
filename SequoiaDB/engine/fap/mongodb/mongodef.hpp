@@ -102,7 +102,7 @@ enum authState
    AUTH_FINISHED = 1 << 31,
 } ;
 
-#define  SDB_FAP_MONGO "mongo"
+#define SDB_AUTH_SOURCE_FAP "fap-mongo"
 
 #pragma pack(1)
 struct mongoMsgHeader

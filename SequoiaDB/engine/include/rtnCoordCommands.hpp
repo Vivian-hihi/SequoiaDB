@@ -55,6 +55,7 @@ namespace engine
    #define COORD_CMD_LISTGROUPS               CMD_ADMIN_PREFIX CMD_NAME_LIST_GROUPS
    #define COORD_CMD_LISTCOLLECTIONSPACES     CMD_ADMIN_PREFIX CMD_NAME_LIST_COLLECTIONSPACES
    #define COORD_CMD_LISTCOLLECTIONS          CMD_ADMIN_PREFIX CMD_NAME_LIST_COLLECTIONS
+   #define COORD_CMD_LISTUSERS                CMD_ADMIN_PREFIX CMD_NAME_LIST_USERS
    #define COORD_CMD_CREATECOLLECTIONSPACE    CMD_ADMIN_PREFIX CMD_NAME_CREATE_COLLECTIONSPACE
    #define COORD_CMD_CREATECOLLECTION         CMD_ADMIN_PREFIX CMD_NAME_CREATE_COLLECTION
    #define COORD_CMD_ALTERCOLLECTION          CMD_ADMIN_PREFIX CMD_NAME_ALTER_COLLECTION
@@ -566,6 +567,13 @@ namespace engine
    protected:
       virtual INT32 _preProcess( rtnQueryOptions &queryOpt,
                                  string &clName ) ;
+   };
+
+   class rtnCoordCMDListUser : public rtnCoordCMDQueryBase
+   {
+   protected:
+      virtual INT32 _preProcess( rtnQueryOptions &queryOpt,
+         string &clName ) ;
    };
 
    class rtnCoordCMDTestCollectionSpace : public rtnCoordCommand

@@ -64,6 +64,7 @@
 #include "spdCoordDownloader.hpp"
 #include "rtnDataSet.hpp"
 #include "rtnAlterRunner.hpp"
+#include "../include/authDef.hpp"
 
 using namespace bson;
 namespace engine
@@ -2185,6 +2186,19 @@ namespace engine
       BSONObjBuilder builder ;
       clName = CAT_COLLECTION_INFO_COLLECTION ;
       builder.appendNull( CAT_COLLECTION_NAME ) ;
+      queryOpt._selector = builder.obj() ;
+      return SDB_OK ;
+   }
+
+   INT32 rtnCoordCMDListUser::_preProcess( rtnQueryOptions &queryOpt,
+                                           string & clName )
+   {
+      BSONObjBuilder builder ;
+      clName = AUTH_USR_COLLECTION ;
+      if ( queryOpt._selector.isEmpty() )
+      {
+         builder.appendNull( FIELD_NAME_USER ) ;
+      }
       queryOpt._selector = builder.obj() ;
       return SDB_OK ;
    }
