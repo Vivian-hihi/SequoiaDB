@@ -3925,8 +3925,6 @@ namespace engine
          utilBuildFullPath( OM_DEFAULT_INSTALL_ROOT_PATH, businessType.c_str(), 
                             OM_PATH_LENGTH, tmpInstallPath ) ;
          utilCatPath( tmpInstallPath, OM_PATH_LENGTH, businessName.c_str() ) ;
-         utilCatPath( tmpInstallPath, OM_PATH_LENGTH, 
-                      OM_DBPATH_PREFIX_DATABASE ) ;
          if ( 0 == pathAdjustIndex )
          {
             utilCatPath( tmpInstallPath, OM_PATH_LENGTH, dataPort.c_str() ) ;
