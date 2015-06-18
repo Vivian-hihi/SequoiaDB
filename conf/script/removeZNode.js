@@ -48,9 +48,11 @@ var task_id         = "" ;
 var host_name       = "" ;
 var zoo_id          = "" ;
 var zkServer        = "" ;
+var cfgFile         = "" ;
 if ( SYS_LINUX == SYS_TYPE )
 {
-   zkServer = "bin/zkServer.sh"
+   zkServer = "bin/zkServer.sh" ;
+   cfgFile  = "conf/zoo.cfg" ;
 }
 else
 {
@@ -180,6 +182,74 @@ function _removeZNode( ssh, installPath, dataPath )
    }
 }
 
+/* *****************************************************************************
+@discretion: check whether the file exist or not
+@author: Tanzhaobo
+@parameter
+   ssh[object]: ssh object
+   file[string]: the file to check
+@return 
+   [bool] true or false
+***************************************************************************** */
+function _fileExsited( ssh, file )
+{
+   var fileExsited = true ;
+   var str         = "" ;
+   var ret         = 0 ;
+
+   str = " ls -l " + file ;
+   try{ ssh.exec( str ) ; }catch(e){}
+   ret = ssh.getLastRet() ;
+   if ( 0 != ret )
+   {
+      fileExsited = false ;
+      errMsg = sprintf( "File[?] does not exist in host[?], rc: ?, detail: ?",
+                        file, ssh.getPeerIP(), ret, ssh.getLastOut() ) ;
+      PD_LOG2( task_id, arguments, PDWARNING, FILE_NAME_REMOVE_ZNODE,
+               sprintf( errMsg + ", rc: ?, detail: ?", ret, ssh.getLastOut() ) ) ;
+   }
+   
+   return fileExsited ;
+}
+
+/* *****************************************************************************
+@discretion: check whether the target znode had been removed or not
+@author: Tanzhaobo
+@parameter
+   ssh[object]: ssh object
+   installPath[string]: install path
+@return 
+   [bool] true or false
+***************************************************************************** */
+function _hasRemoved( ssh, installPath )
+{
+   var hasRemoved = false ;
+   var file1 = "" ;
+   var file2 = "" ;
+   var fileExsited1 = 0 ;
+   var fileExsited2 = 0 ;
+
+   if ( SYS_LINUX == SYS_TYPE )
+   {      
+      file1 = adaptPath(installPath) + zkServer ;
+      file2 = adaptPath(installPath) + cfgFile ;
+   }
+   else
+   {
+      // TODO: windows
+   }
+   fileExsited1 = _fileExsited( ssh, file1 ) ;
+   fileExsited2 = _fileExsited( ssh, file2 ) ;
+   if ( false == fileExsited1 && false == fileExsited2 )
+   {
+      hasRemoved = true ;
+      errMsg = sprintf( "File[?] and file [?] do not exist in host[?], take the znode had been removed in this host",
+                        file1, file2, ssh.getPeerIP() ) ;
+      PD_LOG2( task_id, arguments, PDWARNING, FILE_NAME_REMOVE_ZNODE, errMsg ) ;
+   }
+
+   return hasRemoved ;
+}
 
 function main()
 {
@@ -193,8 +263,8 @@ function main()
    var zooID       = null ;
    var ssh         = null ;
    var deployMod   = null ;
-   var hasFailed   = false ;
-   
+   var hasRemoved  = false ;
+     
    _init() ;
    
    try
@@ -241,36 +311,23 @@ function main()
          try{ ssh.close() ; }catch(e){}
          exception_handle( rc, errMsg ) ;
       }
-      // stop znode
-      try
+      // check whether "bin/zkServer.sh" and "conf/zoo.cfg" exist or not,
+      // if so, let current znode remove, otherwise, take it had been removed
+      hasRemoved = _hasRemoved( ssh, installPath ) ;
+      if ( true == hasRemoved )
       {
+         PD_LOG2( task_id, arguments, PDEVENT, FILE_NAME_REMOVE_ZNODE,
+                  sprintf( "No need to remove znode[?.?]", host_name, zoo_id ) ) ;
+      }
+      else
+      {
+         PD_LOG2( task_id, arguments, PDEVENT, FILE_NAME_REMOVE_ZNODE,
+                  sprintf( "Need to remove znode[?.?]", host_name, zoo_id ) ) ;
          _stopZNode( ssh, installPath ) ;
-      }
-      catch( e )
-      {
-         rc = GETLASTERROR() ;
-         errMsg = GETLASTERRMSG() ;
-         hasFailed = true ;
-      }
-      // remove znode
-      try
-      {
          _removeZNode( ssh, installPath, dataPath ) ;
       }
-      catch( e )
-      {
-         if ( false == hasFailed )
-         {
-            rc = GETLASTERROR() ;
-            errMsg = GETLASTERRMSG() ;
-            hasFailed = true ;
-         }
-      }
+      // close ssh
       try{ ssh.close() ; }catch(e){}
-      if ( true == hasFailed )
-      {
-         exception_handle( rc, errMsg ) ;
-      }
    }
    catch( e )
    {
@@ -281,6 +338,7 @@ function main()
                sprintf( "Failed to remove znode in host[?], rc:?, detail:?", hostName, rc, errMsg ) ) ;   
       RET_JSON[Errno] = rc ;
       RET_JSON[Detail] = errMsg ;
+      try{ ssh.close() ; }catch(e){}
    }
    
    _final() ;
