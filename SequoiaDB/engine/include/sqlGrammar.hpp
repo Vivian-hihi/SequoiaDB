@@ -124,10 +124,10 @@ typedef SQL_CONTAINER::const_iterator SQL_CON_ITR ;
       const static INT32   SPLITBY = 50 ;
 
       /// do not use IN coz windows
-      const static INT32   INN = 50;
-      const static INT32   NOT = 51;
-      const static INT32   NULLL = 52;
-      const static INT32   IS = 53;
+      const static INT32   INN = 51;
+      const static INT32   NOT = 52;
+      const static INT32   NULLL = 53;
+      const static INT32   IS = 54;
          /// trem end
 
          /// factor start
@@ -137,8 +137,10 @@ typedef SQL_CONTAINER::const_iterator SQL_CON_ITR ;
          /// base type start
       const static INT32   DIGITAL = 1001 ;
       const static INT32   STR = 1002 ;
+      const static INT32   BOOL_TRUE = 1003 ;
+      const static INT32   BOOL_FALSE = 1004 ;
          /// base type end
-      const static INT32   SQLMAX = 1003 ;
+      const static INT32   SQLMAX = 10000 ;
 
       template <typename ScannerT>
       struct definition
@@ -205,6 +207,8 @@ typedef SQL_CONTAINER::const_iterator SQL_CON_ITR ;
 
          SQL_RULE(DIGITAL) digital ;
          SQL_RULE(STR) str ;
+         SQL_RULE(BOOL_TRUE) bool_true ;
+         SQL_RULE(BOOL_FALSE) bool_false ;
 
          /// logical rule for parsing.
          rule<ScannerT> graph ;
@@ -238,6 +242,10 @@ typedef SQL_CONTAINER::const_iterator SQL_CON_ITR ;
                           !('.'>>+digit_p)>>!((ch_p('e')|ch_p('E')\
                            >> !(ch_p('+')|ch_p('-')))>>+digit_p)]
                           ];
+
+            bool_true = str_p("true") ;
+
+            bool_false = str_p("false") ;         
 
             graph = (anychar_p - ( ch_p('"')|ch_p('\0')|ch_p('\'')))
                     | str_p("\\\\")
@@ -427,7 +435,7 @@ typedef SQL_CONTAINER::const_iterator SQL_CON_ITR ;
                         >> root_node_d[(eg|lte|gte
                                         |ne|lt|gt|is)]
                         >> SQL_BLANKORNO
-                        >> ( digital | nulll |str | date |dbattr) )
+                        >> ( digital | nulll |str | date |(dbattr - (bool_true | bool_false)) ) )
                       |( dbattr
                          >> SQL_BLANK
                          >> root_node_d[in]
@@ -443,7 +451,12 @@ typedef SQL_CONTAINER::const_iterator SQL_CON_ITR ;
                                       >> wCondition
                                       >> SQL_BLANKORNO
                                       >> rbrackets])
-                      | root_node_d[nott] >> SQL_BLANK >> wFactor;
+                      | root_node_d[nott] >> SQL_BLANK >> wFactor
+                      | ( dbattr
+                         >> SQL_BLANK
+                         >> root_node_d[eg|ne|lte|gte|lt|gt]
+                         >> SQL_BLANK
+                         >> ( bool_true | bool_false ) );
 
             oFactor = ( dbattr
                         >> SQL_BLANKORNO

@@ -456,14 +456,28 @@ namespace engine
 
       string str( key, size ) ;
 
-      if ( SQL_GRAMMAR::STR == node->type
-           ||SQL_GRAMMAR::DBATTR == node->type )
+      if ( SQL_GRAMMAR::STR == node->type )
       {
          builder.append( str, node->value.toString() ) ;
+      }
+      else if ( SQL_GRAMMAR::DBATTR == node->type )
+      {
+         BSONObjBuilder sub( builder.subobjStart(str) ) ;
+         sub.append( "$field", node->value.toString() ) ;
+         sub.doneFast() ;
       }
       else if ( SQL_GRAMMAR::DIGITAL == node->type )
       {
          builder.appendAsNumber( str, node->value.toString() ) ;
+      }
+      else if ( SQL_GRAMMAR::BOOL_TRUE == node->type ||
+                SQL_GRAMMAR::BOOL_FALSE == node->type )
+      {
+         builder.appendBool( str, SQL_GRAMMAR::BOOL_TRUE == node->type ) ;
+      }
+      else if ( SQL_GRAMMAR::NULLL == node->type )
+      {
+         builder.appendNull( str ) ;
       }
       else if ( SQL_GRAMMAR::SQLMAX < node->type )
       {
@@ -476,10 +490,6 @@ namespace engine
          {
             builder.appendNull( str ) ;
          }
-      }
-      else if ( SQL_GRAMMAR::NULLL == node->type )
-      {
-         builder.appendNull( str ) ;
       }
       else
       {

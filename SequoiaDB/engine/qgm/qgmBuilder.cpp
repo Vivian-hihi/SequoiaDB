@@ -2450,6 +2450,17 @@ namespace engine
             goto error ;
          }
       }
+      else if ( SQL_GRAMMAR::BOOL_TRUE == type ||
+                SQL_GRAMMAR::BOOL_FALSE == type )
+      {
+         condition = SDB_OSS_NEW qgmConditionNode( type ) ;
+         if ( NULL == condition )
+         {
+            PD_LOG( PDERROR, "failed to allocate mem" ) ;
+            rc = SDB_OOM ;
+            goto error ;
+         }
+      }
       else
       {
          PD_LOG( PDERROR, "invalid type:%d",type ) ;
