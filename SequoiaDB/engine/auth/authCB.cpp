@@ -73,7 +73,8 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_AUTHCB_AUTHENTICATE, "_authCB::authenticate" )
-   INT32 _authCB::authenticate( BSONObj &obj, _pmdEDUCB *cb )
+   INT32 _authCB::authenticate( BSONObj &obj, _pmdEDUCB *cb,
+                                BOOLEAN chkPasswd )
    {
       INT32 rc = SDB_OK ;
       BSONObj hint ;
@@ -112,7 +113,8 @@ namespace engine
       PD_LOG( PDDEBUG, "get authentication msg:[%s]",
               obj.toString().c_str()) ;
 
-      if ( SDB_OK != _valid( obj, FALSE ) )
+      if ( SDB_OK != _valid( obj, FALSE ) &&
+           SDB_OK != _validSource( obj, chkPasswd ) )
       {
          rc = SDB_INVALIDARG;
          goto error ;
@@ -230,7 +232,7 @@ namespace engine
       SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
       SDB_DPSCB *dpsCB = pmdGetKRCB()->getDPSCB() ;
 
-      rc = authenticate( obj, cb ) ;
+      rc = authenticate( obj, cb, FALSE ) ;
       if ( SDB_OK != rc )
       {
          goto error ;
@@ -347,7 +349,7 @@ namespace engine
       SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
       SDB_DPSCB *dpsCB = pmdGetKRCB()->getDPSCB() ;
 
-      if ( SDB_OK != _valid( obj, TRUE )  ||
+      if ( SDB_OK != _valid( obj, TRUE )  &&
            SDB_OK != _validSource( obj, TRUE ) )
       {
          rc = SDB_INVALIDARG ;
@@ -427,7 +429,7 @@ namespace engine
       goto done ;
    }
 
-   INT32 _authCB::_validSource( BSONObj &obj, BOOLEAN isCrt )
+   INT32 _authCB::_validSource( BSONObj &obj, BOOLEAN chkPasswd )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_AUTHCB__VALID ) ;
@@ -455,7 +457,7 @@ namespace engine
          goto error ;
       }
 
-      if ( isCrt )
+      if ( chkPasswd )
       {
          pass = obj.getField( SDB_AUTH_PASSWD ) ;
          if ( pass.eoo() || String != pass.type() || ( pass.String().empty() ) )

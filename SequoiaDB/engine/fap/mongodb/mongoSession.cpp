@@ -295,11 +295,11 @@ INT32 _mongoSession::_processMsg( const CHAR *pMsg )
       rc = getProcessor()->processMsg( (MsgHeader *) pMsg,
                                        _contextBuff, _replyHeader.contextID,
                                        needReply ) ;
+      _errorInfo = engine::utilGetErrorBson( rc,
+                   _pEDUCB->getInfo( engine::EDU_INFO_ERROR ) ) ;
+
       if ( SDB_OK != rc )
       {
-         _errorInfo = engine::utilGetErrorBson( rc,
-                      _pEDUCB->getInfo( engine::EDU_INFO_ERROR ) ) ;
-
          tmp = _errorInfo.getIntField( OP_ERRNOFIELD ) ;
          // build error msg
          bob.append( "ok", FALSE ) ;
@@ -310,7 +310,7 @@ INT32 _mongoSession::_processMsg( const CHAR *pMsg )
          }
          bob.append( "code",  tmp ) ;
          bob.append( "errmsg", _errorInfo.getStringField( OP_ERRDESP_FIELD) ) ;
-         bob.append( "$err", _errorInfo.getStringField( OP_ERRDESP_FIELD) ) ;
+         bob.append( "err", _errorInfo.getStringField( OP_ERRDESP_FIELD) ) ;
          _contextBuff = engine::rtnContextBuf( bob.obj() ) ;
       }
       bodyLen = _contextBuff.size() ;
@@ -325,9 +325,6 @@ INT32 _mongoSession::_processMsg( const CHAR *pMsg )
    {
       if ( 0 == bodyLen )
       {
-         _errorInfo = engine::utilGetErrorBson( rc,
-                      _pEDUCB->getInfo( engine::EDU_INFO_ERROR ) ) ;
-
          tmp = _errorInfo.getIntField( OP_ERRNOFIELD ) ;
          if ( SDB_OK != rc )
          {
@@ -335,11 +332,12 @@ INT32 _mongoSession::_processMsg( const CHAR *pMsg )
             bob.append( "ok", FALSE ) ;
             bob.append( "code",  tmp ) ;
             bob.append( "errmsg", _errorInfo.getStringField( OP_ERRDESP_FIELD) ) ;
-            bob.append( "$err", _errorInfo.getStringField( OP_ERRDESP_FIELD) ) ;
+            bob.append( "err", _errorInfo.getStringField( OP_ERRDESP_FIELD) ) ;
          }
          else
          {
             bob.append( "ok", TRUE ) ;
+            bob.appendNull( "err" ) ;
          }
 
          _contextBuff = engine::rtnContextBuf( bob.obj() ) ;
@@ -490,7 +488,7 @@ INT32 _mongoSession::_reply( MsgOpReply *replyHeader,
             {
                bob.append( "ok", 0 == replyHeader->flags ? TRUE : FALSE ) ;
                bob.append( "code", replyHeader->flags ) ;
-               bob.append( "$err", _errorInfo.getStringField( OP_ERRDESP_FIELD) ) ;
+               bob.append( "err", _errorInfo.getStringField( OP_ERRDESP_FIELD) ) ;
                bob.appendElements( bsonBody ) ;
                objToSend = bob.obj() ;
                _outBuffer.write( objToSend ) ;

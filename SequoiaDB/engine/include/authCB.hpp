@@ -71,7 +71,8 @@ namespace engine
 
       INT32 removeUsr( BSONObj &obj, _pmdEDUCB *cb, INT32 w = 1 ) ;
 
-      INT32 authenticate( BSONObj &obj, _pmdEDUCB *cb ) ;
+      INT32 authenticate( BSONObj &obj, _pmdEDUCB *cb,
+                          BOOLEAN chkPasswd = TRUE ) ;
 
       INT32 needAuthenticate( _pmdEDUCB *cb, BOOLEAN &need ) ;
 
@@ -84,7 +85,7 @@ namespace engine
       INT32 _initAuthentication( _pmdEDUCB *cb ) ;
       INT32 _createUsr( BSONObj &obj, _pmdEDUCB *cb, INT32 w = 1 ) ;
       INT32 _valid( BSONObj &obj, BOOLEAN notEmpty ) ;
-      INT32 _validSource( BSONObj &obj, BOOLEAN isCrt ) ;
+      INT32 _validSource( BSONObj &obj, BOOLEAN chkPasswd ) ;
 
    private:
       BOOLEAN _authEnabled ;

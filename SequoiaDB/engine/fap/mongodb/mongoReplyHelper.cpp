@@ -77,13 +77,17 @@ namespace fap
          INT32 rc = SDB_OK ;
          bson::BSONObjBuilder bob ;
          rc = err.getIntField( OP_ERRNOFIELD ) ;
-         bob.append( "ok", SDB_OK == rc ? 1.0 : 0.0 ) ;
-         bob.appendNull( "$err" ) ;
+         if ( SDB_OK == rc )
+         {
+            bob.append( "ok", 1.0 ) ;
+            bob.appendNull( "err" ) ;
+         }
          if ( SDB_OK != rc && !err.isEmpty() )
          {
+            bob.append( "ok", 0.0 ) ;
             bob.append( "code", rc ) ;
             bob.append( "errmsg", err.getStringField( OP_ERRDESP_FIELD) ) ;
-            bob.append( "$err", err.getStringField( OP_ERRDESP_FIELD) ) ;
+            bob.append( "err", err.getStringField( OP_ERRDESP_FIELD) ) ;
          }
          buff = engine::rtnContextBuf( bob.obj() ) ;
       }
@@ -97,7 +101,7 @@ namespace fap
          bob.append( "ok", 0 ) ;
          bob.append( "code", 59 ) ;
          bob.append( "errmsg", err.c_str() ) ;
-         bob.append( "$err", err.c_str() ) ;
+         bob.append( "err", err.c_str() ) ;
          buff = engine::rtnContextBuf( bob.obj() ) ;
       }
 
