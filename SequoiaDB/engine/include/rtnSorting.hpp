@@ -40,9 +40,8 @@
 #define RTNSORTING_HPP_
 
 #include "rtnSortDef.hpp"
-#include "rtnContext.hpp"
-#include "dmsTmpBlkUnit.hpp"
 #include "rtnMergeSorting.hpp"
+#include "dmsTmpBlkUnit.hpp"
 
 using namespace bson ;
 
