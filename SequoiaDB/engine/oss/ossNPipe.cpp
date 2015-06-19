@@ -1516,5 +1516,5 @@ error:
    goto done ;
 }
 
-#endif
+#endif // _LINUX
 
