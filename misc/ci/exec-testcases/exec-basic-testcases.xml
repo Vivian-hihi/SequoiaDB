@@ -65,7 +65,7 @@
 			<param name="testcases.path" value="${basic.testcase.path}" />
 			<param name="test-type" value="${test-type-list}" />
 			<param name="includes.case.patterns" value="*.js" />
-			<param name="excludes.case.patterns" value="commlib.js" />
+			<param name="excludes.case.patterns" value="commlib.js,split_killDataGroup.js" />
 			<param name="CHANGEDSTRING" value="${CHANGEDSTRING}" />
 		</foreach>
 
