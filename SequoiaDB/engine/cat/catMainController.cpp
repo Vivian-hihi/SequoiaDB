@@ -1337,7 +1337,7 @@ namespace engine
          || pMsgReq->dstRouteID.columns.serviceID != localRouteID.columns.serviceID )
       {
          rc = SDB_INVALID_ROUTEID;
-         PD_LOG ( PDERROR, "routeID is different from the local"
+         PD_LOG ( PDERROR, "routeID is different from local: "
                   "RemoteRouteID(groupID=%u, nodeID=%u, serviceID=%u)"
                   "LocalRouteID(groupID=%u, nodeID=%u, serviceID=%u)",
                   pMsgReq->dstRouteID.columns.groupID,
