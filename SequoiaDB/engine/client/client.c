@@ -4506,18 +4506,23 @@ error :
    goto done ;
 }*/
 
-SDB_EXPORT INT32 sdbCreateIndex ( sdbCollectionHandle cHandle,
-                                  bson *indexDef,
-                                  const CHAR *pIndexName,
-                                  BOOLEAN isUnique,
-                                  BOOLEAN isEnforced )
+static INT32 _sdbCreateIndex( sdbCollectionHandle cHandle,
+                              bson *indexDef,
+                              const CHAR *pIndexName,
+                              BOOLEAN isUnique,
+                              BOOLEAN isEnforced,
+                              BOOLEAN isOffline )
 {
    INT32 rc         = SDB_OK ;
    BOOLEAN result   = FALSE;
    SINT64 contextID = 0 ;
    bson indexObj ;
    bson newObj ;
-   BOOLEAN bsoninit = FALSE;
+   bson hintObj ;
+   bson* hint = NULL ;
+   BOOLEAN indexInit = FALSE;
+   BOOLEAN newInit = FALSE ;
+   BOOLEAN hintInit = FALSE ;
    sdbCollectionStruct *cs = (sdbCollectionStruct*)cHandle ;
    HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_COLLECTION ) ;
    if ( !cs->_collectionFullName[0] || !indexDef ||
@@ -4527,8 +4532,8 @@ SDB_EXPORT INT32 sdbCreateIndex ( sdbCollectionHandle cHandle,
       goto error ;
    }
 
-   BSON_INIT( indexObj ) ;
-   BSON_INIT( newObj ) ;
+   BSON_INIT2( indexObj, indexInit ) ;
+   BSON_INIT2( newObj, newInit ) ;
 
    BSON_APPEND( indexObj, IXM_FIELD_NAME_KEY, indexDef, bson ) ;
    BSON_APPEND( indexObj, IXM_FIELD_NAME_NAME, pIndexName, string ) ;
@@ -4541,10 +4546,19 @@ SDB_EXPORT INT32 sdbCreateIndex ( sdbCollectionHandle cHandle,
 
    BSON_APPEND( newObj, FIELD_NAME_INDEX,  &indexObj, bson ) ;
    BSON_FINISH ( newObj ) ;
+
+   if ( isOffline )
+   {
+      BSON_INIT2( hintObj, hintInit ) ;
+      BSON_APPEND( hintObj, IXM_FIELD_NAME_MODE, IXM_MODE_VALUE_OFFLINE, string ) ;
+      BSON_FINISH ( hintObj ) ;
+      hint = &hintObj ;
+   }
+
    rc = clientBuildQueryMsg ( &cs->_pSendBuffer, &cs->_sendBufferSize,
                               CMD_ADMIN_PREFIX CMD_NAME_CREATE_INDEX,
                               0, 0, -1, -1, &newObj,
-                              NULL, NULL, NULL, cs->_endianConvert ) ;
+                              NULL, NULL, hint, cs->_endianConvert ) ;
    if ( SDB_OK != rc )
    {
       goto error ;
@@ -4572,11 +4586,30 @@ SDB_EXPORT INT32 sdbCreateIndex ( sdbCollectionHandle cHandle,
    CHECK_RET_MSGHEADER( cs->_pSendBuffer, cs->_pReceiveBuffer,
                         cs->_connection ) ;
 done :
-   BSON_DESTROY( indexObj ) ;
-   BSON_DESTROY( newObj ) ;
+   BSON_DESTROY2( indexObj, indexInit ) ;
+   BSON_DESTROY2( newObj, newInit ) ;
+   BSON_DESTROY2( hintObj, hintInit ) ;
    return rc ;
 error :
    goto done ;
+}
+
+SDB_EXPORT INT32 sdbCreateIndex ( sdbCollectionHandle cHandle,
+                                  bson *indexDef,
+                                  const CHAR *pIndexName,
+                                  BOOLEAN isUnique,
+                                  BOOLEAN isEnforced )
+{
+   return _sdbCreateIndex( cHandle, indexDef, pIndexName, isUnique, isEnforced, FALSE ) ;
+}
+
+SDB_EXPORT INT32 sdbCreateIndexOffline ( sdbCollectionHandle cHandle,
+                                         bson *indexDef,
+                                         const CHAR *pIndexName,
+                                         BOOLEAN isUnique,
+                                         BOOLEAN isEnforced )
+{
+   return _sdbCreateIndex( cHandle, indexDef, pIndexName, isUnique, isEnforced, TRUE ) ;
 }
 
 SDB_EXPORT INT32 sdbGetIndexes ( sdbCollectionHandle cHandle,

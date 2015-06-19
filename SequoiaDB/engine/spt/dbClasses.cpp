@@ -2212,8 +2212,8 @@ error :
    goto done ;
 }
 
-// PD_TRACE_DECLARE_FUNCTION ( SDB_COLL_CRT_INX, "collection_create_index" )
-static JSBool collection_create_index ( JSContext *cx , uintN argc , jsval *vp )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_COLL_CRT_INX, "_collection_create_index" )
+static JSBool _collection_create_index ( JSContext *cx , uintN argc , jsval *vp, BOOLEAN isOffline )
 {
    PD_TRACE_ENTRY ( SDB_COLL_CRT_INX );
    sdbCollectionHandle *collection  = NULL ;
@@ -2259,8 +2259,16 @@ static JSBool collection_create_index ( JSContext *cx , uintN argc , jsval *vp )
       VERIFY ( JS_ValueToBoolean ( cx, argv[3], &enforced ) ) ;
    }
 
-   rc = sdbCreateIndex ( *collection , bsonDef , name , unique ? TRUE : FALSE,
-                         enforced ? TRUE : FALSE );
+   if ( isOffline )
+   {
+      rc = sdbCreateIndexOffline ( *collection , bsonDef , name , unique ? TRUE : FALSE,
+                                   enforced ? TRUE : FALSE );
+   }
+   else
+   {
+      rc = sdbCreateIndex ( *collection , bsonDef , name , unique ? TRUE : FALSE,
+                            enforced ? TRUE : FALSE );
+   }
    REPORT_RC ( SDB_OK == rc , "SdbCollection.createIndex()" , rc ) ;
 
    JS_SET_RVAL ( cx , vp , JSVAL_VOID ) ;
@@ -2273,6 +2281,16 @@ done :
 error :
    TRY_REPORT ( cx , "SdbCollection.createIndex(): false" ) ;
    goto done ;
+}
+
+static JSBool collection_create_index ( JSContext *cx , uintN argc , jsval *vp )
+{
+   return _collection_create_index( cx, argc, vp, FALSE ) ;
+}
+
+static JSBool collection_create_index_offline ( JSContext *cx , uintN argc , jsval *vp )
+{
+   return _collection_create_index( cx, argc, vp, TRUE ) ;
 }
 
 // PD_TRACE_DECLARE_FUNCTION ( SDB_COLL_GET_INX, "collection_get_indexes" )
@@ -2744,6 +2762,7 @@ static JSFunctionSpec collection_functions[] = {
     JS_FS ( "remove" , collection_remove , 0 , 0 ) ,
     JS_FS ( "_count" , collection_count , 0 , 0 ) ,
     JS_FS ( "createIndex" , collection_create_index , 2 , 0 ) ,
+    JS_FS ( "createIndexOffline" , collection_create_index_offline , 2 , 0 ) ,
     JS_FS ( "_getIndexes" , collection_get_indexes , 1 , 0 ) ,
     JS_FS ( "dropIndex" , collection_drop_index , 1 , 0 ) ,
     JS_FS ( "_bulkInsert" , collection_bulk_insert , 1 , 0 ) ,
