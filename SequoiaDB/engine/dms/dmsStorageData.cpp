@@ -1669,7 +1669,8 @@ namespace engine
                                               SDB_DPSCB *dpscb,
                                               BOOLEAN sysCollection,
                                               dmsMBContext *context,
-                                              BOOLEAN needChangeCLID )
+                                              BOOLEAN needChangeCLID,
+                                              BOOLEAN truncateLob )
    {
       INT32 rc           = SDB_OK ;
       BOOLEAN getContext = FALSE ;
@@ -1773,7 +1774,7 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Truncate collection[%s] data failed, rc: %d",
                    pName, rc ) ;
 
-      if ( _pLobSU->isOpened() )
+      if ( truncateLob && _pLobSU->isOpened() )
       {
          rc = _pLobSU->truncate( context, cb, NULL ) ;
          PD_RC_CHECK( rc, PDERROR, "Truncate collection[%s] lob failed, rc: %d",

@@ -621,7 +621,8 @@ namespace engine
                                     SDB_DPSCB *dpscb,
                                     BOOLEAN sysCollection = TRUE,
                                     dmsMBContext *context = NULL,
-                                    BOOLEAN needChangeCLID = TRUE ) ;
+                                    BOOLEAN needChangeCLID = TRUE,
+                                    BOOLEAN truncateLob = TRUE ) ;
 
          INT32 truncateCollectionLoads( const CHAR *pName,
                                         dmsMBContext *context = NULL ) ;
