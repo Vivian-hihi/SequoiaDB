@@ -541,6 +541,7 @@ namespace engine
       info._isAlone     = 0 ;
       info._dbPath      = "" ;
       info._groupName   = "" ;
+      info._startTime   = 0 ;
 
       // group id
       rc = _utilWriteReadPipe( info._svcname.c_str(), info._pid,
