@@ -850,7 +850,6 @@ namespace engine
       ossQueue<pmdEDUEvent> tmpQue ;
       REQUESTID_MAP::iterator iterMap ;
       INT64 waitTime = RTN_COORD_RSP_WAIT_TIME ;
-      INT64 timeCounter = 0 ;
 
       while ( requestIdMap.size() > 0 )
       {
@@ -962,11 +961,9 @@ namespace engine
             }
             else
             {
-               PD_LOG ( ( MSG_CLS_BEAT_RES == pReply->opCode ?
-                          PDDEBUG : PDWARNING ),
-                        "Received expired or unexpected msg(opCode=[%d]%d,"
-                        "expectOpCode=[%d]%d, requestID=%lld, TID=%d) "
-                        "from node[%s]",
+               PD_LOG ( PDWARNING, "Received expired or unexpected msg( "
+                        "opCode=[%d]%d, expectOpCode=[%d]%d, requestID=%lld, "
+                        "TID=%d) from node[%s]",
                         IS_REPLY_TYPE( pReply->opCode ),
                         GET_REQUEST_TYPE( pReply->opCode ),
                         IS_REPLY_TYPE( opCode ),
