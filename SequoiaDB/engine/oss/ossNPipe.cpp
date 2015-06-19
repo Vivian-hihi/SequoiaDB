@@ -40,6 +40,7 @@
 #include "ossUtil.hpp"
 #include "ossMem.hpp"
 #include "ossProc.hpp"
+#include "ossIO.hpp"
 #include "pdTrace.hpp"
 #include "ossTrace.hpp"
 #if defined (_LINUX)
@@ -1001,6 +1002,16 @@ INT32 ossCreateNamedPipe ( const CHAR *name,
       {
          pathName += OSS_FILE_SEP_CHAR ;
       }
+
+      /// make sure exist
+      rc = ossMkdir( pRootPath, OSS_CREATE|OSS_READWRITE|
+                                OSS_RWXU|OSS_RG|OSS_XG|OSS_RO|OSS_XO ) ;
+      if ( rc && SDB_FE != rc )
+      {
+         PD_LOG( PDERROR, "Create pipe dir[%s] failed, rc: %d",
+                 pRootPath, rc ) ;
+         goto error ;
+      }
    }
    pathName += name ;
 
@@ -1014,7 +1025,8 @@ INT32 ossCreateNamedPipe ( const CHAR *name,
    handle._state = action ;
    ossMemset ( handle._name, 0, sizeof(handle._name) ) ;
    ossStrncpy ( handle._name, pathName.c_str(), OSS_NPIPE_MAX_NAME_LEN + 1 ) ;
-   handle._handle = mkfifo ( pathName.c_str(), (S_IRUSR | S_IWUSR) ) ;
+   handle._handle = mkfifo ( pathName.c_str(),
+                             (S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH ) ) ;
    if ( -1 == handle._handle )
    {
       rc = ossGetLastError () ;
@@ -1068,6 +1080,16 @@ INT32 ossOpenNamedPipe ( const CHAR *name,
       if ( pRootPath[ ossStrlen( pRootPath ) - 1 ] != OSS_FILE_SEP_CHAR )
       {
          pathName += OSS_FILE_SEP_CHAR ;
+      }
+
+      /// make sure exist
+      rc = ossMkdir( pRootPath, OSS_CREATE|OSS_READWRITE|
+                                OSS_RWXU|OSS_RG|OSS_XG|OSS_RO|OSS_XO ) ;
+      if ( rc && SDB_FE != rc )
+      {
+         PD_LOG( PDERROR, "Create pipe dir[%s] failed, rc: %d",
+                 pRootPath, rc ) ;
+         goto error ;
       }
    }
    pathName += name ;
@@ -1469,8 +1491,26 @@ INT32 ossEnumNamedPipes( vector<string > &names,
                          OSS_MATCH_TYPE type,
                          const CHAR * rootPath )
 {
-   return _ossEnumNamedPipes( rootPath, names, pattern,
-                              ossStrlen( pattern ), type ) ;
+   INT32 rc = SDB_OK ;
+   /// make sure exist
+   if ( rootPath )
+   {
+      rc = ossMkdir( rootPath, OSS_CREATE|OSS_READWRITE|
+                               OSS_RWXU|OSS_RG|OSS_XG|OSS_RO|OSS_XO ) ;
+      if ( rc && SDB_FE != rc )
+      {
+         PD_LOG( PDERROR, "Create pipe dir[%s] failed, rc: %d",
+                 rootPath, rc ) ;
+         goto error ;
+      }
+   }
+   rc = _ossEnumNamedPipes( rootPath, names, pattern,
+                            ossStrlen( pattern ), type ) ;
+
+done:
+   return rc ;
+error:
+   goto done ;
 }
 
 #endif
