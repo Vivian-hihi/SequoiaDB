@@ -453,9 +453,9 @@ typedef SQL_CONTAINER::const_iterator SQL_CON_ITR ;
                                       >> rbrackets])
                       | root_node_d[nott] >> SQL_BLANK >> wFactor
                       | ( dbattr
-                         >> SQL_BLANK
+                         >> SQL_BLANKORNO
                          >> root_node_d[eg|ne|lte|gte|lt|gt]
-                         >> SQL_BLANK
+                         >> SQL_BLANKORNO
                          >> ( bool_true | bool_false ) );
 
             oFactor = ( dbattr
