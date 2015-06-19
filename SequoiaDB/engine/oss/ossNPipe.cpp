@@ -1012,6 +1012,7 @@ INT32 ossCreateNamedPipe ( const CHAR *name,
                  pRootPath, rc ) ;
          goto error ;
       }
+      rc = SDB_OK ;
    }
    pathName += name ;
 
@@ -1091,6 +1092,7 @@ INT32 ossOpenNamedPipe ( const CHAR *name,
                  pRootPath, rc ) ;
          goto error ;
       }
+      rc = SDB_OK ;
    }
    pathName += name ;
 
@@ -1503,6 +1505,7 @@ INT32 ossEnumNamedPipes( vector<string > &names,
                  rootPath, rc ) ;
          goto error ;
       }
+      rc = SDB_OK ;
    }
    rc = _ossEnumNamedPipes( rootPath, names, pattern,
                             ossStrlen( pattern ), type ) ;
