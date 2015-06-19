@@ -113,6 +113,10 @@ namespace engine
    #define DMS_MB_FLAG_LOAD_BUILD                  0x0200
    // DMS_MB_FLAG_LOAD OPR END }}
 
+   // {{ DMS_MB_FLAG_CREATE_INDEX OPR BEGIN
+   #define DMS_MB_FLAG_CREATE_INDEX_OFFLINE        0x1000
+   // DMS_MB_FLAG_CREATE_INDEX OPR END }}
+
    #define DMS_MB_BASE_FLAG(x)                     ((x)&DMS_MB_BASE_MASK)
    #define DMS_MB_OPR_FLAG(x)                      ((x)&DMS_MB_OPR_TYPE_MASK)
    #define DMS_MB_PHASE_FLAG(x)                    ((x)&DMS_MB_OPR_PHASE_MASK)
@@ -173,6 +177,13 @@ namespace engine
    #define DMS_SET_MB_FLAG_LOAD_BUILD(x)              \
       do {(x)=DMS_MB_FLAG_LOAD_BUILD|DMS_MB_FLAG_LOAD|\
       DMS_MB_FLAG_USED;} while(0)
+
+   #define DMS_IS_MB_FLAG_CREATE_INDEX_OFFLINE(x)     \
+      (0!=((x)&DMS_MB_FLAG_CREATE_INDEX_OFFLINE))
+   #define DMS_SET_MB_FLAG_CREATE_INDEX_OFFLINE(x)    \
+      do { (x)|=DMS_MB_FLAG_CREATE_INDEX_OFFLINE; } while(0)
+   #define DMS_UNSET_MB_FLAG_CREATE_INDEX_OFFLINE(x)    \
+      do { (x)&=~DMS_MB_FLAG_CREATE_INDEX_OFFLINE; } while(0)
 
    /*
       DMS MB ATTRIBUTE DEFINE

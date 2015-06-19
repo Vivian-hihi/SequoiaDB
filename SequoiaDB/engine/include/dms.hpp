@@ -132,7 +132,6 @@ namespace engine
    {
       DMS_INDEX_BUILD_ONLINE = 0,
       DMS_INDEX_BUILD_OFFLINE,
-      DMS_INDEX_BUILD_INMEM,
       DMS_INDEX_BUILD_MODE_NUM
    } ;
    typedef enum _DMS_INDEX_BUILD_MODE DMS_INDEX_BUILD_MODE ;

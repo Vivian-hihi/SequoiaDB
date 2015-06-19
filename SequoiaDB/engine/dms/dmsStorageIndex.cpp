@@ -46,6 +46,7 @@
 #include "dmsCompress.hpp"
 #include "pdTrace.hpp"
 #include "dmsTrace.hpp"
+#include "dmsIndexBuilder.hpp"
 
 using namespace bson ;
 
@@ -720,240 +721,39 @@ namespace engine
    INT32 _dmsStorageIndex::_rebuildIndex( dmsMBContext *context, INT32 indexID,
                                           dmsExtentID indexLID, pmdEDUCB * cb, DMS_INDEX_BUILD_MODE mode )
    {
-      INT32 rc                     = SDB_OK ;
-      dmsExtentID firstExtent      = DMS_INVALID_EXTENT ;
-      dmsExtentID scanExtLID       = DMS_INVALID_EXTENT ;
+      INT32 rc = SDB_OK ;
+      dmsIndexBuilder* builder = NULL ;
 
-      BOOLEAN unique               = FALSE ;
-      BOOLEAN dropDups             = FALSE ;
-      ossValuePtr extentPtr        = 0 ;
-      dmsExtent *extent            = NULL ;
-      dmsOffset recordOffset       = DMS_INVALID_OFFSET ;
-      ossValuePtr recordPtr        = 0 ;
-      ossValuePtr realRecordPtr    = 0 ;
-
-      SDB_BPSCB    *pBPSCB         = pmdGetKRCB()->getBPSCB () ;
-      BOOLEAN bPreLoadEnabled      = pBPSCB->isPreLoadEnabled() ;
-      monAppCB * pMonAppCB         = cb ? cb->getMonAppCB() : NULL ;
-
-      // lock mb
-      rc = context->mbLock( EXCLUSIVE ) ;
-      PD_RC_CHECK( rc, PDERROR, "dms mb context lock failed, rc: %d", rc ) ;
-
-      // make sure the extent is valid
-      PD_CHECK ( DMS_INVALID_EXTENT != context->mb()->_indexExtent[indexID],
-                 SDB_INVALIDARG, error, PDERROR,
-                 "Index %d is invalid for collection %d",
-                 indexID, (INT32)context->mbID() ) ;
-
+      if ( mode >= DMS_INDEX_BUILD_MODE_NUM )
       {
-         // get index control block
-         ixmIndexCB indexCB ( context->mb()->_indexExtent[indexID], this,
-                              context ) ;
+         PD_LOG ( PDERROR, "invalid index build mode" ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
 
-         if ( DMS_INVALID_EXTENT == indexLID )
-         {
-            indexLID = indexCB.getLogicalID() ;
-         }
+      builder = dmsIndexBuilder::createInstance( this, _pDataSu,
+                                              context, cb,
+                                              indexID, indexLID,
+                                              mode ) ;
+      if ( NULL == builder )
+      {
+         PD_LOG ( PDERROR, "Failed to get index builder instance, mode: %d", mode ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
 
-         // get index OID
-         OID oldIndexOID ;
-         // verify the index control block is initialized
-         PD_CHECK ( indexCB.isInitialized(), SDB_DMS_INIT_INDEX,
-                    error, PDERROR, "Failed to initialize index" ) ;
-
-         rc = indexCB.getIndexID ( oldIndexOID ) ;
-         PD_RC_CHECK ( rc, PDERROR, "Failed to get indexID, rc = %d", rc ) ;
-
-         // already creating, continue
-         if ( IXM_INDEX_FLAG_CREATING == indexCB.getFlag() )
-         {
-            scanExtLID = indexCB.scanExtLID() ;
-         }
-         else if ( IXM_INDEX_FLAG_NORMAL != indexCB.getFlag() &&
-                   IXM_INDEX_FLAG_INVALID != indexCB.getFlag() )
-         {
-            PD_LOG ( PDERROR, "Index is either creating or dropping: %d",
-                     (INT32)indexCB.getFlag() ) ;
-            indexCB.setFlag ( IXM_INDEX_FLAG_INVALID ) ;
-            rc = SDB_IXM_UNEXPECTED_STATUS ;
-            goto error ;
-         }
-         else
-         {
-            // truncate index, do NOT remove root
-            rc = indexCB.truncate ( FALSE ) ;
-            if ( rc )
-            {
-               PD_LOG ( PDERROR, "Failed to truncate index, rc: %d", rc ) ;
-               indexCB.setFlag ( IXM_INDEX_FLAG_INVALID ) ;
-               goto error ;
-            }
-            indexCB.setFlag ( IXM_INDEX_FLAG_CREATING ) ;
-         }
-
-         unique = indexCB.unique() ;
-         dropDups = indexCB.dropDups() ;
-
-         // start rebuilding
-         firstExtent = context->mb()->_firstExtentID ;
-         // unlock mb
-         context->mbUnlock() ;
-
-         // loop through each extent
-         while ( DMS_INVALID_EXTENT != firstExtent )
-         {
-            if ( cb->isInterrupted() )
-            {
-               PD_LOG( PDEVENT, "rebuild index is interrupted" ) ;
-               rc = SDB_APP_INTERRUPT ;
-               goto error ;
-            }
-
-            rc = context->mbLock( SHARED ) ;
-            if ( rc )
-            {
-               indexCB.setFlag ( IXM_INDEX_FLAG_INVALID ) ;
-               PD_LOG( PDERROR, "dms mb context lock failed, rc: %d", rc ) ;
-               goto error ;
-            }
-
-            // make sure the index cb is still valid
-            if ( !indexCB.isStillValid ( oldIndexOID ) ||
-                 indexLID != indexCB.getLogicalID() )
-               {
-                  rc = SDB_DMS_INVALID_INDEXCB ;
-                  // do NOT set flag here because something else may changed the
-                  // indexCB, it's possible other threads dropped index so that
-                  // the extent is reused. So we should NOT touch the block here
-                  goto error ;
-               }
-
-            // get the address of extent indicated in context for where
-            // should we starts
-            extentPtr = _pDataSu->extentAddr ( firstExtent ) ;
-            if ( !extentPtr )
-            {
-               PD_LOG ( PDERROR, "Invalid extent: %d", firstExtent ) ;
-               rc = SDB_SYS ;
-               indexCB.setFlag ( IXM_INDEX_FLAG_INVALID ) ;
-               goto error ;
-            }
-            extent = (dmsExtent*)extentPtr ;
-            if ( DMS_EXTENT_FLAG_INUSE != extent->_flag )
-            {
-               PD_LOG ( PDERROR, "Invalid flag %d for extent %d",
-                        extent->_flag, firstExtent ) ;
-               rc = SDB_SYS ;
-               indexCB.setFlag ( IXM_INDEX_FLAG_INVALID ) ;
-               goto error ;
-            }
-
-            // find the extent by logical id
-            if ( DMS_INVALID_EXTENT != scanExtLID &&
-                 extent->_logicID < scanExtLID )
-            {
-               firstExtent = extent->_nextExtent ;
-               context->mbUnlock() ;
-               continue ;
-            }
-
-            // loop for each record in the extent and compare
-            recordOffset = extent->_firstRecordOffset ;
-            recordPtr = extentPtr + recordOffset ;
-
-            // before loop records, let's attempt to pre-load next extent
-            if ( bPreLoadEnabled &&
-                 DMS_INVALID_EXTENT != extent->_nextExtent )
-            {
-               pBPSCB->sendPreLoadRequest ( bpsPreLoadReq( _pDataSu->CSID(),
-                                            _pDataSu->logicalID(),
-                                            extent->_nextExtent) );
-            }
-
-            // loop through all records
-            while ( DMS_INVALID_OFFSET != recordOffset )
-            {
-               ossValuePtr rPtr = 0 ;
-               try
-               {
-                  realRecordPtr = recordPtr ;
-                  if ( OSS_BIT_TEST ( DMS_RECORD_FLAG_DELETING,
-                                      DMS_RECORD_GETATTR(recordPtr)))
-                  {
-                     recordOffset = DMS_RECORD_GETNEXTOFFSET(recordPtr) ;
-                     recordPtr = extentPtr + recordOffset ;
-                     continue;
-                  }
-                  if ( DMS_RECORD_FLAG_OVERFLOWF ==
-                       DMS_RECORD_GETSTATE(recordPtr))
-                  {
-                     dmsRecordID ovfRID = DMS_RECORD_GETOVF(recordPtr) ;
-                     DMS_MON_OP_COUNT_INC( pMonAppCB, MON_DATA_READ, 1 ) ;
-                     realRecordPtr = _pDataSu->extentAddr(ovfRID._extent) +
-                                     ovfRID._offset ;
-                  }
-                  // get the BSON object
-                  DMS_RECORD_EXTRACTDATA ( realRecordPtr, rPtr ) ;
-                  BSONObj obj ( (CHAR*)rPtr ) ;
-                  DMS_MON_OP_COUNT_INC( pMonAppCB, MON_DATA_READ, 1 ) ;
-                  DMS_MON_OP_COUNT_INC( pMonAppCB, MON_READ, 1 ) ;
-
-                  // attempt to insert into the index
-                  rc = _indexInsert ( context, &indexCB, obj,
-                                      dmsRecordID ( firstExtent, recordOffset),
-                                      cb, !unique, dropDups ) ;
-                  // if any error happen
-                  if ( rc )
-                  {
-                     // during index rebuild, it's possible some other
-                     // sessions inserted records that already stored in
-                     // index, and then when we scan the disk we read it
-                     // again. In  this case let's simply skip it
-                     if ( SDB_IXM_IDENTICAL_KEY == rc )
-                     {
-                        rc = SDB_OK ;
-                        // set current record to next one
-                        recordOffset = DMS_RECORD_GETNEXTOFFSET(recordPtr) ;
-                        recordPtr = extentPtr + recordOffset ;
-                        PD_LOG ( PDWARNING, "Identical key is detected "
-                                 "during index rebuild, ignore" ) ;
-                        continue ;
-                     }
-                     // for any other index insert error, let's return error
-                     PD_LOG ( PDERROR, "Failed to insert into index, rc: %d",
-                              rc ) ;
-                     indexCB.setFlag ( IXM_INDEX_FLAG_INVALID ) ;
-                     goto error ;
-                  }
-               }
-               catch ( std::exception &e )
-               {
-                  PD_LOG ( PDERROR, "Failed to create BSON object: %s",
-                           e.what() ) ;
-                  rc = SDB_SYS ;
-                  indexCB.setFlag ( IXM_INDEX_FLAG_INVALID ) ;
-                  goto error ;
-               }
-
-               // move to next record
-               recordOffset = DMS_RECORD_GETNEXTOFFSET(recordPtr) ;
-               recordPtr = extentPtr + recordOffset ;
-            } //while
-
-            indexCB.scanExtLID ( extent->_logicID ) ;
-            firstExtent = extent->_nextExtent ;
-
-            context->mbUnlock() ;
-
-         } //while
-
-         indexCB.setFlag ( IXM_INDEX_FLAG_NORMAL ) ;
-         indexCB.scanExtLID ( DMS_INVALID_EXTENT ) ;
+      rc = builder->build() ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG ( PDERROR, "Failed to build index: %d", rc ) ;
+         goto error ;
       }
 
    done :
-      context->mbUnlock() ;
+      if ( NULL != builder )
+      {
+         dmsIndexBuilder::releaseInstance( builder ) ;
+      }
       return rc ;
    error :
       goto done ;

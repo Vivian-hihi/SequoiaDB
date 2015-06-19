@@ -173,6 +173,7 @@ namespace engine
       private:
          _dmsStorageData               *_pDataSu ;
 
+      friend class _dmsIndexBuilder ;
    };
    typedef _dmsStorageIndex dmsStorageIndex ;
 

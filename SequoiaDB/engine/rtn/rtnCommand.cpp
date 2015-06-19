@@ -739,6 +739,7 @@ namespace engine
          else
          {
             PD_LOG ( PDERROR, "invalid index build mode: %s", mode ) ;
+            rc = SDB_INVALIDARG ;
             goto error ;
          }
       }

@@ -241,7 +241,9 @@ dmsFiles = [
       "dms/dmsStorageLobData.cpp",
       "dms/dmsLobDirectBuffer.cpp",
       "dms/dmsLobDirectInBuffer.cpp",
-      "dms/dmsLobDirectOutBuffer.cpp"
+      "dms/dmsLobDirectOutBuffer.cpp",
+      "dms/dmsIndexBuilder.cpp",
+      "dms/dmsIndexBuilderImpl.cpp"
       ]
 
 ixmFiles = [

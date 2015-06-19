@@ -1032,6 +1032,18 @@ namespace engine
       {
          return TRUE ;
       }
+      else if ( DMS_IS_MB_FLAG_CREATE_INDEX_OFFLINE( collectionFlag ) )
+      {
+         if ( DMS_ACCESS_TYPE_QUERY == accessType ||
+              DMS_ACCESS_TYPE_FETCH == accessType ||
+              DMS_ACCESS_TYPE_CRT_INDEX == accessType ||
+              DMS_ACCESS_TYPE_DROP_INDEX == accessType )
+         {
+            return TRUE ;
+         }
+
+         return FALSE ;
+      }
       return FALSE ;
    }
 
