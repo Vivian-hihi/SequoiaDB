@@ -1005,7 +1005,7 @@ INT32 ossCreateNamedPipe ( const CHAR *name,
 
       /// make sure exist
       rc = ossMkdir( pRootPath, OSS_CREATE|OSS_READWRITE|
-                                OSS_RWXU|OSS_RG|OSS_XG|OSS_RO|OSS_XO ) ;
+                                OSS_RWXU|OSS_RWXG|OSS_RWXO ) ;
       if ( rc && SDB_FE != rc )
       {
          PD_LOG( PDERROR, "Create pipe dir[%s] failed, rc: %d",
@@ -1085,7 +1085,7 @@ INT32 ossOpenNamedPipe ( const CHAR *name,
 
       /// make sure exist
       rc = ossMkdir( pRootPath, OSS_CREATE|OSS_READWRITE|
-                                OSS_RWXU|OSS_RG|OSS_XG|OSS_RO|OSS_XO ) ;
+                                OSS_RWXU|OSS_RWXG|OSS_RWXO ) ;
       if ( rc && SDB_FE != rc )
       {
          PD_LOG( PDERROR, "Create pipe dir[%s] failed, rc: %d",
@@ -1498,7 +1498,7 @@ INT32 ossEnumNamedPipes( vector<string > &names,
    if ( rootPath )
    {
       rc = ossMkdir( rootPath, OSS_CREATE|OSS_READWRITE|
-                               OSS_RWXU|OSS_RG|OSS_XG|OSS_RO|OSS_XO ) ;
+                               OSS_RWXU|OSS_RWXG|OSS_RWXO ) ;
       if ( rc && SDB_FE != rc )
       {
          PD_LOG( PDERROR, "Create pipe dir[%s] failed, rc: %d",
