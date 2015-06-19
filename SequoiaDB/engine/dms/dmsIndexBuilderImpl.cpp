@@ -339,49 +339,53 @@ namespace engine
       rc = _init() ;
       if ( SDB_OK != rc )
       {
-         goto error ;
+         goto before_build_error ;
       }
 
       rc = _beforeBuild() ;
       if ( SDB_OK != rc )
       {
-         goto error ;
+         goto before_build_error ;
       }
 
       for(;;)
       {
          if ( _eoc )
          {
-            goto done ;
+            goto build_done ;
          }
 
          rc = _sorter->reset() ;
          if ( SDB_OK != rc )
          {
-            goto error ;
+            goto build_error ;
          }
 
          rc = _fillSorter() ;
          if ( SDB_OK != rc )
          {
-            goto error ;
+            goto build_error ;
          }
 
          rc = _sorter->sort() ;
          if ( SDB_OK != rc )
          {
-            goto error ;
+            goto build_error ;
          }
 
          rc = _insertKeys( ordering ) ;
          if ( SDB_OK != rc )
          {
-            goto error ;
+            goto build_error ;
          }
       }
 
    done:
       _mbContext->mbUnlock() ;
+      return rc ;
+   before_build_error:
+      goto done ;
+   build_done:
       {
          INT32 ret = _afterBuild() ;
          if ( SDB_OK == rc )
@@ -389,9 +393,9 @@ namespace engine
             rc = ret ;
          }
       }
-      return rc ;
-   error:
       goto done ;
+   build_error:
+      goto build_done ;
    }
 
    INT32 _dmsIndexOfflineBuilder::_beforeBuild()
