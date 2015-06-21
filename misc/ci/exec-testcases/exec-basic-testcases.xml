@@ -217,8 +217,8 @@
 		</exec>
 		<echo message="${beforeTestcase.screen.output}" />
 		
-		<math result="spare.port.step" datatype="int">
-			<op op="/">
+		<math result="spare.port.step" >
+			<op datatype="int" op="/">
 				<op op="-">
 					<num value="${all.spare.port.stop}"/>
 					<num value="${all.spare.port.start}"/>
@@ -226,8 +226,8 @@
 				<num value="${parallel-num}"/>
 			</op>
 		</math>
-		<math result="spare.port.stop" datatype="int">
-			<op op="+">
+		<math result="spare.port.stop" >
+			<op datatype="int" op="+">
 				<num value="${all.spare.port.start}"/>
 				<op op="*">
 					<num value="${parallel-id}"/>
@@ -235,8 +235,8 @@
 				</op>
 			</op>
 		</math>
-		<math result="spare.port.start" datatype="int">
-			<op op="-">
+		<math result="spare.port.start" >
+			<op datatype="int" op="-">
 				<num value="${spare.port.stop}"/>
 				<num value="${spare.port.step}"/>
 			</op>
