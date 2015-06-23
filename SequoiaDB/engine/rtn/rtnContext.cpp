@@ -2527,7 +2527,7 @@ namespace engine
          return SDB_SYS ;
       }
 
-      _totalRecords = _bufferNumRecords ;
+      _resetTotalRecords( numRecords() ) ;
       _isOpened = TRUE ;
 
       return SDB_OK ;

@@ -231,6 +231,11 @@ namespace engine
          UINT32   _getWaitPrefetchNum () { return _waitPrefetchNum.peek() ; }
          BOOLEAN  _isInPrefetching () const { return _isInPrefetch ; }
 
+         void     _resetTotalRecords( INT64 totalRecords )
+         {
+            _totalRecords = totalRecords ;
+         }
+
       protected:
          monContextCB            _monCtxCB ;
          _mthSelector            _selector ;
