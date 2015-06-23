@@ -557,7 +557,7 @@ namespace engine
          // 3. get a znode item to install
          // if no znode item needs to install, let this backgroud
          // thread finish
-         pInfo = _pTask->getAddZNItem() ;
+         pInfo = _pTask->getZNInfo() ;
          if ( NULL == pInfo )
          {
             PD_LOG( PDEVENT, "No znode needs to install now, sub task[%s] exits",

@@ -5285,1275 +5285,6 @@ namespace engine
    }
 
    /*
-      add zookeeper task
-   */
-   _omaInstZNBusTask::_omaInstZNBusTask( INT64 taskID )
-   : _omaTask( taskID )
-   {
-      _taskType = OMA_TASK_INSTALL_ZN;
-      _taskName = OMA_TASK_NAME_INSTALL_ZN_BUSINESS ;
-      _eventID  = 0 ;
-      _progress = 0 ;
-      _errno    = SDB_OK ;
-      ossMemset( _detail, 0, OMA_BUFF_SIZE + 1 ) ;
-   }
-
-   _omaInstZNBusTask::~_omaInstZNBusTask()
-   {
-   }
-
-   INT32 _omaInstZNBusTask::init( const BSONObj &info, void *ptr )
-   {
-      INT32 rc = SDB_OK ;
-
-      _addZNRawInfo = info.copy() ;
-      
-      PD_LOG ( PDDEBUG, "Add znodes passes argument: %s",
-               _addZNRawInfo.toString( FALSE, TRUE ).c_str() ) ;
-
-      // init add znode info
-      rc = _initAddZNInfo( _addZNRawInfo ) ;
-      if ( rc )
-      {
-         PD_LOG( PDERROR, "Failed to init to get add znodes' info" ) ;
-         goto error ;
-      }
-      // init add znodes' result
-      _initAddZNResult() ;
-
-      done:
-         return rc ;
-      error:
-         // TODO: send error msg to omsvc to set task to be failing
-         goto done ;
-   }
-
-   INT32 _omaInstZNBusTask::doit()
-   {
-      INT32 rc               = SDB_OK ;
-      BOOLEAN needToRollback = TRUE ;
-
-      if ( OMA_TASK_STATUS_ROLLBACK == _taskStatus )
-      {
-         /// in case of rollbacking
-         _rollback( TRUE ) ;
-         // set task to be failing
-         setErrInfo( SDB_OMA_TASK_FAIL, "Task failed" ) ;
-         _setResultToFail() ;
-         goto done ;
-      }
-      else
-      {
-         /// in case of installing
-         // . set task's status to be running
-         setTaskStatus( OMA_TASK_STATUS_RUNNING ) ;
-
-         // . check and clean up environment
-         rc = _checkAndCleanEnv() ;
-         if ( SDB_OK != rc )
-         {
-            needToRollback = FALSE ;
-            PD_LOG( PDERROR, "Failed to check and clean up the environment"
-               "before installing znodes, rc = %d", rc ) ;
-            goto error ;
-         }
-         
-         // . add znode nodes
-         rc = _addZNodes() ;
-         if ( rc )
-         {
-            PD_LOG( PDERROR, "Failed to install znodes, rc = %d", rc ) ;
-            goto error ;
-         }
-
-         // 4. update the task's progress and
-         //    waiting for all the sub tasks to be finished
-         rc = _waitAndUpdateProgress() ;
-         if ( rc )
-         {
-            PD_LOG ( PDERROR, "Failed to wait and update install znodes "
-                     "business progress, rc = %d", rc ) ;
-            goto error ;
-         }
-         // 5. check need to rollback or not
-         if ( TRUE == _needToRollback() )
-         {
-            rc = SDB_OMA_TASK_FAIL ;
-            PD_LOG ( PDERROR, "Error happen, going to rollback" ) ;
-            goto error ;
-         }
-         // 6. check znode's status
-         rc = _checkZNodes() ;
-         if ( SDB_OK != rc )
-         {
-            rc = SDB_OMA_TASK_FAIL ;
-            PD_LOG ( PDERROR, "Failed to check znodes' status, "
-               "going to rollback, rc = %d", rc ) ;
-            goto error ;
-         }
-      }
-      
-   done:
-      // . set task's status to be finished
-      setTaskStatus( OMA_TASK_STATUS_FINISH ) ;
-
-      // . update to om the last time
-      rc = _updateProgressToOM() ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "Failed to update install zookeeper business progress "
-                 "to omsvc, rc = %d", rc ) ;
-      }
-      
-      // .submit task info to omagent mgr
-      sdbGetOMAgentMgr()->submitTaskInfo( _taskID ) ;
-      
-      PD_LOG( PDEVENT, "Omagent finish running install zookeeper business "
-              "task[%lld]", _taskID ) ;
-      return SDB_OK ;
-
-   error:
-      _setRetErr( rc ) ;
-      if ( TRUE == needToRollback )
-      {
-         // rollback
-         setTaskStatus( OMA_TASK_STATUS_ROLLBACK ) ;
-         rc = _rollback( FALSE ) ;
-         if ( SDB_OK != rc )
-         {
-            // TODO: let user know rollback failed
-            PD_LOG( PDERROR, "Failed to rollback install zookeeper business "
-                    "task[%lld]", _taskID ) ;
-         }
-      }
-      // . set task to be failing
-      _setResultToFail() ;
-      goto done ;
-   }
-
-   void _omaInstZNBusTask::setIsTaskFail()
-   {
-      ossScopedLock lock ( &_taskLatch, EXCLUSIVE ) ;
-      _isTaskFail = TRUE ;
-   }
-
-   BOOLEAN _omaInstZNBusTask::getIsTaskFail()
-   {
-      ossScopedLock lock ( &_taskLatch, EXCLUSIVE ) ;
-      return _isTaskFail ;
-   }
-
-   AddZNInfo* _omaInstZNBusTask::getAddZNItem()
-   {
-      ossScopedLock lock ( &_taskLatch, EXCLUSIVE ) ;
-      vector<AddZNInfo>::iterator it = _addZNInfo.begin() ;
-      
-      for( ; it != _addZNInfo.end(); it++ )
-      {
-         if ( FALSE == it->_flag )
-         {
-            it->_flag = TRUE ;
-            return &(*it) ;
-         }
-      }
-      return NULL ;
-   }
-   
-   INT32 _omaInstZNBusTask::updateProgressToTask( INT32 serialNum,
-                                                  AddZNResultInfo &resultInfo )
-   {
-      INT32 rc            = SDB_OK ;
-      
-      ossScopedLock lock ( &_taskLatch, EXCLUSIVE ) ;
- 
-      // 1. update the installing znode's result to task
-      map<INT32, AddZNResultInfo>::iterator it ;
-      it = _addZNResult.find( serialNum ) ;
-      if ( it != _addZNResult.end() )
-      {
-         PD_LOG( PDDEBUG, "No.%d install znode sub task updates progress to local "
-                 "task. hostName[%s], zooID[%s], status[%d], "
-                 "statusDesc[%s], errno[%d], detail[%s], flow num[%d]",
-                 serialNum,
-                 resultInfo._hostName.c_str(),
-                 resultInfo._zooid.c_str(),
-                 resultInfo._status,
-                 resultInfo._statusDesc.c_str(),
-                 resultInfo._errno,
-                 resultInfo._detail.c_str(),
-                 resultInfo._flow.size() ) ;
-         it->second = resultInfo ;
-      }
-      
-      // 2. update the progress to local
-      rc = _calculateProgress() ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "Failed to calculate progress, rc = %d", rc ) ;
-         goto error ;
-      }
-
-      // 3. notify task to update progress to om
-      _eventID++ ;
-      _taskEvent.signal() ;
-
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   INT32 _omaInstZNBusTask::updateProgressToTask( INT32 serialNum,
-                                                  INT32 errNum,
-                                                  const CHAR *pDetail,
-                                                  OMA_TASK_STATUS status )
-   {
-      INT32 rc = SDB_OK ;
-      string str ;
-      string flow ;
-      stringstream ss ;
-#define REMOVE_BEGIN  "Removing "
-#define REMOVE_FINISH "Finish removing "
-#define REMOVE_FAIL   "Failed to remove "
-
-      ossScopedLock lock ( &_taskLatch, EXCLUSIVE ) ;
-
-      switch( status )
-      {
-      case OMA_TASK_STATUS_INIT:
-      case OMA_TASK_STATUS_RUNNING:
-         str = REMOVE_BEGIN ;
-         break ;
-      case OMA_TASK_STATUS_FINISH:
-         str = REMOVE_FINISH ;
-         break ;
-      default:
-         str = REMOVE_FAIL ;
-         status = OMA_TASK_STATUS_FINISH ;
-         break ;
-      }
-
-      // 1. update result
-      map<INT32, AddZNResultInfo>::iterator it ;
-      it = _addZNResult.find( serialNum ) ;
-      if ( it != _addZNResult.end() )
-      {
-         // update errno
-         it->second._errno = errNum ;
-         // update detail
-         it->second._detail = pDetail ;
-         // update status
-         it->second._status = status ;
-         it->second._statusDesc = getTaskStatusDesc( status ) ;
-         // update flow
-         ss << str << "znode[" << it->second._hostName << "]" ;
-         flow = ss.str() ;
-         it->second._flow.push_back( flow ) ;
-      }
-
-      // 2. update the progress to local
-      rc = _calculateProgress() ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "Failed to calculate progress, rc = %d", rc ) ;
-         goto error ;
-      }
-      
-      // 3. update to om
-      rc = _updateProgressToOM() ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "Failed to update progress to omsvc, rc = %d", rc ) ;
-         goto error ;
-      }
-
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   void _omaInstZNBusTask::notifyUpdateProgress()
-   {
-      ossScopedLock lock ( &_taskLatch, EXCLUSIVE ) ;
-      _eventID++ ;
-      _taskEvent.signal() ;
-   }
-
-   void _omaInstZNBusTask::setErrInfo( INT32 errNum, const CHAR *pDetail )
-   {
-      ossScopedLock lock ( &_taskLatch, EXCLUSIVE ) ;
-
-      if ( NULL == pDetail )
-      {
-         PD_LOG( PDWARNING, "Error detail is NULL" ) ;
-         return ;
-      }
-      if ( ( SDB_OK == errNum ) ||
-           ( SDB_OK != _errno && '\0' != _detail[0] ) )
-         return ;
-      else
-      {
-         // set errno
-         _errno = errNum ;
-         // set error detail
-         ossStrncpy( _detail, pDetail, OMA_BUFF_SIZE ) ;
-      }
-   }
-
-   INT32 _omaInstZNBusTask::_initAddZNInfo( BSONObj &info )
-   {
-      INT32 rc                   = SDB_OK ;
-      const CHAR *pClusterName   = NULL ;
-      const CHAR *pBusinessType  = NULL ;
-      const CHAR *pBusinessName  = NULL ;
-      const CHAR *pDeployMode    = NULL ;
-      const CHAR *pSdbUser       = NULL ;
-      const CHAR *pSdbPasswd     = NULL ;
-      const CHAR *pSdbUserGroup  = NULL ;
-      const CHAR *pInstallPacket = NULL ;
-      const CHAR *pStr           = NULL ;
-      BSONObj znodeInfoObj ;
-      BSONElement ele ;
-
-      // 1. get task id
-      ele = info.getField( OMA_FIELD_TASKID ) ;
-      if ( NumberInt != ele.type() && NumberLong != ele.type() )
-      {
-         PD_LOG_MSG ( PDERROR, "Receive invalid task id from omsvc" ) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
-       }
-      _taskID = ele.numberLong() ;
-      // 2. get task status
-      ele = info.getField( OMA_FIELD_STATUS ) ;
-      if ( NumberInt != ele.type() && NumberLong != ele.type() )
-      {
-         PD_LOG_MSG ( PDERROR, "Receive invalid task status from omsvc" ) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
-      _taskStatus = (OMA_TASK_STATUS)ele.numberInt() ;
-
-      // 3. get add znode info
-      rc = omaGetObjElement( info, OMA_FIELD_INFO, znodeInfoObj ) ;
-      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
-                "Get field[%s] failed, rc: %d",
-                OMA_FIELD_INFO, rc ) ;
-/*      
-      // 4. get deployMod info from omsvc
-      ele = hostInfoObj.getField( OMA_FIELD_DEPLOYMOD ) ;
-      if ( String != ele.type() )
-      {
-         PD_LOG_MSG ( PDERROR, "Receive invalid content from omsvc" ) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
-      deplayMod = ele.String() ;
-      if ( deplayMod == string(DEPLAY_SA) )
-      {
-         _isStandalone = TRUE ;
-      }
-      else if ( deplayMod == string(DEPLAY_DB) )
-      {
-         _isStandalone = FALSE ;
-      }
-      else
-      {
-         PD_LOG_MSG ( PDERROR, "Receive invalid deplay mode from omsvc" ) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
-*/
-      // 4. get add znode common fields
-      // clusterName
-      rc = omaGetStringElement( znodeInfoObj, OMA_FIELD_CLUSTERNAME,
-                                &pClusterName ) ;
-      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
-                "Get field[%s] failed, rc: %d",
-                OMA_FIELD_CLUSTERNAME, rc ) ;
-      // businessType
-      rc = omaGetStringElement( znodeInfoObj, OMA_FIELD_BUSINESSTYPE,
-                                &pBusinessType) ;
-      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
-                "Get field[%s] failed, rc: %d",
-                OMA_FIELD_BUSINESSTYPE, rc ) ;
-      // businessName
-      rc = omaGetStringElement( znodeInfoObj, OMA_FIELD_BUSINESSNAME,
-                                &pBusinessName ) ;
-      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
-                "Get field[%s] failed, rc: %d",
-                OMA_FIELD_BUSINESSNAME, rc ) ;
-      // deployMode
-      rc = omaGetStringElement( znodeInfoObj, OMA_FIELD_DEPLOYMOD,
-                                &pDeployMode ) ;
-      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
-                "Get field[%s] failed, rc: %d",
-                OMA_FIELD_DEPLOYMOD, rc ) ;
-      // SdbUser
-      rc = omaGetStringElement( znodeInfoObj, OMA_FIELD_SDBUSER, &pSdbUser ) ;
-      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
-                "Get field[%s] failed, rc: %d",
-                OMA_FIELD_SDBUSER, rc ) ;
-      // SdbPasswd
-      rc = omaGetStringElement( znodeInfoObj, OMA_FIELD_SDBPASSWD,
-                                &pSdbPasswd ) ;
-      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
-                "Get field[%s] failed, rc: %d",
-                OMA_FIELD_SDBPASSWD, rc ) ;
-      // SdbUserGroup
-      rc = omaGetStringElement( znodeInfoObj, OMA_FIELD_SDBUSERGROUP,
-                                &pSdbUserGroup ) ;
-      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
-                "Get field[%s] failed, rc: %d",
-                OMA_FIELD_SDBUSERGROUP, rc ) ;
-      // InstallPacket
-      if ( OMA_TASK_INSTALL_ZN == getTaskType() )
-      {
-         rc = omaGetStringElement( znodeInfoObj, OMA_FIELD_INSTALLPACKET,
-                                   &pInstallPacket ) ;
-         PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
-                   "Get field[%s] failed, rc: %d",
-                   OMA_FIELD_INSTALLPACKET, rc ) ;
-      }
-      // 5. get every item and save them
-      ele = znodeInfoObj.getField( OMA_FIELD_CONFIG ) ;
-      if ( Array != ele.type() )
-      {
-         PD_LOG_MSG ( PDERROR, "Receive wrong format add hosts"
-                      "info from omsvc" ) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
-      else
-      {
-         vector<string> serverInfo ;
-         vector<AddZNInfo>::iterator it ;
-         INT32 serialNum = 0 ;
-         BSONObjIterator itr( ele.embeddedObject() ) ;
-         while( itr.more() )
-         {
-            AddZNInfo znodeInfo ;
-            BSONObj item ;
-            stringstream ss ;
-            
-            znodeInfo._serialNum = serialNum++ ;
-            znodeInfo._flag      = FALSE ;
-            znodeInfo._taskID    = getTaskID() ;
-            // common field
-            znodeInfo._common._clusterName = pClusterName ;
-            znodeInfo._common._businessName = pBusinessName ;
-            znodeInfo._common._deployMod = pDeployMode ;
-            znodeInfo._common._sdbUser = pSdbUser ;
-            znodeInfo._common._sdbPasswd = pSdbPasswd ;
-            znodeInfo._common._userGroup = pSdbUserGroup ;
-            if ( OMA_TASK_INSTALL_ZN == getTaskType() )
-            {
-               znodeInfo._common._installPacket = pInstallPacket ;
-            }
-
-            ele = itr.next() ;
-            if ( Object != ele.type() )
-            {
-               rc = SDB_INVALIDARG ;
-               PD_LOG_MSG ( PDERROR, "Receive wrong format bson from omsvc" ) ;
-               goto error ;
-            }
-            item = ele.embeddedObject() ;
-            // HostName
-            rc = omaGetStringElement( item, OMA_FIELD_HOSTNAME, &pStr ) ;
-            PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
-                      "Get field[%s] failed, rc: %d",
-                      OMA_FIELD_HOSTNAME, rc ) ;
-            znodeInfo._item._hostName = pStr ;
-            // User
-            rc = omaGetStringElement( item, OMA_FIELD_USER, &pStr ) ;
-            PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
-                      "Get field[%s] failed, rc: %d",
-                      OMA_FIELD_USER, rc ) ;
-            znodeInfo._item._user = pStr ;
-            // Passwd
-            rc = omaGetStringElement( item, OMA_FIELD_PASSWD, &pStr ) ;
-            PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
-                      "Get field[%s] failed, rc: %d",
-                      OMA_FIELD_PASSWD, rc ) ;
-            znodeInfo._item._passwd = pStr ;
-            // SshPort
-            rc = omaGetStringElement( item, OMA_FIELD_SSHPORT, &pStr ) ;
-            PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
-                      "Get field[%s] failed, rc: %d",
-                      OMA_FIELD_SSHPORT, rc ) ;
-            znodeInfo._item._sshPort = pStr ;
-            // InstallPath
-            rc = omaGetStringElement( item, OMA_FIELD_INSTALLPATH3, &pStr ) ;
-            PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
-                      "Get field[%s] failed, rc: %d",
-                      OMA_FIELD_INSTALLPATH3, rc ) ;
-            znodeInfo._item._installPath = pStr ;
-            // DataPath
-            rc = omaGetStringElement( item, OMA_FIELD_DATAPATH3, &pStr ) ;
-            PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
-                      "Get field[%s] failed, rc: %d",
-                      OMA_FIELD_DATAPATH3, rc ) ;
-            znodeInfo._item._dataPath = pStr ;
-            // DataPort
-            rc = omaGetStringElement( item, OMA_FIELD_DATAPORT3, &pStr ) ;
-            PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
-                      "Get field[%s] failed, rc: %d",
-                      OMA_FIELD_DATAPORT3, rc ) ;
-            znodeInfo._item._dataPort = pStr ;
-            // ElectPort
-            rc = omaGetStringElement( item, OMA_FIELD_ELECTPORT3, &pStr ) ;
-            PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
-                      "Get field[%s] failed, rc: %d",
-                      OMA_FIELD_ELECTPORT3, rc ) ;
-            znodeInfo._item._electPort = pStr ;
-            // ClientPort
-            rc = omaGetStringElement( item, OMA_FIELD_CLIENTPORT3, &pStr ) ;
-            PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
-                      "Get field[%s] failed, rc: %d",
-                      OMA_FIELD_CLIENTPORT3, rc ) ;
-            znodeInfo._item._clientPort = pStr ;
-            // SyncLimit
-            rc = omaGetStringElement( item, OMA_FIELD_SYNCLIMIT3, &pStr ) ;
-            PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
-                      "Get field[%s] failed, rc: %d",
-                      OMA_FIELD_SYNCLIMIT3, rc ) ;
-            znodeInfo._item._syncLimit = pStr ;
-            // InitLimit
-            rc = omaGetStringElement( item, OMA_FIELD_INITLIMIT3, &pStr ) ;
-            PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
-                      "Get field[%s] failed, rc: %d",
-                      OMA_FIELD_INITLIMIT3, rc ) ;
-            znodeInfo._item._initLimit = pStr ;
-            // TickTime
-            rc = omaGetStringElement( item, OMA_FIELD_TICKTIME3, &pStr ) ;
-            PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
-                      "Get field[%s] failed, rc: %d",
-                      OMA_FIELD_TICKTIME3, rc ) ;
-            znodeInfo._item._tickTime = pStr ;
-            // ZooID
-            rc = omaGetStringElement( item, OMA_FIELD_ZOOID3, &pStr ) ;
-            PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
-                      "Get field[%s] failed, rc: %d",
-                      OMA_FIELD_ZOOID3, rc ) ;
-            znodeInfo._item._zooid = pStr ;
-
-            // save server info
-            ss << OMA_ZNODE_SERVER << znodeInfo._item._zooid << "=" <<
-               znodeInfo._item._hostName << ":" << znodeInfo._item._dataPort <<
-               ":" << znodeInfo._item._electPort ;
-            serverInfo.push_back( ss.str() ) ;
-            
-            _addZNInfo.push_back( znodeInfo ) ;
-         }
-         // save server info to every item
-         it = _addZNInfo.begin() ;
-         for( ; it != _addZNInfo.end(); it++ )
-         {
-            it->_common._serverInfo = serverInfo ;
-         }
-      }
-      
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   void _omaInstZNBusTask::_initAddZNResult()
-   {
-      vector<AddZNInfo>::iterator itr = _addZNInfo.begin() ;
-
-      for( ; itr != _addZNInfo.end(); itr++ )
-      {
-         AddZNResultInfo result ;
-         result._errno      = SDB_OK ;
-         result._detail     = "" ;
-         result._hostName   = itr->_item._hostName ;
-         result._zooid      = itr->_item._zooid ;
-         result._status     = OMA_TASK_STATUS_INIT ;
-         result._statusDesc = getTaskStatusDesc( OMA_TASK_STATUS_INIT ) ;
-         
-         _addZNResult.insert( std::pair< INT32, AddZNResultInfo >( 
-            itr->_serialNum, result ) ) ;
-      }
-   }
-
-   INT32 _omaInstZNBusTask::_addZNodes()
-   {
-      INT32 rc        = SDB_OK ;
-      INT32 threadNum = 0 ;
-      INT32 hostNum   = _addZNInfo.size() ;
-      
-      if ( 0 == hostNum )
-      {
-         rc = SDB_INVALIDARG ;
-         PD_LOG_MSG ( PDERROR, "No information for installing znodes" ) ;
-         goto error ;
-      }
-      threadNum = hostNum < MAX_THREAD_NUM ? hostNum : MAX_THREAD_NUM ;
-      for( INT32 i = 0; i < threadNum; i++ )
-      { 
-         ossScopedLock lock( &_taskLatch, EXCLUSIVE ) ;
-         // judge whether program had been interrupted
-         if ( TRUE == pmdGetThreadEDUCB()->isInterrupted() )
-         {
-            PD_LOG( PDEVENT, "Program has been interrupted, stop task[%s]",
-                    _taskName.c_str() ) ;
-            goto done ;
-         }
-         // run sub tasks
-         if ( OMA_TASK_STATUS_RUNNING == _taskStatus )
-         {
-            rc = startOmagentJob( OMA_TASK_INSTALL_ZN_SUB, _taskID,
-                                  BSONObj(), (void *)this ) ;
-            if ( rc )
-            {
-               PD_LOG_MSG ( PDERROR, "Failed to run install znodes' sub task "
-                            "with the type[%d], rc = %d",
-                            OMA_TASK_INSTALL_ZN_SUB, rc ) ;
-               goto error ;
-            }
-         }
-      }
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   INT32 _omaInstZNBusTask::_waitAndUpdateProgress()
-   {
-      INT32 rc = SDB_OK ;
-      BOOLEAN flag = FALSE ;
-      UINT64 subTaskEventID = 0 ;
-      _pmdEDUCB *cb = pmdGetThreadEDUCB () ;
-
-      while ( !cb->isInterrupted() )
-      {
-         // 1. waiting for sub task's notify of update progress
-         if ( SDB_OK != _taskEvent.wait ( OMA_WAIT_SUB_TASK_NOTIFY_TIMEOUT ) )
-         {
-            continue ;
-         }
-         else
-         {
-            // 2. update task progress until no new info need to update
-            while( TRUE )
-            {
-               _taskLatch.get() ;
-               _taskEvent.reset() ;
-               flag = ( subTaskEventID < _eventID ) ? TRUE : FALSE ;
-               subTaskEventID = _eventID ;
-               _taskLatch.release() ;
-               if ( TRUE == flag )
-               {
-                  rc = _updateProgressToOM() ;
-                  if ( SDB_APP_INTERRUPT == rc )
-                  {
-                     PD_LOG( PDERROR, "Failed to update installing znode's "
-                        "progress to omsvc, rc = %d", rc ) ;
-                     goto error ;
-                  }
-                  else if ( SDB_OK != rc )
-                  {
-                     PD_LOG( PDERROR, "Failed to update installing znode's "
-                        "progress to omsvc, rc = %d", rc ) ;
-                  }
-               }
-               else
-               {
-                  break ;
-               }
-            }
-            // when we come here, all the old signal had been handled,
-            // no need to worry about missing any untreated signal
-            // 2. check whether add host task has finished or not
-            if ( _isTaskFinish() )
-            {
-               PD_LOG( PDEVENT, "All the installing znode's sub tasks"
-                  "had finished" ) ;
-               goto done ;
-            }
-            
-         }
-      }
-
-      PD_LOG( PDERROR, "Receive interrupt when running installing "
-         "znode's sub task" ) ;
-      rc = SDB_APP_INTERRUPT ;
-    
-   done:
-      return rc ;
-   error:
-      goto done ; 
-   }
-
-   INT32 _omaInstZNBusTask::_calculateProgress()
-   {
-      INT32 rc            = SDB_OK ;
-      INT32 totalNum      = 0 ;
-      INT32 finishNum     = 0 ;
-      map< INT32, AddZNResultInfo >::iterator it  ;
-      
-      totalNum = _addZNResult.size() ;
-      if ( 0 == totalNum )
-      {
-         rc = SDB_SYS ;
-         PD_LOG_MSG( PDERROR, "Install znode's result is empty" ) ;
-         goto error ;
-      }
-      it = _addZNResult.begin() ;
-      for( ; it != _addZNResult.end(); it++ )
-      {
-         if ( OMA_TASK_STATUS_FINISH == it->second._status )
-            finishNum++ ;
-      }
-      _progress = ( finishNum * 100 ) / totalNum ;
-
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   INT32 _omaInstZNBusTask::_updateProgressToOM()
-   {
-      INT32 rc            = SDB_OK ;
-      INT32 retRc         = SDB_OK ;
-      UINT64 reqID        = 0 ;
-      omAgentMgr *pOmaMgr = sdbGetOMAgentMgr() ;
-      _pmdEDUCB *cb       = pmdGetThreadEDUCB () ;
-      ossAutoEvent updateEvent ;
-      BSONObj obj ;
-      
-      // 1. build update task object
-      _buildUpdateTaskObj( obj ) ;
-
-      // 2. get request id from omagentMgr
-      reqID = pOmaMgr->getRequestID() ;
-      pOmaMgr->registerTaskEvent( reqID, &updateEvent ) ;
-      
-      // 3. send message to omsvc
-      while( !cb->isInterrupted() )
-      {
-         pOmaMgr->sendUpdateTaskReq( reqID, &obj ) ;
-         while ( !cb->isInterrupted() )
-         {
-            if ( SDB_OK != updateEvent.wait( OMA_WAIT_OMSVC_RES_TIMEOUT, &retRc ) )
-            {
-               // try to send update task request again
-               break ;
-            }
-            else
-            {
-               if ( SDB_OM_TASK_NOT_EXIST == retRc )
-               {
-                  PD_LOG( PDERROR, "Failed to update task[%s]'s progress "
-                          "with requestID[%lld], rc = %d",
-                          _taskName.c_str(), reqID, retRc ) ;
-                  pOmaMgr->unregisterTaskEvent( reqID ) ;
-                  rc = retRc ;
-                  goto error ;
-               }
-               else if ( SDB_OK != retRc )
-               {
-                  PD_LOG( PDWARNING, "Retry to update task[%s]'s progress "
-                          "with requestID[%lld], rc = %d",
-                          _taskName.c_str(), reqID, retRc ) ;
-                  break ;
-               }
-               else
-               {
-                  PD_LOG( PDDEBUG, "Success to update task[%s]'s progress "
-                          "with requestID[%lld]", _taskName.c_str(), reqID ) ;
-                  pOmaMgr->unregisterTaskEvent( reqID ) ;
-                  goto done ;
-               }
-            }
-         }
-      }
-
-      PD_LOG( PDERROR, "Receive interrupt when update installing znode "
-         "business task's progress to omsvc" ) ;
-      rc = SDB_APP_INTERRUPT ;
-      
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   void _omaInstZNBusTask::_buildUpdateTaskObj( BSONObj &retObj )
-   {
-      BSONObjBuilder bob ;
-      BSONArrayBuilder bab ;
-      map<INT32, AddZNResultInfo>::iterator it = _addZNResult.begin() ;
-      for ( ; it != _addZNResult.end(); it++ )
-      {
-         BSONObjBuilder builder ;
-         BSONArrayBuilder arrBuilder ;
-         BSONObj obj ;
-
-         vector<string>::iterator itr = it->second._flow.begin() ;
-         for ( ; itr != it->second._flow.end(); itr++ )
-            arrBuilder.append( *itr ) ;
-
-         builder.append( OMA_FIELD_ERRNO, it->second._errno ) ;
-         builder.append( OMA_FIELD_DETAIL, it->second._detail ) ;
-         builder.append( OMA_FIELD_HOSTNAME, it->second._hostName ) ;
-         builder.append( OMA_FIELD_ZOOID3, it->second._zooid ) ;
-         builder.append( OMA_FIELD_STATUS, it->second._status ) ;
-         builder.append( OMA_FIELD_STATUSDESC, it->second._statusDesc ) ;
-         builder.append( OMA_FIELD_FLOW, arrBuilder.arr() ) ;
-         obj = builder.obj() ;
-         bab.append( obj ) ;
-      }
-
-      bob.appendNumber( OMA_FIELD_TASKID, _taskID ) ;
-      if ( OMA_TASK_STATUS_FINISH == _taskStatus )
-      {
-         bob.appendNumber( OMA_FIELD_ERRNO, _errno ) ;
-         bob.append( OMA_FIELD_DETAIL, _detail ) ;
-      }
-      else
-      {
-         bob.appendNumber( OMA_FIELD_ERRNO, SDB_OK ) ;
-         bob.append( OMA_FIELD_DETAIL, "" ) ;
-      }
-      bob.appendNumber( OMA_FIELD_STATUS, _taskStatus ) ;
-      bob.append( OMA_FIELD_STATUSDESC, getTaskStatusDesc( _taskStatus ) ) ;
-      bob.appendNumber( OMA_FIELD_PROGRESS, _progress ) ;
-      bob.appendArray( OMA_FIELD_RESULTINFO, bab.arr() ) ;
-
-      retObj = bob.obj() ;
-   }
-   
-   BOOLEAN _omaInstZNBusTask::_isTaskFinish()
-   {
-      INT32 runNum    = 0 ;
-      INT32 finishNum = 0 ;
-      INT32 failNum   = 0 ;
-      INT32 otherNum  = 0 ;
-      BOOLEAN flag    = TRUE ;
-      ossScopedLock lock( &_latch, EXCLUSIVE ) ;
-      
-      map< string, OMA_TASK_STATUS >::iterator it = _subTaskStatus.begin() ;
-      for ( ; it != _subTaskStatus.end(); it++ )
-      {
-         switch ( it->second )
-         {
-         case OMA_TASK_STATUS_FINISH :
-            finishNum++ ;
-            break ;
-         case OMA_TASK_STATUS_FAIL :            
-            failNum++ ;
-            break ;
-         case OMA_TASK_STATUS_RUNNING :
-            runNum++ ;
-            flag = FALSE ;
-            break ;
-         default :
-            otherNum++ ;
-            flag = FALSE ;
-            break ;
-         }
-      }
-      PD_LOG( PDDEBUG, "In install znode task, the amount of sub tasks is [%d]: "
-              "[%d]running, [%d]finish, [%d]in the other status",
-              _subTaskStatus.size(), runNum, finishNum, otherNum ) ;
-
-      return flag ;
-   }
-
-   BOOLEAN _omaInstZNBusTask::_needToRollback()
-   {
-      map< INT32, AddZNResultInfo >::iterator it ;
-      
-      ossScopedLock lock( &_taskLatch, EXCLUSIVE ) ;
-      
-      it = _addZNResult.begin() ;
-      for ( ; it != _addZNResult.end(); it++ )
-      {
-         if ( OMA_TASK_STATUS_ROLLBACK == it->second._status )
-            return TRUE ;
-      }
-
-      return FALSE ;
-   }
-
-   void _omaInstZNBusTask::_setRetErr( INT32 errNum )
-   {
-      const CHAR *pDetail = NULL ;
-
-      if ( SDB_OK != _errno && '\0' != _detail[0] )
-      {
-         return ;
-      }
-      else
-      {
-         // set errno
-         _errno = errNum ;
-         // set error detail
-         pDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
-         if ( NULL != pDetail && 0 != *pDetail )
-         {
-            ossStrncpy( _detail, pDetail, OMA_BUFF_SIZE ) ;
-         }
-         else
-         {
-            pDetail = getErrDesp( errNum ) ;
-            if ( NULL != pDetail )
-               ossStrncpy( _detail, pDetail, OMA_BUFF_SIZE ) ;
-            else
-               PD_LOG( PDERROR, "Failed to get error message" ) ;
-         }
-      }
-   }
-
-   void _omaInstZNBusTask::_setResultToFail()
-   {
-      map< INT32, AddZNResultInfo >::iterator it ;
-
-      it = _addZNResult.begin() ;
-      for ( ; it != _addZNResult.end(); it++ )
-      {
-         if ( SDB_OK == it->second._errno )
-         {
-            it->second._errno = SDB_OMA_TASK_FAIL ;
-            it->second._detail = getErrDesp( SDB_OMA_TASK_FAIL ) ;
-         }
-      }
-   }
-
-   INT32 _omaInstZNBusTask::_checkAndCleanEnv()
-   {
-      INT32 rc                      = SDB_OK ;
-      INT32 tmpRc                   = SDB_OK ;
-      INT32 errNum                  = 0 ;
-      const CHAR *pDetail           = "" ;
-      BSONObj retObj ;
-      _omaCheckZNEnv runCmd( _addZNInfo ) ;
-
-      rc = runCmd.init( NULL ) ;
-      if ( rc )
-      {
-         PD_LOG( PDERROR, "Failed to init to check environment for installing "
-                 "znodes, rc = %d", rc ) ;
-         pDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
-         if ( NULL == pDetail || 0 == *pDetail )
-            pDetail = "Failed to init to check znodes' status" ;
-         goto error ;
-      }
-      rc = runCmd.doit( retObj ) ;
-      if ( rc )
-      {
-         PD_LOG( PDERROR, "Failed to check the environment for installing "
-                 "znodes, rc = %d", rc ) ;
-         // if we can't get field "detail", it means we failed in CPP,
-         // we had not executed js file yet
-         tmpRc = omaGetStringElement ( retObj, OMA_FIELD_DETAIL, &pDetail ) ;
-         if ( tmpRc )
-         {
-            pDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
-            if ( NULL == pDetail || 0 == *pDetail )
-               pDetail = "Not exeute js file yet" ;
-         }
-         goto error ;
-      }
-      // extract "errno"
-      rc = omaGetIntElement ( retObj, OMA_FIELD_ERRNO, errNum ) ;
-      if ( rc )
-      {
-         PD_LOG( PDERROR, "Failed to get errno from js after "
-                 "checking environment for installing znodes, rc = %d", rc ) ;
-         pDetail = "Failed to get errno from js after checking environment "
-                   "for installing znodes" ;
-         goto error ;
-      }
-      // to see whether execute js successfully or not
-      if ( SDB_OK != errNum )
-      {
-         rc = errNum ;
-         // get error detail
-         tmpRc = omaGetStringElement ( retObj, OMA_FIELD_DETAIL, &pDetail ) ;
-         if ( SDB_OK != tmpRc )
-         {
-            PD_LOG( PDERROR, "Failed to get error detail from js after checking"
-                    " environment for installing znodes, rc = %d", tmpRc ) ;
-            pDetail = "Failed to get error detail from js after "
-                      "checking environment for installing znodes" ;
-         }
-         goto error ;
-      }
-      else
-      {
-         PD_LOG ( PDEVENT, "Success to check environment for installing znodes" ) ;
-      }
-
-   done:
-      return rc ;
-   error:
-      PD_LOG_MSG( PDERROR, "%s, rc = %d", pDetail, rc ) ;
-      goto done ;
-   }
-
-   INT32 _omaInstZNBusTask::_checkZNodes()
-   {
-      INT32 rc                      = SDB_OK ;
-      INT32 tmpRc                   = SDB_OK ;
-      INT32 errNum                  = 0 ;
-      const CHAR *pDetail           = "" ;
-      BSONObj retObj ;
-      _omaCheckZNodes runCmd( _addZNInfo ) ;
-
-      rc = runCmd.init( NULL ) ;
-      if ( rc )
-      {
-         PD_LOG( PDERROR, "Failed to init to check znodes' status, "
-                 "rc = %d", rc ) ;
-         pDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
-         if ( NULL == pDetail || 0 == *pDetail )
-            pDetail = "Failed to init to check znodes' status" ;
-         goto error ;
-      }
-      rc = runCmd.doit( retObj ) ;
-      if ( rc )
-      {
-         PD_LOG( PDERROR, "Failed to check znodes' status, rc = %d", rc ) ;
-         // if we can't get field "detail", it means we failed in CPP,
-         // we had not executed js file yet
-         tmpRc = omaGetStringElement ( retObj, OMA_FIELD_DETAIL, &pDetail ) ;
-         if ( tmpRc )
-         {
-            pDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
-            if ( NULL == pDetail || 0 == *pDetail )
-               pDetail = "Not exeute js file yet" ;
-         }
-         goto error ;
-      }
-      // extract "errno"
-      rc = omaGetIntElement ( retObj, OMA_FIELD_ERRNO, errNum ) ;
-      if ( rc )
-      {
-         PD_LOG( PDERROR, "Failed to get errno from js after "
-                 "check znodes' status, rc = %d", rc ) ;
-         pDetail = "Failed to get errno from js after check znodes' status" ;
-         goto error ;
-      }
-      // to see whether execute js successfully or not
-      if ( SDB_OK != errNum )
-      {
-         rc = errNum ;
-         // get error detail
-         tmpRc = omaGetStringElement ( retObj, OMA_FIELD_DETAIL, &pDetail ) ;
-         if ( SDB_OK != tmpRc )
-         {
-            PD_LOG( PDERROR, "Failed to get error detail from js after "
-                    "check znodes' status, rc = %d", tmpRc ) ;
-            pDetail = "Failed to get error detail from js after "
-                      "checking znodes' status" ;
-         }
-         goto error ;
-      }
-      else
-      {
-         PD_LOG ( PDEVENT, "Success to check znodes' status" ) ;
-      }
-
-   done:
-      return rc ;
-   error:
-      PD_LOG_MSG( PDERROR, "%s, rc = %d", pDetail, rc ) ;
-      goto done ;
-   }
-
-   INT32 _omaInstZNBusTask::_rollback(  BOOLEAN isRestart )
-   {
-      INT32 rc = SDB_OK ;
-      vector<AddZNInfo>::iterator it ;
-      
-      // 1. set task's status to be rollback and update to omsvc
-      setTaskStatus( OMA_TASK_STATUS_ROLLBACK ) ;
-      rc = _updateProgressToOM() ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDWARNING, "Failed to update task's progress to om" ) ;
-      }
-      
-      // 2. going to rollback
-      for( it = _addZNInfo.begin(); it != _addZNInfo.end() ; it++ )
-      {
-         if ( TRUE == isRestart )
-         {
-            rc = _removeZNode( *it ) ;
-            if ( SDB_OK != rc )
-            {
-               PD_LOG( PDERROR, "Failed to rollback znode[%s], rc = %d",
-                  it->_item._hostName.c_str(), rc ) ;
-               continue ;
-            }
-         }
-         else
-         {
-            if ( TRUE == it->_flag )
-            {
-               rc = _removeZNode( *it ) ;
-               if ( SDB_OK != rc )
-               {
-                  PD_LOG( PDERROR, "Failed to rollback znode[%s], rc = %d",
-                     it->_item._hostName.c_str(), rc ) ;
-                  continue ;
-               }
-            }
-         }
-      }
-      
-      return SDB_OK ;
-   }
-/*
-   INT32 _omaInstZNBusTask::_rollback()
-   {
-      INT32 rc = SDB_OK ;
-      vector<AddZNInfo>::iterator it ;
-      map< INT32, AddZNResultInfo >::iterator itr ;
-      
-      // 1. set task's status to be rollback and update to omsvc
-      setTaskStatus( OMA_TASK_STATUS_ROLLBACK ) ;
-      rc = _updateProgressToOM() ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDWARNING, "Failed to update task's progress to om" ) ;
-      }
-      
-      // 2. going to rollback
-      for( it = _addZNInfo.begin(); it != _addZNInfo.end() ; it++ )
-      {
-         if ( TRUE == it->_flag )
-         {
-            itr = _addZNResult.find( it->_serialNum ) ;
-            if ( itr != _addZNResult.end() )
-            {
-               if ( SDB_FE != itr->second._errno )
-               {
-                  rc = _removeZNode( *it ) ;
-                  if ( SDB_OK != rc )
-                  {
-                     PD_LOG( PDERROR, "Failed to rollback znode[%s], rc = %d",
-                        it->_item._hostName.c_str(), rc ) ;
-                     continue ;
-                  }
-                  // if we success to remove this znode, set flag to be false,
-                  // prevent removing this znode again when _rollback is 
-                  // called next time
-                  it->_flag = FALSE ;                  
-               }
-               else
-               {
-                  // set status to be finished
-                  itr->second._status = OMA_TASK_STATUS_FINISH ;
-                  itr->second._statusDesc = getTaskStatusDesc( OMA_TASK_STATUS_FINISH ) ;
-               }
-            }
-         }
-      }
-      // 3. set task to be failing
-      _setResultToFail() ;
-      
-      return SDB_OK ;
-   }
-*/
-
-   INT32 _omaInstZNBusTask::_removeZNode( AddZNInfo &znodeInfo )
-   {
-      INT32 rc                      = SDB_OK ;
-      INT32 tmpRc                   = SDB_OK ;
-      INT32 errNum                  = 0 ;
-      const CHAR *pDetail           = "" ;
-      const CHAR *pHostName         = NULL ;
-      INT32 serialNum               = znodeInfo._serialNum ;
-      BSONObj retObj ;
-      _omaRemoveZNode runCmd( znodeInfo ) ;
-
-      // update progress
-      updateProgressToTask( serialNum, SDB_OK, "", OMA_TASK_STATUS_RUNNING ) ;
-
-      pHostName = znodeInfo._item._hostName.c_str() ;
-
-      // rollback znode
-      rc = runCmd.init( NULL ) ;
-      if ( rc )
-      {
-         PD_LOG( PDERROR, "Failed to init to rollback znode[%s], "
-                 "rc = %d", pHostName, rc ) ;
-         pDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
-         if ( NULL == pDetail || 0 == *pDetail )
-            pDetail = "Failed to init to rollback znode" ;
-         goto error ;
-      }
-      rc = runCmd.doit( retObj ) ;
-      if ( rc )
-      {
-         PD_LOG( PDERROR, "Failed to rollback znode[%s], rc = %d",
-                 pHostName, rc ) ;
-         // if we can't get field "detail", it means we failed in CPP,
-         // we had not executed js file yet
-         tmpRc = omaGetStringElement ( retObj, OMA_FIELD_DETAIL, &pDetail ) ;
-         if ( tmpRc )
-         {
-            pDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
-            if ( NULL == pDetail || 0 == *pDetail )
-               pDetail = "Not exeute js file yet" ;
-         }
-         goto error ;
-      }
-      // extract "errno"
-      rc = omaGetIntElement ( retObj, OMA_FIELD_ERRNO, errNum ) ;
-      if ( rc )
-      {
-         PD_LOG( PDERROR, "Failed to get errno from js after "
-                 "rollback znode[%s], rc = %d", pHostName, rc ) ;
-         pDetail = "Failed to get errno from js after rollback znode" ;
-         goto error ;
-      }
-      // to see whether execute js successfully or not
-      if ( SDB_OK != errNum )
-      {
-         rc = errNum ;
-         // get error detail
-         tmpRc = omaGetStringElement ( retObj, OMA_FIELD_DETAIL, &pDetail ) ;
-         if ( SDB_OK != tmpRc )
-         {
-            PD_LOG( PDERROR, "Failed to get error detail from js after "
-                    "rollback znode[%s], rc = %d", pHostName, tmpRc ) ;
-            pDetail = "Failed to get error detail from js after "
-                      "rollback znode" ;
-         }
-         goto error ;
-      }
-      else
-      {
-
-         PD_LOG ( PDEVENT, "Success to rollback znode" ) ;
-      }
-
-      // update progress
-      updateProgressToTask( serialNum, SDB_OK, "", OMA_TASK_STATUS_FINISH ) ;
-
-   done:
-      return rc ;
-   error:
-      PD_LOG_MSG( PDERROR, "Failed to rollback znode[%s]: %s, rc = %d",
-                  pHostName, pDetail, rc ) ;
-      // update progress
-      updateProgressToTask( serialNum, rc, pDetail, OMA_TASK_STATUS_END ) ;
-
-      goto done ;
-   }
-
-
-   /*
       zookeeper task base
    */
    _omaZNBusTaskBase::_omaZNBusTaskBase( INT64 taskID )
@@ -6568,120 +5299,7 @@ namespace engine
    _omaZNBusTaskBase::~_omaZNBusTaskBase()
    {
    }
-/*
-   INT32 _omaZNBusTaskBase::init( const BSONObj &info, void *ptr )
-   {
-      INT32 rc = SDB_OK ;
 
-      _ZNRawInfo = info.copy() ;
-      
-      PD_LOG ( PDDEBUG, "Add znodes passes argument: %s",
-               _addZNRawInfo.toString( FALSE, TRUE ).c_str() ) ;
-
-      // init add znode info
-      rc = _initAddZNInfo( _addZNRawInfo ) ;
-      if ( rc )
-      {
-         PD_LOG( PDERROR, "Failed to init to get add znodes' info" ) ;
-         goto error ;
-      }
-      // init add znodes' result
-      _initAddZNResult() ;
-
-      done:
-         return rc ;
-      error:
-         // TODO: send error msg to omsvc to set task to be failing
-         goto done ;
-   }
-
-   INT32 _omaZNBusTaskBase::doit()
-   {
-      INT32 rc = SDB_OK ;
-
-      if ( OMA_TASK_STATUS_ROLLBACK == _taskStatus )
-      {
-         /// in case of rollbacking
-         _rollback() ;
-         setErrInfo( SDB_OMA_TASK_FAIL, "Task Failed" ) ;
-         goto done ;
-      }
-      else
-      {
-         /// in case of installing
-         // . set task's status to be running
-         setTaskStatus( OMA_TASK_STATUS_RUNNING ) ;
-         
-         // . add znode nodes
-         rc = _addZNodes() ;
-         if ( rc )
-         {
-            PD_LOG( PDERROR, "Failed to install znodes, rc = %d", rc ) ;
-            goto error ;
-         }
-
-         // 4. update the task's progress and
-         //    waiting for all the sub tasks to be finished
-         rc = _waitAndUpdateProgress() ;
-         if ( rc )
-         {
-            PD_LOG ( PDERROR, "Failed to wait and update install znodes "
-                     "business progress, rc = %d", rc ) ;
-            goto error ;
-         }
-         // 5. check need to rollback or not
-         if ( TRUE == _needToRollback() )
-         {
-            rc = SDB_OMA_TASK_FAIL ;
-            PD_LOG ( PDERROR, "Error happen, going to rollback" ) ;
-            goto error ;
-         }
-         // 6. check znode's status
-         rc = _checkZNodes() ;
-         if ( SDB_OK != rc )
-         {
-            rc = SDB_OMA_TASK_FAIL ;
-            PD_LOG ( PDERROR, "Failed to check znodes' status, "
-               "going to rollback, rc = %d", rc ) ;
-            goto error ;
-         }
-      }
-      
-   done:
-      // . set task's status to be finished
-      setTaskStatus( OMA_TASK_STATUS_FINISH ) ;
-
-      // . update to om the last time
-      rc = _updateProgressToOM() ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "Failed to update install zookeeper business progress "
-                 "to omsvc, rc = %d", rc ) ;
-      }
-      
-      // .submit task info to omagent mgr
-      sdbGetOMAgentMgr()->submitTaskInfo( _taskID ) ;
-      
-      PD_LOG( PDEVENT, "Omagent finish running install zookeeper business "
-              "task[%lld]", _taskID ) ;
-      return SDB_OK ;
-
-   error:
-      _setRetErr( rc ) ;
-      // rollback
-      // when error happens because install path or data path does
-      // not empty, no need to rollback
-      setTaskStatus( OMA_TASK_STATUS_ROLLBACK ) ;
-      rc = _rollback() ;
-      if ( SDB_OK != rc )
-      {
-         // TODO: let user know rollback failed
-         PD_LOG( PDERROR, "Failed to rollback install zookeeper business "
-                 "task[%lld]", _taskID ) ;
-      }
-      goto done ;
-   }
-*/
    void _omaZNBusTaskBase::setIsTaskFail()
    {
       ossScopedLock lock ( &_taskLatch, EXCLUSIVE ) ;
@@ -7493,6 +6111,408 @@ namespace engine
             it->second._detail = getErrDesp( SDB_OMA_TASK_FAIL ) ;
          }
       }
+   }
+
+   /*
+      install zookeeper task
+   */
+   _omaInstZNBusTask::_omaInstZNBusTask( INT64 taskID )
+   : _omaZNBusTaskBase( taskID )
+   {
+      _taskType = OMA_TASK_INSTALL_ZN;
+      _taskName = OMA_TASK_NAME_INSTALL_ZN_BUSINESS ;
+   }
+
+   _omaInstZNBusTask::~_omaInstZNBusTask()
+   {
+   }
+
+   INT32 _omaInstZNBusTask::init( const BSONObj &info, void *ptr )
+   {
+      INT32 rc    = SDB_OK ;
+      INT32 tmpRc = SDB_OK ;
+
+      _ZNRawInfo = info.copy() ;
+      
+      PD_LOG ( PDDEBUG, "Add znodes passes argument: %s",
+               _ZNRawInfo.toString( FALSE, TRUE ).c_str() ) ;
+
+      // init add znode info
+      rc = _initZNInfo( _ZNRawInfo ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to init to get add znodes' info" ) ;
+         goto error ;
+      }
+      // init add znodes' result
+      _initZNResult() ;
+
+   done:
+         return rc ;
+   error:
+      setErrInfo( rc, "Failed to init to install znodes" ) ;
+      // set task's status to be finished
+      setTaskStatus( OMA_TASK_STATUS_FINISH ) ;
+
+      // update to om the last time
+      tmpRc = _updateProgressToOM() ;
+      if ( SDB_OK != tmpRc )
+      {
+         PD_LOG( PDERROR, "Failed to update install zookeeper business progress "
+                 "to omsvc, tmpRc = %d", tmpRc ) ;
+      }
+      
+      // submit task info to omagent mgr
+      sdbGetOMAgentMgr()->submitTaskInfo( _taskID ) ;
+      goto done ;
+   }
+
+   INT32 _omaInstZNBusTask::doit()
+   {
+      INT32 rc               = SDB_OK ;
+      BOOLEAN needToRollback = TRUE ;
+
+      if ( OMA_TASK_STATUS_ROLLBACK == _taskStatus )
+      {
+         /// in case of rollbacking
+         _rollback( TRUE ) ;
+         // set task to be failing
+         setErrInfo( SDB_OMA_TASK_FAIL, "Task failed" ) ;
+         _setResultToFail() ;
+         goto done ;
+      }
+      else
+      {
+         /// in case of installing
+         // . set task's status to be running
+         setTaskStatus( OMA_TASK_STATUS_RUNNING ) ;
+
+         // . check and clean up environment
+         rc = _checkAndCleanEnv() ;
+         if ( SDB_OK != rc )
+         {
+            needToRollback = FALSE ;
+            PD_LOG( PDERROR, "Failed to check and clean up the environment"
+               "before installing znodes, rc = %d", rc ) ;
+            goto error ;
+         }
+         
+         // . add znode nodes
+         rc = _addZNodes() ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Failed to install znodes, rc = %d", rc ) ;
+            goto error ;
+         }
+
+         // 4. update the task's progress and
+         //    waiting for all the sub tasks to be finished
+         rc = _waitAndUpdateProgress() ;
+         if ( rc )
+         {
+            PD_LOG ( PDERROR, "Failed to wait and update install znodes "
+                     "business progress, rc = %d", rc ) ;
+            goto error ;
+         }
+         // 5. check need to rollback or not
+         if ( TRUE == _needToRollback() )
+         {
+            rc = SDB_OMA_TASK_FAIL ;
+            PD_LOG ( PDERROR, "Error happen, going to rollback" ) ;
+            goto error ;
+         }
+         // 6. check znode's status
+         rc = _checkZNodes() ;
+         if ( SDB_OK != rc )
+         {
+            rc = SDB_OMA_TASK_FAIL ;
+            PD_LOG ( PDERROR, "Failed to check znodes' status, "
+               "going to rollback, rc = %d", rc ) ;
+            goto error ;
+         }
+      }
+      
+   done:
+      // . set task's status to be finished
+      setTaskStatus( OMA_TASK_STATUS_FINISH ) ;
+
+      // . update to om the last time
+      rc = _updateProgressToOM() ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to update install zookeeper business progress "
+                 "to omsvc, rc = %d", rc ) ;
+      }
+      
+      // .submit task info to omagent mgr
+      sdbGetOMAgentMgr()->submitTaskInfo( _taskID ) ;
+      
+      PD_LOG( PDEVENT, "Omagent finish running install zookeeper business "
+              "task[%lld]", _taskID ) ;
+      return SDB_OK ;
+
+   error:
+      _setRetErr( rc ) ;
+      if ( TRUE == needToRollback )
+      {
+         // rollback
+         setTaskStatus( OMA_TASK_STATUS_ROLLBACK ) ;
+         rc = _rollback( FALSE ) ;
+         if ( SDB_OK != rc )
+         {
+            // TODO: let user know rollback failed
+            PD_LOG( PDERROR, "Failed to rollback install zookeeper business "
+                    "task[%lld]", _taskID ) ;
+         }
+      }
+      // . set task to be failing
+      _setResultToFail() ;
+      goto done ;
+   }
+
+   INT32 _omaInstZNBusTask::_addZNodes()
+   {
+      INT32 rc        = SDB_OK ;
+      INT32 threadNum = 0 ;
+      INT32 hostNum   = _ZNInfo.size() ;
+      
+      if ( 0 == hostNum )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG ( PDERROR, "No information for installing znodes" ) ;
+         goto error ;
+      }
+      threadNum = hostNum < MAX_THREAD_NUM ? hostNum : MAX_THREAD_NUM ;
+      for( INT32 i = 0; i < threadNum; i++ )
+      { 
+         ossScopedLock lock( &_taskLatch, EXCLUSIVE ) ;
+         // judge whether program had been interrupted
+         if ( TRUE == pmdGetThreadEDUCB()->isInterrupted() )
+         {
+            PD_LOG( PDEVENT, "Program has been interrupted, stop task[%s]",
+                    _taskName.c_str() ) ;
+            goto done ;
+         }
+         // run sub tasks
+         if ( OMA_TASK_STATUS_RUNNING == _taskStatus )
+         {
+            rc = startOmagentJob( OMA_TASK_INSTALL_ZN_SUB, _taskID,
+                                  BSONObj(), (void *)this ) ;
+            if ( rc )
+            {
+               PD_LOG_MSG ( PDERROR, "Failed to run install znodes' sub task "
+                            "with the type[%d], rc = %d",
+                            OMA_TASK_INSTALL_ZN_SUB, rc ) ;
+               goto error ;
+            }
+         }
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   BOOLEAN _omaInstZNBusTask::_needToRollback()
+   {
+      map< INT32, AddZNResultInfo >::iterator it ;
+      
+      ossScopedLock lock( &_taskLatch, EXCLUSIVE ) ;
+      
+      it = _ZNResult.begin() ;
+      for ( ; it != _ZNResult.end(); it++ )
+      {
+         if ( OMA_TASK_STATUS_ROLLBACK == it->second._status )
+            return TRUE ;
+      }
+
+      return FALSE ;
+   }
+
+   INT32 _omaInstZNBusTask::_checkAndCleanEnv()
+   {
+      INT32 rc                      = SDB_OK ;
+      INT32 tmpRc                   = SDB_OK ;
+      INT32 errNum                  = 0 ;
+      const CHAR *pDetail           = "" ;
+      BSONObj retObj ;
+      _omaCheckZNEnv runCmd( _ZNInfo ) ;
+
+      rc = runCmd.init( NULL ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to init to check environment for installing "
+                 "znodes, rc = %d", rc ) ;
+         pDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         if ( NULL == pDetail || 0 == *pDetail )
+            pDetail = "Failed to init to check znodes' status" ;
+         goto error ;
+      }
+      rc = runCmd.doit( retObj ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to check the environment for installing "
+                 "znodes, rc = %d", rc ) ;
+         // if we can't get field "detail", it means we failed in CPP,
+         // we had not executed js file yet
+         tmpRc = omaGetStringElement ( retObj, OMA_FIELD_DETAIL, &pDetail ) ;
+         if ( tmpRc )
+         {
+            pDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+            if ( NULL == pDetail || 0 == *pDetail )
+               pDetail = "Not exeute js file yet" ;
+         }
+         goto error ;
+      }
+      // extract "errno"
+      rc = omaGetIntElement ( retObj, OMA_FIELD_ERRNO, errNum ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to get errno from js after "
+                 "checking environment for installing znodes, rc = %d", rc ) ;
+         pDetail = "Failed to get errno from js after checking environment "
+                   "for installing znodes" ;
+         goto error ;
+      }
+      // to see whether execute js successfully or not
+      if ( SDB_OK != errNum )
+      {
+         rc = errNum ;
+         // get error detail
+         tmpRc = omaGetStringElement ( retObj, OMA_FIELD_DETAIL, &pDetail ) ;
+         if ( SDB_OK != tmpRc )
+         {
+            PD_LOG( PDERROR, "Failed to get error detail from js after checking"
+                    " environment for installing znodes, rc = %d", tmpRc ) ;
+            pDetail = "Failed to get error detail from js after "
+                      "checking environment for installing znodes" ;
+         }
+         goto error ;
+      }
+      else
+      {
+         PD_LOG ( PDEVENT, "Success to check environment for installing znodes" ) ;
+      }
+
+   done:
+      return rc ;
+   error:
+      PD_LOG_MSG( PDERROR, "%s, rc = %d", pDetail, rc ) ;
+      goto done ;
+   }
+
+   INT32 _omaInstZNBusTask::_checkZNodes()
+   {
+      INT32 rc                      = SDB_OK ;
+      INT32 tmpRc                   = SDB_OK ;
+      INT32 errNum                  = 0 ;
+      const CHAR *pDetail           = "" ;
+      BSONObj retObj ;
+      _omaCheckZNodes runCmd( _ZNInfo ) ;
+
+      rc = runCmd.init( NULL ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to init to check znodes' status, "
+                 "rc = %d", rc ) ;
+         pDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         if ( NULL == pDetail || 0 == *pDetail )
+            pDetail = "Failed to init to check znodes' status" ;
+         goto error ;
+      }
+      rc = runCmd.doit( retObj ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to check znodes' status, rc = %d", rc ) ;
+         // if we can't get field "detail", it means we failed in CPP,
+         // we had not executed js file yet
+         tmpRc = omaGetStringElement ( retObj, OMA_FIELD_DETAIL, &pDetail ) ;
+         if ( tmpRc )
+         {
+            pDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+            if ( NULL == pDetail || 0 == *pDetail )
+               pDetail = "Not exeute js file yet" ;
+         }
+         goto error ;
+      }
+      // extract "errno"
+      rc = omaGetIntElement ( retObj, OMA_FIELD_ERRNO, errNum ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to get errno from js after "
+                 "check znodes' status, rc = %d", rc ) ;
+         pDetail = "Failed to get errno from js after check znodes' status" ;
+         goto error ;
+      }
+      // to see whether execute js successfully or not
+      if ( SDB_OK != errNum )
+      {
+         rc = errNum ;
+         // get error detail
+         tmpRc = omaGetStringElement ( retObj, OMA_FIELD_DETAIL, &pDetail ) ;
+         if ( SDB_OK != tmpRc )
+         {
+            PD_LOG( PDERROR, "Failed to get error detail from js after "
+                    "check znodes' status, rc = %d", tmpRc ) ;
+            pDetail = "Failed to get error detail from js after "
+                      "checking znodes' status" ;
+         }
+         goto error ;
+      }
+      else
+      {
+         PD_LOG ( PDEVENT, "Success to check znodes' status" ) ;
+      }
+
+   done:
+      return rc ;
+   error:
+      PD_LOG_MSG( PDERROR, "%s, rc = %d", pDetail, rc ) ;
+      goto done ;
+   }
+
+   INT32 _omaInstZNBusTask::_rollback(  BOOLEAN isRestart )
+   {
+      INT32 rc = SDB_OK ;
+      vector<AddZNInfo>::iterator it ;
+      
+      // 1. set task's status to be rollback and update to omsvc
+      setTaskStatus( OMA_TASK_STATUS_ROLLBACK ) ;
+      rc = _updateProgressToOM() ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDWARNING, "Failed to update task's progress to om" ) ;
+      }
+      
+      // 2. going to rollback
+      for( it = _ZNInfo.begin(); it != _ZNInfo.end() ; it++ )
+      {
+         if ( TRUE == isRestart )
+         {
+            rc = _removeZNode( *it ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "Failed to rollback znode[%s], rc = %d",
+                  it->_item._hostName.c_str(), rc ) ;
+               continue ;
+            }
+         }
+         else
+         {
+            if ( TRUE == it->_flag )
+            {
+               rc = _removeZNode( *it ) ;
+               if ( SDB_OK != rc )
+               {
+                  PD_LOG( PDERROR, "Failed to rollback znode[%s], rc = %d",
+                     it->_item._hostName.c_str(), rc ) ;
+                  continue ;
+               }
+            }
+         }
+      }
+      
+      return SDB_OK ;
    }
 
    /*
