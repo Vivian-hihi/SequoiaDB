@@ -854,7 +854,7 @@ void _ossSocket::quickAck ()
 #if defined( _LINUX )
    if ( _init )
    {
-      INT32 i = 0 ;
+      INT32 i = 1 ;
       setsockopt( _fd, IPPROTO_TCP, TCP_QUICKACK, (void*)&i, sizeof(i) ) ;
    }
 #endif // _LINUX
