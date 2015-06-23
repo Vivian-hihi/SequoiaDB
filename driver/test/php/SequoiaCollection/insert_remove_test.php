@@ -4,7 +4,7 @@ class select_drop_Collection_option_test extends PHPUnit_Framework_TestCase
 	public function testselectCS()
 	{
 		$sdb = new Sequoiadb() ;
-		$array = $sdb->connect( "localhost:50000" ) ;
+		$array = $sdb->connect( "localhost:11810" ) ;
 		$this->assertEquals( 0, $array['errno'] ) ;
 		$cs = $sdb->selectCS( "cs_test" ) ;
 		$this->assertNotEmpty( $cs ) ;

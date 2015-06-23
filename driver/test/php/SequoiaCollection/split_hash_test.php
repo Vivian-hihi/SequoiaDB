@@ -4,7 +4,7 @@ class split_hash_test extends PHPUnit_Framework_TestCase
 	public function testconnect()
 	{
 		$sdb = new Sequoiadb() ;
-		$array = $sdb->connect( "localhost:50000" ) ;
+		$array = $sdb->connect( "localhost:11810" ) ;
 		$this->assertEquals( 0, $array['errno'] ) ;
 		return $sdb ;
 	}
@@ -65,7 +65,7 @@ class split_hash_test extends PHPUnit_Framework_TestCase
 	   if( $isCluster )
 	   {
    		$cata = new Sequoiadb() ;
-   		$array = $cata->connect( 'localhost:30000' ) ;
+   		$array = $cata->connect( 'localhost:11800' ) ;
    		$this->assertEquals( 0, $array['errno'] ) ;
    		
    		$SYSCAT = $cata->selectCS( 'SYSCAT' ) ;
@@ -169,7 +169,7 @@ class split_hash_test extends PHPUnit_Framework_TestCase
 		if( $isCluster )
 		{
    		$cata = new Sequoiadb() ;
-   		$array = $cata->connect( 'localhost:30000' ) ;
+   		$array = $cata->connect( 'localhost:11800' ) ;
    		$this->assertEquals( 0, $array['errno'] ) ;
    		
    		$SYSCAT = $cata->selectCS( 'SYSCAT' ) ;
@@ -292,7 +292,7 @@ class split_hash_test extends PHPUnit_Framework_TestCase
 	protected function onNotSuccessfulTest( Exception $e )
 	{
 		$sdb = new Sequoiadb() ;
-		$array = $sdb->connect( "localhost:50000" ) ;
+		$array = $sdb->connect( "localhost:11810" ) ;
 		$this->assertEquals( 0, $array['errno'] ) ;
 		$sdb->dropCollectionSpace( "cs_test" ) ;
 		fwrite( STDOUT, __METHOD__ . "\n" ) ;

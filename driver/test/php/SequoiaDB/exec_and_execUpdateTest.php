@@ -86,7 +86,7 @@ class exec_and_execUpdateCSTest extends PHPUnit_Framework_TestCase
 	protected function onNotSuccessfulTest( Exception $e )
 	{
 		$sdb = new Sequoiadb() ;
-		$array = $sdb->connect( "localhost:50000" ) ;
+		$array = $sdb->connect( "localhost:11810" ) ;
 		$this->assertEquals( 0, $array['errno'] ) ;
 		$array = $sdb->execUpdateSQL("drop collectionspace cs_test") ;
 		fwrite( STDOUT, __METHOD__ . "\n" ) ;
