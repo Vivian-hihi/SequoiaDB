@@ -169,6 +169,9 @@ var SyncLimit3                             = "synclimit" ;
 var InitLimit3                             = "initlimit" ;
 var TickTime3                              = "ticktime" ;
 var ZooID3                                 = "zooid" ;
+var ClusterName3                           = "clustername" ;
+var BusinessName3                          = "businessname" ;
+var UserTag3                               = "usertag" ;
 
 var DefaultPort2                           = "defaultPort" ;
 
