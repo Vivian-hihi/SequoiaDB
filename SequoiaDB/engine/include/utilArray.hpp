@@ -179,7 +179,6 @@ namespace engine
          {
             goto done ;
          }
-
          else if ( UTIL_ARRAY_DEFAULT_SIZE == _bufSize )
          {
             _dynamicBuf = ( T * )SDB_OSS_MALLOC( sizeof( T ) * size ) ;
