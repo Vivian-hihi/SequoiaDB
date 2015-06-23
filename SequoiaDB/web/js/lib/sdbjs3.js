@@ -1428,7 +1428,7 @@ sdbjs.parts.tabList.remove = function( nodeName, line )
 {
 	var node = sdbjs.fun.getNode( nodeName, 'tabList' ) ;
 	$( node['parts'][line] ).empty().remove() ;
-	node['parts'][line].splice( line, 1 ) ;
+	node['parts'].splice( line, 1 ) ;
 }
 
 /*
@@ -2994,7 +2994,7 @@ sdbjs.fun.clickEvent = function( domObj, isFirst )
 			}
 		}
 	}
-	if( domObj.parentNode !== document.body && isEvent === false )
+	if( domObj.parentNode !== document.body && domObj.parentNode !== null && isEvent === false )
 	{
 		sdbjs.fun.clickEvent( domObj.parentNode ) ;
 	}
