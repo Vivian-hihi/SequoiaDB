@@ -187,7 +187,7 @@ namespace engine
             break ;
          // remove znode business
          case OMA_TASK_REMOVE_ZN :
-//            pTask = SDB_OSS_NEW _omaRemoveZNTask( taskID ) ;
+            pTask = SDB_OSS_NEW _omaRemoveZNBusTask( taskID ) ;
             break ;
          default :
             PD_LOG_MSG( PDERROR, "Unknow task type[%d]", taskType ) ;

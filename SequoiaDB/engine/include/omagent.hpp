@@ -226,6 +226,7 @@ namespace engine
    typedef struct _AddZNInfo AddZNInfo ;
    typedef AddZNInfo RemoveZNInfo ;
    typedef AddZNInfo CheckZNInfo ;
+   typedef AddZNInfo ZNInfo ;
 
    struct _AddZNResultInfo
    {
@@ -238,6 +239,7 @@ namespace engine
       vector<string> _flow ;
    } ;
    typedef struct _AddZNResultInfo AddZNResultInfo ;
+   typedef AddZNResultInfo ZNResultInfo ;
    
 }
 

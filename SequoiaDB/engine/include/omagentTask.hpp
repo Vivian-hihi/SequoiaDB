@@ -354,8 +354,9 @@ namespace engine
          BOOLEAN _needToRollback() ;
          void    _setRetErr( INT32 errNum ) ;
          void    _setResultToFail() ;
+         INT32   _checkAndCleanEnv() ;
          INT32   _checkZNodes() ;
-         INT32   _rollback() ;
+         INT32   _rollback( BOOLEAN isRestart ) ;
          INT32   _removeZNode( AddZNInfo &znodeInfo ) ;
 
       private:
@@ -377,6 +378,90 @@ namespace engine
          CHAR                              _detail[OMA_BUFF_SIZE + 1] ;
    } ;
    typedef _omaInstZNBusTask omaInstZNBusTask ;
+
+   /*
+      zookeeper task base 
+   */
+   class _omaZNBusTaskBase : public _omaTask
+   {
+      public:
+         _omaZNBusTaskBase ( INT64 taskID ) ;
+         virtual ~_omaZNBusTaskBase () ;
+
+      public:
+         virtual INT32 init( const BSONObj &info, void *ptr = NULL ) = 0 ;
+         virtual INT32 doit() = 0 ;
+
+      public:
+         void    setIsTaskFail() ;
+         BOOLEAN getIsTaskFail() ;
+
+      public:
+         ZNInfo*    getZNInfo() ;
+         INT32      updateProgressToTask( INT32 serialNum,
+                                          ZNResultInfo &resultInfo ) ;
+         INT32      updateProgressToTask( INT32 serialNum,
+                                          INT32 errNum,
+                                          const CHAR *pDetail,
+                                          OMA_TASK_STATUS status ) ;
+         void       notifyUpdateProgress() ;
+         void       setErrInfo( INT32 errNum, const CHAR *pDetail ) ;
+         
+      protected:
+         INT32   _initZNInfo( BSONObj &info ) ;
+         void    _initZNResult() ;
+         INT32   _removeZNode( ZNInfo &znodeInfo ) ;
+
+      protected:
+         INT32   _waitAndUpdateProgress() ;
+         BOOLEAN _isTaskFinish() ;
+         INT32   _calculateProgress() ;
+         void    _buildUpdateTaskObj( BSONObj &retObj ) ; 
+         INT32   _updateProgressToOM() ;
+         void    _setRetErr( INT32 errNum ) ;
+         void    _setResultToFail() ;
+
+      protected:
+         // znode raw info
+         BSONObj                           _ZNRawInfo ;
+         // znode info
+         vector<ZNInfo>                    _ZNInfo ;
+         // result
+         map< INT32, ZNResultInfo >        _ZNResult ;
+         
+         BOOLEAN                           _isTaskFail ;
+         
+      protected:
+         ossSpinSLatch                     _taskLatch ;
+         ossEvent                          _taskEvent ;
+         UINT64                            _eventID ; 
+
+         INT32                             _progress ;
+         INT32                             _errno ;
+         CHAR                              _detail[OMA_BUFF_SIZE + 1] ;
+   } ;
+   typedef _omaZNBusTaskBase omaZNBusTaskBase ;
+
+
+   /*
+      remove zookeeper task
+   */
+   class _omaRemoveZNBusTask : public _omaZNBusTaskBase
+   {
+      public:
+         _omaRemoveZNBusTask ( INT64 taskID ) ;
+         virtual ~_omaRemoveZNBusTask () ;
+
+      public:
+         virtual INT32 init( const BSONObj &info, void *ptr = NULL ) ;
+         virtual INT32 doit() ;
+
+      private:
+         INT32 _removeZNodes() ;
+         
+   } ;
+   typedef _omaRemoveZNBusTask omaRemoveZNBusTask ;
+
 
 }
 

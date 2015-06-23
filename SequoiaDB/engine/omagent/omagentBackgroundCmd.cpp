@@ -1305,7 +1305,9 @@ namespace engine
          bob.append( OMA_FIELD_CLIENTPORT3, _addZNInfo._item._clientPort.c_str() ) ;
          bob.append( OMA_FIELD_SYNCLIMIT3, _addZNInfo._item._syncLimit.c_str() ) ;
          bob.append( OMA_FIELD_INITLIMIT3, _addZNInfo._item._initLimit.c_str() ) ;
-         bob.append( OMA_FIELD_TICKTIME3, _addZNInfo._item._tickTime.c_str() ) ;         
+         bob.append( OMA_FIELD_TICKTIME3, _addZNInfo._item._tickTime.c_str() ) ;
+         bob.append( OMA_FIELD_CLUSTERNAME3, _addZNInfo._common._clusterName.c_str() ) ;
+         bob.append( OMA_FIELD_BUSINESSNAME3, _addZNInfo._common._businessName.c_str() ) ;
          for ( ; it != _addZNInfo._common._serverInfo.end(); it++ )
          {
             bab.append( *it ) ;
@@ -1556,7 +1558,9 @@ namespace engine
       //      "clientport":"2181",
       //      "synclimit":"5",
       //      "initLimit":"10",
-      //      "ticktime":"2000"
+      //      "ticktime":"2000",
+      //      "clustername":"cl",
+      //      "businessname":"bus"
       //     },
       //     ...
       //   ]
@@ -1595,6 +1599,8 @@ namespace engine
             builder.append( OMA_FIELD_SYNCLIMIT3, it->_item._syncLimit.c_str() ) ;
             builder.append( OMA_FIELD_INITLIMIT3, it->_item._initLimit.c_str() ) ;
             builder.append( OMA_FIELD_TICKTIME3, it->_item._tickTime.c_str() ) ;
+            builder.append( OMA_FIELD_CLUSTERNAME3, it->_common._clusterName.c_str() ) ;
+            builder.append( OMA_FIELD_BUSINESSNAME3, it->_common._businessName.c_str() ) ;
 
             obj = builder.obj() ;
             bab.append( obj ) ;
@@ -1621,6 +1627,64 @@ namespace engine
       goto done ;
    }
 
+   /*
+      _omaCheckZNEnv
+   */
+   _omaCheckZNEnv::_omaCheckZNEnv ( vector<CheckZNInfo> &info )
+   :_omaCheckZNodes( info )
+   {
+   }
+
+   _omaCheckZNEnv::~_omaCheckZNEnv ()
+   {
+   }
+
+   INT32 _omaCheckZNEnv::init( const CHAR *pInstallInfo )
+   {
+      INT32 rc = SDB_OK ;
+      try
+      {
+         BSONObj bus ;
+         BSONObj sys ;
+         stringstream ss ;
+         rc = _getCheckZNInfos( bus, sys ) ;
+         if ( rc )
+         {
+            PD_LOG ( PDERROR, "Failed to get info for"
+                     "js file, rc = %d", rc ) ;
+            goto error ;
+         }
+
+         // build js file arguments
+         ss << "var " << JS_ARG_BUS << " = " 
+            << bus.toString(FALSE, TRUE).c_str() << " ; "
+            << "var " << JS_ARG_SYS << " = "
+            << sys.toString(FALSE, TRUE).c_str() << " ; " ;
+         _jsFileArgs = ss.str() ;
+         PD_LOG ( PDDEBUG, "Checking znodes' environment pass argument: %s",
+                  _jsFileArgs.c_str() ) ;
+         // add js file
+         rc = addJsFile( FILE_CHECK_ZOOKEEPER_ENV, _jsFileArgs.c_str() ) ;
+         if ( rc )
+         {
+            PD_LOG ( PDERROR, "Failed to add js file[%s], rc = %d ",
+                     FILE_CHECK_ZOOKEEPER_ENV, rc ) ;
+            goto error ;
+         }
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG ( PDERROR, "Failed to build bson, exception is: %s",
+                  e.what() ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error :
+      goto done ;
+   }
 
 
 }

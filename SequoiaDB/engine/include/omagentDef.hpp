@@ -145,6 +145,8 @@ namespace engine
    #define OMA_CMD_INSTALL_ZOOKEEPER                  "install zookeeper node"
    #define OMA_CMD_REMOVE_ZOOKEEPER                   "remove zookeeper node"
    #define OMA_CMD_CHECK_ZOOKEEPER                    "check zookeeper node"
+   #define OMA_CMD_CHECK_ZOOKEEPER_ENV                "check install zookeeper env"
+   
 
    #define OMA_INIT_ENV                               "init for exeuting js"
 
@@ -196,6 +198,7 @@ namespace engine
    #define FILE_INSTALL_ZOOKEEPER           "installZNode.js"
    #define FILE_REMOVE_ZOOKEEPER            "removeZNode.js"
    #define FILE_CHECK_ZOOKEEPER             "checkZNodes.js"
+   #define FILE_CHECK_ZOOKEEPER_ENV         "checkZNEnv.js"
 
 
    /*

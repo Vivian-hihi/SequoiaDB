@@ -429,11 +429,23 @@ namespace engine
          virtual const CHAR * name () { return OMA_CMD_CHECK_ZOOKEEPER ; }
          virtual INT32 init ( const CHAR *pInstallInfo ) ;
 
-      private:
+      protected:
          INT32 _getCheckZNInfos( BSONObj &retObj1, BSONObj &retObj2 ) ;
          
-      private:
+      protected:
          vector<CheckZNInfo>   _checkZNInfos ;
+   } ;
+
+   /*
+      _omaCheckZNode
+   */
+   class _omaCheckZNEnv : public _omaCheckZNodes
+   {
+      public:
+         _omaCheckZNEnv ( vector<CheckZNInfo> &info ) ;
+         ~_omaCheckZNEnv () ;
+         virtual const CHAR * name () { return OMA_CMD_CHECK_ZOOKEEPER_ENV ; }
+         virtual INT32 init ( const CHAR *pInstallInfo ) ;
    } ;
 
 } // namespace engine
