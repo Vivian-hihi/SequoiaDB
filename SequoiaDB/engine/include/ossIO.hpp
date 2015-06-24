@@ -92,6 +92,8 @@
 #define OSS_RWXO     (OSS_RO | OSS_WO | OSS_XO)
  // sticky bit
 #define OSS_STICKY     0
+
+#define OSS_PERMALL       (OSS_RWXU | OSS_RWXG | OSS_RWXO )
  // default
 #define OSS_DEFAULTFILE   (OSS_RWXU | OSS_RG | OSS_XG) // rwxr-x---
 #define OSS_DEFAULTDIR    (OSS_RWXU | OSS_RG | OSS_XG) // rwxr-x---
@@ -113,6 +115,8 @@
 #define OSS_RWXO    S_IRWXO
 // sticky bit
 #define OSS_STICKY  S_ISVTX
+
+#define OSS_PERMALL       (OSS_RWXU | OSS_RWXG | OSS_RWXO )
 // default
 // rw-r-----
 #define OSS_DEFAULTFILE   (OSS_RU | OSS_WU | OSS_RG)

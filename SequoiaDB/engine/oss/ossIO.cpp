@@ -449,6 +449,54 @@ INT32 ossMkdir ( const CHAR* pPathName, UINT32 iPermission )
    try
    {
       fs::path dirpath ( pPathName ) ;
+      fs::perms permission = fs::no_perms ;
+
+      if ( !(iPermission & OSS_PERMALL) )
+      {
+         /// default
+         permission = fs::owner_all |
+                      fs::group_read | fs::group_exe |
+                      fs::others_read | fs::others_exe ;
+      }
+      else
+      {
+         if ( OSS_RU & iPermission )
+         {
+            permission |= fs::owner_read ;
+         }
+         if ( OSS_WU & iPermission )
+         {
+            permission |= fs::owner_write ;
+         }
+         if ( OSS_XU & iPermission )
+         {
+            permission |= fs::owner_exe ;
+         }
+         if ( OSS_RG & iPermission )
+         {
+            permission |= fs::group_read ;
+         }
+         if ( OSS_WG & iPermission )
+         {
+            permission |= fs::group_write ;
+         }
+         if ( OSS_XG & iPermission )
+         {
+            permission |= fs::group_exe ;
+         }
+         if ( OSS_RO & iPermission )
+         {
+            permission |= fs::others_read ;
+         }
+         if ( OSS_WO & iPermission )
+         {
+            permission |= fs::others_write ;
+         }
+         if ( OSS_XO & iPermission )
+         {
+            permission |= fs::others_exe ;
+         }
+      }
 
       if ( exists( dirpath ) )
       {
@@ -465,6 +513,9 @@ INT32 ossMkdir ( const CHAR* pPathName, UINT32 iPermission )
          SDB_VALIDATE_GOTOERROR ( FALSE, SDB_IO,
                                   "Failed to create_directory(dirpath)" ) ;
       }
+
+      /// set permission
+      fs::permissions( dirpath, permission ) ;
    }
    catch ( fs::filesystem_error& e )
    {
