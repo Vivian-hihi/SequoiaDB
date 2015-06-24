@@ -277,7 +277,7 @@ namespace engine
             }
 
             // make dir
-            ossMkdir( _dialogPath, OSS_CREATE|OSS_READWRITE ) ;
+            ossMkdir( _dialogPath ) ;
 
             return SDB_OK ;
          }

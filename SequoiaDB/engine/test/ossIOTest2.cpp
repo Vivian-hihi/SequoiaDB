@@ -88,7 +88,7 @@ int main ( int argc, char **argv )
 
    if (0 != strlen(dirName))
    {    	
-       rc = ossMkdir ( dirName, OSS_CREATE|OSS_READWRITE ) ;
+       rc = ossMkdir ( dirName ) ;
        if ( rc )
        {
           printf("failed to mkdir %s, rc = %d\n", dirName, rc);

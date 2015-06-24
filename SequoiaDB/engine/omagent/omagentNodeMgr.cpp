@@ -1046,7 +1046,7 @@ namespace engine
       }
       else if ( SDB_FNE == rc )
       {
-         rc = ossMkdir ( dbPath, OSS_CREATE|OSS_READWRITE ) ;
+         rc = ossMkdir ( dbPath ) ;
          if ( rc )
          {
             PD_LOG ( PDERROR, "Failed to create config file in path: %s, "
@@ -1082,7 +1082,7 @@ namespace engine
       // if we can not find the file, then create one
       else if ( SDB_FNE == rc )
       {
-         rc = ossMkdir ( cfgPath, OSS_CREATE|OSS_READWRITE ) ;
+         rc = ossMkdir ( cfgPath ) ;
          if ( rc )
          {
             PD_LOG ( PDERROR, "Failed to create directory: %s, rc: %d",

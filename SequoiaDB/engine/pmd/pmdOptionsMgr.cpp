@@ -2005,21 +2005,21 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__PMDOPTMGR__MKDIR );
 
-      rc = ossMkdir( _krcbDbPath, OSS_CREATE|OSS_READWRITE ) ;
+      rc = ossMkdir( _krcbDbPath ) ;
       if ( rc && SDB_FE != rc )
       {
          std::cerr << "Failed to create database dir: " << _krcbDbPath <<
                       ", rc = " << rc << std::endl ;
          goto error ;
       }
-      rc = ossMkdir( _krcbIndexPath, OSS_CREATE|OSS_READWRITE ) ;
+      rc = ossMkdir( _krcbIndexPath ) ;
       if ( rc && SDB_FE != rc )
       {
          std::cerr << "Failed to create index dir: " << _krcbIndexPath <<
                       ", rc = " << rc << std::endl ;
          goto error ;
       }
-      rc = ossMkdir( _krcbDiagLogPath, OSS_CREATE|OSS_READWRITE ) ;
+      rc = ossMkdir( _krcbDiagLogPath ) ;
       if ( rc && SDB_FE != rc )
       {
          std::cerr << "Failed to create diaglog dir: " << _krcbDiagLogPath <<
@@ -2027,7 +2027,7 @@ namespace engine
          goto error ;
       }
 
-      rc = ossMkdir( _krcbLogPath, OSS_CREATE|OSS_READWRITE ) ;
+      rc = ossMkdir( _krcbLogPath ) ;
       if ( rc && SDB_FE != rc )
       {
          std::cerr << "Failed to create repl-log dir: " << _krcbLogPath <<
@@ -2035,7 +2035,7 @@ namespace engine
          goto error ;
       }
 
-      rc = ossMkdir( _krcbBkupPath, OSS_CREATE|OSS_READWRITE ) ;
+      rc = ossMkdir( _krcbBkupPath ) ;
       if ( rc && SDB_FE != rc )
       {
          std::cerr << "Failed to create backup dir: " << _krcbBkupPath <<
@@ -2043,7 +2043,7 @@ namespace engine
          goto error ;
       }
 
-      rc = ossMkdir( _dmsTmpBlkPath, OSS_CREATE|OSS_READWRITE ) ;
+      rc = ossMkdir( _dmsTmpBlkPath ) ;
       if ( rc && SDB_FE != rc )
       {
          std::cerr << "Failed to create tmp dir: " << _dmsTmpBlkPath <<
@@ -2051,7 +2051,7 @@ namespace engine
          goto error ;
       }
 
-      rc = ossMkdir( _krcbLobPath, OSS_CREATE|OSS_READWRITE ) ;
+      rc = ossMkdir( _krcbLobPath ) ;
       if ( rc && SDB_FE != rc )
       {
          std::cerr << "Failed to create lob dir: " << _krcbLobPath <<

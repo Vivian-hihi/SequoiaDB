@@ -277,7 +277,7 @@ namespace engine
       INT32 rc = SDB_OK ;
 
       // make sure directory exist
-      rc = ossMkdir( getLocalCfgPath(), OSS_CREATE|OSS_READWRITE ) ;
+      rc = ossMkdir( getLocalCfgPath() ) ;
       if ( rc && SDB_FE != rc )
       {
          PD_LOG( PDERROR, "Failed to create dir: %s, rc: %d",

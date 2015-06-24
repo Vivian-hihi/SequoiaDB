@@ -213,7 +213,7 @@ namespace engine
          goto error ;
       }
       // make sure the dir exist
-      rc = ossMkdir( dialogFile, OSS_CREATE|OSS_READWRITE ) ;
+      rc = ossMkdir( dialogFile ) ;
       if ( rc && SDB_FE != rc )
       {
          ossPrintf( "Create dialog dir[%s] failed, rc: %d"OSS_NEWLINE,

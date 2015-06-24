@@ -93,10 +93,8 @@
  // sticky bit
 #define OSS_STICKY     0
 
-#define OSS_PERMALL       (OSS_RWXU | OSS_RWXG | OSS_RWXO )
- // default
-#define OSS_DEFAULTFILE   (OSS_RWXU | OSS_RG | OSS_XG) // rwxr-x---
-#define OSS_DEFAULTDIR    (OSS_RWXU | OSS_RG | OSS_XG) // rwxr-x---
+// rwxr-x---
+#define OSS_DEFAULTFILE   (OSS_RWXU | OSS_RG | OSS_XG) 
 #else
  // user
 #define OSS_RU      S_IRUSR
@@ -116,13 +114,14 @@
 // sticky bit
 #define OSS_STICKY  S_ISVTX
 
-#define OSS_PERMALL       (OSS_RWXU | OSS_RWXG | OSS_RWXO )
-// default
 // rw-r-----
 #define OSS_DEFAULTFILE   (OSS_RU | OSS_WU | OSS_RG)
-// rwxr-x---
-#define OSS_DEFAULTDIR    (OSS_RWXU | OSS_RG | OSS_XG)
 #endif
+
+// rwxrwxrwx
+#define OSS_PERMALL       (OSS_RWXU | OSS_RWXG | OSS_RWXO )
+// rwxr-xr-x
+#define OSS_DEFAULTDIR    (OSS_RWXU | OSS_RG | OSS_XG | OSS_RO | OSS_XO )
 
 class _OSS_FILE : public SDBObject
 {
@@ -230,7 +229,7 @@ INT32 ossClose ( OSSFILE& pFile ) ;
  * SDB_FE (dir already exist)
  */
 INT32 ossMkdir(const CHAR   *pPathName,
-                UINT32  iPermission);
+                UINT32 iPermission = OSS_DEFAULTDIR ) ;
 
 /*
  * Delete a file or directory

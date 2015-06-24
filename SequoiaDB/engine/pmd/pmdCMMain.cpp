@@ -156,7 +156,7 @@ namespace engine
          goto error ;
       }
       // make sure the dir exist
-      rc = ossMkdir( dialogPath, OSS_CREATE|OSS_READWRITE ) ;
+      rc = ossMkdir( dialogPath ) ;
       if ( rc && SDB_FE != rc )
       {
          std::cout << "Create dialog dir: " << dialogPath << " failed: "

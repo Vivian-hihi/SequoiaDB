@@ -641,7 +641,7 @@ namespace engine
       INT32 rc = SDB_OK ;
 
       // 1. ensure path valid
-      rc = ossMkdir( _metaHeader._path, OSS_CREATE|OSS_READWRITE ) ;
+      rc = ossMkdir( _metaHeader._path ) ;
       if ( rc && SDB_FE != rc )
       {
          PD_LOG( PDERROR, "Create backup dir[%s] failed, rc: %d",
