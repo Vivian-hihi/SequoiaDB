@@ -55,18 +55,17 @@ TEST(sdb,sdbConnect_with_several_address)
    sdbConnectionHandle connection = 0 ;
    sdbCursorHandle cursor = 0 ;
    INT32 rc                       = SDB_OK ;
-   const CHAR* connArr[10] = {"192.168.20.35:12340",
+   const CHAR* connArr[9] = {"192.168.20.35:12340",
                               "192.168.20.36:12340",
                               "123:123",
                               "",
                               ":12340",
                               "192.168.20.40",
                               "localhost:50000",
-                              "192.168.20.40:11810",
                               "localhost:12340",
                               "localhost:11810"} ;
    // connect to database
-   rc = sdbConnect1 ( connArr, 10, USER, PASSWD, &connection ) ;
+   rc = sdbConnect1 ( connArr, 9, USER, PASSWD, &connection ) ;
    ASSERT_EQ( SDB_OK, rc ) ;
    rc = sdbGetList( connection, 4, NULL, NULL, NULL, &cursor ) ;
    ASSERT_EQ( SDB_OK, rc ) ;
