@@ -325,6 +325,7 @@ namespace engine
 
       if ( !_isOpened )
       {
+         _totalRecords = 0 ;
          _isOpened = TRUE ;
       }
 
