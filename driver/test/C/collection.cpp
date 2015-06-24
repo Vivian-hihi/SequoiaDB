@@ -100,8 +100,14 @@ TEST(collection,sdbCreateIndex)
    sdbCSHandle collectionspace    = 0 ;
    sdbCollectionHandle collection = 0 ;
    sdbCursorHandle cursor         = 0 ;
+   const CHAR *pIndexName1        = INDEX_NAME ;
+   const CHAR *pIndexName2        = "index_c_offline" ;
+   const CHAR *pStr               = NULL ;
    INT32 rc                       = SDB_OK ;
+   bson_iterator it1 ;
+   bson_iterator it2 ;
    bson obj ;
+   bson tmp_obj ;
    rc = initEnv( HOST, SERVER, USER, PASSWD ) ;
    ASSERT_EQ( SDB_OK, rc ) ;
    // connect to database
@@ -111,7 +117,6 @@ TEST(collection,sdbCreateIndex)
    rc = getCollectionSpace ( connection,
                              COLLECTION_SPACE_NAME,
                              &collectionspace ) ;
-   sleep( 3 ) ;
    CHECK_MSG("%s%d\n","rc = ", rc) ;
    ASSERT_EQ( SDB_OK, rc ) ;
    // get cl
@@ -119,26 +124,98 @@ TEST(collection,sdbCreateIndex)
                         COLLECTION_FULL_NAME,
                         &collection ) ;
    ASSERT_EQ( SDB_OK, rc ) ;
+
+   /// create index in online mode
    // build a bson for index definition
    bson_init( &obj ) ;
    bson_append_int( &obj, "name", 1 ) ;
    bson_append_int( &obj, "age", -1 ) ;
    bson_finish( &obj ) ;
    // create index
-   rc = sdbCreateIndex ( collection, &obj, INDEX_NAME, FALSE, FALSE ) ;
+   rc = sdbCreateIndex ( collection, &obj, pIndexName1, FALSE, FALSE ) ;
    ASSERT_EQ( SDB_OK, rc ) ;
    bson_destroy ( &obj ) ;
    // get the newly build index
-   rc = sdbGetIndexes( collection, "testIndex", &cursor ) ;
+   rc = sdbGetIndexes( collection, pIndexName1, &cursor ) ;
    ASSERT_EQ( SDB_OK, rc ) ;
    // print the index record
    bson_init( &obj ) ;
    rc = sdbCurrent( cursor, &obj ) ;
-   CHECK_MSG("%s%d","rc = ",rc) ;
+   CHECK_MSG("%s%d\n","rc = ",rc) ;
    ASSERT_EQ( SDB_OK, rc ) ;
-   printf( "After creating index ,the current index is:\n" ) ;
+   printf( "After creating index in online mode ,the current index is:\n" ) ;
    bson_print( &obj ) ;
+   bson_iterator_init( &it1, &obj ) ;
+   bson_init( &tmp_obj ) ;
+   while( BSON_EOO != ( bson_iterator_next ( &it1 ) ) )
+   {
+      const CHAR *pKey = bson_iterator_key( &it1 ) ;
+      if ( 0 == strncmp( pKey, "IndexDef", sizeof("IndexDef") ) )
+      {
+         bson_iterator it ;
+         bson tmp_obj ;
+         bson_init( &tmp_obj ) ;
+         bson_iterator_subobject( &it1, &tmp_obj ) ;
+         bson_iterator_init( &it, &tmp_obj ) ;
+         while( BSON_EOO != ( bson_iterator_next ( &it ) ) )
+         {
+            const CHAR *pKey2 = bson_iterator_key( &it ) ;
+            if ( 0 == strncmp( pKey2, "name", sizeof("name") ) )
+            {
+               pStr = bson_iterator_string( &it ) ;
+               ASSERT_EQ( 0, strncmp( pStr, pIndexName1, sizeof(pIndexName1) ) ) ;
+            }
+         }
+         bson_destroy( &tmp_obj ) ;
+      }
+   }
    bson_destroy ( &obj ) ;
+
+   /// create index in offline mode
+   bson_init( &obj ) ;
+   bson_append_int( &obj, "name2", 1 ) ;
+   bson_append_int( &obj, "age2", -1 ) ;
+   bson_finish( &obj ) ;
+   // create index
+   rc = sdbCreateIndexOffline ( collection, &obj, pIndexName2, TRUE, TRUE ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   bson_destroy ( &obj ) ;
+   // get the newly build index
+   rc = sdbGetIndexes( collection, pIndexName2, &cursor ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // print the index record
+   bson_init( &obj ) ;
+   rc = sdbCurrent( cursor, &obj ) ;
+   CHECK_MSG("%s%d\n","rc = ",rc) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   printf( "After creating index in offline mode ,the current index is:\n" ) ;
+   bson_print( &obj ) ;
+   bson_iterator_init( &it1, &obj ) ;
+   bson_init( &tmp_obj ) ;
+   while( BSON_EOO != ( bson_iterator_next ( &it1 ) ) )
+   {
+      const CHAR *pKey = bson_iterator_key( &it1 ) ;
+      if ( 0 == strncmp( pKey, "IndexDef", sizeof("IndexDef") ) )
+      {
+         bson_iterator it ;
+         bson tmp_obj ;
+         bson_init( &tmp_obj ) ;
+         bson_iterator_subobject( &it1, &tmp_obj ) ;
+         bson_iterator_init( &it, &tmp_obj ) ;
+         while( BSON_EOO != ( bson_iterator_next ( &it ) ) )
+         {
+            const CHAR *pKey2 = bson_iterator_key( &it ) ;
+            if ( 0 == strncmp( pKey2, "name", sizeof("name") ) )
+            {
+               pStr = bson_iterator_string( &it ) ;
+               ASSERT_EQ( 0, strncmp( pStr, pIndexName2, sizeof(pIndexName2) ) ) ;
+            }
+         }
+         bson_destroy( &tmp_obj ) ;
+      }
+   }
+   bson_destroy ( &obj ) ;
+
    sdbDisconnect ( connection ) ;
    sdbReleaseCursor ( cursor ) ;
    sdbReleaseCollection ( collection ) ;
