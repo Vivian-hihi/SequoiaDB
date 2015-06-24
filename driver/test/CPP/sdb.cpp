@@ -1190,3 +1190,34 @@ TEST(sdb,transactionRollback)
 }
 */
 
+
+// TODO:
+/*
+resetSnapshot
+createCollectionSpace // option
+listCollections
+listReplicaGroups
+getReplicaGroup // name
+getReplicaGroup // id
+createReplicaGroup
+removeReplicaGroup
+createReplicaCataGroup
+activateReplicaGroup
+transactionBegin
+transactionCommit
+transactionRollback
+flushConfigure
+crtJSProcedure
+rmProcedure
+listProcedures
+evalJS
+backupOffline
+listBackup
+removeBackup
+listTasks
+waitTasks
+cancelTask
+setSessionAttr
+listDomains
+
+*/

@@ -38,3 +38,6 @@ TEST(node,getStatus)
    // disconnect the connection
    connect.disconnect() ;
 }
+
+// TODO:
+//all

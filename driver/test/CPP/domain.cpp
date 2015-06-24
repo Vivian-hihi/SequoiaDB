@@ -209,3 +209,11 @@ TEST(domainTest, normalAll )
 
    db.disconnect() ;
 }
+
+
+
+// TODO:
+/*
+getName
+
+*/

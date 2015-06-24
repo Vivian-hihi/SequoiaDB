@@ -721,6 +721,7 @@ TEST(collection,getCollectionName)
    clName = cl.getCollectionName() ;
    // print the cl name
    cout<<"The cl name is ："<<clName<<endl ;
+   ASSERT_EQ( 0, strncmp( clName, COLLECTION_NAME, sizeof(COLLECTION_NAME) ) ) ;
    // disconnect the connection
    connection.disconnect() ;
 }
@@ -754,6 +755,8 @@ TEST(collection,getCSName)
    csName = cl.getCSName() ;
    // print the cl name
    cout<<"The cs name is ："<<csName<<endl ;
+   ASSERT_EQ( 0, strncmp( csName, COLLECTION_SPACE_NAME,
+                          sizeof(COLLECTION_SPACE_NAME) ) ) ;
    // disconnect the connection
    connection.disconnect() ;
 }
@@ -787,6 +790,8 @@ TEST(collection,getFullName)
    fullName = cl.getFullName() ;
    // print the cl name
    cout<<"The full name is ："<<fullName<<endl ;
+   ASSERT_EQ( 0, strncmp( fullName, COLLECTION_FULL_NAME,
+                          sizeof(COLLECTION_FULL_NAME) ) );
    // disconnect the connection
    connection.disconnect() ;
 }
@@ -1706,3 +1711,15 @@ TEST( collection, create_remove_id_index )
 }
 
 
+
+
+// TODO:
+/*
+
+queryOne
+create // deprecated
+drop   // deprecated
+explain
+
+
+*/

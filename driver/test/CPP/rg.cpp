@@ -246,3 +246,17 @@ TEST_F( replicaGroupTest, detachNode )
 
 }
 
+// TODO:
+/*
+getNodeNum
+getDetail
+getMaster
+getSlave
+stop
+start
+getName
+isCatalog
+
+
+*/
+

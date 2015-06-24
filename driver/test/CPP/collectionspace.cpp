@@ -208,3 +208,14 @@ TEST(collectionspace,createCollection_with_Sharding_and_replSize)
 }
 
 */
+
+
+// TODO:
+
+/*
+create //deprecated
+drop   //deprecated
+getCSName
+
+
+*/
