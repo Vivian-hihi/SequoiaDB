@@ -282,6 +282,8 @@ namespace engine
                         "reorg, rc = %d", rc ) ;
                goto error ;
             }
+            su->data()->restoreForCrash() ;
+
             goto rebuild ;
 
          // in rebuild phase, we just rebuild the index
@@ -298,6 +300,8 @@ namespace engine
                PD_LOG ( PDERROR, "Failed to rebuild indexes, rc = %d", rc ) ;
                goto error ;
             }
+            su->index()->restoreForCrash() ;
+
             rc = mbContext->mbLock( EXCLUSIVE ) ;
             if ( rc )
             {
@@ -431,13 +435,20 @@ namespace engine
             goto error ;
          }
 
+         /// judge the file is valid
+         if ( su->data()->getHeader()->_validFlag )
+         {
+            PD_LOG( PDEVENT, "Data file is valid, does not need rebuild" ) ;
+            goto rebuild_index ;
+         }
+
          /******************************************************************
           *       SHADOW COPY PHASE STARTS
           ******************************************************************/
          // set to shadow copy phase
-         DMS_SET_MB_OFFLINE_REORG_SHADOW_COPY ( flag ) ;
+         //DMS_SET_MB_OFFLINE_REORG_SHADOW_COPY ( flag ) ;
          PD_LOG ( PDEVENT, "Shadow copy phase starts" ) ;
-         mbContext->mb()->_flag = flag ;
+         //mbContext->mb()->_flag = flag ;
 
          // copy all records into reorg unit temp file
          while ( TRUE )
@@ -453,7 +464,7 @@ namespace engine
                   // let's continue the next step if we don't want to break when
                   // corruption happen. Usually this is used in full database
                   // rebuild mode
-                  if ( !ignoreError )
+                  if ( SDB_APP_INTERRUPT == rc || !ignoreError )
                   {
                      goto error_shadow_copy ;
                   }
@@ -522,6 +533,16 @@ namespace engine
          /******************************************************************
           *       REBUILD PHASE STARTS
           ******************************************************************/
+      rebuild_index:
+         su->data()->restoreForCrash() ;
+
+         /// judge index is valid
+         if ( su->index()->getHeader()->_validFlag )
+         {
+            PD_LOG( PDEVENT, "Index file is valid, does not need rebuild" ) ;
+            goto cleanup ;
+         }
+
          DMS_SET_MB_OFFLINE_REORG_REBUILD ( flag ) ;
          PD_LOG ( PDEVENT, "Rebuild phase starts" ) ;
          mbContext->mb()->_flag = flag ;
@@ -532,6 +553,8 @@ namespace engine
             PD_LOG ( PDERROR, "Failed to rebuild indexes, rc = %d", rc ) ;
             goto error_rebuild ;
          }
+         su->index()->restoreForCrash() ;
+
          rc = mbContext->mbLock( EXCLUSIVE ) ;
          if ( rc )
          {
@@ -554,6 +577,7 @@ namespace engine
                goto error ;
             }
          }
+
          goto done ;
 
       error_shadow_copy :

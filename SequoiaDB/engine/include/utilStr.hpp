@@ -85,6 +85,8 @@ namespace engine
    /// non-reentrant
    BOOLEAN isValidIPV4( const CHAR *ip ) ;
 
+   string utilTimeSpanStr( UINT64 seconds ) ;
+
    INT32 utilParseVersion( CHAR *pVersionStr,    // in
                            INT32 &version,       // out
                            INT32 &subVersion,    // out

@@ -66,6 +66,8 @@ namespace engine
       std::set<monCollectionSpace> csList ;
       std::set<monCollectionSpace>::iterator it ;
       BOOLEAN registeredRebuild = FALSE ;
+      UINT64 beginTime = 0 ;
+      UINT64 endTime = 0 ;
 
       PD_LOG ( PDEVENT, "Start rebuilding database" ) ;
 
@@ -77,6 +79,7 @@ namespace engine
          goto error ;
       }
       registeredRebuild = TRUE ;
+      beginTime = (UINT64)time( NULL ) ;
 
       // 2) get all collectionspaces
       dmsCB->dumpInfo ( csList, TRUE ) ;
@@ -119,6 +122,8 @@ namespace engine
 
          do
          {
+            UINT64 tCLBegin = 0 ;
+            UINT64 tCLEnd = 0 ;
             // get collection list for the given collectionspace
             su->dumpInfo ( clList ) ;
             // loop for each collection
@@ -154,6 +159,7 @@ namespace engine
                // unlock collection
                su->data()->releaseMBContext( mbContext ) ;
 
+               tCLBegin = (UINT64)time( NULL ) ;
                PD_LOG ( PDEVENT, "Start rebuilding collection %s", pCLName ) ;
 
                // test collection status
@@ -168,7 +174,6 @@ namespace engine
                   {
                      PD_LOG ( PDERROR, "Failed to perform reorg recover: %s, "
                               "rc = %d", pCLName, rc ) ;
-                     continue ;
                   }
                }
                else
@@ -180,19 +185,39 @@ namespace engine
                   {
                      PD_LOG ( PDERROR, "Failed to perform offline reorg: %s, "
                               "rc = %d", pCLName, rc ) ;
-                     continue ;
                   }
                }
-               PD_LOG ( PDEVENT, "Complete rebuilding collection %s",
-                        pCLName ) ;
+
+               tCLEnd = (UINT64)time(NULL) ;
+               PD_LOG ( PDEVENT, "Complete rebuilding collection %s, "
+                        "result: %d, cost %s", pCLName, rc,
+                        utilTimeSpanStr( tCLEnd-tCLBegin ).c_str() ) ;
+
+               if ( SDB_APP_INTERRUPT == rc )
+               {
+                  break ;
+               }
             } // for
          } while ( 0 ) ;
 
          // unlock the collection space
          dmsCB->suUnlock ( suID ) ;
-         PD_LOG ( PDEVENT, "Complete rebuilding collection space %s", pCSName ) ;
+         PD_LOG ( PDEVENT, "Complete rebuilding collection space %s, "
+                  "result: %d", pCSName, rc ) ;
+
+         if ( SDB_APP_INTERRUPT == rc )
+         {
+            if ( PMD_IS_DB_UP )
+            {
+               PMD_SHUTDOWN_DB( rc ) ;
+            }
+            break ;
+         }
       } // end for
-      PD_LOG ( PDEVENT, "Database rebuild is completed" ) ;
+
+      endTime = (UINT64)time(NULL) ;
+      PD_LOG ( PDEVENT, "Complete rebuild database, result: %d, cost %s",
+               rc, utilTimeSpanStr( endTime-beginTime ).c_str() ) ;
 
    done :
       if ( registeredRebuild )

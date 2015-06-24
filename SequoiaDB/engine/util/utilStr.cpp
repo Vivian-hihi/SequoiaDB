@@ -426,6 +426,36 @@ namespace engine
       
    }
 
+   string utilTimeSpanStr( UINT64 seconds )
+   {
+      stringstream ss ;
+      BOOLEAN beginCalc = FALSE ;
+
+      if ( seconds > 86400 ) // days
+      {
+         ss << seconds / 86400 << " days " ;
+         seconds %= 86400 ;
+         beginCalc = TRUE ;
+      }
+      if ( beginCalc || seconds > 3600 ) // hours
+      {
+         ss << seconds / 3600 << " hours " ;
+         seconds %= 3600 ;
+         beginCalc = TRUE ;
+      }
+      if ( beginCalc || seconds > 60 ) // mins
+      {
+         ss << seconds / 60 << " mins " ;
+         seconds %= 60 ;
+         beginCalc = TRUE ;
+      }
+      if ( beginCalc || seconds > 0 )
+      {
+         ss << seconds << " secs" ;
+      }
+      return ss.str() ;
+   }
+
    INT32 utilParseVersion( CHAR * pVersionStr,
                            INT32 &version,
                            INT32 &subVersion,
