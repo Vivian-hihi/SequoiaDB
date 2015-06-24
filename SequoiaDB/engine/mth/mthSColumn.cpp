@@ -467,6 +467,7 @@ namespace engine
             }
             goto done ;
          }
+         /// a <-> a.b   ||  a <-> d
          else if ( ( compare == RIGHT_SUBFIELD ) || ( compare == LEFT_BEFORE ) )
          {
             end = mid ;
