@@ -4544,7 +4544,7 @@ static INT32 _sdbCreateIndex( sdbCollectionHandle cHandle,
    BSON_APPEND( newObj, FIELD_NAME_COLLECTION,
                 cs->_collectionFullName, string ) ;
 
-   BSON_APPEND( newObj, FIELD_NAME_INDEX,  &indexObj, bson ) ;
+   BSON_APPEND( newObj, FIELD_NAME_INDEX, &indexObj, bson ) ;
    BSON_FINISH ( newObj ) ;
 
    if ( isOffline )

@@ -1698,18 +1698,20 @@ do                                                            \
 
    }*/
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_CREATEINDEX, "_sdbCollectionImpl::createIndex" )
-   INT32 _sdbCollectionImpl::createIndex ( const BSONObj &indexDef,
-                                           const CHAR *pName,
-                                           BOOLEAN isUnique,
-                                           BOOLEAN isEnforced )
+//   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT__CREATEINDEX, "_sdbCollectionImpl::_createIndex" )
+   INT32 _sdbCollectionImpl::_createIndex ( const BSONObj &indexDef,
+                                            const CHAR *pName,
+                                            BOOLEAN isUnique,
+                                            BOOLEAN isEnforced,
+                                            BOOLEAN isOffline )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_CREATEINDEX ) ;
+      PD_TRACE_ENTRY ( SDB_CLIENT__CREATEINDEX ) ;
       INT32 rc = SDB_OK ;
       BOOLEAN result ;
       SINT64 contextID = 0 ;
       BSONObj indexObj ;
       BSONObj newObj ;
+      BSONObj hintObj ;
       BOOLEAN locked = FALSE ;
       if ( _collectionFullName [0] == '\0' || !_connection ||
            !pName )
@@ -1725,11 +1727,17 @@ do                                                            \
       newObj = BSON ( FIELD_NAME_COLLECTION << _collectionFullName <<
                       FIELD_NAME_INDEX << indexObj ) ;
 
+      if ( isOffline )
+      {
+         hintObj = BSON ( IXM_FIELD_NAME_MODE << IXM_MODE_VALUE_OFFLINE ) ;
+      }
+
       rc = clientBuildQueryMsgCpp ( &_pSendBuffer, &_sendBufferSize,
                                     CMD_ADMIN_PREFIX CMD_NAME_CREATE_INDEX,
                                     0, 0, -1, -1,
                                     newObj.objdata(),
-                                    NULL, NULL, NULL,
+                                    NULL, NULL,
+                                    isOffline ? hintObj.objdata() : NULL,
                                     _connection->_endianConvert ) ;
       if ( rc )
       {
@@ -1753,13 +1761,29 @@ do                                                            \
    done :
       if ( locked )
          _connection->unlock () ;
-      PD_TRACE_EXITRC ( SDB_CLIENT_CREATEINDEX, rc );
+      PD_TRACE_EXITRC ( SDB_CLIENT__CREATEINDEX, rc );
       return rc ;
    error :
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_GETINDEXES, "_sdbCollectionImpl::getIndexes" )
+   INT32 _sdbCollectionImpl::createIndex ( const BSONObj &indexDef,
+                                           const CHAR *pName,
+                                           BOOLEAN isUnique,
+                                           BOOLEAN isEnforced )
+   {
+      return _createIndex ( indexDef, pName, isUnique, isEnforced, FALSE ) ;
+   }
+
+   INT32 _sdbCollectionImpl::createIndexOffline ( const BSONObj &indexDef,
+                                                  const CHAR *pName,
+                                                  BOOLEAN isUnique,
+                                                  BOOLEAN isEnforced )
+   {
+      return _createIndex ( indexDef, pName, isUnique, isEnforced, TRUE ) ;
+   }
+
+//   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_GETINDEXES, "_sdbCollectionImpl::getIndexes" )
    INT32 _sdbCollectionImpl::getIndexes ( _sdbCursor **cursor,
                                           const CHAR *pName )
    {
@@ -1832,7 +1856,7 @@ do                                                            \
 
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_DROPINDEX, "_sdbCollectionImpl::dropIndex" )
+//   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_DROPINDEX, "_sdbCollectionImpl::dropIndex" )
    INT32 _sdbCollectionImpl::dropIndex ( const CHAR *pName )
    {
       PD_TRACE_ENTRY ( SDB_CLIENT_DROPINDEX ) ;

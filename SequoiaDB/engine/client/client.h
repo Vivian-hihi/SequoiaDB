@@ -1156,6 +1156,8 @@ SDB_EXPORT INT32 sdbCreateIndex ( sdbCollectionHandle cHandle,
     \param [in] isUnique Whether the index elements are unique or not
     \param [in] isEnforced Whether the index is enforced unique
                            This element is meaningful when isUnique is set to true
+    \note when creating index in offline mode, writing operations don't work in
+          this collection
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */

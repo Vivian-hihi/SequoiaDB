@@ -382,6 +382,10 @@ namespace sdbclient
                                   BOOLEAN isUnique,
                                   BOOLEAN isEnforced
                                 ) = 0 ;
+      virtual INT32 createIndexOffline ( const bson::BSONObj &indexDef,
+                                         const CHAR *pName,
+                                         BOOLEAN isUnique,
+                                         BOOLEAN isEnforced ) = 0 ;
       virtual INT32 getIndexes ( _sdbCursor **cursor,
                                  const CHAR *pName ) = 0 ;
       virtual INT32 getIndexes ( sdbCursor &cursor,
@@ -988,9 +992,10 @@ namespace sdbclient
       }*/
 
 /** \fn INT32 createIndex ( const bson::BSONObj &indexDef,
-                          const CHAR *pName,
-                          BOOLEAN isUnique
-                        )
+                            const CHAR *pName,
+                            BOOLEAN isUnique,
+                            BOOLEAN isEnforced
+                          )
     \brief Create the index in current collection
     \param [in] indexDef The bson structure of index element, e.g. {name:1, age:-1}
     \param [in] pIndexName The index name
@@ -1010,6 +1015,33 @@ namespace sdbclient
             return SDB_NOT_CONNECTED ;
          return pCollection->createIndex ( indexDef, pName, isUnique,
                                            isEnforced ) ;
+      }
+
+/** \fn INT32 createIndexOffline ( const bson::BSONObj &indexDef,
+                                   const CHAR *pName,
+                                   BOOLEAN isUnique,
+                                   BOOLEAN isEnforced
+                                 )
+    \brief Create the index in current collection in offline mode
+    \param [in] indexDef The bson structure of index element, e.g. {name:1, age:-1}
+    \param [in] pIndexName The index name
+    \param [in] isUnique Whether the index elements are unique or not
+    \param [in] isEnforced Whether the index is enforced unique
+                           This element is meaningful when isUnique is set to true
+    \note when creating index in offline mode, writing operations don't work in
+          this collection
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+      INT32 createIndexOffline ( const bson::BSONObj &indexDef,
+                                 const CHAR *pName,
+                                 BOOLEAN isUnique,
+                                 BOOLEAN isEnforced )
+      {
+         if ( !pCollection )
+            return SDB_NOT_CONNECTED ;
+         return pCollection->createIndexOffline ( indexDef, pName, isUnique,
+                                                  isEnforced ) ;
       }
 
 /* \fn INT32 getIndexes ( _sdbCursor **cursor,
