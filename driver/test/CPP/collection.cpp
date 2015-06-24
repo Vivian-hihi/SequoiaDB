@@ -572,8 +572,13 @@ TEST(collection,createIndex)
    const CHAR *pPort                        = SERVER ;
    const CHAR *pUsr                         = USER ;
    const CHAR *pPasswd                      = PASSWD ;
+   const CHAR *pIndexName1                  = "indexNameDef" ;
+   const CHAR *pIndexName2                  = "index_cpp_offline" ;
+   const CHAR *pStr                         = NULL ;
    INT32 rc                                 = SDB_OK ;
    BSONObj obj ;
+   BSONElement ele ;
+   BSONObj tmp_obj ;
 
    // initialize the work environment
    rc = initEnv() ;
@@ -587,20 +592,54 @@ TEST(collection,createIndex)
    rc = getCollection( cs, COLLECTION_NAME, cl ) ;
    ASSERT_EQ( SDB_OK, rc ) ;
 
+   /// createIndex
    // build a bson for index definition
    obj = BSON ( "name" << 1 << "age" << -1 ) ;
    // create index
-   rc = cl.createIndex( obj, INDEXNAMEDEF, FALSE, FALSE ) ;
+   rc = cl.createIndex( obj, pIndexName1, TRUE, TRUE ) ;
    ASSERT_EQ( SDB_OK, rc ) ;
 
    // get the newly build index
-   rc = cl.getIndexes( cursor, INDEX_NAME ) ;
+   rc = cl.getIndexes( cursor, pIndexName1 ) ;
    ASSERT_EQ( SDB_OK, rc ) ;
    // print the index record
    rc = cursor.current( obj ) ;
    ASSERT_EQ( SDB_OK, rc ) ;
-   printf( "After creating index ,the current index is:\n" ) ;
+   printf( "After creating index in online mode, the current index is:\n" ) ;
    cout << obj.toString() << endl ;
+   ele = obj.getField( "IndexDef" ) ;
+   if ( Object != ele.type() )
+   {
+      ASSERT_EQ( 0, 1 ) << "invalid object" ;
+   }
+   tmp_obj = ele.embeddedObject().getOwned() ;
+   ele = tmp_obj.getField( "name" ) ;
+   pStr = ele.valuestr() ;
+   ASSERT_EQ( 0, strncmp( pStr, pIndexName1, sizeof(pIndexName1) ) ) ;
+
+   /// createIndexOffline
+   obj = BSON ( "name2" << 1 << "age2" << -1 ) ;
+   // create index
+   rc = cl.createIndexOffline( obj, pIndexName2, TRUE, TRUE ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   // get the newly build index
+   rc = cl.getIndexes( cursor, pIndexName2 ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // print the index record
+   rc = cursor.current( obj ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   printf( "After creating index in offline mode, the current index is:\n" ) ;
+   cout << obj.toString() << endl ;
+   ele = obj.getField( "IndexDef" ) ;
+   if ( Object != ele.type() )
+   {
+      ASSERT_EQ( 0, 1 ) << "invalid object" ;
+   }
+   tmp_obj = ele.embeddedObject().getOwned() ;
+   ele = tmp_obj.getField( "name" ) ;
+   pStr = ele.valuestr() ;
+   ASSERT_EQ( 0, strncmp( pStr, pIndexName2, sizeof(pIndexName2) ) ) ;
 
    // disconnect the connection
    connection.disconnect() ;
