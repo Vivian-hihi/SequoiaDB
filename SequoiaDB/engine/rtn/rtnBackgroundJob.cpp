@@ -49,13 +49,15 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNINDEXJOB__RTNINDEXJOB, "_rtnIndexJob::_rtnIndexJob" )
    _rtnIndexJob::_rtnIndexJob ( RTN_JOB_TYPE type, const CHAR *pCLName,
-                                const BSONObj & indexObj, SDB_DPSCB * dpsCB)
+                                const BSONObj & indexObj, SDB_DPSCB * dpsCB,
+                                DMS_INDEX_BUILD_MODE mode )
    {
       PD_TRACE_ENTRY ( SDB__RTNINDEXJOB__RTNINDEXJOB ) ;
       _type = type ;
       ossMemcpy ( _clFullName, pCLName, DMS_COLLECTION_FULL_NAME_SZ ) ;
       _clFullName[DMS_COLLECTION_FULL_NAME_SZ] = 0 ;
       _indexObj = indexObj.copy() ;
+      _mode = mode ;
       _dpsCB = dpsCB ;
       _dmsCB = pmdGetKRCB()->getDMSCB() ;
       PD_TRACE_EXIT ( SDB__RTNINDEXJOB__RTNINDEXJOB ) ;
@@ -227,7 +229,7 @@ namespace engine
       {
          case RTN_JOB_CREATE_INDEX :
             rc = rtnCreateIndexCommand( _clFullName, _indexObj, eduCB(),
-                                        _dmsCB, _dpsCB, TRUE ) ;
+                                        _dmsCB, _dpsCB, TRUE, _mode ) ;
             break ;
          case RTN_JOB_DROP_INDEX :
             rc = rtnDropIndexCommand( _clFullName, _indexEle, eduCB(),

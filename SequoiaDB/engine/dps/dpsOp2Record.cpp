@@ -728,7 +728,8 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DPS_IXCRT2RECORD, "dpsIXCrt2Record" )
    INT32 dpsIXCrt2Record( const CHAR *fullName,
                           const BSONObj &index,
-                          dpsLogRecord &record )
+                          dpsLogRecord &record,
+                          DMS_INDEX_BUILD_MODE &mode )
    {
       PD_TRACE_ENTRY( SDB__DPS_IXCRT2RECORD ) ;
       INT32 rc = SDB_OK ;
@@ -753,6 +754,15 @@ namespace engine
          goto error ;
       }
 
+      rc = record.push( DPS_LOG_IXCRT_IX_MODE,
+                        sizeof( mode ),
+                        ( const CHAR* )&mode ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to push ix mode to record, rc: %d",rc ) ;
+         goto error ;
+      }
+
       header._length = record.alignedLen() ;
    done:
       PD_TRACE_EXITRC( SDB__DPS_IXCRT2RECORD, rc ) ;
@@ -764,7 +774,8 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION( SDB__DPS_RECORD2IXCRT, "dpsRecord2IXCrt" )
    INT32 dpsRecord2IXCrt( const CHAR *logRecord,
                           const CHAR **fullName,
-                          BSONObj &index )
+                          BSONObj &index,
+                          DMS_INDEX_BUILD_MODE* mode )
    {
       PD_TRACE_ENTRY( SDB__DPS_RECORD2IXCRT ) ;
       INT32 rc = SDB_OK ;
@@ -778,7 +789,7 @@ namespace engine
       }
 
       {
-      dpsLogRecord::iterator itrFullName, itrIndex ;
+      dpsLogRecord::iterator itrFullName, itrIndex, itrMode ;
       itrFullName = record.find( DPS_LOG_PULIBC_FULLNAME ) ;
       if ( !itrFullName.valid() )
       {
@@ -793,6 +804,16 @@ namespace engine
          PD_LOG( PDERROR, "Failed to find tag ix in record" ) ;
          rc = SDB_SYS ;
          goto error ;
+      }
+
+      itrMode = record.find( DPS_LOG_IXCRT_IX_MODE ) ;
+      if ( itrMode.valid() )
+      {
+         *mode = *( DMS_INDEX_BUILD_MODE* )itrMode.value() ;
+      }
+      else
+      {
+         *mode = DMS_INDEX_BUILD_ONLINE ;
       }
 
       *fullName = itrFullName.value() ;

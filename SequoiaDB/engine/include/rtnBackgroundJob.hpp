@@ -54,7 +54,8 @@ namespace engine
    {
       public:
          _rtnIndexJob ( RTN_JOB_TYPE type, const CHAR *pCLName,
-                        const BSONObj &indexObj, SDB_DPSCB *dpsCB ) ;
+                        const BSONObj &indexObj, SDB_DPSCB *dpsCB,
+                        DMS_INDEX_BUILD_MODE mode ) ;
 
          virtual ~_rtnIndexJob() ;
 
@@ -69,14 +70,15 @@ namespace engine
          virtual INT32 doit () ;
 
       protected:
-         RTN_JOB_TYPE      _type ;
-         CHAR              _clFullName[DMS_COLLECTION_FULL_NAME_SZ + 1] ;
-         std::string       _indexName ;
-         std::string       _jobName ;
-         BSONObj           _indexObj ;
-         BSONElement       _indexEle ;
-         SDB_DPSCB         *_dpsCB ;
-         SDB_DMSCB         *_dmsCB ;
+         RTN_JOB_TYPE            _type ;
+         CHAR                    _clFullName[DMS_COLLECTION_FULL_NAME_SZ + 1] ;
+         std::string             _indexName ;
+         std::string             _jobName ;
+         BSONObj                 _indexObj ;
+         BSONElement             _indexEle ;
+         DMS_INDEX_BUILD_MODE    _mode ;
+         SDB_DPSCB*              _dpsCB ;
+         SDB_DMSCB*              _dmsCB ;
 
    };
    typedef _rtnIndexJob rtnIndexJob ;

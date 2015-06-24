@@ -118,11 +118,13 @@ namespace engine
 
    INT32 dpsIXCrt2Record( const CHAR *fullName,
                           const BSONObj &index,
-                          dpsLogRecord &record ) ;
+                          dpsLogRecord &record,
+                          DMS_INDEX_BUILD_MODE &mode ) ;
 
    INT32 dpsRecord2IXCrt( const CHAR *logRecord,
                           const CHAR **fullName,
-                          BSONObj &index ) ;
+                          BSONObj &index,
+                          DMS_INDEX_BUILD_MODE* mode ) ;
 
    INT32 dpsIXDel2Record( const CHAR *fullName,
                           const BSONObj &index,

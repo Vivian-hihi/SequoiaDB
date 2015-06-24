@@ -325,7 +325,7 @@ namespace engine
             indexDef = indexCB.getDef().getOwned() ;
             _pDataSu->_clFullName( context->mb()->_collectionName, fullName,
                                    sizeof(fullName) ) ;
-            rc = dpsIXCrt2Record( fullName, indexDef, record ) ;
+            rc = dpsIXCrt2Record( fullName, indexDef, record, mode ) ;
             PD_RC_CHECK( rc, PDERROR, "Failed to build record:%d", rc ) ;
 
             rc = dpscb->checkSyncControl( record.alignedLen(), cb ) ;

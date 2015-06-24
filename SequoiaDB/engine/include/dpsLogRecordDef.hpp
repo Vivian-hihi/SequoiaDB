@@ -98,6 +98,7 @@ namespace engine
    enum DPS_LOG_IXCRT
    {
       DPS_LOG_IXCRT_IX = 1,
+      DPS_LOG_IXCRT_IX_MODE = 2,
    } ;
 
    enum DPS_LOG_IXDEL
