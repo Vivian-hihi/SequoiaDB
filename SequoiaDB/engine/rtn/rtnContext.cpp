@@ -3925,6 +3925,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       SINT64 context = -1 ;
       _SDB_RTNCB *rtnCB = sdbGetRTNCB() ;
+      rtnContextBase *contextObj = NULL ;
       if ( !_subs.empty() )
       {
          const string &clName = *( _subs.begin() ) ;
@@ -3937,12 +3938,19 @@ namespace engine
                          cb, _options._skip,
                          _options._limit,
                          sdbGetDMSCB(), rtnCB,
-                         context ) ;
+                         context,
+                         &contextObj ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "failed to query on cl:%s, rc:%d",
                     clName.c_str(), rc ) ;
             goto error ;
+         }
+
+         if ( NULL != contextObj && contextObj->isWrite() )
+         {
+            contextObj->setWriteInfo( this->getDPSCB(),
+                                      this->getW() ) ;
          }
 
          _subs.pop_front() ;
@@ -3983,7 +3991,7 @@ namespace engine
       PD_CHECK( _keyGen != NULL, SDB_OOM, error, PDERROR,
                 "malloc failed!" ) ;
 
-      if ( _subs.size() <= 1 )
+      if ( subs.size() <= 1 )
       {
          _includeShardingOrder = FALSE ;
          _options._skip = _numToSkip ;
@@ -4089,6 +4097,9 @@ namespace engine
                                 buf.size() - buf.offset(),
                                 iterSubCTXSkip->second.recordNum() ) ;
                PD_RC_CHECK( rc, PDERROR, "Failed to append objs, rc: %d", rc ) ;
+
+               /// clear data in buff
+               iterSubCTXSkip->second.popAll();
 
                rc = this->_rtnContextBase::getMore( maxNumToReturn, buffObj, cb );
                goto done ;

@@ -1665,6 +1665,8 @@ namespace engine
                    "Open main-collection context failed(rc=%d)",
                    rc );
 
+      pContextMainCL->setWriteInfo( _pDpsCB, w ) ;
+
       if ( FLG_QUERY_EXPLAIN & flags )
       {
          rc = _aggregateMainCLExplaining( pCollectionName, cb,
