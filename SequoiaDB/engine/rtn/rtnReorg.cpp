@@ -292,7 +292,7 @@ namespace engine
             DMS_SET_MB_OFFLINE_REORG_REBUILD ( flag ) ;
             mbContext->mb()->_flag = flag ;
 
-            rc = su->index()->rebuildIndexes ( mbContext, cb ) ;
+            rc = su->index()->rebuildIndexes ( mbContext, cb, DMS_INDEX_BUILD_OFFLINE ) ;
             if ( rc )
             {
                PD_LOG ( PDERROR, "Failed to rebuild indexes, rc = %d", rc ) ;
@@ -526,7 +526,7 @@ namespace engine
          PD_LOG ( PDEVENT, "Rebuild phase starts" ) ;
          mbContext->mb()->_flag = flag ;
 
-         rc = su->index()->rebuildIndexes ( mbContext, cb ) ;
+         rc = su->index()->rebuildIndexes ( mbContext, cb, DMS_INDEX_BUILD_OFFLINE ) ;
          if ( rc )
          {
             PD_LOG ( PDERROR, "Failed to rebuild indexes, rc = %d", rc ) ;
