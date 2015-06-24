@@ -793,22 +793,24 @@ namespace SequoiaDB
          */
         public void CreateIndex(string name, BsonDocument key, bool isUnique, bool isEnforced) 
         {
-            string commandString = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.CREATE_INX;
-            BsonDocument obj = new BsonDocument();
-            BsonDocument dummyObj = new BsonDocument();
-            BsonDocument createObj = new BsonDocument();
-            obj.Add(SequoiadbConstants.IXM_NAME, name);
-            obj.Add(SequoiadbConstants.IXM_KEY, key);
-            obj.Add(SequoiadbConstants.IXM_UNIQUE, isUnique);
-            obj.Add(SequoiadbConstants.IXM_ENFORCED, isEnforced);
-            createObj.Add(SequoiadbConstants.FIELD_COLLECTION, collectionFullName);
-            createObj.Add(SequoiadbConstants.FIELD_INDEX, obj);
+            _CreateIndex(name, key, isUnique, isEnforced, false);
+        }
 
-            SDBMessage rtn = AdminCommand(commandString, createObj, dummyObj, dummyObj, dummyObj, -1, -1, 0);
-
-            int flags = rtn.Flags;
-            if (flags != 0)
-                throw new BaseException(flags);
+        /** \fn void CreateIndexOffline(string name, BsonDocument key, bool isUnique, bool isEnforced)
+         *  \brief Create a index in offline mode
+         *  \param name The index name
+         *  \param key The index key
+         *  \param isUnique Whether the index elements are unique or not
+         *  \param isEnforced Whether the index is enforced unique.
+         *                    This element is meaningful when isUnique is group to true.
+         *  \note when creating index in offline mode, writing operations don't work in
+         *        this collection
+         *  \exception SequoiaDB.BaseException
+         *  \exception System.Exception
+         */
+        public void CreateIndexOffline(string name, BsonDocument key, bool isUnique, bool isEnforced)
+        {
+            _CreateIndex(name, key, isUnique, isEnforced, true);
         }
 
         /** \fn void DropIndex(string name)
@@ -1310,6 +1312,32 @@ namespace SequoiaDB
             SDBMessage rtnSDBMessage = SDBMessageHelper.MsgExtractReply(connection.ReceiveMessage(isBigEndian), isBigEndian);
             rtnSDBMessage = SDBMessageHelper.CheckRetMsgHeader(sdbMessage, rtnSDBMessage);
             int flags = rtnSDBMessage.Flags;
+            if (flags != 0)
+                throw new BaseException(flags);
+        }
+
+        private void _CreateIndex(string name, BsonDocument key, bool isUnique, bool isEnforced, bool isOffline)
+        {
+            string commandString = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.CREATE_INX;
+            BsonDocument obj = new BsonDocument();
+            BsonDocument dummyObj = new BsonDocument();
+            BsonDocument createObj = new BsonDocument();
+            BsonDocument hintObj = new BsonDocument();
+            obj.Add(SequoiadbConstants.IXM_NAME, name);
+            obj.Add(SequoiadbConstants.IXM_KEY, key);
+            obj.Add(SequoiadbConstants.IXM_UNIQUE, isUnique);
+            obj.Add(SequoiadbConstants.IXM_ENFORCED, isEnforced);
+            createObj.Add(SequoiadbConstants.FIELD_COLLECTION, collectionFullName);
+            createObj.Add(SequoiadbConstants.FIELD_INDEX, obj);
+
+            if (true == isOffline)
+            {
+                hintObj.Add(SequoiadbConstants.IXM_MODE, SequoiadbConstants.IXM_MODE_OFFLINE);
+            }
+
+            SDBMessage rtn = AdminCommand(commandString, createObj, dummyObj, dummyObj, hintObj, -1, -1, 0);
+
+            int flags = rtn.Flags;
             if (flags != 0)
                 throw new BaseException(flags);
         }

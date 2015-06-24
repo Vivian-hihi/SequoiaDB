@@ -363,23 +363,43 @@ namespace DriverTest
             ObjectId insertID = (ObjectId)coll.Insert(insertor);
             Assert.IsNotNull(insertID);
 
-            // Create Index
+            // Create Index in online mode
             BsonDocument key = new BsonDocument();
             key.Add("Last Name", 1);
             key.Add("First Name", 1);
-            string name = "index name";
+            string name = "index_name_online";
             coll.CreateIndex(name, key, false, false);
+
+            // Create Index in offline mode
+            BsonDocument key2 = new BsonDocument();
+            key2.Add("Last Name2", 1);
+            key2.Add("First Name2", 1);
+            string name2 = "index_name_offline";
+            coll.CreateIndexOffline(name2, key2, true, true);
 
             // Get Indexes
             DBCursor cursor = coll.GetIndex(name);
             Assert.IsNotNull(cursor);
             BsonDocument index = cursor.Next();
             Assert.IsNotNull(index);
-            Assert.IsTrue(index["IndexDef"].AsBsonDocument["name"].AsString.Equals("index name"));
+            Assert.IsTrue(index["IndexDef"].AsBsonDocument["name"].AsString.Equals(name));
+
+            // Get Indexes
+            DBCursor cursor2 = coll.GetIndex(name2);
+            Assert.IsNotNull(cursor2);
+            BsonDocument index2 = cursor2.Next();
+            Assert.IsNotNull(index2);
+            Assert.IsTrue(index2["IndexDef"].AsBsonDocument["name"].AsString.Equals(name2));
             
             // Drop Index
             coll.DropIndex(name);
             cursor = coll.GetIndex(name);
+            Assert.IsNotNull(cursor);
+            index = cursor.Next();
+            Assert.IsNull(index);
+
+            coll.DropIndex(name2);
+            cursor = coll.GetIndex(name2);
             Assert.IsNotNull(cursor);
             index = cursor.Next();
             Assert.IsNull(index);
@@ -1226,11 +1246,17 @@ namespace DriverTest
         [TestMethod()]
         public void TempTest()
         {
-            int num = 100;
+            int num = 1;
             long recordNum = 0;
             for (int i = 0; i < num; i++)
             {
-                BsonDocument obj = new BsonDocument { { "test_truncate", "test" } };
+                //BsonDocument obj = new BsonDocument { { "test_truncate", "test" } };
+
+                BsonDocument obj = new BsonDocument();
+                long sec = (DateTime.Now.ToUniversalTime().Ticks - 621355968000000000)/10000000;
+                obj.Add("date", DateTime.Now);
+                obj.Add("ts", new BsonTimestamp((int)sec, 0));
+
                 coll.Insert(obj);
             }
             // test api

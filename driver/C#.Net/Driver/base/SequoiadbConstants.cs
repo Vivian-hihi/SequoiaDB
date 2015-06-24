@@ -162,6 +162,9 @@ namespace SequoiaDB
         public const string IXM_UNIQUE = "unique";
         public const string IXM_ENFORCED = "enforced";
         public const string IXM_INDEXDEF = "IndexDef";
+        public const string IXM_MODE = "Mode";
+        public const string IXM_MODE_ONLINE = "online";
+        public const string IXM_MODE_OFFLINE = "offline";
 
         public const string SDB_AUTH_USER = "User";
         public const string SDB_AUTH_PASSWD = "Passwd";
