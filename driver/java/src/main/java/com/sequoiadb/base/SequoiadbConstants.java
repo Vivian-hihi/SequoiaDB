@@ -196,7 +196,10 @@ public class SequoiadbConstants {
 	public final static String IXM_UNIQUE = "unique";
 	public final static String IXM_ENFORCED = "enforced";
 	public final static String IXM_INDEXDEF = "IndexDef";
-
+	public final static String IXM_FIELD_NAME_MODE = "Mode";
+	public final static String IXM_MODE_VALUE_ONLINE = "online";
+	public final static String IXM_MODE_VALUE_OFFLINE = "offline";
+	
 	public final static String PMD_OPTION_SVCNAME = "svcname";
 	public final static String PMD_OPTION_DBPATH = "dbpath";
 

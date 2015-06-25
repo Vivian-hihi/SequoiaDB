@@ -1170,7 +1170,7 @@ public class DBCollection {
 
 	/**
 	 * @fn void createIndex(String name, BSONObject key, boolean isUnique,
-	 *     boolean enforced)
+	 *     boolean enforced, boolean isOffline)
 	 * @brief Create a index with name and key
 	 * @param name
 	 *            The index name
@@ -1181,12 +1181,15 @@ public class DBCollection {
 	 * @param enforced
 	 *            Whether the index is enforced unique This element is
 	 *            meaningful when isUnique is set to true
+	 * @param isOffline
+	 *            Whether the index is offline or not
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
-	public void createIndex(String name, BSONObject key, boolean isUnique,
-			boolean enforced) throws BaseException {
+	private void createIndex(String name, BSONObject key, boolean isUnique,
+			boolean enforced, boolean isOffline ) throws BaseException {
 		String commandString = SequoiadbConstants.ADMIN_PROMPT
 				+ SequoiadbConstants.CREATE_INX;
+		BSONObject hint = new BasicBSONObject() ;
 		BSONObject obj = new BasicBSONObject();
 		BSONObject dummyObj = new BasicBSONObject();
 		BSONObject createObj = new BasicBSONObject();
@@ -1196,16 +1199,59 @@ public class DBCollection {
 		obj.put(SequoiadbConstants.IXM_ENFORCED, enforced);
 		createObj.put(SequoiadbConstants.FIELD_COLLECTION, collectionFullName);
 		createObj.put(SequoiadbConstants.FIELD_INDEX, obj);
-
+		if ( isOffline ) {
+		    hint.put( SequoiadbConstants.IXM_FIELD_NAME_MODE, 
+		            SequoiadbConstants.IXM_MODE_VALUE_OFFLINE );
+		}
 		SDBMessage rtn = adminCommand(commandString, createObj, dummyObj,
-				dummyObj, dummyObj, -1, -1, 0);
+				dummyObj, hint, -1, -1, 0);
 
 		int flags = rtn.getFlags();
 		if (flags != 0) {
 			throw new BaseException(flags, name, key, isUnique);
 		}
 	}
+	
+	/**
+     * @fn void createIndexOffline(String name, BSONObject key, boolean isUnique,
+     *     boolean enforced)
+     * @brief Create a index in offline mode with name and key
+     * @param name
+     *            The index name
+     * @param key
+     *            The index key, like: {"key":1/-1}, ASC(1)/DESC(-1)
+     * @param isUnique
+     *            Whether the index elements are unique or not
+     * @param enforced
+     *            Whether the index is enforced unique This element is
+     *            meaningful when isUnique is set to true
+     * @exception com.sequoiadb.exception.BaseException
+     */
+    public void createIndexOffline(String name, BSONObject key, boolean isUnique,
+            boolean enforced ) throws BaseException {
+        createIndex(name, key, isUnique, enforced, true );
+    }
 
+	/**
+     * @fn void createIndex(String name, BSONObject key, boolean isUnique,
+     *     boolean enforced)
+     * @brief Create a index with name and key
+     * @param name
+     *            The index name
+     * @param key
+     *            The index key, like: {"key":1/-1}, ASC(1)/DESC(-1)
+     * @param isUnique
+     *            Whether the index elements are unique or not
+     * @param enforced
+     *            Whether the index is enforced unique This element is
+     *            meaningful when isUnique is set to true
+     * @exception com.sequoiadb.exception.BaseException
+     */
+	public void createIndex(String name, BSONObject key, boolean isUnique,
+            boolean enforced ) throws BaseException {
+	    createIndex(name, key, isUnique, enforced, false );
+	}
+	
 	/**
 	 * @fn void createIndex(String name, String key, boolean isUnique, boolean
 	 *     enforced)
@@ -1226,7 +1272,7 @@ public class DBCollection {
 		BSONObject k = null;
 		if (key != null)
 			k = (BSONObject) JSON.parse(key);
-		createIndex(name, k, isUnique, enforced);
+		createIndex(name, k, isUnique, enforced, false );
 	}
 	
 	/**
