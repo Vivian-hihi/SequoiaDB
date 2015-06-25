@@ -170,6 +170,7 @@ namespace engine
    public:
       _rtnReelect() ;
       virtual ~_rtnReelect() ;
+      virtual INT32 spaceNode () ;
 
    public:
       virtual const CHAR * name () { return NAME_REELECT ; }
@@ -224,6 +225,8 @@ namespace engine
       public:
          _clsAlterDC() ;
          virtual ~_clsAlterDC() ;
+
+         virtual INT32 spaceService () ;
 
       public:
          virtual const CHAR * name () { return NAME_ALTER_DC ; }

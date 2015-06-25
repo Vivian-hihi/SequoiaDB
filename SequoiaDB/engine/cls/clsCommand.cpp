@@ -427,6 +427,11 @@ namespace engine
 
    }
 
+   INT32 _rtnReelect::spaceNode()
+   {
+      return CMD_SPACE_NODE_DATA | CMD_SPACE_NODE_CATA  ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNREELECT_INIT, "_rtnReelect::init" )
    INT32 _rtnReelect::init ( INT32 flags, INT64 numToSkip,
                              INT64 numToReturn,
@@ -574,6 +579,11 @@ namespace engine
 
    _clsAlterDC::~_clsAlterDC()
    {
+   }
+
+   INT32 _clsAlterDC::spaceService ()
+   {
+      return CMD_SPACE_SERVICE_SHARD ;
    }
 
    INT32 _clsAlterDC::init( INT32 flags, INT64 numToSkip,
