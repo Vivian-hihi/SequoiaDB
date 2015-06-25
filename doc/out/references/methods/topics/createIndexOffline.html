@@ -8,7 +8,7 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="db.collectionspace.collection.createIndexOffline()"/>
-<meta name="description" content="db.collectionspace.collection.createIndex(&lt;name&gt;,&lt;indexDef&gt;,[isUnique],[enforced]) 以离线方式创建 索引 。 参数描述 格式 参数与 createIndex() 完全相同，请参考 db.collectionspace.collection.createIndex() 。 离线方式创建索引时使用了缓存，其大小由配置参数 ..."/>
+<meta name="description" content="db.collectionspace.collection.createIndex(&lt;name&gt;,&lt;indexDef&gt;,[isUnique],[enforced]) 以离线方式创建 索引 。 参数描述 格式 参数与 createIndex() 完全相同，请参考 db.collectionspace.collection.createIndex() 。 ..."/>
 <meta name="DC.Relation" scheme="URI" content="../../../references/methods/jscollection.html"/>
 <meta name="DC.Relation" scheme="URI" content="createIndex.html"/>
 <meta name="DC.Format" content="XHTML"/>
@@ -52,6 +52,8 @@
       <div class="note note"><span class="notetitle">Note:</span> 
         <div class="p">
           <ul class="ul">
+            <li class="li">在集合数据量较大时（大于1000万条记录）使用离线方式创建索引的性能比普通方式要好。</li>
+
             <li class="li">离线方式创建索引时使用了缓存，其大小由配置参数 sortbuf 决定。</li>
 
             <li class="li">在一个集合上同一时刻只能有一个以离线方式创建索引的操作。</li>
