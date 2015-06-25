@@ -7,6 +7,7 @@ Create index in offline mode.
 The parameters are same as [db.collectionspace.collection.createIndex()](URL)。
 
 #####Note:
+- the preformance of creating index in offline mode is better than the ordinary way when the collection has a large amount of data ( more than 10 million records ).
 - the offline mode uses cache, the size is determined by the sortbuf configuration.
 - can't create indexes in offline mode on the same collection simultaneously.
 - the collecton can't be written ( e.g. insert, update and remove ) when an index is creating on it in offline mode.
