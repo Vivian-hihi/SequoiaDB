@@ -40,10 +40,10 @@ using namespace bson ;
 
 namespace engine
 {
-   static void func()
+   /*static void func()
    {
       return ;
-   }
+   }*/
 
    INT32 _clsLocalValidation::run()
    {
