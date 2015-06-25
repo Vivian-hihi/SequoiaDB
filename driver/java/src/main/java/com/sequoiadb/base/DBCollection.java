@@ -1278,6 +1278,7 @@ public class DBCollection {
 	/**
      * @fn void createIdIndex()
      * @brief Create an id index
+     * @param null
      * @exception com.sequoiadb.exception.BaseException
      */
     public void createIdIndex() throws BaseException {
@@ -1294,6 +1295,7 @@ public class DBCollection {
     /**
      * @fn void dropIdIndex()
      * @brief drop an id index
+     * @param null
      * @exception com.sequoiadb.exception.BaseException
      */
     public void dropIdIndex() throws BaseException {
