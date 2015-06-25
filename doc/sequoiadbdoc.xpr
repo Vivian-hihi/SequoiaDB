@@ -890,6 +890,7 @@
                     <file name="references/methods/topics/createIdIndex.dita"/>
                     <file name="references/methods/topics/createIndex_en.dita"/>
                     <file name="references/methods/topics/createIndex.dita"/>
+                    <file name="references/methods/topics/createIndexOffline.dita"/>
                     <file name="references/methods/topics/createNode_en.dita"/>
                     <file name="references/methods/topics/createNode.dita"/>
                     <file name="references/methods/topics/createProcedures_en.dita"/>

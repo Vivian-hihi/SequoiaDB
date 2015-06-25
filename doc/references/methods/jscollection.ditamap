@@ -9,6 +9,7 @@
   <topicref href="topics/dbcount.dita"/>
   <topicref href="topics/createIdIndex.dita"/>
   <topicref href="topics/createIndex.dita"/>
+  <topicref href="topics/createIndexOffline.dita"/>
   <topicref href="topics/deleteLob.dita"/>
   <topicref href="topics/detachCL.dita"/>
   <topicref href="topics/dropIdIndex.dita"/>
