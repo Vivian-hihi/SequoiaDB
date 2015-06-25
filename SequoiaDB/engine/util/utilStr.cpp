@@ -449,10 +449,8 @@ namespace engine
          seconds %= 60 ;
          beginCalc = TRUE ;
       }
-      if ( beginCalc || seconds > 0 )
-      {
-         ss << seconds << " secs" ;
-      }
+      ss << seconds << " secs" ;
+
       return ss.str() ;
    }
 
