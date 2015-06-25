@@ -251,6 +251,7 @@ namespace engine
       private:
          void              _taskNotify ( INT32 msgType ) ;
          void              _lend () ;
+         void              _doneSplit() ;
 
       protected:
          _clsSplitTask           *_pTask ;
