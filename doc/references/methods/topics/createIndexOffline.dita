@@ -3,7 +3,7 @@
 <topic id="topic_rdx_zfd_ms">
   <title>db.collectionspace.collection.createIndexOffline()</title>
   <body>
-    <section><title>db.collectionspace.collection.createIndex(&lt;name>,&lt;indexDef>,[isUnique],[enforced])</title>
+    <section><title>db.collectionspace.collection.createIndexOffline(&lt;name>,&lt;indexDef>,[isUnique],[enforced])</title>
       <p>以离线方式创建<xref href="../../../administration/concepts/database/topics/index.dita">索引</xref>。</p>
     </section>
     <section><title>参数描述</title><p></p>           
