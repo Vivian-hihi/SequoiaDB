@@ -75,7 +75,6 @@ public class SdbConnect {
 		list.add("123:123");
 		list.add("");
 		list.add(":12340");
-		list.add("192.168.20.40");
 		list.add("localhost:50000");
 		list.add("localhost:11810");
 		list.add("localhost:12340");
