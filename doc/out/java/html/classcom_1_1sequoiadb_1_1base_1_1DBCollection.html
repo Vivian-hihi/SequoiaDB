@@ -129,6 +129,12 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>setConnection</b> (IC
 <tr class="memitem:abdcc3ad4938e32478aac1c47c5079745"><td class="memItemLeft" align="right" valign="top">Object&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCollection.html#abdcc3ad4938e32478aac1c47c5079745">insert</a> (String insertor)  throws BaseException </td></tr>
 <tr class="memdesc:abdcc3ad4938e32478aac1c47c5079745"><td class="mdescLeft">&#160;</td><td class="mdescRight">Insert a document into current collection, if the document does not contain field "_id", it will be added.  <a href="#abdcc3ad4938e32478aac1c47c5079745"></a><br/></td></tr>
 <tr class="separator:abdcc3ad4938e32478aac1c47c5079745"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a61e33b9c49d9b9b19482097303790b44"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a61e33b9c49d9b9b19482097303790b44"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>ensureOID</b> (boolean flag)</td></tr>
+<tr class="separator:a61e33b9c49d9b9b19482097303790b44"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aecb83d3e9b1d87daa866db551bd86520"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aecb83d3e9b1d87daa866db551bd86520"></a>
+boolean&#160;</td><td class="memItemRight" valign="bottom"><b>isOIDEnsured</b> ()</td></tr>
+<tr class="separator:aecb83d3e9b1d87daa866db551bd86520"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:acbd08e5117cdf2eab50d4e693e127503"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCollection.html#acbd08e5117cdf2eab50d4e693e127503">bulkInsert</a> (List&lt; BSONObject &gt; insertor, int flag)  throws BaseException </td></tr>
 <tr class="memdesc:acbd08e5117cdf2eab50d4e693e127503"><td class="mdescLeft">&#160;</td><td class="mdescRight">Insert a bulk of bson objects into current collection.  <a href="#acbd08e5117cdf2eab50d4e693e127503"></a><br/></td></tr>
 <tr class="separator:acbd08e5117cdf2eab50d4e693e127503"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -207,12 +213,21 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>setConnection</b> (IC
 <tr class="memitem:abdd89b20edbd831a1df977408203372a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCursor.html">DBCursor</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCollection.html#abdd89b20edbd831a1df977408203372a">getIndex</a> (String name)  throws BaseException </td></tr>
 <tr class="memdesc:abdd89b20edbd831a1df977408203372a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get all of or one of the indexes in current collection.  <a href="#abdd89b20edbd831a1df977408203372a"></a><br/></td></tr>
 <tr class="separator:abdd89b20edbd831a1df977408203372a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a239ea8844f82d189b4e3cf6608d4e8be"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCollection.html#a239ea8844f82d189b4e3cf6608d4e8be">createIndexOffline</a> (String name, BSONObject key, boolean isUnique, boolean enforced)  throws BaseException </td></tr>
+<tr class="memdesc:a239ea8844f82d189b4e3cf6608d4e8be"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create a index in offline mode with name and key.  <a href="#a239ea8844f82d189b4e3cf6608d4e8be"></a><br/></td></tr>
+<tr class="separator:a239ea8844f82d189b4e3cf6608d4e8be"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aef067a43c61d488dcc7a39c7124630a3"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCollection.html#aef067a43c61d488dcc7a39c7124630a3">createIndex</a> (String name, BSONObject key, boolean isUnique, boolean enforced)  throws BaseException </td></tr>
 <tr class="memdesc:aef067a43c61d488dcc7a39c7124630a3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create a index with name and key.  <a href="#aef067a43c61d488dcc7a39c7124630a3"></a><br/></td></tr>
 <tr class="separator:aef067a43c61d488dcc7a39c7124630a3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4dbce5eeaeb2638ce51586a78a0289ef"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCollection.html#a4dbce5eeaeb2638ce51586a78a0289ef">createIndex</a> (String name, String key, boolean isUnique, boolean enforced)  throws BaseException </td></tr>
 <tr class="memdesc:a4dbce5eeaeb2638ce51586a78a0289ef"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create a index with name and key.  <a href="#a4dbce5eeaeb2638ce51586a78a0289ef"></a><br/></td></tr>
 <tr class="separator:a4dbce5eeaeb2638ce51586a78a0289ef"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a18ff0150ba93e2449a16c4b554a5221f"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCollection.html#a18ff0150ba93e2449a16c4b554a5221f">createIdIndex</a> ()  throws BaseException </td></tr>
+<tr class="memdesc:a18ff0150ba93e2449a16c4b554a5221f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create an id index.  <a href="#a18ff0150ba93e2449a16c4b554a5221f"></a><br/></td></tr>
+<tr class="separator:a18ff0150ba93e2449a16c4b554a5221f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aafc8b19893fec31d8f4b01bcebca4466"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCollection.html#aafc8b19893fec31d8f4b01bcebca4466">dropIdIndex</a> ()  throws BaseException </td></tr>
+<tr class="memdesc:aafc8b19893fec31d8f4b01bcebca4466"><td class="mdescLeft">&#160;</td><td class="mdescRight">drop an id index  <a href="#aafc8b19893fec31d8f4b01bcebca4466"></a><br/></td></tr>
+<tr class="separator:aafc8b19893fec31d8f4b01bcebca4466"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:acccda67f1a55e9367c88487743e85ec2"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCollection.html#acccda67f1a55e9367c88487743e85ec2">dropIndex</a> (String name)  throws BaseException </td></tr>
 <tr class="memdesc:acccda67f1a55e9367c88487743e85ec2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Remove the named index of current collection.  <a href="#acccda67f1a55e9367c88487743e85ec2"></a><br/></td></tr>
 <tr class="separator:acccda67f1a55e9367c88487743e85ec2"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -468,6 +483,43 @@ Partition : When the ShardingType is "hash", need to assign Partition, it's the 
 
 </div>
 </div>
+<a class="anchor" id="a18ff0150ba93e2449a16c4b554a5221f"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void com.sequoiadb.base.DBCollection.createIdIndex </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td>  throws BaseException </td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Create an id index. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">null</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname">com.sequoiadb.exception.BaseException</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <a class="anchor" id="aef067a43c61d488dcc7a39c7124630a3"></a>
 <div class="memitem">
 <div class="memproto">
@@ -576,6 +628,69 @@ Partition : When the ShardingType is "hash", need to assign Partition, it's the 
 </div><div class="memdoc">
 
 <p>Create a index with name and key. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">name</td><td>The index name </td></tr>
+    <tr><td class="paramname">key</td><td>The index key, like: {"key":1/-1}, ASC(1)/DESC(-1) </td></tr>
+    <tr><td class="paramname">isUnique</td><td>Whether the index elements are unique or not </td></tr>
+    <tr><td class="paramname">enforced</td><td>Whether the index is enforced unique This element is meaningful when isUnique is set to true </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname">com.sequoiadb.exception.BaseException</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="a239ea8844f82d189b4e3cf6608d4e8be"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void com.sequoiadb.base.DBCollection.createIndexOffline </td>
+          <td>(</td>
+          <td class="paramtype">String&#160;</td>
+          <td class="paramname"><em>name</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">BSONObject&#160;</td>
+          <td class="paramname"><em>key</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">boolean&#160;</td>
+          <td class="paramname"><em>isUnique</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">boolean&#160;</td>
+          <td class="paramname"><em>enforced</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td>  throws BaseException </td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Create a index in offline mode with name and key. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">name</td><td>The index name </td></tr>
@@ -865,6 +980,43 @@ Partition : When the ShardingType is "hash", need to assign Partition, it's the 
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">subClFullName</td><td>The full name of the subcollection </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname">com.sequoiadb.exception.BaseException</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="aafc8b19893fec31d8f4b01bcebca4466"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void com.sequoiadb.base.DBCollection.dropIdIndex </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td>  throws BaseException </td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>drop an id index </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">null</td><td></td></tr>
   </table>
   </dd>
 </dl>
@@ -2604,7 +2756,7 @@ BDQuery.FLG_QUERY_PARALLED </li>
 <p>Set the main keys used in save(). if no main keys are set, use the default main key "_id". </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">keys</td><td>the main keys specified by user. </td></tr>
+    <tr><td class="paramname">keys</td><td>the main keys specified by user. the main key should exist in the object </td></tr>
   </table>
   </dd>
 </dl>
@@ -3203,7 +3355,7 @@ BDQuery.FLG_QUERY_PARALLED </li>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Apr 17 2015 15:27:23 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Thu Jun 25 2015 10:01:46 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.2
 </small></address>
