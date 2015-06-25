@@ -1842,6 +1842,21 @@ namespace engine
       return CLS_FS_TYPE_BETWEEN_SETS ;
    }
 
+   void _clsSplitDstSession::_doneSplit()
+   {
+      clsCB *pClsMgr = pmdGetKRCB()->getClsCB() ;
+      // unregister collection
+      if ( _regTask )
+      {
+         pClsMgr->getTaskMgr()->unregCollection( _pTask->clFullName() ) ;
+         _regTask = FALSE ;
+      }
+
+      PD_LOG( PDEVENT, "Split Session[%s]: Split[%s] has been done",
+              sessionName(), _pTask->taskName() ) ;
+      _quit = TRUE ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSPLDS__ISREADY, "_clsSplitDstSession::_isReady" )
    BOOLEAN _clsSplitDstSession::_isReady ()
    {
@@ -1850,9 +1865,7 @@ namespace engine
 
       if ( STEP_END == _step )
       {
-         PD_LOG( PDEVENT, "Split Session[%s]: Split[%s] has been done",
-                 sessionName(), _pTask->taskName() ) ;
-         _quit = TRUE ;
+         _doneSplit() ;
          ret = FALSE ;
          goto done ;
       }
