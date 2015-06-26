@@ -310,7 +310,6 @@ hasSSL = False
 if hasEnterprise:
    hasSSL = True
    env.Append( CPPDEFINES=[ "SDB_ENTERPRISE" ] )
-   env.Append( CPPDEFINES=[ "SDB_SSL" ] )
 
 # if everything are set, let's set everything to true
 if hasAll:
@@ -702,11 +701,13 @@ fapEnv.Append( CPPDEFINES=["SDB_ENGINE", "SDB_DLL_BUILD"])
 #fapEnv.Append( CPPPATH=[join(engine_dir, "bson")])
 
 # drivers always set SSL definition
-if not hasSSL:
-    toolEnv.Append( CPPDEFINES=[ "SDB_SSL" ] )
-    clientCppEnv.Append( CPPDEFINES=[ "SDB_SSL" ] )
-    clientCEnv.Append( CPPDEFINES=[ "SDB_SSL" ] )
-    shellEnv.Append( CPPDEFINES=[ "SDB_SSL" ] )
+toolEnv.Append( CPPDEFINES=[ "SDB_SSL" ] )
+clientCppEnv.Append( CPPDEFINES=[ "SDB_SSL" ] )
+clientCEnv.Append( CPPDEFINES=[ "SDB_SSL" ] )
+shellEnv.Append( CPPDEFINES=[ "SDB_SSL" ] )
+if hasSSL:
+    env.Append( CPPDEFINES=[ "SDB_SSL" ] )
+    fapEnv.Append( CPPDEFINES=[ "SDB_SSL" ] )
 
 if linux:
     if hasGProf:
