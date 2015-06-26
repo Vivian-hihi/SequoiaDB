@@ -51,27 +51,27 @@ namespace engine
     _closeWithException( TRUE ),
     _buf( NULL ),
     _bufLen( 0 ),
-    _su( NULL )
+    _su( NULL ),
+    _mbContext( NULL ),
+    _dmsCB( NULL ),
+    _writeDMS( FALSE )
    {
-
    }
 
    _rtnContextShdOfLob::~_rtnContextShdOfLob()
    {
+      _pmdEDUCB *cb = pmdGetThreadEDUCB() ;
+
       if ( _closeWithException &&
            SDB_LOB_MODE_CREATEONLY == _mode )
       {
-         _pmdEDUCB *cb = pmdGetThreadEDUCB() ;
          SDB_ASSERT( cb->getID() == eduID(), "impossible" ) ;
          _rollback( cb ) ;
       }
 
+      close( cb ) ;
+
       SAFE_OSS_FREE( _buf ) ;
-      if ( NULL != _su )
-      {
-         sdbGetDMSCB()->suUnlock ( _su->CSID() ) ;
-         _su = NULL ;
-      }
    }
 
    _dmsStorageUnit* _rtnContextShdOfLob::getSU ()
@@ -89,9 +89,9 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNCONTEXTSHDOFLOB_OPEN ) ;
-      SDB_DMSCB *dmsCB = sdbGetDMSCB() ;
+      _dmsCB = sdbGetDMSCB() ;
       const CHAR *clName = NULL ;
-      dmsStorageUnitID suID = DMS_INVALID_CS ;
+      dmsStorageUnitID suID = DMS_INVALID_SUID ;
       BSONElement ele = lob.getField( FIELD_NAME_COLLECTION ) ;
       if ( String != ele.type() )
       {
@@ -102,11 +102,20 @@ namespace engine
       _fullName.assign( ele.valuestr() ) ;
 
       rc = rtnResolveCollectionNameAndLock( _fullName.c_str(),
-                                            dmsCB, &_su,
+                                            _dmsCB, &_su,
                                             &clName, suID ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to get cs lock:%s, rc:%d",
+         PD_LOG( PDERROR, "Failed to get cs lock: %s, rc: %d",
+                 _fullName.c_str(), rc ) ;
+         goto error ;
+      }
+
+      /// get mb context
+      rc = _su->data()->getMBContext( &_mbContext, clName, -1 ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to get collection[%s] mb context, rc: %d",
                  _fullName.c_str(), rc ) ;
          goto error ;
       }
@@ -158,6 +167,17 @@ namespace engine
       _dpsCB = dpsCB ;
       _version = version ;
 
+      if ( SDB_LOB_MODE_R != _mode )
+      {
+         rc = _dmsCB->writable( cb ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "database is not writable, rc = %d", rc ) ;
+            goto error ;
+         }
+         _writeDMS = TRUE ;
+      }
+
       rc = _open( cb ) ;
       if ( SDB_OK != rc )
       {
@@ -168,15 +188,12 @@ namespace engine
       meta = _metaObj ;
       _isOpened = TRUE ;
       _hitEnd = FALSE ;
+
    done:
       PD_TRACE_EXITRC( SDB__RTNCONTEXTSHDOFLOB_OPEN, rc ) ;
       return rc ;
    error:
-      if ( NULL != _su )
-      {
-         dmsCB->suUnlock( _su->CSID() ) ;
-         _su = NULL ;
-      }
+      close( cb ) ;
       goto done ;
    }
 
@@ -191,8 +208,8 @@ namespace engine
       PD_TRACE_ENTRY( SDB__RTNCONTEXTSHDOFLOB_WRITE ) ;
       rc = rtnWriteLob( _fullName.c_str(),
                         _oid, sequence,
-                        offset, len,
-                        data, cb, _w, _dpsCB ) ;
+                        offset, len, data, cb,
+                        _w, _dpsCB, _su, _mbContext ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to write lob:%d", rc ) ;
@@ -218,8 +235,8 @@ namespace engine
       PD_TRACE_ENTRY( SDB__RTNCONTEXTSHDOFLOB_UPDATE ) ;
       rc = rtnUpdateLob( _fullName.c_str(),
                          _oid, sequence,
-                         offset, len,
-                         data, cb, _w, _dpsCB ) ;
+                         offset, len, data, cb,
+                         _w, _dpsCB, _su, _mbContext ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to write lob:%d", rc ) ;
@@ -245,19 +262,19 @@ namespace engine
       if ( _isMainShd && SDB_LOB_MODE_R == _mode )
       {
          rc = rtnGetLobMetaData( _fullName.c_str(),
-                                 _oid, cb, _meta ) ;
+                                 _oid, cb, _meta,
+                                 _su, _mbContext ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "failed to get meta data of lob:%d", rc ) ;
             goto error ;
          }
-
       }
-      else if ( SDB_LOB_MODE_CREATEONLY == _mode &&
-           _isMainShd )
+      else if ( SDB_LOB_MODE_CREATEONLY == _mode && _isMainShd )
       {
          rc = rtnCreateLob( _fullName.c_str(),
-                            _oid, cb, _w, _dpsCB ) ;
+                            _oid, cb, _w, _dpsCB,
+                            _su, _mbContext ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "failed to create lob:%d", rc ) ;
@@ -268,7 +285,8 @@ namespace engine
       {
          rc = rtnQueryAndInvalidateLob( _fullName.c_str(),
                                         _oid, cb, _w,
-                                        _dpsCB, _meta ) ;
+                                        _dpsCB, _meta,
+                                        _su, _mbContext ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "failed to invalidate lob:%d", rc ) ;
@@ -325,7 +343,8 @@ namespace engine
          rc = rtnReadLob( _fullName.c_str(),
                           _oid, t.columns.sequence,
                           t.columns.offset, t.columns.len,
-                          cb, dataOfTuple, onceRead ) ;
+                          cb, dataOfTuple, onceRead,
+                          _su, _mbContext ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "failed to read lob[%s:%d]:%d",
@@ -354,16 +373,28 @@ namespace engine
    {
       return rtnRemoveLobPiece( _fullName.c_str(),
                                 _oid, sequence, cb,
-                                _w, _dpsCB ) ;
+                                _w, _dpsCB, _su, _mbContext ) ;
    }
 
    INT32 _rtnContextShdOfLob::close( _pmdEDUCB *cb )
    {
+      _isOpened = FALSE ;
       _closeWithException = FALSE ;
-      if ( NULL != _su )
+
+      if ( _mbContext && _su )
       {
-         sdbGetDMSCB()->suUnlock( _su->CSID() ) ;
+         _su->data()->releaseMBContext( _mbContext ) ;
+         _mbContext = NULL ;
+      }
+      if ( _su && _dmsCB )
+      {
+         _dmsCB->suUnlock( _su->CSID() ) ;
          _su = NULL ;
+      }
+      if ( _writeDMS )
+      {
+         _dmsCB->writeDown( cb ) ;
+         _writeDMS = FALSE ;
       }
       return SDB_OK ; 
    }
@@ -373,7 +404,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNCONTEXTSHDOFLOB__ROLLBACK ) ;
-      UINT64 failedNum = 0 ;
+      UINT64 sucNum = 0 ;
       std::set<UINT32>::reverse_iterator itr = _written.rbegin() ;
       for ( ; itr != _written.rend(); ++itr )
       {
@@ -385,20 +416,27 @@ namespace engine
 
          rc = rtnRemoveLobPiece( _fullName.c_str(),
                                  _oid, *itr, cb,
-                                 _w, _dpsCB ) ;
+                                 _w, _dpsCB, _su, _mbContext ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "failed to remove piece[%d] of lob, rc:%d",
                     *itr, rc ) ;
-            ++failedNum ;
+            if ( SDB_DMS_CS_DELETING == rc )
+            {
+               break ;
+            }
             rc = SDB_OK ;
             /// do not goto error. try to rollback all pieces.
+         }
+         else
+         {
+            ++sucNum ;
          }
       }
 
       PD_LOG( PDEVENT, "rollback[%s]: we removed %d pieces, failed:%d",
               _oid.str().c_str(),
-              _written.size(), failedNum ) ;
+              _written.size(),  _written.size() - sucNum ) ;
       _written.clear() ;
 
       PD_TRACE_EXITRC( SDB__RTNCONTEXTSHDOFLOB__ROLLBACK, rc ) ;

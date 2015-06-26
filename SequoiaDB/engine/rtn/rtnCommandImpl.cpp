@@ -1513,7 +1513,7 @@ namespace engine
       {
          if ( rtnCB->preDelContext( pCollectionSpace ) > 0 )
          {
-            ossSleep( 200 ) ;
+            ossSleep( 300 ) ;
          }
 
          rc = dmsCB->dropCollectionSpaceP1( pCollectionSpace, cb, dpsCB ) ;

@@ -38,6 +38,10 @@
 
 namespace engine
 {
+   class _dmsMBContext ;
+   class _dmsStorageUnit ;
+   class _SDB_DMSCB ;
+
    class _rtnContextShdOfLob : public _rtnContextBase
    {
    public:
@@ -118,20 +122,25 @@ namespace engine
       INT32 _extendBuf( UINT32 len ) ;
 
    private:
-      std::string _fullName ;
-      bson::OID _oid ;
-      BSONObj _metaObj ;
-      INT32 _mode ;
-      BOOLEAN _isMainShd ;
-      SINT16 _w ;
-      SINT32 _version ;
-      _dmsLobMeta _meta ;
-      SDB_DPSCB *_dpsCB ;
-      BOOLEAN _closeWithException ;
-      CHAR *_buf ;
-      UINT32 _bufLen ;
+      std::string    _fullName ;
+      bson::OID      _oid ;
+      BSONObj        _metaObj ;
+      INT32          _mode ;
+      BOOLEAN        _isMainShd ;
+      SINT16         _w ;
+      SINT32         _version ;
+      _dmsLobMeta    _meta ;
+      SDB_DPSCB      *_dpsCB ;
+      BOOLEAN        _closeWithException ;
+      CHAR           *_buf ;
+      UINT32         _bufLen ;
       std::set<UINT32> _written ;
-      _dmsStorageUnit *_su ;
+
+      _dmsStorageUnit   *_su ;
+      _dmsMBContext     *_mbContext ;
+      _SDB_DMSCB        *_dmsCB ;
+      BOOLEAN           _writeDMS ;
+
    } ;
    typedef class _rtnContextShdOfLob rtnContextShdOfLob ;
 }

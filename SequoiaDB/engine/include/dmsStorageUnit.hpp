@@ -109,9 +109,22 @@ namespace engine
          INT32       getLobPageSize() const { return _storageInfo._lobdPageSize ; }
          const CHAR* CSName() const { return _storageInfo._suName ; }
          UINT32      CSSequence() const { return _storageInfo._sequence ; }
-         UINT32      LogicalCSID() const { return _pDataSu->logicalID() ; }
-         dmsStorageUnitID CSID() const { return _pDataSu->CSID() ; }
-         void        setDeletingCS( BOOLEAN delCS ) { _pDataSu->setDeletingCS( delCS ) ; }
+         UINT32      LogicalCSID() const
+         {
+            return _pDataSu ? _pDataSu->logicalID() : DMS_INVALID_LOGICCSID ;
+         }
+         dmsStorageUnitID CSID() const
+         {
+            return _pDataSu ? _pDataSu->CSID() : DMS_INVALID_SUID ;
+         }
+         void        setDeletingCS( BOOLEAN delCS )
+         {
+            if ( _pDataSu ) { _pDataSu->setDeletingCS( delCS ) ; }
+         }
+         BOOLEAN     isDeleting() const
+         {
+            return _pDataSu ? _pDataSu->isDeleting() : FALSE ;
+         }
 
          INT64       totalSize ( UINT32 type = DMS_SU_ALL ) const ;
          INT64       totalDataPages( UINT32 type = DMS_SU_ALL ) const ;

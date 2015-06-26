@@ -593,7 +593,7 @@ namespace engine
       {
          if ( rtnCB->preDelContext( pCollectionSpace ) > 0 )
          {
-            ossSleep( 200 ) ;
+            ossSleep( 300 ) ;
          }
 
          if ( dropFile )
@@ -721,7 +721,7 @@ namespace engine
 
    retry:
       rc = dmsCB->nameToSUAndLock ( pCollectionSpaceName, suID,
-                                       ppsu, lockType, millisec ) ;
+                                    ppsu, lockType, millisec ) ;
       if ( SDB_OK == rc )
       {
          goto done ;

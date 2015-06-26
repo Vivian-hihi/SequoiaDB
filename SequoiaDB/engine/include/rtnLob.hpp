@@ -79,12 +79,16 @@ namespace engine
                        const bson::OID &oid,
                        pmdEDUCB *cb,
                        SINT16 w,
-                       SDB_DPSCB *dpsCB ) ;
+                       SDB_DPSCB *dpsCB,
+                       dmsStorageUnit *su = NULL,
+                       dmsMBContext *mbContext = NULL ) ;
 
    INT32 rtnGetLobMetaData( const CHAR *fullName,
                             const bson::OID &oid,
                             pmdEDUCB *cb,
-                            dmsLobMeta &meta ) ;
+                            dmsLobMeta &meta,
+                            dmsStorageUnit *su = NULL,
+                            dmsMBContext *mbContext = NULL ) ;
 
    INT32 rtnWriteLob( const CHAR *fullName,
                       const bson::OID &oid,
@@ -94,7 +98,9 @@ namespace engine
                       const CHAR *data,
                       pmdEDUCB *cb,
                       SINT16 w,
-                      SDB_DPSCB *dpsCB ) ;
+                      SDB_DPSCB *dpsCB,
+                      dmsStorageUnit *su = NULL,
+                      dmsMBContext *mbContext = NULL ) ;
 
    INT32 rtnUpdateLob( const CHAR *fullName,
                        const bson::OID &oid,
@@ -104,7 +110,9 @@ namespace engine
                        const CHAR *data,
                        pmdEDUCB *cb,
                        SINT16 w,
-                       SDB_DPSCB *dpsCB ) ;
+                       SDB_DPSCB *dpsCB,
+                       dmsStorageUnit *su = NULL,
+                       dmsMBContext *mbContext = NULL ) ;
 
    INT32 rtnReadLob( const CHAR *fullName,
                      const bson::OID &oid,
@@ -113,7 +121,9 @@ namespace engine
                      UINT32 len,
                      pmdEDUCB *cb,
                      CHAR *data,
-                     UINT32 &read ) ;
+                     UINT32 &read,
+                     dmsStorageUnit *su = NULL,
+                     dmsMBContext *mbContext = NULL ) ;
                       
 
    INT32 rtnCloseLob( const CHAR *fullName,
@@ -121,21 +131,27 @@ namespace engine
                       const dmsLobMeta &meta,
                       pmdEDUCB *cb,
                       SINT16 w,
-                      SDB_DPSCB *dpsCB ) ;
+                      SDB_DPSCB *dpsCB,
+                      dmsStorageUnit *su = NULL,
+                      dmsMBContext *mbContext = NULL ) ;
 
    INT32 rtnRemoveLobPiece( const CHAR *fullName,
                             const bson::OID &oid,
                             UINT32 sequence,
                             pmdEDUCB *cb,
                             SINT16 w,
-                            SDB_DPSCB *dpsCB ) ;
+                            SDB_DPSCB *dpsCB,
+                            dmsStorageUnit *su = NULL,
+                            dmsMBContext *mbContext = NULL ) ;
 
    INT32 rtnQueryAndInvalidateLob( const CHAR *fullName,
                                    const bson::OID &oid,
                                    pmdEDUCB *cb,
                                    SINT16 w,
                                    SDB_DPSCB *dpsCB,
-                                   dmsLobMeta &meta ) ;
+                                   dmsLobMeta &meta,
+                                   dmsStorageUnit *su = NULL,
+                                   dmsMBContext *mbContext = NULL ) ;
 
 
 }

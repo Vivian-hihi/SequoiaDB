@@ -41,6 +41,7 @@ namespace engine
    class _dmsMBContext ;
    class _dmsStorageUnit ;
    class _dpsLogWrapper ;
+   class _SDB_DMSCB ;
 
    class _rtnLocalLobStream : public rtnLobStream
    {
@@ -88,14 +89,21 @@ namespace engine
       virtual INT32 _removev( const RTN_LOB_TUPLES &tuples,
                               _pmdEDUCB *cb ) ;
 
-      virtual INT32 _close( _pmdEDUCB *cb ) { return SDB_OK ;}
+      virtual INT32 _close( _pmdEDUCB *cb ) ;
 
       INT32 _read( const _rtnLobTuple &tuple,
                    _pmdEDUCB *cb,
                    CHAR *buf ) ;
+
    private:
-      _dmsMBContext *_mbContext ;
-      _dmsStorageUnit *_su ;
+      void        _closeInner( _pmdEDUCB *cb ) ;
+
+   private:
+      _dmsMBContext     *_mbContext ;
+      _dmsStorageUnit   *_su ;
+      _SDB_DMSCB        *_dmsCB ;
+      BOOLEAN           _writeDMS ;
+
    } ;
    typedef class _rtnLocalLobStream rtnLocalLobStream ;
 }

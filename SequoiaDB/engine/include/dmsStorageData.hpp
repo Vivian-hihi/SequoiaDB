@@ -579,6 +579,7 @@ namespace engine
          dmsStorageUnitID CSID () const { return _CSID ; }
 
          void  setDeletingCS( BOOLEAN delCS ) { _deletingCS = delCS ; }
+         BOOLEAN isDeleting() const { return _deletingCS ; }
 
          OSS_INLINE INT32  getMBContext( dmsMBContext **pContext, UINT16 mbID,
                                          UINT32 clLID, INT32 lockType = -1 );

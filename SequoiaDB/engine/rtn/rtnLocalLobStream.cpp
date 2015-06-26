@@ -42,23 +42,34 @@ namespace engine
 {
    _rtnLocalLobStream::_rtnLocalLobStream()
    :_mbContext( NULL ),
-    _su( NULL )
+    _su( NULL ),
+    _dmsCB( NULL ),
+    _writeDMS( FALSE )
    {
-
    }
 
    _rtnLocalLobStream::~_rtnLocalLobStream()
+   {
+      pmdEDUCB *cb = pmdGetThreadEDUCB() ;
+      _closeInner( cb ) ;
+   }
+
+   void _rtnLocalLobStream::_closeInner( _pmdEDUCB *cb )
    {
       if ( _mbContext && _su )
       {
          _su->data()->releaseMBContext( _mbContext ) ;
          _mbContext = NULL ;
       }
-
-      if ( _su )
+      if ( _su && _dmsCB )
       {
          sdbGetDMSCB()->suUnlock ( _su->CSID() ) ;
          _su = NULL ;
+      }
+      if ( _writeDMS )
+      {
+         _dmsCB->writeDown( cb ) ;
+         _writeDMS = FALSE ;
       }
    }
 
@@ -70,11 +81,21 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNLOCALLOBSTREAM__PREPARE ) ;
-      SDB_DMSCB *dmsCB = sdbGetDMSCB() ;
       dmsStorageUnitID suID = DMS_INVALID_CS ;
       const CHAR *clName = NULL ;
-      
-      rc = rtnResolveCollectionNameAndLock( fullName, dmsCB,
+
+      if ( SDB_LOB_MODE_R != mode )
+      {
+         rc = _dmsCB->writable( cb ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "database is not writable, rc = %d", rc ) ;
+            goto error ;
+         }
+         _writeDMS = TRUE ;
+      }
+
+      rc = rtnResolveCollectionNameAndLock( fullName, _dmsCB,
                                             &_su, &clName, suID ) ;
       if ( SDB_OK != rc )
       {
@@ -90,21 +111,12 @@ namespace engine
                  clName ) ;
          goto error ;
       }
+
    done:
       PD_TRACE_EXITRC( SDB_RTNLOCALLOBSTREAM__PREPARE, rc ) ;
       return rc ;
    error:
-      if ( _mbContext && _su )
-      {
-         _su->data()->releaseMBContext( _mbContext ) ;
-         _mbContext = NULL ;
-      }
-
-      if ( _su )
-      {
-         dmsCB->suUnlock ( _su->CSID() ) ;
-         _su = NULL ;
-      }
+      _closeInner( cb ) ;
       goto done ;
    }
 
@@ -149,13 +161,9 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNLOCALLOBSTREAM__ENSURELOB ) ;
-      BOOLEAN lockMbBlock = FALSE ;
-      BOOLEAN lockDms = FALSE ;
-      SDB_DMSCB *dmsCB = sdbGetDMSCB() ;
 
       rc = _mbContext->mbLock( EXCLUSIVE ) ;
       PD_RC_CHECK( rc, PDERROR, "dms mb context lock failed, rc: %d", rc ) ;
-      lockMbBlock = TRUE ;
 
       rc = _su->lob()->getLobMeta( getOID(), _mbContext,
                                    cb, meta ) ;
@@ -177,14 +185,6 @@ namespace engine
       else
       {
          rc = SDB_OK ;
-         rc = dmsCB->writable( cb ) ;
-         if ( SDB_OK !=rc )
-         {
-            PD_LOG ( PDERROR, "database is not writable, rc = %d", rc ) ;
-            goto error ;
-         }
-         lockDms = TRUE ;
-
          if ( !dmsAccessAndFlagCompatiblity ( _mbContext->mb()->_flag,
                                               DMS_ACCESS_TYPE_INSERT ) )
          {
@@ -207,14 +207,8 @@ namespace engine
       }
 
    done:
-      if ( lockMbBlock )
-      {
-         _mbContext->mbUnlock() ;
-      }
-      if ( lockDms )
-      {
-         dmsCB->writeDown( cb ) ;
-      }
+      _mbContext->mbUnlock() ;
+
       PD_TRACE_EXITRC( SDB_RTNLOCALLOBSTREAM__ENSURELOB, rc ) ;
       return rc ;
    error:
@@ -228,17 +222,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNLOCALLOBSTREAM__COMPLETELOB ) ;
       SDB_ASSERT( meta.isDone(), "impossible" ) ;
-      SDB_DMSCB *dmsCB = sdbGetDMSCB() ;
       dmsLobRecord record ;
-      BOOLEAN lockDms = FALSE ;
-
-      rc = dmsCB->writable( cb ) ;
-      if ( SDB_OK !=rc )
-      {
-         PD_LOG ( PDERROR, "database is not writable, rc = %d", rc ) ;
-         goto error ;
-      }
-      lockDms = TRUE ;
 
       record.set( &getOID(), DMS_LOB_META_SEQUENCE, 0,
                   sizeof( dmsLobMeta ), ( const CHAR * )( &meta ) ) ;
@@ -249,11 +233,8 @@ namespace engine
          PD_LOG( PDERROR, "failed to write to lob:%d", rc ) ;
          goto error ;
       }
+
    done:
-      if ( lockDms )
-      {
-         dmsCB->writeDown( cb );
-      }
       PD_TRACE_EXITRC( SDB_RTNLOCALLOBSTREAM__COMPLETELOB, rc ) ;
       return rc ;
    error:
@@ -304,17 +285,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNLOCALLOBSTREAM__WRITE ) ;
-      SDB_DMSCB *dmsCB = sdbGetDMSCB() ;
-      BOOLEAN lockDms = FALSE ;
       _dmsLobRecord record ;
-
-      rc = dmsCB->writable( cb ) ;
-      if ( SDB_OK !=rc )
-      {
-         PD_LOG ( PDERROR, "database is not writable, rc = %d", rc ) ;
-         goto error ;
-      }
-      lockDms = TRUE ;
 
       record.set( &getOID(),
                   tuple.tuple.columns.sequence,
@@ -330,11 +301,8 @@ namespace engine
                  record._sequence, rc ) ;
          goto error ;
       }
+
    done:
-      if ( lockDms )
-      {
-         dmsCB->writeDown( cb ) ;
-      }
       PD_TRACE_EXITRC( SDB_RTNLOCALLOBSTREAM__WRITE, rc ) ;
       return rc ;
    error:
@@ -436,19 +404,9 @@ namespace engine
       PD_TRACE_ENTRY( SDB_RTNLOCALLOBSTREAM__ROLLBACK ) ;
       dmsLobRecord piece ;
       INT32 num = 0 ;
-      SDB_DMSCB *dmsCB = sdbGetDMSCB() ;
-      BOOLEAN lockDms = FALSE ;
-
-      rc = dmsCB->writable( cb ) ;
-      if ( SDB_OK !=rc )
-      {
-         PD_LOG ( PDERROR, "database is not writable, rc = %d", rc ) ;
-         goto error ;
-      }
-      lockDms = TRUE ;
 
       RTN_LOB_GET_SEQUENCE_NUM( curOffset(), _getPageSz(), num ) ;
-      
+
       while ( 0 < num )
       {
          --num ;
@@ -457,21 +415,19 @@ namespace engine
                                   _getDPSCB() ) ;
          if ( SDB_OK != rc )
          {
-            PD_LOG( PDERROR, "failed to remove lob[%s],"
+            PD_LOG( PDERROR, "Failed to remove lob[%s],"
                     "sequence:%d, rc:%d", piece._oid->str().c_str(),
                     piece._sequence, rc ) ;
             if ( SDB_LOB_SEQUENCE_NOT_EXIST != rc )
             {
+               /// include SDB_DMS_CS_DELETING
                goto error ;
             }
             rc = SDB_OK ;
          }
       }
+
    done:
-      if ( lockDms )
-      {
-         dmsCB->writeDown( cb ) ;
-      }
       PD_TRACE_EXITRC( SDB_RTNLOCALLOBSTREAM__ROLLBACK, rc ) ;
       return rc ;
    error:
@@ -498,23 +454,19 @@ namespace engine
       goto done ;
    }
 
+   INT32 _rtnLocalLobStream::_close( _pmdEDUCB *cb )
+   {
+      _closeInner( cb ) ;
+      return SDB_OK ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNLOCALLOBSTREAM__REMOVEV, "_rtnLocalLobStream::_removev" )
    INT32 _rtnLocalLobStream::_removev( const RTN_LOB_TUPLES &tuples,
                                        _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNLOCALLOBSTREAM__REMOVEV ) ;
-      SDB_DMSCB *dmsCB = sdbGetDMSCB() ;
-      BOOLEAN lockDms = FALSE ;
       dmsLobRecord record ;
-
-      rc = dmsCB->writable( cb ) ;
-      if ( SDB_OK !=rc )
-      {
-         PD_LOG ( PDERROR, "database is not writable, rc = %d", rc ) ;
-         goto error ;
-      }
-      lockDms = TRUE ;
 
       for ( RTN_LOB_TUPLES::const_iterator itr = tuples.begin() ;
             itr != tuples.end() ;
@@ -535,15 +487,13 @@ namespace engine
             goto error ;
          }
       }
+
    done:
-      if ( lockDms )
-      {
-         dmsCB->writeDown( cb ) ;
-      }
       PD_TRACE_EXITRC( SDB_RTNLOCALLOBSTREAM__REMOVEV, rc ) ;
       return rc ;
    error:
       goto done ;
    }
+
 }
 

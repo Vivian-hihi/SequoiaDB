@@ -45,10 +45,12 @@ namespace engine
    class _rtnLobEnv : public SDBObject
    {
       public :
-         _rtnLobEnv( const CHAR *fullName, _pmdEDUCB *cb ) ;
+         _rtnLobEnv( const CHAR *fullName, _pmdEDUCB *cb,
+                     dmsStorageUnit *su = NULL,
+                     dmsMBContext *mbContext = NULL ) ;
          ~_rtnLobEnv() ;
 
-         INT32 prepareOpr( INT32 lockType ) ;
+         INT32 prepareOpr( INT32 lockType, BOOLEAN isWrite = TRUE ) ;
          INT32 prepareRead() ;
 
          void  oprDone() ;
@@ -66,11 +68,14 @@ namespace engine
          dmsMBContext            *_mbContext ;
 
          BOOLEAN                 _lockedDMS ;
+         BOOLEAN                 _ownSU ;
+         BOOLEAN                 _ownMB ;
 
    } ;
    typedef _rtnLobEnv rtnLobEnv ;
 
-   _rtnLobEnv::_rtnLobEnv( const CHAR *fullName, _pmdEDUCB *cb )
+   _rtnLobEnv::_rtnLobEnv( const CHAR *fullName, _pmdEDUCB *cb,
+                           dmsStorageUnit *su, dmsMBContext *mbContext )
    {
       _fullName   = fullName ;
       _pEDUCB     = cb ;
@@ -80,6 +85,17 @@ namespace engine
       _mbContext  = NULL ;
 
       _lockedDMS  = FALSE ;
+      _ownSU      = FALSE ;
+      _ownMB      = FALSE ;
+
+      if ( su )
+      {
+         _su = su ;
+         if ( mbContext )
+         {
+            _mbContext = mbContext ;
+         }
+      }
    }
 
    _rtnLobEnv::~_rtnLobEnv()
@@ -87,7 +103,7 @@ namespace engine
       oprDone() ;
    }
 
-   INT32 _rtnLobEnv::prepareOpr( INT32 lockType )
+   INT32 _rtnLobEnv::prepareOpr( INT32 lockType, BOOLEAN isWrite )
    {
       INT32 rc = SDB_OK ;
       const CHAR *clName = NULL ;
@@ -95,29 +111,54 @@ namespace engine
 
       oprDone() ;
 
-      rc = _dmsCB->writable( _pEDUCB ) ;
-      if ( SDB_OK !=rc )
+      if ( isWrite )
       {
-         PD_LOG ( PDERROR, "database is not writable, rc = %d", rc ) ;
-         goto error ;
-      }
-      _lockedDMS = TRUE ;
-
-      rc = rtnResolveCollectionNameAndLock( _fullName, _dmsCB,
-                                            &_su, &clName, _suID ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to resolve collection:%s, rc:%d",
-                 _fullName, rc ) ;
-         goto error ;
+         rc = _dmsCB->writable( _pEDUCB ) ;
+         if ( SDB_OK !=rc )
+         {
+            PD_LOG ( PDERROR, "database is not writable, rc = %d", rc ) ;
+            goto error ;
+         }
+         _lockedDMS = TRUE ;
       }
 
-      rc = _su->data()->getMBContext( &_mbContext, clName, lockType ) ;
-      if ( SDB_OK != rc )
+      if ( NULL == _su )
       {
-         PD_LOG( PDERROR, "failed to resolve collection name:%s, rc:%d",
-                 clName, rc ) ;
-         goto error ;
+         _ownSU = TRUE ;
+         rc = rtnResolveCollectionNameAndLock( _fullName, _dmsCB,
+                                               &_su, &clName, _suID ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to resolve collection:%s, rc:%d",
+                    _fullName, rc ) ;
+            goto error ;
+         }
+      }
+      else
+      {
+         _suID = _su->CSID() ;
+      }
+
+      if ( NULL == _mbContext )
+      {
+         _ownMB = TRUE ;
+         rc = _su->data()->getMBContext( &_mbContext, clName, lockType ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to resolve collection name:%s, rc:%d",
+                    clName, rc ) ;
+            goto error ;
+         }
+      }
+      else if ( -1 != lockType )
+      {
+         rc = _mbContext->mbLock( lockType ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "Failed to lock collection context, rc: %d",
+                    rc ) ;
+            goto error ;
+         }
       }
 
    done:
@@ -131,14 +172,26 @@ namespace engine
    {
       if ( _mbContext && _su )
       {
-         _su->data()->releaseMBContext( _mbContext ) ;
-         _mbContext = NULL ;
+         if ( _ownMB )
+         {
+            _su->data()->releaseMBContext( _mbContext ) ;
+            _mbContext = NULL ;
+            _ownMB = FALSE ;
+         }
+         else
+         {
+            _mbContext->pause() ;
+         }
       }
       if ( DMS_INVALID_CS != _suID && _dmsCB )
       {
-         _dmsCB->suUnlock( _suID, SHARED ) ;
-         _su = NULL ;
-         _suID = DMS_INVALID_CS ;
+         if ( _ownSU )
+         {
+            _dmsCB->suUnlock( _suID, SHARED ) ;
+            _su = NULL ;
+            _suID = DMS_INVALID_CS ;
+            _ownSU = FALSE ;
+         }
       }
       if ( _lockedDMS )
       {
@@ -509,13 +562,15 @@ namespace engine
                        const bson::OID &oid,
                        pmdEDUCB *cb,
                        SINT16 w,
-                       SDB_DPSCB *dpsCB )
+                       SDB_DPSCB *dpsCB,
+                       dmsStorageUnit *su,
+                       dmsMBContext *mbContext )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNCREATELOB ) ;
       SDB_ASSERT( NULL != fullName && NULL != cb, "can not be null" ) ;
       _dmsLobMeta meta ;
-      rtnLobEnv lobEnv( fullName, cb ) ;
+      rtnLobEnv lobEnv( fullName, cb, su, mbContext ) ;
 
       rc = lobEnv.prepareOpr( EXCLUSIVE ) ;
       if ( SDB_OK != rc )
@@ -579,13 +634,15 @@ namespace engine
                       const CHAR *data,
                       pmdEDUCB *cb,
                       SINT16 w,
-                      SDB_DPSCB *dpsCB )
+                      SDB_DPSCB *dpsCB,
+                      dmsStorageUnit *su,
+                      dmsMBContext *mbContext )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNWRITELOB2 ) ;
       SDB_ASSERT( NULL != fullName && NULL != cb, "can not be null" ) ;
       _dmsLobRecord record ;
-      rtnLobEnv lobEnv( fullName, cb ) ;
+      rtnLobEnv lobEnv( fullName, cb, su, mbContext ) ;
 
       rc = lobEnv.prepareOpr( -1 ) ;
       if ( SDB_OK != rc )
@@ -622,12 +679,14 @@ namespace engine
                       const dmsLobMeta &meta,
                       pmdEDUCB *cb,
                       SINT16 w,
-                      SDB_DPSCB *dpsCB )
+                      SDB_DPSCB *dpsCB,
+                      dmsStorageUnit *su,
+                      dmsMBContext *mbContext )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNCLOSELOB2 ) ;
       SDB_ASSERT( NULL != fullName && NULL != cb, "can not be null" ) ;
-      rtnLobEnv lobEnv( fullName, cb ) ;
+      rtnLobEnv lobEnv( fullName, cb, su, mbContext ) ;
 
       rc = lobEnv.prepareOpr( -1 ) ;
       if ( SDB_OK != rc )
@@ -660,14 +719,16 @@ namespace engine
    INT32 rtnGetLobMetaData( const CHAR *fullName,
                             const bson::OID &oid,
                             pmdEDUCB *cb,
-                            dmsLobMeta &meta )
+                            dmsLobMeta &meta,
+                            dmsStorageUnit *su,
+                            dmsMBContext *mbContext )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNGETLOBMETADATA2 ) ;
       _dmsLobRecord record ;
-      rtnLobEnv lobEnv( fullName, cb ) ;
+      rtnLobEnv lobEnv( fullName, cb, su, mbContext ) ;
 
-      rc = lobEnv.prepareOpr( -1 ) ;
+      rc = lobEnv.prepareOpr( -1, FALSE ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to prepare to read lob:%d", rc ) ;
@@ -707,15 +768,17 @@ namespace engine
                      UINT32 len,
                      pmdEDUCB *cb,
                      CHAR *data,
-                     UINT32 &read )
+                     UINT32 &read,
+                     dmsStorageUnit *su,
+                     dmsMBContext *mbContext )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNREADLOB2 ) ;
       _dmsLobRecord record ;
       const CHAR *np = NULL ;
-      rtnLobEnv lobEnv( fullName, cb ) ;
+      rtnLobEnv lobEnv( fullName, cb, su, mbContext ) ;
 
-      rc = lobEnv.prepareOpr( -1 ) ;
+      rc = lobEnv.prepareOpr( -1, FALSE ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to prepare to read lob:%d", rc ) ;
@@ -744,12 +807,14 @@ namespace engine
                             UINT32 sequence,
                             pmdEDUCB *cb,
                             SINT16 w,
-                            SDB_DPSCB *dpsCB )
+                            SDB_DPSCB *dpsCB,
+                            dmsStorageUnit *su,
+                            dmsMBContext *mbContext )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNREMOVELOBPIECE ) ;
       _dmsLobRecord record ;
-      rtnLobEnv lobEnv( fullName, cb ) ;
+      rtnLobEnv lobEnv( fullName, cb, su, mbContext ) ;
 
       rc = lobEnv.prepareOpr( -1 ) ;
       if ( SDB_OK != rc )
@@ -787,12 +852,14 @@ namespace engine
                                    pmdEDUCB *cb,
                                    SINT16 w,
                                    SDB_DPSCB *dpsCB,
-                                   dmsLobMeta &meta )
+                                   dmsLobMeta &meta,
+                                   dmsStorageUnit *su,
+                                   dmsMBContext *mbContext )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNQUERYANDINVALIDAGELOB ) ;
       dmsLobMeta lobMeta ;
-      rtnLobEnv lobEnv( fullName, cb ) ;
+      rtnLobEnv lobEnv( fullName, cb, su, mbContext ) ;
 
       rc = lobEnv.prepareOpr( EXCLUSIVE ) ;
       if ( SDB_OK != rc )
@@ -844,13 +911,15 @@ namespace engine
                        const CHAR *data,
                        pmdEDUCB *cb,
                        SINT16 w,
-                       SDB_DPSCB *dpsCB )
+                       SDB_DPSCB *dpsCB,
+                       dmsStorageUnit *su,
+                       dmsMBContext *mbContext  )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNUPDATELOB ) ;
       SDB_ASSERT( NULL != fullName && NULL != cb, "can not be null" ) ;
       _dmsLobRecord record ;
-      rtnLobEnv lobEnv( fullName, cb ) ;
+      rtnLobEnv lobEnv( fullName, cb, su, mbContext ) ;
 
       rc = lobEnv.prepareOpr( -1 ) ;
       if ( SDB_OK != rc )

@@ -364,7 +364,7 @@ namespace engine
       // now let's lock the collectionspace, if we can't lock it, let's return
       // false. we shouldn't wait forever
       //if ( !_latchVec[suID]->try_get() )
-      if ( SDB_OK != _latchVec[suID]->lock_w( OSS_ONE_SEC ) )
+      if ( SDB_OK != _latchVec[suID]->lock_w( 1 ) )
       {
          rc = SDB_LOCK_FAILED ;
          goto error ;
@@ -490,7 +490,7 @@ namespace engine
       // now let's lock the collectionspace, if we can't lock it, let's return
       // false. we shouldn't wait forever
       //if ( !_latchVec[suID]->try_get() )
-      if ( SDB_OK != _latchVec[suID]->lock_w( OSS_ONE_SEC ) )
+      if ( SDB_OK != _latchVec[suID]->lock_w( 1 ) )
       {
          rc = SDB_LOCK_FAILED ;
          goto error ;
@@ -925,7 +925,14 @@ namespace engine
                                    millisec ) ;
       if ( SDB_OK == rc )
       {
-         *su = cscb->_su;
+         if ( cscb->_su->isDeleting() )
+         {
+            rc = SDB_DMS_CS_DELETING ;
+         }
+         else
+         {
+            *su = cscb->_su ;
+         }
       }
       return rc ;
    }
@@ -1157,8 +1164,16 @@ namespace engine
          // release the DMSCB latch before attempting to drop the collectionspace
          _mutex.release_shared() ;
          rc = _CSCBNameRemoveP1( pName, cb, dpsCB ) ;
-         PD_RC_CHECK( rc, PDERROR,
-                     "failed to drop cs(rc=%d)", rc );
+
+         if ( rc )
+         {
+            if ( SDB_LOCK_FAILED != rc )
+            {
+               PD_LOG( PDERROR, "Failed to drop cs[%s], rc: %d",
+                       pName, rc ) ;
+            }
+            goto error ;
+         }
       }
    done :
       PD_TRACE_EXITRC ( SDB__SDB_DMSCB_DROPCSP1, rc );
