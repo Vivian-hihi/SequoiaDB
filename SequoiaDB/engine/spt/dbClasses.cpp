@@ -3642,12 +3642,6 @@ static JSBool rg_attach( JSContext *cx, uintN argc, jsval *vp )
                                "SS/o", &jsHost, &jsSvc, &jsOption ) ;
    REPORT ( ret, "RG.attach(): wrong arguments" ) ;
 
-   if ( NULL != jsOption )
-   {
-      ret = objToBson ( cx , jsOption , &options ) ;
-      VERIFY ( ret ) ;
-   }
-
    host = (CHAR *) JS_EncodeString ( cx , jsHost ) ;
    VERIFY ( host ) ;
 
