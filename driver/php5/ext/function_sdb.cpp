@@ -804,6 +804,33 @@ INT32 createIndex ( sdbCollection *collection,
    return rc ;
 }
 
+INT32 createIndexOffline( sdbCollection *collection,
+                          const CHAR *indexDef,
+                          const CHAR *pName,
+                          BOOLEAN isUnique,
+                          BOOLEAN isEnforced )
+{
+   INT32 rc = SDB_OK ;
+   BSONObj indexDefBson ;
+
+   if ( indexDef )
+   {
+      rc = fromjson ( indexDef, indexDefBson ) ;
+      if ( rc )
+         return rc ;
+   }
+   else
+   {
+      return SDB_INVALIDARG;
+   }
+   rc = collection->createIndexOffline( indexDefBson,
+                                        pName,
+                                        isUnique,
+                                        isEnforced ) ;
+
+   return rc ;
+}
+
 INT32 getIndex ( sdbCollection *collection,
                  sdbCursor **query,
                  const CHAR *pName )

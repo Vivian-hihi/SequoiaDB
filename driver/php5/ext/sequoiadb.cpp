@@ -292,28 +292,29 @@ const zend_function_entry sequoiadb_cs_functions[] = {
 
 const zend_function_entry sequoiadb_collection_functions[] = {
 
-   PHP_ME ( SequoiaCL, __construct      , NULL, ZEND_ACC_PUBLIC )
-   PHP_ME ( SequoiaCL, insert           , NULL, ZEND_ACC_PUBLIC )
-   PHP_ME ( SequoiaCL, update           , NULL, ZEND_ACC_PUBLIC )
-   PHP_ME ( SequoiaCL, remove           , NULL, ZEND_ACC_PUBLIC )
-   PHP_ME ( SequoiaCL, drop             , NULL, ZEND_ACC_PUBLIC )
-   PHP_ME ( SequoiaCL, find             , NULL, ZEND_ACC_PUBLIC )
-   PHP_ME ( SequoiaCL, findAndUpdate    , NULL, ZEND_ACC_PUBLIC )
-   PHP_ME ( SequoiaCL, findAndRemove    , NULL, ZEND_ACC_PUBLIC )
-   PHP_ME ( SequoiaCL, aggregate        , NULL, ZEND_ACC_PUBLIC )
+   PHP_ME ( SequoiaCL, __construct       , NULL, ZEND_ACC_PUBLIC )
+   PHP_ME ( SequoiaCL, insert            , NULL, ZEND_ACC_PUBLIC )
+   PHP_ME ( SequoiaCL, update            , NULL, ZEND_ACC_PUBLIC )
+   PHP_ME ( SequoiaCL, remove            , NULL, ZEND_ACC_PUBLIC )
+   PHP_ME ( SequoiaCL, drop              , NULL, ZEND_ACC_PUBLIC )
+   PHP_ME ( SequoiaCL, find              , NULL, ZEND_ACC_PUBLIC )
+   PHP_ME ( SequoiaCL, findAndUpdate     , NULL, ZEND_ACC_PUBLIC )
+   PHP_ME ( SequoiaCL, findAndRemove     , NULL, ZEND_ACC_PUBLIC )
+   PHP_ME ( SequoiaCL, aggregate         , NULL, ZEND_ACC_PUBLIC )
    //PHP_ME ( SequoiaCL, rename           , NULL, ZEND_ACC_PUBLIC )
-   PHP_ME ( SequoiaCL, createIndex      , NULL, ZEND_ACC_PUBLIC )
-   PHP_ME ( SequoiaCL, getIndex         , NULL, ZEND_ACC_PUBLIC )
-   PHP_ME ( SequoiaCL, deleteIndex      , NULL, ZEND_ACC_PUBLIC )
-   PHP_ME ( SequoiaCL, getCSName        , NULL, ZEND_ACC_PUBLIC )
-   PHP_ME ( SequoiaCL, getCollectionName, NULL, ZEND_ACC_PUBLIC )
-   PHP_ME ( SequoiaCL, getFullName      , NULL, ZEND_ACC_PUBLIC )
-   PHP_ME ( SequoiaCL, count            , NULL, ZEND_ACC_PUBLIC )
-   PHP_ME ( SequoiaCL, __destruct       , NULL, ZEND_ACC_PUBLIC )
-   PHP_ME ( SequoiaCL, split            , NULL, ZEND_ACC_PUBLIC )
-   PHP_ME ( SequoiaCL, truncate         , NULL, ZEND_ACC_PUBLIC )
-   PHP_ME ( SequoiaCL, createIdIndex    , NULL, ZEND_ACC_PUBLIC )
-   PHP_ME ( SequoiaCL, dropIdIndex      , NULL, ZEND_ACC_PUBLIC )
+   PHP_ME ( SequoiaCL, createIndex       , NULL, ZEND_ACC_PUBLIC )
+   PHP_ME ( SequoiaCL, createIndexOffline, NULL, ZEND_ACC_PUBLIC )
+   PHP_ME ( SequoiaCL, getIndex          , NULL, ZEND_ACC_PUBLIC )
+   PHP_ME ( SequoiaCL, deleteIndex       , NULL, ZEND_ACC_PUBLIC )
+   PHP_ME ( SequoiaCL, getCSName         , NULL, ZEND_ACC_PUBLIC )
+   PHP_ME ( SequoiaCL, getCollectionName , NULL, ZEND_ACC_PUBLIC )
+   PHP_ME ( SequoiaCL, getFullName       , NULL, ZEND_ACC_PUBLIC )
+   PHP_ME ( SequoiaCL, count             , NULL, ZEND_ACC_PUBLIC )
+   PHP_ME ( SequoiaCL, __destruct        , NULL, ZEND_ACC_PUBLIC )
+   PHP_ME ( SequoiaCL, split             , NULL, ZEND_ACC_PUBLIC )
+   PHP_ME ( SequoiaCL, truncate          , NULL, ZEND_ACC_PUBLIC )
+   PHP_ME ( SequoiaCL, createIdIndex     , NULL, ZEND_ACC_PUBLIC )
+   PHP_ME ( SequoiaCL, dropIdIndex       , NULL, ZEND_ACC_PUBLIC )
    PHP_FE_END
 };
 
@@ -2336,14 +2337,12 @@ PHP_METHOD ( SequoiaCL, createIndex )
    INT32 rc = SDB_OK ;
    sdbCollection *collection = NULL ;
    CHAR *error = NULL ;
-
    zval *pIndexDef    = NULL ;
    CHAR *indexDef     = NULL ;
    CHAR *pName        = NULL ;
    INT32 pName_len    = 0    ;
    BOOLEAN isUnique   = FALSE ;
    BOOLEAN isEnforced = FALSE ;
-
    if ( zend_parse_parameters ( ZEND_NUM_ARGS () TSRMLS_CC,
                                 "zs|bb",
                                 &pIndexDef,
@@ -2363,15 +2362,55 @@ PHP_METHOD ( SequoiaCL, createIndex )
       PRINTFERROR ( SDB_PHP_DRIVER_INTERNAL_ERROR, error ) ;
       RETURN_ARRAY_STRING ( getThis(), error, 0 ) ;
    }
-
    if ( !php_toJson ( &indexDef, pIndexDef TSRMLS_CC ) )
    {
       SETERROR ( getThis(), SDB_INVALIDARG ) ;
       PRINTFERROR ( SDB_INVALIDARG, error ) ;
       RETURN_ARRAY_STRING ( getThis(), error, 0 ) ;
    }
-
    rc = createIndex ( collection, indexDef, pName, isUnique, isEnforced ) ;
+   SETERROR ( getThis(), rc ) ;
+   PRINTFERROR ( rc, error ) ;
+   RETURN_ARRAY_STRING ( getThis(), error, 0 ) ;
+}
+
+PHP_METHOD ( SequoiaCL, createIndexOffline )
+{
+   INT32 rc = SDB_OK ;
+   sdbCollection *collection = NULL ;
+   CHAR *error = NULL ;
+   zval *pIndexDef    = NULL ;
+   CHAR *indexDef     = NULL ;
+   CHAR *pName        = NULL ;
+   INT32 pName_len    = 0    ;
+   BOOLEAN isUnique   = FALSE ;
+   BOOLEAN isEnforced = FALSE ;
+   if ( zend_parse_parameters ( ZEND_NUM_ARGS () TSRMLS_CC,
+                                "zs|bb",
+                                &pIndexDef,
+                                &pName,
+                                &pName_len,
+                                &isUnique,
+                                &isEnforced ) == FAILURE )
+   {
+      SETERROR ( getThis(), SDB_PHP_DRIVER_INTERNAL_ERROR ) ;
+      PRINTFERROR ( SDB_PHP_DRIVER_INTERNAL_ERROR, error ) ;
+      RETURN_ARRAY_STRING ( getThis(), error, 0 ) ;
+   }
+   GETCLASSFROMZVAL ( getThis(), "_collection", sdbCollection, collection ) ;
+   if ( !collection )
+   {
+      SETERROR ( getThis(), SDB_PHP_DRIVER_INTERNAL_ERROR ) ;
+      PRINTFERROR ( SDB_PHP_DRIVER_INTERNAL_ERROR, error ) ;
+      RETURN_ARRAY_STRING ( getThis(), error, 0 ) ;
+   }
+   if ( !php_toJson ( &indexDef, pIndexDef TSRMLS_CC ) )
+   {
+      SETERROR ( getThis(), SDB_INVALIDARG ) ;
+      PRINTFERROR ( SDB_INVALIDARG, error ) ;
+      RETURN_ARRAY_STRING ( getThis(), error, 0 ) ;
+   }
+   rc = createIndexOffline( collection, indexDef, pName, isUnique, isEnforced ) ;
    SETERROR ( getThis(), rc ) ;
    PRINTFERROR ( rc, error ) ;
    RETURN_ARRAY_STRING ( getThis(), error, 0 ) ;

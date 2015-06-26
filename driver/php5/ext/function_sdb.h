@@ -164,6 +164,12 @@ INT32 createIndex ( sdbCollection *collection,
                     BOOLEAN isUnique,
                     BOOLEAN isEnforced ) ;
 
+INT32 createIndexOffline( sdbCollection *collection,
+                          const CHAR *indexDef,
+                          const CHAR *pName,
+                          BOOLEAN isUnique,
+                          BOOLEAN isEnforced ) ;
+
 INT32 getIndex ( sdbCollection *collection,
                  sdbCursor **query,
                  const CHAR *pName ) ;
