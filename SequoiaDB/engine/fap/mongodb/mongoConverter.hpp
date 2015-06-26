@@ -43,8 +43,6 @@
 #include "commands.hpp"
 #include "msg.hpp"
 
-class command ;
-
 class mongoConverter : public baseConverter
 {
 public:
