@@ -3,7 +3,7 @@
 <head>
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
-<title>SequoiaDB: E:/sequoiadb/SequoiaDB/engine/client/client.h Source File</title>
+<title>SequoiaDB: E:/sequoiadb/client/include/client.h Source File</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -78,7 +78,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="dir_e1038887ada57b707f24258359c63434.html">SequoiaDB</a></li><li class="navelem"><a class="el" href="dir_7900cb3c10b0eab363cdb1242957941a.html">engine</a></li><li class="navelem"><a class="el" href="dir_507bdc6b0bea08371d81259d666e1e2c.html">client</a></li>  </ul>
+<li class="navelem"><a class="el" href="dir_db3a54907829b36871118d03417739cd.html">client</a></li><li class="navelem"><a class="el" href="dir_5c23080e296bbe846f4ed2d01d7b595d.html">include</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
@@ -482,320 +482,320 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="line"><a name="l01144"></a><span class="lineno"> 1144</span>&#160;                                  BOOLEAN isUnique,</div>
 <div class="line"><a name="l01145"></a><span class="lineno"> 1145</span>&#160;                                  BOOLEAN isEnforced ) ;</div>
 <div class="line"><a name="l01146"></a><span class="lineno"> 1146</span>&#160;</div>
-<div class="line"><a name="l01162"></a><span class="lineno"> 1162</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#a0467d0478f23af216b98a92e1c433858" title="Create the index in current collection in offline mode.">sdbCreateIndexOffline</a> ( sdbCollectionHandle cHandle,</div>
-<div class="line"><a name="l01163"></a><span class="lineno"> 1163</span>&#160;                                         bson *indexDef,</div>
-<div class="line"><a name="l01164"></a><span class="lineno"> 1164</span>&#160;                                         <span class="keyword">const</span> CHAR *pIndexName,</div>
-<div class="line"><a name="l01165"></a><span class="lineno"> 1165</span>&#160;                                         BOOLEAN isUnique,</div>
-<div class="line"><a name="l01166"></a><span class="lineno"> 1166</span>&#160;                                         BOOLEAN isEnforced ) ;</div>
-<div class="line"><a name="l01167"></a><span class="lineno"> 1167</span>&#160;</div>
-<div class="line"><a name="l01178"></a><span class="lineno"> 1178</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#ac2b70e43cec2f47e2ee197f22b643cf2" title="Get all of or one of the indexes in current collection.">sdbGetIndexes</a> ( sdbCollectionHandle cHandle,</div>
-<div class="line"><a name="l01179"></a><span class="lineno"> 1179</span>&#160;                                 <span class="keyword">const</span> CHAR *pIndexName,</div>
-<div class="line"><a name="l01180"></a><span class="lineno"> 1180</span>&#160;                                 sdbCursorHandle *handle ) ;</div>
-<div class="line"><a name="l01181"></a><span class="lineno"> 1181</span>&#160;</div>
-<div class="line"><a name="l01190"></a><span class="lineno"> 1190</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#a1bd708dddfeba28c21983b0aece87706" title="Drop the index in current collection.">sdbDropIndex</a> ( sdbCollectionHandle cHandle,</div>
-<div class="line"><a name="l01191"></a><span class="lineno"> 1191</span>&#160;                                <span class="keyword">const</span> CHAR *pIndexName ) ;</div>
-<div class="line"><a name="l01192"></a><span class="lineno"> 1192</span>&#160;</div>
-<div class="line"><a name="l01203"></a><span class="lineno"> 1203</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#a53c12a745313ebba4fe775f9e9e4d55f" title="Get the count of documents in specified collection.">sdbGetCount</a> ( sdbCollectionHandle cHandle,</div>
-<div class="line"><a name="l01204"></a><span class="lineno"> 1204</span>&#160;                               bson *condition,</div>
-<div class="line"><a name="l01205"></a><span class="lineno"> 1205</span>&#160;                               SINT64 *count );</div>
-<div class="line"><a name="l01206"></a><span class="lineno"> 1206</span>&#160;</div>
-<div class="line"><a name="l01207"></a><span class="lineno"> 1207</span>&#160;</div>
-<div class="line"><a name="l01220"></a><span class="lineno"> 1220</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#a9fec2af13aa58dd072b613e0dbb13013" title="Get the count of documents in specified collection.">sdbGetCount1</a> ( sdbCollectionHandle cHandle,</div>
-<div class="line"><a name="l01221"></a><span class="lineno"> 1221</span>&#160;                                bson *condition,</div>
-<div class="line"><a name="l01222"></a><span class="lineno"> 1222</span>&#160;                                bson *hint,</div>
-<div class="line"><a name="l01223"></a><span class="lineno"> 1223</span>&#160;                                SINT64 *count );</div>
-<div class="line"><a name="l01224"></a><span class="lineno"> 1224</span>&#160;</div>
-<div class="line"><a name="l01233"></a><span class="lineno"> 1233</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#a91b2c3ee458cf02dfa4b33b873f6c4b5" title="Insert a bson object into current collection.">sdbInsert</a> ( sdbCollectionHandle cHandle,</div>
-<div class="line"><a name="l01234"></a><span class="lineno"> 1234</span>&#160;                             bson *obj ) ;</div>
-<div class="line"><a name="l01235"></a><span class="lineno"> 1235</span>&#160;</div>
-<div class="line"><a name="l01245"></a><span class="lineno"> 1245</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#a796324abbb96cb8a2edd6bb28d9868bb" title="Insert a bson object into current collection.">sdbInsert1</a> ( sdbCollectionHandle cHandle,</div>
-<div class="line"><a name="l01246"></a><span class="lineno"> 1246</span>&#160;                              bson *obj, bson_iterator *<span class="keywordtype">id</span> ) ;</div>
-<div class="line"><a name="l01247"></a><span class="lineno"> 1247</span>&#160;</div>
-<div class="line"><a name="l01249"></a><span class="lineno"><a class="code" href="client_8h.html#a5387deee4c330c29a64ae8da60dde03a"> 1249</a></span>&#160;<span class="preprocessor">#define FLG_INSERT_CONTONDUP  0x00000001</span></div>
-<div class="line"><a name="l01250"></a><span class="lineno"> 1250</span>&#160;<span class="preprocessor"></span></div>
-<div class="line"><a name="l01292"></a><span class="lineno"> 1292</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#a42e4bc8674da51ab5459fdf84e5c02b3" title="Insert a bulk of bson objects into current collection.">sdbBulkInsert</a> ( sdbCollectionHandle cHandle,</div>
-<div class="line"><a name="l01293"></a><span class="lineno"> 1293</span>&#160;                                 SINT32 flags, bson **obj, SINT32 num ) ;</div>
-<div class="line"><a name="l01294"></a><span class="lineno"> 1294</span>&#160;</div>
-<div class="line"><a name="l01308"></a><span class="lineno"> 1308</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#adc06f96d5957884294f2ba0da4d810e4" title="Update the matching documents in current collection.">sdbUpdate</a> ( sdbCollectionHandle cHandle,</div>
-<div class="line"><a name="l01309"></a><span class="lineno"> 1309</span>&#160;                             bson *rule,</div>
-<div class="line"><a name="l01310"></a><span class="lineno"> 1310</span>&#160;                             bson *condition,</div>
-<div class="line"><a name="l01311"></a><span class="lineno"> 1311</span>&#160;                             bson *hint ) ;</div>
-<div class="line"><a name="l01312"></a><span class="lineno"> 1312</span>&#160;</div>
-<div class="line"><a name="l01326"></a><span class="lineno"> 1326</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#a9b63de6126ba54457ea7476a036e8869" title="Update the matching documents in current collection, insert if no matching.">sdbUpsert</a> ( sdbCollectionHandle cHandle,</div>
-<div class="line"><a name="l01327"></a><span class="lineno"> 1327</span>&#160;                             bson *rule,</div>
-<div class="line"><a name="l01328"></a><span class="lineno"> 1328</span>&#160;                             bson *condition,</div>
-<div class="line"><a name="l01329"></a><span class="lineno"> 1329</span>&#160;                             bson *hint ) ;</div>
-<div class="line"><a name="l01330"></a><span class="lineno"> 1330</span>&#160;</div>
-<div class="line"><a name="l01346"></a><span class="lineno"> 1346</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#a732b464cd7c81bd90009ea1f6f30434f" title="Update the matching documents in current collection, insert if no matching.">sdbUpsert1</a> ( sdbCollectionHandle cHandle,</div>
-<div class="line"><a name="l01347"></a><span class="lineno"> 1347</span>&#160;                              bson *rule,</div>
-<div class="line"><a name="l01348"></a><span class="lineno"> 1348</span>&#160;                              bson *condition,</div>
-<div class="line"><a name="l01349"></a><span class="lineno"> 1349</span>&#160;                              bson *hint,</div>
-<div class="line"><a name="l01350"></a><span class="lineno"> 1350</span>&#160;                              bson *setOnInsert ) ;</div>
-<div class="line"><a name="l01351"></a><span class="lineno"> 1351</span>&#160;</div>
-<div class="line"><a name="l01362"></a><span class="lineno"> 1362</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#abf027cb1e46bd11980da26cbf38d2b80" title="Delete the matching documents in current collection, never rollback if failed.">sdbDelete</a> ( sdbCollectionHandle cHandle,</div>
-<div class="line"><a name="l01363"></a><span class="lineno"> 1363</span>&#160;                             bson *condition,</div>
-<div class="line"><a name="l01364"></a><span class="lineno"> 1364</span>&#160;                             bson *hint ) ;</div>
-<div class="line"><a name="l01365"></a><span class="lineno"> 1365</span>&#160;</div>
-<div class="line"><a name="l01394"></a><span class="lineno"> 1394</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#a9f19793c0471593bbf4beb4722237f6c" title="Get the matching documents in current collection.">sdbQuery1</a> ( sdbCollectionHandle cHandle,</div>
-<div class="line"><a name="l01395"></a><span class="lineno"> 1395</span>&#160;                             bson *condition,</div>
-<div class="line"><a name="l01396"></a><span class="lineno"> 1396</span>&#160;                             bson *select,</div>
-<div class="line"><a name="l01397"></a><span class="lineno"> 1397</span>&#160;                             bson *orderBy,</div>
-<div class="line"><a name="l01398"></a><span class="lineno"> 1398</span>&#160;                             bson *hint,</div>
-<div class="line"><a name="l01399"></a><span class="lineno"> 1399</span>&#160;                             INT64 numToSkip,</div>
-<div class="line"><a name="l01400"></a><span class="lineno"> 1400</span>&#160;                             INT64 numToReturn,</div>
-<div class="line"><a name="l01401"></a><span class="lineno"> 1401</span>&#160;                             INT32 flag,</div>
-<div class="line"><a name="l01402"></a><span class="lineno"> 1402</span>&#160;                             sdbCursorHandle *handle ) ;</div>
-<div class="line"><a name="l01403"></a><span class="lineno"> 1403</span>&#160;</div>
-<div class="line"><a name="l01404"></a><span class="lineno"> 1404</span>&#160;</div>
-<div class="line"><a name="l01425"></a><span class="lineno"> 1425</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#ac440372f496d8d0998091549d80a3b76" title="Get the matching documents in current collection.">sdbQuery</a> ( sdbCollectionHandle cHandle,</div>
-<div class="line"><a name="l01426"></a><span class="lineno"> 1426</span>&#160;                            bson *condition,</div>
-<div class="line"><a name="l01427"></a><span class="lineno"> 1427</span>&#160;                            bson *select,</div>
-<div class="line"><a name="l01428"></a><span class="lineno"> 1428</span>&#160;                            bson *orderBy,</div>
-<div class="line"><a name="l01429"></a><span class="lineno"> 1429</span>&#160;                            bson *hint,</div>
-<div class="line"><a name="l01430"></a><span class="lineno"> 1430</span>&#160;                            INT64 numToSkip,</div>
-<div class="line"><a name="l01431"></a><span class="lineno"> 1431</span>&#160;                            INT64 numToReturn,</div>
-<div class="line"><a name="l01432"></a><span class="lineno"> 1432</span>&#160;                            sdbCursorHandle *handle ) ;</div>
-<div class="line"><a name="l01433"></a><span class="lineno"> 1433</span>&#160;</div>
-<div class="line"><a name="l01466"></a><span class="lineno"> 1466</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#a0433c48b9b1c0b2d5e431b1ff901822c" title="Get the matching documents in current collection and update.">sdbQueryAndUpdate</a> ( sdbCollectionHandle cHandle,</div>
-<div class="line"><a name="l01467"></a><span class="lineno"> 1467</span>&#160;                                     bson *condition,</div>
-<div class="line"><a name="l01468"></a><span class="lineno"> 1468</span>&#160;                                     bson *select,</div>
-<div class="line"><a name="l01469"></a><span class="lineno"> 1469</span>&#160;                                     bson *orderBy,</div>
-<div class="line"><a name="l01470"></a><span class="lineno"> 1470</span>&#160;                                     bson *hint,</div>
-<div class="line"><a name="l01471"></a><span class="lineno"> 1471</span>&#160;                                     bson *update,</div>
-<div class="line"><a name="l01472"></a><span class="lineno"> 1472</span>&#160;                                     INT64 numToSkip,</div>
-<div class="line"><a name="l01473"></a><span class="lineno"> 1473</span>&#160;                                     INT64 numToReturn,</div>
-<div class="line"><a name="l01474"></a><span class="lineno"> 1474</span>&#160;                                     INT32 flag,</div>
-<div class="line"><a name="l01475"></a><span class="lineno"> 1475</span>&#160;                                     BOOLEAN returnNew,</div>
-<div class="line"><a name="l01476"></a><span class="lineno"> 1476</span>&#160;                                     sdbCursorHandle *handle ) ;</div>
-<div class="line"><a name="l01477"></a><span class="lineno"> 1477</span>&#160;</div>
-<div class="line"><a name="l01506"></a><span class="lineno"> 1506</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#a3d7524faae138c55d4ce472e0e6390fb" title="Get the matching documents in current collection and remove.">sdbQueryAndRemove</a> ( sdbCollectionHandle cHandle,</div>
-<div class="line"><a name="l01507"></a><span class="lineno"> 1507</span>&#160;                                     bson *condition,</div>
-<div class="line"><a name="l01508"></a><span class="lineno"> 1508</span>&#160;                                     bson *select,</div>
-<div class="line"><a name="l01509"></a><span class="lineno"> 1509</span>&#160;                                     bson *orderBy,</div>
-<div class="line"><a name="l01510"></a><span class="lineno"> 1510</span>&#160;                                     bson *hint,</div>
-<div class="line"><a name="l01511"></a><span class="lineno"> 1511</span>&#160;                                     INT64 numToSkip,</div>
-<div class="line"><a name="l01512"></a><span class="lineno"> 1512</span>&#160;                                     INT64 numToReturn,</div>
-<div class="line"><a name="l01513"></a><span class="lineno"> 1513</span>&#160;                                     INT32 flag,</div>
-<div class="line"><a name="l01514"></a><span class="lineno"> 1514</span>&#160;                                     sdbCursorHandle *handle ) ;</div>
-<div class="line"><a name="l01515"></a><span class="lineno"> 1515</span>&#160;</div>
-<div class="line"><a name="l01544"></a><span class="lineno"> 1544</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#a38c2547605239b6f0c5ba892b8f4ff6b" title="get access plan of query">sdbExplain</a> ( sdbCollectionHandle cHandle,</div>
-<div class="line"><a name="l01545"></a><span class="lineno"> 1545</span>&#160;                              bson *condition,</div>
-<div class="line"><a name="l01546"></a><span class="lineno"> 1546</span>&#160;                              bson *select,</div>
-<div class="line"><a name="l01547"></a><span class="lineno"> 1547</span>&#160;                              bson *orderBy,</div>
-<div class="line"><a name="l01548"></a><span class="lineno"> 1548</span>&#160;                              bson *hint,</div>
-<div class="line"><a name="l01549"></a><span class="lineno"> 1549</span>&#160;                              INT32 flags,</div>
-<div class="line"><a name="l01550"></a><span class="lineno"> 1550</span>&#160;                              INT64 numToSkip,</div>
-<div class="line"><a name="l01551"></a><span class="lineno"> 1551</span>&#160;                              INT64 numToReturn,</div>
-<div class="line"><a name="l01552"></a><span class="lineno"> 1552</span>&#160;                              bson *options,</div>
-<div class="line"><a name="l01553"></a><span class="lineno"> 1553</span>&#160;                              sdbCursorHandle *handle ) ;</div>
-<div class="line"><a name="l01554"></a><span class="lineno"> 1554</span>&#160;</div>
-<div class="line"><a name="l01563"></a><span class="lineno"> 1563</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#a7f51279ca4717bed0d1a3db9542eb95d" title="Return the next document of current cursor, and move forward.">sdbNext</a> ( sdbCursorHandle cHandle,</div>
-<div class="line"><a name="l01564"></a><span class="lineno"> 1564</span>&#160;                           bson *obj ) ;</div>
-<div class="line"><a name="l01565"></a><span class="lineno"> 1565</span>&#160;</div>
-<div class="line"><a name="l01574"></a><span class="lineno"> 1574</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#a1eacbd9fe97c4b5da544a13d45836c26" title="Return the current document of cursor, and don&#39;t move.">sdbCurrent</a> ( sdbCursorHandle cHandle,</div>
-<div class="line"><a name="l01575"></a><span class="lineno"> 1575</span>&#160;                              bson *obj ) ;</div>
-<div class="line"><a name="l01576"></a><span class="lineno"> 1576</span>&#160;</div>
-<div class="line"><a name="l01577"></a><span class="lineno"> 1577</span>&#160;<span class="comment">/* \fn INT32 sdbUpdateCurrent ( sdbCursorHandle cHandle, bson *rule )</span></div>
-<div class="line"><a name="l01578"></a><span class="lineno"> 1578</span>&#160;<span class="comment">    \brief Update the current document of cursor</span></div>
-<div class="line"><a name="l01579"></a><span class="lineno"> 1579</span>&#160;<span class="comment">    \param [in] cHandle The cursor handle</span></div>
-<div class="line"><a name="l01580"></a><span class="lineno"> 1580</span>&#160;<span class="comment">    \param [in] rule The updating rule, cannot be null</span></div>
-<div class="line"><a name="l01581"></a><span class="lineno"> 1581</span>&#160;<span class="comment">    \retval SDB_OK Operation Success</span></div>
-<div class="line"><a name="l01582"></a><span class="lineno"> 1582</span>&#160;<span class="comment">    \retval Others Operation Fail</span></div>
-<div class="line"><a name="l01583"></a><span class="lineno"> 1583</span>&#160;<span class="comment">*/</span></div>
-<div class="line"><a name="l01584"></a><span class="lineno"> 1584</span>&#160;<span class="comment">/*</span></div>
-<div class="line"><a name="l01585"></a><span class="lineno"> 1585</span>&#160;<span class="comment">SDB_EXPORT INT32 sdbUpdateCurrent ( sdbCursorHandle cHandle,</span></div>
-<div class="line"><a name="l01586"></a><span class="lineno"> 1586</span>&#160;<span class="comment">                                    bson *rule ) ;</span></div>
-<div class="line"><a name="l01587"></a><span class="lineno"> 1587</span>&#160;<span class="comment">*/</span></div>
-<div class="line"><a name="l01588"></a><span class="lineno"> 1588</span>&#160;<span class="comment">/* \fn INT32 sdbDeleteCurrent ( sdbCursorHandle cHandle )</span></div>
-<div class="line"><a name="l01589"></a><span class="lineno"> 1589</span>&#160;<span class="comment">    \brief Delete the current document of cursor</span></div>
-<div class="line"><a name="l01590"></a><span class="lineno"> 1590</span>&#160;<span class="comment">    \param [in] cHandle The cursor handle</span></div>
-<div class="line"><a name="l01591"></a><span class="lineno"> 1591</span>&#160;<span class="comment">    \retval SDB_OK Operation Success</span></div>
-<div class="line"><a name="l01592"></a><span class="lineno"> 1592</span>&#160;<span class="comment">    \retval Others Operation Fail</span></div>
-<div class="line"><a name="l01593"></a><span class="lineno"> 1593</span>&#160;<span class="comment">*/</span></div>
-<div class="line"><a name="l01594"></a><span class="lineno"> 1594</span>&#160;<span class="comment">/*</span></div>
-<div class="line"><a name="l01595"></a><span class="lineno"> 1595</span>&#160;<span class="comment">SDB_EXPORT INT32 sdbDeleteCurrent ( sdbCursorHandle cHandle ) ;</span></div>
-<div class="line"><a name="l01596"></a><span class="lineno"> 1596</span>&#160;<span class="comment">*/</span></div>
-<div class="line"><a name="l01597"></a><span class="lineno"> 1597</span>&#160;</div>
-<div class="line"><a name="l01606"></a><span class="lineno"> 1606</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#af300b292db92e2dd767f944d0201b1b8" title="Close the cursor&#39;s connection to database, we can&#39;t use this handle to get data again.">sdbCloseCursor</a> ( sdbCursorHandle cHandle ) ;</div>
-<div class="line"><a name="l01607"></a><span class="lineno"> 1607</span>&#160;</div>
-<div class="line"><a name="l01615"></a><span class="lineno"> 1615</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#a87a41e0e0c39372ad29e00a8a1c715ae" title="Close all the cursors in current thread, we can&#39;t use those cursors to get data anymore.">sdbCloseAllCursors</a> ( sdbConnectionHandle cHandle ) ;</div>
-<div class="line"><a name="l01616"></a><span class="lineno"> 1616</span>&#160;</div>
-<div class="line"><a name="l01617"></a><span class="lineno"> 1617</span>&#160;</div>
-<div class="line"><a name="l01628"></a><span class="lineno"> 1628</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#ac645b3df9ee4252c360396c8094ac7c2" title="Executing SQL command.">sdbExec</a>( sdbConnectionHandle cHandle,</div>
-<div class="line"><a name="l01629"></a><span class="lineno"> 1629</span>&#160;                          <span class="keyword">const</span> CHAR *sql,</div>
-<div class="line"><a name="l01630"></a><span class="lineno"> 1630</span>&#160;                          sdbCursorHandle *result );</div>
-<div class="line"><a name="l01631"></a><span class="lineno"> 1631</span>&#160;</div>
-<div class="line"><a name="l01640"></a><span class="lineno"> 1640</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#af6f0d1b3b0cff7ca80ad738121c74395" title="Executing SQL command for updating.">sdbExecUpdate</a>( sdbConnectionHandle cHandle,</div>
-<div class="line"><a name="l01641"></a><span class="lineno"> 1641</span>&#160;                                <span class="keyword">const</span> CHAR *sql ) ;</div>
-<div class="line"><a name="l01642"></a><span class="lineno"> 1642</span>&#160;</div>
-<div class="line"><a name="l01649"></a><span class="lineno"> 1649</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#a7cd033383bdfa72c7d5a41138f96ea87" title="Transaction begin.">sdbTransactionBegin</a>( sdbConnectionHandle cHandle ) ;</div>
-<div class="line"><a name="l01650"></a><span class="lineno"> 1650</span>&#160;</div>
-<div class="line"><a name="l01657"></a><span class="lineno"> 1657</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#a115edc69ce14ef4dde88ac63089dbd02" title="Transaction commit.">sdbTransactionCommit</a>( sdbConnectionHandle cHandle ) ;</div>
-<div class="line"><a name="l01658"></a><span class="lineno"> 1658</span>&#160;</div>
-<div class="line"><a name="l01665"></a><span class="lineno"> 1665</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#a299542497f6a905756c27b694348482b" title="Transaction rollback.">sdbTransactionRollback</a>( sdbConnectionHandle cHandle ) ;</div>
-<div class="line"><a name="l01666"></a><span class="lineno"> 1666</span>&#160;</div>
-<div class="line"><a name="l01671"></a><span class="lineno"> 1671</span>&#160;SDB_EXPORT <span class="keywordtype">void</span> <a class="code" href="client_8h.html#a03106641cb3c3cb077df3bfac8a9c135" title="Release the database connection handle.">sdbReleaseConnection</a> ( sdbConnectionHandle cHandle ) ;</div>
-<div class="line"><a name="l01672"></a><span class="lineno"> 1672</span>&#160;</div>
-<div class="line"><a name="l01677"></a><span class="lineno"> 1677</span>&#160;SDB_EXPORT <span class="keywordtype">void</span> <a class="code" href="client_8h.html#ae6a0f8fb1e63b52d9279fecec56dc495" title="Release collection handle, the cursor handle of this collection will still available.">sdbReleaseCollection</a> ( sdbCollectionHandle cHandle ) ;</div>
-<div class="line"><a name="l01678"></a><span class="lineno"> 1678</span>&#160;</div>
-<div class="line"><a name="l01683"></a><span class="lineno"> 1683</span>&#160;SDB_EXPORT <span class="keywordtype">void</span> <a class="code" href="client_8h.html#a4793b898ad8a8accfe099941f4a0b9a1" title="Release the collection space handle, the collecion and cursor handle of this collection space will st...">sdbReleaseCS</a> ( sdbCSHandle cHandle ) ;</div>
-<div class="line"><a name="l01684"></a><span class="lineno"> 1684</span>&#160;</div>
-<div class="line"><a name="l01689"></a><span class="lineno"> 1689</span>&#160;SDB_EXPORT <span class="keywordtype">void</span> <a class="code" href="client_8h.html#a77c5fe8bdc275da433c59c95773c783e" title="Release the cursor handle.">sdbReleaseCursor</a> ( sdbCursorHandle cHandle ) ;</div>
-<div class="line"><a name="l01690"></a><span class="lineno"> 1690</span>&#160;</div>
-<div class="line"><a name="l01695"></a><span class="lineno"> 1695</span>&#160;SDB_EXPORT <span class="keywordtype">void</span> <a class="code" href="client_8h.html#a1d460c17d6c3a21e7637c1b681801831" title="Release the replica group handle.">sdbReleaseReplicaGroup</a> ( sdbReplicaGroupHandle cHandle ) ;</div>
-<div class="line"><a name="l01696"></a><span class="lineno"> 1696</span>&#160;</div>
-<div class="line"><a name="l01701"></a><span class="lineno"> 1701</span>&#160;SDB_EXPORT <span class="keywordtype">void</span> <a class="code" href="client_8h.html#a9b01999a1061ab7def7196f670201aec" title="Release the node handle.">sdbReleaseNode</a> ( sdbNodeHandle cHandle ) ;</div>
-<div class="line"><a name="l01702"></a><span class="lineno"> 1702</span>&#160;</div>
-<div class="line"><a name="l01707"></a><span class="lineno"> 1707</span>&#160;SDB_EXPORT <span class="keywordtype">void</span> <a class="code" href="client_8h.html#a3842610e8f6b748a2636ca3c2ab29b2f" title="Release the domain handle.">sdbReleaseDomain</a> ( sdbDomainHandle cHandle ) ;</div>
-<div class="line"><a name="l01708"></a><span class="lineno"> 1708</span>&#160;</div>
-<div class="line"><a name="l01746"></a><span class="lineno"> 1746</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#aa4258c78ef84179f740d917748c092fd" title="Execute aggregate operation in specified collection.">sdbAggregate</a> ( sdbCollectionHandle cHandle,</div>
-<div class="line"><a name="l01747"></a><span class="lineno"> 1747</span>&#160;                                bson **obj, SINT32 num,</div>
-<div class="line"><a name="l01748"></a><span class="lineno"> 1748</span>&#160;                                sdbCursorHandle *handle ) ;</div>
-<div class="line"><a name="l01749"></a><span class="lineno"> 1749</span>&#160;</div>
-<div class="line"><a name="l01761"></a><span class="lineno"> 1761</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#a856b9ef9d1511f8d39071fc0cc9286b7" title="Attach the specified collection.">sdbAttachCollection</a> ( sdbCollectionHandle cHandle,</div>
-<div class="line"><a name="l01762"></a><span class="lineno"> 1762</span>&#160;                                       <span class="keyword">const</span> CHAR *subClFullName,</div>
-<div class="line"><a name="l01763"></a><span class="lineno"> 1763</span>&#160;                                       bson *options) ;</div>
-<div class="line"><a name="l01764"></a><span class="lineno"> 1764</span>&#160;</div>
-<div class="line"><a name="l01773"></a><span class="lineno"> 1773</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#a16f4f27dfaf5b02a2dd9fe5ec8802a4f" title="Detach the specified collection.">sdbDetachCollection</a> ( sdbCollectionHandle cHandle,</div>
-<div class="line"><a name="l01774"></a><span class="lineno"> 1774</span>&#160;                                       <span class="keyword">const</span> CHAR *subClFullName) ;</div>
-<div class="line"><a name="l01775"></a><span class="lineno"> 1775</span>&#160;</div>
-<div class="line"><a name="l01796"></a><span class="lineno"> 1796</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#a226cdd6bd12bc76e1c0aa4e4cd8f6a69" title="Backup the whole database or specifed replica group.">sdbBackupOffline</a> ( sdbConnectionHandle cHandle,</div>
-<div class="line"><a name="l01797"></a><span class="lineno"> 1797</span>&#160;                                    bson *options) ;</div>
-<div class="line"><a name="l01798"></a><span class="lineno"> 1798</span>&#160;</div>
-<div class="line"><a name="l01819"></a><span class="lineno"> 1819</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#a06a57a52d4cd712932a5a61ab761dafd" title="List the backups.">sdbListBackup</a> ( sdbConnectionHandle cHandle,</div>
-<div class="line"><a name="l01820"></a><span class="lineno"> 1820</span>&#160;                                 bson *options,</div>
-<div class="line"><a name="l01821"></a><span class="lineno"> 1821</span>&#160;                                 bson *condition,</div>
-<div class="line"><a name="l01822"></a><span class="lineno"> 1822</span>&#160;                                 bson *selector,</div>
-<div class="line"><a name="l01823"></a><span class="lineno"> 1823</span>&#160;                                 bson *orderBy,</div>
-<div class="line"><a name="l01824"></a><span class="lineno"> 1824</span>&#160;                                 sdbCursorHandle *handle ) ;</div>
-<div class="line"><a name="l01825"></a><span class="lineno"> 1825</span>&#160;</div>
-<div class="line"><a name="l01838"></a><span class="lineno"> 1838</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#ac78aa54d3018dbbe8dfefe3ed07cd772" title="Remove the backups.">sdbRemoveBackup</a> ( sdbConnectionHandle cHandle,</div>
-<div class="line"><a name="l01839"></a><span class="lineno"> 1839</span>&#160;                                   bson *options) ;</div>
-<div class="line"><a name="l01840"></a><span class="lineno"> 1840</span>&#160;</div>
-<div class="line"><a name="l01857"></a><span class="lineno"> 1857</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#a2f38ac58336c5f70acf6e3472a672674" title="List the tasks.">sdbListTasks</a> ( sdbConnectionHandle cHandle,</div>
-<div class="line"><a name="l01858"></a><span class="lineno"> 1858</span>&#160;                                bson *condition,</div>
-<div class="line"><a name="l01859"></a><span class="lineno"> 1859</span>&#160;                                bson *selector,</div>
-<div class="line"><a name="l01860"></a><span class="lineno"> 1860</span>&#160;                                bson *orderBy,</div>
-<div class="line"><a name="l01861"></a><span class="lineno"> 1861</span>&#160;                                bson *hint,</div>
-<div class="line"><a name="l01862"></a><span class="lineno"> 1862</span>&#160;                                sdbCursorHandle *handle ) ;</div>
-<div class="line"><a name="l01863"></a><span class="lineno"> 1863</span>&#160;</div>
-<div class="line"><a name="l01874"></a><span class="lineno"> 1874</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#a487b4a3fbe98f2cd8a2496c2a15cfec6" title="Wait the tasks to finish.">sdbWaitTasks</a> ( sdbConnectionHandle cHandle,</div>
-<div class="line"><a name="l01875"></a><span class="lineno"> 1875</span>&#160;                                <span class="keyword">const</span> SINT64 *taskIDs,</div>
-<div class="line"><a name="l01876"></a><span class="lineno"> 1876</span>&#160;                                SINT32 num );</div>
-<div class="line"><a name="l01877"></a><span class="lineno"> 1877</span>&#160;</div>
-<div class="line"><a name="l01889"></a><span class="lineno"> 1889</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#aac029248a456673d6f9c153f4aa3572f" title="Cancel the specified task.">sdbCancelTask</a> ( sdbConnectionHandle cHandle,</div>
-<div class="line"><a name="l01890"></a><span class="lineno"> 1890</span>&#160;                                 SINT64 taskID,</div>
-<div class="line"><a name="l01891"></a><span class="lineno"> 1891</span>&#160;                                 BOOLEAN isAsync ) ;</div>
-<div class="line"><a name="l01892"></a><span class="lineno"> 1892</span>&#160;</div>
-<div class="line"><a name="l01906"></a><span class="lineno"> 1906</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#a006c3ff5dfeef9d670c25c49ca682584" title="Set the attributes of the session.">sdbSetSessionAttr</a> ( sdbConnectionHandle cHandle,</div>
-<div class="line"><a name="l01907"></a><span class="lineno"> 1907</span>&#160;                                     bson *options ) ;</div>
-<div class="line"><a name="l01908"></a><span class="lineno"> 1908</span>&#160;</div>
-<div class="line"><a name="l01915"></a><span class="lineno"> 1915</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#a1202fb36bfd55e630011a1cf37abeec5" title="Judge whether the connection is valid.">sdbIsValid</a>( sdbConnectionHandle cHandle, BOOLEAN *result ) ;</div>
-<div class="line"><a name="l01916"></a><span class="lineno"> 1916</span>&#160;</div>
-<div class="line"><a name="l01917"></a><span class="lineno"> 1917</span>&#160;SDB_EXPORT INT32 _sdbMsg ( sdbConnectionHandle cHandle, <span class="keyword">const</span> CHAR *msg ) ;</div>
+<div class="line"><a name="l01164"></a><span class="lineno"> 1164</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#a0467d0478f23af216b98a92e1c433858" title="Create the index in current collection in offline mode.">sdbCreateIndexOffline</a> ( sdbCollectionHandle cHandle,</div>
+<div class="line"><a name="l01165"></a><span class="lineno"> 1165</span>&#160;                                         bson *indexDef,</div>
+<div class="line"><a name="l01166"></a><span class="lineno"> 1166</span>&#160;                                         <span class="keyword">const</span> CHAR *pIndexName,</div>
+<div class="line"><a name="l01167"></a><span class="lineno"> 1167</span>&#160;                                         BOOLEAN isUnique,</div>
+<div class="line"><a name="l01168"></a><span class="lineno"> 1168</span>&#160;                                         BOOLEAN isEnforced ) ;</div>
+<div class="line"><a name="l01169"></a><span class="lineno"> 1169</span>&#160;</div>
+<div class="line"><a name="l01180"></a><span class="lineno"> 1180</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#ac2b70e43cec2f47e2ee197f22b643cf2" title="Get all of or one of the indexes in current collection.">sdbGetIndexes</a> ( sdbCollectionHandle cHandle,</div>
+<div class="line"><a name="l01181"></a><span class="lineno"> 1181</span>&#160;                                 <span class="keyword">const</span> CHAR *pIndexName,</div>
+<div class="line"><a name="l01182"></a><span class="lineno"> 1182</span>&#160;                                 sdbCursorHandle *handle ) ;</div>
+<div class="line"><a name="l01183"></a><span class="lineno"> 1183</span>&#160;</div>
+<div class="line"><a name="l01192"></a><span class="lineno"> 1192</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#a1bd708dddfeba28c21983b0aece87706" title="Drop the index in current collection.">sdbDropIndex</a> ( sdbCollectionHandle cHandle,</div>
+<div class="line"><a name="l01193"></a><span class="lineno"> 1193</span>&#160;                                <span class="keyword">const</span> CHAR *pIndexName ) ;</div>
+<div class="line"><a name="l01194"></a><span class="lineno"> 1194</span>&#160;</div>
+<div class="line"><a name="l01205"></a><span class="lineno"> 1205</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#a53c12a745313ebba4fe775f9e9e4d55f" title="Get the count of documents in specified collection.">sdbGetCount</a> ( sdbCollectionHandle cHandle,</div>
+<div class="line"><a name="l01206"></a><span class="lineno"> 1206</span>&#160;                               bson *condition,</div>
+<div class="line"><a name="l01207"></a><span class="lineno"> 1207</span>&#160;                               SINT64 *count );</div>
+<div class="line"><a name="l01208"></a><span class="lineno"> 1208</span>&#160;</div>
+<div class="line"><a name="l01209"></a><span class="lineno"> 1209</span>&#160;</div>
+<div class="line"><a name="l01222"></a><span class="lineno"> 1222</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#a9fec2af13aa58dd072b613e0dbb13013" title="Get the count of documents in specified collection.">sdbGetCount1</a> ( sdbCollectionHandle cHandle,</div>
+<div class="line"><a name="l01223"></a><span class="lineno"> 1223</span>&#160;                                bson *condition,</div>
+<div class="line"><a name="l01224"></a><span class="lineno"> 1224</span>&#160;                                bson *hint,</div>
+<div class="line"><a name="l01225"></a><span class="lineno"> 1225</span>&#160;                                SINT64 *count );</div>
+<div class="line"><a name="l01226"></a><span class="lineno"> 1226</span>&#160;</div>
+<div class="line"><a name="l01235"></a><span class="lineno"> 1235</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#a91b2c3ee458cf02dfa4b33b873f6c4b5" title="Insert a bson object into current collection.">sdbInsert</a> ( sdbCollectionHandle cHandle,</div>
+<div class="line"><a name="l01236"></a><span class="lineno"> 1236</span>&#160;                             bson *obj ) ;</div>
+<div class="line"><a name="l01237"></a><span class="lineno"> 1237</span>&#160;</div>
+<div class="line"><a name="l01247"></a><span class="lineno"> 1247</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#a796324abbb96cb8a2edd6bb28d9868bb" title="Insert a bson object into current collection.">sdbInsert1</a> ( sdbCollectionHandle cHandle,</div>
+<div class="line"><a name="l01248"></a><span class="lineno"> 1248</span>&#160;                              bson *obj, bson_iterator *<span class="keywordtype">id</span> ) ;</div>
+<div class="line"><a name="l01249"></a><span class="lineno"> 1249</span>&#160;</div>
+<div class="line"><a name="l01251"></a><span class="lineno"><a class="code" href="client_8h.html#a5387deee4c330c29a64ae8da60dde03a"> 1251</a></span>&#160;<span class="preprocessor">#define FLG_INSERT_CONTONDUP  0x00000001</span></div>
+<div class="line"><a name="l01252"></a><span class="lineno"> 1252</span>&#160;<span class="preprocessor"></span></div>
+<div class="line"><a name="l01294"></a><span class="lineno"> 1294</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#a42e4bc8674da51ab5459fdf84e5c02b3" title="Insert a bulk of bson objects into current collection.">sdbBulkInsert</a> ( sdbCollectionHandle cHandle,</div>
+<div class="line"><a name="l01295"></a><span class="lineno"> 1295</span>&#160;                                 SINT32 flags, bson **obj, SINT32 num ) ;</div>
+<div class="line"><a name="l01296"></a><span class="lineno"> 1296</span>&#160;</div>
+<div class="line"><a name="l01310"></a><span class="lineno"> 1310</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#adc06f96d5957884294f2ba0da4d810e4" title="Update the matching documents in current collection.">sdbUpdate</a> ( sdbCollectionHandle cHandle,</div>
+<div class="line"><a name="l01311"></a><span class="lineno"> 1311</span>&#160;                             bson *rule,</div>
+<div class="line"><a name="l01312"></a><span class="lineno"> 1312</span>&#160;                             bson *condition,</div>
+<div class="line"><a name="l01313"></a><span class="lineno"> 1313</span>&#160;                             bson *hint ) ;</div>
+<div class="line"><a name="l01314"></a><span class="lineno"> 1314</span>&#160;</div>
+<div class="line"><a name="l01328"></a><span class="lineno"> 1328</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#a9b63de6126ba54457ea7476a036e8869" title="Update the matching documents in current collection, insert if no matching.">sdbUpsert</a> ( sdbCollectionHandle cHandle,</div>
+<div class="line"><a name="l01329"></a><span class="lineno"> 1329</span>&#160;                             bson *rule,</div>
+<div class="line"><a name="l01330"></a><span class="lineno"> 1330</span>&#160;                             bson *condition,</div>
+<div class="line"><a name="l01331"></a><span class="lineno"> 1331</span>&#160;                             bson *hint ) ;</div>
+<div class="line"><a name="l01332"></a><span class="lineno"> 1332</span>&#160;</div>
+<div class="line"><a name="l01348"></a><span class="lineno"> 1348</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#a732b464cd7c81bd90009ea1f6f30434f" title="Update the matching documents in current collection, insert if no matching.">sdbUpsert1</a> ( sdbCollectionHandle cHandle,</div>
+<div class="line"><a name="l01349"></a><span class="lineno"> 1349</span>&#160;                              bson *rule,</div>
+<div class="line"><a name="l01350"></a><span class="lineno"> 1350</span>&#160;                              bson *condition,</div>
+<div class="line"><a name="l01351"></a><span class="lineno"> 1351</span>&#160;                              bson *hint,</div>
+<div class="line"><a name="l01352"></a><span class="lineno"> 1352</span>&#160;                              bson *setOnInsert ) ;</div>
+<div class="line"><a name="l01353"></a><span class="lineno"> 1353</span>&#160;</div>
+<div class="line"><a name="l01364"></a><span class="lineno"> 1364</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#abf027cb1e46bd11980da26cbf38d2b80" title="Delete the matching documents in current collection, never rollback if failed.">sdbDelete</a> ( sdbCollectionHandle cHandle,</div>
+<div class="line"><a name="l01365"></a><span class="lineno"> 1365</span>&#160;                             bson *condition,</div>
+<div class="line"><a name="l01366"></a><span class="lineno"> 1366</span>&#160;                             bson *hint ) ;</div>
+<div class="line"><a name="l01367"></a><span class="lineno"> 1367</span>&#160;</div>
+<div class="line"><a name="l01396"></a><span class="lineno"> 1396</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#a9f19793c0471593bbf4beb4722237f6c" title="Get the matching documents in current collection.">sdbQuery1</a> ( sdbCollectionHandle cHandle,</div>
+<div class="line"><a name="l01397"></a><span class="lineno"> 1397</span>&#160;                             bson *condition,</div>
+<div class="line"><a name="l01398"></a><span class="lineno"> 1398</span>&#160;                             bson *select,</div>
+<div class="line"><a name="l01399"></a><span class="lineno"> 1399</span>&#160;                             bson *orderBy,</div>
+<div class="line"><a name="l01400"></a><span class="lineno"> 1400</span>&#160;                             bson *hint,</div>
+<div class="line"><a name="l01401"></a><span class="lineno"> 1401</span>&#160;                             INT64 numToSkip,</div>
+<div class="line"><a name="l01402"></a><span class="lineno"> 1402</span>&#160;                             INT64 numToReturn,</div>
+<div class="line"><a name="l01403"></a><span class="lineno"> 1403</span>&#160;                             INT32 flag,</div>
+<div class="line"><a name="l01404"></a><span class="lineno"> 1404</span>&#160;                             sdbCursorHandle *handle ) ;</div>
+<div class="line"><a name="l01405"></a><span class="lineno"> 1405</span>&#160;</div>
+<div class="line"><a name="l01406"></a><span class="lineno"> 1406</span>&#160;</div>
+<div class="line"><a name="l01427"></a><span class="lineno"> 1427</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#ac440372f496d8d0998091549d80a3b76" title="Get the matching documents in current collection.">sdbQuery</a> ( sdbCollectionHandle cHandle,</div>
+<div class="line"><a name="l01428"></a><span class="lineno"> 1428</span>&#160;                            bson *condition,</div>
+<div class="line"><a name="l01429"></a><span class="lineno"> 1429</span>&#160;                            bson *select,</div>
+<div class="line"><a name="l01430"></a><span class="lineno"> 1430</span>&#160;                            bson *orderBy,</div>
+<div class="line"><a name="l01431"></a><span class="lineno"> 1431</span>&#160;                            bson *hint,</div>
+<div class="line"><a name="l01432"></a><span class="lineno"> 1432</span>&#160;                            INT64 numToSkip,</div>
+<div class="line"><a name="l01433"></a><span class="lineno"> 1433</span>&#160;                            INT64 numToReturn,</div>
+<div class="line"><a name="l01434"></a><span class="lineno"> 1434</span>&#160;                            sdbCursorHandle *handle ) ;</div>
+<div class="line"><a name="l01435"></a><span class="lineno"> 1435</span>&#160;</div>
+<div class="line"><a name="l01468"></a><span class="lineno"> 1468</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#a0433c48b9b1c0b2d5e431b1ff901822c" title="Get the matching documents in current collection and update.">sdbQueryAndUpdate</a> ( sdbCollectionHandle cHandle,</div>
+<div class="line"><a name="l01469"></a><span class="lineno"> 1469</span>&#160;                                     bson *condition,</div>
+<div class="line"><a name="l01470"></a><span class="lineno"> 1470</span>&#160;                                     bson *select,</div>
+<div class="line"><a name="l01471"></a><span class="lineno"> 1471</span>&#160;                                     bson *orderBy,</div>
+<div class="line"><a name="l01472"></a><span class="lineno"> 1472</span>&#160;                                     bson *hint,</div>
+<div class="line"><a name="l01473"></a><span class="lineno"> 1473</span>&#160;                                     bson *update,</div>
+<div class="line"><a name="l01474"></a><span class="lineno"> 1474</span>&#160;                                     INT64 numToSkip,</div>
+<div class="line"><a name="l01475"></a><span class="lineno"> 1475</span>&#160;                                     INT64 numToReturn,</div>
+<div class="line"><a name="l01476"></a><span class="lineno"> 1476</span>&#160;                                     INT32 flag,</div>
+<div class="line"><a name="l01477"></a><span class="lineno"> 1477</span>&#160;                                     BOOLEAN returnNew,</div>
+<div class="line"><a name="l01478"></a><span class="lineno"> 1478</span>&#160;                                     sdbCursorHandle *handle ) ;</div>
+<div class="line"><a name="l01479"></a><span class="lineno"> 1479</span>&#160;</div>
+<div class="line"><a name="l01508"></a><span class="lineno"> 1508</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#a3d7524faae138c55d4ce472e0e6390fb" title="Get the matching documents in current collection and remove.">sdbQueryAndRemove</a> ( sdbCollectionHandle cHandle,</div>
+<div class="line"><a name="l01509"></a><span class="lineno"> 1509</span>&#160;                                     bson *condition,</div>
+<div class="line"><a name="l01510"></a><span class="lineno"> 1510</span>&#160;                                     bson *select,</div>
+<div class="line"><a name="l01511"></a><span class="lineno"> 1511</span>&#160;                                     bson *orderBy,</div>
+<div class="line"><a name="l01512"></a><span class="lineno"> 1512</span>&#160;                                     bson *hint,</div>
+<div class="line"><a name="l01513"></a><span class="lineno"> 1513</span>&#160;                                     INT64 numToSkip,</div>
+<div class="line"><a name="l01514"></a><span class="lineno"> 1514</span>&#160;                                     INT64 numToReturn,</div>
+<div class="line"><a name="l01515"></a><span class="lineno"> 1515</span>&#160;                                     INT32 flag,</div>
+<div class="line"><a name="l01516"></a><span class="lineno"> 1516</span>&#160;                                     sdbCursorHandle *handle ) ;</div>
+<div class="line"><a name="l01517"></a><span class="lineno"> 1517</span>&#160;</div>
+<div class="line"><a name="l01546"></a><span class="lineno"> 1546</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#a38c2547605239b6f0c5ba892b8f4ff6b" title="get access plan of query">sdbExplain</a> ( sdbCollectionHandle cHandle,</div>
+<div class="line"><a name="l01547"></a><span class="lineno"> 1547</span>&#160;                              bson *condition,</div>
+<div class="line"><a name="l01548"></a><span class="lineno"> 1548</span>&#160;                              bson *select,</div>
+<div class="line"><a name="l01549"></a><span class="lineno"> 1549</span>&#160;                              bson *orderBy,</div>
+<div class="line"><a name="l01550"></a><span class="lineno"> 1550</span>&#160;                              bson *hint,</div>
+<div class="line"><a name="l01551"></a><span class="lineno"> 1551</span>&#160;                              INT32 flags,</div>
+<div class="line"><a name="l01552"></a><span class="lineno"> 1552</span>&#160;                              INT64 numToSkip,</div>
+<div class="line"><a name="l01553"></a><span class="lineno"> 1553</span>&#160;                              INT64 numToReturn,</div>
+<div class="line"><a name="l01554"></a><span class="lineno"> 1554</span>&#160;                              bson *options,</div>
+<div class="line"><a name="l01555"></a><span class="lineno"> 1555</span>&#160;                              sdbCursorHandle *handle ) ;</div>
+<div class="line"><a name="l01556"></a><span class="lineno"> 1556</span>&#160;</div>
+<div class="line"><a name="l01565"></a><span class="lineno"> 1565</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#a7f51279ca4717bed0d1a3db9542eb95d" title="Return the next document of current cursor, and move forward.">sdbNext</a> ( sdbCursorHandle cHandle,</div>
+<div class="line"><a name="l01566"></a><span class="lineno"> 1566</span>&#160;                           bson *obj ) ;</div>
+<div class="line"><a name="l01567"></a><span class="lineno"> 1567</span>&#160;</div>
+<div class="line"><a name="l01576"></a><span class="lineno"> 1576</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#a1eacbd9fe97c4b5da544a13d45836c26" title="Return the current document of cursor, and don&#39;t move.">sdbCurrent</a> ( sdbCursorHandle cHandle,</div>
+<div class="line"><a name="l01577"></a><span class="lineno"> 1577</span>&#160;                              bson *obj ) ;</div>
+<div class="line"><a name="l01578"></a><span class="lineno"> 1578</span>&#160;</div>
+<div class="line"><a name="l01579"></a><span class="lineno"> 1579</span>&#160;<span class="comment">/* \fn INT32 sdbUpdateCurrent ( sdbCursorHandle cHandle, bson *rule )</span></div>
+<div class="line"><a name="l01580"></a><span class="lineno"> 1580</span>&#160;<span class="comment">    \brief Update the current document of cursor</span></div>
+<div class="line"><a name="l01581"></a><span class="lineno"> 1581</span>&#160;<span class="comment">    \param [in] cHandle The cursor handle</span></div>
+<div class="line"><a name="l01582"></a><span class="lineno"> 1582</span>&#160;<span class="comment">    \param [in] rule The updating rule, cannot be null</span></div>
+<div class="line"><a name="l01583"></a><span class="lineno"> 1583</span>&#160;<span class="comment">    \retval SDB_OK Operation Success</span></div>
+<div class="line"><a name="l01584"></a><span class="lineno"> 1584</span>&#160;<span class="comment">    \retval Others Operation Fail</span></div>
+<div class="line"><a name="l01585"></a><span class="lineno"> 1585</span>&#160;<span class="comment">*/</span></div>
+<div class="line"><a name="l01586"></a><span class="lineno"> 1586</span>&#160;<span class="comment">/*</span></div>
+<div class="line"><a name="l01587"></a><span class="lineno"> 1587</span>&#160;<span class="comment">SDB_EXPORT INT32 sdbUpdateCurrent ( sdbCursorHandle cHandle,</span></div>
+<div class="line"><a name="l01588"></a><span class="lineno"> 1588</span>&#160;<span class="comment">                                    bson *rule ) ;</span></div>
+<div class="line"><a name="l01589"></a><span class="lineno"> 1589</span>&#160;<span class="comment">*/</span></div>
+<div class="line"><a name="l01590"></a><span class="lineno"> 1590</span>&#160;<span class="comment">/* \fn INT32 sdbDeleteCurrent ( sdbCursorHandle cHandle )</span></div>
+<div class="line"><a name="l01591"></a><span class="lineno"> 1591</span>&#160;<span class="comment">    \brief Delete the current document of cursor</span></div>
+<div class="line"><a name="l01592"></a><span class="lineno"> 1592</span>&#160;<span class="comment">    \param [in] cHandle The cursor handle</span></div>
+<div class="line"><a name="l01593"></a><span class="lineno"> 1593</span>&#160;<span class="comment">    \retval SDB_OK Operation Success</span></div>
+<div class="line"><a name="l01594"></a><span class="lineno"> 1594</span>&#160;<span class="comment">    \retval Others Operation Fail</span></div>
+<div class="line"><a name="l01595"></a><span class="lineno"> 1595</span>&#160;<span class="comment">*/</span></div>
+<div class="line"><a name="l01596"></a><span class="lineno"> 1596</span>&#160;<span class="comment">/*</span></div>
+<div class="line"><a name="l01597"></a><span class="lineno"> 1597</span>&#160;<span class="comment">SDB_EXPORT INT32 sdbDeleteCurrent ( sdbCursorHandle cHandle ) ;</span></div>
+<div class="line"><a name="l01598"></a><span class="lineno"> 1598</span>&#160;<span class="comment">*/</span></div>
+<div class="line"><a name="l01599"></a><span class="lineno"> 1599</span>&#160;</div>
+<div class="line"><a name="l01608"></a><span class="lineno"> 1608</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#af300b292db92e2dd767f944d0201b1b8" title="Close the cursor&#39;s connection to database, we can&#39;t use this handle to get data again.">sdbCloseCursor</a> ( sdbCursorHandle cHandle ) ;</div>
+<div class="line"><a name="l01609"></a><span class="lineno"> 1609</span>&#160;</div>
+<div class="line"><a name="l01617"></a><span class="lineno"> 1617</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#a87a41e0e0c39372ad29e00a8a1c715ae" title="Close all the cursors in current thread, we can&#39;t use those cursors to get data anymore.">sdbCloseAllCursors</a> ( sdbConnectionHandle cHandle ) ;</div>
+<div class="line"><a name="l01618"></a><span class="lineno"> 1618</span>&#160;</div>
+<div class="line"><a name="l01619"></a><span class="lineno"> 1619</span>&#160;</div>
+<div class="line"><a name="l01630"></a><span class="lineno"> 1630</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#ac645b3df9ee4252c360396c8094ac7c2" title="Executing SQL command.">sdbExec</a>( sdbConnectionHandle cHandle,</div>
+<div class="line"><a name="l01631"></a><span class="lineno"> 1631</span>&#160;                          <span class="keyword">const</span> CHAR *sql,</div>
+<div class="line"><a name="l01632"></a><span class="lineno"> 1632</span>&#160;                          sdbCursorHandle *result );</div>
+<div class="line"><a name="l01633"></a><span class="lineno"> 1633</span>&#160;</div>
+<div class="line"><a name="l01642"></a><span class="lineno"> 1642</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#af6f0d1b3b0cff7ca80ad738121c74395" title="Executing SQL command for updating.">sdbExecUpdate</a>( sdbConnectionHandle cHandle,</div>
+<div class="line"><a name="l01643"></a><span class="lineno"> 1643</span>&#160;                                <span class="keyword">const</span> CHAR *sql ) ;</div>
+<div class="line"><a name="l01644"></a><span class="lineno"> 1644</span>&#160;</div>
+<div class="line"><a name="l01651"></a><span class="lineno"> 1651</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#a7cd033383bdfa72c7d5a41138f96ea87" title="Transaction begin.">sdbTransactionBegin</a>( sdbConnectionHandle cHandle ) ;</div>
+<div class="line"><a name="l01652"></a><span class="lineno"> 1652</span>&#160;</div>
+<div class="line"><a name="l01659"></a><span class="lineno"> 1659</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#a115edc69ce14ef4dde88ac63089dbd02" title="Transaction commit.">sdbTransactionCommit</a>( sdbConnectionHandle cHandle ) ;</div>
+<div class="line"><a name="l01660"></a><span class="lineno"> 1660</span>&#160;</div>
+<div class="line"><a name="l01667"></a><span class="lineno"> 1667</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#a299542497f6a905756c27b694348482b" title="Transaction rollback.">sdbTransactionRollback</a>( sdbConnectionHandle cHandle ) ;</div>
+<div class="line"><a name="l01668"></a><span class="lineno"> 1668</span>&#160;</div>
+<div class="line"><a name="l01673"></a><span class="lineno"> 1673</span>&#160;SDB_EXPORT <span class="keywordtype">void</span> <a class="code" href="client_8h.html#a03106641cb3c3cb077df3bfac8a9c135" title="Release the database connection handle.">sdbReleaseConnection</a> ( sdbConnectionHandle cHandle ) ;</div>
+<div class="line"><a name="l01674"></a><span class="lineno"> 1674</span>&#160;</div>
+<div class="line"><a name="l01679"></a><span class="lineno"> 1679</span>&#160;SDB_EXPORT <span class="keywordtype">void</span> <a class="code" href="client_8h.html#ae6a0f8fb1e63b52d9279fecec56dc495" title="Release collection handle, the cursor handle of this collection will still available.">sdbReleaseCollection</a> ( sdbCollectionHandle cHandle ) ;</div>
+<div class="line"><a name="l01680"></a><span class="lineno"> 1680</span>&#160;</div>
+<div class="line"><a name="l01685"></a><span class="lineno"> 1685</span>&#160;SDB_EXPORT <span class="keywordtype">void</span> <a class="code" href="client_8h.html#a4793b898ad8a8accfe099941f4a0b9a1" title="Release the collection space handle, the collecion and cursor handle of this collection space will st...">sdbReleaseCS</a> ( sdbCSHandle cHandle ) ;</div>
+<div class="line"><a name="l01686"></a><span class="lineno"> 1686</span>&#160;</div>
+<div class="line"><a name="l01691"></a><span class="lineno"> 1691</span>&#160;SDB_EXPORT <span class="keywordtype">void</span> <a class="code" href="client_8h.html#a77c5fe8bdc275da433c59c95773c783e" title="Release the cursor handle.">sdbReleaseCursor</a> ( sdbCursorHandle cHandle ) ;</div>
+<div class="line"><a name="l01692"></a><span class="lineno"> 1692</span>&#160;</div>
+<div class="line"><a name="l01697"></a><span class="lineno"> 1697</span>&#160;SDB_EXPORT <span class="keywordtype">void</span> <a class="code" href="client_8h.html#a1d460c17d6c3a21e7637c1b681801831" title="Release the replica group handle.">sdbReleaseReplicaGroup</a> ( sdbReplicaGroupHandle cHandle ) ;</div>
+<div class="line"><a name="l01698"></a><span class="lineno"> 1698</span>&#160;</div>
+<div class="line"><a name="l01703"></a><span class="lineno"> 1703</span>&#160;SDB_EXPORT <span class="keywordtype">void</span> <a class="code" href="client_8h.html#a9b01999a1061ab7def7196f670201aec" title="Release the node handle.">sdbReleaseNode</a> ( sdbNodeHandle cHandle ) ;</div>
+<div class="line"><a name="l01704"></a><span class="lineno"> 1704</span>&#160;</div>
+<div class="line"><a name="l01709"></a><span class="lineno"> 1709</span>&#160;SDB_EXPORT <span class="keywordtype">void</span> <a class="code" href="client_8h.html#a3842610e8f6b748a2636ca3c2ab29b2f" title="Release the domain handle.">sdbReleaseDomain</a> ( sdbDomainHandle cHandle ) ;</div>
+<div class="line"><a name="l01710"></a><span class="lineno"> 1710</span>&#160;</div>
+<div class="line"><a name="l01748"></a><span class="lineno"> 1748</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#aa4258c78ef84179f740d917748c092fd" title="Execute aggregate operation in specified collection.">sdbAggregate</a> ( sdbCollectionHandle cHandle,</div>
+<div class="line"><a name="l01749"></a><span class="lineno"> 1749</span>&#160;                                bson **obj, SINT32 num,</div>
+<div class="line"><a name="l01750"></a><span class="lineno"> 1750</span>&#160;                                sdbCursorHandle *handle ) ;</div>
+<div class="line"><a name="l01751"></a><span class="lineno"> 1751</span>&#160;</div>
+<div class="line"><a name="l01763"></a><span class="lineno"> 1763</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#a856b9ef9d1511f8d39071fc0cc9286b7" title="Attach the specified collection.">sdbAttachCollection</a> ( sdbCollectionHandle cHandle,</div>
+<div class="line"><a name="l01764"></a><span class="lineno"> 1764</span>&#160;                                       <span class="keyword">const</span> CHAR *subClFullName,</div>
+<div class="line"><a name="l01765"></a><span class="lineno"> 1765</span>&#160;                                       bson *options) ;</div>
+<div class="line"><a name="l01766"></a><span class="lineno"> 1766</span>&#160;</div>
+<div class="line"><a name="l01775"></a><span class="lineno"> 1775</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#a16f4f27dfaf5b02a2dd9fe5ec8802a4f" title="Detach the specified collection.">sdbDetachCollection</a> ( sdbCollectionHandle cHandle,</div>
+<div class="line"><a name="l01776"></a><span class="lineno"> 1776</span>&#160;                                       <span class="keyword">const</span> CHAR *subClFullName) ;</div>
+<div class="line"><a name="l01777"></a><span class="lineno"> 1777</span>&#160;</div>
+<div class="line"><a name="l01798"></a><span class="lineno"> 1798</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#a226cdd6bd12bc76e1c0aa4e4cd8f6a69" title="Backup the whole database or specifed replica group.">sdbBackupOffline</a> ( sdbConnectionHandle cHandle,</div>
+<div class="line"><a name="l01799"></a><span class="lineno"> 1799</span>&#160;                                    bson *options) ;</div>
+<div class="line"><a name="l01800"></a><span class="lineno"> 1800</span>&#160;</div>
+<div class="line"><a name="l01821"></a><span class="lineno"> 1821</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#a06a57a52d4cd712932a5a61ab761dafd" title="List the backups.">sdbListBackup</a> ( sdbConnectionHandle cHandle,</div>
+<div class="line"><a name="l01822"></a><span class="lineno"> 1822</span>&#160;                                 bson *options,</div>
+<div class="line"><a name="l01823"></a><span class="lineno"> 1823</span>&#160;                                 bson *condition,</div>
+<div class="line"><a name="l01824"></a><span class="lineno"> 1824</span>&#160;                                 bson *selector,</div>
+<div class="line"><a name="l01825"></a><span class="lineno"> 1825</span>&#160;                                 bson *orderBy,</div>
+<div class="line"><a name="l01826"></a><span class="lineno"> 1826</span>&#160;                                 sdbCursorHandle *handle ) ;</div>
+<div class="line"><a name="l01827"></a><span class="lineno"> 1827</span>&#160;</div>
+<div class="line"><a name="l01840"></a><span class="lineno"> 1840</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#ac78aa54d3018dbbe8dfefe3ed07cd772" title="Remove the backups.">sdbRemoveBackup</a> ( sdbConnectionHandle cHandle,</div>
+<div class="line"><a name="l01841"></a><span class="lineno"> 1841</span>&#160;                                   bson *options) ;</div>
+<div class="line"><a name="l01842"></a><span class="lineno"> 1842</span>&#160;</div>
+<div class="line"><a name="l01859"></a><span class="lineno"> 1859</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#a2f38ac58336c5f70acf6e3472a672674" title="List the tasks.">sdbListTasks</a> ( sdbConnectionHandle cHandle,</div>
+<div class="line"><a name="l01860"></a><span class="lineno"> 1860</span>&#160;                                bson *condition,</div>
+<div class="line"><a name="l01861"></a><span class="lineno"> 1861</span>&#160;                                bson *selector,</div>
+<div class="line"><a name="l01862"></a><span class="lineno"> 1862</span>&#160;                                bson *orderBy,</div>
+<div class="line"><a name="l01863"></a><span class="lineno"> 1863</span>&#160;                                bson *hint,</div>
+<div class="line"><a name="l01864"></a><span class="lineno"> 1864</span>&#160;                                sdbCursorHandle *handle ) ;</div>
+<div class="line"><a name="l01865"></a><span class="lineno"> 1865</span>&#160;</div>
+<div class="line"><a name="l01876"></a><span class="lineno"> 1876</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#a487b4a3fbe98f2cd8a2496c2a15cfec6" title="Wait the tasks to finish.">sdbWaitTasks</a> ( sdbConnectionHandle cHandle,</div>
+<div class="line"><a name="l01877"></a><span class="lineno"> 1877</span>&#160;                                <span class="keyword">const</span> SINT64 *taskIDs,</div>
+<div class="line"><a name="l01878"></a><span class="lineno"> 1878</span>&#160;                                SINT32 num );</div>
+<div class="line"><a name="l01879"></a><span class="lineno"> 1879</span>&#160;</div>
+<div class="line"><a name="l01891"></a><span class="lineno"> 1891</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#aac029248a456673d6f9c153f4aa3572f" title="Cancel the specified task.">sdbCancelTask</a> ( sdbConnectionHandle cHandle,</div>
+<div class="line"><a name="l01892"></a><span class="lineno"> 1892</span>&#160;                                 SINT64 taskID,</div>
+<div class="line"><a name="l01893"></a><span class="lineno"> 1893</span>&#160;                                 BOOLEAN isAsync ) ;</div>
+<div class="line"><a name="l01894"></a><span class="lineno"> 1894</span>&#160;</div>
+<div class="line"><a name="l01908"></a><span class="lineno"> 1908</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#a006c3ff5dfeef9d670c25c49ca682584" title="Set the attributes of the session.">sdbSetSessionAttr</a> ( sdbConnectionHandle cHandle,</div>
+<div class="line"><a name="l01909"></a><span class="lineno"> 1909</span>&#160;                                     bson *options ) ;</div>
+<div class="line"><a name="l01910"></a><span class="lineno"> 1910</span>&#160;</div>
+<div class="line"><a name="l01917"></a><span class="lineno"> 1917</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#a1202fb36bfd55e630011a1cf37abeec5" title="Judge whether the connection is valid.">sdbIsValid</a>( sdbConnectionHandle cHandle, BOOLEAN *result ) ;</div>
 <div class="line"><a name="l01918"></a><span class="lineno"> 1918</span>&#160;</div>
-<div class="line"><a name="l01939"></a><span class="lineno"> 1939</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#a062587507c73f8a789f2fe72cf2808b6" title="Create a domain.">sdbCreateDomain</a> ( sdbConnectionHandle cHandle,</div>
-<div class="line"><a name="l01940"></a><span class="lineno"> 1940</span>&#160;                                   <span class="keyword">const</span> CHAR *pDomainName,</div>
-<div class="line"><a name="l01941"></a><span class="lineno"> 1941</span>&#160;                                   bson *options,</div>
-<div class="line"><a name="l01942"></a><span class="lineno"> 1942</span>&#160;                                   sdbDomainHandle *handle ) ;</div>
-<div class="line"><a name="l01943"></a><span class="lineno"> 1943</span>&#160;</div>
-<div class="line"><a name="l01952"></a><span class="lineno"> 1952</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#adc7e70d29899c270f5b32b40de54a6e3" title="Create a domain.">sdbDropDomain</a> ( sdbConnectionHandle cHandle,</div>
-<div class="line"><a name="l01953"></a><span class="lineno"> 1953</span>&#160;                                 <span class="keyword">const</span> CHAR *pDomainName ) ;</div>
-<div class="line"><a name="l01954"></a><span class="lineno"> 1954</span>&#160;</div>
-<div class="line"><a name="l01965"></a><span class="lineno"> 1965</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#a7c6549b272617a83386bb9a4de674b33" title="Get a domain.">sdbGetDomain</a> ( sdbConnectionHandle cHandle,</div>
-<div class="line"><a name="l01966"></a><span class="lineno"> 1966</span>&#160;                                <span class="keyword">const</span> CHAR *pDomainName,</div>
-<div class="line"><a name="l01967"></a><span class="lineno"> 1967</span>&#160;                                sdbDomainHandle *handle ) ;</div>
-<div class="line"><a name="l01968"></a><span class="lineno"> 1968</span>&#160;</div>
-<div class="line"><a name="l01984"></a><span class="lineno"> 1984</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#a5dd88300784507649e3b95d15e2d7c41" title="List the domains.">sdbListDomains</a> ( sdbConnectionHandle cHandle,</div>
-<div class="line"><a name="l01985"></a><span class="lineno"> 1985</span>&#160;                                  bson *condition,</div>
-<div class="line"><a name="l01986"></a><span class="lineno"> 1986</span>&#160;                                  bson *selector,</div>
-<div class="line"><a name="l01987"></a><span class="lineno"> 1987</span>&#160;                                  bson *orderBy,</div>
-<div class="line"><a name="l01988"></a><span class="lineno"> 1988</span>&#160;                                  sdbCursorHandle *handle ) ;</div>
-<div class="line"><a name="l01989"></a><span class="lineno"> 1989</span>&#160;</div>
-<div class="line"><a name="l02009"></a><span class="lineno"> 2009</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#a9e0f5374ef4f6a0ea3bcee786651a90f" title="alter the current domain.">sdbAlterDomain</a>( sdbDomainHandle cHandle,</div>
-<div class="line"><a name="l02010"></a><span class="lineno"> 2010</span>&#160;                                 <span class="keyword">const</span> bson *options ) ;</div>
-<div class="line"><a name="l02011"></a><span class="lineno"> 2011</span>&#160;</div>
-<div class="line"><a name="l02020"></a><span class="lineno"> 2020</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#aa6d4d7eeeff9ac9a6849959df8d51b34" title="list the collection spaces in domain.">sdbListCollectionSpacesInDomain</a>( sdbDomainHandle cHandle,</div>
-<div class="line"><a name="l02021"></a><span class="lineno"> 2021</span>&#160;                                                  sdbCursorHandle *cursor ) ;</div>
-<div class="line"><a name="l02022"></a><span class="lineno"> 2022</span>&#160;</div>
-<div class="line"><a name="l02031"></a><span class="lineno"> 2031</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#a77de96243b2649ba3ae110c4afee4647" title="list the collections in domain.">sdbListCollectionsInDomain</a>( sdbDomainHandle cHandle,</div>
-<div class="line"><a name="l02032"></a><span class="lineno"> 2032</span>&#160;                                             sdbCursorHandle *cursor ) ;</div>
-<div class="line"><a name="l02033"></a><span class="lineno"> 2033</span>&#160;</div>
-<div class="line"><a name="l02042"></a><span class="lineno"> 2042</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#aa7c7ecc4a7736ce7bfdd06611be728dd" title="list the groups in domain.">sdbListGroupsInDomain</a>( sdbDomainHandle cHandle,</div>
-<div class="line"><a name="l02043"></a><span class="lineno"> 2043</span>&#160;                                        sdbCursorHandle *cursor ) ;</div>
-<div class="line"><a name="l02044"></a><span class="lineno"> 2044</span>&#160;</div>
-<div class="line"><a name="l02053"></a><span class="lineno"> 2053</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#a002d23a4b7205c5e903fff039c14ca25" title="invalidate cache on specified nodes.">sdbInvalidateCache</a>( sdbConnectionHandle cHandle,</div>
-<div class="line"><a name="l02054"></a><span class="lineno"> 2054</span>&#160;                                     bson *condition ) ;</div>
-<div class="line"><a name="l02055"></a><span class="lineno"> 2055</span>&#160;</div>
-<div class="line"><a name="l02064"></a><span class="lineno"> 2064</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#afab1c20c215205d0233e5173a9c52a6b" title="interrupte the session">sdbForceSession</a>( sdbConnectionHandle cHandle,</div>
-<div class="line"><a name="l02065"></a><span class="lineno"> 2065</span>&#160;                                  SINT64 sessionID ) ;</div>
-<div class="line"><a name="l02066"></a><span class="lineno"> 2066</span>&#160;</div>
-<div class="line"><a name="l02079"></a><span class="lineno"> 2079</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#ae2abc650e8e968d8716cceb2f3a030ae" title="create a large object">sdbOpenLob</a>( sdbCollectionHandle cHandle,</div>
-<div class="line"><a name="l02080"></a><span class="lineno"> 2080</span>&#160;                             <span class="keyword">const</span> bson_oid_t *oid,</div>
-<div class="line"><a name="l02081"></a><span class="lineno"> 2081</span>&#160;                             INT32 mode,</div>
-<div class="line"><a name="l02082"></a><span class="lineno"> 2082</span>&#160;                             sdbLobHandle *lobHandle ) ;</div>
-<div class="line"><a name="l02083"></a><span class="lineno"> 2083</span>&#160;</div>
-<div class="line"><a name="l02094"></a><span class="lineno"> 2094</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#a974974b64b16e1f1808e929788bd6d08" title="write lob">sdbWriteLob</a>( sdbLobHandle lobHandle,</div>
-<div class="line"><a name="l02095"></a><span class="lineno"> 2095</span>&#160;                              <span class="keyword">const</span> CHAR *buf,</div>
-<div class="line"><a name="l02096"></a><span class="lineno"> 2096</span>&#160;                              UINT32 len ) ;</div>
-<div class="line"><a name="l02097"></a><span class="lineno"> 2097</span>&#160;</div>
-<div class="line"><a name="l02110"></a><span class="lineno"> 2110</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#aa9ebe005f3c9ef0509dea453b13a9e95" title="read lob">sdbReadLob</a>( sdbLobHandle lobHandle,</div>
-<div class="line"><a name="l02111"></a><span class="lineno"> 2111</span>&#160;                             UINT32 len,</div>
-<div class="line"><a name="l02112"></a><span class="lineno"> 2112</span>&#160;                             CHAR *buf,</div>
-<div class="line"><a name="l02113"></a><span class="lineno"> 2113</span>&#160;                             UINT32 *read ) ;</div>
-<div class="line"><a name="l02114"></a><span class="lineno"> 2114</span>&#160;</div>
-<div class="line"><a name="l02121"></a><span class="lineno"> 2121</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#afb9fe703333e67b6c65ad5b8ba8d2661" title="close lob">sdbCloseLob</a>( sdbLobHandle *lobHandle ) ;</div>
-<div class="line"><a name="l02122"></a><span class="lineno"> 2122</span>&#160;</div>
-<div class="line"><a name="l02131"></a><span class="lineno"> 2131</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#a60532913ce2b87b8cfc5cf31eb54f76a" title="remove lob">sdbRemoveLob</a>( sdbCollectionHandle cHandle,</div>
-<div class="line"><a name="l02132"></a><span class="lineno"> 2132</span>&#160;                               <span class="keyword">const</span> bson_oid_t *oid ) ;</div>
-<div class="line"><a name="l02133"></a><span class="lineno"> 2133</span>&#160;</div>
-<div class="line"><a name="l02142"></a><span class="lineno"> 2142</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#a902286fb1830f90849ffd5291ade101c" title="get the lob&#39;s size">sdbGetLobSize</a>( sdbLobHandle lobHandle,</div>
-<div class="line"><a name="l02143"></a><span class="lineno"> 2143</span>&#160;                                SINT64 *size ) ;</div>
-<div class="line"><a name="l02144"></a><span class="lineno"> 2144</span>&#160;</div>
-<div class="line"><a name="l02155"></a><span class="lineno"> 2155</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#ab90f576717b9d416027390b36f783546" title="get lob&#39;s create time">sdbGetLobCreateTime</a>( sdbLobHandle lobHandle,</div>
-<div class="line"><a name="l02156"></a><span class="lineno"> 2156</span>&#160;                                      UINT64 *millis ) ;</div>
-<div class="line"><a name="l02157"></a><span class="lineno"> 2157</span>&#160;</div>
-<div class="line"><a name="l02168"></a><span class="lineno"> 2168</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#a692f6e159b4312c14f4bc89dd5b78e57" title="seek the place to read">sdbSeekLob</a>( sdbLobHandle lobHandle,</div>
-<div class="line"><a name="l02169"></a><span class="lineno"> 2169</span>&#160;                             SINT64 size,</div>
-<div class="line"><a name="l02170"></a><span class="lineno"> 2170</span>&#160;                             SDB_LOB_SEEK whence ) ;</div>
-<div class="line"><a name="l02171"></a><span class="lineno"> 2171</span>&#160;</div>
-<div class="line"><a name="l02180"></a><span class="lineno"> 2180</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#a40a36bfde58fd6b3199db60838970060" title="list all the lobs&#39; meta data in current collection">sdbListLobs</a>( sdbCollectionHandle cHandle,</div>
-<div class="line"><a name="l02181"></a><span class="lineno"> 2181</span>&#160;                              sdbCursorHandle *cursor ) ;</div>
-<div class="line"><a name="l02182"></a><span class="lineno"> 2182</span>&#160;</div>
-<div class="line"><a name="l02191"></a><span class="lineno"> 2191</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#afd9f14b11631d48a17b6dd32a891a6dd" title="list all the pieces in the lob">sdbListLobPieces</a>( sdbCollectionHandle cHandle,</div>
-<div class="line"><a name="l02192"></a><span class="lineno"> 2192</span>&#160;                                   sdbCursorHandle *cursor ) ;</div>
-<div class="line"><a name="l02193"></a><span class="lineno"> 2193</span>&#160;</div>
-<div class="line"><a name="l02194"></a><span class="lineno"> 2194</span>&#160;</div>
-<div class="line"><a name="l02202"></a><span class="lineno"> 2202</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#a0d99d53f92cd8c38ac9d785ac4bd1470">sdbReelect</a>( sdbReplicaGroupHandle cHandle,</div>
-<div class="line"><a name="l02203"></a><span class="lineno"> 2203</span>&#160;                             <span class="keyword">const</span> bson *options ) ;</div>
-<div class="line"><a name="l02204"></a><span class="lineno"> 2204</span>&#160;</div>
-<div class="line"><a name="l02212"></a><span class="lineno"> 2212</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#a59d49e845a277e677faffd5278dbb230">sdbForceStepUp</a>( sdbConnectionHandle cHandle,</div>
-<div class="line"><a name="l02213"></a><span class="lineno"> 2213</span>&#160;                                 <span class="keyword">const</span> bson *options ) ;</div>
-<div class="line"><a name="l02214"></a><span class="lineno"> 2214</span>&#160;</div>
-<div class="line"><a name="l02223"></a><span class="lineno"> 2223</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#add259dddb71fe600d0465182d3114f8a" title="truncate the collection">sdbTruncateCollection</a>( sdbConnectionHandle cHandle,</div>
-<div class="line"><a name="l02224"></a><span class="lineno"> 2224</span>&#160;                                        <span class="keyword">const</span> CHAR *fullName ) ;</div>
-<div class="line"><a name="l02225"></a><span class="lineno"> 2225</span>&#160;</div>
-<div class="line"><a name="l02238"></a><span class="lineno"> 2238</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#ace5a117bc6e05b0a9fcccae3bd66518e" title="detach a node from the group">sdbDetachNode</a>( sdbReplicaGroupHandle cHandle,</div>
-<div class="line"><a name="l02239"></a><span class="lineno"> 2239</span>&#160;                                <span class="keyword">const</span> CHAR *hostName,</div>
-<div class="line"><a name="l02240"></a><span class="lineno"> 2240</span>&#160;                                <span class="keyword">const</span> CHAR *serviceName,</div>
-<div class="line"><a name="l02241"></a><span class="lineno"> 2241</span>&#160;                                <span class="keyword">const</span> bson *options ) ;</div>
-<div class="line"><a name="l02242"></a><span class="lineno"> 2242</span>&#160;</div>
-<div class="line"><a name="l02255"></a><span class="lineno"> 2255</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#a35c6c62749e40429be370cfd51511f26" title="attach a node to the group">sdbAttachNode</a>( sdbReplicaGroupHandle cHandle,</div>
-<div class="line"><a name="l02256"></a><span class="lineno"> 2256</span>&#160;                                <span class="keyword">const</span> CHAR *hostName,</div>
-<div class="line"><a name="l02257"></a><span class="lineno"> 2257</span>&#160;                                <span class="keyword">const</span> CHAR *serviceName,</div>
-<div class="line"><a name="l02258"></a><span class="lineno"> 2258</span>&#160;                                <span class="keyword">const</span> bson *options ) ;</div>
-<div class="line"><a name="l02259"></a><span class="lineno"> 2259</span>&#160;</div>
-<div class="line"><a name="l02266"></a><span class="lineno"> 2266</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#a5f39a69654db7484cb45fbbaf62764c3" title="Create $id index in collection.">sdbCreateIdIndex</a>( sdbCollectionHandle cHandle ) ;</div>
-<div class="line"><a name="l02267"></a><span class="lineno"> 2267</span>&#160;</div>
-<div class="line"><a name="l02275"></a><span class="lineno"> 2275</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#a6f27b1e9a97edc193604f3d413a37e18" title="Drop $id index in collection.">sdbDropIdIndex</a>( sdbCollectionHandle cHandle ) ;</div>
-<div class="line"><a name="l02276"></a><span class="lineno"> 2276</span>&#160;</div>
-<div class="line"><a name="l02277"></a><span class="lineno"> 2277</span>&#160;SDB_EXTERN_C_END</div>
-<div class="line"><a name="l02278"></a><span class="lineno"> 2278</span>&#160;<span class="preprocessor">#endif</span></div>
-<div class="line"><a name="l02279"></a><span class="lineno"> 2279</span>&#160;<span class="preprocessor"></span></div>
+<div class="line"><a name="l01919"></a><span class="lineno"> 1919</span>&#160;SDB_EXPORT INT32 _sdbMsg ( sdbConnectionHandle cHandle, <span class="keyword">const</span> CHAR *msg ) ;</div>
+<div class="line"><a name="l01920"></a><span class="lineno"> 1920</span>&#160;</div>
+<div class="line"><a name="l01941"></a><span class="lineno"> 1941</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#a062587507c73f8a789f2fe72cf2808b6" title="Create a domain.">sdbCreateDomain</a> ( sdbConnectionHandle cHandle,</div>
+<div class="line"><a name="l01942"></a><span class="lineno"> 1942</span>&#160;                                   <span class="keyword">const</span> CHAR *pDomainName,</div>
+<div class="line"><a name="l01943"></a><span class="lineno"> 1943</span>&#160;                                   bson *options,</div>
+<div class="line"><a name="l01944"></a><span class="lineno"> 1944</span>&#160;                                   sdbDomainHandle *handle ) ;</div>
+<div class="line"><a name="l01945"></a><span class="lineno"> 1945</span>&#160;</div>
+<div class="line"><a name="l01954"></a><span class="lineno"> 1954</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#adc7e70d29899c270f5b32b40de54a6e3" title="Create a domain.">sdbDropDomain</a> ( sdbConnectionHandle cHandle,</div>
+<div class="line"><a name="l01955"></a><span class="lineno"> 1955</span>&#160;                                 <span class="keyword">const</span> CHAR *pDomainName ) ;</div>
+<div class="line"><a name="l01956"></a><span class="lineno"> 1956</span>&#160;</div>
+<div class="line"><a name="l01967"></a><span class="lineno"> 1967</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#a7c6549b272617a83386bb9a4de674b33" title="Get a domain.">sdbGetDomain</a> ( sdbConnectionHandle cHandle,</div>
+<div class="line"><a name="l01968"></a><span class="lineno"> 1968</span>&#160;                                <span class="keyword">const</span> CHAR *pDomainName,</div>
+<div class="line"><a name="l01969"></a><span class="lineno"> 1969</span>&#160;                                sdbDomainHandle *handle ) ;</div>
+<div class="line"><a name="l01970"></a><span class="lineno"> 1970</span>&#160;</div>
+<div class="line"><a name="l01986"></a><span class="lineno"> 1986</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#a5dd88300784507649e3b95d15e2d7c41" title="List the domains.">sdbListDomains</a> ( sdbConnectionHandle cHandle,</div>
+<div class="line"><a name="l01987"></a><span class="lineno"> 1987</span>&#160;                                  bson *condition,</div>
+<div class="line"><a name="l01988"></a><span class="lineno"> 1988</span>&#160;                                  bson *selector,</div>
+<div class="line"><a name="l01989"></a><span class="lineno"> 1989</span>&#160;                                  bson *orderBy,</div>
+<div class="line"><a name="l01990"></a><span class="lineno"> 1990</span>&#160;                                  sdbCursorHandle *handle ) ;</div>
+<div class="line"><a name="l01991"></a><span class="lineno"> 1991</span>&#160;</div>
+<div class="line"><a name="l02011"></a><span class="lineno"> 2011</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#a9e0f5374ef4f6a0ea3bcee786651a90f" title="alter the current domain.">sdbAlterDomain</a>( sdbDomainHandle cHandle,</div>
+<div class="line"><a name="l02012"></a><span class="lineno"> 2012</span>&#160;                                 <span class="keyword">const</span> bson *options ) ;</div>
+<div class="line"><a name="l02013"></a><span class="lineno"> 2013</span>&#160;</div>
+<div class="line"><a name="l02022"></a><span class="lineno"> 2022</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#aa6d4d7eeeff9ac9a6849959df8d51b34" title="list the collection spaces in domain.">sdbListCollectionSpacesInDomain</a>( sdbDomainHandle cHandle,</div>
+<div class="line"><a name="l02023"></a><span class="lineno"> 2023</span>&#160;                                                  sdbCursorHandle *cursor ) ;</div>
+<div class="line"><a name="l02024"></a><span class="lineno"> 2024</span>&#160;</div>
+<div class="line"><a name="l02033"></a><span class="lineno"> 2033</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#a77de96243b2649ba3ae110c4afee4647" title="list the collections in domain.">sdbListCollectionsInDomain</a>( sdbDomainHandle cHandle,</div>
+<div class="line"><a name="l02034"></a><span class="lineno"> 2034</span>&#160;                                             sdbCursorHandle *cursor ) ;</div>
+<div class="line"><a name="l02035"></a><span class="lineno"> 2035</span>&#160;</div>
+<div class="line"><a name="l02044"></a><span class="lineno"> 2044</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#aa7c7ecc4a7736ce7bfdd06611be728dd" title="list the groups in domain.">sdbListGroupsInDomain</a>( sdbDomainHandle cHandle,</div>
+<div class="line"><a name="l02045"></a><span class="lineno"> 2045</span>&#160;                                        sdbCursorHandle *cursor ) ;</div>
+<div class="line"><a name="l02046"></a><span class="lineno"> 2046</span>&#160;</div>
+<div class="line"><a name="l02055"></a><span class="lineno"> 2055</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#a002d23a4b7205c5e903fff039c14ca25" title="invalidate cache on specified nodes.">sdbInvalidateCache</a>( sdbConnectionHandle cHandle,</div>
+<div class="line"><a name="l02056"></a><span class="lineno"> 2056</span>&#160;                                     bson *condition ) ;</div>
+<div class="line"><a name="l02057"></a><span class="lineno"> 2057</span>&#160;</div>
+<div class="line"><a name="l02066"></a><span class="lineno"> 2066</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#afab1c20c215205d0233e5173a9c52a6b" title="interrupte the session">sdbForceSession</a>( sdbConnectionHandle cHandle,</div>
+<div class="line"><a name="l02067"></a><span class="lineno"> 2067</span>&#160;                                  SINT64 sessionID ) ;</div>
+<div class="line"><a name="l02068"></a><span class="lineno"> 2068</span>&#160;</div>
+<div class="line"><a name="l02081"></a><span class="lineno"> 2081</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#ae2abc650e8e968d8716cceb2f3a030ae" title="create a large object">sdbOpenLob</a>( sdbCollectionHandle cHandle,</div>
+<div class="line"><a name="l02082"></a><span class="lineno"> 2082</span>&#160;                             <span class="keyword">const</span> bson_oid_t *oid,</div>
+<div class="line"><a name="l02083"></a><span class="lineno"> 2083</span>&#160;                             INT32 mode,</div>
+<div class="line"><a name="l02084"></a><span class="lineno"> 2084</span>&#160;                             sdbLobHandle *lobHandle ) ;</div>
+<div class="line"><a name="l02085"></a><span class="lineno"> 2085</span>&#160;</div>
+<div class="line"><a name="l02096"></a><span class="lineno"> 2096</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#a974974b64b16e1f1808e929788bd6d08" title="write lob">sdbWriteLob</a>( sdbLobHandle lobHandle,</div>
+<div class="line"><a name="l02097"></a><span class="lineno"> 2097</span>&#160;                              <span class="keyword">const</span> CHAR *buf,</div>
+<div class="line"><a name="l02098"></a><span class="lineno"> 2098</span>&#160;                              UINT32 len ) ;</div>
+<div class="line"><a name="l02099"></a><span class="lineno"> 2099</span>&#160;</div>
+<div class="line"><a name="l02112"></a><span class="lineno"> 2112</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#aa9ebe005f3c9ef0509dea453b13a9e95" title="read lob">sdbReadLob</a>( sdbLobHandle lobHandle,</div>
+<div class="line"><a name="l02113"></a><span class="lineno"> 2113</span>&#160;                             UINT32 len,</div>
+<div class="line"><a name="l02114"></a><span class="lineno"> 2114</span>&#160;                             CHAR *buf,</div>
+<div class="line"><a name="l02115"></a><span class="lineno"> 2115</span>&#160;                             UINT32 *read ) ;</div>
+<div class="line"><a name="l02116"></a><span class="lineno"> 2116</span>&#160;</div>
+<div class="line"><a name="l02123"></a><span class="lineno"> 2123</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#afb9fe703333e67b6c65ad5b8ba8d2661" title="close lob">sdbCloseLob</a>( sdbLobHandle *lobHandle ) ;</div>
+<div class="line"><a name="l02124"></a><span class="lineno"> 2124</span>&#160;</div>
+<div class="line"><a name="l02133"></a><span class="lineno"> 2133</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#a60532913ce2b87b8cfc5cf31eb54f76a" title="remove lob">sdbRemoveLob</a>( sdbCollectionHandle cHandle,</div>
+<div class="line"><a name="l02134"></a><span class="lineno"> 2134</span>&#160;                               <span class="keyword">const</span> bson_oid_t *oid ) ;</div>
+<div class="line"><a name="l02135"></a><span class="lineno"> 2135</span>&#160;</div>
+<div class="line"><a name="l02144"></a><span class="lineno"> 2144</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#a902286fb1830f90849ffd5291ade101c" title="get the lob&#39;s size">sdbGetLobSize</a>( sdbLobHandle lobHandle,</div>
+<div class="line"><a name="l02145"></a><span class="lineno"> 2145</span>&#160;                                SINT64 *size ) ;</div>
+<div class="line"><a name="l02146"></a><span class="lineno"> 2146</span>&#160;</div>
+<div class="line"><a name="l02157"></a><span class="lineno"> 2157</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#ab90f576717b9d416027390b36f783546" title="get lob&#39;s create time">sdbGetLobCreateTime</a>( sdbLobHandle lobHandle,</div>
+<div class="line"><a name="l02158"></a><span class="lineno"> 2158</span>&#160;                                      UINT64 *millis ) ;</div>
+<div class="line"><a name="l02159"></a><span class="lineno"> 2159</span>&#160;</div>
+<div class="line"><a name="l02170"></a><span class="lineno"> 2170</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#a692f6e159b4312c14f4bc89dd5b78e57" title="seek the place to read">sdbSeekLob</a>( sdbLobHandle lobHandle,</div>
+<div class="line"><a name="l02171"></a><span class="lineno"> 2171</span>&#160;                             SINT64 size,</div>
+<div class="line"><a name="l02172"></a><span class="lineno"> 2172</span>&#160;                             SDB_LOB_SEEK whence ) ;</div>
+<div class="line"><a name="l02173"></a><span class="lineno"> 2173</span>&#160;</div>
+<div class="line"><a name="l02182"></a><span class="lineno"> 2182</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#a40a36bfde58fd6b3199db60838970060" title="list all the lobs&#39; meta data in current collection">sdbListLobs</a>( sdbCollectionHandle cHandle,</div>
+<div class="line"><a name="l02183"></a><span class="lineno"> 2183</span>&#160;                              sdbCursorHandle *cursor ) ;</div>
+<div class="line"><a name="l02184"></a><span class="lineno"> 2184</span>&#160;</div>
+<div class="line"><a name="l02193"></a><span class="lineno"> 2193</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#afd9f14b11631d48a17b6dd32a891a6dd" title="list all the pieces in the lob">sdbListLobPieces</a>( sdbCollectionHandle cHandle,</div>
+<div class="line"><a name="l02194"></a><span class="lineno"> 2194</span>&#160;                                   sdbCursorHandle *cursor ) ;</div>
+<div class="line"><a name="l02195"></a><span class="lineno"> 2195</span>&#160;</div>
+<div class="line"><a name="l02196"></a><span class="lineno"> 2196</span>&#160;</div>
+<div class="line"><a name="l02204"></a><span class="lineno"> 2204</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#a0d99d53f92cd8c38ac9d785ac4bd1470">sdbReelect</a>( sdbReplicaGroupHandle cHandle,</div>
+<div class="line"><a name="l02205"></a><span class="lineno"> 2205</span>&#160;                             <span class="keyword">const</span> bson *options ) ;</div>
+<div class="line"><a name="l02206"></a><span class="lineno"> 2206</span>&#160;</div>
+<div class="line"><a name="l02214"></a><span class="lineno"> 2214</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#a59d49e845a277e677faffd5278dbb230">sdbForceStepUp</a>( sdbConnectionHandle cHandle,</div>
+<div class="line"><a name="l02215"></a><span class="lineno"> 2215</span>&#160;                                 <span class="keyword">const</span> bson *options ) ;</div>
+<div class="line"><a name="l02216"></a><span class="lineno"> 2216</span>&#160;</div>
+<div class="line"><a name="l02225"></a><span class="lineno"> 2225</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#add259dddb71fe600d0465182d3114f8a" title="truncate the collection">sdbTruncateCollection</a>( sdbConnectionHandle cHandle,</div>
+<div class="line"><a name="l02226"></a><span class="lineno"> 2226</span>&#160;                                        <span class="keyword">const</span> CHAR *fullName ) ;</div>
+<div class="line"><a name="l02227"></a><span class="lineno"> 2227</span>&#160;</div>
+<div class="line"><a name="l02240"></a><span class="lineno"> 2240</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#ace5a117bc6e05b0a9fcccae3bd66518e" title="detach a node from the group">sdbDetachNode</a>( sdbReplicaGroupHandle cHandle,</div>
+<div class="line"><a name="l02241"></a><span class="lineno"> 2241</span>&#160;                                <span class="keyword">const</span> CHAR *hostName,</div>
+<div class="line"><a name="l02242"></a><span class="lineno"> 2242</span>&#160;                                <span class="keyword">const</span> CHAR *serviceName,</div>
+<div class="line"><a name="l02243"></a><span class="lineno"> 2243</span>&#160;                                <span class="keyword">const</span> bson *options ) ;</div>
+<div class="line"><a name="l02244"></a><span class="lineno"> 2244</span>&#160;</div>
+<div class="line"><a name="l02257"></a><span class="lineno"> 2257</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#a35c6c62749e40429be370cfd51511f26" title="attach a node to the group">sdbAttachNode</a>( sdbReplicaGroupHandle cHandle,</div>
+<div class="line"><a name="l02258"></a><span class="lineno"> 2258</span>&#160;                                <span class="keyword">const</span> CHAR *hostName,</div>
+<div class="line"><a name="l02259"></a><span class="lineno"> 2259</span>&#160;                                <span class="keyword">const</span> CHAR *serviceName,</div>
+<div class="line"><a name="l02260"></a><span class="lineno"> 2260</span>&#160;                                <span class="keyword">const</span> bson *options ) ;</div>
+<div class="line"><a name="l02261"></a><span class="lineno"> 2261</span>&#160;</div>
+<div class="line"><a name="l02268"></a><span class="lineno"> 2268</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#a5f39a69654db7484cb45fbbaf62764c3" title="Create $id index in collection.">sdbCreateIdIndex</a>( sdbCollectionHandle cHandle ) ;</div>
+<div class="line"><a name="l02269"></a><span class="lineno"> 2269</span>&#160;</div>
+<div class="line"><a name="l02277"></a><span class="lineno"> 2277</span>&#160;SDB_EXPORT INT32 <a class="code" href="client_8h.html#a6f27b1e9a97edc193604f3d413a37e18" title="Drop $id index in collection.">sdbDropIdIndex</a>( sdbCollectionHandle cHandle ) ;</div>
+<div class="line"><a name="l02278"></a><span class="lineno"> 2278</span>&#160;</div>
+<div class="line"><a name="l02279"></a><span class="lineno"> 2279</span>&#160;SDB_EXTERN_C_END</div>
+<div class="line"><a name="l02280"></a><span class="lineno"> 2280</span>&#160;<span class="preprocessor">#endif</span></div>
+<div class="line"><a name="l02281"></a><span class="lineno"> 2281</span>&#160;<span class="preprocessor"></span></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Jun 19 2015 19:03:56 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Fri Jun 26 2015 09:17:53 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.2
 </small></address>
