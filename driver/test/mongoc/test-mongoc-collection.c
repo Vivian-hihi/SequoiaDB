@@ -65,8 +65,8 @@ test_insert (void)
       ASSERT_CMPINT (r, ==, true);
       bson_destroy(&b);
    }
-   
-  
+
+
    bson_init(&q);
    bson_append_utf8(&q, "hello", 5, "/world", 5);
    ASSERT_CMPINT(check_records(collection, q, true), ==, 10);
@@ -78,7 +78,7 @@ test_insert (void)
    ASSERT_CMPINT (r, ==, false);
    ASSERT_CMPINT (error.domain, ==, MONGOC_ERROR_BSON);
    ASSERT_CMPINT (error.code, ==, MONGOC_ERROR_BSON_INVALID);
-   
+
    tearDown (collection);
    bson_context_destroy(context);
    mongoc_client_destroy(client);
@@ -366,7 +366,7 @@ test_update (void)
       bson_destroy(&q);
       bson_destroy(&u);
    }
-   
+
    bson_init(&q);
    bson_append_utf8(&q, "utf8", 4, "updated", 7);
    ASSERT_CMPINT(check_records(collection, q, true), ==, 10);
@@ -445,7 +445,7 @@ test_remove (void)
       ASSERT_CMPINT (r, ==, true);
       bson_destroy(&b);
    }
-  
+
    ASSERT_CMPINT(check_records(collection, q, true), ==, 0);
    tearDown(collection);
    bson_context_destroy(context);
@@ -481,7 +481,7 @@ test_index (void)
    r = mongoc_collection_create_index(collection, &keys, &opt, &error);
    ASSERT_CMPINT (r, ==, true);
 
-   
+
   // r = mongoc_collection_create_index(collection, &keys, &opt, &error);
   // ASSERT_CMPINT (r, ==, true);
 
@@ -686,7 +686,7 @@ test_count (void)
    bson_error_t error;
    int64_t count;
    bson_t b;
-   
+
 
    client = mongoc_client_new(gTestUri);
    ASSERT_CMPPTR(NULL, !=, client);
@@ -721,7 +721,7 @@ test_count_with_opts (void)
 
    client = mongoc_client_new (gTestUri);
    ASSERT_CMPPTR(NULL, !=, client);
-   
+
    collection = setUp ("test", client);
 
    bson_init (&opts);
@@ -889,7 +889,7 @@ test_validate (void)
 
    client = mongoc_client_new (gTestUri);
    ASSERT_CMPPTR(NULL, !=, client);
-   
+
    //collection = get_test_collection (client, "test_validate");
    //ASSERT_CMPPTR(collection, !=, NULL);
    collection = setUp ("test_validate",client);
@@ -940,7 +940,7 @@ test_rename (void)
    //collection = get_test_collection (client, "test_rename");
    //ASSERT_CMPPTR(collection, !=, NULL);
    collection = setUp ("test_rename", client);
-   
+
    r = mongoc_collection_insert (collection, MONGOC_INSERT_NONE, &doc, NULL, &error);
    ASSERT_CMPINT(r, ==, true);
 
@@ -1105,10 +1105,10 @@ test_large_return (void)
          bson_iter_find(&iter, "big")&&
          (BSON_TYPE_UTF8 == bson_iter_type(&iter)) ))
    {
-      MONGOC_ERROR("record not exist big field" ); 
+      MONGOC_ERROR("record not exist big field" );
       ASSERT_CMPINT(false, !=, false);
    }
-    
+
 
    r = mongoc_cursor_next (cursor, &doc);
    ASSERT_CMPINT(r, ==, false);
@@ -1287,11 +1287,10 @@ test_get_index_info (void)
    ASSERT_CMPINT (error.code, ==, 0);
 
    while (mongoc_cursor_next (cursor, &indexinfo)) {
-      if (bson_iter_init_find (&idx_spec_iter, indexinfo, "IndexDef") &&
-          bson_iter_recurse(&idx_spec_iter, &child) &&
-          bson_iter_find (&child, "name") &&
-          BSON_ITER_HOLDS_UTF8 (&child) &&
-          (cur_idx_name = bson_iter_utf8 (&child, NULL))) {
+      if (bson_iter_init (&idx_spec_iter, indexinfo) &&
+          bson_iter_find (&idx_spec_iter, "name") &&
+          BSON_ITER_HOLDS_UTF8 (&idx_spec_iter) &&
+          (cur_idx_name = bson_iter_utf8 (&idx_spec_iter, NULL))) {
          ASSERT_CMPINT (0, ==, strcmp (cur_idx_name, id_idx_name));
          ++num_idxs;
       } else {
@@ -1332,11 +1331,10 @@ test_get_index_info (void)
    ASSERT_CMPINT (error.code, ==, 0);
 
    while (mongoc_cursor_next (cursor, &indexinfo)) {
-      if (bson_iter_init_find (&idx_spec_iter, indexinfo, "IndexDef") &&
-          bson_iter_recurse(&idx_spec_iter, &child) &&
-          bson_iter_find (&child, "name") &&
-          BSON_ITER_HOLDS_UTF8 (&child) &&
-          (cur_idx_name = bson_iter_utf8 (&child, NULL))) {
+      if (bson_iter_init (&idx_spec_iter, indexinfo) &&
+          bson_iter_find (&idx_spec_iter, "name") &&
+          BSON_ITER_HOLDS_UTF8 (&idx_spec_iter) &&
+          (cur_idx_name = bson_iter_utf8 (&idx_spec_iter, NULL))) {
          if (0 == strcmp (cur_idx_name, idx1_name)) {
             /* need to use the copy of the iter since idx_spec_iter may have gone
              * past the key we want */
@@ -1344,9 +1342,9 @@ test_get_index_info (void)
             //ASSERT_CMPINT (BSON_ITER_HOLDS_BOOL (&idx_spec_iter_copy), ==, true);
             //ASSERT_CMPINT (bson_iter_bool (&idx_spec_iter_copy), ==, true);
          } else if (0 == strcmp (cur_idx_name, idx2_name)) {
-            ASSERT_CMPINT (bson_iter_find (&child, "unique"), ==, true);
-            ASSERT_CMPINT (BSON_ITER_HOLDS_BOOL (&child), ==, true);
-            ASSERT_CMPINT (bson_iter_bool (&child), ==, true);
+            ASSERT_CMPINT (bson_iter_find (&idx_spec_iter, "unique"), ==, true);
+            ASSERT_CMPINT (BSON_ITER_HOLDS_BOOL (&idx_spec_iter), ==, true);
+            ASSERT_CMPINT (bson_iter_bool (&idx_spec_iter), ==, true);
          } else {
             ASSERT_CMPINT (0, ==, strcmp (cur_idx_name, id_idx_name));
          }
@@ -1364,12 +1362,12 @@ test_get_index_info (void)
 
    bson_free (idx1_name);
    bson_free (idx2_name);
- 
+
    tearDown (collection);
    mongoc_client_destroy (client);
 }
 
-static void 
+static void
 test_find_one(void)
 {
    mongoc_collection_t *collection;
@@ -1382,7 +1380,7 @@ test_find_one(void)
    bson_oid_t oid;
    bson_t q = BSON_INITIALIZER;
    const bson_t *doc = NULL;
-   int i; 
+   int i;
    bson_iter_t iter;
 
    client = mongoc_client_new (gTestUri);
@@ -1403,7 +1401,7 @@ test_find_one(void)
       ASSERT_CMPINT (r, ==, true);
       bson_destroy(&b);
    }
-   
+
    cursor = mongoc_collection_find(collection, MONGOC_QUERY_NONE, 0, -1, 0, &q, NULL, NULL);
    ASSERT_CMPPTR (cursor, !=, NULL);
 
@@ -1469,7 +1467,7 @@ test_order(void)
    bson_append_document_end (&q, &child);
    bson_append_document_begin (&q, "$query", -1, &child);
    bson_append_document_end (&q, &child);
-   
+
    cursor = mongoc_collection_find(collection, MONGOC_QUERY_NONE, 0, 1, 0, &q, NULL, NULL);
    ASSERT_CMPPTR (cursor, !=, NULL);
    bson_destroy(&q);
@@ -1484,7 +1482,7 @@ test_order(void)
       MONGOC_WARNING("sort({a:1})%s\n", (char*)bson_as_json(doc, 0));
       ASSERT_CMPINT(false, !=, false);
    }
-   
+
    mongoc_cursor_destroy (cursor);
 
    bson_init(&q);
@@ -1530,7 +1528,7 @@ static void test_explain()
    ASSERT_CMPPTR(NULL, !=, client);
 
    collection = setUp("test_explain", client);
-   
+
    bson_init(&q);
    bson_append_document_begin (&q, "$query", -1, &child);
    bson_append_document_end (&q, &child);
@@ -1541,9 +1539,9 @@ static void test_explain()
    r = mongoc_cursor_next (cursor, &doc);
    ASSERT_CMPINT(r, ==, true);
    ASSERT_CMPPTR (doc, !=, NULL);
-   
-   if (!(bson_iter_init_find(&iter, doc, "Name") && 
-       (bson_iter_type(&iter) == BSON_TYPE_UTF8))) 
+
+   if (!(bson_iter_init_find(&iter, doc, "Name") &&
+       (bson_iter_type(&iter) == BSON_TYPE_UTF8)))
    {
       MONGOC_WARNING("explain():%s\n", (char*)bson_as_json(doc, 0));
       ASSERT_CMPINT(false, !=, false);
@@ -1561,7 +1559,7 @@ static void test_explain()
    tearDown (collection);
    mongoc_client_destroy (client);
 }
- 
+
 static void
 cleanup_globals (void)
 {
