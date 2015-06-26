@@ -35,8 +35,8 @@ from pysequoiadb.error import (SDBBaseError,
 
 class collection(object):
    """Collection for SequoiaDB
-   
-   All operation need deal with the error code returned first, if it has. 
+
+   All operation need deal with the error code returned first, if it has.
    Every error code is not SDB_OK(or 0), it means something error has appeared,
    and user should deal with it according the meaning of error code printed.
 
@@ -74,7 +74,7 @@ class collection(object):
 
    def __del__(self):
       """delete a object existed.
-      
+
       Exceptions:
          pysequoiadb.error.SDBBaseError
       """
@@ -133,11 +133,11 @@ class collection(object):
                                               of all documents if None.
          split_end_condition   dict     The split end condition or None.
                                               eg:
-                                              If we create a collection with the 
+                                              If we create a collection with the
                                               option { ShardingKey:{"age":1},
                                               ShardingType:"Hash",Partition:2^10 },
                                               we can fill {age:30} as the
-                                              splitCondition, and fill {age:60} 
+                                              splitCondition, and fill {age:60}
                                               as the splitEndCondition. when
                                               split, the target replica group
                                               will get the records whose age's
@@ -177,7 +177,7 @@ class collection(object):
    def split_by_percent(self, source_group_name, target_group_name, percent):
       """Split the specified collection from source replica group to target
          replica group by percent.
-      
+
       Parameters:
          Name               Type     Info:
          source_group_name  str      The source replica group name.
@@ -205,7 +205,7 @@ class collection(object):
                          split_condition, split_end_condition = None):
       """Split the specified collection from source replica group to target
          replica group by range.
-      
+
       Parameters:
          Name                  Type  Info:
          source_group_name     str   The source replica group name.
@@ -214,11 +214,11 @@ class collection(object):
                                            all documents if None.
          split_end_condition   dict  The split end condition or None.
                                            eg:
-                                           If we create a collection with the 
+                                           If we create a collection with the
                                            option { ShardingKey:{"age":1},
                                            ShardingType:"Hash",Partition:2^10 },
                                            we can fill {age:30} as the
-                                           splitCondition, and fill {age:60} 
+                                           splitCondition, and fill {age:60}
                                            as the splitEndCondition. when split,
                                            the target replica group will get the
                                            records whose age's hash value are in
@@ -265,7 +265,7 @@ class collection(object):
                                                        percent):
       """Split the specified collection from source replica group to target
          replica group by percent.
-      
+
       Parameters:
          Name               Type     Info:
          source_group_name  str      The source replica group name.
@@ -298,7 +298,7 @@ class collection(object):
 
    def bulk_insert(self, flags, records):
       """Insert a bulk of record into current collection.
-      
+
       Parameters:
          Name        Type       Info:
          flags       int        0 or 1, see Info as below.
@@ -307,7 +307,7 @@ class collection(object):
          pysequoiadb.error.SDBTypeError
          pysequoiadb.error.SDBBaseError
       Info:
-         flags : 0 or 1. 
+         flags : 0 or 1.
          0 : stop insertting when hit index key duplicate error
          1 : continue insertting records even though index key duplicate error hit
       """
@@ -501,7 +501,7 @@ class collection(object):
       bson_selector = None
       bson_order_by = None
       bson_hint = None
-      
+
       num_to_skip = 0L
       num_to_return = -1L
 
@@ -693,12 +693,12 @@ class collection(object):
       return result
 
    def create_index(self, index_def, idx_name, is_unique, is_enforced):
-      """Create the index in current collection.
+      """Create an index in current collection.
 
       Parameters:
          Name         Type  Info:
          index_def    dict  The dict object of index element.
-                                  e.g. {name:1, age:-1}
+                                  e.g. {'name':1, 'age':-1}
          idx_name     str   The index name.
          is_unique    bool  Whether the index elements are unique or not.
          is_enforced  bool  Whether the index is enforced unique This
@@ -1110,7 +1110,7 @@ class collection(object):
       bson_selector = None
       bson_order_by = None
       bson_hint = None
-      
+
       num_to_skip = 0L
 
       if "condition" in kwargs:
@@ -1177,8 +1177,8 @@ class collection(object):
          - num_to_return   long     Only return numToReturn documents,
                                           default is -1L for returning
                                           all results.
-         - flag            int      
-         - options         json     
+         - flag            int
+         - options         json
       Return values:
          a cursor object of query
       Exceptions:
@@ -1191,7 +1191,7 @@ class collection(object):
       bson_order_by = None
       bson_hint = None
       bson_options = None
-      
+
       num_to_skip = 0L
       num_to_return = -1L
       flag = 0
@@ -1265,5 +1265,46 @@ class collection(object):
       try:
          rc = sdb.cl_drop_id_index(self._cl)
          pysequoiadb._raise_if_error("Drop id index failed", rc)
+      except SDBBaseError:
+         raise
+
+   def create_index_offline(self, index_def, idx_name, is_unique, is_enforced):
+      """Create an index in current collection offline.
+
+      Parameters:
+         Name         Type  Info:
+         index_def    dict  The dict object of index element.
+                                  e.g. {'name':1, 'age':-1}
+         idx_name     str   The index name.
+         is_unique    bool  Whether the index elements are unique or not.
+         is_enforced  bool  Whether the index is enforced unique This
+                                  element is meaningful when isUnique is set to
+                                  true.
+      Exceptions:
+         pysequoiadb.error.SDBTypeError
+         pysequoiadb.error.SDBBaseError
+      """
+      if not isinstance(index_def, dict):
+         raise SDBTypeError("index definition must be an instance of dict")
+      if not isinstance(idx_name, basestring):
+         raise SDBTypeError("index name must be an instance of basestring")
+      if not isinstance(is_unique, bool):
+         raise SDBTypeError("is_unique must be an instance of bool")
+      if not isinstance(is_enforced, bool):
+         raise SDBTypeError("is_enforced must be an instance of bool")
+
+      unique = 0
+      enforce = 0
+      bson_index_def = bson.BSON.encode(index_def)
+
+      if is_unique:
+         unique = 1
+      if is_enforced:
+         enforced = 1
+
+      try:
+         rc = sdb.cl_create_index_offline(self._cl, bson_index_def, idx_name,
+                                                    is_unique, is_enforced)
+         pysequoiadb._raise_if_error("Failed to create index offline", rc)
       except SDBBaseError:
          raise

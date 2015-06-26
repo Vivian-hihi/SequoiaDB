@@ -1305,7 +1305,7 @@ done :
 }
 
 ///< implement collection
-__METHOD_IMP(create_cl) 
+__METHOD_IMP(create_cl)
 {
    sdbCollection *cl = NULL;
    NEW_CPPOBJECT( cl, sdbCollection ) ;
@@ -2098,7 +2098,7 @@ __METHOD_IMP(cl_create_lob)
    const CHAR * str_id= NULL ;
    bson::OID *pOid    = NULL ;
    bson::OID oid;
-   
+
 
    if ( !PARSE_PYTHON_ARGS(args, "OOO", &obj, &obj_lob, &oid_obj) )
    {
@@ -2265,6 +2265,38 @@ error:
    goto done ;
 }
 
+__METHOD_IMP(cl_create_index_offline)
+{
+   INT32 rc                       = 0 ;
+   BOOLEAN is_unique              = 0 ;
+   BOOLEAN is_enforced            = 0 ;
+   PYOBJECT *obj                  = NULL ;
+   PYOBJECT *bson_index_def       = NULL ;
+   sdbCollection *cl              = NULL ;
+   const bson::BSONObj *index_def = NULL ;
+   const CHAR *name               = NULL ;
+
+   if ( !PARSE_PYTHON_ARGS( args, "OOsii", &obj, &bson_index_def, &name,
+      &is_unique, &is_enforced ) )
+   {
+      rc = SDB_INVALIDARGS ;
+      goto done ;
+   }
+
+   CAST_PYOBJECT_TO_COBJECT( obj, sdbCollection, cl ) ;
+   CAST_PYBSON_TO_CPPBSON( bson_index_def, index_def ) ;
+
+   rc = cl->createIndexOffline( *index_def, name, is_unique, is_enforced ) ;
+   if ( rc )
+   {
+      goto done ;
+   }
+
+done:
+   DELETE_CPPOBJECT( index_def ) ;
+   return MAKE_RETURN_INT( rc ) ;
+}
+
 __METHOD_IMP(cl_explain)
 {
    INT32 rc                       = 0 ;
@@ -2375,7 +2407,7 @@ __METHOD_IMP(cr_next)
    }
 
 done :
-   return MAKE_RETURN_INT_PYSTRING_SIZE( rc, retObj.objdata(), 
+   return MAKE_RETURN_INT_PYSTRING_SIZE( rc, retObj.objdata(),
       retObj.objsize() ) ;
 error :
    goto done ;
@@ -2505,13 +2537,13 @@ __METHOD_IMP(gp_get_detail)
    CAST_PYOBJECT_TO_COBJECT( obj, Group, replica_group ) ;
    rc = replica_group->getDetail( bson ) ;
 done :
-   return MAKE_RETURN_INT_PYSTRING_SIZE( rc, bson.objdata(), 
+   return MAKE_RETURN_INT_PYSTRING_SIZE( rc, bson.objdata(),
       bson.objsize() ) ;
 error :
    goto done ;
 }
 
-static INT32 convert_pobj2cobj( PYOBJECT *self, PYOBJECT *args, 
+static INT32 convert_pobj2cobj( PYOBJECT *self, PYOBJECT *args,
                                 Group *& group, sdbNode *& node)
 {
    INT32 rc            = 0 ;
@@ -2542,7 +2574,7 @@ static INT32 pydict_to_cmap( PYOBJECT *pyobj,
    {
       rc = SDB_INVALIDARGS ;
       goto error ;
-   }   
+   }
 
    keys = PyDict_Keys( pyobj );
    for ( int i = 0; i < PyList_GET_SIZE( keys ); ++i )
@@ -2553,7 +2585,7 @@ static INT32 pydict_to_cmap( PYOBJECT *pyobj,
       PyObject *val = PyDict_GetItemString( pyobj, key_name );
       if ( NULL == val || !PyString_Check( val ) )
       {
-         rc = SDB_INVALIDARGS ;      
+         rc = SDB_INVALIDARGS ;
          goto error ;
       }
       cobj[ key_name ] = PyString_AsString( val );
@@ -2648,7 +2680,7 @@ __METHOD_IMP(gp_get_node_by_endpoint)
    sdbNode *node           = NULL ;
    Group *replica_group    = NULL ;
 
-   if ( !PARSE_PYTHON_ARGS( args, "OOss", &group_obj, &node_obj, 
+   if ( !PARSE_PYTHON_ARGS( args, "OOss", &group_obj, &node_obj,
       &hostname, &servicename ) )
    {
       rc = SDB_INVALIDARGS ;
@@ -2679,7 +2711,7 @@ __METHOD_IMP(gp_create_node)
    const bson::BSONObj *bson_config = NULL ;
    Group *replica_group    = NULL ;
 
-   if ( !PARSE_PYTHON_ARGS( args, "OsssO", &obj, &nodename, 
+   if ( !PARSE_PYTHON_ARGS( args, "OsssO", &obj, &nodename,
       &servicename, &nodepath, &config ) )
    {
       rc = SDB_INVALIDARGS ;
@@ -3180,7 +3212,7 @@ __METHOD_IMP(lob_seek)
 
    CAST_PYOBJECT_TO_COBJECT(obj, sdbLob, lob) ;
    rc = lob->seek(offset, (SDB_LOB_SEEK)whence) ;
-   
+
 done:
    return MAKE_RETURN_INT( rc ) ;
 error:
@@ -3202,7 +3234,7 @@ __METHOD_IMP(lob_get_create_time)
 
    CAST_PYOBJECT_TO_COBJECT(obj, sdbLob, lob) ;
    rc = lob->getCreateTime(&ms) ;
-   
+
 done:
    return MAKE_RETURN_INT_ULLONG( rc, ms ) ;
 error:

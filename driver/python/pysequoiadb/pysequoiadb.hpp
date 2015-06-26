@@ -88,6 +88,7 @@ __METHOD_DECLARE(cl_list_lobs) ;
 __METHOD_DECLARE(cl_truncate) ;
 __METHOD_DECLARE(cl_create_id_index) ;
 __METHOD_DECLARE(cl_drop_id_index) ;
+__METHOD_DECLARE(cl_create_index_offline) ;
 
 ///< cursor
 __METHOD_DECLARE(create_cursor) ;
@@ -131,7 +132,7 @@ __METHOD_DECLARE(lob_close) ;
 __METHOD_DECLARE(lob_read) ;
 __METHOD_DECLARE(lob_write) ;
 __METHOD_DECLARE(lob_seek) ;
-__METHOD_DECLARE(lob_get_create_time) ; 
+__METHOD_DECLARE(lob_get_create_time) ;
 __METHOD_DECLARE(lob_get_size) ;
 __METHOD_DECLARE(lob_get_oid) ;
 #endif
