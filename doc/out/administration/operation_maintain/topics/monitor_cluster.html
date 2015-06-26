@@ -8,7 +8,7 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="监控集群"/>
-<meta name="description" content="连接到协调节点 $ /opt/sequoiadb/bin/sdb &gt; var db = new Sdb(&#34;localhost&#34;, 11810) ; 得到集群状态 &gt; db.listReplicaGroups() { &#34;Group&#34;: [ { &#34;dbpath&#34;: &#34;/home/sequoiadb/sequoiadb/cata&#34;, &#34;HostName&#34;: &#34;vmsvr1-rhel-x64&#34;, ..."/>
+<meta name="description" content="连接到协调节点 $ /opt/sequoiadb/bin/sdb &gt; var db = new Sdb(&#34;localhost&#34;, 11810) ; 得到集群状态 &gt; db.listReplicaGroups() { &#34;Group&#34;: [ { &#34;dbpath&#34;: &#34;/opt/sequoiadb/data/11800&#34;, &#34;HostName&#34;: &#34;vmsvr2-suse-x64&#34;, ..."/>
 <meta name="DC.Relation" scheme="URI" content="../../../administration/operation_maintain/topics/monitor.html"/>
 <meta name="DC.Format" content="XHTML"/>
 <meta name="DC.Identifier" content="topic_fw2_ygd_pl"/>
@@ -43,15 +43,64 @@
 
       <li class="li">得到集群状态<pre class="pre codeblock">&gt; db.listReplicaGroups()
 {
-  "Group": [
-    {
-      "dbpath": "/home/sequoiadb/sequoiadb/cata",
-      "HostName": "vmsvr1-rhel-x64",
-      "Service": [
-        {
-          "Type": 0,
-          "Name": "11800"
-        },</pre>
+"Group": [
+  {
+    "dbpath": "/opt/sequoiadb/data/11800",
+    "HostName": "vmsvr2-suse-x64",
+    "Service": [
+      {
+        "Type": 0,
+        "Name": "11800"
+      },
+      {
+        "Type": 1,
+        "Name": "11801"
+      },
+      {
+        "Type": 2,
+        "Name": "11802"
+      },
+      {
+        "Type": 3,
+        "Name": "11803"
+      }
+    ],
+    "NodeID": 1000
+  },
+  {
+    "dbpath": "/opt/sequoiadb/data/11850",
+    "HostName": "vmsvr2-suse-x64",
+    "Service": [
+      {
+        "Type": 0,
+        "Name": "11850"
+      },
+      {
+        "Type": 1,
+        "Name": "11851"
+      },
+      {
+        "Type": 2,
+        "Name": "11852"
+      },
+      {
+        "Type": 3,
+        "Name": "11853"
+      }
+    ],
+    "NodeID": 1001
+  }
+],
+"GroupID": 1001,
+"GroupName": "group",
+"PrimaryNode": 1001,
+"Role": 0,
+"Status": 1,
+"Version": 5,
+"_id": {
+  "$oid": "517b2fc33d7e6f820fc0eb57"
+}
+}</pre>
 </li>
 
     </ol>
