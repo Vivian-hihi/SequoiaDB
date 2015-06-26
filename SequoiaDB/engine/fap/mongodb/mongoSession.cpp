@@ -177,7 +177,7 @@ INT32 _mongoSession::run()
          {
             if ( SDB_APP_FORCED != rc )
             {
-               PD_LOG( PDERROR, "Session failed to recv rest msg, rc: %d",
+               PD_LOG( PDERROR, "Session[%s] failed to recv rest msg, rc: %d",
                        sessionName(), rc ) ;
             }
             break ;
