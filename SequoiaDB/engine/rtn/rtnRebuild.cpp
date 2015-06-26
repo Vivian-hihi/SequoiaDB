@@ -124,7 +124,8 @@ namespace engine
          {
             UINT64 tCLBegin = 0 ;
             UINT64 tCLEnd = 0 ;
-            // get collection list for the given collectionspace
+            // get collection list for the given collectionspace, include
+            // catalog system collections
             su->dumpInfo ( clList, TRUE ) ;
             // loop for each collection
             for ( itCollection = clList.begin();
