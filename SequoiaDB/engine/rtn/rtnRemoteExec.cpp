@@ -215,12 +215,10 @@ namespace engine
          SINT32 startFrom = 0 ;
          SINT32 numReturned = 0 ;
          vector<BSONObj> objLst ;
-         vector<BSONObj> *lstPtr = NULL == retObjs ?
-                                   &objLst : retObjs ;
         
          // extract message
          rc = msgExtractReply ( pReceiveBuffer, retCode, &contextID,
-                                &startFrom, &numReturned, *lstPtr ) ;
+                                &startFrom, &numReturned, objLst ) ;
          if ( rc )
          {
             PD_LOG ( PDERROR, "Failed to extract cm reply message, rc=%d",
@@ -229,10 +227,14 @@ namespace engine
          }
          SDB_ASSERT( contextID == -1, "Context id must be invalid" ) ;
 
-         for ( UINT32 i = 0 ; i < lstPtr->size() ; ++i )
+         for ( UINT32 i = 0 ; i < objLst.size() ; ++i )
          {
             PD_LOG( PDEVENT, "RemoteExec recv obj: %s",
-                    (*lstPtr)[i].toString().c_str() ) ;
+                    objLst[i].toString().c_str() ) ;
+            if ( NULL != retObjs )
+            {
+               retObjs->push_back( objLst[i].copy() ) ;
+            }
          }
       }
 
