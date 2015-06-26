@@ -158,11 +158,11 @@ INT32 splitData2 ( sdbCollection *collection,
 
 INT32 collectionRename ( sdbCollection *collection, CHAR *pName ) ;
 
-INT32 createIndex ( sdbCollection *collection,
-                    const CHAR *indexDef,
-                    const CHAR *pName,
-                    BOOLEAN isUnique,
-                    BOOLEAN isEnforced ) ;
+INT32 createIndex( sdbCollection *collection,
+                   const CHAR *indexDef,
+                   const CHAR *pName,
+                   BOOLEAN isUnique,
+                   BOOLEAN isEnforced ) ;
 
 INT32 createIndexOffline( sdbCollection *collection,
                           const CHAR *indexDef,

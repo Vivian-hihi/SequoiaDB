@@ -796,10 +796,10 @@ INT32 createIndex ( sdbCollection *collection,
    {
       return SDB_INVALIDARG;
    }
-   rc = collection->createIndex ( indexDef_bson,
-                                  pName,
-                                  isUnique,
-                                  isEnforced ) ;
+   rc = collection->createIndex( indexDef_bson,
+                                 pName,
+                                 isUnique,
+                                 isEnforced ) ;
 
    return rc ;
 }

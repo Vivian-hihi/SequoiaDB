@@ -2374,7 +2374,7 @@ PHP_METHOD ( SequoiaCL, createIndex )
    RETURN_ARRAY_STRING ( getThis(), error, 0 ) ;
 }
 
-PHP_METHOD ( SequoiaCL, createIndexOffline )
+PHP_METHOD( SequoiaCL, createIndexOffline )
 {
    INT32 rc = SDB_OK ;
    sdbCollection *collection = NULL ;

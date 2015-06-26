@@ -179,7 +179,6 @@ PHP_METHOD ( sequoiaNode, connect ) ;
 
 
 
-
 #ifdef ZTS
 #define SEQUOIADB_G(v) TSRMG(sequoiadb_globals_id, zend_sequoiadb_globals *, v)
 #else
