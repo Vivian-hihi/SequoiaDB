@@ -1,17 +1,30 @@
 #! /usr/bin/python
 
+import time
+import random
+import sys
+
+from bson.objectid import ObjectId
 import pysequoiadb
 from pysequoiadb import client
 from pysequoiadb import const
 from pysequoiadb.error import (SDBTypeError,
                                SDBBaseError,
                                SDBEndOfCursor)
-import time
-import random
-
-from bson.objectid import ObjectId
 
 if __name__ == "__main__":
+
+   if len(sys.argv) != 4:
+      print('usage: insert.py <start_batch> <batches> <record_per_batch>')
+      sys.exit(1)
+
+   start_batch = int(sys.argv[1].strip())
+   batches = int(sys.argv[2].strip())
+   record_per_batch = int(sys.argv[3].strip())
+
+   if start_batch < 0 or batches <= 0 or record_per_batch <= 0:
+      print("invalid parameter!")
+      sys.exit(1)
 
    try:
       db = client("localhost", 11810)
@@ -25,11 +38,10 @@ if __name__ == "__main__":
       inner_obj = {"x":"abcdefghijklmnopqrstuvwxyz#1234567890", "y":"1234567890", "z":"abcdefghijklmnopqrstuvwxyz#abcdefghijklmnopqrstuvwxyz"}
 
       # insert records
+      print("start_batch=" + str(start_batch) + ", batches=" + str(batches) + ", record_per_batch=" + str(record_per_batch))
       print("start...")
-      batches = 10 
-      record_per_batch = 100000
       start_time = time.time()
-      for batch in range(0, batches):
+      for batch in range(start_batch, start_batch + batches):
          records = []
          for idx in range(0, record_per_batch):
             obj = {"i":batch * record_per_batch + idx, "obj":inner_obj, "int":random.randint(0, idx)}
