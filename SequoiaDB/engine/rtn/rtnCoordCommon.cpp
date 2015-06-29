@@ -3560,6 +3560,7 @@ namespace engine
            SDB_CLS_COORD_NODE_CAT_VER_OLD == flag ||
            SDB_CLS_NO_CATALOG_INFO == flag ||
            SDB_CLS_GRP_NOT_EXIST == flag ||
+           SDB_CAT_GRP_NOT_EXIST == flag ||
            SDB_CLS_NODE_NOT_EXIST == flag ||
            SDB_CAT_NO_MATCH_CATALOG == flag )
           )
