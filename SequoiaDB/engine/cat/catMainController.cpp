@@ -885,6 +885,7 @@ namespace engine
                      PD_LOG( PDERROR, "Get more failed, rc: %d", rc ) ;
                      goto error ;
                   }
+                  rc = SDB_OK ;
                   break ;
                }
                // add to dump context
@@ -895,6 +896,10 @@ namespace engine
             }
 
             rc = contextDump.getMore( -1, buffObj, _pEDUCB ) ;
+            if ( SDB_DMS_EOC == rc )
+            {
+               rc = SDB_OK ;
+            }
             PD_RC_CHECK( rc, PDERROR, "Get more from dump context failed, "
                          "rc: %d", rc ) ;
          }
