@@ -1583,7 +1583,7 @@ namespace engine
       {
          if ( SDB_OK != utilBuildFullPath( _krcbDbPath, PMD_OPTION_LOG_PATH,
                                            OSS_MAX_PATHSIZE, _krcbLogPath ) ||
-              SDB_OK != utilCatPath( _krcbDbPath, OSS_MAX_PATHSIZE, "" ) )
+              SDB_OK != utilCatPath( _krcbLogPath, OSS_MAX_PATHSIZE, "" ) )
          {
             std::cerr << "repicalog path is too long!" << endl ;
             rc = SDB_INVALIDPATH ;
