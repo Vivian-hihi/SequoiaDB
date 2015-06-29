@@ -29,6 +29,7 @@
 #include "qgmPlan.hpp"
 #include "utilStr.hpp"
 #include "qgmPlanContainer.hpp"
+#include "utilLinenoiseWrapper.hpp"
 
 #include "pmd.hpp"
 
@@ -54,27 +55,130 @@ void dump(_qgmPlan *root)
    dump( root, 0 ) ;
 }
 
+BOOLEAN readLine ( const char* prompt, char* p, int length )
+{
+   BOOLEAN ret = TRUE ;
+   char *readstr = NULL ;
+
+   ret = getNextCommand( prompt, &readstr ) ;
+   if ( readstr )
+   {
+      if ( ossStrlen( readstr ) >= length )
+      {
+         cout << "input is to long" << std::endl ;
+         ret = FALSE ;
+      }
+      else
+      {
+         ossStrncpy( p, readstr, length -1 ) ;
+         p[ length-1 ] = 0 ;
+      }
+
+      SDB_OSS_FREE( readstr ) ;
+      readstr = NULL ;
+   }
+   else
+   {
+      p[0] = 0 ;
+   }
+
+   return ret ;
+}
+
+string promptStr( INT32 numIndent, const char *prompt )
+{
+   string promptStr ;
+   for ( INT32 i = 0; i< numIndent ; i++ )
+   {
+      promptStr += "    " ;
+   }
+   promptStr += prompt ;
+   promptStr += "> " ;
+
+   return promptStr ;
+}
+
+INT32 readInput ( const CHAR *pPrompt, INT32 numIndent,
+                  CHAR *pInBuff, UINT32 buffLen )
+{
+   memset ( pInBuff, 0, buffLen ) ;
+
+   string strPrompt = promptStr( numIndent, pPrompt ) ;
+   string strPrompt1 = promptStr( numIndent, "" ) ;
+
+   if ( !readLine ( strPrompt.c_str(), pInBuff, buffLen ) )
+   {
+      cout << "quit" << std::endl ;
+      return SDB_APP_FORCED ;
+   }
+
+   // do a loop if the input end with '\\' character
+   while ( pInBuff[ strlen(pInBuff)-1 ] == '\\' &&
+           buffLen - strlen( pInBuff ) > 0 )
+   {
+      if ( !readLine ( strPrompt1.c_str(),
+                       &pInBuff[ strlen(pInBuff)-1 ],
+                       buffLen - strlen( pInBuff ) ) )
+      {
+         memset( pInBuff, 0, buffLen ) ;
+         cout << "quit" << std::endl ;
+         return SDB_APP_FORCED ;
+      }
+   }
+   return SDB_OK ;
+}
+
+#define SQL_READLINE_LEN         ( 1024 * 1024 )
+#define SQL_DUMPBUFF_LEN         ( 1024 * 1024 * 10 )
 
 TEST(sqlTest, parse_1)
 {
    INT32 rc = SDB_OK ;
    SQL_GRAMMAR grammar ;
    qgmOptiTreeNode *qgm = NULL ;
-   CHAR *line = new CHAR[1024*1024];
-   CHAR *dumpBuf = new CHAR[1024*1024*10] ;
+   CHAR *line = (CHAR*)SDB_OSS_MALLOC( SQL_READLINE_LEN ) ;
+   CHAR *dumpBuf = (CHAR*)SDB_OSS_MALLOC( SQL_DUMPBUFF_LEN ) ;
 
    sdbEnablePD( NULL ) ;
    setPDLevel( PDDEBUG ) ;
    getQgmStrategyTable()->init() ;
 
+   if ( !dumpBuf )
+   {
+      cout << "alloc memory failed" << std::endl ;
+      goto done ;
+   }
+
+   linenoiseSetCompletionCallback( (linenoiseCompletionCallback*)lineComplete ) ;
+
    while ( TRUE )
    {
       _qgmPlanContainer container ;
       qgmBuilder builder( container.ptrTable(), container.paramTable() ) ;
-      memset(line, 0, 1024*1024 );
-      memset(dumpBuf, 0, 1024*1024*10 );
-      cout << "sql>" ;
-      cin.getline( line, 1024*1024 ) ;
+
+      ossMemset( line, 0, SQL_READLINE_LEN ) ;
+      ossMemset( dumpBuf, 0, SQL_DUMPBUFF_LEN ) ;
+
+      rc = readInput( "sql", 0, line, SQL_READLINE_LEN ) ;
+      if ( rc )
+      {
+         break ;
+      }
+      else if ( 0 == ossStrlen( line ) )
+      {
+         continue ;
+      }
+
+      if ( 0 == ossStrcasecmp( line, "quit" ) )
+      {
+         break ;
+      }
+      else if ( 0 == ossStrcasecmp( line, "clear" ) )
+      {
+         linenoiseClearScreen() ;
+         continue ;
+      }
+
       const CHAR *sql = NULL ;
       utilStrTrim( line, sql ) ;
       SQL_AST &ast = container.ast() ;
@@ -136,7 +240,7 @@ TEST(sqlTest, parse_1)
                   break ;
                }
 
-               delete qgm ;
+               SDB_OSS_DEL qgm ;
                qgm = NULL ;
             }
          }
@@ -144,7 +248,15 @@ TEST(sqlTest, parse_1)
          cout << ast.stop << endl ;
    }
 
-   delete []line ;
+done:
+   if ( line )
+   {
+      SDB_OSS_FREE( line ) ;
+   }
+   if ( dumpBuf )
+   {
+      SDB_OSS_FREE( dumpBuf ) ;
+   }
 }
 
 /*

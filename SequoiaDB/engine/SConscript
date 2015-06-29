@@ -130,7 +130,9 @@ utilFiles = [
       "util/csv2rawbson.cpp",
       "util/utilCommon.cpp",
       "util/url.c",
-      "util/utilBsonHash.cpp"
+      "util/utilBsonHash.cpp",
+      "util/linenoise.cpp",
+      "util/utilLinenoiseWrapper.cpp"
       ]
 
 rtnFiles = [
@@ -536,9 +538,7 @@ sdbrestoreFiles = [
 #      "test/mthModifierTest.cpp"
 #      ]
 clientTestFiles = [
-      "test/clientTest.cpp",
-      "util/linenoise.cpp",
-      "util/utilLinenoiseWrapper.cpp"
+      "test/clientTest.cpp"
       ]
 #ixmTestFiles = [
 #      "test/ixmTest.cpp"
