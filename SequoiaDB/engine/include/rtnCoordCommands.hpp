@@ -90,6 +90,7 @@ namespace engine
    #define COORD_CMD_GETINDEXES               CMD_ADMIN_PREFIX CMD_NAME_GET_INDEXES
    #define COORD_CMD_GETDATABLOCKS            CMD_ADMIN_PREFIX CMD_NAME_GET_DATABLOCKS
    #define COORD_CMD_GETQUERYMETA             CMD_ADMIN_PREFIX CMD_NAME_GET_QUERYMETA
+   #define COORD_CMD_GETDCINFO                CMD_ADMIN_PREFIX CMD_NAME_GET_DCINFO
    #define COORD_CMD_CREATECATAGROUP          CMD_ADMIN_PREFIX CMD_NAME_CREATE_CATA_GROUP
    #define COORD_CMD_TRACESTART               CMD_ADMIN_PREFIX CMD_NAME_TRACE_START
    #define COORD_CMD_TRACERESUME              CMD_ADMIN_PREFIX CMD_NAME_TRACE_RESUME
@@ -585,7 +586,7 @@ namespace engine
    {
    protected:
       virtual INT32 _preProcess( rtnQueryOptions &queryOpt,
-         string &clName ) ;
+                                 string &clName ) ;
    };
 
    class rtnCoordCMDTestCollectionSpace : public rtnCoordCommand

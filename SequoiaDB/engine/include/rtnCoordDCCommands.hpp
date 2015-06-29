@@ -54,6 +54,16 @@ namespace engine
 
    } ;
 
+   /*
+      rtnCoordGetDCInfo define
+   */
+   class rtnCoordGetDCInfo : public rtnCoordCMDQueryBase
+   {
+   protected:
+      virtual INT32 _preProcess( rtnQueryOptions &queryOpt,
+                                 string &clName ) ;
+   } ;
+
 }
 
 #endif // RTNCOORD_DC_COMMANDS_HPP__

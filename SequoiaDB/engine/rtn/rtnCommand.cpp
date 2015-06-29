@@ -369,6 +369,8 @@ namespace engine
    IMPLEMENT_CMD_AUTO_REGISTER(_rtnSnapshotCataIntr)
    IMPLEMENT_CMD_AUTO_REGISTER(_rtnWaitTask)
    IMPLEMENT_CMD_AUTO_REGISTER(_rtnListTask)
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnListUsers)
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnGetDCInfo)
 
    IMPLEMENT_CMD_AUTO_REGISTER(_rtnBackup)
    _rtnBackup::_rtnBackup ()

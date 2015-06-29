@@ -386,6 +386,26 @@ namespace engine
          virtual RTN_COMMAND_TYPE type () { return CMD_LIST_TASKS ; }
    } ;
 
+   class _rtnListUsers : public _rtnCoordOnly
+   {
+      DECLARE_CMD_AUTO_REGISTER()
+      public:
+         _rtnListUsers () {}
+         virtual ~_rtnListUsers () {}
+         virtual const CHAR * name () { return NAME_LIST_USERS ; }
+         virtual RTN_COMMAND_TYPE type () { return CMD_LIST_USERS ; }
+   } ;
+
+   class _rtnGetDCInfo : public _rtnCoordOnly
+   {
+      DECLARE_CMD_AUTO_REGISTER()
+      public:
+         _rtnGetDCInfo () {}
+         virtual ~_rtnGetDCInfo () {}
+         virtual const CHAR * name () { return NAME_GET_DCINFO ; }
+         virtual RTN_COMMAND_TYPE type () { return CMD_GET_DCINFO ; }
+   } ;
+
    class _rtnBackup : public _rtnCommand
    {
       DECLARE_CMD_AUTO_REGISTER()

@@ -62,7 +62,6 @@ namespace engine
 #define NAME_LIST_SESSIONS_CURRENT           CMD_NAME_LIST_SESSIONS_CURRENT
 #define NAME_LIST_STORAGEUNITS               CMD_NAME_LIST_STORAGEUNITS
 #define NAME_LIST_BACKUPS                    CMD_NAME_LIST_BACKUPS
-#define NAME_LIST_TASKS                      CMD_NAME_LIST_TASKS
 #define NAME_RENAME_COLLECTION               CMD_NAME_RENAME_COLLECTION
 #define NAME_REORG_OFFLINE                   CMD_NAME_REORG_OFFLINE
 #define NAME_REORG_ONLINE                    CMD_NAME_REORG_ONLINE
@@ -110,6 +109,8 @@ namespace engine
 #define NAME_SHUTDOWN_NODE                   CMD_NAME_SHUTDOWN_NODE
 #define NAME_SHUTDOWN_GROUP                  CMD_NAME_SHUTDOWN_GROUP
 #define NAME_GET_CONFIG                      CMD_NAME_GET_CONFIG
+#define NAME_LIST_TASKS                      CMD_NAME_LIST_TASKS
+#define NAME_LIST_USERS                      CMD_NAME_LIST_USERS
 #define NAME_LIST_DOMAINS                    CMD_NAME_LIST_DOMAINS
 #define NAME_LIST_GROUPS                     CMD_NAME_LIST_GROUPS
 #define NAME_CREATE_CATAGROUP                CMD_NAME_CREATE_CATA_GROUP
@@ -120,6 +121,7 @@ namespace engine
 #define NAME_REMOVE_DOMAIN_GROUP             CMD_NAME_REMOVE_DOMAIN_GROUP
 #define NAME_SNAPSHOT_CATA                   CMD_NAME_SNAPSHOT_CATA
 #define NAME_WAITTASK                        CMD_NAME_WAITTASK
+#define NAME_GET_DCINFO                      CMD_NAME_GET_DCINFO
 
    /*
       Command Type Define
@@ -141,6 +143,7 @@ namespace engine
       CMD_GET_INDEXES                        = 31,
       CMD_GET_DATABLOCKS                     = 32,
       CMD_GET_QUERYMETA                      = 33,
+      CMD_GET_DCINFO                         = 34,
 
       CMD_LIST_COLLECTIONS                   = 40,
       CMD_LIST_COLLECTIONSPACES              = 41,
@@ -153,6 +156,7 @@ namespace engine
       CMD_LIST_DOMAINS                       = 48,
       CMD_LIST_BACKUPS                       = 49,
       CMD_LIST_TASKS                         = 50,
+      CMD_LIST_USERS                         = 51,
 
       CMD_RENAME_COLLECTION                  = 60,
 

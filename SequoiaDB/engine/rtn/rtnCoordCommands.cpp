@@ -2157,6 +2157,7 @@ namespace engine
       {
          queryOpt._fullName = clName.c_str() ;
       }
+      queryOpt._flag |= FLG_QUERY_WITH_RETURNDATA ;
 
       // query on catalog
       rc = queryOnCatalog( queryOpt, cb, contextID ) ;
