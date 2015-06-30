@@ -1,5 +1,4 @@
 //Auto generated index for searching.
-w["synchronization"]="147*3,195*1,199*3,491*1,543*1,1136*1,1188*1,1418*1,1704*1,1745*1,1994*1,2237*1";
 w["synchronizaton"]="2237*2";
 w["synchronize"]="147*2";
 w["synchronize."]="147*1";

@@ -43,8 +43,8 @@ $> ./configure &amp;&amp; make &amp;&amp; make install</codeblock>
       <p>After SequoiaDB installed, copy sdb_fdw.so from directory postgresql to PostgreSQL'slib directory. SequoiaDB's default installing path is /opt/sequoiadb</p>
       <codeblock>$> cp -f /opt/sequoiadb/postgresql/sdb_fdw.so ${PGLIBDIR}</codeblock>
       <p>4) Copy scripts of sdb_fdw.control and sdb_fdw-1.0.sql to directory extension, these two scripts need to be edited manually.</p>
-      <codeblock>$> cp -f sdb_fdw.control ${PGSHAREDIR}/extension/ ;
-$> cp -f sdb_fdw--1.0.sql ${PGSHAREDIR}/extension/ ;</codeblock>
+      <codeblock>$> cp -f /opt/sequoiadb/postgresql/sdb_fdw.control ${PGSHAREDIR}/extension/ ;
+$> cp -f /opt/sequoiadb/postgresql/sdb_fdw--1.0.sql ${PGSHAREDIR}/extension/ ;</codeblock>
       <p>sdb_fdw.control's script:</p>
       <codeblock># sdb_fdw extension
 comment = 'foreign data wrapper for SequoiaDB access'
