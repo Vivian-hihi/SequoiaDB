@@ -109,8 +109,8 @@ $&gt; ./configure &amp;&amp; make &amp;&amp; make install</pre>
 
       <p class="p">4) 将sdb_fdw.control和sdb_fdw--1.0.sql脚本拷贝到extension目录中，两个脚本需要用户手工编辑：</p>
 
-      <pre class="pre codeblock">$&gt; cp -f sdb_fdw.control ${PGSHAREDIR}/extension/ ;
-$&gt; cp -f sdb_fdw--1.0.sql ${PGSHAREDIR}/extension/ ;</pre>
+      <pre class="pre codeblock">$&gt; cp -f /opt/sequoiadb/postgresql/sdb_fdw.control ${PGSHAREDIR}/extension/ ;
+$&gt; cp -f /opt/sequoiadb/postgresql/sdb_fdw--1.0.sql ${PGSHAREDIR}/extension/ ;</pre>
 
       <p class="p">sdb_fdw.control 脚本内容：</p>
 
