@@ -575,6 +575,7 @@ namespace engine
    IMPLEMENT_CMD_AUTO_REGISTER( _clsAlterDC )
    _clsAlterDC::_clsAlterDC()
    {
+      _pAction = "" ;
    }
 
    _clsAlterDC::~_clsAlterDC()
@@ -586,13 +587,57 @@ namespace engine
       return CMD_SPACE_SERVICE_SHARD ;
    }
 
+   BOOLEAN _clsAlterDC::writable()
+   {
+      if ( !_pAction )
+      {
+         return FALSE ;
+      }
+      else if ( 0 == ossStrcasecmp( CMD_VALUE_NAME_ENABLE_READONLY,
+                                    _pAction ) ||
+                0 == ossStrcasecmp( CMD_VALUE_NAME_DISABLE_READONLY,
+                                    _pAction ) ||
+                0 == ossStrcasecmp( CMD_VALUE_NAME_ACTIVATE, _pAction ) ||
+                0 == ossStrcasecmp( CMD_VALUE_NAME_DEACTIVATE, _pAction ) )
+      {
+         return FALSE ;
+      }
+      return TRUE ;
+   }
+
    INT32 _clsAlterDC::init( INT32 flags, INT64 numToSkip,
                             INT64 numToReturn, const CHAR *pMatcherBuff,
                             const CHAR *pSelectBuff,
                             const CHAR *pOrderByBuff,
                             const CHAR *pHintBuff )
    {
-      return SDB_OK ;
+      INT32 rc = SDB_OK ;
+
+      try
+      {
+         BSONObj query( pMatcherBuff ) ;
+         BSONElement eleAction = query.getField( FIELD_NAME_ACTION ) ;
+         if ( String != eleAction.type() )
+         {
+            PD_LOG( PDERROR, "The field[%s] is not valid in command[%s]'s "
+                    "param[%s]", FIELD_NAME_ACTION, NAME_ALTER_DC,
+                    query.toString().c_str() ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+         _pAction = eleAction.valuestr() ;
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Parse params occur exception: %s", e.what() ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    INT32 _clsAlterDC::doit( _pmdEDUCB *cb, _SDB_DMSCB *dmsCB,

@@ -231,7 +231,7 @@ namespace engine
       public:
          virtual const CHAR * name () { return NAME_ALTER_DC ; }
          virtual RTN_COMMAND_TYPE type () { return CMD_ALTER_IMAGE ; }
-         virtual BOOLEAN      writable () { return TRUE ; }
+         virtual BOOLEAN      writable () ;
 
          virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn, 
                               const CHAR *pMatcherBuff,
@@ -241,6 +241,10 @@ namespace engine
          virtual INT32 doit ( _pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
                               _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
                               INT16 w = 1, INT64 *pContextID = NULL ) ;
+
+      private:
+         const CHAR              *_pAction ;
+
    } ;
 
 }

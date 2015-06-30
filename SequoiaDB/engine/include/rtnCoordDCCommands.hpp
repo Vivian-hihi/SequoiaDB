@@ -52,6 +52,17 @@ namespace engine
                                 INT64 &contextID,
                                 rtnContextBuf *buf ) ;
 
+      protected:
+         INT32       _executeByNodes( MsgHeader *pMsg,
+                                      pmdEDUCB *cb,
+                                      CoordGroupList &groupLst,
+                                      const CHAR *pAction ) ;
+
+         INT32       _executeByGroups( MsgHeader *pMsg,
+                                       pmdEDUCB *cb,
+                                       CoordGroupList &groupLst,
+                                       const CHAR *pAction ) ;
+
    } ;
 
    /*

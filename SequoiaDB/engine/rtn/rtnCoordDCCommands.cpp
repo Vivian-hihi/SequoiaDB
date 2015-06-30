@@ -109,15 +109,92 @@ namespace engine
          rc = SDB_OK ;
       }
 
-      // 2. execute on the special groups, ignore error
+      // 2. execute on the special groups or special nodes, ignore error
       pAttachMsg->header.opCode        = MSG_BS_QUERY_REQ ;
-      rc = executeOnDataGroup( &pAttachMsg->header, cb, datagroups,
+      if ( 0 == ossStrcasecmp( CMD_VALUE_NAME_ENABLE_READONLY, pAction ) ||
+           0 == ossStrcasecmp( CMD_VALUE_NAME_DISABLE_READONLY, pAction ) ||
+           0 == ossStrcasecmp( CMD_VALUE_NAME_ACTIVATE, pAction ) ||
+           0 == ossStrcasecmp( CMD_VALUE_NAME_DEACTIVATE, pAction ) )
+      {
+         _executeByNodes( pMsg, cb, allgroups, pAction ) ;
+      }
+      else
+      {
+         _executeByGroups( pMsg, cb, allgroups, pAction ) ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 rtnCoordAlterDC::_executeByGroups( MsgHeader *pMsg,
+                                            pmdEDUCB *cb,
+                                            CoordGroupList &groupLst,
+                                            const CHAR *pAction )
+   {
+      INT32 rc = SDB_OK ;
+
+      rc = executeOnDataGroup( pMsg, cb, groupLst,
                                TRUE, NULL, NULL, NULL ) ;
       if ( rc )
       {
-         PD_LOG( PDWARNING, "Failed to execute %s:%s on data nodes, "
+         PD_LOG( PDWARNING, "Failed to execute %s:%s on data groups, "
                  "rc: %d", COORD_CMD_ALTER_DC, pAction, rc ) ;
-         rc = SDB_OK ;
+      }
+
+      return rc ;
+   }
+
+   INT32 rtnCoordAlterDC::_executeByNodes( MsgHeader *pMsg,
+                                           pmdEDUCB *cb,
+                                           CoordGroupList &groupLst,
+                                           const CHAR *pAction )
+   {
+      INT32 rc = SDB_OK ;
+      ROUTE_SET nodes ;
+      ROUTE_RC_MAP faileds ;
+      MsgRouteID routeID ;
+      ROUTE_RC_MAP::iterator it ;
+      BSONObjBuilder errBuild ;
+      BSONArrayBuilder arrayBuild( errBuild.subarrayStart(
+                                   FIELD_NAME_ERROR_NODES ) ) ;
+      BSONObj errorInfo ;
+
+      rc = rtnCoordGetGroupNodes( cb, BSONObj(), NODE_SEL_ALL, groupLst,
+                                  nodes, NULL ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Get group nodes failed, rc: %d", rc ) ;
+         goto error ;
+      }
+
+      rc = executeOnNodes( pMsg, cb, nodes, faileds, NULL, NULL, NULL ) ;
+      it = faileds.begin() ;
+      while( it != faileds.end() )
+      {
+         routeID.value = it->first ;
+         BSONObj errObj = BSON( FIELD_NAME_NODEID <<
+                                (INT32)routeID.columns.nodeID <<
+                                FIELD_NAME_RCFLAG << it->second ) ;
+         arrayBuild.append( errObj ) ;
+         ++it ;
+      }
+      arrayBuild.done() ;
+      errorInfo = errBuild.obj() ;
+
+      if ( rc || faileds.size() > 0 )
+      {
+         PD_LOG( PDERROR, "Failed to execute %s:%s on data nodes, "
+                 "rc: %d, error: %s", COORD_CMD_ALTER_DC, pAction, rc,
+                 errorInfo.toString().c_str() ) ;
+
+         if ( SDB_OK == rc && faileds.size() > 0 )
+         {
+            rc = faileds.begin()->second ;
+         }
+         goto error ;
       }
 
    done:
