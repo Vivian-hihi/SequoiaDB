@@ -371,7 +371,7 @@ function loadHostInfo()
 		if( _hostsInfo.length === 0 )
 		{
 			//报错
-			showProcessError( '请先安装主机，再安装业务。' ) ;
+			showProcessError( _languagePack['error']['web']['module'][0] ) ;
 			return;
 		}
 		$.each( _hostsInfo, function( index, hostInfo ){

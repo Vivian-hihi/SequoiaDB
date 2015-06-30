@@ -222,7 +222,46 @@ function addBusiness( clusterID )
 	sdbjs.fun.saveData( 'SdbClusterName', _clusterList[clusterID]['ClusterName'] ) ;
 	if( businessType === 'sequoiadb' )
 	{
-		gotoPage( 'confsdb.html' ) ;
+        restGetClusterHostsInfo( false, function( jsonArr, textStatus, jqXHR ){
+            var hostsInfo = jsonArr ;
+            if( hostsInfo.length === 0 )
+            {
+                //报错
+                showModalError( 'addBusinessFootAlert',  _languagePack['error']['web']['module'][0] ) ;
+                return;
+            }
+           gotoPage( 'confsdb.html' ) ;
+        }, function( json ){
+            showModalError( 'addBusinessFootAlert', json['detail'] ) ;
+        }, null, _clusterList[clusterID]['ClusterName'] ) ;
+	}
+    else if( businessType === 'zookeeper' )
+	{
+        restGetClusterHostsInfo( false, function( jsonArr, textStatus, jqXHR ){
+            var hostsInfo = jsonArr ;
+            if( hostsInfo.length === 0 )
+            {
+                //报错
+                showModalError( 'addBusinessFootAlert', _languagePack['error']['web']['module'][0] ) ;
+                return;
+            }
+            var tempHostInfo = [] ;
+			$.each( hostsInfo, function( index, value ){
+				tempHostInfo.push( { 'HostName': value['HostName'] } ) ;
+			} ) ;
+            var businessConf = {} ;
+            businessConf['ClusterName']	 = _clusterList[clusterID]['ClusterName'] ;
+            businessConf['BusinessName'] = businessName ;
+            businessConf['BusinessType'] = businessType ;
+            businessConf['DeployMod'] = 'distribution' ;
+            businessConf['Property'] = [ { 'Name': 'zoonodenum', 'Value': '3' } ] ;
+            businessConf['HostInfo'] = tempHostInfo ;
+            sdbjs.fun.saveData( 'SdbBusinessConfig', JSON.stringify( businessConf ) ) ;
+            sdbjs.fun.delData( 'SdbConfigInfo' ) ;
+            gotoPage( 'modzookeeper.html' ) ;
+        }, function( json ){
+            showModalError( 'addBusinessFootAlert', json['detail'] ) ;
+        }, null, _clusterList[clusterID]['ClusterName'] ) ;
 	}
 }
 

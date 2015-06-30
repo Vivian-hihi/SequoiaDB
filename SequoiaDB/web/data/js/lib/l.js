@@ -208,6 +208,7 @@ var __levelNum = 0 ;
 	})() ;
 	var files = [
 		'./css/skins/Aqua/css/ligerui-all.css',
+        './css/skins/ligerui-icons.css',
 		'./css/extend.css',
 		'./css/style.css',
 		'./js/lib/jquery/jquery-1.11.1.min.js',

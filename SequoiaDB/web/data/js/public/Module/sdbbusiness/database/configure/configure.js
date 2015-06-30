@@ -32,7 +32,7 @@ var sdbjs = {
 							  { id: 'maxprefpool', name: '200' }];
 		
 		obj._grid = $( '#maingrid' ).ligerGrid( { columns: columns,
-															   data: { Rows: griddata }, usePager:false, isScroll: true, height: height } ) ;
+                                                  data: { Rows: griddata }, usePager:false, isScroll: true, height: height } ) ;
 		obj.resize() ;
 	},
 	synData: function(){

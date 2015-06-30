@@ -36,7 +36,8 @@ var sdbjs = {
 			}
 		} } ) ;
 		//加载分页内容
-		obj._tab.addTabItem( { tabid: 'overview', text: '数据库总览', url: M( 'sdbbusiness/database/overview/overview.html' ), showClose: false } ) ;
+		obj._tab.addTabItem( { tabid: 'overview', text: '总览', url: M( 'sdbbusiness/database/overview/overview.html' ), showClose: false } ) ;
+        obj._tab.addTabItem( { tabid: 'createcs', text: '集合空间', url: M( 'sdbbusiness/database/cs/create.html' ), showClose: false } ) ;
 		obj._tab.addTabItem( { tabid: 'status', text: '状态', url: M( 'sdbbusiness/database/status/status.html' ), showClose: false } ) ;
 		obj._tab.addTabItem( { tabid: 'config', text: '配置', url: M( 'sdbbusiness/database/configure/configure.html' ), showClose: false } ) ;
 		obj._tab.selectTabItem( 'overview' ) ;

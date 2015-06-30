@@ -33,7 +33,7 @@ var sdbjs = {
 		//设置左框标题
 		$( '#layout > [position="left"]' ).attr( 'title', '集合列表' ) ;
 		//创建布局
-		obj._layout = $( '#layout' ).ligerLayout( { leftWidth: 300, allowLeftCollapse: true, allowLeftResize: true, heightDiff: -15 } ) ;
+		obj._layout = $( '#layout' ).ligerLayout( { leftWidth: 300, allowLeftCollapse: true, allowLeftResize: true, heightDiff: -5 } ) ;
 		//加载集合列表
 		var param = setUrlParam( { 'csName': obj._csName } ) ;
 		var clList = $( '#clList' ).ligerSdbIframe( { url: M( 'sdbbusiness/collectionspace/collectionlist.html' ) + '?' + param, callback: function(){

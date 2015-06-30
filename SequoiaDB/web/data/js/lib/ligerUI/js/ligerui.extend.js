@@ -293,7 +293,7 @@ $.extend( $.ligerui.controls.Grid.prototype, {
 		var g = this, p = this.options ;
 		var columnsWidth = [] ;
 		var columnsLen = p.columns.length ;
-        var width = $( this.element ).width() - columnsLen ;
+        var width = $( this.element ).width() - columnsLen + 1 ;
 		if( typeof( height) != 'undefined' )
 		{
 			g.setHeight( height ) ;
@@ -305,6 +305,10 @@ $.extend( $.ligerui.controls.Grid.prototype, {
 			{
 				var inner = g.gridbody.find(".l-grid-body-inner:first");
 				var newHeight = inner.height() + g.gridheader.height() + 33 ;
+                if( p.usePager == false )
+                {
+                    newHeight -= 34 ;
+                }
 				g.setHeight( newHeight ) ;
 			}
 		}

@@ -323,6 +323,9 @@ function removeGroup( groupName, line )
 			return ( num > 0 ) ;
 		} ) ;
 		sdbjs.parts.tabList.remove( 'groupTabList', line ) ;
+        _groupList.splice( line, 1 ) ;
+        sdbjs.fun.removeNode( 'tabListTable_' + line ) ;
+        sdbjs.fun.removeNode( 'groupDrop_' + line ) ;
 	}
 }
 

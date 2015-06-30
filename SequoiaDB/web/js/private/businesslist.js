@@ -13,12 +13,20 @@ function removeBusiness( index )
 {
 	sdbjs.parts.modalBox.hide( 'isRemoveBusiness' ) ;
 	var businessName = _businessList[index]['BusinessName'] ;
+    var businessType = _businessList[index]['BusinessType'] ;
 	sdbjs.parts.loadingBox.show( 'loading' ) ;
 	restRemoveBusiness( true, function( jsonArr, textStatus, jqXHR ){
 		var taskID = jsonArr[0]['TaskID'] ;
 		sdbjs.fun.saveData( 'SdbTaskID', taskID ) ;
 		sdbjs.fun.saveData( 'SdbDeployModel', 'taskRemoveSdb' ) ;
-		gotoPage( 'uninstsdb.html' ) ;
+        if( businessType == 'sequoiadb' )
+        {
+            gotoPage( 'uninstsdb.html' ) ;
+        }
+        else if( businessType == 'zookeeper' )
+        {
+            gotoPage( 'uninstzookeeper.html' ) ;
+        }
 	}, function( json ){
 		sdbjs.parts.loadingBox.hide( 'loading' ) ;
 		showProcessError( json['detail'] ) ;
@@ -94,7 +102,47 @@ function addBusiness()
 	
 	if( businessType === 'sequoiadb' )
 	{
-		gotoPage( 'confsdb.html' ) ;
+		//gotoPage( 'confsdb.html' ) ;
+        restGetClusterHostsInfo( false, function( jsonArr, textStatus, jqXHR ){
+            var hostsInfo = jsonArr ;
+            if( hostsInfo.length === 0 )
+            {
+                //报错
+                showModalError( 'addBusinessFootAlert', _languagePack['error']['web']['module'][0] ) ;
+                return;
+            }
+           gotoPage( 'confsdb.html' ) ;
+        }, function( json ){
+            showModalError( 'addBusinessFootAlert', json['detail'] ) ;
+        }, null, _clusterName ) ;
+	}
+    else if( businessType === 'zookeeper' )
+	{
+        restGetClusterHostsInfo( false, function( jsonArr, textStatus, jqXHR ){
+            var hostsInfo = jsonArr ;
+            if( hostsInfo.length === 0 )
+            {
+                //报错
+                showModalError( 'addBusinessFootAlert', _languagePack['error']['web']['module'][0] ) ;
+                return;
+            }
+            var tempHostInfo = [] ;
+			$.each( hostsInfo, function( index, value ){
+				tempHostInfo.push( { 'HostName': value['HostName'] } ) ;
+			} ) ;
+            var businessConf = {} ;
+            businessConf['ClusterName']	 = _clusterName ;
+            businessConf['BusinessName'] = businessName ;
+            businessConf['BusinessType'] = businessType ;
+            businessConf['DeployMod'] = 'distribution' ;
+            businessConf['Property'] = [ { 'Name': 'zoonodenum', 'Value': '3' } ] ;
+            businessConf['HostInfo'] = tempHostInfo ;
+            sdbjs.fun.saveData( 'SdbBusinessConfig', JSON.stringify( businessConf ) ) ;
+            sdbjs.fun.delData( 'SdbConfigInfo' ) ;
+            gotoPage( 'modzookeeper.html' ) ;
+        }, function( json ){
+            showModalError( 'addBusinessFootAlert', json['detail'] ) ;
+        }, null, _clusterName ) ;
 	}
 }
 
@@ -174,6 +222,21 @@ function loadBusinessData()
                                                                                   { 'text': '', 'width': '10%' },
                                                                                   { 'text': '', 'width': '25%' },
                                                                                   { 'text': '', 'width': '10%' } ] ) ;
+            }
+            else if( businessInfo['BusinessType'] == 'zookeeper' )
+            {
+                var businessName = businessInfo['BusinessName'] ;
+                var SdbSessionID = sdbjs.fun.getData( 'SdbSessionID' ) ;
+                sdbjs.parts.gridBox.addBody( 'businessInfoGrid', [{ 'text': htmlEncode( businessInfo['BusinessName'] ), 'width': '25%' },
+                                                                  { 'text': htmlEncode( businessInfo['BusinessType'] ), 'width': '15%' },
+                                                                  { 'text': htmlEncode( businessInfo['DeployMod'] ), 'width': '15%' },
+                                                                  { 'text': '', 'width': '10%' },
+                                                                  { 'text': '', 'width': '25%' },
+                                                                  { 'text': function( obj ){
+                                                                      sdbjs.parts.dropDownBox.create( obj, businessInfo['BusinessName'] + '_dropDown' ) ;
+                                                                      sdbjs.parts.dropDownBox.update( businessInfo['BusinessName'] + '_dropDown', htmlEncode( _languagePack['businesslist']['businessGrid']['button'][0] ), 'btn-lg' ) ;
+                                                                      sdbjs.parts.dropDownBox.add( businessInfo['BusinessName'] + '_dropDown', htmlEncode( _languagePack['businesslist']['businessGrid']['button'][3] ), true, 'openDelBusinessModal(' + index + ')' ) ;
+                                                                        }, 'width': '10%' } ] ) ;
             }
             else
             {

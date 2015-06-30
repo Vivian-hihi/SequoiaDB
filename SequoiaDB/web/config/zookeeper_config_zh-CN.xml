@@ -5,8 +5,8 @@
 		<Type>int</Type>
 		<Default>1</Default>
 		<Valid></Valid>
-		<Display>text box</Display>
-		<Edit>true</Edit>
+		<Display>edit box</Display>
+		<Edit>false</Edit>
 		<Desc>zookeeper's node id</Desc>
 		<Level>0</Level>
 		<DynamicEdit>false</DynamicEdit>
@@ -44,7 +44,7 @@
 		<Type>int</Type>
 		<Default>2888</Default>
 		<Valid></Valid>
-		<Display>text box</Display>
+		<Display>edit box</Display>
 		<Edit>true</Edit>
 		<Desc>server uses this port to connect followers to the leader</Desc>
 		<Level>0</Level>
@@ -57,7 +57,7 @@
 		<Type>int</Type>
 		<Default>3888</Default>
 		<Valid></Valid>
-		<Display>text box</Display>
+		<Display>edit box</Display>
 		<Edit>true</Edit>
 		<Desc>the port to listen for leader election</Desc>
 		<Level>0</Level>
@@ -70,7 +70,7 @@
 		<Type>int</Type>
 		<Default>2181</Default>
 		<Valid></Valid>
-		<Display>text box</Display>
+		<Display>edit box</Display>
 		<Edit>true</Edit>
 		<Desc>the port to listen for client connections</Desc>
 		<Level>0</Level>
@@ -83,7 +83,7 @@
 		<Type>int</Type>
 		<Default>2</Default>
 		<Valid></Valid>
-		<Display>text box</Display>
+		<Display>edit box</Display>
 		<Edit>true</Edit>
 		<Desc>limits how far out of date a server can be from a leader</Desc>
 		<Level>0</Level>
@@ -96,7 +96,7 @@
 		<Type>int</Type>
 		<Default>5</Default>
 		<Valid></Valid>
-		<Display>text box</Display>
+		<Display>edit box</Display>
 		<Edit>true</Edit>
 		<Desc>limit the length of time the server in quorum have to connect to a leader</Desc>
 		<Level>0</Level>
@@ -109,7 +109,7 @@
 		<Type>int</Type>
 		<Default>2000</Default>
 		<Valid></Valid>
-		<Display>text box</Display>
+		<Display>edit box</Display>
 		<Edit>true</Edit>
 		<Desc>hearbeats interval(ms)</Desc>
 		<Level>0</Level>

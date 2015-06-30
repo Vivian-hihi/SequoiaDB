@@ -67,7 +67,7 @@ body{ margin:0; padding:0; font-size:12px; font-family:Verdana,Georgia,宋体; c
 
 /* 表格表头 */
 .l-grid-header{  background-color: #eaf2fe; border-bottom: 1px solid #BED5F3; font-weight: bold;line-height: 28px;}
-.l-grid-hd-cell-text{ padding-left: 3px;}
+.l-grid-row-cell-checkbox span,.l-grid-hd-cell-checkbox .l-grid-hd-cell-inner div{ margin-top:7px; }
 
 
 /* 表格样式 */

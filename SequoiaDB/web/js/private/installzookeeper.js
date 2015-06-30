@@ -1,8 +1,8 @@
 //部署模式
 var _deployModel = null ;
 
-//业务类型
-var _businessType = null ;
+//部署类型
+var _deployType = null ;
 
 //任务ID
 var _taskID = null ;
@@ -63,38 +63,38 @@ function updateTaskInfo( taskInfo, isFirst )
 			if( type === 0 )
 			{
 				//'正在初始化任务'
-				str = _languagePack['installhost']['rightPanel']['taskStatus'][0] ;
+				str = _languagePack['installzookeeper']['rightPanel']['taskStatus'][0] ;
 			}
 			else if( type === 1 )
 			{
 				//'正在执行任务'
-				str = _languagePack['installhost']['rightPanel']['taskStatus'][1] ;
+				str = _languagePack['installzookeeper']['rightPanel']['taskStatus'][1] ;
 			}
 			else if( type === 2 )
 			{
 				//'正在回滚任务'
-				str = _languagePack['installhost']['rightPanel']['taskStatus'][2] ;
+				str = _languagePack['installzookeeper']['rightPanel']['taskStatus'][2] ;
 			}
 			else if( type === 3 )
 			{
 				//'正在取消任务'
-				str = _languagePack['installhost']['rightPanel']['taskStatus'][3] ;
+				str = _languagePack['installzookeeper']['rightPanel']['taskStatus'][3] ;
 			}
 			else if( type === 4 )
 			{
 				//'任务完成'
-				str = _languagePack['installhost']['rightPanel']['taskStatus'][4] ;
+				str = _languagePack['installzookeeper']['rightPanel']['taskStatus'][4] ;
 			}
 			else
 			{
 				//'未知状态'
-				str = _languagePack['installhost']['rightPanel']['taskStatus'][5] ;
+				str = _languagePack['installzookeeper']['rightPanel']['taskStatus'][5] ;
 			}
 		}
 		else
 		{
 			//'任务失败'
-			str = _languagePack['installhost']['rightPanel']['taskStatus'][6] ;
+			str = _languagePack['installzookeeper']['rightPanel']['taskStatus'][6] ;
 		}
 		return str ;
 	}
@@ -106,38 +106,38 @@ function updateTaskInfo( taskInfo, isFirst )
 			if( type === 0 )
 			{
 				//'正在初始化安装'
-				str = _languagePack['installhost']['rightPanel']['hostStatus'][0] ;
+				str = _languagePack['installzookeeper']['rightPanel']['hostStatus'][0] ;
 			}
 			else if( type === 1 )
 			{
 				//'正在安装'
-				str = _languagePack['installhost']['rightPanel']['hostStatus'][1] ;
+				str = _languagePack['installzookeeper']['rightPanel']['hostStatus'][1] ;
 			}
 			else if( type === 2 )
 			{
 				//'正在回滚安装'
-				str = _languagePack['installhost']['rightPanel']['hostStatus'][2] ;
+				str = _languagePack['installzookeeper']['rightPanel']['hostStatus'][2] ;
 			}
 			else if( type === 3 )
 			{
 				//'正在取消安装'
-				str = _languagePack['installhost']['rightPanel']['hostStatus'][3] ;
+				str = _languagePack['installzookeeper']['rightPanel']['hostStatus'][3] ;
 			}
 			else if( type === 4 )
 			{
 				//'安装完成'
-				str = _languagePack['installhost']['rightPanel']['hostStatus'][4] ;
+				str = _languagePack['installzookeeper']['rightPanel']['hostStatus'][4] ;
 			}
 			else
 			{
 				//'未知状态'
-				str = _languagePack['installhost']['rightPanel']['hostStatus'][5] ;
+				str = _languagePack['installzookeeper']['rightPanel']['hostStatus'][5] ;
 			}
 		}
 		else
 		{
 			//'安装失败'
-			str = _languagePack['installhost']['rightPanel']['hostStatus'][6] ;
+			str = _languagePack['installzookeeper']['rightPanel']['hostStatus'][6] ;
 		}
 		return str ;
 	}
@@ -156,11 +156,11 @@ function updateTaskInfo( taskInfo, isFirst )
 			_hostStatus.push( false ) ;
 			sdbjs.parts.gridBox.addBody( 'hostListGrid', [{ 'text': function( tdObj ){ 
 				$( tdObj ).attr( 'align', 'center').append( '<img width="22" height="22" src="./images/loading.gif">' ) ;
-			}, 'width': '8%' },
+			}, 'width': '12%' },
 																		 { 'text': htmlEncode( resultInfo['HostName'] ), 'width': '25%' },
-																		 { 'text': htmlEncode( resultInfo['IP'] ), 'width': '20%' },
-																		 { 'text': '', 'width': '30%' },
-																		 { 'text': '', 'width': '17%' } ] ) ;
+																		 { 'text': htmlEncode( resultInfo['zooid'] ), 'width': '15%' },
+																		 { 'text': '', 'width': '28%' },
+																		 { 'text': '', 'width': '20%' } ] ) ;
 		} ) ;
 	}
 	sdbjs.parts.tableBox.updateBody( 'hostInfoTable', 4, 1, htmlEncode( taskStatus ) ) ;
@@ -168,14 +168,18 @@ function updateTaskInfo( taskInfo, isFirst )
 	if( remainTime > 0 )
 	{
 		//'分钟'
-		sdbjs.parts.tableBox.updateBody( 'hostInfoTable', 6, 1, htmlEncode( remainTime + _languagePack['installhost']['leftPanel']['time'] ) ) ;
+		sdbjs.parts.tableBox.updateBody( 'hostInfoTable', 6, 1, htmlEncode( remainTime + _languagePack['installzookeeper']['leftPanel']['time'] ) ) ;
 	}
 	else
 	{
 		sdbjs.parts.tableBox.updateBody( 'hostInfoTable', 6, 1, '' ) ;
 	}
 	$.each( taskInfo['ResultInfo'], function( index, resultInfo ){
-		if( _hostStatus[index] === false )
+		if( _hostStatus[index] === true && resultInfo['errno'] !== 0 )
+		{
+			_hostStatus[index] = false ;
+		}
+		//if( _hostStatus[index] === false )
 		{
 			var statusStr = '' ;
 			if( resultInfo['Flow'] !== null && resultInfo['Flow'].length > 0 )
@@ -207,6 +211,10 @@ function updateTaskInfo( taskInfo, isFirst )
 	if( taskInfo['errno'] !== 0 )
 	{
 		color = 'red' ;
+	}
+	if( taskInfo['errno'] !== 0 )
+	{
+		color = 'red' ;
 		$.each( taskInfo['ResultInfo'], function( index, resultInfo ){
 				_hostStatus[index] = true ;
 				sdbjs.parts.gridBox.updateBody( 'hostListGrid', index, 0, '<img src="./images/delete.png">' ) ;
@@ -215,18 +223,20 @@ function updateTaskInfo( taskInfo, isFirst )
 	sdbjs.parts.progressBox2.update( 'Progress', color, taskInfo['Progress'] ) ;
 	if( taskInfo['Status'] === 4 )
 	{
-		if( _deployModel !== 'taskAddHost' && taskInfo['errno'] !== 0 )
+		if( _deployModel !== 'taskAddSdb' && taskInfo['errno'] !== 0 )
 		{
 			sdbjs.parts.buttonBox.update( 'deployReturn', function( buttonObj ){
 				$( buttonObj ).show() ;
 			}, 'primary' ) ;
 		}
+		sdbjs.parts.buttonBox.update( 'deployNext', function( buttonObj ){
+			$( buttonObj ).show() ;
+		}, 'primary' ) ;
 		if( taskInfo['errno'] === 0 )
 		{
 			sdbjs.fun.delData( 'SdbHostList' ) ;
-			sdbjs.parts.buttonBox.update( 'deployNext', function( buttonObj ){
-				$( buttonObj ).show() ;
-			}, 'primary' ) ;
+			sdbjs.fun.delData( 'SdbClusterName' ) ;
+			sdbjs.fun.delData( 'SdbConfigInfo' ) ;
 		}
 		else
 		{
@@ -252,59 +262,14 @@ function queryTaskInfo( isFirst )
 //返回
 function returnPage()
 {
-	gotoPage( 'addhost.html' ) ;
+    gotoPage( 'modzookeeper.html' ) ;
 }
 
 
 // 下一步
 function nextPage()
 {
-	if( _deployModel === 'AddHost' )
-	{
-		gotoPage( 'index.html' ) ;
-	}
-	else if( _deployModel === 'Deploy' )
-	{
-		if( _businessType === 'sequoiadb' )
-		{
-			gotoPage( 'confsdb.html' ) ;
-		}
-        else if( _businessType === 'zookeeper' )
-		{
-            var clusterName = sdbjs.fun.getData( 'SdbClusterName' ) ;
-            if( clusterName === null )
-            {
-                gotoPage( 'index.html' ) ;
-                return;
-            }
-            var businessName = sdbjs.fun.getData( 'SdbBusinessName' ) ;
-            if( businessName === null )
-            {
-                gotoPage( 'index.html' ) ;
-                return;
-            }
-            var businessType = _businessType ;
-            restGetClusterHostsInfo( false, function( jsonArr, textStatus, jqXHR ){
-                var hostsInfo = jsonArr ;
-                var tempHostInfo = [] ;
-                $.each( hostsInfo, function( index, value ){
-                    tempHostInfo.push( { 'HostName': value['HostName'] } ) ;
-                } ) ;
-                var businessConf = {} ;
-                businessConf['ClusterName']	 = clusterName ;
-                businessConf['BusinessName'] = businessName ;
-                businessConf['BusinessType'] = businessType ;
-                businessConf['DeployMod'] = 'distribution' ;
-                businessConf['Property'] = [ { 'Name': 'zoonodenum', 'Value': '3' } ] ;
-                businessConf['HostInfo'] = tempHostInfo ;
-                sdbjs.fun.saveData( 'SdbBusinessConfig', JSON.stringify( businessConf ) ) ;
-                sdbjs.fun.delData( 'SdbConfigInfo' ) ;
-                gotoPage( 'modzookeeper.html' ) ;
-            }, function( json ){
-                showModalError( 'addBusinessFootAlert', json['detail'] ) ;
-            }, null, clusterName ) ;
-		}
-	}
+	gotoPage( 'index.html' ) ;
 }
 
 
@@ -316,31 +281,33 @@ function createHtml()
 	sdbjs.parts.tabPageBox.create( 'top2', 'tab' ) ;
 	sdbjs.fun.setCSS( 'tab', { 'padding-top': 5 } ) ;
 
-	if( _deployModel === 'taskAddHost' )
+	if ( _deployModel !== 'taskAddSdb' )
 	{
-		sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/home.png"> ' + htmlEncode( _languagePack['public']['tabPage'][1] ), false, 'gotoPage("index.html")' ) ;
-	}
-	else
-	{
-		//'扫描主机'
-		sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/zoom.png"> ' + htmlEncode( _languagePack['public']['tabPage'][2] ), false, null ) ;
-		//'添加主机'
-		sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/layers_1.png"> ' + htmlEncode( _languagePack['public']['tabPage'][3] ), false, null ) ;
-	}
-	//'安装主机'
-	sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/cog.png"> ' + htmlEncode( _languagePack['public']['tabPage'][4] ), true, null );
-	if( _deployModel === 'Deploy' )
-	{
+		if( _deployModel === 'Deploy' )
+		{
+			//'扫描主机'
+			sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/zoom.png"> ' + htmlEncode( _languagePack['public']['tabPage'][2] ), false, null ) ;
+			//'添加主机'
+			sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/layers_1.png"> ' + htmlEncode( _languagePack['public']['tabPage'][3] ), false, null ) ;
+			//'安装主机'
+			sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/cog.png"> ' + htmlEncode( _languagePack['public']['tabPage'][4] ), false, null );
+		}
+
         if( sdbjs.fun.getData( 'SdbBusinessType' ) != 'zookeeper' )
         {
             //'配置业务'
             sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/cube.png"> ' + htmlEncode( _languagePack['public']['tabPage'][5] ), false, null ) ;
         }
-        //'修改业务'
+		//'修改业务'
 		sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/doc_lines_stright.png"> ' + htmlEncode( _languagePack['public']['tabPage'][6] ), false, null );
-		//'安装业务'
-		sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/cog.png"> ' + htmlEncode( _languagePack['public']['tabPage'][7] ), false, null );
 	}
+	else
+	{
+		sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/home.png"> ' + htmlEncode( _languagePack['public']['tabPage'][1] ), false, 'gotoPage("index.html")' ) ;
+	}
+	//'安装业务'
+	sdbjs.parts.tabPageBox.add( 'tab', '<img width="14" src="./images/smallicon/blacks/16x16/cog.png"> ' + htmlEncode( _languagePack['public']['tabPage'][7] ), true, null );
+	
 	
 	/* 左边框架 */
 	sdbjs.parts.divBox.create( 'middle', 'middle-left', 460, 'variable' ) ;
@@ -350,25 +317,26 @@ function createHtml()
 	sdbjs.parts.panelBox.create( 'middle-left', 'hostInfoBar', 'auto', 'variable' ) ;
 	sdbjs.fun.setCSS( 'hostInfoBar', { 'overflow': 'auto' } ) ;
 	//'任务信息'
-	sdbjs.parts.panelBox.update( 'hostInfoBar', htmlEncode( _languagePack['installhost']['leftPanel']['title'] ), function( panelBody ){
+	sdbjs.parts.panelBox.update( 'hostInfoBar', htmlEncode( _languagePack['installzookeeper']['leftPanel']['title'] ), function( panelBody ){
 		sdbjs.parts.tableBox.create( panelBody['name'], 'hostInfoTable' ) ;
 		sdbjs.parts.tableBox.update( 'hostInfoTable', 'loosen border' ) ;
 		//'任务ID'
-		sdbjs.parts.tableBox.addBody( 'hostInfoTable', [ { 'text': htmlEncode( _languagePack['installhost']['leftPanel']['taskInfo'][0] ), width: 150 }, { 'text': '' } ] ) ;
+		sdbjs.parts.tableBox.addBody( 'hostInfoTable', [ { 'text': htmlEncode( _languagePack['installzookeeper']['leftPanel']['taskInfo'][0] ), width: 150 }, { 'text': '' } ] ) ;
 		//'所属集群'
-		sdbjs.parts.tableBox.addBody( 'hostInfoTable', [ { 'text': htmlEncode( _languagePack['installhost']['leftPanel']['taskInfo'][1] ) }, { 'text': '' } ] ) ;
+		sdbjs.parts.tableBox.addBody( 'hostInfoTable', [ { 'text': htmlEncode( _languagePack['installzookeeper']['leftPanel']['taskInfo'][1] ) }, { 'text': '' } ] ) ;
 		//'任务类型'
-		sdbjs.parts.tableBox.addBody( 'hostInfoTable', [ { 'text': htmlEncode( _languagePack['installhost']['leftPanel']['taskInfo'][2] ) }, { 'text': '' } ] ) ;
+		sdbjs.parts.tableBox.addBody( 'hostInfoTable', [ { 'text': htmlEncode( _languagePack['installzookeeper']['leftPanel']['taskInfo'][2] ) }, { 'text': '' } ] ) ;
 		//'项目数'
-		sdbjs.parts.tableBox.addBody( 'hostInfoTable', [ { 'text': htmlEncode( _languagePack['installhost']['leftPanel']['taskInfo'][3] ) }, { 'text': '' } ] ) ;
+		sdbjs.parts.tableBox.addBody( 'hostInfoTable', [ { 'text': htmlEncode( _languagePack['installzookeeper']['leftPanel']['taskInfo'][3] ) }, { 'text': '' } ] ) ;
 		//'任务状态'
-		sdbjs.parts.tableBox.addBody( 'hostInfoTable', [ { 'text': htmlEncode( _languagePack['installhost']['leftPanel']['taskInfo'][4] ) }, { 'text': '' } ] ) ;
+		sdbjs.parts.tableBox.addBody( 'hostInfoTable', [ { 'text': htmlEncode( _languagePack['installzookeeper']['leftPanel']['taskInfo'][4] ) }, { 'text': '' } ] ) ;
 		//'安装进度'
-		sdbjs.parts.tableBox.addBody( 'hostInfoTable', [ { 'text': htmlEncode( _languagePack['installhost']['leftPanel']['taskInfo'][5] ) }, { 'text': '' } ] ) ;
+		sdbjs.parts.tableBox.addBody( 'hostInfoTable', [ { 'text': htmlEncode( _languagePack['installzookeeper']['leftPanel']['taskInfo'][5] ) }, { 'text': '' } ] ) ;
 		//'预计剩余时间'
-		sdbjs.parts.tableBox.addBody( 'hostInfoTable', [ { 'text': htmlEncode( _languagePack['installhost']['leftPanel']['taskInfo'][6] ) }, { 'text': '' } ] ) ;
-		//'安装日志'
-		sdbjs.parts.tableBox.addBody( 'hostInfoTable', [ { 'text': htmlEncode( _languagePack['installhost']['leftPanel']['taskInfo'][7] ) }, { 'text': '<button class="btn btn-default btn-lg" onclick="openLogModal()">' + htmlEncode( _languagePack['installhost']['leftPanel']['logButton'] ) + '</button>' } ] ) ;
+		sdbjs.parts.tableBox.addBody( 'hostInfoTable', [ { 'text': htmlEncode( _languagePack['installzookeeper']['leftPanel']['taskInfo'][6] ) }, { 'text': '' } ] ) ;
+		
+		//'日志'
+		sdbjs.parts.tableBox.addBody( 'hostInfoTable', [ { 'text': htmlEncode( _languagePack['installzookeeper']['leftPanel']['taskInfo'][7] ) }, { 'text': '<button class="btn btn-default btn-lg" onclick="openLogModal()">' + htmlEncode( _languagePack['installzookeeper']['leftPanel']['logButton'] ) + '</button>' } ] ) ;
 	} ) ;
 
 	/* 右边框架 */
@@ -378,17 +346,17 @@ function createHtml()
 	/* 右边 主机列表 */
 	sdbjs.parts.panelBox.create( 'middle-right', 'installInfoBar', 'auto', 'variable' ) ;
 	//'安装进度'
-	sdbjs.parts.panelBox.update( 'installInfoBar', htmlEncode( _languagePack['installhost']['rightPanel']['title'] ), function( panelBody ){
+	sdbjs.parts.panelBox.update( 'installInfoBar', htmlEncode( _languagePack['installzookeeper']['rightPanel']['title'] ), function( panelBody ){
 		sdbjs.parts.progressBox2.create( panelBody['name'], 'Progress' ) ;
 		sdbjs.parts.divBox.create( panelBody['name'], 'hostListDiv', 'auto', 'variable' ) ;
 		sdbjs.fun.setCSS( 'hostListDiv', { 'padding-top': 10 } ) ;
 		sdbjs.parts.gridBox.create( 'hostListDiv', 'hostListGrid', 'auto', 'variable' ) ;
-		//'主机名' 'IP' '安装状态' '安装进度' '日志'
-		sdbjs.parts.gridBox.addTitle( 'hostListGrid', [{ 'text': '', 'width': '8%' },
-																	  { 'text': htmlEncode( _languagePack['installhost']['rightPanel']['hostGrid'][0] ), 'width': '25%' },
-																	  { 'text': htmlEncode( _languagePack['installhost']['rightPanel']['hostGrid'][1] ), 'width': '20%' },
-																	  { 'text': htmlEncode( _languagePack['installhost']['rightPanel']['hostGrid'][2] ), 'width': '30%' },
-																	  { 'text': htmlEncode( _languagePack['installhost']['rightPanel']['hostGrid'][3] ), 'width': '17%' } ] ) ;
+		//'主机名' '端口' '安装状态' '安装进度'
+		sdbjs.parts.gridBox.addTitle( 'hostListGrid', [{ 'text': '', 'width': '12%' },
+                                                       { 'text': htmlEncode( _languagePack['installzookeeper']['rightPanel']['hostGrid'][0] ), 'width': '25%' },
+                                                       { 'text': htmlEncode( _languagePack['installzookeeper']['rightPanel']['hostGrid'][1] ), 'width': '15%' },
+                                                       { 'text': htmlEncode( _languagePack['installzookeeper']['rightPanel']['hostGrid'][2] ), 'width': '28%' },
+                                                       { 'text': htmlEncode( _languagePack['installzookeeper']['rightPanel']['hostGrid'][3] ), 'width': '20%' } ] ) ;
 		
 	} ) ;
 	
@@ -396,7 +364,7 @@ function createHtml()
 	sdbjs.parts.divBox.create( 'middle', 'middle-clear', 0, 0 ) ;
 	sdbjs.fun.setClass( 'middle-clear', 'clear-float' ) ;
 
-	if( _deployModel !== 'taskAddHost' )
+	if( _deployModel !== 'taskAddSdb' )
 	{
 		//返回 下一步
 		sdbjs.parts.buttonBox.create( 'operate', 'deployReturn' ) ;
@@ -410,16 +378,8 @@ function createHtml()
 	}
 	sdbjs.parts.buttonBox.create( 'operate', 'deployNext' ) ;
 	sdbjs.parts.buttonBox.update( 'deployNext', function( buttonObj ){
-		if( _deployModel === 'AddHost' || _deployModel === 'taskAddHost' )
-		{
-			//'完成'
-			$( buttonObj ).text( _languagePack['public']['button']['complete'] ) ;
-		}
-		else if( _deployModel === 'Deploy' )
-		{
-			//'下一步'
-			$( buttonObj ).text( _languagePack['public']['button']['next'] ) ;
-		}
+		//'完成'
+		$( buttonObj ).text( _languagePack['public']['button']['complete'] ) ;
 		$( buttonObj ).hide() ;
 		sdbjs.fun.addClick( buttonObj, 'nextPage()' ) ;
 	}, 'primary' ) ;
@@ -427,7 +387,7 @@ function createHtml()
 	//日志的弹窗
 	sdbjs.parts.modalBox.create( $( document.body ), 'logModal' ) ;
 	//'日志'
-	sdbjs.parts.modalBox.update( 'logModal', htmlEncode( _languagePack['installhost']['logModal']['title'] ), function( bodyObj ){
+	sdbjs.parts.modalBox.update( 'logModal', htmlEncode( _languagePack['installzookeeper']['logModal']['title'] ), function( bodyObj ){
 		sdbjs.parts.wellBox.create( bodyObj, 'logWell' ) ;
 		sdbjs.fun.setCSS( 'logWell', { 'max-height': 350, 'overflow': 'auto', 'font-family': 'Courier', 'word-break': 'break-all' } ) ;
 	}, function( footObj ){
@@ -457,24 +417,32 @@ function checkReady()
 		gotoPage( 'index.html' ) ;
 	}
 	_deployModel = sdbjs.fun.getData( 'SdbDeployModel' ) ;
-	if( _deployModel === null || ( _deployModel !== 'AddHost' && _deployModel !== 'Deploy' && _deployModel !== 'taskAddHost' ) )
+	if( _deployModel === null || ( _deployModel !== 'AddBusiness' && _deployModel !== 'Deploy' && _deployModel !== 'taskAddSdb' ) )
 	{
 		rc = false ;
 		gotoPage( 'index.html' ) ;
 	}
-	_businessType = sdbjs.fun.getData( 'SdbBusinessType' ) ;
-	if( _businessType === null && _deployModel === 'Deploy' )
+	if ( _deployModel !== 'taskAddSdb' )
 	{
-		rc = false ;
-		gotoPage( 'index.html' ) ;
+		businessConfig = sdbjs.fun.getData( 'SdbBusinessConfig' ) ;
+		if( businessConfig === null )
+		{
+			rc = false ;
+			gotoPage( 'index.html' ) ;
+		}
+		else
+		{
+			businessConfig = JSON.parse( businessConfig ) ;
+			_deployType = businessConfig['DeployMod'] ;
+		}
 	}
 	return rc ;
 }
 
 $(document).ready(function(){
-	if( checkReady() )
+	if( checkReady() === true )
 	{
-		sdbjs.fun.saveData( 'SdbStep', 'installhost' ) ;
+		sdbjs.fun.saveData( 'SdbStep', 'installsdb' ) ;
 		createHtml() ;
 		queryTaskInfo( true ) ;
 	}
