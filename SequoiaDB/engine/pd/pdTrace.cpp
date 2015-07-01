@@ -985,7 +985,7 @@ void _pdTraceCB::resumePausedEDUs ()
    // if resume is called during db shutdown, let's simply ignore since all
    // other threads are going to detect the shutdown status and terminate
    // themselves
-   if ( PMD_IS_DB_DOWN )
+   if ( PMD_IS_DB_DOWN() )
       return ;
    _pmdEDUCBLatch.get() ;
    pmdEDUEvent event ( PMD_EDU_EVENT_BP_RESUME ) ;
