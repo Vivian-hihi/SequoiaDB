@@ -41,6 +41,7 @@
 #include "msgDef.h"
 #include "pmdDef.hpp"
 #include "utilStr.hpp"
+#include "sdbInterface.hpp"
 #include "msg.h"
 
 #include "../bson/bson.h"
@@ -66,6 +67,18 @@ namespace engine
    const CHAR* utilDBTypeStr( SDB_TYPE type ) ;
 
    SDB_TYPE utilRoleToType( SDB_ROLE role ) ;
+
+   /*
+      SDB_DB_STATUS AND STRING TRANSFER
+   */
+   const CHAR* utilDBStatusStr( SDB_DB_STATUS dbStatus ) ;
+   SDB_DB_STATUS utilGetDBStatusEnum( const CHAR *status ) ;
+
+   /*
+      SDB_DB_MODE AND STRING TRANSFER
+   */
+   string      utilDBModeStr( UINT32 dbMode ) ;
+   UINT32      utilGetDBModeFlag( const string &mode ) ;
 
    /*
       util Pref instance enum and string transfer

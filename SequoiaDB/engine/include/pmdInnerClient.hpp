@@ -71,6 +71,7 @@ namespace engine
          virtual INT32        authenticate( MsgHeader *pMsg ) ;
          virtual INT32        authenticate( const CHAR *username,
                                             const CHAR *password ) ;
+         virtual void         logout() ;
          virtual INT32        disconnect() ;
 
          virtual BOOLEAN      isAuthed() const ;

@@ -119,6 +119,29 @@ namespace engine
       SDB_CLIENT_MAX
    } ;
 
+   /*
+      SDB_DB_STATUS define
+   */
+   enum SDB_DB_STATUS
+   {
+      SDB_DB_NORMAL           = 0,
+      SDB_DB_SHUTDOWN,
+      SDB_DB_REBUILDING,
+      SDB_DB_FULLSYNC,
+      SDB_DB_OFFLINE_BK,
+
+      SDB_DB_STATUS_MAX
+   } ;
+
+   /*
+      Define SDB_DB_MODE value
+   */
+   #define SDB_DB_MODE_READONLY        0x00000001
+   #define SDB_DB_MODE_DEACTIVATED     0x00000002
+
+   /*
+      _ISDBRoot define
+   */
    class _ISDBRoot
    {
       public:
@@ -233,6 +256,7 @@ namespace engine
          virtual INT32        authenticate( MsgHeader *pMsg ) = 0 ;
          virtual INT32        authenticate( const CHAR *username,
                                             const CHAR *password ) = 0 ;
+         virtual void         logout() = 0 ;
          virtual INT32        disconnect() = 0 ;
 
          virtual BOOLEAN      isAuthed() const = 0 ;
@@ -309,18 +333,31 @@ namespace engine
          virtual BOOLEAN            isCBValue( SDB_CB_TYPE type ) const = 0 ;
          virtual void*              getOrgPointByType( SDB_CB_TYPE type ) = 0 ;
 
+         virtual SDB_DB_STATUS      getDBStatus() const = 0 ;
+         virtual const CHAR*        getDBStatusDesp() const = 0 ;
          virtual BOOLEAN            isShutdown() const = 0 ;
-         virtual BOOLEAN            isPrimary() const = 0 ;
+         virtual BOOLEAN            isNormal() const = 0 ;
+         virtual INT32              getShutdownCode() const = 0 ;
 
+         virtual UINT32             getDBMode() const = 0 ;
+         virtual std::string        getDBModeDesp() const = 0 ;
+         virtual BOOLEAN            isDBReadonly() const = 0 ;
+         virtual BOOLEAN            isDBDeactivated() const = 0 ;
+
+         virtual SDB_ROLE           getDBRole() const = 0 ;
+         virtual const CHAR*        getDBRoleDesp() const = 0 ;
+
+         virtual BOOLEAN            isPrimary() const = 0 ;
          virtual UINT16             getLocalPort() const = 0 ;
          virtual const CHAR*        getSvcname() const = 0 ;
          virtual const CHAR*        getDBPath() const = 0 ;
-         virtual SDB_ROLE           getDBRole() const = 0 ;
          virtual const CHAR*        getHostName() const = 0 ;
          virtual const CHAR*        getGroupName () const = 0 ;
          virtual UINT32             getNodeID() const = 0 ;
          virtual UINT32             getGroupID() const = 0 ;
+
          virtual UINT64             getStartTime() const = 0 ;
+         virtual UINT64             getDBTick() const = 0 ;
 
          virtual void               getVersion( INT32 &ver,
                                                 INT32 &subVer,

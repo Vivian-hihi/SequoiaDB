@@ -142,6 +142,10 @@ namespace engine
       return SDB_OK ;
    }
 
+   void _pmdInnerClient::logout()
+   {
+   }
+
    INT32 _pmdInnerClient::disconnect()
    {
       return SDB_OK ;

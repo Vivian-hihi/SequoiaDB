@@ -1102,7 +1102,7 @@ namespace engine
          eduID = getSystemEDU( type ) ;
          --waitRound ;
 
-         if ( PMD_IS_DB_DOWN )
+         if ( PMD_IS_DB_DOWN() )
          {
             rc = SDB_APP_FORCED ;
             goto error ;

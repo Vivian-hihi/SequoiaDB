@@ -62,28 +62,22 @@ namespace engine
    */
    #define PMD_SYNC_CLOCK_INTERVAL              ( 10 ) /// ms
 
-   /*
-      PMD DB status define
-   */
-   enum PMD_DB_STATUS
-   {
-      PMD_DB_NORMAL        = 0 ,
-      PMD_DB_SHUTDOWN      = 1
-   } ;
+   #define PMD_DB_STATUS()    pmdGetKRCB()->getDBStatus()
+   #define PMD_IS_DB_NORMAL() ( SDB_DB_NORMAL == PMD_DB_STATUS() )
+   #define PMD_IS_DB_DOWN()   ( SDB_DB_SHUTDOWN == PMD_DB_STATUS() )
+   #define PMD_IS_DB_UP()     ( !PMD_IS_DB_DOWN() )
 
-   #define PMD_IS_DB_NORMAL   ( PMD_DB_NORMAL == pmdGetKRCB()->getDBStatus() )
-   #define PMD_IS_DB_DOWN     ( !PMD_IS_DB_UP  )
-   #define PMD_IS_DB_UP       PMD_IS_DB_NORMAL
+   #define PMD_SET_DB_STATUS(x)  pmdGetKRCB()->setDBStatus(x)
 
    #define PMD_SHUTDOWN_DB(code)  \
       do { \
-         pmdGetKRCB()->setDBStatus( PMD_DB_SHUTDOWN ) ; \
+         pmdGetKRCB()->setDBStatus( SDB_DB_SHUTDOWN ) ; \
          pmdGetKRCB()->setExitCode( code ) ; \
       } while ( 0 )
 
    #define PMD_RESTART_DB(code)   \
       do { \
-         pmdGetKRCB()->setDBStatus( PMD_DB_SHUTDOWN ) ; \
+         pmdGetKRCB()->setDBStatus( SDB_DB_SHUTDOWN ) ; \
          pmdGetKRCB()->setExitCode( code ) ; \
          pmdGetKRCB()->setRestart( TRUE ) ; \
       } while ( 0 )
@@ -127,17 +121,31 @@ namespace engine
       virtual void*              getOrgPointByType( SDB_CB_TYPE type ) ;
       virtual BOOLEAN            isCBValue( SDB_CB_TYPE type ) const ;
 
+      virtual SDB_DB_STATUS      getDBStatus() const ;
+      virtual const CHAR*        getDBStatusDesp() const ;
+      virtual BOOLEAN            isShutdown() const ;
+      virtual BOOLEAN            isNormal() const ;
+      virtual INT32              getShutdownCode() const ;
+
+      virtual UINT32             getDBMode() const ;
+      virtual std::string        getDBModeDesp() const ;
+      virtual BOOLEAN            isDBReadonly() const ;
+      virtual BOOLEAN            isDBDeactivated() const ;
+
+      virtual SDB_ROLE           getDBRole() const ;
+      virtual const CHAR*        getDBRoleDesp() const ;
+
       virtual UINT16             getLocalPort() const ;
       virtual const CHAR*        getSvcname() const ;
       virtual const CHAR*        getDBPath() const ;
-      virtual SDB_ROLE           getDBRole() const ;
       virtual const CHAR*        getHostName() const { return _hostName ; }
       virtual const CHAR*        getGroupName () const { return _groupName ; }
       virtual UINT32             getNodeID() const ;
       virtual UINT32             getGroupID() const ;
-      virtual BOOLEAN            isShutdown() const ;
       virtual BOOLEAN            isPrimary() const ;
+
       virtual UINT64             getStartTime() const ;
+      virtual UINT64             getDBTick() const ;
 
       virtual void               getVersion( INT32 &ver,
                                              INT32 &subVer,
@@ -161,9 +169,10 @@ namespace engine
       // configured options
       CHAR           _groupName[ OSS_MAX_GROUPNAME_SIZE + 1 ] ;
       CHAR           _hostName[ OSS_MAX_HOSTNAME + 1 ] ;
-      SDB_ROLE       _role ;
 
-      UINT32         _dbStatus ;
+      SDB_ROLE       _role ;
+      SDB_DB_STATUS  _dbStatus ;
+      UINT32         _dbMode ;
 
       BOOLEAN        _businessOK ;
       INT32          _exitCode ;
@@ -182,11 +191,6 @@ namespace engine
 #endif // SDB_ENGINE
 
    public :
-
-      UINT32 getDBStatus () const
-      {
-         return _dbStatus ;
-      }
       pmdEDUMgr *getEDUMgr ()
       {
          return &_eduMgr ;
@@ -278,10 +282,6 @@ namespace engine
       {
          return _businessOK ;
       }
-      INT32 getExitCode() const
-      {
-         return _exitCode ;
-      }
       BOOLEAN needRestart() const
       {
          return _restart ;
@@ -302,9 +302,31 @@ namespace engine
       {
          _businessOK = businessOK ;
       }
-      void setDBStatus ( UINT32 status )
+      void setDBStatus ( SDB_DB_STATUS status )
       {
          _dbStatus = status ;
+      }
+      void setDBReadonly( BOOLEAN readonly )
+      {
+         if ( readonly )
+         {
+            _dbMode |= SDB_DB_MODE_READONLY ;
+         }
+         else
+         {
+            _dbMode &= ~SDB_DB_MODE_READONLY ;
+         }
+      }
+      void setDBDeactivated( BOOLEAN deactivated )
+      {
+         if ( deactivated )
+         {
+            _dbMode |= SDB_DB_MODE_DEACTIVATED ;
+         }
+         else
+         {
+            _dbMode &= ~SDB_DB_MODE_DEACTIVATED ;
+         }
       }
       void setGroupName ( const CHAR *groupName )
       {

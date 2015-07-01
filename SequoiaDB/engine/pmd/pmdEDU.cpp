@@ -1121,7 +1121,7 @@ namespace engine
                ossStrncpy( eduName, cb->getName(), OSS_MAX_PATHSIZE ) ;
             }
 
-            if ( PMD_IS_DB_UP )
+            if ( PMD_IS_DB_UP() )
             {
                if ( isSystemEDU( cb->getType() ) )
                {

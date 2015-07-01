@@ -208,7 +208,7 @@ namespace engine
 
          if ( SDB_APP_INTERRUPT == rc )
          {
-            if ( PMD_IS_DB_UP )
+            if ( PMD_IS_DB_UP() )
             {
                PMD_SHUTDOWN_DB( rc ) ;
             }

@@ -41,6 +41,7 @@
 #include "ossLatch.hpp"
 #include "pdTrace.hpp"
 #include "utilTrace.hpp"
+#include <sstream>
 
 using namespace bson ;
 
@@ -51,17 +52,18 @@ namespace engine
    {
       if ( NULL == role )
          return SDB_ROLE_MAX;
-      else if ( *role == 0 || 0 == ossStrcmp( role, SDB_ROLE_STANDALONE_STR ) )
+      else if ( *role == 0 ||
+                0 == ossStrcasecmp( role, SDB_ROLE_STANDALONE_STR ) )
          return SDB_ROLE_STANDALONE ;
-      else if ( 0 == ossStrcmp( role, SDB_ROLE_DATA_STR ) )
+      else if ( 0 == ossStrcasecmp( role, SDB_ROLE_DATA_STR ) )
          return SDB_ROLE_DATA;
-      else if ( 0 == ossStrcmp( role, SDB_ROLE_CATALOG_STR ) )
+      else if ( 0 == ossStrcasecmp( role, SDB_ROLE_CATALOG_STR ) )
          return SDB_ROLE_CATALOG;
-      else if ( 0 == ossStrcmp( role, SDB_ROLE_COORD_STR ) )
+      else if ( 0 == ossStrcasecmp( role, SDB_ROLE_COORD_STR ) )
          return SDB_ROLE_COORD;
-      else if ( 0 == ossStrcmp( role, SDB_ROLE_OM_STR ) )
+      else if ( 0 == ossStrcasecmp( role, SDB_ROLE_OM_STR ) )
          return SDB_ROLE_OM ;
-      else if ( 0 == ossStrcmp( role, SDB_ROLE_OMA_STR ) )
+      else if ( 0 == ossStrcasecmp( role, SDB_ROLE_OMA_STR ) )
          return SDB_ROLE_OMA ;
       else
          return SDB_ROLE_MAX;
@@ -109,11 +111,11 @@ namespace engine
    {
       if ( NULL == role )
          return SDB_ROLE_MAX;
-      if ( 0 == ossStrcmp( role, "D" ) )
+      if ( 0 == ossStrcasecmp( role, "D" ) )
          return SDB_ROLE_DATA;
-      else if ( 0 == ossStrcmp( role, "C" ) )
+      else if ( 0 == ossStrcasecmp( role, "C" ) )
          return SDB_ROLE_CATALOG;
-      else if ( 0 == ossStrcmp( role, "S" ) )
+      else if ( 0 == ossStrcasecmp( role, "S" ) )
          return SDB_ROLE_COORD;
       else
          return SDB_ROLE_MAX;
@@ -126,15 +128,15 @@ namespace engine
          return SDB_TYPE_MAX ;
       }
       else if ( 0 == *type ||
-                0 == ossStrcmp( type, SDB_TYPE_DB_STR ) )
+                0 == ossStrcasecmp( type, SDB_TYPE_DB_STR ) )
       {
          return SDB_TYPE_DB ;
       }
-      else if ( 0 == ossStrcmp( type, SDB_TYPE_OM_STR ) )
+      else if ( 0 == ossStrcasecmp( type, SDB_TYPE_OM_STR ) )
       {
          return SDB_TYPE_OM ;
       }
-      else if ( 0 == ossStrcmp( type, SDB_TYPE_OMA_STR ) )
+      else if ( 0 == ossStrcasecmp( type, SDB_TYPE_OMA_STR ) )
       {
          return SDB_TYPE_OMA ;
       }
@@ -177,6 +179,103 @@ namespace engine
             break ;
       }
       return SDB_TYPE_MAX ;
+   }
+
+   const CHAR* utilDBStatusStr( SDB_DB_STATUS dbStatus )
+   {
+      switch( dbStatus )
+      {
+         case SDB_DB_NORMAL :
+            return SDB_DB_NORMAL_STR ;
+         case SDB_DB_SHUTDOWN :
+            return SDB_DB_SHUTDOWN_STR ;
+         case SDB_DB_REBUILDING :
+            return SDB_DB_REBUILDING_STR ;
+         case SDB_DB_FULLSYNC :
+            return SDB_DB_FULLSYNC_STR ;
+         case SDB_DB_OFFLINE_BK :
+            return SDB_DB_OFFLINE_BK_STR ;
+         default :
+            break ;
+      }
+      return "Unknow" ;
+   }
+
+   SDB_DB_STATUS utilGetDBStatusEnum( const CHAR *status )
+   {
+      if ( NULL == status )
+      {
+         return SDB_DB_STATUS_MAX ;
+      }
+      else if ( 0 == *status ||
+                0 == ossStrcasecmp( status, SDB_DB_NORMAL_STR ) )
+      {
+         return SDB_DB_NORMAL ;
+      }
+      else if ( 0 == ossStrcasecmp( status, SDB_DB_SHUTDOWN_STR ) )
+      {
+         return SDB_DB_SHUTDOWN ;
+      }
+      else if ( 0 == ossStrcasecmp( status, SDB_DB_REBUILDING_STR ) )
+      {
+         return SDB_DB_REBUILDING ;
+      }
+      else if ( 0 == ossStrcasecmp( status, SDB_DB_FULLSYNC_STR ) )
+      {
+         return SDB_DB_FULLSYNC ;
+      }
+      else if ( 0 == ossStrcasecmp( status, SDB_DB_OFFLINE_BK_STR ) )
+      {
+         return SDB_DB_OFFLINE_BK ;
+      }
+      else
+      {
+         return SDB_DB_STATUS_MAX ;
+      }
+   }
+
+   std::string utilDBModeStr( UINT32 dbMode )
+   {
+      std::stringstream ss ;
+      BOOLEAN hasAdd = FALSE ;
+
+      if ( SDB_DB_MODE_READONLY & dbMode )
+      {
+         ss << SDB_DB_MODE_READONLY_STR ;
+         hasAdd = TRUE ;
+      }
+      if ( SDB_DB_MODE_DEACTIVATED & dbMode )
+      {
+         if ( hasAdd )
+         {
+            ss << " | " ;
+         }
+         ss << SDB_DB_MODE_DEACTIVATED_STR ;
+      }
+      return ss.str() ;
+   }
+
+   UINT32 utilGetDBModeFlag( const string &mode )
+   {
+      UINT32 modeFlag = 0 ;
+      vector< string > parsed ;
+      utilSplitStr( mode, parsed, "| \t" ) ;
+
+      for ( UINT32 i = 0 ; i < parsed.size() ; ++i )
+      {
+         if ( 0 == ossStrcasecmp( SDB_DB_MODE_READONLY_STR,
+                                  parsed[ i ].c_str() ) )
+         {
+            modeFlag |= SDB_DB_MODE_READONLY ;
+         }
+         else if ( 0 == ossStrcasecmp( SDB_DB_MODE_DEACTIVATED_STR,
+                                       parsed[ i ].c_str() ) )
+         {
+            modeFlag |= SDB_DB_MODE_DEACTIVATED ;
+         }
+      }
+
+      return modeFlag ;
    }
 
    INT32 utilPrefReplStr2Enum( const CHAR * prefReplStr )

@@ -56,6 +56,8 @@ namespace engine
       _businessOK = TRUE ;
       _restart = FALSE ;
 
+      _dbMode = 0 ;
+
       for ( INT32 i = 0 ; i < SDB_CB_MAX ; ++i )
       {
          _arrayCBs[ i ] = NULL ;
@@ -65,7 +67,7 @@ namespace engine
       _isActive         = FALSE ;
 
       /* <-- internal status, can't be modified by config file --> */
-      setDBStatus ( PMD_DB_NORMAL ) ;
+      _dbStatus = SDB_DB_NORMAL ;
       /* <-- external status, can be changed by modifying config file --> */
 
       // standalone role by default, user may overwrite this setting
@@ -121,6 +123,61 @@ namespace engine
       return _arrayCBs[ type ] ? TRUE : FALSE ;
    }
 
+   SDB_DB_STATUS _SDB_KRCB::getDBStatus() const
+   {
+      return _dbStatus ;
+   }
+
+   const CHAR* _SDB_KRCB::getDBStatusDesp() const
+   {
+      return utilDBStatusStr( _dbStatus ) ;
+   }
+
+   BOOLEAN _SDB_KRCB::isNormal() const
+   {
+      return SDB_DB_NORMAL == _dbStatus ? TRUE : FALSE ;
+   }
+
+   BOOLEAN _SDB_KRCB::isShutdown() const
+   {
+      return SDB_DB_SHUTDOWN == _dbStatus ? TRUE : FALSE ;
+   }
+
+   INT32 _SDB_KRCB::getShutdownCode() const
+   {
+      return _exitCode ;
+   }
+
+   UINT32 _SDB_KRCB::getDBMode() const
+   {
+      return _dbMode ;
+   }
+
+   std::string _SDB_KRCB::getDBModeDesp() const
+   {
+      return utilDBModeStr( _dbMode ) ;
+   }
+
+   BOOLEAN _SDB_KRCB::isDBReadonly() const
+   {
+      return ( SDB_DB_MODE_READONLY & _dbMode ) ? TRUE : FALSE ;
+   }
+
+   BOOLEAN _SDB_KRCB::isDBDeactivated() const
+   {
+      return ( SDB_DB_MODE_DEACTIVATED & _dbMode ) ? TRUE : FALSE ;
+   }
+
+   SDB_ROLE _SDB_KRCB::getDBRole() const
+   {
+      return _role ;
+   }
+
+   const CHAR* _SDB_KRCB::getDBRoleDesp() const
+   {
+      return utilDBRoleStr( _role ) ;
+   }
+
    UINT16 _SDB_KRCB::getLocalPort() const
    {
       return _optioncb.getServicePort() ;
@@ -136,11 +193,6 @@ namespace engine
       return _optioncb.getDbPath() ;
    }
 
-   SDB_ROLE _SDB_KRCB::getDBRole() const
-   {
-      return _role ;
-   }
-
    UINT32 _SDB_KRCB::getNodeID() const
    {
       return (UINT32)pmdGetNodeID().columns.nodeID ;
@@ -151,11 +203,6 @@ namespace engine
       return (UINT32)pmdGetNodeID().columns.groupID ;
    }
 
-   BOOLEAN _SDB_KRCB::isShutdown() const
-   {
-      return ( PMD_DB_NORMAL != getDBStatus() ? TRUE : FALSE ) ;
-   }
-
    BOOLEAN _SDB_KRCB::isPrimary() const
    {
       return pmdIsPrimary() ;
@@ -164,6 +211,11 @@ namespace engine
    UINT64 _SDB_KRCB::getStartTime() const
    {
       return pmdGetStartTime() ;
+   }
+
+   UINT64 _SDB_KRCB::getDBTick() const
+   {
+      return pmdGetDBTick() ;
    }
 
    void _SDB_KRCB::getVersion( INT32 &ver, INT32 &subVer, INT32 &fixVer,

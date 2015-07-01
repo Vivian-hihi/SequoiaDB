@@ -274,6 +274,11 @@ namespace engine
       goto done ;
    }
 
+   void _pmdExternClient::logout()
+   {
+      _isAuthed = FALSE ;
+   }
+
    INT32 _pmdExternClient::disconnect()
    {
       if ( _pSocket && !_pSocket->isClosed() )

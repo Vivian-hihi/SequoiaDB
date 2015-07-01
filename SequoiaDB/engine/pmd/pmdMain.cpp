@@ -182,7 +182,7 @@ namespace engine
                     rc ) ;
          goto error ;
       }
-      if ( PMD_IS_DB_DOWN )
+      if ( PMD_IS_DB_DOWN() )
       {
          return rc ;
       }
@@ -236,16 +236,16 @@ namespace engine
       }
 
       // wait until all daemon threads start
-      while ( PMD_IS_DB_UP && startTimerCount < PMD_START_WAIT_TIME &&
+      while ( PMD_IS_DB_UP() && startTimerCount < PMD_START_WAIT_TIME &&
               !krcb->isBusinessOK() )
       {
          ossSleepmillis( 100 ) ;
          startTimerCount += 100 ;
       }
 
-      if ( PMD_IS_DB_DOWN )
+      if ( PMD_IS_DB_DOWN() )
       {
-         rc = krcb->getExitCode() ;
+         rc = krcb->getShutdownCode() ;
          PD_LOG( PDERROR, "Start failed, rc: %d", rc ) ;
          goto error ;
       }
@@ -287,12 +287,12 @@ namespace engine
 #endif // _LINUX
 
       // Now master thread get into big loop and check shutdown flag
-      while ( PMD_IS_DB_UP )
+      while ( PMD_IS_DB_UP() )
       {
          ossSleepsecs ( 1 ) ;
          sdbGetPMDController()->onTimer( OSS_ONE_SEC ) ;
       }
-      rc = krcb->getExitCode() ;
+      rc = krcb->getShutdownCode() ;
 
    done :
       PMD_SHUTDOWN_DB( rc ) ;
@@ -304,7 +304,7 @@ namespace engine
       }
       pmdGetStartup().final() ;
       PD_LOG ( PDEVENT, "Stop sequoiadb, exit code: %d",
-               krcb->getExitCode() ) ;
+               krcb->getShutdownCode() ) ;
       PD_TRACE_EXITRC ( SDB_PMDMSTTHRDMAIN, rc );
       return utilRC2ShellRC( rc ) ;
    error :

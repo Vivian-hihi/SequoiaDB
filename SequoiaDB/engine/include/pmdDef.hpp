@@ -218,6 +218,21 @@ namespace engine
    #define SDB_TYPE_OMA_STR            "sdbcm"
 
    /*
+      SDB_DB_STATUS_STR DEFINE
+   */
+   #define SDB_DB_NORMAL_STR           "Normal"
+   #define SDB_DB_SHUTDOWN_STR         "Shutdown"
+   #define SDB_DB_REBUILDING_STR       "Rebuilding"
+   #define SDB_DB_FULLSYNC_STR         "FullSync"
+   #define SDB_DB_OFFLINE_BK_STR       "OfflineBackup"
+
+   /*
+      SDB_DB_MODE_STR DEFINE
+   */
+   #define SDB_DB_MODE_READONLY_STR    "Readonly"
+   #define SDB_DB_MODE_DEACTIVATED_STR "Deactivated"
+
+   /*
       define
    */
    #define PMD_DFT_CONF                "sdb.conf"

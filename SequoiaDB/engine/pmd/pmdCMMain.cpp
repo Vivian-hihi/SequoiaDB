@@ -254,18 +254,18 @@ namespace engine
 #endif // _LINUX
 
       // Now master thread get into big loop and check shutdown flag
-      while ( PMD_IS_DB_UP )
+      while ( PMD_IS_DB_UP() )
       {
          ossSleepsecs ( 1 ) ;
       }
-      rc = krcb->getExitCode() ;
+      rc = krcb->getShutdownCode() ;
 
    done:
       PMD_SHUTDOWN_DB( rc ) ;
       pmdSetQuit() ;
       krcb->destroy () ;
       PD_LOG ( PDEVENT, "Stop programme, exit code: %d",
-               krcb->getExitCode() ) ;
+               krcb->getShutdownCode() ) ;
       return rc == SDB_OK ? 0 : 1 ;
    error:
       goto done ;

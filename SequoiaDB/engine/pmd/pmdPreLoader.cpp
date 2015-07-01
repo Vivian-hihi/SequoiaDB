@@ -76,7 +76,7 @@ namespace engine
       ossQueue<bpsPreLoadReq*> *dropReqQ  = bpscb->getDropQueue () ;
       bpsPreLoadReq *prefReq = NULL ;
 
-      while ( !PMD_IS_DB_DOWN )
+      while ( !PMD_IS_DB_DOWN() )
       {
          if ( prefReqQ->timed_wait_and_pop ( prefReq, PMD_QUEUE_WAIT_TIME ) )
          {
@@ -145,7 +145,7 @@ namespace engine
             // push pre-load request to drop back queue
             dropReqQ->push ( prefReq ) ;
          } // if ( prefReqQ->timed_wait_and_pop
-      } // while ( !PMD_IS_DB_DOWN )
+      } // while ( !PMD_IS_DB_DOWN() )
 
       PD_TRACE_EXITRC ( SDB_PMDPRELOADERENENTPNT, rc );
       return rc;

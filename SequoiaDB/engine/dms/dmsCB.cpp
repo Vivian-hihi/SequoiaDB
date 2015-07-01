@@ -785,6 +785,7 @@ namespace engine
          goto done;
       }
       _dmsCBState = DMS_STATE_BACKUP ;
+      PMD_SET_DB_STATUS( SDB_DB_OFFLINE_BK ) ;
       _stateMtx.release () ;
 
       while ( TRUE )
@@ -815,6 +816,7 @@ namespace engine
    {
       _stateMtx.get() ;
       _dmsCBState = DMS_STATE_NORMAL ;
+      PMD_SET_DB_STATUS( SDB_DB_NORMAL ) ;
       _backEvent.signalAll() ;
       _stateMtx.release() ;
       if ( cb )
@@ -838,6 +840,7 @@ namespace engine
          goto done;
       }
       _dmsCBState = DMS_STATE_REBUILD ;
+      PMD_SET_DB_STATUS( SDB_DB_REBUILDING ) ;
       _stateMtx.release () ;
 
       while ( TRUE )
@@ -848,7 +851,7 @@ namespace engine
             _stateMtx.release();
             if ( cb )
             {
-               cb->setDmsLockLevel( DMS_LOCK_WRITE ) ;
+               cb->setDmsLockLevel( DMS_LOCK_WHOLE ) ;
             }
             goto done;
          }
@@ -865,7 +868,8 @@ namespace engine
    void _SDB_DMSCB::rebuildDown( _pmdEDUCB *cb )
    {
       _stateMtx.get();
-      _dmsCBState = DMS_STATE_NORMAL;
+      _dmsCBState = DMS_STATE_NORMAL ;
+      PMD_SET_DB_STATUS( SDB_DB_NORMAL ) ;
       _stateMtx.release();
 
       if ( cb )

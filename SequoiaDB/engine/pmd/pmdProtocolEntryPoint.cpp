@@ -86,7 +86,7 @@ namespace engine
             continue ;
          }
          // if we receive error due to database down, we finish
-         if ( rc && PMD_IS_DB_DOWN )
+         if ( rc && PMD_IS_DB_DOWN() )
          {
             rc = SDB_OK ;
             goto done ;
