@@ -535,8 +535,7 @@ namespace engine
    INT32 _clsShardMgr::updateCatGroup ( BOOLEAN unsetPrimary, INT64 millsec )
    {
       PD_TRACE_ENTRY ( SDB__CLSSHDMGR_UPDCATGRP );
-      SDB_ASSERT ( _vecCatlog.size() > 0,
-                   "there's at least 1 catalog exist" ) ;
+
       if ( unsetPrimary )
       {
          _primary = -1 ;
@@ -562,6 +561,9 @@ namespace engine
       // send message
       {
          ossScopedLock lock ( &_shardLatch, SHARED ) ;
+
+         SDB_ASSERT ( _vecCatlog.size() > 0,
+                      "there's at least 1 catalog exist" ) ;
 
          while ( index < _vecCatlog.size () )
          {
