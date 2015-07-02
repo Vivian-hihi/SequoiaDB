@@ -42,6 +42,7 @@
 #include "dpsMessageBlock.hpp"
 #include "dpsLogDef.hpp"
 #include "dpsReplicaLogMgr.hpp"
+#include "utilStr.hpp"
 #include "pdTrace.hpp"
 #include "dpsTrace.hpp"
 
@@ -95,11 +96,11 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__DPSLGFILEMGR_INIT );
       SDB_ASSERT( path, "path can not be NULL!") ;
-      CHAR LOG_BUILDER[OSS_MAX_PATHSIZE+1] = {0} ;
+      CHAR fileFullPath[ OSS_MAX_PATHSIZE+1 ] = {0} ;
       // temp buffer stores log file sequence up to 0xFFFFFFFF, which is
       // 4294967295 ( 10 bytes )
-      CHAR tmp[11] = {0} ;
-      ossMemset ( tmp, 0, sizeof(tmp) ) ;
+      CHAR tmp[11] = { 0 } ;
+
       // make sure path + OSS_FILE_SEP + DPS_LOG_FILE_PREFIX + xxx + 0
       // is less or equal to OSS_MAX_PATHSIZE
       if ( ossStrlen ( path ) + ossStrlen ( DPS_LOG_FILE_PREFIX ) +
@@ -109,6 +110,7 @@ namespace engine
          rc = SDB_INVALIDARG ;
          goto error ;
       }
+
       LOG_LOOP_BEGIN( _logFileNum )
          // memory is free in destructor, or by end of error in this function
          _dpsLogFile *file = SDB_OSS_NEW _dpsLogFile();
@@ -119,18 +121,16 @@ namespace engine
             goto error;
          }
          // push log file to vector array
-         _files.push_back( file );
-         ossMemset( LOG_BUILDER, 0, sizeof(LOG_BUILDER) );
-         ossMemcpy( LOG_BUILDER, path, ossStrlen( path ) );
-         ossStrncat ( LOG_BUILDER, OSS_FILE_SEP, OSS_MAX_PATHSIZE ) ;
-         ossStrncat( LOG_BUILDER, DPS_LOG_FILE_PREFIX,
-                     ossStrlen( DPS_LOG_FILE_PREFIX ) );
-         ossSnprintf ( tmp, sizeof(tmp), "%d", i );
-         ossStrncat( LOG_BUILDER, tmp, ossStrlen( tmp ));
+         _files.push_back( file ) ;
+
+         utilBuildFullPath( path, DPS_LOG_FILE_PREFIX,
+                            OSS_MAX_PATHSIZE, fileFullPath ) ;
+         ossSnprintf ( tmp, sizeof(tmp), "%d", i ) ;
+         ossStrncat( fileFullPath, tmp, ossStrlen( tmp ) ) ;
          // initialize log file for each newly created one
          // we set readonly to FALSE, so that each log file is opened with
          // WRITEONLY option
-         rc = file->init( LOG_BUILDER, _logFileSz, _logFileNum );
+         rc = file->init( fileFullPath, _logFileSz, _logFileNum );
          if ( rc )
          {
             PD_LOG ( PDERROR,"Failed to init log file for %d, rc = %d", i, rc ) ;
