@@ -41,6 +41,7 @@
 #include "ossLatch.hpp"
 #include "clsCatalogAgent.hpp"
 #include "sdbInterface.hpp"
+#include "clsDCMgr.hpp"
 #include <map>
 
 using namespace bson ;
@@ -209,6 +210,7 @@ namespace engine
          _netRouteAgent                *_pNetRtAgent ;
          _clsCatalogAgent              *_pCatAgent ;
          _clsNodeMgrAgent              *_pNodeMgrAgent ;
+         clsDCMgr                      *_pDCMgr ;
          ossSpinXLatch                 _catLatch ;
          MAP_CAT_EVENT                 _mapSyncCatEvent ;
          MAP_NM_EVENT                  _mapSyncNMEvent ;

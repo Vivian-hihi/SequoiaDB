@@ -1006,8 +1006,8 @@ namespace engine
             }
 
             rc = _checkCLStatusAndGetSth( pCollectionName,
-                                    pQuery->version,
-                                    &_isMainCL, &replSize ) ;
+                                          pQuery->version,
+                                          &_isMainCL, &replSize ) ;
             if ( SDB_OK != rc )
             {
                goto error ;
@@ -1212,6 +1212,8 @@ namespace engine
          }
          if ( SDB_OK != rc )
          {
+            PD_LOG( PDERROR, "Run command[%s] failed, rc: %d",
+                    pCommand->name(), rc ) ;
             goto error ;
          }
 

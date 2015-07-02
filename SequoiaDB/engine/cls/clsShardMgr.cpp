@@ -71,6 +71,7 @@ namespace engine
       _requestID = 0 ;
       _pCatAgent = NULL ;
       _pNodeMgrAgent = NULL ;
+      _pDCMgr = NULL ;
 
       _primary = -1 ;
       _catVerion = 0 ;
@@ -569,7 +570,7 @@ namespace engine
          {
             // send message to each catalog node
             rc = _pNetRtAgent->syncSend ( _vecCatlog[index].nodeID,
-               (void*)&req ) ;
+                                          (void*)&req ) ;
             // we consider success for any SDB_OK return
             if ( SDB_OK == rc )
             {
@@ -595,6 +596,11 @@ namespace engine
          if ( SDB_OK == rc )
          {
             rc = result ;
+         }
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Update catalog group info failed, rc: %d", rc ) ;
+            /// don't goto error
          }
       }
    done :
@@ -707,6 +713,13 @@ namespace engine
             rc = result ;
          }
 
+         if ( rc && SDB_DMS_NOTEXIST != rc )
+         {
+            PD_LOG( PDERROR, "Update catalog[%s] failed, rc: %d",
+                    pCollectionName, rc ) ;
+            /// don't goto error
+         }
+
          // if send=TRUE, must reset send flag
          _catLatch.get () ;
          // decrease the wait number, this must be protected within catLatch
@@ -794,6 +807,13 @@ namespace engine
          if ( SDB_OK == rc )
          {
             rc = result ;
+         }
+
+         if ( rc && SDB_CLS_GRP_NOT_EXIST != rc )
+         {
+            PD_LOG( PDERROR, "Update group info[%d] failed, rc: %d",
+                    groupID, rc ) ;
+            /// don't goto error
          }
 
          // if send=TRUE, must reset send flag

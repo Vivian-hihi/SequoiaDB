@@ -123,10 +123,16 @@ namespace engine
             rc = _restore () ;
             if ( rc == SDB_OK )
             {
+               UINT32 startOffset = 0 ;
+               if ( DPS_INVALID_LSN_OFFSET != _logHeader._firstLSN.offset )
+               {
+                  startOffset = (UINT32)( _logHeader._firstLSN.offset %
+                                          _fileSize ) ;
+               }
                PD_LOG ( PDEVENT, "Restore dps log file[%s] succeed, "
                         "firstLsn[%lld], idle space: %u, start offset: %d",
                         path, getFirstLSN().offset, getIdleSize(),
-                        (INT32)( _logHeader._firstLSN.offset % _fileSize ) ) ;
+                        startOffset ) ;
                goto done ;
             }
             else
@@ -404,10 +410,6 @@ namespace engine
          {
             PD_LOG( PDERROR, "failed to load record log:%d", rc ) ;
             goto error ;
-         }
-         else
-         {
-
          }
       }
 
