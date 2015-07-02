@@ -83,6 +83,7 @@ namespace engine
       PD_TRACE_ENTRY( SDB_RTNLOCALLOBSTREAM__PREPARE ) ;
       dmsStorageUnitID suID = DMS_INVALID_CS ;
       const CHAR *clName = NULL ;
+      _dmsCB = sdbGetDMSCB() ;
 
       if ( SDB_LOB_MODE_R != mode )
       {
