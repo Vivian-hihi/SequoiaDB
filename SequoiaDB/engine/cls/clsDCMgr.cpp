@@ -360,7 +360,7 @@ namespace engine
       if ( it == _imageGroups.end() )
       {
          PD_LOG( PDERROR, "Source group[%s] does not exist", source.c_str() ) ;
-         rc = SDB_CAT_GRP_NOT_EXIST ;
+         rc = SDB_CLS_GRP_NOT_EXIST ;
          goto error ;
       }
       image = it->second ;
@@ -546,7 +546,7 @@ namespace engine
       {
          PD_LOG( PDERROR, "Source group[%s] does not exist",
                  sourceGroup.c_str() ) ;
-         rc = SDB_CAT_GRP_NOT_EXIST ;
+         rc = SDB_CLS_GRP_NOT_EXIST ;
          goto error ;
       }
 

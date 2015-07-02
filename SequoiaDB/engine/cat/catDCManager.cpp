@@ -728,7 +728,7 @@ namespace engine
                {
                   PD_LOG( PDERROR, "Image group[%s] is not exist",
                           allGroups[i].c_str() ) ;
-                  rc = SDB_CAT_GRP_NOT_EXIST ;
+                  rc = SDB_CLS_GRP_NOT_EXIST ;
                   goto error ;
                }
                vecSourceGrp.push_back( allGroups[ i ] ) ;
@@ -1268,7 +1268,7 @@ namespace engine
          if ( CAT_INVALID_GROUPID == groupID )
          {
             PD_LOG( PDERROR, "Group[%s] is not exist", it->first.c_str() ) ;
-            rc = SDB_CAT_GRP_NOT_EXIST ;
+            rc = SDB_CLS_GRP_NOT_EXIST ;
             break ;
          }
          else if ( COORD_GROUPID == groupID )
@@ -1283,7 +1283,7 @@ namespace engine
          {
             PD_LOG( PDERROR, "Image group[%s] is not exist",
                     it->second.c_str() ) ;
-            rc = SDB_CAT_GRP_NOT_EXIST ;
+            rc = SDB_CLS_GRP_NOT_EXIST ;
             break ;
          }
          ++it ;

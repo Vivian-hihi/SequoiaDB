@@ -429,7 +429,7 @@ namespace engine
          SDB_ASSERT( !groupName.empty(), "Group name can't be empty" ) ;
          if ( !ignoreErr && groupName.empty() )
          {
-            rc = SDB_CAT_GRP_NOT_EXIST ;
+            rc = SDB_CLS_GRP_NOT_EXIST ;
             goto error ;
          }
          sub.append( BSON( CAT_GROUPID_NAME << groups[ i ] <<
@@ -456,7 +456,7 @@ namespace engine
                      "Group ID can't be invalid" ) ;
          if ( !ignoreErr && CAT_INVALID_GROUPID == groupID )
          {
-            rc = SDB_CAT_GRP_NOT_EXIST ;
+            rc = SDB_CLS_GRP_NOT_EXIST ;
             goto error ;
          }
          sub.append( BSON( CAT_GROUPID_NAME << groupID <<

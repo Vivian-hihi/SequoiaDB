@@ -1846,7 +1846,7 @@ namespace engine
       rc = catGetGroupObj( groupName, FALSE, groupInfo, _pEduCB ) ;
       if ( SDB_CLS_GRP_NOT_EXIST == rc )
       {
-         rc = SDB_CAT_GRP_NOT_EXIST;
+         rc = SDB_CLS_GRP_NOT_EXIST;
          PD_LOG ( PDERROR, "the group(%s) is not exist",
                   groupName );
          goto error ;
