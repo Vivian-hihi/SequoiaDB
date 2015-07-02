@@ -587,10 +587,10 @@
       </code>
 
       <code>
-         <name>SDB_CAT_NODE_NOT_FOUND</name>
+         <name>SDB_ERROR_RESERVED_1</name> <!-- SDB_CAT_NODE_NOT_FOUND -->
          <description>
-            <en>Requested node does not exist</en>
-            <cn>请求节点不存在</cn>
+            <en>Reserved</en> <!-- Requested node does not exist -->
+            <cn>保留</cn> <!-- 请求节点不存在 -->
          </description>
       </code>
 
@@ -1667,10 +1667,10 @@
       </code>
 
       <code>
-         <name>SDB_CAT_GRP_NOT_EXIST</name>
+         <name>SDB_ERROR_RESERVED_2</name> <!-- SDB_CAT_GRP_NOT_EXIST -->
          <description>
-            <en>Group does not exist</en>
-            <cn>分区组不存在</cn>
+            <en>Reserved</en> <!-- Group does not exist -->
+            <cn>保留</cn> <!-- 分区组不存在 -->
          </description>
       </code>
 
