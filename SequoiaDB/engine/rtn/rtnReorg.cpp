@@ -294,7 +294,8 @@ namespace engine
             DMS_SET_MB_OFFLINE_REORG_REBUILD ( flag ) ;
             mbContext->mb()->_flag = flag ;
 
-            rc = su->index()->rebuildIndexes ( mbContext, cb, DMS_INDEX_BUILD_OFFLINE ) ;
+            rc = su->index()->rebuildIndexes ( mbContext, cb,
+                                               DMS_INDEX_BUILD_OFFLINE ) ;
             if ( rc )
             {
                PD_LOG ( PDERROR, "Failed to rebuild indexes, rc = %d", rc ) ;
@@ -378,6 +379,7 @@ namespace engine
       UINT32 attributes = 0 ;
       CHAR fullFilePath [ OSS_MAX_PATHSIZE + 1 ] = {0} ;
       const CHAR *dbpath = krcb->getOptionCB()->getDbPath() ;
+      BOOLEAN dataRebuild = FALSE ;
 
       if ( ossStrlen ( dbpath ) + 1 +
            ossStrlen ( pCollectionFullName ) +
@@ -441,6 +443,7 @@ namespace engine
             PD_LOG( PDEVENT, "Data file is valid, does not need rebuild" ) ;
             goto rebuild_index ;
          }
+         dataRebuild = TRUE ;
 
          /******************************************************************
           *       SHADOW COPY PHASE STARTS
@@ -537,7 +540,8 @@ namespace engine
          su->data()->restoreForCrash() ;
 
          /// judge index is valid
-         if ( su->index()->getHeader()->_validFlag )
+         if ( FALSE == dataRebuild &&
+              su->index()->getHeader()->_validFlag )
          {
             PD_LOG( PDEVENT, "Index file is valid, does not need rebuild" ) ;
             goto cleanup ;
@@ -547,7 +551,8 @@ namespace engine
          PD_LOG ( PDEVENT, "Rebuild phase starts" ) ;
          mbContext->mb()->_flag = flag ;
 
-         rc = su->index()->rebuildIndexes ( mbContext, cb, DMS_INDEX_BUILD_OFFLINE ) ;
+         rc = su->index()->rebuildIndexes ( mbContext, cb,
+                                            DMS_INDEX_BUILD_OFFLINE ) ;
          if ( rc )
          {
             PD_LOG ( PDERROR, "Failed to rebuild indexes, rc = %d", rc ) ;
