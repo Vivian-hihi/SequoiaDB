@@ -154,6 +154,7 @@ namespace engine
       _SDB_RTNCB        *_pRtnCB;
       _authCB           *_pAuthCB;
       CONTEXT_LIST      _contextLst;
+      ossSpinXLatch     _contextLatch ;
 
       ossEvent          _attachEvent ;
 

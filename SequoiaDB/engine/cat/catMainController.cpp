@@ -1363,6 +1363,7 @@ namespace engine
    {
       PD_LOG( PDDEBUG, "add context( handle=%u, contextID=%lld )",
               handle, contextID );
+      ossScopedLock lock( &_contextLatch ) ;
       _contextLst[ contextID ] = ossPack32To64( handle, tid ) ;
    }
 
@@ -1373,6 +1374,7 @@ namespace engine
       UINT32 saveTid = 0 ;
       UINT32 saveHandle = 0 ;
 
+      ossScopedLock lock( &_contextLatch ) ;
       CONTEXT_LIST::iterator iterMap = _contextLst.begin() ;
       while ( iterMap != _contextLst.end() )
       {
@@ -1396,6 +1398,7 @@ namespace engine
       UINT32 saveTid = 0 ;
       UINT32 saveHandle = 0 ;
 
+      ossScopedLock lock( &_contextLatch ) ;
       CONTEXT_LIST::iterator iterMap = _contextLst.begin() ;
       while ( iterMap != _contextLst.end() )
       {
@@ -1415,6 +1418,7 @@ namespace engine
    {
       PD_LOG ( PDDEBUG, "delete context( contextID=%lld )", contextID ) ;
 
+      ossScopedLock lock( &_contextLatch ) ;
       CONTEXT_LIST::iterator iterMap = _contextLst.find( contextID ) ;
       if ( iterMap != _contextLst.end() )
       {
