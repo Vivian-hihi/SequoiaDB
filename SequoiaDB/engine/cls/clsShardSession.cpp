@@ -2269,7 +2269,7 @@ namespace engine
 
          if ( rc )
          {
-            rc = _processSubCLResult( rc, pCommand, pCollection ) ;
+            rc = _processSubCLResult( rc, pSubCLName, pCollection ) ;
             if ( SDB_OK == rc )
             {
                continue ;
