@@ -44,7 +44,7 @@ if __name__ == "__main__":
       for batch in range(start_batch, start_batch + batches):
          records = []
          for idx in range(0, record_per_batch):
-            obj = {"i":batch * record_per_batch + idx, "obj":inner_obj, "int":random.randint(0, idx)}
+            obj = {"i":batch * record_per_batch + idx, "obj":inner_obj, "int":random.randint(0, record_per_batch * batches)}
             records.append(obj)
          begin_time = time.time();
          cl.bulk_insert(1, records)
