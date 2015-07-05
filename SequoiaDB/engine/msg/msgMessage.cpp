@@ -505,6 +505,7 @@ INT32 msgExtractInsert ( CHAR *pBuffer, INT32 *pflag, CHAR **ppCollectionName,
          PD_LOG( PDERROR, "Insert msg is invalid, msg length: %d, offset: %d, "
                  "current: %d, count: %d", pInsert->header.messageLength,
                  offset, *((SINT32*)pCurrent), count ) ;
+         SDB_ASSERT( FALSE, "Insert msg is invalid" ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }
