@@ -272,11 +272,18 @@ namespace engine
          {
             netIOVec &iovec = datas[ groupID ] ;
             UINT32 size = iovec.size() ;
-            if( size > 0 && (const CHAR*)( iovec[size-1].iovBase ) +
-                iovec[size-1].iovLen == pInsertor )
+            if( size > 0 )
             {
-               // change the length
-               iovec[size-1].iovLen += roundLen ;
+               if ( (const CHAR*)( iovec[size-1].iovBase ) +
+                    iovec[size-1].iovLen == pInsertor )
+               {
+                  // only change the length
+                  iovec[size-1].iovLen += roundLen ;
+               }
+               else
+               {
+                  iovec.push_back( netIOV( pInsertor, roundLen ) ) ;
+               }
             }
             else
             {
