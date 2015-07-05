@@ -500,7 +500,7 @@ INT32 msgExtractInsert ( CHAR *pBuffer, INT32 *pflag, CHAR **ppCollectionName,
          break ;
       }
       size = ossRoundUpToMultipleX ( *((SINT32*)pCurrent), 4 ) ;
-      if ( 0 == size )
+      if ( size < 8 )
       {
          PD_LOG( PDERROR, "Insert msg is invalid, msg length: %d, offset: %d, "
                  "current: %d, count: %d", pInsert->header.messageLength,
