@@ -51,6 +51,7 @@ INT32 msgCheckBuffer ( CHAR **ppBuffer, INT32 *bufferSize,
 INT32 extractRC ( BSONObj &obj ) ;
 string routeID2String( MsgRouteID routeID ) ;
 string routeID2String( UINT64 nodeID ) ;
+string msg2String( MsgHeader *pMsg ) ;
 
 BOOLEAN msgIsInnerOpReply( MsgHeader *pMsg ) ;
 

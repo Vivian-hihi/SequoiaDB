@@ -96,6 +96,21 @@ string routeID2String( UINT64 nodeID )
    return routeID2String( *(MsgRouteID*)&nodeID ) ;
 }
 
+string msg2String( MsgHeader *pMsg )
+{
+   stringstream ss ;
+   ss << "Length: " << pMsg->messageLength
+      << ", OpCode: (" << IS_REPLY_TYPE( pMsg->opCode ) << ")"
+                       << GET_REQUEST_TYPE( pMsg->opCode )
+      << ", TID: " << pMsg->TID
+      << ", RouteID: " << pMsg->routeID.columns.groupID << "."
+                       << pMsg->routeID.columns.nodeID << "."
+                       << pMsg->routeID.columns.serviceID
+      << ", ReqID: " << pMsg->requestID ;
+
+   return ss.str() ;
+}
+
 BOOLEAN msgIsInnerOpReply( MsgHeader *pMsg )
 {
    if ( pMsg->messageLength < sizeof( MsgOpReply ) )
@@ -1184,17 +1199,34 @@ INT32 msgExtractReply ( CHAR *pBuffer, SINT32 *flag, SINT64 *contextID,
    *contextID = pReply->contextID ;
    *startFrom = pReply->startFrom ;
    *numReturned = pReply->numReturned ;
-   for ( SINT32 i = 0; i < *numReturned; i++ )
+
+   try
    {
-      if ( offset > pReply->header.messageLength )
+      for ( SINT32 i = 0; i < *numReturned; i++ )
       {
-         rc = SDB_INVALIDARG ;
-         goto error ;
+         if ( offset > pReply->header.messageLength )
+         {
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+         BSONObj obj(&pBuffer[offset]) ;
+         SDB_ASSERT( obj.objsize() >= 5, "obj size must grater or equal 5" ) ;
+         if ( obj.objsize() < 5 )
+         {
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+         objList.push_back(obj) ;
+         offset += ossRoundUpToMultipleX ( obj.objsize(), 4 ) ;
       }
-      BSONObj obj(&pBuffer[offset]) ;
-      objList.push_back(obj) ;
-      offset += ossRoundUpToMultipleX ( obj.objsize(), 4 ) ;
    }
+   catch( std::exception &e )
+   {
+      PD_LOG( PDERROR, "Extract reply msg occur exception: %s", e.what() ) ;
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
 done :
    PD_TRACE_EXITRC ( SDB_MSGEXTRACTREPLY, rc );
    return rc ;

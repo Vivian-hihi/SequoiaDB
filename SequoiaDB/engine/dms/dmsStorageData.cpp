@@ -2245,6 +2245,12 @@ namespace engine
          rc = SDB_INVALIDARG ;
          goto error ;
       }
+      else if ( len < 5 )
+      {
+         PD_LOG( PDERROR, "Bson obj size[%d] is invalid", len ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
 
       deletedRecordOffset = DMS_DELETEDRECORD_GETMYOFFSET( deletedRecordPtr ) ;
       extent = (dmsExtent*)( deletedRecordPtr - deletedRecordOffset ) ;
