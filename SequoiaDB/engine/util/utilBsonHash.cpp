@@ -49,10 +49,8 @@ using namespace bson ;
 namespace engine
 {
    UINT32 _utilBSONHasher::hash( const bson::BSONObj &obj,
-                                 UINT32 partition )
+                                 UINT32 partitionBit )
    {
-      SDB_ASSERT( 0 == partition ||
-                  partition < 32, "must in a valid range" ) ;
       UINT32 hashCode = 0 ;
       BSONObjIterator i( obj ) ;
       while ( i.more() )
@@ -61,12 +59,11 @@ namespace engine
          HASH_COMBINE( hashCode, hash( e ) ) ;
       }
 
-      if ( 0 < partition )
+      if ( 0 < partitionBit )
       {
-         UINT32 i = 1 ;
-         i = i << partition ;
-         i -= 1 ;
-         hashCode &= i ;
+         UINT32 tmpValue = 1 << partitionBit ;
+         tmpValue -= 1 ;
+         hashCode &= tmpValue ;
       }
       return hashCode ;      
    }

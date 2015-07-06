@@ -46,7 +46,7 @@ namespace engine
 
    public:
       static UINT32 hash( const bson::BSONObj &obj,
-                          UINT32 partition = 0 ) ;
+                          UINT32 partitionBit = 0 ) ;
 
       static UINT32 hash( const bson::BSONElement &e ) ;
 
