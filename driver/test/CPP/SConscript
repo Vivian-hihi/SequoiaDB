@@ -56,6 +56,10 @@ testFiles13 = [
         "rg.cpp"
       ]
 
+testFiles14 = [
+         "dc.cpp"
+]
+
 #Google Test
 gtestall = env.StaticLibrary('gtest', gtestFiles)
 gtestMainObj = env.Object('gtestMainObj', gtestMainFile)
@@ -86,10 +90,10 @@ procedure = env.Program("procedure", [testFiles12, gtestMainObj, testCommonFiles
 
 rg = env.Program("rg", [testFiles13, gtestMainObj, testCommonFiles])
 
-
+dc = env.Program("dc", [testFiles14, gtestMainObj, testCommonFiles])
 
 env.Install( '#/build_test',[collection,collectionspace,cursor,query,
                              sdb,cppbson, debug, domain, lob, selectQuery, procedure ] )
 
 #env.Install( '#/build_test',[collection,collectionspace,cursor,query,
-#                             sdb,cppbson, debug, domain, lob, selectQuery, procedure, rg ] )
+#                             sdb,cppbson, debug, domain, lob, selectQuery, procedure, rg, dc ] )
