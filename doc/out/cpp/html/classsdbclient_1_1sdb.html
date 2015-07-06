@@ -305,6 +305,9 @@ INT32&#160;</td><td class="memItemRight" valign="bottom"><b>listTasks</b> (<a cl
 <tr class="memitem:a507853027ef45972e5dffdd1c5d53621"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdb.html#a507853027ef45972e5dffdd1c5d53621">listDomains</a> (<a class="el" href="classsdbclient_1_1sdbCursor.html">sdbCursor</a> &amp;cursor, const bson::BSONObj &amp;condition, const bson::BSONObj &amp;selector, const bson::BSONObj &amp;orderBy, const bson::BSONObj &amp;hint)</td></tr>
 <tr class="memdesc:a507853027ef45972e5dffdd1c5d53621"><td class="mdescLeft">&#160;</td><td class="mdescRight">List the domains.  <a href="#a507853027ef45972e5dffdd1c5d53621"></a><br/></td></tr>
 <tr class="separator:a507853027ef45972e5dffdd1c5d53621"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa8d3249b7868054f85aa1be7cbab7b6d"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdb.html#aa8d3249b7868054f85aa1be7cbab7b6d">getDC</a> (<a class="el" href="classsdbclient_1_1sdbDataCenter.html">sdbDataCenter</a> &amp;dc)</td></tr>
+<tr class="memdesc:aa8d3249b7868054f85aa1be7cbab7b6d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get current data center.  <a href="#aa8d3249b7868054f85aa1be7cbab7b6d"></a><br/></td></tr>
+<tr class="separator:aa8d3249b7868054f85aa1be7cbab7b6d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"></a>
 Public Attributes</h2></td></tr>
@@ -1578,6 +1581,39 @@ AutoSplit: If this option is set to be true, while creating collection(ShardingT
 
 </div>
 </div>
+<a class="anchor" id="aa8d3249b7868054f85aa1be7cbab7b6d"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">INT32 sdbclient::sdb::getDC </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classsdbclient_1_1sdbDataCenter.html">sdbDataCenter</a> &amp;&#160;</td>
+          <td class="paramname"><em>dc</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Get current data center. </p>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname">SDB_OK</td><td>Operation Success </td></tr>
+    <tr><td class="paramname">Others</td><td>Operation Fail </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <a class="anchor" id="ac869176932b4251ff276736996e9c875"></a>
 <div class="memitem">
 <div class="memproto">
@@ -2760,7 +2796,7 @@ Name        : Assign the backups with specifed name to be remove
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Jun 26 2015 09:18:07 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Mon Jul 6 2015 18:50:38 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.2
 </small></address>

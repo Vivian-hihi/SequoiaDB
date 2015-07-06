@@ -179,6 +179,9 @@ typedef ossValuePtr&#160;</td><td class="memItemRight" valign="bottom"><b>sdbDom
 <tr class="memitem:a9f211e33ef04959d59aa7c9956607710"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a9f211e33ef04959d59aa7c9956607710"></a>
 typedef ossValuePtr&#160;</td><td class="memItemRight" valign="bottom"><b>sdbLobHandle</b></td></tr>
 <tr class="separator:a9f211e33ef04959d59aa7c9956607710"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aade46f428803f2b480524623eafe0a45"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aade46f428803f2b480524623eafe0a45"></a>
+typedef ossValuePtr&#160;</td><td class="memItemRight" valign="bottom"><b>sdbDCHandle</b></td></tr>
+<tr class="separator:aade46f428803f2b480524623eafe0a45"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab8dc7a8e34d7d2d5a742de634b7d7956"><td class="memItemLeft" align="right" valign="top">typedef sdbNodeHandle&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="client_8h.html#ab8dc7a8e34d7d2d5a742de634b7d7956">sdbReplicaNodeHandle</a></td></tr>
 <tr class="separator:ab8dc7a8e34d7d2d5a742de634b7d7956"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
@@ -515,6 +518,9 @@ Functions</h2></td></tr>
 <tr class="memitem:a3842610e8f6b748a2636ca3c2ab29b2f"><td class="memItemLeft" align="right" valign="top">SDB_EXPORT void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="client_8h.html#a3842610e8f6b748a2636ca3c2ab29b2f">sdbReleaseDomain</a> (sdbDomainHandle cHandle)</td></tr>
 <tr class="memdesc:a3842610e8f6b748a2636ca3c2ab29b2f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Release the domain handle.  <a href="#a3842610e8f6b748a2636ca3c2ab29b2f"></a><br/></td></tr>
 <tr class="separator:a3842610e8f6b748a2636ca3c2ab29b2f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae6e0b4ae0404c64495634d03072e280c"><td class="memItemLeft" align="right" valign="top">SDB_EXPORT void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="client_8h.html#ae6e0b4ae0404c64495634d03072e280c">sdbReleaseDC</a> (sdbDCHandle cHandle)</td></tr>
+<tr class="memdesc:ae6e0b4ae0404c64495634d03072e280c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Release the data center handle.  <a href="#ae6e0b4ae0404c64495634d03072e280c"></a><br/></td></tr>
+<tr class="separator:ae6e0b4ae0404c64495634d03072e280c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa4258c78ef84179f740d917748c092fd"><td class="memItemLeft" align="right" valign="top">SDB_EXPORT INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="client_8h.html#aa4258c78ef84179f740d917748c092fd">sdbAggregate</a> (sdbCollectionHandle cHandle, bson **obj, SINT32 num, sdbCursorHandle *handle)</td></tr>
 <tr class="memdesc:aa4258c78ef84179f740d917748c092fd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Execute aggregate operation in specified collection.  <a href="#aa4258c78ef84179f740d917748c092fd"></a><br/></td></tr>
 <tr class="separator:aa4258c78ef84179f740d917748c092fd"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -630,6 +636,42 @@ SDB_EXPORT INT32&#160;</td><td class="memItemRight" valign="bottom"><b>_sdbMsg</
 <tr class="memitem:a6f27b1e9a97edc193604f3d413a37e18"><td class="memItemLeft" align="right" valign="top">SDB_EXPORT INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="client_8h.html#a6f27b1e9a97edc193604f3d413a37e18">sdbDropIdIndex</a> (sdbCollectionHandle cHandle)</td></tr>
 <tr class="memdesc:a6f27b1e9a97edc193604f3d413a37e18"><td class="mdescLeft">&#160;</td><td class="mdescRight">Drop $id index in collection.  <a href="#a6f27b1e9a97edc193604f3d413a37e18"></a><br/></td></tr>
 <tr class="separator:a6f27b1e9a97edc193604f3d413a37e18"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5b9dc7021fc661364d0578cb873bd68f"><td class="memItemLeft" align="right" valign="top">SDB_EXPORT INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="client_8h.html#a5b9dc7021fc661364d0578cb873bd68f">sdbGetDCName</a> (sdbDCHandle cHandle, CHAR *pBuffer, INT32 size)</td></tr>
+<tr class="memdesc:a5b9dc7021fc661364d0578cb873bd68f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the name of the data center.  <a href="#a5b9dc7021fc661364d0578cb873bd68f"></a><br/></td></tr>
+<tr class="separator:a5b9dc7021fc661364d0578cb873bd68f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8faf88fae109e7e9bab16f87f4491874"><td class="memItemLeft" align="right" valign="top">SDB_EXPORT INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="client_8h.html#a8faf88fae109e7e9bab16f87f4491874">sdbGetDC</a> (sdbConnectionHandle cHandle, sdbDCHandle *handle)</td></tr>
+<tr class="memdesc:a8faf88fae109e7e9bab16f87f4491874"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the data center.  <a href="#a8faf88fae109e7e9bab16f87f4491874"></a><br/></td></tr>
+<tr class="separator:a8faf88fae109e7e9bab16f87f4491874"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4cec1e34b9674a9064d1c401f343af77"><td class="memItemLeft" align="right" valign="top">SDB_EXPORT INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="client_8h.html#a4cec1e34b9674a9064d1c401f343af77">sdbGetDCDetail</a> (sdbDCHandle cHandle, bson *retInfo)</td></tr>
+<tr class="memdesc:a4cec1e34b9674a9064d1c401f343af77"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the detail of data center.  <a href="#a4cec1e34b9674a9064d1c401f343af77"></a><br/></td></tr>
+<tr class="separator:a4cec1e34b9674a9064d1c401f343af77"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af59745710cd34d0bac4bbe25a14631b2"><td class="memItemLeft" align="right" valign="top">SDB_EXPORT INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="client_8h.html#af59745710cd34d0bac4bbe25a14631b2">sdbActivateDC</a> (sdbDCHandle cHandle)</td></tr>
+<tr class="memdesc:af59745710cd34d0bac4bbe25a14631b2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Activate the data center.  <a href="#af59745710cd34d0bac4bbe25a14631b2"></a><br/></td></tr>
+<tr class="separator:af59745710cd34d0bac4bbe25a14631b2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5a98e2a0a3d9f1da147e4aacaefd1c20"><td class="memItemLeft" align="right" valign="top">SDB_EXPORT INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="client_8h.html#a5a98e2a0a3d9f1da147e4aacaefd1c20">sdbDeactivateDC</a> (sdbDCHandle cHandle)</td></tr>
+<tr class="memdesc:a5a98e2a0a3d9f1da147e4aacaefd1c20"><td class="mdescLeft">&#160;</td><td class="mdescRight">Deactivate the data center.  <a href="#a5a98e2a0a3d9f1da147e4aacaefd1c20"></a><br/></td></tr>
+<tr class="separator:a5a98e2a0a3d9f1da147e4aacaefd1c20"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae4465eaacd04a7a6c0fcb82e6b13044e"><td class="memItemLeft" align="right" valign="top">SDB_EXPORT INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="client_8h.html#ae4465eaacd04a7a6c0fcb82e6b13044e">sdbEnableReadOnly</a> (sdbDCHandle cHandle, BOOLEAN isReadOnly)</td></tr>
+<tr class="memdesc:ae4465eaacd04a7a6c0fcb82e6b13044e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enable data center works in readonly mode or not.  <a href="#ae4465eaacd04a7a6c0fcb82e6b13044e"></a><br/></td></tr>
+<tr class="separator:ae4465eaacd04a7a6c0fcb82e6b13044e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab1cc15c3fbcfa6f638e5c8825a158dea"><td class="memItemLeft" align="right" valign="top">SDB_EXPORT INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="client_8h.html#ab1cc15c3fbcfa6f638e5c8825a158dea">sdbCreateImage</a> (sdbDCHandle cHandle, const CHAR *pCataAddrList)</td></tr>
+<tr class="memdesc:ab1cc15c3fbcfa6f638e5c8825a158dea"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create image in data center.  <a href="#ab1cc15c3fbcfa6f638e5c8825a158dea"></a><br/></td></tr>
+<tr class="separator:ab1cc15c3fbcfa6f638e5c8825a158dea"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a234dfbe5a28b8862821282caa9cc3cc6"><td class="memItemLeft" align="right" valign="top">SDB_EXPORT INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="client_8h.html#a234dfbe5a28b8862821282caa9cc3cc6">sdbRemoveImage</a> (sdbDCHandle cHandle)</td></tr>
+<tr class="memdesc:a234dfbe5a28b8862821282caa9cc3cc6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Remove image in data center.  <a href="#a234dfbe5a28b8862821282caa9cc3cc6"></a><br/></td></tr>
+<tr class="separator:a234dfbe5a28b8862821282caa9cc3cc6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9488497194f01b4f580db39968496405"><td class="memItemLeft" align="right" valign="top">SDB_EXPORT INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="client_8h.html#a9488497194f01b4f580db39968496405">sdbEnableImage</a> (sdbDCHandle cHandle)</td></tr>
+<tr class="memdesc:a9488497194f01b4f580db39968496405"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enable image in data center.  <a href="#a9488497194f01b4f580db39968496405"></a><br/></td></tr>
+<tr class="separator:a9488497194f01b4f580db39968496405"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aff429394a111ea45e517730a1012bf45"><td class="memItemLeft" align="right" valign="top">SDB_EXPORT INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="client_8h.html#aff429394a111ea45e517730a1012bf45">sdbDisableImage</a> (sdbDCHandle cHandle)</td></tr>
+<tr class="memdesc:aff429394a111ea45e517730a1012bf45"><td class="mdescLeft">&#160;</td><td class="mdescRight">Disable image in data center.  <a href="#aff429394a111ea45e517730a1012bf45"></a><br/></td></tr>
+<tr class="separator:aff429394a111ea45e517730a1012bf45"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a857d9b8b39b3c8bc8129038d611e4297"><td class="memItemLeft" align="right" valign="top">SDB_EXPORT INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="client_8h.html#a857d9b8b39b3c8bc8129038d611e4297">sdbAttachGroups</a> (sdbDCHandle cHandle, bson *info)</td></tr>
+<tr class="memdesc:a857d9b8b39b3c8bc8129038d611e4297"><td class="mdescLeft">&#160;</td><td class="mdescRight">Attach specified groups to data center.  <a href="#a857d9b8b39b3c8bc8129038d611e4297"></a><br/></td></tr>
+<tr class="separator:a857d9b8b39b3c8bc8129038d611e4297"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0758e80e9dcbdfde7727379ee16df989"><td class="memItemLeft" align="right" valign="top">SDB_EXPORT INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="client_8h.html#a0758e80e9dcbdfde7727379ee16df989">sdbDetachGroups</a> (sdbDCHandle cHandle, bson *info)</td></tr>
+<tr class="memdesc:a0758e80e9dcbdfde7727379ee16df989"><td class="mdescLeft">&#160;</td><td class="mdescRight">Detach specified groups from data center.  <a href="#a0758e80e9dcbdfde7727379ee16df989"></a><br/></td></tr>
+<tr class="separator:a0758e80e9dcbdfde7727379ee16df989"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>C Client Driver. </p>
@@ -957,6 +999,37 @@ SDB_EXPORT INT32&#160;</td><td class="memItemRight" valign="bottom"><b>_sdbMsg</
 </div>
 </div>
 <h2 class="groupheader">Function Documentation</h2>
+<a class="anchor" id="af59745710cd34d0bac4bbe25a14631b2"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">INT32 sdbActivateDC </td>
+          <td>(</td>
+          <td class="paramtype">sdbDCHandle&#160;</td>
+          <td class="paramname"><em>cHandle</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Activate the data center. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">cHandle</td><td>The data center handle </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname">SDB_OK</td><td>Operation Success </td></tr>
+    <tr><td class="paramname">Others</td><td>Operation Fail </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <a class="anchor" id="aa4258c78ef84179f740d917748c092fd"></a>
 <div class="memitem">
 <div class="memproto">
@@ -1173,6 +1246,71 @@ AutoSplit: Alter current domain to have the ability of automatically split or no
     <tr><td class="paramdir">[in]</td><td class="paramname">cHandle</td><td>The collection handle </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">subClFullName</td><td>The name of the subcollection </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">options</td><td>The low boudary and up boudary eg: {"LowBound":{a:1},"UpBound":{a:100}} </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname">SDB_OK</td><td>Operation Success </td></tr>
+    <tr><td class="paramname">Others</td><td>Operation Fail </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="a857d9b8b39b3c8bc8129038d611e4297"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">INT32 sdbAttachGroups </td>
+          <td>(</td>
+          <td class="paramtype">sdbDCHandle&#160;</td>
+          <td class="paramname"><em>cHandle</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bson *&#160;</td>
+          <td class="paramname"><em>info</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Attach specified groups to data center. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">cHandle</td><td>The data center handle </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">info</td><td>The information of groups to attach, e.g. {Groups:[["group1", "group1"], ["group2", "group2"]]} <div class="fragment"><div class="line">bson obj ;</div>
+<div class="line">bson_init( &amp;obj ) ;</div>
+<div class="line">bson_append_start_array( &amp;obj, <span class="stringliteral">&quot;Groups&quot;</span> ) ;</div>
+<div class="line"></div>
+<div class="line">bson_append_start_array( &amp;obj, <span class="stringliteral">&quot;0&quot;</span> ) ;</div>
+<div class="line">bson_append_string( &amp;obj, <span class="stringliteral">&quot;0&quot;</span>, <span class="stringliteral">&quot;group1&quot;</span> ) ;</div>
+<div class="line">bson_append_string( &amp;obj, <span class="stringliteral">&quot;1&quot;</span>, <span class="stringliteral">&quot;group1&quot;</span> ) ;</div>
+<div class="line">bson_append_finish_array( &amp;obj ) ;</div>
+<div class="line"></div>
+<div class="line">bson_append_start_array( &amp;obj, <span class="stringliteral">&quot;0&quot;</span> ) ;</div>
+<div class="line">bson_append_string( &amp;obj, <span class="stringliteral">&quot;0&quot;</span>, <span class="stringliteral">&quot;group2&quot;</span> ) ;</div>
+<div class="line">bson_append_string( &amp;obj, <span class="stringliteral">&quot;1&quot;</span>, <span class="stringliteral">&quot;group2&quot;</span> ) ;</div>
+<div class="line">bson_append_finish_array( &amp;obj ) ;</div>
+<div class="line"></div>
+<div class="line">bson_append_finish_array( &amp;obj ) ;</div>
+<div class="line"></div>
+<div class="line">rc = bson_finish( &amp;obj ) ;</div>
+<div class="line">ASSERT_EQ( SDB_OK, rc ) ;</div>
+<div class="line"></div>
+<div class="line">rc = <a class="code" href="client_8h.html#a857d9b8b39b3c8bc8129038d611e4297" title="Attach specified groups to data center.">sdbAttachGroups</a>( dc, &amp;obj ) ;</div>
+<div class="line">ASSERT_EQ( SDB_OK, rc ) ;</div>
+<div class="line"></div>
+<div class="line">bson_destroy( &amp;obj ) ;</div>
+</div><!-- fragment --> </td></tr>
   </table>
   </dd>
 </dl>
@@ -1963,6 +2101,48 @@ AutoSplit: If this option is set to be true, while creating collection(ShardingT
 
 </div>
 </div>
+<a class="anchor" id="ab1cc15c3fbcfa6f638e5c8825a158dea"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">INT32 sdbCreateImage </td>
+          <td>(</td>
+          <td class="paramtype">sdbDCHandle&#160;</td>
+          <td class="paramname"><em>cHandle</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const CHAR *&#160;</td>
+          <td class="paramname"><em>pCataAddrList</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Create image in data center. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">cHandle</td><td>The data center handle </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">pCataAddrList</td><td>Catalog address list, e.g. "192.168.20.165:30003", "192.168.20.165:30003,192.168.20.166:30003" </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname">SDB_OK</td><td>Operation Success </td></tr>
+    <tr><td class="paramname">Others</td><td>Operation Fail </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <a class="anchor" id="a1e6abb2fb667c4665b3ed9f123bc65f4"></a>
 <div class="memitem">
 <div class="memproto">
@@ -2398,6 +2578,37 @@ AutoSplit: If this option is set to be true, while creating collection(ShardingT
 
 </div>
 </div>
+<a class="anchor" id="a5a98e2a0a3d9f1da147e4aacaefd1c20"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">INT32 sdbDeactivateDC </td>
+          <td>(</td>
+          <td class="paramtype">sdbDCHandle&#160;</td>
+          <td class="paramname"><em>cHandle</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Deactivate the data center. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">cHandle</td><td>The data center handle </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname">SDB_OK</td><td>Operation Success </td></tr>
+    <tr><td class="paramname">Others</td><td>Operation Fail </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <a class="anchor" id="abf027cb1e46bd11980da26cbf38d2b80"></a>
 <div class="memitem">
 <div class="memproto">
@@ -2489,6 +2700,48 @@ AutoSplit: If this option is set to be true, while creating collection(ShardingT
 
 </div>
 </div>
+<a class="anchor" id="a0758e80e9dcbdfde7727379ee16df989"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">INT32 sdbDetachGroups </td>
+          <td>(</td>
+          <td class="paramtype">sdbDCHandle&#160;</td>
+          <td class="paramname"><em>cHandle</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bson *&#160;</td>
+          <td class="paramname"><em>info</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Detach specified groups from data center. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">cHandle</td><td>The data center handle </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">info</td><td>The information of groups to detach, e.g. {Groups:[["a", "a"], ["b", "b"]]} </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname">SDB_OK</td><td>Operation Success </td></tr>
+    <tr><td class="paramname">Others</td><td>Operation Fail </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <a class="anchor" id="ace5a117bc6e05b0a9fcccae3bd66518e"></a>
 <div class="memitem">
 <div class="memproto">
@@ -2532,6 +2785,37 @@ AutoSplit: If this option is set to be true, while creating collection(ShardingT
     <tr><td class="paramdir">[in]</td><td class="paramname">hostName</td><td>The host name of node. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">serviceName</td><td>The service name of node. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">optoins</td><td>The options of detach. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname">SDB_OK</td><td>Operation Success </td></tr>
+    <tr><td class="paramname">Others</td><td>Operation Fail </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="aff429394a111ea45e517730a1012bf45"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">INT32 sdbDisableImage </td>
+          <td>(</td>
+          <td class="paramtype">sdbDCHandle&#160;</td>
+          <td class="paramname"><em>cHandle</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Disable image in data center. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">cHandle</td><td>The data center handle </td></tr>
   </table>
   </dd>
 </dl>
@@ -2756,6 +3040,79 @@ AutoSplit: If this option is set to be true, while creating collection(ShardingT
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">cHandle</td><td>The collection handle </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">pIndexName</td><td>The index name </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname">SDB_OK</td><td>Operation Success </td></tr>
+    <tr><td class="paramname">Others</td><td>Operation Fail </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="a9488497194f01b4f580db39968496405"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">INT32 sdbEnableImage </td>
+          <td>(</td>
+          <td class="paramtype">sdbDCHandle&#160;</td>
+          <td class="paramname"><em>cHandle</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Enable image in data center. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">cHandle</td><td>The data center handle </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname">SDB_OK</td><td>Operation Success </td></tr>
+    <tr><td class="paramname">Others</td><td>Operation Fail </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="ae4465eaacd04a7a6c0fcb82e6b13044e"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">INT32 sdbEnableReadOnly </td>
+          <td>(</td>
+          <td class="paramtype">sdbDCHandle&#160;</td>
+          <td class="paramname"><em>cHandle</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">BOOLEAN&#160;</td>
+          <td class="paramname"><em>isReadOnly</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Enable data center works in readonly mode or not. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">cHandle</td><td>The data center handle </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">isReadOnly</td><td>Whether to use readonly mode or not </td></tr>
   </table>
   </dd>
 </dl>
@@ -3634,6 +3991,139 @@ AutoSplit: If this option is set to be true, while creating collection(ShardingT
     <tr><td class="paramdir">[in]</td><td class="paramname">numToSkip</td><td>Skip the first numToSkip documents, never skip if this parameter is 0 </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">numToReturn</td><td>Only return numToReturn documents, return all if this parameter is -1 </td></tr>
     <tr><td class="paramdir">[out]</td><td class="paramname">handle</td><td>The cursor handle of current query </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname">SDB_OK</td><td>Operation Success </td></tr>
+    <tr><td class="paramname">Others</td><td>Operation Fail </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="a8faf88fae109e7e9bab16f87f4491874"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">INT32 sdbGetDC </td>
+          <td>(</td>
+          <td class="paramtype">sdbConnectionHandle&#160;</td>
+          <td class="paramname"><em>cHandle</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">sdbDCHandle *&#160;</td>
+          <td class="paramname"><em>handle</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Get the data center. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">cHandle</td><td>The connection handle </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">handle</td><td>The data center handle </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname">SDB_OK</td><td>Operation Success </td></tr>
+    <tr><td class="paramname">Others</td><td>Operation Fail </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="a4cec1e34b9674a9064d1c401f343af77"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">INT32 sdbGetDCDetail </td>
+          <td>(</td>
+          <td class="paramtype">sdbDCHandle&#160;</td>
+          <td class="paramname"><em>cHandle</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bson *&#160;</td>
+          <td class="paramname"><em>retInfo</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Get the detail of data center. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">cHandle</td><td>The connection handle </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">retInfo</td><td>The the detail of data center </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname">SDB_OK</td><td>Operation Success </td></tr>
+    <tr><td class="paramname">Others</td><td>Operation Fail </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="a5b9dc7021fc661364d0578cb873bd68f"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">INT32 sdbGetDCName </td>
+          <td>(</td>
+          <td class="paramtype">sdbDCHandle&#160;</td>
+          <td class="paramname"><em>cHandle</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">CHAR *&#160;</td>
+          <td class="paramname"><em>pBuffer</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">INT32&#160;</td>
+          <td class="paramname"><em>size</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Get the name of the data center. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">cHandle</td><td>The data center handle </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">pBuffer</td><td>The output buffer </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">size</td><td>The size of the output buffer </td></tr>
   </table>
   </dd>
 </dl>
@@ -5977,6 +6467,30 @@ FLG_QUERY_WITH_RETURNDATA(0x00000200) : In general, query won't return data unti
 
 </div>
 </div>
+<a class="anchor" id="ae6e0b4ae0404c64495634d03072e280c"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void sdbReleaseDC </td>
+          <td>(</td>
+          <td class="paramtype">sdbDCHandle&#160;</td>
+          <td class="paramname"><em>cHandle</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Release the data center handle. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">cHandle</td><td>the data center handle </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <a class="anchor" id="a3842610e8f6b748a2636ca3c2ab29b2f"></a>
 <div class="memitem">
 <div class="memproto">
@@ -6081,6 +6595,37 @@ FLG_QUERY_WITH_RETURNDATA(0x00000200) : In general, query won't return data unti
 Path        : Assign the backups in specifed path to be remove, if not assign, use the backup path asigned in the configuration file
 Name        : Assign the backups with specifed name to be remove
 </pre> </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname">SDB_OK</td><td>Operation Success </td></tr>
+    <tr><td class="paramname">Others</td><td>Operation Fail </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="a234dfbe5a28b8862821282caa9cc3cc6"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">INT32 sdbRemoveImage </td>
+          <td>(</td>
+          <td class="paramtype">sdbDCHandle&#160;</td>
+          <td class="paramname"><em>cHandle</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Remove image in data center. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">cHandle</td><td>The data center handle </td></tr>
   </table>
   </dd>
 </dl>
@@ -7574,7 +8119,7 @@ util   : Utilities
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Jun 26 2015 09:17:53 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Mon Jul 6 2015 18:49:31 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.2
 </small></address>
