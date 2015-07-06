@@ -43,23 +43,23 @@
 
     <div class="section"><h2 class="title sectiontitle">参数描述</h2>
       <a name="topic_j1m_lt3_44__references_method_hint_table"><!-- --></a><table cellpadding="4" cellspacing="0" summary="" id="topic_j1m_lt3_44__references_method_hint_table" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d137776e26" class="stentry">参数名</th>
+          <th valign="bottom" align="left" id="d137783e26" class="stentry">参数名</th>
 
-          <th valign="bottom" align="left" id="d137776e29" class="stentry">参数类型</th>
+          <th valign="bottom" align="left" id="d137783e29" class="stentry">参数类型</th>
 
-          <th valign="bottom" align="left" id="d137776e32" class="stentry">描述</th>
+          <th valign="bottom" align="left" id="d137783e32" class="stentry">描述</th>
 
-          <th valign="bottom" align="left" id="d137776e35" class="stentry">是否必填</th>
+          <th valign="bottom" align="left" id="d137783e35" class="stentry">是否必填</th>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d137776e26" class="stentry">option</td>
+          <td valign="top" headers="d137783e26" class="stentry">option</td>
 
-          <td valign="top" headers="d137776e29" class="stentry">json 对象</td>
+          <td valign="top" headers="d137783e29" class="stentry">json 对象</td>
 
-          <td valign="top" headers="d137776e32" class="stentry">访问计划执行参数，目前有 Run 字段项，表示是否执行访问计划，true 表示执行访问计划，获取数据和时间信息，false 表示只获取访问计划的信息，并不执行</td>
+          <td valign="top" headers="d137783e32" class="stentry">访问计划执行参数，目前有 Run 字段项，表示是否执行访问计划，true 表示执行访问计划，获取数据和时间信息，false 表示只获取访问计划的信息，并不执行</td>
 
-          <td valign="top" headers="d137776e35" class="stentry">否，默认为 false</td>
+          <td valign="top" headers="d137783e35" class="stentry">否，默认为 false</td>
 
         </tr>
 </table>
@@ -69,110 +69,110 @@
     <div class="section"><h2 class="title sectiontitle">访问计划描述</h2>
       
       <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d137776e65" class="stentry">字段名</th>
+          <th valign="bottom" align="left" id="d137783e65" class="stentry">字段名</th>
 
-          <th valign="bottom" align="left" id="d137776e68" class="stentry">类型</th>
+          <th valign="bottom" align="left" id="d137783e68" class="stentry">类型</th>
 
-          <th valign="bottom" align="left" id="d137776e71" class="stentry">描述</th>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d137776e65" class="stentry">Name</td>
-
-          <td valign="top" headers="d137776e68" class="stentry">string</td>
-
-          <td valign="top" headers="d137776e71" class="stentry">集合名</td>
+          <th valign="bottom" align="left" id="d137783e71" class="stentry">描述</th>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d137776e65" class="stentry">ScanType</td>
+          <td valign="top" headers="d137783e65" class="stentry">Name</td>
 
-          <td valign="top" headers="d137776e68" class="stentry">string</td>
+          <td valign="top" headers="d137783e68" class="stentry">string</td>
 
-          <td valign="top" headers="d137776e71" class="stentry">扫描方式——
+          <td valign="top" headers="d137783e71" class="stentry">集合名</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d137783e65" class="stentry">ScanType</td>
+
+          <td valign="top" headers="d137783e68" class="stentry">string</td>
+
+          <td valign="top" headers="d137783e71" class="stentry">扫描方式——
             表扫描：“tbscan”；
             索引扫描：“ixscan”
           </td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d137776e65" class="stentry">IndexName</td>
+          <td valign="top" headers="d137783e65" class="stentry">IndexName</td>
 
-          <td valign="top" headers="d137776e68" class="stentry">string</td>
+          <td valign="top" headers="d137783e68" class="stentry">string</td>
 
-          <td valign="top" headers="d137776e71" class="stentry">使用索引的名称</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d137776e65" class="stentry">UseExtSort</td>
-
-          <td valign="top" headers="d137776e68" class="stentry">bool</td>
-
-          <td valign="top" headers="d137776e71" class="stentry">是否使用非索引排序</td>
+          <td valign="top" headers="d137783e71" class="stentry">使用索引的名称</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d137776e65" class="stentry">NodeName</td>
+          <td valign="top" headers="d137783e65" class="stentry">UseExtSort</td>
 
-          <td valign="top" headers="d137776e68" class="stentry">string</td>
+          <td valign="top" headers="d137783e68" class="stentry">bool</td>
 
-          <td valign="top" headers="d137776e71" class="stentry">节点名</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d137776e65" class="stentry">ReturnNum</td>
-
-          <td valign="top" headers="d137776e68" class="stentry">int64</td>
-
-          <td valign="top" headers="d137776e71" class="stentry">返回记录数量</td>
+          <td valign="top" headers="d137783e71" class="stentry">是否使用非索引排序</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d137776e65" class="stentry">ElapsedTime</td>
+          <td valign="top" headers="d137783e65" class="stentry">NodeName</td>
 
-          <td valign="top" headers="d137776e68" class="stentry">float64</td>
+          <td valign="top" headers="d137783e68" class="stentry">string</td>
 
-          <td valign="top" headers="d137776e71" class="stentry">查询耗时（秒）</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d137776e65" class="stentry">IndexRead</td>
-
-          <td valign="top" headers="d137776e68" class="stentry">int64</td>
-
-          <td valign="top" headers="d137776e71" class="stentry">索引记录扫描条数</td>
+          <td valign="top" headers="d137783e71" class="stentry">节点名</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d137776e65" class="stentry">DataRead</td>
+          <td valign="top" headers="d137783e65" class="stentry">ReturnNum</td>
 
-          <td valign="top" headers="d137776e68" class="stentry">int64</td>
+          <td valign="top" headers="d137783e68" class="stentry">int64</td>
 
-          <td valign="top" headers="d137776e71" class="stentry">数据记录扫描条数</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d137776e65" class="stentry">UserCPU</td>
-
-          <td valign="top" headers="d137776e68" class="stentry">float64</td>
-
-          <td valign="top" headers="d137776e71" class="stentry">用户态 CPU 使用时间（秒）</td>
+          <td valign="top" headers="d137783e71" class="stentry">返回记录数量</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d137776e65" class="stentry">SysCPU</td>
+          <td valign="top" headers="d137783e65" class="stentry">ElapsedTime</td>
 
-          <td valign="top" headers="d137776e68" class="stentry">float64</td>
+          <td valign="top" headers="d137783e68" class="stentry">float64</td>
 
-          <td valign="top" headers="d137776e71" class="stentry">内核态 CPU 使用时间（秒）</td>
+          <td valign="top" headers="d137783e71" class="stentry">查询耗时（秒）</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d137776e65" class="stentry">SubCollections</td>
+          <td valign="top" headers="d137783e65" class="stentry">IndexRead</td>
 
-          <td valign="top" headers="d137776e68" class="stentry">Json Array</td>
+          <td valign="top" headers="d137783e68" class="stentry">int64</td>
 
-          <td valign="top" headers="d137776e71" class="stentry">垂直分区表中各子表访问计划</td>
+          <td valign="top" headers="d137783e71" class="stentry">索引记录扫描条数</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d137783e65" class="stentry">DataRead</td>
+
+          <td valign="top" headers="d137783e68" class="stentry">int64</td>
+
+          <td valign="top" headers="d137783e71" class="stentry">数据记录扫描条数</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d137783e65" class="stentry">UserCPU</td>
+
+          <td valign="top" headers="d137783e68" class="stentry">float64</td>
+
+          <td valign="top" headers="d137783e71" class="stentry">用户态 CPU 使用时间（秒）</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d137783e65" class="stentry">SysCPU</td>
+
+          <td valign="top" headers="d137783e68" class="stentry">float64</td>
+
+          <td valign="top" headers="d137783e71" class="stentry">内核态 CPU 使用时间（秒）</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d137783e65" class="stentry">SubCollections</td>
+
+          <td valign="top" headers="d137783e68" class="stentry">Json Array</td>
+
+          <td valign="top" headers="d137783e71" class="stentry">垂直分区表中各子表访问计划</td>
 
         </tr>
 </table>

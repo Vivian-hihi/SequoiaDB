@@ -78,7 +78,9 @@
     <section>
       <title>Linux 推荐配置</title>
       <ul>
-        <li>调整 ulimit <p>在配置文件 /etc/security/limits.conf 中设置：</p>
+        <li>调整 ulimit 
+          <p>suse linux 需要调整 /etc/sysconfig/ulimit 文件，将默认的 SOFTVIRTUALLIMIT="80" 改为 SOFTVIRTUALLIMIT="0" </p>
+          <p>在配置文件 /etc/security/limits.conf 中设置：</p>
           <codeblock>#&lt;domain>      &lt;type>    &lt;item>     &lt;value>
 *               soft      core       0
 *               soft      data       unlimited

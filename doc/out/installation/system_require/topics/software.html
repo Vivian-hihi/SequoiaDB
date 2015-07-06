@@ -179,7 +179,10 @@
     <div class="section"><h2 class="title sectiontitle">Linux 推荐配置</h2>
       
       <ul class="ul">
-        <li class="li">调整 ulimit <p class="p">在配置文件 /etc/security/limits.conf 中设置：</p>
+        <li class="li">调整 ulimit 
+          <p class="p">suse linux 需要调整 /etc/sysconfig/ulimit 文件，将默认的 SOFTVIRTUALLIMIT="80" 改为 SOFTVIRTUALLIMIT="0" </p>
+
+          <p class="p">在配置文件 /etc/security/limits.conf 中设置：</p>
 
           <pre class="pre codeblock">#&lt;domain&gt;      &lt;type&gt;    &lt;item&gt;     &lt;value&gt;
 *               soft      core       0
