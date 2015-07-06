@@ -88,6 +88,7 @@ private:
    Classified_info _clcount ;
    Classified_info _domain ;
    Classified_info _oma ;
+   Classified_info _dc ;
    Classified_info _query ;
    Classified_info _query_gen ; // general functions in sdbQuery
    Classified_info _query_cond ; // functions about condition in sdbQuery

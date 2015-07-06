@@ -164,6 +164,14 @@
       }                                               \
    } while (0)
 
+#define SAFE_RELEASE_DC(x)                            \
+   do {                                               \
+      if ( (x) && *(x) != SDB_INVALID_HANDLE ) {      \
+         sdbReleaseDC ( *(x) ) ;                      \
+         *(x) = SDB_INVALID_HANDLE ;                  \
+      }                                               \
+   } while (0)
+
 #define SDB_JSVAL_IS_OBJECT(x) \
    (JSVAL_IS_NULL(x) || JSVAL_IS_VOID(x) || ! JSVAL_IS_PRIMITIVE(x))
 
@@ -3392,7 +3400,6 @@ JSBool get_node_and_setproperty( JSContext *cx, jsval *vp,
    const CHAR *nodeName = NULL ;
    INT32 nodeID = -1 ;
    JSObject *objRN = NULL ;
-//   jsval valRG = JSVAL_VOID ;
    jsval valHostName = JSVAL_VOID ;
    jsval valServiceName = JSVAL_VOID ;
    jsval valNodeName = JSVAL_VOID ;
@@ -3418,8 +3425,6 @@ JSBool get_node_and_setproperty( JSContext *cx, jsval *vp,
 
    VERIFY ( JS_SetPrivate ( cx , objRN , rn ) ) ;
 
-//   valRG = JS_THIS ( cx, vp ) ;
-//   VERIFY ( JS_SetProperty ( cx, objRN, "_rg", &valRG ) ) ;
    if ( NULL == valRG )
    {
       jsval valRG2 = JS_THIS ( cx, vp ) ;
@@ -4050,7 +4055,7 @@ static JSBool domain_constructor ( JSContext *cx, uintN argc, jsval *vp )
    JSBool ret = JS_TRUE ;
    // the constructor should never be called, internall yor externally
    // it is here just for the sake of defining SdbDomain.prototype
-   REPORT ( JS_FALSE, "use of new SdbDomain() is orbidden, you should use "
+   REPORT ( JS_FALSE, "use of new SdbDomain() is forbidden, you should use "
                       "other functions to produce a SdbDomain object" ) ;
 done :
    return ret ;
@@ -4080,7 +4085,7 @@ static JSBool domain_alter( JSContext *cx, uintN argc, jsval *vp )
 
    argv = JS_ARGV( cx, vp ) ;
    REPORT( JSVAL_IS_OBJECT( argv[0] ),
-           "Domain.alter(): need a object argument") ;
+           "Domain.alter(): need an object argument") ;
 
    argJSObj = JSVAL_TO_OBJECT( argv[0] ) ;
    VERIFY( argJSObj ) ;
@@ -4101,6 +4106,7 @@ done:
    PD_TRACE_EXIT( SDB_DOMAIN_ALTER ) ;
    return ret ;
 error:
+   TRY_REPORT ( cx , "Domain.alter(): false" ) ;
    goto done ;
 }
 
@@ -4224,6 +4230,490 @@ static JSFunctionSpec domain_functions[] = {
 } ;
 
 
+// ----------- sdb data center ------------
+// PD_TRACE_DECLARE_FUNCTION ( SDB_DC_DESTRUCTOR, "dc_destructor" )
+static void dc_destructor ( JSContext *cx, JSObject *obj )
+{
+   PD_TRACE_ENTRY ( SDB_DC_DESTRUCTOR );
+   sdbDCHandle *dc = (sdbDCHandle *) JS_GetPrivate ( cx, obj ) ;
+   SAFE_RELEASE_DC ( dc ) ;
+   SAFE_JS_FREE( cx, dc ) ;
+   JS_SetPrivate ( cx, obj, NULL ) ;
+   PD_TRACE_EXIT ( SDB_DC_DESTRUCTOR );
+}
+
+static JSClass dc_class = {
+   "SdbDC",                      // class name
+   JSCLASS_HAS_PRIVATE | JSCLASS_NEW_RESOLVE, // flags
+   JS_PropertyStub,              // addProperty
+   JS_PropertyStub,              // delProperty
+   JS_PropertyStub,              // getProperty
+   JS_StrictPropertyStub,        // setProperty
+   JS_EnumerateStub,             // enumerate
+   JS_ResolveStub,               // resolve
+   JS_ConvertStub,               // convert
+   dc_destructor,                // finalize
+   JSCLASS_NO_OPTIONAL_MEMBERS   // optional members
+} ;
+
+// PD_TRACE_DECLARE_FUNCTION ( SDB_DC_CONSTRUCTOR, "dc_constructor" )
+static JSBool dc_constructor ( JSContext *cx, uintN argc, jsval *vp )
+{
+   PD_TRACE_ENTRY ( SDB_DC_CONSTRUCTOR ) ;
+   JSBool ret = JS_TRUE ;
+   // the constructor should never be called, internall yor externally
+   // it is here just for the sake of defining SdbDomain.prototype
+   REPORT ( JS_FALSE, "use of new SdbDC() is forbidden, you should use "
+                      "other functions to produce a SdbDC object" ) ;
+done :
+   PD_TRACE_EXIT ( SDB_DC_CONSTRUCTOR ) ;
+   return ret ;
+error :
+   goto done ;
+}
+
+// PD_TRACE_DECLARE_FUNCTION ( SDB_GET_DC, "sdb_get_dc" )
+static JSBool sdb_get_dc ( JSContext *cx , uintN argc , jsval *vp )
+{
+   PD_TRACE_ENTRY( SDB_GET_DC ) ;
+   sdbConnectionHandle *conn = NULL ;
+   sdbDCHandle *dc           = NULL ;
+   INT32 rc                  = SDB_OK ;
+   JSBool ret                = JS_TRUE ;
+   jsval js_val_conn         = JSVAL_VOID ;
+   jsval js_val_name         = JSVAL_VOID ;
+   jsval js_val_dc           = JSVAL_VOID ;
+   JSObject *js_obj_dc       = NULL ;
+   JSString *js_str_name     = NULL ;
+   CHAR dcName[ CLIENT_DC_NAMESZ + 1 ] = { 0 } ;
+
+   // malloc dc handle
+   dc = (sdbDCHandle *) JS_malloc( cx, sizeof(sdbDCHandle) ) ;
+   VERIFY( dc ) ;
+   *dc = SDB_INVALID_HANDLE ;
+
+   // get connection obj from js sdb obj
+   conn = (sdbConnectionHandle *)JS_GetPrivate( cx, JS_THIS_OBJECT( cx, vp ) ) ;
+   REPORT( conn, "Sdb.getDC(): no connection handle" ) ;
+
+   // get dc info from database
+   rc = sdbGetDC( *conn, dc ) ;
+   REPORT_RC( SDB_OK == rc, "Sdb.getDC()", rc ) ;
+   sdbGetDCName( *dc, dcName, CLIENT_DC_NAMESZ ) ;
+
+   // new js dc object for return
+   js_obj_dc = JS_NewObject( cx, &dc_class, NULL, NULL ) ;
+   VERIFY( js_obj_dc ) ;
+
+   // set property and private
+   js_val_conn = JS_THIS( cx, vp ) ;
+   VERIFY( JS_SetProperty( cx, js_obj_dc, "_conn", &js_val_conn ) ) ;
+
+   js_str_name = JS_NewStringCopyN( cx, dcName, ossStrlen(dcName) ) ;
+   VERIFY( js_str_name ) ;
+   js_val_name = STRING_TO_JSVAL( js_str_name ) ;
+   VERIFY( JS_SetProperty( cx, js_obj_dc, "_name", &js_val_name ) ) ;
+
+   VERIFY( JS_SetPrivate( cx, js_obj_dc, dc ) ) ;
+
+   // set js dc object as a property of sdb obj
+   js_val_dc = OBJECT_TO_JSVAL( js_obj_dc ) ;
+   VERIFY( JS_SetProperty( cx, JS_THIS_OBJECT( cx, vp), dcName, &js_val_dc ) ) ;
+
+   // return the newly build dc obj
+   JS_SET_RVAL( cx, vp, OBJECT_TO_JSVAL( js_obj_dc ) ) ;
+
+done:
+   PD_TRACE_EXIT ( SDB_GET_DC ) ;
+   return ret ;
+error:
+   SAFE_RELEASE_DC( dc ) ;
+   SAFE_JS_FREE( cx, dc ) ;
+   if ( NULL != js_obj_dc )
+   {
+      JS_SetPrivate ( cx, js_obj_dc, NULL ) ;
+   }
+   TRY_REPORT( cx, "Sdb.getDC(): false" ) ;
+   goto done ;
+}
+
+// PD_TRACE_DECLARE_FUNCTION ( SDB_DC_CREATEIMAGE, "dc_createImage" )
+static JSBool dc_createImage( JSContext *cx, uintN argc, jsval *vp )
+{
+   PD_TRACE_ENTRY( SDB_DC_CREATEIMAGE ) ;
+   INT32 rc          = SDB_OK ;
+   JSBool ret        = JS_TRUE ;
+   sdbDCHandle *dc   = NULL ;
+   CHAR *pAddr       = NULL ;
+   jsval *argv       = NULL ;
+
+   // get dc obj
+   dc = ( sdbDCHandle * ) JS_GetPrivate ( cx, JS_THIS_OBJECT ( cx, vp ) ) ;
+   REPORT ( dc, "SdbDC.createImage(): no dc handle" ) ;
+
+   // get catalog address from argument
+   REPORT ( argc >= 1, "SdbDC.createImage(): need one argument" ) ;
+
+   argv = JS_ARGV( cx, vp ) ;
+   REPORT( JSVAL_IS_STRING( argv[0] ),
+           "SdbDC.createImage(): need a string argument") ;
+
+   pAddr = (CHAR *) JS_EncodeString( cx, JSVAL_TO_STRING( argv[0] ) ) ;
+   VERIFY( pAddr ) ;
+
+   // create dc image
+   rc = sdbCreateImage( *dc, pAddr ) ;
+   REPORT_RC ( SDB_OK == rc, "SdbDC.createImage()", rc ) ;
+
+   JS_SET_RVAL ( cx , vp , JSVAL_VOID ) ;
+
+done:
+   SAFE_JS_FREE( cx, pAddr ) ;
+   PD_TRACE_EXIT( SDB_DC_CREATEIMAGE ) ;
+   return ret ;
+error:
+   TRY_REPORT ( cx , "SdbDC.createImage(): false" ) ;
+   goto done ;
+}
+
+// PD_TRACE_DECLARE_FUNCTION ( SDB_DC_REMOVEIMAGE, "dc_removeImage" )
+static JSBool dc_removeImage( JSContext *cx, uintN argc, jsval *vp )
+{
+   PD_TRACE_ENTRY( SDB_DC_REMOVEIMAGE ) ;
+   INT32 rc          = SDB_OK ;
+   JSBool ret        = JS_TRUE ;
+   sdbDCHandle *dc   = NULL ;
+
+   // get dc obj
+   dc = ( sdbDCHandle * ) JS_GetPrivate ( cx, JS_THIS_OBJECT ( cx, vp ) ) ;
+   REPORT ( dc, "SdbDC.removeImage(): no dc handle" ) ;
+
+   // remove dc image
+   rc = sdbRemoveImage( *dc ) ;
+   REPORT_RC ( SDB_OK == rc, "SdbDC.removeImage()", rc ) ;
+
+   JS_SET_RVAL ( cx , vp , JSVAL_VOID ) ;
+
+done:
+   PD_TRACE_EXIT( SDB_DC_REMOVEIMAGE ) ;
+   return ret ;
+error:
+   TRY_REPORT ( cx , "SdbDC.removeImage(): false" ) ;
+   goto done ;
+}
+
+// PD_TRACE_DECLARE_FUNCTION ( SDB_DC_ATTACHGROUPS, "dc_attachGroups" )
+static JSBool dc_attachGroups( JSContext *cx, uintN argc, jsval *vp )
+{
+   PD_TRACE_ENTRY( SDB_DC_ATTACHGROUPS ) ;
+   INT32 rc                = SDB_OK ;
+   JSBool ret              = JS_TRUE ;
+   sdbDCHandle *dc         = NULL ;
+   JSObject *js_obj_option = NULL ;
+   jsval *argv             = NULL ;
+   bson option ;
+   bson_init( &option ) ;
+
+   // get dc obj
+   dc = ( sdbDCHandle * )JS_GetPrivate ( cx, JS_THIS_OBJECT ( cx, vp ) ) ;
+   REPORT ( dc, "SdbDC.dc_attachGroups(): no dc handle" ) ;
+   REPORT ( argc >= 1, "SdbDC.dc_attachGroups(): need one argument" ) ;
+
+   // get argument
+   argv = JS_ARGV( cx, vp ) ;
+   REPORT( JSVAL_IS_OBJECT( argv[0] ),
+           "SdbDC.dc_attachGroups(): need an object argument") ;
+   js_obj_option = JSVAL_TO_OBJECT( argv[0] ) ;
+   VERIFY( js_obj_option ) ;
+   {
+   sptConvertor c( cx ) ;
+   rc = c.toBson( js_obj_option, &option ) ;
+   VERIFY( SDB_OK == rc ) ;
+   }
+
+   // attach groups
+   rc = sdbAttachGroups( *dc, &option ) ;
+   REPORT_RC ( SDB_OK == rc, "SdbDC.dc_attachGroups()", rc ) ;
+
+   JS_SET_RVAL ( cx , vp , JSVAL_VOID ) ;
+
+done:
+   bson_destroy( &option ) ;
+   PD_TRACE_EXIT( SDB_DC_ATTACHGROUPS ) ;
+   return ret ;
+error:
+   TRY_REPORT ( cx , "SdbDC.dc_attachGroups(): false" ) ;
+   goto done ;
+}
+
+// PD_TRACE_DECLARE_FUNCTION ( SDB_DC_DETACHGROUPS, "dc_detachGroups" )
+static JSBool dc_detachGroups( JSContext *cx, uintN argc, jsval *vp )
+{
+   PD_TRACE_ENTRY( SDB_DC_DETACHGROUPS ) ;
+   INT32 rc                = SDB_OK ;
+   JSBool ret              = JS_TRUE ;
+   sdbDCHandle *dc         = NULL ;
+   JSObject *js_obj_option = NULL ;
+   jsval *argv             = NULL ;
+   bson option ;
+   bson_init( &option ) ;
+
+   // get dc obj
+   dc = ( sdbDCHandle * )JS_GetPrivate ( cx, JS_THIS_OBJECT ( cx, vp ) ) ;
+   REPORT ( dc, "SdbDC.dc_detachGroups(): no dc handle" ) ;
+   REPORT ( argc >= 1, "SdbDC.dc_detachGroups(): need one argument" ) ;
+
+   // get argument
+   argv = JS_ARGV( cx, vp ) ;
+   REPORT( JSVAL_IS_OBJECT( argv[0] ),
+           "SdbDC.dc_detachGroups(): need an object argument") ;
+   js_obj_option = JSVAL_TO_OBJECT( argv[0] ) ;
+   VERIFY( js_obj_option ) ;
+   {
+   sptConvertor c( cx ) ;
+   rc = c.toBson( js_obj_option, &option ) ;
+   VERIFY( SDB_OK == rc ) ;
+   }
+
+   // attach groups
+   rc = sdbDetachGroups( *dc, &option ) ;
+   REPORT_RC ( SDB_OK == rc, "SdbDC.dc_detachGroups()", rc ) ;
+
+   JS_SET_RVAL ( cx , vp , JSVAL_VOID ) ;
+
+done:
+   bson_destroy( &option ) ;
+   PD_TRACE_EXIT( SDB_DC_DETACHGROUPS ) ;
+   return ret ;
+error:
+   TRY_REPORT ( cx , "SdbDC.dc_detachGroups(): false" ) ;
+   goto done ;
+}
+
+// PD_TRACE_DECLARE_FUNCTION ( SDB_DC_ENABLEIMAGE, "dc_enableImage" )
+static JSBool dc_enableImage( JSContext *cx, uintN argc, jsval *vp )
+{
+   PD_TRACE_ENTRY( SDB_DC_ENABLEIMAGE ) ;
+   INT32 rc          = SDB_OK ;
+   JSBool ret        = JS_TRUE ;
+   sdbDCHandle *dc   = NULL ;
+
+   // get dc obj
+   dc = ( sdbDCHandle * ) JS_GetPrivate ( cx, JS_THIS_OBJECT ( cx, vp ) ) ;
+   REPORT ( dc, "SdbDC.enableImage(): no dc handle" ) ;
+
+   // enable dc image
+   rc = sdbEnableImage( *dc ) ;
+   REPORT_RC ( SDB_OK == rc, "SdbDC.enableImage()", rc ) ;
+
+   JS_SET_RVAL ( cx , vp , JSVAL_VOID ) ;
+
+done:
+   PD_TRACE_EXIT( SDB_DC_ENABLEIMAGE ) ;
+   return ret ;
+error:
+   TRY_REPORT ( cx , "SdbDC.enableImage(): false" ) ;
+   goto done ;
+}
+
+// PD_TRACE_DECLARE_FUNCTION ( SDB_DC_DISABLEIMAGE, "dc_disableImage" )
+static JSBool dc_disableImage( JSContext *cx, uintN argc, jsval *vp )
+{
+   PD_TRACE_ENTRY( SDB_DC_DISABLEIMAGE ) ;
+   INT32 rc          = SDB_OK ;
+   JSBool ret        = JS_TRUE ;
+   sdbDCHandle *dc   = NULL ;
+
+   // get dc obj
+   dc = ( sdbDCHandle * ) JS_GetPrivate ( cx, JS_THIS_OBJECT ( cx, vp ) ) ;
+   REPORT ( dc, "SdbDC.disableImage(): no dc handle" ) ;
+
+   // enable dc image
+   rc = sdbDisableImage( *dc ) ;
+   REPORT_RC ( SDB_OK == rc, "SdbDC.disableImage()", rc ) ;
+
+   JS_SET_RVAL ( cx , vp , JSVAL_VOID ) ;
+
+done:
+   PD_TRACE_EXIT( SDB_DC_DISABLEIMAGE ) ;
+   return ret ;
+error:
+   TRY_REPORT ( cx , "SdbDC.disableImage(): false" ) ;
+   goto done ;
+}
+
+// PD_TRACE_DECLARE_FUNCTION ( SDB_DC_ACTIVATE, "dc_activate" )
+static JSBool dc_activate( JSContext *cx, uintN argc, jsval *vp )
+{
+   PD_TRACE_ENTRY( SDB_DC_ACTIVATE ) ;
+   INT32 rc          = SDB_OK ;
+   JSBool ret        = JS_TRUE ;
+   sdbDCHandle *dc   = NULL ;
+
+   // get dc obj
+   dc = ( sdbDCHandle * ) JS_GetPrivate ( cx, JS_THIS_OBJECT ( cx, vp ) ) ;
+   REPORT ( dc, "SdbDC.activate(): no dc handle" ) ;
+
+   // enable dc image
+   rc = sdbActivateDC( *dc ) ;
+   REPORT_RC ( SDB_OK == rc, "SdbDC.activate()", rc ) ;
+
+   JS_SET_RVAL ( cx , vp , JSVAL_VOID ) ;
+
+done:
+   PD_TRACE_EXIT( SDB_DC_ACTIVATE ) ;
+   return ret ;
+error:
+   TRY_REPORT ( cx , "SdbDC.activate(): false" ) ;
+   goto done ;
+}
+
+// PD_TRACE_DECLARE_FUNCTION ( SDB_DC_DEACTIVATE, "dc_deactivate" )
+static JSBool dc_deactivate( JSContext *cx, uintN argc, jsval *vp )
+{
+   PD_TRACE_ENTRY( SDB_DC_DEACTIVATE ) ;
+   INT32 rc          = SDB_OK ;
+   JSBool ret        = JS_TRUE ;
+   sdbDCHandle *dc   = NULL ;
+
+   // get dc obj
+   dc = ( sdbDCHandle * ) JS_GetPrivate ( cx, JS_THIS_OBJECT ( cx, vp ) ) ;
+   REPORT ( dc, "SdbDC.deactivate(): no dc handle" ) ;
+
+   // enable dc image
+   rc = sdbDeactivateDC( *dc ) ;
+   REPORT_RC ( SDB_OK == rc, "SdbDC.deactivate()", rc ) ;
+
+   JS_SET_RVAL ( cx , vp , JSVAL_VOID ) ;
+
+done:
+   PD_TRACE_EXIT( SDB_DC_DEACTIVATE ) ;
+   return ret ;
+error:
+   TRY_REPORT ( cx , "SdbDC.deactivate(): false" ) ;
+   goto done ;
+}
+
+// PD_TRACE_DECLARE_FUNCTION ( SDB_DC_ENABLEREADONLY, "dc_enableReadonly" )
+static JSBool dc_enableReadonly( JSContext *cx, uintN argc, jsval *vp )
+{
+   PD_TRACE_ENTRY( SDB_DC_ENABLEREADONLY ) ;
+   INT32 rc          = SDB_OK ;
+   JSBool ret        = JS_TRUE ;
+   sdbDCHandle *dc   = NULL ;
+
+   // get dc obj
+   dc = ( sdbDCHandle * ) JS_GetPrivate ( cx, JS_THIS_OBJECT ( cx, vp ) ) ;
+   REPORT ( dc, "SdbDC.enableReadonly(): no dc handle" ) ;
+
+   // enable dc image
+   rc = sdbEnableReadOnly( *dc, TRUE ) ;
+   REPORT_RC ( SDB_OK == rc, "SdbDC.enableReadonly()", rc ) ;
+
+   JS_SET_RVAL ( cx , vp , JSVAL_VOID ) ;
+
+done:
+   PD_TRACE_EXIT( SDB_DC_ENABLEREADONLY ) ;
+   return ret ;
+error:
+   TRY_REPORT ( cx , "SdbDC.enableReadonly(): false" ) ;
+   goto done ;
+}
+
+// PD_TRACE_DECLARE_FUNCTION ( SDB_DC_DISABLEREADONLY, "dc_disableReadonly" )
+static JSBool dc_disableReadonly( JSContext *cx, uintN argc, jsval *vp )
+{
+   PD_TRACE_ENTRY( SDB_DC_DISABLEREADONLY ) ;
+   INT32 rc          = SDB_OK ;
+   JSBool ret        = JS_TRUE ;
+   sdbDCHandle *dc   = NULL ;
+
+   // get dc obj
+   dc = ( sdbDCHandle * ) JS_GetPrivate ( cx, JS_THIS_OBJECT ( cx, vp ) ) ;
+   REPORT ( dc, "SdbDC.disableReadonly(): no dc handle" ) ;
+
+   // enable dc image
+   rc = sdbEnableReadOnly( *dc, FALSE ) ;
+   REPORT_RC ( SDB_OK == rc, "SdbDC.disableReadonly()", rc ) ;
+
+   JS_SET_RVAL ( cx , vp , JSVAL_VOID ) ;
+
+done:
+   PD_TRACE_EXIT( SDB_DC_DISABLEREADONLY ) ;
+   return ret ;
+error:
+   TRY_REPORT ( cx , "SdbDC.disableReadonly(): false" ) ;
+   goto done ;
+}
+
+// PD_TRACE_DECLARE_FUNCTION ( SDB_DC_GETDETAIL, "dc_getDetail" )
+static JSBool dc_getDetail ( JSContext *cx , uintN argc , jsval *vp )
+{
+   PD_TRACE_ENTRY ( SDB_DC_GETDETAIL );
+   sdbDCHandle *dc   = NULL ;
+   JSObject *bsonObj = NULL ;
+   bson *record      = NULL ;
+   bson *copy        = NULL ;
+   INT32 rc          = SDB_OK ;
+   JSBool ret        = JS_TRUE ;
+
+   // get dc obj
+   dc = ( sdbDCHandle * ) JS_GetPrivate ( cx, JS_THIS_OBJECT ( cx, vp ) ) ;
+   REPORT ( dc, "SdbDC.getDetail(): no dc handle" ) ;
+
+   // record will be freed in done:
+   record = bson_create() ;
+   VERIFY ( record ) ;
+
+   // get dc detail
+   rc = sdbGetDCDetail( *dc, record ) ;
+   REPORT_RC ( SDB_OK == rc, "SdbDC.getDetail()" , rc ) ;
+
+   // new js bson obj for return
+   bsonObj = JS_NewObject ( cx , &bson_class , 0 , 0 ) ;
+   VERIFY ( bsonObj ) ;
+
+   JS_SET_RVAL ( cx , vp , OBJECT_TO_JSVAL ( bsonObj ) ) ;
+
+   // copy will be set as private data of bsonObj, or will be freed in error:
+   copy = bson_create() ;
+   VERIFY ( copy ) ;
+
+   VERIFY ( BSON_OK == bson_copy ( copy , record ) ) ;
+
+   ret = JS_SetPrivate ( cx , bsonObj , copy ) ;
+   VERIFY ( ret ) ;
+
+done :
+   SAFE_BSON_DISPOSE ( record ) ;
+   PD_TRACE_EXIT ( SDB_DC_GETDETAIL );
+   return ret ;
+error :
+   SAFE_BSON_DISPOSE ( copy ) ;
+   if ( NULL != copy )
+   {
+      JS_SetPrivate ( cx , bsonObj, NULL ) ;
+   }
+   TRY_REPORT ( cx , "SdbDC.getDetail(): false" ) ;
+   goto done ;
+}
+
+static JSFunctionSpec dc_functions[] = {
+   JS_FS( "createImage", dc_createImage, 1, 0 ),
+   JS_FS( "removeImage", dc_removeImage, 0, 0 ),
+   JS_FS( "attachGroups", dc_attachGroups, 1, 0 ),
+   JS_FS( "detachGroups", dc_detachGroups, 1, 0 ),
+   JS_FS( "enableImage", dc_enableImage, 0, 0 ),
+   JS_FS( "disableImage", dc_disableImage, 0, 0 ),
+   JS_FS( "activate", dc_activate, 0, 0 ),
+   JS_FS( "deactivate", dc_deactivate, 0, 0 ),
+   JS_FS( "enableReadonly", dc_enableReadonly, 0, 0 ),
+   JS_FS( "disableReadonly", dc_disableReadonly, 0, 0 ),
+   JS_FS( "getDetail", dc_getDetail, 0, 0 ),
+   JS_FS_END
+} ;
+
+
 // ----------- Sdb --------------
 // PD_TRACE_DECLARE_FUNCTION ( SDB_DESTRUCTOR, "sdb_destructor" )
 static void sdb_destructor ( JSContext *cx , JSObject *obj )
@@ -4257,6 +4747,7 @@ static JSBool isSpecialCSName ( const CHAR *name )
                                    "listReplicaGroups",
                                    "getCS" ,
                                    "getRG" ,
+                                   "getDC",
                                    "createCS" ,
                                    "createRG",
                                    "removeRG",
@@ -5821,9 +6312,6 @@ static JSBool sdb_create_cs ( JSContext *cx , uintN argc , jsval *vp )
    // the handle contained by cs is released in done:
    rc = sdbCreateCollectionSpaceV2( *connection , csName ,&options, cs );
    REPORT_RC ( SDB_OK == rc , "Sdb.createCS()" , rc ) ;
-   // get the cs handle
-   rc = sdbGetCollectionSpace ( *connection , csName , cs ) ;
-   REPORT_RC ( SDB_OK == rc , "Sdb.createCS()" , rc ) ;
    // new a cs obj
    objCS = JS_NewObject ( cx , &cs_class , 0 , 0 ) ;
    VERIFY ( objCS ) ;
@@ -7338,6 +7826,7 @@ error:
 static JSFunctionSpec sdb_functions[] = {
    JS_FS ( "getCS" , sdb_get_cs , 1 , 0 ) ,
    JS_FS ( "getRG" , sdb_get_rg , 1 , 0 ) ,
+   JS_FS ( "getDC", sdb_get_dc, 0, 0 ),
    JS_FS ( "createCS" , sdb_create_cs , 1 , 0 ) ,
    JS_FS ( "createRG", sdb_create_rg , 1, 0 ),
    JS_FS ( "removeRG", ssdb_remove_rg , 1, 0 ),
@@ -8183,6 +8672,10 @@ JSBool jsobj_is_sdbobj( JSContext *cx, JSObject *obj )
    {
       return TRUE ;
    }
+   else if ( JS_InstanceOf( cx, obj, &dc_class, NULL ) )
+   {
+      return TRUE ;
+   }
    else if ( JS_InstanceOf( cx, obj, &count_class, NULL ) )
    {
       return TRUE ;
@@ -8262,6 +8755,10 @@ JSBool InitDbClasses( JSContext *cx, JSObject *obj )
    VERIFY ( JS_InitClass ( cx, obj, NULL, &domain_class,
                            domain_constructor, 0,
                            0, domain_functions, 0, 0 ) ) ;
+   
+   VERIFY ( JS_InitClass ( cx, obj, NULL, &dc_class,
+                           dc_constructor, 0,
+                           0, dc_functions, 0, 0 ) ) ;
 
    VERIFY ( JS_InitClass ( cx, obj, NULL, &objectid_class,
                            objectid_constructor, 0,

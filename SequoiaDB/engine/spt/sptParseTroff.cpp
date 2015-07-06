@@ -60,6 +60,7 @@
 #define CLCOUNT_CATEGORY    "count"
 #define DOMAIN_CATEGORY     "domain"
 #define OMA_CATEGORY        "oma"
+#define DC_CATEGORY         "dc"
 #define QUERY_CATEGORY      "query"
 #define QUERY_GEN_CATEGORY  "query_gen"
 #define QUERY_COND_CATEGORY "query_cond"
@@ -86,7 +87,7 @@
 
 namespace fs = boost::filesystem ;
 
-#define CATE_SIZE  14
+#define CATE_SIZE  15
 const CHAR* CATE_ARR[ CATE_SIZE ] =
 {
    GLOBAL_CATEGORY,
@@ -99,6 +100,7 @@ const CHAR* CATE_ARR[ CATE_SIZE ] =
    CLCOUNT_CATEGORY,
    DOMAIN_CATEGORY,
    OMA_CATEGORY,
+   DC_CATEGORY,
    QUERY_CATEGORY,
    QUERY_GEN_CATEGORY,
    QUERY_COND_CATEGORY,
@@ -171,6 +173,8 @@ manHelp::manHelp( const CHAR *path )
                                                 _domain._first ) ) ;
    _classify.insert( pair< string, ssmap_ref >( string(OMA_CATEGORY),
                                                 _oma._first ) ) ;
+   _classify.insert( pair< string, ssmap_ref >( string(DC_CATEGORY),
+                                                _dc._first ) ) ;
    _classify.insert( pair< string, ssmap_ref >( string(QUERY_CATEGORY),
                                                 _query._first ) ) ;
 }
@@ -461,6 +465,11 @@ INT32 manHelp::scanFile()
                _oma._first.insert( pair<string, string>(funcName, pFileName) ) ;
                _oma._second.insert( pair<string,string>(synopsis, cutline) ) ;
             }
+            else if ( string(DC_CATEGORY) == categoryName )
+            {
+               _dc._first.insert( pair<string, string>(funcName, pFileName) ) ;
+               _dc._second.insert( pair<string,string>(synopsis, cutline) ) ;
+            }
             else if ( string(QUERY_CATEGORY) == categoryName )
             {
                _query._first.insert( std::pair<string, string>(funcName,
@@ -713,6 +722,11 @@ ssmap& manHelp::getCategoryMap( const CHAR *category )
                          ossStrlen( category ) ) == 0 )
     {
        return _oma._second ;
+    }
+    else if ( ossMemcmp( category, DC_CATEGORY,
+                         ossStrlen( category ) ) == 0 )
+    {
+       return _dc._second ;
     }
     else if ( ossMemcmp( category, QUERY_GEN_CATEGORY,
                          ossStrlen( category ) ) == 0 )

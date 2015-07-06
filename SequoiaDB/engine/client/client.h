@@ -94,6 +94,7 @@ typedef ossValuePtr sdbReplicaGroupHandle ;
 typedef ossValuePtr sdbNodeHandle  ;
 typedef ossValuePtr sdbDomainHandle ;
 typedef ossValuePtr sdbLobHandle ;
+typedef ossValuePtr sdbDCHandle ;
 
 /** sdbReplicaNodeHandle will be deprecated in version 2.x, use sdbNodeHandle instead of it. */
 typedef sdbNodeHandle             sdbReplicaNodeHandle ;
@@ -1708,6 +1709,12 @@ SDB_EXPORT void sdbReleaseNode ( sdbNodeHandle cHandle ) ;
 */
 SDB_EXPORT void sdbReleaseDomain ( sdbDomainHandle cHandle ) ;
 
+/** \fn void sdbReleaseDC ( sdbDCHandle cHandle )
+    \brief Release the data center handle
+    \param [in] cHandle the data center handle
+*/
+SDB_EXPORT void sdbReleaseDC ( sdbDCHandle cHandle ) ;
+
 /** \fn INT32 sdbAggregate ( sdbCollectionHandle cHandle,
                              bson **obj, SINT32 num,
                              sdbCursorHandle *handle )
@@ -2275,6 +2282,136 @@ SDB_EXPORT INT32 sdbCreateIdIndex( sdbCollectionHandle cHandle ) ;
     \note delete, update and upsert do not work after index "$id" was drop
 */
 SDB_EXPORT INT32 sdbDropIdIndex( sdbCollectionHandle cHandle ) ;
+
+/** \fn INT32 sdbGetDCName( sdbDCHandle cHandle, CHAR *pBuffer, INT32 size )
+    \brief Get the name of the data center
+    \param [in] cHandle The data center handle
+    \param [in] pBuffer The output buffer
+    \param [in] size The size of the output buffer
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+SDB_EXPORT INT32 sdbGetDCName( sdbDCHandle cHandle, CHAR *pBuffer, INT32 size ) ;
+
+/** \fn INT32 sdbGetDC( sdbConnectionHandle cHandle, sdbDCHandle *handle )
+    \brief Get the data center
+    \param [in] cHandle The connection handle
+    \param [out] handle The data center handle
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+SDB_EXPORT INT32 sdbGetDC( sdbConnectionHandle cHandle, sdbDCHandle *handle ) ;
+
+/** \fn INT32 sdbGetDCDetail( sdbDCHandle cHandle, bson *retInfo )
+    \brief Get the detail of data center
+    \param [in] cHandle The connection handle
+    \param [out] retInfo The the detail of data center
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+SDB_EXPORT INT32 sdbGetDCDetail( sdbDCHandle cHandle, bson *retInfo ) ;
+
+/** \fn INT32 sdbActivateDC( sdbDCHandle cHandle )
+    \brief Activate the data center
+    \param [in] cHandle The data center handle
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+SDB_EXPORT INT32 sdbActivateDC( sdbDCHandle cHandle ) ;
+
+/** \fn INT32 sdbDeactivateDC( sdbDCHandle cHandle )
+    \brief Deactivate the data center
+    \param [in] cHandle The data center handle
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+SDB_EXPORT INT32 sdbDeactivateDC( sdbDCHandle cHandle ) ;
+
+/** \fn INT32 sdbEnableReadOnly( sdbDCHandle cHandle, BOOLEAN isReadOnly )
+    \brief Enable data center works in readonly mode or not
+    \param [in] cHandle The data center handle
+    \param [in] isReadOnly Whether to use readonly mode or not
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+SDB_EXPORT INT32 sdbEnableReadOnly( sdbDCHandle cHandle, BOOLEAN isReadOnly ) ;
+
+/** \fn INT32 sdbCreateImage( sdbDCHandle cHandle, const CHAR *pCataAddrList )
+    \brief Create image in data center
+    \param [in] cHandle The data center handle
+    \param [in] pCataAddrList Catalog address list, e.g. "192.168.20.165:30003",
+                "192.168.20.165:30003,192.168.20.166:30003" 
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+SDB_EXPORT INT32 sdbCreateImage( sdbDCHandle cHandle, const CHAR *pCataAddrList ) ;
+
+/** \fn INT32 sdbRemoveImage( sdbDCHandle cHandle )
+    \brief Remove image in data center
+    \param [in] cHandle The data center handle
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+SDB_EXPORT INT32 sdbRemoveImage( sdbDCHandle cHandle ) ;
+
+/** \fn INT32 sdbEnableImage( sdbDCHandle cHandle )
+    \brief Enable image in data center
+    \param [in] cHandle The data center handle
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+SDB_EXPORT INT32 sdbEnableImage( sdbDCHandle cHandle ) ;
+
+/** \fn INT32 sdbDisableImage( sdbDCHandle cHandle )
+    \brief Disable image in data center
+    \param [in] cHandle The data center handle
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+SDB_EXPORT INT32 sdbDisableImage( sdbDCHandle cHandle ) ;
+
+/** \fn INT32 sdbAttachGroups( sdbDCHandle cHandle, bson *info )
+    \brief Attach specified groups to data center
+    \param [in] cHandle The data center handle
+    \param [in] info The information of groups to attach, e.g. {Groups:[["group1", "group1"], ["group2", "group2"]]}
+    \code
+      bson obj ;
+      bson_init( &obj ) ;
+      bson_append_start_array( &obj, "Groups" ) ;
+
+      bson_append_start_array( &obj, "0" ) ;
+      bson_append_string( &obj, "0", "group1" ) ;
+      bson_append_string( &obj, "1", "group1" ) ;
+      bson_append_finish_array( &obj ) ;
+
+      bson_append_start_array( &obj, "0" ) ;
+      bson_append_string( &obj, "0", "group2" ) ;
+      bson_append_string( &obj, "1", "group2" ) ;
+      bson_append_finish_array( &obj ) ;
+
+      bson_append_finish_array( &obj ) ;
+
+      rc = bson_finish( &obj ) ;
+      ASSERT_EQ( SDB_OK, rc ) ;
+
+      rc = sdbAttachGroups( dc, &obj ) ;
+      ASSERT_EQ( SDB_OK, rc ) ;
+
+      bson_destroy( &obj ) ;
+
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+SDB_EXPORT INT32 sdbAttachGroups( sdbDCHandle cHandle, bson *info ) ;
+
+/** \fn INT32 sdbDetachGroups( sdbDCHandle cHandle, bson *info )
+    \brief Detach specified groups from data center
+    \param [in] cHandle The data center handle
+    \param [in] info The information of groups to detach, e.g. {Groups:[["a", "a"], ["b", "b"]]}
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+SDB_EXPORT INT32 sdbDetachGroups( sdbDCHandle cHandle, bson *info ) ;
 
 SDB_EXTERN_C_END
 #endif

@@ -2317,12 +2317,12 @@ namespace sdbclient
 */
       _sdbDomain *pDomain ;
 
-/** \fn sdbCollectionSpace ()
+/** \fn sdbDomain ()
     \brief Default constructor.
 */
       sdbDomain() { pDomain = NULL ; }
 
-/** \fn ~sdbCollectionSpace ()
+/** \fn ~sdbDomain ()
     \brief Destructor.
 */
       ~sdbDomain()
@@ -2396,6 +2396,205 @@ namespace sdbclient
 
    };
 
+   class DLLEXPORT _sdbDataCenter
+   {
+   private :
+      _sdbDataCenter ( const _sdbDataCenter& other ) ; // non construction-copyable
+      _sdbDataCenter& operator= ( const _sdbDataCenter& ) ; // non copyable
+      
+   public :
+      _sdbDataCenter () {}
+      virtual ~_sdbDataCenter () {}
+
+   public :
+      virtual const CHAR *getName () = 0 ;
+      virtual INT32 getDetail( bson::BSONObj &retInfo ) = 0 ;
+      virtual INT32 activateDC() = 0 ;
+      virtual INT32 deactivateDC() = 0 ;
+      virtual INT32 enableReadOnly( BOOLEAN isReadOnly ) = 0 ;
+      virtual INT32 createImage( const CHAR *pCataAddrList ) = 0 ;
+      virtual INT32 removeImage() = 0 ;
+      virtual INT32 enableImage() = 0 ;
+      virtual INT32 disableImage() = 0 ;
+      virtual INT32 attachGroups( bson::BSONObj &info ) = 0 ;
+      virtual INT32 detachGroups( bson::BSONObj &info ) = 0 ;
+
+   } ;
+
+   /** \class  sdbDataCenter
+       \brief Database operation interfaces of data center.
+   */
+   class DLLEXPORT sdbDataCenter
+   {
+   private :
+      sdbDataCenter ( const sdbDataCenter& ) ; // non construction-copyable
+      sdbDataCenter& operator= ( const sdbDataCenter& ) ; // non copyable
+      
+   public :
+
+      /** \var pDC
+          \breif A pointer of virtual base class _sdbDataCenter
+
+           Class sdbDataCenter is a shell for _sdbDataCenter. We use pDC to
+           call the methods in class _sdbDataCenter.
+      */
+      _sdbDataCenter *pDC ;
+
+      /** \fn sdbDataCenter ()
+          \brief Default constructor.
+      */
+      sdbDataCenter() { pDC = NULL ; }
+
+      /** \fn ~sdbDataCenter ()
+          \brief Destructor.
+      */
+      ~sdbDataCenter()
+      {
+         if ( pDC )
+            delete pDC ;
+      }
+
+   public :
+
+      /** \fn const CHAR *getName () ;
+          \brief Get the name of current data center.
+          \retval The name of current data center or null if fail
+      */
+      const CHAR *getName ()
+      {
+         if ( NULL == pDC )
+            return NULL ;
+         return pDC->getName() ;
+      }
+
+      /** \fn INT32 getDetail( bson::BSONObj &retInfo )
+          \brief Get the detail of current data center.
+          \param [out] retInfo The detail of data center
+          \retval SDB_OK Operation Success
+          \retval Others Operation Fail
+      */
+      INT32 getDetail( bson::BSONObj &retInfo )
+      {
+         if ( NULL == pDC )
+            return SDB_CLT_INVALID_HANDLE ;
+         return pDC->getDetail( retInfo ) ;
+      }
+
+      /** \fn INT32 activateDC()
+          \brief Activate the data center
+          \retval SDB_OK Operation Success
+          \retval Others Operation Fail
+      */
+      INT32 activateDC()
+      {
+         if ( NULL == pDC )
+            return SDB_CLT_INVALID_HANDLE ;
+         return pDC->activateDC() ;
+      }
+
+      /** \fn INT32 deactivateDC()
+          \brief Deactivate the data center
+          \retval SDB_OK Operation Success
+          \retval Others Operation Fail
+      */
+      INT32 deactivateDC()
+      {
+         if ( NULL == pDC )
+            return SDB_CLT_INVALID_HANDLE ;
+         return pDC->deactivateDC() ;
+      }
+
+      /** \fn INT32 enableReadOnly( BOOLEAN isReadOnly )
+          \brief Enable data center works in readonly mode or not
+          \param [in] isReadOnly Whether to use readonly mode or not
+          \retval SDB_OK Operation Success
+          \retval Others Operation Fail
+      */
+      INT32 enableReadOnly( BOOLEAN isReadOnly )
+      {
+         if ( NULL == pDC )
+            return SDB_CLT_INVALID_HANDLE ;
+         return pDC->enableReadOnly( isReadOnly ) ;
+      }
+
+      /** \fn INT32 createImage( const CHAR *pCataAddrList )
+          \brief Create image in data center
+          \param [in] pCataAddrList Catalog address list, e.g. "192.168.20.165:30003",
+                      "192.168.20.165:30003,192.168.20.166:30003" 
+          \retval SDB_OK Operation Success
+          \retval Others Operation Fail
+      */
+      INT32 createImage( const CHAR *pCataAddrList )
+      {
+         if ( NULL == pDC )
+            return SDB_CLT_INVALID_HANDLE ;
+         return pDC->createImage( pCataAddrList ) ;
+      }
+
+      /** \fn INT32 removeImage()
+          \brief Remove image in data center
+          \retval SDB_OK Operation Success
+          \retval Others Operation Fail
+      */
+      INT32 removeImage()
+      {
+         if ( NULL == pDC )
+            return SDB_CLT_INVALID_HANDLE ;
+         return pDC->removeImage() ;
+      }
+
+      /** \fn INT32 enableImage()
+          \brief Enable image in data center
+          \retval SDB_OK Operation Success
+          \retval Others Operation Fail
+      */
+      INT32 enableImage()
+      {
+         if ( NULL == pDC )
+            return SDB_CLT_INVALID_HANDLE ;
+         return pDC->enableImage() ;
+      }
+      
+      /** \fn INT32 disableImage()
+          \brief Disable image in data center
+          \retval SDB_OK Operation Success
+          \retval Others Operation Fail
+      */
+      INT32 disableImage()
+      {
+         if ( NULL == pDC )
+            return SDB_CLT_INVALID_HANDLE ;
+         return pDC->disableImage() ;
+      }
+
+      /** \fn INT32 attachGroups( BSONObj &info )
+          \brief Attach specified groups to data center
+          \param [in] info The information of groups to attach, e.g. {Groups:[["a", "a"], ["b", "b"]]}
+          \retval SDB_OK Operation Success
+          \retval Others Operation Fail
+      */
+      INT32 attachGroups( bson::BSONObj &info )
+      {
+         if ( NULL == pDC )
+            return SDB_CLT_INVALID_HANDLE ;
+         return pDC->attachGroups( info ) ;
+      }
+
+      /** \fn INT32 detachGroups( BSONObj &info )
+          \brief Detach specified groups from data center
+          \param [in] info The information of groups to detach, e.g. {Groups:[["a", "a"], ["b", "b"]]}
+          \retval SDB_OK Operation Success
+          \retval Others Operation Fail
+      */
+      INT32 detachGroups( bson::BSONObj &info )
+      {
+         if ( NULL == pDC )
+            return SDB_CLT_INVALID_HANDLE ;
+         return pDC->detachGroups( info ) ;
+      }
+
+   };   
+
    class DLLEXPORT _sdbLob
    {
    private :
@@ -2456,7 +2655,7 @@ namespace sdbclient
 */
       sdbLob() { pLob = NULL ; }
 
-/** \fn ~sdb()
+/** \fn ~sdbLob()
     \brief Destructor.
 */
       ~sdbLob()
@@ -2870,7 +3069,8 @@ namespace sdbclient
                                   const bson::BSONObj &orderBy = _sdbStaticObject,
                                   const bson::BSONObj &hint = _sdbStaticObject
                                 ) = 0 ;
-
+      virtual INT32 getDC( _sdbDataCenter **dc ) = 0 ;
+      virtual INT32 getDC( sdbDataCenter &dc ) = 0 ;
 
 /*      virtual INT32 modifyConfig ( INT32 nodeID,
                        std::map<std::string,std::string> &config ) = 0 ;
@@ -4135,7 +4335,17 @@ namespace sdbclient
          return pSDB->listDomains ( cursor, condition, selector, orderBy, hint ) ;
       }
 
-
+      /** \fn INT32 getDC( sdbDataCenter &dc )
+          \brief Get current data center.
+          \retval SDB_OK Operation Success
+          \retval Others Operation Fail
+      */
+      INT32 getDC( sdbDataCenter &dc )
+      {
+         if ( !pSDB )
+            return SDB_SYS ;
+         return pSDB->getDC ( dc ) ;
+      }
 
 /*      INT32 modifyConfig ( INT32 nodeID,
                            std::map<std::string,std::string> &config )

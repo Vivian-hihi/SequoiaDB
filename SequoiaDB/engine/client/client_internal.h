@@ -30,6 +30,7 @@
 #define SDB_HANDLE_TYPE_REPLICANODE  6
 #define SDB_HANDLE_TYPE_DOMAIN       7
 #define SDB_HANDLE_TYPE_LOB          8
+#define SDB_HANDLE_TYPE_DC           9
 
 struct _Node
 {
@@ -65,7 +66,6 @@ struct _sdbRGStruct
    INT32 _handleType ;
    sdbConnectionHandle _connection ;
    Socket* _sock ;
-   INT32 _offset ;
    CHAR *_pSendBuffer ;
    INT32 _sendBufferSize ;
    CHAR *_pReceiveBuffer ;
@@ -85,7 +85,6 @@ struct _sdbRNStruct
    INT32 _handleType ;
    sdbConnectionHandle _connection ;
    Socket* _sock ;
-   INT32 _offset ;
    CHAR *_pSendBuffer ;
    INT32 _sendBufferSize ;
    CHAR *_pReceiveBuffer ;
@@ -108,7 +107,6 @@ struct _sdbCSStruct
    INT32 _handleType ;
    sdbConnectionHandle _connection ;
    Socket* _sock ;
-   INT32 _offset ;
    CHAR *_pSendBuffer ;
    INT32 _sendBufferSize ;
    CHAR *_pReceiveBuffer ;
@@ -126,7 +124,6 @@ struct _sdbCollectionStruct
    INT32 _handleType ;
    sdbConnectionHandle _connection ;
    Socket* _sock ;
-   INT32 _offset ;
    CHAR *_pSendBuffer ;
    INT32 _sendBufferSize ;
    CHAR *_pReceiveBuffer ;
@@ -170,7 +167,6 @@ struct _sdbDomainStruct
    INT32 _handleType ;
    sdbConnectionHandle _connection ;
    Socket* _sock ;
-   INT32 _offset ;
    CHAR *_pSendBuffer ;
    INT32 _sendBufferSize ;
    CHAR *_pReceiveBuffer ;
@@ -213,6 +209,22 @@ struct _sdbLobStruct
    const CHAR *_dataCache ;
 } ;
 typedef struct _sdbLobStruct sdbLobStruct ;
+
+#define CLIENT_DC_NAMESZ 127
+struct _sdbDCStruct
+{
+   INT32 _handleType ;
+   sdbConnectionHandle _connection ;
+   Socket* _sock ;
+   CHAR *_pSendBuffer ;
+   INT32 _sendBufferSize ;
+   CHAR *_pReceiveBuffer ;
+   INT32 _receiveBufferSize ;
+   BOOLEAN _endianConvert ;
+
+   CHAR _name[ CLIENT_DC_NAMESZ + 1 ] ;
+} ;
+typedef struct _sdbDCStruct sdbDCStruct ;
 
 
 #endif

@@ -224,6 +224,7 @@
 #define FIELD_NAME_SCANTYPE                  "ScanType"
 #define VALUE_NAME_TBSCAN                    "tbscan"
 #define VALUE_NAME_IXSCAN                    "ixscan"
+#define VALUE_NAME_GLOBAL                    "GLOBAL"
 #define FIELD_NAME_INDEXNAME                 "IndexName"
 #define FIELD_NAME_INDEXLID                  "IndexLID"
 #define FIELD_NAME_DIRECTION                 "Direction"

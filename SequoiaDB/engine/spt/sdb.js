@@ -462,6 +462,12 @@ SdbDomain.prototype.toString = function() {
 }
 // end SdbDomain
 
+// SdbDc
+SdbDC.prototype.toString = function() {
+   return this._name ;
+}
+// end SdbDc
+
 // Sdb
 Sdb.prototype.toString = function() {
    return this._host + ":" + this._port;

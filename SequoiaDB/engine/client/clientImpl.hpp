@@ -29,11 +29,13 @@ namespace sdbclient
 #define CLIENT_CS_NAMESZ                   127
 #define CLIENT_REPLICAGROUP_NAMESZ         127
 #define CLIENT_DOMAIN_NAMESZ               127
+#define CLIENT_DC_NAMESZ                   127
    class _sdbCollectionSpaceImpl ;
    class _sdbCollectionImpl ;
    class _sdbReplicaGroupImpl ;
    class _sdbNodeImpl ;
    class _sdbDomainImpl ;
+   class _sdbDataCenterImpl ;
    class _sdbLobImpl ;
    class _sdbImpl ;
 
@@ -762,8 +764,62 @@ namespace sdbclient
       }
 
    } ;
-
    typedef class _sdbDomainImpl sdbDomainImpl ;
+
+   /*
+      _sdbDataCenterImpl
+   */
+   class _sdbDataCenterImpl : public _sdbDataCenter
+   {
+      friend class _sdbImpl ;
+      
+   private :
+      _sdbDataCenterImpl ( const _sdbDataCenterImpl& other ) ;
+      _sdbDataCenterImpl& operator= ( const _sdbDataCenterImpl& other ) ;
+#if defined CLIENT_THREAD_SAFE
+      ossSpinSLatch           _mutex ;
+#endif
+      _sdbImpl                *_connection ;
+      CHAR                    *_pSendBuffer ;
+      INT32                   _sendBufferSize ;
+      CHAR                    *_pReceiveBuffer ;
+      INT32                   _receiveBufferSize ;
+      CHAR _dcName[ CLIENT_DC_NAMESZ+1 ] ;
+
+   private:
+      INT32 _setName ( const CHAR *pClusterName,
+                       const CHAR *pBusinessName ) ;
+      void _setConnection ( _sdb *connection ) ;
+      void _dropConnection()
+      {
+         _connection = NULL ;
+      }
+
+   public :
+      _sdbDataCenterImpl () ;
+      ~_sdbDataCenterImpl () ;
+
+   public :
+      const CHAR* getName ()
+      {
+         return _dcName ;
+      }
+      INT32 getDetail( bson::BSONObj &retInfo ) ;
+      INT32 activateDC() ;
+      INT32 deactivateDC() ;
+      INT32 enableReadOnly( BOOLEAN isReadOnly ) ;
+      INT32 createImage( const CHAR *pCataAddrList ) ;
+      INT32 removeImage() ;
+      INT32 enableImage() ;
+      INT32 disableImage() ;
+      INT32 attachGroups( bson::BSONObj &info ) ;
+      INT32 detachGroups( bson::BSONObj &info ) ;
+
+   private :
+      INT32 _DCCommon( const CHAR *pValue, bson::BSONObj *pInfo = NULL ) ;
+
+   } ;
+   typedef class _sdbDataCenterImpl sdbDataCenterImpl ;
 
    /*
       _sdbLobImpl
@@ -867,6 +923,7 @@ namespace sdbclient
       std::set<ossValuePtr>    _nodes ;
       std::set<ossValuePtr>    _replicaGroups ;
       std::set<ossValuePtr>    _domains ;
+      std::set<ossValuePtr>    _dataCenters ;
       std::set<ossValuePtr>    _lobs ;
 
       void _disconnect () ;
@@ -875,9 +932,16 @@ namespace sdbclient
       INT32 _recvExtract ( CHAR **ppBuffer, INT32 *size, SINT64 &contextID,
                            BOOLEAN &result ) ;
       INT32 _reallocBuffer ( CHAR **ppBuffer, INT32 *size, INT32 newSize ) ;
+      INT32 _getRetInfo ( CHAR **ppBuffer, INT32 *size,
+                          SINT64 contextID, _sdbCursor **ppCursor ) ;
       INT32 _runCommand ( const CHAR *pString, BOOLEAN &result,
                           const BSONObj *arg1 = NULL, const BSONObj *arg2 = NULL,
                           const BSONObj *arg3 = NULL, const BSONObj *arg4 = NULL ) ;
+      INT32 _runCommand ( const CHAR *pString,
+                          const BSONObj *arg1 = NULL, const BSONObj *arg2 = NULL,
+                          const BSONObj *arg3 = NULL, const BSONObj *arg4 = NULL,
+                          _sdbCursor **retInfoCursor = NULL,
+                          _sdbCursor **errInfoCursor = NULL ) ;
       INT32 _requestSysInfo () ;
       void _regCursor ( _sdbCursorImpl *cursor )
       {
@@ -913,6 +977,12 @@ namespace sdbclient
       {
          lock () ;
          _domains.insert ( (ossValuePtr)domain ) ;
+         unlock () ;
+      }
+      void _regDataCenter ( _sdbDataCenterImpl *dc )
+      {
+         lock () ;
+         _dataCenters.insert ( (ossValuePtr)dc ) ;
          unlock () ;
       }
       void _regLob ( _sdbLobImpl *lob )
@@ -976,6 +1046,12 @@ namespace sdbclient
          _domains.erase ( (ossValuePtr)domain ) ;
          unlock () ;
       }
+      void _unregDataCenter ( _sdbDataCenterImpl *dc )
+      {
+         lock () ;
+         _dataCenters.erase ( (ossValuePtr)dc ) ;
+         unlock () ;
+      }
       void _unregLob ( _sdbLobImpl *lob )
       {
          lock () ;
@@ -992,6 +1068,7 @@ namespace sdbclient
       friend class _sdbNodeImpl ;
       friend class _sdbReplicaGroupImpl ;
       friend class _sdbDomainImpl ;
+      friend class _sdbDataCenterImpl ;
       friend class _sdbLobImpl ;
    public :
       _sdbImpl ( BOOLEAN useSSL = FALSE ) ;
@@ -1304,7 +1381,14 @@ namespace sdbclient
       {
          return listDomains ( &cursor.pCursor, condition, selector, orderBy, hint ) ;
       }
+
+      INT32 getDC( _sdbDataCenter **dc ) ;
       
+      INT32 getDC( sdbDataCenter &dc )
+      {
+         return getDC( &dc.pDC ) ;
+      }
+
 /*      INT32 modifyConfig ( INT32 nodeID,
                            std::map<std::string,std::string> &config ) ;
 

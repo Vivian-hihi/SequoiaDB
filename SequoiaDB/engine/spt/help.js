@@ -168,3 +168,31 @@ SdbDomain.prototype.help = function( val ) {
       man( "domain", val ) ;
    }
 }
+
+
+SdbDC.prototype.help = function( val ) {
+   if ( val == undefined )
+   {
+      println("DC methods:") ;
+      println("   dc.help(<method>)           help on specified method of data center, e.g. dc.help(\'activate\')");
+      man( "dc" ) ;
+   }
+   else
+   {
+      man( "dc", val ) ;
+   }
+// TODO: need to remove the follow
+   println("   createImage( <imageCatAddr> )  --eg: dc.createImage( \'192.168.20.106:30003\' )") ;
+   println("   removeImage()") ;
+   println("   attachGroups( [groupsMapObj] ) --eg: dc.attachGroups( {Groups:[[\'a\', \'a\'], [\'b\', \'b\']]} }" ) ;
+   println("   detachGroups( [groupsMapObj] ) --eg: dc.detachGroups( {Groups:[[\'a\',\'a\'], [\'b\', \'b\']]} )" ) ;
+   println("   enableImage()") ;
+   println("   disableImage()");
+   println("   activate()") ;
+   println("   deactivate()") ;
+   println("   enableReadonly()") ;
+   println("   disableReadonly()") ;
+   println("   getDetail()") ;
+   println("   toString()") ;
+}
+

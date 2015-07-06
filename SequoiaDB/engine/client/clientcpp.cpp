@@ -4238,14 +4238,13 @@ do                                                            \
       PD_TRACE_ENTRY ( SDB_CLIENT__SETNAME ) ;
       INT32 rc = SDB_OK ;
       INT32 nameLength = ossStrlen ( pCollectionSpaceName ) ;
-      ossMemset ( _collectionSpaceName, 0, sizeof ( _collectionSpaceName ) ) ;
       if ( nameLength > CLIENT_CS_NAMESZ )
       {
          rc = SDB_INVALIDARG ;
          goto exit ;
       }
-      ossMemcpy ( _collectionSpaceName, pCollectionSpaceName,
-                  nameLength );
+      ossMemset ( _collectionSpaceName, 0, sizeof ( _collectionSpaceName ) ) ;
+      ossMemcpy ( _collectionSpaceName, pCollectionSpaceName, nameLength );
    exit:
       PD_TRACE_EXITRC ( SDB_CLIENT__SETNAME, rc );
       return rc ;
@@ -4562,14 +4561,13 @@ do                                                            \
       PD_TRACE_ENTRY ( SDB_CLIENT__DOMAINSETNAME ) ;
       INT32 rc = SDB_OK ;
       INT32 nameLength = ossStrlen ( pDomainName ) ;
-      ossMemset ( _domainName, 0, sizeof ( _domainName ) ) ;
-      if ( nameLength > CLIENT_CS_NAMESZ )
+      if ( nameLength > CLIENT_DOMAIN_NAMESZ )
       {
          rc = SDB_INVALIDARG ;
          goto error ;
       }
-      ossMemcpy ( _domainName, pDomainName,
-                  nameLength );
+      ossMemset ( _domainName, 0, sizeof(_domainName) ) ;
+      ossMemcpy ( _domainName, pDomainName, nameLength ) ;
    done :
       PD_TRACE_EXITRC ( SDB_CLIENT__DOMAINSETNAME, rc );
       return rc ;
@@ -4696,6 +4694,267 @@ do                                                            \
    error :
       goto done ;
    }
+
+   /*
+    * sdbDataCenterImpl
+    * SequoiaDB Data Center Implementation
+    */
+   _sdbDataCenterImpl::_sdbDataCenterImpl () :
+   _connection ( NULL ),
+   _pSendBuffer ( NULL ),
+   _sendBufferSize ( 0 ) ,
+   _pReceiveBuffer ( NULL ) ,
+   _receiveBufferSize ( 0 )
+   {
+      ossMemset( _dcName, 0, sizeof ( _dcName ) ) ;
+   }
+
+   _sdbDataCenterImpl::~_sdbDataCenterImpl ()
+   {
+      if ( _connection )
+      {
+         _connection->_unregDataCenter( this ) ;
+      }
+      if ( _pSendBuffer )
+      {
+         SDB_OSS_FREE ( _pSendBuffer ) ;
+      }
+      if ( _pReceiveBuffer )
+      {
+         SDB_OSS_FREE ( _pReceiveBuffer ) ;
+      }
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT__DCSETNAME, "_sdbDataCenterImpl::_setName" )
+   INT32 _sdbDataCenterImpl::_setName ( const CHAR *pClusterName,
+                                        const CHAR *pBusinessName )
+   {
+      PD_TRACE_ENTRY ( SDB_CLIENT__DCSETNAME ) ;
+      INT32 rc = SDB_OK ;
+      INT32 nameLength = ossStrlen( pClusterName ) + 
+                         ossStrlen( pBusinessName ) + 1 ;
+      const CHAR *pStr = ":" ;
+      if ( nameLength > CLIENT_DC_NAMESZ )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      ossMemset ( _dcName, 0, sizeof(_dcName) ) ;
+      ossMemcpy( _dcName, pClusterName, ossStrlen(pClusterName) ) ;
+      ossMemcpy( _dcName + ossStrlen(pClusterName), pStr, 1 ) ;
+      ossMemcpy( _dcName + ossStrlen(pClusterName) + 1, pBusinessName,
+                 ossStrlen(pBusinessName) ) ;
+   done :
+      PD_TRACE_EXITRC ( SDB_CLIENT__DCSETNAME, rc );
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT__DCSETCONNECTION, "_sdbDataCenterImpl::_setConnection" )
+   void _sdbDataCenterImpl::_setConnection ( _sdb *connection )
+   {
+      PD_TRACE_ENTRY ( SDB_CLIENT__DCSETCONNECTION ) ;
+      _connection = (_sdbImpl*)connection ;
+      _connection->_regDataCenter( this ) ;
+      PD_TRACE_EXIT ( SDB_CLIENT__DCSETCONNECTION );
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT__DCCOMMON, "_sdbDataCenterImpl::_DCCommon" )
+   INT32 _sdbDataCenterImpl::_DCCommon( const CHAR *pValue, bson::BSONObj *pInfo )
+   {
+      PD_TRACE_ENTRY ( SDB_CLIENT__DCCOMMON ) ;
+      INT32 rc            = SDB_OK ;
+      const CHAR *pCommand = CMD_ADMIN_PREFIX CMD_NAME_ALTER_DC ;
+      BSONObjBuilder bob ;
+      BSONObj newObj ;
+
+      // check 
+      if ( NULL == _connection )
+      {
+         rc = SDB_NOT_CONNECTED ;
+         goto error ;
+      }
+      if ( NULL == pValue )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      // build obj to send
+      bob.append( FIELD_NAME_ACTION, pValue ) ;
+      if ( NULL != pInfo )
+      {
+         bob.append( FIELD_NAME_OPTIONS, *pInfo ) ;
+      }
+      newObj = bob.obj() ;
+
+      // run command
+      rc = _connection->_runCommand( pCommand, &newObj, NULL, NULL, NULL,
+                                     NULL, NULL ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+
+   done :
+      PD_TRACE_EXITRC ( SDB_CLIENT__DCCOMMON, rc ) ;
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_DCGETDETAIL, "_sdbDataCenterImpl::getDetail" )
+   INT32 _sdbDataCenterImpl::getDetail( bson::BSONObj &retInfo )
+   {
+      PD_TRACE_ENTRY ( SDB_CLIENT_DCGETDETAIL ) ;
+      INT32 rc                  = SDB_OK ;
+      const CHAR *pCommand      = CMD_ADMIN_PREFIX CMD_NAME_GET_DCINFO ;
+      _sdbCursor *retInfoCursor = NULL ;
+      
+      // check
+      if ( NULL == _connection )
+      {
+         rc = SDB_NOT_CONNECTED ;
+         goto error ;
+      }
+
+      // run command
+      rc = _connection->_runCommand( pCommand, NULL, NULL, NULL, NULL,
+                                     &retInfoCursor ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+      
+      // get dc detail
+      rc = retInfoCursor->next( retInfo ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+
+   done :
+      if ( NULL != retInfoCursor )
+      {
+         delete retInfoCursor ;
+      }
+      PD_TRACE_EXITRC ( SDB_CLIENT_DCGETDETAIL, rc ) ;
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_ACTIVATEDC, "_sdbDataCenterImpl::activateDC" )
+   INT32 _sdbDataCenterImpl::activateDC()
+   {
+      PD_TRACE_ENTRY ( SDB_CLIENT_ACTIVATEDC ) ;
+      INT32 rc = _DCCommon( CMD_VALUE_NAME_ACTIVATE, NULL ) ;
+      PD_TRACE_EXITRC ( SDB_CLIENT_ACTIVATEDC, rc ) ;
+      return rc ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_DEACTIVATEDC, "_sdbDataCenterImpl::deactivateDC" )
+   INT32 _sdbDataCenterImpl::deactivateDC()
+   {
+      PD_TRACE_ENTRY ( SDB_CLIENT_DEACTIVATEDC ) ;
+      INT32 rc = _DCCommon( CMD_VALUE_NAME_DEACTIVATE, NULL ) ;
+      PD_TRACE_EXITRC ( SDB_CLIENT_DEACTIVATEDC, rc ) ;
+      return rc ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_ENABLEREADONLY, "_sdbDataCenterImpl::enableReadOnly" )
+   INT32 _sdbDataCenterImpl::enableReadOnly( BOOLEAN isReadOnly )
+   {
+      PD_TRACE_ENTRY ( SDB_CLIENT_ENABLEREADONLY ) ;
+      INT32 rc = SDB_OK ;
+      if ( TRUE == isReadOnly )
+      {  
+         rc = _DCCommon( CMD_VALUE_NAME_ENABLE_READONLY, NULL ) ;
+      }
+      else
+      {
+         rc = _DCCommon( CMD_VALUE_NAME_DISABLE_READONLY, NULL ) ;
+      }
+      PD_TRACE_EXITRC ( SDB_CLIENT_ENABLEREADONLY, rc ) ;
+      return rc ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_CREATEIMAGE, "_sdbDataCenterImpl::createImage" )
+   INT32 _sdbDataCenterImpl::createImage( const CHAR *pCataAddrList )
+   {
+      PD_TRACE_ENTRY ( SDB_CLIENT_CREATEIMAGE ) ;
+      INT32 rc = SDB_OK ;
+      BSONObj newObj ;
+
+      // check
+      if ( NULL == pCataAddrList )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      // build obj 
+      newObj = BSON( FIELD_NAME_ADDRESS << pCataAddrList ) ;
+
+      // run command
+      rc = _DCCommon( CMD_VALUE_NAME_CREATE, &newObj ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+   done:
+      PD_TRACE_EXITRC ( SDB_CLIENT_CREATEIMAGE, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_REMOVEIMAGE, "_sdbDataCenterImpl::removeImage" )
+   INT32 _sdbDataCenterImpl::removeImage()
+   {
+      PD_TRACE_ENTRY ( SDB_CLIENT_REMOVEIMAGE ) ;
+      INT32 rc = _DCCommon( CMD_VALUE_NAME_REMOVE, NULL ) ;
+      PD_TRACE_EXITRC ( SDB_CLIENT_REMOVEIMAGE, rc ) ;
+      return rc ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_ENABLEIMAGE, "_sdbDataCenterImpl::enableImage" )
+   INT32 _sdbDataCenterImpl::enableImage()
+   {
+      PD_TRACE_ENTRY ( SDB_CLIENT_ENABLEIMAGE ) ;
+      INT32 rc = _DCCommon( CMD_VALUE_NAME_ENABLE, NULL ) ;
+      PD_TRACE_EXITRC ( SDB_CLIENT_ENABLEIMAGE, rc ) ;
+      return rc ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_DISABLEIMAGE, "_sdbDataCenterImpl::disableImage" )
+   INT32 _sdbDataCenterImpl::disableImage()
+   {
+      PD_TRACE_ENTRY ( SDB_CLIENT_DISABLEIMAGE ) ;
+      INT32 rc = _DCCommon( CMD_VALUE_NAME_DISABLE, NULL ) ;
+      PD_TRACE_EXITRC ( SDB_CLIENT_DISABLEIMAGE, rc ) ;
+      return rc ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_ATTACHGROUPS, "_sdbDataCenterImpl::attachGroups" )
+   INT32 _sdbDataCenterImpl::attachGroups( bson::BSONObj &info )
+   {
+      PD_TRACE_ENTRY ( SDB_CLIENT_ATTACHGROUPS ) ;
+      INT32 rc = _DCCommon( CMD_VALUE_NAME_ATTACH, &info ) ;
+      PD_TRACE_EXITRC ( SDB_CLIENT_ATTACHGROUPS, rc ) ;
+      return rc ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_DETACHGROUPS, "_sdbDataCenterImpl::detachGroups" )
+   INT32 _sdbDataCenterImpl::detachGroups( bson::BSONObj &info )
+   {
+      PD_TRACE_ENTRY ( SDB_CLIENT_DETACHGROUPS ) ;
+      INT32 rc = _DCCommon( CMD_VALUE_NAME_DETACH, &info ) ;
+      PD_TRACE_EXITRC ( SDB_CLIENT_DETACHGROUPS, rc ) ;
+      return rc ;
+   }
+      
 
    /*
     * sdbLobImpl
@@ -5449,6 +5708,10 @@ do                                                            \
       for ( it = _domains.begin(); it != _domains.end(); ++it )
       {
          ((_sdbDomainImpl*)(*it))->_dropConnection () ;
+      }
+      for ( it = _dataCenters.begin(); it != _dataCenters.end(); ++it )
+      {
+         ((_sdbDataCenterImpl*)(*it))->_dropConnection () ;
       }
       for ( it = _lobs.begin(); it != _lobs.end(); ++it )
       {
@@ -6218,7 +6481,8 @@ do                                                            \
 
    PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT__RECVEXTRACT, "_sdbImpl::_recvExtract" )
    INT32 _sdbImpl::_recvExtract ( CHAR **ppBuffer, INT32 *size,
-                                  SINT64 &contextID, BOOLEAN &result )
+                                  SINT64 &contextID,
+                                  BOOLEAN &result )
    {
       PD_TRACE_ENTRY ( SDB_CLIENT__RECVEXTRACT ) ;
       INT32 rc          = SDB_OK ;
@@ -6246,6 +6510,48 @@ do                                                            \
       result = TRUE ;
    done :
       PD_TRACE_EXITRC ( SDB_CLIENT__RECVEXTRACT, rc );
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT__GETRETINFO, "_sdbImpl::_getRetInfo" )
+   INT32 _sdbImpl::_getRetInfo ( CHAR **ppBuffer, INT32 *size,
+                                 SINT64 contextID, _sdbCursor **ppCursor )
+   {
+      PD_TRACE_ENTRY ( SDB_CLIENT__GETRETINFO ) ;
+      INT32 rc           = SDB_OK ;
+      _sdbCursor *cursor = NULL ;
+
+      // build cursor obj
+      cursor = (_sdbCursor*)( new(std::nothrow) sdbCursorImpl() ) ;
+      if ( NULL == cursor )
+      {
+         rc = SDB_OOM ;
+         goto error ;
+      }
+      ((_sdbCursorImpl*)cursor)->_setCollection ( NULL ) ;
+      ((_sdbCursorImpl*)cursor)->_contextID = contextID ;
+      ((_sdbCursorImpl*)cursor)->_setConnection ( this ) ;
+
+      // if we can get info from _ppBuffer, do it
+      if ( NULL != ppBuffer )
+      {
+         if ( ((UINT32)((MsgHeader*)*ppBuffer)->messageLength) >
+              ossRoundUpToMultipleX( sizeof(MsgOpReply), 4 ) )
+         {
+            ((_sdbCursorImpl*)cursor)->_pReceiveBuffer = *ppBuffer ;
+            *ppBuffer = NULL ;
+            ((_sdbCursorImpl*)cursor)->_receiveBufferSize = *size ;
+            *size = 0 ;
+         }
+      }
+
+      // return cursor
+      *ppCursor = cursor ;
+      
+   done :
+      PD_TRACE_EXITRC ( SDB_CLIENT__GETRETINFO, rc );
       return rc ;
    error :
       goto done ;
@@ -6293,6 +6599,73 @@ do                                                            \
    error :
       goto done ;
 
+   }
+
+   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT__RUNCOMMAND2, "_sdbImpl::_runCommand" )
+   INT32 _sdbImpl::_runCommand ( const CHAR *pString,
+                                 const BSONObj *arg1,
+                                 const BSONObj *arg2,
+                                 const BSONObj *arg3,
+                                 const BSONObj *arg4,
+                                 _sdbCursor **retInfoCursor,
+                                 _sdbCursor **errInfoCursor )
+   {
+      PD_TRACE_ENTRY ( SDB_CLIENT__RUNCOMMAND2 ) ;
+      INT32 rc            = SDB_OK ;
+      BOOLEAN result      = FALSE ;
+      SINT64 contextID    = -1 ;
+      lock () ;
+      rc = clientBuildQueryMsgCpp ( &_pSendBuffer, &_sendBufferSize, pString,
+                                    0, 0, -1, -1,
+                                    arg1?arg1->objdata():NULL,
+                                    arg2?arg2->objdata():NULL,
+                                    arg3?arg3->objdata():NULL,
+                                    arg4?arg4->objdata():NULL,
+                                    _endianConvert ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+      rc = _send ( _pSendBuffer ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+      rc = _recvExtract ( &_pReceiveBuffer, &_receiveBufferSize,
+                          contextID, result ) ;
+      if ( SDB_OK != rc )
+      {
+         if ( FALSE == result ) // error happened in driver
+         {
+            goto error ;
+         }
+         else // error happened in engine
+         {
+            // TODO: get error info
+            goto error ;
+         }
+      }
+      
+      // check return msg header
+      CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, this ) ;
+      
+      // try to get retObj
+      if ( -1 != contextID )
+      {
+         rc = _getRetInfo( &_pReceiveBuffer, &_receiveBufferSize,
+                           contextID, retInfoCursor ) ;
+         if ( SDB_OK != rc )
+         {
+            goto error ;
+         }
+      }
+   done :
+      unlock () ;
+      PD_TRACE_EXITRC ( SDB_CLIENT__RUNCOMMAND2, rc );
+      return rc ;
+   error :
+      // TODO: maybe need to handle error msg caused by driver
+      goto done ;
    }
 
    PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_GETCOLLECTIONINSDB, "_sdbImpl::getCollection" )
@@ -7997,6 +8370,87 @@ do                                                            \
       PD_TRACE_EXITRC ( SDB_CLIENT_LISTDOMAINS, rc );
       return rc ;
    error :
+      goto done ;
+   }
+
+   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_GETDC, "_sdbImpl::getDC" )
+   INT32 _sdbImpl::getDC( _sdbDataCenter **dc )
+   {
+      PD_TRACE_ENTRY ( SDB_CLIENT_GETDC ) ;
+      INT32 rc                  = SDB_OK ;
+      const CHAR *pClusterName  = NULL ;
+      const CHAR *pBusinessName = NULL ;
+      _sdbDataCenter *pDC       = NULL ;
+      BSONElement ele ;
+      BSONObj retObj ;
+      BSONObj subObj ;
+
+      // check
+      if ( NULL == _sock )
+      {
+         rc = SDB_NOT_CONNECTED ;
+         goto error ;
+      }
+      if ( NULL == dc )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      // build dc obj
+      pDC = (_sdbDataCenter*)( new(std::nothrow) _sdbDataCenterImpl() ) ;
+      if ( NULL == pDC )
+      {
+         rc = SDB_OOM ;
+         goto error ;
+      }
+      
+      // register
+      ((sdbDataCenterImpl*)pDC)->_setConnection ( this ) ;
+
+      // get dc name
+      rc = pDC->getDetail( retObj ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+      ele = retObj.getField( FIELD_NAME_DATACENTER ) ;
+      if ( Object == ele.type() )
+      {
+         subObj = ele.embeddedObject().getOwned() ;
+         ele = subObj.getField( FIELD_NAME_CLUSTERNAME ) ;
+         if ( String == ele.type() )
+         {
+            pClusterName = ele.valuestr() ;
+         }
+         ele = subObj.getField( FIELD_NAME_BUSINESSNAME ) ;
+         if ( String == ele.type() )
+         {
+            pBusinessName = ele.valuestr() ;
+         }
+      }
+      if ( NULL == pClusterName || NULL == pBusinessName )
+      {
+         rc = SDB_SYS ;
+         goto done ;
+      }
+      rc = ((sdbDataCenterImpl*)pDC)->_setName ( pClusterName, pBusinessName ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+
+      // return the newly build dc obj
+      *dc = pDC ;
+
+   done :
+      PD_TRACE_EXITRC ( SDB_CLIENT_GETDC, rc );
+      return rc ;
+   error :
+      if ( NULL != pDC )
+      {
+         delete pDC ;
+      }
       goto done ;
    }
 
