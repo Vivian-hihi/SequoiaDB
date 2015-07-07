@@ -28,9 +28,9 @@
 		<property name="java.driver.jar.name" value="sequoiadb.jar" />
 
 		<echo message="Begin to compile source code..." />
-		<delete dir="${CODE_DIR}/bin"  failonerror="true" />
+		<delete dir="${CODE_DIR}/bin"  failonerror="false" />
     	<mkdir dir="${CODE_DIR}/bin" />
-    	<delete dir="${CODE_DIR}/build" failonerror="true" />
+    	<delete dir="${CODE_DIR}/build" failonerror="false" />
     	<if>
 			<equals arg1="${compile.debug}" arg2="true" />
 			<then>
