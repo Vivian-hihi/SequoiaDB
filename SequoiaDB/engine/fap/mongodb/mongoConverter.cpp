@@ -128,14 +128,14 @@ INT32 mongoConverter::reConvert( msgBuffer &out, MsgOpReply *reply )
          MsgOpQuery* query = (MsgOpQuery *)out.data() ;
          numToReturn = query->numToReturn ;
 
-         if ( 0 == reply->numReturned )// && numToReturn > 0 )
+         if ( 0 == reply->numReturned && 0 != reply->contextID )
          {
             out.zero() ;
             fap::mongo::buildGetMoreMsg( out ) ;
-            MsgOpReply *msg = ( MsgOpReply *)out.data() ;
+            MsgOpGetMore *msg = ( MsgOpGetMore *)out.data() ;
             msg->header.requestID = reply->header.requestID ;
             msg->contextID = reply->contextID ;
-            msg->numReturned = numToReturn ;
+            msg->numToReturn = numToReturn ;
             goto done ;
          }
       }
@@ -155,10 +155,10 @@ INT32 mongoConverter::reConvert( msgBuffer &out, MsgOpReply *reply )
       _parser.setCurrentOp( OP_CMD_COUNT_MORE );
 
       fap::mongo::buildGetMoreMsg( out ) ;
-      MsgOpReply *msg = ( MsgOpReply *)out.data() ;
+      MsgOpGetMore *msg = ( MsgOpGetMore* )out.data() ;
       msg->header.requestID = reply->header.requestID ;
       msg->contextID = reply->contextID ;
-      msg->numReturned = numToReturn ;
+      msg->numToReturn = numToReturn ;
       goto done ;
    }
 

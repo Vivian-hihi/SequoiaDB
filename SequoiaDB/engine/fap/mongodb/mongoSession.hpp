@@ -43,8 +43,7 @@
 #include "pmdSession.hpp"
 #include "mongodef.hpp"
 #include "parser.hpp"
-
-class mongoConverter ;
+#include "mongoConverter.hpp"
 
 /*
    _mongoSession define
@@ -80,7 +79,7 @@ private:
    void  _handleResponse( const INT32 opType, engine::rtnContextBuf &buff ) ;
 
 private:
-   mongoConverter         *_converter ;
+   mongoConverter          _converter ;
    MsgOpReply              _replyHeader ;
    BOOLEAN                 _masterRead ;
    BOOLEAN                 _authed ;

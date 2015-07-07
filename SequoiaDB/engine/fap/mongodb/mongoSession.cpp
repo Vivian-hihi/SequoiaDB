@@ -56,17 +56,10 @@ _mongoSession::_mongoSession( SOCKET fd, engine::IResource *resource )
    : engine::pmdSession( fd ), _masterRead( FALSE ),
      _authed( FALSE ), _resource( resource )
 {
-   _converter = SDB_OSS_NEW mongoConverter() ;
 }
 
 _mongoSession::~_mongoSession()
 {
-   if ( NULL != _converter )
-   {
-      SDB_OSS_DEL( _converter ) ;
-      _converter = NULL ;
-   }
-
    _resource = NULL ;
 }
 
@@ -187,8 +180,8 @@ INT32 _mongoSession::run()
             // make sure buffers are empty for coming msg
             _resetBuffers() ;
             // convert msg first
-            _converter->loadFrom( pBuff, msgSize ) ;
-            rc = _converter->convert( _inBuffer ) ;
+            _converter.loadFrom( pBuff, msgSize ) ;
+            rc = _converter.convert( _inBuffer ) ;
             if ( SDB_OK != rc && SDB_OPTION_NOT_SUPPORT != rc)
             {
                goto error ;
@@ -204,7 +197,7 @@ INT32 _mongoSession::run()
             }
 
             // handle commands before dispatched
-            if ( _preProcessMsg( _converter->getParser(),
+            if ( _preProcessMsg( _converter.getParser(),
                                  _resource, _contextBuff ) )
             {
                goto reply ;
@@ -213,15 +206,6 @@ INT32 _mongoSession::run()
             pInMsg = _inBuffer.data() ;
             while ( NULL != pInMsg )
             {
-               // set session attribute
-               if ( !_masterRead && _authed )
-               {
-                  rc = _setSeesionAttr() ;
-                  if ( SDB_OK != rc )
-                  {
-                     goto error ;
-                  }
-               }
                // process msg
                rc = _processMsg( pInMsg ) ;
                if ( SDB_OK == rc )
@@ -231,9 +215,20 @@ INT32 _mongoSession::run()
                   {
                      _authed = TRUE ;
                   }
+
+                  // operation success
+                  // set session attribute
+                  if ( !_masterRead )
+                  {
+                     rc = _setSeesionAttr() ;
+                     if ( SDB_OK != rc )
+                     {
+                        goto error ;
+                     }
+                  }
                }
 
-               rc = _converter->reConvert( _inBuffer, &_replyHeader ) ;
+               rc = _converter.reConvert( _inBuffer, &_replyHeader ) ;
                if ( SDB_OK != rc )
                {
                   goto reply ;
@@ -255,7 +250,7 @@ INT32 _mongoSession::run()
                }
             }
          reply:
-            _handleResponse( _converter->getOpType(), _contextBuff ) ;
+            _handleResponse( _converter.getOpType(), _contextBuff ) ;
             pBody = _contextBuff.data() ;
             bodyLen = _contextBuff.size() ;
             // send response
@@ -294,7 +289,7 @@ INT32 _mongoSession::_processMsg( const CHAR *pMsg )
    INT32 bodyLen = 0 ;
    BOOLEAN needReply = FALSE ;
    bson::BSONObjBuilder bob ;
-   mongoDataPacket &packet = _converter->getParser().dataPacket() ;
+   mongoDataPacket &packet = _converter.getParser().dataPacket() ;
 
    rc = _onMsgBegin( (MsgHeader *) pMsg ) ;
    if ( SDB_OK != rc )
@@ -409,9 +404,9 @@ INT32 _mongoSession::_reply( MsgOpReply *replyHeader,
    bson::BSONObjBuilder bob ;
    bson::BSONObj bsonBody ;
    bson::BSONObj objToSend ;
-   mongoDataPacket &packet = _converter->getParser().dataPacket() ;
+   mongoDataPacket &packet = _converter.getParser().dataPacket() ;
 
-   if ( OP_KILLCURSORS == _converter->getOpType() ||
+   if ( OP_KILLCURSORS == _converter.getOpType() ||
         dbInsert == packet.opCode ||
         dbUpdate == packet.opCode ||
         dbDelete == packet.opCode )
@@ -431,6 +426,10 @@ INT32 _mongoSession::_reply( MsgOpReply *replyHeader,
    reply.header.version = 0 ;
    // reservedFlag
    reply.header.reservedFlags = 0 ;
+   if ( SDB_AUTH_AUTHORITY_FORBIDDEN == replyHeader->flags )
+   {
+      reply.header.reservedFlags |= 2 ;
+   }
    // startingFrom
    if ( -1 != replyHeader->contextID )
    {
@@ -465,7 +464,7 @@ INT32 _mongoSession::_reply( MsgOpReply *replyHeader,
 
    // nReturn
    if ( packet.with( OPTION_CMD ) &&
-        OP_GETMORE != _converter->getOpType() )
+        OP_GETMORE != _converter.getOpType() )
    {
       reply.nReturned = ( replyHeader->numReturned > 0 ?
                           replyHeader->numReturned : 1 ) ;
@@ -490,7 +489,7 @@ INT32 _mongoSession::_reply( MsgOpReply *replyHeader,
       {
          if ( 0 == reply.cursorId &&
              ( SDB_OK == _replyHeader.flags &&
-               OP_QUERY != _converter->getOpType() ) )
+               OP_QUERY != _converter.getOpType() ) )
          {
             // error or command
             bsonBody.init( pBody ) ;
@@ -518,8 +517,8 @@ INT32 _mongoSession::_reply( MsgOpReply *replyHeader,
       }
       else
       {
-         if ( OP_GETMORE != _converter->getOpType() &&
-              OP_CMD_GET_INDEX == _converter->getOpType()  )
+         if ( OP_GETMORE != _converter.getOpType() &&
+              OP_CMD_GET_INDEX == _converter.getOpType()  )
          {
             bob.append( "ok", 1.0 ) ;
             objToSend = bob.obj() ;
@@ -618,6 +617,16 @@ BOOLEAN _mongoSession::_preProcessMsg( msgParser &parser,
 void _mongoSession::_handleResponse( const INT32 opType,
                                      engine::rtnContextBuf &buff )
 {
+   if ( SDB_AUTH_AUTHORITY_FORBIDDEN == _replyHeader.flags )
+   {
+      bson::BSONObjBuilder bob ;
+      bson::BSONObj obj( buff.data() ) ;
+      bob.append( "ok", obj.getIntField( "ok" ) ) ;
+      bob.append( "$err", obj.getStringField( "err" ) ) ;
+      bob.append( "code", obj.getIntField( "code" ) ) ;
+      buff = engine::rtnContextBuf( bob.obj() ) ;
+   }
+
    if ( OP_CMD_COUNT_MORE == opType )
    {
       bson::BSONObjBuilder bob ;
@@ -643,11 +652,32 @@ void _mongoSession::_handleResponse( const INT32 opType,
          tmp.init( pBody + offset ) ;
          obj = BSON( "name" << tmp.getStringField( "Name" ) ) ;
          _tmpBuffer.write( obj.objdata(), obj.objsize(), TRUE ) ;
-         offset += ossRoundUpToMultipleX( obj.objsize(), 4 ) ;
+         offset += ossRoundUpToMultipleX( tmp.objsize(), 4 ) ;
       }
       const CHAR *pBuffer = _tmpBuffer.data() ;
       INT32 size = _tmpBuffer.size() ;
       engine::rtnContextBuf ctx( pBuffer, size, recordNum ) ;
+      buff = ctx ;
+   }
+
+   if ( OP_CMD_GET_INDEX == opType )
+   {
+      INT32 rNum = buff.recordNum() ;
+      INT32 len = buff.size() ;
+      const CHAR *pBody = buff.data() ;
+      INT32 offset = 0 ;
+      bson::BSONObj obj, tmp, indexObj, value ;
+      _tmpBuffer.zero() ;
+      while ( offset < len )
+      {
+         tmp.init( pBody + offset ) ;
+         obj = tmp.getObjectField( "IndexDef" ) ;
+         _tmpBuffer.write( obj.objdata(), obj.objsize(), TRUE ) ;
+         offset += ossRoundUpToMultipleX( tmp.objsize(), 4 ) ;
+      }
+      const CHAR *pBuffer = _tmpBuffer.data() ;
+      INT32 size = _tmpBuffer.size() ;
+      engine::rtnContextBuf ctx( pBuffer, size, rNum ) ;
       buff = ctx ;
    }
 

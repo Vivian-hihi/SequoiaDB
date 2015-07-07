@@ -56,14 +56,14 @@ public:
       }
    }
 
-   void loadFrom( const CHAR *msg, const INT32 len )
+   void loadFrom( CHAR *msg, const INT32 len )
    {
       if ( NULL == msg )
       {
          return ;
       }
 
-      _msgdata = const_cast< CHAR * >( msg ) ;
+      _msgdata = msg ;
       _msglen  = len ;
    }
 

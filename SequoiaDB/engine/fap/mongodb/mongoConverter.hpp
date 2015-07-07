@@ -73,7 +73,7 @@ public:
 
    // virtual function for baseConverter
    virtual INT32 convert( msgBuffer &out ) ;
-   virtual INT32 reConvert( msgBuffer &out, MsgOpReply *reply ) ;
+   INT32 reConvert( msgBuffer &out, MsgOpReply *reply ) ;
 
 private:
    BOOLEAN _bigEndian ;

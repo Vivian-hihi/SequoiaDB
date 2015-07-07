@@ -52,11 +52,10 @@ DECLARE_COMMAND_VAR( killCursors )
 DECLARE_COMMAND_VAR( getnonce )
 DECLARE_COMMAND_VAR( authenticate )
 DECLARE_COMMAND_VAR( createUser )
-DECLARE_COMMAND_VAR( removeUser )
+DECLARE_COMMAND_VAR( dropUser )
 DECLARE_COMMAND_VAR( listUsers )
 DECLARE_COMMAND_VAR( create )
 DECLARE_COMMAND_VAR( createCS )
-//DECLARE_COMMAND_VAR( createCollection )
 DECLARE_COMMAND_VAR( listCollection )
 DECLARE_COMMAND_VAR( drop )
 DECLARE_COMMAND_VAR( count )
@@ -68,6 +67,7 @@ DECLARE_COMMAND_VAR( listIndexes )
 DECLARE_COMMAND_VAR( getlasterror )
 DECLARE_COMMAND_VAR( ismaster )
 DECLARE_COMMAND_VAR( ping )
+DECLARE_COMMAND_VAR( logout )
 
 
 void generateNonce( std::stringstream &ss )
@@ -114,19 +114,12 @@ INT32 insertCommand::convert( msgParser &parser )
    if ( packet.with( OPTION_CMD ) )
    {
       // hit here means insert with write command
-      // skip nToSkip and nToReturn first
-      parser.skipBytes( sizeof( packet.nToSkip ) + sizeof( packet.nToReturn ) ) ;
    }
    else
    {
       // one or more doc
    }
 
-   if ( !parser.more() )
-   {
-      rc = SDB_INVALIDARG ;
-      goto error ;
-   }
 
 done:
    return rc ;
@@ -137,6 +130,7 @@ error:
 INT32 insertCommand::buildMsg( msgParser& parser, msgBuffer &sdbMsg )
 {
    INT32 rc                = SDB_OK ;
+   baseCommand *&cmd       = parser.command() ;
    MsgOpInsert *insert     = NULL ;
    mongoDataPacket &packet = parser.dataPacket() ;
    parser.setCurrentOp( OP_INSERT ) ;
@@ -158,17 +152,36 @@ INT32 insertCommand::buildMsg( msgParser& parser, msgBuffer &sdbMsg )
       insert->flags |= FLG_INSERT_CONTONDUP ;
    }
 
-   parser.readNextObj( packet.all ) ;
-
    if ( packet.with( OPTION_CMD ) )
    {
+      const CHAR *clName = NULL ;
       packet.fullName = packet.csName ;
       packet.fullName += "." ;
+      clName = packet.all.getStringField( "insert" ) ;
+      if ( 0 == ossStrcmp( clName, "system.users" ) )
+      {
+         packet.optionMask |= OPTION_USR ;
+         cmd = commandMgr::instance()->findCommand( "createUser" ) ;
+         if ( NULL == cmd )
+         {
+            rc = SDB_OPTION_NOT_SUPPORT ;
+            parser.setCurrentOp( OP_CMD_NOT_SUPPORTED ) ;
+         }
+
+         sdbMsg.zero() ;
+         rc = cmd->buildMsg( parser, sdbMsg ) ;
+         if ( SDB_OK != rc )
+         {
+            goto error ;
+         }
+
+         goto done ;
+      }
       packet.fullName += packet.all.getStringField( "insert" ) ;
       insert->nameLength = packet.fullName.length() ;
       sdbMsg.write( packet.fullName.c_str(), insert->nameLength + 1, TRUE ) ;
 
-      if ( packet.all.getBoolField( "ordered" ) )
+      if ( !packet.all.getBoolField( "ordered" ) )
       {
          insert->flags |= FLG_INSERT_CONTONDUP ;
       }
@@ -190,6 +203,14 @@ INT32 insertCommand::buildMsg( msgParser& parser, msgBuffer &sdbMsg )
    }
    else
    {
+      if ( !parser.more() )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      parser.readNextObj( packet.all ) ;
+
       insert->nameLength = packet.fullName.length() ;
       sdbMsg.write( packet.fullName.c_str(), insert->nameLength + 1, TRUE ) ;
       sdbMsg.write( packet.all, TRUE ) ;
@@ -223,7 +244,7 @@ INT32 deleteCommand::convert( msgParser &parser )
 
    if ( packet.with( OPTION_USR ) )
    {
-      cmd = commandMgr::instance()->findCommand( "removeUser" ) ;
+      cmd = commandMgr::instance()->findCommand( "dropUser" ) ;
       if ( NULL == cmd )
       {
          rc = SDB_OPTION_NOT_SUPPORT ;
@@ -241,18 +262,12 @@ INT32 deleteCommand::convert( msgParser &parser )
 
    if ( packet.with( OPTION_CMD ) )
    {
-      parser.skipBytes( sizeof( packet.nToSkip ) + sizeof( packet.nToReturn ) ) ;
+      //parser.skipBytes( sizeof( packet.nToSkip ) + sizeof( packet.nToReturn ) ) ;
    }
    else
    {
       // do nothing here
       parser.readInt( sizeof( INT32 ), (CHAR *)&packet.nToSkip ) ;
-   }
-
-   if ( !parser.more() )
-   {
-      rc = SDB_INVALIDARG ;
-      goto error ;
    }
 
 done:
@@ -264,6 +279,7 @@ error:
 INT32 deleteCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
 {
    INT32 rc                = SDB_OK ;
+   baseCommand *&cmd       = parser.command() ;
    MsgOpDelete *del        = NULL ;
    mongoDataPacket &packet = parser.dataPacket() ;
 
@@ -286,12 +302,31 @@ INT32 deleteCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
       del->flags |= FLG_DELETE_SINGLEREMOVE ;
    }
 
-   parser.readNextObj( packet.all ) ;
-
    if ( packet.with( OPTION_CMD ) )
    {
+      const CHAR *clName = NULL ;
       packet.fullName = packet.csName ;
       packet.fullName += "." ;
+      clName = packet.all.getStringField( "delete" ) ;
+      if ( 0 == ossStrcmp( clName, "system.users" ) )
+      {
+         packet.optionMask |= OPTION_USR ;
+         cmd = commandMgr::instance()->findCommand( "dropUser" ) ;
+         if ( NULL == cmd )
+         {
+            rc = SDB_OPTION_NOT_SUPPORT ;
+            parser.setCurrentOp( OP_CMD_NOT_SUPPORTED ) ;
+         }
+
+         sdbMsg.zero() ;
+         rc = cmd->buildMsg( parser, sdbMsg ) ;
+         if ( SDB_OK != rc )
+         {
+            goto error ;
+         }
+
+         goto done ;
+      }
       packet.fullName += packet.all.getStringField( "delete" ) ;
       del->nameLength = packet.fullName.length() ;
       sdbMsg.write( packet.fullName.c_str(), del->nameLength + 1, TRUE ) ;
@@ -322,6 +357,14 @@ INT32 deleteCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
    }
    else
    {
+      if ( !parser.more() )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      parser.readNextObj( packet.all ) ;
+
       del->nameLength = packet.fullName.length() ;
       sdbMsg.write( packet.fullName.c_str(), del->nameLength + 1, TRUE ) ;
 
@@ -372,18 +415,12 @@ INT32 updateCommand::convert( msgParser &parser )
 
    if ( packet.with( OPTION_CMD ) )
    {
-      parser.skipBytes( sizeof( packet.nToSkip ) + sizeof( packet.nToReturn ) ) ;
+      //parser.skipBytes( sizeof( packet.nToSkip ) + sizeof( packet.nToReturn ) ) ;
    }
    else
    {
       // in update option, nToSkip is used as updateFlags
       parser.readInt( sizeof( INT32 ), (CHAR *)&packet.nToSkip ) ;
-   }
-
-   if( !parser.more() )
-   {
-      rc = SDB_INVALIDARG ;
-      goto error ;
    }
 
 done:
@@ -411,18 +448,17 @@ INT32 updateCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
    update->padding = 0 ;
    update->flags = 0 ;
 
-   parser.readNextObj( packet.all ) ;
-
    if ( packet.with( OPTION_CMD ) )
    {
       packet.fullName = packet.csName ;
       packet.fullName += "." ;
       packet.fullName += packet.all.getStringField( "update" ) ;
       update->nameLength = packet.fullName.length() ;
-      sdbMsg.write( packet.fullName.c_str(), packet.fullName.length(), TRUE ) ;
+      sdbMsg.write( packet.fullName.c_str(),
+                    packet.fullName.length() + 1, TRUE ) ;
 
       bson::BSONElement e = packet.all.getField( "updates" ) ;
-      if ( bson::Array == e.type() )
+      if ( bson::Array != e.type() )
       {
          rc = SDB_INVALIDARG ;
          goto error ;
@@ -437,7 +473,7 @@ INT32 updateCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
       {
          subObj = (*cit).Obj() ;
          obj = subObj.getObjectField( "q" ) ;
-         cond = getQueryObj( obj ) ;
+         //cond = getQueryObj( obj ) ;
          updator = subObj.getObjectField( "u" ) ;
          hint = getHintObj( obj ) ;
 
@@ -450,7 +486,7 @@ INT32 updateCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
             update->flags |= FLG_UPDATE_UPSERT ;
          }
 
-         sdbMsg.write( cond, TRUE ) ;
+         sdbMsg.write( obj, TRUE ) ;
          sdbMsg.write( updator, TRUE ) ;
          sdbMsg.write( hint, TRUE ) ;
          ++cit ;
@@ -458,6 +494,14 @@ INT32 updateCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
    }
    else
    {
+      if ( !parser.more() )
+      {
+         rc = SDB_INVALIDARG ;
+        goto error ;
+      }
+
+      parser.readNextObj( packet.all ) ;
+
       update->nameLength = packet.fullName.length() ;
       sdbMsg.write( packet.fullName.c_str(), update->nameLength + 1, TRUE ) ;
       // in update option, nToSkip is used as updateFlags
@@ -507,10 +551,6 @@ INT32 queryCommand::convert( msgParser &parser )
    mongoDataPacket &packet = parser.dataPacket() ;
 
    parser.readInt( sizeof( packet.nToSkip ), ( CHAR * )&packet.nToSkip ) ;
-   if ( 0 <= packet.nToReturn )
-   {
-      packet.nToReturn  = -1 ;
-   }
    parser.readInt( sizeof( nToReturn ), ( CHAR * )&nToReturn ) ;
    packet.nToReturn = nToReturn < 0 ? -nToReturn : nToReturn ;
    if ( 0 == packet.nToReturn )
@@ -518,7 +558,14 @@ INT32 queryCommand::convert( msgParser &parser )
       packet.nToReturn  = -1 ;
    }
 
-   if ( 0 !=  packet.optionMask && !packet.with( OPTION_CMD ))
+   if ( !parser.more() )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+   parser.readNextObj( packet.all ) ;
+
+   if ( 0 !=  packet.optionMask )
    {
       if ( packet.with( OPTION_IDX ) )
       {
@@ -532,38 +579,16 @@ INT32 queryCommand::convert( msgParser &parser )
       {
          cmd = commandMgr::instance()->findCommand( "listUsers" ) ;
       }
-
-      if ( NULL == cmd )
+      else if ( packet.with( OPTION_CMD ) )
       {
-         rc = SDB_OPTION_NOT_SUPPORT ;
-         parser.setCurrentOp( OP_CMD_NOT_SUPPORTED ) ;
-         goto error ;
+         const CHAR *cmdName = packet.all.firstElementFieldName() ;
+         packet.fullName = packet.csName ;
+         packet.fullName += "." ;
+         packet.fullName += packet.all.getStringField( cmdName ) ;
+
+         cmd = commandMgr::instance()->findCommand( cmdName ) ;
       }
 
-      rc = cmd->convert( parser ) ;
-      if ( SDB_OK != rc )
-      {
-         goto error ;
-      }
-
-      goto done ;
-   }
-
-   if ( !parser.more() )
-   {
-      rc = SDB_INVALIDARG ;
-      goto error ;
-   }
-   parser.readNextObj( packet.all ) ;
-
-   if ( packet.with( OPTION_CMD ) )
-   {
-      const CHAR *cmdName = packet.all.firstElementFieldName() ;
-      packet.fullName = packet.csName ;
-      packet.fullName += "." ;
-      packet.fullName += packet.all.getStringField( cmdName ) ;
-
-      cmd = commandMgr::instance()->findCommand( cmdName ) ;
       if ( NULL == cmd )
       {
          rc = SDB_OPTION_NOT_SUPPORT ;
@@ -645,10 +670,7 @@ INT32 queryCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
 
    sdbMsg.doneLen() ;
 
-done:
    return rc ;
-error:
-   goto done ;
 }
 
 INT32 queryCommand::doCommand( void *pData )
@@ -680,6 +702,10 @@ INT32 getMoreCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
 
    parser.readInt( sizeof( nToReturn ), ( CHAR * )&nToReturn ) ;
    packet.nToReturn = nToReturn < 0 ? -nToReturn : nToReturn ;
+   if ( 0 == packet.nToReturn )
+   {
+      packet.nToReturn = -1 ;
+   }
    more->numToReturn = packet.nToReturn ;
    parser.readInt( sizeof( packet.cursorId ), ( CHAR * )&packet.cursorId ) ;
    // match to sequoiadb contextID, need decrease 1
@@ -687,10 +713,7 @@ INT32 getMoreCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
 
    sdbMsg.doneLen() ;
 
-done:
    return rc ;
-error:
-   goto done ;
 }
 
 INT32 getMoreCommand::doCommand( void *pData )
@@ -739,10 +762,7 @@ INT32 killCursorsCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
 
    sdbMsg.doneLen() ;
 
-done:
    return rc ;
-error:
-   goto done ;
 }
 
 INT32 killCursorsCommand::doCommand( void *pData )
@@ -768,10 +788,7 @@ INT32 getnonceCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
 
    sdbMsg.write( bob.obj(), TRUE ) ;
 
-done:
    return rc ;
-error:
-   goto done ;
 }
 
 INT32 getnonceCommand::doCommand( void *pData )
@@ -783,51 +800,6 @@ INT32 authenticateCommand::convert( msgParser &parser )
 {
    return SDB_OK ;
 }
-
-/* authenticateCommand::buildMsg
-INT32 rc = SDB_OK ;
-MsgOpQuery *query = NULL ;
-mongoDataPacket &packet = parser.dataPacket() ;
-const CHAR *cmdName = CMD_ADMIN_PREFIX CMD_NAME_LIST_USERS ;
-
-parser.setCurrentOp( OP_CMD_AUTH ) ;
-sdbMsg.reverse( sizeof( MsgOpQuery ) ) ;
-sdbMsg.advance( sizeof( MsgOpQuery ) - 4 ) ;
-
-query = ( MsgOpQuery * )sdbMsg.data() ;
-query->header.opCode = MSG_BS_QUERY_REQ ;
-query->header.TID = 0 ;
-query->routeID.value = 0 ;
-query->requestId = packet.requestId ;
-query->version = 0 ;
-query->w = 0 ;
-query->padding = 0 ;
-query->flags = 0 ;
-
-setQueryFlags( parser.reservedInt, query->flags ) ;
-query->nameLength = ossStrlen( cmdName ) ;
-query->numToSkip = packet.nToSkip ;
-query->numToReturn = packet.nToReturn ;
-
-sdbMsg.write( cmdName, query-<nameLength + 1, TURE ) ;
-{
-   bson::BSONObj cond, selector, orderby, hint ;
-   selector = BSON( SDB_AUTH_USER << "" << SDB_AUTH_PASSWD << "" ) ;
-
-   cond = BSON( SDB_AUTH_USER << packet.all.getStringField( "user" ) ) ;
-   sdbMsg.write( cond, TURE ) ;
-   sdbMsg.write( selector, TRUE ) ;
-   sdbMsg.write( orderby, TRUE ) ;
-   sdbMsg.write( hint, TURE ) ;
-}
-
-sdbMsg.doneLen() ;
-
-done:
-return rc ;
-error:
-goto done ;
-*/
 
 INT32 authenticateCommand::buildMsg( msgParser &parser,  msgBuffer &sdbMsg )
 {
@@ -852,58 +824,15 @@ INT32 authenticateCommand::buildMsg( msgParser &parser,  msgBuffer &sdbMsg )
    {
       bson::BSONObj obj ;
       obj = BSON( SDB_AUTH_USER << pUsername
-               << SDB_AUTH_PASSWD << pKey
-               << SDB_AUTH_SOURCE << SDB_AUTH_SOURCE_FAP ) ;
+                  << SDB_AUTH_PASSWD << pKey
+                  << SDB_AUTH_SOURCE << SDB_AUTH_SOURCE_FAP ) ;
       sdbMsg.write( obj, TRUE ) ;
    }
 
    sdbMsg.doneLen() ;
 
-done:
    return rc ;
-error:
-   goto done ;
 }
-
-/*
-INT32 rc = SDB_OK ;
-AuthArg *arg = ( AuthArg * )pData ;
-mongoDataPacket &packet = arg->parser.dataPacket() ;
-
-bson::BSONObj user = packet.all ;
-bson::BSONObj doc = bson::BSONObj( arg->obj ) ;
-const CHAR *pNonce = user.getStringField( "nonce" ) ;
-const CHAR *pUsername = user.getStringField( "user" ) ;
-const CHAR *pKey = user.getStringField( "key" ) ;
-
-{
-   const CHAR *pStoredName = doc.getStringField( "Name" ) ;
-   const CHAR *pStoredPsw = doc.getStringField( "Passwd" ) ;
-   if ( 0 != ossStrcmp( pStoredName, pUsername ) )
-   {
-      rc = SDB_CAT_AUTH_FAILED ;
-      goto error ;
-   }
-
-   md5::ms5digest d ;
-   md5_state_t st ;
-   md5_init( &st ) ;
-   md5_append( &st, ( const md5_byte_t * )pNonce, ossStrlen( pNonce ) ) ;
-   md5_append( &st, ( const md5_byte_t * )pStoredName, ossStrlen)( pStoredName ) ) ;
-   md5_append( &st, ( const md5_byte_t * )pStoredPsw, ossStrlen( pStoredPsw ) ) ;
-   md5_finish( &st, d ) ;
-   if ( 0 == ossStrcmp( pKey, mdt::digestToString( d ) ).c_str() )
-   {
-      rc = SDB_CAT_AUTH_FAILED ;
-      goto error ;
-   }
-}
-
-done:
-return rc ;
-error:
-goto done ;
-*/
 
 INT32 authenticateCommand::doCommand( void *pData )
 {
@@ -931,18 +860,51 @@ INT32 createUserCommand::buildMsg( msgParser& parser, msgBuffer &sdbMsg )
    user->header.routeID.value = 0 ;
    user->header.requestID = packet.requestId ;
 
-   if ( !parser.more() )
+   bson::BSONObj obj, cond ;
+   const CHAR *pName = NULL ;
+   const CHAR *pPasswd = NULL ;
+
+   if ( packet.with( OPTION_CMD ) && packet.with( OPTION_USR ) )
    {
-      rc = SDB_INVALIDARG ;
-      goto error ;
+      bson::BSONElement e = packet.all.getField( "documents" ) ;
+      if ( bson::Array != e.type() )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      {
+         bson::BSONObjIterator it( e.Obj() ) ;
+         while( it.more() )
+         {
+            bson::BSONElement be = it.next() ;
+            cond = be.Obj() ;
+            break ;
+         }
+         pName = cond.getStringField( "user" ) ;
+         pPasswd = cond.getStringField( "pwd" ) ;
+      }
    }
-
-   parser.readNextObj( packet.all ) ;
-
+   else if ( packet.with( OPTION_CMD ) )
    {
-      const CHAR *pName = packet.all.getStringField( "user" ) ;
-      const CHAR *pPasswd = packet.all.getStringField( "pwd" ) ;
+      bson::BSONObj cond = packet.all.getObjectField( "createUser" ) ;
+      pName = cond.getStringField( "user" ) ;
+      pPasswd = cond.getStringField( "pwd" ) ;
+   }
+   else
+   {
+      if ( !parser.more() )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
 
+      parser.readNextObj( packet.all ) ;
+
+      pName = packet.all.getStringField( "user" ) ;
+      pPasswd = packet.all.getStringField( "pwd" ) ;
+   }
+   // build md5
+   {
       std::stringstream ss ;
       generateNonce( ss ) ;
       md5::md5digest d ;
@@ -954,12 +916,12 @@ INT32 createUserCommand::buildMsg( msgParser& parser, msgBuffer &sdbMsg )
       md5_append( &st, ( const md5_byte_t * )pPasswd, ossStrlen( pPasswd ) ) ;
       md5_finish( &st, d ) ;
 
-      bson::BSONObj obj = BSON( SDB_AUTH_USER << pName <<
-                          SDB_AUTH_PASSWD << md5::digestToString( d ).c_str() <<
-                          SDB_AUTH_SOURCE << SDB_AUTH_SOURCE_FAP ) ;
-      sdbMsg.write( obj, TRUE ) ;
+      obj = BSON( SDB_AUTH_USER << pName <<
+                  SDB_AUTH_PASSWD << md5::digestToString( d ).c_str() <<
+                  SDB_AUTH_SOURCE << SDB_AUTH_SOURCE_FAP ) ;
    }
 
+   sdbMsg.write( obj, TRUE ) ;
    sdbMsg.doneLen() ;
 
 done:
@@ -973,57 +935,12 @@ INT32 createUserCommand::doCommand( void *pData )
    return SDB_OK ;
 }
 
-INT32 removeUserCommand::convert( msgParser &parser )
+INT32 dropUserCommand::convert( msgParser &parser )
 {
    return SDB_OK ;
 }
 
-/*
-INT32 rc = SDB_OK ;
-MsgOpQuery *query = NULL ;
-mongoDataPacket &packet = parser.dataPacket() ;
-const CHAR *cmdName = CMD_ADMIN_PREFIX CMD_NAME_LIST_USERS ;
-
-parser.setCurrentOp( OP_CMD_REMOVE_USER ) ;
-sdbMsg.reverse( sizeof( MsgOpQuery ) ) ;
-sdbMsg.advance( sizeof( MsgOpQuery ) - 4 ) ;
-
-query = ( MsgOpQuery * )sdbMsg.data() ;
-query->header.opCode = MSG_BS_QUERY_REQ ;
-query->header.TID = 0 ;
-query->routeID.value = 0 ;
-query->requestId = packet.requestId ;
-query->version = 0 ;
-query->w = 0 ;
-query->padding = 0 ;
-query->flags = 0 ;
-
-setQueryFlags( parser.reservedInt, query->flags ) ;
-query->nameLength = ossStrlen( cmdName ) ;
-query->numToSkip = packet.nToSkip ;
-query->numToReturn = packet.nToReturn ;
-
-sdbMsg.write( cmdName, query-<nameLength + 1, TURE ) ;
-{
-   bson::BSONObj cond, selector, orderby, hint ;
-   selector = BSON( SDB_AUTH_USER << "" << SDB_AUTH_PASSWD << "" ) ;
-
-   cond = BSON( SDB_AUTH_USER << packet.all.getStringField( "user" ) ) ;
-   sdbMsg.write( cond, TURE ) ;
-   sdbMsg.write( selector, TRUE ) ;
-   sdbMsg.write( orderby, TRUE ) ;
-   sdbMsg.write( hint, TURE ) ;
-}
-
-sdbMsg.doneLen() ;
-
-done:
-return rc ;
-error:
-goto done ;
-*/
-
-INT32 removeUserCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
+INT32 dropUserCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
 {
    INT32 rc                = SDB_OK ;
    MsgAuthDelUsr *auth     = NULL ;
@@ -1044,21 +961,49 @@ INT32 removeUserCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
       parser.readInt( sizeof( INT32 ), (CHAR *)&removeFlags ) ;
    }
 
-   if ( !parser.more() )
+   bson::BSONObj obj ;
+   if ( packet.with( OPTION_CMD ) && packet.with( OPTION_USR ) )
    {
-      rc = SDB_INVALIDARG ;
-      goto error ;
+      bson::BSONElement e = packet.all.getField( "deletes" ) ;
+      if ( bson::Array != e.type() )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      std::vector< bson::BSONElement > objList ;
+      std::vector< bson::BSONElement >::const_iterator cit ;
+      bson::BSONObj cond, subObj ;
+      objList = e.Array() ;
+      cit = objList.begin() ;
+      while ( objList.end() != cit )
+      {
+         subObj = (*cit).Obj() ;
+         cond = subObj.getObjectField( "q" ) ;
+         break ;
+      }
+      obj = BSON( SDB_AUTH_USER << cond.getStringField( "user" ) <<
+                  SDB_AUTH_SOURCE << SDB_AUTH_SOURCE_FAP ) ;
    }
-
-   parser.readNextObj( packet.all ) ;
-
+   else if ( packet.with( OPTION_CMD ) )
    {
-      bson::BSONObj obj ;
+      obj = BSON( SDB_AUTH_USER << packet.all.getStringField( "dropUser" ) <<
+                  SDB_AUTH_SOURCE << SDB_AUTH_SOURCE_FAP ) ;
+   }
+   else
+   {
+      if ( !parser.more() )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      parser.readNextObj( packet.all ) ;
+
       obj = BSON( SDB_AUTH_USER << packet.all.getStringField( "user" ) <<
                   SDB_AUTH_SOURCE << SDB_AUTH_SOURCE_FAP ) ;
-
-      sdbMsg.write( obj, TRUE ) ;
    }
+   sdbMsg.write( obj, TRUE ) ;
    sdbMsg.doneLen() ;
 
 done:
@@ -1067,7 +1012,7 @@ error:
    goto done ;
 }
 
-INT32 removeUserCommand::doCommand( void *pData )
+INT32 dropUserCommand::doCommand( void *pData )
 {
    return SDB_OK ;
 }
@@ -1114,10 +1059,7 @@ INT32 listUsersCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
 
    sdbMsg.doneLen() ;
 
-done:
    return rc ;
-error:
-   goto done ;
 }
 
 INT32 listUsersCommand::doCommand( void *pData )
@@ -1159,7 +1101,7 @@ INT32 createCSCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
    sdbMsg.write( cmdName, query->nameLength + 1, TRUE ) ;
    bson::BSONObj obj, empty ;
    obj = BSON( FIELD_NAME_NAME << packet.csName
-            << FIELD_NAME_PAGE_SIZE << 65536 ) ;
+                               << FIELD_NAME_PAGE_SIZE << 65536 ) ;
 
    sdbMsg.write( obj, TRUE ) ;    // condition
    sdbMsg.write( empty, TRUE ) ;  // selector
@@ -1168,10 +1110,7 @@ INT32 createCSCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
 
    sdbMsg.doneLen() ;
 
-done:
    return rc ;
-error:
-   goto error ;
 }
 
 INT32 createCSCommand::doCommand( void *pData )
@@ -1229,10 +1168,7 @@ INT32 createCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
 
    sdbMsg.doneLen() ;
 
-done:
    return rc ;
-error:
-   goto done ;
 }
 
 INT32 createCommand::doCommand( void *pData )
@@ -1299,10 +1235,7 @@ INT32 listCollectionCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
 
    sdbMsg.doneLen() ;
 
-done:
    return rc ;
-error:
-   goto done ;
 }
 
 INT32 listCollectionCommand::doCommand( void *pData )
@@ -1359,10 +1292,7 @@ INT32 dropCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
 
    sdbMsg.doneLen() ;
 
-done:
    return rc ;
-error:
-   goto done ;
 }
 
 INT32 dropCommand::doCommand( void *pData )
@@ -1408,9 +1338,20 @@ INT32 countCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
 
    sdbMsg.write( cmdName, query->nameLength + 1, TRUE ) ;
    {
-      bson::BSONObj cond, obj, empty ;
+      bson::BSONObj cond, obj, orderby, empty ;
       cond = packet.all.getObjectField( "query" ) ;
       obj = BSON( FIELD_NAME_COLLECTION << packet.fullName.c_str() ) ;
+
+      orderby = packet.all.getObjectField( "sort" ) ;
+      if ( packet.all.hasField( "limit" ) )
+      {
+         query->numToReturn = packet.all.getIntField( "limit" ) ;
+      }
+
+      if ( packet.all.hasField( "skip" ) )
+      {
+         query->numToSkip = packet.all.getIntField( "skip" ) ;
+      }
 
       sdbMsg.write( cond, TRUE ) ;
       sdbMsg.write( empty, TRUE ) ;
@@ -1420,11 +1361,7 @@ INT32 countCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
 
    sdbMsg.doneLen() ;
 
-done:
    return rc ;
-error:
-   goto done ;
-   return SDB_OK ;
 }
 
 INT32 countCommand::doCommand( void *pData )
@@ -1468,10 +1405,7 @@ INT32 aggregateCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
    sdbMsg.write( packet.all, TRUE ) ;
    sdbMsg.doneLen() ;
 
-done:
    return rc ;
-error:
-   goto done ;
 }
 
 INT32 aggregateCommand::doCommand( void *pData )
@@ -1524,10 +1458,7 @@ INT32 dropDatabaseCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
 
    sdbMsg.doneLen() ;
 
-done:
    return rc ;
-error:
-   goto done ;
 }
 
 INT32 dropDatabaseCommand::doCommand( void *pData )
@@ -1710,10 +1641,7 @@ INT32 deleteIndexesCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
 
    sdbMsg.doneLen() ;
 
-done:
    return rc ;
-error:
-   goto done ;
 }
 
 INT32 deleteIndexesCommand::doCommand( void *pData )
@@ -1769,19 +1697,31 @@ INT32 listIndexesCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
       }
       else
       {
-         if ( cond.hasField( "index" ) )
+         if ( packet.all.hasField( "index" ) )
          {
-            indexObj = BSON( "indexDef.name" << packet.all.getStringField( "index" ) ) ;
+            indexObj = BSON( "indexDef.name" <<
+                             packet.all.getStringField( "index" ) ) ;
          }
          obj = BSON( FIELD_NAME_COLLECTION << packet.all.getStringField( "ns" ) ) ;
       }
    }
    else if ( packet.with( OPTION_CMD ) )
    {
-      parser.setCurrentOp( OP_CMD_NOT_SUPPORTED ) ;
       rc = SDB_OPTION_NOT_SUPPORT ;
+      parser.setCurrentOp( OP_CMD_NOT_SUPPORTED ) ;
       goto error ;
+
+      //packet.fullName = packet.csName ;
+      //packet.fullName += "." ;
+      //packet.fullName += packet.all.getStringField( "listIndexes" ) ;
+
+      //obj = BSON( FIELD_NAME_COLLECTION << packet.fullName.c_str() ) ;
    }
+
+   sdbMsg.write( indexObj, TRUE ) ;
+   sdbMsg.write( empty, TRUE ) ;
+   sdbMsg.write( empty, TRUE ) ;
+   sdbMsg.write( obj, TRUE ) ;
 
    sdbMsg.doneLen() ;
 
@@ -1840,6 +1780,22 @@ INT32 ismasterCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
 }
 
 INT32 ismasterCommand::doCommand( void *pData )
+{
+   return SDB_OK ;
+}
+
+INT32 logoutCommand::convert( msgParser &parser )
+{
+   return SDB_OK ;
+}
+
+INT32 logoutCommand::buildMsg( msgParser &parser, msgBuffer &sdbMsg )
+{
+   parser.setCurrentOp( OP_CMD_PING ) ;
+   return SDB_OK ;
+}
+
+INT32 logoutCommand::doCommand( void *pData )
 {
    return SDB_OK ;
 }
