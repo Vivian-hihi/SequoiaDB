@@ -368,7 +368,27 @@ namespace engine
          }
       }
 
-      column = node ; 
+      if ( NULL != node )
+      {
+         column = node ;
+         goto done ;
+      }
+      if ( '\0' == *fieldName )
+      {
+         rc = _getColumn( fieldName, this, node ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to get column of an empty fieldName:%d", rc ) ;
+            goto error ;
+         }
+         column = node ;
+      }
+      else
+      {
+         PD_LOG( PDERROR, "unexpected error happended" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
    done:
       PD_TRACE_EXITRC( SDB__MTHSCOLUMNMATRIX__GETCOLUMN, rc ) ;
       return rc ;
