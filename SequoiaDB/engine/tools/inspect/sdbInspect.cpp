@@ -137,6 +137,14 @@ namespace
                           header->_serviceName ) ;
       CHECK_VALUE( ( bufferSize - 1 <= len ), retry ) ;
       len += ossSnprintf( buffer + len, bufferSize - len,
+                          "username    : %s"OSS_NEWLINE,
+                          g_username ) ;
+      CHECK_VALUE( ( bufferSize - 1 <= len ), retry ) ;
+      len += ossSnprintf( buffer + len, bufferSize - len,
+                          "password    : %s"OSS_NEWLINE,
+                          g_password ) ;
+      CHECK_VALUE( ( bufferSize - 1 <= len ), retry ) ;
+      len += ossSnprintf( buffer + len, bufferSize - len,
                           "group       : %s"OSS_NEWLINE,
                           header->_groupName ) ;
       CHECK_VALUE( ( bufferSize - 1 <= len ), retry ) ;
@@ -704,6 +712,11 @@ namespace
       // copy coord service name
       ossMemcpy( header->_serviceName, buffer + len, CI_SERVICENAME_SIZE + 1 ) ;
       len += CI_SERVICENAME_SIZE + 1 ;
+      // copy username and password
+      ossMemcpy( g_username, buffer + len, CI_USERNAME_SIZE + 1 ) ;
+      len += CI_USERNAME_SIZE + 1 ;
+      ossMemcpy( g_password, buffer + len, CI_PASSWD_SIZE + 1 ) ;
+      len += CI_PASSWD_SIZE + 1 ;
       // copy group name
       ossMemcpy( header->_groupName, buffer + len, CI_GROUPNAME_SIZE + 1 ) ;
       len += CI_GROUPNAME_SIZE + 1 ;
@@ -769,6 +782,10 @@ namespace
       pos += CI_HOSTNAME_SIZE + 1 ;
       ossMemcpy( buffer + pos, header->_serviceName, CI_SERVICENAME_SIZE + 1 ) ;
       pos += CI_SERVICENAME_SIZE + 1 ;
+      ossMemcpy( buffer + pos, g_username, CI_USERNAME_SIZE + 1 ) ;
+      pos += CI_USERNAME_SIZE + 1 ;
+      ossMemcpy( buffer + pos, g_password, CI_PASSWD_SIZE + 1 ) ;
+      pos += CI_PASSWD_SIZE + 1 ;
       ossMemcpy( buffer + pos, header->_groupName, CI_GROUPNAME_SIZE + 1 ) ;
       pos += CI_GROUPNAME_SIZE + 1 ;
       ossMemcpy( buffer + pos, header->_csName, CI_CS_NAME_SIZE + 1 ) ;
@@ -781,7 +798,7 @@ namespace
       pos += OSS_MAX_PATHSIZE + 1 ;
       ossMemcpy( buffer + pos, header->_view, CI_VIEWOPTION_SIZE + 1 ) ;
       pos += CI_VIEWOPTION_SIZE + 1 ;
-      ossMemcpy( buffer + pos, header->_padding, CI_HEAD_PADDING_SIZE ) ;
+      ossMemset( buffer + pos, 0, validSize - pos ) ;
 
    done:
       return rc ;
@@ -1138,7 +1155,8 @@ namespace
                goto error ;
             }
             curNode->_db = db;
-            rc = db->connect( curNode->_hostname, curNode->_serviceName ) ;
+            rc = db->connect( curNode->_hostname, curNode->_serviceName,
+                              g_username, g_password ) ;
             if ( SDB_OK != rc )
             {
                //std::cout << "Warning: cannot connect to " << curNode->_hostname
@@ -1906,6 +1924,10 @@ namespace
       // copy coord service name
       ossMemcpy( header->_serviceName,
                  oldheader._serviceName, CI_SERVICENAME_SIZE + 1 ) ;
+      // copy user name and password
+      //ossMemcpy( header->_user, oldheader._user, CI_USERNAME_SIZE + 1 ) ;
+      //ossMemcpy( header->_psw, oldheader._psw, CI_PASSWD_SIZE + 1 ) ;
+
       // copy group name
       ossMemcpy( header->_groupName,
                  oldheader._groupName, CI_GROUPNAME_SIZE + 1 ) ;
@@ -2190,7 +2212,8 @@ namespace
                                               CI_SERVICENAME_SIZE ) ;
                {
                   sdbclient::sdb db ;
-                  rc = db.connect( node->_hostname, node->_serviceName ) ;
+                  rc = db.connect( node->_hostname, node->_serviceName,
+                                   g_username, g_password ) ;
                   if ( SDB_OK != rc )
                   {
                      node->_state = 1 ;
@@ -2285,7 +2308,8 @@ namespace
       }
 
       // get collections from master node
-      rc = db.connect( master->_hostname, master->_serviceName ) ;
+      rc = db.connect( master->_hostname, master->_serviceName,
+                       g_username, g_password ) ;
       if ( SDB_OK != rc )
       {
          std::cout << "Error: failed to connect to master node" << std::endl ;
@@ -2953,6 +2977,7 @@ namespace
 _sdbCi::_sdbCi()
 {
    ossMemset( _coordAddr, 0, CI_ADDRESS_SIZE + 1 ) ;
+   ossMemset( _auth, 0, CI_AUTH_SIZE + 1 ) ;
 }
 
 _sdbCi::~_sdbCi()
@@ -3109,6 +3134,9 @@ INT32 _sdbCi::handle( const po::options_description &desc,
    }
    CHECK_VALUE( ( SDB_OK != rc ), error ) ;
 
+   rc = splitAuth() ;
+   CHECK_VALUE( ( SDB_OK != rc ), error ) ;
+
    if ( 0 != ossStrncmp( CI_VIEW_GROUP, _header._view, CI_VIEWOPTION_SIZE ) &&
         0 != ossStrncmp( CI_VIEW_CL, _header._view, CI_VIEWOPTION_SIZE ) )
    {
@@ -3173,11 +3201,13 @@ INT32 _sdbCi::inspect()
       goto error ;
    }
 
-   rc = coord->connect( _header._coordAddr, _header._serviceName ) ;
+   rc = coord->connect( _header._coordAddr, _header._serviceName,
+                        g_username, g_password ) ;
    if ( SDB_OK != rc )
    {
       std::cout << "Error: failed to connect to " << _header._coordAddr
-         << ":" << _header._serviceName << std::endl ;
+         << ":" << _header._serviceName << " "
+         << g_username << ":" << g_password << std::endl ;
       goto error ;
    }
 
@@ -3525,6 +3555,9 @@ INT32 _sdbCi::doDataExchange( engine::pmdCfgExchange *pEx )
    rdxString( pEx, CONSISTENCY_INSPECT_COORD, _coordAddr,
                    CI_ADDRESS_SIZE , FALSE, FALSE, "", FALSE ) ;
 
+   rdxString( pEx, CONSISTENCY_INSPECT_AUTH, _auth,
+                   CI_AUTH_SIZE , FALSE, FALSE, "\"\":\"\"", FALSE ) ;
+
    rdxString( pEx, CONSISTENCY_INSPECT_ACTION, _header._action,
                    CI_ACTION_SIZE , FALSE, FALSE, CI_ACTION_INSPECT, FALSE ) ;
 
@@ -3599,6 +3632,42 @@ INT32 _sdbCi::splitAddr()
    // initialize hostname and servicename in _header
    ossMemcpy( _header._coordAddr, _coordAddr, pch - begin ) ;
    ossMemcpy( _header._serviceName, pch + 1, end - pch ) ;
+
+done:
+   return rc ;
+error:
+   goto done ;
+}
+
+INT32 _sdbCi::splitAuth()
+{
+   INT32 rc        = SDB_OK ;
+   INT32 length    = ossStrlen( _auth ) ;
+   CHAR *begin     = _auth ;
+   CHAR *end       = begin + length ;
+   const CHAR *pch = NULL ;
+
+   if ( begin == end )
+   {
+      std::cout << "Invalid parameters" << std::endl ;
+      std::cout << " username and password of sequoiadb is NULL"
+         << std::endl ;
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   pch = ossStrrchr( _auth, ':' ) ;
+   if ( NULL == pch || end == pch + 1 )
+   {
+      std::cout << "Invalid parameters" << std::endl ;
+      std::cout << " hostname and password should be split by \":\"" << std::endl ;
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   // initialize hostname and servicename in _header
+   ossMemcpy( g_username, _auth, pch - begin ) ;
+   ossMemcpy( g_password, pch + 1, end - pch ) ;
 
 done:
    return rc ;

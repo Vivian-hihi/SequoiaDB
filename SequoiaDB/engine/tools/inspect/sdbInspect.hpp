@@ -69,6 +69,8 @@
 #define CI_INSPECT_ERROR         0x10001000
 #define CI_INSPECT_CL_NOT_FOUND  0x10001001
 
+#define CI_USERNAME_SIZE OSS_MAX_PATHSIZE
+#define CI_PASSWD_SIZE   OSS_MAX_PATHSIZE
 #define CI_BUFFER_BLOCK      1024
 #define CI_HEADER_SIZE       65536
 #define CI_TAIL_SIZE         65536
@@ -80,6 +82,10 @@
 #define CI_CL_NAME_SIZE      DMS_COLLECTION_NAME_SZ
 #define CI_ADDRESS_SIZE      ( CI_HOSTNAME_SIZE + CI_SERVICENAME_SIZE + 1 )
 #define CI_CL_FULLNAME_SIZE  ( CI_CS_NAME_SIZE + CI_CL_NAME_SIZE + 1 )
+#define CI_AUTH_SIZE         ( CI_USERNAME_SIZE + CI_PASSWD_SIZE + 1 )
+
+CHAR g_username[ CI_USERNAME_SIZE + 1 ] = { 0 } ;
+CHAR g_password[ CI_PASSWD_SIZE + 1 ] = { 0 } ;
 
 #define CI_FILE_NAME       "inspect.bin"
 #define CI_TMP_FILE        "inspect.bin.tmp.%d"
@@ -98,7 +104,7 @@
 #define CI_SUB_VERSION 1
 #define CI_ACTION_SIZE 20
 #define CI_EYECATCHER_SIZE 8
-#define CI_HEAD_PADDING_SIZE ( ( CI_HEADER_SIZE )          - \
+/*#define CI_HEAD_PADDING_SIZE ( ( CI_HEADER_SIZE )          - \
                                ( CI_HOSTNAME_SIZE + 1 )    - \
                                ( CI_SERVICENAME_SIZE + 1)  - \
                                ( CI_GROUPNAME_SIZE + 1 )   - \
@@ -109,7 +115,7 @@
                                ( CI_VIEWOPTION_SIZE + 1 )  - \
                                ( CI_EYECATCHER_SIZE )      - \
                                ( CI_ACTION_SIZE ) -12 )
-
+*/
 #define TAIL_PADDING_SIZE ( CI_TAIL_SIZE - sizeof(INT32) * 2 )
 
 // the length of ciGroupHeader
@@ -254,7 +260,6 @@ struct _ciHeader
    CHAR  _filepath[ OSS_MAX_PATHSIZE + 1 ] ;
    CHAR  _outfile[ OSS_MAX_PATHSIZE + 1 ] ;
    CHAR  _view[ CI_VIEWOPTION_SIZE + 1 ] ;
-   CHAR  _padding[ CI_HEAD_PADDING_SIZE ] ;
    _ciHeader() : _mainVersion( CI_MAIN_VERSION ),
                  _subVersion( CI_SUB_VERSION ),
                  _loop( CI_INVALID_LOOP )
@@ -269,7 +274,6 @@ struct _ciHeader
       ossMemset( _filepath,    0, OSS_MAX_PATHSIZE + 1 ) ;
       ossMemset( _outfile,     0, OSS_MAX_PATHSIZE + 1 ) ;
       ossMemset( _view,        0, CI_VIEWOPTION_SIZE + 1 ) ;
-      ossMemset( _padding,     0, CI_HEAD_PADDING_SIZE ) ;
 
       ossMemcpy( _eyeCatcher, CI_HEADER_EYECATCHER, CI_EYECATCHER_SIZE ) ;
    }
@@ -516,6 +520,7 @@ typedef _ciState ciState ;
 #define CONSISTENCY_INSPECT_FILE      "file"
 #define CONSISTENCY_INSPECT_OUTPUT    "output"
 #define CONSISTENCY_INSPECT_VIEW      "view"
+#define CONSISTENCY_INSPECT_AUTH      "auth"
 
 #define INSPECT_ADD_OPTIONS_BEGIN( desc ) desc.add_options()
 #define INSPECT_ADD_OPTIONS_END ;
@@ -525,6 +530,7 @@ typedef _ciState ciState ;
 #define INSPECT_OPTIONS \
    ( INSPECT_COMMANDS_STRING( CONSISTENCY_INSPECT_HELP, ",h" ), "show all command options" ) \
    ( INSPECT_COMMANDS_STRING( CONSISTENCY_INSPECT_VER, ",v" ), "show version of tool" ) \
+   ( INSPECT_COMMANDS_STRING( CONSISTENCY_INSPECT_AUTH, ",u" ), boost::program_options::value< std::string >(), "auth, username:password, \"\":\"\" is set default" ) \
    ( INSPECT_COMMANDS_STRING( CONSISTENCY_INSPECT_ACTION, ",a" ), boost::program_options::value< std::string >(), "specify action, \"inspect\" or \"report\" supported, \"inspect\" is set default" ) \
    ( INSPECT_COMMANDS_STRING( CONSISTENCY_INSPECT_COORD, ",d" ), boost::program_options::value< std::string >(), "specify the coord address, like: ubuntu-coord:11810" ) \
    ( INSPECT_COMMANDS_STRING( CONSISTENCY_INSPECT_LOOP, ",t" ), boost::program_options::value< INT32 >(), "specify times to loop" ) \
@@ -554,6 +560,7 @@ public:
 
 private:
    INT32 splitAddr() ;
+   INT32 splitAuth() ;
    INT32 inspect() ;
    INT32 report ( const CHAR *inFile, const CHAR *reportFile,
                   CHAR *&tailBuffer, INT64 &tailBufferSize ) ;
@@ -568,6 +575,7 @@ private:
 private:
    ciHeader _header ;
    CHAR     _coordAddr[ CI_ADDRESS_SIZE + 1 ] ;
+   CHAR     _auth[ CI_AUTH_SIZE + 1 ] ;
 } ;
 typedef _sdbCi sdbCi ;
 
@@ -581,6 +589,8 @@ inline ostream &operator<< ( ostream &os, const ciHeader &header )
       << header._loop        << std::endl
       << header._coordAddr   << std::endl
       << header._serviceName << std::endl
+      << g_username          << std::endl
+      << g_password          << std::endl
       << header._groupName   << std::endl
       << header._csName      << std::endl
       << header._clName      << std::endl
