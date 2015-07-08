@@ -1523,7 +1523,7 @@ namespace SequoiaDB
             }
             else
             {
-                dc.Name = clusterName + ":" + businessName;
+                dc.name = clusterName + ":" + businessName;
             }
             return dc;
         }

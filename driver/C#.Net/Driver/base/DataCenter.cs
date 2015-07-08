@@ -12,7 +12,7 @@ namespace SequoiaDB
      */
 	public class DataCenter
 	{
-        private string name;
+        internal string name;
         private Sequoiadb sdb;
         internal bool isBigEndian = false;
 
@@ -22,7 +22,6 @@ namespace SequoiaDB
          */
         public string Name
         {
-            set { name = value; }
             get { return name; }
         }
 
@@ -43,6 +42,7 @@ namespace SequoiaDB
 
         /** \fn BsonDocument GetDetail()
          *  \brief Get the detail of data center.
+         *  \return void
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
          */
@@ -60,6 +60,7 @@ namespace SequoiaDB
 
         /** \fn void ActivateDC()
          *  \brief Activate data center.
+         *  \return void
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
          */
@@ -68,8 +69,9 @@ namespace SequoiaDB
             _DCCommon(SequoiadbConstants.CMD_VALUE_NAME_ACTIVATE, null);
         }
 
-        /** \fn void ActivateDC()
+        /** \fn void DeactivateDC()
          *  \brief Deactivate data center.
+         *  \return void
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
          */
@@ -81,6 +83,7 @@ namespace SequoiaDB
         /** \fn void EnableReadOnly( bool isReadOnly )
          *  \brief Set data center to be read-only or not
          *  \param [in] isReadOnly To set data center to be read-only or not
+         *  \return void         
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
          */
@@ -100,6 +103,7 @@ namespace SequoiaDB
          *  \brief Create image in data center.
          *  \param [in] cataAddrList Catalog address list of remote data center, e.g. "192.168.20.165:30003",
          *              "192.168.20.165:30003,192.168.20.166:30003" 
+         *  \return void
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
          */
@@ -121,6 +125,7 @@ namespace SequoiaDB
 
         /** \fn void RemoveImage()
          *  \brief Remove image in data center.
+         *  \return void
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
          */
@@ -131,6 +136,7 @@ namespace SequoiaDB
 
         /** \fn void EnableImage()
          *  \brief Enable image in data center.
+         *  \return void
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
          */
@@ -141,6 +147,7 @@ namespace SequoiaDB
 
         /** \fn void DisableImage()
          *  \brief Disable image in data center.
+         *  \return void
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
          */
@@ -152,6 +159,7 @@ namespace SequoiaDB
         /** \fn void AttachGroups( BsonDocument info )
          *  \brief Attach specified groups to data center
          *  \param [in] info The information of groups to attach, e.g. {Groups:[["a", "a"], ["b", "b"]]}
+         *  \return void
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
          */
@@ -163,6 +171,7 @@ namespace SequoiaDB
         /** \fn void DetachGroups( BsonDocument info )
          *  \brief Detach specified groups from data center
          *  \param [in] info The information of groups to attach, e.g. {Groups:[["a", "a"], ["b", "b"]]}
+         *  \return void
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
          */
