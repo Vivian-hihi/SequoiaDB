@@ -1489,6 +1489,45 @@ namespace SequoiaDB
                 return null;
         }
 
+        /** \fn DataCenter GetDC()
+         *  \brief Get data center.
+         *  \return The ReplicaGroup has been activated if succeed or null if fail
+         *  \exception SequoiaDB.BaseException
+         *  \exception System.Exception
+         */
+        public DataCenter GetDC()
+        {
+            DataCenter dc = new DataCenter(this);
+            BsonDocument detail = dc.GetDetail();
+            BsonDocument subObj = null;
+            string clusterName = null;
+            string businessName = null;
+            string field = SequoiadbConstants.FIELD_NAME_DATACENTER;
+            if (detail.Contains(field) && detail[field].IsBsonDocument)
+            {
+                subObj = detail[field].AsBsonDocument;
+                field = SequoiadbConstants.FIELD_NAME_CLUSTERNAME;
+                if (subObj.Contains(field) && subObj[field].IsString)
+                {
+                    clusterName = subObj[field].AsString;
+                }
+                field = SequoiadbConstants.FIELD_NAME_BUSINESSNAME;
+                if (subObj.Contains(field) && subObj[field].IsString)
+                {
+                    businessName = subObj[field].AsString;
+                }
+            }
+            if (null == clusterName || null == businessName)
+            {
+                throw new BaseException("SDB_SYS");
+            }
+            else
+            {
+                dc.Name = clusterName + ":" + businessName;
+            }
+            return dc;
+        }
+
         private SDBMessage CreateCS(string csName, BsonDocument options)
         {
             string commandString = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.CREATE_CMD + " " + SequoiadbConstants.COLSPACE;

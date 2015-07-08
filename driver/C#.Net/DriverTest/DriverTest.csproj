@@ -68,6 +68,7 @@
     <Compile Include="Collection\CLSplitAndTask.cs" />
     <Compile Include="Config.cs" />
     <Compile Include="Constants.cs" />
+    <Compile Include="DataCenterTest.cs" />
     <Compile Include="DBCollectionTest.cs" />
     <Compile Include="DBCursorTest.cs" />
     <Compile Include="DomainTest.cs" />

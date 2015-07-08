@@ -42,6 +42,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="base\CollectionSpace.cs" />
+    <Compile Include="base\DataCenter.cs" />
     <Compile Include="base\DBCollection.cs" />
     <Compile Include="base\DBCursor.cs" />
     <Compile Include="base\DBLob.cs" />
@@ -66,6 +67,7 @@
     <Compile Include="util\ByteBuffer.cs" />
     <Compile Include="util\Helper.cs" />
     <Compile Include="util\Logger.cs" />
+    <Compile Include="util\RunCommand.cs" />
     <Compile Include="util\SDBMessageHelper.cs" />
   </ItemGroup>
   <ItemGroup>

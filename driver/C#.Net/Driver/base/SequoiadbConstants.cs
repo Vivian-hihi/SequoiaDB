@@ -82,6 +82,18 @@ namespace SequoiaDB
         public const string LIST_LOBS_CMD = "list lobs";
         public const string TRUNCATE = "truncate";
 
+        public const string CMD_NAME_ALTER_DC = "alter dc";
+        public const string CMD_NAME_GET_DCINFO = "get dcinfo";
+        public const string CMD_VALUE_NAME_CREATE = "create image";
+        public const string CMD_VALUE_NAME_REMOVE = "remove image";
+        public const string CMD_VALUE_NAME_ATTACH = "attach groups";
+        public const string CMD_VALUE_NAME_DETACH = "detach groups";
+        public const string CMD_VALUE_NAME_ENABLE = "enable image";
+        public const string CMD_VALUE_NAME_DISABLE = "disable image";
+        public const string CMD_VALUE_NAME_ACTIVATE = "activate";
+        public const string CMD_VALUE_NAME_DEACTIVATE = "deactivate";
+        public const string CMD_VALUE_NAME_ENABLE_READONLY = "enable readonly";
+        public const string CMD_VALUE_NAME_DISABLE_READONLY = "disable readonly";
 
         public const string OID = "_id";
         public const string CLIENT_RECORD_ID_INDEX = "$id";
@@ -134,6 +146,11 @@ namespace SequoiaDB
         public const string FIELD_NAME_ALTER_TYPE = "AlterType";
         public const string FIELD_NAME_ARGS = "Args";
         public const string FIELD_NAME_VERSION = "Version";
+        public const string FIELD_NAME_ACTION = "Action";
+        public const string FIELD_NAME_ADDRESS = "Address";
+        public const string FIELD_NAME_CLUSTERNAME = "ClusterName";
+        public const string FIELD_NAME_BUSINESSNAME = "BusinessName";
+        public const string FIELD_NAME_DATACENTER = "DataCenter";
 
         public const string FIELD_MODIFY = "$Modify";
         public const string FIELD_OP = "OP";
