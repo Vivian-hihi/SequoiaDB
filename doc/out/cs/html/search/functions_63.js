@@ -9,6 +9,7 @@ var searchData=
   ['createcollectionspace',['CreateCollectionSpace',['../classSequoiaDB_1_1Sequoiadb.html#ad7c177ad9ad6d49fab0a2b0c6539f9e4',1,'SequoiaDB.Sequoiadb.CreateCollectionSpace(string csName)'],['../classSequoiaDB_1_1Sequoiadb.html#a1a6243987e960101a85126958bc6df1e',1,'SequoiaDB.Sequoiadb.CreateCollectionSpace(string csName, int pageSize)'],['../classSequoiaDB_1_1Sequoiadb.html#acea139b5305c3113c577172435bb4f33',1,'SequoiaDB.Sequoiadb.CreateCollectionSpace(string csName, BsonDocument options)']]],
   ['createdomain',['CreateDomain',['../classSequoiaDB_1_1Sequoiadb.html#a60b0a056f93d893224593e6df9d8b633',1,'SequoiaDB::Sequoiadb']]],
   ['createidindex',['CreateIdIndex',['../classSequoiaDB_1_1DBCollection.html#a72122e72d71b7799c8726e8b232c2b4b',1,'SequoiaDB::DBCollection']]],
+  ['createimage',['CreateImage',['../classSequoiaDB_1_1DataCenter.html#ab135e51fbe25efcabbe27801568f4aca',1,'SequoiaDB::DataCenter']]],
   ['createindex',['CreateIndex',['../classSequoiaDB_1_1DBCollection.html#a7f7647c4cbb90fd537852b32ebb6b2f2',1,'SequoiaDB::DBCollection']]],
   ['createindexoffline',['CreateIndexOffline',['../classSequoiaDB_1_1DBCollection.html#a0902fc35bf59b50489ef8ca5af5ee443',1,'SequoiaDB::DBCollection']]],
   ['createlob',['CreateLob',['../classSequoiaDB_1_1DBCollection.html#a98ba855de3079d433baffd391583505a',1,'SequoiaDB.DBCollection.CreateLob()'],['../classSequoiaDB_1_1DBCollection.html#a58f89841006ba1ca87718722ecf2952f',1,'SequoiaDB.DBCollection.CreateLob(ObjectId id)']]],

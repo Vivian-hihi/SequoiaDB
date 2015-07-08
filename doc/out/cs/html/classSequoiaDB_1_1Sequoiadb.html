@@ -245,6 +245,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:af16b85f5bf3937a56b84dcb5a9a78da1"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classSequoiaDB_1_1ReplicaGroup.html">ReplicaGroup</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaDB_1_1Sequoiadb.html#af16b85f5bf3937a56b84dcb5a9a78da1">ActivateReplicaGroup</a> (string groupName)</td></tr>
 <tr class="memdesc:af16b85f5bf3937a56b84dcb5a9a78da1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Activate the <a class="el" href="classSequoiaDB_1_1ReplicaGroup.html" title="Database operation interfaces of replica group.">ReplicaGroup</a> with given name.  <a href="#af16b85f5bf3937a56b84dcb5a9a78da1"></a><br/></td></tr>
 <tr class="separator:af16b85f5bf3937a56b84dcb5a9a78da1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac6cad6804d28f1d3e2d38059b9689381"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classSequoiaDB_1_1DataCenter.html">DataCenter</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaDB_1_1Sequoiadb.html#ac6cad6804d28f1d3e2d38059b9689381">GetDC</a> ()</td></tr>
+<tr class="memdesc:ac6cad6804d28f1d3e2d38059b9689381"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get data center.  <a href="#ac6cad6804d28f1d3e2d38059b9689381"></a><br/></td></tr>
+<tr class="separator:ac6cad6804d28f1d3e2d38059b9689381"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="properties"></a>
 Properties</h2></td></tr>
@@ -1311,6 +1314,39 @@ AutoSplit: If this option is set to be true, while creating collection(ShardingT
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>The CollecionSpace handle </dd></dl>
 <dl class="section note"><dt>Note</dt><dd>If collection space not exit, throw <a class="el" href="classSequoiaDB_1_1BaseException.html" title="Database operation exception.">BaseException</a> </dd></dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname"><a class="el" href="classSequoiaDB_1_1BaseException.html" title="Database operation exception.">SequoiaDB.BaseException</a></td><td></td></tr>
+    <tr><td class="paramname">System.Exception</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="ac6cad6804d28f1d3e2d38059b9689381"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classSequoiaDB_1_1DataCenter.html">DataCenter</a> SequoiaDB.Sequoiadb.GetDC </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Get data center. </p>
+<dl class="section return"><dt>Returns</dt><dd>The <a class="el" href="classSequoiaDB_1_1ReplicaGroup.html" title="Database operation interfaces of replica group.">ReplicaGroup</a> has been activated if succeed or null if fail </dd></dl>
 <dl class="exception"><dt>Exceptions</dt><dd>
   <table class="exception">
     <tr><td class="paramname"><a class="el" href="classSequoiaDB_1_1BaseException.html" title="Database operation exception.">SequoiaDB.BaseException</a></td><td></td></tr>
@@ -2434,7 +2470,7 @@ Name : Assign the backups with specifed name to be remove </li>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Jun 26 2015 09:17:57 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Wed Jul 8 2015 17:07:59 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.2
 </small></address>
