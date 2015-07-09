@@ -2362,7 +2362,7 @@ namespace sdbclient
       INT32 alterDomain ( const bson::BSONObj &options )
       {
          if ( !pDomain )
-            return SDB_SYS ;
+            return SDB_NOT_CONNECTED ;
          return pDomain->alterDomain ( options ) ;
       }
 
@@ -2376,7 +2376,7 @@ namespace sdbclient
       INT32 listCollectionSpacesInDomain ( sdbCursor &cursor )
       {
          if ( !pDomain )
-            return SDB_SYS ;
+            return SDB_NOT_CONNECTED ;
          return pDomain->listCollectionSpacesInDomain ( cursor ) ;
       }
 
@@ -2390,7 +2390,7 @@ namespace sdbclient
       INT32 listCollectionsInDomain ( sdbCursor &cursor )
       {
          if ( !pDomain )
-            return SDB_SYS ;
+            return SDB_NOT_CONNECTED ;
          return pDomain->listCollectionsInDomain ( cursor ) ;
       }
 
@@ -2476,7 +2476,7 @@ namespace sdbclient
       INT32 getDetail( bson::BSONObj &retInfo )
       {
          if ( NULL == pDC )
-            return SDB_CLT_INVALID_HANDLE ;
+            return SDB_NOT_CONNECTED ;
          return pDC->getDetail( retInfo ) ;
       }
 
@@ -2488,7 +2488,7 @@ namespace sdbclient
       INT32 activateDC()
       {
          if ( NULL == pDC )
-            return SDB_CLT_INVALID_HANDLE ;
+            return SDB_NOT_CONNECTED ;
          return pDC->activateDC() ;
       }
 
@@ -2500,7 +2500,7 @@ namespace sdbclient
       INT32 deactivateDC()
       {
          if ( NULL == pDC )
-            return SDB_CLT_INVALID_HANDLE ;
+            return SDB_NOT_CONNECTED ;
          return pDC->deactivateDC() ;
       }
 
@@ -2513,7 +2513,7 @@ namespace sdbclient
       INT32 enableReadOnly( BOOLEAN isReadOnly )
       {
          if ( NULL == pDC )
-            return SDB_CLT_INVALID_HANDLE ;
+            return SDB_NOT_CONNECTED ;
          return pDC->enableReadOnly( isReadOnly ) ;
       }
 
@@ -2527,7 +2527,7 @@ namespace sdbclient
       INT32 createImage( const CHAR *pCataAddrList )
       {
          if ( NULL == pDC )
-            return SDB_CLT_INVALID_HANDLE ;
+            return SDB_NOT_CONNECTED ;
          return pDC->createImage( pCataAddrList ) ;
       }
 
@@ -2539,7 +2539,7 @@ namespace sdbclient
       INT32 removeImage()
       {
          if ( NULL == pDC )
-            return SDB_CLT_INVALID_HANDLE ;
+            return SDB_NOT_CONNECTED ;
          return pDC->removeImage() ;
       }
 
@@ -2551,7 +2551,7 @@ namespace sdbclient
       INT32 enableImage()
       {
          if ( NULL == pDC )
-            return SDB_CLT_INVALID_HANDLE ;
+            return SDB_NOT_CONNECTED ;
          return pDC->enableImage() ;
       }
       
@@ -2563,7 +2563,7 @@ namespace sdbclient
       INT32 disableImage()
       {
          if ( NULL == pDC )
-            return SDB_CLT_INVALID_HANDLE ;
+            return SDB_NOT_CONNECTED ;
          return pDC->disableImage() ;
       }
 
@@ -2576,7 +2576,7 @@ namespace sdbclient
       INT32 attachGroups( bson::BSONObj &info )
       {
          if ( NULL == pDC )
-            return SDB_CLT_INVALID_HANDLE ;
+            return SDB_NOT_CONNECTED ;
          return pDC->attachGroups( info ) ;
       }
 
@@ -2589,7 +2589,7 @@ namespace sdbclient
       INT32 detachGroups( bson::BSONObj &info )
       {
          if ( NULL == pDC )
-            return SDB_CLT_INVALID_HANDLE ;
+            return SDB_NOT_CONNECTED ;
          return pDC->detachGroups( info ) ;
       }
 
@@ -2687,7 +2687,7 @@ namespace sdbclient
       INT32 read ( UINT32 len, CHAR *buf, UINT32 *read )
       {
          if ( !pLob )
-            return SDB_SYS ;
+            return SDB_NOT_CONNECTED ;
          return pLob->read( len, buf, read ) ;
       }
 
@@ -2701,7 +2701,7 @@ namespace sdbclient
       INT32 write ( const CHAR *buf, UINT32 len )
       {
          if ( !pLob )
-            return SDB_SYS ;
+            return SDB_NOT_CONNECTED ;
          return pLob->write( buf, len ) ;
       }
 
@@ -2715,7 +2715,7 @@ namespace sdbclient
       INT32 seek ( SINT64 size, SDB_LOB_SEEK whence )
       {
          if ( !pLob )
-            return SDB_SYS ;
+            return SDB_NOT_CONNECTED ;
          return pLob->seek( size, whence ) ;
       }
 
@@ -2729,7 +2729,7 @@ namespace sdbclient
     INT32 isClosed( BOOLEAN &flag )
     {
        if ( !pLob )
-         return SDB_SYS ;
+         return SDB_NOT_CONNECTED ;
        return pLob->isClosed ( flag ) ;
     }
 
@@ -2754,7 +2754,7 @@ namespace sdbclient
       INT32 getOid ( bson::OID &oid )
       {
          if ( !pLob )
-            return SDB_SYS ;
+            return SDB_NOT_CONNECTED ;
          return pLob->getOid( oid ) ;
       }
 
@@ -2779,7 +2779,7 @@ namespace sdbclient
       INT32 getSize ( SINT64 *size )
       {
          if ( !pLob )
-            return SDB_SYS ;
+            return SDB_NOT_CONNECTED ;
          return pLob->getSize( size ) ;
       }
 
@@ -2804,7 +2804,7 @@ namespace sdbclient
       INT32 getCreateTime ( UINT64 *millis )
       {
          if ( !pLob )
-            return SDB_SYS ;
+            return SDB_NOT_CONNECTED ;
          return pLob->getCreateTime( millis ) ;
       }
 
@@ -3138,7 +3138,7 @@ namespace sdbclient
                     )
       {
          if ( !pSDB )
-            return SDB_SYS ;
+            return SDB_NOT_CONNECTED ;
          return pSDB->connect ( pHostName, port ) ;
       }
 
@@ -3162,7 +3162,7 @@ namespace sdbclient
                      )
      {
         if ( !pSDB )
-           return SDB_SYS ;
+           return SDB_NOT_CONNECTED ;
         return pSDB->connect ( pHostName, port,
                                pUsrName, pPasswd ) ;
      }
@@ -3181,7 +3181,7 @@ namespace sdbclient
                     )
       {
          if ( !pSDB )
-            return SDB_SYS ;
+            return SDB_NOT_CONNECTED ;
          return pSDB->connect ( pHostName, pServiceName ) ;
       }
 
@@ -3204,7 +3204,7 @@ namespace sdbclient
                       const CHAR *pPasswd )
       {
          if ( !pSDB )
-            return SDB_SYS ;
+            return SDB_NOT_CONNECTED ;
          return pSDB->connect ( pHostName, pServiceName,
                                  pUsrName, pPasswd ) ;
       }
@@ -3228,7 +3228,7 @@ namespace sdbclient
                       const CHAR *pPasswd )
       {
          if ( !pSDB )
-            return SDB_SYS ;
+            return SDB_NOT_CONNECTED ;
          return pSDB->connect ( pConnAddrs, arrSize,
                                  pUsrName, pPasswd ) ;
       }
@@ -3245,7 +3245,7 @@ namespace sdbclient
                        const CHAR *pPasswd )
       {
          if ( !pSDB )
-            return SDB_SYS ;
+            return SDB_NOT_CONNECTED ;
          return pSDB->createUsr( pUsrName, pPasswd ) ;
       }
 
@@ -3261,7 +3261,7 @@ namespace sdbclient
                        const CHAR *pPasswd )
       {
          if ( !pSDB )
-            return SDB_SYS ;
+            return SDB_NOT_CONNECTED ;
          return pSDB->removeUsr( pUsrName, pPasswd ) ;
       }
 
@@ -3308,7 +3308,7 @@ namespace sdbclient
                         )
       {
          if ( !pSDB )
-            return SDB_SYS ;
+            return SDB_NOT_CONNECTED ;
          return pSDB->getSnapshot ( cursor, snapType, condition,
                                     selector, orderBy ) ;
       }
@@ -3347,7 +3347,7 @@ namespace sdbclient
                         )
       {
          if ( !pSDB )
-            return SDB_SYS ;
+            return SDB_NOT_CONNECTED ;
          return pSDB->getSnapshot ( cursor, snapType, condition,
                                     selector, orderBy ) ;
       }
@@ -3362,7 +3362,7 @@ namespace sdbclient
       INT32 resetSnapshot ( const bson::BSONObj &condition = _sdbStaticObject )
       {
          if ( !pSDB )
-            return SDB_SYS ;
+            return SDB_NOT_CONNECTED ;
          return pSDB->resetSnapshot ( condition ) ;
       }
 
@@ -3399,7 +3399,7 @@ namespace sdbclient
                   )
       {
          if ( !pSDB )
-            return SDB_SYS ;
+            return SDB_NOT_CONNECTED ;
          return pSDB->getList ( cursor,
                                 listType,
                                 condition,
@@ -3441,7 +3441,7 @@ namespace sdbclient
                     )
       {
          if ( !pSDB )
-            return SDB_SYS ;
+            return SDB_NOT_CONNECTED ;
          return pSDB->getList ( cursor,
                                 listType,
                                 condition,
@@ -3463,7 +3463,7 @@ namespace sdbclient
                           )
       {
          if ( !pSDB )
-            return SDB_SYS ;
+            return SDB_NOT_CONNECTED ;
          return pSDB->getCollection ( pCollectionFullName,
                                       collection ) ;
       }
@@ -3482,7 +3482,7 @@ namespace sdbclient
                           )
       {
          if ( !pSDB )
-            return SDB_SYS ;
+            return SDB_NOT_CONNECTED ;
          return pSDB->getCollection ( pCollectionFullName,
                                       collection ) ;
       }
@@ -3500,7 +3500,7 @@ namespace sdbclient
                                )
       {
          if ( !pSDB )
-            return SDB_SYS ;
+            return SDB_NOT_CONNECTED ;
          return pSDB->getCollectionSpace ( pCollectionSpaceName,
                                            cs ) ;
       }
@@ -3519,7 +3519,7 @@ namespace sdbclient
                                )
       {
          if ( !pSDB )
-            return SDB_SYS ;
+            return SDB_NOT_CONNECTED ;
          return pSDB->getCollectionSpace ( pCollectionSpaceName,
                                            cs ) ;
       }
@@ -3548,7 +3548,7 @@ namespace sdbclient
                                   )
       {
          if ( !pSDB )
-            return SDB_SYS ;
+            return SDB_NOT_CONNECTED ;
          return pSDB->createCollectionSpace ( pCollectionSpaceName,
                                               iPageSize,
                                               cs ) ;
@@ -3579,7 +3579,7 @@ namespace sdbclient
                                   )
       {
          if ( !pSDB )
-            return SDB_SYS ;
+            return SDB_NOT_CONNECTED ;
          return pSDB->createCollectionSpace ( pCollectionSpaceName,
                                               iPageSize, cs ) ;
       }
@@ -3590,7 +3590,7 @@ namespace sdbclient
 //                                  )
 //      {
 //         if ( !pSDB )
-//            return SDB_SYS ;
+//            return SDB_NOT_CONNECTED ;
 //         return pSDB->createCollectionSpace ( pCollectionSpaceName,
 //                                              options, cs ) ;
 //      }
@@ -3615,7 +3615,7 @@ namespace sdbclient
                                   )
       {
          if ( !pSDB )
-            return SDB_SYS ;
+            return SDB_NOT_CONNECTED ;
          return pSDB->createCollectionSpace ( pCollectionSpaceName,
                                               options, cs ) ;
       }
@@ -3629,7 +3629,7 @@ namespace sdbclient
       INT32 dropCollectionSpace ( const CHAR *pCollectionSpaceName )
       {
          if ( !pSDB )
-            return SDB_SYS ;
+            return SDB_NOT_CONNECTED ;
          return pSDB->dropCollectionSpace ( pCollectionSpaceName ) ;
       }
 
@@ -3642,7 +3642,7 @@ namespace sdbclient
       INT32 listCollectionSpaces ( _sdbCursor **result )
       {
          if ( !pSDB )
-            return SDB_SYS ;
+            return SDB_NOT_CONNECTED ;
          return pSDB->listCollectionSpaces ( result ) ;
       }
 
@@ -3655,7 +3655,7 @@ namespace sdbclient
       INT32 listCollectionSpaces ( sdbCursor &result )
       {
          if ( !pSDB )
-            return SDB_SYS ;
+            return SDB_NOT_CONNECTED ;
          return pSDB->listCollectionSpaces ( result ) ;
       }
 
@@ -3668,7 +3668,7 @@ namespace sdbclient
       INT32 listCollections ( _sdbCursor **result )
       {
          if ( !pSDB )
-            return SDB_SYS ;
+            return SDB_NOT_CONNECTED ;
          return pSDB->listCollections ( result ) ;
       }
 
@@ -3681,7 +3681,7 @@ namespace sdbclient
       INT32 listCollections ( sdbCursor &result )
       {
          if ( !pSDB )
-            return SDB_SYS ;
+            return SDB_NOT_CONNECTED ;
          return pSDB->listCollections ( result ) ;
       }
 
@@ -3694,7 +3694,7 @@ namespace sdbclient
       INT32 listReplicaGroups ( _sdbCursor **result )
       {
          if ( !pSDB )
-            return SDB_SYS ;
+            return SDB_NOT_CONNECTED ;
          return pSDB->listReplicaGroups ( result ) ;
       }
 
@@ -3708,7 +3708,7 @@ namespace sdbclient
       INT32 listReplicaGroups ( sdbCursor &result )
       {
          if ( !pSDB )
-            return SDB_SYS ;
+            return SDB_NOT_CONNECTED ;
          return pSDB->listReplicaGroups ( result ) ;
       }
 
@@ -3722,7 +3722,7 @@ namespace sdbclient
       INT32 getReplicaGroup ( const CHAR *pName, _sdbReplicaGroup **result )
       {
          if ( !pSDB )
-            return SDB_SYS ;
+            return SDB_NOT_CONNECTED ;
          return pSDB->getReplicaGroup ( pName, result ) ;
       }
 
@@ -3737,7 +3737,7 @@ namespace sdbclient
       INT32 getReplicaGroup ( const CHAR *pName, sdbReplicaGroup &result )
       {
          if ( !pSDB )
-            return SDB_SYS ;
+            return SDB_NOT_CONNECTED ;
          return pSDB->getReplicaGroup ( pName, result ) ;
       }
 
@@ -3751,7 +3751,7 @@ namespace sdbclient
       INT32 getReplicaGroup ( INT32 id, _sdbReplicaGroup **result )
       {
          if ( !pSDB )
-            return SDB_SYS ;
+            return SDB_NOT_CONNECTED ;
          return pSDB->getReplicaGroup ( id, result ) ;
       }
 
@@ -3765,7 +3765,7 @@ namespace sdbclient
       INT32 getReplicaGroup ( INT32 id, sdbReplicaGroup &result )
       {
          if ( !pSDB )
-            return SDB_SYS ;
+            return SDB_NOT_CONNECTED ;
          return pSDB->getReplicaGroup ( id, result ) ;
       }
 
@@ -3779,7 +3779,7 @@ namespace sdbclient
       INT32 createReplicaGroup ( const CHAR *pName, _sdbReplicaGroup **replicaGroup )
       {
          if ( !pSDB )
-            return SDB_SYS ;
+            return SDB_NOT_CONNECTED ;
          return pSDB->createReplicaGroup ( pName, replicaGroup ) ;
       }
 
@@ -3793,7 +3793,7 @@ namespace sdbclient
       INT32 createReplicaGroup ( const CHAR *pName, sdbReplicaGroup &replicaGroup )
       {
          if ( !pSDB )
-            return SDB_SYS ;
+            return SDB_NOT_CONNECTED ;
          return pSDB->createReplicaGroup ( pName, replicaGroup ) ;
       }
 
@@ -3806,7 +3806,7 @@ namespace sdbclient
       INT32 removeReplicaGroup ( const CHAR *pName )
       {
          if ( !pSDB )
-            return SDB_SYS ;
+            return SDB_NOT_CONNECTED ;
          return pSDB->removeReplicaGroup ( pName ) ;
       }
 
@@ -3828,7 +3828,7 @@ namespace sdbclient
                                const bson::BSONObj &configure )
       {
          if ( !pSDB )
-            return SDB_SYS ;
+            return SDB_NOT_CONNECTED ;
          return pSDB->createReplicaCataGroup ( pHostName, pServiceName,
                                         pDatabasePath, configure ) ;
       }
@@ -3843,7 +3843,7 @@ namespace sdbclient
       INT32 activateReplicaGroup ( const CHAR *pName, _sdbReplicaGroup **replicaGroup )
       {
          if ( !pSDB )
-            return SDB_SYS ;
+            return SDB_NOT_CONNECTED ;
          return pSDB->activateReplicaGroup ( pName, replicaGroup ) ;
       }
 
@@ -3857,7 +3857,7 @@ namespace sdbclient
       INT32 activateReplicaGroup ( const CHAR *pName, sdbReplicaGroup &replicaGroup )
       {
          if ( !pSDB )
-            return SDB_SYS ;
+            return SDB_NOT_CONNECTED ;
          return pSDB->activateReplicaGroup ( pName, replicaGroup ) ;
       }
 
@@ -3870,7 +3870,7 @@ namespace sdbclient
       INT32 execUpdate( const CHAR *sql )
       {
          if ( !pSDB )
-            return SDB_SYS ;
+            return SDB_NOT_CONNECTED ;
          return pSDB->execUpdate( sql ) ;
       }
 
@@ -3886,7 +3886,7 @@ namespace sdbclient
                   _sdbCursor **result )
       {
          if ( !pSDB )
-            return SDB_SYS ;
+            return SDB_NOT_CONNECTED ;
          return pSDB->exec( sql, result ) ;
       }
 
@@ -3902,7 +3902,7 @@ namespace sdbclient
                   sdbCursor &result )
       {
          if ( !pSDB )
-            return SDB_SYS ;
+            return SDB_NOT_CONNECTED ;
          return pSDB->exec( sql, result ) ;
       }
 
@@ -3914,7 +3914,7 @@ namespace sdbclient
       INT32 transactionBegin()
       {
          if ( !pSDB )
-            return SDB_SYS ;
+            return SDB_NOT_CONNECTED ;
          return pSDB->transactionBegin() ;
       }
 
@@ -3926,7 +3926,7 @@ namespace sdbclient
       INT32 transactionCommit()
       {
          if ( !pSDB )
-            return SDB_SYS ;
+            return SDB_NOT_CONNECTED ;
          return pSDB->transactionCommit() ;
       }
 
@@ -3938,7 +3938,7 @@ namespace sdbclient
       INT32 transactionRollback()
       {
          if ( !pSDB )
-            return SDB_SYS ;
+            return SDB_NOT_CONNECTED ;
          return pSDB->transactionRollback() ;
       }
 /** \fn INT32 flushConfigure( BSONObj &options )
@@ -3953,7 +3953,7 @@ namespace sdbclient
       INT32 flushConfigure( const bson::BSONObj &options )
       {
          if ( !pSDB )
-            return SDB_SYS ;
+            return SDB_NOT_CONNECTED ;
          return pSDB->flushConfigure( options ) ;
       }
 
@@ -3966,7 +3966,7 @@ namespace sdbclient
       INT32 crtJSProcedure ( const CHAR *code )
       {
          if ( !pSDB )
-            return SDB_SYS ;
+            return SDB_NOT_CONNECTED ;
          return pSDB->crtJSProcedure( code ) ;
       }
 
@@ -3979,14 +3979,14 @@ namespace sdbclient
       INT32 rmProcedure( const CHAR *spName )
       {
          if ( !pSDB )
-            return SDB_SYS ;
+            return SDB_NOT_CONNECTED ;
          return pSDB->rmProcedure( spName ) ;
       }
 
       INT32 listProcedures( _sdbCursor **cursor, const bson::BSONObj &condition )
       {
          if ( !pSDB )
-            return SDB_SYS ;
+            return SDB_NOT_CONNECTED ;
          return pSDB->listProcedures( cursor, condition ) ;
       }
 
@@ -4000,7 +4000,7 @@ namespace sdbclient
       INT32 listProcedures( sdbCursor &cursor, const bson::BSONObj &condition )
       {
          if ( !pSDB )
-            return SDB_SYS ;
+            return SDB_NOT_CONNECTED ;
          return pSDB->listProcedures( cursor, condition ) ;
       }
 
@@ -4024,7 +4024,7 @@ namespace sdbclient
                    bson::BSONObj &errmsg )
      {
          if ( !pSDB )
-            return SDB_SYS ;
+            return SDB_NOT_CONNECTED ;
          return pSDB->evalJS( code, type, cursor, errmsg ) ;
      }
 
@@ -4034,7 +4034,7 @@ namespace sdbclient
                    bson::BSONObj &errmsg )
      {
          if ( !pSDB )
-            return SDB_SYS ;
+            return SDB_NOT_CONNECTED ;
          return pSDB->evalJS( code, type, cursor, errmsg ) ;
      }
 
@@ -4059,7 +4059,7 @@ namespace sdbclient
       INT32 backupOffline ( const bson::BSONObj &options)
       {
          if ( !pSDB )
-            return SDB_SYS ;
+            return SDB_NOT_CONNECTED ;
          return pSDB->backupOffline( options ) ;
       }
 
@@ -4070,7 +4070,7 @@ namespace sdbclient
                               const bson::BSONObj &orderBy = _sdbStaticObject)
       {
          if ( !pSDB )
-            return SDB_SYS ;
+            return SDB_NOT_CONNECTED ;
          return pSDB->listBackup( cursor, options, condition, selector, orderBy ) ;
       }
 
@@ -4099,7 +4099,7 @@ namespace sdbclient
                               const bson::BSONObj &orderBy = _sdbStaticObject)
       {
          if ( !pSDB )
-            return SDB_SYS ;
+            return SDB_NOT_CONNECTED ;
          return pSDB->listBackup( cursor, options, condition, selector, orderBy ) ;
       }
 
@@ -4116,7 +4116,7 @@ namespace sdbclient
       INT32 removeBackup ( const bson::BSONObj &options)
       {
          if ( !pSDB )
-            return SDB_SYS ;
+            return SDB_NOT_CONNECTED ;
          return pSDB->removeBackup( options ) ;
       }
 
@@ -4127,7 +4127,7 @@ namespace sdbclient
                         const bson::BSONObj &hint = _sdbStaticObject)
       {
          if ( !pSDB )
-            return SDB_SYS ;
+            return SDB_NOT_CONNECTED ;
          return pSDB->listTasks ( cursor,
                                   condition,
                                   selector,
@@ -4155,7 +4155,7 @@ namespace sdbclient
                         const bson::BSONObj &hint = _sdbStaticObject)
       {
          if ( !pSDB )
-            return SDB_SYS ;
+            return SDB_NOT_CONNECTED ;
          return pSDB->listTasks ( cursor,
                                   condition,
                                   selector,
@@ -4175,7 +4175,7 @@ namespace sdbclient
                         SINT32 num )
       {
          if ( !pSDB )
-            return SDB_SYS ;
+            return SDB_NOT_CONNECTED ;
          return pSDB->waitTasks ( taskIDs,
                                   num ) ;
       }
@@ -4193,7 +4193,7 @@ namespace sdbclient
                          BOOLEAN isAsync )
       {
          if ( !pSDB )
-            return SDB_SYS ;
+            return SDB_NOT_CONNECTED ;
          return pSDB->cancelTask ( taskID,
                                    isAsync ) ;
       }
@@ -4212,7 +4212,7 @@ namespace sdbclient
       INT32 setSessionAttr ( const bson::BSONObj &options = _sdbStaticObject )
       {
          if ( !pSDB )
-            return SDB_SYS ;
+            return SDB_NOT_CONNECTED ;
          return pSDB->setSessionAttr ( options ) ;
       }
 
@@ -4225,7 +4225,7 @@ namespace sdbclient
       INT32 closeAllCursors ()
       {
          if ( !pSDB )
-            return SDB_SYS ;
+            return SDB_NOT_CONNECTED ;
          return pSDB->closeAllCursors () ;
       }
 
@@ -4239,7 +4239,7 @@ namespace sdbclient
       INT32 isValid ( BOOLEAN *result )
       {
          if ( !pSDB )
-            return SDB_SYS ;
+            return SDB_NOT_CONNECTED ;
          return pSDB->isValid ( result ) ;
       }
 
@@ -4278,7 +4278,7 @@ namespace sdbclient
                            sdbDomain &domain )
       {
          if ( !pSDB )
-            return SDB_SYS ;
+            return SDB_NOT_CONNECTED ;
          return pSDB->createDomain ( pDomainName, options, domain ) ;
       }
 
@@ -4290,7 +4290,7 @@ namespace sdbclient
 */    INT32 dropDomain ( const CHAR *pDomainName )
       {
          if ( !pSDB )
-            return SDB_SYS ;
+            return SDB_NOT_CONNECTED ;
          return pSDB->dropDomain ( pDomainName ) ;
       }
 
@@ -4306,7 +4306,7 @@ namespace sdbclient
                         sdbDomain &domain )
       {
          if ( !pSDB )
-            return SDB_SYS ;
+            return SDB_NOT_CONNECTED ;
          return pSDB->getDomain ( pDomainName, domain ) ;
       }
 
@@ -4331,7 +4331,7 @@ namespace sdbclient
                           const bson::BSONObj &hint )
       {
          if ( !pSDB )
-            return SDB_SYS ;
+            return SDB_NOT_CONNECTED ;
          return pSDB->listDomains ( cursor, condition, selector, orderBy, hint ) ;
       }
 
@@ -4343,7 +4343,7 @@ namespace sdbclient
       INT32 getDC( sdbDataCenter &dc )
       {
          if ( !pSDB )
-            return SDB_SYS ;
+            return SDB_NOT_CONNECTED ;
          return pSDB->getDC ( dc ) ;
       }
 
@@ -4351,7 +4351,7 @@ namespace sdbclient
                            std::map<std::string,std::string> &config )
       {
          if ( !pSDB )
-            return SDB_SYS ;
+            return SDB_NOT_CONNECTED ;
          return pSDB->modifyConfig ( nodeID, config ) ;
       }
 
@@ -4359,21 +4359,21 @@ namespace sdbclient
                         std::map<std::string,std::string> &config )
       {
          if ( !pSDB )
-            return SDB_SYS ;
+            return SDB_NOT_CONNECTED ;
          return pSDB->getConfig ( nodeID, config ) ;
       }
 
       INT32 modifyConfig ( std::map<std::string,std::string> &config )
       {
          if ( !pSDB )
-            return SDB_SYS ;
+            return SDB_NOT_CONNECTED ;
          return pSDB->modifyConfig ( CURRENT_NODEID, config ) ;
       }
 
       INT32 getConfig ( std::map<std::string,std::string> &config )
       {
          if ( !pSDB )
-            return SDB_SYS ;
+            return SDB_NOT_CONNECTED ;
          return pSDB->getConfig ( CURRENT_NODEID, config ) ;
       }*/
 
