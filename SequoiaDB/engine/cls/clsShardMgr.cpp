@@ -987,7 +987,7 @@ namespace engine
       tmpID.columns.groupID = _cataGrpItem.groupID() ;
 
       _shardLatch.get_shared() ;
-      rc = _cataGrpItem.updatePrimary( id, primary ) ;
+      rc = _cataGrpItem.updatePrimary( tmpID, primary ) ;
       _shardLatch.release_shared() ;
 
       PD_TRACE_EXITRC ( SDB__CLSSHDMGR_UPDPRM, rc );

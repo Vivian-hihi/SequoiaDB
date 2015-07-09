@@ -1388,6 +1388,12 @@ namespace engine
 
          ossStrncpy( bakPath, nodeOptions.getDbPath(),
                      OSS_MAX_PATHSIZE ) ;
+         UINT32 bkPathLen = ossStrlen( bakPath ) ;
+         if ( bkPathLen > 0 &&
+              OSS_FILE_SEP_CHAR == bakPath[ bkPathLen - 1 ] )
+         {
+            bakPath[ bkPathLen - 1 ] = 0 ;
+         }
          ossStrncat( bakPath, "_bak", OSS_MAX_PATHSIZE ) ;
 
          if ( SDB_OK == ossAccess( bakPath ) )
