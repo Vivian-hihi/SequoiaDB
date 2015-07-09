@@ -39,19 +39,30 @@
 #define RTN_BSONSET_HPP_
 
 #include "rtnContext.hpp"
+#include "msg.h"
+
+using namespace bson ;
 
 namespace engine
 {
    class _rtnDataSet : public SDBObject
    {
    public:
-      _rtnDataSet( const rtnQueryOptions &options,
-                   _pmdEDUCB *cb ) ;
-
-      _rtnDataSet( SINT64 contextID,
-                   _pmdEDUCB *cb ) ;
+      _rtnDataSet( const rtnQueryOptions &options, _pmdEDUCB *cb ) ;
+      _rtnDataSet( SINT64 contextID, _pmdEDUCB *cb ) ;
+      _rtnDataSet( MsgOpReply *pReply, _pmdEDUCB *cb,
+                   BOOLEAN ownned = FALSE ) ;
 
       virtual ~_rtnDataSet() ;
+
+   protected:
+      void     clear() ;
+
+      INT32    initByQuery( const rtnQueryOptions &options,
+                            _pmdEDUCB *cb ) ;
+
+      INT32    initByReply( MsgOpReply *pReply, _pmdEDUCB *cb,
+                            BOOLEAN ownned = FALSE ) ;
 
    public:
       INT32 next( BSONObj &obj ) ;
@@ -61,8 +72,9 @@ namespace engine
       SINT64            _contextID ;
       _pmdEDUCB         *_cb ;
       INT32             _lastErr ;
-      BOOLEAN           _fetchFromContext ;
       _SDB_RTNCB        *_rtnCB ;
+      CHAR              *_pBuff ;
+      BOOLEAN           _ownned ;
    } ;
    typedef class _rtnDataSet rtnDataSet ;
 }

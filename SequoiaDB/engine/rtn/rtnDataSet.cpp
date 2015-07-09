@@ -38,44 +38,136 @@
 #include "rtnDataSet.hpp"
 #include "rtn.hpp"
 
+using namespace bson ;
+
 namespace engine
 {
+
    _rtnDataSet::_rtnDataSet( const rtnQueryOptions &options,
                              _pmdEDUCB *cb )
    :_contextID( -1 ),
     _cb( cb ),
     _lastErr( SDB_OK ),
-    _fetchFromContext( TRUE ),
-    _rtnCB( NULL )
+    _rtnCB( sdbGetRTNCB() ),
+    _pBuff( NULL ),
+    _ownned( FALSE )
    {
-      _rtnCB = sdbGetRTNCB() ;
-      _lastErr = rtnQuery( options._fullName, options._query,
+      initByQuery( options, cb ) ;
+   }
+
+   _rtnDataSet::_rtnDataSet( SINT64 contextID, _pmdEDUCB *cb )
+   :_contextID( contextID ),
+    _cb( cb ),
+    _lastErr( SDB_OK ),
+    _rtnCB( sdbGetRTNCB() ),
+    _pBuff( NULL ),
+    _ownned( FALSE )
+   {
+   }
+
+   _rtnDataSet::_rtnDataSet( MsgOpReply *pReply, _pmdEDUCB *cb,
+                             BOOLEAN ownned )
+   :_contextID( -1 ),
+    _cb( cb ),
+    _lastErr( SDB_OK ),
+    _rtnCB( sdbGetRTNCB() ),
+    _pBuff( NULL ),
+    _ownned( FALSE )
+   {
+      initByReply( pReply, cb, ownned ) ;
+   }
+
+   INT32 _rtnDataSet::initByQuery( const rtnQueryOptions &options,
+                                   _pmdEDUCB *cb )
+   {
+      clear() ;
+
+      _cb = cb ;
+      INT32 rc = rtnQuery( options._fullName, options._query,
                            options._selector, options._orderBy,
                            options._hint, options._flag,
                            _cb, options._skip, options._limit,
                            sdbGetDMSCB(), _rtnCB,
                            _contextID, NULL, FALSE ) ;
+      _lastErr = rc ;
+
+      return rc ;
    }
 
-   _rtnDataSet::_rtnDataSet( SINT64 contextID,
-                             _pmdEDUCB *cb )
-   :_contextID( contextID ),
-    _cb( cb ),
-    _lastErr( SDB_OK ),
-    _fetchFromContext( TRUE ),
-    _rtnCB( NULL )
+   INT32 _rtnDataSet::initByReply( MsgOpReply *pReply,
+                                   _pmdEDUCB *cb,
+                                   BOOLEAN ownned )
    {
-      _rtnCB = sdbGetRTNCB() ;
+      INT32 rc = SDB_OK ;
+
+      /// context id must be invalid
+      SDB_ASSERT( -1 == pReply->contextID, "Context id must be -1" ) ;
+
+      /// first clear
+      clear() ;
+
+      _lastErr = pReply->flags ;
+      _cb = cb ;
+
+      rc = pReply->flags ;
+
+      /// has data
+      if ( SDB_OK == rc &&
+           pReply->header.messageLength > sizeof( MsgOpReply ) )
+      {
+         if ( !ownned )
+         {
+            _pBuff = ( CHAR* )pReply ;
+         }
+         else
+         {
+            _pBuff = ( CHAR* )SDB_OSS_MALLOC( pReply->header.messageLength ) ;
+            if ( !_pBuff )
+            {
+               PD_LOG( PDERROR, "Alloc memory[%d] failed",
+                       pReply->header.messageLength ) ;
+               rc = SDB_OOM ;
+               _lastErr = rc ;
+               goto error ;
+            }
+            _ownned = TRUE ;
+            ossMemcpy( _pBuff, pReply, pReply->header.messageLength ) ;
+         }
+
+         _contextBuf = rtnContextBuf( _pBuff + sizeof( MsgOpReply ),
+                                      pReply->header.messageLength -
+                                      sizeof( MsgOpReply ),
+                                      pReply->numReturned ) ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    _rtnDataSet::~_rtnDataSet()
    {
-      if ( -1 != _contextID )
+      clear() ;
+   }
+
+   void _rtnDataSet::clear()
+   {
+      _contextBuf.release() ;
+
+      if ( -1 != _contextID && _cb )
       {
-         sdbGetRTNCB()->contextDelete( _contextID,
-                                       _cb ) ;
+         sdbGetRTNCB()->contextDelete( _contextID, _cb ) ;
          _contextID = -1 ;
       }
+      if ( _pBuff && _ownned )
+      {
+         SDB_OSS_FREE( _pBuff ) ;
+      }
+      _pBuff = NULL ;
+      _ownned = FALSE ;
+
+      _lastErr = SDB_OK ;
    }
 
    INT32 _rtnDataSet::next( BSONObj &obj )
@@ -83,51 +175,38 @@ namespace engine
       INT32 rc = SDB_OK ;
       if ( SDB_OK != _lastErr )
       {
+         rc = _lastErr ;
          goto error ;
       }
 
-   retry:
-      if ( _fetchFromContext )
+      if ( _contextBuf.eof() && -1 != _contextID )
       {
          rc = rtnGetMore( _contextID, -1, _contextBuf, _cb, _rtnCB ) ;
-         if ( SDB_OK != rc )
+         if ( rc )
          {
             if ( SDB_DMS_EOC != rc )
             {
-               PD_LOG( PDERROR, "failed to get next object:%d", rc ) ;
+               PD_LOG( PDERROR, "Get more from context[%lld] failed, rc: %d",
+                       _contextID, rc ) ;
             }
-            else
-            {
-               _contextID = -1 ;
-            }
+            _contextID = -1 ;
             _lastErr = rc ;
             goto error ;
          }
-
-         _fetchFromContext = FALSE ;
       }
 
       rc = _contextBuf.nextObj( obj ) ;
-      if ( SDB_OK == rc )
-      {
-         goto done ;
-      }
-      else if ( SDB_DMS_EOC == rc )
-      {
-         rc = SDB_OK ;
-         _fetchFromContext = TRUE ;
-         goto retry ;
-      }
-      else
+      if ( rc )
       {
          _lastErr = rc ;
-         PD_LOG( PDERROR, "failed to get next from buf:%d", rc ) ;
          goto error ;
-      } 
+      }
+
    done:
       return rc ;
    error:
       goto done ;
    }
+
 }
 
