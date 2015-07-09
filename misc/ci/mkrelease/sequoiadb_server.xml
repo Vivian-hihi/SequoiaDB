@@ -180,6 +180,15 @@
                 </fileExists>
             </ruleList>
         </runProgram>
+        <runProgram>
+            <program>rm</program>
+            <programArguments>-f /usr/bin/sequoiadb</programArguments>
+            <ruleList>
+                <fileExists>
+                    <path>/usr/bin/sequoiadb</path>
+                </fileExists>
+            </ruleList>
+        </runProgram>
     </readyToInstallActionList>
     <postInstallationActionList>
         <createSymLink>
@@ -455,6 +464,15 @@
             <ruleList>
                 <fileExists>
                     <path>/usr/bin/sdb*</path>
+                </fileExists>
+            </ruleList>
+        </runProgram>
+        <runProgram>
+            <program>rm</program>
+            <programArguments>-f /usr/bin/sequoiadb</programArguments>
+            <ruleList>
+                <fileExists>
+                    <path>/usr/bin/sequoiadb</path>
                 </fileExists>
             </ruleList>
         </runProgram>
