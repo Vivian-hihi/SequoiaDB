@@ -13,6 +13,16 @@ using namespace sdbclient ;
  *           test begine             *
  *************************************/
 
+TEST(node, not_connect)
+{
+   sdbNode node ;
+   BSONObj obj ;
+   INT32 rc = SDB_OK ;
+
+   rc = node.getStatus() ;
+   ASSERT_EQ( SDB_NOT_CONNECTED, rc ) ;
+}
+
 TEST(node,getStatus)
 {
    sdb connect ;

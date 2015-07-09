@@ -19,6 +19,16 @@
 using namespace std ;
 using namespace sdbclient ;
 
+TEST( domainTest, not_connect )
+{
+   sdbDomain dm ;
+   BSONObj obj ;
+   INT32 rc = SDB_OK ;
+
+   rc = dm.alterDomain( obj ) ;
+   ASSERT_EQ( SDB_NOT_CONNECTED, rc ) ;
+}
+
 // Testing abnormal in Domain
 TEST( domainTest, abnormal )
 {

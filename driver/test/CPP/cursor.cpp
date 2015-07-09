@@ -8,6 +8,16 @@
 using namespace std ;
 using namespace sdbclient ;
 
+TEST(cursor, not_connect)
+{
+   INT32 rc = SDB_OK ;
+   sdbCursor cursor ;
+   BSONObj obj ;
+
+   rc = cursor.next( obj ) ;
+   ASSERT_EQ( SDB_NOT_CONNECTED, rc ) ;
+}
+
 TEST(cursor,current)
 {
    sdb connection ;

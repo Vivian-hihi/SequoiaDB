@@ -10,6 +10,15 @@ using namespace sdbclient ;
 
 #define INDEXNAMEDEF         "indexNameDef"
 
+TEST(collection, not_connect)
+{
+   sdbCollection cl ;
+   SINT64 count = 0 ;
+   INT32 rc = SDB_OK ;
+   rc = cl.getCount( count ) ;
+   ASSERT_EQ( SDB_NOT_CONNECTED, rc ) ;
+}
+
 TEST(collection,getCount_without_condition)
 {
    sdb connection ;

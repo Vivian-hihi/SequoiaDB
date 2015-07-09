@@ -8,6 +8,17 @@
 using namespace std ;
 using namespace sdbclient ;
 
+
+TEST( dc, not_connect )
+{
+   sdbDataCenter dc ;
+   BSONObj obj ;
+   INT32 rc = SDB_OK ;
+
+   rc = dc.getDetail( obj ) ;
+   ASSERT_EQ( SDB_NOT_CONNECTED, rc ) ;
+}
+
 TEST( dc, all_api_test )
 {
    sdb db ;

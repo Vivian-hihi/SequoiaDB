@@ -13,6 +13,15 @@ using namespace sdbclient ;
 
 #define NUM_RECORD             5
 
+TEST(collectionspace, not_connect)
+{
+   sdbCollectionSpace cs ;
+   sdbCollection cl ;
+   INT32 rc = SDB_OK ;
+   rc = cs.getCollection( COLLECTION_NAME, cl ) ;
+   ASSERT_EQ( SDB_NOT_CONNECTED, rc ) ;
+}
+
 TEST(collectionspace,getCollection)
 {
    sdb connection ;

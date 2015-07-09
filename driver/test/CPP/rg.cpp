@@ -200,6 +200,16 @@ INT32 _tmain( INT32 argc, CHAR* argv[] )
    return RUN_ALL_TESTS() ;
 }
 
+TEST( replicaGroupTest, not_connect )
+{
+   sdbReplicaGroup rg ;
+   BSONObj obj ;
+   INT32 rc = SDB_OK ;
+
+   rc = rg.getDetail( obj ) ;
+   ASSERT_EQ( SDB_NOT_CONNECTED, rc ) ;
+}
+
 TEST_F( replicaGroupTest, init_test )
 {
    if ( FALSE == is_cluster )
