@@ -171,24 +171,6 @@
                 </fileExists>
             </ruleList>
         </runProgram>
-        <runProgram>
-            <program>rm</program>
-            <programArguments>-rf /usr/bin/fap</programArguments>
-            <ruleList>
-                <fileExists>
-                    <path>/usr/bin/fap</path>
-                </fileExists>
-            </ruleList>
-        </runProgram>
-        <runProgram>
-            <program>rm</program>
-            <programArguments>-f /usr/bin/sequoiadb</programArguments>
-            <ruleList>
-                <fileExists>
-                    <path>/usr/bin/sequoiadb</path>
-                </fileExists>
-            </ruleList>
-        </runProgram>
     </readyToInstallActionList>
     <postInstallationActionList>
         <createSymLink>
@@ -375,7 +357,33 @@
         </runProgram>
         <runProgram>
             <program>ln</program>
-            <programArguments>-s ${installdir}/bin/* /usr/bin/</programArguments>
+            <programArguments>-s ${installdir}/bin/sdb /usr/bin/</programArguments>
+            <ruleList>
+                <fileExists>
+                    <negate>1</negate>
+                    <path>/usr/bin/sdb</path>
+                </fileExists>
+            </ruleList>
+        </runProgram>
+        <runProgram>
+            <program>ln</program>
+            <programArguments>-s ${installdir}/bin/sdbimprt /usr/bin/</programArguments>
+            <ruleList>
+                <fileExists>
+                    <negate>1</negate>
+                    <path>/usr/bin/sdbimprt</path>
+                </fileExists>
+            </ruleList>
+        </runProgram>
+        <runProgram>
+            <program>ln</program>
+            <programArguments>-s ${installdir}/bin/sdbexprt /usr/bin/</programArguments>
+            <ruleList>
+                <fileExists>
+                    <negate>1</negate>
+                    <path>/usr/bin/sdbexprt</path>
+                </fileExists>
+            </ruleList>
         </runProgram>
     </postInstallationActionList>
     <preUninstallationActionList>
@@ -451,28 +459,10 @@
         </runProgram>
         <runProgram>
             <program>rm</program>
-            <programArguments>-rf /usr/bin/fap</programArguments>
-            <ruleList>
-                <fileExists>
-                    <path>/usr/bin/fap</path>
-                </fileExists>
-            </ruleList>
-        </runProgram>
-        <runProgram>
-            <program>rm</program>
             <programArguments>-f /usr/bin/sdb*</programArguments>
             <ruleList>
                 <fileExists>
                     <path>/usr/bin/sdb*</path>
-                </fileExists>
-            </ruleList>
-        </runProgram>
-        <runProgram>
-            <program>rm</program>
-            <programArguments>-f /usr/bin/sequoiadb</programArguments>
-            <ruleList>
-                <fileExists>
-                    <path>/usr/bin/sequoiadb</path>
                 </fileExists>
             </ruleList>
         </runProgram>
