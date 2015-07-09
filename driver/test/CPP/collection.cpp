@@ -561,6 +561,58 @@ TEST(collection,query)
    connection.disconnect() ;
 }
 
+TEST(collection,queryOne)
+{
+   // initialize local variables
+   const CHAR *pHostName                    = HOST ;
+   const CHAR *pPort                        = SERVER ;
+   const CHAR *pUsr                         = USER ;
+   const CHAR *pPasswd                      = PASSWD ;
+   INT32 rc = SDB_OK ;
+   INT32 record_num = 100 ;
+   BSONObj cond ;
+   BSONObj sel ;
+   BSONObj order ;
+   BSONObj record ;
+   BSONObj dumpObj ;
+
+   // initialize the work environment
+   rc = initEnv() ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // connect to database
+   sdbclient::sdb connection ;
+   rc = connection.connect( pHostName, pPort, pUsr, pPasswd ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // get cs
+   sdbclient::sdbCollectionSpace cs ;
+   rc = getCollectionSpace( connection, COLLECTION_SPACE_NAME, cs ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // get collection
+   sdbclient::sdbCollection cl ;
+   rc = getCollection( cs, COLLECTION_NAME, cl ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   // insert some records
+   rc = insertRecords( cl, record_num ) ;
+   // define a cursor object for query
+   sdbclient::sdbCursor cursor ;
+   // build up the query condition
+   cond = BSON ( "age" << 50 ) ;
+   sel = BSON( "age" << "" ) ;
+   order = BSON( "age" << -1 ) ;
+   // query the specified records in current collection
+   rc = cl.queryOne( record, cond, sel, order,
+                     dumpObj, record_num - 1, 0 ) ;
+   CHECK_MSG("%s%d\n","rc = ",rc) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   cout << "queryOne result is: " << record.toString( FALSE, TRUE ) << endl ;
+   cond = BSON( "age" << 51 ) ;
+   rc = cl.queryOne( record, cond, sel, order,
+                     dumpObj, record_num - 1, 0 ) ;
+   ASSERT_EQ( SDB_DMS_EOC, rc ) ;
+   // disconnect the connection
+   connection.disconnect() ;
+}
+
 TEST(collection,createIndex)
 {
    sdb connection ;
