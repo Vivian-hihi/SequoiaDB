@@ -162,6 +162,15 @@
                 </userTest>
             </ruleList>
         </exit>
+        <runProgram>
+            <program>rm</program>
+            <programArguments>-f /usr/bin/sdb*</programArguments>
+            <ruleList>
+                <fileExists>
+                    <path>/usr/bin/sdb*</path>
+                </fileExists>
+            </ruleList>
+        </runProgram>
     </readyToInstallActionList>
     <postInstallationActionList>
         <createSymLink>
