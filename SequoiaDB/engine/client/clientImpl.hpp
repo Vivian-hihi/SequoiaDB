@@ -938,10 +938,16 @@ namespace sdbclient
                           const BSONObj *arg1 = NULL, const BSONObj *arg2 = NULL,
                           const BSONObj *arg3 = NULL, const BSONObj *arg4 = NULL ) ;
       INT32 _runCommand ( const CHAR *pString,
-                          const BSONObj *arg1 = NULL, const BSONObj *arg2 = NULL,
-                          const BSONObj *arg3 = NULL, const BSONObj *arg4 = NULL,
-                          _sdbCursor **retInfoCursor = NULL,
-                          _sdbCursor **errInfoCursor = NULL ) ;
+                          const BSONObj *arg1 = NULL,
+                          const BSONObj *arg2 = NULL,
+                          const BSONObj *arg3 = NULL,
+                          const BSONObj *arg4 = NULL,
+                          SINT32 flag = 0,
+                          UINT64 reqID = 0,
+                          SINT64 numToSkip = -1,
+                          SINT64 numToReturn = -1,
+                          _sdbCursor **ppCursor = NULL ) ;
+      INT32 _buildEmptyCursor( _sdbCursor **ppCursor ) ;
       INT32 _requestSysInfo () ;
       void _regCursor ( _sdbCursorImpl *cursor )
       {

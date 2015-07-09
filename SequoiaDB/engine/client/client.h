@@ -2339,7 +2339,7 @@ SDB_EXPORT INT32 sdbEnableReadOnly( sdbDCHandle cHandle, BOOLEAN isReadOnly ) ;
 /** \fn INT32 sdbCreateImage( sdbDCHandle cHandle, const CHAR *pCataAddrList )
     \brief Create image in data center
     \param [in] cHandle The data center handle
-    \param [in] pCataAddrList Catalog address list, e.g. "192.168.20.165:30003",
+    \param [in] pCataAddrList Catalog address list of remote data center, e.g. "192.168.20.165:30003",
                 "192.168.20.165:30003,192.168.20.166:30003" 
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
@@ -2398,7 +2398,7 @@ SDB_EXPORT INT32 sdbDisableImage( sdbDCHandle cHandle ) ;
       ASSERT_EQ( SDB_OK, rc ) ;
 
       bson_destroy( &obj ) ;
-
+    \endcode
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */

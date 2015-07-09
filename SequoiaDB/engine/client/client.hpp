@@ -2519,7 +2519,7 @@ namespace sdbclient
 
       /** \fn INT32 createImage( const CHAR *pCataAddrList )
           \brief Create image in data center
-          \param [in] pCataAddrList Catalog address list, e.g. "192.168.20.165:30003",
+          \param [in] pCataAddrList Catalog address list of remote data center, e.g. "192.168.20.165:30003",
                       "192.168.20.165:30003,192.168.20.166:30003" 
           \retval SDB_OK Operation Success
           \retval Others Operation Fail

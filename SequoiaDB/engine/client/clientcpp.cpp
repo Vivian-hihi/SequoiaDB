@@ -998,53 +998,34 @@ do                                                            \
    {
       PD_TRACE_ENTRY ( SDB_CLIENT_GETCOUNT ) ;
       INT32 rc            = SDB_OK ;
-      BOOLEAN result      = FALSE ;
-      SINT64 contextID    = -1 ;
-      _sdbCursor *cursor  = NULL ;
+      _sdbCursor *pCursor = NULL ;
       BSONObj newObj = BSON ( FIELD_NAME_COLLECTION << _collectionFullName ) ;
       BSONObj countObj ;
-      rc = clientBuildQueryMsgCpp ( &_pSendBuffer, &_sendBufferSize,
-                                    CMD_ADMIN_PREFIX CMD_NAME_GET_COUNT,
-                                    0, 0, 0, -1,
-                                    condition.objdata(), NULL, NULL,
-                                    newObj.objdata(),
-                                    _connection->_endianConvert ) ;
-      if ( rc )
-      {
-         goto exit ;
-      }
-      _connection->lock () ;
-      rc = _connection->_send ( _pSendBuffer ) ;
-      if ( rc )
-      {
-         goto error ;
-      }
-      rc = _connection->_recvExtract ( &_pReceiveBuffer, &_receiveBufferSize,
-                                       contextID, result ) ;
-      if ( rc )
-      {
-         goto error ;
-      }
-      // check return msg header
-      CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, _connection ) ;
-      cursor = (_sdbCursor*)( new(std::nothrow) sdbCursorImpl () ) ;
-      if ( !cursor )
-      {
-         rc = SDB_OOM ;
-         goto error ;
-      }
-      ((_sdbCursorImpl*)cursor)->_setCollection ( NULL ) ;
-      ((_sdbCursorImpl*)cursor)->_contextID = contextID ;
-      ((_sdbCursorImpl*)cursor)->_setConnection ( _connection ) ;
 
+      rc = _connection->_runCommand( CMD_ADMIN_PREFIX CMD_NAME_GET_COUNT,
+                                     &condition, NULL, NULL, &newObj,
+                                     0, 0, 0, -1, &pCursor ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+
+      // check return cursor
+      if ( NULL == pCursor )
+      {
+         rc = SDB_SYS ;
+         goto error ;
+      }
+     
       // there should only 1 record read
-      rc = cursor->next ( countObj ) ;
+      rc = pCursor->next ( countObj ) ;
       if ( rc )
       {
          // if we didn't read anything, let's return unexpected
          if ( SDB_DMS_EOC == rc )
          {
             rc = SDB_UNEXPECTED_RESULT ;
+            goto error ;
          }
       }
       else
@@ -1059,13 +1040,13 @@ do                                                            \
             count = ele.numberLong() ;
          }
       }
-      delete ( cursor ) ;
-   exit:
+   done:
+      if ( NULL != pCursor )
+      {
+         delete( pCursor ) ;
+      }
       PD_TRACE_EXITRC ( SDB_CLIENT_GETCOUNT, rc );
       return rc ;
-   done :
-      _connection->unlock () ;
-      goto exit ;
    error :
       goto done ;
    }
@@ -1353,10 +1334,9 @@ do                                                            \
                   PD_PACK_LONG(numToSkip),
                   PD_PACK_LONG(numToReturn),
                   PD_PACK_INT( flag ) );
-      INT32 rc = SDB_OK ;
-      BOOLEAN result ;
-      SINT64 contextID = 0 ;
-      BOOLEAN locked = FALSE ;
+      INT32 rc              = SDB_OK ;
+      _sdbCursor *pCursor   = NULL ;
+      
       // check
       if ( _collectionFullName [0] == '\0' || !_connection || !cursor )
       {
@@ -1368,69 +1348,45 @@ do                                                            \
       {
          flag |= FLG_QUERY_WITH_RETURNDATA ;
       }
-      // build msg
-      rc = clientBuildQueryMsgCpp ( &_pSendBuffer, &_sendBufferSize,
-                                    _collectionFullName, flag, 0, numToSkip,
-                                    numToReturn,
-                                    condition.objdata(),
-                                    selected.objdata(),
-                                    orderBy.objdata(),
-                                    hint.objdata(),
-                                    _connection->_endianConvert ) ;
-      if ( rc )
-      {
-         goto done ;
-      }
-      // send msg
-      _connection->lock () ;
-      locked = TRUE ;
-      rc = _connection->_send ( _pSendBuffer ) ;
-      if ( rc )
+
+      // run command
+      rc = _connection->_runCommand( _collectionFullName,
+                                     &condition, &selected,
+                                     &orderBy, &hint,
+                                     flag, 0, numToSkip, numToReturn,
+                                     &pCursor ) ;
+      if ( SDB_OK != rc )
       {
          goto error ;
       }
-      // receive from engine
-      rc = _connection->_recvExtract ( &_pReceiveBuffer, &_receiveBufferSize,
-                                       contextID, result ) ;
-      if ( rc )
+
+      // check return cursor
+      if ( NULL == pCursor )
       {
-         goto error ;
+         rc = _connection->_buildEmptyCursor( &pCursor ) ;
+         if ( SDB_OK != rc )
+         {
+            goto error ;
+         }
+         if ( NULL == pCursor )
+         {
+            rc = SDB_SYS ;
+            goto error ;
+         }
       }
-      // check return msg header
-      CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, _connection ) ;
-      // build cursor
-      if ( *cursor )
-      {
-         delete *cursor ;
-         *cursor = NULL ;
-      }
-      *cursor = (_sdbCursor*)( new(std::nothrow) sdbCursorImpl () ) ;
-      if ( !*cursor )
-      {
-         rc = SDB_OOM ;
-         goto error ;
-      }
-      ((_sdbCursorImpl*)*cursor)->_setCollection ( this ) ;
-      ((_sdbCursorImpl*)*cursor)->_contextID = contextID ;
-      ((_sdbCursorImpl*)*cursor)->_setConnection ( _connection ) ;
-      // query with return data
-      if ( ((UINT32)((MsgHeader*)_pReceiveBuffer)->messageLength) >
-           ossRoundUpToMultipleX( sizeof(MsgOpReply), 4 ) )
-      {
-         ((_sdbCursorImpl*)*cursor)->_pReceiveBuffer = _pReceiveBuffer ;
-         _pReceiveBuffer = NULL ;
-         ((_sdbCursorImpl*)*cursor)->_receiveBufferSize = _receiveBufferSize ;
-         _receiveBufferSize = 0 ;
-      }
+
+      // register collection to collection
+      ((_sdbCursorImpl*)pCursor)->_setCollection ( this ) ;
+
+      // return cursor
+      *cursor = pCursor ;
+      
    done :
-      if ( locked )
-         _connection->unlock () ;
       PD_TRACE_EXITRC ( SDB_CLIENT_QUERY, rc );
       return rc ;
    error :
       goto done;
    }
-
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_QUERYONE, "queryOne" )
    INT32 _sdbCollectionImpl::queryOne( bson::BSONObj &obj,
                                        const bson::BSONObj &condition,
@@ -4791,7 +4747,7 @@ do                                                            \
 
       // run command
       rc = _connection->_runCommand( pCommand, &newObj, NULL, NULL, NULL,
-                                     NULL, NULL ) ;
+                                     0, 0, -1, -1, NULL ) ;
       if ( SDB_OK != rc )
       {
          goto error ;
@@ -4821,9 +4777,15 @@ do                                                            \
 
       // run command
       rc = _connection->_runCommand( pCommand, NULL, NULL, NULL, NULL,
-                                     &retInfoCursor ) ;
+                                     0, 0, -1, -1, &retInfoCursor ) ;
       if ( SDB_OK != rc )
       {
+         goto error ;
+      }
+
+      if ( NULL == retInfoCursor )
+      {
+         rc = SDB_SYS ;
          goto error ;
       }
       
@@ -6517,11 +6479,31 @@ do                                                            \
 
    PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT__GETRETINFO, "_sdbImpl::_getRetInfo" )
    INT32 _sdbImpl::_getRetInfo ( CHAR **ppBuffer, INT32 *size,
-                                 SINT64 contextID, _sdbCursor **ppCursor )
+                                 SINT64 contextID,
+                                 _sdbCursor **ppCursor )
    {
       PD_TRACE_ENTRY ( SDB_CLIENT__GETRETINFO ) ;
       INT32 rc           = SDB_OK ;
       _sdbCursor *cursor = NULL ;
+
+      // if nothing return by engine, see we need to return cursor or not
+      if ( -1 == contextID &&
+           ( ((UINT32)((MsgHeader*)*ppBuffer)->messageLength) <=
+              ossRoundUpToMultipleX( sizeof(MsgOpReply), 4 ) ) )
+      {
+         if ( NULL != ppCursor && NULL != *ppCursor )
+         {
+            *ppCursor = NULL ;
+         }
+         goto done ;
+      }
+
+      // check
+      if ( NULL == ppCursor )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
 
       // build cursor obj
       cursor = (_sdbCursor*)( new(std::nothrow) sdbCursorImpl() ) ;
@@ -6607,8 +6589,11 @@ do                                                            \
                                  const BSONObj *arg2,
                                  const BSONObj *arg3,
                                  const BSONObj *arg4,
-                                 _sdbCursor **retInfoCursor,
-                                 _sdbCursor **errInfoCursor )
+                                 SINT32 flag,
+                                 UINT64 reqID,
+                                 SINT64 numToSkip,
+                                 SINT64 numToReturn,
+                                 _sdbCursor **ppCursor )
    {
       PD_TRACE_ENTRY ( SDB_CLIENT__RUNCOMMAND2 ) ;
       INT32 rc            = SDB_OK ;
@@ -6616,7 +6601,7 @@ do                                                            \
       SINT64 contextID    = -1 ;
       lock () ;
       rc = clientBuildQueryMsgCpp ( &_pSendBuffer, &_sendBufferSize, pString,
-                                    0, 0, -1, -1,
+                                    flag, reqID, numToSkip, numToReturn,
                                     arg1?arg1->objdata():NULL,
                                     arg2?arg2->objdata():NULL,
                                     arg3?arg3->objdata():NULL,
@@ -6650,10 +6635,10 @@ do                                                            \
       CHECK_RET_MSGHEADER( _pSendBuffer, _pReceiveBuffer, this ) ;
       
       // try to get retObj
-      if ( -1 != contextID )
+      if ( NULL != ppCursor )
       {
          rc = _getRetInfo( &_pReceiveBuffer, &_receiveBufferSize,
-                           contextID, retInfoCursor ) ;
+                           contextID, ppCursor ) ;
          if ( SDB_OK != rc )
          {
             goto error ;
@@ -6667,6 +6652,34 @@ do                                                            \
       // TODO: maybe need to handle error msg caused by driver
       goto done ;
    }
+
+   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT__BUILDEMPTYCURSOR, "_sdbImpl::_buildEmptyCursor" )
+   INT32 _sdbImpl::_buildEmptyCursor( _sdbCursor **ppCursor )
+   {
+      PD_TRACE_ENTRY ( SDB_CLIENT__BUILDEMPTYCURSOR ) ;
+      INT32 rc           = SDB_OK ;
+      _sdbCursor *cursor = NULL ;
+
+      // build cursor obj
+      cursor = (_sdbCursor*)( new(std::nothrow) sdbCursorImpl() ) ;
+      if ( NULL == cursor )
+      {
+         rc = SDB_OOM ;
+         goto error ;
+      }
+      ((_sdbCursorImpl*)cursor)->_setCollection ( NULL ) ;
+      ((_sdbCursorImpl*)cursor)->_contextID = -1 ;
+      ((_sdbCursorImpl*)cursor)->_setConnection ( this ) ;
+
+      *ppCursor = cursor ;
+
+   done:
+      PD_TRACE_EXITRC ( SDB_CLIENT__BUILDEMPTYCURSOR, rc );      
+      return rc ;
+   error:
+      goto done ;
+   }
+   
 
    PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_GETCOLLECTIONINSDB, "_sdbImpl::getCollection" )
    INT32 _sdbImpl::getCollection ( const CHAR *pCollectionFullName,
