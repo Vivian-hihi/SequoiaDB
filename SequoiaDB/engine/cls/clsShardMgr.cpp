@@ -623,7 +623,6 @@ namespace engine
    {
       PD_TRACE_ENTRY ( SDB__CLSSHDMGR_UPDCATGRP ) ;
       INT32 rc = SDB_OK ;
-      shdMsgHandler *pMsgHandle = sdbGetClsCB()->getShardMsgHandle() ;
 
       _shardLatch.get_shared() ;
       /// clear all node status
@@ -731,7 +730,6 @@ namespace engine
       PD_TRACE_ENTRY ( SDB__CLSSHDMGR_SYNCUPDCAT );
       BOOLEAN send = FALSE ;
       clsEventItem *pEventInfo = NULL ;
-      shdMsgHandler *pMsgHandle = sdbGetClsCB()->getShardMsgHandle() ;
       BOOLEAN hasRetry = FALSE ;
       BOOLEAN needRetry = FALSE ;
       BOOLEAN hasUpCataGrp = FALSE ;
@@ -862,7 +860,6 @@ namespace engine
       PD_TRACE_ENTRY ( SDB__CLSSHDMGR_SYNCUPDGPINFO );
       BOOLEAN send = FALSE ;
       clsEventItem *pEventInfo = NULL ;
-      shdMsgHandler *pMsgHandle = sdbGetClsCB()->getShardMsgHandle() ;
       BOOLEAN hasRetry = FALSE ;
       BOOLEAN needRetry = FALSE ;
       BOOLEAN hasUpCataGrp = FALSE ;
@@ -1808,7 +1805,6 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       clsCSEventItem *item = NULL ;
-      shdMsgHandler *pMsgHandle = sdbGetClsCB()->getShardMsgHandle() ;
       UINT64 requestID = 0 ;
       INT32 result = 0 ;
       BOOLEAN hasRetry = FALSE ;
