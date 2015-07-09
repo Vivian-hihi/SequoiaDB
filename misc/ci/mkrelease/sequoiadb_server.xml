@@ -171,6 +171,15 @@
                 </fileExists>
             </ruleList>
         </runProgram>
+        <runProgram>
+            <program>rm</program>
+            <programArguments>-rf /usr/bin/fap</programArguments>
+            <ruleList>
+                <fileExists>
+                    <path>/usr/bin/fap</path>
+                </fileExists>
+            </ruleList>
+        </runProgram>
     </readyToInstallActionList>
     <postInstallationActionList>
         <createSymLink>
@@ -428,6 +437,24 @@
                 </platformTest>
                 <fileExists>
                     <path>/home/sequoiadb/.profile</path>
+                </fileExists>
+            </ruleList>
+        </runProgram>
+        <runProgram>
+            <program>rm</program>
+            <programArguments>-rf /usr/bin/fap</programArguments>
+            <ruleList>
+                <fileExists>
+                    <path>/usr/bin/fap</path>
+                </fileExists>
+            </ruleList>
+        </runProgram>
+        <runProgram>
+            <program>rm</program>
+            <programArguments>-f /usr/bin/sdb*</programArguments>
+            <ruleList>
+                <fileExists>
+                    <path>/usr/bin/sdb*</path>
                 </fileExists>
             </ruleList>
         </runProgram>
