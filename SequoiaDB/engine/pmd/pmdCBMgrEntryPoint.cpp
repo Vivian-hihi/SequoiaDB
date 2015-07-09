@@ -63,6 +63,10 @@ namespace engine
       {
          if ( cb->waitEvent( eventData, OSS_ONE_SEC, TRUE ) )
          {
+            cb->resetInterrupt() ;
+            cb->resetInfo( EDU_INFO_ERROR ) ;
+            cb->resetLsn() ;
+
             if ( PMD_EDU_EVENT_TERM == eventData._eventType )
             {
                PD_LOG ( PDDEBUG, "EDU[%lld, %s] is terminated", cb->getID(),

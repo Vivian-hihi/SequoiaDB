@@ -67,6 +67,7 @@ namespace engine
       {
          cb->resetInterrupt() ;
          cb->resetInfo( EDU_INFO_ERROR ) ;
+         cb->resetLsn() ;
 
          if ( cb->waitEvent( event, OSS_ONE_SEC, TRUE ) )
          { 

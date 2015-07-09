@@ -401,6 +401,7 @@ namespace engine
    void _pmdEDUCB::resetInterrupt ()
    {
       _ctrlFlag &= ~EDU_CTRL_INTERRUPTED ;
+      _processSelf() ;
    }
 
    void _pmdEDUCB::resetDisconnect ()

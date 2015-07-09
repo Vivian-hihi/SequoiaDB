@@ -246,7 +246,6 @@ namespace engine
       BOOLEAN isNeedRollback = FALSE;
 
       MON_START_OP( _pEDUCB->getMonAppCB() ) ;
-      _pEDUCB->resetLsn() ;
       _primaryID.value = MSG_INVALID_ROUTEID ;
 
       while ( loop )
