@@ -66,7 +66,7 @@ namespace engine
       ON_MSG ( MSG_BS_TRANS_UPDATE_REQ, _onOPMsg )
       ON_MSG ( MSG_BS_TRANS_DELETE_REQ, _onOPMsg )
       ON_MSG ( MSG_BS_TRANS_INSERT_REQ, _onOPMsg )
-      ON_MSG ( MSG_COOR_CHECK_ROUTEID_REQ, _onOPMsg )
+      ON_MSG ( MSG_COM_CHECK_ROUTEID_REQ, _onOPMsg )
 #if defined (_DEBUG)
       ON_MSG ( MSG_AUTH_VERIFY_REQ, _onOPMsg )
       ON_MSG ( MSG_AUTH_CRTUSR_REQ, _onOPMsg )
