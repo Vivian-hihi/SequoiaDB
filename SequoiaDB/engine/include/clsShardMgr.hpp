@@ -207,7 +207,7 @@ namespace engine
                                           BOOLEAN bCreate = FALSE ) ;
          clsEventItem *_findNMSyncEvent ( UINT64 requestID ) ;
 
-         INT32 _findCatNodeID ( const MAP_ROUTE_NODE &catNodes,
+         INT32 _findCatNodeID ( MAP_ROUTE_NODE &catNodes,
                                 const CHAR *hostName,
                                 const std::string &service,
                                 NodeID &id ) ;

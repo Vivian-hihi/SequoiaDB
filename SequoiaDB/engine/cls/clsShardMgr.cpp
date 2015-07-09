@@ -1649,24 +1649,24 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDMGR__FNDCATNODEID, "_clsShardMgr::_findCatNodeID" )
-   INT32 _clsShardMgr::_findCatNodeID ( const MAP_ROUTE_NODE &catNodes,
+   INT32 _clsShardMgr::_findCatNodeID ( MAP_ROUTE_NODE &catNodes,
                                         const CHAR *hostName,
                                         const std::string & service,
                                         NodeID & id )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__CLSSHDMGR__FNDCATNODEID );
-      MAP_ROUTE_NODE::const_iterator cit = catNodes.cbegin() ;
-      while ( cit != catNodes.cend() )
+      MAP_ROUTE_NODE_IT it = catNodes.begin() ;
+      while ( it != catNodes.end() )
       {
-         const clsNodeItem &nodeItem = cit->second ;
+         const clsNodeItem &nodeItem = it->second ;
          if ( 0 == ossStrcmp( nodeItem._host, hostName ) &&
               nodeItem._service[ MSG_ROUTE_CAT_SERVICE ] == service )
          {
             id.value = nodeItem._id.value ;
             goto done ;
          }
-         ++cit ;
+         ++it ;
       }
       rc = SDB_CLS_NODE_NOT_EXIST ;
    done :
