@@ -2473,13 +2473,92 @@ namespace engine
       }
       else if ( NULL != _me )
       {
-         builder.append( _me->_toMatch ) ;
+         /// TODO(not urgent): use macro to instead of const string like "$lte".
+         /// we have same problem in qgm
+         const BSONElement &ele = _me->_toMatch ;
+
+         /// unsame format ?
+         if ( BSONObj::opIN == _me->_op ||
+              BSONObj::opALL == _me->_op ||
+              BSONObj::NIN == _me->_op )
+         {
+            builder.append( ele ) ;
+            goto done ;
+         }
+
+         {
+         BSONObjBuilder b( builder.subobjStart( ele.fieldName() ) ) ;
+         switch ( _me->_op )
+         {
+         case BSONObj::Equality :
+            b.appendAs( ele, "$et" ) ;
+            break ;
+         case BSONObj::LT :
+            b.appendAs( ele, "$lt" ) ;
+            break ;
+         case BSONObj::LTE :
+            b.appendAs( ele, "$lte" ) ;
+            break ;
+         case BSONObj::GTE :
+            b.appendAs( ele, "$gte" ) ;
+            break ;
+         case BSONObj::GT :
+            b.appendAs( ele, "$gt" ) ;
+            break ;
+         case BSONObj::opIN :
+            break ;
+         case BSONObj::NE :
+            b.appendAs( ele, "$ne" ) ;
+            break ;
+         case BSONObj::opSIZE :
+            b.appendAs( ele, "$size" ) ;
+            break ;
+         case BSONObj::opALL :
+            break ;
+         case BSONObj::NIN :
+            break ;
+         case BSONObj::opEXISTS :
+            b.appendAs( ele, "$exists" ) ;
+            break ;
+         case BSONObj::opMOD :
+            b.appendAs( ele, "$mod" ) ;
+            break ;
+         case BSONObj::opTYPE :
+            b.appendAs( ele, "$type" ) ;
+            break ;
+         case BSONObj::opREGEX :
+            /// impossible
+         case BSONObj::opOPTIONS :
+            /// impossible
+            break ;
+         case BSONObj::opELEM_MATCH :
+            b.appendAs( ele, "$elemMatch" ) ;
+            break ;
+         case BSONObj::opNEAR :
+         case BSONObj::opWITHIN :
+         case BSONObj::opMAX_DISTANCE :
+            break ;
+         case BSONObj::opISNULL :
+            b.appendAs( ele, "$isnull" ) ;
+         default:
+            break ;
+         }
+         b.doneFast() ;
+         }
+      }
+      else if ( _isRegex && NULL != _rme )
+      {
+         builder.appendRegex( _rme->_fieldName,
+                              NULL == _rme->_regex ?
+                              "" : _rme->_regex,
+                              NULL == _rme->_flags ?
+                              "" : _rme->_flags ) ;
       }
       else
       {
-         /// do nothing.
+         /// do nothing
       }
-
+   done:
       return ;
    }
 
