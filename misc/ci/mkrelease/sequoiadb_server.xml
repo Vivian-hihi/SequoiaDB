@@ -346,6 +346,10 @@
             <program>/usr/bin/md5sum</program>
             <programArguments>${installer_pathname} | cut -c 1-32 &gt;&gt; /etc/default/sequoiadb</programArguments>
         </runProgram>
+        <runProgram>
+            <program>ln</program>
+            <programArguments>-s ${installdir}/bin/* /usr/bin/</programArguments>
+        </runProgram>
     </postInstallationActionList>
     <preUninstallationActionList>
         <stopWindowsService>
