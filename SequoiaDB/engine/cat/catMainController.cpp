@@ -1332,7 +1332,7 @@ namespace engine
       reply.numReturned = 0;
       reply.startFrom = 0;
       reply.header.messageLength = sizeof( MsgOpReply );
-      reply.header.opCode = MSG_COM_CHECK_ROUTEID_RSP;
+      reply.header.opCode = MSG_COM_CHECK_ROUTEID_RSP ;
       reply.header.requestID = pMsgReq->header.requestID;
       reply.header.routeID.value = 0;
       reply.header.TID = pMsgReq->header.TID;

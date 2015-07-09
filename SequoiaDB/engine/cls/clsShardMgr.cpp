@@ -984,13 +984,39 @@ namespace engine
       INT32 rc = SDB_OK ;
       NodeID tmpID ;
       tmpID.value = id.value ;
-      tmpID.columns.groupID = _cataGrpItem.groupID() ;
+      tmpID.columns.groupID = CATALOG_GROUPID ;
 
       _shardLatch.get_shared() ;
       rc = _cataGrpItem.updatePrimary( tmpID, primary ) ;
       _shardLatch.release_shared() ;
 
       PD_TRACE_EXITRC ( SDB__CLSSHDMGR_UPDPRM, rc );
+      return rc ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDMGR_UPPRM_BYREPLY, "_clsShardMgr::updatePrimaryByReply" )
+   INT32 _clsShardMgr::updatePrimaryByReply( MsgHeader *pMsg )
+   {
+      PD_TRACE_ENTRY ( SDB__CLSSHDMGR_UPPRM_BYREPLY ) ;
+      INT32 rc = MSG_GET_INNER_REPLY_RC( pMsg ) ;
+      UINT32 startFrom = MSG_GET_INNER_REPLY_STARTFROM( pMsg ) ;
+
+      if ( IS_REPLY_TYPE( pMsg->opCode ) &&
+           SDB_CLS_NOT_PRIMARY == rc &&
+           0 != startFrom )
+      {
+         NodeID primaryNode ;
+         primaryNode.columns.nodeID = startFrom ;
+         primaryNode.columns.groupID = CATALOG_GROUPID ;
+         primaryNode.columns.serviceID = MSG_ROUTE_CAT_SERVICE ;
+
+         _shardLatch.get_shared() ;
+         rc = _cataGrpItem.updatePrimary( primaryNode, TRUE ) ;
+         _shardLatch.release_shared() ;
+      }
+
+      PD_TRACE_EXITRC ( SDB__CLSSHDMGR_UPPRM_BYREPLY, rc ) ;
+
       return rc ;
    }
 
@@ -1359,8 +1385,14 @@ namespace engine
             }
             else if ( SDB_CLS_NOT_PRIMARY == rc )
             {
-               /// TODO: update primary by startFrom
-               pEventInfo->event.signalAll ( rc ) ;
+               if ( updatePrimaryByReply( msg ) )
+               {
+                  pEventInfo->event.signalAll ( 1 ) ;
+               }
+               else
+               {
+                  pEventInfo->event.signalAll ( rc ) ;
+               }
                rc = SDB_OK ;
             }
             else
@@ -1472,8 +1504,14 @@ namespace engine
             //not primary node, should update catalog group info, and send again
             else if ( SDB_CLS_NOT_PRIMARY == res->flags )
             {
-               /// TODO: update primary by startFrom
-               pEventInfo->event.signalAll ( rc ) ;
+               if ( updatePrimaryByReply( msg ) )
+               {
+                  pEventInfo->event.signalAll ( 1 ) ;
+               }
+               else
+               {
+                  pEventInfo->event.signalAll ( rc ) ;
+               }
                rc = SDB_OK ;
             }
             //update catalog failed
@@ -1937,8 +1975,14 @@ namespace engine
          //not primary node, should send again
          if ( SDB_CLS_NOT_PRIMARY == res->flags )
          {
-            /// TODO: update primary by startFrom
-            csItem->event.signalAll ( rc ) ;
+            if ( updatePrimaryByReply( msg ) )
+            {
+               csItem->event.signalAll ( 1 ) ;
+            }
+            else
+            {
+               csItem->event.signalAll ( rc ) ;
+            }
             rc = SDB_OK ;
             goto done ;
          }

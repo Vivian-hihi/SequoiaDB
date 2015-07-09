@@ -562,7 +562,11 @@ namespace engine
             INT32 result = MSG_GET_INNER_REPLY_RC( msg ) ;
             if ( SDB_CLS_NOT_PRIMARY == result )
             {
-               _clsCB->updateCatGroup ( TRUE ) ;
+               shardCB *pShardCB = _clsCB->getShardCB() ;
+               if ( SDB_OK != pShardCB->updatePrimaryByReply( msg ) )
+               {
+                  pShardCB->updateCatGroup ( TRUE ) ;
+               }
             }
             else if ( SDB_OK == result )
             {
@@ -626,7 +630,11 @@ namespace engine
       {
          if ( SDB_CLS_NOT_PRIMARY == MSG_GET_INNER_REPLY_RC(pHeader) )
          {
-            _clsCB->updateCatGroup ( TRUE ) ;
+            shardCB *pShardCB = _clsCB->getShardCB() ;
+            if ( SDB_OK != pShardCB->updatePrimaryByReply( pHeader ) )
+            {
+               pShardCB->updateCatGroup ( TRUE ) ;
+            }
          }
 
          PD_LOG( PDWARNING, "Download group info request was refused, rc: %d",

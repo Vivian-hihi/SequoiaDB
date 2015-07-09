@@ -167,6 +167,7 @@ namespace engine
          INT32  updatePrimary ( const NodeID & id , BOOLEAN primary ) ;
          INT32  updateCatGroup ( BOOLEAN unsetPrimary = TRUE,
                                  INT64 millsec = 0 ) ;
+         INT32  updatePrimaryByReply( MsgHeader *pMsg ) ;
 
          INT32 syncUpdateCatalog ( const CHAR *pCollectionName,
                                    INT64 millsec = CLS_SHARD_TIMEOUT ) ;

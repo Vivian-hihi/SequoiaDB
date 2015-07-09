@@ -1576,7 +1576,10 @@ namespace engine
       // need to update catalog group
       if ( SDB_CLS_NOT_PRIMARY == res->flags )
       {
-         updateCatGroup( TRUE ) ;
+         if ( SDB_OK != _shdObj.updatePrimaryByReply( msg ) )
+         {
+            updateCatGroup( TRUE ) ;
+         }
       }
       // need to clear the query task
       else if ( SDB_DMS_EOC == res->flags ||

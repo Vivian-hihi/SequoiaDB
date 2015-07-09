@@ -2146,7 +2146,10 @@ namespace engine
       if ( SDB_CLS_NOT_PRIMARY == msg->flags )
       {
          //update catalog primary
-         _pShardMgr->updateCatGroup( TRUE ) ;
+         if ( SDB_OK != _pShardMgr->updatePrimaryByReply( header ) )
+         {
+            _pShardMgr->updateCatGroup( TRUE ) ;
+         }
          goto done ;
       }
       else if ( SDB_DMS_EOC == msg->flags ||
