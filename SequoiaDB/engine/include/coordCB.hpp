@@ -131,19 +131,19 @@ namespace engine
       MsgRouteID getPrimaryCat()
       {
          ossScopedLock _lock(&_mutex, SHARED) ;
-         return _catGroupInfo->getPrimary();
+         return _catGroupInfo->primary();
       }
 
       void setSlaveCat( MsgRouteID slave )
       {
          ossScopedLock _lock(&_mutex, EXCLUSIVE) ;
-         _catGroupInfo->setSlave( slave );
+         _catGroupInfo->updatePrimary( slave, FALSE ) ;
       }
 
       void setPrimaryCat( MsgRouteID primary )
       {
          ossScopedLock _lock(&_mutex, EXCLUSIVE) ;
-         _catGroupInfo->setPrimary( primary );
+         _catGroupInfo->updatePrimary( primary, TRUE ) ;
       }
 
       INT32 groupID2Name ( UINT32 id, std::string &name ) ;

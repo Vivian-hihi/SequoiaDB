@@ -88,7 +88,7 @@ namespace engine
          if ( NULL != pMsg )
          {
             pMsg->header.messageLength = sizeof(MsgOpReply);
-            pMsg->header.opCode = MSG_COOR_REMOTE_DISC;
+            pMsg->header.opCode = MSG_COM_REMOTE_DISC;
             pMsg->header.routeID = routeID;
             pMsg->header.requestID = pmdGetKRCB()->getCoordCB(
                )->getRouteAgent()->reqIDNew();
@@ -119,7 +119,7 @@ namespace engine
       MsgCoordCheckRouteID msgReq;
       msgReq.header.requestID = 0;
       msgReq.header.messageLength = sizeof( MsgCoordCheckRouteID );
-      msgReq.header.opCode = MSG_COOR_CHECK_ROUTEID_REQ;
+      msgReq.header.opCode = MSG_COM_CHECK_ROUTEID_REQ;
       msgReq.header.routeID.value = 0;
       msgReq.header.TID = _pEduCB->getTID();
       msgReq.dstRouteID = routeID;
@@ -136,7 +136,7 @@ namespace engine
                   routeID.columns.nodeID,
                   routeID.columns.serviceID );
       rc = rtnCoordGetReply( _pEduCB, requestIdMap, replyQue,
-                             MSG_COOR_CHECK_ROUTEID_RSP );
+                             MSG_COM_CHECK_ROUTEID_RSP );
       PD_RC_CHECK( rc, PDERROR,
                   "failed to get reply from node"
                   "(groupID=%u, nodeID=%u, serviceID=%u, rc=%d)",

@@ -48,69 +48,6 @@ namespace engine
 {
 
    /*
-   note: _CoordGroupInfo implement
-   */
-   _CoordGroupInfo::_CoordGroupInfo ( UINT32 groupID )
-   :_groupItem( groupID )
-   {
-   }
-
-   _CoordGroupInfo::~_CoordGroupInfo ()
-   {
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_COORDGI_FRMBSONOBJ, "CoordGroupInfo::fromBSONObj" )
-   INT32 _CoordGroupInfo::fromBSONObj( const bson::BSONObj &boGroupInfo )
-   {
-      PD_TRACE_ENTRY ( SDB_COORDGI_FRMBSONOBJ ) ;
-
-      INT32 rc = _groupItem.updateGroupItem( boGroupInfo ) ;
-      PD_RC_CHECK( rc, PDERROR, "Update group info failed, rc: %d", rc ) ;
-
-   done:
-      PD_TRACE_EXITRC ( SDB_COORDGI_FRMBSONOBJ, rc ) ;
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   INT32 _CoordGroupInfo::setPrimary( const MsgRouteID &ID )
-   {
-      ossScopedRWLock lock( &_primaryMutex, EXCLUSIVE ) ;
-      return _groupItem.updatePrimary( ID, TRUE ) ;
-   }
-
-   void _CoordGroupInfo::setSlave( const MsgRouteID & ID )
-   {
-      ossScopedRWLock lock( &_primaryMutex, EXCLUSIVE ) ;
-      _groupItem.updatePrimary( ID, FALSE ) ;
-   }
-
-   MsgRouteID _CoordGroupInfo::getPrimary( MSG_ROUTE_SERVICE_TYPE type )
-   {
-      ossScopedRWLock lock( &_primaryMutex, SHARED ) ;
-      return _groupItem.primary( type ) ;
-   }
-
-   void _CoordGroupInfo::updateNodeStat( UINT16 nodeID, NET_NODE_STATUS status )
-   {
-      ossScopedRWLock lock( &_primaryMutex, EXCLUSIVE ) ;
-      _groupItem.updateNodeStat( nodeID, status ) ;
-   }
-
-   void _CoordGroupInfo::clearNodesStat()
-   {
-      ossScopedRWLock lock( &_primaryMutex, EXCLUSIVE ) ;
-      _groupItem.clearNodesStat() ;
-   }
-
-   INT32 _CoordGroupInfo::getNodeInfo ( UINT32 pos, SINT32 &status )
-   {
-      ossScopedRWLock lock( &_primaryMutex, SHARED ) ;
-      return _groupItem.getNodeInfo( pos, status ) ;
-   }
-
-   /*
    note: _CoordCB implement
    */
    _CoordCB::_CoordCB()
@@ -240,8 +177,7 @@ namespace engine
    void _CoordCB::updateCatGroupInfo( CoordGroupInfoPtr &groupInfo )
    {
       ossScopedLock _lock(&_mutex, EXCLUSIVE) ;
-      if ( _catGroupInfo->getGroupItem()->groupVersion() !=
-           groupInfo->getGroupItem()->groupVersion() )
+      if ( _catGroupInfo->groupVersion() != groupInfo->groupVersion() )
       {
          // need to update local config
          string oldCfg, newCfg ;
@@ -254,7 +190,7 @@ namespace engine
          MsgRouteID id ;
          string hostName ;
          string svcName ;
-         while ( SDB_OK == groupInfo->getGroupItem()->getNodeInfo( pos, id,
+         while ( SDB_OK == groupInfo->getNodeInfo( pos, id,
                            hostName, svcName, MSG_ROUTE_CAT_SERVICE ) )
          {
             addCatNodeAddr( id, hostName.c_str(), svcName.c_str() ) ;
@@ -420,13 +356,13 @@ namespace engine
    {
       ossScopedLock _lock( &_nodeGroupMutex, EXCLUSIVE ) ;
 
-      _nodeGroupInfo[groupInfo->getGroupID()] = groupInfo ;
+      _nodeGroupInfo[groupInfo->groupID()] = groupInfo ;
 
       // clear group name map
-      _clearGroupName( groupInfo->getGroupID() ) ;
+      _clearGroupName( groupInfo->groupID() ) ;
 
       // add to group name map
-      _addGroupName( groupInfo->groupName(), groupInfo->getGroupID() ) ;
+      _addGroupName( groupInfo->groupName(), groupInfo->groupID() ) ;
    }
 
    void _CoordCB::removeGroupInfo( UINT32 groupID )

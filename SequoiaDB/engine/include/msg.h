@@ -293,11 +293,12 @@ enum MSG_TYPE
    MSG_CLS_GINFO_UPDATED               = 4014,
    MSG_CLS_END                         = 4999,
 
-   MSG_COOR_BEGIN                      = 5000,
-   MSG_COOR_REMOTE_DISC                = 5001,
-   MSG_COOR_CHECK_ROUTEID_REQ          = 5002,
-   MSG_COOR_CHECK_ROUTEID_RSP          = MAKE_REPLY_TYPE(MSG_COOR_CHECK_ROUTEID_REQ),
-   MSG_COOR_END                        = 5999,
+   /// common msg
+   MSG_COM_BEGIN                       = 5000,
+   MSG_COM_REMOTE_DISC                 = 5001,
+   MSG_COM_CHECK_ROUTEID_REQ           = 5002,
+   MSG_COM_CHECK_ROUTEID_RSP           = MAKE_REPLY_TYPE(MSG_COM_CHECK_ROUTEID_REQ),
+   MSG_COM_END                         = 5999,
 
    MSG_CM_REMOTE                       = 6000,
 

@@ -125,11 +125,11 @@ namespace engine
       ********************************/
       if ( NULL != pSession )
       {
-         routeID = pSession->getLastNode( groupInfo->getGroupID() ) ;
+         routeID = pSession->getLastNode( groupInfo->groupID() ) ;
          // last node is valid and in group info( when group or node 
          // is remove )
          if ( routeID.value != 0 &&
-              groupInfo->getGroupItem()->nodePos( routeID.columns.nodeID ) >= 0 )
+              groupInfo->nodePos( routeID.columns.nodeID ) >= 0 )
          {
             if ( pIOVec && pIOVec->size() > 0 )
             {
@@ -152,7 +152,7 @@ namespace engine
 
                PD_LOG( PDWARNING, "Send msg[opCode: %d, TID: %u] to group[%u] 's "
                        "last node[%s] failed, rc: %d", pBuffer->opCode,
-                       pBuffer->TID, groupInfo->getGroupID(),
+                       pBuffer->TID, groupInfo->groupID(),
                        routeID2String( routeID ).c_str(), rc ) ;
             }
          }
@@ -162,17 +162,17 @@ namespace engine
       /*******************************
       // send to new node
       ********************************/
-      groupItem = groupInfo->getGroupItem() ;
-      nodeNum = groupInfo->getGroupSize() ;
+      groupItem = groupInfo.get() ;
+      nodeNum = groupInfo->nodeCount() ;
       if ( nodeNum <= 0 )
       {
-         if ( !hasRetry && CATALOG_GROUPID != groupInfo->getGroupID() )
+         if ( !hasRetry && CATALOG_GROUPID != groupInfo->groupID() )
          {
             hasRetry = TRUE ;
-            rc = rtnCoordGetGroupInfo( cb, groupInfo->getGroupID(),
+            rc = rtnCoordGetGroupInfo( cb, groupInfo->groupID(),
                                        TRUE, groupInfo ) ; 
             PD_RC_CHECK( rc, PDERROR, "Get group info[%u] failed, rc: %d",
-                         groupInfo->getGroupID(), rc ) ;
+                         groupInfo->groupID(), rc ) ;
             goto retry ;
          }
          rc = SDB_CLS_EMPTY_GROUP ;
@@ -236,12 +236,12 @@ namespace engine
       if ( rc && !hasRetry )
       {
          hasRetry = TRUE ;
-         if ( CATALOG_GROUPID != groupInfo->getGroupID() )
+         if ( CATALOG_GROUPID != groupInfo->groupID() )
          {
-            rc = rtnCoordGetGroupInfo( cb, groupInfo->getGroupID(),
+            rc = rtnCoordGetGroupInfo( cb, groupInfo->groupID(),
                                        TRUE, groupInfo ) ;
             PD_RC_CHECK( rc, PDERROR, "Get group info[%u] failed, rc: %d",
-                         groupInfo->getGroupID(), rc ) ;
+                         groupInfo->groupID(), rc ) ;
          }
          else
          {
@@ -275,7 +275,7 @@ namespace engine
       BOOLEAN hasRetry = FALSE ;
 
    retry:
-      primaryRouteID = groupInfo->getPrimary( type ) ;
+      primaryRouteID = groupInfo->primary( type ) ;
       if ( primaryRouteID.value != 0 )
       {
          if ( pIOVec && pIOVec->size() > 0 )
@@ -305,7 +305,7 @@ namespace engine
 
             PD_LOG( PDWARNING, "Send msg[opCode: %d, TID: %u] to group[%u] 's "
                     "primary node[%s] failed, rc: %d", pBuffer->opCode,
-                    pBuffer->TID, groupInfo->getGroupID(),
+                    pBuffer->TID, groupInfo->groupID(),
                     routeID2String( primaryRouteID ).c_str(), rc ) ;
             // not go to error, send to any one node
          }
@@ -328,10 +328,10 @@ namespace engine
       if ( rc && !hasRetry )
       {
          hasRetry = TRUE ;
-         rc = rtnCoordGetGroupInfo( cb, groupInfo->getGroupID(),
+         rc = rtnCoordGetGroupInfo( cb, groupInfo->groupID(),
                                     TRUE, groupInfo ) ;
          PD_RC_CHECK( rc, PDERROR, "Get group info[%u] failed, rc: %d",
-                      groupInfo->getGroupID(), rc ) ;
+                      groupInfo->groupID(), rc ) ;
          goto retry ;
       }
    done:
@@ -357,7 +357,7 @@ namespace engine
 
       MsgRouteID routeID ;
       UINT64 reqID = 0 ;
-      UINT32 groupID = groupInfo->getGroupID() ;
+      UINT32 groupID = groupInfo->groupID() ;
 
       // if trans valid, send to trans node
       cb->getTransNodeRouteID( groupID, routeID ) ;
@@ -889,7 +889,7 @@ namespace engine
             continue ;
          }
 
-         if ( MSG_COOR_REMOTE_DISC == pReply->opCode )
+         if ( MSG_COM_REMOTE_DISC == pReply->opCode )
          {
             // check if transaction-node
             MsgRouteID routeID;
@@ -1639,7 +1639,7 @@ namespace engine
          else
          {
             rc = rtnCoordGetLocalCatGroupInfo ( groupInfo ) ;
-            if ( ( SDB_OK == rc && groupInfo->getGroupSize() == 0 ) ||
+            if ( ( SDB_OK == rc && groupInfo->nodeCount() == 0 ) ||
                    SDB_COOR_NO_NODEGROUP_INFO == rc )
             {
                // couldn't find the match group-info,
@@ -1845,7 +1845,7 @@ namespace engine
       msgGroupReq.header.messageLength = sizeof( MsgCatGroupReq );
       msgGroupReq.header.opCode = MSG_CAT_GRP_REQ ;
 
-      if ( cataGroupInfo->getGroupSize() == 0 )
+      if ( cataGroupInfo->nodeCount() == 0 )
       {
          rc = rtnCoordGetRemoteCataGroupInfoByAddr( cb, groupInfo ) ;
          if ( rc != SDB_OK )
@@ -1951,7 +1951,7 @@ namespace engine
       routeID.value = MSG_INVALID_ROUTEID ;
 
       UINT32 index = 0 ;
-      clsGroupItem *groupItem = groupInfo->getGroupItem() ;
+      clsGroupItem *groupItem = groupInfo.get() ;
       while ( SDB_OK == groupItem->getNodeInfo( index++, routeID, host,
                                                 service, type ) )
       {
@@ -2579,7 +2579,7 @@ namespace engine
                   break;
                }
                CoordGroupInfoPtr groupInfoTmp( pGroupInfo );
-               rc = groupInfoTmp->fromBSONObj( boGroupInfo );
+               rc = groupInfoTmp->updateGroupItem( boGroupInfo );
                if ( rc != SDB_OK )
                {
                   PD_LOG ( PDERROR, "Process get-group-info-reply failed,"
@@ -2703,7 +2703,7 @@ namespace engine
          while ( it != vecGrpPtr.end() )
          {
             CoordGroupInfoPtr &ptr = *it ;
-            groupList[ ptr->getGroupID() ] = ptr->getGroupID() ;
+            groupList[ ptr->groupID() ] = ptr->groupID() ;
             ++it ;
          }
       }
@@ -2770,18 +2770,18 @@ namespace engine
             PD_CHECK( pGroupInfo != NULL, SDB_OOM, error, PDERROR,
                       "malloc failed!" );
             groupInfoTmp = CoordGroupInfoPtr( pGroupInfo );
-            rc = groupInfoTmp->fromBSONObj( boGroupInfo );
+            rc = groupInfoTmp->updateGroupItem( boGroupInfo );
             PD_RC_CHECK( rc, PDERROR, "failed to parse the group info(rc=%d)",
                          rc ) ;
 
-            if ( groupInfoTmp->getGroupID() == CATALOG_GROUPID )
+            if ( groupInfoTmp->groupID() == CATALOG_GROUPID )
             {
                if ( !exceptCata )
                {
                   groupLst.push_back( groupInfoTmp ) ;
                }
             }
-            else if ( groupInfoTmp->getGroupID() == COORD_GROUPID )
+            else if ( groupInfoTmp->groupID() == COORD_GROUPID )
             {
                if ( !exceptCoord )
                {
@@ -2796,7 +2796,7 @@ namespace engine
             rc = rtnCoordUpdateRoute( groupInfoTmp, pCoordcb->getRouteAgent(),
                                       MSG_ROUTE_SHARD_SERVCIE ) ;
             // update cata service also
-            if ( groupInfoTmp->getGroupID() == CATALOG_GROUPID )
+            if ( groupInfoTmp->groupID() == CATALOG_GROUPID )
             {
                rtnCoordUpdateRoute( groupInfoTmp, pCoordcb->getRouteAgent(),
                                     MSG_ROUTE_CAT_SERVICE ) ;
@@ -3010,7 +3010,7 @@ namespace engine
                rc = rtnCoordGetGroupInfo( cb, tmpVecStr[i], FALSE, grpPtr ) ;
                PD_RC_CHECK( rc, PDERROR, "Get group[%s] failed, rc: %d",
                             tmpVecStr[i], rc ) ;
-               groupList[ grpPtr->getGroupID() ] = grpPtr->getGroupID() ;
+               groupList[ grpPtr->groupID() ] = grpPtr->groupID() ;
             }
             tmpVecStr.clear() ;
          }
@@ -3164,7 +3164,7 @@ namespace engine
       while ( it != groupPtrs.end() )
       {
          CoordGroupInfoPtr &ptr = *it ;
-         groupList[ ptr->getGroupID() ] = ptr->getGroupID() ;
+         groupList[ ptr->groupID() ] = ptr->groupID() ;
          ++it ;
       }
 
@@ -3331,7 +3331,7 @@ namespace engine
          ptr = *it ;
 
          routeID.value = MSG_INVALID_ROUTEID ;
-         clsGroupItem *grp = ptr->getGroupItem() ;
+         clsGroupItem *grp = ptr.get() ;
          if ( grp->nodeCount() > 0 )
          {
             randNum %= grp->nodeCount() ;
@@ -3437,7 +3437,6 @@ namespace engine
       PD_TRACE_ENTRY ( SDB_RTNCOUPNODESTATBYRC ) ;
 
       CoordSession *pSession = cb->getCoordSession() ;
-      NET_NODE_STATUS status = NET_NODE_STAT_NORMAL;
       if ( MSG_INVALID_ROUTEID == routeID.value )
       {
          goto done;
@@ -3448,26 +3447,10 @@ namespace engine
                                    routeID ) ;
       }
 
-      switch ( retCode )
-      {
-         case SDB_CLS_FULL_SYNC:
-            status = NET_NODE_STAT_FULLSYNC ;
-            break ;
-         case SDB_NETWORK:
-         case SDB_NETWORK_CLOSE:
-         case SDB_NET_CANNOT_CONNECT:
-         case SDB_COORD_REMOTE_DISC:
-            status = NET_NODE_STAT_OFFLINE ;
-            break ;
-         default:
-            status = NET_NODE_STAT_NORMAL ;
-            break ;
-      }
-
       if( groupInfo.get() )
       {
          groupInfo->updateNodeStat( routeID.columns.nodeID,
-                                    status ) ;
+                                    netResult2Status( retCode ) ) ;
       }
 
    done:
@@ -3493,7 +3476,7 @@ namespace engine
             MsgRouteID primaryNodeID ;
             primaryNodeID.value = nodeID.value ;
             primaryNodeID.columns.nodeID = primaryID ;
-            if ( SDB_OK == groupInfo->setPrimary( primaryNodeID ) )
+            if ( SDB_OK == groupInfo->updatePrimary( primaryNodeID, TRUE ) )
             {
                return TRUE ;
             }
@@ -3508,7 +3491,7 @@ namespace engine
       {
          if ( groupInfo.get() )
          {
-            groupInfo->setSlave( nodeID ) ;
+            groupInfo->updatePrimary( nodeID, FALSE ) ;
          }
 
          if ( canUpdate )

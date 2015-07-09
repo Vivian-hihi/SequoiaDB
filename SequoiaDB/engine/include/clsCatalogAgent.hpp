@@ -343,6 +343,7 @@ namespace engine
    class _clsGroupItem : public SDBObject
    {
       friend class _clsNodeMgrAgent ;
+      friend class _clsShardMgr ;
 
       public:
          _clsGroupItem ( UINT32 groupID ) ;
@@ -363,6 +364,7 @@ namespace engine
 
          const VEC_NODE_INFO* getNodes () ;
          clsNodeItem*         nodeItem ( UINT32 nodeID ) ;
+         clsNodeItem*         nodeItemByPos( UINT32 pos ) ;
          INT32                nodePos  ( UINT32 nodeID ) ;
 
          INT32 getNodeID ( UINT32 pos, MsgRouteID& id,
@@ -385,7 +387,7 @@ namespace engine
          INT32 getNodeInfo ( UINT32 pos, SINT32 &status );
 
          MsgRouteID  primary ( MSG_ROUTE_SERVICE_TYPE type =
-                               MSG_ROUTE_SHARD_SERVCIE ) const ;
+                               MSG_ROUTE_SHARD_SERVCIE ) ;
 
          UINT32 getPrimaryPos();
 
@@ -406,6 +408,8 @@ namespace engine
          VEC_NODE_INFO                 _vecNodes ;
          MsgRouteID                    _primaryNode ;
          UINT32                        _primaryPos;
+
+         ossRWMutex                    _rwMutex ;
 
    };
    typedef _clsGroupItem clsGroupItem ;

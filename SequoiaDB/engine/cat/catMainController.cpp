@@ -1068,7 +1068,7 @@ namespace engine
             rc = _processAuthDel( handle, pMsg ) ;
             break ;
          }
-      case MSG_COOR_CHECK_ROUTEID_REQ :
+      case MSG_COM_CHECK_ROUTEID_REQ :
          {
             rc = _processCheckRouteID( handle, pMsg ) ;
             break;
@@ -1332,7 +1332,7 @@ namespace engine
       reply.numReturned = 0;
       reply.startFrom = 0;
       reply.header.messageLength = sizeof( MsgOpReply );
-      reply.header.opCode = MSG_COOR_CHECK_ROUTEID_RSP;
+      reply.header.opCode = MSG_COM_CHECK_ROUTEID_RSP;
       reply.header.requestID = pMsgReq->header.requestID;
       reply.header.routeID.value = 0;
       reply.header.TID = pMsgReq->header.TID;

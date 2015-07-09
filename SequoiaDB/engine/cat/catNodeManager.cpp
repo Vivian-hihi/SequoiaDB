@@ -487,7 +487,7 @@ namespace engine
       SINT32 dataLen = 0;
       MsgCatRegisterReq *pRegReq = (MsgCatRegisterReq *)pMsg ;
       PD_TRACE_ENTRY ( SDB_CATNODEMGR_REGREQ ) ;
-      BSONObj boNodeInfo;
+      BSONObj boNodeInfo ;
 
       /// fill reply header
       _fillRspHeader( &replyHeader.header, pMsg ) ;
@@ -514,20 +514,22 @@ namespace engine
                    "unexpected error:%s", e.what() );
       }
 
+      PD_TRACE1 ( SDB_CATNODEMGR_REGREQ,
+                  PD_PACK_STRING ( boReq.toString().c_str() ) ) ;
+
       // don't use _pCatCB->primaryCheck(), because reg msg will send by
       // on timer
       PD_CHECK( ( pmdIsPrimary() || SDB_ROLE_CATALOG == nodeRole ),
                 SDB_CLS_NOT_PRIMARY, error, PDWARNING,
                 "service deactive but received register-request:%s",
                 boReq.toString().c_str() );
-      PD_TRACE1 ( SDB_CATNODEMGR_REGREQ,
-                  PD_PACK_STRING ( boReq.toString().c_str() ) ) ;
+
       rc = getNodeInfo( boReq, boNodeInfo );
       if ( rc )
       {
          PD_LOG ( PDERROR, "Failed to get node-info:%s (rc=%d)",
                   boReq.toString().c_str(), rc );
-         rc = SDB_CAT_AUTH_FAILED;
+         rc = SDB_CAT_AUTH_FAILED ;
          goto error;
       }
 
@@ -553,7 +555,7 @@ namespace engine
       return rc;
    error:
       replyHeader.flags = rc ;
-      goto done;
+      goto done ;
    }
 
    INT32 catNodeManager::processCommandMsg( const NET_HANDLE &handle,
@@ -2175,14 +2177,14 @@ namespace engine
          PD_CHECK( beGroupId.type() == NumberInt, SDB_SYS, error, PDERROR,
                   "failed to get the field(%s)", FIELD_NAME_GROUPID );
          CoordGroupInfo groupInfo( beGroupId.numberInt() );
-         rc = groupInfo.fromBSONObj( boGroupInfo );
+         rc = groupInfo.updateGroupItem( boGroupInfo ) ;
          PD_RC_CHECK( rc, PDERROR,
                      "failed to parse group info(rc=%d)",
                      rc );
          // coord group not limited
-         if ( groupInfo.getGroupID() != COORD_GROUPID ) 
+         if ( groupInfo.groupID() != COORD_GROUPID ) 
          {
-            PD_CHECK( groupInfo.getGroupSize() < CLS_REPLSET_MAX_NODE_SIZE,
+            PD_CHECK( groupInfo.nodeCount() < CLS_REPLSET_MAX_NODE_SIZE,
                       SDB_DMS_REACHED_MAX_NODES, error, PDERROR,
                       "reached the maximum number of nodes!" ) ;
          }

@@ -319,7 +319,7 @@ namespace engine
                rc = _onTransCommitPreMsg( msg );
                break;
 
-            case MSG_COOR_CHECK_ROUTEID_REQ:
+            case MSG_COM_CHECK_ROUTEID_REQ:
                rc = _onCheckRouteIDReqMsg( msg );
                break;
 

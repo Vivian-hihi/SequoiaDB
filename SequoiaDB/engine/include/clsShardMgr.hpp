@@ -49,7 +49,7 @@ using namespace bson ;
 namespace engine
 {
    // the shard mgr update some info from catalog timeout
-   #define CLS_SHARD_TIMEOUT     (5*OSS_ONE_SEC)
+   #define CLS_SHARD_TIMEOUT     (30*OSS_ONE_SEC)
 
    /*
       _clsEventItem define
@@ -63,7 +63,7 @@ namespace engine
       UINT64         requestID ;
       std::string    name ;
       UINT32         groupID ;
-      INT32          sendNums ;
+      NET_HANDLE     netHandle ;
 
       _clsEventItem ()
       {
@@ -71,7 +71,7 @@ namespace engine
          waitNum = 0 ;
          requestID = 0 ;
          groupID = 0 ;
-         sendNums = 0 ;
+         netHandle = NET_INVALID_HANDLE ;
       }
    } ;
    typedef class _clsEventItem clsEventItem ;
@@ -86,13 +86,13 @@ namespace engine
          ossEvent       event ;
          UINT32         pageSize ;
          UINT32         lobPageSize ;
-         INT32          sendNums ;
+         NET_HANDLE     netHandle ;
 
          _clsCSEventItem()
          {
             pageSize = 0 ;
-            sendNums = 0 ;
             lobPageSize = 0 ;
+            netHandle = NET_INVALID_HANDLE ;
          }
    } ;
    typedef _clsCSEventItem clsCSEventItem ;
@@ -110,6 +110,9 @@ namespace engine
 
       typedef std::map<UINT64, clsCSEventItem*>          MAP_CS_EVENT ;
       typedef MAP_CS_EVENT::iterator                     MAP_CS_EVENT_IT ;
+
+      typedef std::map<UINT64, _netRouteNode>            MAP_ROUTE_NODE ;
+      typedef MAP_ROUTE_NODE::iterator                   MAP_ROUTE_NODE_IT ;
 
       DECLARE_OBJ_MSG_MAP()
 
@@ -154,7 +157,10 @@ namespace engine
                                INT64 waitMillSec = CLS_SHARD_TIMEOUT ) ;
 
       public:
-         INT32  sendToCatlog ( MsgHeader * msg, INT32 *pSendNum = NULL ) ;
+         INT32  sendToCatlog ( MsgHeader * msg,
+                               NET_HANDLE *pHandle = NULL,
+                               INT64 upCataMillsec = 0,
+                               BOOLEAN catUpCataGrp = TRUE ) ;
          INT32  syncSend( MsgHeader * msg, UINT32 groupID, BOOLEAN primary,
                           MsgHeader **ppRecvMsg,
                           INT64 millisec = CLS_SHARD_TIMEOUT ) ;
@@ -176,15 +182,22 @@ namespace engine
       protected:
 
          INT32 _sendCataQueryReq( INT32 queryType, const BSONObj &query,
-                                  UINT64 requestID, INT32 *pSendNum = NULL ) ;
+                                  UINT64 requestID,
+                                  NET_HANDLE *pHandle = NULL,
+                                  INT64 millsec = 0 ) ;
 
          INT32 _sendCatalogReq ( const CHAR *pCollectionName,
                                  UINT64 requestID = 0,
-                                 INT32 *pSendNum = NULL ) ;
+                                 NET_HANDLE *pHandle = NULL,
+                                 INT64 millsec = 0 ) ;
+
          INT32 _sendGroupReq ( UINT32 groupID, UINT64 requestID = 0,
-                               INT32 *pSendNum = NULL ) ;
+                               NET_HANDLE *pHandle = NULL,
+                               INT64 millsec = 0 ) ;
+
          INT32 _sendCSInfoReq ( const CHAR *pCSName, UINT64 requestID = 0,
-                                INT32 *pSendNum = NULL ) ;
+                                NET_HANDLE *pHandle = NULL,
+                                INT64 millsec = 0 ) ;
 
          clsEventItem *_findCatSyncEvent ( const CHAR *pCollectionName,
                                            BOOLEAN bCreate = FALSE ) ;
@@ -194,8 +207,8 @@ namespace engine
                                           BOOLEAN bCreate = FALSE ) ;
          clsEventItem *_findNMSyncEvent ( UINT64 requestID ) ;
 
-         INT32 _findCatNodeID ( const VECCATLOG &catNodes,
-                                const std::string &host,
+         INT32 _findCatNodeID ( const MAP_ROUTE_NODE &catNodes,
+                                const CHAR *hostName,
                                 const std::string &service,
                                 NodeID &id ) ;
 
@@ -205,6 +218,7 @@ namespace engine
          INT32 _onCatalogReqMsg ( NET_HANDLE handle, MsgHeader* msg ) ;
          INT32 _onCatGroupRes ( NET_HANDLE handle, MsgHeader* msg ) ;
          INT32 _onQueryCSInfoRsp( NET_HANDLE handle, MsgHeader* msg ) ;
+         INT32 _onHandleClose( NET_HANDLE handle, MsgHeader* msg ) ;
 
       private:
          _netRouteAgent                *_pNetRtAgent ;
@@ -217,10 +231,12 @@ namespace engine
          MAP_CS_EVENT                  _mapSyncCSEvent ;
          UINT64                        _requestID ;
 
-         VECCATLOG                     _vecCatlog ;
-         INT32                         _primary ;
+         clsGroupItem                  _cataGrpItem ;
+         MAP_ROUTE_NODE                _mapNodes ;
+
          UINT32                        _catVerion ;
          ossEvent                      _upCatEvent ;
+         NET_HANDLE                    _upCatHandle ;
          ossSpinSLatch                 _shardLatch ;
 
          MsgRouteID                    _nodeID ;

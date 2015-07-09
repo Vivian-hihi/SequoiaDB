@@ -230,7 +230,7 @@ namespace engine
          replCB * getReplCB () ;
          catAgent * getCatAgent () ;
          nodeMgrAgent* getNodeMgrAgent () ;
-         pmdAsyncMsgHandler* getShardMsgHandle() ;
+         shdMsgHandler* getShardMsgHandle() ;
          _clsTaskMgr*  getTaskMgr () ;
          BOOLEAN  isPrimary () ;
          BOOLEAN  isFullSync () ;
@@ -301,6 +301,7 @@ namespace engine
          ossSpinSLatch                 _handlerLatch ;
 
          UINT64                        _regTimerID ;
+         UINT32                        _regFailedTimes ;
          UINT64                        _oneSecTimerID ;
 
    };

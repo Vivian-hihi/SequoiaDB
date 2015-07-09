@@ -74,6 +74,40 @@ namespace engine
       }
    }
 
+   void _shdMsgHandler::handleClose( const NET_HANDLE &handle,
+                                     _MsgRouteID id )
+   {
+      _pmdAsyncMsgHandler::handleClose( handle, id ) ;
+
+      /// post msg to shard edu
+      if ( _pShardCB )
+      {
+         MsgOpReply *pMsg = NULL ;
+         pMsg = ( MsgOpReply* )SDB_OSS_MALLOC( sizeof( MsgOpReply ) ) ;
+         if ( !pMsg )
+         {
+            PD_LOG( PDERROR, "Alloc memory[size: %d] failed",
+                    sizeof( MsgOpReply ) ) ;
+         }
+         else
+         {
+            pMsg->contextID = -1 ;
+            pMsg->flags = 0 ;
+            pMsg->header.messageLength = sizeof( MsgOpReply ) ;
+            pMsg->header.opCode = MSG_COM_REMOTE_DISC ;
+            pMsg->header.requestID = 0 ;
+            pMsg->header.routeID.value = id.value ;
+            pMsg->header.TID = 0 ;
+            pMsg->numReturned = 0 ;
+            pMsg->startFrom = 0 ;
+
+            _pShardCB->postEvent( pmdEDUEvent( PMD_EDU_EVENT_MSG,
+                                               PMD_EDU_MEM_ALLOC,
+                                               pMsg, (UINT64)handle ) ) ;
+         }
+      }
+   }
+
    /*
       _replMsgHandler implement
    */

@@ -2677,7 +2677,9 @@ namespace engine
 
       {
          clsNodeItem& item = _vecNodes[pos] ;
+         _rwMutex.lock_r() ;
          status = item.getStatus( (UINT64)time(NULL) ) ;
+         _rwMutex.release_r() ;
       }
 
    done:
@@ -2705,8 +2707,19 @@ namespace engine
       return pos < 0 ? NULL : &_vecNodes[pos] ;
    }
 
-   MsgRouteID _clsGroupItem::primary ( MSG_ROUTE_SERVICE_TYPE type ) const
+   clsNodeItem* _clsGroupItem::nodeItemByPos( UINT32 pos )
    {
+      if ( pos >= _vecNodes.size() )
+      {
+         return NULL ;
+      }
+      return &_vecNodes[ pos ] ;
+   }
+
+   MsgRouteID _clsGroupItem::primary ( MSG_ROUTE_SERVICE_TYPE type )
+   {
+      ossScopedRWLock lock( &_rwMutex, SHARED ) ;
+
       if ( MSG_INVALID_ROUTEID == _primaryNode.value )
       {
          return _primaryNode ;
@@ -2756,11 +2769,15 @@ namespace engine
 
    UINT32 _clsGroupItem::getPrimaryPos()
    {
-      return _primaryPos;
+      ossScopedRWLock lock( &_rwMutex, SHARED ) ;
+
+      return _primaryPos ;
    }
 
    void _clsGroupItem::cancelPrimary ()
    {
+      ossScopedRWLock lock( &_rwMutex, SHARED ) ;
+
       _primaryNode.value = MSG_INVALID_ROUTEID ;
       _primaryPos = CLS_RG_NODE_POS_INVALID ;
    }
@@ -2773,6 +2790,8 @@ namespace engine
       UINT32 index = 0 ;
       PD_TRACE_ENTRY ( SDB__CLSGPIM_UPPRRIMARY ) ;
       SDB_ASSERT ( nodeID.columns.groupID == _groupID, "group id not same" ) ;
+
+      ossScopedRWLock lock( &_rwMutex, EXCLUSIVE ) ;
 
       // if cancel primary and the pimary is invalid or not the same with
       // nodeID, do nothing
@@ -2828,7 +2847,10 @@ namespace engine
       {
          if ( it->_id.columns.nodeID == nodeID )
          {
+            _rwMutex.lock_w() ;
             (*it).updateStatus( status, (UINT64)time(NULL) ) ;
+            _rwMutex.release_w() ;
+
             if ( NET_NODE_STAT_NORMAL != status )
             {
                updatePrimary( it->_id, FALSE ) ;
@@ -2843,6 +2865,8 @@ namespace engine
 
    void _clsGroupItem::clearNodesStat()
    {
+      ossScopedRWLock lock( &_rwMutex, EXCLUSIVE ) ;
+
       VEC_NODE_INFO_IT it = _vecNodes.begin() ;
       while ( it != _vecNodes.end() )
       {

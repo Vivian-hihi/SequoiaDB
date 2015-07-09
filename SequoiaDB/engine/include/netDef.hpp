@@ -67,10 +67,13 @@ namespace engine
       NET_NODE_STAT_NORMAL = 0,
       NET_NODE_STAT_FULLSYNC,
       NET_NODE_STAT_OFFLINE,
+      NET_NODE_STAT_REBUILD,
+      NET_NODE_STAT_BACKUP,
 
       NET_NODE_STAT_UNKNOWN
    }NET_NODE_STATUS;
 
+   NET_NODE_STATUS netResult2Status( INT32 result ) ;
 
    #define NET_NODE_FAULT_TIMEOUT            ( 600 )
    /*

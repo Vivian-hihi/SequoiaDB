@@ -44,49 +44,7 @@ namespace engine
    typedef clsNodeItem                       CoordNodeInfo ;
    typedef VEC_NODE_INFO                     CoordVecNodeInfo ;
 
-   class _CoordGroupInfo : public SDBObject
-   {
-   public:
-      _CoordGroupInfo ( UINT32 groupID ) ;
-      ~_CoordGroupInfo () ;
-
-      INT32 fromBSONObj( const bson::BSONObj &boGroupInfo );
-
-      INT32 setPrimary( const MsgRouteID &ID ) ;
-      void  setSlave( const MsgRouteID &ID ) ;
-
-      MsgRouteID getPrimary( MSG_ROUTE_SERVICE_TYPE type =
-                             MSG_ROUTE_SHARD_SERVCIE ) ;
-      void updateNodeStat( UINT16 nodeID, NET_NODE_STATUS status ) ;
-      void clearNodesStat() ;
-      INT32 getNodeInfo ( UINT32 pos, SINT32 &status ) ;
-
-      UINT32 getGroupID() const
-      {
-         return _groupItem.groupID() ;
-      }
-
-      string groupName() const
-      {
-         return _groupItem.groupName() ;
-      }
-
-      UINT32 getGroupSize()
-      {
-         return _groupItem.nodeCount() ;
-      }
-
-      clsGroupItem* getGroupItem()
-      {
-         return &_groupItem ;
-      }
-
-   private:
-      clsGroupItem               _groupItem ;
-      ossRWMutex                 _primaryMutex ;
-
-   };
-   typedef _CoordGroupInfo CoordGroupInfo ;
+   typedef clsGroupItem                      CoordGroupInfo ;
 
    typedef boost::shared_ptr<CoordGroupInfo>    CoordGroupInfoPtr;
    typedef std::map<UINT32, CoordGroupInfoPtr>  CoordGroupMap;

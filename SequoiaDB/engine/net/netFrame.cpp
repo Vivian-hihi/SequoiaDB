@@ -1028,5 +1028,32 @@ namespace engine
       return size ;
    }
 
+   NET_NODE_STATUS netResult2Status( INT32 result )
+   {
+      NET_NODE_STATUS status = NET_NODE_STAT_NORMAL ;
+
+      switch ( result )
+      {
+         case SDB_CLS_FULL_SYNC:
+            status = NET_NODE_STAT_FULLSYNC ;
+            break ;
+         case SDB_RTN_IN_REBUILD:
+            status = NET_NODE_STAT_REBUILD ;
+            break ;
+         case SDB_RTN_IN_BACKUP:
+            status = NET_NODE_STAT_BACKUP ;
+            break ;
+         case SDB_NETWORK:
+         case SDB_NETWORK_CLOSE:
+         case SDB_NET_CANNOT_CONNECT:
+            status = NET_NODE_STAT_OFFLINE ;
+            break ;
+         default:
+            break ;
+      }
+
+      return status ;
+   }
+
 }
 

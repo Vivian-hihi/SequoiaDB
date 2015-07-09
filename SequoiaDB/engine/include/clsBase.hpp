@@ -69,17 +69,6 @@ namespace engine
    typedef MsgRouteID   NodeID ;
    #define INVALID_NODE_ID       (MSG_INVALID_ROUTEID)
 
-   /*
-      _catlogServerInfo define
-   */
-   struct _catlogServerInfo : public SDBObject
-   {
-      NodeID      nodeID ;
-      std::string host ;
-      std::string service ;
-   } ;
-   typedef std::vector<_catlogServerInfo>             VECCATLOG ;
-
    #define SAFE_DELETE(p) \
       do { \
          if ( p ) \
@@ -130,12 +119,6 @@ namespace engine
             goto error ; \
          } \
       } while (0)
-
-   #define DO_GOTO_ERROR(exp) \
-      if ( !(exp) ) \
-      { \
-         goto error ; \
-      }
 
 }
 

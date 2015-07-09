@@ -277,8 +277,8 @@ namespace engine
          else
          {
             routeID.columns.serviceID = MSG_ROUTE_LOCAL_SERVICE ;
-            rc = groupInfo->getGroupItem()->getNodeInfo( routeID, strHostName,
-                                                         strServiceName ) ;
+            rc = groupInfo->getNodeInfo( routeID, strHostName,
+                                         strServiceName ) ;
             if ( rc )
             {
                PD_LOG( PDWARNING, "Failed to get node[%d] info failed, rc: %d",
@@ -2430,16 +2430,15 @@ namespace engine
       SINT32 ret = SDB_OK ;
       INT32 rrc = SDB_OK ;
       BSONObj execObj ;
-      clsGroupItem *groupItem = group->getGroupItem() ;
 
       MsgRouteID routeID ;
       string hostName ;
       string serviceName ;
       UINT32 index = 0 ;
 
-      while ( SDB_OK == groupItem->getNodeInfo( index++, routeID, hostName,
-                                                serviceName,
-                                                MSG_ROUTE_LOCAL_SERVICE ) )
+      while ( SDB_OK == group->getNodeInfo( index++, routeID, hostName,
+                                            serviceName,
+                                            MSG_ROUTE_LOCAL_SERVICE ) )
       {
          execObj = BSON( FIELD_NAME_HOST << hostName
                          << PMD_OPTION_SVCNAME << serviceName ) ;
@@ -2465,13 +2464,13 @@ namespace engine
          }
       }
 
-      rtnCoordRemoveGroup ( group->getGroupID() ) ;
+      rtnCoordRemoveGroup ( group->groupID() ) ;
 
       {
          CoordSession *session = cb->getCoordSession();
          if ( NULL != session )
          {
-            session->removeLastNode( group->getGroupID()) ;
+            session->removeLastNode( group->groupID()) ;
          }
       }
 
@@ -2554,10 +2553,9 @@ namespace engine
          if ( !hasCatalogAddrKey )
          {
             MsgRouteID routeID ;
-            clsGroupItem *groupItem = catGroupInfo->getGroupItem() ;
             std::string cataNodeLst = "";
             UINT32 i = 0;
-            if ( catGroupInfo->getGroupSize() == 0 )
+            if ( catGroupInfo->nodeCount() == 0 )
             {
                rc = SDB_CLS_EMPTY_GROUP ;
                PD_LOG ( PDERROR, "Get catalog group info failed(rc=%d)", rc ) ;
@@ -2568,9 +2566,9 @@ namespace engine
             string host ;
             string service ;
 
-            while ( SDB_OK == groupItem->getNodeInfo( i, routeID, host,
-                                                      service,
-                                                      MSG_ROUTE_CAT_SERVICE ) )
+            while ( SDB_OK == catGroupInfo->getNodeInfo( i, routeID, host,
+                                                         service,
+                                                         MSG_ROUTE_CAT_SERVICE ) )
             {
                if ( i > 0 )
                {
@@ -3210,12 +3208,11 @@ namespace engine
       /// here we do not care whether they succeed.
       {
          _MsgClsGInfoUpdated updated ;
-         updated.groupID = groupInfo->getGroupID() ;
-         clsGroupItem *groupItem = groupInfo->getGroupItem() ;
+         updated.groupID = groupInfo->groupID() ;
          MsgRouteID routeID ;
          UINT32 index = 0 ;
 
-         while ( SDB_OK == groupItem->getNodeID( index++, routeID,
+         while ( SDB_OK == groupInfo->getNodeID( index++, routeID,
                                                  MSG_ROUTE_SHARD_SERVCIE ) )
          {
             rtnCoordSendRequestToNodeWithoutReply( (void *)(&updated),
@@ -3274,7 +3271,7 @@ namespace engine
       }
 
       /// do not care rc.
-      if ( COORD_GROUPID == groupInfo->getGroupID() )
+      if ( COORD_GROUPID == groupInfo->groupID() )
       {
          rtnCataChangeNtyToAllNodes( cb ) ;
       }
@@ -3521,16 +3518,16 @@ namespace engine
             if ( 0 != ossStrcmp( CATALOG_GROUPNAME, pGroupName ) ||
                  SDB_OK != rtnCoordGetLocalCatGroupInfo( catGroupInfo ) ||
                  NULL == catGroupInfo.get() ||
-                 catGroupInfo->getGroupSize() == 0 )
+                 catGroupInfo->nodeCount() == 0 )
             {
                break ;
             }
          }
 
          if ( catGroupInfo.get() &&
-              catGroupInfo->getGroupSize() > 0 )
+              catGroupInfo->nodeCount() > 0 )
          {
-            rc = startNodes( catGroupInfo->getGroupItem(), objList ) ;
+            rc = startNodes( catGroupInfo.get(), objList ) ;
          }
          else if ( objGrpLst.size() > 0 )
          {
@@ -6825,7 +6822,7 @@ namespace engine
          goto error ;
       }
 
-      gpLst[gpInfo->getGroupID()] = gpInfo->getGroupID() ;
+      gpLst[gpInfo->groupID()] = gpInfo->groupID() ;
       rc = executeOnDataGroup( pMsg, cb, gpLst, TRUE, NULL, NULL, NULL ) ;
       if ( SDB_OK != rc )
       {

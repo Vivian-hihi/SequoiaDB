@@ -66,11 +66,13 @@ namespace engine
    const UINT32 CLS_REPL_SEC_TIME = 1000 ;
 
    #define CLS_REPL_ACTIVE_CHECK( rc ) \
-           if ( !_active ) \
-           { \
-              rc = SDB_REPL_GROUP_NOT_ACTIVE ;\
-              goto error ;\
-           }
+            do { \
+               if ( !_active ) \
+               { \
+                  rc = SDB_REPL_GROUP_NOT_ACTIVE ;\
+                  goto error ;\
+               } \
+            } while( 0 )
 
 #if defined (_WINDOWS)
    #define CLS_CONNREFUSED    WSAECONNREFUSED
@@ -551,7 +553,7 @@ namespace engine
          }
          case MSG_CLS_BEAT :
          {
-            CLS_REPL_ACTIVE_CHECK( rc )
+            CLS_REPL_ACTIVE_CHECK( rc ) ;
             rc = _handleSharingBeat( ( const _MsgClsBeat *)msg ) ;
             break ;
          }
@@ -570,26 +572,25 @@ namespace engine
          }
          case MSG_CLS_BEAT_RES :
          {
-            CLS_REPL_ACTIVE_CHECK( rc )
+            CLS_REPL_ACTIVE_CHECK( rc ) ;
             rc = _handleSharingBeatRes( ( const _MsgClsBeatRes *)msg ) ;
             break ;
          }
          case MSG_CLS_BALLOT :
          {
-            CLS_REPL_ACTIVE_CHECK( rc )
+            CLS_REPL_ACTIVE_CHECK( rc ) ;
             rc = _vote.handleInput( msg ) ;
             break ;
          }
          case MSG_CLS_BALLOT_RES :
          {
-            CLS_REPL_ACTIVE_CHECK( rc )
+            CLS_REPL_ACTIVE_CHECK( rc ) ;
             rc = _vote.handleInput( msg ) ;
             break ;
          }
          case MSG_CLS_GINFO_UPDATED :
          {
-            PD_LOG( PDEVENT,
-                    "group info has been updated, download again." ) ;
+            PD_LOG( PDEVENT, "Group info has been updated, download again" ) ;
             MsgCatGroupReq msg ;
             msg.id = _info.local ;
             _cata.call( (MsgHeader *)(&msg) ) ;
@@ -597,9 +598,12 @@ namespace engine
          }
          default :
          {
-            PD_LOG( PDWARNING, "unknown msg %d", msg->opCode ) ;
+            PD_LOG( PDWARNING, "unknown msg: %s", msg2String( msg ).c_str() ) ;
+            rc = SDB_CLS_UNKNOW_MSG ;
+            break ;
          }
       }
+
    done:
       PD_TRACE_EXITRC ( SDB__CLSREPSET_HNDMSG, rc );
       return rc ;
@@ -614,6 +618,10 @@ namespace engine
       MsgHeader *pHeader = ( MsgHeader* )msg ;
       PD_TRACE_ENTRY ( SDB__CLSREPSET__HNDGPRES );
 
+      CLS_GROUP_VERSION version ;
+      map<UINT64, _netRouteNode> group ;
+      string groupName ;
+
       if ( SDB_OK != MSG_GET_INNER_REPLY_RC(pHeader) )
       {
          if ( SDB_CLS_NOT_PRIMARY == MSG_GET_INNER_REPLY_RC(pHeader) )
@@ -621,14 +629,11 @@ namespace engine
             _clsCB->updateCatGroup ( TRUE ) ;
          }
 
-         PD_LOG( PDWARNING, "download group info request was refused, rc: %d",
+         PD_LOG( PDWARNING, "Download group info request was refused, rc: %d",
                  MSG_GET_INNER_REPLY_RC(pHeader) ) ;
          goto error ;
       }
-      {
-      CLS_GROUP_VERSION version ;
-      map<UINT64, _netRouteNode> group ;
-      string groupName ;
+
       rc = msgParseCatGroupRes( msg, version, groupName, group ) ;
       if ( SDB_OK != rc )
       {
@@ -639,7 +644,10 @@ namespace engine
       rc = _setGroupSet( version, group ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDWARNING, "set group info failed, rc = %d", rc ) ;
+         if ( SDB_REPL_REMOTE_G_V_EXPIRED != rc )
+         {
+            PD_LOG( PDWARNING, "set group info failed, rc = %d", rc ) ;
+         }
          goto error ;
       }
 
@@ -656,7 +664,7 @@ namespace engine
          _active = TRUE ;
          _vote.init() ;
       }
-      }
+
    done :
       PD_TRACE_EXITRC ( SDB__CLSREPSET__HNDGPRES, rc );
       return rc ;

@@ -424,6 +424,7 @@ namespace engine
     _taskMgr( 0x7FFFFFFF ),
     _taskID ( 0 ),
     _regTimerID ( CLS_INVALID_TIMERID ),
+    _regFailedTimes( 0 ),
     _oneSecTimerID ( CLS_INVALID_TIMERID )
    {
       _replServiceName[0] = 0 ;
@@ -825,7 +826,7 @@ namespace engine
    {
       return _shdObj.getNodeMgrAgent() ;
    }
-   pmdAsyncMsgHandler* _clsMgr::getShardMsgHandle()
+   shdMsgHandler* _clsMgr::getShardMsgHandle()
    {
       return &_shdMsgHandlerObj ;
    }
@@ -1023,9 +1024,10 @@ namespace engine
       UINT32 opCode = (UINT32)(msg->opCode) ;
       msg->TID = 0 ;
 
-      if ( CLS_REPL == type || MSG_CAT_GRP_RES == opCode
-         || MSG_CAT_PAIMARY_CHANGE_RES == opCode
-         || MSG_CLS_GINFO_UPDATED == opCode )
+      if ( CLS_REPL == type ||
+           MSG_CAT_GRP_RES == opCode ||
+           MSG_CAT_PAIMARY_CHANGE_RES == opCode ||
+           MSG_CLS_GINFO_UPDATED == opCode )
       {
          rc = _replObj.dispatchMsg( handle, msg ) ;
       }
@@ -1481,6 +1483,7 @@ namespace engine
          //Kill register timer
          killTimer ( _regTimerID ) ;
          _regTimerID = CLS_INVALID_TIMERID ;
+         _regFailedTimes = 0 ;
 
          //Update the net route agent the local id
          _selfNodeID.columns.groupID = (UINT32)gidEl.Int () ;
@@ -1544,8 +1547,13 @@ namespace engine
       //Need to shutdown
       if ( rc == SDB_CAT_AUTH_FAILED )
       {
-         PD_LOG ( PDSEVERE, "Catlog auth the db node failed, shutdown..." ) ;
-         PMD_SHUTDOWN_DB( SDB_CAT_AUTH_FAILED ) ;
+         ++_regFailedTimes ;
+         if ( SDB_ROLE_CATALOG != pmdGetDBRole() ||
+              _regFailedTimes >= CLS_REPLSET_MAX_NODE_SIZE )
+         {
+            PD_LOG ( PDSEVERE, "Catlog auth the db node failed, shutdown..." ) ;
+            PMD_SHUTDOWN_DB( SDB_CAT_AUTH_FAILED ) ;
+         }
       }
       goto done ;
    }
@@ -1617,7 +1625,11 @@ namespace engine
             UINT32 index = 0 ;
             while ( index < objList.size() )
             {
-               _addTaskInnerSession ( objList[index].objdata() ) ;
+               rc = _addTaskInnerSession ( objList[index].objdata() ) ;
+               if ( rc && SDB_CLS_MUTEX_TASK_EXIST != rc )
+               {
+                  startTaskCheck( objList[index] ) ;
+               }
                ++index ;
             }
          }

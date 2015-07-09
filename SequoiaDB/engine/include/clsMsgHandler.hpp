@@ -35,6 +35,10 @@
 
 #include "clsBase.hpp"
 #include "pmdAsyncHandler.hpp"
+#include "ossEvent.hpp"
+#include "ossLatch.hpp"
+#include <map>
+#include <vector>
 
 namespace engine
 {
@@ -45,6 +49,10 @@ namespace engine
    */
    class _shdMsgHandler : public _pmdAsyncMsgHandler
    {
+      typedef std::set< ossEvent* >                SET_EVENTS ;
+      typedef std::map< NET_HANDLE, SET_EVENTS >   MAP_NET_2_EVENTS ;
+      typedef MAP_NET_2_EVENTS::iterator           MAP_NET_2_EVENTS_IT ;
+
       public:
          _shdMsgHandler( _pmdAsycSessionMgr *pSessionMgr ) ;
          virtual ~_shdMsgHandler();
@@ -52,12 +60,16 @@ namespace engine
          OSS_INLINE void attachShardCB( pmdEDUCB *cb ) { _pShardCB = cb ; }
          OSS_INLINE void detachShardCB() { _pShardCB = NULL ; }
 
+         virtual void  handleClose( const NET_HANDLE &handle,
+                                    _MsgRouteID id ) ;
+
       protected:
          virtual void _postMainMsg( const NET_HANDLE &handle,
                                     MsgHeader *pNewMsg ) ;
 
       protected:
          pmdEDUCB             *_pShardCB ;
+
    } ;
    typedef _shdMsgHandler shdMsgHandler ;
 
