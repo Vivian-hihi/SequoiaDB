@@ -1758,14 +1758,6 @@ namespace engine
       rc = context->resume() ;
       PD_RC_CHECK( rc, PDERROR, "dms mb context resume falied, rc: %d", rc ) ;
 
-      // change mb metadata
-      if ( needChangeCLID )
-      {
-         oldCLID = context->_clLID ;
-         context->mb()->_logicalID = newCLID ;
-         context->_clLID           = newCLID ;
-      }
-
       rc = _pIdxSU->truncateIndexes( context ) ;
       PD_RC_CHECK( rc, PDERROR, "Truncate collection[%s] indexes failed, "
                    "rc: %d", pName, rc ) ;
@@ -1779,6 +1771,14 @@ namespace engine
          rc = _pLobSU->truncate( context, cb, NULL ) ;
          PD_RC_CHECK( rc, PDERROR, "Truncate collection[%s] lob failed, rc: %d",
                       pName, rc ) ;
+      }
+
+      // change mb metadata
+      if ( needChangeCLID )
+      {
+         oldCLID = context->_clLID ;
+         context->mb()->_logicalID = newCLID ;
+         context->_clLID           = newCLID ;
       }
 
       // write dps log
