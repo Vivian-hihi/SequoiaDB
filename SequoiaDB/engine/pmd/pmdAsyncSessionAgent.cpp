@@ -67,7 +67,9 @@ namespace engine
       {
          cb->resetInterrupt() ;
          cb->resetInfo( EDU_INFO_ERROR ) ;
+#if defined ( SDB_ENGINE )
          cb->resetLsn() ;
+#endif // SDB_ENGINE
 
          if ( cb->waitEvent( event, OSS_ONE_SEC, TRUE ) )
          { 
