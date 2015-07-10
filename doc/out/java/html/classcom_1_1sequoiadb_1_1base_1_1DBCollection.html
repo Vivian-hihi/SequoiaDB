@@ -205,10 +205,10 @@ boolean&#160;</td><td class="memItemRight" valign="bottom"><b>isOIDEnsured</b> (
 <tr class="memdesc:a169a70056eb95af85f78591b67911f97"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get all the indexes of current collection.  <a href="#a169a70056eb95af85f78591b67911f97"></a><br/></td></tr>
 <tr class="separator:a169a70056eb95af85f78591b67911f97"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a564a4b8125cb443a40b800993dfcc311"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCursor.html">DBCursor</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCollection.html#a564a4b8125cb443a40b800993dfcc311">queryAndUpdate</a> (BSONObject matcher, BSONObject selector, BSONObject orderBy, BSONObject hint, BSONObject <a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCollection.html#aa2c739b429b5a48f8cf5bf5ef02ba772">update</a>, long skipRows, long returnRows, int flag, boolean returnNew)  throws BaseException </td></tr>
-<tr class="memdesc:a564a4b8125cb443a40b800993dfcc311"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the matching documents in current collection and update.  <a href="#a564a4b8125cb443a40b800993dfcc311"></a><br/></td></tr>
+<tr class="memdesc:a564a4b8125cb443a40b800993dfcc311"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the matching documents in current collection and update. in order to make the update take effect, user must travel the <a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCursor.html" title="Database operation interfaces of cursor.">DBCursor</a> returned by this function.  <a href="#a564a4b8125cb443a40b800993dfcc311"></a><br/></td></tr>
 <tr class="separator:a564a4b8125cb443a40b800993dfcc311"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1d81878f8271c8a4cd4d843a6af30577"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCursor.html">DBCursor</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCollection.html#a1d81878f8271c8a4cd4d843a6af30577">queryAndRemove</a> (BSONObject matcher, BSONObject selector, BSONObject orderBy, BSONObject hint, long skipRows, long returnRows, int flag)  throws BaseException </td></tr>
-<tr class="memdesc:a1d81878f8271c8a4cd4d843a6af30577"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the matching documents in current collection and remove.  <a href="#a1d81878f8271c8a4cd4d843a6af30577"></a><br/></td></tr>
+<tr class="memdesc:a1d81878f8271c8a4cd4d843a6af30577"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the matching documents in current collection and remove. in order to make the remove take effect, user must travel the <a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCursor.html" title="Database operation interfaces of cursor.">DBCursor</a> returned by this function.  <a href="#a1d81878f8271c8a4cd4d843a6af30577"></a><br/></td></tr>
 <tr class="separator:a1d81878f8271c8a4cd4d843a6af30577"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abdd89b20edbd831a1df977408203372a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCursor.html">DBCursor</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCollection.html#abdd89b20edbd831a1df977408203372a">getIndex</a> (String name)  throws BaseException </td></tr>
 <tr class="memdesc:abdd89b20edbd831a1df977408203372a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get all of or one of the indexes in current collection.  <a href="#abdd89b20edbd831a1df977408203372a"></a><br/></td></tr>
@@ -2436,7 +2436,7 @@ BDQuery.FLG_QUERY_PARALLED </li>
 </table>
 </div><div class="memdoc">
 
-<p>Get the matching documents in current collection and remove. </p>
+<p>Get the matching documents in current collection and remove. in order to make the remove take effect, user must travel the <a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCursor.html" title="Database operation interfaces of cursor.">DBCursor</a> returned by this function. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">matcher</td><td>the matching rule, return all the documents if null </td></tr>
@@ -2545,7 +2545,7 @@ BDQuery.FLG_QUERY_PARALLED </li>
 </table>
 </div><div class="memdoc">
 
-<p>Get the matching documents in current collection and update. </p>
+<p>Get the matching documents in current collection and update. in order to make the update take effect, user must travel the <a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCursor.html" title="Database operation interfaces of cursor.">DBCursor</a> returned by this function. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">matcher</td><td>the matching rule, return all the documents if null </td></tr>
@@ -3355,7 +3355,7 @@ BDQuery.FLG_QUERY_PARALLED </li>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Thu Jun 25 2015 10:01:46 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Fri Jul 10 2015 15:23:43 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.2
 </small></address>
