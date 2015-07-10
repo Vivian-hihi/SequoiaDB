@@ -473,19 +473,19 @@ namespace
                          "Inspect result:"OSS_NEWLINE ) ;
       CHECK_VALUE( ( bufferSize - 1 <= len ), retry ) ;
       len += ossSnprintf( buffer + len, bufferSize - len,
-                         "Total group count   : %d"OSS_NEWLINE,
+                         "Total inspected group count   : %d"OSS_NEWLINE,
                          tail._groupCount ) ;
       CHECK_VALUE( ( bufferSize - 1 <= len ), retry ) ;
       len += ossSnprintf( buffer + len, bufferSize - len,
-                         "Total collection    : %d"OSS_NEWLINE,
+                         "Total inspected collection    : %d"OSS_NEWLINE,
                          tail._clCount ) ;
       CHECK_VALUE( ( bufferSize - 1 <= len ), retry ) ;
       len += ossSnprintf( buffer + len, bufferSize - len,
-                         "Total records count : %d"OSS_NEWLINE,
+                         "Total different records count : %d"OSS_NEWLINE,
                          tail._recordCount ) ;
       CHECK_VALUE( ( bufferSize - 1 <= len ), retry ) ;
       len += ossSnprintf( buffer + len, bufferSize - len,
-                         "Total time cost     : %d ms"OSS_NEWLINE,
+                         "Total time cost               : %d ms"OSS_NEWLINE,
                          tail._timeCount ) ;
       CHECK_VALUE( ( bufferSize - 1 <= len ), retry ) ;
 
