@@ -84,7 +84,6 @@ class collectionspace(object):
          self._cs = None
 
    def __repr__(self):
-
       return "Collection Space: %s" % (self.get_collection_space_name())
 
    def __getattr__(self, name):

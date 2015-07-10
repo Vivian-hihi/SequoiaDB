@@ -1137,6 +1137,33 @@ __METHOD_IMP(sdb_get_version)
    return MAKE_RETURN_INT_INT_INT_INT_STRING( version, sub_version, fixed, release, build ) ;
 }
 
+__METHOD_IMP(sdb_get_datacenter)
+{
+   INT32 rc               = 0 ;
+   PYOBJECT *obj          = NULL ;
+   PYOBJECT *dc_obj       = NULL ;
+   sdb *client            = NULL ;
+   sdbDataCenter *dc      = NULL ;
+
+   if ( !PARSE_PYTHON_ARGS( args, "OO", &obj, &dc_obj ) )
+   {
+      rc = SDB_INVALIDARGS ;
+      goto done ;
+   }
+
+   CAST_PYOBJECT_TO_COBJECT( obj, sdb, client ) ;
+   CAST_PYOBJECT_TO_COBJECT( dc_obj, sdbDataCenter, dc ) ;
+
+   rc = client->getDC( *dc ) ;
+   if ( rc )
+   {
+      goto done ;
+   }
+
+done:
+   return MAKE_RETURN_INT( rc ) ;
+}
+
 ///< implement collection space
 __METHOD_IMP(create_cs)
 {
@@ -3286,6 +3313,352 @@ error:
    goto done ;
 }
 
+
+///< data center implement
+__METHOD_IMP(create_dc)
+{
+   sdbDataCenter *ret_obj    = NULL ;
+   NEW_CPPOBJECT(ret_obj, sdbDataCenter);
+   if ( NULL == ret_obj )
+   {
+      return NULL ;
+   }
+
+   return MAKE_PYOBJECT(ret_obj) ;
+}
+
+__METHOD_IMP(release_dc)
+{
+   INT32 rc           = SDB_OK ;
+   PYOBJECT *obj      = NULL ;
+   sdbDataCenter *dc  = NULL ;
+
+   if ( !PARSE_PYTHON_ARGS(args, "O", &obj))
+   {
+      rc = SDB_INVALIDARG ;
+      goto done ;
+   }
+
+   CAST_PYOBJECT_TO_COBJECT(obj, sdbDataCenter, dc) ;
+   DELETE_CPPOBJECT(dc) ;
+done:
+   return MAKE_RETURN_INT(rc) ;
+}
+
+__METHOD_IMP(dc_get_name)
+{
+   INT32 rc           = SDB_OK ;
+   PYOBJECT *obj      = NULL ;
+   sdbDataCenter *dc  = NULL ;
+   const CHAR *name   = NULL ;
+
+   if ( !PARSE_PYTHON_ARGS(args, "O", &obj))
+   {
+      rc = SDB_INVALIDARG ;
+      goto done ;
+   }
+
+   CAST_PYOBJECT_TO_COBJECT(obj, sdbDataCenter, dc) ;
+   name = dc->getName() ;
+done:
+   return MAKE_RETURN_INT_PYSTRING( rc, name ) ;
+}
+
+__METHOD_IMP(dc_create_image)
+{
+   INT32 rc                    = 0 ;
+   sdbDataCenter *dc           = NULL ;
+   PYOBJECT *obj               = NULL ;
+   const CHAR *addr            = NULL ;
+
+   if ( !PARSE_PYTHON_ARGS( args, "Os", &obj, &addr ) )
+   {
+      rc = SDB_INVALIDARGS ;
+      goto error ;
+   }
+
+   CAST_PYOBJECT_TO_COBJECT(obj, sdbDataCenter, dc) ;
+
+   rc = dc->createImage( addr ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+
+done :
+   return MAKE_RETURN_INT( rc ) ;
+error :
+   goto done ;
+}
+
+__METHOD_IMP(dc_remove_image)
+{
+   INT32 rc                    = 0 ;
+   sdbDataCenter *dc           = NULL ;
+   PYOBJECT *obj               = NULL ;
+
+   if ( !PARSE_PYTHON_ARGS( args, "O", &obj ) )
+   {
+      rc = SDB_INVALIDARGS ;
+      goto error ;
+   }
+
+   CAST_PYOBJECT_TO_COBJECT(obj, sdbDataCenter, dc) ;
+
+   rc = dc->removeImage() ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+
+done :
+   return MAKE_RETURN_INT( rc ) ;
+error :
+   goto done ;
+}
+
+__METHOD_IMP(dc_attach_groups)
+{
+   INT32 rc            = 0 ;
+   sdbDataCenter *dc   = NULL ;
+   PYOBJECT *obj       = NULL ;
+   PYOBJECT *groups    = NULL ;
+   bson::BSONObj *info = NULL ;
+
+   if ( !PARSE_PYTHON_ARGS( args, "OO", &obj, &groups ) )
+   {
+      rc = SDB_INVALIDARGS ;
+      goto error ;
+   }
+
+   CAST_PYOBJECT_TO_COBJECT(obj, sdbDataCenter, dc) ;
+   CAST_PYBSON_TO_CPPBSON( groups, info ) ;
+
+   rc = dc->attachGroups( *info ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+done :
+   DELETE_CPPOBJECT( info ) ;
+   return MAKE_RETURN_INT( rc ) ;
+error :
+   goto done ;
+}
+
+__METHOD_IMP(dc_detach_groups)
+{
+   INT32 rc            = 0 ;
+   sdbDataCenter *dc   = NULL ;
+   PYOBJECT *obj       = NULL ;
+   PYOBJECT *groups    = NULL ;
+   bson::BSONObj *info = NULL ;
+
+   if ( !PARSE_PYTHON_ARGS( args, "OO", &obj, &groups ) )
+   {
+      rc = SDB_INVALIDARGS ;
+      goto error ;
+   }
+
+   CAST_PYOBJECT_TO_COBJECT(obj, sdbDataCenter, dc) ;
+   CAST_PYBSON_TO_CPPBSON( groups, info ) ;
+
+   rc = dc->detachGroups( *info ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+done :
+   DELETE_CPPOBJECT( info ) ;
+   return MAKE_RETURN_INT( rc ) ;
+error :
+   goto done ;
+}
+
+__METHOD_IMP(dc_enable_image)
+{
+   INT32 rc                    = 0 ;
+   sdbDataCenter *dc           = NULL ;
+   PYOBJECT *obj               = NULL ;
+
+   if ( !PARSE_PYTHON_ARGS( args, "O", &obj ) )
+   {
+      rc = SDB_INVALIDARGS ;
+      goto error ;
+   }
+
+   CAST_PYOBJECT_TO_COBJECT(obj, sdbDataCenter, dc) ;
+
+   rc = dc->enableImage() ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+
+done :
+   return MAKE_RETURN_INT( rc ) ;
+error :
+   goto done ;
+}
+
+__METHOD_IMP(dc_disable_image)
+{
+   INT32 rc                    = 0 ;
+   sdbDataCenter *dc           = NULL ;
+   PYOBJECT *obj               = NULL ;
+
+   if ( !PARSE_PYTHON_ARGS( args, "O", &obj ) )
+   {
+      rc = SDB_INVALIDARGS ;
+      goto error ;
+   }
+
+   CAST_PYOBJECT_TO_COBJECT(obj, sdbDataCenter, dc) ;
+
+   rc = dc->disableImage() ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+
+done :
+   return MAKE_RETURN_INT( rc ) ;
+error :
+   goto done ;
+}
+
+__METHOD_IMP(dc_activate)
+{
+   INT32 rc                    = 0 ;
+   sdbDataCenter *dc           = NULL ;
+   PYOBJECT *obj               = NULL ;
+
+   if ( !PARSE_PYTHON_ARGS( args, "O", &obj ) )
+   {
+      rc = SDB_INVALIDARGS ;
+      goto error ;
+   }
+
+   CAST_PYOBJECT_TO_COBJECT(obj, sdbDataCenter, dc) ;
+
+   rc = dc->activateDC() ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+
+done :
+   return MAKE_RETURN_INT( rc ) ;
+error :
+   goto done ;
+}
+
+__METHOD_IMP(dc_deactivate)
+{
+   INT32 rc                    = 0 ;
+   sdbDataCenter *dc           = NULL ;
+   PYOBJECT *obj               = NULL ;
+
+   if ( !PARSE_PYTHON_ARGS( args, "O", &obj ) )
+   {
+      rc = SDB_INVALIDARGS ;
+      goto error ;
+   }
+
+   CAST_PYOBJECT_TO_COBJECT(obj, sdbDataCenter, dc) ;
+
+   rc = dc->deactivateDC() ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+
+done :
+   return MAKE_RETURN_INT( rc ) ;
+error :
+   goto done ;
+}
+
+__METHOD_IMP(dc_enable_read_only)
+{
+   INT32 rc                    = 0 ;
+   sdbDataCenter *dc           = NULL ;
+   PYOBJECT *obj               = NULL ;
+
+   if ( !PARSE_PYTHON_ARGS( args, "O", &obj ) )
+   {
+      rc = SDB_INVALIDARGS ;
+      goto error ;
+   }
+
+   CAST_PYOBJECT_TO_COBJECT(obj, sdbDataCenter, dc) ;
+
+   rc = dc->enableReadOnly( TRUE ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+
+done :
+   return MAKE_RETURN_INT( rc ) ;
+error :
+   goto done ;
+}
+
+__METHOD_IMP(dc_disable_read_only)
+{
+   INT32 rc                    = 0 ;
+   sdbDataCenter *dc           = NULL ;
+   PYOBJECT *obj               = NULL ;
+
+   if ( !PARSE_PYTHON_ARGS( args, "O", &obj ) )
+   {
+      rc = SDB_INVALIDARGS ;
+      goto error ;
+   }
+
+   CAST_PYOBJECT_TO_COBJECT(obj, sdbDataCenter, dc) ;
+
+   rc = dc->enableReadOnly( FALSE ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+
+done :
+   return MAKE_RETURN_INT( rc ) ;
+error :
+   goto done ;
+}
+
+__METHOD_IMP(dc_get_detail)
+{
+   INT32 rc                    = 0 ;
+   sdbDataCenter *dc           = NULL ;
+   PYOBJECT *obj               = NULL ;
+   bson::BSONObj retInfo ;
+
+   if ( !PARSE_PYTHON_ARGS( args, "O", &obj ) )
+   {
+      rc = SDB_INVALIDARGS ;
+      goto error ;
+   }
+
+   CAST_PYOBJECT_TO_COBJECT(obj, sdbDataCenter, dc) ;
+
+   rc = dc->getDetail( retInfo ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+
+done :
+   return MAKE_RETURN_INT_PYSTRING_SIZE(rc, retInfo.objdata(),
+                                                retInfo.objsize() ) ;
+error :
+   goto done ;
+}
+
 static PyMethodDef sequoiadb_methods[] = {
    /** client */
    {"sdb_create_client",               sdb_create_client,               METH_VARARGS},
@@ -3329,6 +3702,8 @@ static PyMethodDef sequoiadb_methods[] = {
    {"sdb_close_all_cursors",           sdb_close_all_cursors,           METH_VARARGS},
    {"sdb_is_valid",                    sdb_is_valid,                    METH_VARARGS},
    {"sdb_get_version",                 sdb_get_version,                 METH_VARARGS},
+   {"sdb_get_datacenter",              sdb_get_datacenter,              METH_VARARGS},
+   
    /** cs */
    {"create_cs",                       create_cs,                       METH_VARARGS},
    {"release_cs",                      release_cs,                      METH_VARARGS},
@@ -3411,6 +3786,22 @@ static PyMethodDef sequoiadb_methods[] = {
    {"lob_get_size",                    lob_get_size,                    METH_VARARGS},
    {"lob_get_oid",                     lob_get_oid,                     METH_VARARGS},
    {"lob_get_create_time",             lob_get_create_time,             METH_VARARGS},
+
+   /** data center */
+   {"create_dc",                       create_dc,                       METH_VARARGS},
+   {"release_dc",                      release_dc,                      METH_VARARGS},
+   {"dc_get_name",                     dc_get_name,                     METH_VARARGS},
+   {"dc_create_image",                 dc_create_image,                 METH_VARARGS},
+   {"dc_remove_image",                 dc_remove_image,                 METH_VARARGS},
+   {"dc_attach_groups",                dc_attach_groups,                METH_VARARGS},
+   {"dc_detach_groups",                dc_detach_groups,                METH_VARARGS},
+   {"dc_enable_image",                 dc_enable_image,                 METH_VARARGS},
+   {"dc_disable_image",                dc_disable_image,                METH_VARARGS},
+   {"dc_activate",                     dc_activate,                     METH_VARARGS},
+   {"dc_deactivate",                   dc_deactivate,                   METH_VARARGS},
+   {"dc_enable_read_only",             dc_enable_read_only,             METH_VARARGS},
+   {"dc_disable_read_only",            dc_disable_read_only,            METH_VARARGS},
+   {"dc_get_detail",                   dc_get_detail,                   METH_VARARGS},
    {NULL, NULL}
 };
 

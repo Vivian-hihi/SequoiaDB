@@ -45,6 +45,7 @@ __METHOD_DECLARE(sdb_set_session_attri) ;
 __METHOD_DECLARE(sdb_close_all_cursors) ;
 __METHOD_DECLARE(sdb_is_valid) ;
 __METHOD_DECLARE(sdb_get_version) ;
+__METHOD_DECLARE(sdb_get_datacenter) ;
 
 ///< collection space
 __METHOD_DECLARE(create_cs) ;
@@ -135,4 +136,20 @@ __METHOD_DECLARE(lob_seek) ;
 __METHOD_DECLARE(lob_get_create_time) ;
 __METHOD_DECLARE(lob_get_size) ;
 __METHOD_DECLARE(lob_get_oid) ;
+
+///< data center
+__METHOD_DECLARE(create_dc) ;
+__METHOD_DECLARE(release_dc) ;
+__METHOD_DECLARE(dc_get_name) ;
+__METHOD_DECLARE(dc_create_image) ;
+__METHOD_DECLARE(dc_remove_image) ;
+__METHOD_DECLARE(dc_attach_groups) ;
+__METHOD_DECLARE(dc_detach_groups) ;
+__METHOD_DECLARE(dc_enable_image) ;
+__METHOD_DECLARE(dc_disable_image) ;
+__METHOD_DECLARE(dc_activate) ;
+__METHOD_DECLARE(dc_deactivate) ;
+__METHOD_DECLARE(dc_enable_read_only) ;
+__METHOD_DECLARE(dc_disable_read_only) ;
+__METHOD_DECLARE(dc_get_detail) ;
 #endif
