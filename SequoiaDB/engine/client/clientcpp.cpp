@@ -1375,7 +1375,8 @@ do                                                            \
          }
       }
 
-      // register collection to collection
+      // register cursor to collection
+      // but, it seems no use
       ((_sdbCursorImpl*)pCursor)->_setCollection ( this ) ;
 
       // return cursor
