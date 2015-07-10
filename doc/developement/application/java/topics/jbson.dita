@@ -58,9 +58,17 @@ String str = "hello world";
 byte[] arr = str.getBytes();
 Binary bindata = new Binary(arr);
 obj.put("bindata", bindata);</codeblock></li>
-              <li><p>时间戳</p>Java BSON 使用 org.bson.types.BSONTimestamp 来构造时间戳类型。<codeblock>int sec = 1404189030 ; // 2014-07-01 12:30:30
+              <li><p>时间戳</p>Java BSON 使用 org.bson.types.BSONTimestamp 来构造时间戳类型。<codeblock>String mydate = "2014-07-01 12:30:30.124232";
+String dateStr = mydate.substring(0, mydate.lastIndexOf('.'));
+String incStr = mydate.substring(mydate.lastIndexOf('.') + 1);
+        
+SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+Date date = format.parse(dateStr);
+int seconds = (int)(date.getTime()/1000);
+int inc = Integer.parseInt(incStr);
+BSONTimestamp ts = new BSONTimestamp(seconds, inc);
+        
 BSONObject obj = new BasicBSONObject();
-BSONTimestamp ts = new BSONTimestamp(sec, 0);
 obj.put("timestamp", ts);</codeblock></li>
       </ul>
     </section>
