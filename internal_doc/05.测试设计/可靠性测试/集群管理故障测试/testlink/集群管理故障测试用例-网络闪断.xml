@@ -1,0 +1,339 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<testcases xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<testcase name="建议为测试用例标题">
+		<summary>测试用例摘要（测试目的）</summary>
+		<preconditions>前置条件</preconditions>
+		<execution_type>用例执行方式（手动写1自动写2）</execution_type>
+		<importance>重要性（1高2中3低）</importance>
+		<steps>
+			<step>
+				<step_number>步骤序号（1、操作过程中2、3、……）</step_number>
+				<actions>执行步骤</actions>
+				<expectedresults>期望结果</expectedresults>
+				<execution_type>步骤执行方式（手动写1）</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="创建cataRG过程中coord处理节点网络闪断_rlb.netFlash.clMgr.001">
+		<preconditions>1、操作过程中系统环境运行正常，CM运行正常，sdb运行正常</preconditions>
+		<execution_type>1</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1、操作过程中创建cataRG（如：执行db.createcataRG("sdbserver1", 11800, "/opt/sequoiadb/database/cata/11800")），创建过程中coord处理节点网络闪断
+2、网络闪断后检查操作返回结果
+3、故障恢复后重新创建cataRG，检查创建结果（重启节点+连接节点+创建CL）</actions>
+				<expectedresults>1、操作过程中coord处理节点网络闪断操作失败
+2、故障恢复后重新创建，创建成功，节点可正常重启并连接，在节点做数据操作，操作成功</expectedresults>
+				<execution_type>1</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="创建cataRG过程中目标主机网络闪断_rlb.netFlash.clMgr.002">
+		<preconditions>1、操作过程中系统环境运行正常，CM运行正常，sdb运行正常</preconditions>
+		<execution_type>1</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1、操作过程中创建cataRG（如：执行db.createcataRG("sdbserver1", 11800, "/opt/sequoiadb/database/cata/11800")），创建过程中目标主机网络闪断
+2、网络闪断后检查操作返回结果
+3、故障恢复后重新创建cataRG，检查创建结果（重启节点+连接节点+创建CL）</actions>
+				<expectedresults>1、操作过程中目标主机网络闪断操作失败
+2、故障恢复后重新创建，创建成功，节点可正常重启并连接，在节点做数据操作，操作成功</expectedresults>
+				<execution_type>1</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="创建coordRG过程中coord处理节点网络闪断_rlb.netFlash.clMgr.003">
+		<preconditions>1、操作过程中系统环境运行正常，CM运行正常，sdb运行正常</preconditions>
+		<execution_type>1</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1、操作过程中创建coordRG（如：执行db.createCoordRG("sdbserver1", 11810, "/opt/sequoiadb/database/coord/11810")），创建过程中coord处理节点闪断
+2、网络闪断后检查操作返回结果
+3、故障恢复后重新创建coordRG，检查创建结果（重启节点+连接节点）</actions>
+				<expectedresults>1、操作过程中coord处理节点网络闪断操作失败
+2、故障恢复后重新创建coordRG，检查创建结果（重启节点+连接节点）</expectedresults>
+				<execution_type>1</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="创建coordG过程中目标主机网络闪断_rlb.netFlash.clMgr.004">
+		<preconditions>1、操作过程中系统环境运行正常，CM运行正常，sdb运行正常</preconditions>
+		<execution_type>1</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1、操作过程中创建coordRG（如：执行db.createCoordRG("sdbserver1", 11810, "/opt/sequoiadb/database/coord/11810")），创建过程中目标主机网络闪断
+2、网络闪断后检查操作返回结果
+3、故障恢复后重新创建coordRG，检查创建结果（重启节点+连接节点）</actions>
+				<expectedresults>1、操作过程中目标主机网络闪断操作失败
+2、故障恢复后重新创建coordRG，检查创建结果（重启节点+连接节点）</expectedresults>
+				<execution_type>1</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="创建coordRG过程中catalog主节点网络闪断_rlb.netFlash.clMgr.005">
+		<preconditions>1、操作过程中系统环境运行正常，CM运行正常，sdb运行正常</preconditions>
+		<execution_type>1</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1、操作过程中创建coordRG（如：执行db.createCoordRG("sdbserver1", 11810, "/opt/sequoiadb/database/coord/11810")），创建过程中catalog主节点网络闪断
+2、网络闪断后检查操作返回结果
+3、故障恢复后重新创建coordRG，检查创建结果（重启节点+连接节点）</actions>
+				<expectedresults>1、操作过程中catalog主节点网络闪断操作成功/失败（如果网络闪断前读到编目信息则停止成功；如果网络闪断前读到编目信息则停止失败）
+2、故障恢复后重建coordRG，检查创建结果（重启节点+连接节点）</expectedresults>
+				<execution_type>1</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="删除cataRG过程中catalog主节点网络闪断_rlb.netFlash.clMgr.006">
+		<preconditions>1、操作过程中系统环境运行正常，CM运行正常，sdb运行正常</preconditions>
+		<execution_type>1</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1、操作过程中批量删除cataRG（如：执行db.removeRG("group")），删除过程中catalog主节点网络闪断
+2、网络闪断后检查操作返回结果
+3、故障恢复后重新创建可以创建成功并正常操作</actions>
+				<expectedresults>1、操作过程中catalog主节点网络闪断操作成功/失败（如果网络闪断前读到编目信息则停止成功；如果网络闪断前读到编目信息则停止失败）
+2、故障恢复后重新创建可以创建成功并正常操作</expectedresults>
+				<execution_type>1</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="删除cataRG过程中目标主机网络闪断_rlb.netFlash.clMgr.007">
+		<preconditions>1、操作过程中系统环境运行正常，CM运行正常，sdb运行正常</preconditions>
+		<execution_type>1</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1、操作过程中批量删除cataRG（如：执行db.removeRG("group")），删除过程中目标主机网络闪断
+2、网络闪断后检查操作返回结果
+3、故障恢复后重新创建可以创建成功并正常操作</actions>
+				<expectedresults>1、操作过程中目标主机网络闪断操作失败
+2、故障恢复后故障恢复后重新创建可以创建成功并正常操作</expectedresults>
+				<execution_type>1</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="删除cataRG过程中catalog两个备节点网络闪断_rlb.netFlash.clMgr.008">
+		<preconditions>1、操作过程中系统环境运行正常，CM运行正常，sdb运行正常</preconditions>
+		<execution_type>1</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1、操作过程中批量删除cataRG（如：执行db.removeRG("group")），删除过程中catalog 2个备节点网络闪断
+2、网络闪断后检查操作返回结果
+3、故障恢复后重新创建可以创建成功并正常操作</actions>
+				<expectedresults>1、操作过程中catalog两个备节点网络闪断操作成功
+2、故障恢复后重新创建可以创建成功并正常操作</expectedresults>
+				<execution_type>1</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="创建catalog节点过程中coord处理节点网络闪断_rlb.netFlash.clMgr.009">
+		<preconditions>1、操作过程中系统环境运行正常，CM运行正常，sdb运行正常</preconditions>
+		<execution_type>1</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>
+1、操作过程中创建catalog（如：执行db.getRG("SYSCatalogGroup").createNode("sdbserver2", 11800,"/opt/sequoiadb/database/cata/11800")），创建过程中coord处理节点网络闪断
+2、网络闪断后检查操作返回结果
+3、故障恢复后重新创建catalog节点，检查创建结果（重启节点+连接节点+创建CL）</actions>
+				<expectedresults>1、操作过程中coord处理节点网络闪断操作失败
+2、故障恢复后重新创建，创建成功，节点可正常重启并连接，在节点做数据操作，操作成功</expectedresults>
+				<execution_type>1</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="创建catalog节点过程中catalog主节点网络闪断_rlb.netFlash.clMgr.010">
+		<preconditions>1、操作过程中系统环境运行正常，CM运行正常，sdb运行正常</preconditions>
+		<execution_type>1</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>
+1、操作过程中创建catalog（如：执行db.getRG("SYSCatalogGroup").createNode("sdbserver2", 11800,"/opt/sequoiadb/database/cata/11800")），创建过程中catalog主节点网络闪断
+2、网络闪断后检查操作返回结果
+3、故障恢复后重新创建catalog节点，检查创建结果（重启节点+连接节点+创建CL）</actions>
+				<expectedresults>1、操作过程中catalog主节点网络闪断操作成功/失败（如果网络闪断前读到编目信息则停止成功；如果网络闪断前读到编目信息则停止失败）
+2、故障恢复后重新创建catalog节点，检查创建结果（重启节点+连接节点+创建CL）</expectedresults>
+				<execution_type>1</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="创建catalog节点过程中catalog备节点网络闪断_rlb.netFlash.clMgr.011">
+		<preconditions>1、操作过程中系统环境运行正常，CM运行正常，sdb运行正常</preconditions>
+		<execution_type>1</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1、操作过程中创建catalog（如：执行db.getRG("SYSCatalogGroup").createNode("sdbserver2", 11800,"/opt/sequoiadb/database/cata/11800")），创建过程中catalog备节点网络闪断
+2、网络闪断后检查操作返回结果
+3、故障恢复后重新创建catalog节点，检查创建结果（重启节点+连接节点+创建CL）</actions>
+				<expectedresults>1、操作过程中catalog备节点网络闪断操作失败
+2、故障恢复后重新创建catalog节点，检查创建结果（重启节点+连接节点+创建CL）</expectedresults>
+				<execution_type>1</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="创建catalog节点过程中目标主机网络闪断_rlb.netFlash.clMgr.012">
+		<preconditions>1、操作过程中系统环境运行正常，CM运行正常，sdb运行正常</preconditions>
+		<execution_type>1</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1、操作过程中创建catalog（如：执行db.getRG("SYSCatalogGroup").createNode("sdbserver2", 11800,"/opt/sequoiadb/database/cata/11800")），创建过程中将目标主机网络闪断
+2、网络闪断后检查操作返回结果
+3、故障恢复后重新创建cataRG，检查创建结果（重启节点+连接节点+创建CL）</actions>
+				<expectedresults>1、操作过程中目标主机网络闪断操作失败
+2、故障恢复后重新创建，创建成功，节点可正常重启并连接，在节点做数据操作，操作成功</expectedresults>
+				<execution_type>1</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="创建dataNode过程中catalog主节点网络闪断_rlb.netFlash.clMgr.013">
+		<preconditions>1、操作过程中系统环境运行正常，CM运行正常，sdb运行正常</preconditions>
+		<execution_type>1</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1、操作过程中创建dataNode（如：执行db.getRG("group1").createNode("sdbserver2", 11820,"/opt/sequoiadb/database/cata/11820")），创建过程中将catalog主节点网络闪断
+2、网络闪断后检查操作返回结果
+3、故障恢复后检查各节点数据是否完整一致</actions>
+				<expectedresults>1、操作过程中catalog主节点网络闪断操作成功/失败（如果网络闪断前读到编目信息则停止成功；如果网络闪断前读到编目信息则停止失败）
+2、故障恢复后重新创建，创建成功，节点可正常重启，在节点做数据操作，操作成功</expectedresults>
+				<execution_type>1</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="创建dataNode过程中目标主机网络闪断_rlb.netFlash.clMgr.014">
+		<preconditions>1、操作过程中系统环境运行正常，CM运行正常，sdb运行正常</preconditions>
+		<execution_type>1</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1、操作过程中创建dataNode（如：执行db.getRG("group1").createNode("sdbserver2", 11820,"/opt/sequoiadb/database/cata/11820")），创建过程中目标主机网络闪断
+2、网络闪断后检查操作返回结果
+3、故障恢复后重新创建cataRG，检查创建结果（如果创建成功可以正常操作节点（如重启节点/在节点写数据（重启节点+连接节点+创建CL）</actions>
+				<expectedresults>1、操作过程中目标主机网络闪断操作失败
+2、故障恢复后重新创建，创建成功，节点可正常重启并连接，在节点做数据操作，操作成功</expectedresults>
+				<execution_type>1</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="启动dataNode过程中catalog主节点网络闪断_rlb.netFlash.clMgr.015">
+		<preconditions>1、操作过程中系统环境运行正常，CM运行正常，sdb运行正常</preconditions>
+		<execution_type>1</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1、操作过程中批量启动dataNode节点（如：执行node.start()），启动过程中catalog主节点网络闪断
+2、网络闪断后检查操作返回结果
+3、故障恢复后重新启停该节点，检查启停结果</actions>
+				<expectedresults>1、操作过程中目标主机网络闪断，启动成功/失败（如果网络闪断前读到编目信息则停止成功；如果网络闪断前读到编目信息则停止失败）
+2、故障恢复后再次启停，启停成功；检查各节点编目信息完整一致；</expectedresults>
+				<execution_type>1</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="启动dataNode过程中目标主机网络闪断_rlb.netFlash.clMgr.016">
+		<preconditions>1、操作过程中系统环境运行正常，CM运行正常，sdb运行正常</preconditions>
+		<execution_type>1</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1、操作过程中批量启动dataNode节点（如：执行node.start()），启动过程中目标主机网络闪断
+2、网络闪断后检查操作返回结果
+3、故障恢复后重新启停该节点，检查启停结果</actions>
+				<expectedresults>1、操作过程中目标主机网络闪断，启动成功/失败（如果网络闪断前读到编目信息并注册成功，则启动成功；如果网络闪断前没有注册成功，则启动失败）
+2、故障恢复后再次启停，启停成功；检查各节点编目信息完整一致；</expectedresults>
+				<execution_type>1</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="停止catalog节点过程中catalog主节点网络闪断_rlb.netFlash.clMgr.017">
+		<preconditions>1、操作过程中系统环境运行正常，CM运行正常，sdb运行正常</preconditions>
+		<execution_type>1</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1、操作过程中批量停止catalog节点（如：执行node.stop()），停止过程中catalog主节点网络闪断
+2、网络闪断后检查操作返回结果
+3、故障恢复后重新启停该节点，检查启停结果</actions>
+				<expectedresults>1、操作过程中catalog主节点网络闪断，停止成功/失败（如果网络闪断前读到编目信息则停止成功；如果网络闪断前读到编目信息则停止失败）
+2、故障恢复后再次启停，启停成功；检查各节点编目信息完整一致；</expectedresults>
+				<execution_type>1</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="停止catalog节点过程中目标主机网络闪断_rlb.netFlash.clMgr.018">
+		<preconditions>1、操作过程中系统环境运行正常，CM运行正常，sdb运行正常</preconditions>
+		<execution_type>1</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1、操作过程中批量停止catalog节点（如：node.stop()），停止过程中目标主机网络闪断
+2、网络闪断后检查操作返回结果
+3、故障恢复后重新启停该节点，检查启停结果</actions>
+				<expectedresults>1、操作过程中目标主机网络闪断，停止成功/失败（如果网络闪断前读到编目信息则停止成功；如果网络闪断前读到编目信息则停止失败）
+2、故障恢复后再次启停，启停成功；检查各节点编目信息完整一致；</expectedresults>
+				<execution_type>1</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="attach节点过程中目标主机网络闪断_rlb.netFlash.clMgr.019">
+		<preconditions>1、操作过程中系统环境运行正常，CM运行正常，sdb运行正常</preconditions>
+		<execution_type>1</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1、attach节点过程中目标主机网络闪断
+2、断网后检查操作返回结果
+3、故障恢复后重新attach该节点，检查结点状态</actions>
+				<expectedresults>1、操作过程中目标主机网络闪断，停止成功/失败（如果断网前读到编目信息则停止成功；如果断网前读到编目信息则停止失败）
+2、故障恢复后重新attach该节点，检查结点状态</expectedresults>
+				<execution_type>1</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="detach节点过程中源主机网络闪断_rlb.netFlash.clMgr.020">
+		<preconditions>1、操作过程中系统环境运行正常，CM运行正常，sdb运行正常</preconditions>
+		<execution_type>1</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1、detach节点过程中源主机网络闪断
+2、断网后检查操作返回结果
+3、故障恢复后重新detach该节点，检查结点状态</actions>
+				<expectedresults>1、操作过程中源主机网络闪断，停止成功/失败（如果断网前读到编目信息则停止成功；如果断网前读到编目信息则停止失败）
+2、故障恢复后重新detach该节点，检查结点状态</expectedresults>
+				<execution_type>1</execution_type>
+			</step>
+		</steps>
+	</testcase>
+</testcases>

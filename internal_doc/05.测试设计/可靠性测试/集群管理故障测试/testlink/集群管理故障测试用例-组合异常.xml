@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<testcases xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<testcase name="建议为测试用例标题">
+		<summary>测试用例摘要（测试目的）</summary>
+		<preconditions>前置条件</preconditions>
+		<execution_type>用例执行方式（手动写1自动写2）</execution_type>
+		<importance>重要性（1高2中3低）</importance>
+		<steps>
+			<step>
+				<step_number>步骤序号（1、操作过程中2、3、……）</step_number>
+				<actions>执行步骤</actions>
+				<expectedresults>期望结果</expectedresults>
+				<execution_type>步骤执行方式（手动写1）</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="重复多次创建删除不同coord组和节点/catalog组和节点/dataRG和节点过程中CM正常重启_rlb.combinAbnormal.clMgr.001">
+		<preconditions>1、操作过程中系统环境运行正常，CM运行正常，sdb运行正常</preconditions>
+		<execution_type>1</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1、重复多次创建删除不同coord组和节点/catalog组和节点/dataRG和节点过程中CM正常重启
+2、操作后检查操作返回结果</actions>
+				<expectedresults>1、操作过程中CM正常重启操作失败
+2、CM重启完成后可以继续创建/删除节点组和节点；</expectedresults>
+				<execution_type>1</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="重复多次创建删除不同coord组和节点/catalog组和节点/dataRG和节点过程中CM异常停止（kill -9）_rlb.combinAbnormal.clMgr.002">
+		<preconditions>1、操作过程中系统环境运行正常，CM运行正常，sdb运行正常</preconditions>
+		<execution_type>1</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1、重复多次创建删除不同coord组和节点/catalog组和节点/dataRG和节点过程中CM异常停止（kill -9）
+2、操作后检查操作返回结果</actions>
+				<expectedresults>1、操作过程中CM异常停止（kill -9）操作失败
+2、CM重启完成后可以继续创建/删除节点组和节点；</expectedresults>
+				<execution_type>1</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="修改一个主机的hostname过程中主机hostname/IP更改_rlb.combinAbnormal.clMgr.003">
+		<preconditions>1、操作过程中系统环境运行正常，CM运行正常，sdb运行正常</preconditions>
+		<execution_type>1</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1、修改一个主机的hostname过程中主机hostname/IP更改
+2、操作后检查操作返回结果
+3、故障恢复后操作成功</actions>
+				<expectedresults>1、操作过程中主机hostname/IP更改操作失败
+2、故障恢复后主机可以正常连接，节点间信息正常同步，同步后数据完整一致；</expectedresults>
+				<execution_type>1</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="修改catalog主节点主机的hostname过程中catalog主节点连续降备_rlb.combinAbnormal.clMgr.004">
+		<preconditions>1、操作过程中系统环境运行正常，CM运行正常，sdb运行正常</preconditions>
+		<execution_type>1</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1、修改catalog主节点主机的hostname过程中catalog主节点连续降备
+2、操作后检查操作返回结果
+3、故障恢复后catalog主节点可以连续降备</actions>
+				<expectedresults>1、操作过程中catalog主节点连续降备操作失败
+2、故障恢复后catalog主节点可以连续降备</expectedresults>
+				<execution_type>1</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="修改一个主机的hostname过程中少于(n+1/2)个catalog备节点异常_rlb.combinAbnormal.clMgr.005">
+		<preconditions>1、操作过程中系统环境运行正常，CM运行正常，sdb运行正常</preconditions>
+		<execution_type>1</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1、修改一个主机的hostname过程中少于(n+1/2)个catalog备节点异常
+2、操作后检查操作返回结果
+3、故障恢复后各个节点数据一致</actions>
+				<expectedresults>1、操作过程中少于(n+1/2)个catalog备节点异常操作成功
+2、故障恢复后各个节点数据一致</expectedresults>
+				<execution_type>1</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="修改一个主机的hostname过程中超过(n+1/2)个catalog备节点异常_rlb.combinAbnormal.clMgr.006">
+		<preconditions>1、操作过程中系统环境运行正常，CM运行正常，sdb运行正常</preconditions>
+		<execution_type>1</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1、修改一个主机的hostname过程中超过(n+1/2)个catalog备节点异常
+2、操作后检查操作返回结果
+3、故障恢复后再次创建/删除成功；</actions>
+				<expectedresults>1、操作过程中超过(n+1/2)个catalog备节点异常操作失败
+2、故障恢复后再次创建/删除成功；</expectedresults>
+				<execution_type>1</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="反复多次启停coord节点、catalog节点、dataRG节点过程中CM正常重启_rlb.combinAbnormal.clMgr.007">
+		<preconditions>1、操作过程中系统环境运行正常，CM运行正常，sdb运行正常</preconditions>
+		<execution_type>1</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1、反复多次启停coord节点、catalog节点、dataRG节点过程中CM正常重启
+2、操作后检查操作返回结果
+3、故障恢复后再次创建/删除成功；</actions>
+				<expectedresults>1、操作过程中CM正常重启操作失败
+2、故障恢复后再次创建/删除成功；</expectedresults>
+				<execution_type>1</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="反复多次启停coord节点、catalog节点、dataRG节点过程中CM异常停止（kill -9 kill -15重复操作）_rlb.combinAbnormal.clMgr.008">
+		<preconditions>1、操作过程中系统环境运行正常，CM运行正常，sdb运行正常</preconditions>
+		<execution_type>1</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1、反复多次启停coord节点、catalog节点、dataRG节点过程中CM异常停止（kill -9 kill -15重复操作）
+2、操作后检查操作返回结果
+3、故障恢复后再次创建/删除成功；</actions>
+				<expectedresults>1、操作过程中CM异常停止（kill -9 kill -15重复操作）操作失败
+2、故障恢复后再次创建/删除成功；</expectedresults>
+				<execution_type>1</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="attach节点过程中CM正常重启_rlb.combinAbnormal.clMgr.009">
+		<preconditions>1、操作过程中系统环境运行正常，CM运行正常，sdb运行正常</preconditions>
+		<execution_type>1</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1、attach节点过程中CM正常重启
+2、操作后检查操作返回结果
+3、故障恢复后重新attach该节点，检查结点状态</actions>
+				<expectedresults>1、操作过程中CM正常重启操作失败
+2、故障恢复后重新attach该节点，检查结点状态</expectedresults>
+				<execution_type>1</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="attach节点过程中CM异常停止（kill -9 kill -15重复操作）_rlb.combinAbnormal.clMgr.010">
+		<preconditions>1、操作过程中系统环境运行正常，CM运行正常，sdb运行正常</preconditions>
+		<execution_type>1</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1、attach节点过程中CM异常停止（kill -9 kill -15重复操作）
+2、操作后检查操作返回结果
+3、故障恢复后重新attach该节点，检查结点状态</actions>
+				<expectedresults>1、操作过程中CM异常停止（kill -9 kill -15重复操作）操作失败
+2、故障恢复后重新attach该节点，检查结点状态</expectedresults>
+				<execution_type>1</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="detach节点过程中CM正常重启_rlb.combinAbnormal.clMgr.011">
+		<preconditions>1、操作过程中系统环境运行正常，CM运行正常，sdb运行正常</preconditions>
+		<execution_type>1</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1、detach节点过程中CM正常重启
+2、操作后检查操作返回结果
+3、故障恢复后重新detach该节点，检查结点状态</actions>
+				<expectedresults>1、操作过程中CM正常重启操作失败
+2、故障恢复后重新detach该节点，检查结点状态</expectedresults>
+				<execution_type>1</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="detach节点过程中CM异常停止（kill -9 kill -15重复操作）_rlb.combinAbnormal.clMgr.012">
+		<preconditions>1、操作过程中系统环境运行正常，CM运行正常，sdb运行正常</preconditions>
+		<execution_type>1</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1、detach节点过程中CM异常停止（kill -9 kill -15重复操作）
+2、操作后检查操作返回结果
+3、故障恢复后重新detach该节点，检查结点状态</actions>
+				<expectedresults>1、操作过程中CM异常停止（kill -9 kill -15重复操作）操作失败
+2、故障恢复后重新detach该节点，检查结点状态</expectedresults>
+				<execution_type>1</execution_type>
+			</step>
+		</steps>
+	</testcase>
+</testcases>

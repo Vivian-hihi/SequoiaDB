@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<testcases xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<testcase name="建议为测试用例标题">
+		<summary>测试用例摘要（测试目的）</summary>
+		<preconditions>前置条件</preconditions>
+		<execution_type>用例执行方式（手动写1自动写2）</execution_type>
+		<importance>重要性（1高2中3低）</importance>
+		<steps>
+			<step>
+				<step_number>步骤序号（1、操作过程中2、3、……）</step_number>
+				<actions>执行步骤</actions>
+				<expectedresults>期望结果</expectedresults>
+				<execution_type>步骤执行方式（手动写1）</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="节点运行过程中coord节点所在主机正常重启_rlb.hostRestart.clMgr.02.001">
+		<preconditions>1、操作过程中系统环境运行正常，CM运行正常，sdb运行正常</preconditions>
+		<execution_type>1</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1、节点运行过程中coord节点所在主机异常重启
+2、异常重启后检查操作返回结果</actions>
+				<expectedresults>1、重启后CM和节点会自动拉起，拉起后各节点运行正常,对节点做基本操作，操作成功（如连接coord做数据操作）</expectedresults>
+				<execution_type>1</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="节点运行过程中catalog主节点异常重启_rlb.hostRestart.clMgr.02.002">
+		<preconditions>1、操作过程中系统环境运行正常，CM运行正常，sdb运行正常</preconditions>
+		<execution_type>1</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1、节点运行过程中catalog主节点异常重启
+2、异常重启后检查操作返回结果</actions>
+				<expectedresults>1、重启后CM和节点会自动拉起，拉起后各节点运行正常,对节点做基本操作，操作成功（如连接coord做数据操作）</expectedresults>
+				<execution_type>1</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="节点运行过程中catalog备节点异常重启_rlb.hostRestart.clMgr.02.003">
+		<preconditions>1、操作过程中系统环境运行正常，CM运行正常，sdb运行正常</preconditions>
+		<execution_type>1</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1、节点运行过程中catalog备节点异常重启
+2、异常重启后检查操作返回结果</actions>
+				<expectedresults>1、重启后CM和节点会自动拉起，拉起后各节点运行正常,对节点做基本操作，操作成功（如连接coord做数据操作）</expectedresults>
+				<execution_type>1</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="节点运行过程中dataRG主节点异常重启_rlb.hostRestart.clMgr.02.004">
+		<preconditions>1、操作过程中系统环境运行正常，CM运行正常，sdb运行正常</preconditions>
+		<execution_type>1</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1、节点运行过程中dataRG主节点异常重启
+2、异常重启后检查操作返回结果</actions>
+				<expectedresults>1、重启后CM和节点会自动拉起，拉起后各节点运行正常,对节点做基本操作，操作成功（如连接coord做数据操作）</expectedresults>
+				<execution_type>1</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="节点运行过程中dataRG备节点异常重启_rlb.hostRestart.clMgr.02.005">
+		<preconditions>1、操作过程中系统环境运行正常，CM运行正常，sdb运行正常</preconditions>
+		<execution_type>1</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1、节点运行过程中dataRG备节点异常重启
+2、异常重启后检查操作返回结果</actions>
+				<expectedresults>1、重启后CM和节点会自动拉起，拉起后各节点运行正常,对节点做基本操作，操作成功（如连接coord做数据操作）</expectedresults>
+				<execution_type>1</execution_type>
+			</step>
+		</steps>
+	</testcase>
+</testcases>

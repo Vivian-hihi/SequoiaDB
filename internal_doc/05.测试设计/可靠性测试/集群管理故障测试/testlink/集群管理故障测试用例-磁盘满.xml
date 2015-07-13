@@ -1,0 +1,369 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<testcases xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<testcase name="建议为测试用例标题">
+		<summary>测试用例摘要（测试目的）</summary>
+		<preconditions>前置条件</preconditions>
+		<execution_type>用例执行方式（手动写1自动写2）</execution_type>
+		<importance>重要性（1高2中3低）</importance>
+		<steps>
+			<step>
+				<step_number>步骤序号（1、操作过程中2、3、……）</step_number>
+				<actions>执行步骤</actions>
+				<expectedresults>期望结果</expectedresults>
+				<execution_type>步骤执行方式（手动写1）</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="创建coordRG过程中coord处理节点所在主机磁盘满_rlb.diskExhaustion.clMgr.001">
+		<preconditions>1、操作过程中系统环境运行正常，CM运行正常，sdb运行正常</preconditions>
+		<execution_type>1</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1、创建coordRG过程中coord处理节点所在主机磁盘满
+2、磁盘满后检查操作返回结果
+3、故障恢复后重新创建coordRG，检查创建结果（重启节点+连接节点+创建CL）</actions>
+				<expectedresults>1、操作过程中coord处理节点所在主机磁盘满操作失败
+2、故障恢复后重新创建coordRG，检查创建结果（重启节点+连接节点+创建CL）</expectedresults>
+				<execution_type>1</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="创建coordRG过程中catalog主节点所在主机内磁盘满_rlb.diskExhaustion.clMgr.002">
+		<preconditions>1、操作过程中系统环境运行正常，CM运行正常，sdb运行正常</preconditions>
+		<execution_type>1</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1、创建coordRG过程中catalog主节点所在主机内磁盘满
+2、磁盘满后检查操作返回结果
+3、故障恢复后重新创建coordRG，检查创建结果（重启节点+连接节点+创建CL）</actions>
+				<expectedresults>1、操作过程中catalog主节点所在主机内磁盘满操作失败
+2、故障恢复后重新创建coordRG，检查创建结果（重启节点+连接节点+创建CL）</expectedresults>
+				<execution_type>1</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="创建coord节点过程中catalog主节点所在主机内磁盘满_rlb.diskExhaustion.clMgr.003">
+		<preconditions>1、操作过程中系统环境运行正常，CM运行正常，sdb运行正常</preconditions>
+		<execution_type>1</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1、创建coord节点过程中catalog主节点所在主机内磁盘满
+2、磁盘满后检查操作返回结果
+3、故障恢复后重新创建coord节点，检查创建结果（重启节点+连接节点+创建CL）</actions>
+				<expectedresults>1、操作过程中catalog主节点所在主机内磁盘满操作失败
+2、故障恢复后重新创建coord节点，检查创建结果（重启节点+连接节点+创建CL）</expectedresults>
+				<execution_type>1</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="创建coord节点过程中目标主机磁盘满_rlb.diskExhaustion.clMgr.004">
+		<preconditions>1、操作过程中系统环境运行正常，CM运行正常，sdb运行正常</preconditions>
+		<execution_type>1</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1、创建coord节点过程中目标主机磁盘满
+2、磁盘满后检查操作返回结果
+3、故障恢复后重新创建coord节点，检查创建结果（重启节点+连接节点+创建CL）</actions>
+				<expectedresults>1、操作过程中目标主机磁盘满操作失败
+2、故障恢复后重新创建coord节点，检查创建结果（重启节点+连接节点+创建CL）</expectedresults>
+				<execution_type>1</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="创建cataRG过程中catalog主节点所在主机内磁盘满_rlb.diskExhaustion.clMgr.005">
+		<preconditions>1、操作过程中系统环境运行正常，CM运行正常，sdb运行正常</preconditions>
+		<execution_type>1</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1、创建cataRG过程中catalog主节点所在主机内磁盘满
+2、磁盘满后检查操作返回结果
+3、故障恢复后重新创建cataRG，检查创建结果（重启节点+连接节点+创建CL）</actions>
+				<expectedresults>1、操作过程中catalog主节点所在主机内磁盘满操作失败
+2、故障恢复后重新创建cataRG，检查创建结果（重启节点+连接节点+创建CL）</expectedresults>
+				<execution_type>1</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="创建cataRG过程中目标主机磁盘满_rlb.diskExhaustion.clMgr.006">
+		<preconditions>1、操作过程中系统环境运行正常，CM运行正常，sdb运行正常</preconditions>
+		<execution_type>1</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1、创建cataRG过程中目标主机磁盘满
+2、磁盘满后检查操作返回结果
+3、故障恢复后重新创建cataRG，检查创建结果（重启节点+连接节点+创建CL）</actions>
+				<expectedresults>1、操作过程中目标主机磁盘满操作失败
+2、故障恢复后重新创建cataRG，检查创建结果（重启节点+连接节点+创建CL）</expectedresults>
+				<execution_type>1</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="创建catalog节点过程中catalog主节点所在主机内磁盘满_rlb.diskExhaustion.clMgr.007">
+		<preconditions>1、操作过程中系统环境运行正常，CM运行正常，sdb运行正常</preconditions>
+		<execution_type>1</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1、创建catalog节点过程中catalog主节点所在主机内磁盘满
+2、磁盘满后检查操作返回结果
+3、故障恢复后重新创建catalog节点，检查创建结果（重启节点+连接节点+创建CL）</actions>
+				<expectedresults>1、操作过程中catalog主节点所在主机内磁盘满操作失败
+2、故障恢复后重新创建catalog节点，检查创建结果（重启节点+连接节点+创建CL）</expectedresults>
+				<execution_type>1</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="创建catalog节点过程中目标主机磁盘满_rlb.diskExhaustion.clMgr.008">
+		<preconditions>1、操作过程中系统环境运行正常，CM运行正常，sdb运行正常</preconditions>
+		<execution_type>1</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1、创建catalog节点过程中目标主机磁盘满
+2、磁盘满后检查操作返回结果
+3、故障恢复后重新创建catalog节点，检查创建结果（重启节点+连接节点+创建CL）</actions>
+				<expectedresults>1、操作过程中目标主机磁盘满操作失败
+2、故障恢复后重新创建catalog节点，检查创建结果（重启节点+连接节点+创建CL）</expectedresults>
+				<execution_type>1</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="创建dataRG过程中catalog主节点所在主机内磁盘满_rlb.diskExhaustion.clMgr.009">
+		<preconditions>1、操作过程中系统环境运行正常，CM运行正常，sdb运行正常</preconditions>
+		<execution_type>1</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1、创建dataRG过程中catalog主节点所在主机内磁盘满
+2、磁盘满后检查操作返回结果
+3、故障恢复后重新创建dataRG，检查创建结果（重启节点+连接节点+创建CL）</actions>
+				<expectedresults>1、操作过程中catalog主节点所在主机内磁盘满操作失败
+2、故障恢复后重新创建dataRG，检查创建结果（重启节点+连接节点+创建CL）</expectedresults>
+				<execution_type>1</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="创建dataRG过程中目标主机磁盘满_rlb.diskExhaustion.clMgr.010">
+		<preconditions>1、操作过程中系统环境运行正常，CM运行正常，sdb运行正常</preconditions>
+		<execution_type>1</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1、创建dataRG过程中目标主机磁盘满
+2、磁盘满后检查操作返回结果
+3、故障恢复后重新创建dataRG，检查创建结果（重启节点+连接节点+创建CL）</actions>
+				<expectedresults>1、操作过程中目标主机磁盘满操作失败
+2、故障恢复后重新创建dataRG，检查创建结果（重启节点+连接节点+创建CL）</expectedresults>
+				<execution_type>1</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="创建dataNode过程中catalog主节点所在主机内磁盘满_rlb.diskExhaustion.clMgr.011">
+		<preconditions>1、操作过程中系统环境运行正常，CM运行正常，sdb运行正常</preconditions>
+		<execution_type>1</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1、创建dataNode过程中catalog主节点所在主机内磁盘满
+2、磁盘满后检查操作返回结果
+3、故障恢复后重新创建data节点，检查创建结果（重启节点+连接节点+创建CL）</actions>
+				<expectedresults>1、操作过程中catalog主节点所在主机内磁盘满操作失败
+2、故障恢复后重新创建data节点，检查创建结果（重启节点+连接节点+创建CL）</expectedresults>
+				<execution_type>1</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="创建dataNode过程中目标主机磁盘满_rlb.diskExhaustion.clMgr.012">
+		<preconditions>1、操作过程中系统环境运行正常，CM运行正常，sdb运行正常</preconditions>
+		<execution_type>1</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1、创建dataNode过程中目标主机磁盘满
+2、磁盘满后检查操作返回结果
+3、故障恢复后重新创建data节点，检查创建结果（重启节点+连接节点+创建CL）</actions>
+				<expectedresults>1、操作过程中目标主机磁盘满操作失败
+2、故障恢复后重新创建data节点，检查创建结果（重启节点+连接节点+创建CL）</expectedresults>
+				<execution_type>1</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="启动coord节点过程中目标主机磁盘满_rlb.diskExhaustion.clMgr.013">
+		<preconditions>1、操作过程中系统环境运行正常，CM运行正常，sdb运行正常</preconditions>
+		<execution_type>1</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1、启动coord节点过程中目标主机磁盘满
+2、磁盘满后检查操作返回结果
+3、故障恢复后重新启停该节点，检查启停结果</actions>
+				<expectedresults>1、操作过程中目标主机磁盘满操作失败
+2、故障恢复后重新启停该节点，检查启停结果</expectedresults>
+				<execution_type>1</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="停止coord节点过程中目标主机磁盘满_rlb.diskExhaustion.clMgr.014">
+		<preconditions>1、操作过程中系统环境运行正常，CM运行正常，sdb运行正常</preconditions>
+		<execution_type>1</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1、停止coord节点过程中目标主机磁盘满
+2、磁盘满后检查操作返回结果
+3、故障恢复后重新启停该节点，检查启停结果</actions>
+				<expectedresults>1、操作过程中目标主机磁盘满操作失败
+2、故障恢复后重新启停该节点，检查启停结果</expectedresults>
+				<execution_type>1</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="启动catalog节点过程中目标主机磁盘满_rlb.diskExhaustion.clMgr.015">
+		<preconditions>1、操作过程中系统环境运行正常，CM运行正常，sdb运行正常</preconditions>
+		<execution_type>1</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1、启动catalog节点过程中目标主机磁盘满
+2、磁盘满后检查操作返回结果
+3、故障恢复后重新启停该节点，检查启停结果</actions>
+				<expectedresults>1、操作过程中目标主机磁盘满操作失败
+2、故障恢复后重新启停该节点，检查启停结果</expectedresults>
+				<execution_type>1</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="停止catalog节点过程中目标主机磁盘满_rlb.diskExhaustion.clMgr.016">
+		<preconditions>1、操作过程中系统环境运行正常，CM运行正常，sdb运行正常</preconditions>
+		<execution_type>1</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1、停止catalog节点过程中目标主机磁盘满
+2、磁盘满后检查操作返回结果
+3、故障恢复后重新启停该节点，检查启停结果</actions>
+				<expectedresults>1、操作过程中目标主机磁盘满操作失败
+2、故障恢复后重新启停该节点，检查启停结果</expectedresults>
+				<execution_type>1</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="启动dataNode过程中目标主机磁盘满_rlb.diskExhaustion.clMgr.017">
+		<preconditions>1、操作过程中系统环境运行正常，CM运行正常，sdb运行正常</preconditions>
+		<execution_type>1</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1、启动dataNode过程中目标主机磁盘满
+2、磁盘满后检查操作返回结果
+3、故障恢复后重新启停该节点，检查启停结果</actions>
+				<expectedresults>1、操作过程中目标主机磁盘满操作失败
+2、故障恢复后重新启停该节点，检查启停结果</expectedresults>
+				<execution_type>1</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="停止dataNode过程中目标主机磁盘满_rlb.diskExhaustion.clMgr.018">
+		<preconditions>1、操作过程中系统环境运行正常，CM运行正常，sdb运行正常</preconditions>
+		<execution_type>1</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1、停止dataNode过程中目标主机磁盘满
+2、磁盘满后检查操作返回结果
+3、故障恢复后重新启停该节点，检查启停结果</actions>
+				<expectedresults>1、操作过程中目标主机磁盘满操作失败
+2、故障恢复后重新启停该节点，检查启停结果</expectedresults>
+				<execution_type>1</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="attach节点过程中catalog主节点所在主机内磁盘满_rlb.diskExhaustion.clMgr.019">
+		<preconditions>1、操作过程中系统环境运行正常，CM运行正常，sdb运行正常</preconditions>
+		<execution_type>1</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1、attach节点过程中catalog主节点所在主机内磁盘满
+2、磁盘满后检查操作返回结果
+3、故障恢复后重新attach该节点，检查结点状态</actions>
+				<expectedresults>1、操作过程中catalog主节点所在主机内磁盘满操作失败
+2、故障恢复后重新attach该节点，检查结点状态</expectedresults>
+				<execution_type>1</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="attach节点过程中目标主机磁盘满_rlb.diskExhaustion.clMgr.020">
+		<preconditions>1、操作过程中系统环境运行正常，CM运行正常，sdb运行正常</preconditions>
+		<execution_type>1</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1、attach节点过程中目标主机磁盘满
+2、磁盘满后检查操作返回结果
+3、故障恢复后重新attach该节点，检查结点状态</actions>
+				<expectedresults>1、操作过程中目标主机磁盘满操作失败
+2、故障恢复后重新attach该节点，检查结点状态</expectedresults>
+				<execution_type>1</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="detach节点过程中catalog主节点所在主机内磁盘满_rlb.diskExhaustion.clMgr.021">
+		<preconditions>1、操作过程中系统环境运行正常，CM运行正常，sdb运行正常</preconditions>
+		<execution_type>1</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1、detach节点过程中catalog主节点所在主机内磁盘满
+2、磁盘满后检查操作返回结果
+3、故障恢复后重新detach该节点，检查结点状态</actions>
+				<expectedresults>1、操作过程中catalog主节点所在主机内磁盘满操作失败
+2、故障恢复后重新detach该节点，检查结点状态</expectedresults>
+				<execution_type>1</execution_type>
+			</step>
+		</steps>
+	</testcase>
+	<testcase name="detach节点过程中目标主机磁盘满_rlb.diskExhaustion.clMgr.022">
+		<preconditions>1、操作过程中系统环境运行正常，CM运行正常，sdb运行正常</preconditions>
+		<execution_type>1</execution_type>
+		<importance>2</importance>
+		<steps>
+			<step>
+				<step_number>1</step_number>
+				<actions>1、detach节点过程中目标主机磁盘满
+2、磁盘满后检查操作返回结果
+3、故障恢复后重新detach该节点，检查结点状态</actions>
+				<expectedresults>1、操作过程中目标主机磁盘满操作失败
+2、故障恢复后重新detach该节点，检查结点状态</expectedresults>
+				<execution_type>1</execution_type>
+			</step>
+		</steps>
+	</testcase>
+</testcases>
