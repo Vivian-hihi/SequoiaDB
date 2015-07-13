@@ -4718,7 +4718,7 @@ do                                                            \
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT__DCCOMMON, "_sdbDataCenterImpl::_DCCommon" )
-   INT32 _sdbDataCenterImpl::_DCCommon( const CHAR *pValue, bson::BSONObj *pInfo )
+   INT32 _sdbDataCenterImpl::_DCCommon( const CHAR *pValue, const bson::BSONObj *pInfo )
    {
       PD_TRACE_ENTRY ( SDB_CLIENT__DCCOMMON ) ;
       INT32 rc            = SDB_OK ;
@@ -4901,7 +4901,7 @@ do                                                            \
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_ATTACHGROUPS, "_sdbDataCenterImpl::attachGroups" )
-   INT32 _sdbDataCenterImpl::attachGroups( bson::BSONObj &info )
+   INT32 _sdbDataCenterImpl::attachGroups( const bson::BSONObj &info )
    {
       PD_TRACE_ENTRY ( SDB_CLIENT_ATTACHGROUPS ) ;
       INT32 rc = _DCCommon( CMD_VALUE_NAME_ATTACH, &info ) ;
@@ -4910,7 +4910,7 @@ do                                                            \
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_DETACHGROUPS, "_sdbDataCenterImpl::detachGroups" )
-   INT32 _sdbDataCenterImpl::detachGroups( bson::BSONObj &info )
+   INT32 _sdbDataCenterImpl::detachGroups( const bson::BSONObj &info )
    {
       PD_TRACE_ENTRY ( SDB_CLIENT_DETACHGROUPS ) ;
       INT32 rc = _DCCommon( CMD_VALUE_NAME_DETACH, &info ) ;

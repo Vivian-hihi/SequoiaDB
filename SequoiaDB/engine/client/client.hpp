@@ -2416,8 +2416,8 @@ namespace sdbclient
       virtual INT32 removeImage() = 0 ;
       virtual INT32 enableImage() = 0 ;
       virtual INT32 disableImage() = 0 ;
-      virtual INT32 attachGroups( bson::BSONObj &info ) = 0 ;
-      virtual INT32 detachGroups( bson::BSONObj &info ) = 0 ;
+      virtual INT32 attachGroups( const bson::BSONObj &info ) = 0 ;
+      virtual INT32 detachGroups( const bson::BSONObj &info ) = 0 ;
 
    } ;
 
@@ -2567,26 +2567,26 @@ namespace sdbclient
          return pDC->disableImage() ;
       }
 
-      /** \fn INT32 attachGroups( BSONObj &info )
+      /** \fn INT32 attachGroups( const bson::BSONObj &info )
           \brief Attach specified groups to data center
           \param [in] info The information of groups to attach, e.g. {Groups:[["a", "a"], ["b", "b"]]}
           \retval SDB_OK Operation Success
           \retval Others Operation Fail
       */
-      INT32 attachGroups( bson::BSONObj &info )
+      INT32 attachGroups( const bson::BSONObj &info )
       {
          if ( NULL == pDC )
             return SDB_NOT_CONNECTED ;
          return pDC->attachGroups( info ) ;
       }
 
-      /** \fn INT32 detachGroups( BSONObj &info )
+      /** \fn INT32 detachGroups( const bson::BSONObj &info )
           \brief Detach specified groups from data center
           \param [in] info The information of groups to detach, e.g. {Groups:[["a", "a"], ["b", "b"]]}
           \retval SDB_OK Operation Success
           \retval Others Operation Fail
       */
-      INT32 detachGroups( bson::BSONObj &info )
+      INT32 detachGroups( const bson::BSONObj &info )
       {
          if ( NULL == pDC )
             return SDB_NOT_CONNECTED ;

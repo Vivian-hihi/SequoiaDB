@@ -812,11 +812,11 @@ namespace sdbclient
       INT32 removeImage() ;
       INT32 enableImage() ;
       INT32 disableImage() ;
-      INT32 attachGroups( bson::BSONObj &info ) ;
-      INT32 detachGroups( bson::BSONObj &info ) ;
+      INT32 attachGroups( const bson::BSONObj &info ) ;
+      INT32 detachGroups( const bson::BSONObj &info ) ;
 
    private :
-      INT32 _DCCommon( const CHAR *pValue, bson::BSONObj *pInfo = NULL ) ;
+      INT32 _DCCommon( const CHAR *pValue, const bson::BSONObj *pInfo = NULL ) ;
 
    } ;
    typedef class _sdbDataCenterImpl sdbDataCenterImpl ;
