@@ -263,10 +263,14 @@ namespace engine
 
       while ( TRUE )
       {
-         if ( _pEDUCB && _pEDUCB->isForced () )
+         if ( _pEDUCB )
          {
-            rc = SDB_APP_FORCED ;
-            goto done ;
+            if ( _pEDUCB->isForced () )
+            {
+               rc = SDB_APP_FORCED ;
+               goto done ;
+            }
+            _pEDUCB->resetInterrupt() ;
          }
          rc = _socket.recv ( &pData[totalReceivedSize], size-totalReceivedSize,
                              receivedSize, realTimeout, flags, block ) ;
