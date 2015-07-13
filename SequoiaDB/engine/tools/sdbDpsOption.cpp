@@ -248,26 +248,26 @@ INT32 _dpsFilterOption::doDataExchange( engine::pmdCfgExchange *pEx )
 {
    resetResult() ;
 
-   rdxPath( pEx, DPS_LOG_FILTER_SOURCE,
-            _cmdData.srcPath, OSS_MAX_PATHSIZE, FALSE, FALSE, "./" ) ;
+   rdxString( pEx, DPS_LOG_FILTER_SOURCE,
+              _cmdData.srcPath, OSS_MAX_PATHSIZE, FALSE, FALSE, "./" ) ;
 
    rdxString( pEx, DPS_LOG_FILTER_OUTPUT,
               _cmdData.dstPath, OSS_MAX_PATHSIZE, FALSE, FALSE, "./" ) ;
 
    rdxString( pEx, DPS_LOG_FILTER_NAME,
-            _cmdData.inputName, OSS_MAX_PATHSIZE, FALSE, FALSE, "" ) ;
+              _cmdData.inputName, OSS_MAX_PATHSIZE, FALSE, FALSE, "" ) ;
 
    rdxUShort( pEx, DPS_LOG_FILTER_TYPE,
               _cmdData.type, FALSE, TRUE, (UINT16)PDWARNING ) ;
 
    rdxInt( pEx, DPS_LOG_LSN_AHEAD,
-            _cmdData.lsnAhead, FALSE, TRUE, 20 ) ;
+           _cmdData.lsnAhead, FALSE, TRUE, 20 ) ;
 
    rdxInt( pEx, DPS_LOG_LSN_BACK,
-            _cmdData.lsnBack, FALSE, TRUE, 20 ) ;
+           _cmdData.lsnBack, FALSE, TRUE, 20 ) ;
 
    rdxInt( pEx, DPS_LOG_FILTER_LAST,
-            _cmdData.lastCount, FALSE, TRUE, 0 ) ;
+           _cmdData.lastCount, FALSE, TRUE, 0 ) ;
 
    return getResult() ;
 }
