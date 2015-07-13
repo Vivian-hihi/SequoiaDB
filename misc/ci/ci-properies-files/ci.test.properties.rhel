@@ -5,7 +5,7 @@ install.user=sdbadmin
 install.password=sdbadmin
 
 test.machine.deploy.path=/tmp/sequoiadb_test
-test.machine.software.path=/tmp/sequoiadb
+test.machine.software.path=/tmp/sequoiadb_tools
 
 save.testLog.hostname=bl465-4
 save.testLog.dir=/opt/apache-tomcat-6.0.37/webapps/ROOT
