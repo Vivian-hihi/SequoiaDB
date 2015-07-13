@@ -698,3 +698,515 @@ TEST( selector, simple_elemmatchone_test_1 )
    ASSERT_EQ( SDB_OK, rc ) ;
 }
 
+/// jira SEQUOIADBMAINSTREAM-915
+TEST( selector, jira_915 )
+{
+   INT32 rc = SDB_OK ;
+   mthSelector selector ;
+   BSONObj rule = BSON( "a" << BSON( "$default" << 1 << "$include" << 1 ) ) ;
+   rc = selector.loadPattern( rule ) ;
+   ASSERT_EQ( SDB_OK , rc ) ;
+   BSONObj record = BSON( "b" << 2 ) ;
+   BSONObj result ;
+   rc = selector.select( record, result ) ;
+   ASSERT_EQ( SDB_OK , rc ) ;
+   cout << result.toString( FALSE, TRUE ) << endl ;
+   BSONObj expect = BSON( "a" << 1 ) ;
+   rc = expect.woCompare( result ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+}
+
+TEST( selector, simple_abs_test1 )
+{
+   INT32 rc = SDB_OK ;
+   mthSelector selector ;
+   BSONObj rule = BSON( "a" << BSON( "$abs" << 1 ) ) ;
+   rc = selector.loadPattern( rule ) ;
+   ASSERT_EQ( SDB_OK , rc ) ;
+
+   {
+   BSONObj record = BSON( "a" << 10 ) ;
+   BSONObj result ;
+   rc = selector.select( record, result ) ;
+   ASSERT_EQ( SDB_OK , rc ) ;
+   cout << result.toString( FALSE, TRUE ) << endl ;
+   BSONObj expect = BSON( "a" << 10 ) ;
+   rc = expect.woCompare( result ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   }
+
+   {
+   BSONObj record = BSON( "a" << -10 ) ;
+   BSONObj result ;
+   rc = selector.select( record, result ) ;
+   ASSERT_EQ( SDB_OK , rc ) ;
+   cout << result.toString( FALSE, TRUE ) << endl ;
+   BSONObj expect = BSON( "a" << 10 ) ;
+   rc = expect.woCompare( result ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   }
+
+   {
+   BSONObj record = BSON( "a" << 1.123 ) ;
+   BSONObj result ;
+   rc = selector.select( record, result ) ;
+   ASSERT_EQ( SDB_OK , rc ) ;
+   cout << result.toString( FALSE, TRUE ) << endl ;
+   BSONObj expect = BSON( "a" << 1.123 ) ;
+   rc = expect.woCompare( result ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   }
+
+   {
+   BSONObj record = BSON( "a" << -1.123 ) ;
+   BSONObj result ;
+   rc = selector.select( record, result ) ;
+   ASSERT_EQ( SDB_OK , rc ) ;
+   cout << result.toString( FALSE, TRUE ) << endl ;
+   BSONObj expect = BSON( "a" << 1.123 ) ;
+   rc = expect.woCompare( result ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   }
+
+   {
+   BSONObjBuilder builder ;
+   BSONObj record = BSON( "a" << "") ;
+   BSONObj result ;
+   rc = selector.select( record, result ) ;
+   ASSERT_EQ( SDB_OK , rc ) ;
+   cout << result.toString( FALSE, TRUE ) << endl ;
+   BSONObj expect = builder.appendNull( "a" ).obj() ;
+   rc = expect.woCompare( result ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   }
+}
+
+/// CEILING
+TEST( selector, simple_celling_test1 )
+{
+   INT32 rc = SDB_OK ;
+   mthSelector selector ;
+   BSONObj rule = BSON( "a" << BSON( "$ceiling" << 1 ) ) ;
+   rc = selector.loadPattern( rule ) ;
+   ASSERT_EQ( SDB_OK , rc ) ;
+
+   {
+   BSONObj record = BSON( "a" << 10 ) ;
+   BSONObj result ;
+   rc = selector.select( record, result ) ;
+   ASSERT_EQ( SDB_OK , rc ) ;
+   cout << result.toString( FALSE, TRUE ) << endl ;
+   BSONObj expect = BSON( "a" << 10 ) ;
+   rc = expect.woCompare( result ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   }
+
+   {
+   BSONObj record = BSON( "a" << 10.1 ) ;
+   BSONObj result ;
+   rc = selector.select( record, result ) ;
+   ASSERT_EQ( SDB_OK , rc ) ;
+   cout << result.toString( FALSE, TRUE ) << endl ;
+   BSONObj expect = BSON( "a" << 11 ) ;
+   rc = expect.woCompare( result ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   }
+
+   {
+   BSONObj record = BSON( "a" << -10 ) ;
+   BSONObj result ;
+   rc = selector.select( record, result ) ;
+   ASSERT_EQ( SDB_OK , rc ) ;
+   cout << result.toString( FALSE, TRUE ) << endl ;
+   BSONObj expect = BSON( "a" << -10 ) ;
+   rc = expect.woCompare( result ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   }
+
+   {
+   BSONObj record = BSON( "a" << -10.1 ) ;
+   BSONObj result ;
+   rc = selector.select( record, result ) ;
+   ASSERT_EQ( SDB_OK , rc ) ;
+   cout << result.toString( FALSE, TRUE ) << endl ;
+   BSONObj expect = BSON( "a" << -10 ) ;
+   rc = expect.woCompare( result ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   }
+
+   {
+   BSONObjBuilder builder ;
+   BSONObj record = BSON( "a" << "") ;
+   BSONObj result ;
+   rc = selector.select( record, result ) ;
+   ASSERT_EQ( SDB_OK , rc ) ;
+   cout << result.toString( FALSE, TRUE ) << endl ;
+   BSONObj expect = builder.appendNull( "a" ).obj() ;
+   rc = expect.woCompare( result ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   }
+}
+
+/// floor
+TEST( selector, simple_floor_test1 )
+{
+   INT32 rc = SDB_OK ;
+   mthSelector selector ;
+   BSONObj rule = BSON( "a" << BSON( "$floor" << 1 ) ) ;
+   rc = selector.loadPattern( rule ) ;
+   ASSERT_EQ( SDB_OK , rc ) ;
+
+   {
+   BSONObj record = BSON( "a" << 10 ) ;
+   BSONObj result ;
+   rc = selector.select( record, result ) ;
+   ASSERT_EQ( SDB_OK , rc ) ;
+   cout << result.toString( FALSE, TRUE ) << endl ;
+   BSONObj expect = BSON( "a" << 10 ) ;
+   rc = expect.woCompare( result ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   }
+
+   {
+   BSONObj record = BSON( "a" << 10.123 ) ;
+   BSONObj result ;
+   rc = selector.select( record, result ) ;
+   ASSERT_EQ( SDB_OK , rc ) ;
+   cout << result.toString( FALSE, TRUE ) << endl ;
+   BSONObj expect = BSON( "a" << 10 ) ;
+   rc = expect.woCompare( result ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   }
+
+   {
+   BSONObj record = BSON( "a" << -10 ) ;
+   BSONObj result ;
+   rc = selector.select( record, result ) ;
+   ASSERT_EQ( SDB_OK , rc ) ;
+   cout << result.toString( FALSE, TRUE ) << endl ;
+   BSONObj expect = BSON( "a" << -10 ) ;
+   rc = expect.woCompare( result ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   }
+
+   {
+   BSONObj record = BSON( "a" << -10.123 ) ;
+   BSONObj result ;
+   rc = selector.select( record, result ) ;
+   ASSERT_EQ( SDB_OK , rc ) ;
+   cout << result.toString( FALSE, TRUE ) << endl ;
+   BSONObj expect = BSON( "a" << -11 ) ;
+   rc = expect.woCompare( result ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   }
+
+   {
+   BSONObjBuilder builder ;
+   BSONObj record = BSON( "a" << "abc" ) ;
+   BSONObj result ;
+   rc = selector.select( record, result ) ;
+   ASSERT_EQ( SDB_OK , rc ) ;
+   cout << result.toString( FALSE, TRUE ) << endl ;
+   BSONObj expect = builder.appendNull( "a" ).obj() ;
+   rc = expect.woCompare( result ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   }
+}
+
+/// mod
+TEST( selector, simple_mod_test1 )
+{
+   INT32 rc = SDB_OK ;
+   mthSelector selector ;
+   BSONObj rule = BSON( "a" << BSON( "$mod" << 3 ) ) ;
+   rc = selector.loadPattern( rule ) ;
+   ASSERT_EQ( SDB_OK , rc ) ;
+
+   {
+   BSONObj record = BSON( "a" << 10 ) ;
+   BSONObj result ;
+   rc = selector.select( record, result ) ;
+   ASSERT_EQ( SDB_OK , rc ) ;
+   cout << result.toString( FALSE, TRUE ) << endl ;
+   BSONObj expect = BSON( "a" << 1 ) ;
+   rc = expect.woCompare( result ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   }
+
+   {
+   BSONObj record = BSON( "a" << -10 ) ;
+   BSONObj result ;
+   rc = selector.select( record, result ) ;
+   ASSERT_EQ( SDB_OK , rc ) ;
+   cout << result.toString( FALSE, TRUE ) << endl ;
+   BSONObj expect = BSON( "a" << -1 ) ;
+   rc = expect.woCompare( result ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   }
+
+
+/// 10.123 mod 3 -> 1.1229999999999999
+/*
+   {
+   BSONObj record = BSON( "a" << 10.123 ) ;
+   BSONObj result ;
+   rc = selector.select( record, result ) ;
+   ASSERT_EQ( SDB_OK , rc ) ;
+   cout << result.toString( FALSE, TRUE ) << endl ;
+   BSONObj expect = BSON( "a" << 1.123 ) ;
+   rc = expect.woCompare( result ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   }
+
+   {
+   BSONObj record = BSON( "a" << -10.123 ) ;
+   BSONObj result ;
+   rc = selector.select( record, result ) ;
+   ASSERT_EQ( SDB_OK , rc ) ;
+   cout << result.toString( FALSE, TRUE ) << endl ;
+   BSONObj expect = BSON( "a" << -1.123 ) ;
+   rc = expect.woCompare( result ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   }
+*/
+   {
+   BSONObjBuilder builder ;
+   BSONObj record = BSON( "a" << "abc" ) ;
+   BSONObj result ;
+   rc = selector.select( record, result ) ;
+   ASSERT_EQ( SDB_OK , rc ) ;
+   cout << result.toString( FALSE, TRUE ) << endl ;
+   BSONObj expect = builder.appendNull( "a" ).obj() ;
+   rc = expect.woCompare( result ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   }
+}
+
+/// substr {a:{$substr:3}}
+TEST( selector, simple_substr_test1 )
+{
+   INT32 rc = SDB_OK ;
+   mthSelector selector ;
+   BSONObj rule = BSON( "a" << BSON( "$substr" << 3 ) ) ;
+   rc = selector.loadPattern( rule ) ;
+   ASSERT_EQ( SDB_OK , rc ) ;
+
+   {
+   BSONObj record = BSON( "a" << "abcde" ) ;
+   BSONObj result ;
+   rc = selector.select( record, result ) ;
+   ASSERT_EQ( SDB_OK , rc ) ;
+   cout << result.toString( FALSE, TRUE ) << endl ;
+   BSONObj expect = BSON( "a" << "de" ) ;
+   rc = expect.woCompare( result ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   }
+
+   {
+   BSONObj record = BSON( "a" << "a" ) ;
+   BSONObj result ;
+   rc = selector.select( record, result ) ;
+   ASSERT_EQ( SDB_OK , rc ) ;
+   cout << result.toString( FALSE, TRUE ) << endl ;
+   BSONObj expect = BSON( "a" << "" ) ;
+   rc = expect.woCompare( result ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   }
+
+   {
+   BSONObj record = BSON( "a" << "" ) ;
+   BSONObj result ;
+   rc = selector.select( record, result ) ;
+   ASSERT_EQ( SDB_OK , rc ) ;
+   cout << result.toString( FALSE, TRUE ) << endl ;
+   BSONObj expect = BSON( "a" << "" ) ;
+   rc = expect.woCompare( result ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   }
+
+   {
+   BSONObjBuilder builder ;
+   BSONObj record = BSON( "a" << 1 ) ;
+   BSONObj result ;
+   rc = selector.select( record, result ) ;
+   ASSERT_EQ( SDB_OK , rc ) ;
+   cout << result.toString( FALSE, TRUE ) << endl ;
+   BSONObj expect = builder.appendNull( "a" ).obj() ;
+   rc = expect.woCompare( result ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   }
+}
+
+/// substr {a:{$substr:[2,3]}}
+TEST( selector, simple_substr_test2 )
+{
+   INT32 rc = SDB_OK ;
+   mthSelector selector ;
+   BSONObj rule = BSON( "a" << BSON( "$substr" << BSON_ARRAY( 2 << 3 ) ) ) ;
+   rc = selector.loadPattern( rule ) ;
+   ASSERT_EQ( SDB_OK , rc ) ;
+
+   {
+   BSONObj record = BSON( "a" << "abcdef" ) ;
+   BSONObj result ;
+   rc = selector.select( record, result ) ;
+   ASSERT_EQ( SDB_OK , rc ) ;
+   cout << result.toString( FALSE, TRUE ) << endl ;
+   BSONObj expect = BSON( "a" << "cde" ) ;
+   rc = expect.woCompare( result ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   }
+
+   {
+   BSONObj record = BSON( "a" << "abcde" ) ;
+   BSONObj result ;
+   rc = selector.select( record, result ) ;
+   ASSERT_EQ( SDB_OK , rc ) ;
+   cout << result.toString( FALSE, TRUE ) << endl ;
+   BSONObj expect = BSON( "a" << "cde" ) ;
+   rc = expect.woCompare( result ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   }
+
+   {
+   BSONObj record = BSON( "a" << "a" ) ;
+   BSONObj result ;
+   rc = selector.select( record, result ) ;
+   ASSERT_EQ( SDB_OK , rc ) ;
+   cout << result.toString( FALSE, TRUE ) << endl ;
+   BSONObj expect = BSON( "a" << "" ) ;
+   rc = expect.woCompare( result ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   }
+}
+
+/// substr {a:{$substr:[-2,3]}}
+TEST( selector, simple_substr_test3 )
+{
+   INT32 rc = SDB_OK ;
+   mthSelector selector ;
+   BSONObj rule = BSON( "a" << BSON( "$substr" << BSON_ARRAY( -2 << 3 ) ) ) ;
+   rc = selector.loadPattern( rule ) ;
+   ASSERT_EQ( SDB_OK , rc ) ;
+
+   {
+   BSONObj record = BSON( "a" << "abcdef" ) ;
+   BSONObj result ;
+   rc = selector.select( record, result ) ;
+   ASSERT_EQ( SDB_OK , rc ) ;
+   cout << result.toString( FALSE, TRUE ) << endl ;
+   BSONObj expect = BSON( "a" << "ef" ) ;
+   rc = expect.woCompare( result ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   }
+
+   {
+   BSONObj record = BSON( "a" << "a" ) ;
+   BSONObj result ;
+   rc = selector.select( record, result ) ;
+   ASSERT_EQ( SDB_OK , rc ) ;
+   cout << result.toString( FALSE, TRUE ) << endl ;
+   BSONObj expect = BSON( "a" << "" ) ;
+   rc = expect.woCompare( result ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   }
+
+   {
+   BSONObj record = BSON( "a" << "" ) ;
+   BSONObj result ;
+   rc = selector.select( record, result ) ;
+   ASSERT_EQ( SDB_OK , rc ) ;
+   cout << result.toString( FALSE, TRUE ) << endl ;
+   BSONObj expect = BSON( "a" << "" ) ;
+   rc = expect.woCompare( result ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   }
+}
+
+/// substr {a:{$substr:-2 }}
+TEST( selector, simple_substr_test4 )
+{
+   INT32 rc = SDB_OK ;
+   mthSelector selector ;
+   BSONObj rule = BSON( "a" << BSON( "$substr" << -2 ) ) ;
+   rc = selector.loadPattern( rule ) ;
+   ASSERT_EQ( SDB_OK , rc ) ;
+
+   {
+   BSONObj record = BSON( "a" << "abcdef" ) ;
+   BSONObj result ;
+   rc = selector.select( record, result ) ;
+   ASSERT_EQ( SDB_OK , rc ) ;
+   cout << result.toString( FALSE, TRUE ) << endl ;
+   BSONObj expect = BSON( "a" << "ef" ) ;
+   rc = expect.woCompare( result ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   }
+
+   {
+   BSONObj record = BSON( "a" << "a" ) ;
+   BSONObj result ;
+   rc = selector.select( record, result ) ;
+   ASSERT_EQ( SDB_OK , rc ) ;
+   cout << result.toString( FALSE, TRUE ) << endl ;
+   BSONObj expect = BSON( "a" << "" ) ;
+   rc = expect.woCompare( result ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   }
+
+   {
+   BSONObj record = BSON( "a" << "" ) ;
+   BSONObj result ;
+   rc = selector.select( record, result ) ;
+   ASSERT_EQ( SDB_OK , rc ) ;
+   cout << result.toString( FALSE, TRUE ) << endl ;
+   BSONObj expect = BSON( "a" << "" ) ;
+   rc = expect.woCompare( result ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   }
+}
+
+/// strlen
+TEST( selector, simple_strlen_test1 )
+{
+   INT32 rc = SDB_OK ;
+   mthSelector selector ;
+   BSONObj rule = BSON( "a" << BSON( "$strlen" << 1 ) ) ;
+   rc = selector.loadPattern( rule ) ;
+   ASSERT_EQ( SDB_OK , rc ) ;
+
+   {
+   BSONObj record = BSON( "a" << "abcdef" ) ;
+   BSONObj result ;
+   rc = selector.select( record, result ) ;
+   ASSERT_EQ( SDB_OK , rc ) ;
+   cout << result.toString( FALSE, TRUE ) << endl ;
+   BSONObj expect = BSON( "a" << 6 ) ;
+   rc = expect.woCompare( result ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   }
+
+   {
+   BSONObj record = BSON( "a" << "" ) ;
+   BSONObj result ;
+   rc = selector.select( record, result ) ;
+   ASSERT_EQ( SDB_OK , rc ) ;
+   cout << result.toString( FALSE, TRUE ) << endl ;
+   BSONObj expect = BSON( "a" << 0 ) ;
+   rc = expect.woCompare( result ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   }
+
+   {
+   BSONObjBuilder builder ;
+   BSONObj record = BSON( "a" << 1 ) ;
+   BSONObj result ;
+   rc = selector.select( record, result ) ;
+   ASSERT_EQ( SDB_OK , rc ) ;
+   cout << result.toString( FALSE, TRUE ) << endl ;
+   BSONObj expect = builder.appendNull( "a" ).obj() ;
+   rc = expect.woCompare( result ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   }
+}
+
