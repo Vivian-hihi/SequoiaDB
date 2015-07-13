@@ -3423,7 +3423,7 @@ __METHOD_IMP(dc_attach_groups)
    sdbDataCenter *dc   = NULL ;
    PYOBJECT *obj       = NULL ;
    PYOBJECT *groups    = NULL ;
-   bson::BSONObj *info = NULL ;
+   const bson::BSONObj *info = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "OO", &obj, &groups ) )
    {
@@ -3452,7 +3452,7 @@ __METHOD_IMP(dc_detach_groups)
    sdbDataCenter *dc   = NULL ;
    PYOBJECT *obj       = NULL ;
    PYOBJECT *groups    = NULL ;
-   bson::BSONObj *info = NULL ;
+   const bson::BSONObj *info = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "OO", &obj, &groups ) )
    {
