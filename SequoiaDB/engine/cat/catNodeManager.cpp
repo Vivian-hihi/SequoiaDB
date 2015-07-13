@@ -2206,11 +2206,11 @@ namespace engine
          }
 
          BOOLEAN isValid = FALSE;
-         rc = _checkLocalHost( isValid ) ;
+         rc = _checkLocalHost( isLocalHost, isValid ) ;
          PD_RC_CHECK( rc, PDERROR,
                       "Failed to get localhost existing info, rc: %d", rc ) ;
 
-         PD_CHECK( !(isLocalHost ^ isValid),
+         PD_CHECK( isValid,
                    SDB_CAT_LOCALHOST_CONFLICT, error, PDERROR,
                    "'localhost' and '127.0.0.1' cannot be used mixed with "
                    "other hostname and IP address" );
@@ -2762,7 +2762,7 @@ namespace engine
       return _pCatCB->majoritySize() ;
    }
 
-   INT32 catNodeManager::_checkLocalHost( BOOLEAN &isValid )
+   INT32 catNodeManager::_checkLocalHost( BOOLEAN isLocalHost, BOOLEAN &isValid )
    {
       BSONObj matcher;
       UINT64 count = 0;
@@ -2776,7 +2776,7 @@ namespace engine
 
       if ( 0 == count )
       {
-         // There is no group, so localhost can be used.
+         // There is no group, so it can be used no matter localhost or not.
          isValid = TRUE;
          goto done;
       }
@@ -2796,7 +2796,7 @@ namespace engine
       // if count == 0, then no node uses 'localhost' or '127.0.0.1',
       // so localhost cannot be used.
       // otherwise (count > 0), localhost can be used.
-      isValid = ( 0 == count) ? FALSE : TRUE;
+      isValid = isLocalHost ^ ( 0 == count) ;
 
       done:
          return rc ;
