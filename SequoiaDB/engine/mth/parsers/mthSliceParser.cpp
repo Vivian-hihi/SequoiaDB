@@ -58,6 +58,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__MTHSLICEPARSER_PARSE ) ;
+      BSONObjBuilder builder ;
       INT32 begin = 0 ;
       INT32 limit = -1 ;
 #if defined (_DEBUG)
@@ -139,7 +140,8 @@ namespace engine
       action.setFunc( &mthSliceBuild,
                       &mthSliceGet ) ;
       action.setName( _name.c_str() ) ;
-      action.setSlicePair( begin, limit ) ;
+      builder.append( "arg1", begin ).append( "arg2", limit ) ;
+      action.setArg( builder.obj() ) ;
    done:
       PD_TRACE_EXITRC( SDB__MTHSLICEPARSER_PARSE, rc ) ;
       return rc ;

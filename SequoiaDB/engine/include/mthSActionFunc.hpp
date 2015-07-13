@@ -101,6 +101,125 @@ namespace engine
                              _mthSAction *,
                              bson::BSONElement & ) ;
 
+   INT32 mthAbsBuild( const CHAR *,
+                      const bson::BSONElement &,
+                      _mthSAction *,
+                      bson::BSONObjBuilder & ) ;
+
+   INT32 mthAbsGet( const CHAR *,
+                    const bson::BSONElement &,
+                    _mthSAction *,
+                    bson::BSONElement & ) ;
+
+   INT32 mthCeilingBuild( const CHAR *,
+                          const bson::BSONElement &,
+                          _mthSAction *,
+                          bson::BSONObjBuilder & ) ;
+
+   INT32 mthCeilingGet( const CHAR *,
+                        const bson::BSONElement &,
+                        _mthSAction *,
+                        bson::BSONElement & ) ;
+
+   INT32 mthFloorBuild( const CHAR *,
+                        const bson::BSONElement &,
+                        _mthSAction *,
+                        bson::BSONObjBuilder & ) ;
+
+   INT32 mthFloorGet( const CHAR *,
+                      const bson::BSONElement &,
+                      _mthSAction *,
+                      bson::BSONElement & ) ;
+
+   INT32 mthModBuild( const CHAR *,
+                      const bson::BSONElement &,
+                      _mthSAction *,
+                      bson::BSONObjBuilder & ) ;
+
+   INT32 mthModGet( const CHAR *,
+                    const bson::BSONElement &,
+                    _mthSAction *,
+                    bson::BSONElement & ) ;
+
+   INT32 mthCastBuild( const CHAR *,
+                       const bson::BSONElement &,
+                       _mthSAction *,
+                       bson::BSONObjBuilder & ) ;
+
+   INT32 mthCastGet( const CHAR *,
+                     const bson::BSONElement &,
+                     _mthSAction *,
+                     bson::BSONElement & ) ;
+
+   INT32 mthSubStrBuild( const CHAR *,
+                         const bson::BSONElement &,
+                         _mthSAction *,
+                         bson::BSONObjBuilder & ) ;
+
+   INT32 mthSubStrGet( const CHAR *,
+                       const bson::BSONElement &,
+                       _mthSAction *,
+                       bson::BSONElement & ) ;
+
+   INT32 mthStrLenBuild( const CHAR *,
+                         const bson::BSONElement &,
+                         _mthSAction *,
+                         bson::BSONObjBuilder & ) ;
+
+   INT32 mthStrLenGet( const CHAR *,
+                       const bson::BSONElement &,
+                       _mthSAction *,
+                       bson::BSONElement & ) ;
+
+   INT32 mthLowerBuild( const CHAR *,
+                        const bson::BSONElement &,
+                        _mthSAction *,
+                        bson::BSONObjBuilder & ) ;
+
+   INT32 mthLowerGet( const CHAR *,
+                      const bson::BSONElement &,
+                      _mthSAction *,
+                      bson::BSONElement & ) ;
+
+   INT32 mthUpperBuild( const CHAR *,
+                        const bson::BSONElement &,
+                        _mthSAction *,
+                        bson::BSONObjBuilder & ) ;
+
+   INT32 mthUpperGet( const CHAR *,
+                      const bson::BSONElement &,
+                      _mthSAction *,
+                      bson::BSONElement & ) ;
+
+   INT32 mthTrimBuild( const CHAR *,
+                       const bson::BSONElement &,
+                       _mthSAction *,
+                       bson::BSONObjBuilder & ) ;
+
+   INT32 mthTrimGet( const CHAR *,
+                     const bson::BSONElement &,
+                     _mthSAction *,
+                     bson::BSONElement & ) ;
+
+   INT32 mthLTrimBuild( const CHAR *,
+                        const bson::BSONElement &,
+                        _mthSAction *,
+                        bson::BSONObjBuilder & ) ;
+
+   INT32 mthLTrimGet( const CHAR *,
+                      const bson::BSONElement &,
+                      _mthSAction *,
+                      bson::BSONElement & ) ;
+
+   INT32 mthRTrimBuild( const CHAR *,
+                        const bson::BSONElement &,
+                        _mthSAction *,
+                        bson::BSONObjBuilder & ) ;
+
+   INT32 mthRTrimGet( const CHAR *,
+                      const bson::BSONElement &,
+                      _mthSAction *,
+                      bson::BSONElement & ) ;
 }
 
 #endif

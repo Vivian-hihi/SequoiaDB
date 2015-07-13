@@ -132,7 +132,8 @@ utilFiles = [
       "util/url.c",
       "util/utilBsonHash.cpp",
       "util/linenoise.cpp",
-      "util/utilLinenoiseWrapper.cpp"
+      "util/utilLinenoiseWrapper.cpp",
+      "util/utilString.cpp"
       ]
 
 rtnFiles = [
@@ -272,7 +273,10 @@ mthFiles = [
       "mth/mthSliceIterator.cpp",
       "mth/mthElemMatchIterator.cpp",
       "mth/parsers/mthElemMatchParser.cpp",
-      "mth/parsers/mthElemMatchOneParser.cpp"
+      "mth/parsers/mthElemMatchOneParser.cpp",
+      "mth/parsers/mthMathParser.cpp",
+      "mth/parsers/mthStrParser.cpp",
+      "mth/parsers/mthCastParser.cpp"
       ]
 
 optFiles = [
@@ -607,9 +611,9 @@ constructFiles = [
 #spdTestFiles =[
 #      "test/spd/spdTest.cpp"
 #      ]
-#selectorTestFiles= [
-#      "test/selector/test.cpp"
-#     ]
+selectorTestFiles= [
+      "test/selector/test.cpp"
+     ]
 
 #BSON
 env.StaticLibrary('bson', bsonFiles)
@@ -682,7 +686,7 @@ env.StaticLibrary('omsvc', omsvcFiles)
 sqltest2 = env.Object('sqltest2', gtestMainFile)
 #sqltest3 = env.Object('sqltest3', gtestMainFile)
 #spdtest = env.Object('spdtest', gtestMainFile)
-#selectortest = env.Object('selectortest', gtestMainFile)
+selectortest = env.Object('selectortest', gtestMainFile)
 
 if hasEngine:
    engine = env.Program("sequoiadb", pmdMain,
@@ -787,9 +791,9 @@ if hasTestcase:
 #          LIBDEPS=["qgm","clientcpp","bar","rest","dps","cat","coord","gtest","snappy","cls","bps","pcre","oss","util","bson","mth","opt","pd","ixm","pmd","mig","msg","rtn","dms","mon","net","sql","auth", "aggr", "omsvc"],
 #          _LIBDEPS='$_LIBDEPS_OBJS' )
 
-#   selectorTest =  env.Program("selectorTest", [ selectorTestFiles, selectortest],
-#          LIBDEPS=["qgm","clientcpp","bar","rest","dps","cat","coord","gtest","snappy","cls","bps","pcre","oss","util","bson","mth","opt","pd","ixm","pmd","mig","msg","rtn","dms","mon","net","sql","auth", "aggr", "spd", "omsvc"],
-#          _LIBDEPS='$_LIBDEPS_OBJS' )
+   selectorTest =  env.Program("selectorTest", [ selectorTestFiles, selectortest],
+          LIBDEPS=["qgm","clientcpp","bar","rest","dps","cat","coord","gtest","snappy","cls","bps","pcre","oss","util","bson","mth","opt","pd","ixm","pmd","mig","msg","rtn","dms","mon","net","sql","auth", "aggr", "spd", "omsvc"],
+          _LIBDEPS='$_LIBDEPS_OBJS' )
 
 # Tools
 if hasTool:
@@ -831,7 +835,7 @@ if hasTestcase:
 #   env.Install( '#/tests', sqlTest3 )
 #   env.Install( '#/tests', sqlclient )
 #   env.Install( '#/tests', performance )
-#   env.Install( '#/tests', selectorTest )
+   env.Install( '#/tests', selectorTest )
 # Install tools
 if hasTool:
    env.Install( '#/bin', sdbrestore )

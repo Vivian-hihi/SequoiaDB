@@ -38,8 +38,13 @@
 #include "mthSAction.hpp"
 #include "mthSliceIterator.hpp"
 #include "mthElemMatchIterator.hpp"
+#include "utilString.hpp"
+#include "utilStr.hpp"
 
 using namespace bson ;
+
+#define MTH_MOD(x,y)\
+        ( (x) - ( floor((x) / (y)) * (y) ) )
 
 namespace engine
 {
@@ -134,8 +139,6 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__MTHSLICEBUILD ) ;
       SDB_ASSERT( NULL != action, "can not be null" ) ;
-      INT32 begin = 0 ;
-      INT32 limit = -1 ;
 
       if ( e.eoo() )
       {
@@ -143,9 +146,10 @@ namespace engine
       }
       else if ( Array == e.type() )
       {
-         action->getSlicePair( begin, limit ) ;
+         BSONObj args = action->getArg() ;
          _mthSliceIterator i( e.embeddedObject(),
-                              begin, limit ) ;
+                              args.getIntField( "arg1" ),
+                              args.getIntField("arg2") ) ;
          BSONArrayBuilder sliceBuilder( builder.subarrayStart( fieldName ) ) ;
          while ( i.more() )
          {
@@ -172,9 +176,6 @@ namespace engine
       PD_TRACE_ENTRY( SDB__MTHSLICEGET ) ;
       SDB_ASSERT( NULL != action, "can not be null" ) ;
 
-      INT32 begin = 0 ;
-      INT32 limit = -1 ;
-
       if ( Array != in.type() )
       {
          out = in ;
@@ -183,9 +184,10 @@ namespace engine
       else if ( Array == in.type() )
       {
          BSONObjBuilder subBuilder ;
-         action->getSlicePair( begin, limit ) ;
-         _mthSliceIterator i( in.embeddedObject(),
-                              begin, limit ) ;
+         BSONObj args = action->getArg() ;
+         _mthSliceIterator i( in.embeddedObject(), 
+                              args.getIntField( "arg1" ),
+                              args.getIntField( "arg2" ) ) ;
          BSONArrayBuilder sliceBuilder( subBuilder.subarrayStart( fieldName ) ) ;
          while ( i.more() )
          {
@@ -344,6 +346,1508 @@ namespace engine
       rc = mthElemMatchGetN( fieldName, in, action, out, 1 ) ;
       PD_TRACE_EXITRC( SDB__MTHELEMMATCHONEGET, rc ) ;
       return rc ;
+   }
+
+   ///PD_TRACE_DECLARE_FUNCTION ( SDB__MTHABSBUILD, "mthAbsBuild" )
+   INT32 mthAbsBuild( const CHAR *fieldName,
+                      const bson::BSONElement &e,
+                      _mthSAction *action,
+                      bson::BSONObjBuilder &builder )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__MTHABSBUILD ) ;
+      SDB_ASSERT( NULL != action, "can not be null" ) ;
+      if ( NumberDouble == e.type() )
+      {
+         builder.append( fieldName, fabs( e.Double() ) ) ;
+      }
+      else if ( NumberInt == e.type() )
+      {
+         builder.append( fieldName, abs(e.Int() ) ) ;
+      }
+      else if ( NumberLong == e.type() )
+      {
+         builder.appendNumber( fieldName, llabs( e.Long() ) ) ;
+      }
+      else if ( !e.eoo() )
+      {
+         builder.appendNull( fieldName ) ;
+      }
+      else
+      {
+         /// do nothing.
+      }
+      PD_TRACE_EXITRC( SDB__MTHABSBUILD, rc ) ;
+      return rc ;
+   }
+
+   ///PD_TRACE_DECLARE_FUNCTION ( SDB__MTHABSGET, "mthAbsGet" )
+   INT32 mthAbsGet( const CHAR *fieldName,
+                    const bson::BSONElement &in,
+                    _mthSAction *action,
+                    bson::BSONElement &out )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__MTHABSGET ) ;
+      SDB_ASSERT( NULL != action, "can not be null" ) ;
+      BSONObjBuilder builder ;
+      BSONObj obj ;
+      if ( NumberDouble == in.type() )
+      {
+         builder.append( fieldName, fabs( in.Double() ) ) ;
+         obj = builder.obj() ;
+      }
+      else if ( NumberInt == in.type() )
+      {
+         if ( 0 <= in.Int() )
+         {
+            out = in ;
+            goto done ;
+         }
+         builder.append( fieldName, abs(in.Int() ) ) ;
+         obj = builder.obj() ;
+      }
+      else if ( NumberLong == in.type() )
+      {
+         if ( 0 <= in.Long() )
+         {
+            out = in ;
+            goto done ;
+         }
+         builder.appendNumber( fieldName, llabs( in.Long() ) ) ;
+         obj = builder.obj() ;
+      }
+      else if ( !in.eoo() )
+      {
+         builder.appendNull( fieldName ) ;
+         obj = builder.obj() ;
+      }
+      else
+      {
+         /// do nothing
+      }
+
+      if ( !obj.isEmpty() )
+      {
+         action->setObj( obj ) ;
+         out = action->getObj().getField( fieldName ) ;
+      }
+   done:
+      PD_TRACE_EXITRC( SDB__MTHABSGET, rc ) ;
+      return rc ;
+   }
+
+   ///PD_TRACE_DECLARE_FUNCTION ( SDB__MTHCEILINGBUILD, "mthCeilingBuild" )
+   INT32 mthCeilingBuild( const CHAR *fieldName,
+                          const bson::BSONElement &e,
+                          _mthSAction *action,
+                          bson::BSONObjBuilder &builder )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__MTHABSGET ) ;
+      SDB_ASSERT( NULL != action, "can not be null" ) ;
+      if ( e.isNumber() )
+      {
+         builder.appendNumber( fieldName,
+                               ( INT64 )( ceil( e.Number() ) ) ) ;
+      }
+      else if ( !e.eoo() )
+      {
+         builder.appendNull( fieldName ) ;
+      }
+      
+      PD_TRACE_EXITRC( SDB__MTHCEILINGBUILD, rc ) ;
+      return rc ;
+   }
+
+   ///PD_TRACE_DECLARE_FUNCTION ( SDB__MTHCEILINGGET, "mthCeilingGet" )
+   INT32 mthCeilingGet( const CHAR *fieldName,
+                        const bson::BSONElement &in,
+                        _mthSAction *action,
+                        bson::BSONElement &out )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__MTHABSGET ) ;
+      SDB_ASSERT( NULL != action, "can not be null" ) ;
+      BSONObjBuilder builder ;
+      BSONObj obj ;
+
+      if ( in.isNumber() )
+      {
+         builder.appendNumber( fieldName,
+                               ( INT64 )( ceil( in.Number() ) ) ) ;
+         obj = builder.obj() ;
+      }
+      else if ( !in.eoo() )
+      {
+         builder.appendNull( fieldName ) ;
+         obj = builder.obj() ;
+      }
+
+      if ( !obj.isEmpty() )
+      {
+         action->setObj( obj ) ;
+         out = action->getObj().getField( fieldName ) ;
+      }
+      return rc ;
+   }
+
+   ///PD_TRACE_DECLARE_FUNCTION ( SDB__MTHFLOORBUILD, "mthFloorBuild" )
+   INT32 mthFloorBuild( const CHAR *fieldName,
+                        const bson::BSONElement &e,
+                        _mthSAction *action,
+                        bson::BSONObjBuilder &builder )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__MTHFLOORBUILD ) ;
+      SDB_ASSERT( NULL != action, "can not be null" ) ;
+      if ( e.isNumber() )
+      {
+         builder.appendNumber( fieldName,
+                               ( INT64 )( floor( e.Number() ) ) ) ;
+      }
+      else if ( !e.eoo() )
+      {
+         builder.appendNull( fieldName ) ;
+      }
+      PD_TRACE_EXITRC( SDB__MTHFLOORBUILD, rc ) ;
+      return rc ;
+   }
+
+   ///PD_TRACE_DECLARE_FUNCTION ( SDB__MTHFLOORGET, "mthFloorGet" )
+   INT32 mthFloorGet( const CHAR *fieldName,
+                      const bson::BSONElement &in,
+                      _mthSAction *action,
+                      bson::BSONElement &out )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__MTHFLOORGET ) ;
+      SDB_ASSERT( NULL != action, "can not be null" ) ;
+      BSONObjBuilder builder ;
+      BSONObj obj ;
+
+      if ( in.isNumber() )
+      {
+         builder.appendNumber( fieldName,
+                               ( INT64 )( floor( in.Number() ) ) ) ;
+         obj = builder.obj() ;
+      }
+      else if ( !in.eoo() )
+      {
+         builder.appendNull( fieldName ) ;
+         obj = builder.obj() ;
+      }
+
+      if ( !obj.isEmpty() )
+      {
+         action->setObj( obj ) ;
+         out = action->getObj().getField( fieldName ) ;
+      }   
+      PD_TRACE_EXITRC( SDB__MTHFLOORGET, rc ) ;
+      return rc ;
+   }
+
+   ///PD_TRACE_DECLARE_FUNCTION ( SDB__MTHMODBUILD, "mthModBuild" )
+   INT32 mthModBuild( const CHAR *fieldName,
+                      const bson::BSONElement &e,
+                      _mthSAction *action,
+                      bson::BSONObjBuilder &builder )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__MTHMODBUILD ) ;
+      SDB_ASSERT( NULL != action, "can not be null" ) ;
+      const BSONObj &obj = action->getArg() ;
+      BSONElement arg = obj.getField( "arg1" ) ;
+      if ( e.eoo() )
+      {
+         /// do nothing.
+      }
+      else if ( 0 == arg.numberLong() ||
+                !e.isNumber() ||
+                !arg.isNumber() )
+      {
+         builder.appendNull( fieldName ) ;
+      }
+      else if ( NumberDouble == e.type() &&
+                NumberDouble == arg.type() )
+      {
+         FLOAT64 v = MTH_MOD( e.numberDouble(),
+                              arg.numberDouble() ) ;
+         builder.append( fieldName, v ) ;
+      }
+      else if ( NumberDouble != e.type () &&
+                NumberDouble == arg.type() )
+      {
+         FLOAT64 v = MTH_MOD( e.numberLong(),
+                              arg.numberDouble() ) ;
+         builder.append( fieldName, v ) ;
+      }
+      else if ( NumberDouble == e.type () &&
+                NumberDouble != arg.type() )
+      {
+         FLOAT64 v = MTH_MOD( e.numberDouble(),
+                              arg.numberLong() ) ;
+         builder.append( fieldName, v ) ;
+      }
+      else
+      {
+         INT64 v = MTH_MOD( e.numberLong(),
+                            arg.numberLong() ) ;
+         builder.appendNumber( fieldName, v ) ;
+      } 
+      PD_TRACE_EXITRC( SDB__MTHMODBUILD, rc ) ;
+      return rc ;
+   }
+
+    ///PD_TRACE_DECLARE_FUNCTION ( SDB__MTHMODGET, "mthModGet" )
+   INT32 mthModGet( const CHAR *fieldName,
+                    const bson::BSONElement &in,
+                    _mthSAction *action,
+                    bson::BSONElement &out )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__MTHMODBUILD ) ;
+      SDB_ASSERT( NULL != action, "can not be null" ) ;
+      BSONObjBuilder builder ;
+      BSONObj obj ;
+      const BSONObj &arg = action->getArg() ;
+      BSONElement argEle = arg.getField( "arg1" ) ;
+      if ( in.eoo() )
+      {
+         /// do nothing.
+      }
+      else if ( 0 == argEle.numberLong() ||
+                !in.isNumber() ||
+                !argEle.isNumber() )
+      {
+         builder.appendNull( fieldName ) ;
+      }
+      else if ( NumberDouble == in.type() &&
+                NumberDouble == argEle.type() )
+      {
+         FLOAT64 v = MTH_MOD( in.numberDouble(),
+                              argEle.numberDouble() ) ;
+         builder.append( fieldName, v ) ;
+      }
+      else if ( NumberDouble != in.type () &&
+                NumberDouble == argEle.type() )
+      {
+         FLOAT64 v = MTH_MOD( in.numberLong(),
+                              argEle.numberDouble() ) ;
+         builder.append( fieldName, v ) ;
+      }
+      else if ( NumberDouble == in.type () &&
+                NumberDouble != argEle.type() )
+      {
+        FLOAT64 v = MTH_MOD( in.numberDouble(),
+                              argEle.numberLong() ) ;
+         builder.append( fieldName, v ) ;
+      }
+      else
+      {
+         INT64 v = MTH_MOD( in.numberLong(),
+                             argEle.numberLong() ) ;
+         builder.append( fieldName, v ) ;
+      }
+
+      obj = builder.obj() ;
+      if ( !obj.isEmpty() )
+      {
+         action->setObj( obj ) ;
+         out = action->getObj().getField( fieldName ) ; 
+      }
+      PD_TRACE_EXITRC( SDB__MTHMODBUILD, rc ) ;
+      return rc ;
+   }
+
+   static INT32 _mthCast( const CHAR *fieldName,
+                         const bson::BSONElement &e,
+                         BSONType type,
+                         BSONObjBuilder &builder )
+   {
+      INT32 rc = SDB_OK ;
+      SDB_ASSERT( e.type() != type, "should not be same" ) ;
+      switch ( type )
+      {
+      case MinKey :
+         builder.appendMinKey( fieldName ) ;
+         break ;
+      case EOO :
+         rc = SDB_INVALIDARG ;
+         break ;
+      case NumberDouble :
+      {
+         if ( String != e.type() )
+         {
+            builder.appendNumber( fieldName, e.numberDouble() ) ;
+         }
+         else
+         {
+            try
+            {
+               FLOAT64 f = 0.0 ;
+               f = boost::lexical_cast<FLOAT64>( e.valuestr () ) ;
+               builder.appendNumber( fieldName, f ) ;
+            }
+            catch ( boost::bad_lexical_cast &e )
+            {
+               builder.appendNumber( fieldName, 0.0 ) ;
+            }
+         }
+         break ;
+      }
+      case String :
+      {
+         if ( NumberInt == e.type() )
+         {
+            utilString us ;
+            rc = us.appendINT32( e.numberInt() ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "failed to append int32:%d", rc ) ;
+               goto error ;
+            }
+            builder.append( fieldName, us.str() ) ;
+         }
+         else if ( NumberLong == e.type() )
+         {
+            utilString us ;
+            rc = us.appendINT64( e.numberLong() ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "failed to append int64:%d", rc ) ;
+               goto error ;
+            }
+            builder.append( fieldName, us.str() ) ;
+         }
+         else if ( NumberDouble == e.type() )
+         {
+            utilString us ;
+            rc = us.appendDouble( e.numberDouble() ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "failed to append float64:%d", rc ) ;
+               goto error ;
+            }
+            builder.append( fieldName, us.str() ) ;
+         }
+         else if ( Date == e.type() )
+         {
+            CHAR buffer[64] = { 0 };
+            time_t timer = (time_t)( e.date() / 1000 ) ;
+            struct tm psr ;
+            local_time ( &timer, &psr ) ;
+            sprintf ( buffer,
+                      "%04d-%02d-%02d",
+                      psr.tm_year + 1900,
+                      psr.tm_mon + 1,
+                      psr.tm_mday ) ;
+            builder.append( fieldName, buffer ) ;
+         }
+         else if ( Timestamp == e.type() )
+         {
+            Date_t date = e.timestampTime () ;
+            unsigned int inc = e.timestampInc () ;
+            char buffer[128] = { 0 };
+            time_t timer = (time_t)(date.millis/1000) ;
+            struct tm psr ;
+            local_time ( &timer, &psr ) ;
+            sprintf ( buffer,
+                      "{\"$timestamp\": \"%04d-%02d-%02d-%02d.%02d.%02d.%06d\"}",
+                      psr.tm_year + 1900,
+                      psr.tm_mon + 1,
+                      psr.tm_mday,
+                      psr.tm_hour,
+                      psr.tm_min,
+                      psr.tm_sec,
+                      inc ) ;
+            builder.append( fieldName, buffer ) ;
+         }
+         else if ( jstOID == e.type() )
+         {
+            builder.append( fieldName, e.OID().str() ) ;
+         }
+         else
+         {
+            builder.appendNull( fieldName ) ;
+         }
+         break ;
+      }   
+      case Object :
+      case Array :
+      case BinData :
+      case Undefined :
+         builder.appendNull( fieldName ) ;
+         break ;
+      case jstOID :
+      {
+         if ( String == e.type() &&
+              25 == e.valuestrsize() )
+         {
+            bson::OID o( e.valuestr() ) ;
+            builder.appendOID( fieldName, &o ) ;
+         }
+         else
+         {
+            builder.appendNull( fieldName ) ;
+         }
+         break ;
+      }
+      case Bool :
+         builder.appendBool( fieldName, e.booleanSafe() ) ;
+         break ;
+      case Date :
+      {
+         UINT64 tm = 0 ;
+         if ( e.isNumber() )
+         {
+            Date_t d( e.numberLong() ) ;
+            builder.appendDate( fieldName, d ) ;
+         }
+         else if ( String == e.type() &&
+                   SDB_OK == utilStr2Date( e.valuestr(), tm ))
+         {
+            builder.appendDate( fieldName, Date_t( tm ) ) ;
+         }
+         else
+         {
+            builder.appendNull( fieldName ) ;
+         }
+         break ;
+      }
+      case jstNULL :
+      case RegEx :
+      case DBRef :
+      case Code :
+      case Symbol :
+      case CodeWScope :
+         builder.appendNull( fieldName ) ;
+         break ;
+      case NumberInt :
+      {
+         if ( String != e.type() )
+         {
+            builder.appendNumber( fieldName, e.numberInt() ) ;
+         }
+         else
+         {
+            try
+            {
+               INT32 i = 0 ;
+               i = boost::lexical_cast<INT32>( e.valuestr () ) ;
+               builder.appendNumber( fieldName, i ) ;
+            }
+            catch ( boost::bad_lexical_cast &e )
+            {
+               builder.appendNumber( fieldName, 0 ) ;
+            }
+         }
+         break ;
+      }
+      case Timestamp :
+      {
+         time_t tm = 0 ;;
+         UINT64 usec = 0 ;
+         if ( e.isNumber() )
+         {
+            /// millis
+            builder.appendTimestamp( fieldName, e.numberLong() ) ;
+         }
+         else if ( String == e.type() &&
+                   SDB_OK == engine::utilStr2TimeT( e.valuestr(),
+                                                    tm,
+                                                    &usec ))
+         {
+            builder.appendTimestamp( fieldName, tm * 1000, usec ) ;
+         }
+         else
+         {
+            builder.appendNull( fieldName ) ;
+         }
+         break ;
+      }
+      case NumberLong :
+      {
+         if ( String != e.type() )
+         {
+            builder.appendNumber( fieldName, e.numberLong() ) ;
+         }
+         else
+         {
+            try
+            {
+               INT64 l = 0  ;
+               l = boost::lexical_cast<INT64>( e.valuestr () ) ;
+               builder.appendNumber( fieldName, l ) ;
+            }
+            catch ( boost::bad_lexical_cast &e )
+            {
+               builder.appendNumber( fieldName, 0 ) ;
+            }
+         }
+         break ;
+      } 
+      case MaxKey :
+         builder.appendMaxKey( fieldName ) ;
+         break ;
+      default:
+         rc = SDB_INVALIDARG ;
+         break ;
+      }
+
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "invalid cast type:%d", type ) ;
+         goto error ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   ///PD_TRACE_DECLARE_FUNCTION ( SDB__MTHCASTBUILD, "mthCastBuild" )
+   INT32 mthCastBuild( const CHAR *fieldName,
+                       const bson::BSONElement &e,
+                       _mthSAction *action,
+                       bson::BSONObjBuilder &builder )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__MTHCASTBUILD ) ;
+      BSONElement arg ;
+      BSONType type = EOO ;
+
+      if ( e.eoo() )
+      {
+         goto done ;
+      }
+
+      arg = action->getArg().getField( "arg1" ) ;
+      if ( !arg.isNumber() )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "invalid arg element:%s",
+                 arg.toString( TRUE, TRUE ).c_str() ) ;
+         goto error ;
+      }
+
+      type = ( BSONType )( arg.numberInt() ) ;
+      if ( EOO == type )
+      {
+         PD_LOG( PDERROR, "can not cast to eoo" ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      else if ( e.type() == type )
+      {
+         builder.appendAs( e, fieldName ) ;
+      }
+      else
+      {
+         rc = _mthCast( fieldName, e, type, builder ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to cast element[%s] to"
+                    " type[%d]", e.toString( TRUE, TRUE ).c_str(), type ) ;
+            goto error ;
+                   
+         }
+      }
+   done:
+      PD_TRACE_EXITRC( SDB__MTHCASTBUILD, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   ///PD_TRACE_DECLARE_FUNCTION ( SDB__MTHCASTGET, "mthCastGet" )
+   INT32 mthCastGet( const CHAR *fieldName,
+                     const bson::BSONElement &in,
+                     _mthSAction *action,
+                     bson::BSONElement &out )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__MTHCASTGET ) ;
+      BSONElement arg ;
+      BSONType type = EOO ;
+      BSONObjBuilder builder ;
+
+      if ( in.eoo() )
+      {
+         goto done ;
+      }
+
+      arg = action->getArg().getField( "arg1" ) ;
+      if ( !arg.isNumber() )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "invalid arg element:%s",
+                 arg.toString( TRUE, TRUE ).c_str() ) ;
+         goto error ;
+      }
+
+      type = ( BSONType )( arg.numberInt() ) ;
+      if ( in.type() == type )
+      {
+         out = in ;
+         goto done ;
+      }
+      else
+      {
+         rc = _mthCast( fieldName, in, type, builder ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to cast element[%s] to"
+                    " type[%d]", in.toString( TRUE, TRUE ).c_str(), type ) ;
+            goto error ;
+
+         }
+         action->setObj( builder.obj() ) ;
+         out = action->getObj().getField( fieldName ) ;    
+      }
+   done:
+      PD_TRACE_EXITRC( SDB__MTHCASTGET, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   static void _getSubStr( const CHAR *str,
+                           INT32 strLen,
+                           INT32 begin,
+                           INT32 limit,
+                           const CHAR *&pos,
+                           INT32 &cpLen )
+   {
+      const CHAR *cpBegin = NULL ;
+
+      if ( strLen < 0 )
+      {
+         goto error ;
+      }
+
+      if ( 0 <= begin )
+      {
+         if ( strLen <= begin )
+         {
+            goto error ;
+         }
+         cpBegin = str + begin ;
+         cpLen = strLen - begin ;
+      }
+      else
+      {
+         INT32 beginPos = strLen + begin ;
+         if ( beginPos < 0 )
+         {
+            goto error ;
+         }
+         cpBegin = str + beginPos ;
+         cpLen = strLen - beginPos ;
+      }
+
+      if ( 0 <= limit && limit < cpLen )
+      {
+         cpLen = limit ;
+      }
+
+      pos = cpBegin ;
+   done:
+      return ;
+   error:
+      pos = NULL ;
+      cpLen = -1 ;
+      goto done ;
+   }
+
+   ///PD_TRACE_DECLARE_FUNCTION ( SDB__MTHSUBSTRBUILD, "mthSubStrBuild" )
+   INT32 mthSubStrBuild( const CHAR *fieldName,
+                         const bson::BSONElement &e,
+                         _mthSAction *action,
+                         bson::BSONObjBuilder &builder )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__MTHSUBSTRBUILD ) ;
+      SDB_ASSERT( NULL != action, "can not be null" ) ;
+      INT32 begin = 0 ;
+      INT32 limit = -1 ;
+      if ( e.eoo() )
+      {
+         goto done ;
+      }
+      else if ( String != e.type() )
+      {
+         builder.appendNull( fieldName ) ;
+      }
+      else
+      {
+         begin = action->getArg().getIntField( "arg1" ) ;
+         limit = action->getArg().getIntField( "arg2" ) ;
+         const CHAR *pos = NULL ;
+         INT32 cpLen = -1 ;
+         _getSubStr( e.valuestr(),
+                     e.valuestrsize() - 1,
+                     begin, limit,
+                     pos, cpLen ) ;
+         if ( NULL == pos || -1 == cpLen )
+         {
+            builder.append( fieldName, "" ) ;
+         }
+         else
+         {
+            builder.appendStrWithNoTerminating( fieldName, pos, cpLen ) ;
+         }
+      }
+   done:
+      PD_TRACE_EXITRC( SDB__MTHSUBSTRBUILD, rc ) ;
+      return rc ;
+   }
+
+   ///PD_TRACE_DECLARE_FUNCTION ( SDB__MTHSUBSTRGET, "mthSubStrGet" )
+   INT32 mthSubStrGet( const CHAR *fieldName,
+                       const bson::BSONElement &in,
+                       _mthSAction *action,
+                       bson::BSONElement &out )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__MTHSUBSTRGET ) ;
+      SDB_ASSERT( NULL != action, "can not be null" ) ;
+      BSONObjBuilder builder ;
+      BSONObj obj ;
+      if ( in.eoo() )
+      {
+         goto done ;
+      }
+      else if ( String != in.type() )
+      {
+         builder.appendNull( fieldName ) ;
+      }
+      else
+      {
+         INT32 begin = action->getArg().getIntField( "arg1" ) ;
+         INT32 limit = action->getArg().getIntField( "arg2" ) ;
+         const CHAR *pos = NULL ;
+         INT32 cpLen = -1 ;
+         _getSubStr( in.valuestr(),
+                     in.valuestrsize(),
+                     begin, limit,
+                     pos, cpLen ) ;
+         if ( NULL == pos || -1 == cpLen )
+         {
+            builder.append( fieldName, "" ) ;
+            obj = builder.obj() ;
+         }
+         else if ( pos == in.valuestr() &&
+                   cpLen == in.valuestrsize() - 1 )
+         {
+            out = in ;
+            goto done ;
+         }
+         else
+         {
+            builder.appendStrWithNoTerminating( fieldName, pos, cpLen ) ;
+            obj = builder.obj() ;
+         }
+      }
+
+      if ( !obj.isEmpty() )
+      {
+         action->setObj( obj ) ;
+         out = action->getObj().getField( fieldName ) ;      
+      }
+      
+      PD_TRACE_EXITRC( SDB__MTHSUBSTRGET, rc ) ;
+   done:
+      return rc ;
+   }
+
+   ///PD_TRACE_DECLARE_FUNCTION ( SDB__MTHSTRLENBUILD, "mthStrLenBuild" )
+   INT32 mthStrLenBuild( const CHAR *fieldName,
+                         const bson::BSONElement &e,
+                         _mthSAction *action,
+                         bson::BSONObjBuilder &builder )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__MTHSTRLENBUILD ) ;
+      SDB_ASSERT( NULL != action, "can not be null" ) ;
+      if ( e.eoo() )
+      {
+         goto done ;
+      }
+      else if ( String != e.type() )
+      {
+         builder.appendNull( fieldName ) ;
+      }
+      else
+      {
+         builder.append( fieldName, e.valuestrsize() - 1 ) ;
+      }
+   done:
+      PD_TRACE_EXITRC( SDB__MTHSTRLENBUILD, rc ) ;
+      return rc ;
+   }
+
+   ///PD_TRACE_DECLARE_FUNCTION ( SDB__MTHSTRLENGET, "mthStrLenGet" )
+   INT32 mthStrLenGet( const CHAR *fieldName,
+                       const bson::BSONElement &in,
+                       _mthSAction *action,
+                       bson::BSONElement &out )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__MTHSTRLENGET ) ;
+      BSONObjBuilder builder ;
+      BSONObj obj ;
+      if ( in.eoo() )
+      {
+         goto done ;
+      }
+      else if ( String != in.type() )
+      {
+         builder.appendNull( fieldName ) ;
+         obj = builder.obj() ;
+      }
+      else
+      {
+         builder.append( fieldName, in.valuestrsize() - 1 ) ;
+         obj = builder.obj() ;
+      }
+
+      if ( !obj.isEmpty() )
+      {
+         action->setObj( obj ) ;
+         out = action->getObj().getField( fieldName ) ;
+      }
+   done:
+      PD_TRACE_EXITRC( SDB__MTHSTRLENGET, rc ) ;
+      return rc ;
+   }
+
+   static BOOLEAN _isLower( const CHAR *str )
+   {
+      BOOLEAN rc = TRUE ; 
+      const CHAR *p = str ;
+      while ( '\0' != *p )
+      {
+         if ( 'A' <= *p &&
+              *p <= 'Z' )
+         {
+            rc = FALSE ;
+            break ;
+         }
+         ++p ;
+      }
+      return rc ;
+   }
+
+   static BOOLEAN _isUpper( const CHAR *str )
+   {
+      BOOLEAN rc = TRUE ;
+      const CHAR *p = str ;
+      while ( '\0' != *p )
+      {
+         if ( 'a' <= *p &&
+              *p <= 'z' )
+         {
+            rc = FALSE ;
+            break ;
+         }
+         ++p ;
+      }
+      return rc ;
+   }
+
+   /// TODO:move lower and upper to utilStr.hpp
+   static INT32 _lower( const CHAR *str,
+                        UINT32 len,
+                        utilString &us )
+   {
+      INT32 rc = SDB_OK ;
+      us.resize( len ) ;
+      for ( UINT32 i = 0; i < len; ++i )
+      {
+         const CHAR *p = str + i ;
+         if ( 'A' <= *p &&
+              *p <= 'Z' )
+         {
+            rc = us.append( *p + 32 ) ;
+         }
+         else
+         {
+             rc = us.append( *p ) ;
+         }
+
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to append str:%d", rc ) ;
+            goto error ;
+         }
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   static INT32 _upper( const CHAR *str,
+                        UINT32 len,
+                        utilString &us )
+   {
+      INT32 rc = SDB_OK ;
+      us.resize( len ) ;
+      for ( UINT32 i = 0; i < len; ++i )
+      {
+         const CHAR *p = str + i ;
+         if ( 'a' <= *p &&
+              *p <= 'z' )
+         {
+            rc = us.append( *p - 32 ) ;
+         }
+         else
+         {
+             rc = us.append( *p ) ;
+         }
+
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to append str:%d", rc ) ;
+            goto error ;
+         }
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   ///PD_TRACE_DECLARE_FUNCTION ( SDB__MTHLOWERBUILD, "mthLowerBuild" )
+   INT32 mthLowerBuild( const CHAR *fieldName,
+                        const bson::BSONElement &e,
+                        _mthSAction *action,
+                        bson::BSONObjBuilder &builder )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__MTHLOWERBUILD ) ;
+      if ( e.eoo() )
+      {
+         goto done ;
+      }
+      else if ( String != e.type() )
+      {
+         builder.appendNull( fieldName ) ;
+      }
+      else
+      {
+         utilString us ;
+         rc = _lower( e.valuestr(),
+                      e.valuestrsize(),
+                      us ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to create lower str:%d", rc ) ;
+            goto error ;
+         }
+
+         builder.append( fieldName, us.str() ) ;
+      }
+   done:
+      PD_TRACE_EXITRC( SDB__MTHLOWERBUILD, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   ///PD_TRACE_DECLARE_FUNCTION ( SDB__MTHLOWERGET, "mthLowerGet" )
+   INT32 mthLowerGet( const CHAR *fieldName,
+                      const bson::BSONElement &in,
+                      _mthSAction *action,
+                      bson::BSONElement &out )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__MTHLOWERGET ) ;
+      BSONObjBuilder builder ;
+      BSONObj obj ;
+
+      if ( in.eoo() )
+      {
+         goto done ;
+      }
+      else if ( String != in.type() )
+      {
+         builder.appendNull( fieldName ) ;
+         obj = builder.obj() ;
+      }
+      else if ( _isLower( in.valuestr() ) )
+      {
+         out = in ;
+         goto done ;
+      }
+      else
+      {
+         utilString us ;
+         rc = _lower( in.valuestr(),
+                      in.valuestrsize(),
+                      us ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to create lower str:%d", rc ) ;
+            goto error ;
+         }
+
+         builder.append( fieldName, us.str() ) ;
+         obj = builder.obj() ;
+      }
+
+      if ( !obj.isEmpty() )
+      {
+         action->setObj( obj ) ;
+         out = action->getObj().getField( fieldName ) ;      
+      }
+   done:
+      PD_TRACE_EXITRC( SDB__MTHLOWERGET, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   ///PD_TRACE_DECLARE_FUNCTION ( SDB__MTHUPPERBUILD, "mthUpperBuild" )
+   INT32 mthUpperBuild( const CHAR *fieldName,
+                        const bson::BSONElement &e,
+                        _mthSAction *action,
+                        bson::BSONObjBuilder &builder )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__MTHUPPERBUILD ) ;
+      if ( e.eoo() )
+      {
+         goto done ;
+      }
+      else if ( String != e.type() )
+      {
+         builder.appendNull( fieldName ) ;
+      }
+      else
+      {
+         utilString us ;
+         rc = _upper( e.valuestr(),
+                      e.valuestrsize(),
+                      us ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to create upper str:%d", rc ) ;
+            goto error ;
+         }
+
+         builder.append( fieldName, us.str() ) ;
+      }
+   done:
+      PD_TRACE_EXITRC( SDB__MTHUPPERBUILD, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   ///PD_TRACE_DECLARE_FUNCTION ( SDB__MTHUPPERGET, "mthUpperGet" )
+   INT32 mthUpperGet( const CHAR *fieldName,
+                      const bson::BSONElement &in,
+                      _mthSAction *action,
+                      bson::BSONElement &out )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__MTHUPPERGET ) ;
+      BSONObjBuilder builder ;
+      BSONObj obj ;
+
+      if ( in.eoo() )
+      {
+         goto done ;
+      }
+      else if ( String != in.type() )
+      {
+         builder.appendNull( fieldName ) ;
+         obj = builder.obj() ;
+      }
+      else if ( _isUpper( in.valuestr() ) )
+      {
+         out = in ;
+         goto done ;
+      }
+      else
+      {
+         utilString us ;
+         rc = _upper( in.valuestr(),
+                      in.valuestrsize(),
+                      us ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to create upper str:%d", rc ) ;
+            goto error ;
+         }
+
+         builder.append( fieldName, us.str() ) ;
+         obj = builder.obj() ;
+      }
+
+      if ( !obj.isEmpty() )
+      {
+         action->setObj( obj ) ;
+         out = action->getObj().getField( fieldName ) ;
+      }
+   done:
+      PD_TRACE_EXITRC( SDB__MTHUPPERGET, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   /// lr: -1(ltrim) 0(trim) 1(rtrim)
+   static BOOLEAN isTrimed( const CHAR *str,
+                            INT32 size,
+                            INT8 lr )
+   {
+      BOOLEAN rc = TRUE ;
+      SDB_ASSERT( NULL != str, "can not be null" ) ;
+      INT32 strLen = 0 <= size ? size : ossStrlen( str ) ;
+      if ( 0 == strLen )
+      {
+         goto done ;
+      }
+
+      if ( lr <= 0 )
+      {
+         if ( ' ' == *str ||
+              '\t' == *str )
+         {
+            rc = FALSE ;
+            goto done ;
+         }
+      }
+
+      if ( 0 <= lr )
+      {
+         if ( ' ' == *( str + strLen - 1 ) ||
+              '\t' == *( str + strLen - 1 ) )
+         {
+            rc = FALSE ;
+            goto done ;
+         }
+      }
+   done:
+      return rc ;
+   }
+
+   static void ltrim( const CHAR *str,
+                      const CHAR *&trimed )
+   {
+      const CHAR *p = str ;
+      while ( '\0' != *p )
+      {
+         if ( ' ' != *p &&
+              '\t' != *p )
+         {
+            break ;
+         }
+         ++p ;
+      }
+      trimed = p ;
+      return ;
+   }
+
+   static INT32 rtrim( const CHAR *str,
+                       INT32 size,
+                       _utilString &us )
+   {
+      INT32 rc = SDB_OK ;
+      INT32 pos = size - 1 ;
+      while ( 0 <= pos )
+      {
+         const CHAR *p = str + pos ;
+         if ( ' ' != *p &&
+              '\t' != *p )
+         {
+            break ;
+         }
+         --pos ;
+      }
+
+      if ( 0 <= pos )
+      {
+         rc = us.append( str, pos + 1 ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to append string:%d", rc ) ;
+            goto error ;
+         }
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   static INT32 trim( const CHAR *str,
+                      INT32 size,
+                      INT8 lr,
+                      _utilString &us )
+   {
+      INT32 rc = SDB_OK ;
+      SDB_ASSERT( NULL != str, "can not be null" ) ;
+      INT32 strLen = 0 <= size ? size : ossStrlen( str ) ;
+      const CHAR *p = str ;
+      if ( 0 == strLen )
+      {
+         goto done ;
+      }
+
+      if ( lr <= 0 )
+      {
+         const CHAR *newP = NULL ;
+         ltrim( p, newP ) ;
+         p = newP ;
+      }
+
+      if ( 0 <= lr )
+      {
+         rc = rtrim( p, size - ( p - str ), us ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to trim right site:%d", rc ) ;
+            goto error ;
+         }
+      }
+      else
+      {
+         /// necessary to avoid one more copy when 
+         /// str is like "  abc" ?
+         rc = us.append( p, size - ( p - str ) ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to trim right site:%d", rc ) ;
+            goto error ;
+         }
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   ///PD_TRACE_DECLARE_FUNCTION ( SDB__MTHLRTRIMBUILD, "mthLRTrimBuild" )
+   static INT32 mthLRTrimBuild( const CHAR *fieldName,
+                                const bson::BSONElement &e,
+                                _mthSAction *action,
+                                INT8 lr,
+                                bson::BSONObjBuilder &builder )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__MTHLRTRIMBUILD ) ;
+      if ( e.eoo() )
+      {
+         goto done ;
+      }
+      else if ( String != e.type() )
+      {
+         builder.appendNull( fieldName ) ;
+      }
+      else if ( isTrimed( e.valuestr(),
+                          e.valuestrsize() - 1,
+                          lr ) )
+      {
+         builder.appendAs( e, fieldName ) ;
+      }
+      else
+      {
+         utilString us ;
+         rc = trim( e.valuestr(),
+                    e.valuestrsize() - 1,
+                    lr, us ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to trim string:%d", rc ) ;
+            goto error ;
+         }
+
+         builder.append( fieldName, us.str() ) ;
+      }
+   done:
+      PD_TRACE_EXITRC( SDB__MTHLRTRIMBUILD, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   ///PD_TRACE_DECLARE_FUNCTION ( SDB__MTHLRTRIMGET, "mthLRTrimGet" )
+   INT32 mthLRTrimGet( const CHAR *fieldName,
+                       const bson::BSONElement &in,
+                       _mthSAction *action,
+                       INT8 lr,
+                       bson::BSONElement &out )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__MTHLRTRIMGET ) ;
+      BSONObjBuilder builder ;
+      if ( in.eoo() )
+      {
+         goto done ;
+      }
+      else if ( String != in.type() )
+      {
+         builder.appendNull( fieldName ) ;
+      }
+      else if ( isTrimed( in.valuestr(),
+                          in.valuestrsize() - 1 ,
+                          lr ) )
+      {
+         out = in ;
+         goto done ;
+      }
+      else
+      {
+         utilString us ;
+         rc = trim( in.valuestr(),
+                    in.valuestrsize() - 1,
+                    lr, us ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to trim string:%d", rc ) ;
+            goto error ;
+         }
+
+         builder.append( fieldName, us.str() ) ;
+      }
+
+      action->setObj( builder.obj() ) ;
+      out = action->getObj().getField( fieldName ) ;
+   done:
+      PD_TRACE_EXITRC( SDB__MTHLRTRIMGET, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   ///PD_TRACE_DECLARE_FUNCTION ( SDB__MTHTRIMBUILD, "mthTrimBuild" )
+   INT32 mthTrimBuild( const CHAR *fieldName,
+                       const bson::BSONElement &e,
+                       _mthSAction *action,
+                       bson::BSONObjBuilder &builder )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__MTHTRIMBUILD ) ;
+      rc = mthLRTrimBuild( fieldName, e, action, 0, builder ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to trim string:%d", rc ) ;
+         goto error ;
+      }
+   done:
+      PD_TRACE_EXITRC( SDB__MTHTRIMBUILD, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   ///PD_TRACE_DECLARE_FUNCTION ( SDB__MTHTRIMGET, "mthTrimGet" )
+   INT32 mthTrimGet( const CHAR *fieldName,
+                     const bson::BSONElement &in,
+                     _mthSAction *action,
+                     bson::BSONElement &out )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__MTHTRIMGET ) ;
+      rc = mthLRTrimGet( fieldName, in, action, 0, out ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to trim string:%d", rc ) ;
+         goto error ;
+      }
+   done:
+      PD_TRACE_EXITRC( SDB__MTHTRIMGET, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   ///PD_TRACE_DECLARE_FUNCTION ( SDB__MTHLTRIMBUILD, "mthLTrimBuild" )
+   INT32 mthLTrimBuild( const CHAR *fieldName,
+                        const bson::BSONElement &e,
+                        _mthSAction *action,
+                        bson::BSONObjBuilder &builder )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__MTHLTRIMBUILD ) ;
+      rc = mthLRTrimBuild( fieldName, e, action, -1, builder ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to trim string:%d", rc ) ;
+         goto error ;
+      }
+   done:
+      PD_TRACE_EXITRC( SDB__MTHLTRIMBUILD, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   ///PD_TRACE_DECLARE_FUNCTION ( SDB__MTHLTRIMGET, "mthLTrimGet" )
+   INT32 mthLTrimGet( const CHAR *fieldName,
+                      const bson::BSONElement &in,
+                      _mthSAction *action,
+                      bson::BSONElement &out )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__MTHLTRIMGET ) ;
+      rc = mthLRTrimGet( fieldName, in, action, -1, out ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to trim string:%d", rc ) ;
+         goto error ;
+      }
+   done:
+      PD_TRACE_EXITRC( SDB__MTHLTRIMGET, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   ///PD_TRACE_DECLARE_FUNCTION ( SDB__MTHRTRIMBUILD, "mthRTrimBuild" )
+   INT32 mthRTrimBuild( const CHAR *fieldName,
+                        const bson::BSONElement &e,
+                        _mthSAction *action,
+                        bson::BSONObjBuilder &builder )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__MTHRTRIMBUILD ) ;
+      rc = mthLRTrimBuild( fieldName, e, action, 1, builder ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to trim string:%d", rc ) ;
+         goto error ;
+      }
+   done:
+      PD_TRACE_EXITRC( SDB__MTHRTRIMBUILD, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   ///PD_TRACE_DECLARE_FUNCTION ( SDB__MTHRTRIMGET, "mthRTrimGet" )
+   INT32 mthRTrimGet( const CHAR *fieldName,
+                      const bson::BSONElement &in,
+                      _mthSAction *action,
+                      bson::BSONElement &out )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__MTHRTRIMGET ) ;
+      rc = mthLRTrimGet( fieldName, in, action, 1, out ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to trim string:%d", rc ) ;
+         goto error ;
+      }
+   done:
+      PD_TRACE_EXITRC( SDB__MTHRTRIMGET, rc ) ;
+      return rc ;
+   error:
+      goto done ;
    }
 }
 

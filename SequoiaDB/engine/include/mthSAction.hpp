@@ -102,19 +102,14 @@ namespace engine
          return ;
       }
 
-      OSS_INLINE void setSlicePair( INT32 begin,
-                                    INT32 step )
+      OSS_INLINE const bson::BSONObj &getArg() const
       {
-         _begin = begin ;
-         _limit = step ;
-         return ;
+         return _arg ;
       }
 
-      OSS_INLINE void getSlicePair( INT32 &begin,
-                                    INT32 &step )
+      OSS_INLINE void setArg( const bson::BSONObj &obj )
       {
-         begin = _begin ;
-         step = _limit ;
+         _arg = obj ;
          return ;
       }
 
@@ -157,9 +152,8 @@ namespace engine
       /// that we can use different child classes.
       bson::BSONObj _obj ;
       _mthMatcher _matcher ;
-      INT32 _begin ;
-      INT32 _limit ;
-      
+
+      bson::BSONObj _arg ;
    } ;
    typedef class _mthSAction mthSAction ;
 }

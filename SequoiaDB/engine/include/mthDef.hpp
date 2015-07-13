@@ -43,6 +43,18 @@ namespace engine
    #define MTH_S_ELEMMATCH      MTH_S_PREFIX"elemMatch"
    #define MTH_S_ELEMMATCHONE   MTH_S_PREFIX"elemMatchOne"
    #define MTH_S_ALIAS          MTH_S_PREFIX"alias"
+   #define MTH_S_ABS            MTH_S_PREFIX"abs"
+   #define MTH_S_CEILING        MTH_S_PREFIX"ceiling"
+   #define MTH_S_FLOOR          MTH_S_PREFIX"floor"
+   #define MTH_S_MOD            MTH_S_PREFIX"mod"
+   #define MTH_S_SUBSTR         MTH_S_PREFIX"substr"
+   #define MTH_S_STRLEN         MTH_S_PREFIX"strlen"
+   #define MTH_S_LOWER          MTH_S_PREFIX"lower"
+   #define MTH_S_UPPER          MTH_S_PREFIX"upper"
+   #define MTH_S_LTRIM          MTH_S_PREFIX"ltrim"
+   #define MTH_S_RTRIM          MTH_S_PREFIX"rtrim"
+   #define MTH_S_TRIM           MTH_S_PREFIX"trim"
+   #define MTH_S_CAST           MTH_S_PREFIX"cast"
 
    typedef UINT32 MTH_S_ATTRIBUTE ;
 

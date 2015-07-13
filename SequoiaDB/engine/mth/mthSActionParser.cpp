@@ -40,6 +40,9 @@
 #include "mthSliceParser.hpp"
 #include "mthElemMatchParser.hpp"
 #include "mthElemMatchOneParser.hpp"
+#include "mthMathParser.hpp"
+#include "mthStrParser.hpp"
+#include "mthCastParser.hpp"
 
 #define MTH_ADD_PARSER( parser )\
         do                                                                                    \
@@ -160,11 +163,13 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__MTHSACTIONPARSER__BUILDSLICEACTION ) ;
+      BSONObjBuilder builder ;
       action.setAttribute( MTH_S_ATTR_PROJECTION ) ;
       action.setFunc( &mthSliceBuild,
                       &mthSliceGet ) ;
       action.setName( MTH_S_SLICE ) ;
-      action.setSlicePair( begin, limit ) ;
+      builder.append( "arg1", begin ).append( "arg2", limit ) ;
+      action.setArg( builder.obj() ) ;
       PD_TRACE_EXITRC( SDB__MTHSACTIONPARSER__BUILDSLICEACTION, rc ) ;
       return rc ;
    }
@@ -194,6 +199,42 @@ namespace engine
 
       /// $elemMatchOne
       MTH_ADD_PARSER( _mthElemMatchOneParser ) ;
+
+      /// $abs
+      MTH_ADD_PARSER( _mthAbsParser ) ;
+
+      /// $ceiling
+      MTH_ADD_PARSER( _mthCeilingParser ) ;
+
+      /// $floor
+      MTH_ADD_PARSER( _mthFloorParser ) ;
+
+      /// $mod
+      MTH_ADD_PARSER( _mthModParser ) ;
+
+      /// $substr
+      MTH_ADD_PARSER( _mthSubStrParser ) ;
+
+      /// $strlen
+      MTH_ADD_PARSER( _mthStrLenParser ) ;
+
+      /// $lower
+      MTH_ADD_PARSER( _mthLowerParser ) ;
+
+      /// $upper
+      MTH_ADD_PARSER( _mthUpperParser ) ;
+
+      /// $trim
+      MTH_ADD_PARSER( _mthTrimParser ) ;
+
+      /// $ltrim
+      MTH_ADD_PARSER( _mthLTrimParser ) ;
+
+      /// $rtrim
+      MTH_ADD_PARSER( _mthRTrimParser ) ;
+
+      /// $cast
+      MTH_ADD_PARSER( _mthCastParser ) ;
    done:
       PD_TRACE_EXITRC( SDB__MTHSACTIONPARSER__REGISTERPARSERS, rc ) ;
       return rc ;
