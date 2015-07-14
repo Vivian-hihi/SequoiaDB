@@ -432,7 +432,7 @@ namespace engine
       /// 30s is not update validation, we think db is abnormal
       if ( tick > validationTick && tick - validationTick > s_maxTick )
       {
-         PD_LOG( PDERROR, "db is abnormal, tick[%lld], validation tick[%ldd]",
+         PD_LOG( PDERROR, "db is abnormal, tick[%lld], validation tick[%lld]",
                  tick, validationTick ) ;
          return TRUE ;
       }
