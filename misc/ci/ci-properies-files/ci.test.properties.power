@@ -34,4 +34,3 @@ testcase.path=/tmp/sequoiadb_test/deploy/hlt
 import.file.name=basic-testcases-time.json
 
 deploy.tar.file.name=deploy.tar.gz
-db.path=/opt/sequoiadb
