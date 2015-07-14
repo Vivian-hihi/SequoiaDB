@@ -94,6 +94,8 @@ namespace engine
                )->getRouteAgent()->reqIDNew();
             pMsg->flags = SDB_COORD_REMOTE_DISC;
             pMsg->numReturned = 0;
+            pMsg->contextID = -1 ;
+            pMsg->startFrom = 0 ;
             _pEduCB->postEvent ( pmdEDUEvent( PMD_EDU_EVENT_MSG,
                                               PMD_EDU_MEM_ALLOC,
                                               pMsg ) ) ;
