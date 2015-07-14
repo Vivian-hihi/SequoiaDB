@@ -8560,17 +8560,17 @@ error:
 
 SDB_EXPORT INT32 sdbCloseLob( sdbLobHandle *lobHandle )
 {
-   INT32 rc = SDB_OK ;
-   sdbLobStruct *lob = ( sdbLobStruct * )( *lobHandle );
-   SINT64 contextID = -1 ;
-   BOOLEAN result = TRUE ;
+   INT32 rc          = SDB_OK ;
+   sdbLobStruct *lob = NULL ;
+   SINT64 contextID  = -1 ;
+   BOOLEAN result    = TRUE ;
 
    if ( NULL == lobHandle )
    {
       rc = SDB_INVALIDARG ;
       goto error ;
    }
-
+   lob = ( sdbLobStruct * )( *lobHandle );
    HANDLE_CHECK( *lobHandle, lob, SDB_HANDLE_TYPE_LOB ) ;
 
    if ( NULL == lob->_sock )

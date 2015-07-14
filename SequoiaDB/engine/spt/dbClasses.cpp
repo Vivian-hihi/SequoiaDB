@@ -1765,7 +1765,7 @@ static JSBool collection_put_lob( JSContext *cx , uintN argc , jsval *vp )
    if ( NULL != jsOid )
    {
       oidStr = (CHAR *) JS_EncodeString ( cx , jsOid ) ;
-      VERIFY( path ) ;
+      VERIFY( oidStr ) ;
    }
 
    if ( NULL != oidStr )
