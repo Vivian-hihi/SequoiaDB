@@ -5,7 +5,7 @@
  *              This program will also populate some testing data and create
  *              indexes
  * Notice:
- *              Please add reference of 'sdbcs.dll' in your project.
+ *              Please add reference of 'sequoiadb.dll' in your project.
  *
  * ****************************************************************************/
 
