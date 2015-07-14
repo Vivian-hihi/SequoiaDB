@@ -583,6 +583,7 @@ namespace engine
          if ( 0 != firstLsn.compareOffset( comingLsn.offset ) ||
               !pLog->isFull() )
          {
+            ++i ;
             break ;
          }
          comingLsn = pLog->getComingLSN() ;
@@ -599,7 +600,7 @@ namespace engine
       // 3. reset others
       for ( ; i < _vecLogCL.size() ; ++i )
       {
-         tmpWork = _incFileID( _work ) ;
+         tmpWork = _incFileID( tmpWork ) ;
          pLog = _vecLogCL[ tmpWork ] ;
          firstLsn = pLog->getFirstLSN() ;
          if ( !firstLsn.invalid() )
@@ -607,8 +608,12 @@ namespace engine
             PD_LOG( PDWARNING, "Truncate system log[%s]",
                     pLog->toString().c_str() ) ;
             rc = pLog->truncate( _pEduCB ) ;
-            PD_LOG( PDERROR, "Truncate system log[%s] failed, rc: %d",
-                    pLog->toString().c_str(), rc ) ;
+            if ( rc )
+            {
+               PD_LOG( PDERROR, "Truncate system log[%s] failed, rc: %d",
+                       pLog->toString().c_str(), rc ) ;
+               goto error ;
+            }
          }
       }
 
