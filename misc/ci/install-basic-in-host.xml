@@ -10,7 +10,7 @@
 
 <project name="Install-Software" default="install-software">
 	<property file="${test.basedir}/ci.test.properties" />
-	<!-- <property name="db.path" value="${install.path}/sequoiadb" /> -->
+	<property name="db.path" value="${install.path}/sequoiadb" />
 	<taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
 		<classpath>
 			<pathelement location="${test.machine.software.path}/ant-sdbtasks.jar" />
@@ -18,7 +18,7 @@
 	</taskdef>
 
 	<target name="clean-install" depends="">
-		<exec executable="${db.path}/bin/sdbstop" dir="${db.path}" resultproperty="clean.ret.code" failonerror="true">
+<!-- 		<exec executable="${db.path}/bin/sdbstop" dir="${db.path}" resultproperty="clean.ret.code" failonerror="true">
 			<arg line=" -t all" />
 		</exec>
 		<echo message="clean.ret.code = ${clean.ret.code}" />
@@ -29,7 +29,7 @@
 			<then>
 				<echo message="it's fail!" />
 			</then>
-		</if>
+		</if> -->
 		<exec executable="${db.path}/uninstall" dir="${db.path}" failonerror="true">
 			<arg line=" --mode unattended" />
 		</exec>
