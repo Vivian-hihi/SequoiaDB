@@ -200,6 +200,9 @@ namespace engine
          {
             // parse an obj, i.e:{$group:{_id: groupby, total:{$sum: "$num"}}}
             BSONObj paraObj ( (const CHAR*)pDataPos );
+            PD_CHECK( paraObj.nFields() == 1, SDB_INVALIDARG,
+                     error, PDERROR,
+                     "only one element in one aggregate object is allowed" );
             BSONElement bePara = paraObj.firstElement();
             const CHAR *pAggrOp = bePara.fieldName();
             AGGR_PARSER_MAP::iterator iterMap
