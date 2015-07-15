@@ -1356,8 +1356,6 @@ namespace engine
          goto error ;
       }
 
-      SDB_ASSERT( _subs.empty(), "impossible" ) ;
-
       /// main stream was opened before, the meta piece may be synced
       ///  to other group. we open all streams as normal.
       rc = _openOtherStreams( getFullName(), getOID(), _getMode(), cb ) ;
