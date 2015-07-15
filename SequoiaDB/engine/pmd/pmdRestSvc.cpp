@@ -40,6 +40,7 @@
 #include "pmd.hpp"
 #include "pmdEDUMgr.hpp"
 #include "ossSocket.hpp"
+#include "../omsvc/omRestSession.hpp"
 #include "pmdRestSession.hpp"
 #include "pdTrace.hpp"
 #include "pmdTrace.hpp"
@@ -140,26 +141,40 @@ namespace engine
 
       SOCKET s = *(( SOCKET *) &pData ) ;
 
-      pmdRestSession restSession( s ) ;
-      restSession.attach( cb ) ;
-
-
-      if ( SDB_ROLE_COORD == pmdGetDBRole() )
+      if ( SDB_ROLE_OM == pmdGetDBRole() )
       {
+         _omRestSession omRS( s ) ;
+         omRS.attach( cb ) ;
+
+         _pmdDataProcessor processor ;
+         omRS.attachProcessor( &processor ) ;
+         rc = omRS.run() ;
+         omRS.detachProcessor() ;
+
+         omRS.detach() ;
+      }
+      else if ( SDB_ROLE_COORD == pmdGetDBRole() )
+      {
+         pmdRestSession restSession( s ) ;
+         restSession.attach( cb ) ;
+
          _pmdCoordProcessor processor ;
          restSession.attachProcessor( &processor ) ;
          rc = restSession.run() ;
          restSession.detachProcessor() ;
+         restSession.detach() ;
       }
       else
       {
+         pmdRestSession restSession( s ) ;
+         restSession.attach( cb ) ;
+
          _pmdDataProcessor processor ;
          restSession.attachProcessor( &processor ) ;
          rc = restSession.run() ;
          restSession.detachProcessor() ;
+         restSession.detach() ;
       }
-
-      restSession.detach() ;
 
       return rc ;
    }

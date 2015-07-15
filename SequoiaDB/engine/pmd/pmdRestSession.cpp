@@ -48,14 +48,13 @@ using namespace bson ;
 
 namespace engine
 {
-   static void _sendOpError2Web ( INT32 rc, restAdaptor *pAdptor,
-                                  pmdRestSession *pRestSession,
-                                  pmdEDUCB* pEduCB ) ;
-
    void _sendOpError2Web ( INT32 rc, restAdaptor *pAdptor, 
-                           pmdRestSession *pRestSession,
-                           pmdEDUCB* pEduCB )
+                           pmdRestSession *pRestSession, pmdEDUCB* pEduCB )
    {
+      SDB_ASSERT( ( NULL != pAdptor ) && ( NULL != pRestSession ) 
+                  && ( NULL != pEduCB ), "pAdptor or pRestSession or pEduCB"
+                  " can't be null" ) ;
+
       BSONObj _errorInfo = utilGetErrorBson( rc, pEduCB->getInfo( 
                                              EDU_INFO_ERROR ) ) ;
       pAdptor->setOPResult( pRestSession, rc, _errorInfo ) ;
@@ -342,19 +341,17 @@ namespace engine
 
 
    INT32 _pmdRestSession::_translateMSG( restAdaptor *pAdaptor, 
-                                         HTTP_PARSE_COMMON command, 
-                                         const CHAR *pFilePath,
                                          MsgHeader **msg )
    {
+      SDB_ASSERT( NULL != msg, "msg can't be null" ) ;
+
       INT32 rc = SDB_OK ;
-      if ( NULL == msg )
+      rc = _pRestTransfer->trans( pAdaptor, msg ) ;
+      if ( SDB_OK != rc )
       {
-         rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR, "msg can't be null" ) ;
+         PD_LOG( PDERROR, "transfer rest message failed:rc=%d", rc ) ;
          goto error ;
       }
-
-      rc = _pRestTransfer->trans( pAdaptor, command, pFilePath, msg ) ;
 
    done:
       return rc ;
@@ -415,42 +412,32 @@ namespace engine
                rc = SDB_PMD_SESSION_NOT_EXIST ;
                PD_LOG_MSG( PDERROR, "session is not exist:rc=%d", rc ) ;
                _sendOpError2Web( rc, pAdaptor, this, _pEDUCB ) ;
+               goto done ;
             }
          }
       }
 
-      rc = _processBusinessMsg( pAdaptor, command, pFilePath ) ;
+      rc = _processBusinessMsg( pAdaptor ) ;
       if ( SDB_UNKNOWN_MESSAGE == rc )
       {
-         if ( pmdGetKRCB()->isCBValue( SDB_CB_OMSVC ) )
-         {
-            // response will send in this function ;
-            pmdGetThreadEDUCB()->resetInfo( EDU_INFO_ERROR ) ;
-            rc = _processOMRestMsg( command, pFilePath ) ;
-         }
-         else
-         {
-            // in this case we should send response(SDB_UNKNOWN_MESSAGE) to 
-            // the client
-            PD_LOG( PDERROR, "translate message failed:rc=%d", rc ) ;
-            _sendOpError2Web( rc, pAdaptor, this, _pEDUCB ) ;
-         }
+         // in this case we should send response(SDB_UNKNOWN_MESSAGE) to 
+         // the client
+         PD_LOG_MSG( PDERROR, "translate message failed:rc=%d", rc ) ;
+         _sendOpError2Web( rc, pAdaptor, this, _pEDUCB ) ;
       }
 
    done:
       PD_TRACE_EXITRC ( SDB_PMDRESTSN_PROMSG, rc );
       return rc ;
    }
-   INT32 _pmdRestSession::_processBusinessMsg( restAdaptor *pAdaptor, 
-                                               HTTP_PARSE_COMMON command, 
-                                               const CHAR *pFilePath ) 
+   INT32 _pmdRestSession::_processBusinessMsg( restAdaptor *pAdaptor ) 
    {
       INT32 rc        = SDB_OK ;
       INT64 contextID = -1 ;
       rtnContextBuf contextBuff ;
       BOOLEAN needReplay = FALSE ;
       MsgHeader *msg = NULL ;
-      rc = _translateMSG( pAdaptor, command, pFilePath, &msg ) ;
+      rc = _translateMSG( pAdaptor, &msg ) ;
       if ( SDB_OK != rc )
       {
          if ( SDB_UNKNOWN_MESSAGE != rc )
@@ -527,11 +514,13 @@ namespace engine
                if ( SDB_OK == rc )
                {
                   rc = pAdaptor->appendHttpBody( this, tmpContextBuff.data(), 
-                                              tmpContextBuff.size(), 
-                                              tmpContextBuff.recordNum() ) ;
+                                                 tmpContextBuff.size(), 
+                                                 tmpContextBuff.recordNum() ) ;
                   if ( SDB_OK != rc )
                   {
-                     PD_LOG( PDERROR, "append http body failed:rc=%d", rc ) ;
+                     PD_LOG_MSG( PDERROR, "append http body failed:rc=%d", 
+                                 rc ) ;
+                     _sendOpError2Web( rc, pAdaptor, this, _pEDUCB ) ;
                      goto error ;
                   }
                }
@@ -541,7 +530,9 @@ namespace engine
                   contextID = -1 ;
                   if ( SDB_DMS_EOC != rc )
                   {
-                     PD_LOG( PDERROR, "getmore failed:rc=%d", rc ) ;
+                     PD_LOG_MSG( PDERROR, "getmore failed:rc=%d", rc ) ;
+                     _sendOpError2Web( rc, pAdaptor, this, _pEDUCB ) ;
+                     goto error ;
                   }
 
                   rc = SDB_OK ;
@@ -604,237 +595,6 @@ namespace engine
 
    done:
       return rc ;
-   }
-   INT32 _pmdRestSession::_processOMRestMsg( HTTP_PARSE_COMMON command, 
-                                             const CHAR *pFilePath )
-   {
-      omRestCommandBase *pOmCommand = NULL ;
-      pOmCommand = _createCommand( command, pFilePath ) ;
-      if ( NULL == pOmCommand )
-      {
-         goto error ;
-      }
-
-      pOmCommand->init( _pEDUCB ) ;
-      pOmCommand->doCommand() ;
-
-   done:
-      if ( NULL != pOmCommand )
-      {
-         SDB_OSS_DEL pOmCommand ;
-      }
-      return SDB_OK ;
-
-   error:
-      goto done ;
-   }
-
-   omRestCommandBase *_pmdRestSession::_createCommand( 
-                                             HTTP_PARSE_COMMON command, 
-                                             const CHAR *pFilePath )
-   {
-      omRestCommandBase *commandIf = NULL ;
-      restAdaptor *pAdptor         = NULL ;
-      const CHAR* hostName = pmdGetKRCB()->getHostName();
-      pAdptor = sdbGetPMDController()->getRestAdptor() ;
-      string localAgentHost = hostName ;
-      string localAgentPort = sdbGetOMManager()->getLocalAgentPort() ;
-
-      if ( COM_GETFILE == command )
-      {
-         PD_LOG( PDEVENT, "OM: getfile command:file=%s", pFilePath ) ;
-         commandIf = SDB_OSS_NEW omGetFileCommand( pAdptor, this,
-                                                   _wwwRootPath.c_str(),
-                                                   pFilePath ) ;
-      }
-      else 
-      {
-         const CHAR *pSubCommand = NULL ;
-         pAdptor->getQuery( this, OM_REST_FIELD_COMMAND, &pSubCommand ) ;
-         if ( NULL == pSubCommand )
-         {
-            BSONObjBuilder builder ;
-            builder.append( OM_REST_RES_RETCODE, SDB_INVALIDARG ) ;
-            builder.append( OM_REST_RES_DESP, getErrDesp( SDB_INVALIDARG ) ) ;
-            builder.append( OM_REST_RES_DETAIL, "command is null" ) ;
-            pAdptor->setOPResult( this, SDB_INVALIDARG, builder.obj() ) ;
-            pAdptor->sendResponse( this, HTTP_OK ) ;
-            goto error ;
-         }
-
-         PD_LOG( PDDEBUG, "OM: command:command=%s", pSubCommand ) ;
-         if ( ossStrcmp( pSubCommand, OM_LOGIN_REQ ) != 0
-              && ossStrcmp( pSubCommand, OM_CHECK_SESSION_REQ ) != 0
-              && !isAuthOK() )
-         {
-            // except login_rep and check_seesion_req, other commands can only 
-            // execute in authrity status
-            BSONObjBuilder builder ;
-            builder.append( OM_REST_RES_RETCODE, 
-                            SDB_PMD_SESSION_NOT_EXIST ) ;
-            builder.append( OM_REST_RES_DESP, 
-                            getErrDesp( SDB_PMD_SESSION_NOT_EXIST ) ) ;
-            builder.append( OM_REST_RES_DETAIL, "" ) ;
-            pAdptor->setOPResult( this, SDB_PMD_SESSION_NOT_EXIST, 
-                                  builder.obj() ) ;
-            pAdptor->sendResponse( this, HTTP_OK ) ;
-            PD_LOG( PDEVENT, "OM: redirect to:%s", OM_REST_LOGIN_HTML ) ;
-            goto error ;
-         }
-
-         if ( ossStrcasecmp( pSubCommand, OM_CHANGE_PASSWD_REQ ) == 0 )
-         {
-            commandIf = SDB_OSS_NEW omChangePasswdCommand( pAdptor, this ) ;
-         }
-         else if ( ossStrcasecmp( pSubCommand, OM_CHECK_SESSION_REQ ) == 0 )
-         {
-            commandIf = SDB_OSS_NEW omCheckSessionCommand( pAdptor, this ) ;
-         }
-         else if ( ossStrcasecmp( pSubCommand, OM_CREATE_CLUSTER_REQ ) == 0 )
-         {
-            commandIf = SDB_OSS_NEW omCreateClusterCommand( pAdptor, this ) ;
-         }
-         else if ( ossStrcasecmp( pSubCommand, OM_QUERY_CLUSTER_REQ ) == 0 )
-         {
-            commandIf = SDB_OSS_NEW omQueryClusterCommand( pAdptor, this ) ;
-         }
-         else if ( ossStrcasecmp( pSubCommand, OM_SCAN_HOST_REQ ) == 0 )
-         {
-            commandIf = SDB_OSS_NEW omScanHostCommand( pAdptor, this, 
-                                       localAgentHost, localAgentPort ) ;
-         }
-         else if ( ossStrcasecmp( pSubCommand, OM_CHECK_HOST_REQ ) == 0 )
-         {
-            commandIf = SDB_OSS_NEW omCheckHostCommand( pAdptor, this, 
-                                       localAgentHost, localAgentPort ) ;
-         }
-         else if ( ossStrcasecmp( pSubCommand, OM_ADD_HOST_REQ ) == 0 )
-         {
-            commandIf = SDB_OSS_NEW omAddHostCommand( pAdptor, this, 
-                                       localAgentHost, localAgentPort ) ;
-         }
-         else if ( ossStrcasecmp( pSubCommand, OM_LIST_HOST_REQ ) == 0 )
-         {
-            commandIf = SDB_OSS_NEW omListHostCommand( pAdptor, this ) ;
-         }
-         else if ( ossStrcasecmp( pSubCommand, OM_QUERY_HOST_REQ ) == 0 )
-         {
-            commandIf = SDB_OSS_NEW omQueryHostCommand( pAdptor, this ) ;
-         }
-         else if ( ossStrcasecmp( pSubCommand, OM_LIST_BUSINESS_TYPE_REQ ) 
-                                                                          == 0 )
-         {
-            commandIf = SDB_OSS_NEW omListBusinessTypeCommand( pAdptor, this, 
-                                       _wwwRootPath.c_str(), pFilePath ) ;
-         }
-         else if ( ossStrcasecmp( pSubCommand, 
-                                  OM_GET_BUSINESS_TEMPLATE_REQ ) == 0 )
-         {
-            commandIf = SDB_OSS_NEW omGetBusinessTemplateCommand( pAdptor, 
-                                       this, _wwwRootPath.c_str(), pFilePath ) ;
-         }
-         else if ( ossStrcasecmp( pSubCommand, OM_CONFIG_BUSINESS_REQ ) == 0 )
-         {
-            commandIf = SDB_OSS_NEW omConfigBusinessCommand( pAdptor, this, 
-                                       _wwwRootPath.c_str(), pFilePath ) ;
-         }
-         else if ( ossStrcasecmp( pSubCommand, OM_INSTALL_BUSINESS_REQ) == 0 )
-         {
-            commandIf = SDB_OSS_NEW omInstallBusinessReq( pAdptor, this, 
-                                       _wwwRootPath.c_str(), pFilePath, 
-                                       localAgentHost, localAgentPort ) ;
-         }
-         else if ( ossStrcasecmp( pSubCommand, OM_LIST_NODE_REQ ) == 0 )
-         {
-            commandIf = SDB_OSS_NEW omListNodeCommand( pAdptor, this ) ;
-         }
-         else if ( ossStrcasecmp( pSubCommand, OM_GET_NODE_CONF_REQ ) == 0 )
-         {
-            commandIf = SDB_OSS_NEW omQueryNodeConfCommand( pAdptor, this ) ;
-         }
-         else if ( ossStrcasecmp( pSubCommand, OM_LIST_BUSINESS_REQ ) == 0 )
-         {
-            commandIf = SDB_OSS_NEW omListBusinessCommand( pAdptor, this ) ;
-         }
-         else if ( ossStrcasecmp( pSubCommand, OM_QUERY_BUSINESS_REQ ) == 0 )
-         {
-            commandIf = SDB_OSS_NEW omQueryBusinessCommand( pAdptor, this ) ;
-         }
-         else if ( ossStrcasecmp( pSubCommand, OM_REMOVE_CLUSTER_REQ ) == 0 )
-         {
-            commandIf = SDB_OSS_NEW omRemoveClusterCommand( pAdptor, this ) ;
-         }
-         else if ( ossStrcasecmp( pSubCommand, OM_REMOVE_HOST_REQ ) == 0 )
-         {
-            commandIf = SDB_OSS_NEW omRemoveHostCommand( pAdptor, this,
-                                       localAgentHost, localAgentPort ) ;
-         }
-         else if ( ossStrcasecmp( pSubCommand, OM_REMOVE_BUSINESS_REQ ) == 0 )
-         {
-            commandIf = SDB_OSS_NEW omRemoveBusinessCommand( pAdptor, this,
-                                       localAgentHost, localAgentPort ) ;
-         }
-         else if ( ossStrcasecmp( pSubCommand, OM_QUERY_HOST_STATUS_REQ ) == 0 )
-         {
-            commandIf = SDB_OSS_NEW omQueryHostStatusCommand( pAdptor, this,
-                                       localAgentHost, localAgentPort ) ;
-         }
-         else if ( ossStrcasecmp( pSubCommand, OM_PREDICT_CAPACITY_REQ ) == 0 )
-         {
-            commandIf = SDB_OSS_NEW omPredictCapacity( pAdptor, this ) ;
-         }
-         else if ( ossStrcasecmp( pSubCommand, OM_LIST_TASK_REQ ) == 0 )
-         {
-            commandIf = SDB_OSS_NEW omListTaskCommand( pAdptor, this ) ;
-         }
-         else if ( ossStrcasecmp( pSubCommand, OM_QUERY_TASK_REQ ) == 0 )
-         {
-            commandIf = SDB_OSS_NEW omQueryTaskCommand( pAdptor, this ) ;
-         }
-         else if ( ossStrcasecmp( pSubCommand, OM_GET_LOG_REQ ) == 0 )
-         {
-            commandIf = SDB_OSS_NEW omGetLogCommand( pAdptor, this ) ;
-         }
-         else if ( ossStrcasecmp( pSubCommand, OM_SET_BUSINESS_AUTH_REQ ) == 0 )
-         {
-            commandIf = SDB_OSS_NEW omSetBusinessAuthCommand( pAdptor, this ) ;
-         }
-         else if ( ossStrcasecmp( pSubCommand, 
-                                  OM_REMOVE_BUSINESS_AUTH_REQ ) == 0 )
-         {
-            commandIf = SDB_OSS_NEW omRemoveBusinessAuthCommand( pAdptor, 
-                                                                 this ) ;
-         }
-         else if ( ossStrcasecmp( pSubCommand, 
-                                  OM_QUERY_BUSINESS_AUTH_REQ ) == 0 )
-         {
-            commandIf = SDB_OSS_NEW omQueryBusinessAuthCommand( pAdptor, 
-                                                                this ) ;
-         }
-         else if ( ossStrcasecmp( pSubCommand, 
-                                  OM_DISCOVERY_BUSINESS_REQ ) == 0 )
-         {
-            commandIf = SDB_OSS_NEW omDiscoverBusinessCommand( pAdptor, 
-                                                               this ) ;
-         }
-         else
-         {
-            BSONObjBuilder builder ;
-            string errorInfo ;
-            errorInfo = string("command is unreconigzed:") + pSubCommand ;
-            builder.append( OM_REST_RES_RETCODE, SDB_INVALIDARG ) ;
-            builder.append( OM_REST_RES_DESP, getErrDesp( SDB_INVALIDARG ) ) ;
-            builder.append( OM_REST_RES_DETAIL, errorInfo.c_str() ) ;
-            pAdptor->setOPResult( this, SDB_INVALIDARG, builder.obj() ) ;
-            pAdptor->sendResponse( this, HTTP_OK ) ;
-            goto error ;
-         }
-      }
-
-   done:
-      return commandIf ;
-   error:
-      goto done ;
    }
 
    void _pmdRestSession::_onAttach()
@@ -967,9 +727,7 @@ namespace engine
    {
    }
 
-   INT32 RestToMSGTransfer::trans( restAdaptor *pAdaptor, 
-                                   HTTP_PARSE_COMMON command, 
-                                   const CHAR *pFilePath, MsgHeader **msg )
+   INT32 RestToMSGTransfer::trans( restAdaptor *pAdaptor, MsgHeader **msg )
    {
       INT32 rc = SDB_OK ;
       const CHAR *pSubCommand = NULL ;
@@ -1049,6 +807,104 @@ namespace engine
       {
          rc = _convertGetCount( pAdaptor, msg ) ;
       }
+      else if ( ossStrcasecmp( pSubCommand, CMD_NAME_LIST_CONTEXTS ) == 0 )
+      {
+         rc = _converListContexts( pAdaptor, msg ) ;
+      }
+      else if ( ossStrcasecmp( pSubCommand, CMD_NAME_LIST_CONTEXTS_CURRENT ) 
+                == 0 )
+      {
+         rc = _convertListContextsCurrent( pAdaptor, msg ) ;
+      }
+      else if ( ossStrcasecmp( pSubCommand, CMD_NAME_LIST_SESSIONS ) == 0 )
+      {
+         rc = _convertListSessions( pAdaptor, msg ) ;
+      }
+      else if ( ossStrcasecmp( pSubCommand, CMD_NAME_LIST_SESSIONS_CURRENT ) 
+                == 0 )
+      {
+         rc = _convertListSessionsCurrent( pAdaptor, msg ) ;
+      }
+      else if ( ossStrcasecmp( pSubCommand, CMD_NAME_LIST_COLLECTIONS ) == 0 )
+      {
+         rc = _convertListCoolections( pAdaptor, msg ) ;
+      }
+      else if ( ossStrcasecmp( pSubCommand, CMD_NAME_LIST_COLLECTIONSPACES ) 
+                == 0 )
+      {
+         rc = _convertListCoolectionSpaces( pAdaptor, msg ) ;
+      }
+      else if ( ossStrcasecmp( pSubCommand, CMD_NAME_LIST_STORAGEUNITS ) == 0 )
+      {
+         rc = _convertListStorageUnits( pAdaptor, msg ) ;
+      }
+      else if ( ossStrcasecmp( pSubCommand, CMD_NAME_LIST_GROUPS ) == 0 )
+      {
+         rc = _convertListGroups( pAdaptor, msg ) ;
+      }
+      else if ( ossStrcasecmp( pSubCommand, CMD_NAME_LIST_PROCEDURES ) == 0 )
+      {
+         rc = _convertListProcedures( pAdaptor, msg ) ;
+      }
+      else if ( ossStrcasecmp( pSubCommand, CMD_NAME_LIST_DOMAINS ) == 0 )
+      {
+         rc = _convertListDomains( pAdaptor, msg ) ;
+      }
+      else if ( ossStrcasecmp( pSubCommand, CMD_NAME_LIST_TASKS ) == 0 )
+      {
+         rc = _convertListTasks( pAdaptor, msg ) ;
+      }
+      else if ( ossStrcasecmp( pSubCommand, CMD_NAME_LIST_CS_IN_DOMAIN ) == 0 )
+      {
+         rc = _convertListCSInDomain( pAdaptor, msg ) ;
+      }
+      else if ( ossStrcasecmp( pSubCommand, CMD_NAME_LIST_CL_IN_DOMAIN ) == 0 )
+      {
+         rc = _convertListCLInDomain( pAdaptor, msg ) ;
+      }
+      else if ( ossStrcasecmp( pSubCommand, CMD_NAME_SNAPSHOT_CONTEXTS ) == 0 )
+      {
+         rc = _convertSnapshotContext( pAdaptor, msg ) ;
+      }
+      else if ( ossStrcasecmp( pSubCommand, CMD_NAME_SNAPSHOT_CONTEXTS_CURRENT ) 
+                == 0 )
+      {
+         rc = _convertSnapshotContextCurrent( pAdaptor, msg ) ;
+      }
+      else if ( ossStrcasecmp( pSubCommand, CMD_NAME_SNAPSHOT_SESSIONS ) == 0 )
+      {
+         rc = _convertSnapshotSessions( pAdaptor, msg ) ;
+      }
+      else if ( ossStrcasecmp( pSubCommand, CMD_NAME_SNAPSHOT_SESSIONS_CURRENT ) 
+                == 0 )
+      {
+         rc = _convertSnapshotSessionsCurrent( pAdaptor, msg ) ;
+      }
+      else if ( ossStrcasecmp( pSubCommand, CMD_NAME_SNAPSHOT_COLLECTIONS ) == 0 )
+      {
+         rc = _convertSnapshotCollections( pAdaptor, msg ) ;
+      }
+      else if ( ossStrcasecmp( pSubCommand, CMD_NAME_SNAPSHOT_COLLECTIONSPACES ) 
+                == 0 )
+      {
+         rc = _convertSnapshotCollectionSpaces( pAdaptor, msg ) ;
+      }
+      else if ( ossStrcasecmp( pSubCommand, CMD_NAME_SNAPSHOT_DATABASE ) == 0 )
+      {
+         rc = _convertSnapshotDatabase( pAdaptor, msg ) ;
+      }
+      else if ( ossStrcasecmp( pSubCommand, CMD_NAME_SNAPSHOT_SYSTEM ) == 0 )
+      {
+         rc = _convertSnapshotSystem( pAdaptor, msg ) ;
+      }
+      else if ( ossStrcasecmp( pSubCommand, CMD_NAME_SNAPSHOT_CATA ) == 0 )
+      {
+         rc = _convertSnapshotCata( pAdaptor, msg ) ;
+      }
+//      else if ( ossStrcasecmp( pSubCommand, CMD_NAME_LIST_LOBS ) == 0 )
+//      {
+//         rc = _convertListLobs( pAdaptor, msg ) ;
+//      }
       else if ( ossStrcasecmp( pSubCommand, OM_LOGIN_REQ ) == 0 )
       {
          rc = _convertLogin( pAdaptor, msg ) ;
@@ -2099,6 +1955,833 @@ namespace engine
    error:
       goto done ;
    }
+
+   INT32 RestToMSGTransfer::_convertListBase( restAdaptor *pAdaptor,
+                                              BSONObj &match, BSONObj &selector,
+                                              BSONObj &order )
+   {
+      INT32 rc = SDB_OK ;
+      const CHAR *pOrder    = NULL ;
+      const CHAR *pMatch    = NULL ;
+      const CHAR *pSelector = NULL ;
+
+      pAdaptor->getQuery( _restSession, FIELD_NAME_FILTER, &pMatch ) ;
+      pAdaptor->getQuery( _restSession, FIELD_NAME_SELECTOR, &pSelector ) ;
+      pAdaptor->getQuery( _restSession, FIELD_NAME_SORT, &pOrder ) ;
+      if ( NULL != pMatch )
+      {
+         rc = fromjson( pMatch, match ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG_MSG( PDERROR, "field's format error:field=%s, value=%s", 
+                        FIELD_NAME_FILTER, pMatch ) ;
+            goto error ;
+         }
+      }
+
+      if ( NULL != pSelector )
+      {
+         rc = fromjson( pSelector, selector ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG_MSG( PDERROR, "field's format error:field=%s, value=%s", 
+                        FIELD_NAME_SELECTOR, pSelector ) ;
+            goto error ;
+         }
+      }
+
+      if ( NULL != pOrder )
+      {
+         rc = fromjson( pOrder, order ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG_MSG( PDERROR, "field's format error:field=%s, value=%s", 
+                        FIELD_NAME_SORT, pOrder ) ;
+            goto error ;
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 RestToMSGTransfer::_converListContexts( restAdaptor *pAdaptor,
+                                                 MsgHeader **msg )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj selector ;
+      BSONObj order ;
+      BSONObj match ;
+      CHAR *pBuff           = NULL ;
+      INT32 buffSize        = 0 ;
+      const CHAR *pCommand  = CMD_ADMIN_PREFIX CMD_NAME_LIST_CONTEXTS ;
+
+      rc = _convertListBase( pAdaptor, match, selector, order ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "convert list failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0, 0, -1, &match, 
+                             &selector, &order, NULL ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG_MSG( PDERROR, "build command failed:command=%s, rc=%d", 
+                     pCommand, rc ) ;
+         goto error ;
+      }
+
+      *msg = ( MsgHeader * )pBuff ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 RestToMSGTransfer::_convertListContextsCurrent( restAdaptor *pAdaptor,
+                                                         MsgHeader **msg )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj selector ;
+      BSONObj order ;
+      BSONObj match ;
+      CHAR *pBuff           = NULL ;
+      INT32 buffSize        = 0 ;
+      const CHAR *pCommand  = CMD_ADMIN_PREFIX CMD_NAME_LIST_CONTEXTS_CURRENT ;
+
+      rc = _convertListBase( pAdaptor, match, selector, order ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "convert list failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0, 0, -1, &match, 
+                             &selector, &order, NULL ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG_MSG( PDERROR, "build command failed:command=%s, rc=%d", 
+                     pCommand, rc ) ;
+         goto error ;
+      }
+
+      *msg = ( MsgHeader * )pBuff ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 RestToMSGTransfer::_convertListSessions( restAdaptor *pAdaptor,
+                                                  MsgHeader **msg )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj selector ;
+      BSONObj order ;
+      BSONObj match ;
+      CHAR *pBuff           = NULL ;
+      INT32 buffSize        = 0 ;
+      const CHAR *pCommand  = CMD_ADMIN_PREFIX CMD_NAME_LIST_SESSIONS ;
+
+      rc = _convertListBase( pAdaptor, match, selector, order ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "convert list failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0, 0, -1, &match, 
+                             &selector, &order, NULL ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG_MSG( PDERROR, "build command failed:command=%s, rc=%d", 
+                     pCommand, rc ) ;
+         goto error ;
+      }
+
+      *msg = ( MsgHeader * )pBuff ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 RestToMSGTransfer::_convertListSessionsCurrent( restAdaptor *pAdaptor,
+                                                         MsgHeader **msg )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj selector ;
+      BSONObj order ;
+      BSONObj match ;
+      CHAR *pBuff           = NULL ;
+      INT32 buffSize        = 0 ;
+      const CHAR *pCommand  = CMD_ADMIN_PREFIX CMD_NAME_LIST_SESSIONS_CURRENT ;
+
+      rc = _convertListBase( pAdaptor, match, selector, order ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "convert list failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0, 0, -1, &match, 
+                             &selector, &order, NULL ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG_MSG( PDERROR, "build command failed:command=%s, rc=%d", 
+                     pCommand, rc ) ;
+         goto error ;
+      }
+
+      *msg = ( MsgHeader * )pBuff ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 RestToMSGTransfer::_convertListCoolections( restAdaptor *pAdaptor,
+                                                     MsgHeader **msg )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj selector ;
+      BSONObj order ;
+      BSONObj match ;
+      CHAR *pBuff           = NULL ;
+      INT32 buffSize        = 0 ;
+      const CHAR *pCommand  = CMD_ADMIN_PREFIX CMD_NAME_LIST_COLLECTIONS ;
+
+      rc = _convertListBase( pAdaptor, match, selector, order ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "convert list failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0, 0, -1, &match, 
+                             &selector, &order, NULL ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG_MSG( PDERROR, "build command failed:command=%s, rc=%d", 
+                     pCommand, rc ) ;
+         goto error ;
+      }
+
+      *msg = ( MsgHeader * )pBuff ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 RestToMSGTransfer::_convertListCoolectionSpaces( restAdaptor *pAdaptor,
+                                                          MsgHeader **msg )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj selector ;
+      BSONObj order ;
+      BSONObj match ;
+      CHAR *pBuff           = NULL ;
+      INT32 buffSize        = 0 ;
+      const CHAR *pCommand  = CMD_ADMIN_PREFIX CMD_NAME_LIST_COLLECTIONSPACES ;
+
+      rc = _convertListBase( pAdaptor, match, selector, order ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "convert list failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0, 0, -1, &match, 
+                             &selector, &order, NULL ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG_MSG( PDERROR, "build command failed:command=%s, rc=%d", 
+                     pCommand, rc ) ;
+         goto error ;
+      }
+
+      *msg = ( MsgHeader * )pBuff ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 RestToMSGTransfer::_convertListStorageUnits( restAdaptor *pAdaptor,
+                                                      MsgHeader **msg )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj selector ;
+      BSONObj order ;
+      BSONObj match ;
+      CHAR *pBuff           = NULL ;
+      INT32 buffSize        = 0 ;
+      const CHAR *pCommand  = CMD_ADMIN_PREFIX CMD_NAME_LIST_STORAGEUNITS ;
+
+      rc = _convertListBase( pAdaptor, match, selector, order ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "convert list failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0, 0, -1, &match, 
+                             &selector, &order, NULL ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG_MSG( PDERROR, "build command failed:command=%s, rc=%d", 
+                     pCommand, rc ) ;
+         goto error ;
+      }
+
+      *msg = ( MsgHeader * )pBuff ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 RestToMSGTransfer::_convertListProcedures( restAdaptor *pAdaptor,
+                                                    MsgHeader **msg )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj selector ;
+      BSONObj order ;
+      BSONObj match ;
+      CHAR *pBuff           = NULL ;
+      INT32 buffSize        = 0 ;
+      const CHAR *pCommand  = CMD_ADMIN_PREFIX CMD_NAME_LIST_PROCEDURES ;
+
+      rc = _convertListBase( pAdaptor, match, selector, order ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "convert list failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0, 0, -1, &match, 
+                             &selector, &order, NULL ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG_MSG( PDERROR, "build command failed:command=%s, rc=%d", 
+                     pCommand, rc ) ;
+         goto error ;
+      }
+
+      *msg = ( MsgHeader * )pBuff ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 RestToMSGTransfer::_convertListDomains( restAdaptor *pAdaptor,
+                                                 MsgHeader **msg )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj selector ;
+      BSONObj order ;
+      BSONObj match ;
+      CHAR *pBuff           = NULL ;
+      INT32 buffSize        = 0 ;
+      const CHAR *pCommand  = CMD_ADMIN_PREFIX CMD_NAME_LIST_DOMAINS ;
+
+      rc = _convertListBase( pAdaptor, match, selector, order ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "convert list failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0, 0, -1, &match, 
+                             &selector, &order, NULL ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG_MSG( PDERROR, "build command failed:command=%s, rc=%d", 
+                     pCommand, rc ) ;
+         goto error ;
+      }
+
+      *msg = ( MsgHeader * )pBuff ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 RestToMSGTransfer::_convertListTasks( restAdaptor *pAdaptor,
+                                               MsgHeader **msg )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj selector ;
+      BSONObj order ;
+      BSONObj match ;
+      CHAR *pBuff           = NULL ;
+      INT32 buffSize        = 0 ;
+      const CHAR *pCommand  = CMD_ADMIN_PREFIX CMD_NAME_LIST_TASKS ;
+
+      rc = _convertListBase( pAdaptor, match, selector, order ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "convert list failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0, 0, -1, &match, 
+                             &selector, &order, NULL ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG_MSG( PDERROR, "build command failed:command=%s, rc=%d", 
+                     pCommand, rc ) ;
+         goto error ;
+      }
+
+      *msg = ( MsgHeader * )pBuff ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 RestToMSGTransfer::_convertListCSInDomain( restAdaptor *pAdaptor,
+                                                    MsgHeader **msg )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj selector ;
+      BSONObj order ;
+      BSONObj match ;
+      CHAR *pBuff           = NULL ;
+      INT32 buffSize        = 0 ;
+      const CHAR *pCommand  = CMD_ADMIN_PREFIX CMD_NAME_LIST_CS_IN_DOMAIN ;
+
+      rc = _convertListBase( pAdaptor, match, selector, order ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "convert list failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0, 0, -1, &match, 
+                             &selector, &order, NULL ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG_MSG( PDERROR, "build command failed:command=%s, rc=%d", 
+                     pCommand, rc ) ;
+         goto error ;
+      }
+
+      *msg = ( MsgHeader * )pBuff ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 RestToMSGTransfer::_convertListCLInDomain( restAdaptor *pAdaptor,
+                                                    MsgHeader **msg )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj selector ;
+      BSONObj order ;
+      BSONObj match ;
+      CHAR *pBuff           = NULL ;
+      INT32 buffSize        = 0 ;
+      const CHAR *pCommand  = CMD_ADMIN_PREFIX CMD_NAME_LIST_CL_IN_DOMAIN ;
+
+      rc = _convertListBase( pAdaptor, match, selector, order ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "convert list failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0, 0, -1, &match, 
+                             &selector, &order, NULL ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG_MSG( PDERROR, "build command failed:command=%s, rc=%d", 
+                     pCommand, rc ) ;
+         goto error ;
+      }
+
+      *msg = ( MsgHeader * )pBuff ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 RestToMSGTransfer::_convertSnapshotContext( restAdaptor *pAdaptor,
+                                                     MsgHeader **msg )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj selector ;
+      BSONObj order ;
+      BSONObj match ;
+      CHAR *pBuff           = NULL ;
+      INT32 buffSize        = 0 ;
+      const CHAR *pCommand  = CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_CONTEXTS ;
+
+      rc = _convertListBase( pAdaptor, match, selector, order ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "convert snapshot failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0, 0, -1, &match, 
+                             &selector, &order, NULL ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG_MSG( PDERROR, "build command failed:command=%s, rc=%d", 
+                     pCommand, rc ) ;
+         goto error ;
+      }
+
+      *msg = ( MsgHeader * )pBuff ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 RestToMSGTransfer::_convertSnapshotContextCurrent( 
+                                                     restAdaptor *pAdaptor,
+                                                     MsgHeader **msg )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj selector ;
+      BSONObj order ;
+      BSONObj match ;
+      CHAR *pBuff           = NULL ;
+      INT32 buffSize        = 0 ;
+      const CHAR *pCommand  = CMD_ADMIN_PREFIX 
+                              CMD_NAME_SNAPSHOT_CONTEXTS_CURRENT ;
+
+      rc = _convertListBase( pAdaptor, match, selector, order ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "convert snapshot failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0, 0, -1, &match, 
+                             &selector, &order, NULL ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG_MSG( PDERROR, "build command failed:command=%s, rc=%d", 
+                     pCommand, rc ) ;
+         goto error ;
+      }
+
+      *msg = ( MsgHeader * )pBuff ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 RestToMSGTransfer::_convertSnapshotSessions( restAdaptor *pAdaptor,
+                                                      MsgHeader **msg )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj selector ;
+      BSONObj order ;
+      BSONObj match ;
+      CHAR *pBuff           = NULL ;
+      INT32 buffSize        = 0 ;
+      const CHAR *pCommand  = CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_SESSIONS ;
+
+      rc = _convertListBase( pAdaptor, match, selector, order ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "convert snapshot failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0, 0, -1, &match, 
+                             &selector, &order, NULL ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG_MSG( PDERROR, "build command failed:command=%s, rc=%d", 
+                     pCommand, rc ) ;
+         goto error ;
+      }
+
+      *msg = ( MsgHeader * )pBuff ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 RestToMSGTransfer::_convertSnapshotSessionsCurrent( 
+                                                        restAdaptor *pAdaptor,
+                                                        MsgHeader **msg )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj selector ;
+      BSONObj order ;
+      BSONObj match ;
+      CHAR *pBuff           = NULL ;
+      INT32 buffSize        = 0 ;
+      const CHAR *pCommand  = CMD_ADMIN_PREFIX 
+                              CMD_NAME_SNAPSHOT_SESSIONS_CURRENT ;
+
+      rc = _convertListBase( pAdaptor, match, selector, order ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "convert snapshot failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0, 0, -1, &match, 
+                             &selector, &order, NULL ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG_MSG( PDERROR, "build command failed:command=%s, rc=%d", 
+                     pCommand, rc ) ;
+         goto error ;
+      }
+
+      *msg = ( MsgHeader * )pBuff ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 RestToMSGTransfer::_convertSnapshotCollections( restAdaptor *pAdaptor,
+                                                         MsgHeader **msg )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj selector ;
+      BSONObj order ;
+      BSONObj match ;
+      CHAR *pBuff           = NULL ;
+      INT32 buffSize        = 0 ;
+      const CHAR *pCommand  = CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_COLLECTIONS ;
+
+      rc = _convertListBase( pAdaptor, match, selector, order ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "convert snapshot failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0, 0, -1, &match, 
+                             &selector, &order, NULL ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG_MSG( PDERROR, "build command failed:command=%s, rc=%d", 
+                     pCommand, rc ) ;
+         goto error ;
+      }
+
+      *msg = ( MsgHeader * )pBuff ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 RestToMSGTransfer::_convertSnapshotCollectionSpaces( 
+                                                         restAdaptor *pAdaptor,
+                                                         MsgHeader **msg )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj selector ;
+      BSONObj order ;
+      BSONObj match ;
+      CHAR *pBuff           = NULL ;
+      INT32 buffSize        = 0 ;
+      const CHAR *pCommand  = CMD_ADMIN_PREFIX 
+                              CMD_NAME_SNAPSHOT_COLLECTIONSPACES ;
+
+      rc = _convertListBase( pAdaptor, match, selector, order ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "convert snapshot failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0, 0, -1, &match, 
+                             &selector, &order, NULL ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG_MSG( PDERROR, "build command failed:command=%s, rc=%d", 
+                     pCommand, rc ) ;
+         goto error ;
+      }
+
+      *msg = ( MsgHeader * )pBuff ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 RestToMSGTransfer::_convertSnapshotDatabase( restAdaptor *pAdaptor,
+                                                      MsgHeader **msg )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj selector ;
+      BSONObj order ;
+      BSONObj match ;
+      CHAR *pBuff           = NULL ;
+      INT32 buffSize        = 0 ;
+      const CHAR *pCommand  = CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_DATABASE ;
+
+      rc = _convertListBase( pAdaptor, match, selector, order ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "convert snapshot failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0, 0, -1, &match, 
+                             &selector, &order, NULL ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG_MSG( PDERROR, "build command failed:command=%s, rc=%d", 
+                     pCommand, rc ) ;
+         goto error ;
+      }
+
+      *msg = ( MsgHeader * )pBuff ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 RestToMSGTransfer::_convertSnapshotSystem( restAdaptor *pAdaptor,
+                                                    MsgHeader **msg )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj selector ;
+      BSONObj order ;
+      BSONObj match ;
+      CHAR *pBuff           = NULL ;
+      INT32 buffSize        = 0 ;
+      const CHAR *pCommand  = CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_SYSTEM ;
+
+      rc = _convertListBase( pAdaptor, match, selector, order ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "convert snapshot failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0, 0, -1, &match, 
+                             &selector, &order, NULL ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG_MSG( PDERROR, "build command failed:command=%s, rc=%d", 
+                     pCommand, rc ) ;
+         goto error ;
+      }
+
+      *msg = ( MsgHeader * )pBuff ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 RestToMSGTransfer::_convertSnapshotCata( restAdaptor *pAdaptor,
+                                                  MsgHeader **msg )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj selector ;
+      BSONObj order ;
+      BSONObj match ;
+      CHAR *pBuff           = NULL ;
+      INT32 buffSize        = 0 ;
+      const CHAR *pCommand  = CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_CATA ;
+
+      rc = _convertListBase( pAdaptor, match, selector, order ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "convert snapshot failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0, 0, -1, &match, 
+                             &selector, &order, NULL ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG_MSG( PDERROR, "build command failed:command=%s, rc=%d", 
+                     pCommand, rc ) ;
+         goto error ;
+      }
+
+      *msg = ( MsgHeader * )pBuff ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+//   INT32 RestToMSGTransfer::_convertSnapshotListLobs( restAdaptor *pAdaptor,
+//                                                     MsgHeader **msg )
+//   {
+//      INT32 rc = SDB_OK ;
+//      BSONObj selector ;
+//      BSONObj order ;
+//      BSONObj match ;
+//      CHAR *pBuff           = NULL ;
+//      INT32 buffSize        = 0 ;
+//      const CHAR *pCommand  = CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_CONTEXTS ;
+
+//      rc = _convertListBase( pAdaptor, match, selector, order ) ;
+//      if ( SDB_OK != rc )
+//      {
+//         PD_LOG( PDERROR, "convert snapshot failed:rc=%d", rc ) ;
+//         goto error ;
+//      }
+
+//      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0, 0, -1, &match, 
+//                             &selector, &order, NULL ) ;
+//      if ( SDB_OK != rc )
+//      {
+//         PD_LOG_MSG( PDERROR, "build command failed:command=%s, rc=%d", 
+//                     pCommand, rc ) ;
+//         goto error ;
+//      }
+
+//      *msg = ( MsgHeader * )pBuff ;
+
+//   done:
+//      return rc ;
+//   error:
+//      goto done ;
+//   }
 
    INT32 RestToMSGTransfer::_convertLogin( restAdaptor *pAdaptor,
                                            MsgHeader **msg )

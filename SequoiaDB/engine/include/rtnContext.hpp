@@ -141,6 +141,7 @@ namespace engine
       RTN_CONTEXT_LOB,
       RTN_CONTEXT_SHARD_OF_LOB,
       RTN_CONTEXT_LIST_LOB,
+      RTN_CONTEXT_OM_TRANSFER,
    } ;
 
    const CHAR *getContextTypeDesp( RTN_CONTEXT_TYPE type ) ;

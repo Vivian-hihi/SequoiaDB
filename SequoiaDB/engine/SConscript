@@ -94,7 +94,8 @@ pmdFiles = [
       "pmd/pmdEDUEntryPoint.cpp",
       "pmd/pmdProcessor.cpp",
       "pmd/pmdProtocolEntryPoint.cpp",
-      "pmd/pmdModuleLoader.cpp"
+      "pmd/pmdModuleLoader.cpp",
+      "pmd/pmdRestSession.cpp"
       ]
 migFiles = [
       "mig/migLoad.cpp"
@@ -381,14 +382,16 @@ dpsFiles = [
       ]
 
 omsvcFiles = [
-      "pmd/pmdRestSession.cpp",
       "omsvc/omManager.cpp",
       "omsvc/omGetFileCommand.cpp",
       "omsvc/omConfigGenerator.cpp",
       "omsvc/omCommandInterface.cpp",
       "omsvc/omMsgEventHandler.cpp",
       "omsvc/omManagerJob.cpp",
-      "omsvc/omTaskManager.cpp"
+      "omsvc/omTaskManager.cpp",
+      "omsvc/omRestSession.cpp",
+      "omsvc/omTransferProcessor.cpp",
+      "omsvc/omContextTransfer.cpp"
       ]
 
 barFiles = [

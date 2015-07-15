@@ -473,6 +473,9 @@ namespace engine
    #define  OM_NOTIFY_TASK                   "notify task"
    //**************************************************************************
 
+   // this is for the web transfer request.  web -> om -> coord/data
+   #define  OM_REST_HEADER_CLUSTERNAME       "sdbClusterName"
+   #define  OM_REST_HEADER_BUSINESSNAME      "sdbBusinessName"
 }
 
 #endif // OM_DEF_HPP__

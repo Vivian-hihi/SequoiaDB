@@ -43,6 +43,7 @@
 #include "rtnContextListLob.hpp"
 #include "dmsCB.hpp"
 #include "rtnIxmKeySorter.hpp"
+#include "../omsvc/omContextTransfer.hpp"
 
 using namespace std;
 namespace engine
@@ -262,6 +263,10 @@ namespace engine
                  (*context) = SDB_OSS_NEW rtnContextListLob( _contextHWM,
                                                              pEDUCB->getID() ) ;
                 break ;
+            case RTN_CONTEXT_OM_TRANSFER:
+                 (*context) = SDB_OSS_NEW omContextTransfer( _contextHWM,
+                                                             pEDUCB->getID() ) ;
+                 break; 
             default :
                PD_LOG( PDERROR, "Unknow context type: %d", type ) ;
                return SDB_SYS ;

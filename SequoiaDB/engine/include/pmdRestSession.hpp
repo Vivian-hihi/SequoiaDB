@@ -191,24 +191,13 @@ namespace engine
 
       protected:
 
-         INT32             _processOMRestMsg( HTTP_PARSE_COMMON command,
-                                              const CHAR *pFilePath ) ;
-
          INT32             _fetchOneContext( SINT64 &contextID, 
                                              rtnContextBuf &contextBuff ) ;
-         INT32             _processMsg( HTTP_PARSE_COMMON command, 
+         virtual INT32     _processMsg( HTTP_PARSE_COMMON command, 
                                         const CHAR *pFilePath ) ;
-         INT32             _processBusinessMsg( restAdaptor *pAdaptor, 
-                                                HTTP_PARSE_COMMON command, 
-                                                const CHAR *pFilePath ) ;
-         INT32             _translateMSG( restAdaptor *pAdaptor, 
-                                          HTTP_PARSE_COMMON command, 
-                                          const CHAR *pFilePath, 
+         INT32             _processBusinessMsg( restAdaptor *pAdaptor ) ;
+         INT32             _translateMSG( restAdaptor *pAdaptor,
                                           MsgHeader **msg ) ;
-
-      private:
-         omRestCommandBase *_createCommand( HTTP_PARSE_COMMON command,
-                                            const CHAR *pFilePath ) ;
       protected:
          httpConnection    _restConn ;
          CHAR*             _pFixBuff ;
@@ -232,6 +221,8 @@ namespace engine
    #define REST_CMD_NAME_QUERY_UPDATE  "queryandupdate"
    #define REST_CMD_NAME_QUERY_REMOVE  "queryandremove"
    #define REST_CMD_NAME_UPSERT        "upsert"
+   #define REST_CMD_NAME_LIST          "list"
+   #define REST_CMD_NAME_SNAPSHOT      "snapshot"
 
    #define REST_KEY_NAME_FLAG          "Flag"
    #define REST_KEY_NAME_INSERTOR      "Insertor"
@@ -246,8 +237,7 @@ namespace engine
          ~RestToMSGTransfer() ;
          
       public:
-         INT32       trans( restAdaptor *pAdaptor, HTTP_PARSE_COMMON command, 
-                            const CHAR *pFilePath, MsgHeader **msg ) ;
+         INT32       trans( restAdaptor *pAdaptor, MsgHeader **msg ) ;
                             
       private:
          INT32       _convertCreateCS( restAdaptor *pAdaptor, 
@@ -276,18 +266,71 @@ namespace engine
          INT32       _convertDelete( restAdaptor *pAdaptor, MsgHeader **msg ) ;
 
          INT32       _convertSplit( restAdaptor *pAdaptor, MsgHeader **msg ) ;
-         INT32       _convertListGroups( restAdaptor *pAdaptor,
-                                         MsgHeader **msg ) ;
+         
          INT32       _convertAlterCollection( restAdaptor *pAdaptor,
                                               MsgHeader **msg ) ;
          INT32       _convertGetCount( restAdaptor *pAdaptor, 
                                        MsgHeader **msg ) ;
+
+         //list
+         INT32       _converListContexts( restAdaptor *pAdaptor,
+                                          MsgHeader **msg ) ;
+         INT32       _convertListBase( restAdaptor *pAdaptor,
+                                              BSONObj &match, BSONObj &selector,
+                                              BSONObj &order ) ;
+         INT32       _convertListContextsCurrent( restAdaptor *pAdaptor,
+                                                  MsgHeader **msg ) ;
+         INT32       _convertListSessions( restAdaptor *pAdaptor,
+                                           MsgHeader **msg ) ;
+         INT32       _convertListGroups( restAdaptor *pAdaptor,
+                                         MsgHeader **msg ) ;
+         INT32       _convertListSessionsCurrent( restAdaptor *pAdaptor,
+                                                  MsgHeader **msg ) ;
+         INT32       _convertListCoolections( restAdaptor *pAdaptor,
+                                              MsgHeader **msg ) ;
+         INT32       _convertListCoolectionSpaces( restAdaptor *pAdaptor,
+                                                   MsgHeader **msg ) ;
+         INT32       _convertListStorageUnits( restAdaptor *pAdaptor,
+                                               MsgHeader **msg ) ;
+         INT32       _convertListProcedures( restAdaptor *pAdaptor,
+                                             MsgHeader **msg ) ;
+         INT32       _convertListDomains( restAdaptor *pAdaptor,
+                                          MsgHeader **msg ) ;
+         INT32       _convertListTasks( restAdaptor *pAdaptor,
+                                        MsgHeader **msg ) ;
+         INT32       _convertListCSInDomain( restAdaptor *pAdaptor,
+                                             MsgHeader **msg ) ;
+         INT32       _convertListCLInDomain( restAdaptor *pAdaptor,
+                                             MsgHeader **msg ) ;
+
+         //snapshot
+         INT32       _convertSnapshotContext( restAdaptor *pAdaptor,
+                                              MsgHeader **msg ) ;
+         INT32       _convertSnapshotContextCurrent( restAdaptor *pAdaptor,
+                                                     MsgHeader **msg ) ;
+         INT32       _convertSnapshotSessions( restAdaptor *pAdaptor,
+                                               MsgHeader **msg ) ;
+         INT32       _convertSnapshotSessionsCurrent( restAdaptor *pAdaptor,
+                                                      MsgHeader **msg ) ;
+         INT32       _convertSnapshotCollections( restAdaptor *pAdaptor,
+                                                  MsgHeader **msg ) ;
+         INT32       _convertSnapshotCollectionSpaces( restAdaptor *pAdaptor,
+                                                       MsgHeader **msg ) ;
+         INT32       _convertSnapshotDatabase( restAdaptor *pAdaptor,
+                                               MsgHeader **msg ) ;
+         INT32       _convertSnapshotSystem( restAdaptor *pAdaptor,
+                                             MsgHeader **msg ) ;
+         INT32       _convertSnapshotCata( restAdaptor *pAdaptor,
+                                           MsgHeader **msg ) ;
 
          INT32       _convertLogin( restAdaptor *pAdaptor, MsgHeader **msg ) ;
 
       private:
          pmdRestSession    *_restSession ;
    } ;
+
+   void _sendOpError2Web ( INT32 rc, restAdaptor *pAdptor,
+                           pmdRestSession *pRestSession, pmdEDUCB* pEduCB ) ;
 
 }
 
