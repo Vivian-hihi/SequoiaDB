@@ -2377,6 +2377,14 @@
             <cn>指定用户已存在</cn>
          </description>
       </code>
+      
+      <code>
+         <name>SDB_DMS_EMPTY_COLLECTION</name>
+         <description>
+            <en>The collection is empty</en>
+            <cn>表记录为空</cn>
+         </description>
+      </code>
 
    </codelist>
 </rclist>

@@ -4755,7 +4755,7 @@ namespace engine
                          rc ) ;
             if ( 0 == totalCount )
             {
-               rc = SDB_DMS_EOC ;
+               rc = SDB_DMS_EMPTY_COLLECTION ;
                PD_LOG( PDDEBUG, "collection[%s] is empty", cl ) ;
                break ;
             }
