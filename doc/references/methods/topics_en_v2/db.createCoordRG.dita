@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
+<topic id="topic_lt4_5yy_rs">
+  <title>db.createCoordRG()</title>
+  <body>
+    <section>
+      <title>NAME</title>
+      <p>createCoordRG - Create unique CoordRG.</p>
+    </section>
+    <section>
+      <title>SYNOPSIS</title>
+      <p></p><apiname>db.reateCoordRG</apiname>()
+    </section>
+    <section>
+      <title>CATEGORY</title>
+      <p></p>Sequoiadb
+    </section>
+    <section>
+      <title>DESCRIPTION</title> 
+      <p>Create unique CoordRG.</p>
+    </section>    
+    <section>
+      <title>Examples</title>
+      <p>Create unique CoordRG.</p>
+      <codeblock>db.createCoordRG()</codeblock>      
+    </section>
+  </body>
+</topic>

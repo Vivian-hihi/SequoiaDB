@@ -1109,6 +1109,7 @@
                     <file name="references/methods/topics_en_v2/db.cancelTask.dita"/>
                     <file name="references/methods/topics_en_v2/db.close.dita"/>
                     <file name="references/methods/topics_en_v2/db.createCataRG.dita"/>
+                    <file name="references/methods/topics_en_v2/db.createCoordRG.dita"/>
                     <file name="references/methods/topics_en_v2/db.createCS.dita"/>
                     <file name="references/methods/topics_en_v2/db.createDomain.dita"/>
                     <file name="references/methods/topics_en_v2/db.createProcedure.dita"/>
