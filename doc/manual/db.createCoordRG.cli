@@ -15,7 +15,7 @@ createCoordRG - Create unique CoordRG.
 .sp 2
 
 .sp 2
-db.reateCoordRG()
+db.createCoordRG()
 .SH "CATEGORY"
 
 .sp 2

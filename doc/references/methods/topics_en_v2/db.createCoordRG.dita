@@ -9,7 +9,7 @@
     </section>
     <section>
       <title>SYNOPSIS</title>
-      <p></p><apiname>db.reateCoordRG</apiname>()
+      <p></p><apiname>db.createCoordRG</apiname>()
     </section>
     <section>
       <title>CATEGORY</title>
