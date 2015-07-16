@@ -303,6 +303,9 @@ namespace engine
          INT32       _convertListCLInDomain( restAdaptor *pAdaptor,
                                              MsgHeader **msg ) ;
 
+         INT32       _convertListLobs( restAdaptor *pAdaptor,
+                                       MsgHeader **msg ) ;
+
          //snapshot
          INT32       _convertSnapshotContext( restAdaptor *pAdaptor,
                                               MsgHeader **msg ) ;

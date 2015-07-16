@@ -743,7 +743,7 @@ namespace engine
             PD_LOG_MSG( PDERROR, "can't resolve field:field=%s", 
                         OM_REST_FIELD_COMMAND ) ;
          }
-         
+
          goto error ;
       }
 
@@ -901,10 +901,10 @@ namespace engine
       {
          rc = _convertSnapshotCata( pAdaptor, msg ) ;
       }
-//      else if ( ossStrcasecmp( pSubCommand, CMD_NAME_LIST_LOBS ) == 0 )
-//      {
-//         rc = _convertListLobs( pAdaptor, msg ) ;
-//      }
+      else if ( ossStrcasecmp( pSubCommand, CMD_NAME_LIST_LOBS ) == 0 )
+      {
+         rc = _convertListLobs( pAdaptor, msg ) ;
+      }
       else if ( ossStrcasecmp( pSubCommand, OM_LOGIN_REQ ) == 0 )
       {
          rc = _convertLogin( pAdaptor, msg ) ;
@@ -2426,6 +2426,81 @@ namespace engine
    error:
       goto done ;
    }
+
+   INT32 RestToMSGTransfer::_convertListLobs( restAdaptor *pAdaptor,
+                                              MsgHeader **msg )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj match ;
+      CHAR *pBuff          = NULL ;
+      INT32 buffSize       = 0 ;
+      const CHAR *pCommand = CMD_ADMIN_PREFIX CMD_NAME_LIST_LOBS ;
+      const CHAR *clName   = NULL ;
+
+      pAdaptor->getQuery( _restSession, FIELD_NAME_NAME, &clName ) ;
+      if ( NULL == clName )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "get collection's %s failed", 
+                     FIELD_NAME_NAME ) ;
+         goto error ;
+      }
+
+      match = BSON( FIELD_NAME_COLLECTION << clName ) ;
+      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0, 0, -1, &match, 
+                             NULL, NULL, NULL ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG_MSG( PDERROR, "build command failed:command=%s, rc=%d", 
+                     pCommand, rc ) ;
+         goto error ;
+      }
+
+      *msg = ( MsgHeader * )pBuff ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+//   INT32 RestToMSGTransfer::_convertListLobsPieces( restAdaptor *pAdaptor,
+//                                                    MsgHeader **msg )
+//   {
+//      INT32 rc = SDB_OK ;
+//      BSONObj match ;
+//      CHAR *pBuff          = NULL ;
+//      INT32 buffSize       = 0 ;
+//      const CHAR *pCommand = CMD_ADMIN_PREFIX CMD_NAME_LIST_LOBS ;
+//      const CHAR *clName   = NULL ;
+
+//      pAdaptor->getQuery( _restSession, FIELD_NAME_NAME, &clName ) ;
+//      if ( NULL == clName )
+//      {
+//         rc = SDB_INVALIDARG ;
+//         PD_LOG_MSG( PDERROR, "get collection's %s failed", 
+//                     FIELD_NAME_NAME ) ;
+//         goto error ;
+//      }
+
+//      match = BSON( FIELD_NAME_COLLECTION << clName
+//                    << FIELD_NAME_LOB_LIST_PIECES_MODE << TRUE ) ;
+//      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0, 0, -1, &match, 
+//                             NULL, NULL, NULL ) ;
+//      if ( SDB_OK != rc )
+//      {
+//         PD_LOG_MSG( PDERROR, "build command failed:command=%s, rc=%d", 
+//                     pCommand, rc ) ;
+//         goto error ;
+//      }
+
+//      *msg = ( MsgHeader * )pBuff ;
+
+//   done:
+//      return rc ;
+//   error:
+//      goto done ;
+//   }
 
    INT32 RestToMSGTransfer::_convertSnapshotContext( restAdaptor *pAdaptor,
                                                      MsgHeader **msg )
