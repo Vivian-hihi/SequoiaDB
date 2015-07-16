@@ -95,10 +95,10 @@ namespace engine
          }
       }
 
-      pAdaptor->getHttpHeader( this, ( const CHAR * )OM_REST_HEADER_CLUSTERNAME, 
+      pAdaptor->getHttpHeader( this, ( const CHAR * )OM_REST_HEAD_CLUSTERNAME, 
                                &pClusterName ) ;
       pAdaptor->getHttpHeader( this, 
-                               ( const CHAR * )OM_REST_HEADER_BUSINESSNAME, 
+                               ( const CHAR * )OM_REST_HEAD_BUSINESSNAME, 
                                &pBusinessName ) ;
       if ( ( NULL != pClusterName ) && ( NULL != pBusinessName ) )
       {

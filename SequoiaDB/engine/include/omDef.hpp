@@ -474,8 +474,8 @@ namespace engine
    //**************************************************************************
 
    // this is for the web transfer request.  web -> om -> coord/data
-   #define  OM_REST_HEADER_CLUSTERNAME       "sdbClusterName"
-   #define  OM_REST_HEADER_BUSINESSNAME      "sdbBusinessName"
+   #define  OM_REST_HEAD_CLUSTERNAME         "sdbClusterName"
+   #define  OM_REST_HEAD_BUSINESSNAME        "sdbBusinessName"
 }
 
 #endif // OM_DEF_HPP__
