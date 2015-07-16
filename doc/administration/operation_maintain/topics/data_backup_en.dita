@@ -57,7 +57,7 @@
       <title>Specified node database backup</title>
       <p>1. Connected to the specified node</p><codeblock>$ /opt/sequoiadb/bin/sdb
 > var dbdata = new Sdb("hostname1","servicename1");</codeblock>
-      <p>2. Perform the backup command</p><codeblock>> dbdata.backupOffline({Name:"backupName",Description:"backup data node"}))</codeblock>      
+      <p>2. Perform the backup command</p><codeblock>> dbdata.backupOffline({Name:"backupName",Description:"backup data node"})</codeblock>      
     </section> 
     <note>catalog name of the group is fixed to SYSCatalogGroup.</note>    
   </body>

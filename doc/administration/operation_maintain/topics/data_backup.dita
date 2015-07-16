@@ -57,7 +57,7 @@
       <title>备份指定节点的数据库</title>
       <p>1. 连接到指定节点</p><codeblock>$ /opt/sequoiadb/bin/sdb
 > var dbdata = new Sdb("hostname1","servicename1");</codeblock>
-      <p>2. 执行备份命令</p><codeblock>> dbdata.backupOffline({Name:"backupName",Description:"backup data node"}))</codeblock>      
+      <p>2. 执行备份命令</p><codeblock>> dbdata.backupOffline({Name:"backupName",Description:"backup data node"})</codeblock>      
     </section> 
     <note>catalog 编目组的名称固定为 SYSCatalogGroup</note>    
   </body>
