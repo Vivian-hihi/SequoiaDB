@@ -1168,11 +1168,14 @@ namespace engine
                goto error ;
             }
 
-            rc = _calculateW( &replSize, &clientW, w ) ;
-            if ( SDB_OK != rc )
+            if ( pCommand->writable() )
             {
-               PD_LOG( PDERROR, "failed to calculate w:%d", rc ) ;
-               goto error ;
+               rc = _calculateW( &replSize, &clientW, w ) ;
+               if ( SDB_OK != rc )
+               {
+                  PD_LOG( PDERROR, "failed to calculate w:%d", rc ) ;
+                  goto error ;
+               }
             }
          }
          else if ( CMD_CREATE_COLLECTIONSPACE == pCommand->type() ||
