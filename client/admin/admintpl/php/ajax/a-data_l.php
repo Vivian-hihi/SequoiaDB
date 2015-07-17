@@ -42,6 +42,10 @@ $cscl_list = arrayMerges( $array_1, $array_2 ) ;
 
 foreach( $cscl_list as $key => $csInfo )
 {
+    if( array_key_exists( 'Collection', $cscl_list[ $key ] ) == false )
+    {
+        $cscl_list[ $key ]['Collection'] = [] ;
+    }
     foreach( $array_3 as $masterInfo )
     {
         if( $csInfo['Name'] == $masterInfo[0] )
