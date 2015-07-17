@@ -1723,6 +1723,7 @@ namespace engine
       }
 
       // om and catalog, prefetch and preload and multi-replsync not enable
+      // and syncstrategy is none
       if ( SDB_ROLE_CATALOG == dbRole || SDB_ROLE_OM == dbRole )
       {
          _numPreLoaders    = 0 ;
@@ -1731,6 +1732,7 @@ namespace engine
          _maxReplSync      = 0 ;
          _pagecleanNum     = 1 ;
          _pagecleanInterval= PMD_DFT_PAGECLEANINTERVAL ;
+         _syncStrategy     = CLS_SYNC_NONE ;
       }
 
    done:

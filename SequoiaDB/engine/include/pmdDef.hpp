@@ -165,6 +165,7 @@ namespace engine
       EDU_TYPE_SYNCCLOCK,
       EDU_TYPE_PIPESLISTENER,
       EDU_TYPE_FAPLISTENER,
+      EDU_TYPE_DBMONITOR,
 
       // Agent EDU Type Begin
       EDU_TYPE_AGENT_BEGIN,

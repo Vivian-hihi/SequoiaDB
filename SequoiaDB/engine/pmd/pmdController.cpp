@@ -167,7 +167,13 @@ namespace engine
 
       // start time sync edu
       rc = pEDUMgr->startEDU( EDU_TYPE_SYNCCLOCK, NULL, &eduID ) ;
+      PD_RC_CHECK( rc, PDERROR, "Start sync clock edu failed, rc: %d", rc ) ;
       pEDUMgr->regSystemEDU( EDU_TYPE_SYNCCLOCK, eduID ) ;
+
+      // start db monitor edu
+      rc = pEDUMgr->startEDU( EDU_TYPE_DBMONITOR, NULL, &eduID ) ;
+      PD_RC_CHECK( rc, PDERROR, "Start db monitor edu failed, rc: %d", rc ) ;
+      pEDUMgr->regSystemEDU( EDU_TYPE_DBMONITOR, eduID ) ;
 
       // start tcp listern edu and http listerner edu
       rc = pEDUMgr->startEDU( EDU_TYPE_TCPLISTENER, (void*)_pTcpListener,

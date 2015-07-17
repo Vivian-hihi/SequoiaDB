@@ -302,10 +302,6 @@ namespace engine
 
          INT32 _handleStepUp( UINT32 seconds ) ;
 
-         void _localValidate( UINT32 millis ) ;
-
-         BOOLEAN _dbIsAbNormal() const ;
-
       private:
          _netRouteAgent          *_agent ;
          _clsGroupInfo           _info ;

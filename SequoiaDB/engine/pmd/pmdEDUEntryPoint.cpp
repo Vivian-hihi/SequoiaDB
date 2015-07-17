@@ -122,6 +122,9 @@ namespace engine
          ON_EDUTYPE_TO_ENTRY1 ( EDU_TYPE_FAPLISTENER, TRUE,
                                 pmdFapListenerEntryPoint,
                                 "FAPListener" ),
+         ON_EDUTYPE_TO_ENTRY1 ( EDU_TYPE_DBMONITOR, TRUE,
+                                pmdDBMonitorEntryPoint,
+                                "DBMonitor" ),
 
          // For the end
          ON_EDUTYPE_TO_ENTRY1 ( EDU_TYPE_MAXIMUM, FALSE,
