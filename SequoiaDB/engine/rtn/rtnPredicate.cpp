@@ -110,7 +110,7 @@ namespace engine
       vector<rtnStartStopKey> _result ;
    } ;
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_RTNSSKEY_TOSTRING, "rtnStartStopKey::toString" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNSSKEY_TOSTRING, "rtnStartStopKey::toString" )
    string rtnStartStopKey::toString() const
    {
       PD_TRACE_ENTRY ( SDB_RTNSSKEY_TOSTRING ) ;
@@ -124,7 +124,7 @@ namespace engine
       return buf.str() ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_RTNSSKEY_RESET, "rtnStartStopKey::reset" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNSSKEY_RESET, "rtnStartStopKey::reset" )
    void rtnStartStopKey::reset ()
    {
       PD_TRACE_ENTRY ( SDB_RTNSSKEY_RESET ) ;
@@ -138,7 +138,7 @@ namespace engine
 #define RTN_START_STOP_KEY_START "a"
 #define RTN_START_STOP_KEY_STOP  "o"
 #define RTN_START_STOP_KEY_INCL  "i"
-   PD_TRACE_DECLARE_FUNCTION ( SDB_RTNSSKEY_FROMBSON, "rtnStartStopKey::fromBson" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNSSKEY_FROMBSON, "rtnStartStopKey::fromBson" )
    BOOLEAN rtnStartStopKey::fromBson ( BSONObj &ob )
    {
       PD_TRACE_ENTRY ( SDB_RTNSSKEY_FROMBSON ) ;
@@ -177,7 +177,7 @@ namespace engine
       return ret ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_RTNSSKEY_TOBSON, "rtnStartStopKey::toBson" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNSSKEY_TOBSON, "rtnStartStopKey::toBson" )
    BSONObj rtnStartStopKey::toBson() const
    {
       PD_TRACE_ENTRY ( SDB_RTNSSKEY_TOBSON ) ;
@@ -206,7 +206,7 @@ namespace engine
       return ob.obj () ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_RTNKEYCOMPARE, "rtnKeyCompare" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNKEYCOMPARE, "rtnKeyCompare" )
    INT32 rtnKeyCompare ( const BSONElement &l, const BSONElement &r )
    {
       INT32 rc = SDB_OK ;
@@ -223,7 +223,7 @@ namespace engine
       return rc ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_RTNSSKEY_COMPARE1, "rtnStartStopKey::compare" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNSSKEY_COMPARE1, "rtnStartStopKey::compare" )
    RTN_SSK_VALUE_POS rtnStartStopKey::compare ( BSONElement &ele,
                                                 INT32 dir ) const
    {
@@ -294,7 +294,7 @@ namespace engine
       return pos ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_RTNSSKEY_COMPARE2, "rtnStartStopKey::compare" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNSSKEY_COMPARE2, "rtnStartStopKey::compare" )
    RTN_SSK_RANGE_POS rtnStartStopKey::compare ( rtnStartStopKey &key,
                                                 INT32 dir ) const
    {
@@ -430,7 +430,7 @@ namespace engine
    // input: flags for re flag
    // output: whether it's purePrefix (start with ^)
    // return regular expression string
-   PD_TRACE_DECLARE_FUNCTION ( SDB_SIMAPLEREGEX1, "simpleRegex" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_SIMAPLEREGEX1, "simpleRegex" )
    string simpleRegex ( const CHAR* regex,
                         const CHAR* flags,
                         BOOLEAN *purePrefix )
@@ -568,7 +568,7 @@ namespace engine
       return r;
    }
    
-   PD_TRACE_DECLARE_FUNCTION ( SDB_SIMAPLEREGEX2, "simpleRegex" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_SIMAPLEREGEX2, "simpleRegex" )
    inline string simpleRegex(const BSONElement& e)
    {
       PD_TRACE_ENTRY ( SDB_SIMAPLEREGEX2 ) ;
@@ -654,7 +654,7 @@ namespace engine
    }
 
    // intersection operation for two keysets
-   PD_TRACE_DECLARE_FUNCTION ( SDB_RTNPRED_OPEQU, "rtnPredicate::operator&=" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNPRED_OPEQU, "rtnPredicate::operator&=" )
    const rtnPredicate &rtnPredicate::operator&=
                       (const rtnPredicate &right)
    {
@@ -693,7 +693,7 @@ namespace engine
    }
 
    // union operation for two keysets
-   PD_TRACE_DECLARE_FUNCTION (SDB_RTNPRED_OPOREQ, "rtnPredicate::operator|=" )
+   // PD_TRACE_DECLARE_FUNCTION (SDB_RTNPRED_OPOREQ, "rtnPredicate::operator|=" )
    const rtnPredicate &rtnPredicate::operator|=
                       (const rtnPredicate &right)
    {
@@ -729,7 +729,7 @@ namespace engine
       return *this ;
    }
    // exclude operation for two keysets
-   PD_TRACE_DECLARE_FUNCTION ( SDB_RTNPRED_OPMINUSEQ, "rtnPredicate::operator-=" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNPRED_OPMINUSEQ, "rtnPredicate::operator-=" )
    const rtnPredicate &rtnPredicate::operator-=
                       (const rtnPredicate &right)
    {
@@ -891,7 +891,7 @@ namespace engine
       return temp.isEmpty() ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_RTNPRED_RTNPRED, "rtnPredicate::rtnPredicate" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNPRED_RTNPRED, "rtnPredicate::rtnPredicate" )
    rtnPredicate::rtnPredicate ( const BSONElement &e, BOOLEAN isNot )
    {
       PD_TRACE_ENTRY ( SDB_RTNPRED_RTNPRED ) ;
@@ -1201,7 +1201,7 @@ namespace engine
       PD_TRACE_EXIT ( SDB_RTNPRED_RTNPRED ) ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_RTNPRED_REVERSE, "rtnPredicate::reverse" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNPRED_REVERSE, "rtnPredicate::reverse" )
    void rtnPredicate::reverse ( rtnPredicate &result ) const
    {
       PD_TRACE_ENTRY ( SDB_RTNPRED_REVERSE ) ;
@@ -1288,7 +1288,7 @@ namespace engine
       return f->second ;
    }
    
-   PD_TRACE_DECLARE_FUNCTION ( SDB__RTNPREDSET_MALEFORINDEX, "_rtnPredicateSet::matchLevelForIndex" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNPREDSET_MALEFORINDEX, "_rtnPredicateSet::matchLevelForIndex" )
    INT32 _rtnPredicateSet::matchLevelForIndex (const BSONObj &keyPattern) const
    {
       // scan key from begin to end, return the first X elements that exist in
@@ -1336,7 +1336,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__RTNPREDLIST__RTNPREDLIST, "_rtnPredicateList::_rtnPredicateList" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNPREDLIST__RTNPREDLIST, "_rtnPredicateList::_rtnPredicateList" )
    _rtnPredicateList::_rtnPredicateList ( const rtnPredicateSet &predSet,
                                           const _ixmIndexCB *indexCB,
                                           INT32 direction )
@@ -1386,7 +1386,7 @@ namespace engine
    }
 
    // get the start key of first start/stopkey in each predicate column
-   PD_TRACE_DECLARE_FUNCTION ( SDB__RTNPREDLIST_STARTKEY, "_rtnPredicateList::startKey" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNPREDLIST_STARTKEY, "_rtnPredicateList::startKey" )
    BSONObj _rtnPredicateList::startKey() const
    {
       PD_TRACE_ENTRY ( SDB__RTNPREDLIST_STARTKEY ) ;
@@ -1401,7 +1401,7 @@ namespace engine
       return b.obj() ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__RTNPREDLIST_ENDKEY, "_rtnPredicateList::endKey" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNPREDLIST_ENDKEY, "_rtnPredicateList::endKey" )
    BSONObj _rtnPredicateList::endKey() const
    {
       PD_TRACE_ENTRY ( SDB__RTNPREDLIST_ENDKEY ) ;
@@ -1416,7 +1416,7 @@ namespace engine
       return b.obj() ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__RTNPREDLIST_OBJ, "_rtnPredicateList::obj" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNPREDLIST_OBJ, "_rtnPredicateList::obj" )
    BSONObj _rtnPredicateList::obj() const
    {
       PD_TRACE_ENTRY ( SDB__RTNPREDLIST_OBJ ) ;
@@ -1459,7 +1459,7 @@ namespace engine
 
    // whether an element matches the i'th column
    // even result means the element is contained within a valid range
-   PD_TRACE_DECLARE_FUNCTION ( SDB__RTNPREDLIST_MATLOWELE, "_rtnPredicateList::matchingLowElement" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNPREDLIST_MATLOWELE, "_rtnPredicateList::matchingLowElement" )
    INT32 _rtnPredicateList::matchingLowElement ( const BSONElement &e, INT32 i,
                                                 BOOLEAN direction,
                                                 BOOLEAN &lowEquality ) const
@@ -1542,7 +1542,7 @@ namespace engine
 
    // whether a given index key matches the predicate
    // the key should have same amount of elements than predicate size
-   PD_TRACE_DECLARE_FUNCTION ( SDB__RTNPREDLIST_MATKEY, "_rtnPredicateList::matchesKey" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNPREDLIST_MATKEY, "_rtnPredicateList::matchesKey" )
    BOOLEAN _rtnPredicateList::matchesKey ( const BSONObj &key ) const
    {
       PD_TRACE_ENTRY ( SDB__RTNPREDLIST_MATKEY ) ;
@@ -1597,7 +1597,7 @@ namespace engine
    }
 
    // set the i'th field to next start key and reset all other following fields
-   PD_TRACE_DECLARE_FUNCTION ( SDB__RTNPREDLISTITE_ADVTOLOBOU, "_rtnPredicateListIterator::advanceToLowerBound" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNPREDLISTITE_ADVTOLOBOU, "_rtnPredicateListIterator::advanceToLowerBound" )
    INT32 _rtnPredicateListIterator::advanceToLowerBound( INT32 i )
    {
       PD_TRACE_ENTRY ( SDB__RTNPREDLISTITE_ADVTOLOBOU ) ;
@@ -1605,6 +1605,7 @@ namespace engine
                                                         ]._startKey._bound ;
       _inc[i] = _predList._predicates[i]._startStopKeys[_currentKey[i]
                                                        ]._startKey._inclusive ;
+      _prevKey[ i ] = _currentKey[ i ] ;
       // reset all other following fields
       for ( INT32 j = i+1; j < (INT32)_currentKey.size(); ++j )
       {
@@ -1612,6 +1613,7 @@ namespace engine
             &_predList._predicates[j]._startStopKeys.front()._startKey._bound ;
          _inc[j] =
           _predList._predicates[j]._startStopKeys.front()._startKey._inclusive ;
+         _prevKey[ j ] = -1 ;
       }
       _after = FALSE ;
       PD_TRACE_EXIT ( SDB__RTNPREDLISTITE_ADVTOLOBOU ) ;
@@ -1621,7 +1623,7 @@ namespace engine
    // MATCH means the currElt matches the currentKey[keyIdx]'s range
    // LESS means currElt is less than the range
    // GREATER means currElt is greater than the range
-   PD_TRACE_DECLARE_FUNCTION ( SDB__RTNPREDLISTITE_VALCURSSKEY, "_rtnPredicateListIterator::validateCurrentStartStopKey" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNPREDLISTITE_VALCURSSKEY, "_rtnPredicateListIterator::validateCurrentStartStopKey" )
    rtnPredicateCompareResult
      _rtnPredicateListIterator::validateCurrentStartStopKey ( INT32 keyIdx,
                                                 const BSONElement &currElt,
@@ -1675,7 +1677,7 @@ namespace engine
       return re ;
    }
    
-   PD_TRACE_DECLARE_FUNCTION ( SDB__RTNPREDLISTITE_RESET, "_rtnPredicateListIterator::reset" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNPREDLISTITE_RESET, "_rtnPredicateListIterator::reset" )
    void _rtnPredicateListIterator::reset ()
    {
       PD_TRACE_ENTRY ( SDB__RTNPREDLISTITE_RESET ) ;
@@ -1690,7 +1692,7 @@ namespace engine
       PD_TRACE_EXIT ( SDB__RTNPREDLISTITE_RESET ) ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__RTNPREDLISTITE_ADVANCE, "_rtnPredicateListIterator::advance" )
+   //PD_TRACE_DECLARE_FUNCTION ( SDB__RTNPREDLISTITE_ADVANCE, "_rtnPredicateListIterator::advance" )
    INT32 _rtnPredicateListIterator::advance ( const BSONObj &curr )
    {
       INT32 rc = -1 ;
@@ -1871,12 +1873,6 @@ namespace engine
       }
       // we have a match if we hit here, means all fields got matched
    done :
-      for ( INT32 i = 0; i < (INT32)_currentKey.size(); ++i )
-      {
-         // we define _prevKey in order to prevent advanceToLowerBound
-         // keep looping at the same range
-         _prevKey[i] = _currentKey[i] ;
-      }
       PD_TRACE_EXITRC ( SDB__RTNPREDLISTITE_ADVANCE, rc ) ;
       return rc ;
    }
