@@ -591,8 +591,7 @@ namespace engine
       }
       else
       {
-         INT64 v = MTH_MOD( e.numberLong(),
-                            arg.numberLong() ) ;
+         INT64 v = e.numberLong() % arg.numberLong() ;
          builder.appendNumber( fieldName, v ) ;
       } 
       PD_TRACE_EXITRC( SDB__MTHMODBUILD, rc ) ;
@@ -645,8 +644,7 @@ namespace engine
       }
       else
       {
-         INT64 v = MTH_MOD( in.numberLong(),
-                             argEle.numberLong() ) ;
+         INT64 v = in.numberLong() % argEle.numberLong() ;
          builder.append( fieldName, v ) ;
       }
 
