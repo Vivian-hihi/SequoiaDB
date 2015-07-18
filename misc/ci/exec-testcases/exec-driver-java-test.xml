@@ -10,10 +10,10 @@
         </classpath>
     </taskdef>
     <taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
-      <classpath>
-         <fileset dir="${antTask.jar.path}" includes="*.jar" />
-      </classpath>
-   </taskdef>
+        <classpath>
+            <fileset dir="${antTask.jar.path}" includes="*.jar" />
+        </classpath>
+    </taskdef>
 
     <target name="Clean-Java-Reports" depends="">
         <delete dir="${reports.path}" failonerror="false" />
