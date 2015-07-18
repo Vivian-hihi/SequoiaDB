@@ -238,7 +238,7 @@ namespace engine
          }
          if ( !has )
          {
-            status[merge].offset = 0 ;
+            status[merge].offset = DPS_INVALID_LSN_OFFSET ; 
             status[merge].id.value = itr->first ;
             status[merge].valid = newNodeValid ;
             ++merge ;
