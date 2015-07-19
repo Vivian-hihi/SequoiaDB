@@ -26,8 +26,8 @@
 		<scp file="${basedir}/ci.test.properties" todir="${remote.user}:${remote.password}@${deploy.host.name}:${test.machine.software.path}/ci.test.properties" trust="true" failonerror="true" />
 		<scp file="${basedir}/install-basic-in-host.xml" todir="${remote.user}:${remote.password}@${deploy.host.name}:${test.machine.software.path}/install-basic-in-host.xml" trust="true" failonerror="true" />
 		<scp file="${basedir}/ant-sdbtask/ant-sdbtasks.jar" todir="${remote.user}:${remote.password}@${deploy.host.name}:${test.machine.software.path}/ant-sdbtasks.jar" trust="true" failonerror="true" />
-		<sshexec host="${deploy.host.name}" username="${remote.user}" password="${remote.password}" command="ant -l ${test.machine.software.path}/clean-install-basic-in-host.log -f ${test.machine.software.path}/install-basic-in-host.xml clean-install -Dtest.basedir=${test.machine.software.path}" trust="true" failonerror="true" />
-		<sshexec host="${deploy.host.name}" username="${remote.user}" password="${remote.password}" command="rm -rf ${test.machine.software.path}" trust="true" failonerror="true" />
+		<sshexec host="${deploy.host.name}" username="${remote.user}" password="${remote.password}" command="ant -l ${test.machine.software.path}/clean-install-basic-in-host.log -f ${test.machine.software.path}/install-basic-in-host.xml clean-install -Dtest.basedir=${test.machine.software.path}" trust="true" failonerror="false" />
+		<sshexec host="${deploy.host.name}" username="${remote.user}" password="${remote.password}" command="rm -rf ${test.machine.software.path}" trust="true" failonerror="false" />
 		<sshexec host="${deploy.host.name}" username="${remote.user}" password="${remote.password}" command="mkdir ${test.machine.software.path}" trust="true" failonerror="true" />
 		<echo message="###############################################################################################################################" />
 		<echo message="hostname=${deploy.host.name}:Clean-install" />
