@@ -13,13 +13,13 @@
 <project name="Install-Software" default="Install-Software">
 	<property file="ci.test.properties" />
 	<target name="Uninstall-Software" depends="">
-		<sshexec host="${deploy.host.name}" username="${remote.user}" password="${remote.password}" command="ls -la ${test.machine.software.path};echo &#36;?" trust="true" outputproperty="ret.code" failonerror="false" />
+		<sshexec host="${deploy.host.name}" username="${remote.user}" password="${remote.password}" command="ls -d ${test.machine.software.path}" trust="true" outputproperty="ret.code" failonerror="false" />
 		<echo message="*******************************************************************************************************************************" />
 		<echo message="ret.code = ${ret.code}" />
 		<echo message="*******************************************************************************************************************************" />
 		<if>
 			<not>
-				<equals arg1="${ret.code}" arg2="0" />
+				<equals arg1="${ret.code}" arg2="${test.machine.software.path}" />
 			</not>
 			<then>
 				<sshexec host="${deploy.host.name}" username="${remote.user}" password="${remote.password}" command="mkdir ${test.machine.software.path}" trust="true" failonerror="true" />
