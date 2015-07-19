@@ -15,10 +15,6 @@
 	<property file="${release.path}/build.version" />
 	<target name="Uninstall-Software" depends="">
 		<sshexec host="${deploy.host.name}" username="${remote.user}" password="${remote.password}" command="ls -d ${test.machine.software.path}" trust="true" resultproperty="ret.code" failonerror="false" />
-		<echo message="*******************************************************************************************************************************" />
-		<echo message="ret.code = ${ret.code}" />
-		<echo message="version = ${ant.version}" />
-		<echo message="*******************************************************************************************************************************" />
 		<if>
 			<not>
 				<equals arg1="${ret.code}" arg2="0" />
@@ -37,21 +33,9 @@
 		<echo message="hostname=${deploy.host.name}:Clean-install" />
 		<sshexec host="${deploy.host.name}" username="${remote.user}" password="${remote.password}" command="cat ${test.machine.software.path}/clean-install-basic-in-host.log" trust="true" failonerror="true" />
 		<echo message="###############################################################################################################################" />
-		<!-- <stafTools workType="copy" workHost="LOCAL" fileName="${basedir}/ci.test.properties" saveDir="${test.machine.software.path}" toHost="${deploy.host.name}" failonerror="true"/>
-		<stafTools workType="copy" workHost="LOCAL" fileName="${basedir}/install-basic-in-host.xml" saveDir="${test.machine.software.path}" toHost="${deploy.host.name}" failonerror="true"/>
-		<stafTools workType="copy" workHost="LOCAL" fileName="${basedir}/ant-sdbtask/ant-sdbtasks.jar" saveDir="${test.machine.software.path}" toHost="${deploy.host.name}" failonerror="true"/>
-	    <stafTools workHost="${deploy.host.name}" workType="shell" workDir="${test.machine.software.path}" common="ant -l ${test.machine.software.path}/clean-install-basic-in-host.log -f ${test.machine.software.path}/install-basic-in-host.xml clean-install -Dtest.basedir=${test.machine.software.path}" failonerror="true"/>
-	    <stafTools workHost="${deploy.host.name}" worktype="get" fileName="${test.machine.software.path}/clean-install-basic-in-host.log" failonerror="true"/>
-	    <stafTools workType="copy" workHost="${deploy.host.name}" fileName="${test.machine.software.path}/clean-install-basic-in-host.log" saveDir="/opt" toHost="${deploy.host.name}" failonerror="true"/>
-	    <stafTools workHost="${deploy.host.name}" worktype="delete" fileName="${test.machine.software.path}" failonerror="true"/>
-	    <stafTools workHost="${deploy.host.name}" worktype="create" filename="${test.machine.software.path}" failonerror="true"/> -->
 	</target>
 
 	<target name="Install-Software" depends="Uninstall-Software">
-		<!-- <stafTools workType="copy" workHost="LOCAL" fileName="${install.package.fullname}" saveDir="${test.machine.software.path}" toHost="${deploy.host.name}" failonerror="true"/>
-		<stafTools workType="copy" workHost="LOCAL" fileName="${basedir}/ci.test.properties" saveDir="${test.machine.software.path}" toHost="${deploy.host.name}" failonerror="true"/>
-		<stafTools workType="copy" workHost="LOCAL" fileName="${basedir}/install-basic-in-host.xml" saveDir="${test.machine.software.path}" toHost="${deploy.host.name}" failonerror="true"/>
-		<stafTools workType="copy" workHost="LOCAL" fileName="${basedir}/ant-sdbtask/ant-sdbtasks.jar" saveDir="${test.machine.software.path}" toHost="${deploy.host.name}" failonerror="true"/> -->
 		<scp file="${install.package.fullname}" todir="${remote.user}:${remote.password}@${deploy.host.name}:${test.machine.software.path}/${BUILD.INSTALL.FILENAME}" trust="true" failonerror="true" />
 		<scp file="${basedir}/ci.test.properties" todir="${remote.user}:${remote.password}@${deploy.host.name}:${test.machine.software.path}/ci.test.properties" trust="true" failonerror="true" />
 		<scp file="${basedir}/install-basic-in-host.xml" todir="${remote.user}:${remote.password}@${deploy.host.name}:${test.machine.software.path}/install-basic-in-host.xml" trust="true" failonerror="true" />
@@ -66,15 +50,5 @@
 		<sshexec host="${deploy.host.name}" username="${remote.user}" password="${remote.password}" command="cat ${test.machine.software.path}/install-basic-in-host.log" trust="true" failonerror="true" />
 		<echo message="###############################################################################################################################" />
 		<scp file="${basedir}/deploy-test-result.xml" todir="${remote.user}:${remote.password}@${deploy.host.name}:${test.machine.software.path}/deploy-test-result.xml" trust="true" failonerror="true" />
-		
-
-		<!-- <stafTools workType="shell" workHost="${deploy.host.name}" workDir="${test.machine.software.path}" waitTime="30m" common="ant -l ${test.machine.software.path}/install-basic-in-host.log -f ${test.machine.software.path}/install-basic-in-host.xml -Dtest.basedir=${test.machine.software.path} -Dinstall.package.filename=${install.package.filename} -Dis.standalone.mode=${is.standalone.mode} -Dis.coord.master=${is.coord.master} -Dcatalog.addrs=${catalog.addrs}" failonerror="true"/>
-		<stafTools workType="get" workHost="${deploy.host.name}" fileName="${test.machine.software.path}/install-basic-in-host.log" failonerror="true"/>
-		<stafTools workType="copy" workHost="LOCAL" fileName="${basedir}/deploy-test-result.xml" saveDir="${test.machine.software.path}" toHost="${deploy.host.name}" failonerror="true"/> -->
-
-
-		<!-- <stafTools workType="shell" workHost="${deploy.host.name}" workDir="${test.machine.software.path}" waitTime="30m" common="vim /etc/profile" />
-		<stafTools workType="shell" workHost="${deploy.host.name}" workDir="${test.machine.software.path}" waitTime="30m" common="echo 'ulimit -c unlimited' >> /etc/profile" />
-		<stafTools workType="shell" workHost="${deploy.host.name}" workDir="${test.machine.software.path}" waitTime="30m" common="source /etc/profile" /> -->
 	</target>
 </project>
