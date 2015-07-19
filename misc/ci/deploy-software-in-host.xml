@@ -36,6 +36,7 @@
 	</target>
 
 	<target name="Install-Software" depends="Uninstall-Software">
+		<echo message="BUILD.INSTALL.FILENAME = ${BUILD.INSTALL.FILENAME}" />
 		<scp file="${install.package.fullname}" todir="${remote.user}:${remote.password}@${deploy.host.name}:${test.machine.software.path}/${BUILD.INSTALL.FILENAME}" trust="true" failonerror="true" />
 		<scp file="${basedir}/ci.test.properties" todir="${remote.user}:${remote.password}@${deploy.host.name}:${test.machine.software.path}/ci.test.properties" trust="true" failonerror="true" />
 		<scp file="${basedir}/install-basic-in-host.xml" todir="${remote.user}:${remote.password}@${deploy.host.name}:${test.machine.software.path}/install-basic-in-host.xml" trust="true" failonerror="true" />
