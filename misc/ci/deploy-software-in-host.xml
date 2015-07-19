@@ -12,7 +12,7 @@
 
 <project name="Install-Software" default="Install-Software">
 	<property file="ci.test.properties" />
-	<property file="${release.path}/build.version" />
+	<!-- <property file="${release.path}/build.version" /> -->
 	<target name="Uninstall-Software" depends="">
 		<sshexec host="${deploy.host.name}" username="${remote.user}" password="${remote.password}" command="ls -d ${test.machine.software.path}" trust="true" resultproperty="ret.code" failonerror="false" />
 		<if>
@@ -36,8 +36,10 @@
 	</target>
 
 	<target name="Install-Software" depends="Uninstall-Software">
-		<echo message="BUILD.INSTALL.FILENAME = ${BUILD.INSTALL.FILENAME}" />
-		<scp file="${install.package.fullname}" todir="${remote.user}:${remote.password}@${deploy.host.name}:${test.machine.software.path}/${BUILD.INSTALL.FILENAME}" trust="true" failonerror="true" />
+		
+		<basename property="test.package.name" file="${install.package.fullname}" suffix=".run" />
+		<echo message="test.package.name = ${test.package.name}" />
+		<scp file="${install.package.fullname}" todir="${remote.user}:${remote.password}@${deploy.host.name}:${test.machine.software.path}/${test.package.name}.run" trust="true" failonerror="true" />
 		<scp file="${basedir}/ci.test.properties" todir="${remote.user}:${remote.password}@${deploy.host.name}:${test.machine.software.path}/ci.test.properties" trust="true" failonerror="true" />
 		<scp file="${basedir}/install-basic-in-host.xml" todir="${remote.user}:${remote.password}@${deploy.host.name}:${test.machine.software.path}/install-basic-in-host.xml" trust="true" failonerror="true" />
 		<scp file="${basedir}/ant-sdbtask/ant-sdbtasks.jar" todir="${remote.user}:${remote.password}@${deploy.host.name}:${test.machine.software.path}/ant-sdbtasks.jar" trust="true" failonerror="true" />
