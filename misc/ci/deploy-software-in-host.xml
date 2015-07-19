@@ -13,16 +13,14 @@
 <project name="Install-Software" default="Install-Software">
 	<property file="ci.test.properties" />
 	<target name="Uninstall-Software" depends="">
-		<sshexec host="${deploy.host.name}" username="${remote.user}" password="${remote.password}" command="ls -d ${test.machine.software.path}" trust="true" outputproperty="ret.code" failonerror="false" />
+		<sshexec host="${deploy.host.name}" username="${remote.user}" password="${remote.password}" command="ls -la ${test.machine.software.path};echo &#38;?" trust="true" resultproperty="ret.code" failonerror="false" />
 		<echo message="*******************************************************************************************************************************" />
 		<echo message="ret.code = ${ret.code}" />
-		<echo message="test.machine.software.path = ${test.machine.software.path}" />
-
 		<echo message="version = ${ant.version}" />
 		<echo message="*******************************************************************************************************************************" />
 		<if>
 			<not>
-				<equals arg1="${ret.code}" arg2="/tmp/sequoiadb_tools" forcestring="true" />
+				<equals arg1="${ret.code}" arg2="0" />
 			</not>
 			<then>
 				<sshexec host="${deploy.host.name}" username="${remote.user}" password="${remote.password}" command="mkdir ${test.machine.software.path}" trust="true" failonerror="true" />
