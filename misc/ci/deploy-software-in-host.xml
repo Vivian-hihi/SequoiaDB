@@ -20,7 +20,7 @@
 		<echo message="*******************************************************************************************************************************" />
 		<if>
 			<not>
-				<equals arg1="${ret.code}" arg2="${test.machine.software.path}" forcestring="true" />
+				<equals arg1="${ret.code}" arg2="/tmp/sequoiadb_tools" forcestring="true" />
 			</not>
 			<then>
 				<sshexec host="${deploy.host.name}" username="${remote.user}" password="${remote.password}" command="mkdir ${test.machine.software.path}" trust="true" failonerror="true" />
