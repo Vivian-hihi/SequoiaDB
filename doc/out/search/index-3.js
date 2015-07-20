@@ -1,5 +1,4 @@
 //Auto generated index for searching.
-w["work."]="831*2";
 w["worker"]="792*2,793*2,794*1,795*1,796*7,797*7";
 w["worker.out"]="796*1,797*1";
 w["working"]="797*1,1057*1";
