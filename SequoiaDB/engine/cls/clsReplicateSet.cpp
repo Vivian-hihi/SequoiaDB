@@ -653,8 +653,9 @@ namespace engine
          if ( SDB_REPL_REMOTE_G_V_EXPIRED != rc )
          {
             PD_LOG( PDWARNING, "set group info failed, rc = %d", rc ) ;
+            goto error ;
          }
-         goto error ;
+         rc = SDB_OK ;
       }
 
       _cata.remove( &(msg->header), MSG_GET_INNER_REPLY_RC(pHeader) ) ;
