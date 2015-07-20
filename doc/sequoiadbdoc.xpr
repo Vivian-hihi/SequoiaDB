@@ -1085,6 +1085,7 @@
                     <file name="references/methods/topics_en_v2/cl.attachCL.dita"/>
                     <file name="references/methods/topics_en_v2/cl.count.dita"/>
                     <file name="references/methods/topics_en_v2/cl.createIndex.dita"/>
+                    <file name="references/methods/topics_en_v2/cl.createIndexOffline.dita"/>
                     <file name="references/methods/topics_en_v2/cl.deleteLob.dita"/>
                     <file name="references/methods/topics_en_v2/cl.detachCL.dita"/>
                     <file name="references/methods/topics_en_v2/cl.dropIndex.dita"/>
