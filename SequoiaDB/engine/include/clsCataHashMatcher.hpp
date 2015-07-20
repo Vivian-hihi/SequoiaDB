@@ -68,7 +68,7 @@ namespace engine
 
       void clear();
 
-      INT32 generateHashPredicate( UINT32 partitionBit ) ;
+      INT32 generateHashPredicate( UINT32 partitionBit, UINT32 internalV ) ;
 
       string toString() const ;
 
@@ -110,7 +110,8 @@ namespace engine
       virtual ~clsCataHashMatcher(){};
 
       INT32 loadPattern( const bson::BSONObj &matcher,
-                         UINT32 partitionBit );
+                         UINT32 partitionBit,
+                         UINT32 internalV );
 
       INT32 matches( _clsCatalogItem* pCatalogItem,
                      BOOLEAN &result );

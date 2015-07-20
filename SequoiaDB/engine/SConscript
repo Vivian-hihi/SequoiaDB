@@ -134,7 +134,8 @@ utilFiles = [
       "util/utilBsonHash.cpp",
       "util/linenoise.cpp",
       "util/utilLinenoiseWrapper.cpp",
-      "util/utilString.cpp"
+      "util/utilString.cpp",
+      "util/utilBsonHashObsolete.cpp"
       ]
 
 rtnFiles = [

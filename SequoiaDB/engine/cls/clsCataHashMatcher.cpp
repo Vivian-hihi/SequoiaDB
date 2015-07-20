@@ -175,7 +175,8 @@ namespace engine
       _logicType = CLS_CATA_LOGIC_INVALID ;
    }
 
-   INT32 clsCataHashPredTree::generateHashPredicate( UINT32 partitionBit )
+   INT32 clsCataHashPredTree::generateHashPredicate( UINT32 partitionBit,
+                                                     UINT32 internalV )
    {
       INT32 rc = SDB_OK ;
       try
@@ -215,13 +216,13 @@ namespace engine
             /// should not hit here when version is old
             _hashVal = clsPartition( objKey,
                                      partitionBit,
-                                     CAT_INTERNAL_VERSION_2 ) ;
+                                     internalV ) ;
             _hasPred = TRUE ;
          }
 
          for ( i = 0 ; i < _children.size() ; i++ )
          {
-            rc = _children[i]->generateHashPredicate( partitionBit ) ;
+            rc = _children[i]->generateHashPredicate( partitionBit, internalV ) ;
             PD_RC_CHECK( rc, PDERROR, "Failed to generate hash predicate "
                          "for children(rc=%d)", rc ) ;
             if ( _logicType != CLS_CATA_LOGIC_AND &&
@@ -377,7 +378,8 @@ namespace engine
    }
 
    INT32 clsCataHashMatcher::loadPattern( const BSONObj &matcher,
-                                          UINT32 partitionBit )
+                                          UINT32 partitionBit,
+                                          UINT32 internalV )
    {
       INT32 rc = SDB_OK ;
       try
@@ -386,7 +388,7 @@ namespace engine
          rc = parseAnObj( _matcher, _predicateSet ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to load pattern(rc=%d)", rc ) ;
 
-         rc = _predicateSet.generateHashPredicate( partitionBit ) ;
+         rc = _predicateSet.generateHashPredicate( partitionBit, internalV ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to generate hash value(rc=%d)",
                       rc ) ;
       }

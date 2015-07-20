@@ -1733,7 +1733,8 @@ namespace engine
             builder.append( CAT_SHARDING_PARTITION, clInfo._shardPartition ) ;
 
             /// optimize query on hash-sharding only sdb's version >= 1.12
-            builder.append( CAT_INTERNAL_VERSION, CAT_INTERNAL_VERSION_2 ) ;
+            /// update version since 1.12.4
+            builder.append( CAT_INTERNAL_VERSION, CAT_INTERNAL_VERSION_3 ) ;
          }
       }
       /// add catainfo to record even not specified by user.

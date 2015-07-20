@@ -14,7 +14,7 @@
    You should have received a copy of the GNU Affero General Public License
    along with this program. If not, see <http://www.gnu.org/license/>.
 
-   Source File Name = utilBsonHash.cpp
+   Source File Name = utilBsonHasherObsolete.cpp
 
    Dependencies: N/A
 
@@ -35,8 +35,6 @@
 #include "../bson/lib/md5.h"
 #include "pd.hpp"
 #include <boost/functional/hash.hpp>
-#include "pdTrace.hpp"
-#include "utilTrace.hpp"
 
 using namespace bson ;
 
@@ -50,33 +48,28 @@ using namespace bson ;
 
 namespace engine
 {
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__UTILBSONHASHER_HASHOBJ, "_utilBSONHasher::hashObj" )
-   UINT32 _utilBSONHasher::hashObj( const bson::BSONObj &obj,
-                                    UINT32 partitionBit )
+   UINT32 _utilBSONHasherObsolete::hash( const bson::BSONObj &obj,
+                                 UINT32 partitionBit )
    {
-      PD_TRACE_ENTRY( SDB__UTILBSONHASHER_HASHOBJ ) ;
       UINT32 hashCode = 0 ;
       BSONObjIterator i( obj ) ;
       while ( i.more() )
       {
          BSONElement e = i.next() ;
-         HASH_COMBINE( hashCode, hashElement( e ) ) ;
+         HASH_COMBINE( hashCode, hash( e ) ) ;
       }
 
-      if ( 0 < partitionBit && partitionBit < 32 )
+      if ( 0 < partitionBit )
       {
-         hashCode >>= 32 - partitionBit ;
+         UINT32 tmpValue = 1 << partitionBit ;
+         tmpValue -= 1 ;
+         hashCode &= tmpValue ;
       }
-
-      PD_PACK_UINT( hashCode ) ;
-      PD_TRACE_EXIT( SDB__UTILBSONHASHER_HASHOBJ ) ;
       return hashCode ;      
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__UTILBSONHASHER_HASHELE, "_utilBSONHasher::hashElement" )
-   UINT32 _utilBSONHasher::hashElement( const bson::BSONElement &e )
+   UINT32 _utilBSONHasherObsolete::hash( const bson::BSONElement &e )
    {
-      PD_TRACE_ENTRY( SDB__UTILBSONHASHER_HASHELE ) ;
       UINT32 hashCode = 0 ;
       HASH_COMBINE( hashCode, e.canonicalType() ) ;
 
@@ -128,7 +121,7 @@ namespace engine
       }
 
       case jstOID:
-         HASH_COMBINE( hashCode, hashOid( e.OID() ) ) ;
+         HASH_COMBINE( hashCode, hash( e.OID() ) ) ;
          break ;
 
       case Code:
@@ -140,7 +133,7 @@ namespace engine
 
       case Object:
       case Array:
-         HASH_COMBINE( hashCode, hashObj( e.embeddedObject() ) ) ;
+         HASH_COMBINE( hashCode, hash( e.embeddedObject() ) ) ;
          break ;
 
       case DBRef:
@@ -150,43 +143,38 @@ namespace engine
          break ;
 
       case RegEx:
-         HASH_COMBINE( hashCode, hashStr( e.regex() ) ) ;
-         HASH_COMBINE( hashCode, hashStr( e.regexFlags() ) ) ;
+         HASH_COMBINE( hashCode, hash( e.regex() ) ) ;
+         HASH_COMBINE( hashCode, hash( e.regexFlags() ) ) ;
          break ;
 
       case CodeWScope:
-         HASH_COMBINE( hashCode, hashStr( e.codeWScopeCode() ) ) ;
-         HASH_COMBINE( hashCode, hashObj( e.codeWScopeObject() ) ) ;
+         HASH_COMBINE( hashCode, hash( e.codeWScopeCode() ) ) ;
+         HASH_COMBINE( hashCode, hash( e.codeWScopeObject() ) ) ;
          break ;
       }
-
-      PD_PACK_UINT( hashCode ) ;
-      PD_TRACE_EXIT( SDB__UTILBSONHASHER_HASHELE ) ;
       return hashCode ;
    }
 
-   UINT32 _utilBSONHasher::hashOid( const bson::OID &oid )
+   UINT32 _utilBSONHasherObsolete::hash( const bson::OID &oid )
    {
       return hash( ( const CHAR * )( oid.getData() ), sizeof( oid ) ) ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__UTILBSONHASHER_HASH, "_utilBSONHasher::hash" )
-   UINT32 _utilBSONHasher::hash( const void *v, UINT32 size )
+   UINT32 _utilBSONHasherObsolete::hash( const void *v, UINT32 size )
    {
-      PD_TRACE_ENTRY( SDB__UTILBSONHASHER_HASH ) ;
       UINT32 hashCode = 0 ;
+      UINT32 i = 0 ;
       md5::md5digest digest ;
       md5::md5( v, size, digest ) ;
-      hashCode = digest[3] ;
-      hashCode |= ((UINT32)digest[2]) << 8 ;
-      hashCode |= ((UINT32)digest[1]) << 16 ;
-      hashCode |= ((UINT32)digest[0]) << 24 ;
-      PD_PACK_UINT( hashCode ) ;
-      PD_TRACE_EXIT( SDB__UTILBSONHASHER_HASH ) ;
+      while ( i < 4 )
+      {
+         hashCode |= ( (UINT32)digest[i] << ( 32 - 8 * i ) ) ;
+         ++i ;
+      }
       return hashCode ;
    }
 
-   UINT32 _utilBSONHasher::hashStr( const CHAR *str )
+   UINT32 _utilBSONHasherObsolete::hash( const CHAR *str )
    {
       return hash( str, ossStrlen( str ) ) ;
    }

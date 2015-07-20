@@ -875,10 +875,10 @@ namespace engine
 
       if ( isHashSharding() )
       {
-         if ( !CAT_INTERNAL_VERSION_IS_OLD( getInternalV() ) )
+         if ( CAT_INTERNAL_VERSION_2 <= getInternalV() )
          {
             clsCataHashMatcher hashMatcher( _shardingKey );
-            rc = hashMatcher.loadPattern( matcher, _square );
+            rc = hashMatcher.loadPattern( matcher, _square, getInternalV() );
             PD_RC_CHECK( rc, PDERROR,
                         "failed to load match-info(rc=%d)",
                         rc );
@@ -3225,9 +3225,13 @@ namespace engine
                        UINT32 partitionBit,
                        UINT32 internalVersion )
    {
-      if ( !CAT_INTERNAL_VERSION_IS_OLD( internalVersion ) )
+      if ( CAT_INTERNAL_VERSION_3 <= internalVersion )
       {
-         return BSON_HASHER::hash( keyObj, partitionBit ) ;
+         return BSON_HASHER::hashObj( keyObj, partitionBit ) ;
+      }
+      else if ( CAT_INTERNAL_VERSION_2 == internalVersion )
+      {
+         return BSON_HASHER_OBSOLETE::hash( keyObj, partitionBit ) ;
       }
       /// if it is a old version collection, use old hash algorithm.
       else
