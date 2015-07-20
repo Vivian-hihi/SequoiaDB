@@ -235,6 +235,9 @@ namespace engine
 
          const CHAR* _getSvcNameFromArg( const CHAR *arg ) ;
 
+         INT32 _getCfgFile( const CHAR *pSvcName, 
+                            CHAR *pBuffer, INT32 bufSize ) ;
+
          void     _checkNodeByStartupFile( const CHAR *pSvcName,
                                            dbProcessInfo *pInfo ) ;
 

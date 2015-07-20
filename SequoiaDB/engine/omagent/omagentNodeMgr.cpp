@@ -412,6 +412,8 @@ namespace engine
       MAP_DB_PROCESS_IT it = _mapDBProcess.begin() ;
       while ( it != _mapDBProcess.end() )
       {
+         INT32 rc = SDB_OK ;
+         CHAR cfgFile[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
          if ( isLock )
          {
             getBucket( pSvcName )->release() ;
@@ -454,6 +456,18 @@ namespace engine
          }
 
          pInfo->_pid = OSS_INVALID_PID ;
+
+         // before we try to restart a node which _status is "restart" or
+         // "crash", check whether it's cfg file exist or not, if not,
+         // set it's _status to be "removing"
+         rc = _getCfgFile( pSvcName, cfgFile, OSS_MAX_PATHSIZE + 1 ) ;
+         if ( SDB_FNE == rc )
+         {
+            PD_LOG ( PDERROR, "Failed to get node[%s]'s cfg file: rc: %d",
+                     pSvcName, rc ) ;
+            pInfo->_status = OMNODE_REMOVING ;
+            continue ;
+         }
 
          if ( 0 == restartCount || ( restartCount > 0 &&
               pInfo->_startTime.size() > (UINT32)restartCount ) )
@@ -513,6 +527,56 @@ namespace engine
       }
    }
 
+   INT32 _omAgentNodeMgr::_getCfgFile( const CHAR *pSvcName,
+                                       CHAR *pBuffer, INT32 bufSize )
+   {
+      INT32 rc = SDB_OK ;
+      INT32 len = 0 ;
+      CHAR cfgFile[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
+
+      if ( NULL == pBuffer || bufSize <= 0 )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "Invalid buffer info for output cfg file path" ) ;
+         goto error ;
+      }
+
+      rc = utilBuildFullPath( sdbGetOMAgentOptions()->getLocalCfgPath(),
+                              pSvcName, OSS_MAX_PATHSIZE, cfgFile ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Build node[%s] config path failed, rc: %d",
+                 pSvcName, rc ) ;
+         goto error ;
+      }
+
+      rc = utilCatPath( cfgFile, OSS_MAX_PATHSIZE, PMD_DFT_CONF ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Build node[%s] config path failed, rc: %d",
+                 pSvcName, rc ) ;
+         goto error ;
+      }
+
+      rc = ossAccess( cfgFile ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Access node[%s]'s cfg file failed, rc: %d",
+                 pSvcName, rc ) ;
+         goto error ;
+      }
+
+      // get cfg file
+      len = ( ossStrlen(cfgFile) + 1 <= bufSize ) ? ossStrlen(cfgFile) + 1 : bufSize ;
+      ossStrncpy( pBuffer, cfgFile, len - 1 ) ;
+      pBuffer[len] = '\0' ;      
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    void _omAgentNodeMgr::_checkNodeByStartupFile( const CHAR *pSvcName,
                                                   dbProcessInfo *pInfo )
    {
@@ -527,33 +591,15 @@ namespace engine
          PMD_HIDDEN_COMMANDS_OPTIONS
       PMD_ADD_PARAM_OPTIONS_END
 
-      rc = utilBuildFullPath( sdbGetOMAgentOptions()->getLocalCfgPath(),
-                              pSvcName, OSS_MAX_PATHSIZE, cfgFile ) ;
+      rc = _getCfgFile( pSvcName, cfgFile, OSS_MAX_PATHSIZE + 1 ) ;
       if ( rc )
       {
-         PD_LOG( PDERROR, "Build node[%s] config path failed, rc: %d",
+         PD_LOG( PDERROR, "Get node[%s] config path failed, rc: %d",
                  pSvcName, rc ) ;
          pInfo->_status = OMNODE_REMOVING ;
          goto done ;
       }
-
-      rc = utilCatPath( cfgFile, OSS_MAX_PATHSIZE, PMD_DFT_CONF ) ;
-      if ( rc )
-      {
-         PD_LOG( PDERROR, "Build node[%s] config path failed, rc: %d",
-                 pSvcName, rc ) ;
-         pInfo->_status = OMNODE_REMOVING ;
-         goto done ;
-      }
-
-      rc = ossAccess( cfgFile ) ;
-      if ( SDB_FNE == rc )
-      {
-         PD_LOG( PDERROR, "Config file[%s] not exist", cfgFile ) ;
-         pInfo->_status = OMNODE_REMOVING ;
-         goto done ;
-      }
-
+      
       rc = utilReadConfigureFile( cfgFile, desc, vm ) ;
       if ( rc )
       {
