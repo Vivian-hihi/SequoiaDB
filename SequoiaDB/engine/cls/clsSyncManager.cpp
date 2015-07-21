@@ -238,7 +238,7 @@ namespace engine
          }
          if ( !has )
          {
-            status[merge].offset = DPS_INVALID_LSN_OFFSET ; 
+            status[merge].offset = 0 ; 
             status[merge].id.value = itr->first ;
             status[merge].valid = newNodeValid ;
             ++merge ;
@@ -609,6 +609,8 @@ namespace engine
       {
          if ( _notifyList[i].id.value == id.value )
          {
+            _notifyList[i].hasSync = TRUE ;
+
             INT32 result = lsn.compareOffset( _notifyList[i].offset ) ;
             if ( 0 == result )
             {

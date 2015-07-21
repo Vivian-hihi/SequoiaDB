@@ -711,19 +711,23 @@ namespace engine
       map<UINT64, _clsSharingStatus>::iterator itr = _info.info.begin() ;
       for ( ; itr != _info.info.end(); itr++ )
       {
-         if ( itr->second.timeout >= pmdGetOptionCB()->sharingBreakTime() &&
-              itr->second.timeout >= _beatTime )
+         /// decrease dead time for heartbeat
+         if ( itr->second.deadtime >= pmdGetOptionCB()->sharingBreakTime() &&
+              itr->second.deadtime >= _beatTime )
          {
-            itr->second.timeout -= _beatTime ;
+            itr->second.deadtime -= _beatTime ;
             continue ;
          }
          msg.beat.syncStatus = clsSyncWindow( itr->second.beat.endLsn,
                                               fBegin, mBegin, end ) ;
+
+         /// if send heartbeat msg failed, and the node is not in active,
+         /// nead to reset dead time to decrease heartbeat msg
          if ( SDB_OK != _agent->syncSend( itr->second.beat.identity, &msg ) &&
               _info.alives.find( itr->first ) == _info.alives.end() )
          {
             UINT32 resetTimeout = 0 ;
-            itr->second.timeout = pmdGetOptionCB()->sharingBreakTime() - 1 ;
+            itr->second.deadtime = pmdGetOptionCB()->sharingBreakTime() - 1 ;
             if ( SOCKET_GETLASTERROR == CLS_CONNREFUSED )
             {
                resetTimeout = 1800 * OSS_ONE_SEC ;
@@ -732,7 +736,7 @@ namespace engine
             {
                resetTimeout = 120 * OSS_ONE_SEC ;
             }
-            itr->second.timeout += resetTimeout ;
+            itr->second.deadtime += resetTimeout ;
 
             PD_LOG( PDEVENT, "Reset node[%d] sharing-beat time to %u(sec)",
                     itr->second.beat.identity.columns.nodeID,
@@ -757,8 +761,8 @@ namespace engine
       map<UINT64, _clsSharingStatus *>::iterator itr ;
       map< UINT64, _clsSharingStatus>::iterator itrInfo ;
 
-      /// avoid out-of-data's timeout event
-      if ( pmdGetTickSpanTime( _checkBreakTick ) < millisec )
+      /// avoid out-of-data's timeout event, 50 for deviation
+      if ( pmdGetTickSpanTime( _checkBreakTick ) + 50 < millisec )
       {
          goto done ;
       }
@@ -950,6 +954,7 @@ namespace engine
          {
             itr->second->timeout = 0 ;
             itr->second->breakTime = 0 ;
+            itr->second->deadtime = 0 ;
          }
          else
          {
@@ -985,6 +990,7 @@ namespace engine
       }
       itr->second.timeout = 0 ;
       itr->second.breakTime = 0 ;
+      itr->second.deadtime = 0 ;
    done:
       PD_TRACE_EXITRC ( SDB__CLSREPSET__ALIVE, rc );
       return rc ;
