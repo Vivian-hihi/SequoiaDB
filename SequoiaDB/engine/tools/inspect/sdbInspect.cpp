@@ -2138,7 +2138,8 @@ namespace
          rc = rg.getMaster( master ) ;
          if ( SDB_OK != rc )
          {
-            std::cout << "Error: failed to get master node" << std::endl ;
+            std::cout << "Error: failed to get master node of group: "
+                      << rg.getName() << std::endl ;
             goto error ;
          }
 
@@ -2312,7 +2313,8 @@ namespace
                        g_username, g_password ) ;
       if ( SDB_OK != rc )
       {
-         std::cout << "Error: failed to connect to master node" << std::endl ;
+         std::cout << "Error: failed to connect to master node: "
+                   << master->_hostname << std::endl ;
          goto error ;
       }
 
