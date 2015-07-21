@@ -323,14 +323,12 @@ namespace engine
       DPS_LSN_OFFSET    offset ;
       _MsgRouteID       id ;
       BOOLEAN           valid ;
-      BOOLEAN           hasSync ;
       UINT32            sameReqTimes ;
 
       _clsSyncStatus():offset(0)
       {
          id.value       = 0 ;
          valid          = TRUE ;
-         hasSync        = FALSE ;
          sameReqTimes   = 0 ;
       }
 
@@ -339,7 +337,6 @@ namespace engine
          offset         = right.offset ;
          id.value       = right.id.value ;
          valid          = right.valid ;
-         hasSync        = right.hasSync ;
          sameReqTimes   = right.sameReqTimes ;
 
          return *this ;
@@ -350,11 +347,9 @@ namespace engine
          // 1. already full sync
          // 2. sharing-break
          // 3. same sync req more than 20 times
-         // 4. has not sync log
          if ( DPS_INVALID_LSN_OFFSET == offset ||
               !valid ||
-              sameReqTimes > CLS_SAME_SYNC_LSN_MAX_TIMES ||
-              FALSE == hasSync )
+              sameReqTimes > CLS_SAME_SYNC_LSN_MAX_TIMES )
          {
             return FALSE ;
          }

@@ -609,8 +609,6 @@ namespace engine
       {
          if ( _notifyList[i].id.value == id.value )
          {
-            _notifyList[i].hasSync = TRUE ;
-
             INT32 result = lsn.compareOffset( _notifyList[i].offset ) ;
             if ( 0 == result )
             {

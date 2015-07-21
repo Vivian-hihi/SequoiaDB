@@ -338,8 +338,8 @@ namespace engine
          hasLocal = TRUE ;
          nodes.clear() ;
       }
-      map<UINT64, _netRouteNode>::iterator itr =
-                                          nodes.begin() ;
+
+      map<UINT64, _netRouteNode>::iterator itr = nodes.begin() ;
       for ( ; itr != nodes.end(); itr++ )
       {
         if ( itr->first == _info.local.value )
@@ -373,8 +373,7 @@ namespace engine
 
       {
       /// remove deleted nodes
-      map<UINT64, _clsSharingStatus>::iterator itr2 =
-                                          _info.info.begin() ;
+      map<UINT64, _clsSharingStatus>::iterator itr2 = _info.info.begin() ;
       for ( ; itr2 != _info.info.end(); )
       {
          if ( nodes.end() == nodes.find( itr2->first ) )
@@ -771,13 +770,6 @@ namespace engine
       for ( itr = _info.alives.begin() ; itr != _info.alives.end() ; itr++ )
       {
          itr->second->timeout += millisec ;
-         /// if the first add node( no heart-beat, timeout time is
-         /// start shift time )
-         if ( CLS_BEATID_INVALID == itr->second->beat.beatID &&
-              itr->second->timeout < pmdGetOptionCB()->startShiftTime() )
-         {
-            continue ;
-         }
          if ( pmdGetOptionCB()->sharingBreakTime() <= itr->second->timeout )
          {
             needErase = TRUE ;
@@ -804,14 +796,6 @@ namespace engine
       itr = _info.alives.begin() ;
       for ( ; itr != _info.alives.end(); )
       {
-         /// if the first add node( no heart-beat, timeout time is
-         /// start shift time )
-         if ( CLS_BEATID_INVALID == itr->second->beat.beatID &&
-              itr->second->timeout < pmdGetOptionCB()->startShiftTime() )
-         {
-            ++itr ;
-            continue ;
-         }
          if ( pmdGetOptionCB()->sharingBreakTime() <= itr->second->timeout )
          {
             if ( itr->first == _info.primary.value )
