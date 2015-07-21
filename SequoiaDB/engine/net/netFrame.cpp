@@ -1046,6 +1046,7 @@ namespace engine
          case SDB_NETWORK:
          case SDB_NETWORK_CLOSE:
          case SDB_NET_CANNOT_CONNECT:
+         case SDB_COORD_REMOTE_DISC:
             status = NET_NODE_STAT_OFFLINE ;
             break ;
          default:

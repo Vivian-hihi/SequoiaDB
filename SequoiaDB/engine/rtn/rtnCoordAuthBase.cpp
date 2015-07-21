@@ -118,7 +118,7 @@ namespace engine
          {
             if ( rtnCoordGroupReplyCheck( cb, rc, _canRetry( times ),
                                           res->routeID, cata, NULL,
-                                          TRUE, primaryID ) )
+                                          TRUE, primaryID, TRUE ) )
             {
                rtnClearReplyQue( &replyQue ) ;
                ++times ;

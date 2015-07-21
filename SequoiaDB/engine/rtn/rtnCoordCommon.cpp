@@ -684,7 +684,7 @@ namespace engine
          }
          else if ( rtnCoordGroupReplyCheck( cb, rc, !hasRetry, nodeID,
                                             cataGroupInfo, NULL, TRUE,
-                                            pReply->startFrom ) )
+                                            pReply->startFrom, TRUE ) )
          {
             hasRetry = TRUE ;
             goto retry ;
@@ -1269,7 +1269,7 @@ namespace engine
          {
             if ( rtnCoordGroupReplyCheck( cb, rc, !isNeedRefresh, nodeID,
                                           cataGroupInfo, NULL, TRUE,
-                                          primaryID ) )
+                                          primaryID, TRUE ) )
             {
                isNeedRefresh = TRUE ;
                continue ;
@@ -1578,7 +1578,7 @@ namespace engine
          {
             if ( rtnCoordGroupReplyCheck( cb, rc, !isNeedRefresh, nodeID,
                                           cataGroupInfo, NULL, TRUE,
-                                          primaryID ) )
+                                          primaryID, TRUE ) )
             {
                isNeedRefresh = TRUE ;
                continue;
@@ -1919,7 +1919,7 @@ namespace engine
          {
             if ( rtnCoordGroupReplyCheck( cb, rc, !hasRetry, nodeID,
                                           cataGroupInfo, NULL,
-                                          TRUE, primaryID ) )
+                                          TRUE, primaryID, TRUE ) )
             {
                hasRetry = TRUE ;
                continue;
@@ -3464,7 +3464,8 @@ namespace engine
                                     CoordGroupInfoPtr &groupInfo,
                                     BOOLEAN *pUpdate,
                                     BOOLEAN canUpdate,
-                                    UINT32 primaryID )
+                                    UINT32 primaryID,
+                                    BOOLEAN isReadCmd )
    {
       BOOLEAN primaryExist = FALSE ;
       if ( SDB_CLS_NOT_PRIMARY == flag && 0 != primaryID )
@@ -3515,10 +3516,13 @@ namespace engine
          }
          return TRUE ;
       }
-      // [SDB_COORD_REMOTE_DISC] can't use, because when some insert/update
+      // [SDB_COORD_REMOTE_DISC] can't use in write command,
+      // because when some insert/update
       // opr do partibal, if retry, data will repeat. If we can't do from
       // break, we can use the flag for retry
-      else if ( SDB_CLS_FULL_SYNC == flag )
+      else if ( ( isReadCmd && SDB_COORD_REMOTE_DISC == flag ) ||
+                SDB_CLS_FULL_SYNC == flag ||
+                SDB_RTN_IN_REBUILD == flag )
       {
          // don't update group info
          rtnCoordUpdateNodeStatByRC( cb, nodeID, groupInfo, flag ) ;

@@ -51,15 +51,29 @@ namespace engine
 
    #define RTN_COORD_CMD_BEGIN  void rtnCoordProcesserFactory::addCommand(){
    #define RTN_COORD_CMD_END     }
-   #define RTN_COORD_CMD_ADD( cmdName, cmdClass )  {\
-       rtnCoordCommand *pObj = SDB_OSS_NEW cmdClass();\
-       _cmdMap.insert ( COORD_CMD_MAP::value_type (cmdName, pObj ));}
+   #define RTN_COORD_CMD_ADD( cmdName, cmdClass, readonly ) \
+      do { \
+         rtnCoordCommand *pObj = SDB_OSS_NEW cmdClass(); \
+         SDB_ASSERT( pObj, "Alloc memory failed" ) ; \
+         if ( pObj ) \
+         { \
+            pObj->_isReadonly = readonly ; \
+            _cmdMap.insert ( COORD_CMD_MAP::value_type (cmdName, pObj ) ) ; \
+         } \
+      } while( 0 )
 
    #define RTN_COORD_OP_BEGIN    void rtnCoordProcesserFactory::addOperator(){
    #define RTN_COORD_OP_END      }
-   #define RTN_COORD_OP_ADD( opCode, opClass )  {\
-      rtnCoordOperator *pObj = SDB_OSS_NEW opClass();\
-      _opMap.insert ( COORD_OP_MAP::value_type ( opCode, pObj )); }
+   #define RTN_COORD_OP_ADD( opCode, opClass, readonly ) \
+      do { \
+         rtnCoordOperator *pObj = SDB_OSS_NEW opClass() ; \
+         SDB_ASSERT( pObj, "Alloc memory failed" ) ; \
+         if ( pObj ) \
+         { \
+            pObj->_isReadonly = readonly ; \
+            _opMap.insert ( COORD_OP_MAP::value_type ( opCode, pObj ) ) ; \
+         } \
+      } while( 0 )
 
    /*
       rtnCoordProcesserFactory define

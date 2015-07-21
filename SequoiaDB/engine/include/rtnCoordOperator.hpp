@@ -260,8 +260,12 @@ namespace engine
 
    class rtnCoordOperator : public SDBObject
    {
+      friend class rtnCoordProcesserFactory ;
    public:
+      rtnCoordOperator() { _isReadonly = FALSE ; }
       virtual ~rtnCoordOperator(){}
+
+      BOOLEAN  isReadonly() const { return _isReadonly ; }
 
    public:
       virtual INT32        execute( MsgHeader *pMsg,
@@ -354,6 +358,9 @@ namespace engine
                                             pmdEDUCB *cb,
                                             rtnProcessResult &result ) ;
 
+   protected:
+      /// only write in rtnCoordProcesserFactory
+      BOOLEAN                    _isReadonly ;
 
    };
 

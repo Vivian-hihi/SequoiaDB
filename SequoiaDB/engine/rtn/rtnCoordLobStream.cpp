@@ -1296,7 +1296,8 @@ namespace engine
          else if ( !nodeSpecified &&
                    rtnCoordGroupReplyCheck( cb, flags, canRetry, id,
                                             it->second, NULL, TRUE,
-                                            replyHeader->startFrom ) )
+                                            replyHeader->startFrom,
+                                            isReadonly() ) )
          {
             tag |= RETRY_TAG_RETRY ;
             flags = SDB_OK ;

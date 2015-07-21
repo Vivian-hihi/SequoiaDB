@@ -406,7 +406,8 @@ namespace engine
                                     CoordGroupInfoPtr &groupInfo,
                                     BOOLEAN *pUpdate = NULL,
                                     BOOLEAN canUpdate = TRUE,
-                                    UINT32 primaryID = 0 ) ;
+                                    UINT32 primaryID = 0,
+                                    BOOLEAN isReadCmd = FALSE ) ;
    /*
       return TRUE/FALSE, if TRUE: can retry, otherwise error stop
    */

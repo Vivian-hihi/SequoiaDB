@@ -37,6 +37,7 @@
 #include "dmsLobDef.hpp"
 #include "rtnLobWindow.hpp"
 #include "rtnLobDataPool.hpp"
+#include "msgDef.hpp"
 #include "../bson/bson.hpp"
 
 namespace engine
@@ -115,6 +116,11 @@ namespace engine
       OSS_INLINE const CHAR *getFullName() const
       {
          return _fullName ;
+      }
+
+      OSS_INLINE BOOLEAN isReadonly() const
+      {
+         return SDB_LOB_MODE_R == _mode ? TRUE : FALSE ;
       }
 
    protected:

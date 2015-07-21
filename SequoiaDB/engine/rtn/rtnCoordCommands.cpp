@@ -4515,7 +4515,9 @@ namespace engine
                              contextID, buf ) ;
          if ( rc )
          {
-            goto error ;
+            PD_LOG( PDWARNING, "Wait task[%lld] failed, rc: %d", taskID, rc ) ;
+            rc = SDB_OK ;
+            /// can not report error, because split already created
          }
       }
       else // return taskid to client

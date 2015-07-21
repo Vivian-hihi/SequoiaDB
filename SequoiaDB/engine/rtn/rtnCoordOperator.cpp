@@ -209,7 +209,8 @@ namespace engine
                                                 _canRetry( options._retryTimes ),
                                                 routeID,
                                                 options._mapGroupInfo[ groupID ],
-                                                NULL, TRUE, primaryID ) )
+                                                NULL, TRUE, primaryID,
+                                                isReadonly() ) )
                   {
                      processType = RTN_PROCESS_IGNORE ;
                      result.pushIgnoreRC( routeID.value, rcTmp ) ;
@@ -224,7 +225,7 @@ namespace engine
                         rc = rc ? rc : rcTmp ;
                      }
                      PD_LOG( ( rc ? PDERROR : PDINFO ),
-                             "Failed to execute command[%u] on data "
+                             "Failed to execute command[%u] on "
                              "node[%s], rc: %d", inMsg.opCode(),
                              routeID2String( routeID ).c_str(), rcTmp ) ;
                   }

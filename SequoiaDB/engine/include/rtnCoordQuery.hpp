@@ -78,6 +78,8 @@ namespace engine
          }
       } ;
    public:
+      rtnCoordQuery() { _isReadonly = TRUE ; }
+
       virtual INT32 execute( MsgHeader *pMsg,
                              pmdEDUCB *cb,
                              INT64 &contextID,
