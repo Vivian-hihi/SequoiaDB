@@ -4370,7 +4370,7 @@ namespace engine
    }
 
    _rtnContextSort::_rtnContextSort( INT64 contextID, UINT64 eduID )
-   :_rtnContextData( contextID, eduID ),
+   :_rtnContextBase( contextID, eduID ),
     _dataContext( NULL ),
     _eduCB( NULL ),
     _keyGen ( BSONObj() ),

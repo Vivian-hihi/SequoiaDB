@@ -44,7 +44,7 @@
 
 namespace engine
 {
-   class _rtnContextSort : public _rtnContextData
+   class _rtnContextSort : public _rtnContextBase
    {
    public:
       _rtnContextSort( INT64 contextID, UINT64 eduID ) ;

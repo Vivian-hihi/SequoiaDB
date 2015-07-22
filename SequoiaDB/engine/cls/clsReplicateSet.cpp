@@ -481,7 +481,6 @@ namespace engine
             goto done ;
          }
 
-
          _beatTime += interval ;
          if ( CLS_SHARING_BETA_INTERVAL <= _beatTime )
          {
