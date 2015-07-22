@@ -4,7 +4,7 @@
   <title>rg.detachNode()</title>
   <body>
     <section><title>rg.detachNode(&lt;host>,&lt;service>, [options])</title>
-      <p>将一个已经创建完成但不属于任何组的节点加入到当前组。搭配 rg.detachNode() 使用。</p>
+      <p>分离组内的一个节点。其配置信息不会被删除。搭配 rg.attachNode() 使用。</p>
     </section>
     <section><title>参数描述</title>
       <simpletable>
