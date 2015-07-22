@@ -82,9 +82,9 @@ int main(int argc, char* argv[])
          goto error;
       }
 
-      while (!routine.isParserStopped())
+      while (!routine.isParserStopped() && !routine.isImportersStopped())
       {
-         ossSleep(1000);
+         ossSleep(100);
       }
 
       rc = routine.waitParserStop();
@@ -93,10 +93,13 @@ int main(int argc, char* argv[])
          PD_LOG(PDERROR, "failed to wait parser stop, rc=%d", rc);
       }
 
-      rc = routine.stopImporters();
-      if (SDB_OK != rc)
+      if (!routine.isImportersStopped())
       {
-         PD_LOG(PDERROR, "failed to stop importers, rc=%d", rc);
+         rc = routine.stopImporters();
+         if (SDB_OK != rc)
+         {
+            PD_LOG(PDERROR, "failed to stop importers, rc=%d", rc);
+         }
       }
 
       routine.printStatistics();

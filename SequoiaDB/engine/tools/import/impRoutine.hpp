@@ -52,10 +52,13 @@ namespace import
       //INT32 validate();
       INT32 startParser();
       INT32 waitParserStop();
-      inline BOOLEAN isParserStopped() { return _parserStopped; }
+      inline BOOLEAN isParserStopped() const 
+      { return _parserStopped; }
 
       INT32 startImporters(INT32 num);
       INT32 stopImporters();
+      inline BOOLEAN isImportersStopped()
+      { return 0 == _importesLivingNum.fetch(); }
 
       void printStatistics();
 
@@ -71,7 +74,7 @@ namespace import
 
       // importers
       queue<Worker*>    _importers;
-      INT32             _importesLivingNum;
+      ossAtomicSigned32 _importesLivingNum;
       LogFile           _importerLogFile;
 
       // statistics

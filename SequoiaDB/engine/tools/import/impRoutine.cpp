@@ -57,6 +57,7 @@ namespace import
       LogFile*       logFile;
       ossAtomicSigned64* importedNum;
       ossAtomicSigned64* importFailureNum;
+      ossAtomicSigned32* importesLivingNum;
 
       ImporterArgs()
       {
@@ -108,6 +109,7 @@ namespace import
       SDB_ASSERT(NULL != logFile, "logFile can't be NULL");
       SDB_ASSERT(NULL != importedNum, "importedNum can't be NULL");
       SDB_ASSERT(NULL != importFailureNum, "importFailureNum can't be NULL");
+      SDB_ASSERT(NULL != impArgs->importesLivingNum, "impArgs->importesLivingNum can't be NULL");
 
       if (impArgs->verbose)
       {
@@ -139,14 +141,14 @@ namespace import
             if (SDB_OK != rc)
             {
                importFailureNum->add(records.size());
-               /*for (INT32 i = 0; i < records.size(); i++)
+               for (INT32 i = 0; i < records.size(); i++)
                {
                   bson* obj = records[i];
                   if (SDB_OK != logFile->write(obj))
                   {
                      break;
                   }
-               }*/
+               }
                PD_LOG(PDERROR, "failed to import records, rc=%d", rc);
                goto error;
             }
@@ -164,6 +166,7 @@ namespace import
          ss << "importer [" << impArgs->id << "] stop" << std::endl;
          std::cout << ss.str();
       }
+      impArgs->importesLivingNum->dec();
       return;
    error:
       goto done;
@@ -490,6 +493,7 @@ namespace import
    
    Routine::Routine(const Options& options)
    : _options(options),
+     _importesLivingNum(0),
      _importedNum(0),
      _importFailureNum(0)
    {
@@ -602,6 +606,7 @@ namespace import
          args->logFile = &_importerLogFile;
          args->importedNum = &_importedNum;
          args->importFailureNum = &_importFailureNum;
+         args->importesLivingNum = &_importesLivingNum;
 
          Worker* importer = SDB_OSS_NEW Worker(_importerRoutine, args, TRUE);
          if (NULL == importer)
@@ -622,6 +627,7 @@ namespace import
          }
 
          _importers.push(importer);
+         _importesLivingNum.inc();
       }
 
    done:
@@ -762,7 +768,7 @@ namespace import
       if (_importFailureNum.fetch() > 0)
       {
          ss << "see " << _importerLogFile.filename()
-            << "for import failure records" << std::endl;
+            << " for import failure records" << std::endl;
       }
 
       std::cout << ss.str();
