@@ -98,6 +98,8 @@ int main(int argc, char* argv[])
       {
          PD_LOG(PDERROR, "failed to stop importers, rc=%d", rc);
       }
+
+      routine.printStatistics();
    }
 
 done:

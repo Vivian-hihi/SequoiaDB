@@ -42,6 +42,7 @@ namespace import
 {
    struct ImporterArgs: public WorkerArgs
    {
+      INT32          id;
       string         hostname;
       string         svcname;
       string         user;
@@ -54,17 +55,20 @@ namespace import
       RecordQueue*   workQueue;
       RecordQueue*   idleQueue;
       LogFile*       logFile;
-      INT32          id;
+      ossAtomicSigned64* importedNum;
+      ossAtomicSigned64* importFailureNum;
 
       ImporterArgs()
       {
+         id = -1;
          useSSL = FALSE;
          dryRun = FALSE;
          verbose = FALSE;
          workQueue = NULL;
          idleQueue = NULL;
          logFile = NULL;
-         id = -1;
+         importedNum = NULL;
+         importFailureNum = NULL;
       }
 
       ~ImporterArgs()
@@ -72,6 +76,8 @@ namespace import
          workQueue = NULL;
          idleQueue = NULL;
          logFile = NULL;
+         importedNum = NULL;
+         importFailureNum = NULL;
       }
    };
 
@@ -83,6 +89,8 @@ namespace import
 
       SDB_ASSERT(NULL != args, "arg can't be NULL");
 
+      ossAtomicSigned64* importedNum = impArgs->importedNum;
+      ossAtomicSigned64* importFailureNum = impArgs->importFailureNum;
       BOOLEAN dryRun = impArgs->dryRun;
       LogFile* logFile = impArgs->logFile;
       RecordQueue* workQueue = impArgs->workQueue;
@@ -98,6 +106,8 @@ namespace import
       SDB_ASSERT(NULL != workQueue, "workQueue can't be NULL");
       SDB_ASSERT(NULL != idleQueue, "idelQueue can't be NULL");
       SDB_ASSERT(NULL != logFile, "logFile can't be NULL");
+      SDB_ASSERT(NULL != importedNum, "importedNum can't be NULL");
+      SDB_ASSERT(NULL != importFailureNum, "importFailureNum can't be NULL");
 
       if (impArgs->verbose)
       {
@@ -128,17 +138,19 @@ namespace import
             rc = importer.import(records.array(), records.size());
             if (SDB_OK != rc)
             {
-               for (INT32 i = 0; i < records.size(); i++)
+               importFailureNum->add(records.size());
+               /*for (INT32 i = 0; i < records.size(); i++)
                {
                   bson* obj = records[i];
                   if (SDB_OK != logFile->write(obj))
                   {
                      break;
                   }
-               }
+               }*/
                PD_LOG(PDERROR, "failed to import records, rc=%d", rc);
                goto error;
             }
+            importedNum->add(records.size());
          }
 
          records.reset();
@@ -186,21 +198,25 @@ namespace import
 
    struct ParserArgs: public WorkerArgs
    {
+      INT32          id;
       const Options* options;
       LogFile*       logFile;
       RecordQueue*   workQueue;
       RecordQueue*   idleQueue;
       BOOLEAN*       stopped;
-      INT32          id;
+      INT64*         parsedNum;
+      INT64*         parseFailureNum;
 
       ParserArgs()
       {
+         id = -1;
          options = NULL;
          logFile = NULL;
          workQueue = NULL;
          idleQueue = NULL;
          stopped = NULL;
-         id = -1;
+         parsedNum = NULL;
+         parseFailureNum = NULL;
       }
 
       ~ParserArgs()
@@ -210,6 +226,8 @@ namespace import
          workQueue = NULL;
          idleQueue = NULL;
          stopped = NULL;
+         parsedNum = NULL;
+         parseFailureNum = NULL;
       }
    };
 
@@ -236,12 +254,16 @@ namespace import
       RecordQueue* workQueue = parserArgs->workQueue;
       RecordQueue* idleQueue = parserArgs->idleQueue;
       BOOLEAN* stopped = parserArgs->stopped;
+      INT64* parsedNum = parserArgs->parsedNum;
+      INT64* parseFailureNum = parserArgs->parseFailureNum;
 
       SDB_ASSERT(NULL != options, "options can't be NULL");
       SDB_ASSERT(NULL != logFile, "logFile can't be NULL");
       SDB_ASSERT(NULL != workQueue, "workQueue can't be NULL");
       SDB_ASSERT(NULL != idleQueue, "idelQueue can't be NULL");
       SDB_ASSERT(NULL != stopped, "stopped can't be NULL");
+      SDB_ASSERT(NULL != parsedNum, "parsedNum can't be NULL");
+      SDB_ASSERT(NULL != parseFailureNum, "parseFailureNum can't be NULL");
 
       RecordScanner scanner(options->recordDelimiter(),
                             options->stringDelimiter(),
@@ -376,9 +398,11 @@ namespace import
                         recordArray.inc();
                         countInBatch++;
                         recordNum++;
+                        (*parsedNum)++;
                      }
                      else
                      {
+                        (*parseFailureNum)++;
                         logFile->write(buf, recordLength);
 
                         PD_LOG(PDERROR, "failed to parse record, rc=%d", rc);
@@ -391,14 +415,7 @@ namespace import
 
                      if (recordArray.full())
                      {
-                        if (!options->dryRun())
-                        {
-                           workQueue->push(recordArray);
-                        }
-                        else
-                        {
-                           idleQueue->push(recordArray);
-                        }
+                        workQueue->push(recordArray);
                         countInBatch = 0;
                         rc = _getFreeRecordArray(*idleQueue, options->batchSize(), recordArray);
                         if (SDB_OK != rc)
@@ -472,10 +489,15 @@ namespace import
    }
    
    Routine::Routine(const Options& options)
-   : _options(options)
+   : _options(options),
+     _importedNum(0),
+     _importFailureNum(0)
    {
       _parser = NULL;
       _parserStopped = FALSE;
+
+      _parsedNum = 0;
+      _parseFailureNum = 0;
    }
 
    Routine::~Routine()
@@ -565,6 +587,7 @@ namespace import
             goto error;
          }
 
+         args->id = i;
          args->hostname = _options.hostname();
          args->svcname = _options.svcname();
          args->user = _options.user();
@@ -577,7 +600,8 @@ namespace import
          args->workQueue = &_workQueue;
          args->idleQueue = &_idleQueue;
          args->logFile = &_importerLogFile;
-         args->id = i;
+         args->importedNum = &_importedNum;
+         args->importFailureNum = &_importFailureNum;
 
          Worker* importer = SDB_OSS_NEW Worker(_importerRoutine, args, TRUE);
          if (NULL == importer)
@@ -666,12 +690,14 @@ namespace import
          goto error;
       }
 
+      args->id = 0;
       args->options = &_options;
       args->logFile = &_parserLogFile;
       args->workQueue = &_workQueue;
       args->idleQueue = &_idleQueue;
       args->stopped = &_parserStopped;
-      args->id = 0;
+      args->parsedNum = &_parsedNum;
+      args->parseFailureNum = &_parseFailureNum;
 
       parser = SDB_OSS_NEW Worker(_parserRoutine, args, TRUE);
       if (NULL == parser)
@@ -715,6 +741,31 @@ namespace import
 
       SAFE_OSS_DELETE(_parser);
       return rc;
+   }
+
+   void Routine::printStatistics()
+   {
+      stringstream ss;
+
+      ss << "parsed records: " << _parsedNum << std::endl
+         << "parse failure: " << _parseFailureNum << std::endl;
+
+      ss << "imported records: " << _importedNum.fetch() << std::endl
+         << "import failure: " << _importFailureNum.fetch() << std::endl;
+
+      if (_parseFailureNum > 0)
+      {
+         ss << "see " << _parserLogFile.filename()
+            << " for parse failure records" << std::endl;
+      }
+
+      if (_importFailureNum.fetch() > 0)
+      {
+         ss << "see " << _importerLogFile.filename()
+            << "for import failure records" << std::endl;
+      }
+
+      std::cout << ss.str();
    }
 }
 

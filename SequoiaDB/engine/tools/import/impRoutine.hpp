@@ -37,6 +37,7 @@
 #include "impWorker.hpp"
 #include "impRecordQueue.hpp"
 #include "impLogFile.hpp"
+#include "ossAtomic.hpp"
 #include <queue>
 
 using namespace std;
@@ -56,15 +57,28 @@ namespace import
       INT32 startImporters(INT32 num);
       INT32 stopImporters();
 
+      void printStatistics();
+
    private:
       const Options&    _options;
       RecordQueue       _workQueue;
       RecordQueue       _idleQueue;
-      queue<Worker*>    _importers;
+
+      // parser
       Worker*           _parser;
       BOOLEAN           _parserStopped;
-      LogFile           _importerLogFile;
       LogFile           _parserLogFile;
+
+      // importers
+      queue<Worker*>    _importers;
+      INT32             _importesLivingNum;
+      LogFile           _importerLogFile;
+
+      // statistics
+      INT64             _parsedNum;
+      INT64             _parseFailureNum;
+      ossAtomicSigned64 _importedNum;
+      ossAtomicSigned64 _importFailureNum;
    };
 }
 
