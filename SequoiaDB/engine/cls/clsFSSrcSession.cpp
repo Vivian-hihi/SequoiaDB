@@ -869,8 +869,12 @@ namespace engine
       UINT32 alignLen = 0 ;
       rtnContextBuf buffObj ;
 
+      /// mask sure the context wether exist
+      /// drop cs can delete the context on pmd message dispatcher
       if ( -1 == _contextID || !pRtnCB->contextFind ( _contextID ) )
       {
+         _context = NULL ;
+         _contextID = -1 ;
          rc = SDB_RTN_CONTEXT_NOTEXIST ;
       }
 
