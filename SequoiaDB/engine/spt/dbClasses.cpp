@@ -2234,16 +2234,25 @@ static JSBool _collection_create_index ( JSContext *cx , uintN argc , jsval *vp,
    CHAR *               name        = NULL ;
    JSBool               unique      = JS_FALSE ;
    JSBool               enforced    = JS_FALSE ;
+   stringstream ss ;
+#define BUILD_ERROR_MSG( msg ) \
+   do {                        \
+   ss.str("") ;                \
+   ss << ( isOffline ? "SdbCollection.createIndexOffline()" : "SdbCollection.createIndex()" ) ; \
+   ss << ": " ;                \
+   ss << string(msg) ;         \
+   } while (0)
 
-   REPORT ( argc >= 2 ,
-            "SdbCollection.createIndex(): need at least two arguments" ) ;
+   BUILD_ERROR_MSG( "need at least two arguments" );
+   REPORT ( argc >= 2 , ss.str().c_str() ) ;
 
-   REPORT ( ! JSVAL_IS_PRIMITIVE ( argv[1] ) ,
-            "SdbCollection.createIndex(): 2nd argument is not valid object" ) ;
+   BUILD_ERROR_MSG( "2nd argument is not valid object" ) ;
+   REPORT ( ! JSVAL_IS_PRIMITIVE ( argv[1] ), ss.str().c_str() ) ;
 
    collection = (sdbCollectionHandle *)
       JS_GetPrivate ( cx , JS_THIS_OBJECT ( cx , vp ) ) ;
-   REPORT ( collection , "SdbCollection.createIndex(): no collection handle" ) ;
+   BUILD_ERROR_MSG( "no collection handle" ) ;
+   REPORT ( collection , ss.str().c_str() ) ;
 
    strName = JS_ValueToString ( cx , argv[0] ) ;
    VERIFY ( strName ) ;
@@ -2271,13 +2280,14 @@ static JSBool _collection_create_index ( JSContext *cx , uintN argc , jsval *vp,
    {
       rc = sdbCreateIndexOffline ( *collection , bsonDef , name , unique ? TRUE : FALSE,
                                    enforced ? TRUE : FALSE );
+      REPORT_RC ( SDB_OK == rc , "SdbCollection.createIndexOffline()" , rc ) ;
    }
    else
    {
       rc = sdbCreateIndex ( *collection , bsonDef , name , unique ? TRUE : FALSE,
                             enforced ? TRUE : FALSE );
+      REPORT_RC ( SDB_OK == rc , "SdbCollection.createIndex()" , rc ) ;
    }
-   REPORT_RC ( SDB_OK == rc , "SdbCollection.createIndex()" , rc ) ;
 
    JS_SET_RVAL ( cx , vp , JSVAL_VOID ) ;
 
@@ -2287,7 +2297,8 @@ done :
    PD_TRACE_EXIT ( SDB_COLL_CRT_INX );
    return ret ;
 error :
-   TRY_REPORT ( cx , "SdbCollection.createIndex(): false" ) ;
+   BUILD_ERROR_MSG( "false" ) ;
+   TRY_REPORT ( cx , ss.str().c_str() ) ;
    goto done ;
 }
 
