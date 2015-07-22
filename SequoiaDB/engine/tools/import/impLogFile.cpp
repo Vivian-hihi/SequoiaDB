@@ -184,8 +184,8 @@ namespace import
 
       ss << csname << "_"
          << clname << "_"
-         << custom //<< "_"
-         //<< ossGetCurrentProcessID()
+         << custom << "_"
+         << ossGetCurrentProcessID()
          << ".rec";
 
       return ss.str();

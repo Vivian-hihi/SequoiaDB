@@ -74,6 +74,8 @@ namespace import
    {
       CHAR* pattern;
       CHAR* option;
+      INT32 patternLen;
+      INT32 optionLen;
    };
 
    struct CSVBinary

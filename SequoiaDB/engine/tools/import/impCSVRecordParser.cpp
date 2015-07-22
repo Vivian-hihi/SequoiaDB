@@ -768,7 +768,7 @@ namespace import
 
             if (len == 0)
             {
-               *(str - strDelLen) = '\0';
+               //*(str - strDelLen) = '\0';
                valueLength = length;
                value.length = str - strDelLen - value.str;
                goto done;
@@ -784,7 +784,7 @@ namespace import
 
             inString = FALSE;
             // terminate the string
-            *(str - strDelLen) = '\0';
+            //*(str - strDelLen) = '\0';
             value.length = str - strDelLen - value.str;
             break;
          }
@@ -793,7 +793,7 @@ namespace import
          {
             if (_startWith(str, len, fieldDel, fieldDelLen))
             {
-               *str = '\0';
+               //*str = '\0';
                fieldEnd = TRUE;
                valueLength = length - len;
                value.length = str - value.str;
@@ -802,7 +802,7 @@ namespace import
 
             if (isspace(*str))
             {
-               *str = '\0';
+               //*str = '\0';
                value.length = str - value.str;
                str++;
                len--;
@@ -823,7 +823,7 @@ namespace import
       {
          SDB_ASSERT(len == 0, "len must be equal 0");
          // must be sure it's safe to terminate the string
-         *str = '\0';
+         //*str = '\0';
          valueLength = length;
          value.length = str - value.str;
          goto done;
@@ -935,6 +935,11 @@ namespace import
       CHAR ch;
 
       SDB_ASSERT(NULL != data.str, "data.str can't be NULL");
+
+      // terminate string
+      CHAR* term = str + data.length;
+      CHAR tmpch = *term;
+      *term = '\0';
 
       while ((ch = *(str++)) != '\0')
       {
@@ -1063,6 +1068,8 @@ namespace import
       }
 
    done:
+      // recovery string
+      *term = tmpch;
       return rc;
    error:
       goto done;
@@ -1076,6 +1083,11 @@ namespace import
       CHAR ch;
 
       SDB_ASSERT(NULL != data.str, "data.str can't be NULL");
+
+      // terminate string
+      CHAR* term = str + data.length;
+      CHAR tmpch = *term;
+      *term = '\0';
 
       while ((ch = *(str++)) != '\0')
       {
@@ -1179,6 +1191,8 @@ namespace import
       }
 
    done:
+      // recovery string
+      *term = tmpch;
       return rc;
    error:
       goto done;
@@ -1224,6 +1238,7 @@ namespace import
       if (CSV_STR_BACKSLASH != *str)
       {
          value.pattern = str;
+         value.patternLen = len;
          value.option = CSV_STR_EMPTYOPTIONS;
          goto done;
       }
@@ -1251,7 +1266,8 @@ namespace import
          goto error;
       }
 
-      *str = '\0'; // terminate the pattern
+      //*str = '\0'; // terminate the pattern
+      value.patternLen = str - value.pattern;
 
       // skip '/'
       str++;
@@ -1259,13 +1275,13 @@ namespace import
 
       if (len == 0)
       {
-         value.option = NULL;
+         value.option = CSV_STR_EMPTYOPTIONS;
          goto done;
       }
 
       if (isspace(*str))
       {
-         value.option = NULL;
+         value.option = CSV_STR_EMPTYOPTIONS;
       }
       else
       {
@@ -1285,7 +1301,8 @@ namespace import
 
       if (len != 0)
       {
-         *str = '\0';
+         //*str = '\0';
+         value.optionLen = str - value.option;
          str++;
          len--;
          _skipSpace(&str, len);
@@ -1903,7 +1920,8 @@ namespace import
          rc = bson_append_bool(&obj, field.name.c_str(), value->boolVal);
          break;
       case CSV_TYPE_STRING:
-         rc = bson_append_string(&obj, field.name.c_str(), value->strVal.str);
+         rc = bson_append_string_n(&obj, field.name.c_str(),
+                                   value->strVal.str, value->strVal.length);
          break;
       case CSV_TYPE_NULL:
          rc = bson_append_null(&obj, field.name.c_str());
@@ -1924,9 +1942,35 @@ namespace import
          rc = bson_append_date(&obj, field.name.c_str(), value->dateVal);
          break;
       case CSV_TYPE_REGEX:
-         rc = bson_append_regex(&obj, field.name.c_str(),
-                                value->regexVal.pattern,
-                                value->regexVal.option);
+         {
+            CHAR* patTerm = NULL;
+            CHAR* optTerm = NULL;
+            CHAR patCh = '\0';
+            CHAR optCh = '\0';
+
+            // terminate string
+            patTerm = value->regexVal.pattern + value->regexVal.patternLen;
+            patCh= *patTerm;
+            *patTerm = '\0';
+            optTerm = value->regexVal.option;
+            if (*optTerm != '\0')
+            {
+               optTerm += value->regexVal.optionLen;
+               optCh = *optTerm;
+               *optTerm = '\0';
+            }
+
+            rc = bson_append_regex(&obj, field.name.c_str(),
+                                   value->regexVal.pattern,
+                                   value->regexVal.option);
+
+            // recovery string
+            *patTerm = patCh;
+            if (optCh != '\0')
+            {
+               *optTerm = optCh;
+            }
+         }
          break;
       case CSV_TYPE_BINARY:
          rc = bson_append_binary(&obj, field.name.c_str(),
