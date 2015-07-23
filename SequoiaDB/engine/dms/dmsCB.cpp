@@ -931,6 +931,8 @@ namespace engine
       {
          if ( cscb->_su->isDeleting() )
          {
+            _CSCBRelease( suID, lockType ) ;
+            suID = DMS_INVALID_CS ;
             rc = SDB_DMS_CS_DELETING ;
          }
          else
