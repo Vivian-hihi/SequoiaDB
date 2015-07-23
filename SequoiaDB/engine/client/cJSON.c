@@ -979,7 +979,9 @@ static const char *parse_first_command(cJSON *item,const char *value,int cj_type
          {
             /* not an object! */
             if ( !((*value_temp >= '0' && *value_temp <= '9') ||
-                 *value_temp == '-' ) )
+                 *value_temp == '-' || *value_temp == 'T' ||
+                 *value_temp == 'Z' || *value_temp == ':' ||
+                 *value_temp == '.' ) )
                return 0 ;
             ++len ;
             ++value_temp ;

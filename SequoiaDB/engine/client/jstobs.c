@@ -899,28 +899,53 @@ static BOOLEAN jsonConvertBson ( cJSON *cj, bson *bs, BOOLEAN isObj )
          if ( cJSON_Timestamp == cj->type )
          {
             /* for timestamp type, we provide yyyy-mm-dd-hh.mm.ss.uuuuuu */
-            if ( !sscanf ( cj->valuestring,
-                             TIME_FORMAT,
-                             &year   ,
-                             &month  ,
-                             &day    ,
-                             &hour   ,
-                             &minute ,
-                             &second ,
-                             &micros ) )
+            if( !sscanf ( cj->valuestring,
+                          TIME_FORMAT,
+                          &year,
+                          &month,
+                          &day,
+                          &hour,
+                          &minute,
+                          &second,
+                          &micros ) )
             {
-              return FALSE ;
+               return FALSE ;
             }
          }
          else
          {
             /* for date type, we provide yyyy-mm-dd */
-            if ( !sscanf ( cj->valuestring,
-                           DATE_FORMAT,
-                           &year,
-                           &month,
-                           &day ) )
+            if( strchr( cj->valuestring, 'T' ) )
+            {
+               if( !sscanf ( cj->valuestring,
+                             TIME_FORMAT_IOS,
+                             &year,
+                             &month,
+                             &day,
+                             &hour,
+                             &minute,
+                             &second,
+                             &micros ) )
+               {
                   return FALSE ;
+               }
+               else
+               {
+                  cj->type = cJSON_Timestamp ;
+                  micros = micros * 1000 ;
+               }
+            }
+            else
+            {
+               if( !sscanf ( cj->valuestring,
+                             DATE_FORMAT,
+                             &year,
+                             &month,
+                             &day ) )
+               {
+                  return FALSE ;
+               }
+            }
          }
          --month ;
          /* sanity check for years */
