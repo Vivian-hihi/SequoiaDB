@@ -3,8 +3,24 @@
 <topic id="topic_hqb_hnx_cs">
   <title>db.collectionspace.collection.createIdIndex()</title>
   <body>
-    <section><title>db.collectionspace.collection.createIdIndex()</title>
+    <section><title>db.collectionspace.collection.createIdIndex([options])</title>
       <p>在 SequoiaDB 中创建集合时可以根据需要将 AutoIndexId 置为 false，这样集合将不会创建默认的“$id”索引。同时数据的更新、删除操作将被禁止。本方法可以恢复“$id”索引，同时开放更新和删除功能。</p>
+    </section>
+    <section><title>参数描述</title>
+      <simpletable>
+        <sthead>
+          <stentry>参数名</stentry>
+          <stentry>参数类型</stentry>
+          <stentry>描述</stentry>
+          <stentry>是否必填</stentry>
+        </sthead>
+        <strow>
+          <stentry>Offline</stentry>
+          <stentry>Bool</stentry>
+          <stentry>true 表示使用离线模式创建索引。当离线创建进行时，无法对集合进行写操作，但会大大提高创建索引的速度。缺省为 false。</stentry>
+          <stentry>否</stentry>
+        </strow>
+      </simpletable>      
     </section>
     <section><title>常见的错误</title>
       <simpletable>
@@ -24,6 +40,17 @@
           <stentry>删除定义冲突的索引</stentry>          
         </strow>
       </simpletable>      
-    </section>    
+    </section>
+    <section><title>示例</title>
+      <ul>
+        <li><p>使用默认参数构建 $id 索引:</p>
+          <codeblock>db.foo.bar.createIdIdnex();</codeblock>
+        </li>
+        <li>
+          <p>使用离线方式构建 $id 索引:</p>
+          <codeblock>db.foo.bar.createIdIndex({Offline:true})</codeblock>
+        </li>
+      </ul>
+    </section>
   </body>
 </topic>

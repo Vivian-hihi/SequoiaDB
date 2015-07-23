@@ -8,7 +8,7 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="db.collectionspace.collection.createIdIndex()"/>
-<meta name="description" content="db.collectionspace.collection.createIdIndex() 在 SequoiaDB 中创建集合时可以根据需要将 AutoIndexId 置为 false，这样集合将不会创建默认的“$id”索引。同时数据的更新、删除操作将被禁止。本方法可以恢复“$id”索引，同时开放更新和删除功能。 常见的错误 错误码 可能的原因 解决方法 -247 $id 索引已经存在 - ..."/>
+<meta name="description" content="db.collectionspace.collection.createIdIndex([options]) 在 SequoiaDB 中创建集合时可以根据需要将 AutoIndexId 置为 false，这样集合将不会创建默认的“$id”索引。同时数据的更新、删除操作将被禁止。本方法可以恢复“$id”索引，同时开放更新和删除功能。 参数描述 参数名 参数类型 描述 是否必填 Offline ..."/>
 <meta name="DC.Relation" scheme="URI" content="../../../references/methods/jscollection.html"/>
 <meta name="DC.Format" content="XHTML"/>
 <meta name="DC.Identifier" content="topic_hqb_hnx_cs"/>
@@ -36,40 +36,84 @@
   <h1 class="title topictitle1">db.collectionspace.collection.createIdIndex()</h1>
 
   <div class="body">
-    <div class="section"><h2 class="title sectiontitle">db.collectionspace.collection.createIdIndex()</h2>
+    <div class="section"><h2 class="title sectiontitle">db.collectionspace.collection.createIdIndex([options])</h2>
       <p class="p">在 SequoiaDB 中创建集合时可以根据需要将 AutoIndexId 置为 false，这样集合将不会创建默认的“$id”索引。同时数据的更新、删除操作将被禁止。本方法可以恢复“$id”索引，同时开放更新和删除功能。</p>
 
     </div>
 
+    <div class="section"><h2 class="title sectiontitle">参数描述</h2>
+      <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
+          <th valign="bottom" align="left" id="d125095e26" class="stentry">参数名</th>
+
+          <th valign="bottom" align="left" id="d125095e29" class="stentry">参数类型</th>
+
+          <th valign="bottom" align="left" id="d125095e32" class="stentry">描述</th>
+
+          <th valign="bottom" align="left" id="d125095e35" class="stentry">是否必填</th>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d125095e26" class="stentry">Offline</td>
+
+          <td valign="top" headers="d125095e29" class="stentry">Bool</td>
+
+          <td valign="top" headers="d125095e32" class="stentry">true 表示使用离线模式创建索引。当离线创建进行时，无法对集合进行写操作，但会大大提高创建索引的速度。缺省为 false。</td>
+
+          <td valign="top" headers="d125095e35" class="stentry">否</td>
+
+        </tr>
+</table>
+      
+    </div>
+
     <div class="section"><h2 class="title sectiontitle">常见的错误</h2>
       <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d125095e26" class="stentry">错误码</th>
+          <th valign="bottom" align="left" id="d125095e64" class="stentry">错误码</th>
 
-          <th valign="bottom" align="left" id="d125095e29" class="stentry">可能的原因</th>
+          <th valign="bottom" align="left" id="d125095e67" class="stentry">可能的原因</th>
 
-          <th valign="bottom" align="left" id="d125095e32" class="stentry">解决方法</th>
+          <th valign="bottom" align="left" id="d125095e70" class="stentry">解决方法</th>
           
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d125095e26" class="stentry">-247</td>
+          <td valign="top" headers="d125095e64" class="stentry">-247</td>
 
-          <td valign="top" headers="d125095e29" class="stentry">$id 索引已经存在</td>
+          <td valign="top" headers="d125095e67" class="stentry">$id 索引已经存在</td>
 
-          <td valign="top" headers="d125095e32" class="stentry">-</td>
+          <td valign="top" headers="d125095e70" class="stentry">-</td>
           
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d125095e26" class="stentry">-291</td>
+          <td valign="top" headers="d125095e64" class="stentry">-291</td>
 
-          <td valign="top" headers="d125095e29" class="stentry">存在一个相同定义的索引</td>
+          <td valign="top" headers="d125095e67" class="stentry">存在一个相同定义的索引</td>
 
-          <td valign="top" headers="d125095e32" class="stentry">删除定义冲突的索引</td>
+          <td valign="top" headers="d125095e70" class="stentry">删除定义冲突的索引</td>
           
         </tr>
 </table>
       
     </div>
-    
+
+    <div class="section"><h2 class="title sectiontitle">示例</h2>
+      <ul class="ul">
+        <li class="li"><p class="p">使用默认参数构建 $id 索引:</p>
+
+          <pre class="pre codeblock">db.foo.bar.createIdIdnex();</pre>
+
+        </li>
+
+        <li class="li">
+          <p class="p">使用离线方式构建 $id 索引:</p>
+
+          <pre class="pre codeblock">db.foo.bar.createIdIndex({Offline:true})</pre>
+
+        </li>
+
+      </ul>
+
+    </div>
+
   </div>
 
 <div class="related-links"/>
