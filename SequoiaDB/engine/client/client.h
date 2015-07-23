@@ -2272,11 +2272,13 @@ SDB_EXPORT INT32 sdbAttachNode( sdbReplicaGroupHandle cHandle,
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
-SDB_EXPORT INT32 sdbCreateIdIndex( sdbCollectionHandle cHandle ) ;
+SDB_EXPORT INT32 sdbCreateIdIndex( sdbCollectionHandle cHandle,
+                                   const bson *args ) ;
 
 /** \fn INT32 sdbDropIdIndex( sdbCollectionHandle cHandle )
     \brief Drop $id index in collection
     \param [in] cHandle The collection handle
+    \param [in] args The arguments of creating id index. set it as null if no args.
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
     \note delete, update and upsert do not work after index "$id" was drop

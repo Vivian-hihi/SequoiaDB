@@ -9220,10 +9220,12 @@ error:
    goto done ;
 }
 
-SDB_EXPORT INT32 sdbCreateIdIndex( sdbCollectionHandle cHandle )
+SDB_EXPORT INT32 sdbCreateIdIndex( sdbCollectionHandle cHandle,
+                                   const bson *args )
 {
    INT32 rc = SDB_OK ;
    bson obj ;
+   bson_iterator itr ;
    BOOLEAN bsoninit = FALSE ;
    sdbCollectionStruct *cs = (sdbCollectionStruct*)cHandle ;
    HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_COLLECTION ) ;
@@ -9231,7 +9233,20 @@ SDB_EXPORT INT32 sdbCreateIdIndex( sdbCollectionHandle cHandle )
    BSON_INIT( obj ) ;
    bson_append_start_object( &obj, FIELD_NAME_ALTER ) ;
    bson_append_string( &obj, FIELD_NAME_NAME, SDB_ALTER_CRT_ID_INDEX ) ;
-   bson_append_null( &obj, FIELD_NAME_ARGS ) ;
+   if ( NULL == args )
+   {
+      bson_append_null( &obj, FIELD_NAME_ARGS ) ;
+   }
+   else
+   {
+      bson_append_start_object( &obj, FIELD_NAME_ARGS ) ;
+      bson_iterator_init ( &itr, args ) ;
+      while ( BSON_EOO != bson_iterator_next ( &itr ) )
+      {
+         BSON_APPEND( obj, NULL, &itr, element ) ;
+      }
+      bson_append_finish_object( &obj ) ;
+   }
    bson_append_finish_object( &obj ) ;
    bson_finish( &obj ) ;
 

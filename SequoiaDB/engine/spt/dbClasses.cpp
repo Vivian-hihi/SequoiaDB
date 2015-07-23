@@ -2728,19 +2728,33 @@ static JSBool collection_crt_id_index ( JSContext *cx , uintN argc , jsval *vp )
    INT32 rc = SDB_OK ;
    JSBool ret = JS_TRUE ;
    sdbCollectionHandle *clHandle = NULL ;
+   JSObject *jsOptions = NULL ;
+   bson *obj = NULL ;
+   
+   ret = JS_ConvertArguments ( cx , argc , JS_ARGV ( cx , vp ) ,
+                               "/o" , &jsOptions ) ;
+   REPORT ( ret , "SdbCollection.createIdIndex(): wrong arguments" ) ;
 
-   REPORT ( 0 == argc ,
-            "SdbCollection.createIdIndex(): wrong arguments" ) ;
+   if ( NULL != jsOptions )
+   {
+      if ( !objToBson( cx, jsOptions, &obj ) )
+      {
+         rc = SDB_INVALIDARG ;
+         REPORT_RC ( JS_FALSE , "SdbCollection.createIdIndex():convert json to bson" , rc ) ;
+      }
+   }
+
    clHandle = (sdbCollectionHandle *)
       JS_GetPrivate ( cx , JS_THIS_OBJECT ( cx , vp ) ) ;
    REPORT ( clHandle , "SdbCollection.createIdIndex(): no collection handle" ) ;
 
-   rc = sdbCreateIdIndex( *clHandle ) ;
+   rc = sdbCreateIdIndex( *clHandle, obj ) ;
    REPORT_RC ( SDB_OK == rc,
                "SdbCollection.createIdIndex()" , rc ) ;
 
    JS_SET_RVAL( cx, vp, JSVAL_VOID ) ;
 done:
+   SAFE_BSON_DISPOSE( obj ) ;
    PD_TRACE_EXIT( SDB_COLL_CRT_ID_IX ) ;
    return ret ;
 error:

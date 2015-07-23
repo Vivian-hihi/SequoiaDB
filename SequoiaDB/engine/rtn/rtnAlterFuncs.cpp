@@ -55,7 +55,10 @@ namespace engine
                                   idxDef, cb,
                                   sdbGetDMSCB(),
                                   dpsCB,
-                                  TRUE ) ;
+                                  TRUE,
+                                  args.getBoolField( FIELD_NAME_OFFLINE ) ?
+                                  DMS_INDEX_BUILD_OFFLINE :
+                                  DMS_INDEX_BUILD_ONLINE ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to create id index on cl:%s, rc:%d",
@@ -66,6 +69,23 @@ namespace engine
       return rc ;
    error:
       goto done ;
+   }
+
+   INT32 rtnCreateIDIndexVerify( const bson::BSONObj &args )
+   {
+      INT32 rc = SDB_OK ;
+      BSONElement e = args.getField( FIELD_NAME_OFFLINE ) ;
+      if ( !e.eoo() && Bool != e.type() )
+      {
+         PD_LOG( PDERROR, "invalid arguments:%s",
+                 args.toString( FALSE, TRUE ).c_str() ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ; 
    }
 
    INT32 rtnDropIDIndex( const CHAR *name,
