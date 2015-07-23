@@ -771,7 +771,10 @@ namespace import
             << " for import failure records" << std::endl;
       }
 
-      std::cout << ss.str();
+      string stat = ss.str();
+
+      std::cout << stat;
+      PD_LOG(PDEVENT, stat.c_str());
    }
 }
 

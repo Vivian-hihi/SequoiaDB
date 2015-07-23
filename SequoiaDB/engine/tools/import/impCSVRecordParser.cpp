@@ -2360,6 +2360,7 @@ namespace import
          if (_autoAddField)
          {
             CSVField tmpField;
+            INT32 i = 1;
 
             while (len > 0)
             {
@@ -2392,7 +2393,7 @@ namespace import
 
                {
                   stringstream ss;
-                  ss << "field" << fieldCount;
+                  ss << "field" << (i++);
                   tmpField.name = ss.str();
                }
 
