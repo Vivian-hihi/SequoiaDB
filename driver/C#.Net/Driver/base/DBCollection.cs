@@ -266,10 +266,11 @@ namespace SequoiaDB
             return taskid;
         }
 
-        /** \fn ObjectId Insert(BsonDocument insertor)
+        /** \fn BsonValue Insert(BsonDocument insertor)
          *  \brief Insert a document into current collection
          *  \param insertor The Bson document of insertor, can't be null
-         *  \return ObjectId
+         *  \return The value of field "_id" in "insertor", if "insertor" has no field "_id",
+         *          API will add one and return the value which type is ObjectId
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
          */
