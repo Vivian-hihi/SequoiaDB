@@ -408,6 +408,7 @@ namespace engine
          {
             // can not create index offline in the same collection at the same time
             rc = SDB_DMS_INCOMPATIBLE_MODE ;
+            PD_LOG( PDERROR, "create indexes offline in the same time, rc: %d", rc ) ;
          }
          else
          {

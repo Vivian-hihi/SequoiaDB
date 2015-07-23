@@ -410,7 +410,8 @@ namespace engine
       flag = mbContext->mb()->_flag ;
       attributes = mbContext->mb()->_attributes ;
 
-      if ( !DMS_IS_MB_NORMAL ( flag ) )
+      if ( DMS_IS_MB_OFFLINE_REORG( flag ) ||
+           DMS_IS_MB_ONLINE_REORG ( flag )  )
       {
          PD_LOG ( PDERROR, "Failed to start offline reorg: Collection status "
                   "is not normal: %d", flag ) ;

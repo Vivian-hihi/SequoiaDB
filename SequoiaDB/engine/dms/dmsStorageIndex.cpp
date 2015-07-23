@@ -1315,6 +1315,8 @@ namespace engine
             goto error ;
          }
       }
+
+      DMS_UNSET_MB_FLAG_CREATE_INDEX_OFFLINE( context->mb()->_flag ) ;
       context->mbStat()->_totalIndexPages = indexID << 1 ;
       context->mbStat()->_totalIndexFreeSpace =
          indexID * ( pageSize()-1-sizeof(ixmExtentHead) ) ;

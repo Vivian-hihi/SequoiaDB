@@ -178,7 +178,7 @@ namespace engine
          goto init_error ;
       }
 
-      rc = _build();
+      rc = _build() ;
       if ( SDB_OK != rc )
       {
          goto error ;
