@@ -34,6 +34,7 @@
 #include "core.hpp"
 #include "oss.hpp"
 #include "ossIO.hpp"
+#include "ossNPipe.hpp"
 #include "impOptions.hpp"
 
 using namespace std;
@@ -97,6 +98,22 @@ namespace import
    class GBXInputStream: public InputStream
    {
       //TODO
+   };
+
+   class SubProcessInputStream: public InputStream
+   {
+   public:
+      SubProcessInputStream(const string& subProcessName,
+                            const string& subProcessArgs);
+      ~SubProcessInputStream();
+      INT32 init();
+      INT32 read(CHAR* buf, INT64 bufSize, INT64& readSize);
+
+   private:
+      string   _subProcessName;
+      string   _subProcessArgs;
+      OSSPID   _subPid;
+      OSSNPIPE _pipe;
    };
 }
 

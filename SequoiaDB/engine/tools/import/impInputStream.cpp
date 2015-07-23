@@ -30,6 +30,8 @@
 *******************************************************************************/
 #include "impInputStream.hpp"
 #include "ossUtil.h"
+#include "ossProc.hpp"
+#include <sstream>
 
 namespace import
 {
@@ -70,6 +72,27 @@ namespace import
          }
 
          upstream = stdinStream;
+      }
+      else if (INPUT_EXEC == inputType)
+      {
+         SubProcessInputStream* subProcessStream = SDB_OSS_NEW
+            SubProcessInputStream(options.exec(), options.execArgs());
+         if (NULL == subProcessStream)
+         {
+            rc = SDB_OOM;
+            PD_LOG(PDERROR, "failed to create SubProcessInputStream object, rc=%d", rc);
+            goto error;
+         }
+
+         rc = subProcessStream->init();
+         if (SDB_OK != rc)
+         {
+            PD_LOG(PDERROR, "failed to init SubProcessInputStream, rc=%d", rc);
+            SDB_OSS_DEL(subProcessStream);
+            goto error;
+         }
+
+         upstream = subProcessStream;
       }
       else
       {
@@ -259,6 +282,67 @@ namespace import
       return rc;
    error:
       goto done;
+   }
+
+   SubProcessInputStream::SubProcessInputStream(const string& subProcessName,
+                                                const string& subProcessArgs)
+   : _subProcessName(subProcessName),
+     _subProcessArgs(subProcessArgs)
+   {
+   }
+
+   SubProcessInputStream::~SubProcessInputStream()
+   {
+      if (OSS_INVALID_PID != _subPid)
+      {
+         ossCloseNamedPipe(_pipe);
+         _subPid = OSS_INVALID_PID;
+      }
+   }
+
+   INT32 SubProcessInputStream::init()
+   {
+      ossResultCode result;
+      INT32 rc = SDB_OK;
+      stringstream argv;
+
+      argv << _subProcessName << " " << _subProcessArgs;
+
+      rc = ossExec(_subProcessName.c_str(), argv.str().c_str(),
+                   NULL, 0, _subPid, result, NULL, &_pipe);
+      if (SDB_OK != rc)
+      {
+         PD_LOG(PDERROR, "Failed to execute %s, rc: %d",
+                argv.str().c_str(), rc);
+         goto error;
+      }
+      else
+      {
+         PD_LOG(PDERROR, "execute %s successfully",
+                argv.str().c_str());
+      }
+
+   done:
+      return rc;
+   error:
+      goto done;
+   }
+
+   INT32 SubProcessInputStream::read(CHAR* buf, INT64 bufSize, INT64& readSize)
+   {
+      INT32 rc = SDB_OK;
+
+      SDB_ASSERT(NULL != buf, "buf can't be NULL");
+      SDB_ASSERT(bufSize > 0, "bufSize must be greater than 0");
+
+      rc = ossReadNamedPipe(_pipe, buf, bufSize, &readSize);
+      if (SDB_OK != rc && SDB_EOF != rc)
+      {
+         PD_LOG(PDERROR, "failed to read from sub process %s %s, rc=%d",
+                _subProcessName.c_str(), _subProcessArgs.c_str(), rc);
+      }
+
+      return rc;
    }
 }
 

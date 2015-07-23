@@ -44,7 +44,8 @@ namespace import
    enum INPUT_TYPE
    {
       INPUT_FILE = 0,
-      INPUT_STDIN
+      INPUT_STDIN,
+      INPUT_EXEC
    };
 
    enum INPUT_FORMAT
@@ -79,6 +80,8 @@ namespace import
 
       /* input */
       inline const string& file() const { return _file; }
+      inline const string& exec() const { return _exec; }
+      inline const string& execArgs() const { return _execArgs; }
       inline INPUT_TYPE inputType() const { return _inputType; }
       inline INPUT_FORMAT inputFormat() const { return _inputFormat; }
       inline BOOLEAN linePriority() const { return _linePriority; }
@@ -125,6 +128,8 @@ namespace import
 
       /* input */
       string         _file;
+      string         _exec;
+      string         _execArgs;
       INPUT_TYPE     _inputType;
       INPUT_FORMAT   _inputFormat;
       BOOLEAN        _linePriority;

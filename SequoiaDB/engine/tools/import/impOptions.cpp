@@ -65,7 +65,9 @@ namespace import
    #define IMP_OPTION_BUFFERSIZE        "buffer"
    #define IMP_OPTION_DRYRUN            "dryrun"
    #define IMP_OPTION_VERBOSE           "verbose"
-   
+   #define IMP_OPTION_EXEC              "exec"
+   #define IMP_OPTION_EXECARGS          "execargs"
+
    #define IMP_EXPLAIN_HELP             "print help information"
    #define IMP_EXPLAIN_VERSION          "print version"
    #define IMP_EXPLAIN_HOSTNAME         "host name, default: localhost"
@@ -93,6 +95,8 @@ namespace import
    #define IMP_EXPLAIN_BUFFER           "set buffer size(unit:MB), default is 128MB"
    #define IMP_EXPLAIN_DRYRUN           "only parse record, don't import to database"
    #define IMP_EXPLAIN_VERBOSE          "print run time details"
+   #define IMP_EXPLAIN_EXEC             "execute external program to get data, the program should output data to standard outpupt"
+   #define IMP_EXPLAIN_EXECARGS         "arguments for external program"
 
    #define _TYPE(T) po::value<T>()
 
@@ -117,6 +121,8 @@ namespace import
 
    #define IMP_INPUT_OPTIONS \
       (IMP_OPTION_FILENAME,            _TYPE(string),    IMP_EXPLAIN_FILENAME) \
+      (IMP_OPTION_EXEC,                _TYPE(string),    IMP_EXPLAIN_EXEC) \
+      (IMP_OPTION_EXECARGS,            _TYPE(string),    IMP_EXPLAIN_EXECARGS) \
       (IMP_OPTION_TYPE,                _TYPE(string),    IMP_EXPLAIN_TYPE) \
       (IMP_OPTION_LINEPRIORITY,        _TYPE(string),    IMP_EXPLAIN_LINEPRIORITY) \
       (IMP_OPTION_DELRECORD",r",       _TYPE(string),    IMP_EXPLAIN_DELRECORD) \
@@ -314,10 +320,30 @@ namespace import
          goto error;
       }
 
+      if (has(IMP_OPTION_FILENAME) && has(IMP_OPTION_EXEC))
+      {
+         std::cerr << IMP_OPTION_FILENAME 
+                   << " can't be specified with " 
+                   << IMP_OPTION_EXEC
+                   << std::endl;
+         rc = SDB_INVALIDARG;
+         goto error;
+      }
+
       if (has(IMP_OPTION_FILENAME))
       {
          _file = get<string>(IMP_OPTION_FILENAME);
          _inputType = INPUT_FILE;
+      }
+      else if (has(IMP_OPTION_EXEC))
+      {
+         _exec = get<string>(IMP_OPTION_EXEC);
+         _inputType = INPUT_EXEC;
+
+         if (has(IMP_OPTION_EXECARGS))
+         {
+            _execArgs = get<string>(IMP_OPTION_EXECARGS);
+         }
       }
 
       if (has(IMP_OPTION_TYPE))
