@@ -235,6 +235,18 @@ namespace engine
 
       /// $cast
       MTH_ADD_PARSER( _mthCastParser ) ;
+
+      /// $add
+      MTH_ADD_PARSER( _mthAddParser ) ;
+
+      /// $subtract
+      MTH_ADD_PARSER( _mthSubtractParser ) ;
+
+      /// $multiply
+      MTH_ADD_PARSER( _mthMultiplyParser ) ;
+
+      /// $divide
+      MTH_ADD_PARSER( _mthDivideParser ) ;
    done:
       PD_TRACE_EXITRC( SDB__MTHSACTIONPARSER__REGISTERPARSERS, rc ) ;
       return rc ;

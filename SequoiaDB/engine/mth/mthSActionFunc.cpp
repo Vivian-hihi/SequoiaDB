@@ -807,6 +807,10 @@ namespace engine
          {
             builder.appendDate( fieldName, Date_t( tm ) ) ;
          }
+         else if ( Timestamp == e.type() )
+         {
+            builder.appendDate( fieldName, e.timestampTime() ) ;
+         }
          else
          {
             builder.appendNull( fieldName ) ;
@@ -849,7 +853,7 @@ namespace engine
          if ( e.isNumber() )
          {
             /// millis
-            builder.appendTimestamp( fieldName, e.numberLong() ) ;
+            builder.appendTimestamp( fieldName, e.numberLong(), 0 ) ;
          }
          else if ( String == e.type() &&
                    SDB_OK == engine::utilStr2TimeT( e.valuestr(),
@@ -857,6 +861,10 @@ namespace engine
                                                     &usec ))
          {
             builder.appendTimestamp( fieldName, tm * 1000, usec ) ;
+         }
+         else if ( Date == e.type() )
+         {
+            builder.appendTimestamp( fieldName, e.date().millis, 0 ) ;
          }
          else
          {
@@ -866,7 +874,18 @@ namespace engine
       }
       case NumberLong :
       {
-         if ( String != e.type() )
+         if ( Date == e.type() )
+         {
+            builder.appendNumber( fieldName,
+                                  ( INT64 )( e.date().millis ) ) ;
+         }
+         else if ( Timestamp == e.type() )
+         {
+            UINT64 l = e.timestampTime().millis ;
+            l += e.timestampInc() / 1000 ;
+            builder.appendNumber( fieldName, ( INT64 )l ) ;
+         }
+         else if ( String != e.type() )
          {
             builder.appendNumber( fieldName, e.numberLong() ) ;
          }
@@ -1843,6 +1862,378 @@ namespace engine
       }
    done:
       PD_TRACE_EXITRC( SDB__MTHRTRIMGET, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   ///PD_TRACE_DECLARE_FUNCTION ( SDB__MTHADDBUILD, "mthAddBuild" )
+   INT32 mthAddBuild( const CHAR *fieldName,
+                      const bson::BSONElement &e,
+                      _mthSAction *action,
+                      bson::BSONObjBuilder &builder )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__MTHADDBUILD ) ;
+      SDB_ASSERT( NULL != action, "can not be null" ) ;
+      const BSONObj &obj = action->getArg() ;
+      BSONElement arg = obj.getField( "arg1" ) ;
+      SDB_ASSERT( arg.isNumber(), "must be numeric" ) ;
+
+      if ( e.eoo() )
+      {
+         goto done ;
+      }
+      else if ( !e.isNumber() )
+      {
+         builder.appendNull( fieldName ) ;
+      }
+      else if ( NumberDouble == e.type() ||
+                NumberDouble == arg.type() )
+      {
+         FLOAT64 f = arg.numberDouble() + e.numberDouble() ;
+         builder.appendNumber( fieldName, f ) ;
+      }
+      else
+      {
+         INT64 i = arg.numberLong() + e.numberLong() ;
+         builder.appendIntOrLL( fieldName, i ) ;
+      }
+   done:
+      PD_TRACE_EXITRC( SDB__MTHADDBUILD, rc ) ;
+      return rc ;
+   }
+
+   ///PD_TRACE_DECLARE_FUNCTION ( SDB__MTHADDGET, "mthAddGet" )
+   INT32 mthAddGet( const CHAR *fieldName,
+                    const bson::BSONElement &in,
+                    _mthSAction *action,
+                    bson::BSONElement &out )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__MTHADDGET ) ;
+      BSONObjBuilder builder ;
+      BSONObj obj ;
+      BSONElement arg = action->getArg().getField( "arg1" ) ;
+      SDB_ASSERT( arg.isNumber(), "must be numeric" ) ;
+
+      if ( in.eoo() )
+      {
+         /// do nothing.
+      }
+      else if ( !in.isNumber() )
+      {
+         builder.appendNull( fieldName ) ;
+         obj = builder.obj() ;
+      }
+      else if ( NumberDouble == in.type() ||
+                NumberDouble == arg.type() )
+      {
+         FLOAT64 f = in.numberDouble() + arg.numberDouble() ;
+         builder.appendNumber( fieldName, f ) ;
+         obj = builder.obj() ;
+      }
+      else
+      {
+         INT64 l = in.numberLong() + arg.numberLong() ;
+         builder.appendIntOrLL( fieldName, l ) ;
+         obj = builder.obj() ;
+      }
+
+      if ( !obj.isEmpty() )
+      {
+         action->setObj( obj ) ;
+         out = action->getObj().getField( fieldName ) ;
+      }
+      PD_TRACE_EXITRC( SDB__MTHADDGET, rc ) ;
+      return rc ;
+   }
+
+   ///PD_TRACE_DECLARE_FUNCTION ( SDB__MTHSUBTRACTBUILD, "mthSubtractBuild" )
+   INT32 mthSubtractBuild( const CHAR *fieldName,
+                           const bson::BSONElement &e,
+                           _mthSAction *action,
+                           bson::BSONObjBuilder &builder )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__MTHSUBTRACTBUILD ) ;
+      SDB_ASSERT( NULL != action, "can not be null" ) ;
+      const BSONObj &obj = action->getArg() ;
+      BSONElement arg = obj.getField( "arg1" ) ;
+      SDB_ASSERT( arg.isNumber(), "must be numeric" ) ;
+
+      if ( e.eoo() )
+      {
+         goto done ;
+      }
+      else if ( !e.isNumber() )
+      {
+         builder.appendNull( fieldName ) ;
+      }
+      else if ( NumberDouble == e.type() ||
+                NumberDouble == arg.type() )
+      {
+         FLOAT64 f = e.numberDouble() - arg.numberDouble() ;
+         builder.appendNumber( fieldName, f ) ;
+      }
+      else
+      {
+         INT64 i = e.numberLong() - arg.numberLong() ;
+         builder.appendIntOrLL( fieldName, i ) ;
+      }
+   done:
+      PD_TRACE_EXITRC( SDB__MTHSUBTRACTBUILD, rc ) ;
+      return rc ;
+   }
+
+   ///PD_TRACE_DECLARE_FUNCTION ( SDB__MTHSUBTRACTGET, "mthSubtractGet" )
+   INT32 mthSubtractGet( const CHAR *fieldName,
+                         const bson::BSONElement &in,
+                         _mthSAction *action,
+                         bson::BSONElement &out )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__MTHSUBTRACTGET ) ;
+      BSONObjBuilder builder ;
+      BSONObj obj ;
+      BSONElement arg = action->getArg().getField( "arg1" ) ;
+      SDB_ASSERT( arg.isNumber(), "must be numeric" ) ;
+
+      if ( in.eoo() )
+      {
+         /// do nothing.   
+      }
+      else if ( !in.isNumber() )
+      {
+         builder.appendNull( fieldName ) ;
+         obj = builder.obj() ;
+      }
+      else if ( NumberDouble == in.type() ||
+                NumberDouble == arg.type() )
+      {
+         FLOAT64 f = in.numberDouble() - arg.numberDouble() ;
+         builder.appendNumber( fieldName, f ) ;
+         obj = builder.obj() ;
+      }
+      else
+      {
+         INT64 l = in.numberLong() - arg.numberLong() ;
+         builder.appendIntOrLL( fieldName, l ) ;
+         obj = builder.obj() ;
+      }
+
+      if ( !obj.isEmpty() )
+      {
+         action->setObj( obj ) ;
+         out = action->getObj().getField( fieldName ) ;
+      }
+      PD_TRACE_EXITRC( SDB__MTHSUBTRACTGET, rc ) ;
+      return rc ;
+   }
+
+   ///PD_TRACE_DECLARE_FUNCTION ( SDB__MTHMULTIPLYBUILD, "mthMultiplyBuild" )
+   INT32 mthMultiplyBuild( const CHAR *fieldName,
+                           const bson::BSONElement &e,
+                           _mthSAction *action,
+                           bson::BSONObjBuilder &builder )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__MTHMULTIPLYBUILD ) ;
+      const BSONObj &obj = action->getArg() ;
+      BSONElement arg = obj.getField( "arg1" ) ;
+      SDB_ASSERT( arg.isNumber(), "must be numeric" ) ;
+
+      if ( e.eoo() )
+      {
+         goto done ;
+      }
+      else if ( !e.isNumber() )
+      {
+         builder.appendNull( fieldName ) ;
+      }
+      else if ( NumberDouble == e.type() ||
+                NumberDouble == arg.type() )
+      {
+         FLOAT64 f = arg.numberDouble() * e.numberDouble() ;
+         builder.appendNumber( fieldName, f ) ;
+      }
+      else
+      {
+         INT64 i = arg.numberLong() * e.numberLong() ;
+         builder.appendIntOrLL( fieldName, i ) ;
+      }
+   done:
+      PD_TRACE_EXITRC( SDB__MTHMULTIPLYBUILD, rc ) ;
+      return rc ;
+   }
+
+   ///PD_TRACE_DECLARE_FUNCTION ( SDB__MTHMULTIPLYGET, "mthMultiplyGet" )
+   INT32 mthMultiplyGet( const CHAR *fieldName,
+                         const bson::BSONElement &in,
+                         _mthSAction *action,
+                         bson::BSONElement &out )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__MTHMULTIPLYGET ) ;
+      BSONObjBuilder builder ;
+      BSONObj obj ;
+      BSONElement arg = action->getArg().getField( "arg1" ) ;
+      SDB_ASSERT( arg.isNumber(), "must be numeric" ) ;
+
+      if ( in.eoo() )
+      {
+         /// do nothing.
+      }
+      else if ( !in.isNumber() )
+      {
+         builder.appendNull( fieldName ) ;
+         obj = builder.obj() ;
+      }
+      else if ( NumberDouble == in.type() ||
+                NumberDouble == arg.type() )
+      {
+         FLOAT64 f = in.numberDouble() * arg.numberDouble() ;
+         builder.appendNumber( fieldName, f ) ;
+         obj = builder.obj() ;
+      }
+      else
+      {
+         INT64 l = in.numberLong() * arg.numberLong() ;
+         builder.appendIntOrLL( fieldName, l ) ;
+         obj = builder.obj() ;
+      }
+
+      if ( !obj.isEmpty() )
+      {
+         action->setObj( obj ) ;
+         out = action->getObj().getField( fieldName ) ;
+      }
+      PD_TRACE_EXITRC( SDB__MTHMULTIPLYGET, rc ) ;
+      return rc ;
+   }
+
+   ///PD_TRACE_DECLARE_FUNCTION ( SDB__MTHDIVIDEBUILD, "mthDivideBuild" )
+   INT32 mthDivideBuild( const CHAR *fieldName,
+                         const bson::BSONElement &e,
+                         _mthSAction *action,
+                         bson::BSONObjBuilder &builder )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__MTHDIVIDEBUILD ) ;
+      const BSONObj &obj = action->getArg() ;
+      BSONElement arg = obj.getField( "arg1" ) ;
+      SDB_ASSERT( arg.isNumber(), "must be numeric" ) ;
+
+      if ( e.eoo() )
+      {
+         goto done ;
+      }
+      else if ( !e.isNumber() )
+      {
+         builder.appendNull( fieldName ) ;
+      }
+      else if ( NumberDouble == e.type() ||
+                NumberDouble == arg.type() )
+      {
+         FLOAT64 r = arg.numberDouble() ;
+         if ( fabs(r) < OSS_EPSILON )
+         {
+            PD_LOG( PDERROR, "invalid argument:%f", r ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
+         builder.appendNumber( fieldName, e.numberDouble() / r ) ;
+      }
+      else
+      {
+         INT64 l = e.numberLong() ;
+         INT64 r = arg.numberLong() ;
+         if ( 0 == r )
+         {
+            PD_LOG( PDERROR, "invalid argument:%lld", r ) ;
+            rc = SDB_SYS ; /// should not happen. so use sdb_sys.
+            goto error ;
+         }
+         else if ( 0 == l % r )
+         {
+            builder.appendIntOrLL( fieldName, l / r ) ;
+         }
+         else
+         {
+            builder.appendNumber( fieldName, l / ( FLOAT64 ) r ) ;
+         }
+      }
+   done:
+      PD_TRACE_EXITRC( SDB__MTHDIVIDEBUILD, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   ///PD_TRACE_DECLARE_FUNCTION ( SDB__MTHDIVIDEGET, "mthDivideGet" )
+   INT32 mthDivideGet( const CHAR *fieldName,
+                       const bson::BSONElement &in,
+                       _mthSAction *action,
+                       bson::BSONElement &out )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__MTHDIVIDEGET ) ;
+      BSONObjBuilder builder ;
+      BSONObj obj ;
+      BSONElement arg = action->getArg().getField( "arg1" ) ;
+      SDB_ASSERT( arg.isNumber(), "must be numeric" ) ;
+
+      if ( in.eoo() )
+      {
+         /// do nothing
+      }
+      else if ( !in.isNumber() || 0 == arg.Number() )
+      {
+         builder.appendNull( fieldName ) ;
+         obj = builder.obj() ;
+      }
+      else if ( NumberDouble == in.type() ||
+                NumberDouble == arg.type() )
+      {
+         FLOAT64 r = arg.numberDouble() ;
+         if ( fabs(r) < OSS_EPSILON )
+         {
+            PD_LOG( PDERROR, "invalid argument:%f", r ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
+         builder.appendNumber( fieldName, in.numberDouble() / r ) ;
+         obj = builder.obj() ;
+      }
+      else
+      {
+         INT64 l = in.numberLong() ;
+         INT64 r = arg.numberLong() ;
+         if ( 0 == r )
+         {
+            PD_LOG( PDERROR, "invalid argument:%lld", r ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
+         else if ( 0 == l % r )
+         {
+            builder.appendIntOrLL( fieldName, l / r ) ;
+         }
+         else
+         {
+            builder.appendNumber( fieldName, l / ( FLOAT64 ) r ) ;
+         }
+         obj = builder.obj() ;
+      }
+
+      if ( !obj.isEmpty() )
+      {
+         action->setObj( obj ) ;
+         out = action->getObj().getField( fieldName ) ;
+      }
+
+   done:
+      PD_TRACE_EXITRC( SDB__MTHDIVIDEGET, rc ) ;
       return rc ;
    error:
       goto done ;

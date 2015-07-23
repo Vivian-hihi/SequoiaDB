@@ -93,6 +93,63 @@ namespace engine
       virtual INT32 parse( const bson::BSONElement &e,
                             _mthSAction &action ) const ;
    } ;
+
+   class _mthAddParser : public _mthSActionParser::parser
+   {
+   public:
+      _mthAddParser()
+      {
+         _name = MTH_S_ADD ;
+      }
+      virtual ~_mthAddParser() {}
+
+   public:
+      virtual INT32 parse( const bson::BSONElement &e,
+                            _mthSAction &action ) const ;
+   } ;
+
+   class _mthSubtractParser : public _mthSActionParser::parser
+   {
+   public:
+      _mthSubtractParser()
+      {
+         _name = MTH_S_SUBTRACT ;
+      }
+      virtual ~_mthSubtractParser() {}
+
+   public:
+      virtual INT32 parse( const bson::BSONElement &e,
+                            _mthSAction &action ) const ;
+   } ;
+
+   class _mthMultiplyParser : public _mthSActionParser::parser
+   {
+   public:
+      _mthMultiplyParser()
+      {
+         _name = MTH_S_MULTIPLY ;
+      }
+      virtual ~_mthMultiplyParser() {}
+
+   public:
+      virtual INT32 parse( const bson::BSONElement &e,
+                            _mthSAction &action ) const ;
+   } ;
+
+   class _mthDivideParser : public _mthSActionParser::parser
+   {
+   public:
+      _mthDivideParser()
+      {
+         _name = MTH_S_DIVIDE ;
+      }
+      virtual ~_mthDivideParser() {}
+
+   public:
+      virtual INT32 parse( const bson::BSONElement &e,
+                            _mthSAction &action ) const ;
+   } ;
+
 }
 
 #endif

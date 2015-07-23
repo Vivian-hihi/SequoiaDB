@@ -220,6 +220,46 @@ namespace engine
                       const bson::BSONElement &,
                       _mthSAction *,
                       bson::BSONElement & ) ;
+
+   INT32 mthAddBuild( const CHAR *,
+                      const bson::BSONElement &,
+                      _mthSAction *,
+                      bson::BSONObjBuilder & ) ;
+
+   INT32 mthAddGet( const CHAR *,
+                    const bson::BSONElement &,
+                    _mthSAction *,
+                    bson::BSONElement & ) ;
+
+   INT32 mthSubtractBuild( const CHAR *,
+                           const bson::BSONElement &,
+                           _mthSAction *,
+                           bson::BSONObjBuilder & ) ;
+
+   INT32 mthSubtractGet( const CHAR *,
+                         const bson::BSONElement &,
+                         _mthSAction *,
+                         bson::BSONElement & ) ;
+
+   INT32 mthMultiplyBuild( const CHAR *,
+                           const bson::BSONElement &,
+                           _mthSAction *,
+                           bson::BSONObjBuilder & ) ;
+
+   INT32 mthMultiplyGet( const CHAR *,
+                         const bson::BSONElement &,
+                         _mthSAction *,
+                         bson::BSONElement & ) ;
+
+   INT32 mthDivideBuild( const CHAR *,
+                         const bson::BSONElement &,
+                         _mthSAction *,
+                         bson::BSONObjBuilder & ) ;
+
+   INT32 mthDivideGet( const CHAR *,
+                       const bson::BSONElement &,
+                       _mthSAction *,
+                       bson::BSONElement & ) ;
 }
 
 #endif
