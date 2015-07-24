@@ -713,7 +713,8 @@ namespace bson {
         case bson::Date:
         {
             char buffer[64] ;
-            time_t timer = (time_t)( date() / 1000 ) ;
+            // date() return UINT64, but need INT64
+            time_t timer = (time_t)( ( (long long)date() ) / 1000 ) ;
             struct tm psr ;
             local_time ( &timer, &psr ) ;
             memset ( buffer, 0, 64 ) ;
