@@ -114,7 +114,9 @@ namespace import
       if (impArgs->verbose)
       {
          stringstream ss;
-         ss << "importer [" << impArgs->id << "] started..." << std::endl;
+         ss << "importer [" << impArgs->id << "] with "
+            << impArgs->hostname << ":" << impArgs->svcname
+            << " started..." << std::endl;
          std::cout << ss.str();
       }
 
@@ -493,6 +495,11 @@ namespace import
    
    Routine::Routine(const Options& options)
    : _options(options),
+     _coords(options.hostname(),
+             options.svcname(),
+             options.user(),
+             options.password(),
+             options.useSSL()),
      _importesLivingNum(0),
      _importedNum(0),
      _importFailureNum(0)
@@ -578,13 +585,31 @@ namespace import
       rc = _importerLogFile.init(importerLogFile, TRUE);
       if (SDB_OK != rc)
       {
-         PD_LOG(PDERROR, "failed to init importer log file");
+         PD_LOG(PDERROR, "failed to init importer log file, rc=%d", rc);
+         goto error;
+      }
+
+      rc = _coords.init();
+      if (SDB_OK != rc)
+      {
+         PD_LOG(PDERROR, "failed to init coords, rc=%d", rc);
          goto error;
       }
 
       for (INT32 i = 0; i < num; i++)
       {
-         ImporterArgs* args = SDB_OSS_NEW ImporterArgs();
+         string hostname;
+         string svcname;
+         ImporterArgs* args = NULL;
+
+         rc = _coords.getRandomCoord(hostname, svcname);
+         if (SDB_OK != rc)
+         {
+            PD_LOG(PDERROR, "failed to get coord, rc=%d", rc);
+            goto error;
+         }
+
+         args = SDB_OSS_NEW ImporterArgs();
          if (NULL == args)
          {
             rc = SDB_OOM;
@@ -592,8 +617,8 @@ namespace import
          }
 
          args->id = i;
-         args->hostname = _options.hostname();
-         args->svcname = _options.svcname();
+         args->hostname = hostname;
+         args->svcname = svcname;
          args->user = _options.user();
          args->password = _options.password();
          args->csname = _options.csname();

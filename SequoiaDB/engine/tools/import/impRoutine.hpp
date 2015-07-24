@@ -35,6 +35,7 @@
 #include "oss.hpp"
 #include "impOptions.hpp"
 #include "impWorker.hpp"
+#include "impCoord.hpp"
 #include "impRecordQueue.hpp"
 #include "impLogFile.hpp"
 #include "ossAtomic.hpp"
@@ -49,7 +50,6 @@ namespace import
    public:
       Routine(const Options& options);
       ~Routine();
-      //INT32 validate();
       INT32 startParser();
       INT32 waitParserStop();
       inline BOOLEAN isParserStopped() const 
@@ -66,6 +66,9 @@ namespace import
       const Options&    _options;
       RecordQueue       _workQueue;
       RecordQueue       _idleQueue;
+
+      // coords
+      Coords            _coords;
 
       // parser
       Worker*           _parser;
