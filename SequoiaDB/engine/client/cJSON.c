@@ -547,6 +547,37 @@ static const char *parse_value(cJSON *item,const char *value,int isKey,int isMon
       {
          return parse_dollar_command ( item, value, cJSON_Undefined ) ;
       }
+      //$numberLong
+      else if( !strncmp ( value_temp, "$numberLong", 11 ) )
+      {
+         value = value_temp + 11 ;
+         value = skip ( value ) ;
+         if( *value != ':' )
+         {
+            return 0 ;
+         }
+         ++value ;
+         value = skip ( value ) ;
+         if( *value != '"' )
+         {
+            return 0 ;
+         }
+         ++value ;
+         value = parse_number( item, value ) ;
+         if( *value != '"' )
+         {
+            return 0 ;
+         }
+         ++value ;
+         value = skip ( value ) ;
+         if( *value != '}' )
+         {
+            return 0 ;
+         }
+         ++value ;
+         value = skip ( value ) ;
+         return value ;
+      }
    }
    if (*value=='[')
    {
@@ -954,18 +985,36 @@ static const char *parse_first_command(cJSON *item,const char *value,int cj_type
          {
             return 0 ;
          }
-         item->type = cJSON_Timestamp ;
-         timer = (time_t)t ;
-         local_time ( &timer, &psr ) ;
-         sprintf( temp,
-                  "%04d-%02d-%02d-%02d.%02d.%02d.%06d",
-                  psr.tm_year + 1900,
-                  psr.tm_mon + 1,
-                  psr.tm_mday,
-                  psr.tm_hour,
-                  psr.tm_min,
-                  psr.tm_sec,
-                  i ) ;
+         if( *value == '{' )
+         {
+            item->type = cJSON_Date ;
+            timer = (time_t)t ;
+            local_time ( &timer, &psr ) ;
+            sprintf( temp,
+                     "%04d-%02d-%02dT%02d:%02d:%02d.%03dZ",
+                     psr.tm_year + 1900,
+                     psr.tm_mon + 1,
+                     psr.tm_mday,
+                     psr.tm_hour,
+                     psr.tm_min,
+                     psr.tm_sec,
+                     i ) ;
+         }
+         else
+         {
+            item->type = cJSON_Timestamp ;
+            timer = (time_t)t ;
+            local_time ( &timer, &psr ) ;
+            sprintf( temp,
+                     "%04d-%02d-%02d-%02d.%02d.%02d.%06d",
+                     psr.tm_year + 1900,
+                     psr.tm_mon + 1,
+                     psr.tm_mday,
+                     psr.tm_hour,
+                     psr.tm_min,
+                     psr.tm_sec,
+                     i * 1000 ) ;
+         }
          item->valuestring = (char*)cJSON_malloc( 64 ) ;
          memset ( item->valuestring, 0, 64 ) ;
          strncpy ( item->valuestring, temp, 64 ) ;
