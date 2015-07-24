@@ -139,8 +139,8 @@ namespace engine
       else
       {
          rc = _cataInfo->getLobGroupID( getOID(),
-                                     DMS_LOB_META_SEQUENCE,
-                                     _metaGroup ) ;
+                                        DMS_LOB_META_SEQUENCE,
+                                        _metaGroup ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "failed to get meta group:%d", rc ) ;
@@ -1301,6 +1301,12 @@ namespace engine
          {
             tag |= RETRY_TAG_RETRY ;
             flags = SDB_OK ;
+
+            /// if meta group has update, so need to update meta group
+            if ( _metaGroup == it->first )
+            {
+               _metaGroupInfo = it->second ;
+            }
          }
          // then catalog
          else if ( rtnCoordCataReplyCheck( cb, flags, canRetry, _cataInfo,
