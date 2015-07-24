@@ -205,22 +205,46 @@ namespace engine
          PD_LOG( PDEVENT, "All configs: %s", confObj.toString().c_str() ) ;
       }
 
-      // 4. handlers and init global mem
+      // 4. dump limit info
+      {
+         ossProcLimits limitInfo ;
+         rc = limitInfo.init() ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDWARNING, "can not init limit info:%d", rc ) ;
+         }
+         else
+         {
+            PD_LOG( PDEVENT, "dump limit info:\n%s", limitInfo.str().c_str() ) ;
+            INT64 sort = -1 ;
+            INT64 hard = -1 ;
+            if ( !limitInfo.getLimit( OSS_LIMIT_VIRTUAL_MEM, sort, hard ) )
+            {
+               PD_LOG( PDWARNING, "can not get limit of memory space!" ) ;
+            }
+            else if ( -1 != sort || -1 != hard )
+            {
+               PD_LOG( PDWARNING, "virtual memory is not unlimited!" ) ;
+            }
+         }
+      }
+
+      // 5. handlers and init global mem
       rc = pmdEnableSignalEvent( pmdGetOptionCB()->getDiagLogPath(),
                                  (PMD_ON_QUIT_FUNC)pmdOnQuit ) ;
       PD_RC_CHECK ( rc, PDERROR, "Failed to enable trap, rc: %d", rc ) ;
 
-      // 5. register cbs
+      // 6. register cbs
       sdbGetPMDController()->registerCB( pmdGetDBRole() ) ;
 
-      // 6. system init
+      // 7. system init
       rc = _pmdSystemInit() ;
       if ( rc )
       {
          goto error ;
       }
 
-      // 7. inti krcb
+      // 8. inti krcb
       rc = krcb->init() ;
       if ( rc )
       {
@@ -228,7 +252,7 @@ namespace engine
          goto error ;
       }
 
-      // 8. post init
+      // 9. post init
       rc = _pmdPostInit() ;
       if ( rc )
       {
