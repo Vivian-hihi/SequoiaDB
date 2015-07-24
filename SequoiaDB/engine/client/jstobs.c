@@ -929,11 +929,6 @@ static BOOLEAN jsonConvertBson ( cJSON *cj, bson *bs, BOOLEAN isObj )
                {
                   return FALSE ;
                }
-               else
-               {
-                  cj->type = cJSON_Timestamp ;
-                  micros = micros * 1000 ;
-               }
             }
             else
             {
@@ -949,11 +944,12 @@ static BOOLEAN jsonConvertBson ( cJSON *cj, bson *bs, BOOLEAN isObj )
          }
          --month ;
          /* sanity check for years */
-         if( year    >=    INT32_LAST_YEAR   ||
+         if( cJSON_Timestamp == cj->type && (
+             year    >=    INT32_LAST_YEAR   ||
              month   >=    RELATIVE_MOD      || //[0,11]
              month   <     0                 ||
              day     >     RELATIVE_DAY      || //[1,31]
-             day     <=    0 )
+             day     <=    0 ) )
          {
             return FALSE ;
          }
