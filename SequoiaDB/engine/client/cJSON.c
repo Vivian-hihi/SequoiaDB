@@ -551,6 +551,10 @@ static const char *parse_value(cJSON *item,const char *value,int isKey,int isMon
       else if( !strncmp ( value_temp, "$numberLong", 11 ) )
       {
          value = value_temp + 11 ;
+         if ( *value == '\"' )
+         {
+            ++value ;
+         }
          value = skip ( value ) ;
          if( *value != ':' )
          {
