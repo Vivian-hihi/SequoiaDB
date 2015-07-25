@@ -846,14 +846,12 @@ static BOOLEAN jsonConvertBson ( cJSON *cj, bson *bs, BOOLEAN isObj )
       {
          /* for null type */
          if ( isObj && cj->string )
-         {
-            //bson_append_null ( bs, cj->string ) ;
-         }
+            bson_append_null ( bs, cj->string ) ;
          else
          {
             CHAR num[ INT_NUM_SIZE ] = {0} ;
             get_char_num ( num, i, INT_NUM_SIZE ) ;
-            //bson_append_null ( bs, num ) ;
+            bson_append_null ( bs, num ) ;
          }
          break ;
       }
