@@ -68,7 +68,7 @@ namespace import
    private:
       INT32 _connect(const string& hostname, const string& svcname, sdbConnectionHandle& conn);
       void  _disconnect(sdbConnectionHandle& conn);
-      INT32 _testCoord(const string& hostname, const string& svcname);
+      INT32 _checkCoord(const string& hostname, const string& svcname);
 
    private:
       string   _hostname;

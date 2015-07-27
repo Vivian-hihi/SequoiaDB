@@ -294,7 +294,7 @@ namespace import
       {
          Host& host = *i;
 
-         rc = _testCoord(host.hostname, host.svcname);
+         rc = _checkCoord(host.hostname, host.svcname);
          if (SDB_OK != rc)
          {
             PD_LOG(PDERROR, "failed to connect to %s:%s, rc=%d",
@@ -368,7 +368,7 @@ namespace import
       }
    }
 
-   INT32 Coords::_testCoord(const string& hostname, const string& svcname)
+   INT32 Coords::_checkCoord(const string& hostname, const string& svcname)
    {
       sdbConnectionHandle conn = SDB_INVALID_HANDLE;
       INT32 rc = SDB_OK;
@@ -394,9 +394,11 @@ namespace import
          goto error;
       }
 
+      // choose a random coordinator, but it can't be 
+      // used much more than other coordinator
+      // try 100 times at most
       thres = _refCount / size + 1;
 
-      // try 100 times at most
       for (INT32 t = 0; t < 100; t++)
       {
          i = ossRand() % size;
