@@ -69,6 +69,11 @@ namespace engine
          groupLst = _groupLst ;
       }
 
+      INT32 getGroupNum()
+      {
+         return _groupLst.size();
+      }
+
       BOOLEAN isMainCL()
       {
          return _catlogSet.isMainCL();
