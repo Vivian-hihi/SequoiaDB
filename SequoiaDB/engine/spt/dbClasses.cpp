@@ -2269,10 +2269,12 @@ static JSBool _collection_create_index ( JSContext *cx , uintN argc , jsval *vp,
 
    if ( argc >= 3 )
    {
+      REPORT( JSVAL_IS_BOOLEAN( argv[2]), "3rd argument should be bool" ) ;
       VERIFY ( JS_ValueToBoolean ( cx , argv[2] , &unique ) ) ;
    }
    if ( argc >= 4 )
    {
+      REPORT( JSVAL_IS_BOOLEAN( argv[3]), "4th argument should be bool" ) ;
       VERIFY ( JS_ValueToBoolean ( cx, argv[3], &enforced ) ) ;
    }
 
