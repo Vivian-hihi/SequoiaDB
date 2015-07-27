@@ -1917,7 +1917,7 @@ INT32 csvParser::_appendBsonNull( void *bsonObj, const CHAR *pKey )
 {
    INT32 rc = SDB_OK ;
    bson *pObj = (bson *)bsonObj ;
-   //rc = bson_append_null( pObj, pKey ) ;
+   rc = bson_append_null( pObj, pKey ) ;
    if( rc )
    {
       rc = SDB_DRIVER_BSON_ERROR ;
@@ -2005,7 +2005,7 @@ INT32 csvParser::_appendBson( void *bsonObj, _fieldData *pFieldData )
       }
       break ;
    case CSV_TYPE_NULL:
-      //rc = bson_append_null( pObj, pFieldData->pField ) ;
+      rc = bson_append_null( pObj, pFieldData->pField ) ;
       if( rc )
       {
          rc = SDB_DRIVER_BSON_ERROR ;
@@ -2137,7 +2137,7 @@ INT32 csvParser::_appendBson( void *bsonObj, const CHAR *pKey,
       }
       break ;
    case CSV_TYPE_NULL:
-      //rc = bson_append_null( pObj, pKey ) ;
+      rc = bson_append_null( pObj, pKey ) ;
       break ;
    case CSV_TYPE_OID:
       bson_oid_t bot ;
