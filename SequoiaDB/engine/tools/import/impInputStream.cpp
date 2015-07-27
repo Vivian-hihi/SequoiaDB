@@ -318,7 +318,7 @@ namespace import
       }
       else
       {
-         PD_LOG(PDERROR, "execute %s successfully",
+         PD_LOG(PDEVENT, "execute %s successfully",
                 argv.str().c_str());
       }
 
