@@ -46,6 +46,7 @@
 			<then>
 				<mkdir dir="${db.path}/conf/local/${coord.service.port}" />
 				<copy file="${db.path}/conf/samples/sdb.conf.standalone" tofile="${db.path}/conf/local/${coord.service.port}/sdb.conf" />
+
 				<replaceregexp file="${db.path}/conf/local/${coord.service.port}/sdb.conf" match="diaglevel=.*" replace="diaglevel=5" flags="g" />
 				<replaceregexp file="${db.path}/conf/local/${coord.service.port}/sdb.conf" match="transactionon=false" replace="transactionon=true" flags="g" />
 				<if>
@@ -58,6 +59,13 @@
 				<exec dir="${db.path}/bin" executable="su" failonerror="true" failifexecutionfails="true" >
 					<arg line=" - sdbadmin -c  '${db.path}/bin/sdbstart -c ${db.path}/conf/local/${coord.service.port}'" />
 				</exec>
+
+				<chown owner="sdbadmin" type="both">
+					<fileset dir="${db.path}/conf/local/${coord.service.port}" includes="**/*">
+				</chown>
+				<chgrp group="sdbadmin_group" type="both">
+					<fileset dir="${db.path}/conf/local/${coord.service.port}" includes="**/*">
+				</chgrp>
 			</then>
 			<else>
 				<mkdir dir="${db.path}/conf/local/${coord.service.port}" />
@@ -83,6 +91,13 @@
 				<exec executable="su" dir="${db.path}/bin" spawn="false">
 					<arg line=" - sdbadmin -c  '${db.path}/bin/sdbstart -c ${db.path}/conf/local/${coord.service.port}'" />
 				</exec>
+
+				<chown owner="sdbadmin" type="both">
+					<fileset dir="${db.path}/conf/local/${coord.service.port}" includes="**/*">
+				</chown>
+				<chgrp group="sdbadmin_group" type="both">
+					<fileset dir="${db.path}/conf/local/${coord.service.port}" includes="**/*">
+				</chgrp>
 			</else>
 		</if>
 

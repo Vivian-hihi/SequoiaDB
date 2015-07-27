@@ -39,7 +39,7 @@
 			<param name="testcases.path" value="${ant.testcase.path}/ant" />
 			<param name="test-type" value="ant" />
 			<param name="includes.case.patterns" value="*.xml" />
-			<param name="excludes.case.patterns" value="" />
+			<param name="excludes.case.patterns" value="query_and_create_delete_index.xml" />
 		</foreach>
 
 		<tstamp>
