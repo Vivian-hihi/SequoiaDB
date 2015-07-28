@@ -80,12 +80,14 @@ namespace import
 
       if (SDB_OK != rc)
       {
-         PD_LOG(PDERROR, "Failed to connect to database %s:%s, rc = %d, usessl=%d",
+         PD_LOG(PDERROR,
+                "Failed to connect to database %s:%s, rc = %d, usessl=%d",
                 _hostname.c_str(), _svcname.c_str(), rc, _useSSL);
          goto error;
       }
 
-      rc = sdbGetCollectionSpace(_connection, _csname.c_str(), &_collectionSpace);
+      rc = sdbGetCollectionSpace(_connection, _csname.c_str(),
+                                 &_collectionSpace);
       if (SDB_OK != rc)
       {
          if (SDB_DMS_CS_NOTEXIST == rc)

@@ -109,7 +109,8 @@ namespace import
       SDB_ASSERT(NULL != logFile, "logFile can't be NULL");
       SDB_ASSERT(NULL != importedNum, "importedNum can't be NULL");
       SDB_ASSERT(NULL != importFailureNum, "importFailureNum can't be NULL");
-      SDB_ASSERT(NULL != impArgs->importesLivingNum, "impArgs->importesLivingNum can't be NULL");
+      SDB_ASSERT(NULL != impArgs->importesLivingNum,
+                 "impArgs->importesLivingNum can't be NULL");
 
       if (impArgs->verbose)
       {
@@ -293,7 +294,8 @@ namespace import
          goto error;
       }
 
-      rc = RecordParser::createInstance(options->inputFormat(), *options, parser);
+      rc = RecordParser::createInstance(options->inputFormat(),
+                                        *options, parser);
       if (SDB_OK != rc)
       {
          PD_LOG(PDERROR, "failed to create RecordParser object,"
@@ -310,7 +312,9 @@ namespace import
 
       while(!(*stopped))
       {
-         rc = input->read(buffer + remainSize, bufferSize - remainSize, readSize);
+         rc = input->read(buffer + remainSize,
+                          bufferSize - remainSize,
+                          readSize);
          if (SDB_OK != rc)
          {
             if (SDB_EOF != rc)
@@ -352,12 +356,15 @@ namespace import
                      }
                   }
 
-                  if (isFirst && FORMAT_CSV == options->inputFormat() && options->hasHeaderLine())
+                  if (isFirst &&
+                      FORMAT_CSV == options->inputFormat() &&
+                      options->hasHeaderLine())
                   {
                      if (options->fields().empty())
                      {
                         string fields = string(buf, recordLength);
-                        std::cout << "fields: " << fields << std::endl << std::endl;
+                        std::cout << "fields: " << fields
+                                  << std::endl << std::endl;
 
                         CSVRecordParser* csvParser = (CSVRecordParser*)parser;
 
@@ -365,7 +372,8 @@ namespace import
                         if (SDB_OK != rc)
                         {
                            std::cout << "failed to parse fields" << std::endl;
-                           PD_LOG(PDERROR, "failed to parse fields, rc = %d", rc);
+                           PD_LOG(PDERROR, "failed to parse fields, rc = %d",
+                                  rc);
                            goto error;
                         }
 
@@ -422,7 +430,9 @@ namespace import
                      {
                         workQueue->push(recordArray);
                         countInBatch = 0;
-                        rc = _getFreeRecordArray(*idleQueue, options->batchSize(), recordArray);
+                        rc = _getFreeRecordArray(*idleQueue,
+                                                 options->batchSize(),
+                                                 recordArray);
                         if (SDB_OK != rc)
                         {
                            PD_LOG(PDERROR, "failed to get free RecordArray");
@@ -431,7 +441,9 @@ namespace import
                      }
                   }
                }
-               else if (isFirst && FORMAT_CSV == options->inputFormat() && options->hasHeaderLine())
+               else if (isFirst &&
+                        FORMAT_CSV == options->inputFormat() &&
+                        options->hasHeaderLine())
                {
                   rc = SDB_INVALIDARG;
                   PD_LOG(PDERROR, "the headerline is empty");

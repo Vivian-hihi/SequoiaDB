@@ -46,7 +46,8 @@ namespace import
    {
    }
 
-   INT32 RecordParser::createInstance(INPUT_FORMAT format, const Options& options,
+   INT32 RecordParser::createInstance(INPUT_FORMAT format,
+                                      const Options& options,
                                       RecordParser*& parser)
    {
       INT32 rc = SDB_OK;
@@ -62,13 +63,15 @@ namespace import
          if (NULL == csvParser)
          {
             rc = SDB_OOM;
-            PD_LOG(PDERROR, "failed to create CSVRecordParser object, rc=%d", rc);
+            PD_LOG(PDERROR, "failed to create CSVRecordParser object, rc=%d",
+                   rc);
             goto error;
          }
 
          if (!options.fields().empty())
          {
-            //std::cout << "fields: " << options.fields() << std::endl << std::endl;
+            //std::cout << "fields: " << options.fields()
+                        //<< std::endl << std::endl;
             const CHAR* str = options.fields().c_str();
             INT32 len = options.fields().length();
 
@@ -98,7 +101,8 @@ namespace import
          if (NULL == jsonParser)
          {
             rc = SDB_OOM;
-            PD_LOG(PDERROR, "failed to create JSONRecordParser object, rc=%d", rc);
+            PD_LOG(PDERROR, "failed to create JSONRecordParser object, rc=%d",
+                   rc);
             goto error;
          }
 

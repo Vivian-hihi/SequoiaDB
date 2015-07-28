@@ -35,7 +35,8 @@
 
 namespace import
 {
-   INT32 InputStream::createInstance(INPUT_TYPE inputType, const Options& options,
+   INT32 InputStream::createInstance(INPUT_TYPE inputType,
+                                     const Options& options,
                                      InputStream*& istream)
    {
       InputStream* upstream = NULL;
@@ -43,11 +44,13 @@ namespace import
 
       if (INPUT_FILE == inputType)
       {
-         FileInputStream* fileStream = SDB_OSS_NEW FileInputStream(options.file());
+         FileInputStream* fileStream =
+            SDB_OSS_NEW FileInputStream(options.file());
          if (NULL == fileStream)
          {
             rc = SDB_OOM;
-            PD_LOG(PDERROR, "failed to create FileInputStream object, rc=%d", rc);
+            PD_LOG(PDERROR, "failed to create FileInputStream object, rc=%d",
+                   rc);
             goto error;
          }
 
@@ -67,7 +70,8 @@ namespace import
          if (NULL == stdinStream)
          {
             rc = SDB_OOM;
-            PD_LOG(PDERROR, "failed to create StdinInputStream object, rc=%d", rc);
+            PD_LOG(PDERROR, "failed to create StdinInputStream object, rc=%d",
+                   rc);
             goto error;
          }
 
@@ -80,7 +84,8 @@ namespace import
          if (NULL == subProcessStream)
          {
             rc = SDB_OOM;
-            PD_LOG(PDERROR, "failed to create SubProcessInputStream object, rc=%d", rc);
+            PD_LOG(PDERROR,
+                   "failed to create SubProcessInputStream object, rc=%d", rc);
             goto error;
          }
 
@@ -201,7 +206,8 @@ namespace import
       return rc;
    }
 
-   UTF8InputStream::UTF8InputStream(InputStream* inputStream, BOOLEAN managed)
+   UTF8InputStream::UTF8InputStream(InputStream* inputStream,
+                                    BOOLEAN managed)
    : _upstream(inputStream),
      _managed(managed)
    {
@@ -239,7 +245,8 @@ namespace import
    INT32 UTF8InputStream::_firstRead(CHAR* buf, INT64 bufSize, INT64& readSize)
    {
       static const CHAR UTF8_BOM[] = {0xEF, 0xBB, 0xBF};
-      static const INT32 UTF8_BOM_SIZE = (INT32)(sizeof(UTF8_BOM)/sizeof(UTF8_BOM[0]));
+      static const INT32 UTF8_BOM_SIZE =
+         (INT32)(sizeof(UTF8_BOM)/sizeof(UTF8_BOM[0]));
       INT32 rc = SDB_OK;
       INT64 size = 0;
 

@@ -69,7 +69,8 @@ namespace import
    {
    }
 
-   INT32 RecordScanner::scan(const CHAR* data, INT32 length, BOOLEAN final, INT32& recordLength)
+   INT32 RecordScanner::scan(const CHAR* data, INT32 length, BOOLEAN final,
+                             INT32& recordLength)
    {
       const CHAR* recDel = _recordDelimiter.c_str();
       const INT32 recDelLen = _recordDelimiter.length();   

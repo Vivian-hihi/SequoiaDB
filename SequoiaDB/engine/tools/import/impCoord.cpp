@@ -230,7 +230,9 @@ namespace import
       bson_init(&cond);
       bson_init(&result);
 
-      if (BSON_OK != bson_append_string(&cond, FIELD_NAME_GROUPNAME, COORD_GROUP_NAME))
+      if (BSON_OK != bson_append_string(&cond,
+                                        FIELD_NAME_GROUPNAME,
+                                        COORD_GROUP_NAME))
       {
          rc = SDB_SYS;
          PD_LOG(PDERROR, "failed to append string to bson");
@@ -247,7 +249,8 @@ namespace import
       rc = _connect(_hostname, _svcname, conn);
       if (SDB_OK != rc)
       {
-         PD_LOG(PDERROR, "failed to connect to database %s:%s, rc = %d, usessl=%d",
+         PD_LOG(PDERROR,
+                "failed to connect to database %s:%s, rc = %d, usessl=%d",
                 _hostname.c_str(), _svcname.c_str(), rc, _useSSL);
          goto error;
       }
@@ -334,7 +337,9 @@ namespace import
       goto done;
    }
 
-   INT32 Coords::_connect(const string& hostname, const string& svcname, sdbConnectionHandle& conn)
+   INT32 Coords::_connect(const string& hostname,
+                          const string& svcname,
+                          sdbConnectionHandle& conn)
    {
       INT32 rc = SDB_OK;
 
@@ -351,7 +356,8 @@ namespace import
 
       if (SDB_OK != rc)
       {
-         PD_LOG(PDERROR, "Failed to connect to database %s:%s, rc = %d, usessl=%d",
+         PD_LOG(PDERROR,
+                "Failed to connect to database %s:%s, rc = %d, usessl=%d",
                 hostname.c_str(), svcname.c_str(), rc, _useSSL);
       }
 

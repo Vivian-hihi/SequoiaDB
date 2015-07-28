@@ -46,7 +46,8 @@ namespace import
                     const string& stringDelimiter,
                     BOOLEAN linePriority);
       ~RecordScanner();
-      INT32 scan(const CHAR* data, INT32 length, BOOLEAN final, INT32& recordLength);
+      INT32 scan(const CHAR* data, INT32 length, BOOLEAN final,
+                 INT32& recordLength);
 
    private:
       string   _recordDelimiter;

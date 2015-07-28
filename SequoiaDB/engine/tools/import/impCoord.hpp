@@ -66,7 +66,9 @@ namespace import
       INT32 getRandomCoord(string& hostname, string& svcname);
 
    private:
-      INT32 _connect(const string& hostname, const string& svcname, sdbConnectionHandle& conn);
+      INT32 _connect(const string& hostname,
+                     const string& svcname,
+                     sdbConnectionHandle& conn);
       void  _disconnect(sdbConnectionHandle& conn);
       INT32 _checkCoord(const string& hostname, const string& svcname);
 

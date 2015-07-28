@@ -52,7 +52,9 @@ namespace import
       SDB_ASSERT(NULL != thread, "thread can't be NULL");
       SDB_ASSERT(NULL != thread->routine, "routine can't be NULL");
 
-      thread->thread = (HANDLE)_beginthreadex(NULL, 0, _threadMain, thread, 0, NULL);
+      thread->thread = (HANDLE)_beginthreadex(NULL, 0,
+                                              _threadMain, thread,
+                                              0, NULL);
       if (NULL == thread->thread)
       {
          PD_LOG(PDERROR, "failed to create thread");

@@ -220,7 +220,9 @@ namespace import
       }
    }
 
-   static inline INT32 _convertToCSVType(const CHAR* data, INT32 length, CSV_TYPE& type)
+   static inline INT32 _convertToCSVType(const CHAR* data,
+                                         INT32 length,
+                                         CSV_TYPE& type)
    {
       CHAR* str = (CHAR*)data;
       INT32 rc = SDB_OK;
@@ -858,7 +860,8 @@ namespace import
    static inline INT32 _detectFieldType(const CHAR* data, INT32 length,
                                         const CHAR* strDel, INT32 strDelLen,
                                         const CHAR* fieldDel, INT32 fieldDelLen,
-                                        CSV_TYPE& fieldType, CSVFieldValue& fieldValue,
+                                        CSV_TYPE& fieldType,
+                                        CSVFieldValue& fieldValue,
                                         INT32& fieldLength, BOOLEAN& fieldEnd)
    {
       CHAR* str = (CHAR*)data;
@@ -927,7 +930,8 @@ namespace import
       goto error;
    }
 
-   static inline INT32 _stringToTimestamp(CSVString& data, CSVTimestamp& value)
+   static inline INT32 _stringToTimestamp(CSVString& data,
+                                          CSVTimestamp& value)
    {
       CHAR* str = data.str;
       INT32 rc = SDB_OK;
@@ -1368,7 +1372,8 @@ namespace import
          if (type < 0 || type > 255)
          {
             rc = SDB_INVALIDARG;
-            PD_LOG(PDERROR, "binary type is out of range[0~255], type:%d", type);
+            PD_LOG(PDERROR, "binary type is out of range[0~255], type:%d",
+                   type);
             goto error;
          }
 
@@ -1573,15 +1578,18 @@ namespace import
          rc = _stringToBool(data, length, fieldValue.boolVal, valueLength);
          break;
       case CSV_TYPE_NULL:
-         rc = _stringToNull(data, length, fieldDel, fieldDelLen, valueLength, fieldEnd);
+         rc = _stringToNull(data, length, fieldDel, fieldDelLen,
+                            valueLength, fieldEnd);
          goto done;
       case CSV_TYPE_STRING:
          rc = _stringToString(data, length, strDel, strDelLen, fieldDel,
-                              fieldDelLen, fieldValue.strVal, valueLength, fieldEnd);
+                              fieldDelLen, fieldValue.strVal,
+                              valueLength, fieldEnd);
          goto done;
       case CSV_TYPE_TIMESTAMP:
          rc = _stringToString(data, length, strDel, strDelLen, fieldDel,
-                              fieldDelLen, fieldValue.strVal, valueLength, fieldEnd);
+                              fieldDelLen, fieldValue.strVal,
+                              valueLength, fieldEnd);
          if (SDB_OK != rc)
          {
             goto error;
@@ -1590,7 +1598,8 @@ namespace import
          goto done;
       case CSV_TYPE_DATE:
          rc = _stringToString(data, length, strDel, strDelLen, fieldDel,
-                              fieldDelLen, fieldValue.strVal, valueLength, fieldEnd);
+                              fieldDelLen, fieldValue.strVal,
+                              valueLength, fieldEnd);
          if (SDB_OK != rc)
          {
             goto error;
@@ -1599,7 +1608,8 @@ namespace import
          goto done;
       case CSV_TYPE_OID:
          rc = _stringToString(data, length, strDel, strDelLen, fieldDel,
-                              fieldDelLen, fieldValue.strVal, valueLength, fieldEnd);
+                              fieldDelLen, fieldValue.strVal,
+                              valueLength, fieldEnd);
          if (SDB_OK != rc)
          {
             goto error;
@@ -1608,7 +1618,8 @@ namespace import
          goto done;
       case CSV_TYPE_REGEX:
          rc = _stringToString(data, length, strDel, strDelLen, fieldDel,
-                              fieldDelLen, fieldValue.strVal, valueLength, fieldEnd);
+                              fieldDelLen, fieldValue.strVal,
+                              valueLength, fieldEnd);
          if (SDB_OK != rc)
          {
             goto error;
@@ -1617,7 +1628,8 @@ namespace import
          goto done;
       case CSV_TYPE_BINARY:
          rc = _stringToString(data, length, strDel, strDelLen, fieldDel,
-                              fieldDelLen, fieldValue.strVal, valueLength, fieldEnd);
+                              fieldDelLen, fieldValue.strVal,
+                              valueLength, fieldEnd);
          if (SDB_OK != rc)
          {
             goto error;
@@ -1625,9 +1637,11 @@ namespace import
          rc = _stringToBinary(fieldValue.strVal, fieldValue.binaryVal);
          goto done;
       case CSV_TYPE_AUTO:
-         rc = _detectFieldType(data, length, strDel, strDelLen, fieldDel, fieldDelLen,
+         rc = _detectFieldType(data, length, strDel, strDelLen,
+                               fieldDel, fieldDelLen,
                                type, fieldValue, valueLength, fieldEnd);
-         SDB_ASSERT(CSV_TYPE_AUTO != type, "type must not be CSV_TYPE_AUTO after detecting field type");
+         SDB_ASSERT(CSV_TYPE_AUTO != type,
+                    "type must not be CSV_TYPE_AUTO after detecting field type");
          goto done;
       default:
          rc = SDB_INVALIDARG;
@@ -1637,7 +1651,8 @@ namespace import
       {
          if (CSV_TYPE_NULL != type && CSV_TYPE_AUTO != type)
          {
-            rc = _stringToNull(data, length, fieldDel, fieldDelLen, valueLength, fieldEnd);
+            rc = _stringToNull(data, length, fieldDel, fieldDelLen,
+                               valueLength, fieldEnd);
             if (SDB_OK == rc)
             {
                type = CSV_TYPE_NULL;
@@ -1738,9 +1753,12 @@ namespace import
       goto done;
    }
 
-   static inline INT32 _parseFieldTypeString(const CHAR* data, INT32 length,
-                                             const CHAR* fieldDel, INT32 fieldDelLen,
-                                             CSV_TYPE& fieldType, INT32& fieldTypeLength,
+   static inline INT32 _parseFieldTypeString(const CHAR* data,
+                                             INT32 length,
+                                             const CHAR* fieldDel,
+                                             INT32 fieldDelLen,
+                                             CSV_TYPE& fieldType,
+                                             INT32& fieldTypeLength,
                                              BOOLEAN& fieldEnd)
    {
       CHAR* str = (CHAR*)data;
@@ -1791,10 +1809,14 @@ namespace import
       goto done;
    }
 
-   static inline INT32 _parseFieldDefaultValue(const CHAR* data, INT32 length,
-                                               const CHAR* fieldDel, INT32 fieldDelLen,
-                                               const CHAR* strDel, INT32 strDelLen,
-                                               CSVField& field, INT32& fieldDefaultLength,
+   static inline INT32 _parseFieldDefaultValue(const CHAR* data,
+                                               INT32 length,
+                                               const CHAR* fieldDel,
+                                               INT32 fieldDelLen,
+                                               const CHAR* strDel,
+                                               INT32 strDelLen,
+                                               CSVField& field,
+                                               INT32& fieldDefaultLength,
                                                BOOLEAN& fieldEnd)
    {
       CHAR* str = (CHAR*)data;
@@ -1877,7 +1899,9 @@ namespace import
       goto done;
    }
 
-   static inline INT32 _bsonAppendField(bson& obj, CSVField& field, CSVFieldData& data)
+   static inline INT32 _bsonAppendField(bson& obj,
+                                        CSVField& field,
+                                        CSVFieldData& data)
    {
       CSV_TYPE type;
       CSVFieldValue* value = NULL;
@@ -2256,7 +2280,9 @@ namespace import
       goto done;
    }
 
-   INT32 CSVRecordParser::parseRecord(const CHAR* data, INT32 length, bson& obj)
+   INT32 CSVRecordParser::parseRecord(const CHAR* data,
+                                      INT32 length,
+                                      bson& obj)
    {
       CHAR* str = (CHAR*)data;
       INT32 len = length;
@@ -2426,7 +2452,8 @@ namespace import
       else
       {
          SDB_ASSERT(len == 0, "len must be 0");
-         SDB_ASSERT(fieldCount == fieldDefNum, "fieldCount must be equals to fieldDefNum");
+         SDB_ASSERT(fieldCount == fieldDefNum,
+                    "fieldCount must be equals to fieldDefNum");
       }
 
       if (!_hasId)
