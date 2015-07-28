@@ -1283,8 +1283,9 @@ namespace engine
             continue ;
          }
 
-         PD_LOG( PDWARNING, "Node[%d.%d] return failed, flags: %d",
-                 id.columns.groupID, id.columns.nodeID, flags ) ;
+         PD_LOG( PDWARNING, "Node[%d.%d] return failed, flags: %d, "
+                 "new primary: %d", id.columns.groupID, id.columns.nodeID,
+                 flags, replyHeader->startFrom ) ;
 
          // get group info
          CoordGroupMap::iterator it = _mapGroupInfo.find( id.columns.groupID ) ;

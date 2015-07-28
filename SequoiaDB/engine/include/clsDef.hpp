@@ -176,8 +176,14 @@ namespace engine
       UINT32 timeout ;
       UINT32 breakTime ;
       UINT32 deadtime ;
-      _clsSharingStatus():timeout(0), breakTime( 0 ), deadtime( 0 )
+      UINT32 sendFailedTimes ;
+
+      _clsSharingStatus()
       {
+         timeout = 0 ;
+         breakTime = 0 ;
+         deadtime = 0 ;
+         sendFailedTimes = 0 ;
       }
    } ;
 
@@ -279,6 +285,18 @@ namespace engine
             ++it ;
          }
          return count ;
+      }
+
+      UINT32 getNodeSendFailedTimes( UINT64 nodeID )
+      {
+         map<UINT64, _clsSharingStatus>::iterator it = info.find( nodeID ) ;
+         SDB_ASSERT( it != info.end(), "Node is not exist" ) ;
+
+         if ( it != info.end() )
+         {
+            return it->second.sendFailedTimes ;
+         }
+         return (UINT32)-1 ;
       }
 
    } ;

@@ -413,7 +413,7 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSREPSET_GETPRMY, "_clsReplicateSet::getPrimary" )
-   _MsgRouteID _clsReplicateSet::getPrimary ()
+   MsgRouteID _clsReplicateSet::getPrimary ()
    {
       PD_TRACE_ENTRY ( SDB__CLSREPSET_GETPRMY );
       _MsgRouteID primary ;
@@ -423,6 +423,18 @@ namespace engine
 
       PD_TRACE_EXIT ( SDB__CLSREPSET_GETPRMY );
       return primary ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSREPSET_ISSENDNORMAL, "_clsReplicateSet::isSendNormal" )
+   BOOLEAN _clsReplicateSet::isSendNormal( UINT64 nodeID )
+   {
+      PD_TRACE_ENTRY ( SDB__CLSREPSET_ISSENDNORMAL );
+      _info.mtx.lock_r() ;
+      BOOLEAN isNormal = _info.getNodeSendFailedTimes( nodeID ) == 0 ?
+                         TRUE : FALSE ;
+      _info.mtx.release_r() ;
+      PD_TRACE_EXIT ( SDB__CLSREPSET_ISSENDNORMAL );
+      return isNormal ;
    }
 
    // The function is caller by any thread, so need to use lock
@@ -682,66 +694,83 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSREPSET__SHRBEAT, "_clsReplicateSet::_sharingBeat" )
    void _clsReplicateSet::_sharingBeat()
    {
-      PD_TRACE_ENTRY ( SDB__CLSREPSET__SHRBEAT );
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB__CLSREPSET__SHRBEAT ) ;
+
       if ( _info.info.empty() )
       {
          goto done ;
       }
-
+      else
       {
-      DPS_LSN fBegin ;
-      DPS_LSN mBegin ;
-      DPS_LSN end ;
-      _logger->getLsnWindow( fBegin, mBegin, end ) ;
-      _MsgClsBeat msg ;
-      msg.beat.identity = _info.local ;
-      msg.beat.endLsn = end ;
-      msg.beat.version = _info.version ;
-      msg.beat.role = _vote.primaryIsMe() ?
-                      CLS_GROUP_ROLE_PRIMARY : CLS_GROUP_ROLE_SECONDARY ;
-      msg.beat.beatID = _info.nextBeatID() ;
-      msg.beat.serviceStatus = pmdGetStartup().isOK() ?
-                               SERVICE_NORMAL : SERVICE_ABNORMAL ;
-      UINT8 weight = pmdGetOptionCB()->weight() ;
-      UINT8 shadowWeight = _vote.getShadowWeight() ;
-      msg.beat.weight = CLS_GET_WEIGHT( weight, shadowWeight ) ;
+         DPS_LSN fBegin ;
+         DPS_LSN mBegin ;
+         DPS_LSN end ;
+         _logger->getLsnWindow( fBegin, mBegin, end ) ;
+         _MsgClsBeat msg ;
+         msg.beat.identity = _info.local ;
+         msg.beat.endLsn = end ;
+         msg.beat.version = _info.version ;
+         msg.beat.role = _vote.primaryIsMe() ?
+                         CLS_GROUP_ROLE_PRIMARY : CLS_GROUP_ROLE_SECONDARY ;
+         msg.beat.beatID = _info.nextBeatID() ;
+         msg.beat.serviceStatus = pmdGetStartup().isOK() ?
+                                  SERVICE_NORMAL : SERVICE_ABNORMAL ;
+         UINT8 weight = pmdGetOptionCB()->weight() ;
+         UINT8 shadowWeight = _vote.getShadowWeight() ;
+         msg.beat.weight = CLS_GET_WEIGHT( weight, shadowWeight ) ;
 
-      map<UINT64, _clsSharingStatus>::iterator itr = _info.info.begin() ;
-      for ( ; itr != _info.info.end(); itr++ )
-      {
-         /// decrease dead time for heartbeat
-         if ( itr->second.deadtime >= pmdGetOptionCB()->sharingBreakTime() &&
-              itr->second.deadtime >= _beatTime )
+         map<UINT64, _clsSharingStatus>::iterator itr = _info.info.begin() ;
+         for ( ; itr != _info.info.end(); itr++ )
          {
-            itr->second.deadtime -= _beatTime ;
-            continue ;
-         }
-         msg.beat.syncStatus = clsSyncWindow( itr->second.beat.endLsn,
-                                              fBegin, mBegin, end ) ;
-
-         /// if send heartbeat msg failed, and the node is not in active,
-         /// nead to reset dead time to decrease heartbeat msg
-         if ( SDB_OK != _agent->syncSend( itr->second.beat.identity, &msg ) &&
-              _info.alives.find( itr->first ) == _info.alives.end() )
-         {
-            UINT32 resetTimeout = 0 ;
-            itr->second.deadtime = pmdGetOptionCB()->sharingBreakTime() - 1 ;
-            if ( SOCKET_GETLASTERROR == CLS_CONNREFUSED )
+            /// decrease dead time for heartbeat
+            if ( itr->second.deadtime >= pmdGetOptionCB()->sharingBreakTime() &&
+                 itr->second.deadtime >= _beatTime )
             {
-               resetTimeout = 1800 * OSS_ONE_SEC ;
+               itr->second.deadtime -= _beatTime ;
+               continue ;
+            }
+            msg.beat.syncStatus = clsSyncWindow( itr->second.beat.endLsn,
+                                                 fBegin, mBegin, end ) ;
+
+            rc = _agent->syncSend( itr->second.beat.identity, &msg ) ;
+            if ( SDB_OK == rc )
+            {
+               itr->second.sendFailedTimes = 0 ;
             }
             else
             {
-               resetTimeout = 120 * OSS_ONE_SEC ;
-            }
-            itr->second.deadtime += resetTimeout ;
+               INT32 sysErr = SOCKET_GETLASTERROR ;
 
-            PD_LOG( PDEVENT, "Reset node[%d] sharing-beat time to %u(sec)",
-                    itr->second.beat.identity.columns.nodeID,
-                    resetTimeout / OSS_ONE_SEC ) ;
+               if ( sysErr == CLS_CONNREFUSED )
+               {
+                  ++( itr->second.sendFailedTimes ) ;
+               }
+
+               /// if send heartbeat msg failed, and the node is not in active,
+               /// nead to reset dead time to decrease heartbeat msg
+               if ( _info.alives.find( itr->first ) == _info.alives.end() )
+               {
+                  UINT32 resetTimeout = 0 ;
+                  itr->second.deadtime = pmdGetOptionCB()->sharingBreakTime() - 1 ;
+                  if ( sysErr == CLS_CONNREFUSED )
+                  {
+                     resetTimeout = 1800 * OSS_ONE_SEC ;
+                  }
+                  else
+                  {
+                     resetTimeout = 120 * OSS_ONE_SEC ;
+                  }
+                  itr->second.deadtime += resetTimeout ;
+
+                  PD_LOG( PDEVENT, "Reset node[%d] sharing-beat time to %u(sec)",
+                          itr->second.beat.identity.columns.nodeID,
+                          resetTimeout / OSS_ONE_SEC ) ;
+               }
+            }
          }
       }
-      }
+
    done:
       PD_TRACE_EXIT ( SDB__CLSREPSET__SHRBEAT );
       return ;
@@ -759,8 +788,8 @@ namespace engine
       map<UINT64, _clsSharingStatus *>::iterator itr ;
       map< UINT64, _clsSharingStatus>::iterator itrInfo ;
 
-      /// avoid out-of-data's timeout event, 50 for deviation
-      if ( pmdGetTickSpanTime( _checkBreakTick ) + 50 < millisec )
+      /// avoid out-of-data's timeout event
+      if ( pmdGetTickSpanTime( _checkBreakTick ) < millisec / 2 )
       {
          goto done ;
       }
@@ -938,6 +967,7 @@ namespace engine
             itr->second->timeout = 0 ;
             itr->second->breakTime = 0 ;
             itr->second->deadtime = 0 ;
+            itr->second->sendFailedTimes = 0 ;
          }
          else
          {
@@ -974,6 +1004,8 @@ namespace engine
       itr->second.timeout = 0 ;
       itr->second.breakTime = 0 ;
       itr->second.deadtime = 0 ;
+      itr->second.sendFailedTimes = 0 ;
+
    done:
       PD_TRACE_EXITRC ( SDB__CLSREPSET__ALIVE, rc );
       return rc ;

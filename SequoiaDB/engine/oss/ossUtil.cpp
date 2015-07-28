@@ -1490,12 +1490,12 @@ BOOLEAN ossProcLimits::getLimit( const CHAR *str,
                                  INT64 &soft,
                                  INT64 &hard ) const
 {
-   return SDB_OK ;
+   return TRUE ;
 }
 
 std::string ossProcLimits::str()const
 {
-   return string("") ;
+   return "" ;
 }
 #endif
 

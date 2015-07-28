@@ -455,6 +455,8 @@ namespace engine
                                     UINT32 mask,
                                     BSONObj *pNewObj = NULL ) ;
 
+   BOOLEAN rtnCoordCanRetry( UINT32 retryTimes ) ;
+
 }
 
 #endif //RTNCOORDCOMMON_HPP__

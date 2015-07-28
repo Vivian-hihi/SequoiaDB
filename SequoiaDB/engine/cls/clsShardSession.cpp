@@ -700,7 +700,7 @@ namespace engine
       rc = _checkWriteStatus() ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to check write status:%d", rc ) ;
+         PD_LOG( PDWARNING, "failed to check write status:%d", rc ) ;
          goto error ;
       }
  
@@ -794,7 +794,7 @@ namespace engine
       rc = _checkWriteStatus() ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to check write status:%d", rc ) ;
+         PD_LOG( PDWARNING, "failed to check write status:%d", rc ) ;
          goto error ;
       }
 
@@ -881,7 +881,7 @@ namespace engine
       rc = _checkWriteStatus() ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to check write status:%d", rc ) ;
+         PD_LOG( PDWARNING, "failed to check write status:%d", rc ) ;
          goto error ;
       }
 
@@ -1000,7 +1000,7 @@ namespace engine
             rc = _checkWriteStatus() ;
             if ( SDB_OK != rc )
             {
-               PD_LOG( PDERROR, "failed to check write status:%d", rc ) ;
+               PD_LOG( PDWARNING, "failed to check write status:%d", rc ) ;
                goto error ;
             }
 
@@ -1142,7 +1142,7 @@ namespace engine
             rc = _checkWriteStatus() ;
             if ( SDB_OK != rc )
             {
-               PD_LOG( PDERROR, "failed to check write status:%d", rc ) ;
+               PD_LOG( PDWARNING, "failed to check write status:%d", rc ) ;
                goto error ;
             }
          }
@@ -2744,7 +2744,7 @@ namespace engine
          rc = _checkWriteStatus() ;
          if ( SDB_OK != rc )
          {
-            PD_LOG( PDERROR, "failed to check write status:%d", rc ) ;
+            PD_LOG( PDWARNING, "failed to check write status:%d", rc ) ;
             goto error ;
          }
       }
@@ -2753,7 +2753,7 @@ namespace engine
          rc = _checkReadStatus( header->flags ) ;
          if ( rc )
          {
-            PD_LOG( PDERROR, "failed to check read status:%d", rc ) ;
+            PD_LOG( PDWARNING, "failed to check read status:%d", rc ) ;
             goto error ;
          }
       }
@@ -2858,7 +2858,7 @@ namespace engine
       rc = _checkWriteStatus() ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to check write status:%d", rc ) ;
+         PD_LOG( PDWARNING, "failed to check write status:%d", rc ) ;
          goto error ;
       }
 
@@ -3027,7 +3027,7 @@ namespace engine
       rc = _checkReadStatus( header->flags ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to check read status:%d", rc ) ;
+         PD_LOG( PDWARNING, "failed to check read status:%d", rc ) ;
          goto error ;
       }
 
@@ -3107,7 +3107,7 @@ namespace engine
       rc = _checkWriteStatus() ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to check write status:%d", rc ) ;
+         PD_LOG( PDWARNING, "failed to check write status:%d", rc ) ;
          goto error ;
       }
 
@@ -3221,7 +3221,7 @@ namespace engine
       rc = _checkWriteStatus() ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to check write status:%d", rc ) ;
+         PD_LOG( PDWARNING, "failed to check write status:%d", rc ) ;
          goto error ;
       }
 
@@ -3444,7 +3444,8 @@ namespace engine
             goto error ;
          }
          else if ( MSG_INVALID_ROUTEID !=
-                  ( _primaryID.value = _pReplSet->getPrimary().value ))
+                  ( _primaryID.value = _pReplSet->getPrimary().value ) &&
+                  _pReplSet->isSendNormal( _primaryID.value ) )
          {
             rc = SDB_CLS_NOT_PRIMARY ;
             goto error ;        
@@ -3518,14 +3519,14 @@ namespace engine
       rc = _checkPrimaryStatus() ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to check primary status:%d", rc ) ;
+         PD_LOG( PDINFO, "failed to check primary status:%d", rc ) ;
          goto error ;
       }
 
       rc = _checkRollbackStatus() ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to check rollback status:%d", rc ) ;
+         PD_LOG( PDINFO, "failed to check rollback status:%d", rc ) ;
          goto error ;
       }
 
@@ -3547,7 +3548,7 @@ namespace engine
          rc = _checkPrimaryStatus() ;
          if ( SDB_OK != rc )
          {
-            PD_LOG( PDERROR, "failed to check primary status:%d", rc ) ;
+            PD_LOG( PDINFO, "failed to check primary status:%d", rc ) ;
             goto error ;
          }
       }

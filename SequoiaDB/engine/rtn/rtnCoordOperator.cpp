@@ -54,8 +54,6 @@ using namespace bson;
 namespace engine
 {
 
-   #define RTN_COORD_MAX_RETRY_TIMES         ( 2 )
-
    void rtnClearReplyQue( REPLY_QUE *pReply )
    {
       if ( pReply )
@@ -522,7 +520,7 @@ namespace engine
 
    BOOLEAN rtnCoordOperator::_canRetry( UINT32 times )
    {
-      return times < RTN_COORD_MAX_RETRY_TIMES ? TRUE : FALSE ;
+      return rtnCoordCanRetry( times ) ;
    }
 
    BOOLEAN rtnCoordOperator::_isTrans( pmdEDUCB *cb, MsgHeader *pMsg )

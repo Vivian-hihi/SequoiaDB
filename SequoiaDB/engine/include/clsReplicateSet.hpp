@@ -260,7 +260,8 @@ namespace engine
          void getGroupInfo( _MsgRouteID &primary,
                             vector<_netRouteNode > &group ) ;
 
-         _MsgRouteID getPrimary () ;
+         MsgRouteID     getPrimary () ;
+         BOOLEAN        isSendNormal( UINT64 nodeID ) ;
 
          INT64 netIn() ;
          INT64 netOut() ;

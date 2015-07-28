@@ -116,12 +116,11 @@ namespace engine
 
          if ( rc )
          {
-            if ( rtnCoordGroupReplyCheck( cb, rc, _canRetry( times ),
+            if ( rtnCoordGroupReplyCheck( cb, rc, _canRetry( times++ ),
                                           res->routeID, cata, NULL,
                                           TRUE, primaryID, TRUE ) )
             {
                rtnClearReplyQue( &replyQue ) ;
-               ++times ;
                goto retry ;
             }
          }
