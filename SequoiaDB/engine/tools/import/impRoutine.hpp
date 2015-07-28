@@ -34,12 +34,9 @@
 #include "core.hpp"
 #include "oss.hpp"
 #include "impOptions.hpp"
-#include "impWorker.hpp"
-#include "impCoord.hpp"
 #include "impRecordQueue.hpp"
-#include "impLogFile.hpp"
-#include "ossAtomic.hpp"
-#include <queue>
+#include "impParser.hpp"
+#include "impImporter.hpp"
 
 using namespace std;
 
@@ -48,43 +45,24 @@ namespace import
    class Routine
    {
    public:
-      Routine(const Options& options);
+      Routine(Options& options);
       ~Routine();
-      INT32 startParser();
-      INT32 waitParserStop();
-      inline BOOLEAN isParserStopped() const 
-      { return _parserStopped; }
-
-      INT32 startImporters(INT32 num);
-      INT32 stopImporters();
-      inline BOOLEAN isImportersStopped()
-      { return 0 == _importesLivingNum.fetch(); }
-
+      INT32 run();
       void printStatistics();
 
    private:
-      const Options&    _options;
+      INT32 _startParser();
+      INT32 _waitParserStop();
+      INT32 _startImporter(INT32 workerNum);
+      INT32 _stopImporter();
+
+   private:
+      Options&          _options;
       RecordQueue       _workQueue;
       RecordQueue       _idleQueue;
 
-      // coords
-      Coords            _coords;
-
-      // parser
-      Worker*           _parser;
-      BOOLEAN           _parserStopped;
-      LogFile           _parserLogFile;
-
-      // importers
-      queue<Worker*>    _importers;
-      ossAtomicSigned32 _importesLivingNum;
-      LogFile           _importerLogFile;
-
-      // statistics
-      INT64             _parsedNum;
-      INT64             _parseFailureNum;
-      ossAtomicSigned64 _importedNum;
-      ossAtomicSigned64 _importFailureNum;
+      Parser            _parser;
+      Importer          _importer;
    };
 }
 

@@ -51,7 +51,7 @@ namespace import
       INT32 write(const CHAR* buf, INT32 length);
       INT32 write(const bson* obj);
 
-      inline const string& filename() const { return _fileName; }
+      inline const string& fileName() const { return _fileName; }
 
    private:
       INT32 _open();

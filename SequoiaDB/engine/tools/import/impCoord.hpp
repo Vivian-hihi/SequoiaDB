@@ -56,13 +56,13 @@ namespace import
    class Coords: public SDBObject
    {
    public:
-      Coords(const string& hostname,
-             const string& svcname,
-             const string& user,
-             const string& password,
-             BOOLEAN useSSL);
+      Coords();
       ~Coords();
-      INT32 init();
+      INT32 init(const string& hostname,
+                 const string& svcname,
+                 const string& user,
+                 const string& password,
+                 BOOLEAN useSSL);
       INT32 getRandomCoord(string& hostname, string& svcname);
 
    private:

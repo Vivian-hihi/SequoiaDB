@@ -68,38 +68,10 @@ int main(int argc, char* argv[])
    {
       Routine routine(options);
 
-      rc = routine.startParser();
+      rc = routine.run();
       if (SDB_OK != rc)
       {
-         PD_LOG(PDERROR, "failed to start parser, rc=%d", rc);
-         goto error;
-      }
-
-      rc = routine.startImporters(options.jobs());
-      if (SDB_OK != rc)
-      {
-         PD_LOG(PDERROR, "failed to start importers, rc=%d", rc);
-         goto error;
-      }
-
-      while (!routine.isParserStopped() && !routine.isImportersStopped())
-      {
-         ossSleep(100);
-      }
-
-      rc = routine.waitParserStop();
-      if (SDB_OK != rc)
-      {
-         PD_LOG(PDERROR, "failed to wait parser stop, rc=%d", rc);
-      }
-
-      if (!routine.isImportersStopped())
-      {
-         rc = routine.stopImporters();
-         if (SDB_OK != rc)
-         {
-            PD_LOG(PDERROR, "failed to stop importers, rc=%d", rc);
-         }
+         PD_LOG(PDERROR, "routine running failure, rc=%d", rc);
       }
 
       routine.printStatistics();

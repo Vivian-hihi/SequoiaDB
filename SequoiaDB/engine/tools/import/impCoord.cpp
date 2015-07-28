@@ -195,16 +195,7 @@ namespace import
       goto done;
    }
 
-   Coords::Coords(const string& hostname,
-                  const string& svcname,
-                  const string& user,
-                  const string& password,
-                  BOOLEAN useSSL)
-   : _hostname(hostname),
-     _svcname(svcname),
-     _user(user),
-     _password(password),
-     _useSSL(useSSL)
+   Coords::Coords()
    {
       _inited = FALSE;
       _refCount = 0;
@@ -215,7 +206,11 @@ namespace import
       _coords.clear();
    }
 
-   INT32 Coords::init()
+   INT32 Coords::init(const string& hostname,
+                      const string& svcname,
+                      const string& user,
+                      const string& password,
+                      BOOLEAN useSSL)
    {
       #define COORD_GROUP_NAME "SYSCoord"
       sdbConnectionHandle conn = SDB_INVALID_HANDLE;
@@ -226,6 +221,12 @@ namespace import
       INT32 rc = SDB_OK;
 
       SDB_ASSERT(!_inited, "alreay inited");
+
+      _hostname = hostname;
+      _svcname = svcname;
+      _user = user;
+      _password = password;
+      _useSSL = useSSL;
 
       bson_init(&cond);
       bson_init(&result);
