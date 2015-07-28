@@ -24,8 +24,8 @@
 					<format property="install_begintime" pattern="yyyy-MM-dd-hh.mm.ss a" />
 				</tstamp>
 				<property name="fap.value" value="fapmongo" />
-				<parallel>
-					<parallel>
+<!-- 				<parallel>
+					<parallel> -->
 						<ant antfile="deploy-software-in-host.xml" dir="." inheritAll="false">
 							<property name="install.package.fullname" value="${install.package.fullname}" />
 							<property name="deploy.host.name" value="${test_machine_no1}" />
@@ -47,8 +47,8 @@
 							<property name="is.coord.master" value="false"/>
 							<property name="catalog.addrs" value="${test_machine_no1}:11803,${test_machine_no2}:11803,${test_machine_no3}:11803" />
 						</ant>
-					</parallel>
-					<parallel>
+<!-- 					</parallel>
+					<parallel> -->
 						<ant antfile="deploy-software-in-host.xml" dir="." inheritAll="false">
 							<property name="install.package.fullname" value="${install.package.fullname}" />
 							<property name="deploy.host.name" value="${test_machine_no4}" />
@@ -70,8 +70,8 @@
 							<property name="is.coord.master" value="false"/>
 							<property name="catalog.addrs" value="${test_machine_no4}:11803,${test_machine_no5}:11803,${test_machine_no6}:11803" />
 						</ant>
-					</parallel>
-				</parallel>
+<!-- 					</parallel>
+				</parallel> -->
 
 				<tstamp>
 					<format property="install_endtime" pattern="yyyy-MM-dd-hh.mm.ss a" />

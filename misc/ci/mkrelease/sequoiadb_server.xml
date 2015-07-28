@@ -385,6 +385,16 @@
                 </fileExists>
             </ruleList>
         </runProgram>
+        <runProgram>
+            <program>ln</program>
+            <programArguments>-s ${installdir}/bin/sdblist /usr/bin/</programArguments>
+            <ruleList>
+                <fileExists>
+                    <negate>1</negate>
+                    <path>/usr/bin/sdblist</path>
+                </fileExists>
+            </ruleList>
+        </runProgram>
     </postInstallationActionList>
     <preUninstallationActionList>
         <stopWindowsService>
