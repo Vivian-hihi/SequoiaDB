@@ -927,7 +927,7 @@ namespace import
    done:
       return rc;
    error:
-      goto error;
+      goto done;
    }
 
    static inline INT32 _stringToTimestamp(CSVString& data,
