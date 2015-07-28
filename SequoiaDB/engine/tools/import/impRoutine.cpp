@@ -589,11 +589,14 @@ namespace import
          goto error;
       }
 
-      rc = _coords.init();
-      if (SDB_OK != rc)
+      if (_options.coord())
       {
-         PD_LOG(PDERROR, "failed to init coords, rc=%d", rc);
-         goto error;
+         rc = _coords.init();
+         if (SDB_OK != rc)
+         {
+            PD_LOG(PDERROR, "failed to init coords, rc=%d", rc);
+            goto error;
+         }
       }
 
       for (INT32 i = 0; i < num; i++)
@@ -602,11 +605,19 @@ namespace import
          string svcname;
          ImporterArgs* args = NULL;
 
-         rc = _coords.getRandomCoord(hostname, svcname);
-         if (SDB_OK != rc)
+         if (_options.coord())
          {
-            PD_LOG(PDERROR, "failed to get coord, rc=%d", rc);
-            goto error;
+            rc = _coords.getRandomCoord(hostname, svcname);
+            if (SDB_OK != rc)
+            {
+               PD_LOG(PDERROR, "failed to get coord, rc=%d", rc);
+               goto error;
+            }
+         }
+         else
+         {
+            hostname = _options.hostname();
+            svcname = _options.svcname();
          }
 
          args = SDB_OSS_NEW ImporterArgs();

@@ -67,6 +67,8 @@ namespace import
    #define IMP_OPTION_VERBOSE           "verbose"
    #define IMP_OPTION_EXEC              "exec"
    #define IMP_OPTION_EXECARGS          "execargs"
+   #define IMP_OPTION_SHARDING          "sharding"
+   #define IMP_OPTION_COORD             "coord"
 
    #define IMP_EXPLAIN_HELP             "print help information"
    #define IMP_EXPLAIN_VERSION          "print version"
@@ -97,6 +99,8 @@ namespace import
    #define IMP_EXPLAIN_VERBOSE          "print run time details"
    #define IMP_EXPLAIN_EXEC             "execute external program to get data, the program should output data to standard outpupt"
    #define IMP_EXPLAIN_EXECARGS         "arguments for external program"
+   #define IMP_EXPLAIN_SHARDING         "repackage records by sharding, default is true"
+   #define IMP_EXPLAIN_COORD            "find coordinators automatically, default is true"
 
    #define _TYPE(T) po::value<T>()
 
@@ -140,6 +144,8 @@ namespace import
       (IMP_OPTION_BUFFERSIZE,          _TYPE(INT32),     IMP_EXPLAIN_BUFFER) \
       (IMP_OPTION_DRYRUN,               /* no arg */     IMP_EXPLAIN_DRYRUN) \
       (IMP_OPTION_VERBOSE,              /* no arg */     IMP_EXPLAIN_VERBOSE) \
+      (IMP_OPTION_SHARDING,            _TYPE(string),    IMP_EXPLAIN_SHARDING) \
+      (IMP_OPTION_COORD,               _TYPE(string),    IMP_EXPLAIN_COORD) \
 
    Options::Options()
    {
@@ -165,6 +171,8 @@ namespace import
       _bufferSize = 128;
       _dryRun = FALSE;
       _verbose = FALSE;
+      _sharding = TRUE;
+      _coord = TRUE;
 
    }
 
@@ -488,6 +496,18 @@ namespace import
       if (has(IMP_OPTION_VERBOSE))
       {
          _verbose = TRUE;
+      }
+
+      if (has(IMP_OPTION_SHARDING))
+      {
+         string sharding = get<string>(IMP_OPTION_SHARDING);
+         ossStrToBoolean(sharding.c_str(), &_sharding);
+      }
+
+      if (has(IMP_OPTION_COORD))
+      {
+         string coord = get<string>(IMP_OPTION_COORD);
+         ossStrToBoolean(coord.c_str(), &_coord);
       }
 
    done:
