@@ -117,7 +117,7 @@
 							</node>
 						</catagroup>
 					</sdbdeploy>
-					<sdbdeploy host="${test_machine_no4}" coordport="${coord.service.port}">
+					<!-- <sdbdeploy host="${test_machine_no4}" coordport="${coord.service.port}">
 						<catagroup name="cata2">
 							<node host="${test_machine_no4}" baseport="${cata.service.port}" dbpath="${install.path}/sequoiadb/database/cata/${cata.service.port}">
 								<confitem name="diaglevel" value="5" />
@@ -144,7 +144,7 @@
 								<confitem name="optimeout" value="60000" />
 							</node>
 						</catagroup>
-					</sdbdeploy>
+					</sdbdeploy> -->
 				</parallel>
 				<parallel>
 					<sdbdeploy host="${test_machine_no1}" coordport="${coord.service.port}">
