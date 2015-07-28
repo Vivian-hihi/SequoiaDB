@@ -601,7 +601,7 @@ namespace import
          goto error;
       }
 
-      if (_options.coord())
+      if (_options.enableCoord())
       {
          rc = _coords.init();
          if (SDB_OK != rc)
@@ -617,7 +617,7 @@ namespace import
          string svcname;
          ImporterArgs* args = NULL;
 
-         if (_options.coord())
+         if (_options.enableCoord())
          {
             rc = _coords.getRandomCoord(hostname, svcname);
             if (SDB_OK != rc)

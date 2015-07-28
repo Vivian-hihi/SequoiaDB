@@ -171,8 +171,8 @@ namespace import
       _bufferSize = 128;
       _dryRun = FALSE;
       _verbose = FALSE;
-      _sharding = TRUE;
-      _coord = TRUE;
+      _enableSharding = TRUE;
+      _enableCoord = TRUE;
 
    }
 
@@ -501,13 +501,13 @@ namespace import
       if (has(IMP_OPTION_SHARDING))
       {
          string sharding = get<string>(IMP_OPTION_SHARDING);
-         ossStrToBoolean(sharding.c_str(), &_sharding);
+         ossStrToBoolean(sharding.c_str(), &_enableSharding);
       }
 
       if (has(IMP_OPTION_COORD))
       {
          string coord = get<string>(IMP_OPTION_COORD);
-         ossStrToBoolean(coord.c_str(), &_coord);
+         ossStrToBoolean(coord.c_str(), &_enableCoord);
       }
 
    done:

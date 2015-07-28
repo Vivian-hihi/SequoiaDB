@@ -100,8 +100,8 @@ namespace import
       inline INT32 bufferSize() const { return _bufferSize; }
       inline BOOLEAN dryRun() const { return _dryRun; }
       inline BOOLEAN verbose() const { return _verbose; }
-      inline BOOLEAN sharding() const { return _sharding; }
-      inline BOOLEAN coord() const { return _coord; }
+      inline BOOLEAN enableSharding() const { return _enableSharding; }
+      inline BOOLEAN enableCoord() const { return _enableCoord; }
 
    private:
       BOOLEAN has(CHAR* option);
@@ -150,8 +150,8 @@ namespace import
       INT32          _bufferSize;
       BOOLEAN        _dryRun;
       BOOLEAN        _verbose;
-      BOOLEAN        _sharding;
-      BOOLEAN        _coord;
+      BOOLEAN        _enableSharding;
+      BOOLEAN        _enableCoord;
    };
 }
 
