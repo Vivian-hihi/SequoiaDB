@@ -52,7 +52,7 @@
 						</ant>
 <!-- 					</parallel>
 					<parallel> -->
-						<ant antfile="deploy-software-in-host.xml" dir="." inheritAll="false" output="${test_machine_no4}">
+						<!-- <ant antfile="deploy-software-in-host.xml" dir="." inheritAll="false" output="${test_machine_no4}">
 							<property name="install.package.fullname" value="${install.package.fullname}" />
 							<property name="deploy.host.name" value="${test_machine_no4}" />
 							<property name="is.standalone.mode" value="false" />
@@ -72,7 +72,7 @@
 							<property name="is.standalone.mode" value="false" />
 							<property name="is.coord.master" value="false"/>
 							<property name="catalog.addrs" value="${test_machine_no4}:11803,${test_machine_no5}:11803,${test_machine_no6}:11803" />
-						</ant>
+						</ant> -->
 <!-- 					</parallel>
 				</parallel> -->
 
@@ -171,7 +171,7 @@
 								<confitem name="fap" value="${fap.value}" />
 							</node>
 						</datagroup>
-						<datagroup name="group2">
+						<!-- <datagroup name="group2">
 							<node host="${test_machine_no3}" baseport="22100" dbpath="${install.path}/sequoiadb/database/data/22100">
 								<confitem name="diaglevel" value="5" />
 								<confitem name="transactionon" value="true" />
@@ -216,9 +216,9 @@
 								<confitem name="diagnum" value="80" />
 								<confitem name="fap" value="${fap.value}" />
 							</node>
-						</datagroup>
+						</datagroup> -->
 					</sdbdeploy>
-					<sdbdeploy host="${test_machine_no4}" coordport="${coord.service.port}">
+					<!-- <sdbdeploy host="${test_machine_no4}" coordport="${coord.service.port}">
 						<datagroup name="group4">
 							<node host="${test_machine_no4}" baseport="21100" dbpath="${install.path}/sequoiadb/database/data/21100">
 								<confitem name="diaglevel" value="5" />
@@ -288,7 +288,7 @@
 			          			<confitem name="fap" value="${fap.value}" />
 							</node>
 						</datagroup>
-					</sdbdeploy>
+					</sdbdeploy> -->
 				</parallel>
 
 				<tstamp>
@@ -473,7 +473,7 @@
 						<property name="deploy.file.fullname" value="${deploy.file.fullname}" />
 						<property name="deploy.host.name" value="${test_machine_no3}" />
 					</ant>
-					<ant antfile="deploy-test-in-host.xml" dir="." inheritAll="false">
+					<!-- <ant antfile="deploy-test-in-host.xml" dir="." inheritAll="false">
 						<property name="deploy.file.fullname" value="${deploy.file.fullname}" />
 						<property name="deploy.host.name" value="${test_machine_no4}" />
 					</ant>
@@ -484,7 +484,7 @@
 					<ant antfile="deploy-test-in-host.xml" dir="." inheritAll="false">
 						<property name="deploy.file.fullname" value="${deploy.file.fullname}" />
 						<property name="deploy.host.name" value="${test_machine_no6}" />
-					</ant>
+					</ant> -->
 				</parallel>
 
 				<tstamp>
@@ -690,7 +690,7 @@
 						<tar basedir="${test.reports.path}" destfile="${test.log.path}.tar.gz" compression="gzip" includes="**/*" />
 
 						<stafTools workType="copy" workHost="${host.NAME}" fileName="${test.log.path}.tar.gz"  toHost="${save.testLog.hostname}"  saveDir="${save.testLog.dir}" failonerror="true"/>
-						<sdbProperty name="delete.diaglogFile" value="dir=$(find /opt/sequoiadb/database -name diaglog); for d in $dir ; do echo rm -f $d/* ; rm -f $d/* ; done" />
+						<!-- <sdbProperty name="delete.diaglogFile" value="dir=$(find /opt/sequoiadb/database -name diaglog); for d in $dir ; do echo rm -f $d/* ; rm -f $d/* ; done" />
 
 						<if>
 		   					<equals arg1="${os.arch}" arg2="amd64" />
@@ -711,7 +711,7 @@
 						
 						<echo message="Delete ${test.log.path}.tar.gz and ${test.log.path} dir ..." />
 						<delete file="${test.log.path}.tar.gz" failonerror="false" />
-						<delete dir="${test.log.path}" failonerror="false"/>
+						<delete dir="${test.log.path}" failonerror="false"/> -->
 
 						<tstamp>
 							<format property="copytar_endtime" pattern="yyyy-MM-dd-hh.mm.ss a" />
