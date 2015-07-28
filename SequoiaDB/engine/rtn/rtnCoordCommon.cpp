@@ -3390,18 +3390,18 @@ namespace engine
       if ( SDB_CLS_NOT_PRIMARY == flag && 0 != primaryID &&
            groupInfo.get() )
       {
-         UINT32 oldPrimary = groupInfo->primary().columns.nodeID ;
+         INT32 preStat = NET_NODE_STAT_NORMAL ;
          MsgRouteID primaryNodeID ;
          primaryNodeID.value = nodeID.value ;
          primaryNodeID.columns.nodeID = primaryID ;
-         if ( SDB_OK == groupInfo->updatePrimary( primaryNodeID, TRUE ) )
+         if ( SDB_OK == groupInfo->updatePrimary( primaryNodeID,
+                                                  TRUE, &preStat ) )
          {
             /// when primay's crash has not discoverd by other nodes,
             /// new primary's nodeid may still be old one. 
             /// To avoid send msg to crashed node frequently,
             /// sleep some times.
-            if ( oldPrimary == primaryID &&
-                 nodeID.columns.nodeID != primaryID )
+            if ( NET_NODE_STAT_NORMAL != preStat )
             {
                PD_LOG( PDWARNING, "Primary node[%d.%d] is crashed, sleep "
                        "two second", primaryNodeID.columns.groupID,

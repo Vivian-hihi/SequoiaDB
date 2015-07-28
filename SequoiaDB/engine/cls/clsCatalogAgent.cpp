@@ -2784,7 +2784,8 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSGPIM_UPPRRIMARY, "_clsGroupItem::updatePrimary" )
    INT32 _clsGroupItem::updatePrimary ( const MsgRouteID & nodeID,
-                                        BOOLEAN primary )
+                                        BOOLEAN primary,
+                                        INT32 *pPreStat )
    {
       INT32 rc = SDB_OK ;
       UINT32 index = 0 ;
@@ -2819,8 +2820,14 @@ namespace engine
             _primaryNode.columns.groupID = _groupID ;
             _primaryNode.columns.nodeID = nodeID.columns.nodeID ;
             _primaryNode.columns.serviceID = 0 ;
-            _primaryPos = index;
+            _primaryPos = index ;
 
+            if ( pPreStat )
+            {
+               clsNodeItem &tmpNode = _vecNodes[index] ;
+               *pPreStat = ( INT32 )tmpNode.getStatus( (UINT64)time( NULL ),
+                                                       2 ) ;
+            }
             goto done ;
          }
          ++index ;

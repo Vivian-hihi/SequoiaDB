@@ -391,7 +391,8 @@ namespace engine
 
          UINT32 getPrimaryPos();
 
-         INT32  updatePrimary ( const MsgRouteID& nodeID, BOOLEAN primary ) ;
+         INT32  updatePrimary ( const MsgRouteID& nodeID, BOOLEAN primary,
+                                INT32 *pPreStat = NULL ) ;
 
          void   cancelPrimary () ;
 
