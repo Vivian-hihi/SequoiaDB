@@ -14,7 +14,7 @@
    You should have received a copy of the GNU Affero General Public License
    along with this program. If not, see <http://www.gnu.org/license/>.
 
-   Source File Name = impSharding.hpp
+   Source File Name = impRecordSharding.hpp
 
    Dependencies: N/A
 
@@ -28,8 +28,8 @@
    Last Changed =
 
 *******************************************************************************/
-#ifndef IMP_SHARDING_HPP_
-#define IMP_SHARDING_HPP_
+#ifndef IMP_RECORD_SHARDING_HPP_
+#define IMP_RECORD_SHARDING_HPP_
 
 #include "core.hpp"
 #include "oss.hpp"
@@ -41,17 +41,17 @@ using namespace std;
 
 namespace import
 {
-   class Sharding: public SDBObject
+   class RecordSharding: public SDBObject
    {
    public:
-      Sharding(const string& hostname,
+      RecordSharding(const string& hostname,
                const string& svcname,
                const string& user,
                const string& password,
                const string& csname,
                const string& clname,
                BOOLEAN useSSL);
-      ~Sharding();
+      ~RecordSharding();
       INT32 init();
       INT32 getGroupNum() const { return _groupNum; }
       INT32 getGroupByRecord(bson* record, UINT32& groupId);
@@ -71,4 +71,4 @@ namespace import
    };
 }
 
-#endif /* IMP_SHARDING_HPP_ */
+#endif /* IMP_RECORD_SHARDING_HPP_ */
