@@ -460,7 +460,12 @@ static INT32 _sendAndRecv ( sdbConnectionHandle cHandle, Socket* sock,
    HANDLE_CHECK( cHandle, connection, SDB_HANDLE_TYPE_CONNECTION );
 
    // check arguments
-   if ( NULL == sock || NULL == sendMsg )
+   if ( NULL == sock )
+   {
+      rc = SDB_NOT_CONNECTED ;
+      goto error ;
+   }
+   if ( NULL == sendMsg )
    {
       rc = SDB_INVALIDARG ;
       goto error ;
