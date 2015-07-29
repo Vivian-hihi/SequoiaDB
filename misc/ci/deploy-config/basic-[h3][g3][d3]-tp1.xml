@@ -528,9 +528,6 @@
 			</else>
 		</if>
 
-		<!-- <tstamp>
-			<format property="current.time.log" pattern="yyyy-MM-dd-hh.mm.ss_a" />
-		</tstamp> -->
 		<property name="test.log" value="${test.environment}-T${BUILD_NUMBER}-[H3][G3][D3]" />
 		<property name="test.log.path" value="${test.reports.path}/${test.log}" />
 		
@@ -644,19 +641,9 @@
 				<if>
 					<equals arg1="${copy.test.log}" arg2="true" />
 					<then>
-
-						<!-- <tstamp>
-							<format property="copytar_begintime" pattern="yyyy-MM-dd-hh.mm.ss a" />
-						</tstamp>
-
-						<echo message="The copy.test.log is true , then copy all test log to ${save.testLog.hostname}:${save.testLog.dir}"/>
-						<tstamp>
-							<format property="current.time.log" pattern="yyyy-MM-dd-hh.mm.ss a" />
-						</tstamp>
-
-						<property name="test.log.path" value="${test.reports.path}/${test.environment}-T${BUILD_NUMBER}-[H3][G3][D3]-${current.time.log}" /> -->
 						<echo message="Mkdir ${test.log.path}" />
-						<mkdir dir="${test.log.path}" />
+						<mkdir dir="${test.log.path}/data" />
+						<mkdir dir="${test.log.path}/conf" />
 
 						<if>
 		   					<equals arg1="${os.arch}" arg2="amd64" />
@@ -668,12 +655,12 @@
 								<sdbCopyAndTar fileHostName="${test_machine_no5}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/database" savePath="${test.log.path}" />
 								<sdbCopyAndTar fileHostName="${test_machine_no6}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/database" savePath="${test.log.path}" />
 
-								<sdbCopyAndTar fileHostName="${test_machine_no1}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/conf/local" savePath="${test.log.path}" />
+								<!-- <sdbCopyAndTar fileHostName="${test_machine_no1}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/conf/local" savePath="${test.log.path}" />
 								<sdbCopyAndTar fileHostName="${test_machine_no2}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/conf/local" savePath="${test.log.path}" />
 								<sdbCopyAndTar fileHostName="${test_machine_no3}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/conf/local" savePath="${test.log.path}" />
 								<sdbCopyAndTar fileHostName="${test_machine_no4}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/conf/local" savePath="${test.log.path}" />
 								<sdbCopyAndTar fileHostName="${test_machine_no5}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/conf/local" savePath="${test.log.path}" />
-								<sdbCopyAndTar fileHostName="${test_machine_no6}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/conf/local" savePath="${test.log.path}" />
+								<sdbCopyAndTar fileHostName="${test_machine_no6}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/conf/local" savePath="${test.log.path}" /> -->
 							</then>
 							<else>
 								<sdbCopyAndTar fileHostName="${test_machine_no1}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/database" savePath="${test.log.path}" />
@@ -712,14 +699,6 @@
 						<echo message="Delete ${test.log.path}.tar.gz and ${test.log.path} dir ..." />
 						<delete file="${test.log.path}.tar.gz" failonerror="false" />
 						<delete dir="${test.log.path}" failonerror="false"/> -->
-
-<!-- 						<tstamp>
-							<format property="copytar_endtime" pattern="yyyy-MM-dd-hh.mm.ss a" />
-						</tstamp>
-						<sdbTime beginTime="${copytar_begintime}" endTime="${copytar_endtime}" output="copytar_time" />
-						<echo message="**************************************************************************************************************************************************************" />
-						<echo level="info" message="The copy-tar-package part began at &lt;${copytar_begintime}&gt;, end at &lt;${copytar_endtime}&gt;,total spending ${copytar_time}s." />
-						<echo message="**************************************************************************************************************************************************************" /> -->
 					</then>
 				</if>
 			</try>
