@@ -1,3 +1,0 @@
-16:25:51,531   INFO ReadSdb:79 : dbType=db2 url=jdbc:db2://192.168.30.223:50110/sequoia user=db2inst1 sqlselect * from (select s.*,rownumber() over() as rn from (select * from sedb10) as s ) as s1 where s1.rn between 0 and 10
-  16:25:58,219   INFO ReadSdb:147 : costTime6688
-  

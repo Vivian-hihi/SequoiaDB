@@ -1,3 +1,0 @@
-Manifest-Version: 1.0
-Class-Path: lib/db2jcc.jar lib/sequoiadb.jar lib/commons-logging.jar lib/commons-cli-1.2.jar lib/log4j.jar
-Main-Class: com.sequoiadb.main.SdbMain
