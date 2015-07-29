@@ -2092,7 +2092,7 @@ namespace engine
          break;
 
       case CMD_DROP_COLLECTION:
-         /// wait sync in context
+         /// wait sync in context, not set writable
          rc = _dropMainCL( pCommand->collectionFullName(), w,
                            version, contextID );
          break;
@@ -2110,7 +2110,7 @@ namespace engine
                    rc );
 
       /// wait for sync
-      if ( w > 1 )
+      if ( writable && w > 1 )
       {
          _pDpsCB->completeOpr( eduCB(), w ) ;
       }
