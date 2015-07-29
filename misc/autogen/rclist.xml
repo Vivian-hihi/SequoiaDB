@@ -2386,5 +2386,13 @@
          </description>
       </code>
 
+      <code>
+         <name>SDB_LOB_SEQUENCE_EXISTS</name>
+         <description>
+            <en>LOB sequence exists</en>
+            <cn>大对象的序列已经存在</cn>
+         </description>
+      </code>
+
    </codelist>
 </rclist>
