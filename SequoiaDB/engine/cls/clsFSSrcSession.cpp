@@ -1694,7 +1694,7 @@ namespace engine
       INT32 rc = SDB_OK ;
 
       /// 1. not primary
-      if ( pmdIsPrimary() )
+      if ( !pmdIsPrimary() )
       {
          /* MSG_INVALID_ROUTEID != sdbGetReplCB()->getPrimary().value */
          rc = SDB_CLS_NOT_PRIMARY ;
