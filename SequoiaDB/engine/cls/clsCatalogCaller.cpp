@@ -47,7 +47,6 @@ namespace engine
 {
    const INT32 CLS_CALLER_NO_SEND = -1 ;
    const INT32 CLS_CALLER_INTERVAL = 5000 ;
-   const INT32 CLS_CALLER_NORESPONSE = 15000 ;
 
    _clsCatalogCaller::_clsCatalogCaller()
    {
@@ -134,7 +133,7 @@ namespace engine
             itr->second.timeout += millisec ;
             if ( CLS_CALLER_INTERVAL <= itr->second.timeout )
             {
-               pmdGetKRCB()->getClsCB()->updateCatGroup ( TRUE ) ;
+               /// don't need to update catalog info
                pmdGetKRCB()->getClsCB()->sendToCatlog( itr->second.header) ;
                itr->second.timeout = 0 ;
             }

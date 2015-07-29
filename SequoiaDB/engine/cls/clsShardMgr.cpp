@@ -1013,6 +1013,12 @@ namespace engine
          _shardLatch.get_shared() ;
          rc = _cataGrpItem.updatePrimary( primaryNode, TRUE ) ;
          _shardLatch.release_shared() ;
+
+         if ( SDB_OK == rc )
+         {
+            PD_LOG( PDEVENT, "Update catalog group primary node to [%d] "
+                    "by reply message", startFrom ) ;
+         }
       }
 
       PD_TRACE_EXITRC ( SDB__CLSSHDMGR_UPPRM_BYREPLY, rc ) ;
@@ -1332,6 +1338,11 @@ namespace engine
          {
             PD_LOG ( PDERROR, "Failed to update primary, rc = %d", rc ) ;
             goto error ;
+         }
+         else
+         {
+            PD_LOG( PDEVENT, "Update catalog group primary node to [%d] by "
+                    "group info", primary ) ;
          }
       }
 

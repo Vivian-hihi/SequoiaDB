@@ -650,7 +650,9 @@ namespace engine
             }
          }
 
-         PD_LOG( PDWARNING, "Download group info request was refused, rc: %d",
+         PD_LOG( PDWARNING, "Download group info request was refused from "
+                 "node[%s], rc: %d",
+                 routeID2String( pHeader->routeID ).c_str(),
                  MSG_GET_INNER_REPLY_RC(pHeader) ) ;
          goto error ;
       }
