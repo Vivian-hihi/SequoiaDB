@@ -32,6 +32,7 @@
 #include "ossUtil.h"
 #include "ossProc.hpp"
 #include <sstream>
+#include <boost/program_options/parsers.hpp>
 
 namespace import
 {
@@ -80,7 +81,7 @@ namespace import
       else if (INPUT_EXEC == inputType)
       {
          SubProcessInputStream* subProcessStream = SDB_OSS_NEW
-            SubProcessInputStream(options.exec(), options.execArgs());
+            SubProcessInputStream(options.exec());
          if (NULL == subProcessStream)
          {
             rc = SDB_OOM;
@@ -291,10 +292,8 @@ namespace import
       goto done;
    }
 
-   SubProcessInputStream::SubProcessInputStream(const string& subProcessName,
-                                                const string& subProcessArgs)
-   : _subProcessName(subProcessName),
-     _subProcessArgs(subProcessArgs)
+   SubProcessInputStream::SubProcessInputStream(const string& subProcessCmd)
+   : _subProcessCmd(subProcessCmd)
    {
    }
 
@@ -311,25 +310,47 @@ namespace import
    {
       ossResultCode result;
       INT32 rc = SDB_OK;
-      stringstream argv;
+      CHAR* arguments = NULL;
+      const CHAR* cmd = _subProcessCmd.c_str();
 
-      argv << _subProcessName << " " << _subProcessArgs;
+      {
+         std::list<const CHAR*> argvList;
+         INT32 argLen = 0;
 
-      rc = ossExec(_subProcessName.c_str(), argv.str().c_str(),
-                   NULL, 0, _subPid, result, NULL, &_pipe);
+#if defined(_LINUX)
+         std::vector<std::string> vecArgs;
+
+         vecArgs = boost::program_options::split_unix(cmd);
+         for ( UINT32 i = 0; i < vecArgs.size(); ++i )
+         {
+            argvList.push_back(vecArgs[ i ].c_str());
+         }
+#else // _WINDOWS
+         argvList.push_back(cmd);
+#endif // _LINUX
+
+         rc = ossBuildArguments(&arguments, argLen, argvList);
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "failed to build arguments, rc=%d", rc );
+            goto error ;
+         }
+      }
+
+      rc = ossExec(arguments, arguments,
+                   NULL, OSS_EXEC_NODETACHED, _subPid, result, NULL, &_pipe);
       if (SDB_OK != rc)
       {
-         PD_LOG(PDERROR, "Failed to execute %s, rc: %d",
-                argv.str().c_str(), rc);
+         PD_LOG(PDERROR, "failed to execute %s, rc=%d", cmd, rc);
          goto error;
       }
       else
       {
-         PD_LOG(PDEVENT, "execute %s successfully",
-                argv.str().c_str());
+         PD_LOG(PDEVENT, "execute %s successfully", cmd);
       }
 
    done:
+      SAFE_OSS_FREE(arguments);
       return rc;
    error:
       goto done;
@@ -345,8 +366,8 @@ namespace import
       rc = ossReadNamedPipe(_pipe, buf, bufSize, &readSize);
       if (SDB_OK != rc && SDB_EOF != rc)
       {
-         PD_LOG(PDERROR, "failed to read from sub process %s %s, rc=%d",
-                _subProcessName.c_str(), _subProcessArgs.c_str(), rc);
+         PD_LOG(PDERROR, "failed to read from sub process %s, rc=%d",
+                _subProcessCmd.c_str(), rc);
       }
 
       return rc;

@@ -66,7 +66,6 @@ namespace import
    #define IMP_OPTION_DRYRUN            "dryrun"
    #define IMP_OPTION_VERBOSE           "verbose"
    #define IMP_OPTION_EXEC              "exec"
-   #define IMP_OPTION_EXECARGS          "execargs"
    #define IMP_OPTION_SHARDING          "sharding"
    #define IMP_OPTION_COORD             "coord"
 
@@ -98,7 +97,6 @@ namespace import
    #define IMP_EXPLAIN_DRYRUN           "only parse record, don't import to database"
    #define IMP_EXPLAIN_VERBOSE          "print run time details"
    #define IMP_EXPLAIN_EXEC             "execute external program to get data, the program should output data to standard outpupt"
-   #define IMP_EXPLAIN_EXECARGS         "arguments for external program"
    #define IMP_EXPLAIN_SHARDING         "repackage records by sharding, default is true"
    #define IMP_EXPLAIN_COORD            "find coordinators automatically, default is true"
 
@@ -126,7 +124,6 @@ namespace import
    #define IMP_INPUT_OPTIONS \
       (IMP_OPTION_FILENAME,            _TYPE(string),    IMP_EXPLAIN_FILENAME) \
       (IMP_OPTION_EXEC,                _TYPE(string),    IMP_EXPLAIN_EXEC) \
-      (IMP_OPTION_EXECARGS,            _TYPE(string),    IMP_EXPLAIN_EXECARGS) \
       (IMP_OPTION_TYPE,                _TYPE(string),    IMP_EXPLAIN_TYPE) \
       (IMP_OPTION_LINEPRIORITY,        _TYPE(string),    IMP_EXPLAIN_LINEPRIORITY) \
       (IMP_OPTION_DELRECORD",r",       _TYPE(string),    IMP_EXPLAIN_DELRECORD) \
@@ -347,11 +344,6 @@ namespace import
       {
          _exec = get<string>(IMP_OPTION_EXEC);
          _inputType = INPUT_EXEC;
-
-         if (has(IMP_OPTION_EXECARGS))
-         {
-            _execArgs = get<string>(IMP_OPTION_EXECARGS);
-         }
       }
 
       if (has(IMP_OPTION_TYPE))

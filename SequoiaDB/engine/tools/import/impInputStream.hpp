@@ -104,15 +104,13 @@ namespace import
    class SubProcessInputStream: public InputStream
    {
    public:
-      SubProcessInputStream(const string& subProcessName,
-                            const string& subProcessArgs);
+      SubProcessInputStream(const string& subProcessCmd);
       ~SubProcessInputStream();
       INT32 init();
       INT32 read(CHAR* buf, INT64 bufSize, INT64& readSize);
 
    private:
-      string   _subProcessName;
-      string   _subProcessArgs;
+      string   _subProcessCmd;
       OSSPID   _subPid;
       OSSNPIPE _pipe;
    };
