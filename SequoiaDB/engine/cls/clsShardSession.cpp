@@ -1021,7 +1021,7 @@ namespace engine
          }
          else
          {
-            rc = _checkReadStatus( flags ) ;
+            rc = _checkPrimaryWhenRead( FLG_QUERY_PRIMARY, flags ) ;
             if ( rc )
             {
                goto error ;
@@ -1148,7 +1148,7 @@ namespace engine
          }
          else
          {
-            rc = _checkReadStatus( flags ) ;
+            rc = _checkPrimaryWhenRead( FLG_QUERY_PRIMARY, flags ) ;
             if ( rc )
             {
                goto error ;
@@ -2750,7 +2750,7 @@ namespace engine
       }
       else
       {
-         rc = _checkReadStatus( header->flags ) ;
+         rc = _checkPrimaryWhenRead( FLG_LOBREAD_PRIMARY, header->flags ) ;
          if ( rc )
          {
             PD_LOG( PDWARNING, "failed to check read status:%d", rc ) ;
@@ -3024,7 +3024,7 @@ namespace engine
       /// check primary by flags
       w = 1 ;
 
-      rc = _checkReadStatus( header->flags ) ;
+      rc = _checkPrimaryWhenRead(FLG_LOBREAD_PRIMARY,  header->flags ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDWARNING, "failed to check read status:%d", rc ) ;
@@ -3538,12 +3538,12 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDSESS__CKREADSTATUS, "_clsShdSession::_checkReadStatus" )
-   INT32 _clsShdSession::_checkReadStatus( INT32 flag )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDSESS__CKPRIMARYWHENREAD, "_clsShdSession::_checkPrimaryWhenRead" )
+   INT32 _clsShdSession::_checkPrimaryWhenRead( INT32 flag, INT32 reqFlag )
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB__CLSSHDSESS__CKREADSTATUS ) ;
-      if ( flag & FLG_QUERY_PRIMARY )
+      PD_TRACE_ENTRY( SDB__CLSSHDSESS__CKPRIMARYWHENREAD ) ;
+      if ( flag & reqFlag )
       {
          rc = _checkPrimaryStatus() ;
          if ( SDB_OK != rc )
@@ -3553,7 +3553,7 @@ namespace engine
          }
       }
    done:
-      PD_TRACE_EXITRC( SDB__CLSSHDSESS__CKREADSTATUS, rc ) ;
+      PD_TRACE_EXITRC( SDB__CLSSHDSESS__CKPRIMARYWHENREAD, rc ) ;
       return rc ;
    error:
       goto done ;
