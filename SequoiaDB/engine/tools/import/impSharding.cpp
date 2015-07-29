@@ -245,7 +245,9 @@ namespace import
 
       SDB_ASSERT(_sharding.getGroupNum() > 0, "groupNum must be greater than 0");
 
-      if (1 == _sharding.getGroupNum() || !_options->enableSharding())
+      if (1 == _sharding.getGroupNum() ||
+          !_options->enableSharding() ||
+          1 == _options->batchSize())
       {
          // no need to do anything
          _inited = TRUE;
