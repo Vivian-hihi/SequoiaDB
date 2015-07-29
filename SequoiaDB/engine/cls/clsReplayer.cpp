@@ -571,7 +571,14 @@ namespace engine
             if ( SDB_OK != rc )
             {
                PD_LOG( PDERROR, "failed to write lob:%d", rc ) ;
-               goto error ;
+               if ( SDB_LOB_SEQUENCE_EXISTS == rc )
+               {
+                  rc = SDB_OK ;
+               }
+               else
+               {
+                  goto error ;
+               }
             }
             break ;
          }
@@ -600,7 +607,14 @@ namespace engine
             if ( SDB_OK != rc )
             {
                PD_LOG( PDERROR, "failed to remove lob:%d", rc ) ;
-               goto error ;
+               if ( SDB_LOB_SEQUENCE_NOT_EXIST == rc )
+               {
+                  rc = SDB_OK ;
+               }
+               else
+               {
+                  goto error ;
+               }
             }
             break ;
          }
@@ -903,7 +917,14 @@ namespace engine
             if ( SDB_OK != rc )
             {
                PD_LOG( PDERROR, "failed to remove lob:%d", rc ) ;
-               goto error ;
+               if ( SDB_LOB_SEQUENCE_NOT_EXIST == rc )
+               {
+                  rc = SDB_OK ;
+               }
+               else
+               {
+                  goto error ;
+               }
             }
             break ; 
          }
@@ -964,7 +985,14 @@ namespace engine
             if ( SDB_OK != rc )
             {
                PD_LOG( PDERROR, "failed to write lob:%d", rc ) ;
-               goto error ;
+               if ( SDB_LOB_SEQUENCE_EXISTS == rc )
+               {
+                  rc = SDB_OK ;
+               }
+               else
+               {
+                  goto error ;
+               }
             }
             break ;
          }

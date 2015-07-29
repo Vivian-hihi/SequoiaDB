@@ -1645,9 +1645,15 @@ namespace engine
             goto error ;
          }
 
-         if ( LOG_TYPE_LOB_WRITE == record.head()._type ||
-              LOG_TYPE_LOB_REMOVE == record.head()._type ||
-              LOG_TYPE_LOB_UPDATE == record.head()._type )
+         rc = record.load( _lsnSearchMB.startPtr() ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG ( PDERROR, "Split Session[%s]: parse dps log failed[rc:%d]",
+                     sessionName(), rc ) ;
+            goto error ;
+         }
+
+         if ( CLS_IS_LOB_LOG( record.head()._type ) )
          {
             if ( !_findEnd )
             {

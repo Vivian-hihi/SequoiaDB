@@ -183,12 +183,16 @@ namespace engine
                       DMS_LOB_PAGEID &page ) ;
 
       /// only release space of page. will not change other meta data.
-      INT32 _releasePage( DMS_LOB_PAGEID page ) ;
+      INT32 _releasePage( DMS_LOB_PAGEID page, dmsMBContext *mbContext ) ;
 
       /// release space of page and change other meta data.
       INT32 _removePage( DMS_LOB_PAGEID page,
                          const _dmsLobDataMapBlk *blk,
                          const UINT32 *bucket ) ;
+
+      INT32 _rollback( DMS_LOB_PAGEID page,
+                       dmsMBContext *mbContext,
+                       BOOLEAN pageFilled ) ;                       
 
    private:
       dmsBucketsManagementExtent    *_dmsBME ;
