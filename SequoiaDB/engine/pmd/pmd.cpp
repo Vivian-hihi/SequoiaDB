@@ -202,11 +202,6 @@ namespace engine
       return _role ;
    }
 
-   BOOLEAN _SDB_KRCB::isDataOK() const
-   {
-      return pmdGetStartup().isOK() ;
-   }
-
    const CHAR* _SDB_KRCB::getDBRoleDesp() const
    {
       return utilDBRoleStr( _role ) ;

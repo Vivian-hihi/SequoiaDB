@@ -135,7 +135,6 @@ namespace engine
       virtual BOOLEAN            isDBDeactivated() const ;
 
       virtual BOOLEAN            isInFlowControl() const ;
-      virtual BOOLEAN            isDataOK() const ;
 
       virtual SDB_ROLE           getDBRole() const ;
       virtual const CHAR*        getDBRoleDesp() const ;
