@@ -96,7 +96,7 @@ namespace import
          std::cout << ss.str();
       }
 
-      while (!self->_stopped)
+      for(;;)
       {
          INT32 size;
          inQueue->wait_and_pop(records);
@@ -317,7 +317,6 @@ namespace import
 
       // push empty RecordArray as stop signal
       _inQueue->push(empty);
-      _stopped = TRUE;
 
       rc = _worker->waitStop();
       if (SDB_OK != rc)
