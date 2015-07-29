@@ -3,7 +3,7 @@
 
 <!--@param ${test.reports.path}: The path where test reports directory. -->
 <!--@param ${deploy.case.fullname}:all kind of test environment. -->
-<!--@param ${WORKSPACE}: where the working space is it-->
+
 <!--@param ${DEPLOY_WILDCARD}: deploy config file wildcard. just for debug -->
 <!--@param ${test.environment} : the control the test Environment -->
 <!--@param ${ci.script.file.path} : where the ci.test.properties file is it -->
@@ -20,71 +20,50 @@
 		<if>
 		   	<equals arg1="${os.arch}" arg2="amd64" />
 			<then>
-				<tstamp>
-					<format property="install_begintime" pattern="yyyy-MM-dd-hh.mm.ss a" />
-				</tstamp>
 				<property name="fap.value" value="fapmongo" />
-<!-- 				<parallel>
-					<parallel> -->
-						<ant antfile="deploy-software-in-host.xml" dir="." inheritAll="false">
-							<property name="install.package.fullname" value="${install.package.fullname}" />
-							<property name="deploy.host.name" value="${test_machine_no1}" />
-							<property name="is.standalone.mode" value="false" />
-							<property name="is.coord.master" value="true"/>
-							<property name="catalog.addrs" value="${test_machine_no1}:11803,${test_machine_no2}:11803,${test_machine_no3}:11803" />
-						</ant>
-						<ant antfile="deploy-software-in-host.xml" dir="." inheritAll="false">
-							<property name="install.package.fullname" value="${install.package.fullname}" />
-							<property name="deploy.host.name" value="${test_machine_no2}" />
-							<property name="is.standalone.mode" value="false" />
-							<property name="is.coord.master" value="false"/>
-							<property name="catalog.addrs" value="${test_machine_no1}:11803,${test_machine_no2}:11803,${test_machine_no3}:11803" />
-						</ant>
-						<ant antfile="deploy-software-in-host.xml" dir="." inheritAll="false">
-							<property name="install.package.fullname" value="${install.package.fullname}" />
-							<property name="deploy.host.name" value="${test_machine_no3}" />
-							<property name="is.standalone.mode" value="false" />
-							<property name="is.coord.master" value="false"/>
-							<property name="catalog.addrs" value="${test_machine_no1}:11803,${test_machine_no2}:11803,${test_machine_no3}:11803" />
-						</ant>
-<!-- 					</parallel>
-					<parallel> -->
-						<ant antfile="deploy-software-in-host.xml" dir="." inheritAll="false">
-							<property name="install.package.fullname" value="${install.package.fullname}" />
-							<property name="deploy.host.name" value="${test_machine_no4}" />
-							<property name="is.standalone.mode" value="false" />
-							<property name="is.coord.master" value="true"/>
-							<property name="catalog.addrs" value="${test_machine_no4}:11803,${test_machine_no5}:11803,${test_machine_no6}:11803" />
-						</ant>
-						<ant antfile="deploy-software-in-host.xml" dir="." inheritAll="false">
-							<property name="install.package.fullname" value="${install.package.fullname}" />
-							<property name="deploy.host.name" value="${test_machine_no5}" />
-							<property name="is.standalone.mode" value="false" />
-							<property name="is.coord.master" value="false"/>
-							<property name="catalog.addrs" value="${test_machine_no4}:11803,${test_machine_no5}:11803,${test_machine_no6}:11803" />
-						</ant>
-						<ant antfile="deploy-software-in-host.xml" dir="." inheritAll="false">
-							<property name="install.package.fullname" value="${install.package.fullname}" />
-							<property name="deploy.host.name" value="${test_machine_no6}" />
-							<property name="is.standalone.mode" value="false" />
-							<property name="is.coord.master" value="false"/>
-							<property name="catalog.addrs" value="${test_machine_no4}:11803,${test_machine_no5}:11803,${test_machine_no6}:11803" />
-						</ant>
-<!-- 					</parallel>
-				</parallel> -->
+				<ant antfile="deploy-software-in-host.xml" dir="." inheritAll="false">
+					<property name="install.package.fullname" value="${install.package.fullname}" />
+					<property name="deploy.host.name" value="${test_machine_no1}" />
+					<property name="is.standalone.mode" value="false" />
+					<property name="is.coord.master" value="true"/>
+					<property name="catalog.addrs" value="${test_machine_no1}:11803,${test_machine_no2}:11803,${test_machine_no3}:11803" />
+				</ant>
+				<ant antfile="deploy-software-in-host.xml" dir="." inheritAll="false">
+					<property name="install.package.fullname" value="${install.package.fullname}" />
+					<property name="deploy.host.name" value="${test_machine_no2}" />
+					<property name="is.standalone.mode" value="false" />
+					<property name="is.coord.master" value="false"/>
+					<property name="catalog.addrs" value="${test_machine_no1}:11803,${test_machine_no2}:11803,${test_machine_no3}:11803" />
+				</ant>
+				<ant antfile="deploy-software-in-host.xml" dir="." inheritAll="false">
+					<property name="install.package.fullname" value="${install.package.fullname}" />
+					<property name="deploy.host.name" value="${test_machine_no3}" />
+					<property name="is.standalone.mode" value="false" />
+					<property name="is.coord.master" value="false"/>
+					<property name="catalog.addrs" value="${test_machine_no1}:11803,${test_machine_no2}:11803,${test_machine_no3}:11803" />
+				</ant>
 
-				<tstamp>
-					<format property="install_endtime" pattern="yyyy-MM-dd-hh.mm.ss a" />
-				</tstamp>
-				<sdbTime beginTime="${install_begintime}" endTime="${install_endtime}" output="install_time" />
-				<echo message="**************************************************************************************************************************************************************" />
-				<echo level="info" message="The install-software part began at &lt;${install_begintime}&gt;, end at &lt;${install_endtime}&gt;,total spending ${install_time}s." />
-				<echo message="**************************************************************************************************************************************************************" />
-
-				<tstamp>
-					<format property="deploy_begintime" pattern="yyyy-MM-dd-hh.mm.ss a" />
-				</tstamp>
-
+				<ant antfile="deploy-software-in-host.xml" dir="." inheritAll="false">
+					<property name="install.package.fullname" value="${install.package.fullname}" />
+					<property name="deploy.host.name" value="${test_machine_no4}" />
+					<property name="is.standalone.mode" value="false" />
+					<property name="is.coord.master" value="true"/>
+					<property name="catalog.addrs" value="${test_machine_no4}:11803,${test_machine_no5}:11803,${test_machine_no6}:11803" />
+				</ant>
+				<ant antfile="deploy-software-in-host.xml" dir="." inheritAll="false">
+					<property name="install.package.fullname" value="${install.package.fullname}" />
+					<property name="deploy.host.name" value="${test_machine_no5}" />
+					<property name="is.standalone.mode" value="false" />
+					<property name="is.coord.master" value="false"/>
+					<property name="catalog.addrs" value="${test_machine_no4}:11803,${test_machine_no5}:11803,${test_machine_no6}:11803" />
+				</ant>
+				<ant antfile="deploy-software-in-host.xml" dir="." inheritAll="false">
+					<property name="install.package.fullname" value="${install.package.fullname}" />
+					<property name="deploy.host.name" value="${test_machine_no6}" />
+					<property name="is.standalone.mode" value="false" />
+					<property name="is.coord.master" value="false"/>
+					<property name="catalog.addrs" value="${test_machine_no4}:11803,${test_machine_no5}:11803,${test_machine_no6}:11803" />
+				</ant>
 				<parallel>
 					<sdbdeploy host="${test_machine_no1}" coordport="${coord.service.port}">
 						<catagroup name="cata1">
@@ -183,58 +162,30 @@
 						</datagroup>
 					</sdbdeploy>
 				</parallel>
-
-				<tstamp>
-					<format property="depoly_endtime" pattern="yyyy-MM-dd-hh.mm.ss a" />
-				</tstamp>
-				<sdbTime beginTime="${deploy_begintime}" endTime="${depoly_endtime}" output="depoly_time" />
-				<echo message="**************************************************************************************************************************************************************" />
-				<echo level="info" message="The deploy-software part began at &lt;${deploy_begintime}&gt;, end at &lt;${depoly_endtime}&gt;,total spending ${depoly_time}s." />
-				<echo message="**************************************************************************************************************************************************************" />
-
 			</then>
 			<else>
-
-				<tstamp>
-					<format property="install_begintime" pattern="yyyy-MM-dd-hh.mm.ss a" />
-				</tstamp>
-
 				<property name="fap.value" value="" />
-				<parallel>
-					<ant antfile="deploy-software-in-host.xml" dir="." inheritAll="false">
-						<property name="install.package.fullname" value="${install.package.fullname}" />
-						<property name="deploy.host.name" value="${test_machine_no1}" />
-						<property name="is.standalone.mode" value="false" />
-						<property name="is.coord.master" value="true"/>
-						<property name="catalog.addrs" value="${test_machine_no1}:11803,${test_machine_no2}:11803,${test_machine_no3}:11803" />
-					</ant>
-					<ant antfile="deploy-software-in-host.xml" dir="." inheritAll="false">
-						<property name="install.package.fullname" value="${install.package.fullname}" />
-						<property name="deploy.host.name" value="${test_machine_no2}" />
-						<property name="is.standalone.mode" value="false" />
-						<property name="is.coord.master" value="false"/>
-						<property name="catalog.addrs" value="${test_machine_no1}:11803,${test_machine_no2}:11803,${test_machine_no3}:11803" />
-					</ant>
-					<ant antfile="deploy-software-in-host.xml" dir="." inheritAll="false">
-						<property name="install.package.fullname" value="${install.package.fullname}" />
-						<property name="deploy.host.name" value="${test_machine_no3}" />
-						<property name="is.standalone.mode" value="false" />
-						<property name="is.coord.master" value="false"/>
-						<property name="catalog.addrs" value="${test_machine_no1}:11803,${test_machine_no2}:11803,${test_machine_no3}:11803" />
-					</ant>
-				</parallel>
-
-				<tstamp>
-					<format property="install_endtime" pattern="yyyy-MM-dd-hh.mm.ss a" />
-				</tstamp>
-				<sdbTime beginTime="${install_begintime}" endTime="${install_endtime}" output="install_time" />
-				<echo message="**************************************************************************************************************************************************************" />
-				<echo level="info" message="The install-software part began at &lt;${install_begintime}&gt;, end at &lt;${install_endtime}&gt;,total spending ${install_time}s." />
-				<echo message="**************************************************************************************************************************************************************" />
-
-				<tstamp>
-					<format property="deploy_begintime" pattern="yyyy-MM-dd-hh.mm.ss a" />
-				</tstamp>
+				<ant antfile="deploy-software-in-host.xml" dir="." inheritAll="false">
+					<property name="install.package.fullname" value="${install.package.fullname}" />
+					<property name="deploy.host.name" value="${test_machine_no1}" />
+					<property name="is.standalone.mode" value="false" />
+					<property name="is.coord.master" value="true"/>
+					<property name="catalog.addrs" value="${test_machine_no1}:11803,${test_machine_no2}:11803,${test_machine_no3}:11803" />
+				</ant>
+				<ant antfile="deploy-software-in-host.xml" dir="." inheritAll="false">
+					<property name="install.package.fullname" value="${install.package.fullname}" />
+					<property name="deploy.host.name" value="${test_machine_no2}" />
+					<property name="is.standalone.mode" value="false" />
+					<property name="is.coord.master" value="false"/>
+					<property name="catalog.addrs" value="${test_machine_no1}:11803,${test_machine_no2}:11803,${test_machine_no3}:11803" />
+				</ant>
+				<ant antfile="deploy-software-in-host.xml" dir="." inheritAll="false">
+					<property name="install.package.fullname" value="${install.package.fullname}" />
+					<property name="deploy.host.name" value="${test_machine_no3}" />
+					<property name="is.standalone.mode" value="false" />
+					<property name="is.coord.master" value="false"/>
+					<property name="catalog.addrs" value="${test_machine_no1}:11803,${test_machine_no2}:11803,${test_machine_no3}:11803" />
+				</ant>
 
 				<sdbdeploy host="${test_machine_no1}" coordport="${coord.service.port}">
 					<catagroup name="cata1">
@@ -283,15 +234,6 @@
 						</node>
 					</datagroup>
 				</sdbdeploy>
-
-				<tstamp>
-					<format property="depoly_endtime" pattern="yyyy-MM-dd-hh.mm.ss a" />
-				</tstamp>
-				<sdbTime beginTime="${deploy_begintime}" endTime="${depoly_endtime}" output="depoly_time" />
-				<echo message="**************************************************************************************************************************************************************" />
-				<echo level="info" message="The deploy-software part began at &lt;${deploy_begintime}&gt;, end at &lt;${depoly_endtime}&gt;,total spending ${depoly_time}s." />
-				<echo message="**************************************************************************************************************************************************************" />
-
 			</else>
 		</if>
 	</target>
@@ -303,11 +245,6 @@
 		<if>
 		   	<equals arg1="${os.arch}" arg2="amd64" />
 			<then>
-
-				<tstamp>
-					<format property="deploy_test_begintime" pattern="yyyy-MM-dd-hh.mm.ss a" />
-				</tstamp>
-
 				<parallel>
 					<ant antfile="deploy-test-in-host.xml" dir="." inheritAll="false">
 						<property name="deploy.file.fullname" value="${deploy.file.fullname}" />
@@ -334,22 +271,8 @@
 						<property name="deploy.host.name" value="${test_machine_no6}" />
 					</ant>
 				</parallel>
-
-				<tstamp>
-					<format property="deploy_test_endtime" pattern="yyyy-MM-dd-hh.mm.ss a" />
-				</tstamp>
-				<sdbTime beginTime="${deploy_test_begintime}" endTime="${deploy_test_endtime}" output="deploy_test_time" />
-				<echo message="**************************************************************************************************************************************************************" />
-				<echo level="info" message="The deploy-test part began at &lt;${deploy_test_begintime}&gt;, end at &lt;${deploy_test_endtime}&gt;,total spending ${deploy_test_time}s." />
-				<echo message="**************************************************************************************************************************************************************" />
-
 			</then>
 			<else>
-
-				<tstamp>
-					<format property="deploy_test_begintime" pattern="yyyy-MM-dd-hh.mm.ss a" />
-				</tstamp>
-
 				<parallel>
 					<ant antfile="deploy-test-in-host.xml" dir="." inheritAll="false">
 						<property name="deploy.file.fullname" value="${deploy.file.fullname}" />
@@ -364,23 +287,11 @@
 						<property name="deploy.host.name" value="${test_machine_no3}" />
 					</ant>
 				</parallel>
-
-				<tstamp>
-					<format property="deploy_test_endtime" pattern="yyyy-MM-dd-hh.mm.ss a" />
-				</tstamp>
-				<sdbTime beginTime="${deploy_test_begintime}" endTime="${deploy_test_endtime}" output="deploy_test_time" />
-				<echo message="**************************************************************************************************************************************************************" />
-				<echo level="info" message="The deploy-test part began at &lt;${deploy_test_begintime}&gt;, end at &lt;${deploy_test_endtime}&gt;,total spending ${deploy_test_time}s." />
-				<echo message="**************************************************************************************************************************************************************" />
-
 			</else>
 		</if>
 
-		<tstamp>
-			<format property="current.time.log" pattern="yyyy-MM-dd-hh.mm.ss_a" />
-		</tstamp>
-		<property name="test.log.path" value="${test.reports.path}/${test.environment}-${DEPLOY_WILDCARD}-${host.NAME}-${current.time.log}-${BUILD_NUMBER}" />
-		<property name="test.log" value="${test.environment}-${DEPLOY_WILDCARD}-${host.NAME}-${current.time.log}-${BUILD_NUMBER}" />
+		<property name="test.log" value="${test.environment}-${BUILD_NUMBER}-[H3][G1][D3]" />
+		<property name="test.log.path" value="${test.reports.path}/${test.log}" />
 
 		<if>
 		   	<equals arg1="${os.arch}" arg2="amd64" />
@@ -393,14 +304,8 @@
 						<param name="deploy.case.fullname" value="${deploy.case.fullname}" />
 						<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
 						<param name="ci.properties.path" value="${test.machine.software.path}/ci.test.properties" />
-						<param name="WORKSPACE" value="${WORKSPACE}" />
-						<param name="ci.script.file.path" value="${ci.script.file.path}" />
-						<param name="parallel.count" value="2" />
 						<param name="test.log" value="${test.log}" />
-						<param name="BUILD_NUMBER" value="${BUILD_NUMBER}" />
 						<param name="test-type-list" value="${test-type-list}" />
-						<param name="parallel-id" value="1" />
-						<param name="parallel-num" value="2" />
 					</sdbtest>
 					<sdbtest host="${test_machine_no3}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${testcase.path}/js_testcases/reports" masterreports="${test.reports.path}" >
 						<param name="basic.testcase.path" value="${testcase.path}/js_testcases" />
@@ -409,14 +314,8 @@
 						<param name="deploy.case.fullname" value="${deploy.case.fullname}" />
 						<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
 						<param name="ci.properties.path" value="${test.machine.software.path}/ci.test.properties" />
-						<param name="WORKSPACE" value="${WORKSPACE}" />
-						<param name="ci.script.file.path" value="${ci.script.file.path}" />
-						<param name="parallel.count" value="2" />
 						<param name="test.log" value="${test.log}" />
-						<param name="BUILD_NUMBER" value="${BUILD_NUMBER}" />
 						<param name="test-type-list" value="${test-type-list}" />
-						<param name="parallel-id" value="2" />
-						<param name="parallel-num" value="2" />
 					</sdbtest>
 				</parallel>
 				<parallel>
@@ -427,14 +326,8 @@
 						<param name="deploy.case.fullname" value="${deploy.case.fullname}" />
 						<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
 						<param name="ci.properties.path" value="${test.machine.software.path}/ci.test.properties" />
-						<param name="WORKSPACE" value="${WORKSPACE}" />
-						<param name="ci.script.file.path" value="${ci.script.file.path}" />
-						<param name="parallel.count" value="2" />
 						<param name="test.log" value="${test.log}" />
-						<param name="BUILD_NUMBER" value="${BUILD_NUMBER}" />
-						<param name="test-type-list" value="${test-type-list}" />
-						<param name="parallel-id" value="1" />
-						<param name="parallel-num" value="2" />
+						<param name="test-type-list" value="${test-type-list}" />	
 					</sdbtest>
 					<sdbtest host="${test_machine_no6}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${testcase.path}/js_testcases/reports" masterreports="${test.reports.path}" >
 						<param name="basic.testcase.path" value="${testcase.path}/js_testcases" />
@@ -443,14 +336,8 @@
 						<param name="deploy.case.fullname" value="${deploy.case.fullname}" />
 						<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
 						<param name="ci.properties.path" value="${test.machine.software.path}/ci.test.properties" />
-						<param name="WORKSPACE" value="${WORKSPACE}" />
-						<param name="ci.script.file.path" value="${ci.script.file.path}" />
-						<param name="parallel.count" value="2" />
 						<param name="test.log" value="${test.log}" />
-						<param name="BUILD_NUMBER" value="${BUILD_NUMBER}" />
 						<param name="test-type-list" value="${test-type-list}" />
-						<param name="parallel-id" value="2" />
-						<param name="parallel-num" value="2" />
 					</sdbtest>
 				</parallel>
 			</then>
@@ -463,14 +350,8 @@
 						<param name="deploy.case.fullname" value="${deploy.case.fullname}" />
 						<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
 						<param name="ci.properties.path" value="${test.machine.software.path}/ci.test.properties" />
-						<param name="WORKSPACE" value="${WORKSPACE}" />
-						<param name="ci.script.file.path" value="${ci.script.file.path}" />
-						<param name="parallel.count" value="2" />
 						<param name="test.log" value="${test.log}" />
-						<param name="BUILD_NUMBER" value="${BUILD_NUMBER}" />
 						<param name="test-type-list" value="${test-type-list}" />
-						<param name="parallel-id" value="1" />
-						<param name="parallel-num" value="2" />
 					</sdbtest>
 					<sdbtest host="${test_machine_no3}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${testcase.path}/js_testcases/reports" masterreports="${test.reports.path}" >
 						<param name="basic.testcase.path" value="${testcase.path}/js_testcases" />
@@ -479,115 +360,49 @@
 						<param name="deploy.case.fullname" value="${deploy.case.fullname}" />
 						<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
 						<param name="ci.properties.path" value="${test.machine.software.path}/ci.test.properties" />
-						<param name="WORKSPACE" value="${WORKSPACE}" />
-						<param name="ci.script.file.path" value="${ci.script.file.path}" />
-						<param name="parallel.count" value="2" />
 						<param name="test.log" value="${test.log}" />
-						<param name="BUILD_NUMBER" value="${BUILD_NUMBER}" />
 						<param name="test-type-list" value="${test-type-list}" />
-						<param name="parallel-id" value="2" />
-						<param name="parallel-num" value="2" />
 					</sdbtest>
 				</parallel>
 			</else>
 		</if>		
 
-<!-- 		<if>
-		   	<equals arg1="${test-type-list}" arg2="js" />
-			<then>
-				<trycatch>
-					<try>
+		<trycatch>
+			<try>
+				<if>
+					<equals arg1="${copy.test.log}" arg2="true" />
+					<then>
+						<mkdir dir="${test.log.path}" />
+
 						<if>
-							<equals arg1="${copy.test.log}" arg2="true" />
+		   					<equals arg1="${os.arch}" arg2="amd64" />
 							<then>
-
-								<tstamp>
-									<format property="copytar_begintime" pattern="yyyy-MM-dd-hh.mm.ss a" />
-								</tstamp>
-
-								<echo message="The copy.test.log is true , then copy all test log to ${save.testLog.hostname}:${save.testLog.dir}"/>
-								<tstamp>
-									<format property="current.time.log" pattern="yyyy-MM-dd-hh.mm.ss a" />
-								</tstamp>
-
-								<property name="test.log.path" value="${test.reports.path}/${test.environment}-${DEPLOY_WILDCARD}-${host.NAME}-${current.time.log}-${BUILD_NUMBER}" />
-								<echo message="Mkdir ${test.log.path}" />
-								<mkdir dir="${test.log.path}" />
-
-								<echo message="It's the cluster mod..." />
-								<if>
-								   	<equals arg1="${os.arch}" arg2="amd64" />
-									<then>
-										<sdbCopyAndTar fileHostName="${test_machine_no1}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/database" savePath="${test.log.path}" />
-										<sdbCopyAndTar fileHostName="${test_machine_no2}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/database" savePath="${test.log.path}" />
-										<sdbCopyAndTar fileHostName="${test_machine_no3}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/database" savePath="${test.log.path}" />
-										<sdbCopyAndTar fileHostName="${test_machine_no4}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/database" savePath="${test.log.path}" />
-										<sdbCopyAndTar fileHostName="${test_machine_no5}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/database" savePath="${test.log.path}" />
-										<sdbCopyAndTar fileHostName="${test_machine_no6}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/database" savePath="${test.log.path}" />
-
-										<sdbCopyAndTar fileHostName="${test_machine_no1}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/conf/local" savePath="${test.log.path}" />
-										<sdbCopyAndTar fileHostName="${test_machine_no2}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/conf/local" savePath="${test.log.path}" />
-										<sdbCopyAndTar fileHostName="${test_machine_no3}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/conf/local" savePath="${test.log.path}" />
-										<sdbCopyAndTar fileHostName="${test_machine_no4}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/conf/local" savePath="${test.log.path}" />
-										<sdbCopyAndTar fileHostName="${test_machine_no5}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/conf/local" savePath="${test.log.path}" />
-										<sdbCopyAndTar fileHostName="${test_machine_no6}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/conf/local" savePath="${test.log.path}" />
-									</then>
-									<else>
-										<sdbCopyAndTar fileHostName="${test_machine_no1}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/database" savePath="${test.log.path}" />
-										<sdbCopyAndTar fileHostName="${test_machine_no2}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/database" savePath="${test.log.path}" />
-										<sdbCopyAndTar fileHostName="${test_machine_no3}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/database" savePath="${test.log.path}" />
-
-										<sdbCopyAndTar fileHostName="${test_machine_no1}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/conf/local" savePath="${test.log.path}" />
-										<sdbCopyAndTar fileHostName="${test_machine_no2}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/conf/local" savePath="${test.log.path}" />
-										<sdbCopyAndTar fileHostName="${test_machine_no3}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/conf/local" savePath="${test.log.path}" />
-									</else>
-								</if>
-								
-								<echo message="Tar ${test.log.path}.tar.gz..." />
-								<tar basedir="${test.reports.path}" destfile="${test.log.path}.tar.gz" compression="gzip" includes="**/*" />
-
-								<stafTools workType="copy" workHost="${host.NAME}" fileName="${test.log.path}.tar.gz"  toHost="${save.testLog.hostname}"  saveDir="${save.testLog.dir}" failonerror="true"/>
-								<sdbProperty name="delete.diaglogFile" value="dir=$(find /opt/sequoiadb/database -name diaglog); for d in $dir ; do echo rm -f $d/* ; rm -f $d/* ; done" />
-
-								<if>
-								   	<equals arg1="${os.arch}" arg2="amd64" />
-									<then>
-										<stafTools workType="shell" workHost="${test_machine_no1}" workDir="${install.path}/sequoiadb/database" common="${delete.diaglogFile}" failonerror="true"/>
-										<stafTools workType="shell" workHost="${test_machine_no2}" workDir="${install.path}/sequoiadb/database" common="${delete.diaglogFile}" failonerror="true"/>
-										<stafTools workType="shell" workHost="${test_machine_no3}" workDir="${install.path}/sequoiadb/database" common="${delete.diaglogFile}" failonerror="true"/>
-										<stafTools workType="shell" workHost="${test_machine_no4}" workDir="${install.path}/sequoiadb/database" common="${delete.diaglogFile}" failonerror="true"/>
-										<stafTools workType="shell" workHost="${test_machine_no5}" workDir="${install.path}/sequoiadb/database" common="${delete.diaglogFile}" failonerror="true"/>
-										<stafTools workType="shell" workHost="${test_machine_no6}" workDir="${install.path}/sequoiadb/database" common="${delete.diaglogFile}" failonerror="true"/>
-									</then>
-									<else>
-										<stafTools workType="shell" workHost="${test_machine_no1}" workDir="${install.path}/sequoiadb/database" common="${delete.diaglogFile}" failonerror="true"/>
-										<stafTools workType="shell" workHost="${test_machine_no2}" workDir="${install.path}/sequoiadb/database" common="${delete.diaglogFile}" failonerror="true"/>
-										<stafTools workType="shell" workHost="${test_machine_no3}" workDir="${install.path}/sequoiadb/database" common="${delete.diaglogFile}" failonerror="true"/>
-									</else>
-								</if>
-
-								<echo message="Delete ${test.log.path}.tar.gz and ${test.log.path} dir ..." />
-								<delete file="${test.log.path}.tar.gz" failonerror="false" />
-								<delete dir="${test.log.path}" failonerror="false"/>
-
-								<tstamp>
-									<format property="copytar_endtime" pattern="yyyy-MM-dd-hh.mm.ss a" />
-								</tstamp>
-								<sdbTime beginTime="${copytar_begintime}" endTime="${copytar_endtime}" output="copytar_time" />
-								<echo message="**************************************************************************************************************************************************************" />
-								<echo level="info" message="The copy-tar-package part began at &lt;${copytar_begintime}&gt;, end at &lt;${copytar_endtime}&gt;,total spending ${copytar_time}s." />
-								<echo message="**************************************************************************************************************************************************************" />
-								
+								<sdbCopyAndTar fileHostName="${test_machine_no1}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/database" savePath="${test.log.path}" />
+								<sdbCopyAndTar fileHostName="${test_machine_no2}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/database" savePath="${test.log.path}" />
+								<sdbCopyAndTar fileHostName="${test_machine_no3}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/database" savePath="${test.log.path}" />
+								<sdbCopyAndTar fileHostName="${test_machine_no4}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/database" savePath="${test.log.path}" />
+								<sdbCopyAndTar fileHostName="${test_machine_no5}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/database" savePath="${test.log.path}" />
+								<sdbCopyAndTar fileHostName="${test_machine_no6}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/database" savePath="${test.log.path}" />
 							</then>
+							<else>
+								<sdbCopyAndTar fileHostName="${test_machine_no1}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/database" savePath="${test.log.path}" />
+								<sdbCopyAndTar fileHostName="${test_machine_no2}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/database" savePath="${test.log.path}" />
+								<sdbCopyAndTar fileHostName="${test_machine_no3}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/database" savePath="${test.log.path}" />
+							</else>
 						</if>
-					</try>
-					<catch>
-						<echo message="copy log for download code fail" />
-					</catch>
-					<finally>
-					</finally>
-				</trycatch>
-			</then>
-		</if> -->
+
+						<tar basedir="${test.reports.path}" destfile="${test.log.path}.tar.gz" compression="gzip" includes="**/*" />
+						<stafTools workType="copy" workHost="${host.NAME}" fileName="${test.log.path}.tar.gz"  toHost="${save.testLog.hostname}"  saveDir="${save.testLog.dir}" failonerror="true"/>						
+					</then>
+				</if>
+			</try>
+			<catch>
+				<echo message="Copy log for download code fail" />
+			</catch>
+			<finally>
+				<delete file="${test.log.path}.tar.gz" failonerror="false" />
+				<delete dir="${test.log.path}" failonerror="false"/>
+			</finally>
+		</trycatch>
 	</target>
 </project>

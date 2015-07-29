@@ -37,7 +37,6 @@
 				<dirset dir="${ant.testcase.path}/ant" includes="${includes.dir.patterns}" excludes="${excludes.dir.patterns}" />
 			</path>
 			<param name="testcases.path" value="${ant.testcase.path}/ant" />
-			<param name="test-type" value="ant" />
 			<param name="includes.case.patterns" value="*.xml" />
 			<param name="excludes.case.patterns" value="query_and_create_delete_index.xml" />
 		</foreach>
@@ -56,15 +55,14 @@
 		<hostinfo prefix="host" />
 		<basename property="test.suite.name" file="${test.suite.fullname}" />
 		<basename property="deploy.name" file="${deploy.case.fullname}" suffix=".xml" />
-		<property name="test.suite.class.name" value="testcases-${test-type}.${deploy.name}-${host.NAME}-${parallel.num}-${test.suite.name}" />
+		<property name="test.suite.class.name" value="testcases-ant.${deploy.name}-${host.NAME}-${parallel.num}-${test.suite.name}" />
 
 		<echo message="Now testsuite ${test.suite.name} ..." />
-		<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" message="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot; ?&gt;&#10;&lt;testsuite name=&quot;${test.suite.name}&quot; type=&quot;${test-type}&quot; deploy=&quot;${deploy.name}&quot; hostname=&quot;${host.NAME}&quot; tests=&quot;1&quot; failure=&quot;0&quot;&gt;&#10;" />
+		<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" message="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot; ?&gt;&#10;&lt;testsuite name=&quot;${test.suite.name}&quot; type=&quot;ant&quot; deploy=&quot;${deploy.name}&quot; hostname=&quot;${host.NAME}&quot; tests=&quot;1&quot; failure=&quot;0&quot;&gt;&#10;" />
 
 		<foreach target="test-one-case" param="test.case.fullname">
 			<fileset dir="${test.suite.fullname}" includes="${includes.case.patterns}" excludes="${excludes.case.patterns}" />
 			<param name="testcases.path" value="${testcases.path}" />
-			<param name="test-type" value="${test-type}" />
 			<param name="test.suite.class.name" value="${test.suite.class.name}" />
 			<param name="host.NAME" value="${host.NAME}" />
 		</foreach>
@@ -81,27 +79,22 @@
 		<exec executable="sed">
 			<arg line="-i 's/^\xEF\xBB\xBF//g'  ${test.case.fullname}"/>
 		</exec>
+		
+		<exec command="/bin/sh -c 'eval echo $$$' " dir="" timeout="900000" outputproperty="pid" />
 		<sdbprefix prefixName="CS_PRIX">
+			<param name="${begin.flag}" value="Test" />
 			<param name="${host.NAME}" value="${host.NAME}" />
+			<param name="${pid}" value="${pid}" />
 			<param name="${parallel.num}" value="${parallel.num}" />
-			<param name="${test.case.name}" value="${test.case.name}" />
+			<param name="${end.flag}" value="_end" />
 		</sdbprefix>
 		<echo message="Now testcase ${test.case.name}.xml begin with ${testcase.begin.time}"/>
 
-		<!-- <parallel threadCount="1" timeout="6000000">
-			<sequential> -->
 		<trycatch property="e">
 			<try>
 				<property name="command" value=" -f ${test.case.fullname} test -Dhost.NAME=${host.NAME} -Dcoord.service.port=${coord.service.port} -DCS_PRIX=${CS_PRIX} -Dinstall.path=${install.path} -DantTask.jar.path=${antTask.jar.path}" />
 				<echo message="Command:ant ${command}" />
 				<echo message="The testcase ${test.case.fullname} path on ${testcases.path}" />
-				<!-- <antfetch antfile="${test.case.fullname}" target="test" inheritAll="false" return="ret.code,error.msg">
-					<property name="host.NAME" value="${host.NAME}" />
-					<property name="coord.service.port" value="${coord.service.port}" />
-					<property name="CS_PRIX" value="${CS_PRIX}" />
-					<property name="install.path" value="${install.path}" />
-				</antfetch>
- -->
 				<exec executable="ant" dir="." timeout="900000" outputproperty="error.msg"  resultproperty="ret.code">
 					<arg line="${command}" />
 				</exec>
@@ -112,8 +105,6 @@
 				<echo message="${error.msg}" />
 			</catch>
 		</trycatch>
-			<!-- </sequential>
-		</parallel> -->
 
 		<if>
 			<not>
