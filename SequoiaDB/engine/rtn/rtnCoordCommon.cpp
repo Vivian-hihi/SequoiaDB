@@ -3353,7 +3353,6 @@ namespace engine
                                     CoordGroupInfoPtr &groupInfo,
                                     INT32 retCode )
    {
-      INT32 rc = SDB_OK;
       PD_TRACE_ENTRY ( SDB_RTNCOUPNODESTATBYRC ) ;
 
       CoordSession *pSession = cb->getCoordSession() ;
@@ -3361,7 +3360,7 @@ namespace engine
       {
          goto done;
       }
-      else if ( SDB_OK != rc && pSession )
+      else if ( SDB_OK != retCode && pSession )
       {
          pSession->removeLastNode( routeID.columns.groupID,
                                    routeID ) ;
@@ -3404,7 +3403,7 @@ namespace engine
             if ( NET_NODE_STAT_NORMAL != preStat )
             {
                PD_LOG( PDWARNING, "Primary node[%d.%d] is crashed, sleep "
-                       "two second", primaryNodeID.columns.groupID,
+                       "two seconds", primaryNodeID.columns.groupID,
                        primaryNodeID.columns.nodeID ) ;
                ossSleep( 2 * OSS_ONE_SEC ) ;
             }

@@ -128,13 +128,10 @@ namespace engine
 
       void updateStatus( NET_NODE_STATUS status, UINT64 curTime )
       {
-         if ( _status != (INT32)status )
+         _status = status ;
+         if ( NET_NODE_STAT_NORMAL != _status )
          {
-            _status = status ;
-            if ( NET_NODE_STAT_NORMAL != _status )
-            {
-               _faultTime = curTime ;
-            }
+            _faultTime = curTime ;
          }
       }
 
