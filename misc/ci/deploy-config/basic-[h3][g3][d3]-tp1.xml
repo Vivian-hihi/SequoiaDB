@@ -713,13 +713,13 @@
 						<delete file="${test.log.path}.tar.gz" failonerror="false" />
 						<delete dir="${test.log.path}" failonerror="false"/> -->
 
-						<tstamp>
+<!-- 						<tstamp>
 							<format property="copytar_endtime" pattern="yyyy-MM-dd-hh.mm.ss a" />
 						</tstamp>
 						<sdbTime beginTime="${copytar_begintime}" endTime="${copytar_endtime}" output="copytar_time" />
 						<echo message="**************************************************************************************************************************************************************" />
 						<echo level="info" message="The copy-tar-package part began at &lt;${copytar_begintime}&gt;, end at &lt;${copytar_endtime}&gt;,total spending ${copytar_time}s." />
-						<echo message="**************************************************************************************************************************************************************" />
+						<echo message="**************************************************************************************************************************************************************" /> -->
 					</then>
 				</if>
 			</try>
