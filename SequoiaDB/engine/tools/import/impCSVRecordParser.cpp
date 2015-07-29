@@ -1450,19 +1450,20 @@ namespace import
 
    static void _printField(CSVField& field)
    {
+      stringstream ss;
       CSV_TYPE type = field.type;
 
-      std::cout << "id:\t" << field.id << std::endl;
-      std::cout << "name:\t" << field.name << std::endl;
-      std::cout << "type:\t" << _CSVTypeToString(type) << std::endl;
+      ss << "id:" << field.id
+         << ", name:" << field.name
+         << ", type:" << _CSVTypeToString(type);
       if (CSV_TYPE_NUMBER == type)
       {
-         std::cout << "type:\t" << _CSVTypeToString(field.subType) << std::endl;
+         ss << ", subtype:" << _CSVTypeToString(field.subType);
       }
-      std::cout << "hasDefault:\t" << field.hasDefault << std::endl;
+      ss << ", hasDefault:" << field.hasDefault;
       if (field.hasDefault)
       {
-         std::cout << "default:\t";
+         ss << ", default:";
 
          if (CSV_TYPE_NUMBER == type)
          {
@@ -1472,69 +1473,67 @@ namespace import
          switch(type)
          {
          case CSV_TYPE_AUTO:
-            std::cout << "auto" << std::endl;
+            ss << "auto";
             break;
          case CSV_TYPE_INT:
-            std::cout << field.defaultValue.intVal << std::endl;
+            ss << field.defaultValue.intVal;
             break;
          case CSV_TYPE_LONG:
-            std::cout << field.defaultValue.longVal << std::endl;
+            ss << field.defaultValue.longVal;
             break;
          case CSV_TYPE_DOUBLE:
-            std::cout << field.defaultValue.doubleVal << std::endl;
+            ss << field.defaultValue.doubleVal;
             break;
          case CSV_TYPE_NUMBER:
             break;
          case CSV_TYPE_BOOL:
-            std::cout << field.defaultValue.boolVal << std::endl;
+            ss << field.defaultValue.boolVal;
             break;
          case CSV_TYPE_STRING:
-            std::cout << "[" << field.defaultValue.strVal.str
-                      << "](length: " << field.defaultValue.strVal.length << ")"
-                      << std::endl;
+            ss << "[" << field.defaultValue.strVal.str
+               << "](length: " << field.defaultValue.strVal.length << ")";
             break;
          case CSV_TYPE_TIMESTAMP:
-            std::cout << field.defaultValue.timestampVal.sec
-                      << "."
-                      << field.defaultValue.timestampVal.us
-                      << std::endl;
+            ss << field.defaultValue.timestampVal.sec
+               << "."
+               << field.defaultValue.timestampVal.us;
             break;
          case CSV_TYPE_DATE:
-            std::cout << field.defaultValue.dateVal << std::endl;
+            ss << field.defaultValue.dateVal;
             break;
          case CSV_TYPE_OID:
-            std::cout << "[" << field.defaultValue.oidVal.str
-                      << "](length: " << field.defaultValue.oidVal.length << ")"
-                      << std::endl;
+            ss << "[" << field.defaultValue.oidVal.str
+               << "](length: " << field.defaultValue.oidVal.length << ")";
             break;
          case CSV_TYPE_REGEX:
-            std::cout << "pattern: [" << field.defaultValue.regexVal.pattern
-                      << "], option: [";
+            ss << "pattern: [" << field.defaultValue.regexVal.pattern
+               << "], option: [";
             if (NULL != field.defaultValue.regexVal.option)
             {
-               std::cout << field.defaultValue.regexVal.option;
+               ss << field.defaultValue.regexVal.option;
             }
             else
             {
-               std::cout << "NULL";
+               ss << "NULL";
             }
-            std::cout << "]"
-                      << std::endl;
+            ss << "]";
             break;
          case CSV_TYPE_BINARY:
-            std::cout << "type: [" << field.defaultValue.binaryVal.type
-                      << "], str: ["
-                      << field.defaultValue.binaryVal.str
-                      << "], binLen: ["
-                      << field.defaultValue.binaryVal.binLen
-                      << "]"
-                      << std::endl;
+            ss << "type: [" << field.defaultValue.binaryVal.type
+               << "], str: ["
+               << field.defaultValue.binaryVal.str
+               << "], binLen: ["
+               << field.defaultValue.binaryVal.binLen
+               << "]";
             break;
          default:
-            std::cout << "unsupported type" << std::endl;
+            ss << "unsupported type";
             break;
          }
       }
+
+      ss << std::endl;
+      std::cout << ss.str();
    }
 
    static inline INT32 _parseFieldValue(const CHAR* data, INT32 length,
@@ -2496,7 +2495,6 @@ namespace import
       {
          CSVField* field = _fieldVec[i];
          _printField(*field);
-         std::cout << std::endl;
       }
    }
 }

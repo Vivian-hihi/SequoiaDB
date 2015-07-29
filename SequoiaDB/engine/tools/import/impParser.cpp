@@ -193,8 +193,12 @@ namespace import
                      if (options->fields().empty())
                      {
                         string fields = string(buf, recordLength);
-                        std::cout << "fields: " << fields
-                                  << std::endl << std::endl;
+
+                        if (options->verbose())
+                        {
+                           std::cout << "fields: " << fields
+                                     << std::endl;
+                        }
 
                         CSVRecordParser* csvParser = (CSVRecordParser*)parser;
 

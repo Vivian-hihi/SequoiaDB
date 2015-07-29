@@ -70,8 +70,11 @@ namespace import
 
          if (!options.fields().empty())
          {
-            //std::cout << "fields: " << options.fields()
-                        //<< std::endl << std::endl;
+            if (options.verbose())
+            {
+               std::cout << "fields: " << options.fields()
+                         << std::endl;
+            }
             const CHAR* str = options.fields().c_str();
             INT32 len = options.fields().length();
 
