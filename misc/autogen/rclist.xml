@@ -1077,8 +1077,8 @@
       <code>
          <name>SDB_CAT_NO_NODEGROUP_INFO</name>
          <description>
-            <en>Unable to find the group information on catalog</en>
-            <cn>节点组信息不存在</cn>
+            <en>No activated group information on catalog</en>
+            <cn>不存在已激活节点组的信息</cn>
          </description>
       </code>
 
