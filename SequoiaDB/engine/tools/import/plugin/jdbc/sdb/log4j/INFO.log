@@ -1,0 +1,87 @@
+[framework] 2015-07-27 16:25:51,531 - com.sequoiadb.tasks.ReadSdb  -0    [pool-1-thread-1] INFO  com.sequoiadb.tasks.ReadSdb  - dbType=db2 url=jdbc:db2://192.168.30.223:50110/sequoia user=db2inst1 sqlselect * from (select s.*,rownumber() over() as rn from (select * from sedb10) as s ) as s1 where s1.rn between 0 and 10
+  [framework] 2015-07-27 16:25:58,219 - com.sequoiadb.tasks.ReadSdb  -6688 [pool-1-thread-1] INFO  com.sequoiadb.tasks.ReadSdb  - costTime6688
+  [framework] 2015-07-28 11:20:55,469 - com.sequoiadb.tasks.ReadSdb  -0    [pool-1-thread-1] INFO  com.sequoiadb.tasks.ReadSdb  - dbType=db2 url=jdbc:db2://192.168.30.223:50110/sequoia user=db2inst1 sqlselect * from (select s.*,rownumber() over() as rn from (select * from sedb10) as s ) as s1 where s1.rn between 0 and 10
+  [framework] 2015-07-28 11:21:02,250 - com.sequoiadb.tasks.ReadSdb  -6781 [pool-1-thread-1] INFO  com.sequoiadb.tasks.ReadSdb  - costTime6781
+  [framework] 2015-07-28 11:26:34,062 - com.sequoiadb.tasks.ReadSdb  -0    [pool-1-thread-1] INFO  com.sequoiadb.tasks.ReadSdb  - dbType=db2 url=jdbc:db2://192.168.30.223:50110/sequoia user=db2inst1 sqlselect * from (select s.*,rownumber() over() as rn from (select * from sedb10) as s ) as s1 where s1.rn between 0 and 10
+  [framework] 2015-07-28 16:13:12,109 - com.sequoiadb.tasks.ReadSdb  -0    [pool-1-thread-1] INFO  com.sequoiadb.tasks.ReadSdb  - dbType=db2 url=jdbc:db2://192.168.30.223:50110/sequoia user=db2inst1 sqlselect * from (select s.*,rownumber() over() as rn from (select * from sedb10) as s ) as s1 where s1.rn between 0 and 10
+  [framework] 2015-07-28 16:13:19,062 - com.sequoiadb.tasks.ReadSdb  -6953 [pool-1-thread-1] INFO  com.sequoiadb.tasks.ReadSdb  - costTime6953
+  [framework] 2015-07-28 17:08:01,156 - com.sequoiadb.main.SdbMain  -0    [main] INFO  com.sequoiadb.main.SdbMain  - args:{sqlList=[select * from (select s.*,rownumber() over() as rn from (select * from sedb10) as s ) as s1 where s1.rn between 0 and 10], threads=1, table=sedb10, sumRow=10, dbType=db2, password=liuck_2015, user=db2inst1, url=jdbc:db2://192.168.30.223:50110/sequoia}
+  [framework] 2015-07-28 17:08:06,375 - com.sequoiadb.tasks.ReadSdb  -5219 [pool-1-thread-1] INFO  com.sequoiadb.tasks.ReadSdb  - dbType=db2 url=jdbc:db2://192.168.30.223:50110/sequoia user=db2inst1 sqlselect * from (select s.*,rownumber() over() as rn from (select * from sedb10) as s ) as s1 where s1.rn between 0 and 10
+  [framework] 2015-07-28 18:54:10,953 - com.sequoiadb.main.SdbMain  -0    [main] INFO  com.sequoiadb.main.SdbMain  - args:{sqlList=[select * from (select s.*,rownumber() over() as rn from (select * from sedb10) as s ) as s1 where s1.rn between 0 and 10], threads=1, table=sedb10, sumRow=10, dbType=db2, password=liuck_2015, user=db2inst1, url=jdbc:db2://192.168.30.223:50110/sequoia}
+  [framework] 2015-07-28 18:54:16,187 - com.sequoiadb.tasks.ReadSdb  -5234 [pool-1-thread-1] INFO  com.sequoiadb.tasks.ReadSdb  - dbType=db2 url=jdbc:db2://192.168.30.223:50110/sequoia user=db2inst1 sqlselect * from (select s.*,rownumber() over() as rn from (select * from sedb10) as s ) as s1 where s1.rn between 0 and 10
+  [framework] 2015-07-28 18:54:23,250 - com.sequoiadb.tasks.ReadSdb  -12297 [pool-1-thread-1] INFO  com.sequoiadb.tasks.ReadSdb  - costTime7063
+  [framework] 2015-07-28 18:54:55,344 - com.sequoiadb.main.SdbMain  -0    [main] INFO  com.sequoiadb.main.SdbMain  - args:{sqlList=[select * from (select s.*,rownumber() over() as rn from (select * from sedb10) as s ) as s1 where s1.rn between 0 and 10], threads=1, table=sedb10, sumRow=10, dbType=db2, password=liuck_2015, user=db2inst1, url=jdbc:db2://192.168.30.223:50110/sequoia}
+  [framework] 2015-07-28 18:56:09,937 - com.sequoiadb.main.SdbMain  -0    [main] INFO  com.sequoiadb.main.SdbMain  - args:{sqlList=[select * from (select rownum,* from sedb10 where rownum <=10) where rownum >0], threads=1, table=sedb10, sumRow=10, dbType=oracle, password=liuck_2015, user=db2inst1, url=jdbc:oracle:thin:@192.168.30.223:50110/sequoia}
+  [framework] 2015-07-28 18:56:10,562 - com.sequoiadb.service.ConnectDataBase  -625  [pool-1-thread-1] ERROR com.sequoiadb.service.ConnectDataBase  - IO ´íÎó: Got minus one from a read call
+  [framework] 2015-07-28 18:56:10,562 - com.sequoiadb.tasks.ReadSdb  -625  [pool-1-thread-1] INFO  com.sequoiadb.tasks.ReadSdb  - dbType=oracle url=jdbc:oracle:thin:@192.168.30.223:50110/sequoia user=db2inst1 sqlselect * from (select rownum,* from sedb10 where rownum <=10) where rownum >0
+  [framework] 2015-07-28 18:56:10,562 - com.sequoiadb.tasks.ReadSdb  -625  [pool-1-thread-1] INFO  com.sequoiadb.tasks.ReadSdb  - costTime0
+  [framework] 2015-07-28 19:15:54,094 - com.sequoiadb.main.SdbMain  -0    [main] ERROR com.sequoiadb.main.SdbMain  - [Ljava.lang.StackTraceElement;@7fd021b9
+  org.apache.commons.cli.MissingArgumentException: Missing argument for option: threads
+	at org.apache.commons.cli.Parser.processArgs(Parser.java:343)
+	at org.apache.commons.cli.Parser.processOption(Parser.java:393)
+	at org.apache.commons.cli.Parser.parse(Parser.java:199)
+	at org.apache.commons.cli.Parser.parse(Parser.java:85)
+	at com.sequoiadb.main.SdbMain.paraseCommand(SdbMain.java:69)
+	at com.sequoiadb.main.SdbMain.main(SdbMain.java:38)
+[framework] 2015-07-28 19:17:33,031 - com.sequoiadb.main.SdbMain  -0    [main] ERROR com.sequoiadb.main.SdbMain  - [Ljava.lang.StackTraceElement;@7e073cd7
+  org.apache.commons.cli.MissingArgumentException: Missing argument for option: threads
+	at org.apache.commons.cli.Parser.processArgs(Parser.java:343)
+	at org.apache.commons.cli.Parser.processOption(Parser.java:393)
+	at org.apache.commons.cli.Parser.parse(Parser.java:199)
+	at org.apache.commons.cli.Parser.parse(Parser.java:85)
+	at com.sequoiadb.main.SdbMain.paraseCommand(SdbMain.java:69)
+	at com.sequoiadb.main.SdbMain.main(SdbMain.java:38)
+[framework] 2015-07-28 19:19:20,812 - com.sequoiadb.main.SdbMain  -0    [main] ERROR com.sequoiadb.main.SdbMain  - [Ljava.lang.StackTraceElement;@18be6d81
+  org.apache.commons.cli.MissingArgumentException: Missing argument for option: threads
+	at org.apache.commons.cli.Parser.processArgs(Parser.java:343)
+	at org.apache.commons.cli.Parser.processOption(Parser.java:393)
+	at org.apache.commons.cli.Parser.parse(Parser.java:199)
+	at org.apache.commons.cli.Parser.parse(Parser.java:85)
+	at com.sequoiadb.main.SdbMain.paraseCommand(SdbMain.java:69)
+	at com.sequoiadb.main.SdbMain.main(SdbMain.java:38)
+[framework] 2015-07-28 19:21:17,625 - com.sequoiadb.main.SdbMain  -0    [main] ERROR com.sequoiadb.main.SdbMain  - [Ljava.lang.StackTraceElement;@d2b87e5
+  org.apache.commons.cli.MissingArgumentException: Missing argument for option: threads
+	at org.apache.commons.cli.Parser.processArgs(Parser.java:343)
+	at org.apache.commons.cli.Parser.processOption(Parser.java:393)
+	at org.apache.commons.cli.Parser.parse(Parser.java:199)
+	at org.apache.commons.cli.Parser.parse(Parser.java:85)
+	at com.sequoiadb.main.SdbMain.paraseCommand(SdbMain.java:69)
+	at com.sequoiadb.main.SdbMain.main(SdbMain.java:38)
+[framework] 2015-07-28 19:23:58,578 - com.sequoiadb.main.SdbMain  -0    [main] ERROR com.sequoiadb.main.SdbMain  - [Ljava.lang.StackTraceElement;@7e073cd7
+  org.apache.commons.cli.MissingArgumentException: Missing argument for option: threads
+	at org.apache.commons.cli.Parser.processArgs(Parser.java:343)
+	at org.apache.commons.cli.Parser.processOption(Parser.java:393)
+	at org.apache.commons.cli.Parser.parse(Parser.java:199)
+	at org.apache.commons.cli.Parser.parse(Parser.java:85)
+	at com.sequoiadb.main.SdbMain.paraseCommand(SdbMain.java:69)
+	at com.sequoiadb.main.SdbMain.main(SdbMain.java:38)
+[framework] 2015-07-28 19:26:07,703 - com.sequoiadb.main.SdbMain  -0    [main] ERROR com.sequoiadb.main.SdbMain  - [Ljava.lang.StackTraceElement;@7e073cd7
+  org.apache.commons.cli.MissingArgumentException: Missing argument for option: threads
+	at org.apache.commons.cli.Parser.processArgs(Parser.java:343)
+	at org.apache.commons.cli.Parser.processOption(Parser.java:393)
+	at org.apache.commons.cli.Parser.parse(Parser.java:199)
+	at org.apache.commons.cli.Parser.parse(Parser.java:85)
+	at com.sequoiadb.main.SdbMain.paraseCommand(SdbMain.java:69)
+	at com.sequoiadb.main.SdbMain.main(SdbMain.java:38)
+[framework] 2015-07-28 19:26:07,719 - com.sequoiadb.main.SdbMain  -16   [main] ERROR com.sequoiadb.main.SdbMain  - error info:
+  [framework] 2015-07-28 19:29:25,078 - com.sequoiadb.main.SdbMain  -16   [main] ERROR com.sequoiadb.main.SdbMain  - [Ljava.lang.StackTraceElement;@d2b87e5
+  org.apache.commons.cli.MissingArgumentException: Missing argument for option: threads
+	at org.apache.commons.cli.Parser.processArgs(Parser.java:343)
+	at org.apache.commons.cli.Parser.processOption(Parser.java:393)
+	at org.apache.commons.cli.Parser.parse(Parser.java:199)
+	at org.apache.commons.cli.Parser.parse(Parser.java:85)
+	at com.sequoiadb.main.SdbMain.paraseCommand(SdbMain.java:71)
+	at com.sequoiadb.main.SdbMain.main(SdbMain.java:38)
+[framework] 2015-07-28 19:29:25,078 - com.sequoiadb.main.SdbMain  -16   [main] ERROR com.sequoiadb.main.SdbMain  - CommandLine error
+  [framework] 2015-07-29 10:10:38,359 - com.sequoiadb.main.SdbMain  -0    [main] INFO  com.sequoiadb.main.SdbMain  - args:{sqlList=[], table=sedb10, sumRow=10, dbType=oracle, password=liuck_2015, user=db2inst1, url=jdbc:oracle:thin:@192.168.30.223:50110/sequoia}
+  [framework] 2015-07-29 10:30:56,922 - com.sequoiadb.main.SdbMain  -0    [main] ERROR com.sequoiadb.main.SdbMain  - could not found --threads option
+  [framework] 2015-07-29 10:37:03,422 - com.sequoiadb.main.SdbMain  -0    [main] ERROR com.sequoiadb.main.SdbMain  - [Ljava.lang.StackTraceElement;@1fc1b26c
+  org.apache.commons.cli.MissingArgumentException: Missing argument for option: threads
+	at org.apache.commons.cli.Parser.processArgs(Parser.java:343)
+	at org.apache.commons.cli.Parser.processOption(Parser.java:393)
+	at org.apache.commons.cli.Parser.parse(Parser.java:199)
+	at org.apache.commons.cli.Parser.parse(Parser.java:85)
+	at com.sequoiadb.main.SdbMain.paraseCommand(SdbMain.java:72)
+	at com.sequoiadb.main.SdbMain.main(SdbMain.java:38)
+[framework] 2015-07-29 10:37:03,422 - com.sequoiadb.main.SdbMain  -0    [main] ERROR com.sequoiadb.main.SdbMain  - CommandLine error
+  

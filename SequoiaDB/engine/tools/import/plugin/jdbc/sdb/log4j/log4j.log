@@ -1,0 +1,12 @@
+10:10:38,359   INFO SdbMain:145 : args:{sqlList=[], table=sedb10, sumRow=10, dbType=oracle, password=liuck_2015, user=db2inst1, url=jdbc:oracle:thin:@192.168.30.223:50110/sequoia}
+  10:30:56,922  ERROR SdbMain:124 : could not found --threads option
+  10:37:03,422  ERROR SdbMain:75 : [Ljava.lang.StackTraceElement;@1fc1b26c
+  org.apache.commons.cli.MissingArgumentException: Missing argument for option: threads
+	at org.apache.commons.cli.Parser.processArgs(Parser.java:343)
+	at org.apache.commons.cli.Parser.processOption(Parser.java:393)
+	at org.apache.commons.cli.Parser.parse(Parser.java:199)
+	at org.apache.commons.cli.Parser.parse(Parser.java:85)
+	at com.sequoiadb.main.SdbMain.paraseCommand(SdbMain.java:72)
+	at com.sequoiadb.main.SdbMain.main(SdbMain.java:38)
+10:37:03,422  ERROR SdbMain:79 : CommandLine error
+  
