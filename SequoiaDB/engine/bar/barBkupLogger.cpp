@@ -996,8 +996,8 @@ namespace engine
 
       if ( SDB_ROLE_STANDALONE != krcb->getDBRole() )
       {
-         _replStatus = _pClsCB->getReplCB()->getStatus() ;
-         _pClsCB->getReplCB()->setStatus( CLS_BS_BACKUPOFFLINE ) ;
+         _replStatus = PMD_DB_STATUS() ;
+         PMD_SET_DB_STATUS( SDB_DB_OFFLINE_BK ) ;
 
          // wait all log complete
          while ( TRUE )
@@ -1046,7 +1046,7 @@ namespace engine
       }
       if ( -1 != _replStatus )
       {
-         _pClsCB->getReplCB()->setStatus( (CLS_BS_STATUS)_replStatus ) ;
+         PMD_SET_DB_STATUS( (SDB_DB_STATUS)_replStatus ) ;
       }
       goto done ;
    }
@@ -1061,7 +1061,7 @@ namespace engine
       _pDMSCB->backupDown( cb ) ;
       if ( -1 != _replStatus )
       {
-         _pClsCB->getReplCB()->setStatus( (CLS_BS_STATUS)_replStatus ) ;
+         PMD_SET_DB_STATUS( (SDB_DB_STATUS)_replStatus ) ;
       }
       return SDB_OK ;
    }

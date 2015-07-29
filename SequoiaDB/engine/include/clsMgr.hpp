@@ -233,7 +233,6 @@ namespace engine
          shdMsgHandler* getShardMsgHandle() ;
          _clsTaskMgr*  getTaskMgr () ;
          BOOLEAN  isPrimary () ;
-         BOOLEAN  isFullSync () ;
          INT32    clearAllData () ;
          INT32    invalidateCata ( const CHAR *name ) ;
 

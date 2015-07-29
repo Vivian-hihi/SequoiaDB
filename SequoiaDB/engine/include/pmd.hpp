@@ -62,10 +62,11 @@ namespace engine
    */
    #define PMD_SYNC_CLOCK_INTERVAL              ( 10 ) /// ms
 
-   #define PMD_DB_STATUS()    pmdGetKRCB()->getDBStatus()
-   #define PMD_IS_DB_NORMAL() ( SDB_DB_NORMAL == PMD_DB_STATUS() )
-   #define PMD_IS_DB_DOWN()   ( SDB_DB_SHUTDOWN == PMD_DB_STATUS() )
-   #define PMD_IS_DB_UP()     ( !PMD_IS_DB_DOWN() )
+   #define PMD_DB_STATUS()       pmdGetKRCB()->getDBStatus()
+   #define PMD_IS_DB_NORMAL()    ( SDB_DB_NORMAL == PMD_DB_STATUS() )
+   #define PMD_IS_DB_DOWN()      ( SDB_DB_SHUTDOWN == PMD_DB_STATUS() )
+   #define PMD_IS_DB_UP()        ( !PMD_IS_DB_DOWN() )
+   #define PMD_IS_DB_AVAILABLE() pmdGetKRCB()->isAvailable(NULL)
 
    #define PMD_SET_DB_STATUS(x)  pmdGetKRCB()->setDBStatus(x)
 
@@ -125,12 +126,16 @@ namespace engine
       virtual const CHAR*        getDBStatusDesp() const ;
       virtual BOOLEAN            isShutdown() const ;
       virtual BOOLEAN            isNormal() const ;
+      virtual BOOLEAN            isAvailable( INT32 *pCode = NULL ) const ;
       virtual INT32              getShutdownCode() const ;
 
       virtual UINT32             getDBMode() const ;
       virtual std::string        getDBModeDesp() const ;
       virtual BOOLEAN            isDBReadonly() const ;
       virtual BOOLEAN            isDBDeactivated() const ;
+
+      virtual BOOLEAN            isInFlowControl() const ;
+      virtual BOOLEAN            isDataOK() const ;
 
       virtual SDB_ROLE           getDBRole() const ;
       virtual const CHAR*        getDBRoleDesp() const ;
@@ -173,6 +178,8 @@ namespace engine
       SDB_ROLE       _role ;
       SDB_DB_STATUS  _dbStatus ;
       UINT32         _dbMode ;
+
+      BOOLEAN        _flowControl ;
 
       BOOLEAN        _businessOK ;
       INT32          _exitCode ;
@@ -304,7 +311,11 @@ namespace engine
       }
       void setDBStatus ( SDB_DB_STATUS status )
       {
-         _dbStatus = status ;
+         /// SDB_DB_SHUTDOWN is highest status, cant change
+         if ( SDB_DB_SHUTDOWN != _dbStatus )
+         {
+            _dbStatus = status ;
+         }
       }
       void setDBReadonly( BOOLEAN readonly )
       {
@@ -327,6 +338,10 @@ namespace engine
          {
             _dbMode &= ~SDB_DB_MODE_DEACTIVATED ;
          }
+      }
+      void setFlowControl( BOOLEAN flowControl )
+      {
+         _flowControl = flowControl ;
       }
       void setGroupName ( const CHAR *groupName )
       {

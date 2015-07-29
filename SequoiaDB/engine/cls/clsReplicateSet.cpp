@@ -90,8 +90,7 @@ namespace engine
      _clsCB( NULL ),
      _timerID( CLS_INVALID_TIMERID ),
      _beatTime( 0 ),
-     _active( FALSE ),
-     _replStatus( CLS_BS_NORMAL )
+     _active( FALSE )
    {
       _srcSessionNum = 0 ;
       _ntyLastOffset = DPS_INVALID_LSN_OFFSET ;
@@ -102,6 +101,8 @@ namespace engine
       _checkBreakTick = 0 ;
       memset( _sizethreshold, 0, sizeof( _sizethreshold ) ) ;
       memset( _timeThreshold, 0, sizeof( _timeThreshold ) ) ;
+
+      _faultEvent.reset() ;
    }
 
    _clsReplicateSet::~_clsReplicateSet()
@@ -232,8 +233,7 @@ namespace engine
 
    INT32 _clsReplicateSet::deactive ()
    {
-      // stop repl-sync
-      setStatus( CLS_BS_CLOSED ) ;
+      SDB_ASSERT( PMD_IS_DB_DOWN(), "DB must be down" ) ;
 
       if ( _replBucket.maxReplSync() > 0 )
       {
@@ -410,6 +410,11 @@ namespace engine
    INT32 _clsReplicateSet::callCatalog( MsgHeader *header )
    {
       return _cata.call( header ) ;
+   }
+
+   ossEvent* _clsReplicateSet::getFaultEvent()
+   {
+      return &_faultEvent ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSREPSET_GETPRMY, "_clsReplicateSet::getPrimary" )
@@ -1040,64 +1045,60 @@ namespace engine
 
       UINT32 threshTime = 0 ;
       UINT32 waitTime = 0 ;
-      DPS_LSN_OFFSET offset = _sync.getSyncCtrlArbitLSN() ;
+      DPS_LSN_OFFSET offset = DPS_INVALID_LSN_OFFSET ;
+      DPS_LSN expectLSN ;
 
-      if ( DPS_INVALID_LSN_OFFSET == offset ||
-           isFullSync() )
+      while ( SDB_OK == rc && PMD_IS_DB_AVAILABLE() )
       {
-         goto done ;
-      }
-      else
-      {
-         DPS_LSN expectLSN ;
-
-         while ( SDB_OK == rc )
+         offset = _sync.getSyncCtrlArbitLSN() ;
+         if ( DPS_INVALID_LSN_OFFSET == offset )
          {
-            offset = _sync.getSyncCtrlArbitLSN() ;
-            expectLSN = _logger->expectLsn() ;
+            break ;
+         }
 
-            // when log file number == 1
-            if ( offset >= expectLSN.offset )
-            {
-               goto done ;
-            }
+         expectLSN = _logger->expectLsn() ;
+         // when log file number == 1, make sure all other nodes has uped
+         if ( offset >= expectLSN.offset )
+         {
+            goto done ;
+         }
 
-            threshTime = _getThresholdTime( expectLSN.offset - offset ) ;
-            if ( 0 == threshTime )
-            {
-               goto done ;
-            }
+         threshTime = _getThresholdTime( expectLSN.offset - offset ) ;
+         if ( 0 == threshTime )
+         {
+            goto done ;
+         }
 
-            expectLSN.offset += reqLen ;
-            if ( ( expectLSN.offset > offset + _logger->getLogFileSz() &&
-                   _logger->calcFileID( expectLSN.offset ) ==
-                   _logger->calcFileID( offset ) ) ||
-                 ( waitTime < threshTime ) )
+         expectLSN.offset += reqLen ;
+         if ( ( expectLSN.offset > offset + _logger->getLogFileSz() &&
+                _logger->calcFileID( expectLSN.offset ) ==
+                _logger->calcFileID( offset ) ) ||
+              ( waitTime < threshTime ) )
+         {
+            if ( !_inSyncCtrl )
             {
-               if ( !_inSyncCtrl )
-               {
-                  _inSyncCtrl = TRUE ;
-                  PD_LOG( PDWARNING, "Begin sync control...[expectLSN: %lld, "
-                          "ArbitLSN: %lld, threshTime: %d, reqLen: %d, "
-                          "waitTime: %d]", expectLSN.offset, offset,
-                          threshTime, reqLen, waitTime ) ;
-               }
-               ossSleep( CLS_SYNCCTRL_BASE_TIME ) ;
-               waitTime += CLS_SYNCCTRL_BASE_TIME ;
+               _inSyncCtrl = TRUE ;
+               pmdGetKRCB()->setFlowControl( TRUE ) ;
+               PD_LOG( PDWARNING, "Begin sync control...[expectLSN: %lld, "
+                       "ArbitLSN: %lld, threshTime: %d, reqLen: %d, "
+                       "waitTime: %d]", expectLSN.offset, offset,
+                       threshTime, reqLen, waitTime ) ;
             }
-            else
-            {
-               break ;
-            }
+            ossSleep( CLS_SYNCCTRL_BASE_TIME ) ;
+            waitTime += CLS_SYNCCTRL_BASE_TIME ;
+         }
+         else
+         {
+            break ;
+         }
 
-            if ( cb->isInterrupted() )
-            {
-               rc = SDB_APP_INTERRUPT ;
-            }
-            else if ( !_vote.primaryIsMe() )
-            {
-               rc = SDB_CLS_NOT_PRIMARY ;
-            }
+         if ( cb->isInterrupted() )
+         {
+            rc = SDB_APP_INTERRUPT ;
+         }
+         else if ( !_vote.primaryIsMe() )
+         {
+            rc = SDB_CLS_NOT_PRIMARY ;
          }
       }
 
@@ -1105,6 +1106,7 @@ namespace engine
       if ( 0 == waitTime && _inSyncCtrl )
       {
          _inSyncCtrl = FALSE ;
+         pmdGetKRCB()->setFlowControl( FALSE ) ;
          PD_LOG( PDWARNING, "End sync control" ) ;
       }
       PD_TRACE_EXITRC ( SDB__CLSREPSET__CANASSIGNLOGPAGE, rc );

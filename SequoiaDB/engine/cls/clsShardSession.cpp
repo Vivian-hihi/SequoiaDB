@@ -719,7 +719,6 @@ namespace engine
                                     &_isMainCL, &replSize ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to check cl status:%d", rc ) ;
          goto error ;
       }
 
@@ -813,7 +812,6 @@ namespace engine
                                     &_isMainCL, &replSize ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to check cl status:%d", rc ) ;
          goto error ;
       }
 
@@ -900,7 +898,6 @@ namespace engine
                                     &_isMainCL, &replSize ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to check cl status:%d", rc ) ;
          goto error ;
       }
 
@@ -1027,8 +1024,8 @@ namespace engine
                goto error ;
             }
             rc = _checkCLStatusAndGetSth( pCollectionName,
-                                    pQuery->version,
-                                    &_isMainCL, NULL ) ;
+                                          pQuery->version,
+                                          &_isMainCL, NULL ) ;
             if ( SDB_OK != rc )
             {
                goto error ;
@@ -1164,7 +1161,6 @@ namespace engine
             
             if ( SDB_OK != rc )
             {    
-               PD_LOG( PDERROR, "failed to check cl status:%d", rc ) ;
                goto error ;
             }
 
@@ -2765,7 +2761,6 @@ namespace engine
 
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to check catainfo:%d", rc ) ;
          goto error ;
       }
 
@@ -2867,7 +2862,6 @@ namespace engine
                                     &_isMainCL, NULL ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to check cl status:%d", rc ) ;
          goto error ;
       }
 
@@ -3037,7 +3031,6 @@ namespace engine
                                     &_isMainCL, NULL ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to check cl status:%d", rc ) ;
          goto error ;
       }
 
@@ -3116,7 +3109,6 @@ namespace engine
                                     &_isMainCL, NULL ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to check cl status:%d", rc ) ;
          goto error ;
       }
 
@@ -3230,7 +3222,6 @@ namespace engine
                                     &_isMainCL, NULL ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to check cl status:%d", rc ) ;
          goto error ;
       }
 
@@ -3459,8 +3450,16 @@ namespace engine
          else if ( waitTime < SHD_NOTPRIMARY_WAITTIME &&
                    !_pEDUCB->isInterrupted() )
          {
+            INT32 result = SDB_OK ;
+            rc = _pReplSet->getFaultEvent->wait( SHD_WAITTIME_INTERVAL,
+                                                 &result ) ;
+            if ( SDB_OK == rc && SDB_OK != result )
+            {
+               rc = result ;
+               goto error;
+            }
+
             rc = SDB_OK ;
-            ossSleep( SHD_WAITTIME_INTERVAL ) ;
             waitTime += SHD_WAITTIME_INTERVAL ;
             continue ;
          }
@@ -3564,16 +3563,18 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__CLSSHDSESS__CKREPLSTATUS ) ;
-      if ( _pReplSet->isFullSync() )
+
+      if ( SDB_DB_FULLSYNC == PMD_DB_STATUS() )
       {
          rc = SDB_CLS_FULL_SYNC ;
-         goto error ;
       }
-   done:
+      else if ( SDB_DB_REBUILDING == PMD_DB_STATUS() )
+      {
+         rc = SDB_RTN_IN_REBUILD ;
+      }
+
       PD_TRACE_EXITRC( SDB__CLSSHDSESS__CKREPLSTATUS, rc ) ;
       return rc ;
-   error:
-      goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDSESS__CHECKCLSANDGET, "_clsShdSession::_checkCLStatusAndGetSth" )

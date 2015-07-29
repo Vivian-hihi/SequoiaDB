@@ -82,16 +82,6 @@ namespace engine
             return _vote.primaryIsMe() ;
          }
 
-         OSS_INLINE BOOLEAN isFullSync ()
-         {
-            return CLS_BS_FULLSYNC == _replStatus ? TRUE : FALSE ;
-         }
-
-         OSS_INLINE CLS_BS_STATUS getStatus () const
-         {
-            return _replStatus ;
-         }
-
          OSS_INLINE clsBucket* getBucket ()
          {
             return &_replBucket ;
@@ -101,23 +91,6 @@ namespace engine
          {
             _info.local = id ;
             /// _agent was set by clsMgr.
-         }
-
-         OSS_INLINE void setFullSync( BOOLEAN fullSync )
-         {
-            if ( fullSync )
-            {
-               _replStatus = CLS_BS_FULLSYNC ;
-            }
-            else
-            {
-               _replStatus = CLS_BS_NORMAL ;
-            }
-         }
-
-         OSS_INLINE void setStatus( CLS_BS_STATUS status )
-         {
-            _replStatus = status ;
          }
 
          OSS_INLINE const UINT32 ailves()
@@ -263,6 +236,8 @@ namespace engine
          MsgRouteID     getPrimary () ;
          BOOLEAN        isSendNormal( UINT64 nodeID ) ;
 
+         ossEvent*      getFaultEvent() ;
+
          INT64 netIn() ;
          INT64 netOut() ;
          void resetMon() ;
@@ -316,7 +291,6 @@ namespace engine
          UINT64                  _timerID ;
          UINT32                  _beatTime ;
          BOOLEAN                 _active ;
-         CLS_BS_STATUS           _replStatus ;
          UINT64                  _checkBreakTick ;
 
          UINT32                  _srcSessionNum ;
@@ -333,6 +307,8 @@ namespace engine
          UINT64                  _sizethreshold[ CLS_SYNCCTRL_THRESHOLD_SIZE ] ;
          UINT32                  _timeThreshold[ CLS_SYNCCTRL_THRESHOLD_SIZE ] ;
          BOOLEAN                 _inSyncCtrl ;
+
+         ossEvent                _faultEvent ;
    } ;
 
    typedef class _clsReplicateSet clsReplicateSet ;

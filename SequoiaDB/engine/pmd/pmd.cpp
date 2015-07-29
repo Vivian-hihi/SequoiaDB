@@ -56,6 +56,8 @@ namespace engine
       _businessOK = TRUE ;
       _restart = FALSE ;
 
+      _flowControl = FALSE ;
+
       _dbMode = 0 ;
 
       for ( INT32 i = 0 ; i < SDB_CB_MAX ; ++i )
@@ -138,6 +140,28 @@ namespace engine
       return SDB_DB_NORMAL == _dbStatus ? TRUE : FALSE ;
    }
 
+   BOOLEAN _SDB_KRCB::isAvailable( INT32 *pCode ) const
+   {
+      INT32 rc = SDB_OK ;
+      switch ( _dbStatus )
+      {
+         case SDB_DB_FULLSYNC :
+            rc = SDB_CLS_FULL_SYNC ;
+            break ;
+         case SDB_DB_REBUILDING :
+            rc = SDB_RTN_IN_REBUILD ;
+            break ;
+         default :
+            break ;
+      }
+
+      if ( pCode )
+      {
+         *pCode = rc ;
+      }
+      return SDB_OK == rc ? TRUE : FALSE ;
+   }
+
    BOOLEAN _SDB_KRCB::isShutdown() const
    {
       return SDB_DB_SHUTDOWN == _dbStatus ? TRUE : FALSE ;
@@ -168,9 +192,19 @@ namespace engine
       return ( SDB_DB_MODE_DEACTIVATED & _dbMode ) ? TRUE : FALSE ;
    }
 
+   BOOLEAN _SDB_KRCB::isInFlowControl() const
+   {
+      return _flowControl ;
+   }
+
    SDB_ROLE _SDB_KRCB::getDBRole() const
    {
       return _role ;
+   }
+
+   BOOLEAN _SDB_KRCB::isDataOK() const
+   {
+      return pmdGetStartup().isOK() ;
    }
 
    const CHAR* _SDB_KRCB::getDBRoleDesp() const

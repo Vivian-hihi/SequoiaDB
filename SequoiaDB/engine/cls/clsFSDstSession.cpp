@@ -958,6 +958,7 @@ namespace engine
       {
           PD_LOG( PDWARNING, "Session[%s]: ignore msg", sessionName() ) ;
       }
+
    done:
       PD_TRACE_EXIT ( SDB__CLSDATADBS_HNDNTFRES );
       return SDB_OK ;
@@ -1336,6 +1337,11 @@ namespace engine
          goto done ;
       }
 
+      // disconnect all collection
+      PD_LOG( PDEVENT, "FS Session[%s] close all shard connections",
+              sessionName() ) ;
+      sdbGetClsCB()->getShardRouteAgent()->disconnectAll() ;
+
       //clear all catalog info
       sdbGetShardCB()->getCataAgent()->lock_w() ;
       sdbGetShardCB()->getCataAgent()->clearAll() ;
@@ -1445,9 +1451,6 @@ namespace engine
          _agent->syncSend( src, &msg ) ;
          _timeout = 0 ;
       }
-
-      // disconnect all collection
-      sdbGetClsCB()->getShardRouteAgent()->disconnectAll() ;
 
       PD_TRACE_EXIT ( SDB__CLSFSDS__BEGIN );
       return ;
@@ -1566,6 +1569,13 @@ namespace engine
       return result ;
    }
 
+   void _clsFSDstSession::_onAttach()
+   {
+      /// set full sync status
+      PMD_SET_DB_STATUS( SDB_DB_FULLSYNC ) ;
+      sdbGetReplCB()->getFaultEvent()->signalAll( SDB_CLS_FULL_SYNC ) ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSFSDS__ONDETACH, "_clsFSDstSession::_onDetach" )
    void _clsFSDstSession::_onDetach()
    {
@@ -1579,7 +1589,10 @@ namespace engine
       PD_LOG( PDEVENT, "FS Session[%s]: start sync session.", sessionName() ) ;
       pmdGetKRCB()->getClsCB()->startInnerSession( CLS_REPL,
                                                    CLS_TID_REPL_SYC ) ;
-      sdbGetReplCB()->setFullSync( FALSE ) ;
+
+      /// end full sync status
+      sdbGetReplCB()->getFaultEvent()->reset() ;
+      PMD_SET_DB_STATUS( SDB_DB_NORMAL ) ;
 
       _disconnect() ;
       PD_TRACE_EXIT ( SDB__CLSFSDS__ONDETACH );
@@ -1602,7 +1615,7 @@ namespace engine
    }
 
    INT32 _clsFSDstSession::handleSyncTransRes( NET_HANDLE handle,
-                                             MsgHeader * header )
+                                               MsgHeader * header )
    {
       INT32 rc = SDB_OK;
       SDB_DPSCB *dpsCB = pmdGetKRCB()->getDPSCB();

@@ -211,7 +211,7 @@ namespace engine
             if ( MON_MASK_SERVICE_STATUS & mask )
             {
                ob.appendBool ( FIELD_NAME_SERVICE_STATUS,
-                               !pReplcb->isFullSync() ) ;
+                               PMD_IS_DB_AVAILABLE() ) ;
             }
          }
 

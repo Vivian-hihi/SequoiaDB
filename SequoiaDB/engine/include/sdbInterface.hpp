@@ -337,12 +337,16 @@ namespace engine
          virtual const CHAR*        getDBStatusDesp() const = 0 ;
          virtual BOOLEAN            isShutdown() const = 0 ;
          virtual BOOLEAN            isNormal() const = 0 ;
+         virtual BOOLEAN            isAvailable( INT32 *pCode = NULL ) const = 0 ;
          virtual INT32              getShutdownCode() const = 0 ;
 
          virtual UINT32             getDBMode() const = 0 ;
          virtual std::string        getDBModeDesp() const = 0 ;
          virtual BOOLEAN            isDBReadonly() const = 0 ;
          virtual BOOLEAN            isDBDeactivated() const = 0 ;
+
+         virtual BOOLEAN            isInFlowControl() const = 0 ;
+         virtual BOOLEAN            isDataOK() const = 0 ;
 
          virtual SDB_ROLE           getDBRole() const = 0 ;
          virtual const CHAR*        getDBRoleDesp() const = 0 ;

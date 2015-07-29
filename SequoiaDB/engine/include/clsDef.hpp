@@ -103,14 +103,6 @@ namespace engine
       CLS_ELECTION_STATUS_PRIMARY = 4,
    } ;
 
-   enum CLS_BS_STATUS
-   {
-      CLS_BS_CLOSED           = 0,
-      CLS_BS_NORMAL,
-      CLS_BS_FULLSYNC,
-      CLS_BS_BACKUPOFFLINE,
-   } ;
-
    enum CLS_NODE_SERVICE_STATUS
    {
       SERVICE_NORMAL          = 0,     /// node is normal, and data is normal

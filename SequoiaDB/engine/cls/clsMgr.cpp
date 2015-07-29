@@ -838,10 +838,6 @@ namespace engine
    {
       return _replObj.primaryIsMe () ;
    }
-   BOOLEAN _clsMgr::isFullSync ()
-   {
-      return _replObj.isFullSync() ;
-   }
    INT32 _clsMgr::clearAllData ()
    {
       return _shdObj.clearAllData () ;

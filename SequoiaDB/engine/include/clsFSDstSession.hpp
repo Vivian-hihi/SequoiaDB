@@ -179,6 +179,7 @@ namespace engine
       INT32 handleSyncTransRes( NET_HANDLE handle, MsgHeader* header ) ;
 
    protected:
+      virtual void      _onAttach () ;
       virtual void      _onDetach () ;
    protected:
       void              _pullTransLog ( DPS_LSN &begin ) ;

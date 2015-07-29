@@ -86,7 +86,7 @@ namespace engine
                                    const DPS_LSN_OFFSET &offset ) = 0 ;
 
       protected:
-         virtual BOOLEAN   _isReady () = 0 ;
+         virtual INT32       _isReady () = 0 ;
          virtual const CHAR* _onObjFilter ( const CHAR* inBuff, INT32 inSize,
                                             INT32 &outSize ) = 0 ;
          virtual INT32     _onFSMeta ( const CHAR *clFullName ) = 0 ;
@@ -196,7 +196,7 @@ namespace engine
       INT32 handleSyncTransReq( NET_HANDLE handle, MsgHeader* header ) ;
 
    protected:
-      virtual BOOLEAN _isReady() ;
+      virtual INT32       _isReady() ;
       virtual const CHAR* _onObjFilter ( const CHAR* inBuff, INT32 inSize,
                                          INT32 &outSize ) ;
       virtual INT32 _onLobFilter( const bson::OID &oid,
@@ -227,7 +227,7 @@ namespace engine
          virtual EDU_TYPES eduType () const ;
 
       protected:
-         virtual BOOLEAN _isReady() ;
+         virtual INT32       _isReady() ;
          virtual const CHAR* _onObjFilter ( const CHAR* inBuff, INT32 inSize,
                                             INT32 &outSize ) ;
          virtual INT32   _onFSMeta ( const CHAR *clFullName ) ;

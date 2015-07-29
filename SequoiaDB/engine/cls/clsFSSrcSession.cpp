@@ -127,10 +127,11 @@ namespace engine
 
       if ( !_quit )
       {
-         if ( !_isReady() )
+         INT32 rc = SDB_OK ;
+         if ( SDB_OK != ( rc = _isReady() ) )
          {
-            PD_LOG( PDWARNING, "Session[%s] is not ready, disconnect",
-                    sessionName() ) ;
+            PD_LOG( PDWARNING, "Session[%s] is not ready[%d], disconnect",
+                    sessionName(), rc ) ;
             _disconnect () ;
             goto done ;
          }
@@ -1046,11 +1047,10 @@ namespace engine
          rc = SDB_SYS ;
          goto error ;
       }
-      else if ( !_isReady() )
+      else if ( SDB_OK != ( rc = _isReady() ) )
       {
-         PD_LOG( PDWARNING, "Session[%s] is not ready, disconnect",
-                 sessionName() ) ;
-         rc = SDB_CLS_NOT_PRIMARY ;
+         PD_LOG( PDWARNING, "Session[%s] is not ready[%d], disconnect",
+                 sessionName(), rc ) ;
          goto error ;
       }
 
@@ -1207,8 +1207,10 @@ namespace engine
    INT32 _clsDataSrcBaseSession::handleFSIndex( NET_HANDLE handle,
                                                 MsgHeader* header )
    {
+      INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__CLSDSBS_HNDFSINX );
       SDB_ASSERT( NULL != header, "header should not be NULL" ) ;
+
       MsgClsFSIndexRes res ;
       BSONObj obj ;
       if ( !_hasMeta )
@@ -1218,10 +1220,10 @@ namespace engine
                  sessionName() ) ;
          goto done ;
       }
-      else if ( !_isReady() )
+      else if ( SDB_OK != ( rc = _isReady() ) )
       {
-         PD_LOG( PDWARNING, "Session[%s] is not ready, disconnect",
-                 sessionName() ) ;
+         PD_LOG( PDWARNING, "Session[%s] is not ready[%d], disconnect",
+                 sessionName(), rc ) ;
          _disconnect () ;
          goto done ;
       }
@@ -1258,10 +1260,10 @@ namespace engine
                  sessionName() ) ;
          goto done ;
       }
-      else if ( !_isReady() )
+      else if ( SDB_OK != ( rc = _isReady() ) )
       {
-         PD_LOG( PDWARNING, "Session[%s] is not ready, disconnect",
-                 sessionName() ) ;
+         PD_LOG( PDWARNING, "Session[%s] is not ready[%d], disconnect",
+                 sessionName(), rc ) ;
          _disconnect () ;
          goto done ;
       }
@@ -1378,6 +1380,7 @@ namespace engine
    INT32 _clsFSSrcSession::handleBegin( NET_HANDLE handle,
                                         MsgHeader* header )
    {
+      INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__CLSFSSS_HNDBEGIN );
       SDB_ASSERT( NULL != header, "header should not be NULL" ) ;
       PD_LOG( PDEVENT, "FS Session[%s] begin to full sync", sessionName() ) ;
@@ -1397,17 +1400,7 @@ namespace engine
          goto done ;
       }
 
-      //if in full sync, can't be the source node of other full sync
-      if ( _pRepl->isFullSync () )
-      {
-         PD_LOG ( PDWARNING, "FS Session[%s] in full sync, can't be the fs "
-                  "source node", sessionName() ) ;
-         msg.header.res = SDB_CLS_FULL_SYNC ;
-         _quit = TRUE ;
-         _agent->syncSend( handle, &msg ) ;
-         goto done ;
-      }
-      /*else if ( !_pRepl->primaryIsMe() &&
+      /*if ( !_pRepl->primaryIsMe() &&
                 DPS_INVALID_LSN_OFFSET ==
                 dpscb->getCurrentLsn().offset )
       {
@@ -1419,22 +1412,12 @@ namespace engine
          goto done ;
       }*/
 
-      //if not primay, can't be the source node of the full sync
-      if ( !_isReady() )
+      //if not ready, can't be the source node of the full sync
+      if ( SDB_OK != ( rc = _isReady() ) )
       {
-         PD_LOG( PDWARNING, "FS Session[%s] not primary, disconnect",
-                 sessionName() ) ;
-         msg.header.res = SDB_CLS_NOT_PRIMARY ;
-         _quit = TRUE ;
-         _agent->syncSend( handle, &msg ) ;
-         goto done ;
-      }
-
-      if ( !pmdGetStartup().isOK () )
-      {
-         PD_LOG ( PDWARNING, "FS Session[%s] database is not repared,"
-                  "can't be the fs source node", sessionName() ) ;
-         msg.header.res = SDB_RTN_IN_REBUILD ;
+         PD_LOG( PDWARNING, "FS Session[%s] is not ready[%d], refused",
+                 sessionName(), rc ) ;
+         msg.header.res = rc ;
          _quit = TRUE ;
          _agent->syncSend( handle, &msg ) ;
          goto done ;
@@ -1538,11 +1521,10 @@ namespace engine
          rc = SDB_SYS ;
          goto error ;
       }
-      else if ( !_isReady() )
+      else if ( SDB_OK != ( rc = _isReady() ) )
       {
-         PD_LOG( PDWARNING, "FS Session[%s] is not ready, disconnect",
-                 sessionName() ) ;
-         rc = SDB_CLS_NOT_PRIMARY ;
+         PD_LOG( PDWARNING, "FS Session[%s] is not ready[%d], disconnect",
+                 sessionName(), rc ) ;
          goto error ;
       }
 
@@ -1707,11 +1689,41 @@ namespace engine
       return TRUE ;
    }
 
-   BOOLEAN _clsFSSrcSession::_isReady()
+   INT32 _clsFSSrcSession::_isReady()
    {
-      /*return MSG_INVALID_ROUTEID !=
-             sdbGetReplCB()->getPrimary().value ;*/
-      return pmdIsPrimary() ;
+      INT32 rc = SDB_OK ;
+
+      /// 1. not primary
+      if ( pmdIsPrimary() )
+      {
+         /* MSG_INVALID_ROUTEID != sdbGetReplCB()->getPrimary().value */
+         rc = SDB_CLS_NOT_PRIMARY ;
+         PD_LOG( PDWARNING, "FS Session[%s] not ready: Self node is not "
+                 "primary", sessionName() ) ;
+      }
+      /// 2. in full sync
+      else if ( SDB_DB_FULLSYNC == PMD_DB_STATUS() )
+      {
+         rc = SDB_CLS_FULL_SYNC ;
+         PD_LOG( PDWARNING, "FS Session[%s] not ready: Self node is "
+                 "already in full sync", sessionName() ) ;
+      }
+      /// 3. in rebuild
+      else if ( SDB_DB_REBUILDING == PMD_DB_STATUS() )
+      {
+         rc = SDB_RTN_IN_REBUILD ;
+         PD_LOG( PDWARNING, "FS Session[%s] not ready: Self node is "
+                 "already in rebuilding", sessionName() ) ;
+      }
+      /// 4. business is not ok
+      else if ( !pmdGetStartup().isOK () )
+      {
+         rc = SDB_RTN_IN_REBUILD ;
+         PD_LOG( PDWARNING, "FS Session[%s] not ready: Self node is "
+                 "not recoverd from crash", sessionName() ) ;
+      }
+
+      return rc ;
    }
 
    const CHAR* _clsFSSrcSession::_onObjFilter( const CHAR * inBuff,
@@ -2112,6 +2124,7 @@ namespace engine
    INT32 _clsSplitSrcSession::handleBegin( NET_HANDLE handle,
                                            MsgHeader* header )
    {
+      INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__CLSSPLSS_HNDBEGIN );
       PD_LOG( PDEVENT, "Split Session[%s]: Begin for split", sessionName() ) ;
 
@@ -2139,11 +2152,11 @@ namespace engine
          goto done ;
       }
 
-      //if not primay, can't be the source node of split
-      if ( !_isReady() )
+      //if not ready, can't be the source node of split
+      if ( SDB_OK != ( rc = _isReady() ) )
       {
-         PD_LOG( PDWARNING, "Split Session[%s]: not primary node, refused",
-                 sessionName() ) ;
+         PD_LOG( PDWARNING, "Split Session[%s] not ready[%d], refused",
+                 sessionName(), rc ) ;
          _disconnect () ;
          goto done ;
       }
@@ -2176,6 +2189,7 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSPLSS_HNDEND, "_clsSplitSrcSession::handleEnd" )
    INT32 _clsSplitSrcSession::handleEnd( NET_HANDLE handle, MsgHeader * header )
    {
+      INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__CLSSPLSS_HNDEND );
       INT32 cleanResult = SDB_OK ;
 
@@ -2189,10 +2203,10 @@ namespace engine
             _disconnect() ;
             goto done ;
          }
-         else if ( !_isReady() )
+         else if ( SDB_OK != ( rc = _isReady() ) )
          {
-            PD_LOG( PDWARNING, "Split Session[%s] is not ready, disconnect",
-                    sessionName() ) ;
+            PD_LOG( PDWARNING, "Split Session[%s] is not ready[%d], "
+                    "disconnect", sessionName(), rc ) ;
             _disconnect() ;
             goto done ;
          }
@@ -2276,10 +2290,10 @@ namespace engine
          _disconnect() ;
          goto done ;
       }
-      else if ( !_isReady() )
+      else if ( SDB_OK != ( rc = _isReady() ) )
       {
-         PD_LOG( PDWARNING, "Split Session[%s] is not ready, disconnect",
-                 sessionName() ) ;
+         PD_LOG( PDWARNING, "Split Session[%s] is not ready[%d], disconnect",
+                 sessionName(), rc ) ;
          _disconnect() ;
          goto done ;
       }
@@ -2336,10 +2350,40 @@ namespace engine
       return SDB_OK ;
    }
 
-   BOOLEAN _clsSplitSrcSession::_isReady ()
+   INT32 _clsSplitSrcSession::_isReady ()
    {
-      return ( sdbGetReplCB()->primaryIsMe() &&
-               !sdbGetReplCB()->isFullSync () ) ;
+      INT32 rc = SDB_OK ;
+
+      /// 1. not primary
+      if ( !pmdIsPrimary() )
+      {
+         rc = SDB_CLS_NOT_PRIMARY ;
+         PD_LOG( PDWARNING, "Split Session[%s] not ready: Self node is "
+                 "not primary", sessionName() ) ;
+      }
+      /// 2. In full sync
+      else if ( SDB_DB_FULLSYNC == PMD_DB_STATUS() )
+      {
+         rc = SDB_CLS_FULL_SYNC ;
+         PD_LOG( PDWARNING, "Split Session[%s] not ready: Self node is "
+                 "in full sync", sessionName() ) ;
+      }
+      /// 3. In rebuild
+      else if ( SDB_DB_REBUILDING == PMD_DB_STATUS() )
+      {
+         rc = SDB_RTN_IN_REBUILD ;
+         PD_LOG( PDWARNING, "Split Session[%s] not ready: Self node is "
+                 "in rebuilding", sessionName() ) ;
+      }
+      /// 4. not recoved from crash
+      else if ( !pmdGetStartup().isOK () )
+      {
+         rc = SDB_RTN_IN_REBUILD ;
+         PD_LOG( PDWARNING, "Split Session[%s] not ready: Self node is "
+                 "not recovered from crash", sessionName() ) ;
+      }
+
+      return rc ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSPLSS__GENKEYOBJ, "_clsSplitSrcSession::_genKeyObj" )

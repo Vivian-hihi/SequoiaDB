@@ -195,11 +195,6 @@ namespace engine
       if ( !pmdGetStartup().isOK() )
       {
          _status = CLS_SESSION_STATUS_FULL_SYNC ;
-         _repl->setFullSync( TRUE ) ;
-      }
-      else
-      {
-         _repl->setFullSync( FALSE ) ;
       }
 
       // full sync to repl sync, need to reset repl bucket
@@ -227,7 +222,7 @@ namespace engine
       _pReplBucket->close() ;
 
       if ( CLS_SESSION_STATUS_FULL_SYNC != _status &&
-           CLS_BS_CLOSED != _repl->getStatus() )
+           PMD_IS_DB_UP() )
       {
          pmdGetKRCB()->getClsCB()->startInnerSession( CLS_REPL,
                                                       CLS_TID_REPL_SYC ) ;
@@ -274,10 +269,10 @@ namespace engine
       {
          _selector.clearTime() ;
 
-         if ( CLS_BS_NORMAL != _repl->getStatus() )
+         if ( !PMD_IS_DB_NORMAL() )
          {
             PD_LOG ( PDDEBUG, "Sync Session[%s]: Repl status[%d] is not "
-                     "normal, ignore", sessionName(), _repl->getStatus() ) ;
+                     "normal, ignore", sessionName(), PMD_DB_STATUS() ) ;
             goto done ;
          }
       }
@@ -566,11 +561,11 @@ namespace engine
 
       _status = CLS_SESSION_STATUS_FULL_SYNC ;
 
-      if ( CLS_BS_BACKUPOFFLINE == _repl->getStatus() ||
-           CLS_BS_CLOSED == _repl->getStatus() )
+      if ( SDB_DB_NORMAL != PMD_DB_STATUS() &&
+           SDB_DB_FULLSYNC != PMD_DB_STATUS() )
       {
          PD_LOG( PDINFO, "Repl status is[%d], can't inital full sync",
-                 _repl->getStatus() ) ;
+                 PMD_DB_STATUS() ) ;
          goto done ;
       }
       else if ( sdbGetTransCB()->getTransCBSize() != 0 )
@@ -589,9 +584,16 @@ namespace engine
          PD_LOG( PDWARNING, "Sync Session[%s]: Group size is one or the node "
                  "begin to primary, begin to rebuild database",
                  sessionName() ) ;
-         pClsCB->getReplCB()->setFullSync( TRUE ) ;
+
+         PMD_SET_DB_STATUS( SDB_DB_REBUILDING ) ;
+         pClsCB->getReplCB()->getFaultEvent()->signalAll( SDB_RTN_IN_REBUILD ) ;
 
          rc = rtnRebuildDB ( eduCB() ) ;
+
+         /// restore
+         pClsCB->getReplCB()->getFaultEvent()->reset() ;
+         PMD_SET_DB_STATUS( SDB_DB_NORMAL ) ;
+         /// judge is error
          if ( SDB_OK != rc )
          {
             goto error ;
@@ -611,7 +613,6 @@ namespace engine
                     "rebuild succeed", sessionName() ) ;
          }
 
-         pClsCB->getReplCB()->setFullSync( FALSE ) ;
          pmdGetStartup().ok ( TRUE ) ;
          _status = CLS_SESSION_STATUS_SYNC ;
          // force to secondary
@@ -622,7 +623,6 @@ namespace engine
          _quit = TRUE ;
 
          pClsCB->startInnerSession( CLS_REPL, CLS_TID_REPL_FS_SYC ) ;
-         pClsCB->getReplCB()->setFullSync( TRUE ) ;
          PD_LOG( PDEVENT, "Sync Session[%s]: Start the synchronization of full",
                  sessionName() ) ;
       }
@@ -686,7 +686,7 @@ namespace engine
          msg.header.TID = CLS_TID( _sessionID ) ;
          msg.header.requestID = ++_requestID ;
          msg.next = _logger->expectLsn() ;
-         msg.needData = ( CLS_BS_NORMAL == _repl->getStatus() ) ? 1 : 0 ;
+         msg.needData = PMD_IS_DB_NORMAL() ? 1 : 0 ;
 
          /// when lsn is not specified we set complete with expected.
          if ( pCompleteLSN )

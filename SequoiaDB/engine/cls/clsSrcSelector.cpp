@@ -43,7 +43,7 @@
 
 namespace engine
 {
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSRCSL__CLSSRCSL, "_clsSrcSelector::_clsSrcSelector" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSRCSL__CLSSRCSL, "_clsSrcSelector::_clsSrcSelector" )
    _clsSrcSelector::_clsSrcSelector()
    :_syncmgr( NULL ),
     _noRes( 0 )
@@ -63,7 +63,7 @@ namespace engine
       _blacklist.clear() ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSRCSL_GETFLSYNSRC, "_clsSrcSelector::getFullSyncSrc" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSRCSL_GETFLSYNSRC, "_clsSrcSelector::getFullSyncSrc" )
    const MsgRouteID &_clsSrcSelector::getFullSyncSrc()
    {
       PD_TRACE_ENTRY ( SDB__CLSSRCSL_GETFLSYNSRC ) ;
@@ -77,7 +77,7 @@ namespace engine
       return _src ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSRCSL_GETSYNCSRC, "_clsSrcSelector::getSyncSrc" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSRCSL_GETSYNCSRC, "_clsSrcSelector::getSyncSrc" )
    const MsgRouteID &_clsSrcSelector::getSyncSrc()
    {
       PD_TRACE_ENTRY ( SDB__CLSSRCSL_GETSYNCSRC ) ;
@@ -91,7 +91,7 @@ namespace engine
       return _src ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSRCSL_SLTED, "_clsSrcSelector::selected" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSRCSL_SLTED, "_clsSrcSelector::selected" )
    const MsgRouteID &_clsSrcSelector::selected( BOOLEAN isFullSync )
    {
       PD_TRACE_ENTRY ( SDB__CLSSRCSL_SLTED ) ;
@@ -123,7 +123,7 @@ namespace engine
       return id ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSRCSL_SLPMY, "_clsSrcSelector::selectPrimary" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSRCSL_SLPMY, "_clsSrcSelector::selectPrimary" )
    const MsgRouteID &_clsSrcSelector::selectPrimary ( UINT32 groupID,
                                          MSG_ROUTE_SERVICE_TYPE type )
    {
