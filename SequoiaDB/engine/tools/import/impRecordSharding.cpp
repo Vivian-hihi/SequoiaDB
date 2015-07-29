@@ -35,20 +35,7 @@
 
 namespace import
 {
-   RecordSharding::RecordSharding(const string& hostname,
-                      const string& svcname,
-                      const string& user,
-                      const string& password,
-                      const string& csname,
-                      const string& clname,
-                      BOOLEAN useSSL)
-   : _hostname(hostname),
-     _svcname(svcname),
-     _user(user),
-     _password(password),
-     _csname(csname),
-     _clname(clname),
-     _useSSL(useSSL)
+   RecordSharding::RecordSharding()
    {
       _inited = FALSE;
       _groupNum = 0;
@@ -58,7 +45,13 @@ namespace import
    {
    }
 
-   INT32 RecordSharding::init()
+   INT32 RecordSharding::init(const string& hostname,
+                              const string& svcname,
+                              const string& user,
+                              const string& password,
+                              const string& csname,
+                              const string& clname,
+                              BOOLEAN useSSL)
    {
       INT32 rc = SDB_OK;
       sdbConnectionHandle conn = SDB_INVALID_HANDLE;
@@ -68,6 +61,14 @@ namespace import
       string collectionName;
 
       SDB_ASSERT(!_inited, "alreay inited");
+
+      _hostname = hostname;
+      _svcname = svcname;
+      _user = user;
+      _password = password;
+      _csname = csname;
+      _clname = clname;
+      _useSSL = useSSL;
 
       bson_init(&cond);
       bson_init(&result);

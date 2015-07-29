@@ -29,12 +29,6 @@
 
 *******************************************************************************/
 #include "impRoutine.hpp"
-#include "impInputStream.hpp"
-#include "impRecordScanner.hpp"
-#include "impRecordParser.hpp"
-#include "impCSVRecordParser.hpp"
-#include "impRecordImporter.hpp"
-#include "../util/text.h"
 #include <iostream>
 #include <sstream>
 
@@ -47,12 +41,35 @@ namespace import
 
    Routine::~Routine()
    {
-      // workQueue
+      // parsedQueue
       {
-         if (!_workQueue.empty())
+         if (!_parsedQueue.empty())
          {
             RecordArray array;
-            while (_workQueue.try_pop(array))
+            while (_parsedQueue.try_pop(array))
+            {
+               bson** objs = array.array();
+               for (INT32 i = 0; i < array.capacity(); i++)
+               {
+                  bson* obj = objs[i];
+                  if (NULL != obj)
+                  {
+                     bson_destroy(obj);
+                     SDB_OSS_FREE(obj);
+                     objs[i] = NULL;
+                  }
+               }
+               array.free();
+            }
+         }
+      }
+
+      // shardingQueue
+      {
+         if (!_shardingQueue.empty())
+         {
+            RecordArray array;
+            while (_shardingQueue.try_pop(array))
             {
                bson** objs = array.array();
                for (INT32 i = 0; i < array.capacity(); i++)
@@ -98,6 +115,13 @@ namespace import
    {
       INT32 rc = SDB_OK;
 
+      rc = _startSharding();
+      if (SDB_OK != rc)
+      {
+         PD_LOG(PDERROR, "failed to start sharding, rc=%d", rc);
+         goto error;
+      }
+
       rc = _startImporter(_options.jobs());
       if (SDB_OK != rc)
       {
@@ -114,6 +138,13 @@ namespace import
 
       while (!_parser.isStopped() && !_importer.isStopped())
       {
+         if (_sharding.needSharding())
+         {
+            if (_sharding.isStopped())
+            {
+               break;
+            }
+         }
          ossSleep(100);
       }
 
@@ -121,6 +152,15 @@ namespace import
       if (SDB_OK != rc)
       {
          PD_LOG(PDERROR, "failed to wait parser stop, rc=%d", rc);
+      }
+
+      if (!_sharding.isStopped())
+      {
+         rc = _stopSharding();
+         if (SDB_OK != rc)
+         {
+            PD_LOG(PDERROR, "failed to stop importers, rc=%d", rc);
+         }
       }
 
       if (!_importer.isStopped())
@@ -142,7 +182,15 @@ namespace import
    {
       INT32 rc = SDB_OK;
 
-      rc = _importer.init(&_options, &_workQueue, &_idleQueue, workerNum);
+      if (_sharding.needSharding())
+      {
+         rc = _importer.init(&_options, &_shardingQueue, &_idleQueue, workerNum);
+      }
+      else
+      {
+         rc = _importer.init(&_options, &_parsedQueue, &_idleQueue, workerNum);
+      }
+
       if (SDB_OK != rc)
       {
          PD_LOG(PDERROR, "failed to init importer, rc=%d", rc);
@@ -179,7 +227,7 @@ namespace import
    {
       INT32 rc = SDB_OK;
 
-      rc = _parser.init(&_options, &_workQueue, &_idleQueue);
+      rc = _parser.init(&_options, &_parsedQueue, &_idleQueue);
       if (SDB_OK != rc)
       {
          PD_LOG(PDERROR, "failed to init parser, rc=%d", rc);
@@ -207,6 +255,61 @@ namespace import
       if (SDB_OK != rc)
       {
          PD_LOG(PDERROR, "failed to wait the parser stop");
+      }
+
+      return rc;
+   }
+
+   INT32 Routine::_startSharding()
+   {
+      INT32 rc = SDB_OK;
+
+      rc = _sharding.init(&_options,
+                          &_parsedQueue,
+                          &_shardingQueue,
+                          &_idleQueue);
+      if (SDB_OK != rc)
+      {
+         PD_LOG(PDERROR, "failed to init sharding, rc=%d", rc);
+         goto error;
+      }
+
+      if (_sharding.needSharding())
+      {
+         rc = _sharding.start();
+         if (SDB_OK != rc)
+         {
+            PD_LOG(PDERROR, "failed to start sharding, rc=%d", rc);
+            goto error;
+         }
+      }
+      else
+      {
+         if (_options.verbose())
+         {
+            stringstream ss;
+            ss << "no need to sharding" << std::endl;
+            std::cout << ss.str();
+         }
+      }
+
+   done:
+      return rc;
+   error:
+      goto done;
+   }
+
+   INT32 Routine::_stopSharding()
+   {
+      INT32 rc = SDB_OK;
+
+      if (_sharding.needSharding())
+      {
+         rc = _sharding.stop();
+         if (SDB_OK != rc)
+         {
+            PD_LOG(PDERROR, "failed to stop importer, rc=%d", rc);
+         }
       }
 
       return rc;

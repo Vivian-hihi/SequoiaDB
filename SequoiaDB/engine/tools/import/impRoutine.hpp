@@ -37,6 +37,7 @@
 #include "impRecordQueue.hpp"
 #include "impParser.hpp"
 #include "impImporter.hpp"
+#include "impSharding.hpp"
 
 using namespace std;
 
@@ -55,14 +56,18 @@ namespace import
       INT32 _waitParserStop();
       INT32 _startImporter(INT32 workerNum);
       INT32 _stopImporter();
+      INT32 _startSharding();
+      INT32 _stopSharding();
 
    private:
       Options&          _options;
-      RecordQueue       _workQueue;
+      RecordQueue       _parsedQueue;
+      RecordQueue       _shardingQueue;
       RecordQueue       _idleQueue;
 
       Parser            _parser;
       Importer          _importer;
+      Sharding          _sharding;
    };
 }
 

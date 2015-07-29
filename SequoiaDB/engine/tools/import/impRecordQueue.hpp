@@ -32,6 +32,7 @@
 #define IMP_RECORD_QUEUE_HPP__
 
 #include "ossQueue.hpp"
+#include "ossUtil.h"
 #include "../client/bson/bson.h"
 #include "pd.hpp"
 

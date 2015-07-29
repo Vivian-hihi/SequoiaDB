@@ -94,6 +94,13 @@ namespace import
       SDB_ASSERT(NULL != workQueue, "workQueue can't be NULL");
       SDB_ASSERT(NULL != idleQueue, "idelQueue can't be NULL");
 
+      if (options->verbose())
+      {
+         stringstream ss;
+         ss << "parser started..." << std::endl;
+         std::cout << ss.str();
+      }
+
       RecordScanner scanner(options->recordDelimiter(),
                             options->stringDelimiter(),
                             options->linePriority());
@@ -322,6 +329,12 @@ namespace import
          parser = NULL;
       }
       SAFE_OSS_FREE(buffer);
+      if (options->verbose())
+      {
+         stringstream ss;
+         ss << "parser stopped" << std::endl;
+         std::cout << ss.str();
+      }
       return;
    error:
       goto done;
@@ -334,7 +347,7 @@ namespace import
       _idleQueue = NULL;
       _inited = FALSE;
       _worker = NULL;
-      _stopped = FALSE;
+      _stopped = TRUE;
       _parsedNum = 0;
       _failedNum = 0;
    }
@@ -397,6 +410,8 @@ namespace import
          PD_LOG(PDERROR, "failed to start parser");
          goto error;
       }
+
+      _stopped = FALSE;
 
    done:
       return rc;

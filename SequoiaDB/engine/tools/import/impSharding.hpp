@@ -14,7 +14,7 @@
    You should have received a copy of the GNU Affero General Public License
    along with this program. If not, see <http://www.gnu.org/license/>.
 
-   Source File Name = impRecordSharding.hpp
+   Source File Name = impSharding.hpp
 
    Dependencies: N/A
 
@@ -28,47 +28,53 @@
    Last Changed =
 
 *******************************************************************************/
-#ifndef IMP_RECORD_SHARDING_HPP_
-#define IMP_RECORD_SHARDING_HPP_
+#ifndef IMP_SHARDING_HPP_
+#define IMP_SHARDING_HPP_
 
 #include "core.hpp"
 #include "oss.hpp"
-#include "impCataInfo.hpp"
-#include "../client/bson/bson.h"
-#include <string>
+#include "impRecordSharding.hpp"
+#include "impRecordQueue.hpp"
+#include "impWorker.hpp"
+#include "impOptions.hpp"
+#include <map>
 
 using namespace std;
 
 namespace import
 {
-   class RecordSharding: public SDBObject
+   typedef map<UINT32, RecordArray> ShardingGroups;
+
+   class Sharding: public WorkerArgs
    {
    public:
-      RecordSharding();
-      ~RecordSharding();
-      INT32 init(const string& hostname,
-                 const string& svcname,
-                 const string& user,
-                 const string& password,
-                 const string& csname,
-                 const string& clname,
-                 BOOLEAN useSSL);
-      INT32 getGroupNum() const { return _groupNum; }
-      INT32 getGroupByRecord(bson* record, UINT32& groupId);
+      Sharding();
+      ~Sharding();
+      INT32 init(Options* options,
+                 RecordQueue* inQueue,
+                 RecordQueue* outQueue,
+                 RecordQueue* idleQueue);
+      BOOLEAN needSharding() const;
+      INT32 getGroupNum() const;
+      INT32 start();
+      INT32 stop();
+      inline BOOLEAN isStopped() const { return _stopped; }
 
    private:
-      string   _hostname;
-      string   _svcname;
-      string   _user;
-      string   _password;
-      string   _csname;
-      string   _clname;
-      BOOLEAN  _useSSL;
-      BOOLEAN  _inited;
+      Options*          _options;
+      RecordQueue*      _inQueue;
+      RecordQueue*      _outQueue;
+      RecordQueue*      _idleQueue;
+      BOOLEAN           _inited;
 
-      CataInfo _cataInfo;
-      INT32    _groupNum;
+      RecordSharding    _sharding;
+      Worker*           _worker;
+      BOOLEAN           _stopped;
+
+      ShardingGroups    _groups;
+
+      friend void _shardingRoutine(WorkerArgs* args);
    };
 }
 
-#endif /* IMP_RECORD_SHARDING_HPP_ */
+#endif /* IMP_SHARDING_HPP_ */
