@@ -2984,7 +2984,6 @@ namespace engine
       const MsgLobTuple *tuple = NULL ;
       UINT32 tuplesSize = 0 ;
       bson::BSONObj meta ;
-      INT16 w = 0 ;
       const CHAR *data = NULL ;
       UINT32 read = 0 ;
 
@@ -3014,9 +3013,6 @@ namespace engine
 
       lobContext = ( rtnContextShdOfLob * )context ;
       _pCollectionName = lobContext->getFullName() ;
-
-      /// check primary by flags
-      w = 1 ;
 
       rc = _checkPrimaryWhenRead(FLG_LOBREAD_PRIMARY,  header->flags ) ;
       if ( SDB_OK != rc )
@@ -3451,8 +3447,8 @@ namespace engine
                    !_pEDUCB->isInterrupted() )
          {
             INT32 result = SDB_OK ;
-            rc = _pReplSet->getFaultEvent->wait( SHD_WAITTIME_INTERVAL,
-                                                 &result ) ;
+            rc = _pReplSet->getFaultEvent()->wait( SHD_WAITTIME_INTERVAL,
+                                                   &result ) ;
             if ( SDB_OK == rc && SDB_OK != result )
             {
                rc = result ;
