@@ -507,7 +507,7 @@ namespace engine
    INT32 _clsShardMgr::sendToCatlog ( MsgHeader *msg,
                                       NET_HANDLE *pHandle,
                                       INT64 upCataMillsec,
-                                      BOOLEAN catUpCataGrp )
+                                      BOOLEAN canUpCataGrp )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__CLSSHDMGR_SND2CAT ) ;
@@ -594,7 +594,7 @@ namespace engine
       _shardLatch.release_shared() ;
       hasLock = FALSE ;
       /// send to all failed, update catalog and retry
-      if ( catUpCataGrp && !hasUpdateGrp )
+      if ( canUpCataGrp && !hasUpdateGrp )
       {
          hasUpdateGrp = TRUE ;
          rc = updateCatGroup( FALSE, upCataMillsec ) ;

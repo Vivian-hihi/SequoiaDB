@@ -160,7 +160,7 @@ namespace engine
          INT32  sendToCatlog ( MsgHeader * msg,
                                NET_HANDLE *pHandle = NULL,
                                INT64 upCataMillsec = 0,
-                               BOOLEAN catUpCataGrp = TRUE ) ;
+                               BOOLEAN canUpCataGrp = TRUE ) ;
          INT32  syncSend( MsgHeader * msg, UINT32 groupID, BOOLEAN primary,
                           MsgHeader **ppRecvMsg,
                           INT64 millisec = CLS_SHARD_TIMEOUT ) ;

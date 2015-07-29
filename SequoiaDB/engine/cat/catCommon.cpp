@@ -1169,7 +1169,7 @@ namespace engine
          BSONObjBuilder subCLObjBuilder( orBuilder.subobjStart() ) ;
          subCLObjBuilder.appendRegex( CAT_MAINCL_NAME, ss.str() ) ;
          subCLObjBuilder.done() ;
-         orBuilder.done() ;         
+         orBuilder.done() ;
       }
       matcher = builder.obj() ;
 

@@ -3622,7 +3622,7 @@ namespace engine
          goto error ;
       }
       else if ( curVer > version
-                || ( 0 == groupCount && !isMainCL ) )
+                || ( 0 == groupCount && !mainCL ) )
       {
          if ( 0 == groupCount )
          {
@@ -3639,7 +3639,7 @@ namespace engine
       {
          if ( NULL != isMainCL )
          {
-            *isMainCL = mainCL ;      
+            *isMainCL = mainCL ;
          }
 
          if ( NULL != w )
