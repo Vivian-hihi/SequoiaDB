@@ -528,11 +528,12 @@
 			</else>
 		</if>
 
-		<tstamp>
+		<!-- <tstamp>
 			<format property="current.time.log" pattern="yyyy-MM-dd-hh.mm.ss_a" />
-		</tstamp>
-		<property name="test.log.path" value="${test.reports.path}/${test.environment}-${DEPLOY_WILDCARD}-${host.NAME}-${current.time.log}-${BUILD_NUMBER}" />
-		<property name="test.log" value="${test.environment}-${DEPLOY_WILDCARD}-${host.NAME}-${current.time.log}-${BUILD_NUMBER}" />
+		</tstamp> -->
+		<property name="test.log" value="${test.environment}-T${BUILD_NUMBER}-[H3][G3][D3]" />
+		<property name="test.log.path" value="${test.reports.path}/${test.log}" />
+		
 
 		<!-- <property name="test-type" value="js" />
 		<for list="${test-type}" param="Test-Type">
@@ -644,7 +645,7 @@
 					<equals arg1="${copy.test.log}" arg2="true" />
 					<then>
 
-						<tstamp>
+						<!-- <tstamp>
 							<format property="copytar_begintime" pattern="yyyy-MM-dd-hh.mm.ss a" />
 						</tstamp>
 
@@ -653,11 +654,10 @@
 							<format property="current.time.log" pattern="yyyy-MM-dd-hh.mm.ss a" />
 						</tstamp>
 
-						<property name="test.log.path" value="${test.reports.path}/${test.environment}-${DEPLOY_WILDCARD}-${host.NAME}-${current.time.log}-${BUILD_NUMBER}" />
+						<property name="test.log.path" value="${test.reports.path}/${test.environment}-T${BUILD_NUMBER}-[H3][G3][D3]-${current.time.log}" /> -->
 						<echo message="Mkdir ${test.log.path}" />
 						<mkdir dir="${test.log.path}" />
 
-						<echo message="It's the cluster mod..." />
 						<if>
 		   					<equals arg1="${os.arch}" arg2="amd64" />
 							<then>
