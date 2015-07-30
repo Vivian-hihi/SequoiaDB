@@ -701,7 +701,9 @@ namespace engine
 
       if ( cb && cb->getDmsLockLevel() >= DMS_LOCK_WRITE )
       {
+         _stateMtx.get () ;
          ++_writeCounter ;
+         _stateMtx.release() ;
          // already writable
          goto done ;
       }
