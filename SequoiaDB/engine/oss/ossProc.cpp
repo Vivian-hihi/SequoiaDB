@@ -241,7 +241,7 @@ static INT32 ossCreateList ( const CHAR *pArguments,
          count++ ;
       }
       iNumArgs += count ;
-      bufferLen = i ;
+      bufferLen = i + 1 ;
       // if the original buffer size is not large enough to hold the rename
       // buffer, let's allocate a new one
       if ( isArgument && bufferLen < OSS_RENAME_PROCESS_BUFFER_LEN )
