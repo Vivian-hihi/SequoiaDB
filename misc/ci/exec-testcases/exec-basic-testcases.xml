@@ -187,7 +187,7 @@
 		</exec>
 		<echo message="${beforeTestcase.screen.output}" />
 
-		<property name="sdb.cmd.argument" value=" -e &quot;var CHANGEDPREFIX='${CHANGEDSTRING}';var SPAREPORTSTART='${spare.port.start}';var SPAREPORTSTOP='${spare.port.stop}';var COORDSVCNAME='${coord.service.port}';&quot; -f &quot;${testcases.path}/libs/func.js,${commlib.option},${test.case.fullname}&quot;" />
+		<property name="sdb.cmd.argument" value=" -e &quot;var CHANGEDPREFIX='${CHANGEDSTRING}';var COORDSVCNAME='${coord.service.port}';&quot; -f &quot;${testcases.path}/libs/func.js,${commlib.option},${test.case.fullname}&quot;" />
 		<property name="command" value="sdb${sdb.cmd.argument}" />
 		<echo message="Command:${command}" />
 		<echo message="The testcase ${test.case.fullname} path on ${testcases.path}" />
