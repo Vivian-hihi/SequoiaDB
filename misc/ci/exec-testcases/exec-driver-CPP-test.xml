@@ -24,10 +24,6 @@
     </target>
 
     <target name="Test-Driver-CPP" depends="Clean-CPP-Reports">
-
-        <tstamp>
-            <format property="testtype_begintime" pattern="yyyy-MM-dd-hh.mm.ss a" />
-        </tstamp>
         <hostinfo prefix="host" />
         <echo message="Begin test driver c++ testcases..." />
         <echo message="Perform the driver c++ testcases,with testcase.path=${CPP.testcase.path}" />
@@ -58,16 +54,7 @@
         </replace>  
         <replace token="testsuites" value="testsuite">
             <fileset dir="${reports.path}/"  includes="*" />
-        </replace>
-
-        <tstamp>
-            <format property="testtype_endtime" pattern="yyyy-MM-dd-hh.mm.ss a" />
-        </tstamp>
-        <sdbTime beginTime="${testtype_begintime}" endTime="${testtype_endtime}" output="testtype_time" />
-        <echo message="**************************************************************************************************************************************************************" />
-        <echo level="info" message="The cpp began at &lt;${testtype_begintime}&gt;, end at &lt;${testtype_endtime}&gt;,total spending ${testtype_time}s." />
-        <echo file="/opt/testsuite.log${BUILD_NUMBER}" append="true" message="Now testtype is driver-cpp,cost ${testtype_time}s,hostname=${host.NAME}&#10;" />
-        <echo message="**************************************************************************************************************************************************************" />          
+        </replace>     
     </target>
 
     <target name="test-one-case">    
@@ -90,45 +77,6 @@
             <arg line=" ${append} " />
             <env key="LD_LIBRARY_PATH" path="${LD_LIBRARY_PATH}:/opt/sequoiadb/lib" />
         </exec>
-
-        <!-- <trycatch>
-            <try>
-                <echo message="############################begin" />
-                <exec executable="${case-full-name}" dir="${testcases.path}" timeout="1200000" outputproperty="screen.output" resultproperty="ret.code" failonerror="false">
-                    <arg line=" ${append} " />
-                    <env key="LD_LIBRARY_PATH" path="${LD_LIBRARY_PATH}:/opt/sequoiadb/lib" />
-                </exec>
-                <echo message="############################end" />
-            </try>
-            <catch></catch>
-            <finally>
-                <trycatch property="e">
-                    <try>
-                        <xmlproperty file="${reports.path}/${test.case.name}.xml" includeSemanticAttribute="true" />
-                        <echo message="############################hello" /> 
-                    </try>
-                    <catch>
-                        <echo message="error=${e}" />
-                        <property name="error_code" value="-1" />
-                        <echo message="error_code=${error_code}" />
-                    </catch>
-                    <finally>
-                        <if>
-                            <equals arg1="${error_code}" arg2="-1" />
-                            <then>
-                                <echo message="############################world" />
-                                <copy file="${reports.path}/${test.case.name}.xml" todir="/opt/error_test_report" />
-                                <delete file="${reports.path}/${test.case.name}.xml" />
-                            </then>
-                        </if>
-                    </finally>
-                </trycatch>
-                <echo message="${screen.output}" />
-                <echo message="The result = ${ret.code} after exec ${test.case.name} testcase." />
-            </finally>
-        </trycatch> -->
-
-        
     </target>
 </project>
 

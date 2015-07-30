@@ -23,25 +23,8 @@
 		<echo message="Clean deploy result reports compeleted." />
 	</target>
 
-	<!-- <target name="Test-PHP-Samples" depends="Clean-PHP-Reports">
-		<echo message="Begin test php samples testcases..." />
-		<echo message="Perform the php samples testcases,with testcase.path=${samples.testcase.path}/PHP" />
-		<foreach target="test-one-suite" param="test.suite.fullname">
-			<path>
-				<dirset dir="${samples.testcase.path}/PHP" includes="${includes.dir.patterns}" excludes="${excludes.dir.patterns}" />
-			</path>
-			<param name="testcases.path" value="${samples.testcase.path}/PHP" />
-			<param name="test-type" value="samples-php" />
-			<param name="includes.case.patterns" value="*.php" />
-			<param name="excludes.case.patterns" value="" />
-		</foreach>
-	</target> -->
-
 	<target name="Test-Driver-PHP" depends="Clean-PHP-Reports">
 		<hostinfo prefix="host" />
-		<tstamp>
-            <format property="testtype_begintime" pattern="yyyy-MM-dd-hh.mm.ss a" />
-        </tstamp>
 		<echo message="Begin test driver php testcases..." />
 		<echo message="Perform the driver php testcases,with testcase.path=${php.testcase.path}" />
 		<foreach target="test-one-suite" param="test.suite.fullname">
@@ -53,15 +36,6 @@
 			<param name="includes.case.patterns" value="*.php" />
 			<param name="excludes.case.patterns" value="" />
 		</foreach>
-
-		<tstamp>
-            <format property="testtype_endtime" pattern="yyyy-MM-dd-hh.mm.ss a" />
-        </tstamp>
-        <sdbTime beginTime="${testtype_begintime}" endTime="${testtype_endtime}" output="testtype_time" />
-        <echo message="**************************************************************************************************************************************************************" />
-        <echo level="info" message="The php began at &lt;${testtype_begintime}&gt;, end at &lt;${testtype_endtime}&gt;,total spending ${testtype_time}s." />
-        <echo file="/opt/testsuite.log${BUILD_NUMBER}" append="true" message="Now testtype is driver-php,cost ${testtype_time}s,hostname=${host.NAME}&#10;" />
-        <echo message="**************************************************************************************************************************************************************" /> 
 	</target>
 
 	<target name="test-one-suite" depends="" >

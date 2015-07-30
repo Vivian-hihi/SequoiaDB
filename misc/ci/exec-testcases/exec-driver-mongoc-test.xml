@@ -17,10 +17,7 @@
       <hostinfo prefix="host" />
       <basename property="deploy.name" file="${deploy.case.fullname}" suffix=".xml" />
       <property name="test.suite.class.name" value="testcases-driver-mongoc.${deploy.name}-${host.NAME}-${parallel.num}" />
-      <tstamp>
-         <format property="testtype_begintime" pattern="yyyy-MM-dd-hh.mm.ss a" />
-      </tstamp>
-      
+
       <echo message="Begin test driver mongoc testcases..." />
       <echo message="Perform the driver mongoc testcases,with testcase.path=${mongoc.testcase.path}" />
       <chmod file="${mongoc.testcase.path}/test-mongo" perm="u+x" />     
@@ -60,15 +57,6 @@
       </exec>
       <echo message="${mongo.screen.output}" />
       <echo message="The result = ${mongo.ret.code} after exec parallel testcase." />
-
-      <tstamp>
-         <format property="testtype_endtime" pattern="yyyy-MM-dd-hh.mm.ss a" />
-      </tstamp>
-      <sdbTime beginTime="${testtype_begintime}" endTime="${testtype_endtime}" output="testtype_time" />
-      <echo message="**************************************************************************************************************************************************************" />
-      <echo level="info" message="The mongo began at &lt;${testtype_begintime}&gt;, end at &lt;${testtype_endtime}&gt;,total spending ${testtype_time}s." />
-      <echo file="/opt/testsuite.log${BUILD_NUMBER}" append="true" message="Now testtype is driver-mongoc,cost ${testtype_time}s,hostname=${host.NAME}&#10;" />
-      <echo message="**************************************************************************************************************************************************************" />
    </target>        
     
    <target name="test-one-case">
