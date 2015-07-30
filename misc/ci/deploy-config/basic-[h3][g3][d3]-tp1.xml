@@ -433,7 +433,7 @@
 			</else>
 		</if>
 
-		<property name="test.log" value="${test.environment}-${BUILD_NUMBER}-[H3][G3][D3]" />
+		<property name="test.log" value="${test.environment}-${OS_NAME}${BUILD_NUMBER}-[H3][G3][D3]" />
 		<property name="test.log.path" value="${test.reports.path}/${test.log}" />
 		
 

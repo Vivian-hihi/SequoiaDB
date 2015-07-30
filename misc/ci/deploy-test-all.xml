@@ -32,20 +32,7 @@
 	
 	<target name="8.Tar-Deploy-Package" depends="" >
 		<echo level="info" message="Step1 : Tar the package &lt;${WORKSPACE}/${deploy.tar.file.name}&gt; on &lt;${WORKSPACE}&gt;." />
-
-		<tstamp>
-			<format property="deploy_tar_begintime" pattern="yyyy-MM-dd-hh.mm.ss a" />
-		</tstamp>
-
 		<tar destfile="${WORKSPACE}/${deploy.tar.file.name}" basedir="${WORKSPACE}" includes="deploy/**/*" compression="gzip" />
-
-		<tstamp>
-			<format property="deploy_tar_endtime" pattern="yyyy-MM-dd-hh.mm.ss a" />
-		</tstamp>
-		<sdbTime beginTime="${deploy_tar_begintime}" endTime="${deploy_tar_endtime}" output="deploy_tar_time" />
-		<echo message="**************************************************************************************************************************************************************" />
-		<echo level="info" message="The tar deploy-file part began at &lt;${deploy_tar_begintime}&gt;, end at &lt;${deploy_tar_endtime}&gt;,total spending ${deploy_tar_time}s." />
-		<echo message="**************************************************************************************************************************************************************" />
 	</target>
 	
 	<target name="9.Clean-Last-Build-Reports" depends="8.Tar-Deploy-Package">
@@ -58,26 +45,12 @@
 		<if>
 			<equals arg1="${test-type-list}" arg2="basic" />
 			<then>
-				<property name="exclude_value" value="${test.environment}-[h3][g1][d3]-tp2.xml,${test.environment}-[h1][g1][d1]-tp1.xml" />
+				<property name="exclude_value" value="${test.environment}-[h3][g1][d3]-tp2.xml" />
 				<property name="environment_information" value="The build test environment is &lt;${test.environment}-[h3][g3][d3]-tp1&gt;,&lt;${test.environment}-standalone-tp1&gt;." />
 			</then>
 			<else>
-				<property name="exclude_value" value="${test.environment}-[h1][g1][d1]-tp1.xml" />
+				<property name="exclude_value" value="" />
 				<property name="environment_information" value="The build test environment is &lt;${test.environment}-[h3][g1][d3]-tp2&gt;,&lt;${test.environment}-[h3][g3][d3]-tp1&gt;,&lt;${test.environment}-standalone-tp1&gt;." />
-			</else>
-		</if>
-		<if>
-			<equals arg1="${DEPLOY_WILDCARD}" arg2="*" />
-			<then>
-				<echo message="**************************************************************************************************************************************************************" />
-				<echo level="info" message="${environment_information}" />
-				<echo level="info" message="exclude_value=${exclude_value}" />
-				<echo message="**************************************************************************************************************************************************************" />
-			</then>
-			<else>
-				<echo message="**************************************************************************************************************************************************************" />
-				<echo level="info" message="The build test environment is &lt;${test.environment}-${DEPLOY_WILDCARD}&gt;." />
-				<echo message="**************************************************************************************************************************************************************" />
 			</else>
 		</if>
 		<foreach target="11.Deploy-And-Test-Case" param="deploy.case.fullname">
@@ -107,6 +80,7 @@
 					<property name="deploy.file.fullname" value="${WORKSPACE}/${deploy.tar.file.name}" />
 
 					<property name="test-type-list" value="${test-type-list}" />
+					<property name="OS_NAME" value="${OS_NAME}" />
 				</ant>
 			</then>
 		</if>
