@@ -10,63 +10,63 @@ public class ConnectDataBase {
 
 	
 	String driver = null;
-	
+
 	String url = null;
-	
-	String user = null;  //数据库用户名
-	
-	String password = null; //数据库密码
-	
+
+	String user = null;
+
+	String password = null;
+
 	Connection conn = null;
-	
+
 	Logger logger = Logger.getLogger(ConnectDataBase.class);
-	
-	public void dbDriver(String dbType,String url,String user,String password){
-		
-		if(dbType != null && dbType == "mysql"){
+
+	public void dbDriver(String dbType, String url, String user, String password) {
+
+		if (dbType != null && dbType == "mysql") {
 			driver = "com.mysql.jdbc.Driver";
 			this.url = url;
 			this.user = user;
 			this.password = password;
 		}
-		if(dbType != null && dbType == "sqlserver"){
+		if (dbType != null && dbType == "sqlserver") {
 			driver = "com.microsoft.jdbc.sqlserver.SQLServerDriver";
 			this.url = url;
 			this.user = user;
 			this.password = password;
 		}
-		if(dbType != null && dbType == "db2"){
-			driver ="com.ibm.db2.jcc.DB2Driver";
+		if (dbType != null && dbType == "db2") {
+			driver = "com.ibm.db2.jcc.DB2Driver";
 			this.url = url;
 			this.user = user;
 			this.password = password;
 		}
-		if(dbType != null && dbType == "oracle"){
+		if (dbType != null && dbType == "oracle") {
 			driver = "oracle.jdbc.driver.OracleDriver";
 			this.url = url;
 			this.user = user;
 			this.password = password;
 		}
 	}
-	
-	public ConnectDataBase(String dbType,String url,String user,String password) {
+
+	public ConnectDataBase(String dbType, String url, String user, String password) {
 		try {
-		   dbDriver(dbType,url,user,password);  
-			  
-		   Class.forName(driver);  //加载驱动
-		   
-		   conn = DriverManager.getConnection(url, user, password); //连接数据库
-		   
-		  } catch (ClassNotFoundException e) {
-			  logger.error(e.getMessage());
-		   e.printStackTrace();
-		  } catch (SQLException e) {
-			  logger.error(e.getMessage());
-		   e.printStackTrace();
-		  }
-		 }
-	
-	public Connection getConnection(){  //向外界提供方法
-		  return this.conn;
-		 }
+			dbDriver(dbType, url, user, password);
+
+			Class.forName(driver); //load driver
+
+			conn = DriverManager.getConnection(url, user, password); // connect db
+
+		} catch (ClassNotFoundException e) {
+			logger.error(e.getMessage());
+			e.printStackTrace();
+		} catch (SQLException e) {
+			logger.error(e.getMessage());
+			e.printStackTrace();
+		}
+	}
+
+	public Connection getConnection() {
+		return this.conn;
+	}
 }
