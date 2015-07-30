@@ -1456,7 +1456,7 @@ namespace engine
       }
 
       if ( !dmsAccessAndFlagCompatiblity ( mbContext->mb()->_flag,
-                                           DMS_ACCESS_TYPE_DELETE ) )
+                                           DMS_ACCESS_TYPE_TRUNCATE ) )
       {
          PD_LOG ( PDERROR, "Incompatible collection mode: %d",
                   mbContext->mb()->_flag ) ;
