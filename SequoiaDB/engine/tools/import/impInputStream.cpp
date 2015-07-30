@@ -311,6 +311,7 @@ namespace import
       ossResultCode result;
       INT32 rc = SDB_OK;
       CHAR* arguments = NULL;
+      INT32 flag = OSS_EXEC_NORESIZEARGV | OSS_EXEC_NODETACHED;
       const CHAR* cmd = _subProcessCmd.c_str();
 
       {
@@ -321,7 +322,7 @@ namespace import
          std::vector<std::string> vecArgs;
 
          vecArgs = boost::program_options::split_unix(cmd);
-         for ( UINT32 i = 0; i < vecArgs.size(); ++i )
+         for (UINT32 i = 0; i < vecArgs.size(); ++i)
          {
             argvList.push_back(vecArgs[ i ].c_str());
          }
@@ -330,15 +331,15 @@ namespace import
 #endif // _LINUX
 
          rc = ossBuildArguments(&arguments, argLen, argvList);
-         if ( rc )
+         if (SDB_OK != rc)
          {
-            PD_LOG( PDERROR, "failed to build arguments, rc=%d", rc );
-            goto error ;
+            PD_LOG( PDERROR, "failed to build arguments, rc=%d", rc);
+            goto error;
          }
       }
 
       rc = ossExec(arguments, arguments,
-                   NULL, OSS_EXEC_NODETACHED, _subPid, result, NULL, &_pipe);
+                   NULL, flag, _subPid, result, NULL, &_pipe);
       if (SDB_OK != rc)
       {
          PD_LOG(PDERROR, "failed to execute %s, rc=%d", cmd, rc);
