@@ -1614,7 +1614,7 @@ namespace engine
       }
       else if ( fullCLLID == _curCollection )
       {
-         dpsLogRecord record ;
+         const dpsLogRecordHeader *rh = NULL ;
          DPS_LSN lsn ;
          lsn.offset = offset ;
          SDB_DPSCB *dpsCB = pmdGetKRCB()->getDPSCB() ;
@@ -1622,20 +1622,13 @@ namespace engine
          INT32 rc = dpsCB->searchHeader( lsn, &_lsnSearchMB ) ;
          if ( SDB_OK != rc )
          {
-            PD_LOG ( PDERROR, "Split Session[%s]: Failed to load dps "
+            PD_LOG ( PDERROR, "FS Src Session[%s]: Failed to load dps "
                      "log[offset:%lld, rc:%d]", sessionName(), offset, rc ) ;
             goto error ;
          }
 
-         rc = record.load( _lsnSearchMB.startPtr() ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG ( PDERROR, "Split Session[%s]: parse dps log failed[rc:%d]",
-                     sessionName(), rc ) ;
-            goto error ;
-         }
-
-         if ( CLS_IS_LOB_LOG( record.head()._type ) )
+         rh = ( const dpsLogRecordHeader * )( _lsnSearchMB.startPtr() ) ;
+         if ( CLS_IS_LOB_LOG( rh->_type ) )
          {
             if ( !_findEnd )
             {
