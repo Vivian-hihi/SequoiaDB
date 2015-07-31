@@ -37,7 +37,7 @@
 *******************************************************************************/
 #include "sdbDpsLogFilter.hpp"
 #include "ossUtil.hpp"
-#include "ossStr.hpp"
+#include "utilStr.hpp"
 #include "ossIO.hpp"
 #include "dpsLogFile.hpp"
 #include "dpsDef.hpp"
