@@ -1063,7 +1063,7 @@ public class DBCollection {
 	 *                             int flag, boolean returnNew)
 	 * @brief Get the matching documents in current collection and update.
 	 *        in order to make the update take effect, user must travel 
-	 *        the DBCursor returned by this function to.
+	 *        the DBCursor returned by this function.
      * @param matcher 
      *            the matching rule, return all the documents if null
 	 * @param selector
@@ -1106,7 +1106,7 @@ public class DBCollection {
 	 *                             int flag)
 	 * @brief Get the matching documents in current collection and remove.
 	 *        in order to make the remove take effect, user must travel 
-     *        the DBCursor returned by this function to.
+     *        the DBCursor returned by this function.
      * @param matcher 
      *            the matching rule, return all the documents if null
 	 * @param selector

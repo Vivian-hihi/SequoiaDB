@@ -34,7 +34,7 @@ public class logger {
 		InputStream in = null;
 		try{
 		    String filepath = System.getProperty("user.dir")+"/sdbdriver.properties";
-		    System.out.println(filepath);
+		    //System.out.println(filepath);
 		    File file = new File(filepath);
 		    if (file.exists())
 		    {
