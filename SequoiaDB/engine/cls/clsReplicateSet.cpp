@@ -578,7 +578,7 @@ namespace engine
                shardCB *pShardCB = _clsCB->getShardCB() ;
                if ( SDB_OK != pShardCB->updatePrimaryByReply( msg ) )
                {
-                  pShardCB->updateCatGroup ( TRUE ) ;
+                  pShardCB->updateCatGroup () ;
                }
             }
             else if ( SDB_OK == result )
@@ -646,7 +646,7 @@ namespace engine
             shardCB *pShardCB = _clsCB->getShardCB() ;
             if ( SDB_OK != pShardCB->updatePrimaryByReply( pHeader ) )
             {
-               pShardCB->updateCatGroup ( TRUE ) ;
+               pShardCB->updateCatGroup() ;
             }
          }
 

@@ -212,8 +212,7 @@ namespace engine
          UINT64 setTimer ( CLS_MEMBER_TYPE type, UINT32 milliSec ) ;
          void   killTimer ( UINT64 timerID ) ;
          INT32  sendToCatlog ( MsgHeader * msg ) ;
-         INT32  updateCatGroup ( BOOLEAN unsetPrimary = TRUE,
-                                 INT64 millisec = 0 ) ;
+         INT32  updateCatGroup ( INT64 millisec = 0 ) ;
 
          INT32  startInnerSession ( INT32 type, INT32 innerTID,
                                     void *data = NULL ) ;

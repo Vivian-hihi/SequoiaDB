@@ -1432,9 +1432,9 @@ namespace engine
       goto done ;
    }
 
-   INT32 _clsMgr::updateCatGroup ( BOOLEAN unsetPrimary, INT64 millisec )
+   INT32 _clsMgr::updateCatGroup ( INT64 millisec )
    {
-      return _shdObj.updateCatGroup ( unsetPrimary, millisec ) ;
+      return _shdObj.updateCatGroup ( millisec ) ;
    }
 
    //message function
@@ -1454,7 +1454,7 @@ namespace engine
       rc = MSG_GET_INNER_REPLY_RC( msg ) ;
       if ( SDB_CLS_NOT_PRIMARY == rc )
       {
-         updateCatGroup ( TRUE ) ;
+         updateCatGroup () ;
          goto error ;
       }
       else if ( rc != SDB_OK )
@@ -1518,7 +1518,7 @@ namespace engine
       //Update the primary catlog node
       if ( SDB_OK != _shdObj.updatePrimary( msg->routeID, TRUE ) )
       {
-         _shdObj.updateCatGroup ( FALSE ) ;
+         _shdObj.updateCatGroup () ;
       }
 
       //Active the shard and repl CBs
@@ -1574,7 +1574,7 @@ namespace engine
       {
          if ( SDB_OK != _shdObj.updatePrimaryByReply( msg ) )
          {
-            updateCatGroup( TRUE ) ;
+            updateCatGroup() ;
          }
       }
       // need to clear the query task

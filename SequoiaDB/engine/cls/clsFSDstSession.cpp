@@ -2161,7 +2161,7 @@ namespace engine
          //update catalog primary
          if ( SDB_OK != _pShardMgr->updatePrimaryByReply( header ) )
          {
-            _pShardMgr->updateCatGroup( TRUE ) ;
+            _pShardMgr->updateCatGroup() ;
          }
          goto done ;
       }

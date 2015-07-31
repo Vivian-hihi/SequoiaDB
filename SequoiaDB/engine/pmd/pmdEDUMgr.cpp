@@ -368,6 +368,7 @@ namespace engine
    INT32 _pmdEDUMgr::_interruptWritingEDUs()
    {
       std::map<EDUID, pmdEDUCB*>::iterator it ;
+      UINT32 count = 0 ;
 
       /*******************CRITICAL SECTION ********************/
       {
@@ -377,12 +378,17 @@ namespace engine
          {
             if ( (*it).second->isWritingDB() )
             {
+               ++count ;
                ( *it ).second->interrupt() ;
                PD_LOG ( PDDEBUG, "Interrupt edu[ID:%lld]", it->first ) ;
             }
          }
       }
       /******************END CRITICAL SECTION******************/
+      if ( count > 0 )
+      {
+         PD_LOG( PDEVENT, "Interrupt %d writing edus", count ) ;
+      }
       return SDB_OK ;
    }
 

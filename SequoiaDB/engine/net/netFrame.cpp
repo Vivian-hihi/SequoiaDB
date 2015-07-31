@@ -127,7 +127,7 @@ namespace engine
       _beatTimeout = beatTimeout ;
    }
 
-   void _netFrame::_heartbeat()
+   void _netFrame::_heartbeat( INT32 serviceType )
    {
       MsgHeader beat ;
       NET_EH eh ;
@@ -154,7 +154,9 @@ namespace engine
          _mtx.release_shared() ;
 
          /// send msg
-         if ( pmdGetTickSpanTime( eh->getLastBeatTick() ) >= _beatInterval )
+         if ( pmdGetTickSpanTime( eh->getLastBeatTick() ) >= _beatInterval &&
+              ( -1 == serviceType ||
+                serviceType == eh->id().columns.serviceID ) )
          {
             eh->mtx().get() ;
             eh->syncSend( (const void*)&beat, beat.messageLength ) ;
@@ -164,7 +166,7 @@ namespace engine
       }
    }
 
-   void _netFrame::_checkBreak( UINT32 timeout )
+   void _netFrame::_checkBreak( UINT32 timeout, INT32 serviceType )
    {
       NET_EH eh ;
       NET_HANDLE handle = NET_INVALID_HANDLE ;
@@ -187,7 +189,9 @@ namespace engine
 
          spanTime = pmdGetTickSpanTime( eh->getLastRecvTick() ) ;
          /// check break
-         if ( spanTime >= timeout )
+         if ( ( -1 == serviceType ||
+                serviceType == eh->id().columns.serviceID ) &&
+              spanTime >= timeout )
          {
             routeid = eh->id() ;
             PD_LOG( PDERROR, "Connection[Handle: %d, GroupID: %d, NodeID: %d, "
@@ -199,7 +203,7 @@ namespace engine
       }
    }
 
-   void _netFrame::heartbeat( UINT32 interval )
+   void _netFrame::heartbeat( UINT32 interval, INT32 serviceType )
    {
       UINT32 beatTimeout = _beatTimeout ;
       UINT64 spanTime = pmdGetTickSpanTime( _beatLastTick ) ;
@@ -212,13 +216,13 @@ namespace engine
       if ( _checkBeat )
       {
          _checkBeat = FALSE ;
-         _checkBreak( beatTimeout ) ;
+         _checkBreak( beatTimeout, serviceType ) ;
       }
       else if ( spanTime >= _beatInterval )
       {
          _beatLastTick = pmdGetDBTick() ;
          _checkBeat = TRUE ;
-         _heartbeat() ;
+         _heartbeat( serviceType ) ;
       }
    }
 

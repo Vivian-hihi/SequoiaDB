@@ -2665,7 +2665,8 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSGPIM_GETNDINFO3, "_clsGroupItem::getNodeInfo" )
-   INT32 _clsGroupItem::getNodeInfo ( UINT32 pos, SINT32 &status )
+   INT32 _clsGroupItem::getNodeInfo ( UINT32 pos, SINT32 &status,
+                                      INT32 faultTimeout )
    {
       INT32 rc = SDB_OK;
       PD_TRACE_ENTRY ( SDB__CLSGPIM_GETNDINFO3 ) ;
@@ -2678,13 +2679,28 @@ namespace engine
       {
          clsNodeItem& item = _vecNodes[pos] ;
          _rwMutex.lock_r() ;
-         status = item.getStatus( (UINT64)time(NULL) ) ;
+         status = item.getStatus( (UINT64)time(NULL), faultTimeout ) ;
          _rwMutex.release_r() ;
       }
 
    done:
       PD_TRACE_EXIT ( SDB__CLSGPIM_GETNDINFO3 ) ;
       return rc;
+   }
+
+   BOOLEAN _clsGroupItem::isNodeInStatus( UINT32 pos, INT32 status,
+                                          INT32 faultTimeout )
+   {
+      /// node not exist
+      if ( pos >= _vecNodes.size() )
+      {
+         return FALSE ;
+      }
+
+      clsNodeItem& item = _vecNodes[pos] ;
+      ossScopedRWLock lock( &_rwMutex, SHARED ) ;
+      return item.isInStatus( (UINT64)time(NULL), status,
+                              faultTimeout ) ;
    }
 
    INT32 _clsGroupItem::nodePos ( UINT32 nodeID )
@@ -2826,7 +2842,7 @@ namespace engine
             {
                clsNodeItem &tmpNode = _vecNodes[index] ;
                *pPreStat = ( INT32 )tmpNode.getStatus( (UINT64)time( NULL ),
-                                                       2 ) ;
+                                                       NET_NODE_FAULTUP_MIN_TIME ) ;
             }
             goto done ;
          }

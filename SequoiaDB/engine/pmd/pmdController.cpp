@@ -553,9 +553,11 @@ namespace engine
          _timeCounter = 0 ;
       }
 
-      for ( UINT32 i = 0 ; i < _vecMonNets.size() ; ++i )
+      map< _netFrame*, INT32 >::iterator it = _mapMonNets.begin() ;
+      while( it != _mapMonNets.end() )
       {
-         _vecMonNets[ i ]->heartbeat( OSS_ONE_SEC ) ;
+         it->first->heartbeat( OSS_ONE_SEC, it->second ) ;
+         ++it ;
       }
    }
 
@@ -621,27 +623,20 @@ namespace engine
       _pRSManager = pRSManager ;
    }
 
-   void _pmdController::registerNet( _netFrame *pNetFrame )
+   void _pmdController::registerNet( _netFrame *pNetFrame, INT32 serviceType )
    {
-      SDB_ASSERT( FALSE == pmdGetKRCB()->isActive(),
-                  "Can't register when actived" ) ;
-      _vecMonNets.push_back( pNetFrame ) ;
+      SDB_ASSERT( pmdGetThreadEDUCB() &&
+                  EDU_TYPE_MAIN == pmdGetThreadEDUCB()->getType(),
+                  "Must register in main thread" ) ;
+      _mapMonNets[ pNetFrame ] = serviceType ;
    }
 
    void _pmdController::unregNet( _netFrame *pNetFrame )
    {
-      SDB_ASSERT( FALSE == pmdGetKRCB()->isActive(),
-                  "Can't register when actived" ) ;
-      vector< _netFrame* >::iterator it = _vecMonNets.begin() ;
-      while( it != _vecMonNets.end() )
-      {
-         if ( *it == pNetFrame )
-         {
-            _vecMonNets.erase( it ) ;
-            break ;
-         }
-         ++it ;
-      }
+      SDB_ASSERT( pmdGetThreadEDUCB() &&
+                  EDU_TYPE_MAIN == pmdGetThreadEDUCB()->getType(),
+                  "Must unregister in main thread" ) ;
+      _mapMonNets.erase( pNetFrame ) ;
    }
 
    INT32 _pmdController::initForeignModule( const CHAR *moduleName )

@@ -47,7 +47,7 @@ namespace engine
       _SDB_KRCB implement
    */
    _SDB_KRCB::_SDB_KRCB ()
-   :_mainEDU( &_eduMgr, EDU_TYPE_AGENT )
+   :_mainEDU( &_eduMgr, EDU_TYPE_MAIN )
    {
       ossMemset( _hostName, 0, sizeof( _hostName ) ) ;
       ossMemset( _groupName, 0, sizeof( _groupName ) ) ;

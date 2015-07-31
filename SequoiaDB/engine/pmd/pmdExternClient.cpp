@@ -51,6 +51,8 @@ using namespace bson ;
 namespace engine
 {
 
+   #define PMD_AUTH_RETRY_TIMES        ( 3 )
+
    /*
       _pmdExternClient implement
    */
@@ -185,10 +187,14 @@ namespace engine
       {
          MsgHeader *pAuthRes = NULL ;
          shardCB *pShard = sdbGetShardCB() ;
-         BOOLEAN hasRetry = FALSE ;
+         UINT32 retryTimes = 0 ;
+         MsgOpReply replyHeader ;
+         replyHeader.contextID = -1 ;
+         replyHeader.numReturned = 0 ;
 
          while ( TRUE )
          {
+            ++retryTimes ;
             rc = pShard->syncSend( pMsg, CATALOG_GROUPID, TRUE, &pAuthRes ) ;
             if ( SDB_OK != rc )
             {
@@ -204,13 +210,31 @@ namespace engine
                goto error ;
             }
             rc = MSG_GET_INNER_REPLY_RC(pAuthRes) ;
+            replyHeader.flags = rc ;
+            replyHeader.startFrom = MSG_GET_INNER_REPLY_STARTFROM(pAuthRes) ;
+            ossMemcpy( &(replyHeader.header), pAuthRes, sizeof( MsgHeader ) ) ;
+            /// release recv msg
             SDB_OSS_FREE( (BYTE*)pAuthRes ) ;
             pAuthRes = NULL ;
 
-            if ( SDB_CLS_NOT_PRIMARY == rc && !hasRetry )
+            if ( SDB_CLS_NOT_PRIMARY == rc &&
+                 retryTimes < PMD_AUTH_RETRY_TIMES )
             {
-               hasRetry = TRUE ;
-               pShard->updateCatGroup( TRUE, CLS_SHARD_TIMEOUT ) ;
+               INT32 rcTmp = SDB_OK ;
+               rcTmp = pShard->updatePrimaryByReply( &(replyHeader.header) ) ;
+               if ( SDB_NET_CANNOT_CONNECT == rcTmp )
+               {
+                  /// the node is crashed, sleep some seconds
+                  PD_LOG( PDWARNING, "Catalog group primary node is crashed "
+                          "but other nodes not aware, sleep %d seconds",
+                          NET_NODE_FAULTUP_MIN_TIME ) ;
+                  ossSleep( NET_NODE_FAULTUP_MIN_TIME * OSS_ONE_SEC ) ;
+               }
+
+               if ( rcTmp )
+               {
+                  pShard->updateCatGroup( CLS_SHARD_TIMEOUT ) ;
+               }
                continue ;
             }
             else if ( rc )

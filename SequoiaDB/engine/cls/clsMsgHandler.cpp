@@ -92,7 +92,7 @@ namespace engine
          else
          {
             pMsg->contextID = -1 ;
-            pMsg->flags = 0 ;
+            pMsg->flags = SDB_NETWORK_CLOSE ;
             pMsg->header.messageLength = sizeof( MsgOpReply ) ;
             pMsg->header.opCode = MSG_COM_REMOTE_DISC ;
             pMsg->header.requestID = 0 ;

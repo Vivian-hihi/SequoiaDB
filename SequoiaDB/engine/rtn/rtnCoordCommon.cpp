@@ -3402,10 +3402,12 @@ namespace engine
             /// sleep some times.
             if ( NET_NODE_STAT_NORMAL != preStat )
             {
+               groupInfo->cancelPrimary() ;
                PD_LOG( PDWARNING, "Primary node[%d.%d] is crashed, sleep "
-                       "two seconds", primaryNodeID.columns.groupID,
-                       primaryNodeID.columns.nodeID ) ;
-               ossSleep( 2 * OSS_ONE_SEC ) ;
+                       "%d seconds", primaryNodeID.columns.groupID,
+                       primaryNodeID.columns.nodeID,
+                       NET_NODE_FAULTUP_MIN_TIME ) ;
+               ossSleep( NET_NODE_FAULTUP_MIN_TIME * OSS_ONE_SEC ) ;
             }
             return canRetry ;
          }
@@ -3445,20 +3447,19 @@ namespace engine
          return TRUE ;
       }
       // [SDB_COORD_REMOTE_DISC] can't use in write command,
-      // because when some insert/update
-      // opr do partibal, if retry, data will repeat. If we can't do from
-      // break, we can use the flag for retry
-      else if ( ( isReadCmd && SDB_COORD_REMOTE_DISC == flag ) ||
-                SDB_CLS_FULL_SYNC == flag ||
+      // because when some insert/update opr do partibal,
+      // if retry, data will repeat. The code can't update status,
+      // because it maybe occured in long time ago
+      if ( ( isReadCmd && SDB_COORD_REMOTE_DISC == flag ) ||
+           SDB_CLS_NODE_NOT_ENOUGH == flag )
+      {
+         return TRUE ;
+      }
+      else if ( SDB_CLS_FULL_SYNC == flag ||
                 SDB_RTN_IN_REBUILD == flag )
       {
          // don't update group info
          rtnCoordUpdateNodeStatByRC( cb, nodeID, groupInfo, flag ) ;
-         return TRUE ;
-      }
-      else if ( SDB_CLS_NODE_NOT_ENOUGH == flag )
-      {
-         // do nothing, retry once
          return TRUE ;
       }
 

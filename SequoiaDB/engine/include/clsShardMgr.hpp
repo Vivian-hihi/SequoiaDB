@@ -165,8 +165,7 @@ namespace engine
                           MsgHeader **ppRecvMsg,
                           INT64 millisec = CLS_SHARD_TIMEOUT ) ;
          INT32  updatePrimary ( const NodeID & id , BOOLEAN primary ) ;
-         INT32  updateCatGroup ( BOOLEAN unsetPrimary = TRUE,
-                                 INT64 millsec = 0 ) ;
+         INT32  updateCatGroup ( INT64 millsec = 0 ) ;
          INT32  updatePrimaryByReply( MsgHeader *pMsg ) ;
 
          INT32 syncUpdateCatalog ( const CHAR *pCollectionName,

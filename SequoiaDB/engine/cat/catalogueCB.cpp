@@ -88,7 +88,8 @@ namespace engine
       // if know primary exist or no majority size, return at now,
       // otherwise, need to wait some time
       if ( MSG_INVALID_ROUTEID !=
-           ( _primaryID.value = pRepl->getPrimary().value ) )
+           ( _primaryID.value = pRepl->getPrimary().value ) &&
+           pRepl->isSendNormal( _primaryID.value ) )
       {
          goto error ;
       }

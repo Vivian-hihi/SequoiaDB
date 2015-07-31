@@ -2479,7 +2479,7 @@ namespace engine
 
    INT32 _clsShdSession::_onCatalogChangeNtyMsg( MsgHeader * msg )
    {
-      _pShdMgr->updateCatGroup( FALSE ) ;
+      _pShdMgr->updateCatGroup() ;
       return SDB_OK ;
    }
 
@@ -3435,7 +3435,7 @@ namespace engine
                   _pReplSet->isSendNormal( _primaryID.value ) )
          {
             rc = SDB_CLS_NOT_PRIMARY ;
-            goto error ;        
+            goto error ;
          }
          else if ( !CLS_IS_MAJORITY( _pReplSet->getAlivesByTimeout(),
                                      _pReplSet->groupSize() ) )

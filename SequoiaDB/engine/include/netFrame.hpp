@@ -89,7 +89,7 @@ namespace engine
 
          void stop() ;
 
-         void heartbeat( UINT32 interval ) ;
+         void heartbeat( UINT32 interval, INT32 serviceType = -1 ) ;
 
          void setBeatInfo( UINT32 beatTimeout,
                            UINT32 beatInteval = NET_HEARTBEAT_INTERVAL ) ;
@@ -179,9 +179,9 @@ namespace engine
 
          void _addRoute( NET_EH eh ) ;
 
-         void _heartbeat() ;
+         void _heartbeat( INT32 serviceType ) ;
 
-         void _checkBreak( UINT32 timeout ) ;
+         void _checkBreak( UINT32 timeout, INT32 serviceType ) ;
 
       private:
          io_service                       _ioservice ;

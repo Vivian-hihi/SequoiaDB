@@ -184,6 +184,8 @@ namespace engine
 
       EDU_TYPE_LOADWORKER,
       EDU_TYPE_PREFETCHER,
+
+      EDU_TYPE_MAIN,
       EDU_TYPE_UNKNOWN,
       EDU_TYPE_MAXIMUM = EDU_TYPE_UNKNOWN
    } ;

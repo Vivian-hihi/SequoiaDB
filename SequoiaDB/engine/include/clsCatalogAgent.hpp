@@ -50,7 +50,6 @@ using namespace bson ;
 
 namespace engine
 {
-   #define SDB_CLS_NODE_INFO_EXPIRED_TIME       100000
    class _clsShardMgr ;
    class _clsCatalogAgent ;
    class _clsCatalogSet ;
@@ -384,7 +383,17 @@ namespace engine
          INT32 getNodeInfo ( const MsgRouteID& id,
                              std::string& hostName, std::string& serviceName ) ;
 
-         INT32 getNodeInfo ( UINT32 pos, SINT32 &status );
+         /*
+            This function will change status when timeout > faultTimeout
+         */
+         INT32 getNodeInfo ( UINT32 pos, SINT32 &status,
+                             INT32 faultTimeout = NET_NODE_FAULT_TIMEOUT ) ;
+
+         /*
+            This function not change status when timeout > faultTimeout
+         */
+         BOOLEAN isNodeInStatus( UINT32 pos, INT32 status,
+                                 INT32 faultTimeout = NET_NODE_FAULT_TIMEOUT ) ;
 
          MsgRouteID  primary ( MSG_ROUTE_SERVICE_TYPE type =
                                MSG_ROUTE_SHARD_SERVCIE ) ;

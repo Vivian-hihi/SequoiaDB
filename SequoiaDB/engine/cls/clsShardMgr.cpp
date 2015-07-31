@@ -36,6 +36,7 @@
 #include "rtn.hpp"
 #include "msgMessage.hpp"
 #include "msgCatalog.hpp"
+#include "pmdController.hpp"
 #include "../bson/bson.h"
 #include "pdTrace.hpp"
 #include "clsTrace.hpp"
@@ -44,6 +45,8 @@ using namespace bson ;
 
 namespace engine 
 {
+
+   #define CLS_CATA_RETRY_MAX_TIMES          ( 3 )
 
    struct _hostAndPort
    {
@@ -197,6 +200,7 @@ namespace engine
       pmdOptionsCB *optCB = pmdGetOptionCB() ;
       // catAddrs is pointing to option control block
       vector< _pmdAddrPair > catAddrs = optCB->catAddrs() ;
+      _netFrame *pNetFrame = NULL ;
 
       if ( !_pNetRtAgent )
       {
@@ -205,6 +209,11 @@ namespace engine
                   rc ) ;
          goto error ;
       }
+      pNetFrame = _pNetRtAgent->getFrame() ;
+      /// register shard net agent to net monitor for catalog connections
+      pNetFrame->setBeatInfo( pmdGetOptionCB()->getOprTimeout() ) ;
+      sdbGetPMDController()->registerNet( pNetFrame,
+                                          MSG_ROUTE_CAT_SERVICE ) ;
 
       // init param, get configured catalog address
       for ( UINT32 i = 0 ; i < catAddrs.size() ; ++i )
@@ -255,11 +264,20 @@ namespace engine
 
    INT32 _clsShardMgr::final ()
    {
+      if ( _pNetRtAgent )
+      {
+         sdbGetPMDController()->unregNet( _pNetRtAgent->getFrame() ) ;
+      }
       return SDB_OK ;
    }
 
    void _clsShardMgr::onConfigChange ()
    {
+      if ( _pNetRtAgent )
+      {
+         UINT32 opTimeout = pmdGetOptionCB()->getOprTimeout() ;
+         _pNetRtAgent->getFrame()->setBeatInfo( opTimeout ) ;
+      }
    }
 
    void _clsShardMgr::ntyPrimaryChange( BOOLEAN primary,
@@ -486,7 +504,7 @@ namespace engine
          // need to update
          if ( CATALOG_GROUPID == groupID )
          {
-            rc = updateCatGroup( FALSE, millisec ) ;
+            rc = updateCatGroup( millisec ) ;
          }
          else
          {
@@ -597,7 +615,7 @@ namespace engine
       if ( canUpCataGrp && !hasUpdateGrp )
       {
          hasUpdateGrp = TRUE ;
-         rc = updateCatGroup( FALSE, upCataMillsec ) ;
+         rc = updateCatGroup( upCataMillsec ) ;
          if ( SDB_OK == rc )
          {
             goto retry ;
@@ -619,20 +637,16 @@ namespace engine
 
    // update cached catalog group information
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDMGR_UPDCATGRP, "_clsShardMgr::updateCatGroup" )
-   INT32 _clsShardMgr::updateCatGroup ( BOOLEAN unsetPrimary, INT64 millsec )
+   INT32 _clsShardMgr::updateCatGroup ( INT64 millsec )
    {
       PD_TRACE_ENTRY ( SDB__CLSSHDMGR_UPDCATGRP ) ;
       INT32 rc = SDB_OK ;
+      UINT32 times = 0 ;
 
       _shardLatch.get_shared() ;
       /// clear all node status
       _cataGrpItem.clearNodesStat() ;
 
-      if ( unsetPrimary )
-      {
-         /// cancel primary node
-         _cataGrpItem.cancelPrimary() ;
-      }
       _shardLatch.release_shared() ;
 
       // build catalog group request
@@ -649,6 +663,7 @@ namespace engine
       }
 
    retry:
+      ++times ;
       //send to a catalog
       rc = sendToCatlog( ( MsgHeader*)&req, &_upCatHandle, 0, FALSE ) ;
       if ( rc )
@@ -669,7 +684,8 @@ namespace engine
 
          if ( rc )
          {
-            if ( SDB_NETWORK_CLOSE == rc )
+            if ( SDB_NETWORK_CLOSE == rc &&
+                 times < CLS_CATA_RETRY_MAX_TIMES )
             {
                goto retry ;
             }
@@ -730,7 +746,7 @@ namespace engine
       PD_TRACE_ENTRY ( SDB__CLSSHDMGR_SYNCUPDCAT );
       BOOLEAN send = FALSE ;
       clsEventItem *pEventInfo = NULL ;
-      BOOLEAN hasRetry = FALSE ;
+      UINT32 retryTimes = 0 ;
       BOOLEAN needRetry = FALSE ;
       BOOLEAN hasUpCataGrp = FALSE ;
 
@@ -742,6 +758,7 @@ namespace engine
       }
 
    retry:
+      ++retryTimes ;
       needRetry = FALSE ;
       _catLatch.get() ;
       // look for sync event from cache
@@ -793,14 +810,23 @@ namespace engine
             rc = result <= 0 ? result : SDB_CLS_NOT_PRIMARY ;
          }
 
-         if ( SDB_NETWORK_CLOSE == rc )
+         if ( SDB_NET_CANNOT_CONNECT == rc )
+         {
+            /// the node is crashed, sleep some seconds
+            PD_LOG( PDWARNING, "Catalog group primary node is crashed but "
+                    "other nodes not aware, sleep %d seconds",
+                    NET_NODE_FAULTUP_MIN_TIME ) ;
+            ossSleep( NET_NODE_FAULTUP_MIN_TIME * OSS_ONE_SEC ) ;
+            needRetry = TRUE ;
+            hasUpCataGrp = FALSE ;
+         }
+         else if ( SDB_NETWORK_CLOSE == rc )
          {
             needRetry = TRUE ;
             hasUpCataGrp = FALSE ;
          }
-         else if ( SDB_CLS_NOT_PRIMARY == rc && !hasRetry )
+         else if ( SDB_CLS_NOT_PRIMARY == rc )
          {
-            hasRetry = TRUE ;
             needRetry = TRUE ;
             hasUpCataGrp = result > 0 ? TRUE : FALSE ;
          }
@@ -836,10 +862,9 @@ namespace engine
       }
 
       /// if need retry, update catalog and retry
-      if ( needRetry )
+      if ( needRetry && retryTimes < CLS_CATA_RETRY_MAX_TIMES )
       {
-         if ( hasUpCataGrp ||
-              SDB_OK == updateCatGroup( TRUE, millsec ) )
+         if ( hasUpCataGrp || SDB_OK == updateCatGroup( millsec ) )
          {
             goto retry ;
          }
@@ -860,11 +885,12 @@ namespace engine
       PD_TRACE_ENTRY ( SDB__CLSSHDMGR_SYNCUPDGPINFO );
       BOOLEAN send = FALSE ;
       clsEventItem *pEventInfo = NULL ;
-      BOOLEAN hasRetry = FALSE ;
+      UINT32 retryTimes = 0 ;
       BOOLEAN needRetry = FALSE ;
       BOOLEAN hasUpCataGrp = FALSE ;
 
    retry:
+      ++retryTimes ;
       needRetry = FALSE ;
       _catLatch.get() ;
 
@@ -917,14 +943,23 @@ namespace engine
             rc = result <= 0 ? result : SDB_CLS_NOT_PRIMARY ;
          }
 
-         if ( SDB_NETWORK_CLOSE == rc )
+         if ( SDB_NET_CANNOT_CONNECT == rc )
+         {
+            /// the node is crashed, sleep some seconds
+            PD_LOG( PDWARNING, "Catalog group primary node is crashed but "
+                    "other nodes not aware, sleep %d seconds",
+                    NET_NODE_FAULTUP_MIN_TIME ) ;
+            ossSleep( NET_NODE_FAULTUP_MIN_TIME * OSS_ONE_SEC ) ;
+            needRetry = TRUE ;
+            hasUpCataGrp = FALSE ;
+         }
+         else if ( SDB_NETWORK_CLOSE == rc )
          {
             needRetry = TRUE ;
             hasUpCataGrp = FALSE ;
          }
-         else if ( SDB_CLS_NOT_PRIMARY == rc && !hasRetry )
+         else if ( SDB_CLS_NOT_PRIMARY == rc )
          {
-            hasRetry = TRUE ;
             needRetry = TRUE ;
             hasUpCataGrp = result > 0 ? TRUE : FALSE ;
          }
@@ -960,10 +995,9 @@ namespace engine
       }
 
       /// if need retry, update catalog and retry
-      if ( needRetry )
+      if ( needRetry && retryTimes < CLS_CATA_RETRY_MAX_TIMES )
       {
-         if ( hasUpCataGrp ||
-              SDB_OK == updateCatGroup( TRUE, millsec ) )
+         if ( hasUpCataGrp || SDB_OK == updateCatGroup( millsec ) )
          {
             goto retry ;
          }
@@ -1005,16 +1039,27 @@ namespace engine
            SDB_CLS_NOT_PRIMARY == rc &&
            0 != startFrom )
       {
+         INT32 preStat = NET_NODE_STAT_NORMAL ;
          NodeID primaryNode ;
          primaryNode.columns.nodeID = startFrom ;
          primaryNode.columns.groupID = CATALOG_GROUPID ;
          primaryNode.columns.serviceID = MSG_ROUTE_CAT_SERVICE ;
 
          _shardLatch.get_shared() ;
-         rc = _cataGrpItem.updatePrimary( primaryNode, TRUE ) ;
+         rc = _cataGrpItem.updatePrimary( primaryNode, TRUE, &preStat ) ;
+         if ( NET_NODE_STAT_NORMAL != preStat )
+         {
+            _cataGrpItem.cancelPrimary() ;
+            rc = SDB_NET_CANNOT_CONNECT ;
+         }
          _shardLatch.release_shared() ;
 
-         if ( SDB_OK == rc )
+         if ( NET_NODE_STAT_NORMAL != preStat )
+         {
+            PD_LOG( PDWARNING, "Catalog group primary node[%d] is crashed",
+                    startFrom ) ;
+         }
+         else if ( SDB_OK == rc )
          {
             PD_LOG( PDEVENT, "Update catalog group primary node to [%d] "
                     "by reply message", startFrom ) ;
@@ -1396,7 +1441,13 @@ namespace engine
             }
             else if ( SDB_CLS_NOT_PRIMARY == rc )
             {
-               if ( updatePrimaryByReply( msg ) )
+               INT32 rcTmp = updatePrimaryByReply( msg ) ;
+               if ( SDB_NET_CANNOT_CONNECT == rcTmp )
+               {
+                  /// the node is crashed
+                  pEventInfo->event.signalAll ( rcTmp ) ;
+               }
+               else if ( SDB_OK == rcTmp )
                {
                   pEventInfo->event.signalAll ( 1 ) ;
                }
@@ -1515,7 +1566,13 @@ namespace engine
             //not primary node, should update catalog group info, and send again
             else if ( SDB_CLS_NOT_PRIMARY == res->flags )
             {
-               if ( updatePrimaryByReply( msg ) )
+               INT32 rcTmp = updatePrimaryByReply( msg ) ;
+               if ( SDB_NET_CANNOT_CONNECT == rcTmp )
+               {
+                  /// the node is crashed
+                  pEventInfo->event.signalAll ( rcTmp ) ;
+               }
+               else if ( SDB_OK == rcTmp )
                {
                   pEventInfo->event.signalAll ( 1 ) ;
                }
@@ -1859,7 +1916,7 @@ namespace engine
       clsCSEventItem *item = NULL ;
       UINT64 requestID = 0 ;
       INT32 result = 0 ;
-      BOOLEAN hasRetry = FALSE ;
+      UINT32 retryTimes = 0 ;
       BOOLEAN needRetry = FALSE ;
       BOOLEAN hasUpCataGrp = FALSE ;
 
@@ -1886,6 +1943,7 @@ namespace engine
       _catLatch.release() ;
 
    retry:
+      ++retryTimes ;
       needRetry = FALSE ;
       // send request
       rc = _sendCSInfoReq( csName, requestID, &(item->netHandle),
@@ -1905,23 +1963,31 @@ namespace engine
          rc = result <= 0 ? result : SDB_CLS_NOT_PRIMARY ;
       }
 
-      if ( SDB_NETWORK_CLOSE == rc )
+      if ( SDB_NET_CANNOT_CONNECT == rc )
+      {
+         /// the node is crashed, sleep some seconds
+         PD_LOG( PDWARNING, "Catalog group primary node is crashed but "
+                 "other nodes not aware, sleep %d seconds",
+                 NET_NODE_FAULTUP_MIN_TIME ) ;
+         ossSleep( NET_NODE_FAULTUP_MIN_TIME * OSS_ONE_SEC ) ;
+         needRetry = TRUE ;
+         hasUpCataGrp = FALSE ;
+      }
+      else if ( SDB_NETWORK_CLOSE == rc )
       {
          needRetry = TRUE ;
          hasUpCataGrp = FALSE ;
       }
-      else if ( SDB_CLS_NOT_PRIMARY == rc && !hasRetry )
+      else if ( SDB_CLS_NOT_PRIMARY == rc )
       {
-         hasRetry = TRUE ;
          needRetry = TRUE ;
          hasUpCataGrp = result > 0 ? TRUE : FALSE ;
       }
 
       /// if need retry, update catalog and retry
-      if ( needRetry )
+      if ( needRetry && retryTimes < CLS_CATA_RETRY_MAX_TIMES )
       {
-         if ( hasUpCataGrp ||
-              SDB_OK == updateCatGroup( TRUE, waitMillSec ) )
+         if ( hasUpCataGrp || SDB_OK == updateCatGroup( waitMillSec ) )
          {
             goto retry ;
          }
@@ -1986,7 +2052,13 @@ namespace engine
          //not primary node, should send again
          if ( SDB_CLS_NOT_PRIMARY == res->flags )
          {
-            if ( updatePrimaryByReply( msg ) )
+            INT32 rcTmp = updatePrimaryByReply( msg ) ;
+            if ( SDB_NET_CANNOT_CONNECT == rcTmp )
+            {
+               /// the node is crashed
+               csItem->event.signalAll ( rcTmp ) ;
+            }
+            else if ( SDB_OK == rcTmp )
             {
                csItem->event.signalAll ( 1 ) ;
             }

@@ -84,8 +84,9 @@ namespace engine
    void _dpsLogWrapper::regEventHandler( dpsEventHandler *pHandler )
    {
       SDB_ASSERT( pHandler, "Handle can't be NULL" ) ;
-      SDB_ASSERT( FALSE == pmdGetKRCB()->isActive(),
-                  "Can't register handle when pmd actived" ) ;
+      SDB_ASSERT( pmdGetThreadEDUCB() &&
+                  EDU_TYPE_MAIN == pmdGetThreadEDUCB()->getType(),
+                  "Must register in main thread" ) ;
       for ( UINT32 i = 0 ; i < _vecEventHandler.size() ; ++i )
       {
          SDB_ASSERT( pHandler != _vecEventHandler[ i ],
@@ -98,8 +99,9 @@ namespace engine
    void _dpsLogWrapper::unregEventHandler( dpsEventHandler *pHandler )
    {
       SDB_ASSERT( pHandler, "Handle can't be NULL" ) ;
-      SDB_ASSERT( FALSE == pmdGetKRCB()->isActive(),
-                  "Can't unregister when pmd actived" ) ;
+      SDB_ASSERT( pmdGetThreadEDUCB() && 
+                  EDU_TYPE_MAIN == pmdGetThreadEDUCB()->getType(),
+                  "Must unregister in main thread" ) ;
 
       vector< dpsEventHandler* >::iterator it = _vecEventHandler.begin() ;
       while ( it != _vecEventHandler.end() )

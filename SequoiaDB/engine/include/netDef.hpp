@@ -75,7 +75,9 @@ namespace engine
 
    NET_NODE_STATUS netResult2Status( INT32 result ) ;
 
-   #define NET_NODE_FAULT_TIMEOUT            ( 600 )
+   #define NET_NODE_FAULT_TIMEOUT            ( 600 )  /// second
+   #define NET_NODE_FAULTUP_MIN_TIME         ( 3 )    /// second
+
    /*
       _netRouteNode define
    */
@@ -96,8 +98,6 @@ namespace engine
       :_status( NET_NODE_STAT_NORMAL ),
        _faultTime( 0 )
       {
-         SDB_ASSERT( (UINT64)&_status % 4 == 0,
-                     "the addr of _status must be aligned 4 bytes!" );
          _id.value = MSG_INVALID_ROUTEID ;
          _host[0] = 0 ;
       }
@@ -135,6 +135,15 @@ namespace engine
          }
       }
 
+      void getStatus( INT32 &status, UINT64 &faultTime ) const
+      {
+         status = _status ;
+         faultTime = _faultTime ;
+      }
+
+      /*
+         This function will change status when timeout > faultTimeout
+      */
       NET_NODE_STATUS getStatus( UINT64 curTime,
                                  INT32 faultTimeout = NET_NODE_FAULT_TIMEOUT )
       {
@@ -146,6 +155,24 @@ namespace engine
             }
          }
          return (NET_NODE_STATUS)_status ;
+      }
+
+      /*
+         This function not change status when timeout > faultTimeout
+      */
+      BOOLEAN isInStatus( UINT64 curTime,
+                          INT32 status,
+                          INT32 faultTimeout = NET_NODE_FAULT_TIMEOUT )
+      {
+         INT32 tmpStatus = _status ;
+         if ( NET_NODE_STAT_NORMAL != tmpStatus && faultTimeout > 0 )
+         {
+            if ( curTime - _faultTime > ( UINT64 )faultTimeout )
+            {
+               tmpStatus = NET_NODE_STAT_NORMAL ;
+            }
+         }
+         return status == tmpStatus ? TRUE : FALSE ;
       }
 
    } ;
