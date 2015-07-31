@@ -152,6 +152,32 @@ namespace import
       return FALSE;
    }
 
+   static inline BOOLEAN _isValidFieldEnd(const CHAR* data, INT32 length,
+                                          const CHAR* fieldDel, INT32 fieldDelLen,
+                                          INT32& endLength, BOOLEAN& fieldEnd)
+   {
+      CHAR* str = (CHAR*)data;
+      INT32 len = length;
+
+      SDB_ASSERT(NULL != data, "data can't be NULL");
+      SDB_ASSERT(length > 0, "length must be greater than 0");
+
+      _skipSpace(&str, len);
+      if (len == 0)
+      {
+         endLength = length;
+         return TRUE;
+      }
+      else if (_startWith(str, len, fieldDel, fieldDelLen))
+      {
+         fieldEnd = TRUE;
+         endLength = length - len;
+         return TRUE;
+      }
+
+      return FALSE;
+   }
+
    static inline BOOLEAN _isValidFieldName(CHAR* field, INT32 length)
    {
       SDB_ASSERT(NULL != field, "field can't be NULL");
@@ -341,9 +367,12 @@ namespace import
       goto done;
    }
 
+   // _stringToRawXXX used to auto detect field's raw type
+   // _stringToXXX used to convert data types
+
    // [+|-]<0~9...>
-   static inline INT32 _stringToInt(const CHAR* data, INT32 length,
-                                    INT32& value, INT32& valueLength)
+   static inline INT32 _stringToRawInt(const CHAR* data, INT32 length,
+                                       INT32& value, INT32& valueLength)
    {
       CHAR* str = (CHAR*)data;
       INT32 len = length;
@@ -414,8 +443,8 @@ namespace import
    }
 
    // [+|-]<0~9...>
-   static inline INT32 _stringToLong(const CHAR* data, INT32 length,
-                                     INT64& value, INT32& valueLength)
+   static inline INT32 _stringToRawLong(const CHAR* data, INT32 length,
+                                        INT64& value, INT32& valueLength)
    {
       CHAR* str = (CHAR*)data;
       INT32 len = length;
@@ -485,9 +514,9 @@ namespace import
       goto done;
    }
 
-   static inline INT32 _stringToNumber(const CHAR* data, INT32 length,
-                                       CSV_TYPE& type, CSVFieldValue& value,
-                                       INT32& valueLength)
+   static inline INT32 _stringToRawNumber(const CHAR* data, INT32 length,
+                                          CSV_TYPE& type, CSVFieldValue& value,
+                                          INT32& valueLength)
    {
       CHAR* str = (CHAR*)data;
       INT32 len = length;
@@ -504,7 +533,7 @@ namespace import
       SDB_ASSERT(length > 0, "length must be greater than 0");
 
       // integer part
-      rc = _stringToLong(str, len, integer, intLen);
+      rc = _stringToRawLong(str, len, integer, intLen);
       if (SDB_OK != rc)
       {
          //PD_LOG(PDERROR, "failed to convert to long, rc=%d", rc);
@@ -542,7 +571,7 @@ namespace import
       }
 
       // fractional part
-      rc = _stringToLong(str, len, decimal, decLen);
+      rc = _stringToRawLong(str, len, decimal, decLen);
       if (SDB_OK != rc)
       {
          //PD_LOG(PDERROR, "failed to convert to long, rc=%d", rc);
@@ -574,7 +603,7 @@ namespace import
       }
 
       // exponent part
-      rc = _stringToLong(str, len, exponent, expLen);
+      rc = _stringToRawLong(str, len, exponent, expLen);
       if (SDB_OK != rc)
       {
          //PD_LOG(PDERROR, "failed to convert to long, rc=%d", rc);
@@ -596,8 +625,8 @@ namespace import
    }
 
    // <true|false>
-   static inline INT32 _stringToBool(const CHAR* data, INT32 length,
-                                     BOOLEAN& value, INT32& valueLength)
+   static inline INT32 _stringToRawBool(const CHAR* data, INT32 length,
+                                        BOOLEAN& value, INT32& valueLength)
    {
       INT32 rc = SDB_OK;
 
@@ -633,8 +662,8 @@ namespace import
 
    // [+|-]<0~9...>[.<0~9...>[<E|e>[+|-]<0~9...>]]
    // -123.45e-678
-   static inline INT32 _stringToDouble(const CHAR* data, INT32 length,
-                                       FLOAT64& value, INT32& valueLength)
+   static inline INT32 _stringToRawDouble(const CHAR* data, INT32 length,
+                                          FLOAT64& value, INT32& valueLength)
    {
       INT32 rc = SDB_OK;
       CSV_TYPE subType = CSV_TYPE_AUTO;
@@ -643,7 +672,7 @@ namespace import
       SDB_ASSERT(NULL != data, "data can't be NULL");
       SDB_ASSERT(length > 0, "length must be greater than 0");
 
-      rc = _stringToNumber(data, length, subType, subValue, valueLength);
+      rc = _stringToRawNumber(data, length, subType, subValue, valueLength);
       if (SDB_OK != rc)
       {
          //PD_LOG(PDERROR, "failed to convert to number, rc=%d", rc);
@@ -673,9 +702,9 @@ namespace import
       goto done;
    }
 
-   static INT32 _stringToNull(const CHAR* data, INT32 length,
-                              const CHAR* fieldDel, INT32 fieldDelLen,
-                              INT32& valueLength, BOOLEAN& fieldEnd)
+   static INT32 _stringToRawNull(const CHAR* data, INT32 length,
+                                 const CHAR* fieldDel, INT32 fieldDelLen,
+                                 INT32& valueLength, BOOLEAN& fieldEnd)
    {
       CHAR* str = (CHAR*)data;
       INT32 len = length;
@@ -856,6 +885,403 @@ namespace import
       goto done;
    }
 
+   static inline INT32 _stringToInt(const CHAR* data, INT32 length,
+                                    const CHAR* strDel, INT32 strDelLen,
+                                    const CHAR* fieldDel, INT32 fieldDelLen,
+                                    INT32& value, INT32& valueLength,
+                                    BOOLEAN& fieldEnd)
+   {
+      CHAR* str = (CHAR*)data;
+      INT32 len = length;
+      INT32 tmpLen = 0;
+      CSVString csvStr;
+      INT32 rc = SDB_OK;
+
+      SDB_ASSERT(NULL != data, "data can't be NULL");
+      SDB_ASSERT(length > 0, "length must be greater than 0");
+
+      rc = _stringToRawInt(data, length, value, valueLength);
+      if (SDB_OK != rc)
+      {
+         rc = _stringToRawBool(data, length, value, valueLength);
+      }
+
+      if (SDB_OK == rc)
+      {
+         str += valueLength;
+         len -= valueLength;
+
+         if (!_isValidFieldEnd(str, len, fieldDel, fieldDelLen, tmpLen, fieldEnd))
+         {
+            goto error;
+         }
+
+         valueLength += tmpLen;
+         goto done;
+      }
+
+      rc = _stringToString(data, length,
+                           strDel, strDelLen,
+                           fieldDel, fieldDelLen,
+                           csvStr, valueLength, fieldEnd);
+      if (SDB_OK != rc || data == csvStr.str)
+      {
+         goto error;
+      }
+
+      tmpLen = 0;
+      str = csvStr.str;
+      len = csvStr.length;
+      _skipSpace(&str, len);
+
+      // find out int or bool in string
+      rc = _stringToRawInt(str, len, value, tmpLen);
+      if (SDB_OK != rc)
+      {
+         rc = _stringToRawBool(str, len, value, tmpLen);
+      }
+
+      if (SDB_OK != rc)
+      {
+         goto error;
+      }
+
+      str += tmpLen;
+      len -= tmpLen;
+
+      _skipSpace(&str, len);
+      if (0 != len)
+      {
+         goto error;
+      }
+
+   done:
+      return rc;
+   error:
+      goto done;
+   }
+
+   static inline INT32 _stringToLong(const CHAR* data, INT32 length,
+                                    const CHAR* strDel, INT32 strDelLen,
+                                    const CHAR* fieldDel, INT32 fieldDelLen,
+                                    INT64& value, INT32& valueLength,
+                                    BOOLEAN& fieldEnd)
+   {
+      CHAR* str = (CHAR*)data;
+      INT32 len = length;
+      INT32 tmpLen = 0;
+      CSVString csvStr;
+      INT32 rc = SDB_OK;
+
+      SDB_ASSERT(NULL != data, "data can't be NULL");
+      SDB_ASSERT(length > 0, "length must be greater than 0");
+
+      rc = _stringToRawLong(data, length, value, valueLength);
+      if (SDB_OK != rc)
+      {
+         BOOLEAN boolValue = FALSE;
+         rc = _stringToRawBool(data, length, boolValue, valueLength);
+         value = boolValue;
+      }
+
+      if (SDB_OK == rc)
+      {
+         str += valueLength;
+         len -= valueLength;
+
+         if (!_isValidFieldEnd(str, len, fieldDel, fieldDelLen, tmpLen, fieldEnd))
+         {
+            goto error;
+         }
+
+         valueLength += tmpLen;
+         goto done;
+      }
+
+      rc = _stringToString(data, length,
+                           strDel, strDelLen,
+                           fieldDel, fieldDelLen,
+                           csvStr, valueLength, fieldEnd);
+      if (SDB_OK != rc || data == csvStr.str)
+      {
+         goto error;
+      }
+
+      tmpLen = 0;
+      str = csvStr.str;
+      len = csvStr.length;
+      _skipSpace(&str, len);
+
+      // find out long or bool in string
+      rc = _stringToRawLong(str, len, value, tmpLen);
+      if (SDB_OK != rc)
+      {
+         BOOLEAN boolValue = FALSE;
+         rc = _stringToRawBool(str, len, boolValue, tmpLen);
+         value = boolValue;
+      }
+
+      if (SDB_OK != rc)
+      {
+         goto error;
+      }
+
+      str += tmpLen;
+      len -= tmpLen;
+
+      _skipSpace(&str, len);
+      if (0 != len)
+      {
+         goto error;
+      }
+
+   done:
+      return rc;
+   error:
+      goto done;
+   }
+
+   static inline INT32 _stringToBool(const CHAR* data, INT32 length,
+                                    const CHAR* strDel, INT32 strDelLen,
+                                    const CHAR* fieldDel, INT32 fieldDelLen,
+                                    BOOLEAN& value, INT32& valueLength,
+                                    BOOLEAN& fieldEnd)
+   {
+      CHAR* str = (CHAR*)data;
+      INT32 len = length;
+      INT32 tmpLen = 0;
+      CSVString csvStr;
+      INT32 rc = SDB_OK;
+
+      SDB_ASSERT(NULL != data, "data can't be NULL");
+      SDB_ASSERT(length > 0, "length must be greater than 0");
+
+      rc = _stringToRawBool(data, length, value, valueLength);
+      if (SDB_OK != rc)
+      {
+         INT64 longValue = 0;
+         rc = _stringToRawLong(data, length, longValue, valueLength);
+         value = (0 != longValue);
+      }
+
+      if (SDB_OK == rc)
+      {
+         str += valueLength;
+         len -= valueLength;
+
+         if (!_isValidFieldEnd(str, len, fieldDel, fieldDelLen, tmpLen, fieldEnd))
+         {
+            goto error;
+         }
+
+         valueLength += tmpLen;
+         goto done;
+      }
+
+      rc = _stringToString(data, length,
+                           strDel, strDelLen,
+                           fieldDel, fieldDelLen,
+                           csvStr, valueLength, fieldEnd);
+      if (SDB_OK != rc || data == csvStr.str)
+      {
+         goto error;
+      }
+
+      tmpLen = 0;
+      str = csvStr.str;
+      len = csvStr.length;
+      _skipSpace(&str, len);
+
+      // find out long or bool in string
+      rc = _stringToRawBool(str, len, value, tmpLen);
+      if (SDB_OK != rc)
+      {
+         INT64 longValue = 0;
+         rc = _stringToRawLong(str, len, longValue, tmpLen);
+         value = (0 != longValue);
+      }
+
+      if (SDB_OK != rc)
+      {
+         goto error;
+      }
+
+      str += tmpLen;
+      len -= tmpLen;
+
+      _skipSpace(&str, len);
+      if (0 != len)
+      {
+         goto error;
+      }
+
+   done:
+      return rc;
+   error:
+      goto done;
+   }
+
+   static inline INT32 _stringToNumber(const CHAR* data, INT32 length,
+                                    const CHAR* strDel, INT32 strDelLen,
+                                    const CHAR* fieldDel, INT32 fieldDelLen,
+                                    CSV_TYPE& type, CSVFieldValue& value,
+                                    INT32& valueLength, BOOLEAN& fieldEnd)
+   {
+      CHAR* str = (CHAR*)data;
+      INT32 len = length;
+      INT32 tmpLen = 0;
+      CSVString csvStr;
+      INT32 rc = SDB_OK;
+
+      SDB_ASSERT(NULL != data, "data can't be NULL");
+      SDB_ASSERT(length > 0, "length must be greater than 0");
+
+      rc = _stringToRawNumber(data, length, type, value, valueLength);
+      if (SDB_OK == rc)
+      {
+         str += valueLength;
+         len -= valueLength;
+
+         if (!_isValidFieldEnd(str, len, fieldDel, fieldDelLen, tmpLen, fieldEnd))
+         {
+            goto error;
+         }
+
+         valueLength += tmpLen;
+         goto done;
+      }
+
+      rc = _stringToString(data, length,
+                           strDel, strDelLen,
+                           fieldDel, fieldDelLen,
+                           csvStr, valueLength, fieldEnd);
+      if (SDB_OK != rc || data == csvStr.str)
+      {
+         goto error;
+      }
+
+      tmpLen = 0;
+      str = csvStr.str;
+      len = csvStr.length;
+      _skipSpace(&str, len);
+
+      // find out double in string
+      rc = _stringToRawNumber(str, len, type, value, tmpLen);
+      if (SDB_OK != rc)
+      {
+         goto error;
+      }
+
+      str += tmpLen;
+      len -= tmpLen;
+
+      _skipSpace(&str, len);
+      if (0 != len)
+      {
+         goto error;
+      }
+
+   done:
+      return rc;
+   error:
+      goto done;
+   }
+
+   static inline INT32 _stringToDouble(const CHAR* data, INT32 length,
+                                    const CHAR* strDel, INT32 strDelLen,
+                                    const CHAR* fieldDel, INT32 fieldDelLen,
+                                    FLOAT64& value, INT32& valueLength,
+                                    BOOLEAN& fieldEnd)
+   {
+      CHAR* str = (CHAR*)data;
+      INT32 len = length;
+      INT32 tmpLen = 0;
+      CSVString csvStr;
+      INT32 rc = SDB_OK;
+
+      SDB_ASSERT(NULL != data, "data can't be NULL");
+      SDB_ASSERT(length > 0, "length must be greater than 0");
+
+      rc = _stringToRawDouble(data, length, value, valueLength);
+      if (SDB_OK == rc)
+      {
+         str += valueLength;
+         len -= valueLength;
+
+         if (!_isValidFieldEnd(str, len, fieldDel, fieldDelLen, tmpLen, fieldEnd))
+         {
+            goto error;
+         }
+
+         valueLength += tmpLen;
+         goto done;
+      }
+
+      rc = _stringToString(data, length,
+                           strDel, strDelLen,
+                           fieldDel, fieldDelLen,
+                           csvStr, valueLength, fieldEnd);
+      if (SDB_OK != rc || data == csvStr.str)
+      {
+         goto error;
+      }
+
+      tmpLen = 0;
+      str = csvStr.str;
+      len = csvStr.length;
+      _skipSpace(&str, len);
+
+      // find out double in string
+      rc = _stringToRawDouble(str, len, value, tmpLen);
+      if (SDB_OK != rc)
+      {
+         goto error;
+      }
+
+      str += tmpLen;
+      len -= tmpLen;
+
+      _skipSpace(&str, len);
+      if (0 != len)
+      {
+         goto error;
+      }
+
+   done:
+      return rc;
+   error:
+      goto done;
+   }
+
+   static INT32 _stringToNull(const CHAR* data, INT32 length,
+                              const CHAR* fieldDel, INT32 fieldDelLen,
+                              INT32& valueLength, BOOLEAN& fieldEnd)
+   {
+      CHAR* str = (CHAR*)data;
+      INT32 len = length;
+      INT32 rc = SDB_OK;
+      fieldEnd = FALSE;
+
+      SDB_ASSERT(NULL != data, "data can't be NULL");
+      SDB_ASSERT(length > 0, "length must be greater than 0");
+
+      while (len > 0)
+      {
+         if (_startWith(str, len, fieldDel, fieldDelLen))
+         {
+            fieldEnd = TRUE;
+            break;
+         }
+
+         str++;
+         len--;
+      }
+
+      valueLength = length - len;
+
+      return rc;
+   }
+
    // support INT/LONG/DOUBLE/BOOL/NULL/STRING
    static inline INT32 _detectFieldType(const CHAR* data, INT32 length,
                                         const CHAR* strDel, INT32 strDelLen,
@@ -874,11 +1300,11 @@ namespace import
       SDB_ASSERT(length > 0, "length must be greater than 0");
       SDB_ASSERT(!isspace(*data), "data can't begin with space");
 
-      rc = _stringToNumber(str, len, fieldType, fieldValue, valueLength);
+      rc = _stringToRawNumber(str, len, fieldType, fieldValue, valueLength);
       if (SDB_OK != rc)
       {
          fieldType = CSV_TYPE_BOOL;
-         rc = _stringToBool(str, len, fieldValue.boolVal, valueLength);
+         rc = _stringToRawBool(str, len, fieldValue.boolVal, valueLength);
       }
 
       if (SDB_OK == rc)
@@ -905,7 +1331,7 @@ namespace import
       }
 
       // null
-      rc = _stringToNull(str, len, fieldDel, fieldDelLen, fieldLength, fieldEnd);
+      rc = _stringToRawNull(str, len, fieldDel, fieldDelLen, fieldLength, fieldEnd);
       if (SDB_OK == rc)
       {
          fieldType = CSV_TYPE_NULL;
@@ -1041,7 +1467,7 @@ namespace import
          INT64 us = 0;
          INT32 valueLength = 0;
 
-         rc = _stringToLong(data.str, data.length, varLong, valueLength);
+         rc = _stringToRawLong(data.str, data.length, varLong, valueLength);
          if (SDB_OK != rc || data.length != valueLength)
          {
             PD_LOG(PDERROR, "failed to get the number of timestamp, rc=%d", rc);
@@ -1169,7 +1595,7 @@ namespace import
       {
          INT32 valueLength = 0;
 
-         rc = _stringToLong(data.str, data.length, value, valueLength);
+         rc = _stringToRawLong(data.str, data.length, value, valueLength);
          if (SDB_OK != rc || data.length != valueLength)
          {
             goto error;
@@ -1362,7 +1788,7 @@ namespace import
             goto error;
          }
 
-         rc = _stringToInt(str, len, type, typeLength);
+         rc = _stringToRawInt(str, len, type, typeLength);
          if (SDB_OK != rc)
          {
             PD_LOG(PDERROR, "invalid binary type");
@@ -1562,19 +1988,29 @@ namespace import
       switch(type)
       {
       case CSV_TYPE_INT:
-         rc = _stringToInt(data, length, fieldValue.intVal, valueLength);
+         rc = _stringToInt(data, length, strDel, strDelLen,
+                           fieldDel, fieldDelLen, fieldValue.intVal,
+                           valueLength, fieldEnd);
          break;
       case CSV_TYPE_LONG:
-         rc = _stringToLong(data, length, fieldValue.longVal, valueLength);
+         rc = _stringToLong(data, length, strDel, strDelLen,
+                            fieldDel, fieldDelLen, fieldValue.longVal,
+                            valueLength, fieldEnd);
          break;
       case CSV_TYPE_NUMBER:
-         rc = _stringToNumber(data, length, subType, fieldValue, valueLength);
+         rc = _stringToNumber(data, length, strDel, strDelLen,
+                              fieldDel, fieldDelLen, subType, fieldValue,
+                              valueLength, fieldEnd);
          break;
       case CSV_TYPE_DOUBLE:
-         rc = _stringToDouble(data, length, fieldValue.doubleVal, valueLength);
+         rc = _stringToDouble(data, length, strDel, strDelLen,
+                              fieldDel, fieldDelLen, fieldValue.doubleVal,
+                              valueLength, fieldEnd);
          break;
       case CSV_TYPE_BOOL:
-         rc = _stringToBool(data, length, fieldValue.boolVal, valueLength);
+         rc = _stringToBool(data, length, strDel, strDelLen,
+                            fieldDel, fieldDelLen, fieldValue.boolVal,
+                            valueLength, fieldEnd);
          break;
       case CSV_TYPE_NULL:
          rc = _stringToNull(data, length, fieldDel, fieldDelLen,
@@ -1650,7 +2086,7 @@ namespace import
       {
          if (CSV_TYPE_NULL != type && CSV_TYPE_AUTO != type)
          {
-            rc = _stringToNull(data, length, fieldDel, fieldDelLen,
+            rc = _stringToRawNull(data, length, fieldDel, fieldDelLen,
                                valueLength, fieldEnd);
             if (SDB_OK == rc)
             {
@@ -1658,31 +2094,6 @@ namespace import
                goto done;
             }
          }
-         goto error;
-      }
-
-      // process non-string type
-
-      str += valueLength;
-      len -= valueLength;
-
-      _skipSpace(&str, len);
-
-      if (len == 0)
-      {
-         valueLength = length;
-         goto done;
-      }
-      else if (_startWith(str, len, fieldDel, fieldDelLen))
-      {
-         fieldEnd = TRUE;
-         valueLength = length - len;
-         goto done;
-      }
-      else
-      {
-         rc = SDB_INVALIDARG;
-         PD_LOG(PDERROR, "invalid field");
          goto error;
       }
 
