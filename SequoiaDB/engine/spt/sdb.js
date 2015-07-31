@@ -38,6 +38,8 @@ var SDB_COORD_GROUP_NAME         = "SYSCoord" ;
 var SDB_CATALOG_GROUP_NAME       = "SYSCatalogGroup" ;
 var SDB_SPARE_GROUP_NAME         = "SYSSpare" ;
 
+var SDB_PRINT_JSON_FORMAT        = true ; 
+
 // end Global Constants
 
 // Global functions
@@ -80,13 +82,21 @@ Bson.prototype.toObj = function() {
 }
 
 Bson.prototype.toString = function() {
-   try
+   if ( typeof(SDB_PRINT_JSON_FORMAT) == "undefined" ||
+        SDB_PRINT_JSON_FORMAT )
    {
-      var obj = this.toObj();
-      var str = JSON.stringify ( obj, undefined, 2 ) ;
-      return str ;
+      try
+      {
+         var obj = this.toObj();
+         var str = JSON.stringify ( obj, undefined, 2 ) ;
+         return str ;
+      }
+      catch ( e )
+      {
+         return this.toJson() ;
+      }
    }
-   catch ( e )
+   else
    {
       return this.toJson() ;
    }
