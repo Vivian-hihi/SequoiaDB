@@ -1454,7 +1454,7 @@ namespace engine
       rc = MSG_GET_INNER_REPLY_RC( msg ) ;
       if ( SDB_CLS_NOT_PRIMARY == rc )
       {
-         updateCatGroup () ;
+         updateCatGroup ( 100 ) ;
          goto error ;
       }
       else if ( rc != SDB_OK )
