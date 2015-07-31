@@ -43,6 +43,7 @@
 #include "dpsLogFile.hpp"
 #include "ossIO.hpp"
 #include "dpsDump.hpp"
+#include "utilStr.hpp"
 #include "sdbDpsLogFilter.hpp"
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/operations.hpp>
@@ -489,7 +490,7 @@ namespace
    }
 
    INT32 filte( iFilter *filter, const dpsCmdData *data,
-                    OSSFILE& out, const CHAR *filename )
+                OSSFILE& out, const CHAR *filename )
    {
       SDB_ASSERT( filter, "filter is NULL" ) ;
       SDB_ASSERT( filename, "filename cannot be NULL" ) ;
@@ -1088,9 +1089,12 @@ INT32 _dpsMetaFilter::doFilte( const dpsCmdData *data, OSSFILE &out,
          // src log file ;
          fs::path fileDir( data->srcPath ) ;
          const CHAR *filepath = fileDir.string().c_str() ;
-         CHAR filename[ OSS_MAX_PATHSIZE * 2 ] = { 0 } ;
-         ossSnprintf( filename, OSS_MAX_PATHSIZE, "%s/sequoiadbLog.%d",
-                      filepath, idx ) ;
+         CHAR shortName[ 30 ] = { 0 } ;
+         CHAR filename[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
+
+         ossSnprintf( shortName, sizeof( shortName ) - 1, "sequoiadbLog.%d",
+                      idx ) ;
+         utilBuildFullPath( filepath, shortName, OSS_MAX_PATHSIZE, filename ) ;
 
          if( !dpsLogFilter::isFileExisted( filename ) )
          {

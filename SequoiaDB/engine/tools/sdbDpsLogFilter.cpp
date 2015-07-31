@@ -37,6 +37,7 @@
 *******************************************************************************/
 #include "sdbDpsLogFilter.hpp"
 #include "ossUtil.hpp"
+#include "ossStr.hpp"
 #include "ossIO.hpp"
 #include "dpsLogFile.hpp"
 #include "dpsDef.hpp"
@@ -215,9 +216,13 @@ INT32 _dpsLogFilter::doParse()
          // src log file ;
          fs::path fileDir( _cmdData->srcPath ) ;
          const CHAR *filepath = fileDir.string().c_str() ;
-         CHAR filename[ OSS_MAX_PATHSIZE * 2 ] = { 0 } ;
-         ossSnprintf( filename, OSS_MAX_PATHSIZE, "%s/sequoiadbLog.%d",
-                      filepath, idx ) ;
+         CHAR shortName[ 30 ] = { 0 } ;
+         CHAR filename[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
+
+         ossSnprintf( shortName, sizeof( shortName ) - 1, "sequoiadbLog.%d",
+                      idx ) ;
+         engine::utilBuildFullPath( filepath, shortName,
+                                    OSS_MAX_PATHSIZE, filename ) ;
 
          if( !isFileExisted( filename ) )
          {

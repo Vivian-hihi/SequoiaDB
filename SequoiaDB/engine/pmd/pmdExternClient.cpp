@@ -51,7 +51,7 @@ using namespace bson ;
 namespace engine
 {
 
-   #define PMD_AUTH_RETRY_TIMES        ( 3 )
+   #define PMD_AUTH_RETRY_TIMES        ( 4 )
 
    /*
       _pmdExternClient implement

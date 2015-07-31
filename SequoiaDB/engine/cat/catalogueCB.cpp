@@ -79,7 +79,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       isDelay = FALSE ;
 
-      if ( pmdIsPrimary() )
+      if ( pRepl->primaryIsMe() )
       {
          goto done ;
       }

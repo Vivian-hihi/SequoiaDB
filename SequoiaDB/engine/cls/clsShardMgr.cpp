@@ -46,7 +46,7 @@ using namespace bson ;
 namespace engine 
 {
 
-   #define CLS_CATA_RETRY_MAX_TIMES          ( 3 )
+   #define CLS_CATA_RETRY_MAX_TIMES          ( 4 )
 
    struct _hostAndPort
    {
