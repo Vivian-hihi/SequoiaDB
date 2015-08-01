@@ -2331,6 +2331,8 @@ TEST( collection, create_and_remove_id_index )
    bson obj ;
    bson record ;
    bson updater ;
+   bson option ;
+   bson_init( &option ) ;
 
    rc = initEnv( HOST, SERVER, USER, PASSWD ) ;
    ASSERT_EQ( SDB_OK, rc ) ;
@@ -2400,8 +2402,11 @@ TEST( collection, create_and_remove_id_index )
    ASSERT_EQ( SDB_RTN_AUTOINDEXID_IS_FALSE, rc ) ;
 
    // test
-   rc = sdbCreateIdIndex( cl ) ;
+   bson_append_bool( &option, "Offline", 0 ) ;
+   bson_finish( &option ) ;
+   rc = sdbCreateIdIndex( cl, &option ) ;
    ASSERT_EQ( SDB_OK, rc ) ;
+   bson_destroy( &option ) ;
 
    rc = sdbDelete( cl, NULL, NULL ) ;
    ASSERT_EQ( SDB_OK, rc ) ;
