@@ -68,6 +68,7 @@ namespace import
    #define IMP_OPTION_EXEC              "exec"
    #define IMP_OPTION_SHARDING          "sharding"
    #define IMP_OPTION_COORD             "coord"
+   #define IMP_OPTION_HELPFUL           "helpful"
 
    #define IMP_EXPLAIN_HELP             "print help information"
    #define IMP_EXPLAIN_VERSION          "print version"
@@ -93,12 +94,13 @@ namespace import
    #define IMP_EXPLAIN_FORCE            "force to insert the records that are not in utf-8 format, default: false"
    #define IMP_EXPLAIN_SSL              "use SSL connection (arg: [true|false], e.g. \"--ssl true\")"
    #define IMP_EXPLAIN_JOBS             "importing job num at once, default is 1"
-   #define IMP_EXPLAIN_BUFFER           "set buffer size(unit:MB), default is 128MB"
+   #define IMP_EXPLAIN_BUFFER           "set buffer size(unit:MB), default is 64MB"
    #define IMP_EXPLAIN_DRYRUN           "only parse record, don't import to database"
    #define IMP_EXPLAIN_VERBOSE          "print run time details"
    #define IMP_EXPLAIN_EXEC             "execute external program to get data, the program should output data to standard outpupt"
    #define IMP_EXPLAIN_SHARDING         "repackage records by sharding, default is true"
    #define IMP_EXPLAIN_COORD            "find coordinators automatically, default is true"
+   #define IMP_EXPLAIN_HELPFUL          "print all options"
 
    #define _TYPE(T) po::value<T>()
 
@@ -116,10 +118,13 @@ namespace import
       (IMP_OPTION_COLLECTION",l",      _TYPE(string),    IMP_EXPLAIN_COLLECTION) \
       (IMP_OPTION_ERRORSTOP,           _TYPE(string),    IMP_EXPLAIN_ERRORSTOP) \
       (IMP_OPTION_SSL,                 _TYPE(string),    IMP_EXPLAIN_SSL) \
+      (IMP_OPTION_VERBOSE",v",          /* no arg */     IMP_EXPLAIN_VERBOSE) \
 
    #define IMP_IMPORT_OPTIONS \
       (IMP_OPTION_BATCHSIZE",n",       _TYPE(INT32),     IMP_EXPLAIN_BATCHSIZE) \
       (IMP_OPTION_JOBS",j",            _TYPE(INT32),     IMP_EXPLAIN_JOBS) \
+      (IMP_OPTION_COORD,               _TYPE(string),    IMP_EXPLAIN_COORD) \
+      (IMP_OPTION_SHARDING,            _TYPE(string),    IMP_EXPLAIN_SHARDING) \
 
    #define IMP_INPUT_OPTIONS \
       (IMP_OPTION_FILENAME,            _TYPE(string),    IMP_EXPLAIN_FILENAME) \
@@ -137,12 +142,11 @@ namespace import
       (IMP_OPTION_SPARSE,              _TYPE(string),    IMP_EXPLAIN_SPARSE) \
       (IMP_OPTION_EXTRA,               _TYPE(string),    IMP_EXPLAIN_EXTRA) \
 
-   #define IMP_HIDDEN_OPTIONS \
+   #define IMP_HELPFUL_OPTIONS \
+      (IMP_OPTION_HELPFUL,              /* no arg */     IMP_EXPLAIN_HELPFUL) \
       (IMP_OPTION_BUFFERSIZE,          _TYPE(INT32),     IMP_EXPLAIN_BUFFER) \
       (IMP_OPTION_DRYRUN,               /* no arg */     IMP_EXPLAIN_DRYRUN) \
-      (IMP_OPTION_VERBOSE,              /* no arg */     IMP_EXPLAIN_VERBOSE) \
-      (IMP_OPTION_SHARDING,            _TYPE(string),    IMP_EXPLAIN_SHARDING) \
-      (IMP_OPTION_COORD,               _TYPE(string),    IMP_EXPLAIN_COORD) \
+
 
    Options::Options()
    {
@@ -152,12 +156,16 @@ namespace import
       _recordDelimiter = "\n";
       _inputType = INPUT_STDIN;
       _inputFormat = FORMAT_CSV;
-      _batchSize = 100;
       _linePriority = TRUE;
       _errorStop = FALSE;
       _force = FALSE;
       _useSSL = FALSE;
+      _verbose = FALSE;
+
+      _batchSize = 100;
       _jobs = 1;
+      _enableSharding = TRUE;
+      _enableCoord = TRUE;
 
       _stringDelimiter = "\"";
       _fieldDelimiter = ",";
@@ -165,12 +173,8 @@ namespace import
       _autoAddField = TRUE;
       _autoCompletion = FALSE;
 
-      _bufferSize = 128;
+      _bufferSize = 64;
       _dryRun = FALSE;
-      _verbose = FALSE;
-      _enableSharding = TRUE;
-      _enableCoord = TRUE;
-
    }
 
    Options::~Options()
@@ -189,7 +193,7 @@ namespace import
          IMP_IMPORT_OPTIONS
          IMP_INPUT_OPTIONS
          IMP_CSV_OPTIONS
-         IMP_HIDDEN_OPTIONS
+         IMP_HELPFUL_OPTIONS
       ;
 
       rc = utilReadCommandLine( argc, argv, _allDesc, _vm, FALSE );
@@ -200,7 +204,9 @@ namespace import
 
       _parsed = TRUE;
 
-      if (has(IMP_OPTION_HELP) || has(IMP_OPTION_VERSION))
+      if (has(IMP_OPTION_HELP) ||
+          has(IMP_OPTION_VERSION) ||
+          has(IMP_OPTION_HELPFUL))
       {
          goto done;
       }
@@ -221,6 +227,11 @@ namespace import
    BOOLEAN Options::hasVersion()
    {
       return has(IMP_OPTION_VERSION);
+   }
+
+   BOOLEAN Options::hasHelpful()
+   {
+      return has(IMP_OPTION_HELPFUL);
    }
 
    BOOLEAN Options::has(CHAR* option)
@@ -275,6 +286,20 @@ namespace import
 
       std::cout << "Import Options:" << std::endl;
       std::cout << import << std::endl;
+   }
+
+   void Options::printHelpfulInfo()
+   {
+      po::options_description helpful;
+
+      helpful.add_options()
+         IMP_HELPFUL_OPTIONS
+      ;
+
+      printHelpInfo();
+
+      std::cout << "Helpful Options:" << std::endl;
+      std::cout << helpful << std::endl;
    }
 
    INT32 Options::setOptions()
@@ -406,9 +431,9 @@ namespace import
       if (has(IMP_OPTION_JOBS))
       {
          _jobs = get<INT32>(IMP_OPTION_JOBS);
-         if (_jobs <= 0)
+         if (_jobs <= 0 || _jobs > 1000)
          {
-            std::cerr << IMP_OPTION_JOBS " is less than 1: "
+            std::cerr << IMP_OPTION_JOBS " is out of range [1, 1000]: "
                       << _jobs
                       << std::endl;
             rc = SDB_INVALIDARG;
@@ -470,9 +495,9 @@ namespace import
       if (has(IMP_OPTION_BUFFERSIZE))
       {
          _bufferSize = get<INT32>(IMP_OPTION_BUFFERSIZE);
-         if (_bufferSize <= 0)
+         if (_bufferSize <= 32 || _bufferSize > 2048)
          {
-            std::cerr << IMP_OPTION_BATCHSIZE " is less than 1: "
+            std::cerr << IMP_OPTION_BATCHSIZE " is out of range [32, 2048]: "
                       << _bufferSize
                       << std::endl;
             rc = SDB_INVALIDARG;

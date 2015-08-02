@@ -61,8 +61,10 @@ namespace import
       ~Options();
       INT32 parse(INT32 argc, CHAR* argv[]);
       void printHelpInfo();
+      void printHelpfulInfo();
       BOOLEAN hasHelp();
       BOOLEAN hasVersion();
+      BOOLEAN hasHelpful();
 
       /* general */
       inline const string& hostname() const { return _hostname; }
@@ -73,10 +75,13 @@ namespace import
       inline const string& clname() const { return _clName; }
       inline BOOLEAN errorStop() const { return _errorStop; }
       inline BOOLEAN useSSL() const { return _useSSL; }
+      inline BOOLEAN verbose() const { return _verbose; }
 
       /* import */
       inline INT32 batchSize() const { return _batchSize; }
       inline INT32 jobs() const { return _jobs; }
+      inline BOOLEAN enableSharding() const { return _enableSharding; }
+      inline BOOLEAN enableCoord() const { return _enableCoord; }
 
       /* input */
       inline const string& file() const { return _file; }
@@ -95,12 +100,9 @@ namespace import
       inline BOOLEAN autoAddField() const { return _autoAddField; }
       inline BOOLEAN autoCompletion() const { return _autoCompletion; }
 
-      /* hidden */
+      /* helpful */
       inline INT32 bufferSize() const { return _bufferSize; }
       inline BOOLEAN dryRun() const { return _dryRun; }
-      inline BOOLEAN verbose() const { return _verbose; }
-      inline BOOLEAN enableSharding() const { return _enableSharding; }
-      inline BOOLEAN enableCoord() const { return _enableCoord; }
 
    private:
       BOOLEAN has(CHAR* option);
@@ -122,10 +124,13 @@ namespace import
       string         _clName;
       BOOLEAN        _errorStop;
       BOOLEAN        _useSSL;
+      BOOLEAN        _verbose;
 
       /* import */
       INT32          _batchSize;
       INT32          _jobs;
+      BOOLEAN        _enableSharding;
+      BOOLEAN        _enableCoord;
 
       /* input */
       string         _file;
@@ -144,12 +149,10 @@ namespace import
       BOOLEAN        _autoAddField;
       BOOLEAN        _autoCompletion;
 
-      /* hidden */
+      /* helpful */
       INT32          _bufferSize;
       BOOLEAN        _dryRun;
-      BOOLEAN        _verbose;
-      BOOLEAN        _enableSharding;
-      BOOLEAN        _enableCoord;
+
    };
 }
 

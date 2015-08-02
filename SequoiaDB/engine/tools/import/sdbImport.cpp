@@ -65,6 +65,12 @@ int main(int argc, char* argv[])
       goto done;
    }
 
+   if (options.hasHelpful())
+   {
+      options.printHelpfulInfo();
+      goto done;
+   }
+
    {
       Routine routine(options);
 
