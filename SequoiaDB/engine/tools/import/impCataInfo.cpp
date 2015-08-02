@@ -37,77 +37,40 @@ namespace import
 {
    CataInfo::CataInfo()
    {
-      _cataInfo = NULL;
+      _cataSet = NULL;
    }
 
    CataInfo::~CataInfo()
    {
-      SAFE_OSS_DELETE(_cataInfo);
+      _cataSet = NULL;
    }
 
-   INT32 CataInfo::init(const std::string& collectionName, const char* bsonData)
+   BOOLEAN CataInfo::isMainCL()
    {
-      INT32 rc = SDB_OK;
-      
-      SDB_ASSERT(NULL == _cataInfo, "already inited");
-      SDB_ASSERT(NULL != bsonData, "bsonData can't be NULL");
+      SDB_ASSERT(NULL != _cataSet, "must be inited");
 
-      _collectionName = collectionName;
-
-      try
-      {
-         BSONObj obj(bsonData);
-
-         _cataInfo = SDB_OSS_NEW
-            engine::_CoordCataInfo(-1, _collectionName.c_str());
-         if (NULL == _cataInfo)
-         {
-            rc = SDB_OOM;
-            PD_LOG(PDERROR, "failed to alloc CoordCataInfo");
-            goto error;
-         }
-
-         rc = _cataInfo->fromBSONObj(obj);
-         if (SDB_OK != rc)
-         {
-            PD_LOG(PDERROR, "failed to init _cataInfo from bson");
-            goto error;
-         }
-      }
-      catch (std::exception &e)
-      {
-         rc = SDB_INVALIDARG;
-         PD_LOG(PDERROR, "failed to init _cataInfo from bson,"
-                "received unexcepted error:%s", e.what());
-         goto error;
-      }
-
-   done:
-      return rc;
-   error:
-      SAFE_OSS_DELETE(_cataInfo);
-      goto done;
+      return _cataSet->isMainCL();
    }
 
    INT32 CataInfo::getGroupNum()
    {
-      SDB_ASSERT(NULL != _cataInfo, "must be inited");
+      SDB_ASSERT(NULL != _cataSet, "must be inited");
 
-      return _cataInfo->getGroupNum();
+      return _cataSet->getAllGroupID()->size();
    }
 
    INT32 CataInfo::getGroupByRecord(const char* bsonData, UINT32& groupId)
    {
       INT32 rc = SDB_OK;
 
-      SDB_ASSERT(NULL != _cataInfo, "must be inited");
+      SDB_ASSERT(NULL != _cataSet, "must be inited");
       SDB_ASSERT(NULL != bsonData, "bsonData can't be NULL");
 
       try
       {
          BSONObj obj(bsonData);
 
-         rc = _cataInfo->getGroupByRecord(obj, groupId);
+         rc = _cataSet->findGroupID(obj, groupId);
          if (SDB_OK != rc)
          {
             PD_LOG(PDERROR, "failed to get group by record, rc=%d", rc);
@@ -118,6 +81,59 @@ namespace import
       {
          rc = SDB_INVALIDARG;
          PD_LOG(PDERROR, "failed to get group by record,"
+                "received unexcepted error:%s", e.what());
+         goto error;
+      }
+
+   done:
+      return rc;
+   error:
+      goto done;
+   }
+
+   INT32 CataInfo::getSubCLList(vector<string>& list)
+   {
+      INT32 rc = SDB_OK;
+
+      SDB_ASSERT(NULL != _cataSet, "must be inited");
+      SDB_ASSERT(isMainCL(), "must be MainCL");
+
+      rc = _cataSet->getSubCLList(list);
+      if (SDB_OK != rc)
+      {
+         PD_LOG(PDERROR, "failed to get subCL, rc=%d", rc);
+         goto error;
+      }
+
+   done:
+      return rc;
+   error:
+      goto done;
+   }
+
+   INT32 CataInfo::getSubCLNameByRecord(const char* bsonData,
+                                                 string &subCLName)
+   {
+      INT32 rc = SDB_OK;
+
+      SDB_ASSERT(NULL != _cataSet, "must be inited");
+      SDB_ASSERT(NULL != bsonData, "bsonData can't be NULL");
+
+      try
+      {
+         BSONObj obj(bsonData);
+
+         rc = _cataSet->findSubCLName(obj, subCLName);
+         if (SDB_OK != rc)
+         {
+            PD_LOG(PDERROR, "failed to find subCLName by record, rc=%d", rc);
+            goto error;
+         }
+      }
+      catch (std::exception &e)
+      {
+         rc = SDB_INVALIDARG;
+         PD_LOG(PDERROR, "failed to find subCLName by record,"
                 "received unexcepted error:%s", e.what());
          goto error;
       }

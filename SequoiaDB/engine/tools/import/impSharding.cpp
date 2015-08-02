@@ -111,10 +111,12 @@ namespace import
          for (INT32 i = 0; i < size; i++)
          {
             bson* record = records[i];
-            ShardingGroups::iterator it;
-            UINT32 groupId;
+            SubShardingGroups::iterator it;
+            string cl;
+            SubShardingGroups* subGroups = NULL;
+            UINT32 groupId = 0;
 
-            rc = sharding->getGroupByRecord(record, groupId);
+            rc = sharding->getGroupByRecord(record, cl, groupId);
             if (SDB_OK != rc)
             {
                PD_LOG(PDERROR, "failed to get group by record, rc=%d", rc);
@@ -122,8 +124,10 @@ namespace import
                goto error;
             }
 
-            it = groups->find(groupId);
-            if (it != groups->end())
+            subGroups = &((*groups)[cl]);
+
+            it = subGroups->find(groupId);
+            if (it != subGroups->end())
             {
                // find the group
                RecordArray& array = it->second;
@@ -135,7 +139,7 @@ namespace import
                if (array.full())
                {
                   outQueue->push(array);
-                  groups->erase(it);
+                  subGroups->erase(it);
                }
             }
             else
@@ -159,7 +163,7 @@ namespace import
                }
                else
                {
-                  (*groups)[groupId] = array;
+                  (*subGroups)[groupId] = array;
                }
             }
 
@@ -173,8 +177,16 @@ namespace import
               it != groups->end();
               it++)
          {
-            RecordArray array = it->second;
-            outQueue->push(array);
+            SubShardingGroups* subGroups = &(it->second);
+            for (SubShardingGroups::iterator subIt = subGroups->begin();
+                 subIt != subGroups->end();
+                 subIt++)
+            {
+               RecordArray array = subIt->second;
+               outQueue->push(array);
+            }
+
+            subGroups->clear();
          }
 
          groups->clear();
@@ -243,11 +255,12 @@ namespace import
          goto error;
       }
 
-      SDB_ASSERT(_sharding.getGroupNum() > 0, "groupNum must be greater than 0");
+      SDB_ASSERT(_sharding.getGroupNum() >= 0,
+                 "groupNum must be greater than or equals 0");
 
-      if (1 == _sharding.getGroupNum() ||
+      if (_sharding.getGroupNum() <= 1 ||
           !_options->enableSharding() ||
-          1 == _options->batchSize())
+          _options->batchSize() <= 1)
       {
          // no need to do anything
          _inited = TRUE;

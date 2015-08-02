@@ -34,8 +34,10 @@
 #include "core.hpp"
 #include "oss.hpp"
 #include "impCataInfo.hpp"
+#include "impCatalogAgent.hpp"
 #include "../client/bson/bson.h"
 #include <string>
+#include <map>
 
 using namespace std;
 
@@ -54,20 +56,24 @@ namespace import
                  const string& clname,
                  BOOLEAN useSSL);
       INT32 getGroupNum() const { return _groupNum; }
-      INT32 getGroupByRecord(bson* record, UINT32& groupId);
+      INT32 getGroupByRecord(bson* record, string& collection, UINT32& groupId);
 
    private:
-      string   _hostname;
-      string   _svcname;
-      string   _user;
-      string   _password;
-      string   _csname;
-      string   _clname;
-      BOOLEAN  _useSSL;
-      BOOLEAN  _inited;
+      string                  _hostname;
+      string                  _svcname;
+      string                  _user;
+      string                  _password;
+      string                  _csname;
+      string                  _clname;
+      BOOLEAN                 _useSSL;
+      BOOLEAN                 _inited;
 
-      CataInfo _cataInfo;
-      INT32    _groupNum;
+      CatalogAgent            _cataAgent;
+      CataInfo                _cataInfo;
+      string                  _collectionName;
+      BOOLEAN                 _isMainCL;
+      INT32                   _groupNum;
+      map<string, CataInfo>   _subCataInfo;
    };
 }
 

@@ -34,10 +34,13 @@
 #include "core.hpp"
 #include "oss.hpp"
 #include <string>
+#include <vector>
+
+using namespace std;
 
 namespace engine
 {
-   class _CoordCataInfo;
+   class _clsCatalogSet;
 }
 
 namespace import
@@ -48,13 +51,17 @@ namespace import
    public:
       CataInfo();
       ~CataInfo();
-      INT32 init(const std::string& collectionName, const char* bsonData);
       INT32 getGroupNum();
+      BOOLEAN isMainCL();
+      INT32 getSubCLList(vector<string>& list);
       INT32 getGroupByRecord(const char* bsonData, UINT32& groupId);
+      INT32 getSubCLNameByRecord(const char* bsonData, string &subCLName);
 
    private:
-      std::string                _collectionName;
-      engine::_CoordCataInfo*    _cataInfo;
+      string                     _collectionName;
+      engine::_clsCatalogSet*    _cataSet;
+
+   friend class CatalogAgent;
    };
 }
 

@@ -43,7 +43,8 @@ using namespace std;
 
 namespace import
 {
-   typedef map<UINT32, RecordArray> ShardingGroups;
+   typedef map<UINT32, RecordArray> SubShardingGroups;
+   typedef map<string, SubShardingGroups> ShardingGroups;
 
    class Sharding: public WorkerArgs
    {
