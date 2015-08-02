@@ -831,7 +831,7 @@ namespace import
                goto done;
             }
 
-            if (isspace(*str))
+            /*if (isspace(*str))
             {
                //*str = '\0';
                value.length = str - value.str;
@@ -843,7 +843,7 @@ namespace import
                   goto done;
                }
                break;
-            }
+            }*/
          }
 
          str++;
@@ -2015,11 +2015,19 @@ namespace import
       case CSV_TYPE_NULL:
          rc = _stringToNull(data, length, fieldDel, fieldDelLen,
                             valueLength, fieldEnd);
+         if (SDB_OK != rc)
+         {
+            goto error;
+         }
          goto done;
       case CSV_TYPE_STRING:
          rc = _stringToString(data, length, strDel, strDelLen, fieldDel,
                               fieldDelLen, fieldValue.strVal,
                               valueLength, fieldEnd);
+         if (SDB_OK != rc)
+         {
+            goto error;
+         }
          goto done;
       case CSV_TYPE_TIMESTAMP:
          rc = _stringToString(data, length, strDel, strDelLen, fieldDel,
@@ -2030,6 +2038,10 @@ namespace import
             goto error;
          }
          rc = _stringToTimestamp(fieldValue.strVal, fieldValue.timestampVal);
+         if (SDB_OK != rc)
+         {
+            goto error;
+         }
          goto done;
       case CSV_TYPE_DATE:
          rc = _stringToString(data, length, strDel, strDelLen, fieldDel,
@@ -2040,6 +2052,10 @@ namespace import
             goto error;
          }
          rc = _stringToDate(fieldValue.strVal, fieldValue.dateVal);
+         if (SDB_OK != rc)
+         {
+            goto error;
+         }
          goto done;
       case CSV_TYPE_OID:
          rc = _stringToString(data, length, strDel, strDelLen, fieldDel,
@@ -2050,6 +2066,10 @@ namespace import
             goto error;
          }
          rc = _stringToOID(fieldValue.strVal, fieldValue.oidVal);
+         if (SDB_OK != rc)
+         {
+            goto error;
+         }
          goto done;
       case CSV_TYPE_REGEX:
          rc = _stringToString(data, length, strDel, strDelLen, fieldDel,
@@ -2060,6 +2080,10 @@ namespace import
             goto error;
          }
          rc = _stringToRegex(fieldValue.strVal, fieldValue.regexVal);
+         if (SDB_OK != rc)
+         {
+            goto error;
+         }
          goto done;
       case CSV_TYPE_BINARY:
          rc = _stringToString(data, length, strDel, strDelLen, fieldDel,
@@ -2070,6 +2094,10 @@ namespace import
             goto error;
          }
          rc = _stringToBinary(fieldValue.strVal, fieldValue.binaryVal);
+         if (SDB_OK != rc)
+         {
+            goto error;
+         }
          goto done;
       case CSV_TYPE_AUTO:
          rc = _detectFieldType(data, length, strDel, strDelLen,
@@ -2077,6 +2105,10 @@ namespace import
                                type, fieldValue, valueLength, fieldEnd);
          SDB_ASSERT(CSV_TYPE_AUTO != type,
                     "type must not be CSV_TYPE_AUTO after detecting field type");
+         if (SDB_OK != rc)
+         {
+            goto error;
+         }
          goto done;
       default:
          rc = SDB_INVALIDARG;
@@ -2100,6 +2132,11 @@ namespace import
    done:
       return rc;
    error:
+      {
+         string field(data, length);
+         PD_LOG(PDERROR, "failed to parse field value, type=%s, value=[%s]",
+                _CSVTypeToString(type), field.c_str());
+      }
       goto done;
    }
 
