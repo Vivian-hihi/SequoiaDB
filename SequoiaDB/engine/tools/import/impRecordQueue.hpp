@@ -67,6 +67,8 @@ namespace import
       void free()
       {
          SAFE_OSS_FREE(_array);
+         _capacity = 0;
+         _size = 0;
       }
 
       inline E* array() const
@@ -125,6 +127,44 @@ namespace import
 
    typedef class Array<bson*> RecordArray;
    typedef class ossQueue<RecordArray> RecordQueue;
+
+   static inline INT32 getRecordArray(INT32 capacity,
+                                    RecordArray& recordArray)
+   {
+      RecordArray array;
+      INT32 rc = SDB_OK;
+
+      rc = array.init(capacity);
+      if (SDB_OK != rc)
+      {
+         PD_LOG(PDERROR, "failed to init RecordArray, rc=%d", rc);
+         goto error;
+      }
+
+      recordArray = array;
+
+   done:
+      return rc;
+   error:
+      goto done;
+   }
+
+   static inline void freeRecordArray(RecordArray& recordArray)
+   {
+      INT32 capacity = recordArray.capacity();
+      for (INT32 i = 0; i < capacity; i++)
+      {
+         bson* obj = recordArray[i];
+         if (NULL != obj)
+         {
+            bson_destroy(obj);
+            SDB_OSS_FREE(obj);
+            recordArray[i] = NULL;
+         }
+      }
+
+      recordArray.free();
+   }
 }
 
 #endif /* IMP_RECORD_QUEUE_HPP__ */

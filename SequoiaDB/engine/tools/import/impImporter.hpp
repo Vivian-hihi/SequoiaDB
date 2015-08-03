@@ -52,7 +52,6 @@ namespace import
       ~Importer();
       INT32 init(Options* options,
                  RecordQueue* workQueue,
-                 RecordQueue* idleQueue,
                  INT32 workerNum);
       INT32 start();
       INT32 stop();
@@ -70,7 +69,6 @@ namespace import
    private:
       Options*          _options;
       RecordQueue*      _workQueue;
-      RecordQueue*      _idleQueue;
       BOOLEAN           _inited;
 
       Coords            _coords;

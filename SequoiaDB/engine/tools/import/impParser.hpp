@@ -46,8 +46,7 @@ namespace import
       Parser();
       ~Parser();
       INT32 init(Options* options,
-                 RecordQueue* workQueue,
-                 RecordQueue* idleQueue);
+                 RecordQueue* workQueue);
       INT32 start();
       INT32 stop();
       inline BOOLEAN isStopped() const { return _stopped; }
@@ -61,7 +60,6 @@ namespace import
    private:
       Options*          _options;
       RecordQueue*      _workQueue;
-      RecordQueue*      _idleQueue;
       BOOLEAN           _inited;
 
       Worker*           _worker;

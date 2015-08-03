@@ -63,7 +63,6 @@ namespace import
       BOOLEAN dryRun = options->dryRun();
       LogFile* logFile = &(self->_logFile);
       RecordQueue* workQueue = self->_workQueue;
-      RecordQueue* idleQueue = self->_idleQueue;
       RecordImporter importer(impArgs->hostname,
                               impArgs->svcname,
                               options->user(),
@@ -73,7 +72,6 @@ namespace import
                               options->useSSL());
 
       SDB_ASSERT(NULL != workQueue, "workQueue can't be NULL");
-      SDB_ASSERT(NULL != idleQueue, "idelQueue can't be NULL");
       SDB_ASSERT(NULL != logFile, "logFile can't be NULL");
 
       if (options->verbose())
@@ -122,8 +120,7 @@ namespace import
             self->_importedNum.add(records.size());
          }
 
-         records.reset();
-         idleQueue->push(records);
+         freeRecordArray(records);
       }
 
    done:
@@ -146,7 +143,6 @@ namespace import
    {
       _options = NULL;
       _workQueue = NULL;
-      _idleQueue = NULL;
       _inited = FALSE;
    }
 
@@ -162,18 +158,15 @@ namespace import
 
    INT32 Importer::init(Options* options,
                  RecordQueue* workQueue,
-                 RecordQueue* idleQueue,
                  INT32 workerNum)
    {
       INT32 rc = SDB_OK;
 
       SDB_ASSERT(NULL != options, "options can't be NULL");
       SDB_ASSERT(NULL != workQueue, "workQueue can't be NULL");
-      SDB_ASSERT(NULL != idleQueue, "idleQueue can't be NULL");
 
       _options = options;
       _workQueue = workQueue;
-      _idleQueue = idleQueue;
 
       string fileName = makeRecordLogFileName(_options->csname(),
                                               _options->clname(),

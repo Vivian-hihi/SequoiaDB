@@ -35,40 +35,6 @@
 
 namespace import
 {
-   static INT32 _getFreeRecordArray(RecordQueue& queue, INT32 capacity,
-                                    RecordArray& recordArray)
-   {
-      RecordArray array;
-      INT32 rc = SDB_OK;
-
-      if (queue.try_pop(recordArray))
-      {
-         INT32 num = recordArray.size();
-         for (INT32 i = 0; i < num; i++)
-         {
-            bson* obj = recordArray[i];
-            bson_destroy(obj);
-            SDB_OSS_FREE(obj);
-            recordArray[i] = NULL;
-         }
-         recordArray.reset();
-         goto done;
-      }
-
-      rc = array.init(capacity);
-      if (SDB_OK != rc)
-      {
-         PD_LOG(PDERROR, "failed to init RecordArray, rc=%d", rc);
-         goto error;
-      }
-
-      recordArray = array;
-
-   done:
-      return rc;
-   error:
-      goto error;
-   }
 
    void _shardingRoutine(WorkerArgs* args)
    {
@@ -82,7 +48,6 @@ namespace import
       Options* options = self->_options;
       RecordQueue* inQueue = self->_inQueue;
       RecordQueue* outQueue = self->_outQueue;
-      RecordQueue* idleQueue = self->_idleQueue;
       RecordSharding* sharding = &(self->_sharding);
       ShardingGroups* groups = &(self->_groups);
 
@@ -120,7 +85,8 @@ namespace import
             if (SDB_OK != rc)
             {
                PD_LOG(PDERROR, "failed to get group by record, rc=%d", rc);
-               idleQueue->push(records);
+               //TODO: log records
+               freeRecordArray(records);
                goto error;
             }
 
@@ -147,11 +113,12 @@ namespace import
                // add new group
                RecordArray array;
 
-               rc = _getFreeRecordArray(*idleQueue, options->batchSize(), array);
+               rc = getRecordArray(options->batchSize(), array);
                if (SDB_OK != rc)
                {
                   PD_LOG(PDERROR, "failed to get free record array, rc=%d", rc);
-                  idleQueue->push(records);
+                  //TODO: log records
+                  freeRecordArray(records);
                   goto error;
                }
 
@@ -168,9 +135,15 @@ namespace import
             }
 
             shardingCount++;
+            // clear the array,
+            // otherwise the bson will be freed by freeRecordArray
+            records[i] = NULL;
          }
+
+         freeRecordArray(records);
       }
 
+   done:
       if (!groups->empty())
       {
          for (ShardingGroups::iterator it = groups->begin();
@@ -192,7 +165,6 @@ namespace import
          groups->clear();
       }
 
-   done:
       self->_stopped = TRUE;
       if (options->verbose())
       {
@@ -213,7 +185,6 @@ namespace import
       _options = NULL;
       _inQueue = NULL;
       _outQueue = NULL;
-      _idleQueue = NULL;
       _inited = FALSE;
       _worker = NULL;
       _stopped = TRUE;
@@ -225,9 +196,8 @@ namespace import
    }
 
    INT32 Sharding::init(Options* options,
-                       RecordQueue* inQueue,
-                       RecordQueue* outQueue,
-                       RecordQueue* idleQueue)
+                        RecordQueue* inQueue,
+                        RecordQueue* outQueue)
    {
       INT32 rc = SDB_OK;
 
@@ -235,12 +205,10 @@ namespace import
       SDB_ASSERT(NULL != options, "options can't be NULL");
       SDB_ASSERT(NULL != inQueue, "inQueue can't be NULL");
       SDB_ASSERT(NULL != outQueue, "outQueue can't be NULL");
-      SDB_ASSERT(NULL != idleQueue, "idleQueue can't be NULL");
 
       _options = options;
       _inQueue = inQueue;
       _outQueue = outQueue;
-      _idleQueue = idleQueue;
 
       rc = _sharding.init(_options->hostname(),
                           _options->svcname(),

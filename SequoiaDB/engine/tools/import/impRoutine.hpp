@@ -63,7 +63,6 @@ namespace import
       Options&          _options;
       RecordQueue       _parsedQueue;
       RecordQueue       _shardingQueue;
-      RecordQueue       _idleQueue;
 
       Parser            _parser;
       Importer          _importer;

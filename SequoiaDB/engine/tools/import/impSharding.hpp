@@ -53,8 +53,7 @@ namespace import
       ~Sharding();
       INT32 init(Options* options,
                  RecordQueue* inQueue,
-                 RecordQueue* outQueue,
-                 RecordQueue* idleQueue);
+                 RecordQueue* outQueue);
       BOOLEAN needSharding() const;
       INT32 getGroupNum() const;
       INT32 start();
@@ -65,7 +64,6 @@ namespace import
       Options*          _options;
       RecordQueue*      _inQueue;
       RecordQueue*      _outQueue;
-      RecordQueue*      _idleQueue;
       BOOLEAN           _inited;
 
       RecordSharding    _sharding;

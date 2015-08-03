@@ -87,28 +87,6 @@ namespace import
          }
       }
 
-      // idleQueue
-      {
-         if (!_idleQueue.empty())
-         {
-            RecordArray array;
-            while (_idleQueue.try_pop(array))
-            {
-               bson** objs = array.array();
-               for (INT32 i = 0; i < array.capacity(); i++)
-               {
-                  bson* obj = objs[i];
-                  if (NULL != obj)
-                  {
-                     bson_destroy(obj);
-                     SDB_OSS_FREE(obj);
-                     objs[i] = NULL;
-                  }
-               }
-               array.free();
-            }
-         }
-      }
    }
 
    INT32 Routine::run()
@@ -184,11 +162,11 @@ namespace import
 
       if (_sharding.needSharding())
       {
-         rc = _importer.init(&_options, &_shardingQueue, &_idleQueue, workerNum);
+         rc = _importer.init(&_options, &_shardingQueue, workerNum);
       }
       else
       {
-         rc = _importer.init(&_options, &_parsedQueue, &_idleQueue, workerNum);
+         rc = _importer.init(&_options, &_parsedQueue, workerNum);
       }
 
       if (SDB_OK != rc)
@@ -227,7 +205,7 @@ namespace import
    {
       INT32 rc = SDB_OK;
 
-      rc = _parser.init(&_options, &_parsedQueue, &_idleQueue);
+      rc = _parser.init(&_options, &_parsedQueue);
       if (SDB_OK != rc)
       {
          PD_LOG(PDERROR, "failed to init parser, rc=%d", rc);
@@ -266,8 +244,7 @@ namespace import
 
       rc = _sharding.init(&_options,
                           &_parsedQueue,
-                          &_shardingQueue,
-                          &_idleQueue);
+                          &_shardingQueue);
       if (SDB_OK != rc)
       {
          PD_LOG(PDERROR, "failed to init sharding, rc=%d", rc);

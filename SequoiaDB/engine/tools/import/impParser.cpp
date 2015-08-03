@@ -38,32 +38,6 @@
 
 namespace import
 {
-   static INT32 _getFreeRecordArray(RecordQueue& queue, INT32 capacity,
-                                    RecordArray& recordArray)
-   {
-      RecordArray array;
-      INT32 rc = SDB_OK;
-
-      if (queue.try_pop(recordArray))
-      {
-         recordArray.reset();
-         goto done;
-      }
-
-      rc = array.init(capacity);
-      if (SDB_OK != rc)
-      {
-         PD_LOG(PDERROR, "failed to init RecordArray, rc=%d", rc);
-         goto error;
-      }
-
-      recordArray = array;
-
-   done:
-      return rc;
-   error:
-      goto error;
-   }
 
    void _parserRoutine(WorkerArgs* args)
    {
@@ -87,12 +61,10 @@ namespace import
       const Options* options = self->_options;
       LogFile* logFile = &(self->_logFile);
       RecordQueue* workQueue = self->_workQueue;
-      RecordQueue* idleQueue = self->_idleQueue;
 
       SDB_ASSERT(NULL != options, "options can't be NULL");
       SDB_ASSERT(NULL != logFile, "logFile can't be NULL");
       SDB_ASSERT(NULL != workQueue, "workQueue can't be NULL");
-      SDB_ASSERT(NULL != idleQueue, "idelQueue can't be NULL");
 
       if (options->verbose())
       {
@@ -133,7 +105,7 @@ namespace import
          goto error;
       }
 
-      rc = _getFreeRecordArray(*idleQueue, options->batchSize(), recordArray);
+      rc = getRecordArray(options->batchSize(), recordArray);
       if (SDB_OK != rc)
       {
          PD_LOG(PDERROR, "failed to get free RecordArray");
@@ -225,29 +197,28 @@ namespace import
                      SDB_ASSERT(countInBatch < recordArray.capacity(),
                                 "countInBatch must be less than batchSize");
 
-                     obj = recordArray[countInBatch];
+                     obj = (bson*)SDB_OSS_MALLOC(sizeof(bson));
                      if (NULL == obj)
                      {
-                        obj = (bson*)SDB_OSS_MALLOC(sizeof(bson));
-                        if (NULL == obj)
-                        {
-                           rc = SDB_OOM;
-                           PD_LOG(PDERROR, "failed to malloc bson");
-                           goto error;
-                        }
-
-                        recordArray[countInBatch] = obj;
+                        rc = SDB_OOM;
+                        PD_LOG(PDERROR, "failed to malloc bson");
+                        goto error;
                      }
+                     bson_init(obj);
 
                      rc = parser->parseRecord(buf, recordLength, *obj);
                      if (SDB_OK == rc)
                      {
+                        SDB_ASSERT(NULL == recordArray[countInBatch], "must be NULL");
+                        recordArray[countInBatch] = obj;
                         recordArray.inc();
                         countInBatch++;
                         self->_parsedNum++;
                      }
                      else
                      {
+                        bson_destroy(obj);
+                        SAFE_OSS_FREE(obj);
                         self->_failedNum++;
                         logFile->write(buf, recordLength);
 
@@ -263,9 +234,7 @@ namespace import
                      {
                         workQueue->push(recordArray);
                         countInBatch = 0;
-                        rc = _getFreeRecordArray(*idleQueue,
-                                                 options->batchSize(),
-                                                 recordArray);
+                        rc = getRecordArray(options->batchSize(), recordArray);
                         if (SDB_OK != rc)
                         {
                            PD_LOG(PDERROR, "failed to get free RecordArray");
@@ -308,19 +277,11 @@ namespace import
          }
       }
 
+   done:
       if (!recordArray.empty())
       {
-         if (options->dryRun())
-         {
-            idleQueue->push(recordArray);
-         }
-         else
-         {
-            workQueue->push(recordArray);
-         }
+         workQueue->push(recordArray);
       }
-
-   done:
       self->_stopped = TRUE;
       if (NULL != input)
       {
@@ -348,7 +309,6 @@ namespace import
    {
       _options = NULL;
       _workQueue = NULL;
-      _idleQueue = NULL;
       _inited = FALSE;
       _worker = NULL;
       _stopped = TRUE;
@@ -362,18 +322,15 @@ namespace import
    }
 
    INT32 Parser::init(Options* options,
-              RecordQueue* workQueue,
-              RecordQueue* idleQueue)
+                      RecordQueue* workQueue)
    {
       INT32 rc = SDB_OK;
 
       SDB_ASSERT(NULL != options, "options can't be NULL");
       SDB_ASSERT(NULL != workQueue, "workQueue can't be NULL");
-      SDB_ASSERT(NULL != idleQueue, "idleQueue can't be NULL");
 
       _options = options;
       _workQueue = workQueue;
-      _idleQueue = idleQueue;
 
       string parserLogFile = makeRecordLogFileName(_options->csname(),
                                                    _options->clname(),
