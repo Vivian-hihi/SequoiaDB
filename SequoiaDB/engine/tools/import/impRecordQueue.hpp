@@ -38,110 +38,163 @@
 
 namespace import
 {
-   template<typename E>
-   class Array: public SDBObject
+   class BsonArray: public SDBObject
    {
    public:
-      Array()
+      BsonArray()
       {
          _array = NULL;
          _capacity = 0;
          _size = 0;
+         _bsonSize = 0;
+         _finished = FALSE;
+      }
+
+      ~BsonArray()
+      {
+         if (NULL != _array)
+         {
+            for (INT32 i = 0; i < _capacity; i++)
+            {
+               bson* obj = _array[i];
+               if (NULL != obj)
+               {
+                  bson_destroy(obj);
+                  SDB_OSS_FREE(obj);
+               }
+            }
+
+            SDB_OSS_FREE(_array);
+            _array = NULL;
+         }
+
+         _capacity = 0;
+         _size = 0;
+         _bsonSize = 0;
+         _finished = FALSE;
       }
 
       INT32 init(INT32 capacity)
       {
          SDB_ASSERT(NULL == _array, "already inited");
+         SDB_ASSERT(capacity > 0, "capacity must be greater than 0");
 
-         _array = (E*)SDB_OSS_MALLOC(sizeof(E) * capacity);
+         _array = (bson**)SDB_OSS_MALLOC(sizeof(bson*) * capacity);
          if (NULL == _array)
          {
             return SDB_OOM;
          }
-         ossMemset(_array, 0, sizeof(E) * capacity);
+         ossMemset(_array, 0, sizeof(bson*) * capacity);
          _capacity = capacity;
 
          return SDB_OK;
       }
 
-      void free()
-      {
-         SAFE_OSS_FREE(_array);
-         _capacity = 0;
-         _size = 0;
-      }
-
-      inline E* array() const
-      {
-         return _array;
-      }
-
-      inline INT32 capacity() const
+      inline INT32 capacity()
       {
          return _capacity;
       }
 
-      inline INT32 size() const
+      inline INT32 size()
       {
          return _size;
       }
 
-      inline void reset()
+      inline INT32 bsonSize()
       {
-         _size = 0;
+         return _bsonSize;
       }
 
-      inline void inc()
-      {
-         _size++;
-         SDB_ASSERT(_size <= _capacity, "out of range");
-      }
-
-      inline void setSize(INT32 size)
-      {
-         SDB_ASSERT(size >= 0 && size <= _capacity, "out of range");
-         _size = size;
-      }
-
-      inline BOOLEAN empty()
+      inline BOOLEAN empty() const
       {
          return _size == 0;
       }
 
-      inline BOOLEAN full()
+      inline BOOLEAN full() const
       {
          return _size == _capacity;
       }
 
-      inline E& operator[](INT32 i)
+      inline bson** array() const
       {
-         SDB_ASSERT(i >=0 && i < _capacity, "out of range");
-         return _array[i];
+         return _array;
+      }
+
+      inline void finish()
+      {
+         SDB_ASSERT(NULL != _array, "already inited");
+         
+         _finished = TRUE;
+      }
+
+      inline void push(bson* obj)
+      {
+         SDB_ASSERT(NULL != _array, "already inited");
+         SDB_ASSERT(NULL != obj, "obj can't be NULL");
+         SDB_ASSERT(_size < _capacity, "_size out of range");
+         SDB_ASSERT(!_finished, "already finished");
+
+         _array[_size] = obj;
+         _size++;
+
+         _bsonSize += bson_size(obj);
+      }
+
+      // return the bson* in position id
+      inline bson* get(INT32 id)
+      {
+         SDB_ASSERT(NULL != _array, "already inited");
+         SDB_ASSERT(id < _size, "id out of range");
+
+         return _array[id];
+      }
+
+      // return the bson* in position id and erase it
+      inline bson* pop(INT32 id)
+      {
+         SDB_ASSERT(NULL != _array, "already inited");
+         SDB_ASSERT(id < _size, "id out of range");
+
+         bson* obj = _array[id];
+         _array[id] = NULL;
+         return obj;
       }
 
    private:
-      E*    _array;
-      INT32 _capacity;
-      INT32 _size;
+      bson**   _array;
+      INT32    _capacity;
+      INT32    _size;
+      INT32    _bsonSize;
+      BOOLEAN  _finished;
    };
 
-   typedef class Array<bson*> RecordArray;
-   typedef class ossQueue<RecordArray> RecordQueue;
+   typedef class BsonArray RecordArray;
+   typedef class ossQueue<RecordArray*> RecordQueue;
 
    static inline INT32 getRecordArray(INT32 capacity,
-                                    RecordArray& recordArray)
+                                    RecordArray** recordArray)
    {
-      RecordArray array;
+      RecordArray* array = NULL;
       INT32 rc = SDB_OK;
 
-      rc = array.init(capacity);
+      SDB_ASSERT(NULL != recordArray, "recordArray can't be NULL");
+
+      array = SDB_OSS_NEW RecordArray();
+      if (NULL == array)
+      {
+         rc = SDB_OOM;
+         PD_LOG(PDERROR, "failed to alloc RecordArray, rc=%d", rc);
+         goto error;
+      }
+
+      rc = array->init(capacity);
       if (SDB_OK != rc)
       {
          PD_LOG(PDERROR, "failed to init RecordArray, rc=%d", rc);
          goto error;
       }
 
-      recordArray = array;
+      *recordArray = array;
 
    done:
       return rc;
@@ -149,21 +202,20 @@ namespace import
       goto done;
    }
 
-   static inline void freeRecordArray(RecordArray& recordArray)
+   static inline void freeRecordArray(RecordArray** recordArray)
    {
-      INT32 capacity = recordArray.capacity();
-      for (INT32 i = 0; i < capacity; i++)
-      {
-         bson* obj = recordArray[i];
-         if (NULL != obj)
-         {
-            bson_destroy(obj);
-            SDB_OSS_FREE(obj);
-            recordArray[i] = NULL;
-         }
-      }
+      SDB_ASSERT(NULL != recordArray, "recordArray can't be NULL");
 
-      recordArray.free();
+      SDB_OSS_DEL(*recordArray);
+      *recordArray = NULL;
+   }
+
+   static inline void freeRecord(bson* obj)
+   {
+      SDB_ASSERT(NULL != obj, "obj can't be NULL");
+
+      bson_destroy(obj);
+      SDB_OSS_FREE(obj);
    }
 }
 

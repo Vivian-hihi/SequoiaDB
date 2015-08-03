@@ -52,7 +52,7 @@ namespace import
    void _importerRoutine(WorkerArgs* args)
    {
       ImporterArgs* impArgs = (ImporterArgs*)args;
-      RecordArray records;
+      RecordArray* records = NULL;
       INT32 rc = SDB_OK;
 
       SDB_ASSERT(NULL != args, "arg can't be NULL");
@@ -94,7 +94,7 @@ namespace import
       {
          workQueue->wait_and_pop(records);
 
-         if (records.empty())
+         if (NULL == records)
          {
             // stop
             break;
@@ -102,25 +102,26 @@ namespace import
 
          if (!dryRun)
          {
-            rc = importer.import(records.array(), records.size());
+            rc = importer.import(records->array(), records->size());
             if (SDB_OK != rc)
             {
-               self->_failedNum.add(records.size());
-               for (INT32 i = 0; i < records.size(); i++)
+               self->_failedNum.add(records->size());
+               for (INT32 i = 0; i < records->size(); i++)
                {
-                  bson* obj = records[i];
+                  bson* obj = records->get(i);
                   if (SDB_OK != logFile->write(obj))
                   {
                      break;
                   }
                }
+               freeRecordArray(&records);
                PD_LOG(PDERROR, "failed to import records, rc=%d", rc);
                goto error;
             }
-            self->_importedNum.add(records.size());
+            self->_importedNum.add(records->size());
          }
 
-         freeRecordArray(records);
+         freeRecordArray(&records);
       }
 
    done:
@@ -284,7 +285,7 @@ namespace import
 
       for (INT32 i = 0; i < num; i++)
       {
-         RecordArray empty;
+         RecordArray* empty = NULL;
 
          // push empty RecordArray as stop signal
          _workQueue->push(empty);

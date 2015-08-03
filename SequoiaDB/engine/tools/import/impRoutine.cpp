@@ -45,21 +45,13 @@ namespace import
       {
          if (!_parsedQueue.empty())
          {
-            RecordArray array;
+            RecordArray* array = NULL;
             while (_parsedQueue.try_pop(array))
             {
-               bson** objs = array.array();
-               for (INT32 i = 0; i < array.capacity(); i++)
+               if (NULL != array)
                {
-                  bson* obj = objs[i];
-                  if (NULL != obj)
-                  {
-                     bson_destroy(obj);
-                     SDB_OSS_FREE(obj);
-                     objs[i] = NULL;
-                  }
+                  freeRecordArray(&array);
                }
-               array.free();
             }
          }
       }
@@ -68,21 +60,13 @@ namespace import
       {
          if (!_shardingQueue.empty())
          {
-            RecordArray array;
+            RecordArray* array = NULL;
             while (_shardingQueue.try_pop(array))
             {
-               bson** objs = array.array();
-               for (INT32 i = 0; i < array.capacity(); i++)
+               if (NULL != array)
                {
-                  bson* obj = objs[i];
-                  if (NULL != obj)
-                  {
-                     bson_destroy(obj);
-                     SDB_OSS_FREE(obj);
-                     objs[i] = NULL;
-                  }
+                  freeRecordArray(&array);
                }
-               array.free();
             }
          }
       }

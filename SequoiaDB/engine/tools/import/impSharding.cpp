@@ -39,7 +39,7 @@ namespace import
    void _shardingRoutine(WorkerArgs* args)
    {
       Sharding* self = (Sharding*)args;
-      RecordArray records;
+      RecordArray* records = NULL;
       INT32 rc = SDB_OK;
       INT32 shardingCount = 0;
 
@@ -66,16 +66,16 @@ namespace import
          INT32 size;
          inQueue->wait_and_pop(records);
 
-         if (records.empty())
+         if (NULL == records)
          {
             // stop
             break;
          }
 
-         size = records.size();
+         size = records->size();
          for (INT32 i = 0; i < size; i++)
          {
-            bson* record = records[i];
+            bson* record = records->get(i);
             SubShardingGroups::iterator it;
             string cl;
             SubShardingGroups* subGroups = NULL;
@@ -86,7 +86,7 @@ namespace import
             {
                PD_LOG(PDERROR, "failed to get group by record, rc=%d", rc);
                //TODO: log records
-               freeRecordArray(records);
+               freeRecordArray(&records);
                goto error;
             }
 
@@ -96,14 +96,14 @@ namespace import
             if (it != subGroups->end())
             {
                // find the group
-               RecordArray& array = it->second;
+               RecordArray* array = it->second;
 
-               SDB_ASSERT(!array.full(), "record array can't be full");
+               SDB_ASSERT(!array->full(), "record array can't be full");
 
-               array[array.size()] = record;
-               array.inc();
-               if (array.full())
+               array->push(record);
+               if (array->full())
                {
+                  array->finish();
                   outQueue->push(array);
                   subGroups->erase(it);
                }
@@ -111,21 +111,21 @@ namespace import
             else
             {
                // add new group
-               RecordArray array;
+               RecordArray* array = NULL;
 
-               rc = getRecordArray(options->batchSize(), array);
+               rc = getRecordArray(options->batchSize(), &array);
                if (SDB_OK != rc)
                {
                   PD_LOG(PDERROR, "failed to get free record array, rc=%d", rc);
                   //TODO: log records
-                  freeRecordArray(records);
+                  freeRecordArray(&records);
                   goto error;
                }
 
-               array[array.size()] = record;
-               array.inc();
-               if (array.full())
+               array->push(record);
+               if (array->full())
                {
+                  array->finish();
                   outQueue->push(array);
                }
                else
@@ -137,10 +137,10 @@ namespace import
             shardingCount++;
             // clear the array,
             // otherwise the bson will be freed by freeRecordArray
-            records[i] = NULL;
+            records->pop(i);
          }
 
-         freeRecordArray(records);
+         freeRecordArray(&records);
       }
 
    done:
@@ -155,7 +155,7 @@ namespace import
                  subIt != subGroups->end();
                  subIt++)
             {
-               RecordArray array = subIt->second;
+               RecordArray* array = subIt->second;
                outQueue->push(array);
             }
 
@@ -291,7 +291,7 @@ namespace import
    INT32 Sharding::stop()
    {
       INT32 rc = SDB_OK;
-      RecordArray empty;
+      RecordArray* empty = NULL;
 
       SDB_ASSERT(_inited, "must be inited");
       SDB_ASSERT(NULL != _worker, "_worker can't be NULL");

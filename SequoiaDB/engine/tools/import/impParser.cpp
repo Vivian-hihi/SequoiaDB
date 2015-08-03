@@ -46,7 +46,7 @@ namespace import
       CHAR* buffer = NULL;
       InputStream* input = NULL;
       RecordParser* parser = NULL;
-      RecordArray recordArray;
+      RecordArray* recordArray = NULL;
 
       INT64 readSize = 0;
       INT32 remainSize = 0;
@@ -105,7 +105,7 @@ namespace import
          goto error;
       }
 
-      rc = getRecordArray(options->batchSize(), recordArray);
+      rc = getRecordArray(options->batchSize(), &recordArray);
       if (SDB_OK != rc)
       {
          PD_LOG(PDERROR, "failed to get free RecordArray");
@@ -194,7 +194,7 @@ namespace import
                   {
                      bson* obj = NULL;
 
-                     SDB_ASSERT(countInBatch < recordArray.capacity(),
+                     SDB_ASSERT(countInBatch < recordArray->capacity(),
                                 "countInBatch must be less than batchSize");
 
                      obj = (bson*)SDB_OSS_MALLOC(sizeof(bson));
@@ -209,9 +209,8 @@ namespace import
                      rc = parser->parseRecord(buf, recordLength, *obj);
                      if (SDB_OK == rc)
                      {
-                        SDB_ASSERT(NULL == recordArray[countInBatch], "must be NULL");
-                        recordArray[countInBatch] = obj;
-                        recordArray.inc();
+                        SDB_ASSERT(!recordArray->full(), "can't be full");
+                        recordArray->push(obj);
                         countInBatch++;
                         self->_parsedNum++;
                      }
@@ -230,11 +229,13 @@ namespace import
                         }
                      }
 
-                     if (recordArray.full())
+                     if (recordArray->full())
                      {
+                        recordArray->finish();
                         workQueue->push(recordArray);
                         countInBatch = 0;
-                        rc = getRecordArray(options->batchSize(), recordArray);
+                        recordArray = NULL;
+                        rc = getRecordArray(options->batchSize(), &recordArray);
                         if (SDB_OK != rc)
                         {
                            PD_LOG(PDERROR, "failed to get free RecordArray");
@@ -278,9 +279,10 @@ namespace import
       }
 
    done:
-      if (!recordArray.empty())
+      if (NULL != recordArray && !recordArray->empty())
       {
          workQueue->push(recordArray);
+         recordArray = NULL;
       }
       self->_stopped = TRUE;
       if (NULL != input)
