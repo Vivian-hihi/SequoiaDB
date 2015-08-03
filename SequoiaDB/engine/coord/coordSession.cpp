@@ -304,9 +304,11 @@ namespace engine
       return routeID;
    }
 
-   void CoordSession::addRequest( const UINT64 reqID, const MsgRouteID &routeID )
+   void CoordSession::addRequest( const UINT64 reqID,
+                                  const MsgRouteID &routeID,
+                                  NET_HANDLE handle )
    {
-      _requestMap[ reqID ] = routeID;
+      _requestMap[ reqID ] = coordRequestInfo( routeID, handle ) ;
    }
 
    void CoordSession::delRequest( const UINT64 reqID )
@@ -345,10 +347,10 @@ namespace engine
    BOOLEAN  CoordSession::isValidResponse( const MsgRouteID &routeID,
                                            const UINT64 reqID )
    {
-      REQUESTID_MAP::iterator iterMap = _requestMap.begin();
+      COORD_REQINFO_MAP_IT iterMap = _requestMap.begin();
       while( iterMap != _requestMap.end() )
       {
-         if ( iterMap->second.value == routeID.value &&
+         if ( iterMap->second._id.value == routeID.value &&
               iterMap->first <= reqID )
          {
             return TRUE;
@@ -357,5 +359,22 @@ namespace engine
       }
       return FALSE;
    }
+
+   BOOLEAN CoordSession::isValidResponse( const NET_HANDLE &handle,
+                                          const UINT64 reqID )
+   {
+      COORD_REQINFO_MAP_IT iterMap = _requestMap.begin();
+      while( iterMap != _requestMap.end() )
+      {
+         if ( iterMap->second._handle == handle &&
+              iterMap->first <= reqID )
+         {
+            return TRUE;
+         }
+         ++iterMap;
+      }
+      return FALSE;
+   }
+
 }
 

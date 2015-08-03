@@ -43,6 +43,9 @@
 
 namespace engine
 {
+   /*
+      _subSessionInfo define
+   */
    typedef struct _subSessionInfo
    {
       MsgRouteID  routeID ;
@@ -58,7 +61,31 @@ namespace engine
    typedef std::map<UINT64, subSessionInfo>     COORD_SUBSESSION_MAP ;
    typedef std::map<UINT32, MsgRouteID>         COORD_LASTNODE_MAP ;
 
+   /*
+      coordRequestInfo define
+   */
+   struct coordRequestInfo
+   {
+      MsgRouteID        _id ;
+      NET_HANDLE        _handle ;
 
+      coordRequestInfo()
+      {
+         _id.value = MSG_INVALID_ROUTEID ;
+         _handle = NET_INVALID_HANDLE ;
+      }
+      coordRequestInfo( const MsgRouteID &id, NET_HANDLE handle )
+      {
+         _id.value = id.value ;
+         _handle = handle ;
+      }
+   } ;
+   typedef std::map<UINT64, coordRequestInfo>   COORD_REQINFO_MAP ;
+   typedef COORD_REQINFO_MAP::iterator          COORD_REQINFO_MAP_IT ;
+
+   /*
+      CoordSession define
+   */
    class CoordSession : public SDBObject
    {
    public:
@@ -66,7 +93,7 @@ namespace engine
       ~CoordSession(){}
 
    public:
-      INT32     addSubSession( const MsgRouteID &routeID );
+      INT32    addSubSession( const MsgRouteID &routeID );
       void     addSubSessionWithoutCheck( const MsgRouteID &routeID );
       BOOLEAN  delSubSession( const MsgRouteID &routeID );
       INT32    disConnect( const MsgRouteID &routeID );
@@ -77,14 +104,19 @@ namespace engine
       void     getAllSessionRoute( ROUTE_SET &routeMap );
       void     postEvent ( pmdEDUEvent const &data );
       BOOLEAN  isSubsessionConnected( const MsgRouteID &routeID );
-      void     addRequest( const UINT64 reqID, const MsgRouteID &routeID );
+      void     addRequest( const UINT64 reqID,
+                           const MsgRouteID &routeID,
+                           NET_HANDLE handle ) ;
       void     delRequest( const UINT64 reqID );
       //void     delRequest( const MsgRouteID &routeID );
       void     clearRequest();
-      BOOLEAN  isValidResponse( const UINT64 reqID );
-      BOOLEAN  isValidResponse( const MsgRouteID &routeID, const UINT64 reqID );
-      void     setPreferReplType( INT32 type );
-      INT32    getPreferReplType();
+      BOOLEAN  isValidResponse( const UINT64 reqID ) ;
+      BOOLEAN  isValidResponse( const MsgRouteID &routeID,
+                                const UINT64 reqID ) ;
+      BOOLEAN  isValidResponse( const NET_HANDLE &handle,
+                                const UINT64 reqID ) ;
+      void     setPreferReplType( INT32 type ) ;
+      INT32    getPreferReplType() ;
 
    private:
       CoordSession(){}
@@ -96,10 +128,10 @@ namespace engine
       COORD_SUBSESSION_MAP       _subSessionMap;
       COORD_LASTNODE_MAP         _lastNodeMap;
       ossSpinXLatch              _mutex ;
-      REQUESTID_MAP              _requestMap;
+      COORD_REQINFO_MAP          _requestMap;
       INT32                      _preferReplType;
    } ;
 }
 
-#endif
+#endif // COORDSESSION_HPP__
 

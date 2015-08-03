@@ -55,13 +55,17 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_NETMLTRTAGT_SYNCSENDWITHOUTSESSION, "netMultiRouteAgent::syncSendWithoutSession" )
-   INT32 netMultiRouteAgent::syncSendWithoutCheck( const MsgRouteID &id, void *header,
-                                                   UINT64 &reqID, pmdEDUCB *pEduCB,
-                                                   void *body, UINT32 bodyLen )
+   INT32 netMultiRouteAgent::syncSendWithoutCheck( const MsgRouteID &id,
+                                                   void *header,
+                                                   UINT64 &reqID,
+                                                   pmdEDUCB *pEduCB,
+                                                   void *body,
+                                                   UINT32 bodyLen )
    {
       INT32 rc = SDB_OK;
       PD_TRACE_ENTRY ( SDB_NETMLTRTAGT_SYNCSENDWITHOUTSESSION );
       MsgHeader *pHeader = (MsgHeader *)header ;
+      NET_HANDLE handle = NET_INVALID_HANDLE ;
 
       CoordSession *pSession = NULL;
       if ( pEduCB )
@@ -82,27 +86,32 @@ namespace engine
                id.columns.groupID, id.columns.nodeID, id.columns.serviceID );
       if ( !body )
       {
-         rc = _pNetWork->syncSend( id, header );
+         rc = _pNetWork->syncSend( id, header, &handle );
       }
       else
       {
-         rc = _pNetWork->syncSend( id, pHeader, body, bodyLen ) ;
+         rc = _pNetWork->syncSend( id, pHeader, body, bodyLen, &handle ) ;
       }
       if ( SDB_OK == rc && pSession )
       {
-         pSession->addRequest( reqID, id );
+         pSession->addRequest( reqID, id, handle );
       }
       return rc;
       PD_TRACE_EXITRC ( SDB_NETMLTRTAGT_SYNCSENDWITHOUTSESSION, rc );
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_NETMLTRTAGT_SYNCSEND, "netMultiRouteAgent::syncSend" )
-   INT32 netMultiRouteAgent::syncSend( const MsgRouteID &id, void *header, UINT64 &reqID,
-                                       pmdEDUCB *pEduCB, void *body, UINT32 bodyLen )
+   INT32 netMultiRouteAgent::syncSend( const MsgRouteID &id,
+                                       void *header,
+                                       UINT64 &reqID,
+                                       pmdEDUCB *pEduCB,
+                                       void *body,
+                                       UINT32 bodyLen )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_NETMLTRTAGT_SYNCSEND );
       MsgHeader *pHeader = (MsgHeader *)header ;
+      NET_HANDLE handle = NET_INVALID_HANDLE ;
 
       SDB_ASSERT( _pNetWork && header, "_pNetWork && header can't be NULL") ;
 
@@ -128,15 +137,15 @@ namespace engine
 
       if ( !body )
       {
-         rc = _pNetWork->syncSend( id, header );
+         rc = _pNetWork->syncSend( id, header, &handle );
       }
       else
       {
-         rc = _pNetWork->syncSend( id, pHeader, body, bodyLen ) ;
+         rc = _pNetWork->syncSend( id, pHeader, body, bodyLen, &handle ) ;
       }
       if ( SDB_OK == rc && pSession )
       {
-         pSession->addRequest( reqID, id );
+         pSession->addRequest( reqID, id, handle );
       }
 
    done:
@@ -147,13 +156,16 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_NETMLTRTAGT_SYNCSEND2, "netMultiRouteAgent::syncSend" )
-   INT32 netMultiRouteAgent::syncSend( const MsgRouteID &id, MsgHeader *header,
-                                       const netIOVec &iov, UINT64 &reqID,
+   INT32 netMultiRouteAgent::syncSend( const MsgRouteID &id,
+                                       MsgHeader *header,
+                                       const netIOVec &iov,
+                                       UINT64 &reqID,
                                        pmdEDUCB *pEduCB )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_NETMLTRTAGT_SYNCSEND2 );
       MsgHeader *pHeader = (MsgHeader *)header ;
+      NET_HANDLE handle = NET_INVALID_HANDLE ;
 
       SDB_ASSERT( _pNetWork && header, "_pNetWork && header can't be NULL") ;
 
@@ -177,10 +189,10 @@ namespace engine
                pHeader->opCode, pHeader->requestID, pHeader->TID,
                id.columns.groupID, id.columns.nodeID, id.columns.serviceID );
 
-      rc = _pNetWork->syncSendv( id, header, iov );
+      rc = _pNetWork->syncSendv( id, header, iov, &handle );
       if ( SDB_OK == rc && pSession )
       {
-         pSession->addRequest( reqID, id );
+         pSession->addRequest( reqID, id, handle );
       }
    done:
       PD_TRACE_EXITRC ( SDB_NETMLTRTAGT_SYNCSEND2, rc );
@@ -367,7 +379,7 @@ namespace engine
       }
       PD_TRACE_EXIT ( SDB_NETMLTRTAGT_DELSESS );
    }
-   
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB_NETMLTRTAGT_ISSUBSESSCONN, "netMultiRouteAgent::isSubSessionConnected" )
    BOOLEAN netMultiRouteAgent::isSubSessionConnected( UINT32 tID,
                                                       const MsgRouteID &ID )
