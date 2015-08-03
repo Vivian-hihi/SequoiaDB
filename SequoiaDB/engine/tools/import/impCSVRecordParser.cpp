@@ -2721,7 +2721,7 @@ namespace import
 
       _fieldVec.push_back(field);
 
-      if (CSV_TYPE_OID == field->type && field->name == recordIdName)
+      if (field->name == recordIdName)
       {
          _hasId = TRUE;
       }
