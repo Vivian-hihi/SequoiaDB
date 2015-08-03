@@ -7,8 +7,6 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.util.Map;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -20,20 +18,17 @@ import com.sequoiadb.service.ConnectDataBase;
 
 public class ReadSdb implements Runnable {
 
-	private int taskNum;
 
 	private Map<String, Object> map;
 
 	private String sql = null;
 
 	Logger logger = Logger.getLogger(ReadSdb.class);
-	private static ConcurrentLinkedQueue<BSONObject> queue = new ConcurrentLinkedQueue<BSONObject>();
-	private static int count = 2;
-	private static CountDownLatch lath = new CountDownLatch(count); // finished when lath==0
+//	private static ConcurrentLinkedQueue<BSONObject> queue = new ConcurrentLinkedQueue<BSONObject>();
+//	private static int count = 2;
+//	private static CountDownLatch lath = new CountDownLatch(count); // finished when lath==0
+    
 
-	public ReadSdb(int num) {
-		this.taskNum = num;
-	}
 	public ReadSdb() {
 
 	}
@@ -62,21 +57,23 @@ public class ReadSdb implements Runnable {
 
 	}
 	// readDB
+	@SuppressWarnings("unused")
 	public void read(String dbType, String url, String user, String password, String sql) throws InterruptedException {
 
 		ConnectDataBase cdb = new ConnectDataBase(dbType, url, user, password);
 		conn = cdb.getConnection();
 		long startTime = System.currentTimeMillis();
 		logger.info("dbType=" + dbType + " url=" + url + " user=" + user + " sql" + sql);
+		
 		try {
 			pstmt = conn.prepareStatement(sql);
 			rs = pstmt.executeQuery();
 			ExecutorService es = Executors.newFixedThreadPool(4);
-
+			int sum=0;
 			while (rs.next()) {
 				ResultSetMetaData rsmd = rs.getMetaData();
 				BSONObject bson = new BasicBSONObject();
-
+                sum++;
 				int i = -1;
 				int type = -1;
 				try {
@@ -131,6 +128,10 @@ public class ReadSdb implements Runnable {
 							break;
 						case Types.NUMERIC:
 							bson.put(name, rs.getBigDecimal(name));
+							break;
+						case Types.NULL:
+							bson.put(name, null);
+							break;
 						default:
 							logger.error("could not found this type on metadata");
 							break;
@@ -139,13 +140,18 @@ public class ReadSdb implements Runnable {
 				} catch (Exception e) {
 					logger.error(e.getMessage());
 				}
-				ReadSdb.offer(bson);
+				
+				System.out.println(bson);
+				/*queue.offer(bson);
 				for (int k = 0; k < count; k++) {
 					es.submit(new Poll());
-				}
+					
+				}*/
 			}
+			/*
 			lath.await();
-			es.shutdown();
+			es.shutdown();*/
+			
 		} catch (SQLException e) {
 			logger.error(e.getMessage());
 			e.printStackTrace();
@@ -162,24 +168,24 @@ public class ReadSdb implements Runnable {
 				e.printStackTrace();
 			}
 		}
+		
 	}
 
-	public static void offer(BSONObject bon) {
-
-		queue.offer(bon);
-	}
-
-	public static class Poll implements Runnable {
-
+	/*public static class Poll implements Runnable {
+        
 		@Override
 		public void run() {
+			
 			while (!queue.isEmpty()) {
-				System.out.println(queue.poll());
+			BSONObject s;
+			s = queue.poll();
+			if(s != null)
+			System.out.println(s);
 			}
+			
 			lath.countDown();
-
 		}
 
-	}
+	}*/
 
 }
