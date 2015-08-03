@@ -3382,98 +3382,97 @@ void SdbBeginForeignModify( ModifyTableState *mtstate,
 
 void sdb_slot_deform_tuple( TupleTableSlot *slot, int natts )
 {
-   HeapTuple	tuple = slot->tts_tuple;
-	TupleDesc	tupleDesc = slot->tts_tupleDescriptor;
-	Datum	   *values = slot->tts_values;
-	bool	   *isnull = slot->tts_isnull;
-	HeapTupleHeader tup = tuple->t_data;
-	bool		hasnulls = HeapTupleHasNulls(tuple);
-	Form_pg_attribute *att = tupleDesc->attrs;
-	int			attnum;
-	char	   *tp;				/* ptr to tuple data */
-	long		off;			/* offset in tuple data */
-	bits8	   *bp = tup->t_bits;		/* ptr to null bitmap in tuple */
-	bool		slow;			/* can we use/set attcacheoff? */
+   HeapTuple tuple     = slot->tts_tuple;
+   TupleDesc tupleDesc = slot->tts_tupleDescriptor;
+   Datum *values       = slot->tts_values;
+   bool *isnull        = slot->tts_isnull;
+   HeapTupleHeader tup = tuple->t_data;
+   bool hasnulls       = HeapTupleHasNulls(tuple);
+   Form_pg_attribute *att = tupleDesc->attrs;
+   int attnum;
+   char *tp;           /* ptr to tuple data */
+   long off;        /* offset in tuple data */
+   bits8 *bp = tup->t_bits;      /* ptr to null bitmap in tuple */
+   bool slow;       /* can we use/set attcacheoff? */
 
-	/*
-	 * Check whether the first call for this tuple, and initialize or restore
-	 * loop state.
-	 */
-	attnum = slot->tts_nvalid;
-	if (attnum == 0)
-	{
-		/* Start from the first attribute */
-		off = 0;
-		slow = false;
-	}
-	else
-	{
-		/* Restore state from previous execution */
-		off = slot->tts_off;
-		slow = slot->tts_slow;
-	}
+   /*
+    * Check whether the first call for this tuple, and initialize or restore
+    * loop state.
+    */
+   attnum = slot->tts_nvalid;
+   if (attnum == 0)
+   {
+      /* Start from the first attribute */
+      off = 0;
+      slow = false;
+   }
+   else
+   {
+      /* Restore state from previous execution */
+      off = slot->tts_off;
+      slow = slot->tts_slow;
+   }
 
-	tp = (char *) tup + tup->t_hoff;
+   tp = (char *) tup + tup->t_hoff;
 
-	for (; attnum < natts; attnum++)
-	{
-		Form_pg_attribute thisatt = att[attnum];
+   for (; attnum < natts; attnum++)
+   {
+      Form_pg_attribute thisatt = att[attnum];
 
-		if (hasnulls && att_isnull(attnum, bp))
-		{
-			values[attnum] = (Datum) 0;
-			isnull[attnum] = true;
-			slow = true;		/* can't use attcacheoff anymore */
-			continue;
-		}
+      if (hasnulls && att_isnull(attnum, bp))
+      {
+         values[attnum] = (Datum) 0;
+         isnull[attnum] = true;
+         slow = true;      /* can't use attcacheoff anymore */
+         continue;
+      }
 
-		isnull[attnum] = false;
+      isnull[attnum] = false;
 
-		if (!slow && thisatt->attcacheoff >= 0)
-			off = thisatt->attcacheoff;
-		else if (thisatt->attlen == -1)
-		{
-			/*
-			 * We can only cache the offset for a varlena attribute if the
-			 * offset is already suitably aligned, so that there would be no
-			 * pad bytes in any case: then the offset will be valid for either
-			 * an aligned or unaligned value.
-			 */
-			if (!slow &&
-				off == att_align_nominal(off, thisatt->attalign))
-				thisatt->attcacheoff = off;
-			else
-			{
-				off = att_align_pointer(off, thisatt->attalign, -1,
-										tp + off);
-				slow = true;
-			}
-		}
-		else
-		{
-			/* not varlena, so safe to use att_align_nominal */
-			off = att_align_nominal(off, thisatt->attalign);
+      if (!slow && thisatt->attcacheoff >= 0)
+         off = thisatt->attcacheoff;
+      else if (thisatt->attlen == -1)
+      {
+         /*
+          * We can only cache the offset for a varlena attribute if the
+          * offset is already suitably aligned, so that there would be no
+          * pad bytes in any case: then the offset will be valid for either
+          * an aligned or unaligned value.
+          */
+         if (!slow &&
+            off == att_align_nominal(off, thisatt->attalign))
+            thisatt->attcacheoff = off;
+         else
+         {
+            off = att_align_pointer(off, thisatt->attalign, -1,
+                              tp + off);
+            slow = true;
+         }
+      }
+      else
+      {
+         /* not varlena, so safe to use att_align_nominal */
+         off = att_align_nominal(off, thisatt->attalign);
 
-			if (!slow)
-				thisatt->attcacheoff = off;
-		}
+         if (!slow)
+            thisatt->attcacheoff = off;
+      }
 
-		values[attnum] = fetchatt(thisatt, tp + off);
+      values[attnum] = fetchatt(thisatt, tp + off);
 
-		off = att_addlength_pointer(off, thisatt->attlen, tp + off);
+      off = att_addlength_pointer(off, thisatt->attlen, tp + off);
 
-		if (thisatt->attlen <= 0)
-			slow = true;		/* can't use attcacheoff anymore */
-	}
+      if (thisatt->attlen <= 0)
+         slow = true;      /* can't use attcacheoff anymore */
+   }
 
-	/*
-	 * Save state for next execution
-	 */
-	slot->tts_nvalid = attnum;
-	slot->tts_off = off;
-	slot->tts_slow = slow;
+   /*
+    * Save state for next execution
+    */
+   slot->tts_nvalid = attnum;
+   slot->tts_off = off;
+   slot->tts_slow = slow;
 }
-
 
 TupleTableSlot *SdbExecForeignInsert( EState *estate, ResultRelInfo *rinfo,
       TupleTableSlot *slot, TupleTableSlot *planSlot )
