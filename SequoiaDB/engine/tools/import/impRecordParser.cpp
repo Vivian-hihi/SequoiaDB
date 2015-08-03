@@ -143,12 +143,28 @@ namespace import
       SDB_ASSERT(length > 0, "length must be greater than 0");
       SDB_ASSERT(length == (INT32)strlen(data), "invalid data length");
 
+      bson_init(&obj);
+
       result = jsonToBson2(&obj, data, FALSE, FALSE);
       if (!result)
       {
          rc = SDB_INVALIDARG;
+         goto error;
       }
 
+      if (bson_size(&obj) > IMP_MAX_BSON_SIZE)
+      {
+         rc = SDB_DRIVER_BSON_ERROR;
+         PD_LOG(PDERROR, "the bson obj is beyond "
+                "the max size %d, actual size %d, rc=%d",
+                IMP_MAX_BSON_SIZE, bson_size(&obj), rc);
+         goto error;
+      }
+
+   done:
       return rc;
+   error:
+      bson_destroy(&obj);
+      goto done;
    }
 }

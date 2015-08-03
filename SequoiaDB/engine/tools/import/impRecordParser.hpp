@@ -41,6 +41,8 @@ using namespace std;
 
 namespace import
 {
+   #define IMP_MAX_BSON_SIZE (1024 * 1024 * 16)
+
    // abstract class
    class RecordParser: public SDBObject
    {

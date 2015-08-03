@@ -108,6 +108,8 @@ namespace import
    #define TIME_MAX_NUM  2147356800
    #define TIME_MIX_NUM -2209017600
 
+   #define CSV_MAX_STRING_SIZE (1024 * 1024 * 16)
+
    #define RECORD_ID_NAME "_id"
 
    static inline void _skipSpace(CHAR** data, INT32& length)
@@ -877,6 +879,12 @@ namespace import
       }
 
    done:
+      if (SDB_OK == rc && valueLength > CSV_MAX_STRING_SIZE)
+      {
+         rc = SDB_INVALIDARG;
+         PD_LOG(PDERROR, "the string is out of length [0-%d]: %d",
+                CSV_MAX_STRING_SIZE, valueLength);
+      }
       return rc;
    error:
       goto done;
@@ -2916,6 +2924,15 @@ namespace import
       {
          rc = SDB_DRIVER_BSON_ERROR;
          PD_LOG(PDERROR, "failed to finish bson, rc=%d", rc);
+         goto error;
+      }
+
+      if (bson_size(&obj) > IMP_MAX_BSON_SIZE)
+      {
+         rc = SDB_DRIVER_BSON_ERROR;
+         PD_LOG(PDERROR, "the bson obj is beyond "
+                "the max size %d, actual size %d, rc=%d",
+                IMP_MAX_BSON_SIZE, bson_size(&obj), rc);
          goto error;
       }
 
