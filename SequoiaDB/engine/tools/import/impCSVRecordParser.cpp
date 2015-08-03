@@ -187,19 +187,16 @@ namespace import
          return FALSE;
       }
 
-      // the first character can be underscore and alphabet
-      if ('_' != field[0] && !isalpha(field[0]))
+      // the first character can't be '$'
+      if ('$' == field[0])
       {
          return FALSE;
       }
 
-      // the rest characters can be underscore, digit and alphabet
-      field++;
-      length--;
-
+      // the characters can't be invisible or '.'
       while (length > 0)
       {
-         if ('_' != *field && !isalpha(*field) && !isdigit(*field))
+         if (!isprint(*field) || '.' == *field)
          {
             return FALSE;
          }
