@@ -1293,7 +1293,7 @@
       <code>
          <name>SDB_CM_OP_NODE_FAILED</name>
          <description>
-            <en>Failed to operate on node only</en>
+            <en>Failed to operate on node</en>
             <cn>在节点上执行操作失败</cn>
          </description>
       </code>
