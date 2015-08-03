@@ -234,6 +234,7 @@ INT32 _ossSocket::setKeepAlive( INT32 keepAlive, INT32 keepIdle,
    INT32 rc = SDB_OK ;
    PD_CHECK( _init, SDB_SYS, error, PDWARNING, "Socket is not init" ) ;
 
+#ifdef _LINUX
    rc = setsockopt( _fd, SOL_SOCKET, SO_KEEPALIVE,
                     ( void *)&keepAlive, sizeof(keepAlive) ) ;
    if ( SDB_OK != rc )
@@ -262,6 +263,7 @@ INT32 _ossSocket::setKeepAlive( INT32 keepAlive, INT32 keepIdle,
       PD_LOG ( PDWARNING, "Failed to setsockopt, rc = %d",
                SOCKET_GETLASTERROR ) ;
    }
+#endif // _LINUX
 
 done:
    return rc ;

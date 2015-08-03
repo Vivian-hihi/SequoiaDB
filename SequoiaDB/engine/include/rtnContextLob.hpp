@@ -41,6 +41,7 @@ using namespace bson ;
 namespace engine
 {
    class _rtnLobStream ;
+   class _rtnLobFetcher ;
 
    class _rtnContextLob : public _rtnContextBase
    {
@@ -81,6 +82,43 @@ namespace engine
       UINT32 _readLen ;
    } ;
    typedef class _rtnContextLob rtnContextLob ;
+
+   /*
+      _rtnContextLobFetcher define
+   */
+   class _rtnContextLobFetcher : public rtnContextBase
+   {
+      public:
+         _rtnContextLobFetcher( INT64 contextID, UINT64 eduID ) ;
+         virtual ~_rtnContextLobFetcher() ;
+
+         INT32 open( _rtnLobFetcher *pFetcher,
+                     const CHAR *fullName,
+                     BOOLEAN onlyMetaPage ) ;
+
+         /*
+            Forbidden the function
+         */
+         virtual INT32     getMore( INT32 maxNumToReturn,
+                                    rtnContextBuf &buffObj,
+                                    _pmdEDUCB *cb ) ;
+
+         _rtnLobFetcher*   getLobFetcher() ;
+
+      public:
+         virtual RTN_CONTEXT_TYPE getType () const ;
+         virtual _dmsStorageUnit* getSU () ;
+
+      protected:
+         virtual INT32     _prepareData( _pmdEDUCB *cb ) { return SDB_OK ; }
+         virtual void      _toString( stringstream &ss ) ;
+
+      private:
+         _rtnLobFetcher    *_pFetcher ;
+
+   } ;
+   typedef _rtnContextLobFetcher rtnContextLobFetcher ;
+
 }
 
 #endif

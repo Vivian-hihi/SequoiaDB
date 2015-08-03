@@ -49,6 +49,7 @@
 #include "dpsLogRecordDef.hpp"
 #include "rtnLob.hpp"
 #include "pmdStartup.hpp"
+#include "rtnContextLob.hpp"
 #include <set>
 
 using namespace bson ;
@@ -80,6 +81,7 @@ namespace engine
       _agent = agent ;
       _contextID = -1 ;
       _context   = NULL ;
+      _lobContextID = -1 ;
       _findEnd = FALSE ;
       _query = NULL ;
       _queryLen = 0 ;
@@ -173,6 +175,12 @@ namespace engine
                           pmdGetKRCB()->getRTNCB() ) ;
          _contextID = -1 ;
          _context   = NULL ;
+      }
+      if ( -1 != _lobContextID )
+      {
+         rtnKillContexts( 1, &_lobContextID, eduCB(),
+                          pmdGetKRCB()->getRTNCB() ) ;
+         _lobContextID = -1 ;
       }
       _findEnd = FALSE ;
       _needData = 1 ;
@@ -305,13 +313,20 @@ namespace engine
       CHAR fullName[DMS_COLLECTION_NAME_SZ +
                     DMS_COLLECTION_SPACE_NAME_SZ + 2] = {0} ;
       clsJoin2Full( cs, collection, fullName ) ;
+      SDB_RTNCB *pRtnCB = pmdGetKRCB()->getRTNCB() ;
+      rtnContextLobFetcher *pContextLob = NULL ;
 
       if ( -1 != _contextID )
       {
-         rtnKillContexts( 1, &_contextID , eduCB(),
-                          pmdGetKRCB()->getRTNCB() ) ;
+         rtnKillContexts( 1, &_contextID , eduCB(), pRtnCB ) ;
          _contextID = -1 ;
          _context   = NULL ;
+      }
+
+      if ( -1 != _lobContextID )
+      {
+         rtnKillContexts( 1, &_lobContextID , eduCB(), pRtnCB ) ;
+         _lobContextID = -1 ;
       }
 
       // not need data, don't open context
@@ -324,8 +339,7 @@ namespace engine
       if ( TBSCAN == _scanType() )
       {
          rc = rtnQuery( fullName, selector, matcher, orderBy, hint, 0, eduCB(),
-                        0, -1,  pmdGetKRCB()->getDMSCB(),
-                        pmdGetKRCB()->getRTNCB(),
+                        0, -1,  pmdGetKRCB()->getDMSCB(), pRtnCB,
                         _contextID, (rtnContextBase**)&_context ) ;
       }
       // SHARD KEY INDEX SCAN
@@ -333,8 +347,7 @@ namespace engine
       {
          rc = rtnTraversalQuery( fullName, _rangeKeyObj, IXM_SHARD_KEY_NAME, 1,
                                  eduCB(), pmdGetKRCB()->getDMSCB(),
-                                 pmdGetKRCB()->getRTNCB(), _contextID,
-                                 &_context ) ;
+                                 pRtnCB, _contextID, &_context ) ;
       }
 
       if ( SDB_DMS_EOC == rc )
@@ -345,15 +358,37 @@ namespace engine
       {
          PD_LOG ( PDERROR, "Session[%s]: Failed to run query, rc = %d",
                   sessionName(), rc ) ;
+         goto error ;
       }
       else
       {
          SDB_ASSERT( _context->scanType() == _scanType(), "scan type error" ) ;
       }
 
+      /// create lob context
+      rc = pRtnCB->contextNew( RTN_CONTEXT_LOB_FETCHER,
+                               (rtnContext**)&pContextLob,
+                               _lobContextID, eduCB() ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Create lob context failed, rc: %d", rc ) ;
+         goto error ;
+      }
+      /// open lob context
+      rc = pContextLob->open( &_lobFetcher,
+                              _curCollecitonName.c_str(),
+                              FALSE ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to init lob fetcher, rc: %d", rc ) ;
+         goto error ;
+      }
+
    done :
       PD_TRACE_EXITRC ( SDB__CLSDSBS__OPNCONTX, rc );
       return rc ;
+   error:
+      goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSDSBS__CONSTINX, "_clsDataSrcBaseSession::_constructIndex" )
@@ -874,8 +909,8 @@ namespace engine
       /// drop cs can delete the context on pmd message dispatcher
       if ( -1 == _contextID || !pRtnCB->contextFind ( _contextID ) )
       {
-         _context = NULL ;
          _contextID = -1 ;
+         _context = NULL ;
          rc = SDB_RTN_CONTEXT_NOTEXIST ;
       }
 
@@ -1102,8 +1137,8 @@ namespace engine
 
          rc = dmsCB->nameToSUAndLock( cs, suID, &su ) ;
          PD_RC_CHECK( rc, PDWARNING,
-                     "session[%s]: can not find cs: %s [rc=%d]",
-                    sessionName(), cs, rc );
+                      "Session[%s]: can not find cs: %s [rc=%d]",
+                      sessionName(), cs, rc ) ;
 
          // get cur cs and cl logical id
          rc = su->data()->getMBContext( &mbContext, collection, SHARED ) ;
@@ -1145,14 +1180,6 @@ namespace engine
             goto error ;
          }
          _curCollection = curCollection ;
-
-         rc = _lobFetcher.init( _curCollecitonName.c_str(),
-                                FALSE ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDERROR, "failed to init lob fetcher:%d", rc ) ;
-            goto error ;
-         }
 
          _constructMeta( meta, cs, collection, su ) ;
          PD_LOG( PDDEBUG, "Session[%s]: get meta [%s]", sessionName(),

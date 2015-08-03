@@ -44,7 +44,7 @@ namespace engine
     _onlyMetaPage( FALSE ),
     _lastErr( SDB_OK )
    {
-
+      ossMemset( _fullName, 0, sizeof( _fullName ) ) ;
    }
 
    _rtnLobFetcher::~_rtnLobFetcher()
@@ -85,6 +85,7 @@ namespace engine
          goto error ;
       }
 
+      ossStrncpy( _fullName, fullName, DMS_COLLECTION_FULL_NAME_SZ ) ;
       _lastErr = SDB_OK ;
       _pos = 0 ;
       _onlyMetaPage = onlyMetaPage ;
@@ -213,5 +214,12 @@ namespace engine
 
       return ;
    }
+
+   void _rtnLobFetcher::close( INT32 cause )
+   {
+      _fini() ;
+      _lastErr = cause ;
+   }
+
 }
 

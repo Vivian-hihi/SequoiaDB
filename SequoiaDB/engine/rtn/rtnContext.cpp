@@ -98,6 +98,10 @@ namespace engine
             return "SHARD_OF_LOB" ;
          case RTN_CONTEXT_LIST_LOB :
             return "LIST_LOB" ;
+         case RTN_CONTEXT_OM_TRANSFER :
+            return "OM_TRANSFER" ;
+         case RTN_CONTEXT_LOB_FETCHER :
+            return "LOB_FETCHER" ;
          default :
             break ;
       }
@@ -212,7 +216,6 @@ namespace engine
       stringstream ss ;
 
       ss << "BufferSize:" << _resultBufferSize ;
-
       if ( _totalRecords > 0 )
       {
          ss << ",TotalRecordNum:" << _totalRecords ;

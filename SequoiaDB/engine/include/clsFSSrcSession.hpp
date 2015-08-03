@@ -147,6 +147,7 @@ namespace engine
          DPS_LSN_OFFSET                   _beginLSNOffset ;
          SINT64                           _contextID ;
          _rtnContextData                  *_context ;
+         INT64                            _lobContextID ;
          BOOLEAN                          _findEnd ;
          const CHAR                       *_query ;
          SINT32                           _queryLen ;
@@ -170,7 +171,8 @@ namespace engine
          BSONObj                          _curScanKeyObj ;
          deque<DPS_LSN_OFFSET>            _deqLSN ;
          ossSpinXLatch                    _LSNlatch ;
-         _rtnLobFetcher                   _lobFetcher ;
+         rtnLobFetcher                    _lobFetcher ;
+
    };
 
    class _clsFSSrcSession : public _clsDataSrcBaseSession

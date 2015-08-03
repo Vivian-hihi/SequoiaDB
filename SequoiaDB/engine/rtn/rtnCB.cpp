@@ -154,6 +154,7 @@ namespace engine
    {
       UINT32 count = 0 ;
       rtnContext *pContext = NULL ;
+      EDU_TYPES eduType = EDU_TYPE_UNKNOWN ;
       std::map<SINT64, rtnContext*>::iterator it ;
       pmdEDUMgr *pEDUMgr = pmdGetKRCB()->getEDUMgr() ;
 
@@ -168,11 +169,19 @@ namespace engine
          if ( pContext && pContext->getSU() &&
               0 == ossStrcmp( csName, pContext->getSU()->CSName() ) )
          {
-            ++count ;
-            pEDUMgr->postEDUPost( pContext->eduID(),
-                                  PMD_EDU_EVENT_KILLCONTEXT,
-                                  PMD_EDU_MEM_NONE, NULL,
-                                  ( UINT64 )pContext->contextID() ) ;
+            /// only for Agent and Shard Agent and Rest Agent
+            eduType = pEDUMgr->getEDUTypeByID( pContext->eduID() ) ;
+            if ( EDU_TYPE_AGENT == eduType ||
+                 EDU_TYPE_SHARDAGENT == eduType ||
+                 EDU_TYPE_RESTAGENT == eduType ||
+                 EDU_TYPE_FAPAGENT == eduType )
+            {
+               ++count ;
+               pEDUMgr->postEDUPost( pContext->eduID(),
+                                     PMD_EDU_EVENT_KILLCONTEXT,
+                                     PMD_EDU_MEM_NONE, NULL,
+                                     ( UINT64 )pContext->contextID() ) ;
+            }
          }
       }
 
@@ -266,7 +275,11 @@ namespace engine
             case RTN_CONTEXT_OM_TRANSFER:
                  (*context) = SDB_OSS_NEW omContextTransfer( _contextHWM,
                                                              pEDUCB->getID() ) ;
-                 break; 
+                 break;
+            case RTN_CONTEXT_LOB_FETCHER:
+                 (*context) = SDB_OSS_NEW rtnContextLobFetcher( _contextHWM,
+                                                                pEDUCB->getID() ) ;
+                 break ;
             default :
                PD_LOG( PDERROR, "Unknow context type: %d", type ) ;
                return SDB_SYS ;

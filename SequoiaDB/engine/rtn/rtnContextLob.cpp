@@ -35,6 +35,7 @@
 #include "pmd.hpp"
 #include "rtnLocalLobStream.hpp"
 #include "rtnCoordLobStream.hpp"
+#include "rtnLobFetcher.hpp"
 #include "rtnTrace.hpp"
 
 using namespace bson ;
@@ -273,5 +274,73 @@ namespace engine
    error:
       goto done ;
    }
+
+   /*
+      _rtnContextLobFetcher implement
+   */
+   _rtnContextLobFetcher::_rtnContextLobFetcher( INT64 contextID,
+                                                 UINT64 eduID )
+   :rtnContextBase( contextID, eduID )
+   {
+   }
+
+   _rtnContextLobFetcher::~_rtnContextLobFetcher()
+   {
+      if ( _pFetcher )
+      {
+         _pFetcher->close() ;
+      }
+      _pFetcher = NULL ;
+   }
+
+   INT32 _rtnContextLobFetcher::open( rtnLobFetcher *pFetcher,
+                                      const CHAR *fullName,
+                                      BOOLEAN onlyMetaPage )
+   {
+      _pFetcher = pFetcher ;
+      if ( _pFetcher )
+      {
+         return _pFetcher->init( fullName, onlyMetaPage ) ;
+      }
+      return SDB_SYS ;
+   }
+
+   INT32 _rtnContextLobFetcher::getMore( INT32 maxNumToReturn,
+                                         rtnContextBuf &buffObj,
+                                         _pmdEDUCB *cb )
+   {
+      /// not used for call
+      return SDB_SYS ;
+   }
+
+   rtnLobFetcher* _rtnContextLobFetcher::getLobFetcher()
+   {
+      return _pFetcher ;
+   }
+
+   RTN_CONTEXT_TYPE _rtnContextLobFetcher::getType () const
+   {
+      return RTN_CONTEXT_LOB_FETCHER ;
+   }
+
+   _dmsStorageUnit* _rtnContextLobFetcher::getSU ()
+   {
+      if ( _pFetcher )
+      {
+         return _pFetcher->getSu() ;
+      }
+      return NULL ;
+   }
+
+   void _rtnContextLobFetcher::_toString( stringstream &ss )
+   {
+      if ( _pFetcher )
+      {
+         ss << ",CollectionName:" << _pFetcher->collectionName()
+            << ",HitEnd:" << _pFetcher->hitEnd()
+            << ",Position:" << _pFetcher->toBeFetched() ;
+      }
+   }
+
 }
 

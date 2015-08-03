@@ -53,6 +53,8 @@ namespace engine
                    _dmsLobInfoOnPage &piece,
                    _dpsMessageBlock *mb = NULL ) ;
 
+      void  close( INT32 cause = SDB_DMS_EOC ) ;
+
       BOOLEAN hitEnd() const
       {
          return SDB_DMS_EOC == _lastErr ||
@@ -69,15 +71,22 @@ namespace engine
          return _su ;
       }
 
+      const CHAR* collectionName() const
+      {
+         return _fullName ;
+      }
+
    private:
       void _fini() ;
    private:
-      dmsStorageUnitID _suID ;
-      _dmsStorageUnit *_su ;
-      _dmsMBContext *_mbContext ;
-      DMS_LOB_PAGEID _pos ;
-      BOOLEAN _onlyMetaPage ;
-      INT32 _lastErr ;
+      dmsStorageUnitID     _suID ;
+      _dmsStorageUnit      *_su ;
+      _dmsMBContext        *_mbContext ;
+      DMS_LOB_PAGEID       _pos ;
+      BOOLEAN              _onlyMetaPage ;
+      INT32                _lastErr ;
+      CHAR                 _fullName[ DMS_COLLECTION_FULL_NAME_SZ + 1 ] ;
+
    } ;
    typedef class _rtnLobFetcher rtnLobFetcher ;
 }
