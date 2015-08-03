@@ -524,8 +524,9 @@ namespace engine
       goto done ;
    }
 
-   INT32 _clsShdSession::_createCLByCatalog( const CHAR * clFullName,
-                                             const CHAR *pParent )
+   INT32 _clsShdSession::_createCLByCatalog( const CHAR *clFullName,
+                                             const CHAR *pParent,
+                                             BOOLEAN mustOnSelf )
    {
       INT32 rc                = SDB_OK ;
       UINT32 attribute        = 0 ;
@@ -577,7 +578,7 @@ namespace engine
          vector< string >::iterator iter = subCLList.begin() ;
          while ( iter != subCLList.end() )
          {
-            rc = _createCLByCatalog( (*iter).c_str(), clFullName ) ;
+            rc = _createCLByCatalog( (*iter).c_str(), clFullName, FALSE ) ;
             if ( rc )
             {
                break ;
@@ -589,17 +590,19 @@ namespace engine
       {
          if( 0 == groupCount )
          {
-            if ( pParent )
+            /// first clear
+            _pCatAgent->lock_w() ;
+            _pCatAgent->clear( clFullName ) ;
+            _pCatAgent->release_w() ;
+
+            if ( pParent && FALSE == mustOnSelf )
             {
                /// ignore this sub-collection
                goto done ;
             }
 
-            _pCatAgent->lock_w() ;
-            _pCatAgent->clear( clFullName ) ;
-            _pCatAgent->release_w() ;
             rc = SDB_CLS_COORD_NODE_CAT_VER_OLD ;
-            PD_LOG( PDERROR, "Session[%s] can not find collection: %s",
+            PD_LOG( PDERROR, "Session[%s]: Collection[%s] is not on this group",
                     sessionName(), clFullName ) ;
             goto error ;
          }

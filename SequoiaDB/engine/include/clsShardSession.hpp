@@ -88,7 +88,8 @@ namespace engine
 
          INT32   _createCSByCatalog( const CHAR *clFullName ) ;
          INT32   _createCLByCatalog( const CHAR *clFullName,
-                                     const CHAR *pParent = NULL ) ;
+                                     const CHAR *pParent = NULL,
+                                     BOOLEAN mustOnSelf = TRUE ) ;
          INT32   _processSubCLResult( INT32 result,
                                       const CHAR *clFullName,
                                       const CHAR *pParent ) ;
