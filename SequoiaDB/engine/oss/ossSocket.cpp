@@ -227,6 +227,48 @@ error:
    goto done ;
 }
 
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSSK_KPAL, "ossSocket::setKeepAlive" )
+INT32 _ossSocket::setKeepAlive( INT32 keepAlive, INT32 keepIdle,
+                                INT32 keepInterval, INT32 keepCount )
+{
+   INT32 rc = SDB_OK ;
+   PD_CHECK( _init, SDB_SYS, error, PDWARNING, "Socket is not init" ) ;
+
+   rc = setsockopt( _fd, SOL_SOCKET, SO_KEEPALIVE,
+                    ( void *)&keepAlive, sizeof(keepAlive) ) ;
+   if ( SDB_OK != rc )
+   {
+      PD_LOG ( PDWARNING, "Failed to setsockopt, rc = %d",
+               SOCKET_GETLASTERROR ) ;
+   }
+   rc = setsockopt( _fd, SOL_TCP, TCP_KEEPIDLE,
+                    ( void *)&keepIdle, sizeof(keepIdle) ) ;
+   if ( SDB_OK != rc )
+   {
+      PD_LOG ( PDWARNING, "Failed to setsockopt, rc = %d",
+               SOCKET_GETLASTERROR ) ;
+   }
+   rc = setsockopt( _fd, SOL_TCP, TCP_KEEPINTVL,
+                    ( void *)&keepInterval, sizeof(keepInterval) ) ;
+   if ( SDB_OK != rc )
+   {
+      PD_LOG ( PDWARNING, "Failed to setsockopt, rc = %d",
+               SOCKET_GETLASTERROR ) ;
+   }
+   rc = setsockopt( _fd, SOL_TCP, TCP_KEEPCNT,
+                    ( void *)&keepCount, sizeof(keepCount) ) ;
+   if ( SDB_OK != rc )
+   {
+      PD_LOG ( PDWARNING, "Failed to setsockopt, rc = %d",
+               SOCKET_GETLASTERROR ) ;
+   }
+
+done:
+   return rc ;
+error:
+   goto done ;
+}
+
 // PD_TRACE_DECLARE_FUNCTION ( SDB_OSSSK_BIND_LSTN, "ossSocket::bind_listen" )
 INT32 _ossSocket::bind_listen ()
 {

@@ -56,18 +56,20 @@ do                                                      \
    }                                                    \
 }while( FALSE )
 
-#define CHECK_RET_MSGHEADER( pSendBuf, pRecvBuf, connHandle ) \
-do                                                            \
-{                                                             \
-   rc = clientCheckRetMsgHeader( pSendBuf, pRecvBuf ) ;       \
-   if ( SDB_OK != rc )                                        \
-   {                                                          \
-      if ( SDB_UNEXPECTED_RESULT == rc )                      \
-      {                                                       \
-         sdbDisconnect( connHandle ) ;                        \
-      }                                                       \
-      goto error ;                                            \
-   }                                                          \
+#define CHECK_RET_MSGHEADER( pSendBuf, pRecvBuf, connHandle )               \
+do                                                                          \
+{                                                                           \
+   sdbConnectionStruct *db = (sdbConnectionStruct*)connHandle ;             \
+   HANDLE_CHECK( connHandle, db, SDB_HANDLE_TYPE_CONNECTION ) ;             \
+   rc = clientCheckRetMsgHeader( pSendBuf, pRecvBuf, db->_endianConvert ) ; \
+   if ( SDB_OK != rc )                                                      \
+   {                                                                        \
+      if ( SDB_UNEXPECTED_RESULT == rc )                                    \
+      {                                                                     \
+         sdbDisconnect( connHandle ) ;                                      \
+      }                                                                     \
+      goto error ;                                                          \
+   }                                                                        \
 }while( FALSE )
 
 #define ALLOC_HANDLE( handle, type )                      \
@@ -1979,7 +1981,8 @@ SDB_EXPORT INT32 sdbGetQueryMeta ( sdbCollectionHandle cHandle,
    }
 
    // check return msg header
-   CHECK_RET_MSGHEADER( cs->_pSendBuffer, cs->_pReceiveBuffer, cHandle ) ;
+   CHECK_RET_MSGHEADER( cs->_pSendBuffer, cs->_pReceiveBuffer,
+                        cs->_connection ) ;
    ALLOC_HANDLE( cursor, sdbCursorStruct ) ;
    INIT_CURSOR( cursor, cs->_connection, cs, contextID ) ;
 

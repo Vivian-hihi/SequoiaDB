@@ -89,7 +89,8 @@ namespace sdbclient
 #define CHECK_RET_MSGHEADER( pSendBuf, pRecvBuf, pConnect )   \
 do                                                            \
 {                                                             \
-   rc = clientCheckRetMsgHeader( pSendBuf, pRecvBuf ) ;       \
+   rc = clientCheckRetMsgHeader( pSendBuf, pRecvBuf,          \
+                                 pConnect->_endianConvert ) ; \
    if ( SDB_OK != rc )                                        \
    {                                                          \
       if ( SDB_UNEXPECTED_RESULT == rc )                      \

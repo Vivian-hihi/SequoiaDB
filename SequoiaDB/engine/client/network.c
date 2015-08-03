@@ -137,6 +137,7 @@ INT32 clientConnect ( const CHAR *pHostName,
       goto error ;
    }
 
+   setKeepAlive( rawSocket, 1, 15, 5, 3 ) ;
    _disableNagle( rawSocket ) ;
 
    s = (Socket*) SDB_OSS_MALLOC ( sizeof( Socket ) ) ;
@@ -258,6 +259,51 @@ SOCKET clientGetRawSocket( Socket* sock )
 
 done:
    return s ;
+error:
+   goto done ;
+}
+
+INT32 setKeepAlive( SOCKET sock, INT32 keepAlive, INT32 keepIdle,
+                   INT32 keepInterval, INT32 keepCount )
+{
+   INT32 rc = SDB_OK ;
+
+   if ( NULL == sock )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+   rc = setsockopt( sock, SOL_SOCKET, SO_KEEPALIVE,
+                    ( void *)&keepAlive, sizeof(keepAlive) ) ;
+   if ( SDB_OK != rc )
+   {
+      rc = SDB_SYS ;
+      goto error ;
+   }
+   rc = setsockopt( sock, SOL_TCP, TCP_KEEPIDLE,
+                    ( void *)&keepIdle, sizeof(keepIdle) ) ;
+   if ( SDB_OK != rc )
+   {
+      rc = SDB_SYS ;
+      goto error ;
+   }
+   rc = setsockopt( sock, SOL_TCP, TCP_KEEPINTVL,
+                    ( void *)&keepInterval, sizeof(keepInterval) ) ;
+   if ( SDB_OK != rc )
+   {
+      rc = SDB_SYS ;
+      goto error ;
+   }
+   rc = setsockopt( sock, SOL_TCP, TCP_KEEPCNT,
+                    ( void *)&keepCount, sizeof(keepCount) ) ;
+   if ( SDB_OK != rc )
+   {
+      rc = SDB_SYS ;
+      goto error ;
+   }
+
+done:
+   return rc ;
 error:
    goto done ;
 }

@@ -114,6 +114,8 @@ class _ossSocket : public SDBObject
 
    public :
       INT32 setSocketLi ( INT32 lOnOff, INT32 linger ) ;
+      INT32 setKeepAlive( INT32 keepAlive, INT32 keepIdle,
+                          INT32 keepInterval, INT32 keepCount ) ;
 
       // Create a listening socket, timeout in millisecond
       _ossSocket ( UINT32 port, INT32 timeoutMilli = 0 ) ;

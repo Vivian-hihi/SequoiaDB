@@ -234,7 +234,7 @@ namespace engine
       setPDLevel( PDINFO ) ;
 
       ossSprintVersion( "Version", verText, OSS_MAX_PATHSIZE, FALSE ) ;
-      PD_LOG( PDEVENT, "Start programme[%s]...", verText ) ;
+      PD_LOG( PDEVENT, "Stop programme[%s]...", verText ) ;
 
       if ( listServices.size() > 0 )
       {
