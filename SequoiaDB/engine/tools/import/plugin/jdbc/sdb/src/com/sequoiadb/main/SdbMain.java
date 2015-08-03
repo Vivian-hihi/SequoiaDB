@@ -64,7 +64,7 @@ public static void main(String[] args) {
 		opt.addOption("sumrow", true, "Rows which you want to select.");
 		opt.addOption("threads", true, "Concurrent number");
 		opt.addOption("version", false, "information about sdbJdbc");
-		opt.addOption("sql", true, "sql");
+		opt.addOption("sql", true, "sql of user defined");
 		opt.addOption("h", "help", false, "print help for the command.");
 		String formatstr = "gmkdir [--connect][--username][password][--table][--sumrow][--threads][-h/--help] DirectoryName";
 		String versionstr = "version  v1.1";
