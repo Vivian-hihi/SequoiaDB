@@ -897,6 +897,7 @@ int sdbSetBsonValue( sdbbson *bsonObj, const char *name, Datum valueDatum,
       case TEXTARRAYOID:
       case INT4ARRAYOID:
       case FLOAT4ARRAYOID:
+      case 1022:
       /* FLOAT8ARRAY is not support */
       case INT2ARRAYOID:
       /* this type do not have type name, so we must use the value(see more types in pg_type.h) */ 
