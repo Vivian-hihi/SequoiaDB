@@ -29,7 +29,7 @@
 
 *******************************************************************************/
 #include "impCataInfo.hpp"
-#include "coordDef.hpp"
+#include "clsCatalogAgent.hpp"
 
 using namespace bson;
 

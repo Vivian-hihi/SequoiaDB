@@ -16,6 +16,42 @@ inspectFiles = [
       "tools/inspect/sdbInspect.cpp"
       ]
 
+importFiles = [
+      "tools/import/sdbImport.cpp",
+      "tools/import/impOptions.cpp",
+      "tools/import/impInputStream.cpp",
+      "tools/import/impRecordScanner.cpp",
+      "tools/import/impRecordParser.cpp",
+      "tools/import/impCSVRecordParser.cpp",
+      "tools/import/impRecordImporter.cpp",
+      "tools/import/impWorker.cpp",
+      "tools/import/impCoord.cpp",
+      "tools/import/impRecordSharding.cpp",
+      "tools/import/impCataInfo.cpp",
+      "tools/import/impCatalogAgent.cpp",
+      "tools/import/impParser.cpp",
+      "tools/import/impImporter.cpp",
+      "tools/import/impSharding.cpp",
+      "tools/import/impRoutine.cpp",
+      "tools/import/impLogFile.cpp",
+      "tools/import/impUtil.cpp"
+      ]
+
+clsFiles = [
+      "cls/clsCatalogAgent.cpp",
+      "cls/clsCatalogMatcher.cpp",
+      "cls/clsCatalogPredicate.cpp",
+      "cls/clsCataHashMatcher.cpp"
+      ]
+
+ixmFiles = [
+      "ixm/ixmIndexKey.cpp"
+      ]
+
+rtnFiles = [
+      "rtn/rtnPredicate.cpp"
+]
+
 migFiles = [
       "mig/migExport.cpp",
       "mig/migImport.cpp",
@@ -110,6 +146,9 @@ utilFiles = [
       "client/base64c.c",
       "client/cJSON.c",
       "client/jstobs.c",
+      "bson/md5.c",
+      "util/utilBsonHash.cpp",
+      "util/utilBsonHashObsolete.cpp",
       "util/utilParseJSONs.cpp",
       "util/utilParseCSV.cpp",
       "util/utilParseData.cpp",
@@ -437,6 +476,12 @@ sdbRepairMain = [
       "tools/sdbrepair.cpp"
       ]
 
+#cls
+toolEnv.StaticLibrary('cls', clsFiles)
+#ixm
+toolEnv.StaticLibrary('ixm', ixmFiles)
+#rtn
+toolEnv.StaticLibrary('rtn', rtnFiles)
 #BSON
 toolEnv.StaticLibrary('bson', bsonFiles)
 #Client Driver
@@ -471,6 +516,10 @@ toolEnv.StaticLibrary('spt2', spt2Files)
 toolEnv.StaticLibrary('ssh2', ssh2Files)
 
 #Export Executable
+sdbimprt2 = toolEnv.Program("sdbimprt2", importFiles,
+         LIBDEPS=["bson", "oss", "pd", "util", "client", "cls", "ixm", "rtn", "msg"],
+         _LIBDEPS='$_LIBDEPS_OBJS' )
+
 sdbexprt = toolEnv.Program("sdbexprt", sdbExportMain,
          LIBDEPS=["bson","mig","oss","pd","util","client","clientcpp"],
          _LIBDEPS='$_LIBDEPS_OBJS' )
@@ -541,6 +590,7 @@ if linux:
                LIBDEPS=["pd", "oss", "util"],
                _LIBDEPS='$_LIBDEPS_OBJS' )
 
+toolEnv.Install( '#/bin', sdbimprt2 )
 toolEnv.Install( '#/bin', sdbexprt )
 toolEnv.Install( '#/bin', sdbimprt )
 toolEnv.Install( '#/bin', sdbstart )
