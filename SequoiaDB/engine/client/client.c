@@ -1654,14 +1654,14 @@ static INT32 _sdbConnect ( const CHAR *pHostName, const CHAR *pServiceName,
 done:
    return rc ;
 error:
-   // destroy mutex
-   if ( NULL != connection && TRUE == hasMutexInit )
-   {
-      ossMutexDestroy ( &connection->_sockMutex ) ;
-   }
-   if ( connection )
+   if ( NULL !=connection )
    {
       sdbDisconnect( (sdbConnectionHandle)connection ) ;
+      // destroy mutex
+      if ( TRUE == hasMutexInit )
+      {
+         ossMutexDestroy ( &connection->_sockMutex ) ;
+      }
       sdbReleaseConnection( (sdbConnectionHandle)connection ) ;
    }
    SET_INVALID_HANDLE( handle ) ;
