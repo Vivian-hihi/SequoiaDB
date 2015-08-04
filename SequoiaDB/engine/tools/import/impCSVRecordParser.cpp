@@ -908,7 +908,7 @@ namespace import
       rc = _stringToRawInt(data, length, value, valueLength);
       if (SDB_OK != rc)
       {
-         rc = _stringToRawBool(data, length, value, valueLength);
+         rc = _stringToRawBool(data, length, (BOOLEAN&)value, valueLength);
       }
 
       if (SDB_OK == rc)
@@ -943,7 +943,7 @@ namespace import
       rc = _stringToRawInt(str, len, value, tmpLen);
       if (SDB_OK != rc)
       {
-         rc = _stringToRawBool(str, len, value, tmpLen);
+         rc = _stringToRawBool(str, len, (BOOLEAN&)value, tmpLen);
       }
 
       if (SDB_OK != rc)

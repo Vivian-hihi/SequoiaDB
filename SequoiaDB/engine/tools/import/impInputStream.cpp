@@ -245,7 +245,7 @@ namespace import
 
    INT32 UTF8InputStream::_firstRead(CHAR* buf, INT64 bufSize, INT64& readSize)
    {
-      static const CHAR UTF8_BOM[] = {0xEF, 0xBB, 0xBF};
+      static const UINT8 UTF8_BOM[] = {0xEF, 0xBB, 0xBF};
       static const INT32 UTF8_BOM_SIZE =
          (INT32)(sizeof(UTF8_BOM)/sizeof(UTF8_BOM[0]));
       INT32 rc = SDB_OK;
