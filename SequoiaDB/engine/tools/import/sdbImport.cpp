@@ -44,7 +44,7 @@ int main(int argc, char* argv[])
    INT32 rc = SDB_OK;
 
    sdbEnablePD(IMP_LOG_PATH);
-   setPDLevel(PDWARNING);
+   setPDLevel(PDINFO);
 
    rc = options.parse(argc, argv);
    if (SDB_OK != rc)

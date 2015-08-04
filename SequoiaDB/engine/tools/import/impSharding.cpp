@@ -51,14 +51,17 @@ namespace import
       RecordSharding* sharding = &(self->_sharding);
       ShardingGroups* groups = &(self->_groups);
 
-      if (options->verbose())
       {
          stringstream ss;
          ss << "sharding started with "
             << sharding->getGroupNum() << " groups..."
             << std::endl;
 
-         std::cout << ss.str();
+         PD_LOG(PDEVENT, "%s", ss.str().c_str());
+         if (options->verbose())
+         {
+            std::cout << ss.str();
+         }
       }
 
       for(;;)
@@ -166,14 +169,18 @@ namespace import
       }
 
       self->_stopped = TRUE;
-      if (options->verbose())
+
       {
          stringstream ss;
          ss << "sharding stopped, sharding records "
             << shardingCount << "."
             << std::endl;
 
-         std::cout << ss.str();
+         PD_LOG(PDEVENT, "%s", ss.str().c_str());
+         if (options->verbose())
+         {
+            std::cout << ss.str();
+         }
       }
       return;
    error:

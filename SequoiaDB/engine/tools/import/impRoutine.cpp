@@ -77,6 +77,8 @@ namespace import
    {
       INT32 rc = SDB_OK;
 
+      PD_LOG(PDINFO, "begin importing");
+
       rc = _startSharding();
       if (SDB_OK != rc)
       {
@@ -135,6 +137,7 @@ namespace import
       }
 
    done:
+      PD_LOG(PDINFO, "finished importing");
       return rc;
    error:
       goto done;
@@ -246,10 +249,12 @@ namespace import
       }
       else
       {
+         CHAR* str = "no need to sharding";
+         PD_LOG(PDINFO, "%s", str);
          if (_options.verbose())
          {
             stringstream ss;
-            ss << "no need to sharding" << std::endl;
+            ss << str << std::endl;
             std::cout << ss.str();
          }
       }

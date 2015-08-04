@@ -70,6 +70,7 @@ namespace import
 
          if (!options.fields().empty())
          {
+            PD_LOG(PDINFO, "fields: %s", options.fields().c_str());
             if (options.verbose())
             {
                std::cout << "fields: " << options.fields()

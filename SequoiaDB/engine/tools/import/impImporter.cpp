@@ -77,13 +77,17 @@ namespace import
       SDB_ASSERT(NULL != logFile, "logFile can't be NULL");
       SDB_ASSERT(NULL != monitor, "monitor can't be NULL");
 
-      if (options->verbose())
       {
          stringstream ss;
          ss << "importer [" << impArgs->id << "] with "
             << impArgs->hostname << ":" << impArgs->svcname
             << " started..." << std::endl;
-         std::cout << ss.str();
+
+         PD_LOG(PDEVENT, "%s", ss.str().c_str());
+         if (options->verbose())
+         {
+            std::cout << ss.str();
+         }
       }
 
       rc = importer.connect();
@@ -130,11 +134,15 @@ namespace import
       }
 
    done:
-      if (options->verbose())
       {
          stringstream ss;
          ss << "importer [" << impArgs->id << "] stop" << std::endl;
-         std::cout << ss.str();
+
+         PD_LOG(PDEVENT, "%s", ss.str().c_str());
+         if (options->verbose())
+         {
+            std::cout << ss.str();
+         }
       }
       self->_livingNum.dec();
       return;

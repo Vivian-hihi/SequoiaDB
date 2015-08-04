@@ -69,11 +69,15 @@ namespace import
       SDB_ASSERT(NULL != workQueue, "workQueue can't be NULL");
       SDB_ASSERT(NULL != monitor, "monitor can't be NULL");
 
-      if (options->verbose())
+
       {
-         stringstream ss;
-         ss << "parser started..." << std::endl;
-         std::cout << ss.str();
+         CHAR* str = "parser started...\n";
+
+         PD_LOG(PDEVENT, "%s", str);
+         if (options->verbose())
+         {
+            std::cout << str;
+         }
       }
 
       RecordScanner scanner(options->recordDelimiter(),
@@ -169,6 +173,7 @@ namespace import
                      {
                         string fields = string(buf, recordLength);
 
+                        PD_LOG(PDINFO, "fields: %s", fields.c_str());
                         if (options->verbose())
                         {
                            std::cout << "fields: " << fields
@@ -248,7 +253,7 @@ namespace import
                            for(;;)
                            {
                               ossSleep(100);
-                              if (monitor->recordsMem() < (options->recordsMem() / 2))
+                              if (monitor->recordsMem() <= (options->recordsMem() / 2))
                               {
                                  break;
                               }
@@ -317,11 +322,15 @@ namespace import
          parser = NULL;
       }
       SAFE_OSS_FREE(buffer);
-      if (options->verbose())
+
       {
-         stringstream ss;
-         ss << "parser stopped" << std::endl;
-         std::cout << ss.str();
+         CHAR* str= "parser stopped\n";
+
+         PD_LOG(PDEVENT, "%s", str);
+         if (options->verbose())
+         {
+            std::cout << str;
+         }
       }
       return;
    error:
