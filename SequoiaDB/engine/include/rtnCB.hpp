@@ -103,7 +103,8 @@ namespace engine
          return _contextList.size() ;
       }
 
-      OSS_INLINE void contextDump ( std::map<UINT64, std::set<SINT64> > &contextList )
+      OSS_INLINE void contextDump ( std::map<UINT64,
+                                    std::set<SINT64> > &contextList )
       {
          UINT64 eduID = PMD_INVALID_EDUID ;
          INT64  contextID = -1  ;
@@ -119,8 +120,9 @@ namespace engine
          }
       }
 
-      OSS_INLINE void monContextSnap ( std::map<UINT64, std::set<monContextFull> >
-                                   &contextList )
+      OSS_INLINE void monContextSnap ( std::map<UINT64,
+                                       std::set<monContextFull> >
+                                       &contextList )
       {
          UINT64 eduID = PMD_INVALID_EDUID ;
          INT64  contextID = -1  ;
