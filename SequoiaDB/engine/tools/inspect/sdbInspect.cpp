@@ -2314,7 +2314,14 @@ namespace
       if ( SDB_OK != rc )
       {
          std::cout << "Error: failed to connect to master node: "
-                   << master->_hostname << std::endl ;
+                   << master->_hostname << ":"
+                   << master->_serviceName ;
+         if ( SDB_AUTH_AUTHORITY_FORBIDDEN == rc )
+         {
+            std::cout << "user: " << g_username
+                      << "   password: " << g_password;
+         }
+         std::cout << std::endl ;
          goto error ;
       }
 
@@ -3208,8 +3215,13 @@ INT32 _sdbCi::inspect()
    if ( SDB_OK != rc )
    {
       std::cout << "Error: failed to connect to " << _header._coordAddr
-         << ":" << _header._serviceName << " "
-         << g_username << ":" << g_password << std::endl ;
+                << ":" << _header._serviceName ;
+      if ( SDB_AUTH_AUTHORITY_FORBIDDEN == rc )
+      {
+         std::cout << "user: " << g_username
+                   << "   password: " << g_password;
+      }
+      std::cout << std::endl ;
       goto error ;
    }
 
