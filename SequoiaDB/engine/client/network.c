@@ -27,6 +27,7 @@
 #include <netdb.h>
 #include <netinet/tcp.h>
 #else
+#include <mstcpip.h>
 #pragma comment(lib, "Ws2_32.lib")
 #endif
 #ifdef SDB_SSL
@@ -49,7 +50,7 @@ struct Socket
 #if defined (_WINDOWS)
 static BOOLEAN sockInitialized = FALSE ;
 static ossMutex winSockInitMutex ;
-static void _winSockInit()
+static void _winSockInit( void )
 {
    ossMutexInit( &winSockInitMutex ) ;
 }
@@ -267,12 +268,37 @@ INT32 setKeepAlive( SOCKET sock, INT32 keepAlive, INT32 keepIdle,
                    INT32 keepInterval, INT32 keepCount )
 {
    INT32 rc = SDB_OK ;
+#if defined (_WINDOWS)
+   struct tcp_keepalive alive_in ;
+   DWORD ulBytesReturn       = 0 ;
+#endif
 
-   if ( NULL == sock )
+   if ( 0 == sock )
    {
       rc = SDB_INVALIDARG ;
       goto error ;
    }
+   
+   // set keep alive options
+#if defined (_WINDOWS)
+   alive_in.onoff             = keepAlive ;
+   alive_in.keepalivetime     = keepIdle * 1000 ; // ms
+   alive_in.keepaliveinterval = keepInterval * 1000 ; // ms
+   rc = setsockopt( sock, SOL_SOCKET, SO_KEEPALIVE,
+                    ( CHAR *)&keepAlive, sizeof(keepAlive) ) ;
+   if ( SDB_OK != rc )
+   {
+      rc = SDB_SYS ;
+      goto error ;
+   }
+   rc = WSAIoctl( sock, SIO_KEEPALIVE_VALS, &alive_in, sizeof(alive_in),
+                  NULL, 0, &ulBytesReturn, NULL, NULL ) ;
+   if ( SDB_OK != rc )
+   {
+      rc = SDB_SYS ;
+      goto error ;
+   }
+#else
    rc = setsockopt( sock, SOL_SOCKET, SO_KEEPALIVE,
                     ( void *)&keepAlive, sizeof(keepAlive) ) ;
    if ( SDB_OK != rc )
@@ -301,6 +327,7 @@ INT32 setKeepAlive( SOCKET sock, INT32 keepAlive, INT32 keepIdle,
       rc = SDB_SYS ;
       goto error ;
    }
+#endif
 
 done:
    return rc ;

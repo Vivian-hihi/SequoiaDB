@@ -39,6 +39,9 @@
 #include <stdio.h>
 #include "pdTrace.hpp"
 #include "ossTrace.hpp"
+#if defined (_WINDOWS)
+#include <mstcpip.h>
+#endif
 #ifdef SDB_SSL
 #include "ossSSLWrapper.h"
 #endif
@@ -232,9 +235,32 @@ INT32 _ossSocket::setKeepAlive( INT32 keepAlive, INT32 keepIdle,
                                 INT32 keepInterval, INT32 keepCount )
 {
    INT32 rc = SDB_OK ;
+#if defined (_WINDOWS)
+   struct tcp_keepalive alive_in ;
+   DWORD ulBytesReturn       = 0 ;
+#endif
    PD_CHECK( _init, SDB_SYS, error, PDWARNING, "Socket is not init" ) ;
 
-#ifdef _LINUX
+   // set keep alive options
+#if defined (_WINDOWS)
+   alive_in.onoff             = keepAlive ;
+   alive_in.keepalivetime     = keepIdle * 1000 ; // ms
+   alive_in.keepaliveinterval = keepInterval * 1000 ; // ms
+   rc = setsockopt( _fd, SOL_SOCKET, SO_KEEPALIVE,
+                    ( CHAR *)&keepAlive, sizeof(keepAlive) ) ;
+   if ( SDB_OK != rc )
+   {
+      PD_LOG ( PDWARNING, "Failed to setsockopt, rc = %d",
+               SOCKET_GETLASTERROR ) ;
+   }
+   rc = WSAIoctl( _fd, SIO_KEEPALIVE_VALS, &alive_in, sizeof(alive_in),
+                  NULL, 0, &ulBytesReturn, NULL, NULL ) ;
+   if ( SDB_OK != rc )
+   {
+      PD_LOG ( PDWARNING, "Failed to setsockopt, rc = %d",
+               SOCKET_GETLASTERROR ) ;
+   }
+#else
    rc = setsockopt( _fd, SOL_SOCKET, SO_KEEPALIVE,
                     ( void *)&keepAlive, sizeof(keepAlive) ) ;
    if ( SDB_OK != rc )
@@ -263,7 +289,7 @@ INT32 _ossSocket::setKeepAlive( INT32 keepAlive, INT32 keepIdle,
       PD_LOG ( PDWARNING, "Failed to setsockopt, rc = %d",
                SOCKET_GETLASTERROR ) ;
    }
-#endif // _LINUX
+#endif // _WINDOWS
 
 done:
    return rc ;
