@@ -31,9 +31,12 @@
 #include "impRecordImporter.hpp"
 #include "ossUtil.h"
 #include "pd.hpp"
+#include "msgDef.h"
 
 namespace import
 {
+   #define IMP_MAX_RECORDS_SIZE (SDB_MAX_MSG_LENGTH - 1024 * 1024 * 1)
+
    RecordImporter::RecordImporter(const string& hostname,
                                   const string& svcname,
                                   const string& user,
@@ -169,5 +172,74 @@ namespace import
       }
 
       return rc;
+   }
+
+   INT32 RecordImporter::import(RecordArray* array)
+   {
+      INT32 rc = SDB_OK;
+      INT32 size = 0;
+      bson** records = NULL;
+
+      SDB_ASSERT(NULL != array, "array can't be NULL");
+      SDB_ASSERT(!array->empty(), "array can't be empty");
+
+      size = array->size();
+      records = array->array();
+
+      if (array->bsonSize() <= IMP_MAX_RECORDS_SIZE)
+      {
+         rc = import(records, size);
+         if (SDB_OK != rc)
+         {
+            PD_LOG(PDERROR, "failed to import records, size=%d, ,rc=%d",
+                   array->bsonSize(), rc);
+            goto error;
+         }
+      }
+      else // the array is too large, so we split it
+      {
+         INT32 i = 0;
+         INT32 start = 0;
+         INT32 totalSize = 0;
+
+         for (; i < size; i++)
+         {
+            bson* obj = records[i];
+            SDB_ASSERT(NULL != obj, "obj can't be NULL");
+
+            INT32 objSize = bson_size(obj);
+
+            if (totalSize + objSize > IMP_MAX_RECORDS_SIZE)
+            {
+               rc = import(&records[start], i - start);
+               if (SDB_OK != rc)
+               {
+                  PD_LOG(PDERROR, "failed to import records, rc=%d", rc);
+                  goto error;
+               }
+               start = i;
+               totalSize = 0;
+               continue;
+            }
+
+            totalSize += objSize;
+         }
+
+         // import last records in array
+         if (totalSize > 0)
+         {
+            rc = import(&records[start], i - start);
+            if (SDB_OK != rc)
+            {
+               PD_LOG(PDERROR, "failed to import records, rc=%d", rc);
+               goto error;
+            }
+         }
+      }
+
+   done:
+      return rc;
+   error:
+      goto done;
    }
 }

@@ -102,7 +102,7 @@ namespace import
 
          if (!dryRun)
          {
-            rc = importer.import(records->array(), records->size());
+            rc = importer.import(records);
             if (SDB_OK != rc)
             {
                self->_failedNum.add(records->size());

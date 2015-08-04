@@ -33,6 +33,7 @@
 
 #include "core.hpp"
 #include "oss.hpp"
+#include "impRecordQueue.hpp"
 #include "../client/client.h"
 #include <string>
 
@@ -54,6 +55,7 @@ namespace import
       INT32 connect();
       void disconnect();
       INT32 import(bson* objs[], INT32 num);
+      INT32 import(RecordArray* array);
 
    private:
       string   _hostname;
