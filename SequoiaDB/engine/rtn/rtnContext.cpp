@@ -581,14 +581,15 @@ namespace engine
       // need to get more datas
       if ( isEmpty() && !eof() )
       {
-         UINT64 tmpTotalRead = _pMonAppCB->totalDataRead ;
+         UINT64 tmpTotalRead = cb->getMonAppCB()->totalDataRead ;
          rc = _prepareData( cb ) ;
          if ( rc && SDB_DMS_EOC != rc )
          {
             PD_LOG( PDERROR, "Prepare data failed, rc: %d", rc ) ;
             goto error ;
          }
-         _monCtxCB.dataRead += ( _pMonAppCB->totalDataRead - tmpTotalRead ) ;
+         _monCtxCB.dataRead += ( cb->getMonAppCB()->totalDataRead -
+                                 tmpTotalRead ) ;
       }
 
       // if not empty, get current data
