@@ -82,7 +82,7 @@ namespace engine
    {
       PD_TRACE_ENTRY ( SDB__RTNACCESSPL_INVALIDATE );
       cleanNum = 0 ;
-      list<optAccessPlan *>::iterator it ;
+      vector<optAccessPlan *>::iterator it ;
       RTNAPL_XLOCK
       // check if the plan is in the list
       for ( it = _plans.begin(); it != _plans.end(); )
@@ -119,7 +119,7 @@ namespace engine
       SDB_ASSERT ( out, "out can't be NULL" ) ;
       (*out) = NULL ;
       SINT32 inc = 0 ;
-      list<optAccessPlan *>::iterator it ;
+      vector<optAccessPlan *>::iterator it ;
       {
          RTNAPL_XLOCK
          // check if the plan is in the list
@@ -135,7 +135,7 @@ namespace engine
                if ( it != _plans.begin() )
                {
                   _plans.erase(it) ;
-                  _plans.push_front( *out ) ;
+                  _plans.insert ( _plans.begin(), *out ) ;
                }
                // increase usage count
                (*out)->incCount() ;
@@ -162,12 +162,12 @@ namespace engine
          // any plan that not been used
          if ( _plans.size() >= RTN_APL_SIZE )
          {
-            list<optAccessPlan *>::reverse_iterator rit ;
+            vector<optAccessPlan *>::reverse_iterator rit ;
             for ( rit = _plans.rbegin() ; rit != _plans.rend(); )
             {
                if ( (*rit)->getCount() == 0 )
                {
-                  // we can remove existing, let's reset incSize back to FALSE
+                  // we can remove existing, let's reset inc back to 0
                   inc = 0 ;
                   SDB_OSS_DEL (*rit) ;
                   _plans.erase( (++rit).base() ) ;
@@ -215,7 +215,7 @@ namespace engine
    void _rtnAccessPlanList::releasePlan ( optAccessPlan *plan )
    {
       PD_TRACE_ENTRY ( SDB_RTNACCESSPL_RELPL );
-      list<optAccessPlan *>::iterator it ;
+      vector<optAccessPlan *>::iterator it ;
       RTNAPL_SLOCK
       // check if the plan is in the list
       for ( it = _plans.begin(); it != _plans.end(); ++it )
@@ -240,7 +240,7 @@ namespace engine
    {
       PD_TRACE_ENTRY ( SDB__RTNACCESSPL_CLEAR );
       cleanNum = 0 ;
-      list<optAccessPlan *>::iterator it ;
+      vector<optAccessPlan *>::iterator it ;
       RTNAPL_XLOCK
       // check if the plan is in the list
       for ( it = _plans.begin(); it != _plans.end(); )

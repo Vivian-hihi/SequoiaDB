@@ -67,7 +67,7 @@ namespace engine
    #define RTNAPL_SLOCK ossScopedLock _lock ( &_mutex, SHARED ) ;
       ossSpinSLatch _mutex ;
       // hash result and plan map
-      list<optAccessPlan *> _plans ;
+      vector<optAccessPlan *> _plans ;
       _dmsStorageUnit *_su ;
       CHAR *_collectionName ;
       _rtnAccessPlanManager *_apm ;
@@ -81,7 +81,7 @@ namespace engine
       }
       ~_rtnAccessPlanList()
       {
-         list<optAccessPlan *>::iterator it ;
+         vector<optAccessPlan *>::iterator it ;
          for ( it = _plans.begin(); it != _plans.end(); ++it )
          {
             SDB_OSS_DEL (*it) ;
