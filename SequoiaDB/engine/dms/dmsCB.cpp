@@ -364,7 +364,7 @@ namespace engine
       // now let's lock the collectionspace, if we can't lock it, let's return
       // false. we shouldn't wait forever
       //if ( !_latchVec[suID]->try_get() )
-      if ( SDB_OK != _latchVec[suID]->lock_w( 1 ) )
+      if ( SDB_OK != _latchVec[suID]->lock_w( OSS_ONE_SEC ) )
       {
          rc = SDB_LOCK_FAILED ;
          goto error ;
@@ -490,7 +490,7 @@ namespace engine
       // now let's lock the collectionspace, if we can't lock it, let's return
       // false. we shouldn't wait forever
       //if ( !_latchVec[suID]->try_get() )
-      if ( SDB_OK != _latchVec[suID]->lock_w( 1 ) )
+      if ( SDB_OK != _latchVec[suID]->lock_w( OSS_ONE_SEC ) )
       {
          rc = SDB_LOCK_FAILED ;
          goto error ;
@@ -880,38 +880,6 @@ namespace engine
       }
    }
 
-   INT32 _SDB_DMSCB::setDeleting( const CHAR *pName, BOOLEAN deleting )
-   {
-      INT32 rc = SDB_OK ;
-
-      if ( !pName )
-      {
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
-      else
-      {
-         SDB_DMS_CSCB *cscb = NULL;
-         dmsStorageUnit *su = NULL ;
-         _mutex.get_shared() ;
-         rc = _CSCBNameLookup( pName, &cscb ) ;
-         if ( rc )
-         {
-            _mutex.release_shared() ;
-            goto error ;
-         }
-         su = cscb->_su ;
-         SDB_ASSERT ( su, "storage unit pointer can't be NULL" ) ;
-         su->setDeletingCS( deleting ) ;
-         _mutex.release_shared() ;
-      }
-
-   done :
-      return rc ;
-   error :
-      goto done ;
-   }
-
    INT32 _SDB_DMSCB::nameToSUAndLock ( const CHAR *pName,
                                        dmsStorageUnitID &suID,
                                        _dmsStorageUnit **su,
@@ -931,16 +899,7 @@ namespace engine
                                    millisec ) ;
       if ( SDB_OK == rc )
       {
-         if ( cscb->_su->isDeleting() )
-         {
-            _CSCBRelease( suID, lockType ) ;
-            suID = DMS_INVALID_CS ;
-            rc = SDB_DMS_CS_DELETING ;
-         }
-         else
-         {
-            *su = cscb->_su ;
-         }
+         *su = cscb->_su ;
       }
       return rc ;
    }
@@ -1172,14 +1131,10 @@ namespace engine
          // release the DMSCB latch before attempting to drop the collectionspace
          _mutex.release_shared() ;
          rc = _CSCBNameRemoveP1( pName, cb, dpsCB ) ;
-
          if ( rc )
          {
-            if ( SDB_LOCK_FAILED != rc )
-            {
-               PD_LOG( PDERROR, "Failed to drop cs[%s], rc: %d",
-                       pName, rc ) ;
-            }
+            PD_LOG( PDERROR, "Failed to drop cs[%s], rc: %d",
+                    pName, rc ) ;
             goto error ;
          }
       }

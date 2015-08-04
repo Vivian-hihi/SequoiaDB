@@ -229,7 +229,6 @@ namespace engine
       PD_TRACE_ENTRY ( SDB__DMSMBCONTEXT__RESET ) ;
       _mb            = NULL ;
       _mbStat        = NULL ;
-      _deletingCS    = NULL ;
       _latch         = NULL ;
       _clLID         = DMS_INVALID_CLID ;
       _mbID          = DMS_INVALID_MBID ;
@@ -300,7 +299,6 @@ namespace engine
       _pLobSU           = NULL ;
       _logicalCSID      = 0 ;
       _CSID             = DMS_INVALID_SUID ;
-      _deletingCS       = FALSE ;
       PD_TRACE_EXIT ( SDB__DMSSTORAGEDATA ) ;
    }
 

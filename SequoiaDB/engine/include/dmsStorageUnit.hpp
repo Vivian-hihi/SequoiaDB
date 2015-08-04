@@ -117,14 +117,6 @@ namespace engine
          {
             return _pDataSu ? _pDataSu->CSID() : DMS_INVALID_SUID ;
          }
-         void        setDeletingCS( BOOLEAN delCS )
-         {
-            if ( _pDataSu ) { _pDataSu->setDeletingCS( delCS ) ; }
-         }
-         BOOLEAN     isDeleting() const
-         {
-            return _pDataSu ? _pDataSu->isDeleting() : FALSE ;
-         }
 
          INT64       totalSize ( UINT32 type = DMS_SU_ALL ) const ;
          INT64       totalDataPages( UINT32 type = DMS_SU_ALL ) const ;

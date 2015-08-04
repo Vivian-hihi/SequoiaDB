@@ -401,7 +401,6 @@ namespace engine
    void _pmdEDUCB::resetInterrupt ()
    {
       _ctrlFlag &= ~EDU_CTRL_INTERRUPTED ;
-      _processSelf() ;
    }
 
    void _pmdEDUCB::resetDisconnect ()
@@ -728,25 +727,6 @@ namespace engine
       }
 
       return _pUncompressBuff ;
-   }
-
-   void _pmdEDUCB::_processSelf()
-   {
-#if defined ( SDB_ENGINE )
-      SDB_RTNCB *rtnCB = pmdGetKRCB()->getRTNCB() ;
-      SINT64 contextID = -1 ;
-      pmdEDUEvent event ;
-      while( _selfQue.try_pop( event ) )
-      {
-         ++_processEventCount ;
-         if ( PMD_EDU_EVENT_KILLCONTEXT == event._eventType )
-         {
-            contextID = (SINT64)event._userData ;
-            rtnCB->contextDelete( contextID, this ) ;
-         }
-         pmdEduEventRelase( event, this ) ;
-      }
-#endif // SDB_ENGINE
    }
 
 #if defined ( SDB_ENGINE )

@@ -196,16 +196,7 @@ namespace engine
       void postEvent ( pmdEDUEvent const &data )
       {
          // no need latch since _queue is already latched
-         if ( PMD_EDU_EVENT_KILLCONTEXT == data._eventType )
-         {
-#if defined ( SDB_ENGINE )
-            _selfQue.push( data ) ;
-#endif // SDB_ENGINE
-         }
-         else
-         {
-            _queue.push ( data ) ;
-         }
+         _queue.push ( data ) ;
       }
 
       BOOLEAN waitEvent ( pmdEDUEvent &data, INT64 millsec,
@@ -406,8 +397,6 @@ namespace engine
       CHAR*    _getBuffInfo ( EDU_INFO_TYPE type, UINT32 &size ) ;
       BOOLEAN  _allocFromCatch( INT32 len, CHAR **ppBuff, INT32 &buffLen ) ;
 
-      void     _processSelf() ;
-
    private :
       ossRWMutex     _callInMutex ;
       EDUID          _eduID ;
@@ -460,7 +449,6 @@ namespace engine
       ossEvent                _event ;   // for cls replSet notify
 
       std::set<SINT64>        _contextList ;
-      ossQueue<pmdEDUEvent>   _selfQue ;
 
       UINT32                  _dmsLockLevel ; // for dms lock
 

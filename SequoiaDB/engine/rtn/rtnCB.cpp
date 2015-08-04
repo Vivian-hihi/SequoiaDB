@@ -150,44 +150,6 @@ namespace engine
       return ;
    }
 
-   UINT32 _SDB_RTNCB::preDelContext( const CHAR *csName )
-   {
-      UINT32 count = 0 ;
-      rtnContext *pContext = NULL ;
-      EDU_TYPES eduType = EDU_TYPE_UNKNOWN ;
-      std::map<SINT64, rtnContext*>::iterator it ;
-      pmdEDUMgr *pEDUMgr = pmdGetKRCB()->getEDUMgr() ;
-
-      RTNCB_SLOCK
-      it = _contextList.begin() ;
-      while ( it != _contextList.end() )
-      {
-         pContext = it->second ;
-         ++it ;
-
-         /// ensure the context
-         if ( pContext && pContext->getSU() &&
-              0 == ossStrcmp( csName, pContext->getSU()->CSName() ) )
-         {
-            /// only for Agent and Shard Agent and Rest Agent
-            eduType = pEDUMgr->getEDUTypeByID( pContext->eduID() ) ;
-            if ( EDU_TYPE_AGENT == eduType ||
-                 EDU_TYPE_SHARDAGENT == eduType ||
-                 EDU_TYPE_RESTAGENT == eduType ||
-                 EDU_TYPE_FAPAGENT == eduType )
-            {
-               ++count ;
-               pEDUMgr->postEDUPost( pContext->eduID(),
-                                     PMD_EDU_EVENT_KILLCONTEXT,
-                                     PMD_EDU_MEM_NONE, NULL,
-                                     ( UINT64 )pContext->contextID() ) ;
-            }
-         }
-      }
-
-      return count ;
-   }
-
    SINT32 _SDB_RTNCB::contextNew ( RTN_CONTEXT_TYPE type,
                                    rtnContext **context,
                                    SINT64 &contextID,

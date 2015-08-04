@@ -536,8 +536,6 @@ namespace engine
       SDB_RTNCB *rtnCB = pmdGetKRCB()->getRTNCB() ;
       SINT64 contextID = -1 ;
       BOOLEAN writable = FALSE ;
-      BOOLEAN setDel = FALSE ;
-      UINT32 retryTime = 0 ;
 
       SDB_ASSERT ( pCollectionSpace, "collection space can't be NULL" ) ;
       SDB_ASSERT ( dmsCB, "dms control block can't be NULL" ) ;
@@ -554,11 +552,6 @@ namespace engine
       rc = dmsCB->writable( cb ) ;
       PD_RC_CHECK( rc, PDERROR, "Database is not writable, rc = %d", rc ) ;
       writable = TRUE ;
-
-      rc = dmsCB->setDeleting( pCollectionSpace, TRUE ) ;
-      PD_RC_CHECK( rc, PDWARNING, "Set collectionspace[%s] deleting failed, "
-                   "rc: %d", pCollectionSpace, rc ) ;
-      setDel = TRUE ;
 
       // let's find out whether the collection space is held by this
       // EDU. If so we have to get rid of those contexts
@@ -589,27 +582,13 @@ namespace engine
          }
       }
 
-      while ( retryTime++ < 100 )
+      if ( dropFile )
       {
-         if ( rtnCB->preDelContext( pCollectionSpace ) > 0 )
-         {
-            ossSleep( 300 ) ;
-         }
-
-         if ( dropFile )
-         {
-            rc = dmsCB->dropCollectionSpace ( pCollectionSpace, cb, dpsCB ) ;
-         }
-         else
-         {
-            rc = dmsCB->unloadCollectonSpace( pCollectionSpace, cb ) ;
-         }
-
-         if ( SDB_LOCK_FAILED == rc )
-         {
-            continue ;
-         }
-         break ;
+         rc = dmsCB->dropCollectionSpace ( pCollectionSpace, cb, dpsCB ) ;
+      }
+      else
+      {
+         rc = dmsCB->unloadCollectonSpace( pCollectionSpace, cb ) ;
       }
       PD_RC_CHECK( rc, PDERROR, "Failed to %s collectionspace %s, "
                    "rc: %d", dropFile ? "drop" : "unload",
@@ -623,10 +602,6 @@ namespace engine
       PD_TRACE_EXITRC ( SDB_RTNDELCSCOMMAND, rc ) ;
       return rc ;
    error :
-      if ( setDel )
-      {
-         dmsCB->setDeleting( pCollectionSpace, FALSE ) ;
-      }
       goto done ;
    }
 
