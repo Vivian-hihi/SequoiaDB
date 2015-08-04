@@ -494,6 +494,7 @@ namespace engine
       if ( _pMonAppCB && cb->getID() != eduID() )
       {
          *_pMonAppCB += *cb->getMonAppCB() ;
+         _monCtxCB.dataRead += _pMonAppCB->totalDataRead ;
          cb->getMonAppCB()->reset() ;
       }
 
@@ -580,12 +581,14 @@ namespace engine
       // need to get more datas
       if ( isEmpty() && !eof() )
       {
+         UINT64 tmpTotalRead = _pMonAppCB->totalDataRead ;
          rc = _prepareData( cb ) ;
          if ( rc && SDB_DMS_EOC != rc )
          {
             PD_LOG( PDERROR, "Prepare data failed, rc: %d", rc ) ;
             goto error ;
          }
+         _monCtxCB.dataRead += ( _pMonAppCB->totalDataRead - tmpTotalRead ) ;
       }
 
       // if not empty, get current data
@@ -4105,7 +4108,8 @@ namespace engine
                /// clear data in buff
                iterSubCTXSkip->second.popAll();
 
-               rc = this->_rtnContextBase::getMore( maxNumToReturn, buffObj, cb );
+               rc = this->_rtnContextBase::getMore( maxNumToReturn,
+                                                    buffObj, cb );
                goto done ;
             }
          }
