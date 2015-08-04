@@ -416,18 +416,20 @@ namespace import
    {
       INT32 rc = SDB_OK;
 
-      SDB_ASSERT(_inited, "must be inited");
-      SDB_ASSERT(NULL != _worker, "_worker can't be NULL");
-
-      _stopped = TRUE;
-
-      rc = _worker->waitStop();
-      if (SDB_OK != rc)
+      if(_inited)
       {
-         PD_LOG(PDERROR, "failed to wait the parser stop");
-      }
+         SDB_ASSERT(NULL != _worker, "_worker can't be NULL");
 
-      SAFE_OSS_DELETE(_worker);
+         _stopped = TRUE;
+
+         rc = _worker->waitStop();
+         if (SDB_OK != rc)
+         {
+            PD_LOG(PDERROR, "failed to wait the parser stop");
+         }
+
+         SAFE_OSS_DELETE(_worker);
+      }
       return rc;
    }
 }

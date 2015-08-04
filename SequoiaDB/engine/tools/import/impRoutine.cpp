@@ -83,21 +83,21 @@ namespace import
       if (SDB_OK != rc)
       {
          PD_LOG(PDERROR, "failed to start sharding, rc=%d", rc);
-         goto error;
+         goto stop;
       }
 
       rc = _startImporter(_options.jobs());
       if (SDB_OK != rc)
       {
          PD_LOG(PDERROR, "failed to start importers, rc=%d", rc);
-         goto error;
+         goto stop;
       }
 
       rc = _startParser();
       if (SDB_OK != rc)
       {
          PD_LOG(PDERROR, "failed to start parser, rc=%d", rc);
-         goto error;
+         goto stop;
       }
 
       while (!_parser.isStopped() && !_importer.isStopped())
@@ -112,35 +112,27 @@ namespace import
          ossSleep(100);
       }
 
+   stop:
       rc = _waitParserStop();
       if (SDB_OK != rc)
       {
          PD_LOG(PDERROR, "failed to wait parser stop, rc=%d", rc);
       }
 
-      if (!_sharding.isStopped())
+      rc = _stopSharding();
+      if (SDB_OK != rc)
       {
-         rc = _stopSharding();
-         if (SDB_OK != rc)
-         {
-            PD_LOG(PDERROR, "failed to stop importers, rc=%d", rc);
-         }
+         PD_LOG(PDERROR, "failed to stop importers, rc=%d", rc);
       }
 
-      if (!_importer.isStopped())
+      rc = _stopImporter();
+      if (SDB_OK != rc)
       {
-         rc = _stopImporter();
-         if (SDB_OK != rc)
-         {
-            PD_LOG(PDERROR, "failed to stop importers, rc=%d", rc);
-         }
+         PD_LOG(PDERROR, "failed to stop importers, rc=%d", rc);
       }
 
-   done:
       PD_LOG(PDINFO, "finished importing");
       return rc;
-   error:
-      goto done;
    }
 
    INT32 Routine::_startImporter(INT32 workerNum)
@@ -269,13 +261,10 @@ namespace import
    {
       INT32 rc = SDB_OK;
 
-      if (_sharding.needSharding())
+      rc = _sharding.stop();
+      if (SDB_OK != rc)
       {
-         rc = _sharding.stop();
-         if (SDB_OK != rc)
-         {
-            PD_LOG(PDERROR, "failed to stop importer, rc=%d", rc);
-         }
+         PD_LOG(PDERROR, "failed to stop importer, rc=%d", rc);
       }
 
       return rc;
