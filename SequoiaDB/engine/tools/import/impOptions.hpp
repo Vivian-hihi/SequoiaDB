@@ -103,6 +103,7 @@ namespace import
       /* helpful */
       inline INT32 bufferSize() const { return _bufferSize; }
       inline BOOLEAN dryRun() const { return _dryRun; }
+      inline INT64 recordsMem() const { return _recordsMem; }
 
    private:
       BOOLEAN has(CHAR* option);
@@ -150,8 +151,9 @@ namespace import
       BOOLEAN        _autoCompletion;
 
       /* helpful */
-      INT32          _bufferSize;
       BOOLEAN        _dryRun;
+      INT32          _bufferSize;
+      INT64          _recordsMem; // the records used momory threshold 
 
    };
 }

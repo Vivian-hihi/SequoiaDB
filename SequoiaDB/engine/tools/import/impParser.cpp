@@ -33,6 +33,7 @@
 #include "impRecordScanner.hpp"
 #include "impRecordParser.hpp"
 #include "impCSVRecordParser.hpp"
+#include "impMonitor.hpp"
 #include "../util/text.h"
 #include "pd.hpp"
 
@@ -61,10 +62,12 @@ namespace import
       const Options* options = self->_options;
       LogFile* logFile = &(self->_logFile);
       RecordQueue* workQueue = self->_workQueue;
+      Monitor* monitor = impGetMonitor();
 
       SDB_ASSERT(NULL != options, "options can't be NULL");
       SDB_ASSERT(NULL != logFile, "logFile can't be NULL");
       SDB_ASSERT(NULL != workQueue, "workQueue can't be NULL");
+      SDB_ASSERT(NULL != monitor, "monitor can't be NULL");
 
       if (options->verbose())
       {
@@ -231,10 +234,28 @@ namespace import
 
                      if (recordArray->full())
                      {
+                        monitor->recordsMemInc(recordArray->bsonSize());
                         recordArray->finish();
                         workQueue->push(recordArray);
                         countInBatch = 0;
                         recordArray = NULL;
+
+                        if (monitor->recordsMem() > options->recordsMem())
+                        {
+                           // records' memory is beyond the threshold,
+                           // so wait a moment
+                           PD_LOG(PDEVENT, "records memory is beyond the threshold");
+                           for(;;)
+                           {
+                              ossSleep(100);
+                              if (monitor->recordsMem() < (options->recordsMem() / 2))
+                              {
+                                 break;
+                              }
+                           }
+                           PD_LOG(PDEVENT, "records memory usage down, go on");
+                        }
+
                         rc = getRecordArray(options->batchSize(), &recordArray);
                         if (SDB_OK != rc)
                         {

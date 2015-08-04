@@ -30,6 +30,7 @@
 *******************************************************************************/
 #include "impImporter.hpp"
 #include "impRecordImporter.hpp"
+#include "impMonitor.hpp"
 #include "pd.hpp"
 #include <sstream>
 
@@ -59,6 +60,7 @@ namespace import
 
       Importer* self = impArgs->self;
       Options* options = self->_options;
+      Monitor* monitor = impGetMonitor();
 
       BOOLEAN dryRun = options->dryRun();
       LogFile* logFile = &(self->_logFile);
@@ -73,6 +75,7 @@ namespace import
 
       SDB_ASSERT(NULL != workQueue, "workQueue can't be NULL");
       SDB_ASSERT(NULL != logFile, "logFile can't be NULL");
+      SDB_ASSERT(NULL != monitor, "monitor can't be NULL");
 
       if (options->verbose())
       {
@@ -114,11 +117,13 @@ namespace import
                      break;
                   }
                }
+               monitor->recordsMemDec(records->bsonSize());
                freeRecordArray(&records);
                PD_LOG(PDERROR, "failed to import records, rc=%d", rc);
                goto error;
             }
             self->_importedNum.add(records->size());
+            monitor->recordsMemDec(records->bsonSize());
          }
 
          freeRecordArray(&records);

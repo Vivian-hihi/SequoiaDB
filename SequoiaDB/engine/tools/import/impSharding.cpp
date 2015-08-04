@@ -135,7 +135,7 @@ namespace import
             }
 
             shardingCount++;
-            // clear the array,
+            // clear this record in array,
             // otherwise the bson will be freed by freeRecordArray
             records->pop(i);
          }

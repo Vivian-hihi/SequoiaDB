@@ -69,6 +69,7 @@ namespace import
    #define IMP_OPTION_SHARDING          "sharding"
    #define IMP_OPTION_COORD             "coord"
    #define IMP_OPTION_HELPFUL           "helpful"
+   #define IMP_OPTION_RECORDSMEM        "recordsmem"
 
    #define IMP_EXPLAIN_HELP             "print help information"
    #define IMP_EXPLAIN_VERSION          "print version"
@@ -101,6 +102,7 @@ namespace import
    #define IMP_EXPLAIN_SHARDING         "repackage records by sharding, default is true"
    #define IMP_EXPLAIN_COORD            "find coordinators automatically, default is true"
    #define IMP_EXPLAIN_HELPFUL          "print all options"
+   #define IMP_EXPLAIN_RECORDSMEM       "the maximum memory size used by records, the unit is MB, range is [128~8192], default is 1024"
 
    #define _TYPE(T) po::value<T>()
 
@@ -146,6 +148,7 @@ namespace import
       (IMP_OPTION_HELPFUL,              /* no arg */     IMP_EXPLAIN_HELPFUL) \
       (IMP_OPTION_BUFFERSIZE,          _TYPE(INT32),     IMP_EXPLAIN_BUFFER) \
       (IMP_OPTION_DRYRUN,               /* no arg */     IMP_EXPLAIN_DRYRUN) \
+      (IMP_OPTION_RECORDSMEM,          _TYPE(INT32),     IMP_EXPLAIN_RECORDSMEM) \
 
 
    Options::Options()
@@ -175,6 +178,7 @@ namespace import
 
       _bufferSize = 64;
       _dryRun = FALSE;
+      _recordsMem = (1024 * 1024 * 1024); // 1GB
    }
 
    Options::~Options()
@@ -495,9 +499,9 @@ namespace import
       if (has(IMP_OPTION_BUFFERSIZE))
       {
          _bufferSize = get<INT32>(IMP_OPTION_BUFFERSIZE);
-         if (_bufferSize <= 32 || _bufferSize > 2048)
+         if (_bufferSize < 32 || _bufferSize > 2048)
          {
-            std::cerr << IMP_OPTION_BATCHSIZE " is out of range [32, 2048]: "
+            std::cerr << IMP_OPTION_BUFFERSIZE " is out of range [32, 2048]: "
                       << _bufferSize
                       << std::endl;
             rc = SDB_INVALIDARG;
@@ -525,6 +529,21 @@ namespace import
       {
          string coord = get<string>(IMP_OPTION_COORD);
          ossStrToBoolean(coord.c_str(), &_enableCoord);
+      }
+
+      if (has(IMP_OPTION_RECORDSMEM))
+      {
+         INT32 recordsMem = get<INT32>(IMP_OPTION_RECORDSMEM);
+         if (recordsMem < 128 || recordsMem > 8192)
+         {
+            std::cerr << IMP_OPTION_RECORDSMEM " is out of range [128, 8192]: "
+                      << recordsMem
+                      << std::endl;
+            rc = SDB_INVALIDARG;
+            goto error;
+         }
+
+         _recordsMem = recordsMem * 1024 * 1024; // convert MB to Byte
       }
 
    done:

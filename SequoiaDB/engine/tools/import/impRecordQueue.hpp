@@ -100,7 +100,7 @@ namespace import
          return _size;
       }
 
-      inline INT32 bsonSize()
+      inline INT64 bsonSize()
       {
          return _bsonSize;
       }
@@ -164,7 +164,7 @@ namespace import
       bson**   _array;
       INT32    _capacity;
       INT32    _size;
-      INT32    _bsonSize;
+      INT64    _bsonSize;
       BOOLEAN  _finished;
    };
 

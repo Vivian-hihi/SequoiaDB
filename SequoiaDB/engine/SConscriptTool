@@ -34,7 +34,8 @@ importFiles = [
       "tools/import/impSharding.cpp",
       "tools/import/impRoutine.cpp",
       "tools/import/impLogFile.cpp",
-      "tools/import/impUtil.cpp"
+      "tools/import/impUtil.cpp",
+      "tools/import/impMonitor.cpp"
       ]
 
 clsFiles = [
