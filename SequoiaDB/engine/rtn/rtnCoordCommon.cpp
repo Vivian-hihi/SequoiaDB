@@ -275,6 +275,7 @@ namespace engine
       MsgRouteID primaryRouteID ;
       UINT64 reqID = 0 ;
       BOOLEAN hasRetry = FALSE ;
+      CoordSession *pSession  = cb->getCoordSession() ;
 
    retry:
       primaryRouteID = groupInfo->primary( type ) ;
@@ -293,6 +294,10 @@ namespace engine
          if ( SDB_OK == rc )
          {
             sendNodes[ reqID ] = primaryRouteID ;
+            if ( pSession )
+            {
+               pSession->addLastNode( primaryRouteID ) ;
+            }
             goto done ;
          }
          else
