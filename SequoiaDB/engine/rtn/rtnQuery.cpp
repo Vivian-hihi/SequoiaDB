@@ -518,6 +518,12 @@ namespace engine
                                  pBlockObj, direction ) ;
          PD_RC_CHECK( rc, PDERROR, "Open data context failed, rc: %d", rc ) ;
 
+         /// when open succeed, plan and mbcontext and su is take over
+         /// by context
+         suID = DMS_INVALID_CS ;
+         plan = NULL ;
+         mbContext = NULL ;
+
          if ( FLG_QUERY_MODIFY & flags )
          {
             dataContext->setQueryModifier( queryModifier ) ;
@@ -543,6 +549,12 @@ namespace engine
                                  pBlockObj, direction ) ;
          PD_RC_CHECK( rc, PDERROR, "Open data context failed, rc: %d", rc ) ;
 
+         /// when open succeed, plan and mbcontext and su is take over
+         /// by context
+         suID = DMS_INVALID_CS ;
+         plan = NULL ;
+         mbContext = NULL ;
+
          rc = rtnSort ( (rtnContext**)&dataContext,
                         orderBy,
                         cb, numToSkip,
@@ -550,10 +562,6 @@ namespace engine
                         contextID ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to sort, rc: %d", rc ) ;
       }
-
-      suID = DMS_INVALID_CS ;
-      plan = NULL ;
-      mbContext = NULL ;
 
       // sample timetamp
       if ( cb->getMonConfigCB()->timestampON )
