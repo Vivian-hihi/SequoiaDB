@@ -116,6 +116,19 @@ public class SequoiadbConstants {
 	public final static String CMD_NAME_REMOVE_DOMAIN_GROUP = "remove domain group";
 	public final static String CMD_NAME_ALTER_COLLECTION = "alter collection";
 	public final static String CMD_NAME_TRUNCATE = "truncate";
+	public final static String CMD_NAME_GET_DCINFO = "get dcinfo";
+	public final static String CMD_NAME_ALTER_DC = "alter dc";
+	
+	public final static String CMD_VALUE_NAME_CREATE = "create image";
+    public final static String CMD_VALUE_NAME_REMOVE = "remove image";
+    public final static String CMD_VALUE_NAME_ATTACH = "attach groups";
+    public final static String CMD_VALUE_NAME_DETACH = "detach groups";
+    public final static String CMD_VALUE_NAME_ENABLE = "enable image";
+    public final static String CMD_VALUE_NAME_DISABLE = "disable image";
+    public final static String CMD_VALUE_NAME_ACTIVATE = "activate";
+    public final static String CMD_VALUE_NAME_DEACTIVATE = "deactivate";
+    public final static String CMD_VALUE_NAME_ENABLE_READONLY = "enable readonly";
+    public final static String CMD_VALUE_NAME_DISABLE_READONLY = "disable readonly";
 	
 	public final static String FIELD_NAME_NAME = "Name";
 	public final static String FIELD_NAME_OLDNAME = "OldName";
@@ -155,6 +168,13 @@ public class SequoiadbConstants {
 	public final static String FIELD_NAME_ALTER = "Alter";
 	public final static String FIELD_NAME_ALTER_TYPE = "AlterType";
 	public final static String FIELD_NAME_VERSION = "Version";
+	
+	public final static String FIELD_NAME_DATACENTER = "DataCenter";
+	public final static String FIELD_NAME_CLUSTERNAME = "ClusterName";
+	public final static String FIELD_NAME_BUSINESSNAME = "BusinessName";
+	public final static String FIELD_NAME_IMAGE = "Image";
+	public final static String FIELD_NAME_ACTION = "Action";
+	public final static String FIELD_NAME_ADDRESS = "Address";
 	
 	public final static int SDB_ALTER_VERSION = 1;
     public final static String SDB_ALTER_DB = "db";

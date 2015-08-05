@@ -118,6 +118,7 @@ public interface DBLob {
     /**
      * @fn          close()
      * @brief       close the lob
+     * @param       null
      * @exception   com.sequoiadb.exception.BaseException
      */
     public void close() throws BaseException;

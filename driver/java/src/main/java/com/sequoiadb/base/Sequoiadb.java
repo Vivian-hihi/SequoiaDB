@@ -2111,4 +2111,16 @@ public class Sequoiadb {
 			return retType;
 		}
 	}
+	
+	/**
+     * @fn          DBDataCenter getDataCenter()
+     * @brief       get the datacenter
+     * @return      DBDataCenter
+     * @exception   com.sequoiadb.exception.BaseException 
+     */
+	public DBDataCenter getDataCenter() throws BaseException {
+	    DBDataCenter dc = new DBDataCenterConcrete(this);
+	    return dc;
+	}
+	
 }
