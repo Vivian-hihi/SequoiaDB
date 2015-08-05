@@ -1252,7 +1252,7 @@ namespace SequoiaDB
 
         /** \fn void CreateIdIndex(BsonDocument options)
          * \brief Create $id index in collection
-         * \param options Options for create id index, or null for options, see SequoiaDB Information Center "SequoiaDB Shell Methods" for more detail.
+         * \param options Options for create id index, or null for no options, see SequoiaDB Information Center "SequoiaDB Shell Methods" for more detail.
          *         e.g.: {"Offline":true}
          *         <ul>
          *          <li>Offline   : Use offline mode to create index or not, default to be false
