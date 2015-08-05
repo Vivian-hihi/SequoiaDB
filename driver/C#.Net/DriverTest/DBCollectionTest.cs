@@ -1216,6 +1216,7 @@ namespace DriverTest
             const string id_name = "$id";
             DBCursor cursor = null;
             BsonDocument doc = null;
+            BsonDocument options = null;
             BsonValue value = null;
 
             // test
@@ -1226,7 +1227,11 @@ namespace DriverTest
             Assert.IsTrue(null == doc);
 
             // test
-            coll.CreateIdIndex();
+            options = new BsonDocument()
+            {
+                {"Offline", false}
+            };
+            coll.CreateIdIndex(options);
             cursor = coll.GetIndex(id_name);
             doc = null;
             doc = cursor.Next();

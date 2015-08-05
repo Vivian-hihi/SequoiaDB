@@ -1249,18 +1249,25 @@ namespace SequoiaDB
                 throw new BaseException(flags);
         }
 
-        /** \fn void CreateIdIndex()
+        /** \fn void CreateIdIndex(BsonDocument options)
          * \brief Create $id index in collection
          * \exception SequoiaDB.BaseException
          * \exception System.Exception
          */
-        public void CreateIdIndex()
+        public void CreateIdIndex(BsonDocument options)
         {
             BsonDocument newObj = new BsonDocument();
             BsonDocument subObj = new BsonDocument();
 
             subObj.Add(SequoiadbConstants.FIELD_NAME, SequoiadbConstants.SDB_ALTER_CRT_ID_INDEX);
-            subObj.Add(SequoiadbConstants.FIELD_NAME_ARGS, null);
+            if (null == options)
+            {
+                subObj.Add(SequoiadbConstants.FIELD_NAME_ARGS, null);
+            }
+            else
+            {
+                subObj.Add(SequoiadbConstants.FIELD_NAME_ARGS, options);
+            }
 
             newObj.Add(SequoiadbConstants.FIELD_NAME_ALTER, subObj);
 
