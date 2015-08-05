@@ -223,9 +223,9 @@ INT32&#160;</td><td class="memItemRight" valign="bottom"><b>getQueryMeta</b> (<a
 <tr class="memitem:a5211b8c4862ce35d22bfef25c3c76be4"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdbCollection.html#a5211b8c4862ce35d22bfef25c3c76be4">truncate</a> ()</td></tr>
 <tr class="memdesc:a5211b8c4862ce35d22bfef25c3c76be4"><td class="mdescLeft">&#160;</td><td class="mdescRight">truncate the collection  <a href="#a5211b8c4862ce35d22bfef25c3c76be4"></a><br/></td></tr>
 <tr class="separator:a5211b8c4862ce35d22bfef25c3c76be4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2958c5375f3e1bc06219d6f8ecb22936"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdbCollection.html#a2958c5375f3e1bc06219d6f8ecb22936">createIdIndex</a> ()</td></tr>
-<tr class="memdesc:a2958c5375f3e1bc06219d6f8ecb22936"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create $id index in collection.  <a href="#a2958c5375f3e1bc06219d6f8ecb22936"></a><br/></td></tr>
-<tr class="separator:a2958c5375f3e1bc06219d6f8ecb22936"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adefc2c57e20cdd060c9addc3288ec873"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdbCollection.html#adefc2c57e20cdd060c9addc3288ec873">createIdIndex</a> (const bson::BSONObj &amp;options=_sdbStaticObject)</td></tr>
+<tr class="memdesc:adefc2c57e20cdd060c9addc3288ec873"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create $id index in collection.  <a href="#adefc2c57e20cdd060c9addc3288ec873"></a><br/></td></tr>
+<tr class="separator:adefc2c57e20cdd060c9addc3288ec873"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6daa25e5fab62904eded7f21d4e82786"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdbCollection.html#a6daa25e5fab62904eded7f21d4e82786">dropIdIndex</a> ()</td></tr>
 <tr class="memdesc:a6daa25e5fab62904eded7f21d4e82786"><td class="mdescLeft">&#160;</td><td class="mdescRight">Drop $id index in collection.  <a href="#a6daa25e5fab62904eded7f21d4e82786"></a><br/></td></tr>
 <tr class="separator:a6daa25e5fab62904eded7f21d4e82786"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -466,7 +466,7 @@ Partition    : When the ShardingType is "hash", need to assign Partition, it's t
 
 </div>
 </div>
-<a class="anchor" id="a2958c5375f3e1bc06219d6f8ecb22936"></a>
+<a class="anchor" id="adefc2c57e20cdd060c9addc3288ec873"></a>
 <div class="memitem">
 <div class="memproto">
 <table class="mlabels">
@@ -476,7 +476,8 @@ Partition    : When the ShardingType is "hash", need to assign Partition, it's t
         <tr>
           <td class="memname">INT32 sdbclient::sdbCollection::createIdIndex </td>
           <td>(</td>
-          <td class="paramname"></td><td>)</td>
+          <td class="paramtype">const bson::BSONObj &amp;&#160;</td>
+          <td class="paramname"><em>options</em> = <code>_sdbStaticObject</code></td><td>)</td>
           <td></td>
         </tr>
       </table>
@@ -488,6 +489,13 @@ Partition    : When the ShardingType is "hash", need to assign Partition, it's t
 </div><div class="memdoc">
 
 <p>Create $id index in collection. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">options</td><td>The arguments of creating id index.e.g.{Offline:true} <pre class="fragment">Offline     : Use offline mode to create index or not, default to be false
+</pre> </td></tr>
+  </table>
+  </dd>
+</dl>
 <dl class="retval"><dt>Return values</dt><dd>
   <table class="retval">
     <tr><td class="paramname">SDB_OK</td><td>Operation Success </td></tr>
@@ -2232,7 +2240,7 @@ FLG_QUERY_WITH_RETURNDATA(0x00000200) : In general, query won't return data unti
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Jul 6 2015 18:50:38 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Wed Aug 5 2015 18:22:11 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.2
 </small></address>

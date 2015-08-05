@@ -4,7 +4,7 @@ var searchData=
   ['del',['del',['../classsdbclient_1_1sdbCollection.html#a282d616532a50056a8583e1725bea04c',1,'sdbclient::sdbCollection']]],
   ['deprecated_20list',['Deprecated List',['../deprecated.html',1,'']]],
   ['detachcollection',['detachCollection',['../classsdbclient_1_1sdbCollection.html#ae109b9915c1f22d57a448ee22f3dbdde',1,'sdbclient::sdbCollection']]],
-  ['detachgroups',['detachGroups',['../classsdbclient_1_1sdbDataCenter.html#a640821c33ffc6c9f225add7920ae1fb3',1,'sdbclient::sdbDataCenter']]],
+  ['detachgroups',['detachGroups',['../classsdbclient_1_1sdbDataCenter.html#a2e282b5322f25c86b545cf5ba45e0ff2',1,'sdbclient::sdbDataCenter']]],
   ['detachnode',['detachNode',['../classsdbclient_1_1sdbReplicaGroup.html#a9e73a7616c1643ad9ca609b2f263bd3f',1,'sdbclient::sdbReplicaGroup']]],
   ['disableimage',['disableImage',['../classsdbclient_1_1sdbDataCenter.html#a9567820e79ecf5682e12481f02537b76',1,'sdbclient::sdbDataCenter']]],
   ['disconnect',['disconnect',['../classsdbclient_1_1sdb.html#a7cb2e09ad40b95a4dcfc58c45a75f76e',1,'sdbclient::sdb']]],

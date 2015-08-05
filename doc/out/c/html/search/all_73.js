@@ -52,7 +52,7 @@ var searchData=
   ['sdbcreatecollectionspace',['sdbCreateCollectionSpace',['../client_8h.html#a6dcd0cb6d5b03d1ba0c3c4ff49d34269',1,'client.h']]],
   ['sdbcreatecollectionspacev2',['sdbCreateCollectionSpaceV2',['../client_8h.html#a2d091041d635a6bd730ff2ac2d19998e',1,'client.h']]],
   ['sdbcreatedomain',['sdbCreateDomain',['../client_8h.html#a062587507c73f8a789f2fe72cf2808b6',1,'client.h']]],
-  ['sdbcreateidindex',['sdbCreateIdIndex',['../client_8h.html#a5f39a69654db7484cb45fbbaf62764c3',1,'client.h']]],
+  ['sdbcreateidindex',['sdbCreateIdIndex',['../client_8h.html#a82e00c93801a0fe161f1258eda768572',1,'client.h']]],
   ['sdbcreateimage',['sdbCreateImage',['../client_8h.html#ab1cc15c3fbcfa6f638e5c8825a158dea',1,'client.h']]],
   ['sdbcreateindex',['sdbCreateIndex',['../client_8h.html#a1e6abb2fb667c4665b3ed9f123bc65f4',1,'client.h']]],
   ['sdbcreateindexoffline',['sdbCreateIndexOffline',['../client_8h.html#a0467d0478f23af216b98a92e1c433858',1,'client.h']]],

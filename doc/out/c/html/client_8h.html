@@ -630,9 +630,9 @@ SDB_EXPORT INT32&#160;</td><td class="memItemRight" valign="bottom"><b>_sdbMsg</
 <tr class="memitem:a35c6c62749e40429be370cfd51511f26"><td class="memItemLeft" align="right" valign="top">SDB_EXPORT INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="client_8h.html#a35c6c62749e40429be370cfd51511f26">sdbAttachNode</a> (sdbReplicaGroupHandle cHandle, const CHAR *hostName, const CHAR *serviceName, const bson *options)</td></tr>
 <tr class="memdesc:a35c6c62749e40429be370cfd51511f26"><td class="mdescLeft">&#160;</td><td class="mdescRight">attach a node to the group  <a href="#a35c6c62749e40429be370cfd51511f26"></a><br/></td></tr>
 <tr class="separator:a35c6c62749e40429be370cfd51511f26"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5f39a69654db7484cb45fbbaf62764c3"><td class="memItemLeft" align="right" valign="top">SDB_EXPORT INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="client_8h.html#a5f39a69654db7484cb45fbbaf62764c3">sdbCreateIdIndex</a> (sdbCollectionHandle cHandle)</td></tr>
-<tr class="memdesc:a5f39a69654db7484cb45fbbaf62764c3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create $id index in collection.  <a href="#a5f39a69654db7484cb45fbbaf62764c3"></a><br/></td></tr>
-<tr class="separator:a5f39a69654db7484cb45fbbaf62764c3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a82e00c93801a0fe161f1258eda768572"><td class="memItemLeft" align="right" valign="top">SDB_EXPORT INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="client_8h.html#a82e00c93801a0fe161f1258eda768572">sdbCreateIdIndex</a> (sdbCollectionHandle cHandle, const bson *args)</td></tr>
+<tr class="memdesc:a82e00c93801a0fe161f1258eda768572"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create $id index in collection.  <a href="#a82e00c93801a0fe161f1258eda768572"></a><br/></td></tr>
+<tr class="separator:a82e00c93801a0fe161f1258eda768572"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6f27b1e9a97edc193604f3d413a37e18"><td class="memItemLeft" align="right" valign="top">SDB_EXPORT INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="client_8h.html#a6f27b1e9a97edc193604f3d413a37e18">sdbDropIdIndex</a> (sdbCollectionHandle cHandle)</td></tr>
 <tr class="memdesc:a6f27b1e9a97edc193604f3d413a37e18"><td class="mdescLeft">&#160;</td><td class="mdescRight">Drop $id index in collection.  <a href="#a6f27b1e9a97edc193604f3d413a37e18"></a><br/></td></tr>
 <tr class="separator:a6f27b1e9a97edc193604f3d413a37e18"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -2070,7 +2070,7 @@ AutoSplit: If this option is set to be true, while creating collection(ShardingT
 
 </div>
 </div>
-<a class="anchor" id="a5f39a69654db7484cb45fbbaf62764c3"></a>
+<a class="anchor" id="a82e00c93801a0fe161f1258eda768572"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
@@ -2078,8 +2078,18 @@ AutoSplit: If this option is set to be true, while creating collection(ShardingT
           <td class="memname">INT32 sdbCreateIdIndex </td>
           <td>(</td>
           <td class="paramtype">sdbCollectionHandle&#160;</td>
-          <td class="paramname"><em>cHandle</em></td><td>)</td>
+          <td class="paramname"><em>cHandle</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
           <td></td>
+          <td class="paramtype">const bson *&#160;</td>
+          <td class="paramname"><em>args</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -2087,7 +2097,9 @@ AutoSplit: If this option is set to be true, while creating collection(ShardingT
 <p>Create $id index in collection. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">cHandle</td><td>The collection handle </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">cHandle</td><td>The collection handle. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">args</td><td>The arguments of creating id index. set it as null if no args. e.g.{Offline:true} <pre class="fragment">Offline     : Use offline mode to create index or not, default to be false
+</pre> </td></tr>
   </table>
   </dd>
 </dl>
@@ -2129,7 +2141,7 @@ AutoSplit: If this option is set to be true, while creating collection(ShardingT
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">cHandle</td><td>The data center handle </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">pCataAddrList</td><td>Catalog address list, e.g. "192.168.20.165:30003", "192.168.20.165:30003,192.168.20.166:30003" </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">pCataAddrList</td><td>Catalog address list of remote data center, e.g. "192.168.20.165:30003", "192.168.20.165:30003,192.168.20.166:30003" </td></tr>
   </table>
   </dd>
 </dl>
@@ -8119,7 +8131,7 @@ util   : Utilities
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Jul 6 2015 18:49:31 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Wed Aug 5 2015 18:22:08 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.2
 </small></address>

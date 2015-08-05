@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['insert',['Insert',['../classSequoiaDB_1_1DBCollection.html#aa3d130e8a5990bf820b56d1f0e4a4082',1,'SequoiaDB::DBCollection']]],
+  ['insert',['Insert',['../classSequoiaDB_1_1DBCollection.html#ab760cb822c4859ad2ef1b3fa62c51557',1,'SequoiaDB::DBCollection']]],
   ['iscatalog',['IsCatalog',['../classSequoiaDB_1_1ReplicaGroup.html#a3a258c39ee70133a04bb643732837347',1,'SequoiaDB::ReplicaGroup']]],
   ['isclosed',['IsClosed',['../classSequoiaDB_1_1DBLob.html#ad8cc68e971e4f1d1106e7fae354da579',1,'SequoiaDB::DBLob']]],
   ['iscollectionexist',['IsCollectionExist',['../classSequoiaDB_1_1CollectionSpace.html#ac770dc0b7eb4f126535c6464113e9219',1,'SequoiaDB::CollectionSpace']]],
