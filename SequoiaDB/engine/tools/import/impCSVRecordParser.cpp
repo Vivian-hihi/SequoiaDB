@@ -926,6 +926,7 @@ namespace import
 
          if (!_isValidFieldEnd(str, len, fieldDel, fieldDelLen, tmpLen, fieldEnd))
          {
+            rc = SDB_INVALIDARG;
             goto error;
          }
 
@@ -1004,6 +1005,7 @@ namespace import
 
          if (!_isValidFieldEnd(str, len, fieldDel, fieldDelLen, tmpLen, fieldEnd))
          {
+            rc = SDB_INVALIDARG;
             goto error;
          }
 
@@ -1084,6 +1086,7 @@ namespace import
 
          if (!_isValidFieldEnd(str, len, fieldDel, fieldDelLen, tmpLen, fieldEnd))
          {
+            rc = SDB_INVALIDARG;
             goto error;
          }
 
@@ -1157,6 +1160,7 @@ namespace import
 
          if (!_isValidFieldEnd(str, len, fieldDel, fieldDelLen, tmpLen, fieldEnd))
          {
+            rc = SDB_INVALIDARG;
             goto error;
          }
 
@@ -1223,6 +1227,7 @@ namespace import
 
          if (!_isValidFieldEnd(str, len, fieldDel, fieldDelLen, tmpLen, fieldEnd))
          {
+            rc = SDB_INVALIDARG;
             goto error;
          }
 
