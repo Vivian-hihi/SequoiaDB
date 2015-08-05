@@ -445,7 +445,7 @@ namespace sdbclient
       INT32 truncate() ;
 
       /// create/drop index
-      INT32 createIdIndex() ;
+      INT32 createIdIndex( const bson::BSONObj &options = _sdbStaticObject ) ;
 
       INT32 dropIdIndex() ;
       

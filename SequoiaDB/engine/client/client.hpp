@@ -460,7 +460,7 @@ namespace sdbclient
       virtual INT32 truncate() = 0 ;
 
       /// create/drop $id index
-      virtual INT32 createIdIndex() = 0 ;
+      virtual INT32 createIdIndex( const bson::BSONObj &options = _sdbStaticObject ) = 0 ;
 
       virtual INT32 dropIdIndex() = 0 ;
       
@@ -1380,16 +1380,16 @@ namespace sdbclient
         return pCollection->truncate() ;
     }
 
-/** \fn INT32 createIdIndex()
+/** \fn INT32 createIdIndex( const bson::BSONObj &options )
     \brief Create $id index in collection
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
-    INT32 createIdIndex()
+    INT32 createIdIndex( const bson::BSONObj &options = _sdbStaticObject )
     {
        if ( !pCollection )
           return SDB_NOT_CONNECTED ;
-        return pCollection->createIdIndex() ;
+        return pCollection->createIdIndex( options ) ;
     }
 
 /** \fn INT32 dropIdIndex()

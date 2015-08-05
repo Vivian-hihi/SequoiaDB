@@ -3191,7 +3191,7 @@ do                                                            \
    }
 
 //PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_CREATEIDINDEX, "_sdbCollectionImpl::createIdIndex" )
-   INT32 _sdbCollectionImpl::createIdIndex()
+   INT32 _sdbCollectionImpl::createIdIndex( const bson::BSONObj &options )
    {
       PD_TRACE_ENTRY( SDB_CLIENT_CREATEIDINDEX ) ;
       INT32 rc = SDB_OK ;
@@ -3200,9 +3200,17 @@ do                                                            \
       BSONObj subObj ;
 
       bob.append( FIELD_NAME_NAME, SDB_ALTER_CRT_ID_INDEX ) ;
-      bob.appendNull( FIELD_NAME_ARGS ) ;
+      if ( options.isEmpty() )
+      {
+         bob.appendNull( FIELD_NAME_ARGS ) ; 
+      }
+      else
+      {
+         bob.append( FIELD_NAME_ARGS, options ) ;
+      }
       subObj = bob.obj() ;
       obj = BSON( FIELD_NAME_ALTER << subObj ) ;
+      
       rc = alterCollection( obj ) ;
       if ( SDB_OK != rc )
       {
