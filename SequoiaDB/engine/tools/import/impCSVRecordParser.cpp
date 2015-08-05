@@ -940,6 +940,7 @@ namespace import
                            csvStr, valueLength, fieldEnd);
       if (SDB_OK != rc || data == csvStr.str)
       {
+         rc = SDB_INVALIDARG;
          goto error;
       }
 
@@ -1019,6 +1020,7 @@ namespace import
                            csvStr, valueLength, fieldEnd);
       if (SDB_OK != rc || data == csvStr.str)
       {
+         rc = SDB_INVALIDARG;
          goto error;
       }
 
@@ -1100,6 +1102,7 @@ namespace import
                            csvStr, valueLength, fieldEnd);
       if (SDB_OK != rc || data == csvStr.str)
       {
+         rc = SDB_INVALIDARG;
          goto error;
       }
 
@@ -1174,6 +1177,7 @@ namespace import
                            csvStr, valueLength, fieldEnd);
       if (SDB_OK != rc || data == csvStr.str)
       {
+         rc = SDB_INVALIDARG;
          goto error;
       }
 
@@ -1241,6 +1245,7 @@ namespace import
                            csvStr, valueLength, fieldEnd);
       if (SDB_OK != rc || data == csvStr.str)
       {
+         rc = SDB_INVALIDARG;
          goto error;
       }
 
