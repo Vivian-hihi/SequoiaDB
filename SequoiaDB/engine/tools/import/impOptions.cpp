@@ -178,7 +178,7 @@ namespace import
 
       _bufferSize = 64;
       _dryRun = FALSE;
-      _recordsMem = (1024 * 1024 * 1024 * 2); // 2GB
+      _recordsMem = (INT64)1024 * 1024 * 1024 * 2; // 2GB
    }
 
    Options::~Options()
