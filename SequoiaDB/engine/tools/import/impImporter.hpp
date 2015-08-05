@@ -72,6 +72,7 @@ namespace import
       BOOLEAN           _inited;
 
       Coords            _coords;
+      UINT32            _refCount;
       vector<Worker*>   _workers;
       ossAtomicSigned32 _livingNum;
       LogFile           _logFile;

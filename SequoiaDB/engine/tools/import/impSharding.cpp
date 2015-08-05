@@ -217,8 +217,7 @@ namespace import
       _inQueue = inQueue;
       _outQueue = outQueue;
 
-      rc = _sharding.init(_options->hostname(),
-                          _options->svcname(),
+      rc = _sharding.init(_options->hosts(),
                           _options->user(),
                           _options->password(),
                           _options->csname(),
@@ -299,10 +298,9 @@ namespace import
    {
       INT32 rc = SDB_OK;
 
-      if(_inited)
+      if(_inited && NULL != _worker)
       {
          RecordArray* empty = NULL;
-         SDB_ASSERT(NULL != _worker, "_worker can't be NULL");
 
          // push empty RecordArray as stop signal
          _inQueue->push(empty);

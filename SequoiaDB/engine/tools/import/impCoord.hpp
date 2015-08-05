@@ -33,6 +33,7 @@
 
 #include "core.hpp"
 #include "oss.hpp"
+#include "impHosts.hpp"
 #include "../client/client.h"
 #include <string>
 #include <vector>
@@ -41,29 +42,18 @@ using namespace std;
 
 namespace import
 {
-   struct Host
-   {
-      string hostname;
-      string svcname;
-      INT32  refCount;
-
-      Host()
-      {
-         refCount = 0;
-      }
-   };
-
    class Coords: public SDBObject
    {
    public:
       Coords();
       ~Coords();
-      INT32 init(const string& hostname,
-                 const string& svcname,
+      INT32 init(const vector<Host>& hosts,
                  const string& user,
                  const string& password,
                  BOOLEAN useSSL);
       INT32 getRandomCoord(string& hostname, string& svcname);
+      static INT32 getRandomCoord(vector<Host>& hosts, UINT32& refCount,
+                                  string& hostname, string& svcname);
 
    private:
       INT32 _connect(const string& hostname,
@@ -73,8 +63,6 @@ namespace import
       INT32 _checkCoord(const string& hostname, const string& svcname);
 
    private:
-      string   _hostname;
-      string   _svcname;
       string   _user;
       string   _password;
       BOOLEAN  _useSSL;

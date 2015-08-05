@@ -33,6 +33,7 @@
 
 #include "core.hpp"
 #include "oss.hpp"
+#include "impHosts.hpp"
 #include <boost/program_options.hpp>
 
 namespace po = boost::program_options;
@@ -69,6 +70,8 @@ namespace import
       /* general */
       inline const string& hostname() const { return _hostname; }
       inline const string& svcname() const { return _svcname; }
+      inline const string& hostsString() const { return _hostsString; }
+      inline vector<Host>& hosts() { return _hosts; }
       inline const string& user() const { return _user; }
       inline const string& password() const { return _password; }
       inline const string& csname() const { return _csName; }
@@ -120,6 +123,8 @@ namespace import
       string         _hostname;
       string         _svcname;
       string         _user;
+      string         _hostsString;
+      vector<Host>   _hosts;
       string         _password;
       string         _csName;
       string         _clName;

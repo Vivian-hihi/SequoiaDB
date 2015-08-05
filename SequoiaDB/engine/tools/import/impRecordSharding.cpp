@@ -46,8 +46,7 @@ namespace import
    {
    }
 
-   INT32 RecordSharding::init(const string& hostname,
-                              const string& svcname,
+   INT32 RecordSharding::init(const vector<Host>& hosts,
                               const string& user,
                               const string& password,
                               const string& csname,
@@ -61,8 +60,7 @@ namespace import
 
       SDB_ASSERT(!_inited, "alreay inited");
 
-      _hostname = hostname;
-      _svcname = svcname;
+      _hosts = &hosts;
       _user = user;
       _password = password;
       _csname = csname;
@@ -70,41 +68,78 @@ namespace import
       _useSSL = useSSL;
       bson_init(&cataObj);
 
-      if (_useSSL)
+      for (vector<Host>::const_iterator it = hosts.begin();
+           it != hosts.end(); it++)
       {
-         rc = sdbSecureConnect(_hostname.c_str(), _svcname.c_str(),
-                               _user.c_str(), _password.c_str(), &conn);
-      }
-      else
-      {
-         rc = sdbConnect(_hostname.c_str(), _svcname.c_str(),
-                         _user.c_str(), _password.c_str(), &conn);
-      }
+         const Host& host = *it;
 
-      if (SDB_OK != rc)
-      {
-         PD_LOG(PDERROR, "failed to connect to database %s:%s, rc=%d, usessl=%d",
-                _hostname.c_str(), _svcname.c_str(), rc, _useSSL);
-      }
-
-      rc = sdbGetSnapshot(conn, SDB_SNAP_CATALOG, NULL, NULL, NULL, &cursor);
-      if (SDB_OK != rc)
-      {
-         if (SDB_RTN_COORD_ONLY == rc)
+         if (SDB_INVALID_HANDLE != cursor)
          {
-            // may be standalone node or data node in replica,
-            // so we just set _hostname to it
-            PD_LOG(PDWARNING, "%s:%s is not coordinator",
-                  _hostname.c_str(), _svcname.c_str());
-            rc = SDB_OK;
-            _inited = TRUE;
-            _groupNum = 1;
-            goto done;
+            sdbCloseCursor(cursor);
+            sdbReleaseCursor(cursor);
+            cursor = SDB_INVALID_HANDLE;
          }
 
-         PD_LOG(PDERROR, "failed to get coordinator group from %s:%s, rc = %d",
-                _hostname.c_str(), _svcname.c_str(), rc);
-         goto error;
+         if (SDB_INVALID_HANDLE != conn)
+         {
+            sdbDisconnect(conn);
+            sdbReleaseConnection(conn);
+            conn = SDB_INVALID_HANDLE;
+         }
+
+         if (_useSSL)
+         {
+            rc = sdbSecureConnect(host.hostname.c_str(), host.svcname.c_str(),
+                                  _user.c_str(), _password.c_str(), &conn);
+         }
+         else
+         {
+            rc = sdbConnect(host.hostname.c_str(), host.svcname.c_str(),
+                            _user.c_str(), _password.c_str(), &conn);
+         }
+
+         if (SDB_OK != rc)
+         {
+            PD_LOG(PDWARNING, "failed to connect to server %s:%s, rc=%d, usessl=%d",
+                   host.hostname.c_str(), host.svcname.c_str(), rc, _useSSL);
+            rc = SDB_OK;
+            continue;
+         }
+
+         rc = sdbGetSnapshot(conn, SDB_SNAP_CATALOG, NULL, NULL, NULL, &cursor);
+         if (SDB_OK != rc)
+         {
+            if (SDB_INVALID_HANDLE != cursor)
+            {
+               sdbCloseCursor(cursor);
+               sdbReleaseCursor(cursor);
+               cursor = SDB_INVALID_HANDLE;
+            }
+
+            if (SDB_RTN_COORD_ONLY == rc)
+            {
+               // may be standalone node or data node in replica,
+               // so we just set _hostname to it
+               PD_LOG(PDWARNING, "%s:%s is not coordinator",
+                      host.hostname.c_str(), host.svcname.c_str());
+               rc = SDB_OK;
+               continue;
+            }
+
+            PD_LOG(PDWARNING, "failed to get coordinator group from %s:%s, rc = %d",
+                   host.hostname.c_str(), host.svcname.c_str(), rc);
+            rc = SDB_OK;
+            continue;
+         }
+
+         break;
+      }
+
+      if (SDB_INVALID_HANDLE == cursor)
+      {
+         rc = SDB_OK;
+         PD_LOG(PDWARNING, "failed to get coordinator group");
+         goto done;
       }
 
       for(;;)
@@ -181,6 +216,7 @@ namespace import
       {
          sdbCloseCursor(cursor);
          sdbReleaseCursor(cursor);
+         cursor = SDB_INVALID_HANDLE;
       }
       if (SDB_INVALID_HANDLE != conn)
       {

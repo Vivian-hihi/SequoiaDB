@@ -29,6 +29,7 @@
 
 *******************************************************************************/
 #include "impRoutine.hpp"
+#include "impHosts.hpp"
 #include <iostream>
 #include <sstream>
 

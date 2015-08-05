@@ -158,6 +158,7 @@ namespace import
       _options = NULL;
       _workQueue = NULL;
       _inited = FALSE;
+      _refCount = 0;
    }
 
    Importer::~Importer()
@@ -195,8 +196,7 @@ namespace import
 
       if (_options->enableCoord())
       {
-         rc = _coords.init(_options->hostname(),
-                           _options->svcname(),
+         rc = _coords.init(_options->hosts(),
                            _options->user(),
                            _options->password(),
                            _options->useSSL());
@@ -224,8 +224,13 @@ namespace import
          }
          else
          {
-            hostname = _options->hostname();
-            svcname = _options->svcname();
+            rc = Coords::getRandomCoord(_options->hosts(), _refCount,
+                                        hostname, svcname);
+            if (SDB_OK != rc)
+            {
+               PD_LOG(PDERROR, "failed to get coord, rc=%d", rc);
+               goto error;
+            }
          }
 
          args = SDB_OSS_NEW ImporterArgs();

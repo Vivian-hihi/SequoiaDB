@@ -43,6 +43,7 @@ namespace import
    #define IMP_OPTION_VERSION           "version"
    #define IMP_OPTION_HOSTNAME          "hostname"
    #define IMP_OPTION_SVCNAME           "svcname"
+   #define IMP_OPTION_HOSTS             "hosts"
    #define IMP_OPTION_USER              "user"
    #define IMP_OPTION_PASSWORD          "password"
    #define IMP_OPTION_COLLECTSPACE      "csname"
@@ -75,6 +76,7 @@ namespace import
    #define IMP_EXPLAIN_VERSION          "print version"
    #define IMP_EXPLAIN_HOSTNAME         "host name, default: localhost"
    #define IMP_EXPLAIN_SVCNAME          "service name, default: 11810"
+   #define IMP_EXPLAIN_HOSTS            "host addresses(hostname:svcname), separated by ',', such as 'localhost:11810,localhost:11910', default: 'localhost:11810'"
    #define IMP_EXPLAIN_USER             "username"
    #define IMP_EXPLAIN_PASSWORD         "password"
    #define IMP_EXPLAIN_DELCHAR          "string delimiter, default: '\"' ( csv only )"
@@ -108,12 +110,14 @@ namespace import
 
    #define IMP_DEFAULT_HOSTNAME "localhost"
    #define IMP_DEFAULT_SVCNAME  "11810"
+   #define IMP_DEFAULT_HOST     "localhost:11810"
 
    #define IMP_GENERAL_OPTIONS \
       (IMP_OPTION_HELP",h",             /* no arg */     IMP_EXPLAIN_HELP) \
       (IMP_OPTION_VERSION",V",          /* no arg */     IMP_EXPLAIN_VERSION) \
       (IMP_OPTION_HOSTNAME",s",        _TYPE(string),    IMP_EXPLAIN_HOSTNAME) \
       (IMP_OPTION_SVCNAME",p",         _TYPE(string),    IMP_EXPLAIN_SVCNAME) \
+      (IMP_OPTION_HOSTS,               _TYPE(string),    IMP_EXPLAIN_HOSTS) \
       (IMP_OPTION_USER",u",            _TYPE(string),    IMP_EXPLAIN_USER) \
       (IMP_OPTION_PASSWORD",w",        _TYPE(string),    IMP_EXPLAIN_PASSWORD) \
       (IMP_OPTION_COLLECTSPACE",c",    _TYPE(string),    IMP_EXPLAIN_COLLECTSPACE) \
@@ -156,6 +160,7 @@ namespace import
       _parsed = FALSE;
       _hostname = IMP_DEFAULT_HOSTNAME;
       _svcname = IMP_DEFAULT_SVCNAME;
+      _hostsString = IMP_DEFAULT_HOST;
       _recordDelimiter = "\n";
       _inputType = INPUT_STDIN;
       _inputFormat = FORMAT_CSV;
@@ -310,6 +315,11 @@ namespace import
    {
       INT32 rc = SDB_OK;
 
+      if (has(IMP_OPTION_HOSTS))
+      {
+         _hostsString = get<string>(IMP_OPTION_HOSTS);
+      }
+
       if (has(IMP_OPTION_HOSTNAME))
       {
          _hostname = get<string>(IMP_OPTION_HOSTNAME);
@@ -319,6 +329,30 @@ namespace import
       {
          _svcname = get<string>(IMP_OPTION_SVCNAME);
       }
+
+      // add hostname & svcname to hostsString,
+      // so we can process them in one time
+      if (has(IMP_OPTION_HOSTNAME) || has(IMP_OPTION_SVCNAME))
+      {
+         // it's ok if there are duplicate hostsString, it'll be processed.
+         if (has(IMP_OPTION_HOSTS))
+         {
+            _hostsString += "," + _hostname + ":" + _svcname;
+         }
+         else
+         {
+            _hostsString = _hostname + ":" + _svcname;
+         }
+      }
+
+      rc = Hosts::parse(_hostsString, _hosts);
+      if (SDB_OK != rc)
+      {
+         std::cerr << "invalid host"  << std::endl;
+         rc = SDB_INVALIDARG;
+         goto error;
+      }
+      Hosts::removeDuplicate(_hosts);
 
       if (has(IMP_OPTION_USER))
       {

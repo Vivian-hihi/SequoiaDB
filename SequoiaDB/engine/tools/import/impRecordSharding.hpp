@@ -35,6 +35,7 @@
 #include "oss.hpp"
 #include "impCataInfo.hpp"
 #include "impCatalogAgent.hpp"
+#include "impHosts.hpp"
 #include "../client/bson/bson.h"
 #include <string>
 #include <map>
@@ -48,8 +49,7 @@ namespace import
    public:
       RecordSharding();
       ~RecordSharding();
-      INT32 init(const string& hostname,
-                 const string& svcname,
+      INT32 init(const vector<Host>& hosts,
                  const string& user,
                  const string& password,
                  const string& csname,
@@ -59,8 +59,7 @@ namespace import
       INT32 getGroupByRecord(bson* record, string& collection, UINT32& groupId);
 
    private:
-      string                  _hostname;
-      string                  _svcname;
+      const vector<Host>*     _hosts;
       string                  _user;
       string                  _password;
       string                  _csname;

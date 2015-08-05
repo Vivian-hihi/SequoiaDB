@@ -206,8 +206,7 @@ namespace import
       _coords.clear();
    }
 
-   INT32 Coords::init(const string& hostname,
-                      const string& svcname,
+   INT32 Coords::init(const vector<Host>& hosts,
                       const string& user,
                       const string& password,
                       BOOLEAN useSSL)
@@ -222,8 +221,6 @@ namespace import
 
       SDB_ASSERT(!_inited, "alreay inited");
 
-      _hostname = hostname;
-      _svcname = svcname;
       _user = user;
       _password = password;
       _useSSL = useSSL;
@@ -247,44 +244,78 @@ namespace import
          goto error;
       }
 
-      rc = _connect(_hostname, _svcname, conn);
-      if (SDB_OK != rc)
+      for (vector<Host>::const_iterator it = hosts.begin();
+           it != hosts.end(); it++)
       {
-         PD_LOG(PDERROR,
-                "failed to connect to database %s:%s, rc = %d, usessl=%d",
-                _hostname.c_str(), _svcname.c_str(), rc, _useSSL);
-         goto error;
-      }
+         const Host& host = *it;
 
-      rc = sdbGetList(conn, SDB_LIST_GROUPS, &cond, NULL, NULL, &cursor);
-      if (SDB_OK != rc)
-      {
-         if (SDB_RTN_COORD_ONLY == rc)
+         if (SDB_INVALID_HANDLE != cursor)
          {
-            Host host;
-            host.hostname = _hostname;
-            host.svcname = _svcname;
-            _coords.push_back(host);
+            sdbCloseCursor(cursor);
+            sdbReleaseCursor(cursor);
+            cursor = SDB_INVALID_HANDLE;
+         }
+         _disconnect(conn);
 
-            // may be standalone node or data node in replica,
-            // so we just set _hostname to it
-            PD_LOG(PDWARNING, "%s:%s is not coordinator",
-                  _hostname.c_str(), _svcname.c_str());
-            rc = SDB_OK;
-            _inited = TRUE;
-            goto done;
+         rc = _connect(host.hostname, host.svcname, conn);
+         if (SDB_OK != rc)
+         {
+            PD_LOG(PDWARNING,
+                   "failed to connect to server %s:%s, rc = %d, usessl=%d",
+                   host.hostname.c_str(), host.svcname.c_str(), rc, _useSSL);
+            continue;
          }
 
-         PD_LOG(PDERROR, "failed to get coordinator group from %s:%s, rc = %d",
-                _hostname.c_str(), _svcname.c_str(), rc);
+         // the host can be connected
+         _coords.push_back(host);
+
+         rc = sdbGetList(conn, SDB_LIST_GROUPS, &cond, NULL, NULL, &cursor);
+         if (SDB_OK != rc)
+         {
+            if (SDB_RTN_COORD_ONLY == rc)
+            {
+               // may be standalone node or data node in replica,
+               // so we just set _hostname to it
+               PD_LOG(PDWARNING, "%s:%s is not coordinator",
+                      host.hostname.c_str(), host.svcname.c_str());
+               rc = SDB_OK;
+               continue;
+            }
+
+            PD_LOG(PDWARNING, "failed to get coordinator group from %s:%s, rc = %d",
+                   host.hostname.c_str(), host.svcname.c_str(), rc);
+            rc = SDB_OK;
+            continue;
+         }
+
+         rc = sdbNext(cursor, &result);
+         if (SDB_OK != rc)
+         {
+            if (SDB_INVALID_HANDLE != cursor)
+            {
+               sdbCloseCursor(cursor);
+               sdbReleaseCursor(cursor);
+               cursor = SDB_INVALID_HANDLE;
+            }
+            PD_LOG(PDWARNING, "failed to get result from cursor, rc=%d", rc);
+            rc = SDB_OK;
+            continue;
+         }
+
+         break;
+      }
+
+      if (_coords.empty())
+      {
+         PD_LOG(PDERROR, "no host can be connected, rc=%d", rc);
          goto error;
       }
 
-      rc = sdbNext(cursor, &result);
-      if (SDB_OK != rc)
+      if (SDB_INVALID_HANDLE == cursor)
       {
-         PD_LOG(PDERROR, "failed to get result from cursor, rc=%d", rc);
-         goto error;
+         // no coords info
+         _inited = TRUE;
+         goto done;
       }
 
       rc = _getCoords(&result, _coords);
@@ -293,6 +324,8 @@ namespace import
          PD_LOG(PDERROR, "failed to get coordinators, rc=%d", rc);
          goto error;
       }
+
+      Hosts::removeDuplicate(_coords);
 
       for (vector<Host>::iterator i = _coords.begin(); i != _coords.end();)
       {
@@ -331,6 +364,7 @@ namespace import
       {
          sdbCloseCursor(cursor);
          sdbReleaseCursor(cursor);
+         cursor = SDB_INVALID_HANDLE;
       }
       _disconnect(conn);
       return rc;
@@ -388,13 +422,17 @@ namespace import
 
    INT32 Coords::getRandomCoord(string& hostname, string& svcname)
    {
+      return Coords::getRandomCoord(_coords, _refCount, hostname, svcname);
+   }
+
+   INT32 Coords::getRandomCoord(vector<Host>& hosts, UINT32& refCount, 
+                                string& hostname, string& svcname)
+   {
       INT32 rc = SDB_OK;
       INT32 i = 0;
       INT32 thres = 0;
 
-      SDB_ASSERT(_inited, "must inited");
-
-      INT32 size = _coords.size();
+      INT32 size = hosts.size();
       if (0 == size)
       {
          rc = SDB_SYS;
@@ -404,12 +442,12 @@ namespace import
       // choose a random coordinator, but it can't be 
       // used much more than other coordinator
       // try 100 times at most
-      thres = _refCount / size + 1;
+      thres = refCount / size + 1;
 
       for (INT32 t = 0; t < 100; t++)
       {
          i = ossRand() % size;
-         Host& host = _coords[i];
+         Host& host = hosts[i];
          if (host.refCount + 1 <= thres)
          {
             break;
@@ -417,11 +455,11 @@ namespace import
       }
 
       {
-         Host& host = _coords[i];
+         Host& host = hosts[i];
          hostname = host.hostname;
          svcname = host.svcname;
          host.refCount++;
-         _refCount++;
+         refCount++;
       }
 
    done:
