@@ -228,6 +228,8 @@ namespace engine
             goto done ;
          }
       }
+      PD_LOG( PDERROR, "Access plan[%s] is not found in vector",
+              plan->toString().c_str() ) ;
       // otherwise it's not in the list, let's simply delete the plan
       SDB_OSS_DEL plan ;
    done :
@@ -384,6 +386,8 @@ namespace engine
       if ( _planLists.find ( hash ) == _planLists.end() )
       {
          // if the plan is not in the plan list
+         PD_LOG( PDERROR, "Access plan[%s] is not found is lists",
+                 plan->toString().c_str() ) ;
          SDB_OSS_DEL plan ;
          goto done ;
       }
@@ -586,6 +590,8 @@ namespace engine
       // if the collection no longer exist, we simply delete the plan
       if ( (it = _planSets.find(pCollectionName) ) == _planSets.end() )
       {
+         PD_LOG( PDERROR, "Access plan[%s] is not found in plan sets",
+                 plan->toString().c_str() ) ;
          SDB_OSS_DEL plan ;
          goto done ;
       }

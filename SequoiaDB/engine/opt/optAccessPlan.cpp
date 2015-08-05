@@ -722,5 +722,26 @@ namespace engine
          SDB_OSS_DEL this ;
       }
    }
+
+   std::string _optAccessPlan::toString() const
+   {
+      stringstream ss ;
+      ss << "CollectionName:" << _collectionName
+         << ",IndexName:" << _idxName
+         << ",OrderBy:" << _orderBy.toString().c_str()
+         << ",Query:" << _query.toString().c_str()
+         << ",Hint:" << _hint.toString().c_str()
+         << ",HintFailed:" << _hintFailed
+         << ",Direction:" << _direction
+         << ",ScanType:" << ( TBSCAN == _scanType ? "TBSCAN" : "IXSCAN" )
+         << ",Valid:" << _isValid
+         << ",AutoPlan:" << _isAutoPlan
+         << ",HashValue:" << _hashValue
+         << ",Count:" << _useCount.peek()
+         << ",SortRequired:" << _sortRequired
+         << ",AutoHint:" << _autoHint ;
+      return ss.str() ;
+   }
+
 }
 
