@@ -1710,6 +1710,7 @@ TEST( collection, create_remove_id_index )
    BSONObj obj ;
    BSONObj record ;
    BSONObj updater ;
+   BSONObj options ;
 
    rc = initEnv() ;
    ASSERT_EQ( SDB_OK, rc ) ;
@@ -1765,7 +1766,8 @@ TEST( collection, create_remove_id_index )
    ASSERT_EQ( SDB_RTN_AUTOINDEXID_IS_FALSE, rc ) ;
 
    // create $id index
-   rc = cl.createIdIndex() ;
+   options = BSON( "Offline" << true ) ;
+   rc = cl.createIdIndex( options ) ;
    ASSERT_EQ( SDB_OK, rc ) ;
 
    rc = cl.del() ;
