@@ -649,7 +649,7 @@ namespace engine
          {
             continue ;
          }
-         hashValue ^= ossHash( e.valuestr(), e.valuesize() ) ;
+         hashValue ^= ossHash( e.value(), e.valuesize() ) ;
       }
 
       return hashValue ;
