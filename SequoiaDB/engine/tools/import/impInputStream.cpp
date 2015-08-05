@@ -275,11 +275,17 @@ namespace import
          readSize = 0;
       }
 
+      size = 0;
       rc = _upstream->read(buf, bufSize, size);
       if (SDB_OK != rc)
       {
-         PD_LOG(PDERROR, "failed to read from upstream, rc=%d", rc);
-         goto error;
+         if (SDB_EOF != rc)
+         {
+            PD_LOG(PDERROR, "failed to read from upstream, rc=%d", rc);
+            goto error;
+         }
+
+         rc = SDB_OK;
       }
 
       readSize += size;

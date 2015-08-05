@@ -162,7 +162,6 @@ namespace import
       INT32 len = length;
 
       SDB_ASSERT(NULL != data, "data can't be NULL");
-      SDB_ASSERT(length > 0, "length must be greater than 0");
 
       _skipSpace(&str, len);
       if (len == 0)
