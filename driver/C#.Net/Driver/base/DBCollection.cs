@@ -1230,6 +1230,7 @@ namespace SequoiaDB
 
         /** \fn void Truncate()
          * \brief Truncate the collection
+         * \return void
          * \exception SequoiaDB.BaseException
          * \exception System.Exception
          */
@@ -1251,6 +1252,12 @@ namespace SequoiaDB
 
         /** \fn void CreateIdIndex(BsonDocument options)
          * \brief Create $id index in collection
+         * \param options Options for create id index, or null for options, see SequoiaDB Information Center "SequoiaDB Shell Methods" for more detail.
+         *         e.g.: {"Offline":true}
+         *         <ul>
+         *          <li>Offline   : Use offline mode to create index or not, default to be false
+         *         </ul>
+         * \return void
          * \exception SequoiaDB.BaseException
          * \exception System.Exception
          */
@@ -1276,6 +1283,7 @@ namespace SequoiaDB
 
         /** \fn void DropIdIndex()
          * \brief Drop $id index in collection
+         * \return void
          * \exception SequoiaDB.BaseException
          * \exception System.Exception
          */
