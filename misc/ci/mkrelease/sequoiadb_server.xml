@@ -40,6 +40,34 @@
         </component>
     </componentList>
     <readyToInstallActionList>
+        <throwError>
+            <text>There is not enough disk space for installation.</text>
+            <ruleList>
+                <checkFreeDiskSpace>
+                    <logic>less_or_equal</logic>
+                    <path>${installdir}</path>
+                    <size>1300000</size>
+                </checkFreeDiskSpace>
+            </ruleList>
+        </throwError>
+        <throwError>
+            <text>The ROOT user is not allowed to create.</text>
+            <ruleList>
+                <compareValues>
+                    <logic>equals</logic>
+                    <value1>${username}</value1>
+                    <value2>root</value2>
+                </compareValues>
+            </ruleList>
+        </throwError>
+        <throwError>
+            <text>SequoiaDB does not support 32-bit operating system.</text>
+            <ruleList>
+                <platformTest>
+                    <type>linux-x86</type>
+                </platformTest>
+            </ruleList>
+        </throwError>
         <createDirectory>
             <path>/home/sequoiadb</path>
             <ruleList>
@@ -133,23 +161,27 @@
         </changePermissions>
         <runProgram>
             <program>echo</program>
-            <programArguments> 'export PATH=$PATH:/opt/sequoiadb' &gt;&gt; /home/sequoiadb/.profile</programArguments>
+            <programArguments>'export PATH=$PATH: ${installdir}' &gt;&gt; /home/sequoiadb/.bash_profile</programArguments>
             <ruleList>
-                <fileContentTest>
-                    <encoding>utf-8</encoding>
-                    <logic>does_not_contain</logic>
-                    <path>/home/sequoiadb/.profile</path>
-                    <text>export PATH=$PATH:${installdir}</text>
-                </fileContentTest>
+                <fileExists>
+                    <path>/home/sequoiadb/.bash_profile</path>
+                </fileExists>
             </ruleList>
         </runProgram>
+        <addEnvironmentVariable>
+            <name>PATH</name>
+            <scope>user</scope>
+            <username>${username}</username>
+            <value>$PATH:${installdir}</value>
+            <ruleList>
+                <fileExists>
+                    <negate>1</negate>
+                    <path>/home/sequoiadb/.bash_profile</path>
+                </fileExists>
+            </ruleList>
+        </addEnvironmentVariable>
         <changeOwnerAndGroup>
             <files>/home/sequoiadb</files>
-            <group>${username}_group</group>
-            <owner>${username}</owner>
-        </changeOwnerAndGroup>
-        <changeOwnerAndGroup>
-            <files>/home/sequoiadb/.profile</files>
             <group>${username}_group</group>
             <owner>${username}</owner>
         </changeOwnerAndGroup>
