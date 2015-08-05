@@ -2266,9 +2266,12 @@ SDB_EXPORT INT32 sdbAttachNode( sdbReplicaGroupHandle cHandle,
                                 const CHAR *serviceName,
                                 const bson *options ) ;
 
-/** \fn INT32 sdbCreateIdIndex( sdbCollectionHandle cHandle )
+/** \fn INT32 sdbCreateIdIndex( sdbCollectionHandle cHandle, const bson *args )
     \brief Create $id index in collection
-    \param [in] cHandle The collection handle
+    \param [in] cHandle The collection handle.
+    \param [in] args The arguments of creating id index. set it as null if no args. e.g.{Offline:true}
+
+        Offline     : Use offline mode to create index or not, default to be false
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
@@ -2278,7 +2281,6 @@ SDB_EXPORT INT32 sdbCreateIdIndex( sdbCollectionHandle cHandle,
 /** \fn INT32 sdbDropIdIndex( sdbCollectionHandle cHandle )
     \brief Drop $id index in collection
     \param [in] cHandle The collection handle
-    \param [in] args The arguments of creating id index. set it as null if no args.
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
     \note delete, update and upsert do not work after index "$id" was drop

@@ -1382,6 +1382,9 @@ namespace sdbclient
 
 /** \fn INT32 createIdIndex( const bson::BSONObj &options )
     \brief Create $id index in collection
+    \param [in] options The arguments of creating id index.e.g.{Offline:true}
+
+        Offline     : Use offline mode to create index or not, default to be false
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
