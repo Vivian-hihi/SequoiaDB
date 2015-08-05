@@ -2251,7 +2251,8 @@ namespace import
       rc = _convertToCSVType(data, fieldTypeLength, fieldType);
       if (SDB_OK != rc)
       {
-         PD_LOG(PDERROR, "invalid csv type");
+         string s(data, fieldTypeLength);
+         PD_LOG(PDERROR, "invalid csv type: %s", s.c_str());
          goto error;
       }
 
