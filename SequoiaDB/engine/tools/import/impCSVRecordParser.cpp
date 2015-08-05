@@ -267,6 +267,7 @@ namespace import
       switch(str[0])
       {
       case 'b':
+      case 'B':
          // bool
          // boolean
          // binary
@@ -281,6 +282,7 @@ namespace import
          }
          break;
       case 'd':
+      case 'D':
          // date
          // double
          if (CSV_STR_TYPE_EQ(CSV_STR_DATE, str, length))
@@ -293,6 +295,7 @@ namespace import
          }
          break;
       case 'i':
+      case 'I':
          // int
          // integer
          if (CSV_STR_TYPE_EQ(CSV_STR_INT, str, length) ||
@@ -302,6 +305,7 @@ namespace import
          }
          break;
       case 'l':
+      case 'L':
          // long
          if (CSV_STR_TYPE_EQ(CSV_STR_LONG, str, length))
          {
@@ -309,6 +313,7 @@ namespace import
          }
          break;
       case 'n':
+      case 'N':
          // null
          // number
          if (CSV_STR_TYPE_EQ(CSV_STR_NULL, str, length))
@@ -321,6 +326,7 @@ namespace import
          }
          break;
       case 'o':
+      case 'O':
          // oid
          if (CSV_STR_TYPE_EQ(CSV_STR_OID, str, length))
          {
@@ -328,6 +334,7 @@ namespace import
          }
          break;
       case 'r':
+      case 'R':
          // regex
          if (CSV_STR_TYPE_EQ(CSV_STR_REGEX, str, length))
          {
@@ -335,6 +342,7 @@ namespace import
          }
          break;
       case 's':
+      case 'S':
          // string
          if (CSV_STR_TYPE_EQ(CSV_STR_STRING, str, length))
          {
@@ -342,6 +350,7 @@ namespace import
          }
          break;
       case 't':
+      case 'T':
          // timestamp
          if (CSV_STR_TYPE_EQ(CSV_STR_TIMESTAMP, str, length))
          {
