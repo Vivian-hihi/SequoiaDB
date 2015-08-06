@@ -55,7 +55,7 @@ public class CataNodeGroup extends NodeGroup {
 						"host :"+nodeInfo.getHost()+"\n" +
 						"port : " +nodeInfo.getBasePort() +"\n" +
 						"path : " + nodeInfo.getDbpath() + "\n" +
-						"configMap :"+nodeInfo.getConfigMap().toString()
+						"configMap :"+nodeInfo.getConfigMap().toString() + "\n\n\n"
 						);
 				sdb.createReplicaCataGroup(nodeInfo.getHost(),
 						nodeInfo.getBasePort(), nodeInfo.getDbpath(),
@@ -110,6 +110,8 @@ public class CataNodeGroup extends NodeGroup {
 			} catch (InterruptedException e) {
 			}
 		}
+
+		System.out.println("The Group : " + this.getName() + " select master time is " + i + " seconds.");
 
 		com.sequoiadb.base.Node node = null;
 		
