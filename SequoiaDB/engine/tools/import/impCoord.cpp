@@ -266,9 +266,6 @@ namespace import
             continue;
          }
 
-         // the host can be connected
-         _coords.push_back(host);
-
          rc = sdbGetList(conn, SDB_LIST_GROUPS, &cond, NULL, NULL, &cursor);
          if (SDB_OK != rc)
          {
@@ -305,24 +302,23 @@ namespace import
          break;
       }
 
-      if (_coords.empty())
+      if (SDB_INVALID_HANDLE != cursor && NULL != bson_data(&result))
       {
-         PD_LOG(PDERROR, "no host can be connected, rc=%d", rc);
-         goto error;
+         rc = _getCoords(&result, _coords);
+         if (SDB_OK != rc)
+         {
+            PD_LOG(PDERROR, "failed to get coordinators, rc=%d", rc);
+            goto error;
+         }
       }
 
-      if (SDB_INVALID_HANDLE == cursor)
+      for (vector<Host>::const_iterator it = hosts.begin();
+           it != hosts.end(); it++)
       {
-         // no coords info
-         _inited = TRUE;
-         goto done;
-      }
-
-      rc = _getCoords(&result, _coords);
-      if (SDB_OK != rc)
-      {
-         PD_LOG(PDERROR, "failed to get coordinators, rc=%d", rc);
-         goto error;
+         Host host;
+         host.hostname = (*it).hostname;
+         host.svcname = (*it).svcname;
+         _coords.push_back(host);
       }
 
       Hosts::removeDuplicate(_coords);
