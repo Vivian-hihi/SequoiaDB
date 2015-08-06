@@ -598,7 +598,7 @@ namespace import
       str += decLen;
       len -= decLen;
       valueLength += decLen;
-      if (integer > 0)
+      if (integer >= 0)
       {
          num = (FLOAT64)integer + (FLOAT64)decimal / pow(10.0, decLen);
       }
