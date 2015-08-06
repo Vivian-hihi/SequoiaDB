@@ -535,6 +535,7 @@ namespace import
       INT32 decLen;
       INT32 expLen;
       FLOAT64 num;
+      BOOLEAN neg = FALSE;
 
       SDB_ASSERT(NULL != data, "data can't be NULL");
       SDB_ASSERT(length > 0, "length must be greater than 0");
@@ -545,6 +546,11 @@ namespace import
       {
          //PD_LOG(PDERROR, "failed to convert to long, rc=%d", rc);
          goto error;
+      }
+
+      if ('-' == *str)
+      {
+         neg = TRUE;
       }
 
       str += intLen;
@@ -598,7 +604,7 @@ namespace import
       str += decLen;
       len -= decLen;
       valueLength += decLen;
-      if (integer >= 0)
+      if (!neg)
       {
          num = (FLOAT64)integer + (FLOAT64)decimal / pow(10.0, decLen);
       }
