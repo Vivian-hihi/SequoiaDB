@@ -126,7 +126,7 @@ namespace import
                monitor->recordsMemDec(records->bsonSize());
                freeRecordArray(&records);
                PD_LOG(PDERROR, "failed to import records, rc=%d", rc);
-               goto error;
+               continue;
             }
             self->_importedNum.add(records->size());
             monitor->recordsMemDec(records->bsonSize());
