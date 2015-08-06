@@ -2858,7 +2858,13 @@ namespace import
          len -= fieldDelLen;
       }
 
-      if (len == 0 && fieldCount < fieldDefNum)
+      if (len == 0 && fieldCount == 0)
+      {
+         // empty record
+         rc = SDB_DMS_EOC;
+         goto error;
+      }
+      else if (len == 0 && fieldCount < fieldDefNum)
       {
          if (_autoAddValue)
          {
