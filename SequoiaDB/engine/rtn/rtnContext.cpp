@@ -4288,8 +4288,8 @@ namespace engine
    {
       if ( !_options._orderBy.isEmpty() )
       {
-         ss << ",Orderby:" << _options._orderBy.toString().c_str() ;
-         ss << ",IsShardingOrder:" << _includeShardingOrder ;
+         ss << ",Orderby:" << _options._orderBy.toString().c_str()
+            << ",IsShardingOrder:" << _includeShardingOrder ;
       }
       if ( _numToReturn > 0 )
       {         
