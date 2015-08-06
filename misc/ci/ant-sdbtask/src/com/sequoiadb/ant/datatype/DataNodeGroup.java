@@ -73,7 +73,6 @@ public class DataNodeGroup extends NodeGroup {
 			} 
 			
 			i++;
-			System.out.println("The Group : " + this.getName() + " select master time is " + i + " seconds.");
 			if (i >= timeout) {
 				throw new BuildException("Group:" + this.getName()
 						+ " select master timeout.");
@@ -86,7 +85,7 @@ public class DataNodeGroup extends NodeGroup {
 			catch (InterruptedException e) {
 			}
 		}
-
+		System.out.println("The Group : " + this.getName() + " select master time is " + i + " seconds.");
 		
 
 	}
