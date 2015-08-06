@@ -115,9 +115,11 @@ namespace import
                self->_failedNum.add(records->size());
                for (INT32 i = 0; i < records->size(); i++)
                {
+                  INT32 ret;
                   bson* obj = records->get(i);
-                  if (SDB_OK != logFile->write(obj))
+                  if (SDB_OK != (ret = logFile->write(obj)))
                   {
+                     PD_LOG(PDERROR, "failed to log write records, rc=%d", ret);
                      break;
                   }
                }

@@ -227,7 +227,11 @@ namespace import
                         bson_destroy(obj);
                         SAFE_OSS_FREE(obj);
                         self->_failedNum++;
-                        logFile->write(buf, recordLength);
+                        INT32 ret;
+                        if (SDB_OK != (ret = logFile->write(buf, recordLength)))
+                        {
+                           PD_LOG(PDERROR, "failed to log write record, rc=%d", ret);
+                        }
 
                         PD_LOG(PDERROR, "failed to parse record, rc=%d", rc);
 

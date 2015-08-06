@@ -37,6 +37,7 @@
 #include "impRecordQueue.hpp"
 #include "impWorker.hpp"
 #include "impOptions.hpp"
+#include "impLogFile.hpp"
 #include <map>
 
 using namespace std;
@@ -59,6 +60,12 @@ namespace import
       INT32 start();
       INT32 stop();
       inline BOOLEAN isStopped() const { return _stopped; }
+      inline INT64 shardingNum() const { return _shardingNum; }
+      inline INT64 failedNum() const { return _failedNum; }
+      inline const string& logFileName() const
+      {
+         return _logFile.fileName();
+      }
 
    private:
       Options*          _options;
@@ -71,6 +78,12 @@ namespace import
       BOOLEAN           _stopped;
 
       ShardingGroups    _groups;
+
+      LogFile           _logFile;
+
+      // statistics
+      INT64             _shardingNum;
+      INT64             _failedNum;
 
       friend void _shardingRoutine(WorkerArgs* args);
    };

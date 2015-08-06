@@ -29,6 +29,7 @@
 
 *******************************************************************************/
 #include "impSharding.hpp"
+#include "impMonitor.hpp"
 #include "pd.hpp"
 #include <iostream>
 #include <sstream>
@@ -50,6 +51,8 @@ namespace import
       RecordQueue* outQueue = self->_outQueue;
       RecordSharding* sharding = &(self->_sharding);
       ShardingGroups* groups = &(self->_groups);
+      LogFile* logFile = &(self->_logFile);
+      Monitor* monitor = impGetMonitor();
 
       {
          stringstream ss;
@@ -87,12 +90,21 @@ namespace import
             rc = sharding->getGroupByRecord(record, cl, groupId);
             if (SDB_OK != rc)
             {
+               INT32 ret;
                PD_LOG(PDERROR, "failed to get group by record, rc=%d", rc);
-               //TODO: log records
-               freeRecordArray(&records);
-               goto error;
+               if (SDB_OK != (ret = logFile->write(record)))
+               {
+                  PD_LOG(PDERROR, "failed to log record, rc=%d", ret);
+               }
+               monitor->recordsMemDec(bson_size(record));
+               freeRecord(record);
+               records->pop(i);
+
+               self->_failedNum++;
+               continue;
             }
 
+            self->_shardingNum++;
             subGroups = &((*groups)[cl]);
 
             it = subGroups->find(groupId);
@@ -120,7 +132,20 @@ namespace import
                if (SDB_OK != rc)
                {
                   PD_LOG(PDERROR, "failed to get free record array, rc=%d", rc);
-                  //TODO: log records
+                  for (INT32 i = 0; i < records->size(); i++)
+                  {
+                     INT32 ret;
+                     bson* obj = records->get(i);
+                     if (NULL == obj)
+                     {
+                        continue;
+                     }
+                     if (SDB_OK != (ret = logFile->write(obj)))
+                     {
+                        PD_LOG(PDERROR, "failed to log write records, rc=%d", ret);
+                        break;
+                     }
+                  }
                   freeRecordArray(&records);
                   goto error;
                }
@@ -195,6 +220,8 @@ namespace import
       _inited = FALSE;
       _worker = NULL;
       _stopped = TRUE;
+      _shardingNum = 0;
+      _failedNum = 0;
    }
 
    Sharding::~Sharding()
@@ -216,6 +243,17 @@ namespace import
       _options = options;
       _inQueue = inQueue;
       _outQueue = outQueue;
+
+      string shardingLogFile = makeRecordLogFileName(_options->csname(),
+                                                     _options->clname(),
+                                                     string("sharding"));
+
+      rc = _logFile.init(shardingLogFile, FALSE);
+      if (SDB_OK != rc)
+      {
+         PD_LOG(PDERROR, "failed to init sharding log file");
+         goto error;
+      }
 
       rc = _sharding.init(_options->hosts(),
                           _options->user(),

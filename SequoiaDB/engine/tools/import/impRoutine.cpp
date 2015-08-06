@@ -278,6 +278,9 @@ namespace import
       ss << "parsed records: " << _parser.parsedNum() << std::endl
          << "parse failure: " << _parser.failedNum() << std::endl;
 
+      ss << "sharding records: " << _sharding.shardingNum() << std::endl
+         << "sharding failure: " << _sharding.failedNum() << std::endl;
+
       ss << "imported records: " << _importer.parsedNum() << std::endl
          << "import failure: " << _importer.failedNum() << std::endl;
 
@@ -285,6 +288,12 @@ namespace import
       {
          ss << "see " << _parser.logFileName()
             << " for parse failure records" << std::endl;
+      }
+
+      if (_sharding.failedNum() > 0)
+      {
+         ss << "see " << _sharding.logFileName()
+            << " for sharding failure records" << std::endl;
       }
 
       if (_importer.failedNum() > 0)
