@@ -133,10 +133,12 @@ namespace engine
 
          // if indexLID == DMS_INALID_EXTENT, it will get from index cb
          INT32    _rebuildIndex ( _dmsMBContext *context, INT32 indexID,
-                                  dmsExtentID indexLID, _pmdEDUCB * cb, DMS_INDEX_BUILD_MODE mode ) ;
+                                  dmsExtentID indexLID, _pmdEDUCB * cb,
+                                  DMS_INDEX_BUILD_MODE mode ) ;
 
          INT32    _indexInsert( _ixmIndexCB *indexCB,
-                                 const _ixmKey &key, const dmsRecordID &rid, const Ordering& order,
+                                 const _ixmKey &key, const dmsRecordID &rid,
+                                 const Ordering& order,
                                  _pmdEDUCB *cb, BOOLEAN dupAllowed,
                                  BOOLEAN dropDups ) ;
 

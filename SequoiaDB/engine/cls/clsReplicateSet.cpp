@@ -407,9 +407,9 @@ namespace engine
       goto done ;
    }
 
-   INT32 _clsReplicateSet::callCatalog( MsgHeader *header )
+   INT32 _clsReplicateSet::callCatalog( MsgHeader *header, UINT32 times )
    {
-      return _cata.call( header ) ;
+      return _cata.call( header, times ) ;
    }
 
    ossEvent* _clsReplicateSet::getFaultEvent()

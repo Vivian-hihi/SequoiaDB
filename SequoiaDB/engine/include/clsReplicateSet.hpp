@@ -228,7 +228,7 @@ namespace engine
 
          INT32 handleEvent( pmdEDUEvent *event ) ;
 
-         INT32 callCatalog( MsgHeader *header ) ;
+         INT32 callCatalog( MsgHeader *header, UINT32 times = 1 ) ;
 
          void getGroupInfo( _MsgRouteID &primary,
                             vector<_netRouteNode > &group ) ;

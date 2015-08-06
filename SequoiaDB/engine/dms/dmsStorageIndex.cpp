@@ -719,7 +719,8 @@ namespace engine
    }
 
    INT32 _dmsStorageIndex::_rebuildIndex( dmsMBContext *context, INT32 indexID,
-                                          dmsExtentID indexLID, pmdEDUCB * cb, DMS_INDEX_BUILD_MODE mode )
+                                          dmsExtentID indexLID, pmdEDUCB * cb,
+                                          DMS_INDEX_BUILD_MODE mode )
    {
       INT32 rc = SDB_OK ;
       dmsIndexBuilder* builder = NULL ;
@@ -732,9 +733,9 @@ namespace engine
       }
 
       builder = dmsIndexBuilder::createInstance( this, _pDataSu,
-                                              context, cb,
-                                              indexID, indexLID,
-                                              mode ) ;
+                                                 context, cb,
+                                                 indexID, indexLID,
+                                                 mode ) ;
       if ( NULL == builder )
       {
          PD_LOG ( PDERROR, "Failed to get index builder instance, mode: %d", mode ) ;
@@ -759,7 +760,8 @@ namespace engine
       goto done ;
    }
 
-   INT32 _dmsStorageIndex::rebuildIndexes( dmsMBContext *context, pmdEDUCB *cb, DMS_INDEX_BUILD_MODE mode )
+   INT32 _dmsStorageIndex::rebuildIndexes( dmsMBContext *context, pmdEDUCB *cb,
+                                           DMS_INDEX_BUILD_MODE mode )
    {
       INT32 rc                     = SDB_OK ;
       INT32  indexID               = 0 ;

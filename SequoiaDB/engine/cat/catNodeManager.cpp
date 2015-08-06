@@ -278,6 +278,22 @@ namespace engine
          }
          else
          {
+            BSONObj objPrimary ;
+            /// check primary node is the same
+            rc = catGetOneObj( CAT_NODE_INFO_COLLECTION,
+                               BSON( CAT_PRIMARY_NAME << 0 ),
+                               BSON( CAT_GROUPID_NAME << groupID ),
+                               BSONObj(), _pEduCB, objPrimary ) ;
+            if ( SDB_OK == rc )
+            {
+               BSONElement ele = objPrimary.getField( CAT_PRIMARY_NAME ) ;
+               if ( ele.isNumber() && (UINT16)ele.numberInt() == nodeID )
+               {
+                  /// already the same, don't update
+                  goto done ;
+               }
+            }
+
             if ( pRequest->header.routeID.columns.nodeID == nodeID )
             {
                boMatcher = BSON( CAT_GROUPID_NAME << groupID ) ;
@@ -288,15 +304,11 @@ namespace engine
                                  CAT_PRIMARY_NAME <<
                                  pRequest->header.routeID.columns.nodeID ) ;
             }
-            BSONObj boComment = BSON( CAT_PRIMARY_NAME << nodeID ) ;
-            BSONObjBuilder bobUpdater ;
-            bobUpdater.append( "$set", boComment ) ;
-            boUpdater = bobUpdater.obj() ;
+            boUpdater = BSON( "$set" << BSON( CAT_PRIMARY_NAME << nodeID ) ) ;
          }
 
-         BSONObj hint ;
          rc = rtnUpdate ( CAT_NODE_INFO_COLLECTION, boMatcher, boUpdater,
-                          hint, 0, _pEduCB, _pDmsCB, _pDpsCB, w ) ;
+                          BSONObj(), 0, _pEduCB, _pDmsCB, _pDpsCB, w ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to set primary-node(rc=%d)",
                       rc ) ;
       }
