@@ -82,7 +82,7 @@ public class TestCreateIdIndex {
         assertEquals(canDelete, false);
         
         // once createIdIndex, delete can be execute
-        cl.createIdIndex();
+        cl.createIdIndex(new BasicBSONObject());
         try {
             cl.delete(new BasicBSONObject(strAge, iAge));
             canDelete = true;
@@ -118,7 +118,7 @@ public class TestCreateIdIndex {
         assertEquals(canUpdate, false);
         
         // once createIdIndex, delete can be execute
-        cl.createIdIndex();
+        cl.createIdIndex(new BasicBSONObject());
         try {
             cl.update(new BasicBSONObject(strAge, iAge), modifier, null);;
             canUpdate = true;

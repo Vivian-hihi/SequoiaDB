@@ -1280,20 +1280,26 @@ public class DBCollection {
 	}
 	
 	/**
-     * @fn void createIdIndex()
+     * @fn void createIdIndex(BSONObject options)
      * @brief Create an id index
-     * @param null
+     * @param options can be empty or specify option. e.g. {Offline:true}
      * @exception com.sequoiadb.exception.BaseException
      */
-    public void createIdIndex() throws BaseException {
+    public void createIdIndex(BSONObject options) throws BaseException {
         BSONObject tmp = new BasicBSONObject();
         tmp.put(SequoiadbConstants.FIELD_NAME_NAME, 
                 SequoiadbConstants.SDB_ALTER_CRT_ID_INDEX);
-        tmp.put(SequoiadbConstants.FIELD_NAME_ARGS, null);
+        if(options.isEmpty()) {
+            tmp.put(SequoiadbConstants.FIELD_NAME_ARGS, null);
+        }
+        else {
+            tmp.put(SequoiadbConstants.FIELD_NAME_ARGS, options);
+        }
         
-        BSONObject options = new BasicBSONObject();
-        options.put(SequoiadbConstants.FIELD_NAME_ALTER, tmp);
-        alterCollection(options);
+        
+        BSONObject innerOptions = new BasicBSONObject();
+        innerOptions.put(SequoiadbConstants.FIELD_NAME_ALTER, tmp);
+        alterCollection(innerOptions);
     }
     
     /**
