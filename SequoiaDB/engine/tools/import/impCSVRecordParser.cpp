@@ -989,6 +989,7 @@ namespace import
       _skipSpace(&str, len);
       if (0 != len)
       {
+         rc = SDB_INVALIDARG;
          goto error;
       }
 
@@ -1071,6 +1072,7 @@ namespace import
       _skipSpace(&str, len);
       if (0 != len)
       {
+         rc = SDB_INVALIDARG;
          goto error;
       }
 
@@ -1144,6 +1146,7 @@ namespace import
 
       if (SDB_OK != rc)
       {
+         rc = SDB_INVALIDARG;
          goto error;
       }
 
@@ -1221,6 +1224,7 @@ namespace import
       _skipSpace(&str, len);
       if (0 != len)
       {
+         rc = SDB_INVALIDARG;
          goto error;
       }
 
@@ -1289,6 +1293,7 @@ namespace import
       _skipSpace(&str, len);
       if (0 != len)
       {
+         rc = SDB_INVALIDARG;
          goto error;
       }
 
