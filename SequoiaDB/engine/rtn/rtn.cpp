@@ -451,17 +451,15 @@ namespace engine
                                                          DMS_SU_FILENAME_SZ,
                                                          sequence ) )
                   {
-                     PD_LOG ( PDDEBUG, "Candidate Filename %s", pFileName ) ;
+                     PD_LOG ( PDDEBUG, "Candidate Filename: %s", pFileName ) ;
                      storageUnit = SDB_OSS_NEW dmsStorageUnit ( csName,
                                                                 sequence ) ;
                      PD_CHECK ( storageUnit, SDB_OOM, error, PDERROR,
                                 "Failed to allocate dmsStorageUnit for %s",
                                 dir_iter->path().string().c_str() ) ;
 
-                     // open the storage unit without attempt to create new
-                     // container, if we can't open the container, maybe it's
-                     // just invalid, let's continue open other storage units
-                     // without this one
+                     // open collection space file failed, need report error
+                     // and restart
                      rc = storageUnit->open ( dataPath,
                                               indexPath,
                                               lobPath,
@@ -470,10 +468,11 @@ namespace engine
                      {
                         SDB_OSS_DEL storageUnit ;
                         storageUnit = NULL ;
-                        PD_LOG ( PDWARNING, "Failed to open storage unit %s",
-                                 dir_iter->path().string().c_str() ) ;
-                        rc = SDB_OK ;
-                        continue ;
+                        PD_LOG ( PDSEVERE, "Failed to open storage unit[%s], "
+                                 "rc: %d", dir_iter->path().string().c_str(),
+                                 rc ) ;
+                        PMD_RESTART_DB( rc ) ;
+                        goto error ;
                      }
 
                      rc = dmsCB->addCollectionSpace ( csName, sequence,
@@ -483,20 +482,18 @@ namespace engine
                      {
                         SDB_OSS_DEL storageUnit ;
                         storageUnit = NULL ;
-                        if ( SDB_DMS_CS_EXIST == rc )
-                        {
-                           PD_LOG ( PDWARNING, "Failed to add collection since "
-                                    "it's already exist: %s", csName ) ;
-                        }
-                        else
-                        {
-                           PD_LOG ( PDWARNING, "Failed to add collection, rc: "
-                                    "%d", rc ) ;
-                        }
-                        rc = SDB_OK ;
-                        continue ;
+                        PD_LOG( PDSEVERE, "Failed to add collection "
+                                "space[%s], rc: %d", csName, rc ) ;
+                        PMD_RESTART_DB( rc ) ;
+                        goto error ;
                      }
                   } // if ( rtnVerifyCollectionSpaceFileName
+                  else
+                  {
+                     PD_LOG( PDWARNING, "Found unknow file[%s] when load "
+                             "collection spaces, ignored",
+                             dir_iter->path().string().c_str() ) ;
+                  }
                } //  if ( fs::is_regular_file(dir_iter->status()))
             } //for ( fs::directory_iterator dir_iter(dbDir)
          } // if ( fs::exists(dbDir) && fs::is_directory(dbDir) )
