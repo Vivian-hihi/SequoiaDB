@@ -74,7 +74,7 @@ namespace engine
 
       const static UINT32 maxSliceTime = 30 * OSS_ONE_SEC ;
       /// silence time must be higher than brk time.
-      if ( pmdGetOptionCB()->sharingBreakTime() + 1000 <= _timeout() &&
+      if ( pmdGetOptionCB()->sharingBreakTime() + 1000 <= _timeout() ||
            maxSliceTime <= _timeout() )
       {
          next = CLS_ELECTION_STATUS_SEC ;
