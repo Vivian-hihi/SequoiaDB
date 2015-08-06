@@ -1249,7 +1249,7 @@ namespace engine
             BSONObj shardKeyObj = BSON ( "key"<<shardingKey<<"name"<<
                                          IXM_SHARD_KEY_NAME<<"v"<<0 ) ;
             rc = rtnCreateIndexCommand ( pCollection, shardKeyObj,
-                                         cb, dmsCB, dpsCB, TRUE ) ;\
+                                         cb, dmsCB, dpsCB, TRUE ) ;
             if ( SDB_IXM_REDEF == rc || SDB_IXM_EXIST_COVERD_ONE == rc )
             {
                /// same defined index already exists.
