@@ -550,7 +550,15 @@ namespace import
       str += intLen;
       len -= intLen;
 
-      if ('.' != *str)
+      if ('E' == *str || 'e' == *str)
+      {
+         str++;
+         len--;
+         type = CSV_TYPE_DOUBLE;
+         num = integer;
+         goto exp;
+      }
+      else if ('.' != *str)
       {
          if (integer >= CSV_INT_MIN && integer <= CSV_INT_MAX)
          {
@@ -590,7 +598,14 @@ namespace import
       str += decLen;
       len -= decLen;
       valueLength += decLen;
-      num = (FLOAT64)integer + (FLOAT64)decimal / pow(10.0, decLen);
+      if (integer > 0)
+      {
+         num = (FLOAT64)integer + (FLOAT64)decimal / pow(10.0, decLen);
+      }
+      else
+      {
+         num = (FLOAT64)integer - (FLOAT64)decimal / pow(10.0, decLen);
+      }
 
       if ('E' != *str && 'e' != *str)
       {
@@ -602,6 +617,7 @@ namespace import
       str++;
       len--;
 
+   exp:
       if (!isdigit(*str) && '+' != *str && '-' != *str)
       {
          value.doubleVal = num;
