@@ -71,6 +71,7 @@ int main(int argc, char* argv[])
       goto done;
    }
 
+   try
    {
       Routine routine(options);
 
@@ -81,6 +82,10 @@ int main(int argc, char* argv[])
       }
 
       routine.printStatistics();
+   }
+   catch(std::exception &e)
+   {
+      PD_LOG(PDERROR, "unexpected err happened:%s", e.what());
    }
 
 done:

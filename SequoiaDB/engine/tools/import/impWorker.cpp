@@ -43,7 +43,14 @@ namespace import
       SDB_ASSERT(NULL != arg, "arg can't be NULL");
 
       self = (WorkerThread*)arg;
-      self->routine(self->args);
+      try
+      {
+         self->routine(self->args);
+      }
+      catch(std::exception &e)
+      {
+         PD_LOG(PDERROR, "unexpected err happened:%s", e.what());
+      }
       return SDB_OK;
    }
 
@@ -111,7 +118,14 @@ namespace import
       ret = pthread_sigmask(SIG_BLOCK, &sigset, NULL);
       SDB_ASSERT(ret == 0, "");
 
-      self->routine(self->args);
+      try
+      {
+         self->routine(self->args);
+      }
+      catch(std::exception &e)
+      {
+         PD_LOG(PDERROR, "unexpected err happened:%s", e.what());
+      }
       return NULL;
    }
 
