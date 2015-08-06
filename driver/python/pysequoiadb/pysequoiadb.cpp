@@ -2252,20 +2252,24 @@ error:
 
 __METHOD_IMP(cl_create_id_index)
 {
-   INT32 rc           = SDB_OK ;
-   PYOBJECT *obj      = NULL ;
-   sdbCollection *cl  = NULL ;
+   INT32 rc                         = SDB_OK ;
+   PYOBJECT *obj                    = NULL ;
+   PYOBJECT *option                 = NULL ;
+   sdbCollection *cl                = NULL ;
+   const bson::BSONObj *bson_option = NULL ;
 
-   if ( !PARSE_PYTHON_ARGS(args, "O", &obj) )
+   if ( !PARSE_PYTHON_ARGS(args, "OO", &obj, &option) )
    {
       rc = SDB_INVALIDARG ;
       goto error ;
    }
 
    CAST_PYOBJECT_TO_COBJECT( obj, sdbCollection, cl ) ;
-   rc = cl->createIdIndex() ;
+   CAST_PYBSON_TO_CPPBSON( option, bson_option ) ;
+   rc = cl->createIdIndex(*bson_option) ;
 
 done:
+   DELETE_CPPOBJECT( bson_option ) ;
    return MAKE_RETURN_INT(rc) ;
 error:
    goto done ;

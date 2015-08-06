@@ -1254,9 +1254,13 @@ class collection(object):
       except SDBBaseError:
             raise
 
-   def create_id_index(self):
+   def create_id_index(self, options):
+      if not isinstance(options, dict):
+         raise SDBTypeError("options must be an instance of dict")
+
+      bson_options = bson.BSON.encode(options)
       try:
-         rc = sdb.cl_create_id_index(self._cl)
+         rc = sdb.cl_create_id_index(self._cl, bson_options)
          pysequoiadb._raise_if_error("Create id index failed", rc)
       except SDBBaseError:
          raise

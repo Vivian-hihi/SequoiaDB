@@ -131,7 +131,7 @@
 -130 = Failed to assign data node from coordinator node
 -131 = PHP driver internal error
 -132 = Failed to send the message
--133 = Unable to find the group information on catalog
+-133 = No activated group information on catalog
 -134 = Remote-node is disconnected
 -135 = Unable to find the catalog information
 -136 = Failed to update catalog
@@ -158,7 +158,7 @@
 -157 = Invalid node configuration
 -158 = Group is empty
 -159 = The operation is for coord node only
--160 = Failed to operate on node only
+-160 = Failed to operate on node
 -161 = The mutex job already exist
 -162 = The specified job does not exist
 -163 = The catalog information is corrupted
@@ -294,3 +294,5 @@
 -293 = The command is in local mode
 -294 = The object is not a special object in sdb shell
 -295 = The specified user already exist
+-296 = The collection is empty
+-297 = LOB sequence exists
