@@ -1217,8 +1217,7 @@ namespace engine
       {
          su = NULL ;
          dmsStorageUnitID suID = (*it).second ;
-         //ossScopedLock lock ( _latchVec[suID], SHARED ) ;
-         ossScopedRWLock lock ( _latchVec[suID], SHARED ) ;
+
          SDB_DMS_CSCB *cscb = _cscbVec[suID] ;
          if ( !cscb )
             continue ;
@@ -1254,7 +1253,7 @@ namespace engine
       for ( it = _cscbNameMap.begin(); it != _cscbNameMap.end(); it++ )
       {
          dmsStorageUnitID suID = (*it).second ;
-         ossScopedRWLock lock ( _latchVec[suID], SHARED ) ;
+
          SDB_DMS_CSCB *cscb = _cscbVec[suID] ;
          if ( !cscb )
          {
@@ -1321,7 +1320,7 @@ namespace engine
       {
          su = NULL ;
          dmsStorageUnitID suID = (*it).second ;
-         ossScopedRWLock lock ( _latchVec[suID], SHARED ) ;
+
          SDB_DMS_CSCB *cscb = _cscbVec[suID] ;
          if ( !cscb )
          {
@@ -1354,7 +1353,7 @@ namespace engine
       {
          su = NULL ;
          dmsStorageUnitID suID = (*it).second ;
-         ossScopedRWLock lock ( _latchVec[suID], SHARED ) ;
+
          SDB_DMS_CSCB *cscb = _cscbVec[suID] ;
          if ( !cscb )
          {

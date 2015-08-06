@@ -330,17 +330,42 @@ namespace engine
       {
          if ( DMS_IS_MB_INUSE ( _dmsMME->_mbList[i]._flag ) )
          {
-            _dmsMME->_mbList[i]._totalRecords = _mbStatInfo[i]._totalRecords ;
-            _dmsMME->_mbList[i]._totalDataPages =
-               _mbStatInfo[i]._totalDataPages ;
-            _dmsMME->_mbList[i]._totalIndexPages =
-               _mbStatInfo[i]._totalIndexPages ;
-            _dmsMME->_mbList[i]._totalDataFreeSpace =
-               _mbStatInfo[i]._totalDataFreeSpace ;
-            _dmsMME->_mbList[i]._totalIndexFreeSpace =
-               _mbStatInfo[i]._totalIndexFreeSpace ;
-            _dmsMME->_mbList[i]._totalLobPages =
-               _mbStatInfo[i]._totalLobPages ;
+            if ( _dmsMME->_mbList[i]._totalRecords !=
+                 _mbStatInfo[i]._totalRecords )
+            {
+               _dmsMME->_mbList[i]._totalRecords =
+                  _mbStatInfo[i]._totalRecords ;
+            }
+            if ( _dmsMME->_mbList[i]._totalDataPages !=
+                 _mbStatInfo[i]._totalDataPages )
+            {
+               _dmsMME->_mbList[i]._totalDataPages =
+                  _mbStatInfo[i]._totalDataPages ;
+            }
+            if ( _dmsMME->_mbList[i]._totalIndexPages !=
+                 _mbStatInfo[i]._totalIndexPages )
+            {
+               _dmsMME->_mbList[i]._totalIndexPages =
+                  _mbStatInfo[i]._totalIndexPages ;
+            }
+            if ( _dmsMME->_mbList[i]._totalDataFreeSpace !=
+                 _mbStatInfo[i]._totalDataFreeSpace )
+            {
+               _dmsMME->_mbList[i]._totalDataFreeSpace =
+                  _mbStatInfo[i]._totalDataFreeSpace ;
+            }
+            if ( _dmsMME->_mbList[i]._totalIndexFreeSpace !=
+                 _mbStatInfo[i]._totalIndexFreeSpace )
+            {
+               _dmsMME->_mbList[i]._totalIndexFreeSpace =
+                  _mbStatInfo[i]._totalIndexFreeSpace ;
+            }
+            if ( _dmsMME->_mbList[i]._totalLobPages !=
+                 _mbStatInfo[i]._totalLobPages )
+            {
+               _dmsMME->_mbList[i]._totalLobPages =
+                  _mbStatInfo[i]._totalLobPages ;
+            }
          }
       }
       PD_TRACE_EXIT ( SDB__DMSSTORAGEDATA_SYNCMEMTOMMAP ) ;

@@ -34,7 +34,8 @@
 #include "clsLocalValidation.hpp"
 #include "pmdEDU.hpp"
 #include "rtn.hpp"
-#include "rtnDataSet.hpp"
+#include "dmsCB.hpp"
+
 
 using namespace bson ;
 
@@ -49,10 +50,11 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       const UINT32 pLen = 512 ;
-      SINT64 contextID = -1 ;
       SDB_RTNCB *rtnCB = sdbGetRTNCB() ;
-      _pmdEDUCB *cb = pmdGetThreadEDUCB() ;
-      /// malloc
+      SDB_DMSCB *dmsCB = sdbGetDMSCB() ;
+      std::set<monCollectionSpace> csList ;
+
+      /// 1. malloc
       CHAR *p = (CHAR *)SDB_OSS_MALLOC( pLen ) ;
       if ( NULL == p )
       {
@@ -64,7 +66,7 @@ namespace engine
       *p = '\0' ;
       *( p + pLen - 1 ) = '\0' ;
 
-      /// create new thread
+      /// 2. create new thread
       /*try
       {
          boost::thread t( func ) ;
@@ -78,56 +80,18 @@ namespace engine
          goto error ;
       }*/
 
-      /// dump dms
-      {
-         BSONObj obj ;
-         rc = rtnSnapCommandEntry( CMD_SNAPSHOT_COLLECTIONSPACES,
-                                   obj, obj, obj, 0,
-                                   cb, 0, 1, sdbGetDMSCB(),
-                                   rtnCB, contextID, FALSE ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDERROR, "failed to do snapshot:%d", rc ) ;
-            goto error ;
-         }
+      /// 3. dump dms
+      dmsCB->dumpInfo( csList, TRUE ) ;
 
-         {
-            _rtnDataSet ds( contextID, cb ) ;
-            /// contextID has been managed by ds.
-            contextID = -1 ;
-            do
-            {
-               rc = ds.next( obj ) ;
-               if ( SDB_DMS_EOC == rc )
-               {
-                  rc = SDB_OK ;
-                  break ;
-               }
-               else if ( SDB_OK == rc )
-               {
-                  continue ;
-               }
-               else
-               {
-                  PD_LOG( PDERROR, "failed to get data of snapshot:%d", rc ) ;
-                  goto error ;
-               }
-            } while ( TRUE ) ;
-         }
-      }
-
-      /// update validation tick
+      /// 4. update validation tick
       pmdUpdateValidationTick() ;
+
    done:
       SAFE_OSS_FREE( p ) ;
-      if ( -1 != contextID )
-      {
-         rtnCB->contextDelete( contextID, cb ) ;
-         contextID = -1 ;
-      }
       return rc ;
    error:
       goto done ;
    }
+
 }
 
