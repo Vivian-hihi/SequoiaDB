@@ -2362,9 +2362,18 @@ namespace engine
 
    void _rtnContextDump::_toString( stringstream &ss )
    {
-      ss << ",Orderby:" << _orderby.toString().c_str()
-         << ",NumToReturn:" << _numToReturn
-         << ",NumToSkip:" << _numToSkip ;
+      if ( !_orderby.isEmpty() )
+      {
+         ss << ",Orderby:" << _orderby.toString().c_str() ;
+      }
+      if ( _numToReturn > 0 )
+      {
+         ss << ",NumToReturn:" << _numToReturn ;
+      }
+      if ( _numToSkip > 0 )
+      {
+         ss << ",NumToSkip:" << _numToSkip ;
+      }
    }
 
    /*
@@ -2743,9 +2752,18 @@ namespace engine
 
    void _rtnContextCoord::_toString( stringstream &ss )
    {
-      ss << ",Orderby:" << _orderBy.toString().c_str()
-         << ",NumToReturn:" << _numToReturn
-         << ",NumToSkip:" << _numToSkip ;
+      if ( !_orderBy.isEmpty() )
+      {
+         ss << ",Orderby:" << _orderBy.toString().c_str() ;
+      }
+      if ( _numToReturn > 0 )
+      {
+         ss << ",NumToReturn:" << _numToReturn ;
+      }
+      if ( _numToSkip > 0 )
+      {
+         ss << ",NumToSkip:" << _numToSkip ;
+      }
    }
 
    INT32 _rtnContextCoord::_reOrderSubContext()
@@ -4268,10 +4286,19 @@ namespace engine
 
    void _rtnContextMainCL::_toString( stringstream &ss )
    {
-      ss << ",Orderby:" << _options._orderBy.toString().c_str()
-         << ",IsShardingOrder:" << _includeShardingOrder
-         << ",NumToReturn:" << _numToReturn
-         << ",NumToSkip:" << _numToSkip ;
+      if ( !_options._orderBy.isEmpty() )
+      {
+         ss << ",Orderby:" << _options._orderBy.toString().c_str() ;
+         ss << ",IsShardingOrder:" << _includeShardingOrder ;
+      }
+      if ( _numToReturn > 0 )
+      {         
+         ss << ",NumToReturn:" << _numToReturn ;
+      }
+      if ( _numToSkip > 0 )
+      {
+         ss << ",NumToSkip:" << _numToSkip ;
+      }
    }
 
    INT32 _rtnContextMainCL::_prepareDataByOrder( _pmdEDUCB *cb )
@@ -4708,9 +4735,18 @@ namespace engine
 
    void _rtnContextSort::_toString( stringstream &ss )
    {
-      ss << ",NumToReturn:" << _limit
-         << ",NumToSkip:" << _skip
-         << ",Orderby:" << _orderby.toString().c_str() ;
+      if ( _limit > 0 )
+      {
+         ss << ",NumToReturn:" << _limit ;
+      }
+      if ( _skip > 0 )
+      {
+         ss << ",NumToSkip:" << _skip ;
+      }
+      if ( !_orderby.isEmpty() )
+      {
+         ss << ",Orderby:" << _orderby.toString().c_str() ;
+      }
    }
 
    _rtnContextQgmSort::_rtnContextQgmSort( INT64 contextID, UINT64 eduID )
