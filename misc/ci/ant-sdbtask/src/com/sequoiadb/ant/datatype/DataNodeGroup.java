@@ -34,7 +34,7 @@ public class DataNodeGroup extends NodeGroup {
 					System.out.println("host :"+nodeInfo.getHost()+"\n" +
 							"port : " +nodeInfo.getBasePort() +"\n" +
 							"path : " + nodeInfo.getDbpath() + "\n" +
-							"configMap :"+nodeInfo.getConfigMap().toString()
+							"configMap :"+nodeInfo.getConfigMap().toString() + "\n\n\n"
 							);
 					
 					group.createNode(nodeInfo.getHost(),
@@ -61,7 +61,7 @@ public class DataNodeGroup extends NodeGroup {
 
 		ReplicaGroup group = sdb.getReplicaGroup(getName());
 
-		// Wait for group select master, max wait time is 120sec;
+		// Wait for group select master, max wait time is 600sec;
 		int i = 0;
 		while (true) {
 			try {
@@ -73,6 +73,7 @@ public class DataNodeGroup extends NodeGroup {
 			} 
 			
 			i++;
+			System.out.println("The Group : " + this.getName() + " select master time is " + i + " seconds.");
 			if (i >= timeout) {
 				throw new BuildException("Group:" + this.getName()
 						+ " select master timeout.");
