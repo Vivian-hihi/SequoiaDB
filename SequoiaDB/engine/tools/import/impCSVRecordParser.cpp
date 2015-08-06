@@ -1961,7 +1961,8 @@ namespace import
             ss << field.defaultValue.boolVal;
             break;
          case CSV_TYPE_STRING:
-            ss << "[" << field.defaultValue.strVal.str
+            ss << "[" << string(field.defaultValue.strVal.str,
+                                field.defaultValue.strVal.length)
                << "](length: " << field.defaultValue.strVal.length << ")";
             break;
          case CSV_TYPE_TIMESTAMP:
@@ -1973,15 +1974,18 @@ namespace import
             ss << field.defaultValue.dateVal;
             break;
          case CSV_TYPE_OID:
-            ss << "[" << field.defaultValue.oidVal.str
+            ss << "[" << string(field.defaultValue.oidVal.str,
+                                field.defaultValue.oidVal.length)
                << "](length: " << field.defaultValue.oidVal.length << ")";
             break;
          case CSV_TYPE_REGEX:
-            ss << "pattern: [" << field.defaultValue.regexVal.pattern
+            ss << "pattern: [" << string(field.defaultValue.regexVal.pattern,
+                                         field.defaultValue.regexVal.patternLen)
                << "], option: [";
             if (NULL != field.defaultValue.regexVal.option)
             {
-               ss << field.defaultValue.regexVal.option;
+               ss << string(field.defaultValue.regexVal.option,
+                            field.defaultValue.regexVal.optionLen);
             }
             else
             {
@@ -1992,7 +1996,8 @@ namespace import
          case CSV_TYPE_BINARY:
             ss << "type: [" << field.defaultValue.binaryVal.type
                << "], str: ["
-               << field.defaultValue.binaryVal.str
+               << string(field.defaultValue.binaryVal.str,
+                         field.defaultValue.binaryVal.binLen)
                << "], binLen: ["
                << field.defaultValue.binaryVal.binLen
                << "]";
