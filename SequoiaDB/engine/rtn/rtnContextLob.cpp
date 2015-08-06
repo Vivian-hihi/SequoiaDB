@@ -275,6 +275,17 @@ namespace engine
       goto done ;
    }
 
+   void _rtnContextLob::_toString( stringstream &ss )
+   {
+      if ( _stream )
+      {
+         ss << ",Name:" << _stream->getFullName()
+            << ",OID:" << _stream->getOID().toString().c_str()
+            << ",CurOffset:" << _stream->curOffset()
+            << ",IsReadOnly:" << _stream->isReadonly() ;
+      }
+   }
+
    /*
       _rtnContextLobFetcher implement
    */

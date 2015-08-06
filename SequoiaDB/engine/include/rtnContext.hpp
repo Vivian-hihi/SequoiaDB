@@ -504,6 +504,7 @@ namespace engine
 
       protected:
          virtual INT32  _prepareData( _pmdEDUCB *cb ) ;
+         virtual void   _toString( stringstream &ss ) ;
 
       private:
          // rest number of records to expect, -1 means select all
@@ -629,6 +630,7 @@ namespace engine
 
       protected:
          virtual INT32  _prepareData( _pmdEDUCB *cb ) ;
+         virtual void   _toString( stringstream &ss ) ;
 
       private:
          INT32    _getSubData () ;
@@ -766,6 +768,7 @@ namespace engine
       BOOLEAN requireOrder () const;
    protected:
       virtual INT32 _prepareData( _pmdEDUCB *cb );
+      virtual void  _toString( stringstream &ss ) ;
 
    private:
       INT32 _prepareSubCTXData( SINT64 contextID,
@@ -844,6 +847,7 @@ namespace engine
 
    protected:
       virtual INT32 _prepareData( _pmdEDUCB *cb ){ return SDB_DMS_EOC; };
+      virtual void  _toString( stringstream &ss ) ;
 
    private:
       INT32 _tryLock( const CHAR *pCollectionName,
@@ -885,6 +889,7 @@ namespace engine
 
    protected:
       virtual INT32 _prepareData( _pmdEDUCB *cb ){ return SDB_DMS_EOC; };
+      virtual void  _toString( stringstream &ss ) ;
 
    private:
       INT32 _tryLock( const CHAR *pCollectionName,
@@ -898,8 +903,8 @@ namespace engine
       SDB_DMSCB            *_pDmsCB;
       _clsCatalogAgent     *_pCatAgent;
       dpsTransCB           *_pTransCB;
-      std::string          _collectionName ;
-      std::string          _clShortName ;
+      CHAR                 _collectionName[ DMS_COLLECTION_FULL_NAME_SZ + 1 ] ;
+      const CHAR           *_clShortName ;
       BOOLEAN              _gotDmsCBWrite ;
       BOOLEAN              _hasLock ;
       BOOLEAN              _hasDropped ;
@@ -933,6 +938,7 @@ namespace engine
 
    protected:
       virtual INT32 _prepareData( _pmdEDUCB *cb ){ return SDB_DMS_EOC; };
+      virtual void  _toString( stringstream &ss ) ;
 
    private:
       void _clean( _pmdEDUCB *cb );
@@ -964,6 +970,7 @@ namespace engine
    protected:
       virtual INT32     _prepareData( _pmdEDUCB *cb ) ;
       virtual BOOLEAN   _canPrefetch () const { return FALSE ; }
+      virtual void      _toString( stringstream &ss ) ;
 
    private:
       INT32 _prepareToExplain( _pmdEDUCB *cb ) ;

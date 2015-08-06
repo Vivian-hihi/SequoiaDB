@@ -111,6 +111,7 @@ namespace engine
 
    protected:
       virtual INT32 _prepareData( _pmdEDUCB *cb ) ;
+      virtual void  _toString( stringstream &ss ) ;
 
    private:
       INT32 _open( _pmdEDUCB *cb ) ;

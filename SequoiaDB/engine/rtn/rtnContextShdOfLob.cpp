@@ -254,6 +254,15 @@ namespace engine
       return SDB_OK ;
    }
 
+   void _rtnContextShdOfLob::_toString( stringstream &ss )
+   {
+      ss << ",Name:" << _fullName.c_str()
+         << ",OID:" << _oid.toString().c_str()
+         << ",Mode:" << _mode
+         << ",IsMainShard:" << _isMainShd
+         << ",BuffLen:" << _bufLen ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNCONTEXTSHDOFLOB__OPEN, "_rtnContextShdOfLob::_open" )
    INT32 _rtnContextShdOfLob::_open( _pmdEDUCB *cb )
    {

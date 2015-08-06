@@ -215,7 +215,10 @@ namespace engine
    {
       stringstream ss ;
 
-      ss << "BufferSize:" << _resultBufferSize ;
+      ss << "IsOpened:" << _isOpened
+         << ",HitEnd:" << _hitEnd
+         << ",BufferSize:" << _resultBufferSize ;
+
       if ( _totalRecords > 0 )
       {
          ss << ",TotalRecordNum:" << _totalRecords ;
@@ -224,12 +227,16 @@ namespace engine
       {
          ss << ",BufferRecordNum:" << _bufferNumRecords ;
       }
-      if ( _matcher && !_matcher->getMatchPattern().isEmpty() )
-      {
-         ss << ",Matcher:" << _matcher->getMatchPattern().toString() ;
-      }
 
-      _toString( ss ) ;
+      if ( isOpened() )
+      {
+         if ( _matcher && !_matcher->getMatchPattern().isEmpty() )
+         {
+            ss << ",Matcher:" << _matcher->getMatchPattern().toString() ;
+         }
+
+         _toString( ss ) ;
+      }
 
       return ss.str() ;
    }
@@ -1304,8 +1311,8 @@ namespace engine
    }
 
    INT32 _rtnContextData::_prepareByIXScan( pmdEDUCB *cb,
-                                                 DMS_ACCESS_TYPE accessType,
-                                                 vector<INT64>* dollarList )
+                                            DMS_ACCESS_TYPE accessType,
+                                            vector<INT64>* dollarList )
    {
       INT32 rc                   = SDB_OK ;
       rtnIXScanner *scanner      = _scanner ;
@@ -2353,6 +2360,13 @@ namespace engine
       return SDB_DMS_EOC ;
    }
 
+   void _rtnContextDump::_toString( stringstream &ss )
+   {
+      ss << ",Orderby:" << _orderby.toString().c_str()
+         << ",NumToReturn:" << _numToReturn
+         << ",NumToSkip:" << _numToSkip ;
+   }
+
    /*
       _rtnContextCoord implement
    */
@@ -2725,6 +2739,13 @@ namespace engine
       return rc ;
    error:
       goto done ;
+   }
+
+   void _rtnContextCoord::_toString( stringstream &ss )
+   {
+      ss << ",Orderby:" << _orderBy.toString().c_str()
+         << ",NumToReturn:" << _numToReturn
+         << ",NumToSkip:" << _numToSkip ;
    }
 
    INT32 _rtnContextCoord::_reOrderSubContext()
@@ -3939,15 +3960,15 @@ namespace engine
          const string &clName = *( _subs.begin() ) ;
          rc = rtnQuery( clName.c_str(),
                         _options._selector,
-                         _options._query,
-                         _options._orderBy,
-                         _options._hint,
-                         _options._flag,
-                         cb, _options._skip,
-                         _options._limit,
-                         sdbGetDMSCB(), rtnCB,
-                         context,
-                         &contextObj ) ;
+                        _options._query,
+                        _options._orderBy,
+                        _options._hint,
+                        _options._flag,
+                        cb, _options._skip,
+                        _options._limit,
+                        sdbGetDMSCB(), rtnCB,
+                        context,
+                        &contextObj ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "failed to query on cl:%s, rc:%d",
@@ -4243,6 +4264,14 @@ namespace engine
       SDB_ASSERT( _subs.empty(), "should be empty" ) ;
       rc = _prepareDataByOrder( cb );
       return rc;
+   }
+
+   void _rtnContextMainCL::_toString( stringstream &ss )
+   {
+      ss << ",Orderby:" << _options._orderBy.toString().c_str()
+         << ",IsShardingOrder:" << _includeShardingOrder
+         << ",NumToReturn:" << _numToReturn
+         << ",NumToSkip:" << _numToSkip ;
    }
 
    INT32 _rtnContextMainCL::_prepareDataByOrder( _pmdEDUCB *cb )
@@ -4677,6 +4706,13 @@ namespace engine
       goto done ;
    }
 
+   void _rtnContextSort::_toString( stringstream &ss )
+   {
+      ss << ",NumToReturn:" << _limit
+         << ",NumToSkip:" << _skip
+         << ",Orderby:" << _orderby.toString().c_str() ;
+   }
+
    _rtnContextQgmSort::_rtnContextQgmSort( INT64 contextID, UINT64 eduID )
    :_rtnContextBase( contextID, eduID ),
     _qp(NULL)
@@ -4874,6 +4910,15 @@ namespace engine
       goto done;
    }
 
+   void _rtnContextDelCS::_toString( stringstream &ss )
+   {
+      ss << ",Name:" << _name
+         << ",GotLogSize:" << _gotLogSize
+         << ",GotDMSWrite:" << _gotDmsCBWrite
+         << ",LogicalID:" << _logicCSID
+         << ",Step:" << _status ;
+   }
+
    INT32 _rtnContextDelCS::getMore( INT32 maxNumToReturn,
                                     rtnContextBuf &buffObj,
                                     _pmdEDUCB *cb )
@@ -5005,6 +5050,8 @@ namespace engine
       _hasDropped    = FALSE ;
       _mbContext     = NULL ;
       _su            = NULL ;
+      _clShortName   = NULL ;
+      ossMemset( _collectionName, 0, sizeof( _collectionName ) ) ;
    }
 
    _rtnContextDelCL::~_rtnContextDelCL()
@@ -5019,21 +5066,20 @@ namespace engine
    {
       INT32 rc                = SDB_OK ;
       dmsStorageUnitID suID   = DMS_INVALID_CS ;
-      const CHAR *pCollectionShortName = NULL;
 
-      rc = rtnResolveCollectionNameAndLock ( pCollectionName, _pDmsCB,
-                                             &_su, &pCollectionShortName,
+      ossStrncpy( _collectionName, pCollectionName,
+                  DMS_COLLECTION_FULL_NAME_SZ ) ;
+
+      rc = rtnResolveCollectionNameAndLock ( _collectionName, _pDmsCB,
+                                             &_su, &_clShortName,
                                              suID ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to resolve collection name"
-                   "(collection:%s, rc: %d)", pCollectionName, rc ) ;
-
-      _collectionName = pCollectionName ;
-      _clShortName    = pCollectionShortName ;
+                   "(collection:%s, rc: %d)", _collectionName, rc ) ;
 
       // lock collection
       if ( getDPSCB() && _pTransCB->isTransOn() )
       {
-         rc = _su->data()->getMBContext( &_mbContext, pCollectionShortName,
+         rc = _su->data()->getMBContext( &_mbContext, _clShortName,
                                          EXCLUSIVE ) ;
          PD_RC_CHECK( rc, PDERROR, "Get collection[%s] mb context failed, "
                       "rc: %d", pCollectionName, rc ) ;
@@ -5109,21 +5155,21 @@ namespace engine
          goto error ;
       }
       _pCatAgent->lock_w () ;
-      _pCatAgent->clear ( _collectionName.c_str() ) ;
+      _pCatAgent->clear ( _collectionName ) ;
       _pCatAgent->release_w () ;
-      pmdGetKRCB()->getClsCB()->invalidateCata( _collectionName.c_str() ) ;
+      pmdGetKRCB()->getClsCB()->invalidateCata( _collectionName ) ;
 
       // drop collection
-      rc = _su->data()->dropCollection ( _clShortName.c_str(), cb, getDPSCB(),
+      rc = _su->data()->dropCollection ( _clShortName, cb, getDPSCB(),
                                          TRUE, _mbContext ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "Failed to drop collection %s, rc: %d",
-                  _collectionName.c_str(), rc ) ;
+                  _collectionName, rc ) ;
          goto error ;
       }
 
-      _su->getAPM()->invalidatePlans ( _clShortName.c_str() ) ;
+      _su->getAPM()->invalidatePlans ( _clShortName ) ;
       _hasDropped = TRUE ;
 
       _clean( cb ) ;
@@ -5134,6 +5180,14 @@ namespace engine
       return rc;
    error:
       goto done;
+   }
+
+   void _rtnContextDelCL::_toString( stringstream &ss )
+   {
+      ss << ",Name:" << _collectionName
+         << ",GotDMSWrite:" << _gotDmsCBWrite
+         << ",HasLock:" << _hasLock
+         << ",HasDropped:" << _hasDropped ;
    }
 
    void _rtnContextDelCL::_clean( _pmdEDUCB *cb )
@@ -5320,6 +5374,12 @@ namespace engine
       goto done ;
    }
 
+   void _rtnContextDelMainCL::_toString( stringstream &ss )
+   {
+      ss << ",Name:" << _name
+         << ",Version:" << _version ;
+   }
+
    _rtnContextExplain::_rtnContextExplain( INT64 contextID,
                                            UINT64 eduID )
    :_rtnContextBase( contextID, eduID ),
@@ -5436,6 +5496,11 @@ namespace engine
       return rc ;
    error:
       goto done ;
+   }
+
+   void _rtnContextExplain::_toString( stringstream &ss )
+   {
+      ss << ",NeedRun:" << _needRun ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCONTEXTEXPLAIN__PREPARETOEXPLAIN, "_rtnContextExplain::_prepareToExplain" )
