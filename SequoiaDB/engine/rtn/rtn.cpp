@@ -45,6 +45,7 @@
 #include "boost/filesystem.hpp"
 #include "boost/filesystem/operations.hpp"
 #include "boost/filesystem/path.hpp"
+#include "pmdStartup.hpp"
 #include "pdTrace.hpp"
 #include "rtnTrace.hpp"
 
@@ -289,6 +290,77 @@ namespace engine
       return ret ;
    }
 
+   SDB_FILE_TYPE rtnParseFileName( const CHAR *pFileName )
+   {
+      SDB_FILE_TYPE fileType = SDB_FILE_UNKNOW ;
+
+      /// start up file
+      if ( 0 == ossStrcmp( pFileName, PMD_STARTUP_FILE_NAME ) )
+      {
+         fileType = SDB_FILE_STARTUP ;
+      }
+      else
+      {
+         /// <csname>.<num>.<posfix>
+         const CHAR *pDot = ossStrchr ( pFileName, '.' ) ;
+         const CHAR *pDotr = ossStrrchr ( pFileName, '.' ) ;
+
+         const CHAR *pSeqPos = NULL ;
+         UINT32 size = 0 ;
+         CHAR csName[ DMS_COLLECTION_SPACE_NAME_SZ + 1 ] = { 0 } ;
+
+         if ( !pDot || !pDotr || pDotr - pDot <= 1 || pDot == pFileName ||
+              *(pDotr + 1) == 0 || ossStrchr( pDot + 1, '.' ) != pDotr )
+         {
+            goto done ;
+         }
+
+         // check sequence
+         pSeqPos = pDot + 1 ;
+         while ( pSeqPos < pDotr )
+         {
+            if ( *pSeqPos < '0' || *pSeqPos > '9' )
+            {
+               goto done ;
+            }
+            ++pSeqPos ;
+         }
+
+         // cs name check
+         size = pDot - pFileName ;
+         if ( size > DMS_COLLECTION_SPACE_NAME_SZ )
+         {
+            goto done ;
+         }
+         ossStrncpy ( csName, pFileName, size ) ;
+         if ( SDB_OK != dmsCheckCSName( csName, TRUE ) )
+         {
+            goto done ;
+         }
+
+         // ext check
+         if ( 0 == ossStrcmp( pDotr + 1, DMS_DATA_SU_EXT_NAME ) )
+         {
+            fileType = SDB_FILE_DATA ;
+         }
+         else if ( 0 == ossStrcmp( pDotr + 1, DMS_INDEX_SU_EXT_NAME ) )
+         {
+            fileType = SDB_FILE_INDEX ;
+         }
+         else if ( 0 == ossStrcmp( pDotr + 1, DMS_LOB_META_SU_EXT_NAME ) )
+         {
+            fileType = SDB_FILE_LOBM ;
+         }
+         else if ( 0 == ossStrcmp( pDotr + 1, DMS_LOB_DATA_SU_EXT_NAME ) )
+         {
+            fileType = SDB_FILE_LOBD ;
+         }
+      }
+
+   done:
+      return fileType ;
+   }
+
    // load a single collection name from given path
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNLOADCS, "rtnLoadCollectionSpace" )
    INT32 rtnLoadCollectionSpace ( const CHAR *pCSName,
@@ -488,7 +560,7 @@ namespace engine
                         goto error ;
                      }
                   } // if ( rtnVerifyCollectionSpaceFileName
-                  else
+                  else if ( SDB_FILE_UNKNOW == rtnParseFileName( pFileName ) )
                   {
                      PD_LOG( PDWARNING, "Found unknow file[%s] when load "
                              "collection spaces, ignored",
