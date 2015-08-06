@@ -950,7 +950,6 @@ namespace engine
       // note each group is consists of 8 segments
       maxSegmentID = ceil (( _maxSegID + 1 - _dataSegID ) / 8.0f ) ;
       // always flush header and metadata
-      syncMemToMmap() ;
       for ( UINT32 i = 0; i < _dataSegID; ++i )
       {
          // we should check the header before every phyical flush, to make sure
