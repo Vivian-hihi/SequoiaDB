@@ -47,8 +47,13 @@ namespace import
       inline void recordsMemInc(INT64 size) { _recordsMem.add(size); }
       inline void recordsMemDec(INT64 size) { _recordsMem.sub(size); }
 
+      inline INT64 recordsNum() { return _recordsNum.fetch(); }
+      inline void recordsNumInc(INT64 size) { _recordsNum.add(size); }
+      inline void recordsNumDec(INT64 size) { _recordsNum.sub(size); }
+
    private:
       ossAtomicSigned64  _recordsMem;
+      ossAtomicSigned64  _recordsNum;
    };
 
    Monitor* impGetMonitor();

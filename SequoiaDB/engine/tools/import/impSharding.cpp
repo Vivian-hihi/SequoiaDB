@@ -97,6 +97,7 @@ namespace import
                   PD_LOG(PDERROR, "failed to log record, rc=%d", ret);
                }
                monitor->recordsMemDec(bson_size(record));
+               monitor->recordsNumDec(1);
                freeRecord(record);
                records->pop(i);
 

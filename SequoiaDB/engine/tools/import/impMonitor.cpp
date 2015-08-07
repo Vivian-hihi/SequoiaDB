@@ -33,7 +33,8 @@
 namespace import
 {
    Monitor::Monitor()
-   : _recordsMem(0)
+   : _recordsMem(0),
+     _recordsNum(0)
    {
    }
 

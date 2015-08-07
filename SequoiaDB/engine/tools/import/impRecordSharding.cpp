@@ -174,6 +174,8 @@ namespace import
          goto error;
       }
 
+      _isMainCL = _cataInfo.isMainCL();
+
       if (_cataInfo.isMainCL())
       {
          vector<string> subCLList;

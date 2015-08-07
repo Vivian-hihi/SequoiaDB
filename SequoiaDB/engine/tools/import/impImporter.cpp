@@ -124,12 +124,14 @@ namespace import
                   }
                }
                monitor->recordsMemDec(records->bsonSize());
+               monitor->recordsNumDec(records->size());
                freeRecordArray(&records);
                PD_LOG(PDERROR, "failed to import records, rc=%d", rc);
                continue;
             }
             self->_importedNum.add(records->size());
             monitor->recordsMemDec(records->bsonSize());
+            monitor->recordsNumDec(records->size());
          }
 
          freeRecordArray(&records);

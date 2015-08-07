@@ -247,6 +247,7 @@ namespace import
                      if (recordArray->full())
                      {
                         monitor->recordsMemInc(recordArray->bsonSize());
+                        monitor->recordsNumInc(recordArray->size());
                         recordArray->finish();
                         workQueue->push(recordArray);
                         countInBatch = 0;
@@ -256,7 +257,14 @@ namespace import
                         {
                            // records' memory is beyond the threshold,
                            // so wait a moment
-                           PD_LOG(PDEVENT, "records memory is beyond the threshold");
+                           INT64 recordsMem = monitor->recordsMem();
+                           INT64 recordsNum = monitor->recordsNum();
+                           PD_LOG(PDEVENT, "records memory is beyond the threshold,\n"
+                                  "records memory: %lld MB, thredshold: %lld MB,\n"
+                                  "records num: %lld, average record size %lld",
+                                  recordsMem / (1024 * 1024),
+                                  options->recordsMem() / (1024 * 1024)
+                                  recordsNum, recordsMem / recordsNum);
                            for(;;)
                            {
                               ossSleep(100);
