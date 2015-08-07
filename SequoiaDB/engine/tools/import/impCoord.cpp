@@ -33,7 +33,7 @@
 #include "../client/bson/bson.h"
 #include "pd.hpp"
 #include "ossUtil.hpp"
-#include <iostream>
+#include <sstream>
 
 namespace import
 {
@@ -338,9 +338,6 @@ namespace import
          else
          {
             i++;
-            /*std::cout << "{hostname:" << host.hostname
-                      << ", svcname:" << host.svcname << "}"
-                      << std::endl;*/
          }
       }
 
@@ -349,6 +346,19 @@ namespace import
          rc = SDB_SYS;
          PD_LOG(PDERROR, "failed to get coordinators, rc=%d", rc);
          goto error;
+      }
+      else
+      {
+         stringstream ss;
+
+         for (vector<Host>::iterator it = _coords.begin();
+              it != _coords.end(); it++)
+         {
+            Host& host = *it;
+            ss << host.hostname << ":" << host.svcname << ",";
+         }
+
+         PD_LOG(PDINFO, "%d hosts: %s", _coords.size(), ss.str().c_str());
       }
 
       _inited = TRUE;
