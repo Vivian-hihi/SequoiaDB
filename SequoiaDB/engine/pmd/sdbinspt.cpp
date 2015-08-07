@@ -59,6 +59,7 @@ namespace fs = boost::filesystem ;
 
 #define BUFFERSIZE          256
 #define OPTION_HELP         "help"
+#define OPTION_VERSION      "version"
 #define OPTION_DBPATH       "dbpath"
 #define OPTION_INDEXPATH    "indexpath"
 #define OPTION_OUTPUT       "output"
@@ -79,6 +80,7 @@ namespace fs = boost::filesystem ;
 #define COMMANDS_STRING( a, b ) (string(a) +string( b)).c_str()
 #define COMMANDS_OPTIONS \
        ( COMMANDS_STRING(OPTION_HELP, ",h"), "help" )\
+       ( COMMANDS_STRING(OPTION_VERSION, ",v"), "version" )\
        ( COMMANDS_STRING(OPTION_DBPATH, ",d"), boost::program_options::value<string>(), "database path" ) \
        ( COMMANDS_STRING(OPTION_INDEXPATH, ",x"), boost::program_options::value<string>(), "index path" ) \
        ( COMMANDS_STRING(OPTION_OUTPUT, ",o"), boost::program_options::value<string>(), "output file" ) \
@@ -261,6 +263,12 @@ INT32 resolveArgument ( po::options_description &desc, INT32 argc, CHAR **argv )
    {
       displayArg ( desc ) ;
       rc = SDB_PMD_HELP_ONLY ;
+      goto done ;
+   }
+   else if ( vm.count( OPTION_VERSION )
+   {
+      ossPrintVersion( "SDB DmsDump" ) ;
+      rc = SDB_PMD_VERSION_ONLY ;
       goto done ;
    }
    // for dbpath, copy to gDatabasePath
