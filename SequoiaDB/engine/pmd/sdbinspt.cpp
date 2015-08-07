@@ -110,6 +110,7 @@ namespace fs = boost::filesystem ;
 #define ACTION_INSPECT           0x01
 #define ACTION_DUMP              0x02
 #define ACTION_STAT              0x04
+#define ACTION_REPAIRE           0x08
 
 #define ACTION_INSPECT_STRING    "inspect"
 #define ACTION_STAT_STRING       "stat"
@@ -124,7 +125,7 @@ BOOLEAN gVerbose                                     = TRUE ;
 UINT32  gDumpType                                    = DMS_SU_DMP_OPT_FORMATTED;
 CHAR    gCSName [ DMS_COLLECTION_SPACE_NAME_SZ + 1 ] = {0} ;
 CHAR    gCLName [ DMS_COLLECTION_NAME_SZ + 1 ]       = {0} ;
-CHAR    gAction                                      = ACTION_DUMP ;
+CHAR    gAction                                      = 0 ;
 BOOLEAN gDumpData                                    = FALSE ;
 BOOLEAN gDumpIndex                                   = FALSE ;
 SINT32  gStartingPage                                = -1 ;
@@ -564,7 +565,6 @@ INT32 resolveArgument ( po::options_description &desc, INT32 argc, CHAR **argv )
    }
 
    // by default we dump
-   gAction = ACTION_DUMP ;
    ossStrncpy ( actionString, ACTION_DUMP_STRING,
                 sizeof(actionString) ) ;
    if ( vm.count ( OPTION_ACTION ) )
@@ -612,25 +612,40 @@ INT32 resolveArgument ( po::options_description &desc, INT32 argc, CHAR **argv )
          goto done ;
       }
    }
-   else
+   else if ( !vm.count( OPTION_REPAIRE ) )
    {
-      dumpAndShowPrintf ( "Action must be specified"OSS_NEWLINE ) ;
+      dumpAndShowPrintf ( "Action or repaire must be specified"OSS_NEWLINE ) ;
       // if no action specified, let's display help
       displayArg ( desc ) ;
       rc = SDB_PMD_HELP_ONLY ;
       goto done ;
    }
+
    if( vm.count( OPTION_SHOW_CONTENT ) )
    {
       ossStrToBoolean( vm[OPTION_SHOW_CONTENT].as<string>().c_str(),
                        &gShowRecordContent ) ;
    }
+
    if ( vm.count( OPTION_REPAIRE ) )
    {
       gRepairStr = vm[OPTION_REPAIRE].as<string>().c_str() ;
       rc = parseRepaireString( gRepairStr ) ;
       if ( rc )
       {
+         goto done ;
+      }
+      if ( gAction != 0 )
+      {
+         ossPrintf( "Repaire can't use with other action"OSS_NEWLINE ) ;
+         rc = SDB_INVALIDARG ;
+         goto done ;
+      }
+      if ( 0 == ossStrlen( gCLName ) || 0 == ossStrlen( gCSName ) )
+      {
+         ossPrintf( "Repaire must specify the collection space and "
+                    "collection"OSS_NEWLINE ) ;
+         rc = SDB_INVALIDARG ;
          goto done ;
       }
    }
@@ -663,6 +678,8 @@ INT32 resolveArgument ( po::options_description &desc, INT32 argc, CHAR **argv )
                        gNumPages ) ;
    dumpAndShowPrintf ( "   Show record: %s"OSS_NEWLINE,
                        gShowRecordContent ? "True":"False") ;
+   dumpAndShowPrintf ( "   Repaire    : %s"OSS_NEWLINE,
+                       gRepairStr.c_str() ) ;
    dumpAndShowPrintf ( OSS_NEWLINE ) ;
 done :
    PD_TRACE_EXITRC ( SDB_SDBINSPT_RESVARG, rc );
