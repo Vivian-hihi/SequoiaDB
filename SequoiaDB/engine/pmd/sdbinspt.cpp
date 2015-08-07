@@ -1454,6 +1454,24 @@ void inspectIndexDef ( OSSFILE &file, SINT32 pageSize, UINT16 collectionID,
          continue ;
       }
 
+      try
+      {
+         BSONObj indexDef( gExtentBuffer+sizeof(ixmIndexCBExtent)) ) ;
+         if ( indexDef.hasField ( IXM_UNIQUE_FIELD ) )
+         {
+            BSONElement e = indexDef.getField( IXM_UNIQUE_FIELD ) ;
+            if ( e.booleanSafe() )
+            {
+               gMBStat._uniqueIdxNum += 1 ;
+            }
+         }
+      }
+      catch( std::exception &e )
+      {
+         /// donothing
+      }
+      gMBStat._totalIndexPages += 1 ;
+
 retry :
       // dump index cb and get root, since index cb must be 1 page, so we put
       // pageSize as inSize
@@ -1582,6 +1600,7 @@ void inspectIndexExtents ( OSSFILE &file, SINT32 pageSize,
    std::deque<dmsExtentID> childExtents ;
    // set to index type
    INSPECT_EXTENT_TYPE extentType = INSPECT_EXTENT_TYPE_INDEX ;
+   ixmExtentHead *pExtentHead = NULL ;
    childExtents.push_back ( rootID ) ;
 
    while ( !childExtents.empty() )
@@ -1616,6 +1635,10 @@ void inspectIndexExtents ( OSSFILE &file, SINT32 pageSize,
          ++err ;
          continue ;
       }
+
+      pExtentHead = (ixmExtentHead*)gExtentBuffer ;
+      gMBStat._totalIndexPages += 1 ;
+      gMBStat._totalIndexFreeSpace += pExtentHead->_totalFreeSize ;
 
 retry :
       localErr = 0 ;
@@ -1726,6 +1749,7 @@ void inspectCollectionData( OSSFILE &file, SINT32 pageSize, UINT16 id,
    dmsMB *mb = NULL ;
    dmsExtentID tempExtent = DMS_INVALID_EXTENT ;
    dmsExtentID firstExtent = DMS_INVALID_EXTENT ;
+   dmsExtent *pExtent = NULL ;
 
    rc = loadMB ( id, mb ) ;
    if ( rc )
@@ -1758,12 +1782,16 @@ void inspectCollectionData( OSSFILE &file, SINT32 pageSize, UINT16 id,
          goto error ;
       }
 
+      pExtent = (dmsExtent*)gExtentBuffer ;
+      gMBStat._totalDataPages += pExtent->_blockSize ;
+      gMBStat._totalDataFreeSpace += pExtent->_freeSpace ;
+      gMBStat._totalRecords += pExtent->_recCount ;
+
       if ( pExpBuffer )
       {
          dmsSpaceManagementExtent *pSME=(dmsSpaceManagementExtent*)pExpBuffer ;
 
-         for ( INT32 i = 0 ; i < ((dmsExtent*)gExtentBuffer)->_blockSize ;
-               ++i )
+         for ( INT32 i = 0 ; i < pExtent->_blockSize ; ++i )
          {
             if ( pSME->getBitMask( firstExtent + i ) != DMS_SME_FREE )
             {
@@ -1859,13 +1887,34 @@ error :
 void inspectCollection ( OSSFILE &file, SINT32 pageSize, UINT16 id,
                          SINT32 hwm, CHAR *pExpBuffer, SINT32 &err )
 {
+   gMBStat.reset() ;
    if ( SDB_INSPT_DATA == gCurInsptType )
    {
       inspectCollectionData( file, pageSize, id, hwm, pExpBuffer, err ) ;
+      /// flush data info
+      ossSnprintf( gBuffer, gBufferSize,
+                   "The collection data info:"OSS_NEWLINE
+                   "   Total Record           : %llu"OSS_NEWLINE
+                   "   Total Data Pages       : %u"OSS_NEWLINE,
+                   "   Total Data Free Space  : %llu"OSS_NEWLINE,
+                   gMBStat._totalRecords,
+                   gMBStat._totalDataPages,
+                   gMBStat._totalDataFreeSpace ) ;
+      flushOutput( gBuffer, gBufferSize ) ;
    }
    else if ( SDB_INSPT_INDEX == gCurInsptType )
    {
       inspectCollectionIndex( file, pageSize, id, hwm, pExpBuffer, err ) ;
+      /// flush index info
+      ossSnprintf( gBuffer, gBufferSize,
+                   "The collection index info:"OSS_NEWLINE
+                   "   Total Index Pages      : %u"OSS_NEWLINE,
+                   "   Total Index Free Space : %llu"OSS_NEWLINE
+                   "   Unique Index Number    : %u"OSS_NEWLINE,
+                   gMBStat._totalIndexPages,
+                   gMBStat._totalIndexFreeSpace,
+                   gMBStat._uniqueIdxNum ) ;
+      flushOutput( gBuffer, gBufferSize ) ;
    }
 }
 
