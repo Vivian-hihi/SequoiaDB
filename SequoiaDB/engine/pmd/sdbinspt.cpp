@@ -286,7 +286,7 @@ INT32 parseRepaireString( const std::string &str )
    /// parse mb member
    vector< pmdAddrPair > items ;
    pmdOptionsCB opt ;
-   INT32 rc = opt.parseAddressLine( pin + 1, items, ",", "=" ) ;
+   INT32 rc = opt.parseAddressLine( pos + 1, items, ",", "=" ) ;
    if ( SDB_OK != rc )
    {
       ossPrintf( "Parse repaire value failed: %d"OSS_NEWLINE, rc ) ;
@@ -648,6 +648,7 @@ INT32 resolveArgument ( po::options_description &desc, INT32 argc, CHAR **argv )
          rc = SDB_INVALIDARG ;
          goto done ;
       }
+      gAction = ACTION_REPAIRE ;
    }
 
    // show input parameters on screen so people can see it
@@ -2974,6 +2975,11 @@ INT32 main ( INT32 argc, CHAR **argv )
         OSS_BIT_TEST ( gAction, ACTION_STAT ) )
    {
       inspectDB () ;
+   }
+
+   if ( OSS_BIT_TEST ( gAction, ACTION_REPAIRE )
+   {
+      /// repaire db
    }
 
    // are we doing database dump?
