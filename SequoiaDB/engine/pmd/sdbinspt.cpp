@@ -280,8 +280,7 @@ INT32 parseRepaireString( const std::string &str )
       ossPrintf( "repaire only support for type mb" ) ;
       return SDB_INVALIDARG ;
    }
-   *pos = ":" ;
-   ss << "mb:" ;
+   *pos = ':' ;
 
    /// parse mb member
    vector< pmdAddrPair > items ;
