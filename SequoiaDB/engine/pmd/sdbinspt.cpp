@@ -270,14 +270,14 @@ INT32 parseRepaireString( const std::string &str )
    CHAR *pos = (CHAR*)ossStrchr( pin, ':' ) ;
    if ( NULL == pos )
    {
-      ossPrintf( "repaire format must be: mb:xx=y,dd=k" ) ;
+      ossPrintf( "repaire format must be: mb:xx=y,dd=k"OSS_NEWLINE ) ;
       return SDB_INVALIDARG ;
    }
    *pos = 0 ;
    if ( 0 != ossStrcasecmp( pin, "mb" ) )
    {
       *pos = ':' ;
-      ossPrintf( "repaire only support for type mb" ) ;
+      ossPrintf( "repaire only support for type mb"OSS_NEWLINE ) ;
       return SDB_INVALIDARG ;
    }
    *pos = ':' ;
@@ -288,7 +288,7 @@ INT32 parseRepaireString( const std::string &str )
    INT32 rc = opt.parseAddressLine( pin + 1, items, ",", "=" ) ;
    if ( SDB_OK != rc )
    {
-      ossPrintf( "Parse repaire value failed: %d", rc ) ;
+      ossPrintf( "Parse repaire value failed: %d"OSS_NEWLINE, rc ) ;
       return rc ;
    }
    UINT64 value = 0 ;
@@ -299,7 +299,7 @@ INT32 parseRepaireString( const std::string &str )
       /// must be nubmer
       if ( !pmdUtilIsNum( aItem._service ) )
       {
-         ossPrintf( "Field[%s]'s value is not number[%s]",
+         ossPrintf( "Field[%s]'s value is not number[%s]"OSS_NEWLINE,
                     aItem._host, aItem._service ) ;
          return SDB_INVALIDARG ;
       }
@@ -352,7 +352,7 @@ INT32 parseRepaireString( const std::string &str )
       }
       else
       {
-         ossPrintf( "Unknow mb key: %s", aItem._host ) ;
+         ossPrintf( "Unknow mb key: %s"OSS_NEWLINE, aItem._host ) ;
          return SDB_INVALIDARG ;
       }
    }
