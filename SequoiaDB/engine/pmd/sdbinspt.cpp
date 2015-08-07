@@ -46,6 +46,7 @@
 #include "pmdEDU.hpp"
 #include "ixmExtent.hpp"
 #include "ossVer.h"
+#include "pmdOptionsMgr.hpp"
 
 #include <boost/program_options.hpp>
 #include <boost/program_options/parsers.hpp>
@@ -77,7 +78,7 @@ namespace fs = boost::filesystem ;
 
 #define OPTION_REPAIRE_DESP \
    "repaire the db info, like --repaire mb:Flag=0,Attr=1\n"\
-   " mb support key:\n"\
+   "-mb support key:\n"\
    "  IndexPages(u)      LID(u)            Attr(u)\n"\
    "  IndexFreeSpace(u)  DataPages(u)      Flag(u)\n"\
    "  DataFreeSpace(u)   LobPages(u)       Records(u)"
@@ -129,6 +130,7 @@ BOOLEAN gDumpIndex                                   = FALSE ;
 SINT32  gStartingPage                                = -1 ;
 SINT32  gNumPages                                    = 1 ;
 SINT32  gCurFileIndex                                = 0 ;
+std::string gRepairStr ;
 OSSFILE gFile ;
 
 #define DMS_DUMPFILE "dmsdump"
@@ -167,6 +169,19 @@ BOOLEAN gReachEnd                                    = FALSE ;
 BOOLEAN gHitCS                                       = FALSE ;
 SDB_INSPT_TYPE gCurInsptType                         = SDB_INSPT_DATA ;
 dmsMBStatInfo gMBStat ;
+dmsMB         gRepaireMB ;
+UINT32        gRepaireMask                           = 0 ;
+
+#define PMD_REPAIRE_MB_MASK_FLAG             0x00000001
+#define PMD_REPAIRE_MB_MASK_LID              0x00000002
+#define PMD_REPAIRE_MB_MASK_ATTR             0x00000004
+#define PMD_REPAIRE_MB_MASK_RECORD           0x00000008
+#define PMD_REPAIRE_MB_MASK_DATAPAGE         0x00000010
+#define PMD_REPAIRE_MB_MASK_IDXPAGE          0x00000020
+#define PMD_REPAIRE_MB_MASK_LOBPAGE          0x00000040
+#define PMD_REPAIRE_MB_MASK_DATAFREE         0x00000080
+#define PMD_REPAIRE_MB_MASK_IDXFREE          0x00000100
+
 
 #define RETRY_COUNT 5
 INT32 switchFile( OSSFILE& file, const INT32 size )
@@ -233,6 +248,117 @@ void init ( po::options_description &desc )
 void displayArg ( po::options_description &desc )
 {
    std::cout << desc << std::endl ;
+}
+
+BOOLEAN pmdUtilIsNum( const CHAR *str )
+{
+   UINT32 i = 0 ;
+   while( str[i] )
+   {
+      if ( str[i] < '0' || str[i] > '9' )
+      {
+         return FALSE ;
+      }
+      ++i ;
+   }
+   return TRUE ;
+}
+
+INT32 parseRepaireString( const std::string &str )
+{
+   const CHAR *pin = str.c_str() ;
+   CHAR *pos = (CHAR*)ossStrchr( pin, ':' ) ;
+   if ( NULL == pos )
+   {
+      ossPrintf( "repaire format must be: mb:xx=y,dd=k" ) ;
+      return SDB_INVALIDARG ;
+   }
+   *pos = 0 ;
+   if ( 0 != ossStrcasecmp( pin, "mb" ) )
+   {
+      *pos = ':' ;
+      ossPrintf( "repaire only support for type mb" ) ;
+      return SDB_INVALIDARG ;
+   }
+   *pos = ":" ;
+   ss << "mb:" ;
+
+   /// parse mb member
+   vector< pmdAddrPair > items ;
+   pmdOptionsCB opt ;
+   INT32 rc = opt.parseAddressLine( pin + 1, items, ",", "=" ) ;
+   if ( SDB_OK != rc )
+   {
+      ossPrintf( "Parse repaire value failed: %d", rc ) ;
+      return rc ;
+   }
+   UINT64 value = 0 ;
+   for ( UINT32 i = 0 ; i < items.size() ; ++i )
+   {
+      pmdAddrPair &aItem = items[ i ] ;
+
+      /// must be nubmer
+      if ( !pmdUtilIsNum( aItem._service ) )
+      {
+         ossPrintf( "Field[%s]'s value is not number[%s]",
+                    aItem._host, aItem._service ) ;
+         return SDB_INVALIDARG ;
+      }
+      value = ossAtoll( aItem._service ) ;
+
+      if ( 0 == ossStrcasecmp( aItem._host, "Flag" ) )
+      {
+         gRepaireMask |= PMD_REPAIRE_MB_MASK_FLAG ;
+         gRepaireMB._flag = value ;
+      }
+      else if ( 0 == ossStrcasecmp( aItem._host, "LID" ) )
+      {
+         gRepaireMask |= PMD_REPAIRE_MB_MASK_LID ;
+         gRepaireMB._logicalID = value ;
+      }
+      else if ( 0 == ossStrcasecmp( aItem._host, "Attr" ) )
+      {
+         gRepaireMask |= PMD_REPAIRE_MB_MASK_ATTR ;
+         gRepaireMB._attributes = value ;
+      }
+      else if ( 0 == ossStrcasecmp( aItem._host, "Records" ) )
+      {
+         gRepaireMask |= PMD_REPAIRE_MB_MASK_RECORD ;
+         gRepaireMB._totalRecords = value ;
+      }
+      else if ( 0 == ossStrcasecmp( aItem._host, "DataPages" ) )
+      {
+         gRepaireMask |= PMD_REPAIRE_MB_MASK_DATAPAGE ;
+         gRepaireMB._totalDataPages = value ;
+      }
+      else if ( 0 == ossStrcasecmp( aItem._host, "IndexPages" ) )
+      {
+         gRepaireMask |= PMD_REPAIRE_MB_MASK_IDXPAGE ;
+         gRepaireMB._totalIndexPages = value ;
+      }
+      else if ( 0 == ossStrcasecmp( aItem._host, "LobPages" ) )
+      {
+         gRepaireMask |= PMD_REPAIRE_MB_MASK_LOBPAGE ;
+         gRepaireMB._totalLobPages = value ;
+      }
+      else if ( 0 == ossStrcasecmp( aItem._host, "DataFreeSpace" ) )
+      {
+         gRepaireMask |= PMD_REPAIRE_MB_MASK_DATAFREE ;
+         gRepaireMB._totalDataFreeSpace = value ;
+      }
+      else if ( 0 == ossStrcasecmp( aItem._host, "IndexFreeSpace" ) )
+      {
+         gRepaireMask |= PMD_REPAIRE_MB_MASK_IDXFREE ;
+         gRepaireMB._totalIndexFreeSpace = value ;
+      }
+      else
+      {
+         ossPrintf( "Unknow mb key: %s", aItem._host ) ;
+         return SDB_INVALIDARG ;
+      }
+   }
+
+   return SDB_OK ;
 }
 
 // resolve input argument
@@ -500,6 +626,16 @@ INT32 resolveArgument ( po::options_description &desc, INT32 argc, CHAR **argv )
       ossStrToBoolean( vm[OPTION_SHOW_CONTENT].as<string>().c_str(),
                        &gShowRecordContent ) ;
    }
+   if ( vm.count( OPTION_REPAIRE ) )
+   {
+      gRepairStr = vm[OPTION_REPAIRE].as<string>().c_str() ;
+      rc = parseRepaireString( gRepairStr ) ;
+      if ( rc )
+      {
+         goto done ;
+      }
+   }
+
    // show input parameters on screen so people can see it
    // save them into output as well
    dumpAndShowPrintf ( "Run Options   :"OSS_NEWLINE ) ;
