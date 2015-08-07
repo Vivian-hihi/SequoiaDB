@@ -2508,7 +2508,7 @@ void repaireCollections( OSSFILE &file )
                   DMS_COLLECTION_NAME_SZ ) ;
       if ( 0 == ossStrcmp( gCLName, collectionName ) )
       {
-         rc = repaireCollection( file, pMB, i ) ;
+         repaireCollection( file, pMB, i ) ;
          /// found
          goto done ;
       }
@@ -2518,7 +2518,9 @@ void repaireCollections( OSSFILE &file )
                gCLName, gCSName ) ;
 
 done:
-   return rc ;
+   return ;
+error:
+   goto done ;
 }
 
 // PD_TRACE_DECLARE_FUNCTION ( SDB_DUMPCOLLECTIONS, "dumpCollections" )
