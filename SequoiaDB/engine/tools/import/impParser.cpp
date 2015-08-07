@@ -263,7 +263,7 @@ namespace import
                                   "records memory: %lld MB, thredshold: %lld MB,\n"
                                   "records num: %lld, average record size %lld",
                                   recordsMem / (1024 * 1024),
-                                  options->recordsMem() / (1024 * 1024)
+                                  options->recordsMem() / (1024 * 1024),
                                   recordsNum, recordsMem / recordsNum);
                            for(;;)
                            {
