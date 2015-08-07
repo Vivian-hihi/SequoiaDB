@@ -526,7 +526,11 @@ void flushOutput ( const CHAR *pBuffer, INT32 size )
    SINT64 writeSize ;
    SINT64 writtenSize = 0 ;
 
-   if ( ossStrlen ( gOutputFile ) == 0 )
+   if ( 0 == size )
+   {
+      goto done ;
+   }
+   else if ( ossStrlen ( gOutputFile ) == 0 )
    {
       goto error ;
    }
@@ -2161,7 +2165,6 @@ retry :
          clearBuffer () ;
          goto error ;
       }
-      printf( "TEST**** len: %d, buff: %d\n", len, gBufferSize ) ;
       goto retry ;
    }
    flushOutput ( gBuffer, len ) ;
