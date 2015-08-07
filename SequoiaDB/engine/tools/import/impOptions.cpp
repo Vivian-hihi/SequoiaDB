@@ -104,7 +104,7 @@ namespace import
    #define IMP_EXPLAIN_SHARDING         "repackage records by sharding, default is true"
    #define IMP_EXPLAIN_COORD            "find coordinators automatically, default is true"
    #define IMP_EXPLAIN_HELPFUL          "print all options"
-   #define IMP_EXPLAIN_RECORDSMEM       "the maximum memory size used by records, the unit is MB, range is [256~8192], default is 2048"
+   #define IMP_EXPLAIN_RECORDSMEM       "the maximum memory size used by records, the unit is MB, range is [128~81920], default is 4096"
 
    #define _TYPE(T) po::value<T>()
 
@@ -183,7 +183,7 @@ namespace import
 
       _bufferSize = 64;
       _dryRun = FALSE;
-      _recordsMem = (INT64)1024 * 1024 * 1024 * 2; // 2GB
+      _recordsMem = (INT64)1024 * 1024 * 1024 * 4; // 4GB
    }
 
    Options::~Options()
@@ -568,9 +568,9 @@ namespace import
       if (has(IMP_OPTION_RECORDSMEM))
       {
          INT64 recordsMem = get<INT32>(IMP_OPTION_RECORDSMEM);
-         if (recordsMem < 256 || recordsMem > 8192)
+         if (recordsMem < 128 || recordsMem > 81920)
          {
-            std::cerr << IMP_OPTION_RECORDSMEM " is out of range [256, 8192]: "
+            std::cerr << IMP_OPTION_RECORDSMEM " is out of range [128, 81920]: "
                       << recordsMem
                       << std::endl;
             rc = SDB_INVALIDARG;
