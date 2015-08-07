@@ -1751,6 +1751,7 @@ void inspectCollectionData( OSSFILE &file, SINT32 pageSize, UINT16 id,
    dmsExtentID tempExtent = DMS_INVALID_EXTENT ;
    dmsExtentID firstExtent = DMS_INVALID_EXTENT ;
    dmsExtent *pExtent = NULL ;
+   CHAR collectionName[ DMS_COLLECTION_NAME_SZ + 1 ] = { 0 } ;
 
    rc = loadMB ( id, mb ) ;
    if ( rc )
@@ -1761,7 +1762,9 @@ void inspectCollectionData( OSSFILE &file, SINT32 pageSize, UINT16 id,
       goto error ;
    }
    firstExtent = mb->_firstExtentID ;
-   dumpPrintf ( " Inspect Data for collection [%d]"OSS_NEWLINE, id ) ;
+   ossStrncpy( collectionName, mb->_collectionName, DMS_COLLECTION_NAME_SZ ) ;
+   dumpPrintf ( " Inspect Data for collection [%d : %s]"OSS_NEWLINE,
+                id, collectionName ) ;
    // loop through all extents
    while ( DMS_INVALID_EXTENT != firstExtent )
    {
@@ -1896,7 +1899,7 @@ void inspectCollection ( OSSFILE &file, SINT32 pageSize, UINT16 id,
       ossSnprintf( gBuffer, gBufferSize,
                    "The collection data info:"OSS_NEWLINE
                    "   Total Record           : %llu"OSS_NEWLINE
-                   "   Total Data Pages       : %u"OSS_NEWLINE,
+                   "   Total Data Pages       : %u"OSS_NEWLINE
                    "   Total Data Free Space  : %llu"OSS_NEWLINE,
                    gMBStat._totalRecords,
                    gMBStat._totalDataPages,
