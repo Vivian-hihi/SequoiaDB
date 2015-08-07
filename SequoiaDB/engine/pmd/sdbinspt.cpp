@@ -453,7 +453,7 @@ INT32 resolveArgument ( po::options_description &desc, INT32 argc, CHAR **argv )
       }
       // stat input
       else if ( ossStrncasecmp( action, ACTION_STAT_STRING,
-                ossStrlen(action) ) == )
+                ossStrlen(action) ) == 0 )
       {
          ossStrncpy( actionString, ACTION_STAT_STRING,
                      sizeof(actionString) ) ;
