@@ -2479,6 +2479,10 @@ void repaireCollection( OSSFILE &file, dmsMB *pMB,
       dumpPrintf( " *****Save collection to file failed: %d"OSS_NEWLINE,
                   rc ) ;
    }
+   else
+   {
+      dumpPrintf( " Save collection info to file succeed"OSS_NEWLINE ) ;
+   }
 }
 
 void repaireCollections( OSSFILE &file )
