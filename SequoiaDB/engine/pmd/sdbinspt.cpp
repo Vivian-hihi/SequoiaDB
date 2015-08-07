@@ -1457,7 +1457,7 @@ void inspectIndexDef ( OSSFILE &file, SINT32 pageSize, UINT16 collectionID,
 
       try
       {
-         BSONObj indexDef( gExtentBuffer+sizeof(ixmIndexCBExtent)) ) ;
+         BSONObj indexDef( gExtentBuffer+sizeof(ixmIndexCBExtent) ) ;
          if ( indexDef.hasField ( IXM_UNIQUE_FIELD ) )
          {
             BSONElement e = indexDef.getField( IXM_UNIQUE_FIELD ) ;
