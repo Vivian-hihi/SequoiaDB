@@ -45,6 +45,7 @@
 #include "pmdTrace.hpp"
 #include "pmdEDU.hpp"
 #include "ixmExtent.hpp"
+#include "ossVer.h"
 
 #include <boost/program_options.hpp>
 #include <boost/program_options/parsers.hpp>
