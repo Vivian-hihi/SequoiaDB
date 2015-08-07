@@ -2161,6 +2161,7 @@ retry :
          clearBuffer () ;
          goto error ;
       }
+      printf( "TEST**** len: %d, buff: %d\n", len, gBufferSize ) ;
       goto retry ;
    }
    flushOutput ( gBuffer, len ) ;
