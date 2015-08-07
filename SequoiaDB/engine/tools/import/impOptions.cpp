@@ -430,11 +430,6 @@ namespace import
          }
       }
 
-      if (has(IMP_OPTION_DELRECORD))
-      {
-         _recordDelimiter = get<string>(IMP_OPTION_DELRECORD);
-      }
-
       if (has(IMP_OPTION_BATCHSIZE))
       {
          _batchSize = get<INT32>(IMP_OPTION_BATCHSIZE);
@@ -490,9 +485,38 @@ namespace import
          _stringDelimiter = get<string>(IMP_OPTION_DELCHAR);
       }
 
+      if (has(IMP_OPTION_DELRECORD))
+      {
+         _recordDelimiter = get<string>(IMP_OPTION_DELRECORD);
+      }
+
       if (has(IMP_OPTION_DELFIELD))
       {
          _fieldDelimiter = get<string>(IMP_OPTION_DELFIELD);
+      }
+
+      if (_stringDelimiter == _recordDelimiter)
+      {
+         std::cerr << IMP_OPTION_DELCHAR << " can't be same with "
+                   << IMP_OPTION_DELRECORD << std::endl;
+         rc = SDB_INVALIDARG;
+         goto error;
+      }
+
+      if (_stringDelimiter == _fieldDelimiter)
+      {
+         std::cerr << IMP_OPTION_DELCHAR << " can't be same with "
+                   << IMP_OPTION_DELFIELD << std::endl;
+         rc = SDB_INVALIDARG;
+         goto error;
+      }
+
+      if (_recordDelimiter == _fieldDelimiter)
+      {
+         std::cerr << IMP_OPTION_DELRECORD << " can't be same with "
+                   << IMP_OPTION_DELFIELD << std::endl;
+         rc = SDB_INVALIDARG;
+         goto error;
       }
 
       if (has(IMP_OPTION_FIELDS))
