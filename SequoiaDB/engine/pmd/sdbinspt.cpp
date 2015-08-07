@@ -2479,7 +2479,8 @@ error :
 enum SDB_INSPT_ACTION
 {
    SDB_INSPT_ACTION_DUMP = 0,
-   SDB_INSPT_ACTION_INSPECT
+   SDB_INSPT_ACTION_INSPECT,
+   SDB_INSPT_ACTION_REPARE
 } ;
 
 // PD_TRACE_DECLARE_FUNCTION ( SDB_ACTIONCSATTEMPT, "actionCSAttempt" )
@@ -2755,7 +2756,8 @@ void actionCSAttemptEntry( const CHAR *csName, UINT32 sequence,
       return ;
    }
 
-   if ( gDumpData )
+   if ( gDumpData ||
+        SDB_INSPT_ACTION_REPARE == action )
    {
       csFileName = rtnMakeSUFileName( csName, sequence,
                                       DMS_DATA_SU_EXT_NAME ) ;
@@ -2833,50 +2835,9 @@ error :
    goto done ;
 }
 
-// PD_TRACE_DECLARE_FUNCTION ( SDB_DUMPDB, "dumpDB" )
-void dumpDB ()
-{
-   PD_TRACE_ENTRY ( SDB_DUMPDB ) ;
-   CHAR csName [ DMS_COLLECTION_SPACE_NAME_SZ + 1 ] = {0} ;
-   UINT32 sequence = 0 ;
-   fs::path dbDir ( gDatabasePath ) ;
-   fs::directory_iterator end_iter ;
-   if ( fs::exists ( dbDir ) && fs::is_directory ( dbDir ) )
-   {
-      for ( fs::directory_iterator dir_iter ( dbDir );
-            dir_iter != end_iter; ++dir_iter )
-      {
-         if ( fs::is_regular_file ( dir_iter->status() ) )
-         {
-            const std::string fileName = dir_iter->path().filename().string() ;
-            const CHAR *pFileName = fileName.c_str() ;
-            if ( rtnVerifyCollectionSpaceFileName ( pFileName, csName,
-                               DMS_COLLECTION_SPACE_NAME_SZ, sequence ) )
-            {
-               if ( ossStrlen ( gCSName ) == 0 ||
-                    ossStrncmp ( gCSName, csName,
-                                 DMS_COLLECTION_SPACE_NAME_SZ ) == 0 )
-               {
-                  actionCSAttemptEntry ( csName, sequence,
-                                         ossStrlen ( gCSName ) != 0,
-                                         SDB_INSPT_ACTION_DUMP ) ;
-               }
-            }
-         }
-      }
-   }
-   else
-   {
-      // if we can't find the path, let's show error
-      dumpPrintf ( "Error: dump path %s is not a valid directory"OSS_NEWLINE,
-                   gDatabasePath ) ;
-   }
-   PD_TRACE_EXIT ( SDB_DUMPDB );
-}
-
 // database inspection may entry code
 // PD_TRACE_DECLARE_FUNCTION ( SDB_INSPECTDB, "inspectDB" )
-void inspectDB ()
+void inspectDB( SDB_INSPT_ACTION action )
 {
    PD_TRACE_ENTRY ( SDB_INSPECTDB );
    CHAR csName [ DMS_COLLECTION_SPACE_NAME_SZ + 1 ] = {0} ;
@@ -2901,7 +2862,7 @@ void inspectDB ()
                {
                   actionCSAttemptEntry ( csName, sequence,
                                          ossStrlen ( gCSName ) != 0,
-                                         SDB_INSPT_ACTION_INSPECT ) ;
+                                         action ) ;
                }
             }
          }
@@ -2974,12 +2935,13 @@ INT32 main ( INT32 argc, CHAR **argv )
    if ( OSS_BIT_TEST ( gAction, ACTION_INSPECT ) ||
         OSS_BIT_TEST ( gAction, ACTION_STAT ) )
    {
-      inspectDB () ;
+      inspectDB( SDB_INSPT_ACTION_INSPECT ) ;
    }
 
-   if ( OSS_BIT_TEST ( gAction, ACTION_REPAIRE )
+   if ( OSS_BIT_TEST ( gAction, ACTION_REPAIRE ) )
    {
       /// repaire db
+      inspectDB( SDB_INSPT_ACTION_REPARE ) ;
    }
 
    // are we doing database dump?
@@ -2993,7 +2955,7 @@ INT32 main ( INT32 argc, CHAR **argv )
       else
       {
          // if we don't specify pages to dump, let's dump entire database
-         dumpDB () ;
+         inspectDB( SDB_INSPT_ACTION_DUMP ) ;
       }
    }
 
