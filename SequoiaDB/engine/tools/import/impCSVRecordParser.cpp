@@ -816,12 +816,12 @@ namespace import
          {
             // previous character is escape
             // TODO: process "\\\\"
-            if ('\\' == *(str - 1))
+            /*if ('\\' == *(str - 1))
             {
                len -= strDelLen;
                str += strDelLen;
                continue;
-            }
+            }*/
 
             len -= strDelLen;
             str += strDelLen;

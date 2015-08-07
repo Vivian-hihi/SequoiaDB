@@ -131,12 +131,12 @@ namespace import
                if (_startWith(str, len, strDel, strDelLen))
                {
                   // previous character is escape
-                  if ('\\' == *(str - 1))
+                  /*if ('\\' == *(str - 1))
                   {
                      len -= strDelLen;
                      str += strDelLen;
                      continue;
-                  }
+                  }*/
 
                   len -= strDelLen;
                   str += strDelLen;
