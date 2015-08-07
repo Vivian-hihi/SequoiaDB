@@ -73,6 +73,11 @@ namespace fs = boost::filesystem ;
 #define OPTION_PAGESTART    "pagestart"
 #define OPTION_NUMPAGE      "numpage"
 #define OPTION_SHOW_CONTENT "record"
+#define OPTION_REPAIRE      "repaire"
+
+#define OPTION_REPAIRE_DESP \
+   "repaire the db info, like --repaire mb:Flag=0,"
+
 #define ADD_PARAM_OPTIONS_BEGIN( desc )\
         desc.add_options()
 
@@ -1887,7 +1892,7 @@ void inspectCollectionIndex( OSSFILE &file, SINT32 pageSize, UINT16 id,
       goto error ;
    }
    ossStrncpy( collectionName, mb->_collectionName,
-               DMS_COLLECTION_FULL_NAME_SZ ) ;
+               DMS_COLLECTION_NAME_SZ ) ;
 
    dumpPrintf ( " Inspect Index for collection [%d : %s]"OSS_NEWLINE,
                 id, collectionName ) ;
