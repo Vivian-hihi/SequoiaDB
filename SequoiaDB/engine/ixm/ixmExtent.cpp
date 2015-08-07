@@ -2675,9 +2675,11 @@ namespace engine
                                        DMS_SU_DMP_OPT_FORMATTED,
                                        childExtents,
                                        TRUE ) ;
-      PD_RC_CHECK ( rc, PDERROR,
-                    "Failed to dump index extent, rc = %d", rc ) ;
-      PD_LOG ( PDERROR, "Index Page Dump:\n%s", pBuffer ) ;
+      if ( rc > 0 )
+      {
+         PD_LOG ( PDERROR, "Index Page Dump:\n%s", pBuffer ) ;
+      }
+      rc = SDB_OK ;
 
    done :
       if ( pBuffer )
