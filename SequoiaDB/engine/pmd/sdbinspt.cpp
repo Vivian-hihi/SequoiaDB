@@ -631,7 +631,7 @@ INT32 resolveArgument ( po::options_description &desc, INT32 argc, CHAR **argv )
    }
    if ( vm.count( OPTION_ONLY_META ) )
    {
-      ossStrToBoolean( vm[OPTION_SHOW_CONTENT].as<string>().c_str(),
+      ossStrToBoolean( vm[OPTION_ONLY_META].as<string>().c_str(),
                        &gOnlyMeta ) ;
    }
 
