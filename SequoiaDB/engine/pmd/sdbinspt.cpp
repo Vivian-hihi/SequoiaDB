@@ -2484,6 +2484,9 @@ void repaireCollection( OSSFILE &file, dmsMB *pMB,
 void repaireCollections( OSSFILE &file )
 {
    INT32 rc = SDB_OK ;
+   dmsMB *pMB = NULL ;
+   CHAR collectionName[ DMS_COLLECTION_NAME_SZ + 1 ] = { 0 } ;
+
    if ( FALSE == gInitMME )
    {
       SINT64 lenRead = 0 ;
@@ -2497,9 +2500,6 @@ void repaireCollections( OSSFILE &file )
       }
       gInitMME = TRUE ;
    }
-
-   dmsMB *pMB = NULL ;
-   CHAR collectionName[ DMS_COLLECTION_NAME_SZ + 1 ] = { 0 } ;
 
    for ( UINT32 i = 0 ; i < DMS_MME_SLOTS ; ++i )
    {
