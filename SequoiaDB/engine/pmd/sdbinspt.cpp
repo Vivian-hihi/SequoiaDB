@@ -2411,6 +2411,116 @@ error :
    goto done ;
 }
 
+void repaireCollection( OSSFILE &file, dmsMB *pMB,
+                        UINT32 id )
+{
+   dumpPrintf( "Begin to repaire collection: %s.%s, ID: %u"OSS_NEWLINE,
+               gCSName, gCLName, id ) ;
+   if ( gRepaireMask & PMD_REPAIRE_MB_MASK_FLAG )
+   {
+      dumpPrintf( "   Flag[%u] ==> [%u]"OSS_NEWLINE,
+                  pMB->_flag, gRepaireMB._flag ) ;
+      pMB->_flag = gRepaireMB._flag ;
+   }
+   if ( gRepaireMask & PMD_REPAIRE_MB_MASK_ATTR )
+   {
+      dumpPrintf( "   Attr[%u] ==> [%u]"OSS_NEWLINE,
+                  pMB->_attributes, gRepaireMB._attributes ) ;
+      pMB->_attributes = gRepaireMB._attributes ;
+   }
+   if ( gRepaireMask & PMD_REPAIRE_MB_MASK_LID )
+   {
+      dumpPrintf( "   LID[%u] ==> [%u]"OSS_NEWLINE,
+                  pMB->_logicalID, gRepaireMB._logicalID ) ;
+      pMB->_logicalID = gRepaireMB._logicalID ;
+   }
+   if ( gRepaireMask & PMD_REPAIRE_MB_MASK_RECORD )
+   {
+      dumpPrintf( "   Record[%llu] ==> [%llu]"OSS_NEWLINE,
+                  pMB->_totalRecords, gRepaireMB._totalRecords ) ;
+      pMB->_totalRecords = gRepaireMB._totalRecords ;
+   }
+   if ( gRepaireMask & PMD_REPAIRE_MB_MASK_DATAPAGE )
+   {
+      dumpPrintf( "   DataPages[%u] ==> [%u]"OSS_NEWLINE,
+                  pMB->_totalDataPages, gRepaireMB._totalDataPages ) ;
+      pMB->_totalDataPages = gRepaireMB._totalDataPages ;
+   }
+   if ( gRepaireMask & PMD_REPAIRE_MB_MASK_IDXPAGE )
+   {
+      dumpPrintf( "   IndexPages[%u] ==> [%u]"OSS_NEWLINE,
+                  pMB->_totalIndexPages, gRepaireMB._totalIndexPages ) ;
+      pMB->_totalIndexPages = gRepaireMB._totalIndexPages ;
+   }
+   if ( gRepaireMask & PMD_REPAIRE_MB_MASK_LOBPAGE )
+   {
+      dumpPrintf( "   LobPages[%u] ==> [%u]"OSS_NEWLINE,
+                  pMB->_totalLobPages, gRepaireMB._totalLobPages ) ;
+      pMB->_totalLobPages = gRepaireMB._totalLobPages ;
+   }
+   if ( gRepaireMask & PMD_REPAIRE_MB_MASK_DATAFREE )
+   {
+      dumpPrintf( "   DataFreeSpace[%llu] ==> [%llu]"OSS_NEWLINE,
+                  pMB->_totalDataFreeSpace, gRepaireMB._totalDataFreeSpace ) ;
+      pMB->_totalDataFreeSpace = gRepaireMB._totalDataFreeSpace ;
+   }
+   if ( gRepaireMask & PMD_REPAIRE_MB_MASK_IDXFREE )
+   {
+      dumpPrintf( "   IndexFreeSpace[%llu] ==> [%llu]"OSS_NEWLINE,
+                  pMB->_totalIndexFreeSpace, gRepaireMB._totalIndexFreeSpace ) ;
+      pMB->_totalIndexFreeSpace = gRepaireMB._totalIndexFreeSpace ;
+   }
+
+   INT64 written = 0 ;
+   INT32 rc = ossSeekAndWriteN( file, DMS_MME_OFFSET + id * sizeof( dmsMB ),
+                                (const CHAR*)pMB, sizeof( dmsMB ), written ) ;
+   if ( rc )
+   {
+      dumpPrintf( " *****Save collection to file failed: %d"OSS_NEWLINE,
+                  rc ) ;
+   }
+}
+
+void repaireCollections( OSSFILE &file )
+{
+   INT32 rc = SDB_OK ;
+   if ( FALSE == gInitMME )
+   {
+      SINT64 lenRead = 0 ;
+      rc = ossSeekAndRead ( &file, DMS_MME_OFFSET, gMMEBuff,
+                            DMS_MME_SZ, &lenRead ) ;
+      if ( rc || lenRead != DMS_MME_SZ )
+      {
+         dumpPrintf ( "Error: Failed to read sme, read %lld bytes, "
+                      "rc = %d"OSS_NEWLINE, lenRead, rc ) ;
+         goto error ;
+      }
+      gInitMME = TRUE ;
+   }
+
+   dmsMB *pMB = NULL ;
+   CHAR collectionName[ DMS_COLLECTION_NAME_SZ + 1 ] = { 0 } ;
+
+   for ( UINT32 i = 0 ; i < DMS_MME_SLOTS ; ++i )
+   {
+      pMB = ( dmsMB* )( gMMEBuff + i * sizeof( dmsMB ) ) ;
+      ossStrncpy( collectionName, pMB->_collectionName,
+                  DMS_COLLECTION_NAME_SZ ) ;
+      if ( 0 == ossStrcmp( gCLName, collectionName ) )
+      {
+         rc = repaireCollection( file, pMB, i ) ;
+         /// found
+         goto done ;
+      }
+   }
+
+   dumpPrintf( "Not found collection[%s] in space[%s]"OSS_NEWLINE,
+               gCLName, gCSName ) ;
+
+done:
+   return rc ;
+}
+
 // PD_TRACE_DECLARE_FUNCTION ( SDB_DUMPCOLLECTIONS, "dumpCollections" )
 void dumpCollections ( OSSFILE &file, SINT32 pageSize )
 {
@@ -2498,9 +2608,18 @@ void actionCSAttempt ( const CHAR *pFile, const CHAR *expectEye,
 
    SINT64   restLen = 0 ;
    SINT64   readPos = 0 ;
+   UINT32   iMode = OSS_DEFAULT | OSS_EXCLUSIVE ;
 
-   rc = ossOpen ( pFile, OSS_DEFAULT | OSS_READONLY | OSS_EXCLUSIVE,
-                  OSS_RU | OSS_WU | OSS_RG, file ) ;
+   if ( SDB_INSPT_ACTION_REPARE == action )
+   {
+      iMode |= OSS_READWRITE ;
+   }
+   else
+   {
+      iMode |= OSS_READONLY ;
+   }
+
+   rc = ossOpen ( pFile, iMode, OSS_RU | OSS_WU | OSS_RG, file ) ;
    if ( rc )
    {
       dumpPrintf ( "Error: Failed to open %s, rc = %d"OSS_NEWLINE,
@@ -2552,6 +2671,9 @@ void actionCSAttempt ( const CHAR *pFile, const CHAR *expectEye,
 
    switch ( action )
    {
+   case SDB_INSPT_ACTION_REPARE :
+      repaireCollections( file ) ;
+      break ;
    case SDB_INSPT_ACTION_DUMP :
       if ( gStartingPage < 0 )
       {
