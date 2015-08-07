@@ -265,7 +265,7 @@ INT32 resolveArgument ( po::options_description &desc, INT32 argc, CHAR **argv )
       rc = SDB_PMD_HELP_ONLY ;
       goto done ;
    }
-   else if ( vm.count( OPTION_VERSION )
+   else if ( vm.count( OPTION_VERSION ) )
    {
       ossPrintVersion( "SDB DmsDump" ) ;
       rc = SDB_PMD_VERSION_ONLY ;
