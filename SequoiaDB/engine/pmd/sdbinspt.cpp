@@ -2472,7 +2472,7 @@ void repaireCollection( OSSFILE &file, dmsMB *pMB,
    }
 
    INT64 written = 0 ;
-   INT32 rc = ossSeekAndWriteN( file, DMS_MME_OFFSET + id * sizeof( dmsMB ),
+   INT32 rc = ossSeekAndWriteN( &file, DMS_MME_OFFSET + id * sizeof( dmsMB ),
                                 (const CHAR*)pMB, sizeof( dmsMB ), written ) ;
    if ( rc )
    {
