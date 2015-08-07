@@ -150,6 +150,7 @@ BOOLEAN gShowRecordContent                           = FALSE ;
 BOOLEAN gReachEnd                                    = FALSE ;
 BOOLEAN gHitCS                                       = FALSE ;
 SDB_INSPT_TYPE gCurInsptType                         = SDB_INSPT_DATA ;
+dmsMBStatInfo gMBStat ;
 
 #define RETRY_COUNT 5
 INT32 switchFile( OSSFILE& file, const INT32 size )
@@ -516,37 +517,35 @@ void flushOutput ( const CHAR *pBuffer, INT32 size )
    SINT64 writeSize ;
    SINT64 writtenSize = 0 ;
 
+   if ( ossStrlen ( gOutputFile ) == 0 )
+   {
+      goto error ;
+   }
+
    rc = switchFile( gFile, size ) ;
    if( rc )
    {
       goto error ;
    }
 
-   if ( ossStrlen ( gOutputFile ) != 0 )
+   do
    {
-      do
+      rc = ossWrite ( &gFile, &pBuffer[writtenSize], size-writtenSize,
+                      &writeSize ) ;
+      if ( rc && SDB_INTERRUPT != rc )
       {
-         rc = ossWrite ( &gFile, &pBuffer[writtenSize], size-writtenSize,
-                         &writeSize ) ;
-         if ( rc && SDB_INTERRUPT != rc )
-         {
-            break ;
-         }
-         rc = SDB_OK ;
-         writtenSize += writeSize ;
-      } while ( writtenSize < size ) ;
-      if ( rc )
-      {
-         ossPrintf ( "Error: Failed to write into file, rc = %d"OSS_NEWLINE,
-                     rc ) ;
-         goto error ;
+         break ;
       }
-   }
-   else
+      rc = SDB_OK ;
+      writtenSize += writeSize ;
+   } while ( writtenSize < size ) ;
+   if ( rc )
    {
-      // if we don't want to flush to file, let's go to error to print to screen
+      ossPrintf ( "Error: Failed to write into file, rc = %d"OSS_NEWLINE,
+                  rc ) ;
       goto error ;
    }
+
 done :
    PD_TRACE1 ( SDB_FLUSHOUTPUT, PD_PACK_INT(rc) );
    PD_TRACE_EXIT ( SDB_FLUSHOUTPUT );
