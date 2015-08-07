@@ -76,7 +76,11 @@ namespace fs = boost::filesystem ;
 #define OPTION_REPAIRE      "repaire"
 
 #define OPTION_REPAIRE_DESP \
-   "repaire the db info, like --repaire mb:Flag=0,"
+   "repaire the db info, like --repaire mb:Flag=0,Attr=1\n"\
+   " mb support key:\n"\
+   "  IndexPages(u)      LID(u)            Attr(u)\n"\
+   "  IndexFreeSpace(u)  DataPages(u)      Flag(u)\n"\
+   "  DataFreeSpace(u)   LobPages(u)       Records(u)"
 
 #define ADD_PARAM_OPTIONS_BEGIN( desc )\
         desc.add_options()
@@ -98,7 +102,8 @@ namespace fs = boost::filesystem ;
        ( COMMANDS_STRING(OPTION_DUMPINDEX, ",i"), boost::program_options::value<string>(), "dump index (true/false)" ) \
        ( COMMANDS_STRING(OPTION_PAGESTART, ",s"), boost::program_options::value<SINT32>(), "starting page number" ) \
        ( COMMANDS_STRING(OPTION_NUMPAGE, ",n"), boost::program_options::value<SINT32>(), "number of pages" ) \
-       ( COMMANDS_STRING(OPTION_SHOW_CONTENT, ",p"), boost::program_options::value<string>(), "display data/index content(true/false)" )
+       ( COMMANDS_STRING(OPTION_SHOW_CONTENT, ",p"), boost::program_options::value<string>(), "display data/index content(true/false)" ) \
+       ( COMMANDS_STRING(OPTION_REPAIRE, ",r"), boost::program_options::value<string>(), OPTION_REPAIRE_DESP )
 
 // bitwise operation
 #define ACTION_INSPECT           0x01
