@@ -151,6 +151,7 @@ namespace import
 
                   // the string is end
                   inString = FALSE;
+                  continue;
                }
             }
 
