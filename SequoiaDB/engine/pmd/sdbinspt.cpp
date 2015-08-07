@@ -98,7 +98,10 @@ namespace fs = boost::filesystem ;
 // bitwise operation
 #define ACTION_INSPECT           0x01
 #define ACTION_DUMP              0x02
+#define ACTION_STAT              0x04
+
 #define ACTION_INSPECT_STRING    "inspect"
+#define ACTION_STAT_STRING       "stat"
 #define ACTION_DUMP_STRING       "dump"
 #define ACTION_ALL_STRING        "all"
 
@@ -448,13 +451,21 @@ INT32 resolveArgument ( po::options_description &desc, INT32 argc, CHAR **argv )
                       sizeof(actionString) ) ;
          gAction = ACTION_DUMP ;
       }
+      // stat input
+      else if ( ossStrncasecmp( action, ACTION_STAT_STRING,
+                ossStrlen(action) ) == )
+      {
+         ossStrncpy( actionString, ACTION_STAT_STRING,
+                     sizeof(actionString) ) ;
+         gAction = ACTION_STAT ;
+      }
       // all input
       else if ( ossStrncasecmp ( action, ACTION_ALL_STRING,
                 ossStrlen(action) ) == 0 )
       {
          ossStrncpy ( actionString, ACTION_ALL_STRING,
                       sizeof(actionString) ) ;
-         gAction = ACTION_INSPECT | ACTION_DUMP ;
+         gAction = ACTION_INSPECT | ACTION_DUMP | ACTION_STAT ;
       }
       // if action options is not valid, let's display help
       else
@@ -1811,6 +1822,12 @@ void inspectCollectionData( OSSFILE &file, SINT32 pageSize, UINT16 id,
          }
       }
 
+      /// don't inspect data extent
+      if ( !OSS_BIT_TEST ( gAction, ACTION_INSPECT ) )
+      {
+         continue ;
+      }
+
 retry_data :
       extentRIDList.clear() ;
       tempExtent = firstExtent ;
@@ -1859,6 +1876,7 @@ void inspectCollectionIndex( OSSFILE &file, SINT32 pageSize, UINT16 id,
    dmsMB *mb       = NULL ;
    std::map<UINT16, dmsExtentID> indexRoots ;
    std::map<UINT16, dmsExtentID>::iterator it ;
+   CHAR collectionName[ DMS_COLLECTION_NAME_SZ + 1 ] = { 0 } ;
 
    rc = loadMB ( id, mb ) ;
    if ( rc )
@@ -1868,6 +1886,11 @@ void inspectCollectionIndex( OSSFILE &file, SINT32 pageSize, UINT16 id,
       ++err ;
       goto error ;
    }
+   ossStrncpy( collectionName, mb->_collectionName,
+               DMS_COLLECTION_FULL_NAME_SZ ) ;
+
+   dumpPrintf ( " Inspect Index for collection [%d : %s]"OSS_NEWLINE,
+                id, collectionName ) ;
 
    inspectIndexDef ( file, pageSize, id, mb, pExpBuffer, indexRoots, err ) ;
 
@@ -1901,7 +1924,7 @@ void inspectCollection ( OSSFILE &file, SINT32 pageSize, UINT16 id,
       inspectCollectionData( file, pageSize, id, hwm, pExpBuffer, err ) ;
       /// flush data info
       ossSnprintf( gBuffer, gBufferSize,
-                   "The collection data info:"OSS_NEWLINE
+                   " ****The collection data info****"OSS_NEWLINE
                    "   Total Record           : %llu"OSS_NEWLINE
                    "   Total Data Pages       : %u"OSS_NEWLINE
                    "   Total Data Free Space  : %llu"OSS_NEWLINE,
@@ -1915,8 +1938,8 @@ void inspectCollection ( OSSFILE &file, SINT32 pageSize, UINT16 id,
       inspectCollectionIndex( file, pageSize, id, hwm, pExpBuffer, err ) ;
       /// flush index info
       ossSnprintf( gBuffer, gBufferSize,
-                   "The collection index info:"OSS_NEWLINE
-                   "   Total Index Pages      : %u"OSS_NEWLINE,
+                   " ****The collection index info****"OSS_NEWLINE
+                   "   Total Index Pages      : %u"OSS_NEWLINE
                    "   Total Index Free Space : %llu"OSS_NEWLINE
                    "   Unique Index Number    : %u"OSS_NEWLINE,
                    gMBStat._totalIndexPages,
@@ -2785,7 +2808,8 @@ INT32 main ( INT32 argc, CHAR **argv )
       goto done ;
    }
    // are we doing database inspection?
-   if ( OSS_BIT_TEST ( gAction, ACTION_INSPECT ) )
+   if ( OSS_BIT_TEST ( gAction, ACTION_INSPECT ) ||
+        OSS_BIT_TEST ( gAction, ACTION_STAT ) )
    {
       inspectDB () ;
    }
