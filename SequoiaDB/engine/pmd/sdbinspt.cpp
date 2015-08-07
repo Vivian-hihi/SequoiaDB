@@ -74,6 +74,7 @@ namespace fs = boost::filesystem ;
 #define OPTION_PAGESTART    "pagestart"
 #define OPTION_NUMPAGE      "numpage"
 #define OPTION_SHOW_CONTENT "record"
+#define OPTION_ONLY_META    "meta"
 #define OPTION_REPAIRE      "repaire"
 
 #define OPTION_REPAIRE_DESP \
@@ -91,7 +92,7 @@ namespace fs = boost::filesystem ;
 #define COMMANDS_STRING( a, b ) (string(a) +string( b)).c_str()
 #define COMMANDS_OPTIONS \
        ( COMMANDS_STRING(OPTION_HELP, ",h"), "help" )\
-       ( COMMANDS_STRING(OPTION_VERSION, ",v"), "version" )\
+       ( OPTION_VERSION, "version" )\
        ( COMMANDS_STRING(OPTION_DBPATH, ",d"), boost::program_options::value<string>(), "database path" ) \
        ( COMMANDS_STRING(OPTION_INDEXPATH, ",x"), boost::program_options::value<string>(), "index path" ) \
        ( COMMANDS_STRING(OPTION_OUTPUT, ",o"), boost::program_options::value<string>(), "output file" ) \
@@ -104,6 +105,7 @@ namespace fs = boost::filesystem ;
        ( COMMANDS_STRING(OPTION_PAGESTART, ",s"), boost::program_options::value<SINT32>(), "starting page number" ) \
        ( COMMANDS_STRING(OPTION_NUMPAGE, ",n"), boost::program_options::value<SINT32>(), "number of pages" ) \
        ( COMMANDS_STRING(OPTION_SHOW_CONTENT, ",p"), boost::program_options::value<string>(), "display data/index content(true/false)" ) \
+       ( OPTION_ONLY_META, boost::program_options::value<string>(), "inspect only meta(Header, SME, MME), true/false" ) \
        ( COMMANDS_STRING(OPTION_REPAIRE, ",r"), boost::program_options::value<string>(), OPTION_REPAIRE_DESP )
 
 // bitwise operation
@@ -166,6 +168,7 @@ INT32   gPageNum                                     = 0 ;
 CHAR   *gMMEBuff                                     = NULL ;
 BOOLEAN gInitMME                                     = FALSE ;
 BOOLEAN gShowRecordContent                           = FALSE ;
+BOOLEAN gOnlyMeta                                    = FALSE ;
 BOOLEAN gReachEnd                                    = FALSE ;
 BOOLEAN gHitCS                                       = FALSE ;
 SDB_INSPT_TYPE gCurInsptType                         = SDB_INSPT_DATA ;
@@ -626,6 +629,11 @@ INT32 resolveArgument ( po::options_description &desc, INT32 argc, CHAR **argv )
       ossStrToBoolean( vm[OPTION_SHOW_CONTENT].as<string>().c_str(),
                        &gShowRecordContent ) ;
    }
+   if ( vm.count( OPTION_ONLY_META ) )
+   {
+      ossStrToBoolean( vm[OPTION_SHOW_CONTENT].as<string>().c_str(),
+                       &gOnlyMeta ) ;
+   }
 
    if ( vm.count( OPTION_REPAIRE ) )
    {
@@ -679,6 +687,8 @@ INT32 resolveArgument ( po::options_description &desc, INT32 argc, CHAR **argv )
                        gNumPages ) ;
    dumpAndShowPrintf ( "   Show record: %s"OSS_NEWLINE,
                        gShowRecordContent ? "True":"False") ;
+   dumpAndShowPrintf ( "   Only Meta:   %s"OSS_NEWLINE,
+                       gOnlyMeta ? "True":"False" ) ;
    dumpAndShowPrintf ( "   Repaire    : %s"OSS_NEWLINE,
                        gRepairStr.c_str() ) ;
    dumpAndShowPrintf ( OSS_NEWLINE ) ;
@@ -1943,6 +1953,13 @@ void inspectCollectionData( OSSFILE &file, SINT32 pageSize, UINT16 id,
    ossStrncpy( collectionName, mb->_collectionName, DMS_COLLECTION_NAME_SZ ) ;
    dumpPrintf ( " Inspect Data for collection [%d : %s]"OSS_NEWLINE,
                 id, collectionName ) ;
+
+   if ( !OSS_BIT_TEST( gAction, ACTION_STAT ) &&
+        gOnlyMeta )
+   {
+      goto done ;
+   }
+
    // loop through all extents
    while ( DMS_INVALID_EXTENT != firstExtent )
    {
@@ -2057,6 +2074,12 @@ void inspectCollectionIndex( OSSFILE &file, SINT32 pageSize, UINT16 id,
 
    inspectIndexDef ( file, pageSize, id, mb, pExpBuffer, indexRoots, err ) ;
 
+   if ( !OSS_BIT_TEST( gAction, ACTION_STAT ) &&
+        gOnlyMeta )
+   {
+      goto done ;
+   }
+
    // after inspect index def, we should iterate all indexes
    for ( it = indexRoots.begin() ; it != indexRoots.end() ; ++it )
    {
@@ -2168,6 +2191,11 @@ void dumpCollectionData( OSSFILE &file, SINT32 pageSize, UINT16 id )
       flushOutput ( gBuffer, len ) ;
    }
 
+   if ( gOnlyMeta )
+   {
+      goto done ;
+   }
+
    extentType = INSPECT_EXTENT_TYPE_DATA ;
    firstExtent = mb->_firstExtentID ;
    dumpPrintf ( " Dump Data for Collection [%d]"OSS_NEWLINE, id ) ;
@@ -2241,6 +2269,12 @@ void dumpCollectionIndex( OSSFILE &file, SINT32 pageSize, UINT16 id )
    }
 
    dumpIndexDef ( file, pageSize, id, mb, indexRoots ) ;
+
+   if ( gOnlyMeta )
+   {
+      goto done ;
+   }
+
    // after dump index def, we should iterate all indexes and dump their
    // extents
    for ( it = indexRoots.begin() ; it != indexRoots.end() ; ++it )
