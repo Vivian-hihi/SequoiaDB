@@ -2424,7 +2424,7 @@ namespace engine
       }
       if ( objSet.size() != 1 )
       {
-         PD_LOG ( PDINFO, "Split Session[%s]: More than one sharding key[%d] "
+         PD_LOG ( PDERROR, "Split Session[%s]: More than one sharding key[%d] "
                   "is detected", sessionName(), objSet.size() ) ;
          rc = SDB_MULTI_SHARDING_KEY ;
          goto error ;
