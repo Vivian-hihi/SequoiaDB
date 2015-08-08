@@ -2005,6 +2005,7 @@ void inspectCollectionData( OSSFILE &file, SINT32 pageSize, UINT16 id,
       /// don't inspect data extent
       if ( !OSS_BIT_TEST ( gAction, ACTION_INSPECT ) )
       {
+         firstExtent = pExtent->_nextExtent ;
          continue ;
       }
 
