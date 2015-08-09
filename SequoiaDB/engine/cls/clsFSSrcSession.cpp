@@ -2425,7 +2425,8 @@ namespace engine
       if ( objSet.size() != 1 )
       {
          PD_LOG ( PDERROR, "Split Session[%s]: More than one sharding key[%d] "
-                  "is detected", sessionName(), objSet.size() ) ;
+                  "is detected[%s]", sessionName(), objSet.size(),
+                  obj.toString().c_str() ) ;
          rc = SDB_MULTI_SHARDING_KEY ;
          goto error ;
       }
@@ -2585,6 +2586,8 @@ namespace engine
       PD_TRACE_EXIT ( SDB__CLSSPLSS__ONOBJFLT );
       return outBuff ;
    error:
+      PD_LOG( PDERROR, "Split Session[%s]: Filter obj failed[%d], disconnect",
+              sessionName(), rc ) ;
       outSize = 0 ;
       _disconnect() ;
       goto done ;
