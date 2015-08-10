@@ -1910,6 +1910,16 @@ CHAR  *ossGetRealPath( const CHAR  *pPath,
 
    while ( TRUE )
    {
+      // if we had changed the first / to '\0',
+      // that means the input path(assume it is "/a/b/c") does not exist,
+      // and 'realpath' can not deal with this situation in linux.
+      // so let's return "\0a/b/c" out of the loop
+      if ( '\0' == pathBuffer[0] )
+      {
+         ret = pathBuffer ;
+         break ;
+      }
+      // try to get real path
       ret =
 #if defined (_LINUX)
          realpath ( pathBuffer, tempBuffer ) ;
@@ -1932,8 +1942,10 @@ CHAR  *ossGetRealPath( const CHAR  *pPath,
       else
       {
          // if we cannot find any /, and we still not able to build real path,
-         // that means the relative path is not correct, let's return ret (
-         // which is NULL )
+         // that means the input relative path is like "a/b/c", let's replenish
+         // the first path of absolute path, and then replenish the rest
+         ossStrncpy( resolvedPath, tempBuffer, length ) ;
+         ret = pathBuffer ;
          break ;
       }
       // when we get here that means we find the previous /
@@ -1947,7 +1959,7 @@ CHAR  *ossGetRealPath( const CHAR  *pPath,
    if ( ret && pPos )
    {
       *pPos = OSS_PATH_SEP_CHAR ;
-      ossStrncat ( resolvedPath, pPos, length ) ;
+      ossStrncat ( resolvedPath, pPos, length - ossStrlen(resolvedPath) ) ;
    }
    PD_TRACE_EXIT ( SDB_OSSGETREALPATH );
    return ret ? resolvedPath: NULL ;
