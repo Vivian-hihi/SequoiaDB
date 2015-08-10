@@ -1925,13 +1925,11 @@ namespace engine
          {
             if ( pQuery )
             {
-               PD_LOG( PDERROR, "Failed to get groups for obj[%s] from "
+               PD_LOG( PDWARNING, "Failed to get groups for obj[%s] from "
                        "catalog info[%s]", pQuery->toString().c_str(),
                        cataInfo->getCatalogSet()->toCataInfoBson(
                        ).toString().c_str() ) ;
             }
-            SDB_ASSERT( FALSE, "Catalog can't be empty" ) ;
-            rc = SDB_CAT_NO_MATCH_CATALOG ;
          }
          else
          {

@@ -422,6 +422,8 @@ namespace engine
       _MsgReplConsultationRes *msg = ( _MsgReplConsultationRes * )header ;
       if ( SDB_OK != msg->header.res )
       {
+         PD_LOG( PDEVENT, "Sync Session[%s]: Consult failed[%d], need to "
+                 "synchronize full data", sessionName(), msg->header.res ) ;
          _fullSync() ;
          goto done ;
       }

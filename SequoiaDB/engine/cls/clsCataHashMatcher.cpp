@@ -39,6 +39,7 @@
 using namespace bson;
 namespace engine
 {
+
    clsCataHashPredTree::clsCataHashPredTree( BSONObj shardingKey )
    : _logicType( CLS_CATA_LOGIC_INVALID ),
    _shardingKey( shardingKey ),
@@ -185,6 +186,7 @@ namespace engine
          UINT32 i = 0 ;
          BSONObjBuilder bobKey ;
          BSONObj objKey ;
+         BSONElement eleShard ;
          BSONObjIterator iterKey( _shardingKey ) ;
          if ( CLS_CATA_LOGIC_AND == _logicType && isNull() )
          {
@@ -207,7 +209,28 @@ namespace engine
                _fieldSet.clear() ;
                break ;
             }
-            bobKey.appendAs( iterField->second, "" ) ;
+            else if ( Array == iterField->second.type() )
+            {
+               BSONObj tmpObj( iterField->second.embeddedObject() ) ;
+               if ( tmpObj.nFields() > 1 )
+               {
+                  includeAllKey = FALSE ;
+                  if ( _logicType != CLS_CATA_LOGIC_AND )
+                  {
+                     upgradeToUniverse() ;
+                     goto done ;
+                  }
+                  _fieldSet.clear() ;
+                  break ;
+               }
+               eleShard = tmpObj.firstElement() ;
+            }
+            else
+            {
+               eleShard = iterField->second ;
+            }
+
+            bobKey.appendAs( eleShard, "" ) ;
          }
 
          if ( includeAllKey )
@@ -291,7 +314,7 @@ namespace engine
          }
          for ( i = 0 ; i < _children.size() ; i++ )
          {
-            rc = _children[i]->matches( pCatalogItem, rsTmp );
+            rc = _children[i]->matches( pCatalogItem, rsTmp ) ;
             PD_RC_CHECK( rc, PDERROR, "Failed to match the children!" ) ;
             if ( !rsTmp && CLS_CATA_LOGIC_AND == _logicType )
             {
@@ -345,7 +368,7 @@ namespace engine
          while ( cit != _fieldSet.end() )
          {
             buf << "{ " << cit->first << ": "
-                << cit->second.toString() << " }" ;
+                << cit->second.toString( false, false ) << " }" ;
             ++cit ;
          }
       }
@@ -665,10 +688,7 @@ namespace engine
                {
                   if ( iter.more() )
                   {
-                     rc = SDB_INVALIDARG ;
-                     PD_LOG( PDERROR, "Invalid field:%s",
-                             obj.toString().c_str() ) ;
-                     goto error ;
+                     result = PREDICATE_OBJ_TYPE_OP_NOT_EQ ;
                   }
                   else
                   {
@@ -679,8 +699,8 @@ namespace engine
                {
                   result = PREDICATE_OBJ_TYPE_OP_NOT_EQ ;
                }
-               break ;
             }
+            break ;
          }
       }
       catch ( std::exception &e )
