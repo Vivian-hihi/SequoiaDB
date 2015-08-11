@@ -1505,7 +1505,7 @@ namespace engine
             {
                PD_LOG( PDERROR, "Session[%s]: Failed to insert to "
                        "sub-collection[%s] of main-collection[%s], rc: %d",
-                       sessionName(), pSubCLName, _pCollectionName ) ;
+                       sessionName(), pSubCLName, _pCollectionName, rc ) ;
                goto error ;
             }
 
