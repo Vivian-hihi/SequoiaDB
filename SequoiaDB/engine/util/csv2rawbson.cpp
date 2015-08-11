@@ -1389,6 +1389,7 @@ INT32 csvParser::_string2date( INT64 &value, CHAR *pBuffer, INT32 size )
    }
    --month ;
    /* sanity check for years */
+   /*
    if( year    >     INT32_LAST_YEAR   ||
        year    <     RELATIVE_YEAR     ||
        month   >=    RELATIVE_MOD      || //[0,11]
@@ -1399,6 +1400,8 @@ INT32 csvParser::_string2date( INT64 &value, CHAR *pBuffer, INT32 size )
       rc = SDB_INVALIDARG ;
       goto error ;
    }
+   */
+   /*
    if ( ( year   == INT32_LAST_YEAR &&
           month  >  0 ) ||
         ( year   == INT32_LAST_YEAR &&
@@ -1408,7 +1411,15 @@ INT32 csvParser::_string2date( INT64 &value, CHAR *pBuffer, INT32 size )
       rc = SDB_INVALIDARG ;
       goto error ;
    }
-
+   */
+   if( month   >=    RELATIVE_MOD      || //[0,11]
+       month   <     0                 ||
+       day     >     RELATIVE_DAY      || //[1,31]
+       day     <=    0 )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
    year -= RELATIVE_YEAR ;
 
    /* construct tm */
@@ -1457,6 +1468,7 @@ INT32 csvParser::_string2date2( INT64 &value, CHAR *pBuffer, INT32 size )
       goto error ;
    }
 
+   /*
    if ( value > TIME_MAX_NUM )
    {
       PD_LOG ( PDERROR, "The time stamp %lld is greater than %d",
@@ -1464,6 +1476,7 @@ INT32 csvParser::_string2date2( INT64 &value, CHAR *pBuffer, INT32 size )
       rc = SDB_INVALIDARG ;
       goto error ;
    }
+   */
 
    value *= 1000 ;
 
