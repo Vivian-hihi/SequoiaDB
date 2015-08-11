@@ -3389,6 +3389,13 @@ namespace engine
                                     UINT32 primaryID,
                                     BOOLEAN isReadCmd )
    {
+      /// remove the last node
+      if ( cb && cb->getCoordSession() )
+      {
+         cb->getCoordSession()->removeLastNode( nodeID.columns.groupID,
+                                                nodeID ) ;
+      }
+
       if ( SDB_CLS_NOT_PRIMARY == flag && 0 != primaryID &&
            groupInfo.get() )
       {
