@@ -964,6 +964,14 @@ static BOOLEAN jsonConvertBson ( cJSON *cj, bson *bs, BOOLEAN isObj )
          {
             return FALSE ;
          }
+         if( cJSON_Date == cj->type && (
+             month   >=    RELATIVE_MOD      || //[0,11]
+             month   <     0                 ||
+             day     >     RELATIVE_DAY      || //[1,31]
+             day     <=    0 ) )
+         {
+            return FALSE ;
+         }
 
          year -= RELATIVE_YEAR ;
 
