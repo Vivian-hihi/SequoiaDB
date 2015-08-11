@@ -885,7 +885,7 @@ namespace bson {
             Date_t date = timestampTime () ;
             unsigned int inc = timestampInc () ;
             char buffer[128] ;
-            time_t timer = (time_t)(date.millis/1000) ;
+            time_t timer = (time_t)(((long long)date.millis)/1000) ;
             struct tm psr ;
             local_time ( &timer, &psr ) ;
             memset ( buffer, 0, 128 ) ;
