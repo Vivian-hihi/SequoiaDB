@@ -341,6 +341,9 @@
 #define FIELD_OP_VALUE_UPDATE                "update"
 #define FIELD_OP_VALUE_REMOVE                "remove"
 
+#define FIELD_OP_VALUE_KEEP                  "keep"
+#define FIELD_OP_VALUE_REPLACE               "replace"
+
 #define IXM_FIELD_NAME_KEY                   "key"
 #define IXM_FIELD_NAME_NAME                  "name"
 #define IXM_FIELD_NAME_UNIQUE                "unique"

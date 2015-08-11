@@ -72,6 +72,7 @@ namespace engine
       RENAME,
       NULLOPR,
       REPLACE,
+      KEEP,
 
       UNKNOW
    } ;
@@ -175,10 +176,15 @@ namespace engine
       BOOLEAN _initialized ;
       vector<ModifierElement> _modifierElements ;
 
+      // add for replace begin
+      vector<string> _keepKeys ;
+      BOOLEAN        _isReplaceID ;
+      BOOLEAN        _isReplace ;
+      // add for replace end
+
       vector<INT64> *_dollarList ;
       _compareFieldNames1  _fieldCompare ;
       BOOLEAN        _ignoreTypeError ;
-      BOOLEAN        _isReplace ;
 
       INT32 _addModifier ( const BSONElement &ele, ModType type ) ;
       INT32 _parseElement ( const BSONElement &ele ) ;
@@ -300,6 +306,7 @@ namespace engine
          _dollarList    = NULL ;
          _ignoreTypeError = TRUE ;
          _isReplace     = FALSE ;
+         _isReplaceID   = FALSE ;
       }
       ~_mthModifier()
       {

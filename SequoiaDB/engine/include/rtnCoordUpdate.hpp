@@ -95,6 +95,8 @@ namespace engine
 
       BSONObj _buildNewSelector( const BSONObj &selector,
                                  const CoordSubCLlist &subCLList ) ;
+
+      BOOLEAN _isUpdateReplace( const BSONObj &boUpdator ) ;
    };
 }
 

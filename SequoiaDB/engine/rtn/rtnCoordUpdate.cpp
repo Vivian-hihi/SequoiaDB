@@ -531,12 +531,32 @@ namespace engine
       goto done;
    }
 
+   BOOLEAN rtnCoordUpdate::_isUpdateReplace( const BSONObj &boUpdator )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObjIterator iter( boUpdator ) ;
+      static string replaceStr = CMD_ADMIN_PREFIX FIELD_OP_VALUE_REPLACE ;
+      while ( iter.more() )
+      {
+         BSONElement beTmp = iter.next() ;
+         if ( beTmp.fieldName() == replaceStr )
+         {
+            return TRUE ;
+         }
+      }
+
+      return FALSE ;
+   }
+
    INT32 rtnCoordUpdate::kickShardingKey( const CoordCataInfoPtr &cataInfo,
                                           const BSONObj &boUpdator,
                                           bson::BSONObj &boNewUpdator,
                                           BOOLEAN &hasShardingKey )
    {
       INT32 rc = SDB_OK ;
+      BSONObjBuilder keepBuilder ;
+      bool isReplace = FALSE ;
+      isReplace = _isUpdateReplace( boUpdator ) ;
       try
       {
          BSONObj boShardingKey ;
@@ -553,7 +573,16 @@ namespace engine
                        "updator=%s", boUpdator.toString().c_str() ) ;
                goto error;
             }
+
             BSONObj boTmp = beTmp.Obj() ;
+            //if replace. leave the keep
+            if ( isReplace 
+                 && beTmp.fieldName() == CMD_ADMIN_PREFIX FIELD_OP_VALUE_KEEP )
+            {
+               keepBuilder.appendElementsUnique( boTmp ) ;
+               continue ;
+            }
+
             BSONObjBuilder bobFields;
             BSONObjIterator iterField( boTmp ) ;
             while( iterField.more() )
@@ -595,6 +624,26 @@ namespace engine
             {
                bobNewUpdator.appendObject( beTmp.fieldName(),
                                            boFields.objdata() );
+            }
+         }
+         if ( isReplace ) 
+         {
+            //generate new $keep by combining boUpdator.$keep & boShardingKey.
+            keepBuilder.appendElementsUnique( boShardingKey ) ;
+            BSONObj newKeep = keepBuilder.obj();
+            if ( !newKeep.isEmpty() )
+            {
+               BSONObjBuilder sortedBuilder ;
+               BSONObjIteratorSorted iterSorted( newKeep ) ;
+               while ( iterSorted.more() )
+               {
+                  BSONElement sortedTmp = iterSorted.next() ;
+                  sortedBuilder.append( sortedTmp ) ;
+               }
+               //{'$keep':{a:1, b:1}}
+               bobNewUpdator.append( CMD_ADMIN_PREFIX FIELD_OP_VALUE_KEEP, 
+                                     sortedBuilder.obj() ) ;
+               hasShardingKey = TRUE ; 
             }
          }
          boNewUpdator = bobNewUpdator.obj() ;

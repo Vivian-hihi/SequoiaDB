@@ -50,6 +50,17 @@ using namespace std ;
 
 namespace engine
 {
+#define ADD_CHG_FIELD_VALUE( builder, fieldName, value, strChg ) \
+      do { \
+         if ( builder ) \
+         { \
+            BSONObjBuilder subBuilder ( builder->subobjStart ( strChg ) ) ; \
+            subBuilder.append ( fieldName, value ) ; \
+            subBuilder.done () ; \
+         } \
+      } while ( 0)
+
+
 
 #define ADD_CHG_ELEMENT( builder, ele, strChg ) \
    do { \
@@ -177,8 +188,23 @@ namespace engine
             PD_LOG_MSG ( PDERROR, "REPALCE can't have dollar argument" ) ;
             goto error ;
          }
-         ModifierElement me( ele, type, dollarNum ) ;
-         _modifierElements.push_back( me ) ;
+
+         if ( type == KEEP )
+         {
+            _keepKeys.push_back( ele.fieldName() ) ;
+         }
+         else
+         {
+            if ( type == REPLACE )
+            {
+               if ( ossStrcmp( ele.fieldName(), DMS_ID_KEY_NAME ) == 0 )
+               {
+                  _isReplaceID = TRUE ;
+               }
+            }
+            ModifierElement me( ele, type, dollarNum ) ;
+            _modifierElements.push_back( me ) ;
+         }
       }
 
    done :
@@ -974,6 +1000,14 @@ namespace engine
                return INC ;
             }
          }
+         else if ( field[1] == 'k' )
+         {
+            if ( field[2] == 'e' && field[3] == 'e' &&
+                 field[4] == 'p' && field[5] == 0 )
+            {
+               return KEEP ;
+            }
+         }
          else if ( field[1] == 'p' )
          {
             if ( field[2] == 'u' )
@@ -1078,10 +1112,18 @@ namespace engine
          _isReplace = TRUE ;
       }
 
-      if ( _isReplace && type != REPLACE )
+      if ( _isReplace && type != REPLACE && type != KEEP )
       {
          PD_LOG_MSG ( PDERROR, "REPLACE can't support other operator[%s]",
                       ele.fieldName() ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      if ( !_isReplace && type == KEEP )
+      {
+         PD_LOG_MSG( PDERROR, "keep can only be exist in replace opertion."
+                     "replace is missing or replace is all shardingKey" ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }
@@ -1419,6 +1461,8 @@ namespace engine
       std::sort( _modifierElements.begin(),
                  _modifierElements.end(),
                  _compareFieldNames2( _dollarList ) ) ;
+
+      std::sort( _keepKeys.begin(), _keepKeys.end() ) ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__MTHMDF_LDPTN, "_mthModifier::loadPattern" )
@@ -1446,6 +1490,13 @@ namespace engine
             goto error ;
          }
          eleNum ++ ;
+      }
+
+      if ( _isReplace && _modifierElements.size() == 0 )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "replace's modifier can't be zero" ) ;
+         goto error ;
       }
       modifierSort() ;
       _initialized = TRUE ;
@@ -1846,8 +1897,43 @@ namespace engine
    INT32 _mthModifier::_buildNewObjReplace( Builder &b,
                                             BSONObjIteratorSorted &es )
    {
-      BOOLEAN isIDReplaced = FALSE ;
       UINT32 i = 0 ;
+      std::vector<string> keepVec ;
+      while ( es.more() )
+      {
+         BSONElement e = es.next() ;
+         if ( !_isReplaceID 
+               && ossStrcmp( e.fieldName(), DMS_ID_KEY_NAME ) == 0 )
+         {
+            b.append( e ) ;
+         }
+         else
+         {
+            UINT32 j = 0 ;
+            while ( j < _keepKeys.size() )
+            {
+               INT32 cmp = ossStrcmp( e.fieldName(), 
+                                      _keepKeys[j].c_str() ) ;
+               //remain the keep field.
+               //es: {a:2, b:2, c:2} && keep: {a} ==> e: {a:2}
+               if ( cmp == 0 )
+               {
+                  b.append( e ) ;
+                  keepVec.push_back( _keepKeys[j] ) ;
+               }
+               else if ( cmp < 0 )
+               {
+                  break ; 
+               }
+               j++ ;
+            }
+         }
+
+         ADD_CHG_ELEMENT_AS ( _srcChgBuilder, e, e.fieldName(), 
+                              "$replace" ) ;
+      }
+
+      i = 0 ;
       while ( i < _modifierElements.size() )
       {
          const CHAR *pTmpFieldName = _modifierElements[i]._toModify.fieldName() ;
@@ -1855,24 +1941,15 @@ namespace engine
                               pTmpFieldName, 
                               "$replace" ) ;
          b.append( _modifierElements[i]._toModify ) ;
-         if ( ossStrcmp( pTmpFieldName, DMS_ID_KEY_NAME ) == 0 )
-         {
-            isIDReplaced = TRUE ;
-         }
          i++ ;
       }
-      
-      while ( es.more() )
-      {
-         BSONElement e = es.next() ;
-         if ( ossStrcmp( e.fieldName(), DMS_ID_KEY_NAME ) == 0 
-              && !isIDReplaced )
-         {
-            b.append( e ) ;
-         }
 
-         ADD_CHG_ELEMENT_AS ( _srcChgBuilder, e, e.fieldName(), 
-                              "$replace" ) ;
+      i = 0 ;
+      while ( i < keepVec.size() )
+      {
+         // make sure $keep is after $replace
+         ADD_CHG_FIELD_VALUE ( _dstChgBuilder, keepVec[i], 1, "$keep" ) ;
+         i++ ;
       }
 
       return SDB_OK  ;
