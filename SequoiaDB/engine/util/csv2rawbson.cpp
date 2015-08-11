@@ -1491,6 +1491,7 @@ INT32 csvParser::_string2regex( _csvRegex &value, CHAR *pBuffer, INT32 size )
                if( i + 1 >= size )
                {
                   value.pPattern = pBuffer + 1 ;
+                  value.pOptions = CSV_STR_EMPTYOPTIONS ;
                }
                // /pattern/options
                else
