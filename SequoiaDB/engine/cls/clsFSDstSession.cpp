@@ -184,6 +184,7 @@ namespace engine
       {
          msg.messageLength = sizeof( MsgHeader ) ;
          msg.TID = CLS_TID( _sessionID ) ;
+         msg.routeID.value = MSG_INVALID_ROUTEID ;
          msg.requestID = ++_requestID ;
          msg.opCode = MSG_BS_DISCONNECT ;
          _agent->syncSend( _selector.src(), &msg ) ;
@@ -1443,8 +1444,23 @@ namespace engine
       MsgClsFSBegin msg ;
       msg.type = CLS_FS_TYPE_IN_SET ;
       msg.header.TID = CLS_TID( _sessionID ) ;
-
+      MsgRouteID lastID = _selector.src() ;
       MsgRouteID src = _selector.selected( TRUE ) ;
+
+      /// send disconnect to the last source session
+      if ( MSG_INVALID_ROUTEID != lastID.value &&
+           lastID.value != src.value )
+      {
+         MsgHeader disMsg ;
+         disMsg.messageLength = sizeof( MsgHeader ) ;
+         disMsg.routeID.value = MSG_INVALID_ROUTEID ;
+         disMsg.TID = CLS_TID( _sessionID ) ;
+         disMsg.requestID = ++_requestID ;
+         disMsg.opCode = MSG_BS_DISCONNECT ;
+         _agent->syncSend( lastID, &disMsg ) ;
+      }
+
+      /// send to new source node
       if ( MSG_INVALID_ROUTEID != src.value )
       {
          msg.header.requestID = ++_requestID ;
@@ -1929,9 +1945,24 @@ namespace engine
          MsgClsFSBegin msg ;
          msg.type = CLS_FS_TYPE_BETWEEN_SETS ;
          msg.header.TID = CLS_TID( _sessionID ) ;
+         MsgRouteID lastID = _selector.src() ;
          // pickup the source group id
          MsgRouteID src = _selector.selectPrimary( _pTask->sourceID(),
-                                                   MSG_ROUTE_SHARD_SERVCIE );
+                                                   MSG_ROUTE_SHARD_SERVCIE ) ;
+
+         /// send disconnect to the last source session
+         if ( MSG_INVALID_ROUTEID != lastID.value &&
+              lastID.value != src.value )
+         {
+            MsgHeader disMsg ;
+            disMsg.messageLength = sizeof( MsgHeader ) ;
+            disMsg.routeID.value = MSG_INVALID_ROUTEID ;
+            disMsg.TID = CLS_TID( _sessionID ) ;
+            disMsg.requestID = ++_requestID ;
+            disMsg.opCode = MSG_BS_DISCONNECT ;
+            _agent->syncSend( lastID, &disMsg ) ;
+         }
+
          // validate
          if ( MSG_INVALID_ROUTEID != src.value )
          {

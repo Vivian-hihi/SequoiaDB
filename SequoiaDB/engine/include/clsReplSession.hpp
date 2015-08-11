@@ -52,7 +52,7 @@ namespace engine
    {
       CLS_SESSION_STATUS_SYNC = 1,
       CLS_SESSION_STATUS_CONSULT = 2,
-      CLS_SESSION_STATUS_FULL_SYNC = 3,
+      CLS_SESSION_STATUS_FULL_SYNC = 3
    } ;
 
    /*
@@ -110,6 +110,7 @@ namespace engine
          MsgRouteID                    _syncSrc ;
          CLS_SESSION_STATUS            _status ;
          BOOLEAN                       _quit ;
+         ossAtomic32                   _addFSSession ;
          BOOLEAN                       _isFirstToSync ;
          UINT32                        _timeout ;
          UINT64                        _requestID ;

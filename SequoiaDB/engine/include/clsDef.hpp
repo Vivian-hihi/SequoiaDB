@@ -69,9 +69,9 @@ namespace engine
    #define CLS_BEATID_INVALID                   ( 0 )
 
    //full sync node timeout
-   #define CLS_FS_NORES_TIMEOUT 10000
-   #define CLS_DST_SESSION_NO_MSG_TIME          (300000)
-   #define CLS_SRC_SESSION_NO_MSG_TIME          (10000)
+   #define CLS_FS_NORES_TIMEOUT                 (10000)  // 10 secs
+   #define CLS_DST_SESSION_NO_MSG_TIME          (300000) // 5 mins
+   #define CLS_SRC_SESSION_NO_MSG_TIME          (10000)  // 10 secs
 
    enum CLS_SYNC_STATUS
    {

@@ -676,6 +676,8 @@ INT32 resolveArgument ( po::options_description &desc, INT32 argc, CHAR **argv )
                        ossStrlen(gCLName)?gCLName:"{all}" ) ;
    dumpAndShowPrintf ( "Action        : %s"OSS_NEWLINE,
                        actionString ) ;
+   dumpAndShowPrintf ( "Repaire       : %s"OSS_NEWLINE,
+                       gRepairStr.c_str() ) ;
    dumpAndShowPrintf ( "Dump Options  :"OSS_NEWLINE ) ;
    dumpAndShowPrintf ( "   Dump Data  : %s"OSS_NEWLINE,
                        gDumpData?"True":"False" ) ;
@@ -689,8 +691,6 @@ INT32 resolveArgument ( po::options_description &desc, INT32 argc, CHAR **argv )
                        gShowRecordContent ? "True":"False") ;
    dumpAndShowPrintf ( "   Only Meta:   %s"OSS_NEWLINE,
                        gOnlyMeta ? "True":"False" ) ;
-   dumpAndShowPrintf ( "   Repaire    : %s"OSS_NEWLINE,
-                       gRepairStr.c_str() ) ;
    dumpAndShowPrintf ( OSS_NEWLINE ) ;
 done :
    PD_TRACE_EXITRC ( SDB_SDBINSPT_RESVARG, rc );

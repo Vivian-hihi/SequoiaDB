@@ -57,7 +57,8 @@ using namespace bson ;
 namespace engine
 {
 
-#define CLS_SYNC_MAX_TIME           (5)
+#define CLS_SYNC_MAX_TIME                 (5)         // second
+#define CLS_FS_SRC_MAX_NO_MSG_TIME        (3600000)   // 1 hour
 
 #define CLS_IS_LOB_LOG( type )\
         ( LOG_TYPE_LOB_WRITE == ( type ) || \
@@ -138,8 +139,8 @@ namespace engine
             goto done ;
          }
 
-         //if the peer node no msg a long time, shoud to quit
-         if ( CLS_DST_SESSION_NO_MSG_TIME < _timeCounter )
+         /// if the peer node no msg a long time, shoud to quit
+         if ( CLS_FS_SRC_MAX_NO_MSG_TIME < _timeCounter )
          {
             PD_LOG ( PDWARNING, "Session[%s]: no msg a long time, quit",
                      sessionName() ) ;

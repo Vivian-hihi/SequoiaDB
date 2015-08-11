@@ -60,7 +60,8 @@ namespace engine
        _status( CLS_SESSION_STATUS_SYNC ),
        _quit( FALSE ),
        _timeout( 0 ),
-       _consultLsn()
+       _consultLsn(),
+       _addFSSession(0)
    {
       PD_TRACE_ENTRY ( SDB__CLSDSTREPSN__CLSDSTREPSN );
       _logger = pmdGetKRCB()->getDPSCB() ;
@@ -113,7 +114,7 @@ namespace engine
 
       _selector.timeout( interval ) ;
 
-      if ( _timeout < CLS_SYNC_INTERVAL )
+      if ( _timeout < CLS_SYNC_INTERVAL || _quit )
       {
          goto done ;
       }
@@ -194,6 +195,8 @@ namespace engine
       // if start form crash, should full sync
       if ( !pmdGetStartup().isOK() )
       {
+         PD_LOG( PDEVENT, "Sync Session[%s]: The db data is abnormal, "
+                 "need to synchronize full data", sessionName() ) ;
          _status = CLS_SESSION_STATUS_FULL_SYNC ;
       }
 
@@ -440,7 +443,8 @@ namespace engine
          if ( msg->returnTo.invalid() )
          {
             PD_LOG ( PDWARNING, "Sync Session[%s]: Consult returnTo lsn is "
-                     "invalid", sessionName() ) ;
+                     "invalid, need to synchronize full data",
+                     sessionName() ) ;
             _fullSync() ;
             goto done ;
          }
@@ -459,7 +463,8 @@ namespace engine
                if ( SDB_OK != _logger->searchHeader( search, &_mb ) )
                {
                   PD_LOG ( PDWARNING, "Sync Session[%s]: No find the lsn less "
-                           "than(offset:%lld, version:%d)", sessionName(),
+                           "than(offset:%lld, version:%d), need to "
+                           "synchronize full data", sessionName(),
                            msg->returnTo.offset, msg->returnTo.version ) ;
                   _fullSync () ;
                   goto done ;
@@ -484,6 +489,11 @@ namespace engine
 
             if ( 0 != point.compareVersion( msg->returnTo.version ) )
             {
+               PD_LOG( PDERROR, "Sync Session[%s]: The local searched "
+                       "lsn[%u,%lld] is not the same with consult "
+                       "lsn[%u,%lld], need to synchronize full data",
+                       sessionName(), point.version, point.offset,
+                       msg->returnTo.version, msg->returnTo.offset ) ;
                _fullSync() ;
                goto done ;
             }
@@ -499,8 +509,9 @@ namespace engine
                if ( SDB_OK != rc )
                {
                   PD_LOG( PDERROR, "Sync Session[%s]: Search lsn[%lld, %d] "
-                          "failed, rc: %d", sessionName(), rollback.offset,
-                          rollback.version, rc ) ;
+                          "failed, rc: %d, need to synchronize full data",
+                          sessionName(), rollback.offset, rollback.version,
+                          rc ) ;
                   _fullSync() ;
                   goto done ;
                }
@@ -512,8 +523,8 @@ namespace engine
                else if ( SDB_OK != _rollback( _mb.offset( 0 ) ) )
                {
                   PD_LOG( PDERROR, "Sync Session[%s]: Rollback lsn[%lld, %d] "
-                          "failed", sessionName(), rollback.offset,
-                          rollback.version  ) ;
+                          "failed, need to synchronize full data",
+                          sessionName(), rollback.offset, rollback.version  ) ;
                   _fullSync() ;
                   goto done ;
                }
@@ -530,8 +541,8 @@ namespace engine
                                            ( _mb.offset(0) ))->_length,
                                           point.version ) )
             {
-               PD_LOG( PDERROR, "Sync Session[%s]: Rollback log failed.",
-                       sessionName() ) ;
+               PD_LOG( PDERROR, "Sync Session[%s]: Rollback log failed, "
+                       "need to synchronize full data", sessionName() ) ;
                _fullSync() ;
                goto done ;
             }
@@ -624,9 +635,12 @@ namespace engine
       {
          _quit = TRUE ;
 
-         pClsCB->startInnerSession( CLS_REPL, CLS_TID_REPL_FS_SYC ) ;
-         PD_LOG( PDEVENT, "Sync Session[%s]: Start the synchronization of full",
-                 sessionName() ) ;
+         if ( _addFSSession.compareAndSwap( 0, 1 ) )
+         {
+            pClsCB->startInnerSession( CLS_REPL, CLS_TID_REPL_FS_SYC ) ;
+            PD_LOG( PDEVENT, "Sync Session[%s]: Start the synchronization of full",
+                    sessionName() ) ;
+         }
       }
 
    done:
@@ -840,8 +854,8 @@ namespace engine
          if ( rc )
          {
             PD_LOG( PDERROR, "Sync Session[%s]: Failed to move lsn to "
-                    "[%u, %llu], rc: %d", sessionName(),
-                    expectLSN.version, expectLSN.offset ) ;
+                    "[%u, %llu], rc: %d, need to synchronize full data",
+                    sessionName(), expectLSN.version, expectLSN.offset ) ;
             _fullSync() ;
          }
          else
@@ -856,8 +870,9 @@ namespace engine
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "Sync Session[%s]: Failed to rollback[%lld, "
-                    "type: %d], rc: %d", sessionName(),
-                    recordHeader->_lsn, recordHeader->_type, rc ) ;
+                    "type: %d], rc: %d, need to synchronize full data",
+                    sessionName(), recordHeader->_lsn, recordHeader->_type,
+                    rc ) ;
             _fullSync() ;
          }
       }
@@ -935,7 +950,7 @@ namespace engine
       _timeout += interval ;
 
       //if the peer node no msg a long time,need to quit
-      if ( CLS_DST_SESSION_NO_MSG_TIME < _timeout )
+      if ( !_quit && CLS_DST_SESSION_NO_MSG_TIME < _timeout )
       {
          PD_LOG ( PDEVENT, "Sync Session[%s] peer node a long time no msg, "
                   "quit", sessionName() ) ;
