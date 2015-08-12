@@ -197,7 +197,8 @@ namespace import
       // the characters can't be invisible or '.'
       while (length > 0)
       {
-         if (!isprint(*field) || '.' == *field)
+         UINT8 ch = *field;
+         if (ch <=127 && (!isprint(ch) || '.' == ch))
          {
             return FALSE;
          }
