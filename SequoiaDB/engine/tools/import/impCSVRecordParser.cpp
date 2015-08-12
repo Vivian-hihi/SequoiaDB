@@ -1914,7 +1914,8 @@ namespace import
          goto error;
       }
 
-      value.binLen = base64Len;
+      // ignore '\0'
+      value.binLen = base64Len - 1;
 
    done:
       return rc ;
