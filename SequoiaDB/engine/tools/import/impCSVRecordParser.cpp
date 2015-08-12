@@ -1492,6 +1492,7 @@ namespace import
          year -= RELATIVE_YEAR;
 
          /* construct tm */
+         ossMemset(&t, 0, sizeof(t));
          t.tm_year = year;
          t.tm_mon  = month;
          t.tm_mday = day;
@@ -1623,12 +1624,10 @@ namespace import
          year -= RELATIVE_YEAR;
 
          /* construct tm */
+         ossMemset(&t, 0, sizeof(t));
          t.tm_year = year;
          t.tm_mon  = month;
          t.tm_mday = day;
-         t.tm_hour = 0;
-         t.tm_min  = 0;
-         t.tm_sec  = 0;
 
          /* create integer time representation */
          timep = mktime(&t);
