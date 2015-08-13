@@ -524,7 +524,6 @@ namespace engine
             if ( SDB_OK == rc )
             {
                written += (UINT32)writtenLen ;
-               _idleSize -= (UINT32)writtenLen ;
             }
             else
             {
@@ -534,6 +533,7 @@ namespace engine
                goto error;
             }
          }
+         _idleSize -= len ;
       }
       else if ( len > _idleSize )
       {
