@@ -4933,6 +4933,8 @@ do                                                            \
     * SequoiaDB large object Implementation
     */
    _sdbLobImpl::_sdbLobImpl () :
+   _connection (NULL),
+   _collection (NULL),
    _pSendBuffer ( NULL ),
    _sendBufferSize ( 0 ),
    _pReceiveBuffer ( NULL ),
