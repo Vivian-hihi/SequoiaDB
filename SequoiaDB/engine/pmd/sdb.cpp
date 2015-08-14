@@ -818,12 +818,6 @@ int main ( int argc , CHAR **argv )
    PD_TRACE_ENTRY ( SDB_SDB_MAIN );
    ArgInfo           argInfo ;
 
-   // save the program's path
-   rc = setProgramName( argv[0] );
-   if ( rc )
-   {
-      goto error ;
-   }
 #if defined( _LINUX )
    signal( SIGCHLD, SIG_IGN ) ;
 #endif // _LINUX
