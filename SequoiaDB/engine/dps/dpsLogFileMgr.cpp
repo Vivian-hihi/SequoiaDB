@@ -272,7 +272,7 @@ namespace engine
 
       // empty file or full file(roll over)
       if ( WORK_FILE->getIdleSize() == 0 ||
-           WORK_FILE->getIdleSize() == WORK_FILE->size() )
+           WORK_FILE->getFirstLSN().invalid() )
       {
          WORK_FILE->reset( _logicalWork, beginLsn.offset, beginLsn.version ) ;
       }

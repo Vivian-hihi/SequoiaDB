@@ -320,7 +320,8 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR, "Failed to flush header, rc: %d", rc ) ;
       }
 
-      if ( _logHeader._logID == DPS_INVALID_LOG_FILE_ID )
+      if ( _logHeader._logID == DPS_INVALID_LOG_FILE_ID ||
+           _logHeader._firstLSN.invalid() )
       {
          _logHeader._firstLSN.version = DPS_INVALID_LSN_VERSION ;
          _logHeader._firstLSN.offset = DPS_INVALID_LSN_OFFSET ;
