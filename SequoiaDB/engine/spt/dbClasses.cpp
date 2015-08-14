@@ -58,6 +58,7 @@
 #include "sptConvertorHelper.hpp"
 #include <boost/lexical_cast.hpp>
 #include "utilStr.hpp"
+#include "ossProc.hpp"
 
 #define SAFE_BSON_DISPOSE( p ) \
    do { if ( p ) { bson_dispose( p ) ; ( p ) = NULL ; } } while ( 0 )
@@ -441,7 +442,7 @@ static JSBool global_help ( JSContext *cx , uintN argc , jsval *vp )
 #if defined (SDB_SHELL)
    INT32 rc                                     = SDB_OK ;
    CHAR tfPath[ OSS_MAX_PATHSIZE + 1 ]          = { 0 } ;
-   INT32 len                                    = 0 ;
+   CHAR pwdPath[ OSS_MAX_PATHSIZE + 1 ]         = { 0 } ;
 #endif
    JSBool ret                                   = JS_TRUE ;
    JSString *strCate                            = NULL ;
@@ -465,16 +466,12 @@ static JSBool global_help ( JSContext *cx , uintN argc , jsval *vp )
    }
 
 #if defined (SDB_SHELL)
-   // get the troff file path
-   rc = getProgramPath( tfPath ) ;
+   // get the troff file path 
+   rc = ossGetEWD( pwdPath, OSS_MAX_PATHSIZE ) ;
    REPORT_RC ( SDB_OK == rc, "help()", rc ) ;
-   len = ossStrlen(TF_REL_PATH) ;
-   if ( ossStrlen( tfPath ) + len  > OSS_MAX_PATHSIZE )
-   {
-      rc = SDB_INVALIDARG ;
-      REPORT_RC ( SDB_OK == rc, "help()", rc ) ;
-   }
-   ossStrncat ( tfPath, TF_REL_PATH, ossStrlen(TF_REL_PATH) ) ;
+   rc = engine::utilBuildFullPath( pwdPath, TF_REL_PATH,
+                                   OSS_MAX_PATHSIZE, tfPath ) ;
+   REPORT_RC ( SDB_OK == rc, "help()", rc ) ;
    // get manHelp instance and display xxx.help() or xxx.help(yyy)
    rc = manHelp::getInstance( tfPath ).getFileHelp( cate, cmd ) ;
    REPORT_RC ( SDB_OK == rc, "help()", rc ) ;
