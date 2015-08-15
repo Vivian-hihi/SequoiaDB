@@ -3,7 +3,7 @@
 <topic id="topic_qs5_kkk_tp">
   <title>db.collectionspace.collection.listLobs()</title>
   <body>
-    <section><title>db.collectionspace.collection.putLob()</title>
+    <section><title>db.collectionspace.collection.listLob()</title>
       <p>枚举集合中的大对象。</p>
     </section>
     <section><title>参数描述</title>

@@ -6526,4 +6526,5 @@ w["collection.py"]="1095*2,1131*1,1136*1";
 w["collection.update"]="692*1";
 w["collection1_name"]="1470*2,1477*2,1486*2";
 w["collection2_name"]="1470*2,1477*2,1486*2";
+w["collection:"]="577*1,1095*1";
 
