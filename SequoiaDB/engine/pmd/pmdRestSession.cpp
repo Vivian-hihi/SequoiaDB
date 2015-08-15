@@ -349,7 +349,7 @@ namespace engine
       rc = _pRestTransfer->trans( pAdaptor, msg ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "transfer rest message failed:rc=%d", rc ) ;
+         //PD_LOG( PDERROR, "transfer rest message failed:rc=%d", rc ) ;
          goto error ;
       }
 
