@@ -61,6 +61,21 @@ namespace import
    #define CSV_STR_TRUE_SIZE  ((INT32)(sizeof(CSV_STR_TRUE) - 1))
    #define CSV_STR_FALSE_SIZE ((INT32)(sizeof(CSV_STR_FALSE) - 1))
 
+   #define CSV_STR_YES        "yes"
+   #define CSV_STR_NO         "no"
+   #define CSV_STR_YES_SIZE   ((INT32)(sizeof(CSV_STR_YES) - 1))
+   #define CSV_STR_NO_SIZE    ((INT32)(sizeof(CSV_STR_NO) - 1))
+
+   #define CSV_STR_T          "t"
+   #define CSV_STR_F          "f"
+   #define CSV_STR_T_SIZE     ((INT32)(sizeof(CSV_STR_T) - 1))
+   #define CSV_STR_F_SIZE     ((INT32)(sizeof(CSV_STR_F) - 1))
+
+   #define CSV_STR_Y          "y"
+   #define CSV_STR_N          "n"
+   #define CSV_STR_Y_SIZE     ((INT32)(sizeof(CSV_STR_Y) - 1))
+   #define CSV_STR_N_SIZE     ((INT32)(sizeof(CSV_STR_N) - 1))
+
    #define CSV_STR_INT_SIZE         (sizeof(CSV_STR_INT) - 1)
    #define CSV_STR_INTEGER_SIZE     (sizeof(CSV_STR_INTEGER) - 1)
    #define CSV_STR_LONG_SIZE        (sizeof(CSV_STR_LONG) - 1)
@@ -675,6 +690,48 @@ namespace import
       {
          value = FALSE;
          valueLength = CSV_STR_FALSE_SIZE;
+         goto done;
+      }
+      else if (length >= CSV_STR_YES_SIZE &&
+               ossStrncasecmp(data, CSV_STR_YES, CSV_STR_YES_SIZE) == 0)
+      {
+         value = TRUE;
+         valueLength = CSV_STR_YES_SIZE;
+         goto done;
+      }
+      else if (length >= CSV_STR_NO_SIZE &&
+               ossStrncasecmp(data, CSV_STR_NO, CSV_STR_NO_SIZE) == 0)
+      {
+         value = FALSE;
+         valueLength = CSV_STR_NO_SIZE;
+         goto done;
+      }
+      else if (length >= CSV_STR_T_SIZE &&
+               ossStrncasecmp(data, CSV_STR_T, CSV_STR_T_SIZE) == 0)
+      {
+         value = TRUE;
+         valueLength = CSV_STR_T_SIZE;
+         goto done;
+      }
+      else if (length >= CSV_STR_F_SIZE &&
+               ossStrncasecmp(data, CSV_STR_F, CSV_STR_F_SIZE) == 0)
+      {
+         value = FALSE;
+         valueLength = CSV_STR_F_SIZE;
+         goto done;
+      }
+      else if (length >= CSV_STR_Y_SIZE &&
+               ossStrncasecmp(data, CSV_STR_Y, CSV_STR_Y_SIZE) == 0)
+      {
+         value = TRUE;
+         valueLength = CSV_STR_Y_SIZE;
+         goto done;
+      }
+      else if (length >= CSV_STR_N_SIZE &&
+               ossStrncasecmp(data, CSV_STR_N, CSV_STR_N_SIZE) == 0)
+      {
+         value = FALSE;
+         valueLength = CSV_STR_N_SIZE;
          goto done;
       }
       else
