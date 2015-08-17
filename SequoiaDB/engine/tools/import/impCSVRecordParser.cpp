@@ -178,11 +178,14 @@ namespace import
 
       SDB_ASSERT(NULL != data, "data can't be NULL");
 
-      _skipSpace(&str, len);
-      if (len == 0)
+      if (!isspace(*fieldDel))
       {
-         endLength = length;
-         return TRUE;
+         _skipSpace(&str, len);
+         if (len == 0)
+         {
+            endLength = length;
+            return TRUE;
+         }
       }
       else if (_startWith(str, len, fieldDel, fieldDelLen))
       {

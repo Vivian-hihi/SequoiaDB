@@ -33,6 +33,7 @@
 #include "ossUtil.h"
 #include "pd.hpp"
 #include <iostream>
+#include <sstream>
 
 using namespace engine;
 using namespace std;
@@ -154,6 +155,89 @@ namespace import
       (IMP_OPTION_DRYRUN,               /* no arg */     IMP_EXPLAIN_DRYRUN) \
       (IMP_OPTION_RECORDSMEM,          _TYPE(INT32),     IMP_EXPLAIN_RECORDSMEM) \
 
+   static INT32 _convertAsciiEscapeChar(const string& in, string& out)
+   {
+      INT32 rc = SDB_OK;
+      stringstream ss;
+      const CHAR* str = in.c_str();
+      INT32 len = in.length();
+
+      while (len > 0)
+      {
+         CHAR ch = *str;
+
+         if ('\\' == ch)
+         {
+            CHAR nextCh = *(str + 1);
+            str++;
+            len--;
+
+            // escape ascii char
+            if (isdigit(nextCh))
+            {
+               INT64 c = 0;
+
+               while (len > 0 && isdigit(*str))
+               {
+                  c = c * 10 + (*str - '0');
+                  // the max ascii is 127
+                  if (c < 0 || c > 127)
+                  {
+                     rc = SDB_INVALIDARG;
+                     goto error;
+                  }
+                  str++;
+                  len--;
+               }
+
+               ss << (CHAR)c;
+               continue;
+            }
+            else if ('n' == nextCh)
+            {
+               str++;
+               len--;
+               ss << '\n';
+               continue;
+            }
+            else if ('r' == nextCh)
+            {
+               str++;
+               len--;
+               ss << '\r';
+               continue;
+            }
+            else if ('t' == nextCh)
+            {
+               str++;
+               len--;
+               ss << '\t';
+               continue;
+            }
+            else if ('\\' == nextCh)
+            {
+               str++;
+               len--;
+               ss << '\\';
+               continue;
+            }
+
+            rc = SDB_INVALIDARG;
+            goto error;
+         }
+
+         ss << ch;
+         str++;
+         len--;
+      }
+
+      out = ss.str();
+
+   done:
+      return rc;
+   error:
+      goto done;
+   }
 
    Options::Options()
    {
@@ -482,36 +566,60 @@ namespace import
 
       if (has(IMP_OPTION_DELCHAR))
       {
-         _stringDelimiter = get<string>(IMP_OPTION_DELCHAR);
-         if (_stringDelimiter.empty())
+         _stringDelimiterIn = get<string>(IMP_OPTION_DELCHAR);
+         if (_stringDelimiterIn.empty())
          {
             std::cerr << IMP_OPTION_DELCHAR << " can't be empty"
                       << std::endl;
             rc = SDB_INVALIDARG;
             goto error;
          }
+
+         rc = _convertAsciiEscapeChar(_stringDelimiterIn, _stringDelimiter);
+         if (SDB_OK != rc)
+         {
+            std::cerr << "invalid " << IMP_OPTION_DELCHAR
+                      << std::endl;
+            goto error;
+         }
       }
 
       if (has(IMP_OPTION_DELRECORD))
       {
-         _recordDelimiter = get<string>(IMP_OPTION_DELRECORD);
-         if (_recordDelimiter.empty())
+         _recordDelimiterIn = get<string>(IMP_OPTION_DELRECORD);
+         if (_recordDelimiterIn.empty())
          {
             std::cerr << IMP_OPTION_DELRECORD << " can't be empty"
                       << std::endl;
             rc = SDB_INVALIDARG;
             goto error;
          }
+
+         rc = _convertAsciiEscapeChar(_recordDelimiterIn, _recordDelimiter);
+         if (SDB_OK != rc)
+         {
+            std::cerr << "invalid " << IMP_OPTION_DELRECORD
+                      << std::endl;
+            goto error;
+         }
       }
 
       if (has(IMP_OPTION_DELFIELD))
       {
-         _fieldDelimiter = get<string>(IMP_OPTION_DELFIELD);
-         if (_fieldDelimiter.empty())
+         _fieldDelimiterIn = get<string>(IMP_OPTION_DELFIELD);
+         if (_fieldDelimiterIn.empty())
          {
             std::cerr << IMP_OPTION_DELFIELD << " can't be empty"
                       << std::endl;
             rc = SDB_INVALIDARG;
+            goto error;
+         }
+
+         rc = _convertAsciiEscapeChar(_fieldDelimiterIn, _fieldDelimiter);
+         if (SDB_OK != rc)
+         {
+            std::cerr << "invalid " << IMP_OPTION_DELFIELD
+                      << std::endl;
             goto error;
          }
       }

@@ -144,10 +144,13 @@ namespace import
       INPUT_TYPE     _inputType;
       INPUT_FORMAT   _inputFormat;
       BOOLEAN        _linePriority;
+      string         _recordDelimiterIn;
       string         _recordDelimiter;
       BOOLEAN        _force;
 
       /* csv */
+      string         _stringDelimiterIn;
+      string         _fieldDelimiterIn;
       string         _stringDelimiter;
       string         _fieldDelimiter;
       string         _fields;
