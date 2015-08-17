@@ -233,6 +233,76 @@ public class DBCollection {
 	}
 
 	/**
+     * @fn <T> void save(T type, Boolean ignoreNullValue)
+     * @brief Insert an object into current collection
+     * @param type
+     *            The object of insertor, can't be null
+     * @param ignoreNullValue
+     *            true:if type's inner value is null, it will not save to collection;
+     *            false:if type's inner value is null, it will save to collection too.
+     * @exception com.sequoiadb.exception.BaseException 
+     *            1.when the type is not support, throw BaseException with the type "SDB_INVALIDARG"
+     *            2.when offer main keys by setMainKeys(), and try to update "_id" field,
+     *              it may get a BaseException with the type of "SDB_IXM_DUP_KEY" 
+     * @note when save include update shardingKey field, the shardingKey modify action is not take effect, but the other
+     *       field update is take effect. Because of current version is not support update shardingKey field.
+     * @see com.sequoiadb.base.DBCollection.setMainKeys
+     */
+    public <T> void save(T type, Boolean ignoreNullValue) throws BaseException
+    {
+        // transform java object to bson object
+        BSONObject obj;
+        try
+        {
+            obj = BasicBSONObject.typeToBson(type, ignoreNullValue);
+        }
+        catch (Exception e)
+        {
+            throw new BaseException("SDB_INVALIDARG", type, e);
+        }
+        BSONObject matcher = new BasicBSONObject();
+        BSONObject modifer = new BasicBSONObject(); 
+        // if user don't specify main keys, use default one "_id"
+        if (mainKeys.isEmpty())
+        {
+            Object id = obj.get(SequoiadbConstants.OID);
+            if (id == null || (id instanceof ObjectId && ((ObjectId) id).isNew()))
+            {
+                if (id != null && id instanceof ObjectId)
+                    ((ObjectId) id).notNew();
+                insert(obj);
+            }
+            else
+            {
+                // build condtion
+                matcher.put(SequoiadbConstants.OID, id);
+                // build rule
+                modifer.put("$set", obj);
+                upsert(matcher, modifer, null);
+            }
+        }
+        else
+        { // if user specify main keys, use these main keys
+            Iterator<String> it = mainKeys.iterator();
+            // build condition
+            while (it.hasNext())
+            {
+                String key = it.next();
+                if (obj.containsField(key))
+                    matcher.put(key, obj.get(key));
+            }
+            // build rule
+            if (!matcher.isEmpty()) {
+                modifer.put("$set", obj);
+                upsert(matcher, modifer, null);
+            }
+            else {
+                insert(obj);
+            }
+        }
+    }
+	
+	/**
 	 * @fn <T> void save(T type)
 	 * @brief Insert an object into current collection
 	 * @param type
@@ -247,57 +317,82 @@ public class DBCollection {
 	 */
 	public <T> void save(T type) throws BaseException
 	{
-		// transform java object to bson object
-		BSONObject obj;
-		try
-		{
-			obj = BasicBSONObject.typeToBson(type);
-		}
-		catch (Exception e)
-		{
-			throw new BaseException("SDB_INVALIDARG", type, e);
-		}
-		BSONObject matcher = new BasicBSONObject();
-		BSONObject modifer = new BasicBSONObject(); 
-		// if user don't specify main keys, use default one "_id"
-		if (mainKeys.isEmpty())
-		{
-			Object id = obj.get(SequoiadbConstants.OID);
-			if (id == null || (id instanceof ObjectId && ((ObjectId) id).isNew()))
-			{
-				if (id != null && id instanceof ObjectId)
-					((ObjectId) id).notNew();
-				insert(obj);
-			}
-			else
-			{
-				// build condtion
-				matcher.put(SequoiadbConstants.OID, id);
-				// build rule
-				modifer.put("$set", obj);
-				upsert(matcher, modifer, null);
-			}
-		}
-		else
-		{ // if user specify main keys, use these main keys
-			Iterator<String> it = mainKeys.iterator();
-			// build condition
-			while (it.hasNext())
-			{
-				String key = it.next();
-				if (obj.containsField(key))
-					matcher.put(key, obj.get(key));
-			}
-			// build rule
-			if (!matcher.isEmpty()) {
-			    modifer.put("$set", obj);
-                upsert(matcher, modifer, null);
-			}
-			else {
-			    insert(obj);
-			}
-		}
+		save(type, false);
 	}
+	
+	/**
+     * @fn <T> void save(List<T> type, Boolean ignoreNullValue)
+     * @brief Insert an object into current collection
+     * @param type
+     *            The List instance of insertor, can't be null or empty
+     * @param ignoreNullValue
+     *            true:if type's inner value is null, it will not save to collection;
+     *            false:if type's inner value is null, it will save to collection too.
+     * @exception com.sequoiadb.exception.BaseException 
+     *            1.while the input argument is null or the List instance is empty
+     *            2.while the type is not support, throw BaseException with the type "SDB_INVALIDARG"
+     *            3.while offer main keys by setMainKeys(), and try to update "_id" field,
+     *              it may get a BaseException with the type of "SDB_IXM_DUP_KEY" when the "_id" field you
+     *              want to update to had been existing in database 
+     * @note when save include update shardingKey field, the shardingKey modify action is not take effect, but the other
+     *       field update is take effect. Because of current version is not support update shardingKey field.
+     * @see com.sequoiadb.base.DBCollection.setMainKeys
+     */
+    public <T> void save(List<T> type, Boolean ignoreNullValue) throws BaseException {
+        if (type == null || type.size() == 0)
+            throw new BaseException("SDB_INVALIDARG", type);
+        // transform java object to bson object
+        List<BSONObject> objs = new ArrayList<BSONObject>();
+        try {
+            Iterator<T> it = type.iterator(); 
+            while (it != null && it.hasNext()) {
+                objs.add(BasicBSONObject.typeToBson(it.next(), ignoreNullValue));
+            }
+        } catch (Exception e) {
+            throw new BaseException("SDB_INVALIDARG", type, e);
+        }
+        BSONObject matcher = new BasicBSONObject();
+        BSONObject modifer = new BasicBSONObject();
+        BSONObject obj = null;
+        Iterator<BSONObject> ite = objs.iterator();
+        // if user don't specify main keys, use default one "_id"
+        if (mainKeys.isEmpty()) {
+            while(ite != null && ite.hasNext()) {
+                obj = ite.next();
+                Object id = obj.get(SequoiadbConstants.OID);
+                if (id == null || (id instanceof ObjectId && ((ObjectId) id).isNew())) {
+                    if (id != null && id instanceof ObjectId)
+                        ((ObjectId) id).notNew();
+                    insert(obj);
+                } else {
+                    // build condtion
+                    matcher.put(SequoiadbConstants.OID, id);
+                    // build rule
+                    modifer.put("$set", obj);
+                    upsert(matcher, modifer, null);
+                }
+            }
+        } else { // if user specify main keys, use these main keys
+            while (ite != null && ite.hasNext()) {
+                obj = ite.next();
+                Iterator<String> i = mainKeys.iterator();
+                // build condition
+                while (i.hasNext()) {
+                    String key = i.next();
+                    if (obj.containsField(key))
+                        matcher.put(key, obj.get(key));
+                }
+                if (!matcher.isEmpty()) {
+                    // build rule
+                    modifer.put("$set", obj);
+                    upsert(matcher, modifer, null);
+                }
+                else {
+                    insert(obj);
+                }
+            }
+        }
+    }
 	
 	/**
 	 * @fn <T> void save(List<T> type)
@@ -315,59 +410,7 @@ public class DBCollection {
 	 * @see com.sequoiadb.base.DBCollection.setMainKeys
 	 */
 	public <T> void save(List<T> type) throws BaseException {
-		if (type == null || type.size() == 0)
-			throw new BaseException("SDB_INVALIDARG", type);
-		// transform java object to bson object
-		List<BSONObject> objs = new ArrayList<BSONObject>();
-		try {
-			Iterator<T> it = type.iterator(); 
-			while (it != null && it.hasNext()) {
-				objs.add(BasicBSONObject.typeToBson(it.next()));
-			}
-		} catch (Exception e) {
-			throw new BaseException("SDB_INVALIDARG", type, e);
-		}
-		BSONObject matcher = new BasicBSONObject();
-		BSONObject modifer = new BasicBSONObject();
-		BSONObject obj = null;
-		Iterator<BSONObject> ite = objs.iterator();
-		// if user don't specify main keys, use default one "_id"
-		if (mainKeys.isEmpty()) {
-			while(ite != null && ite.hasNext()) {
-				obj = ite.next();
-				Object id = obj.get(SequoiadbConstants.OID);
-				if (id == null || (id instanceof ObjectId && ((ObjectId) id).isNew())) {
-					if (id != null && id instanceof ObjectId)
-						((ObjectId) id).notNew();
-					insert(obj);
-				} else {
-					// build condtion
-					matcher.put(SequoiadbConstants.OID, id);
-					// build rule
-					modifer.put("$set", obj);
-					upsert(matcher, modifer, null);
-				}
-			}
-		} else { // if user specify main keys, use these main keys
-			while (ite != null && ite.hasNext()) {
-				obj = ite.next();
-				Iterator<String> i = mainKeys.iterator();
-				// build condition
-				while (i.hasNext()) {
-					String key = i.next();
-					if (obj.containsField(key))
-						matcher.put(key, obj.get(key));
-				}
-				if (!matcher.isEmpty()) {
-				    // build rule
-				    modifer.put("$set", obj);
-				    upsert(matcher, modifer, null);
-				}
-				else {
-				    insert(obj);
-				}
-			}
-		}
+		save(type, false);
 	}
 	
 	public void ensureOID(boolean flag) {
