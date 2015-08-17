@@ -408,6 +408,12 @@ namespace import
       SDB_ASSERT(NULL != data, "data can't be NULL");
       SDB_ASSERT(length > 0, "length must be greater than 0");
 
+      if ('#' == *str)
+      {
+         str++;
+         len--;
+      }
+
       if ('-' == *str)
       {
          neg = TRUE;
@@ -479,6 +485,12 @@ namespace import
 
       SDB_ASSERT(NULL != data, "data can't be NULL");
       SDB_ASSERT(length > 0, "length must be greater than 0");
+
+      if ('#' == *str)
+      {
+         str++;
+         len--;
+      }
 
       if ('-' == *str)
       {
