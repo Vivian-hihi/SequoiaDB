@@ -483,16 +483,37 @@ namespace import
       if (has(IMP_OPTION_DELCHAR))
       {
          _stringDelimiter = get<string>(IMP_OPTION_DELCHAR);
+         if (_stringDelimiter.empty())
+         {
+            std::cerr << IMP_OPTION_DELCHAR << " can't be empty"
+                      << std::endl;
+            rc = SDB_INVALIDARG;
+            goto error;
+         }
       }
 
       if (has(IMP_OPTION_DELRECORD))
       {
          _recordDelimiter = get<string>(IMP_OPTION_DELRECORD);
+         if (_recordDelimiter.empty())
+         {
+            std::cerr << IMP_OPTION_DELRECORD << " can't be empty"
+                      << std::endl;
+            rc = SDB_INVALIDARG;
+            goto error;
+         }
       }
 
       if (has(IMP_OPTION_DELFIELD))
       {
          _fieldDelimiter = get<string>(IMP_OPTION_DELFIELD);
+         if (_fieldDelimiter.empty())
+         {
+            std::cerr << IMP_OPTION_DELFIELD << " can't be empty"
+                      << std::endl;
+            rc = SDB_INVALIDARG;
+            goto error;
+         }
       }
 
       if (_stringDelimiter == _recordDelimiter)
