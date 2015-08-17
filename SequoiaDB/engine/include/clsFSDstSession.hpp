@@ -172,6 +172,7 @@ namespace engine
    public:
       virtual SDB_SESSION_TYPE sessionType() const ;
       virtual EDU_TYPES eduType () const ;
+      virtual BOOLEAN canAttachMeta() const ;
 
    public:
       INT32 handleBeginRes( NET_HANDLE handle, MsgHeader* header ) ;

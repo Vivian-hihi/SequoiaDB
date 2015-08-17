@@ -482,6 +482,8 @@ namespace engine
          }
          else
          {
+            UINT32 rollbackNum = 0 ;
+            dpsLogRecordHeader *pLogHeader = NULL ;
             DPS_LSN rollback = _logger->getCurrentLsn() ;
             DPS_LSN point ;
             point.offset = ((dpsLogRecordHeader *)( _mb.offset(0) ))->_lsn ;
@@ -515,6 +517,7 @@ namespace engine
                   _fullSync() ;
                   goto done ;
                }
+               pLogHeader = ( dpsLogRecordHeader* )_mb.offset( 0 ) ;
 
                if ( 0 == point.compareOffset( rollback.offset ) )
                {
@@ -530,15 +533,13 @@ namespace engine
                }
                else
                {
-                  rollback.offset = ((dpsLogRecordHeader *)
-                                    ( _mb.offset(0) ))->_preLsn ;
+                  ++rollbackNum ;
+                  rollback.offset = pLogHeader->_preLsn ;
                }
             }
 
             /// move to correct expect point.
-            if ( SDB_OK != _logger->move( point.offset +
-                                          ((dpsLogRecordHeader *)
-                                           ( _mb.offset(0) ))->_length,
+            if ( SDB_OK != _logger->move( point.offset + pLogHeader->_length,
                                           point.version ) )
             {
                PD_LOG( PDERROR, "Sync Session[%s]: Rollback log failed, "
@@ -546,6 +547,12 @@ namespace engine
                _fullSync() ;
                goto done ;
             }
+            PD_LOG( PDEVENT, "Sync Session[%s]: Complete consult and "
+                    "rollbacked %u records, current lsn[%u, %lld], "
+                    "expect lsn[%u, %lld]", sessionName(), rollbackNum,
+                    point.version, point.offset, point.version,
+                    point.offset + pLogHeader->_length ) ;
+
             _status = CLS_SESSION_STATUS_SYNC ;
             _syncFailedNum = 0 ;
             _consultLsn.offset = DPS_INVALID_LSN_OFFSET ;

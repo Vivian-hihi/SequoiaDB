@@ -1293,6 +1293,11 @@ namespace engine
       return  EDU_TYPE_REPLAGENT ;
    }
 
+   BOOLEAN _clsFSDstSession::canAttachMeta() const
+   {
+      return _status != CLS_FS_STATUS_BEGIN ? TRUE : FALSE ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSFSDS_HNDBGRES, "_clsFSDstSession::handleBeginRes" )
    INT32 _clsFSDstSession::handleBeginRes( NET_HANDLE handle,
                                            MsgHeader* header )

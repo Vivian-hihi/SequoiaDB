@@ -68,6 +68,7 @@ namespace engine
          virtual SDB_SESSION_TYPE sessionType() const ;
 
          virtual EDU_TYPES eduType () const ;
+         virtual BOOLEAN canAttachMeta() const { return FALSE ; }
 
          // called by net io thread
          virtual BOOLEAN timeout ( UINT32 interval ) ;

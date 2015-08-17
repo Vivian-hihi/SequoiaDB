@@ -2049,7 +2049,7 @@ namespace engine
                           DMS_MB_ATTR_COMPRESSED ) )
       {
          rc = dmsCompress( cb, record, ((CHAR*)(&oid)), oidLen,
-                             &compressedData, &compressedDataSize ) ;
+                           &compressedData, &compressedDataSize ) ;
          PD_RC_CHECK ( rc, PDERROR, "Failed to compress record[%s], rc: %d",
                        record.toString().c_str(), rc ) ;
          // 4 bytes len + compressed record
@@ -2057,7 +2057,7 @@ namespace engine
          PD_TRACE2 ( SDB__DMSSTORAGEDATA_INSERTRECORD,
                      PD_PACK_STRING ( "size after compress" ),
                      PD_PACK_UINT ( dmsRecordSize ) ) ;
-                     
+
          // if we find the record size is greater than non-compression, let's
          // save non-compressed version
          if ( dmsRecordSize > (UINT32)(record.objsize() + oidLen) )
