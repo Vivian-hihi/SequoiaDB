@@ -400,7 +400,7 @@ public class ReplicaGroup {
 		config.put(SequoiadbConstants.PMD_OPTION_SVCNAME,
 				Integer.toString(port));
 		config.put(SequoiadbConstants.PMD_OPTION_DBPATH, dbPath);
-		if (configure != null)
+		if (configure != null && !configure.isEmpty())
 			for (String key : configure.keySet()) {
 				if (key.equals(SequoiadbConstants.FIELD_NAME_GROUPNAME)
 						|| key.equals(SequoiadbConstants.FIELD_NAME_HOST)
@@ -440,7 +440,7 @@ public class ReplicaGroup {
         config.put(SequoiadbConstants.PMD_OPTION_SVCNAME,
                 Integer.toString(port));
         config.put(SequoiadbConstants.PMD_OPTION_DBPATH, dbPath);
-        if (configure != null)
+        if (configure != null && !configure.isEmpty())
             for (String key : configure.keySet()) {
                 if (key.equals(SequoiadbConstants.FIELD_NAME_GROUPNAME)
                         || key.equals(SequoiadbConstants.FIELD_NAME_HOST)
