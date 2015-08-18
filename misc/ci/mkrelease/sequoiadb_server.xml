@@ -174,10 +174,12 @@
             <username>${username}</username>
             <value>$PATH:${installdir}</value>
             <ruleList>
-                <fileExists>
-                    <negate>1</negate>
+                <fileContentTest>
+                    <encoding>utf-8</encoding>
+                    <logic>does_not_contain</logic>
                     <path>/home/sequoiadb/.bash_profile</path>
-                </fileExists>
+                    <text>${installdir}</text>
+                </fileContentTest>
             </ruleList>
         </addEnvironmentVariable>
         <changeOwnerAndGroup>
@@ -380,7 +382,7 @@
         </runProgram>
         <addEnvironmentVariable>
             <name>PATH</name>
-            <scope>system</scope>
+            <scope>user</scope>
             <username>${username}</username>
             <value>$PATH:${installdir}/bin</value>
             <ruleList>
@@ -388,7 +390,7 @@
                     <encoding>utf-8</encoding>
                     <logic>does_not_contain</logic>
                     <path>/home/sequoiadb/.bash_profile</path>
-                    <text>${installdir}</text>
+                    <text>${installdir}/bin</text>
                 </fileContentTest>
             </ruleList>
         </addEnvironmentVariable>
@@ -475,6 +477,9 @@
         </runProgram>
         <removeDirectoryFromPath>
             <path>${installdir}/bin</path>
+        </removeDirectoryFromPath>
+        <removeDirectoryFromPath>
+            <path>${installdir}</path>
         </removeDirectoryFromPath>
     </postUninstallationActionList>
     <allowedLanguages>en zh_CN</allowedLanguages>
