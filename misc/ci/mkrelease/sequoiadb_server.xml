@@ -383,6 +383,14 @@
             <scope>system</scope>
             <username>${username}</username>
             <value>$PATH:${installdir}/bin</value>
+            <ruleList>
+                <fileContentTest>
+                    <encoding>utf-8</encoding>
+                    <logic>does_not_contain</logic>
+                    <path>/home/sequoiadb/.bash_profile</path>
+                    <text>${installdir}</text>
+                </fileContentTest>
+            </ruleList>
         </addEnvironmentVariable>
         <createSymLink>
             <linkName>${installdir}/www/doc</linkName>
@@ -461,7 +469,7 @@
                     <type>linux</type>
                 </platformTest>
                 <fileExists>
-                    <path>/home/sequoiadb/.profile</path>
+                    <path>/home/sequoiadb/.bash_profile</path>
                 </fileExists>
             </ruleList>
         </runProgram>
