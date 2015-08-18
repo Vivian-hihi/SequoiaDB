@@ -187,7 +187,8 @@ namespace import
             return TRUE;
          }
       }
-      else if (_startWith(str, len, fieldDel, fieldDelLen))
+
+      if (_startWith(str, len, fieldDel, fieldDelLen))
       {
          fieldEnd = TRUE;
          endLength = length - len;
@@ -396,104 +397,23 @@ namespace import
    // _stringToRawXXX used to auto detect field's raw type
    // _stringToXXX used to convert data types
 
-   // [+|-]<0~9...>
-   static inline INT32 _stringToRawInt(const CHAR* data, INT32 length,
-                                       INT32& value, INT32& valueLength)
+   // the number is long type,
+   // but if the number is overflow, we set it as double
+   static inline INT32 _stringToRawNum(const CHAR* data, INT32 length,
+                                          CSV_TYPE& type, CSVFieldValue& value,
+                                          INT32& valueLength)
    {
       CHAR* str = (CHAR*)data;
       INT32 len = length;
       INT32 rc = SDB_OK;
-      BOOLEAN neg = FALSE;
-      UINT32 quo; // quoteint
-      INT32 rem; // remainder
-      INT32 num;
-
-      SDB_ASSERT(NULL != data, "data can't be NULL");
-      SDB_ASSERT(length > 0, "length must be greater than 0");
-
-      if ('#' == *str)
-      {
-         str++;
-         len--;
-      }
-
-      if ('-' == *str)
-      {
-         neg = TRUE;
-         str++;
-         len--;
-      }
-      else if ('+' == *str)
-      {
-         str++;
-         len--;
-      }
-
-      if (len == 0 || !isdigit(*str))
-      {
-         rc = SDB_INVALIDARG;
-         //PD_LOG(PDERROR, "no digit for integer");
-         goto error;
-      }
-
-      quo = neg ? -CSV_INT_MIN : CSV_INT_MAX;
-      rem = quo % 10;
-      quo /= 10;
-      num = 0;
-
-      while (len > 0)
-      {
-         INT32 ch = *str;
-
-         if (!isdigit(ch))
-         {
-            break;
-         }
-
-         ch -= '0';
-
-         // overflow
-         if (num > (INT32)quo || (num == (INT32)quo && ch > rem))
-         {
-            rc = SDB_INVALIDARG;
-            //PD_LOG(PDERROR, "integer overflow");
-            goto error;
-         }
-         
-         num = num * 10 + ch;
-         str++;
-         len--;
-      }
-
-      value = neg ? -num : num;
-      valueLength = length - len;
-
-   done:
-      return rc;
-   error:
-      goto done;
-   }
-
-   // [+|-]<0~9...>
-   static inline INT32 _stringToRawLong(const CHAR* data, INT32 length,
-                                        INT64& value, INT32& valueLength)
-   {
-      CHAR* str = (CHAR*)data;
-      INT32 len = length;
-      INT32 rc = SDB_OK;
+      INT64 intNum;
+      FLOAT64 floatNum;
       BOOLEAN neg = FALSE;
       UINT64 quo; // quoteint
       INT64 rem; // remainder
-      INT64 num;
 
       SDB_ASSERT(NULL != data, "data can't be NULL");
       SDB_ASSERT(length > 0, "length must be greater than 0");
-
-      if ('#' == *str)
-      {
-         str++;
-         len--;
-      }
 
       if ('-' == *str)
       {
@@ -507,17 +427,19 @@ namespace import
          len--;
       }
 
-      if (len == 0 || !isdigit(*str))
+      if (len == 0)
       {
          rc = SDB_INVALIDARG;
-         //PD_LOG(PDERROR, "no digit for long");
          goto error;
       }
 
       quo = neg ? ((UINT64)CSV_LONG_MAX + 1) : CSV_LONG_MAX;
       rem = quo % 10;
       quo /= 10;
-      num = 0;
+      intNum = 0;
+      floatNum = 0;
+
+      type = CSV_TYPE_LONG;
 
       while (len > 0)
       {
@@ -530,20 +452,37 @@ namespace import
 
          ch -= '0';
 
-         // overflow
-         if (num > (INT64)quo || (num == (INT64)quo && ch > rem))
+         if (CSV_TYPE_LONG == type)
          {
-            rc = SDB_INVALIDARG;
-            //PD_LOG(PDERROR, "long overflow");
-            goto error;
+            // overflow
+            if (intNum > (INT64)quo || (intNum == (INT64)quo && ch > rem))
+            {
+               type = CSV_TYPE_DOUBLE;
+               floatNum = (FLOAT64)intNum;
+               floatNum = floatNum * 10 + ch;
+            }
+            else
+            {
+               intNum = intNum * 10 + ch;
+            }
          }
-         
-         num = num * 10 + ch;
+         else // CSV_TYPE_DOUBLE
+         {
+            floatNum = floatNum * 10 + ch;
+         }
+
          str++;
          len--;
       }
 
-      value = neg ? -num : num;
+      if (CSV_TYPE_LONG == type)
+      {
+         value.longVal = neg ? -intNum : intNum;
+      }
+      else // CSV_TYPE_DOUBLE
+      {
+         value.doubleVal = neg ? -floatNum : floatNum;
+      }
       valueLength = length - len;
 
    done:
@@ -559,23 +498,29 @@ namespace import
       CHAR* str = (CHAR*)data;
       INT32 len = length;
       INT32 rc = SDB_OK;
-      INT64 integer;
-      INT64 decimal;
-      INT64 exponent;
+      FLOAT64 decimal;
+      FLOAT64 exponent;
       INT32 intLen;
       INT32 decLen;
       INT32 expLen;
       FLOAT64 num;
       BOOLEAN neg = FALSE;
+      CSV_TYPE tmpType = CSV_TYPE_AUTO;
+      CSVFieldValue tmpValue;
 
       SDB_ASSERT(NULL != data, "data can't be NULL");
       SDB_ASSERT(length > 0, "length must be greater than 0");
 
+      if ('#' == *str)
+      {
+         str++;
+         len--;
+      }
+
       // integer part
-      rc = _stringToRawLong(str, len, integer, intLen);
+      rc = _stringToRawNum(str, len, tmpType, tmpValue, intLen);
       if (SDB_OK != rc)
       {
-         //PD_LOG(PDERROR, "failed to convert to long, rc=%d", rc);
          goto error;
       }
 
@@ -592,56 +537,82 @@ namespace import
          str++;
          len--;
          type = CSV_TYPE_DOUBLE;
-         num = integer;
-         goto exp;
-      }
-      else if ('.' != *str)
-      {
-         if (integer >= CSV_INT_MIN && integer <= CSV_INT_MAX)
+         if (CSV_TYPE_LONG == tmpType)
          {
-            type = CSV_TYPE_INT;
-            value.intVal = (INT32)integer;
+            num = (FLOAT64)tmpValue.longVal;
          }
          else
          {
-            type = CSV_TYPE_LONG;
-            value.longVal = integer;
+            num = tmpValue.doubleVal;
          }
-         valueLength = length - len;
-         goto done;
+         goto exp;
       }
 
-      str++;
-      len--;
-      type = CSV_TYPE_DOUBLE;
+      if ('.' == *str)
+      {
+         str++;
+         len--;
+      }
 
       if (!isdigit(*str))
       {
-         value.doubleVal = integer;
+         if (CSV_TYPE_LONG == tmpType)
+         {
+            if (tmpValue.longVal >= CSV_INT_MIN && tmpValue.longVal <= CSV_INT_MAX)
+            {
+               type = CSV_TYPE_INT;
+               value.intVal = (INT32)tmpValue.longVal;
+            }
+            else
+            {
+               type = CSV_TYPE_LONG;
+               value.longVal = tmpValue.longVal;
+            }
+         }
+         else
+         {
+            type = CSV_TYPE_DOUBLE;
+            value.doubleVal = tmpValue.doubleVal;
+         }
          valueLength = length - len;
          goto done;
       }
 
       // fractional part
-      rc = _stringToRawLong(str, len, decimal, decLen);
+      type = CSV_TYPE_DOUBLE;
+      if (CSV_TYPE_LONG == tmpType)
+      {
+         num = (FLOAT64)tmpValue.longVal;
+      }
+      else
+      {
+         num = tmpValue.doubleVal;
+      }
+      rc = _stringToRawNum(str, len, tmpType, tmpValue, decLen);
       if (SDB_OK != rc)
       {
-         //PD_LOG(PDERROR, "failed to convert to long, rc=%d", rc);
          goto error;
       }
 
-      SDB_ASSERT(decimal >= 0, "decimal must be greater or equals 0");
+      if (CSV_TYPE_LONG == tmpType)
+      {
+         decimal = (FLOAT64)tmpValue.longVal;
+      }
+      else
+      {
+         decimal = tmpValue.doubleVal;
+      }
 
       str += decLen;
       len -= decLen;
       valueLength += decLen;
       if (!neg)
       {
-         num = (FLOAT64)integer + (FLOAT64)decimal / pow(10.0, decLen);
+         num = num + decimal / pow(10.0, decLen);
       }
       else
       {
-         num = (FLOAT64)integer - (FLOAT64)decimal / pow(10.0, decLen);
+         num = num - decimal / pow(10.0, decLen);
       }
 
       if ('E' != *str && 'e' != *str)
@@ -663,20 +634,148 @@ namespace import
       }
 
       // exponent part
-      rc = _stringToRawLong(str, len, exponent, expLen);
+      rc = _stringToRawNum(str, len, tmpType, tmpValue, expLen);
       if (SDB_OK != rc)
       {
-         //PD_LOG(PDERROR, "failed to convert to long, rc=%d", rc);
          goto error;
+      }
+
+      if (CSV_TYPE_LONG == tmpType)
+      {
+         exponent = (FLOAT64)tmpValue.longVal;
+      }
+      else
+      {
+         exponent = tmpValue.doubleVal;
       }
 
       str += expLen;
       len -= expLen;
       valueLength += expLen;
-      num *= pow(10.0, (FLOAT64)exponent);
+      num *= pow(10.0, exponent);
 
       value.doubleVal = num;
       valueLength = length - len;
+
+   done:
+      return rc;
+   error:
+      goto done;
+   }
+
+   // [+|-]<0~9...>
+   static inline INT32 _stringToRawInt(const CHAR* data, INT32 length,
+                                       INT32& value, INT32& valueLength)
+   {
+      CHAR* str = (CHAR*)data;
+      INT32 len = length;
+      INT32 rc = SDB_OK;
+      CSV_TYPE type;
+      CSVFieldValue tmpValue;
+
+      SDB_ASSERT(NULL != data, "data can't be NULL");
+      SDB_ASSERT(length > 0, "length must be greater than 0");
+
+      rc = _stringToRawNumber(str, len, type, tmpValue, valueLength);
+      if (SDB_OK != rc)
+      {
+         goto error;
+      }
+
+      switch(type)
+      {
+      case CSV_TYPE_INT:
+         value = tmpValue.intVal;
+         break;
+      // overflow
+      case CSV_TYPE_LONG:
+      case CSV_TYPE_DOUBLE:
+      default:
+         rc = SDB_INVALIDARG;
+         goto error;
+      }
+
+   done:
+      return rc;
+   error:
+      goto done;
+   }
+
+   // [+|-]<0~9...>
+   static inline INT32 _stringToRawLong(const CHAR* data, INT32 length,
+                                        INT64& value, INT32& valueLength)
+   {
+      CHAR* str = (CHAR*)data;
+      INT32 len = length;
+      INT32 rc = SDB_OK;
+      CSV_TYPE type;
+      CSVFieldValue tmpValue;
+
+      SDB_ASSERT(NULL != data, "data can't be NULL");
+      SDB_ASSERT(length > 0, "length must be greater than 0");
+
+      rc = _stringToRawNumber(str, len, type, tmpValue, valueLength);
+      if (SDB_OK != rc)
+      {
+         goto error;
+      }
+
+      switch(type)
+      {
+      case CSV_TYPE_INT:
+         value = tmpValue.intVal;
+         break;
+      case CSV_TYPE_LONG:
+         value = tmpValue.longVal;
+         break;
+      // overflow
+      case CSV_TYPE_DOUBLE:
+      default:
+         rc = SDB_INVALIDARG;
+         goto error;
+      }
+
+   done:
+      return rc;
+   error:
+      goto done;
+   }
+
+   // [+|-]<0~9...>[.<0~9...>[<E|e>[+|-]<0~9...>]]
+   // -123.45e-678
+   static inline INT32 _stringToRawDouble(const CHAR* data, INT32 length,
+                                          FLOAT64& value, INT32& valueLength)
+   {
+      INT32 rc = SDB_OK;
+      CSV_TYPE subType = CSV_TYPE_AUTO;
+      CSVFieldValue subValue;
+
+      SDB_ASSERT(NULL != data, "data can't be NULL");
+      SDB_ASSERT(length > 0, "length must be greater than 0");
+
+      rc = _stringToRawNumber(data, length, subType, subValue, valueLength);
+      if (SDB_OK != rc)
+      {
+         //PD_LOG(PDERROR, "failed to convert to number, rc=%d", rc);
+         goto error;
+      }
+
+      switch(subType)
+      {
+      case CSV_TYPE_DOUBLE:
+         value = subValue.doubleVal;
+         break;
+      case CSV_TYPE_INT:
+         value = subValue.intVal;
+         break;
+      case CSV_TYPE_LONG:
+         value = subValue.longVal;
+         break;
+      default:
+         rc = SDB_INVALIDARG;
+         PD_LOG(PDERROR, "invalid subtype: %d", subType);
+         goto error;
+      }
 
    done:
       return rc;
@@ -753,48 +852,6 @@ namespace import
       {
          rc = SDB_INVALIDARG;
          //PD_LOG(PDERROR, "failed to convert to bool, rc=%d", rc);
-         goto error;
-      }
-
-   done:
-      return rc;
-   error:
-      goto done;
-   }
-
-   // [+|-]<0~9...>[.<0~9...>[<E|e>[+|-]<0~9...>]]
-   // -123.45e-678
-   static inline INT32 _stringToRawDouble(const CHAR* data, INT32 length,
-                                          FLOAT64& value, INT32& valueLength)
-   {
-      INT32 rc = SDB_OK;
-      CSV_TYPE subType = CSV_TYPE_AUTO;
-      CSVFieldValue subValue;
-
-      SDB_ASSERT(NULL != data, "data can't be NULL");
-      SDB_ASSERT(length > 0, "length must be greater than 0");
-
-      rc = _stringToRawNumber(data, length, subType, subValue, valueLength);
-      if (SDB_OK != rc)
-      {
-         //PD_LOG(PDERROR, "failed to convert to number, rc=%d", rc);
-         goto error;
-      }
-
-      switch(subType)
-      {
-      case CSV_TYPE_DOUBLE:
-         value = subValue.doubleVal;
-         break;
-      case CSV_TYPE_INT:
-         value = subValue.intVal;
-         break;
-      case CSV_TYPE_LONG:
-         value = subValue.longVal;
-         break;
-      default:
-         rc = SDB_INVALIDARG;
-         PD_LOG(PDERROR, "invalid subtype: %d", subType);
          goto error;
       }
 
