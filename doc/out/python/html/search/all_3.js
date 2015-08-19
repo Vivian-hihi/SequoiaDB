@@ -15,6 +15,7 @@ var searchData=
   ['consterror',['ConstError',['../classpysequoiadb_1_1const_01_1_1const_01_1_1ConstError.html',1,'pysequoiadb::const ::const ']]],
   ['create_5fcollection',['create_collection',['../classpysequoiadb_1_1collectionspace_1_1collectionspace.html#a8f390d781b5fe3c5b04bc0271b666fec',1,'pysequoiadb::collectionspace::collectionspace']]],
   ['create_5fcollection_5fspace',['create_collection_space',['../classpysequoiadb_1_1client_1_1client.html#a548cc40bec6b5722d367458912ad23bb',1,'pysequoiadb::client::client']]],
+  ['create_5fimage',['create_image',['../classpysequoiadb_1_1datacenter_1_1datacenter.html#a55cb3d84cd487490390ab54a459c88c2',1,'pysequoiadb::datacenter::datacenter']]],
   ['create_5findex',['create_index',['../classpysequoiadb_1_1collection_1_1collection.html#a0823f6a6b07a2f7504880632366c82fe',1,'pysequoiadb::collection::collection']]],
   ['create_5findex_5foffline',['create_index_offline',['../classpysequoiadb_1_1collection_1_1collection.html#a1cc01791574a091fce4bfb992a9ff1a0',1,'pysequoiadb::collection::collection']]],
   ['create_5flob',['create_lob',['../classpysequoiadb_1_1collection_1_1collection.html#a27b737239cfd58c864c012e7aff52f5f',1,'pysequoiadb::collection::collection']]],

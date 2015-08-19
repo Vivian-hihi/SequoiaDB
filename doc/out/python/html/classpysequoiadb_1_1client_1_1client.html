@@ -192,6 +192,8 @@ def&#160;</td><td class="memItemRight" valign="bottom"><b>__repr__</b></td></tr>
 <tr class="separator:aac17be205eaf4e1f9abd7afd7088d999"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7c223a7d1daf0fd06d3615d4d337a9fa"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpysequoiadb_1_1client_1_1client.html#a7c223a7d1daf0fd06d3615d4d337a9fa">is_valid</a></td></tr>
 <tr class="separator:a7c223a7d1daf0fd06d3615d4d337a9fa"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a27c66119cb5777a70350fe99e0288a87"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpysequoiadb_1_1client_1_1client.html#a27c66119cb5777a70350fe99e0288a87">get_datacenter</a></td></tr>
+<tr class="separator:a27c66119cb5777a70350fe99e0288a87"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-attribs"></a>
 Static Public Attributes</h2></td></tr>
@@ -639,7 +641,7 @@ Exceptions:
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>page_size</em> = <code>0</code>&#160;</td>
+          <td class="paramname"><em>options</em> = <code>0</code>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -651,10 +653,13 @@ Exceptions:
 <pre class="fragment">Create collection space with specified pagesize.
 
 Parameters:
-   Name         Type     Info:
-   cs_name      str      The name of collection space to be created.
-   page_size    int      The page size of collection space. See Info
+   Name          Type     Info:
+   cs_name       str      The name of collection space to be created.
+   options       int/dict The options to create collection space.
+    -PageSize    int      The page size of collection space. See Info
                          as below.
+    -Domain      str      The domain of collection space to belongs
+    -LobPageSize int      The page size when stored lob, see Info as below
 Return values:
    collection space object created.
 Exceptions:
@@ -668,6 +673,16 @@ Info:
            16384  :  16k
            32768  :  32k
            65536  :  64k
+   valid LOB page size value:
+               0  :  256k default Lob page size
+            4096  :  4k
+            8192  :  8k
+           16384  :  16k
+           32768  :  32k
+           65536  :  64k
+          131072  :  128k
+          262144  :  256k
+          524288  :  512k
 </pre> 
 </div>
 </div>
@@ -1103,6 +1118,28 @@ Return values:
    a collection space object of query.
 Exceptions:
    pysequoiadb.error.SDBTypeError
+   pysequoiadb.error.SDBBaseError
+</pre> 
+</div>
+</div>
+<a class="anchor" id="a27c66119cb5777a70350fe99e0288a87"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">def pysequoiadb.client.client.get_datacenter </td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>self</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<pre class="fragment">get data center
+
+Return values:
+   an object of data center 
+Exceptions:
    pysequoiadb.error.SDBBaseError
 </pre> 
 </div>
@@ -1876,7 +1913,7 @@ Exceptions:
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Jun 26 2015 16:24:13 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Wed Aug 19 2015 18:26:40 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.7
 </small></address>

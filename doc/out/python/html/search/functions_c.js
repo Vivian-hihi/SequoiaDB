@@ -2,6 +2,7 @@ var searchData=
 [
   ['read',['read',['../classpysequoiadb_1_1lob_1_1lob.html#afdd33ceb8a07fd9972d4084597f78238',1,'pysequoiadb::lob::lob']]],
   ['remove_5fbackup',['remove_backup',['../classpysequoiadb_1_1client_1_1client.html#ae0220a5e47c7a7736d5226727b971da7',1,'pysequoiadb::client::client']]],
+  ['remove_5fimage',['remove_image',['../classpysequoiadb_1_1datacenter_1_1datacenter.html#ad3cf98da77e95a4ba0b8e1f58c8ff93b',1,'pysequoiadb::datacenter::datacenter']]],
   ['remove_5flob',['remove_lob',['../classpysequoiadb_1_1collection_1_1collection.html#ae29b71dbe335749bef2d8406b6ff2338',1,'pysequoiadb::collection::collection']]],
   ['remove_5fnode',['remove_node',['../classpysequoiadb_1_1replicagroup_1_1replicagroup.html#ade1b7f511b284b41b00883ac30793f4b',1,'pysequoiadb::replicagroup::replicagroup']]],
   ['remove_5fprocedure',['remove_procedure',['../classpysequoiadb_1_1client_1_1client.html#a4f0d379ad4934428704d8e895920f3bd',1,'pysequoiadb::client::client']]],

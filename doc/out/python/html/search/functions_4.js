@@ -1,11 +1,15 @@
 var searchData=
 [
   ['database',['database',['../classbson_1_1dbref_1_1DBRef.html#a67be0c331170712850830a5f5008922c',1,'bson::dbref::DBRef']]],
+  ['deactivate',['deactivate',['../classpysequoiadb_1_1datacenter_1_1datacenter.html#a7b64e499466b57de76319615bb96ecd0',1,'pysequoiadb::datacenter::datacenter']]],
   ['decode',['decode',['../classbson_1_1BSON.html#a762002d1276dd5ca3ade4169c14fc685',1,'bson::BSON']]],
   ['delete',['delete',['../classpysequoiadb_1_1collection_1_1collection.html#a08431e592c6ee801dd35bdb0c1961e55',1,'pysequoiadb::collection::collection']]],
   ['detach_5fcollection',['detach_collection',['../classpysequoiadb_1_1collection_1_1collection.html#a59fe0f3be6f268362142980bc48973c7',1,'pysequoiadb::collection::collection']]],
+  ['detach_5fgroups',['detach_groups',['../classpysequoiadb_1_1datacenter_1_1datacenter.html#a95ca1a5ed550b39a17e02af562f343cd',1,'pysequoiadb::datacenter::datacenter']]],
   ['detach_5fnode',['detach_node',['../classpysequoiadb_1_1replicagroup_1_1replicagroup.html#a584eaeffe3042522246ef94331ecc379',1,'pysequoiadb::replicagroup::replicagroup']]],
   ['detail',['detail',['../classpysequoiadb_1_1error_1_1SDBBaseError.html#a2e8fffb6cf94f8a1cdea6c08a955a30a',1,'pysequoiadb::error::SDBBaseError']]],
+  ['disabel_5fread_5fonly',['disabel_read_only',['../classpysequoiadb_1_1datacenter_1_1datacenter.html#a2cb8867dbce26f5acd26b7c8f2e38c9d',1,'pysequoiadb::datacenter::datacenter']]],
+  ['disable_5fimage',['disable_image',['../classpysequoiadb_1_1datacenter_1_1datacenter.html#a68fb22848a00bcd3eaf6dc2155946836',1,'pysequoiadb::datacenter::datacenter']]],
   ['disconnect',['disconnect',['../classpysequoiadb_1_1client_1_1client.html#a55386e002908c9be26d7ec1255198893',1,'pysequoiadb::client::client']]],
   ['drop_5fcollection',['drop_collection',['../classpysequoiadb_1_1collectionspace_1_1collectionspace.html#a1e15a1d5fb5063ea745a40cc158b1d96',1,'pysequoiadb::collectionspace::collectionspace']]],
   ['drop_5fcollection_5fspace',['drop_collection_space',['../classpysequoiadb_1_1client_1_1client.html#ad547f29394c428ec463b073f7e3f504f',1,'pysequoiadb::client::client']]],
