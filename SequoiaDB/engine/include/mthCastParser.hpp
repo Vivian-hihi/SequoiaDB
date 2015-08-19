@@ -35,16 +35,14 @@
 #define MTH_CASTPARSER_HPP_
 
 #include "mthSActionParser.hpp"
+#include <map>
 
 namespace engine
 {
    class _mthCastParser : public _mthSActionParser::parser
    {
    public:
-      _mthCastParser()
-      {
-         _name = MTH_S_CAST ;
-      }
+      _mthCastParser() ;
       virtual ~_mthCastParser(){}
 
    public:
@@ -54,6 +52,19 @@ namespace engine
    private:
       INT32 _getCastType( const CHAR *str,
                           BSONType &type ) const ;
+
+   private:
+      class mycom
+      {
+      public:
+          BOOLEAN operator()( const CHAR *l, const CHAR *r )const
+          {
+             return ossStrcmp( l, r ) < 0 ;
+          }
+      } ;
+
+      typedef std::map<const CHAR *, INT32, mycom> TYPE_LIST ;
+      TYPE_LIST  _tl ;
    } ;
 }
 

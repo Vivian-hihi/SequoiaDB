@@ -40,6 +40,26 @@
 
 namespace engine
 {
+   _mthCastParser::_mthCastParser()
+   {
+      _name = MTH_S_CAST ;
+
+      _tl["minkey"] = MinKey ;
+      _tl["double"] = NumberDouble ;
+      _tl["string"] = String ;
+      _tl["object"] = Object ;
+      _tl["array"] = Array ;
+      _tl["bindata"] = BinData ;
+      _tl["oid"] = jstOID ;
+      _tl["bool"] = Bool ;
+      _tl["date"] = Date ;
+      _tl["null"] = jstNULL ;
+      _tl["int32"] = NumberInt ;
+      _tl["timestamp"] = Timestamp ;
+      _tl["int64"] = NumberLong ;
+      _tl["maxkey"] = MaxKey ;
+   }
+
    ///PD_TRACE_DECLARE_FUNCTION ( SDB__MTHCASTPARSER_PARSE, "_mthCastParser::parse" )
    INT32 _mthCastParser::parse( const bson::BSONElement &e,
                                 _mthSAction &action ) const
@@ -138,6 +158,7 @@ namespace engine
                                        BSONType &type ) const
    {
       INT32 rc = SDB_OK ;
+      TYPE_LIST::const_iterator itr ;
       BSONType t = bson::EOO ;
       utilString us ;
       const CHAR *p = str ;
@@ -156,29 +177,10 @@ namespace engine
          ++p ;
       }
 
-      if ( 0 == ossStrcmp( us.str(), "string" ) )
+      itr = _tl.find( us.str() ) ;
+      if ( _tl.end() != itr )
       {
-         t = String ;
-      }
-      else if ( 0 == ossStrcmp( us.str(), "numberint" ) )
-      {
-         t = NumberInt ; 
-      }
-      else if ( 0 == ossStrcmp( us.str(), "numberlong" ) )
-      {
-         t = NumberLong ;
-      }
-      else if ( 0 == ossStrcmp( us.str(), "numberdouble" ) )
-      {
-         t = NumberDouble ;
-      }
-      else if ( 0 == ossStrcmp( us.str(), "date" ) )
-      {
-         t = Date ;
-      }
-      else if ( 0 == ossStrcmp( us.str(), "timestamp" ) )
-      {
-         t = Timestamp ;
+         t = ( BSONType )( itr->second ) ;
       }
       else
       {

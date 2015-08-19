@@ -40,6 +40,7 @@
 #include "mthElemMatchIterator.hpp"
 #include "utilString.hpp"
 #include "utilStr.hpp"
+#include "../util/fromjson.hpp"
 
 using namespace bson ;
 
@@ -675,7 +676,12 @@ namespace engine
          break ;
       case NumberDouble :
       {
-         if ( String != e.type() )
+         if ( Bool == e.type() )
+         {
+            FLOAT64 f = e.Bool() ? 1.0 : 0.0 ;
+            builder.appendNumber( fieldName, f ) ;
+         }
+         else if ( String != e.type() )
          {
             builder.appendNumber( fieldName, e.numberDouble() ) ;
          }
@@ -751,7 +757,7 @@ namespace engine
             struct tm psr ;
             local_time ( &timer, &psr ) ;
             sprintf ( buffer,
-                      "{\"$timestamp\": \"%04d-%02d-%02d-%02d.%02d.%02d.%06d\"}",
+                      "%04d-%02d-%02d-%02d.%02d.%02d.%06d",
                       psr.tm_year + 1900,
                       psr.tm_mon + 1,
                       psr.tm_mday,
@@ -765,6 +771,16 @@ namespace engine
          {
             builder.append( fieldName, e.OID().str() ) ;
          }
+         else if ( Object == e.type() )
+         {
+            builder.append( fieldName,
+                            e.embeddedObject().toString( FALSE, TRUE ) ) ; 
+         }
+         else if ( Array == e.type() )
+         {
+            builder.append( fieldName,
+                            e.embeddedObject().toString( TRUE, TRUE ) ) ;
+         }
          else
          {
             builder.appendNull( fieldName ) ;
@@ -772,6 +788,26 @@ namespace engine
          break ;
       }   
       case Object :
+      {
+         if ( String == e.type() )
+         {
+            BSONObj obj ;
+            INT32 r = fromjson( e.valuestr(), obj ) ;
+            if ( SDB_OK == r )
+            {
+               builder.append( fieldName, obj ) ;
+            }
+            else
+            {
+               builder.appendNull( fieldName ) ;
+            }
+         }
+         else
+         {
+            builder.appendNull( fieldName ) ;
+         }
+         break ;
+      }
       case Array :
       case BinData :
       case Undefined :
@@ -792,7 +828,7 @@ namespace engine
          break ;
       }
       case Bool :
-         builder.appendBool( fieldName, e.booleanSafe() ) ;
+         builder.appendBool( fieldName, e.trueValue() ) ;
          break ;
       case Date :
       {
@@ -827,7 +863,18 @@ namespace engine
          break ;
       case NumberInt :
       {
-         if ( String != e.type() )
+         if ( Date == e.type() )
+         {
+            builder.appendNumber( fieldName,
+                                  ( INT32 )( e.date().millis ) ) ;
+         }
+         else if ( Timestamp == e.type() )
+         {
+            INT32 l = e.timestampTime().millis ;
+            l += e.timestampInc() / 1000 ;
+            builder.appendNumber( fieldName, ( INT32 )l ) ;
+         }
+         else if ( String != e.type() )
          {
             builder.appendNumber( fieldName, e.numberInt() ) ;
          }
