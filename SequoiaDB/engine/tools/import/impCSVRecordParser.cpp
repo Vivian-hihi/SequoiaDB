@@ -111,17 +111,24 @@ namespace import
    #define CSV_LONG_MAX OSS_SINT64_MAX
    #define CSV_LONG_MIN OSS_SINT64_MIN
 
-   #define TIME_FORMAT "%d-%d-%d-%d.%d.%d.%d"
-   #define DATE_FORMAT "%d-%d-%d"
-   #define INT32_LAST_YEAR 2038
-   #define RELATIVE_YEAR 1900
-   #define RELATIVE_MOD 12
-   #define RELATIVE_DAY 31
-   #define RELATIVE_HOUR 24
-   #define RELATIVE_MIN_SEC 60
+   #define RELATIVE_YEAR      1900
+   #define RELATIVE_MOD       12
+   #define RELATIVE_DAY       31
+   #define RELATIVE_HOUR      24
+   #define RELATIVE_MIN_SEC   60
+   #define RELATIVE_MICRO_SEC 1000000
 
-   #define TIME_MAX_NUM  2147356800
-   #define TIME_MIX_NUM -2209017600
+   #define TIME_FORMAT        "%d-%d-%d-%d.%d.%d.%d"
+   #define TIME_LAST_YEAR     2038
+   #define TIME_START_YEAR    1901
+   #define TIME_MAX_NUM       2147443199
+   #define TIME_MIN_NUM       -2147414400
+
+   #define DATE_FORMAT        "%d-%d-%d"
+   #define DATE_START_YEAR    -9999
+   #define DATE_LAST_YEAR     9999
+   #define DATE_MAX_NUM       253402271999
+   #define DATE_MIN_NUM       -377705145943
 
    #define CSV_MAX_STRING_SIZE (1024 * 1024 * 16)
 
@@ -991,9 +998,9 @@ namespace import
             }
 
             /*if (isspace(*str))
-            {
+            {*/
                //*str = '\0';
-               value.length = str - value.str;
+               /*value.length = str - value.str;
                str++;
                len--;
                if (len == 0)
@@ -1551,6 +1558,12 @@ namespace import
       CHAR tmpch = *term;
       *term = '\0';
 
+      // may be negative number
+      if ('-' == *str)
+      {
+         str++;
+      }
+
       while ((ch = *(str++)) != '\0')
       {
          if (!isdigit(ch))
@@ -1591,7 +1604,7 @@ namespace import
          month--;
 
          /* sanity check */
-         if (year > INT32_LAST_YEAR || year < RELATIVE_YEAR ||
+         if (year > TIME_LAST_YEAR || year < TIME_START_YEAR ||
              month >= RELATIVE_MOD || month < 0 ||
              day > RELATIVE_DAY || day <= 0)
          {
@@ -1600,9 +1613,19 @@ namespace import
             goto error;
          }
 
-         if (INT32_LAST_YEAR == year)
+         if (TIME_LAST_YEAR == year)
          {
-            if (month > 0 || (month == 0 && day >= 18))
+            if (month > 0 || (month == 0 && day >= 19))
+            {
+               rc = SDB_INVALIDARG;
+               PD_LOG(PDERROR, "invalid month or day of timestamp");
+               goto error;
+            }
+         }
+
+         if (TIME_START_YEAR == year)
+         {
+            if (month < 11 || (month == 11 && day < 15))
             {
                rc = SDB_INVALIDARG;
                PD_LOG(PDERROR, "invalid month or day of timestamp");
@@ -1612,7 +1635,8 @@ namespace import
 
          if (hour >= RELATIVE_HOUR || hour < 0 ||
              minute >= RELATIVE_MIN_SEC || minute < 0 ||
-             second >= RELATIVE_MIN_SEC || second < 0)
+             second >= RELATIVE_MIN_SEC || second < 0 ||
+             micros >= RELATIVE_MICRO_SEC || micros < 0)
          {
             rc = SDB_INVALIDARG;
             PD_LOG(PDERROR, "invalid time of timestamp");
@@ -1658,10 +1682,10 @@ namespace import
          sec = varLong / 1000;
          us = varLong - ( sec * 1000 );
 
-         if (varLong < TIME_MIX_NUM )
+         if (varLong < (INT64)TIME_MIN_NUM * 1000 )
          {
             PD_LOG(PDERROR, "The timestamp %lld is greater than %d000",
-                   varLong, TIME_MIX_NUM);
+                   varLong, TIME_MIN_NUM);
             rc = SDB_INVALIDARG;
             goto error;
          }
@@ -1700,6 +1724,12 @@ namespace import
       CHAR tmpch = *term;
       *term = '\0';
 
+      // may be negative number
+      if ('-' == *str)
+      {
+         str++;
+      }
+
       while ((ch = *(str++)) != '\0')
       {
          if (!isdigit(ch))
@@ -1732,23 +1762,13 @@ namespace import
          month--;
 
          /* sanity check */
-         if (year > INT32_LAST_YEAR || year < RELATIVE_YEAR ||
+         if (year > DATE_LAST_YEAR || year < DATE_START_YEAR ||
              month >= RELATIVE_MOD || month < 0 ||
              day > RELATIVE_DAY || day <= 0)
          {
             rc = SDB_INVALIDARG;
             PD_LOG(PDERROR, "invalid date");
             goto error;
-         }
-
-         if (INT32_LAST_YEAR == year)
-         {
-            if (month > 0 || (month == 0 && day >= 18))
-            {
-               rc = SDB_INVALIDARG;
-               PD_LOG(PDERROR, "invalid month or day of date");
-               goto error;
-            }
          }
 
          year -= RELATIVE_YEAR;
@@ -1780,18 +1800,18 @@ namespace import
             goto error;
          }
 
-         if (value < TIME_MIX_NUM)
+         if (value < DATE_MIN_NUM)
          {
             PD_LOG(PDERROR, "The time stamp %lld is greater than %d",
-                   value, TIME_MIX_NUM);
+                   value, DATE_MIN_NUM);
             rc = SDB_INVALIDARG;
             goto error;
          }
 
-         if (value > TIME_MAX_NUM)
+         if (value > DATE_MAX_NUM)
          {
             PD_LOG(PDERROR, "The time stamp %lld is greater than %d",
-                   value, TIME_MAX_NUM);
+                   value, DATE_MAX_NUM);
             rc = SDB_INVALIDARG;
             goto error;
          }
