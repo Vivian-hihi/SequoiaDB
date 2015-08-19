@@ -134,6 +134,8 @@ namespace import
 
    #define RECORD_ID_NAME "_id"
 
+   static BOOLEAN _cast = FALSE;
+
    static inline void _skipSpace(CHAR** data, INT32& length)
    {
       CHAR* str = *data;
@@ -694,9 +696,20 @@ namespace import
       case CSV_TYPE_INT:
          value = tmpValue.intVal;
          break;
-      // overflow
       case CSV_TYPE_LONG:
+         if (_cast)
+         {
+            value = tmpValue.longVal;
+            break;
+         }
+         // passthrough
       case CSV_TYPE_DOUBLE:
+         if (_cast)
+         {
+            value = tmpValue.doubleVal;
+            break;
+         }
+         // passthrough
       default:
          rc = SDB_INVALIDARG;
          goto error;
@@ -735,8 +748,13 @@ namespace import
       case CSV_TYPE_LONG:
          value = tmpValue.longVal;
          break;
-      // overflow
       case CSV_TYPE_DOUBLE:
+         if (_cast)
+         {
+            value = tmpValue.doubleVal;
+            break;
+         }
+         // passthrough
       default:
          rc = SDB_INVALIDARG;
          goto error;
@@ -2677,7 +2695,8 @@ namespace import
                           const string& stringDelimiter,
                           BOOLEAN autoAddField,
                           BOOLEAN autoAddValue,
-                          BOOLEAN hasHeaderLine)
+                          BOOLEAN hasHeaderLine,
+                          BOOLEAN cast)
    : RecordParser(fieldDelimiter,
                   stringDelimiter,
                   autoAddField,
@@ -2685,6 +2704,7 @@ namespace import
      _hasHeaderLine(hasHeaderLine)
    {
       _hasId = FALSE;
+      _cast = cast;
    }
 
    CSVRecordParser::~CSVRecordParser()

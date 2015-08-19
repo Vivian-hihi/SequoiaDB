@@ -169,7 +169,8 @@ namespace import
                       const string& stringDelimiter,
                       BOOLEAN autoAddField,
                       BOOLEAN autoAddValue,
-                      BOOLEAN hasHeaderLine);
+                      BOOLEAN hasHeaderLine,
+                      BOOLEAN cast);
       ~CSVRecordParser();
       INT32 parseRecord(const CHAR* data, INT32 length, bson& obj);
       INT32 parseFields(const CHAR* data, INT32 length);

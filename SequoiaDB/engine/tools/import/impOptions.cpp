@@ -72,6 +72,7 @@ namespace import
    #define IMP_OPTION_COORD             "coord"
    #define IMP_OPTION_HELPFUL           "helpful"
    #define IMP_OPTION_RECORDSMEM        "recordsmem"
+   #define IMP_OPTION_CAST              "cast"
 
    #define IMP_EXPLAIN_HELP             "print help information"
    #define IMP_EXPLAIN_VERSION          "print version"
@@ -94,18 +95,19 @@ namespace import
    #define IMP_EXPLAIN_SPARSE           "for csv input, whether to add missing field, default: true"
    #define IMP_EXPLAIN_EXTRA            "for csv input, whether to add missing value, default: false"
    #define IMP_EXPLAIN_LINEPRIORITY     "reverse the priority for record and character delimiter, default: true"
-   #define IMP_EXPLAIN_ERRORSTOP        "whether stop by hitting error, default false"
+   #define IMP_EXPLAIN_ERRORSTOP        "whether stop by hitting error, default: false"
    #define IMP_EXPLAIN_FORCE            "force to insert the records that are not in utf-8 format, default: false"
-   #define IMP_EXPLAIN_SSL              "use SSL connection (arg: [true|false], e.g. \"--ssl true\")"
-   #define IMP_EXPLAIN_JOBS             "importing job num at once, default is 1"
-   #define IMP_EXPLAIN_BUFFER           "set buffer size(unit:MB), default is 64MB"
+   #define IMP_EXPLAIN_SSL              "use SSL connection (arg: [true|false], e.g. \"--ssl true\"), default: false"
+   #define IMP_EXPLAIN_JOBS             "importing job num at once, default: 1"
+   #define IMP_EXPLAIN_BUFFER           "set buffer size(unit:MB), default: 64"
    #define IMP_EXPLAIN_DRYRUN           "only parse record, don't import to database"
    #define IMP_EXPLAIN_VERBOSE          "print run time details"
    #define IMP_EXPLAIN_EXEC             "execute external program to get data, the program should output data to standard outpupt"
-   #define IMP_EXPLAIN_SHARDING         "repackage records by sharding, default is true"
-   #define IMP_EXPLAIN_COORD            "find coordinators automatically, default is true"
+   #define IMP_EXPLAIN_SHARDING         "repackage records by sharding, default: true"
+   #define IMP_EXPLAIN_COORD            "find coordinators automatically, default: true"
    #define IMP_EXPLAIN_HELPFUL          "print all options"
-   #define IMP_EXPLAIN_RECORDSMEM       "the maximum memory size used by records, the unit is MB, range is [128~81920], default is 4096"
+   #define IMP_EXPLAIN_RECORDSMEM       "the maximum memory size used by records, the unit is MB, range is [128~81920], default: 4096"
+   #define IMP_EXPLAIN_CAST             "allow type cast when lost precision, default: false"
 
    #define _TYPE(T) po::value<T>()
 
@@ -148,6 +150,7 @@ namespace import
       (IMP_OPTION_HEADERLINE,          _TYPE(string),    IMP_EXPLAIN_HEADERLINE) \
       (IMP_OPTION_SPARSE,              _TYPE(string),    IMP_EXPLAIN_SPARSE) \
       (IMP_OPTION_EXTRA,               _TYPE(string),    IMP_EXPLAIN_EXTRA) \
+      (IMP_OPTION_CAST,                _TYPE(string),    IMP_EXPLAIN_CAST) \
 
    #define IMP_HELPFUL_OPTIONS \
       (IMP_OPTION_HELPFUL,              /* no arg */     IMP_EXPLAIN_HELPFUL) \
@@ -264,6 +267,7 @@ namespace import
       _hasHeaderLine = FALSE;
       _autoAddField = TRUE;
       _autoCompletion = FALSE;
+      _cast = FALSE;
 
       _bufferSize = 64;
       _dryRun = FALSE;
@@ -681,6 +685,12 @@ namespace import
       {
          string extra = get<string>(IMP_OPTION_EXTRA);
          ossStrToBoolean(extra.c_str(), &_autoCompletion);
+      }
+
+      if (has(IMP_OPTION_CAST))
+      {
+         string cast = get<string>(IMP_OPTION_CAST);
+         ossStrToBoolean(cast.c_str(), &_cast);
       }
 
       if (has(IMP_OPTION_BUFFERSIZE))

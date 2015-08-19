@@ -102,6 +102,7 @@ namespace import
       inline BOOLEAN hasHeaderLine() const { return _hasHeaderLine; }
       inline BOOLEAN autoAddField() const { return _autoAddField; }
       inline BOOLEAN autoCompletion() const { return _autoCompletion; }
+      inline BOOLEAN cast() const { return _cast; }
 
       /* helpful */
       inline INT32 bufferSize() const { return _bufferSize; }
@@ -157,6 +158,7 @@ namespace import
       BOOLEAN        _hasHeaderLine;
       BOOLEAN        _autoAddField;
       BOOLEAN        _autoCompletion;
+      BOOLEAN        _cast;
 
       /* helpful */
       BOOLEAN        _dryRun;

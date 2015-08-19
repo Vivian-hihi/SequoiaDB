@@ -59,7 +59,8 @@ namespace import
                                         options.stringDelimiter(),
                                         options.autoAddField(),
                                         options.autoCompletion(),
-                                        options.hasHeaderLine());
+                                        options.hasHeaderLine(),
+                                        options.cast());
          if (NULL == csvParser)
          {
             rc = SDB_OOM;
