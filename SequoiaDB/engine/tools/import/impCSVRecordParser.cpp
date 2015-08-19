@@ -118,13 +118,15 @@ namespace import
    #define RELATIVE_MIN_SEC   60
    #define RELATIVE_MICRO_SEC 1000000
 
-   #define TIME_FORMAT        "%d-%d-%d-%d.%d.%d.%d"
+   #define TIME_FORMAT        "YYYY-MM-DD-HH.mm.ss.ffffff"
+   #define TIME_FORMAT_LEN    (sizeof(TIME_FORMAT) - 1)
    #define TIME_LAST_YEAR     2038
    #define TIME_START_YEAR    1901
    #define TIME_MAX_NUM       2147443199
    #define TIME_MIN_NUM       -2147414400
 
-   #define DATE_FORMAT        "%d-%d-%d"
+   #define DATE_FORMAT        "YYYY-MM-DD"
+   #define DATE_FORMAT_LEN    (sizeof(DATE_FORMAT) - 1)
    #define DATE_START_YEAR    -9999
    #define DATE_LAST_YEAR     9999
    #define DATE_MAX_NUM       253402271999
@@ -1561,6 +1563,249 @@ namespace import
       goto done;
    }
 
+   static inline INT32 _str2i(CHAR* data, INT32 dataLength,
+                              INT32& value, INT32& valueLength)
+   {
+      CSV_TYPE type = CSV_TYPE_AUTO;
+      CSVFieldValue tmpValue;
+      INT32 rc;
+
+      rc = _stringToRawNum(data, dataLength, type, tmpValue, valueLength);
+      if (SDB_OK != rc)
+      {
+         goto error;
+      }
+
+      if (CSV_TYPE_LONG != type)
+      {
+         rc = SDB_INVALIDARG;
+         goto error;
+      }
+
+      if (tmpValue.longVal < CSV_INT_MIN || tmpValue.longVal > CSV_INT_MAX)
+      {
+         rc = SDB_INVALIDARG;
+         goto error;
+      }
+
+      value = (INT32)tmpValue.longVal;
+
+   done:
+      return rc;
+   error:
+      goto done;
+   }
+
+   /*
+    * year: YYYY
+    * month: MM
+    * day: DD
+    * hour: HH
+    * minute: mm
+    * second: ss
+    * millisecond: SSS
+    * microsecond: ffffff
+    * any charcater: *
+    */
+   static inline INT32 _stringToDateTime(CHAR* data, INT32 dataLength,
+                                              CHAR* format, INT32 formatLength,
+                                              struct tm* time, INT32& microsec)
+   {
+      INT32 year = 0;
+      INT32 month = 0;
+      INT32 day = 0;
+      INT32 hour = 0;
+      INT32 minute = 0;
+      INT32 second = 0;
+      INT32 rc = SDB_OK;
+      CHAR* str = data;
+      INT32 strLen = dataLength;
+      CHAR* fmt = format;
+      INT32 fmtLen = formatLength;
+      INT32 valueLength = 0;
+      BOOLEAN mxs = FALSE;
+
+      SDB_ASSERT(NULL != data, "data can't be NULL");
+      SDB_ASSERT(NULL != format, "format can't be NULL");
+      SDB_ASSERT(NULL != time, "time can't be NULL");
+
+      _skipSpace(&str, strLen);
+      _skipSpace(&fmt, fmtLen);
+
+      while (strLen > 0 && fmtLen > 0)
+      {
+         switch (*fmt)
+         {
+         // year: YYYY
+         case 'Y':
+            SDB_ASSERT('Y' == fmt[0] &&
+                       'Y' == fmt[1] &&
+                       'Y' == fmt[2] &&
+                       'Y' == fmt[3], "invalid format of year");
+            rc = _str2i(str, strLen, year, valueLength);
+            if (SDB_OK != rc)
+            {
+               goto error;
+            }
+            str += valueLength;
+            strLen -= valueLength;
+            fmt += 4;
+            fmtLen -= 4;
+            break;
+         // month: MM
+         case 'M':
+            SDB_ASSERT('M' == fmt[0] &&
+                       'M' == fmt[1], "invalid format of month");
+            rc = _str2i(str, strLen, month, valueLength);
+            if (SDB_OK != rc)
+            {
+               goto error;
+            }
+            str += valueLength;
+            strLen -= valueLength;
+            fmt += 2;
+            fmtLen -= 2;
+            break;
+         // day: DD
+         case 'D':
+            SDB_ASSERT('D' == fmt[0] &&
+                       'D' == fmt[1], "invalid format of day");
+            rc = _str2i(str, strLen, day, valueLength);
+            if (SDB_OK != rc)
+            {
+               goto error;
+            }
+            str += valueLength;
+            strLen -= valueLength;
+            fmt += 2;
+            fmtLen -= 2;
+            break;
+         // hour: HH
+         case 'H':
+            SDB_ASSERT('H' == fmt[0] &&
+                       'H' == fmt[1], "invalid format of hour");
+            rc = _str2i(str, strLen, hour, valueLength);
+            if (SDB_OK != rc)
+            {
+               goto error;
+            }
+            str += valueLength;
+            strLen -= valueLength;
+            fmt += 2;
+            fmtLen -= 2;
+            break;
+         // minute: mm
+         case 'm':
+            SDB_ASSERT('m' == fmt[0] &&
+                       'm' == fmt[1], "invalid format of minute");
+            rc = _str2i(str, strLen, minute, valueLength);
+            if (SDB_OK != rc)
+            {
+               goto error;
+            }
+            str += valueLength;
+            strLen -= valueLength;
+            fmt += 2;
+            fmtLen -= 2;
+            break;
+         // second: ss
+         case 's':
+            SDB_ASSERT('s' == fmt[0] &&
+                       's' == fmt[1], "invalid format of second");
+            rc = _str2i(str, strLen, second, valueLength);
+            if (SDB_OK != rc)
+            {
+               goto error;
+            }
+            str += valueLength;
+            strLen -= valueLength;
+            fmt += 2;
+            fmtLen -= 2;
+            break;
+         // millisecond: SSS
+         case 'S':
+            {
+               INT32 ms;
+               SDB_ASSERT('S' == fmt[0] &&
+                          'S' == fmt[1] &&
+                          'S' == fmt[2], "invalid format of millisecond");
+               if (mxs)
+               {
+                  rc = SDB_INVALIDARG;
+                  goto error;
+               }
+               rc = _str2i(str, strLen, ms, valueLength);
+               if (SDB_OK != rc)
+               {
+                  goto error;
+               }
+               microsec = ms * 1000;
+               str += valueLength;
+               strLen -= valueLength;
+               fmt += 3;
+               fmtLen -= 3;
+               mxs = TRUE;
+            }
+            break;
+         // microsecond: ffffff
+         case 'f':
+            SDB_ASSERT('f' == fmt[0] &&
+                       'f' == fmt[1] &&
+                       'f' == fmt[2] &&
+                       'f' == fmt[3] &&
+                       'f' == fmt[4] &&
+                       'f' == fmt[5], "invalid format of microsecond");
+            if (mxs)
+            {
+               rc = SDB_INVALIDARG;
+               goto error;
+            }
+            rc = _str2i(str, strLen, microsec, valueLength);
+            if (SDB_OK != rc)
+            {
+               goto error;
+            }
+            str += valueLength;
+            strLen -= valueLength;
+            fmt += 6;
+            fmtLen -= 6;
+            mxs = TRUE;
+            break;
+         // any charcater: *
+         case '*':
+            str++;
+            strLen--;
+            fmt++;
+            fmtLen--;
+            break;
+         default:
+            if (*str != *fmt)
+            {
+               rc = SDB_INVALIDARG;
+               goto error;
+            }
+            str++;
+            strLen--;
+            fmt++;
+            fmtLen--;
+            break;
+         }
+      }
+
+      ossMemset(time, 0, sizeof(struct tm));
+      time->tm_year = year;
+      time->tm_mon  = month - 1;
+      time->tm_mday = day;
+      time->tm_hour = hour;
+      time->tm_min  = minute;
+      time->tm_sec  = second;
+
+   done:
+      return rc;
+   error:
+      goto done;
+   }
+
    static inline INT32 _stringToTimestamp(CSVString& data,
                                           CSVTimestamp& value)
    {
@@ -1594,46 +1839,31 @@ namespace import
       if (hasNonDigit)
       {
          struct tm t ;
-         /* date and timestamp */
-         INT32 year = 0;
-         INT32 month = 0;
-         INT32 day = 0;
-         INT32 hour = 0;
-         INT32 minute = 0;
-         INT32 second = 0;
-         INT32 micros = 0;
+         INT32 microsec = 0;
          time_t timep;
 
-         /* for timestamp type, we provide yyyy-mm-dd-hh.mm.ss.uuuuuu */
-         if (!sscanf(data.str,
-                     TIME_FORMAT,
-                     &year,
-                     &month,
-                     &day,
-                     &hour,
-                     &minute,
-                     &second,
-                     &micros))
+         rc = _stringToDateTime(data.str, data.length,
+                                TIME_FORMAT, TIME_FORMAT_LEN,
+                                &t, microsec);
+         if (SDB_OK != rc)
          {
-            rc = SDB_INVALIDARG;
             PD_LOG(PDERROR, "failed to scan timepstamp, rc=%d", rc);
             goto error;
          }
-         month--;
 
          /* sanity check */
-         if (year > TIME_LAST_YEAR || year < TIME_START_YEAR ||
-             month >= RELATIVE_MOD || month < 0 ||
-             day > RELATIVE_DAY || day <= 0)
+         if (t.tm_year > TIME_LAST_YEAR || t.tm_year < TIME_START_YEAR ||
+             t.tm_mon >= RELATIVE_MOD || t.tm_mon < 0 ||
+             t.tm_mday > RELATIVE_DAY || t.tm_mday <= 0)
          {
             rc = SDB_INVALIDARG;
             PD_LOG(PDERROR, "invalid date of timestamp");
             goto error;
          }
 
-         if (TIME_LAST_YEAR == year)
+         if (TIME_LAST_YEAR == t.tm_year)
          {
-            if (month > 0 || (month == 0 && day >= 19))
+            if (t.tm_mon > 0 || (t.tm_mon == 0 && t.tm_mday >= 19))
             {
                rc = SDB_INVALIDARG;
                PD_LOG(PDERROR, "invalid month or day of timestamp");
@@ -1641,9 +1871,9 @@ namespace import
             }
          }
 
-         if (TIME_START_YEAR == year)
+         if (TIME_START_YEAR == t.tm_year)
          {
-            if (month < 11 || (month == 11 && day < 15))
+            if (t.tm_mon < 11 || (t.tm_mon == 11 && t.tm_mday < 15))
             {
                rc = SDB_INVALIDARG;
                PD_LOG(PDERROR, "invalid month or day of timestamp");
@@ -1651,26 +1881,17 @@ namespace import
             }
          }
 
-         if (hour >= RELATIVE_HOUR || hour < 0 ||
-             minute >= RELATIVE_MIN_SEC || minute < 0 ||
-             second >= RELATIVE_MIN_SEC || second < 0 ||
-             micros >= RELATIVE_MICRO_SEC || micros < 0)
+         if (t.tm_hour >= RELATIVE_HOUR || t.tm_hour < 0 ||
+             t.tm_min >= RELATIVE_MIN_SEC || t.tm_min < 0 ||
+             t.tm_sec >= RELATIVE_MIN_SEC || t.tm_sec < 0 ||
+             microsec >= RELATIVE_MICRO_SEC || microsec < 0)
          {
             rc = SDB_INVALIDARG;
             PD_LOG(PDERROR, "invalid time of timestamp");
             goto error;
          }
 
-         year -= RELATIVE_YEAR;
-
-         /* construct tm */
-         ossMemset(&t, 0, sizeof(t));
-         t.tm_year = year;
-         t.tm_mon  = month;
-         t.tm_mday = day;
-         t.tm_hour = hour;
-         t.tm_min  = minute;
-         t.tm_sec  = second;
+         t.tm_year -= RELATIVE_YEAR;
 
          /* create integer time representation */
          timep = mktime(&t);
@@ -1681,7 +1902,7 @@ namespace import
             goto error;
          }
          value.sec = (INT32)timep;
-         value.us = micros;
+         value.us = microsec;
       }
       else
       {
@@ -1760,42 +1981,29 @@ namespace import
       if (hasNonDigit)
       {
          struct tm t;
-         /* date and timestamp */
-         INT32 year = 0;
-         INT32 month = 0;
-         INT32 day = 0;
+         INT32 microsec = 0;
          time_t timep;
 
-         /* for timestamp type, we provide yyyy-mm-dd-hh.mm.ss.uuuuuu */
-         if (!sscanf(data.str,
-                     DATE_FORMAT,
-                     &year,
-                     &month,
-                     &day))
+         rc = _stringToDateTime(data.str, data.length,
+                                DATE_FORMAT, DATE_FORMAT_LEN,
+                                &t, microsec);
+         if (SDB_OK != rc)
          {
-            rc = SDB_INVALIDARG;
             PD_LOG(PDERROR, "failed to scan date");
             goto error;
          }
-         month--;
 
          /* sanity check */
-         if (year > DATE_LAST_YEAR || year < DATE_START_YEAR ||
-             month >= RELATIVE_MOD || month < 0 ||
-             day > RELATIVE_DAY || day <= 0)
+         if (t.tm_year > DATE_LAST_YEAR || t.tm_year < DATE_START_YEAR ||
+             t.tm_mon >= RELATIVE_MOD || t.tm_mon < 0 ||
+             t.tm_mday > RELATIVE_DAY || t.tm_mday <= 0)
          {
             rc = SDB_INVALIDARG;
             PD_LOG(PDERROR, "invalid date");
             goto error;
          }
 
-         year -= RELATIVE_YEAR;
-
-         /* construct tm */
-         ossMemset(&t, 0, sizeof(t));
-         t.tm_year = year;
-         t.tm_mon  = month;
-         t.tm_mday = day;
+         t.tm_year -= RELATIVE_YEAR; 
 
          /* create integer time representation */
          timep = mktime(&t);
