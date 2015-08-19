@@ -309,15 +309,16 @@ done:
 
 __METHOD_IMP(sdb_create_collection_space)
 {
-   INT32 rc               = 0 ;
-   INT32 page_size        = 0 ;
-   PYOBJECT *obj          = NULL ;
-   PYOBJECT *cs_obj       = NULL ;
-   const CHAR *cs_name    = NULL ;
-   sdb *client            = NULL ;
-   sdbCollectionSpace *cs = NULL ;
+   INT32 rc                     = SDB_OK ;
+   PYOBJECT *bson_options       = 0 ;
+   PYOBJECT *obj                = NULL ;
+   PYOBJECT *cs_obj             = NULL ;
+   const CHAR *cs_name          = NULL ;
+   sdb *client                  = NULL ;
+   sdbCollectionSpace *cs       = NULL ;
+   const bson::BSONObj *options = NULL ;
 
-   if ( !PARSE_PYTHON_ARGS( args, "OsiO", &obj, &cs_name, &page_size,
+   if ( !PARSE_PYTHON_ARGS( args, "OsOO", &obj, &cs_name, &bson_options,
       &cs_obj ) )
    {
       rc = SDB_INVALIDARGS ;
@@ -326,8 +327,9 @@ __METHOD_IMP(sdb_create_collection_space)
 
    CAST_PYOBJECT_TO_COBJECT( obj, sdb, client ) ;
    CAST_PYOBJECT_TO_COBJECT( cs_obj, sdbCollectionSpace, cs ) ;
+   CAST_PYBSON_TO_CPPBSON( bson_options, options ) ;
 
-   rc = client->createCollectionSpace( cs_name, page_size, *cs ) ;
+   rc = client->createCollectionSpace( cs_name, *options, *cs ) ;
    if ( rc )
    {
       goto done ;
