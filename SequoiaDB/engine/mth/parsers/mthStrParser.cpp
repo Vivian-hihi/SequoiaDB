@@ -57,7 +57,11 @@ namespace engine
       }
 #endif
 
-      if ( e.isNumber() )
+      if ( e.isNumber() && 0 <=  e.numberInt())
+      {
+         limit = e.numberInt() ;
+      }
+      else if ( e.isNumber() )
       {
          begin = e.numberInt() ;
       }
