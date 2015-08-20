@@ -1659,8 +1659,8 @@ namespace engine
          goto done ;
       }
 
-      PD_RC_CHECK( rc, PDERROR, "Failed to synchronise transaction-log, "
-                   "rc: %d", rc );
+      PD_RC_CHECK( rc, PDERROR, "FS Session[%s]: Failed to synchronise "
+                   "transaction-log, rc: %d", sessionName(), rc );
 
       if ( CLS_FS_EOF == pRsp->eof )
       {
@@ -1683,9 +1683,21 @@ namespace engine
          {
             SDB_ASSERT( STEP_TS_BEGIN == _tsStep, "get unexpected log" ) ;
             rc = dpsCB->move( header->_lsn, header->_version ) ;
-            PD_RC_CHECK( rc, PDERROR, "Failed to move lsn[%d,%lld], rc: %d",
-                         header->_version, header->_lsn, rc ) ;
-            _tsStep = STEP_TS_ING ;
+            if ( rc )
+            {
+               PD_LOG( PDERROR, "FS Session[%s]: Failed to move lsn to "
+                       "[%u, %lld] for sync the log info, rc: %d",
+                       sessionName(), header->_version, header->_lsn,
+                       rc ) ;
+               goto error ;
+            }
+            else
+            {
+               PD_LOG( PDEVENT, "FS Session[%s]: Move lsn to [%u, %lld] for "
+                       "sync the log info succeed", sessionName(),
+                       header->_version, header->_lsn ) ;
+               _tsStep = STEP_TS_ING ;
+            }
          }
 
          rc = dpsCB->recordRow( pOffset, header->_length );

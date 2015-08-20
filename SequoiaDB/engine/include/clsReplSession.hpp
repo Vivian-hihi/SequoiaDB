@@ -109,6 +109,7 @@ namespace engine
          _clsBucket                    *_pReplBucket ;
          _clsReplayer                  _replayer ;
          MsgRouteID                    _syncSrc ;
+         MsgRouteID                    _lastSyncNode ;
          CLS_SESSION_STATUS            _status ;
          BOOLEAN                       _quit ;
          ossAtomic32                   _addFSSession ;
