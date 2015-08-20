@@ -60,9 +60,9 @@ namespace engine
        _mb( CLS_SYNC_DEF_LEN ),
        _status( CLS_SESSION_STATUS_SYNC ),
        _quit( FALSE ),
+       _addFSSession(0),
        _timeout( 0 ),
-       _consultLsn(),
-       _addFSSession(0)
+       _consultLsn()
    {
       PD_TRACE_ENTRY ( SDB__CLSDSTREPSN__CLSDSTREPSN );
       _logger = pmdGetKRCB()->getDPSCB() ;
@@ -405,7 +405,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__CLSDSTREPSN_HNDSSTRES );
 
-      if ( header->messageLength < sizeof( _MsgReplConsultationRes ) )
+      if ( (UINT32)header->messageLength < sizeof( _MsgReplConsultationRes ) )
       {
          /// the message is old( no hashValue, no reserved )
          PD_LOG( PDWARNING, "Sync Session[%s]: Consultation responses message "
@@ -1125,7 +1125,7 @@ namespace engine
       res.header.header.requestID = msg->header.requestID ;
       time_t bTime = time(NULL) ;
 
-      if ( header->messageLength < sizeof( _MsgReplConsultation ) )
+      if ( (UINT32)header->messageLength < sizeof( _MsgReplConsultation ) )
       {
          /// the old message( no hashValue, and reserved )
          PD_LOG( PDWARNING, "Sync Session[%s]: Recv consult request message "
