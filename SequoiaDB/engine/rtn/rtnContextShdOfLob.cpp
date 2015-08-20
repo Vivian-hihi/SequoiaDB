@@ -289,6 +289,8 @@ namespace engine
             PD_LOG( PDERROR, "failed to create lob:%d", rc ) ;
             goto error ;
          }
+
+         _written.insert( DMS_LOB_META_SEQUENCE ) ;
       }
       else if ( _isMainShd && SDB_LOB_MODE_REMOVE == _mode )
       {
