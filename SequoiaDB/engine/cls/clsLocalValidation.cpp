@@ -81,7 +81,7 @@ namespace engine
       }*/
 
       /// 3. dump dms
-      dmsCB->dumpInfo( csList, TRUE ) ;
+      //dmsCB->dumpInfo( csList, TRUE ) ;
 
       /// 4. update validation tick
       pmdUpdateValidationTick() ;
