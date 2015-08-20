@@ -102,7 +102,8 @@ namespace engine
 
       _internalBlk = SDB_OSS_NEW _rtnInternalSorting( _orderby,
                                                       _sortBuf,
-                                                      _totalBufSize ) ;
+                                                      _totalBufSize,
+                                                      _limit ) ;
       if ( NULL == _internalBlk )
       {
          PD_LOG( PDERROR, "failed to allocate _internalBlk." ) ;
@@ -124,8 +125,8 @@ namespace engine
 
    //PD_TRACE_DECLARE_FUNCTION ( SDB__RTNSORTING_PUSH, "_rtnSorting::push" )
    INT32 _rtnSorting::push( const BSONObj& key,
-                              const CHAR* obj, INT32 objLen,
-                              BSONElement* arrEle, _pmdEDUCB *cb )
+                            const CHAR* obj, INT32 objLen,
+                            BSONElement* arrEle, _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNSORTING_PUSH ) ;

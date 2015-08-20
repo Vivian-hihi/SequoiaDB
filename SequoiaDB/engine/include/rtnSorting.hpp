@@ -65,12 +65,13 @@ namespace engine
                   _pmdEDUCB *cb );
 
       INT32 push( const BSONObj& key, const CHAR* obj, INT32 objLen,
-                    BSONElement* arrEle, _pmdEDUCB *cb ) ;
+                  BSONElement* arrEle, _pmdEDUCB *cb ) ;
 
       INT32 sort( _pmdEDUCB *cb ) ;
 
       /// do not ensure that the key and obj is get owned.
-      INT32 fetch( BSONObj &key, const CHAR** obj, INT32* objLen, _pmdEDUCB *cb ) ;
+      INT32 fetch( BSONObj &key, const CHAR** obj,
+                   INT32* objLen, _pmdEDUCB *cb ) ;
 
    private:
 
