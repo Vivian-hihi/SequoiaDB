@@ -167,6 +167,8 @@ namespace import
    public:
       CSVRecordParser(const string& fieldDelimiter,
                       const string& stringDelimiter,
+                      const string& dateFormat,
+                      const string& timestampFormat,
                       BOOLEAN autoAddField,
                       BOOLEAN autoAddValue,
                       BOOLEAN hasHeaderLine,

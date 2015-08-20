@@ -118,15 +118,15 @@ namespace import
    #define RELATIVE_MIN_SEC   60
    #define RELATIVE_MICRO_SEC 1000000
 
-   #define TIME_FORMAT        "YYYY-MM-DD-HH.mm.ss.ffffff"
-   #define TIME_FORMAT_LEN    (sizeof(TIME_FORMAT) - 1)
+   #define TIME_FORMAT        (_timestampFormat.c_str())
+   #define TIME_FORMAT_LEN    (_timestampFormat.length())
    #define TIME_LAST_YEAR     2038
    #define TIME_START_YEAR    1901
    #define TIME_MAX_NUM       2147443199
    #define TIME_MIN_NUM       -2147414400
 
-   #define DATE_FORMAT        "YYYY-MM-DD"
-   #define DATE_FORMAT_LEN    (sizeof(DATE_FORMAT) - 1)
+   #define DATE_FORMAT        (_dateFormat.c_str())
+   #define DATE_FORMAT_LEN    (_dateFormat.length())
    #define DATE_START_YEAR    -9999
    #define DATE_LAST_YEAR     9999
    #define DATE_MAX_NUM       253402271999
@@ -136,6 +136,8 @@ namespace import
 
    #define RECORD_ID_NAME "_id"
 
+   static string  _dateFormat;
+   static string  _timestampFormat;
    static BOOLEAN _cast = FALSE;
 
    static inline void _skipSpace(CHAR** data, INT32& length)
@@ -1607,9 +1609,9 @@ namespace import
     * microsecond: ffffff
     * any charcater: *
     */
-   static inline INT32 _stringToDateTime(CHAR* data, INT32 dataLength,
-                                              CHAR* format, INT32 formatLength,
-                                              struct tm* time, INT32& microsec)
+   static inline INT32 _stringToDateTime(const CHAR* data, INT32 dataLength,
+                                         const CHAR* format, INT32 formatLength,
+                                         struct tm* time, INT32& microsec)
    {
       INT32 year = 0;
       INT32 month = 0;
@@ -1618,9 +1620,9 @@ namespace import
       INT32 minute = 0;
       INT32 second = 0;
       INT32 rc = SDB_OK;
-      CHAR* str = data;
+      CHAR* str = (CHAR*)data;
       INT32 strLen = dataLength;
-      CHAR* fmt = format;
+      CHAR* fmt = (CHAR*)format;
       INT32 fmtLen = formatLength;
       INT32 valueLength = 0;
       BOOLEAN mxs = FALSE;
@@ -1628,6 +1630,8 @@ namespace import
       SDB_ASSERT(NULL != data, "data can't be NULL");
       SDB_ASSERT(NULL != format, "format can't be NULL");
       SDB_ASSERT(NULL != time, "time can't be NULL");
+      SDB_ASSERT(dataLength > 0, "dataLength must be greater than 0");
+      SDB_ASSERT(formatLength > 0, "formatLength must be greater than 0");
 
       _skipSpace(&str, strLen);
       _skipSpace(&fmt, fmtLen);
@@ -2900,11 +2904,13 @@ namespace import
    }
 
    CSVRecordParser::CSVRecordParser(const string& fieldDelimiter,
-                          const string& stringDelimiter,
-                          BOOLEAN autoAddField,
-                          BOOLEAN autoAddValue,
-                          BOOLEAN hasHeaderLine,
-                          BOOLEAN cast)
+                                    const string& stringDelimiter,
+                                    const string& dateFormat,
+                                    const string& timestampFormat,
+                                    BOOLEAN autoAddField,
+                                    BOOLEAN autoAddValue,
+                                    BOOLEAN hasHeaderLine,
+                                    BOOLEAN cast)
    : RecordParser(fieldDelimiter,
                   stringDelimiter,
                   autoAddField,
@@ -2912,6 +2918,8 @@ namespace import
      _hasHeaderLine(hasHeaderLine)
    {
       _hasId = FALSE;
+      _dateFormat = dateFormat;
+      _timestampFormat = timestampFormat;
       _cast = cast;
    }
 

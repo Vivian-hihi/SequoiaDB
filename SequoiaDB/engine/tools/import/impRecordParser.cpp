@@ -57,6 +57,8 @@ namespace import
          CSVRecordParser* csvParser =
             SDB_OSS_NEW CSVRecordParser(options.fieldDelimiter(),
                                         options.stringDelimiter(),
+                                        options.dateFormat(),
+                                        options.timestampFormat(),
                                         options.autoAddField(),
                                         options.autoCompletion(),
                                         options.hasHeaderLine(),
