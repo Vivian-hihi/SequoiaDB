@@ -138,6 +138,7 @@ namespace engine
       // get how much space we still able to write
       UINT32 getIdleSize() { return _idleSize ; }
       UINT32 getLength () { return _fileSize - _idleSize ; }
+      UINT32 getValidLength() const ;
       // reset metadata
       INT32 reset ( UINT32 logID, const DPS_LSN_OFFSET &offset,
                     const DPS_LSN_VER &version ) ;

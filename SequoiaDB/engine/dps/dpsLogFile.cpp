@@ -425,6 +425,19 @@ namespace engine
       goto done ;
    }
 
+   UINT32 _dpsLogFile::getValidLength() const
+   {
+      if ( DPS_INVALID_LSN_OFFSET == _logHeader._firstLSN.offset )
+      {
+         return _fileSize - _idleSize ;
+      }
+      else
+      {
+         return _fileSize - _idleSize -
+               ( _logHeader._firstLSN.offset % _fileSize ) ;
+      }
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DPSLOGFILE_RESET, "_dpsLogFile::reset" )
    INT32 _dpsLogFile::reset ( UINT32 logID, const DPS_LSN_OFFSET &offset,
                               const DPS_LSN_VER &version )

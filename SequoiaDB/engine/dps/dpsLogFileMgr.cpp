@@ -272,7 +272,7 @@ namespace engine
 
       // empty file or full file(roll over)
       if ( WORK_FILE->getIdleSize() == 0 ||
-           WORK_FILE->getFirstLSN().invalid() )
+           WORK_FILE->getIdleSize() == WORK_FILE->size() )
       {
          WORK_FILE->reset( _logicalWork, beginLsn.offset, beginLsn.version ) ;
       }
@@ -400,9 +400,9 @@ namespace engine
       UINT32 fileOffset = offset  % _logFileSz ;
       INT32 signFlag = -1 ;
 
-      if ( _files[_work]->header()._logID != DPS_INVALID_LOG_FILE_ID
-         && offset > _files[_work]->getFirstLSN().offset +
-         _files[_work]->getLength() )
+      if ( _files[_work]->header()._logID != DPS_INVALID_LOG_FILE_ID &&
+           offset > _files[_work]->getFirstLSN().offset +
+           _files[_work]->getValidLength() )
       {
          signFlag = 1 ;
       }
@@ -412,7 +412,7 @@ namespace engine
          if ( _files[_work]->header()._logID != DPS_INVALID_LOG_FILE_ID &&
              ( _files[_work]->getFirstLSN().offset <= offset &&
                offset <= _files[_work]->getFirstLSN().offset +
-               _files[_work]->getLength() ) )
+               _files[_work]->getValidLength() ) )
          {
             // at the end of file, need set idle to 0
             if ( file != _work )
@@ -437,7 +437,6 @@ namespace engine
             rc = _files[_work]->reset ( DPS_INVALID_LOG_FILE_ID,
                                         DPS_INVALID_LSN_OFFSET,
                                         DPS_INVALID_LSN_VERSION ) ;
-            _work = signFlag == -1 ? _decFileID ( _work ) : _incFileID ( _work ) ;
          }
 
          if ( SDB_OK != rc )
@@ -445,6 +444,7 @@ namespace engine
             break ;
          }
 
+         _work = signFlag == -1 ? _decFileID ( _work ) : _incFileID ( _work ) ;
          ++i ;
       }
 
