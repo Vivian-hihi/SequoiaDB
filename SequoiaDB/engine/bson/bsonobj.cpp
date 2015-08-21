@@ -517,7 +517,8 @@ namespace bson {
             /// r is date
             else
             {
-               long long L_Macro = l.timestampTime() + l.timestampInc() / 1000 ;
+               long long L_Macro = ( long long ) l.timestampTime() 
+                                   + l.timestampInc() / 1000 ;
                long long R_Macro = r.date() ;
                if ( L_Macro - R_Macro != 0 )
                {
@@ -531,15 +532,18 @@ namespace bson {
         {
             if ( Date == r.type() )
             {
-               if ( l.date() < r.date() )
+               long long iL = l.date() ;
+               long long iR = r.date() ;
+               if ( iL < iR )
                    return -1;
-               return l.date() == r.date() ? 0 : 1;
+               return iL == iR ? 0 : 1;
             }
             /// r is timestamp
             else
             {
                long long L_Macro = l.date() ;
-               long long R_Macro = r.timestampTime() + r.timestampInc() / 1000 ;
+               long long R_Macro = ( long long ) r.timestampTime() 
+                                   + r.timestampInc() / 1000 ;
                if ( L_Macro - R_Macro != 0 )
                {
                   return L_Macro > R_Macro ? 1 : -1 ;
