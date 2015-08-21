@@ -198,7 +198,15 @@ SdbCollection.prototype.findOne = function( query, select ) {
 SdbCollection.prototype.getIndex = function( name ) {
    if ( ! name )
       throw "SdbCollection.getIndex(): 1st parameter should be valid string" ;
-   return this._getIndexes( name ).next() ;
+   var obj = this._getIndexes(name).next();
+   if (undefined == obj)
+   {
+      //setLastError( -47 );
+      //setLastErrorMsg( getErr( -47 ) );
+      throw "-47 \n" + getErr( -47 );
+   }
+
+   return obj ;
 }
 
 SdbCollection.prototype.listIndexes = function() {
