@@ -2428,7 +2428,6 @@ namespace engine
       /// clean up
       {
       SINT32 ret = SDB_OK ;
-      INT32 rrc = SDB_OK ;
       BSONObj execObj ;
 
       MsgRouteID routeID ;
@@ -2447,20 +2446,19 @@ namespace engine
          /// here we only return a err code. do not goto error.
          if ( SDB_OK != rc )
          {
-            PD_LOG( PDERROR,
-                    "remote node execute(configure) failed(rc=%d) node(%s)",
-                    rc, execObj.toString().c_str());
-            rrc = SDB_CATA_FAILED_TO_CLEANUP ;
+            PD_LOG( PDWARNING, "Stop node[GroupName: %s, HostName: %s, "
+                    "SvcName: %s] failed, rc: %d, retObj: %s",
+                    groupName, hostName.c_str(), serviceName.c_str(),
+                    rc, execObj.toString().c_str() ) ;
          }
 
-         rc = rtnRemoteExec ( SDBRM, hostName.c_str(),
-                              &ret, &execObj ) ;
+         rc = rtnRemoteExec ( SDBRM, hostName.c_str(), &ret, &execObj ) ;
          if ( SDB_OK != rc )
          {
-            PD_LOG( PDERROR,
-                    "remote node execute(configure) failed(rc=%d) node(%s)",
-                    rc, execObj.toString().c_str());
-            rrc = SDB_CATA_FAILED_TO_CLEANUP ;
+            PD_LOG( PDERROR, "Remove node[GroupName: %s, HostName: %s, "
+                    "SvcName: %s] failed, rc: %d, retObj: %s",
+                    groupName, hostName.c_str(), serviceName.c_str(),
+                    rc, execObj.toString().c_str() ) ;
          }
       }
 
@@ -2474,7 +2472,6 @@ namespace engine
          }
       }
 
-      rc = rrc ;
       if ( SDB_OK != rc )
       {
          goto error ;
@@ -3154,7 +3151,7 @@ namespace engine
          ele = rInfo.getField( PMD_OPTION_SVCNAME ) ;
          if ( ele.eoo() || String != ele.type() )
          {
-            PD_LOG( PDERROR, "failed to get srv from msg[%s]",
+            PD_LOG( PDERROR, "Failed to get srv from msg[%s]",
                     rInfo.toString().c_str() ) ;
             rc = SDB_INVALIDARG ;
             goto error ;
@@ -3173,7 +3170,8 @@ namespace engine
          else
          {
             PD_LOG( PDERROR, "unexpected type(%d) of \"OnlyDetach\""
-                    "it should be bool", ele.type() ) ;
+                    "it should be bool in %s", ele.type(),
+                    rInfo.toString().c_str() ) ;
             rc = SDB_INVALIDARG ;
             goto error ;
          }
@@ -3192,7 +3190,9 @@ namespace engine
       rc = executeOnCataGroup ( pMsg, cb, TRUE ) ;
       if ( rc )
       {
-         PD_LOG ( PDERROR, "failed to remove node, rc = %d", rc ) ;
+         PD_LOG ( PDERROR, "Failed to remove node[GroupName:%s, "
+                  "HostName: %s, SvcName: %s] in catalog, rc: %d",
+                  groupName.c_str(), host.c_str(), srv.c_str(), rc ) ;
          goto error ;
       }
 
@@ -3200,7 +3200,8 @@ namespace engine
       rc = rtnCoordGetGroupInfo( cb, groupName.c_str(), TRUE, groupInfo ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to get groupinfo from cata:%d", rc ) ;
+         PD_LOG( PDERROR, "Failed to get groupinfo[%s] from catalog, rc: %d",
+                 groupName.c_str(), rc ) ;
          goto error ;
       }
 
@@ -3223,45 +3224,42 @@ namespace engine
       // notify cm to stop and remove node 
       {
          SINT32 retCode;
-         INT32 rrc = SDB_OK ;
-         rrc = rtnRemoteExec ( SDBSTOP, host.c_str(),
-                               &retCode, &rInfo ) ;
-         rrc = SDB_OK == rrc ?
-               retCode : rrc ;
-         if ( SDB_OK != rrc )
+
+         /// ignore the stop result, because remove or clear will
+         /// retry to stop in sdbcm
+         rc = rtnRemoteExec ( SDBSTOP, host.c_str(), &retCode, &rInfo ) ;
+         rc = ( SDB_OK == rc ) ? retCode : rc ;
+         if ( rc )
          {
-            PD_LOG( PDERROR,
-                    "remote node execute(configure) failed(rc=%d)",
-                    rrc );
-            rc = SDB_CATA_FAILED_TO_CLEANUP ;
-            /// don't goto error, continue remove the node
+            PD_LOG( PDWARNING, "Stop the node[GroupName: %s, HostName: %s "
+                    "SvcName: %s] failed, rc: %d, retObj: %s",
+                    groupName.c_str(), host.c_str(), srv.c_str(), rc,
+                    rInfo.toString().c_str() ) ;
+            /// ignored this error
          }
 
          if ( !onlyDetach )
          {
-            rrc = rtnRemoteExec ( SDBRM, host.c_str(),
-                                  &retCode, &rInfo ) ;
-            rrc = SDB_OK == rrc ?
-                  retCode : rrc ;
-            if ( SDB_OK != rrc )
+            rc = rtnRemoteExec ( SDBRM, host.c_str(), &retCode, &rInfo ) ;
+            rc = SDB_OK == rc ? retCode : rc ;
+            if ( SDB_OK != rc )
             {
-               PD_LOG( PDERROR,
-                       "remote node execute(configure) failed(rc=%d)",
-                       rrc );
-               rc = SDB_CATA_FAILED_TO_CLEANUP ;
+               PD_LOG( PDERROR, "Remove the node[GroupName: %s, HostName: %s, "
+                       "SvcName: %s] failed, rc: %d, retObj: %s",
+                       groupName.c_str(), host.c_str(), srv.c_str(), rc,
+                       rInfo.toString().c_str() ) ;
              }
          }
          else if ( !keepData )
          {
-            rc = rtnRemoteExec( SDBCLEARDATA, host.c_str(),
-                                &retCode, &rInfo ) ;
-            rc = SDB_OK == rc ?
-                 retCode : rc ;
+            rc = rtnRemoteExec( SDBCLEARDATA, host.c_str(), &retCode, &rInfo ) ;
+            rc = SDB_OK == rc ? retCode : rc ;
             if ( SDB_OK != rc )
             {
-               PD_LOG( PDERROR, "failed to clear data on node, "
-                       "rc:%d", rc ) ;
-               goto error ;
+               PD_LOG( PDERROR, "Clear data on node[GroupName: %s, HostName: "
+                       "%s, SvcName: %s] failed, rc: %d, retObj: %s",
+                       groupName.c_str(), host.c_str(), srv.c_str(),
+                       rc, rInfo.toString().c_str() ) ;
             }
          }
       }
@@ -3272,7 +3270,7 @@ namespace engine
       }
 
       /// do not care rc.
-      if ( COORD_GROUPID == groupInfo->groupID() )
+      if ( CATALOG_GROUPID == groupInfo->groupID() )
       {
          rtnCataChangeNtyToAllNodes( cb ) ;
       }
