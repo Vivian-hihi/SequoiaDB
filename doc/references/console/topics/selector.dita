@@ -503,7 +503,7 @@
         <strow>
           <stentry>Date</stentry>
           <stentry>Int64<fig></fig>Double<fig></fig>Stirng<fig></fig>Timestamp<fig></fig>Int32</stentry>
-          <stentry>绝对毫秒<fig></fig>绝对毫秒<fig></fig>形如 "2015-08-19"<fig></fig> <fig></fig>绝对毫秒</stentry>
+          <stentry>绝对毫秒<fig></fig>绝对毫秒<fig></fig>形如 "2015-08-19"<fig></fig>&nbsp;<fig></fig>绝对毫秒</stentry>
           <stentry>null</stentry>
         </strow>
         <strow>
