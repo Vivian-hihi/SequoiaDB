@@ -515,7 +515,7 @@
         <strow>
           <stentry>Int32</stentry>
           <stentry>String<fig></fig>Bool<fig></fig>Int64<fig></fig>Double<fig></fig>Timestamp<fig></fig>Date</stentry>
-          <stentry> <fig></fig> <fig></fig> <fig></fig> <fig></fig>绝对毫秒<fig></fig>绝对毫秒</stentry>
+          <stentry>&nbsp;<fig></fig>&nbsp;<fig></fig>&nbsp;<fig></fig>&nbsp;<fig></fig>绝对毫秒<fig></fig>绝对毫秒</stentry>
           <stentry>0</stentry>
         </strow>
         <strow>
@@ -527,7 +527,7 @@
         <strow>
           <stentry>Int64</stentry>
           <stentry>Int32<fig></fig>Double<fig></fig>Stirng<fig></fig>Timestamp<fig></fig>Date</stentry>
-          <stentry> <fig></fig> <fig></fig> <fig></fig>绝对毫秒<fig></fig>绝对毫秒</stentry>
+          <stentry>&nbsp;<fig></fig>&nbsp;<fig></fig>&nbsp;<fig></fig>绝对毫秒<fig></fig>绝对毫秒</stentry>
           <stentry>0</stentry>
         </strow>
         <strow>
