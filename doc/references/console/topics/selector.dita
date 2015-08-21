@@ -431,7 +431,7 @@
           <stentry>9</stentry>
         </strow>
         <strow>
-          <stentry>NULL</stentry>
+          <stentry>Null</stentry>
           <stentry>"null"</stentry>
           <stentry>10</stentry>
         </strow>
@@ -507,7 +507,7 @@
           <stentry>null</stentry>
         </strow>
         <strow>
-          <stentry>NULL</stentry>
+          <stentry>Null</stentry>
           <stentry>ALL</stentry>
           <stentry>--</stentry>
           <stentry>--</stentry>
