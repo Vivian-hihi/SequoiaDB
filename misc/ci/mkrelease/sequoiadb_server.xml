@@ -60,14 +60,6 @@
                 </compareValues>
             </ruleList>
         </throwError>
-        <throwError>
-            <text>SequoiaDB does not support 32-bit operating system.</text>
-            <ruleList>
-                <platformTest>
-                    <type>linux-x86</type>
-                </platformTest>
-            </ruleList>
-        </throwError>
         <createDirectory>
             <path>/home/sequoiadb</path>
             <ruleList>
@@ -81,7 +73,7 @@
             <abortOnError>0</abortOnError>
             <customErrorMessage>${msg(Install.ErrorMsg.CreateGroup.error)}</customErrorMessage>
             <program>groupadd</program>
-            <programArguments>${username}_group</programArguments>
+            <programArguments>${username}_group;sig_group=$?</programArguments>
             <showMessageOnError>0</showMessageOnError>
             <ruleList>
                 <platformTest>
@@ -97,7 +89,8 @@
             <abortOnError>0</abortOnError>
             <customErrorMessage>${msg(Install.ErrorMsg.CreateGroup.error)}</customErrorMessage>
             <program>useradd</program>
-            <programArguments> ${username} -d /home/sequoiadb -g ${username}_group  -s /bin/bash </programArguments>
+            <programArguments> ${username} -p ${userpasswd} -d /home/sequoiadb -g ${username}_group  -s /bin/bash;sig=$? </programArguments>
+            <useMSDOSPath>0</useMSDOSPath>
             <ruleList>
                 <platformTest>
                     <type>linux</type>
@@ -111,39 +104,24 @@
         <runProgram>
             <program>echo</program>
             <programArguments> ${username}:${userpasswd} | chpasswd</programArguments>
+            <workingDirectory>/usr/sbin</workingDirectory>
             <ruleList>
                 <platformTest>
                     <type>linux</type>
                 </platformTest>
             </ruleList>
         </runProgram>
-        <addGroup>
-            <groupname>${username}_group</groupname>
-            <showMessageOnError>1</showMessageOnError>
-            <ruleList>
-                <platformTest>
-                    <type>windows</type>
-                </platformTest>
-            </ruleList>
-        </addGroup>
-        <addUser>
-            <homedir>${installdir}</homedir>
-            <password>${userpasswd}</password>
-            <showMessageOnError>1</showMessageOnError>
-            <username>${username}</username>
-            <ruleList>
-                <platformTest>
-                    <type>windows</type>
-                </platformTest>
-            </ruleList>
-        </addUser>
         <runProgram>
+            <abortOnError>0</abortOnError>
             <program>echo</program>
             <programArguments>3 &gt; /proc/sys/net/ipv4/tcp_retries2</programArguments>
             <ruleList>
                 <platformTest>
                     <type>linux</type>
                 </platformTest>
+                <fileExists>
+                    <path>/proc/sys/net/ipv4/tcp_retries2</path>
+                </fileExists>
             </ruleList>
         </runProgram>
         <changePermissions>
@@ -153,39 +131,35 @@
                 <fileExists>
                     <path>/home/sequoiadb</path>
                 </fileExists>
-                <userTest>
-                    <logic>exists</logic>
-                    <username>${username}</username>
-                </userTest>
             </ruleList>
         </changePermissions>
         <runProgram>
+            <abortOnError>0</abortOnError>
             <program>echo</program>
-            <programArguments>'export PATH=$PATH: ${installdir}' &gt;&gt; /home/sequoiadb/.bash_profile</programArguments>
-            <ruleList>
-                <fileExists>
-                    <path>/home/sequoiadb/.bash_profile</path>
-                </fileExists>
-            </ruleList>
-        </runProgram>
-        <addEnvironmentVariable>
-            <name>PATH</name>
-            <scope>user</scope>
-            <username>${username}</username>
-            <value>$PATH:${installdir}</value>
+            <programArguments>'export PATH=$PATH:${installdir}' &gt;&gt; ~${username}/.bashrc</programArguments>
+            <ruleEvaluationLogic>or</ruleEvaluationLogic>
             <ruleList>
                 <fileContentTest>
                     <encoding>utf-8</encoding>
                     <logic>does_not_contain</logic>
-                    <path>/home/sequoiadb/.bash_profile</path>
+                    <path>~${username}/.bashrc</path>
                     <text>${installdir}</text>
                 </fileContentTest>
+                <fileExists>
+                    <negate>1</negate>
+                    <path>~${username}/.bashrc</path>
+                </fileExists>
             </ruleList>
-        </addEnvironmentVariable>
+        </runProgram>
         <changeOwnerAndGroup>
             <files>/home/sequoiadb</files>
             <group>${username}_group</group>
             <owner>${username}</owner>
+            <ruleList>
+                <fileExists>
+                    <path>/home/sequoiadb</path>
+                </fileExists>
+            </ruleList>
         </changeOwnerAndGroup>
         <exit>
             <exitCode>1</exitCode>
@@ -275,28 +249,6 @@
             <key>defaultPort</key>
             <value>${port}</value>
         </propertiesFileSet>
-        <createWindowsService>
-            <abortOnError>1</abortOnError>
-            <customErrorMessage>${msg(Install.ErrorMsg.CreateService.error)}</customErrorMessage>
-            <description>SequoiaDB Cluster Manager</description>
-            <displayName>SequoiaDB Cluster Manager</displayName>
-            <program>${installdir}\bin\sdbcm.exe</program>
-            <programArguments></programArguments>
-            <serviceName>sdbcm</serviceName>
-            <startType>auto</startType>
-        </createWindowsService>
-        <startWindowsService>
-            <customErrorMessage>${msg(Install.ErrorMsg.StartWindowsService.error)}</customErrorMessage>
-            <delay>15000</delay>
-            <displayName>SequoiaDB Cluster Manager</displayName>
-            <serviceName>sdbcm</serviceName>
-            <ruleList>
-                <windowsServiceTest>
-                    <condition>exists</condition>
-                    <service>sdbcm</service>
-                </windowsServiceTest>
-            </ruleList>
-        </startWindowsService>
         <addUnixService>
             <customErrorMessage>${msg(Install.ErrorMsg.CreateLinuxService.error)}</customErrorMessage>
             <description>SequoiaDB Cluster Manager</description>
@@ -380,49 +332,30 @@
             <program>/usr/bin/md5sum</program>
             <programArguments>${installer_pathname} | cut -c 1-32 &gt;&gt; /etc/default/sequoiadb</programArguments>
         </runProgram>
-        <addEnvironmentVariable>
-            <name>PATH</name>
-            <scope>user</scope>
-            <username>${username}</username>
-            <value>$PATH:${installdir}/bin</value>
+        <runProgram>
+            <abortOnError>0</abortOnError>
+            <program>echo</program>
+            <programArguments>'export PATH=$PATH:${installdir}/bin' &gt;&gt; ~${username}/.bashrc</programArguments>
+            <ruleEvaluationLogic>or</ruleEvaluationLogic>
             <ruleList>
                 <fileContentTest>
                     <encoding>utf-8</encoding>
                     <logic>does_not_contain</logic>
-                    <path>/home/sequoiadb/.bash_profile</path>
+                    <path>~${username}/.bashrc</path>
                     <text>${installdir}/bin</text>
                 </fileContentTest>
+                <fileExists>
+                    <negate>1</negate>
+                    <path>~${username}/.bashrc</path>
+                </fileExists>
             </ruleList>
-        </addEnvironmentVariable>
+        </runProgram>
         <createSymLink>
             <linkName>${installdir}/www/doc</linkName>
             <target>${installdir}/doc</target>
         </createSymLink>
-        <changeOwnerAndGroup>
-            <files>${installdir}/www/doc</files>
-            <group>${username}_group</group>
-            <owner>${username}</owner>
-        </changeOwnerAndGroup>
     </postInstallationActionList>
     <preUninstallationActionList>
-        <stopWindowsService>
-            <abortOnError>1</abortOnError>
-            <customErrorMessage>${msg(Install.ErrorMsg.StopSdbCm.error)}</customErrorMessage>
-            <delay>15000</delay>
-            <displayName>SequoiaDB Cluster Manager</displayName>
-            <serviceName>sdbcm</serviceName>
-            <ruleList>
-                <windowsServiceTest>
-                    <condition>is_running</condition>
-                    <service>sdbcm</service>
-                </windowsServiceTest>
-            </ruleList>
-        </stopWindowsService>
-        <deleteWindowsService>
-            <abortOnError>1</abortOnError>
-            <displayName>SequoiaDB Cluster Manager</displayName>
-            <serviceName>sdbcm</serviceName>
-        </deleteWindowsService>
         <runProgram>
             <program>service</program>
             <programArguments>sdbcm stop</programArguments>
@@ -463,23 +396,13 @@
                 </fileExists>
             </ruleList>
         </deleteFile>
-        <runProgram>
-            <program>sed</program>
-            <programArguments> -i 's/export PATH=$PATH:\/opt\/sequoiadb/ /g' /home/sequoiadb/.bash_profile</programArguments>
-            <ruleList>
-                <platformTest>
-                    <type>linux</type>
-                </platformTest>
-                <fileExists>
-                    <path>/home/sequoiadb/.bash_profile</path>
-                </fileExists>
-            </ruleList>
-        </runProgram>
-        <removeDirectoryFromPath>
-            <path>${installdir}/bin</path>
-        </removeDirectoryFromPath>
         <removeDirectoryFromPath>
             <path>${installdir}</path>
+            <scope>user</scope>
+        </removeDirectoryFromPath>
+        <removeDirectoryFromPath>
+            <path>${installdir}/bin</path>
+            <scope>user</scope>
         </removeDirectoryFromPath>
     </postUninstallationActionList>
     <allowedLanguages>en zh_CN</allowedLanguages>
@@ -494,16 +417,6 @@
     <singleInstanceCheck>1</singleInstanceCheck>
     <vendor>SequoiaDB</vendor>
     <installationAbortedActionList>
-        <deleteWindowsService>
-            <displayName>SequoiaDB Cluster Manager</displayName>
-            <serviceName>sdbcm</serviceName>
-            <ruleList>
-                <windowsServiceTest>
-                    <condition>exists</condition>
-                    <service>sdbcm</service>
-                </windowsServiceTest>
-            </ruleList>
-        </deleteWindowsService>
         <removeUnixService>
             <name>sdbcm</name>
             <ruleEvaluationLogic>or</ruleEvaluationLogic>
@@ -538,10 +451,25 @@
                 <platformTest>
                     <type>linux</type>
                 </platformTest>
+                <isFalse>
+                    <value>$sig</value>
+                </isFalse>
             </ruleList>
         </runProgram>
         <deleteGroup>
             <groupname>${username}_group</groupname>
+            <ruleList>
+                <userTest>
+                    <logic>exists</logic>
+                    <username>${username}</username>
+                </userTest>
+                <platformTest>
+                    <type>linux</type>
+                </platformTest>
+                <isFalse>
+                    <value>$sig_group</value>
+                </isFalse>
+            </ruleList>
         </deleteGroup>
     </installationAbortedActionList>
     <licenseFileList>
