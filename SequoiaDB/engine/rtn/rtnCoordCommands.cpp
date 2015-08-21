@@ -3234,6 +3234,7 @@ namespace engine
                     "remote node execute(configure) failed(rc=%d)",
                     rrc );
             rc = SDB_CATA_FAILED_TO_CLEANUP ;
+            /// don't goto error, continue remove the node
          }
 
          if ( !onlyDetach )

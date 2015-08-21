@@ -84,7 +84,8 @@ namespace engine
                                  BOOLEAN useCurUser = FALSE ) ;
 
    INT32          omStopDBNode( const CHAR *pExecName,
-                                const CHAR *pServiceName ) ;
+                                const CHAR *pServiceName,
+                                BOOLEAN force = FALSE ) ;
 
    INT32          omGetSvcListFromConfig( const CHAR *pCfgRootDir,
                                           vector< string > &svcList ) ;

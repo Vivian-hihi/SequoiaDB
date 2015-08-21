@@ -221,7 +221,7 @@ namespace engine
          INT32    startANode( const CHAR *svcname, NODE_START_TYPE type,
                               BOOLEAN needLock ) ;
          INT32    stopANode( const CHAR *svcname, NODE_START_TYPE type,
-                             BOOLEAN needLock ) ;
+                             BOOLEAN needLock, BOOLEAN force = FALSE ) ;
 
       protected:
          void     lockBucket( const string &svcname ) ;

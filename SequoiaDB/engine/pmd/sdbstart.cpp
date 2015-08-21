@@ -66,7 +66,6 @@ namespace engine
 {
    #define SDBSTART_LOG_FILE_NAME   "sdbstart.log"
 
-   #define PMD_OPTION_FORCE         "force"
    #define PMD_OPTION_OPTIONS       "options"
 
    #define COMMANDS_OPTIONS \

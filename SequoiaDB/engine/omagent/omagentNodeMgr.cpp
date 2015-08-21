@@ -749,7 +749,8 @@ namespace engine
 
    INT32 _omAgentNodeMgr::stopANode( const CHAR * svcname,
                                      NODE_START_TYPE type,
-                                     BOOLEAN needLock )
+                                     BOOLEAN needLock,
+                                     BOOLEAN force )
    {
       INT32 rc = SDB_OK ;
       BOOLEAN hasLock = FALSE ;
@@ -767,7 +768,7 @@ namespace engine
       */
 
       rc = omStopDBNode( sdbGetOMAgentOptions()->getStopProcFile(),
-                         svcname ) ;
+                         svcname, force ) ;
       if ( SDB_OK == rc )
       {
          if ( pInfo )
@@ -780,7 +781,7 @@ namespace engine
       }
       else
       {
-         PD_LOG( PDERROR, "Stop sequoaidb node failed, svc = %d, rc: %d",
+         PD_LOG( PDERROR, "Stop sequoaidb node failed, svc = %s, rc: %d",
                  svcname, rc ) ;
          goto error ;
       }
@@ -1425,7 +1426,13 @@ namespace engine
       }
 
       // first to stop the node
-      stopANode( pSvcName, NODE_START_CLIENT, FALSE ) ;
+      rc = stopANode( pSvcName, NODE_START_CLIENT, FALSE, TRUE ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Stop node[%s] failed before remove it, rc: %d",
+                 pSvcName, rc ) ;
+         goto error ;
+      }
 
       // make sure need to backup dialog
       if ( backupDialog )

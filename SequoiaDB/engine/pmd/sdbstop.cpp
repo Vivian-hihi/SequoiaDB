@@ -62,7 +62,8 @@ namespace engine
        ( PMD_OPTION_VERSION, "version" ) \
        ( PMD_COMMANDS_STRING( PMD_OPTION_TYPE, ",t"), po::value<string>(), "node type: db/om/all, default: db" ) \
        ( PMD_COMMANDS_STRING( PMD_OPTION_ROLE, ",r" ), po::value<string>(), "role type: coord/data/catalog/om" ) \
-       ( PMD_COMMANDS_STRING(PMD_OPTION_SVCNAME, ",p"), po::value<string>(), "service name, separated by comma (',')" )
+       ( PMD_COMMANDS_STRING(PMD_OPTION_SVCNAME, ",p"), po::value<string>(), "service name, separated by comma (',')" ) \
+       ( PMD_OPTION_FORCE, "force stop when the node can't stop normally" )
 
    // initialize options
    void init ( po::options_description &desc )
@@ -80,7 +81,8 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB_SDBSTOP_RESVARG, "resolveArgument" )
    INT32 resolveArgument ( po::options_description &desc, INT32 argc,
                            CHAR **argv, vector<string> &listServices,
-                           INT32 &typeFilter, INT32 &roleFilter )
+                           INT32 &typeFilter, INT32 &roleFilter,
+                           BOOLEAN &bForce )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_SDBSTOP_RESVARG );
@@ -155,6 +157,10 @@ namespace engine
          }
          typeFilter = -1 ;
       }
+      if ( vm.count( PMD_OPTION_FORCE ) )
+      {
+         bForce = TRUE ;
+      }
 
    done :
       PD_TRACE_EXITRC ( SDB_SDBSTOP_RESVARG, rc );
@@ -177,12 +183,13 @@ namespace engine
       BOOLEAN bFind = TRUE ;
       INT32 typeFilter = SDB_TYPE_DB ;
       INT32 roleFilter =  -1 ;
+      BOOLEAN bForce = FALSE ;
       po::options_description desc ( "Command options" ) ;
       init ( desc ) ;
 
       // validate arguments
       rc = resolveArgument ( desc, argc, argv, listServices, typeFilter,
-                             roleFilter ) ;
+                             roleFilter, bForce ) ;
       if ( rc )
       {
          if ( SDB_PMD_HELP_ONLY != rc && SDB_PMD_VERSION_ONLY != rc )
@@ -282,7 +289,7 @@ namespace engine
                         info._pid, utilDBTypeStr( (SDB_TYPE)info._type ),
                         info._svcname.c_str() ) ;
 
-            rc = utilStopNode( info ) ;
+            rc = utilStopNode( info, UTIL_STOP_NODE_TIMEOUT, bForce ) ;
             if ( SDB_OK == rc )
             {
                ++success ;

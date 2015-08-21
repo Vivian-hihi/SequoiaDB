@@ -1028,7 +1028,7 @@ namespace engine
       goto done ;
    }
 
-   INT32 utilStopNode( utilNodeInfo & node, INT32 timeout )
+   INT32 utilStopNode( utilNodeInfo & node, INT32 timeout, BOOLEAN force )
    {
       INT32 rc = SDB_OK ;
 
@@ -1074,6 +1074,10 @@ namespace engine
       rc = SDB_TIMEOUT ;
 
    done:
+      if ( rc && force )
+      {
+         rc = ossTerminateProcess( node._pid, TRUE ) ;
+      }
       return rc ;
    error:
       goto done ;

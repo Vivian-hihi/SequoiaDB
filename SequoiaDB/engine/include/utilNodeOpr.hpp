@@ -178,7 +178,8 @@ namespace engine
       stop node
    */
    INT32    utilStopNode ( utilNodeInfo &node,
-                           INT32 timeout = UTIL_STOP_NODE_TIMEOUT ) ;
+                           INT32 timeout = UTIL_STOP_NODE_TIMEOUT,
+                           BOOLEAN force = FALSE ) ;
 
    /*
       Notiry the sdb node to end pipe dup

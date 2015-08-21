@@ -382,7 +382,8 @@ namespace engine
       goto done ;
    }
 
-   INT32 omStopDBNode( const CHAR * pExecName, const CHAR * pServiceName )
+   INT32 omStopDBNode( const CHAR *pExecName, const CHAR *pServiceName,
+                       BOOLEAN force )
    {
       INT32 rc                = SDB_OK ;
       CHAR *pArgumentBuffer   = NULL ;
@@ -397,6 +398,10 @@ namespace engine
       {
          argv.push_back( SDBCM_OPTION_PREFIX PMD_OPTION_SVCNAME ) ;
          argv.push_back( pServiceName ) ;
+      }
+      if ( force )
+      {
+         argv.push_back( SDBCM_OPTION_PREFIX PMD_OPTION_FORCE ) ;
       }
 
       rc = ossBuildArguments( &pArgumentBuffer, argBuffLen, argv ) ;

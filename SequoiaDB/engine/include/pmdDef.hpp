@@ -268,6 +268,7 @@ namespace engine
    #define PMD_OPTION_PORT             "port"
    #define PMD_OPTION_STANDALONE       "standalone"      // for om
    #define PMD_OPTION_ALIVE_TIME       "alivetime"       // for om
+   #define PMD_OPTION_FORCE            "force"
 
    /*
       SDB_RUN_MODE_TYPE_STR DEFINE
