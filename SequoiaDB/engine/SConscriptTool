@@ -24,6 +24,7 @@ importFiles = [
       "tools/import/impRecordParser.cpp",
       "tools/import/impCSVRecordParser.cpp",
       "tools/import/impRecordImporter.cpp",
+      "tools/import/impRecordReader.cpp",
       "tools/import/impWorker.cpp",
       "tools/import/impCoord.cpp",
       "tools/import/impRecordSharding.cpp",

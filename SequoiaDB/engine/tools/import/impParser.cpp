@@ -31,6 +31,7 @@
 #include "impParser.hpp"
 #include "impInputStream.hpp"
 #include "impRecordScanner.hpp"
+#include "impRecordReader.hpp"
 #include "impRecordParser.hpp"
 #include "impCSVRecordParser.hpp"
 #include "impMonitor.hpp"
@@ -49,12 +50,8 @@ namespace import
       RecordParser* parser = NULL;
       RecordArray* recordArray = NULL;
 
-      INT64 readSize = 0;
-      INT32 remainSize = 0;
-      INT64 totalSize = 0;
       INT32 countInBatch = 0;
       BOOLEAN isFirst = TRUE;
-      BOOLEAN final = FALSE;
       INT32 rc = SDB_OK;
 
       SDB_ASSERT(NULL != args, "arg can't be NULL");
@@ -69,7 +66,6 @@ namespace import
       SDB_ASSERT(NULL != workQueue, "workQueue can't be NULL");
       SDB_ASSERT(NULL != monitor, "monitor can't be NULL");
 
-
       {
          CHAR* str = "parser started...\n";
 
@@ -83,6 +79,8 @@ namespace import
       RecordScanner scanner(options->recordDelimiter(),
                             options->stringDelimiter(),
                             options->linePriority());
+
+      RecordReader recordReader;
 
       INT32 bufferSize = options->bufferSize() * 1024 * 1024;
       // 1 byte to ensure it's safe to terminate string
@@ -119,201 +117,170 @@ namespace import
          goto error;
       }
 
+      recordReader.reset(buffer, bufferSize,
+                         input, &scanner,
+                         options->recordDelimiter().length());
+
       while(!self->_stopped)
       {
-         rc = input->read(buffer + remainSize,
-                          bufferSize - remainSize,
-                          readSize);
+         CHAR* record = NULL;
+         INT32 recordLength = 0;
+         bson* obj = NULL;
+
+         rc = recordReader.read(record, recordLength);
          if (SDB_OK != rc)
          {
-            if (SDB_EOF != rc)
-            {
-               printf("\nread error!\n");
-               PD_LOG(PDERROR, "failed to read from InputStream, rc=%d", rc);
-               goto error;
-            }
-
-            if (remainSize == 0)
+            if (SDB_EOF == rc)
             {
                rc = SDB_OK;
                break;
             }
 
-            readSize = 0;
-            final = TRUE;
+            printf("\nread record error!\n");
+            PD_LOG(PDERROR, "failed to read record");
+            goto error;
          }
 
-         totalSize += readSize;
-
-         CHAR* buf = buffer;
-         INT32 length = readSize + remainSize;
-         for(;;)
+         if (0 == recordLength)
          {
-            INT32 recordLength = 0;
-            rc = scanner.scan(buf, length, final, recordLength);
-            if (SDB_OK == rc)
+            if (isFirst &&
+                0 == recordLength &&
+                FORMAT_CSV == options->inputFormat() &&
+                options->hasHeaderLine())
             {
-               if (recordLength > 0)
+               rc = SDB_INVALIDARG;
+               PD_LOG(PDERROR, "the headerline is empty");
+               printf("ERROR: the headerline is empty\n");
+               goto error;
+            }
+
+            continue;
+         }
+
+         if (!options->force() && !isValidUTF8WSize(record, recordLength))
+         {
+            rc = SDB_MIG_DATA_NON_UTF;
+            PD_LOG(PDERROR, "It is not utf-8 file, rc=%d", rc);
+            if (options->errorStop())
+            {
+               goto error;
+            }
+         }
+
+         if (isFirst)
+         {
+            isFirst = FALSE;
+            if (FORMAT_CSV == options->inputFormat() &&
+                options->hasHeaderLine() &&
+                options->fields().empty())
+            {
+               string fields = string(record, recordLength);
+
+               PD_LOG(PDINFO, "fields: %s", fields.c_str());
+               if (options->verbose())
                {
-                  if (!options->force() && !isValidUTF8WSize(buf, recordLength))
-                  {
-                     rc = SDB_MIG_DATA_NON_UTF;
-                     PD_LOG(PDERROR, "It is not utf-8 file, rc=%d", rc);
-                     if (options->errorStop())
-                     {
-                        goto error;
-                     }
-                  }
-
-                  if (isFirst &&
-                      FORMAT_CSV == options->inputFormat() &&
-                      options->hasHeaderLine())
-                  {
-                     if (options->fields().empty())
-                     {
-                        string fields = string(buf, recordLength);
-
-                        PD_LOG(PDINFO, "fields: %s", fields.c_str());
-                        if (options->verbose())
-                        {
-                           std::cout << "fields: " << fields
-                                     << std::endl;
-                        }
-
-                        CSVRecordParser* csvParser = (CSVRecordParser*)parser;
-
-                        rc = csvParser->parseFields(buf, recordLength);
-                        if (SDB_OK != rc)
-                        {
-                           std::cout << "failed to parse fields" << std::endl;
-                           PD_LOG(PDERROR, "failed to parse fields, rc = %d",
-                                  rc);
-                           goto error;
-                        }
-
-                        if (options->verbose())
-                        {
-                           csvParser->printFieldsDef();
-                        }
-                     }
-                     isFirst = FALSE;
-                  }
-                  else
-                  {
-                     bson* obj = NULL;
-
-                     SDB_ASSERT(countInBatch < recordArray->capacity(),
-                                "countInBatch must be less than batchSize");
-
-                     obj = (bson*)SDB_OSS_MALLOC(sizeof(bson));
-                     if (NULL == obj)
-                     {
-                        rc = SDB_OOM;
-                        PD_LOG(PDERROR, "failed to malloc bson");
-                        goto error;
-                     }
-                     bson_init(obj);
-
-                     rc = parser->parseRecord(buf, recordLength, *obj);
-                     if (SDB_OK == rc)
-                     {
-                        SDB_ASSERT(!recordArray->full(), "can't be full");
-                        recordArray->push(obj);
-                        countInBatch++;
-                        self->_parsedNum++;
-                     }
-                     else
-                     {
-                        bson_destroy(obj);
-                        SAFE_OSS_FREE(obj);
-                        if (SDB_DMS_EOC != rc)
-                        {
-                           self->_failedNum++;
-                           INT32 ret;
-                           if (SDB_OK != (ret = logFile->write(buf, recordLength)))
-                           {
-                              PD_LOG(PDERROR, "failed to log write record, rc=%d", ret);
-                           }
-
-                           PD_LOG(PDERROR, "failed to parse record, rc=%d", rc);
-
-                           if (options->errorStop())
-                           {
-                              goto error;
-                           }
-                        }
-                     }
-
-                     if (recordArray->full())
-                     {
-                        monitor->recordsMemInc(recordArray->bsonSize());
-                        monitor->recordsNumInc(recordArray->size());
-                        recordArray->finish();
-                        workQueue->push(recordArray);
-                        countInBatch = 0;
-                        recordArray = NULL;
-
-                        if (monitor->recordsMem() > options->recordsMem())
-                        {
-                           // records' memory is beyond the threshold,
-                           // so wait a moment
-                           INT64 recordsMem = monitor->recordsMem();
-                           INT64 recordsNum = monitor->recordsNum();
-                           PD_LOG(PDEVENT, "records memory is beyond the threshold,\n"
-                                  "records memory: %lld MB, thredshold: %lld MB,\n"
-                                  "records num: %lld, average record size %lld",
-                                  recordsMem / (1024 * 1024),
-                                  options->recordsMem() / (1024 * 1024),
-                                  recordsNum, recordsMem / recordsNum);
-                           for(;;)
-                           {
-                              ossSleep(100);
-                              if (monitor->recordsMem() <= (options->recordsMem() / 2))
-                              {
-                                 break;
-                              }
-                           }
-                           PD_LOG(PDEVENT, "records memory usage down, go on");
-                        }
-
-                        rc = getRecordArray(options->batchSize(), &recordArray);
-                        if (SDB_OK != rc)
-                        {
-                           PD_LOG(PDERROR, "failed to get free RecordArray");
-                           goto error;
-                        }
-                     }
-                  }
+                  std::cout << "fields: " << fields
+                            << std::endl;
                }
-               else if (isFirst &&
-                        FORMAT_CSV == options->inputFormat() &&
-                        options->hasHeaderLine())
+
+               CSVRecordParser* csvParser = (CSVRecordParser*)parser;
+
+               rc = csvParser->parseFields(record, recordLength);
+               if (SDB_OK != rc)
                {
-                  rc = SDB_INVALIDARG;
-                  PD_LOG(PDERROR, "the headerline is empty");
-                  printf("ERROR: the headerline is empty\n");
+                  std::cout << "failed to parse fields" << std::endl;
+                  PD_LOG(PDERROR, "failed to parse fields, rc = %d",
+                         rc);
                   goto error;
                }
 
-               length -= recordLength + options->recordDelimiter().length();
-               buf += recordLength + options->recordDelimiter().length();
-
-               if (length <= 0)
+               if (options->verbose())
                {
-                  remainSize = 0;
-                  break;
+                  csvParser->printFieldsDef();
+               }
+
+               continue;
+            }
+         }
+
+         SDB_ASSERT(countInBatch < recordArray->capacity(),
+                    "countInBatch must be less than batchSize");
+
+         obj = (bson*)SDB_OSS_MALLOC(sizeof(bson));
+         if (NULL == obj)
+         {
+            rc = SDB_OOM;
+            PD_LOG(PDERROR, "failed to malloc bson");
+            goto error;
+         }
+         bson_init(obj);
+
+         rc = parser->parseRecord(record, recordLength, *obj);
+         if (SDB_OK != rc)
+         {
+            bson_destroy(obj);
+            SAFE_OSS_FREE(obj);
+            if (SDB_DMS_EOC != rc)
+            {
+               self->_failedNum++;
+               INT32 ret;
+               if (SDB_OK != (ret = logFile->write(record, recordLength)))
+               {
+                  PD_LOG(PDERROR, "failed to log write record, rc=%d", ret);
+               }
+
+               PD_LOG(PDERROR, "failed to parse record, rc=%d", rc);
+
+               if (options->errorStop())
+               {
+                  goto error;
                }
             }
-            else if (SDB_EOF == rc)
+
+            continue;
+         }
+
+         SDB_ASSERT(!recordArray->full(), "can't be full");
+         recordArray->push(obj);
+         countInBatch++;
+         self->_parsedNum++;
+
+         if (recordArray->full())
+         {
+            monitor->recordsMemInc(recordArray->bsonSize());
+            monitor->recordsNumInc(recordArray->size());
+            recordArray->finish();
+            workQueue->push(recordArray);
+            countInBatch = 0;
+            recordArray = NULL;
+
+            if (monitor->recordsMem() > options->recordsMem())
             {
-               ossMemmove(buffer, buf, length);
-               remainSize = length;
-               break;
+               // records' memory is beyond the threshold,
+               // so wait a moment
+               INT64 recordsMem = monitor->recordsMem();
+               INT64 recordsNum = monitor->recordsNum();
+               PD_LOG(PDEVENT, "records memory is beyond the threshold,\n"
+                      "records memory: %lld MB, thredshold: %lld MB,\n"
+                      "records num: %lld, average record size %lld",
+                      recordsMem / (1024 * 1024),
+                      options->recordsMem() / (1024 * 1024),
+                      recordsNum, recordsMem / recordsNum);
+               for(;;)
+               {
+                  ossSleep(100);
+                  if (monitor->recordsMem() <= (options->recordsMem() / 2))
+                  {
+                     break;
+                  }
+               }
+               PD_LOG(PDEVENT, "records memory usage down, go on");
             }
-            else
+
+            rc = getRecordArray(options->batchSize(), &recordArray);
+            if (SDB_OK != rc)
             {
-               printf("\nscan record error!\n");
-               PD_LOG(PDERROR, "failed to scan record");
+               PD_LOG(PDERROR, "failed to get free RecordArray");
                goto error;
             }
          }
