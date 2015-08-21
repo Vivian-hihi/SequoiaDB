@@ -174,5 +174,379 @@
         </li>
       </ul>
     </section>
+    <section><title>$abs</title>      
+    </section>
+    <section><title>说明</title>
+      <p>返回数字的绝对值，非数字类型返回 null。</p>
+    </section>    
+    <section><title>示例</title>
+      <ul>
+        <li>          
+          <p><codeblock>db.foo.bar.find({},{a:{$abs:1}})</codeblock></p>          
+        </li>        
+      </ul>
+      <note>{$abs:1}中1没有特殊含义，仅作为占位符出现。</note>
+    </section>
+    <section><title>$ceiling</title>      
+    </section>
+    <section><title>说明</title>
+      <p>返回大于目标字段值的最小整数值，非数字类型返回 null。</p>
+    </section>    
+    <section><title>示例</title>
+      <ul>
+        <li>          
+          <p><codeblock>db.foo.bar.find({},{a:{$ceiling:1}})</codeblock></p>          
+        </li>        
+      </ul>
+      <note>{$ceiling:1}中1没有特殊含义，仅作为占位符出现。</note>
+    </section>
+    <section><title>$floor</title>      
+    </section>
+    <section><title>说明</title>
+      <p>返回小于目标字段值的最大整数值，非数字类型返回 null。</p>
+    </section>    
+    <section><title>示例</title>
+      <ul>
+        <li>          
+          <p><codeblock>db.foo.bar.find({},{a:{$floor:1}})</codeblock></p>          
+        </li>        
+      </ul>
+      <note>{$floor:1}中1没有特殊含义，仅作为占位符出现。</note>
+    </section>
+    <section><title>$mod</title>      
+    </section>
+    <section><title>说明</title>
+      <p>返回取模的结果，非数字类型返回 null。</p>
+    </section>    
+    <section><title>示例</title>
+      <ul>
+        <li>
+          <p>返回字段a对10取模的结果</p>
+          <p><codeblock>db.foo.bar.find({},{a:{$mod:10}})</codeblock></p>          
+        </li>        
+      </ul>
+      <note>不能对零取模。</note>
+    </section>
+    <section><title>$add</title>      
+    </section>
+    <section><title>说明</title>
+      <p>返回字段值加上某个数值的结果。非数字类型返回 null。</p>
+    </section>    
+    <section><title>示例</title>
+      <ul>
+        <li>
+          <p>返回a字段加上10的结果。</p>
+          <p><codeblock>db.foo.bar.find({}, {a:{$add:10}})</codeblock></p>          
+        </li>        
+      </ul>      
+    </section>
+    <section><title>$subtract</title>      
+    </section>
+    <section><title>说明</title>
+      <p>返回字段值减去某个数值的结果。非数字类型返回 null。</p>
+    </section>    
+    <section><title>示例</title>
+      <ul>
+        <li>
+          <p>返回a字段减去10的结果。</p>
+          <p><codeblock>db.foo.bar.find({}, {a:{$subtract:10}})</codeblock></p>          
+        </li>        
+      </ul>      
+    </section>
+    <section><title>$multiply</title>      
+    </section>
+    <section><title>说明</title>
+      <p>返回字段值与某个数值相乘的结果。非数字类型返回 null。</p>
+    </section>    
+    <section><title>示例</title>
+      <ul>
+        <li>
+          <p>返回a字段乘以10的结果。</p>
+          <p><codeblock>db.foo.bar.find({}, {a:{$multiply:10}})</codeblock></p>          
+        </li>        
+      </ul>      
+    </section>
+    <section><title>$divide</title>      
+    </section>
+    <section><title>说明</title>
+      <p>返回字段值除以某个数值的结果。非数字类型返回 null。</p>
+    </section>    
+    <section><title>示例</title>
+      <ul>
+        <li>
+          <p>返回a字段除以10的结果。</p>
+          <p><codeblock>db.foo.bar.find({}, {a:{$divide:10}})</codeblock></p>          
+        </li>        
+      </ul>
+      <note>除数不能为0。</note>
+    </section>
+    <section><title>$substr</title>      
+    </section>
+    <section><title>说明</title>
+      <p>返回字符串的子串，非字符串类型返回 null。</p>
+    </section>    
+    <section><title>示例</title>
+      <ul>
+        <li>
+          <p>记录{a:"abcdefg"}</p>
+          <p>返回下标为0，长度为2的子串。</p>
+          <p><codeblock>db.foo.bar.find({}, {a:{$substr:2}})</codeblock></p>
+          <p>返回{a:" ab"}</p>
+          
+          <p>返回倒数第二个字符开始的子串。</p>
+          <p><codeblock>db.foo.bar.find({}, {a:{$substr:-2}})</codeblock></p>
+          <p>返回{a:"fg"}</p>
+          
+          <p>返回下标为0，长度为3的子串。</p>
+          <p><codeblock>db.foo.bar.find({}, {a:{$substr:[2,3]}})</codeblock></p>
+          <p>返回{a:"cde"}</p>
+          
+          <p>返回倒数第二个字符开始，长度为3的子串。</p>
+          <p><codeblock>db.foo.bar.find({}, {a:{$substr:[-2, 3]}})</codeblock></p>
+          <p>返回{a:"fg"}  (长度不足3)</p>
+        </li>        
+      </ul>      
+    </section>
+    <section><title>$strlen</title>      
+    </section>
+    <section><title>说明</title>
+      <p>返回字符串长度，不包括终止符。非字符串返回 null。</p>
+    </section>    
+    <section><title>示例</title>
+      <ul>
+        <li>          
+          <p><codeblock>db.foo.bar.find({},{a:{$strlen:1})</codeblock></p>          
+        </li>        
+      </ul>
+      <note>{$strlen:1}中1没有特殊含义，仅作为占位符出现。</note>
+    </section>
+    <section><title>$lower</title>      
+    </section>
+    <section><title>说明</title>
+      <p>返回字符串中字符改变为小写的结果。非字符串类型返回 null。</p>
+    </section>    
+    <section><title>示例</title>
+      <ul>
+        <li>          
+          <p><codeblock>db.foo.bar.find({},{a:{$lower:1}})</codeblock></p>          
+        </li>        
+      </ul>
+      <note>{a:{$lower:1}}中的1作为占位符出现。</note>
+    </section>
+    <section><title>$upper</title>      
+    </section>
+    <section><title>说明</title>
+      <p>返回字符串中字符改变为大写的结果。非字符串类型返回 null。</p>
+    </section>    
+    <section><title>示例</title>
+      <ul>
+        <li>          
+          <p><codeblock>db.foo.bar.find({},{a:{$upper:1}})</codeblock></p>          
+        </li>        
+      </ul>
+      <note>{a:{$ upper:1}}中的1作为占位符出现。</note>
+    </section>
+    <section><title>$ltrim</title>      
+    </section>
+    <section><title>说明</title>
+      <p>去掉字符串左侧开头的空格(或制表符)。非字符串类型返回 null。</p>
+    </section>    
+    <section><title>示例</title>
+      <ul>
+        <li>          
+          <p><codeblock>db.foo.bar.find({},{a:{$ltrim:1}})</codeblock></p>          
+        </li>        
+      </ul>
+      <note>{a:{$ ltrim:1}}中的1作为占位符出现。</note>
+    </section>
+    <section><title>$rtrim</title>      
+    </section>
+    <section><title>说明</title>
+      <p>去掉字符串右侧开头的空格(及制表符)。非字符串类型返回 null。</p>
+    </section>    
+    <section><title>示例</title>
+      <ul>
+        <li>          
+          <p><codeblock>db.foo.bar.find({},{a:{$rtrim:1}})</codeblock></p>          
+        </li>        
+      </ul>
+      <note>{a:{$ rtrim:1}}中的1作为占位符出现。</note>
+    </section>
+    <section><title>$trim</title>      
+    </section>
+    <section><title>说明</title>
+      <p>去掉字符串两侧开头的空格(及制表符)。非字符串类型返回 null。</p>
+    </section>    
+    <section><title>示例</title>
+      <ul>
+        <li>          
+          <p><codeblock>db.foo.bar.find({},{a:{$trim:1}})</codeblock></p>          
+        </li>        
+      </ul>
+      <note>{a:{$ trim:1}}中的1作为占位符出现。</note>
+    </section>
+    <section><title>$cast</title>      
+    </section>
+    <section><title>说明</title>
+      <p>将字段转化为指定类型。其中指定的类型可以使用字符串表示(大小写不敏感)，也可以使用数字表示，如下表：</p>
+      <simpletable>
+        <sthead>
+          <stentry>目标类型</stentry>
+          <stentry>字符串表示</stentry>
+          <stentry>数字表示</stentry>
+        </sthead>
+        <strow>
+          <stentry>MinKey</stentry>
+          <stentry>"minkey"</stentry>
+          <stentry>-1</stentry>
+        </strow>
+        <strow>
+          <stentry>Double</stentry>
+          <stentry>"double"</stentry>
+          <stentry>1</stentry>
+        </strow>
+        <strow>
+          <stentry>String</stentry>
+          <stentry>"string"</stentry>
+          <stentry>2</stentry>
+        </strow>
+        <strow>
+          <stentry>Object</stentry>
+          <stentry>"object"</stentry>
+          <stentry>3</stentry>
+        </strow>
+        <strow>
+          <stentry>ObjectId</stentry>
+          <stentry>"oid"</stentry>
+          <stentry>7</stentry>
+        </strow>          
+        <strow>
+          <stentry>Bool</stentry>
+          <stentry>"bool"</stentry>
+          <stentry>8</stentry>
+        </strow>
+        <strow>
+          <stentry>Date</stentry>
+          <stentry>"date"</stentry>
+          <stentry>9</stentry>
+        </strow>
+        <strow>
+          <stentry>NULL</stentry>
+          <stentry>"null"</stentry>
+          <stentry>10</stentry>
+        </strow>
+        <strow>
+          <stentry>Int32</stentry>
+          <stentry>"int32"</stentry>
+          <stentry>16</stentry>
+        </strow>
+        <strow>
+          <stentry>Timestamp</stentry>
+          <stentry>"timestamp"</stentry>
+          <stentry>17</stentry>
+        </strow>
+        <strow>
+          <stentry>Int64</stentry>
+          <stentry>"int64"</stentry>
+          <stentry>18</stentry>
+        </strow>
+        <strow>
+          <stentry>MaxKey</stentry>
+          <stentry>"maxkey"</stentry>
+          <stentry>127</stentry>
+        </strow>        
+      </simpletable>
+      <p>转换关系如下：</p>
+      <simpletable>
+        <sthead>
+          <stentry>目标类型</stentry>
+          <stentry>源类型</stentry>
+          <stentry>转换格式备注</stentry>
+          <stentry>异常返回</stentry>
+        </sthead>
+        <strow>
+          <stentry>MinKey</stentry>
+          <stentry>ALL</stentry>
+          <stentry>--</stentry>
+          <stentry>--</stentry>
+        </strow>
+        <strow>
+          <stentry>Double</stentry>
+          <stentry>String<fig></fig>Bool<fig></fig>Int32<fig></fig>Int64</stentry>
+          <stentry></stentry>
+          <stentry>0.0</stentry>
+        </strow>
+        <strow>
+          <stentry>String</stentry>
+          <stentry>Int32<fig></fig>Int64<fig></fig>Double<fig></fig>Date<fig></fig>Timestamp<fig></fig>Oid<fig></fig>Object<fig></fig>Array</stentry>
+          <stentry></stentry>
+          <stentry>null</stentry>
+        </strow>
+        <strow>
+          <stentry>Object</stentry>
+          <stentry>String</stentry>
+          <stentry>标准Json</stentry>
+          <stentry>null</stentry>
+        </strow>
+        <strow>
+          <stentry>ObjectId</stentry>
+          <stentry>String</stentry>
+          <stentry>24个字符</stentry>
+          <stentry>null</stentry>
+        </strow>          
+        <strow>
+          <stentry>Bool</stentry>
+          <stentry>Int32<fig></fig>Int64<fig></fig>Double</stentry>
+          <stentry>0:false，其他:true<fig></fig>0:false，其他:true<fig></fig>0:false，其他:true</stentry>
+          <stentry>--</stentry>
+        </strow>
+        <strow>
+          <stentry>Date</stentry>
+          <stentry>Int64<fig></fig>Double<fig></fig>Stirng<fig></fig>Timestamp<fig></fig>Int32</stentry>
+          <stentry>绝对毫秒<fig></fig>绝对毫秒<fig></fig>形如 "2015-08-19"<fig></fig> <fig></fig>绝对毫秒</stentry>
+          <stentry>null</stentry>
+        </strow>
+        <strow>
+          <stentry>NULL</stentry>
+          <stentry>ALL</stentry>
+          <stentry>--</stentry>
+          <stentry>--</stentry>
+        </strow>
+        <strow>
+          <stentry>Int32</stentry>
+          <stentry>String<fig></fig>Bool<fig></fig>Int64<fig></fig>Double<fig></fig>Timestamp<fig></fig>Date</stentry>
+          <stentry> <fig></fig> <fig></fig> <fig></fig> <fig></fig>绝对毫秒<fig></fig>绝对毫秒</stentry>
+          <stentry>0</stentry>
+        </strow>
+        <strow>
+          <stentry>Timestamp</stentry>
+          <stentry>Int32<fig></fig>Int64<fig></fig>Double<fig></fig>Stirng<fig></fig>Date</stentry>
+          <stentry>绝对毫秒<fig></fig>绝对毫秒<fig></fig>绝对毫秒<fig></fig>形如 "2015-08-19-17.59.05.918488"<fig></fig> </stentry>
+          <stentry>null</stentry>
+        </strow>
+        <strow>
+          <stentry>Int64</stentry>
+          <stentry>Int32<fig></fig>Double<fig></fig>Stirng<fig></fig>Timestamp<fig></fig>Date</stentry>
+          <stentry> <fig></fig> <fig></fig> <fig></fig>绝对毫秒<fig></fig>绝对毫秒</stentry>
+          <stentry>0</stentry>
+        </strow>
+        <strow>
+          <stentry>MaxKey</stentry>
+          <stentry>ALL</stentry>
+          <stentry>--</stentry>
+          <stentry>--</stentry>
+        </strow>        
+      </simpletable>
+      <note>时间类型字段转换为Int32类型可能会发生溢出。</note>
+    </section>    
+    <section><title>示例</title>
+      <ul>
+        <li>          
+          <p><codeblock>db.foo.bar.insert({a:"123"}) ;
+db.foo.bar.find({a:{$cast:"int32"}});</codeblock></p>
+          <p>返回<codeblock>{a:123}</codeblock></p>
+        </li>        
+      </ul>      
+    </section>
   </body>
 </topic>

@@ -294,6 +294,682 @@
 
     </div>
 
+    <div class="section"><h2 class="title sectiontitle">$abs</h2>      
+    </div>
+
+    <div class="section"><h2 class="title sectiontitle">说明</h2>
+      <p class="p">返回数字的绝对值，非数字类型返回 null。</p>
+
+    </div>
+    
+    <div class="section"><h2 class="title sectiontitle">示例</h2>
+      <ul class="ul">
+        <li class="li">          
+          <div class="p"><pre class="pre codeblock">db.foo.bar.find({},{a:{$abs:1}})</pre>
+</div>
+          
+        </li>
+        
+      </ul>
+
+      <div class="note note"><span class="notetitle">Note:</span> {$abs:1}中1没有特殊含义，仅作为占位符出现。</div>
+
+    </div>
+
+    <div class="section"><h2 class="title sectiontitle">$ceiling</h2>      
+    </div>
+
+    <div class="section"><h2 class="title sectiontitle">说明</h2>
+      <p class="p">返回大于目标字段值的最小整数值，非数字类型返回 null。</p>
+
+    </div>
+    
+    <div class="section"><h2 class="title sectiontitle">示例</h2>
+      <ul class="ul">
+        <li class="li">          
+          <div class="p"><pre class="pre codeblock">db.foo.bar.find({},{a:{$ceiling:1}})</pre>
+</div>
+          
+        </li>
+        
+      </ul>
+
+      <div class="note note"><span class="notetitle">Note:</span> {$ceiling:1}中1没有特殊含义，仅作为占位符出现。</div>
+
+    </div>
+
+    <div class="section"><h2 class="title sectiontitle">$floor</h2>      
+    </div>
+
+    <div class="section"><h2 class="title sectiontitle">说明</h2>
+      <p class="p">返回小于目标字段值的最大整数值，非数字类型返回 null。</p>
+
+    </div>
+    
+    <div class="section"><h2 class="title sectiontitle">示例</h2>
+      <ul class="ul">
+        <li class="li">          
+          <div class="p"><pre class="pre codeblock">db.foo.bar.find({},{a:{$floor:1}})</pre>
+</div>
+          
+        </li>
+        
+      </ul>
+
+      <div class="note note"><span class="notetitle">Note:</span> {$floor:1}中1没有特殊含义，仅作为占位符出现。</div>
+
+    </div>
+
+    <div class="section"><h2 class="title sectiontitle">$mod</h2>      
+    </div>
+
+    <div class="section"><h2 class="title sectiontitle">说明</h2>
+      <p class="p">返回取模的结果，非数字类型返回 null。</p>
+
+    </div>
+    
+    <div class="section"><h2 class="title sectiontitle">示例</h2>
+      <ul class="ul">
+        <li class="li">
+          <p class="p">返回字段a对10取模的结果</p>
+
+          <div class="p"><pre class="pre codeblock">db.foo.bar.find({},{a:{$mod:10}})</pre>
+</div>
+          
+        </li>
+        
+      </ul>
+
+      <div class="note note"><span class="notetitle">Note:</span> 不能对零取模。</div>
+
+    </div>
+
+    <div class="section"><h2 class="title sectiontitle">$add</h2>      
+    </div>
+
+    <div class="section"><h2 class="title sectiontitle">说明</h2>
+      <p class="p">返回字段值加上某个数值的结果。非数字类型返回 null。</p>
+
+    </div>
+    
+    <div class="section"><h2 class="title sectiontitle">示例</h2>
+      <ul class="ul">
+        <li class="li">
+          <p class="p">返回a字段加上10的结果。</p>
+
+          <div class="p"><pre class="pre codeblock">db.foo.bar.find({}, {a:{$add:10}})</pre>
+</div>
+          
+        </li>
+        
+      </ul>
+      
+    </div>
+
+    <div class="section"><h2 class="title sectiontitle">$subtract</h2>      
+    </div>
+
+    <div class="section"><h2 class="title sectiontitle">说明</h2>
+      <p class="p">返回字段值减去某个数值的结果。非数字类型返回 null。</p>
+
+    </div>
+    
+    <div class="section"><h2 class="title sectiontitle">示例</h2>
+      <ul class="ul">
+        <li class="li">
+          <p class="p">返回a字段减去10的结果。</p>
+
+          <div class="p"><pre class="pre codeblock">db.foo.bar.find({}, {a:{$subtract:10}})</pre>
+</div>
+          
+        </li>
+        
+      </ul>
+      
+    </div>
+
+    <div class="section"><h2 class="title sectiontitle">$multiply</h2>      
+    </div>
+
+    <div class="section"><h2 class="title sectiontitle">说明</h2>
+      <p class="p">返回字段值与某个数值相乘的结果。非数字类型返回 null。</p>
+
+    </div>
+    
+    <div class="section"><h2 class="title sectiontitle">示例</h2>
+      <ul class="ul">
+        <li class="li">
+          <p class="p">返回a字段乘以10的结果。</p>
+
+          <div class="p"><pre class="pre codeblock">db.foo.bar.find({}, {a:{$multiply:10}})</pre>
+</div>
+          
+        </li>
+        
+      </ul>
+      
+    </div>
+
+    <div class="section"><h2 class="title sectiontitle">$divide</h2>      
+    </div>
+
+    <div class="section"><h2 class="title sectiontitle">说明</h2>
+      <p class="p">返回字段值除以某个数值的结果。非数字类型返回 null。</p>
+
+    </div>
+    
+    <div class="section"><h2 class="title sectiontitle">示例</h2>
+      <ul class="ul">
+        <li class="li">
+          <p class="p">返回a字段除以10的结果。</p>
+
+          <div class="p"><pre class="pre codeblock">db.foo.bar.find({}, {a:{$divide:10}})</pre>
+</div>
+          
+        </li>
+        
+      </ul>
+
+      <div class="note note"><span class="notetitle">Note:</span> 除数不能为0。</div>
+
+    </div>
+
+    <div class="section"><h2 class="title sectiontitle">$substr</h2>      
+    </div>
+
+    <div class="section"><h2 class="title sectiontitle">说明</h2>
+      <p class="p">返回字符串的子串，非字符串类型返回 null。</p>
+
+    </div>
+    
+    <div class="section"><h2 class="title sectiontitle">示例</h2>
+      <ul class="ul">
+        <li class="li">
+          <p class="p">记录{a:"abcdefg"}</p>
+
+          <p class="p">返回下标为0，长度为2的子串。</p>
+
+          <div class="p"><pre class="pre codeblock">db.foo.bar.find({}, {a:{$substr:2}})</pre>
+</div>
+
+          <p class="p">返回{a:" ab"}</p>
+
+          
+          <p class="p">返回倒数第二个字符开始的子串。</p>
+
+          <div class="p"><pre class="pre codeblock">db.foo.bar.find({}, {a:{$substr:-2}})</pre>
+</div>
+
+          <p class="p">返回{a:"fg"}</p>
+
+          
+          <p class="p">返回下标为0，长度为3的子串。</p>
+
+          <div class="p"><pre class="pre codeblock">db.foo.bar.find({}, {a:{$substr:[2,3]}})</pre>
+</div>
+
+          <p class="p">返回{a:"cde"}</p>
+
+          
+          <p class="p">返回倒数第二个字符开始，长度为3的子串。</p>
+
+          <div class="p"><pre class="pre codeblock">db.foo.bar.find({}, {a:{$substr:[-2, 3]}})</pre>
+</div>
+
+          <p class="p">返回{a:"fg"}  (长度不足3)</p>
+
+        </li>
+        
+      </ul>
+      
+    </div>
+
+    <div class="section"><h2 class="title sectiontitle">$strlen</h2>      
+    </div>
+
+    <div class="section"><h2 class="title sectiontitle">说明</h2>
+      <p class="p">返回字符串长度，不包括终止符。非字符串返回 null。</p>
+
+    </div>
+    
+    <div class="section"><h2 class="title sectiontitle">示例</h2>
+      <ul class="ul">
+        <li class="li">          
+          <div class="p"><pre class="pre codeblock">db.foo.bar.find({},{a:{$strlen:1})</pre>
+</div>
+          
+        </li>
+        
+      </ul>
+
+      <div class="note note"><span class="notetitle">Note:</span> {$strlen:1}中1没有特殊含义，仅作为占位符出现。</div>
+
+    </div>
+
+    <div class="section"><h2 class="title sectiontitle">$lower</h2>      
+    </div>
+
+    <div class="section"><h2 class="title sectiontitle">说明</h2>
+      <p class="p">返回字符串中字符改变为小写的结果。非字符串类型返回 null。</p>
+
+    </div>
+    
+    <div class="section"><h2 class="title sectiontitle">示例</h2>
+      <ul class="ul">
+        <li class="li">          
+          <div class="p"><pre class="pre codeblock">db.foo.bar.find({},{a:{$lower:1}})</pre>
+</div>
+          
+        </li>
+        
+      </ul>
+
+      <div class="note note"><span class="notetitle">Note:</span> {a:{$lower:1}}中的1作为占位符出现。</div>
+
+    </div>
+
+    <div class="section"><h2 class="title sectiontitle">$upper</h2>      
+    </div>
+
+    <div class="section"><h2 class="title sectiontitle">说明</h2>
+      <p class="p">返回字符串中字符改变为大写的结果。非字符串类型返回 null。</p>
+
+    </div>
+    
+    <div class="section"><h2 class="title sectiontitle">示例</h2>
+      <ul class="ul">
+        <li class="li">          
+          <div class="p"><pre class="pre codeblock">db.foo.bar.find({},{a:{$upper:1}})</pre>
+</div>
+          
+        </li>
+        
+      </ul>
+
+      <div class="note note"><span class="notetitle">Note:</span> {a:{$ upper:1}}中的1作为占位符出现。</div>
+
+    </div>
+
+    <div class="section"><h2 class="title sectiontitle">$ltrim</h2>      
+    </div>
+
+    <div class="section"><h2 class="title sectiontitle">说明</h2>
+      <p class="p">去掉字符串左侧开头的空格(或制表符)。非字符串类型返回 null。</p>
+
+    </div>
+    
+    <div class="section"><h2 class="title sectiontitle">示例</h2>
+      <ul class="ul">
+        <li class="li">          
+          <div class="p"><pre class="pre codeblock">db.foo.bar.find({},{a:{$ltrim:1}})</pre>
+</div>
+          
+        </li>
+        
+      </ul>
+
+      <div class="note note"><span class="notetitle">Note:</span> {a:{$ ltrim:1}}中的1作为占位符出现。</div>
+
+    </div>
+
+    <div class="section"><h2 class="title sectiontitle">$rtrim</h2>      
+    </div>
+
+    <div class="section"><h2 class="title sectiontitle">说明</h2>
+      <p class="p">去掉字符串右侧开头的空格(及制表符)。非字符串类型返回 null。</p>
+
+    </div>
+    
+    <div class="section"><h2 class="title sectiontitle">示例</h2>
+      <ul class="ul">
+        <li class="li">          
+          <div class="p"><pre class="pre codeblock">db.foo.bar.find({},{a:{$rtrim:1}})</pre>
+</div>
+          
+        </li>
+        
+      </ul>
+
+      <div class="note note"><span class="notetitle">Note:</span> {a:{$ rtrim:1}}中的1作为占位符出现。</div>
+
+    </div>
+
+    <div class="section"><h2 class="title sectiontitle">$trim</h2>      
+    </div>
+
+    <div class="section"><h2 class="title sectiontitle">说明</h2>
+      <p class="p">去掉字符串两侧开头的空格(及制表符)。非字符串类型返回 null。</p>
+
+    </div>
+    
+    <div class="section"><h2 class="title sectiontitle">示例</h2>
+      <ul class="ul">
+        <li class="li">          
+          <div class="p"><pre class="pre codeblock">db.foo.bar.find({},{a:{$trim:1}})</pre>
+</div>
+          
+        </li>
+        
+      </ul>
+
+      <div class="note note"><span class="notetitle">Note:</span> {a:{$ trim:1}}中的1作为占位符出现。</div>
+
+    </div>
+
+    <div class="section"><h2 class="title sectiontitle">$cast</h2>      
+    </div>
+
+    <div class="section"><h2 class="title sectiontitle">说明</h2>
+      <p class="p">将字段转化为指定类型。其中指定的类型可以使用字符串表示(大小写不敏感)，也可以使用数字表示，如下表：</p>
+
+      <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
+          <th valign="bottom" align="left" id="d102151e795" class="stentry">目标类型</th>
+
+          <th valign="bottom" align="left" id="d102151e798" class="stentry">字符串表示</th>
+
+          <th valign="bottom" align="left" id="d102151e801" class="stentry">数字表示</th>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d102151e795" class="stentry">MinKey</td>
+
+          <td valign="top" headers="d102151e798" class="stentry">"minkey"</td>
+
+          <td valign="top" headers="d102151e801" class="stentry">-1</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d102151e795" class="stentry">Double</td>
+
+          <td valign="top" headers="d102151e798" class="stentry">"double"</td>
+
+          <td valign="top" headers="d102151e801" class="stentry">1</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d102151e795" class="stentry">String</td>
+
+          <td valign="top" headers="d102151e798" class="stentry">"string"</td>
+
+          <td valign="top" headers="d102151e801" class="stentry">2</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d102151e795" class="stentry">Object</td>
+
+          <td valign="top" headers="d102151e798" class="stentry">"object"</td>
+
+          <td valign="top" headers="d102151e801" class="stentry">3</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d102151e795" class="stentry">ObjectId</td>
+
+          <td valign="top" headers="d102151e798" class="stentry">"oid"</td>
+
+          <td valign="top" headers="d102151e801" class="stentry">7</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d102151e795" class="stentry">Bool</td>
+
+          <td valign="top" headers="d102151e798" class="stentry">"bool"</td>
+
+          <td valign="top" headers="d102151e801" class="stentry">8</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d102151e795" class="stentry">Date</td>
+
+          <td valign="top" headers="d102151e798" class="stentry">"date"</td>
+
+          <td valign="top" headers="d102151e801" class="stentry">9</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d102151e795" class="stentry">NULL</td>
+
+          <td valign="top" headers="d102151e798" class="stentry">"null"</td>
+
+          <td valign="top" headers="d102151e801" class="stentry">10</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d102151e795" class="stentry">Int32</td>
+
+          <td valign="top" headers="d102151e798" class="stentry">"int32"</td>
+
+          <td valign="top" headers="d102151e801" class="stentry">16</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d102151e795" class="stentry">Timestamp</td>
+
+          <td valign="top" headers="d102151e798" class="stentry">"timestamp"</td>
+
+          <td valign="top" headers="d102151e801" class="stentry">17</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d102151e795" class="stentry">Int64</td>
+
+          <td valign="top" headers="d102151e798" class="stentry">"int64"</td>
+
+          <td valign="top" headers="d102151e801" class="stentry">18</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d102151e795" class="stentry">MaxKey</td>
+
+          <td valign="top" headers="d102151e798" class="stentry">"maxkey"</td>
+
+          <td valign="top" headers="d102151e801" class="stentry">127</td>
+
+        </tr>
+</table>
+
+      <p class="p">转换关系如下：</p>
+
+      <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
+          <th valign="bottom" align="left" id="d102151e959" class="stentry">目标类型</th>
+
+          <th valign="bottom" align="left" id="d102151e962" class="stentry">源类型</th>
+
+          <th valign="bottom" align="left" id="d102151e965" class="stentry">转换格式备注</th>
+
+          <th valign="bottom" align="left" id="d102151e968" class="stentry">异常返回</th>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d102151e959" class="stentry">MinKey</td>
+
+          <td valign="top" headers="d102151e962" class="stentry">ALL</td>
+
+          <td valign="top" headers="d102151e965" class="stentry">--</td>
+
+          <td valign="top" headers="d102151e968" class="stentry">--</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d102151e959" class="stentry">Double</td>
+
+          <td valign="top" headers="d102151e962" class="stentry">String<div class="fig fignone"/>
+Bool<div class="fig fignone"/>
+Int32<div class="fig fignone"/>
+Int64</td>
+
+          <td valign="top" headers="d102151e965" class="stentry"> </td>
+
+          <td valign="top" headers="d102151e968" class="stentry">0.0</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d102151e959" class="stentry">String</td>
+
+          <td valign="top" headers="d102151e962" class="stentry">Int32<div class="fig fignone"/>
+Int64<div class="fig fignone"/>
+Double<div class="fig fignone"/>
+Date<div class="fig fignone"/>
+Timestamp<div class="fig fignone"/>
+Oid<div class="fig fignone"/>
+Object<div class="fig fignone"/>
+Array</td>
+
+          <td valign="top" headers="d102151e965" class="stentry"> </td>
+
+          <td valign="top" headers="d102151e968" class="stentry">null</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d102151e959" class="stentry">Object</td>
+
+          <td valign="top" headers="d102151e962" class="stentry">String</td>
+
+          <td valign="top" headers="d102151e965" class="stentry">标准Json</td>
+
+          <td valign="top" headers="d102151e968" class="stentry">null</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d102151e959" class="stentry">ObjectId</td>
+
+          <td valign="top" headers="d102151e962" class="stentry">String</td>
+
+          <td valign="top" headers="d102151e965" class="stentry">24个字符</td>
+
+          <td valign="top" headers="d102151e968" class="stentry">null</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d102151e959" class="stentry">Bool</td>
+
+          <td valign="top" headers="d102151e962" class="stentry">Int32<div class="fig fignone"/>
+Int64<div class="fig fignone"/>
+Double</td>
+
+          <td valign="top" headers="d102151e965" class="stentry">0:false，其他:true<div class="fig fignone"/>
+0:false，其他:true<div class="fig fignone"/>
+0:false，其他:true</td>
+
+          <td valign="top" headers="d102151e968" class="stentry">--</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d102151e959" class="stentry">Date</td>
+
+          <td valign="top" headers="d102151e962" class="stentry">Int64<div class="fig fignone"/>
+Double<div class="fig fignone"/>
+Stirng<div class="fig fignone"/>
+Timestamp<div class="fig fignone"/>
+Int32</td>
+
+          <td valign="top" headers="d102151e965" class="stentry">绝对毫秒<div class="fig fignone"/>
+绝对毫秒<div class="fig fignone"/>
+形如 "2015-08-19"<div class="fig fignone"/>
+ <div class="fig fignone"/>
+绝对毫秒</td>
+
+          <td valign="top" headers="d102151e968" class="stentry">null</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d102151e959" class="stentry">NULL</td>
+
+          <td valign="top" headers="d102151e962" class="stentry">ALL</td>
+
+          <td valign="top" headers="d102151e965" class="stentry">--</td>
+
+          <td valign="top" headers="d102151e968" class="stentry">--</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d102151e959" class="stentry">Int32</td>
+
+          <td valign="top" headers="d102151e962" class="stentry">String<div class="fig fignone"/>
+Bool<div class="fig fignone"/>
+Int64<div class="fig fignone"/>
+Double<div class="fig fignone"/>
+Timestamp<div class="fig fignone"/>
+Date</td>
+
+          <td valign="top" headers="d102151e965" class="stentry"> <div class="fig fignone"/>
+ <div class="fig fignone"/>
+ <div class="fig fignone"/>
+ <div class="fig fignone"/>
+绝对毫秒<div class="fig fignone"/>
+绝对毫秒</td>
+
+          <td valign="top" headers="d102151e968" class="stentry">16</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d102151e959" class="stentry">Timestamp</td>
+
+          <td valign="top" headers="d102151e962" class="stentry">Int32<div class="fig fignone"/>
+Int64<div class="fig fignone"/>
+Double<div class="fig fignone"/>
+Stirng<div class="fig fignone"/>
+Date</td>
+
+          <td valign="top" headers="d102151e965" class="stentry">绝对毫秒<div class="fig fignone"/>
+绝对毫秒<div class="fig fignone"/>
+绝对毫秒<div class="fig fignone"/>
+形如 "2015-08-19-17.59.05.918488"<div class="fig fignone"/>
+ </td>
+
+          <td valign="top" headers="d102151e968" class="stentry">null</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d102151e959" class="stentry">Int64</td>
+
+          <td valign="top" headers="d102151e962" class="stentry">Int32<div class="fig fignone"/>
+Double<div class="fig fignone"/>
+Stirng<div class="fig fignone"/>
+Timestamp<div class="fig fignone"/>
+Date</td>
+
+          <td valign="top" headers="d102151e965" class="stentry"> <div class="fig fignone"/>
+ <div class="fig fignone"/>
+ <div class="fig fignone"/>
+绝对毫秒<div class="fig fignone"/>
+绝对毫秒</td>
+
+          <td valign="top" headers="d102151e968" class="stentry">0</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d102151e959" class="stentry">MaxKey</td>
+
+          <td valign="top" headers="d102151e962" class="stentry">ALL</td>
+
+          <td valign="top" headers="d102151e965" class="stentry">--</td>
+
+          <td valign="top" headers="d102151e968" class="stentry">--</td>
+
+        </tr>
+</table>
+
+      <div class="note note"><span class="notetitle">Note:</span> 时间类型字段转换为Int32类型可能会发生溢出。</div>
+
+    </div>
+    
+    <div class="section"><h2 class="title sectiontitle">示例</h2>
+      <ul class="ul">
+        <li class="li">          
+          <div class="p"><pre class="pre codeblock">db.foo.bar.insert({a:"123"}) ;
+db.foo.bar.find({a:{$cast:"int32"}});</pre>
+</div>
+
+          <div class="p">返回<pre class="pre codeblock">{a:123}</pre>
+</div>
+
+        </li>
+        
+      </ul>
+      
+    </div>
+
   </div>
 
 <div class="related-links"/>
