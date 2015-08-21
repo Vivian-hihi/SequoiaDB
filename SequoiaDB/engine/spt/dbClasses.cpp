@@ -8540,7 +8540,7 @@ static JSBool sdbdate_constructor( JSContext *cx, uintN argc, jsval *vp )
 
       if ( !JSVAL_IS_STRING( argv[0]) )
       {
-         REPORT_RC ( SDB_OK == rc , "SdbDate(): wrong arguments", SDB_INVALIDARG ) ;
+         REPORT_RC ( FALSE , "SdbDate(): wrong arguments", SDB_INVALIDARG ) ;
       }
 
       timeStr = JS_EncodeString( cx, JSVAL_TO_STRING( argv[0]) ) ;
