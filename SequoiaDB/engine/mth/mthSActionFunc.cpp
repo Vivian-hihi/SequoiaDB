@@ -781,6 +781,12 @@ namespace engine
             builder.append( fieldName,
                             e.embeddedObject().toString( TRUE, TRUE ) ) ;
          }
+         else if ( Bool == e.type() )
+         {
+            builder.append( fieldName,
+                            e.booleanSafe() ?
+                            "true" : "false" ) ;
+         }
          else
          {
             builder.appendNull( fieldName ) ;
