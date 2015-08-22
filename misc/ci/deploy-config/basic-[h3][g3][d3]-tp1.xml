@@ -438,7 +438,7 @@
 		
 
 		<property name="test-type" value="js" />
-		<!-- <for list="${test-type}" param="Test-Type">
+		<for list="${test-type}" param="Test-Type">
 			<sequential>
 				<ant antfile="${WORKSPACE}/sequoiadb/misc/ci/test-type.xml" dir="." inheritAll="false">
 					<property name="deploy.case.fullname" value="${deploy.case.fullname}" />
@@ -453,7 +453,7 @@
 					<property name="BUILD_NUMBER" value="${BUILD_NUMBER}" />
 				</ant>
 			</sequential>
-		</for> -->
+		</for>
 
 		<for list="driver-java" param="Test-Type">
 			<sequential>
