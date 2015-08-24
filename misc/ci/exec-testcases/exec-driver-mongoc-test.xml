@@ -65,14 +65,6 @@
       <echo message="Exec test-mongo -f -p -l ${test.case.name}" />
       <echo message="Env:LD_LIBRARY_PATH=${mongoc.testcase.libpath}" />
       <echo message="The testcase ${test.case.name} path on ${testcases.path}" />
-      
-      
-
-      <echo message="**************************************************************************************************************************************************************" />
-      <echo message="test.suite.class.name=${test.suite.class.name}" />
-      <echo message="test.case.name=${test.case.name}" />
-      <echo message="reports.path=${reports.path}" />
-      <echo message="**************************************************************************************************************************************************************" />
       <exec executable="./test-mongo" dir="${testcases.path}" timeout="60000" outputproperty="screen.output" resultproperty="ret.code" failonerror="false">
          <arg line=" -f -p -l ${test.case.name} -F ${reports.path}/${test.case.name}.xml" />
          <env key="LD_LIBRARY_PATH" path="${LD_LIBRARY_PATH}:${mongoc.testcase.libpath}" />
