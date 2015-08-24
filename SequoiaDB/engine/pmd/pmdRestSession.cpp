@@ -909,6 +909,10 @@ namespace engine
       {
          rc = _convertLogin( pAdaptor, msg ) ;
       }
+      else if ( ossStrcasecmp( pSubCommand, REST_CMD_NAME_EXEC ) == 0 )
+      {
+         rc = _convertExec( pAdaptor, msg ) ;
+      }
       else
       {
          if ( !pmdGetKRCB()->isCBValue( SDB_CB_OMSVC ) )
@@ -2812,6 +2816,81 @@ namespace engine
       {
          PD_LOG_MSG( PDERROR, "build command failed:command=%s, rc=%d", 
                      pCommand, rc ) ;
+         goto error ;
+      }
+
+      *msg = ( MsgHeader * )pBuff ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 RestToMSGTransfer::_buildExecMsg( CHAR **ppBuffer, INT32 *bufferSize,
+                                           const CHAR *pSql, UINT64 reqID )
+   {
+      INT32 rc = SDB_OK ;
+      if ( NULL == pSql )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      {
+         INT32 sqlLen = ossStrlen( pSql ) + 1 ;
+         MsgOpSql *sqlMsg = NULL ;
+         INT32 len = sizeof( MsgOpSql ) +
+                     ossRoundUpToMultipleX( sqlLen, 4 ) ;
+         if ( len < 0 )
+         {
+            ossPrintf ( "Packet size overflow"OSS_NEWLINE ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+
+         rc = msgCheckBuffer( ppBuffer, bufferSize, len ) ;
+         if ( rc )
+         {
+            ossPrintf ( "Failed to check buffer, rc = %d"OSS_NEWLINE, rc ) ;
+            goto error ;
+         }
+
+         sqlMsg                       = ( MsgOpSql *)( *ppBuffer ) ;
+         sqlMsg->header.requestID     = reqID ;
+         sqlMsg->header.opCode        = MSG_BS_SQL_REQ ;
+         sqlMsg->header.messageLength = sizeof( MsgOpSql ) + sqlLen ;
+         sqlMsg->header.routeID.value = 0 ;
+         sqlMsg->header.TID           = ossGetCurrentThreadID() ;
+         ossMemcpy( *ppBuffer + sizeof( MsgOpSql ),
+                    pSql, sqlLen ) ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 RestToMSGTransfer::_convertExec( restAdaptor *pAdaptor, 
+                                          MsgHeader **msg )
+   {
+      INT32 rc = SDB_OK ;
+      const CHAR *pSql     = NULL ;
+      CHAR *pBuff          = NULL ;
+      INT32 buffSize       = 0 ;
+
+      pAdaptor->getQuery( _restSession, REST_KEY_NAME_SQL, &pSql ) ;
+      if ( NULL == pSql )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "get exec's field failed:field=%s", 
+                     REST_KEY_NAME_SQL ) ;
+         goto error ;
+      }
+
+      rc = _buildExecMsg( &pBuff, &buffSize, pSql, 0 ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG_MSG( PDERROR, "build exec command failed:rc=%d", rc ) ;
          goto error ;
       }
 

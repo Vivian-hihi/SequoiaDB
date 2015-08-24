@@ -223,12 +223,14 @@ namespace engine
    #define REST_CMD_NAME_UPSERT        "upsert"
    #define REST_CMD_NAME_LIST          "list"
    #define REST_CMD_NAME_SNAPSHOT      "snapshot"
+   #define REST_CMD_NAME_EXEC          "exec"
 
    #define REST_KEY_NAME_FLAG          "Flag"
    #define REST_KEY_NAME_INSERTOR      "Insertor"
    #define REST_KEY_NAME_UPDATOR       "Updator"
    #define REST_KEY_NAME_DELETOR       "Deletor"
-   #define REST_KEY_NAME_SET_ON_INSERT "setoninsert"
+   #define REST_KEY_NAME_SET_ON_INSERT "Setoninsert"
+   #define REST_KEY_NAME_SQL           "Sql"
 
    class RestToMSGTransfer : public SDBObject
    {
@@ -325,6 +327,10 @@ namespace engine
                                              MsgHeader **msg ) ;
          INT32       _convertSnapshotCata( restAdaptor *pAdaptor,
                                            MsgHeader **msg ) ;
+
+         INT32       _buildExecMsg( CHAR **ppBuffer, INT32 *bufferSize,
+                                    const CHAR *pSql, UINT64 reqID ) ;
+         INT32       _convertExec( restAdaptor *pAdaptor, MsgHeader **msg ) ;
 
          INT32       _convertLogin( restAdaptor *pAdaptor, MsgHeader **msg ) ;
 

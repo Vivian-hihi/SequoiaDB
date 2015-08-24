@@ -73,11 +73,9 @@ namespace engine
       pmdRemoteSession *remoteSession = NULL ;
       MsgHeader *reply = NULL ;
       VEC_SUB_SESSIONPTR subSessionVec ;
-      omManager *om = sdbGetOMManager() ;
 
-      remoteSession = om->getRSManager()->addSession( pmdGetThreadEDUCB(), 
-                                                      OM_WAIT_SCAN_RES_INTERVAL, 
-                                                      NULL ) ;
+      remoteSession = rsManager->addSession( pmdGetThreadEDUCB(), 
+                                             OM_WAIT_SCAN_RES_INTERVAL, NULL ) ;
       if ( NULL == remoteSession )
       {
          rc = SDB_OOM ;
@@ -94,8 +92,9 @@ namespace engine
 
       rc = remoteSession->sendMsg( msg ) ;
       if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "send msg to localhost's agent failed:rc=%d", rc ) ;
+      {  
+         PD_LOG( PDERROR, "send msg to target failed:id=%ld,rc=%d", 
+                 id.value, rc ) ;
          goto error ;
       }
 
@@ -133,7 +132,7 @@ namespace engine
       *result = reply ;
 
    done:
-      _clearRemoteSession( om->getRSManager(), remoteSession ) ;
+      _clearRemoteSession( rsManager, remoteSession ) ;
       return rc ;
    error:
       goto done ;
