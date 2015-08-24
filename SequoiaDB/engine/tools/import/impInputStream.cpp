@@ -37,6 +37,7 @@
 namespace import
 {
    INT32 InputStream::createInstance(INPUT_TYPE inputType,
+                                     const string& input,
                                      const Options& options,
                                      InputStream*& istream)
    {
@@ -45,8 +46,10 @@ namespace import
 
       if (INPUT_FILE == inputType)
       {
+         SDB_ASSERT(!input.empty(), "input can't be empty");
+
          FileInputStream* fileStream =
-            SDB_OSS_NEW FileInputStream(options.file());
+            SDB_OSS_NEW FileInputStream(input);
          if (NULL == fileStream)
          {
             rc = SDB_OOM;

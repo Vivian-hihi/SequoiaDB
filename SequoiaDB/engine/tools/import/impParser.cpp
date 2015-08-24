@@ -37,6 +37,7 @@
 #include "impMonitor.hpp"
 #include "../util/text.h"
 #include "pd.hpp"
+#include <sstream>
 
 namespace import
 {
@@ -53,6 +54,11 @@ namespace import
       INT32 countInBatch = 0;
       BOOLEAN isFirst = TRUE;
       INT32 rc = SDB_OK;
+
+      string inputString;
+      INT32 fileId = 0;
+      INT64 parsedNum = 0;
+      INT64 failedNum = 0;
 
       SDB_ASSERT(NULL != args, "arg can't be NULL");
 
@@ -93,14 +99,6 @@ namespace import
       }
       buffer[bufferSize] = '\0'; 
 
-      rc = InputStream::createInstance(options->inputType(), *options, input);
-      if (SDB_OK != rc)
-      {
-         PD_LOG(PDERROR, "failed to create InputStream object,"
-                "rc=%d, INPUT_TYPE=%d", rc, options->inputType());
-         goto error;
-      }
-
       rc = RecordParser::createInstance(options->inputFormat(),
                                         *options, parser);
       if (SDB_OK != rc)
@@ -114,6 +112,44 @@ namespace import
       if (SDB_OK != rc)
       {
          PD_LOG(PDERROR, "failed to get free RecordArray");
+         goto error;
+      }
+
+   begin:
+      if (INPUT_FILE == options->inputType())
+      {
+         if (NULL != input)
+         {
+            InputStream::releaseInstance(input);
+            input = NULL;
+         }
+         // maybe multiple files
+         if (fileId < (INT32)options->files().size())
+         {
+            inputString = options->files()[fileId];
+            fileId++;
+            parsedNum = 0;
+            failedNum = 0;
+            isFirst = TRUE;
+            PD_LOG(PDINFO, "read data from file [%s]", inputString.c_str());
+            if (options->verbose())
+            {
+               std::cout << "read data from file [" 
+                         << inputString << "]"
+                         << std::endl;
+            }
+         }
+         else
+         {
+            goto done;
+         }
+      }
+      rc = InputStream::createInstance(options->inputType(),
+                                       inputString, *options, input);
+      if (SDB_OK != rc)
+      {
+         PD_LOG(PDERROR, "failed to create InputStream object,"
+                "rc=%d, INPUT_TYPE=%d", rc, options->inputType());
          goto error;
       }
 
@@ -133,6 +169,24 @@ namespace import
             if (SDB_EOF == rc)
             {
                rc = SDB_OK;
+               if (INPUT_FILE == options->inputType())
+               {
+                  std::stringstream ss;
+
+                  ss << "parsed records of file ["
+                     << inputString << "]: "
+                     << parsedNum
+                     << std::endl;
+
+                  ss << "parse failure of file ["
+                     << inputString << "]: "
+                     << failedNum
+                     << std::endl;
+
+                  PD_LOG(PDINFO, "%s", ss.str().c_str());
+                  // maybe multiple files
+                  goto begin;
+               }
                break;
             }
 
@@ -171,9 +225,14 @@ namespace import
          {
             isFirst = FALSE;
             if (FORMAT_CSV == options->inputFormat() &&
-                options->hasHeaderLine() &&
-                options->fields().empty())
+                options->hasHeaderLine())
             {
+               if (!options->fields().empty())
+               {
+                  // fields is defined, so ignore the headerline
+                  continue;
+               }
+
                string fields = string(record, recordLength);
 
                PD_LOG(PDINFO, "fields: %s", fields.c_str());
@@ -199,6 +258,7 @@ namespace import
                   csvParser->printFieldsDef();
                }
 
+               // headerline can't be parsed as record
                continue;
             }
          }
@@ -223,6 +283,7 @@ namespace import
             if (SDB_DMS_EOC != rc)
             {
                self->_failedNum++;
+               failedNum++;
                INT32 ret;
                if (SDB_OK != (ret = logFile->write(record, recordLength)))
                {
@@ -244,6 +305,7 @@ namespace import
          recordArray->push(obj);
          countInBatch++;
          self->_parsedNum++;
+         parsedNum++;
 
          if (recordArray->full())
          {

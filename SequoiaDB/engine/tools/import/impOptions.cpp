@@ -29,6 +29,7 @@
 
 *******************************************************************************/
 #include "impOptions.hpp"
+#include "impUtil.hpp"
 #include "utilParam.hpp"
 #include "ossUtil.h"
 #include "pd.hpp"
@@ -686,13 +687,21 @@ namespace import
 
       if (has(IMP_OPTION_FILENAME))
       {
-         _file = get<string>(IMP_OPTION_FILENAME);
          _inputType = INPUT_FILE;
+         string fileList = get<string>(IMP_OPTION_FILENAME);
+
+         rc = parseFileList(fileList, _files);
+         if (SDB_OK != rc)
+         {
+            std::cerr << "invalid " << IMP_OPTION_FILENAME 
+                      << std::endl;
+            goto error;
+         }
       }
       else if (has(IMP_OPTION_EXEC))
       {
-         _exec = get<string>(IMP_OPTION_EXEC);
          _inputType = INPUT_EXEC;
+         _exec = get<string>(IMP_OPTION_EXEC);
       }
 
       if (has(IMP_OPTION_TYPE))

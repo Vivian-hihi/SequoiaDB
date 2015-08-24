@@ -55,6 +55,7 @@ namespace import
       virtual INT32 read(CHAR* buf, INT64 bufSize, INT64& readSize) = 0;
 
       static INT32 createInstance(INPUT_TYPE inputType,
+                                  const string& input,
                                   const Options& options,
                                   InputStream*& istream);
       static void  releaseInstance(InputStream* istream);

@@ -87,7 +87,7 @@ namespace import
       inline BOOLEAN enableCoord() const { return _enableCoord; }
 
       /* input */
-      inline const string& file() const { return _file; }
+      inline const vector<string>& files() const { return _files; }
       inline const string& exec() const { return _exec; }
       inline INPUT_TYPE inputType() const { return _inputType; }
       inline INPUT_FORMAT inputFormat() const { return _inputFormat; }
@@ -142,7 +142,7 @@ namespace import
       BOOLEAN        _enableCoord;
 
       /* input */
-      string         _file;
+      vector<string> _files;
       string         _exec;
       INPUT_TYPE     _inputType;
       INPUT_FORMAT   _inputFormat;

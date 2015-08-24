@@ -33,10 +33,15 @@
 
 #include "core.hpp"
 #include "oss.hpp"
+#include <string>
+#include <vector>
+
+using namespace std;
 
 namespace import
 {
    UINT32 RC2ShellRC(INT32 rc);
+   INT32 parseFileList(const string& fileList, vector<string>& files);
 }
 
 #endif /* IMP_UTIL_HPP_ */
