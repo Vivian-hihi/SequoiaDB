@@ -2584,22 +2584,45 @@ namespace import
       INT32 len = length;
       INT32 rc = SDB_OK;
       fieldEnd = FALSE;
+      CHAR* start = NULL;
+      CHAR quotes = 0;
+      BOOLEAN hasQuotes = FALSE;
  
       SDB_ASSERT(NULL != data, "data can't be NULL");
       SDB_ASSERT(NULL != fieldDel, "fieldDel can't be NULL");
       SDB_ASSERT(length > 0, "length must be greater than 0");
       SDB_ASSERT(fieldDelLen > 0, "fieldDelLen must be greater than 0");
 
+      if ('\'' == *str || '\"' == *str)
+      {
+         hasQuotes = TRUE;
+         quotes = *str;
+         str++;
+         len--;
+      }
+
+      start = str;
+
       while (len > 0)
       {
-         if (isspace(*str))
+         if (hasQuotes)
          {
-            break;
+            if (quotes == *str)
+            {
+               break;
+            }
          }
-         else if (_startWith(str, len, fieldDel, fieldDelLen))
+         else
          {
-            fieldEnd = TRUE;
-            break;
+            if (isspace(*str))
+            {
+               break;
+            }
+            else if (_startWith(str, len, fieldDel, fieldDelLen))
+            {
+               fieldEnd = TRUE;
+               break;
+            }
          }
 
          str++;
@@ -2612,16 +2635,20 @@ namespace import
          goto error;
       }
 
-      fieldNameLength = length - len;
-      if (!_isValidFieldName((CHAR*)data, fieldNameLength))
+      fieldNameLength = str - start;
+      fieldName = string(start, fieldNameLength);
+      if (!_isValidFieldName(start, fieldNameLength))
       {
          rc = SDB_INVALIDARG;
-         PD_LOG(PDERROR, "invalid field name");
+         PD_LOG(PDERROR, "invalid field name: [%s]", fieldName.c_str());
          goto error;
       }
 
-      fieldName = string(data, fieldNameLength);
-
+      if (hasQuotes)
+      {
+         str++;
+         len--;
+      }
       _skipSpace(&str, len);
       fieldNameLength = length - len;
       if (len != 0 && _startWith(str, len, fieldDel, fieldDelLen))
