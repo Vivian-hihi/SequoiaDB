@@ -111,6 +111,7 @@ namespace engine
 
       _wwwRootPath      = pmdGetOptionCB()->getWWWPath() ;
       _pRestTransfer    = SDB_OSS_NEW RestToMSGTransfer( this ) ;
+      _pRestTransfer->init() ;
    }
 
    _pmdRestSession::~_pmdRestSession()
@@ -718,6 +719,12 @@ namespace engine
       }
    }
 
+   typedef struct restCommand2Func_s
+   {
+      string commandName ;
+      restTransFunc func ;
+   } restCommand2Func ;
+
    RestToMSGTransfer::RestToMSGTransfer( pmdRestSession *session )
                      :_restSession( session )
    {
@@ -727,10 +734,93 @@ namespace engine
    {
    }
 
+   INT32 RestToMSGTransfer::init()
+   {
+      INT32 rc  = SDB_OK ;
+      INT32 i   = 0 ;
+      INT32 len = 0 ;
+      static restCommand2Func s_commandArray[] = {
+         { REST_CMD_NAME_QUERY,  &RestToMSGTransfer::_convertQuery },
+         { REST_CMD_NAME_INSERT, &RestToMSGTransfer::_convertInsert },
+         { REST_CMD_NAME_DELETE, &RestToMSGTransfer::_convertDelete },
+         { REST_CMD_NAME_UPDATE, &RestToMSGTransfer::_convertUpdate },
+         { REST_CMD_NAME_UPSERT, &RestToMSGTransfer::_convertUpsert },
+         { REST_CMD_NAME_QUERY_UPDATE, 
+                                 &RestToMSGTransfer::_convertQueryUpdate },
+         { REST_CMD_NAME_QUERY_REMOVE, 
+                                 &RestToMSGTransfer::_convertQueryRemove },
+         { CMD_NAME_CREATE_COLLECTIONSPACE, 
+                                 &RestToMSGTransfer::_convertCreateCS },
+         { CMD_NAME_CREATE_COLLECTION, 
+                                 &RestToMSGTransfer::_convertCreateCL },
+         { CMD_NAME_DROP_COLLECTIONSPACE, 
+                                 &RestToMSGTransfer::_convertDropCS },
+         { CMD_NAME_DROP_COLLECTION,
+                                 &RestToMSGTransfer::_convertDropCL },
+         { CMD_NAME_SPLIT,       &RestToMSGTransfer::_convertSplit },
+         { CMD_NAME_ALTER_COLLECTION,  
+                                 &RestToMSGTransfer::_convertAlterCollection },
+         { CMD_NAME_GET_COUNT,   &RestToMSGTransfer::_convertGetCount },
+         { CMD_NAME_LIST_GROUPS, &RestToMSGTransfer::_convertListGroups },
+         { CMD_NAME_LIST_PROCEDURES,   
+                                 &RestToMSGTransfer::_convertListProcedures },
+         { CMD_NAME_LIST_CONTEXTS, 
+                                 &RestToMSGTransfer::_convertListContexts },
+         { CMD_NAME_LIST_CONTEXTS_CURRENT, 
+                              &RestToMSGTransfer::_convertListContextsCurrent },
+         { CMD_NAME_LIST_SESSIONS, 
+                                 &RestToMSGTransfer::_convertListSessions },
+         { CMD_NAME_LIST_SESSIONS_CURRENT, 
+                              &RestToMSGTransfer::_convertListSessionsCurrent },
+         { CMD_NAME_LIST_COLLECTIONS, 
+                                 &RestToMSGTransfer::_convertListCollections },
+         { CMD_NAME_LIST_COLLECTIONSPACES, 
+                             &RestToMSGTransfer::_convertListCollectionSpaces },
+         { CMD_NAME_LIST_STORAGEUNITS, 
+                                 &RestToMSGTransfer::_convertListStorageUnits },
+         { CMD_NAME_LIST_DOMAINS,  
+                                 &RestToMSGTransfer::_convertListDomains },
+         { CMD_NAME_LIST_TASKS,  &RestToMSGTransfer::_convertListTasks },
+//         { CMD_NAME_LIST_CS_IN_DOMAIN, &RestToMSGTransfer::_convertQuery },
+//         { CMD_NAME_LIST_CL_IN_DOMAIN, &RestToMSGTransfer::_convertQuery },
+         { CMD_NAME_SNAPSHOT_CONTEXTS, 
+                                 &RestToMSGTransfer::_convertSnapshotContext },
+         { CMD_NAME_SNAPSHOT_CONTEXTS_CURRENT, 
+                           &RestToMSGTransfer::_convertSnapshotContextCurrent },
+         { CMD_NAME_SNAPSHOT_SESSIONS, 
+                                 &RestToMSGTransfer::_convertSnapshotSessions },
+         { CMD_NAME_SNAPSHOT_SESSIONS_CURRENT, 
+                        &RestToMSGTransfer::_convertSnapshotSessionsCurrent },
+         { CMD_NAME_SNAPSHOT_COLLECTIONS, 
+                              &RestToMSGTransfer::_convertSnapshotCollections },
+         { CMD_NAME_SNAPSHOT_COLLECTIONSPACES, 
+                        &RestToMSGTransfer::_convertSnapshotCollectionSpaces },
+         { CMD_NAME_SNAPSHOT_DATABASE, 
+                              &RestToMSGTransfer::_convertSnapshotDatabase },
+         { CMD_NAME_SNAPSHOT_SYSTEM, 
+                              &RestToMSGTransfer::_convertSnapshotSystem },
+         { CMD_NAME_SNAPSHOT_CATA,  
+                                 &RestToMSGTransfer::_convertSnapshotCata },
+         { CMD_NAME_LIST_LOBS,   &RestToMSGTransfer::_convertListLobs },
+         { OM_LOGIN_REQ,         &RestToMSGTransfer::_convertLogin },
+         { REST_CMD_NAME_EXEC,   &RestToMSGTransfer::_convertExec }
+      } ;
+
+      len = sizeof( s_commandArray ) / sizeof( restCommand2Func ) ;
+      for ( i = 0 ; i < len ; i++ ) 
+      {
+         _mapTransFunc.insert( _value_type( s_commandArray[i].commandName,
+                                            s_commandArray[i].func ) ) ;
+      }
+
+      return rc ;
+   }
+
    INT32 RestToMSGTransfer::trans( restAdaptor *pAdaptor, MsgHeader **msg )
    {
       INT32 rc = SDB_OK ;
       const CHAR *pSubCommand = NULL ;
+      _iterator iter ;
 
       pAdaptor->getQuery( _restSession, OM_REST_FIELD_COMMAND, &pSubCommand ) ;
       if ( NULL == pSubCommand )
@@ -747,171 +837,11 @@ namespace engine
          goto error ;
       }
 
-      if ( ossStrcasecmp( pSubCommand, REST_CMD_NAME_QUERY ) == 0 )
+      iter = _mapTransFunc.find( pSubCommand ) ;
+      if ( iter != _mapTransFunc.end() )
       {
-         rc = _convertQuery( pAdaptor, msg ) ;
-      }
-      else if ( ossStrcasecmp( pSubCommand, REST_CMD_NAME_INSERT ) == 0 )
-      {
-         rc = _convertInsert( pAdaptor, msg ) ;
-      }
-      else if ( ossStrcasecmp( pSubCommand, REST_CMD_NAME_DELETE ) == 0 )
-      {
-         rc = _convertDelete( pAdaptor, msg ) ;
-      }
-      else if ( ossStrcasecmp( pSubCommand, REST_CMD_NAME_UPDATE ) == 0 )
-      {
-         rc = _convertUpdate( pAdaptor, msg ) ;
-      }
-      else if ( ossStrcasecmp( pSubCommand, REST_CMD_NAME_UPSERT ) == 0 )
-      {
-         rc = _convertUpdate( pAdaptor, msg, TRUE ) ;
-      }
-      else if ( ossStrcasecmp( pSubCommand, REST_CMD_NAME_QUERY_UPDATE ) == 0 )
-      {
-         rc = _convertQueryModify( pAdaptor, msg, TRUE ) ;
-      }
-      else if ( ossStrcasecmp( pSubCommand, REST_CMD_NAME_QUERY_REMOVE ) == 0 )
-      {
-         rc = _convertQueryModify( pAdaptor, msg, FALSE ) ;
-      }
-      else if ( ossStrcasecmp( pSubCommand, CMD_NAME_CREATE_COLLECTIONSPACE ) == 0 )
-      {
-         rc = _convertCreateCS( pAdaptor, msg ) ;
-      }
-      else if ( ossStrcasecmp( pSubCommand, CMD_NAME_CREATE_COLLECTION ) == 0 )
-      {
-         rc = _convertCreateCL( pAdaptor, msg ) ;
-      }
-      else if ( ossStrcasecmp( pSubCommand, CMD_NAME_DROP_COLLECTIONSPACE ) == 0 )
-      {
-         rc = _convertDropCS( pAdaptor, msg ) ;
-      }
-      else if ( ossStrcasecmp( pSubCommand, CMD_NAME_DROP_COLLECTION ) == 0 )
-      {
-         rc = _convertDropCL( pAdaptor, msg ) ;
-      }
-      else if ( ossStrcasecmp( pSubCommand, CMD_NAME_SPLIT ) == 0 )
-      {
-         rc = _convertSplit( pAdaptor, msg ) ;
-      }
-      else if ( ossStrcasecmp( pSubCommand, CMD_NAME_LIST_GROUPS ) == 0 )
-      {
-         rc = _convertListGroups( pAdaptor, msg ) ;
-      }
-      else if ( ossStrcasecmp( pSubCommand, CMD_NAME_ALTER_COLLECTION ) == 0 )
-      {
-         rc = _convertAlterCollection( pAdaptor, msg ) ;
-      }
-      else if ( ossStrcasecmp( pSubCommand, CMD_NAME_GET_COUNT ) == 0 )
-      {
-         rc = _convertGetCount( pAdaptor, msg ) ;
-      }
-      else if ( ossStrcasecmp( pSubCommand, CMD_NAME_LIST_CONTEXTS ) == 0 )
-      {
-         rc = _converListContexts( pAdaptor, msg ) ;
-      }
-      else if ( ossStrcasecmp( pSubCommand, CMD_NAME_LIST_CONTEXTS_CURRENT ) 
-                == 0 )
-      {
-         rc = _convertListContextsCurrent( pAdaptor, msg ) ;
-      }
-      else if ( ossStrcasecmp( pSubCommand, CMD_NAME_LIST_SESSIONS ) == 0 )
-      {
-         rc = _convertListSessions( pAdaptor, msg ) ;
-      }
-      else if ( ossStrcasecmp( pSubCommand, CMD_NAME_LIST_SESSIONS_CURRENT ) 
-                == 0 )
-      {
-         rc = _convertListSessionsCurrent( pAdaptor, msg ) ;
-      }
-      else if ( ossStrcasecmp( pSubCommand, CMD_NAME_LIST_COLLECTIONS ) == 0 )
-      {
-         rc = _convertListCoolections( pAdaptor, msg ) ;
-      }
-      else if ( ossStrcasecmp( pSubCommand, CMD_NAME_LIST_COLLECTIONSPACES ) 
-                == 0 )
-      {
-         rc = _convertListCoolectionSpaces( pAdaptor, msg ) ;
-      }
-      else if ( ossStrcasecmp( pSubCommand, CMD_NAME_LIST_STORAGEUNITS ) == 0 )
-      {
-         rc = _convertListStorageUnits( pAdaptor, msg ) ;
-      }
-      else if ( ossStrcasecmp( pSubCommand, CMD_NAME_LIST_GROUPS ) == 0 )
-      {
-         rc = _convertListGroups( pAdaptor, msg ) ;
-      }
-      else if ( ossStrcasecmp( pSubCommand, CMD_NAME_LIST_PROCEDURES ) == 0 )
-      {
-         rc = _convertListProcedures( pAdaptor, msg ) ;
-      }
-      else if ( ossStrcasecmp( pSubCommand, CMD_NAME_LIST_DOMAINS ) == 0 )
-      {
-         rc = _convertListDomains( pAdaptor, msg ) ;
-      }
-      else if ( ossStrcasecmp( pSubCommand, CMD_NAME_LIST_TASKS ) == 0 )
-      {
-         rc = _convertListTasks( pAdaptor, msg ) ;
-      }
-      else if ( ossStrcasecmp( pSubCommand, CMD_NAME_LIST_CS_IN_DOMAIN ) == 0 )
-      {
-         rc = _convertListCSInDomain( pAdaptor, msg ) ;
-      }
-      else if ( ossStrcasecmp( pSubCommand, CMD_NAME_LIST_CL_IN_DOMAIN ) == 0 )
-      {
-         rc = _convertListCLInDomain( pAdaptor, msg ) ;
-      }
-      else if ( ossStrcasecmp( pSubCommand, CMD_NAME_SNAPSHOT_CONTEXTS ) == 0 )
-      {
-         rc = _convertSnapshotContext( pAdaptor, msg ) ;
-      }
-      else if ( ossStrcasecmp( pSubCommand, CMD_NAME_SNAPSHOT_CONTEXTS_CURRENT ) 
-                == 0 )
-      {
-         rc = _convertSnapshotContextCurrent( pAdaptor, msg ) ;
-      }
-      else if ( ossStrcasecmp( pSubCommand, CMD_NAME_SNAPSHOT_SESSIONS ) == 0 )
-      {
-         rc = _convertSnapshotSessions( pAdaptor, msg ) ;
-      }
-      else if ( ossStrcasecmp( pSubCommand, CMD_NAME_SNAPSHOT_SESSIONS_CURRENT ) 
-                == 0 )
-      {
-         rc = _convertSnapshotSessionsCurrent( pAdaptor, msg ) ;
-      }
-      else if ( ossStrcasecmp( pSubCommand, CMD_NAME_SNAPSHOT_COLLECTIONS ) == 0 )
-      {
-         rc = _convertSnapshotCollections( pAdaptor, msg ) ;
-      }
-      else if ( ossStrcasecmp( pSubCommand, CMD_NAME_SNAPSHOT_COLLECTIONSPACES ) 
-                == 0 )
-      {
-         rc = _convertSnapshotCollectionSpaces( pAdaptor, msg ) ;
-      }
-      else if ( ossStrcasecmp( pSubCommand, CMD_NAME_SNAPSHOT_DATABASE ) == 0 )
-      {
-         rc = _convertSnapshotDatabase( pAdaptor, msg ) ;
-      }
-      else if ( ossStrcasecmp( pSubCommand, CMD_NAME_SNAPSHOT_SYSTEM ) == 0 )
-      {
-         rc = _convertSnapshotSystem( pAdaptor, msg ) ;
-      }
-      else if ( ossStrcasecmp( pSubCommand, CMD_NAME_SNAPSHOT_CATA ) == 0 )
-      {
-         rc = _convertSnapshotCata( pAdaptor, msg ) ;
-      }
-      else if ( ossStrcasecmp( pSubCommand, CMD_NAME_LIST_LOBS ) == 0 )
-      {
-         rc = _convertListLobs( pAdaptor, msg ) ;
-      }
-      else if ( ossStrcasecmp( pSubCommand, OM_LOGIN_REQ ) == 0 )
-      {
-         rc = _convertLogin( pAdaptor, msg ) ;
-      }
-      else if ( ossStrcasecmp( pSubCommand, REST_CMD_NAME_EXEC ) == 0 )
-      {
-         rc = _convertExec( pAdaptor, msg ) ;
+         restTransFunc func = iter->second ;
+         (this->*func)( pAdaptor, msg ) ;
       }
       else
       {
@@ -1297,6 +1227,18 @@ namespace engine
       goto done ;
    }
 
+   INT32 RestToMSGTransfer::_convertQueryUpdate( restAdaptor *pAdaptor,
+                                                 MsgHeader **msg )
+   {
+      return _convertQueryModify( pAdaptor, msg, TRUE ) ;
+   }
+
+   INT32 RestToMSGTransfer::_convertQueryRemove( restAdaptor *pAdaptor,
+                                                 MsgHeader **msg )
+   {
+      return _convertQueryModify( pAdaptor, msg, FALSE ) ;
+   }
+
    INT32 RestToMSGTransfer::_convertQueryModify( restAdaptor *pAdaptor,
                                                  MsgHeader **msg,
                                                  BOOLEAN isUpdate )
@@ -1479,9 +1421,21 @@ namespace engine
       goto done ;
    }
 
+   INT32 RestToMSGTransfer::_convertUpsert( restAdaptor *pAdaptor,
+                                            MsgHeader **msg )
+   {
+      return _convertUpdateBase( pAdaptor, msg, TRUE ) ;
+   }
+
    INT32 RestToMSGTransfer::_convertUpdate( restAdaptor *pAdaptor,
-                                            MsgHeader **msg,
-                                            BOOLEAN isUpsert )
+                                            MsgHeader **msg )
+   {
+      return _convertUpdateBase( pAdaptor, msg, FALSE ) ;
+   }
+
+   INT32 RestToMSGTransfer::_convertUpdateBase( restAdaptor *pAdaptor,
+                                                MsgHeader **msg,
+                                                BOOLEAN isUpsert )
    {
       INT32 rc              = SDB_OK ;
       CHAR *pBuff           = NULL ;
@@ -2011,7 +1965,7 @@ namespace engine
       goto done ;
    }
 
-   INT32 RestToMSGTransfer::_converListContexts( restAdaptor *pAdaptor,
+   INT32 RestToMSGTransfer::_convertListContexts( restAdaptor *pAdaptor,
                                                  MsgHeader **msg )
    {
       INT32 rc = SDB_OK ;
@@ -2151,7 +2105,7 @@ namespace engine
       goto done ;
    }
 
-   INT32 RestToMSGTransfer::_convertListCoolections( restAdaptor *pAdaptor,
+   INT32 RestToMSGTransfer::_convertListCollections( restAdaptor *pAdaptor,
                                                      MsgHeader **msg )
    {
       INT32 rc = SDB_OK ;
@@ -2186,7 +2140,7 @@ namespace engine
       goto done ;
    }
 
-   INT32 RestToMSGTransfer::_convertListCoolectionSpaces( restAdaptor *pAdaptor,
+   INT32 RestToMSGTransfer::_convertListCollectionSpaces( restAdaptor *pAdaptor,
                                                           MsgHeader **msg )
    {
       INT32 rc = SDB_OK ;

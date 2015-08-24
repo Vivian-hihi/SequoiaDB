@@ -232,6 +232,10 @@ namespace engine
    #define REST_KEY_NAME_SET_ON_INSERT "Setoninsert"
    #define REST_KEY_NAME_SQL           "Sql"
 
+   class RestToMSGTransfer ;   
+   typedef INT32 ( RestToMSGTransfer::*restTransFunc )( restAdaptor *pAdaptor, 
+                                                        MsgHeader **msg ) ;
+
    class RestToMSGTransfer : public SDBObject
    {
       public:
@@ -240,6 +244,7 @@ namespace engine
          
       public:
          INT32       trans( restAdaptor *pAdaptor, MsgHeader **msg ) ;
+         INT32       init() ;
                             
       private:
          INT32       _convertCreateCS( restAdaptor *pAdaptor, 
@@ -259,12 +264,22 @@ namespace engine
                                          INT32* skip,
                                          INT32* returnRow ) ;
          INT32       _convertQuery( restAdaptor *pAdaptor, MsgHeader **msg ) ;
+
+         INT32       _convertQueryUpdate( restAdaptor *pAdaptor,
+                                          MsgHeader **msg ) ;
+         INT32       _convertQueryRemove( restAdaptor *pAdaptor,
+                                          MsgHeader **msg ) ;
          INT32       _convertQueryModify( restAdaptor *pAdaptor,
                                           MsgHeader **msg,
                                           BOOLEAN isUpdate ) ;
+
          INT32       _convertInsert( restAdaptor *pAdaptor, MsgHeader **msg ) ;
-         INT32       _convertUpdate( restAdaptor *pAdaptor, MsgHeader **msg,
-                                     BOOLEAN isUpsert = FALSE ) ;
+
+         INT32       _convertUpdateBase( restAdaptor *pAdaptor, MsgHeader **msg,
+                                         BOOLEAN isUpsert = FALSE ) ;
+         INT32       _convertUpdate( restAdaptor *pAdaptor, MsgHeader **msg ) ;
+         INT32       _convertUpsert( restAdaptor * pAdaptor, MsgHeader **msg ) ;
+
          INT32       _convertDelete( restAdaptor *pAdaptor, MsgHeader **msg ) ;
 
          INT32       _convertSplit( restAdaptor *pAdaptor, MsgHeader **msg ) ;
@@ -275,8 +290,8 @@ namespace engine
                                        MsgHeader **msg ) ;
 
          //list
-         INT32       _converListContexts( restAdaptor *pAdaptor,
-                                          MsgHeader **msg ) ;
+         INT32       _convertListContexts( restAdaptor *pAdaptor,
+                                           MsgHeader **msg ) ;
          INT32       _convertListBase( restAdaptor *pAdaptor,
                                               BSONObj &match, BSONObj &selector,
                                               BSONObj &order ) ;
@@ -288,9 +303,9 @@ namespace engine
                                          MsgHeader **msg ) ;
          INT32       _convertListSessionsCurrent( restAdaptor *pAdaptor,
                                                   MsgHeader **msg ) ;
-         INT32       _convertListCoolections( restAdaptor *pAdaptor,
+         INT32       _convertListCollections( restAdaptor *pAdaptor,
                                               MsgHeader **msg ) ;
-         INT32       _convertListCoolectionSpaces( restAdaptor *pAdaptor,
+         INT32       _convertListCollectionSpaces( restAdaptor *pAdaptor,
                                                    MsgHeader **msg ) ;
          INT32       _convertListStorageUnits( restAdaptor *pAdaptor,
                                                MsgHeader **msg ) ;
@@ -336,6 +351,9 @@ namespace engine
 
       private:
          pmdRestSession    *_restSession ;
+         std::map< string, restTransFunc > _mapTransFunc ;
+         typedef std::map< string, restTransFunc >::value_type _value_type ;
+         typedef std::map< string, restTransFunc >::iterator _iterator ;
    } ;
 
    void _sendOpError2Web ( INT32 rc, restAdaptor *pAdptor,
