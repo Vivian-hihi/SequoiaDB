@@ -29,6 +29,7 @@
 
 *******************************************************************************/
 #include "impLogFile.hpp"
+#include "ossUtil.h"
 #include "pd.hpp"
 #include <string>
 #include <sstream>
