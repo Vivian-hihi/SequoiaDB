@@ -162,7 +162,7 @@ namespace import
          goto error;
       }
 
-      rc = write(buffer, strlen(buffer));
+      rc = write(buffer, ossStrlen(buffer));
       if (SDB_OK != rc)
       {
          PD_LOG(PDERROR, "failed to write bson, rc=%d", rc);

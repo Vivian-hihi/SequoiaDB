@@ -67,6 +67,8 @@ namespace import
          string hostname1 = host1.hostname;
          string hostname2 = host2.hostname;
 
+         // "localhost" equals "127.0.0.1"
+
          if ("127.0.0.1" == hostname1)
          {
             hostname1 = "localhost";

@@ -100,10 +100,9 @@ namespace import
       for(;;)
       {
          workQueue->wait_and_pop(records);
-
          if (NULL == records)
          {
-            // stop
+            // NULL records is the singal of stopping
             break;
          }
 
