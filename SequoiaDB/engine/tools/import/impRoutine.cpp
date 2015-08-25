@@ -32,6 +32,9 @@
 #include "impHosts.hpp"
 #include <iostream>
 #include <sstream>
+#include <boost/date_time/posix_time/posix_time.hpp>
+
+namespace pt = boost::posix_time;
 
 namespace import
 {
@@ -77,8 +80,12 @@ namespace import
    INT32 Routine::run()
    {
       INT32 rc = SDB_OK;
+      pt::ptime startTime;
+      pt::ptime endTime;
 
       PD_LOG(PDINFO, "begin importing");
+
+      startTime = pt::second_clock::universal_time();
 
       rc = _startSharding();
       if (SDB_OK != rc)
@@ -130,6 +137,20 @@ namespace import
       if (SDB_OK != rc)
       {
          PD_LOG(PDERROR, "failed to stop importers, rc=%d", rc);
+      }
+
+      endTime = pt::second_clock::universal_time();
+
+      if (SDB_OK == rc && _importer.parsedNum() > 0)
+      {
+         pt::time_duration time = endTime - startTime;
+         INT64 sec = time.total_seconds();
+
+         stringstream ss;
+         ss << "import " << _importer.parsedNum() << " records in "
+            << sec << " second(s), average "
+            << _importer.parsedNum() / sec << " records/s";
+         PD_LOG(PDINFO, "%s", ss.str().c_str());
       }
 
       PD_LOG(PDINFO, "finished importing");
