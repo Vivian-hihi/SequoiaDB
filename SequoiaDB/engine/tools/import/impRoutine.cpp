@@ -141,15 +141,15 @@ namespace import
 
       endTime = pt::second_clock::universal_time();
 
-      if (SDB_OK == rc && _importer.parsedNum() > 0)
+      if (SDB_OK == rc && _importer.importedNum() > 0)
       {
          pt::time_duration time = endTime - startTime;
          INT64 sec = time.total_seconds();
 
          stringstream ss;
-         ss << "import " << _importer.parsedNum() << " records in "
+         ss << "import " << _importer.importedNum() << " records in "
             << sec << " second(s), average "
-            << _importer.parsedNum() / sec << " records/s";
+            << _importer.importedNum() / sec << " records/s";
          PD_LOG(PDINFO, "%s", ss.str().c_str());
       }
 
@@ -302,7 +302,7 @@ namespace import
       ss << "sharding records: " << _sharding.shardingNum() << std::endl
          << "sharding failure: " << _sharding.failedNum() << std::endl;
 
-      ss << "imported records: " << _importer.parsedNum() << std::endl
+      ss << "imported records: " << _importer.importedNum() << std::endl
          << "import failure: " << _importer.failedNum() << std::endl;
 
       if (_parser.failedNum() > 0)

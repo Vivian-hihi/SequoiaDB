@@ -59,7 +59,7 @@ namespace import
       {
          return 0 == _livingNum.fetch();
       }
-      inline INT64 parsedNum() { return _importedNum.fetch(); }
+      inline INT64 importedNum() { return _importedNum.fetch(); }
       inline INT64 failedNum() { return _failedNum.fetch(); }
       inline const string& logFileName() const
       {
