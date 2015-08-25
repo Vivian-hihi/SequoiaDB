@@ -8,7 +8,7 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="db.listCollections()"/>
-<meta name="description" content="db.listCollections() 枚举集合，执行此方法会将指定集合空间下的集合信息全部显示出来。 示例 db.listCollections() 返回： { &#34;Name&#34;: &#34;foo.bar&#34;, &#34;Details&#34;: [ { &#34;ID&#34;: 0, &#34;Logical ID&#34;: 1, &#34;Sequence&#34;: 1, &#34;Indexes&#34;: 2, &#34;Status&#34;: &#34;Normal&#34; } ] }"/>
+<meta name="description" content="db.listCollections() 枚举集合，执行此方法会将指定集合空间下的集合信息全部显示出来。 示例 db.listCollections() 返回： { &#34;Name&#34;: &#34;foo.bar&#34;, }"/>
 <meta name="DC.Relation" scheme="URI" content="../../../references/methods/jssequoiadb.html"/>
 <meta name="DC.Relation" scheme="URI" content="listCollectionSpaces.html"/>
 <meta name="DC.Relation" scheme="URI" content="listReplicaGroups.html"/>
@@ -52,18 +52,9 @@
 
           <p class="p">返回：</p>
 
-          <pre class="pre codeblock">    { 
-        "Name": "foo.bar",
-        "Details": [ 
-          { 
-            "ID": 0,
-            "Logical ID": 1, 
-            "Sequence": 1, 
-            "Indexes": 2,
-            "Status": "Normal" 
-           }
-        ]
-      }</pre>
+          <pre class="pre codeblock">{ 
+        "Name": "foo.bar",        
+}</pre>
   
         </li>
 

@@ -11,18 +11,9 @@
         <li>
           <p><codeblock>db.listCollections()</codeblock></p>
           <p>返回：</p>
-          <codeblock>    { 
-        "Name": "foo.bar",
-        "Details": [ 
-          { 
-            "ID": 0,
-            "Logical ID": 1, 
-            "Sequence": 1, 
-            "Indexes": 2,
-            "Status": "Normal" 
-           }
-        ]
-      }</codeblock>  
+          <codeblock>{ 
+        "Name": "foo.bar",        
+}</codeblock>  
         </li>
       </ul>      
     </section>
