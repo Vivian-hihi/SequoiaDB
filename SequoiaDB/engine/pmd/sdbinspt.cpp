@@ -289,7 +289,7 @@ INT32 parseRepaireString( const std::string &str )
    /// parse mb member
    vector< pmdAddrPair > items ;
    pmdOptionsCB opt ;
-   INT32 rc = opt.parseAddressLine( pos + 1, items, ",", "=" ) ;
+   INT32 rc = opt.parseAddressLine( pos + 1, items, ",", "=", 0 ) ;
    if ( SDB_OK != rc )
    {
       ossPrintf( "Parse repaire value failed: %d"OSS_NEWLINE, rc ) ;

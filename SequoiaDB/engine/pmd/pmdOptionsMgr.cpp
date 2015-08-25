@@ -629,7 +629,8 @@ namespace engine
    INT32 _pmdCfgRecord::parseAddressLine( const CHAR * pAddressLine,
                                           vector < pmdAddrPair > & vecAddr,
                                           const CHAR * pItemSep,
-                                          const CHAR * pInnerSep ) const
+                                          const CHAR * pInnerSep,
+                                          UINT32 maxSize ) const
    {
       INT32 rc = SDB_OK ;
       vector<string> addrs ;
@@ -649,7 +650,7 @@ namespace engine
       boost::algorithm::split( addrs, pAddressLine,
                                boost::algorithm::is_any_of(
                                pItemSep ) ) ;
-      if ( CLS_REPLSET_MAX_NODE_SIZE < addrs.size() )
+      if ( maxSize > 0 && maxSize < addrs.size() )
       {
          std::cerr << "addr more than max member size" << endl ;
          rc = SDB_INVALIDARG ;

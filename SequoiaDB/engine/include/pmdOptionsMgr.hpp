@@ -233,7 +233,8 @@ namespace engine
          INT32 parseAddressLine( const CHAR *pAddressLine,
                                  vector< pmdAddrPair > &vecAddr,
                                  const CHAR *pItemSep = ",",
-                                 const CHAR *pInnerSep = ":" ) const ;
+                                 const CHAR *pInnerSep = ":",
+                                 UINT32 maxSize = CLS_REPLSET_MAX_NODE_SIZE ) const ;
 
          string makeAddressLine( const vector< pmdAddrPair > &vecAddr,
                                  CHAR chItemSep = ',',

@@ -220,12 +220,12 @@ namespace engine
                              DMS_INSPECT_SME_STATE_BUFSZ ) ;
             len += ossSnprintf ( outBuf + len, outSize - len,
                                  "SME State %d (%s)"OSS_NEWLINE,
-                                 ((CHAR*)inBuf)[i], stateBuf ) ;
+                                 pSME->getBitMask(i), stateBuf ) ;
             smeMask2String ( pExpSME->getBitMask(i), stateBuf,
                              DMS_INSPECT_SME_STATE_BUFSZ ) ;
             len += ossSnprintf ( outBuf + len, outSize - len,
                                  "Expected State %d (%s)"OSS_NEWLINE,
-                                 expBuffer[i], stateBuf ) ;
+                                 pExpSME->getBitMask(i), stateBuf ) ;
             ++localErr ;
          }
          else if ( i < (UINT32)pageNum &&
