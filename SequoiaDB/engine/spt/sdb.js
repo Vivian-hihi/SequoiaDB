@@ -201,7 +201,9 @@ SdbCollection.prototype.getIndex = function( name ) {
    var obj = this._getIndexes(name).next();
    if (undefined == obj)
    {
-      throw "" + SDB_IXM_NOTEXIST + "\n" + getErr( SDB_IXM_NOTEXIST );
+      setLastError( SDB_IXM_NOTEXIST ) ;
+      setLastErrMsg( getErr( SDB_IXM_NOTEXIST ) ) ;
+      throw "" + SDB_IXM_NOTEXIST ;
    }
 
    return obj ;
