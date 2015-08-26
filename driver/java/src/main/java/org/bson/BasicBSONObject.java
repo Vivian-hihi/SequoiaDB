@@ -689,7 +689,13 @@ public class BasicBSONObject implements Map<String, Object>, BSONObject {
                                     realMap.put(key,((BSONObject) field).get(key));
                                     }
 								    else{
-                                        realMap.put(key,((BSONObject)((BSONObject) field).get(key)).as((Class)valueType));
+								        Object tmpObj = ((BSONObject) field).get(key);
+								        if (BSON.IsBasicType(tmpObj)){
+								            realMap.put(key, tmpObj);
+								        }
+								        else{
+								            realMap.put(key,((BSONObject)tmpObj).as((Class)valueType));
+								        }
                                     }
 								}
 							}
