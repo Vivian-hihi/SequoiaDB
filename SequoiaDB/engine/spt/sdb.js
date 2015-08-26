@@ -203,7 +203,7 @@ SdbCollection.prototype.getIndex = function( name ) {
    {
       setLastError( SDB_IXM_NOTEXIST ) ;
       setLastErrMsg( getErr( SDB_IXM_NOTEXIST ) ) ;
-      throw "" + SDB_IXM_NOTEXIST ;
+      throw SDB_IXM_NOTEXIST ;
    }
 
    return obj ;
