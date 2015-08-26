@@ -841,7 +841,7 @@ namespace engine
       if ( iter != _mapTransFunc.end() )
       {
          restTransFunc func = iter->second ;
-         (this->*func)( pAdaptor, msg ) ;
+         rc = (this->*func)( pAdaptor, msg ) ;
       }
       else
       {
