@@ -95,7 +95,7 @@ CSV(Comma Separated Value)格式以逗号分隔数值。默认情况下记录以
 
 注意：
 - 指定类型为bool，实际类型为int、long或double时，0值转为false，非0值转为true。
-- 指定类型为int、long或double，实际类型为bool时，true转为1，false转为0。
+- 指定类型为int、long或double，实际类型为bool时，true/t/yes/y转为1，false/f/no/n转为0。
 - 参数--cast可以指定数值转换时是否允许精度损失或数值溢出。
 
 ####命令选项
@@ -113,7 +113,7 @@ CSV(Comma Separated Value)格式以逗号分隔数值。默认情况下记录以
 |--clname|-l|集合的名字|
 |--errorstop|-|如果遇到解析错误就停止，默认为false|
 |--ssl|-|使用SSL连接，默认为false|
-|--verbose|-|显示详细的执行信息|
+|--verbose|-v|显示详细的执行信息|
 
 **输入选项**
 
@@ -188,9 +188,9 @@ CSV(Comma Separated Value)格式以逗号分隔数值。默认情况下记录以
 
 ####示例
 
-1. 将数据导入到本地数据库11810中集合空间foo的集合bar，导入格式是csv，数据文件为test.csv
+1. 将数据导入到本地数据库11810中集合空间foo的集合bar，导入格式是csv，数据文件为test.csv，第一行为字段定义
 ```
-sdbimprt --hosts=localhost:11810 --type=csv --file=test.csv -c foo -l bar
+sdbimprt --hosts=localhost:11810 --type=csv --file=test.csv -c foo -l bar --headerline=true
 ```
 
 2. 导入格式是csv，文件名是test.csv，导入至集合空间foo的集合bar中
@@ -227,7 +227,7 @@ sdbimprt --hosts=localhost:11810 --type=csv --file=../data -c foo -l bar
 sdbimprt --type=csv --file=../data,./foo_bar_data.csv -c foo -l bar --timestampfmt="YYYY-MM-DD T HH.mm.ss.SSS T" --hosts=localhost:11810,localhost:11910 -j 2
 ```
 
-6. 导入格式是json，通过管道从其它工具other获取数据，导入至集合空间foo的集合bar中
+6. 导入格式是json，通过管道从其它工具other获取数据，导入至集合空间foo的集合bar中，第一行为字段定义
 ```
-other | sdbimprt --hosts=localhost:11810 --type=json -c foo -l bar
+other | sdbimprt --hosts=localhost:11810 --type=json -c foo -l bar --headerline=true
 ```
