@@ -916,7 +916,7 @@ namespace engine
             BSONElement ie = i.next() ;
             // make sure we don't have embedded object with ELEM_MATCH operation
             if ( ie.type() == Object &&
-                 ie.embeddedObject().firstElement().getGtLtOp() !=
+                 ie.embeddedObject().firstElement().getGtLtOp() ==
                        BSONObj::opELEM_MATCH )
             {
                pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
