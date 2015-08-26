@@ -33,7 +33,7 @@ CSV(Comma Separated Value)格式以逗号分隔数值。默认情况下记录以
 |long|-|十进制长整型，取值范围-9223372036854775808~9223372036854775807|
 |double|-|双精度浮点型，取值范围为1.7E-308~1.7E+308|
 |number|-|数值类型，自动判断数值的具体类型(int, long, double)|
-|bool|boolean|布尔型，取值为true或false|
+|bool|boolean|布尔型，取值为true/false/t/f/yes/no/y/n，不区分大小写|
 |string|-|字符串|
 |null|-|空值|
 |oid|-|OID类型，长度必须为24字节，不支持类型自动判断|
@@ -148,6 +148,7 @@ CSV(Comma Separated Value)格式以逗号分隔数值。默认情况下记录以
 	- type支持所有的CSV类型
 	- type可不写，由导入工具自动判断
 	- 指定字段可以用命令行指定，也可以在导入文件的首行指定。如果在命令行指定了--fields，并且--headerline设为true，导入工具将会优先使用命令行指定字段并且跳过导入文件的首行
+	- 字段名不能以'$'开头，中间不能有'.'，不能有不可见字符，包含空格时需要将字段名用单引号或双引号引起来
 	- 例如：--fields='name string default "Jack", age int default 18, phone'
 - datefmt格式包括年、月、日、通配符以及特定字符
 	- 年：YYYY
@@ -181,7 +182,7 @@ CSV(Comma Separated Value)格式以逗号分隔数值。默认情况下记录以
 |选项|缩写|说明|
 |---|----|---|
 |--insertnum|-n|指定每次导入的记录数，取值范围为1~100000，默认为100|
-|--jobs|-j|指定导入连接数（每个连接一个线程），默认为1|
+|--jobs|-j|指定导入连接数（每个连接一个线程），取值范围为1~1000，默认为1|
 |--coord|-|指定是否自动查找协调节点，默认为true|
 |--sharding|-|指定是否按分区信息重新打包记录，默认为true|
 
