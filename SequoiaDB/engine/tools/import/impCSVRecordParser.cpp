@@ -424,6 +424,7 @@ namespace import
       BOOLEAN neg = FALSE;
       UINT64 quo; // quoteint
       INT64 rem; // remainder
+      CHAR* start;
 
       SDB_ASSERT(NULL != data, "data can't be NULL");
       SDB_ASSERT(length > 0, "length must be greater than 0");
@@ -453,6 +454,7 @@ namespace import
       floatNum = 0;
 
       type = CSV_TYPE_LONG;
+      start = str;
 
       while (len > 0)
       {
@@ -486,6 +488,13 @@ namespace import
 
          str++;
          len--;
+      }
+
+      if (start == str)
+      {
+         // no digits
+         rc = SDB_INVALIDARG;
+         goto error;
       }
 
       if (CSV_TYPE_LONG == type)
@@ -812,7 +821,7 @@ namespace import
       goto done;
    }
 
-   // <true|false>
+   // <true|false|t|f|yes|no|y|n>
    static inline INT32 _stringToRawBool(const CHAR* data, INT32 length,
                                         BOOLEAN& value, INT32& valueLength)
    {
@@ -1340,6 +1349,14 @@ namespace import
       SDB_ASSERT(length > 0, "length must be greater than 0");
 
       rc = _stringToRawNumber(data, length, type, value, valueLength);
+      if (SDB_OK != rc)
+      {
+         BOOLEAN boolValue = FALSE;
+         rc = _stringToRawBool(data, length, boolValue, valueLength);
+         type = CSV_TYPE_INT;
+         value.intVal = boolValue;
+      }
+
       if (SDB_OK == rc)
       {
          str += valueLength;
@@ -1372,6 +1389,14 @@ namespace import
 
       // find out double in string
       rc = _stringToRawNumber(str, len, type, value, tmpLen);
+      if (SDB_OK != rc)
+      {
+         BOOLEAN boolValue = FALSE;
+         rc = _stringToRawBool(data, length, boolValue, valueLength);
+         type = CSV_TYPE_INT;
+         value.intVal = boolValue;
+      }
+
       if (SDB_OK != rc)
       {
          goto error;

@@ -148,8 +148,12 @@ namespace import
 
          stringstream ss;
          ss << "import " << _importer.importedNum() << " records in "
-            << sec << " second(s), average "
-            << _importer.importedNum() / sec << " records/s";
+            << sec << " second(s)";
+         if (sec > 0)
+         {
+            ss << ", average "
+               << _importer.importedNum() / sec << " records/s";
+         }
          PD_LOG(PDINFO, "%s", ss.str().c_str());
       }
 
