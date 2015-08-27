@@ -2012,7 +2012,19 @@ static JSBool collection_split ( JSContext *cx , uintN argc , jsval *vp )
       JS_GetPrivate ( cx , JS_THIS_OBJECT ( cx , vp ) ) ;
    REPORT ( collection , "SdbCollection.split(): no collection handle" ) ;
 
-   REPORT( argc >= 3, "SdbCollection.split(): wrong argument number" ) ;
+   REPORT( argc >= 3, "SdbCollection.split(): invalid argument" ) ;
+
+   if ( !JSVAL_IS_STRING( argv[0] ) )
+   {
+      REPORT ( FALSE , "SdbCollection.split(): the 1st argument "
+         "should be a string" ) ;
+   }
+
+   if ( !JSVAL_IS_STRING( argv[1] ) )
+   {
+      REPORT ( FALSE , "SdbCollection.split(): the 2nd argument "
+         "should be a string" ) ;
+   }
 
    if ( JSVAL_IS_INT( argv[2] ) )
    {
@@ -2446,6 +2458,12 @@ static JSBool collection_bulk_insert ( JSContext *cx , uintN argc , jsval *vp )
    for ( i = 0 ; i < len ; i++ )
    {
       VERIFY ( JS_GetElement ( cx , objArray , i , &valElem ) ) ;
+      if ( !JSVAL_IS_OBJECT( valElem ) )
+      {
+         REPORT ( FALSE , "SdbCollection._bulkInsert(): the %d%s element in array "
+            "should be a json", i+1,
+            0 == i ? "st" : ( 1 == i ? "ed" : ( 2 == i ? "rd" : "th" ) ) ) ;
+      }
       objElem = JSVAL_TO_OBJECT ( valElem ) ;
       VERIFY ( objToBson ( cx , objElem , &bsonArray[i] ) ) ;
    }
