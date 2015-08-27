@@ -128,6 +128,8 @@ CSV(Comma Separated Value)格式以逗号分隔数值。默认情况下记录以
 
 注意:
 - linepriority参数需要被特别关注，如果设置不当，可能会导入数据失败。当记录中包含“记录分隔符”并且 linepriority为 true 时，工具会优先按照“记录分隔符”解析，而导致导入失败。比如：如果记录为 {"name": "Mike\n"}，应当设置 linepriority为false。
+- 使用file参数指定文件或目录时，重复出现的文件会被忽略。
+- 使用hosts指定地址时，重复出现的地址会被忽略。
 
 **CSV选项**
 
