@@ -1704,7 +1704,6 @@ static INT32 _sdbConnect1 ( const CHAR **pConnAddrs, INT32 arrSize,
    }
 
    // calculate the start position
-   srand ( (UINT32)time(NULL) ) ;
    i = rand() % arrSize ;
    mark = i ;
    // get host and port

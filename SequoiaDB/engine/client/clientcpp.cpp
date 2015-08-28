@@ -5907,7 +5907,6 @@ do                                                            \
          goto error ;
       }
       // calculate the start position
-      srand ( (UINT32)time(NULL) ) ;
       i = rand() % arrSize ;
       mark = i ;
 
