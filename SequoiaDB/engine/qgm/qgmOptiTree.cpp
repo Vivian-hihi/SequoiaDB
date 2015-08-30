@@ -378,6 +378,22 @@ namespace engine
       return SDB_OK ;
    }
 
+   BOOLEAN _qgmOprUnit::hasExpr() const
+   {
+      BOOLEAN r = FALSE ;
+      qgmOPFieldVec::const_iterator itr = _fields.begin() ;
+      for ( ; itr != _fields.end(); ++itr )
+      {
+         if ( !( itr->expr.isEmpty() ) )
+         {
+            r = TRUE ;
+            break ;
+         }
+      }
+
+      return r ;
+   }
+
 //////// _qgmOptiTreeNode
    _qgmOptiTreeNode::_qgmOptiTreeNode( QGM_OPTI_TYPE type,
                                        qgmPtrTable *table,
