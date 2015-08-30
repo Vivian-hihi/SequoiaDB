@@ -130,6 +130,14 @@ typedef SQL_CONTAINER::const_iterator SQL_CON_ITR ;
       const static INT32   IS = 54;
          /// trem end
 
+      /// math start
+      const static INT32 ADD = 55 ;
+      const static INT32 SUB = 56 ;
+      const static INT32 MULTIPLY = 57 ;
+      const static INT32 DIVIDE = 58 ;
+      const static INT32 MOD = 59 ;
+      /// math end
+
          /// factor start
       const static INT32   DBATTR = 1000 ;
          /// factor end
@@ -140,6 +148,7 @@ typedef SQL_CONTAINER::const_iterator SQL_CON_ITR ;
       const static INT32   BOOL_TRUE = 1003 ;
       const static INT32   BOOL_FALSE = 1004 ;
          /// base type end
+
       const static INT32   SQLMAX = 10000 ;
 
       template <typename ScannerT>
@@ -210,6 +219,12 @@ typedef SQL_CONTAINER::const_iterator SQL_CON_ITR ;
          SQL_RULE(BOOL_TRUE) bool_true ;
          SQL_RULE(BOOL_FALSE) bool_false ;
 
+         SQL_RULE(ADD) add ;
+         SQL_RULE(SUB) sub ;
+         SQL_RULE(MULTIPLY) multiply ;
+         SQL_RULE(DIVIDE) divide ;
+         SQL_RULE(MOD) mod ;
+
          /// logical rule for parsing.
          rule<ScannerT> graph ;
          rule<ScannerT> wCondition ;
@@ -229,6 +244,10 @@ typedef SQL_CONTAINER::const_iterator SQL_CON_ITR ;
          rule<ScannerT> partition ;
          rule<ScannerT> dbattrchar ;
          rule<ScannerT> inFactor ;
+         rule<ScannerT> expr_factor ;
+         rule<ScannerT> expr_group ;
+         rule<ScannerT> expr;
+         
 
          const SQL_RULE(SQL) &start() const
          {
@@ -272,7 +291,11 @@ typedef SQL_CONTAINER::const_iterator SQL_CON_ITR ;
                                        |ch_p('"')
                                        |ch_p('\'')
                                        |space_p
-                                       |ch_p('\0')) ;
+                                       |ch_p('\0')
+                                       |ch_p('-')
+                                       |ch_p('+')
+                                       |ch_p('/')
+                                       |ch_p('%')) ;
 
             dbattr = leaf_node_d[
                              lexeme_d[+(dbattrchar)]
@@ -327,6 +350,32 @@ typedef SQL_CONTAINER::const_iterator SQL_CON_ITR ;
             rollback = no_node_d[as_lower_d[str_p("rollback")]] ;
 
             commit = no_node_d[as_lower_d[str_p("commit")]] ;
+
+            add = ch_p('+') ;
+
+            sub = ch_p('-') ;
+
+            multiply = ch_p('*') ;
+
+            divide = ch_p('/') ;
+
+            mod = ch_p('%') ;
+
+            expr_factor = func |digital | str | dbattr
+                          | (inner_node_d[lbrackets
+                                      >> SQL_BLANKORNO
+                                      >> expr
+                                      >> SQL_BLANKORNO
+                                      >> rbrackets]) ;
+
+            expr_group = expr_factor % ( SQL_BLANKORNO
+                                        >> root_node_d[( multiply | divide | mod )]
+                                        >> SQL_BLANKORNO ) ;
+
+            expr = expr_group % ( SQL_BLANKORNO
+                                  >> root_node_d[( add | sub )]
+                                  >> SQL_BLANKORNO  ) ;
+                   
 
             func = leaf_node_d[dbattr
                                >> SQL_BLANKORNO
@@ -511,7 +560,7 @@ typedef SQL_CONTAINER::const_iterator SQL_CON_ITR ;
                    >> SQL_BLANK
                    >> fDomain ;
 
-            selector =  ( func | dbattr )
+            selector =  expr
                         >> !( SQL_BLANK
                               >> root_node_d[as]
                               >> SQL_BLANK

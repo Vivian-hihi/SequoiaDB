@@ -62,8 +62,12 @@ namespace engine
          if ( SQL_GRAMMAR::DBATTR == value.type )
          {
             ss << "{value:" << value.value.toString()
-               << ", alias:" << value.alias.toString()
-               << "}" ;
+               << ", alias:" << value.alias.toString() ;
+            if ( !(value.expr.isEmpty()) )
+            {
+               ss << ", expr:" << value.expr.toString() ;
+            }
+            ss << "}" ;
          }
          else
          {
@@ -118,6 +122,8 @@ namespace engine
       }
 
       BOOLEAN isInAggrFieldAlias( const qgmDbAttr &field ) const ;
+
+      BOOLEAN hasExpr() const ;
 
    protected:
       virtual UINT32 _getFieldAlias( qgmOPFieldPtrVec &fieldAlias,

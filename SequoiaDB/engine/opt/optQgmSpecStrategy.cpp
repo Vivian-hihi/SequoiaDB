@@ -431,6 +431,13 @@ namespace engine
       qgmFilterUnit *newCopy = NULL ;
       INT32 rc = SDB_OK ;
 
+      if ( filter->hasExpr() ||
+           oprUnit->hasExpr() )
+      {
+         result = OPT_SS_REFUSE ;
+         goto done ;
+      }
+
       if ( filter->hasConstraint() && FILTER_SEC != filterUnit->filterType() )
       {
          result = OPT_SS_REFUSE ;
@@ -511,6 +518,14 @@ namespace engine
       BOOLEAN delDup = QGM_OPR_FILTER_COPY_FLAG ;
 
       qgmOPFieldVec::iterator it = fields->begin() ;
+
+      if ( oprUnit->hasExpr() ||
+           aggrNode->hasExpr() )
+      {
+         result = OPT_SS_REFUSE ;
+         goto done ; 
+      }
+
       while ( it != fields->end() )
       {
          qgmOpField &field = *it ;
@@ -771,6 +786,12 @@ namespace engine
 
       result = OPT_SS_REFUSE ;
 
+      if ( oprUnit->hasExpr() ||
+           (( qgmOptiSelect * )subNode)->hasExpr() )
+      {
+         goto done ;
+      }
+
       if ( !filterUnit || filterUnit->hasCondition() )
       {
          goto done ;
@@ -800,6 +821,27 @@ namespace engine
       return "AggrFilter-Strategy" ;
    }
 
+
+///////////////////////////
+//   _optQgmFilterScanSty
+//
+   INT32  _optQgmFilterScanSty::calcResult( qgmOprUnit *oprUnit,
+                                            qgmOptiTreeNode *curNode,
+                                            qgmOptiTreeNode *subNode,
+                                            OPT_QGM_SS_RESULT &result )
+   {
+      INT32 rc = SDB_OK ;
+      qgmOptiSelect *filter = ( qgmOptiSelect * )subNode ;
+      result = ( oprUnit->hasExpr() || filter->hasExpr() ) ?
+                 OPT_SS_REFUSE : OPT_SS_ACCEPT ;
+
+      return rc ;
+   }
+
+   const CHAR* _optQgmFilterScanSty::strategyName() const
+   {
+      return "FilterScan-Strategy" ;
+   }
    /////////////////////////////////////////////////////////////////////////////
    // tool functions
    /////////////////////////////////////////////////////////////////////////////

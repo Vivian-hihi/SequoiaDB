@@ -1,6 +1,5 @@
 /*******************************************************************************
 
-
    Copyright (C) 2011-2014 SequoiaDB Ltd.
 
    This program is free software: you can redistribute it and/or modify
@@ -15,12 +14,9 @@
    You should have received a copy of the GNU Affero General Public License
    along with this program. If not, see <http://www.gnu.org/license/>.
 
-   Source File Name = qgmSelector.hpp
+   Source File Name = qgmSelectorExpr.hpp
 
    Descriptive Name =
-
-   When/how to use: this program may be used on binary and text-formatted
-   versions of PMD component. This file contains functions for agent processing.
 
    Dependencies: N/A
 
@@ -35,46 +31,51 @@
 
 ******************************************************************************/
 
-#ifndef QGMSELECTOR_HPP_
-#define QGMSELECTOR_HPP_
+#ifndef QGM_SELECTOREXPR_HPP_
+#define QGM_SELECTOREXPR_HPP_
 
-#include "qgmDef.hpp"
+#include "qgmSelectorExprNode.hpp"
+#include <boost/shared_ptr.hpp>
 
 namespace engine
 {
-   class _qgmSelector : public SDBObject
+   class _qgmSelectorExpr : public SDBObject
    {
    public:
-      _qgmSelector() ;
-      virtual ~_qgmSelector() ;
+      _qgmSelectorExpr() ;
+      ~_qgmSelectorExpr() ;
+      _qgmSelectorExpr( const _qgmSelectorExpr &e )
+      :_exprRoot( e._exprRoot )
+      {
+
+      }
+
+      _qgmSelectorExpr &operator=(const _qgmSelectorExpr &e)
+      {
+         _exprRoot = e._exprRoot ;
+         return *this ;
+      }
 
    public:
-      OSS_INLINE BOOLEAN empty()const{ return _selector.empty() ;}
+      BOOLEAN isEmpty() const
+      {
+         return NULL == _exprRoot.get() ;
+      }
 
-      OSS_INLINE BOOLEAN needSelect()const{return _needSelect ;}
+      void set( _qgmSelectorExprNode *root )
+      {
+         _exprRoot.reset( root ) ;
+         return ;
+      }
 
-      INT32 load( const qgmOPFieldVec &op ) ;
+      std::string toString() const ;
 
-      INT32 select( const BSONObj &src, BSONObj &out ) const;
-
-      INT32 select( const qgmFetchOut &src, BSONObj &out ) const ;
-
-      BSONObj selector() const;
-
-      string toString() const ;
-
-   private:
-      INT32 _createValueWithExpr( const BSONElement &e,
-                                  const CHAR *fieldName,
-                                  const _qgmSelectorExpr &expr,
-                                  BSONObjBuilder &builder ) const ;
+      INT32 getValue( const bson::BSONElement &e,
+                      _qgmValueTuple &v ) const ;
 
    private:
-      qgmOPFieldVec _selector ;
-      BOOLEAN _needSelect ;
+      boost::shared_ptr<_qgmSelectorExprNode> _exprRoot ;
    } ;
-
-   typedef class _qgmSelector qgmSelector ;
 }
 
 #endif

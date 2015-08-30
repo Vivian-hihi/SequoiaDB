@@ -56,6 +56,7 @@ namespace engine
    class _qgmOptiUpdate ;
    class _qgmOptiAggregation ;
    class qgmOptiMthMatchSelect;
+   class _qgmSelectorExprNode ;
 
    /// qgmBuilder can not be freed before sql operation done.
    class _qgmBuilder : public SDBObject
@@ -198,6 +199,15 @@ namespace engine
 
       INT32 _buildInCondition( const SQL_CON_ITR &root,
                                _qgmConditionNode *&condition ) ;
+
+      INT32 _addSelectorFromExpr( const SQL_CON_ITR &root,
+                                  _qgmOptiSelect *node,
+                                  const CHAR *alias,
+                                  UINT32 len ) ;
+
+      INT32 _buildExprTree( const SQL_CON_ITR &root,
+                            _qgmSelectorExprNode *exprNode,
+                            qgmDbAttr &attr ) ;
 
    private:
       _qgmPtrTable *_table ;

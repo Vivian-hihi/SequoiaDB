@@ -316,7 +316,7 @@ namespace engine
       {
          try
          {
-            if ( _selector.hasAlias() )
+            if ( _selector.needSelect() )
             {
                rc = _selector.select( BSONObj(getMoreRes), next.obj ) ;
                if ( SDB_OK != rc )

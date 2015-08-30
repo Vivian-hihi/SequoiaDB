@@ -45,6 +45,7 @@
 #include "../bson/bson.h"
 #include "mthCommon.hpp"
 #include "utilStr.hpp"
+#include "qgmSelectorExpr.hpp"
 
 using namespace bson ;
 
@@ -239,6 +240,7 @@ namespace engine
       qgmDbAttr value ;
       qgmField alias ;
       INT32 type ;
+      _qgmSelectorExpr expr ;
 
       _qgmOpField()
       :type(SQL_GRAMMAR::SQLMAX)
@@ -247,9 +249,9 @@ namespace engine
       _qgmOpField( const _qgmOpField &field )
       :value( field.value ),
        alias( field.alias ),
-       type( field.type )
+       type( field.type ),
+       expr( field.expr )
       {
-
       }
 
       _qgmOpField &operator=( const _qgmOpField &field )
@@ -257,6 +259,7 @@ namespace engine
          value = field.value ;
          alias = field.alias ;
          type = field.type ;
+         expr = field.expr ;
          return *this ;
       }
 
@@ -271,7 +274,7 @@ namespace engine
       {
          return value == field.value
                 && alias == field.alias
-                && type == field.type ;
+                && type == field.type ; 
       }
 
 
@@ -298,6 +301,10 @@ namespace engine
          if ( !alias.empty() )
          {
             ss << ",alias:" << alias.toString() ;
+         }
+         if ( !expr.isEmpty() )
+         {
+            ss << ",expr:" << expr.toString() ;
          }
          return ss.str() ;
       }
@@ -356,6 +363,48 @@ namespace engine
       QGM_JOIN_ACHIEVE_NL = 0,
       QGM_JOIN_ACHIEVE_HASH,
       QGM_JOIN_ACHIEVE_MERGE,
+   } ;
+
+   class _qgmValueTuple
+   {
+   public:
+      _qgmValueTuple( CHAR *data, UINT32 len, BOOLEAN format ) ;
+      ~_qgmValueTuple() ;
+
+   private:
+      struct _tuple
+      {
+         UINT32 len ;
+         INT16 type ;
+         UINT16 flag ;
+      } ;
+
+   public:
+      INT32 setValue( UINT32 dataLen, const void *data, INT16 type ) ;
+
+      const void *getValue() const
+      {
+         return NULL == _row ?
+                NULL :
+                ( const void * )( _row + sizeof( _tuple ) ) ;
+      }
+
+      UINT32 getValueLen() const
+      {
+         return NULL == _row ?
+                0 :
+                ( ( _tuple * )_row )->len - sizeof( _tuple ) ;
+      }
+
+      INT16 getValueType() const
+      {
+         return NULL == _row ?
+                ( INT16 )bson::EOO :
+                ( ( _tuple * )_row )->type ;
+      }
+   private:
+      CHAR *_row ;
+      UINT32 _len ;
    } ;
 }
 

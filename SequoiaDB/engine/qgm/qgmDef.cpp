@@ -382,4 +382,58 @@ namespace engine
       return NULL == next ?
              this->obj.getOwned() : qgmMerge( obj, next->mergedObj() ) ;
    }
+
+////////////////// _qgmValueTuple
+   _qgmValueTuple::_qgmValueTuple( CHAR *data, UINT32 len, BOOLEAN format )
+   :_row( data ),
+    _len( len )
+   {
+      SDB_ASSERT( NULL != _row, "can not be null" ) ;
+      SDB_ASSERT( sizeof( _tuple ) <= _len, "impossible" ) ;
+      if ( format )
+      {
+         _tuple *t = ( _tuple * )_row ;
+         t->len = 0 ;
+         t->type = ( INT16 )bson::EOO ;
+         t->flag = 0 ;
+      }
+   }
+
+   _qgmValueTuple::~_qgmValueTuple()
+   {
+
+   }
+
+   INT32 _qgmValueTuple::setValue( UINT32 dataLen, const void *data, INT16 type )
+   {
+      INT32 rc = SDB_OK ;
+      _tuple *t = NULL ;
+
+      if ( NULL == _row )
+      {
+         PD_LOG( PDERROR, "row data is null" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+      else if ( _len < ( dataLen + sizeof( _tuple ) ) )
+      {
+         PD_LOG( PDERROR, "size of row buffer is not enough for data" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      t = ( _tuple * )_row ;
+      t->len = sizeof( _tuple ) + dataLen ;
+      t->type = type ;
+      if ( 0 < dataLen )
+      {
+         ossMemcpy( _row + sizeof( _tuple ),
+                    data, dataLen ) ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
 }
+

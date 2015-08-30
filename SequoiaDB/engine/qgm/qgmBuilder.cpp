@@ -68,6 +68,7 @@
 #include "qgmPlHashJoin.hpp"
 #include "pdTrace.hpp"
 #include "qgmTrace.hpp"
+#include "qgmSelectorExprNode.hpp"
 
 #define QGM_ALIAS_ASSERT( alias, len ) \
         SDB_ASSERT( ((NULL != alias) && (0 != len))\
@@ -95,6 +96,15 @@ namespace engine
    {
       SDB_ASSERT( NULL != _table && NULL != _param,
                   "impossible" ) ;
+   }
+
+   BOOLEAN isMathOp( INT32 type )
+   {
+      return ( SQL_GRAMMAR::ADD == type ||
+               SQL_GRAMMAR::SUB == type ||
+               SQL_GRAMMAR::MULTIPLY == type ||
+               SQL_GRAMMAR::DIVIDE == type ||
+               SQL_GRAMMAR::MOD == type ) ;
    }
 
    _qgmBuilder::~_qgmBuilder()
@@ -1899,14 +1909,6 @@ namespace engine
          {
             goto error ;
          }
-         if ( NULL != alias )
-         {
-            rc = _table->getField( alias, len, func.alias ) ;
-            if ( SDB_OK != rc )
-            {
-               goto error ;
-            }
-         }
 
          if ( NULL != alias )
          {
@@ -1919,6 +1921,15 @@ namespace engine
          node->_selector.push_back( func ) ;
          node->_hasFunc = TRUE ;
       }
+      else if ( isMathOp( type ) )
+      {
+         rc = _addSelectorFromExpr( root, node, alias, len ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to add selector from expr:%d", rc ) ;
+            goto error ;
+         }
+      } 
       else
       {
          PD_LOG( PDERROR, "invalid type:%d", type ) ;
@@ -2929,5 +2940,177 @@ namespace engine
       goto done ;
    }
 
+   /// PD_TRACE_DECLARE_FUNCTION( SDB__QGMBUILDER__ADDSELECTORFROMEXPR, "_qgmBuilder::_addSelectorFromExpr" )
+   INT32 _qgmBuilder::_addSelectorFromExpr( const SQL_CON_ITR &root,
+                                            _qgmOptiSelect *node,
+                                            const CHAR *alias,
+                                            UINT32 len )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__QGMBUILDER__ADDSELECTORFROMEXPR ) ;
+      qgmOpField opField ;
+      /// destructed when goto error or destruction of qgmSelectorExpr
+      _qgmSelectorExprNode *exprRoot = new(std::nothrow) _qgmSelectorExprNode() ;
+      if ( NULL == exprRoot )
+      {
+         PD_LOG( PDERROR, "failed to allocate mem." ) ;
+         rc = SDB_OOM ;
+         goto error ;
+      }
+
+      rc = _buildExprTree( root, exprRoot, opField.value ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to build expr tree:%d", rc ) ;
+         goto error ;
+      }
+
+      opField.expr.set( exprRoot ) ;
+      exprRoot = NULL ;
+
+      if ( NULL != alias )
+      {
+         rc = _table->getField( alias, len, opField.alias ) ;
+         if ( SDB_OK != rc )
+         {
+            goto error ;
+         }
+      }
+
+      node->_selector.push_back( opField ) ;
+   done:
+      PD_TRACE_EXITRC( SDB__QGMBUILDER__ADDSELECTORFROMEXPR, rc ) ;
+      return rc ;
+   error:
+      SAFE_OSS_DELETE( exprRoot ) ;
+      goto done ;
+   }
+
+   /// PD_TRACE_DECLARE_FUNCTION( SDB__QGMBUILDER__BUILDEXPRTREE, "_qgmBuilder::_buildExprTree" )
+   INT32 _qgmBuilder::_buildExprTree( const SQL_CON_ITR &root,
+                                      _qgmSelectorExprNode *exprNode,
+                                      qgmDbAttr &attr )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__QGMBUILDER__BUILDEXPRTREE ) ;
+      SDB_ASSERT( NULL != exprNode, "can not be null" ) ;
+      INT32 type = (INT32)(root->value.id().to_long()) ;
+      if ( isMathOp( type ) )
+      {
+         /// destructed in exprNode's destruction
+         _qgmSelectorExprNode *right = NULL ;
+         _qgmSelectorExprNode *left = NULL ;
+
+         PD_CHECK( 2 == root->children.size(),
+                   SDB_INVALIDARG,
+                   error, PDERROR,
+                   "invalid children size:%d",
+                   root->children.size() ) ;
+
+         exprNode->setType( type ) ;
+
+         left = new( std::nothrow ) _qgmSelectorExprNode() ;
+         if ( NULL == left )
+         {
+            PD_LOG( PDERROR, "failed to allocate mem." ) ;
+            rc = SDB_OOM ;
+            goto error ;
+         }
+         exprNode->setLeft( left ) ;
+
+         right = new( std::nothrow) _qgmSelectorExprNode() ;
+         if ( NULL == right )
+         {
+            PD_LOG( PDERROR, "failed to allocate mem." ) ;
+            rc = SDB_OOM ;
+            goto error ;
+         }
+         exprNode->setRight( right ) ;
+
+         rc = _buildExprTree( root->children.begin(),
+                              left, attr ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to build left tree:%d", rc ) ;
+            goto error ; 
+         }
+
+         rc = _buildExprTree( root->children.begin() + 1,
+                              right, attr ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to build left tree:%d", rc ) ;
+            goto error ;
+         }
+      }
+      else if ( SQL_GRAMMAR::DIGITAL == type )
+      {
+         BSONObjBuilder builder ;
+         BSONElement e ;
+         exprNode->setType( type ) ;
+         qgmField field ;
+         rc = _table->getField( root, field ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to get field:%d", rc ) ;
+            goto error ;
+         }
+
+         if ( !builder.appendAsNumber( "", field.toString() ) )
+         {
+            PD_LOG( PDERROR, "failed to cast [%s] to digital", field.toString().c_str() ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
+
+         e = builder.done().firstElement() ;
+         if ( NumberInt == e.type() ||
+              NumberLong == e.type() )
+         {
+            exprNode->setValue( ( INT64 )( e.numberLong() ) ) ;
+         }
+         else
+         {
+            exprNode->setValue( ( FLOAT64 )( e.numberDouble() ) ) ;
+         }
+      }
+      else if ( SQL_GRAMMAR::DBATTR == type )
+      {
+         qgmDbAttr field ;
+         exprNode->setType( type ) ;
+         rc = _table->getAttr( root, field ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to get field:%d", rc ) ;
+            goto error ;
+         }
+
+         if ( !attr.empty() )
+         {
+            if ( !( attr == field ) )
+            {
+               PD_LOG( PDERROR, "more than one field name exist in expr. [%s][%s]",
+                       attr.toString().c_str(), field.toString().c_str() ) ;
+               rc = SDB_INVALIDARG ;
+               goto error ;
+            }
+         }
+         else
+         {
+            attr = field ;
+         }
+      }
+      else
+      {
+         PD_LOG( PDERROR, "unexpected type:%d", type ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+   done:
+      PD_TRACE_EXITRC( SDB__QGMBUILDER__BUILDEXPRTREE, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
 }
 

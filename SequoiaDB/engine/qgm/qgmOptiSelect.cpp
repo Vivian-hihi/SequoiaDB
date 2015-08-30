@@ -69,7 +69,9 @@ namespace engine
 
    BOOLEAN _qgmOptiSelect::isEmpty()
    {
-      if ( QGM_OPTI_TYPE_SCAN == getType() || -1 != _limit || 0 != _skip )
+      if ( QGM_OPTI_TYPE_SCAN == getType() ||
+           -1 != _limit || 0 != _skip ||
+           hasExpr() )
       {
          return FALSE ;
       }
@@ -140,7 +142,7 @@ namespace engine
          // if  sub node is not join, and selectors has no field alias,
          // the selectors can be empty
          if ( QGM_OPTI_TYPE_JOIN != getSubNode(0)->getType() &&
-              0 == fieldAlias.size() )
+              0 == fieldAlias.size() && !hasExpr() )
          {
             _selector.clear() ;
          }
@@ -242,6 +244,11 @@ namespace engine
             if ( !(itr->alias.empty()) )
             {
                ss << ",alias:" << itr->alias.toString() ;
+            }
+
+            if ( !( itr->expr.isEmpty() ) )
+            {
+               ss << ", expr:" << itr->expr.toString() ;
             }
             ss << "}," ;
          }
@@ -729,6 +736,7 @@ namespace engine
                {
                   f.value.value.relegation().clear() ;
                   f.value.value.attr() = itr->alias ;
+                  f.value.expr = itr->expr ;
                }
 
                plan->_funcSelector.push_back( f ) ;
@@ -980,5 +988,22 @@ namespace engine
 
       PD_TRACE_EXITRC( SDB__QGMOPTISELECT__PARAMEXISTINSELECOTR, rc ) ;
       return rc ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMOPTISELECT_HASEXPR, "_qgmOptiSelect::hasExpr" )
+   BOOLEAN _qgmOptiSelect::hasExpr() const
+   {
+      BOOLEAN r = FALSE ;
+      qgmOPFieldVec::const_iterator itr = _selector.begin() ;
+      for ( ; itr != _selector.end(); ++itr )
+      {
+         if ( !( itr->expr.isEmpty() ) )
+         {
+            r = TRUE ;
+            break ;
+         }
+      }
+
+      return r ;
    }
 }

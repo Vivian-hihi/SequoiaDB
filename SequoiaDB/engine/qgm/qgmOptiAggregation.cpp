@@ -535,4 +535,23 @@ namespace engine
       goto done ;
    }
 
+   //PD_TRACE_DECLARE_FUNCTION( SDB__QGMOPTIAGGREGATION_HASEXPR, "_qgmOptiAggregation::hasExpr" 
+   BOOLEAN _qgmOptiAggregation::hasExpr() const
+   {
+      PD_TRACE_ENTRY( SDB__QGMOPTIAGGREGATION_HASEXPR ) ;
+      BOOLEAN r = FALSE ;
+      qgmAggrSelectorVec::const_iterator itr = _selector.begin() ;
+      for ( ; itr != _selector.end(); ++itr )
+      {
+         if ( SQL_GRAMMAR::DBATTR == itr->value.type &&
+              !( itr->value.expr.isEmpty() ) )
+         {
+            r = TRUE ;
+            break ;
+         }
+      }
+      PD_TRACE_EXIT( SDB__QGMOPTIAGGREGATION_HASEXPR ) ;
+      return r ;
+   }
+
 }

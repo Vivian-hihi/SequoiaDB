@@ -44,7 +44,7 @@
 namespace engine
 {
    _qgmSelector::_qgmSelector()
-   :_hasAlias( FALSE )
+   :_needSelect( FALSE )
    {
 
    }
@@ -70,8 +70,12 @@ namespace engine
             else
             {
                ss << "{value:" << itr->value.toString()
-                  << ",alias:" << itr->alias.toString()
-                 << "}," ;
+                  << ",alias:" << itr->alias.toString() ;
+               if ( !itr->expr.isEmpty() )
+               {
+                  ss << ",expr:" << itr->expr.toString() ;
+               }
+               ss  << "}," ;
             }
          }
          ss.seekp((INT32)ss.tellp()-1 ) ;
@@ -91,9 +95,10 @@ namespace engine
       for ( ; itr != op.end(); itr++ )
       {
          _selector.push_back( *itr ) ;
-         if ( !( itr->alias.empty() ) )
+         if ( !( itr->alias.empty() ) ||
+              !( itr->expr.isEmpty() ) )
          {
-            _hasAlias = TRUE ;
+            _needSelect = TRUE ;
          }
       }
       return rc ;
@@ -134,7 +139,7 @@ namespace engine
                   builder.appendNull( itr->alias.toString() ) ;
                }
             }
-            else
+            else if ( itr->expr.isEmpty() )
             {
                if ( itr->alias.empty() )
                {
@@ -143,6 +148,19 @@ namespace engine
                else
                {
                   builder.appendAs( ele, itr->alias.toString() ) ;
+               }
+            }
+            else
+            {
+               rc = _createValueWithExpr( ele,
+                                          itr->alias.empty() ?
+                                          ele.fieldName() :
+                                          itr->alias.toString().c_str(),
+                                          itr->expr, builder ) ;
+               if ( SDB_OK != rc )
+               {
+                  PD_LOG( PDERROR, "failed to create value from expr:%d", rc ) ;
+                  goto error ;
                }
             }
             }
@@ -206,13 +224,29 @@ namespace engine
                      builder.appendNull( itr->alias.toString() ) ;
                   }
                }
-               else if ( itr->alias.empty() )
+               else if ( itr->expr.isEmpty() )
                {
-                  builder.append( ele ) ;
+                  if ( itr->alias.empty() )
+                  {
+                     builder.append( ele ) ;
+                  }
+                  else
+                  {
+                     builder.appendAs( ele, itr->alias.toString() ) ;
+                  }
                }
                else
                {
-                  builder.appendAs( ele, itr->alias.toString() ) ;
+                  rc = _createValueWithExpr( ele,
+                                             itr->alias.empty() ?
+                                             ele.fieldName() :
+                                             itr->alias.toString().c_str(),
+                                             itr->expr, builder ) ;
+                  if ( SDB_OK != rc )
+                  {
+                     PD_LOG( PDERROR, "failed to create value from expr:%d", rc ) ;
+                     goto error ;
+                  }
                }
             }
 
@@ -248,4 +282,49 @@ namespace engine
 
       return builder.obj() ;
    }
+
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMSELECTOR__CREATEVALUEWITHEXPR, "_qgmSelector::_createValueWithExpr" )
+   INT32 _qgmSelector::_createValueWithExpr( const BSONElement &e,
+                                             const CHAR *fieldName,
+                                             const _qgmSelectorExpr &expr,
+                                             BSONObjBuilder &builder ) const
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__QGMSELECTOR__CREATEVALUEWITHEXPR ) ;
+      CHAR row[16] ;
+      _qgmValueTuple v( row, 16, TRUE ) ;
+      INT16 vType = 0 ;
+
+      if ( !e.isNumber() )
+      {
+         builder.appendNull( fieldName ) ;
+         goto done ;
+      }
+
+      rc = expr.getValue( e, v ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to get value from expr:%d", rc ) ;
+         goto error ;
+      }
+
+      vType = v.getValueType() ;
+      if ( ( INT16 )bson::EOO == vType )
+      {
+         builder.appendNull( fieldName ) ;
+      }
+      else if ( ( INT16 )bson::NumberLong == vType )
+      {
+         builder.appendIntOrLL( fieldName, *((INT64 *)(v.getValue() )) ) ;
+      }
+      else
+      {
+         builder.appendNumber( fieldName, *((FLOAT64 *)(v.getValue() ) ) ) ;
+      }
+   done:
+      PD_TRACE_EXITRC( SDB__QGMSELECTOR__CREATEVALUEWITHEXPR, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   } 
 }

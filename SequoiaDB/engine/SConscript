@@ -484,7 +484,9 @@ qgmFiles = [
       "qgm/qgmOptiSplit.cpp",
       "qgm/qgmPlSplitBy.cpp",
       "qgm/qgmPlHashJoin.cpp",
-      "qgm/qgmHashTable.cpp"
+      "qgm/qgmHashTable.cpp",
+      "qgm/qgmSelectorExpr.cpp",
+      "qgm/qgmSelectorExprNode.cpp"
       ]
 
 spdFiles = [

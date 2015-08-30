@@ -175,6 +175,22 @@ namespace engine
    };
    typedef _optQgmAggrFilterSty optQgmAggrFilterSty ;
 
+   class _optQgmFilterScanSty : public optQgmStrategyBase
+   {
+   public:
+      _optQgmFilterScanSty() {}
+      virtual ~_optQgmFilterScanSty() {}
+
+   public:
+      virtual INT32  calcResult( qgmOprUnit *oprUnit,
+                                    qgmOptiTreeNode *curNode,
+                                    qgmOptiTreeNode *subNode,
+                                    OPT_QGM_SS_RESULT &result ) ;
+
+      virtual const CHAR* strategyName() const ;
+   } ;
+   typedef class _optQgmFilterScanSty optQgmFilterScanSty ;
+
    /////////////////////////////////////////////////////////////////////////////
    // tool functions
    /////////////////////////////////////////////////////////////////////////////

@@ -65,6 +65,8 @@ namespace engine
       virtual string toString() const ;
       virtual INT32 handleHints( QGM_HINS &hints ) ;
 
+      BOOLEAN hasExpr() const ;
+
    protected:
       virtual INT32 _extend( _qgmOptiTreeNode *&exNode ) ;
       virtual UINT32 _getFieldAlias( qgmOPFieldPtrVec &fieldAlias,
