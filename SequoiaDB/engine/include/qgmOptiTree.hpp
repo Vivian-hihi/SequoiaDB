@@ -138,6 +138,8 @@ namespace engine
          const qgmField& getDispatchAlias() const { return _dispatchAlias ; }
          void   clearDispatchAlias() { _dispatchAlias.clear() ; }
 
+         BOOLEAN hasExpr() const ;
+
       protected:
          virtual void   _toString( stringstream &ss ) const ;
          virtual INT32  _replaceRele( const qgmField &newRele ) ;
