@@ -90,7 +90,7 @@ namespace import
    #define IMP_EXPLAIN_COLLECTSPACE     "collection space name"
    #define IMP_EXPLAIN_COLLECTION       "collection name"
    #define IMP_EXPLAIN_BATCHSIZE        "batch insert records number, minimun 1, maximum 100000, default: 100"
-   #define IMP_EXPLAIN_FILENAME         "input files name, multiple files or directories must be separated by ',', use standard input if both --exec and --file are not specified"
+   #define IMP_EXPLAIN_FILENAME         "input files name, multiple files or directories must be separated by ',', don't support subdirectories recursively. use standard input if both --exec and --file are not specified"
    #define IMP_EXPLAIN_TYPE             "type of record to load, default: csv (json,csv)"
    #define IMP_EXPLAIN_FIELDS           "field name, separated by comma (',')(e.g. \"--fields name,age\"). "\
                                         "field type and default value can be specified for csv input (e.g. \"--fields name string,age int default 18\")"
