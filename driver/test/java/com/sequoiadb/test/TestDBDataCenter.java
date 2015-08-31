@@ -28,6 +28,7 @@ import com.sequoiadb.testdata.SDBTestHelper;
 public class TestDBDataCenter {
     private static Sequoiadb sdb;
     private static DBDataCenter dc;
+    private static boolean isCluster = false;
 
     @BeforeClass
     public static void setConnBeforeClass() throws Exception {
@@ -43,17 +44,27 @@ public class TestDBDataCenter {
     public void setUp() throws Exception {
         // sdb
         sdb = new Sequoiadb(Constants.COOR_NODE_CONN, "", "");
+        isCluster = Constants.isCluster();
+        if(!isCluster){
+            return;
+        }
         dc  = sdb.getDataCenter();
     }
 
     @After
     public void tearDown() throws Exception {
+        if(!isCluster){
+            return;
+        }
         dc.activate();
         sdb.disconnect();
     }
 
     @Test
     public void testGetDetail() {
+        if(!isCluster){
+            return;
+        }
         String name = dc.getName();
         BSONObject detail = dc.getDetail();
         SDBTestHelper.println("name=" + name);
@@ -62,6 +73,9 @@ public class TestDBDataCenter {
     
     @Test
     public void testActivate() {
+        if(!isCluster){
+            return;
+        }
         BSONObject detail = dc.getDetail();
         Boolean isActive  = (Boolean)detail.get("Activated");
         assertEquals(isActive, Boolean.TRUE);
@@ -75,6 +89,9 @@ public class TestDBDataCenter {
     
     @Test
     public void testImage() {
+        if(!isCluster){
+            return;
+        }
 //        SDBTestHelper.println("before create image");
 //        BSONObject detail = dc.getDetail();
 //        SDBTestHelper.println(detail.toString());
@@ -132,6 +149,9 @@ public class TestDBDataCenter {
     
     @Test
     public void testReadonly() {
+        if(!isCluster){
+            return;
+        }
         SDBTestHelper.println("before disable readonly");
         BSONObject detail = dc.getDetail();
         SDBTestHelper.println(detail.toString());
