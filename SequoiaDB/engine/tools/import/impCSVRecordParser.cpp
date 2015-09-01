@@ -3252,6 +3252,18 @@ namespace import
 
       bson_init(&obj);
 
+      if (!_hasId)
+      {
+         bson_oid_t oid;
+         bson_oid_gen(&oid);
+         rc = bson_append_oid(&obj, RECORD_ID_NAME, &oid);
+         if (SDB_OK != rc)
+         {
+            PD_LOG(PDERROR, "failed to append record id, rc=%d", rc);
+            goto error;
+         }
+      }
+
       while (len > 0 && fieldCount < fieldDefNum)
       {
          _skipSpace(&str, len);
@@ -3401,18 +3413,6 @@ namespace import
          SDB_ASSERT(len == 0, "len must be 0");
          SDB_ASSERT(fieldCount == fieldDefNum,
                     "fieldCount must be equals to fieldDefNum");
-      }
-
-      if (!_hasId)
-      {
-         bson_oid_t oid;
-         bson_oid_gen(&oid);
-         rc = bson_append_oid(&obj, RECORD_ID_NAME, &oid);
-         if (SDB_OK != rc)
-         {
-            PD_LOG(PDERROR, "failed to append record id, rc=%d", rc);
-            goto error;
-         }
       }
 
       if (BSON_OK != bson_finish(&obj))
