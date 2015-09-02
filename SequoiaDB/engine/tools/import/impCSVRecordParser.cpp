@@ -2183,10 +2183,9 @@ namespace import
          len--;
       }
 
+      value.optionLen = str - value.option;
       if (len != 0)
       {
-         //*str = '\0';
-         value.optionLen = str - value.option;
          str++;
          len--;
          _skipSpace(&str, len);
@@ -2215,6 +2214,11 @@ namespace import
 
       SDB_ASSERT(NULL != data.str, "data.str can't be NULL");
       SDB_ASSERT(data.length > 0, "data.length must be greater than 0");
+
+      // terminate string
+      CHAR* term = str + data.length;
+      CHAR tmpch = *term;
+      *term = '\0';
 
       value.bin = NULL;
 
@@ -2323,6 +2327,8 @@ namespace import
       value.binLen = base64Len - 1;
 
    done:
+      // recovery string
+      *term = tmpch;
       return rc ;
    error:
       SAFE_OSS_FREE(value.bin);
