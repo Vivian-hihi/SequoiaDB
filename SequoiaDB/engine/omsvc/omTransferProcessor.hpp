@@ -35,6 +35,7 @@
 
 #include "pmdProcessor.hpp"
 #include "pmdRemoteSession.hpp"
+#include "omSdbConnector.hpp"
 #include <map>
 #include <string>
 
@@ -97,9 +98,10 @@ namespace engine
                                              pmdRemoteSessionMgr *rsManager,
                                              pmdRemoteSession *remoteSession ) ;
          INT32                         _sendMsg2Target( 
-                                                pmdRemoteSessionMgr *rsManager,
-                                                MsgRouteID &id, MsgHeader *msg, 
-                                                MsgHeader **result ) ;
+                                                     const omNodeInfo &nodeInfo, 
+                                                     MsgHeader *msg, 
+                                                     omSdbConnector **connector,
+                                                     MsgHeader **result ) ;
 
       private:
          list< _omNodeInfo >           _nodeList ;

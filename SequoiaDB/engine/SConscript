@@ -392,7 +392,8 @@ omsvcFiles = [
       "omsvc/omTaskManager.cpp",
       "omsvc/omRestSession.cpp",
       "omsvc/omTransferProcessor.cpp",
-      "omsvc/omContextTransfer.cpp"
+      "omsvc/omContextTransfer.cpp",
+      "omsvc/omSdbConnector.cpp"
       ]
 
 barFiles = [

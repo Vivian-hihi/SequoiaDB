@@ -44,6 +44,7 @@
 #include "msgAuth.hpp"
 #include "pmdTrace.hpp"
 #include "../bson/bson.h"
+#include "../bson/lib/md5.hpp"
 
 using namespace bson ;
 
@@ -93,12 +94,20 @@ namespace engine
                goto done ;
             }
          }
+         else if ( ossStrcasecmp( pSubCommand, OM_LOGIN_REQ ) == 0 )
+         {
+            rc = _processBusinessMsg( pAdaptor ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG_MSG( PDERROR, "login failed:rc=%d", rc ) ;
+                _sendOpError2Web( rc, pAdaptor, this, _pEDUCB ) ;
+                goto done ;
+            }
+         }
       }
 
-      pAdaptor->getHttpHeader( this, ( const CHAR * )OM_REST_HEAD_CLUSTERNAME, 
-                               &pClusterName ) ;
-      pAdaptor->getHttpHeader( this, 
-                               ( const CHAR * )OM_REST_HEAD_BUSINESSNAME, 
+      pAdaptor->getHttpHeader( this, OM_REST_HEAD_CLUSTERNAME, &pClusterName ) ;
+      pAdaptor->getHttpHeader( this, OM_REST_HEAD_BUSINESSNAME, 
                                &pBusinessName ) ;
       if ( ( NULL != pClusterName ) && ( NULL != pBusinessName ) )
       {
@@ -106,13 +115,7 @@ namespace engine
       }
       else
       {
-         rc = _processBusinessMsg( pAdaptor ) ;
-         if ( SDB_UNKNOWN_MESSAGE == rc )
-         {
-            pmdGetThreadEDUCB()->resetInfo( EDU_INFO_ERROR ) ;
-            // response is send in this function
-            rc = _processOMRestMsg( command, pFilePath ) ;
-         }
+         rc = _processOMRestMsg( command, pFilePath ) ;
       }
 
    done:
@@ -262,6 +265,8 @@ namespace engine
 
    INT32 _omRestSession::_getBusinessAccessNode( const CHAR *pClusterName,
                                                  const CHAR *pBusinessName,
+                                                 const CHAR *pSdbUser,
+                                                 const CHAR *pSdbPasswd,
                                                  list<omNodeInfo> &nodeList )
    {
       INT32 rc = SDB_OK ;
@@ -286,11 +291,25 @@ namespace engine
          goto error ;
       }
 
-      rc = _getBusinessAuth( pClusterName, pBusinessName, user, passwd ) ;
-      if ( SDB_OK != rc )
+      if ( NULL == pSdbUser || NULL == pSdbPasswd )
       {
-         PD_LOG( PDERROR, "get business auth failed:rc=%d", rc ) ;
-         goto error ;
+         md5::md5digest digest ;
+         string tmpPasswd ;
+         rc = _getBusinessAuth( pClusterName, pBusinessName, user, tmpPasswd ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "get business auth failed:rc=%d", rc ) ;
+            goto error ;
+         }
+      
+         md5::md5( ( const void * )tmpPasswd.c_str(), 
+                   tmpPasswd.length(), digest) ;
+         passwd = md5::digestToString( digest ) ;
+      }
+      else
+      {
+         user   = pSdbUser ;
+         passwd = pSdbPasswd ;
       }
 
       {
@@ -381,7 +400,12 @@ namespace engine
       MsgHeader *msg = NULL ;
       _omTransferProcessor *transProcessor = NULL ;
       list<omNodeInfo> nodeList ;
-      rc = _getBusinessAccessNode( pClusterName, pBusinessName, nodeList ) ;
+      const CHAR *pSdbUser      = NULL ;
+      const CHAR *pSdbPasswd    = NULL ;
+      pAdaptor->getHttpHeader( this, OM_REST_HEAD_SDBUSER, &pSdbUser ) ;
+      pAdaptor->getHttpHeader( this, OM_REST_HEAD_SDBPASSWD, &pSdbPasswd ) ;
+      rc = _getBusinessAccessNode( pClusterName, pBusinessName, 
+                                   pSdbUser, pSdbPasswd, nodeList ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "get business info failed:rc=%d", rc ) ;
@@ -434,7 +458,7 @@ namespace engine
          rtnContextBuf fetchOneBuff ;
          if ( -1 != contextID )
          {
-            _fetchOneContext( contextID, fetchOneBuff ) ;
+            rc = _fetchOneContext( contextID, fetchOneBuff ) ;
             if ( -1 != contextID )
             {
                // -1 != contextID means we have more data to send. 

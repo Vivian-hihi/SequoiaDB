@@ -36,6 +36,7 @@
 #include "rtnContext.hpp"
 #include "pmdRemoteSession.hpp"
 #include "pmdEDU.hpp"
+#include "omSdbConnector.hpp"
 #include <map>
 #include <string>
 
@@ -49,8 +50,7 @@ namespace engine
          _omContextTransfer( INT64 contextID, UINT64 eduID ) ;
          virtual ~_omContextTransfer() ;
 
-         INT32 open( pmdRemoteSessionMgr *rsmManager, 
-                     const MsgRouteID &routeID, MsgHeader *reply ) ;
+         INT32 open( omSdbConnector *conn, MsgHeader *reply ) ;
       public:
          virtual RTN_CONTEXT_TYPE getType () const ;
          virtual _dmsStorageUnit* getSU () ;
@@ -58,14 +58,12 @@ namespace engine
 
       protected:
          virtual INT32     _prepareData( _pmdEDUCB *cb ) ;
-         void              _clearRemoteSession( 
-                                             pmdRemoteSession *remoteSession ) ;
          INT32             _appendReply( MsgHeader *reply ) ;
          INT32             _getMoreFromRemote( _pmdEDUCB *cb ) ;
 
       protected:
-         pmdRemoteSessionMgr  *_rsmManager ;
-         MsgRouteID           _remoteRouteID ;
+         omSdbConnector       *_conn ;
+         MsgHeader            *_reply ;
          SINT64               _originalContextID ;
    } ;
 

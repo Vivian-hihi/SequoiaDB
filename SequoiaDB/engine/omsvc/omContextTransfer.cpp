@@ -44,17 +44,28 @@ namespace engine
    _omContextTransfer::_omContextTransfer( INT64 contextID, UINT64 eduID )
                       :_rtnContextBase( contextID, eduID )
    {
-      _rsmManager        = NULL ;
+      _conn              = NULL ;
+      _reply             = NULL ;
       _originalContextID = -1 ;
    }
 
    _omContextTransfer::~_omContextTransfer()
    {
+      if ( NULL != _conn )
+      {
+         _conn->close() ;
+         SDB_OSS_DEL _conn ;
+         _conn = NULL ;
+      }
 
+      if ( NULL != _reply )
+      {
+         SDB_OSS_FREE( _reply ) ;
+         _reply = NULL ;
+      }
    }
 
-   INT32 _omContextTransfer::open( pmdRemoteSessionMgr *rsmManager, 
-                                   const MsgRouteID &routeID, MsgHeader *reply )
+   INT32 _omContextTransfer::open( omSdbConnector *conn, MsgHeader *reply )
    {
       INT32 rc           = SDB_OK ;
       SINT32 flag        = SDB_OK ;
@@ -63,15 +74,15 @@ namespace engine
       UINT32 i           = 0;
       vector< BSONObj > objVec ;
 
-      if ( NULL == rsmManager )
+      _conn  = conn ;
+      _reply = reply ;
+
+      if ( NULL == conn || NULL == reply )
       {
          rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR, "rsmManager can't be null!" ) ;
+         PD_LOG( PDERROR, "rsmManager or reply can't be null!" ) ;
          goto error ;
       }
-
-      _rsmManager    = rsmManager ;
-      _remoteRouteID = routeID ;
 
       rc = msgExtractReply( (CHAR *)reply, &flag, &_originalContextID, 
                             &startFrom, &numReturned, objVec ) ;
@@ -136,16 +147,6 @@ namespace engine
       return NULL ; 
    }
 
-   void _omContextTransfer::_clearRemoteSession( 
-                                             pmdRemoteSession *remoteSession )
-   {
-      if ( NULL != remoteSession )
-      {
-         remoteSession->clearSubSession() ;
-         _rsmManager->removeSession( remoteSession ) ;
-      }
-   }
-
    INT32 _omContextTransfer::_appendReply( MsgHeader *reply )
    {
       INT32 rc           = SDB_OK ;
@@ -197,67 +198,23 @@ namespace engine
    INT32 _omContextTransfer::_getMoreFromRemote( _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
-      pmdRemoteSession *remoteSession = NULL ;
       MsgHeader *reply = NULL ;
-      VEC_SUB_SESSIONPTR subSessionVec ;
       UINT32 tid = cb->getTID() ;
 
       MsgOpGetMore msgReq ;
       msgFillGetMoreMsg( msgReq, tid, _originalContextID, -1, 0 ) ;
 
-      // create remote session
-      remoteSession = _rsmManager->addSession( cb, OM_WAIT_SCAN_RES_INTERVAL, 
-                                               NULL ) ;
-      if ( NULL == remoteSession )
-      {
-         rc = SDB_OOM ;
-         PD_LOG( PDERROR, "create remote session failed:rc=%d", rc ) ;
-         goto error ;
-      }
-
-      if ( NULL == remoteSession->addSubSession( _remoteRouteID.value ) )
-      {
-         rc = SDB_OOM ;
-         PD_LOG( PDERROR, "addSubSession failed:id=%ld", 
-                 _remoteRouteID.value ) ;
-         goto error ;
-      }
-
-      rc = remoteSession->sendMsg( (MsgHeader *) &msgReq ) ;
+      rc = _conn->sendMessage( (MsgHeader *) &msgReq ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "send msg to localhost's agent failed:rc=%d", rc ) ;
+         PD_LOG( PDERROR, "send msg failed:rc=%d", rc ) ;
          goto error ;
       }
 
-      rc = remoteSession->waitReply( TRUE, &subSessionVec ) ;
+      rc = _conn->recvMessage( &reply ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "wait reply failed:rc=%d", rc ) ;
-         goto error ;
-      }
-
-      if ( 1 != subSessionVec.size() )
-      {
-         rc = SDB_UNEXPECTED_RESULT ;
-         PD_LOG( PDERROR, "unexpected session size:size=%d", 
-                 subSessionVec.size() ) ;
-         goto error ;
-      }
-
-      if ( subSessionVec[0]->isDisconnect() )
-      {
-         rc = SDB_NETWORK_CLOSE ;
-         PD_LOG(PDERROR, "session disconnected:id=%s,rc=%d", 
-                routeID2String( subSessionVec[0]->getNodeID()).c_str(), rc ) ;
-         goto error ;
-      }
-
-      reply = subSessionVec[0]->getRspMsg() ;
-      if ( NULL == reply )
-      {
-         rc = SDB_UNEXPECTED_RESULT ;
-         PD_LOG( PDERROR, "receive null response:rc=%d", rc ) ;
+         PD_LOG( PDERROR, "receive reply failed:rc=%d", rc ) ;
          goto error ;
       }
 
@@ -267,18 +224,22 @@ namespace engine
          PD_LOG( PDERROR, "append reply failed:rc=%d", rc );
          goto error ;
       }
-      
+
    done:
-      _clearRemoteSession( remoteSession ) ;
       return rc ;
    error:
+      if ( NULL != reply )
+      {
+         SDB_OSS_FREE( reply ) ;
+         reply = NULL ;
+      }
       goto done ;
    }
 
    INT32 _omContextTransfer::_prepareData( _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
-      
+
       if ( !_isOpened )
       {
          rc = SDB_DMS_CONTEXT_IS_CLOSE ;
@@ -295,8 +256,7 @@ namespace engine
       rc = _getMoreFromRemote( cb ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "get more from remote failed:rc=%d,routeID=%s", rc,
-                 routeID2String( _remoteRouteID ).c_str() );
+         PD_LOG( PDERROR, "get more from remote failed:rc=%d", rc );
          goto error ;
       }
 

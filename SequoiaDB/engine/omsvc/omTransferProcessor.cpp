@@ -65,76 +65,65 @@ namespace engine
       }
    }
 
-   INT32 _omTransferProcessor::_sendMsg2Target( pmdRemoteSessionMgr *rsManager,
-                                                MsgRouteID &id, MsgHeader *msg, 
+   INT32 _omTransferProcessor::_sendMsg2Target( const omNodeInfo &nodeInfo,
+                                                MsgHeader *msg, 
+                                                omSdbConnector **connector,
                                                 MsgHeader **result )
    {
+      SDB_ASSERT( NULL != connector && NULL != result, "connector or result "
+      "can't be null" ) ;
       INT32 rc = SDB_OK ;
-      pmdRemoteSession *remoteSession = NULL ;
       MsgHeader *reply = NULL ;
-      VEC_SUB_SESSIONPTR subSessionVec ;
-
-      remoteSession = rsManager->addSession( pmdGetThreadEDUCB(), 
-                                             OM_WAIT_SCAN_RES_INTERVAL, NULL ) ;
-      if ( NULL == remoteSession )
+      omSdbConnector *conn = SDB_OSS_NEW omSdbConnector() ;
+      if ( NULL == conn )
       {
          rc = SDB_OOM ;
-         PD_LOG( PDERROR, "create remote session failed:rc=%d", rc ) ;
+         PD_LOG( PDERROR, "out of memory!" ) ;
          goto error ;
       }
 
-      if ( NULL == remoteSession->addSubSession( id.value ) )
+      rc = conn->init( nodeInfo.hostName, ossAtoi( nodeInfo.service.c_str() ), 
+                       nodeInfo.user, nodeInfo.passwd ) ;
+      if ( SDB_OK != rc )
       {
-         rc = SDB_OOM ;
-         PD_LOG( PDERROR, "addSubSession failed:id=%ld", id.value ) ;
+         PD_LOG( PDERROR, "initial the connection failed:host=%s,port=%s,rc=%d", 
+                 nodeInfo.hostName.c_str(), nodeInfo.service.c_str(), rc ) ;
          goto error ;
       }
 
-      rc = remoteSession->sendMsg( msg ) ;
+      rc = conn->sendMessage( msg ) ;
       if ( SDB_OK != rc )
       {  
-         PD_LOG( PDERROR, "send msg to target failed:id=%ld,rc=%d", 
-                 id.value, rc ) ;
+         PD_LOG( PDERROR, "send msg to target failed:host=%s,port=%s,rc=%d", 
+                 nodeInfo.hostName.c_str(), nodeInfo.service.c_str(), rc ) ;
          goto error ;
       }
 
-      rc = remoteSession->waitReply( TRUE, &subSessionVec ) ;
+      rc = conn->recvMessage( &reply ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "wait reply failed:rc=%d", rc ) ;
+         PD_LOG( PDERROR, "receive reply failed:rc=%d", rc ) ;
          goto error ;
       }
 
-      if ( 1 != subSessionVec.size() )
-      {
-         rc = SDB_UNEXPECTED_RESULT ;
-         PD_LOG( PDERROR, "unexpected session size:size=%d", 
-                 subSessionVec.size() ) ;
-         goto error ;
-      }
-
-      if ( subSessionVec[0]->isDisconnect() )
-      {
-         rc = SDB_NETWORK_CLOSE ;
-         PD_LOG(PDERROR, "session disconnected:id=%s,rc=%d", 
-                routeID2String( subSessionVec[0]->getNodeID()).c_str(), rc ) ;
-         goto error ;
-      }
-
-      reply = subSessionVec[0]->getRspMsg() ;
-      if ( NULL == reply )
-      {
-         rc = SDB_UNEXPECTED_RESULT ;
-         PD_LOG( PDERROR, "receive null response:rc=%d", rc ) ;
-         goto error ;
-      }
-
-      *result = reply ;
+      *connector = conn ;
+      *result    = reply ;
 
    done:
-      _clearRemoteSession( rsManager, remoteSession ) ;
       return rc ;
    error:
+      if ( NULL != conn )
+      {
+         conn->close() ;
+         SDB_OSS_DEL conn ;
+         conn = NULL ;
+      }
+      if ( NULL != reply )
+      {
+         SDB_OSS_FREE( reply ) ;
+         reply = NULL ;
+      }
+
       goto done ;
    }
 
@@ -143,14 +132,17 @@ namespace engine
                                            INT64 &contextID,
                                            BOOLEAN &needReply )
    {
-      pmdKRCB *pKrcb    = pmdGetKRCB();
-      SDB_RTNCB *pRtncb = pKrcb->getRTNCB();
-      INT32 rc          = SDB_OK ;
-      MsgHeader *result = NULL ;
+      pmdKRCB *pKrcb       = pmdGetKRCB();
+      SDB_RTNCB *pRtncb    = pKrcb->getRTNCB();
+      INT32 rc             = SDB_OK ;
+      omSdbConnector *conn = NULL ;
+      MsgHeader *result    = NULL ;
       rtnContext *pContext = NULL ;
       omManager *om = sdbGetOMManager() ;
       MsgRouteID routeID ;
       _omContextTransfer *pTmpContext = NULL ;
+
+      contextID = -1 ;
       list< omNodeInfo >::iterator iter = _nodeList.begin() ;
 
       if ( _nodeList.size() <= 0 )
@@ -163,9 +155,8 @@ namespace engine
 
       while ( iter != _nodeList.end() )
       {
-         contextID = -1 ;
          routeID = om->updateAgentInfo( iter->hostName, iter->service ) ;
-         rc = _sendMsg2Target( om->getRSManager(), routeID, msg, &result ) ;
+         rc = _sendMsg2Target( *iter, msg, &conn, &result ) ;
          if ( SDB_OK == rc )
          {
             break ;
@@ -190,7 +181,8 @@ namespace engine
                    rc ) ;
 
       pTmpContext = ( _omContextTransfer *)pContext ;
-      rc = pTmpContext->open( om->getRSManager(), routeID, result ) ;
+      //  conn & result will delete in destructor _omContextTransfer
+      rc = pTmpContext->open( conn, result ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "open context failed:rc=%d", rc ) ;
@@ -204,6 +196,20 @@ namespace engine
       {
          pRtncb->contextDelete( contextID, eduCB() ) ;
          contextID = -1 ;
+      }
+      else
+      {
+         if ( NULL != conn )
+         {
+            conn->close() ;
+            SDB_OSS_DEL conn ;
+            conn = NULL ;
+         }
+         if ( NULL != result )
+         {
+            SDB_OSS_FREE( result ) ;
+            result = NULL ;
+         }
       }
       goto done ;
    }

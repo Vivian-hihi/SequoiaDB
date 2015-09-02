@@ -46,6 +46,9 @@ using namespace bson ;
 namespace engine
 {
 
+   #define  OM_REST_HEAD_SDBUSER         "SdbUser"
+   #define  OM_REST_HEAD_SDBPASSWD       "SdbPasswd"
+
    class _dpsLogWrapper ;
    class _SDB_RTNCB ;
    class restAdaptor ;
@@ -198,6 +201,7 @@ namespace engine
          INT32             _processBusinessMsg( restAdaptor *pAdaptor ) ;
          INT32             _translateMSG( restAdaptor *pAdaptor,
                                           MsgHeader **msg ) ;
+         INT32             _checkAuth( restAdaptor *pAdaptor ) ;
       protected:
          httpConnection    _restConn ;
          CHAR*             _pFixBuff ;

@@ -43,6 +43,7 @@
 #include "msgAuth.hpp"
 #include "pmdTrace.hpp"
 #include "../bson/bson.h"
+#include "authCB.hpp"
 
 using namespace bson ;
 
@@ -368,6 +369,8 @@ namespace engine
       rtnContext *pContext = _pRTNCB->contextFind( contextID ) ;
       if ( NULL == pContext )
       {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "can't fine context,contextID=%u", rc, contextID ) ;
          contextID = -1 ;
       }
       else
@@ -376,17 +379,21 @@ namespace engine
          if ( rc || pContext->eof() )
          {
             _pRTNCB->contextDelete( contextID, _pEDUCB ) ;
-            contextID = -1 ;
             if ( SDB_DMS_EOC != rc )
             {
                PD_LOG( PDERROR, "getmore failed:rc=%d,contextID=%u", rc, 
                        contextID ) ;
+               goto error ;
             }
          }
       }
 
       rc = SDB_OK ;
+   done:
       return rc ;
+   error:
+      contextID = -1 ;
+      goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_PMDRESTSN_PROMSG, "_pmdRestSession::_processMsg" )
@@ -431,6 +438,34 @@ namespace engine
       PD_TRACE_EXITRC ( SDB_PMDRESTSN_PROMSG, rc );
       return rc ;
    }
+
+   INT32 _pmdRestSession::_checkAuth( restAdaptor *pAdaptor )
+   {
+      INT32 rc = SDB_OK ;
+      const CHAR *pUserName = NULL ;
+      const CHAR *pPasswd   = NULL ;
+      pAdaptor->getHttpHeader( this, OM_REST_HEAD_SDBUSER, &pUserName ) ;
+      pAdaptor->getHttpHeader( this, OM_REST_HEAD_SDBPASSWD, &pPasswd ) ;
+      if ( NULL != pUserName && NULL != pPasswd )
+      {
+         BSONObj bsonAuth = BSON( SDB_AUTH_USER << pUserName 
+                                  << SDB_AUTH_PASSWD << pPasswd ) ;
+         if ( !getClient()->isAuthed() )
+         {
+            rc = getClient()->authenticate( pUserName, pPasswd ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG_MSG( PDERROR, "authenticate failed:rc=%d", rc ) ;
+               goto error ;
+            }
+         }
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+   
    INT32 _pmdRestSession::_processBusinessMsg( restAdaptor *pAdaptor ) 
    {
       INT32 rc        = SDB_OK ;
@@ -448,6 +483,14 @@ namespace engine
          }
 
          // if SDB_UNKNOWN_MESSAGE == rc, we should try _processOMRestMsg
+         goto error ;
+      }
+
+      rc = _checkAuth( pAdaptor ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "check auth failed:rc=%d", rc ) ;
+         _sendOpError2Web( rc, pAdaptor, this, eduCB() ) ;
          goto error ;
       }
 
