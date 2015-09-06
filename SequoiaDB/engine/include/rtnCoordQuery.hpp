@@ -126,6 +126,25 @@ namespace engine
                        rtnSendOptions &options,
                        rtnProcessResult &result ) ;
 
+      BOOLEAN _isUpdate( const BSONObj &hint ) ;
+
+      INT32 _generateNewHint( const CoordCataInfoPtr &cataInfo,
+                              const BSONObj &selector,
+                              const BSONObj &hint, BSONObj &newHint,
+                              BOOLEAN &isChanged, pmdEDUCB *cb ) ;
+
+      INT32 _generateShardUpdator( const CoordCataInfoPtr &cataInfo,
+                                   const BSONObj &selector,
+                                   const BSONObj &updator, BSONObj &newUpdator,
+                                   BOOLEAN &isChanged, pmdEDUCB *cb ) ;
+
+      INT32 _saveMSG( MsgHeader *msg, MsgOpQuery *query ) ;
+
+      INT32 _restoreMSG( MsgHeader **msg, MsgOpQuery **query ) ;
+
+      INT32 _buildNewHintMsg( const CHAR *msg, const BSONObj &newHint,
+                              CHAR *&newMsg ) ;
+
    protected:
       virtual INT32              _prepareCLOp( CoordCataInfoPtr &cataInfo,
                                                rtnSendMsgIn &inMsg,
@@ -160,6 +179,10 @@ namespace engine
                                                 netMultiRouteAgent *pRouteAgent,
                                                 pmdEDUCB *cb,
                                                 rtnProcessResult &result ) ;
+
+   private:
+      MsgHeader                  *_savedMSG ;
+      MsgOpQuery                 *_savedQuery ;
 
    };
 

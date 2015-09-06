@@ -345,7 +345,7 @@ namespace engine
    error:
       if ( pBlock )
       {
-         for ( INT32 i = 0 ; i < pBlock->size() ; ++i )
+         for ( UINT32 i = 0 ; i < pBlock->size() ; ++i )
          {
             cb->releaseBuff( (*pBlock)[ i ] ) ;
          }
@@ -367,7 +367,7 @@ namespace engine
       vector<CHAR*> *pBlock = ( vector<CHAR*>* )itPtr ;
       if ( NULL != pBlock )
       {
-         for ( INT32 i = 0 ; i < pBlock->size() ; ++i )
+         for ( UINT32 i = 0 ; i < pBlock->size() ; ++i )
          {
             cb->releaseBuff( (*pBlock)[ i ] ) ;
          }
@@ -443,6 +443,137 @@ namespace engine
          contextID = pContext->contextID() ;
       }
 
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   BOOLEAN rtnCoordQuery::_isUpdate( const BSONObj &hint )
+   {
+      BSONObj updator ;
+      BSONObj newUpdator ;
+      BSONElement modifierEle ;
+      BSONObj modifier ;
+
+      modifierEle = hint.getField( FIELD_NAME_MODIFY ) ;
+      if ( Object != modifierEle.type() )
+      {
+         return FALSE ;  
+      }
+
+      modifier = modifierEle.Obj() ;
+
+      BSONElement updatorEle = modifier.getField( FIELD_NAME_OP_UPDATE ) ;
+      if ( Object != updatorEle.type() )
+      {
+         return FALSE ;  
+      }
+
+      return TRUE ;
+   }
+
+   INT32 rtnCoordQuery::_generateNewHint( const CoordCataInfoPtr &cataInfo,
+                                          const BSONObj &selector,
+                                          const BSONObj &hint, BSONObj &newHint,
+                                          BOOLEAN &isChanged, pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj updator ;
+      BSONObj newUpdator ;
+      BSONElement modifierEle ;
+      BSONObj modifier ;
+
+      modifierEle = hint.getField( FIELD_NAME_MODIFY ) ;
+      SDB_ASSERT( Object == modifierEle.type(), 
+                  "modifierELe must be an Object" ) ;
+
+      modifier = modifierEle.Obj() ;
+
+      BSONElement updatorEle = modifier.getField( FIELD_NAME_OP_UPDATE ) ;
+      SDB_ASSERT( Object == updatorEle.type(), "updatorEle must be an Object" ) ;
+      updator = updatorEle.Obj() ;
+
+      rc = _generateShardUpdator( cataInfo, selector, updator, newUpdator, 
+                                  isChanged, cb ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "kick shardingkey for updator failed:rc=%d" ) ;
+         goto error ;
+      }
+
+      if ( isChanged )
+      {
+         // new modifier
+         BSONObj filterUpdate ;
+         BSONObjBuilder modifierBuilder ;
+         BSONObj tmpModifier ;
+         filterUpdate = BSON( FIELD_NAME_OP_UPDATE << 1 ) ;
+         tmpModifier  = modifier.filterFieldsUndotted( filterUpdate, false ) ;
+         modifierBuilder.appendElements( tmpModifier ) ;
+         modifierBuilder.append( FIELD_NAME_OP_UPDATE, newUpdator ) ;
+
+         BSONObj newModifier = modifierBuilder.obj() ;
+
+         // new hint
+         BSONObj filterModify ;
+         BSONObjBuilder hintBuilder ;
+         BSONObj tmpHint ;
+         filterModify = BSON( FIELD_NAME_MODIFY << 1 ) ;
+         tmpHint      = hint.filterFieldsUndotted( filterModify, false ) ;
+         hintBuilder.appendElements( tmpHint ) ;
+         hintBuilder.append( FIELD_NAME_MODIFY, newModifier ) ;
+
+         newHint = hintBuilder.obj() ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 rtnCoordQuery::_generateShardUpdator( const CoordCataInfoPtr &cataInfo,
+                                               const BSONObj &selector,
+                                               const BSONObj &updator,
+                                               BSONObj &newUpdator,
+                                               BOOLEAN &isChanged, 
+                                               pmdEDUCB *cb )
+   {
+      INT32 rc               = SDB_OK ;
+      BOOLEAN hasShardingKey = FALSE ;
+      rtnCoordShardKicker shardKicker ;
+
+      newUpdator = updator ;
+      rc = shardKicker.kickShardingKey( cataInfo, updator, newUpdator, 
+                                        hasShardingKey ) ;
+      PD_RC_CHECK( rc, PDERROR, "Update failed, failed to kick the "
+                   "sharding-key field(rc=%d)", rc ) ;
+
+      if ( cataInfo->isMainCL() )
+      {
+         INT32 rcTmp = SDB_OK ;
+         BSONObj newSubObj ;
+         CoordSubCLlist subCLList ;
+         rcTmp = cataInfo->getMatchSubCLs( selector, subCLList ) ;
+         if ( rcTmp )
+         {
+            rc = rcTmp ;
+            PD_LOG( PDERROR,"Failed to get match sub-collection:rc=%d", 
+                    rcTmp ) ;
+            goto error ;
+         }
+
+         rc = shardKicker.kickShardingKeyForSubCL( subCLList, newUpdator, 
+                                                   newSubObj,
+                                                   hasShardingKey, cb ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                      "Failed to kick the sharding-key field "
+                      "for sub-collection, rc: %d", rc ) ;
+         newUpdator = newSubObj ;
+      }
+
+      isChanged = hasShardingKey ;
    done:
       return rc ;
    error:
@@ -525,8 +656,10 @@ namespace engine
       MsgOpQuery *pQueryMsg   = ( MsgOpQuery* )pMsg ;
       SDB_RTNCB *pRtncb       = pmdGetKRCB()->getRTNCB() ;
       CHAR *pNewMsg           = NULL ;
+      CHAR *pFindAndModifyMsg = NULL ;
       BOOLEAN needReset       = FALSE ;
 
+      BOOLEAN isUpdate        = FALSE ;
       INT32 flags             = 0 ;
       CHAR *pCollectionName   = NULL ;
       INT64 numToSkip         = 0 ;
@@ -534,14 +667,16 @@ namespace engine
       CHAR *pQuery            = NULL ;
       CHAR *pFieldSelector    = NULL ;
       CHAR *pOrderBy          = NULL ;
+      CHAR *pHint             = NULL ;
 
       BSONObj objQuery ;
       BSONObj objSelector ;
       BSONObj objOrderby ;
+      BSONObj objHint ;
 
       rc = msgExtractQuery( (CHAR*)pMsg, &flags, &pCollectionName,
                             &numToSkip, &numToReturn, &pQuery,
-                            &pFieldSelector, &pOrderBy, NULL ) ;
+                            &pFieldSelector, &pOrderBy, &pHint ) ;
       PD_RC_CHECK( rc, PDERROR, "Extract query msg failed, rc: %d", rc ) ;
 
       try
@@ -552,6 +687,7 @@ namespace engine
          }
          objSelector = BSONObj( pFieldSelector ) ;
          objOrderby = BSONObj( pOrderBy ) ;
+         objHint = BSONObj( pHint ) ;
       }
       catch( std::exception &e )
       {
@@ -634,9 +770,39 @@ namespace engine
          ++sendOpt._retryTimes ;
       }
 
+      //e.g. objHint = {"$Modify":{"OP":"update", "Update":{"$set":{a:1}} } }
+      isUpdate = _isUpdate( objHint ) ;
+      _saveMSG( inMsg._pMsg, pQueryMsg ) ;
    retry:
       do
       {
+         _restoreMSG( &inMsg._pMsg, &pQueryMsg ) ;
+         SAFE_OSS_FREE( pFindAndModifyMsg ) ;
+         if ( isUpdate && cataInfo->isSharded() )
+         {
+            //kick shardingKey
+            BOOLEAN isChanged = FALSE ;
+            BSONObj newHint ;
+            rc = _generateNewHint( cataInfo, objSelector, objHint, newHint,
+                                   isChanged, cb ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "generate new hint failed:rc=%d", rc ) ;
+               goto error ;
+            }
+            if ( isChanged )
+            {
+               rc = _buildNewHintMsg( (const CHAR*)inMsg._pMsg, newHint, 
+                                      pFindAndModifyMsg ) ;
+               if ( SDB_OK != rc )
+               {
+                  PD_LOG( PDERROR, "Failed to build new msg: %d", rc ) ;
+                  goto error ;
+               }
+               pQueryMsg   = (MsgOpQuery *)pFindAndModifyMsg ;
+               inMsg._pMsg = (MsgHeader*)pFindAndModifyMsg ;
+            }
+         }
          pQueryMsg->version = cataInfo->getVersion() ;
 
          if ( cataInfo->isMainCL() )
@@ -686,6 +852,7 @@ namespace engine
       {
          SDB_OSS_FREE( pNewMsg ) ;
       }
+      SAFE_OSS_FREE( pFindAndModifyMsg ) ;
       if ( pSucGrpLst )
       {
          *pSucGrpLst = result._sucGroupLst ;
@@ -704,6 +871,78 @@ namespace engine
          contextID = -1 ;
          *pContext = NULL ;
       }
+      goto done ;
+   }
+
+   INT32 rtnCoordQuery::_saveMSG( MsgHeader *msg, MsgOpQuery *query )
+   {
+      _savedMSG   = msg ;
+      _savedQuery = query ;
+      return SDB_OK ;
+   }
+
+   INT32 rtnCoordQuery::_restoreMSG( MsgHeader **msg, MsgOpQuery **query )
+   {
+      *msg   = _savedMSG ;
+      *query = _savedQuery ;
+      return SDB_OK ;
+   }
+
+   INT32 rtnCoordQuery::_buildNewHintMsg( const CHAR *msg,
+                                          const BSONObj &newHint,
+                                          CHAR *&newMsg )
+   {
+      INT32 rc = SDB_OK ;
+      INT32 flag = 0;
+      CHAR *pCollectionName = NULL;
+      SINT64 numToSkip = 0;
+      SINT64 numToReturn = 0;
+      CHAR *pQuery = NULL;
+      CHAR *pFieldSelector = NULL;
+      CHAR *pOrderBy = NULL;
+      CHAR *pHint = NULL;
+      BSONObj query ;
+      BSONObj selector ;
+      BSONObj orderBy ;
+      BSONObj hint ;
+      INT32 bufSize = 0 ;
+      MsgOpQuery *pSrc = (MsgOpQuery *)msg;
+
+      rc = msgExtractQuery( ( CHAR * )msg, &flag, &pCollectionName,
+                            &numToSkip, &numToReturn, &pQuery,
+                            &pFieldSelector, &pOrderBy, &pHint );
+      PD_RC_CHECK( rc, PDERROR,
+                  "failed to parse query request(rc=%d)", rc );
+
+      try
+      {
+         query = BSONObj( pQuery ) ;
+         selector = BSONObj( pFieldSelector ) ;
+         orderBy = BSONObj( pOrderBy ) ;
+         hint = BSONObj( pHint ) ;
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG( PDERROR, "unexpected error happened:%s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      rc = msgBuildQueryMsg( &newMsg, &bufSize,
+                             pCollectionName,
+                             flag, pSrc->header.requestID,
+                             numToSkip, numToReturn,
+                             &query, &selector,
+                             &orderBy, &newHint ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to build new msg:%d", rc ) ;
+         goto error ;
+      } 
+   done:
+      return rc ;
+   error:
+      SAFE_OSS_FREE( newMsg ) ;
       goto done ;
    }
 

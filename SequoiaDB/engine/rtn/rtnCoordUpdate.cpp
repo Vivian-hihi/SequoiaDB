@@ -131,8 +131,9 @@ namespace engine
 
          if ( cataInfo->isSharded() )
          {
-            rc = kickShardingKey( cataInfo, boUpdator, tmpNewObj,
-                                  hasShardingKey ) ;
+            rtnCoordShardKicker shardKicker ;
+            rc = shardKicker.kickShardingKey( cataInfo, boUpdator, tmpNewObj,
+                                              hasShardingKey ) ;
             PD_RC_CHECK( rc, PDERROR, "Update failed, failed to kick the "
                          "sharding-key field(rc=%d)", rc ) ;
 
@@ -148,10 +149,9 @@ namespace engine
                   break ;
                }
 
-               rc = kickShardingKeyForSubCL( subCLList, tmpNewObj,
-                                             newSubObj,
-                                             hasShardingKey, cb ) ;
-               //rc = checkModifierForSubCL( subCLList, pUpdator, cb ) ;
+               rc = shardKicker.kickShardingKeyForSubCL( subCLList, tmpNewObj,
+                                                         newSubObj,
+                                                         hasShardingKey, cb ) ;
                PD_RC_CHECK( rc, PDERROR,
                             "Failed to kick the sharding-key field "
                             "for sub-collection, rc: %d",
@@ -412,7 +412,7 @@ namespace engine
    error:
       if ( pBlock )
       {
-         for ( INT32 i = 0 ; i < pBlock->size() ; ++i )
+         for ( UINT32 i = 0 ; i < pBlock->size() ; ++i )
          {
             cb->releaseBuff( (*pBlock)[ i ] ) ;
          }
@@ -434,7 +434,7 @@ namespace engine
       vector<CHAR*> *pBlock = ( vector<CHAR*>* )itPtr ;
       if ( NULL != pBlock )
       {
-         for ( INT32 i = 0 ; i < pBlock->size() ; ++i )
+         for ( UINT32 i = 0 ; i < pBlock->size() ; ++i )
          {
             cb->releaseBuff( (*pBlock)[ i ] ) ;
          }
@@ -525,170 +525,6 @@ namespace engine
          }
          ++iterCL ;
       }
-   done:
-      return rc;
-   error:
-      goto done;
-   }
-
-   BOOLEAN rtnCoordUpdate::_isUpdateReplace( const BSONObj &boUpdator )
-   {
-      INT32 rc = SDB_OK ;
-      BSONObjIterator iter( boUpdator ) ;
-      static string replaceStr = CMD_ADMIN_PREFIX FIELD_OP_VALUE_REPLACE ;
-      while ( iter.more() )
-      {
-         BSONElement beTmp = iter.next() ;
-         if ( beTmp.fieldName() == replaceStr )
-         {
-            return TRUE ;
-         }
-      }
-
-      return FALSE ;
-   }
-
-   INT32 rtnCoordUpdate::kickShardingKey( const CoordCataInfoPtr &cataInfo,
-                                          const BSONObj &boUpdator,
-                                          bson::BSONObj &boNewUpdator,
-                                          BOOLEAN &hasShardingKey )
-   {
-      INT32 rc = SDB_OK ;
-      BSONObjBuilder keepBuilder ;
-      bool isReplace = FALSE ;
-      isReplace = _isUpdateReplace( boUpdator ) ;
-      try
-      {
-         BSONObj boShardingKey ;
-         cataInfo->getShardingKey( boShardingKey ) ;
-         BSONObjBuilder bobNewUpdator ;
-         BSONObjIterator iter( boUpdator ) ;
-         while ( iter.more() )
-         {
-            BSONElement beTmp = iter.next() ;
-            if ( beTmp.type() != Object )
-            {
-               rc = SDB_INVALIDARG;
-               PD_LOG( PDERROR, "updator's element must be an Object type:"
-                       "updator=%s", boUpdator.toString().c_str() ) ;
-               goto error;
-            }
-
-            BSONObj boTmp = beTmp.Obj() ;
-            //if replace. leave the keep
-            if ( isReplace 
-                 && beTmp.fieldName() == CMD_ADMIN_PREFIX FIELD_OP_VALUE_KEEP )
-            {
-               keepBuilder.appendElementsUnique( boTmp ) ;
-               continue ;
-            }
-
-            BSONObjBuilder bobFields;
-            BSONObjIterator iterField( boTmp ) ;
-            while( iterField.more() )
-            {
-               BSONElement beField = iterField.next() ;
-               BSONObjIterator iterKey( boShardingKey ) ;
-               BOOLEAN isKey = FALSE ;
-               while( iterKey.more() )
-               {
-                  BSONElement beKey = iterKey.next();
-                  const CHAR *pKey = beKey.fieldName();
-                  const CHAR *pField = beField.fieldName();
-                  while( *pKey == *pField && *pKey != '\0' )
-                  {
-                     ++pKey;
-                     ++pField;
-                  }
-
-                  // shardingkey_fieldName == updator_fieldName
-                  if ( *pKey == *pField
-                     || ( '\0' == *pKey && '.' == *pField )
-                     || ( '\0' == *pField && '.' == *pKey ) )
-                  {
-                     isKey = TRUE;
-                     break;
-                  }
-               }
-               if ( isKey )
-               {
-                  hasShardingKey = TRUE;
-               }
-               else
-               {
-                  bobFields.append( beField );
-               }
-            }
-            BSONObj boFields = bobFields.obj();
-            if ( !boFields.isEmpty() )
-            {
-               bobNewUpdator.appendObject( beTmp.fieldName(),
-                                           boFields.objdata() );
-            }
-         }
-         if ( isReplace ) 
-         {
-            //generate new $keep by combining boUpdator.$keep & boShardingKey.
-            keepBuilder.appendElementsUnique( boShardingKey ) ;
-            BSONObj newKeep = keepBuilder.obj();
-            if ( !newKeep.isEmpty() )
-            {
-               BSONObjBuilder sortedBuilder ;
-               BSONObjIteratorSorted iterSorted( newKeep ) ;
-               while ( iterSorted.more() )
-               {
-                  BSONElement sortedTmp = iterSorted.next() ;
-                  sortedBuilder.append( sortedTmp ) ;
-               }
-               //{'$keep':{a:1, b:1}}
-               bobNewUpdator.append( CMD_ADMIN_PREFIX FIELD_OP_VALUE_KEEP, 
-                                     sortedBuilder.obj() ) ;
-               hasShardingKey = TRUE ; 
-            }
-         }
-         boNewUpdator = bobNewUpdator.obj() ;
-      }
-      catch ( std::exception &e )
-      {
-         rc = SDB_INVALIDARG;
-         PD_LOG ( PDERROR,"Failed to check the record is include sharding-key,"
-                  "occured unexpected error: %s", e.what() ) ;
-         goto error;
-      }
-
-   done:
-      return rc;
-   error:
-      goto done;
-   }
-
-   INT32 rtnCoordUpdate::kickShardingKeyForSubCL( const CoordSubCLlist &subCLList,
-                                                  const BSONObj &boUpdator,
-                                                  BSONObj &boNewUpdator,
-                                                  BOOLEAN &hasShardingKey,
-                                                  pmdEDUCB *cb )
-   {
-      INT32 rc = SDB_OK;
-      CoordSubCLlist::const_iterator iterCL = subCLList.begin();
-      BSONObj boCur = boUpdator;
-      BSONObj boNew = boUpdator;
-
-      while( iterCL != subCLList.end() )
-      {
-         CoordCataInfoPtr subCataInfo;
-         rc = rtnCoordGetCataInfo( cb, (*iterCL).c_str(), FALSE,
-                                   subCataInfo ) ;
-         PD_RC_CHECK( rc, PDERROR,
-                      "get catalog of sub-collection(%s) failed(rc=%d)",
-                      (*iterCL).c_str(), rc ) ;
-         rc = kickShardingKey( subCataInfo, boCur, boNew, hasShardingKey ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to kick sharding-key for "
-                      "sub-collection(rc=%d)", rc ) ;
-         boCur = boNew ;
-         ++iterCL ;
-      }
-      boNewUpdator = boNew ;
-
    done:
       return rc;
    error:

@@ -422,6 +422,24 @@ namespace engine
                              rtnContextBuf *buf ) ;
    } ;
 
+
+   class rtnCoordShardKicker : public SDBObject 
+   {
+   public:
+      rtnCoordShardKicker() ;
+      ~rtnCoordShardKicker() ;
+
+   public:
+      INT32 kickShardingKey( const CoordCataInfoPtr &cataInfo,
+                             const BSONObj &updator, BSONObj &newUpdator,
+                             BOOLEAN &hasShardingKey ) ;
+      INT32 kickShardingKeyForSubCL( const CoordSubCLlist &subCLList,
+                                     const BSONObj &updator, 
+                                     BSONObj &newUpdator,
+                                     BOOLEAN &hasShardingKey, pmdEDUCB *cb ) ;
+      BOOLEAN _isUpdateReplace( const BSONObj &updator ) ;
+   } ;
+
 }
 
 #endif //RTNCOORDOPERATOR_HPP__

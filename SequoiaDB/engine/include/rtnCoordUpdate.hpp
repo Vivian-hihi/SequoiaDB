@@ -82,21 +82,8 @@ namespace engine
                                     const CHAR *pUpdator,
                                     pmdEDUCB *cb ) ;
 
-      INT32 kickShardingKey( const CoordCataInfoPtr &cataInfo,
-                             const bson::BSONObj &boUpdator,
-                             bson::BSONObj &boNewUpdator,
-                             BOOLEAN &hasShardingKey ) ;
-
-      INT32 kickShardingKeyForSubCL( const CoordSubCLlist &subCLList,
-                                     const bson::BSONObj &boUpdator,
-                                     bson::BSONObj &boNewUpdator,
-                                     BOOLEAN &hasShardingKey,
-                                     pmdEDUCB *cb ) ;
-
       BSONObj _buildNewSelector( const BSONObj &selector,
                                  const CoordSubCLlist &subCLList ) ;
-
-      BOOLEAN _isUpdateReplace( const BSONObj &boUpdator ) ;
    };
 }
 

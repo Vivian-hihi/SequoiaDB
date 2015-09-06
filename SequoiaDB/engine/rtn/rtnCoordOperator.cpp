@@ -890,5 +890,178 @@ namespace engine
       goto done ;
    }
 
+   rtnCoordShardKicker::rtnCoordShardKicker()
+   {
+   }
+
+   rtnCoordShardKicker::~rtnCoordShardKicker()
+   {
+   }
+
+   BOOLEAN rtnCoordShardKicker::_isUpdateReplace( const BSONObj &updator )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObjIterator iter( updator ) ;
+      static string replaceStr = CMD_ADMIN_PREFIX FIELD_OP_VALUE_REPLACE ;
+      while ( iter.more() )
+      {
+         BSONElement beTmp = iter.next() ;
+         if ( beTmp.fieldName() == replaceStr )
+         {
+            return TRUE ;
+         }
+      }
+
+      return FALSE ;
+   }
+
+   INT32 rtnCoordShardKicker::kickShardingKey( const CoordCataInfoPtr &cataInfo,
+                                               const BSONObj &updator,
+                                               BSONObj &newUpdator,
+                                               BOOLEAN &hasShardingKey )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObjBuilder keepBuilder ;
+      bool isReplace = _isUpdateReplace( updator ) ;
+      try
+      {
+         BSONObj boShardingKey ;
+         cataInfo->getShardingKey( boShardingKey ) ;
+         BSONObjBuilder bobNewUpdator ;
+         BSONObjIterator iter( updator ) ;
+         while ( iter.more() )
+         {
+            BSONElement beTmp = iter.next() ;
+            if ( beTmp.type() != Object )
+            {
+               rc = SDB_INVALIDARG;
+               PD_LOG( PDERROR, "updator's element must be an Object type:"
+                       "updator=%s", updator.toString().c_str() ) ;
+               goto error;
+            }
+
+            BSONObj boTmp = beTmp.Obj() ;
+            //if replace. leave the keep
+            if ( isReplace 
+                 && beTmp.fieldName() == CMD_ADMIN_PREFIX FIELD_OP_VALUE_KEEP )
+            {
+               keepBuilder.appendElementsUnique( boTmp ) ;
+               continue ;
+            }
+
+            BSONObjBuilder bobFields;
+            BSONObjIterator iterField( boTmp ) ;
+            while( iterField.more() )
+            {
+               BSONElement beField = iterField.next() ;
+               BSONObjIterator iterKey( boShardingKey ) ;
+               BOOLEAN isKey = FALSE ;
+               while( iterKey.more() )
+               {
+                  BSONElement beKey = iterKey.next();
+                  const CHAR *pKey = beKey.fieldName();
+                  const CHAR *pField = beField.fieldName();
+                  while( *pKey == *pField && *pKey != '\0' )
+                  {
+                     ++pKey;
+                     ++pField;
+                  }
+
+                  // shardingkey_fieldName == updator_fieldName
+                  if ( *pKey == *pField
+                     || ( '\0' == *pKey && '.' == *pField )
+                     || ( '\0' == *pField && '.' == *pKey ) )
+                  {
+                     isKey = TRUE;
+                     break;
+                  }
+               }
+               if ( isKey )
+               {
+                  hasShardingKey = TRUE;
+               }
+               else
+               {
+                  bobFields.append( beField );
+               }
+            }
+            BSONObj boFields = bobFields.obj();
+            if ( !boFields.isEmpty() )
+            {
+               bobNewUpdator.appendObject( beTmp.fieldName(),
+                                           boFields.objdata() );
+            }
+         }
+         if ( isReplace ) 
+         {
+            //generate new $keep by combining boUpdator.$keep & boShardingKey.
+            keepBuilder.appendElementsUnique( boShardingKey ) ;
+            BSONObj newKeep = keepBuilder.obj();
+            if ( !newKeep.isEmpty() )
+            {
+               BSONObjBuilder sortedBuilder ;
+               BSONObjIteratorSorted iterSorted( newKeep ) ;
+               while ( iterSorted.more() )
+               {
+                  BSONElement sortedTmp = iterSorted.next() ;
+                  sortedBuilder.append( sortedTmp ) ;
+               }
+               //{'$keep':{a:1, b:1}}
+               bobNewUpdator.append( CMD_ADMIN_PREFIX FIELD_OP_VALUE_KEEP, 
+                                     sortedBuilder.obj() ) ;
+               hasShardingKey = TRUE ; 
+            }
+         }
+         newUpdator = bobNewUpdator.obj() ;
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_INVALIDARG;
+         PD_LOG ( PDERROR,"Failed to check the record is include sharding-key,"
+                  "occured unexpected error: %s", e.what() ) ;
+         goto error;
+      }
+
+   done:
+      return rc;
+   error:
+      goto done;
+   }
+
+   INT32 rtnCoordShardKicker::kickShardingKeyForSubCL( 
+                                                const CoordSubCLlist &subCLList,
+                                                const BSONObj &updator,
+                                                BSONObj &newUpdator,
+                                                BOOLEAN &hasShardingKey,
+                                                pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK;
+      CoordSubCLlist::const_iterator iterCL = subCLList.begin();
+      BSONObj boCur = updator;
+      BSONObj boNew = updator;
+
+      while( iterCL != subCLList.end() )
+      {
+         CoordCataInfoPtr subCataInfo;
+         rc = rtnCoordGetCataInfo( cb, (*iterCL).c_str(), FALSE,
+                                   subCataInfo ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                      "get catalog of sub-collection(%s) failed(rc=%d)",
+                      (*iterCL).c_str(), rc ) ;
+         rc = kickShardingKey( subCataInfo, boCur, boNew, hasShardingKey ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to kick sharding-key for "
+                      "sub-collection(rc=%d)", rc ) ;
+         boCur = boNew ;
+         ++iterCL ;
+      }
+
+      newUpdator = boNew ;
+
+   done:
+      return rc;
+   error:
+      goto done;
+   }
+
 }
 
