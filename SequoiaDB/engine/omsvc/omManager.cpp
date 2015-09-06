@@ -360,7 +360,7 @@ namespace engine
          bsonBuilder.append( SDB_AUTH_PASSWD, md5::digestToString( digest ) ) ;
          obj = bsonBuilder.obj() ;
          rc = pAuthCB->createUsr( obj, cb ) ;
-         if ( SDB_IXM_DUP_KEY == rc )
+         if ( SDB_IXM_DUP_KEY == rc || SDB_AUTH_USER_ALREADY_EXIST == rc )
          {
             rc = SDB_OK ;
          }
