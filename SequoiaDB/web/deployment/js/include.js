@@ -121,7 +121,8 @@ function ajaxSendMsg( data, async, before, success, error, complete, isJson )
 				else if( jsonArr[0]['errno'] === -62 )
 				{
 					//session id 不存在
-					gotoPage( 'login.html' )
+               //gotoPage( 'login.html' ) ;
+					gotoPage( '/login.html#/Login' ) ;
 				}
 				else
 				{
@@ -454,12 +455,14 @@ $(document).ready(function(){
 	{
 		if( sdbjs.fun.getData( 'SdbUser' ) === null )
 		{
-			gotoPage( 'login.html' ) ;
+			//gotoPage( 'login.html' ) ;
+         gotoPage( '/login.html#/Login' ) ;
 			return;
 		}
 		if( sdbjs.fun.getData( 'SdbSessionID' ) === null )
 		{
-			gotoPage( 'login.html' ) ;
+			//gotoPage( 'login.html' ) ;
+         gotoPage( '/login.html#/Login' ) ;
 			return;
 		}
 	}

@@ -17,7 +17,8 @@ function logout()
 	sdbjs.fun.delData( 'SdbUser' ) ;
 	sdbjs.fun.delData( 'SdbSessionID' ) ;
 	sdbjs.fun.delData( 'SdbDeployModel' ) ;
-	gotoPage( 'login.html' ) ;
+	//gotoPage( 'login.html' ) ;
+   gotoPage( '/login.html#/Login' ) ;
 }
 
 //修改密码

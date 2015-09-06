@@ -335,6 +335,7 @@ function gotoBusinessList( clusterID )
 {
 	sdbjs.fun.saveData( 'SdbClusterName', _clusterList[clusterID]['ClusterName'] ) ;
 	gotoPage( 'businesslist.html' ) ;
+   //gotoPage( '/#/Data/Overview/Index' ) ;
 }
 
 function gotoTaskPage( taskID, taskType )

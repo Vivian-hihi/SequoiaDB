@@ -240,7 +240,15 @@ function loadBusinessData()
             }
             else
             {
-                sdbjs.parts.gridBox.addBody( 'businessInfoGrid', [{ 'text': htmlEncode( businessInfo['BusinessName'] ), 'width': '25%' },
+                sdbjs.parts.gridBox.addBody( 'businessInfoGrid', [{ 'text': function( obj ){
+                                                                                     var moduleEle = $( '<div></div>' ).text( businessInfo['BusinessName'] ).appendTo( obj ) ;
+                                                                                     moduleEle.css( 'cursor', 'pointer').on( 'click', function(){
+                                                                                        sdbjs.fun.saveData( 'SdbModuleName', businessInfo['BusinessName'] ) ;
+                                                                                        sdbjs.fun.saveData( 'SdbModuleType', businessInfo['BusinessType'] ) ;
+                                                                                        sdbjs.fun.saveData( 'SdbModuleMode', businessInfo['DeployMod'] ) ;
+                                                                                        gotoPage( '/#/Data/Operate/Index' ) ;
+                                                                                     } ) ;
+                                                                                  }, 'width': '25%' },
                                                                                   { 'text': htmlEncode( businessInfo['BusinessType'] ), 'width': '15%' },
                                                                                   { 'text': htmlEncode( businessInfo['DeployMod'] ), 'width': '15%' },
                                                                                   { 'text': htmlEncode( user === null ? _languagePack['businesslist']['businessGrid']['auth'][1] : _languagePack['businesslist']['businessGrid']['auth'][0] ), 'width': '10%' },
