@@ -1,0 +1,263 @@
+﻿(function(){
+   var sacApp = window.SdbSacManagerModule ;
+   //控制器
+   sacApp.controllerProvider.register( 'Data.Metadata.Index.Ctrl', function( $scope, SdbRest, InheritSize, FormModal ){
+      SdbRest.getLanguage( 'Data.Metadata.Index', function( data ){
+         $scope.Language.DataMetadataIndex = data ;
+         $scope.$apply() ;
+      } ) ;
+      //添加自动调节宽高
+      InheritSize.append( $( '#MetadataIndex' ) ) ;
+      InheritSize.append( $( '#MetadataList' ) ) ;
+      $( '#MetadataList > div' ).each( function( index, ele ){
+         InheritSize.append( ele ) ;
+      } ) ;
+      //过滤CS和cl
+      $scope.findCLName = '' ;
+      $scope.search = function( fullName ){
+         var csName = '', clName = '';
+         var tmp = fullName.split( '.' ) ;
+         csName = tmp[0] ;
+         clName = tmp[1] ;
+         var csList = $scope.csList ;
+         $.each( csList, function( index, csInfo ){
+            if( typeof( clName ) == 'string' )
+            {
+               if( csName == '' || csName == '*' )
+               {
+                  csList[index]['hide'] = false ;
+               }
+               else
+               {
+                  csList[index]['hide'] = ( csInfo['Name'] != csName ) ;
+               }
+               $.each( csInfo['Collection'], function( index2, clInfo ){
+                  if( clName == '' || clName == '*' )
+                  {
+                     csList[index]['Collection'][index2]['hide'] = false ;
+                  }
+                  else
+                  {
+                     csList[index]['Collection'][index2]['hide'] = ( clInfo['Name'] != clName ) ;
+                  }
+               } ) ;
+               $scope.findCLName = clName ;
+            }
+            else
+            {
+               if( csName == '' || csName == '*' )
+               {
+                  csList[index]['hide'] = false ;
+               }
+               else
+               {
+                  csList[index]['hide'] = ( csInfo['Name'].indexOf( csName ) == -1 ) ;
+               }
+               $scope.findCLName = '' ;
+            }
+         } ) ;
+         $scope.csList = csList ;
+      }
+      //展开cs下所有的cl
+      $scope.clTableShow = function( clickEvent ){
+         var buttonTrEle = $( clickEvent.srcElement ).parent().parent() ;
+         $( '> tr', buttonTrEle.parent() ).removeClass( 'ng-hide' ) ;
+         $( buttonTrEle ).hide() ;
+      }
+      //显示CS属性
+      $scope.showCSInfo = function( index ){
+         $scope.showType = 'cs' ;
+         $scope.csID = index ;
+      }
+      //显示CL属性
+      $scope.showCLInfo = function( csIndex, clIndex ){
+         $scope.showType = 'cl' ;
+         $scope.clID = [ csIndex, clIndex ] ;
+         SdbRest.QueryIndexes( {}, function( indexList ){
+            $scope.indexList = indexList ;
+         } ) ;
+      }
+
+      //打开 创建集合空间 的窗口
+      // $scope.showCreateCS = function(){
+      //    /*
+      //     var createCSConf = window.SdbSacManagerConf.CreateCSConf ;
+      //    createCSConf['title'] = '创建集合空间' ;
+      //    FormModal.create( createCSConf, function( result ){
+      //       alert( JSON.stringify( result ) ) ;
+      //    */
+      //    $scope.Components.Modal.icon = '' ;
+      //    $scope.Components.Modal.title = '创建集合空间' ;
+      //    $scope.Components.Modal.isShow = true ;
+      //    $scope.Components.Modal.Context = '<table class="table loosen"><tr><td style="width:100px;">数据</td><td></td></tr></table>' ;
+         
+      //    //$scope.$apply() ;
+      // }
+
+
+      $scope.showCreateCS = function(){
+         $scope.Components.Modal.icon = 'fa-plus' ;
+         $scope.Components.Modal.title = '插入记录' ;
+         $scope.Components.Modal.isShow = true ;
+         $scope.Components.Modal.jsonEdit = {"name":"BeJson","url":"http://www.bejson.com","page":88,"isNonProfit":true,"address":{"street":"科技园路.","city":"江苏苏州","country":"中国"},"links":[{"name":"Google","url":"http://www.google.com"},{"name":"Baidu","url":"http://www.baidu.com"},{"name":"SoSo","url":"http://www.SoSo.com"}]} ;
+         $scope.Components.Modal.Context = '<table class="table loosen"><tr><td style="width:100px;">数据</td><td><div json-edit para="data.jsonEdit"></div></td></tr></table>' ;
+         
+         } ) ;
+      }
+      //打开 删除集合空间 的窗口
+      $scope.showRemoveCS = function(){
+         var csValid = '' ;
+         var csList = $scope.csList ;
+         $.each( csList, function( index, csInfo ){
+            if( index > 0 )
+            {
+               csValid = csValid + ',' ;
+            }
+            csValid = csValid + csInfo['Name'] + ':' + csInfo['Name'] ;
+         } ) ;
+         var removeCSConf = window.SdbSacManagerConf.RemoveCSConf ;
+         removeCSConf['title'] = '删除集合空间' ;
+         FormModal.create( removeCSConf, function( result ){
+            alert( JSON.stringify( result ) ) ;
+         }, null, null, function( inputList ){
+            inputList[0]['valid'] = csValid ;
+            return inputList ;
+         } ) ;
+      }
+      //打开 删除集合 的窗口
+      $scope.showRemoveCL = function(){
+         var clValid = '' ;
+         var csList = $scope.csList ;
+         var i = 0 ;
+         $.each( csList, function( index, csInfo ){
+            $.each( csInfo['Collection'], function( index2, clInfo ){
+               if( i > 0 )
+               {
+                  clValid = clValid + ',' ;
+               }
+               clValid = clValid + clInfo['Name'] + ':' + clInfo['Name'] ;
+               ++i ;
+            } ) ;
+         } ) ;
+         var removeCLConf = window.SdbSacManagerConf.RemoveCLConf ;
+         removeCLConf['title'] = '删除集合' ;
+         FormModal.create( removeCLConf, function( result ){
+            alert( JSON.stringify( result ) ) ;
+         }, null, null, function( inputList ){
+            inputList[0]['valid'] = clValid ;
+            return inputList ;
+         } ) ;
+      }
+      //打开 创建集合 的窗口
+      $scope.showCreateCL = function(){
+         var createCLConf = window.SdbSacManagerConf.CreateCLConf ;
+         createCLConf['title'] = '创建集合' ;
+         FormModal.create( createCLConf, function( result ){
+            alert( JSON.stringify( result ) ) ;
+         } ) ;
+      }
+      //打开 创建索引 的窗口
+      $scope.showCreateIndex = function(){
+         var createIndexConf = window.SdbSacManagerConf.CreateIndexConf ;
+         createIndexConf['title'] = '创建索引' ;
+         FormModal.create( createIndexConf, function( result ){
+            var indexDef = {} ;
+            $.each( result['indexDef'], function( index, values ){
+               indexDef[ values[0] ] = values[1] ;
+            } ) ;
+            result['indexDef'] = indexDef ;
+            alert( JSON.stringify( result ) ) ;
+         } ) ;
+      }
+      //打开 索引详细 的窗口
+      $scope.showIndex = function(){
+         FormModal.create( { id: 'showIndex', icon:'', width:'200px', title: '索引详细' , input: [
+                           {
+                              name: "index",
+                              webName: "索引名",
+                              type: "select",
+                              valid: "name:employee_id_key1,name:employee_id_key2,name:employee_id_key3,name:employee_id_key4,name:employee_id_key5"
+                           },
+                           { 
+                              type: 'table', title: [ { 'text': 'Key' }, { 'text': 'Value' } ], rows: [ 
+                                 [ { 'text': 'name' }, { 'text': 'record_id_index' } ],
+                                 [ { 'text': 'key' }, { 'text': 'employee_id' } ],
+                                 [ { 'text': 'unique' }, { 'text': 'true' } ],
+                                 [ { 'text': 'enforced' }, { 'text': 'true' } ]
+                             ] 
+                          }
+               ]
+         } ) ;
+      }
+      //打开 删除索引 的窗口
+      $scope.showRemoveIndex = function(){
+         FormModal.create( { id: 'showRemoveIndex', icon:'', width:'200px', title: '删除索引' , input: [
+                           {
+                              name: "index",
+                              webName: "索引名",
+                              type: "select",
+                              valid: "name:employee_id_key1,name:employee_id_key2,name:employee_id_key3,name:employee_id_key4,name:employee_id_key5"
+                           },
+                           {
+                              type:'table', title: [ { 'text': '属性' }, { 'text': '描述' } ], rows:[
+                                 [ { 'text': 'name' }, { 'text': 'record_id_index' } ],
+                                 [ { 'text': 'key' }, { 'text': 'employee_id' } ],
+                                 [ { 'text': 'unique' }, { 'text': 'true' } ],
+                                 [ { 'text': 'enforced' }, { 'text': 'true' } ]
+                              ]
+                           }
+            ]
+         } ) ;
+      }
+      //获取所有cs和cl的信息
+      function getCSCLInfo()
+      {
+         //获取cs和cl的信息
+         SdbRest.QueryCS( {}, function( csList ){
+            SdbRest.QueryCL( {}, function( clList ){
+               //合并cs和cl的信息
+               $.each( csList, function( index, csInfo ){
+                  csList[index]['hide'] = false ;
+                  $.each( csInfo['Collection'], function( index2, clInfo ){
+                     var fullName = csInfo['Name'] + '.' + clInfo['Name'] ;
+                     $.each( clList, function( index3, clInfo2 ){
+                        if( clInfo2['Name'] == fullName )
+                        {
+                           csList[index]['Collection'][index2]['hide'] = false ;
+                           csList[index]['Collection'][index2]['Details'] = clInfo2['Details'] ;
+                           if( csList[index]['Collection'][index2]['Details'][0]['TotalDataPages'] > 0 )
+                           {
+                              csList[index]['Collection'][index2]['Details'][0]['MetadataRatio'] = parseInt( csList[index]['Collection'][index2]['Details'][0]['TotalIndexPages'] * 100 / csList[index]['Collection'][index2]['Details'][0]['TotalDataPages'] ) ;
+                           }
+                           else
+                           {
+                              csList[index]['Collection'][index2]['Details'][0]['MetadataRatio'] = 0 ;
+                           }
+                           return false ;
+                        }
+                     } ) ;
+                  } ) ;
+                  var i = index ;
+                  if( index > 3 ) i = index % 4 ;
+                  if( i == 0 ) csList[index]['color'] = 'green' ;
+                  if( i == 1 ) csList[index]['color'] = 'yellow' ;
+                  if( i == 2 ) csList[index]['color'] = 'blue' ;
+                  if( i == 3 ) csList[index]['color'] = 'violet' ;
+               } ) ;
+               $scope.csList = csList ;
+               $scope.showType = 'cs' ;
+               if( csList.length > 0 )
+               {
+                  $scope.csID = 0 ;
+               }
+               else
+               {
+                  $scope.csID = -1 ;
+               }
+               $scope.$apply() ;
+            } ) ;
+         } ) ;
+      }
+      getCSCLInfo() ;
+   } ) ;
+}());

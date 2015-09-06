@@ -1,0 +1,42 @@
+﻿<div ng-switch on="inputInfo.type" style="position:relative;*zoom:1;">
+   <input ng-switch-when="string" type="text" class="form-control" data-desc="{{inputInfo.error}}" ng-class="{true:'alert-danger'}[inputInfo.error.length > 0]" placeholder="{{inputInfo.placeholder}}" ng-model="inputInfo.value" ng-click="showMenu(inputInfo)">
+   <div ng-switch-when="string" ng-if="inputInfo.selectList.length > 0" class="FormSelectList" ng-show="inputInfo.showMenu == true">
+      <ul>
+         <li ng-repeat="selectLi in inputInfo.selectList | filter: inputInfo.value | limitTo: 3 track by $index" ng-click="inputInfo.value=selectLi;inputInfo.showMenu=false;">{{selectLi}}</li>
+      </ul>
+   </div>
+   <input ng-switch-when="int" type="text" class="form-control" data-desc="{{inputInfo.error}}" ng-class="{true:'alert-danger'}[inputInfo.error.length > 0]" placeholder="{{inputInfo.placeholder}}" ng-model="inputInfo.value">
+   <select class="form-control" ng-switch-when="select" ng-change="onChange(inputInfo)" ng-model="inputInfo.value" ng-options="selectList.value as selectList.key for selectList in inputInfo.valid"></select>
+   <div style="padding:0 0 0 20px;" ng-switch-when="group">
+      <table class="table" style="margin:10px 0 0 0;" ng-repeat="childInfo in inputInfo.child track by $index">
+         <tbody>
+            <tr>
+               <td style="width:120px;" ng-style="{true:{'vertical-align':'middle'},false:{'vertical-align':'top','padding-top':'8px'}}[childInfo.type!='list']">
+                  <label><span class="error" ng-if="childInfo.required == true">*</span> {{childInfo.webName}}</label> <i ng-if="childInfo.desc" class="fa fa-info-circle" data-desc="{{childInfo.desc}}"></i>
+               </td>
+               <td ng-eval="inputInfo=childInfo;" ng-include="'./app/template/Component/Form_child.html'"></td>
+            </tr>
+            <tr>
+               <td colspan="2" class="error">{{childInfo.error}}</td>
+            </tr>
+         </tbody>
+      </table>
+   </div>
+   <div ng-switch-when="list">
+      <table class="table loosen">
+         <tbody>
+            <tr ng-repeat="childList in inputInfo.child track by $index">
+               <td ng-repeat="childInfo in childList track by $index" ng-style="{true:{'padding-left':'0'}}[$first]">
+                  <div ng-eval="inputInfo=childInfo;" ng-include="'./app/template/Component/Form_child.html'"></div>
+               </td>
+               <td style="width:23px;">
+                  <button class="FormBtn" ng-click="listAppend(inputInfo.child,childList)"><i class="fa fa-plus"></i></button>
+               </td>
+               <td style="width:23px;">
+                  <button class="FormBtn" ng-click="listRemove(inputInfo.child,childList)"><i class="fa fa-minus"></i></button>
+               </td>
+            </tr>
+         </tbody>
+      </table>
+   </div>
+</div>

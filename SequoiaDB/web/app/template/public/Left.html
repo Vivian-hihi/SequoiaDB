@@ -1,0 +1,36 @@
+<div class="{{Language}}" ng-controller="Index.Left.Ctrl" inherit-size>
+   <div id="PublicNav2" class="relativeBox">
+      <div class="absoluteLeftBox first" data-width="80">
+         <div class="button" data-height="17" nav-fold><i class="fa fa-forward"></i></div>
+         <div class="list" data-offsetY="-17">
+            <ul>
+               <li ng-repeat="nav in Left.navMenu track by $index" ng-class="{active:Left.selectModule==nav.module}">
+                  <a ng-if="!nav.action">
+                     <i ng-class="'fa fa-lg ' + nav.icon"></i>
+                     <p>{{nav.text}}</p>
+                  </a>
+                  <a ng-if="nav.action" ng-href="{{nav.action}}">
+                     <i ng-class="'fa fa-lg ' + nav.icon"></i>
+                     <p>{{nav.text}}</p>
+                  </a>
+               </li>
+            </ul>
+         </div>
+      </div>
+      <div class="second" data-width="180" data-mLeft="80" id="PublicLeftMenu">
+         <div style="visibility:hidden;" class="button" data-height="17" nav-fold><i class="fa fa-backward"></i></div>
+         <div class="list" data-offsetY="-17">
+            <ul>
+               <li ng-repeat="menu in Left.selectMenu track by $index">
+                  <div>{{menu.title}}</div>
+                  <ul>
+                     <li ng-repeat="list in menu.list track by $index" ng-class="{ active: Left.selectAction == list.action }">
+                        <a ng-href="#/{{Left.selectModule}}/{{list.action}}/Index">{{list.text}}</a>
+                     </li>
+                  </ul>
+               </li>
+            </ul>
+         </div>
+      </div>
+   </div>
+</div>

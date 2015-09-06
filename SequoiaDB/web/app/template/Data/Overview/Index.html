@@ -1,0 +1,19 @@
+<div id="ModuleBox" style="overflow-y:auto;overflow-x:hidden;+zoom:1;+position:relative;" ng-controller="Data.Overview.Index.Ctrl"  >
+   <div id="DataList" style="padding:10px 0 0 0;">
+      <div id="DataBoxList" data-module="Response" style="+zoom:1;+position:relative;">
+         <div data-min-width="660" data-max-width="1980" ng-repeat="moduleInfo in QueryModule track by $index">
+            <div ng-class="moduleInfo.color" class="DataListBox">
+               <div class="DataTitle">
+                  <span class="ModuleName">{{moduleInfo.BusinessName}}</span> (<span class="ModuleType">{{moduleInfo.BusinessType}} - {{moduleInfo.DeployMod}}</span>) - <span class="status success">{{autoLanguage("良好")}}</span>
+               </div>
+               <div class="DataSubTitle">{{autoLanguage("业务运行正常")}}</div>
+               <div class="DataSubTitle">{{autoLanguage("一共 5 个集合， 1,000,000 条记录")}}</div>
+               <div data-module="Response" style="+zoom:1;+position:relative;" create-response>
+                  <div style="height:220px;" data-width="400" create-record-chart></div>
+                  <div style="height:200px;" data-width="200" create-database-chart></div>
+               </div>
+            </div>
+         </div>
+      </div>
+   </div>
+</div>

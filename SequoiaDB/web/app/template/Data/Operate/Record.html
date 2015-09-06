@@ -1,0 +1,19 @@
+<div id="OperateRecord" style="padding:10px 15px;" ng-controller="Data.Operate.Record.Ctrl">
+   <div id="btnGroup" class="selectClass" data-height="40">
+      <button class="topBtn" ng-click="queryAll()"><i class="fa fa-search"></i> {{autoLanguage("查询所有")}}</button>
+      <button class="topBtn" ng-click="QuickQuery()"><i class="fa fa-search"></i> {{autoLanguage("快速查询")}}</button>
+      <button class="topBtn" ng-click="Query()"><i class="fa fa-search"></i> {{autoLanguage("高级查询")}}</button>
+      <button class="topBtn" ng-click="Insert()"><i class="fa fa-plus"></i> {{autoLanguage("插入")}}</button>
+      <button class="topBtn" ng-click="Update()"><i class="fa fa-plus"></i> {{autoLanguage("更新")}}</button>
+      <button class="topBtn" ng-click="Delete()"><i class="fa fa-remove"></i> {{autoLanguage("删除")}}</button>
+   </div>
+   <div data-mtop="12" data-height="40" class="result Ellipsis" ng-class="{true:'success',false:'failed'}[execRc]">
+      {{execResult}}
+   </div>
+   <div id="GridParent" style="position:relative;" data-mtop="13" data-offsety="-105">
+      <div ng-show="GridData['body'].length > 0" style="width:100%;" create-grid para="GridData"></div>
+      <div ng-show="GridData['body'].length == 0">
+         没有数据
+      </div>
+   </div>
+</div>
