@@ -835,28 +835,31 @@ namespace import
          }
       }
 
-      if (_stringDelimiter == _recordDelimiter)
+      if (FORMAT_CSV == _inputFormat)
       {
-         std::cerr << IMP_OPTION_DELCHAR << " can't be same with "
-                   << IMP_OPTION_DELRECORD << std::endl;
-         rc = SDB_INVALIDARG;
-         goto error;
-      }
+         if (_stringDelimiter == _recordDelimiter)
+         {
+            std::cerr << IMP_OPTION_DELCHAR << " can't be same with "
+                      << IMP_OPTION_DELRECORD << std::endl;
+            rc = SDB_INVALIDARG;
+            goto error;
+         }
 
-      if (_stringDelimiter == _fieldDelimiter)
-      {
-         std::cerr << IMP_OPTION_DELCHAR << " can't be same with "
-                   << IMP_OPTION_DELFIELD << std::endl;
-         rc = SDB_INVALIDARG;
-         goto error;
-      }
+         if (_stringDelimiter == _fieldDelimiter)
+         {
+            std::cerr << IMP_OPTION_DELCHAR << " can't be same with "
+                      << IMP_OPTION_DELFIELD << std::endl;
+            rc = SDB_INVALIDARG;
+            goto error;
+         }
 
-      if (_recordDelimiter == _fieldDelimiter)
-      {
-         std::cerr << IMP_OPTION_DELRECORD << " can't be same with "
-                   << IMP_OPTION_DELFIELD << std::endl;
-         rc = SDB_INVALIDARG;
-         goto error;
+         if (_recordDelimiter == _fieldDelimiter)
+         {
+            std::cerr << IMP_OPTION_DELRECORD << " can't be same with "
+                      << IMP_OPTION_DELFIELD << std::endl;
+            rc = SDB_INVALIDARG;
+            goto error;
+         }
       }
 
       if (has(IMP_OPTION_FIELDS))
