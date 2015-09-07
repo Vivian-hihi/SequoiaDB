@@ -173,13 +173,14 @@ namespace import
       {
          if (!isspace(*str))
          {
-            *data = str;
             break;
          }
 
          str++;
          length--;
       }
+
+      *data = str;
    }
 
    // don't skip if the delimiter is space
@@ -198,13 +199,14 @@ namespace import
          if (!isspace(*str) ||
              (_startWith(str, length, delimiter, delLength)))
          {
-            *data = str;
             break;
          }
 
          str++;
          length--;
       }
+
+      *data = str;
    }
 
    static inline BOOLEAN _isValidFieldEnd(const CHAR* data, INT32 length,
@@ -1160,6 +1162,11 @@ namespace import
       str = csvStr.str;
       len = csvStr.length;
       _skipSpace(&str, len);
+      if (0 == len)
+      {
+         rc = SDB_INVALIDARG;
+         goto error;
+      }
 
       // find out int or bool in string
       rc = _stringToRawInt(str, len, value, tmpLen);
@@ -1241,6 +1248,11 @@ namespace import
       str = csvStr.str;
       len = csvStr.length;
       _skipSpace(&str, len);
+      if (0 == len)
+      {
+         rc = SDB_INVALIDARG;
+         goto error;
+      }
 
       // find out long or bool in string
       rc = _stringToRawLong(str, len, value, tmpLen);
@@ -1324,6 +1336,11 @@ namespace import
       str = csvStr.str;
       len = csvStr.length;
       _skipSpace(&str, len);
+      if (0 == len)
+      {
+         rc = SDB_INVALIDARG;
+         goto error;
+      }
 
       // find out long or bool in string
       rc = _stringToRawBool(str, len, value, tmpLen);
@@ -1408,6 +1425,11 @@ namespace import
       str = csvStr.str;
       len = csvStr.length;
       _skipSpace(&str, len);
+      if (0 == len)
+      {
+         rc = SDB_INVALIDARG;
+         goto error;
+      }
 
       // find out double in string
       rc = _stringToRawNumber(str, len, type, value, tmpLen);
@@ -1485,6 +1507,11 @@ namespace import
       str = csvStr.str;
       len = csvStr.length;
       _skipSpace(&str, len);
+      if (0 == len)
+      {
+         rc = SDB_INVALIDARG;
+         goto error;
+      }
 
       // find out double in string
       rc = _stringToRawDouble(str, len, value, tmpLen);
@@ -2211,7 +2238,6 @@ namespace import
          str++;
          len--;
          _skipSpace(&str, len);
-
          if (len != 0)
          {
             rc = SDB_INVALIDARG;
