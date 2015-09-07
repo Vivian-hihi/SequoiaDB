@@ -7844,7 +7844,7 @@ static JSBool sdb_force_step_up( JSContext *cx, uintN argc, jsval *vp )
    REPORT ( connection , "Sdb.forceSetpUp(): no connection handle" ) ;
 
    ret = JS_ConvertArguments ( cx , argc , JS_ARGV ( cx , vp ) ,
-                               "/o" , opsObj ) ;
+                               "/o" , &opsObj ) ;
    REPORT ( ret , "Sdb.forceStepUp(): wrong arguments" ) ;
 
    if ( NULL != opsObj )
