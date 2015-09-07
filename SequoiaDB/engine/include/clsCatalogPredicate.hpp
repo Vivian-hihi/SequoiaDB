@@ -79,11 +79,14 @@ namespace engine
       string toString() const ;
 
    protected:
+      /// compareLU <= 0, compare lowbound and stop key
+      /// compareLR >=0, compare upbound and start key
       INT32 _matches( bson::BSONObjIterator itrSK,
                       bson::BSONObjIterator itrLB,
                       bson::BSONObjIterator itrUB,
                       BOOLEAN & result,
-                      BOOLEAN isCloseInterval ) ;
+                      BOOLEAN isCloseInterval,
+                      INT32 compareLU ) ;
 
    private:
       // forbid copy constructor
