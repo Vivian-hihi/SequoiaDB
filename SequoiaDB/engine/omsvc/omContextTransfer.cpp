@@ -45,7 +45,6 @@ namespace engine
                       :_rtnContextBase( contextID, eduID )
    {
       _conn              = NULL ;
-      _reply             = NULL ;
       _originalContextID = -1 ;
    }
 
@@ -56,12 +55,6 @@ namespace engine
          _conn->close() ;
          SDB_OSS_DEL _conn ;
          _conn = NULL ;
-      }
-
-      if ( NULL != _reply )
-      {
-         SDB_OSS_FREE( _reply ) ;
-         _reply = NULL ;
       }
    }
 
@@ -75,7 +68,6 @@ namespace engine
       vector< BSONObj > objVec ;
 
       _conn  = conn ;
-      _reply = reply ;
 
       if ( NULL == conn || NULL == reply )
       {
@@ -226,13 +218,13 @@ namespace engine
       }
 
    done:
-      return rc ;
-   error:
       if ( NULL != reply )
       {
          SDB_OSS_FREE( reply ) ;
          reply = NULL ;
       }
+      return rc ;
+   error:
       goto done ;
    }
 

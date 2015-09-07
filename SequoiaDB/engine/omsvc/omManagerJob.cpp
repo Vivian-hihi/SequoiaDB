@@ -507,6 +507,12 @@ namespace engine
 
    omHostNotifierJob::~omHostNotifierJob()
    {
+      _MAP_CLUSTER_ITER iter = _mapClusters.begin() ;
+      while ( iter != _mapClusters.end() )
+      {
+         SDB_OSS_DEL iter->second ;
+         _mapClusters.erase( iter++ ) ;
+      }
    }
 
    RTN_JOB_TYPE omHostNotifierJob::type() const

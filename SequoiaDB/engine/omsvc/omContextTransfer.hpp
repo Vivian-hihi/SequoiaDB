@@ -63,7 +63,6 @@ namespace engine
 
       protected:
          omSdbConnector       *_conn ;
-         MsgHeader            *_reply ;
          SINT64               _originalContextID ;
    } ;
 

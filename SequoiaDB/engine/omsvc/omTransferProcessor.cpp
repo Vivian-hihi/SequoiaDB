@@ -190,6 +190,11 @@ namespace engine
       }
 
    done:
+      if ( NULL != result )
+      {
+         SDB_OSS_FREE( result ) ;
+         result = NULL ;
+      }
       return rc ;
    error:
       if ( -1 != contextID )
@@ -204,11 +209,6 @@ namespace engine
             conn->close() ;
             SDB_OSS_DEL conn ;
             conn = NULL ;
-         }
-         if ( NULL != result )
-         {
-            SDB_OSS_FREE( result ) ;
-            result = NULL ;
          }
       }
       goto done ;
