@@ -140,26 +140,6 @@ namespace import
    static string  _timestampFormat;
    static BOOLEAN _cast = FALSE;
 
-   static inline void _skipSpace(CHAR** data, INT32& length)
-   {
-      CHAR* str = *data;
-
-      SDB_ASSERT(NULL != data, "data can't be NULL");
-      SDB_ASSERT(NULL != str, "str can't be NULL");
-
-      while (length > 0)
-      {
-         if (!isspace(*str))
-         {
-            *data = str;
-            break;
-         }
-
-         str++;
-         length--;
-      }
-   }
-
    static inline BOOLEAN _startWith(const CHAR* data, INT32 dataLen,
                                     const CHAR* str, INT32 strLen)
    {
@@ -182,6 +162,51 @@ namespace import
       return FALSE;
    }
 
+   static inline void _skipSpace(CHAR** data, INT32& length)
+   {
+      CHAR* str = *data;
+
+      SDB_ASSERT(NULL != data, "data can't be NULL");
+      SDB_ASSERT(NULL != str, "str can't be NULL");
+
+      while (length > 0)
+      {
+         if (!isspace(*str))
+         {
+            *data = str;
+            break;
+         }
+
+         str++;
+         length--;
+      }
+   }
+
+   // don't skip if the delimiter is space
+   static inline void _skipSpace(CHAR** data, INT32& length,
+                                 const CHAR* delimiter, INT32 delLength)
+   {
+      CHAR* str = *data;
+
+      SDB_ASSERT(NULL != data, "data can't be NULL");
+      SDB_ASSERT(NULL != str, "str can't be NULL");
+      SDB_ASSERT(NULL != delimiter, "delimiter can't be NULL");
+      SDB_ASSERT(delLength > 0, "delLength must be greater than 0");
+
+      while (length > 0)
+      {
+         if (!isspace(*str) ||
+             (_startWith(str, length, delimiter, delLength)))
+         {
+            *data = str;
+            break;
+         }
+
+         str++;
+         length--;
+      }
+   }
+
    static inline BOOLEAN _isValidFieldEnd(const CHAR* data, INT32 length,
                                           const CHAR* fieldDel, INT32 fieldDelLen,
                                           INT32& endLength, BOOLEAN& fieldEnd)
@@ -191,14 +216,11 @@ namespace import
 
       SDB_ASSERT(NULL != data, "data can't be NULL");
 
-      if (!isspace(*fieldDel))
+      _skipSpace(&str, len, fieldDel, fieldDelLen);
+      if (len == 0)
       {
-         _skipSpace(&str, len);
-         if (len == 0)
-         {
-            endLength = length;
-            return TRUE;
-         }
+         endLength = length;
+         return TRUE;
       }
 
       if (_startWith(str, len, fieldDel, fieldDelLen))
@@ -1058,7 +1080,7 @@ namespace import
       }
       else
       {
-         _skipSpace(&str, len);
+         _skipSpace(&str, len, fieldDel, fieldDelLen);
          if (len == 0)
          {
             valueLength = length;
@@ -1546,7 +1568,7 @@ namespace import
          str += valueLength;
          len -= valueLength;
 
-         _skipSpace(&str, len);
+         _skipSpace(&str, len, fieldDel, fieldDelLen);
          if (len == 0)
          {
             fieldLength = length;
