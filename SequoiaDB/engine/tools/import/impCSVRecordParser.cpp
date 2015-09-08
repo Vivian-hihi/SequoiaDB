@@ -1921,6 +1921,7 @@ namespace import
          INT32 microsec = 0;
          time_t timep;
 
+         ossMemset(&t, 0, sizeof(t));
          rc = _stringToDateTime(data.str, data.length,
                                 TIME_FORMAT, TIME_FORMAT_LEN,
                                 &t, microsec);
@@ -2063,6 +2064,7 @@ namespace import
          INT32 microsec = 0;
          time_t timep;
 
+         ossMemset(&t, 0, sizeof(t));
          rc = _stringToDateTime(data.str, data.length,
                                 DATE_FORMAT, DATE_FORMAT_LEN,
                                 &t, microsec);
