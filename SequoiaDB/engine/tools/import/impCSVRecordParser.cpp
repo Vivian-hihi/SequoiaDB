@@ -1363,6 +1363,7 @@ namespace import
       _skipSpace(&str, len);
       if (0 != len)
       {
+         rc = SDB_INVALIDARG;
          goto error;
       }
 
