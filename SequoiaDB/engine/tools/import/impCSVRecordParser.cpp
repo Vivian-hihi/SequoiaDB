@@ -122,15 +122,15 @@ namespace import
    #define TIME_FORMAT_LEN    (_timestampFormat.length())
    #define TIME_LAST_YEAR     2038
    #define TIME_START_YEAR    1901
-   #define TIME_MAX_NUM       2147443199
-   #define TIME_MIN_NUM       -2147414400
+   #define TIME_MAX_NUM       ((INT64)2147443199)
+   #define TIME_MIN_NUM       ((INT64)-2147414400)
 
    #define DATE_FORMAT        (_dateFormat.c_str())
    #define DATE_FORMAT_LEN    (_dateFormat.length())
    #define DATE_START_YEAR    -9999
    #define DATE_LAST_YEAR     9999
-   #define DATE_MAX_NUM       253402271999
-   #define DATE_MIN_NUM       -377705145943
+   #define DATE_MAX_NUM       ((INT64)253402271999)
+   #define DATE_MIN_NUM       ((INT64)-377705145943)
 
    #define CSV_MAX_STRING_SIZE (1024 * 1024 * 16)
 
@@ -2001,9 +2001,9 @@ namespace import
             us += 1000000;
          }
 
-         if (varLong < (INT64)TIME_MIN_NUM * 1000 )
+         if (varLong < TIME_MIN_NUM * 1000 )
          {
-            PD_LOG(PDERROR, "The timestamp %lld is greater than %lld000",
+            PD_LOG(PDERROR, "The timestamp %lld is less than %lld000",
                    varLong, TIME_MIN_NUM);
             rc = SDB_INVALIDARG;
             goto error;
@@ -2102,7 +2102,7 @@ namespace import
 
          if (value < DATE_MIN_NUM)
          {
-            PD_LOG(PDERROR, "The time stamp %lld is greater than %lld",
+            PD_LOG(PDERROR, "The time stamp %lld is less than %lld",
                    value, DATE_MIN_NUM);
             rc = SDB_INVALIDARG;
             goto error;
