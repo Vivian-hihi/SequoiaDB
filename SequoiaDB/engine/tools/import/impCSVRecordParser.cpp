@@ -1975,12 +1975,6 @@ namespace import
 
          /* create integer time representation */
          timep = mktime(&t);
-         if(!timep)
-         {
-            rc = SDB_INVALIDARG;
-            PD_LOG(PDERROR, "failed to make time of timestamp");
-            goto error;
-         }
          value.sec = (INT32)timep;
          value.us = microsec;
       }
@@ -2094,13 +2088,6 @@ namespace import
 
          /* create integer time representation */
          timep = mktime(&t);
-         if (!timep)
-         {
-            rc = SDB_INVALIDARG;
-            PD_LOG(PDERROR, "failed to make time of date");
-            goto error;
-         }
-
          value = (INT64)timep * 1000;
       }
       else
