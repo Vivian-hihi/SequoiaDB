@@ -1999,11 +1999,17 @@ namespace import
          }
 
          sec = varLong / 1000;
-         us = varLong - ( sec * 1000 );
+         us = (varLong % 1000) * 1000; // microseconds
+         if (us < 0)
+         {
+            // move 1s from sec to us
+            sec--;
+            us += 1000000;
+         }
 
          if (varLong < (INT64)TIME_MIN_NUM * 1000 )
          {
-            PD_LOG(PDERROR, "The timestamp %lld is greater than %d000",
+            PD_LOG(PDERROR, "The timestamp %lld is greater than %lld000",
                    varLong, TIME_MIN_NUM);
             rc = SDB_INVALIDARG;
             goto error;
@@ -2011,7 +2017,7 @@ namespace import
 
          if ((sec > TIME_MAX_NUM) || ((sec == TIME_MAX_NUM) && us > 0))
          {
-            PD_LOG(PDERROR, "The timestamp %lld is greater than %d000",
+            PD_LOG(PDERROR, "The timestamp %lld is greater than %lld000",
                    varLong, TIME_MAX_NUM);
             rc = SDB_INVALIDARG;
             goto error;
@@ -2109,7 +2115,7 @@ namespace import
 
          if (value < DATE_MIN_NUM)
          {
-            PD_LOG(PDERROR, "The time stamp %lld is greater than %d",
+            PD_LOG(PDERROR, "The time stamp %lld is greater than %lld",
                    value, DATE_MIN_NUM);
             rc = SDB_INVALIDARG;
             goto error;
@@ -2117,7 +2123,7 @@ namespace import
 
          if (value > DATE_MAX_NUM)
          {
-            PD_LOG(PDERROR, "The time stamp %lld is greater than %d",
+            PD_LOG(PDERROR, "The time stamp %lld is greater than %lld",
                    value, DATE_MAX_NUM);
             rc = SDB_INVALIDARG;
             goto error;
