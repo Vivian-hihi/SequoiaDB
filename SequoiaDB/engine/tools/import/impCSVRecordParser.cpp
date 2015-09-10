@@ -3418,14 +3418,6 @@ namespace import
                   goto error;
                }
 
-               if (CSV_TYPE_NULL == fieldData.type)
-               {
-                  str += valueLength + fieldDelLen;
-                  len -= valueLength + fieldDelLen;
-                  SDB_ASSERT(fieldEnd, "CSV_TYPE_NULL must be fieldEnd");
-                  continue;
-               }
-
                {
                   stringstream ss;
                   ss << "field" << (i++);
