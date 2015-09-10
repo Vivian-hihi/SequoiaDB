@@ -125,6 +125,8 @@ private:
    INT32 _addSdbDate( JSObject *obj,
                       const CHAR *key,
                       bson *bs) ;
+private:
+   BOOLEAN _isValidOid( const CHAR *value ) ;
 
 private:
    JSContext *_cx ;

@@ -36,6 +36,7 @@
 
 *******************************************************************************/
 
+#include "ossUtil.hpp"
 #include "sptConvertor.hpp"
 #include "pd.hpp"
 #include "ossMem.hpp"
@@ -614,7 +615,7 @@ INT32 sptConvertor::_addSpecialObj( JSObject *obj,
          goto error ;
       }
 
-      if ( 24 != strValue.length() )
+      if ( 24 != strValue.length() || !_isValidOid( strValue.c_str() ) )
       {
          rc = SDB_INVALIDARG ;
          goto error ;
@@ -1125,4 +1126,18 @@ done:
    return rc ;
 error:
    goto done ;
+}
+
+BOOLEAN sptConvertor::_isValidOid( const CHAR *value )
+{
+   if ( NULL == value || 24 > ossStrlen( value ) )
+      return FALSE ;
+   for ( UINT32 i = 0; i < 24; ++i )
+   {
+      if ( !std::isxdigit(value[i]) )
+      {
+         return FALSE ;
+      }
+   }
+   return TRUE ;
 }

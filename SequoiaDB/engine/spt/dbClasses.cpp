@@ -7984,7 +7984,7 @@ static JSBool objectid_constructor( JSContext *cx, uintN argc, jsval *vp )
       VERIFY( hexStr ) ;
       if ( !isValidOIDHex( hexStr ) )
       {
-         REPORT_RC( ret, "ObjectId(): wrong arguments", SDB_INVALIDARG ) ;
+         REPORT_RC( FALSE, "ObjectId(): wrong arguments", SDB_INVALIDARG ) ;
       }
       jsOidStr = JS_NewStringCopyN( cx, hexStr, 24 ) ;
       VERIFY( jsOidStr ) ;
