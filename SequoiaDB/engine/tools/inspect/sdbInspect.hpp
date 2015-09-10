@@ -250,6 +250,7 @@ struct _ciHeader
    INT32 _mainVersion ;
    INT32 _subVersion ;
    INT32 _loop ;
+   UINT64 _tailSize;
    CHAR  _eyeCatcher[ CI_EYECATCHER_SIZE ] ;
    CHAR  _action[ CI_ACTION_SIZE ] ;
    CHAR  _coordAddr[ CI_HOSTNAME_SIZE + 1 ] ;
@@ -262,7 +263,8 @@ struct _ciHeader
    CHAR  _view[ CI_VIEWOPTION_SIZE + 1 ] ;
    _ciHeader() : _mainVersion( CI_MAIN_VERSION ),
                  _subVersion( CI_SUB_VERSION ),
-                 _loop( CI_INVALID_LOOP )
+                 _loop( CI_INVALID_LOOP ),
+                 _tailSize( 0 )
    {
       ossMemset( _action,      0, CI_ACTION_SIZE ) ;
       ossMemset( _eyeCatcher,  0, CI_EYECATCHER_SIZE ) ;
@@ -483,7 +485,7 @@ typedef _ciTail ciTail ;
 struct _ciState
 {
    //    0   1   1   0   1   1   0   0             bits of state
-   //    1   2   3   4   5   7   7   -             index if node 
+   //    1   2   3   4   5   6   7   -             index if node 
    //  if 8th of state is 1, means that all node has current record, and every
    //  cursor should get next record. or the min bson( of "oid" ) need get next
    //  record.
