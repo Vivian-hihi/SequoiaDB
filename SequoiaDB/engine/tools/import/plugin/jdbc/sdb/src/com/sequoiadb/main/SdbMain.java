@@ -28,6 +28,10 @@ public class SdbMain {
 	
 public	static Logger logger = Logger.getLogger(SdbMain.class);
 
+public static int paraseSuccess = 0;
+
+public static int totalselect = 0;
+
 public static void main(String[] args) {
 	
 	/**
@@ -49,6 +53,11 @@ public static void main(String[] args) {
         executor.execute(myTask);
     }
     executor.shutdown();
+    while(!executor.isTerminated()){
+    }
+    logger.info("Finished all threads");
+    logger.info("paraseSuccess : "+paraseSuccess);
+    logger.info("totalselect : "+totalselect);
 	}
 }
 
@@ -61,13 +70,14 @@ public static void main(String[] args) {
 		opt.addOption("username", true, "DataBase UserName.");
 		opt.addOption("password", true, "DataBase password.");
 		opt.addOption("table", true, "table name which you want to select.");
-		opt.addOption("sumrow", true, "Rows which you want to select.");
+		opt.addOption("startrow", true, "startRow which you want to select.");
+		opt.addOption("endrow", true, "endRow which you want to select.");
 		opt.addOption("threads", true, "Concurrent number");
-		opt.addOption("version", false, "information about sdbJdbc");
 		opt.addOption("sql", true, "sql of user defined");
+		opt.addOption("version", false, "information about sdbJdbc");
 		opt.addOption("h", "help", false, "print help for the command.");
-		String formatstr = "gmkdir [--connect][--username][password][--table][--sumrow][--threads][-h/--help] DirectoryName";
-		String versionstr = "version  v1.1";
+		String formatstr = "gmkdir [--connect][--username][password][--table][--sumrow][--threads][--sql][-h/--help] DirectoryName";
+		String versionstr = "sdbimport-jdbc version  v1.0";
 		HelpFormatter formatter = new HelpFormatter();
 		CommandLineParser parser = new PosixParser();
 		CommandLine cl = null;
@@ -82,16 +92,16 @@ public static void main(String[] args) {
 		// -h or --help
 		if (cl == null) {
 			logger.error("CommandLine error");
-			return null;
+			System.exit(1);
 		}
 		if (null != cl && cl.hasOption("h")) {
 			HelpFormatter hf = new HelpFormatter();
-			hf.printHelp(formatstr, "", opt, "");
-			return null;
+			hf.printHelp(formatstr, "", opt, "",true);
+			System.exit(1);
 		}
 		if (null != cl && cl.hasOption("version")) {
 			System.out.println(versionstr);
-			return null;
+			System.exit(1);
 		}
 		// --connect
 		if (null != cl && cl.hasOption("connect")) {
@@ -116,43 +126,57 @@ public static void main(String[] args) {
 		if (null != cl && cl.hasOption("table")) {
 			map.put("table", cl.getOptionValue("table"));
 		}
-		// --sumrow
-		if (null != cl && cl.hasOption("sumrow")) {
-			map.put("sumRow", cl.getOptionValue("sumrow"));
+		// --startrow
+	    if (null != cl && cl.hasOption("startrow")) {
+			map.put("startRow", cl.getOptionValue("startrow"));
+			}
+		// --endrow
+		if (null != cl && cl.hasOption("endrow")) {
+			map.put("endRow", cl.getOptionValue("endrow"));
 		}
 		// --threads
 		if (null != cl && cl.hasOption("threads")) {
+			int thr = Integer.parseInt(cl.getOptionValue("threads"));
+			if(thr < 0 || thr>100){
+				System.out.println("--threads option value bettween 1~100");
+				System.exit(1);
+			}
 			map.put("threads", cl.getOptionValue("threads"));
 		}
 		if (map.get("url") == null) {
 			System.out.println("could not found --connect option");
 			logger.error("could not found --connect option");
-			return null;
+			System.exit(1);
 		}
 		if (map.get("dbType") == null) {
 			logger.error("could not found --dbType option");
-			return null;
+			System.exit(1);
 		}
 		if (map.get("user") == null) {
 			System.out.println("could not found --username option");
 			logger.error("could not found --username option");
-			return null;
+			System.exit(1);
 		}
 		if (map.get("password") == null) {
 			System.out.println("could not found --password option");
 			logger.error("could not found --password option");
-			return null;
+			System.exit(1);
 		}
 		if(cl != null && !cl.hasOption("sql")){
 		if (map.get("table") == null) {
 				System.out.println("could not found --table option");
 				logger.info("could not found --table option");
-				return null;
-		}	
-		if (map.get("sumRow") == null) {
+				System.exit(1);
+		}
+		if(map.get("startRow") == null){
+			map.put("startRow", 0);
+			logger.info("could not found --startrow option");
+			logger.info("default query from "+map.get("table") +" start 0 row");
+		}
+		if (map.get("endRow") == null) {
 			int sumrow = queryRowCount(map);
-			map.put("sumRow",sumrow);
-			logger.info("could not found --sumrow option");
+			map.put("endRow",sumrow);
+			logger.info("could not found --endrow option");
 			logger.info("default query all rows from"+map.get("table"));
 		}
 		if (map.get("threads") == null) {
@@ -160,32 +184,58 @@ public static void main(String[] args) {
 			logger.info("could not found --threads option");
 		}
 		
-		int sumRow = Integer.parseInt(map.get("sumRow").toString());
+		int endRow = Integer.parseInt(map.get("endRow").toString());
+		int startRow = Integer.parseInt(map.get("startRow").toString());
 		int threads = Integer.parseInt(map.get("threads").toString());
-		int avg = sumRow / threads;
-		int start = 0;
-		int end = avg;
+		
+		int avg = (endRow-startRow) / threads;
 		String sql = null;
 		String table = map.get("table").toString();
+		if(endRow < 0){
+			System.out.println("--endRow option value must greater than zero");
+			logger.error("--endRow option value must greater than zero");
+			System.exit(1);
+		}
+		if(startRow > endRow){
+			System.out.println("--startRow option value could not greater than endRow");
+			logger.error("--startRow option value could not greater than endRow");
+			System.exit(1);
+		}
+		
+		if(endRow == startRow){
+			String sql1 = null;
+			if (map.get("dbType").toString() == "oracle")
+				sql1 = "select * from (select rownum,* from " + table + " where rownum <=" + startRow
+						+ ") where rownum >" + startRow;
+			if (map.get("dbType").toString() == "db2")
+				sql1 = "select * from (select s.*,rownumber() over() as rn from (select * from " + table
+						+ ") as s ) as s1 where s1.rn between " + startRow + " and " + startRow;
+			list.add(sql1);
+			map.put("sqlList", list);
+			return map;
+		}
+		int start = startRow;
+		int end = start+avg;
+		totalselect = endRow-startRow;
 		
 		for (int i = 1; i <= threads; i++) {
 			if (i == threads) {
 				if (map.get("dbType").toString() == "db2")
 					sql = "select * from (select s.*,rownumber() over() as rn from (select * from " + table
-							+ ") as s ) as s1 where s1.rn between " + start + " and " + sumRow;
+							+ ") as s ) as s1 where s1.rn between " + start + " and " + endRow;
 				if (map.get("dbType").toString() == "oracle")
-					sql = "select * from (select rownum,* from " + table + " where rownum <=" + sumRow
-							+ ") where rownum >" + start;
+					sql = "select * from (select rownum as rown,t.* from " + table + " t where rownum <=" + endRow
+							+ ") tabalias where tabalias.rown >" + start;
 			} else {
 				if (map.get("dbType").toString() == "db2")
 					sql = "select * from (select s.*,rownumber() over() as rn from (select * from " + table
 							+ ") as s ) as s1 where s1.rn between " + start + " and " + end;
 				if (map.get("dbType").toString() == "oracle")
-					sql = "select * from (select rownum,* from " + table + " where rownum <=" + sumRow
-							+ ") where rownum >" + start;
+					sql = "select * from (select rownum as rown,t.* from " + table + " t where rownum <=" + end
+					+ ") tabalias where tabalias.rown >" + start;
 			}
-			start = i * avg + 1;
-			end = (i + 1) * avg;
+			start = end + 1;
+			end = (i + 1) * avg+startRow;
 			list.add(sql);
 		}
 		}
@@ -198,6 +248,7 @@ public static void main(String[] args) {
 		}
 		map.put("sqlList", list);
 		logger.info("args:" + map);
+//		System.out.println(map);
 		return map;
    }
    private static int queryRowCount(Map<String,Object> map){
