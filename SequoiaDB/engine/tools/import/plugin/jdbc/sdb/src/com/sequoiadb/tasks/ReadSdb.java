@@ -1,11 +1,13 @@
 package com.sequoiadb.tasks;
 
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Types;
+import java.text.SimpleDateFormat;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -13,7 +15,9 @@ import java.util.concurrent.Executors;
 import org.apache.log4j.Logger;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
+import org.bson.types.BSONTimestamp;
 
+import com.sequoiadb.main.SdbMain;
 import com.sequoiadb.service.ConnectDataBase;
 
 public class ReadSdb implements Runnable {
@@ -66,6 +70,7 @@ public class ReadSdb implements Runnable {
 		logger.info("dbType=" + dbType + " url=" + url + " user=" + user + " sql" + sql);
 		
 		try {
+			//select * from (select t.*,rownum as rown from DEPT t where rownum <=4) tabalias where tabalias.rown >1
 			pstmt = conn.prepareStatement(sql);
 			rs = pstmt.executeQuery();
 			ExecutorService es = Executors.newFixedThreadPool(4);
@@ -73,7 +78,7 @@ public class ReadSdb implements Runnable {
 			while (rs.next()) {
 				ResultSetMetaData rsmd = rs.getMetaData();
 				BSONObject bson = new BasicBSONObject();
-                sum++;
+				SdbMain.paraseSuccess++;
 				int i = -1;
 				int type = -1;
 				try {
@@ -106,12 +111,27 @@ public class ReadSdb implements Runnable {
 							bson.put(name, rs.getTime(name));
 							break;
 						case Types.TIMESTAMP:
-							bson.put(name, rs.getTimestamp(name));
+							String tsamp = rs.getObject(name).toString();
+							String dateStr = tsamp.substring(0, tsamp.lastIndexOf("."));
+							String incStr = tsamp.substring(tsamp.lastIndexOf(".")+1);
+							if(!incStr.equals("0")){
+							SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+							java.util.Date date = format.parse(dateStr);
+							int seconds = (int)(date.getTime()/1000);
+							int inc = Integer.parseInt(incStr);
+							BSONTimestamp ts = new BSONTimestamp(seconds,inc);
+							bson.put(name, ts.toString());
+							}else{
+								bson.put(name, rs.getTimestamp(name));
+							}
 							break;
 						case Types.TINYINT:
 							bson.put(name, rs.getShort(name));
 							break;
 						case Types.VARCHAR:
+							bson.put(name, rs.getString(name));
+							break;
+						case Types.CHAR:
 							bson.put(name, rs.getString(name));
 							break;
 						case Types.NCHAR:
@@ -123,12 +143,25 @@ public class ReadSdb implements Runnable {
 						case Types.BIT:
 							bson.put(name, rs.getByte(name));
 							break;
+						case Types.BINARY:
+							bson.put(name, rs.getBinaryStream(name));
+							break;	
 						case Types.BLOB:
-							bson.put(name, rs.getBlob(name));
+							bson.put(name, null);
 							break;
+						case Types.CLOB:
+							bson.put(name, null);
+							break;
+						case Types.NCLOB:
+							bson.put(name, null);
+							break;	
 						case Types.NUMERIC:
+							if(dbType.equals("oracle") && !name.equals("ROWN"))
 							bson.put(name, rs.getBigDecimal(name));
 							break;
+						case Types.ROWID:
+							bson.put(name, rs.getRowId(name));
+							break;	
 						case Types.NULL:
 							bson.put(name, null);
 							break;
@@ -162,7 +195,7 @@ public class ReadSdb implements Runnable {
 					pstmt.close();
 				if (conn != null)
 					conn.close();
-				logger.info("costTime" + (System.currentTimeMillis() - startTime));
+				logger.info("costTime:" + (System.currentTimeMillis() - startTime)+"s");
 			} catch (SQLException e) {
 				logger.error(e.getMessage());
 				e.printStackTrace();
