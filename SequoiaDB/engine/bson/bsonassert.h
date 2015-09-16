@@ -82,7 +82,7 @@ namespace bson {
         throw bson::assertion( msgid , msg );
     }
     inline void msgasserted(int msgid, const std::string &msg) { msgasserted(msgid, msg.c_str()); }
-    inline void massert(unsigned msgid, std::string msg, bool expr) {
+    inline void massert(unsigned msgid, const char* msg, bool expr) {
         if(!expr) {
             std::cout << "assertion failure in bson library: " << msgid << ' ' << msg << std::endl;
             throw bson::assertion( msgid , msg );
