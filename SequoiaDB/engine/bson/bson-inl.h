@@ -136,7 +136,7 @@ namespace bson {
             ss << " first element: " << e.toString();
         }
         catch ( ... ) { }
-        massert( 10334 , ss.str() , 0 );
+        massert( 10334 , ss.str().c_str() , 0 );
     }
 
     /* the idea with NOINLINE_DECL here is to keep this from inlining in the
