@@ -1133,7 +1133,8 @@ namespace engine
       }
 
       sdbGetShardCB()->getAndLockCataSet( fullname, &pCatSet, TRUE ) ;
-      if ( pCatSet && CLS_REPLSET_MAX_NODE_SIZE == pCatSet->getW() )
+      if ( ( pCatSet && CLS_REPLSET_MAX_NODE_SIZE == pCatSet->getW() ) ||
+            ( DMS_INDEX_BUILD_OFFLINE == mode ) )
       {
          useSync = TRUE ;
       }
