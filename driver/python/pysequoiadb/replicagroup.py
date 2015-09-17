@@ -212,7 +212,7 @@ class replicagroup(object):
          node = None
          raise
 
-      return ret, node
+      return rc, node
 
    def get_nodebyname(self,nodename):
       """Get specified node from current replica group.
