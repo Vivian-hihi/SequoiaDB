@@ -197,9 +197,9 @@ class replicagroup(object):
          pysequoiadb.error.SDBTypeError
          pysequoiadb.error.SDBBaseError
       """
-      if not isintance(hostname, basestring):
+      if not isinstance(hostname, basestring):
          raise SDBTypeError("hostname must be an instance of basestring")
-      if not isintance(servicename, basestring):
+      if not isinstance(servicename, basestring):
          raise SDBTypeError("servicename must be an instance of basestring")
 
       try:
@@ -226,7 +226,7 @@ class replicagroup(object):
          pysequoiadb.error.SDBTypeError
          pysequoiadb.error.SDBBaseError
       """
-      if not isintance(nodename, basestring):
+      if not isinstance(nodename, basestring):
          raise SDBTypeError("nodename must be an instance of basestring")
 
       try:
