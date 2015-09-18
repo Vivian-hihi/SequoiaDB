@@ -5753,6 +5753,8 @@ do                                                            \
          goto error ;
       }
       _sock->disableNagle () ;
+      // set keep alive
+      _sock->setKeepAlive( 1, 15, 5, 3 ) ;
 
       if ( _useSSL )
       {
