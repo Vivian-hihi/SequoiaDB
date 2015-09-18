@@ -115,21 +115,19 @@ namespace engine
             {
                goto done ;
             }
-
             _func.push_back( func ) ;
             }
          }
       }
 
       rc = _groupby.load( groupby ) ;
-
-      if ( !_isAggr && !_groupby.empty() )
+      if ( rc )
       {
-         _isAggr = TRUE;
+         PD_LOG( PDERROR, "Load groupby failed, rc: %d", rc ) ;
+         goto done ;
       }
-
-
       _initialized = TRUE ;
+
    done:
       return ;
    }
@@ -210,7 +208,7 @@ namespace engine
          {
             _eoc = TRUE ;
 
-            if ( !_pushedAtThisTime && _pushedAtAnyTime )
+            if ( !_pushedAtThisTime && ( _pushedAtAnyTime || !_isAggr ) )
             {
                goto error ;
             }
@@ -298,19 +296,7 @@ namespace engine
                }
                else
                {
-                  if ( _isAggr )
-                  {
-                     continue ;
-                  }
-                  rc = _result( next ) ;
-                  if ( SDB_OK != rc )
-                  {
-                     goto error ;
-                  }
-                  else
-                  {
-                     break ;
-                  }
+                  continue ;
                }
             }
          }
