@@ -1007,7 +1007,7 @@ public class SDBMessageHelper {
 				SequoiadbConstants.ZERO_NODEID,
 				Operation.OP_KILL_CONTEXT.getOperationCode(), endianConvert));
 		ByteBuffer buf = ByteBuffer.allocate(8 + 8 * contextIds.length);
-		if (SequoiadbConstants.SYSTEM_ENDIAN == SequoiadbConstants.LITTLE_ENDIAN) {
+		if (endianConvert) {
 			buf.order(ByteOrder.LITTLE_ENDIAN);
 		} else {
 			buf.order(ByteOrder.BIG_ENDIAN);
