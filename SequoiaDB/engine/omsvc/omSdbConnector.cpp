@@ -368,6 +368,7 @@ namespace engine
       }
 
       _init = FALSE ;
+      return SDB_OK ;
    }
 }
 
