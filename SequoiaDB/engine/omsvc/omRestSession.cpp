@@ -101,8 +101,9 @@ namespace engine
             {
                PD_LOG_MSG( PDERROR, "login failed:rc=%d", rc ) ;
                 _sendOpError2Web( rc, pAdaptor, this, _pEDUCB ) ;
-                goto done ;
             }
+
+            goto done ;
          }
       }
 
@@ -402,6 +403,15 @@ namespace engine
       list<omNodeInfo> nodeList ;
       const CHAR *pSdbUser      = NULL ;
       const CHAR *pSdbPasswd    = NULL ;
+
+      if ( !isAuthOK() )
+      {
+         rc = SDB_PMD_SESSION_NOT_EXIST ;
+         PD_LOG( PDERROR, "session is not exist:rc=%d", rc ) ;
+         _sendOpError2Web( rc, pAdaptor, this, eduCB() ) ;
+         goto error ;
+      }
+      
       pAdaptor->getHttpHeader( this, OM_REST_HEAD_SDBUSER, &pSdbUser ) ;
       pAdaptor->getHttpHeader( this, OM_REST_HEAD_SDBPASSWD, &pSdbPasswd ) ;
       rc = _getBusinessAccessNode( pClusterName, pBusinessName, 
@@ -459,6 +469,12 @@ namespace engine
          if ( -1 != contextID )
          {
             rc = _fetchOneContext( contextID, fetchOneBuff ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG_MSG( PDERROR, "fetch context failed:rc=%d", rc ) ;
+               _sendOpError2Web( rc, pAdaptor, this, _pEDUCB ) ;
+               goto error ;
+            }
             if ( -1 != contextID )
             {
                // -1 != contextID means we have more data to send. 
@@ -547,10 +563,12 @@ namespace engine
    INT32 _omRestSession::_processOMRestMsg( HTTP_PARSE_COMMON command, 
                                             const CHAR *pFilePath )
    {
+      INT32 rc = SDB_OK ;
       omRestCommandBase *pOmCommand = NULL ;
       pOmCommand = _createCommand( command, pFilePath ) ;
       if ( NULL == pOmCommand )
       {
+         rc = SDB_INVALIDARG ;
          goto error ;
       }
 
@@ -562,7 +580,7 @@ namespace engine
       {
          SDB_OSS_DEL pOmCommand ;
       }
-      return SDB_OK ;
+      return rc ;
 
    error:
       goto done ;
@@ -571,6 +589,7 @@ namespace engine
    omRestCommandBase *_omRestSession::_createCommand( HTTP_PARSE_COMMON command, 
                                                       const CHAR *pFilePath )
    {
+      INT32 rc = SDB_OK ;
       omRestCommandBase *commandIf = NULL ;
       restAdaptor *pAdptor         = NULL ;
       const CHAR* hostName = pmdGetKRCB()->getHostName();
@@ -591,12 +610,10 @@ namespace engine
          pAdptor->getQuery( this, OM_REST_FIELD_COMMAND, &pSubCommand ) ;
          if ( NULL == pSubCommand )
          {
-            BSONObjBuilder builder ;
-            builder.append( OM_REST_RES_RETCODE, SDB_INVALIDARG ) ;
-            builder.append( OM_REST_RES_DESP, getErrDesp( SDB_INVALIDARG ) ) ;
-            builder.append( OM_REST_RES_DETAIL, "command is null" ) ;
-            pAdptor->setOPResult( this, SDB_INVALIDARG, builder.obj() ) ;
-            pAdptor->sendResponse( this, HTTP_OK ) ;
+            rc = SDB_INVALIDARG ;
+            PD_LOG_MSG( PDERROR, "get command failed:filed=%s,rc=%d",
+                        OM_REST_FIELD_COMMAND, rc ) ;
+            _sendOpError2Web( rc, pAdptor, this, eduCB() ) ;
             goto error ;
          }
 
@@ -607,15 +624,10 @@ namespace engine
          {
             // except login_rep and check_seesion_req, other commands can only 
             // execute in authrity status
-            BSONObjBuilder builder ;
-            builder.append( OM_REST_RES_RETCODE, 
-                            SDB_PMD_SESSION_NOT_EXIST ) ;
-            builder.append( OM_REST_RES_DESP, 
-                            getErrDesp( SDB_PMD_SESSION_NOT_EXIST ) ) ;
-            builder.append( OM_REST_RES_DETAIL, "" ) ;
-            pAdptor->setOPResult( this, SDB_PMD_SESSION_NOT_EXIST, 
-                                  builder.obj() ) ;
-            pAdptor->sendResponse( this, HTTP_OK ) ;
+            rc = SDB_PMD_SESSION_NOT_EXIST ;
+            PD_LOG( PDERROR, "session is not exist:rc=%d", rc ) ;
+            _sendOpError2Web( rc, pAdptor, this, eduCB() ) ;
+
             PD_LOG( PDEVENT, "OM: redirect to:%s", OM_REST_LOGIN_HTML ) ;
             goto error ;
          }
@@ -757,14 +769,10 @@ namespace engine
          }
          else
          {
-            BSONObjBuilder builder ;
-            string errorInfo ;
-            errorInfo = string("command is unreconigzed:") + pSubCommand ;
-            builder.append( OM_REST_RES_RETCODE, SDB_INVALIDARG ) ;
-            builder.append( OM_REST_RES_DESP, getErrDesp( SDB_INVALIDARG ) ) ;
-            builder.append( OM_REST_RES_DETAIL, errorInfo.c_str() ) ;
-            pAdptor->setOPResult( this, SDB_INVALIDARG, builder.obj() ) ;
-            pAdptor->sendResponse( this, HTTP_OK ) ;
+            rc = SDB_INVALIDARG ;
+            PD_LOG_MSG( PDERROR, "command is unreconigzed:command=%s,rc=%d",
+                        pSubCommand, rc ) ;
+            _sendOpError2Web( rc, pAdptor, this, eduCB() ) ;
             goto error ;
          }
       }
