@@ -225,23 +225,31 @@ namespace engine
 
       if ( _size > 0 )
       {
+         INT32 pos = 0 ;
          INT32 num = 0 ;
          utilSplitIterator i( (CHAR*)_begin, '.', _size ) ;
          while ( i.more() )
          {
+            if ( 0 == pos )
+            {
+               ++pos ;
+            }
+            else
+            {
+               ss << "." ;
+            }
+
             const CHAR *left = i.next() ;
             if ( '$' == *left && '[' == *(left + 1) &&
                  SDB_OK == mthConvertSubElemToNumeric( left, num ) )
             {
-               ss << num << '.' ;
+               ss << num ;
             }
             else
             {
-               ss << left << '.' ;
+               ss << left ;
             }
          }
-         ss.seekp( (INT32)ss.tellp() - 1 ) ;
-         ss << '\0' ;
       }
       return ss.str() ;
    }
