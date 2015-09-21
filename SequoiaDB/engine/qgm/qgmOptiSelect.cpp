@@ -913,24 +913,28 @@ namespace engine
             goto error ;
          }
 
-         if ( !found )
+         if ( found )
          {
-            PD_LOG( PDERROR, "split field [%s] is not found in selecotr",
-                    _splitby.toString().c_str() ) ;
-            rc = SDB_INVALIDARG ;
-            goto error ;
+            if ( NULL != sExist && !sExist->alias.empty() )
+            {
+               _splitby.relegation().clear() ;
+               if ( 0 == pos )
+               {
+                  _splitby.attr() = sExist->alias ;
+               }
+               else
+               {
+                  _splitby.attr().replace( 0, pos, sExist->alias ) ;
+               }
+            }
          }
-         else if ( NULL != sExist && !sExist->alias.empty() )
+         else
          {
+            qgmOpField field( _splitby, SQL_GRAMMAR::DBATTR ) ;
+            _table->getUniqueFieldAlias( field.alias ) ;
+            _splitby.attr() = field.alias ;
             _splitby.relegation().clear() ;
-            if ( 0 == pos )
-            {
-               _splitby.attr() = sExist->alias ;
-            }
-            else
-            {
-               _splitby.attr().replace( 0, pos, sExist->alias ) ;
-            }
+            _selector.push_back( field ) ;
          }
 
          plan->insertPlan( QGM_EXTEND_SPLITBY ) ;

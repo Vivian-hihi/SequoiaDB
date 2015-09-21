@@ -57,7 +57,7 @@ namespace engine
 
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMOPTIAGGREGATION_INIT, "_qgmOptiAggregation::init" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMOPTIAGGREGATION_INIT, "_qgmOptiAggregation::init" )
    INT32 _qgmOptiAggregation::init()
    {
       PD_TRACE_ENTRY(SDB__QGMOPTIAGGREGATION_INIT) ;
@@ -108,7 +108,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMOPTIAGGREGATION_DONE, "_qgmOptiAggregation::done" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMOPTIAGGREGATION_DONE, "_qgmOptiAggregation::done" )
    INT32 _qgmOptiAggregation::done()
    {
       PD_TRACE_ENTRY( SDB__QGMOPTIAGGREGATION_DONE ) ;
@@ -155,7 +155,7 @@ namespace engine
       return rc ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMOPTIAGGREGATION__UPDATE2UNIT, "_qgmOptiAggregation::_update2Unit" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMOPTIAGGREGATION__UPDATE2UNIT, "_qgmOptiAggregation::_update2Unit" )
    void _qgmOptiAggregation::_update2Unit( _qgmOptiAggregation::AGGR_TYPE type )
    {
       PD_TRACE_ENTRY( SDB__QGMOPTIAGGREGATION__UPDATE2UNIT ) ;
@@ -178,7 +178,7 @@ namespace engine
       return ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMOPTIAGGREGATION__ADDFIELDS, "_qgmOptiAggregation::_addFields" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMOPTIAGGREGATION__ADDFIELDS, "_qgmOptiAggregation::_addFields" )
    INT32 _qgmOptiAggregation::_addFields( qgmOprUnit * oprUnit )
    {
       PD_TRACE_ENTRY( SDB__QGMOPTIAGGREGATION__ADDFIELDS ) ;
@@ -251,7 +251,7 @@ namespace engine
       return FALSE ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMOPTIAGGREGATION__GETFIELDALIAS, "_qgmOptiAggregation::_getFieldAlias" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMOPTIAGGREGATION__GETFIELDALIAS, "_qgmOptiAggregation::_getFieldAlias" )
    UINT32 _qgmOptiAggregation::_getFieldAlias( qgmOPFieldPtrVec & fieldAlias,
                                                BOOLEAN getAll )
    {
@@ -275,7 +275,7 @@ namespace engine
       return count ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMOPTIAGGREGATION__PUSHOPRUNIT, "_qgmOptiAggregation::_pushOprUnit" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMOPTIAGGREGATION__PUSHOPRUNIT, "_qgmOptiAggregation::_pushOprUnit" )
    INT32 _qgmOptiAggregation::_pushOprUnit( qgmOprUnit * oprUnit,
                                             PUSH_FROM from )
    {
@@ -402,7 +402,7 @@ namespace engine
       return SDB_OK ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMOPTIAGGREGATION_OURPUTSORT, "_qgmOptiAggregation::outputSort" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMOPTIAGGREGATION_OURPUTSORT, "_qgmOptiAggregation::outputSort" )
    INT32 _qgmOptiAggregation::outputSort( qgmOPFieldVec & sortFields )
    {
       PD_TRACE_ENTRY( SDB__QGMOPTIAGGREGATION_OURPUTSORT ) ;
@@ -481,7 +481,7 @@ namespace engine
       return ss.str() ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMOPTIAGGREGATION_PARSE, "_qgmOptiAggregation::parse" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMOPTIAGGREGATION_PARSE, "_qgmOptiAggregation::parse" )
    INT32 _qgmOptiAggregation::parse( const qgmOpField &field,
                                      BOOLEAN &isFunc,
                                      BOOLEAN needRele )
@@ -535,7 +535,7 @@ namespace engine
       goto done ;
    }
 
-   //PD_TRACE_DECLARE_FUNCTION( SDB__QGMOPTIAGGREGATION_HASEXPR, "_qgmOptiAggregation::hasExpr" 
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMOPTIAGGREGATION_HASEXPR, "_qgmOptiAggregation::hasExpr" 
    BOOLEAN _qgmOptiAggregation::hasExpr() const
    {
       PD_TRACE_ENTRY( SDB__QGMOPTIAGGREGATION_HASEXPR ) ;
