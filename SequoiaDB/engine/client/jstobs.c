@@ -891,7 +891,7 @@ static BOOLEAN jsonConvertBson ( cJSON *cj, bson *bs, BOOLEAN isObj )
             UTC time
             date min 1900-01-01-00.00.00.000000 +/- TZ
             date max 9999-12-31-23.59.59.999999 +/- TZ
-            timestamp min 1901-12-13-20.45.52.999999 +/- TZ
+            timestamp min 1901-12-13-20.45.52.000000 +/- TZ
             timestamp max 2038-01-19-03.14.07.999999 +/- TZ
          */
          struct tm t ;
@@ -952,7 +952,7 @@ static BOOLEAN jsonConvertBson ( cJSON *cj, bson *bs, BOOLEAN isObj )
             }
          }
          /* sanity check for years */
-         if( cJSON_Timestamp == cj->type )
+         /*if( cJSON_Timestamp == cj->type )
          {
             if( year > INT32_LAST_YEAR )
             {
@@ -978,7 +978,7 @@ static BOOLEAN jsonConvertBson ( cJSON *cj, bson *bs, BOOLEAN isObj )
          }
 
          if( cJSON_Date == cj->type && (
-             year    >     9999              || //[1900,9999]
+             year    >     INT64_LAST_YEAR   || //[1900,9999]
              year    <     RELATIVE_YEAR     ||
              month   >     RELATIVE_MON      || //[1,12]
              month   <     1                 ||
@@ -986,7 +986,7 @@ static BOOLEAN jsonConvertBson ( cJSON *cj, bson *bs, BOOLEAN isObj )
              day     <     1 ) )
          {
             return FALSE ;
-         }
+         }*/
 
          --month ;
          year -= RELATIVE_YEAR ;
@@ -1001,15 +1001,13 @@ static BOOLEAN jsonConvertBson ( cJSON *cj, bson *bs, BOOLEAN isObj )
 
          /* create integer time representation */
          timep = mktime( &t ) ;
-         if( timep == -1 )
+         if( cJSON_Date == cj->type &&
+                  ( timep < TIME_STAMP_DATE_MIN || timep > TIME_STAMP_DATE_MAX ) )
          {
-            if( ossGetLastError() != 0 )
-            {
-               return FALSE ;
-            }
+            return FALSE ;
          }
          else if( cJSON_Timestamp == cj->type &&
-                  ( timep < -2147483648 || timep > 2147483648 ) )
+                  ( timep < TIME_STAMP_TIMESTAMP_MIN || timep > TIME_STAMP_TIMESTAMP_MAX ) )
          {
             return FALSE ;
          }
