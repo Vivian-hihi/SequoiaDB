@@ -952,7 +952,7 @@ static BOOLEAN jsonConvertBson ( cJSON *cj, bson *bs, BOOLEAN isObj )
             }
          }
          /* sanity check for years */
-         /*if( cJSON_Timestamp == cj->type )
+         if( cJSON_Timestamp == cj->type )
          {
             if( year > INT32_LAST_YEAR )
             {
@@ -986,7 +986,7 @@ static BOOLEAN jsonConvertBson ( cJSON *cj, bson *bs, BOOLEAN isObj )
              day     <     1 ) )
          {
             return FALSE ;
-         }*/
+         }
 
          --month ;
          year -= RELATIVE_YEAR ;
