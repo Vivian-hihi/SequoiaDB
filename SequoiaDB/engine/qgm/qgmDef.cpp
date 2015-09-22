@@ -83,7 +83,8 @@ namespace engine
       }
       const CHAR *l = _begin ;
       const CHAR *r = field._begin ;
-      while( *l && *r )
+      UINT32 pos = 0 ;
+      while( pos < _size )
       {
          if ( *l != *r )
          {
@@ -91,6 +92,7 @@ namespace engine
          }
          ++l ;
          ++r ;
+         ++pos ;
       }
       return TRUE ;
    }
@@ -103,7 +105,8 @@ namespace engine
       }
       const CHAR *l = _begin ;
       const CHAR *r = field._begin ;
-      while( *l && *r )
+      UINT32 pos = 0 ;
+      while( pos < _size )
       {
          if ( *l != *r )
          {
@@ -111,6 +114,7 @@ namespace engine
          }
          ++l ;
          ++r ;
+         ++pos ;
       }
       return FALSE ;
    }
@@ -186,6 +190,7 @@ namespace engine
       return sub ;
    }
 
+   /// ex: self: abc.dek, return: abc
    _qgmField _qgmField::rootField()
    {
       UINT32 pos = 0 ;
@@ -196,6 +201,76 @@ namespace engine
          root._size = pos ;
       }
       return root ;
+   }
+
+   /// ex: self: abc.dek, return: dek
+   _qgmField _qgmField::lastField()
+   {
+      UINT32 pos = 0 ;
+      _qgmField last( *this ) ;
+
+      if ( qgmUtilLastDot( _begin, _size, pos ) && ++pos < _size )
+      {
+         last._begin += pos ;
+         last._size -= pos ;
+      }
+      return last ;
+   }
+
+   /// ex: self: abc.def.kk, cur: abc, return: def
+   ///                       cur: kk,  return: (null)
+   _qgmField _qgmField::nextField( const _qgmField &cur )
+   {
+      _qgmField next ;
+      next._ptrTable = _ptrTable ;
+      const CHAR *end = _begin + _size ;
+      const CHAR *pos = cur._begin + cur._size + 1 ;
+
+      if ( !cur.empty() &&
+           cur._begin >= _begin &&
+           pos < end )
+      {
+         next._begin = pos ;
+         next._size = end - pos ;
+         while( pos < end )
+         {
+            if ( '.' == *pos )
+            {
+               next._size = pos - next._begin ;
+               break ;
+            }
+            ++pos ;
+         }
+      }
+      return next ;
+   }
+
+   /// ex: self: abc.def.kk, cur: kk, return: def
+   ///                       cur: abc,return: (null)
+   _qgmField _qgmField::preField( const _qgmField &cur )
+   {
+      _qgmField next ;
+      next._ptrTable = _ptrTable ;
+      const CHAR *pos = cur._begin - 1 ;
+
+      if ( !cur.empty() &&
+           cur._begin + cur._size <= _begin + _size &&
+           pos > _begin )
+      {
+         next._begin = _begin ;
+         next._size = pos - _begin ;
+         while( pos > _begin )
+         {
+            --pos ;
+            if ( '.' == *pos )
+            {
+               next._begin = pos + 1 ;
+               next._size = cur._begin - 1 - next._begin ;
+               break ;
+            }
+         }
+      }
+      return next ;
    }
 
    void _qgmField::replace( UINT32 pos, UINT32 size, const _qgmField &field )

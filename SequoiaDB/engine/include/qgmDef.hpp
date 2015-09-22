@@ -94,6 +94,9 @@ namespace engine
 
       _qgmField subField( UINT32 pos, UINT32 size = _qgmField::npos ) ;
       _qgmField rootField() ;
+      _qgmField lastField() ;
+      _qgmField nextField( const _qgmField &cur ) ;
+      _qgmField preField( const _qgmField &cur ) ;
 
       void      replace( UINT32 pos, UINT32 size,
                          const _qgmField &field ) ;

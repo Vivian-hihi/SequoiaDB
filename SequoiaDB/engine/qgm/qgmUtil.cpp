@@ -65,6 +65,24 @@ namespace engine
       return found ;
    }
 
+   BOOLEAN qgmUtilLastDot( const CHAR *str, UINT32 len, UINT32 &pos )
+   {
+      BOOLEAN found = FALSE ;
+      UINT32 tLen = len ;
+
+      while ( tLen > 0 )
+      {
+         --tLen ;
+         if ( '.' == str[ tLen ] )
+         {
+            pos = tLen ;
+            found = TRUE ;
+            break ;
+         }
+      }
+      return found ;
+   }
+
    BOOLEAN qgmUtilSame( const CHAR *src, UINT32 srcLen,
                         const CHAR *dst, UINT32 dstLen )
    {

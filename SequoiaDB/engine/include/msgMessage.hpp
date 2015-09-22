@@ -257,11 +257,6 @@ INT32 msgBuildSysInfoRequest ( CHAR **ppBuffer, INT32 *pBufferSize ) ;
 
 INT32 msgExtractSysInfoRequest ( CHAR *pBuffer, BOOLEAN &endianConvert ) ;
 
-INT32 msgBuildSysInfoReply ( CHAR **ppBuffer, INT32 *pBufferSize ) ;
-
-INT32 msgExtractSysInfoReply ( CHAR *pBuffer, BOOLEAN &endianConvert,
-                               INT32 *osType ) ;
-
 INT32 msgExtractAggrRequest ( CHAR *pBuffer, CHAR **ppCollectionName,
                               CHAR **ppObjs, INT32 &count,
                               INT32 *pFlags = NULL );

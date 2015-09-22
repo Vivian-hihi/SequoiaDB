@@ -47,6 +47,7 @@ namespace engine
 {
 
    BOOLEAN qgmUtilFirstDot( const CHAR *str, UINT32 len, UINT32 &pos ) ;
+   BOOLEAN qgmUtilLastDot( const CHAR *str, UINT32 len, UINT32 &pos ) ;
 
    BOOLEAN qgmUtilSame( const CHAR *src, UINT32 srcLen,
                         const CHAR *dst, UINT32 dstLen ) ;
