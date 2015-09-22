@@ -885,6 +885,15 @@ static BOOLEAN jsonConvertBson ( cJSON *cj, bson *bs, BOOLEAN isObj )
       case cJSON_Timestamp:
       case cJSON_Date:
       {
+         /*
+            eg. before 1927-12-31-23.54.07,
+            will be more than 352 seconds
+            UTC time
+            date min 1900-01-01-00.00.00.000000 +/- TZ
+            date max 9999-12-31-23.59.59.999999 +/- TZ
+            timestamp min 1901-12-13-20.45.52.999999 +/- TZ
+            timestamp max 2038-01-19-03.14.07.999999 +/- TZ
+         */
          struct tm t ;
          /* date and timestamp */
          INT32 year   = 0 ;
@@ -942,37 +951,44 @@ static BOOLEAN jsonConvertBson ( cJSON *cj, bson *bs, BOOLEAN isObj )
                }
             }
          }
-         --month ;
          /* sanity check for years */
-         if( cJSON_Timestamp == cj->type && (
-             year    >=    INT32_LAST_YEAR   ||
-             month   >=    RELATIVE_MOD      || //[0,11]
-             month   <     0                 ||
-             day     >     RELATIVE_DAY      || //[1,31]
-             day     <=    0 ) )
+         if( cJSON_Timestamp == cj->type )
          {
-            return FALSE ;
+            if( year > INT32_LAST_YEAR )
+            {
+               return FALSE ;
+            }
+            else if( year < RELATIVE_YEAR )
+            {
+               return FALSE ;
+            }
+            if( month   >  RELATIVE_MON     || //[1,12]
+                month   <  1                ||
+                day     >  RELATIVE_DAY     || //[1,31]
+                day     <  1                ||
+                hour    >= RELATIVE_HOUR    || //[0,23]
+                hour    <  0                ||
+                minute  >= RELATIVE_MIN_SEC || //[0,59]
+                minute  <  0                ||
+                second  >= RELATIVE_MIN_SEC || //[0,59]
+                second  < 0 )
+            {
+               return FALSE ;
+            }
          }
-         if( cJSON_Timestamp == cj->type && (
-             hour    >=    RELATIVE_HOUR     || //[0,23]
-             hour    <     0                 ||
-             minute  >=    RELATIVE_MIN_SEC  || //[0,59]
-             minute  <     0                 ||
-             second  >=    RELATIVE_MIN_SEC  || //[0,59]
-             second  <     0                )
-           )
-         {
-            return FALSE ;
-         }
+
          if( cJSON_Date == cj->type && (
-             month   >=    RELATIVE_MOD      || //[0,11]
-             month   <     0                 ||
+             year    >     9999              || //[1900,9999]
+             year    <     RELATIVE_YEAR     ||
+             month   >     RELATIVE_MON      || //[1,12]
+             month   <     1                 ||
              day     >     RELATIVE_DAY      || //[1,31]
-             day     <=    0 ) )
+             day     <     1 ) )
          {
             return FALSE ;
          }
 
+         --month ;
          year -= RELATIVE_YEAR ;
 
          /* construct tm */
@@ -985,8 +1001,18 @@ static BOOLEAN jsonConvertBson ( cJSON *cj, bson *bs, BOOLEAN isObj )
 
          /* create integer time representation */
          timep = mktime( &t ) ;
-         if( !timep )
+         if( timep == -1 )
+         {
+            if( ossGetLastError() != 0 )
+            {
+               return FALSE ;
+            }
+         }
+         else if( cJSON_Timestamp == cj->type &&
+                  ( timep < -2147483648 || timep > 2147483648 ) )
+         {
             return FALSE ;
+         }
          /* append timestamp or date accordingly */
          if ( cJSON_Timestamp == cj->type )
          {
