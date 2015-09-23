@@ -574,6 +574,7 @@ namespace engine
       vector<qgmOpField>::iterator itr ;
       qgmField uniqueField ;
       BOOLEAN addSortFeild = FALSE ;
+      BOOLEAN addRootFilter = FALSE ;
 
       if ( NULL != stream.next )
       {
@@ -659,6 +660,7 @@ namespace engine
          plan->_skip     = _skip ;
 
          clearConstraint() ;
+         addRootFilter = TRUE ;
       }
 
       if ( _hasFunc || _groupby.size() > 0 )
@@ -939,7 +941,16 @@ namespace engine
 
          plan->insertPlan( QGM_EXTEND_SPLITBY ) ;
          plan->_splitby = _splitby ;
+
+         if ( !found && !addRootFilter )
+         {
+            plan->insertPlan( QGM_EXTEND_ORDERFILTER ) ;
+            _table->getUniqueTableAlias( uniqueField ) ;
+            plan->pushAlias( uniqueField ) ;
+            addRootFilter = TRUE ;
+         }
       }
+
    done:
       PD_TRACE_EXITRC( SDB__QGMOPTISELECT__VALIDATEANDCRTPLAN, rc ) ;
       return rc ;
