@@ -69,6 +69,11 @@ namespace engine
       INT32    _buildNewObj( Builder &b, BSONObjIterator &es,
                              const BSONElement &replace ) ;
 
+      void     _appendReplace( BSONObjBuilder &b,
+                               const BSONElement &replace ) ;
+      void     _appendReplace( BSONArrayBuilder &b,
+                               const BSONElement &replace ) ;
+
    private:
       _qgmDbAttr        _splitby ;
       qgmFetchOut       _fetch ;

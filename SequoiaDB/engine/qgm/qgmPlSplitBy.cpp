@@ -50,7 +50,7 @@ namespace engine
    :_qgmPlan( QGM_PLAN_TYPE_SPLIT, alias ),
    _splitby(splitby),
    _itr(_fetch.obj),
-   _fieldName( _splitby.attr().toString() )
+   _fieldName( _splitby.attr().toFieldName() )
    {
       _initialized = TRUE ;
       _replaced = FALSE ;
@@ -143,6 +143,32 @@ namespace engine
       goto done ;
    }
 
+   void _qgmPlSplitBy::_appendReplace( BSONObjBuilder &b,
+                                       const BSONElement &replace )
+   {
+      if ( !replace.eoo() )
+      {
+         b.appendAs( replace, _splitEle.fieldName() ) ;
+      }
+      else
+      {
+         b.appendNull( _splitEle.fieldName() ) ;
+      }
+   }
+
+   void _qgmPlSplitBy::_appendReplace( BSONArrayBuilder &b,
+                                       const BSONElement &replace )
+   {
+      if ( !replace.eoo() )
+      {
+         b.append( replace ) ;
+      }
+      else
+      {
+         b.appendNull() ;
+      }
+   }
+
    template<class Builder>
    INT32 _qgmPlSplitBy::_buildNewObj( Builder &b, BSONObjIterator &es,
                                       const BSONElement &replace )
@@ -173,14 +199,7 @@ namespace engine
          else if ( _splitEle.fieldName() == e.fieldName() &&
                    _splitEle.size() == e.size() )
          {
-            if ( !replace.eoo() )
-            {
-               b.appendAs( replace, _splitEle.fieldName() ) ;
-            }
-            else
-            {
-               b.appendNull( _splitEle.fieldName() ) ;
-            }
+            _appendReplace( b, replace ) ;
             _replaced = TRUE ;
          }
          /*
