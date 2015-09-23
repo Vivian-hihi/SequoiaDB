@@ -41,6 +41,7 @@
 #include "core.hpp"
 #include "oss.hpp"
 #include <vector>
+#include <set>
 #include "ossUtil.hpp"
 #include "../bson/bson.h"
 #include "../bson/bsonobj.h"
@@ -163,6 +164,9 @@ namespace engine
       }
    } ;
 
+   #define MTH_MODIFIER_FIELD_OPR_BIT              0x00000001
+   #define MTH_MODIFIER_RECORD_OPR_BIT             0x00000002
+
    /*
       _mthModifier define
    */
@@ -175,9 +179,10 @@ namespace engine
       BSONObj _modifierPattern ;
       BOOLEAN _initialized ;
       vector<ModifierElement> _modifierElements ;
+      UINT32  _modifierBits ;
 
       // add for replace begin
-      vector<string> _keepKeys ;
+      set<string>    _keepKeys ;
       BOOLEAN        _isReplaceID ;
       BOOLEAN        _isReplace ;
       // add for replace end
@@ -305,6 +310,7 @@ namespace engine
          _dstChgBuilder = NULL ;
          _dollarList    = NULL ;
          _ignoreTypeError = TRUE ;
+         _modifierBits  = 0 ;
          _isReplace     = FALSE ;
          _isReplaceID   = FALSE ;
       }
@@ -365,3 +371,4 @@ namespace engine
 }
 
 #endif //MTHMODIFIER_HPP_
+

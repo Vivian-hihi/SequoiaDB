@@ -131,14 +131,14 @@ namespace engine
                       ele.toString().c_str() ) ;
          goto error ;
       }
-      else if ( INC == type &&  !ele.isNumber() )
+      else if ( INC == type && !ele.isNumber() )
       {
          PD_LOG_MSG ( PDERROR, "$inc field must be number, %s",
                       ele.toString().c_str() ) ;
          goto error ;
       }
-      else if ( ( PUSH_ALL == type || PULL_ALL == type )
-         && Array != ele.type () )
+      else if ( ( PUSH_ALL == type || PULL_ALL == type ) &&
+                Array != ele.type () )
       {
          PD_LOG_MSG ( PDERROR, "$push_all/pull_all field must be array, %s",
                       ele.toString().c_str() ) ;
@@ -150,11 +150,12 @@ namespace engine
                       ele.toString().c_str() ) ;
          goto error ;
       }
-      else if ( ( BITOR == type || BITAND == type || BITXOR == type
-         || BITNOT == type ) && !ele.isNumber() )
+      else if ( ( BITOR == type || BITAND == type ||
+                  BITXOR == type || BITNOT == type ) &&
+                !ele.isNumber() )
       {
-         PD_LOG_MSG ( PDERROR, "bitor/bitand/bitxor/bitnot field must be array, %s",
-                      ele.toString().c_str()) ;
+         PD_LOG_MSG ( PDERROR, "bitor/bitand/bitxor/bitnot field must be "
+                      "array, %s", ele.toString().c_str() ) ;
          goto error ;
       }
       else if ( BIT == type && !ele.isABSONObj() )
@@ -170,41 +171,44 @@ namespace engine
          goto error ;
       }
       else if ( ( UNSET == type || RENAME == type ) &&
-           ossStrcmp ( ele.fieldName(), DMS_ID_KEY_NAME ) == 0 )
+                ossStrcmp ( ele.fieldName(), DMS_ID_KEY_NAME ) == 0 )
       {
          PD_LOG_MSG ( PDERROR, "ID field can't be renamed or unset" ) ;
          goto error ;
       }
-
+      else if ( ( REPLACE == type || KEEP == type ) &&
+                ( NULL != ossStrchr( ele.fieldName(), '.' ) ||
+                  '$' == ele.fieldName()[0] ) )
       {
-         rc = mthCheckFieldName ( ele.fieldName(), dollarNum ) ;
-         if ( rc )
-         {
-            PD_LOG_MSG ( PDERROR, "Faild field name : %s", ele.fieldName() ) ;
-            goto error ;
-         }
-         if ( type == REPLACE && dollarNum > 0 )
-         {
-            PD_LOG_MSG ( PDERROR, "REPALCE can't have dollar argument" ) ;
-            goto error ;
-         }
+         PD_LOG_MSG ( PDERROR, "$replace and $keep's field name can't start "
+                      "with '$', and can't include '.', %s",
+                      ele.toString().c_str() ) ;
+         goto error ;
+      }
 
-         if ( type == KEEP )
-         {
-            _keepKeys.push_back( ele.fieldName() ) ;
-         }
-         else
-         {
-            if ( type == REPLACE )
-            {
-               if ( ossStrcmp( ele.fieldName(), DMS_ID_KEY_NAME ) == 0 )
-               {
-                  _isReplaceID = TRUE ;
-               }
-            }
-            ModifierElement me( ele, type, dollarNum ) ;
-            _modifierElements.push_back( me ) ;
-         }
+      /// then check the field name valid
+      rc = mthCheckFieldName ( ele.fieldName(), dollarNum ) ;
+      if ( rc )
+      {
+         PD_LOG_MSG ( PDERROR, "Faild field name : %s", ele.fieldName() ) ;
+         goto error ;
+      }
+
+      if ( REPLACE == type &&
+           0 == ossStrcmp( ele.fieldName(), DMS_ID_KEY_NAME ) )
+      {
+         _isReplaceID = TRUE ;
+      }
+
+      /// add to vector
+      if ( KEEP == type )
+      {
+         _keepKeys.insert( ele.fieldName() ) ;
+      }
+      else
+      {
+         ModifierElement me( ele, type, dollarNum ) ;
+         _modifierElements.push_back( me ) ;
       }
 
    done :
@@ -1107,25 +1111,28 @@ namespace engine
          goto error ;
       }
 
-      if ( type == REPLACE )
+      if ( REPLACE == type )
       {
          _isReplace = TRUE ;
+         if ( _modifierBits & MTH_MODIFIER_FIELD_OPR_BIT )
+         {
+            PD_LOG_MSG( PDERROR, "Operator[$replace] can't be used with "
+                        "others", ele.fieldName() ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+         _modifierBits |= MTH_MODIFIER_RECORD_OPR_BIT ;
       }
-
-      if ( _isReplace && type != REPLACE && type != KEEP )
+      else if ( KEEP != type )
       {
-         PD_LOG_MSG ( PDERROR, "REPLACE can't support other operator[%s]",
-                      ele.fieldName() ) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
-
-      if ( !_isReplace && type == KEEP )
-      {
-         PD_LOG_MSG( PDERROR, "keep can only be exist in replace opertion."
-                     "replace is missing or replace is all shardingKey" ) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
+         if ( _modifierBits & MTH_MODIFIER_RECORD_OPR_BIT )
+         {
+            PD_LOG_MSG( PDERROR, "Operator[%d] can't be used with $replace",
+                        type ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+         _modifierBits |= MTH_MODIFIER_FIELD_OPR_BIT ;
       }
 
       // then check element type
@@ -1134,13 +1141,12 @@ namespace engine
       case Object:
       {
          // for {$inc, $pull, etc...} cases
-         BSONObjIterator j(ele.embeddedObject()) ;
+         BSONObjIterator j( ele.embeddedObject() ) ;
          // even thou this is a loop, we always exist after parsing the first
          // element
          while ( j.more () )
          {
             rc = _addModifier ( j.next(), type ) ;
-
             if ( SDB_OK != rc )
             {
                goto error ;
@@ -1461,8 +1467,6 @@ namespace engine
       std::sort( _modifierElements.begin(),
                  _modifierElements.end(),
                  _compareFieldNames2( _dollarList ) ) ;
-
-      std::sort( _keepKeys.begin(), _keepKeys.end() ) ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__MTHMDF_LDPTN, "_mthModifier::loadPattern" )
@@ -1492,12 +1496,20 @@ namespace engine
          eleNum ++ ;
       }
 
-      if ( _isReplace && _modifierElements.size() == 0 )
+      /// if has $keep, but not $replace, report error
+      if ( !_isReplace && _keepKeys.size() > 0 )
       {
+         PD_LOG_MSG( PDERROR, "Operator $keep can only be used with "
+                     "$replace") ;
          rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR, "replace's modifier can't be zero" ) ;
          goto error ;
       }
+      /// when not replace _id, keep the _id
+      else if ( _isReplace && !_isReplaceID )
+      {
+         _keepKeys.insert( DMS_ID_KEY_NAME ) ;
+      }
+
       modifierSort() ;
       _initialized = TRUE ;
 
@@ -1897,59 +1909,34 @@ namespace engine
    INT32 _mthModifier::_buildNewObjReplace( Builder &b,
                                             BSONObjIteratorSorted &es )
    {
-      UINT32 i = 0 ;
-      std::vector<string> keepVec ;
-      while ( es.more() )
+      while ( es.more() && _keepKeys.size() > 0 )
       {
          BSONElement e = es.next() ;
-         if ( !_isReplaceID 
-               && ossStrcmp( e.fieldName(), DMS_ID_KEY_NAME ) == 0 )
+         if ( _keepKeys.count( e.fieldName() ) )
          {
             b.append( e ) ;
-         }
-         else
-         {
-            UINT32 j = 0 ;
-            while ( j < _keepKeys.size() )
-            {
-               INT32 cmp = ossStrcmp( e.fieldName(), 
-                                      _keepKeys[j].c_str() ) ;
-               //remain the keep field.
-               //es: {a:2, b:2, c:2} && keep: {a} ==> e: {a:2}
-               if ( cmp == 0 )
-               {
-                  b.append( e ) ;
-                  keepVec.push_back( _keepKeys[j] ) ;
-               }
-               else if ( cmp < 0 )
-               {
-                  break ; 
-               }
-               j++ ;
-            }
          }
 
          ADD_CHG_ELEMENT_AS ( _srcChgBuilder, e, e.fieldName(), 
                               "$replace" ) ;
       }
 
-      i = 0 ;
+      UINT32 i = 0 ;
       while ( i < _modifierElements.size() )
       {
          const CHAR *pTmpFieldName = _modifierElements[i]._toModify.fieldName() ;
          ADD_CHG_ELEMENT_AS ( _dstChgBuilder, _modifierElements[i]._toModify, 
-                              pTmpFieldName, 
-                              "$replace" ) ;
+                              pTmpFieldName, "$replace" ) ;
          b.append( _modifierElements[i]._toModify ) ;
-         i++ ;
+         ++i ;
       }
 
-      i = 0 ;
-      while ( i < keepVec.size() )
+      set<string>::iterator it = _keepKeys.begin() ;
+      while ( it != _keepKeys.end() )
       {
          // make sure $keep is after $replace
-         ADD_CHG_FIELD_VALUE ( _dstChgBuilder, keepVec[i], 1, "$keep" ) ;
-         i++ ;
+         ADD_CHG_FIELD_VALUE ( _dstChgBuilder, *it, 1, "$keep" ) ;
+         ++it ;
       }
 
       return SDB_OK  ;

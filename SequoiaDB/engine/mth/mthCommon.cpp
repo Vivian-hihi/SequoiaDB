@@ -160,7 +160,6 @@ namespace engine
       while ( pTmp && *pTmp )
       {
          pDot = ossStrchr( pTmp, '.' ) ;
-
          if ( '$' == *pTmp )
          {
             if ( pDot )
