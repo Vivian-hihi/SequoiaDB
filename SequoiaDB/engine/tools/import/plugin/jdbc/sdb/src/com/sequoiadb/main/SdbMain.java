@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -28,7 +29,7 @@ public class SdbMain {
 	
 public	static Logger logger = Logger.getLogger(SdbMain.class);
 
-public static int paraseSuccess = 0;
+public static AtomicInteger paraseSuccess = new AtomicInteger(0);
 
 public static int totalselect = 0;
 
@@ -57,7 +58,7 @@ public static void main(String[] args) {
     }
     logger.info("Finished all threads");
     logger.info("paraseSuccess : "+paraseSuccess);
-    logger.info("totalselect : "+totalselect);
+    logger.info("\n\n");
 	}
 }
 
@@ -70,6 +71,7 @@ public static void main(String[] args) {
 		opt.addOption("username", true, "DataBase UserName.");
 		opt.addOption("password", true, "DataBase password.");
 		opt.addOption("table", true, "table name which you want to select.");
+		opt.addOption("fieldmodify", true, "modify field name as _id in table");
 		opt.addOption("startrow", true, "startRow which you want to select.");
 		opt.addOption("endrow", true, "endRow which you want to select.");
 		opt.addOption("threads", true, "Concurrent number");
@@ -205,8 +207,8 @@ public static void main(String[] args) {
 		if(endRow == startRow){
 			String sql1 = null;
 			if (map.get("dbType").toString() == "oracle")
-				sql1 = "select * from (select rownum,* from " + table + " where rownum <=" + startRow
-						+ ") where rownum >" + startRow;
+				sql1 = "select * from (select rownum as rown,t.* from " + table + " t where rownum <=" + endRow
+						+ ") tabalias where tabalias.rown >=" + endRow;
 			if (map.get("dbType").toString() == "db2")
 				sql1 = "select * from (select s.*,rownumber() over() as rn from (select * from " + table
 						+ ") as s ) as s1 where s1.rn between " + startRow + " and " + startRow;
@@ -217,7 +219,10 @@ public static void main(String[] args) {
 		int start = startRow;
 		int end = start+avg;
 		totalselect = endRow-startRow;
-		
+		if(totalselect <= threads){
+			logger.error("threads could not bigger than totalselect");
+			System.exit(1);
+		}
 		for (int i = 1; i <= threads; i++) {
 			if (i == threads) {
 				if (map.get("dbType").toString() == "db2")
@@ -225,14 +230,14 @@ public static void main(String[] args) {
 							+ ") as s ) as s1 where s1.rn between " + start + " and " + endRow;
 				if (map.get("dbType").toString() == "oracle")
 					sql = "select * from (select rownum as rown,t.* from " + table + " t where rownum <=" + endRow
-							+ ") tabalias where tabalias.rown >" + start;
+							+ ") tabalias where tabalias.rown >=" + start;
 			} else {
 				if (map.get("dbType").toString() == "db2")
 					sql = "select * from (select s.*,rownumber() over() as rn from (select * from " + table
 							+ ") as s ) as s1 where s1.rn between " + start + " and " + end;
 				if (map.get("dbType").toString() == "oracle")
 					sql = "select * from (select rownum as rown,t.* from " + table + " t where rownum <=" + end
-					+ ") tabalias where tabalias.rown >" + start;
+					+ ") tabalias where tabalias.rown >=" + start;
 			}
 			start = end + 1;
 			end = (i + 1) * avg+startRow;
@@ -246,9 +251,11 @@ public static void main(String[] args) {
 			list.add(sql);
 			}
 		}
+		if(cl != null && cl.hasOption("fieldmodify")){
+			map.put("fieldname", cl.getOptionValue("fieldmodify"));
+		}
 		map.put("sqlList", list);
 		logger.info("args:" + map);
-//		System.out.println(map);
 		return map;
    }
    private static int queryRowCount(Map<String,Object> map){
