@@ -128,6 +128,9 @@ extern "C"
 #define CJSON_INNER_SETONINSERT  "$SetOnInsert"
 #define CJSON_INNER_MODIFY       "$Modify"
 
+#define CJSON_INT64_MAX_10 922337203685477580
+#define CSJON_INT64_MAX_Last 7
+
 /* The cJSON structure: */
 typedef struct cJSON {
    struct cJSON *next,*prev;   /* next/prev allow you to walk array/object chains. Alternatively, use GetArraySize/GetArrayItem/GetObjectItem */

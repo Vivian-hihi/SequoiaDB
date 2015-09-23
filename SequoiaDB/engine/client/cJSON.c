@@ -144,6 +144,7 @@ static const char *parse_number(cJSON *item,const char *num)
    double n=0,sign=1,scale=0;int subscale=0,signsubscale=1;
    int n1=0 ;
    long long n2 = 0 ;
+   long long n3 = 0 ;
    item->numType = cJSON_INT32 ;
    /* Could use sscanf for this? */
    if (*num=='-')
@@ -161,16 +162,21 @@ static const char *parse_number(cJSON *item,const char *num)
    {
       do
       {
-         n=(n*10.0)+(*num -'0');   
-         n1=(n1*10)+(*num -'0') ;
-         n2=(n2*10)+(*num -'0') ;
+         n3 = (n2*10)+(*num - '0') ;
+         if( ( n3 - (*num - '0') ) / 10 != n2 )
+         {
+            item->numType = cJSON_DOUBLE ;
+         }
+         n=(n*10.0)+(*num - '0') ;   
+         n1=(n1*10)+(*num - '0') ;
+         n2=n3 ;
          ++num ;
-         if ( cJSON_INT32== item->numType &&
-               (long long)n1!=n2 )
+         if( cJSON_INT32 == item->numType &&
+             (long long)n1!= n2 )
          {
             item->numType = cJSON_INT64 ;
          }
-      } while (*num>='0' && *num<='9');   /* Number? */
+      }while (*num>='0' && *num<='9');   /* Number? */
    }
    if (*num=='.' && num[1]>='0' && num[1]<='9') 
    {
