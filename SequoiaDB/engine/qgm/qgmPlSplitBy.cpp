@@ -41,6 +41,7 @@
 #include <sstream>
 
 using namespace std ;
+using namespace bson ;
 
 namespace engine
 {
@@ -49,9 +50,10 @@ namespace engine
    :_qgmPlan( QGM_PLAN_TYPE_SPLIT, alias ),
    _splitby(splitby),
    _itr(_fetch.obj),
-   _fieldName(_splitby.attr().toString())
+   _fieldName( _splitby.attr().toString() )
    {
       _initialized = TRUE ;
+      _replaced = FALSE ;
    }
 
    _qgmPlSplitBy::~_qgmPlSplitBy()
@@ -74,14 +76,16 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMPLSPLITBY__FETCHNEXT, "_qgmPlSplitBy::_fetchNext" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMPLSPLITBY__FETCHNEXT, "_qgmPlSplitBy::_fetchNext" )
    INT32 _qgmPlSplitBy::_fetchNext( qgmFetchOut &next )
    {
       PD_TRACE_ENTRY( SDB__QGMPLSPLITBY__FETCHNEXT ) ;
       INT32 rc = SDB_OK ;
+      _replaced = FALSE ;
+
       if ( _fetch.obj.isEmpty() )
       {
-fetch:
+   fetch:
          rc = input( 0 )->fetchNext( _fetch ) ;
          if ( SDB_OK != rc )
          {
@@ -89,83 +93,41 @@ fetch:
          }
 
          SDB_ASSERT( NULL == _fetch.next, "impossible" ) ;
-      //   SDB_ASSERT( _splitby.relegation() == _fetch.alias, "impossible" ) ;
-         {
-         std::string fieldName = _splitby.attr().toString() ;
-         BSONElement ele = _fetch.obj.getField( fieldName ) ;
-         if ( Array != ele.type() )
-         {
-            PD_LOG( PDDEBUG, "element [%s] is not array", fieldName.c_str() ) ;
-            if ( ele.eoo() )
-            {
-               BSONObjBuilder builder ;
-               builder.appendElements( _fetch.obj ) ;
-               builder.appendNull( fieldName ) ;
-               next.obj = builder.obj() ;
-               next.alias = _fetch.alias ;
-            }
-            else
-            {
-               next = _fetch ;
-            }
 
+         _splitEle = _fetch.obj.getFieldDotted( _fieldName ) ;
+         if ( Array != _splitEle.type() ) /// not array
+         {
+            next = _fetch ;
+            _clear() ;
+            goto done ;
+         }
+         else if ( 0 == _splitEle.embeddedObject().nFields() )
+         {
+            BSONObjBuilder build ;
+            BSONObjIterator itr( _fetch.obj ) ;
+            rc = _buildNewObj( build, itr, BSONElement() ) ;
+            PD_RC_CHECK( rc, PDERROR, "Build new object failed, rc: %d",
+                         rc ) ;
+            next.obj = build.obj() ;
+            next.alias = _fetch.alias ;
             _clear() ;
             goto done ;
          }
          else
          {
-            _itr = BSONObjIterator( ele.embeddedObject() ) ;
-            if ( !_itr.more() )
-            {
-               /// empty array.
-               PD_LOG( PDDEBUG, "element [%s] is a empty array",
-                       ele.fieldName() ) ;
-               BSONObjBuilder builder ;
-               BSONObjIterator itr( _fetch.obj ) ;
-               while ( itr.more() )
-               {
-                  BSONElement e = itr.next() ;
-                  if ( 0 == ossStrcmp( ele.fieldName(),
-                                       e.fieldName()) )
-                  {
-                     builder.appendNull( ele.fieldName()) ;
-                  }
-                  else
-                  {
-                     builder.append( e ) ;
-                  }
-               }
-               next.obj = builder.obj() ;
-               next.alias = _fetch.alias ;
-               _clear() ;
-               goto done ;
-            }
-         }
+            _itr = BSONObjIterator( _splitEle.embeddedObject() ) ;
          }
       }
 
       SDB_ASSERT( NULL == _fetch.next, "impossible" ) ;
       if ( _itr.more() )
       {
-         BSONObjBuilder builder ;
-         BOOLEAN added = FALSE ;
-         BSONElement splited = _itr.next() ;
+         BSONObjBuilder build ;
          BSONObjIterator itr( _fetch.obj ) ;
-         while ( itr.more() )
-         {
-            BSONElement other = itr.next() ;
-            if ( !added &&
-                 0 == _fieldName.compare(other.fieldName()))
-            {
-               builder.appendAs( splited, _fieldName ) ;
-               added = TRUE ;
-            }
-            else
-            {
-               builder.append( other ) ;
-            }
-         }
-         next.obj = builder.obj() ;
+         rc = _buildNewObj( build, itr, _itr.next() ) ;
+         PD_RC_CHECK( rc, PDERROR, "Build new object failed, rc: %d",
+                      rc ) ;
+         next.obj = build.obj() ;
          next.alias = _fetch.alias ;
       }
       else
@@ -181,9 +143,86 @@ fetch:
       goto done ;
    }
 
+   template<class Builder>
+   INT32 _qgmPlSplitBy::_buildNewObj( Builder &b, BSONObjIterator &es,
+                                      const BSONElement &replace )
+   {
+      INT32 rc = SDB_OK ;
+
+      while( es.more() )
+      {
+         BSONElement e = es.next() ;
+
+         /*
+            Split element EOO or
+            Split element END <= e BEING or
+            Split element BEGIN >= e END
+         */
+         if ( _replaced ||
+              _splitEle.eoo() ||
+              _splitEle.fieldName() + _splitEle.size() - 1 <=
+              e.fieldName() - 1 ||
+              _splitEle.fieldName() - 1 >=
+              e.fieldName() + e.size() - 1 )
+         {
+            b.append( e ) ;
+         }
+         /*
+            Split element == e
+         */
+         else if ( _splitEle.fieldName() == e.fieldName() &&
+                   _splitEle.size() == e.size() )
+         {
+            if ( !replace.eoo() )
+            {
+               b.appendAs( replace, _splitEle.fieldName() ) ;
+            }
+            else
+            {
+               b.appendNull( _splitEle.fieldName() ) ;
+            }
+            _replaced = TRUE ;
+         }
+         /*
+            Split element in e
+         */
+         else
+         {
+            if ( Object == e.type() )
+            {
+               BSONObjBuilder bb( b.subobjStart(e.fieldName())) ;
+               BSONObjIterator bis( e.Obj() ) ;
+               rc = _buildNewObj( bb, bis, replace ) ;
+               PD_RC_CHECK( rc, PDERROR, "Build object[%s] failed, rc: %d",
+                            e.toString().c_str(), rc ) ;
+               bb.done() ;
+            }
+            else if ( Array == e.type() )
+            {
+               BSONArrayBuilder ba( b.subarrayStart( e.fieldName() ) ) ;
+               BSONObjIterator bis(e.embeddedObject()) ;
+               rc = _buildNewObj( ba, bis, replace ) ;
+               PD_RC_CHECK( rc, PDERROR, "Build array[%s] failed, rc: %d",
+                            e.toString().c_str(), rc ) ;
+               ba.done() ;
+            }
+            else
+            {
+               b.append( e ) ;
+            }
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    void _qgmPlSplitBy::_clear()
    {
       _fetch.obj = BSONObj() ;
+      _splitEle = BSONElement() ;
       _fetch.alias.clear() ;
    }
 

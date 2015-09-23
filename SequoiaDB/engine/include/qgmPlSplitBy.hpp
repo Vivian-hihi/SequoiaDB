@@ -41,8 +41,13 @@
 #include "qgmPlan.hpp"
 #include "msgDef.h"
 
+using namespace bson ;
+
 namespace engine
 {
+   /*
+      _qgmPlSplitBy define
+   */
    class _qgmPlSplitBy : public _qgmPlan
    {
    public:
@@ -60,14 +65,21 @@ namespace engine
 
       void _clear() ;
 
+      template<class Builder>
+      INT32    _buildNewObj( Builder &b, BSONObjIterator &es,
+                             const BSONElement &replace ) ;
+
    private:
-      _qgmDbAttr _splitby ;
-      qgmFetchOut _fetch ;
-      BSONObjIterator _itr ;
-      std::string _fieldName ;
+      _qgmDbAttr        _splitby ;
+      qgmFetchOut       _fetch ;
+      BSONObjIterator   _itr ;
+      BSONElement       _splitEle ;
+      std::string       _fieldName ;
+      BOOLEAN           _replaced ;
+
    } ;
    typedef class _qgmPlSplitBy qgmPlSplitBy ;
 }
 
-#endif
+#endif // QGMPLSPLITBY_HPP_
 
