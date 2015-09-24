@@ -70,7 +70,8 @@ namespace engine
       static INT32 on_body( void *pData, const CHAR* at,
                             size_t length ) ;
       static INT32 _parse_http_query( httpConnection *pHttpConnection,
-                                      CHAR *pBuffer, INT32 length ) ;
+                                      CHAR *pBuffer, INT32 length,
+                                      CHAR *pDecodeBuff, INT32 decodeLen ) ;
       OSS_INLINE const CHAR *_getResourceFileName( const CHAR *pPath ) ;
       OSS_INLINE const CHAR *_getFileExtension( const CHAR *pFileName ) ;
       OSS_INLINE BOOLEAN _checkEndOfHeader( httpConnection *pHttpCon,
