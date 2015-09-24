@@ -36,7 +36,7 @@
 #include "core.h"
 #include "ossMem.h"
 #include "ossUtil.h"
-#if defined (_LINUX)
+#if defined (_LINUX) || defined (_AIX)
 #include <stdlib.h>
 #elif defined (_WINDOWS)
 #include <malloc.h>
@@ -84,7 +84,7 @@ UINT32 ossMemDebugSize = 0 ;
 
 #define SDB_MEMDEBUG_ENDPOS     sizeof(CHAR)
 
-#if defined (_LINUX)
+#if defined (_LINUX) || defined (_AIX)
 #define OSS_MEM_MAX_SZ 4294967295ll
 #elif defined (_WINDOWS)
 #define OSS_MEM_MAX_SZ 4294967295LL
@@ -494,7 +494,7 @@ void ossMemFree ( void *p )
 
 void *ossAlignedAlloc( UINT32 alignment, UINT32 size )
 {
-#if defined (_LINUX)
+#if defined (_LINUX) || defined (_AIX)
    void *ptr = NULL ;
    /// returns zero on success, or one of the 
    ///  error values listed in the next section on failure.

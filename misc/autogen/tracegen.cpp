@@ -106,7 +106,7 @@ void TraceGen::_extractFromFile ( std::ofstream *fout,
                                   const CHAR *pFileName,
                                   INT32 compid )
 {
-#if defined (_LINUX)
+#if defined (_LINUX) || defined (_AIX)
    FILE *pFile = fopen ( pFileName, "r" ) ;
 #elif defined (_WINDOWS)
    FILE *pFile = NULL ;

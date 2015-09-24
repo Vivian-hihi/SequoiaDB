@@ -44,7 +44,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 
-#if defined (_LINUX)
+#if defined (_LINUX) || defined ( _AIX )
 #include <errno.h>
 #include <unistd.h>
 #endif
@@ -52,7 +52,7 @@
 #define ISEMPTYSTRING(x) (strlen(x)==0)
 #define OSS_MAX_GROUPNAME_SIZE      127
 
-#if defined (_LINUX)
+#if defined (_LINUX) || defined ( _AIX )
 #define OSS_FILE_SEP       "/"
 #define OSS_FILE_SEP_CHAR  '/'
 #define OSS_MAX_PATHSIZE   PATH_MAX
@@ -122,7 +122,7 @@ typedef struct ossOnce
 
 #define OSS_ONCE_INIT {0}
 
-#else /* Linux */
+#else /* Posix */
 #include <pthread.h>
 #define ossMutex                  pthread_mutex_t
 #define ossMutexInit(_n)          pthread_mutex_init((_n), NULL)

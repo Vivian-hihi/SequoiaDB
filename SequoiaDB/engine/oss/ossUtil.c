@@ -45,7 +45,7 @@
 #include "ossUtil.h"
 #include "ossMem.h"
 #include "oss.h"
-#if defined (_LINUX)
+#if defined (_LINUX) || defined ( _AIX )
 #include <locale.h>
 #endif
 // All strings represent "true"
@@ -274,7 +274,7 @@ void ossCloseStdFds()
 INT32 ossStrncasecmp ( const CHAR *pString1, const CHAR *pString2,
                        size_t iLength)
 {
-#if defined (_LINUX)
+#if defined (_LINUX) || defined ( _AIX )
    return strncasecmp(pString1, pString2, iLength);
 #else
    if (iLength==0)
@@ -324,7 +324,7 @@ size_t ossVsnprintf
 
 #if defined (_WINDOWS)
    n = _vsnprintf_s( buf, size, _TRUNCATE, fmt, ap ) ;
-#elif defined (_LINUX)
+#elif defined (_LINUX) || defined ( _AIX )
    n = vsnprintf( buf, size, fmt, ap ) ;
 #endif
 

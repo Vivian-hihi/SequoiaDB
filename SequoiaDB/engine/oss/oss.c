@@ -39,6 +39,8 @@
 #if defined (_LINUX)
 #include <unistd.h>
 #include <syscall.h>
+#elif defined (_AIX)
+#include <pthread.h>
 #else
 #include <tlhelp32.h>
 #endif
@@ -99,6 +101,8 @@ OSSTID ossGetCurrentThreadID()
 {
 #if defined (_WINDOWS)
    return GetCurrentThreadId();
+#elif defined (_AIX)
+   return pthread_self();
 #else
    return syscall(SYS_gettid);
 #endif
@@ -174,7 +178,7 @@ INT32 ossOnceRun(ossOnce* control, void (*func)(void))
 
    return 0 ;
 
-#else /* Linux */
+#else /* Posix */
    return pthread_once ( control, func ) ;
 #endif
 }

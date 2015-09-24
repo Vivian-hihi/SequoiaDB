@@ -35,7 +35,7 @@
 #include "core.hpp"
 #include "pdTrace.hpp"
 #include "ossTrace.hpp"
-#if defined (_LINUX)
+#if defined (_LINUX) || defined (_AIX)
    #include <fcntl.h>
    #include <unistd.h>
    #include <sys/stat.h>
@@ -84,7 +84,7 @@ int ossPrimitiveFileOp::Open( const CHAR * pFilePath, UINT32_64 options )
    INT32 rc = 0 ;
    PD_TRACE_ENTRY ( SDB_OSSPFOP_OPEN );
 
-#if defined (_LINUX)
+#if defined (_LINUX) || defined (_AIX)
    INT32 mode = O_RDWR ;
 
    if ( options & OSS_PRIMITIVE_FILE_OP_READ_ONLY )
@@ -153,7 +153,7 @@ exit :
 
 void ossPrimitiveFileOp::openStdout()
 {
-#if defined (_LINUX)
+#if defined (_LINUX) || defined (_AIX)
    setFileHandle(STDOUT_FILENO) ;
 #elif defined (_WINDOWS)
    HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE) ;
@@ -192,7 +192,7 @@ int ossPrimitiveFileOp::Read
 {
    INT32     retval    = 0 ;
    PD_TRACE_ENTRY ( SDB_OSSPFOP_READ );
-#if defined (_LINUX)
+#if defined (_LINUX) || defined (_AIX)
    ssize_t bytesRead = 0 ;
 #elif defined (_WINDOWS)
    SINT64  bytesRead = 0 ;

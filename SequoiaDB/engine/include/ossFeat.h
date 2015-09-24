@@ -73,7 +73,7 @@
 // architecture
 #if defined ( _WINDOWS32 ) || defined ( _LIN32 )
    #define OSS_ARCH_32
-#elif defined ( _WINDOWS64 ) || defined ( _LIN64 ) || defined ( _PPCLIN64 )
+#elif defined ( _WINDOWS64 ) || defined ( _LIN64 ) || defined ( _PPCLIN64 ) || defined ( _AIX )
    #define OSS_ARCH_64
 #endif
 
@@ -82,6 +82,8 @@
 #define OSS_OSTYPE_LIN32               2
 #define OSS_OSTYPE_LIN64               3
 #define OSS_OSTYPE_PPCLIN64            4
+#define OSS_OSTYPE_AIX                 5
+
 #if defined (_WINDOWS32)
 #define OSS_OSTYPE                     OSS_OSTYPE_WIN32
 #elif defined (_WINDOWS64)
@@ -92,6 +94,8 @@
 #define OSS_OSTYPE                     OSS_OSTYPE_LIN64
 #elif defined (_PPCLIN64)
 #define OSS_OSTYPE                     OSS_OSTYPE_PPCLIN64
+#elif defined (_AIX)
+#define OSS_OSTYPE                     OSS_OSTYPE_AIX
 #endif
 
 
@@ -122,7 +126,11 @@
    #define FD_SETSIZE      __FD_SETSIZE
    // sys/types.h must be included AFTER __FD_SETSIZE declaration
    #include <sys/types.h>
-
+#elif defined _AIX
+   #define __FUNC__ __func__
+   #define SDB_EXPORT
+   #define OSS_FD_SETSIZE  FD_SETSIZE
+   #include <sys/types.h>
 #elif defined _WINDOWS
    #ifdef SDB_STATIC_BUILD
       #define SDB_EXPORT

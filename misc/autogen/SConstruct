@@ -22,6 +22,8 @@ def GuessOS():
         return 'linux'
     elif id == 'Windows' or id == 'Microsoft':
         return 'win32'
+    elif id == 'AIX':
+        return 'aix'
     else:
         return None
 

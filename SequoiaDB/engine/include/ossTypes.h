@@ -59,7 +59,7 @@
 #define NULL 0
 #endif
 
-#if defined ( _LINUX )
+#if defined ( _LINUX ) || defined ( _AIX )
    typedef int ossSystemError ;
 #elif defined ( _WINDOWS )
    typedef DWORD ossSystemError ;
@@ -69,7 +69,7 @@
    typedef unsigned char        UINT8;
    typedef unsigned char         BYTE;
    typedef char                 SINT8;
-#if defined (_LINUX)
+#if defined (_LINUX) || defined ( _AIX )
    typedef char                 INT8 ;
    #define SDB_DEV_NULL         "/dev/null"
 #endif
@@ -90,7 +90,7 @@
 #define OSS_SINT64_MAX 0x7FFFFFFFFFFFFFFFLL
 #define OSS_SINT64_MIN (-9223372036854775807LL-1)
 
-#if defined (_LINUX)
+#if defined (_LINUX) || defined ( _AIX )
    typedef INT32                BOOLEAN;
 #endif
    typedef float                FLOAT32;
@@ -108,11 +108,11 @@
 
 #define SDB_PAGE_SIZE           4096
 
-#if defined (_LINUX)
+#if defined (_LINUX) || defined ( _AIX )
 typedef INT32 SOCKET ;
 #endif
 
-#if defined _LINUX
+#if defined _LINUX || defined _AIX
    #include "pthread.h"
    typedef pid_t           OSSPID ;
    typedef pthread_t       OSSTID ;

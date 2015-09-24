@@ -137,7 +137,7 @@ static OSS_INLINE void ossLockGet( volatile ossLock * const pLock )
    }
 }*/
 
-#if defined (_LINUX)
+#if defined (_LINUX) || defined (_AIX)
 static OSS_INLINE void ossLockGet8 ( volatile CHAR * const pLock )
 {
    if ( !*pLock && !ossAtomicExchange8 ( pLock, OSS_LOCK_LOCKED ) )

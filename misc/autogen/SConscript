@@ -16,6 +16,7 @@ boost_lib_dir = join(boost_dir, 'lib')
 linux = False
 linux64  = False
 windows = False
+aix = False
 force64 = has_option( "force64" )
 msarch = None
 guess_os = GuessOS()
@@ -116,6 +117,22 @@ if guess_os == "linux":
     elif guess_arch == "ia64" and force32:
         # let's use 32 bit boost library
         env.Append( LIBPATH=["/usr/lib32", join(boost_lib_dir,'linux32')] )
+
+    if static:
+        env.Append( LINKFLAGS=" -static " )
+    env.Append ( LIBS="boost_filesystem" )
+    env.Append ( LIBS="boost_system" )
+    env.Append ( LIBS="pthread" )
+    env.Append ( CPPFLAGS=" -ggdb " )
+elif guess_os == "aix":
+    aix = True
+
+    env.Append( LIBS=['m'] )
+    env.Append( LIBS=['dl'] )
+    nixLibPrefix = "lib"
+    env.Append( EXTRALIBPATH="/usr/lib" )
+    env.Append( EXTRALIBPATH="/lib" )
+    env.Append( LIBPATH=join(boost_lib_dir,'aix') )
 
     if static:
         env.Append( LINKFLAGS=" -static " )

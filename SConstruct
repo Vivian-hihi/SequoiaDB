@@ -95,6 +95,8 @@ def GuessOS():
       return 'linux'
    elif id == 'Windows' or id == 'Microsoft':
       return 'win32'
+   elif id == 'AIX':
+      return 'aix'
    else:
       return None
 
@@ -249,6 +251,7 @@ nix = False
 linux = False
 linux64  = False
 windows = False
+aix = False
 
 release = True
 debugBuild = False
@@ -333,7 +336,9 @@ elif ( hasTestcase and not hasEngine ):
 boostCompiler = ""
 boostVersion = ""
 
-usesm = True
+usesm = False
+if guess_os == 'linux' or guess_os == 'windows':
+   usesm = True
 
 extraLibPlaces = []
 
@@ -615,6 +620,45 @@ elif "win32" == guess_os:
     winLibString += " odbc32.lib odbccp32.lib uuid.lib dbghelp.lib "
 
     env.Append( LIBS=Split(winLibString) )
+elif guess_os == 'aix':
+   aix = True
+   nix = True
+
+   # -lm
+   env.Append( LIBS=['m'] )
+   # -ldl
+   env.Append( LIBS=['dl'] )
+   # -lpthread
+   env.Append( LIBS=["pthread"] )
+   # GNU
+   env.Append( CPPDEFINES=[ "_GNU_SOURCE" ] )
+
+   nixLibPrefix = "lib"
+   boost_lib_dir = join(boost_lib_dir,'aix')
+   # use big endian
+   env.Append( CPPDEFINES=[ "SDB_BIG_ENDIAN" ] )
+   env.Append( EXTRALIBPATH="/lib" )
+   # use project-related boost library
+   env.Append( EXTRALIBPATH=boost_lib_dir )
+   # use project-related ssl library
+   env.Append( EXTRALIBPATH=join(ssl_dir,'lib/aix') )
+   # use project-related spidermonkey library
+   if usesm:
+      if debugBuild:
+          smlib_dir = join(js_dir,'lib/debug/aix/lib')
+          env.Append( CPPPATH=join(js_dir,'lib/debug/aix/include') )
+          env.Append( EXTRALIBPATH=[smlib_dir] )
+      else:
+          smlib_dir = join(js_dir,'lib/release/aix/lib')
+          env.Append( CPPPATH=join(js_dir,'lib/release/aix/include') )
+          env.Append( EXTRALIBPATH=[smlib_dir] )
+
+   # SSL
+   ssllib_dir = join(ssl_dir,'lib/aix')
+   env.Append( LIBS=['ssl'] )
+   env.Append( LIBS=['crypto'] )
+   ssllib_file = join(ssllib_dir, 'libcrypto.a')
+   ssllib_file1 = join(ssllib_dir, 'libssl.a')
 else:
     print( "No special config for [" + os.sys.platform + "] which probably means it won't work" )
 
@@ -745,7 +789,7 @@ Export("clientCppEnv")
 Export("clientCEnv")
 Export("installSetup getSysInfo")
 Export("usesm")
-Export("windows linux nix")
+Export("windows linux nix aix")
 if usesm:
    Export("smlib_file")
 Export("ssllib_file")
