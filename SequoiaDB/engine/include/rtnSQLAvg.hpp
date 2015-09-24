@@ -45,7 +45,7 @@ namespace engine
    class _rtnSQLAvg : public _rtnSQLFunc
    {
    public:
-      _rtnSQLAvg() ;
+      _rtnSQLAvg( const CHAR *pName ) ;
       virtual ~_rtnSQLAvg() ;
 
    public:

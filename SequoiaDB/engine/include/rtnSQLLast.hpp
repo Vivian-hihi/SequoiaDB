@@ -41,12 +41,11 @@
 
 namespace engine
 {
-#define SQL_FUNC_NAME_LAST    "last"
 
    class rtnSQLLast : public _rtnSQLFunc
    {
    public:
-      rtnSQLLast();
+      rtnSQLLast( const CHAR *pName );
 
       virtual ~rtnSQLLast();
 

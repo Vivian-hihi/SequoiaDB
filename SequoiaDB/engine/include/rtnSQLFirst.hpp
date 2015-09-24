@@ -42,12 +42,11 @@
 
 namespace engine
 {
-#define SQL_FUNC_NAME_FIRST "first"
 
    class _rtnSQLFirst : public _rtnSQLFunc
    {
    public:
-      _rtnSQLFirst() ;
+      _rtnSQLFirst( const CHAR *pName ) ;
       virtual ~_rtnSQLFirst() ;
 
    public:

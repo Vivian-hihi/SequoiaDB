@@ -45,7 +45,7 @@ namespace engine
    class _rtnSQLSum : public _rtnSQLFunc
    {
    public:
-      _rtnSQLSum() ;
+      _rtnSQLSum( const CHAR *pName ) ;
       virtual ~_rtnSQLSum() ;
 
    public:

@@ -50,7 +50,7 @@ namespace engine
    typedef std::set< bson::BSONElement >     FIELD_SET;
    typedef std::vector< bson::BSONObj >      OBJ_VEC;
    public:
-      rtnSQLMergeArraySet();
+      rtnSQLMergeArraySet( const CHAR *pName );
 
       virtual ~rtnSQLMergeArraySet();
 

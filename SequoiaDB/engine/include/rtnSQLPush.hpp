@@ -46,7 +46,7 @@ namespace engine
    class rtnSQLPush : public _rtnSQLFunc
    {
    public:
-      rtnSQLPush();
+      rtnSQLPush( const CHAR *pName );
 
       virtual ~rtnSQLPush();
 

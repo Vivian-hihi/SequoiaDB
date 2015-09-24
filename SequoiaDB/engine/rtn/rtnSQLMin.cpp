@@ -39,9 +39,9 @@
 
 namespace engine
 {
-   _rtnSQLMin::_rtnSQLMin()
+   _rtnSQLMin::_rtnSQLMin( const CHAR *pName )
+   :_rtnSQLFunc( pName )
    {
-      _name = "min" ;
    }
 
    _rtnSQLMin::~_rtnSQLMin()

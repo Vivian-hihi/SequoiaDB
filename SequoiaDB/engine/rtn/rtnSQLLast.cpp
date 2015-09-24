@@ -40,9 +40,9 @@ using namespace bson;
 
 namespace engine
 {
-   rtnSQLLast::rtnSQLLast()
+   rtnSQLLast::rtnSQLLast( const CHAR *pName )
+   :_rtnSQLFunc( pName )
    {
-      _name = SQL_FUNC_NAME_LAST;
    }
 
    rtnSQLLast::~rtnSQLLast()

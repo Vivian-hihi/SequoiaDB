@@ -45,7 +45,7 @@ namespace engine
    class _rtnSQLMax : public _rtnSQLFunc
    {
    public:
-      _rtnSQLMax() ;
+      _rtnSQLMax( const CHAR *pName ) ;
       virtual ~_rtnSQLMax() ;
    public:
       INT32 result( BSONObjBuilder &builder ) ;

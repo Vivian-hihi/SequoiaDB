@@ -43,7 +43,8 @@ using namespace bson;
 
 namespace engine
 {
-   rtnSQLPush::rtnSQLPush()
+   rtnSQLPush::rtnSQLPush( const CHAR *pName )
+   :_rtnSQLFunc( pName )
    {
       _pArrBuilder = SDB_OSS_NEW BSONArrayBuilder();
    }

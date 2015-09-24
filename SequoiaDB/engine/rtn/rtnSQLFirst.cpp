@@ -39,10 +39,10 @@
 
 namespace engine
 {
-   _rtnSQLFirst::_rtnSQLFirst()
-   :_firstInAll(FALSE)
+   _rtnSQLFirst::_rtnSQLFirst( const CHAR *pName )
+   :_rtnSQLFunc( pName ),
+    _firstInAll(FALSE)
    {
-      _name = "first" ;
    }
 
    _rtnSQLFirst::~_rtnSQLFirst()

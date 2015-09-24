@@ -39,11 +39,12 @@
 #include "pmd.hpp"
 #include "pmdCB.hpp"
 #include "qgmUtil.hpp"
-#include "rtnSQLFirst.hpp"
+#include "rtnSQLFuncFactory.hpp"
 #include <sstream>
 
 namespace engine
 {
+
    _qgmPlAggregation::_qgmPlAggregation( const qgmAggrSelectorVec &selector,
                                          const qgmOPFieldVec &groupby,
                                          const qgmField &alias,
@@ -95,11 +96,11 @@ namespace engine
             _rtnSQLFunc *func = NULL ;
             _qgmOpField first ;
 
-            rc = sqlCB->getFunc( SQL_FUNC_NAME_FIRST, 1, func ) ;
+            rc = sqlCB->getFunc( RTN_SQL_FUNC_FIRST, 1, func ) ;
             if ( SDB_OK != rc )
             {
-               PD_LOG( PDERROR, "can not find func:%d",
-                       SQL_FUNC_NAME_FIRST ) ;
+               PD_LOG( PDERROR, "can not find func[%s], rc: %d",
+                       RTN_SQL_FUNC_FIRST, rc ) ;
                goto done ;
             }
 

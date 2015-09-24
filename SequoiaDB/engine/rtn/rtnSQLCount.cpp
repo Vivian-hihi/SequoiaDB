@@ -39,10 +39,10 @@
 
 namespace engine
 {
-   _rtnSQLCount::_rtnSQLCount()
-   :_count(0)
+   _rtnSQLCount::_rtnSQLCount( const CHAR *pName )
+   :_rtnSQLFunc( pName ),
+    _count(0)
    {
-      _name = "count" ;
    }
 
    _rtnSQLCount::~_rtnSQLCount()

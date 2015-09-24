@@ -39,9 +39,9 @@
 
 namespace engine
 {
-   _rtnSQLMax::_rtnSQLMax()
+   _rtnSQLMax::_rtnSQLMax( const CHAR *pName )
+   :_rtnSQLFunc( pName )
    {
-      _name = "max" ;
    }
 
    _rtnSQLMax::~_rtnSQLMax()

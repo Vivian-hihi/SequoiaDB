@@ -39,11 +39,11 @@
 
 namespace engine
 {
-   _rtnSQLSum::_rtnSQLSum()
-   :_sum(0),
+   _rtnSQLSum::_rtnSQLSum( const CHAR *pName )
+   :_rtnSQLFunc( pName ),
+    _sum(0),
     _effective( FALSE )
    {
-      _name = "sum" ;
    }
 
    _rtnSQLSum::~_rtnSQLSum()

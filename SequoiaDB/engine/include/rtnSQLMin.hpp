@@ -45,7 +45,7 @@ namespace engine
    class _rtnSQLMin : public _rtnSQLFunc
    {
    public:
-      _rtnSQLMin() ;
+      _rtnSQLMin( const CHAR *pName ) ;
       virtual ~_rtnSQLMin() ;
    public:
       virtual INT32 result( BSONObjBuilder &builder ) ;

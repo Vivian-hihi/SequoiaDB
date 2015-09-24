@@ -45,7 +45,7 @@ namespace engine
    class _rtnSQLCount : public _rtnSQLFunc
    {
    public:
-      _rtnSQLCount() ;
+      _rtnSQLCount( const CHAR *pName ) ;
       virtual ~_rtnSQLCount() ;
 
    public:

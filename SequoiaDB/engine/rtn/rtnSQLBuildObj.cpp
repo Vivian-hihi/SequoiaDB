@@ -43,7 +43,8 @@ using namespace bson;
 
 namespace engine
 {
-   rtnSQLBuildObj::rtnSQLBuildObj()
+   rtnSQLBuildObj::rtnSQLBuildObj( const CHAR *pName )
+   :_rtnSQLFunc( pName )
    {
       _hasData = FALSE;
    }

@@ -44,6 +44,18 @@ namespace engine
 {
    class _rtnSQLFunc ;
 
+   #define RTN_SQL_FUNC_COUNT                "count"
+   #define RTN_SQL_FUNC_SUM                  "sum"
+   #define RTN_SQL_FUNC_MIN                  "min"
+   #define RTN_SQL_FUNC_MAX                  "max"
+   #define RTN_SQL_FUNC_AVG                  "avg"
+   #define RTN_SQL_FUNC_FIRST                "first"
+   #define RTN_SQL_FUNC_LAST                 "last"
+   #define RTN_SQL_FUNC_PUSH                 "push"
+   #define RTN_SQL_FUNC_ADDTOSET             "addtoset"
+   #define RTN_SQL_FUNC_BUILDOBJ             "buildobj"
+   #define RTN_SQL_FUNC_MERGEARRAYSET        "mergearrayset"
+
    class _rtnSQLFuncFactory : public SDBObject
    {
    public:

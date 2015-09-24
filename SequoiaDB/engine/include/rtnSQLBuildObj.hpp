@@ -45,7 +45,7 @@ namespace engine
    class rtnSQLBuildObj : public _rtnSQLFunc
    {
    public:
-      rtnSQLBuildObj();
+      rtnSQLBuildObj( const CHAR *pName );
 
       virtual ~rtnSQLBuildObj();
 

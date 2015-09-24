@@ -60,55 +60,61 @@ namespace engine
                                        _rtnSQLFunc *&func )
    {
       INT32 rc = SDB_OK ;
-      CHAR *name = NULL ;
-      rc = utilStrToUpper( funcName, name ) ;
-      if ( SDB_OK != rc )
+
+      if ( 0 == ossStrcasecmp( RTN_SQL_FUNC_COUNT, funcName) &&
+           1 == paramNum )
       {
-         goto error ;
+         func = SDB_OSS_NEW _rtnSQLCount( RTN_SQL_FUNC_COUNT ) ;
       }
-      if ( 0 == ossStrcmp("COUNT", name) && 1 == paramNum )
+      else if ( 0 == ossStrcasecmp( RTN_SQL_FUNC_SUM, funcName ) &&
+                1 == paramNum )
       {
-         func = SDB_OSS_NEW _rtnSQLCount() ;
+         func = SDB_OSS_NEW _rtnSQLSum( RTN_SQL_FUNC_SUM ) ;
       }
-      else if ( 0 == ossStrcmp( "SUM", name ) && 1 == paramNum )
+      else if ( 0 == ossStrcasecmp( RTN_SQL_FUNC_MIN, funcName ) &&
+                1 == paramNum )
       {
-         func = SDB_OSS_NEW _rtnSQLSum() ;
+         func = SDB_OSS_NEW _rtnSQLMin( RTN_SQL_FUNC_MIN ) ;
       }
-      else if ( 0 == ossStrcmp( "MIN", name ) && 1 == paramNum )
+      else if ( 0 == ossStrcasecmp( RTN_SQL_FUNC_MAX, funcName ) &&
+                1 == paramNum )
       {
-         func = SDB_OSS_NEW _rtnSQLMin() ;
+         func = SDB_OSS_NEW _rtnSQLMax( RTN_SQL_FUNC_MAX ) ;
       }
-      else if ( 0 == ossStrcmp( "MAX", name) && 1 == paramNum )
+      else if ( 0 == ossStrcasecmp( RTN_SQL_FUNC_AVG, funcName ) &&
+                1 == paramNum )
       {
-         func = SDB_OSS_NEW _rtnSQLMax() ;
+         func = SDB_OSS_NEW _rtnSQLAvg( RTN_SQL_FUNC_AVG ) ;
       }
-      else if ( 0 == ossStrcmp( "AVG", name) && 1 == paramNum )
+      else if ( 0 == ossStrcasecmp( RTN_SQL_FUNC_FIRST, funcName ) &&
+                1 == paramNum )
       {
-         func = SDB_OSS_NEW _rtnSQLAvg() ;
+         func = SDB_OSS_NEW _rtnSQLFirst( RTN_SQL_FUNC_FIRST ) ;
       }
-      else if ( 0 == ossStrcmp( "FIRST", name ) && 1 == paramNum )
+      else if ( 0 == ossStrcasecmp( RTN_SQL_FUNC_LAST, funcName ) &&
+                1 == paramNum )
       {
-         func = SDB_OSS_NEW _rtnSQLFirst() ;
+         func = SDB_OSS_NEW rtnSQLLast( RTN_SQL_FUNC_LAST ) ;
       }
-      else if ( 0 == ossStrcmp( "LAST", name ) && 1 == paramNum )
+      else if ( 0 == ossStrcasecmp( RTN_SQL_FUNC_PUSH, funcName ) &&
+                1 == paramNum )
       {
-         func = SDB_OSS_NEW rtnSQLLast() ;
+         func = SDB_OSS_NEW rtnSQLPush( RTN_SQL_FUNC_PUSH ) ;
       }
-      else if ( 0 == ossStrcmp( "PUSH", name ) && 1 == paramNum )
+      else if ( 0 == ossStrcasecmp( RTN_SQL_FUNC_ADDTOSET, funcName ) &&
+                1 == paramNum )
       {
-         func = SDB_OSS_NEW rtnSQLPush() ;
+         func = SDB_OSS_NEW rtnSQLAddToSet( RTN_SQL_FUNC_ADDTOSET ) ;
       }
-      else if ( 0 == ossStrcmp( "ADDTOSET", name ) && 1 == paramNum )
+      else if ( 0 == ossStrcasecmp( RTN_SQL_FUNC_BUILDOBJ, funcName ) &&
+                paramNum > 0 )
       {
-         func = SDB_OSS_NEW rtnSQLAddToSet() ;
+         func = SDB_OSS_NEW rtnSQLBuildObj( RTN_SQL_FUNC_BUILDOBJ ) ;
       }
-      else if ( 0 == ossStrcmp( "BUILDOBJ", name ) && paramNum > 0 )
+      else if ( 0 == ossStrcasecmp( RTN_SQL_FUNC_MERGEARRAYSET, funcName ) &&
+                1 == paramNum )
       {
-         func = SDB_OSS_NEW rtnSQLBuildObj() ;
-      }
-      else if ( 0 == ossStrcmp( "MERGEARRAYSET", name ) && 1 == paramNum )
-      {
-         func = SDB_OSS_NEW rtnSQLMergeArraySet() ;
+         func = SDB_OSS_NEW rtnSQLMergeArraySet( RTN_SQL_FUNC_MERGEARRAYSET ) ;
       }
       else
       {
@@ -124,11 +130,6 @@ namespace engine
       }
 
    done:
-      if ( NULL != name )
-      {
-         SDB_OSS_FREE( name ) ;
-         name = NULL ;
-      }
       return rc ;
    error:
       goto done ;

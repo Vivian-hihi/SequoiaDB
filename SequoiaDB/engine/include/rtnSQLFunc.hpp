@@ -53,8 +53,12 @@ namespace engine
    class _rtnSQLFunc : public SDBObject
    {
    public:
-      _rtnSQLFunc()
+      _rtnSQLFunc( const CHAR *pName = "" )
       {
+         if ( pName )
+         {
+            _name = pName ;
+         }
       }
       virtual ~_rtnSQLFunc()
       {

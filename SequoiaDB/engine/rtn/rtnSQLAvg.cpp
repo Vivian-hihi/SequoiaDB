@@ -39,11 +39,11 @@
 
 namespace engine
 {
-   _rtnSQLAvg::_rtnSQLAvg()
-   :_total(0),
+   _rtnSQLAvg::_rtnSQLAvg( const CHAR *pName )
+   :_rtnSQLFunc( pName ),
+    _total(0),
     _count(0)
    {
-      _name = "avg" ;
    }
 
    _rtnSQLAvg::~_rtnSQLAvg()
