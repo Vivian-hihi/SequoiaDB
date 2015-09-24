@@ -57,6 +57,8 @@ namespace engine
          _firstInAll = TRUE ;
       }
 
+      virtual BOOLEAN isAggr() { return FALSE ; }
+
    private:
       virtual INT32 _push( const RTN_FUNC_PARAMS &param ) ;
 
