@@ -42,8 +42,8 @@ public static void main(String[] args) {
 	 * @param unit
 	 * @param workQueue
 	 * */
-	ThreadPoolExecutor executor = new ThreadPoolExecutor(12, 20, 200, TimeUnit.MILLISECONDS,
-            new ArrayBlockingQueue<Runnable>(12));
+	ThreadPoolExecutor executor = new ThreadPoolExecutor(2, 100, 200, TimeUnit.MILLISECONDS,
+            new ArrayBlockingQueue<Runnable>(100));
 	PropertyConfigurator.configure("lib/log4j.properties");
 	
 	Map<String,Object> map=paraseCommand(args);
@@ -216,10 +216,12 @@ public static void main(String[] args) {
 			map.put("sqlList", list);
 			return map;
 		}
-		int start = startRow;
+		int start = 1;
+		if(startRow >= 1)
+		start = startRow;
 		int end = start+avg;
-		totalselect = endRow-startRow;
-		if(totalselect <= threads){
+		totalselect = endRow-startRow+1;
+		if(totalselect < threads){
 			logger.error("threads could not bigger than totalselect");
 			System.exit(1);
 		}
