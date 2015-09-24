@@ -234,8 +234,14 @@ SDB_EXPORT void bson_oid_gen( bson_oid_t *oid ) {
     }
     if( oid_inc_func )
         i = oid_inc_func();
+#if defined(_WIN32)
     else
-        i = incr++;
+        i = InterlockedIncrement((volatile long*)&incr)-1;
+#elif defined (__linux__)
+    else
+        i = __sync_fetch_and_add(&incr, 1);
+#endif
+        //i = incr++;
     memset ( oid, 0, sizeof(bson_oid_t) ) ;
     {
        unsigned char *source = (unsigned char *)&t ;
