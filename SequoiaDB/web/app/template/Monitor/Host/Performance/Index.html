@@ -1,0 +1,9 @@
+<div id="MonitorPerformance" style="padding:10px 15px;" ng-controller="Monitor.Performance.Index.Ctrl">
+   <div class="selectClass" style="margin:0 15px 0 15px;height:40px; border-bottom: 1px solid #dddddd;">
+      {{autoLanguage("搜索")}}: <input class="form-control" style="width:150px;" ng-init="searchName=''" ng-model="searchName" ng-change="search(searchName)" /> 
+      <i class="fa fa-info-circle" data-desc= {{autoLanguage("...")}} style="color:#00B8E6;"></i>
+   </div>
+   <div style="max-height:620px; <!-- overflow-y: scroll -->">
+   	<div></div>
+   </div>
+</div>
