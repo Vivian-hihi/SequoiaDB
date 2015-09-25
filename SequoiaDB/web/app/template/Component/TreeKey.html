@@ -2,7 +2,7 @@
    <table class="table">
       <tr style="cursor:pointer;" ng-click="toggle(field)">
          <td style="width:10px;">
-            <i class="caret caret-right caret-5x"></i>
+            <i class="caret caret-5x" ng-class="{ 'caret-right': !field.isOpen, 'caret-bottom': field.isOpen }"></i>
          </td>
          <td style="width:25px;"><img src="./images/tree/object.png"></td>
          <td>

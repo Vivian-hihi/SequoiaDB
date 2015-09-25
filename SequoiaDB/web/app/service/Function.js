@@ -299,13 +299,7 @@
          var storageType ;
 	      if( browser[0] === 'ie' && browser[1] <= 7 )
 	      {
-		      storageType = 'userData' ;
-		      var obj = document.createElement( 'input' ) ;
-		      obj.type = 'hidden' ;
-		      obj.style.display = 'none' ;
-		      obj.addBehavior( '#default#userData' ) ;
-		      $( document.body ).append( $( obj ) ) ;
-		      g._userdata = obj ;
+            storageType = 'cookie' ;
 	      }
 	      else
 	      {
@@ -328,51 +322,52 @@
 	      return storageType ;
       }
 
-      //读取本地数据
-      g.getLocalData = function( key )
+      g.storageType = g.setBrowserStorage() ;
+      //本地数据操作
+      g.LocalData = function( key, value )
       {
-	      var value = null ;
-         var storageType = g.setBrowserStorage() ;
-	      if( storageType === 'userData' )
-	      {
-		      g._userdata.load( 'sdbjs' );
-		      value = g._userdata.getAttribute( key ) ;
-	      }
-	      else if ( storageType === 'localStorage' )
-	      {
-		      value = window.localStorage.getItem( key ) ;
-	      }
-	      else if ( storageType === 'cookie' )
-	      {
-		      value = $.cookie( key ) ;
-	      }
-	      return value ;
+         
+         if( typeof( value ) == 'undefined' )
+         {
+            //读取本地数据
+            var value = null ;
+	         if ( g.storageType === 'localStorage' )
+	         {
+		         value = window.localStorage.getItem( key ) ;
+	         }
+	         else if ( g.storageType === 'cookie' )
+	         {
+		         value = $.cookie( key ) ;
+	         }
+	         return value ;
+         }
+         else if( value == null )
+         {
+            //删除本地数据
+            if ( g.storageType === 'localStorage' )
+	         {
+		         window.localStorage.removeItem( key ) ;
+	         }
+	         else if ( g.storageType === 'cookie' )
+	         {
+		         $.removeCookie( key ) ;
+	         }
+         }
+         else
+         {
+            //写入本地数据
+            if ( g.storageType === 'localStorage' )
+	         {
+		         window.localStorage.setItem( key, value ) ;
+	         }
+	         else if ( g.storageType === 'cookie' )
+	         {
+		         var saveTime = new Date() ;
+		         saveTime.setDate( saveTime.getDate() + 365 ) ;
+		         $.cookie( key, value, { 'expires': saveTime } ) ;
+	         }
+         }
       }
 
-      //写入本地数据
-      g.setLocalData = function( key, value )
-      {
-         var storageType = g.setBrowserStorage() ;
-         if( storageType === 'userData' )
-	      {
-		      var saveTime = new Date() ;
-		      saveTime.setDate( saveTime.getDate() + 365 ) ;
-		      g._userdata.expires = saveTime.toUTCString() ;
-		      g._userdata.load( 'sdbjs' ) ;
-		      g._userdata.setAttribute( key, value ) ;
-		      g._userdata.save( 'sdbjs' ) ;
-	      }
-	      else if ( storageType === 'localStorage' )
-	      {
-		      window.localStorage.setItem( key, value ) ;
-	      }
-	      else if ( storageType === 'cookie' )
-	      {
-		      var saveTime = new Date() ;
-		      saveTime.setDate( saveTime.getDate() + 365 ) ;
-		      saveTime = saveTime.toUTCString() ;
-		      $.cookie( key, value, { 'expires': saveTime } ) ;
-	      }
-      }
    } ) ;
 }());

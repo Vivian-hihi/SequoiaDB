@@ -59,12 +59,12 @@
             </div>
          </td>
          <td class="lineBox">
-            <button class="treeBtn" data-desc="复制" ng-if="field.level > 0" ng-click="copy(fields,field)">
+            <button class="treeBtn" data-desc="{{autoLanguage('复制')}}" ng-if="field.level > 0" ng-click="copy(fields,field)">
                <i class="fa fa-copy"></i>
             </button>
          </td>
          <td class="lineBox">
-            <button class="treeBtn treeBtnColor2" data-desc="删除" ng-click="remove(fields,field)" ng-if="field.level > 0">
+            <button class="treeBtn treeBtnColor2" data-desc="{{autoLanguage('删除')}}" ng-click="remove(fields,field)" ng-if="field.level > 0">
                <i class="fa fa-remove"></i>
             </button>
          </td>

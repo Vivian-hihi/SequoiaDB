@@ -467,13 +467,7 @@ sdbjs.fun.setBrowserStorage = function()
 	var browser = sdbjs.fun.getBrowserInfo() ;
 	if( browser[0] === 'ie' && browser[1] <= 7 )
 	{
-		sdbjs.private.storageType = 'userData' ;
-		var obj = document.createElement( 'input' ) ;
-		obj.type = 'hidden' ;
-		obj.style.display = 'none' ;
-		obj.addBehavior( '#default#userData' ) ;
-		$( document.body ).append( $( obj ) ) ;
-		sdbjs.private.userdata = obj ;
+      sdbjs.private.storageType = 'cookie' ;
 	}
 	else
 	{
@@ -554,8 +548,7 @@ sdbjs.fun.saveData = function( key, value )
 	{
 		var saveTime = new Date() ;
 		saveTime.setDate( saveTime.getDate() + 365 ) ;
-		saveTime = saveTime.toUTCString() ;
-		$.cookie( key, value, { 'expires': saveTime } ) ;
+		$.cookie( key, value, { 'expires': saveTime, 'path': '/' } ) ;
 	}
 }
 

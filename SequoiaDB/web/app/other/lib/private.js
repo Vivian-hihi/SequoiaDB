@@ -151,6 +151,9 @@ _IndexBottom.checkPing = function( $scope, SdbRest )
       {
          $scope.Bottom.sysStatus = $scope.autoLanguage( '良好' ) ;
          $scope.Bottom.statusColor = 'success' ;
+         setTimeout( function(){
+            _IndexBottom.checkPing( $scope, SdbRest ) ;
+         }, 5000 ) ;
       }
       else
       {
@@ -159,9 +162,6 @@ _IndexBottom.checkPing = function( $scope, SdbRest )
          _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
       }
       $scope.$apply() ;
-      setTimeout( function(){
-         _IndexBottom.checkPing( $scope, SdbRest ) ;
-      }, 5000 ) ;
    } ) ;
 }
 
@@ -181,10 +181,13 @@ _DataOperateRecord.buildJsonGrid = function( $scope, $compile, records, isNotFil
             { 'html': $compile( '<i class="fa fa-font"  ng-class="{ active: showType == 1 }" ng-click="show(1)"></i>' )( $scope ) },
             { 'html': $compile( '<i class="fa fa-list" ng-class="{ active: showType == 2 }" ng-click="show(2)"></i>' )( $scope ) },
             { 'html': $compile( '<i class="fa fa-table"  ng-class="{ active: showType == 3 }" ng-click="show(3)"></i>' )( $scope ) }
+         ],
+         'right': [
+            { 'html': $compile( '<span ng-bind="recordTotal"></span>' )( $scope ) }
          ]
       },
       'options': {
-         'grid': { 'tdModel': 'auto', 'titleWidth': [ '60px', '190px', 100 ] }
+         'grid': { 'tdModel': 'auto', 'titleWidth': [ '60px', '80px', 100 ] }
       }
    } ;
    if( isNotFilter )
@@ -195,13 +198,13 @@ _DataOperateRecord.buildJsonGrid = function( $scope, $compile, records, isNotFil
       gridData.tool.left.push( { 'html': $compile( '<input style="width:100px;" ng-change="checkCurrent()" ng-model="setCurrent" ng-keypress="gotoPate($event)">' )( $scope ) } ) ;
       gridData.tool.left.push( { 'html': $compile( '<span>/<span>' )( $scope ) } ) ;
       gridData.tool.left.push( { 'html': $compile( '<span ng-bind="total"></span>' )( $scope ) } ) ;
-      gridData.tool.left.push( { 'html': $compile( '<i class="fa fa-play" ng-click="nextPage()"></i>' )( $scope ) } ) ;
+      gridData.tool.left.push( { 'html': $compile( '<i class="fa fa-play" ng-show="current < total" ng-click="nextPage()"></i>' )( $scope ) } ) ;
    }
    $.each( records, function( index, record ){
       var tmpJson = JSON.stringify( record, null, 3 ) ;
-      var editBtn = $compile( '<a ng-click="Edit(' + index + ')"></a>' )( $scope ).addClass( 'linkButton' ).append( $( '<i class="fa fa-edit"></i>' ).text( ' ' + $scope.autoLanguage( '编辑' ) ) ) ;
-      var copyBtn = $compile( '<a ng-click="Insert(' + index + ')"></a>' )( $scope ).addClass( 'linkButton' ).append( $( '<i class="fa fa-copy"></i>' ).text( ' ' + $scope.autoLanguage( '复制' ) ) ) ;
-      var deleteBtn = $compile( '<a ng-click="DeleteRecord(' + index + ')" ></a>' )( $scope ).addClass( 'linkButton' ).append( $( '<i class="fa fa-remove"></i>' ).text( ' ' + $scope.autoLanguage( '删除' ) ) ) ;
+      var editBtn = $compile( '<a ng-click="Edit(' + index + ')"></a>' )( $scope ).addClass( 'linkButton' ).append( $( '<i class="fa fa-edit"></i>' ).attr( 'data-desc', $scope.autoLanguage( '编辑' ) ) ) ;
+      var copyBtn = $compile( '<a ng-click="Insert(' + index + ')"></a>' )( $scope ).addClass( 'linkButton' ).append( $( '<i class="fa fa-copy"></i>' ).attr( 'data-desc', $scope.autoLanguage( '复制' ) ) ) ;
+      var deleteBtn = $compile( '<a ng-click="DeleteRecord(' + index + ')" ></a>' )( $scope ).addClass( 'linkButton' ).append( $( '<i class="fa fa-remove"></i>' ).attr( 'data-desc', $scope.autoLanguage( '删除' ) ) ) ;
       gridData['body'].push( [
          { 'text': ( index + 1 ) },
          { 'html': $compile( '<span></span>' )( $scope ).append( editBtn ).append( '&nbsp;&nbsp;' ).append( copyBtn ).append( '&nbsp;&nbsp;' ).append( deleteBtn ), 'ellipsis': false },
@@ -222,13 +225,25 @@ _DataOperateRecord.buildTreeGrid = function( $scope, $compile, records, isNotFil
       'tool': {
          'position': 'bottom',
          'left': [
-            { 'html': $compile( '<i class="fa fa-font"  ng-class="{ active: showType == 1 }" ng-click="show(1)"></i>' )( $scope ) },
+            { 'html': $compile( '<i class="fa fa-font" ng-class="{ active: showType == 1 }" ng-click="show(1)"></i>' )( $scope ) },
             { 'html': $compile( '<i class="fa fa-list" ng-class="{ active: showType == 2 }" ng-click="show(2)"></i>' )( $scope ) },
-            { 'html': $compile( '<i class="fa fa-table"  ng-class="{ active: showType == 3 }" ng-click="show(3)"></i>' )( $scope ) }
+            { 'html': $compile( '<i class="fa fa-table" ng-class="{ active: showType == 3 }" ng-click="show(3)"></i>' )( $scope ) }
+         ],
+         'right': [
+            { 'html': $compile( '<span ng-bind="recordTotal"></span>' )( $scope ) }
          ]
       },
       'options': {
-         'grid': { 'tdModel': 'dynamic' }
+         'grid': { 'tdModel': 'dynamic' },
+         'event': {
+            'onResize': function( column, line, width, height ){
+               if( column == 0 )
+               {
+                  var id = line ;
+                  gridData['data'][id]['width'] = parseInt( width ) ;
+               }
+            }
+         }
       },
       'data': []
    } ;
@@ -240,12 +255,12 @@ _DataOperateRecord.buildTreeGrid = function( $scope, $compile, records, isNotFil
       gridData.tool.left.push( { 'html': $compile( '<input type="text" style="width:100px;" ng-change="checkCurrent()" ng-model="setCurrent" ng-keypress="gotoPate($event)">' )( $scope ) } ) ;
       gridData.tool.left.push( { 'html': $compile( '<span>/<span>' )( $scope ) } ) ;
       gridData.tool.left.push( { 'html': $compile( '<span ng-bind="total"></span>' )( $scope ) } ) ;
-      gridData.tool.left.push( { 'html': $compile( '<i class="fa fa-play" ng-click="nextPage()"></i>' )( $scope ) } ) ;
+      gridData.tool.left.push( { 'html': $compile( '<i class="fa fa-play" ng-show="current < total" ng-click="nextPage()"></i>' )( $scope ) } ) ;
    }
    $.each( records, function( index, record ){
       var index2 = gridData['data'].length ;
       var line = json2Array( record, 0, true ) ;
-      gridData['data'].push( { 'Json': line, 'index': index + 1 } ) ;
+      gridData['data'].push( { 'Json': line, 'index': index + 1, width: 100 } ) ;
       gridData['body'].push( [ { 'html': '<div tree-key para="data.data[' + index2 + ']"></div>', 'ellipsis': false }, { 'html': '<div tree-value para="data.data[' + index2 + ']"></div>', 'ellipsis': false }, { 'html': '<div tree-type para="data.data[' + index2 + ']"></div>', 'ellipsis': false } ] ) ;
    } ) ;
    $scope.GridData = gridData ;
@@ -264,6 +279,9 @@ _DataOperateRecord.buildTableGrid = function( $scope, $compile, SdbFunction, rec
             { 'html': $compile( '<i class="fa fa-font"  ng-class="{ active: showType == 1 }" ng-click="show(1)"></i>' )( $scope ) },
             { 'html': $compile( '<i class="fa fa-list"  ng-class="{ active: showType == 2 }" ng-click="show(2)"></i>' )( $scope ) },
             { 'html': $compile( '<i class="fa fa-table" ng-class="{ active: showType == 3 }" ng-click="show(3)"></i>' )( $scope ) }
+         ],
+         'right': [
+            { 'html': $compile( '<span ng-bind="recordTotal"></span>' )( $scope ) }
          ]
       },
       'options': {
@@ -278,7 +296,7 @@ _DataOperateRecord.buildTableGrid = function( $scope, $compile, SdbFunction, rec
       gridData.tool.left.push( { 'html': $compile( '<input style="width:100px;" ng-change="checkCurrent()" ng-model="setCurrent" ng-keypress="gotoPate($event)">' )( $scope ) } ) ;
       gridData.tool.left.push( { 'html': $compile( '<span>/<span>' )( $scope ) } ) ;
       gridData.tool.left.push( { 'html': $compile( '<span ng-bind="total"></span>' )( $scope ) } ) ;
-      gridData.tool.left.push( { 'html': $compile( '<i class="fa fa-play" ng-click="nextPage()"></i>' )( $scope ) } ) ;
+      gridData.tool.left.push( { 'html': $compile( '<i class="fa fa-play" ng-show="current < total" ng-click="nextPage()"></i>' )( $scope ) } ) ;
    }
    var keyList = [ '' ] ;
    //取得json的所有键
@@ -298,8 +316,9 @@ _DataOperateRecord.buildTableGrid = function( $scope, $compile, SdbFunction, rec
    } ) ;
    //取得json的所有值
    $.each( records, function( index, record ){
-      var line = [ index + 1 ] ;
+      var line = [] ;
       line = SdbFunction.getJsonValues( record, keyList, line ) ;
+      line[0] = index + 1 ;
       var newRow = [] ;
       $.each( line, function( index, value ){
          newRow.push( { 'text': value } ) ;
@@ -328,7 +347,7 @@ _DataOperateRecord.createInsertModel = function( $scope, SdbRest, queryFilter, r
    $scope.Components.Modal.ok = function(){
       var str = JSON.stringify( $scope.Components.Modal.jsonEdit.Callback.getJson() ) ;
       var data = { 'cmd': 'insert', 'name': fullName, 'insertor': str } ;
-      SdbRest.ClOperation( data, function( json ){
+      SdbRest.DataOperation( data, function( json ){
          $scope.execResult = sprintf( $scope.autoLanguage( '? ? 插入记录成功' ), timeFormat( new Date(), 'hh:mm:ss' ), fullName ) ;
          $scope.execRc = true ;
          queryRecord( queryFilter, $scope.showType, false ) ;
@@ -358,9 +377,11 @@ _DataOperateRecord.createEditModel = function( $scope, SdbRest, queryFilter, rec
    $scope.Components.Modal.Context = '<div json-edit para="data.jsonEdit"></div>' ;
    $scope.Components.Modal.ok = function(){
       var filter = JSON.stringify( { '_id': records[recordIndex]['_id'] } ) ;
-      var updator = JSON.stringify( { '$set': $scope.Components.Modal.jsonEdit.Callback.getJson() } ) ;
+      var newRecord = $scope.Components.Modal.jsonEdit.Callback.getJson() ;
+      delete newRecord['_id'] ;
+      var updator = JSON.stringify( { '$replace': newRecord } ) ;
       var data = { 'cmd': 'update', 'name': fullName, 'updator': updator, 'filter': filter } ;
-      SdbRest.ClOperation( data, function( json ){
+      SdbRest.DataOperation( data, function( json ){
          $scope.execResult = sprintf( $scope.autoLanguage( '? ? 更新成功' ), timeFormat( new Date(), 'hh:mm:ss' ), fullName ) ;
          $scope.execRc = true ;
          queryRecord( queryFilter, $scope.showType, false ) ;
@@ -382,8 +403,8 @@ _DataOperateRecord.createEditModel = function( $scope, SdbRest, queryFilter, rec
    }
 }
 
-//创建快速查询操作弹窗
-_DataOperateRecord.createQuickQueryModel = function( $scope, fieldList, fullName, queryRecord )
+//创建查询操作弹窗
+_DataOperateRecord.createQueryModel = function( $scope, fieldList, fullName, queryRecord )
 {
    $scope.Components.Modal.icon = 'fa-search' ;
    $scope.Components.Modal.title = $scope.autoLanguage( '查询' ) ;
@@ -392,26 +413,23 @@ _DataOperateRecord.createQuickQueryModel = function( $scope, fieldList, fullName
       inputList: [
          {
             "name": "filter",
-            "webName": "查询条件",
+            "webName": $scope.autoLanguage( "查询条件" ),
             "type": "group",
-            "desc": "查询条件的逻辑符。",
             "child": [
                {
                   "name": "model",
-                  "webName": "匹配模式",
+                  "webName": $scope.autoLanguage( "匹配模式" ),
                   "type": "select",
                   "value": "and",
-                  "desc": "查询条件的逻辑符。",
                   "valid": [
-                     { "key": "满足所有条件", "value": "and" },
-                     { "key": "满足任意条件", "value": "or" }
+                     { "key": $scope.autoLanguage( "满足所有条件" ), "value": "and" },
+                     { "key": $scope.autoLanguage( "满足任一条件" ), "value": "or" }
                   ]
                },
                {
                   "name": "condition",
-                  "webName": "条件",
+                  "webName": $scope.autoLanguage( "匹配条件" ),
                   "type": "list",
-                  "desc": "查询条件的逻辑符。",
                   "valid": {
                      "min": 0
                   },
@@ -419,8 +437,8 @@ _DataOperateRecord.createQuickQueryModel = function( $scope, fieldList, fullName
                      [
                         {
                            "name": "field",
-                           "webName": "字段名",
-                           "placeholder": "字段名",
+                           "webName": $scope.autoLanguage( "字段名" ),
+                           "placeholder": $scope.autoLanguage( "字段名" ),
                            "type": "string",
                            "value": "",
                            "valid": {
@@ -445,8 +463,8 @@ _DataOperateRecord.createQuickQueryModel = function( $scope, fieldList, fullName
                         },
                         {
                            "name": "value",
-                           "webName": "值",
-                           "placeholder": "值",
+                           "webName": $scope.autoLanguage( "值" ),
+                           "placeholder": $scope.autoLanguage( "值" ),
                            "type": "string",
                            "value": "",
                            "valid": {
@@ -461,7 +479,7 @@ _DataOperateRecord.createQuickQueryModel = function( $scope, fieldList, fullName
          },
          {
             "name": "selector",
-            "webName": "选择字段",
+            "webName": $scope.autoLanguage( "选择字段" ),
             "type": "list",
             "valid": {
                "min": 0
@@ -470,8 +488,8 @@ _DataOperateRecord.createQuickQueryModel = function( $scope, fieldList, fullName
                [
                   {
                      "name": "field",
-                     "webName": "字段名", 
-                     "placeholder": "字段名",
+                     "webName": $scope.autoLanguage( "字段名" ), 
+                     "placeholder": $scope.autoLanguage( "字段名" ),
                      "type": "string",
                      "valid": {
                         "min": 1,
@@ -486,7 +504,7 @@ _DataOperateRecord.createQuickQueryModel = function( $scope, fieldList, fullName
          },
          {
             "name": "sort",
-            "webName": "排序字段",
+            "webName": $scope.autoLanguage( "排序字段" ),
             "type": "list",
             "valid": {
                "min": 0,
@@ -496,8 +514,8 @@ _DataOperateRecord.createQuickQueryModel = function( $scope, fieldList, fullName
                [
                   {
                      "name": "field",
-                     "webName": "字段名",
-                     "placeholder": "字段名",
+                     "webName": $scope.autoLanguage( "字段名" ),
+                     "placeholder": $scope.autoLanguage( "字段名" ),
                      "type": "string",
                      "valid": {
                         "min": 1,
@@ -512,8 +530,8 @@ _DataOperateRecord.createQuickQueryModel = function( $scope, fieldList, fullName
                      "type": "select",
                      "value": "1",
                      "valid": [
-                        { "key": "升序", "value": "1" },
-                        { "key": "降序", "value": "-1" }
+                        { "key": $scope.autoLanguage( "升序" ), "value": "1" },
+                        { "key": $scope.autoLanguage( "降序" ), "value": "-1" }
                      ]
                   }
                ]
@@ -521,7 +539,7 @@ _DataOperateRecord.createQuickQueryModel = function( $scope, fieldList, fullName
          },
          {
             "name": "hint",
-            "webName": "扫描方式",
+            "webName": $scope.autoLanguage( "扫描方式" ),
             "type": "select",
             "value": "1",
             "valid": [
@@ -531,7 +549,7 @@ _DataOperateRecord.createQuickQueryModel = function( $scope, fieldList, fullName
          },
          {
             "name": "returnnum",
-            "webName": "返回记录数",
+            "webName": $scope.autoLanguage( "返回记录数" ),
             "required": true,
             "type": "int",
             "valid": {
@@ -542,7 +560,7 @@ _DataOperateRecord.createQuickQueryModel = function( $scope, fieldList, fullName
          },
          {
             "name": "skip",
-            "webName": "跳过记录数",
+            "webName": $scope.autoLanguage( "跳过记录数" ),
             "required": true,
             "type": "int",
             "valid": {
@@ -552,167 +570,203 @@ _DataOperateRecord.createQuickQueryModel = function( $scope, fieldList, fullName
          }
       ]
    } ;
-   $scope.Components.Modal.Context = '<div form-create para="data.form"></div>' ;
-   $scope.Components.Modal.ok = function(){
-      var isAllClear = $scope.Components.Modal.form.check() ;
-      if( isAllClear )
-      {
-         function modalValue2Query( valueJson )
+   $scope.Components.Modal.form2 = {
+      inputList: [
          {
-            var filter = {} ;
-            var selector = {} ;
-            var sort = {} ;
-            var hint = {} ;
-            var returnnum = 30 ;
-            var skip = 0 ;
-            //filter
-            {
-               var jobj = valueJson['filter'] ;
-               if( jobj['condition'].length > 1 ||( jobj['condition'].length == 1 && jobj['condition'][0]['field'].length > 0 ) )
-               {
-                  $.each( jobj['condition'], function( index, field ){
-                     var fieldValue = autoTypeConvert( field['value'], true ) ;
-                     switch( field['logic'] )
-                     {
-                     case '>':
-                        filter[ field['field'] ] = { '$gt': fieldValue } ;
-                        break ;
-                     case '>=':
-                        filter[ field['field'] ] = { '$gte': fieldValue } ;
-                        break ;
-                     case '<':
-                        filter[ field['field'] ] = { '$lt': fieldValue } ;
-                        break ;
-                     case '<=':
-                        filter[ field['field'] ] = { '$lte': fieldValue } ;
-                        break ;
-                     case '!=':
-                        filter[ field['field'] ] = { '$ne': fieldValue } ;
-                        break ;
-                     case '=':
-                        filter[ field['field'] ] = fieldValue ;
-                        break ;
-                     }
-                  } ) ;
-                  if( jobj['model'] == 'or' )
-                  {
-                     filter = { '$or': filter } ;
-                  }
-               }
-            }
-            // number to return
-            {
-               returnnum = valueJson['returnnum'] ;
-            }
-            // skip
-            {
-               skip = valueJson['skip'] ;
-            }
-            //组装
-            var returnJson = {} ;
-            if( $.isEmptyObject( filter ) == false )
-            {
-               returnJson['filter'] = JSON.stringify( filter ) ;
-            }
-            returnJson['returnnum'] = returnnum ;
-            returnJson['skip'] = skip ;
-            return returnJson ;
+            "name": "returnnum",
+            "webName": $scope.autoLanguage( "返回记录数" ),
+            "required": true,
+            "type": "int",
+            "valid": {
+               "min": 1,
+               "max": 100
+            },
+            "value": 30
+         },
+         {
+            "name": "skip",
+            "webName": $scope.autoLanguage( "跳过记录数" ),
+            "required": true,
+            "type": "int",
+            "valid": {
+               "min": 0
+            },
+            "value": 0
          }
-         var value = $scope.Components.Modal.form.getValue() ;
-         var data = modalValue2Query( value ) ;
-         data['name'] = fullName ;
-         queryRecord( data, $scope.showType ) ;
-      }
-      return isAllClear ;
-   }
-}
-
-//创建查询操作弹窗
-_DataOperateRecord.createQueryModel = function( $scope, fieldList, fullName, queryRecord )
-{
-   $scope.Components.Modal.icon = 'fa-search' ;
-   $scope.Components.Modal.title = $scope.autoLanguage( '查询' ) ;
-   $scope.Components.Modal.isShow = true ;
+      ]
+   } ;
+   $scope.Components.Modal.tab = 1 ;
    $scope.Components.Modal.filter = { Json: {}, Height: 0 } ;
    $scope.Components.Modal.selector = { Json: {}, Height: 0 } ;
    $scope.Components.Modal.sort = { Json: {}, Height: 0 } ;
    $scope.Components.Modal.hint = { Json: {}, Height: 0 } ;
-   $scope.Components.Modal.form = {
-      inputList: [
-         {
-            "name": "returnnum",
-            "webName": "返回记录数",
-            "required": true,
-            "type": "int",
-            "valid": {
-               "min": 1,
-               "max": 100
-            },
-            "value": 30
-         },
-         {
-            "name": "skip",
-            "webName": "跳过记录数",
-            "required": true,
-            "type": "int",
-            "valid": {
-               "min": 0
-            },
-            "value": 0
-         }
-      ]
-   } ;
    $scope.Components.Modal.Context = '\
-<table class="table loosen">\
+<div class="underlineTab" style="padding-bottom:20px;">\
+   <ul class="left">\
+      <li ng-class="{active:data.tab == 1}">\
+         <a ng-click="data.tab = 1">' + $scope.autoLanguage( '快速查询' ) + '</a>\
+      </li>\
+      <li ng-class="{active:data.tab == 2}">\
+         <a ng-click="data.tab = 2">' + $scope.autoLanguage( '高级查询' ) + '</a>\
+      </li>\
+   </ul>\
+</div>\
+<div ng-show="data.tab == 1" form-create para="data.form"></div>\
+<table ng-show="data.tab == 2" class="table loosen">\
    <tr>\
-      <td style="width:130px;vertical-align:top;">查询条件</td>\
+      <td style="width:130px;vertical-align:top;">' + $scope.autoLanguage( '查询条件' ) + '</td>\
       <td><div json-edit para="data.filter"></div></td>\
    </tr>\
    <tr>\
-      <td style="width:130px;vertical-align:top;">选择字段</td>\
+      <td style="width:130px;vertical-align:top;">' + $scope.autoLanguage( '选择字段' ) + '</td>\
       <td><div json-edit para="data.selector"></div></td>\
    </tr>\
    <tr>\
-      <td style="width:130px;vertical-align:top;">排序字段</td>\
+      <td style="width:130px;vertical-align:top;">' + $scope.autoLanguage( '排序字段' ) + '</td>\
       <td><div json-edit para="data.sort"></div></td>\
    </tr>\
    <tr>\
-      <td style="width:130px;vertical-align:top;">扫描方式</td>\
+      <td style="width:130px;vertical-align:top;">' + $scope.autoLanguage( '扫描方式' ) + '</td>\
       <td><div json-edit para="data.hint"></div></td>\
    </tr>\
    <tr>\
-      <td colspan="2"><div form-create para="data.form"></div></td>\
+      <td colspan="2"><div form-create para="data.form2"></div></td>\
    </tr>\
 </table>' ;
    $scope.Components.Modal.ok = function(){
-      var isAllClear = $scope.Components.Modal.form.check() ;
-      if( isAllClear )
+      if( $scope.Components.Modal.tab == 1 )
       {
-         var filter = $scope.Components.Modal.filter.Callback.getJson() ;
-         var selector = $scope.Components.Modal.selector.Callback.getJson() ;
-         var sort = $scope.Components.Modal.sort.Callback.getJson() ;
-         var hint = $scope.Components.Modal.hint.Callback.getJson() ;
-         var data = $scope.Components.Modal.form.getValue() ;
-         if( $.isEmptyObject( filter ) == false )
+         var isAllClear = $scope.Components.Modal.form.check() ;
+         if( isAllClear )
          {
-            data['filter'] = JSON.stringify( filter ) ;
+            function modalValue2Query( valueJson )
+            {
+               var filter = {} ;
+               var selector = {} ;
+               var sort = {} ;
+               var hint = {} ;
+               var returnnum = 30 ;
+               var skip = 0 ;
+               //filter
+               {
+                  var jobj = valueJson['filter'] ;
+                  if( jobj['condition'].length > 1 || ( jobj['condition'].length == 1 && jobj['condition'][0]['field'].length > 0 ) )
+                  {
+                     $.each( jobj['condition'], function( index, field ){
+                        var fieldValue = autoTypeConvert( field['value'], true ) ;
+                        switch( field['logic'] )
+                        {
+                        case '>':
+                           filter[ field['field'] ] = { '$gt': fieldValue } ;
+                           break ;
+                        case '>=':
+                           filter[ field['field'] ] = { '$gte': fieldValue } ;
+                           break ;
+                        case '<':
+                           filter[ field['field'] ] = { '$lt': fieldValue } ;
+                           break ;
+                        case '<=':
+                           filter[ field['field'] ] = { '$lte': fieldValue } ;
+                           break ;
+                        case '!=':
+                           filter[ field['field'] ] = { '$ne': fieldValue } ;
+                           break ;
+                        case '=':
+                           filter[ field['field'] ] = fieldValue ;
+                           break ;
+                        }
+                     } ) ;
+                     if( jobj['model'] == 'or' )
+                     {
+                        filter = { '$or': filter } ;
+                     }
+                  }
+               }
+               //selector
+               {
+                  var jobj = valueJson['selector'] ;
+                  if( jobj.length > 1 || ( jobj.length == 1 && jobj[0]['field'].length > 0 ) )
+                  {
+                     $.each( jobj, function( index, field ){
+                        selector[ field['field'] ] = 1 ;
+                     } ) ;
+                  }
+               }
+               //sort
+               {
+                  var jobj = valueJson['sort'] ;
+                  if( jobj.length > 1 || ( jobj.length == 1 && jobj[0]['field'].length > 0 ) )
+                  {
+                     $.each( jobj, function( index, field ){
+                        sort[ field['field'] ] = autoTypeConvert( field['order'], false )  ;
+                     } ) ;
+                  }
+               }
+               // number to return
+               {
+                  returnnum = valueJson['returnnum'] ;
+               }
+               // skip
+               {
+                  skip = valueJson['skip'] ;
+               }
+               //组装
+               var returnJson = {} ;
+               if( $.isEmptyObject( filter ) == false )
+               {
+                  returnJson['filter'] = JSON.stringify( filter ) ;
+               }
+               if( $.isEmptyObject( selector ) == false )
+               {
+                  returnJson['selector'] = JSON.stringify( selector ) ;
+               }
+               if( $.isEmptyObject( sort ) == false )
+               {
+                  returnJson['sort'] = JSON.stringify( sort ) ;
+               }
+               returnJson['returnnum'] = returnnum ;
+               returnJson['skip'] = skip ;
+               return returnJson ;
+            }
+            var value = $scope.Components.Modal.form.getValue() ;
+            alert( JSON.stringify( value ) )
+            var data = modalValue2Query( value ) ;
+            data['name'] = fullName ;
+            queryRecord( data, $scope.showType ) ;
          }
-         if( $.isEmptyObject( selector ) == false )
-         {
-            data['selector'] = JSON.stringify( selector ) ;
-         }
-         if( $.isEmptyObject( sort ) == false )
-         {
-            data['sort'] = JSON.stringify( sort ) ;
-         }
-         if( $.isEmptyObject( hint ) == false )
-         {
-            data['hint'] = JSON.stringify( hint ) ;
-         }
-         data['name'] = fullName ;
-         queryRecord( data, $scope.showType ) ;
+         return isAllClear ;
       }
-      return isAllClear ;
+      else
+      {
+         var isAllClear = $scope.Components.Modal.form2.check() ;
+         if( isAllClear )
+         {
+            var filter = $scope.Components.Modal.filter.Callback.getJson() ;
+            var selector = $scope.Components.Modal.selector.Callback.getJson() ;
+            var sort = $scope.Components.Modal.sort.Callback.getJson() ;
+            var hint = $scope.Components.Modal.hint.Callback.getJson() ;
+            var data = $scope.Components.Modal.form2.getValue() ;
+            if( $.isEmptyObject( filter ) == false )
+            {
+               data['filter'] = JSON.stringify( filter ) ;
+            }
+            if( $.isEmptyObject( selector ) == false )
+            {
+               data['selector'] = JSON.stringify( selector ) ;
+            }
+            if( $.isEmptyObject( sort ) == false )
+            {
+               data['sort'] = JSON.stringify( sort ) ;
+            }
+            if( $.isEmptyObject( hint ) == false )
+            {
+               data['hint'] = JSON.stringify( hint ) ;
+            }
+            data['name'] = fullName ;
+            queryRecord( data, $scope.showType ) ;
+         }
+         return isAllClear ;
+      }
    }
    $scope.Components.Modal.onResize = function( width, height ){
       height = height - 30 ;
@@ -733,24 +787,22 @@ _DataOperateRecord.createUpdateModel = function( $scope, SdbRest, queryFilter, f
    $scope.Components.Modal.form = {
       inputList: [
          {
-            "name": "filter", "webName": "更新条件", "type": "group",
+            "name": "filter", "webName": $scope.autoLanguage( "更新条件" ), "type": "group",
             "child": [
                {
                   "name": "model",
-                  "webName": "匹配模式",
+                  "webName": $scope.autoLanguage( "匹配模式" ),
                   "type": "select",
                   "value": "and",
-                  "desc": "查询条件的逻辑符。",
                   "valid": [
-                     { "key": "满足所有条件", "value": "and" },
-                     { "key": "满足任意条件", "value": "or" }
+                     { "key": $scope.autoLanguage( "满足所有条件" ), "value": "and" },
+                     { "key": $scope.autoLanguage( "满足任意条件" ), "value": "or" }
                   ]
                },
                {
                   "name": "condition",
-                  "webName": "条件",
+                  "webName": $scope.autoLanguage( "匹配条件" ),
                   "type": "list",
-                  "desc": "查询条件的逻辑符。",
                   "valid": {
                      "min": 0
                   },
@@ -758,8 +810,8 @@ _DataOperateRecord.createUpdateModel = function( $scope, SdbRest, queryFilter, f
                      [
                         {
                            "name": "field",
-                           "webName": "字段名",
-                           "placeholder": "字段名",
+                           "webName": $scope.autoLanguage( "字段名" ),
+                           "placeholder": $scope.autoLanguage( "字段名" ),
                            "type": "string",
                            "value": "",
                            "valid": {
@@ -784,8 +836,8 @@ _DataOperateRecord.createUpdateModel = function( $scope, SdbRest, queryFilter, f
                         },
                         {
                            "name": "value",
-                           "webName": "值",
-                           "placeholder": "值",
+                           "webName": $scope.autoLanguage( "值" ),
+                           "placeholder": $scope.autoLanguage( "值" ),
                            "type": "string",
                            "value": "",
                            "valid": {
@@ -800,7 +852,7 @@ _DataOperateRecord.createUpdateModel = function( $scope, SdbRest, queryFilter, f
          },
          {
             "name": "updator",
-            "webName": "更新操作",
+            "webName": $scope.autoLanguage( "更新操作" ),
             "type": "list",
             "desc": "",
             "required": true,
@@ -811,8 +863,8 @@ _DataOperateRecord.createUpdateModel = function( $scope, SdbRest, queryFilter, f
                [
                   {
                      "name": "field",
-                     "webName": "字段名",
-                     "placeholder": "字段名",
+                     "webName": $scope.autoLanguage( "字段名" ),
+                     "placeholder": $scope.autoLanguage( "字段名" ),
                      "type": "string",
                      "value": "",
                      "valid": {
@@ -824,8 +876,8 @@ _DataOperateRecord.createUpdateModel = function( $scope, SdbRest, queryFilter, f
                   },
                   {
                      "name": "value",
-                     "webName": "值",
-                     "placeholder": "值",
+                     "webName": $scope.autoLanguage( "值" ),
+                     "placeholder": $scope.autoLanguage( "值" ),
                      "type": "string",
                      "value": "",
                      "valid": {}
@@ -902,7 +954,7 @@ _DataOperateRecord.createUpdateModel = function( $scope, SdbRest, queryFilter, f
          var data = modalValue2Update( value ) ;
          data['cmd'] = 'update' ;
          data['name'] = fullName ;
-         SdbRest.ClOperation( data, function( json ){
+         SdbRest.DataOperation( data, function( json ){
             $scope.execResult = sprintf( $scope.autoLanguage( '? ? 更新成功' ), timeFormat( new Date(), 'hh:mm:ss' ), fullName ) ;
             $scope.execRc = true ;
             queryRecord( queryFilter, $scope.showType, false ) ;
@@ -929,21 +981,22 @@ _DataOperateRecord.createDeleteModel = function( $scope, SdbRest, queryFilter, f
    $scope.Components.Modal.form = {
       inputList: [
          {
-            "name": "filter", "webName": "删除条件", "type": "group",
+            "name": "filter", "webName": $scope.autoLanguage( "删除条件" ), "type": "group",
             "child": [
                {
-                  "name": "model", "webName": "匹配模式", "type": "select", "value": "and", "desc": "查询条件的逻辑符。",
+                  "name": "model", "webName": $scope.autoLanguage( "匹配模式" ), "type": "select", "value": "and",
                   "valid": [
-                     { "key": "满足所有条件", "value": "and" },
-                     { "key": "满足任意条件", "value": "or" }
+                     { "key": $scope.autoLanguage( "满足所有条件" ), "value": "and" },
+                     { "key": $scope.autoLanguage( "满足任意条件" ), "value": "or" }
                   ]
                },
                {
-                  "name": "condition", "webName": "条件", "type": "list", "desc": "查询条件的逻辑符。", "valid": { "min": 0 },
+                  "name": "condition", "webName": $scope.autoLanguage( "匹配条件" ), "type": "list", "valid": { "min": 0 },
                   "child": [
                      [
                         {
-                           "name": "field", "webName": "字段名", "placeholder": "字段名", "type": "string", "value": "",
+                           "name": "field", "webName": $scope.autoLanguage( "字段名" ),
+                           "placeholder": $scope.autoLanguage( "字段名" ), "type": "string", "value": "",
                            "valid": {
                               "min": 1, "regex": "^[^/$].*", "ban": "."
                            },
@@ -961,7 +1014,8 @@ _DataOperateRecord.createDeleteModel = function( $scope, SdbRest, queryFilter, f
                            ]
                         },
                         {
-                           "name": "value", "webName": "值", "placeholder": "值", "type": "string"
+                           "name": "value", "webName": $scope.autoLanguage( "值" ),
+                           "placeholder": $scope.autoLanguage( "值" ), "type": "string"
                         }
                      ]
                   ]
@@ -1024,7 +1078,7 @@ _DataOperateRecord.createDeleteModel = function( $scope, SdbRest, queryFilter, f
          var data = modalValue2Delete( value ) ;
          data['cmd'] = 'delete' ;
          data['name'] = fullName ;
-         SdbRest.ClOperation( data, function( json ){
+         SdbRest.DataOperation( data, function( json ){
             $scope.execResult = sprintf( $scope.autoLanguage( '? ? 删除成功' ), timeFormat( new Date(), 'hh:mm:ss' ), fullName ) ;
             $scope.execRc = true ;
             queryRecord( queryFilter, $scope.showType, false ) ;
@@ -1045,30 +1099,30 @@ _DataOperateRecord.createDeleteModel = function( $scope, SdbRest, queryFilter, f
 
 //创建删除记录操作弹窗
 _DataOperateRecord.createDeleteRecordModel = function( $scope, SdbRest, queryFilter, recordIndex, fullName, queryRecord, records ){
-         var _id = records[recordIndex]['_id']['$oid'] ;
-         $scope.Components.Confirm.isShow = true ; 
-         $scope.Components.Confirm.type = 1; 
-         $scope.Components.Confirm.okText = '是的，删除' ;  
-         $scope.Components.Confirm.closeText = '取消' ;  
-         $scope.Components.Confirm.ok = function(){
-            var deletor = JSON.stringify( { '_id': { '$oid': _id } } ) ;
-            var data = { 'cmd': 'delete', 'name': fullName, 'deletor': deletor } ;
-            SdbRest.ClOperation( data, function( json ){
-               $scope.execResult = sprintf( $scope.autoLanguage( '? ? 删除成功' ), timeFormat( new Date(), 'hh:mm:ss' ), fullName ) ;
-               $scope.execRc = true ;
-               queryRecord( queryFilter, $scope.showType, false ) ;
-            }, function( errorInfo ){
-               $scope.execResult = sprintf( $scope.autoLanguage( '? ? 删除失败，错误码: ?，?. ?' ), timeFormat( new Date(), 'hh:mm:ss' ), fullName, errorInfo['errno'], errorInfo['description'], errorInfo['detail'] ) ;
-               $scope.execRc = false ;
-            }, function(){
-               _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
-            }, function(){
-               //关闭弹窗
-               $scope.Components.Modal.isShow = false ;
-               $scope.$apply() ;
-            } ) ;
-            $scope.Components.Confirm.isShow = false ;
-         }
-         $scope.Components.Confirm.title = '您确定要删除这条记录吗?' ;
-         $scope.Components.Confirm.context = '_id : ' + _id ;
-      }
+   var _id = records[recordIndex]['_id']['$oid'] ;
+   $scope.Components.Confirm.isShow = true ;
+   $scope.Components.Confirm.type = 1 ;
+   $scope.Components.Confirm.okText = $scope.autoLanguage( '是的，删除' ) ;
+   $scope.Components.Confirm.closeText = $scope.autoLanguage( '取消' ) ;
+   $scope.Components.Confirm.title = $scope.autoLanguage( '要删除这条记录吗？' ) ;
+   $scope.Components.Confirm.context = '_id : ' + _id ;
+   $scope.Components.Confirm.ok = function(){
+      var deletor = JSON.stringify( { '_id': { '$oid': _id } } ) ;
+      var data = { 'cmd': 'delete', 'name': fullName, 'deletor': deletor } ;
+      SdbRest.DataOperation( data, function( json ){
+         $scope.execResult = sprintf( $scope.autoLanguage( '? ? 删除成功' ), timeFormat( new Date(), 'hh:mm:ss' ), fullName ) ;
+         $scope.execRc = true ;
+         queryRecord( queryFilter, $scope.showType, false ) ;
+      }, function( errorInfo ){
+         $scope.execResult = sprintf( $scope.autoLanguage( '? ? 删除失败，错误码: ?，?. ?' ), timeFormat( new Date(), 'hh:mm:ss' ), fullName, errorInfo['errno'], errorInfo['description'], errorInfo['detail'] ) ;
+         $scope.execRc = false ;
+      }, function(){
+         _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
+      }, function(){
+         //关闭弹窗
+         $scope.Components.Modal.isShow = false ;
+         $scope.$apply() ;
+      } ) ;
+      $scope.Components.Confirm.isShow = false ;
+   }
+}

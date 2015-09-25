@@ -18,34 +18,40 @@
            resolve: resolveFun( [ './app/controller/Data/Operate/Record.js' ] )
         }
       },
-      { path: '/Data/Lob/Index',
+      { path: '/Data/Operate/Lobs',
         options: {
-           templateUrl: './app/template/Data/Lob/Index.html',
-           resolve: resolveFun( [ './app/controller/Data/Lob/Index.js' ] )
+           templateUrl: './app/template/Data/Operate/Lobs.html',
+           resolve: resolveFun( [ './app/controller/Data/Operate/Lobs.js' ] )
         }
       },
-      { path: '/Data/Lob/Lobs',
+      { path: '/Data/Database/Index',
         options: {
-           templateUrl: './app/template/Data/Lob/Lobs.html',
-           resolve: resolveFun( [ './app/controller/Data/Lob/Lobs.js' ] )
+           templateUrl: './app/template/Data/Database/Index.html',
+           resolve: resolveFun( [ './app/controller/Data/Database/Index.js' ] )
         }
       },
-      { path: '/Data/Metadata/Index',
+      { path: '/Monitor/HostOverview/Index',
         options: {
-           templateUrl: './app/template/Data/Metadata/Index.html',
-           resolve: resolveFun( [ './app/controller/Data/Metadata/Index.js' ] )
-        }
+           templateUrl: './app/template/Monitor/Host/Preview/Index.html',
+           resolve: resolveFun( [ './app/controller/Monitor/Host/Preview/Index.js' ] )
+         }
+      },
+      { path: '/Monitor/HostPerformance/Index',
+        options: {
+           templateUrl: './app/template/Monitor/Host/Performance/Index.html',
+           resolve: resolveFun( [ './app/controller/Monitor/Host/Performance/Index.js' ] )
+         }
+      },
+      { path: '/Monitor/HostWarning/Index',
+        options: {
+           templateUrl: './app/template/Monitor/Host/Warning/Index.html',
+           resolve: resolveFun( [ './app/controller/Monitor/Host/Warning/Index.js' ] )
+         }
       },
       { path: '/Deploy/Index',
         options: {
            templateUrl: './app/template/Deploy/Index.html',
            resolve: resolveFun( [ './app/controller/Deploy/Index.js' ] )
-        }
-      },
-      { path: '/Login',
-        options: {
-           templateUrl: './app/template/public/Login.html',
-           resolve: resolveFun( [ './app/controller/Login.js' ] )
         }
       }
    ] ;

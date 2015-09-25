@@ -112,7 +112,7 @@ function timeFormat( date, fmt )
 //删除两端空格
 function trim( str )
 {　　
-   return str.replace( /(^s*)|(s*$)/g, '' ) ;
+   return str.replace( /(^\s*)|(\s*$)/g, '' ) ; 
 }
 
 //判断是不是数组
@@ -123,7 +123,7 @@ function isArray( object ) {
 }
 
 //自动判断类型并转换
-//hasQuotes 如果设置成true，那么如果带有 "xxx"，或转换成 xxxx的字符串
+//hasQuotes 如果设置成true，那么如果带有 "xxx"，或转换成 xxxx 的字符串
 function autoTypeConvert( val, hasQuotes )
 {
    if( typeof( val ) == 'string' )
@@ -506,8 +506,12 @@ function json2Array( json, level, exact )
 //打印调试
 function printfDebug( text )
 {
-   if( window.SdbDebug == true )
-      console.warn( text ) ;
+   try
+   {
+      if( window.SdbDebug == true )
+         console.warn( text ) ;
+   }
+   catch( e ){}
 }
 
 //带小数就进位

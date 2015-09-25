@@ -5,7 +5,7 @@
          <div class="list" data-offsetY="-17">
             <ul>
                <li ng-repeat="nav in Left.navMenu track by $index" ng-class="{active:Left.selectModule==nav.module}">
-                  <a ng-if="!nav.action">
+                  <a ng-if="!nav.action" ng-click="selectLeftModule(nav.module)">
                      <i ng-class="'fa fa-lg ' + nav.icon"></i>
                      <p>{{nav.text}}</p>
                   </a>

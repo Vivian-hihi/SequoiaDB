@@ -39,7 +39,7 @@
 				"aboutSAC": {
 						"title": "About SAC",
 						"context": [
-							  "Version: 1.12",
+							  "Version: 2.0",
 							  "SAC ( SequoiaDB Administration Center ) is a web-based service utility providing real-time performance analytic and operational management to SequoiaDB database."
 						]
 				},

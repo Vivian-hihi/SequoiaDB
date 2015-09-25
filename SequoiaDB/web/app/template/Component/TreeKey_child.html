@@ -2,7 +2,7 @@
    <table class="table">
       <tr ng-style="{true:{'cursor':'pointer'}}[field.type=='Object' || field.type=='Array']" ng-click="toggle(field)">
          <td style="width:10px;">
-            <i class="caret caret-right caret-5x" ng-if="field.type=='Object' || field.type=='Array'"></i>
+            <i class="caret caret-5x" ng-class="{ 'caret-right': !field.isOpen, 'caret-bottom': field.isOpen }" ng-if="field.type=='Object' || field.type=='Array'"></i>
          </td>
          <td style="width:25px;" ng-switch on="field.type">
             <img src="./images/tree/object.png" ng-switch-when="Object">
@@ -22,9 +22,9 @@
             <img src="./images/tree/bool.png" ng-switch-when="Bool">
          </td>
          <td>
-            <div style="width:300px;" class="Ellipsis" ng-if="field.type=='Object'">{{field.key}}</div>
-            <div style="width:300px;" class="Ellipsis" ng-if="field.type=='Array'">{{field.key}}</div>
-            <div style="width:300px;" class="Ellipsis" ng-if="field.type!='Object'&&field.type!='Array'">{{field.key}}</div>
+            <div ng-style="{width: (Setting.width - 53 - field.level * 14 ) + 'px' }" class="Ellipsis" ng-if="field.type=='Object'">{{field.key}}</div>
+            <div ng-style="{width: (Setting.width - 53 - field.level * 14 ) + 'px' }" class="Ellipsis" ng-if="field.type=='Array'">{{field.key}}</div>
+            <div ng-style="{width: (Setting.width - 53 - field.level * 14 ) + 'px' }"  class="Ellipsis" ng-if="field.type!='Object'&&field.type!='Array'">{{field.key}}</div>
          </td>
       </tr>
    </table>

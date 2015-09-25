@@ -4,6 +4,8 @@
            trigger: 'axis',
            formatter: '{a0}: {c0}'
        },
+       animation: false,
+       addDataAnimation: false,
        legend: {
            borderWidth: 1,
            padding: [ 5, 10, 5, 10 ],
@@ -38,7 +40,7 @@
            {
                name: 'Record',
                type: 'line',
-               data: [ 0, 150, 200, 270, 400, 440, 600 ]
+               data: [ 0, 0, 0, 0, 0, 0, 0 ]
            }
        ]
    } ;

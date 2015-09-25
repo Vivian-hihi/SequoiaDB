@@ -2,10 +2,10 @@
    var sacApp = window.SdbSacManagerModule ;
    //控制器
    sacApp.controllerProvider.register( 'Data.Operate.Record.Ctrl', function( $scope, $compile, $location, Loading, SdbRest, InheritSize, SdbFunction, FormModal ){
-      var clusterName = SdbFunction.getLocalData( 'SdbClusterName' ) ;
-      var moduleName = SdbFunction.getLocalData( 'SdbModuleName' ) ;
-      var csName = SdbFunction.getLocalData( 'SdbCsName' ) ;
-      var clName = SdbFunction.getLocalData( 'SdbClName' ) ;
+      var clusterName = SdbFunction.LocalData( 'SdbClusterName' ) ;
+      var moduleName = SdbFunction.LocalData( 'SdbModuleName' ) ;
+      var csName = SdbFunction.LocalData( 'SdbCsName' ) ;
+      var clName = SdbFunction.LocalData( 'SdbClName' ) ;
       var fullName = csName + '.' + clName ;
       printfDebug( 'Cluster: ' + clusterName + ', Module: ' + moduleName + ', cs: ' + csName + ', cl: ' + clName ) ;
       if( clusterName == null || moduleName == null || csName == null || clName == null )
@@ -23,6 +23,8 @@
          InheritSize.append( ele ) ;
       } ) ;
 
+      $scope.fullName = csName + '.' + clName ;
+
       //初始化
       var isNotFilter = true ;
       var records = [] ;
@@ -31,6 +33,7 @@
       $scope.setCurrent = 1 ;
       $scope.current = 1 ;
       $scope.total = 0 ;
+      $scope.recordTotal = '' ;
       var queryFilter = { 'name': fullName, 'returnnum': limit, 'skip': 0 } ;
       $scope.GridData = { 'title': [], 'body': [], 'tool': {}, 'options': { 'grid': {} } } ;
 
@@ -63,6 +66,14 @@
          else if( isNaN( $scope.setCurrent ) || parseInt( $scope.setCurrent ) != $scope.setCurrent )
          {
             $scope.setCurrent = parseInt( $scope.setCurrent ) ;
+            if( isNaN( $scope.setCurrent ) )
+            {
+               $scope.setCurrent = 1 ;
+            }
+         }
+         else if( $scope.setCurrent > $scope.total )
+         {
+            $scope.setCurrent = $scope.total ;
          }
       }
       //跳转到指定页
@@ -110,7 +121,7 @@
             isNotFilter = false ;
          }
          data['cmd'] = 'query' ;
-         SdbRest.ClOperation( data, function( json ){
+         SdbRest.DataOperation( data, function( json ){
             records = json ;
             //获取所有字段
             $.each( records, function( index, record ){
@@ -118,9 +129,17 @@
             } ) ;
             if( showSuccess != false )
             {
-               $scope.execResult = sprintf( $scope.autoLanguage( '? ? 执行查询成功，显示 ? - ?，总计 ? 条记录' ), timeFormat( new Date(), 'hh:mm:ss' ), fullName, data['skip'] + 1, data['skip'] + records.length, records.length ) ;
+               var start = 0 ;
+               var end = 0 ;
+               if( records.length > 0 )
+               {
+                  start = data['skip'] + 1 ;
+                  end = data['skip'] + records.length ;
+               }
+               $scope.execResult = sprintf( $scope.autoLanguage( '? ? 执行查询成功，显示 ? - ?，总计 ? 条记录' ), timeFormat( new Date(), 'hh:mm:ss' ), fullName, start, end, records.length ) ;
                $scope.execRc = true ;
             }
+            $scope.recordTotal = '' ;
             queryFilter = data ;
          }, function( errorInfo ){
             records = [] ;
@@ -130,6 +149,7 @@
          }, function(){
             records = [] ;
             fieldList = [] ;
+            _IndexPublic.createErrorModel( $scope, $scope.autoLanguage( '网络连接错误，请尝试按F5刷新浏览器。' ) ) ;
          }, function(){
             $scope.$apply() ;
             $scope.show( type ) ;
@@ -137,9 +157,18 @@
          if( isNotFilter )
          {
             var newdata = { 'cmd': 'get count', 'name': fullName } ;
-            SdbRest.ClOperation( newdata, function( countData ){
-                $scope.total = countData['Total'];
-                $scope.$apply();
+            SdbRest.DataOperation( newdata, function( countData ){
+               $scope.recordTotal = sprintf( $scope.autoLanguage( '一共 ? 条记录。' ), countData[0]['Total'] ) ;
+               $scope.total = parseInt( countData[0]['Total'] / limit ) ;
+               if( $scope.total % limit > 1 )
+               {
+                  ++$scope.total ;
+               }
+               if( $scope.total == 0 )
+               {
+                  $scope.total = 1 ;
+               }
+               $scope.$apply() ;
             } ) ;
          }
       }
@@ -154,11 +183,6 @@
       //创建编辑记录弹窗
       $scope.Edit = function( recordIndex ){
          _DataOperateRecord.createEditModel( $scope, SdbRest, queryFilter, recordIndex, fullName, queryRecord, records ) ;
-      }
-
-      //创建快速查询弹窗
-      $scope.QuickQuery = function(){
-         _DataOperateRecord.createQuickQueryModel( $scope, fieldList, fullName, queryRecord ) ;
       }
 
       //创建查询弹窗

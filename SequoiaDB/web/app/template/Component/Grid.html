@@ -15,7 +15,7 @@
    </div>
    <div class="GridBody">
       <div class="GridTr" ng-repeat="tr in data.body track by $index">
-         <div class="GridTd" ng-repeat="td in tr track by $index" ng-class="{'undefined':'Ellipsis','true':'Ellipsis'}[td.ellipsis]" ng-style="{'width':Setting.bodyWidth[$index],'height':Setting.grid.tdHeight[$parent.$index]}"></div>
+         <div class="GridTd" ng-repeat="td in tr track by $index" ng-class="{'undefined':'Ellipsis','true':'Ellipsis'}[td.ellipsis]" ng-style="{'width':Setting.bodyWidth[$index],'height':Setting.grid.tdHeight[$parent.$index],'word-break':(data.options.grid.tdModel == 'auto' || !data.options.grid.tdModel ? 'break-all' : '' ) }"></div>
          <div class="clear-float"></div>
       </div>
    </div>

@@ -250,12 +250,19 @@
                   if( typeof( scope.data['tool']['right'] ) != 'undefined' )
                   {
                      $.each( scope.data['tool']['right'], function( index, right ){
-                        if( typeof( right['html'] ) == 'string' || typeof( right['html'] ) == 'object' )
+                        if( typeof( right['html'] ) == 'string' )
                         {
                            var ele = $( '> .GridTool > .ToolRight > span:eq(' + index + ')', parentEle ) ;
                            var newEle = $compile( right['html'] )( scope ) ;
                            angular.element( ele.get(0) ).empty() ;
                            angular.element( ele.get(0) ).append( newEle ) ;
+                        }
+                        else if( typeof( right['html'] ) == 'object' )
+                        {
+                           var ele = $( '> .GridTool > .ToolRight > span:eq(' + index + ')', parentEle ) ;
+                           var newEle = right['html'] ;
+                           $( ele ).empty() ;
+                           $( ele ).append( newEle ) ;
                         }
                      } ) ;
                   }
@@ -271,6 +278,19 @@
                   } ) ;
                } ) ;
             }
+            //执行Resize事件
+            function onResize( scope, widthArr, heightArr )
+            {
+               if( scope.data['options']['event'] && typeof( scope.data['options']['event']['onResize'] ) == 'function' )
+               {
+                  var column = scope.data['title'].length ;
+                  $.each( scope.data['body'], function( y, columnInfo ){
+                     $.each( columnInfo, function( x ){
+                        scope.data['options']['event']['onResize']( x, y, scope.Setting.bodyWidth[x], scope.Setting.grid.tdHeight[y] ) ;
+                     } ) ;
+                  } ) ;
+               }
+            }
             return {
                pre: function preLink( scope, element, attributes ){
                   $( element ).css( 'position', 'relative' ) ;
@@ -281,6 +301,8 @@
                      setRowHeight( scope, element ) ;
                      //设置总高度
                      setGridHeight( scope, element ) ;
+                     //响应事件
+                     onResize( scope ) ;
                   } ) ;
                   scope.$watch( 'data', function(){
                      //清除网格内容
@@ -298,6 +320,8 @@
                            setRowHeight( scope, element ) ;
                            //设置总高度
                            setGridHeight( scope, element ) ;
+                           //响应事件
+                           onResize( scope ) ;
                         } ) ;
                      }
                   } ) ;
@@ -498,6 +522,7 @@
                         else
                         {
                            scope.Setting.Mask.detach() ;
+                           scope.data.noOK = false ;
                         }
                      }
                   } ) ;
@@ -735,7 +760,7 @@
    });
 
    //Json编辑器
-   sacApp.directive( 'jsonEdit', function( $templateCache, SdbRest, SdbFunction ){
+   sacApp.directive( 'jsonEdit', function( $rootScope ){
       var dire = {
          restrict: 'A',
          scope: {
@@ -744,6 +769,7 @@
          templateUrl: './app/template/Component/JsonEdit.html',
          replace: false,
          controller: function( $scope, $element ){
+            $scope.autoLanguage = $rootScope.autoLanguage ;
             var json = {} ;
             if( $scope.data && typeof( $scope.data['Json'] ) == 'object' )
             {
@@ -818,25 +844,51 @@
                   }
                   //添加子字段
                   scope.add = function( field ){
-                     var key = 'field' ;
-                     var i = 0 ;
-                     while( true )
+                     if( field.type == 'Array' )
                      {
-                        var hasKey = false ;
-                        $.each( field['val'], function( index, val ){
-                           if( val['key'] == key )
-                           {
-                              hasKey = true ;
-                              return false ;
-                           }
-                        } ) ;
-                        if( hasKey == false )
+                        var key = '0' ;
+                        var i = 0 ;
+                        while( true )
                         {
-                           field['val'].push( { key: key, val: 'value', isOpen: true, type: 'String', level: field.level + 1 } ) ;
-                           break ;
+                           var hasKey = false ;
+                           $.each( field['val'], function( index, val ){
+                              if( val['key'] == key )
+                              {
+                                 hasKey = true ;
+                                 return false ;
+                              }
+                           } ) ;
+                           if( hasKey == false )
+                           {
+                              field['val'].push( { key: key, val: 'value', isOpen: true, type: 'String', level: field.level + 1 } ) ;
+                              break ;
+                           }
+                           ++i ;
+                           key = i + '' ;
                         }
-                        ++i ;
-                        key = 'field_' + i ;
+                     }
+                     else
+                     {
+                        var key = 'field' ;
+                        var i = 0 ;
+                        while( true )
+                        {
+                           var hasKey = false ;
+                           $.each( field['val'], function( index, val ){
+                              if( val['key'] == key )
+                              {
+                                 hasKey = true ;
+                                 return false ;
+                              }
+                           } ) ;
+                           if( hasKey == false )
+                           {
+                              field['val'].push( { key: key, val: 'value', isOpen: true, type: 'String', level: field.level + 1 } ) ;
+                              break ;
+                           }
+                           ++i ;
+                           key = 'field_' + i ;
+                        }
                      }
                   }
                   //删除字段
@@ -1286,7 +1338,7 @@
    });
 
    //json树 key部分
-   sacApp.directive( 'treeKey', function(){
+   sacApp.directive( 'treeKey', function( $window ){
       var dire = {
          restrict: 'A',
          scope: {
@@ -1297,13 +1349,20 @@
          controller: function( $scope, $element ){
             $scope.Setting = {
                items: $scope.data.Json,
-               index: $scope.data.index
+               index: $scope.data.index,
+               width: $scope.data.width
             }
          },
          compile: function( element, attributes ){
             return {
                pre: function preLink( scope, element, attributes ){
                   $( element ).addClass( 'jsonTree' ) ;
+                  scope.$watch( 'data.width', function(){
+                     if( scope.data && typeof( scope.data.width ) == 'number' )
+                     {
+                        scope.Setting.width = scope.data.width ;
+                     }
+                  } ) ;
                },
                post: function postLink( scope, element, attributes ){
                   scope.toggle = function( field ){
@@ -1320,7 +1379,7 @@
    });
 
    //json树 value部分
-   sacApp.directive( 'treeValue', function(){
+   sacApp.directive( 'treeValue', function( $window ){
       var dire = {
          restrict: 'A',
          scope: {
@@ -1331,13 +1390,19 @@
          controller: function( $scope, $element ){
             $scope.Setting = {
                items: $scope.data.Json,
-               index: $scope.data.index
+               index: $scope.data.index,
+               width: $scope.data.width
             }
          },
          compile: function( element, attributes ){
             return {
                pre: function preLink( scope, element, attributes ){
                   $( element ).addClass( 'jsonTreeValue' ) ;
+                  scope.$watch( 'data.width', function(){
+                     if( scope.data && typeof( scope.data.width ) == 'number' )
+                     {
+                        scope.Setting.width = scope.data.width ;
+                     }                  } ) ;
                },
                post: function postLink( scope, element, attributes ){
                }
@@ -1436,7 +1501,7 @@
             //弹窗样式
             Style: {
                top:'0px' ,
-               left:'0px',
+               left:'0px'
             },
             Mask: $( '<div></div>' ).attr( 'ng-mousedown', 'prompt()').addClass( 'mask-screen2 unalpha' ).css( 'opacity', '0.1' )
          } ;
@@ -1554,23 +1619,213 @@
 
    //取得焦点
    sacApp.directive( 'getFocus', function(){
-   var dire = {
-      restrict: 'A',
-      replace: false,
-      // 专用控制器
-      controller: function( $scope, $element ){},
-      // 编译
-      compile: function( element, attributes ){
-         return {
-            pre: function preLink( scope, element, attributes ){},
-            post: function postLink( scope, element, attributes ){
-               $( element ).get(0).focus() ;
-            }
-         } ;
+      var dire = {
+         restrict: 'A',
+         replace: false,
+         // 专用控制器
+         controller: function( $scope, $element ){},
+         // 编译
+         compile: function( element, attributes ){
+            return {
+               pre: function preLink( scope, element, attributes ){},
+               post: function postLink( scope, element, attributes ){
+                  $( element ).get(0).focus() ;
+               }
+            } ;
+         }
+      } ;
+      return dire ;
+   });
+
+   //添加自定义属性
+   sacApp.directive( 'ngAttr', function(){
+      var dire = {
+         restrict: 'A',
+         replace: false,
+         scope: {
+            data: '=ngAttr'
+         },
+         // 专用控制器
+         controller: function( $scope, $element ){},
+         // 编译
+         compile: function( element, attributes ){
+            return {
+               pre: function preLink( scope, element, attributes ){},
+               post: function postLink( scope, element, attributes ){
+                  scope.$watch( 'data', function(){
+                     if( typeof( scope.data ) == 'object' )
+                     {
+                        $( element ).attr( scope.data ) ;
+                     }
+                  } ) ;
+               }
+            } ;
+         }
+      } ;
+      return dire ;
+   });
+
+   //创建圆柱体
+   sacApp.directive( 'createCylinder', function(){
+      function getAllCoord( $scope )
+      {
+         function getCoord( $scope, index, height, offsetY ){
+            var round   = $scope.Setting.round ;
+            var width   = $scope.Setting.width - 100 ;
+            var height  = height ;
+            var percent = $scope.Setting.data[index]['percent'] ;
+            //圆柱主干
+            $scope.Setting.data[index]['zg'] = {} ;
+            $scope.Setting.data[index]['zg']['x'] = 0 ;
+            $scope.Setting.data[index]['zg']['y'] = round + offsetY ;
+            $scope.Setting.data[index]['zg']['width'] = width - 1 ;
+            $scope.Setting.data[index]['zg']['height'] = height - round * 2 - offsetY ;
+            if( $scope.Setting.data[index]['zg']['height'] < 0 ) $scope.Setting.data[index]['zg']['height'] = 0 ;
+
+            //圆柱底部
+            $scope.Setting.data[index]['db'] = {} ;
+            $scope.Setting.data[index]['db']['cx'] = width / 2 - 1 ;
+            $scope.Setting.data[index]['db']['cy'] = height - round - 1 ;
+            $scope.Setting.data[index]['db']['rx'] = width / 2 - 1 ;
+            $scope.Setting.data[index]['db']['ry'] = round ;
+
+            //圆柱主干2
+            $scope.Setting.data[index]['zg2'] = {} ;
+            $scope.Setting.data[index]['zg2']['x'] = 1 ;
+            $scope.Setting.data[index]['zg2']['y'] = round + offsetY ;
+            $scope.Setting.data[index]['zg2']['width'] = width - 3 ;
+            $scope.Setting.data[index]['zg2']['height'] = height - round * 2 - offsetY - 2 ;
+            if( $scope.Setting.data[index]['zg2']['height'] < 0 ) $scope.Setting.data[index]['zg2']['height'] = 0 ;
+
+            //圆柱头部
+            $scope.Setting.data[index]['tb'] = {} ;
+            $scope.Setting.data[index]['tb']['cx'] = width / 2 - 1 ;
+            $scope.Setting.data[index]['tb']['cy'] = round + offsetY ;
+            $scope.Setting.data[index]['tb']['rx'] = width / 2 - 1 ;
+            $scope.Setting.data[index]['tb']['ry'] = round ;
+
+            //箭头
+            var pointX = width - 2 ;
+            var pointY = height / 2 + offsetY / 2 + 5 ;
+            $scope.Setting.data[index]['jt'] = {} ;
+            $scope.Setting.data[index]['jt']['d'] = 'M' + pointX + ' ' + pointY + 'L' + ( pointX + 25 ) + ' ' + ( pointY - 6 ) ;
+
+            //字体
+            $scope.Setting.data[index]['zt'] = {} ;
+            $scope.Setting.data[index]['zt']['x'] = width + 29 ;
+            $scope.Setting.data[index]['zt']['y'] = height / 2  + offsetY / 2 - 2 ;
+         }
+         $scope.Setting.data = $scope.data ;
+         //圆柱真正的高度
+         var height2 = $scope.Setting.height - ( $scope.Setting.round * 2 ) ;
+         var height3 = 0 ;
+         var len = $scope.Setting.data.length ;
+         $.each( $scope.Setting.data, function( index ){
+            var tmpHeight = 0 ;
+            var thisHeight = height2 * ( 1 - $scope.Setting.data[index]['percent'] ) - height3 ;
+            var cyOffsetY = ( index + 1 < len ) ? thisHeight : 0 ;
+            if( index > 0 ) tmpHeight = 1 ;
+            getCoord( $scope, index, ( $scope.Setting.height - height3 + tmpHeight ), cyOffsetY ) ;
+            height3 += height2 * $scope.Setting.data[index]['percent'] ;
+            $scope.Setting.data[index]['percentStr'] = parseInt( $scope.Setting.data[index]['percent'] * 100 ) + '%' ;
+         } ) ;
       }
-   } ;
-   return dire ;
-});
+      var dire = {
+         restrict: 'A',
+         scope: {
+            data: '=para'
+         },
+         replace: false,
+         templateUrl: './app/template/Component/Cylinder.html',
+         controller: function( $scope, $element ){
+            $scope.Setting = {
+               width: 200,
+               height: 200,
+               round: 20,
+               borderColor: '#F0F0F0',
+               data: []
+            } ;
+            $scope.$watch( 'data', function(){
+               if( isArray( $scope.data ) && $scope.data.length > 0 )
+               {
+                  getAllCoord( $scope ) ;
+               }
+            } ) ;
+         },
+         compile: function( element, attributes ){
+            return {
+               pre: function preLink( scope, element, attributes ){
+                  //scope的一些初始化或者运算
+               },
+               post: function postLink( scope, element, attributes ){
+                  setTimeout( function(){
+                     scope.Setting.width = $( element ).width()  - 5 ;
+                     scope.Setting.height = $( element ).height() - 5 ;
+                     $( '> svg', element ).attr( { width: scope.Setting.width, height: scope.Setting.height } ) ;
+                     getAllCoord( scope ) ;
+                  } ) ;
+               }
+            } ;
+         }
+      } ;
+      return dire ;
+   } ) ;
+
+   //创建动态框架
+   sacApp.directive( 'createResponse', function( $window ){
+      //计算一个的宽度
+      function getLineWidth( parentWidth, eleSum, min, max )
+      {
+         //计算得到的宽度
+         var newWidth = 0 ;
+         //一行能有多少列
+         var num = parseInt( parentWidth / min ) ;
+         //计算得到的列数比实际的多
+         if( num > eleSum )
+         {
+            newWidth = parseInt( parentWidth / eleSum ) ;
+            if( max > 0 && newWidth > max )
+            {
+               newWidth = max ;
+            }
+         }
+         else
+         {
+            //计算得到的列数比实际的少或者相同
+            //剩余多少空间
+            newWidth = parentWidth / num ;
+         }
+         return newWidth ;
+      }
+      var dire = {
+         restrict: 'A',
+         scope: {
+            data: '=createResponse'
+         },
+         replace: false,
+         controller: function( $scope, $element ){
+         },
+         compile: function( element, attributes ){
+            return {
+               pre: function preLink( scope, element, attributes ){
+                  angular.element( $window ).bind( 'resize', function () {
+                     if( typeof( scope.data.max ) == 'undefined' ) scope.data.max = 0 ;
+                     var newWidth = getLineWidth( $( element ).parent().width(), scope.data.len, scope.data.min, scope.data.max ) ;
+                     $( element ).css( 'float', 'left' ).outerWidth( newWidth ) ;
+                  } ) ;
+               },
+               post: function postLink( scope, element, attributes ){
+                  scope.$watch( 'data', function(){
+                     if( typeof( scope.data.max ) == 'undefined' ) scope.data.max = 0 ;
+                     var newWidth = getLineWidth( $( element ).parent().width(), scope.data.len, scope.data.min, scope.data.max ) ;
+                     $( element ).css( 'float', 'left' ).outerWidth( newWidth ) ;
+                  } ) ;
+               }
+            } ;
+         }
+      } ;
+      return dire ;
+   });
 }());
 
 /*

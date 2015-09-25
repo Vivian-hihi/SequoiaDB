@@ -41,7 +41,7 @@
             //¼ýÍ·
             var pointX = width - 2 ;
             var pointY = height / 2 + offsetY / 2 + 5 ;
-            rv['j'] = paper.path( 'M' + pointX + ' ' + pointY + 'L' + ( pointX + 25 ) + ' ' + ( pointY - 6 ) ).
+            rv['j'] = paper.path( 'M' + pointX + ',' + pointY + 'L' + ( pointX + 25 ) + ',' + ( pointY - 6 ) ).
             attr( { 'stroke-width': 2, 'stroke-linecap': 'butt', 'stroke-linejoin': 'miter', 'stroke': color2 } ) ;
             //×ÖÌå
             rv['f'] = paper.text( 0, 0, name + ' ' + ( percent * 100 ) + '%' ).
@@ -79,13 +79,16 @@
          g.list.push( rvArr ) ;
          return id ;
       }
-      g.resizeCylinder = function( id ){
+      g.resizeCylinder = function( id, data ){
          var arr = g.list[id] ;
          var id = arr['id'] ;
          var offsetX = arr['offsetX'] ;
          var offsetY = arr['offsetY'] ;
          var round  = arr['round'] ;
-         var data   = arr['data'] ;
+         if( typeof( data ) == 'undefined' )
+         {
+            data = arr['data'] ;
+         }
          var width  = $( id ).width()  - offsetX ;
          var height = $( id ).height() - offsetY ;
          var paper  = arr['paper'] ;
@@ -94,7 +97,7 @@
          var height2 = height - ( round * 2 ) - offsetY ;
          var height3 = 0 ;
          var len = data.length ;
-         function resize( index, arg, rv ){
+         function resize( arg, rv ){
             var width   = arg['width'] - 100 ;
             var height  = arg['height'] ;
             var offsetX = arg['offsetX'] ;
@@ -128,17 +131,17 @@
             var notLast = ( index + 1 < len ) ;
             if( index > 0 ) tmpHeight = 1 ;
             var cyOffsetY = ( index + 1 < len ) ? thisHeight : offsetY ;
-            resize( index, { width: width,
-                             height: ( height - height3 + tmpHeight ),
-                             offsetX: offsetX,
-                             offsetY: cyOffsetY,
-                             round: round,
-                             color1: value['color'],
-                             color2: value['color'],
-                             color3: '#F0F0F0',
-                             notLast: notLast,
-                             name: value['name'],
-                             percent: value['percent'] }, arr['ele'][index] ) ;
+            resize( { width: width,
+                      height: ( height - height3 + tmpHeight ),
+                      offsetX: offsetX,
+                      offsetY: cyOffsetY,
+                      round: round,
+                      color1: value['color'],
+                      color2: value['color'],
+                      color3: '#F0F0F0',
+                      notLast: notLast,
+                      name: value['name'],
+                      percent: value['percent'] }, arr['ele'][index] ) ;
             height3 += height2 * value['percent'] + offsetY ;
          } ) ;
       }

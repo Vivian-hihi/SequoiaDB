@@ -3,12 +3,12 @@
    //全局模板
    sacApp.controllerProvider.register( 'Login.Ctrl', function ( $scope, $rootScope, $window, $compile, SdbFunction, SdbRest ) {
       //默认语言
-      if (SdbFunction.getLocalData( 'SdbLanguage' ) == null )
+      if( SdbFunction.LocalData( 'SdbLanguage' ) == null )
       {
-         SdbFunction.setLocalData( 'SdbLanguage', 'zh-CN' ) ;
+         SdbFunction.LocalData( 'SdbLanguage', 'zh-CN' ) ;
       }
       //获取语言
-      $scope.Language = SdbFunction.getLocalData( 'SdbLanguage' ) ;
+      $scope.Language = SdbFunction.LocalData( 'SdbLanguage' ) ;
       //语言控制
       $rootScope.autoLanguage = function( text ){
          return _IndexPublic.languageCtrl( $scope, text ) ;
@@ -38,13 +38,19 @@
          $scope.result = '' ;
 	      SdbRest.Login( $scope.username, $scope.password, function( json, textStatus, jqXHR ){
 		      var id = jqXHR.getResponseHeader( 'SdbSessionID' ) ;
-		      SdbFunction.setLocalData( 'SdbSessionID', id ) ;
-		      SdbFunction.setLocalData( 'SdbUser', $scope.username ) ;
+		      SdbFunction.LocalData( 'SdbSessionID', id ) ;
+		      SdbFunction.LocalData( 'SdbUser', $scope.username ) ;
 		      window.location.href = '/deployment/index.html' ;
+
+            //var sql = 'SELECT T1.FullName, T1.IsMainCL, T1.MainCLName, T1.ShardingType, T1.Details.TotalRecord, T1.Details.Indexes AS TotalIndexes FROM (SELECT * FROM $SNAPSHOT_CL split BY Details) AS T1' ;
+            //获取集合列表
+            //SdbRest.Exec( sql, function( data ){}, function( errorInfo ){}, function(){} ) ;
+
+
 	      }, function( errorInfo ){
             $scope.result = errorInfo['detail'] ;
 	      }, function( XMLHttpRequest, textStatus, errorThrown ){
-            $scope.result = '网络错误' ;
+            $scope.result = $scope.autoLanguage( '网络错误' ) ;
          }, function(){
             $scope.isLoading = false ;
             $scope.$apply() ;
@@ -61,7 +67,7 @@
       $scope.chooseLanguage = function( listIndex ){
          var newLanguage = $scope.LanguageList[listIndex]['key'] ;
          $scope.Language = newLanguage ;
-         SdbFunction.setLocalData( 'SdbLanguage', newLanguage ) ;
+         SdbFunction.LocalData( 'SdbLanguage', newLanguage ) ;
          $( '#languageMenu' ).hide() ;
          mask.detach() ;
       }

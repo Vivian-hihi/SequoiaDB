@@ -3,15 +3,15 @@
    //全局模板
    sacApp.controller( 'Index.Ctrl', function( $scope, $window, $rootScope, Tip, FormModal, SdbFunction, Loading ){
       //校验登录信息
-      if( SdbFunction.getLocalData( 'SdbUser' ) === null || SdbFunction.getLocalData( 'SdbSessionID' ) === null )
+      if( SdbFunction.LocalData( 'SdbUser' ) === null || SdbFunction.LocalData( 'SdbSessionID' ) === null )
 		{
 			window.location.href = './login.html#/Login' ;
          return;
       }
       //设置默认语言
-      if( SdbFunction.getLocalData( 'SdbLanguage' ) == null )
+      if( SdbFunction.LocalData( 'SdbLanguage' ) == null )
       {
-         SdbFunction.setLocalData( 'SdbLanguage', 'zh-CN' ) ;
+         SdbFunction.LocalData( 'SdbLanguage', 'zh-CN' ) ;
       }
       //预加载模板
       $scope.Templates = {} ;
@@ -19,14 +19,16 @@
       $scope.Templates.Left = './app/template/public/Left.html' ;
       $scope.Templates.Bottom = './app/template/public/Bottom.html' ;
       //获取语言
-      $scope.Language = SdbFunction.getLocalData( 'SdbLanguage' ) ;
-      //-------- 全局组件 ---------
-      $scope.Components = {} ;
-      $scope.Components.Confirm = {} ;
-      $scope.Components.Modal = {} ;
+      $scope.Language = SdbFunction.LocalData( 'SdbLanguage' ) ;
       //初始化提示标签
       Tip.create() ;
       Tip.auto() ;
+      //-------- 全局变量 ---------
+      $rootScope.Url = { Module: '', Action: '', Method: '' } ;
+      //-------- 全局组件 ---------
+      $rootScope.Components = {} ;
+      $rootScope.Components.Confirm = {} ;
+      $rootScope.Components.Modal = {} ;
       //-------- 全局函数 ---------
       //格式化
       $rootScope.sprintf = sprintf ;
@@ -86,6 +88,59 @@
             'action': '/deployment/index.html'
          },
          {
+            'text': $scope.autoLanguage( '监控' ),
+            'module': 'Monitor',
+            'icon': 'fa-flash',
+            'list': [
+               {
+                  'title': $scope.autoLanguage( '主机管理' ),
+                  'list': [
+                     {
+                        'text': $scope.autoLanguage( '预览' ),
+                        'action': 'HostOverview'
+                     },
+                     {
+                        'text': $scope.autoLanguage( '性能' ),
+                        'action': 'HostPerformance'
+                     },
+                     {
+                        'text': $scope.autoLanguage( '告警' ),
+                        'action': 'HostWarning'
+                     }
+                  ]
+               },
+               {
+                  'title': $scope.autoLanguage( '业务管理' ),
+                  'list': [
+                     {
+                        'text': $scope.autoLanguage( '预览' ),
+                        'action': 'ModuleOverview'
+                     },
+                     {
+                        'text': $scope.autoLanguage( '性能监控' ),
+                        'action': 'ModulePerformance'
+                     },
+                     {
+                        'text': $scope.autoLanguage( '数据分析' ),
+                        'action': 'ModuleAnalysis'
+                     },
+                     {
+                        'text': $scope.autoLanguage( '告警' ),
+                        'action': 'ModuleWarning'
+                     },
+                     {
+                        'text': $scope.autoLanguage( '配置' ),
+                        'action': 'ModuleConfig'
+                     },
+                     {
+                        'text': $scope.autoLanguage( '策略' ),
+                        'action': 'ModuleStrategy'
+                     }
+                  ]
+               }
+            ]
+         },
+         {
             'text': $scope.autoLanguage( '数据' ),
             'module': 'Data',
             'icon': 'fa-database',
@@ -98,16 +153,12 @@
                         'action': 'Overview'
                      },
                      {
+                        'text': $scope.autoLanguage( '数据库操作' ),
+                        'action': 'Database'
+                     },
+                     {
                         'text': $scope.autoLanguage( '数据操作' ),
                         'action': 'Operate'
-                     },
-                     {
-                        'text': $scope.autoLanguage( 'Lob操作' ),
-                        'action': 'Lob'
-                     },
-                     {
-                        'text': $scope.autoLanguage( '元数据操作' ),
-                        'action': 'Metadata'
                      }
                   ]
                }
@@ -120,13 +171,23 @@
          $scope.Left.navMenu = navMenu ;
          $scope.Left.selectModule = route[1] ;
          $scope.Left.selectAction = route[2] ;
+         $rootScope.Url.Module = route[1] ;
+         $rootScope.Url.Action = route[2] ;
+         $rootScope.Url.Method = route[3] ;
       } ) ;
+      $scope.selectLeftModule = function( moduleName ){
+         $scope.Left.selectModule = moduleName ;
+         $scope.Left.selectMenu = getMenu( navMenu, $scope.Left.selectModule ) ;
+      }
       var route = $location.url().split( '/' ) ;
       $scope.Left.navMenu = navMenu ;
       $scope.Left.selectModule = route[1] ;
       $scope.Left.selectAction = route[2] ;
       $scope.Left.selectMenu = getMenu( navMenu, $scope.Left.selectModule ) ;
       $scope.Left.isHideMenu = false ;
+      $rootScope.Url.Module = route[1] ;
+      $rootScope.Url.Action = route[2] ;
+      $rootScope.Url.Method = route[3] ;
    } ) ;
    //底部
    sacApp.controller( 'Index.Bottom.Ctrl', function( $scope, SdbRest ){

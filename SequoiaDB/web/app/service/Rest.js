@@ -4,12 +4,12 @@
       var g = this ;
       function restBeforeSend( jqXHR )
       {
-	      var id = SdbFunction.getLocalData( 'SdbSessionID' ) ;
+	      var id = SdbFunction.LocalData( 'SdbSessionID' ) ;
 	      if( id !== null )
 	      {
 		      jqXHR.setRequestHeader( 'SdbSessionID', id ) ;
 	      }
-	      var language = SdbFunction.getLocalData( 'SdbLanguage' )
+	      var language = SdbFunction.LocalData( 'SdbLanguage' )
 	      if( language !== null )
 	      {
 		      jqXHR.setRequestHeader( 'SdbLanguage', language ) ;
@@ -48,6 +48,7 @@
                {
                   //session id 不存在
                   failed( jsonArr[0] ) ;
+                  window.location.href = './login.html#/Login' ;
                }
                else if( typeof( failed ) === 'function' )
                {
@@ -152,7 +153,7 @@
       //获取配置文件
       g.getConfig = function( fileName, success )
       {
-         var language = SdbFunction.getLocalData( 'SdbLanguage' ) ;
+         var language = SdbFunction.LocalData( 'SdbLanguage' ) ;
          var newUrl = './config/' + fileName + '_' + language ;
          $.get( newUrl, {}, function( reData ){
             success( reData ) ;
@@ -162,7 +163,7 @@
       //获取语言文件
       g.getLanguage = function( fileName, success )
       {
-         var language = SdbFunction.getLocalData( 'SdbLanguage' ) ;
+         var language = SdbFunction.LocalData( 'SdbLanguage' ) ;
          var newUrl = './app/language/' + fileName + '_' + language ;
          $.get( newUrl, {}, function( reData ){
             success( reData ) ;
@@ -191,21 +192,21 @@
       }
 
       //om系统操作
-      g.OmOperation = function( data, success, failed, error, complete )
+      g.OmOperation = function( data, success, failed, error, complete, showLoading )
       {
-         g._post( data, null, success, failed, error, complete ) ;
+         g._post( data, null, success, failed, error, complete, showLoading ) ;
       }
 
-      //集合操作
-      g.ClOperation = function( data, success, failed, error, complete )
+      //数据操作
+      g.DataOperation = function( data, success, failed, error, complete )
       {
          g._post( data, function( jqXHR ){
-	         var clusterName = SdbFunction.getLocalData( 'SdbClusterName' ) ;
+	         var clusterName = SdbFunction.LocalData( 'SdbClusterName' ) ;
 	         if( clusterName !== null )
 	         {
 		         jqXHR.setRequestHeader( 'SdbClusterName', clusterName ) ;
 	         }
-	         var businessName = SdbFunction.getLocalData( 'SdbModuleName' )
+	         var businessName = SdbFunction.LocalData( 'SdbModuleName' )
 	         if( businessName !== null )
 	         {
 		         jqXHR.setRequestHeader( 'SdbBusinessName', businessName ) ;
@@ -213,22 +214,38 @@
          }, success, failed, error, complete ) ;
       }
 
-      //SQL
-      g.Exec = function( sql, success, failed, error, complete )
+      //SQL(自动获取cluster和module)
+      g.Exec = function( sql, success, failed, error, complete, showLoading )
       {
          var data = { 'cmd': 'exec', 'sql': sql } ;
          g._post( data, function( jqXHR ){
-	         var clusterName = SdbFunction.getLocalData( 'SdbClusterName' ) ;
+	         var clusterName = SdbFunction.LocalData( 'SdbClusterName' ) ;
 	         if( clusterName !== null )
 	         {
 		         jqXHR.setRequestHeader( 'SdbClusterName', clusterName ) ;
 	         }
-	         var businessName = SdbFunction.getLocalData( 'SdbModuleName' )
+	         var businessName = SdbFunction.LocalData( 'SdbModuleName' )
 	         if( businessName !== null )
 	         {
 		         jqXHR.setRequestHeader( 'SdbBusinessName', businessName ) ;
 	         }
-         }, success, failed, error, complete ) ;
+         }, success, failed, error, complete, showLoading ) ;
+      }
+
+      //SQL(手工设置cluster和module)
+      g.Exec2 = function( clusterName, businessName, sql, success, failed, error, complete, showLoading )
+      {
+         var data = { 'cmd': 'exec', 'sql': sql } ;
+         g._post( data, function( jqXHR ){
+	         if( clusterName !== null )
+	         {
+		         jqXHR.setRequestHeader( 'SdbClusterName', clusterName ) ;
+	         }
+	         if( businessName !== null )
+	         {
+		         jqXHR.setRequestHeader( 'SdbBusinessName', businessName ) ;
+	         }
+         }, success, failed, error, complete, showLoading ) ;
       }
 
       //登录

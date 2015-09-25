@@ -39,7 +39,7 @@
 				"aboutSAC": {
 						"title": "关于SAC",
 						"context": [
-							  "Version: 1.12",
+							  "Version: 2.0",
 							  "SAC（SequoiaDB Administration Center）提供针对SequoiaDB数据库的图形化监控服务。"
 						]
 				},
