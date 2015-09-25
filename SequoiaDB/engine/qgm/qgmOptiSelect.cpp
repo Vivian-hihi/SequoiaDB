@@ -740,6 +740,14 @@ namespace engine
                   f.value.value.attr() = itr->alias ;
                   f.value.expr = itr->expr ;
                }
+               else if ( f.value.value.attr().rootField() !=
+                         f.value.value.attr() )
+               {
+                  rc = SDB_INVALIDARG ;
+                  PD_LOG_MSG( PDERROR, "Aggr selector[%s] dotted format "
+                              "must be used with alias",
+                              itr->toString().c_str() ) ;
+               }
 
                plan->_funcSelector.push_back( f ) ;
             }
