@@ -1,36 +1,45 @@
-<div id="MetadataIndex" ng-controller="Data.Metadata.Index.Ctrl" style="padding:10px 0;">
-   <div class="selectClass" style="margin:0 15px 0 15px;height:40px;">
-      {{autoLanguage("搜索")}}: <input class="form-control" style="width:300px;" ng-init="searchName=''" ng-model="searchName" ng-change="search(searchName)" /> <i class="fa fa-info-circle" data-desc= {{autoLanguage("用于快速搜索集合空间和集合，例：foo.bar。")}} style="color:#00B8E6;"></i>
+<div id="MetadataIndex" ng-controller="Data.Database.Index.Ctrl" style="padding:10px 0;">
+   <div class="underlineTab" style="margin:0 15px 0 15px;height:60px;">
+      <ul class="right" style="height:45px;">
+         <li class="text Ellipsis" style="width:240px;height:32px;">
+            <b>{{moduleName}}</b>
+         </li>
+         <li style="float:right;height:32px;">
+            {{autoLanguage("搜索")}}: <input class="form-control" data-desc={{autoLanguage("用于快速搜索集合空间和集合，例：foo.bar。")}} style="width:300px;" ng-init="searchName=''" ng-model="searchName" ng-change="search(searchName)" />
+         </li>
+      </ul>
    </div>
-   <div id="MetadataList" data-offsetY="-35" class="relativeBox" style="padding:10px 15px;">
+   <div id="MetadataList" data-offsetY="-55" class="relativeBox" style="padding:0 15px 10px 15px;">
       <div class="previewLeft" data-offsetX="-290">
-         <div style="margin-bottom:20px;" ng-repeat="csInfo in csList track by $index" ng-if="csInfo['hide'] == false">
+         <div ng-show="csList.length > 0" style="margin-bottom:20px;" ng-repeat="csInfo in csList track by $index" ng-if="csInfo['hide'] == false">
             <div ng-class="csInfo.color" class="MetadataListBox" style="overflow:hidden;">
                <div style="max-width:600px;" class="Ellipsis">
-                  {{autoLanguage("集合空间")}}: <a class="linkButton" ng-style="{ true: {'font-weight':'bold','color':'#FF7547'} }[showType == 'cs'&&csID == $index]" ng-click="showCSInfo($index)">{{csInfo.Name}}</a>
+                  {{autoLanguage("集合空间")}}: <a class="linkButton" ng-style="{true:{'font-weight':'bold','color':'#FF7547'} }[showType == 'cs'&&csID == $index]" ng-click="showCSInfo($index)">{{csInfo.Name}}</a>
                </div>
-               <div style="padding:10px 0 0 0;">
-                  <span>{{autoLanguage("所属分区组")}}: </span> <span ng-repeat="groupName in csInfo.Group track by $index">{{groupName}} </span>
+               <div style="padding:10px 0 0 15px;">
+                  <span ng-if="csInfo['GroupName'].length > 0">{{sprintf(autoLanguage("一共 ? 个分区组"),csInfo.GroupName.length)}},</span>
+                  {{sprintf(autoLanguage("一共 ? 个集合"),csInfo.CLNum)}}:
                </div>
-               <div style="padding:10px 0 0 15px;">{{sprintf(autoLanguage("一共 ? 个集合。"),csInfo.Collection.length)}}:</div>
                <div style="padding:10px 15px;font-size:90%;">
                   <table class="table loosen border">
                      <tbody>
                         <tr>
-                           <td style="background-color:#F1F4F5; font-weight:bold;">{{autoLanguage("集合")}}</td>
-                           <td style="background-color:#F1F4F5; font-weight:bold;">{{autoLanguage("分区类型")}}</td>
-                           <td style="background-color:#F1F4F5; font-weight:bold;">{{autoLanguage("Lob数")}}</td>
-                           <td style="background-color:#F1F4F5; font-weight:bold;">{{autoLanguage("记录数")}}</td>
-                           <td style="background-color:#F1F4F5; font-weight:bold;">{{autoLanguage("索引数")}}</td>
-                           <td style="background-color:#F1F4F5; font-weight:bold;">{{autoLanguage("元数据比例")}}</td>
+                           <td style="background-color:#F1F4F5;font-weight:bold;">{{autoLanguage("集合")}}</td>
+                           <td style="background-color:#F1F4F5;font-weight:bold;">{{autoLanguage("分区类型")}}</td>
+                           <td style="background-color:#F1F4F5;font-weight:bold;">{{autoLanguage("Lob数")}}</td>
+                           <td style="background-color:#F1F4F5;font-weight:bold;">{{autoLanguage("记录数")}}</td>
+                           <td style="background-color:#F1F4F5;font-weight:bold;">{{autoLanguage("索引数")}}</td>
+                           <td style="background-color:#F1F4F5;font-weight:bold;">{{autoLanguage("元数据比例")}}</td>
                         </tr>
                         <tr ng-if="findCLName.length == 0" ng-repeat="clInfo in csInfo.Collection track by $index" ng-hide="csInfo.Collection.length > 5 && $index > maxShowCLNum[$parent.$parent.$index]">
-                           <td><a class="linkButton" ng-click="showCLInfo($parent.$parent.$index,$index)" ng-style="{ true: {'font-weight':'bold','color':'#FF7547'} }[showType == 'cl'&&clID[0] == $parent.$parent.$index&&clID[1] == $index]">{{clInfo.Name}}</a></td>
-                           <td><span class="badge badge-info">Vertical</span></td>
+                           <td>
+                              <a class="linkButton" ng-click="showCLInfo($parent.$parent.$index,$index)" ng-style="{ true: {'font-weight':'bold','color':'#FF7547'} }[showType == 'cl'&&clID[0] == $parent.$parent.$index&&clID[1] == $index]">{{clInfo.Name}}</a>
+                           </td>
+                           <td><span class="badge badge-info">{{clInfo.ShardingType}}</span></td>
                            <td><a class="linkButton" >{{clInfo.Details.0.Lob}}</a></td>
-                           <td><a class="linkButton" >{{clInfo.Details.0.TotalRecords}}</a></td>
+                           <td><a class="linkButton" ng-click="gotoRecord(csInfo.Name,clInfo.Name)">{{clInfo.Details.0.TotalRecords}}</a></td>
                            <td><a class="linkButton" ng-click='showIndex()'>{{clInfo.Details.0.Indexes}}</a></td>
-                           <td>{{clInfo.Details.0.MetadataRatio}}%</td>
+                           <td>{{clInfo.Details.0.MetadataRatio}}<span ng-if="clInfo.Details">%</span></td>
                         </tr>
                         <tr ng-if="findCLName.length == 0&&csInfo.Collection.length > 5&&maxShowCLNum[$index] == 3">
                            <td colspan="6"><a class="linkButton" ng-click="clTableShow($index)">{{autoLanguage("展示所有...")}}</a></td>
@@ -39,8 +48,10 @@
                            <td colspan="6"><a class="linkButton" ng-click="clTableHide($index)">{{autoLanguage("收起...")}}</a></td>
                         </tr>
                         <tr ng-if="findCLName.length > 0" ng-repeat="clInfo in csInfo.Collection track by $index" ng-hide="clInfo.hide">
-                           <td><a class="linkButton" ng-click="showCLInfo($parent.$parent.$index,$index)" ng-style="{ true: {'font-weight':'bold','color':'#FF7547'} }[showType == 'cl'&&clID[0] == $parent.$parent.$index&&clID[1] == $index]">{{clInfo.Name}}</a></td>
-                           <td><span class="badge badge-info">Vertical</span></td>
+                           <td>
+                              <a class="linkButton" ng-click="showCLInfo($parent.$parent.$index,$index)" ng-style="{ true: {'font-weight':'bold','color':'#FF7547'} }[showType == 'cl'&&clID[0] == $parent.$parent.$index&&clID[1] == $index]">{{clInfo.Name}}</a>
+                           </td>
+                           <td><span class="badge badge-info">{{clInfo.ShardingType}}</span></td>
                            <td><a class="linkButton">{{clInfo.Details.0.Lob}}</a></td>
                            <td><a class="linkButton">{{clInfo.Details.0.TotalRecords}}</a></td>
                            <td><a class="linkButton">{{clInfo.Details.0.Indexes}}</a></td>
@@ -51,6 +62,12 @@
                </div>
             </div>
          </div>
+         <div ng-show="csList.length == 0">
+            <div class="data_empty">
+               <div class="title">{{autoLanguage("业务没有集合空间")}}</div>
+               <div class="tips">{{autoLanguage("使用\"创建集合空间\"操作创建集合空间。")}}</div>
+            </div>
+         </div>
       </div>
       <div class="previewMove" data-width="10"></div>
       <div class="previewRight" data-width="280">
@@ -59,27 +76,25 @@
                <b ng-if="showType == 'cs'">{{autoLanguage("集合空间属性")}}:</b>
                <b ng-if="showType == 'cl'">{{autoLanguage("集合属性")}}:</b>
             </div>
-            <div ng-if="showType == 'cl'">{{autoLanguage("集合空间")}}：<a class="linkButton" ng-click="showCSInfo(clID[0])">{{csList[clID[0]]['Name']}}</a></div>
+            <div ng-if="showType == 'cl'">{{autoLanguage("集合空间")}} - <a class="linkButton" ng-click="showCSInfo(clID[0])">{{csList[clID[0]]['Name']}}</a></div>
             <div style="padding:5px 0 0 0;">
                <table class="table loosen border">
                   <tbody>
-                     <tr ng-if="showType == 'cs'||showType == 'cl'">
+                     <tr>
                         <td style="background-color:#F1F4F5;">Key</td>
                         <td style="background-color:#F1F4F5;">Value</td>
                      </tr>
-                     <tr ng-if="showType == 'cs'">
+                     <tr>
                         <td>Name</td>
-                        <td>{{csList[csID]['Name']}}</td>
+                        <td>{{attr['Info']['Name']}}</td>
                      </tr>
-                     <tr ng-if="showType == 'cl'">
-                        <td>Name</td>
-                        <td>{{csList[clID[0]]['Collection'][clID[1]]['Name']}}</td>
+                     <tr>
+                        <td>Group</td>
+                        <td>
+                           <select ng-model="aa" ng-options="selectList for selectList in attr.GroupName"></select>
+                        </td>
                      </tr>
-                     <tr ng-repeat="(key, value) in csList[csID] track by $index" ng-if="key != 'Collection'&&key != 'Group'&&key != 'Name'&&key != 'color'&&key != 'hide'&&showType == 'cs'">
-                        <td>{{key}}</td>
-                        <td>{{value}}</td>
-                     </tr>
-                     <tr ng-repeat="(key, value) in csList[clID[0]]['Collection'][clID[1]]['Details'][0] track by $index" ng-if="showType == 'cl'">
+                     <tr ng-repeat="(key, value) in attr['Info'] track by $index" ng-if="key != 'Name'">
                         <td>{{key}}</td>
                         <td>{{value}}</td>
                      </tr>
