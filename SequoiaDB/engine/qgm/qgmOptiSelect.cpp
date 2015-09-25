@@ -747,6 +747,7 @@ namespace engine
                   PD_LOG_MSG( PDERROR, "Aggr selector[%s] dotted format "
                               "must be used with alias",
                               itr->toString().c_str() ) ;
+                  goto error ;
                }
 
                plan->_funcSelector.push_back( f ) ;
