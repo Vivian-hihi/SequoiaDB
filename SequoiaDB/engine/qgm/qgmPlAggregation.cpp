@@ -42,6 +42,8 @@
 #include "rtnSQLFuncFactory.hpp"
 #include <sstream>
 
+using namespace bson ;
+
 namespace engine
 {
 
