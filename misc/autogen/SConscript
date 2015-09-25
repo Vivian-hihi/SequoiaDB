@@ -136,10 +136,12 @@ elif guess_os == "aix":
 
     if static:
         env.Append( LINKFLAGS=" -static " )
+    env.Append( LINKFLAGS=" -maix64 " )
     env.Append ( LIBS="boost_filesystem" )
     env.Append ( LIBS="boost_system" )
     env.Append ( LIBS="pthread" )
-    env.Append ( CPPFLAGS=" -ggdb " )
+    env.Append ( CPPFLAGS=" -ggdb -maix64 " )
+    env.Append ( CPPDEFINES=[ "SDB_BIG_ENDIAN" ] )
 elif "win32" == guess_os:
 
     # when building windows

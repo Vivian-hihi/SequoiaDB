@@ -203,13 +203,15 @@ static void local_time ( time_t *Time, struct tm *TM )
 {
    if ( !Time || !TM )
       return ;
-#if defined (__linux__ )
+#if defined (__linux__ ) || defined (_AIX)
    localtime_r( Time, TM ) ;
 #elif defined (_WIN32)
    // The Time represents the seconds elapsed since midnight (00:00:00),
    // January 1, 1970, UTC. This value is usually obtained from the time
    // function.
    localtime_s( TM, Time ) ;
+#else
+#error "unimplemented local_time()"
 #endif
 }
 

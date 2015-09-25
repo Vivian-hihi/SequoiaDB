@@ -38,7 +38,7 @@ namespace bson {
         unsigned pid;
 #if defined(_WIN32)
         pid = (unsigned short) GetCurrentProcessId();
-#elif defined(__linux__) || defined(__APPLE__) || defined(__sunos__)
+#elif defined(__linux__) || defined(__APPLE__) || defined(__sunos__) || defined (_AIX)
         pid = (unsigned short) getpid();
 #else
         pid = (unsigned short) Security::getNonce();

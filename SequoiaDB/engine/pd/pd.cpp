@@ -36,7 +36,7 @@
 #include <stdarg.h>
 #include <time.h>
 #include <string.h>
-#if defined (_LINUX)
+#if defined (_LINUX) || defined (_AIX)
 #include <sys/time.h>
 #include <sys/types.h>
 #include <unistd.h>

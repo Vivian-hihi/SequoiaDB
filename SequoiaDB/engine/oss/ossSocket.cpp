@@ -103,6 +103,11 @@ _ossSocket::_ossSocket ( const CHAR *pHostname, UINT32 port,
    if ( (0 == gethostbyname_r ( pHostname, &hent, hbuf, sizeof(hbuf),
                                 &retval, &error )) &&
          NULL != retval )
+#elif defined (_AIX)
+   struct hostent hent ;
+   struct hostent_data hent_data ;
+   hp = &hent ;
+   if ( (0 == gethostbyname_r ( pHostname, &hent, &hent_data ) ) )
 #endif
    {
       UINT32 *pAddr = (UINT32 *)hp->h_addr_list[0] ;
@@ -268,6 +273,9 @@ INT32 _ossSocket::setKeepAlive( INT32 keepAlive, INT32 keepIdle,
       PD_LOG ( PDWARNING, "Failed to setsockopt, rc = %d",
                SOCKET_GETLASTERROR ) ;
    }
+   #if defined (_AIX)
+      #define SOL_TCP IPPROTO_TCP
+   #endif
    rc = setsockopt( _fd, SOL_TCP, TCP_KEEPIDLE,
                     ( void *)&keepIdle, sizeof(keepIdle) ) ;
    if ( SDB_OK != rc )
@@ -497,6 +505,9 @@ BOOLEAN _ossSocket::isConnected ()
 #if defined (_WINDOWS)
    rc = ::send ( _fd, "", 0, 0 ) ;
    if ( SOCKET_ERROR == rc )
+#elif defined (_AIX)
+   rc = ::send ( _fd, "", 0, 0 ) ;
+   if ( 0 == rc )
 #else
    // MSG_NOSIGNAL : Requests not to send SIGPIPE on errors on stream
    // oriented sockets when the other end breaks the connection. The EPIPE
@@ -704,7 +715,7 @@ INT32 _ossSocket::connect ( INT32 timeout )
    SDB_ASSERT ( !_peerAddress.sin_addr.s_addr,
                 "Cannot connect without close/init" ) ;
 
-#if defined (_LINUX)
+#if defined (_LINUX) || defined (_AIX)
 
    INT32 flags = fcntl( native(), F_GETFL, 0) ;
    if ( fcntl( native(), F_SETFL, flags | O_NONBLOCK ) <0 )
@@ -921,13 +932,16 @@ error:
 
 void _ossSocket::quickAck ()
 {
-#if defined( _LINUX )
+#if defined( _LINUX ) || defined (_AIX)
+   #if defined (_AIX)
+         #define TCP_QUICKACK TCP_NODELAYACK
+   #endif
    if ( _init )
    {
       INT32 i = 1 ;
       setsockopt( _fd, IPPROTO_TCP, TCP_QUICKACK, (void*)&i, sizeof(i) ) ;
    }
-#endif // _LINUX
+#endif
 }
 
 #ifdef SDB_SSL
@@ -1209,7 +1223,7 @@ INT32 _ossSocket::_complete( INT32 timeout )
 {
    INT32 rc = SDB_OK ;
    PD_TRACE_ENTRY( SDB__OSSSK__COMPLETE ) ;
-#if defined (_LINUX)
+#if defined (_LINUX) || defined (_AIX)
    INT32 err = 0 ;
    socklen_t errlen = sizeof(err) ;
    timeval tv ;

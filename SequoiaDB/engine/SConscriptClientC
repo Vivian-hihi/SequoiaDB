@@ -2,6 +2,7 @@ import os
 
 Import("clientCEnv")
 Import("linux")
+Import("aix")
 Import("windows")
 Import("ssllib_file")
 Import("ssllib_file1")
@@ -42,7 +43,7 @@ def merge(target, source = None, env = clientCEnv):
     mergeStaticLibrary(clientCLibStatic, ssllib_file, ssllib_file1, pureLib)
     clientCEnv.Install( '#/client/lib/', clientCLibStatic )
 
-if linux:
+if linux or aix:
    staticPureSdbCLib = clientCEnv.StaticLibrary('staticpuresdbc', clientCLibFiles)
    dir = os.path.dirname(staticPureSdbCLib[0].get_abspath())
    clientCEnv.AddPostAction(staticPureSdbCLib, Action(merge))

@@ -66,7 +66,7 @@
 #define OSS_PROCESS_NAME_LEN          255
 #define OSS_RENAME_PROCESS_BUFFER_LEN OSS_PROCESS_NAME_LEN
 
-#if defined (_LINUX)
+#if defined (_LINUX) || defined (_AIX)
 #define OSS_FILE_DIRECT_IO_ALIGNMENT 512
 #elif defined (_WINDOWS)
 #define OSS_FILE_DIRECT_IO_ALIGNMENT 512

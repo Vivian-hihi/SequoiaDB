@@ -83,7 +83,7 @@
  * not
  */
 #define TRACE_EYE_CATCHER_SIZE     8
-#if defined (_LINUX)
+#if defined (_LINUX) || defined (_AIX)
 #define TRACE_EYE_CATCHER          "TRACE\n  "
 #define TRACECB_EYE_CATCHER        "@TRACE\n "
 #elif defined (_WINDOWS)

@@ -41,7 +41,7 @@
 #include "pd.hpp"
 #include "pdTrace.hpp"
 #include "ossTrace.hpp"
-#if defined (_LINUX)
+#if defined (_LINUX) || defined (_AIX)
 #include <sys/statvfs.h>
 #include <sys/utsname.h>
 #elif defined (_WINDOWS)
@@ -52,7 +52,7 @@
 // midnight (00:00:00), January 1, 1970, UTC
 void ossLocalTime ( time_t &Time, struct tm &TM )
 {
-#if defined (_LINUX )
+#if defined (_LINUX ) || defined (_AIX)
    localtime_r( &Time, &TM ) ;
 #elif defined (_WINDOWS)
    // The Time represents the seconds elapsed since midnight (00:00:00),
@@ -81,7 +81,7 @@ BOOLEAN ossIsPowerOf2( UINT32 num, UINT32 * pSquare )
 //  The Time is represented as seconds elapsed since the Epoch.
 void ossGmtime ( time_t &Time, struct tm &TM )
 {
-#if defined (_LINUX )
+#if defined (_LINUX ) || defined (_AIX)
    gmtime_r( &Time, &TM ) ;
 #elif defined (_WINDOWS)
    // Time is represented as seconds elapsed since midnight (00:00:00),
@@ -130,7 +130,7 @@ void ossTimestampToString( ossTimestamp &Tm, CHAR * pStr )
 
 void ossGetCurrentTime( ossTimestamp &TM )
 {
-#if defined (_LINUX)
+#if defined (_LINUX) || defined (_AIX)
    struct timeval tv ;
 
    // obtain the current time, expressed as seconds and microseconds since
@@ -201,7 +201,7 @@ SINT32 ossGetCPUUsage
       ossErr = GetLastError() ;
       rc = SDB_SYS ;
    }
-#elif defined (_LINUX)
+#elif defined (_LINUX) || defined (_AIX)
 
    #if ( defined __GLIBC__ && ( __GLIBC__ >= 2 ) && ( __GLIBC_MINOR__ >= 2 ) )
       #define OSS_CLK_TCK CLOCKS_PER_SEC
@@ -291,7 +291,7 @@ SINT32 ossGetCPUUsage
 (
 #if defined (_WINDOWS)
    HANDLE tHandle,  // thread handle, e.g., GetCurrthenThread()
-#elif defined (_LINUX)
+#elif defined (_LINUX) || defined (_AIX)
    OSSTID tid,      // lwp / kernel thread id, ossGetCurrentThreadID()
 #endif
    ossTime &usrTime,
@@ -324,7 +324,7 @@ SINT32 ossGetCPUUsage
       ossErr = GetLastError() ;
       rc = SDB_SYS ;
    }
-#elif defined (_LINUX)
+#elif defined (_LINUX) || defined (_AIX)
 
    #if ( defined __GLIBC__ && ( __GLIBC__ >= 2 ) && ( __GLIBC_MINOR__ >= 2 ) )
       #define OSS_CLK_TCK CLOCKS_PER_SEC
@@ -550,7 +550,7 @@ void ossTickConversionFactor::initialize(void)
 
 static BOOLEAN g_isSrand = FALSE ;
 static ossSpinXLatch g_randLatch ;
-#if defined (_LINUX)
+#if defined (_LINUX) || defined (_AIX)
 static UINT32 g_randSeed = 0 ;
 #endif
 // PD_TRACE_DECLARE_FUNCTION ( SDB_OSSSRAND, "ossSrand" )
@@ -562,7 +562,7 @@ static void ossSrand()
    {
 #if defined (_WINDOWS)
       srand ( (UINT32) time ( NULL ) ) ;
-#elif defined (_LINUX)
+#elif defined (_LINUX) || defined (_AIX)
       g_randSeed = time ( NULL ) ;
 #endif
       g_isSrand = TRUE ;
@@ -580,7 +580,7 @@ UINT32 ossRand ()
       ossSrand () ;
 #if defined (_WINDOWS)
    rand_s ( &randVal ) ;
-#elif defined (_LINUX)
+#elif defined (_LINUX) || defined (_AIX)
    g_randLatch.get() ;
    randVal = rand_r ( &g_randSeed ) ;
    g_randLatch.release() ;
@@ -824,7 +824,7 @@ exit :
    return  ( (UINT32)( curPos - szOutBuf ) ) ;
 }
 
-#if defined (_LINUX)
+#if defined (_LINUX) || defined (_AIX)
 #define OSS_GET_MEM_INFO_FILE      "/proc/meminfo"
 #define OSS_GET_MEM_INFO_MEMTOTAL  "MemTotal"
 #define OSS_GET_MEM_INFO_MEMFREE   "MemFree"
@@ -869,7 +869,7 @@ INT32 ossGetMemoryInfo ( INT32 &loadPercent,
       rc = SDB_SYS ;
       goto error ;
    }
-#elif defined (_LINUX)
+#elif defined (_LINUX) || defined (_AIX)
    CHAR pathName[OSS_PROC_PATH_LEN_MAX + 1] = {0} ;
    CHAR lineBuffer [OSS_PROC_PATH_LEN_MAX+1] = {0} ;
    INT32 inputNum = 0 ;
@@ -986,7 +986,7 @@ INT32 ossGetDiskInfo ( const CHAR *pPath,
       ossErr = ossGetLastError () ;
       goto error ;
    }
-#elif defined (_LINUX)
+#elif defined (_LINUX) || defined (_AIX)
    struct statvfs vfs ;
    if ( statvfs ( pPath, &vfs ) )
    {
@@ -1032,7 +1032,7 @@ typedef NTSTATUS (__stdcall *NTQUERYSYSTEMINFORMATION)
                   ULONG,
                   PULONG ) ;
 #define OSS_NTQUERYSYSTEMINFORMATION_STR "NtQuerySystemInformation"
-#elif defined (_LINUX)
+#elif defined (_LINUX) || defined (_AIX)
 #define OSS_GET_CPU_INFO_FILE      "/proc/stat"
 #define OSS_GET_CPU_INFO_PATTERN   "%lld%lld%lld%lld%lld%lld%lld"
 #endif
@@ -1060,7 +1060,7 @@ INT32 ossGetCPUInfo ( SINT64 &user, SINT64 &sys,
    // sys time also includes idle time
    sys -= idle ;
    user /= 10000 ;
-#elif defined (_LINUX)
+#elif defined (_LINUX) || defined (_AIX)
    CHAR pathName [ OSS_PROC_PATH_LEN_MAX + 1 ] = { 0 } ;
    CHAR buffer [ OSS_PROC_PATH_LEN_MAX + 1 ] = { 0 } ;
    SINT64 userTime = 0 ;
@@ -1151,7 +1151,7 @@ INT32 ossGetProcMemInfo( ossProcMemInfo &memInfo,
                   "failed to get process memory info(errorno:%d)",
                   GetLastError() ) ;
    }
-#elif defined (_LINUX)
+#elif defined (_LINUX) || defined (_AIX)
    ossProcStatInfo procInfo( pid ) ;
    memInfo.rss = procInfo._rss ;
    memInfo.vSize = procInfo._vSize ;
@@ -1169,7 +1169,7 @@ error:
    goto done;
 }
 
-#if defined (_LINUX)
+#if defined (_LINUX) || defined (_AIX)
 ossProcStatInfo::ossProcStatInfo( OSSPID pid )
 :_pid(-1),_state(0),_ppid(-1),_pgrp(-1),
 _session(-1),_tty(-1),_tpgid(-1),_flags(0),
@@ -1223,7 +1223,7 @@ _kstkEsp(0),_kstkEip(0)
             pathName );
    }
 }
-#endif //#if defined (_LINUX)
+#endif
 
 ossIPInfo::ossIPInfo()
 :_ipNum(0), _ips(NULL)
@@ -1241,7 +1241,7 @@ ossIPInfo::~ossIPInfo()
    _ipNum = 0 ;
 }
 
-#if defined (_LINUX)
+#if defined (_LINUX) || defined (_AIX)
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <net/if.h>
@@ -1405,7 +1405,7 @@ error:
 #error "unsupported os"
 #endif
 
-#if defined (_LINUX)
+#if defined (_LINUX) || defined (_AIX)
 #include <sys/resource.h>
 
 std::string ossProcLimits::str()const
@@ -1427,13 +1427,15 @@ INT32 ossProcLimits::init()
    _initRLimit( RLIMIT_CORE, OSS_LIMIT_CORE_SZ ) ; 
    _initRLimit( RLIMIT_CPU, OSS_LIMIT_CPU_TIME ) ; 
    _initRLimit( RLIMIT_DATA, OSS_LIMIT_DATA_SEG_SZ ) ; 
-   _initRLimit( RLIMIT_FSIZE, OSS_LIMIT_FILE_SZ ) ; 
+   _initRLimit( RLIMIT_FSIZE, OSS_LIMIT_FILE_SZ ) ;  
+   _initRLimit( RLIMIT_STACK, OSS_LIMIT_STACK_SIZE ) ;
+   _initRLimit( RLIMIT_NOFILE, OSS_LIMIT_OPEN_FILE ) ;
+#if !defined (_AIX)
    _initRLimit( RLIMIT_LOCKS, OSS_LIMIT_FILE_LOCK ) ; 
    _initRLimit( RLIMIT_MEMLOCK, OSS_LIMIT_MEM_LOCK ) ; 
    _initRLimit( RLIMIT_MSGQUEUE, OSS_LIMIT_MSG_QUEUE ) ; 
-   _initRLimit( RLIMIT_RTPRIO, OSS_LIMIT_SCHE_PRIO) ; 
-   _initRLimit( RLIMIT_STACK, OSS_LIMIT_STACK_SIZE ) ;
-   _initRLimit( RLIMIT_NOFILE, OSS_LIMIT_OPEN_FILE ) ;
+   _initRLimit( RLIMIT_RTPRIO, OSS_LIMIT_SCHE_PRIO) ;
+#endif
    return rc ;
 }
 

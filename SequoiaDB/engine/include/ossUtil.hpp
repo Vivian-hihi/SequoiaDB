@@ -187,7 +187,7 @@ SINT32 ossGetCPUUsage
 (
 #if defined (_WINDOWS)
    HANDLE tHandle,
-#elif defined (_LINUX)
+#elif defined (_LINUX) || defined (_AIX)
    OSSTID tid,
 #endif
    ossTime &usrTime,
@@ -279,7 +279,7 @@ OSS_INLINE UINT64 ossRdtsc()
    #define  ossRdtsc()  __rdtsc()
 #endif
 
-#if defined (_LINUX)
+#if defined (_LINUX) || defined (_AIX)
 OSS_INLINE void ossGetTimeOfDay( struct timeval * pTV )
 {
    if ( pTV )
@@ -382,7 +382,7 @@ public :
          }
       }
       return result ;
-   #elif defined (_LINUX)
+   #elif defined (_LINUX) || defined (_AIX)
       SINT64 resultHi, resultLo ;
 
       if ( OSS_TICKS_OP_ADD & flags )
@@ -441,7 +441,7 @@ protected :
          countsPerSecond.QuadPart = 1 ;
       }
       factor = countsPerSecond.QuadPart ;
-   #elif defined (_LINUX)
+   #elif defined (_LINUX) || defined (_AIX)
       factor = 1 ;
    #endif
    }
@@ -516,7 +516,7 @@ public :
    OSS_INLINE UINT64 toUINT64() const
    {
       UINT64 val = peek() ;
-   #if defined (_LINUX)
+   #if defined (_LINUX) || defined (_AIX)
       UINT32 hi, lo ;
 
       hi = (UINT32)( val >> 32 ) ;
@@ -542,7 +542,7 @@ public :
    {
    #if defined (_WINDOWS)
       poke( v ) ;
-   #elif defined(_LINUX)
+   #elif defined(_LINUX) || defined (_AIX)
       UINT32 hi, lo ;
       UINT64 val ;
 
@@ -585,7 +585,7 @@ public :
 
       seconds = (UINT32)( microsecondsInTotal / OSS_ONE_MILLION ) ;
       microseconds = (UINT32)(microsecondsInTotal - seconds * OSS_ONE_MILLION) ;
-   #elif defined (_LINUX)
+   #elif defined (_LINUX) || defined (_AIX)
       ossUnpack32From64( ticks, seconds, microseconds ) ;
    #endif
    } ;
@@ -610,7 +610,7 @@ public :
       {
          numTicksForInterval = timeValueInMicroseconds * cFactor.factor ;
       }
-   #elif defined (_LINUX)
+   #elif defined (_LINUX) || defined (_AIX)
       UINT32 hi, lo ;
 
       hi = timeValueInMicroseconds / OSS_ONE_MILLION ;
@@ -716,7 +716,7 @@ OSS_INLINE BOOLEAN operator > (const ossTickDelta &x, const ossTickDelta &y )
 {
 #if defined (_WINDOWS)
    return ( x.peek() > y.peek() ) ;
-#elif defined (_LINUX)
+#elif defined (_LINUX) || defined (_AIX)
    return (SINT64)(ossTickCore::addOrSub(x, y, OSS_TICKS_OP_NO_SCALE)) > 0 ;
 #endif
 }
@@ -725,7 +725,7 @@ OSS_INLINE BOOLEAN operator >= (const ossTickDelta &x, const ossTickDelta &y )
 {
 #if defined (_WINDOWS)
    return ( x.peek() >= y.peek() ) ;
-#elif defined (_LINUX)
+#elif defined (_LINUX) || defined (_AIX)
    return (SINT64)(ossTickCore::addOrSub(x, y, OSS_TICKS_OP_NO_SCALE)) >= 0 ;
 #endif
 }
@@ -734,7 +734,7 @@ OSS_INLINE BOOLEAN operator < (const ossTickDelta &x, const ossTickDelta &y )
 {
 #if defined (_WINDOWS)
    return ( x.peek() < y.peek() ) ;
-#elif defined (_LINUX)
+#elif defined (_LINUX) || defined (_AIX)
    return (SINT64)(ossTickCore::addOrSub(x, y, OSS_TICKS_OP_NO_SCALE)) < 0 ;
 #endif
 }
@@ -743,7 +743,7 @@ OSS_INLINE BOOLEAN operator <= (const ossTickDelta &x, const ossTickDelta &y )
 {
 #if defined (_WINDOWS)
    return ( x.peek() <= y.peek() ) ;
-#elif defined (_LINUX)
+#elif defined (_LINUX) || defined (_AIX)
    return (SINT64)(ossTickCore::addOrSub(x, y, OSS_TICKS_OP_NO_SCALE)) <= 0 ;
 #endif
 }
@@ -752,7 +752,7 @@ OSS_INLINE BOOLEAN operator == (const ossTickDelta &x, const ossTickDelta &y )
 {
 #if defined (_WINDOWS)
    return ( x.peek() == y.peek() ) ;
-#elif defined (_LINUX)
+#elif defined (_LINUX) || defined (_AIX)
    return (SINT64)(ossTickCore::addOrSub(x, y, OSS_TICKS_OP_NO_SCALE)) == 0 ;
 #endif
 }
@@ -761,7 +761,7 @@ OSS_INLINE BOOLEAN operator > (const ossTick &x, const ossTick &y)
 {
 #if defined (_WINDOWS)
    return ( x.peek() > y.peek() ) ;
-#elif defined (_LINUX)
+#elif defined (_LINUX) || defined (_AIX)
    return (SINT64)(ossTickCore::addOrSub(x, y, OSS_TICKS_OP_NO_SCALE)) > 0 ;
 #endif
 }
@@ -770,7 +770,7 @@ OSS_INLINE BOOLEAN operator >= (const ossTick &x, const ossTick &y)
 {
 #if defined (_WINDOWS)
    return ( x.peek() >= y.peek() ) ;
-#elif defined (_LINUX)
+#elif defined (_LINUX) || defined (_AIX)
    return (SINT64)(ossTickCore::addOrSub(x, y, OSS_TICKS_OP_NO_SCALE)) >= 0 ;
 #endif
 }
@@ -779,7 +779,7 @@ OSS_INLINE BOOLEAN operator < (const ossTick &x, const ossTick &y)
 {
 #if defined (_WINDOWS)
    return ( x.peek() < y.peek() ) ;
-#elif defined (_LINUX)
+#elif defined (_LINUX) || defined (_AIX)
    return (SINT64)(ossTickCore::addOrSub(x, y, OSS_TICKS_OP_NO_SCALE)) < 0 ;
 #endif
 }
@@ -788,7 +788,7 @@ OSS_INLINE BOOLEAN operator <= (const ossTick &x, const ossTick &y)
 {
 #if defined (_WINDOWS)
    return ( x.peek() <= y.peek() ) ;
-#elif defined (_LINUX)
+#elif defined (_LINUX) || defined (_AIX)
    return (SINT64)(ossTickCore::addOrSub(x, y, OSS_TICKS_OP_NO_SCALE)) <= 0 ;
 #endif
 }
@@ -797,7 +797,7 @@ OSS_INLINE BOOLEAN operator == (const ossTick &x, const ossTick &y)
 {
 #if defined (_WINDOWS)
    return ( x.peek() == y.peek() ) ;
-#elif defined (_LINUX)
+#elif defined (_LINUX) || defined (_AIX)
    return (SINT64)(ossTickCore::addOrSub(x, y, OSS_TICKS_OP_NO_SCALE)) == 0 ;
 #endif
 }
@@ -998,7 +998,7 @@ typedef struct _ossProcMemInfo
 }ossProcMemInfo;
 INT32 ossGetProcMemInfo( ossProcMemInfo &memInfo,
                         OSSPID pid = ossGetCurrentProcessID() );
-#if defined (_LINUX)
+#if defined (_LINUX) || defined (_AIX)
 class ossProcStatInfo
 {
 public:

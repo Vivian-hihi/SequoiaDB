@@ -38,7 +38,7 @@
 #include "encoding.h"
 #include "base64c.h"
 
-#if defined (__linux__)
+#if defined (__linux__) || defined (_AIX)
 #include <sys/types.h>
 #include <unistd.h>
 #elif defined (_WIN32)
@@ -224,7 +224,7 @@ SDB_EXPORT void bson_oid_gen( bson_oid_t *oid ) {
           rand_s ( &b ) ;
           n = (((unsigned long long)a)<<32) | b ;
        }
-#elif defined (__linux__)
+#elif defined (__linux__) || defined (_AIX)
        pid = (unsigned short) getpid () ;
        n = (((unsigned long long)random())<<32) | random() ;
 #endif
@@ -237,7 +237,7 @@ SDB_EXPORT void bson_oid_gen( bson_oid_t *oid ) {
 #if defined(_WIN32)
     else
         i = InterlockedIncrement((volatile long*)&incr)-1;
-#elif defined (__linux__)
+#elif defined (__linux__) || defined (_AIX)
     else
         i = __sync_fetch_and_add(&incr, 1);
 #endif
@@ -586,7 +586,7 @@ SDB_EXPORT int bson_sprint_iterator ( char **pbuf, int *left, bson_iterator *i,
 }
 SDB_EXPORT int bson_sprint_raw ( char **pbuf, int *left, const char *data, int isobj )
 {
-	  bson_iterator i;
+    bson_iterator i;
     const char *key;
     int first = 1 ;
     if ( left <= 0 || !pbuf || !data )
@@ -773,7 +773,7 @@ SDB_EXPORT int bson_sprint_length( const bson *b ) {
 
 SDB_EXPORT void bson_print( const bson *b )
 {
-	 char *p = NULL ;
+   char *p = NULL ;
    int bufferSize = bson_sprint_length ( b ) ;
    p = (char*)malloc(bufferSize) ;
    if ( !p )
@@ -1744,7 +1744,7 @@ void LocalTime ( time_t *Time, struct tm *TM )
 {
    if ( !Time || !TM )
       return ;
-#if defined (__linux__ )
+#if defined (__linux__ ) || defined (_AIX)
    localtime_r( Time, TM ) ;
 #elif defined (_WIN32)
    // The Time represents the seconds elapsed since midnight (00:00:00),

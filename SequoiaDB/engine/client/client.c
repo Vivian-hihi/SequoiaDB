@@ -26,10 +26,10 @@
 #include "../bson/lib/md5.h"
 #include "fmpDef.h"
 
-#if defined( _LINUX )
+#if defined( _LINUX ) || defined (_AIX)
 #include <arpa/inet.h>
 #include <netinet/tcp.h>
-#endif // _LINUX
+#endif
 
 SDB_EXTERN_C_START
 BOOLEAN g_disablePassEncode = FALSE ;
@@ -188,7 +188,7 @@ static BOOLEAN _sdbIsSrand = FALSE ;
 void  _sdbDisconnect_inner ( sdbConnectionHandle handle ) ;
 
 
-#if defined (_LINUX)
+#if defined (_LINUX) || defined (_AIX)
 static UINT32 _sdbRandSeed = 0 ;
 #endif
 static void _sdbSrand ()
@@ -197,7 +197,7 @@ static void _sdbSrand ()
    {
 #if defined (_WINDOWS)
       srand ( (UINT32) time ( NULL ) ) ;
-#elif defined (_LINuX)
+#elif defined (_LINUX) || defined (_AIX)
       _sdbRandSeed = time ( NULL ) ;
 #endif
       _sdbIsSrand = TRUE ;
@@ -213,7 +213,7 @@ static UINT32 _sdbRand ()
    }
 #if defined (_WINDOWS)
    rand_s ( &randVal ) ;
-#elif defined (_LINUX)
+#elif defined (_LINUX) || defined (_AIX)
    randVal = rand_r ( &_sdbRandSeed ) ;
 #endif
    return randVal ;
@@ -412,13 +412,16 @@ static INT32 _recv ( sdbConnectionHandle cHandle, Socket* sock,
          goto error ;
       }
 
-#if defined( _LINUX )
+#if defined( _LINUX ) || defined (_AIX)
+      #if defined (_AIX)
+         #define TCP_QUICKACK TCP_NODELAYACK
+      #endif
       // quick ack
       {
          INT32 i = 0 ;
          setsockopt( clientGetRawSocket ( sock ), IPPROTO_TCP, TCP_QUICKACK, (void*)&i, sizeof(i) ) ;
       }
-#endif // _LINUX
+#endif
       break ;
    }
    ossEndianConvertIf4 ( len, realLen, endianConvert ) ;

@@ -632,7 +632,10 @@ elif guess_os == 'aix':
    env.Append( LIBS=["pthread"] )
    # GNU
    env.Append( CPPDEFINES=[ "_GNU_SOURCE" ] )
-
+   # AIX64
+   env.Append( CPPFLAGS=" -maix64 " )
+   env.Append( LINKFLAGS=" -maix64 " )
+   env.Append( AR=" -X64 " )
    nixLibPrefix = "lib"
    boost_lib_dir = join(boost_lib_dir,'aix')
    # use big endian
@@ -653,6 +656,11 @@ elif guess_os == 'aix':
           env.Append( CPPPATH=join(js_dir,'lib/release/aix/include') )
           env.Append( EXTRALIBPATH=[smlib_dir] )
 
+   # spider monkey
+   if usesm:
+      smlib_file = join(smlib_dir, 'libmozjs185.so')
+      env.Append( CPPDEFINES=[ "XP_UNIX" ] )
+      env.Append( LIBS=['js_static'] )
    # SSL
    ssllib_dir = join(ssl_dir,'lib/aix')
    env.Append( LIBS=['ssl'] )

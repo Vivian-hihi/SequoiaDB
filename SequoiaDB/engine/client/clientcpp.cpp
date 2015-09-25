@@ -58,7 +58,7 @@ using namespace bson ;
 namespace sdbclient
 {
    static BOOLEAN _sdbIsSrand = FALSE ;
-#if defined (_LINUX)
+#if defined (_LINUX) || defined (_AIX)
    static UINT32 _sdbRandSeed = 0 ;
 #endif
    static void _sdbSrand ()
@@ -67,7 +67,7 @@ namespace sdbclient
       {
 #if defined (_WINDOWS)
          srand ( (UINT32) time ( NULL ) ) ;
-#elif defined (_LINUX)
+#elif defined (_LINUX) || defined (_AIX)
          _sdbRandSeed = time ( NULL ) ;
 #endif
          _sdbIsSrand = TRUE ;
@@ -80,7 +80,7 @@ namespace sdbclient
          _sdbSrand () ;
 #if defined (_WINDOWS)
       rand_s ( &randVal ) ;
-#elif defined (_LINUX)
+#elif defined (_LINUX) || defined (_AIX)
       randVal = rand_r ( &_sdbRandSeed ) ;
 #endif
       return randVal ;

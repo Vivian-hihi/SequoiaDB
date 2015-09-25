@@ -2,6 +2,7 @@ import os
 
 Import("clientCppEnv")
 Import("linux")
+Import("aix")
 Import("windows")
 Import("ssllib_file")
 Import("ssllib_file1")
@@ -56,7 +57,7 @@ def merge(target, source = None, env = clientCppEnv):
     mergeStaticLibrary(clientCPPLibStatic, ssllib_file, ssllib_file1, pureLib)
     clientCppEnv.Install( '#/client/lib/', clientCPPLibStatic )
 
-if linux:
+if linux or aix:
    staticPureSdbCPPLib = clientCppEnv.StaticLibrary('staticpuresdbcpp', clientCPPLibFiles)
    dir = os.path.dirname(staticPureSdbCPPLib[0].get_abspath())
    clientCPPLibStatic = dir + '/libstaticsdbcpp.a'

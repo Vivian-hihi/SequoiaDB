@@ -18,7 +18,7 @@
 #include "ossUtil.h"
 #include "ossMem.h"
 #include "oss.h"
-#if defined (_LINUX)
+#if defined (_LINUX) || defined (_AIX)
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -306,6 +306,9 @@ INT32 setKeepAlive( SOCKET sock, INT32 keepAlive, INT32 keepIdle,
       rc = SDB_SYS ;
       goto error ;
    }
+   #if defined (_AIX)
+      #define SOL_TCP IPPROTO_TCP
+   #endif
    rc = setsockopt( sock, SOL_TCP, TCP_KEEPIDLE,
                     ( void *)&keepIdle, sizeof(keepIdle) ) ;
    if ( SDB_OK != rc )
