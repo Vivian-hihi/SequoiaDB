@@ -51,7 +51,7 @@ namespace engine
                                          _qgmPtrTable *table )
    :_qgmPlan( QGM_PLAN_TYPE_AGGR, alias ),
     _eoc( FALSE ), _pushedAtThisTime( FALSE ),
-    _pushedAtAnyTime( FALSE ), _isAggr( FALSE )
+    _pushedAtAnyTime( FALSE ), _isAggr( FALSE ), _isStat( FALSE )
    {
       INT32 rc = SDB_OK ;
       SQL_CB *sqlCB = pmdGetKRCB()->getSqlCB() ;
@@ -87,7 +87,11 @@ namespace engine
                _func.push_back( func ) ;
                if ( !_isAggr && func->isAggr() )
                {
-                  _isAggr = TRUE;
+                  _isAggr = TRUE ;
+               }
+               if ( !_isStat && func->isStat() )
+               {
+                  _isStat = TRUE ;
                }
             }
          }
@@ -105,18 +109,18 @@ namespace engine
             }
 
             {
-            SDB_ASSERT( NULL != func, "impossible") ;
-            vector<qgmOpField> param ;
-            param.push_back( itr->value ) ;
-            rc = func->init( itr->value.alias.empty()?
-                             itr->value.value.attr() :
-                             itr->value.alias,
-                             param ) ;
-            if ( SDB_OK != rc )
-            {
-               goto done ;
-            }
-            _func.push_back( func ) ;
+               SDB_ASSERT( NULL != func, "impossible") ;
+               vector<qgmOpField> param ;
+               param.push_back( itr->value ) ;
+               rc = func->init( itr->value.alias.empty()?
+                                itr->value.value.attr() :
+                                itr->value.alias,
+                                param ) ;
+               if ( SDB_OK != rc )
+               {
+                  goto done ;
+               }
+               _func.push_back( func ) ;
             }
          }
       }
@@ -126,6 +130,10 @@ namespace engine
       {
          PD_LOG( PDERROR, "Load groupby failed, rc: %d", rc ) ;
          goto done ;
+      }
+      if ( !_isAggr && !_groupby.empty() )
+      {
+         _isAggr = TRUE ;
       }
       _initialized = TRUE ;
 
@@ -209,7 +217,7 @@ namespace engine
          {
             _eoc = TRUE ;
 
-            if ( !_pushedAtThisTime && ( _pushedAtAnyTime || !_isAggr ) )
+            if ( !_pushedAtThisTime && ( _pushedAtAnyTime || !_isStat ) )
             {
                goto error ;
             }
@@ -297,7 +305,19 @@ namespace engine
                }
                else
                {
-                  continue ;
+                  if ( _isAggr )
+                  {
+                     continue ;
+                  }
+                  rc = _result( next ) ;
+                  if ( SDB_OK != rc )
+                  {
+                     goto error ;
+                  }
+                  else
+                  {
+                     break ;
+                  }
                }
             }
          }

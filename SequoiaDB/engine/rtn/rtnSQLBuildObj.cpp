@@ -60,7 +60,7 @@ namespace engine
                "no aliases for function!" );
       try
       {
-         builder.append( _alias.toString(), _obj );
+         builder.append( _alias.toString(), _obj ) ;
          _hasData = FALSE;
       }
       catch( std::exception &e )
@@ -79,26 +79,25 @@ namespace engine
    {
       INT32 rc = SDB_OK;
       SDB_ASSERT( param.size() == _param.size(), "invalid size!" );
+
+      if ( _hasData )
+      {
+         goto done ;
+      }
+
       try
       {
          BSONObjBuilder objBuilder;
-         if ( !_hasData )
+         UINT32 i = 0 ;
+         for ( i = 0; i < param.size(); i++ )
          {
-            UINT32 i = 0 ;
-            for ( i = 0; i < param.size(); i++ )
+            if ( !param[i].eoo() )
             {
-               if ( !param[i].eoo() )
-               {
-                  objBuilder.appendAs( param[i], _param[i].alias.toString() );
-                  _hasData = TRUE;
-               }
+               objBuilder.appendAs( param[i], _param[i].alias.toString() );
             }
          }
-         if ( _hasData )
-         {
-            _obj = objBuilder.obj();
-         }
-         
+         _obj = objBuilder.obj() ;
+         _hasData = TRUE ;
       }
       catch( std::exception &e )
       {

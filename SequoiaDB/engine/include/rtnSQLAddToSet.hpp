@@ -56,8 +56,6 @@ namespace engine
 
       virtual INT32 result( bson::BSONObjBuilder &builder );
 
-      virtual BOOLEAN isAggr() { return FALSE ; }
-
    private:
       virtual INT32 _push( const RTN_FUNC_PARAMS &param );
 

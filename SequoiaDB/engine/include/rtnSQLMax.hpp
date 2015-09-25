@@ -50,8 +50,6 @@ namespace engine
    public:
       INT32 result( BSONObjBuilder &builder ) ;
 
-      virtual BOOLEAN isAggr() { return FALSE ; }
-
    private:
       INT32 _push( const RTN_FUNC_PARAMS &param ) ;
    private:

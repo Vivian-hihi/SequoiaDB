@@ -81,6 +81,7 @@ namespace engine
       BOOLEAN _pushedAtThisTime ;
       BOOLEAN _pushedAtAnyTime ;
       BOOLEAN _isAggr;
+      BOOLEAN _isStat ;
    } ;
 
    typedef class _qgmPlAggregation qgmPlAggregation ;

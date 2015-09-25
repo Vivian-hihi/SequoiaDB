@@ -113,10 +113,8 @@ namespace engine
          return _name.c_str() ;
       }
 
-      virtual BOOLEAN isAggr()
-      {
-         return TRUE;
-      }
+      virtual BOOLEAN isAggr() const { return TRUE ; }
+      virtual BOOLEAN isStat() const { return FALSE ; }
 
       virtual INT32 result( BSONObjBuilder &builder ) = 0 ;
 
