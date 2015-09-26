@@ -262,9 +262,9 @@ typedef SQL_CONTAINER::const_iterator SQL_CON_ITR ;
                            >> !(ch_p('+')|ch_p('-')))>>+digit_p)]
                           ];
 
-            bool_true = str_p("true") ;
+            bool_true = as_lower_d[ str_p("true") ] ;
 
-            bool_false = str_p("false") ;         
+            bool_false = as_lower_d[ str_p("false") ] ;         
 
             graph = (anychar_p - ( ch_p('"')|ch_p('\0')|ch_p('\'')))
                     | str_p("\\\\")
