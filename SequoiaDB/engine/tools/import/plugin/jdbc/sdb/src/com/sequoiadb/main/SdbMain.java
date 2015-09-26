@@ -33,6 +33,8 @@ public static AtomicInteger paraseSuccess = new AtomicInteger(0);
 
 public static int totalselect = 0;
 
+public static int times = 0;
+
 public static void main(String[] args) {
 	
 	/**
@@ -51,10 +53,31 @@ public static void main(String[] args) {
 	List<String> obj = (List)map.get("sqlList");
 	for(String sql: obj){
 	    ReadSdb myTask = new ReadSdb(map,sql);
+	    try{
         executor.execute(myTask);
+	    }catch(Exception e){
+	    	logger.info(e.getMessage());
+	    }
     }
     executor.shutdown();
     while(!executor.isTerminated()){
+    	if(executor.getTaskCount() >= executor.getCompletedTaskCount()){
+    	  ++times;
+    	  if(times >= 20){
+    		  executor.shutdown();
+    	  }
+    	}
+    	new Thread(
+    		 new Runnable() {
+				public void run() {
+					try {
+						Thread.sleep(1000);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+				}
+			}
+    	).start();
     }
     logger.info("Finished all threads");
     logger.info("paraseSuccess : "+paraseSuccess);
@@ -64,8 +87,6 @@ public static void main(String[] args) {
 
    private static Map<String,Object> paraseCommand(String[] args){
 	   
-//	    command = "--connect jdbc:db2://192.168.30.223:50110/sequoia --username db2inst1 --password liuck_2015 --table sedb10 --sumrow 1000000 --threads 4";
-//		String command = command;
 		Options opt = new Options();
 		opt.addOption("connect", true, "JDBC URL.");
 		opt.addOption("username", true, "DataBase UserName.");
@@ -89,11 +110,11 @@ public static void main(String[] args) {
 			cl = parser.parse(opt, args);
 		} catch (ParseException e) {
 			formatter.printHelp(formatstr, opt);
-			logger.error(e.getStackTrace(), e);
+			logger.info(e.getStackTrace(), e);
 		}
 		// -h or --help
 		if (cl == null) {
-			logger.error("CommandLine error");
+			logger.info("CommandLine error");
 			System.exit(1);
 		}
 		if (null != cl && cl.hasOption("h")) {
@@ -147,21 +168,21 @@ public static void main(String[] args) {
 		}
 		if (map.get("url") == null) {
 			System.out.println("could not found --connect option");
-			logger.error("could not found --connect option");
+			logger.info("could not found --connect option");
 			System.exit(1);
 		}
 		if (map.get("dbType") == null) {
-			logger.error("could not found --dbType option");
+			logger.info("could not found --dbType option");
 			System.exit(1);
 		}
 		if (map.get("user") == null) {
 			System.out.println("could not found --username option");
-			logger.error("could not found --username option");
+			logger.info("could not found --username option");
 			System.exit(1);
 		}
 		if (map.get("password") == null) {
 			System.out.println("could not found --password option");
-			logger.error("could not found --password option");
+			logger.info("could not found --password option");
 			System.exit(1);
 		}
 		if(cl != null && !cl.hasOption("sql")){
@@ -195,12 +216,12 @@ public static void main(String[] args) {
 		String table = map.get("table").toString();
 		if(endRow < 0){
 			System.out.println("--endRow option value must greater than zero");
-			logger.error("--endRow option value must greater than zero");
+			logger.info("--endRow option value must greater than zero");
 			System.exit(1);
 		}
 		if(startRow > endRow){
 			System.out.println("--startRow option value could not greater than endRow");
-			logger.error("--startRow option value could not greater than endRow");
+			logger.info("--startRow option value could not greater than endRow");
 			System.exit(1);
 		}
 		
@@ -222,7 +243,7 @@ public static void main(String[] args) {
 		int end = start+avg;
 		totalselect = endRow-startRow+1;
 		if(totalselect < threads){
-			logger.error("threads could not bigger than totalselect");
+			logger.info("threads could not bigger than totalselect");
 			System.exit(1);
 		}
 		for (int i = 1; i <= threads; i++) {
@@ -275,8 +296,8 @@ public static void main(String[] args) {
 			rowCount = Integer.parseInt(rs.getString(1));
 		}
 	} catch (SQLException e) {
-		logger.error("query sumRows from table error");
-		logger.error(e.getMessage());
+		logger.info("query sumRows from table error");
+		logger.info(e.getMessage());
 	}
 		
 	   return rowCount;
