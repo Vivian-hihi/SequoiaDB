@@ -1,9 +1,6 @@
 package com.sequoiadb.tasks;
 
-import java.io.InputStream;
 import java.sql.Connection;
-import java.sql.DatabaseMetaData;
-import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
@@ -60,8 +57,7 @@ public class ReadSdb implements Runnable {
             	read(map.get("dbType").toString(), map.get("url").toString(), map.get("user").toString(),
     					map.get("password").toString(), sql,null);
 		} catch (InterruptedException e) {
-			logger.error(e.getMessage());
-			e.printStackTrace();
+			logger.info(e.getMessage());
 		}
 
 	}
@@ -74,8 +70,7 @@ public class ReadSdb implements Runnable {
 		long startTime = System.currentTimeMillis();
 		logger.info("dbType=" + dbType + " url=" + url + " user=" + user + " sql=" + sql+" fieldname="+fieldname);
 		try {
-			//select * from (select t.*,rownum as rown from DEPT t where rownum <=4) tabalias where tabalias.rown >1
-			pstmt = conn.prepareStatement(sql);
+			pstmt = conn.prepareStatement("select * from (select rownum as rown,t.* from test3 t where rownum <=10000) tabalias where tabalias.rown >=1");
 			rs = pstmt.executeQuery();
 			ExecutorService es = Executors.newFixedThreadPool(4);
 			while (rs.next()) {
@@ -109,7 +104,7 @@ public class ReadSdb implements Runnable {
 						case Types.LONGVARCHAR:
 							if(fieldname!= null && name.equals(fieldname))
 							bson.put("_id", rs.getBigDecimal(name));
-							else	
+							else		
 							bson.put(name, rs.getBigDecimal(name));
 							break;
 						case Types.BOOLEAN:
@@ -177,9 +172,9 @@ public class ReadSdb implements Runnable {
 							break;
 						case Types.VARCHAR:
 							if(fieldname!= null && name.equals(fieldname))
-							bson.put("_id", rs.getString(name).trim());
+							bson.put("_id", rs.getString(name));
 							else
-							bson.put(name, rs.getString(name).trim());
+							bson.put(name, rs.getString(name));
 							break;
 						case Types.CHAR:
 							if(fieldname!= null && name.equals(fieldname))
@@ -189,15 +184,15 @@ public class ReadSdb implements Runnable {
 							break;
 						case Types.NCHAR:
 							if(fieldname!= null && name.equals(fieldname))
-							bson.put("_id", rs.getNString(name).trim());
+							bson.put("_id", rs.getNString(name));
 							else
-							bson.put(name, rs.getNString(name).trim());
+							bson.put(name, rs.getNString(name));
 							break;
 						case Types.NVARCHAR:
 							if(fieldname!= null && name.equals(fieldname))
-							bson.put("_id", rs.getNString(name).trim());
+							bson.put("_id", rs.getNString(name));
 							else
-							bson.put(name, rs.getNString(name).trim());
+							bson.put(name, rs.getNString(name));
 							break;
 						case Types.BIT:
 							bson.put(name, rs.getByte(name));
@@ -206,15 +201,15 @@ public class ReadSdb implements Runnable {
 							bson.put(name, rs.getBinaryStream(name));
 							break;	
 						case Types.BLOB:						
-							logger.error("unsupport this type of BLOB");
+							logger.info("unsupport this type of BLOB");
 							System.exit(1);
 							break;
 						case Types.CLOB:
-							logger.error("unsupport this type of CLOB");
+							logger.info("unsupport this type of CLOB");
 							System.exit(1);
 							break;
 						case Types.NCLOB:
-							logger.error("unsupport this type of NCLOB");
+							logger.info("unsupport this type of NCLOB");
 							System.exit(1);
 							break;	
 						case Types.NUMERIC:
@@ -231,40 +226,35 @@ public class ReadSdb implements Runnable {
 							bson.put(name, rs.getRowId(name));
 							break;
 						case Types.VARBINARY:
-							logger.error("unsupport this type of RAW");
+							logger.info("unsupport this type of RAW");
 							System.exit(1);
 							break;	
 						case -13:
-							logger.error("unsupport this type of BFILE");
+							logger.info("unsupport this type of BFILE");
 							System.exit(1);
 							break;	
 						case Types.NULL:
 							bson.put(name, null);
 							break;
 						default:
-							logger.error("Field "+"'"+name+"'"+" could not found this type");
+							logger.info("Field "+"'"+name+"'"+" could not found this type");
 							System.exit(1);
 							break;
 						}
 					}
 				} catch (Exception e) {
-					logger.info("failure parase bsonObject: "+bson);
+					logger.error("failure parase bsonObject: "+bson);
+				}
+
+				if(bson.toMap().size() == rsmd.getColumnCount()-1){
+					System.out.println(bson);
+					SdbMain.paraseSuccess.getAndIncrement();
 				}
 				
-				System.out.println(bson);
-				SdbMain.paraseSuccess.getAndIncrement();
-				/*queue.offer(bson);
-				for (int k = 0; k < count; k++) {
-					es.submit(new Poll());
-					
-				}*/
 			}
-			/*
-			lath.await();
-			es.shutdown();*/
 			
 		} catch (SQLException e) {
-			logger.error(e.getMessage());
+			logger.info(e.getMessage());
 			
 		} finally {
 			try {
@@ -274,29 +264,9 @@ public class ReadSdb implements Runnable {
 					conn.close();
 				logger.info("costTime:" + (System.currentTimeMillis() - startTime)+" ms");
 			} catch (SQLException e) {
-				logger.error(e.getMessage());
+				logger.info(e.getMessage());
 			}
 		}
 		
 	}
-	
-
-
-	/*public static class Poll implements Runnable {
-        
-		@Override
-		public void run() {
-			
-			while (!queue.isEmpty()) {
-			BSONObject s;
-			s = queue.poll();
-			if(s != null)
-			System.out.println(s);
-			}
-			
-			lath.countDown();
-		}
-
-	}*/
-
 }
