@@ -222,9 +222,9 @@ boolean&#160;</td><td class="memItemRight" valign="bottom"><b>isOIDEnsured</b> (
 <tr class="memitem:a4dbce5eeaeb2638ce51586a78a0289ef"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCollection.html#a4dbce5eeaeb2638ce51586a78a0289ef">createIndex</a> (String name, String key, boolean isUnique, boolean enforced)  throws BaseException </td></tr>
 <tr class="memdesc:a4dbce5eeaeb2638ce51586a78a0289ef"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create a index with name and key.  <a href="#a4dbce5eeaeb2638ce51586a78a0289ef"></a><br/></td></tr>
 <tr class="separator:a4dbce5eeaeb2638ce51586a78a0289ef"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a18ff0150ba93e2449a16c4b554a5221f"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCollection.html#a18ff0150ba93e2449a16c4b554a5221f">createIdIndex</a> ()  throws BaseException </td></tr>
-<tr class="memdesc:a18ff0150ba93e2449a16c4b554a5221f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create an id index.  <a href="#a18ff0150ba93e2449a16c4b554a5221f"></a><br/></td></tr>
-<tr class="separator:a18ff0150ba93e2449a16c4b554a5221f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa8053773cbb8eabd26cf5d02e6121558"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCollection.html#aa8053773cbb8eabd26cf5d02e6121558">createIdIndex</a> (BSONObject options)  throws BaseException </td></tr>
+<tr class="memdesc:aa8053773cbb8eabd26cf5d02e6121558"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create an id index.  <a href="#aa8053773cbb8eabd26cf5d02e6121558"></a><br/></td></tr>
+<tr class="separator:aa8053773cbb8eabd26cf5d02e6121558"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aafc8b19893fec31d8f4b01bcebca4466"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCollection.html#aafc8b19893fec31d8f4b01bcebca4466">dropIdIndex</a> ()  throws BaseException </td></tr>
 <tr class="memdesc:aafc8b19893fec31d8f4b01bcebca4466"><td class="mdescLeft">&#160;</td><td class="mdescRight">drop an id index  <a href="#aafc8b19893fec31d8f4b01bcebca4466"></a><br/></td></tr>
 <tr class="separator:aafc8b19893fec31d8f4b01bcebca4466"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -483,7 +483,7 @@ Partition : When the ShardingType is "hash", need to assign Partition, it's the 
 
 </div>
 </div>
-<a class="anchor" id="a18ff0150ba93e2449a16c4b554a5221f"></a>
+<a class="anchor" id="aa8053773cbb8eabd26cf5d02e6121558"></a>
 <div class="memitem">
 <div class="memproto">
 <table class="mlabels">
@@ -493,7 +493,8 @@ Partition : When the ShardingType is "hash", need to assign Partition, it's the 
         <tr>
           <td class="memname">void com.sequoiadb.base.DBCollection.createIdIndex </td>
           <td>(</td>
-          <td class="paramname"></td><td>)</td>
+          <td class="paramtype">BSONObject&#160;</td>
+          <td class="paramname"><em>options</em></td><td>)</td>
           <td>  throws BaseException </td>
         </tr>
       </table>
@@ -507,7 +508,7 @@ Partition : When the ShardingType is "hash", need to assign Partition, it's the 
 <p>Create an id index. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">null</td><td></td></tr>
+    <tr><td class="paramname">options</td><td>can be empty or specify option. e.g. {Offline:true} </td></tr>
   </table>
   </dd>
 </dl>
@@ -3350,12 +3351,12 @@ BDQuery.FLG_QUERY_PARALLED </li>
 </div>
 </div>
 <hr/>The documentation for this class was generated from the following file:<ul>
-<li>E:/work/sequoiadb/driver/java/src/main/java/com/sequoiadb/base/DBCollection.java</li>
+<li>E:/sequoiadb/driver/java/src/main/java/com/sequoiadb/base/DBCollection.java</li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Aug 5 2015 16:22:03 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Sat Sep 26 2015 13:47:46 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.2
 </small></address>
